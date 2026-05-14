@@ -9,6 +9,7 @@ var __require = /* @__PURE__ */ ((x) => typeof require !== "undefined" ? require
 
 // cloudflare-worker/lib/shared-validator.js
 var IX2_REJECTION_MESSAGE = "Legacy Webflow IX2 interactions detected. As of May 1, 2026, Marketplace templates submitted with IX2 interactions are rejected. Rebuild interactions with Webflow Interactions powered by GSAP (IX3), publish again, and rerun validation.";
+var UNICORN_STUDIO_REJECTION_MESSAGE = "Unicorn Studio embed detected. Marketplace templates may only use custom code for approved exceptions such as GSAP, font smoothing, no-index tags on licensing/changelog pages, or documented SVG snippets. Replace the Unicorn Studio effect with Webflow-native or approved GSAP implementation, publish again, and rerun validation.";
 function countPatternMatches(value, pattern) {
   const matches = value.match(pattern);
   return matches ? matches.length : 0;
@@ -41,6 +42,33 @@ function detectIx2Interactions(html) {
   };
 }
 __name(detectIx2Interactions, "detectIx2Interactions");
+function detectUnicornStudioUsage(html) {
+  const matches = [
+    {
+      label: "Unicorn Studio project embeds",
+      count: countPatternMatches(html, /\sdata-us-project\s*=/gi)
+    },
+    {
+      label: "Unicorn Studio runtime loader URLs",
+      count: countPatternMatches(html, /(?:hiunicornstudio\/unicornstudio\.js|unicornStudio\.umd\.js|cdn\.unicorn\.studio)/gi)
+    },
+    {
+      label: "Unicorn Studio initialization calls",
+      count: countPatternMatches(html, /UnicornStudio\.init\s*\(/g)
+    },
+    {
+      label: "Unicorn Studio runtime globals",
+      count: countPatternMatches(html, /\bUnicornStudio\b/g)
+    }
+  ].filter((item) => item.count > 0);
+  const strongMatches = matches.filter((item) => item.label !== "Unicorn Studio runtime globals");
+  return {
+    detected: strongMatches.length > 0,
+    count: strongMatches.reduce((total, item) => total + item.count, 0),
+    matches
+  };
+}
+__name(detectUnicornStudioUsage, "detectUnicornStudioUsage");
 function validateGsapUsage(html, pageUrl, customPatterns = []) {
   const defaultPatterns = [
     // Core GSAP object and method access
@@ -438,6 +466,18 @@ function validateGsapUsage(html, pageUrl, customPatterns = []) {
       flaggedCode: ix2Detection.matches.map((item) => `${item.label}: ${item.count}`)
     });
   }
+  const unicornStudioDetection = detectUnicornStudioUsage(html);
+  if (unicornStudioDetection.detected) {
+    results.unicornStudioDetected = true;
+    results.unicornStudioCount = unicornStudioDetection.count;
+    results.flaggedCode.push({
+      scriptIndex: "document",
+      message: UNICORN_STUDIO_REJECTION_MESSAGE,
+      reason: "Unicorn Studio is a third-party custom-code runtime and is not one of the Marketplace custom-code exceptions.",
+      policy: "custom-code-third-party-unicorn-studio",
+      flaggedCode: unicornStudioDetection.matches.map((item) => `${item.label}: ${item.count}`)
+    });
+  }
   const scriptContents = extractScriptContents(html);
   const styleContents = extractStyleContents(html);
   scriptContents.forEach((script, index) => {
@@ -644,6 +684,8 @@ function validateGsapUsage(html, pageUrl, customPatterns = []) {
       securityRiskCount: results.securityRisks.length,
       legacyIx2Detected: results.legacyIx2Detected === true,
       legacyIx2Count: results.legacyIx2Count || 0,
+      unicornStudioDetected: results.unicornStudioDetected === true,
+      unicornStudioCount: results.unicornStudioCount || 0,
       passed
     },
     details: results
@@ -690,43 +732,60 @@ function extractStyleContents(html) {
   return styles;
 }
 __name(extractStyleContents, "extractStyleContents");
+function appendExternalScript(externalScripts, seenScriptSources, src, source = "script-src", type = "text/javascript") {
+  if (!src || seenScriptSources.has(src)) {
+    return;
+  }
+  seenScriptSources.add(src);
+  externalScripts.push({
+    src,
+    type,
+    source
+  });
+}
+__name(appendExternalScript, "appendExternalScript");
+function appendDynamicExternalScripts(html, externalScripts, seenScriptSources) {
+  const dynamicScriptRegex = /\.src\s*=\s*['"](https?:\/\/[^'"]+)['"]/gi;
+  let match;
+  while ((match = dynamicScriptRegex.exec(html)) !== null) {
+    appendExternalScript(externalScripts, seenScriptSources, match[1], "dynamic-script-assignment");
+  }
+}
+__name(appendDynamicExternalScripts, "appendDynamicExternalScripts");
 function extractExternalScripts(html) {
   if (typeof window === "undefined" && typeof __require === "undefined") {
     const scriptRegex = /<script[^>]+src\s*=\s*['"]([^'"]+)['"][^>]*>/gi;
     const externalScripts = [];
+    const seenScriptSources = /* @__PURE__ */ new Set();
     let match;
     while ((match = scriptRegex.exec(html)) !== null) {
-      externalScripts.push({
-        src: match[1],
-        type: "text/javascript"
-      });
+      appendExternalScript(externalScripts, seenScriptSources, match[1]);
     }
+    appendDynamicExternalScripts(html, externalScripts, seenScriptSources);
     return externalScripts;
   } else {
     try {
       const cheerio = __require("cheerio");
       const $ = cheerio.load(html);
       const externalScripts = [];
+      const seenScriptSources = /* @__PURE__ */ new Set();
       $("script[src]").each((_, element) => {
         const src = $(element).attr("src");
         if (src) {
-          externalScripts.push({
-            src,
-            type: $(element).attr("type") || "text/javascript"
-          });
+          appendExternalScript(externalScripts, seenScriptSources, src, "script-src", $(element).attr("type") || "text/javascript");
         }
       });
+      appendDynamicExternalScripts(html, externalScripts, seenScriptSources);
       return externalScripts;
     } catch (error) {
       const scriptRegex = /<script[^>]+src\s*=\s*['"]([^'"]+)['"][^>]*>/gi;
       const externalScripts = [];
+      const seenScriptSources = /* @__PURE__ */ new Set();
       let match;
       while ((match = scriptRegex.exec(html)) !== null) {
-        externalScripts.push({
-          src: match[1],
-          type: "text/javascript"
-        });
+        appendExternalScript(externalScripts, seenScriptSources, match[1]);
       }
+      appendDynamicExternalScripts(html, externalScripts, seenScriptSources);
       return externalScripts;
     }
   }
@@ -1400,6 +1459,8 @@ var GsapValidationWorkflow = class extends WorkflowEntrypoint {
                 securityRiskCount: validationSummary.securityRiskCount || 0,
                 legacyIx2Detected: validationSummary.legacyIx2Detected === true,
                 legacyIx2Count: validationSummary.legacyIx2Count || 0,
+                unicornStudioDetected: validationSummary.unicornStudioDetected === true,
+                unicornStudioCount: validationSummary.unicornStudioCount || 0,
                 passed: validation.passed
               },
               details: {
@@ -1408,6 +1469,8 @@ var GsapValidationWorkflow = class extends WorkflowEntrypoint {
                 allowedCustomCode: validationDetails.allowedCustomCode || [],
                 flaggedCode: validationDetails.flaggedCode || [],
                 securityRisks: validationDetails.securityRisks || [],
+                unicornStudioDetected: validationDetails.unicornStudioDetected === true,
+                unicornStudioCount: validationDetails.unicornStudioCount || 0,
                 externalScripts: validationDetails.externalScripts || []
               },
               flaggedCodeCount: validationSummary.flaggedCodeCount || 0

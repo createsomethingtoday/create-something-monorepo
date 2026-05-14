@@ -33,6 +33,8 @@ export interface PublishedUrlValidationSummary {
       securityRiskCount?: number;
       legacyIx2Detected?: boolean;
       legacyIx2Count?: number;
+      unicornStudioDetected?: boolean;
+      unicornStudioCount?: number;
       passed?: boolean;
     };
     details?: {
@@ -54,6 +56,7 @@ export interface PublishedUrlValidationSummary {
   passed: boolean;
   gsapDetected: boolean;
   legacyIx2Detected: boolean;
+  unicornStudioDetected: boolean;
   raw: Record<string, unknown>;
 }
 
@@ -108,6 +111,75 @@ function isRetryableWorkerError(error: Error) {
   );
 }
 
+function extractHttpStatus(error?: string) {
+  if (typeof error !== 'string') {
+    return null;
+  }
+
+  const match = error.match(/HTTP error:\s*(\d{3})/i);
+  return match ? Number(match[1]) : null;
+}
+
+function toDisplayPath(url: string) {
+  try {
+    const parsed = new URL(url);
+    return `${parsed.pathname}${parsed.search}` || '/';
+  } catch {
+    return url;
+  }
+}
+
+function formatReferrers(referrers?: string[]) {
+  if (!Array.isArray(referrers) || referrers.length === 0) {
+    return '';
+  }
+
+  const displayReferrers = referrers.map(toDisplayPath);
+  if (displayReferrers.length === 1) {
+    return displayReferrers[0];
+  }
+  if (displayReferrers.length === 2) {
+    return `${displayReferrers[0]} and ${displayReferrers[1]}`;
+  }
+
+  return `${displayReferrers[0]}, ${displayReferrers[1]}, and ${displayReferrers.length - 2} more page${displayReferrers.length - 2 === 1 ? '' : 's'}`;
+}
+
+function buildRequestFailureMessage(
+  failedPage: PublishedUrlValidationSummary['pageResults'][number] | undefined
+) {
+  if (!failedPage) {
+    return 'Some published pages could not be fetched during the published-site crawl.';
+  }
+
+  const status = extractHttpStatus(failedPage.error);
+  if (status === 404 && failedPage.url) {
+    const linkedFrom = formatReferrers(failedPage.referrers);
+    return linkedFrom
+      ? `Broken internal link detected: ${failedPage.url} returned 404 during the published-site crawl. Linked from ${linkedFrom}. Remove or fix that link and validate again.`
+      : `Broken internal link detected: ${failedPage.url} returned 404 during the published-site crawl. Remove or fix that link and validate again.`;
+  }
+
+  if (failedPage.url && failedPage.error) {
+    return `Some published pages could not be fetched, starting with ${failedPage.url} (${failedPage.error}).`;
+  }
+
+  if (failedPage.url) {
+    return `Some published pages could not be fetched, starting with ${failedPage.url}.`;
+  }
+
+  return 'Some published pages could not be fetched during the published-site crawl.';
+}
+
+function addUniqueIssue(issues: string[], message: string | undefined) {
+  const normalized = typeof message === 'string' ? message.trim() : '';
+  if (!normalized || issues.includes(normalized)) {
+    return;
+  }
+
+  issues.push(normalized);
+}
+
 export function normalizePublishedUrl(rawValue: string): string {
   if (typeof rawValue !== 'string' || rawValue.trim() === '') {
     throw new Error('Published URL is required.');
@@ -142,15 +214,21 @@ export function normalizePublishedUrl(rawValue: string): string {
 
 function summarizeWorkerResponse(data: Record<string, unknown>): PublishedUrlValidationSummary {
   if (data.success !== true) {
-    throw new Error(typeof data.error === 'string' ? data.error : 'Validation service returned an invalid response.');
+    throw new Error(
+      typeof data.error === 'string'
+        ? data.error
+        : 'Validation service returned an invalid response.'
+    );
   }
 
   const pageResults = Array.isArray(data.pageResults)
     ? (data.pageResults as PublishedUrlValidationSummary['pageResults'])
     : [];
-  const siteResults = (typeof data.siteResults === 'object' && data.siteResults
-    ? (data.siteResults as Record<string, unknown>)
-    : {}) as Record<string, unknown>;
+  const siteResults = (
+    typeof data.siteResults === 'object' && data.siteResults
+      ? (data.siteResults as Record<string, unknown>)
+      : {}
+  ) as Record<string, unknown>;
 
   const analyzedCount =
     typeof siteResults.analyzedCount === 'number'
@@ -196,6 +274,15 @@ function summarizeWorkerResponse(data: Record<string, unknown>): PublishedUrlVal
         (item) => item.policy === 'ix2-rejected' || /legacy webflow ix2/i.test(item.message || '')
       )
   );
+  const unicornStudioDetected = pageResults.some(
+    (page) =>
+      page.summary?.unicornStudioDetected === true ||
+      page.details?.flaggedCode?.some(
+        (item) =>
+          item.policy === 'custom-code-third-party-unicorn-studio' ||
+          /unicorn studio/i.test(item.message || '')
+      )
+  );
 
   return {
     raw: data,
@@ -211,8 +298,71 @@ function summarizeWorkerResponse(data: Record<string, unknown>): PublishedUrlVal
     },
     passed,
     gsapDetected,
-    legacyIx2Detected
+    legacyIx2Detected,
+    unicornStudioDetected
   };
+}
+
+export function getPublishedUrlValidationIssues(summary: PublishedUrlValidationSummary) {
+  const issues: string[] = [];
+
+  if (summary.passed) {
+    return issues;
+  }
+
+  if (summary.siteResults.pageCount === 0 || summary.siteResults.analyzedCount === 0) {
+    return [
+      'No published pages were crawled. Confirm the site is public and try validation again.'
+    ];
+  }
+
+  if (summary.siteResults.incomplete) {
+    return ['The full published-site crawl did not finish. Try validation again in a minute.'];
+  }
+
+  if (summary.siteResults.requestFailureCount > 0) {
+    return [buildRequestFailureMessage(summary.pageResults.find((page) => page.success === false))];
+  }
+
+  if (summary.legacyIx2Detected) {
+    addUniqueIssue(issues, LEGACY_IX2_VALIDATION_MESSAGE);
+  }
+
+  for (const page of summary.pageResults) {
+    if (page.success === false || page.passed !== false) {
+      continue;
+    }
+
+    for (const flagged of page.details?.flaggedCode || []) {
+      addUniqueIssue(issues, flagged.message);
+    }
+  }
+
+  const failedPage = summary.pageResults.find(
+    (page) => page.success !== false && page.passed === false
+  );
+  addUniqueIssue(issues, failedPage?.error);
+
+  if (issues.length === 0) {
+    issues.push('The published site did not pass the marketplace validation checks.');
+  }
+
+  return issues;
+}
+
+export function buildPublishedUrlValidationMessage(summary: PublishedUrlValidationSummary) {
+  if (summary.passed) {
+    return summary.siteResults.passedCount > 0
+      ? `Published site validated across ${summary.siteResults.passedCount} page${summary.siteResults.passedCount === 1 ? '' : 's'}.`
+      : 'Published site validated.';
+  }
+
+  const issues = getPublishedUrlValidationIssues(summary);
+  if (issues.length === 1) {
+    return issues[0];
+  }
+
+  return `Published URL validation found ${issues.length} blocking issues.`;
 }
 
 async function startWorkflow(url: string) {
@@ -248,10 +398,10 @@ async function pollWorkflow(url: string, instanceId: string) {
 
     for (let attempt = 1; attempt <= POLL_RETRIES; attempt += 1) {
       try {
-        const data = (await postWorker(
-          { url, instanceId },
-          POLL_TIMEOUT_MS
-        )) as Record<string, unknown>;
+        const data = (await postWorker({ url, instanceId }, POLL_TIMEOUT_MS)) as Record<
+          string,
+          unknown
+        >;
 
         if (data.success === true && Array.isArray(data.pageResults)) {
           return data;
@@ -269,7 +419,8 @@ async function pollWorkflow(url: string, instanceId: string) {
         }
         break;
       } catch (error) {
-        const typedError = error instanceof Error ? error : new Error('Validation workflow failed.');
+        const typedError =
+          error instanceof Error ? error : new Error('Validation workflow failed.');
         const status = (typedError as Error & { status?: number }).status;
         const retryable =
           typedError.name === 'AbortError' ||

@@ -76,14 +76,17 @@ type Tone = 'success' | 'error' | 'info';
 type StatusMessage = {
   tone: Tone;
   message: string;
+  details?: string[];
 };
 
 type PublishedUrlValidationResponse = {
   passed?: boolean;
   message?: string;
+  validationIssues?: string[];
   normalizedUrl?: string;
   gsapDetected?: boolean;
   legacyIx2Detected?: boolean;
+  unicornStudioDetected?: boolean;
   autofill?: TemplateAutofillPayload;
   autofillWarning?: string;
   screenshotCount?: number;
@@ -261,7 +264,30 @@ async function fetchTemplateSuggestions(url: string) {
   }
 }
 
-function validationFailureMessage(response: Response, data: Record<string, unknown>) {
+type ValidationFailurePayload = {
+  validationIssues?: unknown;
+  message?: unknown;
+  error?: unknown;
+};
+
+function validationFailureIssues(data: ValidationFailurePayload) {
+  if (!Array.isArray(data.validationIssues)) {
+    return [];
+  }
+
+  return data.validationIssues
+    .filter((issue): issue is string => typeof issue === 'string' && issue.trim().length > 0)
+    .map((issue) => issue.trim());
+}
+
+function validationFailureMessage(
+  response: Response,
+  data: ValidationFailurePayload,
+  issues = validationFailureIssues(data)
+) {
+  if (issues.length === 1) {
+    return issues[0];
+  }
   if (typeof data.message === 'string' && data.message.trim()) {
     return data.message;
   }
@@ -272,6 +298,18 @@ function validationFailureMessage(response: Response, data: Record<string, unkno
   return response.ok
     ? 'Published URL validation failed.'
     : `Published URL validation request failed with HTTP ${response.status}.`;
+}
+
+function validationFailureStatus(
+  response: Response,
+  data: ValidationFailurePayload
+): StatusMessage {
+  const issues = validationFailureIssues(data);
+  return {
+    tone: 'error',
+    message: validationFailureMessage(response, data, issues),
+    details: issues.length > 1 ? issues : undefined
+  };
 }
 
 type FeedbackAction = {
@@ -678,6 +716,13 @@ function FieldFeedback({
   return (
     <div className={feedbackClass(feedback.tone)}>
       <span>{feedback.message}</span>
+      {feedback.details?.length ? (
+        <ul className="submission-field-feedback-list">
+          {feedback.details.map((detail) => (
+            <li key={detail}>{detail}</li>
+          ))}
+        </ul>
+      ) : null}
       {action ? (
         <>
           {' '}
@@ -1843,15 +1888,9 @@ export function TemplateIntake() {
     const validationData = (await readJsonResponse(response)) as PublishedUrlValidationResponse;
 
     if (!response.ok || !validationData.passed || !validationData.normalizedUrl) {
-      const message = validationFailureMessage(response, validationData);
-      setTemplateStatus({
-        tone: 'error',
-        message
-      });
-      setFeedback('publishedUrl', {
-        tone: 'error',
-        message
-      });
+      const status = validationFailureStatus(response, validationData);
+      setTemplateStatus(status);
+      setFeedback('publishedUrl', status);
       return;
     }
 
@@ -2138,11 +2177,24 @@ export function TemplateIntake() {
           name?: string;
         };
         error?: string;
+        validationIssues?: string[];
         warning?: string;
       };
 
       if (!response.ok || !data.asset) {
-        throw new Error(data.error || 'Failed to submit template.');
+        const validationIssues = validationFailureIssues(data);
+        setTemplateStatus({
+          tone: 'error',
+          message:
+            data.error ||
+            (validationIssues.length === 1
+              ? validationIssues[0]
+              : validationIssues.length > 1
+                ? `Published URL validation found ${validationIssues.length} blocking issues.`
+                : 'Failed to submit template.'),
+          details: validationIssues.length > 1 ? validationIssues : undefined
+        });
+        return;
       }
 
       setTemplateStatus({
@@ -3443,7 +3495,16 @@ export function TemplateIntake() {
                   </div>
 
                   {templateStatus ? (
-                    <div className={statusClassName(templateStatus.tone)}>{templateStatus.message}</div>
+                    <div className={statusClassName(templateStatus.tone)}>
+                      <span>{templateStatus.message}</span>
+                      {templateStatus.details?.length ? (
+                        <ul className="submission-status-list">
+                          {templateStatus.details.map((detail) => (
+                            <li key={detail}>{detail}</li>
+                          ))}
+                        </ul>
+                      ) : null}
+                    </div>
                   ) : null}
 
                   <div className="submission-actions">

@@ -10,7 +10,8 @@ import { getServerAirtable } from '../../../../lib/server/airtable';
 import { getPricingTiers, WEBFLOW_FEATURES } from '../../../../lib/intake/constants';
 import { evaluateCreatorEligibility } from '../../../../lib/intake/creator-eligibility';
 import {
-  LEGACY_IX2_VALIDATION_MESSAGE,
+  buildPublishedUrlValidationMessage,
+  getPublishedUrlValidationIssues,
   runPublishedUrlValidation
 } from '../../../../lib/intake/published-url';
 import { validateTemplateNameSyntax } from '../../../../lib/intake/template-name';
@@ -276,11 +277,11 @@ export async function POST(request: Request) {
 
     const publishedValidation = await runPublishedUrlValidation(body.publishedUrl || '');
     if (!publishedValidation.summary.passed) {
+      const validationIssues = getPublishedUrlValidationIssues(publishedValidation.summary);
       return jsonNoStore(
         {
-          error: publishedValidation.summary.legacyIx2Detected
-            ? LEGACY_IX2_VALIDATION_MESSAGE
-            : 'Published URL validation failed.'
+          error: buildPublishedUrlValidationMessage(publishedValidation.summary),
+          validationIssues
         },
         { status: 400 }
       );

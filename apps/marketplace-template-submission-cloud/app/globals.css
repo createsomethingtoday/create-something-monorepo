@@ -927,6 +927,17 @@ select {
   line-height: 1.45;
 }
 
+.submission-field-feedback-list,
+.submission-status-list {
+  margin: 0.35rem 0 0 1.1rem;
+  padding: 0;
+}
+
+.submission-field-feedback-list li,
+.submission-status-list li {
+  margin-top: 0.25rem;
+}
+
 .submission-field-feedback-success {
   color: #007a41;
 }
