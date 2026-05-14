@@ -111,8 +111,14 @@ Environment variables:
 
 - `HUB_INSTANCE_ID` (recommended): unique id for this deployed hub worker; used to namespace hub state/discovery KV keys so team hubs do not overwrite each other.
 - `HUB_API_TOKEN` (optional): if set, `/mcp` requires `Authorization: Bearer <token>`. For compatibility with clients that can only provide a signed endpoint URL, the gateway also accepts `?mcp_access_token=<token>`, but header bearer remains the standard path.
+- `HUB_ADDITIONAL_API_TOKENS` (optional): comma-separated or JSON array of additional static bearer tokens accepted as equivalent Hub credentials. Use only for explicitly scoped static bearer lanes.
+- `/mcp/bearer` is the same MCP transport path with a plain bearer challenge for clients that should not be steered toward OAuth discovery.
+- `HUB_OAUTH_DISCOVERY_ENABLED` (optional): `true` by default. Set `false` for static bearer-only hosts so OAuth metadata routes return `404` and unauthorized MCP responses do not advertise `resource_metadata`.
 - `HUB_IDENTITY_MODE` (optional): `session_required` (default) or `compat`
 - `HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS` (optional): `false` (default). Set `true` only for a tightly controlled compat exception that is explicitly approved.
+- `HUB_COMPAT_ALLOWED_TOOL_PREFIXES` (optional): comma-separated or JSON array of proxy tool prefixes allowed for fallback compat identity. Use this for static bearer lanes that do not use the session resolver but still need server-side tool scoping.
+- `HUB_COMPAT_FALLBACK_TOOL_MODE` (optional): `read_write` by default. Set `read_only` for static bearer lanes that should not discover or execute mutable downstream proxy tools.
+- `HUB_SESSION_RESOLVER_ENABLED` (optional): `true` by default. Set `false` for static bearer-only hosts that must not call the identity/session resolver.
 - `HUB_SESSION_RESOLVE_URL` (optional): identity-worker resolver endpoint (`/v1/mcp/sessions/resolve`)
 - `HUB_SESSION_RESOLVE_TOKEN` (optional): shared secret used by hub to call resolver endpoint
 - `HUB_SESSION_RESOLVE_TIMEOUT_MS` (optional): resolver call timeout, default `5000`
@@ -128,6 +134,7 @@ Environment variables:
 - `HUB_DISCOVERY_MAX_PROXY_TOOLS` (optional): positive integer cap; unset/null means no cap
 - `HUB_DISCOVERY_SHARED_PACK` (standard for shared hubs): named default from `config/mcp-hub/discovery-packs.json`
 - `HUB_REQUIRED_DISCOVERY_SERVERS` (optional): comma-separated or JSON array of connected server names always included in discovery preferences, default none.
+- `HUB_MANAGEMENT_TOOL_ALLOWLIST` (optional): comma-separated or JSON array of Hub management tool names to expose. Leave unset for the full management surface; set this on shared static bearer lanes to hide mutation tools such as `hub_update_state` and `hub_set_discovery`.
 - `HUB_REFRESH_SECONDS` (optional): cache TTL for downstream tool catalog, default `300`
 - `HUB_CACHE_BUST` (optional): any value change forces runtime refresh
 - `HUB_ACCOUNT_ID` (optional): fallback account ID written to hub telemetry rows
@@ -183,6 +190,10 @@ Session-scoped identity (optional):
 - In `compat` mode, the hub keeps legacy fallback identity behavior and accepts session token in
   `X-MCP-Session-Token` or bearer (when bearer is not the configured `HUB_API_TOKEN`).
 - Proxy tools are filtered/enforced by `allowed_tool_prefixes` when identity is session-resolved.
+- Static bearer-only compat lanes can disable the resolver with `HUB_SESSION_RESOLVER_ENABLED=false`
+  and enforce a narrow fallback scope with `HUB_COMPAT_ALLOWED_TOOL_PREFIXES`.
+- Add `HUB_COMPAT_FALLBACK_TOOL_MODE=read_only` when that static lane should be read/capture-only.
+- Add `HUB_ADDITIONAL_API_TOKENS` only when a static lane intentionally accepts several existing bearer keys for the same fallback actor and scope.
 
 ## Telemetry + Correlation
 

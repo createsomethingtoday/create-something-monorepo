@@ -13,6 +13,7 @@ INFISICAL_INCLUDE_IMPORTS="${INFISICAL_INCLUDE_IMPORTS:-true}"
 DRY_RUN="${DRY_RUN:-false}"
 REVIEWER="${REVIEWER:-all}"
 INCLUDE_CENTRAL="${INCLUDE_CENTRAL:-0}"
+CENTRAL_ACCESS_TOKEN_ENV_VARS="${CENTRAL_ACCESS_TOKEN_ENV_VARS:-CS_HUB_WF_TEMPLATE_REVIEW_ERIC_API_TOKEN,CS_HUB_WF_TEMPLATE_REVIEW_NATALIA_API_TOKEN,CS_HUB_WF_TEMPLATE_REVIEW_MARIANA_API_TOKEN,CS_HUB_WF_TEMPLATE_REVIEW_VICKI_API_TOKEN}"
 
 REVIEWERS=(
   "WF_TEMPLATE_REVIEW_NATALIA|cs-hub-wf-template-review-natalia"
@@ -135,6 +136,42 @@ reviewer_key_matches() {
   [[ "$reviewer_key" == "WF_TEMPLATE_REVIEW_${reviewer_upper}" ]]
 }
 
+central_access_token_vars() {
+  printf '%s' "$CENTRAL_ACCESS_TOKEN_ENV_VARS" | tr ',' '\n' | sed -E 's/^[[:space:]]+|[[:space:]]+$//g' | awk 'NF'
+}
+
+central_primary_token() {
+  if [[ -n "${CS_HUB_WF_TEMPLATE_REVIEW_API_TOKEN:-}" ]]; then
+    printf '%s' "$CS_HUB_WF_TEMPLATE_REVIEW_API_TOKEN"
+    return 0
+  fi
+
+  local token_var
+  while IFS= read -r token_var; do
+    if [[ -n "${!token_var:-}" ]]; then
+      printf '%s' "${!token_var}"
+      return 0
+    fi
+  done < <(central_access_token_vars)
+
+  return 1
+}
+
+central_access_tokens_json() {
+  {
+    if [[ -n "${CS_HUB_WF_TEMPLATE_REVIEW_API_TOKEN:-}" ]]; then
+      printf '%s\n' "$CS_HUB_WF_TEMPLATE_REVIEW_API_TOKEN"
+    fi
+
+    local token_var
+    while IFS= read -r token_var; do
+      if [[ -n "${!token_var:-}" ]]; then
+        printf '%s\n' "${!token_var}"
+      fi
+    done < <(central_access_token_vars)
+  } | jq -Rsc 'split("\n") | map(select(length > 0)) | unique'
+}
+
 INFISICAL_INCLUDE_IMPORTS="$(normalize_bool_or_fail "$INFISICAL_INCLUDE_IMPORTS")"
 DRY_RUN="$(normalize_bool_or_fail "$DRY_RUN")"
 
@@ -145,7 +182,19 @@ require_cmd infisical
 load_secrets_from_infisical
 
 missing=0
-require_secret "HUB_SESSION_RESOLVE_TOKEN" || missing=1
+needs_session_resolve_token=0
+for entry in "${TARGETS[@]}"; do
+  IFS='|' read -r reviewer_key _worker <<<"$entry"
+  if ! reviewer_key_matches "$reviewer_key" "$REVIEWER"; then
+    continue
+  fi
+  if [[ "$reviewer_key" != "WF_TEMPLATE_REVIEW" ]]; then
+    needs_session_resolve_token=1
+  fi
+done
+if [[ "$needs_session_resolve_token" == "1" ]]; then
+  require_secret "HUB_SESSION_RESOLVE_TOKEN" || missing=1
+fi
 require_secret "WEBFLOW_TEMPLATE_REVIEW_MCP_API_KEY" || missing=1
 require_secret "BRAINTRUST_API_KEY" || missing=1
 require_secret "BRAINTRUST_PROJECT_ID" || missing=1
@@ -155,7 +204,13 @@ for entry in "${TARGETS[@]}"; do
   if ! reviewer_key_matches "$reviewer_key" "$REVIEWER"; then
     continue
   fi
-  require_secret "CS_HUB_${reviewer_key}_API_TOKEN" || missing=1
+  if [[ "$reviewer_key" == "WF_TEMPLATE_REVIEW" ]]; then
+    while IFS= read -r token_var; do
+      require_secret "$token_var" || missing=1
+    done < <(central_access_token_vars)
+  else
+    require_secret "CS_HUB_${reviewer_key}_API_TOKEN" || missing=1
+  fi
 done
 
 if [[ "$missing" == "1" ]]; then
@@ -168,10 +223,19 @@ for entry in "${TARGETS[@]}"; do
   if ! reviewer_key_matches "$reviewer_key" "$REVIEWER"; then
     continue
   fi
-  reviewer_token_var="CS_HUB_${reviewer_key}_API_TOKEN"
   echo "syncing ${worker}"
-  put_versioned_secret "$worker" "HUB_API_TOKEN" "${!reviewer_token_var}"
-  put_versioned_secret "$worker" "HUB_SESSION_RESOLVE_TOKEN" "$HUB_SESSION_RESOLVE_TOKEN"
+  if [[ "$reviewer_key" == "WF_TEMPLATE_REVIEW" ]]; then
+    central_primary="$(central_primary_token)"
+    central_tokens_json="$(central_access_tokens_json)"
+    put_versioned_secret "$worker" "HUB_API_TOKEN" "$central_primary"
+    put_versioned_secret "$worker" "HUB_ADDITIONAL_API_TOKENS" "$central_tokens_json"
+  else
+    reviewer_token_var="CS_HUB_${reviewer_key}_API_TOKEN"
+    put_versioned_secret "$worker" "HUB_API_TOKEN" "${!reviewer_token_var}"
+  fi
+  if [[ "$reviewer_key" != "WF_TEMPLATE_REVIEW" ]]; then
+    put_versioned_secret "$worker" "HUB_SESSION_RESOLVE_TOKEN" "$HUB_SESSION_RESOLVE_TOKEN"
+  fi
   put_versioned_secret "$worker" "WEBFLOW_TEMPLATE_REVIEW_MCP_API_KEY" "$WEBFLOW_TEMPLATE_REVIEW_MCP_API_KEY"
   put_versioned_secret "$worker" "BRAINTRUST_API_KEY" "$BRAINTRUST_API_KEY"
   put_versioned_secret "$worker" "BRAINTRUST_PROJECT_ID" "$BRAINTRUST_PROJECT_ID"

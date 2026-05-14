@@ -29,6 +29,11 @@ HUB_DISCOVERY_SHARED_PACK = "shared-auth-core"
 # - "session_required" (default): requires X-MCP-Session-Token + resolver config
 # - "compat": keeps legacy header/bearer fallback identity behavior
 # HUB_IDENTITY_MODE = "session_required"
+# Optional static bearer controls for compat lanes.
+# HUB_ADDITIONAL_API_TOKENS = ""
+# HUB_OAUTH_DISCOVERY_ENABLED = "true"
+# HUB_SESSION_RESOLVER_ENABLED = "true"
+# HUB_COMPAT_ALLOWED_TOOL_PREFIXES = ""
 # Optional Braintrust project name (falls back to "CREATE SOMETHING")
 # BRAINTRUST_PROJECT_NAME = "CREATE SOMETHING"
 # Optional explicit Braintrust project id
@@ -40,6 +45,8 @@ HUB_DISCOVERY_SHARED_PACK = "shared-auth-core"
 
 # Optional. If set, /mcp requires Authorization: Bearer <token>
 # HUB_API_TOKEN = ""
+# Optional. Additional accepted static bearer tokens; use Worker secret for real credentials.
+# HUB_ADDITIONAL_API_TOKENS = ""
 
 # Comma-separated or JSON array strings.
 # Defaults to registry defaults when unset.
@@ -48,6 +55,7 @@ HUB_DISCOVERY_SHARED_PACK = "shared-auth-core"
 # HUB_DISABLED_SERVERS = ""
 # HUB_DISCOVERY_DEFAULT_SERVERS = "composio-toolkit-gmail,composio-toolkit-googledrive"
 # HUB_DISCOVERY_MAX_PROXY_TOOLS = "200"
+# HUB_MANAGEMENT_TOOL_ALLOWLIST = ""
 # HUB_ACCOUNT_ID = "operator"
 # HUB_SESSION_RESOLVE_URL = "https://id.createsomething.space/v1/mcp/sessions/resolve"
 # HUB_SESSION_RESOLVE_TOKEN = ""

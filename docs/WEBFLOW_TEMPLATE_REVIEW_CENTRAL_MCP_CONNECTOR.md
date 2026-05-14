@@ -4,43 +4,41 @@ Runtime strategy context: [Webflow Template Review Runtime Strategy Brief](./WEB
 
 ## Purpose
 
-The central connector gives Webflow Template Reviewers one remote MCP service that can be added to Claude custom connectors or Gumloop:
+The central connector gives Webflow Template Reviewers one public remote MCP URL for Claude Code, Claude-compatible clients, and Gumloop:
 
 ```text
-https://wf-template-review.mcp.createsomething.agency/mcp
+https://wf-template-review.mcp.createsomething.agency/mcp/bearer
 ```
 
-Use `/mcp` for Claude or any client that should discover OAuth metadata. Use `/mcp/bearer` for Gumloop-style bearer-token clients that should not be prompted toward OAuth discovery.
+This endpoint is intentionally bearer-only. It does not use OAuth discovery, does not call the identity/session resolver, and does not depend on:
 
-This is a shared Hub endpoint, not a shared reviewer identity. Each reviewer must still authenticate with a reviewer-bound managed bearer or session token so the Hub can resolve:
+```text
+https://id.createsomething.space/v1/mcp/sessions/resolve
+```
 
-- `account_id`
-- `tenant_id`
-- `user_id`
-- `allowed_tool_prefixes`
-- `tool_mode`
+Use a configured static Hub bearer as the client credential. This is shared MCP access, not reviewer identity, so the central connector must stay scoped to read/capture/discovery tools. The central worker accepts the approved existing reviewer Hub bearers for Eric, Mariana, Vicki, and Natalia; all of those tokens map to the same central fallback actor and the same read/capture allowlist. Reviewer-attributed Airtable writes remain on the reviewer-specific Hubs such as:
 
-The downstream `webflow-template-review-mcp` receives the resolved account ID through Hub headers and maps it to the reviewer directory. Prompt text such as "I am Eric" or "assign this to Natalia" is not identity.
+```text
+https://wf-template-review-eric.mcp.createsomething.agency/mcp
+```
 
 ## Runtime Shape
 
-| Layer                         | Responsibility                                                                                                 |
-| ----------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| Claude or Gumloop             | Chat/runtime surface. Sends requests to the central MCP URL with reviewer auth.                                |
-| `cs-mcp-hub-remote`           | Single remote MCP endpoint, session resolver, discovery cap, route authorization, traces, and proxy execution. |
-| Identity worker               | Resolves reviewer managed bearer or session tokens to account context and allowed tool prefixes.               |
-| `webflow-template-review-mcp` | Template Review queue/context/capture/draft/write tools with reviewer-safe ownership checks.                   |
+| Layer                         | Responsibility                                                                                           |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------- |
+| Claude Code, Claude, Gumloop  | Remote MCP client. Sends `Authorization: Bearer <token>` to `/mcp/bearer`.                               |
+| `cs-mcp-hub-remote`           | Static-bearer Hub in `compat` mode with OAuth discovery and session resolver disabled for this endpoint. |
+| `webflow-template-review-mcp` | Template Review queue/context/public capture tools behind the Hub.                                       |
+
+No reviewer identity is inferred from prompt text, OAuth, custom headers, or the session resolver on this central endpoint.
 
 ## Deployment
 
-The central endpoint reuses the existing reviewer Phase A Hub deploy script. It is intentionally not included in the default reviewer loop unless requested.
-
-Deploy, normalize, and verify the central endpoint:
+Deploy and verify the central endpoint only. Central normalize is skipped by default because reviewer-access tokens should not expose Hub state/discovery mutation tools:
 
 ```bash
 REVIEWER=central \
-HUB_API_TOKEN="$CS_HUB_WF_TEMPLATE_REVIEW_API_TOKEN" \
-SESSION_TOKEN_FOR_NORMALIZE="$SESSION_TOKEN_FOR_NORMALIZE" \
+HUB_API_TOKEN="$CS_HUB_WF_TEMPLATE_REVIEW_ERIC_API_TOKEN" \
 pnpm mcp:hub:webflow-template-review:central:deploy all
 ```
 
@@ -48,12 +46,6 @@ Deploy only:
 
 ```bash
 pnpm mcp:hub:webflow-template-review:central:deploy deploy
-```
-
-Include the central endpoint in a full reviewer deploy:
-
-```bash
-INCLUDE_CENTRAL=1 bash scripts/cs-hub-webflow-reviewers-phase-a-deploy.sh all
 ```
 
 Sync central runtime secrets:
@@ -66,71 +58,78 @@ The central worker defaults to:
 
 - `CENTRAL_SLUG=wf-template-review`
 - `CENTRAL_ACCOUNT_ID=acct_wf_template_review`
-- `CENTRAL_IDENTITY_MODE=session_required`
+- `CENTRAL_IDENTITY_MODE=compat`
+- `CENTRAL_SESSION_RESOLVER_ENABLED=false`
+- `CENTRAL_OAUTH_DISCOVERY_ENABLED=false`
+- `CENTRAL_FALLBACK_TOOL_MODE=read_write`
+- `CENTRAL_MANAGEMENT_TOOL_ALLOWLIST=hub_status,hub_list_proxy_tools,hub_search_proxy_tools,hub_route_intent,hub_describe_proxy_tool,hub_get_proxy_tool,hub_run_intent,hub_execute_proxy_tool,hub_run_proxy_tool,hub_list_services,hub_policy_status`
+- `CENTRAL_SKIP_NORMALIZE=1`
+- `CENTRAL_ACCESS_TOKEN_ENV_VARS=CS_HUB_WF_TEMPLATE_REVIEW_ERIC_API_TOKEN,CS_HUB_WF_TEMPLATE_REVIEW_NATALIA_API_TOKEN,CS_HUB_WF_TEMPLATE_REVIEW_MARIANA_API_TOKEN,CS_HUB_WF_TEMPLATE_REVIEW_VICKI_API_TOKEN`
 - `ENABLED_SERVERS=webflow-template-review-mcp`
 - `DISABLED_SERVERS=webflow-local,webflow-site-analyzer-mcp`
 - `DISCOVERY_PACK=webflow-marketplace-review-phase-a`
 - `DISCOVERY_MAX_PROXY_TOOLS=18`
 
-Reviewer-specific Hubs remain available as fallback.
+The deploy script also sends an empty `HUB_SESSION_RESOLVE_URL` for the central worker and sets `HUB_COMPAT_ALLOWED_TOOL_PREFIXES` to the central read/capture allowlist. `CENTRAL_FALLBACK_TOOL_MODE` stays `read_write` because the generic route classifier treats `template_review_start_capture_session` as mutable even though it is part of the read/capture workflow; the explicit proxy allowlist is the central safety boundary. The vault sync script writes `HUB_ADDITIONAL_API_TOKENS` from `CENTRAL_ACCESS_TOKEN_ENV_VARS` so approved reviewer bearers can authenticate to the central endpoint without resolver lookup. Reviewer-specific workers keep their existing resolver/OAuth defaults unless explicitly redeployed with different variables.
 
-## Current Live Status
+The central worker accepts these existing reviewer Hub bearer tokens as equivalent static access credentials:
 
-As of 2026-05-14:
+- `CS_HUB_WF_TEMPLATE_REVIEW_ERIC_API_TOKEN`
+- `CS_HUB_WF_TEMPLATE_REVIEW_NATALIA_API_TOKEN`
+- `CS_HUB_WF_TEMPLATE_REVIEW_MARIANA_API_TOKEN`
+- `CS_HUB_WF_TEMPLATE_REVIEW_VICKI_API_TOKEN`
+- `CS_HUB_WF_TEMPLATE_REVIEW_MARIANA_API_TOKEN`
+- `CS_HUB_WF_TEMPLATE_REVIEW_VICKI_API_TOKEN`
 
-- The central Worker is deployed at `https://wf-template-review.mcp.createsomething.agency/mcp`.
-- `/health` reports `identity_mode=session_required`, session resolver enabled, and only `webflow-template-review-mcp` connected.
-- Unauthenticated `/mcp` calls return `401` with OAuth protected-resource metadata for Claude-style discovery.
-- Unauthenticated `/mcp/bearer` calls return `401` with a plain bearer challenge for Gumloop-style bearer-token configuration.
-- The static central Hub bearer reaches the Hub control surface only; it is not a reviewer credential.
-- Live reviewer-managed bearer issuance is blocked until `.agency` entitlement state is updated for the reviewer accounts. The current identity-worker response is `policy_acceptance_required`.
+All four tokens resolve to the same central fallback actor on this endpoint. They do not create reviewer identity on the central connector.
 
-## Reviewer Token Requirements
+## Central Tool Scope
 
-For reviewer-safe writes, Claude and Gumloop must use a token that resolves through the identity worker. The token should resolve to a Webflow Template Review reviewer account such as `acct_wf_eric`, `acct_wf_natalia`, `acct_wf_mariana`, or `acct_wf_vicki`.
+The central bearer endpoint should expose only the Template Review tools that work without reviewer identity:
 
-Recommended token posture:
+- `webflow-template-review-mcp__template_review_workflow`
+- `webflow-template-review-mcp__template_review_health`
+- `webflow-template-review-mcp__template_review_start_capture_session`
+- `webflow-template-review-mcp__template_review_continue_capture_session`
+- `webflow-template-review-mcp__template_review_get_capture_session_artifact`
+- `webflow-template-review-mcp__template_review_draft_from_capture_session`
+- `webflow-template-review-mcp__template_review_list_queue`
+- `webflow-template-review-mcp__template_review_get_review_context`
+- `webflow-template-review-mcp__template_review_search_assets`
+- `webflow-template-review-mcp__template_review_search_versions`
+- `webflow-template-review-mcp__template_review_get_asset`
+- `webflow-template-review-mcp__template_review_list_versions`
+- `webflow-template-review-mcp__template_review_get_version`
+- `webflow-template-review-mcp__template_review_list_releases`
+- `webflow-template-review-mcp__template_review_get_field_map`
+- `webflow-template-review-mcp__template_review_get_metrics`
 
-- `bound_host=wf-template-review`
-- `tenant_id=tenant_webflow_marketplace`
-- `tool_mode=read_write` only for reviewers approved for MCP write actions
-- `allowed_tool_prefixes` limited to the Phase A Template Review surface
+Do not expose reviewer-attributed write tools on this shared central credential:
 
-Migration posture:
+- `template_review_assign_self`
+- `template_review_unassign_self`
+- `template_review_request_changes`
+- `template_review_set_review_status`
+- `template_review_save_draft_feedback`
+- broad admin tools such as `template_review_assign_reviewer`
 
-- The existing `CS_HUB_WF_TEMPLATE_REVIEW_*_API_TOKEN` secrets are reviewer-specific Worker runtime tokens. They are not governed reviewer identity tokens and should not be used as central Claude/Gumloop credentials.
-- Existing reviewer-bound managed bearer tokens for `wf-template-review-{reviewer}` may resolve on the shared `wf-template-review` host.
-- Central tokens do not become valid on reviewer-specific hosts just because the shared host exists.
-- Non-reviewer accounts on the shared host do not inherit reviewer tool prefixes.
+Use reviewer-specific Hubs for assignment, reviewer queue, draft feedback writes, status changes, and request-changes actions.
 
-Before issuing reviewer-managed bearers for the central connector, update or confirm `.agency` entitlement rows so each reviewer has:
+## Claude Code Setup
 
-- `managed_bearer_allowed=true`
-- `org_membership_active=true`
-- `service_entitled=true`
-- `policy_accepted=true`
-- `contract_active=true`
-- `billing_active=true`
-
-Then issue managed bearers through `identity-worker` `POST /v1/mcp/long-lived-tokens/admin-issue` with `bound_host=wf-template-review`. Store the one-time returned plaintext only in the approved secret manager or deliver it through the approved credential handoff path.
-
-## Claude Setup
-
-Use the remote MCP custom connector flow and point the connector at:
+Yes: Claude Code can use the bearer route. Configure the remote MCP server URL as:
 
 ```text
-https://wf-template-review.mcp.createsomething.agency/mcp
+https://wf-template-review.mcp.createsomething.agency/mcp/bearer
 ```
 
-Operational requirements:
+Use bearer authentication with any approved central access token:
 
-- Scope the connector to the intended reviewer group.
-- Use OAuth/session or reviewer managed bearer auth that the identity worker can resolve.
-- Do not configure a shared static Hub token as the reviewer credential.
-- Keep analyzer/local MCP servers out of the connector.
-- Verify the connector can call `hub_list_services`, `hub_search_proxy_tools`, and `hub_execute_proxy_tool`.
+```text
+Authorization: Bearer <CS_HUB_WF_TEMPLATE_REVIEW_ERIC_API_TOKEN>
+```
 
-The Hub exposes OAuth protected-resource metadata for hosts that support discovery, but reviewer identity still has to resolve through the identity worker before any tool execution.
+Do not configure OAuth, session login, custom identity headers, or `X-MCP-Session-Token` for this central connector.
 
 ## Gumloop Setup
 
@@ -139,62 +138,56 @@ Use Gumloop custom MCP server configuration:
 ```text
 Server URL: https://wf-template-review.mcp.createsomething.agency/mcp/bearer
 Auth: Bearer Token
-Token: reviewer-bound managed bearer token
+Token: one of the approved CS_HUB_WF_TEMPLATE_REVIEW_*_API_TOKEN values
 ```
 
 Gumloop notes:
 
-- Prefer Bearer Token auth over custom authentication headers for Anthropic-native models.
-- Use `/mcp/bearer` so unauthorized setup checks receive a plain bearer challenge rather than OAuth protected-resource metadata.
-- Gumloop's MCP Agent path does not provide approval prompts, so do not rely on the client for write confirmation.
-- Keep write safety in the Hub and downstream MCP: reviewer identity, allowed tool prefixes, ownership checks, and explicit reviewer-safe write tools.
+- Put the token in Gumloop's **Access Token / API Key** field so it is sent as `Authorization: Bearer <token>`.
+- Eric, Mariana, Vicki, and Natalia can use their approved existing reviewer Hub token here; the token still does not create reviewer identity on the central endpoint.
+- Do not use custom headers for this MCP. Anthropic-native Gumloop models do not forward custom headers.
+- Gumloop has no approval prompts before MCP tool execution, so the server-side allowlist is the safety boundary.
 
-## Reviewer Workflow
+## Expected Workflow
 
 Expected tool path:
 
 1. `hub_list_services`
 2. `hub_search_proxy_tools` with `serverName=webflow-template-review-mcp`
-3. `hub_execute_proxy_tool` for the selected `webflow-template-review-mcp__template_review_*` proxy tool
+3. `hub_execute_proxy_tool` for an allowed `webflow-template-review-mcp__template_review_*` proxy tool
 
 For full public-site reviews, use the capture-session proxy tools:
 
 - `webflow-template-review-mcp__template_review_start_capture_session`
 - `webflow-template-review-mcp__template_review_continue_capture_session`
+- `webflow-template-review-mcp__template_review_get_capture_session_artifact`
 - `webflow-template-review-mcp__template_review_draft_from_capture_session`
 
-For reviewer-safe Airtable actions, use only the narrow proxy tools:
-
-- `webflow-template-review-mcp__template_review_assign_self`
-- `webflow-template-review-mcp__template_review_unassign_self`
-- `webflow-template-review-mcp__template_review_request_changes`
-- `webflow-template-review-mcp__template_review_set_review_status`
-- `webflow-template-review-mcp__template_review_save_draft_feedback`
-
-Do not expose or promote broad admin tools such as `template_review_assign_reviewer`.
+For reviewer-attributed writes, switch to the reviewer-specific Hub.
 
 ## Acceptance Checks
 
-Before PMM or reviewer enablement treats the central connector as reviewer-ready:
+Before PMM or reviewer enablement treats the central connector as ready for Claude/Gumloop testing:
 
-- The endpoint is reachable at `/mcp` and advertises OAuth protected-resource metadata.
-- The endpoint is reachable at `/mcp/bearer` and unauthenticated calls return a plain bearer challenge.
-- `.agency` entitlement rows allow managed bearer issuance for each reviewer.
-- Reviewer-managed bearers are issued or OAuth/session login is confirmed for Claude.
+- `/health` reports `identity_mode=compat`.
+- `/health` reports `oauth_discovery_enabled=false`.
+- `/health` reports `session_resolver.enabled=false`.
+- Unauthenticated `/mcp` and `/mcp/bearer` calls return `401` with a plain bearer challenge.
+- `/.well-known/oauth-authorization-server` returns `404`.
+- `/mcp/.well-known/oauth-protected-resource` returns `404`.
 - `hub_list_services` shows only `webflow-template-review-mcp`.
-- `hub_search_proxy_tools` shows the Phase A reviewer-safe Template Review tools and no analyzer/local tools.
-- Eric and Natalia tokens on the same endpoint resolve to different reviewer identities.
-- A prompt-spoofed identity attempt does not change the resolved reviewer.
-- `template_review_my_queue` scopes to the authenticated reviewer.
-- `template_review_assign_self` attributes to the authenticated reviewer.
-- A forbidden cross-reviewer mutation is denied by the downstream MCP.
-- Gumloop and Claude both use the same shared URL and token posture.
+- `hub_search_proxy_tools` shows the central read/capture Template Review allowlist.
+- Eric, Mariana, Vicki, and Natalia static reviewer Hub bearers can authenticate to the same central endpoint.
+- `tools/list` does not expose Hub mutation tools such as `hub_update_state`, `hub_set_discovery`, or `hub_refresh_connections`.
+- Analyzer/local tools do not appear.
+- Reviewer-attributed write tools and broad admin tools do not appear.
+- A request with a non-static personal bearer is rejected rather than sent to the session resolver.
+- Eric's reviewer-specific endpoint still reports and behaves according to its own reviewer-specific Hub config.
 
 ## Related Files
 
 - `scripts/cs-hub-webflow-reviewers-phase-a-deploy.sh`
 - `scripts/cs-hub-webflow-reviewers-phase-a-vault-sync.sh`
-- `packages/identity-worker/src/index.ts`
 - `packages/cs-mcp-hub-remote/index.ts`
 - `config/mcp-hub/fleet.json`
 - [Hub and Dify Eval Suites](./WEBFLOW_TEMPLATE_REVIEW_HUB_EVAL_SUITE.md)

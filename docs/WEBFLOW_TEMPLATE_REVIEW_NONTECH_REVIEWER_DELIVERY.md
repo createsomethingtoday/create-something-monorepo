@@ -15,11 +15,11 @@ Reviewer
 
 Reviewer, after central connector validation
   -> Claude or Gumloop
-  -> https://wf-template-review.mcp.createsomething.agency/mcp for Claude
-  -> https://wf-template-review.mcp.createsomething.agency/mcp/bearer for Gumloop bearer auth
-  -> reviewer-bound managed bearer/session identity
+  -> https://wf-template-review.mcp.createsomething.agency/mcp/bearer
+  -> central shared bearer credential
+  -> read/capture Template Review tools only
   -> webflow-template-review-mcp
-  -> Airtable
+  -> Airtable reads and public-site capture
 
 Operator / power user
   -> Claude Code
@@ -36,7 +36,7 @@ Claude Code is still useful, but it should be an operator/back-office tool unles
 - Claude Code gives operators local shell access for raw HTML checks, batch triage, and skill iteration.
 - `webflow-template-review-mcp` is the control point that can safely expose reviewer-specific Airtable reads/writes.
 - The reviewer Hubs must remain constrained to `webflow-template-review-mcp` only.
-- The central Claude/Gumloop connector must use Hub `session_required` identity. A shared static Hub token, including the old reviewer-specific Worker runtime tokens, is not reviewer identity.
+- The central Claude/Gumloop connector is a shared bearer-only endpoint with no OAuth/session resolver dependency. Because it is not reviewer identity, it must stay scoped to read/capture tools.
 
 ## Lowest-Friction Rollout
 
@@ -121,6 +121,6 @@ Short term: keep reviewers in Dify and use Claude Code as operator support.
 
 Medium term: validate the [central Claude/Gumloop MCP connector](./WEBFLOW_TEMPLATE_REVIEW_CENTRAL_MCP_CONNECTOR.md) and implement the URL/page/script probe tools inside `webflow-template-review-mcp` so Dify no longer depends on Claude Code for the skill's local checks.
 
-Current central-connector status: the shared endpoint is deployed and rejects unauthenticated MCP calls correctly. Reviewer credential rollout is still gated by `.agency` entitlement and managed-bearer/session setup, so Dify and reviewer-specific Hubs remain the safe reviewer path for now.
+Current central-connector status: the shared endpoint is moving to bearer-only compat mode for Claude Code, Claude-compatible clients, and Gumloop. It should not use OAuth discovery, managed bearer issuance, or the identity/session resolver. Dify and reviewer-specific Hubs remain the safe reviewer path for reviewer-attributed writes.
 
 Long term: package the Claude Code plugin for internal operators and reviewer power users only.

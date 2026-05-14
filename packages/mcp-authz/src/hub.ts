@@ -4,12 +4,18 @@ type ToolLike = {
   description?: string;
 };
 
-const DESTRUCTIVE_PATTERN = /\b(delete|destroy|purge|wipe|drop|archive|trash|remove|revoke|disconnect|deactivate)\b/i;
-const WRITE_PATTERN = /\b(create|update|upsert|insert|append|send|post|publish|start|run|execute|sync|batch_update|values_update|set|assign|unassign|clear)\b/i;
-const AUTH_ADMIN_PATTERN = /\b(get_connect_link|oauth|authorize|auth|token|consent|credential|scope)\b/i;
-const CONTROL_PLANE_PATTERN = /\b(policy|rollout|registry|state|quota|rate_limit|discovery|bundle|trace)\b/i;
-const READ_ACTION_PREFIX_PATTERN = /^(list|get|fetch|describe|inspect|preview|validate|search|query|check|test)\b/i;
+const DESTRUCTIVE_PATTERN =
+  /\b(delete|destroy|purge|wipe|drop|archive|trash|remove|revoke|disconnect|deactivate)\b/i;
+const WRITE_PATTERN =
+  /\b(create|update|upsert|insert|append|send|post|publish|start|run|execute|sync|batch_update|values_update|set|assign|unassign|clear)\b/i;
+const AUTH_ADMIN_PATTERN =
+  /\b(get_connect_link|oauth|authorize|auth|token|consent|credential|scope)\b/i;
+const CONTROL_PLANE_PATTERN =
+  /\b(policy|rollout|registry|state|quota|rate_limit|discovery|bundle|trace)\b/i;
+const READ_ACTION_PREFIX_PATTERN =
+  /^(list|get|fetch|describe|inspect|preview|validate|search|query|check|test)\b/i;
 const READ_METADATA_PATTERN = /\b(status|schema|health|info|details)\b/i;
+const EXPLICIT_READ_ONLY_DOWNSTREAM_TOOLS = new Set(['template_review_start_capture_session']);
 
 function normalizeHubRouteText(...parts: Array<string | null | undefined>): string {
   return parts
@@ -25,14 +31,16 @@ function routeIdentifierText(route: {
   serverName: string;
   downstreamToolName: string;
 }): string {
-  return normalizeHubRouteText(
-    route.proxyToolName,
-    route.serverName,
-    route.downstreamToolName,
-  );
+  return normalizeHubRouteText(route.proxyToolName, route.serverName, route.downstreamToolName);
 }
 
-function classifyInvocationAccessType(invocationAction?: string | null): AuthorizationAccessType | null {
+function isExplicitReadOnlyRoute(route: { downstreamToolName: string }): boolean {
+  return EXPLICIT_READ_ONLY_DOWNSTREAM_TOOLS.has(route.downstreamToolName);
+}
+
+function classifyInvocationAccessType(
+  invocationAction?: string | null
+): AuthorizationAccessType | null {
   const text = normalizeHubRouteText(invocationAction);
   if (!text) return null;
   if (DESTRUCTIVE_PATTERN.test(text)) {
@@ -41,7 +49,10 @@ function classifyInvocationAccessType(invocationAction?: string | null): Authori
   if (AUTH_ADMIN_PATTERN.test(text)) {
     return 'auth_admin';
   }
-  if (READ_ACTION_PREFIX_PATTERN.test(text) || (READ_METADATA_PATTERN.test(text) && !WRITE_PATTERN.test(text))) {
+  if (
+    READ_ACTION_PREFIX_PATTERN.test(text) ||
+    (READ_METADATA_PATTERN.test(text) && !WRITE_PATTERN.test(text))
+  ) {
     return 'read';
   }
   if (CONTROL_PLANE_PATTERN.test(text)) {
@@ -53,14 +64,18 @@ function classifyInvocationAccessType(invocationAction?: string | null): Authori
   return null;
 }
 
-export function classifyHubRoute(route: {
-  proxyToolName: string;
-  serverName: string;
-  downstreamToolName: string;
-  serverTags?: string[] | null;
-}, definition?: ToolLike, options?: {
-  invocationAction?: string | null;
-}): {
+export function classifyHubRoute(
+  route: {
+    proxyToolName: string;
+    serverName: string;
+    downstreamToolName: string;
+    serverTags?: string[] | null;
+  },
+  definition?: ToolLike,
+  options?: {
+    invocationAction?: string | null;
+  }
+): {
   accessType: AuthorizationAccessType;
   oauthRequired: boolean;
   tags: string[];
@@ -73,7 +88,9 @@ export function classifyHubRoute(route: {
     // in otherwise read-only tools, which creates false control-plane or
     // destructive matches if we pattern-match the prose directly.
     const text = routeIdentifierText(route);
-    if (DESTRUCTIVE_PATTERN.test(text)) {
+    if (isExplicitReadOnlyRoute(route)) {
+      accessType = 'read';
+    } else if (DESTRUCTIVE_PATTERN.test(text)) {
       accessType = 'destructive';
     } else if (CONTROL_PLANE_PATTERN.test(text)) {
       accessType = 'control_plane';
@@ -93,7 +110,7 @@ export function classifyHubRoute(route: {
     route.serverName,
     accessType,
     oauthRequired ? 'oauth_required' : 'oauth_not_required',
-    ...((route.serverTags ?? []).filter((tag) => typeof tag === 'string' && tag.length > 0)),
+    ...(route.serverTags ?? []).filter((tag) => typeof tag === 'string' && tag.length > 0)
   ];
 
   return { accessType, oauthRequired, tags: [...new Set(tags)] };
@@ -123,12 +140,12 @@ export function buildHubAuthorizationRequest(input: {
       proxyToolName: input.proxyToolName,
       serverName: input.serverName,
       downstreamToolName: input.downstreamToolName,
-      serverTags: input.serverTags ?? null,
+      serverTags: input.serverTags ?? null
     },
     input.definition,
     {
-      invocationAction: input.invocationAction,
-    },
+      invocationAction: input.invocationAction
+    }
   );
 
   return {
@@ -140,13 +157,13 @@ export function buildHubAuthorizationRequest(input: {
       role: input.role ?? null,
       readOnly: input.readOnly ?? input.toolMode === 'read_only',
       toolMode: input.toolMode ?? null,
-      identitySource: input.identitySource ?? null,
+      identitySource: input.identitySource ?? null
     },
     action: {
       name: input.actionName,
       writeIntent: input.actionName === 'execute' && classification.accessType !== 'read',
       humanReviewStep: false,
-      introspectionOk: input.introspectionOk ?? true,
+      introspectionOk: input.introspectionOk ?? true
     },
     resource: {
       kind: 'hub_route',
@@ -159,9 +176,9 @@ export function buildHubAuthorizationRequest(input: {
       tags: classification.tags,
       metadata: {
         description: input.definition?.description ?? null,
-        invocationAction: input.invocationAction ?? null,
-      },
+        invocationAction: input.invocationAction ?? null
+      }
     },
-    context: input.context,
+    context: input.context
   };
 }
