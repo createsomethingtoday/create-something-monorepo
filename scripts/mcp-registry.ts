@@ -28,6 +28,7 @@ type BaseServer = {
   package_path?: string;
   catalog_exposure_mode?: CatalogExposureMode;
   estimated_tool_count?: number;
+  setupNotes?: string;
   exposure_exception_reason?: string;
   exposure_review_owner?: string;
   catalog?: CatalogConfig;
