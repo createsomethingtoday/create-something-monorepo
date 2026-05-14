@@ -13,12 +13,13 @@ If write posture is read-only, or if enablement is ambiguous, stop and use manua
 
 Only these narrow verbs belong in the reviewer lane:
 
+- `template_review_save_draft_feedback`
 - `template_review_request_changes`
 - `template_review_approve_version`
 - `template_review_reject_version`
 - `template_review_complete_publishing`
 
-Do not substitute broad mutation tools such as `template_review_update_version_review`.
+`template_review_save_draft_feedback` is the safest write path: it saves agent draft feedback for reviewer use and must not set review status. Decision/status verbs require stronger reviewer ownership and explicit approval. Do not substitute broad mutation tools such as `template_review_update_version_review`.
 
 ## Preconditions
 
@@ -32,6 +33,14 @@ Before any write:
 If any precondition fails, fail closed.
 
 ## Action Rules
+
+`save_draft_feedback`
+
+- require `version_id`
+- call `template_review_get_review_context` first
+- require explicit user approval to save
+- write only draft/agent feedback fields
+- do not set `Review Status`, rejection feedback, publishing metadata, or human reviewer feedback
 
 `request_changes`
 
