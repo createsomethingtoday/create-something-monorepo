@@ -111,11 +111,19 @@ export function parseTranscript(rawText: string, extension: string | null): Pars
   };
 }
 
-export function buildCanonicalMeetingSourceUrl(meetingId: string | null, originalUrl: string | null): string | null {
+export function buildCanonicalMeetingSourceUrl(
+  meetingId: string | null,
+  originalUrl: string | null,
+  occurrenceId?: string | null,
+): string | null {
   if (!meetingId) return null;
 
   const host = deriveZoomHost(originalUrl) ?? 'us06web.zoom.us';
-  return `https://${host}/recording/management/detail?meeting_id=${encodeURIComponent(meetingId)}`;
+  const baseUrl = `https://${host}/recording/management/detail?meeting_id=${encodeURIComponent(meetingId)}`;
+  const occurrence = occurrenceId?.trim();
+  if (!occurrence) return baseUrl;
+
+  return `${baseUrl}#occurrence=${encodeURIComponent(occurrence)}`;
 }
 
 function parsePositiveInt(raw: string | undefined, fallback: number): number {
@@ -161,12 +169,13 @@ async function buildTranscriptCandidate(
   const meetingTitle = cleanMeetingTitle(meeting.topic?.trim() || 'Zoom Meeting Transcript');
   const meetingDate = extractMeetingDate(startTime);
   const transcriptFileId = file.id?.trim() || file.recording_id?.trim() || null;
-  const sourceUrl = buildCanonicalMeetingSourceUrl(meetingId, downloadUrl);
+  const sourceUrl = buildCanonicalMeetingSourceUrl(meetingId, downloadUrl, meetingUuid ?? startTime);
   const canonicalMeetingKey = buildCanonicalMeetingKey({
     meetingId,
     meetingUuid,
     meetingTitle,
     meetingDate,
+    startTime,
   });
   const fileKey = transcriptFileId || `${file.file_type ?? 'file'}:${file.file_extension ?? 'txt'}`;
 
@@ -193,17 +202,24 @@ function buildCanonicalMeetingKey(input: {
   meetingUuid: string | null;
   meetingTitle: string;
   meetingDate: string;
+  startTime: string | null;
 }): string {
-  if (input.meetingId) {
-    return `zoom-meeting:${input.meetingId}`;
+  if (input.meetingUuid) {
+    return `zoom-meeting-uuid:${encodeKeyComponent(input.meetingUuid)}`;
   }
 
-  if (input.meetingUuid) {
-    return `zoom-meeting-uuid:${sanitizeKey(input.meetingUuid)}`;
+  if (input.meetingId) {
+    const occurrenceKey = input.startTime ? encodeKeyComponent(input.startTime) : input.meetingDate;
+    return `zoom-meeting:${input.meetingId}:${occurrenceKey}`;
   }
 
   return `zoom-topic:${sanitizeKey(input.meetingTitle)}:${input.meetingDate}`;
 }
+
+export const zoomTestExports = {
+  buildCanonicalMeetingKey,
+  buildCanonicalMeetingSourceUrl,
+};
 
 function cleanMeetingTitle(raw: string): string {
   return raw.replace(/\s+/g, ' ').trim().slice(0, 2000) || 'Zoom Meeting Transcript';
@@ -438,4 +454,8 @@ function stringify(value: string | number | undefined): string | null {
 
 function sanitizeKey(value: string): string {
   return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+}
+
+function encodeKeyComponent(value: string): string {
+  return encodeURIComponent(value.trim());
 }
