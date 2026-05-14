@@ -378,7 +378,9 @@ export function buildPublishedUrlValidationMessage(summary: PublishedUrlValidati
     return issues[0];
   }
 
-  return `Published URL validation found ${issues.length} blocking issues.`;
+  return `Published URL validation found ${issues.length} blocking issues: ${issues
+    .map((issue, index) => `${index + 1}. ${issue}`)
+    .join(' ')}`;
 }
 
 async function startWorkflow(url: string) {

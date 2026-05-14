@@ -288,6 +288,9 @@ function validationFailureMessage(
   if (issues.length === 1) {
     return issues[0];
   }
+  if (issues.length > 1) {
+    return `Published URL validation found ${issues.length} blocking issues.`;
+  }
   if (typeof data.message === 'string' && data.message.trim()) {
     return data.message;
   }
@@ -2186,12 +2189,11 @@ export function TemplateIntake() {
         setTemplateStatus({
           tone: 'error',
           message:
-            data.error ||
-            (validationIssues.length === 1
+            validationIssues.length === 1
               ? validationIssues[0]
               : validationIssues.length > 1
                 ? `Published URL validation found ${validationIssues.length} blocking issues.`
-                : 'Failed to submit template.'),
+                : data.error || 'Failed to submit template.',
           details: validationIssues.length > 1 ? validationIssues : undefined
         });
         return;
