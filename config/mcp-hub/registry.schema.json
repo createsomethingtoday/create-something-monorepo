@@ -246,6 +246,9 @@
           "type": "integer",
           "minimum": 0
         },
+        "setupNotes": {
+          "type": "string"
+        },
         "exposure_exception_reason": {
           "type": "string"
         },
@@ -325,6 +328,9 @@
           "type": "integer",
           "minimum": 0
         },
+        "setupNotes": {
+          "type": "string"
+        },
         "exposure_exception_reason": {
           "type": "string"
         },
@@ -394,6 +400,9 @@
         "estimated_tool_count": {
           "type": "integer",
           "minimum": 0
+        },
+        "setupNotes": {
+          "type": "string"
         },
         "exposure_exception_reason": {
           "type": "string"

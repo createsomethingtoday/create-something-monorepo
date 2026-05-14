@@ -115,6 +115,17 @@ test('validate passes on a minimal well-formed registry', (t) => {
   assert.match(result.stdout, /Registry validation passed/);
 });
 
+test('validate accepts setupNotes as server metadata', (t) => {
+  const { root, configDir } = makeWorkspace(t);
+  const registry = baseRegistry();
+  registry.servers['example-mcp'].setupNotes = 'Production smoke passed with example_tool.';
+  writeRegistry(configDir, registry);
+
+  const result = runValidate(root);
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  assert.match(result.stdout, /Registry validation passed/);
+});
+
 test('validate rejects non-kebab-case server names', (t) => {
   const { root, configDir } = makeWorkspace(t);
   const registry = baseRegistry();
