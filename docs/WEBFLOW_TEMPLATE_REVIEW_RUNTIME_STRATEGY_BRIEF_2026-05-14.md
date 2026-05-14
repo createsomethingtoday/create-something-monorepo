@@ -68,7 +68,7 @@ Recommended near-term position:
 
 Recommended architecture position:
 
-- Favor the centralized Template Review MCP through the Hub when authenticated reviewer identity is available: `https://wf-template-review.mcp.createsomething.agency/mcp`.
+- Favor the centralized Template Review MCP through the Hub when authenticated reviewer identity is available: `https://wf-template-review.mcp.createsomething.agency/mcp` for Claude/OAuth-discovery clients and `https://wf-template-review.mcp.createsomething.agency/mcp/bearer` for Gumloop bearer-token clients.
 - Keep reviewer-specific Hub lanes as the safe fallback while centralized identity is being validated.
 - Never trust prompt text for reviewer identity. Identity should come from auth/session/token mapping.
 - Treat direct shared-bearer MCP access as read/eval infrastructure, not as the authoritative write path for reviewer attribution.

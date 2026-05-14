@@ -4,11 +4,13 @@ Runtime strategy context: [Webflow Template Review Runtime Strategy Brief](./WEB
 
 ## Purpose
 
-The central connector gives Webflow Template Reviewers one remote MCP URL that can be added to Claude custom connectors or Gumloop:
+The central connector gives Webflow Template Reviewers one remote MCP service that can be added to Claude custom connectors or Gumloop:
 
 ```text
 https://wf-template-review.mcp.createsomething.agency/mcp
 ```
+
+Use `/mcp` for Claude or any client that should discover OAuth metadata. Use `/mcp/bearer` for Gumloop-style bearer-token clients that should not be prompted toward OAuth discovery.
 
 This is a shared Hub endpoint, not a shared reviewer identity. Each reviewer must still authenticate with a reviewer-bound managed bearer or session token so the Hub can resolve:
 
@@ -78,7 +80,8 @@ As of 2026-05-14:
 
 - The central Worker is deployed at `https://wf-template-review.mcp.createsomething.agency/mcp`.
 - `/health` reports `identity_mode=session_required`, session resolver enabled, and only `webflow-template-review-mcp` connected.
-- Unauthenticated MCP calls return `401` with OAuth protected-resource metadata.
+- Unauthenticated `/mcp` calls return `401` with OAuth protected-resource metadata for Claude-style discovery.
+- Unauthenticated `/mcp/bearer` calls return `401` with a plain bearer challenge for Gumloop-style bearer-token configuration.
 - The static central Hub bearer reaches the Hub control surface only; it is not a reviewer credential.
 - Live reviewer-managed bearer issuance is blocked until `.agency` entitlement state is updated for the reviewer accounts. The current identity-worker response is `policy_acceptance_required`.
 
@@ -134,7 +137,7 @@ The Hub exposes OAuth protected-resource metadata for hosts that support discove
 Use Gumloop custom MCP server configuration:
 
 ```text
-Server URL: https://wf-template-review.mcp.createsomething.agency/mcp
+Server URL: https://wf-template-review.mcp.createsomething.agency/mcp/bearer
 Auth: Bearer Token
 Token: reviewer-bound managed bearer token
 ```
@@ -142,6 +145,7 @@ Token: reviewer-bound managed bearer token
 Gumloop notes:
 
 - Prefer Bearer Token auth over custom authentication headers for Anthropic-native models.
+- Use `/mcp/bearer` so unauthorized setup checks receive a plain bearer challenge rather than OAuth protected-resource metadata.
 - Gumloop's MCP Agent path does not provide approval prompts, so do not rely on the client for write confirmation.
 - Keep write safety in the Hub and downstream MCP: reviewer identity, allowed tool prefixes, ownership checks, and explicit reviewer-safe write tools.
 
@@ -174,6 +178,7 @@ Do not expose or promote broad admin tools such as `template_review_assign_revie
 Before PMM or reviewer enablement treats the central connector as reviewer-ready:
 
 - The endpoint is reachable at `/mcp` and advertises OAuth protected-resource metadata.
+- The endpoint is reachable at `/mcp/bearer` and unauthenticated calls return a plain bearer challenge.
 - `.agency` entitlement rows allow managed bearer issuance for each reviewer.
 - Reviewer-managed bearers are issued or OAuth/session login is confirmed for Claude.
 - `hub_list_services` shows only `webflow-template-review-mcp`.

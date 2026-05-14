@@ -88,3 +88,27 @@ test('unauthorized MCP responses advertise oauth protected resource metadata', a
     /resource_metadata="https:\/\/mj\.mcp\.createsomething\.agency\/mcp\/\.well-known\/oauth-protected-resource"/,
   );
 });
+
+test('unauthorized bearer-only MCP path does not advertise oauth metadata', async () => {
+  const response = await hubWorker.fetch(
+    new Request('https://mj.mcp.createsomething.agency/mcp/bearer', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/list', params: {} }),
+    }),
+    {
+      OAUTH_ISSUER_URL: 'https://id.createsomething.space',
+      HUB_API_TOKEN: 'secret',
+      HUB_SESSION_RESOLVE_URL: 'https://id.createsomething.space/v1/mcp/sessions/resolve',
+      HUB_SESSION_RESOLVE_TOKEN: 'resolve-token',
+    } as any,
+    {
+      waitUntil() {},
+    } as any,
+  );
+
+  assert.equal(response.status, 401);
+  assert.equal(response.headers.get('WWW-Authenticate'), 'Bearer realm="create-something-hub"');
+});

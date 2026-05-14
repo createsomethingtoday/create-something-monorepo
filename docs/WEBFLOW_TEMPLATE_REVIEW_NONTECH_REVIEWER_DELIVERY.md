@@ -15,7 +15,8 @@ Reviewer
 
 Reviewer, after central connector validation
   -> Claude or Gumloop
-  -> https://wf-template-review.mcp.createsomething.agency/mcp
+  -> https://wf-template-review.mcp.createsomething.agency/mcp for Claude
+  -> https://wf-template-review.mcp.createsomething.agency/mcp/bearer for Gumloop bearer auth
   -> reviewer-bound managed bearer/session identity
   -> webflow-template-review-mcp
   -> Airtable

@@ -819,6 +819,7 @@ export default {
             version: HUB_VERSION,
             endpoints: {
               mcp: '/mcp',
+              mcp_bearer: '/mcp/bearer',
               health: '/health',
             },
             auth_required: Boolean(readEnvString(env, 'HUB_API_TOKEN')),
@@ -913,10 +914,7 @@ function ensureStreamableHttpAcceptHeader(request: Request): Request {
 }
 
 export async function authorizeRequest(request: Request, env: Env): Promise<Response | null> {
-  const protectedResourceMetadataUrl = `${new URL(request.url).origin}/mcp/.well-known/oauth-protected-resource`;
-  const unauthorizedHeaders = {
-    'WWW-Authenticate': `Bearer realm="create-something-hub", resource_metadata="${protectedResourceMetadataUrl}"`,
-  };
+  const unauthorizedHeaders = buildUnauthorizedHeaders(new URL(request.url));
   const requiredToken = readEnvString(env, 'HUB_API_TOKEN');
   if (!requiredToken) {
     return null;
@@ -946,6 +944,24 @@ export async function authorizeRequest(request: Request, env: Env): Promise<Resp
   }
 
   return jsonResponse({ error: 'Unauthorized' }, 401, unauthorizedHeaders);
+}
+
+function buildUnauthorizedHeaders(url: URL): Record<string, string> {
+  if (isBearerOnlyMcpPath(url.pathname)) {
+    return {
+      'WWW-Authenticate': 'Bearer realm="create-something-hub"',
+    };
+  }
+
+  const protectedResourceMetadataUrl = `${url.origin}/mcp/.well-known/oauth-protected-resource`;
+  return {
+    'WWW-Authenticate': `Bearer realm="create-something-hub", resource_metadata="${protectedResourceMetadataUrl}"`,
+  };
+}
+
+function isBearerOnlyMcpPath(pathname: string): boolean {
+  const normalized = pathname.replace(/\/+$/, '') || '/';
+  return normalized === '/mcp/bearer' || normalized.startsWith('/mcp/bearer/');
 }
 
 export function normalizeInboundMcpRequest(request: Request): Request {
