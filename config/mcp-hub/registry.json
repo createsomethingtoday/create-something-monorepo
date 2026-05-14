@@ -12849,6 +12849,63 @@
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 0
     },
+    "hydradb-context-mcp": {
+      "transport": "stdio",
+      "command": "infisical",
+      "args": [
+        "run",
+        "--env=prod",
+        "--path=/mcp-hub/hydradb",
+        "--include-imports=true",
+        "--",
+        "node",
+        "./packages/hydradb-context-mcp/dist/index.js"
+      ],
+      "description": "Dormant governed CREATE SOMETHING wrapper for read-only Hydra DB context recall with explicit sub-tenant allowlisting.",
+      "tags": [
+        "memory",
+        "context",
+        "hydradb",
+        "database",
+        "internal",
+        "dormant",
+        "readonly",
+        "cs",
+        "policy_os_only"
+      ],
+      "lifecycle": "dormant",
+      "package_path": "packages/hydradb-context-mcp",
+      "catalog_exposure_mode": "dormant",
+      "estimated_tool_count": 1
+    },
+    "hydradb-memory": {
+      "transport": "stdio",
+      "command": "infisical",
+      "args": [
+        "run",
+        "--env=prod",
+        "--path=/mcp-hub/hydradb",
+        "--include-imports=true",
+        "--",
+        "npx",
+        "-y",
+        "@hydra_db/mcp@0.1.1"
+      ],
+      "description": "Dormant internal Hydra DB context-memory MCP pilot for tenant-scoped agent memory and graph-enriched recall.",
+      "tags": [
+        "memory",
+        "context",
+        "hydradb",
+        "database",
+        "internal",
+        "dormant",
+        "cs",
+        "policy_os_only"
+      ],
+      "lifecycle": "dormant",
+      "catalog_exposure_mode": "dormant",
+      "estimated_tool_count": 7
+    },
     "interaction-atlas-mcp": {
       "transport": "http",
       "url": "https://interaction-atlas-mcp.createsomething.workers.dev/mcp",
@@ -16370,6 +16427,8 @@
     "dormant": [
       "gmail-notion-mcp",
       "notion-sync-mcp",
+      "hydradb-memory",
+      "hydradb-context-mcp",
       "loom-mcp"
     ],
     "finance": [

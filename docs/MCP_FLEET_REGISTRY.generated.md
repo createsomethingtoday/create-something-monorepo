@@ -147,11 +147,13 @@ past a thousand near-identical rows.
 | `composio-category-webinars` | 2 |
 | `composio-category-website-builders` | 15 |
 
-## Dormant (4)
+## Dormant (6)
 
 | Server | Transport | Endpoint | Exposure | Est. Tools | Tags |
 | --- | --- | --- | --- | --- | --- |
 | `gmail-notion-mcp` | `http` | `https://gmail-notion-mcp.createsomething.workers.dev/mcp` | `direct` | `0` | `dormant`, `prototype`, `cs` |
+| `hydradb-context-mcp` | `stdio` | `infisical run --env=prod --path=/mcp-hub/hydradb --include-imports=true -- node ./packages/hydradb-context-mcp/dist/index.js` | `dormant` | `1` | `memory`, `context`, `hydradb`, `database`, `internal`, `dormant`, `readonly`, `cs`, `policy_os_only` |
+| `hydradb-memory` | `stdio` | `infisical run --env=prod --path=/mcp-hub/hydradb --include-imports=true -- npx -y @hydra_db/mcp@0.1.1` | `dormant` | `7` | `memory`, `context`, `hydradb`, `database`, `internal`, `dormant`, `cs`, `policy_os_only` |
 | `loom-mcp` | `http` | `https://loom.mcp.createsomething.agency/mcp` | `dormant` | `0` | `coordination`, `loom`, `legacy`, `dormant`, `cs` |
 | `notion-sync-mcp` | `http` | `https://notion-sync-mcp-worker.createsomething.workers.dev/mcp` | `direct` | `0` | `dormant`, `prototype`, `cs` |
 | `slack-webflow` | `http` | `https://mcp.slack.com/mcp` | `direct` | `0` | `slack`, `communication`, `webflow` |
@@ -176,7 +178,7 @@ Hand-curated bundles are listed inline. Composio category bundles are listed in 
 | --- | --- |
 | `agency` | `outerfields-pcn` |
 | `core` | `create-something`, `three-tier-framework`, `playbook` |
-| `dormant` | `gmail-notion-mcp`, `notion-sync-mcp`, `loom-mcp` |
+| `dormant` | `gmail-notion-mcp`, `notion-sync-mcp`, `hydradb-memory`, `hydradb-context-mcp`, `loom-mcp` |
 | `finance` | `quickbooks-notion-mcp-server` |
 | `halfdozen` | `notion-halfdozen-create-something`, `notion-halfdozen-system-studio`, `notion-halfdozen-blondish`, `notion-halfdozen-c3-management`, `notion-halfdozen-cracked`, `notion-halfdozen-fanpad`, `notion-halfdozen-juice-labs`, `notion-halfdozen-kk-management`, `notion-halfdozen-lightswitch`, `notion-halfdozen-phase-3`, `notion-halfdozen-three-six-zero`, `halfdozen-dm-mcp`, `halfdozen-operator-notion-mcp`, `half-dozen-youtube-sync` |
 | `halfdozen-observability` | `halfdozen-telemetry` |

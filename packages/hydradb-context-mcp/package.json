@@ -1,0 +1,51 @@
+{
+  "name": "@create-something/hydradb-context-mcp",
+  "version": "0.1.0",
+  "description": "Governed read-only Hydra DB recall wrapper for CREATE SOMETHING context memory",
+  "type": "module",
+  "createSomething": {
+    "agentLegibilityContract": true,
+    "tier": "database",
+    "surface": "mcp",
+    "entrypoints": [
+      "src/index.ts"
+    ],
+    "boot": "pnpm dev",
+    "smoke": "pnpm typecheck && pnpm test && pnpm build"
+  },
+  "main": "dist/index.js",
+  "bin": {
+    "hydradb-context-mcp": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "lint": "pnpm run typecheck",
+    "start": "node dist/index.js",
+    "test": "tsx --test src/**/*.test.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.25.3",
+    "zod": "^3.25.46"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.4",
+    "typescript": "^5.7.0"
+  },
+  "keywords": [
+    "mcp",
+    "hydradb",
+    "context-memory",
+    "read-only",
+    "create-something"
+  ],
+  "author": "CREATE SOMETHING <hello@createsomething.agency>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/createsomethingtoday/create-something-monorepo.git",
+    "directory": "packages/hydradb-context-mcp"
+  }
+}
