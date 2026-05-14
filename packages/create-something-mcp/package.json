@@ -20,13 +20,21 @@
   },
   "scripts": {
     "build:content": "tsx scripts/build-content.ts",
-    "build": "npm run build:content && tsc",
+    "build:workspace-deps": "pnpm --filter @create-something/playbook-mcp build && pnpm --filter @create-something/flue-service-agent build:lib",
+    "build": "pnpm run build:workspace-deps && npm run build:content && tsc",
     "dev": "tsc --watch",
+    "flue:history:promote": "pnpm run build:workspace-deps && tsc && node scripts/promote-flue-run-history.mjs --remote",
+    "flue:history:upload": "pnpm run build:workspace-deps && tsc && node scripts/upload-flue-run-history-to-d1.mjs --remote",
     "lint": "pnpm run typecheck",
+    "smoke:flue-ingestion": "pnpm run build:workspace-deps && tsc && node scripts/smoke-flue-run-history-ingestion.mjs",
+    "smoke:flue-promotion": "pnpm run build:workspace-deps && tsc && node scripts/promote-flue-run-history.mjs --dry-run",
+    "smoke:flue-resources": "pnpm run build:workspace-deps && tsc && node scripts/smoke-flue-run-history-resources.mjs",
+    "smoke:flue-remote-resources": "pnpm run build:workspace-deps && tsc && node scripts/smoke-remote-flue-run-history-resources.mjs",
     "start": "node dist/index.js",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "pnpm run build:workspace-deps && tsc --noEmit"
   },
   "dependencies": {
+    "@create-something/flue-service-agent": "workspace:*",
     "@create-something/playbook-mcp": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.25.3",
     "zod": "^3.23.0"

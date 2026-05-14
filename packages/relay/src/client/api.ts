@@ -118,9 +118,11 @@ export async function restartGateway(): Promise<RestartGatewayResponse> {
 
 export interface StorageStatusResponse {
   configured: boolean;
+  mounted: boolean;
   missing?: string[];
   lastSync: string | null;
   message: string;
+  error?: string;
 }
 
 export async function getStorageStatus(): Promise<StorageStatusResponse> {

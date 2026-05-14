@@ -1,0 +1,12 @@
+{
+  "taskId": "delivery-readiness-runtime-routing",
+  "clientName": "ExampleCo",
+  "workflowName": "delivery-evidence-summary",
+  "request": "Evaluate the contract bundle and runtime-routing golden task for Flue pilot promotion.",
+  "contractBundle": {
+    "agentContractPath": "templates/agent_contract.yaml",
+    "goldenTasksPath": "templates/golden_tasks.yaml",
+    "goldenTaskId": "runtime-routing-pi-flue"
+  },
+  "goldenTaskPayloadPath": "packages/agents/flue-service-agent/fixtures/runtime-routing-pi-flue.json"
+}

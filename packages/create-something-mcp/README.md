@@ -33,6 +33,7 @@ Content from all CREATE SOMETHING properties.
 | `playbooks://list`, `playbooks://hosts/{slug}` | playbook | Host workflow playbooks (via @create-something/playbook-mcp) |
 | `playbooks://comparison` | playbook | Host comparison matrix by task type |
 | `playbooks://graduation-path` | playbook | Graduation path: Claude Desktop -> Cursor -> Codex |
+| `flue://run-history/status`, `flue://run-history/latest`, `flue://run-history/list` | stdio + Worker | Flue service-agent run-history resources from local JSONL or `TELEMETRY_DB.flue_run_history` |
 
 ## Tools (Automation Tier)
 
@@ -108,6 +109,36 @@ pnpm --filter=@create-something/mcp build
 node packages/create-something-mcp/dist/index.js
 ```
 
+Local stdio also registers Flue service-agent run-history resources. By default it reads `packages/agents/flue-service-agent/.artifacts/flue-service-agent/run-history.jsonl`; set `FLUE_RUN_HISTORY_PATH` to override that location.
+
+The Worker registers the same read-only resources when `TELEMETRY_DB` is bound. Remote records are read from the `flue_run_history` D1 table as schema-valid `flue.run_history.v1` JSON in `record_json`. Apply the D1 migration from the Worker package before relying on remote history:
+
+```bash
+cd packages/create-something-mcp/worker
+pnpm exec wrangler d1 migrations apply cs-telemetry --remote
+```
+
+Upload validated local Flue history into remote D1 with the package-owned operator command:
+
+```bash
+pnpm --dir packages/create-something-mcp flue:history:upload
+```
+
+The upload path validates JSONL with the Flue run-history schema and performs idempotent D1 upserts by `run_id`; the Worker remains read-only.
+
+For promotion, prefer the single command that generates a Cloudflare-ready Flue history record and then uploads it:
+
+```bash
+pnpm --dir packages/create-something-mcp flue:history:promote -- --issue CRE-123
+```
+
+Use `pnpm --dir packages/create-something-mcp smoke:flue-promotion` to exercise the same path with a temp JSONL and no remote D1 write.
+
+CI ownership lives in `.github/workflows/flue-run-history-promotion.yml`:
+
+- pull requests and `main` pushes touching Flue/MCP promotion surfaces run dry-run validation.
+- manual `workflow_dispatch` with `target=remote` runs the same promotion against remote D1 under the `production` environment and Cloudflare credentials.
+
 ## Worker Development
 
 ```bash
@@ -121,7 +152,7 @@ npm run tail     # Tail production logs
 
 ## Telemetry
 
-Worker deploys include telemetry via `@create-something/mcp-core` and the `TELEMETRY_DB` D1 binding (`cs-telemetry`). Tool invocations and run counts are written to fleet telemetry tables (`mcp_tool_invocations`, `mcp_run_counts`).
+Worker deploys include telemetry via `@create-something/mcp-core` and the `TELEMETRY_DB` D1 binding (`cs-telemetry`). Tool invocations and run counts are written to fleet telemetry tables (`mcp_tool_invocations`, `mcp_run_counts`). Flue service-agent run history is read from `flue_run_history` in the same binding; writes happen through the controlled operator upload script, not a public endpoint.
 
 ## Agent Legibility Contract
 
@@ -130,7 +161,7 @@ Worker deploys include telemetry via `@create-something/mcp-core` and the `TELEM
 | Entry point | `README.md`, `src/index.ts`, `worker/index.ts` |
 | Boot command | `pnpm --filter=@create-something/mcp build && node packages/create-something-mcp/dist/index.js` for local stdio, or `cd packages/create-something-mcp/worker && npm run dev` for the Worker runtime |
 | Smoke command | `pnpm --filter=@create-something/mcp typecheck && pnpm --filter=@create-something/mcp build` |
-| Validation surfaces | typecheck output, content build artifacts in `src/content/generated/`, stdio startup, Worker logs via `npm run tail`, telemetry rows in `mcp_tool_invocations` and `mcp_run_counts` |
+| Validation surfaces | typecheck output, content build artifacts in `src/content/generated/`, local and remote Flue run-history resource smokes, stdio startup, Worker logs via `npm run tail`, telemetry rows in `mcp_tool_invocations`, `mcp_run_counts`, and `flue_run_history` |
 | UI validation path | none |
 | Escalation rule | Stop if the remote Worker behavior, telemetry, or embedded content output disagrees with local stdio behavior and the mismatch cannot be reproduced from the checked-in content pipeline. |
 

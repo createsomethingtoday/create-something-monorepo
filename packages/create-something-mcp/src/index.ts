@@ -22,6 +22,10 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { registerResources } from './resources.js';
 import { registerTools } from './tools.js';
 import { registerPrompts } from './prompts.js';
+import {
+  getLocalFlueRunHistoryPath,
+  registerLocalFlueRunHistoryResources,
+} from './local-flue-run-history.js';
 
 // Content counts for info
 import { PAPERS } from './content/generated/papers.js';
@@ -45,6 +49,7 @@ const server = new McpServer({
 
 // Register all three primitive handlers
 registerResources(server);
+registerLocalFlueRunHistoryResources(server);
 registerTools(server);
 registerPrompts(server);
 
@@ -62,3 +67,4 @@ await server.connect(transport);
 console.error('CREATE SOMETHING Content MCP running on stdio');
 console.error(`Content: ${PAPERS.length} papers, ${CANON_PAGES.length} canon pages, ${PATTERNS.length} patterns, ${MASTERS.length} masters, ${GRAPH_NODES.length} graph nodes, ${PRAXIS_EXERCISES.length} exercises, ${PRODUCTS.length} products, ${HOST_PLAYBOOKS.length} host playbooks, ${PROPERTY_DOCUMENTS.length} property docs`);
 console.error('Capabilities: Resources (Database) + Tools (Automation) + Prompts (Judgment)');
+console.error(`Local Flue run-history resources: ${getLocalFlueRunHistoryPath()}`);

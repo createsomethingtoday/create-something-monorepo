@@ -1,0 +1,24 @@
+{
+  "taskId": "cloudflare-readiness-runtime-routing",
+  "clientName": "ExampleCo",
+  "workflowName": "delivery-evidence-summary",
+  "request": "Verify that the Flue service-agent pilot has Cloudflare Worker build artifacts and deployment guardrails before promotion.",
+  "expectedWebhookAgents": [
+    "service-delivery",
+    "delivery-readiness",
+    "mcp-access-review",
+    "cloudflare-readiness"
+  ],
+  "generatedArtifacts": {
+    "manifestPath": "packages/agents/flue-service-agent/dist/flue-cloudflare/manifest.json",
+    "wranglerConfigPath": "packages/agents/flue-service-agent/dist/flue-cloudflare/wrangler.jsonc",
+    "entryPath": "packages/agents/flue-service-agent/dist/flue-cloudflare/_entry.ts"
+  },
+  "deploymentPolicy": {
+    "deployFromCurrentWorkspace": true,
+    "requireLinearEvidence": true,
+    "requireSecretManager": true,
+    "allowedSecretsLocation": "Cloudflare secrets or Infisical",
+    "rollbackNote": "Disable the Flue Worker route or roll back to the previous Worker version; Pi/OpenClaw relay remains independent."
+  }
+}

@@ -41,6 +41,7 @@ coverage
 # Temporary files
 *.tmp
 .cache
+.artifacts/
 .wrangler/
 
 # Client apps (in development)

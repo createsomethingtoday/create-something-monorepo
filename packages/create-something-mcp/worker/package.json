@@ -9,6 +9,7 @@
     "tail": "node ../../../scripts/run-wrangler.mjs tail"
   },
   "dependencies": {
+    "@create-something/flue-service-agent": "workspace:*",
     "@create-something/mcp-core": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.25.3",
     "agents": "^0.3.10",

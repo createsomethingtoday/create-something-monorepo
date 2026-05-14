@@ -1,0 +1,15 @@
+{
+  "taskId": "runtime-routing-pi-flue",
+  "clientName": "ExampleCo",
+  "workflowName": "delivery-evidence-summary",
+  "request": "Summarize delivery evidence from a contract-bound client workflow and decide whether the work should start in Pi/OpenClaw or Flue.",
+  "source": "webhook",
+  "risk": "medium",
+  "expectedRuntime": "flue",
+  "requiresOperatorReview": true,
+  "contractRefs": {
+    "agentContract": "templates/agent_contract.yaml",
+    "goldenTasks": "templates/golden_tasks.yaml",
+    "goldenTaskId": "runtime-routing-pi-flue"
+  }
+}

@@ -1,0 +1,66 @@
+{
+  "name": "@create-something/flue-service-agent",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Flue pilot service-agent endpoint for Policy OS delivery workflows.",
+  "main": "./dist/lib/src/index.js",
+  "types": "./dist/lib/src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/lib/src/index.d.ts",
+      "import": "./dist/lib/src/index.js"
+    },
+    "./mcp-resources": {
+      "types": "./dist/lib/src/mcp-resources.d.ts",
+      "import": "./dist/lib/src/mcp-resources.js"
+    },
+    "./mcp-resource-core": {
+      "types": "./dist/lib/src/mcp-resource-core.d.ts",
+      "import": "./dist/lib/src/mcp-resource-core.js"
+    }
+  },
+  "files": [
+    ".flue",
+    "dist",
+    "fixtures",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsc && pnpm run flue:build",
+    "build:lib": "tsc",
+    "build:cloudflare": "tsc && pnpm run flue:build:cloudflare",
+    "dev": "flue dev --target node",
+    "flue:build": "flue build --target node --output dist/flue",
+    "flue:build:cloudflare": "flue build --target cloudflare --output dist/flue-cloudflare",
+    "flue:evidence": "../../../scripts/ona-bootstrap-local.sh pnpm --dir packages/agents/flue-service-agent run build && node dist/lib/src/linear-evidence.js",
+    "flue:evidence:cloudflare": "../../../scripts/ona-bootstrap-local.sh pnpm --dir packages/agents/flue-service-agent run build && ../../../scripts/ona-bootstrap-local.sh pnpm --dir packages/agents/flue-service-agent run build:cloudflare && node dist/lib/src/linear-evidence.js --cloudflare",
+    "flue:history": "../../../scripts/ona-bootstrap-local.sh pnpm --dir packages/agents/flue-service-agent run build && node dist/lib/src/run-history.js --append",
+    "flue:history:cloudflare": "../../../scripts/ona-bootstrap-local.sh pnpm --dir packages/agents/flue-service-agent run build && ../../../scripts/ona-bootstrap-local.sh pnpm --dir packages/agents/flue-service-agent run build:cloudflare && node dist/lib/src/run-history.js --cloudflare --append",
+    "flue:resources": "node dist/lib/src/mcp-resources.js",
+    "flue:resources:smoke": "pnpm run flue:history:cloudflare && node dist/lib/src/mcp-resources.js --resource all --history-path .artifacts/flue-service-agent/run-history.jsonl",
+    "flue:run:golden": "flue run service-delivery --target node --id runtime-routing-pi-flue --payload \"$(cat fixtures/runtime-routing-pi-flue.json)\"",
+    "flue:smoke": "../../../scripts/ona-bootstrap-local.sh pnpm --dir packages/agents/flue-service-agent build && node dist/lib/src/smoke.js",
+    "flue:smoke:cloudflare": "../../../scripts/ona-bootstrap-local.sh pnpm --dir packages/agents/flue-service-agent run build && ../../../scripts/ona-bootstrap-local.sh pnpm --dir packages/agents/flue-service-agent run build:cloudflare && node dist/lib/src/smoke.js --cloudflare",
+    "lint": "pnpm run typecheck",
+    "smoke": "node dist/lib/src/smoke.js",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@flue/runtime": "^0.6.2",
+    "valibot": "^1.4.0"
+  },
+  "devDependencies": {
+    "@flue/cli": "^0.6.2",
+    "@types/node": "^22.0.0",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.18"
+  },
+  "keywords": [
+    "flue",
+    "policy-os",
+    "service-agent"
+  ],
+  "license": "MIT"
+}

@@ -22,6 +22,10 @@ import { enableTelemetry } from '@create-something/mcp-core';
 import { registerResources } from '../src/resources.js';
 import { registerTools } from '../src/tools.js';
 import { registerPrompts } from '../src/prompts.js';
+import {
+  registerRemoteFlueRunHistoryResources,
+  type McpResourceServerLike,
+} from '../src/remote-flue-run-history.js';
 
 // Content counts
 import { PAPERS } from '../src/content/generated/papers.js';
@@ -61,14 +65,20 @@ export class CreateSomethingMCP extends McpAgent<Env> {
         'create-something',
         () => this.env.MCP_ACCOUNT_ID?.trim() || 'operator',
         {
-        apiKey: (this.env as any).BRAINTRUST_API_KEY,
-        projectName: 'create-something',
-        projectId: (this.env as any).BRAINTRUST_PROJECT_ID,
+          apiKey: (this.env as any).BRAINTRUST_API_KEY,
+          projectName: 'create-something',
+          projectId: (this.env as any).BRAINTRUST_PROJECT_ID,
         },
       );
     }
 
     registerResources(this.server);
+    if (this.env.TELEMETRY_DB) {
+      registerRemoteFlueRunHistoryResources(
+        this.server as unknown as McpResourceServerLike,
+        this.env.TELEMETRY_DB,
+      );
+    }
     registerTools(this.server);
     registerPrompts(this.server);
   }
@@ -113,9 +123,15 @@ export default {
           products: PRODUCTS.length,
         },
         capabilities: {
-          resources: `${PAPERS.length + CANON_PAGES.length + PATTERNS.length + MASTERS.length + 10 + 2 + 1 + 1} URIs (Database tier)`,
+          resources: `${PAPERS.length + CANON_PAGES.length + PATTERNS.length + MASTERS.length + 10 + 2 + 1 + 1 + (env.TELEMETRY_DB ? 3 : 0)} URIs (Database tier)`,
           tools: '5 tools (Automation tier — search, relate, classify, apply_triad, audit_design)',
           prompts: '5 prompts (Judgment tier — architecture_review, design_review, triad_analysis, mcp_design, research_dive)',
+        },
+        flue_run_history: {
+          storage: env.TELEMETRY_DB ? 'TELEMETRY_DB.flue_run_history' : 'unbound',
+          resources: env.TELEMETRY_DB
+            ? ['flue://run-history/status', 'flue://run-history/latest', 'flue://run-history/list']
+            : [],
         },
         properties: {
           'io': 'Research papers and knowledge graph',

@@ -1,0 +1,126 @@
+name: Flue Run History Promotion
+
+on:
+  pull_request:
+    paths:
+      - 'packages/agents/flue-service-agent/**'
+      - 'packages/create-something-mcp/**'
+      - 'templates/agent_contract.yaml'
+      - 'templates/golden_tasks.yaml'
+      - 'packages/agency/content/templates/delivery/**'
+      - 'scripts/ona-bootstrap-local.sh'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/flue-run-history-promotion.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'packages/agents/flue-service-agent/**'
+      - 'packages/create-something-mcp/**'
+      - 'templates/agent_contract.yaml'
+      - 'templates/golden_tasks.yaml'
+      - 'packages/agency/content/templates/delivery/**'
+      - 'scripts/ona-bootstrap-local.sh'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/flue-run-history-promotion.yml'
+  workflow_dispatch:
+    inputs:
+      issue:
+        description: 'Linear issue ID to stamp on the generated Flue run-history record, for example CRE-123.'
+        required: true
+        type: string
+      target:
+        description: 'Promotion target. Use dry-run for validation; remote writes to TELEMETRY_DB.flue_run_history.'
+        required: true
+        default: dry-run
+        type: choice
+        options:
+          - dry-run
+          - remote
+
+permissions:
+  contents: read
+
+concurrency:
+  group: flue-run-history-promotion-${{ github.event_name == 'workflow_dispatch' && inputs.target || github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  dry-run:
+    name: Validate Flue run-history promotion
+    if: github.event_name != 'workflow_dispatch' || inputs.target == 'dry-run'
+    runs-on: ubuntu-latest
+    env:
+      FLUE_PROMOTION_ISSUE: ${{ github.event_name == 'workflow_dispatch' && inputs.issue || format('ci-{0}', github.run_id) }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: '22.18.0'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate promotion path without remote write
+        run: |
+          pnpm --dir packages/create-something-mcp run build:workspace-deps
+          pnpm --dir packages/create-something-mcp exec tsc
+          node packages/create-something-mcp/scripts/promote-flue-run-history.mjs --dry-run --issue "$FLUE_PROMOTION_ISSUE"
+
+  remote:
+    name: Promote Flue run-history to D1
+    if: github.event_name == 'workflow_dispatch' && inputs.target == 'remote'
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_WORKERS_API_TOKEN != '' && secrets.CLOUDFLARE_WORKERS_API_TOKEN || secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID != '' && vars.CLOUDFLARE_ACCOUNT_ID || '9645bd52e640b8a4f40a3a55ff1dd75a' }}
+      FLUE_PROMOTION_ISSUE: ${{ inputs.issue }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: '22.18.0'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify Cloudflare credentials
+        shell: bash
+        run: |
+          test -n "$CLOUDFLARE_API_TOKEN" || {
+            echo "CLOUDFLARE_WORKERS_API_TOKEN or CLOUDFLARE_API_TOKEN is required for remote promotion." >&2
+            exit 1
+          }
+          test -n "$CLOUDFLARE_ACCOUNT_ID" || {
+            echo "CLOUDFLARE_ACCOUNT_ID repository variable is required for remote promotion." >&2
+            exit 1
+          }
+
+      - name: Promote run history to remote D1
+        run: |
+          pnpm --dir packages/create-something-mcp run build:workspace-deps
+          pnpm --dir packages/create-something-mcp exec tsc
+          node packages/create-something-mcp/scripts/promote-flue-run-history.mjs --remote --issue "$FLUE_PROMOTION_ISSUE"

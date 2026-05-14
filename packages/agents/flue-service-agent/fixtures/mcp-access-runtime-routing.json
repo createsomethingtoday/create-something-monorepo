@@ -1,0 +1,23 @@
+{
+  "taskId": "mcp-access-runtime-routing",
+  "clientName": "ExampleCo",
+  "workflowName": "delivery-evidence-summary",
+  "request": "Verify that this Flue service-agent workflow uses brokered CREATE SOMETHING MCP hub access before promotion.",
+  "requiredServers": [
+    "create-something",
+    "playbook",
+    "three-tier-framework"
+  ],
+  "requiredHubTools": [
+    "hub_list_services",
+    "hub_search_proxy_tools",
+    "hub_describe_proxy_tool",
+    "hub_execute_proxy_tool"
+  ],
+  "contract": {
+    "agentContractPath": "templates/agent_contract.yaml"
+  },
+  "hubRegistry": {
+    "registryPath": "config/mcp-hub/registry.json"
+  }
+}

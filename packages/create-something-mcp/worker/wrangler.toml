@@ -23,3 +23,4 @@ new_sqlite_classes = ["CreateSomethingMCP"]
 binding = "TELEMETRY_DB"
 database_name = "cs-telemetry"
 database_id = "f710641a-0c85-4a7b-bb73-2c16f8d024c3"
+migrations_dir = "migrations"

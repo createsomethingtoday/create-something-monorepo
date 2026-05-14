@@ -33,6 +33,50 @@ agent_profile:
       - "claude"
       - "cursor"
 
+runtime_integrations:
+  primary_runtime: "flue" # pi_openclaw | flue | codex_harness | custom
+  runtime_candidates:
+    - "pi_openclaw"
+    - "flue"
+    - "codex_harness"
+  trigger_surfaces:
+    - "webhook" # channel | webhook | cli | cron | manual
+  sandbox_mode: "virtual" # virtual | container | local | external
+  channel_gateway:
+    enabled: false
+    runtime: "pi_openclaw"
+    handoff_mode: "operator_review" # operator_review | service_agent_followup | none
+  service_agent:
+    enabled: true
+    runtime: "flue"
+    pilot_package: "@create-something/flue-service-agent"
+    endpoint_pattern: "/agents/service-delivery/:id"
+    readiness_endpoint_pattern: "/agents/delivery-readiness/:id"
+    mcp_access_endpoint_pattern: "/agents/mcp-access-review/:id"
+    cloudflare_readiness_endpoint_pattern: "/agents/cloudflare-readiness/:id"
+    structured_output_required: true
+    event_evidence_required: true
+    deployment_target: "cloudflare-workers"
+    deployment_gate:
+      cloudflare_build_required: true
+      linear_evidence_required: true
+      linear_evidence_command: "pnpm --dir packages/agents/flue-service-agent flue:evidence:cloudflare"
+      secrets_location: "Cloudflare secrets or Infisical"
+      rollback_note_required: true
+  mcp_access:
+    discovery_mode: "brokered" # brokered | direct_allowlist | exception_direct
+    hub_runtime: "create-something-hub"
+    direct_server_access_allowed: false
+    hub_tools:
+      - "hub_list_services"
+      - "hub_search_proxy_tools"
+      - "hub_describe_proxy_tool"
+      - "hub_execute_proxy_tool"
+    allowed_servers:
+      - "create-something"
+      - "playbook"
+      - "three-tier-framework"
+
 capability_scope:
   allowed_tools:
     - "<tool-name>"
@@ -68,6 +112,26 @@ budget_and_latency_guardrails:
 
 observability:
   log_sink: "<provider>"
+  run_history_resource:
+    enabled: true
+    schema: "flue.run_history.v1"
+    local_jsonl_path: ".artifacts/flue-service-agent/run-history.jsonl"
+    command: "pnpm --dir packages/agents/flue-service-agent flue:history:cloudflare"
+    remote_mcp_registration:
+      server: "create-something"
+      storage_binding: "TELEMETRY_DB"
+      table: "flue_run_history"
+      source_uri: "d1://TELEMETRY_DB/flue_run_history"
+      migration: "packages/create-something-mcp/worker/migrations/0001_flue_run_history.sql"
+      upload_command: "pnpm --dir packages/create-something-mcp flue:history:upload"
+      promotion_command: "pnpm --dir packages/create-something-mcp flue:history:promote -- --issue CRE-123"
+      promotion_workflow: ".github/workflows/flue-run-history-promotion.yml"
+      smoke_command: "pnpm --dir packages/create-something-mcp smoke:flue-remote-resources"
+      promotion_smoke_command: "pnpm --dir packages/create-something-mcp smoke:flue-promotion"
+    mcp_resources:
+      - "flue://run-history/status"
+      - "flue://run-history/latest"
+      - "flue://run-history/list"
   required_metrics:
     - "tool_success_rate"
     - "approval_rate"

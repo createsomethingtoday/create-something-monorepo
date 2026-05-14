@@ -233,6 +233,15 @@ Access the admin UI at `/_admin/` to:
 
 The admin UI requires Cloudflare Access authentication (or `DEV_MODE=true` for local development).
 
+Protected admin API status endpoints:
+
+| Endpoint | Description |
+|----------|-------------|
+| `GET /api/admin/storage` | R2 configuration, mount availability, and last backup timestamp |
+| `GET /api/admin/runtime` | Machine-readable relay runtime, version matrix, gateway status, model-provider mode, and storage status |
+| `POST /api/admin/storage/sync` | Trigger a manual R2 backup |
+| `POST /api/admin/gateway/restart` | Restart the OpenClaw gateway process |
+
 ## Debug Endpoints
 
 Debug endpoints are available at `/debug/*` when enabled (requires `DEBUG_ROUTES=true` and Cloudflare Access):
