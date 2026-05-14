@@ -18,6 +18,10 @@ RATE_LIMIT_MAX_CALLS="${RATE_LIMIT_MAX_CALLS:-120}"
 RATE_LIMIT_WINDOW_SECONDS="${RATE_LIMIT_WINDOW_SECONDS:-60}"
 QUOTA_MAX_PROXY_CALLS_PER_PERIOD="${QUOTA_MAX_PROXY_CALLS_PER_PERIOD:-10000}"
 REVIEWER_IDENTITY_MODE="${REVIEWER_IDENTITY_MODE:-compat}"
+CENTRAL_SLUG="${CENTRAL_SLUG:-wf-template-review}"
+CENTRAL_ACCOUNT_ID="${CENTRAL_ACCOUNT_ID:-acct_wf_template_review}"
+CENTRAL_IDENTITY_MODE="${CENTRAL_IDENTITY_MODE:-session_required}"
+INCLUDE_CENTRAL="${INCLUDE_CENTRAL:-0}"
 REQUIRED_GLOBAL_SERVERS_SENTINEL="${REQUIRED_GLOBAL_SERVERS_SENTINEL:-__none__}"
 REQUIRED_DISCOVERY_SERVERS_SENTINEL="${REQUIRED_DISCOVERY_SERVERS_SENTINEL:-__none__}"
 SKIP_NORMALIZE="${SKIP_NORMALIZE:-0}"
@@ -31,6 +35,11 @@ REVIEWERS=(
   "wf-template-review-mariana|acct_wf_mariana"
   "wf-template-review-micah|acct_wf_micah"
 )
+
+TARGETS=("${REVIEWERS[@]}")
+if [[ "$INCLUDE_CENTRAL" == "1" || "$INCLUDE_CENTRAL" == "true" || "$REVIEWER" == "central" || "$REVIEWER" == "shared" || "$REVIEWER" == "$CENTRAL_SLUG" ]]; then
+  TARGETS+=("${CENTRAL_SLUG}|${CENTRAL_ACCOUNT_ID}")
+fi
 
 require_cmd() {
   command -v "$1" >/dev/null 2>&1 || {
@@ -123,14 +132,29 @@ slug_matches_reviewer() {
   if [[ "$reviewer" == "all" ]]; then
     return 0
   fi
+  if [[ "$reviewer" == "central" || "$reviewer" == "shared" || "$reviewer" == "$CENTRAL_SLUG" ]]; then
+    [[ "$slug" == "$CENTRAL_SLUG" ]]
+    return $?
+  fi
   [[ "$slug" == "wf-template-review-${reviewer}" ]]
+}
+
+identity_mode_for_slug() {
+  local slug="$1"
+  if [[ "$slug" == "$CENTRAL_SLUG" ]]; then
+    echo "$CENTRAL_IDENTITY_MODE"
+    return 0
+  fi
+  echo "$REVIEWER_IDENTITY_MODE"
 }
 
 deploy_one() {
   local slug="$1"
   local account_id="$2"
   local worker
+  local identity_mode
   worker="$(worker_name_for_slug "$slug")"
+  identity_mode="$(identity_mode_for_slug "$slug")"
 
   echo "===== DEPLOY ${worker} ====="
   cd "$HUB_DIR"
@@ -143,7 +167,7 @@ deploy_one() {
     --var "HUB_ENABLED_BUNDLES:${BUNDLE_NAME}" \
     --var "HUB_ENABLED_SERVERS:${ENABLED_SERVERS}" \
     --var "HUB_DISABLED_SERVERS:${DISABLED_SERVERS}" \
-    --var "HUB_IDENTITY_MODE:${REVIEWER_IDENTITY_MODE}" \
+    --var "HUB_IDENTITY_MODE:${identity_mode}" \
     --var "HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS:false" \
     --var "HUB_SESSION_RESOLVE_URL:${SESSION_RESOLVE_URL}" \
     --var "HUB_DISCOVERY_MODE:compact" \
@@ -288,7 +312,7 @@ case "$ACTION" in
     ;;
 esac
 
-for entry in "${REVIEWERS[@]}"; do
+for entry in "${TARGETS[@]}"; do
   slug="${entry%%|*}"
   account_id="${entry#*|}"
   if ! slug_matches_reviewer "$slug" "$REVIEWER"; then

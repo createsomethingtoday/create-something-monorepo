@@ -3,6 +3,27 @@
   "version": 1,
   "description": "Operational fleet of CREATE SOMETHING MCP deployments per tenant. Populated from HD Notion Products database (27b019187ac5800f9efcc74fffa00405) and halfdozen-notion-mcp wrangler configs on 2026-04-16.",
   "deployments": {
+    "wf-template-review": {
+      "type": "policy_os_hub",
+      "product": "Webflow Template Review - Central Reviewer MCP",
+      "client": "internal",
+      "tenant": "webflow-marketplace",
+      "url": "https://wf-template-review.mcp.createsomething.agency/mcp",
+      "status": "requested",
+      "account": "create-something",
+      "package_path": "packages/cs-mcp-hub-remote",
+      "wrangler_config": "packages/cs-mcp-hub-remote/wrangler.team-hubs.toml",
+      "auth": {
+        "type": "bearer",
+        "bearer_token_env_var": "CS_HUB_WF_TEMPLATE_REVIEW_API_TOKEN",
+        "infisical_path": "/mcp-hub/hubs",
+        "infisical_note": "Static hub token is for deployment/normalization only. Claude and Gumloop reviewers should use reviewer-bound managed bearer or session tokens resolved by the identity worker."
+      },
+      "related_deployments": [
+        "webflow-template-review-mcp"
+      ],
+      "notes": "Single reviewer-facing Hub endpoint for Claude custom connectors and Gumloop. Deploy with HUB_IDENTITY_MODE=session_required and keep reviewer-specific Hubs as fallback."
+    },
     "viv-blondish": {
       "type": "policy_os_hub",
       "product": "Viv Bakos \u2014 Personal Hub",

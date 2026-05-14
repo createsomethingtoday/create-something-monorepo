@@ -3594,8 +3594,18 @@ function getHostBindingFailure(boundHost: string | null | undefined, resourceHos
 	const normalizedBoundHost = normalizeOptionalHostName(boundHost);
 	if (!normalizedBoundHost) return null;
 	if (!resourceHost) return 'resource_host_required';
+	if (isWebflowTemplateReviewReviewerHost(normalizedBoundHost) && isWebflowTemplateReviewSharedHost(resourceHost)) {
+		return null;
+	}
 	if (resourceHost !== normalizedBoundHost) return 'host_mismatch';
 	return null;
+}
+
+export function resolveMcpHostBindingFailure(input: {
+	boundHost?: string | null;
+	resourceHost?: string | null;
+}): string | null {
+	return getHostBindingFailure(input.boundHost, normalizeOptionalHostName(input.resourceHost));
 }
 
 function normalizeToolMode(raw: McpToolMode | undefined): McpToolMode {
@@ -3645,6 +3655,13 @@ export function resolveEffectiveAllowedToolPrefixes(input: {
 	return input.allowedToolPrefixes ?? null;
 }
 
+const WEBFLOW_TEMPLATE_REVIEW_SHARED_HOSTS = new Set([
+	'wf-template-review',
+	'wf-template-review-central',
+	'webflow-template-review',
+	'webflow-template-reviewers',
+]);
+
 function isWebflowTemplateReviewReviewerLane(input: {
 	accountId?: string | null;
 	tenantId?: string | null;
@@ -3658,12 +3675,24 @@ function isWebflowTemplateReviewReviewerLane(input: {
 	}
 
 	const host = normalizeOptionalHostName(input.host);
-	if (host?.startsWith('wf-template-review-')) {
+	if (isWebflowTemplateReviewReviewerHost(host)) {
 		return true;
 	}
 
 	const boundHost = normalizeOptionalHostName(input.boundHost);
-	return Boolean(boundHost?.startsWith('wf-template-review-'));
+	return isWebflowTemplateReviewReviewerHost(boundHost);
+}
+
+function isWebflowTemplateReviewSharedHost(host: string | null | undefined): boolean {
+	const normalized = normalizeOptionalHostName(host);
+	return Boolean(normalized && WEBFLOW_TEMPLATE_REVIEW_SHARED_HOSTS.has(normalized));
+}
+
+function isWebflowTemplateReviewReviewerHost(host: string | null | undefined): boolean {
+	const normalized = normalizeOptionalHostName(host);
+	return Boolean(
+		normalized?.startsWith('wf-template-review-') && !WEBFLOW_TEMPLATE_REVIEW_SHARED_HOSTS.has(normalized),
+	);
 }
 
 function clampTtlSeconds(raw: number | undefined): number {

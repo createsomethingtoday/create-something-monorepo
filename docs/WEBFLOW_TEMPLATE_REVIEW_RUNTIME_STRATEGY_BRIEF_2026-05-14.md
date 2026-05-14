@@ -68,7 +68,7 @@ Recommended near-term position:
 
 Recommended architecture position:
 
-- Favor one centralized Template Review MCP through the Hub when authenticated reviewer identity is available.
+- Favor the centralized Template Review MCP through the Hub when authenticated reviewer identity is available: `https://wf-template-review.mcp.createsomething.agency/mcp`.
 - Keep reviewer-specific Hub lanes as the safe fallback while centralized identity is being validated.
 - Never trust prompt text for reviewer identity. Identity should come from auth/session/token mapping.
 - Treat direct shared-bearer MCP access as read/eval infrastructure, not as the authoritative write path for reviewer attribution.
@@ -98,13 +98,13 @@ These questions came out of the retro and are now resolved enough for PMM handof
 
 ## Completed Next Steps And Remaining Gates
 
-| Next step                                             | Status                                                    | Notes                                                                                                                                                                                                                  |
-| ----------------------------------------------------- | --------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Create the requirements matrix.                       | Complete in this brief.                                   | The matrix above is the PMM-ready comparison.                                                                                                                                                                          |
-| Prototype centralized MCP identity mapping.           | Architecture decision complete; engineering gate remains. | Centralized is the target, but only with Hub session identity. The current reviewer-specific Hubs remain the safe fallback until `session_required` identity, allowed tool prefixes, and trace attribution are proven. |
-| Keep Braintrust evals focused on workflow behavior.   | Implemented and should continue.                          | Existing suites cover Dify comprehensive behavior, Dify trust workflows, MCP Hub/Airtable behavior, E2B public-site capture, prompt injection boundaries, and no-write guardrails.                                     |
-| Use Dify as the live baseline.                        | Confirmed.                                                | Dify remains the reviewer/eval baseline while Claude proper and Gumloop are gated by identity, connector, and eval requirements.                                                                                       |
-| Prepare PMM language around governed review workflow. | Complete in this brief.                                   | Use the messaging below. Avoid "scanner" and avoid making the analyzer MCP sound launch-critical.                                                                                                                      |
+| Next step                                             | Status                                                         | Notes                                                                                                                                                                                                                 |
+| ----------------------------------------------------- | -------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Create the requirements matrix.                       | Complete in this brief.                                        | The matrix above is the PMM-ready comparison.                                                                                                                                                                         |
+| Prototype centralized MCP identity mapping.           | Central endpoint implementation path added; live gate remains. | The shared `wf-template-review` Hub target uses `session_required` identity. The current reviewer-specific Hubs remain the safe fallback until live Claude/Gumloop token resolution and trace attribution are proven. |
+| Keep Braintrust evals focused on workflow behavior.   | Implemented and should continue.                               | Existing suites cover Dify comprehensive behavior, Dify trust workflows, MCP Hub/Airtable behavior, E2B public-site capture, prompt injection boundaries, and no-write guardrails.                                    |
+| Use Dify as the live baseline.                        | Confirmed.                                                     | Dify remains the reviewer/eval baseline while Claude proper and Gumloop are gated by identity, connector, and eval requirements.                                                                                      |
+| Prepare PMM language around governed review workflow. | Complete in this brief.                                        | Use the messaging below. Avoid "scanner" and avoid making the analyzer MCP sound launch-critical.                                                                                                                     |
 
 ## Eval Coverage And Gaps
 
@@ -144,6 +144,7 @@ What to avoid:
 ## Related Docs
 
 - [Webflow Template Review Nontechnical Reviewer Delivery](./WEBFLOW_TEMPLATE_REVIEW_NONTECH_REVIEWER_DELIVERY.md)
+- [Webflow Template Review Central MCP Connector](./WEBFLOW_TEMPLATE_REVIEW_CENTRAL_MCP_CONNECTOR.md)
 - [Webflow Template Review Claude Code Reviewer Setup](./WEBFLOW_TEMPLATE_REVIEW_CLAUDE_CODE_REVIEWER_SETUP.md)
 - [Webflow Template Review Hub Eval Suite](./WEBFLOW_TEMPLATE_REVIEW_HUB_EVAL_SUITE.md)
 - [Remote MCP Identity Standard](./REMOTE_MCP_IDENTITY_STANDARD.md)

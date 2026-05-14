@@ -2,7 +2,7 @@
 
 Strategy context: [Webflow Template Review Runtime Strategy Brief](./WEBFLOW_TEMPLATE_REVIEW_RUNTIME_STRATEGY_BRIEF_2026-05-14.md).
 
-Reviewers should not have to understand Claude Code, MCP configuration, Infisical, or shell commands. This doc describes the Dify-first delivery model for the current low-friction reviewer rollout; the runtime strategy brief explains how the workflow can move across Claude, Dify, and E2B surfaces.
+Reviewers should not have to understand Claude Code, MCP configuration, Infisical, or shell commands. This doc describes the Dify-first delivery model for the current low-friction reviewer rollout; the runtime strategy brief explains how the workflow can move across Claude, Dify, Gumloop, and E2B surfaces.
 
 ## Recommended Delivery Model
 
@@ -10,6 +10,13 @@ Reviewers should not have to understand Claude Code, MCP configuration, Infisica
 Reviewer
   -> Dify Review Hub UI
   -> reviewer-specific Hub MCP
+  -> webflow-template-review-mcp
+  -> Airtable
+
+Reviewer, after central connector validation
+  -> Claude or Gumloop
+  -> https://wf-template-review.mcp.createsomething.agency/mcp
+  -> reviewer-bound managed bearer/session identity
   -> webflow-template-review-mcp
   -> Airtable
 
@@ -28,6 +35,7 @@ Claude Code is still useful, but it should be an operator/back-office tool unles
 - Claude Code gives operators local shell access for raw HTML checks, batch triage, and skill iteration.
 - `webflow-template-review-mcp` is the control point that can safely expose reviewer-specific Airtable reads/writes.
 - The reviewer Hubs must remain constrained to `webflow-template-review-mcp` only.
+- The central Claude/Gumloop connector must use Hub `session_required` identity. A shared static Hub token is not reviewer identity.
 
 ## Lowest-Friction Rollout
 
@@ -110,6 +118,6 @@ For nontechnical reviewer rollout:
 
 Short term: keep reviewers in Dify and use Claude Code as operator support.
 
-Medium term: implement the URL/page/script probe tools inside `webflow-template-review-mcp` so Dify no longer depends on Claude Code for the skill's local checks.
+Medium term: validate the [central Claude/Gumloop MCP connector](./WEBFLOW_TEMPLATE_REVIEW_CENTRAL_MCP_CONNECTOR.md) and implement the URL/page/script probe tools inside `webflow-template-review-mcp` so Dify no longer depends on Claude Code for the skill's local checks.
 
 Long term: package the Claude Code plugin for internal operators and reviewer power users only.

@@ -225,6 +225,89 @@ test('buildVisibleProxyRoutes in full mode keeps all session-allowed routes', ()
   );
 });
 
+test('buildVisibleProxyRoutes scopes centralized Webflow template review sessions to reviewer-safe tools', () => {
+  const safeReadRoute = {
+    proxyToolName: 'webflow-template-review-mcp__template_review_get_review_context',
+    serverName: 'webflow-template-review-mcp',
+    downstreamToolName: 'template_review_get_review_context',
+    serverTags: [],
+    call: async () => ({ ok: true }),
+  };
+  const safeWriteRoute = {
+    proxyToolName: 'webflow-template-review-mcp__template_review_assign_self',
+    serverName: 'webflow-template-review-mcp',
+    downstreamToolName: 'template_review_assign_self',
+    serverTags: [],
+    call: async () => ({ ok: true }),
+  };
+  const forbiddenAdminRoute = {
+    proxyToolName: 'webflow-template-review-mcp__template_review_assign_reviewer',
+    serverName: 'webflow-template-review-mcp',
+    downstreamToolName: 'template_review_assign_reviewer',
+    serverTags: [],
+    call: async () => ({ ok: true }),
+  };
+
+  const runtime = {
+    builtAt: 0,
+    stateResolution: {
+      state: { enabledBundles: [], enabledServers: [], disabledServers: [] },
+      enabledServerNames: ['webflow-template-review-mcp'],
+      warnings: [],
+    },
+    connected: [],
+    failed: [],
+    proxies: {
+      toolDefinitions: [safeReadRoute, safeWriteRoute, forbiddenAdminRoute].map((route) => ({
+        name: route.proxyToolName,
+        description: `[webflow-template-review-mcp] ${route.downstreamToolName}`,
+        inputSchema: { type: 'object', properties: {} },
+      })),
+      routes: new Map([
+        [safeReadRoute.proxyToolName, safeReadRoute],
+        [safeWriteRoute.proxyToolName, safeWriteRoute],
+        [forbiddenAdminRoute.proxyToolName, forbiddenAdminRoute],
+      ]),
+      warnings: [],
+    },
+  };
+
+  const visible = buildVisibleProxyRoutes(
+    runtime as any,
+    {
+      mode: 'compact' as const,
+      activeServers: ['webflow-template-review-mcp'],
+      maxProxyTools: 18,
+    },
+    {
+      accountId: 'acct_wf_eric',
+      tenantId: 'tenant_webflow_marketplace',
+      userId: 'auth0|eric',
+      sessionId: null,
+      authMode: 'managed_bearer',
+      toolMode: 'read_write',
+      serviceTier: null,
+      entitlementSnapshot: null,
+      boundHost: 'wf-template-review',
+      resourceHost: 'wf-template-review',
+      allowedToolPrefixes: [
+        'webflow-template-review-mcp__template_review_get_review_context',
+        'webflow-template-review-mcp__template_review_assign_self',
+      ],
+      identitySource: 'session' as const,
+    },
+  );
+
+  assert.deepEqual(
+    visible.toolDefinitions.map((tool) => tool.name).sort(),
+    [
+      'webflow-template-review-mcp__template_review_assign_self',
+      'webflow-template-review-mcp__template_review_get_review_context',
+    ].sort(),
+  );
+  assert.equal(visible.routes.has('webflow-template-review-mcp__template_review_assign_reviewer'), false);
+});
+
 test('buildAuthorizedVisibleProxyRoutes filters mutable discovery for read-only sessions', async () => {
   const readRoute = {
     proxyToolName: 'composio-toolkit-googlesheets__googlesheets_get_spreadsheet',

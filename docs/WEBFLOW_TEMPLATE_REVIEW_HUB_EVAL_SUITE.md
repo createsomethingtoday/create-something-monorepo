@@ -4,8 +4,11 @@ Runtime strategy context: [Webflow Template Review Runtime Strategy Brief](./WEB
 
 These Braintrust suites verify the reviewer-specific Webflow Template Review Hubs, the Dify reviewer agents, and the capture-session workflow that replaced analyzer-only dependency.
 
+Central connector context: [Webflow Template Review Central MCP Connector](./WEBFLOW_TEMPLATE_REVIEW_CENTRAL_MCP_CONNECTOR.md).
+
 ## Reviewer Lanes
 
+- Central Claude/Gumloop connector: `https://wf-template-review.mcp.createsomething.agency/mcp`
 - Eric: `https://wf-template-review-eric.mcp.createsomething.agency/mcp`
 - Natalia: `https://wf-template-review-natalia.mcp.createsomething.agency/mcp`
 - Mariana: `https://wf-template-review-mariana.mcp.createsomething.agency/mcp`
@@ -109,6 +112,7 @@ These gaps should be tracked before expanding beyond the Dify baseline:
 
 - Structural `capture_state` validation, not only tool sequence validation.
 - Adversarial reviewer identity isolation, including prompt-spoofed identity and cross-reviewer mutation attempts.
+- Central endpoint live identity evals using two reviewer tokens against `wf-template-review`.
 - Live reversible write roundtrips for `request_changes`, `save_draft_feedback`, and status updates.
 - Prompt-injection fixtures where the malicious instruction is captured from an actual public page.
 - Mechanical Claude proper and Gumloop runtime evals after those surfaces are connected through the Hub.
