@@ -6,12 +6,10 @@ import {
 	isProtectedAbundanceApiPath,
 	isValidAbundanceApiBearer
 } from '../src/lib/server/abundance-api-auth.ts';
+import { isValidMetaSignature } from '../src/lib/server/abundance-whatsapp-auth.ts';
 import { POST as matchPost } from '../src/routes/api/abundance/match/+server.ts';
 import { POST as convertPost } from '../src/routes/api/abundance/convert/+server.ts';
-import {
-	GET as whatsappGet,
-	isValidMetaSignature
-} from '../src/routes/api/abundance/whatsapp/+server.ts';
+import { GET as whatsappGet } from '../src/routes/api/abundance/whatsapp/+server.ts';
 
 type StatementRecord = {
 	sql: string;
