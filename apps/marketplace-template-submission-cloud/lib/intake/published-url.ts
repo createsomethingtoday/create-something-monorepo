@@ -1,4 +1,7 @@
+import { getCloudflareEnv } from '../../vendor/core/runtime';
+
 const WORKER_URL = 'https://gsap-validation-worker.createsomething.workers.dev/crawlWebsite';
+const WORKER_SERVICE_URL = 'https://gsap-validation-worker.internal/crawlWebsite';
 const DIRECT_TIMEOUT_MS = 14_000;
 const START_TIMEOUT_MS = 45_000;
 const POLL_TIMEOUT_MS = 30_000;
@@ -64,26 +67,39 @@ function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function fetchWithTimeout(url: string, options: RequestInit, timeoutMs: number) {
+async function fetchWithTimeout(
+  url: string,
+  options: RequestInit,
+  timeoutMs: number,
+  fetcher: typeof fetch = fetch
+) {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
-    return await fetch(url, { ...options, signal: controller.signal });
+    return await fetcher(url, { ...options, signal: controller.signal });
   } finally {
     clearTimeout(timeoutId);
   }
 }
 
 async function postWorker(payload: Record<string, unknown>, timeoutMs: number) {
+  const env = await getCloudflareEnv();
+  const validationWorker = env?.GSAP_VALIDATION_WORKER;
+  const workerUrl = validationWorker ? WORKER_SERVICE_URL : WORKER_URL;
+  const workerFetch = validationWorker
+    ? (validationWorker.fetch.bind(validationWorker) as typeof fetch)
+    : fetch;
+
   const response = await fetchWithTimeout(
-    WORKER_URL,
+    workerUrl,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     },
-    timeoutMs
+    timeoutMs,
+    workerFetch
   );
 
   const data = (await response.json().catch(() => null)) as Record<string, unknown> | null;

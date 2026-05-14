@@ -1,5 +1,6 @@
 interface CloudflareEnv {
   ASSETS?: Fetcher;
+  GSAP_VALIDATION_WORKER?: Fetcher;
   UPLOADS_WORKER_URL?: string;
   UPLOADS_WORKER_SECRET?: string;
   AIRTABLE_API_KEY?: string;
