@@ -1,0 +1,1439 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Webflow Surface Ownership and Runtime Map</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%23146ef5'/%3E%3Cpath d='M4 4h8v2H6v4h6v2H4z' fill='white'/%3E%3C/svg%3E"
+    />
+    <style>
+      :root {
+        --bg: #f6f7f2;
+        --paper: #ffffff;
+        --ink: #172033;
+        --muted: #647084;
+        --line: #d9dee7;
+        --line-strong: #a8b0c0;
+        --webflow: #146ef5;
+        --app: #0f8b8d;
+        --automation: #dc6b2f;
+        --data: #2f7d4a;
+        --judgment: #7557c5;
+        --legacy: #7d8793;
+        --risk: #b3404a;
+        --shadow: 0 18px 48px rgba(23, 32, 51, 0.09);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family:
+          Inter,
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          'Segoe UI',
+          sans-serif;
+        line-height: 1.5;
+      }
+
+      a {
+        color: inherit;
+      }
+
+      .page {
+        width: min(1180px, calc(100vw - 32px));
+        margin: 0 auto;
+        padding: 28px 0 56px;
+      }
+
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 22px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .brand {
+        color: var(--ink);
+        font-weight: 720;
+        letter-spacing: 0;
+      }
+
+      .pill-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .pill {
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.72);
+        padding: 6px 10px;
+        white-space: nowrap;
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1.4fr) minmax(260px, 0.6fr);
+        gap: 22px;
+        align-items: stretch;
+        margin-bottom: 22px;
+      }
+
+      .intro,
+      .boundary-card,
+      .section,
+      .status-card,
+      .dependency-card {
+        background: var(--paper);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        box-shadow: var(--shadow);
+      }
+
+      .intro {
+        padding: 30px;
+      }
+
+      .eyebrow {
+        margin: 0 0 10px;
+        color: var(--app);
+        font-size: 12px;
+        font-weight: 760;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      h1,
+      h2,
+      h3 {
+        margin: 0;
+        letter-spacing: 0;
+        line-height: 1.12;
+      }
+
+      h1 {
+        max-width: 790px;
+        font-size: clamp(34px, 5vw, 58px);
+      }
+
+      h2 {
+        font-size: clamp(24px, 3.2vw, 34px);
+      }
+
+      h3 {
+        font-size: 18px;
+      }
+
+      p {
+        margin: 0;
+      }
+
+      .lede {
+        max-width: 760px;
+        margin-top: 18px;
+        color: var(--muted);
+        font-size: 18px;
+      }
+
+      .source-links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 24px;
+      }
+
+      .source-links a {
+        display: inline-flex;
+        align-items: center;
+        min-height: 38px;
+        padding: 8px 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        color: var(--ink);
+        font-size: 14px;
+        font-weight: 680;
+        text-decoration: none;
+      }
+
+      .source-links a:hover {
+        border-color: var(--line-strong);
+        background: #f9faf8;
+      }
+
+      .boundary-card {
+        padding: 22px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        gap: 18px;
+      }
+
+      .boundary-card strong {
+        display: block;
+        font-size: 14px;
+        color: var(--ink);
+      }
+
+      .boundary-card span {
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .boundary-stack {
+        display: grid;
+        gap: 12px;
+      }
+
+      .boundary-line {
+        border-left: 4px solid var(--line-strong);
+        padding-left: 12px;
+      }
+
+      .boundary-line.webflow {
+        border-left-color: var(--webflow);
+      }
+
+      .boundary-line.cs {
+        border-left-color: var(--app);
+      }
+
+      .nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin: 0 0 22px;
+      }
+
+      .nav a {
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.75);
+        color: var(--muted);
+        padding: 8px 12px;
+        font-size: 13px;
+        font-weight: 690;
+        text-decoration: none;
+      }
+
+      .nav a:hover {
+        color: var(--ink);
+        border-color: var(--line-strong);
+      }
+
+      .section {
+        margin-top: 22px;
+        padding: 24px;
+        overflow: hidden;
+      }
+
+      .section-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 18px;
+        margin-bottom: 18px;
+      }
+
+      .section-header p {
+        max-width: 690px;
+        color: var(--muted);
+      }
+
+      .legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .legend span {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 5px 8px;
+        color: var(--muted);
+        font-size: 12px;
+        white-space: nowrap;
+      }
+
+      .dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 999px;
+        background: var(--line-strong);
+      }
+
+      .dot.webflow {
+        background: var(--webflow);
+      }
+
+      .dot.app {
+        background: var(--app);
+      }
+
+      .dot.automation {
+        background: var(--automation);
+      }
+
+      .dot.data {
+        background: var(--data);
+      }
+
+      .dot.judgment {
+        background: var(--judgment);
+      }
+
+      .dot.legacy {
+        background: var(--legacy);
+      }
+
+      .graph-wrap {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fbfcfa;
+        overflow-x: auto;
+      }
+
+      svg.graph {
+        display: block;
+        width: 100%;
+        min-width: 980px;
+        height: auto;
+        font-family:
+          Inter,
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          'Segoe UI',
+          sans-serif;
+      }
+
+      .lane-bg {
+        fill: #ffffff;
+        stroke: #dfe4eb;
+        stroke-width: 1;
+      }
+
+      .lane-title {
+        fill: #6b7380;
+        font-size: 13px;
+        font-weight: 760;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+
+      .node rect {
+        fill: #ffffff;
+        stroke-width: 2;
+      }
+
+      .node.webflow rect {
+        stroke: var(--webflow);
+      }
+
+      .node.app rect {
+        stroke: var(--app);
+      }
+
+      .node.automation rect {
+        stroke: var(--automation);
+      }
+
+      .node.data rect {
+        stroke: var(--data);
+      }
+
+      .node.judgment rect {
+        stroke: var(--judgment);
+      }
+
+      .node.legacy rect {
+        stroke: var(--legacy);
+      }
+
+      .node text {
+        fill: var(--ink);
+        font-size: 14px;
+        font-weight: 720;
+      }
+
+      .node .sub {
+        fill: #6b7380;
+        font-size: 12px;
+        font-weight: 520;
+      }
+
+      .edge {
+        fill: none;
+        stroke: #46556b;
+        stroke-width: 1.8;
+        marker-end: url(#arrow);
+      }
+
+      .edge.soft {
+        stroke: #7c8798;
+        stroke-dasharray: 7 6;
+        marker-end: url(#arrow-soft);
+      }
+
+      .edge-label {
+        fill: #5f6876;
+        font-size: 12px;
+        font-weight: 650;
+      }
+
+      .note-grid,
+      .status-grid,
+      .dependency-grid {
+        display: grid;
+        gap: 14px;
+      }
+
+      .note-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        margin-top: 16px;
+      }
+
+      .note {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 14px;
+        background: #ffffff;
+      }
+
+      .note strong {
+        display: block;
+        margin-bottom: 4px;
+        font-size: 14px;
+      }
+
+      .note span {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .status-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+
+      .status-card {
+        padding: 16px;
+        box-shadow: none;
+      }
+
+      .status-card h3 {
+        margin-bottom: 10px;
+      }
+
+      .status-card ul,
+      .dependency-card ul {
+        display: grid;
+        gap: 8px;
+        margin: 0;
+        padding-left: 18px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .dependency-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .dependency-card {
+        padding: 18px;
+        box-shadow: none;
+      }
+
+      .dependency-card h3 {
+        margin-bottom: 8px;
+      }
+
+      .tag {
+        display: inline-flex;
+        align-items: center;
+        min-height: 24px;
+        border-radius: 999px;
+        padding: 3px 8px;
+        color: #ffffff;
+        font-size: 12px;
+        font-weight: 760;
+      }
+
+      .tag.webflow {
+        background: var(--webflow);
+      }
+
+      .tag.app {
+        background: var(--app);
+      }
+
+      .tag.automation {
+        background: var(--automation);
+      }
+
+      .tag.data {
+        background: var(--data);
+      }
+
+      .tag.judgment {
+        background: var(--judgment);
+      }
+
+      .tag.legacy {
+        background: var(--legacy);
+      }
+
+      .package-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+
+      .package-table th,
+      .package-table td {
+        border-bottom: 1px solid var(--line);
+        padding: 10px 8px;
+        text-align: left;
+        vertical-align: top;
+      }
+
+      .package-table th {
+        color: #566171;
+        font-size: 12px;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+
+      .package-table code {
+        color: var(--ink);
+        font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+        font-size: 12px;
+      }
+
+      .footer {
+        margin-top: 22px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      @media (max-width: 980px) {
+        .hero,
+        .note-grid,
+        .status-grid,
+        .dependency-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .section-header {
+          display: grid;
+        }
+      }
+
+      @media (max-width: 720px) {
+        .page {
+          width: min(100vw - 20px, 1180px);
+          padding-top: 16px;
+        }
+
+        .topbar {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .intro,
+        .boundary-card,
+        .section {
+          padding: 18px;
+        }
+
+        .package-table {
+          display: block;
+          overflow-x: auto;
+          white-space: nowrap;
+        }
+      }
+
+      @media print {
+        body {
+          background: #ffffff;
+        }
+
+        .page {
+          width: 100%;
+          padding: 0;
+        }
+
+        .nav,
+        .source-links {
+          display: none;
+        }
+
+        .intro,
+        .boundary-card,
+        .section,
+        .status-card,
+        .dependency-card {
+          box-shadow: none;
+        }
+
+        .section {
+          break-inside: avoid;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <div class="topbar">
+        <div>
+          <span class="brand">CREATE SOMETHING</span>
+          <span> / Webflow ownership visualization</span>
+        </div>
+        <div class="pill-row" aria-label="Document metadata">
+          <span class="pill">Last reviewed: 2026-05-14</span>
+          <span class="pill">Tracked: CRE-319, CRE-320, CRE-322</span>
+        </div>
+      </div>
+
+      <section class="hero" aria-labelledby="page-title">
+        <div class="intro">
+          <p class="eyebrow">Runtime and relationship map</p>
+          <h1 id="page-title">Webflow Surface Ownership and Runtime Map</h1>
+          <p class="lede">
+            A visual companion to the canonical Markdown map for all Webflow-related packages,
+            public flows, review MCPs, analyzer services, and governance Code Components in this
+            monorepo.
+          </p>
+          <div class="source-links">
+            <a href="./WEBFLOW_SURFACE_OWNERSHIP_RUNTIME_MAP.md">Markdown source</a>
+            <a href="#creator-flow">Creator flow</a>
+            <a href="#review-flow">Reviewer flow</a>
+            <a href="#governance-flow">Governance boundary</a>
+          </div>
+        </div>
+
+        <aside class="boundary-card" aria-label="Operating boundary">
+          <div class="boundary-stack">
+            <div class="boundary-line webflow">
+              <strong>Webflow posture</strong>
+              <span>Render UI, host entry points, embed apps, collect interaction.</span>
+            </div>
+            <div class="boundary-line cs">
+              <strong>CREATE SOMETHING posture</strong>
+              <span
+                >Own durable state, credentials, policy, workers, MCPs, telemetry, and
+                evidence.</span
+              >
+            </div>
+          </div>
+          <p>
+            The recurring implication: Webflow should present trusted state and workflow
+            affordances, while CREATE SOMETHING should decide, execute, persist, and audit.
+          </p>
+        </aside>
+      </section>
+
+      <nav class="nav" aria-label="Visualization sections">
+        <a href="#creator-flow">Public Creator Flows</a>
+        <a href="#review-flow">Reviewer and Agent Flows</a>
+        <a href="#governance-flow">Governance Boundary</a>
+        <a href="#status">Status Classes</a>
+        <a href="#dependencies">Flow Dependencies</a>
+        <a href="#packages">Package Index</a>
+      </nav>
+
+      <section class="section" id="creator-flow" aria-labelledby="creator-title">
+        <div class="section-header">
+          <div>
+            <h2 id="creator-title">Public Creator Flows</h2>
+            <p>
+              The creator-facing system splits Webflow-hosted entry and iframe surfaces from the
+              Cloud app logic, automation services, and durable evidence stores.
+            </p>
+          </div>
+          <div class="legend" aria-label="Legend">
+            <span><i class="dot webflow"></i>Webflow</span>
+            <span><i class="dot app"></i>App logic</span>
+            <span><i class="dot automation"></i>Automation</span>
+            <span><i class="dot data"></i>Data</span>
+          </div>
+        </div>
+
+        <div class="graph-wrap">
+          <svg
+            class="graph"
+            viewBox="0 0 1180 610"
+            role="img"
+            aria-labelledby="creator-graph-title creator-graph-desc"
+          >
+            <title id="creator-graph-title">Public creator flows</title>
+            <desc id="creator-graph-desc">
+              Diagram showing Webflow public surfaces connecting into application logic, automation
+              services, and durable data stores.
+            </desc>
+            <defs>
+              <marker
+                id="arrow"
+                viewBox="0 0 10 10"
+                refX="8.5"
+                refY="5"
+                markerWidth="7"
+                markerHeight="7"
+                orient="auto-start-reverse"
+              >
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#46556b"></path>
+              </marker>
+              <marker
+                id="arrow-soft"
+                viewBox="0 0 10 10"
+                refX="8.5"
+                refY="5"
+                markerWidth="7"
+                markerHeight="7"
+                orient="auto-start-reverse"
+              >
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#7c8798"></path>
+              </marker>
+            </defs>
+
+            <rect class="lane-bg" x="24" y="34" width="246" height="520" rx="8"></rect>
+            <text class="lane-title" x="44" y="64">Webflow public surfaces</text>
+            <rect class="lane-bg" x="312" y="34" width="256" height="520" rx="8"></rect>
+            <text class="lane-title" x="332" y="64">Application logic</text>
+            <rect class="lane-bg" x="610" y="34" width="246" height="520" rx="8"></rect>
+            <text class="lane-title" x="630" y="64">Automation services</text>
+            <rect class="lane-bg" x="898" y="34" width="246" height="520" rx="8"></rect>
+            <text class="lane-title" x="918" y="64">Durable data and evidence</text>
+
+            <g class="node webflow">
+              <rect x="44" y="102" width="206" height="68" rx="8"></rect>
+              <text x="62" y="130">webflow.com</text>
+              <text class="sub" x="62" y="151">submit-a-template page</text>
+            </g>
+            <g class="node webflow">
+              <rect x="44" y="226" width="206" height="68" rx="8"></rect>
+              <text x="62" y="254">dashboard cloud</text>
+              <text class="sub" x="62" y="275">apps/webflow-dashboard-cloud</text>
+            </g>
+            <g class="node webflow">
+              <rect x="44" y="350" width="206" height="68" rx="8"></rect>
+              <text x="62" y="378">submission app</text>
+              <text class="sub" x="62" y="399">marketplace iframe</text>
+            </g>
+
+            <g class="node app">
+              <rect x="332" y="102" width="216" height="68" rx="8"></rect>
+              <text x="350" y="130">dashboard core</text>
+              <text class="sub" x="350" y="151">shared domain logic</text>
+            </g>
+            <g class="node app">
+              <rect x="332" y="226" width="216" height="68" rx="8"></rect>
+              <text x="350" y="254">/api/auth/*</text>
+              <text class="sub" x="350" y="275">login and sessions</text>
+            </g>
+            <g class="node app">
+              <rect x="332" y="334" width="216" height="68" rx="8"></rect>
+              <text x="350" y="362">/api/assets/*</text>
+              <text class="sub" x="350" y="383">asset profile and uploads</text>
+            </g>
+            <g class="node app">
+              <rect x="332" y="442" width="216" height="68" rx="8"></rect>
+              <text x="350" y="470">/api/intake/*</text>
+              <text class="sub" x="350" y="491">creator and template intake</text>
+            </g>
+
+            <g class="node automation">
+              <rect x="630" y="140" width="206" height="68" rx="8"></rect>
+              <text x="648" y="168">template analyzer</text>
+              <text class="sub" x="648" y="189">autofill and checks</text>
+            </g>
+            <g class="node automation">
+              <rect x="630" y="284" width="206" height="68" rx="8"></rect>
+              <text x="648" y="312">upload worker</text>
+              <text class="sub" x="648" y="333">template-form-uploads</text>
+            </g>
+            <g class="node automation">
+              <rect x="630" y="428" width="206" height="68" rx="8"></rect>
+              <text x="648" y="456">validation API</text>
+              <text class="sub" x="648" y="477">webflow-api.createsomething.io</text>
+            </g>
+
+            <g class="node data">
+              <rect x="918" y="102" width="206" height="68" rx="8"></rect>
+              <text x="936" y="130">Airtable</text>
+              <text class="sub" x="936" y="151">appMoIgXMTTTNIc3p</text>
+            </g>
+            <g class="node data">
+              <rect x="918" y="226" width="206" height="68" rx="8"></rect>
+              <text x="936" y="254">KV sessions</text>
+              <text class="sub" x="936" y="275">SESSIONS binding</text>
+            </g>
+            <g class="node data">
+              <rect x="918" y="350" width="206" height="68" rx="8"></rect>
+              <text x="936" y="378">R2 uploads</text>
+              <text class="sub" x="936" y="399">UPLOADS bucket</text>
+            </g>
+            <g class="node data">
+              <rect x="918" y="474" width="206" height="68" rx="8"></rect>
+              <text x="936" y="502">D1 app state</text>
+              <text class="sub" x="936" y="523">optional DB binding</text>
+            </g>
+
+            <path class="edge" d="M250 136 C292 136 292 384 332 384"></path>
+            <text class="edge-label" x="262" y="220">iframe shell</text>
+            <path class="edge" d="M250 260 C296 260 296 136 332 136"></path>
+            <path class="edge" d="M250 260 C296 260 296 260 332 260"></path>
+            <path class="edge" d="M250 260 C296 260 296 368 332 368"></path>
+            <path class="edge" d="M250 260 C850 260 850 508 918 508"></path>
+            <path class="edge" d="M250 384 C296 384 296 476 332 476"></path>
+            <path class="edge" d="M548 260 C724 260 724 260 918 260"></path>
+            <path class="edge" d="M548 368 C720 368 720 136 918 136"></path>
+            <path class="edge" d="M548 368 C724 368 724 384 918 384"></path>
+            <path class="edge" d="M548 476 C710 476 710 136 918 136"></path>
+            <path class="edge" d="M548 476 C596 476 596 174 630 174"></path>
+            <path class="edge" d="M548 476 C596 476 596 318 630 318"></path>
+            <path class="edge" d="M548 476 C596 476 596 462 630 462"></path>
+            <path class="edge" d="M836 318 C880 318 880 384 918 384"></path>
+          </svg>
+        </div>
+
+        <div class="note-grid">
+          <div class="note">
+            <strong>Creator-critical state</strong>
+            <span
+              >Auth, submissions, uploads, analytics, and profile flows rely on Cloud app routes and
+              backend bindings.</span
+            >
+          </div>
+          <div class="note">
+            <strong>Analyzer posture</strong>
+            <span
+              >Analyzer output assists creators with validation and autofill. It is not reviewer
+              approval.</span
+            >
+          </div>
+          <div class="note">
+            <strong>Migration posture</strong>
+            <span
+              >The SvelteKit dashboard is now a parity reference for the Webflow Cloud dashboard
+              port.</span
+            >
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="review-flow" aria-labelledby="review-title">
+        <div class="section-header">
+          <div>
+            <h2 id="review-title">Reviewer and Agent Flows</h2>
+            <p>
+              Reviewer work should route through bounded MCPs and evidence surfaces. Raw Airtable
+              writes are not the normal review path.
+            </p>
+          </div>
+          <div class="legend" aria-label="Legend">
+            <span><i class="dot judgment"></i>Entry and judgment</span>
+            <span><i class="dot automation"></i>MCPs</span>
+            <span><i class="dot app"></i>Evidence</span>
+            <span><i class="dot data"></i>Data plane</span>
+          </div>
+        </div>
+
+        <div class="graph-wrap">
+          <svg
+            class="graph"
+            viewBox="0 0 1180 610"
+            role="img"
+            aria-labelledby="review-graph-title review-graph-desc"
+          >
+            <title id="review-graph-title">Reviewer and agent flows</title>
+            <desc id="review-graph-desc">
+              Diagram showing reviewer and agent entry points flowing through MCPs into evidence
+              sources, Airtable records, and Linear evidence.
+            </desc>
+            <defs>
+              <marker
+                id="review-arrow"
+                viewBox="0 0 10 10"
+                refX="8.5"
+                refY="5"
+                markerWidth="7"
+                markerHeight="7"
+                orient="auto-start-reverse"
+              >
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#46556b"></path>
+              </marker>
+              <marker
+                id="review-arrow-soft"
+                viewBox="0 0 10 10"
+                refX="8.5"
+                refY="5"
+                markerWidth="7"
+                markerHeight="7"
+                orient="auto-start-reverse"
+              >
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#7c8798"></path>
+              </marker>
+            </defs>
+            <style>
+              #review-flow .edge {
+                marker-end: url(#review-arrow);
+              }
+              #review-flow .edge.soft {
+                marker-end: url(#review-arrow-soft);
+              }
+            </style>
+            <rect class="lane-bg" x="24" y="34" width="246" height="520" rx="8"></rect>
+            <text class="lane-title" x="44" y="64">Reviewer and agent entry</text>
+            <rect class="lane-bg" x="312" y="34" width="256" height="520" rx="8"></rect>
+            <text class="lane-title" x="332" y="64">Review MCPs</text>
+            <rect class="lane-bg" x="610" y="34" width="246" height="520" rx="8"></rect>
+            <text class="lane-title" x="630" y="64">Evidence and analysis</text>
+            <rect class="lane-bg" x="898" y="34" width="246" height="520" rx="8"></rect>
+            <text class="lane-title" x="918" y="64">Review data plane</text>
+
+            <g class="node judgment">
+              <rect x="44" y="102" width="206" height="68" rx="8"></rect>
+              <text x="62" y="130">human reviewer</text>
+              <text class="sub" x="62" y="151">approval boundary</text>
+            </g>
+            <g class="node judgment">
+              <rect x="44" y="226" width="206" height="68" rx="8"></rect>
+              <text x="62" y="254">Dify reviewer agents</text>
+              <text class="sub" x="62" y="275">guided review workflow</text>
+            </g>
+            <g class="node judgment">
+              <rect x="44" y="350" width="206" height="68" rx="8"></rect>
+              <text x="62" y="378">Hub MCP</text>
+              <text class="sub" x="62" y="399">bundle routing</text>
+            </g>
+
+            <g class="node automation">
+              <rect x="332" y="80" width="216" height="68" rx="8"></rect>
+              <text x="350" y="108">template review MCP</text>
+              <text class="sub" x="350" y="129">template workflow writes</text>
+            </g>
+            <g class="node automation">
+              <rect x="332" y="202" width="216" height="68" rx="8"></rect>
+              <text x="350" y="230">app review MCP</text>
+              <text class="sub" x="350" y="251">app workflow writes</text>
+            </g>
+            <g class="node automation">
+              <rect x="332" y="324" width="216" height="68" rx="8"></rect>
+              <text x="350" y="352">site analyzer MCP</text>
+              <text class="sub" x="350" y="373">published URL evidence</text>
+            </g>
+            <g class="node automation">
+              <rect x="332" y="446" width="216" height="68" rx="8"></rect>
+              <text x="350" y="474">webflow-local MCP</text>
+              <text class="sub" x="350" y="495">plagiarism and framework</text>
+            </g>
+
+            <g class="node app">
+              <rect x="630" y="102" width="206" height="68" rx="8"></rect>
+              <text x="648" y="130">published evidence</text>
+              <text class="sub" x="648" y="151">URL, screenshots, DOM</text>
+            </g>
+            <g class="node app">
+              <rect x="630" y="226" width="206" height="68" rx="8"></rect>
+              <text x="648" y="254">policy snapshots</text>
+              <text class="sub" x="648" y="275">review caveats</text>
+            </g>
+            <g class="node app">
+              <rect x="630" y="350" width="206" height="68" rx="8"></rect>
+              <text x="648" y="378">analyzer DO jobs</text>
+              <text class="sub" x="648" y="399">job persistence</text>
+            </g>
+            <g class="node app">
+              <rect x="630" y="474" width="206" height="68" rx="8"></rect>
+              <text x="648" y="502">plagiarism checks</text>
+              <text class="sub" x="648" y="523">framework detection</text>
+            </g>
+
+            <g class="node data">
+              <rect x="918" y="82" width="206" height="60" rx="8"></rect>
+              <text x="936" y="112">Airtable Assets</text>
+              <text class="sub" x="936" y="132">asset records</text>
+            </g>
+            <g class="node data">
+              <rect x="918" y="182" width="206" height="60" rx="8"></rect>
+              <text x="936" y="212">Asset Versions</text>
+              <text class="sub" x="936" y="232">submitted versions</text>
+            </g>
+            <g class="node data">
+              <rect x="918" y="282" width="206" height="60" rx="8"></rect>
+              <text x="936" y="312">Asset Releases</text>
+              <text class="sub" x="936" y="332">release posture</text>
+            </g>
+            <g class="node data">
+              <rect x="918" y="424" width="206" height="68" rx="8"></rect>
+              <text x="936" y="452">Linear evidence</text>
+              <text class="sub" x="936" y="473">tracked review context</text>
+            </g>
+
+            <path class="edge" d="M147 170 C147 194 147 204 147 226"></path>
+            <path class="edge" d="M147 294 C147 318 147 328 147 350"></path>
+            <path class="edge" d="M250 384 C296 384 296 114 332 114"></path>
+            <path class="edge" d="M250 384 C296 384 296 236 332 236"></path>
+            <path class="edge" d="M250 384 C296 384 296 358 332 358"></path>
+            <path class="edge" d="M250 384 C296 384 296 480 332 480"></path>
+
+            <path class="edge" d="M548 114 C720 114 720 112 918 112"></path>
+            <path class="edge" d="M548 114 C720 114 720 212 918 212"></path>
+            <path class="edge" d="M548 114 C720 114 720 312 918 312"></path>
+            <path class="edge" d="M548 236 C720 236 720 112 918 112"></path>
+            <path class="edge" d="M548 236 C720 236 720 212 918 212"></path>
+
+            <path class="edge" d="M548 358 C596 358 596 136 630 136"></path>
+            <path class="edge" d="M548 358 C596 358 596 260 630 260"></path>
+            <path class="edge" d="M548 358 C596 358 596 384 630 384"></path>
+            <path class="edge" d="M548 480 C596 480 596 508 630 508"></path>
+            <path class="edge" d="M836 136 C880 136 880 114 918 114"></path>
+            <path class="edge" d="M836 508 C880 508 880 458 918 458"></path>
+            <path class="edge" d="M548 114 C740 114 740 458 918 458"></path>
+            <path class="edge" d="M548 236 C750 236 750 458 918 458"></path>
+          </svg>
+        </div>
+
+        <div class="note-grid">
+          <div class="note">
+            <strong>Normal write path</strong>
+            <span>Template and app review writes should pass through the matching review MCP.</span>
+          </div>
+          <div class="note">
+            <strong>Evidence caveat</strong>
+            <span
+              >Published-site analyzer jobs are default review evidence. Manual Designer diagnostics
+              require explicit scope.</span
+            >
+          </div>
+          <div class="note">
+            <strong>Approval boundary</strong>
+            <span
+              >Reviewer agents should verify capability flags and receive explicit approval before
+              writes.</span
+            >
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="governance-flow" aria-labelledby="governance-title">
+        <div class="section-header">
+          <div>
+            <h2 id="governance-title">Governance Code Components Boundary</h2>
+            <p>
+              Code Components should render the governance console, but policy, credentials,
+              workflow state, and mutation authority belong behind Cloudflare routes and
+              operator-only boundaries.
+            </p>
+          </div>
+          <div class="legend" aria-label="Legend">
+            <span><i class="dot webflow"></i>Webflow UI</span>
+            <span><i class="dot automation"></i>Cloudflare API</span>
+            <span><i class="dot data"></i>Durable state</span>
+            <span><i class="dot judgment"></i>Policy</span>
+          </div>
+        </div>
+
+        <div class="graph-wrap">
+          <svg
+            class="graph"
+            viewBox="0 0 1180 560"
+            role="img"
+            aria-labelledby="governance-graph-title governance-graph-desc"
+          >
+            <title id="governance-graph-title">Governance Code Components boundary</title>
+            <desc id="governance-graph-desc">
+              Diagram showing Webflow Code Components rendering the console, Cloudflare routes
+              handling API requests, and durable governance state remaining outside browser props.
+            </desc>
+            <defs>
+              <marker
+                id="governance-arrow"
+                viewBox="0 0 10 10"
+                refX="8.5"
+                refY="5"
+                markerWidth="7"
+                markerHeight="7"
+                orient="auto-start-reverse"
+              >
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#46556b"></path>
+              </marker>
+              <marker
+                id="governance-arrow-soft"
+                viewBox="0 0 10 10"
+                refX="8.5"
+                refY="5"
+                markerWidth="7"
+                markerHeight="7"
+                orient="auto-start-reverse"
+              >
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#7c8798"></path>
+              </marker>
+            </defs>
+            <style>
+              #governance-flow .edge {
+                marker-end: url(#governance-arrow);
+              }
+              #governance-flow .edge.soft {
+                marker-end: url(#governance-arrow-soft);
+              }
+            </style>
+            <rect class="lane-bg" x="24" y="34" width="306" height="470" rx="8"></rect>
+            <text class="lane-title" x="44" y="64">Webflow Code Components</text>
+            <rect class="lane-bg" x="390" y="34" width="306" height="470" rx="8"></rect>
+            <text class="lane-title" x="410" y="64">Cloudflare application routes</text>
+            <rect class="lane-bg" x="756" y="34" width="388" height="470" rx="8"></rect>
+            <text class="lane-title" x="776" y="64">Durable governance state</text>
+
+            <g class="node webflow">
+              <rect x="48" y="104" width="246" height="68" rx="8"></rect>
+              <text x="66" y="132">governed console</text>
+              <text class="sub" x="66" y="153">governed-workflow-console.webflow.io</text>
+            </g>
+            <g class="node webflow">
+              <rect x="48" y="234" width="246" height="68" rx="8"></rect>
+              <text x="66" y="262">webflow-components</text>
+              <text class="sub" x="66" y="283">React Code Components</text>
+            </g>
+            <g class="node webflow">
+              <rect x="48" y="364" width="246" height="68" rx="8"></rect>
+              <text x="66" y="392">Designer props</text>
+              <text class="sub" x="66" y="413">public configuration only</text>
+            </g>
+
+            <g class="node automation">
+              <rect x="414" y="72" width="246" height="58" rx="8"></rect>
+              <text x="432" y="103">GET workflow context</text>
+              <text class="sub" x="432" y="123">/api/canon/workflow-context</text>
+            </g>
+            <g class="node automation">
+              <rect x="414" y="174" width="246" height="58" rx="8"></rect>
+              <text x="432" y="205">POST agent</text>
+              <text class="sub" x="432" y="225">/api/canon/agent</text>
+            </g>
+            <g class="node automation">
+              <rect x="414" y="276" width="246" height="58" rx="8"></rect>
+              <text x="432" y="307">POST action preview</text>
+              <text class="sub" x="432" y="327">/api/canon/action-preview</text>
+            </g>
+            <g class="node automation">
+              <rect x="414" y="396" width="246" height="68" rx="8"></rect>
+              <text x="432" y="424">POST operator approval</text>
+              <text class="sub" x="432" y="445">trusted session only</text>
+            </g>
+
+            <g class="node data">
+              <rect x="780" y="72" width="164" height="58" rx="8"></rect>
+              <text x="798" y="103">D1 state</text>
+              <text class="sub" x="798" y="123">workflow records</text>
+            </g>
+            <g class="node judgment">
+              <rect x="962" y="72" width="164" height="58" rx="8"></rect>
+              <text x="980" y="103">Policy artifacts</text>
+              <text class="sub" x="980" y="123">repo policy</text>
+            </g>
+            <g class="node data">
+              <rect x="780" y="188" width="164" height="58" rx="8"></rect>
+              <text x="798" y="219">Linear evidence</text>
+              <text class="sub" x="798" y="239">task context</text>
+            </g>
+            <g class="node data">
+              <rect x="962" y="188" width="164" height="58" rx="8"></rect>
+              <text x="980" y="219">Activity events</text>
+              <text class="sub" x="980" y="239">public-safe log</text>
+            </g>
+            <g class="node judgment">
+              <rect x="870" y="340" width="164" height="68" rx="8"></rect>
+              <text x="888" y="368">Infisical</text>
+              <text class="sub" x="888" y="389">server-only secrets</text>
+            </g>
+
+            <path class="edge" d="M294 138 C348 138 348 101 414 101"></path>
+            <path class="edge" d="M294 138 C348 138 348 203 414 203"></path>
+            <path class="edge" d="M294 138 C348 138 348 305 414 305"></path>
+            <path class="edge soft" d="M294 138 C348 138 348 430 414 430"></path>
+            <text class="edge-label" x="302" y="470">operator-only mutation route</text>
+            <path class="edge" d="M171 234 C171 212 171 194 171 172"></path>
+            <path class="edge" d="M171 364 C171 296 171 226 171 172"></path>
+            <path class="edge" d="M660 101 C714 101 714 101 780 101"></path>
+            <path class="edge" d="M660 101 C770 101 770 101 962 101"></path>
+            <path class="edge" d="M660 101 C714 101 714 217 780 217"></path>
+            <path class="edge" d="M660 203 C714 203 714 101 780 101"></path>
+            <path class="edge" d="M660 305 C770 305 770 101 962 101"></path>
+            <path class="edge" d="M660 430 C724 430 724 217 962 217"></path>
+            <path class="edge" d="M660 430 C724 430 724 101 780 101"></path>
+            <path class="edge soft" d="M952 340 C952 292 936 132 944 101"></path>
+            <path class="edge soft" d="M952 408 C870 470 738 430 660 430"></path>
+          </svg>
+        </div>
+
+        <div class="note-grid">
+          <div class="note">
+            <strong>Public preview rule</strong>
+            <span>Public webflow.io previews should remain read-only or local-state only.</span>
+          </div>
+          <div class="note">
+            <strong>Credential rule</strong>
+            <span
+              >Internal API keys and token-bearing endpoints do not belong in Webflow props or
+              browser code.</span
+            >
+          </div>
+          <div class="note">
+            <strong>Share rule</strong>
+            <span
+              >Library sharing is externally visible and should follow governance
+              verification.</span
+            >
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="status" aria-labelledby="status-title">
+        <div class="section-header">
+          <div>
+            <h2 id="status-title">Production, Legacy, Experimental</h2>
+            <p>
+              This classification is the triage view: it separates active product surfaces from
+              internal adjuncts, utility scripts, and historical references.
+            </p>
+          </div>
+        </div>
+
+        <div class="status-grid">
+          <article class="status-card">
+            <span class="tag app">Active product</span>
+            <h3>Production or candidate</h3>
+            <ul>
+              <li>webflow-dashboard-cloud</li>
+              <li>marketplace-template-submission-cloud</li>
+              <li>webflow-components</li>
+              <li>template/app review MCPs</li>
+              <li>site analyzer and validators</li>
+            </ul>
+          </article>
+          <article class="status-card">
+            <span class="tag automation">Internal</span>
+            <h3>Admin and operations</h3>
+            <ul>
+              <li>webflow-apps-admin</li>
+              <li>bundle-scanner</li>
+              <li>webflow-automation</li>
+              <li>webflow-intake</li>
+            </ul>
+          </article>
+          <article class="status-card">
+            <span class="tag data">Utility</span>
+            <h3>Embedded and support</h3>
+            <ul>
+              <li>landing-page-filter</li>
+              <li>wf-search-category</li>
+              <li>gsap-validation-worker</li>
+              <li>webflow-validation worker</li>
+            </ul>
+          </article>
+          <article class="status-card">
+            <span class="tag legacy">Reference</span>
+            <h3>Legacy surfaces</h3>
+            <ul>
+              <li>webflow-dashboard</li>
+              <li>webflow-review</li>
+              <li>older readiness docs</li>
+              <li>prototype snippets</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section class="section" id="dependencies" aria-labelledby="dependencies-title">
+        <div class="section-header">
+          <div>
+            <h2 id="dependencies-title">Flow Dependencies</h2>
+            <p>
+              Each public or reviewer workflow has a different failure surface. Triage should start
+              from the flow and then move to package, runtime, binding, and evidence.
+            </p>
+          </div>
+        </div>
+
+        <div class="dependency-grid">
+          <article class="dependency-card">
+            <span class="tag webflow">Creator dashboard</span>
+            <h3>Runtime needs</h3>
+            <ul>
+              <li>Airtable API key and base ID</li>
+              <li>SESSIONS KV and UPLOADS R2</li>
+              <li>Resend or Knock login path</li>
+              <li>Optional analyzer and Turnstile secrets</li>
+            </ul>
+          </article>
+          <article class="dependency-card">
+            <span class="tag app">Submission app</span>
+            <h3>Runtime needs</h3>
+            <ul>
+              <li>Parent Webflow iframe shell</li>
+              <li>Airtable automation webhook envelope</li>
+              <li>Upload worker secret and route</li>
+              <li>Template analyzer API base</li>
+            </ul>
+          </article>
+          <article class="dependency-card">
+            <span class="tag judgment">Review hubs</span>
+            <h3>Runtime needs</h3>
+            <ul>
+              <li>Airtable PAT and base ID</li>
+              <li>MCP API key from Infisical</li>
+              <li>Reviewer directory mapping</li>
+              <li>Analyzer browser credentials and DO jobs</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section class="section" id="packages" aria-labelledby="packages-title">
+        <div class="section-header">
+          <div>
+            <h2 id="packages-title">Package Index</h2>
+            <p>
+              Compact index of the Webflow-related packages and surfaces covered by the ownership
+              review.
+            </p>
+          </div>
+        </div>
+
+        <table class="package-table">
+          <thead>
+            <tr>
+              <th>Surface</th>
+              <th>Package or config</th>
+              <th>Runtime</th>
+              <th>Ownership implication</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Creator dashboard Cloud port</td>
+              <td>
+                <code>apps/webflow-dashboard-cloud</code>,
+                <code>packages/webflow-dashboard-core</code>
+              </td>
+              <td>Next.js 15 on Webflow Cloud/OpenNext</td>
+              <td>
+                Current authenticated dashboard path; keep shared creator domain logic in core.
+              </td>
+            </tr>
+            <tr>
+              <td>Marketplace template submission</td>
+              <td><code>apps/marketplace-template-submission-cloud</code></td>
+              <td>Webflow Cloud iframe</td>
+              <td>
+                Parent Webflow page owns shell; app owns form, validation, uploads, and webhooks.
+              </td>
+            </tr>
+            <tr>
+              <td>Governance console</td>
+              <td>
+                <code>packages/webflow-components</code>,
+                <code>config/webflow/control-plane.json</code>
+              </td>
+              <td>Webflow Code Components</td>
+              <td>Render governance UI only; mutation authority stays behind trusted routes.</td>
+            </tr>
+            <tr>
+              <td>Template Review MCP</td>
+              <td><code>packages/webflow-template-review-mcp</code></td>
+              <td>Cloudflare Worker MCP</td>
+              <td>Canonical bounded write path for template reviews.</td>
+            </tr>
+            <tr>
+              <td>App Review MCP</td>
+              <td><code>packages/webflow-app-review-mcp</code></td>
+              <td>Cloudflare Worker MCP</td>
+              <td>Canonical bounded write path for app reviews.</td>
+            </tr>
+            <tr>
+              <td>Site Analyzer MCP</td>
+              <td><code>packages/webflow-site-analyzer-mcp</code></td>
+              <td>Node, Worker, and remote MCP</td>
+              <td>Published-site evidence surface with manual-state caveats.</td>
+            </tr>
+            <tr>
+              <td>Local Webflow MCP</td>
+              <td><code>packages/webflow-mcp</code></td>
+              <td>Local stdio/HTTP or Worker</td>
+              <td>Compatibility MCP for plagiarism, framework, and scan stats.</td>
+            </tr>
+            <tr>
+              <td>Template analyzer</td>
+              <td><code>packages/webflow-template-analyzer</code></td>
+              <td>Designer extension and container Worker</td>
+              <td>Creator assistance surface; failures should degrade to manual entry.</td>
+            </tr>
+            <tr>
+              <td>Template validation</td>
+              <td><code>packages/webflow-template-validation</code></td>
+              <td>Next.js companion app, extension, Worker</td>
+              <td>
+                Published-site checks now; Designer-only checks require explicit Webflow SDK scope.
+              </td>
+            </tr>
+            <tr>
+              <td>Search and utility scripts</td>
+              <td>
+                <code>packages/webflow-template-search</code>,
+                <code>packages/landing-page-filter</code>, <code>packages/wf-search-category</code>
+              </td>
+              <td>Workers, Pages/functions, scripts</td>
+              <td>Public discoverability and admin sync, not reviewer judgment.</td>
+            </tr>
+            <tr>
+              <td>Operations and admin tooling</td>
+              <td>
+                <code>packages/webflow-automation</code>, <code>packages/webflow-apps-admin</code>,
+                <code>packages/bundle-scanner</code>, <code>packages/webflow-intake</code>
+              </td>
+              <td>Workers, console scripts, browser tooling, process docs</td>
+              <td>
+                Internal adjuncts; persist durable findings into Airtable, Linear, or MCP evidence.
+              </td>
+            </tr>
+            <tr>
+              <td>Legacy and reference systems</td>
+              <td><code>packages/webflow-dashboard</code>, <code>packages/webflow-review</code></td>
+              <td>SvelteKit dashboard, prototype review Workers/snippets</td>
+              <td>
+                Use as parity or historical context, not default destination for new behavior.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <p class="footer">
+        Canonical Markdown source: docs/WEBFLOW_SURFACE_OWNERSHIP_RUNTIME_MAP.md. This standalone
+        HTML version is intentionally static and has no external runtime dependencies.
+      </p>
+    </main>
+  </body>
+</html>
