@@ -2206,6 +2206,22 @@ importers:
 
   packages/notion-tools: {}
 
+  packages/notion-worker-experiments:
+    dependencies:
+      '@notionhq/client':
+        specifier: ^2.2.15
+        version: 2.3.0
+      '@notionhq/workers':
+        specifier: ^0.3.0
+        version: 0.3.0(@notionhq/client@2.3.0)
+    devDependencies:
+      '@types/node':
+        specifier: 24.10.9
+        version: 24.10.9
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
   packages/observability:
     dependencies:
       braintrust:
@@ -7178,6 +7194,12 @@ packages:
   '@notionhq/client@5.9.0':
     resolution: {integrity: sha512-TvAVMfwtVv61hsPrRfB9ehgzSjX6DaAi1ZRAnpg8xFjzaXhzhEfbO0PhBRm3ecSv1azDuO2kBuyQHh2/z7G4YQ==}
     engines: {node: '>=18'}
+
+  '@notionhq/workers@0.3.0':
+    resolution: {integrity: sha512-8WbldCJIBMhxklSnNRPONdpZiCy9UxhqiBaC4kVQWd2w2qUu/EEvHVcNV3byq1Je6mRP7HHMz4Lh+pH+FBRVZw==}
+    engines: {node: '>=22.0.0', npm: '>=10.9.2'}
+    peerDependencies:
+      '@notionhq/client': ^2.2.15
 
   '@openai/agents-core@0.4.10':
     resolution: {integrity: sha512-U2uu22OZGFZ53Ogm5Qtzymg1Oc1FFNdkh+fg0QWDJ7mERQU5G4LzhbTiwS/jylVgKPj74e2uBb8oj/X5rHwxDQ==}
@@ -21304,6 +21326,12 @@ snapshots:
       - encoding
 
   '@notionhq/client@5.9.0': {}
+
+  '@notionhq/workers@0.3.0(@notionhq/client@2.3.0)':
+    dependencies:
+      '@notionhq/client': 2.3.0
+      ajv: 8.17.1
+      ajv-formats: 3.0.1(ajv@8.17.1)
 
   '@openai/agents-core@0.4.10(@cfworker/json-schema@4.1.1)(hono@4.11.7)(ws@8.19.0(bufferutil@4.1.0)(utf-8-validate@6.0.6))(zod@3.25.76)':
     dependencies:

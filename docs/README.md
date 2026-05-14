@@ -68,6 +68,9 @@ Read in this order when you need broad repo context:
 - [guides/MCP_DUI_ORGANIZATION.md](./guides/MCP_DUI_ORGANIZATION.md)
 - [guides/MCP_APPS_INTEGRATION.md](./guides/MCP_APPS_INTEGRATION.md)
 - [MCP_IMPLEMENTATION_COMPARISON_2026-03-07.md](./MCP_IMPLEMENTATION_COMPARISON_2026-03-07.md)
+- [guides/NOTION_WORKERS_AND_CLI_2026.md](./guides/NOTION_WORKERS_AND_CLI_2026.md)
+- [guides/NOTION_API_COMPATIBILITY_AUDIT_2026.md](./guides/NOTION_API_COMPATIBILITY_AUDIT_2026.md)
+- [guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md](./guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md)
 
 ### Runbooks and operational procedures
 
@@ -84,6 +87,9 @@ Read in this order when you need broad repo context:
 - [guides/EXAMPLES.md](./guides/EXAMPLES.md)
 - [guides/COMPONENT_GUIDE.md](./guides/COMPONENT_GUIDE.md)
 - [guides/SKILLS.md](./guides/SKILLS.md)
+- [guides/NOTION_WORKERS_AND_CLI_2026.md](./guides/NOTION_WORKERS_AND_CLI_2026.md)
+- [guides/NOTION_API_COMPATIBILITY_AUDIT_2026.md](./guides/NOTION_API_COMPATIBILITY_AUDIT_2026.md)
+- [guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md](./guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md)
 - [guides/STEEL_CLI.md](./guides/STEEL_CLI.md)
 - [guides/UNDERSTANDING_TEMPLATE.md](./guides/UNDERSTANDING_TEMPLATE.md)
 
@@ -119,6 +125,12 @@ docs/
   [MCP_SCAFFOLD.md](./MCP_SCAFFOLD.md),
   [COMPOSIO_PATTERNS.md](./COMPOSIO_PATTERNS.md),
   [MCP_FLEET_REGISTRY.md](./MCP_FLEET_REGISTRY.md)
+
+- **Working with Notion Workers or Notion API migrations**:
+  [guides/NOTION_WORKERS_AND_CLI_2026.md](./guides/NOTION_WORKERS_AND_CLI_2026.md),
+  [guides/NOTION_API_COMPATIBILITY_AUDIT_2026.md](./guides/NOTION_API_COMPATIBILITY_AUDIT_2026.md),
+  [guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md](./guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md),
+  [COMPOSIO_PATTERNS.md](./COMPOSIO_PATTERNS.md)
 
 - **Changing policy or approval behavior**:
   [policies/README.md](./policies/README.md),
