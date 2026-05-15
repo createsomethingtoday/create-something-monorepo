@@ -105,18 +105,6 @@ export const REGISTRY_CATALOG_ENTRIES = [
     "authType": "bearer"
   },
   {
-    "name": "Webflow Site Analyzer",
-    "slug": "webflow-site-analyzer",
-    "url": "https://analyzer.mcp.createsomething.agency",
-    "description": "Webflow Site Analyzer MCP — browser-backed template validation with Steel + Groq",
-    "category": "create-something",
-    "transports": [
-      "http"
-    ],
-    "requiresAuth": true,
-    "authType": "bearer"
-  },
-  {
     "name": "Webflow Template Review",
     "slug": "webflow-template-review",
     "url": "https://webflow-template-review-mcp.createsomething.workers.dev",

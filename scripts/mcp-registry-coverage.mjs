@@ -192,13 +192,13 @@ const PACKAGE_COVERAGE = {
     registry: ['webflow-local']
   },
   'packages/webflow-site-analyzer-mcp': {
-    registry: ['webflow-site-analyzer-mcp']
+    note: 'retired Webflow analyzer implementation; not registered in active Hub routing'
   },
   'packages/webflow-site-analyzer-mcp/worker': {
-    registry: ['webflow-site-analyzer-mcp']
+    note: 'retired Webflow analyzer Worker; deployment route removed from active Hub routing'
   },
   'packages/webflow-site-analyzer-mcp/workers/remote': {
-    registry: ['webflow-site-analyzer-mcp']
+    note: 'retired Webflow analyzer remote Worker; deployment route removed from active Hub routing'
   },
   'packages/webflow-template-review-mcp': {
     registry: ['webflow-template-review-mcp']

@@ -8,12 +8,12 @@ Brokered, local, dormant, and non-HTTP servers are summarized but excluded from 
 
 ## Summary
 
-- MCP registry servers: 1033
-- Dify-direct candidates: 38
+- MCP registry servers: 1032
+- Dify-direct candidates: 37
 - Dify inventory status: `partial`
 - Dify MCP server cards in inventory: 16
 - Dify agents in inventory: 14
-- Dify MCP intake artifacts: 25
+- Dify MCP intake artifacts: 21
 
 ## Candidate Status
 
@@ -22,7 +22,7 @@ Brokered, local, dormant, and non-HTTP servers are summarized but excluded from 
 | `ready` | 5 | Mapped to a Dify server and published agent with smoke/eval gates. |
 | `agent-needs-gates` | 0 | Published agent exists but smoke/eval evidence is incomplete. |
 | `agent-draft` | 0 | Agent exists but is not published yet. |
-| `intake-ready` | 22 | Repo has a Dify Studio intake artifact, but the server card and discovered tools are not codified yet. |
+| `intake-ready` | 21 | Repo has a Dify Studio intake artifact, but the server card and discovered tools are not codified yet. |
 | `server-only` | 0 | Dify MCP server exists but no Dify agent uses it yet. |
 | `missing-dify-server` | 11 | No Dify MCP server card is codified for this registry server. |
 
@@ -70,12 +70,11 @@ Brokered, local, dormant, and non-HTTP servers are summarized but excluded from 
 | `substrate-mcp` | `intake-ready` | - | `config/dify-mcp-intake/substrate.json` | - | - | 0 | `direct` | Register the Dify MCP server card from the intake artifact, discover tools, then codify inventory. |
 | `webflow-app-review-mcp` | `intake-ready` | - | `config/dify-mcp-intake/webflow-app-review.json` | - | - | 0 | `direct` | Register the Dify MCP server card from the intake artifact, discover tools, then codify inventory. |
 | `webflow-local` | `intake-ready` | - | `config/dify-mcp-intake/webflow-local.json` | - | - | 10 | `direct` | Register the Dify MCP server card from the intake artifact, discover tools, then codify inventory. |
-| `webflow-site-analyzer-mcp` | `intake-ready` | - | `config/dify-mcp-intake/webflow-site-analyzer.json` | - | - | 22 | `unset` | Register the Dify MCP server card from the intake artifact, discover tools, then codify inventory. |
 | `webflow-template-review-mcp` | `intake-ready` | - | `config/dify-mcp-intake/webflow-template-review.json` | - | - | 0 | `direct` | Register the Dify MCP server card from the intake artifact, discover tools, then codify inventory. |
 | `abundance-jobs-mcp` | `ready` | `abundance-jobs` | - | `abundance-hub` | `abundance-hub` | 4 | `direct` | Keep smoke/eval evidence current. |
-| `create-something` | `ready` | `create-something` | `config/dify-mcp-intake/create-something.json` | `create-something-guide-agent` | `create-something-guide-agent` | 5 | `direct` | Keep smoke/eval evidence current. |
-| `playbook` | `ready` | `playbook` | `config/dify-mcp-intake/playbook.json` | `create-something-guide-agent` | `create-something-guide-agent` | 14 | `direct` | Keep smoke/eval evidence current. |
-| `three-tier-framework` | `ready` | `three-tier-framework` | `config/dify-mcp-intake/three-tier-framework.json` | `create-something-guide-agent` | `create-something-guide-agent` | 6 | `direct` | Keep smoke/eval evidence current. |
+| `create-something` | `ready` | `create-something` | - | `create-something-guide-agent` | `create-something-guide-agent` | 5 | `direct` | Keep smoke/eval evidence current. |
+| `playbook` | `ready` | `playbook` | - | `create-something-guide-agent` | `create-something-guide-agent` | 14 | `direct` | Keep smoke/eval evidence current. |
+| `three-tier-framework` | `ready` | `three-tier-framework` | - | `create-something-guide-agent` | `create-something-guide-agent` | 6 | `direct` | Keep smoke/eval evidence current. |
 | `youtube-transcript-notion-mcp` | `ready` | `yt-transcript-notion` | - | `youtube-transcript-notion-agent` | `youtube-transcript-notion-agent` | 6 | `direct` | Keep smoke/eval evidence current. |
 
 ## Intake-Ready Candidate URLs
@@ -102,7 +101,6 @@ Brokered, local, dormant, and non-HTTP servers are summarized but excluded from 
 | `substrate-mcp` | `config/dify-mcp-intake/substrate.json` | `https://substrate.mcp.createsomething.agency/mcp` | Substrate execution/storage MCP |
 | `webflow-app-review-mcp` | `config/dify-mcp-intake/webflow-app-review.json` | `https://webflow-app-review-mcp.createsomething.workers.dev/mcp` | Webflow App Review MCP for app asset and version workflows |
 | `webflow-local` | `config/dify-mcp-intake/webflow-local.json` | `https://webflow-mcp.createsomething.workers.dev/mcp` | Remote Webflow Marketplace MCP for plagiarism and framework analysis; kept as webflow-local for existing Hub bundle compatibility |
-| `webflow-site-analyzer-mcp` | `config/dify-mcp-intake/webflow-site-analyzer.json` | `https://analyzer.mcp.createsomething.agency/mcp` | Webflow Site Analyzer MCP — browser-backed template validation with Steel + Groq |
 | `webflow-template-review-mcp` | `config/dify-mcp-intake/webflow-template-review.json` | `https://webflow-template-review-mcp.createsomething.workers.dev/mcp` | Webflow Template Review MCP for template asset and version workflows |
 
 ## Unmapped Candidate URLs

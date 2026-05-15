@@ -38,7 +38,6 @@ const FLEET_REGISTRY = {
   ],
   local: [
     'packages/quickbooks-notion-mcp',
-    'packages/webflow-site-analyzer-mcp',
     'packages/agency/clients/outerfields/mcp-server',
   ],
 };

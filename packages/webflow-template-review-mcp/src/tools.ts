@@ -681,6 +681,7 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
       release_record_id: z.string().optional(),
       reject_reason: z.string().optional(),
       rejection_feedback: z.string().optional(),
+      agent_review_feedback: z.string().optional(),
     },
     async ({
       version_id,
@@ -694,6 +695,7 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
       release_record_id,
       reject_reason,
       rejection_feedback,
+      agent_review_feedback,
     }) => {
       try {
         const reviewer = getReviewer();
@@ -721,6 +723,7 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
             release_record_id,
             reject_reason,
             rejection_feedback,
+            agent_review_feedback,
           }),
         });
       } catch (error) {

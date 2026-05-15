@@ -86,15 +86,14 @@ flowchart LR
   subgraph ReviewMCPs["Review MCPs"]
     TemplateMCP["webflow-template-review-mcp"]
     AppMCP["webflow-app-review-mcp"]
-    AnalyzerMCP["webflow-site-analyzer-mcp"]
     LocalMCP["webflow-local / webflow-mcp"]
   end
 
   subgraph Evidence["Evidence and analysis"]
+    AgentSandbox["agent sandbox"]
     PublishedEvidence["Published-site evidence"]
     PolicySnapshots["Policy snapshots"]
     Plagiarism["Plagiarism and framework checks"]
-    AnalyzerJobs["Analyzer Durable Object jobs"]
   end
 
   subgraph ReviewData["Review data plane"]
@@ -108,8 +107,8 @@ flowchart LR
   Dify --> Hub
   Hub --> TemplateMCP
   Hub --> AppMCP
-  Hub --> AnalyzerMCP
   Hub --> LocalMCP
+  Dify --> AgentSandbox
 
   TemplateMCP --> AirtableAssets
   TemplateMCP --> AirtableVersions
@@ -117,9 +116,8 @@ flowchart LR
   AppMCP --> AirtableAssets
   AppMCP --> AirtableVersions
 
-  AnalyzerMCP --> AnalyzerJobs
-  AnalyzerMCP --> PublishedEvidence
-  AnalyzerMCP --> PolicySnapshots
+  AgentSandbox --> PublishedEvidence
+  AgentSandbox --> PolicySnapshots
   LocalMCP --> Plagiarism
 
   PublishedEvidence --> TemplateMCP
@@ -177,7 +175,7 @@ flowchart LR
 | ------------------------------------------ | ------------------------------------------------------------------ | ---------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Creator dashboard Cloud port               | `apps/webflow-dashboard-cloud`, `packages/webflow-dashboard-core`  | Next.js 15 on Webflow Cloud/OpenNext                                                     | Airtable base `appMoIgXMTTTNIc3p`, R2 `UPLOADS`, KV `SESSIONS`, optional D1 `DB` | Active migration target               | This is the current authenticated dashboard path. Keep shared domain logic in `webflow-dashboard-core`; avoid adding new creator-critical work only to the older SvelteKit dashboard. |
 | Legacy/source dashboard                    | `packages/webflow-dashboard`                                       | SvelteKit on Cloudflare                                                                  | Airtable, KV, R2, analytics APIs                                                 | Reference and possible legacy runtime | Treat as parity reference for the Cloud port. The parity matrix intentionally supersedes older conflicting readiness docs.                                                            |
-| Marketplace template submission app        | `apps/marketplace-template-submission-cloud`                       | Webflow Cloud iframe on `webflow.com/templates/submit-a-template`                        | Airtable Automation webhooks, upload worker, Turnstile, analyzer output          | Active public submission surface      | The parent Webflow page owns the hero and iframe shell; the app owns creator/template form flow, validation, uploads, and webhook envelope.                                           |
+| Marketplace template submission app        | `apps/marketplace-template-submission-cloud`                       | Webflow Cloud iframe on `webflow.com/templates/submit-a-template`                        | Airtable Automation webhooks, upload worker, Turnstile, sandbox/autofill output  | Active public submission surface      | The parent Webflow page owns the hero and iframe shell; the app owns creator/template form flow, validation, uploads, and webhook envelope.                                           |
 | Webflow Code Components governance console | `packages/webflow-components`, `config/webflow/control-plane.json` | Webflow Code Components, published origin `https://governed-workflow-console.webflow.io` | Cloudflare/D1 context endpoint, repo policy, Linear evidence                     | Active governance UI path             | Webflow renders the console only. Approval endpoints must stay empty on public previews unless routed through a trusted authenticated operator proxy.                                 |
 | Bundle scanner Code Component              | `packages/bundle-scanner`, `packages/bundle-scanner-core`          | React app and Webflow Code Component                                                     | Local browser scan state, scanner-core policy rules                              | Active internal adjunct               | Useful for app bundle review. It is not a durable compliance system unless findings are mirrored into Airtable/Linear or a review MCP.                                                |
 | Webflow template search worker             | `packages/webflow-template-search`                                 | Cloudflare Worker + D1                                                                   | D1 search index synced from Airtable assets/categories/tags                      | Active utility                        | Search/admin sync depends on correct D1 binding and `SYNC_ADMIN_TOKEN`. Keep marketplace search separate from reviewer judgment.                                                      |
@@ -189,7 +187,7 @@ flowchart LR
 | ----------------------------------------- | ---------------------------------------- | --------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Template Review MCP                       | `packages/webflow-template-review-mcp`   | Cloudflare Worker at `https://webflow-template-review-mcp.createsomething.workers.dev/mcp`          | Airtable Assets, Asset Versions, Asset Releases                              | Active reviewer automation                    | Normal template review reads/writes should go through this MCP, not raw Airtable. Write tools must stay bounded by confirmed field maps and reviewer assignment rules.       |
 | App Review MCP                            | `packages/webflow-app-review-mcp`        | Cloudflare Worker at `https://webflow-app-review-mcp.createsomething.workers.dev/mcp`               | Airtable Assets and Asset Versions                                           | Active reviewer automation                    | Mirrors the template review posture for app assets. Broad metadata and marketplace-status writes remain outside normal reviewer flow unless explicitly requested.            |
-| Site Analyzer MCP                         | `packages/webflow-site-analyzer-mcp`     | Node HTTP, Worker, and container-backed remote at `https://analyzer.mcp.createsomething.agency/mcp` | Published URLs, preview URLs, policy snapshots, browser extraction output    | Active analyzer and reviewer evidence surface | Reviewer hubs should prefer published-site jobs for normal reviews. Designer extraction/manual rows should not be summarized as confirmed failures unless explicitly scoped. |
+| Retired site analyzer MCP                 | `packages/webflow-site-analyzer-mcp`     | Removed from active Hub/Dify routing                                                     | Historical published URL, preview URL, policy snapshot, and browser extraction code | Retired reviewer evidence surface             | Reviewer agents now use their sandbox for bounded published-site analysis. Designer-only findings remain manual unless direct evidence is supplied.                         |
 | Local Webflow MCP                         | `packages/webflow-mcp`                   | Local stdio/HTTP or Worker at `https://webflow-mcp.createsomething.workers.dev/mcp`                 | Plagiarism worker/index, framework detection, scan stats                     | Active compatibility MCP                      | Kept as `webflow-local` for hub bundle compatibility. It provides plagiarism/framework tools, not authoritative reviewer writes.                                             |
 | Template Analyzer extension/cloud backend | `packages/webflow-template-analyzer`     | Webflow Designer extension plus Cloudflare Container Worker `webflow-template-analyzer`             | Published URL analysis, generated autofill suggestions, screenshot artifacts | Active creator-assistance surface             | This is productized analyzer output for creators. Analyzer failures should degrade to manual entry without blocking unrelated submission steps.                              |
 | Webflow Way Validator                     | `packages/webflow-template-validation`   | Next.js companion app, Designer extension, Cloudflare Worker `validation-worker`                    | Published-site checks and future Designer checks                             | Active validation surface                     | Current MVP emphasizes published-site Typography/Styles/Naming. Components/Variables need Webflow Apps SDK scope and should remain explicitly marked when not verified.      |
@@ -205,7 +203,7 @@ flowchart LR
 | Webflow Apps Admin audit                       | `packages/webflow-apps-admin`                                          | Browser console scripts, planned extension, audit dashboard/worker | Webflow Apps admin pages and generated audit reports     | Internal/admin                                      | Current report found duplicate client IDs. This is admin tooling, not creator-facing product. Selectors may break if Webflow admin UI changes.                                     |
 | Webflow Code Components intake                 | `packages/webflow-intake`                                              | Documentation/process package                                      | Intake notes and package graduation decisions            | Process/reference                                   | Defines IC MVP -> agentic engineering -> Code Components path. Use for new Code Component candidates before adding them to `webflow-components`.                                   |
 | Dify MCP intake for Webflow                    | `config/dify-mcp-intake/webflow-*.json`                                | Dify Studio MCP registration workflow                              | Infisical secret references, Hub registry entries        | Pending Dify Studio registration for listed servers | These artifacts are not Dify inventory entries. Tool discovery and risk classification must happen before copying into `config/dify/inventory.json`.                               |
-| MCP Hub registry bundles                       | `config/mcp-hub/registry*.json`, `config/mcp-hub/discovery-packs.json` | CREATE SOMETHING Hub MCP                                           | Registry and discovery-pack JSON                         | Active routing control plane                        | Current Webflow bundles separate template review phase A/B and app review phase A/B. Keep `webflow-site-analyzer-mcp` and `webflow-local` in phase B review bundles only.          |
+| MCP Hub registry bundles                       | `config/mcp-hub/registry*.json`, `config/mcp-hub/discovery-packs.json` | CREATE SOMETHING Hub MCP                                           | Registry and discovery-pack JSON                         | Active routing control plane                        | Current Webflow bundles separate template review phase A/B and app review phase A/B. Phase B template review keeps `webflow-local` only for plagiarism/framework tools.          |
 
 ## Public Flow Dependencies
 
@@ -262,21 +260,20 @@ Entry points:
 
 - Dify/Hub services for template reviewers
 - `webflow-template-review-mcp`
-- `webflow-site-analyzer-mcp`
 - `webflow-local` for plagiarism/framework tools
+- agent sandbox for bounded published-site review evidence
 
 Runtime dependencies:
 
 - Airtable PAT and base ID
 - `MCP_API_KEY`/bearer token from Infisical
 - Reviewer directory JSON for identity mapping
-- Steel or Browserless credentials for analyzer browser execution
-- analyzer Durable Object job persistence
+- agent sandbox/network execution for published-site crawl evidence
 
 Operational implications:
 
 - Normal reviews should start with template review MCP queue/context tools.
-- Automated analysis should enqueue published-site analyzer jobs with published URL only unless manual Designer diagnostics are explicitly requested.
+- Automated analysis should use the agent sandbox with the published URL only unless manual Designer diagnostics are explicitly requested.
 - Before any Airtable write, reviewer agents must verify context capability flags and receive explicit user approval.
 
 ### App Review Hub
@@ -328,10 +325,10 @@ Operational implications:
 
 | Class                                     | Surfaces                                                                                                                                                                                                                                                                                                                                                               |
 | ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Active production or production-candidate | `apps/webflow-dashboard-cloud`, `apps/marketplace-template-submission-cloud`, `packages/webflow-components`, `packages/webflow-template-review-mcp`, `packages/webflow-app-review-mcp`, `packages/webflow-site-analyzer-mcp`, `packages/webflow-template-analyzer`, `packages/webflow-template-validation`, `packages/webflow-mcp`, `packages/webflow-template-search` |
+| Active production or production-candidate | `apps/webflow-dashboard-cloud`, `apps/marketplace-template-submission-cloud`, `packages/webflow-components`, `packages/webflow-template-review-mcp`, `packages/webflow-app-review-mcp`, `packages/webflow-template-analyzer`, `packages/webflow-template-validation`, `packages/webflow-mcp`, `packages/webflow-template-search` |
 | Active internal/admin                     | `packages/webflow-apps-admin`, `packages/bundle-scanner`, `packages/bundle-scanner-core`, `packages/webflow-automation`, `packages/webflow-intake`                                                                                                                                                                                                                     |
 | Utility or embedded scripts               | `packages/landing-page-filter`, `packages/wf-search-category`, `packages/gsap-validation-worker`, `packages/io/workers/webflow-validation`                                                                                                                                                                                                                             |
-| Legacy/reference                          | `packages/webflow-dashboard`, `packages/webflow-review`                                                                                                                                                                                                                                                                                                                |
+| Legacy/reference                          | `packages/webflow-dashboard`, `packages/webflow-review`, `packages/webflow-site-analyzer-mcp`                                                                                                                                                                                                                                                                          |
 
 ## Follow-Up Implications
 
@@ -339,7 +336,7 @@ Operational implications:
 2. Reconcile old dashboard docs against `specs/webflow-dashboard-cloud-parity-matrix.md`; when they disagree, prefer the parity matrix and current code.
 3. Add a generated or checked registry view that connects public Webflow flows to their MCP/worker dependencies, so outage triage starts from a flow rather than a package name.
 4. Keep Dify intake artifacts pending until tools are discovered and classified; do not paste empty fragments into inventory.
-5. Treat analyzer output differently by role: creators receive validation/autofill assistance; reviewers receive evidence with caveats and manual-state boundaries.
+5. Treat sandbox analysis output differently by role: creators receive validation/autofill assistance; reviewers receive evidence with caveats and manual-state boundaries.
 6. Make credential boundaries explicit in Webflow Code Components. Public Webflow props must not contain internal credentials or direct mutation endpoints.
 
 ## Validation Commands
@@ -353,7 +350,6 @@ pnpm --filter @create-something/webflow-dashboard-core check
 pnpm --filter @create-something/webflow-dashboard-core test
 pnpm --filter @create-something/webflow-template-review-mcp test
 pnpm --filter @create-something/webflow-app-review-mcp test
-pnpm --filter @create-something/webflow-site-analyzer-mcp test
 pnpm --filter @create-something/webflow-template-search test
 pnpm webflow:governance:verify
 pnpm dify:mcp:intake:check

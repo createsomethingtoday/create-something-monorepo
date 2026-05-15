@@ -127,7 +127,6 @@
       "mode": "compact",
       "activeServers": [
         "webflow-template-review-mcp",
-        "webflow-site-analyzer-mcp",
         "webflow-local"
       ],
       "maxProxyTools": 30

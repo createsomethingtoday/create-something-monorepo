@@ -2813,6 +2813,7 @@ async function evaluateHubRouteAuthorization(params: {
   definition?: Tool;
   trace: InvocationTrace;
   rollout: AuthzRolloutRow;
+  serviceTierRollout?: AuthzRolloutRow;
   actionName: 'discover' | 'execute';
   entrypoint: string;
   invocationAction?: string | null;
@@ -2825,6 +2826,7 @@ async function evaluateHubRouteAuthorization(params: {
     definition,
     trace,
     rollout,
+    serviceTierRollout,
     actionName,
     entrypoint,
     invocationAction,
@@ -2852,13 +2854,13 @@ async function evaluateHubRouteAuthorization(params: {
     },
   });
 
-  const serviceTierRollout = await getServiceTierAuthzRollout(env);
+  const resolvedServiceTierRollout = serviceTierRollout ?? (await getServiceTierAuthzRollout(env));
   const serviceTierEvaluation = await evaluateAuthorizationRequest(
     SERVICE_TIER_AUTHZ_POLICY_ID,
     request,
     {
-      mode: serviceTierRollout.mode,
-      canaryPercent: serviceTierRollout.canaryPercent,
+      mode: resolvedServiceTierRollout.mode,
+      canaryPercent: resolvedServiceTierRollout.canaryPercent,
     },
     hubAuthzHybridConfig(env),
   );
@@ -2930,26 +2932,29 @@ export async function buildAuthorizedVisibleProxyRoutes(params: {
     return base;
   }
 
-  const rollout = await getHubRouteAuthzRollout(params.env);
-  const allowed: Array<{ tool: Tool; route: ProxyRoute }> = [];
-
-  for (const tool of base.toolDefinitions) {
-    const route = base.routes.get(tool.name);
-    if (!route) continue;
-    const evaluation = await evaluateHubRouteAuthorization({
-      env: params.env,
-      accountContext: params.accountContext,
-      route,
-      definition: tool,
-      trace: params.trace,
-      rollout,
-      actionName: 'discover',
-      entrypoint: params.entrypoint,
-      recordDecision: false,
-    });
-    if (evaluation.final.decision === 'allow') {
-      allowed.push({ tool, route });
-    } else {
+  const [rollout, serviceTierRollout] = await Promise.all([
+    getHubRouteAuthzRollout(params.env),
+    getServiceTierAuthzRollout(params.env),
+  ]);
+  const evaluated = await Promise.all(
+    base.toolDefinitions.map(async (tool) => {
+      const route = base.routes.get(tool.name);
+      if (!route) return null;
+      const evaluation = await evaluateHubRouteAuthorization({
+        env: params.env,
+        accountContext: params.accountContext,
+        route,
+        definition: tool,
+        trace: params.trace,
+        rollout,
+        serviceTierRollout,
+        actionName: 'discover',
+        entrypoint: params.entrypoint,
+        recordDecision: false,
+      });
+      if (evaluation.final.decision === 'allow') {
+        return { tool, route };
+      }
       await recordAuthzDecisionEvent(
         params.env.TELEMETRY_DB,
         toHubAuthzEvent({
@@ -2963,8 +2968,13 @@ export async function buildAuthorizedVisibleProxyRoutes(params: {
           entrypoint: params.entrypoint,
         }),
       );
-    }
-  }
+      return null;
+    }),
+  );
+
+  const allowed = evaluated.filter(
+    (entry): entry is { tool: Tool; route: ProxyRoute } => Boolean(entry),
+  );
 
   return {
     toolDefinitions: allowed.map((entry) => entry.tool),
