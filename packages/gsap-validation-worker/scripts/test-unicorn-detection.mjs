@@ -13,6 +13,7 @@ assert.notEqual(end, endMarker.length - 1, 'validator slice end not found');
 const sandbox = {
   console,
   Set,
+  URL,
   __name: (target) => target
 };
 
@@ -65,4 +66,42 @@ const textOnlyResult = sandbox.validateGsapUsage(
 assert.equal(textOnlyResult.summary.unicornStudioDetected, false);
 assert.equal(textOnlyResult.summary.unicornStudioCount, 0);
 
-console.log('Unicorn Studio validation regression passed.');
+const ix2Html = `
+<!doctype html>
+<html>
+	<body>
+		<div data-w-id="abc"></div>
+		<script>Webflow.require("ix2").init({})</script>
+	</body>
+</html>`;
+
+const nonExemptIx2Result = sandbox.validateGsapUsage(
+  ix2Html,
+  'https://non-exempt-template.webflow.io/'
+);
+
+assert.equal(nonExemptIx2Result.passed, false);
+assert.equal(nonExemptIx2Result.summary.legacyIx2Detected, true);
+assert.equal(nonExemptIx2Result.summary.legacyIx2Exempted, false);
+assert.ok(
+  nonExemptIx2Result.details.flaggedCode.some((issue) => issue.policy === 'ix2-rejected'),
+  'expected non-exempt IX2 to be rejected'
+);
+
+const exemptIx2Result = sandbox.validateGsapUsage(ix2Html, 'https://az-bergamo.webflow.io/');
+
+assert.equal(exemptIx2Result.passed, true);
+assert.equal(exemptIx2Result.summary.legacyIx2Detected, true);
+assert.equal(exemptIx2Result.summary.legacyIx2Exempted, true);
+assert.ok(
+  exemptIx2Result.details.allowedCustomCode.some(
+    (issue) => issue.policy === 'ix2-approved-exception'
+  ),
+  'expected approved IX2 exception to be recorded'
+);
+assert.equal(
+  exemptIx2Result.details.flaggedCode.some((issue) => issue.policy === 'ix2-rejected'),
+  false
+);
+
+console.log('GSAP validation regression passed.');

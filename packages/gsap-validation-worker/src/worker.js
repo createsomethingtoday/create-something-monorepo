@@ -10,11 +10,23 @@ var __require = /* @__PURE__ */ ((x) => typeof require !== "undefined" ? require
 // cloudflare-worker/lib/shared-validator.js
 var IX2_REJECTION_MESSAGE = "Legacy Webflow IX2 interactions detected. As of May 1, 2026, Marketplace templates submitted with IX2 interactions are rejected. Rebuild interactions with Webflow Interactions powered by GSAP (IX3), publish again, and rerun validation.";
 var UNICORN_STUDIO_REJECTION_MESSAGE = "Unicorn Studio embed detected. Marketplace templates may only use custom code for approved exceptions such as GSAP, font smoothing, no-index tags on licensing/changelog pages, or documented SVG snippets. Replace the Unicorn Studio effect with Webflow-native or approved GSAP implementation, publish again, and rerun validation.";
+var LEGACY_IX2_EXEMPT_HOSTNAMES = /* @__PURE__ */ new Set([
+  // Zendesk 1124554: approved exception for pre-cutoff Bergamo submission.
+  "az-bergamo.webflow.io"
+]);
 function countPatternMatches(value, pattern) {
   const matches = value.match(pattern);
   return matches ? matches.length : 0;
 }
 __name(countPatternMatches, "countPatternMatches");
+function isLegacyIx2ExemptUrl(pageUrl) {
+  try {
+    return LEGACY_IX2_EXEMPT_HOSTNAMES.has(new URL(pageUrl).hostname.toLowerCase());
+  } catch {
+    return false;
+  }
+}
+__name(isLegacyIx2ExemptUrl, "isLegacyIx2ExemptUrl");
 function detectIx2Interactions(html) {
   const matches = [
     {
@@ -458,13 +470,24 @@ function validateGsapUsage(html, pageUrl, customPatterns = []) {
   if (ix2Detection.detected) {
     results.legacyIx2Detected = true;
     results.legacyIx2Count = ix2Detection.count;
-    results.flaggedCode.push({
-      scriptIndex: "document",
-      message: IX2_REJECTION_MESSAGE,
-      reason: "Legacy IX2 interactions are no longer accepted for Marketplace templates submitted on or after May 1, 2026.",
-      policy: "ix2-rejected",
-      flaggedCode: ix2Detection.matches.map((item) => `${item.label}: ${item.count}`)
-    });
+    if (isLegacyIx2ExemptUrl(pageUrl)) {
+      results.legacyIx2Exempted = true;
+      results.allowedCustomCode.push({
+        scriptIndex: "document",
+        message: "Approved legacy IX2 exception",
+        reason: "Zendesk 1124554 approved this pre-cutoff template to proceed with existing IX2 interactions.",
+        policy: "ix2-approved-exception",
+        flaggedCode: ix2Detection.matches.map((item) => `${item.label}: ${item.count}`)
+      });
+    } else {
+      results.flaggedCode.push({
+        scriptIndex: "document",
+        message: IX2_REJECTION_MESSAGE,
+        reason: "Legacy IX2 interactions are no longer accepted for Marketplace templates submitted on or after May 1, 2026.",
+        policy: "ix2-rejected",
+        flaggedCode: ix2Detection.matches.map((item) => `${item.label}: ${item.count}`)
+      });
+    }
   }
   const unicornStudioDetection = detectUnicornStudioUsage(html);
   if (unicornStudioDetection.detected) {
@@ -684,6 +707,7 @@ function validateGsapUsage(html, pageUrl, customPatterns = []) {
       securityRiskCount: results.securityRisks.length,
       legacyIx2Detected: results.legacyIx2Detected === true,
       legacyIx2Count: results.legacyIx2Count || 0,
+      legacyIx2Exempted: results.legacyIx2Exempted === true,
       unicornStudioDetected: results.unicornStudioDetected === true,
       unicornStudioCount: results.unicornStudioCount || 0,
       passed
