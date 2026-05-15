@@ -283,6 +283,8 @@ reset_discovery_preferences() {
   local reset_payload='{"jsonrpc":"2.0","id":"fleet-verify-discovery-reset","method":"tools/call","params":{"name":"hub_set_discovery","arguments":{"reset":true}}}'
   local curl_args=(
     -sS
+    --connect-timeout "${VERIFY_CURL_CONNECT_TIMEOUT_SECONDS}"
+    --max-time "${VERIFY_CURL_MAX_TIME_SECONDS}"
     -X POST "$mcp_url"
     -H "Authorization: Bearer ${token}"
     -H "Content-Type: application/json"
@@ -323,6 +325,8 @@ create_fleet_verify_session() {
     body_file="$(mktemp)"
     status="$(
       curl -sS -o "$body_file" -w "%{http_code}" -X POST "$create_url" \
+        --connect-timeout "${VERIFY_CURL_CONNECT_TIMEOUT_SECONDS}" \
+        --max-time "${VERIFY_CURL_MAX_TIME_SECONDS}" \
         -H "X-API-Key: ${identity_admin_token}" \
         -H "Content-Type: application/json" \
         --data "$(jq -cn \
@@ -380,6 +384,8 @@ create_fleet_verify_session() {
     body_file="$(mktemp)"
     status="$(
       curl -sS -o "$body_file" -w "%{http_code}" -X POST "$issue_url" \
+        --connect-timeout "${VERIFY_CURL_CONNECT_TIMEOUT_SECONDS}" \
+        --max-time "${VERIFY_CURL_MAX_TIME_SECONDS}" \
         -H "X-API-Key: ${identity_admin_token}" \
         -H "Content-Type: application/json" \
         --data "$(jq -cn \
@@ -451,6 +457,8 @@ create_fleet_verify_session() {
     body_file="$(mktemp)"
     status="$(
       curl -sS -o "$body_file" -w "%{http_code}" -X POST "$create_url" \
+        --connect-timeout "${VERIFY_CURL_CONNECT_TIMEOUT_SECONDS}" \
+        --max-time "${VERIFY_CURL_MAX_TIME_SECONDS}" \
         -H "Authorization: Bearer ${identity_access_token}" \
         -H "Content-Type: application/json" \
         --data "$(jq -cn --arg tenant "$tenant_id" --arg host "$host" --argjson toolkitProfile "$toolkit_profile_json" '{
@@ -539,6 +547,8 @@ check_mcp_protocol() {
   init_body="$(mktemp)"
   init_status="$(
     curl -sS -o "$init_body" -D "$init_headers" -w "%{http_code}" \
+      --connect-timeout "${VERIFY_CURL_CONNECT_TIMEOUT_SECONDS}" \
+      --max-time "${VERIFY_CURL_MAX_TIME_SECONDS}" \
       -X POST "$mcp_url" \
       -H "Authorization: Bearer ${token}" \
       -H 'Content-Type: application/json' \
@@ -583,6 +593,8 @@ check_mcp_protocol() {
 
   local curl_args=(
     -sS
+    --connect-timeout "${VERIFY_CURL_CONNECT_TIMEOUT_SECONDS}"
+    --max-time "${VERIFY_CURL_MAX_TIME_SECONDS}"
     -o "$list_body"
     -D "$list_headers"
     -w "%{http_code}"
@@ -645,6 +657,8 @@ check_missing_session_token_rejected() {
   body_file="$(mktemp)"
   status="$(
     curl -sS -o "$body_file" -w "%{http_code}" -X POST "$mcp_url" \
+      --connect-timeout "${VERIFY_CURL_CONNECT_TIMEOUT_SECONDS}" \
+      --max-time "${VERIFY_CURL_MAX_TIME_SECONDS}" \
       -H "Authorization: Bearer ${token}" \
       -H "Content-Type: application/json" \
       -H "Accept: application/json" \
@@ -690,6 +704,8 @@ check_compat_identity_without_session() {
   body_file="$(mktemp)"
   status="$(
     curl -sS -o "$body_file" -w "%{http_code}" -X POST "$mcp_url" \
+      --connect-timeout "${VERIFY_CURL_CONNECT_TIMEOUT_SECONDS}" \
+      --max-time "${VERIFY_CURL_MAX_TIME_SECONDS}" \
       -H "Authorization: Bearer ${token}" \
       -H "Content-Type: application/json" \
       -H "Accept: application/json" \
@@ -750,6 +766,8 @@ check_discovery_pack_reset() {
 
   status="$(
     curl -sS -o "$body_file" -w "%{http_code}" -X POST "$mcp_url" \
+      --connect-timeout "${VERIFY_CURL_CONNECT_TIMEOUT_SECONDS}" \
+      --max-time "${VERIFY_CURL_MAX_TIME_SECONDS}" \
       "${headers[@]}" \
       --data '{"jsonrpc":"2.0","id":"fleet-verify-reset-discovery","method":"tools/call","params":{"name":"hub_set_discovery","arguments":{"reset":true}}}'
   )"
@@ -810,6 +828,8 @@ search_visible_connection_status_tool() {
   if [[ -n "$session_token" ]]; then
     services_status="$(
       curl -sS -o "$services_body" -w "%{http_code}" -X POST "$mcp_url" \
+        --connect-timeout "${VERIFY_CURL_CONNECT_TIMEOUT_SECONDS}" \
+        --max-time "${VERIFY_CURL_MAX_TIME_SECONDS}" \
         -H "Authorization: Bearer ${token}" \
         -H "X-MCP-Session-Token: ${session_token}" \
         -H "Content-Type: application/json" \
@@ -819,6 +839,8 @@ search_visible_connection_status_tool() {
   else
     services_status="$(
       curl -sS -o "$services_body" -w "%{http_code}" -X POST "$mcp_url" \
+        --connect-timeout "${VERIFY_CURL_CONNECT_TIMEOUT_SECONDS}" \
+        --max-time "${VERIFY_CURL_MAX_TIME_SECONDS}" \
         -H "Authorization: Bearer ${token}" \
         -H "Content-Type: application/json" \
         -H "Accept: application/json" \
@@ -871,6 +893,8 @@ search_visible_connection_status_tool() {
     if [[ -n "$session_token" ]]; then
       status="$(
         curl -sS -o "$body_file" -w "%{http_code}" -X POST "$mcp_url" \
+          --connect-timeout "${VERIFY_CURL_CONNECT_TIMEOUT_SECONDS}" \
+          --max-time "${VERIFY_CURL_MAX_TIME_SECONDS}" \
           -H "Authorization: Bearer ${token}" \
           -H "X-MCP-Session-Token: ${session_token}" \
           -H "Content-Type: application/json" \
@@ -880,6 +904,8 @@ search_visible_connection_status_tool() {
     else
       status="$(
         curl -sS -o "$body_file" -w "%{http_code}" -X POST "$mcp_url" \
+          --connect-timeout "${VERIFY_CURL_CONNECT_TIMEOUT_SECONDS}" \
+          --max-time "${VERIFY_CURL_MAX_TIME_SECONDS}" \
           -H "Authorization: Bearer ${token}" \
           -H "Content-Type: application/json" \
           -H "Accept: application/json" \
@@ -947,6 +973,8 @@ check_compat_account_routing() {
   body_file="$(mktemp)"
   status="$(
     curl -sS -o "$body_file" -w "%{http_code}" -X POST "$mcp_url" \
+      --connect-timeout "${VERIFY_CURL_CONNECT_TIMEOUT_SECONDS}" \
+      --max-time "${VERIFY_CURL_MAX_TIME_SECONDS}" \
       -H "Authorization: Bearer ${token}" \
       -H "X-MCP-Account-Id: acct_spoof_attempt" \
       -H "Content-Type: application/json" \
@@ -1039,6 +1067,8 @@ check_session_account_routing() {
 
   local set_payload='{"jsonrpc":"2.0","id":"fleet-verify-discovery","method":"tools/call","params":{"name":"hub_set_discovery","arguments":{"mode":"full","activeServers":[]}}}'
   curl -sS -X POST "$mcp_url" \
+    --connect-timeout "${VERIFY_CURL_CONNECT_TIMEOUT_SECONDS}" \
+    --max-time "${VERIFY_CURL_MAX_TIME_SECONDS}" \
     -H "Authorization: Bearer ${token}" \
     -H "X-MCP-Session-Token: ${FLEET_VERIFY_SESSION_TOKEN}" \
     -H "Content-Type: application/json" \
@@ -1065,6 +1095,8 @@ check_session_account_routing() {
   body_file="$(mktemp)"
   status="$(
     curl -sS -o "$body_file" -w "%{http_code}" -X POST "$mcp_url" \
+      --connect-timeout "${VERIFY_CURL_CONNECT_TIMEOUT_SECONDS}" \
+      --max-time "${VERIFY_CURL_MAX_TIME_SECONDS}" \
       -H "Authorization: Bearer ${token}" \
       -H "X-MCP-Session-Token: ${FLEET_VERIFY_SESSION_TOKEN}" \
       -H "Content-Type: application/json" \
