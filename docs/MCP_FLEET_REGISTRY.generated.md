@@ -194,4 +194,4 @@ Hand-curated bundles are listed inline. Composio category bundles are listed in 
 | `webflow-marketplace-app-review-phase-a` | `webflow-app-review-mcp` |
 | `webflow-marketplace-app-review-phase-b` | `webflow-app-review-mcp` |
 | `webflow-marketplace-review-phase-a` | `webflow-template-review-mcp` |
-| `webflow-marketplace-review-phase-b` | `webflow-template-review-mcp`, `webflow-site-analyzer-mcp`, `webflow-local` |
+| `webflow-marketplace-review-phase-b` | `webflow-template-review-mcp` |

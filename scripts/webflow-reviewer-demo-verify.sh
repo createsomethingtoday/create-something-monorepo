@@ -208,6 +208,18 @@ verify_reviewer() {
   visible_proxy_tool_count="$(echo "$services_resp" | payload_json | jq -r '.visibleProxyToolCount // 0')"
   total_proxy_tool_count="$(echo "$services_resp" | payload_json | jq -r '.totalProxyToolCount // 0')"
 
+  if [[ "$enabled_servers" != "$SERVER_NAME" ]]; then
+    echo "unexpected enabled servers for ${reviewer}: ${enabled_servers:-none}; expected ${SERVER_NAME}" >&2
+    echo "$status_resp" | payload_json | jq .
+    exit 1
+  fi
+
+  if echo "$services_resp" | payload_json | jq -e '[.services[]?.name] != ["'"$SERVER_NAME"'"]' >/dev/null 2>&1; then
+    echo "unexpected services for ${reviewer}; expected only ${SERVER_NAME}" >&2
+    echo "$services_resp" | payload_json | jq '.services[]?.name'
+    exit 1
+  fi
+
   local visible_tools_json filtered_tools_json
   visible_tools_json="$(echo "$list_resp" | payload_json | jq -c '.proxyTools // []')"
   filtered_tools_json="$(echo "$search_resp" | payload_json | jq -c '[.tools[]?.proxyToolName]')"

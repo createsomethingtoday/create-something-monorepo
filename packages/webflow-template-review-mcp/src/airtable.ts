@@ -107,11 +107,20 @@ export interface TemplateReviewVersion {
 
 export interface TemplateReviewQueueQuery {
   limit?: number;
+  pageToken?: string;
   status?: TemplateReviewQueueStatus;
   assigned?: TemplateReviewQueueAssignmentFilter;
   sort?: TemplateReviewQueueSort;
   currentReviewer?: CollaboratorRef | null;
   onlyAssignedToCurrentReviewer?: boolean;
+}
+
+export interface TemplateReviewQueuePagination {
+  limit: number;
+  returned: number;
+  hasMore: boolean;
+  nextPageToken?: string;
+  source: 'assets' | 'asset_versions';
 }
 
 export interface TemplateReviewContext {
@@ -515,17 +524,6 @@ function chunkArray<T>(values: T[], size: number): T[][] {
   return chunks;
 }
 
-function myQueueScanLimit(limit?: number): number {
-  const requested = Math.max(limit ?? 100, 1);
-  return Math.min(Math.max(requested * 5, 100), 500);
-}
-
-function queueVersionScanLimit(limit?: number): number | undefined {
-  if (!limit) return undefined;
-  const requested = Math.max(limit, 1);
-  return Math.min(Math.max(requested * 5, 100), 1000);
-}
-
 function recordIdsFormula(ids: string[]): string {
   if (ids.length === 0) return 'FALSE()';
   const clauses = ids.map((id) => `RECORD_ID() = '${escapeFormulaValue(id)}'`);
@@ -729,6 +727,7 @@ export class AirtableClient {
     fieldNames?: string[];
     fieldIds?: string[];
     limit?: number;
+    offset?: string;
     viewId?: string;
     filterByFormula?: string;
     sortField?: string;
@@ -736,49 +735,76 @@ export class AirtableClient {
     returnFieldsByFieldId?: boolean;
   }): Promise<AirtableRecord[]> {
     const records: AirtableRecord[] = [];
-    let offset: string | undefined;
+    const { limit, ...pageArgs } = args;
+    let offset = args.offset;
 
     do {
-      const params = new URLSearchParams();
-      const remaining = args.limit ? Math.max(args.limit - records.length, 0) : undefined;
-      const pageSize = remaining ? Math.min(remaining, 100) : 100;
+      const remaining = limit ? Math.max(limit - records.length, 0) : undefined;
+      const page = await this.listRecordsPage({
+        ...pageArgs,
+        maxRecords: limit,
+        pageSize: remaining ? Math.min(remaining, 100) : undefined,
+        offset,
+      });
+      records.push(...page.records);
+      offset = page.offset;
+    } while (offset && (!limit || records.length < limit));
 
-      if (args.limit) params.set('maxRecords', String(args.limit));
-      params.set('pageSize', String(pageSize));
-      if (args.viewId) params.set('view', args.viewId);
-      if (args.filterByFormula) params.set('filterByFormula', args.filterByFormula);
-      for (const field of args.fieldNames ?? []) params.append('fields[]', field);
-      for (const fieldId of args.fieldIds ?? []) params.append('fields[]', fieldId);
-      if (args.returnFieldsByFieldId) params.set('returnFieldsByFieldId', 'true');
-      if (args.sortField) {
-        params.set('sort[0][field]', args.sortField);
-        params.set('sort[0][direction]', args.sortDirection ?? 'asc');
-      }
-      if (offset) params.set('offset', offset);
+    return limit ? records.slice(0, limit) : records;
+  }
 
-      const response = await this.request(`/${args.tableId}?${params.toString()}`);
-      if (!response.ok) {
-        const airtable = await this.readErrorDetails(response);
-        throw new AirtableClientError('AIRTABLE_LIST_FAILED', 'Failed to list Airtable records.', response.status, {
-          tableId: args.tableId,
-          ...(args.limit ? { limit: args.limit } : {}),
-          ...(args.viewId ? { viewId: args.viewId } : {}),
-          ...(args.filterByFormula ? { filterByFormula: args.filterByFormula } : {}),
-          ...(args.fieldNames?.length ? { fieldNames: args.fieldNames } : {}),
-          ...(args.fieldIds?.length ? { fieldIds: args.fieldIds } : {}),
-          ...(args.returnFieldsByFieldId ? { returnFieldsByFieldId: true } : {}),
-          ...(args.sortField ? { sortField: args.sortField, sortDirection: args.sortDirection ?? 'asc' } : {}),
-          ...(offset ? { offset } : {}),
-          ...(airtable === undefined ? {} : { airtable }),
-        });
-      }
+  private async listRecordsPage(args: {
+    tableId: string;
+    fieldNames?: string[];
+    fieldIds?: string[];
+    maxRecords?: number;
+    pageSize?: number;
+    offset?: string;
+    viewId?: string;
+    filterByFormula?: string;
+    sortField?: string;
+    sortDirection?: 'asc' | 'desc';
+    returnFieldsByFieldId?: boolean;
+  }): Promise<{ records: AirtableRecord[]; offset?: string }> {
+    const params = new URLSearchParams();
+    const pageSize = Math.min(Math.max(args.pageSize ?? 100, 1), 100);
 
-      const json = (await response.json()) as { records?: AirtableRecord[]; offset?: string };
-      records.push(...(json.records ?? []));
-      offset = json.offset;
-    } while (offset && (!args.limit || records.length < args.limit));
+    if (args.maxRecords) params.set('maxRecords', String(args.maxRecords));
+    params.set('pageSize', String(pageSize));
+    if (args.viewId) params.set('view', args.viewId);
+    if (args.filterByFormula) params.set('filterByFormula', args.filterByFormula);
+    for (const field of args.fieldNames ?? []) params.append('fields[]', field);
+    for (const fieldId of args.fieldIds ?? []) params.append('fields[]', fieldId);
+    if (args.returnFieldsByFieldId) params.set('returnFieldsByFieldId', 'true');
+    if (args.sortField) {
+      params.set('sort[0][field]', args.sortField);
+      params.set('sort[0][direction]', args.sortDirection ?? 'asc');
+    }
+    if (args.offset) params.set('offset', args.offset);
 
-    return args.limit ? records.slice(0, args.limit) : records;
+    const response = await this.request(`/${args.tableId}?${params.toString()}`);
+    if (!response.ok) {
+      const airtable = await this.readErrorDetails(response);
+      throw new AirtableClientError('AIRTABLE_LIST_FAILED', 'Failed to list Airtable records.', response.status, {
+        tableId: args.tableId,
+        ...(args.maxRecords ? { maxRecords: args.maxRecords } : {}),
+        ...(args.pageSize ? { pageSize } : {}),
+        ...(args.offset ? { offset: args.offset } : {}),
+        ...(args.viewId ? { viewId: args.viewId } : {}),
+        ...(args.filterByFormula ? { filterByFormula: args.filterByFormula } : {}),
+        ...(args.fieldNames?.length ? { fieldNames: args.fieldNames } : {}),
+        ...(args.fieldIds?.length ? { fieldIds: args.fieldIds } : {}),
+        ...(args.returnFieldsByFieldId ? { returnFieldsByFieldId: true } : {}),
+        ...(args.sortField ? { sortField: args.sortField, sortDirection: args.sortDirection ?? 'asc' } : {}),
+        ...(airtable === undefined ? {} : { airtable }),
+      });
+    }
+
+    const json = (await response.json()) as { records?: AirtableRecord[]; offset?: string };
+    return {
+      records: json.records ?? [],
+      offset: json.offset,
+    };
   }
 
   private async getRecord(tableId: string, recordId: string): Promise<AirtableRecord | null> {
@@ -851,13 +877,15 @@ export class AirtableClient {
   async listAssetQueueDetailed(query: TemplateReviewQueueQuery = {}): Promise<{
     sortApplied: TemplateReviewQueueSort;
     items: TemplateReviewQueueItem[];
+    pagination: TemplateReviewQueuePagination;
   }> {
     const limit = query.limit ?? 100;
     const sort = query.sort ?? 'submittedDate_desc';
     const airtableSort = queueSortToAirtableSort(sort);
 
     if (shouldUseVersionFirstQueue(query)) {
-      const versions = await this.listQueueVersions(query, queueVersionScanLimit(query.limit));
+      const versionPage = await this.listQueueVersionsPage(query, limit, query.pageToken);
+      const versions = versionPage.versions;
       const versionsByAsset = new Map<string, TemplateReviewVersion[]>();
       for (const version of versions) {
         if (!version.assetId) continue;
@@ -881,9 +909,17 @@ export class AirtableClient {
       }
 
       const sorted = sortQueueItems(items, sort);
+      const sliced = sorted.slice(0, limit);
       return {
         sortApplied: sort,
-        items: query.limit ? sorted.slice(0, query.limit) : sorted,
+        items: sliced,
+        pagination: {
+          limit,
+          returned: sliced.length,
+          hasMore: Boolean(versionPage.nextPageToken),
+          ...(versionPage.nextPageToken ? { nextPageToken: versionPage.nextPageToken } : {}),
+          source: 'asset_versions',
+        },
       };
     }
 
@@ -891,13 +927,14 @@ export class AirtableClient {
       `{${CONFIRMED_ASSET_FIELDS.type}} = 'Template🏗️'`,
       query.status ? assetStatusFormula(query.status) : null,
     ]);
-    const assets = await this.listAssetQueue(limit, {
+    const assetPage = await this.listAssetQueuePage(limit, {
       filterByFormula,
       sortField: airtableSort.field,
       sortDirection: airtableSort.direction,
+      pageToken: query.pageToken,
     });
     const items = await Promise.all(
-      assets.map(async (asset) => {
+      assetPage.items.map(async (asset) => {
         const versions = await this.listVersionsForAsset(asset.assetId, 25);
         const selectedVersion = selectQueueVersion(asset, versions, query);
         return toQueueItem(asset, selectedVersion, query);
@@ -909,14 +946,49 @@ export class AirtableClient {
     return {
       sortApplied: sort,
       items: sortQueueItems(filtered, sort),
+      pagination: {
+        limit,
+        returned: filtered.length,
+        hasMore: Boolean(assetPage.nextPageToken),
+        ...(assetPage.nextPageToken ? { nextPageToken: assetPage.nextPageToken } : {}),
+        source: 'assets',
+      },
     };
   }
 
-  private async listQueueVersions(query: TemplateReviewQueueQuery, limit?: number): Promise<TemplateReviewVersion[]> {
-    const records = await this.listRecords({
+  private async listAssetQueuePage(
+    limit = 100,
+    options?: {
+      filterByFormula?: string;
+      sortField?: string;
+      sortDirection?: 'asc' | 'desc';
+      pageToken?: string;
+    },
+  ): Promise<{ items: TemplateReviewAsset[]; nextPageToken?: string }> {
+    const page = await this.listRecordsPage({
+      tableId: TABLE_IDS.assets,
+      pageSize: limit,
+      offset: options?.pageToken,
+      filterByFormula: options?.filterByFormula ?? `{${CONFIRMED_ASSET_FIELDS.type}} = 'Template🏗️'`,
+      sortField: options?.sortField,
+      sortDirection: options?.sortDirection,
+    });
+    return {
+      items: page.records.filter((record) => isTemplateLikeAsset(record.fields)).map((record) => mapAsset(record)),
+      nextPageToken: page.offset,
+    };
+  }
+
+  private async listQueueVersionsPage(
+    query: TemplateReviewQueueQuery,
+    limit?: number,
+    pageToken?: string,
+  ): Promise<{ versions: TemplateReviewVersion[]; nextPageToken?: string }> {
+    const page = await this.listRecordsPage({
       tableId: TABLE_IDS.assetVersions,
       fieldNames: [...QUEUE_VERSION_FIELD_NAMES],
-      limit,
+      pageSize: limit,
+      offset: pageToken,
       filterByFormula: andFormula([
         versionStatusFormula(query.status),
         versionAssignmentFormula(query),
@@ -925,7 +997,10 @@ export class AirtableClient {
       sortDirection: 'desc',
     });
 
-    return records.map((record) => mapVersion(record));
+    return {
+      versions: page.records.map((record) => mapVersion(record)),
+      nextPageToken: page.offset,
+    };
   }
 
   private async listAssetsByIds(assetIds: string[]): Promise<Map<string, TemplateReviewAsset>> {
@@ -950,23 +1025,36 @@ export class AirtableClient {
     );
   }
 
-  private async listVersionsAssignedToReviewer(currentReviewer: CollaboratorRef, limit?: number): Promise<TemplateReviewVersion[]> {
-    const records = await this.listRecords({
+  private async listVersionsAssignedToReviewerPage(
+    currentReviewer: CollaboratorRef,
+    limit?: number,
+    pageToken?: string,
+    query: TemplateReviewQueueQuery = {},
+  ): Promise<{ versions: TemplateReviewVersion[]; nextPageToken?: string }> {
+    const page = await this.listRecordsPage({
       tableId: TABLE_IDS.assetVersions,
-      limit,
-      filterByFormula: reviewerLookupFormula(CONFIRMED_VERSION_FIELDS.reviewOwner, currentReviewer),
+      pageSize: limit,
+      offset: pageToken,
+      filterByFormula: andFormula([
+        reviewerLookupFormula(CONFIRMED_VERSION_FIELDS.reviewOwner, currentReviewer),
+        versionStatusFormula(query.status),
+      ]),
       sortField: CONFIRMED_VERSION_FIELDS.submissionDatetime,
       sortDirection: 'desc',
     });
 
-    return records
-      .map((record) => mapVersion(record))
-      .filter((version) => version.reviewOwner?.id === currentReviewer.id);
+    return {
+      versions: page.records
+        .map((record) => mapVersion(record))
+        .filter((version) => version.reviewOwner?.id === currentReviewer.id),
+      nextPageToken: page.offset,
+    };
   }
 
   async listMyQueueDetailed(query: TemplateReviewQueueQuery = {}): Promise<{
     sortApplied: TemplateReviewQueueSort;
     items: TemplateReviewQueueItem[];
+    pagination: TemplateReviewQueuePagination;
   }> {
     const currentReviewer = query.currentReviewer;
     if (!currentReviewer?.id) {
@@ -985,12 +1073,13 @@ export class AirtableClient {
       onlyAssignedToCurrentReviewer: true,
     };
 
-    // Bound the reviewer-version scan so large historical queues do not time out
-    // before we can apply the requested queue limit.
-    const assignedVersions = await this.listVersionsAssignedToReviewer(
+    const assignedVersionPage = await this.listVersionsAssignedToReviewerPage(
       currentReviewer,
-      myQueueScanLimit(query.limit),
+      query.limit ?? 100,
+      query.pageToken,
+      normalizedQuery,
     );
+    const assignedVersions = assignedVersionPage.versions;
     const versionsByAsset = new Map<string, TemplateReviewVersion[]>();
     for (const version of assignedVersions) {
       if (!version.assetId) continue;
@@ -1014,9 +1103,17 @@ export class AirtableClient {
     }
 
     const sorted = sortQueueItems(items, sort);
+    const sliced = sorted.slice(0, query.limit ?? 100);
     return {
       sortApplied: sort,
-      items: query.limit ? sorted.slice(0, query.limit) : sorted,
+      items: sliced,
+      pagination: {
+        limit: query.limit ?? 100,
+        returned: sliced.length,
+        hasMore: Boolean(assignedVersionPage.nextPageToken),
+        ...(assignedVersionPage.nextPageToken ? { nextPageToken: assignedVersionPage.nextPageToken } : {}),
+        source: 'asset_versions',
+      },
     };
   }
 

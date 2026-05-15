@@ -16490,9 +16490,7 @@
       "webflow-template-review-mcp"
     ],
     "webflow-marketplace-review-phase-b": [
-      "webflow-template-review-mcp",
-      "webflow-site-analyzer-mcp",
-      "webflow-local"
+      "webflow-template-review-mcp"
     ]
   },
   "defaults": {

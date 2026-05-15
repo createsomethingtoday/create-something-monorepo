@@ -7,13 +7,13 @@ import {
   ListResourcesRequestSchema,
   ListToolsRequestSchema,
   ReadResourceRequestSchema,
-  type Tool,
+  type Tool
 } from '@modelcontextprotocol/sdk/types.js';
 import {
   buildOAuthAuthorizationServerMetadata,
   buildOAuthProtectedResourceMetadata,
   isOAuthAuthorizationServerPath,
-  isOAuthProtectedResourcePath,
+  isOAuthProtectedResourcePath
 } from '../mcp-core/src/oauth-discovery.js';
 import {
   buildHubAuthorizationRequest,
@@ -25,7 +25,7 @@ import {
   recordAuthzDecisionEvent,
   requiresHumanReview,
   type AuthzDecisionEventRecord,
-  type AuthzRolloutRow,
+  type AuthzRolloutRow
 } from '@create-something/mcp-authz';
 
 import discoveryPacksJson from '../../config/mcp-hub/discovery-packs.json';
@@ -86,7 +86,7 @@ type BraintrustLogger = {
   flush(): Promise<void>;
   traced(
     callback: (span: BraintrustSpan) => void | Promise<void>,
-    options: { name: string; type: string },
+    options: { name: string; type: string }
   ): Promise<void>;
 };
 
@@ -330,14 +330,17 @@ type WaitUntilContext = Pick<ExecutionContext, 'waitUntil'>;
 
 const DOWNSTREAM_BEARER_ENV_FALLBACK: Record<string, string> = {
   'cs-telemetry': 'CS_TELEMETRY_OPERATOR_API_TOKEN',
-  'halfdozen-telemetry': 'HALFDOZEN_TELEMETRY_OPERATOR_API_TOKEN',
+  'halfdozen-telemetry': 'HALFDOZEN_TELEMETRY_OPERATOR_API_TOKEN'
 };
 
 interface Env {
   HUB_INSTANCE_ID?: string;
   HUB_API_TOKEN?: string;
+  HUB_ADDITIONAL_API_TOKENS?: string;
   OAUTH_ISSUER_URL?: string;
+  HUB_OAUTH_DISCOVERY_ENABLED?: string;
   HUB_IDENTITY_MODE?: string;
+  HUB_SESSION_RESOLVER_ENABLED?: string;
   HUB_SESSION_RESOLVE_URL?: string;
   HUB_SESSION_RESOLVE_TOKEN?: string;
   HUB_SESSION_RESOLVE_TIMEOUT_MS?: string;
@@ -359,6 +362,8 @@ interface Env {
   HUB_DISCOVERY_PAGE_SIZE?: string;
   HUB_ALLOW_DIRECT_PROXY_TOOLS?: string;
   HUB_DIRECT_PROXY_ALLOWED_PREFIXES?: string;
+  HUB_MANAGEMENT_TOOL_ALLOWLIST?: string;
+  HUB_COMPAT_ALLOWED_TOOL_PREFIXES?: string;
   HUB_RATE_LIMIT_MAX_CALLS_PER_WINDOW?: string;
   HUB_RATE_LIMIT_WINDOW_SECONDS?: string;
   HUB_RATE_LIMIT_SCOPE?: string;
@@ -400,13 +405,13 @@ export const MANAGEMENT_TOOLS: Tool[] = [
     inputSchema: {
       type: 'object',
       properties: {},
-      additionalProperties: false,
+      additionalProperties: false
     },
     _meta: {
       ui: {
-        resourceUri: HUB_OVERVIEW_RESOURCE_URI,
-      },
-    },
+        resourceUri: HUB_OVERVIEW_RESOURCE_URI
+      }
+    }
   },
   {
     name: 'hub_list_registry',
@@ -414,8 +419,8 @@ export const MANAGEMENT_TOOLS: Tool[] = [
     inputSchema: {
       type: 'object',
       properties: {},
-      additionalProperties: false,
-    },
+      additionalProperties: false
+    }
   },
   {
     name: 'hub_list_proxy_tools',
@@ -423,8 +428,8 @@ export const MANAGEMENT_TOOLS: Tool[] = [
     inputSchema: {
       type: 'object',
       properties: {},
-      additionalProperties: false,
-    },
+      additionalProperties: false
+    }
   },
   {
     name: 'hub_search_proxy_tools',
@@ -436,15 +441,15 @@ export const MANAGEMENT_TOOLS: Tool[] = [
         query: { type: 'string' },
         serverName: { type: 'string' },
         cursor: { type: 'string' },
-        limit: { type: 'number' },
+        limit: { type: 'number' }
       },
-      additionalProperties: false,
+      additionalProperties: false
     },
     _meta: {
       ui: {
-        resourceUri: HUB_AUTH_WORKFLOW_RESOURCE_URI,
-      },
-    },
+        resourceUri: HUB_AUTH_WORKFLOW_RESOURCE_URI
+      }
+    }
   },
   {
     name: 'hub_route_intent',
@@ -457,11 +462,11 @@ export const MANAGEMENT_TOOLS: Tool[] = [
         query: { type: 'string' },
         serverName: { type: 'string' },
         allowDiscoveryFallback: { type: 'boolean' },
-        limit: { type: 'number' },
+        limit: { type: 'number' }
       },
       required: ['intent'],
-      additionalProperties: false,
-    },
+      additionalProperties: false
+    }
   },
   {
     name: 'hub_describe_proxy_tool',
@@ -470,16 +475,16 @@ export const MANAGEMENT_TOOLS: Tool[] = [
     inputSchema: {
       type: 'object',
       properties: {
-        proxyToolName: { type: 'string' },
+        proxyToolName: { type: 'string' }
       },
       required: ['proxyToolName'],
-      additionalProperties: false,
+      additionalProperties: false
     },
     _meta: {
       ui: {
-        resourceUri: HUB_AUTH_WORKFLOW_RESOURCE_URI,
-      },
-    },
+        resourceUri: HUB_AUTH_WORKFLOW_RESOURCE_URI
+      }
+    }
   },
   {
     name: 'hub_get_proxy_tool',
@@ -487,11 +492,11 @@ export const MANAGEMENT_TOOLS: Tool[] = [
     inputSchema: {
       type: 'object',
       properties: {
-        proxyToolName: { type: 'string' },
+        proxyToolName: { type: 'string' }
       },
       required: ['proxyToolName'],
-      additionalProperties: false,
-    },
+      additionalProperties: false
+    }
   },
   {
     name: 'hub_run_intent',
@@ -503,16 +508,16 @@ export const MANAGEMENT_TOOLS: Tool[] = [
         intent: { type: 'string' },
         args: {
           type: 'object',
-          additionalProperties: true,
+          additionalProperties: true
         },
         query: { type: 'string' },
         serverName: { type: 'string' },
         allowDiscoveryFallback: { type: 'boolean' },
-        limit: { type: 'number' },
+        limit: { type: 'number' }
       },
       required: ['intent'],
-      additionalProperties: false,
-    },
+      additionalProperties: false
+    }
   },
   {
     name: 'hub_execute_proxy_tool',
@@ -524,17 +529,17 @@ export const MANAGEMENT_TOOLS: Tool[] = [
         proxyToolName: { type: 'string' },
         args: {
           type: 'object',
-          additionalProperties: true,
-        },
+          additionalProperties: true
+        }
       },
       required: ['proxyToolName'],
-      additionalProperties: false,
+      additionalProperties: false
     },
     _meta: {
       ui: {
-        resourceUri: HUB_AUTH_WORKFLOW_RESOURCE_URI,
-      },
-    },
+        resourceUri: HUB_AUTH_WORKFLOW_RESOURCE_URI
+      }
+    }
   },
   {
     name: 'hub_run_proxy_tool',
@@ -545,12 +550,12 @@ export const MANAGEMENT_TOOLS: Tool[] = [
         proxyToolName: { type: 'string' },
         args: {
           type: 'object',
-          additionalProperties: true,
-        },
+          additionalProperties: true
+        }
       },
       required: ['proxyToolName'],
-      additionalProperties: false,
-    },
+      additionalProperties: false
+    }
   },
   {
     name: 'hub_list_services',
@@ -559,22 +564,23 @@ export const MANAGEMENT_TOOLS: Tool[] = [
     inputSchema: {
       type: 'object',
       properties: {},
-      additionalProperties: false,
+      additionalProperties: false
     },
     _meta: {
       ui: {
-        resourceUri: HUB_OVERVIEW_RESOURCE_URI,
-      },
-    },
+        resourceUri: HUB_OVERVIEW_RESOURCE_URI
+      }
+    }
   },
   {
     name: 'hub_list_discovery_packs',
-    description: 'List available discovery packs. Discovery packs are the standard managed discovery baseline for shared hubs and can be applied with hub_set_discovery.',
+    description:
+      'List available discovery packs. Discovery packs are the standard managed discovery baseline for shared hubs and can be applied with hub_set_discovery.',
     inputSchema: {
       type: 'object',
       properties: {},
-      additionalProperties: false,
-    },
+      additionalProperties: false
+    }
   },
   {
     name: 'hub_set_discovery',
@@ -587,10 +593,10 @@ export const MANAGEMENT_TOOLS: Tool[] = [
         mode: { type: 'string', enum: ['compact', 'full'] },
         activeServers: { type: 'array', items: { type: 'string' } },
         maxProxyTools: { type: 'number' },
-        reset: { type: 'boolean' },
+        reset: { type: 'boolean' }
       },
-      additionalProperties: false,
-    },
+      additionalProperties: false
+    }
   },
   {
     name: 'hub_refresh_connections',
@@ -598,8 +604,8 @@ export const MANAGEMENT_TOOLS: Tool[] = [
     inputSchema: {
       type: 'object',
       properties: {},
-      additionalProperties: false,
-    },
+      additionalProperties: false
+    }
   },
   {
     name: 'hub_update_state',
@@ -614,10 +620,10 @@ export const MANAGEMENT_TOOLS: Tool[] = [
         disableBundles: { type: 'array', items: { type: 'string' } },
         enableServers: { type: 'array', items: { type: 'string' } },
         disableServers: { type: 'array', items: { type: 'string' } },
-        writeCodexConfig: { type: 'boolean' },
+        writeCodexConfig: { type: 'boolean' }
       },
-      additionalProperties: false,
-    },
+      additionalProperties: false
+    }
   },
   {
     name: 'hub_trace_lookup',
@@ -626,11 +632,11 @@ export const MANAGEMENT_TOOLS: Tool[] = [
       type: 'object',
       properties: {
         correlationId: { type: 'string' },
-        limit: { type: 'number' },
+        limit: { type: 'number' }
       },
       required: ['correlationId'],
-      additionalProperties: false,
-    },
+      additionalProperties: false
+    }
   },
   {
     name: 'hub_policy_status',
@@ -638,85 +644,107 @@ export const MANAGEMENT_TOOLS: Tool[] = [
     inputSchema: {
       type: 'object',
       properties: {},
-      additionalProperties: false,
+      additionalProperties: false
     },
     _meta: {
       ui: {
-        resourceUri: HUB_OVERVIEW_RESOURCE_URI,
-      },
-    },
-  },
+        resourceUri: HUB_OVERVIEW_RESOURCE_URI
+      }
+    }
+  }
 ];
+
+export function resolveVisibleManagementTools(env: Env): Tool[] {
+  const allowlist = parseList(readEnvString(env, 'HUB_MANAGEMENT_TOOL_ALLOWLIST'));
+  if (allowlist === null) {
+    return MANAGEMENT_TOOLS;
+  }
+
+  const allowed = new Set(allowlist);
+  return MANAGEMENT_TOOLS.filter((tool) => allowed.has(tool.name));
+}
+
+function isKnownManagementToolName(toolName: string): boolean {
+  return MANAGEMENT_TOOLS.some((tool) => tool.name === toolName);
+}
+
+function isManagementToolAllowed(env: Env, toolName: string): boolean {
+  const allowlist = parseList(readEnvString(env, 'HUB_MANAGEMENT_TOOL_ALLOWLIST'));
+  return allowlist === null || allowlist.includes(toolName);
+}
 
 export const HUB_RESOURCES: HubResourceDefinition[] = [
   {
     uri: 'hub://status',
     name: 'Hub Status',
     description: 'Runtime status, connected downstream servers, warnings, and proxy tool coverage.',
-    mimeType: 'application/json',
+    mimeType: 'application/json'
   },
   {
     uri: 'hub://registry',
     name: 'Hub Registry',
     description: 'Configured server registry and bundle definitions.',
-    mimeType: 'application/json',
+    mimeType: 'application/json'
   },
   {
     uri: 'hub://policy',
     name: 'Hub Policy',
     description: 'Active rate-limit and quota policy settings for this hub runtime.',
-    mimeType: 'application/json',
+    mimeType: 'application/json'
   },
   {
     uri: 'hub://connections',
     name: 'Hub Connections',
     description: 'Connection status and tool counts per downstream server.',
-    mimeType: 'application/json',
+    mimeType: 'application/json'
   },
   {
     uri: 'hub://proxy-tools',
     name: 'Visible Proxy Tools',
-    description: 'Proxy tools visible to the calling account/session after discovery + policy filtering.',
-    mimeType: 'application/json',
+    description:
+      'Proxy tools visible to the calling account/session after discovery + policy filtering.',
+    mimeType: 'application/json'
   },
   {
     uri: 'hub://discovery',
     name: 'Discovery Settings',
-    description: 'Current discovery preferences and available discovery packs for this account. Discovery packs are the standard managed baseline for shared hubs.',
-    mimeType: 'application/json',
+    description:
+      'Current discovery preferences and available discovery packs for this account. Discovery packs are the standard managed baseline for shared hubs.',
+    mimeType: 'application/json'
   },
   {
     uri: HUB_OVERVIEW_RESOURCE_URI,
     name: 'Hub Overview',
-    description: 'MCP App overview for the remote hub with key runtime metrics and quick-start guidance.',
-    mimeType: 'text/html',
+    description:
+      'MCP App overview for the remote hub with key runtime metrics and quick-start guidance.',
+    mimeType: 'text/html'
   },
   {
     uri: HUB_AUTH_WORKFLOW_RESOURCE_URI,
     name: 'Hub Auth Workflow',
-    description: 'Recommended brokered workflow for toolkit connection checks, connect links, retries, and reconnects.',
-    mimeType: 'text/html',
-  },
+    description:
+      'Recommended brokered workflow for toolkit connection checks, connect links, retries, and reconnects.',
+    mimeType: 'text/html'
+  }
 ];
 
-let runtimeCache:
-  | {
-      key: string;
-      runtime: HubRuntime;
-      builtAt: number;
-    }
-  | null = null;
+let runtimeCache: {
+  key: string;
+  runtime: HubRuntime;
+  builtAt: number;
+} | null = null;
 
-let pendingRuntimeLoad:
-  | {
-      key: string;
-      promise: Promise<HubRuntime>;
-    }
-  | null = null;
+let pendingRuntimeLoad: {
+  key: string;
+  promise: Promise<HubRuntime>;
+} | null = null;
 
 let hubRouteTableReady = false;
 
-const rateLimitBuckets = new Map<string, { windowStartMs: number; count: number; lastSeenMs: number }>();
+const rateLimitBuckets = new Map<
+  string,
+  { windowStartMs: number; count: number; lastSeenMs: number }
+>();
 let rateLimitSweepCounter = 0;
 const HUB_PROXY_PERIOD_COUNTER_SERVER = `${HUB_NAME}:proxy`;
 const sessionResolveCache = new Map<
@@ -752,26 +780,32 @@ export default {
     }
 
     if (isOAuthAuthorizationServerPath(url.pathname)) {
+      if (!isOAuthDiscoveryEnabled(env)) {
+        return withCors(new Response('Not found', { status: 404 }));
+      }
       return withCors(
         new Response(JSON.stringify(buildHubOAuthAuthorizationServerMetadata(url, env)), {
           status: 200,
           headers: {
             'Content-Type': 'application/json',
-            'Cache-Control': 'public, max-age=300',
-          },
-        }),
+            'Cache-Control': 'public, max-age=300'
+          }
+        })
       );
     }
 
     if (isOAuthProtectedResourcePath(url.pathname)) {
+      if (!isOAuthDiscoveryEnabled(env)) {
+        return withCors(new Response('Not found', { status: 404 }));
+      }
       return withCors(
         new Response(JSON.stringify(buildHubOAuthProtectedResourceMetadata(url, env)), {
           status: 200,
           headers: {
             'Content-Type': 'application/json',
-            'Cache-Control': 'public, max-age=300',
-          },
-        }),
+            'Cache-Control': 'public, max-age=300'
+          }
+        })
       );
     }
 
@@ -786,7 +820,7 @@ export default {
         const acceptHeader = (normalizedRequest.headers.get('accept') ?? '').toLowerCase();
         if (!acceptHeader.includes('text/event-stream')) {
           return withCors(
-            jsonResponse({ error: 'Not Acceptable: Client must accept text/event-stream' }, 406),
+            jsonResponse({ error: 'Not Acceptable: Client must accept text/event-stream' }, 406)
           );
         }
       }
@@ -796,7 +830,7 @@ export default {
         const server = buildHubServer(runtime, env, ctx);
         const transport = new WebStandardStreamableHTTPServerTransport({
           sessionIdGenerator: undefined,
-          enableJsonResponse: true,
+          enableJsonResponse: true
         });
 
         await server.connect(transport);
@@ -819,23 +853,25 @@ export default {
             version: HUB_VERSION,
             endpoints: {
               mcp: '/mcp',
-              health: '/health',
+              mcp_bearer: '/mcp/bearer',
+              health: '/health'
             },
-            auth_required: Boolean(readEnvString(env, 'HUB_API_TOKEN')),
+            auth_required: isHubStaticAuthConfigured(env),
             identity_mode: resolveHubIdentityMode(env),
+            oauth_discovery_enabled: isOAuthDiscoveryEnabled(env),
             legacy_bridge: {
               enabled: readEnvString(env, 'HUB_LEGACY_BRIDGE_ENABLED') === 'true',
-              sunset_at: readEnvString(env, 'HUB_LEGACY_SUNSET_AT') ?? null,
+              sunset_at: readEnvString(env, 'HUB_LEGACY_SUNSET_AT') ?? null
             },
             state_storage: env.HUB_STATE_KV ? 'kv' : 'env-only',
             policy: buildPolicyStatusPayload(rateLimitPolicy, quotaPolicy, env),
             downstream_auth_config: {
               has_cs_telemetry_operator_token: Boolean(
-                readEnvString(env, 'CS_TELEMETRY_OPERATOR_API_TOKEN'),
+                readEnvString(env, 'CS_TELEMETRY_OPERATOR_API_TOKEN')
               ),
               has_halfdozen_telemetry_operator_token: Boolean(
-                readEnvString(env, 'HALFDOZEN_TELEMETRY_OPERATOR_API_TOKEN'),
-              ),
+                readEnvString(env, 'HALFDOZEN_TELEMETRY_OPERATOR_API_TOKEN')
+              )
             },
             session_resolver: {
               enabled: isSessionResolverConfigured(env),
@@ -843,22 +879,22 @@ export default {
               has_binding: Boolean(env.IDENTITY_WORKER),
               timeout_ms: parsePositiveInt(
                 readEnvString(env, 'HUB_SESSION_RESOLVE_TIMEOUT_MS'),
-                DEFAULT_SESSION_RESOLVE_TIMEOUT_MS,
-              ),
+                DEFAULT_SESSION_RESOLVE_TIMEOUT_MS
+              )
             },
             enabled_servers: runtime.stateResolution.enabledServerNames,
             connected_servers: runtime.connected.map((server) => ({
               name: server.name,
-              tool_count: server.tools.length,
+              tool_count: server.tools.length
             })),
             failed_servers: runtime.failed,
             proxy_tool_count: runtime.proxies.toolDefinitions.length,
             warnings: uniqueSortedStrings([
               ...runtime.stateResolution.warnings,
-              ...runtime.proxies.warnings,
+              ...runtime.proxies.warnings
             ]),
-            built_at: new Date(runtime.builtAt).toISOString(),
-          }),
+            built_at: new Date(runtime.builtAt).toISOString()
+          })
         );
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
@@ -867,16 +903,26 @@ export default {
     }
 
     return withCors(new Response('Not found', { status: 404 }));
-  },
+  }
 };
 
-export function buildHubOAuthAuthorizationServerMetadata(url: URL, env: Env): Record<string, unknown> {
-  const issuer = normalizeHubOAuthIssuer(readEnvString(env, 'OAUTH_ISSUER_URL') ?? 'https://id.createsomething.space');
+export function buildHubOAuthAuthorizationServerMetadata(
+  url: URL,
+  env: Env
+): Record<string, unknown> {
+  const issuer = normalizeHubOAuthIssuer(
+    readEnvString(env, 'OAUTH_ISSUER_URL') ?? 'https://id.createsomething.space'
+  );
   return buildOAuthAuthorizationServerMetadata(url.origin, { issuer, resourcePath: '/mcp' });
 }
 
-export function buildHubOAuthProtectedResourceMetadata(url: URL, env: Env): Record<string, unknown> {
-  const issuer = normalizeHubOAuthIssuer(readEnvString(env, 'OAUTH_ISSUER_URL') ?? 'https://id.createsomething.space');
+export function buildHubOAuthProtectedResourceMetadata(
+  url: URL,
+  env: Env
+): Record<string, unknown> {
+  const issuer = normalizeHubOAuthIssuer(
+    readEnvString(env, 'OAUTH_ISSUER_URL') ?? 'https://id.createsomething.space'
+  );
   return buildOAuthProtectedResourceMetadata(url.origin, { issuer, resourcePath: '/mcp' });
 }
 
@@ -913,17 +959,13 @@ function ensureStreamableHttpAcceptHeader(request: Request): Request {
 }
 
 export async function authorizeRequest(request: Request, env: Env): Promise<Response | null> {
-  const protectedResourceMetadataUrl = `${new URL(request.url).origin}/mcp/.well-known/oauth-protected-resource`;
-  const unauthorizedHeaders = {
-    'WWW-Authenticate': `Bearer realm="create-something-hub", resource_metadata="${protectedResourceMetadataUrl}"`,
-  };
-  const requiredToken = readEnvString(env, 'HUB_API_TOKEN');
-  if (!requiredToken) {
+  const unauthorizedHeaders = buildUnauthorizedHeaders(new URL(request.url), env);
+  if (!isHubStaticAuthConfigured(env)) {
     return null;
   }
 
   const providedToken = getRequestToken(request);
-  if (providedToken && timingSafeEqual(providedToken, requiredToken)) {
+  if (providedToken && isHubStaticBearerToken(providedToken, env)) {
     return null;
   }
 
@@ -933,19 +975,60 @@ export async function authorizeRequest(request: Request, env: Env): Promise<Resp
 
   const sessionHeaderToken = request.headers.get('x-mcp-session-token')?.trim() ?? null;
   const bearerToken = getRequestBearerToken(request);
-  const bearerIsHubToken =
-    bearerToken && requiredToken ? timingSafeEqual(bearerToken, requiredToken) : false;
-  const identityToken = sessionHeaderToken ?? (bearerToken && !bearerIsHubToken ? bearerToken : null);
+  const bearerIsHubToken = bearerToken ? isHubStaticBearerToken(bearerToken, env) : false;
+  const identityToken =
+    sessionHeaderToken ?? (bearerToken && !bearerIsHubToken ? bearerToken : null);
   if (!identityToken) {
     return jsonResponse({ error: 'Unauthorized' }, 401, unauthorizedHeaders);
   }
 
-  const resolved = await resolveSessionForBearerToken(env, identityToken, extractResourceHostFromRequest(request));
+  const resolved = await resolveSessionForBearerToken(
+    env,
+    identityToken,
+    extractResourceHostFromRequest(request)
+  );
   if (resolved?.valid === true && normalizeTraceValue(resolved.account_id)) {
     return null;
   }
 
   return jsonResponse({ error: 'Unauthorized' }, 401, unauthorizedHeaders);
+}
+
+function buildUnauthorizedHeaders(url: URL, env: Env): Record<string, string> {
+  if (isBearerOnlyMcpPath(url.pathname) || !isOAuthDiscoveryEnabled(env)) {
+    return {
+      'WWW-Authenticate': 'Bearer realm="create-something-hub"'
+    };
+  }
+
+  const protectedResourceMetadataUrl = `${url.origin}/mcp/.well-known/oauth-protected-resource`;
+  return {
+    'WWW-Authenticate': `Bearer realm="create-something-hub", resource_metadata="${protectedResourceMetadataUrl}"`
+  };
+}
+
+function isOAuthDiscoveryEnabled(env: Env): boolean {
+  return parseBooleanWithDefault(readEnvString(env, 'HUB_OAUTH_DISCOVERY_ENABLED'), true);
+}
+
+function isBearerOnlyMcpPath(pathname: string): boolean {
+  const normalized = pathname.replace(/\/+$/, '') || '/';
+  return normalized === '/mcp/bearer' || normalized.startsWith('/mcp/bearer/');
+}
+
+function isHubStaticAuthConfigured(env: Env): boolean {
+  return resolveHubStaticBearerTokens(env).length > 0;
+}
+
+function isHubStaticBearerToken(token: string, env: Env): boolean {
+  return resolveHubStaticBearerTokens(env).some((candidate) => timingSafeEqual(token, candidate));
+}
+
+function resolveHubStaticBearerTokens(env: Env): string[] {
+  return uniqueSortedStrings([
+    ...(readEnvString(env, 'HUB_API_TOKEN') ? [readEnvString(env, 'HUB_API_TOKEN') as string] : []),
+    ...(parseList(readEnvString(env, 'HUB_ADDITIONAL_API_TOKENS')) ?? [])
+  ]);
 }
 
 export function normalizeInboundMcpRequest(request: Request): Request {
@@ -961,7 +1044,7 @@ export function normalizeInboundMcpRequest(request: Request): Request {
 
   headers.set(
     'Authorization',
-    carrierToken.toLowerCase().startsWith('bearer ') ? carrierToken : `Bearer ${carrierToken}`,
+    carrierToken.toLowerCase().startsWith('bearer ') ? carrierToken : `Bearer ${carrierToken}`
   );
   return new Request(request, { headers });
 }
@@ -1038,9 +1121,15 @@ async function getHubRuntime(env: Env, options: { force?: boolean } = {}): Promi
   const persistedState = await readHubState(env, registry);
   const resolution = resolveState(registry, persistedState);
   const key = buildRuntimeCacheKey(env, resolution.state);
-  const ttlMs = parsePositiveInt(readEnvString(env, 'HUB_REFRESH_SECONDS'), DEFAULT_REFRESH_SECONDS) * 1000;
+  const ttlMs =
+    parsePositiveInt(readEnvString(env, 'HUB_REFRESH_SECONDS'), DEFAULT_REFRESH_SECONDS) * 1000;
 
-  if (!options.force && runtimeCache && runtimeCache.key === key && Date.now() - runtimeCache.builtAt <= ttlMs) {
+  if (
+    !options.force &&
+    runtimeCache &&
+    runtimeCache.key === key &&
+    Date.now() - runtimeCache.builtAt <= ttlMs
+  ) {
     return runtimeCache.runtime;
   }
 
@@ -1054,7 +1143,7 @@ async function getHubRuntime(env: Env, options: { force?: boolean } = {}): Promi
       runtimeCache = {
         key,
         runtime,
-        builtAt: runtime.builtAt,
+        builtAt: runtime.builtAt
       };
       if (previousRuntime && previousRuntime !== runtime) {
         void closeHubRuntime(previousRuntime);
@@ -1081,27 +1170,27 @@ async function buildHubRuntime(env: Env, stateResolution: StateResolution): Prom
     stateResolution.enabledServerNames,
     connectConcurrency,
     async (serverName) => {
-    const config = registry.servers[serverName];
-    if (!config) {
-      return {
-        kind: 'failed' as const,
-        failure: { name: serverName, error: `Server "${serverName}" not found in registry` },
-      };
-    }
+      const config = registry.servers[serverName];
+      if (!config) {
+        return {
+          kind: 'failed' as const,
+          failure: { name: serverName, error: `Server "${serverName}" not found in registry` }
+        };
+      }
 
-    if (config.transport !== 'http') {
-      return {
-        kind: 'warning' as const,
-        message: `Skipping "${serverName}": remote hub only supports HTTP downstream servers`,
-      };
-    }
+      if (config.transport !== 'http') {
+        return {
+          kind: 'warning' as const,
+          message: `Skipping "${serverName}": remote hub only supports HTTP downstream servers`
+        };
+      }
 
-    const result = await connectSingleDownstream(serverName, config, env);
-    if ('client' in result) {
-      return { kind: 'connected' as const, connected: result };
+      const result = await connectSingleDownstream(serverName, config, env);
+      if ('client' in result) {
+        return { kind: 'connected' as const, connected: result };
+      }
+      return { kind: 'failed' as const, failure: result };
     }
-    return { kind: 'failed' as const, failure: result };
-    },
   );
 
   for (const result of connectionResults) {
@@ -1128,14 +1217,14 @@ async function buildHubRuntime(env: Env, stateResolution: StateResolution): Prom
     stateResolution,
     connected,
     failed,
-    proxies,
+    proxies
   };
 }
 
 async function mapWithConcurrency<T, R>(
   items: T[],
   concurrency: number,
-  mapper: (item: T, index: number) => Promise<R>,
+  mapper: (item: T, index: number) => Promise<R>
 ): Promise<R[]> {
   if (items.length === 0) {
     return [];
@@ -1160,7 +1249,7 @@ async function mapWithConcurrency<T, R>(
 async function connectSingleDownstream(
   name: string,
   config: HttpServerConfig,
-  env: Env,
+  env: Env
 ): Promise<ConnectedDownstream | DownstreamFailure> {
   const connectTimeoutMs = resolveConnectTimeoutMs(config, env);
   const listToolsTimeoutMs = resolveListToolsTimeoutMs(config, env);
@@ -1175,7 +1264,7 @@ async function connectSingleDownstream(
   for (let attempt = 1; attempt <= maxBootstrapAttempts; attempt += 1) {
     const client = new Client({
       name: `${HUB_NAME}:${name}`,
-      version: HUB_VERSION,
+      version: HUB_VERSION
     });
 
     try {
@@ -1183,13 +1272,13 @@ async function connectSingleDownstream(
       await withTimeout(
         client.connect(transport),
         connectTimeoutMs,
-        `Connect to downstream "${name}"`,
+        `Connect to downstream "${name}"`
       );
 
       const tools = await withTimeout(
         listAllTools(client),
         listToolsTimeoutMs,
-        `List tools from downstream "${name}"`,
+        `List tools from downstream "${name}"`
       );
 
       return { name, config, baseHeaders: headers, toolCallTimeoutMs, client, tools };
@@ -1206,7 +1295,7 @@ async function connectSingleDownstream(
 
       if (shouldRetry) {
         console.warn(
-          `[${HUB_NAME}] downstream bootstrap timed out for "${name}" (attempt ${attempt}/${maxBootstrapAttempts}); retrying once.`,
+          `[${HUB_NAME}] downstream bootstrap timed out for "${name}" (attempt ${attempt}/${maxBootstrapAttempts}); retrying once.`
         );
         continue;
       }
@@ -1229,11 +1318,11 @@ function isRetryableBootstrapTimeoutError(message: string, serverName: string): 
 function resolveHttpHeaders(
   serverName: string,
   config: HttpServerConfig,
-  env: Env,
+  env: Env
 ): Record<string, string> {
   const headers: Record<string, string> = {
     ...(config.http_headers ?? {}),
-    ...(config.headers ?? {}),
+    ...(config.headers ?? {})
   };
 
   if (config.env_http_headers) {
@@ -1259,7 +1348,7 @@ function resolveHttpHeaders(
 function resolveToolCallTimeoutMs(config: HttpServerConfig, env: Env): number {
   const fallback = parsePositiveInt(
     readEnvString(env, 'HUB_TOOL_CALL_TIMEOUT_MS'),
-    DEFAULT_TOOL_CALL_TIMEOUT_MS,
+    DEFAULT_TOOL_CALL_TIMEOUT_MS
   );
   return parsePositiveIntFromUnknown(config.tool_call_timeout_ms ?? config.timeout_ms, fallback);
 }
@@ -1267,7 +1356,7 @@ function resolveToolCallTimeoutMs(config: HttpServerConfig, env: Env): number {
 function resolveConnectTimeoutMs(config: HttpServerConfig, env: Env): number {
   const fallback = parsePositiveInt(
     readEnvString(env, 'HUB_CONNECT_TIMEOUT_MS'),
-    DEFAULT_CONNECT_TIMEOUT_MS,
+    DEFAULT_CONNECT_TIMEOUT_MS
   );
   return parsePositiveIntFromUnknown(config.connect_timeout_ms, fallback);
 }
@@ -1275,7 +1364,7 @@ function resolveConnectTimeoutMs(config: HttpServerConfig, env: Env): number {
 function resolveListToolsTimeoutMs(config: HttpServerConfig, env: Env): number {
   const fallback = parsePositiveInt(
     readEnvString(env, 'HUB_LIST_TOOLS_TIMEOUT_MS'),
-    DEFAULT_LIST_TOOLS_TIMEOUT_MS,
+    DEFAULT_LIST_TOOLS_TIMEOUT_MS
   );
   return parsePositiveIntFromUnknown(config.list_tools_timeout_ms ?? config.timeout_ms, fallback);
 }
@@ -1283,7 +1372,7 @@ function resolveListToolsTimeoutMs(config: HttpServerConfig, env: Env): number {
 function resolveConnectConcurrency(env: Env): number {
   const parsed = parsePositiveInt(
     readEnvString(env, 'HUB_CONNECT_CONCURRENCY'),
-    DEFAULT_CONNECT_CONCURRENCY,
+    DEFAULT_CONNECT_CONCURRENCY
   );
   return Math.max(1, Math.min(parsed, MAX_CONNECT_CONCURRENCY));
 }
@@ -1324,11 +1413,11 @@ async function callDownstreamToolWithTrace(
   toolName: string,
   args: Record<string, unknown>,
   trace: InvocationTrace,
-  accountId: string,
+  accountId: string
 ): Promise<any> {
   const client = new Client({
     name: `${HUB_NAME}:${server.name}:proxy`,
-    version: HUB_VERSION,
+    version: HUB_VERSION
   });
 
   const headers: Record<string, string> = {
@@ -1339,13 +1428,13 @@ async function callDownstreamToolWithTrace(
     'x-hub-downstream-server': server.name,
     'x-hub-downstream-tool': toolName,
     'x-mcp-account-id': accountId,
-    'x-hub-account-id': accountId,
+    'x-hub-account-id': accountId
   };
 
   const transport = new StreamableHTTPClientTransport(new URL(server.config.url), {
     requestInit: {
-      headers,
-    },
+      headers
+    }
   });
 
   await client.connect(transport);
@@ -1357,14 +1446,14 @@ async function callDownstreamToolWithTrace(
         _meta: {
           progressToken: trace.requestId,
           'io.modelcontextprotocol/related-task': {
-            taskId: trace.correlationId,
-          },
-        },
+            taskId: trace.correlationId
+          }
+        }
       },
       undefined,
       {
-        timeout: server.toolCallTimeoutMs,
-      },
+        timeout: server.toolCallTimeoutMs
+      }
     );
   } finally {
     try {
@@ -1389,7 +1478,7 @@ function buildProxyCatalog(connectedServers: ConnectedDownstream[]): ProxyCatalo
         ...tool,
         name: proxyName,
         description: `[${server.name}] ${tool.description ?? ''}`.trim(),
-        inputSchema: tool.inputSchema ?? { type: 'object', properties: {} },
+        inputSchema: tool.inputSchema ?? { type: 'object', properties: {} }
       });
 
       routes.set(proxyName, {
@@ -1398,7 +1487,7 @@ function buildProxyCatalog(connectedServers: ConnectedDownstream[]): ProxyCatalo
         downstreamToolName: tool.name,
         serverTags: [...(server.config.tags ?? [])],
         call: (args, trace, accountId) =>
-          callDownstreamToolWithTrace(server, tool.name, args, trace, accountId),
+          callDownstreamToolWithTrace(server, tool.name, args, trace, accountId)
       });
     }
   }
@@ -1406,7 +1495,7 @@ function buildProxyCatalog(connectedServers: ConnectedDownstream[]): ProxyCatalo
   return {
     toolDefinitions,
     routes,
-    warnings,
+    warnings
   };
 }
 
@@ -1420,37 +1509,37 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
   const server = new Server(
     {
       name: HUB_NAME,
-      version: HUB_VERSION,
+      version: HUB_VERSION
     },
     {
       capabilities: {
         tools: {
-          listChanged: true,
+          listChanged: true
         },
         resources: {
           listChanged: false,
-          subscribe: false,
-        },
-      },
-    },
+          subscribe: false
+        }
+      }
+    }
   );
 
   server.setRequestHandler(ListToolsRequestSchema, async (request, extra) => {
     const cursor = extractListCursor(request);
     const pageSize = resolveDiscoveryPageSize(env);
-    const allTools = MANAGEMENT_TOOLS;
+    const allTools = resolveVisibleManagementTools(env);
     const offset = decodeCursorOffset(cursor);
     const boundedOffset = Math.max(0, Math.min(offset, allTools.length));
     const nextOffset = boundedOffset + pageSize;
 
     return {
       tools: allTools.slice(boundedOffset, boundedOffset + pageSize),
-      nextCursor: nextOffset < allTools.length ? encodeCursorOffset(nextOffset) : undefined,
+      nextCursor: nextOffset < allTools.length ? encodeCursorOffset(nextOffset) : undefined
     };
   });
 
   server.setRequestHandler(ListResourcesRequestSchema, async () => ({
-    resources: HUB_RESOURCES,
+    resources: HUB_RESOURCES
   }));
 
   server.setRequestHandler(ReadResourceRequestSchema, async (request, extra) => {
@@ -1464,12 +1553,12 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
         accountContext,
         env,
         trace: extractInvocationTrace(request, extra),
-        entrypoint: `resource:${uri}`,
+        entrypoint: `resource:${uri}`
       });
       return {
         accountContext,
         prefs,
-        visible,
+        visible
       };
     };
 
@@ -1477,7 +1566,7 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
       case 'hub://status':
         return toJsonResource(uri, {
           ...buildStatusPayload(runtime),
-          policy: buildPolicyStatusPayload(rateLimitPolicy, quotaPolicy, env),
+          policy: buildPolicyStatusPayload(rateLimitPolicy, quotaPolicy, env)
         });
       case 'hub://registry':
         return toJsonResource(uri, buildRegistryPayload(registry));
@@ -1488,17 +1577,17 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
           enabledServerNames: runtime.stateResolution.enabledServerNames,
           connectedServers: runtime.connected.map((server) => ({
             name: server.name,
-            toolCount: server.tools.length,
+            toolCount: server.tools.length
           })),
           failedServers: runtime.failed,
-          builtAt: new Date(runtime.builtAt).toISOString(),
+          builtAt: new Date(runtime.builtAt).toISOString()
         });
       case 'hub://proxy-tools': {
         const { prefs, visible } = await getDiscoveryContext();
         return toJsonResource(uri, {
           count: visible.toolDefinitions.length,
           proxyTools: visible.toolDefinitions.map((tool) => tool.name),
-          discovery: prefs,
+          discovery: prefs
         });
       }
       case 'hub://discovery': {
@@ -1510,20 +1599,23 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
             description: pack.description,
             mode: pack.preferences.mode,
             activeServers: pack.preferences.activeServers,
-            maxProxyTools: pack.preferences.maxProxyTools,
-          })),
+            maxProxyTools: pack.preferences.maxProxyTools
+          }))
         });
       }
       case HUB_OVERVIEW_RESOURCE_URI: {
         const { prefs, visible } = await getDiscoveryContext();
-        return toHtmlResource(uri, buildHubOverviewHtml({
-          runtime,
-          rateLimitPolicy,
-          quotaPolicy,
-          env,
-          prefs,
-          visibleProxyToolCount: visible.toolDefinitions.length,
-        }));
+        return toHtmlResource(
+          uri,
+          buildHubOverviewHtml({
+            runtime,
+            rateLimitPolicy,
+            quotaPolicy,
+            env,
+            prefs,
+            visibleProxyToolCount: visible.toolDefinitions.length
+          })
+        );
       }
       case HUB_AUTH_WORKFLOW_RESOURCE_URI:
         return toHtmlResource(uri, buildHubAuthWorkflowHtml());
@@ -1541,10 +1633,28 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
     const startedAt = Date.now();
 
     try {
+      if (isKnownManagementToolName(toolName) && !isManagementToolAllowed(env, toolName)) {
+        const message = `Hub management tool "${toolName}" is not enabled for this hub.`;
+        const result = toErrorResult(message);
+        await recordHubInvocationWithCtx({
+          accountId,
+          toolName,
+          success: false,
+          durationMs: Date.now() - startedAt,
+          trace,
+          errorMessage: message,
+          metadata: {
+            type: 'management',
+            policy: 'management_tool_allowlist'
+          }
+        });
+        return result;
+      }
+
       if (toolName === 'hub_status') {
         const result = toJsonResult({
           ...buildStatusPayload(runtime),
-          policy: buildPolicyStatusPayload(rateLimitPolicy, quotaPolicy, env),
+          policy: buildPolicyStatusPayload(rateLimitPolicy, quotaPolicy, env)
         });
         await recordHubInvocationWithCtx({
           accountId,
@@ -1553,8 +1663,8 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
           durationMs: Date.now() - startedAt,
           trace,
           metadata: {
-            type: 'management',
-          },
+            type: 'management'
+          }
         });
         return result;
       }
@@ -1568,8 +1678,8 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
           durationMs: Date.now() - startedAt,
           trace,
           metadata: {
-            type: 'management',
-          },
+            type: 'management'
+          }
         });
         return result;
       }
@@ -1582,11 +1692,11 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
           accountContext,
           env,
           trace,
-          entrypoint: 'hub_list_proxy_tools',
+          entrypoint: 'hub_list_proxy_tools'
         });
         const result = toJsonResult({
           proxyTools: visible.toolDefinitions.map((tool) => tool.name),
-          count: visible.toolDefinitions.length,
+          count: visible.toolDefinitions.length
         });
         await recordHubInvocationWithCtx({
           accountId,
@@ -1595,8 +1705,8 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
           durationMs: Date.now() - startedAt,
           trace,
           metadata: {
-            type: 'management',
-          },
+            type: 'management'
+          }
         });
         return result;
       }
@@ -1611,7 +1721,7 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
           env,
           trace,
           entrypoint: 'hub_search_proxy_tools',
-          filters,
+          filters
         });
         const result = toJsonResult(searchProxyTools(visible, args));
         const query = stringArg(args.query);
@@ -1630,8 +1740,8 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
             serverName,
             limit,
             cursor,
-            visibleProxyToolCount: visible.toolDefinitions.length,
-          },
+            visibleProxyToolCount: visible.toolDefinitions.length
+          }
         });
         return result;
       }
@@ -1649,8 +1759,8 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
             errorMessage: '"intent" is required',
             metadata: {
               type: 'management',
-              operation: 'route_intent',
-            },
+              operation: 'route_intent'
+            }
           });
           return errorResult;
         }
@@ -1662,7 +1772,7 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
           accountContext,
           env,
           trace,
-          entrypoint: 'hub_route_intent',
+          entrypoint: 'hub_route_intent'
         });
         const candidate = resolveIntentRouteCandidate(visible, args);
         const result = toJsonResult(candidateToRoutePayload(candidate, visible));
@@ -1679,8 +1789,8 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
             source: candidate.source,
             intent: candidate.intent,
             normalizedIntent: candidate.normalizedIntent,
-            proxyToolName: candidate.proxyToolName,
-          },
+            proxyToolName: candidate.proxyToolName
+          }
         });
         return result;
       }
@@ -1698,8 +1808,8 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
             errorMessage: '"proxyToolName" is required',
             metadata: {
               type: 'management',
-              operation: 'describe_proxy_tool',
-            },
+              operation: 'describe_proxy_tool'
+            }
           });
           return errorResult;
         }
@@ -1712,7 +1822,7 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
           env,
           trace,
           entrypoint: 'hub_describe_proxy_tool',
-          proxyToolName,
+          proxyToolName
         });
         if (!match) {
           const message = `Proxy tool "${proxyToolName}" is unknown or not visible for this session.`;
@@ -1727,8 +1837,8 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
             metadata: {
               type: 'management',
               operation: 'describe_proxy_tool',
-              proxyToolName,
-            },
+              proxyToolName
+            }
           });
           return errorResult;
         }
@@ -1740,7 +1850,7 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
           downstreamToolName: route.downstreamToolName,
           description: definition.description ?? '',
           inputSchema: definition.inputSchema ?? { type: 'object', properties: {} },
-          visible: true,
+          visible: true
         });
         await recordHubInvocationWithCtx({
           accountId,
@@ -1753,8 +1863,8 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
             operation: 'describe_proxy_tool',
             proxyToolName,
             serverName: route.serverName,
-            downstreamToolName: route.downstreamToolName,
-          },
+            downstreamToolName: route.downstreamToolName
+          }
         });
         return result;
       }
@@ -1772,8 +1882,8 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
             errorMessage: '"intent" is required',
             metadata: {
               type: 'management',
-              operation: 'run_intent',
-            },
+              operation: 'run_intent'
+            }
           });
           return errorResult;
         }
@@ -1791,8 +1901,8 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
             metadata: {
               type: 'management',
               operation: 'run_intent',
-              intent,
-            },
+              intent
+            }
           });
           return errorResult;
         }
@@ -1804,7 +1914,7 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
           accountContext,
           env,
           trace,
-          entrypoint: 'hub_run_intent',
+          entrypoint: 'hub_run_intent'
         });
         const candidate = resolveIntentRouteCandidate(visible, args);
         if (!candidate.proxyToolName) {
@@ -1822,8 +1932,8 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
               operation: 'run_intent',
               source: candidate.source,
               intent: candidate.intent,
-              normalizedIntent: candidate.normalizedIntent,
-            },
+              normalizedIntent: candidate.normalizedIntent
+            }
           });
           return errorResult;
         }
@@ -1845,8 +1955,8 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
               source: candidate.source,
               intent: candidate.intent,
               normalizedIntent: candidate.normalizedIntent,
-              proxyToolName: candidate.proxyToolName,
-            },
+              proxyToolName: candidate.proxyToolName
+            }
           });
           return errorResult;
         }
@@ -1866,7 +1976,7 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
           rateLimitPolicy,
           quotaPolicy,
           entrypoint: 'hub_run_intent',
-          entryProxyToolName: route.proxyToolName,
+          entryProxyToolName: route.proxyToolName
         });
       }
 
@@ -1883,8 +1993,8 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
             errorMessage: '"proxyToolName" is required',
             metadata: {
               type: 'management',
-              operation: 'execute_proxy_tool',
-            },
+              operation: 'execute_proxy_tool'
+            }
           });
           return errorResult;
         }
@@ -1897,7 +2007,7 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
           env,
           trace,
           entrypoint: 'hub_execute_proxy_tool',
-          proxyToolName,
+          proxyToolName
         });
         if (!match) {
           const message = `Proxy tool "${proxyToolName}" is unknown or not visible for this session.`;
@@ -1912,8 +2022,8 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
             metadata: {
               type: 'management',
               operation: 'execute_proxy_tool',
-              proxyToolName,
-            },
+              proxyToolName
+            }
           });
           return errorResult;
         }
@@ -1931,8 +2041,8 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
             metadata: {
               type: 'management',
               operation: 'execute_proxy_tool',
-              proxyToolName,
-            },
+              proxyToolName
+            }
           });
           return errorResult;
         }
@@ -1952,7 +2062,7 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
           rateLimitPolicy,
           quotaPolicy,
           entrypoint: 'hub_execute_proxy_tool',
-          entryProxyToolName: proxyToolName,
+          entryProxyToolName: proxyToolName
         });
       }
 
@@ -1972,8 +2082,8 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
             activeServerCount: prefs.activeServers.length,
             maxProxyTools: prefs.maxProxyTools,
             visibleProxyToolCount: visible.toolDefinitions.length,
-            routeAuthorizationApplied: false,
-          },
+            routeAuthorizationApplied: false
+          }
         });
         return result;
       }
@@ -1985,8 +2095,8 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
             id: pack.id,
             description: pack.description,
             discovery: pack.preferences,
-            activeServerCount: pack.preferences.activeServers.length,
-          })),
+            activeServerCount: pack.preferences.activeServers.length
+          }))
         });
         await recordHubInvocationWithCtx({
           accountId,
@@ -1996,8 +2106,8 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
           trace,
           metadata: {
             type: 'management',
-            packCount: packs.length,
-          },
+            packCount: packs.length
+          }
         });
         return result;
       }
@@ -2028,8 +2138,8 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
                 metadata: {
                   type: 'management',
                   operation: 'set_discovery',
-                  pack: packId,
-                },
+                  pack: packId
+                }
               });
               return errorResult;
             }
@@ -2038,17 +2148,22 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
           nextPrefs = {
             mode: parseDiscoveryMode(stringArg(args.mode)) ?? basePrefs.mode,
             activeServers: resolveDiscoveryActiveServers(
-              optionalStringArrayArg(args.activeServers, 'activeServers') ?? basePrefs.activeServers,
-              runtime,
+              optionalStringArrayArg(args.activeServers, 'activeServers') ??
+                basePrefs.activeServers,
+              runtime
             ),
             maxProxyTools: resolveDiscoveryMaxProxyTools(
-              optionalNumberArg(args.maxProxyTools, 'maxProxyTools') ?? basePrefs.maxProxyTools,
-            ),
+              optionalNumberArg(args.maxProxyTools, 'maxProxyTools') ?? basePrefs.maxProxyTools
+            )
           };
           await persistDiscoveryPreferences(accountId, nextPrefs, env);
         }
 
-        const visibleTools = buildVisibleProxyRoutes(runtime, nextPrefs, accountContext).toolDefinitions;
+        const visibleTools = buildVisibleProxyRoutes(
+          runtime,
+          nextPrefs,
+          accountContext
+        ).toolDefinitions;
         try {
           await server.sendToolListChanged();
         } catch {
@@ -2060,13 +2175,13 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
           appliedPack: appliedPack
             ? {
                 id: appliedPack.id,
-                description: appliedPack.description,
+                description: appliedPack.description
               }
             : null,
           visibleProxyToolCount: visibleTools.length,
           totalProxyToolCount: runtime.proxies.toolDefinitions.length,
           sampleVisibleProxyTools: visibleTools.slice(0, 25).map((tool) => tool.name),
-          note: 'Refresh tools/list to pick up the updated discovery view.',
+          note: 'Refresh tools/list to pick up the updated discovery view.'
         });
         await recordHubInvocationWithCtx({
           accountId,
@@ -2081,8 +2196,8 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
             maxProxyTools: nextPrefs.maxProxyTools,
             reset,
             pack: appliedPack?.id ?? null,
-            visibleProxyToolCount: visibleTools.length,
-          },
+            visibleProxyToolCount: visibleTools.length
+          }
         });
         return result;
       }
@@ -2098,8 +2213,8 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
           trace,
           metadata: {
             type: 'management',
-            refreshed: true,
-          },
+            refreshed: true
+          }
         });
         return result;
       }
@@ -2112,7 +2227,7 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
           enableBundles: stringArrayArg(args.enableBundles, 'enableBundles'),
           disableBundles: stringArrayArg(args.disableBundles, 'disableBundles'),
           enableServers: stringArrayArg(args.enableServers, 'enableServers'),
-          disableServers: stringArrayArg(args.disableServers, 'disableServers'),
+          disableServers: stringArrayArg(args.disableServers, 'disableServers')
         };
 
         const stateUpdate = await applyRemoteStateUpdate(env, patch);
@@ -2124,10 +2239,10 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
           codexWrite: writeCodexRequested
             ? {
                 supported: false,
-                reason: 'Remote hub does not write local .codex/config.toml files.',
+                reason: 'Remote hub does not write local .codex/config.toml files.'
               }
             : null,
-          note: 'State persisted remotely. Proxy tool list refreshed from live downstream connections.',
+          note: 'State persisted remotely. Proxy tool list refreshed from live downstream connections.'
         });
 
         await recordHubInvocationWithCtx({
@@ -2138,8 +2253,8 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
           trace,
           metadata: {
             type: 'management',
-            patch,
-          },
+            patch
+          }
         });
         return result;
       }
@@ -2156,8 +2271,8 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
             trace,
             errorMessage: '"correlationId" is required',
             metadata: {
-              type: 'management',
-            },
+              type: 'management'
+            }
           });
           return errorResult;
         }
@@ -2173,8 +2288,8 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
           metadata: {
             type: 'management',
             correlationId,
-            limit,
-          },
+            limit
+          }
         });
         return result;
       }
@@ -2188,8 +2303,8 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
           durationMs: Date.now() - startedAt,
           trace,
           metadata: {
-            type: 'management',
-          },
+            type: 'management'
+          }
         });
         return result;
       }
@@ -2214,8 +2329,8 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
                 entrypoint: 'direct_proxy_disabled',
                 proxyToolName: toolName,
                 downstreamServer: directProxyRoute.serverName,
-                downstreamTool: directProxyRoute.downstreamToolName,
-              },
+                downstreamTool: directProxyRoute.downstreamToolName
+              }
             }),
             recordHubRouteInvocationWithCtx({
               accountId,
@@ -2228,16 +2343,16 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
               metadata: {
                 proxyToolName: toolName,
                 blockedByPolicy: 'broker_only',
-                entrypoint: 'direct_proxy_disabled',
-              },
-            }),
+                entrypoint: 'direct_proxy_disabled'
+              }
+            })
           ]);
           return toErrorResult(message, {
             next_step: 'brokered_execution_required',
             instructions: [
               'Call hub_list_services first, then hub_search_proxy_tools to find the proxyToolName.',
               'Optionally call hub_describe_proxy_tool if argument shape is unclear.',
-              'Call hub_execute_proxy_tool with proxyToolName + args.',
+              'Call hub_execute_proxy_tool with proxyToolName + args.'
             ],
             example: {
               search: {
@@ -2245,17 +2360,17 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
                 arguments: {
                   serverName: directProxyRoute.serverName,
                   query: directProxyRoute.downstreamToolName,
-                  limit: 5,
-                },
+                  limit: 5
+                }
               },
               execute: {
                 name: 'hub_execute_proxy_tool',
                 arguments: {
                   proxyToolName: directProxyRoute.proxyToolName,
-                  args: {},
-                },
-              },
-            },
+                  args: {}
+                }
+              }
+            }
           });
         }
 
@@ -2272,7 +2387,7 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
           rateLimitPolicy,
           quotaPolicy,
           entrypoint: 'direct_proxy_tool',
-          entryProxyToolName: toolName,
+          entryProxyToolName: toolName
         });
       }
 
@@ -2285,8 +2400,8 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
         trace,
         errorMessage: `Unknown tool "${toolName}"`,
         metadata: {
-          type: 'unknown-tool',
-        },
+          type: 'unknown-tool'
+        }
       });
       return errorResult;
     } catch (error) {
@@ -2307,8 +2422,8 @@ function buildHubServer(runtime: HubRuntime, env: Env, executionCtx?: WaitUntilC
           userId: accountContext.userId,
           sessionId: accountContext.sessionId,
           authMode: accountContext.authMode,
-          identitySource: accountContext.identitySource,
-        },
+          identitySource: accountContext.identitySource
+        }
       });
       return toErrorResult(`Tool "${toolName}" failed: ${message}`);
     }
@@ -2321,19 +2436,19 @@ function buildStatusPayload(runtime: HubRuntime): Record<string, unknown> {
   return {
     hub: {
       name: HUB_NAME,
-      version: HUB_VERSION,
+      version: HUB_VERSION
     },
     state: runtime.stateResolution.state,
     enabledServerNames: runtime.stateResolution.enabledServerNames,
     connectedServers: runtime.connected.map((server) => ({
       name: server.name,
-      toolCount: server.tools.length,
+      toolCount: server.tools.length
     })),
     failedServers: runtime.failed,
     proxyToolCount: runtime.proxies.toolDefinitions.length,
     warnings: runtime.proxies.warnings,
     builtAt: new Date(runtime.builtAt).toISOString(),
-    note: 'Use hub_update_state for live toggles and hub_refresh_connections to force reconnect + rebuild proxy catalog.',
+    note: 'Use hub_update_state for live toggles and hub_refresh_connections to force reconnect + rebuild proxy catalog.'
   };
 }
 
@@ -2343,29 +2458,32 @@ function buildRegistryPayload(currentRegistry: McpBundleRegistry): Record<string
     .map(([name, config]) => ({
       name,
       transport: config.transport,
-      target: config.transport === 'http' ? config.url : `${config.command} ${(config.args ?? []).join(' ')}`.trim(),
+      target:
+        config.transport === 'http'
+          ? config.url
+          : `${config.command} ${(config.args ?? []).join(' ')}`.trim(),
       tags: config.tags ?? [],
-      description: config.description ?? '',
+      description: config.description ?? ''
     }));
 
   const bundles = Object.entries(currentRegistry.bundles)
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([name, bundleServers]) => ({
       name,
-      servers: bundleServers,
+      servers: bundleServers
     }));
 
   return {
     servers,
     bundles,
-    defaults: currentRegistry.defaults ?? {},
+    defaults: currentRegistry.defaults ?? {}
   };
 }
 
 function buildPolicyStatusPayload(
   rateLimitPolicy: RateLimitPolicy,
   quotaPolicy: QuotaPolicy,
-  env: Env,
+  env: Env
 ): Record<string, unknown> {
   const period = getCurrentPeriod();
 
@@ -2376,7 +2494,7 @@ function buildPolicyStatusPayload(
       maxCallsPerWindow: rateLimitPolicy.maxCalls,
       windowSeconds: rateLimitPolicy.windowSeconds,
       exemptServers: [...rateLimitPolicy.exemptServers].sort(),
-      activeBucketCount: rateLimitBuckets.size,
+      activeBucketCount: rateLimitBuckets.size
     },
     quota: {
       enabled: quotaPolicy.enabled,
@@ -2384,7 +2502,7 @@ function buildPolicyStatusPayload(
       period,
       counterServerName: HUB_PROXY_PERIOD_COUNTER_SERVER,
       telemetryDbConfigured: Boolean(env.TELEMETRY_DB),
-      exemptServers: [...quotaPolicy.exemptServers].sort(),
+      exemptServers: [...quotaPolicy.exemptServers].sort()
     },
     note: [
       rateLimitPolicy.enabled
@@ -2392,8 +2510,8 @@ function buildPolicyStatusPayload(
         : 'Rate limiting is disabled. Set HUB_RATE_LIMIT_MAX_CALLS_PER_WINDOW > 0 to enable.',
       quotaPolicy.enabled
         ? `Quota enforcement uses TELEMETRY_DB mcp_run_counts with server_name=${HUB_PROXY_PERIOD_COUNTER_SERVER}.`
-        : 'Quota is disabled. Set HUB_QUOTA_MAX_PROXY_CALLS_PER_PERIOD > 0 to enable.',
-    ].join(' '),
+        : 'Quota is disabled. Set HUB_QUOTA_MAX_PROXY_CALLS_PER_PERIOD > 0 to enable.'
+    ].join(' ')
   };
 }
 
@@ -2402,7 +2520,9 @@ function resolveRateLimitPolicy(env: Env): RateLimitPolicy {
   const maxCalls = parsePositiveInt(maxCallsRaw, 0);
   const windowSeconds = parsePositiveInt(readEnvString(env, 'HUB_RATE_LIMIT_WINDOW_SECONDS'), 60);
   const scope = parseRateLimitScope(readEnvString(env, 'HUB_RATE_LIMIT_SCOPE'));
-  const exemptServers = new Set(parseList(readEnvString(env, 'HUB_RATE_LIMIT_EXEMPT_SERVERS')) ?? []);
+  const exemptServers = new Set(
+    parseList(readEnvString(env, 'HUB_RATE_LIMIT_EXEMPT_SERVERS')) ?? []
+  );
 
   const enabled = maxCalls > 0;
   return {
@@ -2411,7 +2531,7 @@ function resolveRateLimitPolicy(env: Env): RateLimitPolicy {
     windowMs: windowSeconds * 1000,
     windowSeconds,
     scope,
-    exemptServers,
+    exemptServers
   };
 }
 
@@ -2425,21 +2545,21 @@ function parseRateLimitScope(raw: string | undefined): RateLimitScope {
 function resolveQuotaPolicy(env: Env): QuotaPolicy {
   const maxCallsPerPeriod = parsePositiveInt(
     readEnvString(env, 'HUB_QUOTA_MAX_PROXY_CALLS_PER_PERIOD'),
-    0,
+    0
   );
   const exemptServers = new Set(parseList(readEnvString(env, 'HUB_QUOTA_EXEMPT_SERVERS')) ?? []);
 
   return {
     enabled: maxCallsPerPeriod > 0,
     maxCallsPerPeriod,
-    exemptServers,
+    exemptServers
   };
 }
 
 function applyRateLimit(
   policy: RateLimitPolicy,
   accountId: string,
-  route: ProxyRoute,
+  route: ProxyRoute
 ): RateLimitDecision {
   if (!policy.enabled || policy.exemptServers.has(route.serverName)) {
     return {
@@ -2449,7 +2569,7 @@ function applyRateLimit(
       resetAt: new Date(Date.now()).toISOString(),
       scope: policy.scope,
       maxCalls: policy.maxCalls,
-      windowSeconds: policy.windowSeconds,
+      windowSeconds: policy.windowSeconds
     };
   }
 
@@ -2459,9 +2579,8 @@ function applyRateLimit(
   const windowStartMs = current ? current.windowStartMs : now;
   const windowExpired = now >= windowStartMs + policy.windowMs;
 
-  const bucket = !current || windowExpired
-    ? { windowStartMs: now, count: 0, lastSeenMs: now }
-    : current;
+  const bucket =
+    !current || windowExpired ? { windowStartMs: now, count: 0, lastSeenMs: now } : current;
 
   if (bucket.count >= policy.maxCalls) {
     bucket.lastSeenMs = now;
@@ -2474,7 +2593,7 @@ function applyRateLimit(
       resetAt: new Date(bucket.windowStartMs + policy.windowMs).toISOString(),
       scope: policy.scope,
       maxCalls: policy.maxCalls,
-      windowSeconds: policy.windowSeconds,
+      windowSeconds: policy.windowSeconds
     };
   }
 
@@ -2490,7 +2609,7 @@ function applyRateLimit(
     resetAt: new Date(bucket.windowStartMs + policy.windowMs).toISOString(),
     scope: policy.scope,
     maxCalls: policy.maxCalls,
-    windowSeconds: policy.windowSeconds,
+    windowSeconds: policy.windowSeconds
   };
 }
 
@@ -2498,7 +2617,7 @@ async function applyQuotaPolicy(
   env: Env,
   policy: QuotaPolicy,
   accountId: string,
-  route: ProxyRoute,
+  route: ProxyRoute
 ): Promise<QuotaDecision> {
   const period = getCurrentPeriod();
   const key = `${accountId}::${period}`;
@@ -2511,7 +2630,7 @@ async function applyQuotaPolicy(
       currentCount: 0,
       maxCallsPerPeriod: policy.maxCallsPerPeriod,
       period,
-      reason: 'disabled_or_exempt',
+      reason: 'disabled_or_exempt'
     };
   }
 
@@ -2524,7 +2643,7 @@ async function applyQuotaPolicy(
       currentCount: 0,
       maxCallsPerPeriod: policy.maxCallsPerPeriod,
       period,
-      reason: 'telemetry_db_unavailable',
+      reason: 'telemetry_db_unavailable'
     };
   }
 
@@ -2537,7 +2656,7 @@ async function applyQuotaPolicy(
         remaining: 0,
         currentCount,
         maxCallsPerPeriod: policy.maxCallsPerPeriod,
-        period,
+        period
       };
     }
 
@@ -2548,7 +2667,7 @@ async function applyQuotaPolicy(
       remaining: Math.max(0, policy.maxCallsPerPeriod - updatedCount),
       currentCount: updatedCount,
       maxCallsPerPeriod: policy.maxCallsPerPeriod,
-      period,
+      period
     };
   } catch (error) {
     return {
@@ -2558,7 +2677,7 @@ async function applyQuotaPolicy(
       currentCount: 0,
       maxCallsPerPeriod: policy.maxCallsPerPeriod,
       period,
-      reason: `quota_check_failed:${error instanceof Error ? error.message : String(error)}`,
+      reason: `quota_check_failed:${error instanceof Error ? error.message : String(error)}`
     };
   }
 }
@@ -2569,7 +2688,7 @@ async function getQuotaCount(db: D1Database, accountId: string, period: string):
       `SELECT runs_this_period
        FROM mcp_run_counts
        WHERE server_name = ? AND account_id = ? AND period_start = ?
-       LIMIT 1`,
+       LIMIT 1`
     )
     .bind(HUB_PROXY_PERIOD_COUNTER_SERVER, accountId, period)
     .first<{ runs_this_period: number | null }>();
@@ -2578,14 +2697,18 @@ async function getQuotaCount(db: D1Database, accountId: string, period: string):
   return typeof count === 'number' && Number.isFinite(count) ? Math.max(0, Math.floor(count)) : 0;
 }
 
-async function incrementQuotaCount(db: D1Database, accountId: string, period: string): Promise<number> {
+async function incrementQuotaCount(
+  db: D1Database,
+  accountId: string,
+  period: string
+): Promise<number> {
   await db
     .prepare(
       `INSERT INTO mcp_run_counts (server_name, account_id, period_start, runs_this_period, updated_at)
        VALUES (?, ?, ?, 1, datetime('now'))
        ON CONFLICT(server_name, account_id, period_start) DO UPDATE SET
          runs_this_period = mcp_run_counts.runs_this_period + 1,
-         updated_at = datetime('now')`,
+         updated_at = datetime('now')`
     )
     .bind(HUB_PROXY_PERIOD_COUNTER_SERVER, accountId, period)
     .run();
@@ -2593,11 +2716,7 @@ async function incrementQuotaCount(db: D1Database, accountId: string, period: st
   return getQuotaCount(db, accountId, period);
 }
 
-function buildRateLimitKey(
-  scope: RateLimitScope,
-  accountId: string,
-  route: ProxyRoute,
-): string {
+function buildRateLimitKey(scope: RateLimitScope, accountId: string, route: ProxyRoute): string {
   if (scope === 'account_server_tool') {
     return `${accountId}::${route.serverName}::${route.downstreamToolName}`;
   }
@@ -2628,7 +2747,7 @@ async function applyRemoteStateUpdate(
     disableBundles: string[];
     enableServers: string[];
     disableServers: string[];
-  },
+  }
 ): Promise<Record<string, unknown>> {
   const current = await readHubState(env, registry);
   const next = updateState(registry, current, env, patch);
@@ -2636,14 +2755,14 @@ async function applyRemoteStateUpdate(
 
   return {
     updatedState: next,
-    storage: write,
+    storage: write
   };
 }
 
 export function buildVisibleProxyRoutes(
   runtime: HubRuntime,
   prefs: DiscoveryPreferences,
-  accountContext: ResolvedAccountContext,
+  accountContext: ResolvedAccountContext
 ): VisibleProxyCatalog {
   const sessionScoped = runtime.proxies.toolDefinitions
     .map((tool) => {
@@ -2654,13 +2773,15 @@ export function buildVisibleProxyRoutes(
     .filter((entry): entry is { tool: Tool; route: ProxyRoute } => Boolean(entry))
     .filter((entry) => isRouteAllowedForSession(entry.route, accountContext.allowedToolPrefixes));
 
-  const discoveryScoped = prefs.mode === 'full'
-    ? sessionScoped
-    : sessionScoped.filter((entry) => prefs.activeServers.includes(entry.route.serverName));
+  const discoveryScoped =
+    prefs.mode === 'full'
+      ? sessionScoped
+      : sessionScoped.filter((entry) => prefs.activeServers.includes(entry.route.serverName));
 
-  const capped = prefs.maxProxyTools && prefs.maxProxyTools > 0
-    ? discoveryScoped.slice(0, prefs.maxProxyTools)
-    : discoveryScoped;
+  const capped =
+    prefs.maxProxyTools && prefs.maxProxyTools > 0
+      ? discoveryScoped.slice(0, prefs.maxProxyTools)
+      : discoveryScoped;
 
   const toolDefinitions = capped.map((entry) => entry.tool);
   const routes = new Map(capped.map((entry) => [entry.route.proxyToolName, entry.route]));
@@ -2669,7 +2790,7 @@ export function buildVisibleProxyRoutes(
   return {
     toolDefinitions,
     routes,
-    definitionByName,
+    definitionByName
   };
 }
 
@@ -2683,8 +2804,8 @@ function hubAuthzHybridConfig(env: Env) {
       url: readEnvString(env, 'OSO_URL'),
       apiKey: readEnvString(env, 'OSO_API_KEY'),
       fetchTimeoutMillis,
-      bootstrapPolicy: parseBooleanWithDefault(readEnvString(env, 'OSO_BOOTSTRAP_POLICY'), false),
-    },
+      bootstrapPolicy: parseBooleanWithDefault(readEnvString(env, 'OSO_BOOTSTRAP_POLICY'), false)
+    }
   };
 }
 
@@ -2694,9 +2815,9 @@ async function getHubRouteAuthzRollout(env: Env): Promise<AuthzRolloutRow> {
     env.TELEMETRY_DB,
     {
       scopeType: 'policy',
-      policyId: HUB_ROUTE_AUTHZ_POLICY_ID,
+      policyId: HUB_ROUTE_AUTHZ_POLICY_ID
     },
-    manifest,
+    manifest
   );
 }
 
@@ -2706,9 +2827,9 @@ async function getServiceTierAuthzRollout(env: Env): Promise<AuthzRolloutRow> {
     env.TELEMETRY_DB,
     {
       scopeType: 'policy',
-      policyId: SERVICE_TIER_AUTHZ_POLICY_ID,
+      policyId: SERVICE_TIER_AUTHZ_POLICY_ID
     },
-    manifest,
+    manifest
   );
 }
 
@@ -2732,7 +2853,7 @@ function toHubAuthzEvent(params: {
     evaluation,
     actionName,
     entrypoint,
-    invocationAction,
+    invocationAction
   } = params;
   const classification = classifyHubRoute(route, definition, { invocationAction });
   return {
@@ -2765,27 +2886,28 @@ function toHubAuthzEvent(params: {
     policyHash: evaluation.final.policyHash,
     compilerVersion: evaluation.final.compilerVersion,
     correlationId: trace.correlationId,
-    metadataJson: safeJsonStringify({
-      entrypoint,
-      proxyToolName: route.proxyToolName,
-      serverName: route.serverName,
-      downstreamToolName: route.downstreamToolName,
-      invocationAction: invocationAction ?? null,
-      oauthRequired: classification.oauthRequired,
-      sessionId: accountContext.sessionId,
-      toolMode: accountContext.toolMode,
-      serviceTier: accountContext.serviceTier,
-      entitlementSnapshot: accountContext.entitlementSnapshot,
-      identitySource: accountContext.identitySource,
-      latency_ms: evaluation.final.latencyMs,
-    }) ?? '{}',
+    metadataJson:
+      safeJsonStringify({
+        entrypoint,
+        proxyToolName: route.proxyToolName,
+        serverName: route.serverName,
+        downstreamToolName: route.downstreamToolName,
+        invocationAction: invocationAction ?? null,
+        oauthRequired: classification.oauthRequired,
+        sessionId: accountContext.sessionId,
+        toolMode: accountContext.toolMode,
+        serviceTier: accountContext.serviceTier,
+        entitlementSnapshot: accountContext.entitlementSnapshot,
+        identitySource: accountContext.identitySource,
+        latency_ms: evaluation.final.latencyMs
+      }) ?? '{}'
   };
 }
 
 function hasProtectedHubActorContext(env: Env, accountContext: ResolvedAccountContext): boolean {
   const identityMode = resolveHubIdentityMode(env);
   const protectedRemoteExecution =
-    identityMode === 'session_required' || Boolean(readEnvString(env, 'HUB_API_TOKEN'));
+    identityMode === 'session_required' || isHubStaticAuthConfigured(env);
 
   if (!protectedRemoteExecution) {
     return true;
@@ -2828,7 +2950,7 @@ async function evaluateHubRouteAuthorization(params: {
     actionName,
     entrypoint,
     invocationAction,
-    recordDecision = true,
+    recordDecision = true
   } = params;
   const request = buildHubAuthorizationRequest({
     accountId: accountContext.accountId,
@@ -2848,8 +2970,8 @@ async function evaluateHubRouteAuthorization(params: {
     invocationAction,
     context: {
       serviceTier: accountContext.serviceTier,
-      entitlementSnapshot: accountContext.entitlementSnapshot,
-    },
+      entitlementSnapshot: accountContext.entitlementSnapshot
+    }
   });
 
   const serviceTierRollout = await getServiceTierAuthzRollout(env);
@@ -2858,9 +2980,9 @@ async function evaluateHubRouteAuthorization(params: {
     request,
     {
       mode: serviceTierRollout.mode,
-      canaryPercent: serviceTierRollout.canaryPercent,
+      canaryPercent: serviceTierRollout.canaryPercent
     },
-    hubAuthzHybridConfig(env),
+    hubAuthzHybridConfig(env)
   );
 
   if (serviceTierEvaluation.final.decision !== 'allow') {
@@ -2876,8 +2998,8 @@ async function evaluateHubRouteAuthorization(params: {
           evaluation: serviceTierEvaluation,
           actionName,
           entrypoint,
-          invocationAction,
-        }),
+          invocationAction
+        })
       );
     }
     return serviceTierEvaluation;
@@ -2888,9 +3010,9 @@ async function evaluateHubRouteAuthorization(params: {
     request,
     {
       mode: rollout.mode,
-      canaryPercent: rollout.canaryPercent,
+      canaryPercent: rollout.canaryPercent
     },
-    hubAuthzHybridConfig(env),
+    hubAuthzHybridConfig(env)
   );
 
   if (recordDecision) {
@@ -2905,8 +3027,8 @@ async function evaluateHubRouteAuthorization(params: {
         evaluation,
         actionName,
         entrypoint,
-        invocationAction,
-      }),
+        invocationAction
+      })
     );
   }
 
@@ -2924,7 +3046,7 @@ export async function buildAuthorizedVisibleProxyRoutes(params: {
 }): Promise<VisibleProxyCatalog> {
   const base = filterVisibleProxyCatalog(
     buildVisibleProxyRoutes(params.runtime, params.prefs, params.accountContext),
-    params.filters,
+    params.filters
   );
   if (base.toolDefinitions.length === 0) {
     return base;
@@ -2945,7 +3067,7 @@ export async function buildAuthorizedVisibleProxyRoutes(params: {
       rollout,
       actionName: 'discover',
       entrypoint: params.entrypoint,
-      recordDecision: false,
+      recordDecision: false
     });
     if (evaluation.final.decision === 'allow') {
       allowed.push({ tool, route });
@@ -2960,8 +3082,8 @@ export async function buildAuthorizedVisibleProxyRoutes(params: {
           trace: params.trace,
           evaluation,
           actionName: 'discover',
-          entrypoint: params.entrypoint,
-        }),
+          entrypoint: params.entrypoint
+        })
       );
     }
   }
@@ -2969,7 +3091,7 @@ export async function buildAuthorizedVisibleProxyRoutes(params: {
   return {
     toolDefinitions: allowed.map((entry) => entry.tool),
     routes: new Map(allowed.map((entry) => [entry.route.proxyToolName, entry.route])),
-    definitionByName: new Map(allowed.map((entry) => [entry.tool.name, entry.tool])),
+    definitionByName: new Map(allowed.map((entry) => [entry.tool.name, entry.tool]))
   };
 }
 
@@ -2998,7 +3120,7 @@ async function getAuthorizedExactVisibleProxyRoute(params: {
     rollout: await getHubRouteAuthzRollout(params.env),
     actionName: 'discover',
     entrypoint: params.entrypoint,
-    recordDecision: false,
+    recordDecision: false
   });
   if (evaluation.final.decision === 'allow') {
     return { route, definition };
@@ -3014,8 +3136,8 @@ async function getAuthorizedExactVisibleProxyRoute(params: {
       trace: params.trace,
       evaluation,
       actionName: 'discover',
-      entrypoint: params.entrypoint,
-    }),
+      entrypoint: params.entrypoint
+    })
   );
 
   return null;
@@ -3051,7 +3173,7 @@ export async function executeProxyRoute(params: {
     rateLimitPolicy,
     quotaPolicy,
     entrypoint,
-    entryProxyToolName,
+    entryProxyToolName
   } = params;
   const recordHubInvocationWithCtx = (log: HubInvocationLog): Promise<void> =>
     recordHubInvocation(env, log, executionCtx);
@@ -3064,7 +3186,7 @@ export async function executeProxyRoute(params: {
     authMode: accountContext.authMode,
     identitySource: accountContext.identitySource,
     boundHost: accountContext.boundHost,
-    resourceHost: accountContext.resourceHost,
+    resourceHost: accountContext.resourceHost
   };
   const invocationAction = extractRouteInvocationAction(executionArgs);
 
@@ -3089,8 +3211,8 @@ export async function executeProxyRoute(params: {
           downstreamServer: route.serverName,
           downstreamTool: route.downstreamToolName,
           ...identityTraceMetadata,
-          allowedToolPrefixes: accountContext.allowedToolPrefixes ?? null,
-        },
+          allowedToolPrefixes: accountContext.allowedToolPrefixes ?? null
+        }
       }),
       recordHubRouteInvocationWithCtx({
         accountId,
@@ -3104,9 +3226,9 @@ export async function executeProxyRoute(params: {
           proxyToolName: entryProxyToolName,
           blockedByPolicy: 'session_scope',
           entrypoint,
-          ...identityTraceMetadata,
-        },
-      }),
+          ...identityTraceMetadata
+        }
+      })
     ]);
     return toErrorResult(message);
   }
@@ -3114,7 +3236,7 @@ export async function executeProxyRoute(params: {
   const routeDefinition = definition ?? {
     name: route.proxyToolName,
     description: '',
-    inputSchema: { type: 'object', properties: {} },
+    inputSchema: { type: 'object', properties: {} }
   };
   const authzEvaluation = await evaluateHubRouteAuthorization({
     env,
@@ -3125,7 +3247,7 @@ export async function executeProxyRoute(params: {
     rollout: await getHubRouteAuthzRollout(env),
     actionName: 'execute',
     entrypoint,
-    invocationAction,
+    invocationAction
   });
   if (authzEvaluation.final.decision !== 'allow') {
     const durationMs = Date.now() - startedAt;
@@ -3155,8 +3277,8 @@ export async function executeProxyRoute(params: {
           fallbackReason: authzEvaluation.final.fallbackReason,
           matchedRuleIds: authzEvaluation.final.matchedRuleIds,
           invocationAction,
-          ...identityTraceMetadata,
-        },
+          ...identityTraceMetadata
+        }
       }),
       recordHubRouteInvocationWithCtx({
         accountId,
@@ -3172,9 +3294,9 @@ export async function executeProxyRoute(params: {
           requiresHumanReview: requiresHumanReview(authzEvaluation.final),
           evaluationPath: authzEvaluation.final.evaluationPath,
           invocationAction,
-          ...identityTraceMetadata,
-        },
-      }),
+          ...identityTraceMetadata
+        }
+      })
     ]);
 
     return toErrorResult(message);
@@ -3208,8 +3330,8 @@ export async function executeProxyRoute(params: {
           resetAt: rateLimitDecision.resetAt,
           maxCalls: rateLimitDecision.maxCalls,
           windowSeconds: rateLimitDecision.windowSeconds,
-          ...identityTraceMetadata,
-        },
+          ...identityTraceMetadata
+        }
       }),
       recordHubRouteInvocationWithCtx({
         accountId,
@@ -3228,9 +3350,9 @@ export async function executeProxyRoute(params: {
           resetAt: rateLimitDecision.resetAt,
           maxCalls: rateLimitDecision.maxCalls,
           windowSeconds: rateLimitDecision.windowSeconds,
-          ...identityTraceMetadata,
-        },
-      }),
+          ...identityTraceMetadata
+        }
+      })
     ]);
 
     return toErrorResult(message);
@@ -3263,8 +3385,8 @@ export async function executeProxyRoute(params: {
           currentCount: quotaDecision.currentCount,
           maxCallsPerPeriod: quotaDecision.maxCallsPerPeriod,
           period: quotaDecision.period,
-          ...identityTraceMetadata,
-        },
+          ...identityTraceMetadata
+        }
       }),
       recordHubRouteInvocationWithCtx({
         accountId,
@@ -3283,9 +3405,9 @@ export async function executeProxyRoute(params: {
           currentCount: quotaDecision.currentCount,
           maxCallsPerPeriod: quotaDecision.maxCallsPerPeriod,
           period: quotaDecision.period,
-          ...identityTraceMetadata,
-        },
-      }),
+          ...identityTraceMetadata
+        }
+      })
     ]);
 
     return toErrorResult(message);
@@ -3303,7 +3425,9 @@ export async function executeProxyRoute(params: {
         success: proxiedSuccess,
         durationMs,
         trace,
-        errorMessage: proxiedSuccess ? null : proxyFailure?.rawMessage ?? 'Downstream MCP returned isError response',
+        errorMessage: proxiedSuccess
+          ? null
+          : (proxyFailure?.rawMessage ?? 'Downstream MCP returned isError response'),
         metadata: {
           type: 'proxy',
           entrypoint,
@@ -3317,23 +3441,23 @@ export async function executeProxyRoute(params: {
             remaining: rateLimitDecision.remaining,
             resetAt: rateLimitDecision.resetAt,
             maxCalls: rateLimitDecision.maxCalls,
-            windowSeconds: rateLimitDecision.windowSeconds,
+            windowSeconds: rateLimitDecision.windowSeconds
           },
           quota: {
             remaining: quotaDecision.remaining,
             currentCount: quotaDecision.currentCount,
             maxCallsPerPeriod: quotaDecision.maxCallsPerPeriod,
             period: quotaDecision.period,
-            reason: quotaDecision.reason ?? null,
+            reason: quotaDecision.reason ?? null
           },
           downstreamFailure: proxiedSuccess
             ? null
             : {
                 code: proxyFailure?.code ?? null,
                 missingScopes: proxyFailure?.missingScopes ?? null,
-                authRelated: proxyFailure?.authRelated ?? false,
-              },
-        },
+                authRelated: proxyFailure?.authRelated ?? false
+              }
+        }
       }),
       recordHubRouteInvocationWithCtx({
         accountId,
@@ -3342,7 +3466,9 @@ export async function executeProxyRoute(params: {
         success: proxiedSuccess,
         durationMs,
         trace,
-        errorMessage: proxiedSuccess ? null : proxyFailure?.rawMessage ?? 'Downstream MCP returned isError response',
+        errorMessage: proxiedSuccess
+          ? null
+          : (proxyFailure?.rawMessage ?? 'Downstream MCP returned isError response'),
         metadata: {
           proxyToolName: entryProxyToolName,
           entrypoint,
@@ -3353,10 +3479,10 @@ export async function executeProxyRoute(params: {
             : {
                 code: proxyFailure?.code ?? null,
                 missingScopes: proxyFailure?.missingScopes ?? null,
-                authRelated: proxyFailure?.authRelated ?? false,
-              },
-        },
-      }),
+                authRelated: proxyFailure?.authRelated ?? false
+              }
+        }
+      })
     ]);
 
     if (proxyFailure) {
@@ -3368,7 +3494,7 @@ export async function executeProxyRoute(params: {
         auth_related: proxyFailure.authRelated,
         retry_guidance: proxyFailure.authRelated
           ? 'If the toolkit is disconnected or missing scopes, execute the reconnect proxy tool, present the link to the user, then retry only after the user confirms auth completed.'
-          : null,
+          : null
       });
     }
 
@@ -3396,9 +3522,9 @@ export async function executeProxyRoute(params: {
           downstreamFailure: {
             code: proxyFailure.code,
             missingScopes: proxyFailure.missingScopes,
-            authRelated: proxyFailure.authRelated,
-          },
-        },
+            authRelated: proxyFailure.authRelated
+          }
+        }
       }),
       recordHubRouteInvocationWithCtx({
         accountId,
@@ -3416,10 +3542,10 @@ export async function executeProxyRoute(params: {
           downstreamFailure: {
             code: proxyFailure.code,
             missingScopes: proxyFailure.missingScopes,
-            authRelated: proxyFailure.authRelated,
-          },
-        },
-      }),
+            authRelated: proxyFailure.authRelated
+          }
+        }
+      })
     ]);
     return toErrorResult(proxyFailure.errorMessage, {
       next_step: proxyFailure.nextStep,
@@ -3429,14 +3555,14 @@ export async function executeProxyRoute(params: {
       auth_related: proxyFailure.authRelated,
       retry_guidance: proxyFailure.authRelated
         ? 'If the toolkit is disconnected or missing scopes, execute the reconnect proxy tool, present the link to the user, then retry only after the user confirms auth completed.'
-        : null,
+        : null
     });
   }
 }
 
 export function searchProxyTools(
   visible: VisibleProxyCatalog,
-  args: Record<string, unknown>,
+  args: Record<string, unknown>
 ): Record<string, unknown> {
   const filters = extractProxyRouteDiscoveryFilters(args);
   const query = filters.query ?? null;
@@ -3452,7 +3578,7 @@ export function searchProxyTools(
         proxyToolName: route.proxyToolName,
         serverName: route.serverName,
         downstreamToolName: route.downstreamToolName,
-        description: definition?.description ?? '',
+        description: definition?.description ?? ''
       };
     })
     .sort((a, b) => a.proxyToolName.localeCompare(b.proxyToolName));
@@ -3460,9 +3586,8 @@ export function searchProxyTools(
   const filtered = all.filter((item) => matchesProxySearchItem(item, filters));
 
   const page = filtered.slice(startIndex, startIndex + limit);
-  const nextCursor = startIndex + page.length < filtered.length
-    ? String(startIndex + page.length)
-    : null;
+  const nextCursor =
+    startIndex + page.length < filtered.length ? String(startIndex + page.length) : null;
 
   return {
     query,
@@ -3471,22 +3596,20 @@ export function searchProxyTools(
     limit,
     cursor: cursor ?? '0',
     nextCursor,
-    tools: page,
+    tools: page
   };
 }
 
 function extractRouteInvocationAction(args: Record<string, unknown>): string | null {
-  return stringArg(args.action)
-    ?? stringArg(args.operation)
-    ?? stringArg(args.method);
+  return stringArg(args.action) ?? stringArg(args.operation) ?? stringArg(args.method);
 }
 
 function extractProxyRouteDiscoveryFilters(
-  args: Record<string, unknown>,
+  args: Record<string, unknown>
 ): ProxyRouteDiscoveryFilters {
   return {
     query: stringArg(args.query),
-    serverName: stringArg(args.serverName),
+    serverName: stringArg(args.serverName)
   };
 }
 
@@ -3497,7 +3620,7 @@ function matchesProxySearchItem(
     downstreamToolName: string;
     description: string;
   },
-  filters: ProxyRouteDiscoveryFilters,
+  filters: ProxyRouteDiscoveryFilters
 ): boolean {
   if (filters.serverName && item.serverName !== filters.serverName) {
     return false;
@@ -3518,7 +3641,7 @@ function matchesProxySearchItem(
 
 function filterVisibleProxyCatalog(
   visible: VisibleProxyCatalog,
-  filters: ProxyRouteDiscoveryFilters | undefined,
+  filters: ProxyRouteDiscoveryFilters | undefined
 ): VisibleProxyCatalog {
   if (!filters?.query && !filters?.serverName) {
     return visible;
@@ -3537,22 +3660,23 @@ function filterVisibleProxyCatalog(
           proxyToolName: entry.route.proxyToolName,
           serverName: entry.route.serverName,
           downstreamToolName: entry.route.downstreamToolName,
-          description: entry.tool.description ?? '',
+          description: entry.tool.description ?? ''
         },
-        filters,
-      ));
+        filters
+      )
+    );
 
   const toolDefinitions = filteredEntries.map((entry) => entry.tool);
   return {
     toolDefinitions,
     routes: new Map(filteredEntries.map((entry) => [entry.route.proxyToolName, entry.route])),
-    definitionByName: new Map(toolDefinitions.map((tool) => [tool.name, tool])),
+    definitionByName: new Map(toolDefinitions.map((tool) => [tool.name, tool]))
   };
 }
 
 export function resolveIntentRouteCandidate(
   visible: VisibleProxyCatalog,
-  args: Record<string, unknown>,
+  args: Record<string, unknown>
 ): IntentRouteCandidate {
   const intent = stringArg(args.intent) ?? '';
   const normalizedIntent = normalizeIntentKey(intent);
@@ -3570,7 +3694,7 @@ export function resolveIntentRouteCandidate(
       downstreamToolName: null,
       description: '',
       reason: 'Intent is required.',
-      alternatives: [],
+      alternatives: []
     };
   }
 
@@ -3586,7 +3710,7 @@ export function resolveIntentRouteCandidate(
       downstreamToolName: route.downstreamToolName,
       description: allowlistMatch.definition.description ?? '',
       reason: `Matched allowlisted intent "${allowlistMatch.intentId}".`,
-      alternatives: [],
+      alternatives: []
     };
   }
 
@@ -3603,18 +3727,19 @@ export function resolveIntentRouteCandidate(
       downstreamToolName: null,
       description: '',
       reason,
-      alternatives: [],
+      alternatives: []
     };
   }
 
-  const query = stringArg(args.query)
-    ?? allowlistMatch?.definition.fallbackQuery
-    ?? normalizedIntent.replaceAll('_', ' ');
+  const query =
+    stringArg(args.query) ??
+    allowlistMatch?.definition.fallbackQuery ??
+    normalizedIntent.replaceAll('_', ' ');
   const serverName = explicitServerName ?? allowlistMatch?.definition.preferredServer ?? null;
   const discoveryFetchLimit = Math.min(Math.max(limit * 5, 20), 100);
   const discovered = searchProxyTools(visible, { query, serverName, limit: discoveryFetchLimit });
   const tools = Array.isArray((discovered as Record<string, unknown>).tools)
-    ? (discovered as Record<string, unknown>).tools as Array<Record<string, unknown>>
+    ? ((discovered as Record<string, unknown>).tools as Array<Record<string, unknown>>)
     : [];
   const rankedTools = rankDiscoveryFallbackTools(tools, query).slice(0, limit);
 
@@ -3635,8 +3760,8 @@ export function resolveIntentRouteCandidate(
         proxyToolName: stringArg(tool.proxyToolName) ?? '',
         serverName: stringArg(tool.serverName) ?? '',
         downstreamToolName: stringArg(tool.downstreamToolName) ?? '',
-        description: stringArg(tool.description) ?? '',
-      })),
+        description: stringArg(tool.description) ?? ''
+      }))
     };
   }
 
@@ -3649,13 +3774,13 @@ export function resolveIntentRouteCandidate(
     downstreamToolName: null,
     description: '',
     reason: `No route found for intent "${intent}" in allowlist or discovery.`,
-    alternatives: [],
+    alternatives: []
   };
 }
 
 function candidateToRoutePayload(
   candidate: IntentRouteCandidate,
-  visible: VisibleProxyCatalog,
+  visible: VisibleProxyCatalog
 ): Record<string, unknown> {
   const definition = candidate.proxyToolName
     ? visible.definitionByName.get(candidate.proxyToolName)
@@ -3672,12 +3797,16 @@ function candidateToRoutePayload(
     description: candidate.description || definition?.description || '',
     inputSchema: definition?.inputSchema ?? null,
     reason: candidate.reason,
-    alternatives: candidate.alternatives,
+    alternatives: candidate.alternatives
   };
 }
 
 function normalizeIntentKey(value: string): string {
-  return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
 }
 
 const ROUTER_STOP_WORDS = new Set([
@@ -3700,7 +3829,7 @@ const ROUTER_STOP_WORDS = new Set([
   'the',
   'to',
   'with',
-  'you',
+  'you'
 ]);
 
 const MIN_HEURISTIC_ALLOWLIST_SCORE = 120;
@@ -3740,11 +3869,13 @@ function countTokenOverlap(queryTokens: Set<string>, candidateTokens: string[]):
 function scoreAllowlistIntentHeuristic(
   queryTokens: Set<string>,
   intentId: string,
-  definition: IntentRouteDefinition,
+  definition: IntentRouteDefinition
 ): number {
   if (!queryTokens.size) return 0;
   const idTokens = tokenizeRouterText(intentId);
-  const synonymTokens = (definition.synonyms ?? []).flatMap((synonym) => tokenizeRouterText(synonym));
+  const synonymTokens = (definition.synonyms ?? []).flatMap((synonym) =>
+    tokenizeRouterText(synonym)
+  );
   const descriptionTokens = tokenizeRouterText(definition.description ?? '');
   const preferredServerTokens = tokenizeRouterText(definition.preferredServer ?? '');
 
@@ -3768,7 +3899,7 @@ function isDeprecatedDescription(description: string): boolean {
 
 function rankDiscoveryFallbackTools(
   tools: Array<Record<string, unknown>>,
-  query: string,
+  query: string
 ): Array<Record<string, unknown>> {
   if (!tools.length) return tools;
   const queryTokens = new Set(tokenizeRouterText(query));
@@ -3795,7 +3926,7 @@ function rankDiscoveryFallbackTools(
       tool,
       score,
       deprecated,
-      proxyToolName,
+      proxyToolName
     };
   });
 
@@ -3809,16 +3940,14 @@ function rankDiscoveryFallbackTools(
 }
 
 function findAllowlistIntentMatch(
-  normalizedIntent: string,
+  normalizedIntent: string
 ): { intentId: string; definition: IntentRouteDefinition } | null {
   const queryTokens = new Set(tokenizeRouterText(normalizedIntent));
-  let best:
-    | {
-      score: number;
-      intentId: string;
-      definition: IntentRouteDefinition;
-    }
-    | null = null;
+  let best: {
+    score: number;
+    intentId: string;
+    definition: IntentRouteDefinition;
+  } | null = null;
 
   for (const [intentId, definition] of Object.entries(intentRouteRegistry.intents ?? {})) {
     if (!definition?.proxyToolName) continue;
@@ -3829,7 +3958,9 @@ function findAllowlistIntentMatch(
     let score = 0;
     if (keys.some((key) => key === normalizedIntent)) {
       score = idNorm === normalizedIntent ? 1000 : 900;
-    } else if (keys.some((key) => key && (normalizedIntent.includes(key) || key.includes(normalizedIntent)))) {
+    } else if (
+      keys.some((key) => key && (normalizedIntent.includes(key) || key.includes(normalizedIntent)))
+    ) {
       score = 500;
     } else {
       score = scoreAllowlistIntentHeuristic(queryTokens, intentId, definition);
@@ -3839,7 +3970,7 @@ function findAllowlistIntentMatch(
       best = {
         score,
         intentId,
-        definition,
+        definition
       };
     }
   }
@@ -3852,7 +3983,7 @@ function findAllowlistIntentMatch(
 function buildDiscoveryServicesPayload(
   runtime: HubRuntime,
   prefs: DiscoveryPreferences,
-  visible: VisibleProxyCatalog,
+  visible: VisibleProxyCatalog
 ): Record<string, unknown> {
   const byServer = new Map<string, number>();
   for (const tool of runtime.proxies.toolDefinitions) {
@@ -3874,30 +4005,29 @@ function buildDiscoveryServicesPayload(
       'hub_list_services',
       'hub_search_proxy_tools(serverName=<service>)',
       'hub_describe_proxy_tool',
-      'hub_execute_proxy_tool',
+      'hub_execute_proxy_tool'
     ],
     services: runtime.connected.map((server) => ({
       name: server.name,
       totalProxyTools: byServer.get(server.name) ?? 0,
       visibleProxyTools: visibleByServer.get(server.name) ?? 0,
-      activeInDiscovery: prefs.activeServers.includes(server.name),
+      activeInDiscovery: prefs.activeServers.includes(server.name)
     })),
     totalProxyToolCount: runtime.proxies.toolDefinitions.length,
     visibleProxyToolCount: visible.toolDefinitions.length,
-    note:
-      'Service visibility reflects session + discovery scope. Discovery packs are the standard managed baseline for shared hubs. Choose a service here, then call hub_search_proxy_tools with serverName for per-tool authorized discovery.',
+    note: 'Service visibility reflects session + discovery scope. Discovery packs are the standard managed baseline for shared hubs. Choose a service here, then call hub_search_proxy_tools with serverName for per-tool authorized discovery.'
   };
 }
 
 async function getDiscoveryPreferences(
   accountId: string,
   runtime: HubRuntime,
-  env: Env,
+  env: Env
 ): Promise<DiscoveryPreferences> {
   const cacheKey = buildDiscoveryCacheKey(env, accountId);
   const kvReadTimeoutMs = parsePositiveInt(
     readEnvString(env, 'HUB_DISCOVERY_READ_TIMEOUT_MS'),
-    500,
+    500
   );
   const cached = discoveryPreferencesByAccount.get(cacheKey);
   if (cached) {
@@ -3912,21 +4042,23 @@ async function getDiscoveryPreferences(
       const raw = await withTimeout(
         kv.get(buildDiscoveryKvKey(env, accountId)),
         kvReadTimeoutMs,
-        `Read discovery preferences for ${accountId}`,
+        `Read discovery preferences for ${accountId}`
       );
       if (raw) {
         try {
           const parsed = JSON.parse(raw) as Record<string, unknown>;
           const fromKv = normalizeDiscoveryPreferences(
             {
-              mode: parseDiscoveryMode(typeof parsed.mode === 'string' ? parsed.mode : null) ?? DEFAULT_DISCOVERY_MODE,
+              mode:
+                parseDiscoveryMode(typeof parsed.mode === 'string' ? parsed.mode : null) ??
+                DEFAULT_DISCOVERY_MODE,
               activeServers: parseStateStringArray(parsed.activeServers),
               maxProxyTools: resolveDiscoveryMaxProxyTools(
-                typeof parsed.maxProxyTools === 'number' ? parsed.maxProxyTools : null,
-              ),
+                typeof parsed.maxProxyTools === 'number' ? parsed.maxProxyTools : null
+              )
             },
             runtime,
-            env,
+            env
           );
           discoveryPreferencesByAccount.set(cacheKey, fromKv);
           return fromKv;
@@ -3950,44 +4082,45 @@ function buildDefaultDiscoveryPreferences(runtime: HubRuntime, env: Env): Discov
   const modeFromEnv = parseDiscoveryMode(readEnvString(env, 'HUB_DISCOVERY_MODE'));
   const activeServersFromEnv = parseList(readEnvString(env, 'HUB_DISCOVERY_DEFAULT_SERVERS'));
   const maxProxyToolsRaw = readEnvString(env, 'HUB_DISCOVERY_MAX_PROXY_TOOLS');
-  const maxProxyToolsFromEnv = maxProxyToolsRaw !== undefined
-    ? resolveDiscoveryMaxProxyTools(parsePositiveInt(maxProxyToolsRaw, 0))
-    : undefined;
+  const maxProxyToolsFromEnv =
+    maxProxyToolsRaw !== undefined
+      ? resolveDiscoveryMaxProxyTools(parsePositiveInt(maxProxyToolsRaw, 0))
+      : undefined;
 
-  return normalizeDiscoveryPreferences({
-    mode: modeFromEnv ?? sharedPack?.preferences.mode ?? DEFAULT_DISCOVERY_MODE,
-    activeServers: resolveDiscoveryActiveServers(
-      activeServersFromEnv ?? sharedPack?.preferences.activeServers ?? [],
-      runtime,
-    ),
-    maxProxyTools: maxProxyToolsFromEnv ?? sharedPack?.preferences.maxProxyTools ?? null,
-  }, runtime, env);
+  return normalizeDiscoveryPreferences(
+    {
+      mode: modeFromEnv ?? sharedPack?.preferences.mode ?? DEFAULT_DISCOVERY_MODE,
+      activeServers: resolveDiscoveryActiveServers(
+        activeServersFromEnv ?? sharedPack?.preferences.activeServers ?? [],
+        runtime
+      ),
+      maxProxyTools: maxProxyToolsFromEnv ?? sharedPack?.preferences.maxProxyTools ?? null
+    },
+    runtime,
+    env
+  );
 }
 
 function getRequiredGlobalServers(currentRegistry: McpBundleRegistry, env?: Env): string[] {
   const raw = env?.HUB_REQUIRED_GLOBAL_SERVERS;
   const configured =
-    typeof raw === 'string'
-      ? parseList(raw) ?? []
-      : DEFAULT_REQUIRED_GLOBAL_SERVERS;
+    typeof raw === 'string' ? (parseList(raw) ?? []) : DEFAULT_REQUIRED_GLOBAL_SERVERS;
   return configured.filter((serverName) => Boolean(currentRegistry.servers[serverName]));
 }
 
 function getRequiredDiscoveryServers(runtime: HubRuntime, env?: Env): string[] {
   const raw = env?.HUB_REQUIRED_DISCOVERY_SERVERS;
   const configured =
-    typeof raw === 'string'
-      ? parseList(raw) ?? []
-      : DEFAULT_REQUIRED_DISCOVERY_SERVERS;
+    typeof raw === 'string' ? (parseList(raw) ?? []) : DEFAULT_REQUIRED_DISCOVERY_SERVERS;
   return configured.filter((serverName) =>
-    runtime.connected.some((server) => server.name === serverName),
+    runtime.connected.some((server) => server.name === serverName)
   );
 }
 
 async function persistDiscoveryPreferences(
   accountId: string,
   prefs: DiscoveryPreferences,
-  env: Env,
+  env: Env
 ): Promise<void> {
   const cacheKey = buildDiscoveryCacheKey(env, accountId);
   discoveryPreferencesByAccount.set(cacheKey, prefs);
@@ -3999,7 +4132,7 @@ async function persistDiscoveryPreferences(
 async function clearDiscoveryPreferences(
   accountId: string,
   runtime: HubRuntime,
-  env: Env,
+  env: Env
 ): Promise<DiscoveryPreferences> {
   const cacheKey = buildDiscoveryCacheKey(env, accountId);
   discoveryPreferencesByAccount.delete(cacheKey);
@@ -4015,16 +4148,16 @@ async function clearDiscoveryPreferences(
 function normalizeDiscoveryPreferences(
   prefs: DiscoveryPreferences,
   runtime: HubRuntime,
-  env?: Env,
+  env?: Env
 ): DiscoveryPreferences {
   const requiredActiveServers = getRequiredDiscoveryServers(runtime, env);
   return {
     mode: prefs.mode,
     activeServers: resolveDiscoveryActiveServers(
       [...prefs.activeServers, ...requiredActiveServers],
-      runtime,
+      runtime
     ),
-    maxProxyTools: resolveDiscoveryMaxProxyTools(prefs.maxProxyTools),
+    maxProxyTools: resolveDiscoveryMaxProxyTools(prefs.maxProxyTools)
   };
 }
 
@@ -4057,7 +4190,10 @@ function resolveDiscoveryMaxProxyTools(value: number | null): number | null {
 }
 
 function resolveDiscoveryPageSize(env: Env): number {
-  const parsed = parsePositiveInt(readEnvString(env, 'HUB_DISCOVERY_PAGE_SIZE'), DEFAULT_DISCOVERY_PAGE_SIZE);
+  const parsed = parsePositiveInt(
+    readEnvString(env, 'HUB_DISCOVERY_PAGE_SIZE'),
+    DEFAULT_DISCOVERY_PAGE_SIZE
+  );
   return Math.min(Math.max(parsed, 1), MAX_DISCOVERY_PAGE_SIZE);
 }
 
@@ -4068,7 +4204,11 @@ function listDiscoveryPacks(runtime: HubRuntime, env?: Env): ResolvedDiscoveryPa
     .sort((a, b) => a.id.localeCompare(b.id));
 }
 
-export function resolveDiscoveryPack(packId: string, runtime: HubRuntime, env?: Env): ResolvedDiscoveryPack | null {
+export function resolveDiscoveryPack(
+  packId: string,
+  runtime: HubRuntime,
+  env?: Env
+): ResolvedDiscoveryPack | null {
   const key = packId.trim();
   if (!key) return null;
   const definition = discoveryPackRegistry.packs?.[key];
@@ -4080,23 +4220,29 @@ function resolveDiscoveryPackDefinition(
   packId: string,
   definition: DiscoveryPackDefinition | undefined,
   runtime: HubRuntime,
-  env?: Env,
+  env?: Env
 ): ResolvedDiscoveryPack | null {
   if (!definition) return null;
-  const mode = parseDiscoveryMode(typeof definition.mode === 'string' ? definition.mode : null) ?? DEFAULT_DISCOVERY_MODE;
+  const mode =
+    parseDiscoveryMode(typeof definition.mode === 'string' ? definition.mode : null) ??
+    DEFAULT_DISCOVERY_MODE;
   const activeServers = parseStateStringArray(definition.activeServers);
   const maxProxyTools = resolveDiscoveryMaxProxyTools(
-    typeof definition.maxProxyTools === 'number' ? definition.maxProxyTools : null,
+    typeof definition.maxProxyTools === 'number' ? definition.maxProxyTools : null
   );
 
   return {
     id: packId,
     description: typeof definition.description === 'string' ? definition.description : '',
-    preferences: normalizeDiscoveryPreferences({
-      mode,
-      activeServers,
-      maxProxyTools,
-    }, runtime, env),
+    preferences: normalizeDiscoveryPreferences(
+      {
+        mode,
+        activeServers,
+        maxProxyTools
+      },
+      runtime,
+      env
+    )
   };
 }
 
@@ -4175,7 +4321,7 @@ function resultIsError(value: unknown): boolean {
 function classifyProxyFailure(
   proxiedResult: unknown,
   route: ProxyRoute,
-  proxyToolName: string,
+  proxyToolName: string
 ): ProxyFailureDetails | null {
   const resultRecord = asRecord(proxiedResult);
   if (!resultRecord) {
@@ -4185,7 +4331,8 @@ function classifyProxyFailure(
   const structured = asRecord(resultRecord.structuredContent);
   const data = asRecord(structured?.data);
   const dataSuccess = typeof data?.success === 'boolean' ? data.success : undefined;
-  const rootSuccess = typeof structured?.successful === 'boolean' ? structured.successful : undefined;
+  const rootSuccess =
+    typeof structured?.successful === 'boolean' ? structured.successful : undefined;
   const hasRootError = structured?.error !== undefined && structured.error !== null;
 
   const semanticFailure = dataSuccess === false || rootSuccess === false || hasRootError;
@@ -4193,8 +4340,9 @@ function classifyProxyFailure(
     return null;
   }
 
-  const rawMessage = extractProxyFailureRawMessage(resultRecord, structured, data)
-    ?? 'Downstream MCP returned an error response.';
+  const rawMessage =
+    extractProxyFailureRawMessage(resultRecord, structured, data) ??
+    'Downstream MCP returned an error response.';
   const code = extractProxyFailureCode(structured, data);
   return classifyProxyFailureMessage(rawMessage, route, proxyToolName, code);
 }
@@ -4203,14 +4351,15 @@ function classifyProxyFailureMessage(
   rawMessageInput: string,
   route: ProxyRoute,
   proxyToolName: string,
-  code: string | number | null,
+  code: string | number | null
 ): ProxyFailureDetails {
   const rawMessage = normalizeFailureMessage(rawMessageInput);
   const missingScopes = extractMissingScopes(rawMessage);
   const authRelated = Boolean(
     missingScopes ||
-      /connectedaccountnotfound|no connected account found|invalid access token|unauthorized|invalid[_\s-]?grant|token/i
-        .test(rawMessage),
+    /connectedaccountnotfound|no connected account found|invalid access token|unauthorized|invalid[_\s-]?grant|token/i.test(
+      rawMessage
+    )
   );
 
   const toolkitSlug = extractToolkitSlug(route.serverName);
@@ -4241,14 +4390,14 @@ function classifyProxyFailureMessage(
     authRelated,
     nextStep: authRelated ? 'search_and_execute_connect_link' : null,
     reconnectProxyTool: authRelated ? reconnectProxyTool : null,
-    toolkitSlug,
+    toolkitSlug
   };
 }
 
 function extractProxyFailureRawMessage(
   resultRecord: Record<string, unknown>,
   structured: Record<string, unknown> | null,
-  data: Record<string, unknown> | null,
+  data: Record<string, unknown> | null
 ): string | null {
   const dataMessage = typeof data?.message === 'string' ? data.message : null;
   if (dataMessage) return dataMessage;
@@ -4258,7 +4407,8 @@ function extractProxyFailureRawMessage(
 
   if (typeof structured?.message === 'string') return structured.message;
   if (typeof structured?.error === 'string') return structured.error;
-  if (structured?.error !== undefined && structured.error !== null) return JSON.stringify(structured.error);
+  if (structured?.error !== undefined && structured.error !== null)
+    return JSON.stringify(structured.error);
 
   const content = resultRecord.content;
   if (Array.isArray(content)) {
@@ -4279,7 +4429,8 @@ function extractProxyFailureRawMessage(
         }
         if (typeof parsed.message === 'string') return parsed.message;
         if (typeof parsed.error === 'string') return parsed.error;
-        if (parsed.error !== undefined && parsed.error !== null) return JSON.stringify(parsed.error);
+        if (parsed.error !== undefined && parsed.error !== null)
+          return JSON.stringify(parsed.error);
       }
 
       return text;
@@ -4291,7 +4442,7 @@ function extractProxyFailureRawMessage(
 
 function extractProxyFailureCode(
   structured: Record<string, unknown> | null,
-  data: Record<string, unknown> | null,
+  data: Record<string, unknown> | null
 ): string | number | null {
   if (typeof data?.code === 'number' || typeof data?.code === 'string') {
     return data.code;
@@ -4340,7 +4491,7 @@ function extractToolkitSlug(serverName: string): string {
 function toJsonResult(payload: Record<string, unknown>) {
   return {
     content: [{ type: 'text' as const, text: JSON.stringify(payload, null, 2) }],
-    structuredContent: payload,
+    structuredContent: payload
   };
 }
 
@@ -4350,9 +4501,9 @@ function toJsonResource(uri: string, payload: unknown) {
       {
         uri,
         mimeType: 'application/json',
-        text: JSON.stringify(payload, null, 2),
-      },
-    ],
+        text: JSON.stringify(payload, null, 2)
+      }
+    ]
   };
 }
 
@@ -4362,16 +4513,16 @@ function toHtmlResource(uri: string, html: string) {
       {
         uri,
         mimeType: 'text/html',
-        text: html,
-      },
-    ],
+        text: html
+      }
+    ]
   };
 }
 
 function toErrorResult(message: string, structuredContent?: Record<string, unknown>) {
   const result: Record<string, unknown> = {
     isError: true,
-    content: [{ type: 'text' as const, text: message }],
+    content: [{ type: 'text' as const, text: message }]
   };
   if (structuredContent) {
     result.structuredContent = structuredContent;
@@ -4392,7 +4543,7 @@ function buildHubOverviewHtml(params: {
   const health = {
     hub: {
       name: HUB_NAME,
-      version: HUB_VERSION,
+      version: HUB_VERSION
     },
     builtAt: new Date(runtime.builtAt).toISOString(),
     connectedServers: runtime.connected.length,
@@ -4401,12 +4552,11 @@ function buildHubOverviewHtml(params: {
     visibleProxyToolCount,
     discovery: prefs,
     policy,
-    note:
-      'Use hub_list_services -> hub_search_proxy_tools (with serverName when known) -> hub_describe_proxy_tool -> hub_execute_proxy_tool for scalable brokered execution.',
+    note: 'Use hub_list_services -> hub_search_proxy_tools (with serverName when known) -> hub_describe_proxy_tool -> hub_execute_proxy_tool for scalable brokered execution.',
     discoveryPackNote:
       'For shared hubs, use named discovery packs as the managed baseline and treat raw hub_set_discovery overrides as temporary operator exceptions.',
     authNote:
-      'For toolkit auth or reconnects, search for __connection_status or __get_connect_link and execute that proxy tool via hub_execute_proxy_tool.',
+      'For toolkit auth or reconnects, search for __connection_status or __get_connect_link and execute that proxy tool via hub_execute_proxy_tool.'
   };
 
   const escaped = escapeHtml(JSON.stringify(health, null, 2));
@@ -4434,7 +4584,7 @@ function buildHubOverviewHtml(params: {
     `    <pre><code>${escaped}</code></pre>`,
     '  </main>',
     '</body>',
-    '</html>',
+    '</html>'
   ].join('\n');
 }
 
@@ -4443,28 +4593,28 @@ function buildHubAuthWorkflowHtml(): string {
     'List services with hub_list_services and choose the target service first.',
     'Search for the right proxy tool with hub_search_proxy_tools and pass serverName whenever known.',
     'Describe it with hub_describe_proxy_tool if you need the exact schema.',
-    'Execute it with hub_execute_proxy_tool using proxyToolName + args.',
+    'Execute it with hub_execute_proxy_tool using proxyToolName + args.'
   ];
   const discoveryAdminSequence = [
     'For shared hubs, treat named discovery packs as the default managed baseline.',
     'Use hub_list_discovery_packs before changing discovery scope.',
-    'Use hub_set_discovery(pack=...) for managed changes and reserve raw activeServers overrides for temporary operator exceptions.',
+    'Use hub_set_discovery(pack=...) for managed changes and reserve raw activeServers overrides for temporary operator exceptions.'
   ];
   const authSequence = [
     'Before first toolkit use, run __connection_status if the task depends on external auth.',
     'If disconnected, run __get_connect_link.',
     'Show the returned link to the user and stop.',
-    'Retry only after the user confirms auth is complete.',
+    'Retry only after the user confirms auth is complete.'
   ];
   const reconnectSequence = [
     'If a downstream tool returns auth failure or missing scopes, stop retrying the business tool.',
     'Run the reconnect proxy tool, usually <serverName>__get_connect_link, through hub_execute_proxy_tool.',
-    'Show the link, wait for the user to authenticate, then retry the original tool.',
+    'Show the link, wait for the user to authenticate, then retry the original tool.'
   ];
   const reminders = [
     'Direct proxy tools may be disabled even when they exist in the catalog.',
     'When the hub returns a connect link, present it to the user instead of continuing silently.',
-    'Treat auth config missing errors as deployment/configuration issues, not user errors.',
+    'Treat auth config missing errors as deployment/configuration issues, not user errors.'
   ];
 
   const renderList = (items: string[], ordered = false) => {
@@ -4480,12 +4630,12 @@ function buildHubAuthWorkflowHtml(): string {
         arguments: {
           serverName: 'composio-toolkit-airtable',
           query: 'connection_status',
-          limit: 5,
-        },
+          limit: 5
+        }
       },
       null,
-      2,
-    ),
+      2
+    )
   );
   const executeStatusExample = escapeHtml(
     JSON.stringify(
@@ -4493,12 +4643,12 @@ function buildHubAuthWorkflowHtml(): string {
         name: 'hub_execute_proxy_tool',
         arguments: {
           proxyToolName: 'composio-toolkit-airtable__connection_status',
-          args: {},
-        },
+          args: {}
+        }
       },
       null,
-      2,
-    ),
+      2
+    )
   );
   const executeConnectExample = escapeHtml(
     JSON.stringify(
@@ -4506,12 +4656,12 @@ function buildHubAuthWorkflowHtml(): string {
         name: 'hub_execute_proxy_tool',
         arguments: {
           proxyToolName: 'composio-toolkit-airtable__get_connect_link',
-          args: {},
-        },
+          args: {}
+        }
       },
       null,
-      2,
-    ),
+      2
+    )
   );
 
   return [
@@ -4546,23 +4696,23 @@ function buildHubAuthWorkflowHtml(): string {
     '    <div class="grid">',
     '      <section class="card">',
     '        <h2>Default Sequence</h2>',
-             renderList(defaultSequence, true),
+    renderList(defaultSequence, true),
     '      </section>',
     '      <section class="card">',
     '        <h2>Discovery Packs</h2>',
-             renderList(discoveryAdminSequence, true),
+    renderList(discoveryAdminSequence, true),
     '      </section>',
     '      <section class="card">',
     '        <h2>Auth Check</h2>',
-             renderList(authSequence, true),
+    renderList(authSequence, true),
     '      </section>',
     '      <section class="card">',
     '        <h2>Reconnect</h2>',
-             renderList(reconnectSequence, true),
+    renderList(reconnectSequence, true),
     '      </section>',
     '      <section class="card">',
     '        <h2>Reminders</h2>',
-             renderList(reminders),
+    renderList(reminders),
     '      </section>',
     '    </div>',
     '    <div class="grid">',
@@ -4585,7 +4735,7 @@ function buildHubAuthWorkflowHtml(): string {
     '    </div>',
     '  </main>',
     '</body>',
-    '</html>',
+    '</html>'
   ].join('\n');
 }
 
@@ -4606,7 +4756,11 @@ function sanitizeName(value: string): string {
   return value.replace(/[^a-zA-Z0-9_-]/g, '_');
 }
 
-function reserveProxyName(baseName: string, routes: Map<string, ProxyRoute>, warnings: string[]): string {
+function reserveProxyName(
+  baseName: string,
+  routes: Map<string, ProxyRoute>,
+  warnings: string[]
+): string {
   if (!routes.has(baseName)) {
     return baseName;
   }
@@ -4644,11 +4798,14 @@ function extractInvocationTrace(request: unknown, extra: unknown): InvocationTra
   return {
     requestId,
     correlationId,
-    transportRequestId: normalizeTraceValue(extraRecord?.requestId) ?? requestId,
+    transportRequestId: normalizeTraceValue(extraRecord?.requestId) ?? requestId
   };
 }
 
-export async function resolveAccountContext(extra: unknown, env: Env): Promise<ResolvedAccountContext> {
+export async function resolveAccountContext(
+  extra: unknown,
+  env: Env
+): Promise<ResolvedAccountContext> {
   const extraRecord = asRecord(extra);
   const authorization = getHeaderValue(extraRecord?.requestInfo, 'authorization');
   const sessionHeaderToken = getHeaderValue(extraRecord?.requestInfo, 'x-mcp-session-token');
@@ -4658,14 +4815,13 @@ export async function resolveAccountContext(extra: unknown, env: Env): Promise<R
   if (identityMode === 'session_required') {
     if (!isSessionResolverConfigured(env)) {
       throw new Error(
-        'HUB_IDENTITY_MODE=session_required requires HUB_SESSION_RESOLVE_URL and HUB_SESSION_RESOLVE_TOKEN.',
+        'HUB_IDENTITY_MODE=session_required requires HUB_SESSION_RESOLVE_URL and HUB_SESSION_RESOLVE_TOKEN.'
       );
     }
     const bearerToken = authorization ? parseBearerToken(authorization) : null;
-    const staticHubToken = readEnvString(env, 'HUB_API_TOKEN');
-    const bearerIsHubToken =
-      bearerToken && staticHubToken ? timingSafeEqual(bearerToken, staticHubToken) : false;
-    const identityToken = sessionHeaderToken ?? (bearerToken && !bearerIsHubToken ? bearerToken : null);
+    const bearerIsHubToken = bearerToken ? isHubStaticBearerToken(bearerToken, env) : false;
+    const identityToken =
+      sessionHeaderToken ?? (bearerToken && !bearerIsHubToken ? bearerToken : null);
     if (!identityToken) {
       throw new Error('Missing X-MCP-Session-Token header or bearer token.');
     }
@@ -4673,9 +4829,7 @@ export async function resolveAccountContext(extra: unknown, env: Env): Promise<R
   }
 
   const bearerToken = authorization ? parseBearerToken(authorization) : null;
-  const staticHubToken = readEnvString(env, 'HUB_API_TOKEN');
-  const bearerIsHubToken =
-    bearerToken && staticHubToken ? timingSafeEqual(bearerToken, staticHubToken) : false;
+  const bearerIsHubToken = bearerToken ? isHubStaticBearerToken(bearerToken, env) : false;
   if (bearerIsHubToken && !sessionHeaderToken) {
     return resolveFallbackAccountContext(extra, env, resourceHost);
   }
@@ -4692,13 +4846,15 @@ export async function resolveAccountContext(extra: unknown, env: Env): Promise<R
 async function resolveSessionAccountContext(
   env: Env,
   token: string,
-  resourceHost: string | null,
+  resourceHost: string | null
 ): Promise<ResolvedAccountContext> {
   const resolved = await resolveSessionForBearerToken(env, token, resourceHost);
   const accountId = normalizeTraceValue(resolved?.account_id);
   if (!resolved || resolved.valid !== true || !accountId) {
     const reason = normalizeTraceValue(resolved?.reason);
-    throw new Error(reason ? `Unauthorized MCP session token: ${reason}` : 'Unauthorized MCP session token');
+    throw new Error(
+      reason ? `Unauthorized MCP session token: ${reason}` : 'Unauthorized MCP session token'
+    );
   }
 
   return {
@@ -4709,36 +4865,37 @@ async function resolveSessionAccountContext(
     authMode: normalizeResolvedAuthMode(resolved),
     toolMode: normalizeTraceValue(resolved.tool_mode),
     allowedToolPrefixes:
-      resolved.allowed_tool_prefixes == null ? null : parseAllowedToolPrefixes(resolved.allowed_tool_prefixes),
+      resolved.allowed_tool_prefixes == null
+        ? null
+        : parseAllowedToolPrefixes(resolved.allowed_tool_prefixes),
     boundHost: normalizeTraceValue(resolved.bound_host),
     resourceHost,
     identitySource: 'session',
     serviceTier: normalizeTraceValue(resolved.service_tier),
-    entitlementSnapshot: asRecord(resolved.entitlement_snapshot),
+    entitlementSnapshot: asRecord(resolved.entitlement_snapshot)
   };
 }
 
 function resolveFallbackAccountContext(
   extra: unknown,
   env: Env,
-  resourceHost: string | null,
+  resourceHost: string | null
 ): ResolvedAccountContext {
   const extraRecord = asRecord(extra);
   const authInfo = asRecord(extraRecord?.authInfo);
   const trustClientAccountHeaders = parseBooleanWithDefault(
     readEnvString(env, 'HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS'),
-    false,
+    false
   );
   const authorization = getHeaderValue(extraRecord?.requestInfo, 'authorization');
   const accountHeader = trustClientAccountHeaders
-    ? getHeaderValue(extraRecord?.requestInfo, 'x-mcp-account-id') ??
-      getHeaderValue(extraRecord?.requestInfo, 'x-hub-account-id')
+    ? (getHeaderValue(extraRecord?.requestInfo, 'x-mcp-account-id') ??
+      getHeaderValue(extraRecord?.requestInfo, 'x-hub-account-id'))
     : null;
-  const staticHubToken = readEnvString(env, 'HUB_API_TOKEN');
   const rawBearer = authorization ? parseBearerToken(authorization) : null;
   // Guard against identity spoofing when gateway auth is provided by query/api-key headers.
-  // In protected mode (HUB_API_TOKEN configured), Authorization should not influence fallback account identity.
-  const fromBearer = staticHubToken ? null : rawBearer;
+  // In protected mode, Authorization should not influence fallback account identity.
+  const fromBearer = isHubStaticAuthConfigured(env) ? null : rawBearer;
   const fromAuth =
     normalizeTraceValue(authInfo?.accountId) ??
     normalizeTraceValue(authInfo?.tenantId) ??
@@ -4752,20 +4909,27 @@ function resolveFallbackAccountContext(
     sessionId: null,
     authMode: 'fallback',
     toolMode: resolveCompatFallbackToolMode(env),
-    allowedToolPrefixes: null,
+    allowedToolPrefixes: resolveCompatAllowedToolPrefixes(env),
     boundHost: null,
     resourceHost,
     serviceTier: null,
     entitlementSnapshot: null,
-    identitySource: 'fallback',
+    identitySource: 'fallback'
   };
 }
 
 function isSessionResolverConfigured(env: Env): boolean {
+  if (!parseBooleanWithDefault(readEnvString(env, 'HUB_SESSION_RESOLVER_ENABLED'), true)) {
+    return false;
+  }
   return Boolean(
     readEnvString(env, 'HUB_SESSION_RESOLVE_TOKEN') &&
-      (env.IDENTITY_WORKER || readEnvString(env, 'HUB_SESSION_RESOLVE_URL')),
+    (env.IDENTITY_WORKER || readEnvString(env, 'HUB_SESSION_RESOLVE_URL'))
   );
+}
+
+function resolveCompatAllowedToolPrefixes(env: Env): string[] | null {
+  return parseList(readEnvString(env, 'HUB_COMPAT_ALLOWED_TOOL_PREFIXES'));
 }
 
 export function resolveHubIdentityMode(env: Env): HubIdentityMode {
@@ -4798,7 +4962,7 @@ function resolveCompatFallbackToolMode(env: Env): string {
 async function resolveSessionForBearerToken(
   env: Env,
   token: string,
-  resourceHost: string | null = null,
+  resourceHost: string | null = null
 ): Promise<IdentitySessionResolveResponse | null> {
   const now = Date.now();
   const cacheKey = buildSessionResolveCacheKey(token, resourceHost);
@@ -4816,21 +4980,24 @@ async function resolveSessionForBearerToken(
 
   const timeoutMs = parsePositiveInt(
     readEnvString(env, 'HUB_SESSION_RESOLVE_TIMEOUT_MS'),
-    DEFAULT_SESSION_RESOLVE_TIMEOUT_MS,
+    DEFAULT_SESSION_RESOLVE_TIMEOUT_MS
   );
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
-    const request = new Request(resolveUrl ?? 'https://identity-worker.internal/v1/mcp/sessions/resolve', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${resolveToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ token, resource_host: resourceHost }),
-      signal: controller.signal,
-    });
+    const request = new Request(
+      resolveUrl ?? 'https://identity-worker.internal/v1/mcp/sessions/resolve',
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${resolveToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ token, resource_host: resourceHost }),
+        signal: controller.signal
+      }
+    );
     const response = identityWorker ? await identityWorker.fetch(request) : await fetch(request);
 
     if (!response.ok) {
@@ -4841,13 +5008,16 @@ async function resolveSessionForBearerToken(
     }
 
     const payload = (await response.json()) as IdentitySessionResolveResponse;
-    sessionResolveCache.set(cacheKey, { value: payload, expiresAtMs: now + SESSION_RESOLVE_CACHE_MS });
+    sessionResolveCache.set(cacheKey, {
+      value: payload,
+      expiresAtMs: now + SESSION_RESOLVE_CACHE_MS
+    });
     maybeSweepSessionResolveCache(now);
     return payload;
   } catch (error) {
     const value = {
       valid: false,
-      reason: error instanceof Error ? `resolver_error:${error.name}` : 'resolver_error',
+      reason: error instanceof Error ? `resolver_error:${error.name}` : 'resolver_error'
     };
     sessionResolveCache.set(cacheKey, { value, expiresAtMs: now + SESSION_RESOLVE_CACHE_MS });
     maybeSweepSessionResolveCache(now);
@@ -4879,7 +5049,10 @@ function parseAllowedToolPrefixes(value: unknown): string[] {
     .slice(0, 500);
 }
 
-function isRouteAllowedForSession(route: ProxyRoute, allowedToolPrefixes: string[] | null): boolean {
+function isRouteAllowedForSession(
+  route: ProxyRoute,
+  allowedToolPrefixes: string[] | null
+): boolean {
   if (allowedToolPrefixes === null) {
     return true;
   }
@@ -5027,7 +5200,7 @@ async function getBraintrustLogger(env: Env): Promise<BraintrustLogger | null> {
       apiKey,
       projectName,
       asyncFlush: true,
-      setCurrent: true,
+      setCurrent: true
     };
 
     if (projectId) {
@@ -5046,7 +5219,7 @@ async function flushBraintrust(logger: BraintrustLogger): Promise<void> {
     await logger.flush();
   } catch (error) {
     console.warn(
-      `[${HUB_NAME}] braintrust logger flush failed: ${error instanceof Error ? error.message : String(error)}`,
+      `[${HUB_NAME}] braintrust logger flush failed: ${error instanceof Error ? error.message : String(error)}`
     );
   }
 
@@ -5056,7 +5229,7 @@ async function flushBraintrust(logger: BraintrustLogger): Promise<void> {
     await braintrust.flush();
   } catch (error) {
     console.warn(
-      `[${HUB_NAME}] braintrust global flush failed: ${error instanceof Error ? error.message : String(error)}`,
+      `[${HUB_NAME}] braintrust global flush failed: ${error instanceof Error ? error.message : String(error)}`
     );
   }
 }
@@ -5081,12 +5254,12 @@ async function emitHubInvocationToBraintrust(env: Env, log: HubInvocationLog): P
             tool: log.toolName,
             accountId: log.accountId,
             correlationId: log.trace.correlationId,
-            requestId: log.trace.requestId,
+            requestId: log.trace.requestId
           },
           output: {
             success: log.success,
             durationMs: Math.max(0, Math.floor(log.durationMs)),
-            error: log.errorMessage ?? null,
+            error: log.errorMessage ?? null
           },
           error: log.errorMessage ?? undefined,
           tags: buildHubBraintrustTags(['mcp', HUB_NAME, log.toolName], metadata),
@@ -5098,19 +5271,19 @@ async function emitHubInvocationToBraintrust(env: Env, log: HubInvocationLog): P
             durationMs: Math.max(0, Math.floor(log.durationMs)),
             correlationId: log.trace.correlationId,
             requestId: log.trace.requestId,
-            ...(metadata ?? {}),
-          },
+            ...(metadata ?? {})
+          }
         });
       },
       {
         name: `mcp:${HUB_NAME}:${log.toolName}`,
-        type: 'tool',
-      },
+        type: 'tool'
+      }
     );
     await flushBraintrust(logger);
   } catch (error) {
     console.warn(
-      `[${HUB_NAME}] braintrust hub emit failed: ${error instanceof Error ? error.message : String(error)}`,
+      `[${HUB_NAME}] braintrust hub emit failed: ${error instanceof Error ? error.message : String(error)}`
     );
   }
 }
@@ -5128,17 +5301,17 @@ async function emitHubRouteToBraintrust(env: Env, log: HubRouteLog): Promise<voi
             downstreamTool: log.downstreamTool,
             accountId: log.accountId,
             correlationId: log.trace.correlationId,
-            requestId: log.trace.requestId,
+            requestId: log.trace.requestId
           },
           output: {
             success: log.success,
             durationMs: Math.max(0, Math.floor(log.durationMs)),
-            error: log.errorMessage ?? null,
+            error: log.errorMessage ?? null
           },
           error: log.errorMessage ?? undefined,
           tags: buildHubBraintrustTags(
             ['mcp', HUB_NAME, log.downstreamServer, log.downstreamTool],
-            metadata,
+            metadata
           ),
           metadata: {
             server: HUB_NAME,
@@ -5149,35 +5322,33 @@ async function emitHubRouteToBraintrust(env: Env, log: HubRouteLog): Promise<voi
             durationMs: Math.max(0, Math.floor(log.durationMs)),
             correlationId: log.trace.correlationId,
             requestId: log.trace.requestId,
-            ...(metadata ?? {}),
-          },
+            ...(metadata ?? {})
+          }
         });
       },
       {
         name: `mcp:${log.downstreamServer}:${log.downstreamTool}`,
-        type: 'tool',
-      },
+        type: 'tool'
+      }
     );
     await flushBraintrust(logger);
   } catch (error) {
     console.warn(
-      `[${HUB_NAME}] braintrust route emit failed: ${error instanceof Error ? error.message : String(error)}`,
+      `[${HUB_NAME}] braintrust route emit failed: ${error instanceof Error ? error.message : String(error)}`
     );
   }
 }
 
 function buildHubBraintrustTags(
   baseTags: string[],
-  metadata: Record<string, unknown> | null,
+  metadata: Record<string, unknown> | null
 ): string[] {
   const policy =
     typeof metadata?.policy === 'string' && metadata.policy.length > 0
       ? `policy:${metadata.policy}`
       : null;
   const type =
-    typeof metadata?.type === 'string' && metadata.type.length > 0
-      ? `type:${metadata.type}`
-      : null;
+    typeof metadata?.type === 'string' && metadata.type.length > 0 ? `type:${metadata.type}` : null;
   const entrypoint =
     typeof metadata?.entrypoint === 'string' && metadata.entrypoint.length > 0
       ? `entry:${metadata.entrypoint}`
@@ -5189,7 +5360,7 @@ function buildHubBraintrustTags(
 async function recordHubInvocation(
   env: Env,
   log: HubInvocationLog,
-  executionCtx?: WaitUntilContext,
+  executionCtx?: WaitUntilContext
 ): Promise<void> {
   enqueueWithWaitUntil(emitHubInvocationToBraintrust(env, log), executionCtx);
 
@@ -5208,19 +5379,21 @@ async function recordHubInvocation(
          VALUES (?, ?, ?, 1, datetime('now'))
          ON CONFLICT(server_name, account_id, period_start) DO UPDATE SET
            runs_this_period = mcp_run_counts.runs_this_period + 1,
-           updated_at = datetime('now')`,
+           updated_at = datetime('now')`
       )
       .bind(HUB_NAME, accountId, period)
       .run();
   } catch (error) {
-    console.warn(`[${HUB_NAME}] telemetry run count write failed: ${error instanceof Error ? error.message : String(error)}`);
+    console.warn(
+      `[${HUB_NAME}] telemetry run count write failed: ${error instanceof Error ? error.message : String(error)}`
+    );
   }
 
   try {
     await db
       .prepare(
         `INSERT INTO mcp_tool_invocations (server_name, account_id, tool_name, success, duration_ms, error_message, correlation_id, request_id, metadata_json)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
       )
       .bind(
         HUB_NAME,
@@ -5231,7 +5404,7 @@ async function recordHubInvocation(
         errorMessage,
         log.trace.correlationId,
         log.trace.requestId,
-        metadataJson,
+        metadataJson
       )
       .run();
     return;
@@ -5239,7 +5412,8 @@ async function recordHubInvocation(
     const message = error instanceof Error ? error.message : String(error);
     const missingMetadata = isMissingColumnError(message, 'metadata_json');
     const missingTrace =
-      isMissingColumnError(message, 'correlation_id') || isMissingColumnError(message, 'request_id');
+      isMissingColumnError(message, 'correlation_id') ||
+      isMissingColumnError(message, 'request_id');
 
     if (!missingMetadata && !missingTrace) {
       console.warn(`[${HUB_NAME}] telemetry invocation write failed: ${message}`);
@@ -5251,7 +5425,7 @@ async function recordHubInvocation(
         await db
           .prepare(
             `INSERT INTO mcp_tool_invocations (server_name, account_id, tool_name, success, duration_ms, error_message, correlation_id, request_id)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
           )
           .bind(
             HUB_NAME,
@@ -5261,7 +5435,7 @@ async function recordHubInvocation(
             Math.max(0, Math.floor(log.durationMs)),
             errorMessage,
             log.trace.correlationId,
-            log.trace.requestId,
+            log.trace.requestId
           )
           .run();
         return;
@@ -5283,7 +5457,7 @@ async function recordHubInvocation(
     await db
       .prepare(
         `INSERT INTO mcp_tool_invocations (server_name, account_id, tool_name, success, duration_ms, error_message)
-         VALUES (?, ?, ?, ?, ?, ?)`,
+         VALUES (?, ?, ?, ?, ?, ?)`
       )
       .bind(
         HUB_NAME,
@@ -5291,12 +5465,12 @@ async function recordHubInvocation(
         log.toolName,
         log.success ? 1 : 0,
         Math.max(0, Math.floor(log.durationMs)),
-        errorMessage,
+        errorMessage
       )
       .run();
   } catch (error) {
     console.warn(
-      `[${HUB_NAME}] telemetry basic write failed: ${error instanceof Error ? error.message : String(error)}`,
+      `[${HUB_NAME}] telemetry basic write failed: ${error instanceof Error ? error.message : String(error)}`
     );
   }
 }
@@ -5319,21 +5493,21 @@ async function ensureHubRouteTable(db: D1Database): Promise<void> {
          request_id TEXT,
          metadata_json TEXT,
          created_at TEXT NOT NULL DEFAULT (datetime('now'))
-       )`,
+       )`
     )
     .run();
 
   await db
     .prepare(
       `CREATE INDEX IF NOT EXISTS idx_mcp_hub_routes_correlation_time
-         ON mcp_hub_routes(correlation_id, created_at)`,
+         ON mcp_hub_routes(correlation_id, created_at)`
     )
     .run();
 
   await db
     .prepare(
       `CREATE INDEX IF NOT EXISTS idx_mcp_hub_routes_downstream_time
-         ON mcp_hub_routes(downstream_server_name, created_at)`,
+         ON mcp_hub_routes(downstream_server_name, created_at)`
     )
     .run();
 
@@ -5343,7 +5517,7 @@ async function ensureHubRouteTable(db: D1Database): Promise<void> {
 async function recordHubRouteInvocation(
   env: Env,
   log: HubRouteLog,
-  executionCtx?: WaitUntilContext,
+  executionCtx?: WaitUntilContext
 ): Promise<void> {
   enqueueWithWaitUntil(emitHubRouteToBraintrust(env, log), executionCtx);
 
@@ -5353,7 +5527,9 @@ async function recordHubRouteInvocation(
   try {
     await ensureHubRouteTable(db);
   } catch (error) {
-    console.warn(`[${HUB_NAME}] failed creating mcp_hub_routes table: ${error instanceof Error ? error.message : String(error)}`);
+    console.warn(
+      `[${HUB_NAME}] failed creating mcp_hub_routes table: ${error instanceof Error ? error.message : String(error)}`
+    );
     return;
   }
 
@@ -5371,7 +5547,7 @@ async function recordHubRouteInvocation(
            correlation_id,
            request_id,
            metadata_json
-         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
       )
       .bind(
         HUB_NAME,
@@ -5383,12 +5559,12 @@ async function recordHubRouteInvocation(
         log.errorMessage ? log.errorMessage.slice(0, 500) : null,
         log.trace.correlationId,
         log.trace.requestId,
-        safeJsonStringify(log.metadata),
+        safeJsonStringify(log.metadata)
       )
       .run();
   } catch (error) {
     console.warn(
-      `[${HUB_NAME}] route telemetry write failed: ${error instanceof Error ? error.message : String(error)}`,
+      `[${HUB_NAME}] route telemetry write failed: ${error instanceof Error ? error.message : String(error)}`
     );
   }
 }
@@ -5396,14 +5572,14 @@ async function recordHubRouteInvocation(
 async function queryTraceByCorrelation(
   env: Env,
   correlationId: string,
-  limit: number,
+  limit: number
 ): Promise<Record<string, unknown>> {
   const db = env.TELEMETRY_DB;
   if (!db) {
     return {
       correlationId,
       count: 0,
-      error: 'TELEMETRY_DB binding is not configured on this hub deployment.',
+      error: 'TELEMETRY_DB binding is not configured on this hub deployment.'
     };
   }
 
@@ -5415,7 +5591,7 @@ async function queryTraceByCorrelation(
          FROM mcp_tool_invocations
          WHERE correlation_id = ?
          ORDER BY created_at DESC
-         LIMIT ?`,
+         LIMIT ?`
       )
       .bind(...baseBind)
       .all<{
@@ -5440,7 +5616,7 @@ async function queryTraceByCorrelation(
       return {
         correlationId,
         count: 0,
-        error: message,
+        error: message
       };
     }
 
@@ -5450,7 +5626,7 @@ async function queryTraceByCorrelation(
          FROM mcp_tool_invocations
          WHERE correlation_id = ?
          ORDER BY created_at DESC
-         LIMIT ?`,
+         LIMIT ?`
       )
       .bind(...baseBind)
       .all<{
@@ -5474,7 +5650,7 @@ async function queryTraceByCorrelation(
 async function queryHubRouteRowsByCorrelation(
   db: D1Database,
   correlationId: string,
-  limit: number,
+  limit: number
 ): Promise<
   Array<{
     hub_server_name: string;
@@ -5503,7 +5679,7 @@ async function queryHubRouteRowsByCorrelation(
          FROM mcp_hub_routes
          WHERE correlation_id = ?
          ORDER BY created_at DESC
-         LIMIT ?`,
+         LIMIT ?`
       )
       .bind(correlationId, limit)
       .all<{
@@ -5552,7 +5728,7 @@ function formatTraceLookupResult(
     request_id: string | null;
     metadata_json: string | null;
     created_at: string;
-  }>,
+  }>
 ): Record<string, unknown> {
   const invocations = rows.map((row) => ({
     server: row.server_name,
@@ -5565,7 +5741,7 @@ function formatTraceLookupResult(
     requestId: row.request_id,
     metadata: parseMetadataJson(row.metadata_json),
     timestamp: row.created_at,
-    where: row.server_name === HUB_NAME ? 'hub' : 'downstream',
+    where: row.server_name === HUB_NAME ? 'hub' : 'downstream'
   }));
 
   const routedDownstreamInvocations = routeRows.map((row) => ({
@@ -5580,7 +5756,7 @@ function formatTraceLookupResult(
     requestId: row.request_id,
     metadata: parseMetadataJson(row.metadata_json),
     timestamp: row.created_at,
-    where: 'hub-route',
+    where: 'hub-route'
   }));
 
   return {
@@ -5589,7 +5765,7 @@ function formatTraceLookupResult(
     hubInvocations: invocations.filter((entry) => entry.where === 'hub'),
     downstreamInvocations: invocations.filter((entry) => entry.where !== 'hub'),
     routedDownstreamInvocations,
-    invocations,
+    invocations
   };
 }
 
@@ -5616,7 +5792,9 @@ function safeJsonStringify(value: Record<string, unknown> | undefined): string |
 }
 
 function isMissingColumnError(message: string, column: string): boolean {
-  return message.includes(`no such column: ${column}`) || message.includes(`no column named ${column}`);
+  return (
+    message.includes(`no such column: ${column}`) || message.includes(`no column named ${column}`)
+  );
 }
 
 async function readHubState(env: Env, currentRegistry: McpBundleRegistry): Promise<HubState> {
@@ -5624,7 +5802,11 @@ async function readHubState(env: Env, currentRegistry: McpBundleRegistry): Promi
   if (fromKv) {
     return enforceRequiredHubStateServers(fromKv, currentRegistry, env);
   }
-  return enforceRequiredHubStateServers(readStateFromEnv(env, currentRegistry), currentRegistry, env);
+  return enforceRequiredHubStateServers(
+    readStateFromEnv(env, currentRegistry),
+    currentRegistry,
+    env
+  );
 }
 
 async function readHubStateFromKv(env: Env): Promise<HubState | null> {
@@ -5639,13 +5821,13 @@ async function readHubStateFromKv(env: Env): Promise<HubState | null> {
     return {
       enabledBundles: parseStateStringArray(parsed.enabledBundles),
       enabledServers: parseStateStringArray(parsed.enabledServers),
-      disabledServers: parseStateStringArray(parsed.disabledServers),
+      disabledServers: parseStateStringArray(parsed.disabledServers)
     };
   } catch (error) {
     console.warn(
       `[${HUB_NAME}] failed to parse HUB_STATE_KV payload; falling back to env/defaults: ${
         error instanceof Error ? error.message : String(error)
-      }`,
+      }`
     );
     return null;
   }
@@ -5662,7 +5844,7 @@ async function writeHubState(env: Env, state: HubState): Promise<Record<string, 
   return {
     persisted: true,
     key,
-    storage: 'kv',
+    storage: 'kv'
   };
 }
 
@@ -5684,17 +5866,21 @@ function readStateFromEnv(env: Env, currentRegistry: McpBundleRegistry): HubStat
   return {
     enabledBundles,
     enabledServers,
-    disabledServers,
+    disabledServers
   };
 }
 
-function enforceRequiredHubStateServers(state: HubState, currentRegistry: McpBundleRegistry, env: Env): HubState {
+function enforceRequiredHubStateServers(
+  state: HubState,
+  currentRegistry: McpBundleRegistry,
+  env: Env
+): HubState {
   const requiredServers = getRequiredGlobalServers(currentRegistry, env);
   if (requiredServers.length === 0) {
     return {
       enabledBundles: uniqueSortedStrings(state.enabledBundles),
       enabledServers: uniqueSortedStrings(state.enabledServers),
-      disabledServers: uniqueSortedStrings(state.disabledServers),
+      disabledServers: uniqueSortedStrings(state.disabledServers)
     };
   }
 
@@ -5702,7 +5888,9 @@ function enforceRequiredHubStateServers(state: HubState, currentRegistry: McpBun
   return {
     enabledBundles: uniqueSortedStrings(state.enabledBundles),
     enabledServers: uniqueSortedStrings([...(state.enabledServers ?? []), ...requiredServers]),
-    disabledServers: uniqueSortedStrings((state.disabledServers ?? []).filter((name) => !requiredSet.has(name))),
+    disabledServers: uniqueSortedStrings(
+      (state.disabledServers ?? []).filter((name) => !requiredSet.has(name))
+    )
   };
 }
 
@@ -5717,7 +5905,7 @@ function updateState(
     disableBundles?: string[];
     enableServers?: string[];
     disableServers?: string[];
-  },
+  }
 ): HubState {
   const knownBundles = new Set(Object.keys(currentRegistry.bundles));
   const knownServers = new Set(Object.keys(currentRegistry.servers));
@@ -5725,19 +5913,19 @@ function updateState(
   const baseline: HubState = {
     enabledBundles: resolvedBaseline.enabledBundles.filter((bundle) => knownBundles.has(bundle)),
     enabledServers: resolvedBaseline.enabledServers.filter((server) => knownServers.has(server)),
-    disabledServers: resolvedBaseline.disabledServers.filter((server) => knownServers.has(server)),
+    disabledServers: resolvedBaseline.disabledServers.filter((server) => knownServers.has(server))
   };
 
   const unknownBundles = [
     ...(patch.setBundles ?? []),
     ...(patch.enableBundles ?? []),
-    ...(patch.disableBundles ?? []),
+    ...(patch.disableBundles ?? [])
   ].filter((bundle) => !knownBundles.has(bundle));
 
   const unknownServers = [
     ...(patch.setServers ?? []),
     ...(patch.enableServers ?? []),
-    ...(patch.disableServers ?? []),
+    ...(patch.disableServers ?? [])
   ].filter((server) => !knownServers.has(server));
 
   if (unknownBundles.length > 0 || unknownServers.length > 0) {
@@ -5775,10 +5963,10 @@ function updateState(
     {
       enabledBundles: [...enabledBundles].sort(),
       enabledServers: [...enabledServers].sort(),
-      disabledServers: [...disabledServers].sort(),
+      disabledServers: [...disabledServers].sort()
     },
     currentRegistry,
-    env,
+    env
   );
 }
 
@@ -5788,7 +5976,7 @@ function resolveState(currentRegistry: McpBundleRegistry, state: HubState): Stat
   const resolved: HubState = {
     enabledBundles: uniqueSortedStrings(state.enabledBundles),
     enabledServers: uniqueSortedStrings(state.enabledServers),
-    disabledServers: uniqueSortedStrings(state.disabledServers),
+    disabledServers: uniqueSortedStrings(state.disabledServers)
   };
 
   const enabledServerNames = new Set<string>();
@@ -5828,7 +6016,7 @@ function resolveState(currentRegistry: McpBundleRegistry, state: HubState): Stat
   return {
     state: resolved,
     enabledServerNames: [...enabledServerNames].sort(),
-    warnings,
+    warnings
   };
 }
 
@@ -5838,7 +6026,7 @@ function buildRuntimeCacheKey(env: Env, state: HubState): string {
     enabledBundles: state.enabledBundles,
     enabledServers: state.enabledServers,
     disabledServers: state.disabledServers,
-    cacheBust,
+    cacheBust
   });
 }
 
@@ -5864,7 +6052,12 @@ function parseList(raw: string | undefined): string[] | null {
     }
   }
 
-  return uniqueSortedStrings(trimmed.split(',').map((part) => part.trim()).filter(Boolean));
+  return uniqueSortedStrings(
+    trimmed
+      .split(',')
+      .map((part) => part.trim())
+      .filter(Boolean)
+  );
 }
 
 function parseStateStringArray(value: unknown): string[] {
@@ -5873,7 +6066,7 @@ function parseStateStringArray(value: unknown): string[] {
     value
       .filter((entry) => typeof entry === 'string')
       .map((entry) => String(entry).trim())
-      .filter(Boolean),
+      .filter(Boolean)
   );
 }
 
@@ -5908,7 +6101,7 @@ async function closeHubRuntime(runtime: HubRuntime): Promise<void> {
       } catch {
         // Best-effort shutdown.
       }
-    }),
+    })
   );
 }
 
@@ -5940,7 +6133,7 @@ function parseBooleanWithDefault(raw: string | undefined, fallback: boolean): bo
 function isDirectProxyToolAllowed(env: Env, proxyToolName: string): boolean {
   const directProxyEnabled = parseBooleanWithDefault(
     readEnvString(env, 'HUB_ALLOW_DIRECT_PROXY_TOOLS'),
-    false,
+    false
   );
   if (!directProxyEnabled) return false;
 
@@ -5967,7 +6160,7 @@ function jsonResponse(data: unknown, status = 200, initHeaders?: HeadersInit): R
   }
   return new Response(JSON.stringify(data, null, 2), {
     status,
-    headers,
+    headers
   });
 }
 
@@ -5987,13 +6180,13 @@ function withCors(response: Response): Response {
       'X-Correlation-ID',
       'X-Request-ID',
       'X-API-Key',
-      'API-Key',
-    ].join(', '),
+      'API-Key'
+    ].join(', ')
   );
 
   return new Response(response.body, {
     status: response.status,
     statusText: response.statusText,
-    headers,
+    headers
   });
 }

@@ -348,7 +348,7 @@ function checkFleetCoverage() {
         `fleet deployment ${deploymentSlug}: expected wrangler_config ${configPath}, got ${deployment.wrangler_config}`
       );
     }
-    if (!deployment.url?.startsWith('https://') || !deployment.url.endsWith('/mcp')) {
+    if (!isValidMcpUrl(deployment.url)) {
       errors.push(`fleet deployment ${deploymentSlug}: invalid MCP url ${deployment.url}`);
     }
     if (
@@ -362,7 +362,7 @@ function checkFleetCoverage() {
   for (const [deploymentSlug, deployment] of Object.entries(fleetDeployments)) {
     if (deployment.status !== 'deployed') continue;
 
-    if (!deployment.url?.startsWith('https://') || !deployment.url.endsWith('/mcp')) {
+    if (!isValidMcpUrl(deployment.url)) {
       errors.push(
         `fleet deployment ${deploymentSlug}: deployed MCP has invalid url ${deployment.url}`
       );
@@ -402,6 +402,18 @@ function checkAgentCoverage() {
     if (!playbookWorkerSource.includes(expectedRoute)) {
       errors.push(`playbook worker missing protected agent route ${expectedRoute}`);
     }
+  }
+}
+
+function isValidMcpUrl(value) {
+  if (typeof value !== 'string') return false;
+  try {
+    const url = new URL(value);
+    return (
+      url.protocol === 'https:' && (url.pathname === '/mcp' || url.pathname.startsWith('/mcp/'))
+    );
+  } catch {
+    return false;
   }
 }
 

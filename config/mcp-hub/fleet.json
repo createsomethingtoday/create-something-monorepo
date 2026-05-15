@@ -3,6 +3,25 @@
   "version": 1,
   "description": "Operational fleet of CREATE SOMETHING MCP deployments per tenant. Populated from HD Notion Products database (27b019187ac5800f9efcc74fffa00405) and halfdozen-notion-mcp wrangler configs on 2026-04-16.",
   "deployments": {
+    "wf-template-review": {
+      "type": "policy_os_hub",
+      "product": "Webflow Template Review - Central Reviewer MCP",
+      "client": "internal",
+      "tenant": "webflow-marketplace",
+      "url": "https://wf-template-review.mcp.createsomething.agency/mcp/bearer",
+      "status": "deployed",
+      "account": "create-something",
+      "package_path": "packages/cs-mcp-hub-remote",
+      "wrangler_config": "packages/cs-mcp-hub-remote/wrangler.team-hubs.toml",
+      "auth": {
+        "type": "bearer",
+        "bearer_token_env_var": "CS_HUB_WF_TEMPLATE_REVIEW_{ERIC,NATALIA,MARIANA,VICKI}_API_TOKEN",
+        "infisical_path": "/mcp-hub/hubs",
+        "infisical_note": "The existing Eric, Natalia, Mariana, and Vicki reviewer Hub tokens are accepted as equivalent central Claude/Gumloop bearer credentials. This endpoint intentionally does not use OAuth discovery, session resolver, or reviewer identity."
+      },
+      "related_deployments": ["webflow-template-review-mcp"],
+      "notes": "Single bearer-only Hub endpoint for Claude Code/Claude-compatible clients and Gumloop. Target config is HUB_IDENTITY_MODE=compat, HUB_SESSION_RESOLVER_ENABLED=false, HUB_OAUTH_DISCOVERY_ENABLED=false, HUB_COMPAT_FALLBACK_TOOL_MODE=read_write, with a central read/capture proxy allowlist and a restricted Hub management-tool allowlist. Reviewer-specific Hubs remain the path for reviewer-attributed writes."
+    },
     "viv-blondish": {
       "type": "policy_os_hub",
       "product": "Viv Bakos \u2014 Personal Hub",
@@ -17,10 +36,7 @@
         "bearer_token_env_var": "CS_HUB_VIV_BLONDISH_API_TOKEN",
         "infisical_path": "/mcp-hub/hubs"
       },
-      "related_deployments": [
-        "blondish-hub",
-        "blondish-notion"
-      ],
+      "related_deployments": ["blondish-hub", "blondish-notion"],
       "toolkits": [
         "google-meet",
         "google-sheets",
@@ -55,10 +71,7 @@
         "bearer_token_env_var": "CS_HUB_MORGAN_YOUNG_C3_MANAGEMENT_API_TOKEN",
         "infisical_path": "/mcp-hub/hubs"
       },
-      "related_deployments": [
-        "c3denver-hub",
-        "c3-management-notion"
-      ],
+      "related_deployments": ["c3denver-hub", "c3-management-notion"],
       "toolkits": [
         "google-meet",
         "google-sheets",
@@ -92,10 +105,7 @@
         "bearer_token_env_var": "CS_HUB_BLONDISH_API_TOKEN",
         "infisical_path": "/mcp-hub/hubs"
       },
-      "related_deployments": [
-        "viv-blondish",
-        "blondish-notion"
-      ]
+      "related_deployments": ["viv-blondish", "blondish-notion"]
     },
     "august": {
       "type": "policy_os_hub",
@@ -194,9 +204,7 @@
         "bearer_token_env_var": "CS_HUB_CRACKED_API_TOKEN",
         "infisical_path": "/mcp-hub/hubs"
       },
-      "related_deployments": [
-        "cracked-notion"
-      ]
+      "related_deployments": ["cracked-notion"]
     },
     "c3denver-hub": {
       "type": "policy_os_hub",
@@ -212,10 +220,7 @@
         "bearer_token_env_var": "CS_HUB_C3DENVER_API_TOKEN",
         "infisical_path": "/mcp-hub/hubs"
       },
-      "related_deployments": [
-        "morgan-young-c3-management",
-        "c3-management-notion"
-      ]
+      "related_deployments": ["morgan-young-c3-management", "c3-management-notion"]
     },
     "system-studio-notion": {
       "type": "notion_mcp",
@@ -250,10 +255,7 @@
         "infisical_path": "/halfdozen-notion-mcp/blondish",
         "bearer_token_env_var": "MCP_BEARER_TOKEN"
       },
-      "related_deployments": [
-        "blondish-hub",
-        "viv-blondish"
-      ]
+      "related_deployments": ["blondish-hub", "viv-blondish"]
     },
     "c3-management-notion": {
       "type": "notion_mcp",
@@ -272,10 +274,7 @@
         "bearer_token_env_var": "MCP_BEARER_TOKEN",
         "infisical_path": "/halfdozen-notion-mcp/c3-management"
       },
-      "related_deployments": [
-        "c3denver-hub",
-        "morgan-young-c3-management"
-      ]
+      "related_deployments": ["c3denver-hub", "morgan-young-c3-management"]
     },
     "cracked-notion": {
       "type": "notion_mcp",
@@ -293,9 +292,7 @@
         "infisical_path": "/halfdozen-notion-mcp/cracked",
         "bearer_token_env_var": "MCP_BEARER_TOKEN"
       },
-      "related_deployments": [
-        "cracked-hub"
-      ]
+      "related_deployments": ["cracked-hub"]
     },
     "fanpad-notion": {
       "type": "notion_mcp",

@@ -6,13 +6,17 @@ import {
   classifyHubRoute,
   evaluateAuthorizationRequest,
   getPolicyManifest,
-  listPolicyManifests,
+  listPolicyManifests
 } from '../dist/index.js';
 
 test('policy registry exposes repo-first manifests', () => {
   const manifests = listPolicyManifests();
-  assert.ok(manifests.some((manifest) => manifest.policyId === 'policy.hub-route-authorization.v1'));
-  assert.ok(manifests.some((manifest) => manifest.policyId === 'policy.service-tier-entitlement.v1'));
+  assert.ok(
+    manifests.some((manifest) => manifest.policyId === 'policy.hub-route-authorization.v1')
+  );
+  assert.ok(
+    manifests.some((manifest) => manifest.policyId === 'policy.service-tier-entitlement.v1')
+  );
   const manifest = getPolicyManifest('policy.partner-auth-governance.v1');
   assert.equal(manifest.version, 1);
   assert.equal(typeof manifest.policyHash, 'string');
@@ -22,7 +26,7 @@ test('hub route classification distinguishes destructive proxy routes', () => {
   const classification = classifyHubRoute({
     proxyToolName: 'composio-toolkit-zoom__zoom_delete_a_meeting',
     serverName: 'composio-toolkit-zoom',
-    downstreamToolName: 'zoom_delete_a_meeting',
+    downstreamToolName: 'zoom_delete_a_meeting'
   });
 
   assert.equal(classification.accessType, 'destructive');
@@ -35,7 +39,7 @@ test('hub route classification preserves registry policy_os_only tags', () => {
     proxyToolName: 'create-something__house_policy_tool',
     serverName: 'create-something',
     downstreamToolName: 'house_policy_tool',
-    serverTags: ['cs', 'policy_os_only'],
+    serverTags: ['cs', 'policy_os_only']
   });
 
   assert.ok(classification.tags.includes('policy_os_only'));
@@ -46,7 +50,7 @@ test('hub route classification treats reviewer assignment as write access', () =
   const classification = classifyHubRoute({
     proxyToolName: 'webflow-template-review-mcp__template_review_assign_reviewer',
     serverName: 'webflow-template-review-mcp',
-    downstreamToolName: 'template_review_assign_reviewer',
+    downstreamToolName: 'template_review_assign_reviewer'
   });
 
   assert.equal(classification.accessType, 'write');
@@ -56,10 +60,20 @@ test('hub route classification treats reviewer unassignment as write access', ()
   const classification = classifyHubRoute({
     proxyToolName: 'webflow-template-review-mcp__template_review_unassign_self',
     serverName: 'webflow-template-review-mcp',
-    downstreamToolName: 'template_review_unassign_self',
+    downstreamToolName: 'template_review_unassign_self'
   });
 
   assert.equal(classification.accessType, 'write');
+});
+
+test('hub route classification treats public capture session start as read access', () => {
+  const classification = classifyHubRoute({
+    proxyToolName: 'webflow-template-review-mcp__template_review_start_capture_session',
+    serverName: 'webflow-template-review-mcp',
+    downstreamToolName: 'template_review_start_capture_session'
+  });
+
+  assert.equal(classification.accessType, 'read');
 });
 
 test('hub route classification ignores control-plane words inside read descriptions', () => {
@@ -67,12 +81,12 @@ test('hub route classification ignores control-plane words inside read descripti
     {
       proxyToolName: 'composio-toolkit-gmail__gmail_fetch_emails',
       serverName: 'composio-toolkit-gmail',
-      downstreamToolName: 'gmail_fetch_emails',
+      downstreamToolName: 'gmail_fetch_emails'
     },
     {
       description:
-        'Fetches Gmail messages. The messages field may be absent or empty (valid no-results state).',
-    },
+        'Fetches Gmail messages. The messages field may be absent or empty (valid no-results state).'
+    }
   );
 
   assert.equal(classification.accessType, 'read');
@@ -83,12 +97,12 @@ test('hub route classification ignores destructive words inside read description
     {
       proxyToolName: 'composio-toolkit-gmail__gmail_fetch_message_by_message_id',
       serverName: 'composio-toolkit-gmail',
-      downstreamToolName: 'gmail_fetch_message_by_message_id',
+      downstreamToolName: 'gmail_fetch_message_by_message_id'
     },
     {
       description:
-        'Fetches a specific message by ID. Spam/trash messages are excluded unless requested upstream.',
-    },
+        'Fetches a specific message by ID. Spam/trash messages are excluded unless requested upstream.'
+    }
   );
 
   assert.equal(classification.accessType, 'read');
@@ -99,10 +113,10 @@ test('hub route classification uses invocation action for multiplexed read manag
     {
       proxyToolName: 'halfdozen-operator-notion-mcp__operator_notion_sync_contracts',
       serverName: 'halfdozen-operator-notion-mcp',
-      downstreamToolName: 'operator_notion_sync_contracts',
+      downstreamToolName: 'operator_notion_sync_contracts'
     },
     { description: 'Manage Notion sync contracts.' },
-    { invocationAction: 'list_contracts' },
+    { invocationAction: 'list_contracts' }
   );
 
   assert.equal(classification.accessType, 'read');
@@ -113,10 +127,10 @@ test('hub route classification preserves write access for multiplexed mutation a
     {
       proxyToolName: 'halfdozen-operator-notion-mcp__operator_notion_sync_contracts',
       serverName: 'halfdozen-operator-notion-mcp',
-      downstreamToolName: 'operator_notion_sync_contracts',
+      downstreamToolName: 'operator_notion_sync_contracts'
     },
     { description: 'Manage Notion sync contracts.' },
-    { invocationAction: 'run_sync_contract' },
+    { invocationAction: 'run_sync_contract' }
   );
 
   assert.equal(classification.accessType, 'write');
@@ -131,14 +145,14 @@ test('hub route auth blocks mutation discovery for read-only sessions', async ()
     proxyToolName: 'composio-toolkit-googlesheets__googlesheets_values_update',
     serverName: 'composio-toolkit-googlesheets',
     downstreamToolName: 'googlesheets_values_update',
-    actionName: 'discover',
+    actionName: 'discover'
   });
 
   const result = await evaluateAuthorizationRequest(
     'policy.hub-route-authorization.v1',
     request,
     { mode: 'legacy_enforce', canaryPercent: 0 },
-    { mode: 'legacy' },
+    { mode: 'legacy' }
   );
 
   assert.equal(result.final.decision, 'block');
@@ -154,14 +168,14 @@ test('hub route auth requires human review for destructive execution', async () 
     proxyToolName: 'composio-toolkit-zoom__zoom_delete_a_meeting',
     serverName: 'composio-toolkit-zoom',
     downstreamToolName: 'zoom_delete_a_meeting',
-    actionName: 'execute',
+    actionName: 'execute'
   });
 
   const result = await evaluateAuthorizationRequest(
     'policy.hub-route-authorization.v1',
     request,
     { mode: 'legacy_enforce', canaryPercent: 0 },
-    { mode: 'legacy' },
+    { mode: 'legacy' }
   );
 
   assert.equal(result.final.decision, 'require_human_review');
@@ -179,14 +193,14 @@ test('hub route auth blocks unresolved protected route context', async () => {
     proxyToolName: 'composio-toolkit-zoom__zoom_create_a_meeting',
     serverName: 'composio-toolkit-zoom',
     downstreamToolName: 'zoom_create_a_meeting',
-    actionName: 'execute',
+    actionName: 'execute'
   });
 
   const result = await evaluateAuthorizationRequest(
     'policy.hub-route-authorization.v1',
     request,
     { mode: 'legacy_enforce', canaryPercent: 0 },
-    { mode: 'legacy' },
+    { mode: 'legacy' }
   );
 
   assert.equal(result.final.decision, 'block');
@@ -212,16 +226,16 @@ test('service-tier policy blocks paid write execution for mcp-only access', asyn
         policy_accepted: true,
         contract_active: true,
         billing_active: true,
-        approved_exception: { present: false },
-      },
-    },
+        approved_exception: { present: false }
+      }
+    }
   });
 
   const result = await evaluateAuthorizationRequest(
     'policy.service-tier-entitlement.v1',
     request,
     { mode: 'legacy_enforce', canaryPercent: 0 },
-    { mode: 'legacy' },
+    { mode: 'legacy' }
   );
 
   assert.equal(result.final.decision, 'block');
@@ -248,16 +262,16 @@ test('service-tier policy allows mcp-only read execution for multiplexed managem
         policy_accepted: true,
         contract_active: true,
         billing_active: true,
-        approved_exception: { present: false },
-      },
-    },
+        approved_exception: { present: false }
+      }
+    }
   });
 
   const result = await evaluateAuthorizationRequest(
     'policy.service-tier-entitlement.v1',
     request,
     { mode: 'legacy_enforce', canaryPercent: 0 },
-    { mode: 'legacy' },
+    { mode: 'legacy' }
   );
 
   assert.equal(result.final.decision, 'allow');
@@ -276,7 +290,7 @@ test('service-tier policy allows mcp-only gmail read execution despite read-desc
     actionName: 'execute',
     definition: {
       description:
-        'Fetches Gmail messages. The messages field may be absent or empty (valid no-results state).',
+        'Fetches Gmail messages. The messages field may be absent or empty (valid no-results state).'
     },
     context: {
       serviceTier: 'mcp_only',
@@ -286,16 +300,16 @@ test('service-tier policy allows mcp-only gmail read execution despite read-desc
         policy_accepted: true,
         contract_active: true,
         billing_active: true,
-        approved_exception: { present: false },
-      },
-    },
+        approved_exception: { present: false }
+      }
+    }
   });
 
   const result = await evaluateAuthorizationRequest(
     'policy.service-tier-entitlement.v1',
     request,
     { mode: 'legacy_enforce', canaryPercent: 0 },
-    { mode: 'legacy' },
+    { mode: 'legacy' }
   );
 
   assert.equal(result.final.decision, 'allow');
@@ -320,16 +334,16 @@ test('service-tier policy blocks paid policy os access without billing', async (
         policy_accepted: true,
         contract_active: true,
         billing_active: false,
-        approved_exception: { present: false },
-      },
-    },
+        approved_exception: { present: false }
+      }
+    }
   });
 
   const result = await evaluateAuthorizationRequest(
     'policy.service-tier-entitlement.v1',
     request,
     { mode: 'legacy_enforce', canaryPercent: 0 },
-    { mode: 'legacy' },
+    { mode: 'legacy' }
   );
 
   assert.equal(result.final.decision, 'block');
@@ -355,16 +369,16 @@ test('service-tier policy blocks paid policy os access without contract', async 
         policy_accepted: true,
         contract_active: false,
         billing_active: true,
-        approved_exception: { present: false },
-      },
-    },
+        approved_exception: { present: false }
+      }
+    }
   });
 
   const result = await evaluateAuthorizationRequest(
     'policy.service-tier-entitlement.v1',
     request,
     { mode: 'legacy_enforce', canaryPercent: 0 },
-    { mode: 'legacy' },
+    { mode: 'legacy' }
   );
 
   assert.equal(result.final.decision, 'block');
@@ -390,16 +404,16 @@ test('service-tier policy blocks paid policy os access without policy acceptance
         policy_accepted: false,
         contract_active: true,
         billing_active: true,
-        approved_exception: { present: false },
-      },
-    },
+        approved_exception: { present: false }
+      }
+    }
   });
 
   const result = await evaluateAuthorizationRequest(
     'policy.service-tier-entitlement.v1',
     request,
     { mode: 'legacy_enforce', canaryPercent: 0 },
-    { mode: 'legacy' },
+    { mode: 'legacy' }
   );
 
   assert.equal(result.final.decision, 'block');
@@ -425,16 +439,16 @@ test('service-tier policy allows paid policy os execution when commercial gates 
         policy_accepted: true,
         contract_active: true,
         billing_active: true,
-        approved_exception: { present: false },
-      },
-    },
+        approved_exception: { present: false }
+      }
+    }
   });
 
   const result = await evaluateAuthorizationRequest(
     'policy.service-tier-entitlement.v1',
     request,
     { mode: 'legacy_enforce', canaryPercent: 0 },
-    { mode: 'legacy' },
+    { mode: 'legacy' }
   );
 
   assert.equal(result.final.decision, 'allow');
@@ -460,16 +474,16 @@ test('service-tier policy blocks policy-os-only discovery for mcp-only access', 
         policy_accepted: true,
         contract_active: true,
         billing_active: true,
-        approved_exception: { present: false },
-      },
-    },
+        approved_exception: { present: false }
+      }
+    }
   });
 
   const result = await evaluateAuthorizationRequest(
     'policy.service-tier-entitlement.v1',
     request,
     { mode: 'legacy_enforce', canaryPercent: 0 },
-    { mode: 'legacy' },
+    { mode: 'legacy' }
   );
 
   assert.equal(result.final.decision, 'block');
@@ -481,27 +495,27 @@ test('identity admin mint policy allows consent-backed requests', async () => {
     actor: {
       accountId: 'acct_1',
       actorId: 'partner:operator',
-      role: 'operator',
+      role: 'operator'
     },
     action: {
       name: 'admin_mint_session',
       writeIntent: true,
       humanReviewStep: true,
-      introspectionOk: true,
+      introspectionOk: true
     },
     resource: {
       kind: 'mcp_session',
       id: 'acct_1',
       toolName: 'mcp_session_admin_mint',
-      accessType: 'auth_admin',
-    },
+      accessType: 'auth_admin'
+    }
   };
 
   const result = await evaluateAuthorizationRequest(
     'policy.partner-auth-governance.v1',
     request,
     { mode: 'legacy_enforce', canaryPercent: 0 },
-    { mode: 'legacy' },
+    { mode: 'legacy' }
   );
 
   assert.equal(result.final.decision, 'allow');
@@ -513,28 +527,28 @@ test('partner toolkit auth policy blocks account actions without consent evidenc
       accountId: 'acct_1',
       actorId: 'partner:operator',
       role: 'partner_admin',
-      identitySource: 'partner_admin_key',
+      identitySource: 'partner_admin_key'
     },
     action: {
       name: 'create_toolkit_connect_link',
       writeIntent: true,
       humanReviewStep: false,
-      introspectionOk: false,
+      introspectionOk: false
     },
     resource: {
       kind: 'partner_toolkit_account',
       id: 'client_1:airtable:primary',
       toolName: 'create_toolkit_connect_link',
       accessType: 'auth_admin',
-      oauthRequired: true,
-    },
+      oauthRequired: true
+    }
   };
 
   const result = await evaluateAuthorizationRequest(
     'policy.partner-auth-governance.v1',
     request,
     { mode: 'legacy_enforce', canaryPercent: 0 },
-    { mode: 'legacy' },
+    { mode: 'legacy' }
   );
 
   assert.equal(result.final.decision, 'block');
@@ -547,27 +561,27 @@ test('partner toolkit auth policy requires review before disabling bindings', as
       accountId: 'acct_1',
       actorId: 'partner:operator',
       role: 'partner_admin',
-      identitySource: 'partner_admin_key',
+      identitySource: 'partner_admin_key'
     },
     action: {
       name: 'disable_toolkit_account',
       writeIntent: true,
       humanReviewStep: false,
-      introspectionOk: true,
+      introspectionOk: true
     },
     resource: {
       kind: 'partner_toolkit_account',
       id: 'client_1:airtable:primary',
       toolName: 'disable_toolkit_account',
-      accessType: 'destructive',
-    },
+      accessType: 'destructive'
+    }
   };
 
   const result = await evaluateAuthorizationRequest(
     'policy.partner-auth-governance.v1',
     request,
     { mode: 'legacy_enforce', canaryPercent: 0 },
-    { mode: 'legacy' },
+    { mode: 'legacy' }
   );
 
   assert.equal(result.final.decision, 'require_human_review');
@@ -580,27 +594,27 @@ test('partner toolkit auth policy allows reviewed pin operations with consent', 
       accountId: 'acct_1',
       actorId: 'partner:operator',
       role: 'partner_admin',
-      identitySource: 'partner_admin_key',
+      identitySource: 'partner_admin_key'
     },
     action: {
       name: 'pin_toolkit_account',
       writeIntent: true,
       humanReviewStep: true,
-      introspectionOk: true,
+      introspectionOk: true
     },
     resource: {
       kind: 'partner_toolkit_account',
       id: 'client_1:airtable:primary',
       toolName: 'pin_toolkit_account',
-      accessType: 'write',
-    },
+      accessType: 'write'
+    }
   };
 
   const result = await evaluateAuthorizationRequest(
     'policy.partner-auth-governance.v1',
     request,
     { mode: 'legacy_enforce', canaryPercent: 0 },
-    { mode: 'legacy' },
+    { mode: 'legacy' }
   );
 
   assert.equal(result.final.decision, 'allow');

@@ -18,6 +18,16 @@ RATE_LIMIT_MAX_CALLS="${RATE_LIMIT_MAX_CALLS:-120}"
 RATE_LIMIT_WINDOW_SECONDS="${RATE_LIMIT_WINDOW_SECONDS:-60}"
 QUOTA_MAX_PROXY_CALLS_PER_PERIOD="${QUOTA_MAX_PROXY_CALLS_PER_PERIOD:-10000}"
 REVIEWER_IDENTITY_MODE="${REVIEWER_IDENTITY_MODE:-compat}"
+CENTRAL_SLUG="${CENTRAL_SLUG:-wf-template-review}"
+CENTRAL_ACCOUNT_ID="${CENTRAL_ACCOUNT_ID:-acct_wf_template_review}"
+CENTRAL_IDENTITY_MODE="${CENTRAL_IDENTITY_MODE:-compat}"
+CENTRAL_SESSION_RESOLVER_ENABLED="${CENTRAL_SESSION_RESOLVER_ENABLED:-false}"
+CENTRAL_OAUTH_DISCOVERY_ENABLED="${CENTRAL_OAUTH_DISCOVERY_ENABLED:-false}"
+CENTRAL_FALLBACK_TOOL_MODE="${CENTRAL_FALLBACK_TOOL_MODE:-read_write}"
+CENTRAL_ALLOWED_TOOL_PREFIXES="${CENTRAL_ALLOWED_TOOL_PREFIXES:-webflow-template-review-mcp__template_review_workflow,webflow-template-review-mcp__template_review_health,webflow-template-review-mcp__template_review_start_capture_session,webflow-template-review-mcp__template_review_continue_capture_session,webflow-template-review-mcp__template_review_get_capture_session_artifact,webflow-template-review-mcp__template_review_draft_from_capture_session,webflow-template-review-mcp__template_review_list_queue,webflow-template-review-mcp__template_review_get_review_context,webflow-template-review-mcp__template_review_search_assets,webflow-template-review-mcp__template_review_search_versions,webflow-template-review-mcp__template_review_get_asset,webflow-template-review-mcp__template_review_list_versions,webflow-template-review-mcp__template_review_get_version,webflow-template-review-mcp__template_review_list_releases,webflow-template-review-mcp__template_review_get_field_map,webflow-template-review-mcp__template_review_get_metrics}"
+CENTRAL_MANAGEMENT_TOOL_ALLOWLIST="${CENTRAL_MANAGEMENT_TOOL_ALLOWLIST:-hub_status,hub_list_proxy_tools,hub_search_proxy_tools,hub_route_intent,hub_describe_proxy_tool,hub_get_proxy_tool,hub_run_intent,hub_execute_proxy_tool,hub_run_proxy_tool,hub_list_services,hub_policy_status}"
+CENTRAL_SKIP_NORMALIZE="${CENTRAL_SKIP_NORMALIZE:-1}"
+INCLUDE_CENTRAL="${INCLUDE_CENTRAL:-0}"
 REQUIRED_GLOBAL_SERVERS_SENTINEL="${REQUIRED_GLOBAL_SERVERS_SENTINEL:-__none__}"
 REQUIRED_DISCOVERY_SERVERS_SENTINEL="${REQUIRED_DISCOVERY_SERVERS_SENTINEL:-__none__}"
 SKIP_NORMALIZE="${SKIP_NORMALIZE:-0}"
@@ -31,6 +41,11 @@ REVIEWERS=(
   "wf-template-review-mariana|acct_wf_mariana"
   "wf-template-review-micah|acct_wf_micah"
 )
+
+TARGETS=("${REVIEWERS[@]}")
+if [[ "$INCLUDE_CENTRAL" == "1" || "$INCLUDE_CENTRAL" == "true" || "$REVIEWER" == "central" || "$REVIEWER" == "shared" || "$REVIEWER" == "$CENTRAL_SLUG" ]]; then
+  TARGETS+=("${CENTRAL_SLUG}|${CENTRAL_ACCOUNT_ID}")
+fi
 
 require_cmd() {
   command -v "$1" >/dev/null 2>&1 || {
@@ -109,6 +124,10 @@ domain_for_slug() {
 
 mcp_url_for_slug() {
   local slug="$1"
+  if [[ "$slug" == "$CENTRAL_SLUG" ]]; then
+    echo "https://$(domain_for_slug "$slug")/mcp/bearer"
+    return 0
+  fi
   echo "https://$(domain_for_slug "$slug")/mcp"
 }
 
@@ -123,14 +142,92 @@ slug_matches_reviewer() {
   if [[ "$reviewer" == "all" ]]; then
     return 0
   fi
+  if [[ "$reviewer" == "central" || "$reviewer" == "shared" || "$reviewer" == "$CENTRAL_SLUG" ]]; then
+    [[ "$slug" == "$CENTRAL_SLUG" ]]
+    return $?
+  fi
   [[ "$slug" == "wf-template-review-${reviewer}" ]]
+}
+
+identity_mode_for_slug() {
+  local slug="$1"
+  if [[ "$slug" == "$CENTRAL_SLUG" ]]; then
+    echo "$CENTRAL_IDENTITY_MODE"
+    return 0
+  fi
+  echo "$REVIEWER_IDENTITY_MODE"
+}
+
+session_resolver_enabled_for_slug() {
+  local slug="$1"
+  if [[ "$slug" == "$CENTRAL_SLUG" ]]; then
+    echo "$CENTRAL_SESSION_RESOLVER_ENABLED"
+    return 0
+  fi
+  echo "true"
+}
+
+session_resolve_url_for_slug() {
+  local slug="$1"
+  if [[ "$slug" == "$CENTRAL_SLUG" ]]; then
+    echo ""
+    return 0
+  fi
+  echo "$SESSION_RESOLVE_URL"
+}
+
+oauth_discovery_enabled_for_slug() {
+  local slug="$1"
+  if [[ "$slug" == "$CENTRAL_SLUG" ]]; then
+    echo "$CENTRAL_OAUTH_DISCOVERY_ENABLED"
+    return 0
+  fi
+  echo "true"
+}
+
+compat_allowed_tool_prefixes_for_slug() {
+  local slug="$1"
+  if [[ "$slug" == "$CENTRAL_SLUG" ]]; then
+    echo "$CENTRAL_ALLOWED_TOOL_PREFIXES"
+    return 0
+  fi
+  echo ""
+}
+
+compat_fallback_tool_mode_for_slug() {
+  local slug="$1"
+  if [[ "$slug" == "$CENTRAL_SLUG" ]]; then
+    echo "$CENTRAL_FALLBACK_TOOL_MODE"
+    return 0
+  fi
+  echo ""
+}
+
+management_tool_allowlist_for_slug() {
+  local slug="$1"
+  if [[ "$slug" == "$CENTRAL_SLUG" ]]; then
+    echo "$CENTRAL_MANAGEMENT_TOOL_ALLOWLIST"
+    return 0
+  fi
+  echo ""
+}
+
+skip_normalize_for_slug() {
+  local slug="$1"
+  if [[ "$slug" == "$CENTRAL_SLUG" ]]; then
+    [[ "$CENTRAL_SKIP_NORMALIZE" == "1" || "$CENTRAL_SKIP_NORMALIZE" == "true" ]]
+    return $?
+  fi
+  return 1
 }
 
 deploy_one() {
   local slug="$1"
   local account_id="$2"
   local worker
+  local identity_mode
   worker="$(worker_name_for_slug "$slug")"
+  identity_mode="$(identity_mode_for_slug "$slug")"
 
   echo "===== DEPLOY ${worker} ====="
   cd "$HUB_DIR"
@@ -143,9 +240,14 @@ deploy_one() {
     --var "HUB_ENABLED_BUNDLES:${BUNDLE_NAME}" \
     --var "HUB_ENABLED_SERVERS:${ENABLED_SERVERS}" \
     --var "HUB_DISABLED_SERVERS:${DISABLED_SERVERS}" \
-    --var "HUB_IDENTITY_MODE:${REVIEWER_IDENTITY_MODE}" \
+    --var "HUB_IDENTITY_MODE:${identity_mode}" \
+    --var "HUB_SESSION_RESOLVER_ENABLED:$(session_resolver_enabled_for_slug "$slug")" \
+    --var "HUB_OAUTH_DISCOVERY_ENABLED:$(oauth_discovery_enabled_for_slug "$slug")" \
+    --var "HUB_COMPAT_ALLOWED_TOOL_PREFIXES:$(compat_allowed_tool_prefixes_for_slug "$slug")" \
+    --var "HUB_COMPAT_FALLBACK_TOOL_MODE:$(compat_fallback_tool_mode_for_slug "$slug")" \
+    --var "HUB_MANAGEMENT_TOOL_ALLOWLIST:$(management_tool_allowlist_for_slug "$slug")" \
     --var "HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS:false" \
-    --var "HUB_SESSION_RESOLVE_URL:${SESSION_RESOLVE_URL}" \
+    --var "HUB_SESSION_RESOLVE_URL:$(session_resolve_url_for_slug "$slug")" \
     --var "HUB_DISCOVERY_MODE:compact" \
     --var "HUB_DISCOVERY_SHARED_PACK:${DISCOVERY_PACK}" \
     --var "HUB_DISCOVERY_DEFAULT_SERVERS:${DISCOVERY_ACTIVE_SERVERS}" \
@@ -164,25 +266,33 @@ normalize_one() {
   local mcp_url
   local enabled_servers_json
   local discovery_active_servers_json
+  local identity_mode
+  local session_token
+  local -a auth_headers
   worker="$(worker_name_for_slug "$slug")"
   mcp_url="$(mcp_url_for_slug "$slug")"
   enabled_servers_json="$(json_array_from_csv "$ENABLED_SERVERS")"
   discovery_active_servers_json="$(json_array_from_csv "$DISCOVERY_ACTIVE_SERVERS")"
+  identity_mode="$(identity_mode_for_slug "$slug")"
 
   if [[ -z "${HUB_API_TOKEN:-}" ]]; then
     echo "missing HUB_API_TOKEN; cannot normalize ${worker}" >&2
     exit 1
   fi
-  if [[ -z "${SESSION_TOKEN_FOR_NORMALIZE:-}" ]]; then
+  auth_headers=(-H "Authorization: Bearer ${HUB_API_TOKEN}")
+  if [[ "$identity_mode" == "session_required" && -z "${SESSION_TOKEN_FOR_NORMALIZE:-}" ]]; then
     echo "missing SESSION_TOKEN_FOR_NORMALIZE; cannot normalize ${worker} in session_required mode" >&2
     exit 1
+  fi
+  if [[ "$identity_mode" == "session_required" ]]; then
+    session_token="${SESSION_TOKEN_FOR_NORMALIZE}"
+    auth_headers+=(-H "X-MCP-Session-Token: ${session_token}")
   fi
 
   echo "===== NORMALIZE ${worker} ====="
 
   curl_with_url "$mcp_url" -sS -X POST \
-    -H "Authorization: Bearer ${HUB_API_TOKEN}" \
-    -H "X-MCP-Session-Token: ${SESSION_TOKEN_FOR_NORMALIZE}" \
+    "${auth_headers[@]}" \
     -H "Content-Type: application/json" \
     -H "Accept: application/json, text/event-stream" \
     -d '{
@@ -199,8 +309,7 @@ normalize_one() {
     }' | jq .
 
   curl_with_url "$mcp_url" -sS -X POST \
-    -H "Authorization: Bearer ${HUB_API_TOKEN}" \
-    -H "X-MCP-Session-Token: ${SESSION_TOKEN_FOR_NORMALIZE}" \
+    "${auth_headers[@]}" \
     -H "Content-Type: application/json" \
     -H "Accept: application/json, text/event-stream" \
     -d "{
@@ -224,26 +333,32 @@ verify_one() {
   local worker
   local health_url
   local mcp_url
+  local identity_mode
+  local -a auth_headers
   worker="$(worker_name_for_slug "$slug")"
   health_url="$(health_url_for_slug "$slug")"
   mcp_url="$(mcp_url_for_slug "$slug")"
+  identity_mode="$(identity_mode_for_slug "$slug")"
 
   if [[ -z "${HUB_API_TOKEN:-}" ]]; then
     echo "missing HUB_API_TOKEN; cannot verify ${worker}" >&2
     exit 1
   fi
-  if [[ -z "${SESSION_TOKEN_FOR_VERIFY:-${SESSION_TOKEN_FOR_NORMALIZE:-}}" ]]; then
+  auth_headers=(-H "Authorization: Bearer ${HUB_API_TOKEN}")
+  if [[ "$identity_mode" == "session_required" && -z "${SESSION_TOKEN_FOR_VERIFY:-${SESSION_TOKEN_FOR_NORMALIZE:-}}" ]]; then
     echo "missing SESSION_TOKEN_FOR_VERIFY or SESSION_TOKEN_FOR_NORMALIZE; cannot verify ${worker}" >&2
     exit 1
   fi
-  local session_token="${SESSION_TOKEN_FOR_VERIFY:-${SESSION_TOKEN_FOR_NORMALIZE}}"
+  if [[ "$identity_mode" == "session_required" ]]; then
+    local session_token="${SESSION_TOKEN_FOR_VERIFY:-${SESSION_TOKEN_FOR_NORMALIZE}}"
+    auth_headers+=(-H "X-MCP-Session-Token: ${session_token}")
+  fi
 
   echo "===== VERIFY ${worker} ====="
   curl_with_url "$health_url" -sS | jq .
 
   curl_with_url "$mcp_url" -sS -X POST \
-    -H "Authorization: Bearer ${HUB_API_TOKEN}" \
-    -H "X-MCP-Session-Token: ${session_token}" \
+    "${auth_headers[@]}" \
     -H "Content-Type: application/json" \
     -H "Accept: application/json, text/event-stream" \
     -d '{
@@ -257,8 +372,7 @@ verify_one() {
     }' | jq .
 
   curl_with_url "$mcp_url" -sS -X POST \
-    -H "Authorization: Bearer ${HUB_API_TOKEN}" \
-    -H "X-MCP-Session-Token: ${session_token}" \
+    "${auth_headers[@]}" \
     -H "Content-Type: application/json" \
     -H "Accept: application/json, text/event-stream" \
     -d '{
@@ -288,7 +402,7 @@ case "$ACTION" in
     ;;
 esac
 
-for entry in "${REVIEWERS[@]}"; do
+for entry in "${TARGETS[@]}"; do
   slug="${entry%%|*}"
   account_id="${entry#*|}"
   if ! slug_matches_reviewer "$slug" "$REVIEWER"; then
@@ -298,7 +412,7 @@ for entry in "${REVIEWERS[@]}"; do
     deploy_one "$slug" "$account_id"
   fi
   if [[ "$ACTION" == "normalize" || "$ACTION" == "all" ]]; then
-    if [[ "$SKIP_NORMALIZE" != "1" ]]; then
+    if [[ "$SKIP_NORMALIZE" != "1" ]] && ! skip_normalize_for_slug "$slug"; then
       normalize_one "$slug"
     fi
   fi

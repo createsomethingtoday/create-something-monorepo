@@ -6,13 +6,14 @@ import {
   normalizeInboundMcpRequest,
   resolveAccountContext,
   resolveHubIdentityMode,
+  resolveVisibleManagementTools
 } from '../index.ts';
 
 function makeExtra(headers: Record<string, string>) {
   return {
     requestInfo: {
-      headers,
-    },
+      headers
+    }
   };
 }
 
@@ -27,17 +28,32 @@ test('resolveHubIdentityMode defaults to session_required', () => {
   assert.equal(mode, 'session_required');
 });
 
+test('resolveVisibleManagementTools applies static hub allowlist', () => {
+  const tools = resolveVisibleManagementTools({
+    HUB_MANAGEMENT_TOOL_ALLOWLIST:
+      'hub_status,hub_list_services,hub_search_proxy_tools,hub_describe_proxy_tool,hub_execute_proxy_tool'
+  } as any);
+  const names = tools.map((tool) => tool.name);
+
+  assert.deepEqual(names, [
+    'hub_status',
+    'hub_search_proxy_tools',
+    'hub_describe_proxy_tool',
+    'hub_execute_proxy_tool',
+    'hub_list_services'
+  ]);
+  assert.equal(names.includes('hub_update_state'), false);
+  assert.equal(names.includes('hub_set_discovery'), false);
+});
+
 test('resolveAccountContext requires session token header or bearer token in session_required mode', async () => {
   await assert.rejects(
-    resolveAccountContext(
-      makeExtra({}),
-      {
-        HUB_IDENTITY_MODE: 'session_required',
-        HUB_SESSION_RESOLVE_URL: 'https://identity.example/resolve',
-        HUB_SESSION_RESOLVE_TOKEN: 'resolver_secret',
-      } as any,
-    ),
-    /Missing X-MCP-Session-Token header or bearer token\./,
+    resolveAccountContext(makeExtra({}), {
+      HUB_IDENTITY_MODE: 'session_required',
+      HUB_SESSION_RESOLVE_URL: 'https://identity.example/resolve',
+      HUB_SESSION_RESOLVE_TOKEN: 'resolver_secret'
+    } as any),
+    /Missing X-MCP-Session-Token header or bearer token\./
   );
 });
 
@@ -50,7 +66,10 @@ test('resolveAccountContext resolves identity via session resolver in session_re
   globalThis.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
     const request = input instanceof Request ? input : new Request(String(input), init);
     capturedAuth = request.headers.get('authorization') ?? '';
-    const body = JSON.parse(await request.text()) as { token?: string; resource_host?: string | null };
+    const body = JSON.parse(await request.text()) as {
+      token?: string;
+      resource_host?: string | null;
+    };
     capturedToken = body.token ?? '';
     capturedResourceHost = body.resource_host ?? '';
     return new Response(
@@ -60,14 +79,14 @@ test('resolveAccountContext resolves identity via session resolver in session_re
         account_id: 'acct_123',
         tenant_id: 'tenant_acme',
         user_id: 'user_123',
-        allowed_tool_prefixes: ['composio-toolkit-gmail__'],
+        allowed_tool_prefixes: ['composio-toolkit-gmail__']
       }),
       {
         status: 200,
         headers: {
-          'Content-Type': 'application/json',
-        },
-      },
+          'Content-Type': 'application/json'
+        }
+      }
     );
   };
 
@@ -75,13 +94,13 @@ test('resolveAccountContext resolves identity via session resolver in session_re
     const context = await resolveAccountContext(
       makeExtra({
         'x-mcp-session-token': 'ms_tok_abc',
-        host: 'viv-blondish.mcp.createsomething.agency',
+        host: 'viv-blondish.mcp.createsomething.agency'
       }),
       {
         HUB_IDENTITY_MODE: 'session_required',
         HUB_SESSION_RESOLVE_URL: 'https://identity.example/resolve',
-        HUB_SESSION_RESOLVE_TOKEN: 'resolver_secret',
-      } as any,
+        HUB_SESSION_RESOLVE_TOKEN: 'resolver_secret'
+      } as any
     );
 
     assert.equal(capturedAuth, 'Bearer resolver_secret');
@@ -116,7 +135,7 @@ test('resolveAccountContext prefers identity service binding when available', as
     const context = await resolveAccountContext(
       makeExtra({
         'x-mcp-session-token': 'ms_tok_binding',
-        host: 'cs-mcp-hub-remote.createsomething.workers.dev',
+        host: 'cs-mcp-hub-remote.createsomething.workers.dev'
       }),
       {
         HUB_IDENTITY_MODE: 'session_required',
@@ -126,7 +145,10 @@ test('resolveAccountContext prefers identity service binding when available', as
             const request = _input instanceof Request ? _input : new Request(String(_input), init);
             bindingCalled = true;
             capturedAuth = request.headers.get('authorization') ?? '';
-            const body = JSON.parse(await request.text()) as { token?: string; resource_host?: string | null };
+            const body = JSON.parse(await request.text()) as {
+              token?: string;
+              resource_host?: string | null;
+            };
             capturedToken = body.token ?? '';
             capturedResourceHost = body.resource_host ?? '';
             return new Response(
@@ -136,18 +158,18 @@ test('resolveAccountContext prefers identity service binding when available', as
                 account_id: 'acct_binding',
                 tenant_id: 'tenant_binding',
                 user_id: 'user_binding',
-                allowed_tool_prefixes: ['composio-toolkit-slack__'],
+                allowed_tool_prefixes: ['composio-toolkit-slack__']
               }),
               {
                 status: 200,
                 headers: {
-                  'Content-Type': 'application/json',
-                },
-              },
+                  'Content-Type': 'application/json'
+                }
+              }
             );
-          },
-        },
-      } as any,
+          }
+        }
+      } as any
     );
 
     assert.equal(bindingCalled, true);
@@ -170,7 +192,10 @@ test('resolveAccountContext accepts managed bearer auth in session_required mode
 
   globalThis.fetch = async (_input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
     const request = _input instanceof Request ? _input : new Request(String(_input), init);
-    const body = JSON.parse(await request.text()) as { token?: string; resource_host?: string | null };
+    const body = JSON.parse(await request.text()) as {
+      token?: string;
+      resource_host?: string | null;
+    };
     capturedToken = body.token ?? '';
     capturedResourceHost = body.resource_host ?? '';
     return new Response(
@@ -181,14 +206,14 @@ test('resolveAccountContext accepts managed bearer auth in session_required mode
         tenant_id: 'tenant_lane',
         user_id: 'user_lane',
         bound_host: 'morgan-young-c3-management',
-        allowed_tool_prefixes: ['composio-toolkit-gmail__'],
+        allowed_tool_prefixes: ['composio-toolkit-gmail__']
       }),
       {
         status: 200,
         headers: {
-          'Content-Type': 'application/json',
-        },
-      },
+          'Content-Type': 'application/json'
+        }
+      }
     );
   };
 
@@ -196,14 +221,14 @@ test('resolveAccountContext accepts managed bearer auth in session_required mode
     const context = await resolveAccountContext(
       makeExtra({
         authorization: 'Bearer mcpu_lane_token',
-        host: 'morgan-young-c3-management.mcp.createsomething.agency',
+        host: 'morgan-young-c3-management.mcp.createsomething.agency'
       }),
       {
         HUB_IDENTITY_MODE: 'session_required',
         HUB_API_TOKEN: 'hub_static_token',
         HUB_SESSION_RESOLVE_URL: 'https://identity.example/resolve',
-        HUB_SESSION_RESOLVE_TOKEN: 'resolver_secret',
-      } as any,
+        HUB_SESSION_RESOLVE_TOKEN: 'resolver_secret'
+      } as any
     );
 
     assert.equal(capturedToken, 'mcpu_lane_token');
@@ -218,12 +243,9 @@ test('resolveAccountContext accepts managed bearer auth in session_required mode
 });
 
 test('resolveAccountContext ignores compat header account override by default', async () => {
-  const context = await resolveAccountContext(
-    makeExtra({ 'x-mcp-account-id': 'acct_fallback' }),
-    {
-      HUB_IDENTITY_MODE: 'compat',
-    } as any,
-  );
+  const context = await resolveAccountContext(makeExtra({ 'x-mcp-account-id': 'acct_fallback' }), {
+    HUB_IDENTITY_MODE: 'compat'
+  } as any);
 
   assert.equal(context.accountId, 'operator');
   assert.equal(context.authMode, 'fallback');
@@ -237,8 +259,8 @@ test('resolveAccountContext can opt into compat header account override', async 
     makeExtra({ 'x-mcp-account-id': 'acct_header_override' }),
     {
       HUB_IDENTITY_MODE: 'compat',
-      HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS: 'true',
-    } as any,
+      HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS: 'true'
+    } as any
   );
 
   assert.equal(context.accountId, 'acct_header_override');
@@ -253,8 +275,8 @@ test('resolveAccountContext can disable compat header account override', async (
     {
       HUB_IDENTITY_MODE: 'compat',
       HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS: 'false',
-      HUB_ACCOUNT_ID: 'acct_fixed',
-    } as any,
+      HUB_ACCOUNT_ID: 'acct_fixed'
+    } as any
   );
 
   assert.equal(context.accountId, 'acct_fixed');
@@ -264,14 +286,11 @@ test('resolveAccountContext can disable compat header account override', async (
 });
 
 test('resolveAccountContext can force compat fallback identities to read_only', async () => {
-  const context = await resolveAccountContext(
-    makeExtra({ 'x-mcp-account-id': 'acct_fallback' }),
-    {
-      HUB_IDENTITY_MODE: 'compat',
-      HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS: 'true',
-      HUB_COMPAT_FALLBACK_TOOL_MODE: 'read_only',
-    } as any,
-  );
+  const context = await resolveAccountContext(makeExtra({ 'x-mcp-account-id': 'acct_fallback' }), {
+    HUB_IDENTITY_MODE: 'compat',
+    HUB_COMPAT_TRUST_CLIENT_ACCOUNT_HEADERS: 'true',
+    HUB_COMPAT_FALLBACK_TOOL_MODE: 'read_only'
+  } as any);
 
   assert.equal(context.accountId, 'acct_fallback');
   assert.equal(context.authMode, 'fallback');
@@ -290,14 +309,14 @@ test('resolveAccountContext preserves resolver-backed compat personal bearer ide
         tenant_id: 'tenant_acme',
         user_id: 'user_legacy',
         allowed_tool_prefixes: null,
-        auth_mode: 'legacy_key',
+        auth_mode: 'legacy_key'
       }),
       {
         status: 200,
         headers: {
-          'Content-Type': 'application/json',
-        },
-      },
+          'Content-Type': 'application/json'
+        }
+      }
     );
 
   try {
@@ -307,8 +326,8 @@ test('resolveAccountContext preserves resolver-backed compat personal bearer ide
         HUB_IDENTITY_MODE: 'compat',
         HUB_API_TOKEN: 'hub_static_token',
         HUB_SESSION_RESOLVE_URL: 'https://identity.example/resolve',
-        HUB_SESSION_RESOLVE_TOKEN: 'resolver_secret',
-      } as any,
+        HUB_SESSION_RESOLVE_TOKEN: 'resolver_secret'
+      } as any
     );
 
     assert.equal(context.accountId, 'acct_personal');
@@ -335,14 +354,14 @@ test('resolveAccountContext does not resolve compat static hub bearer through id
         tool_mode: 'read_write',
         allowed_tool_prefixes: ['webflow-template-review-mcp__template_review_assign_self'],
         auth_mode: 'managed_bearer',
-        bound_host: 'wf-template-review-eric',
+        bound_host: 'wf-template-review-eric'
       }),
       {
         status: 200,
         headers: {
-          'Content-Type': 'application/json',
-        },
-      },
+          'Content-Type': 'application/json'
+        }
+      }
     );
   };
 
@@ -350,15 +369,15 @@ test('resolveAccountContext does not resolve compat static hub bearer through id
     const context = await resolveAccountContext(
       makeExtra({
         authorization: 'Bearer mcpu_reviewer_lane_token',
-        host: 'wf-template-review-eric.mcp.createsomething.agency',
+        host: 'wf-template-review-eric.mcp.createsomething.agency'
       }),
       {
         HUB_IDENTITY_MODE: 'compat',
         HUB_API_TOKEN: 'mcpu_reviewer_lane_token',
         HUB_ACCOUNT_ID: 'acct_reviewer_lane',
         HUB_SESSION_RESOLVE_URL: 'https://identity.example/resolve',
-        HUB_SESSION_RESOLVE_TOKEN: 'resolver_secret',
-      } as any,
+        HUB_SESSION_RESOLVE_TOKEN: 'resolver_secret'
+      } as any
     );
 
     assert.equal(resolverCalled, false);
@@ -382,29 +401,29 @@ test('resolveAccountContext skips resolver for compat static hub bearer even if 
     return new Response(
       JSON.stringify({
         valid: false,
-        reason: 'token_not_found',
+        reason: 'token_not_found'
       }),
       {
         status: 200,
         headers: {
-          'Content-Type': 'application/json',
-        },
-      },
+          'Content-Type': 'application/json'
+        }
+      }
     );
   };
 
   try {
     const context = await resolveAccountContext(
       makeExtra({
-        authorization: 'Bearer hub_static_token',
+        authorization: 'Bearer hub_static_token'
       }),
       {
         HUB_IDENTITY_MODE: 'compat',
         HUB_API_TOKEN: 'hub_static_token',
         HUB_ACCOUNT_ID: 'acct_lane',
         HUB_SESSION_RESOLVE_URL: 'https://identity.example/resolve',
-        HUB_SESSION_RESOLVE_TOKEN: 'resolver_secret',
-      } as any,
+        HUB_SESSION_RESOLVE_TOKEN: 'resolver_secret'
+      } as any
     );
 
     assert.equal(resolverCalled, false);
@@ -413,6 +432,96 @@ test('resolveAccountContext skips resolver for compat static hub bearer even if 
     assert.equal(context.identitySource, 'fallback');
     assert.equal(context.toolMode, 'read_write');
     assert.equal(context.allowedToolPrefixes, null);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('resolveAccountContext applies static compat allowed tool prefixes without resolver', async () => {
+  const originalFetch = globalThis.fetch;
+  let resolverCalled = false;
+
+  globalThis.fetch = async (): Promise<Response> => {
+    resolverCalled = true;
+    return new Response(JSON.stringify({ valid: false, reason: 'should_not_resolve' }), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+  };
+
+  try {
+    const context = await resolveAccountContext(
+      makeExtra({
+        authorization: 'Bearer central_static_token',
+        host: 'wf-template-review.mcp.createsomething.agency'
+      }),
+      {
+        HUB_IDENTITY_MODE: 'compat',
+        HUB_API_TOKEN: 'central_static_token',
+        HUB_ACCOUNT_ID: 'acct_wf_template_review',
+        HUB_SESSION_RESOLVER_ENABLED: 'false',
+        HUB_COMPAT_FALLBACK_TOOL_MODE: 'read_write',
+        HUB_COMPAT_ALLOWED_TOOL_PREFIXES:
+          'webflow-template-review-mcp__template_review_start_capture_session,webflow-template-review-mcp__template_review_draft_from_capture_session'
+      } as any
+    );
+
+    assert.equal(resolverCalled, false);
+    assert.equal(context.accountId, 'acct_wf_template_review');
+    assert.equal(context.authMode, 'fallback');
+    assert.equal(context.identitySource, 'fallback');
+    assert.equal(context.toolMode, 'read_write');
+    assert.equal(context.resourceHost, 'wf-template-review');
+    assert.deepEqual(context.allowedToolPrefixes, [
+      'webflow-template-review-mcp__template_review_draft_from_capture_session',
+      'webflow-template-review-mcp__template_review_start_capture_session'
+    ]);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('resolveAccountContext treats additional static bearer tokens as central fallback auth', async () => {
+  const originalFetch = globalThis.fetch;
+  let resolverCalled = false;
+
+  globalThis.fetch = async (): Promise<Response> => {
+    resolverCalled = true;
+    return new Response(JSON.stringify({ valid: true, account_id: 'acct_reviewer' }), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+  };
+
+  try {
+    const context = await resolveAccountContext(
+      makeExtra({
+        authorization: 'Bearer reviewer_static_token',
+        host: 'wf-template-review.mcp.createsomething.agency'
+      }),
+      {
+        HUB_IDENTITY_MODE: 'compat',
+        HUB_API_TOKEN: 'central_static_token',
+        HUB_ADDITIONAL_API_TOKENS: 'reviewer_static_token,another_reviewer_static_token',
+        HUB_ACCOUNT_ID: 'acct_wf_template_review',
+        HUB_SESSION_RESOLVER_ENABLED: 'false',
+        HUB_COMPAT_FALLBACK_TOOL_MODE: 'read_write',
+        HUB_COMPAT_ALLOWED_TOOL_PREFIXES:
+          'webflow-template-review-mcp__template_review_start_capture_session'
+      } as any
+    );
+
+    assert.equal(resolverCalled, false);
+    assert.equal(context.accountId, 'acct_wf_template_review');
+    assert.equal(context.identitySource, 'fallback');
+    assert.equal(context.toolMode, 'read_write');
+    assert.deepEqual(context.allowedToolPrefixes, [
+      'webflow-template-review-mcp__template_review_start_capture_session'
+    ]);
   } finally {
     globalThis.fetch = originalFetch;
   }
@@ -427,7 +536,10 @@ test('authorizeRequest accepts a resolved personal bearer token in compat mode',
   globalThis.fetch = async (_input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
     const request = _input instanceof Request ? _input : new Request(String(_input), init);
     capturedAuth = request.headers.get('authorization') ?? '';
-    const body = JSON.parse(await request.text()) as { token?: string; resource_host?: string | null };
+    const body = JSON.parse(await request.text()) as {
+      token?: string;
+      resource_host?: string | null;
+    };
     capturedToken = body.token ?? '';
     capturedResourceHost = body.resource_host ?? '';
     return new Response(
@@ -436,14 +548,14 @@ test('authorizeRequest accepts a resolved personal bearer token in compat mode',
         account_id: 'acct_personal',
         tenant_id: 'tenant_acme',
         user_id: 'user_legacy',
-        auth_mode: 'legacy_key',
+        auth_mode: 'legacy_key'
       }),
       {
         status: 200,
         headers: {
-          'Content-Type': 'application/json',
-        },
-      },
+          'Content-Type': 'application/json'
+        }
+      }
     );
   };
 
@@ -451,14 +563,14 @@ test('authorizeRequest accepts a resolved personal bearer token in compat mode',
     const failure = await authorizeRequest(
       new Request('https://viv-blondish.mcp.createsomething.agency/mcp', {
         headers: {
-          Authorization: 'Bearer mlk_personal_token_authz',
-        },
+          Authorization: 'Bearer mlk_personal_token_authz'
+        }
       }),
       {
         HUB_API_TOKEN: 'hub_static_token',
         HUB_SESSION_RESOLVE_URL: 'https://identity.example/resolve',
-        HUB_SESSION_RESOLVE_TOKEN: 'resolver_secret',
-      } as any,
+        HUB_SESSION_RESOLVE_TOKEN: 'resolver_secret'
+      } as any
     );
 
     assert.equal(failure, null);
@@ -470,16 +582,92 @@ test('authorizeRequest accepts a resolved personal bearer token in compat mode',
   }
 });
 
+test('authorizeRequest does not call resolver when resolver is disabled for bearer-only compat host', async () => {
+  const originalFetch = globalThis.fetch;
+  let resolverCalled = false;
+
+  globalThis.fetch = async (): Promise<Response> => {
+    resolverCalled = true;
+    return new Response(JSON.stringify({ valid: true, account_id: 'acct_personal' }), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+  };
+
+  try {
+    const failure = await authorizeRequest(
+      new Request('https://wf-template-review.mcp.createsomething.agency/mcp/bearer', {
+        headers: {
+          Authorization: 'Bearer personal_token_not_static_hub_token'
+        }
+      }),
+      {
+        HUB_IDENTITY_MODE: 'compat',
+        HUB_API_TOKEN: 'central_static_token',
+        HUB_SESSION_RESOLVER_ENABLED: 'false',
+        HUB_SESSION_RESOLVE_URL: 'https://identity.example/resolve',
+        HUB_SESSION_RESOLVE_TOKEN: 'resolver_secret'
+      } as any
+    );
+
+    assert.equal(resolverCalled, false);
+    assert.equal(failure?.status, 401);
+    assert.equal(failure?.headers.get('WWW-Authenticate'), 'Bearer realm="create-something-hub"');
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('authorizeRequest accepts additional static bearer tokens without resolver', async () => {
+  const originalFetch = globalThis.fetch;
+  let resolverCalled = false;
+
+  globalThis.fetch = async (): Promise<Response> => {
+    resolverCalled = true;
+    return new Response(JSON.stringify({ valid: false, reason: 'should_not_resolve' }), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+  };
+
+  try {
+    const failure = await authorizeRequest(
+      new Request('https://wf-template-review.mcp.createsomething.agency/mcp/bearer', {
+        headers: {
+          Authorization: 'Bearer reviewer_static_token'
+        }
+      }),
+      {
+        HUB_IDENTITY_MODE: 'compat',
+        HUB_API_TOKEN: 'central_static_token',
+        HUB_ADDITIONAL_API_TOKENS: 'reviewer_static_token,another_reviewer_static_token',
+        HUB_SESSION_RESOLVER_ENABLED: 'false',
+        HUB_SESSION_RESOLVE_URL: 'https://identity.example/resolve',
+        HUB_SESSION_RESOLVE_TOKEN: 'resolver_secret'
+      } as any
+    );
+
+    assert.equal(failure, null);
+    assert.equal(resolverCalled, false);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test('authorizeRequest accepts the configured HUB_API_TOKEN via mcp_access_token query param', async () => {
   const failure = await authorizeRequest(
     new Request(
-      'https://aaron-outerfields.mcp.createsomething.agency/mcp?mcp_access_token=hub_static_token',
+      'https://aaron-outerfields.mcp.createsomething.agency/mcp?mcp_access_token=hub_static_token'
     ),
     {
       HUB_API_TOKEN: 'hub_static_token',
       HUB_SESSION_RESOLVE_URL: 'https://identity.example/resolve',
-      HUB_SESSION_RESOLVE_TOKEN: 'resolver_secret',
-    } as any,
+      HUB_SESSION_RESOLVE_TOKEN: 'resolver_secret'
+    } as any
   );
 
   assert.equal(failure, null);
@@ -494,7 +682,10 @@ test('authorizeRequest accepts a resolved personal token via mcp_access_token qu
   globalThis.fetch = async (_input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
     const request = _input instanceof Request ? _input : new Request(String(_input), init);
     capturedAuth = request.headers.get('authorization') ?? '';
-    const body = JSON.parse(await request.text()) as { token?: string; resource_host?: string | null };
+    const body = JSON.parse(await request.text()) as {
+      token?: string;
+      resource_host?: string | null;
+    };
     capturedToken = body.token ?? '';
     capturedResourceHost = body.resource_host ?? '';
     return new Response(
@@ -503,27 +694,27 @@ test('authorizeRequest accepts a resolved personal token via mcp_access_token qu
         account_id: 'acct_personal',
         tenant_id: 'tenant_acme',
         user_id: 'user_legacy',
-        auth_mode: 'legacy_key',
+        auth_mode: 'legacy_key'
       }),
       {
         status: 200,
         headers: {
-          'Content-Type': 'application/json',
-        },
-      },
+          'Content-Type': 'application/json'
+        }
+      }
     );
   };
 
   try {
     const failure = await authorizeRequest(
       new Request(
-        'https://aaron-outerfields.mcp.createsomething.agency/mcp?mcp_access_token=mlk_personal_token_query',
+        'https://aaron-outerfields.mcp.createsomething.agency/mcp?mcp_access_token=mlk_personal_token_query'
       ),
       {
         HUB_API_TOKEN: 'hub_static_token',
         HUB_SESSION_RESOLVE_URL: 'https://identity.example/resolve',
-        HUB_SESSION_RESOLVE_TOKEN: 'resolver_secret',
-      } as any,
+        HUB_SESSION_RESOLVE_TOKEN: 'resolver_secret'
+      } as any
     );
 
     assert.equal(failure, null);
@@ -545,7 +736,10 @@ test('authorizeRequest accepts a resolved personal token via token query param',
   globalThis.fetch = async (_input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
     const request = _input instanceof Request ? _input : new Request(String(_input), init);
     capturedAuth = request.headers.get('authorization') ?? '';
-    const body = JSON.parse(await request.text()) as { token?: string; resource_host?: string | null };
+    const body = JSON.parse(await request.text()) as {
+      token?: string;
+      resource_host?: string | null;
+    };
     capturedToken = body.token ?? '';
     capturedResourceHost = body.resource_host ?? '';
     return new Response(
@@ -554,14 +748,14 @@ test('authorizeRequest accepts a resolved personal token via token query param',
         account_id: 'acct_personal',
         tenant_id: 'tenant_acme',
         user_id: 'user_legacy',
-        auth_mode: 'legacy_key',
+        auth_mode: 'legacy_key'
       }),
       {
         status: 200,
         headers: {
-          'Content-Type': 'application/json',
-        },
-      },
+          'Content-Type': 'application/json'
+        }
+      }
     );
   };
 
@@ -571,8 +765,8 @@ test('authorizeRequest accepts a resolved personal token via token query param',
       {
         HUB_API_TOKEN: 'hub_static_token',
         HUB_SESSION_RESOLVE_URL: 'https://identity.example/resolve',
-        HUB_SESSION_RESOLVE_TOKEN: 'resolver_secret',
-      } as any,
+        HUB_SESSION_RESOLVE_TOKEN: 'resolver_secret'
+      } as any
     );
 
     assert.equal(failure, null);
@@ -593,7 +787,10 @@ test('authorizeRequest accepts a resolved personal token via x-api-key header', 
   globalThis.fetch = async (_input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
     const request = _input instanceof Request ? _input : new Request(String(_input), init);
     capturedAuth = request.headers.get('authorization') ?? '';
-    const body = JSON.parse(await request.text()) as { token?: string; resource_host?: string | null };
+    const body = JSON.parse(await request.text()) as {
+      token?: string;
+      resource_host?: string | null;
+    };
     capturedToken = body.token ?? '';
     capturedResourceHost = body.resource_host ?? '';
     return new Response(
@@ -602,14 +799,14 @@ test('authorizeRequest accepts a resolved personal token via x-api-key header', 
         account_id: 'acct_personal',
         tenant_id: 'tenant_acme',
         user_id: 'user_legacy',
-        auth_mode: 'legacy_key',
+        auth_mode: 'legacy_key'
       }),
       {
         status: 200,
         headers: {
-          'Content-Type': 'application/json',
-        },
-      },
+          'Content-Type': 'application/json'
+        }
+      }
     );
   };
 
@@ -617,14 +814,14 @@ test('authorizeRequest accepts a resolved personal token via x-api-key header', 
     const failure = await authorizeRequest(
       new Request('https://aaron-outerfields.mcp.createsomething.agency/mcp', {
         headers: {
-          'x-api-key': 'mlk_personal_token_header',
-        },
+          'x-api-key': 'mlk_personal_token_header'
+        }
       }),
       {
         HUB_API_TOKEN: 'hub_static_token',
         HUB_SESSION_RESOLVE_URL: 'https://identity.example/resolve',
-        HUB_SESSION_RESOLVE_TOKEN: 'resolver_secret',
-      } as any,
+        HUB_SESSION_RESOLVE_TOKEN: 'resolver_secret'
+      } as any
     );
 
     assert.equal(failure, null);
@@ -646,7 +843,10 @@ test('normalizeInboundMcpRequest exposes mcp_access_token to downstream account 
   globalThis.fetch = async (_input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
     const request = _input instanceof Request ? _input : new Request(String(_input), init);
     capturedAuth = request.headers.get('authorization') ?? '';
-    const body = JSON.parse(await request.text()) as { token?: string; resource_host?: string | null };
+    const body = JSON.parse(await request.text()) as {
+      token?: string;
+      resource_host?: string | null;
+    };
     capturedToken = body.token ?? '';
     capturedResourceHost = body.resource_host ?? '';
     return new Response(
@@ -655,33 +855,32 @@ test('normalizeInboundMcpRequest exposes mcp_access_token to downstream account 
         account_id: 'acct_personal',
         tenant_id: 'tenant_acme',
         user_id: 'user_legacy',
-        auth_mode: 'legacy_key',
+        auth_mode: 'legacy_key'
       }),
       {
         status: 200,
         headers: {
-          'Content-Type': 'application/json',
-        },
-      },
+          'Content-Type': 'application/json'
+        }
+      }
     );
   };
 
   try {
     const request = normalizeInboundMcpRequest(
-      new Request(`https://aaron-outerfields.mcp.createsomething.agency/mcp?mcp_access_token=${token}`),
+      new Request(
+        `https://aaron-outerfields.mcp.createsomething.agency/mcp?mcp_access_token=${token}`
+      )
     );
 
     assert.equal(request.headers.get('authorization'), `Bearer ${token}`);
 
-    const context = await resolveAccountContext(
-      makeExtraFromRequest(request),
-      {
-        HUB_IDENTITY_MODE: 'session_required',
-        HUB_API_TOKEN: 'hub_static_token',
-        HUB_SESSION_RESOLVE_URL: 'https://identity.example/resolve',
-        HUB_SESSION_RESOLVE_TOKEN: 'resolver_secret',
-      } as any,
-    );
+    const context = await resolveAccountContext(makeExtraFromRequest(request), {
+      HUB_IDENTITY_MODE: 'session_required',
+      HUB_API_TOKEN: 'hub_static_token',
+      HUB_SESSION_RESOLVE_URL: 'https://identity.example/resolve',
+      HUB_SESSION_RESOLVE_TOKEN: 'resolver_secret'
+    } as any);
 
     assert.equal(capturedAuth, 'Bearer resolver_secret');
     assert.equal(capturedToken, token);
@@ -701,28 +900,28 @@ test('authorizeRequest rejects host-mismatched managed bearer tokens', async () 
     new Response(
       JSON.stringify({
         valid: false,
-        reason: 'host_mismatch',
+        reason: 'host_mismatch'
       }),
       {
         status: 200,
         headers: {
-          'Content-Type': 'application/json',
-        },
-      },
+          'Content-Type': 'application/json'
+        }
+      }
     );
 
   try {
     const failure = await authorizeRequest(
       new Request('https://morgan-young-c3-management.mcp.createsomething.agency/mcp', {
         headers: {
-          Authorization: 'Bearer mcpu_wrong_host',
-        },
+          Authorization: 'Bearer mcpu_wrong_host'
+        }
       }),
       {
         HUB_API_TOKEN: 'hub_static_token',
         HUB_SESSION_RESOLVE_URL: 'https://identity.example/resolve',
-        HUB_SESSION_RESOLVE_TOKEN: 'resolver_secret',
-      } as any,
+        HUB_SESSION_RESOLVE_TOKEN: 'resolver_secret'
+      } as any
     );
 
     assert.ok(failure instanceof Response);
@@ -739,28 +938,28 @@ test('authorizeRequest rejects an invalid personal bearer token when static auth
     new Response(
       JSON.stringify({
         valid: false,
-        reason: 'token_not_found',
+        reason: 'token_not_found'
       }),
       {
         status: 200,
         headers: {
-          'Content-Type': 'application/json',
-        },
-      },
+          'Content-Type': 'application/json'
+        }
+      }
     );
 
   try {
     const failure = await authorizeRequest(
       new Request('https://hub.example/mcp', {
         headers: {
-          Authorization: 'Bearer mlk_invalid_token',
-        },
+          Authorization: 'Bearer mlk_invalid_token'
+        }
       }),
       {
         HUB_API_TOKEN: 'hub_static_token',
         HUB_SESSION_RESOLVE_URL: 'https://identity.example/resolve',
-        HUB_SESSION_RESOLVE_TOKEN: 'resolver_secret',
-      } as any,
+        HUB_SESSION_RESOLVE_TOKEN: 'resolver_secret'
+      } as any
     );
 
     assert.ok(failure instanceof Response);
