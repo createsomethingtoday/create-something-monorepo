@@ -1,0 +1,68 @@
+{
+  "policy_id": "policy.hydradb-context-retention.v1",
+  "version": 1,
+  "status": "draft",
+  "scope": ["hydradb", "context_memory", "agent_recall", "mcp_hub"],
+  "source_of_truth": {
+    "policy_docs": "git",
+    "linear_evidence": "linear",
+    "mcp_catalog": "config/mcp-hub/registry.core.json",
+    "credentials": "infisical"
+  },
+  "approved_sub_tenants": {
+    "cs-internal-context": {
+      "allowed_content": "internal policy and architecture docs",
+      "retention": "retain while source file exists and remains approved",
+      "sync_cadence": "weekly and after policy changes"
+    },
+    "cs-linear-evidence": {
+      "allowed_content": "sanitized completed Linear delivery evidence",
+      "retention": "18 months unless reopened, sensitive, or superseded",
+      "sync_cadence": "daily weekdays or after delivery batches"
+    },
+    "cs-mcp-catalog": {
+      "allowed_content": "sanitized MCP registry summaries",
+      "retention": "retain while registry entry exists; remove or supersede within 7 days of removal",
+      "sync_cadence": "after registry changes and weekly"
+    }
+  },
+  "allowed_surfaces": {
+    "shared_recall": ["hydradb-context-mcp.context_recall"],
+    "operator_only": ["hydradb-memory"],
+    "local_operator_enabled": ["hydradb-context-mcp", "hydradb-memory"]
+  },
+  "prohibited_content": [
+    "api_keys",
+    "bearer_tokens",
+    "oauth_refresh_tokens",
+    "customer_private_data",
+    "phi",
+    "payment_details",
+    "legal_documents",
+    "unresolved_sensitive_incident_details"
+  ],
+  "sync": {
+    "command": "pnpm hydradb:sync:infisical",
+    "requires_infer_false": true,
+    "requires_stable_source_id": true,
+    "requires_secret_pattern_guard": true,
+    "lanes": ["policy", "linear-evidence", "mcp-catalog"]
+  },
+  "monitoring": {
+    "command": "pnpm hydradb:production-monitor:infisical",
+    "max_latency_ms": 15000,
+    "min_result_count": 1,
+    "requires_disallowed_subtenant_rejection": true
+  },
+  "key_policy": {
+    "infisical_path": "/mcp-hub/hydradb",
+    "initial_exposed_key_allowed_for_internal_pilot": true,
+    "rotation_required_before_customer_facing_use": true
+  },
+  "rollback": [
+    "disable hydradb-context-mcp in local/operator Hub state",
+    "disable hydradb-memory outside local operator diagnostics and deletion workflows",
+    "remove or revoke HYDRA_DB_API_KEY from Infisical if sensitivity is in question",
+    "record evidence in Linear"
+  ]
+}

@@ -1,6 +1,6 @@
 # Hydra DB Context Memory Pilot
 
-Hydra DB is approved only as a dormant internal pilot until Infisical-backed credentials are in place and the first recall-quality checks pass.
+Hydra DB is approved for internal governed recall. The upstream Hydra DB MCP server is enabled for local operators only; shared agent lanes must use the `hydradb-context-mcp` read-only wrapper.
 
 ## Tier Fit
 
@@ -14,7 +14,7 @@ Hydra DB must not replace Linear, Infisical, D1, KV, R2, or application database
 
 ## Secret Handling
 
-The Hydra DB token shared in chat must be considered exposed. If it is kept temporarily for the pilot, store it only in Infisical, use it only for internal non-customer data, and rotate it before any production or customer-facing use.
+The Hydra DB token shared in chat must be considered exposed. It may remain in use during the initial internal rollout because the user explicitly approved that path, but it must stay only in Infisical, must be used only for internal non-customer data, and must be rotated before any customer-facing use.
 
 Store only the active values in Infisical:
 
@@ -54,7 +54,7 @@ The Hub registry includes `hydradb-memory` as a dormant stdio server:
 infisical run --env=prod --path=/mcp-hub/hydradb --include-imports=true -- npx -y @hydra_db/mcp@0.1.1
 ```
 
-It is listed in the `dormant` bundle and is not enabled by default. Enable it only for an internal operator lane after the active Infisical values exist.
+It is listed in the `dormant` bundle and is enabled only in local operator Hub state. Keep it available only for local operator ingestion, diagnostics, deletion, and low-level recovery. Do not enable it in shared Hub state.
 
 The governed wrapper is `hydradb-context-mcp`, also dormant:
 
@@ -62,7 +62,7 @@ The governed wrapper is `hydradb-context-mcp`, also dormant:
 infisical run --env=prod --path=/mcp-hub/hydradb --include-imports=true -- node ./packages/hydradb-context-mcp/dist/index.js
 ```
 
-Prefer `hydradb-context-mcp` for shared recall testing because it exposes only the read-only `context_recall` tool. Keep the upstream `hydradb-memory` entry for local operator ingestion and low-level diagnostics.
+Use `hydradb-context-mcp` for governed recall because it exposes only the read-only `context_recall` tool. Keep the upstream `hydradb-memory` entry enabled only for local operator ingestion, diagnostics, and deletion.
 
 ## Pilot Corpus
 
@@ -156,6 +156,15 @@ pnpm hydradb:context:gate:infisical -- --json
 
 The gate confirms the wrapper stays dormant in the registry, exposes exactly one tool (`context_recall`), returns recall results from the default sub-tenant, and rejects a non-allowlisted sub-tenant.
 
+Enable the governed wrapper and upstream memory server for the local/internal operator Hub state only:
+
+```bash
+pnpm hydradb:operator:enable
+pnpm hydradb:operator:gate:infisical -- --json
+```
+
+This enables `hydradb-context-mcp` and `hydradb-memory` in `config/mcp-hub/state.json`. The registry lifecycle for both entries remains `dormant`; that lifecycle is intentional because the Cloudflare production Hub cannot execute stdio downstreams and because upstream memory tools must not enter broad agent routing. Remote production promotion therefore ships the registry, sync, monitor, and policy guardrails, while actual Hydra recall runs through the local/operator wrapper.
+
 Use policy preflight to turn Hydra recall into agent-ready context before material implementation work:
 
 ```bash
@@ -163,6 +172,55 @@ pnpm hydradb:policy-preflight:infisical -- --task "Build a governed MCP for a ne
 ```
 
 The preflight output is compiled markdown with source references. Treat it as advisory recall; verify against repo files and current Linear state before acting.
+
+## Sync
+
+Run the approved sync lanes through Infisical:
+
+```bash
+pnpm hydradb:sync:infisical
+```
+
+This orchestrates:
+
+1. policy and MCP creation docs into `cs-internal-context`
+2. sanitized completed Linear evidence into `cs-linear-evidence`
+3. sanitized MCP registry summaries into `cs-mcp-catalog`
+4. production recall monitoring
+
+Useful variants:
+
+```bash
+pnpm hydradb:sync:infisical -- --lane policy
+pnpm hydradb:sync:infisical -- --lane linear-evidence --linear-limit 20
+pnpm hydradb:sync:infisical -- --lane mcp-catalog --skip-monitor
+pnpm hydradb:sync:infisical -- --dry-run --json
+```
+
+Recommended cadence:
+
+- policy/docs: weekly and after policy changes
+- Linear evidence: daily on weekdays or after delivery batches
+- MCP catalog: after registry changes and weekly
+- monitor: after each sync and before agent workflows that depend on Hydra recall
+
+## Production Monitoring
+
+Run the recall monitor:
+
+```bash
+pnpm hydradb:production-monitor:infisical -- --json
+```
+
+The default monitor checks:
+
+- `cs-internal-context` returns policy context
+- `cs-linear-evidence` returns delivery evidence
+- `cs-mcp-catalog` returns catalog context
+- each recall finishes within 15 seconds
+- `client-not-allowlisted-context` is rejected before a network request
+
+Treat monitor failures as production-blocking for Hydra-backed agent workflows. Rerun once for transient provider issues, then repair sync, allowlist, or operator state before relying on recall.
 
 ## Linear Evidence Lane
 
@@ -219,10 +277,11 @@ pnpm hydradb:mcp-catalog-preflight:infisical -- \
 
 The preflight output is compiled markdown with source references such as `MCP webflow-template-review-mcp` and `MCP ground-mcp`. Treat those as candidate servers, not authorization to expose them.
 
-Only after the recall-quality and wrapper gates pass should an operator enable the governed dormant server locally:
+Only after the recall-quality and wrapper gates pass should an operator start a local Hub with the governed wrapper and upstream memory server enabled:
 
 ```bash
-node packages/cs-mcp-hub/dist/index.js --enable-server hydradb-context-mcp
+pnpm hydradb:operator:enable
+pnpm hydradb:operator:gate:infisical -- --json
 pnpm mcp:hub:start
 ```
 
@@ -230,13 +289,16 @@ For a Hub smoke test, use a harmless memory such as a public policy summary, the
 
 ## Acceptance Criteria
 
-Before promoting beyond dormant/internal:
+Before relying on Hydra DB for internal production agent workflows:
 
 - active Hydra DB token exists only in Infisical, with rotation required before production/customer use
 - tenant infra status is ready
-- shared lanes expose only the governed `context_recall` wrapper; upstream store/search/delete/list/fetch tools stay limited to a local operator lane
+- shared lanes expose only the governed `context_recall` wrapper; upstream store/search/delete/list/fetch tools stay enabled only in a local operator lane
 - first smoke proves sub-tenant isolation
 - recall results improve at least one real agent workflow compared with current repo/Linear-only context
+- `pnpm hydradb:operator:gate:infisical -- --json` passes
+- `pnpm hydradb:production-monitor:infisical -- --json` passes
+- retention rules in `docs/policies/v1/policy.hydradb-context-retention.v1.md` are followed
 - Linear evidence records commands run, corpus used, and rollback note
 
 Rollback is simple: disable `hydradb-context-mcp` and `hydradb-memory` in Hub state, then remove or revoke the Hydra DB key from Infisical.

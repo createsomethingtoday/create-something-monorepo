@@ -47,6 +47,7 @@ Read in this order when you need broad repo context:
 - [MCP_CATALOG_EXPOSURE_POLICY.md](./MCP_CATALOG_EXPOSURE_POLICY.md)
 - [AGENCY_USER_PROVISIONING_POLICY.md](./AGENCY_USER_PROVISIONING_POLICY.md)
 - [policies/v1/policy.git-light-agent-delivery.v1.md](./policies/v1/policy.git-light-agent-delivery.v1.md)
+- [policies/v1/policy.hydradb-context-retention.v1.md](./policies/v1/policy.hydradb-context-retention.v1.md)
 
 ### Agent execution, observability, and UI legibility
 

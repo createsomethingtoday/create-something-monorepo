@@ -27,6 +27,7 @@ First-wave policies scaffolded here:
 19. `policy.cross-workspace-sync-governance.v1`
 20. `policy.prospect-hub-onboarding.v1`
 21. `policy.git-light-agent-delivery.v1`
+22. `policy.hydradb-context-retention.v1`
 
 Each policy has:
 
