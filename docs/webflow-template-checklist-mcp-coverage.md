@@ -8,9 +8,9 @@ Legend:
 - `Partial`: Some signal is available, but policy-complete validation still needs human review or deeper extraction.
 - `Manual`: Not realistically automatable with current MCP data access.
 
-Automation sources used for this matrix:
+Automation sources used for this historical matrix:
 - Published-site checks: `window.__wfReview` tools (`audit_webflow_way`, `audit_meta`, `audit_headings`, `audit_links`, `audit_images`, `audit_forms`, `audit_media`, `audit_404`, `audit_ix2`, `audit_ix3`, `get_sitemap_urls`).
-- Designer checks: `extract_designer_metadata` from `@create-something/webflow-site-analyzer-mcp` (Steel/Browerless-backed Playwright extraction).
+- Designer checks: retired analyzer extraction is no longer an active reviewer route. Treat Designer-only assertions as manual unless a current sandbox/manual inspection artifact supplies direct evidence.
 
 ## CMS and Ecommerce
 

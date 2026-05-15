@@ -183,8 +183,6 @@
     "deploy:halfdozen-dm-mcp": "node scripts/run-wrangler.mjs --cwd packages/halfdozen-dm-mcp/worker deploy",
     "deploy:airtable-primary-tags": "pnpm --dir packages/airtable-primary-tags-worker deploy",
     "deploy:webflow-local-mcp": "node scripts/run-wrangler.mjs --cwd packages/webflow-mcp/worker deploy",
-    "deploy:webflow-site-analyzer-mcp": "node scripts/run-wrangler.mjs --cwd packages/webflow-site-analyzer-mcp/worker deploy",
-    "deploy:webflow-site-analyzer-mcp-remote": "pnpm --dir packages/webflow-site-analyzer-mcp/workers/remote run deploy",
     "deploy:playbook-mcp": "node scripts/run-wrangler.mjs --cwd packages/playbook-mcp/worker deploy",
     "deploy:halfdozen-operator-notion-mcp": "pnpm mcp:halfdozen-operator-notion:preflight && pnpm exec wrangler deploy --cwd packages/halfdozen-operator-notion-mcp/worker",
     "deploy:blondish-notion-mcp": "node scripts/run-wrangler.mjs --cwd packages/halfdozen-notion-mcp/worker deploy --config wrangler.blondish.toml",

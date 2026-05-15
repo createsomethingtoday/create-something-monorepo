@@ -31,18 +31,6 @@ reviewer_secret_name() {
   esac
 }
 
-reviewer_version_id() {
-  case "$1" in
-    natalia) echo "rec2Z71ZwPRlAqmJ5" ;;
-    sudiksha) echo "reci2kYADC8S6OFw3" ;;
-    eric) echo "reckK8373eRd3cZyJ" ;;
-    vicki) echo "recMzHVzKn9M7m7fH" ;;
-    mariana) echo "recNGiYJ1fjpQ9Q8D" ;;
-    micah) echo "recA25E1MM9NOzkzs" ;;
-    *) return 1 ;;
-  esac
-}
-
 reviewer_email() {
   case "$1" in
     natalia) echo "natalia.ledford@webflow.com" ;;
@@ -170,12 +158,65 @@ payload_json() {
   jq -r '.result.content[0].text | fromjson'
 }
 
+reviewer_version_id_override() {
+  local reviewer="$1"
+  local reviewer_upper env_name
+  reviewer_upper="$(printf '%s' "$reviewer" | tr '[:lower:]-' '[:upper:]_')"
+  env_name="WEBFLOW_REVIEWER_${reviewer_upper}_VERSION_ID"
+
+  if [[ -n "${!env_name:-}" ]]; then
+    echo "${!env_name}"
+    return 0
+  fi
+
+  if [[ -n "${WEBFLOW_REVIEWER_VERSION_ID:-}" ]]; then
+    echo "$WEBFLOW_REVIEWER_VERSION_ID"
+    return 0
+  fi
+
+  return 1
+}
+
+execute_template_review_tool() {
+  local hub_url="$1"
+  local token="$2"
+  local proxy_tool_name="$3"
+  local args_json="$4"
+
+  mcp_call "$hub_url" "$token" "hub_execute_proxy_tool" \
+    "$(jq -cn --arg proxyToolName "$proxy_tool_name" --argjson args "$args_json" '{proxyToolName:$proxyToolName,args:$args}')"
+}
+
+resolve_smoke_version_id() {
+  local reviewer="$1"
+  local hub_url="$2"
+  local token="$3"
+  local reviewer_upper override list_resp version_id
+  reviewer_upper="$(printf '%s' "$reviewer" | tr '[:lower:]-' '[:upper:]_')"
+
+  if override="$(reviewer_version_id_override "$reviewer")"; then
+    echo "$override"
+    return 0
+  fi
+
+  list_resp="$(execute_template_review_tool "$hub_url" "$token" "webflow-template-review-mcp__template_review_list_queue" \
+    '{"limit":50,"status":"ready_to_review","assigned":"unassigned"}')"
+  assert_no_rpc_error "$list_resp" "list_queue ready_to_review unassigned ${reviewer}"
+
+  version_id="$(echo "$list_resp" | payload_json | jq -r '.data.items[]? | select(.assignableVersionId != null and (.canAssign == true or .canAssign == null)) | .assignableVersionId' | head -n 1)"
+  if [[ -z "$version_id" || "$version_id" == "null" ]]; then
+    echo "no unassigned ready_to_review template versions available for ${reviewer}; set WEBFLOW_REVIEWER_${reviewer_upper}_VERSION_ID or WEBFLOW_REVIEWER_VERSION_ID to override" >&2
+    exit 1
+  fi
+
+  echo "$version_id"
+}
+
 smoke_reviewer() {
   local reviewer="$1"
   local hub_url secret_name version_id expected_email token
   hub_url="$(reviewer_url "$reviewer")"
   secret_name="$(reviewer_secret_name "$reviewer")"
-  version_id="$(reviewer_version_id "$reviewer")"
   expected_email="$(reviewer_email "$reviewer")"
 
   if ! token="$(resolve_token "$secret_name")"; then
@@ -183,22 +224,34 @@ smoke_reviewer() {
     exit 1
   fi
 
+  version_id="$(resolve_smoke_version_id "$reviewer" "$hub_url" "$token")"
+
   echo "== ${reviewer} =="
-  local refresh_resp assign_resp context_resp my_queue_resp unassign_resp
+  local refresh_resp before_resp assign_resp context_resp my_queue_resp unassign_resp restore_resp
+  local previous_owner final_owner
   refresh_resp="$(mcp_call "$hub_url" "$token" "hub_refresh_connections" '{}')"
   assert_no_rpc_error "$refresh_resp" "hub_refresh_connections ${reviewer}"
 
-  assign_resp="$(mcp_call "$hub_url" "$token" "hub_execute_proxy_tool" "$(jq -cn --arg version_id "$version_id" '{proxyToolName:"webflow-template-review-mcp__template_review_assign_self",args:{version_id:$version_id}}')")"
+  before_resp="$(execute_template_review_tool "$hub_url" "$token" "webflow-template-review-mcp__template_review_get_review_context" "$(jq -cn --arg version_id "$version_id" '{version_id:$version_id}')")"
+  assert_no_rpc_error "$before_resp" "preflight get_review_context ${reviewer}"
+  previous_owner="$(echo "$before_resp" | payload_json | jq -r '.data.context.reviewOwner.email // "null"')"
+
+  assign_resp="$(execute_template_review_tool "$hub_url" "$token" "webflow-template-review-mcp__template_review_assign_self" "$(jq -cn --arg version_id "$version_id" '{version_id:$version_id}')")"
   assert_no_rpc_error "$assign_resp" "assign_self ${reviewer}"
 
-  context_resp="$(mcp_call "$hub_url" "$token" "hub_execute_proxy_tool" "$(jq -cn --arg version_id "$version_id" '{proxyToolName:"webflow-template-review-mcp__template_review_get_review_context",args:{version_id:$version_id}}')")"
+  context_resp="$(execute_template_review_tool "$hub_url" "$token" "webflow-template-review-mcp__template_review_get_review_context" "$(jq -cn --arg version_id "$version_id" '{version_id:$version_id}')")"
   assert_no_rpc_error "$context_resp" "get_review_context ${reviewer}"
 
-  my_queue_resp="$(mcp_call "$hub_url" "$token" "hub_execute_proxy_tool" "$(jq -cn --arg version_id "$version_id" '{proxyToolName:"webflow-template-review-mcp__template_review_my_queue",args:{limit:10}}')")"
+  my_queue_resp="$(execute_template_review_tool "$hub_url" "$token" "webflow-template-review-mcp__template_review_my_queue" '{"limit":50}')"
   assert_no_rpc_error "$my_queue_resp" "my_queue ${reviewer}"
 
-  unassign_resp="$(mcp_call "$hub_url" "$token" "hub_execute_proxy_tool" "$(jq -cn --arg version_id "$version_id" '{proxyToolName:"webflow-template-review-mcp__template_review_unassign_self",args:{version_id:$version_id}}')")"
+  unassign_resp="$(execute_template_review_tool "$hub_url" "$token" "webflow-template-review-mcp__template_review_unassign_self" "$(jq -cn --arg version_id "$version_id" '{version_id:$version_id}')")"
   assert_no_rpc_error "$unassign_resp" "unassign_self ${reviewer}"
+
+  if [[ "$previous_owner" == "$expected_email" ]]; then
+    restore_resp="$(execute_template_review_tool "$hub_url" "$token" "webflow-template-review-mcp__template_review_assign_self" "$(jq -cn --arg version_id "$version_id" '{version_id:$version_id}')")"
+    assert_no_rpc_error "$restore_resp" "restore assignment ${reviewer}"
+  fi
 
   local assign_ok assign_owner context_ok context_current context_owner context_assigned my_queue_ok my_queue_has_version unassign_ok unassign_owner
   assign_ok="$(echo "$assign_resp" | payload_json | jq -r '.ok // false')"
@@ -211,6 +264,10 @@ smoke_reviewer() {
   my_queue_has_version="$(echo "$my_queue_resp" | payload_json | jq -r --arg version_id "$version_id" '([.data.items[].assignableVersionId] | index($version_id)) != null')"
   unassign_ok="$(echo "$unassign_resp" | payload_json | jq -r '.ok // false')"
   unassign_owner="$(echo "$unassign_resp" | payload_json | jq -r '.data.updated_version.reviewOwner.email // "null"')"
+  final_owner="$unassign_owner"
+  if [[ "$previous_owner" == "$expected_email" ]]; then
+    final_owner="$(echo "$restore_resp" | payload_json | jq -r '.data.updated_version.reviewOwner.email // "null"')"
+  fi
 
   if [[ "$assign_ok" != "true" || "$assign_owner" != "$expected_email" ]]; then
     echo "assign_self validation failed for ${reviewer}" >&2
@@ -232,11 +289,17 @@ smoke_reviewer() {
     echo "$unassign_resp" | jq .
     exit 1
   fi
+  if [[ "$final_owner" != "$previous_owner" ]]; then
+    echo "assignment restoration failed for ${reviewer}: expected ${previous_owner}, got ${final_owner}" >&2
+    exit 1
+  fi
 
+  echo "version_id=${version_id}"
   echo "assign_self=ok owner=${assign_owner}"
   echo "get_review_context=ok current=${context_current} assigned=${context_assigned}"
   echo "my_queue=ok has_version=${my_queue_has_version}"
   echo "unassign_self=ok owner=${unassign_owner}"
+  echo "state_restored=ok owner=${final_owner}"
 }
 
 main() {

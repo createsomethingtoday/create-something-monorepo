@@ -8,7 +8,7 @@
 > `composio-toolkit-*` server list lives in
 > [`config/mcp-hub/registry.composio.generated.json`](../config/mcp-hub/registry.composio.generated.json).
 
-## Active (core, 39)
+## Active (core, 38)
 
 | Server | Transport | Endpoint | Exposure | Est. Tools | Tags |
 | --- | --- | --- | --- | --- | --- |
@@ -48,7 +48,6 @@
 | `three-tier-framework` | `http` | `https://framework.mcp.createsomething.agency/mcp` | `direct` | `6` | `core`, `framework`, `cs`, `policy_os_only` |
 | `webflow-app-review-mcp` | `http` | `https://webflow-app-review-mcp.createsomething.workers.dev/mcp` | `direct` | `0` | `webflow`, `review`, `airtable`, `apps`, `cs` |
 | `webflow-local` | `http` | `https://webflow-mcp.createsomething.workers.dev/mcp` | `direct` | `10` | `webflow`, `review`, `plagiarism`, `frameworks`, `cs` |
-| `webflow-site-analyzer-mcp` | `http` | `https://analyzer.mcp.createsomething.agency/mcp` | `direct` | `22` | `webflow`, `review`, `analyzer`, `browser`, `cs` |
 | `webflow-template-review-mcp` | `http` | `https://webflow-template-review-mcp.createsomething.workers.dev/mcp` | `direct` | `0` | `webflow`, `review`, `airtable`, `templates`, `cs` |
 | `youtube-transcript-notion-mcp` | `http` | `https://youtube-transcript-notion-mcp.createsomething.workers.dev/mcp` | `direct` | `6` | `youtube`, `transcript`, `notion`, `dify`, `cs` |
 
@@ -185,7 +184,7 @@ Hand-curated bundles are listed inline. Composio category bundles are listed in 
 | `halfdozen` | `notion-halfdozen-create-something`, `notion-halfdozen-system-studio`, `notion-halfdozen-blondish`, `notion-halfdozen-c3-management`, `notion-halfdozen-cracked`, `notion-halfdozen-fanpad`, `notion-halfdozen-juice-labs`, `notion-halfdozen-kk-management`, `notion-halfdozen-lightswitch`, `notion-halfdozen-phase-3`, `notion-halfdozen-three-six-zero`, `halfdozen-dm-mcp`, `halfdozen-operator-notion-mcp`, `half-dozen-youtube-sync` |
 | `halfdozen-observability` | `halfdozen-telemetry` |
 | `halfdozen-sync` | `halfdozen-gmail-sync-danny`, `halfdozen-gmail-sync-fillip`, `halfdozen-gmail-sync-leah`, `halfdozen-zoom-sync` |
-| `local-dev` | `community-mcp`, `ground-mcp`, `harness-mcp`, `social-mcp`, `ui-preview-mcp`, `webflow-local`, `webflow-site-analyzer-mcp`, `lsmcp` |
+| `local-dev` | `community-mcp`, `ground-mcp`, `harness-mcp`, `social-mcp`, `ui-preview-mcp`, `webflow-local`, `lsmcp` |
 | `meetings` | `meetings` |
 | `observability` | `cs-telemetry` |
 | `ops` | `schedule-mcp`, `substrate-mcp` |
@@ -194,4 +193,4 @@ Hand-curated bundles are listed inline. Composio category bundles are listed in 
 | `webflow-marketplace-app-review-phase-a` | `webflow-app-review-mcp` |
 | `webflow-marketplace-app-review-phase-b` | `webflow-app-review-mcp` |
 | `webflow-marketplace-review-phase-a` | `webflow-template-review-mcp` |
-| `webflow-marketplace-review-phase-b` | `webflow-template-review-mcp`, `webflow-site-analyzer-mcp`, `webflow-local` |
+| `webflow-marketplace-review-phase-b` | `webflow-template-review-mcp`, `webflow-local` |

@@ -260,6 +260,64 @@ test('update_version_review rejects reviewer-scoped owner changes before mutatio
   assert.equal(payload.error?.code, 'REVIEWER_WRITE_SCOPE_VIOLATION');
 });
 
+test('update_version_review writes supplemental agent review feedback through reviewer scope', async () => {
+  const { server, handlers } = createServerHarness();
+  const calls: Array<{ method: string; args: unknown[] }> = [];
+  const client = {
+    requireAssignedVersion: async (...args: unknown[]) => {
+      calls.push({ method: 'requireAssignedVersion', args });
+      return { versionId: 'rec_version_1' };
+    },
+    updateVersionReview: async (...args: unknown[]) => {
+      calls.push({ method: 'updateVersionReview', args });
+      return {
+        versionId: 'rec_version_1',
+        agentReviewFeedback: 'AI supplemental draft',
+      };
+    },
+  } as unknown as AirtableClient;
+
+  registerTools(server, () => client, () => reviewer);
+
+  const result = await handlers.get('template_review_update_version_review')?.({
+    version_id: 'rec_version_1',
+    agent_review_feedback: 'AI supplemental draft',
+  });
+
+  assert.ok(result);
+  assert.deepEqual(calls[0], {
+    method: 'requireAssignedVersion',
+    args: [
+      'rec_version_1',
+      {
+        id: 'usr_eric',
+        email: 'eric.unger@webflow.com',
+        name: 'Eric Unger',
+      },
+    ],
+  });
+  assert.deepEqual(calls[1], {
+    method: 'updateVersionReview',
+    args: [
+      'rec_version_1',
+      {
+        review_owner: undefined,
+        review_status: undefined,
+        quality_rating: undefined,
+        improvement_areas: undefined,
+        review_feedback: undefined,
+        review_checklist: undefined,
+        publishing_checklist: undefined,
+        release_record_id: undefined,
+        reject_reason: undefined,
+        rejection_feedback: undefined,
+        agent_review_feedback: 'AI supplemental draft',
+      },
+    ],
+  });
+  assert.equal(parsePayload(result).ok, true);
+});
+
 test('save_draft_feedback writes validated improvement areas through to the client', async () => {
   const { server, handlers } = createServerHarness();
   const calls: Array<{ method: string; args: unknown[] }> = [];

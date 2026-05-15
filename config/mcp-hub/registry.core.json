@@ -897,31 +897,6 @@
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 10
     },
-    "webflow-site-analyzer-mcp": {
-      "transport": "http",
-      "url": "https://analyzer.mcp.createsomething.agency/mcp",
-      "bearer_token_env_var": "WEBFLOW_SITE_ANALYZER_MCP_API_KEY",
-      "description": "Webflow Site Analyzer MCP — browser-backed template validation with Steel + Groq",
-      "tags": [
-        "webflow",
-        "review",
-        "analyzer",
-        "browser",
-        "cs"
-      ],
-      "estimated_tool_count": 22,
-      "catalog": {
-        "include": true,
-        "name": "Webflow Site Analyzer",
-        "slug": "webflow-site-analyzer",
-        "category": "create-something",
-        "requiresAuth": true,
-        "authType": "bearer",
-        "transports": [
-          "http"
-        ]
-      }
-    },
     "webflow-template-review-mcp": {
       "transport": "http",
       "url": "https://webflow-template-review-mcp.createsomething.workers.dev/mcp",
@@ -1030,7 +1005,6 @@
       "social-mcp",
       "ui-preview-mcp",
       "webflow-local",
-      "webflow-site-analyzer-mcp",
       "lsmcp"
     ],
     "meetings": [
@@ -1061,7 +1035,6 @@
     ],
     "webflow-marketplace-review-phase-b": [
       "webflow-template-review-mcp",
-      "webflow-site-analyzer-mcp",
       "webflow-local"
     ]
   },

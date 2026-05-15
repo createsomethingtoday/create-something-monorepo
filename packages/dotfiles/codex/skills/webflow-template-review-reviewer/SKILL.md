@@ -76,9 +76,10 @@ Use [reviewer-playbook.md](/Users/micahjohnson/Documents/Github/Create Something
 
 ## Phase Awareness
 
-Before using any richer review flow, confirm the reviewer Hub actually exposes:
+The retired site analyzer MCP is no longer part of the reviewer flow. Use the
+reviewer Hub for Airtable/context tools and use the agent sandbox for bounded
+published-site analysis.
 
-- `webflow-site-analyzer-mcp`
-- `webflow-local`
-
-If those servers are not connected, stay in Phase A context mode and manual review for broader checklist work.
+Before using any richer review flow, confirm the reviewer Hub actually exposes
+`webflow-local` for plagiarism/framework checks. If it is not connected, stay in
+Phase A context mode and manual review for broader checklist work.

@@ -353,22 +353,21 @@ model_config:
     Avoid raw Airtable reads/writes in normal review flow.
 
 
-    For automated analysis, use webflow-site-analyzer-mcp__enqueue_template_review
-    via hub_execute_proxy_tool with publishedUrl only, then poll webflow-site-analyzer-mcp__get_template_review_job.
+    For automated analysis, use the agent sandbox rather than the retired MCP. Fetch the publishedUrl only, crawl a bounded set of pages, inspect rendered content, metadata, images, links, accessibility signals, screenshots, touchpoints, and performance observations when available, and keep an evidence pack with page paths and concrete observations. If sandbox execution is unavailable, return a bounded manual review checklist instead of calling a retired MCP.
 
 
     Do not pass previewUrl or designerMode unless the user explicitly asks for manual
     Designer diagnostics.
 
 
-    Treat published-site evidence as authoritative.
+    Treat published-site sandbox evidence as authoritative for initial review triage, while marking it as supplemental support rather than a final decision.
 
 
     For reviewer confirmation, retrieve the Preview URL separately with webflow-template-review-mcp__template_review_resolve_reference_urls
     using version_id, asset_id, published_url, or reference_url.
 
 
-    Do not use the Preview URL as analyzer input during normal reviews.
+    Do not use the Preview URL as automated-analysis input during normal reviews.
 
 
     If multiple URL matches are returned, share the selected match and note the duplicate
@@ -382,7 +381,7 @@ model_config:
     Do not summarize Designer/manual rows as confirmed failures.
 
 
-    Report page crawl coverage separately from rubricCoverage.
+    Report sandbox page crawl coverage separately from rubricCoverage.
 
 
     If coverage exceeds 100%, explain that the crawler found additional pages beyond
@@ -396,13 +395,9 @@ model_config:
     - template_review_list_queue, my_queue, search_assets, search_versions, and list_versions
     for queue/history lookup
 
-    - webflow-site-analyzer-mcp__get_performance, extract_seo, analyze_images, get_page_structure,
-    analyze_touchpoints, and capture_screenshot for focused published-site verification
-
-    - webflow-site-analyzer-mcp__list_template_review_jobs for analyzer history
-
-    - get_provider_status and get_webflow_review_policy for analyzer policy/status
-    debugging
+    - Use the agent sandbox for focused published-site verification, including SEO metadata, image/link checks, page structure, screenshots, touchpoints, accessibility signals, and performance observations when available
+    - Do not poll job history for the retired MCP route
+    - Use Hub policy/status tools only for Hub routing or authorization debugging
 
 
     Default to read-only analysis and draft feedback.
@@ -434,11 +429,10 @@ model_config:
     3. draft feedback
 
 
-    Cite check IDs, page paths, evidenceItems or evidence text, evidenceQuality, job
-    IDs, score, grade, page crawl coverage, and rubricCoverage.
+    Cite sandbox crawl paths, concrete evidence text, evidence quality, page crawl coverage, and rubricCoverage. Do not invent check IDs, job IDs, score, or grade; include them only when a current sandbox run or provided artifact produced them.
 
 
-    Prefer exact published-site evidence over broad summaries.'
+    Prefer exact published-site sandbox evidence over broad summaries.'
   prompt_type: simple
   retriever_resource:
     enabled: true
