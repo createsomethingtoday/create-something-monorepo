@@ -110,6 +110,16 @@ describe('Flue run-history resource', () => {
     });
     expect(record.readiness.delivery.checks).toEqual({ pass: 2, review: 0, block: 0 });
     expect(record.guardrails.deployable).toBe(true);
+    expect(record.governance).toMatchObject({
+      tier: 'automation',
+      validation: {
+        command: 'pnpm --dir packages/agents/flue-service-agent flue:history:cloudflare',
+        status: 'passed',
+        checkedAt: readyEvidence.checkedAt,
+      },
+      rollback: 'Disable the Flue Worker route; Pi/OpenClaw relay remains independent.',
+    });
+    expect(record.governance?.evidence.map((entry) => entry.kind)).toContain('linear_issue');
   });
 
   it('keeps node-only history in review until Cloudflare readiness is attached', () => {

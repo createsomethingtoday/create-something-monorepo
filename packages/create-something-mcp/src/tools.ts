@@ -7,6 +7,10 @@ import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { search, findRelated } from './search.js';
 import {
+  registerFlueRunHistoryTools,
+  type FlueRunHistoryToolOptions,
+} from './flue-run-history-tools.js';
+import {
   classifyComponent,
   debugSystem,
   analyzeMCPServer,
@@ -28,7 +32,11 @@ const USER_VISIBLE = {
   }
 };
 
-export function registerTools(server: McpServer) {
+export interface RegisterToolsOptions {
+  flueRunHistory?: FlueRunHistoryToolOptions;
+}
+
+export function registerTools(server: McpServer, options: RegisterToolsOptions = {}) {
   // ==========================================================================
   // search — Cross-property full-text search
   // ==========================================================================
@@ -299,6 +307,8 @@ export function registerTools(server: McpServer) {
       };
     }
   );
+
+  registerFlueRunHistoryTools(server, options.flueRunHistory);
 }
 
 // ============================================================================

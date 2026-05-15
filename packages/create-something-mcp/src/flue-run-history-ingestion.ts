@@ -1,4 +1,9 @@
 import type { RunHistoryRecord } from '@create-something/flue-service-agent/mcp-resource-core';
+import {
+  assertFlueRunHistoryRecordGoverned,
+  normalizeFlueRunHistoryRecordGovernance,
+  type GovernedRunHistoryRecord,
+} from './flue-run-history-governance.js';
 
 export const FLUE_RUN_HISTORY_D1_TABLE = 'flue_run_history';
 
@@ -14,17 +19,28 @@ export interface FlueRunHistoryD1Row {
   record_json: string;
 }
 
+export interface D1RunPreparedStatementLike {
+  bind(...values: unknown[]): D1RunPreparedStatementLike;
+  run(): Promise<unknown>;
+}
+
+export interface D1WritableDatabaseLike {
+  prepare(query: string): D1RunPreparedStatementLike;
+}
+
 export function createFlueRunHistoryD1Row(record: RunHistoryRecord): FlueRunHistoryD1Row {
+  const governed = normalizeFlueRunHistoryRecordGovernance(record);
+
   return {
-    run_id: record.runId,
-    checked_at: record.checkedAt,
-    status: record.status,
-    deployable: record.guardrails.deployable ? 1 : 0,
-    issue: record.issue ?? null,
-    resource_uri: record.resourceUri,
-    workflow_name: record.workflow.workflowName,
-    deployment_target: record.runtime.deploymentTarget,
-    record_json: JSON.stringify(record),
+    run_id: governed.runId,
+    checked_at: governed.checkedAt,
+    status: governed.status,
+    deployable: governed.guardrails.deployable ? 1 : 0,
+    issue: governed.issue ?? null,
+    resource_uri: governed.resourceUri,
+    workflow_name: governed.workflow.workflowName,
+    deployment_target: governed.runtime.deploymentTarget,
+    record_json: JSON.stringify(governed),
   };
 }
 
@@ -93,4 +109,50 @@ export function createFlueRunHistoryCountSql(records: RunHistoryRecord[]): strin
   return `SELECT COUNT(*) AS matching_count
 FROM ${FLUE_RUN_HISTORY_D1_TABLE}
 WHERE run_id IN (${runIds.map(sqlLiteral).join(', ')});`;
+}
+
+export async function upsertFlueRunHistoryRecord(
+  db: D1WritableDatabaseLike,
+  record: RunHistoryRecord,
+): Promise<GovernedRunHistoryRecord> {
+  const governed = assertFlueRunHistoryRecordGoverned(record);
+  const row = createFlueRunHistoryD1Row(governed);
+
+  await db
+    .prepare(
+      `INSERT INTO ${FLUE_RUN_HISTORY_D1_TABLE} (
+        run_id,
+        checked_at,
+        status,
+        deployable,
+        issue,
+        resource_uri,
+        workflow_name,
+        deployment_target,
+        record_json
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(run_id) DO UPDATE SET
+        checked_at = excluded.checked_at,
+        status = excluded.status,
+        deployable = excluded.deployable,
+        issue = excluded.issue,
+        resource_uri = excluded.resource_uri,
+        workflow_name = excluded.workflow_name,
+        deployment_target = excluded.deployment_target,
+        record_json = excluded.record_json`,
+    )
+    .bind(
+      row.run_id,
+      row.checked_at,
+      row.status,
+      row.deployable,
+      row.issue,
+      row.resource_uri,
+      row.workflow_name,
+      row.deployment_target,
+      row.record_json,
+    )
+    .run();
+
+  return governed;
 }

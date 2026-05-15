@@ -238,6 +238,7 @@ The pilot should not attempt to replace OpenClaw channels. It should prove that 
 - `CRE-349`: `packages/create-something-mcp` now has a controlled `flue:history:upload` operator command that validates local Flue run-history JSONL and performs idempotent D1 upserts into `TELEMETRY_DB.flue_run_history`; the first hosted upload populated 2 records and live MCP status reported `missingHistory: false`.
 - `CRE-351`: `packages/create-something-mcp` now has a one-step `flue:history:promote` operator command that generates Cloudflare-ready Flue run-history evidence and uploads the validated JSONL to hosted D1; `smoke:flue-promotion` runs the same path against a temp JSONL without remote writes. The current hosted table has 3 records, with latest issue `CRE-351`.
 - `CRE-353`: `.github/workflows/flue-run-history-promotion.yml` now owns CI validation for the promotion path. Pull requests and `main` pushes run dry-run promotion checks, while `workflow_dispatch` with `target=remote` performs the protected D1 upload under the `production` environment.
+- `CRE-357`: `packages/create-something-mcp` now has a governed `record_flue_run` MCP tool on the hosted Worker when `TELEMETRY_DB` is bound. The tool and operator upload path both require Linear issue traceability, Three-Tier tier metadata, evidence refs, validation status, and rollback guidance before D1 upsert.
 
 ## Open Questions
 

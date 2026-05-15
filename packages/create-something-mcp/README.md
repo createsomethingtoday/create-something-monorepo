@@ -111,7 +111,7 @@ node packages/create-something-mcp/dist/index.js
 
 Local stdio also registers Flue service-agent run-history resources. By default it reads `packages/agents/flue-service-agent/.artifacts/flue-service-agent/run-history.jsonl`; set `FLUE_RUN_HISTORY_PATH` to override that location.
 
-The Worker registers the same read-only resources when `TELEMETRY_DB` is bound. Remote records are read from the `flue_run_history` D1 table as schema-valid `flue.run_history.v1` JSON in `record_json`. Apply the D1 migration from the Worker package before relying on remote history:
+The Worker registers the same resources when `TELEMETRY_DB` is bound. Remote records are read from the `flue_run_history` D1 table as schema-valid `flue.run_history.v1` JSON in `record_json`. Apply the D1 migration from the Worker package before relying on remote history:
 
 ```bash
 cd packages/create-something-mcp/worker
@@ -124,7 +124,28 @@ Upload validated local Flue history into remote D1 with the package-owned operat
 pnpm --dir packages/create-something-mcp flue:history:upload
 ```
 
-The upload path validates JSONL with the Flue run-history schema and performs idempotent D1 upserts by `run_id`; the Worker remains read-only.
+The upload path validates JSONL with the Flue run-history schema and a stricter governance gate before performing idempotent D1 upserts by `run_id`. Promoted records must carry:
+
+- `issue`: a Linear issue ID such as `CRE-123`
+- `governance.tier`: `database`, `automation`, or `judgment`
+- `governance.evidence`: at least one evidence reference
+- `governance.validation`: command, status, and timestamp
+- `governance.rollback`: rollback guidance
+
+The hosted Worker also exposes a governed MCP write tool when `TELEMETRY_DB` is bound:
+
+```json
+{
+  "tool": "record_flue_run",
+  "arguments": {
+    "operatorIntent": "record_flue_run",
+    "dryRun": true,
+    "recordJson": "{\"schemaVersion\":\"flue.run_history.v1\",...}"
+  }
+}
+```
+
+Use `dryRun: true` to validate governance without writing. With `dryRun: false`, the tool performs the same idempotent D1 upsert as the operator upload path.
 
 For promotion, prefer the single command that generates a Cloudflare-ready Flue history record and then uploads it:
 
@@ -152,7 +173,7 @@ npm run tail     # Tail production logs
 
 ## Telemetry
 
-Worker deploys include telemetry via `@create-something/mcp-core` and the `TELEMETRY_DB` D1 binding (`cs-telemetry`). Tool invocations and run counts are written to fleet telemetry tables (`mcp_tool_invocations`, `mcp_run_counts`). Flue service-agent run history is read from `flue_run_history` in the same binding; writes happen through the controlled operator upload script, not a public endpoint.
+Worker deploys include telemetry via `@create-something/mcp-core` and the `TELEMETRY_DB` D1 binding (`cs-telemetry`). Tool invocations and run counts are written to fleet telemetry tables (`mcp_tool_invocations`, `mcp_run_counts`). Flue service-agent run history is read from `flue_run_history` in the same binding; writes happen through the controlled operator upload script or the governed `record_flue_run` MCP tool.
 
 ## Agent Legibility Contract
 

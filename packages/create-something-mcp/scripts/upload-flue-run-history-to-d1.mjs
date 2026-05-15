@@ -7,6 +7,10 @@ import {
   createFlueRunHistoryCountSql,
   createFlueRunHistoryUpsertSql,
 } from '../dist/flue-run-history-ingestion.js';
+import {
+  assertFlueRunHistoryRecordsGoverned,
+  createFlueRunHistoryGovernanceSummary,
+} from '../dist/flue-run-history-governance.js';
 
 const DEFAULT_HISTORY_PATH =
   'packages/agents/flue-service-agent/.artifacts/flue-service-agent/run-history.jsonl';
@@ -101,7 +105,10 @@ if (!existsSync(historyPath)) {
 }
 
 const historyText = readFileSync(historyPath, 'utf8');
-const records = parseRunHistoryJsonl(historyText, historyPath);
+const records = assertFlueRunHistoryRecordsGoverned(
+  parseRunHistoryJsonl(historyText, historyPath),
+  { source: historyPath },
+);
 const sql = createFlueRunHistoryUpsertSql(records);
 
 if (!sql) {
@@ -130,6 +137,14 @@ if (dryRun) {
     newestCheckedAt,
     historyPath,
     database,
+    governance: {
+      strict: true,
+      records: records.map((record) => ({
+        runId: record.runId,
+        issue: record.issue,
+        ...createFlueRunHistoryGovernanceSummary(record),
+      })),
+    },
   }, null, 2));
   process.exit(0);
 }
@@ -167,4 +182,12 @@ console.log(JSON.stringify({
   newestCheckedAt,
   historyPath,
   database,
+  governance: {
+    strict: true,
+    records: records.map((record) => ({
+      runId: record.runId,
+      issue: record.issue,
+      ...createFlueRunHistoryGovernanceSummary(record),
+    })),
+  },
 }, null, 2));

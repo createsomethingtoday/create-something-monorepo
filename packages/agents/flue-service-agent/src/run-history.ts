@@ -20,6 +20,24 @@ const readinessSummarySchema = v.object({
   checks: checkSummarySchema,
 });
 
+export const runHistoryGovernanceTierSchema = v.picklist(['database', 'automation', 'judgment']);
+
+const artifactRefSchema = v.object({
+  kind: v.string(),
+  path: v.string(),
+});
+
+export const runHistoryGovernanceSchema = v.object({
+  tier: runHistoryGovernanceTierSchema,
+  evidence: v.array(artifactRefSchema),
+  validation: v.object({
+    command: v.string(),
+    status: v.picklist(['passed', 'review_required', 'failed']),
+    checkedAt: v.string(),
+  }),
+  rollback: v.string(),
+});
+
 export const runHistoryRecordSchema = v.object({
   schemaVersion: v.literal('flue.run_history.v1'),
   resourceUri: v.string(),
@@ -59,10 +77,7 @@ export const runHistoryRecordSchema = v.object({
     durableObjectBindings: v.array(v.string()),
   }),
   artifacts: v.array(
-    v.object({
-      kind: v.string(),
-      path: v.string(),
-    }),
+    artifactRefSchema,
   ),
   guardrails: v.object({
     operatorReviewRequired: v.boolean(),
@@ -70,9 +85,13 @@ export const runHistoryRecordSchema = v.object({
     secretsLocation: v.string(),
     rollbackNote: v.string(),
   }),
+  governance: v.optional(runHistoryGovernanceSchema),
 });
 
 export type RunHistoryRecord = v.InferOutput<typeof runHistoryRecordSchema>;
+export type RunHistoryGovernanceTier = v.InferOutput<typeof runHistoryGovernanceTierSchema>;
+export type RunHistoryGovernance = v.InferOutput<typeof runHistoryGovernanceSchema>;
+type RunHistoryGovernanceValidationStatus = RunHistoryGovernance['validation']['status'];
 
 export interface RunHistoryOptions {
   issue?: string;
@@ -114,6 +133,14 @@ function createRunId(evidence: SmokeEvidence): string {
 function readinessStatus(evidence: SmokeEvidence): RunHistoryRecord['status'] {
   if (!evidence.ok) return 'blocked';
   return evidence.cloudflareReadiness ? 'ready' : 'review_required';
+}
+
+function validationStatus(
+  status: RunHistoryRecord['status'],
+): RunHistoryGovernanceValidationStatus {
+  if (status === 'blocked') return 'failed';
+  if (status === 'review_required') return 'review_required';
+  return 'passed';
 }
 
 function cloudflareArtifacts(evidence: SmokeEvidence): RunHistoryRecord['artifacts'] {
@@ -195,6 +222,25 @@ export function createRunHistoryRecord(
       deployable: evidence.ok && cloudflare?.readiness === 'ready',
       secretsLocation: cloudflare?.evidence.deploymentPolicy.allowedSecretsLocation ?? 'Cloudflare secrets or Infisical',
       rollbackNote:
+        cloudflare?.evidence.deploymentPolicy.rollbackNote ??
+        'Pi/OpenClaw relay remains independent; attach Cloudflare readiness before deploying Flue.',
+    },
+    governance: {
+      tier: 'automation',
+      evidence: [
+        { kind: 'validation_command', path: options.validationCommand ?? defaultValidationCommand(evidence) },
+        { kind: 'linear_issue', path: options.issue ?? 'unset' },
+        { kind: 'node_manifest', path: evidence.flueManifest.path },
+        { kind: 'agent_contract', path: evidence.deliveryReadiness.evidence.contractRefs.agentContract },
+        { kind: 'golden_tasks', path: evidence.deliveryReadiness.evidence.contractRefs.goldenTasks },
+        ...cloudflareArtifacts(evidence),
+      ],
+      validation: {
+        command: options.validationCommand ?? defaultValidationCommand(evidence),
+        status: validationStatus(readinessStatus(evidence)),
+        checkedAt: evidence.checkedAt,
+      },
+      rollback:
         cloudflare?.evidence.deploymentPolicy.rollbackNote ??
         'Pi/OpenClaw relay remains independent; attach Cloudflare readiness before deploying Flue.',
     },

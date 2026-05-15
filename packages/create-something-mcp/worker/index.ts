@@ -79,7 +79,11 @@ export class CreateSomethingMCP extends McpAgent<Env> {
         this.env.TELEMETRY_DB,
       );
     }
-    registerTools(this.server);
+    registerTools(this.server, {
+      flueRunHistory: this.env.TELEMETRY_DB
+        ? { db: this.env.TELEMETRY_DB }
+        : undefined,
+    });
     registerPrompts(this.server);
   }
 }
@@ -124,7 +128,9 @@ export default {
         },
         capabilities: {
           resources: `${PAPERS.length + CANON_PAGES.length + PATTERNS.length + MASTERS.length + 10 + 2 + 1 + 1 + (env.TELEMETRY_DB ? 3 : 0)} URIs (Database tier)`,
-          tools: '5 tools (Automation tier — search, relate, classify, apply_triad, audit_design)',
+          tools: env.TELEMETRY_DB
+            ? '6 tools (Automation tier — search, relate, classify, apply_triad, audit_design, record_flue_run)'
+            : '5 tools (Automation tier — search, relate, classify, apply_triad, audit_design)',
           prompts: '5 prompts (Judgment tier — architecture_review, design_review, triad_analysis, mcp_design, research_dive)',
         },
         flue_run_history: {
@@ -132,6 +138,7 @@ export default {
           resources: env.TELEMETRY_DB
             ? ['flue://run-history/status', 'flue://run-history/latest', 'flue://run-history/list']
             : [],
+          tools: env.TELEMETRY_DB ? ['record_flue_run'] : [],
         },
         properties: {
           'io': 'Research papers and knowledge graph',

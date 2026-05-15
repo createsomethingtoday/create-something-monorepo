@@ -7,7 +7,7 @@ const record = {
   schemaVersion: 'flue.run_history.v1',
   resourceUri: 'flue://run-history/%40create-something%2Fflue-service-agent/ingestion-smoke',
   runId: 'ingestion-smoke',
-  issue: "CRE-349's smoke",
+  issue: 'CRE-349',
   packageName: '@create-something/flue-service-agent',
   checkedAt: '2026-05-14T18:00:00.000Z',
   status: 'ready',
@@ -99,7 +99,7 @@ if (sqlite.status !== 0) {
   throw new Error(`sqlite3 smoke failed:\n${sqlite.stderr}`);
 }
 
-const expected = "ingestion-smoke|blocked|0|CRE-349's smoke|delivery-evidence-summary's check";
+const expected = "ingestion-smoke|blocked|0|CRE-349|delivery-evidence-summary's check";
 const actual = sqlite.stdout.trim();
 if (actual !== expected) {
   throw new Error(`Unexpected ingestion smoke output:\nexpected ${expected}\nactual   ${actual}`);

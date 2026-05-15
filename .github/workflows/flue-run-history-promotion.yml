@@ -53,7 +53,7 @@ jobs:
     if: github.event_name != 'workflow_dispatch' || inputs.target == 'dry-run'
     runs-on: ubuntu-latest
     env:
-      FLUE_PROMOTION_ISSUE: ${{ github.event_name == 'workflow_dispatch' && inputs.issue || format('ci-{0}', github.run_id) }}
+      FLUE_PROMOTION_ISSUE: ${{ github.event_name == 'workflow_dispatch' && inputs.issue || 'CRE-0' }}
 
     steps:
       - name: Checkout
