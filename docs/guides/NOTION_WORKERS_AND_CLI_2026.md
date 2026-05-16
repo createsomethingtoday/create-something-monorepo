@@ -119,6 +119,8 @@ Local test flow:
 cd packages/notion-worker-experiments
 ntn workers exec summarizePage --local -d '{"pageId":"<page_id>"}'
 ntn workers exec appendPolicyNote --local -d '{"pageId":"<page_id>","heading":"Example","note":"Needs review","sourceUrl":null}'
+LINEAR_API_KEY="$LINEAR_API_KEY" ntn workers sync trigger linearIssuesSync --local --preview
+infisical run --env=prod --path=/ --include-imports=true -- env PATH="$HOME/.local/bin:$PATH" LINEAR_SYNC_PAGE_SIZE=2 ntn workers sync trigger linearIssuesSync --local --preview --no-dotenv
 ```
 
 Hosted flow:
@@ -126,7 +128,13 @@ Hosted flow:
 ```bash
 cd packages/notion-worker-experiments
 ntn login
-ntn workers deploy --name create-something-notion-worker-experiments
+pnpm --filter @create-something/notion-worker-experiments build
+ntn workers deploy --name create-something-linear-sync --local-build
+ntn workers env set "LINEAR_API_KEY=$LINEAR_API_KEY"
+ntn workers env set "LINEAR_TEAM_KEY=${LINEAR_TEAM_KEY:-CRE}"
+ntn workers env set "LINEAR_SYNC_PAGE_SIZE=100"
+ntn workers sync trigger linearIssuesSync --preview
+ntn workers sync trigger linearIssuesSync
 ntn workers exec summarizePage -d '{"pageId":"<page_id>"}'
 ntn workers runs list
 ```
@@ -141,6 +149,8 @@ Good examples:
 - Substrate read model -> Notion managed "Agency Ops View".
 - Agency Ops health index -> Notion managed PM review database.
 - Public dataset or partner feed -> Notion managed database.
+- Linear issues -> Notion managed PM review database when Linear remains the
+  executable coordination source of truth.
 
 Avoid Syncs for current client-owned schemas until Notion supports syncing into existing databases. As of the reviewed docs, Syncs create and manage their own databases.
 
@@ -238,6 +248,10 @@ For repo-local experiments:
 - Use `ntn workers exec --local` before any hosted deploy.
 - Store secrets with `ntn workers env set`, not in repo files.
 - Use `.env.example` only for names and comments.
+- For `packages/notion-worker-experiments`, deploy with `--local-build`; the
+  package build emits a bundled Worker file because Notion's cloud builder does
+  not have the monorepo root TypeScript config and hosted runs do not reliably
+  resolve pnpm workspace transitive dependency symlinks.
 - Notion's Worker quickstart now lists Node.js `22+` and npm `10+` as
   prerequisites. The repo package can still typecheck under the monorepo's
   current toolchain, but hosted Worker deploy tests should run from a Node 22
