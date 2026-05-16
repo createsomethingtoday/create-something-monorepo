@@ -1,9 +1,93 @@
 import { Worker } from '@notionhq/workers';
+import * as Builder from '@notionhq/workers/builder';
+import * as Schema from '@notionhq/workers/schema';
 import { j } from '@notionhq/workers/schema-builder';
 
 const worker = new Worker();
 
-export default worker;
+const exportedWorker = worker as typeof worker & { default: typeof worker };
+exportedWorker.default = worker;
+
+export default exportedWorker;
+
+const linearApiPacer = worker.pacer('linearApi', {
+  allowedRequests: 1,
+  intervalMs: 1000
+});
+
+const linearIssuesDatabase = worker.database('linearIssues', {
+  type: 'managed',
+  initialTitle: 'Linear Issues',
+  primaryKeyProperty: 'Issue ID',
+  schema: {
+    properties: {
+      Name: Schema.title(),
+      'Issue ID': Schema.richText(),
+      Identifier: Schema.richText(),
+      URL: Schema.url(),
+      Status: Schema.richText(),
+      'Status Type': Schema.richText(),
+      Priority: Schema.number(),
+      'Priority Label': Schema.richText(),
+      Assignee: Schema.richText(),
+      Project: Schema.richText(),
+      Team: Schema.richText(),
+      Labels: Schema.richText(),
+      Branch: Schema.richText(),
+      Created: Schema.date(),
+      Updated: Schema.date(),
+      'Description Preview': Schema.richText()
+    }
+  }
+});
+
+worker.sync('linearIssuesSync', {
+  database: linearIssuesDatabase,
+  mode: 'replace',
+  schedule: '30m',
+  execute: async (state: LinearIssuesSyncState | undefined) => {
+    await linearApiPacer.wait();
+
+    const page = await fetchLinearIssues({
+      after: state?.after ?? null,
+      first: readLinearPageSize(),
+      teamKey: readOptionalEnv('LINEAR_TEAM_KEY') ?? 'CRE'
+    });
+
+    const endCursor = page.pageInfo.endCursor ?? null;
+    if (page.pageInfo.hasNextPage && !endCursor) {
+      throw new Error('Linear pagination reported hasNextPage=true without an endCursor.');
+    }
+
+    return {
+      changes: page.nodes.map((issue) => ({
+        type: 'upsert' as const,
+        key: issue.id,
+        upstreamUpdatedAt: issue.updatedAt,
+        properties: {
+          Name: Builder.title(issue.title || issue.identifier || issue.id),
+          'Issue ID': Builder.richText(issue.id),
+          Identifier: Builder.richText(issue.identifier),
+          URL: textValue(issue.url, Builder.url),
+          Status: Builder.richText(issue.state?.name ?? ''),
+          'Status Type': Builder.richText(issue.state?.type ?? ''),
+          Priority: numberValue(issue.priority),
+          'Priority Label': Builder.richText(priorityLabel(issue.priority)),
+          Assignee: Builder.richText(issue.assignee?.name ?? ''),
+          Project: Builder.richText(issue.project?.name ?? ''),
+          Team: Builder.richText(issue.team ? `${issue.team.key} - ${issue.team.name}` : ''),
+          Labels: Builder.richText(issue.labels.nodes.map((label) => label.name).join(', ')),
+          Branch: Builder.richText(issue.branchName ?? ''),
+          Created: dateTimeValue(issue.createdAt),
+          Updated: dateTimeValue(issue.updatedAt),
+          'Description Preview': Builder.richText(truncateText(issue.description ?? '', 1800))
+        }
+      })),
+      hasMore: page.pageInfo.hasNextPage,
+      nextState: page.pageInfo.hasNextPage ? { after: endCursor } : undefined
+    };
+  }
+});
 
 const plainTextSchema = j.object({
   text: j.string().describe('Plain text extracted from a Notion block.'),
@@ -97,6 +181,177 @@ worker.tool('appendPolicyNote', {
 function markReadOnly(capability: { config: object }): void {
   const config = capability.config as Record<string, unknown>;
   config.hints = { readOnlyHint: true };
+}
+
+const LINEAR_API_URL = 'https://api.linear.app/graphql';
+const LINEAR_ISSUES_QUERY = `
+  query NotionWorkerLinearIssues($first: Int!, $after: String, $filter: IssueFilter) {
+    issues(first: $first, after: $after, orderBy: updatedAt, filter: $filter) {
+      nodes {
+        id
+        identifier
+        title
+        description
+        priority
+        branchName
+        url
+        createdAt
+        updatedAt
+        state { name type }
+        assignee { name }
+        project { name }
+        team { key name }
+        labels { nodes { name } }
+      }
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+    }
+  }
+`;
+
+type LinearIssuesSyncState = {
+  after: string | null;
+};
+
+type LinearIssue = {
+  id: string;
+  identifier: string;
+  title: string;
+  description: string | null;
+  priority: number;
+  branchName: string | null;
+  url: string;
+  createdAt: string;
+  updatedAt: string;
+  state: {
+    name: string;
+    type: string;
+  } | null;
+  assignee: {
+    name: string;
+  } | null;
+  project: {
+    name: string;
+  } | null;
+  team: {
+    key: string;
+    name: string;
+  } | null;
+  labels: {
+    nodes: Array<{ name: string }>;
+  };
+};
+
+type LinearIssuesConnection = {
+  nodes: LinearIssue[];
+  pageInfo: {
+    hasNextPage: boolean;
+    endCursor: string | null;
+  };
+};
+
+type LinearIssuesResponse = {
+  issues: LinearIssuesConnection;
+};
+
+type LinearGraphqlPayload<T> = {
+  data?: T;
+  errors?: Array<{ message?: string }>;
+};
+
+async function fetchLinearIssues(options: {
+  after: string | null;
+  first: number;
+  teamKey: string;
+}): Promise<LinearIssuesConnection> {
+  const filter = options.teamKey ? { team: { key: { eq: options.teamKey } } } : undefined;
+  const data = await linearGraphql<LinearIssuesResponse>(LINEAR_ISSUES_QUERY, {
+    after: options.after,
+    filter,
+    first: options.first
+  });
+
+  return data.issues;
+}
+
+async function linearGraphql<T>(query: string, variables: Record<string, unknown>): Promise<T> {
+  const token = readOptionalEnv('LINEAR_API_KEY');
+  if (!token) {
+    throw new Error('LINEAR_API_KEY is required for linearIssuesSync.');
+  }
+
+  const response = await fetch(readOptionalEnv('LINEAR_API_URL') ?? LINEAR_API_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: token
+    },
+    body: JSON.stringify({ query, variables })
+  });
+
+  const payload = (await response.json()) as LinearGraphqlPayload<T>;
+  if (!response.ok || payload.errors?.length || !payload.data) {
+    const messages = payload.errors
+      ?.map((error) => error.message)
+      .filter((message): message is string => Boolean(message))
+      .join('; ');
+    throw new Error(
+      `Linear GraphQL request failed with HTTP ${response.status}${messages ? `: ${messages}` : ''}`
+    );
+  }
+
+  return payload.data;
+}
+
+function readOptionalEnv(key: string): string | null {
+  const value = process.env[key]?.trim();
+  return value ? value : null;
+}
+
+function readLinearPageSize(): number {
+  const value = Number(readOptionalEnv('LINEAR_SYNC_PAGE_SIZE') ?? 100);
+  if (!Number.isFinite(value)) return 100;
+  return Math.min(Math.max(Math.trunc(value), 1), 250);
+}
+
+function textValue(
+  value: string | null | undefined,
+  builder: (value: string) => ReturnType<typeof Builder.richText>
+) {
+  return value ? builder(value) : [];
+}
+
+function numberValue(value: number | null | undefined) {
+  return typeof value === 'number' && Number.isFinite(value) ? Builder.number(value) : [];
+}
+
+function dateTimeValue(value: string | null | undefined) {
+  return value && !Number.isNaN(Date.parse(value)) ? Builder.dateTime(value) : [];
+}
+
+function priorityLabel(priority: number | null | undefined): string {
+  switch (priority) {
+    case 1:
+      return 'Urgent';
+    case 2:
+      return 'High';
+    case 3:
+      return 'Medium';
+    case 4:
+      return 'Low';
+    case 0:
+      return 'No priority';
+    default:
+      return '';
+  }
+}
+
+function truncateText(value: string, maxLength: number): string {
+  const normalized = value.replace(/\s+/g, ' ').trim();
+  if (normalized.length <= maxLength) return normalized;
+  return `${normalized.slice(0, maxLength - 3)}...`;
 }
 
 function clampBlockLimit(value: number): number {
