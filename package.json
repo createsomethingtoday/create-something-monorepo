@@ -40,6 +40,7 @@
     "check:clients": "node scripts/workspace-lane-run.mjs clients check",
     "check:labs": "node scripts/workspace-lane-run.mjs labs check",
     "check:all": "pnpm check && pnpm check:clients && pnpm check:labs",
+    "lockfile:check:staged": "node scripts/check-staged-lockfile-sync.mjs",
     "lint": "pnpm --filter @create-something/mcp-core build && pnpm --filter @create-something/composio-bridge build && pnpm --filter @create-something/observability build && pnpm --filter @create-something/playbook-mcp build && pnpm --filter @create-something/eslint-plugin-canon build && node scripts/workspace-lint.mjs --allow-missing",
     "lint:strict": "node scripts/workspace-lint.mjs",
     "format": "prettier --write \"packages/**/*.{js,ts,svelte,json,css,md}\"",
