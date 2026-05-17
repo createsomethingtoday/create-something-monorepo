@@ -23,6 +23,33 @@
     }
   ];
 
+  const applicationQueue = [
+    {
+      name: 'Dify',
+      track: 'Service Partner first',
+      status: 'Primary submission',
+      href: '/dify',
+      detail:
+        'Use the Dify lane as the main proof page for implementation, Marketplace Partner readiness, and the affiliate funnel after acceptance.'
+    },
+    {
+      name: 'Cloudflare',
+      track: 'PowerUP Consult first',
+      status: 'Runtime submission',
+      href: '/cloudflare',
+      detail:
+        'Use the Cloudflare lane to show Workers, Pages, D1, remote MCPs, runbooks, and governed delivery evidence.'
+    },
+    {
+      name: 'Notion',
+      track: 'Solutions Partner first',
+      status: 'Workspace submission',
+      href: '/notion',
+      detail:
+        'Use the Notion lane to show PM/operator workspaces, template proof, builder examples, and source-of-truth boundaries.'
+    }
+  ];
+
   const partnerLanes = [
     {
       name: 'Dify',
@@ -183,22 +210,40 @@
             <Button href="/stack" variant="secondary">See Stack Boundary</Button>
           </div>
         </BlurFade>
+
+        <BlurFade delay={0.18}>
+          <p class="hero-note">Apply. Route. Prove. Govern.</p>
+        </BlurFade>
       </div>
 
       <BlurFade delay={0.2}>
         <aside class="partner-brief product-surface product-surface--soft" aria-label="Partner stack summary">
-          <div>
-            <span>Public claim</span>
-            <strong>Application-ready implementation lanes</strong>
+          <div class="partner-brief__header">
+            <div class="partner-logo-stack" aria-hidden="true">
+              <span><BrandLogo name="Dify" size={22} /></span>
+              <span><BrandLogo name="Cloudflare Workers" size={22} /></span>
+              <span><BrandLogo name="Notion API" size={22} /></span>
+            </div>
+            <div>
+              <span>Partner stack</span>
+              <strong>Dify + Cloudflare + Notion</strong>
+            </div>
           </div>
-          <div>
-            <span>Lead offer</span>
-            <strong>Policy OS plus governed delivery</strong>
-          </div>
-          <div>
-            <span>Approval posture</span>
-            <strong>No official partner claims yet</strong>
-          </div>
+
+          <dl class="partner-brief__facts">
+            <div>
+              <dt>Public claim</dt>
+              <dd>Application-ready implementation lanes</dd>
+            </div>
+            <div>
+              <dt>Lead offer</dt>
+              <dd>Policy OS plus governed delivery</dd>
+            </div>
+            <div>
+              <dt>Approval posture</dt>
+              <dd>No official partner claims yet</dd>
+            </div>
+          </dl>
         </aside>
       </BlurFade>
     </div>
@@ -214,6 +259,31 @@
           <h2>{item.value}</h2>
           <p>{item.detail}</p>
         </article>
+      {/each}
+    </div>
+  </div>
+</section>
+
+<section class="content-section application-section">
+  <div class="shell-inner-pad partners-shell">
+    <div class="section-copy wide">
+      <span class="product-kicker">Application Queue</span>
+      <h2>The recommended order stays visible.</h2>
+      <p>
+        Each lane has a public page, a lead partner track, and a proof boundary. The queue keeps the
+        application motion legible without implying approval before the programs accept CREATE
+        SOMETHING.
+      </p>
+    </div>
+
+    <div class="application-grid">
+      {#each applicationQueue as item}
+        <a class="application-card product-surface product-surface--soft" href={item.href}>
+          <span>{item.name}</span>
+          <h3>{item.track}</h3>
+          <strong>{item.status}</strong>
+          <p>{item.detail}</p>
+        </a>
       {/each}
     </div>
   </div>
@@ -384,18 +454,31 @@
       linear-gradient(
         180deg,
         rgba(3, 3, 4, 1) 0%,
-        rgba(3, 3, 4, 0.88) 10%,
-        rgba(3, 3, 4, 0.24) 30%,
-        rgba(3, 3, 4, 0.2) 70%,
-        rgba(3, 3, 4, 0.9) 100%
+        rgba(3, 3, 4, 0.86) 8%,
+        rgba(3, 3, 4, 0.28) 20%,
+        rgba(3, 3, 4, 0) 34%,
+        rgba(3, 3, 4, 0) 66%,
+        rgba(3, 3, 4, 0.32) 80%,
+        rgba(3, 3, 4, 0.82) 92%,
+        rgba(3, 3, 4, 1) 100%
       ),
       linear-gradient(
         90deg,
-        rgba(3, 3, 4, 0.98) 0%,
-        rgba(3, 3, 4, 0.88) 42%,
-        rgba(3, 3, 4, 0.52) 74%,
-        rgba(3, 3, 4, 0.76) 100%
-      );
+        rgba(3, 3, 4, 1) 0%,
+        rgba(3, 3, 4, 0.965) 28%,
+        rgba(3, 3, 4, 0.68) 52%,
+        rgba(3, 3, 4, 0.18) 72%,
+        rgba(3, 3, 4, 0.34) 88%,
+        rgba(3, 3, 4, 0.52) 100%
+      ),
+      radial-gradient(
+        circle at 74% 54%,
+        rgba(3, 3, 4, 0) 0%,
+        rgba(3, 3, 4, 0.08) 22%,
+        rgba(3, 3, 4, 0.24) 58%,
+        rgba(3, 3, 4, 0.46) 100%
+      ),
+      radial-gradient(circle at 16% 52%, rgba(3, 3, 4, 0.18) 0%, transparent 38%);
   }
 
   .partners-hero :global(.hero-signal-field) {
@@ -417,6 +500,25 @@
     display: grid;
     gap: 1.1rem;
     max-width: 47rem;
+  }
+
+  .hero-copy .product-kicker {
+    width: fit-content;
+    padding: 0.38rem 0.7rem 0.4rem;
+    border: 1px solid rgba(91, 125, 255, 0.16);
+    border-radius: 999px;
+    background: rgba(8, 10, 14, 0.62);
+    box-shadow:
+      inset 0 0 0 1px rgba(255, 255, 255, 0.02),
+      0 10px 30px rgba(0, 0, 0, 0.18);
+    backdrop-filter: blur(12px);
+  }
+
+  .hero-copy .product-kicker::before {
+    width: 0.38rem;
+    height: 0.38rem;
+    background: rgba(59, 109, 255, 0.96);
+    box-shadow: 0 0 14px rgba(70, 154, 255, 0.38);
   }
 
   .hero-title {
@@ -444,15 +546,63 @@
     align-items: center;
   }
 
+  .hero-note {
+    margin: 0;
+    color: var(--color-fg-muted);
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    letter-spacing: 0;
+    text-transform: uppercase;
+  }
+
   .partner-brief {
     display: grid;
-    gap: 0.85rem;
+    gap: 1rem;
     padding: clamp(1.15rem, 3vw, 1.6rem);
   }
 
-  .partner-brief div {
+  .partner-brief__header {
+    display: grid;
+    gap: 0.9rem;
+    padding: 1rem;
+    border-radius: 0.75rem;
+    border: 1px solid var(--color-shell-border-default);
+    background: rgba(255, 255, 255, 0.03);
+  }
+
+  .partner-logo-stack {
+    display: flex;
+    align-items: center;
+  }
+
+  .partner-logo-stack span {
+    display: inline-grid;
+    place-items: center;
+    width: 2.6rem;
+    height: 2.6rem;
+    border-radius: 0.85rem;
+    border: 1px solid var(--color-shell-border-default);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--color-fg-primary);
+  }
+
+  .partner-logo-stack span + span {
+    margin-left: -0.45rem;
+  }
+
+  .partner-brief__header > div:last-child,
+  .partner-brief__facts div {
     display: grid;
     gap: 0.35rem;
+  }
+
+  .partner-brief__facts {
+    display: grid;
+    gap: 0.85rem;
+    margin: 0;
+  }
+
+  .partner-brief__facts div {
     padding: 1rem;
     border-radius: 0.75rem;
     border: 1px solid var(--color-shell-border-default);
@@ -460,7 +610,9 @@
   }
 
   .partner-brief span,
+  .partner-brief dt,
   .status-card span,
+  .application-card span,
   .lane-card span,
   .lane-card dt,
   .loop-step span {
@@ -471,7 +623,9 @@
     text-transform: uppercase;
   }
 
-  .partner-brief strong {
+  .partner-brief strong,
+  .partner-brief dd {
+    margin: 0;
     color: var(--color-fg-primary);
     font-size: 1.05rem;
     line-height: 1.3;
@@ -489,7 +643,14 @@
     gap: 0.9rem;
   }
 
+  .application-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.9rem;
+  }
+
   .status-card,
+  .application-card,
   .lane-card,
   .routing-card {
     min-height: 13rem;
@@ -503,7 +664,12 @@
     text-decoration: none;
   }
 
+  .application-card {
+    text-decoration: none;
+  }
+
   .status-card h2,
+  .application-card h3,
   .lane-card h3,
   .routing-card h3,
   .loop-step h3,
@@ -521,6 +687,7 @@
   }
 
   .status-card p,
+  .application-card p,
   .lane-card p,
   .routing-card p,
   .loop-step p,
@@ -530,6 +697,13 @@
     color: var(--color-fg-secondary);
     line-height: 1.68;
     text-wrap: pretty;
+  }
+
+  .application-card strong {
+    color: var(--color-fg-primary);
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    line-height: 1.4;
   }
 
   .section-copy {
@@ -665,6 +839,7 @@
     }
 
     .status-grid,
+    .application-grid,
     .lane-grid,
     .routing-grid {
       grid-template-columns: 1fr;
@@ -699,6 +874,7 @@
 
     .partner-brief,
     .status-card,
+    .application-card,
     .lane-card,
     .routing-card,
     .guardrail-list li,
