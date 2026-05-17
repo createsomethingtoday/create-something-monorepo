@@ -73,7 +73,12 @@
     <p>{description}</p>
   </div>
 
-  <div class="artifact-grid" class:artifact-grid--six={items.length === 6} role="list">
+  <div
+    class="artifact-grid"
+    class:artifact-grid--six={items.length === 6}
+    class:artifact-grid--seven={items.length === 7}
+    role="list"
+  >
     {#each items as item}
       {@const label = item.displayName ?? item.name}
       <article class="artifact-card" role="listitem">
@@ -132,6 +137,15 @@
     grid-column: span 2;
   }
 
+  .artifact-grid--seven .artifact-card:nth-child(1) {
+    grid-column: 1 / -1;
+    grid-template-rows: auto auto auto;
+  }
+
+  .artifact-grid--seven .artifact-card:nth-child(n + 2) {
+    grid-column: span 2;
+  }
+
   .artifact-card {
     display: grid;
     gap: 0.65rem;
@@ -185,6 +199,10 @@
     .artifact-card:nth-child(2),
     .artifact-card:nth-child(n + 3) {
       grid-column: auto;
+    }
+
+    .artifact-grid--seven .artifact-card:nth-child(1) {
+      grid-column: 1 / -1;
     }
   }
 

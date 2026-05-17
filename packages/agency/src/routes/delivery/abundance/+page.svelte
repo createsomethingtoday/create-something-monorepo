@@ -513,12 +513,23 @@
   .artifact-grid,
   .layer-grid {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 16px;
+  }
+
+  .artifact-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
   }
 
   .layer-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .artifact-link:nth-child(-n + 3) {
+    grid-column: span 2;
+  }
+
+  .artifact-link:nth-child(n + 4) {
+    grid-column: span 3;
   }
 
   .artifact-link {
@@ -770,6 +781,10 @@
     .evidence-layout,
     .delivery-agent__form div {
       grid-template-columns: 1fr;
+    }
+
+    .artifact-link {
+      grid-column: auto;
     }
 
     .delivery-hero {
