@@ -55,6 +55,36 @@
     'TRMNL'
   ];
 
+  const partnerStackCards = [
+    {
+      name: 'Dify',
+      logo: 'Dify',
+      href: '/dify',
+      role: 'Agent surface',
+      detail:
+        'Dify carries public agent workflows, app-template candidates, marketplace proof, and the affiliate acquisition lane.',
+      motion: 'Service Partner first'
+    },
+    {
+      name: 'Cloudflare',
+      logo: 'Cloudflare Workers',
+      href: '/cloudflare',
+      role: 'Runtime substrate',
+      detail:
+        'Cloudflare carries Workers, Pages, D1, remote MCP endpoints, rollback notes, and production delivery evidence.',
+      motion: 'PowerUP Consult first'
+    },
+    {
+      name: 'Notion',
+      logo: 'Notion API',
+      href: '/notion',
+      role: 'Operator workspace',
+      detail:
+        'Notion carries client-readable workspaces, PM visibility, template proof, and source-of-truth boundaries.',
+      motion: 'Solutions Partner first'
+    }
+  ];
+
   const deliveryArtifacts = [
     {
       displayName: 'Workflow map',
@@ -269,6 +299,53 @@
         <a class="stack-link" href="/partners">Review partner stack</a>
       </div>
     </div>
+  </div>
+</section>
+
+<section class="partner-section">
+  <div class="shell-inner-pad partner-shell">
+    <div class="section-lead">
+      <BlurFade>
+        <span class="product-kicker">Partner stack</span>
+      </BlurFade>
+      <BlurFade delay={0.05}>
+        <h2>Dify, Cloudflare, and Notion are one governed delivery story.</h2>
+      </BlurFade>
+      <BlurFade delay={0.1}>
+        <p>
+          The partner motion now mirrors the operating model: agents need a surface, workflows need
+          a runtime, and operators need a workspace. The public posture stays application-ready
+          without claiming approval before each program accepts CREATE SOMETHING.
+        </p>
+      </BlurFade>
+    </div>
+
+    <div class="partner-stack-grid">
+      {#each partnerStackCards as card, index}
+        <BlurFade delay={0.15 + index * 0.05}>
+          <a class="product-surface partner-stack-card" href={card.href}>
+            <div class="partner-stack-card__header">
+              <span class="partner-stack-card__logo" aria-hidden="true">
+                <BrandLogo name={card.logo} size={24} />
+              </span>
+              <div>
+                <span>{card.role}</span>
+                <h3>{card.name}</h3>
+              </div>
+            </div>
+            <p>{card.detail}</p>
+            <strong>{card.motion}</strong>
+          </a>
+        </BlurFade>
+      {/each}
+    </div>
+
+    <BlurFade delay={0.32}>
+      <div class="partner-stack-actions">
+        <a class="stack-link" href="/partners">Review full partner stack</a>
+        <a class="stack-link" href="/book">Map a partner-grade workflow</a>
+      </div>
+    </BlurFade>
   </div>
 </section>
 
@@ -612,6 +689,7 @@
   }
 
   .signal-section,
+  .partner-section,
   .control-section,
   .ink-section,
   .capability-section,
@@ -668,6 +746,79 @@
     letter-spacing: 0.08em;
     text-transform: uppercase;
     text-decoration: none;
+  }
+
+  .partner-shell {
+    display: grid;
+    gap: 1.1rem;
+  }
+
+  .partner-stack-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.9rem;
+  }
+
+  .partner-stack-card {
+    display: grid;
+    min-height: 16rem;
+    gap: 0.9rem;
+    align-content: start;
+    padding: clamp(1rem, 2.4vw, 1.35rem);
+    text-decoration: none;
+  }
+
+  .partner-stack-card__header {
+    display: flex;
+    gap: 0.85rem;
+    align-items: center;
+  }
+
+  .partner-stack-card__logo {
+    display: inline-grid;
+    place-items: center;
+    flex: 0 0 auto;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 0.9rem;
+    border: 1px solid var(--color-shell-border-default);
+    background: rgba(255, 255, 255, 0.04);
+  }
+
+  .partner-stack-card span,
+  .partner-stack-card strong {
+    color: var(--color-fg-muted);
+    font-family: var(--font-mono);
+    font-size: 0.74rem;
+    letter-spacing: 0;
+    line-height: 1.45;
+    text-transform: uppercase;
+  }
+
+  .partner-stack-card h3 {
+    margin: 0;
+    color: var(--color-fg-primary);
+    font-size: 1.3rem;
+    line-height: 1.12;
+    letter-spacing: 0;
+  }
+
+  .partner-stack-card p {
+    margin: 0;
+    color: var(--color-fg-secondary);
+    line-height: 1.7;
+    text-wrap: pretty;
+  }
+
+  .partner-stack-card strong {
+    color: var(--color-fg-primary);
+  }
+
+  .partner-stack-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: center;
   }
 
   .signal-pill {
@@ -869,7 +1020,8 @@
 
     .metric-grid,
     .capability-grid,
-    .offer-grid {
+    .offer-grid,
+    .partner-stack-grid {
       grid-template-columns: 1fr;
     }
 
@@ -887,10 +1039,15 @@
     }
 
     .signal-shell,
+    .partner-stack-card,
     .capability-card,
     .offer-card,
     .cta-panel {
       padding: 1rem;
+    }
+
+    .partner-stack-card {
+      padding-right: 4.2rem;
     }
 
     .signal-pill {
