@@ -203,26 +203,26 @@
         </BlurFade>
 
         <BlurFade delay={0.05}>
-          <h1 class="hero-title">Calm, transparent AI systems for the operator who has to own the outcome.</h1>
+          <h1 class="hero-title">Make the workflow safe enough to trust.</h1>
         </BlurFade>
 
         <BlurFade delay={0.1}>
           <p class="hero-detail">
-            CREATE SOMETHING is the operating toolchain I use as a solo operator to complete the
-            outcome. Reputable services make the work transparent; the moat is the calm, reliable
-            workflow built around your business.
+            For the operator who has to answer for what happens next. CREATE SOMETHING fixes the
+            workflow creating the most drag, then adds approvals, visibility, and recovery paths as
+            the stakes rise.
           </p>
         </BlurFade>
 
         <BlurFade delay={0.15}>
           <div class="hero-actions">
             <Button href="/book">{agencyCoreMessaging.bookMappingSessionLabel}</Button>
-            <Button href="/stack" variant="secondary">See The Stack</Button>
+            <Button href="/services" variant="secondary">See The Operating Model</Button>
           </div>
         </BlurFade>
 
         <BlurFade delay={0.2}>
-          <p class="hero-note">Connect. Automate. Govern. Operate.</p>
+          <p class="hero-note">Scoped delivery. Clear controls. Portable artifacts.</p>
         </BlurFade>
       </div>
     </div>
@@ -445,7 +445,7 @@
       <BlurFade delay={0.15}>
         <div class="hero-actions hero-actions--center">
           <Button href="/book">{agencyCoreMessaging.bookMappingSessionLabel}</Button>
-          <Button href="/stack" variant="secondary">See The Stack</Button>
+          <Button href="/services" variant="secondary">See The Operating Model</Button>
         </div>
       </BlurFade>
     </div>
