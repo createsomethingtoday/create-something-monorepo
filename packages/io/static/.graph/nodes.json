@@ -4102,15 +4102,15 @@
     "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/docs/guides/COMPONENT_GUIDE.md"
   },
   {
-    "id": "docs/guides/ATLAS_LOOM_INTEGRATION.md",
-    "title": "AI Interaction Atlas + Loom Integration",
+    "id": "docs/guides/ATLAS_LINEAR_INTEGRATION.md",
+    "title": "AI Interaction Atlas + Linear Integration",
     "package": null,
     "type": "general",
     "concepts": [],
     "hash": "6736b95aea4b0099",
     "wordCount": 548,
     "lastModified": "2026-02-04T13:53:58.292Z",
-    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/docs/guides/ATLAS_LOOM_INTEGRATION.md"
+    "absolutePath": "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/docs/guides/ATLAS_LINEAR_INTEGRATION.md"
   },
   {
     "id": "papers/published/webflow-dashboard-refactor.md",
