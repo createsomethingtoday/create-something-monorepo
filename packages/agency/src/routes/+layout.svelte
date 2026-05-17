@@ -42,6 +42,9 @@
 		{ label: 'Proof Surfaces', href: '/products' },
 		{ label: 'About', href: '/about' }
 	];
+	const primaryBookingHref = $derived(
+		$page.url.pathname === '/services' ? agencyCoreMessaging.servicesMappingSessionHref : '/book'
+	);
 
 	// Quick access items for unified search
 	const quickAccessItems = [
@@ -150,7 +153,7 @@
 		currentPath={$page.url.pathname}
 		fixed={true}
 		ctaLabel={agencyCoreMessaging.bookMappingSessionLabel}
-		ctaHref="/book"
+		ctaHref={primaryBookingHref}
 		user={data.user}
 		onLogout={handleLogout}
 		showLogin={true}
@@ -176,7 +179,7 @@
 			{ label: 'About', href: '/about' },
 			{ label: 'Security', href: '/security' },
 			{ label: 'Bearer Token Policy', href: '/bearer-token-policy' },
-			{ label: agencyCoreMessaging.bookMappingSessionLabel, href: '/book' }
+			{ label: agencyCoreMessaging.bookMappingSessionLabel, href: primaryBookingHref }
 		]}
 		showSocial={true}
 		isAuthenticated={!!data.user}

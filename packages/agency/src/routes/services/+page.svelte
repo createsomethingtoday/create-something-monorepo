@@ -248,7 +248,7 @@
 
       <BlurFade delay={0.15}>
         <div class="hero-actions">
-          <Button href="/book">{agencyCoreMessaging.bookMappingSessionLabel}</Button>
+          <Button href={agencyCoreMessaging.servicesMappingSessionHref}>{agencyCoreMessaging.bookMappingSessionLabel}</Button>
           <Button href="#offer-ladder" variant="secondary">See Offer Ladder</Button>
         </div>
       </BlurFade>
@@ -457,6 +457,7 @@
         eyebrow="First call"
         title="The mapping session is where the buyer stops guessing."
         description="We turn the messy workflow into an inspectable plan: what connects, what runs, what pauses, what stops, and what artifact proves the first build."
+        ctaHref={agencyCoreMessaging.servicesMappingSessionHref}
       />
     </BlurFade>
   </div>
@@ -503,7 +504,7 @@
       </BlurFade>
       <BlurFade delay={0.15}>
         <div class="hero-actions hero-actions--center">
-          <Button href="/book">{agencyCoreMessaging.bookMappingSessionLabel}</Button>
+          <Button href={agencyCoreMessaging.servicesMappingSessionHref}>{agencyCoreMessaging.bookMappingSessionLabel}</Button>
           <Button href="/products" variant="secondary">See Proof Surfaces</Button>
         </div>
       </BlurFade>
