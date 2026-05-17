@@ -6,13 +6,26 @@
   import SystemBoundaryMap from '$lib/components/SystemBoundaryMap.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
-  const stackRoles = [
+  type StackRole = {
+    name: string;
+    role: string;
+    why: string;
+    createSomething: string;
+    portable: string;
+    logos?: string[];
+    href?: string;
+    hrefLabel?: string;
+  };
+
+  const stackRoles: StackRole[] = [
     {
       name: 'Cloudflare',
       role: 'Runtime and durable data',
       why: 'Workers, D1, Durable Objects, queues, and edge routes keep the system deployable without a heavyweight client-owned platform team.',
       createSomething: 'CREATE SOMETHING owns the Worker code, MCP routes, data model, policy hooks, and deployment runbook.',
-      portable: 'Source code, schemas, migration files, wrangler config, runbooks, and rollback notes.'
+      portable: 'Source code, schemas, migration files, wrangler config, runbooks, and rollback notes.',
+      href: '/cloudflare',
+      hrefLabel: 'Cloudflare lane'
     },
     {
       name: 'Composio',
@@ -26,7 +39,18 @@
       role: 'Agent and workflow packaging',
       why: 'Dify is useful when a workflow needs a visible agent surface, repeatable server cards, or lightweight operator-facing automation.',
       createSomething: 'CREATE SOMETHING keeps server IDs stable, documents tool dependencies, and tests the agent against real workflow behavior.',
-      portable: 'Agent DSL, MCP intake artifacts, server cards, smoke checks, and workflow notes.'
+      portable: 'Agent DSL, MCP intake artifacts, server cards, smoke checks, and workflow notes.',
+      href: '/dify',
+      hrefLabel: 'Dify lane'
+    },
+    {
+      name: 'Notion',
+      role: 'Operator workspace',
+      why: 'Notion is useful when the workflow needs PM visibility, client-readable evidence, template distribution, or human review around agent work.',
+      createSomething: 'CREATE SOMETHING defines the workspace model, source-of-truth boundary, automation path, read/write policy, and template-safe evidence.',
+      portable: 'Workspace map, view definitions, template instructions, data-source notes, Worker/MCP boundaries, and evidence model.',
+      href: '/notion',
+      hrefLabel: 'Notion lane'
     },
     {
       name: 'OpenAI',
@@ -196,8 +220,8 @@
 
 <SEO
   title="Stack & Boundaries | CREATE SOMETHING .agency"
-  description="How CREATE SOMETHING uses Cloudflare, Composio, Dify, OpenAI, Webflow, TRMNL, Linear, Infisical, and Auth0 without turning vendor names into the product."
-  keywords="transparent AI stack, MCP stack, vendor boundaries, Composio, Cloudflare, Dify, OpenAI, Webflow, TRMNL, Policy OS"
+  description="How CREATE SOMETHING uses Cloudflare, Composio, Dify, Notion, OpenAI, Webflow, TRMNL, Linear, Infisical, and Auth0 without turning vendor names into the product."
+  keywords="transparent AI stack, MCP stack, vendor boundaries, Composio, Cloudflare, Dify, Notion, OpenAI, Webflow, TRMNL, Policy OS"
   ogImage="/og-image.svg"
   propertyName="agency"
 />
@@ -223,6 +247,7 @@
         <div class="hero-actions">
           <Button href="/book">{agencyCoreMessaging.bookMappingSessionLabel}</Button>
           <Button href="/services" variant="secondary">See The Operating Model</Button>
+          <Button href="/partners" variant="secondary">See Partner Stack</Button>
         </div>
       </BlurFade>
     </div>
@@ -346,6 +371,9 @@
                 <dd>{role.portable}</dd>
               </div>
             </dl>
+            {#if role.href}
+              <a class="vendor-card__link" href={role.href}>{role.hrefLabel ?? 'Partner lane'}</a>
+            {/if}
           </article>
         </BlurFade>
       {/each}
@@ -674,6 +702,17 @@
     display: grid;
     gap: 0.85rem;
     margin: 0;
+  }
+
+  .vendor-card__link {
+    width: fit-content;
+    margin-top: 0.1rem;
+    color: var(--color-fg-primary);
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-decoration: none;
   }
 
   .vendor-card dl div,

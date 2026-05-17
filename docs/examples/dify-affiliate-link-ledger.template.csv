@@ -1,0 +1,5 @@
+surface,url,audience,disclosure_present,link_type,date_added,status,notes
+createsomething.agency /dify,https://createsomething.agency/dify,operators,no,direct,,draft,Replace direct Dify references only after affiliate acceptance and disclosure update.
+createsomething.agency /dify/mcp-control-plane,https://createsomething.agency/dify/mcp-control-plane,builders,no,direct,,draft,Use as first high-intent content surface for Dify plus MCP education.
+newsletter TBD,,builders,no,direct,,planned,Declare newsletter channel in affiliate dashboard before adding affiliate links.
+video/social TBD,,agencies,no,direct,,planned,Declare exact channel in affiliate dashboard before adding affiliate links.

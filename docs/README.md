@@ -19,6 +19,13 @@ Read in this order when you need broad repo context:
 
 - [MCP_FIRST_THESIS.md](./MCP_FIRST_THESIS.md)
 - [POLICY_OS_PRODUCT_DEFINITION.md](./POLICY_OS_PRODUCT_DEFINITION.md)
+- [PARTNER_STACK_LEAD_PACKET.md](./PARTNER_STACK_LEAD_PACKET.md)
+- [CLOUDFLARE_PARTNER_LEAD_PACKET.md](./CLOUDFLARE_PARTNER_LEAD_PACKET.md)
+- [DIFY_PARTNER_AFFILIATE_LEAD_PACKET.md](./DIFY_PARTNER_AFFILIATE_LEAD_PACKET.md)
+- [NOTION_PARTNER_LEAD_PACKET.md](./NOTION_PARTNER_LEAD_PACKET.md)
+- [internal/partnership-applications/cloudflare-partner.md](./internal/partnership-applications/cloudflare-partner.md)
+- [internal/partnership-applications/dify-partner-affiliate.md](./internal/partnership-applications/dify-partner-affiliate.md)
+- [internal/partnership-applications/notion-partner.md](./internal/partnership-applications/notion-partner.md)
 - [AGENCY_CODEX_VECTOR_STRATEGY.md](./AGENCY_CODEX_VECTOR_STRATEGY.md)
 - [MIXED_STACK_CLIENT_MCP_OFFER_ASSESSMENT_2026-03-09.md](./MIXED_STACK_CLIENT_MCP_OFFER_ASSESSMENT_2026-03-09.md)
 - [FUNNEL_AND_DISCOVERY_STRATEGY_2026-03-09.md](./FUNNEL_AND_DISCOVERY_STRATEGY_2026-03-09.md)
@@ -77,7 +84,9 @@ Read in this order when you need broad repo context:
 
 - [AUTH0_SUBJECT_REBIND_RUNBOOK.md](./AUTH0_SUBJECT_REBIND_RUNBOOK.md)
 - [CS_HUB_VAULT_ROTATION_WORKFLOW.md](./CS_HUB_VAULT_ROTATION_WORKFLOW.md)
+- [DM_HUB_CLIENT_ONBOARDING.md](./DM_HUB_CLIENT_ONBOARDING.md)
 - [guides/AGENCY_SERVICE_TIER_MIGRATION_RUNBOOK_2026-03-09.md](./guides/AGENCY_SERVICE_TIER_MIGRATION_RUNBOOK_2026-03-09.md)
+- [guides/DIFY_PARTNER_AFFILIATE_OPERATING_RUNBOOK.md](./guides/DIFY_PARTNER_AFFILIATE_OPERATING_RUNBOOK.md)
 - [LINEAR_COORDINATION.md](./LINEAR_COORDINATION.md)
 - [MCP_HUB_REMOTE_DEPLOY.md](./MCP_HUB_REMOTE_DEPLOY.md)
 - [guides/POLICY_OS_GATING_DEPLOY_CHECKLIST_2026-03-09.md](./guides/POLICY_OS_GATING_DEPLOY_CHECKLIST_2026-03-09.md)
@@ -127,10 +136,20 @@ docs/
   [COMPOSIO_PATTERNS.md](./COMPOSIO_PATTERNS.md),
   [MCP_FLEET_REGISTRY.md](./MCP_FLEET_REGISTRY.md)
 
+- **Working on Cloudflare partner or runtime positioning**:
+  [PARTNER_STACK_LEAD_PACKET.md](./PARTNER_STACK_LEAD_PACKET.md),
+  [CLOUDFLARE_PARTNER_LEAD_PACKET.md](./CLOUDFLARE_PARTNER_LEAD_PACKET.md),
+  [internal/partnership-applications/cloudflare-partner.md](./internal/partnership-applications/cloudflare-partner.md),
+  [MCP_HUB_REMOTE_DEPLOY.md](./MCP_HUB_REMOTE_DEPLOY.md),
+  [REMOTE_MCP_IDENTITY_STANDARD.md](./REMOTE_MCP_IDENTITY_STANDARD.md)
+
 - **Working with Notion Workers or Notion API migrations**:
+  [PARTNER_STACK_LEAD_PACKET.md](./PARTNER_STACK_LEAD_PACKET.md),
   [guides/NOTION_WORKERS_AND_CLI_2026.md](./guides/NOTION_WORKERS_AND_CLI_2026.md),
   [guides/NOTION_API_COMPATIBILITY_AUDIT_2026.md](./guides/NOTION_API_COMPATIBILITY_AUDIT_2026.md),
   [guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md](./guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md),
+  [NOTION_PARTNER_LEAD_PACKET.md](./NOTION_PARTNER_LEAD_PACKET.md),
+  [internal/partnership-applications/notion-partner.md](./internal/partnership-applications/notion-partner.md),
   [COMPOSIO_PATTERNS.md](./COMPOSIO_PATTERNS.md)
 
 - **Changing policy or approval behavior**:
@@ -148,8 +167,12 @@ docs/
   [OPENAI_AGENT_SDK_HALFDOZEN_SMOKE.md](./OPENAI_AGENT_SDK_HALFDOZEN_SMOKE.md)
 
 - **Managing Dify agents over MCPs**:
+  [PARTNER_STACK_LEAD_PACKET.md](./PARTNER_STACK_LEAD_PACKET.md),
   [guides/DIFY_FIRST_AGENT_CONTROL_PLANE.md](./guides/DIFY_FIRST_AGENT_CONTROL_PLANE.md),
   [guides/DIFY_WORKSPACE_INVENTORY.md](./guides/DIFY_WORKSPACE_INVENTORY.md),
+  [DIFY_PARTNER_AFFILIATE_LEAD_PACKET.md](./DIFY_PARTNER_AFFILIATE_LEAD_PACKET.md),
+  [guides/DIFY_PARTNER_AFFILIATE_OPERATING_RUNBOOK.md](./guides/DIFY_PARTNER_AFFILIATE_OPERATING_RUNBOOK.md),
+  [internal/partnership-applications/dify-partner-affiliate.md](./internal/partnership-applications/dify-partner-affiliate.md),
   [DIFY_WORKSPACE_INVENTORY.generated.md](./DIFY_WORKSPACE_INVENTORY.generated.md),
   [DIFY_MCP_COVERAGE.generated.md](./DIFY_MCP_COVERAGE.generated.md),
   [guides/DIFY_YOUTUBE_TRANSCRIPT_NOTION_AGENT.md](./guides/DIFY_YOUTUBE_TRANSCRIPT_NOTION_AGENT.md)

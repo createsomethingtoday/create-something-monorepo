@@ -48,6 +48,7 @@
     'Cloudflare Workers',
     'Composio',
     'Dify',
+    'Notion',
     'OpenAI',
     'Webflow',
     'Linear',
@@ -263,7 +264,10 @@
         {/each}
       </div>
 
-      <a class="stack-link" href="/stack">Review stack boundaries</a>
+      <div class="signal-actions">
+        <a class="stack-link" href="/stack">Review stack boundaries</a>
+        <a class="stack-link" href="/partners">Review partner stack</a>
+      </div>
     </div>
   </div>
 </section>
@@ -647,6 +651,13 @@
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 0.7rem;
+  }
+
+  .signal-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: center;
   }
 
   .stack-link {

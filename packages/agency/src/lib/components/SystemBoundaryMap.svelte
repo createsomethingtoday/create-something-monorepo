@@ -1,7 +1,7 @@
 <script lang="ts">
   import BrandLogo from '$lib/components/BrandLogo.svelte';
 
-  const vendorMarks = ['Cloudflare Workers', 'Composio', 'Dify', 'OpenAI', 'Webflow', 'Linear'];
+  const vendorMarks = ['Cloudflare Workers', 'Composio', 'Dify', 'Notion', 'OpenAI', 'Linear'];
 
   const boundaryNotes = [
     {

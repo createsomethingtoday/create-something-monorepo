@@ -38,6 +38,7 @@
 	const navLinks = [
 		{ label: 'How I Work', href: '/services' },
 		{ label: 'Stack', href: '/stack' },
+		{ label: 'Partners', href: '/partners' },
 		{ label: 'Proof Surfaces', href: '/products' },
 		{ label: 'About', href: '/about' }
 	];
@@ -46,6 +47,10 @@
 	const quickAccessItems = [
 		{ id: 'nav-services', label: 'How I Work', description: 'Calm, transparent workflow systems and governed execution', href: '/services', icon: '🔨', keywords: ['workflow system', 'calm', 'transparent', 'reliable', 'governed execution', 'automation', 'pricing', 'services'] },
 		{ id: 'nav-stack', label: 'Stack', description: 'Vendor roles, portability boundaries, and delivery ownership', href: '/stack', icon: '🧭', keywords: ['stack', 'vendors', 'boundaries', 'composio', 'cloudflare', 'webflow', 'dify', 'openai', 'trmnl'] },
+		{ id: 'nav-partners', label: 'Partners', description: 'Unified Dify, Cloudflare, and Notion partner application stack', href: '/partners', icon: 'P', keywords: ['partners', 'partner stack', 'dify', 'cloudflare', 'notion', 'affiliate', 'marketplace', 'solutions partner'] },
+		{ id: 'nav-cloudflare', label: 'Cloudflare', description: 'Cloudflare runtime substrate, PowerUP consult path, and agency account-management lane', href: '/cloudflare', icon: 'CF', keywords: ['cloudflare', 'partner', 'powerup', 'workers', 'pages', 'd1', 'durable objects', 'remote mcp', 'self-serve agency'] },
+		{ id: 'nav-dify', label: 'Dify', description: 'Dify implementation lane, partner application proof, and affiliate funnel', href: '/dify', icon: 'D', keywords: ['dify', 'partner', 'affiliate', 'marketplace', 'service partner', 'agent runtime', 'policy os'] },
+		{ id: 'nav-notion', label: 'Notion', description: 'Notion Solutions Partner lane, templates, builders, and operator workspace proof', href: '/notion', icon: 'N', keywords: ['notion', 'solutions partner', 'templates', 'builders', 'workers', 'mcp', 'operator workspace'] },
 		{ id: 'nav-products', label: 'Proof Surfaces', description: 'Proof surfaces for MCPs, agent tools, and Policy OS', href: '/products', icon: '📦', keywords: ['portfolio', 'tools', 'integrations', 'proof surfaces'] },
 		{ id: 'nav-book', label: agencyCoreMessaging.bookMappingSessionLabel, description: 'Map the workflow, MCP wedge, and decision states', href: '/book', icon: '📞', keywords: ['contact', 'hire', 'start', 'book', 'mapping', 'session', 'workflow system'] },
 		{ id: 'nav-mcp-access', label: 'MCP Access', description: 'Reveal, copy, rotate, and revoke your personal bearer token', href: '/mcp-access', icon: '🗝️', keywords: ['mcp access', 'bearer token', 'copy token', 'host setup', 'codex', 'claude', 'cursor'] },
@@ -163,6 +168,10 @@
 		quickLinks={[
 			{ label: 'How I Work', href: '/services' },
 			{ label: 'Stack', href: '/stack' },
+			{ label: 'Partners', href: '/partners' },
+			{ label: 'Cloudflare', href: '/cloudflare' },
+			{ label: 'Dify', href: '/dify' },
+			{ label: 'Notion', href: '/notion' },
 			{ label: 'Proof Surfaces', href: '/products' },
 			{ label: 'About', href: '/about' },
 			{ label: 'Security', href: '/security' },
