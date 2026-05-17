@@ -11,6 +11,8 @@ const require = createRequire(import.meta.url);
 const workersEntry = require.resolve('@notionhq/workers');
 const workersPackagePath = resolve(dirname(workersEntry), '../package.json');
 const workersPackage = JSON.parse(await readFile(workersPackagePath, 'utf8'));
+const PACKAGE_JSON_REQUIRE_PATTERN =
+  /const\s+([A-Za-z_$][\w$]*)\s*=\s*[A-Za-z_$][\w$]*\((["'])\.\.\/package\.json\2\);/;
 
 await build({
   bundle: true,
@@ -24,14 +26,15 @@ await build({
 });
 
 const bundledSource = await readFile(outputPath, 'utf8');
-const sdkVersionRequire = 'const packageJson = require2("../package.json");';
-const patchedSource = bundledSource.replace(
-  sdkVersionRequire,
-  `const packageJson = { version: ${JSON.stringify(workersPackage.version)} };`
-);
-
-if (patchedSource === bundledSource) {
-  throw new Error('Expected @notionhq/workers SDK version require snippet was not found.');
+const patchMatch = bundledSource.match(PACKAGE_JSON_REQUIRE_PATTERN);
+if (!patchMatch) {
+  throw new Error('Expected @notionhq/workers package.json require snippet was not found.');
 }
+
+const [, packageJsonBinding] = patchMatch;
+const patchedSource = bundledSource.replace(
+  PACKAGE_JSON_REQUIRE_PATTERN,
+  `const ${packageJsonBinding} = { version: ${JSON.stringify(workersPackage.version)} };`
+);
 
 await writeFile(outputPath, patchedSource);
