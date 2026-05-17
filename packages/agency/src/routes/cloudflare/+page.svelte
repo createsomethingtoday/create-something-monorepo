@@ -240,6 +240,10 @@
             <Button href="/partners" variant="secondary">See Partner Stack</Button>
           </div>
         </BlurFade>
+
+        <BlurFade delay={0.18}>
+          <p class="hero-note">Route. Gate. State. Prove.</p>
+        </BlurFade>
       </div>
 
       <BlurFade delay={0.2}>
@@ -535,7 +539,8 @@
         rgba(3, 3, 4, 0.08) 22%,
         rgba(3, 3, 4, 0.24) 58%,
         rgba(3, 3, 4, 0.46) 100%
-      );
+      ),
+      radial-gradient(circle at 16% 52%, rgba(3, 3, 4, 0.18) 0%, transparent 38%);
   }
 
   .cloudflare-hero :global(.hero-signal-field) {
@@ -557,6 +562,25 @@
     display: grid;
     gap: 1.1rem;
     max-width: 47rem;
+  }
+
+  .cloudflare-hero .hero-copy .product-kicker {
+    width: fit-content;
+    padding: 0.38rem 0.7rem 0.4rem;
+    border: 1px solid rgba(91, 125, 255, 0.16);
+    border-radius: 999px;
+    background: rgba(8, 10, 14, 0.62);
+    box-shadow:
+      inset 0 0 0 1px rgba(255, 255, 255, 0.02),
+      0 10px 30px rgba(0, 0, 0, 0.18);
+    backdrop-filter: blur(12px);
+  }
+
+  .cloudflare-hero .hero-copy .product-kicker::before {
+    width: 0.38rem;
+    height: 0.38rem;
+    background: rgba(59, 109, 255, 0.96);
+    box-shadow: 0 0 14px rgba(70, 154, 255, 0.38);
   }
 
   .cloudflare-hero .hero-title {
@@ -582,6 +606,15 @@
     flex-wrap: wrap;
     gap: 0.85rem;
     align-items: center;
+  }
+
+  .hero-note {
+    margin: 0;
+    color: var(--color-fg-muted);
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    letter-spacing: 0;
+    text-transform: uppercase;
   }
 
   .cloudflare-brief {
