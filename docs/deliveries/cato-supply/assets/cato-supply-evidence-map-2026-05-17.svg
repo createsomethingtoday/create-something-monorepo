@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="620" viewBox="0 0 1200 620">
+<rect width="1200" height="620" fill="#f8fafc"/>
+<text x="70" y="72" font-size="34" font-weight="800" fill="#0f172a">Cato Insights Evidence Map</text>
+<text x="70" y="108" font-size="18" fill="#475569">Generated 2026-05-17 - client-facing proof paths from the monorepo</text>
+<text x="96" y="146" font-size="14" font-weight="700" fill="#64748b">DELIVERED COMPONENT</text>
+<text x="595" y="146" font-size="14" font-weight="700" fill="#64748b">REPO EVIDENCE</text>
+
+<rect x="70" y="165" width="1060" height="116" rx="9" fill="#ffffff" stroke="#cbd5e1"/>
+<text x="96" y="199" font-size="19" fill="#0f172a">Mock CMS model: Insights records, categories,</text>
+<text x="96" y="223" font-size="19" fill="#0f172a">archive routing, and detail-page content shape</text>
+<text x="96" y="255" font-size="15" fill="#475569">ready-for-review - Database</text>
+<text x="660" y="199" font-size="14" fill="#334155">- packages/agency/clients/cato-supply-insights-review/site/data/insights-cms.json</text>
+<text x="660" y="221" font-size="14" fill="#334155">- packages/agency/clients/cato-supply-insights-review/site/scripts/render-insights-cms.mjs</text>
+<text x="660" y="243" font-size="14" fill="#334155">- packages/agency/clients/cato-supply-insights-review/site/insights.html</text>
+
+<rect x="70" y="303" width="1060" height="116" rx="9" fill="#ffffff" stroke="#cbd5e1"/>
+<text x="96" y="337" font-size="19" fill="#0f172a">Review surface: Cloudflare Pages review build</text>
+<text x="96" y="361" font-size="19" fill="#0f172a">and local validation package</text>
+<text x="96" y="393" font-size="15" fill="#475569">deployed - Automation</text>
+<text x="660" y="337" font-size="14" fill="#334155">- packages/agency/clients/cato-supply-insights-review/package.json</text>
+<text x="660" y="359" font-size="14" fill="#334155">- packages/agency/clients/cato-supply-insights-review/site</text>
+<text x="660" y="381" font-size="14" fill="#334155">- packages/agency/clients/cato-supply-insights-review/verification/screenshots</text>
+
+<rect x="70" y="441" width="1060" height="116" rx="9" fill="#ffffff" stroke="#cbd5e1"/>
+<text x="96" y="475" font-size="19" fill="#0f172a">Webflow handoff: Draft native port boundary and</text>
+<text x="96" y="499" font-size="19" fill="#0f172a">production publishing guardrail</text>
+<text x="96" y="531" font-size="15" fill="#475569">staged-not-published - Judgment</text>
+<text x="660" y="475" font-size="14" fill="#334155">- packages/agency/clients/cato-supply-insights-review/docs/notion-progress-update-2026-05-16.md</text>
+<text x="660" y="497" font-size="14" fill="#334155">- packages/agency/clients/cato-supply-insights-review/docs/webflow-port-notes-2026-05-16.md</text>
+<text x="660" y="519" font-size="14" fill="#334155">- packages/agency/clients/cato-supply-insights-review/README.md</text>
+</svg>

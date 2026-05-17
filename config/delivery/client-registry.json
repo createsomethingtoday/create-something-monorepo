@@ -13,6 +13,7 @@
       "notionContext": {
         "source": "CREATE SOMETHING Notion / Agency Ops",
         "workspaceRoot": "CREATE SOMETHING",
+        "contextLine": "This Cato registry entry is prepared for the private Cato client and engagement records in CREATE SOMETHING Notion / Agency Ops; mirror it into Notion when the connector is available.",
         "sourceDatabases": [
           "Clients",
           "Engagements"
@@ -188,6 +189,93 @@
           "CRE-182",
           "CRE-183"
         ]
+      }
+    },
+    "cato-supply": {
+      "name": "Cato Supply",
+      "shortName": "Cato",
+      "deliveryOwner": "CREATE SOMETHING",
+      "status": "active",
+      "visibility": "client_summary",
+      "projects": [
+        "cato-supply"
+      ],
+      "notionContext": {
+        "source": "CREATE SOMETHING Notion / Agency Ops",
+        "workspaceRoot": "CREATE SOMETHING",
+        "sourceDatabases": [
+          "Clients",
+          "Engagements"
+        ],
+        "engagementTitle": "Cato Supply — Insights CMS and navigation review",
+        "phase": "Client review",
+        "status": "Active",
+        "reviewedAt": "2026-05-16",
+        "privacyRule": "Private Notion URLs, contact records, Webflow credentials, and unpublished client data stay out of public delivery artifacts."
+      },
+      "ownerContext": {
+        "primaryChannel": "Email",
+        "priority": "P1",
+        "privatePrimaryContactsPresent": true,
+        "privatePrimaryContactCount": 1,
+        "decisionOwnerStatus": "client_review_pending",
+        "operatorRosterStatus": "not_required_for_static_review",
+        "requiredOwnerRoles": [
+          "Client reviewer for Insights content shape, navigation behavior, and page polish",
+          "Webflow publishing approver for moving staged Designer changes to production",
+          "CMS owner for approving final Insight entries and categories"
+        ],
+        "publicSummary": "Cato has a private primary contact in Notion. Delivery artifacts should describe the review workflow without exposing personal contact details or private workspace links."
+      },
+      "deliveryPages": [
+        {
+          "id": "cato-insights-review",
+          "label": "Cato Insights Review",
+          "status": "deployed",
+          "kind": "cloudflare_pages",
+          "sourcePath": "packages/agency/clients/cato-supply-insights-review",
+          "url": "https://cato-supply-insights-review.pages.dev/insights"
+        }
+      ],
+      "liveSurfaces": [
+        {
+          "id": "cato-webflow-draft",
+          "label": "Cato Webflow Designer draft",
+          "status": "staged-not-published",
+          "kind": "webflow_designer",
+          "role": "Native Webflow Nav component and Insights page structures are staged through MCP but held back from production publishing pending client review."
+        }
+      ],
+      "packages": [
+        {
+          "id": "cato-supply-insights-review-package",
+          "label": "Cato Supply Insights review package",
+          "status": "implemented",
+          "path": "packages/agency/clients/cato-supply-insights-review",
+          "role": "Repo-backed static review surface, mock CMS content, validation screenshots, and Webflow handoff notes."
+        }
+      ],
+      "mcpSurfaces": [
+        {
+          "id": "cato-webflow-mcp",
+          "label": "Cato Webflow MCP Bridge",
+          "status": "used-for-draft-port",
+          "kind": "webflow_mcp_bridge",
+          "evidence": "packages/agency/clients/cato-supply-insights-review/docs/webflow-port-notes-2026-05-16.md",
+          "role": "Designer-side MCP bridge used to stage native Nav component changes without publishing Webflow production domains."
+        }
+      ],
+      "agents": [
+        {
+          "id": "delivery-update-agent",
+          "label": "Delivery Update Agent",
+          "status": "active",
+          "source": "config/delivery/agent.json",
+          "role": "Stages client progress updates from repo-backed evidence while keeping client-send and production publish approval-gated."
+        }
+      ],
+      "coordination": {
+        "linearIssueIds": []
       }
     }
   }

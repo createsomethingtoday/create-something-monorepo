@@ -1,0 +1,493 @@
+{
+  "categories": [
+    {
+      "id": "resiliency",
+      "page": "resiliency-reports.html",
+      "title": "Resiliency Report Alerts",
+      "filterLabel": "Reports",
+      "cardLabel": "Resiliency Reports",
+      "cardTitle": "Market signals for care continuity.",
+      "cardSummary": "Disruption patterns, practical risk analysis, and healthcare supply intelligence for procurement teams.",
+      "cardCta": "Explore reports",
+      "heroSummary": "Subscribe for recurring healthcare supply risk alerts and browse Cato's archive of disruption reports, sourcing signals, and care continuity analysis.",
+      "panelLabel": "Subscribe + archive",
+      "panelTitle": "Built for recurring supply risk reports.",
+      "panelSummary": "Use this page as the entry point for Resiliency Report Alerts and the archive for recurring healthcare supply risk analysis.",
+      "archiveEyebrow": "Archive",
+      "archiveTitle": "Latest Resiliency Reports",
+      "archiveSummary": "Published reports collect here so supply chain, procurement, and clinical operations teams can scan recent disruption signals.",
+      "hasSubscribe": true
+    },
+    {
+      "id": "research",
+      "page": "cato-research.html",
+      "title": "Cato Research",
+      "filterLabel": "Research",
+      "cardLabel": "Cato Research",
+      "cardTitle": "Research on intelligent procurement.",
+      "cardSummary": "Whitepapers and analysis on supply optionality, operational resilience, and clinical value.",
+      "cardCta": "Read research",
+      "heroSummary": "Whitepapers and research on intelligent procurement, supply optionality, and healthcare supply chain resilience.",
+      "panelLabel": "Research archive",
+      "panelTitle": "A home for Cato's procurement point of view.",
+      "panelSummary": "Approved research, whitepapers, and annual reports collect here as Cato's market perspective grows.",
+      "archiveEyebrow": "Research archive",
+      "archiveTitle": "Latest Cato Research",
+      "archiveSummary": "Whitepapers and analysis organized for executives, procurement leaders, and supply chain operators.",
+      "hasSubscribe": false
+    },
+    {
+      "id": "resources",
+      "page": "resource-library.html",
+      "title": "Resource Library",
+      "filterLabel": "Resources",
+      "cardLabel": "Resource Library",
+      "cardTitle": "Guides and operational resources.",
+      "cardSummary": "Explainers, frameworks, and practical resources for supply chain and clinical operations leaders.",
+      "cardCta": "Browse resources",
+      "heroSummary": "Guides, explainers, and operational resources for healthcare procurement, supply chain, and clinical value teams.",
+      "panelLabel": "Resource archive",
+      "panelTitle": "A practical library for supply gap response.",
+      "panelSummary": "Guides, explainers, and briefings collect here for teams managing substitution, shortage, and backorder response.",
+      "archiveEyebrow": "Resource library",
+      "archiveTitle": "Latest Operational Resources",
+      "archiveSummary": "Practical resources for procurement, supply chain, and clinical value teams protecting care continuity.",
+      "hasSubscribe": false
+    },
+    {
+      "id": "newsroom",
+      "page": "newsroom.html",
+      "title": "Newsroom",
+      "filterLabel": "News",
+      "cardLabel": "Newsroom",
+      "cardTitle": "Company updates and announcements.",
+      "cardSummary": "Launch updates, events, media notes, and milestones from the Cato team.",
+      "cardCta": "Visit newsroom",
+      "heroSummary": "Company news, launch updates, events, and announcements from Cato.",
+      "panelLabel": "Latest updates",
+      "panelTitle": "Launches, events, and company milestones.",
+      "panelSummary": "Track Cato announcements, event field notes, media mentions, and product milestones in one newsroom archive.",
+      "archiveEyebrow": "Newsroom archive",
+      "archiveTitle": "Latest Company Updates",
+      "archiveSummary": "Launch notes, event recaps, media mentions, and company announcements collect here as approved Newsroom entries are published.",
+      "hasSubscribe": false
+    }
+  ],
+  "items": [
+    {
+      "id": "supply-disruption-preparedness-brief",
+      "slug": "2026-supply-disruption-preparedness-brief",
+      "category": "resiliency",
+      "resourceType": "Resiliency Report",
+      "pill": "Featured report",
+      "title": "2026 Supply Disruption Preparedness Brief",
+      "summary": "A planning brief for healthcare procurement teams preparing for supplier shortages, backorders, and regional disruption risk.",
+      "date": "May 8, 2026",
+      "ctaLabel": "Read report",
+      "featured": true,
+      "menuFeature": true,
+      "audience": "Procurement, supply chain, and clinical operations teams.",
+      "body": [
+        {
+          "heading": "Why this matters",
+          "paragraphs": [
+            "Healthcare supply disruption planning is moving from exception handling to routine operating discipline. Teams need a repeatable way to identify pressure, evaluate alternatives, and decide when clinical partners should be involved.",
+            "This brief gives procurement and supply chain teams a shared frame for reviewing shortage exposure before backorders turn into care continuity risk."
+          ]
+        },
+        {
+          "heading": "What to watch",
+          "paragraphs": [
+            "Monitor supplier concentration, substitute availability, contract constraints, regional logistics pressure, and product categories with known recall or allocation patterns."
+          ],
+          "bullets": [
+            "Identify SKUs with limited clinical substitutes.",
+            "Track lead-time changes before formal backorder notices arrive.",
+            "Document escalation owners for high-risk categories."
+          ]
+        },
+        {
+          "heading": "How teams can use it",
+          "paragraphs": [
+            "Use the checklist as a meeting artifact for sourcing reviews, value analysis conversations, and recurring supply continuity planning."
+          ]
+        }
+      ],
+      "takeaways": [
+        "Use recurring signals, not one-off alerts.",
+        "Prioritize categories that affect clinical workflows.",
+        "Keep substitute paths visible before disruption."
+      ]
+    },
+    {
+      "id": "backorder-response-planning",
+      "slug": "backorder-response-planning-clinical-teams",
+      "category": "resiliency",
+      "resourceType": "Alert",
+      "pill": "Alert",
+      "title": "Backorder Response Planning for Clinical Teams",
+      "summary": "A rapid-response note for care teams evaluating disrupted items, substitutions, and timing risk.",
+      "date": "May 8, 2026",
+      "ctaLabel": "View alert",
+      "featured": false,
+      "menuFeature": false,
+      "audience": "Clinical value analysis, procurement, and supply chain teams.",
+      "body": [
+        {
+          "heading": "Response planning frame",
+          "paragraphs": [
+            "Backorder response works best when procurement, supply chain, and clinical teams share the same decision sequence. Start with patient impact, then evaluate substitution quality, cost, availability, and training requirements."
+          ]
+        },
+        {
+          "heading": "Operational checks",
+          "paragraphs": [
+            "A response plan should show who owns supplier outreach, who approves clinical substitutions, and when the team will revisit the risk."
+          ],
+          "bullets": [
+            "Confirm projected available inventory.",
+            "Separate clinically acceptable substitutes from purchasing alternatives.",
+            "Record communication needs for affected departments."
+          ]
+        }
+      ],
+      "takeaways": [
+        "Make clinical acceptance visible.",
+        "Separate temporary substitutions from standardization decisions.",
+        "Set a review date for every disruption response."
+      ]
+    },
+    {
+      "id": "regional-sourcing-signal-watchlist",
+      "slug": "regional-sourcing-signal-watchlist",
+      "category": "resiliency",
+      "resourceType": "Watchlist",
+      "pill": "Watchlist",
+      "title": "Regional Sourcing Signal Watchlist",
+      "summary": "A focused scan of sourcing pressure, alternate supply paths, and continuity considerations for healthcare teams.",
+      "date": "May 8, 2026",
+      "ctaLabel": "Open watchlist",
+      "featured": false,
+      "menuFeature": false,
+      "audience": "Healthcare supply chain and sourcing teams.",
+      "body": [
+        {
+          "heading": "Signals to monitor",
+          "paragraphs": [
+            "Regional sourcing pressure often appears first as pricing volatility, delayed confirmations, or tighter substitute availability. Watchlist reporting gives teams a simple place to track those early indicators."
+          ]
+        },
+        {
+          "heading": "Suggested review rhythm",
+          "paragraphs": [
+            "Review the watchlist weekly during active pressure periods, then move to a monthly rhythm once supplier confirmations and substitute paths stabilize."
+          ]
+        }
+      ],
+      "takeaways": [
+        "Watch regional availability patterns.",
+        "Keep alternate supply paths current.",
+        "Review sourcing pressure on a recurring cadence."
+      ]
+    },
+    {
+      "id": "intelligent-procurement-optionality",
+      "slug": "intelligent-procurement-expands-supply-optionality",
+      "category": "research",
+      "resourceType": "Cato Research",
+      "pill": "Cato Research",
+      "title": "How Intelligent Procurement Expands Supply Optionality",
+      "summary": "Cato research on how better market visibility helps care teams evaluate alternatives before shortages become operational blockers.",
+      "date": "May 8, 2026",
+      "ctaLabel": "Read research",
+      "featured": false,
+      "menuFeature": false,
+      "audience": "Executives, procurement leaders, and supply chain operators.",
+      "body": [
+        {
+          "heading": "Research premise",
+          "paragraphs": [
+            "Supply optionality depends on visibility. Teams that can see alternative items, supplier paths, and clinical constraints earlier are better positioned to respond without forcing rushed purchasing decisions."
+          ]
+        },
+        {
+          "heading": "Procurement implications",
+          "paragraphs": [
+            "The strongest procurement programs treat intelligence as an operating layer that connects sourcing, value analysis, and clinical planning."
+          ],
+          "bullets": [
+            "Map equivalent products before disruption.",
+            "Use demand and availability signals together.",
+            "Treat supplier optionality as resilience infrastructure."
+          ]
+        }
+      ],
+      "takeaways": [
+        "Visibility creates optionality.",
+        "Optionality reduces rushed substitutions.",
+        "Procurement intelligence should be shared across functions."
+      ]
+    },
+    {
+      "id": "healthcare-supply-optionality-outlook",
+      "slug": "healthcare-supply-optionality-outlook",
+      "category": "research",
+      "resourceType": "Whitepaper",
+      "pill": "Whitepaper",
+      "title": "Healthcare Supply Optionality Outlook",
+      "summary": "A research perspective on how healthcare organizations can build resilience by widening safe sourcing options.",
+      "date": "May 8, 2026",
+      "ctaLabel": "Read whitepaper",
+      "featured": false,
+      "menuFeature": false,
+      "audience": "Healthcare executives and procurement leaders.",
+      "body": [
+        {
+          "heading": "Outlook summary",
+          "paragraphs": [
+            "Healthcare systems are rethinking sourcing resilience as margin pressure, supplier volatility, and clinical standardization requirements converge."
+          ]
+        },
+        {
+          "heading": "What changes",
+          "paragraphs": [
+            "The next phase of procurement intelligence will favor teams that can evaluate availability, clinical acceptance, and financial impact in one repeatable workflow."
+          ]
+        }
+      ],
+      "takeaways": [
+        "Optionality is a strategic capability.",
+        "Sourcing decisions need clinical and financial context.",
+        "Repeatable workflows scale better than ad hoc workarounds."
+      ]
+    },
+    {
+      "id": "medical-supply-sourcing-checklist",
+      "slug": "medical-supply-sourcing-checklist",
+      "category": "resources",
+      "resourceType": "Resource Library",
+      "pill": "Resource Library",
+      "title": "Medical Supply Sourcing Checklist",
+      "summary": "A practical checklist for teams evaluating disrupted SKUs, substitution options, supplier readiness, and delivery timelines.",
+      "date": "May 8, 2026",
+      "ctaLabel": "View resource",
+      "featured": false,
+      "menuFeature": false,
+      "audience": "Procurement, supply chain, and clinical value teams.",
+      "body": [
+        {
+          "heading": "When to use this checklist",
+          "paragraphs": [
+            "Use this checklist when a product disruption requires a fast, repeatable comparison of alternate SKUs, supplier paths, clinical constraints, and timing risk."
+          ]
+        },
+        {
+          "heading": "Triage the disruption",
+          "paragraphs": [
+            "Start with the facts that determine urgency and decision ownership before comparing substitutions."
+          ],
+          "bullets": [
+            "Current item, manufacturer, contract status, and affected facilities.",
+            "Known inventory, open orders, backorder timing, and supplier confidence.",
+            "Clinical use case, frequency of use, and potential patient-care impact.",
+            "Teams that need to approve substitutions before a switch can happen."
+          ]
+        },
+        {
+          "heading": "Compare viable alternatives",
+          "paragraphs": [
+            "A substitute should be evaluated against supply availability and adoption risk together, not as a purchasing-only decision."
+          ],
+          "bullets": [
+            "Functional match, sizing, sterility, packaging, and documentation requirements.",
+            "Training impact for clinical teams and any change in workflow.",
+            "Pricing variance, freight impact, contract constraints, and approval path.",
+            "Supplier reliability, delivery confidence, and contingency options."
+          ]
+        },
+        {
+          "heading": "Create the decision record",
+          "paragraphs": [
+            "Close the review with a clear recommendation, named owners, and the trigger that would cause the team to revisit the decision."
+          ],
+          "bullets": [
+            "Recommended path and backup option.",
+            "Approvers and implementation owner.",
+            "Expected review date or inventory threshold.",
+            "Open questions for sourcing, clinical, or supplier teams."
+          ]
+        }
+      ],
+      "takeaways": [
+        "Use one repeatable checklist for every disruption review.",
+        "Document clinical constraints before purchasing substitutes.",
+        "Compare availability, cost, and adoption risk in the same decision."
+      ]
+    },
+    {
+      "id": "supply-continuity-briefing",
+      "slug": "supply-continuity-briefing-backorder-risk",
+      "category": "resources",
+      "resourceType": "Webinar",
+      "pill": "Webinar",
+      "title": "Supply Continuity Briefing: Preparing for Backorder Risk",
+      "summary": "A briefing format for procurement, supply chain, and clinical operations teams monitoring supply pressure.",
+      "date": "May 8, 2026",
+      "ctaLabel": "Watch briefing",
+      "featured": false,
+      "menuFeature": false,
+      "audience": "Supply chain, sourcing, and clinical operations leaders.",
+      "body": [
+        {
+          "heading": "Briefing format",
+          "paragraphs": [
+            "This briefing model helps teams move from raw supply updates to coordinated operational decisions."
+          ]
+        },
+        {
+          "heading": "Discussion prompts",
+          "paragraphs": [
+            "Each briefing should answer what changed, what categories are exposed, what alternatives are viable, and which decisions need clinical input."
+          ]
+        }
+      ],
+      "takeaways": [
+        "Make the briefing recurring.",
+        "Tie every signal to an owner.",
+        "Capture decisions for future reviews."
+      ]
+    },
+    {
+      "id": "procurement-intelligence-hub-launch",
+      "slug": "cato-launches-expanded-procurement-intelligence-hub",
+      "category": "newsroom",
+      "resourceType": "Company update",
+      "pill": "Company update",
+      "title": "Cato Launches Expanded Procurement Intelligence Hub",
+      "summary": "A company update introducing Cato's expanded Insights structure for reports, research, resources, and launch news.",
+      "date": "May 8, 2026",
+      "ctaLabel": "Read update",
+      "featured": false,
+      "menuFeature": true,
+      "audience": "Customers, partners, investors, and media contacts.",
+      "body": [
+        {
+          "heading": "Launch summary",
+          "paragraphs": [
+            "Cato is expanding its Insights experience to give healthcare procurement teams a clearer home for recurring reports, research, practical resources, and company news."
+          ]
+        },
+        {
+          "heading": "Why it matters",
+          "paragraphs": [
+            "The new structure makes it easier to publish high-priority updates once and surface them across the hub, category pages, and navigation feature areas."
+          ]
+        }
+      ],
+      "takeaways": [
+        "Insights becomes the hub for Cato's publishing system.",
+        "Category pages can grow as content volume increases.",
+        "Featured items can be promoted in the menu and hub."
+      ]
+    },
+    {
+      "id": "idm-summit-field-notes",
+      "slug": "idm-summit-field-notes-healthcare-sourcing",
+      "category": "newsroom",
+      "resourceType": "Event recap",
+      "pill": "Event recap",
+      "title": "IDM Summit Field Notes for Healthcare Sourcing Teams",
+      "summary": "Event takeaways, customer conversations, and procurement themes worth surfacing for the wider Cato audience.",
+      "date": "May 8, 2026",
+      "ctaLabel": "Read recap",
+      "featured": false,
+      "menuFeature": true,
+      "audience": "Healthcare sourcing leaders, customers, and partners.",
+      "body": [
+        {
+          "heading": "Field notes",
+          "paragraphs": [
+            "The IDM Summit surfaced recurring questions around supply visibility, substitution planning, and how procurement teams can make better use of market signals."
+          ]
+        },
+        {
+          "heading": "What Cato heard",
+          "paragraphs": [
+            "Teams want fewer disconnected updates and more practical intelligence that supports sourcing decisions before a shortage becomes urgent."
+          ]
+        }
+      ],
+      "takeaways": [
+        "Event recaps can become durable audience content.",
+        "Customer questions should feed future research topics.",
+        "The newsroom should connect events back to the Insights hub."
+      ]
+    },
+    {
+      "id": "capstone-launch-brief",
+      "slug": "capstone-launch-brief",
+      "category": "newsroom",
+      "resourceType": "Launch brief",
+      "pill": "Launch brief",
+      "title": "Capstone Launch Brief",
+      "summary": "A short launch brief on how Cato is expanding procurement intelligence for healthcare supply teams.",
+      "date": "May 8, 2026",
+      "ctaLabel": "Read brief",
+      "featured": false,
+      "menuFeature": false,
+      "audience": "Customers, partners, and healthcare procurement leaders.",
+      "body": [
+        {
+          "heading": "Launch context",
+          "paragraphs": [
+            "Capstone gives Cato a way to package product and market updates as concise launch briefs for audiences that need the operational context, not just the announcement."
+          ]
+        },
+        {
+          "heading": "Publishing use",
+          "paragraphs": [
+            "This format can support future partner launches, product milestones, and market-facing announcements."
+          ]
+        }
+      ],
+      "takeaways": [
+        "Launch briefs should stay concise.",
+        "Each brief should connect announcement value to user impact.",
+        "The newsroom can preserve launch history over time."
+      ]
+    },
+    {
+      "id": "healthcare-procurement-coverage",
+      "slug": "healthcare-procurement-coverage",
+      "category": "newsroom",
+      "resourceType": "Media note",
+      "pill": "Media note",
+      "title": "Cato Supply Featured in Healthcare Procurement Coverage",
+      "summary": "Media notes and partner mentions for teams tracking Cato's work across healthcare supply and procurement resilience.",
+      "date": "May 8, 2026",
+      "ctaLabel": "Read note",
+      "featured": false,
+      "menuFeature": false,
+      "audience": "Media, partners, customers, and investors.",
+      "body": [
+        {
+          "heading": "Coverage note",
+          "paragraphs": [
+            "Media notes give Cato a lightweight format for collecting third-party mentions, partner coverage, and relevant market commentary."
+          ]
+        },
+        {
+          "heading": "How to use it",
+          "paragraphs": [
+            "Use this content type when an update is externally visible but does not need a full launch announcement or research treatment."
+          ]
+        }
+      ],
+      "takeaways": [
+        "Keep media notes short and attributable.",
+        "Link back to coverage when available.",
+        "Use the newsroom archive for discoverability."
+      ]
+    }
+  ]
+}

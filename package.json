@@ -204,6 +204,8 @@
     "delivery:project": "node scripts/delivery-update.mjs",
     "delivery:abundance": "node scripts/delivery-update.mjs --project abundance",
     "delivery:abundance:check": "node scripts/delivery-update.mjs --project abundance --check",
+    "delivery:cato-supply": "node scripts/delivery-update.mjs --project cato-supply",
+    "delivery:cato-supply:check": "node scripts/delivery-update.mjs --project cato-supply --check",
     "abundance:smoke:prod": "node scripts/abundance-production-smoke.mjs",
     "delivery:abundance:image2": "node scripts/delivery-update.mjs --project abundance --image2",
     "delivery:abundance:image2:force": "node scripts/delivery-update.mjs --project abundance --image2 --force-image2",

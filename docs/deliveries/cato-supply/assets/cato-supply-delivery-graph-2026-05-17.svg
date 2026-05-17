@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="620" viewBox="0 0 1200 620">
+<rect width="1200" height="620" fill="#f8fafc"/>
+<text x="60" y="72" font-size="34" font-weight="800" fill="#0f172a">Cato Supply Insights CMS and Navigation Review</text>
+<text x="60" y="108" font-size="18" fill="#475569">Generated 2026-05-17 - DB, MCP/API, and agent delivery relationship</text>
+<line x1="390" y1="305" x2="435" y2="305" stroke="#64748b" stroke-width="3"/>
+<polygon points="435,305 421,296 421,314" fill="#64748b"/>
+<line x1="765" y1="305" x2="810" y2="305" stroke="#64748b" stroke-width="3"/>
+<polygon points="810,305 796,296 796,314" fill="#64748b"/>
+
+<rect x="60" y="155" width="330" height="300" rx="10" fill="#ffffff" stroke="#0f766e" stroke-width="3"/>
+<text x="84" y="197" font-size="17" font-weight="700" fill="#0f766e">Database</text>
+<text x="84" y="231" font-size="26" font-weight="700" fill="#0f172a">Mock CMS model</text>
+<text x="84" y="263" font-size="17" fill="#475569">ready-for-review</text>
+<text x="84" y="303" font-size="15" fill="#334155">The package includes a local CMS data</text>
+<text x="84" y="325" font-size="15" fill="#334155">file with 11 Insight records and 4</text>
+<text x="84" y="347" font-size="15" fill="#334155">categories. It drives hub, focused</text>
+<text x="84" y="369" font-size="15" fill="#334155">archive, and detail pages so the client</text>
+<text x="84" y="391" font-size="15" fill="#334155">can review content organization before</text>
+<text x="84" y="413" font-size="15" fill="#334155">final Webflow CMS binding.</text>
+
+<rect x="435" y="155" width="330" height="300" rx="10" fill="#ffffff" stroke="#2563eb" stroke-width="3"/>
+<text x="459" y="197" font-size="17" font-weight="700" fill="#2563eb">Automation</text>
+<text x="459" y="231" font-size="26" font-weight="700" fill="#0f172a">Review surface</text>
+<text x="459" y="263" font-size="17" fill="#475569">deployed</text>
+<text x="459" y="303" font-size="15" fill="#334155">The static review artifact is packaged</text>
+<text x="459" y="325" font-size="15" fill="#334155">with scripts to validate, serve, and</text>
+<text x="459" y="347" font-size="15" fill="#334155">redeploy the Cloudflare review surface.</text>
+<text x="459" y="369" font-size="15" fill="#334155">Screenshots are retained as evidence</text>
+<text x="459" y="391" font-size="15" fill="#334155">for desktop, mobile, dropdown, form,</text>
+<text x="459" y="413" font-size="15" fill="#334155">archive, and CMS detail polish.</text>
+
+<rect x="810" y="155" width="330" height="300" rx="10" fill="#ffffff" stroke="#a16207" stroke-width="3"/>
+<text x="834" y="197" font-size="17" font-weight="700" fill="#a16207">Judgment</text>
+<text x="834" y="231" font-size="26" font-weight="700" fill="#0f172a">Webflow handoff</text>
+<text x="834" y="263" font-size="17" fill="#475569">staged-not-published</text>
+<text x="834" y="303" font-size="15" fill="#334155">The notes capture what has been staged</text>
+<text x="834" y="325" font-size="15" fill="#334155">in Webflow, what remains held back, and</text>
+<text x="834" y="347" font-size="15" fill="#334155">the decision rule: use Cloudflare for</text>
+<text x="834" y="369" font-size="15" fill="#334155">client review first, then publish</text>
+<text x="834" y="391" font-size="15" fill="#334155">Webflow only after copy, content shape,</text>
+<text x="834" y="413" font-size="15" fill="#334155">interactions, and CMS binding decisions</text>
+<text x="834" y="435" font-size="15" fill="#334155">are approved.</text>
+<rect x="60" y="505" width="1080" height="64" rx="8" fill="#e2e8f0"/>
+<text x="84" y="545" font-size="18" fill="#0f172a">Delivery rule: repo artifacts stay authoritative; the client surface renders the current state instead of becoming the source of truth.</text>
+</svg>
