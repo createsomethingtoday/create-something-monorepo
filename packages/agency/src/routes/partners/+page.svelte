@@ -20,6 +20,11 @@
       label: 'Workspace application',
       value: 'Notion Solutions Partner',
       detail: 'Position Notion as the operator workspace, PM layer, and template distribution proof.'
+    },
+    {
+      label: 'Ecosystem readiness',
+      value: 'OpenAI readiness lane',
+      detail: 'Use OpenAI as reasoning and agent-host proof, not as an unsupported affiliate claim.'
     }
   ];
 
@@ -47,6 +52,14 @@
       href: '/notion',
       detail:
         'Use the Notion lane to show PM/operator workspaces, template proof, builder examples, and source-of-truth boundaries.'
+    },
+    {
+      name: 'OpenAI',
+      track: 'Readiness lane only',
+      status: 'Do not overclaim',
+      href: '/stack',
+      detail:
+        'Use the stack boundary to show OpenAI-ready MCP, Agents SDK, ChatGPT compatibility, evals, and Policy OS proof.'
     }
   ];
 
@@ -80,6 +93,16 @@
       support: 'Templates and builders as proof; Technology Partner later',
       detail:
         'Notion carries PM visibility, client-readable evidence, template systems, human review, and operating dashboards.'
+    },
+    {
+      name: 'OpenAI',
+      label: 'Reasoning host',
+      logo: 'OpenAI',
+      href: '/stack',
+      lead: 'Ecosystem readiness',
+      support: 'Startup, portal, or research paths only when eligible',
+      detail:
+        'OpenAI carries reasoning and agent-host proof while CREATE SOMETHING owns scoped tools, approvals, evals, and policy boundaries.'
     }
   ];
 
@@ -114,8 +137,14 @@
     {
       displayName: 'partner_stack_packet.md',
       name: 'partner_stack_packet.md',
-      summary: 'One narrative tying Dify, Cloudflare, and Notion to the same governed workflow system.',
+      summary: 'One narrative tying Dify, Cloudflare, Notion, and OpenAI to the same governed workflow system.',
       tag: 'Strategy'
+    },
+    {
+      displayName: 'surface_review_2026_05_17.md',
+      name: 'surface_review_2026_05_17.md',
+      summary: 'Current review of partner, affiliate, MCP, agent, policy, and public-page alignment.',
+      tag: 'Review'
     },
     {
       displayName: 'application_drafts.md',
@@ -140,6 +169,12 @@
       name: 'brand_guardrails.md',
       summary: 'Claim language, logo usage, disclosure, and no-implied-endorsement rules before approvals.',
       tag: 'Guard'
+    },
+    {
+      displayName: 'openai_readiness.md',
+      name: 'openai_readiness.md',
+      summary: 'OpenAI ecosystem proof without unsupported affiliate, reseller, or Frontier Alliance claims.',
+      tag: 'OpenAI'
     }
   ];
 
@@ -163,6 +198,11 @@
       title: 'Client delivery proof',
       detail:
         'Use sanitized diagrams, generated catalogs, evaluation summaries, and public screenshots instead of raw traces or private workspace records.'
+    },
+    {
+      title: 'OpenAI readiness',
+      detail:
+        'Use OpenAI as reasoning and agent-host proof. Do not route it as affiliate or reseller work unless OpenAI grants that program participation.'
     }
   ];
 
@@ -170,14 +210,15 @@
     'No official partner, certified provider, reseller, or technology alliance claim before acceptance.',
     'No vendor commercial brand use in sales collateral unless the relevant program authorizes it.',
     'No raw traces, secrets, private hub details, client records, billing details, or broad connector surfaces in public proof.',
-    'No affiliate links until acceptance, disclosure language, declared domains, and payment/tax setup are complete.'
+    'No affiliate links until acceptance, disclosure language, declared domains, and payment/tax setup are complete.',
+    'No OpenAI affiliate, reseller, or Frontier Alliance claim without explicit OpenAI authorization.'
   ];
 </script>
 
 <SEO
-  title="Partner Stack | Dify, Cloudflare, and Notion"
-  description="CREATE SOMETHING's partner stack for governed AI workflow systems: Dify for agent surfaces, Cloudflare for runtime, and Notion for operator workspaces."
-  keywords="Dify partner, Cloudflare partner, Notion partner, AI workflow systems, partner stack, Policy OS, MCP governance"
+  title="Partner Stack | CREATE SOMETHING .agency"
+  description="CREATE SOMETHING's partner stack for governed AI workflow systems: Dify for agent surfaces, Cloudflare for runtime, Notion for operator workspaces, and OpenAI as reasoning-host readiness."
+  keywords="Dify partner, Cloudflare partner, Notion partner, OpenAI readiness, AI workflow systems, partner stack, Policy OS, MCP governance"
   ogImage="/og-image.svg"
   propertyName="agency"
 />
@@ -199,8 +240,9 @@
         <BlurFade delay={0.1}>
           <p class="hero-detail">
             Dify is the agent surface, Cloudflare is the runtime substrate, and Notion is the
-            operator workspace. CREATE SOMETHING owns the policy artifacts, MCP boundaries,
-            delivery runbooks, and evidence that make the combined system credible.
+            operator workspace. OpenAI is the reasoning-host readiness lane. CREATE SOMETHING owns
+            the policy artifacts, MCP boundaries, delivery runbooks, and evidence that make the
+            combined system credible.
           </p>
         </BlurFade>
 
@@ -223,17 +265,18 @@
               <span><BrandLogo name="Dify" size={22} /></span>
               <span><BrandLogo name="Cloudflare" size={22} /></span>
               <span><BrandLogo name="Notion" size={22} /></span>
+              <span><BrandLogo name="OpenAI" size={22} /></span>
             </div>
             <div>
               <span>Partner stack</span>
-              <strong>Dify + Cloudflare + Notion</strong>
+              <strong>Dify + Cloudflare + Notion + OpenAI</strong>
             </div>
           </div>
 
           <dl class="partner-brief__facts">
             <div>
               <dt>Public claim</dt>
-              <dd>Application-ready implementation lanes</dd>
+              <dd>Application-ready lanes plus ecosystem readiness</dd>
             </div>
             <div>
               <dt>Lead offer</dt>
@@ -639,13 +682,13 @@
 
   .status-grid {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 0.9rem;
   }
 
   .application-grid {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 0.9rem;
   }
 
@@ -724,7 +767,7 @@
 
   .lane-grid {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 0.9rem;
   }
 
@@ -802,12 +845,22 @@
     min-height: 12rem;
   }
 
+  .routing-card:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+    min-height: 10.5rem;
+  }
+
   .guardrail-list {
     display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.75rem;
     padding: 0;
     margin: 0;
     list-style: none;
+  }
+
+  .guardrail-list li:first-child {
+    grid-column: 1 / -1;
   }
 
   .guardrail-list li {
@@ -830,6 +883,14 @@
     max-width: 45rem;
   }
 
+  @media (max-width: 1180px) {
+    .status-grid,
+    .application-grid,
+    .lane-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
   @media (max-width: 980px) {
     .hero-layout,
     .section-grid,
@@ -838,11 +899,16 @@
       grid-template-columns: 1fr;
     }
 
-    .status-grid,
-    .application-grid,
-    .lane-grid,
     .routing-grid {
       grid-template-columns: 1fr;
+    }
+
+    .guardrail-list {
+      grid-template-columns: 1fr;
+    }
+
+    .guardrail-list li:first-child {
+      grid-column: auto;
     }
 
     .partner-brief {
@@ -880,6 +946,12 @@
     .guardrail-list li,
     .cta-layout {
       padding: 1rem;
+    }
+
+    .status-grid,
+    .application-grid,
+    .lane-grid {
+      grid-template-columns: 1fr;
     }
 
     .loop-step {

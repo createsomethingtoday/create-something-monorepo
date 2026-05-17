@@ -649,7 +649,7 @@
 
   .signal-strip {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 0.7rem;
   }
 
@@ -873,10 +873,6 @@
       grid-template-columns: 1fr;
     }
 
-    .signal-strip {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
     .hero-title {
       font-size: clamp(2.6rem, 11vw, 4rem);
     }
@@ -898,7 +894,7 @@
     }
   }
 
-  @media (max-width: 420px) {
+  @media (max-width: 520px) {
     .signal-strip {
       grid-template-columns: 1fr;
     }
