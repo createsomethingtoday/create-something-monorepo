@@ -6,8 +6,13 @@
 
   const imageSources: Record<string, string> = {
     'Model Context Protocol': '/images/stack/mcp.svg',
+    Cloudflare: '/images/stack/cloudflare.svg',
+    'Cloudflare Workers': '/images/stack/cloudflare.svg',
+    'Cloudflare D1': '/images/stack/cloudflare.svg',
     Composio: '/images/stack/composio.ico',
     Dify: '/images/stack/dify.svg',
+    Notion: '/images/stack/notion.svg',
+    'Notion API': '/images/stack/notion.svg',
     OpenAI: '/images/stack/openai.svg',
     Webflow: '/images/stack/webflow.png',
     Linear: '/images/stack/linear.svg',

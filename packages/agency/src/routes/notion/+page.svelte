@@ -197,7 +197,7 @@
         >
           <div class="notion-brief-header">
             <span class="logo-mark" aria-hidden="true">
-              <BrandLogo name="Notion API" size={24} />
+              <BrandLogo name="Notion" size={24} />
             </span>
             <div>
               <span>Notion track</span>

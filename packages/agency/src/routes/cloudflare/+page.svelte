@@ -253,7 +253,7 @@
         >
           <div class="cloudflare-brief-header">
             <span class="logo-mark" aria-hidden="true">
-              <BrandLogo name="Cloudflare Workers" size={25} />
+              <BrandLogo name="Cloudflare" size={25} />
             </span>
             <div>
               <span>Cloudflare track</span>

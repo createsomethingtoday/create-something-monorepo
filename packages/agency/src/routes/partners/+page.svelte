@@ -64,7 +64,7 @@
     {
       name: 'Cloudflare',
       label: 'Runtime substrate',
-      logo: 'Cloudflare Workers',
+      logo: 'Cloudflare',
       href: '/cloudflare',
       lead: 'PowerUP Consult first',
       support: 'Self-Serve Agency when account volume justifies it',
@@ -221,8 +221,8 @@
           <div class="partner-brief__header">
             <div class="partner-logo-stack" aria-hidden="true">
               <span><BrandLogo name="Dify" size={22} /></span>
-              <span><BrandLogo name="Cloudflare Workers" size={22} /></span>
-              <span><BrandLogo name="Notion API" size={22} /></span>
+              <span><BrandLogo name="Cloudflare" size={22} /></span>
+              <span><BrandLogo name="Notion" size={22} /></span>
             </div>
             <div>
               <span>Partner stack</span>
