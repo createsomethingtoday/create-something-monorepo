@@ -657,6 +657,7 @@
     display: grid;
     gap: 0.85rem;
     max-width: 44rem;
+    margin-bottom: clamp(1.5rem, 3vw, 2.25rem);
   }
 
   .section-lead--center {
