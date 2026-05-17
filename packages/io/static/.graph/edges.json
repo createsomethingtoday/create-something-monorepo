@@ -1179,7 +1179,7 @@
     }
   },
   {
-    "source": "docs/guides/ATLAS_LOOM_INTEGRATION.md",
+    "source": "docs/guides/ATLAS_LINEAR_INTEGRATION.md",
     "target": "docs/guides/OBSERVABILITY_SETUP.md",
     "type": "cross-reference",
     "weight": 0.8,
@@ -1188,7 +1188,7 @@
     }
   },
   {
-    "source": "docs/guides/ATLAS_LOOM_INTEGRATION.md",
+    "source": "docs/guides/ATLAS_LINEAR_INTEGRATION.md",
     "target": ".claude/rules/harness-patterns.md",
     "type": "cross-reference",
     "weight": 0.8,

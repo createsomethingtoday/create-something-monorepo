@@ -8,6 +8,360 @@ import type { Paper } from '../types.js';
 
 export const PAPERS: Paper[] = [
   {
+    slug: "analyzer-mcp-review-architecture",
+    title: "The Analyzer MCP: A Policy-Grounded Review Architecture",
+    subtitle: "How CREATE SOMETHING turned Webflow template review into a multi-surface MCP system",
+    description: "This paper documents how the Webflow Site Analyzer MCP was created, why a plain crawler or checklist app was insufficient, and what system architects can reuse from the design. The core problem was not only extraction. Webflow template review spans multiple truth surfaces: published pages, Designer-only metadata, and external review policy that can change outside the codebase. The analyzer solves this by treating review as a governed MCP system. URLs and Designer state form the Database layer, browser-backed extraction and queued review execution form the Automation layer, and policy ingestion, manual-review boundaries, observability, and script evolution form the Judgment layer. The result is not just an analyzer. It is a review architecture that can explain what it checked, what it could not check, which policy version it used, and how its automation should improve without collapsing governance into a prompt.",
+    category: "Case Study",
+    date: "2026-04-13",
+    readingTime: 16,
+    difficulty: "intermediate",
+    keywords: ["MCP","Webflow","Review Architecture","Three-Tier Framework","Policy as Artifact","Observability","System Design"],
+    content: `## Executive Thesis
+
+The analyzer MCP exists because template review is not a single inspection problem.
+
+It is a coordination problem across three changing surfaces:
+
+- the **published site**, where runtime behavior, metadata, accessibility issues, and public SEO signals live
+- the **Webflow Designer**, where pages, components, style selectors, CMS collections, and breakpoints are visible
+- the **review policy itself**, which lives outside the codebase and changes when Webflow updates its submission guidelines or grading rubric
+
+A crawler can inspect pages. A browser bot can click around Designer. A prompt can summarize policy. None of those, by themselves, creates a durable review system.
+
+The analyzer MCP was created to unify those surfaces into one governed tool surface that other agents and operators can use repeatably.
+
+## The Problem It Solves
+
+Manual template review does not scale linearly because the reviewer is forced to join evidence across incompatible contexts.
+
+Consider a simple question:
+
+**"Is this template ready to submit?"**
+
+That answer depends on checks that sit in different places:
+
+- SEO title formulas and alt text are visible on the published site.
+- Unused components, page inventory, and class naming patterns depend on Designer metadata.
+- Some requirements are explicit pass/fail rules; others remain manual judgment calls.
+- The policy source is not static. It lives on Webflow's public guideline and rubric pages.
+
+Without a unifying system, review drift appears in predictable ways:
+
+- one reviewer checks the homepage thoroughly and skim-checks the rest
+- another reviewer checks Designer hygiene but misses runtime metadata failures
+- an agent overclaims confidence because it only saw the published surface
+- a policy change lands upstream and nobody can prove which rule set was used for a given review
+
+The analyzer MCP solves this by turning review into a system with explicit control boundaries, not a loose pile of scripts.
+
+## Why CREATE SOMETHING Built It as an MCP
+
+The design choice was not "browser automation or MCP."
+
+Browser automation is part of the implementation. MCP is the delivery and control surface.
+
+That matters for four reasons:
+
+1. **Portability**
+   The review capability should be callable from Codex-first workflows today without being trapped inside one bespoke UI.
+
+2. **Trust boundary clarity**
+   MCP makes the review surface explicit: which tools exist, what they accept, and what they return.
+
+3. **Tier separation**
+   Review data, execution logic, and policy can be modeled separately instead of being collapsed into one giant agent prompt.
+
+4. **Governed evolution**
+   The system can observe failures, version its extraction logic, and improve its automation without pretending policy no longer matters.
+
+This is the broader CREATE SOMETHING point in concrete form:
+
+The valuable work was not scaffolding a server. The valuable work was deciding **what kind of MCP to build**, **which boundaries to respect**, and **how to attach judgment to automation without hiding it**.
+
+## How the Analyzer MCP Was Created
+
+The creation process followed a system design sequence, not a feature checklist.
+
+### 1. Identify the real source surfaces
+
+The first move was to stop treating "the website" as one thing.
+
+The analyzer distinguishes between:
+
+- **published pages** as runtime truth
+- **preview/Designer context** as authoring truth
+- **external review policy** as governance truth
+
+That decomposition is what made the rest of the system possible.
+
+### 2. Codify browser-backed extraction flows
+
+Two core automation paths were made explicit.
+
+**Flow A: page extraction**
+
+- open a browser session
+- detect whether the URL is a Webflow preview
+- if preview, enter \`#site-iframe-next\`
+- run extraction scripts inside the iframe, not the Designer chrome
+
+This is how page-level tools such as touchpoint analysis, SEO extraction, structure extraction, image analysis, and performance checks stay grounded in the actual page being reviewed.
+
+**Flow B: Designer metadata extraction**
+
+- open the preview URL
+- navigate the Designer interface in a fixed sequence
+- collect pages, style selectors, components, interactions, CMS collections, assets, and breakpoints
+
+The important insight is not that browser automation clicks panels. The insight is that the Designer path was **codified as a repeatable review primitive** instead of remaining hidden reviewer muscle memory.
+
+### 3. Treat policy as an artifact, not prose in a prompt
+
+The analyzer fetches and normalizes the canonical Webflow submission guidelines and grading rubric from their live public pages.
+
+It records:
+
+- source URL
+- fetch timestamp
+- content hash
+- a derived \`policyVersion\`
+
+This is a decisive architectural move.
+
+It means a review can say more than "the agent used the latest rules." It can say:
+
+- **which policy source was used**
+- **when it was fetched**
+- **which normalized sections and rubric rows informed the review**
+
+That turns review policy into a traceable system input.
+
+### 4. Build a unified review pipeline
+
+The analyzer does not stop at individual tools. It assembles them into a review workflow:
+
+1. run a published-site precheck
+2. extract and score Designer metadata
+3. derive seed URLs from the Designer page list
+4. crawl the published site with those seeds
+5. normalize all findings into unified checklist rows
+6. summarize which checks passed, failed, were partial, or remain manual
+
+This matters because it turns a set of tools into a review system.
+
+The output is not "some SEO data" plus "some component data." The output is a review artifact with operational shape.
+
+### 5. Add queueing, progress, and bounded concurrency
+
+Review work is expensive and browser-backed. That means orchestration matters.
+
+The analyzer includes queued template-review jobs with:
+
+- bounded concurrency
+- queue capacity limits
+- explicit phases such as \`precheck\`, \`designer\`, \`published\`, and \`normalizing\`
+- persisted job status and final result payloads
+
+This makes the system usable in production conditions rather than only in ad hoc local debugging.
+
+### 6. Make improvement part of the architecture
+
+Extraction scripts are versioned.
+
+Feedback can be recorded against a specific script version. The analyzer then:
+
+- identifies recurring issue patterns
+- detects problematic domains
+- proposes modifications
+- compares versions
+- promotes improved versions through testing to active use
+
+That is the difference between an analyzer and a living automation surface.
+
+## The Three-Tier Mapping
+
+The analyzer is a concrete example of CREATE SOMETHING's Three-Tier Framework.
+
+| Tier | In the analyzer MCP | Why it matters |
+|------|---------------------|----------------|
+| **Database** | Published URLs, preview URLs, Designer metadata, policy snapshots, review artifacts | Review has to start from what actually exists |
+| **Automation** | Browser sessions, extraction scripts, queued jobs, unified review execution | Review becomes runnable, not aspirational |
+| **Judgment** | Policy ingestion, manual-review boundaries, feedback, version comparison, promotion decisions | The system can explain what should happen and how it should improve |
+
+For system architects, this is the reusable lesson:
+
+If your review system cannot point to its Database, Automation, and Judgment layers separately, it will become hard to debug and impossible to govern.
+
+## The Review System, Explained
+
+The review system has four architectural moves worth isolating.
+
+### A. Multi-surface evidence, one report
+
+The analyzer combines two kinds of evidence that are usually reviewed separately:
+
+- **Designer evidence**: structure, inventory, naming, component usage, breakpoints
+- **published-site evidence**: metadata, heading hierarchy, alt text, 404 behavior, video controls, image loading behavior
+
+The report then normalizes both into one checklist.
+
+That is what makes the output useful to a reviewer and to another agent.
+
+### B. Manual is a first-class state
+
+A weak review system either hides uncertainty or floods operators with caveats.
+
+The analyzer does neither.
+
+Some rows remain intentionally manual because the current payloads do not support a defensible automated claim. Examples include:
+
+- explicit unused animation cleanup
+- variable naming and reuse
+- class stack depth
+- contrast and transition-quality checks in some runs
+
+This is good architecture.
+
+A review system gains trust when it can say:
+
+- **pass** when it has sufficient evidence
+- **fail** when it has sufficient evidence
+- **manual** when the evidence boundary is real
+
+### C. Policy versioning is part of the review result
+
+Because policy is ingested and hashed, the review system can maintain alignment between external rule changes and internal automation.
+
+That prevents a common failure mode:
+
+the team thinks it automated "the rubric," but what it actually automated was a screenshot of the rubric from months ago.
+
+### D. Observability is operational, not decorative
+
+The analyzer records metrics such as:
+
+- analysis duration
+- estimated browser cost
+- item counts
+- provider health
+- session metrics
+- queued review status
+- browser minutes per review
+
+This changes the architectural conversation.
+
+Instead of only asking "Did the review finish?" operators can ask:
+
+- Was it healthy?
+- Was it expensive?
+- Which provider degraded?
+- Which phase failed?
+- Which script version produced the result?
+
+That is how a review system becomes governable.
+
+## What Makes This More Than a Site Analyzer
+
+The term "site analyzer" is technically true and strategically incomplete.
+
+The distinguishing value is the **review architecture**:
+
+- the system knows how to gather evidence from multiple surfaces
+- it ties that evidence to a normalized policy artifact
+- it reports manual boundaries explicitly
+- it queues and tracks execution like a production workflow
+- it can improve its automation through versioned feedback loops
+
+A conventional analyzer answers:
+
+**"What is on this page?"**
+
+This system is designed to answer:
+
+**"What should happen in this review, what evidence supports that answer, and where does human judgment still belong?"**
+
+That is a different class of system.
+
+## Design Insights for System Architects
+
+### 1. Do not collapse all truth into one crawl
+
+If the workflow spans multiple authority surfaces, model those surfaces directly.
+
+Published pages and authoring systems are not interchangeable.
+
+### 2. Policy should be fetched, normalized, and versioned
+
+If external policy matters, treat it like data with provenance.
+
+Do not bury it in prompt text and call that governance.
+
+### 3. "Manual" is part of the contract
+
+A credible automation system needs an explicit state for checks it cannot yet justify.
+
+Anything else is theater.
+
+### 4. Review orchestration is part of the product
+
+Queueing, progress, bounded concurrency, and resumable results are not secondary implementation details.
+
+They are what separate a demo from an operating system for review.
+
+### 5. Self-improvement belongs under guardrails
+
+Version registries, feedback loops, and proposal generation are valuable, but only when they remain subordinate to explicit policy and operator visibility.
+
+Autonomy without legibility is just harder-to-debug drift.
+
+## How to Apply This Pattern Outside Webflow
+
+The pattern generalizes beyond template review.
+
+Use it whenever a workflow has:
+
+- multiple truth surfaces
+- changing external policy
+- partially automatable checks
+- expensive execution paths
+- a need for explainable review artifacts
+
+Examples:
+
+- security review across source code, runtime config, and compliance policy
+- procurement review across vendor documents, ERP state, and approval policy
+- content review across CMS state, published rendering, and brand/legal guidance
+
+The system pattern stays the same:
+
+1. identify the surfaces
+2. model them as separate evidence sources
+3. ingest policy with provenance
+4. normalize findings into one review artifact
+5. keep manual states explicit
+6. attach observability and versioned improvement loops
+
+## Conclusion
+
+The analyzer MCP was created to solve a very practical problem: Webflow review needed a system, not just more scripts.
+
+Its deeper value is architectural.
+
+It demonstrates that a useful MCP is often not the one that exposes the most raw tools. It is the one that:
+
+- understands the real boundaries of the workflow
+- converts policy into an auditable input
+- turns multi-surface evidence into an operational artifact
+- leaves room for human judgment where automation is not yet defensible
+
+That is the CREATE SOMETHING alignment in its most concrete form.
+
+The moat was not "we can call a browser from MCP."
+
+The moat was designing a review system that can explain itself, evolve carefully, and remain portable as the surrounding agent ecosystem changes.`
+  },
+  {
     slug: "andon-protocol",
     title: "The Andon Protocol",
     subtitle: "AI-Native Structured Escalation for Agent Harnesses and Multi-Agent Systems",
@@ -1739,6 +2093,87 @@ cs-003: Session management
 	}`
   },
   {
+    slug: "braintrust-trace-unsurfacing",
+    title: "Braintrust Trace Unsurfacing: Finding What Normal Aggregates Hide",
+    subtitle: "How a 1,000-row trace snapshot exposed clustered permission failures, routing misses, and latent control-plane stalls",
+    description: "This paper documents a CREATE SOMETHING Braintrust trace audit (project 8ca0d63b-d985-4373-9906-c253bf3f52d0) and explains why aggregate uptime metrics were insufficient to diagnose practical reliability risk. In a sample where 92.9% of rows were non-errors, Braintrust still surfaced concentrated failure clusters: LinkedIn permission denials, intent route misses, repeated 429 throttles, and extreme control-plane latency outliers. We convert these findings into ranked experiments with explicit acceptance criteria and dashboard contracts so operations can move from anecdotal debugging to measurable reliability governance.",
+    category: "Research",
+    date: "2026-03-04",
+    readingTime: 15,
+    difficulty: "intermediate",
+    keywords: ["Braintrust","Observability","MCP","Reliability","Experiment Design","Dashboarding"],
+    content: `## Executive Thesis
+
+Braintrust's practical advantage is not that it shows errors. It is that it **unsurfaces hidden operational structure** inside "mostly successful" traffic.
+
+In this snapshot, only \`71/1000\` rows are errors (\`7.1%\`). A naive read says "system is mostly fine." The trace-level read says otherwise: two failure classes (\`permission\` and \`intent_routing\`) account for \`76.1%\` of all observed failures.
+
+## Snapshot Evidence (Mar 4, 2026)
+
+Project ID: \`8ca0d63b-d985-4373-9906-c253bf3f52d0\`  
+Window: \`Mar 1, 2026 9:55 AM\` to \`Mar 4, 2026 5:30 AM\` (America/Chicago)  
+Rows: \`1,000\`  
+Error rows: \`71\`
+
+### Error Composition
+
+- \`permission\`: \`30\` (42.3%)
+- \`intent_routing\`: \`24\` (33.8%)
+- \`rate_limit\`: \`4\` (5.6%)
+- \`validation\`: \`4\` (5.6%)
+
+### Hidden Reliability Risks Unsurfaced
+
+1. **Permission failure clustering**
+   - Repeated forbidden signatures appeared in bursts (for example, "You don't have permission to access this post.").
+2. **Intent-router brittleness**
+   - \`hub_route_intent\` produced \`22\` errors out of \`36\` calls (\`61.1%\` error rate), concentrated around synonym variants for Sheets tasks.
+3. **Throttle duplication**
+   - 429 responses (\`TOO_MANY_REQUESTS\`, \`serviceErrorCode=101\`) appeared as repeatable patterns, indicating missing circuit-break behavior.
+4. **Tail-latency instability**
+   - \`hub_update_state\` reached \`252,517 ms\`, which is over 4 minutes for a control-plane path that should be predictable.
+
+These are not independent bugs. They represent a reliability topology: permissions, routing, and control-plane latency interacting under real workload.
+
+## From Trace to Ranked Experiments
+
+We translated trace findings into five ranked experiments with exact acceptance criteria and dashboard specs:
+
+1. EXP-01 LinkedIn permission preflight
+2. EXP-02 Intent canonicalization + semantic fallback
+3. EXP-03 Provider 429 circuit breaker
+4. EXP-04 Control-plane cache + latency stabilization
+5. EXP-05 Tool-argument auto-repair
+
+Specification index: \`docs/internal/braintrust-experiments/README.md\`
+
+## Why the Dashboard Design Matters
+
+The dashboard uses Tufte-style high data density and direct labeling to reduce interpretive noise:
+
+- Minimal chrome, maximal signal
+- Error composition and tool reliability in one glance
+- Repeated cluster table to expose recurrence rather than isolated incidents
+- Latency outlier table to keep tails visible
+
+This prevents the common failure mode where summary metrics hide operational recurrence.
+
+## Operational Loop
+
+Each experiment now has:
+
+- exact acceptance criteria
+- explicit metrics and formulas
+- dashboard panel requirements
+- baseline evidence from the March 4 snapshot
+
+This makes reliability work executable: the team can ship, measure, and gate promotion decisions against objective thresholds instead of subjective confidence.
+
+## Conclusion
+
+Braintrust did not just report that errors existed. It unsurfaced where the system was structurally fragile despite high apparent throughput. That is the difference between observability as logging and observability as decision infrastructure.`
+  },
+  {
     slug: "code-mode-hermeneutic-analysis",
     title: "Code-Mediated Tool Use",
     subtitle: "A Hermeneutic Analysis of LLM-Tool Interaction—why Code Mode achieves Zuhandenheit while direct tool calling forces Vorhandenheit.\"",
@@ -1938,6 +2373,286 @@ The hermeneutic circle isn't yet closed. Claude Code operates in a transitional 
 
 
 ## References`
+  },
+  {
+    slug: "composio-three-tier-delivery",
+    title: "Composio in the MCP Delivery System",
+    subtitle: "A decision-grade policy for wrap pattern adoption, control boundaries, and brand alignment",
+    description: "This paper defines the CREATE SOMETHING policy for including Composio in our framework and MCP delivery system. The inclusion is scoped to commodity app connectivity and implemented through a strict wrap pattern: clients experience CREATE SOMETHING MCP servers while Composio remains internal infrastructure. We map bridge components to the Three-Tier Framework control models, preserve the MCP-only wedge versus Agent Outcome Stack default, and define governance gates (red lines, SLOs, and pilot graduation criteria). As of March 4, 2026, technical evaluation reports 29/29 checks passed (run date: 2026-02-10), while canonical status remains conditional adopt (decision date: 2026-02-21) pending client pilot closure.",
+    category: "Research",
+    date: "2026-03-04",
+    readingTime: 22,
+    difficulty: "intermediate",
+    keywords: ["Composio","MCP","Three-Tier Framework","Wrap Pattern","Agent Outcome Stack","Policy as Artifact","Automation Infrastructure"],
+    content: `## Executive Thesis
+
+Composio belongs in our stack as **infrastructure for commodity connectivity**, not as product identity.
+
+That is the entire policy in one sentence.
+
+The strategic logic remains unchanged:
+
+- **MCP consumption is commoditized.**
+- **MCP creation is not.**
+
+Composio reduces undifferentiated integration effort (OAuth and standard CRUD across long-tail SaaS apps), so CREATE SOMETHING can concentrate on differentiated work: domain-specific MCP design, policy operations, judgment loops, and outcome delivery.
+
+## Strategic Context: What Must Not Be Lost
+
+CREATE SOMETHING has two valid views of the system, at different altitudes:
+
+1. **Go-to-market view (Two-Layer Model)**
+   - Automation Layer (MCP connectivity) is the wedge.
+   - Intelligence Layer (agents, skills, policy operations) is the margin.
+2. **Architectural view (Three-Tier Framework)**
+   - Database = what exists.
+   - Automation = what happens.
+   - Judgment = what should happen.
+
+Composio inclusion is acceptable only if both views remain intact:
+
+- It cannot collapse our packaging into "tool plumbing resale."
+- It cannot collapse control models by leaking judgment into a vendor black box.
+
+## Problem Statement
+
+Without a commodity connectivity substrate, teams repeatedly rebuild the same integration mechanics:
+
+- OAuth link flows
+- token/state bookkeeping
+- repetitive CRUD tool scaffolding
+- app-by-app edge-case handling for low-differentiation outcomes
+
+That repetition burns delivery bandwidth where no moat exists.
+
+The question is not "Is Composio good?" The question is:
+
+**Does Composio increase delivery velocity while preserving CREATE SOMETHING's control of policy, brand, and differentiated outcome logic?**
+
+## Design Goals and Non-Goals
+
+### Goals
+
+- Accelerate long-tail integration delivery for commodity apps.
+- Keep clients on CREATE SOMETHING-facing MCP surfaces.
+- Preserve the Three-Tier control boundary model.
+- Keep the Agent Outcome Stack as the default paid offer.
+- Maintain swap-ability if vendor conditions change.
+
+### Non-goals
+
+- Reposition CREATE SOMETHING as a Composio implementation shop.
+- Expose Composio as a client-facing brand dependency.
+- Delegate core policy and judgment control to external infrastructure.
+- Use Composio for deep domain or SLA-critical integrations by default.
+
+## The Wrap Pattern: Boundary of Visibility
+
+The wrap pattern is the decisive architectural move.
+
+\`\`\`text
+Client Request
+   "Connect Tool X to our workflow"
+        ↓
+CREATE SOMETHING MCP Server (visible, contractual surface)
+   ├── Custom tools (domain logic, differentiators)
+   ├── Policy artifacts (prompts, constraints, approvals)
+   └── Composio bridge (internal plumbing)
+         ├── managed auth/connect links
+         ├── commodity tool discovery
+         └── commodity tool execution
+\`\`\`
+
+Invariant:
+
+- **Client sees CREATE SOMETHING.**
+- **Composio remains implementation detail.**
+
+This preserves both trust and substitution optionality.
+
+## Three-Tier Alignment (Control-Model Exact)
+
+Composio does not alter the framework. It occupies specific roles within it.
+
+| Tier | Control Model | Bridge Components | Controlled Outcome |
+|------|---------------|-------------------|--------------------|
+| **Database** | Application-controlled | \`ComposioAccount\`, \`ComposioTokenProvider\` | Connected-account and token state resolution |
+| **Automation** | Model-controlled | \`ComposioToolFactory\`, \`ComposioClient\` | Tool registration, invocation, and execution path |
+| **Judgment** | User-controlled | \`ComposioAuthProvider\` + policy resolution in our harness | Constraint selection, approval semantics, permission boundaries |
+
+### Why this matters
+
+Many integrations fail not at API mechanics, but at boundary confusion. If a vendor starts deciding behavior that should be user-controlled, Judgment degrades. If agents act without policy visibility, Automation becomes unsafe.
+
+The wrap pattern prevents that collapse by pinning control authority where it belongs.
+
+## Delivery Model Alignment: Offer Architecture
+
+Composio inclusion does not change commercial packaging:
+
+- **MCP-only** remains discovery/compliance-constrained wedge.
+- **Agent Outcome Stack** remains default paid delivery.
+
+The distinction is structural:
+
+- MCP-only sells bounded connectivity.
+- Outcome Stack sells connectivity + policy + judgment operations + measurable business outcomes.
+
+Composio can accelerate the first layer. It does not replace the second.
+
+## Decision Rubric: Composio vs Custom vs Hybrid
+
+Use this rubric per integration request.
+
+| Criterion | Weight | Composio Path | Custom Path |
+|-----------|--------|---------------|-------------|
+| Domain-specific logic depth | High | Low depth (CRUD-oriented) | High depth (workflow semantics) |
+| SLA criticality | High | Non-critical or tolerable fallback | Critical path / strict guarantees |
+| Policy complexity | High | Standardized access semantics | Complex approval/governance rules |
+| Time-to-delivery pressure | Medium | Fastest for commodity apps | Slower, but full control |
+| Vendor substitution risk | Medium | Acceptable with wrapper containment | Required to minimize vendor dependency |
+| Differentiation potential | High | Low differentiation | High differentiation |
+
+### Default decision rule
+
+- If outcome value comes from connectivity itself: Composio is likely sufficient.
+- If outcome value comes from interpretation, orchestration, or domain judgment: custom wins.
+- If split is clean: hybrid (commodity via Composio, differentiator via custom tools).
+
+## Operational Sequence in Real Delivery
+
+1. **Classify request**: commodity, deep domain, or hybrid.
+2. **Choose path**: Composio/custom/hybrid via rubric.
+3. **Define policy artifacts**: prompts, constraints, approval thresholds.
+4. **Implement**:
+   - Composio bridge for commodity tools.
+   - custom MCP tools for differentiated logic.
+5. **Instrument**: latency, failure class, resolution outcomes.
+6. **Review against red lines**: if breached, route to custom path.
+
+## Governance Status (With Concrete Dates)
+
+As of **March 4, 2026**, evidence is:
+
+- **2026-02-10**: \`packages/composio-bridge/eval-report.json\` reports **29/29 passing technical checks**.
+- **2026-02-21**: canonical decision in \`docs/internal/COMPOSIO_EVALUATION.md\` is **CONDITIONAL ADOPT**.
+- **Open gate**: Phase 2 client pilot closure remains required for full completion.
+
+Interpretation:
+
+- Technical suitability is strong.
+- Program-level adoption remains intentionally gated.
+
+## Red Lines (Brand and Architecture)
+
+Composio usage is out of policy when any of the following occurs:
+
+- Client-facing positioning implies Composio is the product.
+- Core workflow correctness depends on vendor behavior we cannot govern.
+- Judgment-layer constraints cannot be expressed or enforced in our harness.
+- SLA-critical domains are delegated without fallback strategy.
+- Domain differentiation is reduced to commodity CRUD abstractions.
+
+If a red line is hit, default to custom MCP implementation.
+
+## SLO and Reliability Envelope
+
+For integrations kept on the Composio path, define and monitor:
+
+- tool discovery latency budget
+- execution success rate by toolkit
+- auth-connect completion rate
+- fallback activation rate
+- incident class mapping (vendor, network, policy, application)
+
+Policy rule:
+
+- If reliability indicators violate agreed SLO envelopes for a client-critical flow, promote that flow to custom.
+
+## Economics: Where Margin Actually Comes From
+
+Composio lowers cost of commodity integration mechanics. That is useful, but not the business.
+
+Margin remains in:
+
+- workflow-specific tool semantics
+- policy selection and enforcement
+- judgment-loop instrumentation and operations
+- continuous improvement of outcomes, not just connection count
+
+A high-volume integration catalog with low policy quality is operational debt, not strategic advantage.
+
+## Failure Modes and Mitigations
+
+| Failure Mode | Typical Cause | Mitigation |
+|-------------|---------------|------------|
+| Moat erosion | Treating integration count as value | Enforce custom path for domain-differentiated workflows |
+| Policy drift | Hidden auth/behavior assumptions | Keep policy artifacts explicit and versioned in our system |
+| Vendor lock concern | Direct coupling at product boundary | Keep wrap pattern strict; preserve swappable adapter boundary |
+| Tool sprawl | Uncurated long-tail capability growth | Curate allowed tool sets per client context |
+| Reliability surprises | Unmonitored third-party variance | SLO instrumentation + fallback playbooks |
+
+## Pilot Design to Graduate from Conditional Adopt
+
+To move from conditional to full adopt, Phase 2 pilot should produce evidence in four dimensions:
+
+1. **Delivery velocity**
+   - Time from request to production-ready connectivity
+   - Comparison against equivalent custom path estimate
+2. **Outcome quality**
+   - Whether agent outcomes improved, not just connection establishment
+3. **Operational stability**
+   - Incident rate, fallback frequency, and support burden
+4. **Policy integrity**
+   - Proof that judgment controls remained visible and enforceable
+
+Graduation rule:
+
+- If velocity improves and policy integrity remains uncompromised within SLO bounds, retain conditional adopt and expand scope deliberately.
+- If policy integrity or reliability is compromised in critical flows, narrow scope and move affected paths to custom.
+
+## Brand Alignment Test: Subtractive Triad
+
+Composio policy should pass all three tests.
+
+| Triad Level | Test | Pass Condition |
+|-------------|------|----------------|
+| **DRY (Implementation)** | Are we removing duplicated integration mechanics? | Commodity plumbing is reused, not rebuilt per client |
+| **Rams (Artifact)** | Does each integration choice earn its existence? | Composio used only when it materially improves delivery without reducing quality |
+| **Hermeneutic (System)** | Does this keep work connected to the whole strategy? | Packaging, tier boundaries, and policy ownership remain coherent |
+
+If any test fails, the implementation is misaligned even if it "works" technically.
+
+## Policy as Artifact: Practical Implication
+
+Composio changes connection plumbing. It does not own behavioral policy.
+
+- Prompts and constraints remain ours.
+- Approval semantics remain ours.
+- Judgment visibility remains ours.
+
+This keeps policy portable across client contexts and protects the ability to swap infrastructure without rewriting system behavior.
+
+## Conclusion
+
+A high-grade CREATE SOMETHING position on Composio is not enthusiastic adoption or blanket rejection.
+
+It is disciplined scope:
+
+- Use Composio where value is commodity connectivity.
+- Use custom MCP where value is domain judgment and differentiated outcomes.
+- Keep the wrap boundary strict so brand, policy, and control remain ours.
+
+That is the practical form of the creation moat in delivery operations: accelerate what is commoditized; protect what is not.
+
+## Sources (Internal)
+
+- \`docs/COMPOSIO_PATTERNS.md\`
+- \`docs/internal/COMPOSIO_EVALUATION.md\`
+- \`docs/HUB_COMPOSIO_READINESS_ASSESSMENT_2026-02-21.md\`
+- \`docs/MCP_FIRST_THESIS.md\`
+- \`docs/THREE_TIER_FRAMEWORK.md\`
+- \`CLAUDE.md\``
   },
   {
     slug: "cumulative-state-antipattern",
@@ -4665,6 +5380,281 @@ The hermeneutic insight: To understand a codebase, you don't need all
 
 
 ## References`
+  },
+  {
+    slug: "webflow-analyzer-productization",
+    title: "Webflow Analyzer Productization",
+    subtitle: "From reviewer tooling to creator copilot",
+    description: "This paper explains how the Webflow analyzer moved from reviewer-side infrastructure into creator-facing product surfaces. The interesting work was not simply exposing raw analyzer checks to more people. It was translating evidence-gathering and review logic into bounded validation, autofill, screenshot packaging, and submission guidance across the dashboard and marketplace submission flows. The paper argues that productization succeeds when a system preserves role boundaries: reviewers keep deep evidence and explicit manual states, while creators receive the parts of the system that can safely reduce labor before formal review.",
+    category: "Case Study",
+    date: "2026-04-25",
+    readingTime: 14,
+    difficulty: "intermediate",
+    keywords: ["Webflow","Analyzer","Productization","Review Systems","Creator Workflow","Three-Tier Framework","Submission UX"],
+    content: `## Executive Thesis
+
+The Webflow analyzer became a product when it started helping creators **before** review, not only reviewers **during** review.
+
+That is the entire argument.
+
+The architecture paper already explains why review needed:
+
+- published-site evidence
+- Designer evidence
+- policy provenance
+- explicit manual boundaries
+
+This paper explains the next move:
+
+how those capabilities were translated into creator-facing workflow assistance without collapsing reviewer judgment into a form widget.
+
+## The Productization Problem
+
+Reviewer tooling and creator tooling do not need the same output shape.
+
+A reviewer can work with:
+
+- long checklist rows
+- explicit partial states
+- evidence notes
+- queue progress
+- script-version detail
+- policy provenance
+
+A creator preparing a submission usually needs something different:
+
+- validation feedback
+- missing information surfaced clearly
+- fields suggested or filled automatically
+- screenshots prepared for upload
+- faster progress through the form
+
+Raw analyzer output is too heavy for the second task.
+
+Productization, in this context, means **translation**:
+
+turning review-grade evidence into creator-grade assistance while keeping the underlying trust boundaries intact.
+
+## The Analyzer Family
+
+By April 2026, the repository no longer described a single analyzer surface. It described a family of related surfaces:
+
+### 1. Reviewer-side analyzer MCP
+
+Primary package:
+
+- \`packages/webflow-site-analyzer-mcp\`
+
+This is where deep extraction, policy-grounded review, remote execution, and queueing live.
+
+### 2. Creator-side validator
+
+Primary package:
+
+- \`packages/webflow-template-validation\`
+
+This is a creator-oriented validation surface that explains coverage, issues, and checklist progress more directly inside a Webflow-friendly workflow.
+
+### 3. Creator-side autofill and screenshot packaging
+
+Primary package:
+
+- \`packages/webflow-template-analyzer\`
+
+Consumer surfaces:
+
+- \`apps/webflow-dashboard-cloud\`
+- \`apps/marketplace-template-submission-cloud\`
+
+This branch focuses on form assistance:
+
+- extracting likely field values
+- packaging screenshots
+- returning downloadable artifacts
+- shaping output for submission UX
+
+The important observation is that these are not interchangeable deploys. They exist because the workflow has different roles.
+
+## What Changed in April
+
+April 2026 is where productization became visible.
+
+The repository shows four important changes.
+
+### 1. Validation became an explicit creator step
+
+The submission flows added a distinct validation pass against a published URL.
+
+This matters because it moved the analyzer upstream:
+
+the system no longer waits for a reviewer to discover avoidable issues later.
+
+### 2. Analyzer output became autofill
+
+The dashboard and marketplace submission app added analyzer-backed autofill.
+
+That is a large shift in product meaning.
+
+The analyzer is no longer only saying:
+
+**"Here is what I found."**
+
+It is now also saying:
+
+**"Here is work I can safely do for you."**
+
+That is one of the clearest signs of a maturing workflow product.
+
+### 3. Screenshots became product artifacts
+
+Screenshots were not left as opaque debugging output.
+
+They became:
+
+- packaged assets
+- download links
+- upload-ready materials
+
+This is an important productization move because it transforms extraction output into something legible and reusable inside the submission process.
+
+### 4. Submission UX closed the loop
+
+The later April commits focused on:
+
+- summary clarity
+- field application visibility
+- iframe behavior
+- webhook mapping
+- success-state preservation
+
+Those are not analyzer features in the narrow sense.
+
+They are the signs that the analyzer has been absorbed into an end-to-end workflow.
+
+## Translation, Not Exposure
+
+A common failure mode in internal-tool productization is to expose expert output directly to non-expert users and call that product work.
+
+That is not what happened here.
+
+The Webflow analyzer productization work translated the system across three dimensions:
+
+### Evidence translation
+
+Deep review findings became:
+
+- validation messages
+- suggested fields
+- applied fields
+- screenshot counts
+
+### Role translation
+
+Reviewer-owned decisions stayed reviewer-owned.
+
+Creator-facing surfaces received only the parts that could safely reduce labor without overclaiming authority.
+
+### Interface translation
+
+The output moved from MCP tools and review scripts into:
+
+- dashboard validation screens
+- submission summaries
+- upload affordances
+- post-validation state management
+
+This is why the productization work feels different from merely adding new checks.
+
+## Why the Boundaries Matter
+
+The system would become weaker if productization meant collapsing every surface into one universal analyzer app.
+
+That would mix incompatible responsibilities.
+
+Instead, the repository points toward a better rule:
+
+> Share evidence pipelines. Preserve role boundaries.
+
+That rule produces cleaner surfaces:
+
+- reviewers get deep evidence and explicit manual states
+- creators get validation, autofill, and preparation assistance
+
+Each side benefits from the same underlying system, but not from the same presentation layer.
+
+## The Three-Tier Mapping
+
+Productization did not replace the Three-Tier Framework. It made it more visible.
+
+| Tier | In the productized analyzer flow | Why it matters |
+|------|----------------------------------|----------------|
+| **Database** | Published URL, preview URL, screenshot artifacts, field models, policy snapshots | The creator flow still depends on real evidence, not only form inputs |
+| **Automation** | Validation endpoints, autofill mapping, screenshot packaging, dashboard/submission integration | The system removes labor before review begins |
+| **Judgment** | Manual review boundaries, warning states, what is suggested vs applied, reviewer-only decisions | Productization stays trustworthy because it does not overclaim |
+
+The key lesson is that creator-facing UX is still a Three-Tier system.
+
+It is not "just frontend polish."
+
+## Design Rules That Fell Out of This Work
+
+### 1. Productization is translation
+
+Do not dump expert output into a user interface and call it done.
+
+Convert it into the smallest safe action a user can benefit from.
+
+### 2. Upstream assistance is high leverage
+
+If the system can help creators before formal review, it removes avoidable work from both sides.
+
+### 3. Manual is still part of the contract
+
+Creators should receive help, not false certainty.
+
+The system remains trustworthy because some decisions still stop at validation, warning, or reviewer ownership.
+
+### 4. Artifacts matter
+
+Screenshots, summaries, and applied-field lists are not decorative extras.
+
+They are how automation becomes legible inside a workflow.
+
+### 5. Separate surfaces can still be one story
+
+The validator, the autofill service, the reviewer MCP, and the submission apps are distinct surfaces.
+
+They still belong to one coherent story because they all answer the same underlying problem:
+
+how to reduce review friction without erasing governance.
+
+## What This Means for the Series
+
+The analyzer series should not stop at architecture.
+
+It should show the progression:
+
+1. the review system had to be built correctly
+2. then its outputs had to be translated
+3. then those translations had to fit real creator workflows
+
+That last step is what turns infrastructure into product.
+
+## Conclusion
+
+The Webflow analyzer did not become more important because it gained more checks.
+
+It became more important because its evidence started doing useful work earlier in the workflow.
+
+That is the productization move:
+
+- reviewer systems stay rigorous
+- creator systems stay bounded
+- the same evidence pipeline serves both
+
+When that happens, the analyzer stops being "a powerful internal tool."
+
+It becomes a workflow surface that changes how submissions are prepared.`
   },
   {
     slug: "webflow-dashboard-refactor",

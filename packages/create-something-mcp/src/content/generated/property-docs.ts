@@ -12,6 +12,30 @@ import type { PropertyDocument } from '../types.js';
 
 export const PROPERTY_DOCUMENTS: PropertyDocument[] = [
   {
+    id: "io:AGENTS",
+    property: "io",
+    title: "Agents: @create-something/io",
+    description: "Agents: @create-something/io",
+    section: "root",
+    path: "AGENTS.md",
+    slug: "AGENTS",
+    uri: "docs://io/AGENTS",
+    content: `# Agents: @create-something/io
+
+## Agent Entry
+
+- Start with \`README.md\` for research and plugin context.
+- Read \`UNDERSTANDING.md\` for the package model.
+- Primary entrypoints: \`src/routes/+page.svelte\`, \`src/routes/papers/+page.svelte\`, \`src/lib/config/plugins.ts\`.
+
+## Validation
+
+- Boot: \`pnpm dev\`
+- Smoke: \`pnpm check\`
+- Escalate if research content, plugin catalog, or experiment data cannot be reconciled with checked-in artifacts.
+`
+  },
+  {
     id: "io:ARCHITECTURAL_SEPARATION",
     property: "io",
     title: "Architectural Separation: .io vs SPACE",
@@ -1487,6 +1511,299 @@ The philosophical insight: validation isn't just about preventing bad data. It's
 
 > "The tool recedes; the work continues."
 > — — CREATE SOMETHING Canon`
+  },
+  {
+    id: "io:content/experiments/webflow-analyzer-lineage",
+    property: "io",
+    title: "Webflow Analyzer Lineage",
+    description: "A git-history-backed experiment tracing how a narrow Webflow analysis problem expanded into browser-backed MCP review, policy-grounded operations, and creator-facing submission assistance.",
+    section: "content",
+    path: "content/experiments/webflow-analyzer-lineage.md",
+    slug: "content/experiments/webflow-analyzer-lineage",
+    uri: "docs://io/content/experiments/webflow-analyzer-lineage",
+    content: `\`\`\`
+╔══════════════════════════════════════════════════════════════════╗
+║  WEBFLOW ANALYZER LINEAGE                         APR 2026       ║
+║  ────────────────────────────────────────────────────────────    ║
+║                                                                  ║
+║  Jan 31         Feb 6          Mar 27           Apr 21-23        ║
+║  Experiment  →  MCP Server  →  Review Ops   →  Creator Autofill ║
+║  detection      extraction      queue +         validation +     ║
+║  problem        + Designer      feedback        submission UX     ║
+║                  state                                            ║
+║                                                                  ║
+║  The arc is not "better crawling."                               ║
+║  The arc is "review became a system."                            ║
+╚══════════════════════════════════════════════════════════════════╝
+\`\`\`
+
+## Hypothesis
+
+If the Webflow analyzer history is read as a sequence of system decisions instead of a pile of features, a clear pattern appears:
+
+the project moved from **narrow analysis** to **governed review** and then to **creator-facing workflow assistance**.
+
+That is the lineage worth documenting.
+
+## Why This Experiment Exists
+
+The repository already contains strong analyzer artifacts:
+
+- the original plagiarism-detection experiment
+- the analyzer MCP package
+- the policy-grounded review architecture paper
+- the validator and submission surfaces
+
+What it did not yet have was one artifact that explains how those pieces fit together historically.
+
+This experiment fills that gap by reading the git history itself as evidence.
+
+## Timeline
+
+### Phase 1: Start with a narrow analysis problem
+
+On **January 31, 2026**, the repository added:
+
+- \`packages/io/content/experiments/webflow-plagiarism-detection.md\`
+
+That experiment framed the problem as **template similarity and originality detection**:
+
+- fingerprint large sets of templates
+- compare structure and semantics efficiently
+- lower review cost
+- expose the analysis through MCP tools
+
+This phase matters because it established the first durable insight:
+
+> Webflow review work benefits from structured tooling, not only ad hoc human inspection.
+
+But it was still a narrow view of the task. It solved a detection problem, not a whole review workflow.
+
+## Phase 2: Turn analysis into browser-backed infrastructure
+
+On **February 6, 2026**, the repository added:
+
+- \`packages/webflow-site-analyzer-mcp/\`
+
+This is the moment the work stopped being only a research experiment and became infrastructure.
+
+The new package introduced:
+
+- browser-backed extraction
+- published-site checks
+- Webflow Designer metadata extraction
+- observability hooks
+- versioned scripts
+- a self-improvement loop
+
+The key change was conceptual:
+
+the analyzer no longer treated "the website" as a single truth surface.
+
+It started distinguishing between:
+
+- **published pages** as runtime evidence
+- **Designer state** as authoring evidence
+
+That distinction is what made later review automation possible.
+
+## Phase 3: Review becomes policy-grounded
+
+On **February 18, 2026**, the repository added the canonical policy context pipeline.
+
+This introduced a third truth surface:
+
+- **external review policy**
+
+From this point forward, the system was no longer only asking:
+
+**"What is on the site?"**
+
+It could also ask:
+
+**"What policy version are we reviewing against?"**
+
+Then on **March 2, 2026**, the repository shows a cluster of review-oriented work:
+
+- checklist coverage analysis
+- human-vs-automated boundary analysis
+- Archipro review runs
+- MCP coverage validation
+
+This phase hardened the core idea:
+
+> Review is not just extraction. Review is evidence joined to policy, with explicit manual boundaries.
+
+## Phase 4: Operators need workflows, not demos
+
+On **March 27, 2026**, the repository added remote deployment and template review operations work:
+
+- queued jobs
+- remote execution
+- fallback paths
+- Airtable feedback loops
+- broader production checklist coverage
+
+This is the point where the analyzer became an operating surface for reviewers.
+
+The system now had production-shaped concerns:
+
+- bounded concurrency
+- progress phases
+- domain fallback
+- review job state
+- feedback collection
+
+That is a different class of software from a local analyzer demo.
+
+## Phase 5: Public articulation and distribution
+
+On **April 13, 2026**, two things happened that matter together.
+
+First, the repo published:
+
+- \`packages/io/content/papers/analyzer-mcp-review-architecture.md\`
+
+That paper gave the architecture a public thesis:
+
+the analyzer is a **policy-grounded review system**, not merely a crawler.
+
+Second, the same date brought major analyzer hardening and distribution work:
+
+- more checklist coverage
+- Worker deployment
+- MCP hub connectivity
+- workflow prompts and tool exposure
+- template name validation
+
+This was the distribution moment:
+
+the analyzer was no longer only local infrastructure. It became a networked review service.
+
+## Phase 6: The analyzer moves upstream into submission
+
+The most important late-stage shift happened on **April 21-23, 2026**.
+
+The repository added analyzer autofill and validation flows to:
+
+- \`apps/webflow-dashboard-cloud\`
+- \`apps/marketplace-template-submission-cloud\`
+
+Alongside that, the repository also carried a creator-facing validator and analyzer branch:
+
+- \`packages/webflow-template-validation\`
+- \`packages/webflow-template-analyzer\`
+
+This phase is easy to underread if you only look at individual commits.
+
+What actually happened is that analyzer capability moved **upstream** in the workflow:
+
+- from reviewer inspection
+- to creator pre-checks
+- to autofill of submission data
+- to screenshot packaging
+- to clearer validation summaries
+- to submission success handling
+
+The system started helping creators **before** formal review.
+
+That is productization, not just feature growth.
+
+## What the History Shows
+
+The history does **not** describe one static tool.
+
+It describes an analyzer family with different trust boundaries:
+
+1. **Reviewer-side MCP analysis**
+   - deep evidence gathering
+   - policy-linked review output
+   - manual states preserved
+
+2. **Creator-side validation**
+   - bounded checks
+   - actionable guidance
+   - lower ambiguity before handoff
+
+3. **Creator-side autofill**
+   - extracted facts become filled fields
+   - screenshots become downloadable assets
+   - the submission form becomes easier to complete
+
+That split is not duplication. It is the workflow maturing.
+
+## The Core Insight
+
+The Webflow analyzer became strategically interesting when it stopped being "a smart crawler."
+
+It became interesting when it learned to respect three boundaries:
+
+- **evidence boundaries**
+- **policy boundaries**
+- **role boundaries**
+
+Those boundaries are what allowed one lineage to support both reviewers and creators without pretending those users need the same thing.
+
+## What This Proves
+
+This lineage review supports five claims:
+
+1. The analyzer story is coherent when read across January to April 2026, not commit-by-commit.
+2. Policy ingestion was a turning point, not a small add-on.
+3. Remote operations and queued review jobs marked the transition from demo to system.
+4. Productization happened when analyzer output was translated into creator-facing validation and autofill.
+5. The strongest framing for the series is **governed review**, not generic site analysis.
+
+## What This Does Not Prove
+
+This experiment does not prove:
+
+- that every analyzer package should collapse into one deploy surface
+- that reviewer and creator tools should share the same UI or permission boundary
+- that automation should replace final reviewer judgment
+
+The history points in the opposite direction:
+
+the system gets stronger as its boundaries become clearer.
+
+## Reproducibility
+
+To reconstruct the same lineage, review these commits in order:
+
+- \`52878ccf\` — original experiment
+- \`bc8b5a9e\` — analyzer MCP package
+- \`c574e212\` — policy context pipeline
+- \`a7758624\` plus the \`2026-03-02\` review-analysis cluster
+- \`1fa19860\` — remote review ops
+- \`963f0487\` — architecture paper
+- \`919aefb0\` — analyzer hardening and distribution
+- \`7033af53\` — validator import
+- \`95921a7e\` and \`c41e2988\` — dashboard/submission autofill
+
+Primary files:
+
+- \`packages/io/content/experiments/webflow-plagiarism-detection.md\`
+- \`packages/webflow-site-analyzer-mcp/README.md\`
+- \`packages/io/content/papers/analyzer-mcp-review-architecture.md\`
+- \`packages/webflow-template-validation/README.md\`
+- \`packages/webflow-template-analyzer/cloudflare/README.md\`
+- \`apps/marketplace-template-submission-cloud/README.md\`
+
+## Conclusion
+
+The git history tells a stronger story than "we kept improving an analyzer."
+
+It shows a system learning what review actually requires:
+
+- more than one truth surface
+- explicit policy provenance
+- preserved manual states
+- operational execution paths
+- and finally, creator-facing workflow help
+
+That is why the next series should treat the analyzer as a **lineage**:
+
+from detection, to governed review, to submission copilot.`
   },
   {
     id: "io:content/experiments/webflow-plagiarism-detection",
@@ -3301,6 +3618,19 @@ Templates and scaffolding tools have commoditized *starting* an MCP server. The 
 1. **Show, don't scaffold** — Reference implementations over templates
 2. **Production focus** — Patterns that survive real deployment
 3. **Creation over consumption** — How to build, not just how to use
+
+---
+
+## Agent Legibility Contract
+
+| Field | Value |
+|-------|-------|
+| Entry point | \`src/routes/+page.svelte\`, \`src/routes/papers/+page.svelte\`, \`src/lib/config/plugins.ts\` |
+| Boot command | \`pnpm dev\` |
+| Smoke command | \`pnpm check\` |
+| Validation surfaces | Svelte check output, ESLint output, route preview, paper/plugin route responses |
+| UI validation path | \`/\`, \`/papers\`, \`/plugins\` |
+| Escalation rule | stop if research content, plugin catalog, or D1-backed experiment data cannot be reconciled with the checked-in source artifacts |
 
 ---
 
@@ -6139,6 +6469,30 @@ All plugin UI uses **Canon tokens** (no hardcoded colors):
 `
   },
   {
+    id: "ltd:AGENTS",
+    property: "ltd",
+    title: "Agents: @create-something/ltd",
+    description: "Agents: @create-something/ltd",
+    section: "root",
+    path: "AGENTS.md",
+    slug: "AGENTS",
+    uri: "docs://ltd/AGENTS",
+    content: `# Agents: @create-something/ltd
+
+## Agent Entry
+
+- Start with \`README.md\` for canon and philosophy.
+- Read \`UNDERSTANDING.md\` for the package model.
+- Primary entrypoints: \`src/routes/+page.svelte\`, \`src/routes/principles/+page.svelte\`, \`src/routes/standards/+page.svelte\`.
+
+## Validation
+
+- Boot: \`pnpm dev\`
+- Smoke: \`pnpm check\`
+- Escalate before changing canon, voice, or standards semantics without an explicit judgment artifact.
+`
+  },
+  {
     id: "ltd:DESIGN_IMPROVEMENTS",
     property: "ltd",
     title: "Design Improvements for createsomething.ltd",
@@ -6530,6 +6884,17 @@ MCP is the **chassis**—the structural frame that holds everything together.
 .agency (Services) → delivers custom MCPs to clients →
 .ltd (Philosophy) → refined by what creation work reveals
 \`\`\`
+
+## Agent Legibility Contract
+
+| Field | Value |
+|-------|-------|
+| Entry point | \`src/routes/+page.svelte\`, \`src/routes/principles/+page.svelte\`, \`src/routes/standards/+page.svelte\` |
+| Boot command | \`pnpm dev\` |
+| Smoke command | \`pnpm check\` |
+| Validation surfaces | Svelte check output, route preview, Cloudflare Pages build output |
+| UI validation path | \`/\`, \`/principles\`, \`/standards\` |
+| Escalation rule | stop if a change alters canon, voice, or standards semantics without an explicit judgment artifact or operator decision |
 
 ---
 
@@ -7121,6 +7486,234 @@ Score
 ---
 
 *This specification defines a system for transforming the Subtractive Triad from a manual audit methodology into an automated, ongoing health check infrastructure.*
+`
+  },
+  {
+    id: "ltd:src/routes/presentations/abundance-system/SCRIPT",
+    property: "ltd",
+    title: "ABUNDANCE",
+    description: "ABUNDANCE",
+    section: "src",
+    path: "src/routes/presentations/abundance-system/SCRIPT.md",
+    slug: "src/routes/presentations/abundance-system/SCRIPT",
+    uri: "docs://ltd/src/routes/presentations/abundance-system/SCRIPT",
+    content: `# ABUNDANCE
+
+## Slide 1: Title
+
+Abundance.
+
+This is the nurse staffing system, explained in plain language.
+
+Not the implementation details first.
+Not a wall of product jargon.
+Just what the system does, why it exists, and where the safety rails sit.
+
+---
+
+## Slide 2: The staffing problem
+
+Nurse staffing is still full of repeated facts and manual re-entry.
+
+A nurse texts a recruiter.
+Someone copies details into a system.
+Someone checks a license.
+Someone chases missing documents.
+Someone decides who looks close enough.
+
+That is slow.
+And in healthcare, slow plus unclear is dangerous.
+
+---
+
+## Slide 3: What Abundance actually is
+
+Abundance does three jobs.
+
+First, it listens and turns conversation into a working profile.
+Second, it ranks likely fits.
+Third, it controls when the system is allowed to write, escalate, or stop.
+
+Think of it as conversation plus matching plus guardrails.
+
+---
+
+## Slide 4: Translating the code
+
+The codebase uses generic marketplace language.
+
+Seeker.
+Talent.
+Match.
+Intake.
+
+In nurse staffing terms, that becomes the open role, the nurse available to fill it, the recommended pairing, and the running intake history.
+
+For this client, the important note is that demand already exists.
+We are not trying to generate the facility side.
+We are improving how nurses are acquired and matched into it.
+
+That translation matters because the engine is generic by design, but the workflow can be specialized.
+
+---
+
+## Slide 5: What intake feels like
+
+The concierge flow is the clearest way to understand the product.
+
+A nurse says, “I’m an ICU nurse in Austin looking for a 13-week travel contract starting in April. Nights are best.”
+
+The system captures what it can.
+Then it asks only for what is still missing.
+
+That is the key move.
+It does not force a 20-question form before it becomes useful.
+
+---
+
+## Slide 6: What the system keeps
+
+The system keeps the facts it needs to keep working:
+
+who you are,
+what you can do,
+when you are available,
+what has been confirmed,
+what still needs proof,
+and what happened in previous conversations.
+
+In the repo, that shows up as profiles, matches, and intakes.
+It is meant to remember progress, not just collect data.
+
+---
+
+## Slide 7: How matching stays legible
+
+The current matching engine is not magic.
+It is simple math.
+
+Skills count for forty percent.
+Budget counts for thirty percent.
+Availability counts for thirty percent.
+
+In a nurse staffing deployment, that maps cleanly to specialty and credential fit, pay fit, and shift or start-date availability.
+
+Simple scoring is a feature here.
+You can explain it.
+You can audit it.
+You can improve it without pretending it is a black box.
+
+---
+
+## Slide 8: What happens on conflict
+
+The seeded concierge demo includes a strong example.
+
+A nurse says one license date.
+The credentialing portal returns another.
+
+The system does not guess.
+It packages the thread for human review.
+
+That is the right behavior in a regulated workflow.
+The goal is not “AI does everything.”
+The goal is “AI does the safe parts fast and hands off the risky parts clearly.”
+
+---
+
+## Slide 9: The policy rules
+
+Three rules matter most for this product.
+
+Inferred is not the same as confirmed.
+Sensitive fields need an explicit yes before external use.
+Low-confidence or regulated exceptions trigger a human handoff.
+
+Those rules are already written down in the repo as policy artifacts.
+That means the safety model is not hidden inside prompts.
+
+---
+
+## Slide 10: Why \`.agency\` exists
+
+The concierge chat is the product surface.
+\`.agency\` is the control surface.
+
+That is where identity, entitlement, credential separation, and route authorization live.
+
+In plain terms:
+the chat can feel simple because the control layer is doing the serious work in the background.
+
+One login boundary.
+One governed access model.
+One place to stop execution when policy, billing, contract, or security state says no.
+
+---
+
+## Slide 11: What is real now versus what gets specialized
+
+What is already real in code:
+profiles, intake history, matching, WhatsApp-ready identity, human handoff, governed widgets, and controlled execution.
+
+What gets specialized for this engagement:
+nurse credential rules, specialty and shift fit, pay-package logic, resume and consent collection, recruiter handoff, and healthcare audit outputs.
+
+That distinction is important.
+This is not a fake deck.
+It is a real system with a clear adaptation path.
+
+---
+
+## Slide 12: What nurse acquisition likely costs
+
+We also have enough research to budget this honestly.
+
+The client already has demand.
+So this budget is about nurse acquisition, not a two-sided marketplace launch.
+
+A focused working range is roughly six to twelve thousand dollars a month.
+A broader signal-generating range is roughly twelve to twenty thousand.
+
+That is grounded in candidate-side recruitment benchmarks:
+Indeed and job-media clicks,
+Google and LinkedIn specialty clicks,
+and healthcare completed-application costs that rise fast for harder-to-fill roles.
+
+---
+
+## Slide 13: Recommended first 90 days
+
+If we wanted to test the funnel instead of just describe it, the starting range is clear.
+
+Focused working budget:
+six to twelve thousand dollars per month.
+
+Better signal-generating budget:
+twelve to twenty thousand dollars per month.
+
+Channel order is straightforward:
+job channels first,
+search second,
+Meta retargeting for completion and reactivation,
+and LinkedIn only where specialty targeting matters.
+
+Month one is message testing.
+Month two is budget reallocation around nurse quality.
+Month three is scaling the best specialty and geography combinations.
+
+---
+
+## Slide 14: The client value
+
+For nurses, less form fatigue.
+For recruiters, less retyping.
+For operators, fewer hidden blockers.
+For leadership, a system that is faster without becoming opaque.
+
+The claim is simple:
+Abundance turns staffing from repeated intake and manual guesswork into guided matching with visible safety rails.
+
+And now the nurse-acquisition path includes a research-backed budget range, not just a product story.
 `
   },
   {
@@ -10653,6 +11246,170 @@ After recording:
 `
   },
   {
+    id: "ltd:src/routes/presentations/hub/SCRIPT",
+    property: "ltd",
+    title: "HUB",
+    description: "HUB",
+    section: "src",
+    path: "src/routes/presentations/hub/SCRIPT.md",
+    slug: "src/routes/presentations/hub/SCRIPT",
+    uri: "docs://ltd/src/routes/presentations/hub/SCRIPT",
+    content: `# HUB
+
+## Slide 1: Title [0:00]
+
+HUB.
+
+The governed MCP surface.
+
+Not another connector catalog.
+Not another thin proxy.
+The control layer between the MCP user, Codex, and the downstream systems that actually do work.
+
+---
+
+## Slide 2: The problem [0:40]
+
+Codex MCP configuration is a flat list.
+
+That works for a handful of tools.
+It breaks down when the surface gets large, provider-variable, tenant-sensitive, or destructive.
+
+The user should not have to reason about raw connector sprawl.
+The model should not browse an unbounded catalog.
+
+---
+
+## Slide 3: The basic relationship [1:30]
+
+There are three actors here.
+
+The MCP user chooses the task and the acceptable operating posture.
+Codex hosts the session, lists tools, and decides when to invoke them.
+The Hub governs what is visible and what is allowed to execute.
+
+That separation matters.
+
+---
+
+## Slide 4: Why the Hub exists [2:20]
+
+The Hub turns a flat MCP inventory into a house surface.
+
+It keeps CREATE SOMETHING naming, routing, and policy in front.
+It keeps commodity provider plumbing behind the surface.
+And it reduces the cognitive burden on both the user and the model.
+
+---
+
+## Slide 5: Discovery is governed [3:10]
+
+The Hub does not expose every downstream tool equally.
+
+Small bounded surfaces may be exposed directly.
+Large or variable catalogs move behind brokered discovery.
+
+Search.
+Describe.
+Execute.
+
+That is not ceremony.
+That is governance.
+
+---
+
+## Slide 6: Execution is governed [4:10]
+
+Routing is only the beginning.
+
+Before a protected downstream call runs, the Hub resolves actor context, classifies the route, evaluates authorization, enforces quotas, applies retry policy, and emits telemetry.
+
+The point is not just to know where a call goes.
+The point is to know whether it should happen at all.
+
+---
+
+## Slide 7: Tenant policy [5:20]
+
+Visibility is tenant-scoped.
+
+Servers can be allowed or denied.
+Tool prefixes can be allowed or denied.
+Alias routes can prefer one provider and fall back to another.
+Pending OAuth candidates stay hidden unless policy says otherwise.
+
+The visible tool surface is a policy result.
+
+---
+
+## Slide 8: What the user sees [6:25]
+
+The user should see one CREATE SOMETHING surface.
+
+A governed route.
+A clear reason when access is blocked.
+A standard recovery path when a connection needs repair.
+
+Not internal provider labels.
+Not raw operational leakage.
+
+---
+
+## Slide 9: What Codex gains [7:15]
+
+Codex gets a smaller, cleaner tool surface.
+
+That improves selection quality.
+It reduces destructive ambiguity.
+It keeps shared controls in one place instead of scattering them across many MCP entries.
+
+The model works better when the surface is intentional.
+
+---
+
+## Slide 10: What operators gain [8:05]
+
+Operators gain a control plane.
+
+Registry.
+Bundles.
+State.
+Tenant routing.
+Discovery packs.
+Trace lookup.
+
+One gateway.
+Many downstream MCPs.
+Centralized control over exposure and execution.
+
+---
+
+## Slide 11: The framing [9:00]
+
+In the CREATE SOMETHING model:
+
+Database is the substrate.
+Automation is the execution layer.
+Judgment is the policy layer.
+
+The Hub lives in automation.
+But it is shaped by policy artifacts at every meaningful boundary.
+
+---
+
+## Slide 12: The claim [9:50]
+
+The Hub is not a convenience wrapper.
+
+It is the difference between having MCP access and having a governed MCP product.
+
+Policy governs exposure.
+Hub governs execution.
+Codex gets a surface it can reason over.
+The user gets outcomes without connector sprawl.
+`
+  },
+  {
     id: "ltd:src/routes/presentations/user-onboarding/SCRIPT",
     property: "ltd",
     title: "User Onboarding Video Script",
@@ -10942,6 +11699,30 @@ src/routes/
 ---
 
 *Last validated: 2024-11-25*
+`
+  },
+  {
+    id: "space:AGENTS",
+    property: "space",
+    title: "Agents: @create-something/space",
+    description: "Agents: @create-something/space",
+    section: "root",
+    path: "AGENTS.md",
+    slug: "AGENTS",
+    uri: "docs://space/AGENTS",
+    content: `# Agents: @create-something/space
+
+## Agent Entry
+
+- Start with \`README.md\` for the package contract.
+- Read \`UNDERSTANDING.md\` for the package model.
+- Primary entrypoints: \`src/routes\`, \`src/lib\`.
+
+## Validation
+
+- Boot: \`pnpm dev\`
+- Smoke: \`pnpm check && pnpm build\`
+- Escalate if automation experiment behavior cannot be validated through the documented UI or build path.
 `
   },
   {
@@ -18963,6 +19744,19 @@ pnpm --filter=space build && wrangler pages deploy packages/space/.svelte-kit/cl
 
 ---
 
+## Agent Legibility Contract
+
+| Field | Value |
+|-------|-------|
+| Entry point | \`README.md\`, \`src/routes\`, \`src/lib\` |
+| Boot command | \`pnpm --filter=space dev\` |
+| Smoke command | \`pnpm --filter=space check && pnpm --filter=space build\` |
+| Validation surfaces | \`svelte-check\` output, build output, local route rendering, browser screenshots, Worker-backed API responses for \`/api/code/run\`, \`/api/praxis/run\`, \`/api/motion/analyze\`, and \`/api/motion/extract\` |
+| UI validation path | Start with \`/playground\`, then validate the narrow route affected by the change: \`/praxis\`, \`/motion\`, \`/data\`, or \`/discover\` |
+| Escalation rule | Stop if the visual issue depends on deployed Cloudflare Workers, Puppeteer extraction, or remote data feeds that cannot be reproduced from the local route and API surface. |
+
+---
+
 ## Related
 
 - [The MCP-First Thesis](../../docs/MCP_FIRST_THESIS.md) — Strategic context
@@ -21817,6 +22611,30 @@ Notion (A&amp;R Review Queue)
 </div>`
   },
   {
+    id: "agency:AGENTS",
+    property: "agency",
+    title: "Agents: @create-something/agency",
+    description: "Agents: @create-something/agency",
+    section: "root",
+    path: "AGENTS.md",
+    slug: "AGENTS",
+    uri: "docs://agency/AGENTS",
+    content: `# Agents: @create-something/agency
+
+## Agent Entry
+
+- Start with \`README.md\` for service positioning and the package contract.
+- Read \`UNDERSTANDING.md\` for the package model.
+- Primary entrypoints: \`src/routes/+page.svelte\`, \`src/routes/services/+page.svelte\`, \`content/sales/README.md\`.
+
+## Validation
+
+- Boot: \`pnpm dev\`
+- Smoke: \`pnpm check\`
+- Escalate if Auth0, D1, or client-delivery data is needed and not available through local fixtures or Infisical-backed environment.
+`
+  },
+  {
     id: "agency:CANON_AUDIT",
     property: "agency",
     title: "Canon Audit: .agency Property",
@@ -22026,6 +22844,132 @@ grep -roh "#[0-9a-fA-F]{6}" packages/agency/src --include="*.svelte" 2>/dev/null
 - App imports Canon system correctly ✅
 
 The .agency property has **excellent Canon compliance** for the critical path. Remaining violations are in optional enhancement areas that don't affect the core design system integrity.
+`
+  },
+  {
+    id: "agency:clients/cato-supply-insights-review/docs/notion-progress-update-2026-05-16",
+    property: "agency",
+    title: "Cato Supply Insights Progress Update",
+    description: "Cato Supply Insights Progress Update",
+    section: "clients",
+    path: "clients/cato-supply-insights-review/docs/notion-progress-update-2026-05-16.md",
+    slug: "clients/cato-supply-insights-review/docs/notion-progress-update-2026-05-16",
+    uri: "docs://agency/clients/cato-supply-insights-review/docs/notion-progress-update-2026-05-16",
+    content: `# Cato Supply Insights Progress Update
+
+**Client:** Cato Supply
+**Engagement:** Insights CMS and navigation review
+**Status:** Client review package live; Webflow native changes staged but not published
+**Review URL:** https://cato-supply-insights-review.pages.dev/insights
+
+## Summary
+
+The Cato Insights work has moved from a local prototype into a repo-backed client package. The review surface is live on Cloudflare Pages and can be shared for client feedback while native Webflow publishing remains held.
+
+## Completed
+
+- Built a reviewable Insights hub with focused pages for Resiliency Report Alerts, Cato Research, Resource Library, and Newsroom.
+- Added mock CMS content for archive and detail pages so the client can review content shape before final Webflow CMS binding.
+- Polished the Resiliency subscribe/archive experience, including form hierarchy, button style, archive cards, spacing, and mobile behavior.
+- Aligned the navigation dropdowns: About remains compact while Insights uses a richer mega menu with featured Resiliency content.
+- Added predictable dropdown interaction behavior in the static review build: hover/focus open, Escape/outside close, ARIA state sync, and mobile-safe behavior.
+- Ported the native Webflow Nav direction through MCP: compact About styling and a native Insights dropdown are staged in Designer.
+
+## Review Surfaces
+
+- Primary review: https://cato-supply-insights-review.pages.dev/insights
+- Resiliency detail example: https://cato-supply-insights-review.pages.dev/2026-supply-disruption-preparedness-brief
+- Repo package: \`packages/agency/clients/cato-supply-insights-review\`
+- Mock CMS data: \`packages/agency/clients/cato-supply-insights-review/site/data/insights-cms.json\`
+- Validation screenshots: \`packages/agency/clients/cato-supply-insights-review/verification/screenshots\`
+
+## Webflow Status
+
+Native Webflow changes are staged but not published. The current Webflow work should be treated as a draft implementation pass until the client approves the Cloudflare review surface and the final CMS binding plan.
+
+## Next
+
+- Review the Cloudflare URL with the client.
+- Decide whether the native Webflow menu should remain purely native Webflow dropdown behavior or receive a small custom controller matching the local build.
+- Connect the Webflow pages to live CMS Collection Lists and field bindings.
+- Publish Webflow only after client approval.
+`
+  },
+  {
+    id: "agency:clients/cato-supply-insights-review/docs/webflow-port-notes-2026-05-16",
+    property: "agency",
+    title: "Webflow Port Notes",
+    description: "Webflow Port Notes",
+    section: "clients",
+    path: "clients/cato-supply-insights-review/docs/webflow-port-notes-2026-05-16.md",
+    slug: "clients/cato-supply-insights-review/docs/webflow-port-notes-2026-05-16",
+    uri: "docs://agency/clients/cato-supply-insights-review/docs/webflow-port-notes-2026-05-16",
+    content: `# Webflow Port Notes
+
+## Native Changes Staged
+
+- Updated the shared \`Nav\` component through Webflow MCP.
+- Added \`Insights\` between \`About Us\` and \`Case Studies\`.
+- Created a native Webflow dropdown wrapper for Insights.
+- Inserted mega menu content matching the Cloudflare review surface.
+- Restyled the compact About dropdown to match the updated nav system.
+- Set native dropdown hover delay attributes on About and Insights.
+
+## Held Back
+
+- No Webflow site publish was performed.
+- No custom production domains were published.
+- Final CMS Collection List binding is still pending.
+
+## Production Guardrail
+
+Use the Cloudflare review package for client review first. Treat Webflow as staged implementation until copy, content shape, and CMS binding decisions are approved.
+`
+  },
+  {
+    id: "agency:clients/cato-supply-insights-review/README",
+    property: "agency",
+    title: "Cato Supply Insights Review",
+    description: "Cato Supply Insights Review",
+    section: "clients",
+    path: "clients/cato-supply-insights-review/README.md",
+    slug: "clients/cato-supply-insights-review/README",
+    uri: "docs://agency/clients/cato-supply-insights-review/README",
+    content: `# Cato Supply Insights Review
+
+Client review package for the Cato Supply Insights CMS, focused landing pages, and navigation dropdown work.
+
+## Surfaces
+
+- Review URL: https://cato-supply-insights-review.pages.dev/insights
+- Detail example: https://cato-supply-insights-review.pages.dev/2026-supply-disruption-preparedness-brief
+- Cloudflare Pages project: \`cato-supply-insights-review\`
+- Production review branch: \`client-review\`
+- Native Webflow status: draft Designer changes applied, not published to custom production domains
+
+## Package Layout
+
+- \`site/\` - static Webflow export plus the local Insights/CMS polish.
+- \`site/data/insights-cms.json\` - mock CMS records used to render hub, archive, and detail pages.
+- \`site/scripts/render-insights-cms.mjs\` - renderer for the local CMS mock pages.
+- \`verification/screenshots/\` - screenshots captured while polishing and validating the review surface.
+- \`docs/\` - client/update notes suitable for Notion and handoff.
+- \`experiments/\` - one-off HTML prototypes retained for context.
+
+## Commands
+
+\`\`\`bash
+pnpm --filter @create-something/cato-supply-insights-review check
+pnpm --filter @create-something/cato-supply-insights-review dev
+pnpm --filter @create-something/cato-supply-insights-review deploy:review
+\`\`\`
+
+## Current State
+
+- The local review build includes the Insights hub, Resiliency Report Alerts, Cato Research, Resource Library, Newsroom, and CMS detail pages.
+- The dropdown system has one shared controller in the local build: About stays compact, Insights remains the featured mega menu, and both support hover/focus/Escape behavior.
+- The Webflow \`Nav\` component has been updated through MCP with an Insights native dropdown and aligned About styling, but the site has not been published.
+- The package is intentionally separate from native Webflow so the Cloudflare URL can be used for client review before publishing Webflow production domains.
 `
   },
   {
@@ -23436,6 +24380,11 @@ What's the platform architecture?
 - **troubleshooting**: Common deployment issues
 - **database-migrations**: D1 database schema updates
 - **monitoring**: Analytics and error tracking
+
+### Resources & Prompts
+- **Resource**: \`pcn://architecture\` (platform architecture overview)
+- **Resource**: \`pcn://components\` (component/pattern/guide catalog)
+- **Prompts**: \`platform_onboarding\`, \`architecture_review\`, \`feature_design_session\`
 
 ## Technical Details
 
@@ -25292,20 +26241,190 @@ Based on Sprint 2 baselines:
 `
   },
   {
+    id: "agency:content/sales/agency-positioning-spine-2026-03",
+    property: "agency",
+    title: "Agency Positioning Spine",
+    description: "Agency Positioning Spine",
+    section: "content",
+    path: "content/sales/agency-positioning-spine-2026-03.md",
+    slug: "content/sales/agency-positioning-spine-2026-03",
+    uri: "docs://agency/content/sales/agency-positioning-spine-2026-03",
+    content: `# Agency Positioning Spine
+
+Date: 2026-03-28
+
+## Goal
+
+Hold the public message stable through the next 12 months, even as models, tools, and delivery details change underneath it.
+
+The category should stay fixed. Only proof, examples, and stack references should rotate.
+
+## Durable Category
+
+CREATE SOMETHING .agency is governed workflow infrastructure for ops-minded teams.
+
+The promise is not "latest AI tooling."
+
+The promise is:
+
+- one safer operating path
+- clearer handoffs and approvals
+- faster execution without losing control
+
+## Primary Buyer
+
+The best-fit buyer is usually one of these:
+
+- Ops or RevOps leader carrying downside risk
+- systems-minded founder or operator
+- marketplace, platform, or process owner responsible for reliability
+- technical lead who needs cross-system automation without cleanup debt
+
+Psychographic traits:
+
+- pragmatic
+- skeptical of hype
+- competitive
+- risk-aware
+- wants proof before commitment
+
+## Emotional Job
+
+The buyer is not trying to feel inspired by AI.
+
+The buyer wants to:
+
+- move faster without being embarrassed by a broken workflow
+- trust the system when volume, edge cases, or approvals show up
+- buy from a specialist instead of managing another employee
+
+## Brand Frame
+
+Use this frame quietly and consistently:
+
+- high-performance systems
+- clinical governance
+
+The Porsche 930 Turbo and emergency medicine story belongs on the About page and in founder narrative.
+
+It should shape tone, not turn the whole site into a racing theme.
+
+## Core Message Hierarchy
+
+Homepage:
+
+- Fix the workflow your team still protects by hand.
+- Start with one workflow.
+- Add governed execution when risk rises.
+
+About:
+
+- Power without governance is a liability.
+- The founder story explains why the work is both serious and warm.
+- Show operator credibility, not just technical capability.
+
+Services:
+
+- This is a scoped specialist engagement.
+- Clients are not hiring an internal admin.
+- Visibility comes through artifacts, approvals, and release evidence.
+
+Proof page:
+
+- Show that the work is real and inspectable.
+- Prioritize artifacts, systems, and concrete operating outcomes over abstract claims.
+
+Booking:
+
+- Frame the session as a diagnostic for one workflow.
+- Prevent open-ended consulting expectations at the intake step.
+
+## Relationship Boundary
+
+Repeat this consistently:
+
+- .agency scopes and governs critical workflows
+- the client keeps business context and approval ownership
+- delivery is artifact-backed and portable
+- full system development or embedded admin work routes to partners when needed
+
+## Proof System
+
+Clients trust what they can see.
+
+So the site and follow-up materials should keep showing:
+
+- runbooks
+- approval boundaries
+- release evidence
+- case notes
+- productized artifacts
+- selected builds in production
+
+If a new model ships, update the proof and examples. Do not rewrite the category.
+
+## Words To Use
+
+- governed
+- workflow
+- operating path
+- control layer
+- handoff
+- approval
+- recovery
+- production
+- artifact-backed
+- reliable
+- specialist
+
+## Words To Limit
+
+- bleeding edge
+- autonomous everything
+- AI-native as a standalone claim
+- latest model
+- hours and retainers before outcomes are clear
+- custom platform as the first answer
+
+## 12-Month Content Rhythm
+
+Keep the homepage and services pages mostly stable.
+
+Update on this rhythm instead:
+
+- monthly: one operator note from a real workflow failure mode or design decision
+- quarterly: one proof artifact or case note added to the proof page
+- as shipped: update stack mentions and examples only where they strengthen proof
+
+## Decision Rule For Future Copy Changes
+
+Before changing a headline, ask:
+
+1. Does this change the category, or just the example?
+2. Will this still be true if the model stack changes next quarter?
+3. Does this make the relationship boundary clearer?
+4. Does this increase trust for the buyer carrying downside risk?
+
+If the answer to 1 is yes, do not change it lightly.
+`
+  },
+  {
     id: "agency:content/sales/discovery-call-script",
     property: "agency",
-    title: "POLICY OS Discovery Call Script (Ops/RevOps)",
-    description: "POLICY OS Discovery Call Script (Ops/RevOps)",
+    title: "Workflow Infrastructure Discovery Call Script (Ops/RevOps)",
+    description: "Workflow Infrastructure Discovery Call Script (Ops/RevOps)",
     section: "content",
     path: "content/sales/discovery-call-script.md",
     slug: "content/sales/discovery-call-script",
     uri: "docs://agency/content/sales/discovery-call-script",
-    content: `# POLICY OS Discovery Call Script (Ops/RevOps)
+    content: `# Workflow Infrastructure Discovery Call Script (Ops/RevOps)
 
 **Audience:** Ops/RevOps leaders  
 **Duration:** 20–30 minutes  
-**Primary objective:** confirm fit and secure next step for a Policy Mapping Session  
-**Message taxonomy:** core phrase "POLICY OS for production autonomy"; client-facing \`Skills + MCP\`; technical proof \`MCP + Skills\`
+**Primary objective:** confirm fit and secure next step for a Workflow Mapping Session  
+**Message taxonomy:** core phrase "Production-safe workflow infrastructure"; client-facing \`Skills + MCP\`; technical proof \`MCP + Skills\`
+
+**Operator standard:** discovery is workflow diagnosis and policy-boundary mapping, not app-intake alone
 
 ---
 
@@ -25322,6 +26441,7 @@ Anchor mindset:
 
 - diagnose before prescribing
 - map risk and workflow economics
+- map the trust boundary, not just the integration list
 - close to a concrete next action
 
 ---
@@ -25330,11 +26450,16 @@ Anchor mindset:
 
 Opening:
 
-> "Thanks for making time. I want to use this call to understand where operations are breaking down, then decide whether a POLICY OS pilot is the right next step. Sound good?"
+> "Thanks for making time. I want to use this call to understand where the workflow is breaking down, then decide whether a scoped workflow wedge is the right next step. Sound good?"
 
 Intent prompt:
 
 > "What prompted this conversation now?"
+
+Guardrail:
+
+- if the buyer starts with app names, convert back to workflow language:
+  > "What business process are those systems supporting, and where does it break today?"
 
 ---
 
@@ -25354,11 +26479,16 @@ Use these in sequence:
 4. **Cross-system coupling**
 > "What systems must stay in sync for this workflow to work end-to-end?"
 
+5. **Business objective**
+> "If we fixed one workflow in the next 30 days, what business result would matter most?"
+
 Follow-up probes:
 
 - "What did you already try?"
 - "Where does work drift between systems?"
 - "What breaks first when volume spikes?"
+- "What is the cost of one bad failure?"
+- "Who owns this workflow day to day?"
 
 ---
 
@@ -25374,7 +26504,7 @@ Then validate:
 
 If confirmed, position:
 
-> "That is exactly what POLICY OS is designed for: keep safe actions fast, gate risky actions explicitly, and keep every decision auditable."
+> "That is exactly what this model is designed for: keep safe actions fast, gate risky actions explicitly, and keep every decision auditable."
 
 ---
 
@@ -25382,11 +26512,11 @@ If confirmed, position:
 
 Map problem to delivery tier:
 
-1. **Custom Workflow MCPs**
+1. **Workflow Infrastructure**
 - build trusted workflow substrate
 - normalize tool contracts and execution paths
 
-2. **Autonomy Assurance**
+2. **Policy OS**
 - policy controls, release gates, approval rules, incident loops
 - default path for production-risk workflows
 
@@ -25397,6 +26527,10 @@ Map problem to delivery tier:
 Live mapping line:
 
 > "Based on your current risk and coupling, you likely start at [tier] with an assurance posture of [approval mode]."
+
+Policy boundary check:
+
+> "Before we talk implementation, let’s sort actions into what can auto-run, what needs approval, and what should be blocked."
 
 ---
 
@@ -25423,11 +26557,20 @@ Pivot:
 ### Objection: "Why not MCP-only?"
 Response:
 
-> "MCP-only is a good wedge for discovery or compliance-constrained starts. POLICY OS is what makes autonomous outcomes reliable at production scale."
+> "MCP-only is a good wedge for discovery or compliance-constrained starts. Policy OS is what makes automation reliable at production scale."
 
 Pivot:
 
 > "Do you want connectivity only, or governed execution with measurable reliability?"
+
+### Objection: "Can Braintrust handle the policy?"
+Response:
+
+> "Braintrust helps us trace, evaluate, and tune runtime behavior. It is not the approval or policy enforcement layer. The policy boundary still has to be designed explicitly."
+
+Pivot:
+
+> "Which actions do you need to auto-allow, review, or block?"
 
 ### Objection: price resistance
 Response:
@@ -25446,7 +26589,7 @@ Pivot:
 
 Use when pain is clear, buyer has authority, and urgency exists.
 
-> "Next step is a paid Policy Mapping Session. You’ll get pilot scope, policy boundary, and a 30-day implementation plan."
+> "Next step is a paid Workflow Mapping Session. You’ll get pilot scope, trust boundary, and a 30-day implementation plan."
 
 Commit:
 
@@ -25458,7 +26601,7 @@ Commit:
 
 Use when value is likely but authority, budget, or urgency is partial.
 
-> "We can start with a scoped MCP-only wedge and define explicit triggers for moving into Autonomy Assurance."
+> "We can start with a scoped MCP-only wedge and define explicit triggers for moving into Policy OS."
 
 Commit:
 
@@ -25483,7 +26626,7 @@ Commit:
 
 ### 30-second positioning statement
 
-> "CREATE SOMETHING runs a POLICY OS for production autonomy. We build custom workflow MCPs, then layer governance so safe actions stay fast, risky actions are approval-gated, and every decision is auditable."
+> "CREATE SOMETHING builds production-safe workflow infrastructure. We usually start with a scoped MCP wedge, then layer governance so safe actions stay fast, risky actions are approval-gated, and every decision is auditable."
 
 ### 2-minute "how it works in practice"
 
@@ -25501,7 +26644,7 @@ Commit:
 
 ### Closing language by fit
 
-1. **High fit:** "Let’s schedule the Policy Mapping Session and lock stakeholders now."
+1. **High fit:** "Let’s schedule the Workflow Mapping Session and lock stakeholders now."
 2. **Medium fit:** "Let’s scope a narrow wedge and define assurance trigger thresholds upfront."
 3. **Low fit:** "Let’s pause and re-enter when [condition] is true."
 
@@ -25514,13 +26657,17 @@ Commit:
 3. Capture outputs in a standard discovery note.
 4. Execute post-call follow-up from \`../templates/sales/policy-os-follow-up-sequence.md\`.
 5. Build proposals using the same artifact vocabulary.
+6. For high-fit work, send the Workflow Mapping Session agenda before the paid session.
 
 ### Discovery note template (required fields)
 
 - workflow candidate
+- business objective
+- current failure cost
 - risk class (\`low|medium|high\`)
 - required approvals
 - integration systems
+- policy boundary (\`auto-allow|approval-required|block\`)
 - recommended package tier
 - buyer authority level
 - next step owner and date
@@ -25567,19 +26714,537 @@ Pass when call closes with named owner, scoped next step, and date.
 `
   },
   {
+    id: "agency:content/sales/discovery-policy",
+    property: "agency",
+    title: "Discovery Policy And Standards",
+    description: "Discovery Policy And Standards",
+    section: "content",
+    path: "content/sales/discovery-policy.md",
+    slug: "content/sales/discovery-policy",
+    uri: "docs://agency/content/sales/discovery-policy",
+    content: `# Discovery Policy And Standards
+
+**Scope:** all CREATE SOMETHING \`.agency\` discovery, qualification, and workflow mapping work  
+**Applies to:** discovery calls, async qualification, MCP-only wedge scoping, and Workflow Mapping Sessions
+
+---
+
+## Purpose
+
+Ensure discovery produces a decision-ready workflow map, not just an integration request list.
+
+Discovery must determine:
+
+1. The business workflow to improve
+2. The systems and data required
+3. The trust boundary for autonomous action
+4. The policy boundary for \`auto-allow\`, \`approval-required\`, and \`block\`
+5. The correct engagement path: \`MCP-only wedge\`, \`Workflow Infrastructure\`, \`Policy OS\`, or \`Enterprise Extension\`
+
+---
+
+## Core standard
+
+Discovery is successful only when the workflow, risk boundary, and next-step package are clear.
+
+The question is not:
+
+> "What do you want to connect?"
+
+The primary question is:
+
+> "What business workflow needs to become safe, fast, and governable?"
+
+Integration requests are inputs to workflow discovery, not the end product.
+
+---
+
+## Required outputs
+
+Every discovery must produce these minimum outputs:
+
+1. \`workflow candidate\`
+2. \`business objective\`
+3. \`current failure cost\`
+4. \`systems in scope\`
+5. \`human gate boundaries\`
+6. \`policy boundary\`
+7. \`recommended tier\`
+8. \`named owner\`
+9. \`next step and date\`
+
+If these are incomplete, discovery is incomplete.
+
+---
+
+## Mandatory classification
+
+Every qualified workflow must be mapped across the Three-Tier Framework:
+
+- \`Database\`: systems of record, data dependencies, freshness, and state ownership
+- \`Automation\`: actions, tool paths, handoffs, retries, and deterministic workflow steps
+- \`Judgment\`: approvals, escalation triggers, disallowed actions, and policy selection
+
+Do not recommend implementation before all three are addressed.
+
+---
+
+## Policy boundary standard
+
+Every discovery must classify actions into these buckets:
+
+1. \`auto-allow\`
+Safe read or low-risk actions that can execute without human review
+
+2. \`approval-required\`
+Actions that can be automated but require explicit human gate or inbox review
+
+3. \`block\`
+Actions that must not execute in the proposed system
+
+The policy boundary must also define:
+
+- escalation triggers
+- fallback/manual path
+- ownership boundary
+- release-gate conditions for production rollout
+
+If a workflow cannot be described in these terms, it is not ready for Policy OS.
+
+---
+
+## Package routing rules
+
+### Route to \`MCP-only wedge\` when:
+
+- the client primarily needs trusted connectivity
+- the workflow is read-only or compliance-constrained
+- autonomy risk is intentionally low
+- the next step is validation rather than governed execution
+
+### Route to \`Workflow Infrastructure\` when:
+
+- the workflow requires deterministic execution paths
+- multiple systems must stay in sync
+- current failure cost is operational, financial, or customer-visible
+
+### Add \`Policy OS\` when:
+
+- write actions or approvals matter
+- risky actions need gating
+- auditability or incident loops are required
+- the client wants production-safe autonomous behavior
+
+### Add \`Enterprise Extension\` when:
+
+- the workflow is regulated, compliance-heavy, or high-stakes
+- cross-system orchestration is deep
+- custom trust boundaries are required
+
+---
+
+## Braintrust standard
+
+Braintrust is an observability and eval layer.
+
+It is not the policy control plane.
+
+Use Braintrust for:
+
+- decision traces
+- evals
+- runtime observation
+- regression visibility
+
+Do not describe Braintrust as the mechanism that enforces \`allow\`, \`approval-required\`, or \`block\`.
+Those belong in policy artifacts, workflow controls, and runtime enforcement paths.
+
+---
+
+## Prohibited discovery shortcuts
+
+Do not:
+
+- reduce discovery to app enumeration alone
+- promise governed automation before policy boundaries are defined
+- position onboarding as the same thing as discovery
+- describe MCP setup as the final deliverable when the real need is governed workflow execution
+- skip quantified failure cost
+- skip named decision owner
+
+---
+
+## Exit criteria
+
+Discovery can close only in one of these states:
+
+1. \`Advance\`
+Paid Workflow Mapping Session or approved scoped wedge with owner and date
+
+2. \`Park\`
+Explicit re-entry condition and timing window
+
+3. \`Refer\`
+The need is primarily system implementation, internal enablement, or onboarding outside \`.agency\` scope
+
+No discovery should end with vague intent and no owner.
+`
+  },
+  {
+    id: "agency:content/sales/discovery-runbook",
+    property: "agency",
+    title: "Workflow Discovery Runbook",
+    description: "Workflow Discovery Runbook",
+    section: "content",
+    path: "content/sales/discovery-runbook.md",
+    slug: "content/sales/discovery-runbook",
+    uri: "docs://agency/content/sales/discovery-runbook",
+    content: `# Workflow Discovery Runbook
+
+**Audience:** CREATE SOMETHING \`.agency\` operators  
+**Purpose:** run discovery as workflow diagnosis and trust-boundary mapping, not tool intake
+
+---
+
+## Outcome
+
+A successful discovery yields:
+
+- one workflow candidate
+- one business owner
+- one proposed trust boundary
+- one recommended package path
+- one dated next action
+
+The runbook is complete only when those are written down.
+
+---
+
+## Phase 1: Pre-call preparation
+
+Review before the call:
+
+- company context
+- likely workflow category
+- likely systems involved
+- current automation footprint
+- probable risk profile
+
+Prepare a working hypothesis in this format:
+
+\`[team] is struggling with [workflow] because [handoff/risk/failure], and the cost likely appears as [delay/rework/incidents/revenue leakage].\`
+
+Do not prepare a solution architecture before hearing the workflow.
+
+---
+
+## Phase 2: Discovery call
+
+### Opening objective
+
+State that the call is for workflow diagnosis and fit determination.
+
+Default opening:
+
+> "I want to understand where the workflow is breaking down, what actions need to stay governed, and whether there is a clear wedge to map."
+
+### Minimum questions
+
+Ask these before talking about implementation:
+
+1. What business outcome matters in the next 30 days?
+2. Which workflow breaks most often or costs the most when it breaks?
+3. What systems must stay in sync for that workflow to work?
+4. Which actions can run automatically today?
+5. Which actions still require a human gate?
+6. What is the cost of one bad failure?
+7. Who owns the workflow operationally?
+
+### Three-Tier mapping
+
+During the call, classify answers live:
+
+- \`Database\`: source systems, records, state, freshness
+- \`Automation\`: actions, tool paths, handoffs, retries
+- \`Judgment\`: approvals, exceptions, escalation, blocked actions
+
+### Playback
+
+Use this structure:
+
+> "Here is the workflow I think matters, where it breaks, what systems are involved, and where the trust boundary actually is."
+
+If the buyer disagrees, correct the map before discussing any package.
+
+---
+
+## Phase 3: Policy boundary definition
+
+For the selected workflow, classify actions into:
+
+- \`auto-allow\`
+- \`approval-required\`
+- \`block\`
+
+Then capture:
+
+- escalation trigger
+- fallback/manual path
+- audit expectation
+- release-gate condition
+
+This is the handoff point between workflow discovery and Policy OS scope.
+
+---
+
+## Phase 4: Package routing
+
+Use these routing rules:
+
+- \`MCP-only wedge\` if trusted connectivity is the primary need
+- \`Workflow Infrastructure\` if the workflow needs deterministic execution paths
+- \`Policy OS\` if action governance is required
+- \`Enterprise Extension\` if stakes, regulation, or orchestration depth are high
+
+Default rule:
+
+If the buyer describes write actions, approvals, or incident risk, do not stop at MCP-only.
+
+---
+
+## Phase 5: Post-call artifacts
+
+Every discovery must result in:
+
+1. Completed discovery note
+2. Fit classification
+3. Recommended next step
+4. Proposal-ready implications for:
+   \`mcp_contract.yaml\`
+   \`agent_contract.yaml\`
+   \`outcome_contract.md\`
+
+Use the proposal template only after the discovery note is complete.
+
+---
+
+## Workflow Mapping Session standard
+
+If discovery is high-fit, the next step is a paid Workflow Mapping Session.
+
+That session must deliver:
+
+1. Pilot workflow scope
+2. Policy boundary
+3. 30-day implementation plan
+
+If you cannot confidently state those three outputs, do not position the session as complete.
+
+---
+
+## Braintrust usage standard
+
+When Braintrust appears in the conversation, frame it correctly:
+
+- Braintrust provides traces, evals, and observability
+- Braintrust helps inspect policy outcomes and runtime behavior
+- Braintrust does not replace policy artifacts or approval logic
+
+Use it as evidence infrastructure, not as the governance mechanism itself.
+
+---
+
+## Red flags
+
+Slow down or re-scope when:
+
+- the buyer only wants a list of integrations
+- no workflow owner exists
+- no failure cost can be named
+- approval boundaries are vague
+- onboarding/setup is being confused with operational design
+- a regulated workflow is being treated as a generic automation request
+
+---
+
+## Close states
+
+End every discovery in one of three states:
+
+1. \`Advance\`
+Workflow Mapping Session or scoped wedge booked
+
+2. \`Park\`
+Re-entry condition defined
+
+3. \`Refer\`
+Outside scope or better served by a partner
+`
+  },
+  {
+    id: "agency:content/sales/operator-checklist",
+    property: "agency",
+    title: "Workflow Infrastructure Operator Checklist",
+    description: "Workflow Infrastructure Operator Checklist",
+    section: "content",
+    path: "content/sales/operator-checklist.md",
+    slug: "content/sales/operator-checklist",
+    uri: "docs://agency/content/sales/operator-checklist",
+    content: `# Workflow Infrastructure Operator Checklist
+
+**Purpose:** one internal checklist for running the full CREATE SOMETHING \`.agency\` workflow from discovery to release readiness
+
+---
+
+## 1. Before first contact
+
+- Review the client context and likely workflow category
+- Review [discovery-policy.md](/Users/micahjohnson/Documents/Github/Create%20Something/create-something-monorepo/packages/agency/content/sales/discovery-policy.md)
+- Review [discovery-runbook.md](/Users/micahjohnson/Documents/Github/Create%20Something/create-something-monorepo/packages/agency/content/sales/discovery-runbook.md)
+- Send or prepare [policy-os-buyer-brief-ops-revops.md](/Users/micahjohnson/Documents/Github/Create%20Something/create-something-monorepo/packages/agency/content/sales/policy-os-buyer-brief-ops-revops.md)
+- Enter the call with a workflow hypothesis, not an integration prescription
+
+---
+
+## 2. Discovery call
+
+- Run [discovery-call-script.md](/Users/micahjohnson/Documents/Github/Create%20Something/create-something-monorepo/packages/agency/content/sales/discovery-call-script.md) as the branching guide
+- Identify the business objective for the next 30 days
+- Identify the workflow candidate
+- Quantify current failure cost
+- Identify systems in scope
+- Identify workflow owner and decision owner
+- Classify the workflow across \`Database\`, \`Automation\`, and \`Judgment\`
+- Define the policy boundary:
+  - \`auto-allow\`
+  - \`approval-required\`
+  - \`block\`
+- Determine whether the correct route is:
+  - \`Workflow Mapping Session\`
+  - \`MCP-only wedge\`
+  - \`Park\`
+  - \`Refer\`
+
+Exit rule:
+
+- Do not end discovery without a named owner and a dated next step or explicit re-entry condition
+
+---
+
+## 3. Post-call capture
+
+- Complete [discovery-note-template.md](/Users/micahjohnson/Documents/Github/Create%20Something/create-something-monorepo/packages/agency/content/templates/sales/discovery-note-template.md)
+- Use [discovery-note-example.md](/Users/micahjohnson/Documents/Github/Create%20Something/create-something-monorepo/packages/agency/content/templates/sales/discovery-note-example.md) if specificity is weak
+- Confirm fit level: \`high\`, \`medium\`, or \`low\`
+- Confirm recommended package tier
+- Confirm whether Braintrust is relevant only as observability/evals
+
+---
+
+## 4. Commercial handoff
+
+- Complete [policy-os-proposal-input-template.md](/Users/micahjohnson/Documents/Github/Create%20Something/create-something-monorepo/packages/agency/content/templates/sales/policy-os-proposal-input-template.md)
+- Use [pricing-framework.md](/Users/micahjohnson/Documents/Github/Create%20Something/create-something-monorepo/packages/agency/content/templates/sales/pricing-framework.md) for pricing posture
+- Send [policy-os-follow-up-sequence.md](/Users/micahjohnson/Documents/Github/Create%20Something/create-something-monorepo/packages/agency/content/templates/sales/policy-os-follow-up-sequence.md) based on fit level
+
+For high-fit work:
+
+- Send [workflow-mapping-session-agenda.md](/Users/micahjohnson/Documents/Github/Create%20Something/create-something-monorepo/packages/agency/content/templates/sales/workflow-mapping-session-agenda.md)
+- Lock stakeholders, owner, and date
+
+---
+
+## 5. Workflow Mapping Session
+
+- Confirm the pilot workflow scope
+- Confirm workflow boundary and out-of-scope areas
+- Confirm policy boundary with explicit \`auto-allow\`, \`approval-required\`, and \`block\` classes
+- Confirm fallback/manual path
+- Confirm release-gate expectations
+- Confirm 30-day implementation plan
+
+Exit rule:
+
+- Do not mark the session complete without:
+  - pilot scope
+  - policy boundary
+  - 30-day plan
+
+---
+
+## 6. Delivery artifact drafting
+
+- Review [templates/delivery/README.md](/Users/micahjohnson/Documents/Github/Create%20Something/create-something-monorepo/packages/agency/content/templates/delivery/README.md)
+- Draft [mcp_contract.yaml](/Users/micahjohnson/Documents/Github/Create%20Something/create-something-monorepo/packages/agency/content/templates/delivery/mcp_contract.yaml)
+- Draft [agent_contract.yaml](/Users/micahjohnson/Documents/Github/Create%20Something/create-something-monorepo/packages/agency/content/templates/delivery/agent_contract.yaml)
+- Draft [outcome_contract.md](/Users/micahjohnson/Documents/Github/Create%20Something/create-something-monorepo/packages/agency/content/templates/delivery/outcome_contract.md)
+- Draft [golden_tasks.yaml](/Users/micahjohnson/Documents/Github/Create%20Something/create-something-monorepo/packages/agency/content/templates/delivery/golden_tasks.yaml)
+- Draft [runbook.md](/Users/micahjohnson/Documents/Github/Create%20Something/create-something-monorepo/packages/agency/content/templates/delivery/runbook.md)
+
+Reference example set:
+
+- [exampleco-mcp_contract.yaml](/Users/micahjohnson/Documents/Github/Create%20Something/create-something-monorepo/packages/agency/content/templates/delivery/examples/exampleco-mcp_contract.yaml)
+- [exampleco-agent_contract.yaml](/Users/micahjohnson/Documents/Github/Create%20Something/create-something-monorepo/packages/agency/content/templates/delivery/examples/exampleco-agent_contract.yaml)
+- [exampleco-outcome_contract.md](/Users/micahjohnson/Documents/Github/Create%20Something/create-something-monorepo/packages/agency/content/templates/delivery/examples/exampleco-outcome_contract.md)
+- [golden_tasks.yaml](/Users/micahjohnson/Documents/Github/Create%20Something/create-something-monorepo/packages/agency/content/templates/delivery/golden_tasks.yaml)
+- [exampleco-runbook.md](/Users/micahjohnson/Documents/Github/Create%20Something/create-something-monorepo/packages/agency/content/templates/delivery/examples/exampleco-runbook.md)
+
+---
+
+## 7. Release readiness review
+
+- Confirm all five delivery artifacts are drafted
+- Confirm policy owner, workflow owner, and technical owner are named
+- Confirm blocked actions are explicitly listed
+- Confirm approval-required actions have a real inbox or owner
+- Confirm manual fallback is documented
+- Confirm golden-task scenarios cover:
+  - happy path
+  - approval-required path
+  - blocked action
+  - mismatch/ambiguity path
+  - manual fallback path
+- Confirm Braintrust, if used, is only described as observability/evals
+
+---
+
+## 8. Implementation handoff
+
+- Hand off the full artifact set together
+- Do not hand off \`mcp_contract.yaml\` without \`agent_contract.yaml\`
+- Do not hand off build scope without \`outcome_contract.md\`
+- Do not approve production rollout without golden-task checks and runbook
+
+If the audience is the internal Half Dozen team:
+
+- use [halfdozen-mcp-onboarding-pack.md](/Users/micahjohnson/Documents/Github/Create%20Something/create-something-monorepo/packages/agency/content/templates/delivery/halfdozen-mcp-onboarding-pack.md)
+- use [halfdozen-mcp-onboarding-checklist.md](/Users/micahjohnson/Documents/Github/Create%20Something/create-something-monorepo/packages/agency/content/templates/delivery/halfdozen-mcp-onboarding-checklist.md)
+- review [halfdozen-mcp-onboarding-example.md](/Users/micahjohnson/Documents/Github/Create%20Something/create-something-monorepo/packages/agency/content/templates/delivery/examples/halfdozen-mcp-onboarding-example.md)
+
+---
+
+## 9. Final discipline
+
+- No discovery without workflow and policy boundary
+- No proposal without approval boundaries
+- No implementation without artifact set
+- No production without gates, fallback, and runbook
+`
+  },
+  {
     id: "agency:content/sales/policy-os-buyer-brief-ops-revops",
     property: "agency",
-    title: "POLICY OS Buyer Brief (Ops/RevOps)",
-    description: "POLICY OS Buyer Brief (Ops/RevOps)",
+    title: "Workflow Infrastructure Buyer Brief (Ops/RevOps)",
+    description: "Workflow Infrastructure Buyer Brief (Ops/RevOps)",
     section: "content",
     path: "content/sales/policy-os-buyer-brief-ops-revops.md",
     slug: "content/sales/policy-os-buyer-brief-ops-revops",
     uri: "docs://agency/content/sales/policy-os-buyer-brief-ops-revops",
-    content: `# POLICY OS Buyer Brief (Ops/RevOps)
+    content: `# Workflow Infrastructure Buyer Brief (Ops/RevOps)
 
 **Audience:** Ops and RevOps leaders  
 **Read time:** ~3 minutes  
-**Core phrase:** POLICY OS for production autonomy  
+**Core phrase:** Production-safe workflow infrastructure  
 **Delivery vector language:** client-facing \`Skills + MCP\`; technical proof \`MCP + Skills\`
 
 ---
@@ -25591,7 +27256,7 @@ Most teams can now connect tools to AI. Very few can run autonomous workflows sa
 The bottleneck is no longer "Can we connect systems?"  
 The bottleneck is "Can we govern actions, approvals, and risk while keeping execution fast?"
 
-**POLICY OS** is the operating model that closes that gap.
+This operating model closes that gap.
 
 ---
 
@@ -25610,11 +27275,11 @@ This is how automation scales without creating hidden operational risk.
 
 ## Offer ladder (how engagements scale)
 
-### 1) Custom Workflow MCPs
+### 1) Workflow Infrastructure
 Build the workflow substrate: trusted integrations, tool contracts, and deterministic execution paths.
 
-### 2) Autonomy Assurance
-Add reliability controls: policy envelopes, release gates, approval rules, and incident loops.
+### 2) Policy OS
+Add governed execution controls: policy envelopes, release gates, approval rules, blocked-state UX, and incident loops.
 
 ### 3) Enterprise Extension
 Extend into high-stakes operations: cross-system orchestration, strict governance controls, and custom trust boundaries.
@@ -25629,12 +27294,12 @@ Extend into high-stakes operations: cross-system orchestration, strict governanc
   Allowed actions, approval mode, escalation triggers, budget/latency guardrails.
 - \`outcome_contract.md\`  
   Workflow targets, success criteria, fallback/manual path, ownership boundaries.
-- Golden-task checks + runbook  
+- \`golden_tasks.yaml\` + runbook
   Regression gates, incident response, rollback path.
 
 ---
 
-## Operating model (how POLICY OS works)
+## Operating model (how this works)
 
 1. Safe actions are auto-allowed.
 2. Risky actions route to an approval inbox.
@@ -25659,19 +27324,19 @@ These metrics are the health signal for production autonomy.
 ## Common objections (short answers)
 
 ### "We already have automations."
-Most automations fail at governance boundaries. POLICY OS adds approvals, policy control, and auditability so automation can scale safely.
+Most automations fail at governance boundaries. This model adds approvals, policy control, and auditability so automation can scale safely.
 
 ### "This sounds heavy."
 It is phased. Start with one high-value workflow, govern only the risky actions, then expand coverage with evidence.
 
 ### "Why not MCP-only?"
-MCP-only is a valid entry wedge for discovery/compliance. POLICY OS is the reliability layer that makes autonomous outcomes dependable in production.
+MCP-only is a valid entry wedge for discovery/compliance. Policy OS is what makes autonomous outcomes dependable in production.
 
 ---
 
 ## Next step
 
-### Policy Mapping Session
+### Workflow Mapping Session
 
 Output from session:
 
@@ -25685,17 +27350,17 @@ If the map is not convincing, do not proceed.
   {
     id: "agency:content/sales/README",
     property: "agency",
-    title: "POLICY OS Sales Assets v1",
-    description: "POLICY OS Sales Assets v1",
+    title: "Workflow Infrastructure Sales Assets v1",
+    description: "Workflow Infrastructure Sales Assets v1",
     section: "content",
     path: "content/sales/README.md",
     slug: "content/sales/README",
     uri: "docs://agency/content/sales/README",
-    content: `# POLICY OS Sales Assets v1
+    content: `# Workflow Infrastructure Sales Assets v1
 
 **Primary buyer:** Ops/RevOps  
 **Primary channel:** Live discovery and mapping calls  
-**Core phrase:** POLICY OS for production autonomy
+**Core phrase:** Production-safe workflow infrastructure
 
 ---
 
@@ -25709,19 +27374,46 @@ If the map is not convincing, do not proceed.
    - \`discovery-call-script.md\`
    - Purpose: qualify fit, map tier, handle objections, and close to a concrete next step.
 
-3. **Commercial interface spec (machine-readable source of truth)**
+3. **Discovery policy and standards**
+   - \`discovery-policy.md\`
+   - Purpose: define what discovery must produce, what shortcuts are prohibited, and how to route into policy/control work.
+
+4. **Operator runbook**
+   - \`discovery-runbook.md\`
+   - Purpose: run workflow-first discovery consistently and convert calls into package-routing decisions.
+
+5. **Operator checklist**
+   - \`operator-checklist.md\`
+   - Purpose: single internal checklist covering the full path from first contact to release readiness.
+
+6. **Commercial interface spec (machine-readable source of truth)**
    - \`policy-os-interface-spec.yaml\`
    - Purpose: standardize one-pager inputs/outputs, call script branch logic, and taxonomy.
 
-4. **Discovery note (required after every call)**
+7. **Discovery note (required after every call)**
    - \`../templates/sales/discovery-note-template.md\`
    - Purpose: standardize proposal inputs in one pass.
 
-5. **Proposal input template (delivery handoff)**
+8. **Client-facing Workflow Mapping Session agenda**
+   - \`../templates/sales/workflow-mapping-session-agenda.md\`
+   - Purpose: align stakeholders on session inputs, structure, and outputs before the paid mapping session.
+
+9. **Delivery artifact templates**
+   - \`../templates/delivery/README.md\`
+   - \`../templates/delivery/mcp_contract.yaml\`
+   - \`../templates/delivery/agent_contract.yaml\`
+   - \`../templates/delivery/outcome_contract.md\`
+   - \`../templates/delivery/golden_tasks.yaml\`
+   - \`../templates/delivery/runbook.md\`
+   - \`../templates/delivery/halfdozen-mcp-onboarding-pack.md\`
+   - \`../templates/delivery/halfdozen-mcp-onboarding-checklist.md\`
+   - Purpose: convert workflow mapping outputs into implementation-ready artifact drafts.
+
+10. **Proposal input template (delivery handoff)**
    - \`../templates/sales/policy-os-proposal-input-template.md\`
    - Purpose: convert discovery output into proposal scope and contract artifact implications.
 
-6. **Follow-up sequence (post-call execution)**
+11. **Follow-up sequence (post-call execution)**
    - \`../templates/sales/policy-os-follow-up-sequence.md\`
    - Purpose: move high and medium fit deals to decision with clear owner and date.
 
@@ -25729,7 +27421,7 @@ If the map is not convincing, do not proceed.
 
 ## Message taxonomy
 
-- Core phrase: "POLICY OS for production autonomy."
+- Core phrase: "Production-safe workflow infrastructure."
 - Client-facing delivery vector: \`Skills + MCP\`
 - Technical proof vector: \`MCP + Skills\`
 
@@ -25738,21 +27430,25 @@ If the map is not convincing, do not proceed.
 ## Operating flow
 
 1. Send one-pager.
-2. Run discovery script as a branching guide.
-3. Capture discovery note.
-4. Assign fit (\`high|medium|low\`) and select close path.
-5. Execute follow-up sequence and lock next action.
-6. Build proposal using:
+2. Review \`discovery-policy.md\`, \`discovery-runbook.md\`, and \`operator-checklist.md\`.
+3. Run discovery script as a branching guide.
+4. Capture discovery note.
+5. Assign fit (\`high|medium|low\`) and select close path.
+6. For high-fit work, send \`workflow-mapping-session-agenda.md\`.
+7. Execute follow-up sequence and lock next action.
+8. Build proposal using:
    - \`mcp_contract.yaml\`
    - \`agent_contract.yaml\`
    - \`outcome_contract.md\`
+   - \`golden_tasks.yaml\`
+9. After the Workflow Mapping Session, instantiate the delivery templates before implementation starts.
 
 ---
 
 ## Fit-to-next-step policy
 
 1. **High fit**
-   - Next step: paid Policy Mapping Session.
+   - Next step: paid Workflow Mapping Session.
    - Must exit call with owner, stakeholder set, and calendar date.
 
 2. **Medium fit**
@@ -25768,8 +27464,10 @@ If the map is not convincing, do not proceed.
 ## Usage discipline
 
 - Use script language blocks as defaults, then adapt to buyer wording.
+- Do not reduce discovery to "what do you want to connect?"
 - Do not skip risk-classification in the note template.
 - Do not produce proposals with missing approval boundaries.
+- Do not position Braintrust as the policy control plane; it is observability and eval infrastructure.
 `
   },
   {
@@ -25935,6 +27633,75 @@ createsomething.agency/discover
 - Engage with comments in first 30 minutes
 - CTA link goes in first comment
 - Character count: ~1,800 (optimal range)
+`
+  },
+  {
+    id: "agency:content/social/linkedin-braintrust-trace-unsurfacing",
+    property: "agency",
+    title: "LinkedIn Post: Braintrust Trace Dashboard (CREATE SOMETHING)",
+    description: "LinkedIn Post: Braintrust Trace Dashboard (CREATE SOMETHING)",
+    section: "content",
+    path: "content/social/linkedin-braintrust-trace-unsurfacing.md",
+    slug: "content/social/linkedin-braintrust-trace-unsurfacing",
+    uri: "docs://agency/content/social/linkedin-braintrust-trace-unsurfacing",
+    content: `# LinkedIn Post: Braintrust Trace Dashboard (CREATE SOMETHING)
+
+**Campaign:** Reliability Observability - Braintrust
+**Target:** LinkedIn (CREATE SOMETHING company page)
+**Type:** Dashboard highlight + research teaser
+**Asset:** \`docs/BRAINTRUST_CREATE_SOMETHING_TRACE_DASHBOARD_2026-03-04.png\`
+**CTA:** createsomething.io/papers/braintrust-trace-unsurfacing
+
+---
+
+## Post
+
+This dashboard is a good example of why raw percentages can fool us.
+
+At first look, things seemed fine: 929 of 1,000 rows had no errors.
+
+Then Braintrust helped us **unsurface** what was hiding underneath:
+- 71 rows were errors (7.1%)
+- permission + intent routing made up 76.1% of all failures
+- \`hub_route_intent\` failed on 22 of 36 calls (61.1%)
+- one control-plane event (\`hub_update_state\`) took 252,517 ms
+
+Simple takeaway: a high success rate can still hide repeated failure patterns.
+
+So we turned this into 5 ranked experiments with clear pass/fail rules:
+1. LinkedIn permission preflight
+2. Intent cleanup + semantic fallback
+3. Provider 429 circuit breaker
+4. Control-plane cache + latency stabilization
+5. Tool-argument auto-repair
+
+That is the point of observability:
+not just collecting logs, but making hidden system problems visible enough to fix.
+
+Paper + experiment specs are now published from this snapshot.
+
+---
+
+## Comment (Post after publishing)
+
+Paper: createsomething.io/papers/braintrust-trace-unsurfacing
+
+Dashboard screenshot + experiment specs:
+- \`docs/BRAINTRUST_CREATE_SOMETHING_TRACE_DASHBOARD_2026-03-04.png\`
+- \`docs/internal/braintrust-experiments/README.md\`
+
+#Braintrust #MCP #ReliabilityEngineering #Observability #AgentEngineering #CreateSomething
+
+---
+
+## Voice Compliance
+
+- [x] Plain-language (high-school senior readable)
+- [x] Includes concrete numbers from dashboard snapshot
+- [x] "Nicely Said" style: clear, direct, no jargon-heavy phrasing
+- [x] Emphasizes mechanism ("unsurfacing hidden structure"), not hype
+- [x] Links insight to clear execution path (ranked experiments + pass/fail criteria)
+- [x] Suitable for company page distribution
 `
   },
   {
@@ -26239,6 +28006,118 @@ Norvig's original notebook: github.com/norvig/pytudes/blob/main/ipynb/Advent-202
 `
   },
   {
+    id: "agency:content/social/linkedin-personal-governed-reviewer-lane",
+    property: "agency",
+    title: "LinkedIn Post: Personal - Governed Reviewer Lane",
+    description: "LinkedIn Post: Personal - Governed Reviewer Lane",
+    section: "content",
+    path: "content/social/linkedin-personal-governed-reviewer-lane.md",
+    slug: "content/social/linkedin-personal-governed-reviewer-lane",
+    uri: "docs://agency/content/social/linkedin-personal-governed-reviewer-lane",
+    content: `# LinkedIn Post: Personal - Governed Reviewer Lane
+
+**Campaign:** Webflow Marketplace reviewer lane
+**Target:** LinkedIn (Personal - Micah)
+**Type:** Longform post + static graphic
+**Asset:** \`packages/agency/static/social/linkedin-governed-reviewer-lane.png\`
+**Source Asset:** \`packages/agency/static/social/linkedin-governed-reviewer-lane.svg\`
+**CTA:** Soft inbound conversation
+
+---
+
+## Post
+
+Most AI demos try to do too much.
+
+They want the agent to do everything.
+
+I think the better question is:
+
+what is the smallest thing it can do safely?
+
+This week I shipped a reviewer lane for the Webflow Marketplace with that exact idea in mind.
+
+Not "replace the reviewer."
+Not "fully automate the workflow."
+
+Just:
+- show the reviewer the right context
+- let them assign the version to themselves
+- keep the bigger review decisions manual
+
+That is a lot less flashy than full automation.
+
+But it is also a lot more real.
+
+If a workflow has real stakes, people do not just need something smart.
+They need something they can trust.
+
+For me, that means the system needs:
+- clear rules about what it can do
+- a very small write surface
+- a fallback when something is unclear
+- visibility for the human in the loop
+
+If those pieces are missing, the demo might look cool, but the workflow is still fragile.
+
+If those pieces are there, AI can actually start helping in a way that feels usable.
+
+That is the kind of system I want to keep building.
+
+If you are working on messy, approval-heavy workflows right now, I would genuinely love to hear how you are thinking about this.
+
+---
+
+## Comment (Post after publishing)
+
+The question I keep coming back to is:
+
+what is the smallest safe action this workflow can support?
+
+That question usually gets me to a better system faster than asking how much of the workflow I can automate.
+
+#AI #Operations #WorkflowDesign #HumanInTheLoop
+
+---
+
+## Voice Compliance
+
+- [x] Personal, builder-led voice
+- [x] Reads closer to a smart senior in high school than an operator memo
+- [x] Clear by line 2 for a non-technical ops leader
+- [x] Concrete workflow example instead of abstract AI claims
+- [x] Explicit restraint and manual fallback
+- [x] Minimal MCP jargon
+- [x] Self-contained
+
+---
+
+## Asset Notes
+
+- Upload the static graphic, not a talking-head video.
+- Lead image should stay monochrome and diagrammatic, not product-screenshot heavy.
+- Keep the bottom caption visible: \`Only narrow self-assignment is automated. Official state changes remain manual.\`
+- If LinkedIn compression hurts legibility, export the source SVG to a 1600x900 PNG before posting.
+
+---
+
+## Repo Anchors
+
+- \`packages/webflow-template-review-mcp/src/tools.ts\`
+- \`packages/webflow-template-review-mcp/src/resources.ts\`
+- \`specs/webflow-marketplace/delivery/template-review-hub/mcp_contract.yaml\`
+
+---
+
+## Posting Notes
+
+- Best fit: personal account, weekday morning
+- Best audience: workflow owners, operator buyers, and approval-bound team leads
+- Do not foreground session tokens, Hub config, or transport details in the post body
+- Keep any follow-up comments focused on trust boundaries, not protocol mechanics
+`
+  },
+  {
     id: "agency:content/social/linkedin-personal-norvig-synthesis",
     property: "agency",
     title: "LinkedIn Post: Personal Account - Norvig Synthesis",
@@ -26482,6 +28361,449 @@ The full framework: createsomething.ltd/ethos
 - Engage with comments in first 30 minutes
 - CTA link goes in first comment
 - Character count: ~1,450 (optimal range)
+`
+  },
+  {
+    id: "agency:content/social/linkedin-webflow-analyzer-01",
+    property: "agency",
+    title: "LinkedIn Post: Webflow Analyzer 01 - The Website Was Only One Source of Truth",
+    description: "LinkedIn Post: Webflow Analyzer 01 - The Website Was Only One Source of Truth",
+    section: "content",
+    path: "content/social/linkedin-webflow-analyzer-01.md",
+    slug: "content/social/linkedin-webflow-analyzer-01",
+    uri: "docs://agency/content/social/linkedin-webflow-analyzer-01",
+    content: `# LinkedIn Post: Webflow Analyzer 01 - The Website Was Only One Source of Truth
+
+**Campaign:** Webflow Analyzer Series
+**Target:** LinkedIn (Personal - Micah)
+**Type:** Longform post + static diagram
+**Asset:** \`packages/agency/static/social/linkedin-webflow-analyzer-multi-surface.png\`
+**Source Asset:** \`packages/agency/static/social/linkedin-webflow-analyzer-multi-surface.svg\`
+**Graphic Brief:** \`packages/agency/static/social/linkedin-webflow-analyzer-multi-surface-brief.md\`
+**CTA:** createsomething.io/papers/analyzer-mcp-review-architecture
+
+---
+
+## Post
+
+I think one of the easiest mistakes in workflow automation is pretending the website is the whole system.
+
+That sounds obvious when you say it out loud.
+
+But a lot of review tools still act like if they can crawl the published page, they understand the whole job.
+
+Working on Webflow review forced me to stop thinking that way.
+
+The published site is only one source of truth.
+
+You also have:
+- the Designer, where structure and component hygiene actually live
+- the policy, which sits outside the codebase and can change underneath you
+
+If you only look at the page, you miss authoring reality.
+
+If you only look at the Designer, you miss runtime reality.
+
+If you ignore policy provenance, you cannot explain what rules you actually used.
+
+That was the real turning point for me.
+
+The interesting move was not "build a better crawler."
+
+It was admitting that review spans multiple truth surfaces, then building the system around that fact.
+
+That is when the analyzer started becoming useful.
+
+I wrote up the architecture because I think this pattern shows up in a lot more places than Webflow.
+
+Any messy workflow with real stakes usually has the same problem:
+the truth is split across more than one surface.
+
+---
+
+## Comment (Post after publishing)
+
+Paper: createsomething.io/papers/analyzer-mcp-review-architecture
+
+The shortest version:
+published state, authoring state, and policy state are not the same thing.
+
+#WorkflowDesign #MCP #Webflow #SystemsThinking #AgentEngineering
+
+---
+
+## Voice Compliance
+
+- [x] Personal, builder-led voice
+- [x] Clear by line 2 for non-technical readers
+- [x] Low-jargon framing with one simple core claim
+- [x] No "AI replaces review" language
+- [x] Explains the architectural move, not just the tool
+
+---
+
+## Asset Notes
+
+- Keep the graphic simple and monochrome.
+- Three labeled columns are enough:
+  - \`Published Site\`
+  - \`Designer State\`
+  - \`Policy Snapshot\`
+- Avoid product screenshots on this one. The point is the model, not the UI.
+
+---
+
+## Repo Anchors
+
+- \`packages/io/content/papers/analyzer-mcp-review-architecture.md\`
+- \`packages/webflow-site-analyzer-mcp/README.md\`
+- \`packages/io/content/experiments/webflow-analyzer-lineage.md\`
+
+---
+
+## Posting Notes
+
+- Post 1 of 4
+- Best fit: weekday morning
+- Best audience: workflow owners, product-minded operators, design systems leads
+`
+  },
+  {
+    id: "agency:content/social/linkedin-webflow-analyzer-02",
+    property: "agency",
+    title: "LinkedIn Post: Webflow Analyzer 02 - Manual Is A First-Class Review State",
+    description: "LinkedIn Post: Webflow Analyzer 02 - Manual Is A First-Class Review State",
+    section: "content",
+    path: "content/social/linkedin-webflow-analyzer-02.md",
+    slug: "content/social/linkedin-webflow-analyzer-02",
+    uri: "docs://agency/content/social/linkedin-webflow-analyzer-02",
+    content: `# LinkedIn Post: Webflow Analyzer 02 - Manual Is A First-Class Review State
+
+**Campaign:** Webflow Analyzer Series
+**Target:** LinkedIn (Personal - Micah)
+**Type:** Longform post + simple graphic
+**Asset:** \`packages/agency/static/social/linkedin-webflow-analyzer-manual-state.png\`
+**Source Asset:** \`packages/agency/static/social/linkedin-webflow-analyzer-manual-state.svg\`
+**Graphic Brief:** \`packages/agency/static/social/linkedin-webflow-analyzer-manual-state-brief.md\`
+**CTA:** createsomething.io/papers/analyzer-mcp-review-architecture
+
+---
+
+## Post
+
+I think a lot of automation gets less trustworthy right at the moment it tries to sound the most confident.
+
+Everything becomes pass or fail.
+
+That looks clean in a demo.
+
+It is not how real review works.
+
+One of the most useful design decisions in the Webflow analyzer was treating **manual** as a real answer.
+
+Not a fallback.
+Not an error.
+Not an embarrassment.
+
+A real state.
+
+Because some checks genuinely do have an evidence boundary.
+
+The system can:
+- pass what it can justify
+- fail what it can justify
+- stop and say manual when the claim would be too weak
+
+That sounds small, but I think it changes the trust profile of the whole workflow.
+
+The reviewer can see where automation is helping.
+
+They can also see where it is intentionally refusing to bluff.
+
+That is a much better relationship than an agent pretending it knows more than it does.
+
+For me, this is one of the clearest signs that a workflow tool is maturing:
+
+it stops trying to win by looking fully autonomous.
+
+It starts winning by being explicit about where judgment still belongs.
+
+I would rather use a system that is narrow and honest than one that is broad and theatrical.
+
+---
+
+## Comment (Post after publishing)
+
+One of my favorite questions for any workflow tool is:
+
+where is it still allowed to say "manual"?
+
+If the answer is nowhere, I usually trust it less.
+
+#HumanInTheLoop #WorkflowDesign #AI #ReviewSystems #CreateSomething
+
+---
+
+## Voice Compliance
+
+- [x] Personal, builder-led voice
+- [x] Concrete, non-hyped framing
+- [x] Explicitly values bounded automation over autonomy theater
+- [x] High-school senior readable
+- [x] Self-contained without needing protocol background
+
+---
+
+## Asset Notes
+
+- Use a simple three-state diagram:
+  - \`Pass\`
+  - \`Fail\`
+  - \`Manual\`
+- The visual should make \`Manual\` feel intentional, not degraded.
+- Keep it diagrammatic, not screenshot-heavy.
+
+---
+
+## Repo Anchors
+
+- \`packages/io/content/papers/analyzer-mcp-review-architecture.md\`
+- \`packages/webflow-site-analyzer-mcp/src/checklist/designer-checklist.ts\`
+- \`specs/webflow-analyzer-series.md\`
+
+---
+
+## Posting Notes
+
+- Post 2 of 4
+- Best posted 2-4 days after post 1
+- Best audience: operators, QA leads, workflow automation buyers
+`
+  },
+  {
+    id: "agency:content/social/linkedin-webflow-analyzer-03",
+    property: "agency",
+    title: "LinkedIn Post: Webflow Analyzer 03 - Policy Should Be Fetched, Hashed, And Named",
+    description: "LinkedIn Post: Webflow Analyzer 03 - Policy Should Be Fetched, Hashed, And Named",
+    section: "content",
+    path: "content/social/linkedin-webflow-analyzer-03.md",
+    slug: "content/social/linkedin-webflow-analyzer-03",
+    uri: "docs://agency/content/social/linkedin-webflow-analyzer-03",
+    content: `# LinkedIn Post: Webflow Analyzer 03 - Policy Should Be Fetched, Hashed, And Named
+
+**Campaign:** Webflow Analyzer Series
+**Target:** LinkedIn (Personal - Micah)
+**Type:** Longform post + provenance diagram
+**Asset:** \`packages/agency/static/social/linkedin-webflow-analyzer-policy-provenance.png\`
+**Source Asset:** \`packages/agency/static/social/linkedin-webflow-analyzer-policy-provenance.svg\`
+**Graphic Brief:** \`packages/agency/static/social/linkedin-webflow-analyzer-policy-provenance-brief.md\`
+**CTA:** createsomething.io/papers/analyzer-mcp-review-architecture
+
+---
+
+## Post
+
+If your workflow depends on rules that live on someone else's website, I do not think you have real governance until you can name the version you used.
+
+This came up very directly in Webflow review.
+
+The submission rules and rubric do not live inside our codebase.
+
+So "the agent used the latest rules" is not actually a very good answer.
+
+Latest when?
+From where?
+Which text?
+What changed?
+
+That is why I think policy should be treated like data:
+
+- source URL
+- fetch timestamp
+- content hash
+- derived policy version
+
+Once you do that, the conversation changes.
+
+You stop saying:
+"the model reviewed this against the guidelines."
+
+You can start saying:
+"this review used this policy snapshot, fetched at this time, normalized from these sources."
+
+That is a much stronger system.
+
+Not because it sounds more technical.
+
+Because it is more legible.
+
+If external policy matters, burying it in prompt text is not enough.
+
+You need provenance.
+
+I think this applies way beyond Webflow.
+
+Any workflow that depends on vendor policy, compliance text, marketplace rules, or operating guidelines eventually hits the same wall:
+you need to know which rules were in force when the decision was made.
+
+---
+
+## Comment (Post after publishing)
+
+This is one of the biggest differences between "prompting a workflow" and actually governing one.
+
+If the rule can change upstream, provenance has to become part of the system.
+
+#PolicyAsArtifact #MCP #WorkflowGovernance #SystemsDesign #AIEngineering
+
+---
+
+## Voice Compliance
+
+- [x] Clear, direct claim in the first sentence
+- [x] Builder-led voice, not compliance theater
+- [x] Low jargon relative to topic
+- [x] Concrete mechanism instead of abstract governance talk
+- [x] Framed for operators and technical leads
+
+---
+
+## Asset Notes
+
+- Show a left-to-right provenance chain:
+  - \`Guideline URL\`
+  - \`Fetched At\`
+  - \`Content Hash\`
+  - \`Policy Version\`
+- Keep the graphic closer to an evidence chain than a product diagram.
+
+---
+
+## Repo Anchors
+
+- \`packages/webflow-site-analyzer-mcp/src/policy/index.ts\`
+- \`packages/io/content/papers/analyzer-mcp-review-architecture.md\`
+- \`specs/webflow-analyzer-series.md\`
+
+---
+
+## Posting Notes
+
+- Post 3 of 4
+- Best posted after the multi-surface and manual-state posts
+- Best audience: technical founders, compliance-minded operators, platform teams
+`
+  },
+  {
+    id: "agency:content/social/linkedin-webflow-analyzer-04",
+    property: "agency",
+    title: "LinkedIn Post: Webflow Analyzer 04 - The Interesting Move Was Creator Autofill",
+    description: "LinkedIn Post: Webflow Analyzer 04 - The Interesting Move Was Creator Autofill",
+    section: "content",
+    path: "content/social/linkedin-webflow-analyzer-04.md",
+    slug: "content/social/linkedin-webflow-analyzer-04",
+    uri: "docs://agency/content/social/linkedin-webflow-analyzer-04",
+    content: `# LinkedIn Post: Webflow Analyzer 04 - The Interesting Move Was Creator Autofill
+
+**Campaign:** Webflow Analyzer Series
+**Target:** LinkedIn (Personal - Micah)
+**Type:** Longform post + product screenshot or static frame
+**Asset:** \`packages/agency/static/social/linkedin-webflow-analyzer-creator-autofill.png\`
+**Source Asset:** \`packages/agency/static/social/linkedin-webflow-analyzer-creator-autofill.svg\`
+**Graphic Brief:** \`packages/agency/static/social/linkedin-webflow-analyzer-creator-autofill-brief.md\`
+**CTA:** createsomething.io/papers/webflow-analyzer-productization
+
+---
+
+## Post
+
+The analyzer stopped feeling like infrastructure when it started doing useful work for creators before review even began.
+
+That was the move I did not want to miss in the write-up.
+
+A lot of internal tooling stays trapped on the reviewer side.
+
+It helps the team doing approval work, but the person submitting still has to do the same messy preparation by hand.
+
+What changed here was upstream assistance.
+
+The flow became:
+- validate the published URL
+- extract what the system can safely infer
+- autofill some fields
+- prepare screenshots for upload
+- show a clear summary of what happened
+
+That is not the same as "the analyzer got smarter."
+
+It is the analyzer starting to reduce labor in the submission workflow itself.
+
+I think that is what productization usually is.
+
+Not exposing more raw capability.
+
+Translating capability into the smallest safe action that actually helps the person in front of the form.
+
+The important part is that this still keeps the boundary intact.
+
+Reviewers and creators do not need the same interface.
+They do not need the same level of evidence detail.
+They do not need the same authority.
+
+But they can still benefit from the same underlying evidence pipeline.
+
+That is the part I keep coming back to:
+
+same system, different trust surface.
+
+That is when internal workflow infrastructure starts becoming a real product surface.
+
+---
+
+## Comment (Post after publishing)
+
+New paper on this part of the story:
+createsomething.io/papers/webflow-analyzer-productization
+
+Productization, to me, is mostly translation:
+turning internal capability into the smallest safe external help.
+
+#ProductDesign #WorkflowAutomation #Webflow #AIProducts #CreateSomething
+
+---
+
+## Voice Compliance
+
+- [x] Personal, builder-led framing
+- [x] Clear distinction between infrastructure and productization
+- [x] Bounded-automation language preserved
+- [x] No hype about full autonomy
+- [x] Connects system design to user-facing value
+
+---
+
+## Asset Notes
+
+- Best option: screenshot sequence of validation -> autofill -> screenshot-ready summary.
+- If screenshot quality is not ready, use a static three-step diagram instead.
+- Emphasize translation into workflow help, not model sophistication.
+
+---
+
+## Repo Anchors
+
+- \`packages/io/content/papers/webflow-analyzer-productization.md\`
+- \`apps/webflow-dashboard-cloud/lib/intake/template-analyzer.ts\`
+- \`apps/marketplace-template-submission-cloud/lib/intake/template-analyzer.ts\`
+- \`packages/io/content/experiments/webflow-analyzer-lineage.md\`
+
+---
+
+## Posting Notes
+
+- Post 4 of 4
+- Best as the closing post in the sequence
+- Best audience: product leads, workflow owners, submission-platform operators
 `
   },
   {
@@ -27799,6 +30121,1647 @@ Before sending SOW to client:
 `
   },
   {
+    id: "agency:content/templates/delivery/examples/exampleco-golden-task-checks",
+    property: "agency",
+    title: "Golden-Task Checks",
+    description: "Golden-Task Checks",
+    section: "content",
+    path: "content/templates/delivery/examples/exampleco-golden-task-checks.md",
+    slug: "content/templates/delivery/examples/exampleco-golden-task-checks",
+    uri: "docs://agency/content/templates/delivery/examples/exampleco-golden-task-checks",
+    content: `# Golden-Task Checks
+
+**Status:** Example  
+**Client:** \`ExampleCo\`  
+**Workflow:** \`quote_to_confirmation\`  
+**Owner:** \`RevOps Director\`
+
+---
+
+## Purpose
+
+Golden-task checks validate that the quote-to-confirmation workflow behaves correctly before production rollout.
+
+---
+
+## Pass criteria
+
+The workflow is considered ready for release only if:
+
+- every must-pass scenario passes
+- blocked actions are blocked
+- approval-required actions route to the RevOps approval inbox
+- manual fallback is verified for mismatch and tool-failure scenarios
+- audit fields are visible for decisions and approvals
+
+---
+
+## Required audit fields
+
+- \`workflow_id\`
+- \`decision\`
+- \`policy_class\`
+- \`correlation_id\`
+- \`approver_id\`
+
+---
+
+## Scenario set
+
+### 1. Happy path aligned-state execution
+
+- classification: \`must-pass\`
+- scenario: HubSpot, internal order state, and Stripe billing all match and the order is ready for confirmation.
+- inputs:
+  - valid \`deal_id\`
+  - valid \`order_id\`
+  - matching billing reference
+- expected result:
+  - state comparison succeeds and a confirmation draft is generated
+- expected policy outcome:
+  - \`auto-allow\`
+- evidence required:
+  - trace showing aligned-state comparison and successful draft creation
+
+### 2. Approval-required confirmation send
+
+- classification: \`must-pass\`
+- scenario: a valid confirmation draft is ready and the RevOps approver explicitly approves send.
+- inputs:
+  - approved \`draft_id\`
+  - \`approved_by\`
+- expected result:
+  - email is not sent until approval is present, then sends successfully
+- expected policy outcome:
+  - \`approval-required\`
+- evidence required:
+  - approval record and send trace with audit fields
+
+### 3. Blocked destructive action
+
+- classification: \`must-pass\`
+- scenario: workflow attempts to issue a refund or overwrite approved pricing directly.
+- inputs:
+  - destructive action request
+- expected result:
+  - action is blocked with explicit reason
+- expected policy outcome:
+  - \`block\`
+- evidence required:
+  - block decision trace or log
+
+### 4. Source-state mismatch escalation
+
+- classification: \`must-pass\`
+- scenario: HubSpot and order database disagree on approved pricing or send readiness.
+- inputs:
+  - mismatched pricing or approval state
+- expected result:
+  - workflow stops and routes to human review
+- expected policy outcome:
+  - \`approval-required\`
+- evidence required:
+  - escalation event, exception record, and approval inbox handoff
+
+### 5. Manual fallback on tool failure
+
+- classification: \`must-pass\`
+- scenario: Gmail send or write path fails after approval.
+- inputs:
+  - approved confirmation with simulated tool failure
+- expected result:
+  - workflow stops, routes to ops inbox, and manual send path is completed
+- expected policy outcome:
+  - \`fallback\`
+- evidence required:
+  - failure trace plus manual completion confirmation from ops lead
+
+---
+
+## Signoff
+
+- workflow owner: \`RevOps Director\`
+- technical owner: \`Engineering Manager\`
+- policy owner: \`RevOps Director\`
+- target review date: \`2026-03-12\`
+
+---
+
+## Notes
+
+- Braintrust may capture traces and eval evidence for these checks.
+- Braintrust does not enforce approval or block decisions.
+`
+  },
+  {
+    id: "agency:content/templates/delivery/examples/exampleco-outcome_contract",
+    property: "agency",
+    title: "Outcome Contract",
+    description: "Outcome Contract",
+    section: "content",
+    path: "content/templates/delivery/examples/exampleco-outcome_contract.md",
+    slug: "content/templates/delivery/examples/exampleco-outcome_contract",
+    uri: "docs://agency/content/templates/delivery/examples/exampleco-outcome_contract",
+    content: `# Outcome Contract
+
+**Status:** Example  
+**Client:** \`ExampleCo\`  
+**Workflow:** \`quote_to_confirmation\`  
+**Date:** \`2026-03-07\`
+
+---
+
+## 1. Pilot scope
+
+### In scope
+
+- quote marked ready for confirmation in CRM
+- state comparison across HubSpot, internal order database, and Stripe
+- draft confirmation generation for internal review
+- approval-gated confirmation send
+
+### Out of scope
+
+- refunds
+- destructive data cleanup
+- workflow redesign for unrelated CRM or billing processes
+
+---
+
+## 2. Business objective
+
+The purpose of this pilot is to:
+
+- reduce order-confirmation errors caused by cross-system drift
+- improve speed and governance in the confirmation workflow
+- establish a production-safe path for customer confirmation sends
+
+Target outcome in 30 days:
+
+- reduce manual reconciliation time and prevent unreviewed confirmation sends
+
+---
+
+## 3. Success criteria
+
+The pilot is successful if:
+
+- risky actions are not executed without the required approval
+- the workflow owner accepts the governed workflow path
+- manual cleanup is reduced by at least 50 percent
+- required audit fields are visible for approval and block decisions
+- golden-task checks pass at the agreed threshold
+
+Primary KPI:
+
+- unreviewed risky actions prevented
+
+Secondary KPIs:
+
+- approval turnaround time
+- incident rate trend
+
+---
+
+## 4. Workflow boundary
+
+### Systems in scope
+
+- HubSpot
+- Internal Order Database
+- Stripe
+- Gmail
+
+### Trust boundary
+
+- auto-allow: source-state comparison and draft generation
+- approval-required: pricing exception creation and confirmation send
+- block: refunds, record deletion, and pricing overwrite without explicit review
+
+### Ownership boundary
+
+- workflow owner: \`RevOps Director\`
+- technical owner: \`Engineering Manager\`
+- approval owner: \`RevOps Director\`
+
+---
+
+## 5. Fallback and manual path
+
+If the governed workflow cannot complete safely:
+
+1. stop the workflow at the mismatch or blocked-action boundary
+2. send the exception to the shared ops inbox
+3. ops lead completes source corrections and customer communication manually
+4. record the exception and resolution for audit review
+
+Fallback is considered acceptable if:
+
+- no incorrect confirmation is sent
+- the customer receives the correct approved communication
+
+---
+
+## 6. Delivery artifacts
+
+This pilot produces:
+
+- \`mcp_contract.yaml\`
+- \`agent_contract.yaml\`
+- \`outcome_contract.md\`
+- golden-task checks
+- runbook
+
+If observability is included, it may also include Braintrust tracing and eval coverage.
+
+---
+
+## 7. Release gates
+
+The workflow does not move to production until:
+
+- pilot workflow scope is approved
+- policy boundary is approved
+- golden-task checks pass
+- manual fallback is rehearsed
+- RevOps Director and Engineering Manager sign off
+
+---
+
+## 8. Risks and assumptions
+
+### Risks
+
+- source systems may remain inconsistent longer than expected
+- client security review may delay production write scopes
+
+### Assumptions
+
+- order database remains the final source of truth for send readiness
+- RevOps team can operate a shared approval inbox during pilot rollout
+
+---
+
+## 9. Decision record
+
+### Approved next step
+
+- run the Workflow Mapping Session and prepare the pilot implementation recommendation
+
+### Decision owner
+
+- \`Jordan Lee\`
+
+### Target date
+
+- \`2026-03-12\`
+`
+  },
+  {
+    id: "agency:content/templates/delivery/examples/exampleco-runbook",
+    property: "agency",
+    title: "Workflow Runbook",
+    description: "Workflow Runbook",
+    section: "content",
+    path: "content/templates/delivery/examples/exampleco-runbook.md",
+    slug: "content/templates/delivery/examples/exampleco-runbook",
+    uri: "docs://agency/content/templates/delivery/examples/exampleco-runbook",
+    content: `# Workflow Runbook
+
+**Status:** Example  
+**Client:** \`ExampleCo\`  
+**Workflow:** \`quote_to_confirmation\`  
+**Primary owner:** \`RevOps Director\`
+
+---
+
+## 1. Purpose
+
+This runbook defines how ExampleCo operators monitor, approve, and recover the quote-to-confirmation workflow safely.
+
+---
+
+## 2. Workflow summary
+
+- business objective: reduce manual reconciliation and prevent incorrect quote confirmations from being sent
+- workflow boundary: starts when a quote is ready for confirmation and ends when an approved confirmation is sent and recorded
+- systems in scope:
+  - \`HubSpot\`
+  - \`Internal Order Database\`
+  - \`Stripe\`
+  - \`Gmail\`
+- policy boundary:
+  - auto-allow: source-state comparison and draft generation
+  - approval-required: pricing exception creation and confirmation send
+  - block: refunds, destructive record changes, or pricing overwrite without review
+
+---
+
+## 3. Roles
+
+- workflow owner: \`RevOps Director\`
+- technical owner: \`Engineering Manager\`
+- approval owner: \`RevOps Director\`
+- fallback owner: \`Ops lead\`
+
+---
+
+## 4. Normal operating procedure
+
+### Auto-allow path
+
+1. quote is marked ready for confirmation
+2. system compares HubSpot, internal order data, and Stripe billing state
+3. if aligned, confirmation draft is generated
+4. audit event is written
+
+### Approval-required path
+
+1. risky action is prepared
+2. action is routed to the RevOps shared approval inbox
+3. approver reviews state comparison and draft
+4. confirmation send executes only after approval
+5. audit event is written
+
+### Block path
+
+1. prohibited action is requested or inferred
+2. action is blocked with explicit reason
+3. operator reviews whether manual alternative is needed
+
+---
+
+## 5. Exception handling
+
+### Source-state mismatch
+
+- signal: HubSpot, order database, or Stripe disagree on required state
+- operator action:
+  1. stop workflow execution
+  2. review internal order database as source of truth
+  3. correct mismatch or create pricing exception
+- exit condition: state is aligned or manual path is complete
+
+### Approval backlog
+
+- signal: approvals remain pending past the agreed turnaround window
+- operator action:
+  1. alert RevOps Director
+  2. review queue and assign backup approver if needed
+  3. prioritize customer-impacting confirmations
+- exit condition: queue returns to target turnaround
+
+### Tool or auth failure
+
+- signal: Gmail send fails or a required auth scope is unavailable
+- operator action:
+  1. determine whether the issue is transient
+  2. retry only if policy allows and no customer-facing duplication risk exists
+  3. route to manual send path if safe execution cannot be guaranteed
+- exit condition: send completes safely or manual fallback completes
+
+---
+
+## 6. Manual fallback
+
+When the workflow cannot proceed safely:
+
+1. stop the automated path
+2. create or update the exception record
+3. hand off to ops lead through shared inbox
+4. complete source correction and customer communication manually
+5. record the resolution for audit review
+
+Fallback success condition:
+
+- no incorrect confirmation is sent and the customer receives the correct approved communication
+
+---
+
+## 7. Rollback and containment
+
+Use rollback or containment when:
+
+- blocked actions are not being blocked
+- approval-required actions execute without approval
+- audit fields are missing
+- cross-system drift creates unsafe outputs
+
+Immediate containment options:
+
+1. disable production send path
+2. switch workflow to draft-only mode
+3. route all sends to manual approval
+4. stop the workflow entirely
+
+Recovery steps:
+
+1. identify root cause
+2. confirm safe state across systems
+3. reconcile affected records if necessary
+4. rerun golden-task checks before re-enable
+
+---
+
+## 8. Observability and evidence
+
+Required evidence sources:
+
+- workflow logs
+- approval inbox records
+- Braintrust traces and evals if enabled
+- incident notes
+
+Required review cadence:
+
+- daily during pilot
+- weekly after stabilization unless incident rate increases
+
+---
+
+## 9. Escalation matrix
+
+- policy ambiguity: \`RevOps Director\`
+- technical failure: \`Engineering Manager\`
+- workflow exception: \`Ops lead\`
+- customer-impacting incident: \`Jordan Lee\`
+
+---
+
+## 10. Change management
+
+Any change to the workflow must update:
+
+- \`mcp_contract.yaml\`
+- \`agent_contract.yaml\`
+- \`outcome_contract.md\`
+- golden-task checks
+- this runbook
+
+No production change is complete until the documentation and gates are updated together.
+`
+  },
+  {
+    id: "agency:content/templates/delivery/examples/halfdozen-current-mcp-onboarding-checklist",
+    property: "agency",
+    title: "Half Dozen Current MCP Onboarding Checklist",
+    description: "Half Dozen Current MCP Onboarding Checklist",
+    section: "content",
+    path: "content/templates/delivery/examples/halfdozen-current-mcp-onboarding-checklist.md",
+    slug: "content/templates/delivery/examples/halfdozen-current-mcp-onboarding-checklist",
+    uri: "docs://agency/content/templates/delivery/examples/halfdozen-current-mcp-onboarding-checklist",
+    content: `# Half Dozen Current MCP Onboarding Checklist
+
+**Status:** Working draft  
+**Audience:** session lead for current Half Dozen MCP onboarding
+
+---
+
+## Before the session
+
+- confirm which MCPs are in scope for this onboarding:
+  - \`halfdozen-notion-mcp\`
+  - \`halfdozen-operator-notion-mcp\`
+  - \`halfdozen-gmail-sync\`
+  - \`halfdozen-dm-mcp\`
+  - \`halfdozen-zoom-sync\`
+  - \`half-dozen-youtube-sync\`
+  - \`halfdozen-telemetry-mcp\`
+- confirm each attendee's assigned hub lane:
+  - \`Lainy\`
+  - \`Danny\`
+  - \`August\`
+  - \`Fillip\`
+  - \`Leah\`
+  - \`MJ\`
+- confirm each attendee's assigned Notion bridge lane where applicable
+- confirm named owners for each MCP family
+- confirm auth/connectivity is working for live demos where required
+- prepare the current onboarding pack
+- prepare relevant runbooks and golden-task checks if already available
+
+---
+
+## During the session
+
+- explain which workflow each MCP supports
+- explain which MCPs touch internal vs client systems
+- explain which MCPs include operator-only flows
+- explain the team hub lane matrix and who uses which lane
+- explain \`auto-allow\`, \`approval-required\`, and \`block\`
+- call out these non-negotiables:
+  - no ambiguous workspace writes in Notion
+  - no bypassing DM allow-list controls
+  - no end-user management of Zoom Clips session/profile auth
+  - no destructive actions outside explicit workflow scope
+  - no copying live bearer tokens or bridge passwords into repo or shared docs
+- show where telemetry/Braintrust evidence lives
+
+---
+
+## User understanding check
+
+For each team member, confirm they can answer:
+
+- which MCP do I use for this workflow?
+- which hub lane and bridge lane do I use?
+- what is safe to do directly?
+- when do I stop and ask for review?
+- what actions are blocked or operator-only?
+- who do I escalate to if the MCP fails?
+
+---
+
+## After the session
+
+- share the current onboarding pack
+- share follow-up artifact links
+- record any unresolved policy decisions
+- assign owners for unresolved auth or permission gaps
+- set a usage review checkpoint date
+
+---
+
+## Exit criteria
+
+- workflow-to-MCP mapping is clear
+- approval boundaries are understood
+- operator-only actions are understood
+- failure and escalation paths are understood
+`
+  },
+  {
+    id: "agency:content/templates/delivery/examples/halfdozen-current-mcp-onboarding-pack",
+    property: "agency",
+    title: "Half Dozen Current MCP Onboarding Pack",
+    description: "Half Dozen Current MCP Onboarding Pack",
+    section: "content",
+    path: "content/templates/delivery/examples/halfdozen-current-mcp-onboarding-pack.md",
+    slug: "content/templates/delivery/examples/halfdozen-current-mcp-onboarding-pack",
+    uri: "docs://agency/content/templates/delivery/examples/halfdozen-current-mcp-onboarding-pack",
+    content: `# Half Dozen Current MCP Onboarding Pack
+
+**Status:** Working draft  
+**Audience:** Half Dozen team  
+**Purpose:** operational onboarding pack for the MCPs currently in active team use
+
+---
+
+## 1. Onboarding objective
+
+This onboarding is for governed team use of the current Half Dozen MCP fleet.
+
+The goal is that team members can answer:
+
+- which MCP supports which workflow
+- which actions are safe to run directly
+- which actions require approval or operator involvement
+- which actions are blocked or out of scope
+- what to do when an MCP is unavailable or returns uncertain state
+
+---
+
+## 2. MCP inventory
+
+| MCP | Primary users | Primary workflow | Safe actions | Approval-required or operator-gated actions | Blocked or out-of-scope actions | Primary owner |
+|-----|---------------|------------------|--------------|---------------------------------------------|---------------------------------|---------------|
+| \`halfdozen-notion-mcp\` | operators, coordinators | work across Half Dozen internal Notion and a client Notion workspace | search, read schema, query data sources, draft or update content in the correct workspace | client-facing updates when internal review is required; any action where workspace targeting is unclear | writing to the wrong workspace; destructive changes without explicit intent | Half Dozen operator lead |
+| \`halfdozen-operator-notion-mcp\` | platform/operator admins | manage pinned Notion accounts and onboarding state | list account state, inspect status, use pinned tools in the configured workspace | account onboarding wizard, pin changes, cross-account copy/sync | caller-selected workspace/account overrides on pinned tools | MCP operator/admin |
+| \`halfdozen-gmail-sync\` | ops, relationship managers | search Gmail and sync interactions into Notion | search mail, preview query results, sync known-safe email records | bulk syncs or canonical record creation when team policy requires review | arbitrary destructive mailbox actions; unreviewed changes outside sync workflow | workflow owner |
+| \`halfdozen-dm-mcp\` | DM operators | DM workspace work plus allow-listed Composio tools | Notion CRUD in DM workspace, inventory/check allowed toolkits, connection status | new toolkit connection via connect-link, writes through allow-listed proxy tools where business workflow requires review | tools outside allow-list; bypassing entity/account policy; unauthorized toolkit access | DM workflow owner |
+| \`halfdozen-zoom-sync\` | meeting capture team | Zoom Clips extraction and Notion sync | search clips, get session status, transcript analysis, clip summarization | syncs that publish new canonical records; operator-only session/profile maintenance | asking end users to manage session cookies/profile; destructive edits outside clip workflow | technical owner |
+| \`half-dozen-youtube-sync\` | content and research operators | extract playlist/video transcripts and sync to Notion | transcript extraction, playlist scraping, guided analysis, status/resource reads | end-to-end sync to canonical Notion target when internal review is required | arbitrary edits outside sync target; unsupported browser-only workflows on remote worker | content workflow owner |
+| \`halfdozen-telemetry-mcp\` | maintainers, operators | inspect MCP fleet health and usage | query health, usage, activity, error trends | direct SQL or cleanup actions if maintainers choose to restrict them operationally | mutating operational data outside approved admin path | MCP maintainer |
+
+---
+
+## 3. Team hub lanes
+
+The Half Dozen team is split across named hub lanes. These are the primary remote MCP entry points for team-specific hub access.
+
+| Team | Hub URL | Auth mode |
+|------|---------|-----------|
+| \`Lainy\` | \`https://lainy.mcp.createsomething.agency/mcp\` | Bearer token |
+| \`Danny\` | \`https://danny.mcp.createsomething.agency/mcp\` | Bearer token |
+| \`August\` | \`https://august.mcp.createsomething.agency/mcp\` | Bearer token |
+| \`Fillip\` | \`https://fillip.mcp.createsomething.agency/mcp\` | Bearer token |
+| \`Leah\` | \`https://leah.mcp.createsomething.agency/mcp\` | Bearer token |
+| \`MJ\` | \`https://mj.mcp.createsomething.agency/mcp\` | Bearer token |
+
+### Notion bridge lanes
+
+These companion Notion bridge endpoints are team-specific and use Basic Auth.
+
+| Team | Bridge URL | Username | Auth mode |
+|------|------------|----------|-----------|
+| \`Lainy\` | \`https://lainy-notion.mcp.createsomething.agency/mcp\` | \`acct_lainy\` | Basic Auth |
+| \`Danny\` | \`https://danny-notion.mcp.createsomething.agency/mcp\` | \`acct_danny\` | Basic Auth |
+| \`August\` | \`https://august-notion.mcp.createsomething.agency/mcp\` | \`acct_august\` | Basic Auth |
+| \`Fillip\` | \`https://fillip-notion.mcp.createsomething.agency/mcp\` | \`acct_fillip\` | Basic Auth |
+| \`Leah\` | \`https://leah-notion.mcp.createsomething.agency/mcp\` | \`acct_leah\` | Basic Auth |
+| \`MJ\` | \`https://mj-notion.mcp.createsomething.agency/mcp\` | \`acct_mj\` | Basic Auth |
+
+Credential handling rule:
+
+- do not store live bearer tokens or bridge passwords in repo docs
+- retrieve them from the approved secret store or private operator handoff
+- rotate and reissue outside the onboarding docs when needed
+
+---
+
+## 4. Per-MCP operating notes
+
+### \`halfdozen-notion-mcp\`
+
+- Purpose: one operator surface for two workspaces, \`halfdozen\` and \`client\`
+- Read path: safe for search, schema inspection, and workspace-aware reads
+- Write path: safe only when the operator is certain which workspace is intended
+- Approval boundary: use internal review when a client-facing page update changes project state or when workspace targeting is uncertain
+- Block rule: do not write when the correct workspace is ambiguous
+- Failure path: stop, confirm workspace, then retry or use manual Notion path
+
+### \`halfdozen-operator-notion-mcp\`
+
+- Purpose: admin/operator layer for pinned workspaces and onboarding state
+- Safe path: status inspection, account listing, pinned tool execution in fixed workspaces
+- Operator-gated path: onboarding wizard, account pinning, sync/copy across managed accounts
+- Block rule: pinned tools reject workspace/account overrides and should stay that way
+- Failure path: escalate to MCP operator/admin rather than improvising account changes
+
+### \`halfdozen-gmail-sync\`
+
+- Purpose: governed Gmail-to-Notion interaction and contact sync
+- Safe path: search emails, preview queries, sync individually identified records
+- Approval boundary: bulk or canonical writes should follow team review rules when they affect shared operating records
+- Block rule: do not treat it as a general mailbox-management tool
+- Failure path: if OAuth or sync fails, stop and hand off to manual Notion entry or auth repair
+
+### \`halfdozen-dm-mcp\`
+
+- Purpose: DM workspace plus DM-namespaced Composio proxies with allow-list controls
+- Safe path: use currently exposed Notion tools and inspect enabled toolsets/status
+- Approval boundary: new external connections and write actions through proxy tools need workflow-specific review if they affect canonical state
+- Block rule: no tool outside the allow-list, no override around entity/account policy
+- Failure path: if a toolkit is missing, verify allow-list and connection status before proceeding
+
+### \`halfdozen-zoom-sync\`
+
+- Purpose: governed Zoom Clips extraction and Notion sync
+- Safe path: check session status, search synced clips, analyze transcripts
+- Operator-gated path: \`set_clips_profile\` and \`upload_session_context\` are operator-only and should not be delegated to end users
+- Approval boundary: syncs that publish or modify canonical records may require review by workflow owner
+- Block rule: do not ask Half Dozen end users to manage session cookies or Steel profiles
+- Failure path: if Clips auth is invalid, report temporary unavailability and route to MCP administrator
+
+### \`half-dozen-youtube-sync\`
+
+- Purpose: transcript extraction and Notion sync for playlist/video workflows
+- Safe path: extract transcripts, scrape playlists, analyze transcript content
+- Approval boundary: syncs into canonical Notion databases can be reviewed before broad rollout or high-volume runs
+- Block rule: do not use the remote worker as if it supports all local/browser-only behavior
+- Failure path: if extraction or sync fails, use connection test or CLI/manual fallback path
+
+### \`halfdozen-telemetry-mcp\`
+
+- Purpose: inspect fleet health, errors, and usage as a conversational operational layer
+- Safe path: health and usage queries
+- Approval boundary: if maintainers expose SQL/cleanup workflows, restrict them to maintainers
+- Block rule: do not use operational mutation paths casually
+- Failure path: fall back to direct logs/database review when the telemetry MCP itself is degraded
+
+---
+
+## 5. Team-wide policy framing
+
+### Auto-allow
+
+- reading status, resources, schemas, and search results
+- draft generation and non-destructive analysis
+- health and observability queries
+- connecting to the correct named hub lane when credentials have already been provisioned
+
+### Approval-required or operator-gated
+
+- client-facing sends or publishes
+- writes to canonical client systems when review is required
+- onboarding/account-connection changes
+- high-volume or bulk syncs that affect shared operating records
+- issuing or rotating team hub credentials
+- changing bridge credentials or lane assignments
+
+### Blocked
+
+- destructive actions outside explicit workflow scope
+- writing into the wrong workspace or system on ambiguous context
+- bypassing allow-list or account-pinning controls
+- asking non-operator users to perform admin-only auth/session maintenance
+- sharing live bearer tokens or bridge passwords in public or repo-tracked docs
+
+---
+
+## 6. Braintrust positioning
+
+When Braintrust is part of the discussion:
+
+- use it for traces, evals, and observability
+- use it to inspect policy outcomes and runtime behavior
+- do not present it as the system that grants permission or enforces approval
+
+---
+
+## 7. Live onboarding agenda for the Half Dozen team
+
+### Part 1. Fleet overview
+
+- introduce each MCP and the workflow it supports
+- show the MCP inventory table
+- show the team hub lane matrix and which lane each person should use
+
+### Part 2. Policy boundary
+
+- explain auto-allow, approval-required, and blocked actions
+- give one real example from Notion, one from sync, and one from telemetry
+- explain that credentials are provisioned privately and are not to be copied into shared docs
+
+### Part 3. Failure handling
+
+- show the fallback owner for each MCP family
+- explain when to stop instead of improvising
+- explain what to do when a team member cannot authenticate to their assigned hub or bridge lane
+
+### Part 4. Evidence
+
+- show where runbooks and golden-task checks live
+- show where Braintrust or logs are used for evidence
+
+---
+
+## 8. Completion criteria
+
+- the team can map each MCP to the correct workflow
+- the team can identify at least one safe action, one gated action, and one blocked action for each MCP they use
+- the team knows which MCPs are operator-only in parts of their workflow
+- the team knows the fallback and escalation path
+- the team knows which named hub lane and Notion bridge lane they should use
+`
+  },
+  {
+    id: "agency:content/templates/delivery/examples/halfdozen-mcp-onboarding-example",
+    property: "agency",
+    title: "Half Dozen MCP Onboarding Example",
+    description: "Half Dozen MCP Onboarding Example",
+    section: "content",
+    path: "content/templates/delivery/examples/halfdozen-mcp-onboarding-example.md",
+    slug: "content/templates/delivery/examples/halfdozen-mcp-onboarding-example",
+    uri: "docs://agency/content/templates/delivery/examples/halfdozen-mcp-onboarding-example",
+    content: `# Half Dozen MCP Onboarding Example
+
+**Status:** Example  
+**Audience:** Half Dozen team  
+**Scope:** selected MCPs for internal adoption
+
+---
+
+## MCP inventory snapshot
+
+| MCP | Primary users | Primary workflow | Safe actions | Approval-required actions | Blocked actions | Owner |
+|-----|---------------|------------------|--------------|---------------------------|-----------------|-------|
+| \`halfdozen-notion-mcp\` | operators, coordinators | read from Half Dozen workspace and create/update in client Notion workspace | reading workspace state, drafting content, preparing structured entries | updates that change client-facing project state if team policy requires review | deleting client records or writing to the wrong workspace | Half Dozen operator lead |
+| \`halfdozen-gmail-sync\` | ops, relationship managers | Gmail to Notion interaction and contact sync | read/search/sync preview | write paths that create or update canonical records when policy requires review | destructive contact or interaction changes outside approved flow | workflow owner |
+| \`halfdozen-zoom-sync\` | meeting capture team | Zoom clips extraction and Notion sync | clip lookup, transcript retrieval, draft analysis | syncs that publish to canonical client workspace when review is required | destructive edits outside sync scope | technical owner |
+| \`halfdozen-telemetry-mcp\` | operators, maintainers | monitor MCP health and usage | querying health, usage, and incident status | none in normal use | mutating operational state outside approved admin flow | MCP maintainer |
+
+---
+
+## Example live onboarding flow
+
+### 1. Frame the workflow
+
+- \`halfdozen-notion-mcp\` is for working across the Half Dozen internal workspace and a client workspace from one MCP surface
+- \`halfdozen-gmail-sync\` is for syncing interaction data into the operating system, not for arbitrary mailbox manipulation
+- \`halfdozen-zoom-sync\` is for governed meeting capture workflows
+- \`halfdozen-telemetry-mcp\` is for seeing MCP fleet health and issues
+
+### 2. Frame the policy boundary
+
+- auto-allow:
+  - reading workspace or workflow state
+  - generating drafts
+  - querying health data
+- approval-required:
+  - client-facing sends
+  - writes to canonical client systems when human review is required
+  - exception creation or state changes that affect downstream work
+- block:
+  - destructive record deletion
+  - refund-like or financially destructive actions
+  - writing into the wrong workspace or system on ambiguous context
+
+### 3. Frame the failure path
+
+- if workspace or source state is ambiguous, stop and escalate
+- if auth fails, switch to fallback and notify owner
+- if a write action is uncertain, do not improvise; use approval path
+
+### 4. Frame evidence
+
+- use runbooks for operator response
+- use golden-task checks for validation
+- use Braintrust for traces/evals where enabled
+
+---
+
+## Example completion criteria
+
+- each team member can name which MCP supports which workflow
+- each team member can identify one auto-allow action, one approval-required action, and one blocked action
+- each team member knows the fallback owner for the MCPs they use
+`
+  },
+  {
+    id: "agency:content/templates/delivery/examples/README",
+    property: "agency",
+    title: "Delivery Artifact Examples",
+    description: "Delivery Artifact Examples",
+    section: "content",
+    path: "content/templates/delivery/examples/README.md",
+    slug: "content/templates/delivery/examples/README",
+    uri: "docs://agency/content/templates/delivery/examples/README",
+    content: `# Delivery Artifact Examples
+
+These examples show how to turn a completed discovery note into implementation-ready artifacts.
+
+Current example:
+
+- \`exampleco-mcp_contract.yaml\`
+- \`exampleco-agent_contract.yaml\`
+- \`exampleco-outcome_contract.md\`
+- \`exampleco-golden-task-checks.md\`
+- \`exampleco-runbook.md\`
+- \`halfdozen-mcp-onboarding-example.md\`
+- \`halfdozen-current-mcp-onboarding-pack.md\`
+- \`halfdozen-current-mcp-onboarding-checklist.md\`
+
+Source:
+
+- \`../../sales/discovery-note-example.md\`
+
+Use these as reference implementations, not as universal defaults. Each client workflow should be rewritten to match its actual systems, risk profile, and ownership structure.
+`
+  },
+  {
+    id: "agency:content/templates/delivery/golden-task-checks",
+    property: "agency",
+    title: "Golden-Task Checks",
+    description: "Golden-Task Checks",
+    section: "content",
+    path: "content/templates/delivery/golden-task-checks.md",
+    slug: "content/templates/delivery/golden-task-checks",
+    uri: "docs://agency/content/templates/delivery/golden-task-checks",
+    content: `# Golden-Task Checks
+
+**Status:** Draft  
+**Client:** \`CLIENT_NAME\`  
+**Workflow:** \`PRIMARY_WORKFLOW_NAME\`  
+**Owner:** \`ROLE_OR_NAME\`
+
+---
+
+## Purpose
+
+Golden-task checks validate that the governed workflow behaves correctly on a small set of representative scenarios before production rollout.
+
+Use this document to define:
+
+- the critical workflow scenarios that must pass
+- the expected policy outcome for each scenario
+- the required evidence for signoff
+
+---
+
+## Pass criteria
+
+The workflow is considered ready for release only if:
+
+- every \`must-pass\` scenario passes
+- blocked actions are actually blocked
+- approval-required actions route to the correct human gate
+- fallback/manual path is verified for failure scenarios
+- required audit fields are present in traces or logs
+
+---
+
+## Required audit fields
+
+- \`workflow_id\`
+- \`decision\`
+- \`policy_class\`
+- \`correlation_id\`
+- \`approver_id\` if approval was required
+
+---
+
+## Scenario set
+
+### 1. Happy path aligned-state execution
+
+- classification: \`must-pass\`
+- scenario: \`DESCRIBE THE NORMAL LOW-RISK WORKFLOW\`
+- inputs:
+  - \`REQUIRED_INPUT\`
+- expected result:
+  - \`AUTO-ALLOW ACTION EXECUTES CORRECTLY\`
+- expected policy outcome:
+  - \`auto-allow\`
+- evidence required:
+  - \`TRACE OR LOG SHOWING SUCCESS\`
+
+### 2. Approval-required action routing
+
+- classification: \`must-pass\`
+- scenario: \`DESCRIBE A WRITE OR SEND ACTION THAT MUST GO TO REVIEW\`
+- inputs:
+  - \`REQUIRED_INPUT\`
+- expected result:
+  - \`ACTION DOES NOT EXECUTE UNTIL APPROVED\`
+- expected policy outcome:
+  - \`approval-required\`
+- evidence required:
+  - \`APPROVAL EVENT AND FINAL EXECUTION TRACE\`
+
+### 3. Blocked destructive or out-of-scope action
+
+- classification: \`must-pass\`
+- scenario: \`DESCRIBE A PROHIBITED ACTION\`
+- inputs:
+  - \`REQUIRED_INPUT\`
+- expected result:
+  - \`ACTION IS BLOCKED WITH EXPLICIT REASON\`
+- expected policy outcome:
+  - \`block\`
+- evidence required:
+  - \`BLOCK TRACE OR LOG\`
+
+### 4. Source-state mismatch or ambiguity
+
+- classification: \`must-pass\`
+- scenario: \`DESCRIBE A MISMATCH, MISSING CONTEXT, OR POLICY AMBIGUITY CASE\`
+- inputs:
+  - \`REQUIRED_INPUT\`
+- expected result:
+  - \`WORKFLOW STOPS AND ESCALATES TO HUMAN REVIEW\`
+- expected policy outcome:
+  - \`approval-required\` or \`block\`
+- evidence required:
+  - \`ESCALATION EVENT AND MANUAL HANDOFF RECORD\`
+
+### 5. Manual fallback execution
+
+- classification: \`must-pass\`
+- scenario: \`DESCRIBE A TOOL FAILURE OR UNAVAILABLE SYSTEM CASE\`
+- inputs:
+  - \`REQUIRED_INPUT\`
+- expected result:
+  - \`MANUAL FALLBACK PATH IS USED WITHOUT LOSING CONTROL\`
+- expected policy outcome:
+  - \`fallback\`
+- evidence required:
+  - \`RUNBOOK STEP EXECUTED AND OWNER CONFIRMATION\`
+
+---
+
+## Signoff
+
+- workflow owner: \`ROLE_OR_NAME\`
+- technical owner: \`ROLE_OR_NAME\`
+- policy owner: \`ROLE_OR_NAME\`
+- target review date: \`YYYY-MM-DD\`
+
+---
+
+## Notes
+
+- Braintrust may be used to capture traces and eval results for these checks.
+- Braintrust is evidence infrastructure, not the mechanism that enforces the policy decision.
+`
+  },
+  {
+    id: "agency:content/templates/delivery/halfdozen-mcp-onboarding-checklist",
+    property: "agency",
+    title: "Half Dozen MCP Onboarding Checklist",
+    description: "Half Dozen MCP Onboarding Checklist",
+    section: "content",
+    path: "content/templates/delivery/halfdozen-mcp-onboarding-checklist.md",
+    slug: "content/templates/delivery/halfdozen-mcp-onboarding-checklist",
+    uri: "docs://agency/content/templates/delivery/halfdozen-mcp-onboarding-checklist",
+    content: `# Half Dozen MCP Onboarding Checklist
+
+**Purpose:** practical checklist for onboarding the Half Dozen team to one MCP or a small MCP bundle
+
+---
+
+## Pre-onboarding
+
+- identify the MCP being onboarded
+- identify the workflow it supports
+- identify the team members attending
+- confirm the artifact set exists:
+  - \`mcp_contract.yaml\`
+  - \`agent_contract.yaml\`
+  - \`outcome_contract.md\`
+  - \`golden_tasks.yaml\`
+  - \`runbook.md\`
+- confirm approval owner
+- confirm fallback owner
+- confirm the MCP is reachable and authenticated
+
+---
+
+## During onboarding
+
+- explain the workflow in plain language
+- explain the source systems and touched systems
+- explain the \`auto-allow\` actions
+- explain the \`approval-required\` actions
+- explain the \`block\` actions
+- walk one happy-path example
+- walk one approval-path example
+- walk one failure/fallback example
+- show where logs or traces live
+- explain Braintrust correctly as observability/evals only
+
+---
+
+## Per-user understanding check
+
+Each attendee should be able to answer:
+
+- when should I use this MCP?
+- what should I never do with this MCP?
+- when do I need approval?
+- what do I do if the system state looks wrong?
+- where do I go if a tool fails?
+- who owns the workflow?
+
+---
+
+## Post-onboarding
+
+- share the artifact pack
+- share the runbook
+- share the golden-task examples
+- record open questions
+- assign any unresolved policy decisions
+- set a checkpoint date for usage review
+
+---
+
+## Exit criteria
+
+- users can describe the workflow correctly
+- users can identify approval boundaries
+- users can identify blocked actions
+- fallback path is understood
+- owners are named
+- review date is set
+`
+  },
+  {
+    id: "agency:content/templates/delivery/halfdozen-mcp-onboarding-pack",
+    property: "agency",
+    title: "Half Dozen MCP Onboarding Pack",
+    description: "Half Dozen MCP Onboarding Pack",
+    section: "content",
+    path: "content/templates/delivery/halfdozen-mcp-onboarding-pack.md",
+    slug: "content/templates/delivery/halfdozen-mcp-onboarding-pack",
+    uri: "docs://agency/content/templates/delivery/halfdozen-mcp-onboarding-pack",
+    content: `# Half Dozen MCP Onboarding Pack
+
+**Purpose:** internal onboarding template for the Half Dozen team using CREATE SOMETHING-managed MCPs
+
+---
+
+## 1. What this pack is for
+
+Use this document when onboarding the Half Dozen team to one or more MCPs.
+
+The onboarding goal is not just:
+
+- what the MCP is
+- how to connect it
+- what tools it exposes
+
+The onboarding goal is also:
+
+- who should use it
+- what it is safe to do with it
+- what actions require review
+- what actions are blocked
+- what to do when the MCP fails or returns uncertain state
+
+This pack should be used together with:
+
+- \`mcp_contract.yaml\`
+- \`agent_contract.yaml\`
+- \`outcome_contract.md\`
+- \`golden_tasks.yaml\`
+- \`runbook.md\`
+
+---
+
+## 2. MCP inventory for Half Dozen
+
+Current MCP families in this repo include:
+
+- \`halfdozen-notion-mcp\`
+- \`halfdozen-operator-notion-mcp\`
+- \`halfdozen-gmail-sync\`
+- \`halfdozen-dm-mcp\`
+- \`halfdozen-zoom-sync\`
+- \`half-dozen-youtube-sync\`
+- \`halfdozen-telemetry-mcp\`
+
+For each MCP being onboarded, complete the table below.
+
+| MCP | Primary users | Primary workflow | Safe actions | Approval-required actions | Blocked actions | Owner |
+|-----|---------------|------------------|--------------|---------------------------|-----------------|-------|
+| \`MCP_NAME\` | \`TEAM_OR_ROLE\` | \`WORKFLOW\` | \`AUTO-ALLOW\` | \`APPROVAL-REQUIRED\` | \`BLOCKED\` | \`OWNER\` |
+
+---
+
+## 3. Team onboarding objectives
+
+By the end of onboarding, every Half Dozen user should know:
+
+1. Which MCP to use for which workflow
+2. Which workspace or system each MCP touches
+3. What they can do without asking
+4. What requires explicit review or approval
+5. What should never be attempted through the MCP
+6. Where to look when something fails
+7. Where traces, logs, and audit evidence live
+
+---
+
+## 4. Per-MCP onboarding section
+
+Copy this section once per MCP.
+
+### MCP: \`MCP_NAME\`
+
+#### What it is
+
+- purpose: \`SHORT DESCRIPTION\`
+- primary workflow: \`WORKFLOW\`
+- source systems: \`SYSTEMS\`
+
+#### Who should use it
+
+- intended users: \`ROLE_OR_TEAM\`
+- not intended for: \`ROLE_OR_TEAM\`
+
+#### What it reads
+
+- \`RESOURCE_OR_SYSTEM\`
+- \`RESOURCE_OR_SYSTEM\`
+
+#### What it writes or triggers
+
+- \`WRITE_ACTION\`
+- \`WRITE_ACTION\`
+
+#### Policy boundary
+
+- auto-allow:
+  - \`LOW-RISK ACTION\`
+- approval-required:
+  - \`RISKY ACTION\`
+- block:
+  - \`DISALLOWED ACTION\`
+
+#### Human path
+
+- approval owner: \`ROLE_OR_NAME\`
+- fallback owner: \`ROLE_OR_NAME\`
+- escalation owner: \`ROLE_OR_NAME\`
+
+#### Known failure modes
+
+- \`FAILURE_MODE\`
+- \`FAILURE_MODE\`
+
+#### What to do when it fails
+
+1. \`FIRST_RESPONSE\`
+2. \`CHECK TRACE OR LOG\`
+3. \`USE MANUAL FALLBACK\`
+4. \`ESCALATE TO OWNER\`
+
+#### Evidence and observability
+
+- logs: \`WHERE\`
+- traces/evals: \`BRAINTRUST_OR_OTHER\`
+- approval record: \`WHERE\`
+
+---
+
+## 5. Live onboarding agenda
+
+Use this sequence during the actual onboarding session.
+
+### Part 1. Workflow framing
+
+- Explain what workflow the MCP supports
+- Explain which systems it touches
+- Explain why that workflow exists
+
+### Part 2. Policy framing
+
+- Show the \`auto-allow\`, \`approval-required\`, and \`block\` classes
+- Explain one concrete example of each
+- Make the trust boundary explicit
+
+### Part 3. Operator behavior
+
+- Show the normal path
+- Show the approval path
+- Show the fallback path
+- Show where to escalate
+
+### Part 4. Evidence and review
+
+- Show where traces are stored
+- Explain that Braintrust is for observability and evals, not policy enforcement
+- Show the runbook and golden-task checks
+
+---
+
+## 6. Required materials before onboarding
+
+- completed artifact set for the MCP or workflow
+- valid access path and auth state
+- named owners
+- known fallback/manual path
+- at least one completed golden-task scenario
+
+Do not run a team onboarding without these.
+
+---
+
+## 7. Completion checklist
+
+- team knows when to use this MCP
+- team knows what is safe
+- team knows what needs approval
+- team knows what is blocked
+- team knows fallback/manual path
+- team knows who owns incidents
+- team knows where evidence is stored
+
+If any of these are unclear, onboarding is incomplete.
+`
+  },
+  {
+    id: "agency:content/templates/delivery/outcome_contract",
+    property: "agency",
+    title: "Outcome Contract v1",
+    description: "Outcome Contract v1",
+    section: "content",
+    path: "content/templates/delivery/outcome_contract.md",
+    slug: "content/templates/delivery/outcome_contract",
+    uri: "docs://agency/content/templates/delivery/outcome_contract",
+    content: `# Outcome Contract v1
+
+## 1) Engagement
+- Client: \`<client-name>\`
+- Engagement ID: \`<engagement-id>\`
+- Package Name: \`Policy OS\` (default) or \`MCP-only\` (exception)
+- Approved Workflows:
+  - \`<workflow-1>\`
+- Approval Mode: \`hybrid\`
+- Escalation Policy: \`<policy-id-or-runbook-section>\`
+- Review Cadence: \`weekly review + monthly tuning\`
+- Billing and Entitlement Assumptions:
+  - service tier: \`policy_os_trial\`
+  - service entitled: \`true\`
+  - policy accepted: \`true\`
+  - contract active: \`true\`
+  - billing active: \`true\`
+- Delivery Vector Canonical Phrase: \`Skills on MCP\`
+- Delivery Vector (Client-Facing): \`Skills + MCP\`
+- Delivery Vector (Technical): \`MCP + Skills\`
+- Primary Interface: \`Codex\` (portable artifacts required)
+
+## 2) Target Workflows
+List the workflows that must improve.
+
+1. \`<workflow-1>\`
+2. \`<workflow-2>\`
+3. \`<workflow-3>\`
+
+For each workflow, define:
+- Trigger event
+- Required systems
+- Expected output artifact
+- Human approval requirement
+
+## 3) Success Metrics
+Define measurable outcomes.
+
+- Time to first autonomous outcome: \`<= 14 days\`
+- Golden task pass rate: \`>= 90%\`
+- Manual effort reduction: \`<target-%>\`
+- Error/escalation rate ceiling: \`<target-%>\`
+
+## 4) Fallback and Manual Path
+Define safe fallback behavior.
+
+- If policy confidence is below threshold: route to human owner.
+- If write operation is blocked: return draft artifact and escalation ticket.
+- If dependency fails: use documented manual workflow and capture incident.
+
+## 5) Ownership Boundaries
+Clarify who owns what.
+
+- Client owns business decisions, approvals, and policy sign-off.
+- CREATE SOMETHING owns integration architecture, quality gates, and runbook maintenance.
+- Both parties review model behavior drift on agreed cadence.
+
+## 6) Handoff Bundle
+All items are required for completion.
+
+- [ ] \`mcp_contract.yaml\`
+- [ ] \`agent_contract.yaml\`
+- [ ] \`outcome_contract.md\`
+- [ ] \`golden_tasks.yaml\`
+- [ ] \`runbook.md\`
+- [ ] Endpoint inventory and auth scope matrix
+- [ ] Tool/resource/prompt registry
+- [ ] Incident and rollback runbook
+
+## 7) Change Control
+How changes are approved.
+
+- Policy change requests require explicit owner approval.
+- Tool scope expansions require security review.
+- Pricing/commercial logic changes are always human approved.
+
+## 8) Messaging and Trust
+Positioning rules that remain aligned across sales, delivery, and technical proof.
+
+- Operator-facing pages and outreach lead with \`Skills + MCP\`.
+- Technical architecture, security, and compliance surfaces use \`MCP + Skills\`.
+- Technical positioning statement: \`MCP is the substrate for auth, trust boundaries, portability, and governance; Skills are the behavior layer.\`
+- Context-bloat objection handling: \`We scope tool access by bundle and workflow so only relevant capabilities enter context.\`
+- Moat emphasis order: custom MCP creation, auth/security boundary design, policy artifacts, approval/escalation runbooks, monthly tuning.
+
+## 9) Review Cadence
+- Weekly: golden task report + incident summary
+- Monthly: policy tuning and roadmap update
+- Quarterly: architecture and portability review
+`
+  },
+  {
+    id: "agency:content/templates/delivery/README",
+    property: "agency",
+    title: "Workflow Artifact Templates",
+    description: "Workflow Artifact Templates",
+    section: "content",
+    path: "content/templates/delivery/README.md",
+    slug: "content/templates/delivery/README",
+    uri: "docs://agency/content/templates/delivery/README",
+    content: `# Workflow Artifact Templates
+
+These files mirror the canonical contract bundle in \`/templates\`.
+
+Use the root \`/templates\` directory as the source of truth. This folder exists so \`.agency\` operators can draft the same bundle without maintaining a second schema.
+
+## Canonical bundle
+
+1. \`mcp_contract.yaml\`
+2. \`agent_contract.yaml\`
+3. \`outcome_contract.md\`
+4. \`golden_tasks.yaml\`
+5. \`runbook.md\`
+
+Each artifact must carry the Policy OS metadata required by the canonical bundle:
+
+- \`package_name\`
+- \`approved_workflows\`
+- \`approval_mode\`
+- \`escalation_policy\`
+- \`review_cadence\`
+- \`billing_and_entitlement_assumptions\`
+
+## Recommended sequence
+
+1. Complete \`discovery-note-template.md\`
+2. Complete \`policy-os-proposal-input-template.md\`
+3. Draft the full bundle from the approved workflow map
+4. Review the bundle together before implementation
+5. Keep root \`/templates\` and this mirrored bundle aligned
+
+## Usage notes
+
+- \`mcp_contract.yaml\` defines systems, tools, resources, scopes, and failure model.
+- \`agent_contract.yaml\` defines behavior, approval boundaries, escalation logic, and runtime guardrails.
+- \`outcome_contract.md\` defines workflow scope, success criteria, fallback path, and accountability.
+- \`golden_tasks.yaml\` defines must-pass scenarios that prove the workflow behaves correctly before release.
+- \`runbook.md\` defines operating cadence, approvals, exceptions, containment, rollback, and recovery.
+
+Braintrust may be referenced only as observability and eval infrastructure, not as the policy control plane.
+`
+  },
+  {
+    id: "agency:content/templates/delivery/runbook",
+    property: "agency",
+    title: "Workflow Runbook",
+    description: "Workflow Runbook",
+    section: "content",
+    path: "content/templates/delivery/runbook.md",
+    slug: "content/templates/delivery/runbook",
+    uri: "docs://agency/content/templates/delivery/runbook",
+    content: `# Workflow Runbook
+
+**Status:** Draft  
+**Client:** \`CLIENT_NAME\`  
+**Workflow:** \`PRIMARY_WORKFLOW_NAME\`  
+**Primary owner:** \`ROLE_OR_NAME\`  
+**Package:** \`Policy OS\`
+
+---
+
+## 1. Policy OS metadata
+
+- approved workflows:
+  - \`WORKFLOW_NAME\`
+- approval mode: \`none|human-in-the-loop|hybrid\`
+- escalation policy: \`POLICY_ID_OR_RUNBOOK_SECTION\`
+- review cadence: \`weekly review + monthly tuning\`
+- billing and entitlement assumptions:
+  - service tier: \`mcp_only|policy_os_trial|policy_os_core\`
+  - service entitled: \`true|false\`
+  - policy accepted: \`true|false\`
+  - contract active: \`true|false\`
+  - billing active: \`true|false\`
+
+## 2. Purpose
+
+This runbook defines how operators monitor, intervene in, and recover the workflow safely.
+
+Use it for:
+
+- approval handling
+- exception response
+- blocked-action review
+- fallback/manual execution
+- rollback and containment
+
+## 3. Workflow summary
+
+- business objective: \`BUSINESS_OBJECTIVE\`
+- workflow boundary: \`START TO END OF THE PILOT WORKFLOW\`
+- systems in scope:
+  - \`SYSTEM_NAME\`
+  - \`SYSTEM_NAME\`
+- policy boundary:
+  - auto-allow: \`LOW-RISK ACTIONS\`
+  - approval-required: \`RISKY ACTIONS\`
+  - block: \`DISALLOWED ACTIONS\`
+
+## 4. Roles
+
+- workflow owner: \`ROLE_OR_NAME\`
+- technical owner: \`ROLE_OR_NAME\`
+- approval owner: \`ROLE_OR_NAME\`
+- fallback owner: \`ROLE_OR_NAME\`
+
+## 5. Normal operating procedure
+
+### Auto-allow path
+
+1. \`LOW-RISK ACTION IS TRIGGERED\`
+2. \`SYSTEM VALIDATES INPUTS\`
+3. \`ACTION EXECUTES\`
+4. \`AUDIT EVENT IS WRITTEN\`
+
+### Approval-required path
+
+1. \`RISKY ACTION IS PREPARED\`
+2. \`ACTION IS ROUTED TO APPROVAL INBOX\`
+3. \`APPROVER REVIEWS CONTEXT\`
+4. \`ACTION EXECUTES ONLY AFTER APPROVAL\`
+5. \`AUDIT EVENT IS WRITTEN\`
+
+### Block path
+
+1. \`DISALLOWED ACTION IS DETECTED\`
+2. \`ACTION IS BLOCKED\`
+3. \`REASON IS RETURNED\`
+4. \`OPERATOR REVIEWS WHETHER MANUAL ALTERNATIVE IS NEEDED\`
+
+## 6. Exception handling
+
+### Source-state mismatch
+
+- signal: \`SYSTEMS DO NOT AGREE ON REQUIRED STATE\`
+- operator action:
+  1. stop workflow execution
+  2. review source-of-truth system
+  3. correct mismatch or route to fallback
+- exit condition: \`SOURCE STATE IS ALIGNED OR MANUAL PATH IS COMPLETE\`
+
+### Approval backlog
+
+- signal: \`ACTIONS WAITING TOO LONG FOR HUMAN REVIEW\`
+- operator action:
+  1. alert approval owner
+  2. review queue health
+  3. reroute or reprioritize approvals
+- exit condition: \`QUEUE RETURNS TO ACCEPTABLE TURNAROUND\`
+
+### Tool or auth failure
+
+- signal: \`TOOL CALL FAILS OR ACCESS EXPIRES\`
+- operator action:
+  1. confirm whether failure is transient or configuration-related
+  2. retry only if policy allows
+  3. switch to fallback/manual path if risk boundary would be crossed
+- exit condition: \`ACTION COMPLETES SAFELY OR MANUAL PATH COMPLETES\`
+
+## 7. Manual fallback
+
+When the workflow cannot proceed safely:
+
+1. \`STOP THE AUTOMATED PATH\`
+2. \`OPEN OR UPDATE THE EXCEPTION RECORD\`
+3. \`HAND OFF TO FALLBACK OWNER\`
+4. \`COMPLETE THE TASK MANUALLY\`
+5. \`RECORD THE RESOLUTION\`
+
+Fallback success condition:
+
+- \`WORKFLOW OUTCOME IS COMPLETED WITHOUT BREACHING POLICY BOUNDARY\`
+
+## 8. Rollback and containment
+
+Use rollback or containment when:
+
+- blocked actions are not being blocked
+- approval-required actions execute without approval
+- audit fields are missing
+- system drift creates unsafe outputs
+
+Immediate containment options:
+
+1. disable production write paths
+2. switch workflow to read-only mode
+3. route all actions to manual approval
+4. stop the workflow entirely
+
+Recovery steps:
+
+1. identify root cause
+2. confirm safe state
+3. replay or reconcile affected records if required
+4. rerun golden-task checks before re-enable
+
+## 9. Observability and evidence
+
+Required evidence sources:
+
+- workflow logs
+- approval inbox records
+- trace/eval tooling such as Braintrust
+- incident notes
+
+Required review cadence:
+
+- daily during pilot
+- weekly after stabilization, unless risk profile requires more
+- monthly tuning review for ongoing Policy OS engagements
+
+## 10. Escalation matrix
+
+- policy ambiguity: \`POLICY_OWNER\`
+- technical failure: \`TECHNICAL_OWNER\`
+- workflow exception: \`WORKFLOW_OWNER\`
+- customer-impacting incident: \`DECISION_OWNER\`
+
+## 11. Change management
+
+Any change to the workflow must update:
+
+- \`mcp_contract.yaml\`
+- \`agent_contract.yaml\`
+- \`outcome_contract.md\`
+- \`golden_tasks.yaml\`
+- this runbook
+
+No production change is complete until the documentation and gates are updated together.
+`
+  },
+  {
     id: "agency:content/templates/outreach/connection-request",
     property: "agency",
     title: "LinkedIn Connection Request Templates",
@@ -28644,15 +32607,108 @@ After sending, update lead in funnel:
 `
   },
   {
+    id: "agency:content/templates/sales/discovery-note-example",
+    property: "agency",
+    title: "Workflow Infrastructure Discovery Note Example",
+    description: "Workflow Infrastructure Discovery Note Example",
+    section: "content",
+    path: "content/templates/sales/discovery-note-example.md",
+    slug: "content/templates/sales/discovery-note-example",
+    uri: "docs://agency/content/templates/sales/discovery-note-example",
+    content: `# Workflow Infrastructure Discovery Note Example
+
+**Purpose:** show the expected level of specificity for post-call discovery capture  
+**Use with:** \`discovery-note-template.md\`
+
+---
+
+## Call metadata
+
+- date: 2026-03-07
+- company: ExampleCo
+- primary contact: Jordan Lee
+- role: RevOps Director
+- additional stakeholders: Sales Ops Manager, Engineering Manager
+- call owner: CREATE SOMETHING
+
+---
+
+## Problem summary
+
+- triggering event: order-confirmation errors increased after a CRM and billing workflow change
+- business objective in next 30 days: reduce manual order reconciliation and prevent incorrect confirmation sends
+- current workflow pain (1-2 sentences): Customer order records pass through CRM, internal ops review, and billing, but write actions drift across systems and confirmations are sometimes sent before final approval.
+- current workaround: ops team manually reviews spreadsheets twice daily and blocks sends when mismatches are found
+- quantified impact (time/cost/risk): 8-10 hours per week of cleanup, delayed bookings, and customer-facing trust risk when incorrect confirmations go out
+
+---
+
+## Workflow qualification
+
+- workflow candidate: quote-to-confirmation workflow
+- risk class (\`low|medium|high\`): high
+- required approvals (current + desired): currently manual ops review before send; desired approval gate only for pricing exceptions and account mismatches
+- integration systems in scope: HubSpot, internal order database, Stripe, Gmail
+- failure hotspots: stale CRM state, duplicate billing records, premature confirmation send
+- human gate boundaries (existing/missing): existing gate before send; missing gate on pricing discrepancy path
+- policy boundary:
+  - auto-allow: read-only CRM lookup, order-state comparison, draft generation for internal review
+  - approval-required: sending confirmation email, writing back corrected pricing, creating exception records
+  - block: issuing refunds, deleting customer records, overwriting approved pricing without explicit human review
+- fallback/manual path: ops team completes exception handling manually in shared inbox and updates source systems directly
+- workflow owner: RevOps Director
+
+---
+
+## Package recommendation
+
+- recommended tier:
+  - \`Policy OS\`
+- rationale: client already has automation fragments, but failure cost is driven by missing approval boundaries and inconsistent cross-system writes
+- if MCP-only wedge recommended, list assurance trigger criteria:
+- if Braintrust or eval tooling is discussed, note it as observability only: Braintrust may be added after pilot scoping to trace approval routing and evaluate workflow regressions
+
+---
+
+## Commercial and decision signals
+
+- buyer authority level: strong recommender, final approval with COO
+- budget posture: budget available for pilot if risk reduction is clear
+- timeline urgency: this quarter
+- procurement or security constraints: vendor review required for production write access
+- fit level (\`high|medium|low\`): high
+
+---
+
+## Next step
+
+- next action: schedule paid Workflow Mapping Session
+- owner: Jordan Lee
+- due date: 2026-03-12
+- required participants: RevOps Director, Engineering Manager, Ops lead
+- deliverable committed (for example: Workflow Mapping Session output): pilot scope, policy boundary, and 30-day implementation plan
+
+---
+
+## Proposal input block
+
+- \`mcp_contract.yaml\` implications: define read access to CRM and billing state, gated write tools for confirmation and exception handling, explicit auth scopes for production send paths
+- \`agent_contract.yaml\` implications: auto-allow read and draft actions, approval gate for send/write corrections, block destructive billing actions
+- \`outcome_contract.md\` implications: pilot targets reduction in manual reconciliation and prevention of unreviewed sends
+- primary reliability KPI for pilot: unreviewed risky actions prevented
+- release-gate conditions: approval routing tested on golden tasks, trace visibility in place, manual fallback confirmed with ops owner
+`
+  },
+  {
     id: "agency:content/templates/sales/discovery-note-template",
     property: "agency",
-    title: "POLICY OS Discovery Note Template",
-    description: "POLICY OS Discovery Note Template",
+    title: "Workflow Infrastructure Discovery Note Template",
+    description: "Workflow Infrastructure Discovery Note Template",
     section: "content",
     path: "content/templates/sales/discovery-note-template.md",
     slug: "content/templates/sales/discovery-note-template",
     uri: "docs://agency/content/templates/sales/discovery-note-template",
-    content: `# POLICY OS Discovery Note Template
+    content: `# Workflow Infrastructure Discovery Note Template
 
 **Purpose:** Standardize post-call capture so proposal drafting is consistent and fast.  
 **Use with:** \`content/sales/discovery-call-script.md\`
@@ -28673,13 +32729,14 @@ After sending, update lead in funnel:
 ## Problem summary
 
 - triggering event:
+- business objective in next 30 days:
 - current workflow pain (1-2 sentences):
 - current workaround:
 - quantified impact (time/cost/risk):
 
 ---
 
-## POLICY OS qualification
+## Workflow qualification
 
 - workflow candidate:
 - risk class (\`low|medium|high\`):
@@ -28687,17 +32744,24 @@ After sending, update lead in funnel:
 - integration systems in scope:
 - failure hotspots:
 - human gate boundaries (existing/missing):
+- policy boundary:
+  - auto-allow:
+  - approval-required:
+  - block:
+- fallback/manual path:
+- workflow owner:
 
 ---
 
 ## Package recommendation
 
 - recommended tier:
-  - \`Custom Workflow MCPs\`
-  - \`Autonomy Assurance\`
+  - \`Workflow Infrastructure\`
+  - \`Policy OS\`
   - \`Enterprise Extension\`
 - rationale:
 - if MCP-only wedge recommended, list assurance trigger criteria:
+- if Braintrust or eval tooling is discussed, note it as observability only:
 
 ---
 
@@ -28717,7 +32781,7 @@ After sending, update lead in funnel:
 - owner:
 - due date:
 - required participants:
-- deliverable committed (for example: Policy Mapping Session output):
+- deliverable committed (for example: Workflow Mapping Session output):
 
 ---
 
@@ -28727,6 +32791,7 @@ After sending, update lead in funnel:
 - \`agent_contract.yaml\` implications:
 - \`outcome_contract.md\` implications:
 - primary reliability KPI for pilot:
+- release-gate conditions:
 `
   },
   {
@@ -29649,13 +33714,13 @@ For each:
   {
     id: "agency:content/templates/sales/policy-os-follow-up-sequence",
     property: "agency",
-    title: "POLICY OS Follow-up Sequence (Post-Discovery)",
-    description: "POLICY OS Follow-up Sequence (Post-Discovery)",
+    title: "Workflow Infrastructure Follow-up Sequence (Post-Discovery)",
+    description: "Workflow Infrastructure Follow-up Sequence (Post-Discovery)",
     section: "content",
     path: "content/templates/sales/policy-os-follow-up-sequence.md",
     slug: "content/templates/sales/policy-os-follow-up-sequence",
     uri: "docs://agency/content/templates/sales/policy-os-follow-up-sequence",
-    content: `# POLICY OS Follow-up Sequence (Post-Discovery)
+    content: `# Workflow Infrastructure Follow-up Sequence (Post-Discovery)
 
 Use this sequence after a discovery call to convert diagnosis into a concrete decision.
 
@@ -29665,9 +33730,13 @@ Use this sequence after a discovery call to convert diagnosis into a concrete de
 
 - buyer fit level (\`high|medium|low\`)
 - workflow candidate
+- business objective
+- current failure cost
 - risk class
 - required approvals
 - integration systems
+- workflow owner
+- policy boundary
 - recommended package tier
 - next-step owner and target date
 
@@ -29679,15 +33748,18 @@ Use this sequence after a discovery call to convert diagnosis into a concrete de
 Confirm shared diagnosis and lock next action.
 
 ### Template
-Subject: POLICY OS recap + next step
+Subject: workflow recap + next step
 
 Hi {{Name}},
 
 Thanks again for the discussion. Here is the operating summary from today:
 
 - Workflow candidate: {{workflow}}
+- Business objective: {{business_objective}}
+- Current failure cost: {{failure_cost}}
 - Risk class: {{risk_class}}
 - Systems in scope: {{systems}}
+- Workflow owner: {{workflow_owner}}
 - Recommended path: {{tier}}
 
 Based on this, the next step is:
@@ -29729,25 +33801,32 @@ Subject: confirm mapping session stakeholders
 
 Hi {{Name}},
 
-To finalize the Policy Mapping Session, please confirm:
+To finalize the Workflow Mapping Session, please confirm:
 - decision owner
 - ops/technical stakeholders
 - preferred slot this week
 
-Deliverable remains: pilot scope, policy boundary, and 30-day plan.
+Deliverable remains: pilot scope, trust boundary, and 30-day plan.
+
+Please also confirm the actions that currently fall into:
+- auto-allow
+- approval-required
+- block
 
 Best,  
 {{sender}}
 
 ### Medium fit
-Subject: confirm MCP wedge + assurance triggers
+Subject: confirm MCP wedge + reliability triggers
 
 Hi {{Name}},
 
 For the MCP-only wedge, please confirm:
 - single workflow boundary
-- trigger criteria for entering Autonomy Assurance
+- trigger criteria for entering Policy OS
 - checkpoint date for trigger review
+
+If runtime tracing is in scope, we can add Braintrust as observability support after the wedge is defined.
 
 Best,  
 {{sender}}
@@ -29812,20 +33891,19 @@ Best,
 
 - Every sequence ends with a named owner and date, or explicit pause condition.
 - Medium-fit sequences include documented assurance trigger criteria.
-- High-fit sequences result in a scheduled Policy Mapping Session.
-
+- High-fit sequences result in a scheduled Workflow Mapping Session.
 `
   },
   {
     id: "agency:content/templates/sales/policy-os-proposal-input-template",
     property: "agency",
-    title: "POLICY OS Proposal Input Template",
-    description: "POLICY OS Proposal Input Template",
+    title: "Workflow Infrastructure Proposal Input Template",
+    description: "Workflow Infrastructure Proposal Input Template",
     section: "content",
     path: "content/templates/sales/policy-os-proposal-input-template.md",
     slug: "content/templates/sales/policy-os-proposal-input-template",
     uri: "docs://agency/content/templates/sales/policy-os-proposal-input-template",
-    content: `# POLICY OS Proposal Input Template
+    content: `# Workflow Infrastructure Proposal Input Template
 
 **Purpose:** Convert discovery outputs into proposal-ready scope in one pass.  
 **Use after:** \`content/templates/sales/discovery-note-template.md\`
@@ -29853,12 +33931,12 @@ Best,
 
 ## Scope by offer ladder
 
-### Custom Workflow MCPs (required baseline)
+### Workflow Infrastructure (required baseline)
 - systems in scope:
 - workflow boundaries:
 - implementation deliverables:
 
-### Autonomy Assurance (if included)
+### Policy OS (if included)
 - approval boundaries:
 - release gates:
 - incident loop expectations:
@@ -29925,7 +34003,6 @@ Best,
 - decision owner:
 - target decision date:
 - if deferred: re-entry condition and date:
-
 `
   },
   {
@@ -30001,11 +34078,11 @@ We don't play pricing games. Our rates are what they are. We'd rather scope diff
 
 ## Service Tiers
 
-### Discovery Sprint
+### Workflow Mapping Session
 
-**Purpose**: Understand the problem, define the solution, de-risk the project
+**Purpose**: Map one workflow, define its trust boundary, and de-risk implementation
 **Duration**: 1-2 weeks
-**Deliverable**: Discovery report with recommendations, scope, and estimate
+**Deliverable**: Pilot scope, policy boundary, implementation roadmap, and fixed-price recommendation
 
 | Complexity | Price | When to Use |
 |------------|-------|-------------|
@@ -30017,11 +34094,12 @@ We don't play pricing games. Our rates are what they are. We'd rather scope diff
 - Stakeholder interviews (up to 5)
 - Technical assessment
 - Workflow mapping
+- Policy-boundary definition (\`auto-allow\`, \`approval-required\`, \`block\`)
 - Solution architecture
-- Implementation roadmap
+- 30-day implementation roadmap
 - Fixed-price estimate for next phase
 
-**Value Proposition**: "Spend \$10K to know exactly what you're building and what it will cost. No surprises."
+**Value Proposition**: "Spend \$10K to define one workflow clearly enough to implement it with the right trust boundary and no ambiguity about next steps."
 
 ---
 
@@ -30448,6 +34526,107 @@ I'd be happy to recommend some alternatives that might be better suited."
 - >30% discount requested
 - Payment terms beyond Net 30
 - Scope-to-budget ratio impossible
+`
+  },
+  {
+    id: "agency:content/templates/sales/workflow-mapping-session-agenda",
+    property: "agency",
+    title: "Workflow Mapping Session Agenda",
+    description: "Workflow Mapping Session Agenda",
+    section: "content",
+    path: "content/templates/sales/workflow-mapping-session-agenda.md",
+    slug: "content/templates/sales/workflow-mapping-session-agenda",
+    uri: "docs://agency/content/templates/sales/workflow-mapping-session-agenda",
+    content: `# Workflow Mapping Session Agenda
+
+**Audience:** client stakeholders  
+**Duration:** 60 minutes  
+**Purpose:** define one pilot workflow, its trust boundary, and the 30-day implementation path
+
+---
+
+## What we will do
+
+During this session we will:
+
+1. Select the workflow to scope
+2. Map the systems, actions, and approvals involved
+3. Define the policy boundary for automation
+4. Confirm what should be automated, reviewed, or blocked
+5. Align on the implementation path for the next 30 days
+
+---
+
+## What we need from your team
+
+Please bring:
+
+- the workflow owner
+- one operational stakeholder closest to the work
+- one technical stakeholder if systems or auth complexity is expected
+- examples of current failure cases or manual workarounds
+
+---
+
+## Agenda
+
+### 1. Workflow selection and business objective
+
+- What outcome matters most right now?
+- Which workflow is the best pilot candidate?
+- What makes it expensive or risky today?
+
+### 2. Current-state workflow map
+
+- Trigger
+- Systems in scope
+- Sequence of actions
+- Handoffs and failure points
+- Existing human review steps
+
+### 3. Trust and policy boundary
+
+We will classify actions into:
+
+- \`auto-allow\`
+- \`approval-required\`
+- \`block\`
+
+We will also define:
+
+- escalation triggers
+- fallback/manual path
+- ownership boundaries
+
+### 4. Delivery path
+
+- Is this an \`MCP-only wedge\`, \`Workflow Infrastructure\`, or \`Policy OS\` engagement?
+- What must ship first?
+- What does success look like in 30 days?
+
+### 5. Close and next actions
+
+- Confirm pilot scope
+- Confirm stakeholders
+- Confirm decision owner
+- Confirm implementation next step and date
+
+---
+
+## What you receive after the session
+
+- Pilot workflow scope
+- Policy boundary recommendation
+- 30-day implementation plan
+- Proposal-ready summary for implementation artifacts
+
+---
+
+## Notes on observability
+
+If tracing or evals are part of the plan, we may recommend Braintrust for runtime visibility.
+
+Braintrust is used for observability and tuning, not as the enforcement mechanism for workflow policy.
 `
   },
   {
@@ -31128,7 +35307,7 @@ Status: **Partially pass with one notable layout defect.**
     uri: "docs://agency/README",
     content: `# CREATE SOMETHING Agency
 
-**createsomething.agency** — POLICY OS for production autonomy
+**createsomething.agency** — production-safe workflow infrastructure for technical operators
 
 We build the connectivity layer between your tools and AI.
 
@@ -31143,7 +35322,7 @@ Neither Claude Desktop, Claude Cowork, nor Codex can create MCP servers from wit
 - Domain expertise (understanding your business)
 - MCP protocol knowledge (auth, transports, error handling)
 - Integration experience (data mapping, security boundaries)
-- POLICY OS design (Skills + MCP with policy boundaries)
+- Workflow control design (Skills + MCP with trust boundaries)
 
 This is what \`.agency\` delivers.
 
@@ -31153,10 +35332,10 @@ This is what \`.agency\` delivers.
 
 | Offer | Description | Typical Output |
 |-------|-------------|----------------|
-| **Custom Workflow MCPs** | Build trusted workflow substrate for business-critical operations. | Workflow implementation + integration contracts |
-| **Autonomy Assurance** | Add policy controls, release gates, approval rules, and incident loops. | Governed runtime behavior + reliability controls |
+| **Workflow Infrastructure** | Build trusted workflow substrate for business-critical operations. | Workflow implementation + integration contracts |
+| **Policy OS** | Add policy controls, release gates, approval rules, incident loops, and recurring governed-execution operations. | Governed runtime behavior + release evidence |
 | **Enterprise Extension** | Extend for high-stakes, cross-system, and compliance-heavy workflows. | Custom governance boundaries + enterprise orchestration |
-| **Policy Mapping Session** | Paid pre-implementation mapping to scope workflow and policy boundary. | Pilot scope, policy boundary, and 30-day plan |
+| **Workflow Mapping Session** | Paid pre-implementation mapping to scope workflow and trust boundary. | Pilot scope, trust boundary, and 30-day plan |
 
 ---
 
@@ -31174,8 +35353,8 @@ This is what \`.agency\` delivers.
 └─────────────────────────────────────────────────────────────┘
 \`\`\`
 
-**Entry point**: Custom Workflow MCPs that connect your systems with trusted action paths  
-**Expansion**: Assurance and Extension based on risk and workflow complexity
+**Entry point**: a scoped MCP wedge that connects one important workflow with trusted action paths  
+**Expansion**: Workflow Infrastructure first, Policy OS for governed execution, then Enterprise Extension based on risk and workflow complexity
 
 ---
 
@@ -31248,11 +35427,22 @@ packages/agency/
 │   │   └── admin/           # Internal tools
 │   └── lib/                 # Shared utilities
 ├── content/                 # Operational content
-│   ├── sales/               # POLICY OS buyer brief, script, and interface spec
+│   ├── sales/               # workflow infrastructure buyer brief, script, and interface spec
 │   └── case-studies/        # MCP project documentation
 ├── docs/                    # Client documentation
 └── workers/                 # Cloudflare Workers
 \`\`\`
+
+## Agent Legibility Contract
+
+| Field | Value |
+|-------|-------|
+| Entry point | \`src/routes/+page.svelte\`, \`src/routes/services/+page.svelte\`, \`content/sales/README.md\` |
+| Boot command | \`pnpm dev\` |
+| Smoke command | \`pnpm check\` |
+| Validation surfaces | Svelte check output, Cloudflare Pages build output, route preview, sales content review |
+| UI validation path | \`/\`, \`/services\` |
+| Escalation rule | stop if Auth0, D1, or client-delivery data is required and cannot be reproduced from local fixtures or Infisical-backed environment |
 
 ## Sales Assets
 
@@ -31261,10 +35451,18 @@ The active sales system is documented in:
 - \`content/sales/README.md\`
 - \`content/sales/policy-os-buyer-brief-ops-revops.md\`
 - \`content/sales/discovery-call-script.md\`
+- \`content/sales/discovery-policy.md\`
+- \`content/sales/discovery-runbook.md\`
+- \`content/sales/operator-checklist.md\`
 - \`content/sales/policy-os-interface-spec.yaml\`
 - \`content/templates/sales/discovery-note-template.md\`
+- \`content/templates/sales/workflow-mapping-session-agenda.md\`
 - \`content/templates/sales/policy-os-proposal-input-template.md\`
 - \`content/templates/sales/policy-os-follow-up-sequence.md\`
+- \`content/templates/delivery/README.md\`
+- \`content/templates/delivery/mcp_contract.yaml\`
+- \`content/templates/delivery/agent_contract.yaml\`
+- \`content/templates/delivery/outcome_contract.md\`
 
 ---
 
@@ -31279,6 +35477,97 @@ pnpm --filter=agency exec tsc --noEmit
 
 # Deploy
 pnpm --filter=agency build && wrangler pages deploy packages/agency/.svelte-kit/cloudflare --project-name=create-something-agency
+\`\`\`
+
+## Auth0 And Infisical
+
+\`.agency\` now treats Auth0 as the identity source of truth. Browser login flows redirect through Auth0 Universal Login, the Auth0 callback is handled at \`/auth/callback\`, and server-side session validation accepts Auth0-issued tokens through the shared Canon auth layer.
+
+Tenant export uses \`a0deploy\`, not \`auth0\`. The repo-level export wrapper is:
+
+\`\`\`bash
+cp auth0/config.example.json auth0/config.json
+pnpm auth0:export
+\`\`\`
+
+The export wrapper expects \`AUTH0_DOMAIN\`, \`AUTH0_CLIENT_ID\`, and \`AUTH0_CLIENT_SECRET\` in your environment, then runs:
+
+\`\`\`bash
+a0deploy export -c auth0/config.json -f yaml -o auth0/export
+\`\`\`
+
+Required Pages secrets:
+
+\`\`\`bash
+AUTH0_DOMAIN
+AUTH0_CLIENT_ID
+AUTH0_CLIENT_SECRET
+AUTH0_ISSUER_BASE_URL
+AUTH0_JWKS_URL
+\`\`\`
+
+Optional Pages secrets:
+
+\`\`\`bash
+AUTH0_AUDIENCE
+AUTH0_SCOPE
+AUTH0_CLAIMS_NAMESPACE
+AUTH0_REDIRECT_URI
+\`\`\`
+
+Do not point \`AUTH0_AUDIENCE\` at the Auth0 Management API (\`https://<tenant>/api/v2/\`) for browser sign-in. \`.agency\` only needs the ID token for the property session; the Management API audience is a machine-to-machine setting and can break Universal Login flows.
+
+If Auth0 login is fronted by a custom domain, preview hostname, or proxy that differs from the incoming Worker request host, set:
+
+\`\`\`bash
+AUTH0_REDIRECT_URI=https://createsomething.agency/auth/callback
+\`\`\`
+
+and add that exact URL to the Auth0 application's Allowed Callback URLs.
+
+Recommended Infisical path:
+
+\`\`\`bash
+/agency/auth
+\`\`\`
+
+Auth0 secrets must live only under \`/agency/auth\`. Do not store duplicate \`AUTH0_*\` keys at the Infisical root path \`/\`; the seed/sync scripts now fail closed when root-path drift is present.
+
+Seed Auth0 tenant values into Infisical:
+
+\`\`\`bash
+AUTH0_DOMAIN=...
+AUTH0_CLIENT_ID=...
+AUTH0_CLIENT_SECRET=...
+AUTH0_ISSUER_BASE_URL=...
+AUTH0_JWKS_URL=...
+AUTH0_REDIRECT_URI=https://createsomething.agency/auth/callback
+pnpm agency:auth0:seed
+\`\`\`
+
+Sync Auth0 secrets from Infisical into the Cloudflare Pages project:
+
+\`\`\`bash
+pnpm agency:auth0:sync
+\`\`\`
+
+Useful overrides:
+
+\`\`\`bash
+PROJECT_NAME=create-something-agency
+INFISICAL_ENV=prod
+INFISICAL_PATH=/agency/auth
+INFISICAL_PROJECT_ID=<optional>
+DRY_RUN=true
+CLOUDFLARE_ACCOUNT_ID=<required when Wrangler has multiple accounts>
+\`\`\`
+
+After syncing secrets, deploy normally:
+
+\`\`\`bash
+pnpm --filter @create-something/canon package
+pnpm --filter @create-something/agency build
+pnpm --filter @create-something/agency deploy
 \`\`\`
 
 ---
@@ -31727,6 +36016,34 @@ Before each practice session, simulate real conditions:
 ---
 
 *"The goal isn't to memorize solutions. It's to recognize patterns so quickly that the solution emerges naturally."*
+`
+  },
+  {
+    id: "agency:static/images/stack/README",
+    property: "agency",
+    title: "Stack Logo Assets",
+    description: "Stack Logo Assets",
+    section: "static",
+    path: "static/images/stack/README.md",
+    slug: "static/images/stack/README",
+    uri: "docs://agency/static/images/stack/README",
+    content: `# Stack Logo Assets
+
+These assets are vendor-owned marks used only as small stack references. Keep them subordinate to CREATE SOMETHING branding, do not imply endorsement, and replace them if vendor guidance changes.
+
+Sources used:
+
+- \`mcp.svg\`: \`https://modelcontextprotocol.io/favicon.svg\`
+- \`cloudflare.svg\`: Cloudflare logo guidance at \`https://www.cloudflare.com/logo/\`; compact mark sourced through Simple Icons for small stack references
+- \`composio.ico\`: \`https://composio.dev/favicon.ico\`
+- \`dify.svg\`: Dify site icon from \`https://dify.ai/\`
+- \`notion.svg\`: Notion-sourced SVG reference at \`https://commons.wikimedia.org/wiki/File:Notion-logo.svg\`; compact mark sourced through Simple Icons for small stack references
+- \`openai.svg\`: public SVG cache for the OpenAI symbol; usage should follow \`https://openai.com/brand/\`
+- \`webflow.png\`: Webflow brand site favicon from \`https://brand.webflow.com/\`
+- \`linear.svg\`: \`https://linear.app/static/favicon.svg\`
+- \`trmnl.png\`: \`https://trmnl.com/images/favicons/apple-touch-icon-180x180.png\`
+- \`infisical.png\`: generated from \`https://infisical.com/infisical.ico\`
+- \`auth0.svg\`: \`https://cdn.auth0.com/website/website/favicons/auth0-favicon.svg\`
 `
   },
   {
@@ -32210,6 +36527,357 @@ Legacy Techforce paths in \`/Users/micahjohnson/Documents/Github/Create Somethin
 ## Related Locations
 
 - \`/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/docs/internal/partnership-applications/\`
+`
+  },
+  {
+    id: "agency:static/social/linkedin-webflow-analyzer-creator-autofill-brief",
+    property: "agency",
+    title: "Static Graphic Brief: Webflow Analyzer 04",
+    description: "Static Graphic Brief: Webflow Analyzer 04",
+    section: "static",
+    path: "static/social/linkedin-webflow-analyzer-creator-autofill-brief.md",
+    slug: "static/social/linkedin-webflow-analyzer-creator-autofill-brief",
+    uri: "docs://agency/static/social/linkedin-webflow-analyzer-creator-autofill-brief",
+    content: `# Static Graphic Brief: Webflow Analyzer 04
+
+## Deliverables
+
+- PNG: \`packages/agency/static/social/linkedin-webflow-analyzer-creator-autofill.png\`
+- Source SVG: \`packages/agency/static/social/linkedin-webflow-analyzer-creator-autofill.svg\`
+
+## Use
+
+Supports:
+
+- \`packages/agency/content/social/linkedin-webflow-analyzer-04.md\`
+
+## Format
+
+- Canvas: \`1600x900\`
+- Background: near-black \`#050505\`
+- Visual mode: three-step productized workflow
+- Typography: Helvetica/Arial/sans-serif
+
+## Core Message
+
+\`The analyzer became a product when it started helping creators before review.\`
+
+## Layout
+
+### Header
+
+- Kicker: \`CREATOR AUTOFILL\`
+- Title: \`Same evidence pipeline. Different trust surface.\`
+- Subhead: \`Validation, autofill, and screenshot prep translate reviewer infrastructure into creator help.\`
+
+### Main body
+
+Three wide cards left to right:
+
+1. \`Validate URL\`
+   - caption:
+     - \`Check the published page\`
+     - \`Return safe signals\`
+
+2. \`Autofill Fields\`
+   - caption:
+     - \`Apply what can be inferred\`
+     - \`Leave judgment-sensitive fields alone\`
+
+3. \`Screenshots Ready\`
+   - caption:
+     - \`Package assets for upload\`
+     - \`Show a clear summary\`
+
+Add a thin line above or below the cards:
+
+\`reviewer infrastructure -> creator workflow help\`
+
+### Footer strip
+
+- footer text: \`Productization is translation: turn internal capability into the smallest safe external help.\`
+- brand mark on right: \`CREATE SOMETHING\`
+
+## Copy Constraints
+
+- Keep the language plain and workflow-oriented.
+- Avoid sounding like fully autonomous submission.
+- The phrase \`Different trust surface\` should remain visible somewhere in the graphic.
+
+## Visual Notes
+
+- This one can lean slightly more product-facing than the other three.
+- Still avoid literal UI screenshots unless they are clean and high-contrast.
+- Prefer simple cards and arrows over browser chrome.
+
+## Export Notes
+
+- If using screenshots, crop tightly and keep text large.
+- If using pure diagram treatment, preserve strong spacing so the three-step flow reads instantly.
+`
+  },
+  {
+    id: "agency:static/social/linkedin-webflow-analyzer-manual-state-brief",
+    property: "agency",
+    title: "Static Graphic Brief: Webflow Analyzer 02",
+    description: "Static Graphic Brief: Webflow Analyzer 02",
+    section: "static",
+    path: "static/social/linkedin-webflow-analyzer-manual-state-brief.md",
+    slug: "static/social/linkedin-webflow-analyzer-manual-state-brief",
+    uri: "docs://agency/static/social/linkedin-webflow-analyzer-manual-state-brief",
+    content: `# Static Graphic Brief: Webflow Analyzer 02
+
+## Deliverables
+
+- PNG: \`packages/agency/static/social/linkedin-webflow-analyzer-manual-state.png\`
+- Source SVG: \`packages/agency/static/social/linkedin-webflow-analyzer-manual-state.svg\`
+
+## Use
+
+Supports:
+
+- \`packages/agency/content/social/linkedin-webflow-analyzer-02.md\`
+
+## Format
+
+- Canvas: \`1600x900\`
+- Background: near-black \`#050505\`
+- Visual mode: state diagram
+- Typography: Helvetica/Arial/sans-serif
+
+## Core Message
+
+\`Manual is a first-class review state.\`
+
+## Layout
+
+### Header
+
+- Kicker: \`REVIEW STATES\`
+- Title: \`Trust improves when the system can say manual.\`
+- Subhead: \`Pass what it can justify. Fail what it can justify. Stop when the evidence boundary is real.\`
+
+### Main body
+
+Three large vertical state columns centered horizontally:
+
+1. \`Pass\`
+   - caption: \`Enough evidence to approve this check\`
+
+2. \`Fail\`
+   - caption: \`Enough evidence to reject this check\`
+
+3. \`Manual\`
+   - caption: \`Enough evidence to stop pretending\`
+
+Put \`Manual\` in the center or give it equal emphasis so it does not read like an exception bucket.
+
+Below the columns, place a thin logic line:
+
+\`weak claim -> manual\`
+
+### Footer strip
+
+- footer text: \`A credible review system preserves uncertainty instead of hiding it.\`
+- brand mark on right: \`CREATE SOMETHING\`
+
+## Copy Constraints
+
+- Do not use warning icons or error styling on \`Manual\`.
+- Avoid red/yellow/green traffic-light language.
+- Keep the state names crisp and the captions plain.
+
+## Visual Notes
+
+- This should feel calm, not alarmist.
+- \`Manual\` should look intentional and dignified.
+- Use boxes, dividers, and typography instead of UI screenshots.
+- If any emphasis is added, use weight and spacing rather than color coding.
+
+## Export Notes
+
+- Test legibility on mobile-width previews before posting.
+- If \`Subhead\` runs long, break it across two lines rather than reducing font too far.
+`
+  },
+  {
+    id: "agency:static/social/linkedin-webflow-analyzer-multi-surface-brief",
+    property: "agency",
+    title: "Static Graphic Brief: Webflow Analyzer 01",
+    description: "Static Graphic Brief: Webflow Analyzer 01",
+    section: "static",
+    path: "static/social/linkedin-webflow-analyzer-multi-surface-brief.md",
+    slug: "static/social/linkedin-webflow-analyzer-multi-surface-brief",
+    uri: "docs://agency/static/social/linkedin-webflow-analyzer-multi-surface-brief",
+    content: `# Static Graphic Brief: Webflow Analyzer 01
+
+## Deliverables
+
+- PNG: \`packages/agency/static/social/linkedin-webflow-analyzer-multi-surface.png\`
+- Source SVG: \`packages/agency/static/social/linkedin-webflow-analyzer-multi-surface.svg\`
+
+## Use
+
+Supports:
+
+- \`packages/agency/content/social/linkedin-webflow-analyzer-01.md\`
+
+## Format
+
+- Canvas: \`1600x900\`
+- Background: near-black \`#050505\`
+- Visual mode: monochrome systems diagram
+- Typography: Helvetica/Arial/sans-serif
+
+## Core Message
+
+\`The website was only one source of truth.\`
+
+## Layout
+
+### Header
+
+- Kicker: \`WEBFLOW ANALYZER\`
+- Title: \`Review spans more than one truth surface.\`
+- Subhead: \`Published site, Designer state, and policy snapshot all matter.\`
+
+### Main body
+
+Three equal cards from left to right:
+
+1. \`Published Site\`
+   - short caption: \`Runtime evidence\`
+   - micro-lines:
+     - \`SEO\`
+     - \`Accessibility\`
+     - \`Metadata\`
+
+2. \`Designer State\`
+   - short caption: \`Authoring evidence\`
+   - micro-lines:
+     - \`Pages\`
+     - \`Components\`
+     - \`Classes\`
+
+3. \`Policy Snapshot\`
+   - short caption: \`Governance evidence\`
+   - micro-lines:
+     - \`Guidelines\`
+     - \`Rubric\`
+     - \`Version\`
+
+Use thin arrows from all three cards into one lower center card:
+
+- center card title: \`Governed Review\`
+- caption: \`The analyzer got useful when it stopped acting like a crawler.\`
+
+### Footer strip
+
+- footer text: \`Truth is split across surfaces. Review has to join them.\`
+- brand mark on right: \`CREATE SOMETHING\`
+
+## Copy Constraints
+
+- Keep all text sentence case except the kicker.
+- No product screenshot chrome.
+- No more than 24 words in the footer strip.
+
+## Visual Notes
+
+- The three source cards should feel equivalent in weight.
+- The center review card should feel assembled from them, not dominant over them.
+- Keep line weights light and diagrammatic, closer to an architecture poster than a product ad.
+
+## Export Notes
+
+- Export PNG from SVG at native size.
+- Verify small text remains legible in LinkedIn compression.
+- If any line of footer text feels tight, shorten before export rather than shrinking font size.
+`
+  },
+  {
+    id: "agency:static/social/linkedin-webflow-analyzer-policy-provenance-brief",
+    property: "agency",
+    title: "Static Graphic Brief: Webflow Analyzer 03",
+    description: "Static Graphic Brief: Webflow Analyzer 03",
+    section: "static",
+    path: "static/social/linkedin-webflow-analyzer-policy-provenance-brief.md",
+    slug: "static/social/linkedin-webflow-analyzer-policy-provenance-brief",
+    uri: "docs://agency/static/social/linkedin-webflow-analyzer-policy-provenance-brief",
+    content: `# Static Graphic Brief: Webflow Analyzer 03
+
+## Deliverables
+
+- PNG: \`packages/agency/static/social/linkedin-webflow-analyzer-policy-provenance.png\`
+- Source SVG: \`packages/agency/static/social/linkedin-webflow-analyzer-policy-provenance.svg\`
+
+## Use
+
+Supports:
+
+- \`packages/agency/content/social/linkedin-webflow-analyzer-03.md\`
+
+## Format
+
+- Canvas: \`1600x900\`
+- Background: near-black \`#050505\`
+- Visual mode: evidence chain / provenance flow
+- Typography: Helvetica/Arial/sans-serif
+
+## Core Message
+
+\`Policy should be fetched, hashed, and named.\`
+
+## Layout
+
+### Header
+
+- Kicker: \`POLICY PROVENANCE\`
+- Title: \`If the rule can change upstream, version it.\`
+- Subhead: \`Prompt text is not enough when external policy is part of the workflow.\`
+
+### Main body
+
+One left-to-right chain with four large steps:
+
+1. \`Guideline URL\`
+2. \`Fetched At\`
+3. \`Content Hash\`
+4. \`Policy Version\`
+
+Under each step, add one short explanatory line:
+
+1. \`Where it came from\`
+2. \`When it was pulled\`
+3. \`What text was seen\`
+4. \`What review used\`
+
+Add a final rightmost output node:
+
+- \`Review Result\`
+- caption: \`Now the decision can name its rules.\`
+
+### Footer strip
+
+- footer text: \`If you cannot name the policy version, you do not yet have governance.\`
+- brand mark on right: \`CREATE SOMETHING\`
+
+## Copy Constraints
+
+- Keep the chain strictly linear.
+- Do not add decorative icons unless they improve scanability.
+- Avoid product UI metaphors here. This should read like evidence provenance.
+
+## Visual Notes
+
+- The graphic should feel more like a custody chain than a dashboard.
+- Use arrows and clearly boxed steps.
+- Keep enough breathing room that each label is readable in a compressed LinkedIn image.
+
+## Export Notes
+
+- Make sure arrowheads remain visible after PNG export.
+- Preserve enough contrast on the subhead; this post depends on the chain reading instantly.
 `
   },
   {

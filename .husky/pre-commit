@@ -4,8 +4,9 @@
 
 # Get staged TypeScript/Svelte files
 STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(ts|tsx|svelte)$' || true)
+STAGED_LOCKFILE_INPUTS=$(git diff --cached --name-only --diff-filter=ACDMR | grep -E '(^|/)package\.json$|^pnpm-lock\.yaml$' || true)
 
-if [ -z "$STAGED_FILES" ]; then
+if [ -z "$STAGED_FILES" ] && [ -z "$STAGED_LOCKFILE_INPUTS" ]; then
   exit 0
 fi
 
@@ -154,6 +155,23 @@ if [ -n "$STAGED_REGISTRY" ]; then
   else
     echo "⚠️  ./node_modules/.bin/tsx not found; skipping registry validation."
     echo "   Run pnpm install (or pnpm bootstrap:worktree) to enable this gate."
+  fi
+fi
+
+# =============================================================================
+# CHECK 6: package manifest / pnpm lockfile sync
+# =============================================================================
+if [ -n "$STAGED_LOCKFILE_INPUTS" ]; then
+  echo ""
+  echo "📦 Checking staged package manifest / lockfile sync..."
+
+  if node scripts/check-staged-lockfile-sync.mjs; then
+    echo "✅ Lockfile sync check passed"
+  else
+    echo ""
+    echo "❌ Lockfile sync check failed."
+    echo "   Run pnpm install --lockfile-only --ignore-scripts and stage pnpm-lock.yaml."
+    exit 1
   fi
 fi
 
