@@ -61,6 +61,7 @@ type DifyAgent = {
   };
   allowed_mcp_servers: string[];
   enabled_tools: string[];
+  builtin_tools?: DifyTool[];
   policy_pack: string;
   instructions_source?: string;
   eval_suite: string;
@@ -141,7 +142,7 @@ const VALID_EVAL_CHECKS = new Set<EvalCheck>([
 const DRAFT_MANIFEST_STATUSES = new Set<string>([
   'draft_pending_studio_import',
   'draft',
-  'planned',
+  'planned'
 ]);
 
 function isDraftManifestFile(absolutePath: string): boolean {
@@ -357,6 +358,31 @@ function validateAgent(
     }
   }
 
+  const builtinToolNames = new Set<string>();
+  for (const tool of agent.builtin_tools ?? []) {
+    const context = `agent ${agentId} builtin tool`;
+    if (!tool.name) {
+      errors.push(`${context}: every tool needs a name`);
+      continue;
+    }
+    if (builtinToolNames.has(tool.name)) {
+      errors.push(`${context}: duplicate tool ${tool.name}`);
+    }
+    builtinToolNames.add(tool.name);
+    if (
+      (tool.risk === 'write' || tool.risk === 'external_side_effect') &&
+      tool.enabled &&
+      tool.requires_user_confirmation !== true
+    ) {
+      errors.push(
+        `${context} ${tool.name}: write or side-effect tool must require user confirmation`
+      );
+    }
+    if (tool.risk === 'write' || tool.risk === 'external_side_effect') {
+      enablesWriteTool = true;
+    }
+  }
+
   if (enablesWriteTool && agent.write_policy !== 'requires_explicit_confirmation') {
     errors.push(
       `agent ${agentId}: write-capable tools require write_policy requires_explicit_confirmation`
@@ -465,11 +491,12 @@ function validateAgentSmokeCases(
 
   if (!agent.smoke_cases) return;
 
-  const enabledToolNames = new Set(
-    agent.enabled_tools
+  const enabledToolNames = new Set([
+    ...agent.enabled_tools
       .map((ref) => parseToolRef(ref)?.toolName)
-      .filter((toolName): toolName is string => Boolean(toolName))
-  );
+      .filter((toolName): toolName is string => Boolean(toolName)),
+    ...(agent.builtin_tools ?? []).filter((tool) => tool.enabled).map((tool) => tool.name)
+  ]);
   const allToolNames = new Set<string>();
 
   for (const ref of agent.enabled_tools) {
@@ -479,6 +506,9 @@ function validateAgentSmokeCases(
     for (const tool of server?.tools ?? []) {
       allToolNames.add(tool.name);
     }
+  }
+  for (const tool of agent.builtin_tools ?? []) {
+    allToolNames.add(tool.name);
   }
 
   const ids = new Set<string>();
@@ -575,11 +605,13 @@ function renderInventoryDoc(inventory: DifyInventory): string {
   lines.push('');
 
   lines.push('## Agents', '');
-  lines.push('| Agent | Status | Audience | App ID | MCP Servers | Enabled Tools | Eval Suite |');
-  lines.push('| --- | --- | --- | --- | --- | ---: | --- |');
+  lines.push(
+    '| Agent | Status | Audience | App ID | MCP Servers | MCP Tools | Builtin Tools | Eval Suite |'
+  );
+  lines.push('| --- | --- | --- | --- | --- | ---: | ---: | --- |');
   for (const [agentId, agent] of Object.entries(inventory.agents)) {
     lines.push(
-      `| ${code(agentId)} | ${code(agent.status)} | ${code(agent.audience)} | ${codeOrDash(agent.dify_app_id)} | ${agent.allowed_mcp_servers.map(code).join(', ')} | ${String(agent.enabled_tools.length)} | ${code(agent.eval_suite)} |`
+      `| ${code(agentId)} | ${code(agent.status)} | ${code(agent.audience)} | ${codeOrDash(agent.dify_app_id)} | ${agent.allowed_mcp_servers.map(code).join(', ')} | ${String(agent.enabled_tools.length)} | ${String(agent.builtin_tools?.filter((tool) => tool.enabled).length ?? 0)} | ${code(agent.eval_suite)} |`
     );
   }
   lines.push('');
@@ -630,6 +662,14 @@ function renderInventoryDoc(inventory: DifyInventory): string {
       const risk = tool?.risk ?? 'unknown';
       const writeNote = tool?.requires_user_confirmation ? ', confirmation required' : '';
       lines.push(`  - ${code(toolRef)} (${risk}${writeNote})`);
+    }
+    if (agent.builtin_tools && agent.builtin_tools.length > 0) {
+      lines.push('- Builtin tools:');
+      for (const tool of agent.builtin_tools) {
+        const writeNote = tool.requires_user_confirmation ? ', confirmation required' : '';
+        const disabledNote = tool.enabled ? '' : ', disabled';
+        lines.push(`  - ${code(tool.name)} (${tool.risk}${writeNote}${disabledNote})`);
+      }
     }
     lines.push('');
   }
