@@ -1,0 +1,30 @@
+name = "hydra-db-recall-mcp"
+main = "index.ts"
+compatibility_date = "2026-05-18"
+compatibility_flags = ["nodejs_compat"]
+account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
+workers_dev = true
+
+[observability]
+enabled = true
+
+[vars]
+BRAINTRUST_PROJECT_NAME = "CREATE SOMETHING"
+MCP_ACCOUNT_ID = "hydra-db-recall-agent"
+HYDRA_DB_BASE_URL = "https://api.hydradb.com"
+HYDRA_DB_SUB_TENANT_ID = "operator-recall"
+HYDRA_DB_RETENTION_DAYS = "180"
+HYDRA_DB_DEFAULT_RECALL_SCOPE = "knowledge"
+
+[[durable_objects.bindings]]
+name = "MCP_OBJECT"
+class_name = "HydraDbRecallMcp"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["HydraDbRecallMcp"]
+
+[[d1_databases]]
+binding = "TELEMETRY_DB"
+database_name = "cs-telemetry"
+database_id = "f710641a-0c85-4a7b-bb73-2c16f8d024c3"

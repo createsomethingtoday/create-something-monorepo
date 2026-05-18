@@ -423,6 +423,38 @@
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 0
     },
+    "hydra-db-recall-mcp": {
+      "transport": "http",
+      "url": "https://hydra-db-recall-mcp.createsomething.workers.dev/mcp",
+      "description": "CREATE SOMETHING governed read-only HydraDB recall wrapper with D1 and Braintrust telemetry",
+      "bearer_token_env_var": "HYDRA_DB_RECALL_MCP_API_KEY",
+      "tags": [
+        "hydradb",
+        "recall",
+        "memory",
+        "internal",
+        "observability",
+        "cs",
+        "policy_os_only"
+      ],
+      "catalog": {
+        "include": true,
+        "name": "Hydra DB Recall",
+        "slug": "hydra-db-recall",
+        "category": "create-something",
+        "requiresAuth": true,
+        "authType": "bearer",
+        "transports": [
+          "http",
+          "sse"
+        ]
+      },
+      "catalog_exposure_mode": "direct",
+      "estimated_tool_count": 4,
+      "exposure_exception_reason": "Internal operator recall lane exposes only read-only HydraDB recall/list/fetch/policy tools; upstream store, ingest, and delete tools remain operator-only.",
+      "exposure_review_owner": "CRE-359",
+      "package_path": "packages/hydra-db-recall-mcp"
+    },
     "notion-halfdozen-blondish": {
       "transport": "http",
       "url": "https://blondish-notion.mcp.workway.co/mcp",

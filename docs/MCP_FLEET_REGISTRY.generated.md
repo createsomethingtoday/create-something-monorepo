@@ -8,7 +8,7 @@
 > `composio-toolkit-*` server list lives in
 > [`config/mcp-hub/registry.composio.generated.json`](../config/mcp-hub/registry.composio.generated.json).
 
-## Active (core, 39)
+## Active (core, 40)
 
 | Server | Transport | Endpoint | Exposure | Est. Tools | Tags |
 | --- | --- | --- | --- | --- | --- |
@@ -26,6 +26,7 @@
 | `halfdozen-operator-notion-mcp` | `http` | `https://halfdozen-operator-notion-mcp.createsomething.workers.dev/mcp` | `brokered` | `100` | `halfdozen`, `notion`, `composio`, `operator`, `workway` |
 | `halfdozen-telemetry` | `http` | `https://halfdozen-telemetry-mcp.half-dozen.workers.dev/mcp` | `direct` | `0` | `observability`, `telemetry`, `workway` |
 | `halfdozen-zoom-sync` | `http` | `https://zoom.mcp.workway.co/mcp` | `direct` | `0` | `halfdozen`, `zoom`, `workway` |
+| `hydra-db-recall-mcp` | `http` | `https://hydra-db-recall-mcp.createsomething.workers.dev/mcp` | `direct` | `4` | `hydradb`, `recall`, `memory`, `internal`, `observability`, `cs`, `policy_os_only` |
 | `interaction-atlas-mcp` | `http` | `https://interaction-atlas-mcp.createsomething.workers.dev/mcp` | `direct` | `0` | `policy-os`, `interaction-atlas`, `workflow`, `judgment`, `cs` |
 | `meetings` | `http` | `https://meetings-mcp.createsomething.workers.dev/mcp` | `direct` | `0` | `meetings`, `cs` |
 | `notion-halfdozen-blondish` | `http` | `https://blondish-notion.mcp.workway.co/mcp` | `direct` | `0` | `halfdozen`, `notion`, `blondish`, `workway` |
