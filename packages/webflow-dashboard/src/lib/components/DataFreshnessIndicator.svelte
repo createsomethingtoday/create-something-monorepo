@@ -1,293 +1,292 @@
 <script lang="ts">
-	/**
-	 * DataFreshnessIndicator - Shows that financial data is from a weekly snapshot
-	 * 
-	 * Use this component wherever cumulative financial data (revenue, purchases) is displayed
-	 * to set clear expectations about data freshness and update schedule.
-	 * 
-	 * Variants:
-	 * - 'inline': Compact inline badge for table headers and stat cards
-	 * - 'tooltip': Icon-only with hover tooltip (fixed position, never clipped)
-	 * - 'full': Full message with icon (for page headers)
-	 */
-	import { Info, Clock, X } from 'lucide-svelte';
+  /**
+   * DataFreshnessIndicator - Shows that financial data is from a weekly snapshot
+   *
+   * Use this component wherever cumulative financial data (revenue, purchases) is displayed
+   * to set clear expectations about data freshness and update schedule.
+   *
+   * Variants:
+   * - 'inline': Compact inline badge for table headers and stat cards
+   * - 'tooltip': Icon-only with hover tooltip (fixed position, never clipped)
+   * - 'full': Full message with icon (for page headers)
+   */
+  import { Info, Clock, X } from 'lucide-svelte';
 
-	interface Props {
-		variant?: 'inline' | 'tooltip' | 'full';
-		showSchedule?: boolean;
-	}
+  interface Props {
+    variant?: 'inline' | 'tooltip' | 'full';
+    showSchedule?: boolean;
+  }
 
-	let { variant = 'inline', showSchedule = false }: Props = $props();
+  let { variant = 'inline', showSchedule = false }: Props = $props();
 
-	// Tooltip state for fixed-position tooltip
-	let showTooltip = $state(false);
-	let tooltipPosition = $state({ top: 0, left: 0 });
+  // Tooltip state for fixed-position tooltip
+  let showTooltip = $state(false);
+  let tooltipPosition = $state({ top: 0, left: 0 });
 
-	function handleClick(e: MouseEvent) {
-		const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-		tooltipPosition = {
-			top: rect.bottom + 8,
-			left: rect.left + rect.width / 2
-		};
-		showTooltip = !showTooltip;
-	}
+  function handleClick(e: MouseEvent) {
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    tooltipPosition = {
+      top: rect.bottom + 8,
+      left: rect.left + rect.width / 2
+    };
+    showTooltip = !showTooltip;
+  }
 
-	function closeTooltip() {
-		showTooltip = false;
-	}
+  function closeTooltip() {
+    showTooltip = false;
+  }
 
-	// Calculate next Monday 4 PM UTC
-	function getNextUpdateInfo(): { lastUpdate: string; nextUpdate: string; daysUntil: number } {
-		const now = new Date();
-		const currentDay = now.getUTCDay();
-		const currentHour = now.getUTCHours();
+  // Calculate next Monday 4 PM UTC
+  function getNextUpdateInfo(): { lastUpdate: string; nextUpdate: string; daysUntil: number } {
+    const now = new Date();
+    const currentDay = now.getUTCDay();
+    const currentHour = now.getUTCHours();
 
-		// Calculate days until next Monday 4 PM UTC
-		let daysUntilMonday: number;
-		if (currentDay === 1) {
-			daysUntilMonday = currentHour < 16 ? 0 : 7;
-		} else if (currentDay === 0) {
-			daysUntilMonday = 1;
-		} else {
-			daysUntilMonday = 8 - currentDay;
-		}
+    // Calculate days until next Monday 4 PM UTC
+    let daysUntilMonday: number;
+    if (currentDay === 1) {
+      daysUntilMonday = currentHour < 16 ? 0 : 7;
+    } else if (currentDay === 0) {
+      daysUntilMonday = 1;
+    } else {
+      daysUntilMonday = 8 - currentDay;
+    }
 
-		// Calculate last Monday
-		let daysSinceLastMonday: number;
-		if (currentDay === 1 && currentHour >= 16) {
-			daysSinceLastMonday = 0;
-		} else if (currentDay === 1) {
-			daysSinceLastMonday = 7;
-		} else if (currentDay === 0) {
-			daysSinceLastMonday = 6;
-		} else {
-			daysSinceLastMonday = currentDay - 1;
-		}
+    // Calculate last Monday
+    let daysSinceLastMonday: number;
+    if (currentDay === 1 && currentHour >= 16) {
+      daysSinceLastMonday = 0;
+    } else if (currentDay === 1) {
+      daysSinceLastMonday = 7;
+    } else if (currentDay === 0) {
+      daysSinceLastMonday = 6;
+    } else {
+      daysSinceLastMonday = currentDay - 1;
+    }
 
-		const lastMonday = new Date(now);
-		lastMonday.setUTCDate(now.getUTCDate() - daysSinceLastMonday);
-		lastMonday.setUTCHours(16, 0, 0, 0);
+    const lastMonday = new Date(now);
+    lastMonday.setUTCDate(now.getUTCDate() - daysSinceLastMonday);
+    lastMonday.setUTCHours(16, 0, 0, 0);
 
-		const nextMonday = new Date(now);
-		nextMonday.setUTCDate(now.getUTCDate() + daysUntilMonday);
-		nextMonday.setUTCHours(16, 0, 0, 0);
+    const nextMonday = new Date(now);
+    nextMonday.setUTCDate(now.getUTCDate() + daysUntilMonday);
+    nextMonday.setUTCHours(16, 0, 0, 0);
 
-		return {
-			lastUpdate: formatRelativeDate(lastMonday),
-			nextUpdate: formatRelativeDate(nextMonday),
-			daysUntil: daysUntilMonday
-		};
-	}
+    return {
+      lastUpdate: formatRelativeDate(lastMonday),
+      nextUpdate: formatRelativeDate(nextMonday),
+      daysUntil: daysUntilMonday
+    };
+  }
 
-	function formatRelativeDate(date: Date): string {
-		const now = new Date();
-		const diffMs = date.getTime() - now.getTime();
-		const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+  function formatRelativeDate(date: Date): string {
+    const now = new Date();
+    const diffMs = date.getTime() - now.getTime();
+    const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
 
-		if (diffDays === 0) {
-			const diffHours = Math.round(diffMs / (1000 * 60 * 60));
-			if (diffHours <= 0) return 'Today';
-			if (diffHours === 1) return 'in 1 hour';
-			return `in ${diffHours} hours`;
-		}
-		if (diffDays === 1) return 'Tomorrow';
-		if (diffDays === -1) return 'Yesterday';
-		if (diffDays < 0) return `${Math.abs(diffDays)} days ago`;
-		return `in ${diffDays} days`;
-	}
+    if (diffDays === 0) {
+      const diffHours = Math.round(diffMs / (1000 * 60 * 60));
+      if (diffHours <= 0) return 'Today';
+      if (diffHours === 1) return 'in 1 hour';
+      return `in ${diffHours} hours`;
+    }
+    if (diffDays === 1) return 'Tomorrow';
+    if (diffDays === -1) return 'Yesterday';
+    if (diffDays < 0) return `${Math.abs(diffDays)} days ago`;
+    return `in ${diffDays} days`;
+  }
 
-	const updateInfo = $derived(getNextUpdateInfo());
+  const updateInfo = $derived(getNextUpdateInfo());
 </script>
 
 {#if variant === 'full'}
-	<div class="freshness-full">
-		<div class="freshness-header">
-			<Clock size={14} />
-			<span class="freshness-label">Weekly Snapshot</span>
-		</div>
-		<p class="freshness-detail">
-			Updated {updateInfo.lastUpdate} • Next update {updateInfo.nextUpdate}
-		</p>
-		{#if showSchedule}
-			<p class="freshness-schedule">
-				<Info size={12} />
-				Data syncs every Monday at 4 PM UTC
-			</p>
-		{/if}
-	</div>
-	{:else if variant === 'tooltip'}
-		<button 
-			class="freshness-tooltip"
-			onclick={handleClick}
-			aria-label="Show data freshness info"
-		>
-			<Info size={14} />
-		</button>
-		{#if showTooltip}
-			<button
-				type="button"
-				class="tooltip-backdrop"
-				onclick={closeTooltip}
-				aria-label="Close data freshness tooltip"
-			></button>
-			<div 
-				class="tooltip-fixed"
-				style="top: {tooltipPosition.top}px; left: {tooltipPosition.left}px;"
-			>
-			<button class="tooltip-close" onclick={closeTooltip}>
-				<X size={12} />
-			</button>
-			<div class="tooltip-title">Weekly Snapshot</div>
-			<div class="tooltip-detail">Updated {updateInfo.lastUpdate}</div>
-			<div class="tooltip-detail">Next update {updateInfo.nextUpdate}</div>
-			<div class="tooltip-schedule">Syncs every Monday at 4 PM UTC</div>
-		</div>
-	{/if}
+  <div class="freshness-full">
+    <div class="freshness-header">
+      <Clock size={14} />
+      <span class="freshness-label">Weekly Snapshot</span>
+    </div>
+    <p class="freshness-detail">
+      Expected latest snapshot {updateInfo.lastUpdate} • Next scheduled update {updateInfo.nextUpdate}
+    </p>
+    {#if showSchedule}
+      <p class="freshness-schedule">
+        <Info size={12} />
+        Data syncs every Monday at 4 PM UTC
+      </p>
+    {/if}
+  </div>
+{:else if variant === 'tooltip'}
+  <button class="freshness-tooltip" onclick={handleClick} aria-label="Show data freshness info">
+    <Info size={14} />
+  </button>
+  {#if showTooltip}
+    <button
+      type="button"
+      class="tooltip-backdrop"
+      onclick={closeTooltip}
+      aria-label="Close data freshness tooltip"
+    ></button>
+    <div
+      class="tooltip-fixed"
+      style="top: {tooltipPosition.top}px; left: {tooltipPosition.left}px;"
+    >
+      <button class="tooltip-close" onclick={closeTooltip}>
+        <X size={12} />
+      </button>
+      <div class="tooltip-title">Weekly Snapshot</div>
+      <div class="tooltip-detail">Expected latest snapshot {updateInfo.lastUpdate}</div>
+      <div class="tooltip-detail">Next scheduled update {updateInfo.nextUpdate}</div>
+      <div class="tooltip-schedule">Syncs every Monday at 4 PM UTC</div>
+    </div>
+  {/if}
 {:else}
-	<!-- inline variant -->
-	<span class="freshness-badge" title="Data syncs weekly on Mondays at 4 PM UTC">
-		<Clock size={10} />
-		<span>Weekly Snapshot</span>
-	</span>
+  <!-- inline variant -->
+  <span class="freshness-badge" title="Data syncs weekly on Mondays at 4 PM UTC">
+    <Clock size={10} />
+    <span>Weekly Snapshot</span>
+  </span>
 {/if}
 
 <style>
-	.freshness-full {
-		display: flex;
-		flex-direction: column;
-		gap: 0.25rem;
-		padding: var(--space-sm);
-		background: var(--color-bg-subtle);
-		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-md);
-		margin-bottom: var(--space-md);
-	}
+  .freshness-full {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: var(--space-sm);
+    background: var(--color-bg-subtle);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--space-md);
+  }
 
-	.freshness-header {
-		display: flex;
-		align-items: center;
-		gap: 0.375rem;
-		color: var(--color-fg-secondary);
-		font-size: var(--text-body-sm);
-		font-weight: var(--font-medium);
-	}
+  .freshness-header {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    color: var(--color-fg-secondary);
+    font-size: var(--text-body-sm);
+    font-weight: var(--font-medium);
+  }
 
-	.freshness-detail {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
-		margin: 0;
-	}
+  .freshness-detail {
+    font-size: var(--text-caption);
+    color: var(--color-fg-muted);
+    margin: 0;
+  }
 
-	.freshness-schedule {
-		display: flex;
-		align-items: center;
-		gap: 0.25rem;
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
-		margin: 0.25rem 0 0;
-	}
+  .freshness-schedule {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: var(--text-caption);
+    color: var(--color-fg-muted);
+    margin: 0.25rem 0 0;
+  }
 
-	.freshness-tooltip {
-		display: inline-flex;
-		align-items: center;
-		padding: 0;
-		background: transparent;
-		border: none;
-		color: var(--color-fg-muted);
-		cursor: pointer;
-		transition: color 100ms var(--ease-standard);
-	}
+  .freshness-tooltip {
+    display: inline-flex;
+    align-items: center;
+    padding: 0;
+    background: transparent;
+    border: none;
+    color: var(--color-fg-muted);
+    cursor: pointer;
+    transition: color 100ms var(--ease-standard);
+  }
 
-	.freshness-tooltip:hover {
-		color: var(--color-fg-secondary);
-	}
+  .freshness-tooltip:hover {
+    color: var(--color-fg-secondary);
+  }
 
-	/* Fixed-position tooltip that won't clip */
-	.tooltip-backdrop {
-		position: fixed;
-		inset: 0;
-		z-index: 999;
-		background: transparent;
-		border: none;
-		padding: 0;
-	}
+  /* Fixed-position tooltip that won't clip */
+  .tooltip-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 999;
+    background: transparent;
+    border: none;
+    padding: 0;
+  }
 
-	.tooltip-fixed {
-		position: fixed;
-		transform: translateX(-50%);
-		z-index: 1000;
-		padding: var(--space-sm) var(--space-md);
-		background: var(--color-bg-surface);
-		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-md);
-		box-shadow: var(--shadow-lg);
-		min-width: 200px;
-	}
+  .tooltip-fixed {
+    position: fixed;
+    transform: translateX(-50%);
+    z-index: 1000;
+    padding: var(--space-sm) var(--space-md);
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    min-width: 200px;
+    max-width: min(280px, calc(100vw - 24px));
+  }
 
-	.tooltip-close {
-		position: absolute;
-		top: var(--space-xs);
-		right: var(--space-xs);
-		padding: 4px;
-		background: transparent;
-		border: none;
-		color: var(--color-fg-muted);
-		cursor: pointer;
-		border-radius: var(--radius-sm);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		transition: background 100ms, color 100ms;
-	}
+  .tooltip-close {
+    position: absolute;
+    top: var(--space-xs);
+    right: var(--space-xs);
+    padding: 4px;
+    background: transparent;
+    border: none;
+    color: var(--color-fg-muted);
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition:
+      background 100ms,
+      color 100ms;
+  }
 
-	.tooltip-close:hover {
-		background: var(--color-bg-subtle);
-		color: var(--color-fg-primary);
-	}
+  .tooltip-close:hover {
+    background: var(--color-bg-subtle);
+    color: var(--color-fg-primary);
+  }
 
-	.tooltip-title {
-		font-size: var(--text-body-sm);
-		font-weight: var(--font-semibold);
-		color: var(--color-fg-primary);
-		margin-bottom: var(--space-xs);
-	}
+  .tooltip-title {
+    font-size: var(--text-body-sm);
+    font-weight: var(--font-semibold);
+    color: var(--color-fg-primary);
+    margin-bottom: var(--space-xs);
+  }
 
-	.tooltip-detail {
-		font-size: var(--text-caption);
-		color: var(--color-fg-secondary);
-		line-height: 1.4;
-	}
+  .tooltip-detail {
+    font-size: var(--text-caption);
+    color: var(--color-fg-secondary);
+    line-height: 1.4;
+  }
 
-	.tooltip-schedule {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
-		margin-top: var(--space-xs);
-		padding-top: var(--space-xs);
-		border-top: 1px solid var(--color-border-default);
-	}
+  .tooltip-schedule {
+    font-size: var(--text-caption);
+    color: var(--color-fg-muted);
+    margin-top: var(--space-xs);
+    padding-top: var(--space-xs);
+    border-top: 1px solid var(--color-border-default);
+  }
 
-	.freshness-badge {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.25rem;
-		padding: 0.125rem 0.375rem;
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
-		background: var(--color-bg-subtle);
-		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-sm);
-		cursor: help;
-		white-space: nowrap;
-	}
+  .freshness-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.125rem 0.375rem;
+    font-size: var(--text-caption);
+    color: var(--color-fg-muted);
+    background: var(--color-bg-subtle);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-sm);
+    cursor: help;
+    white-space: nowrap;
+  }
 
-	.freshness-badge:hover {
-		border-color: var(--color-border-emphasis);
-		color: var(--color-fg-secondary);
-	}
+  .freshness-badge:hover {
+    border-color: var(--color-border-emphasis);
+    color: var(--color-fg-secondary);
+  }
 
-	.freshness-tooltip:focus-visible,
-	.tooltip-close:focus-visible {
-		outline: 2px solid var(--color-focus);
-		outline-offset: 2px;
-	}
+  .freshness-tooltip:focus-visible,
+  .tooltip-close:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+  }
 </style>
