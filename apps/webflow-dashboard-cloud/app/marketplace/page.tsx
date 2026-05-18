@@ -1,9 +1,28 @@
+import {
+  enrichCategoriesWithHistory,
+  enrichLeaderboardWithHistory,
+  type MarketplaceCategoryTrendRecord
+} from '@create-something/webflow-dashboard-core/marketplace-history';
 import { getSyncMetadata } from '@create-something/webflow-dashboard-core/sync-schedule';
 import { getCompetitionLevel } from '../../lib/marketplace';
 import { getServerAirtable } from '../../lib/server/airtable';
+import { getOptionalEnv } from '../../lib/server/env';
 import { requireUser } from '../../lib/server/session';
 
 export const dynamic = 'force-dynamic';
+
+function formatTrend(entry: MarketplaceCategoryTrendRecord): string {
+  if (entry.changePercent === undefined || !entry.trend) {
+    return 'Unavailable';
+  }
+
+  if (entry.trend === 'neutral') {
+    return 'Flat 0%';
+  }
+
+  const prefix = entry.trend === 'up' ? '+' : '';
+  return `${entry.trend === 'up' ? 'Up' : 'Down'} ${prefix}${entry.changePercent}%`;
+}
 
 export default async function MarketplacePage() {
   const user = await requireUser();
@@ -23,7 +42,13 @@ export default async function MarketplacePage() {
     }
   }
 
-  const leaderboard = leaderboardResult.records.map((record) => ({
+  const env = await getOptionalEnv();
+  const [leaderboardRecords, categoryRecords] = await Promise.all([
+    enrichLeaderboardWithHistory(env?.DB, leaderboardResult.records, leaderboardResult.freshness),
+    enrichCategoriesWithHistory(env?.DB, categoryResult.records, categoryResult.freshness)
+  ]);
+
+  const leaderboard = leaderboardRecords.map((record) => ({
     ...record,
     isUserTemplate: userEmails.has(record.creatorEmail.toLowerCase())
   }));
@@ -37,8 +62,10 @@ export default async function MarketplacePage() {
     actualSource: categoryResult.freshness.source
   });
 
-  const lowestCompetition = categoryResult.records
-    .filter((category) => category.templatesInSubcategory < 10 && category.avgRevenuePerTemplate > 0)
+  const lowestCompetition = categoryRecords
+    .filter(
+      (category) => category.templatesInSubcategory < 10 && category.avgRevenuePerTemplate > 0
+    )
     .slice(0, 3)
     .map((category) => ({
       ...category,
@@ -52,8 +79,8 @@ export default async function MarketplacePage() {
           <div>
             <h1 className="page-title">Marketplace insights</h1>
             <p className="page-subtitle">
-              Weekly leaderboard and category data, redacted for competitor privacy but still aligned with the
-              original dashboard contracts.
+              Weekly leaderboard and category data, redacted for competitor privacy but still
+              aligned with the original dashboard contracts.
             </p>
           </div>
         </section>
@@ -68,7 +95,7 @@ export default async function MarketplacePage() {
             <div className="metric-label">Your ranked templates</div>
           </div>
           <div className="metric">
-            <div className="metric-value">{categoryResult.records.length}</div>
+            <div className="metric-value">{categoryRecords.length}</div>
             <div className="metric-label">Category rows</div>
           </div>
         </section>
@@ -76,8 +103,8 @@ export default async function MarketplacePage() {
         <section className="card">
           <h2 className="card-title">Freshness</h2>
           <p className="card-subtitle">
-            Leaderboard refreshed {new Date(leaderboardSync.lastSyncTime).toLocaleString()} and category data refreshed{' '}
-            {new Date(categorySync.lastSyncTime).toLocaleString()}.
+            Leaderboard refreshed {new Date(leaderboardSync.lastSyncTime).toLocaleString()} and
+            category data refreshed {new Date(categorySync.lastSyncTime).toLocaleString()}.
           </p>
           <div className="grid grid-2" style={{ marginTop: '1rem' }}>
             <div className="notice">
@@ -86,7 +113,9 @@ export default async function MarketplacePage() {
             </div>
             <div className="notice">
               <strong>Next expected update</strong>
-              <div style={{ marginTop: '0.4rem' }}>{new Date(leaderboardSync.nextSyncTime).toLocaleString()}</div>
+              <div style={{ marginTop: '0.4rem' }}>
+                {new Date(leaderboardSync.nextSyncTime).toLocaleString()}
+              </div>
             </div>
           </div>
         </section>
@@ -95,14 +124,17 @@ export default async function MarketplacePage() {
           <h2 className="card-title">Opportunity watchlist</h2>
           <div className="grid grid-3" style={{ marginTop: '1rem' }}>
             {lowestCompetition.length === 0 ? (
-              <div className="notice">No low-competition opportunities surfaced from the current category snapshot.</div>
+              <div className="notice">
+                No low-competition opportunities surfaced from the current category snapshot.
+              </div>
             ) : (
               lowestCompetition.map((entry) => (
                 <div className="notice" key={`${entry.category}-${entry.subcategory}`}>
                   <strong>{entry.subcategory}</strong>
                   <div style={{ marginTop: '0.35rem' }}>{entry.competitionLevel} competition</div>
                   <div style={{ marginTop: '0.2rem' }}>
-                    {entry.templatesInSubcategory} templates, ${Math.round(entry.avgRevenuePerTemplate)} avg revenue
+                    {entry.templatesInSubcategory} templates, $
+                    {Math.round(entry.avgRevenuePerTemplate)} avg revenue
                   </div>
                 </div>
               ))
@@ -128,13 +160,17 @@ export default async function MarketplacePage() {
                   <td>
                     <strong>{entry.templateName}</strong>
                     {entry.isUserTemplate ? (
-                      <div style={{ color: 'var(--color-primary)', marginTop: '0.25rem' }}>Your template</div>
+                      <div style={{ color: 'var(--color-primary)', marginTop: '0.25rem' }}>
+                        Your template
+                      </div>
                     ) : null}
                   </td>
                   <td>{entry.category}</td>
                   <td>{entry.totalSales30d}</td>
                   <td>{entry.revenueRank}</td>
-                  <td>{entry.isUserTemplate ? `$${Math.round(entry.totalRevenue30d)}` : 'Redacted'}</td>
+                  <td>
+                    {entry.isUserTemplate ? `$${Math.round(entry.totalRevenue30d)}` : 'Redacted'}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -151,16 +187,18 @@ export default async function MarketplacePage() {
                 <th>Templates</th>
                 <th>Sales (30d)</th>
                 <th>Revenue</th>
+                <th>Trend</th>
               </tr>
             </thead>
             <tbody>
-              {categoryResult.records.map((entry) => (
+              {categoryRecords.map((entry) => (
                 <tr key={`${entry.category}-${entry.subcategory}`}>
                   <td>{entry.category}</td>
                   <td>{entry.subcategory}</td>
                   <td>{entry.templatesInSubcategory}</td>
                   <td>{entry.totalSales30d}</td>
                   <td>${Math.round(entry.totalRevenue30d)}</td>
+                  <td>{formatTrend(entry)}</td>
                 </tr>
               ))}
             </tbody>

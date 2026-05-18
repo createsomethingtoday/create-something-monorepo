@@ -2,6 +2,7 @@
 
 import type { ApiKey, Creator } from '@create-something/webflow-dashboard-core/airtable';
 import { useState } from 'react';
+import { ConfirmDialog } from './confirm-dialog';
 import { appPath } from '../lib/runtime-paths';
 
 const API_SCOPES = [
@@ -26,6 +27,8 @@ export function AccountPanel({
   const [keyName, setKeyName] = useState('');
   const [selectedScopes, setSelectedScopes] = useState<string[]>(['read:assets']);
   const [latestGeneratedKey, setLatestGeneratedKey] = useState<string | null>(null);
+  const [keyPendingRevoke, setKeyPendingRevoke] = useState<ApiKey | null>(null);
+  const [revokingKeyId, setRevokingKeyId] = useState<string | null>(null);
 
   async function refreshKeys() {
     const response = await fetch(appPath('/api/keys'), { cache: 'no-store' });
@@ -102,6 +105,7 @@ export function AccountPanel({
   async function revokeKey(keyId: string) {
     setMessage(null);
     setError(null);
+    setRevokingKeyId(keyId);
 
     const response = await fetch(appPath('/api/keys/revoke'), {
       method: 'POST',
@@ -112,11 +116,14 @@ export function AccountPanel({
     if (!response.ok) {
       const data = (await response.json().catch(() => ({}))) as { error?: string };
       setError(data.error || 'Failed to revoke key');
+      setRevokingKeyId(null);
       return;
     }
 
     setMessage('API key revoked.');
     await refreshKeys();
+    setKeyPendingRevoke(null);
+    setRevokingKeyId(null);
   }
 
   async function handleLogout() {
@@ -142,7 +149,12 @@ export function AccountPanel({
             <label className="field-label" htmlFor="name">
               Creator name
             </label>
-            <input className="field-input" id="name" name="name" defaultValue={profile?.name || ''} />
+            <input
+              className="field-input"
+              id="name"
+              name="name"
+              defaultValue={profile?.name || ''}
+            />
           </div>
           <div className="field">
             <label className="field-label" htmlFor="legalName">
@@ -200,7 +212,10 @@ export function AccountPanel({
               {API_SCOPES.map((scope) => {
                 const checked = selectedScopes.includes(scope.id);
                 return (
-                  <label key={scope.id} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                  <label
+                    key={scope.id}
+                    style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}
+                  >
                     <input
                       type="checkbox"
                       checked={checked}
@@ -225,7 +240,8 @@ export function AccountPanel({
 
         {latestGeneratedKey ? (
           <div className="notice notice-warning" style={{ marginTop: '1rem' }}>
-            <strong>Copy this key now:</strong> <span className="inline-code">{latestGeneratedKey}</span>
+            <strong>Copy this key now:</strong>{' '}
+            <span className="inline-code">{latestGeneratedKey}</span>
           </div>
         ) : null}
 
@@ -256,7 +272,11 @@ export function AccountPanel({
                   <td>{key.scopes.join(', ') || 'None'}</td>
                   <td>
                     {key.status === 'Active' ? (
-                      <button className="button button-secondary" type="button" onClick={() => revokeKey(key.id)}>
+                      <button
+                        className="button button-secondary"
+                        type="button"
+                        onClick={() => setKeyPendingRevoke(key)}
+                      >
                         Revoke
                       </button>
                     ) : null}
@@ -267,6 +287,20 @@ export function AccountPanel({
           </tbody>
         </table>
       </section>
+
+      <ConfirmDialog
+        open={Boolean(keyPendingRevoke)}
+        title="Revoke API key?"
+        description={`This will immediately revoke "${keyPendingRevoke?.name || 'this key'}" for all integrations using it.`}
+        confirmLabel="Revoke key"
+        busy={Boolean(keyPendingRevoke && revokingKeyId === keyPendingRevoke.id)}
+        onCancel={() => setKeyPendingRevoke(null)}
+        onConfirm={() => {
+          if (keyPendingRevoke) {
+            void revokeKey(keyPendingRevoke.id);
+          }
+        }}
+      />
     </div>
   );
 }

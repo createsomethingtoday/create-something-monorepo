@@ -1,6 +1,7 @@
 export * from './airtable';
 export * from './hash';
 export * from './kv';
+export * from './marketplace-history';
 export * from './marketplace-webhook';
 export * from './r2';
 export * from './runtime';
