@@ -1,8 +1,9 @@
 /**
  * Analytics Snapshot Cron Job
  * 
- * Captures daily snapshots of asset metrics for historical tracking.
- * This enables real sparkline trends in the dashboard.
+ * Captures daily snapshots of asset metrics and marketplace analytics for
+ * historical tracking. This enables real sparkline/category trend rendering
+ * in the dashboard.
  * 
  * Schedule: Run daily at midnight UTC via Cloudflare Cron Trigger
  * Trigger URL: /api/cron/snapshot
@@ -14,6 +15,7 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { getAirtableClient } from '$lib/server/airtable';
+import { captureMarketplaceSnapshots } from '$lib/server/marketplace-history';
 import { isAuthorizedCronRequest } from '$lib/server/security';
 
 export const GET: RequestHandler = async ({ request, platform }) => {
@@ -35,25 +37,36 @@ export const GET: RequestHandler = async ({ request, platform }) => {
 
 	try {
 		const airtable = getAirtableClient(platform?.env);
-		
-		// Get all assets that have analytics data (published or were published)
-		const allAssets = await airtable.getAllAssetsForSnapshot();
-		
+
+		// Fetch all snapshot sources in parallel. Marketplace data changes weekly,
+		// but capturing it alongside daily asset snapshots keeps D1 history current
+		// without adding a second cron surface.
+		const [allAssets, leaderboard, categories] = await Promise.all([
+			airtable.getAllAssetsForSnapshot(),
+			airtable.getLeaderboard({ maxRecords: null }),
+			airtable.getCategoryPerformance()
+		]);
+
 		const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-		
+
 		// Filter to assets with meaningful data
-		const assetsToSnapshot = allAssets.filter(asset => 
-			(asset.uniqueViewers ?? 0) > 0 || 
-			(asset.cumulativePurchases ?? 0) > 0 || 
+		const assetsToSnapshot = allAssets.filter(asset =>
+			(asset.uniqueViewers ?? 0) > 0 ||
+			(asset.cumulativePurchases ?? 0) > 0 ||
 			(asset.cumulativeRevenue ?? 0) > 0
 		);
+		const marketplace = await captureMarketplaceSnapshots(db, {
+			leaderboard,
+			categories
+		});
 
 		if (assetsToSnapshot.length === 0) {
-			return json({ 
-				success: true, 
+			return json({
+				success: true,
 				message: 'No assets with analytics data to snapshot',
 				captured: 0,
-				date: today
+				date: today,
+				marketplace
 			});
 		}
 
@@ -80,6 +93,7 @@ export const GET: RequestHandler = async ({ request, platform }) => {
 			success: true,
 			captured: assetsToSnapshot.length,
 			date: today,
+			marketplace,
 			assets: assetsToSnapshot.map(a => ({ id: a.id, name: a.name }))
 		});
 

@@ -1865,9 +1865,11 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 		},
 
 		/**
-		 * Get leaderboard data (top 50 templates by sales).
+		 * Get leaderboard data ordered by marketplace sales rank.
+		 * Defaults to the top 50 rows for the UI; snapshot jobs can pass `null`
+		 * to capture every ranked row exposed by Airtable.
 		 */
-		async getLeaderboard(): Promise<{
+		async getLeaderboard(options: { maxRecords?: number | null } = {}): Promise<{
 			records: Array<{
 				templateName: string;
 				category: string;
@@ -1880,10 +1882,11 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 			}>;
 			freshness: MarketplaceFreshnessMetadata;
 		}> {
+			const maxRecords = options.maxRecords === undefined ? 50 : options.maxRecords;
 			const records = await base(TABLES.LEADERBOARD)
 				.select({
 					view: VIEWS.LEADERBOARD,
-					maxRecords: 50,
+					...(typeof maxRecords === 'number' ? { maxRecords } : {}),
 					sort: [{ field: 'SALES_RANK', direction: 'asc' }]
 				})
 				.all();
