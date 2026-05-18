@@ -3590,12 +3590,17 @@ function normalizeOptionalHostName(raw: string | null | undefined): string | nul
 	return normalized || null;
 }
 
-function getHostBindingFailure(boundHost: string | null | undefined, resourceHost: string | null): string | null {
+export function getHostBindingFailure(boundHost: string | null | undefined, resourceHost: string | null): string | null {
 	const normalizedBoundHost = normalizeOptionalHostName(boundHost);
 	if (!normalizedBoundHost) return null;
 	if (!resourceHost) return 'resource_host_required';
-	if (resourceHost !== normalizedBoundHost) return 'host_mismatch';
-	return null;
+	if (resourceHost === normalizedBoundHost) return null;
+	if (isCentralWebflowTemplateReviewHostBinding(normalizedBoundHost, resourceHost)) return null;
+	return 'host_mismatch';
+}
+
+function isCentralWebflowTemplateReviewHostBinding(boundHost: string, resourceHost: string): boolean {
+	return resourceHost === 'wf-template-review' && boundHost.startsWith('wf-template-review-');
 }
 
 function normalizeToolMode(raw: McpToolMode | undefined): McpToolMode {
