@@ -99,10 +99,42 @@ Suggested link ledger fields:
 | Surface            | Page, newsletter, video, repo doc, or social channel. |
 | URL                | Exact public URL where the link appears.              |
 | Audience           | Builder, operator, agency, or client buyer.           |
+| Channel role       | Canonical, distribution, or discovery.                |
 | Disclosure present | Yes or no.                                            |
 | Link type          | Direct, affiliate, partner referral, or marketplace.  |
+| Campaign           | Content cluster or dispatch identifier.               |
 | Date added         | When the link went live.                              |
+| Status             | Draft, planned, live, paused, or removed.             |
 | Notes              | Context, campaign, or removal requirement.            |
+
+## Channel Execution
+
+Use `docs/DIFY_AFFILIATE_CONTENT_CHANNEL_PLAN.md` as the source of truth for
+the content channel.
+
+The default channel split is:
+
+- `createsomething.agency`: canonical Dify posts, affiliate disclosures,
+  internal links, approved affiliate links after acceptance, and partner or
+  service lead routing.
+- `Substack`: weekly dispatches that summarize and point back to canonical
+  custom-domain pages.
+
+Weekly loop:
+
+1. Publish or update the custom-domain Dify page first.
+2. Add internal links from `/dify`, `/dify/mcp-control-plane`, and relevant
+   partner pages.
+3. Confirm the page uses direct Dify links unless affiliate acceptance exists.
+4. Send a short Substack dispatch that links back to the canonical page.
+5. Record the exact URL, audience, disclosure state, link type, and campaign in
+   the link ledger or the active Linear issue.
+6. Record visits, clicks, affiliate clicks, paid conversions, and service leads
+   in Linear.
+
+Do not make Substack the canonical owner of long-form Dify affiliate content.
+If full posts are mirrored there, keep the custom-domain page as the canonical
+source and avoid duplicate affiliate-link sprawl.
 
 ## Public Funnel
 
@@ -118,6 +150,8 @@ Publish or maintain these content topics:
 - `Dify agent eval gates`
 - `How to ship a Dify app with MCP tools`
 - `Client-safe Dify delivery evidence`
+- `Dify template marketplace workflow`
+- `Dify affiliate starter kit for agencies`
 
 Keep current public Dify links direct until affiliate approval exists.
 

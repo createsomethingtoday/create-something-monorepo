@@ -102,6 +102,39 @@ Use Affiliate as the acquisition lane for self-serve users:
 - Track the first 20 paid conversions as the operational milestone for improved
   affiliate economics.
 
+## Content Channel Strategy
+
+Use the CREATE SOMETHING custom-domain site as the canonical Dify affiliate
+content channel and use Substack as distribution.
+
+The custom-domain channel owns:
+
+- Long-form Dify plus MCP guides.
+- Affiliate disclosures and approved affiliate links after acceptance.
+- Internal links to `/dify`, `/dify/mcp-control-plane`, `/partners`, and
+  `/book`.
+- Analytics and lead routing between self-serve subscriptions and partner or
+  implementation opportunities.
+
+Substack owns:
+
+- Weekly dispatches that summarize and link back to canonical posts.
+- Subscriber relationship and replies.
+- Lightweight commentary, not canonical ownership of the Dify content cluster.
+
+Current measurable target:
+
+- First 30 days: 4 canonical posts, 4 Substack dispatches, 100-200 subscribers.
+- First 90 days: 8-12 canonical posts, 300-500 subscribers, 4-6 paid
+  conversions after approval.
+- First 6 months: 2,500-5,000 Dify content-cluster visits per month and 20 paid
+  conversions.
+- First 12 months: 6,000-10,000 Dify content-cluster visits per month and 50
+  paid conversions.
+
+See `docs/DIFY_AFFILIATE_CONTENT_CHANNEL_PLAN.md` for the detailed content
+cluster, Substack workflow, and commission run-rate targets.
+
 ## Public Messaging Guardrails
 
 Approved before Dify acceptance:
@@ -144,9 +177,11 @@ Prepare these before submitting:
 - Primary category: `Service Partner`
 - Secondary category: `Marketplace Partner`
 - Public reference page: `/dify`
+- Public content-channel page: `/dify/content-engine`
 - Product proof: public guide agent and sanitized public trust catalog entries.
 - Delivery proof: sanitized Abundance, YouTube Transcript Notion, and Webflow
   Marketplace Creator Agent examples.
+- Content proof: `docs/DIFY_AFFILIATE_CONTENT_CHANNEL_PLAN.md`.
 - Operating proof: inventory, coverage, eval, and trust catalog checks.
 - Compliance note: no official partnership, certification, or commercial Dify
   brand claim until Dify approves it.

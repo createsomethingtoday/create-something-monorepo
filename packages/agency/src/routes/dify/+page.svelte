@@ -87,11 +87,42 @@
       href: '/dify/mcp-control-plane#evals'
     },
     {
+      step: 'Publish',
+      title: 'Custom-domain content engine',
+      detail:
+        'Keep canonical Dify articles, disclosures, analytics, and partner handoff on the agency domain while Substack distributes the dispatch.',
+      href: '/dify/content-engine'
+    },
+    {
       step: 'Adopt',
       title: 'Client-safe delivery evidence',
       detail:
         'Route self-serve buyers through disclosed affiliate surfaces after acceptance and route implementation buyers through the partner lane.',
       href: '/dify/mcp-control-plane#adoption'
+    }
+  ];
+
+  const contentChannelCards = [
+    {
+      label: 'Canonical',
+      title: 'Custom-domain blog and guide pages',
+      detail:
+        'Own the searchable Dify content cluster, affiliate disclosures, internal links, and lead routing from the CREATE SOMETHING site.',
+      href: '/dify/content-engine'
+    },
+    {
+      label: 'Distribution',
+      title: 'Substack weekly dispatch',
+      detail:
+        'Send one short note per canonical piece with one argument, one artifact, and one link back to the agency domain.',
+      href: '/dify/content-engine'
+    },
+    {
+      label: 'Milestone',
+      title: '20 paid affiliate conversions',
+      detail:
+        'Use the first 20 paid conversions as the upgrade target while keeping service, reseller, and enterprise leads in the partner lane.',
+      href: '/dify/content-engine'
     }
   ];
 
@@ -361,6 +392,30 @@
   </div>
 </section>
 
+<section class="content-section channel-section">
+  <div class="shell-inner-pad dify-shell">
+    <div class="section-copy wide">
+      <span class="product-kicker">Content Channel</span>
+      <h2>The affiliate funnel starts on the custom domain.</h2>
+      <p>
+        The recommended channel split is now repo-backed: publish canonical Dify guides on the
+        agency domain, use Substack for dispatch, and keep every approved affiliate link tied to a
+        declared surface and ledger row.
+      </p>
+    </div>
+
+    <div class="channel-grid">
+      {#each contentChannelCards as card}
+        <a class="channel-card product-surface product-surface--soft" href={card.href}>
+          <span>{card.label}</span>
+          <h3>{card.title}</h3>
+          <p>{card.detail}</p>
+        </a>
+      {/each}
+    </div>
+  </div>
+</section>
+
 <section class="content-section compliance-section">
   <div class="shell-inner-pad dify-shell compliance-layout">
     <div class="section-copy">
@@ -555,7 +610,8 @@
   .proof-card span,
   .audience-card span,
   .funnel-step span,
-  .ecosystem-card span {
+  .ecosystem-card span,
+  .channel-card span {
     color: var(--color-fg-muted);
     font-family: var(--font-mono);
     font-size: 0.72rem;
@@ -636,6 +692,7 @@
   .audience-card p,
   .funnel-step p,
   .ecosystem-card p,
+  .channel-card p,
   .section-copy p,
   .cta-layout p {
     margin: 0;
@@ -674,7 +731,8 @@
 
   .proof-grid,
   .audience-grid,
-  .ecosystem-grid {
+  .ecosystem-grid,
+  .channel-grid {
     display: grid;
     gap: 1rem;
   }
@@ -691,7 +749,12 @@
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
-  .ecosystem-card {
+  .channel-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .ecosystem-card,
+  .channel-card {
     color: inherit;
     text-decoration: none;
     transition:
@@ -700,7 +763,8 @@
       transform 160ms ease;
   }
 
-  .ecosystem-card:hover {
+  .ecosystem-card:hover,
+  .channel-card:hover {
     border-color: rgba(255, 255, 255, 0.2);
     background: rgba(255, 255, 255, 0.055);
     transform: translateY(-2px);
@@ -715,8 +779,17 @@
   .proof-card h3,
   .audience-card h3,
   .funnel-step h3,
-  .ecosystem-card h3 {
+  .ecosystem-card h3,
+  .channel-card h3 {
     font-size: clamp(1.05rem, 1.5vw, 1.35rem);
+  }
+
+  .channel-card {
+    min-height: 13rem;
+    display: grid;
+    align-content: start;
+    gap: 0.7rem;
+    padding: clamp(1rem, 2.4vw, 1.3rem);
   }
 
   .funnel-list {
@@ -800,7 +873,8 @@
 
     .status-grid,
     .audience-grid,
-    .ecosystem-grid {
+    .ecosystem-grid,
+    .channel-grid {
       grid-template-columns: 1fr;
     }
 
@@ -860,7 +934,8 @@
     }
 
     .proof-card,
-    .audience-card {
+    .audience-card,
+    .channel-card {
       min-height: auto;
     }
 
