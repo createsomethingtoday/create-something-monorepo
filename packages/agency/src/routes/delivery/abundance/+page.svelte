@@ -169,6 +169,7 @@
   canonical="https://createsomething.agency/delivery/abundance"
   ogImage="/og-image.svg"
   propertyName="agency"
+  noindex={true}
 />
 
 <section class="delivery-hero">

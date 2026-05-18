@@ -39,7 +39,7 @@
 </script>
 
 <SEO
-  title="Proof Surfaces | MCPs, Agent Tools, and Policy OS"
+  title="Proof Surfaces | CREATE SOMETHING .agency"
   description="Proof surfaces behind CREATE SOMETHING .agency: agent tools, MCP connectors, and client builds that show how the operating layer becomes inspectable."
   keywords="MCP servers, Policy OS, agent coordination, grounded AI code analysis, workflow governance, operator surfaces"
   ogImage="/og-image.svg"

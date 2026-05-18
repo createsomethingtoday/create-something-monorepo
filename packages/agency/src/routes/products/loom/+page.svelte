@@ -19,7 +19,7 @@
 
 <SEO
 	title="Loom MCP | Multi-Agent Coordination"
-	description="External memory for AI agents. Route tasks to the right agent, checkpoint progress, recover from crashes. Multi-agent coordination for Claude, Cursor, Codex, and Gemini."
+	description="External memory for AI agents: route tasks, checkpoint progress, recover from crashes, and coordinate Claude, Cursor, Codex, and Gemini."
 	keywords="MCP, Model Context Protocol, multi-agent, agent coordination, task management, Claude, Cursor, VS Code, Copilot, crash recovery"
 	ogImage="/og-image.svg"
 	propertyName="agency"

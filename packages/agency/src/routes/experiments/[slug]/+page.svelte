@@ -19,6 +19,7 @@
 	description={paper.description || paper.excerpt_long || paper.excerpt_short || 'Community experiment from the playground'}
 	keywords={paper.focus_keywords || `${paper.category}, experiments, community, fork, learn`}
 	propertyName="agency"
+	noindex={true}
 	breadcrumbs={[
 		{ name: 'Home', url: '/' },
 		{ name: 'Experiments', url: '/experiments' },

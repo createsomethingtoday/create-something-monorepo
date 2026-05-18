@@ -217,7 +217,7 @@
 
 <SEO
   title="Partner Stack | CREATE SOMETHING .agency"
-  description="CREATE SOMETHING's partner stack for governed AI workflow systems: Dify for agent surfaces, Cloudflare for runtime, Notion for operator workspaces, and OpenAI as reasoning-host readiness."
+  description="CREATE SOMETHING partner stack for governed AI workflow systems: Dify agent surfaces, Cloudflare runtime, Notion workspaces, and OpenAI readiness."
   keywords="Dify partner, Cloudflare partner, Notion partner, OpenAI readiness, AI workflow systems, partner stack, Policy OS, MCP governance"
   ogImage="/og-image.svg"
   propertyName="agency"

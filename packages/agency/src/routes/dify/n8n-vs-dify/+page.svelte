@@ -118,11 +118,14 @@
 </script>
 
 <SEO
-  title="Dify vs n8n | Workflow Automation vs Agent Apps"
-  description="A practical comparison of n8n, Cloudflare, and Dify: when to use workflow automation, when to own runtime infrastructure, and when to publish client-facing agent apps."
+  title="Dify vs n8n | Agent Apps vs Automation"
+  description="A practical comparison of n8n, Cloudflare, and Dify: workflow automation, runtime ownership, and client-facing agent apps."
   keywords="Dify vs n8n, n8n vs Dify, workflow automation vs agent apps, Dify MCP, n8n MCP, AI workflow automation"
   canonical="https://createsomething.agency/dify/n8n-vs-dify"
+  ogType="article"
   ogImage="/og-image.svg"
+  articleSection="Dify Implementation"
+  articleTags={['Dify', 'n8n', 'workflow automation', 'agent apps', 'MCP']}
   propertyName="agency"
 />
 
