@@ -31,10 +31,10 @@ interface ExternalApiResponse {
 	isWhitelisted?: boolean;
 }
 
-const EXTERNAL_API_URL = 'https://check-asset-name.vercel.app/api/checkTemplateuser';
+const DEFAULT_EXTERNAL_API_URL = 'https://check-asset-name.vercel.app/api/checkTemplateuser';
 const REQUEST_TIMEOUT_MS = 10000; // 10 seconds
 
-export const POST: RequestHandler = async ({ request }) => {
+export const POST: RequestHandler = async ({ request, platform }) => {
 	try {
 		// Parse request body
 		const body = await request.json() as { email?: string };
@@ -69,8 +69,10 @@ export const POST: RequestHandler = async ({ request }) => {
 		const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
 		try {
+			const externalApiUrl = platform?.env.SUBMISSION_STATUS_API_URL || DEFAULT_EXTERNAL_API_URL;
+
 			// Proxy request to external API (server-to-server, no CORS issues)
-			const response = await fetch(EXTERNAL_API_URL, {
+			const response = await fetch(externalApiUrl, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
@@ -154,4 +156,3 @@ export const POST: RequestHandler = async ({ request }) => {
 		);
 	}
 };
-

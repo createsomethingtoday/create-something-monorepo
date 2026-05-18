@@ -596,11 +596,13 @@ export interface CreateCreatorInput {
 export interface ApiKey {
 	id: string;
 	name: string;
+	keyPrefix?: string;
 	createdAt: string;
 	expiresAt?: string;
 	lastUsedAt?: string;
 	scopes: string[];
 	status: 'Active' | 'Revoked' | 'Expired';
+	requestCount?: number;
 }
 
 export interface CreatorCategorySplit {
@@ -1668,6 +1670,7 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 				apiKey: {
 					id: record.id,
 					name: record.fields['Name'] as string,
+					keyPrefix: record.fields['Key Prefix'] as string,
 					createdAt: record.fields['Created At'] as string,
 					expiresAt: record.fields['Expires At'] as string,
 					scopes: scopes,
@@ -1700,11 +1703,13 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 				return {
 					id: r.id,
 					name: r.fields['Name'] as string || 'Unnamed Key',
+					keyPrefix: r.fields['Key Prefix'] as string | undefined,
 					createdAt: r.fields['Created At'] as string,
 					expiresAt: expiresAt,
 					lastUsedAt: r.fields['Last Used At'] as string | undefined,
 					scopes: (r.fields['Scopes'] as string || '').split(',').filter(Boolean),
-					status: finalStatus
+					status: finalStatus,
+					requestCount: r.fields['Request Count'] as number | undefined
 				};
 			});
 		},
@@ -1860,9 +1865,11 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 		},
 
 		/**
-		 * Get leaderboard data (top 50 templates by sales).
+		 * Get leaderboard data ordered by marketplace sales rank.
+		 * Defaults to the top 50 rows for the UI; snapshot jobs can pass `null`
+		 * to capture every ranked row exposed by Airtable.
 		 */
-		async getLeaderboard(): Promise<{
+		async getLeaderboard(options: { maxRecords?: number | null } = {}): Promise<{
 			records: Array<{
 				templateName: string;
 				category: string;
@@ -1875,10 +1882,11 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 			}>;
 			freshness: MarketplaceFreshnessMetadata;
 		}> {
+			const maxRecords = options.maxRecords === undefined ? 50 : options.maxRecords;
 			const records = await base(TABLES.LEADERBOARD)
 				.select({
 					view: VIEWS.LEADERBOARD,
-					maxRecords: 50,
+					...(typeof maxRecords === 'number' ? { maxRecords } : {}),
 					sort: [{ field: 'SALES_RANK', direction: 'asc' }]
 				})
 				.all();

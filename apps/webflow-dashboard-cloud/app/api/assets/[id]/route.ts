@@ -27,22 +27,9 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
 
   const { id } = await getRouteParams(context);
   const airtable = await getServerAirtable();
-  const debug = new URL(request.url).searchParams.get('debug') === '1';
 
   const isOwner = await airtable.verifyAssetOwnership(id, user.email);
   if (!isOwner) {
-    if (debug) {
-      const details = await airtable.debugAssetOwnership(id, user.email);
-      return jsonNoStore(
-        {
-          error: 'Forbidden',
-          message: 'You do not have permission to view this asset',
-          debug: details.debug
-        },
-        { status: 403 }
-      );
-    }
-
     return jsonNoStore(
       { error: 'Forbidden', message: 'You do not have permission to view this asset' },
       { status: 403 }
@@ -114,7 +101,10 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
   }
 
   if (body.carouselImages !== undefined) {
-    if (!Array.isArray(body.carouselImages) || body.carouselImages.some((url) => typeof url !== 'string')) {
+    if (
+      !Array.isArray(body.carouselImages) ||
+      body.carouselImages.some((url) => typeof url !== 'string')
+    ) {
       return jsonNoStore({ error: 'Carousel images must be an array of strings' }, { status: 400 });
     }
   }

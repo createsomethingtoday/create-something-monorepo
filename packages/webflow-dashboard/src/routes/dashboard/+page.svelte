@@ -30,12 +30,18 @@
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let EditAssetModal = $state<any>(null);
 
-  const publishedCount = $derived((data.assets || []).filter((asset) => asset.status === 'Published').length);
-  const delistedCount = $derived((data.assets || []).filter((asset) => asset.status === 'Delisted').length);
+  const publishedCount = $derived(
+    (data.assets || []).filter((asset) => asset.status === 'Published').length
+  );
+  const delistedCount = $derived(
+    (data.assets || []).filter((asset) => asset.status === 'Delisted').length
+  );
   const scheduledCount = $derived(
     (data.assets || []).filter((asset) => ['Scheduled', 'Upcoming'].includes(asset.status)).length
   );
-  const rejectedCount = $derived((data.assets || []).filter((asset) => asset.status === 'Rejected').length);
+  const rejectedCount = $derived(
+    (data.assets || []).filter((asset) => asset.status === 'Rejected').length
+  );
   const uniqueAssetTypes = $derived(
     Array.from(new Set((data.assets || []).map((asset) => asset.type).filter(Boolean)))
   );
@@ -109,20 +115,6 @@
       // Fetch full asset details (includes short + long description fields)
       const response = await fetch(`/api/assets/${id}`);
       if (!response.ok) {
-        // If forbidden, fetch debug payload (same session/cookies) to help troubleshoot Airtable ownership matching
-        if (response.status === 403) {
-          try {
-            const dbgRes = await fetch(`/api/assets/${id}?debug=1`);
-            const dbgJson = await dbgRes.json();
-            // eslint-disable-next-line no-console
-            console.error('[EditAssetModal][OwnershipDebug]', dbgJson);
-            toast.error('Permission denied loading asset details. Debug info logged to console.');
-          } catch (e) {
-            // eslint-disable-next-line no-console
-            console.error('[EditAssetModal][OwnershipDebug] Failed to load debug info', e);
-          }
-        }
-
         const errorData = (await response.json().catch(() => ({}))) as { message?: string };
         throw new Error(errorData.message || 'Failed to load asset details');
       }
@@ -186,7 +178,9 @@
 
   function handleReviewAssets() {
     trackEvent('dashboard_quick_action_clicked', { action: 'review_assets' });
-    document.getElementById('asset-portfolio')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    document
+      .getElementById('asset-portfolio')
+      ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   function handleOpenValidation() {
@@ -245,8 +239,12 @@
                   <span><strong>{(data.assets || []).length}</strong> total assets</span>
                 </div>
                 <div class="quick-actions">
-                  <Button variant="secondary" size="sm" onclick={handleReviewAssets}>Review assets</Button>
-                  <Button variant="outline" size="sm" onclick={handleOpenValidation}>Open validation</Button>
+                  <Button variant="secondary" size="sm" onclick={handleReviewAssets}
+                    >Review assets</Button
+                  >
+                  <Button variant="outline" size="sm" onclick={handleOpenValidation}
+                    >Open validation</Button
+                  >
                   {#if data.hasTemplateAsset}
                     <Button variant="outline" size="sm" onclick={handleExploreMarketplace}
                       >Explore marketplace</Button

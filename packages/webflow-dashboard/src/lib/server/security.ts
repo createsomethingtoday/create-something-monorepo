@@ -79,6 +79,15 @@ export function getSourceOrigin(request: Request): string | null {
 }
 
 /**
+ * Validates that a public mutation was submitted by the dashboard origin itself.
+ * This is stricter than iframe mutation CSRF checks because these endpoints do
+ * not have an authenticated session boundary yet.
+ */
+export function isSameOriginRequest(request: Request, requestOrigin: string): boolean {
+  return getSourceOrigin(request) === requestOrigin;
+}
+
+/**
  * Validates that a request originated from an allowed origin.
  */
 export function isTrustedRequestOrigin(

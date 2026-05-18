@@ -1,6 +1,7 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { getAirtableClient } from '$lib/server/airtable';
+import { enrichLeaderboardWithHistory } from '$lib/server/marketplace-history';
 import { requireTemplateAssetAccess } from '$lib/server/template-access';
 import { getSyncMetadata } from '$lib/utils/sync-schedule';
 
@@ -41,6 +42,11 @@ export const GET: RequestHandler = async ({ locals, platform }) => {
 			airtable.getCreatorByEmail(userEmail)
 		]);
 		const records = leaderboardResult.records;
+		const enrichedRecords = await enrichLeaderboardWithHistory(
+			platform?.env?.DB,
+			records,
+			leaderboardResult.freshness
+		);
 
 		// Collect all known emails for this user (login email + creator record emails)
 		// The leaderboard CREATOR_EMAIL comes from Snowflake (workspace owner email)
@@ -55,7 +61,7 @@ export const GET: RequestHandler = async ({ locals, platform }) => {
 		}
 
 		// Transform records and apply security redaction
-		const leaderboard = records.map((record) => {
+		const leaderboard = enrichedRecords.map((record) => {
 			const creatorEmail = record.creatorEmail || '';
 			const isUserTemplate = userEmails.has(creatorEmail.toLowerCase());
 
@@ -70,7 +76,8 @@ export const GET: RequestHandler = async ({ locals, platform }) => {
 				avgRevenuePerSale: isUserTemplate ? record.avgRevenuePerSale || 0 : undefined,
 				salesRank: record.salesRank || 0,
 				revenueRank: record.revenueRank || 0,
-				isUserTemplate
+				isUserTemplate,
+				trendData: record.trendData
 			};
 		});
 
