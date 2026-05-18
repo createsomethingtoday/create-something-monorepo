@@ -596,11 +596,13 @@ export interface CreateCreatorInput {
 export interface ApiKey {
 	id: string;
 	name: string;
+	keyPrefix?: string;
 	createdAt: string;
 	expiresAt?: string;
 	lastUsedAt?: string;
 	scopes: string[];
 	status: 'Active' | 'Revoked' | 'Expired';
+	requestCount?: number;
 }
 
 export interface CreatorCategorySplit {
@@ -1668,6 +1670,7 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 				apiKey: {
 					id: record.id,
 					name: record.fields['Name'] as string,
+					keyPrefix: record.fields['Key Prefix'] as string,
 					createdAt: record.fields['Created At'] as string,
 					expiresAt: record.fields['Expires At'] as string,
 					scopes: scopes,
@@ -1700,11 +1703,13 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 				return {
 					id: r.id,
 					name: r.fields['Name'] as string || 'Unnamed Key',
+					keyPrefix: r.fields['Key Prefix'] as string | undefined,
 					createdAt: r.fields['Created At'] as string,
 					expiresAt: expiresAt,
 					lastUsedAt: r.fields['Last Used At'] as string | undefined,
 					scopes: (r.fields['Scopes'] as string || '').split(',').filter(Boolean),
-					status: finalStatus
+					status: finalStatus,
+					requestCount: r.fields['Request Count'] as number | undefined
 				};
 			});
 		},

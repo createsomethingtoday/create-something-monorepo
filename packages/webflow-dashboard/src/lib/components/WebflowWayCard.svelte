@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { Button, Badge, Dialog } from './ui';
+	import { env } from '$env/dynamic/public';
 	import { ShieldCheck, Check, Info, ExternalLink } from 'lucide-svelte';
 
 	interface Props {
@@ -11,9 +12,10 @@
 	let showInstallModal = $state(false);
 
 	const installUrl =
+		env.PUBLIC_WEBFLOW_WAY_INSTALL_URL ||
 		'https://webflow.com/oauth/authorize?response_type=code&client_id=28685cff5fef23c426a670bb57bf383b25cd16125bc5bba2103d899b3f4a7092&workspace=createsomethingagency';
 
-	const externalUrl = 'https://webflow-way-validator.vercel.app';
+	const externalUrl = env.PUBLIC_WEBFLOW_WAY_VALIDATOR_URL || 'https://webflow-way-validator.vercel.app';
 
 	function handleLearnMore() {
 		showInstallModal = true;
