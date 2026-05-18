@@ -1,0 +1,607 @@
+import React, {
+  CSSProperties,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
+import { TemplateCard } from '../cards/TemplateCard';
+
+// ─── API types ────────────────────────────────────────────────────────────────
+
+interface ApiItem {
+  id: string;
+  template_slug: string;
+  name: string;
+  url: string | null;
+  creator_name: string | null;
+  creator_profile_url: string | null;
+  creator_avatar_url: string | null;
+  creator_avatar_alt: string | null;
+  thumbnail_image_url: string | null;
+  thumbnail_image_secondary_url: string | null;
+  price: number | null;
+  is_free: boolean;
+  popularity_score: number | null;
+  published_date: string | null;
+}
+
+interface ApiResponse {
+  items: ApiItem[];
+  pagination: {
+    page: number;
+    page_size: number;
+    total_items: number;
+    total_pages: number;
+    has_next_page: boolean;
+    has_previous_page: boolean;
+  };
+}
+
+// ─── Filter / route state ─────────────────────────────────────────────────────
+
+type TemplateScope = 'all' | 'featured' | 'free' | 'landing_pages';
+
+interface FilterState {
+  q: string;
+  scope: TemplateScope;
+  categoryGroupSlug: string | null;
+  childCategorySlug: string | null;
+  styles: string[];
+  types: string[];
+  freeOnly: boolean;
+  sort: string;
+}
+
+// ─── Props ────────────────────────────────────────────────────────────────────
+
+export interface TemplateGridProps {
+  /**
+   * Base URL for the template search API, no trailing slash.
+   * Production default: https://webflow-template-marketplace.webflow.io/templates
+   * (Cloud App proxy — CSP-safe from webflow.com pages).
+   * Override to https://webflow-template-search.createsomething.workers.dev for local dev.
+   */
+  apiBase?: string;
+  /**
+   * Override for Designer preview only.
+   * In production the slug is auto-detected from the URL path
+   * (/templates/category/{slug}).
+   */
+  categorySlug?: string;
+  /**
+   * Override scope for Designer preview of special pages
+   * (featured, free, landing_pages).
+   * In production the scope is auto-detected from the URL path.
+   */
+  scopeOverride?: TemplateScope;
+  /** Fallback sort when no ?sort= param is present in the URL */
+  initialSort?: 'popular' | 'newest' | 'price_asc' | 'price_desc';
+  /** Items per page per infinite-scroll fetch */
+  pageSize?: number;
+}
+
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+// Cloud App proxy (CSP-safe on webflow.com) is the production default.
+// Falls back to the Worker directly for local/staging environments.
+const DEFAULT_API_BASE = 'https://webflow-template-marketplace.webflow.io/templates';
+const DEFAULT_PAGE_SIZE = 24;
+
+// Selectors matching the existing Webflow filter/sort UI (same as client-script.ts)
+const SEL_SORT = '[data-template-search-sort], select[name="sort"]';
+const SEL_STYLE = '[data-template-search-style], select[name="styles"]';
+const SEL_TYPE = '[data-template-search-type], select[name="types"]';
+const SEL_FREE = '[data-template-search-free], input[name="free_only"], input[fs-cmsfilter-field="free"]';
+const SEL_SEARCH = '[data-template-search-input], input[type="search"]';
+
+// ─── URL helpers ──────────────────────────────────────────────────────────────
+
+function normalizeSort(value: string | null, fallback = 'popular'): string {
+  if (!value) return fallback;
+  if (value === 'approval-date-desc') return 'newest';
+  if (value === 'price-asc') return 'price_asc';
+  if (value === 'price-desc') return 'price_desc';
+  return value;
+}
+
+/**
+ * Derives the full filter state from the current page URL.
+ * Mirrors client-script.ts parseRouteState() so all Webflow template URL
+ * patterns map correctly to API parameters.
+ *
+ * Supported paths:
+ *   /templates/all                     → scope=all
+ *   /templates/featured                → scope=featured
+ *   /templates/free                    → scope=free
+ *   /templates/free-website-templates  → scope=free
+ *   /templates/landing-page            → scope=landing_pages
+ *   /templates/landing-pages           → scope=landing_pages
+ *   /templates/category/{slug}         → category_group_slug={slug}
+ *   /templates/subcategory/{slug}      → child_category_slug={slug}
+ */
+function parseRouteState(
+  defaultSort = 'popular',
+  slugOverride?: string,
+  scopeOverrideParam?: TemplateScope,
+): FilterState {
+  if (typeof window === 'undefined') {
+    return {
+      q: '',
+      scope: scopeOverrideParam ?? 'all',
+      categoryGroupSlug: slugOverride || null,
+      childCategorySlug: null,
+      styles: [],
+      types: [],
+      freeOnly: false,
+      sort: defaultSort,
+    };
+  }
+
+  const url = new URL(window.location.href);
+  const params = url.searchParams;
+  const pathname = url.pathname.replace(/\/+$/, '');
+
+  let scope: TemplateScope = 'all';
+  let freeOnly = false;
+
+  // Path-based scope detection
+  if (pathname === '/templates/featured') scope = 'featured';
+  if (
+    pathname === '/templates/free' ||
+    pathname === '/templates/free-website-templates' ||
+    params.get('pricing') === 'free'
+  ) {
+    scope = 'free';
+    freeOnly = true;
+  }
+  if (/\/templates\/landing-page(s)?($|\/)/.test(pathname)) {
+    scope = 'landing_pages';
+  }
+
+  // Slug detection from path
+  const categoryMatch = pathname.match(/\/templates\/category\/([^/?#]+)/);
+  const subcategoryMatch = pathname.match(/\/templates\/subcategory\/([^/?#]+)/);
+
+  // Query-param filters (user-applied via filter UI)
+  const qRaw = params.get('q') ?? params.get('query') ?? params.get('search') ?? '';
+  const freeParam = ['1', 'true', 'yes', 'on'].includes((params.get('free_only') ?? '').toLowerCase());
+  const styles = params.getAll('styles').flatMap((v) => v.split(',')).filter(Boolean);
+  const types = params.getAll('types').flatMap((v) => v.split(',')).filter(Boolean);
+
+  return {
+    q: qRaw.trim(),
+    scope: scopeOverrideParam ?? scope,
+    // Designer preview slug prop takes precedence over URL detection
+    categoryGroupSlug: slugOverride || (categoryMatch ? categoryMatch[1] : null),
+    childCategorySlug: subcategoryMatch ? subcategoryMatch[1] : null,
+    styles,
+    types,
+    freeOnly: freeOnly || freeParam,
+    sort: normalizeSort(params.get('sort'), defaultSort),
+  };
+}
+
+function buildApiUrl(base: string, filters: FilterState, page: number, pageSize: number): string {
+  // Use string concatenation — new URL('/path', base) strips any basePath from `base`
+  const url = new URL(`${base}/api/templates/search`);
+  if (filters.q) url.searchParams.set('q', filters.q);
+  if (filters.scope !== 'all') url.searchParams.set('scope', filters.scope);
+  if (filters.categoryGroupSlug) url.searchParams.set('category_group_slug', filters.categoryGroupSlug);
+  if (filters.childCategorySlug) url.searchParams.set('child_category_slug', filters.childCategorySlug);
+  if (filters.freeOnly) url.searchParams.set('free_only', 'true');
+  url.searchParams.set('sort', filters.sort);
+  url.searchParams.set('page', String(page));
+  url.searchParams.set('page_size', String(pageSize));
+  filters.styles.forEach((v) => url.searchParams.append('styles', v));
+  filters.types.forEach((v) => url.searchParams.append('types', v));
+  return url.toString();
+}
+
+function updateUrlParams(filters: FilterState): void {
+  if (typeof window === 'undefined') return;
+  const url = new URL(window.location.href);
+  ['q', 'query', 'search', 'styles', 'types', 'free_only', 'sort', 'page'].forEach((k) =>
+    url.searchParams.delete(k),
+  );
+  if (filters.q) url.searchParams.set('q', filters.q);
+  if (filters.sort && filters.sort !== 'popular') url.searchParams.set('sort', filters.sort);
+  if (filters.freeOnly && filters.scope !== 'free') url.searchParams.set('free_only', 'true');
+  filters.styles.forEach((v) => url.searchParams.append('styles', v));
+  filters.types.forEach((v) => url.searchParams.append('types', v));
+  window.history.replaceState({}, '', url.toString());
+}
+
+// ─── Price helper ─────────────────────────────────────────────────────────────
+
+function formatPrice(item: ApiItem): string {
+  if (item.is_free || item.price === 0) return 'Free';
+  if (typeof item.price !== 'number') return '';
+  return `${item.price} USD`;
+}
+
+// ─── Styles ───────────────────────────────────────────────────────────────────
+
+const GRID_STYLES = `
+@keyframes tmgrid-fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.tmgrid-item {
+  animation: tmgrid-fade-in 320ms ease-out both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tmgrid-item { animation: none; opacity: 1 !important; }
+}
+
+@keyframes tmgrid-spin {
+  to { transform: rotate(360deg); }
+}
+.tmgrid-spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid rgba(0,0,0,0.10);
+  border-top-color: rgba(0,0,0,0.45);
+  border-radius: 50%;
+  animation: tmgrid-spin 0.8s linear infinite;
+}
+
+@keyframes tmgrid-shimmer {
+  0%   { background-position: -600px 0; }
+  100% { background-position:  600px 0; }
+}
+.tmgrid-skeleton {
+  background: linear-gradient(90deg, #ebebeb 25%, #f5f5f5 50%, #ebebeb 75%);
+  background-size: 1200px 100%;
+  animation: tmgrid-shimmer 1.4s infinite linear;
+  border-radius: 8px;
+}
+
+/* Responsive grid breakpoints injected here so Webflow classes don't override */
+.tmgrid-grid {
+  display: grid !important;
+  grid-template-columns: repeat(4, 1fr) !important;
+  gap: 24px !important;
+  width: 100% !important;
+}
+@media (max-width: 991px) { .tmgrid-grid { grid-template-columns: repeat(3, 1fr) !important; } }
+@media (max-width: 767px) { .tmgrid-grid { grid-template-columns: repeat(2, 1fr) !important; } }
+@media (max-width: 479px) { .tmgrid-grid { grid-template-columns: 1fr !important; } }
+`;
+
+const S: Record<string, CSSProperties> = {
+  root: {
+    width: '100%',
+    fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+    boxSizing: 'border-box',
+  },
+  loadMoreWrapper: {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingTop: '48px',
+    paddingBottom: '24px',
+    minHeight: '80px',
+  },
+  errorBox: {
+    padding: '32px',
+    textAlign: 'center',
+    color: 'rgba(0,0,0,0.5)',
+    fontSize: '14px',
+  },
+  emptyBox: {
+    padding: '64px 32px',
+    textAlign: 'center',
+    color: 'rgba(0,0,0,0.4)',
+    fontSize: '14px',
+  },
+  countLabel: {
+    paddingBottom: '20px',
+    fontSize: '13px',
+    color: 'rgba(0,0,0,0.45)',
+  },
+};
+
+// ─── Skeleton ─────────────────────────────────────────────────────────────────
+
+const SkeletonCard: React.FC<{ index: number }> = ({ index }) => (
+  <div className="tmgrid-item" style={{ animationDelay: `${index * 40}ms` }}>
+    <div className="tmgrid-skeleton" style={{ aspectRatio: '150 / 199', marginBottom: '14px' }} />
+    <div className="tmgrid-skeleton" style={{ height: '14px', width: '70%', marginBottom: '6px' }} />
+    <div className="tmgrid-skeleton" style={{ height: '14px', width: '45%' }} />
+  </div>
+);
+
+// ─── TemplateGrid ─────────────────────────────────────────────────────────────
+
+export const TemplateGrid: React.FC<TemplateGridProps> = ({
+  apiBase: apiBaseProp = '',
+  categorySlug: categorySlugProp = '',
+  scopeOverride,
+  initialSort = 'popular',
+  pageSize = DEFAULT_PAGE_SIZE,
+}) => {
+  // Webflow passes defaultValue strings (including '') as actual values, not undefined.
+  // Fall back to the production URL whenever the prop is blank.
+  const apiBase = apiBaseProp || DEFAULT_API_BASE;
+  const resolvedPageSize = pageSize || DEFAULT_PAGE_SIZE;
+  // Parse initial filter state from URL on first render
+  const [filters, setFilters] = useState<FilterState>(() =>
+    parseRouteState(initialSort, categorySlugProp || undefined, scopeOverride),
+  );
+
+  const [items, setItems] = useState<ApiItem[]>([]);
+  const [page, setPage] = useState(1);
+  const [hasNextPage, setHasNextPage] = useState(false);
+  const [totalItems, setTotalItems] = useState<number | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  // Stale-fetch guard: every new filter/sort change increments this
+  const fetchEpochRef = useRef(0);
+
+  // ── Fetch ─────────────────────────────────────────────────────────────────
+
+  const fetchPage = useCallback(
+    async (targetPage: number, currentFilters: FilterState, append: boolean) => {
+      const epoch = ++fetchEpochRef.current;
+
+      if (!append) {
+        setLoading(true);
+        setError(null);
+        setItems([]);
+      } else {
+        setLoadingMore(true);
+      }
+
+      try {
+        const url = buildApiUrl(apiBase, currentFilters, targetPage, resolvedPageSize);
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`API ${res.status}`);
+        const data: ApiResponse = await res.json();
+
+        if (epoch !== fetchEpochRef.current) return;
+
+        setItems((prev) => (append ? [...prev, ...data.items] : data.items));
+        setPage(data.pagination.page);
+        setHasNextPage(data.pagination.has_next_page);
+        setTotalItems(data.pagination.total_items);
+      } catch (e) {
+        if (epoch !== fetchEpochRef.current) return;
+        setError(e instanceof Error ? e.message : 'Failed to load templates');
+      } finally {
+        if (epoch === fetchEpochRef.current) {
+          setLoading(false);
+          setLoadingMore(false);
+        }
+      }
+    },
+    [apiBase, resolvedPageSize],
+  );
+
+  // Re-fetch from page 1 whenever filters change
+  useEffect(() => {
+    fetchPage(1, filters, false);
+  }, [filters, fetchPage]);
+
+  // ── Infinite scroll ───────────────────────────────────────────────────────
+
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasNextPage && !loadingMore && !loading) {
+          fetchPage(page + 1, filters, true);
+        }
+      },
+      { rootMargin: '300px' },
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasNextPage, loadingMore, loading, page, filters, fetchPage]);
+
+  // ── Wire Webflow filter/sort UI controls ──────────────────────────────────
+  //
+  // The existing Webflow Designer filter form (sort dropdown, style select,
+  // type select, free toggle, search input) uses the same DOM selectors as
+  // client-script.ts. TemplateGrid listens to those elements and updates its
+  // own filter state — no Finsweet required.
+
+  useLayoutEffect(() => {
+    let debounceId: ReturnType<typeof setTimeout> | null = null;
+
+    const sortEl = document.querySelector<HTMLSelectElement>(SEL_SORT);
+    const styleEl = document.querySelector<HTMLSelectElement>(SEL_STYLE);
+    const typeEl = document.querySelector<HTMLSelectElement>(SEL_TYPE);
+    const freeEl = document.querySelector<HTMLInputElement>(SEL_FREE);
+    const searchEl = document.querySelector<HTMLInputElement>(SEL_SEARCH);
+
+    // Sync initial UI state → form values
+    if (sortEl) sortEl.value = filters.sort;
+    if (freeEl) freeEl.checked = filters.freeOnly;
+    if (searchEl) searchEl.value = filters.q;
+
+    function applyFilters(patch: Partial<FilterState>) {
+      setFilters((prev) => {
+        const next = { ...prev, ...patch };
+        updateUrlParams(next);
+        return next;
+      });
+    }
+
+    const onSort = (e: Event) => {
+      applyFilters({ sort: normalizeSort((e.target as HTMLSelectElement).value, 'popular') });
+    };
+    const onStyle = (e: Event) => {
+      const v = (e.target as HTMLSelectElement).value;
+      applyFilters({ styles: v ? [v] : [] });
+    };
+    const onType = (e: Event) => {
+      const v = (e.target as HTMLSelectElement).value;
+      applyFilters({ types: v ? [v] : [] });
+    };
+    const onFree = (e: Event) => {
+      applyFilters({ freeOnly: (e.target as HTMLInputElement).checked });
+    };
+    const onSearch = (e: Event) => {
+      const q = (e.target as HTMLInputElement).value.trim();
+      if (debounceId) clearTimeout(debounceId);
+      debounceId = setTimeout(() => applyFilters({ q }), 220);
+    };
+
+    sortEl?.addEventListener('change', onSort);
+    styleEl?.addEventListener('change', onStyle);
+    typeEl?.addEventListener('change', onType);
+    freeEl?.addEventListener('change', onFree);
+    searchEl?.addEventListener('input', onSearch);
+
+    return () => {
+      sortEl?.removeEventListener('change', onSort);
+      styleEl?.removeEventListener('change', onStyle);
+      typeEl?.removeEventListener('change', onType);
+      freeEl?.removeEventListener('change', onFree);
+      searchEl?.removeEventListener('input', onSearch);
+      if (debounceId) clearTimeout(debounceId);
+    };
+    // Only run once on mount — selectors are stable page-level elements
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Re-parse from URL on browser back/forward navigation
+  useEffect(() => {
+    const onPop = () => {
+      setFilters(parseRouteState(initialSort, categorySlugProp || undefined, scopeOverride));
+    };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, [initialSort, categorySlugProp, scopeOverride]);
+
+  // ── Render ─────────────────────────────────────────────────────────────────
+
+  if (loading) {
+    return (
+      <div style={S.root}>
+        <style dangerouslySetInnerHTML={{ __html: GRID_STYLES }} />
+        <div className="tmgrid-grid">
+          {Array.from({ length: Math.min(resolvedPageSize, 12) }).map((_, i) => (
+            <SkeletonCard key={i} index={i} />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div style={S.root}>
+        <div style={S.errorBox}>
+          <p>Unable to load templates. Please try refreshing the page.</p>
+          <button
+            onClick={() => fetchPage(1, filters, false)}
+            style={{
+              marginTop: '12px',
+              padding: '8px 20px',
+              fontSize: '13px',
+              cursor: 'pointer',
+              border: '1px solid rgba(0,0,0,0.2)',
+              borderRadius: '6px',
+              background: 'white',
+            }}
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (items.length === 0) {
+    return (
+      <div style={S.root}>
+        <div style={S.emptyBox}>
+          <p>No templates found.</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={S.root}>
+      <style dangerouslySetInnerHTML={{ __html: GRID_STYLES }} />
+      {totalItems !== null && (
+        <div style={S.countLabel}>
+          {totalItems.toLocaleString()} template{totalItems !== 1 ? 's' : ''}
+        </div>
+      )}
+
+      <div className="tmgrid-grid">
+        {items.map((item, i) => (
+          <div
+            key={item.id}
+            className="tmgrid-item"
+            style={{ animationDelay: `${Math.min(i % resolvedPageSize, 11) * 40}ms` }}
+            data-template-slug={item.template_slug}
+          >
+            <TemplateCard
+              templateName={item.name}
+              templateLink={{ href: item.url ?? '#' }}
+              price={formatPrice(item)}
+              priceNumeric={String(item.price ?? '0')}
+              isFree={item.is_free}
+              creatorName={item.creator_name ?? ''}
+              creatorLink={
+                item.creator_profile_url
+                  ? { href: item.creator_profile_url, target: '_blank' }
+                  : undefined
+              }
+              creatorIcon={
+                item.creator_avatar_url
+                  ? { src: item.creator_avatar_url, alt: item.creator_avatar_alt ?? item.creator_name ?? '' }
+                  : undefined
+              }
+              primaryImage={
+                item.thumbnail_image_url
+                  ? { src: item.thumbnail_image_url, alt: item.name }
+                  : undefined
+              }
+              secondaryImage={
+                item.thumbnail_image_secondary_url
+                  ? { src: item.thumbnail_image_secondary_url, alt: item.name }
+                  : undefined
+              }
+              approvalDate={item.published_date ?? ''}
+              popularityScore={String(item.popularity_score ?? '')}
+            />
+          </div>
+        ))}
+      </div>
+
+      {/* Infinite scroll sentinel */}
+      <div ref={sentinelRef} style={{ height: 1 }} aria-hidden="true" />
+
+      {loadingMore && (
+        <div style={S.loadMoreWrapper}>
+          <div className="tmgrid-spinner" />
+        </div>
+      )}
+
+      {!hasNextPage && items.length > 0 && (
+        <div
+          style={{
+            ...S.loadMoreWrapper,
+            fontSize: '13px',
+            color: 'rgba(0,0,0,0.35)',
+          }}
+        >
+          All {totalItems?.toLocaleString()} templates loaded
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default TemplateGrid;
