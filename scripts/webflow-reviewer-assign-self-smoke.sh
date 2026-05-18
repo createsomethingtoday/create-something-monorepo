@@ -19,6 +19,25 @@ reviewer_url() {
   esac
 }
 
+reviewer_hub_url() {
+  local reviewer="$1"
+  local reviewer_upper env_name
+  reviewer_upper="$(printf '%s' "$reviewer" | tr '[:lower:]-' '[:upper:]_')"
+  env_name="WEBFLOW_REVIEWER_${reviewer_upper}_HUB_URL"
+
+  if [[ -n "${!env_name:-}" ]]; then
+    echo "${!env_name}"
+    return 0
+  fi
+
+  if [[ -n "${WEBFLOW_REVIEWER_HUB_URL:-}" ]]; then
+    echo "$WEBFLOW_REVIEWER_HUB_URL"
+    return 0
+  fi
+
+  reviewer_url "$reviewer"
+}
+
 reviewer_secret_name() {
   case "$1" in
     natalia) echo "CS_HUB_WF_TEMPLATE_REVIEW_NATALIA_API_TOKEN" ;;
@@ -215,7 +234,7 @@ resolve_smoke_version_id() {
 smoke_reviewer() {
   local reviewer="$1"
   local hub_url secret_name version_id expected_email token
-  hub_url="$(reviewer_url "$reviewer")"
+  hub_url="$(reviewer_hub_url "$reviewer")"
   secret_name="$(reviewer_secret_name "$reviewer")"
   expected_email="$(reviewer_email "$reviewer")"
 
