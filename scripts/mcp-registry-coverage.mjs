@@ -121,6 +121,12 @@ const PACKAGE_COVERAGE = {
   'packages/harness-mcp': {
     registry: ['harness-mcp']
   },
+  'packages/hydra-db-recall-mcp': {
+    registry: ['hydra-db-recall-mcp']
+  },
+  'packages/hydra-db-recall-mcp/worker': {
+    registry: ['hydra-db-recall-mcp']
+  },
   'packages/interaction-atlas-mcp': {
     registry: ['interaction-atlas-mcp']
   },

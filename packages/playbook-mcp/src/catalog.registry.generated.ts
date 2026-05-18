@@ -31,6 +31,19 @@ export const REGISTRY_CATALOG_ENTRIES = [
     "requiresAuth": false
   },
   {
+    "name": "Hydra DB Recall",
+    "slug": "hydra-db-recall",
+    "url": "https://hydra-db-recall-mcp.createsomething.workers.dev",
+    "description": "CREATE SOMETHING governed read-only HydraDB recall wrapper with D1 and Braintrust telemetry",
+    "category": "create-something",
+    "transports": [
+      "http",
+      "sse"
+    ],
+    "requiresAuth": true,
+    "authType": "bearer"
+  },
+  {
     "name": "Outerfields PCN",
     "slug": "outerfields",
     "url": "https://outerfields.mcp.createsomething.agency",
