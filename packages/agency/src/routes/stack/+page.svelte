@@ -220,7 +220,7 @@
 
 <SEO
   title="Stack & Boundaries | CREATE SOMETHING .agency"
-  description="How CREATE SOMETHING uses Cloudflare, Composio, Dify, Notion, OpenAI, Webflow, TRMNL, Linear, Infisical, and Auth0 without turning vendor names into the product."
+  description="How CREATE SOMETHING uses Cloudflare, Dify, Notion, OpenAI, Webflow, Linear, Infisical, and Auth0 while keeping vendor boundaries clear."
   keywords="transparent AI stack, MCP stack, vendor boundaries, Composio, Cloudflare, Dify, Notion, OpenAI, Webflow, TRMNL, Policy OS"
   ogImage="/og-image.svg"
   propertyName="agency"

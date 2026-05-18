@@ -24,7 +24,7 @@
 
 <SEO
   title="Bearer Token Policy"
-  description="The bearer token policy for CREATE SOMETHING .agency. One long-lived token per user, live entitlement checks, revocation, audit controls, and legal/commercial enforcement."
+  description="CREATE SOMETHING .agency bearer token policy: one long-lived token per user, live entitlement checks, revocation, audit controls, and enforcement."
   propertyName="agency"
 />
 

@@ -132,7 +132,10 @@
   description="CREATE SOMETHING uses a custom-domain-first Dify content engine with Substack distribution for disclosed affiliate acquisition and partner-safe lead routing."
   keywords="Dify affiliate content, Dify Substack, Dify blog strategy, Dify partner funnel, Dify MCP content"
   canonical="https://createsomething.agency/dify/content-engine"
+  ogType="article"
   ogImage="/og-image.svg"
+  articleSection="Dify Affiliate Content"
+  articleTags={['Dify', 'affiliate', 'Substack', 'content strategy', 'MCP']}
   propertyName="agency"
 />
 

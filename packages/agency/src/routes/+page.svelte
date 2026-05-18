@@ -184,8 +184,8 @@
 </script>
 
 <SEO
-  title={`${agencyCoreMessaging.categoryLabel} | CREATE SOMETHING .agency`}
-  description="CREATE SOMETHING .agency builds calm, transparent, reliable AI workflow systems for business operators: one workflow, clear vendor boundaries, portable artifacts, and escalation only when judgment is required."
+  title="Calm AI Workflow Systems | CREATE SOMETHING .agency"
+  description="CREATE SOMETHING .agency builds calm AI workflow systems for operators: one workflow, clear vendor boundaries, portable artifacts, and governed escalation."
   keywords="calm transparent reliable AI workflow systems, Policy OS, MCP wedge, transparent AI stack, workflow system, production automation, technical operators"
   ogImage="/og-image.svg"
   propertyName="agency"

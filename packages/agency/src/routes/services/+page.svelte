@@ -218,8 +218,8 @@
 </script>
 
 <SEO
-  title="How I Work | Calm, Transparent AI Workflow Systems"
-  description="CREATE SOMETHING .agency installs calm, transparent, reliable AI workflow systems: one workflow, clear stack boundaries, decision states, and governed escalation only when judgment is required."
+  title="Calm AI Workflow Systems | CREATE SOMETHING .agency"
+  description="How CREATE SOMETHING installs calm AI workflow systems: one workflow, clear stack boundaries, decision states, and governed escalation when judgment is required."
   keywords="calm transparent AI workflow systems, Policy OS, workflow system, MCP wedge, production automation, agent reliability"
   ogImage="/og-image.svg"
   propertyName="agency"

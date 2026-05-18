@@ -55,7 +55,10 @@
   title="Dify + MCP Control Plane | CREATE SOMETHING .agency"
   description="How CREATE SOMETHING packages Dify, MCP server cards, and Policy OS into a governed control plane for agent workflows."
   keywords="Dify MCP control plane, Dify agent governance, MCP server cards, Policy OS, Dify app templates"
+  ogType="article"
   ogImage="/og-image.svg"
+  articleSection="Dify Implementation"
+  articleTags={['Dify', 'MCP', 'Policy OS', 'agent workflows']}
   propertyName="agency"
 />
 
