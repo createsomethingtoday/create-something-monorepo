@@ -1,5 +1,15 @@
 <script lang="ts">
-  import { Button, Card, CardContent, CardHeader, CardTitle, Input, Label, Textarea } from './ui';
+  import {
+    Button,
+    Card,
+    CardContent,
+    CardHeader,
+    CardTitle,
+    Dialog,
+    Input,
+    Label,
+    Textarea
+  } from './ui';
   import CarouselUploader from './CarouselUploader.svelte';
   import ImageUploader from './ImageUploader.svelte';
   import SecondaryThumbnailUploader from './SecondaryThumbnailUploader.svelte';
@@ -220,6 +230,7 @@
   let isCheckingName = $state(false);
   let nameCheckTimeout: ReturnType<typeof setTimeout> | null = null;
   let modalRef: HTMLDivElement | undefined = $state();
+  let showArchiveConfirm = $state(false);
 
   const originalName = $derived(asset.name);
   const canArchive = $derived(!asset.status.includes('Delisted'));
@@ -701,10 +712,6 @@
   async function handleArchive() {
     if (!onArchive || isArchiving) return;
 
-    if (!confirm('Are you sure you want to archive this asset? This action cannot be undone.')) {
-      return;
-    }
-
     trackEvent('asset_archive_initiated', {
       asset_id: asset.id,
       asset_name: asset.name,
@@ -732,6 +739,7 @@
       toast.error(message);
     } finally {
       isArchiving = false;
+      showArchiveConfirm = false;
     }
   }
 
@@ -1173,7 +1181,7 @@
             <Button
               type="button"
               variant="destructive"
-              onclick={handleArchive}
+              onclick={() => (showArchiveConfirm = true)}
               disabled={isArchiving}
             >
               {isArchiving ? 'Archiving...' : 'Archive Asset'}
@@ -1197,6 +1205,32 @@
     </Card>
   </div>
 </div>
+
+<Dialog
+  isOpen={showArchiveConfirm}
+  onClose={() => (showArchiveConfirm = false)}
+  title="Archive this asset?"
+  size="sm"
+>
+  <div class="confirm-dialog">
+    <p>
+      This asset will be archived and removed from the active dashboard workflow. This action cannot
+      be undone here.
+    </p>
+    <div class="confirm-actions">
+      <Button
+        variant="secondary"
+        onclick={() => (showArchiveConfirm = false)}
+        disabled={isArchiving}
+      >
+        Cancel
+      </Button>
+      <Button variant="destructive" onclick={handleArchive} disabled={isArchiving}>
+        {isArchiving ? 'Archiving...' : 'Archive asset'}
+      </Button>
+    </div>
+  </div>
+</Dialog>
 
 <style>
   .modal-overlay {
@@ -1286,6 +1320,26 @@
     border-radius: var(--radius-md);
     color: var(--color-error);
     font-size: var(--text-body-sm);
+  }
+
+  .confirm-dialog {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    padding: var(--space-md);
+  }
+
+  .confirm-dialog p {
+    margin: 0;
+    color: var(--color-fg-secondary);
+    font-size: var(--text-body-sm);
+    line-height: 1.5;
+  }
+
+  .confirm-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-sm);
   }
 
   .native-select {
