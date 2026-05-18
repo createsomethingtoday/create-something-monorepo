@@ -8,8 +8,6 @@ import {
   buildDifyClientConfig,
   callDifyChat,
   observationsContain,
-  usedForbiddenTool,
-  usedTool,
   type DifyChatInput,
   type DifyChatOutput,
   type DifyClientConfig
@@ -53,6 +51,7 @@ type DifyAgent = {
     api_key_secret: SecretRef;
   };
   enabled_tools: string[];
+  builtin_tools?: DifyTool[];
   smoke_command?: string;
   smoke_cases?: DifySmokeCase[];
 };
@@ -332,6 +331,17 @@ function uniqueTools(tools: string[]): string[] {
   return Array.from(new Set(tools.map(localToolName).filter(Boolean)));
 }
 
+function outputUsedTool(output: DifyChatOutput, toolName: string | undefined): boolean {
+  if (!toolName) return true;
+  const expected = localToolName(toolName);
+  return output.toolCalls.some((call) => localToolName(call.tool) === expected);
+}
+
+function outputUsedForbiddenTool(output: DifyChatOutput, toolName: string): boolean {
+  const forbidden = localToolName(toolName);
+  return output.toolCalls.some((call) => localToolName(call.tool) === forbidden);
+}
+
 function inferWriteTools(inventory: DifyInventory, agent: DifyAgent): string[] {
   const forbidden = new Set<string>();
 
@@ -344,6 +354,12 @@ function inferWriteTools(inventory: DifyInventory, agent: DifyAgent): string[] {
     const tool = inventory.mcp_servers?.[serverId]?.tools.find(
       (candidate) => candidate.name === toolName
     );
+    if (tool?.risk === 'write' || tool?.risk === 'external_side_effect') {
+      forbidden.add(tool.name);
+    }
+  }
+
+  for (const tool of agent.builtin_tools ?? []) {
     if (tool?.risk === 'write' || tool?.risk === 'external_side_effect') {
       forbidden.add(tool.name);
     }
@@ -489,10 +505,10 @@ function buildAttemptResult(
 ): SmokeAttemptResult {
   const requiredTools = smokeCase.requiredTools.map((tool) => ({
     tool,
-    used: usedTool(output, tool)
+    used: outputUsedTool(output, tool)
   }));
   const forbiddenToolsUsed = smokeCase.forbiddenTools.filter((tool) =>
-    usedForbiddenTool(output, [tool])
+    outputUsedForbiddenTool(output, tool)
   );
   const expectedAnswers = smokeCase.expectedAnswers.map((text) => ({
     text,
@@ -693,7 +709,8 @@ async function main(): Promise<void> {
           secretKey: secretRef?.secret_key,
           caseCount: smokeCases.length,
           cases: smokeCases,
-          enabledTools: agent.enabled_tools
+          enabledTools: agent.enabled_tools,
+          builtinTools: agent.builtin_tools ?? []
         },
         null,
         2
