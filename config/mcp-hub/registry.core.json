@@ -685,6 +685,38 @@
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 0
     },
+    "spotify-mcp": {
+      "transport": "http",
+      "url": "https://spotify-mcp.createsomething.workers.dev/mcp",
+      "description": "CREATE SOMETHING governed Spotify MCP wrapper over RapidAPI with D1 and Braintrust telemetry",
+      "bearer_token_env_var": "SPOTIFY_MCP_API_KEY",
+      "tags": [
+        "spotify",
+        "rapidapi",
+        "music",
+        "dify",
+        "observability",
+        "cs",
+        "policy_os_only"
+      ],
+      "catalog": {
+        "include": true,
+        "name": "Spotify",
+        "slug": "spotify",
+        "category": "create-something",
+        "requiresAuth": true,
+        "authType": "bearer",
+        "transports": [
+          "http",
+          "sse"
+        ]
+      },
+      "catalog_exposure_mode": "direct",
+      "estimated_tool_count": 29,
+      "exposure_exception_reason": "Dify migration preserves the imported RapidAPI Spotify provider surface; direct exposure avoids remapping tool names during cutover.",
+      "exposure_review_owner": "CRE-161",
+      "package_path": "packages/spotify-mcp"
+    },
     "schedule-mcp": {
       "transport": "http",
       "url": "https://schedule.mcp.createsomething.agency/mcp",
