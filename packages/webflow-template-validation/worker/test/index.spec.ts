@@ -469,6 +469,45 @@ describe('Interactions Validator', () => {
 		expect(result.issues.some((issue) => issue.id === 'interactions-analysis-incomplete' && issue.severity === 'warning')).toBe(true);
 	});
 
+	it('does not treat Webflow Lottie element markers as legacy IX2', async () => {
+		vi.mocked(fetchHTML).mockResolvedValue({
+			html: `<!doctype html><html><body>
+				<div data-w-id="lottie-1" data-is-ix2-target="0" data-animation-type="lottie" data-src="/animation.json" data-renderer="svg" data-default-duration="0"></div>
+				<script>Webflow.require("ix2").init({ events: { "e-1": { action: { actionTypeId: "PLUGIN_LOTTIE_EFFECT" } } }, actionLists: { pluginLottie: { actionItemGroups: [{ actionItems: [{ actionTypeId: "PLUGIN_LOTTIE" }] }] } } })</script>
+			</body></html>`,
+			status: 200,
+			headers: { 'content-type': 'text/html' },
+			size: 0,
+			loadTime: 0
+		});
+
+		const result = await validateInteractions('https://example.com');
+
+		expect(result.stats.legacyIx2Detected).toBe(false);
+		expect(result.stats.legacyIx2Count).toBe(0);
+		expect(result.issues.some((issue) => issue.id === 'legacy-ix2-interactions-detected')).toBe(false);
+	});
+
+	it('still detects non-Lottie IX2 markers on pages that also include Lottie', async () => {
+		vi.mocked(fetchHTML).mockResolvedValue({
+			html: `<!doctype html><html><body>
+				<div data-w-id="lottie-1" data-is-ix2-target="0" data-animation-type="lottie" data-src="/animation.json" data-renderer="svg" data-default-duration="0"></div>
+				<div data-w-id="legacy-card"></div>
+				<script>Webflow.require("ix2").init({})</script>
+			</body></html>`,
+			status: 200,
+			headers: { 'content-type': 'text/html' },
+			size: 0,
+			loadTime: 0
+		});
+
+		const result = await validateInteractions('https://example.com');
+
+		expect(result.stats.legacyIx2Detected).toBe(true);
+		expect(result.stats.legacyIx2Count).toBe(2);
+		expect(result.issues.some((issue) => issue.id === 'legacy-ix2-interactions-detected')).toBe(true);
+	});
+
 	it('blocks validation when no pages can be checked for IX2', async () => {
 		vi.mocked(fetchHTML).mockRejectedValue(new Error('HTTP 404: Not Found'));
 

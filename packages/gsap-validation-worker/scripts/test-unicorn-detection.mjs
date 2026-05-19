@@ -88,6 +88,49 @@ assert.ok(
   'expected non-exempt IX2 to be rejected'
 );
 
+const lottieHtml = `
+<!doctype html>
+<html>
+  <body>
+    <div data-w-id="lottie-1" data-is-ix2-target="0" data-animation-type="lottie" data-src="/animation.json" data-renderer="svg" data-default-duration="0"></div>
+  </body>
+</html>`;
+
+const lottieResult = sandbox.validateGsapUsage(lottieHtml, 'https://lottie-template.webflow.io/');
+
+assert.equal(lottieResult.passed, true);
+assert.equal(lottieResult.summary.legacyIx2Detected, false);
+assert.equal(lottieResult.summary.legacyIx2Count, 0);
+assert.equal(
+  lottieResult.details.flaggedCode.some((issue) => issue.policy === 'ix2-rejected'),
+  false,
+  'expected Webflow Lottie element markers to be allowed'
+);
+
+const lottieRuntimeDetection = sandbox.detectIx2Interactions(`
+<!doctype html>
+<html>
+  <body>
+    <div data-w-id="lottie-1" data-is-ix2-target="0" data-animation-type="lottie" data-src="/animation.json" data-renderer="svg" data-default-duration="0"></div>
+    <script>Webflow.require("ix2").init({ events: { "e-1": { action: { actionTypeId: "PLUGIN_LOTTIE_EFFECT" } } }, actionLists: { pluginLottie: { actionItemGroups: [{ actionItems: [{ actionTypeId: "PLUGIN_LOTTIE" }] }] } } })</script>
+  </body>
+</html>`);
+
+assert.equal(lottieRuntimeDetection.detected, false);
+assert.equal(lottieRuntimeDetection.count, 0);
+
+const mixedLottieIx2Result = sandbox.validateGsapUsage(
+  `${lottieHtml}<div data-w-id="legacy-card"></div>`,
+  'https://mixed-template.webflow.io/'
+);
+
+assert.equal(mixedLottieIx2Result.passed, false);
+assert.equal(mixedLottieIx2Result.summary.legacyIx2Detected, true);
+assert.ok(
+  mixedLottieIx2Result.details.flaggedCode.some((issue) => issue.policy === 'ix2-rejected'),
+  'expected non-Lottie IX2 markers to remain rejected'
+);
+
 const exemptIx2Result = sandbox.validateGsapUsage(ix2Html, 'https://az-bergamo.webflow.io/');
 
 assert.equal(exemptIx2Result.passed, true);
