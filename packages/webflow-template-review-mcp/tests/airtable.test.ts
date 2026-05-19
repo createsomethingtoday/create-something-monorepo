@@ -2,13 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { AirtableClient } from '../src/airtable.js';
-import {
-  CONFIRMED_ASSET_FIELDS,
-  CONFIRMED_VERSION_FIELDS,
-  CONFIRMED_WRITE_FIELD_IDS,
-  METRICS_ASSET_FIELD_IDS,
-  TABLE_IDS,
-} from '../src/schema.js';
+import { CONFIRMED_ASSET_FIELDS, CONFIRMED_VERSION_FIELDS, CONFIRMED_WRITE_FIELD_IDS, METRICS_ASSET_FIELD_IDS, TABLE_IDS } from '../src/schema.js';
 
 const ericReviewer = {
   id: 'usr_eric',
@@ -289,14 +283,14 @@ test('listVersionsForAgentFeedback filters for ready rows without existing agent
     },
   });
 
-  const versions = await client.listVersionsForAgentFeedback({ limit: 5, viewId: 'viw_ready_queue' });
+  const versions = await client.listVersionsForAgentFeedback({
+    limit: 5,
+    viewId: 'viw_ready_queue',
+  });
 
   assert.ok(capturedUrl);
   assert.equal(capturedUrl.searchParams.get('view'), 'viw_ready_queue');
-  assert.match(
-    capturedUrl.searchParams.get('filterByFormula') ?? '',
-    /LEN\(TRIM\(\{📝Agent Review Feedback\} & ""\)\) = 0/,
-  );
+  assert.match(capturedUrl.searchParams.get('filterByFormula') ?? '', /LEN\(TRIM\(\{📝Agent Review Feedback\} & ""\)\) = 0/);
   assert.equal(capturedUrl.searchParams.get('sort[0][field]'), CONFIRMED_VERSION_FIELDS.submissionDatetime);
   assert.equal(versions.length, 1);
   assert.equal(versions[0]?.reviewStatus, '🆕Ready for Review');
@@ -604,13 +598,10 @@ test('assignSelfToVersion rejects versions already owned by another reviewer', a
     },
   });
 
-  await assert.rejects(
-    client.assignSelfToVersion('rec_version_conflict', ericReviewer),
-    (error: unknown) => {
-      assert.equal((error as { code?: string }).code, 'REVIEWER_ASSIGNMENT_CONFLICT');
-      return true;
-    },
-  );
+  await assert.rejects(client.assignSelfToVersion('rec_version_conflict', ericReviewer), (error: unknown) => {
+    assert.equal((error as { code?: string }).code, 'REVIEWER_ASSIGNMENT_CONFLICT');
+    return true;
+  });
 });
 
 test('requireAssignedVersion fails closed when the version is unassigned', async () => {
@@ -646,13 +637,10 @@ test('requireAssignedVersion fails closed when the version is unassigned', async
     },
   });
 
-  await assert.rejects(
-    client.requireAssignedVersion('rec_version_unassigned', ericReviewer),
-    (error: unknown) => {
-      assert.equal((error as { code?: string }).code, 'REVIEWER_ASSIGNMENT_REQUIRED');
-      return true;
-    },
-  );
+  await assert.rejects(client.requireAssignedVersion('rec_version_unassigned', ericReviewer), (error: unknown) => {
+    assert.equal((error as { code?: string }).code, 'REVIEWER_ASSIGNMENT_REQUIRED');
+    return true;
+  });
 });
 
 test('updateVersionReview rejects unsupported improvement areas before calling Airtable', async () => {
@@ -739,6 +727,105 @@ test('updateVersionReview includes Airtable error details on failed updates', as
             message: 'Testing write access is not a valid option.',
           },
         },
+      });
+      return true;
+    },
+  );
+});
+
+test('updateVersionReview reasserts review owner after review field mutations', async () => {
+  const bodies: unknown[] = [];
+  const client = new AirtableClient({
+    apiKey: 'test',
+    reviewOwnerReassertionDelayMs: 0,
+    fetchFn: async (input, init) => {
+      const url = new URL(String(input));
+
+      assert.match(url.pathname, new RegExp(`/${TABLE_IDS.assetVersions}/rec_version_reassert_owner$`));
+      assert.equal(init?.method, 'PATCH');
+      bodies.push(JSON.parse(String(init?.body)));
+
+      if (bodies.length === 1) {
+        return jsonResponse({
+          id: 'rec_version_reassert_owner',
+          createdTime: '2026-03-18T00:00:00.000Z',
+          fields: {
+            [CONFIRMED_VERSION_FIELDS.assetRecordId]: 'rec_asset_current',
+            [CONFIRMED_VERSION_FIELDS.reviewOwner]: ericReviewer,
+            [CONFIRMED_VERSION_FIELDS.reviewStatus]: '🏃🏾In Review',
+          },
+        });
+      }
+
+      if (bodies.length === 2) {
+        return jsonResponse({
+          id: 'rec_version_reassert_owner',
+          createdTime: '2026-03-18T00:00:00.000Z',
+          fields: {
+            [CONFIRMED_VERSION_FIELDS.assetRecordId]: 'rec_asset_current',
+            [CONFIRMED_VERSION_FIELDS.reviewOwner]: ericReviewer,
+            [CONFIRMED_VERSION_FIELDS.reviewStatus]: '🏃🏾In Review',
+          },
+        });
+      }
+
+      throw new Error('Unexpected extra Airtable write');
+    },
+  });
+
+  const version = await client.updateVersionReview('rec_version_reassert_owner', {
+    review_owner: { id: ericReviewer.id },
+    review_status: '🏃🏾In Review',
+  });
+
+  assert.deepEqual(bodies, [
+    {
+      fields: {
+        [CONFIRMED_VERSION_FIELDS.reviewOwner]: { id: ericReviewer.id },
+        [CONFIRMED_VERSION_FIELDS.reviewStatus]: '🏃🏾In Review',
+      },
+    },
+    {
+      fields: {
+        [CONFIRMED_VERSION_FIELDS.reviewOwner]: { id: ericReviewer.id },
+      },
+    },
+  ]);
+  assert.equal(version.reviewOwner?.id, ericReviewer.id);
+  assert.equal(version.reviewStatus, '🏃🏾In Review');
+});
+
+test('updateVersionReview fails when review owner reassertion returns a different owner', async () => {
+  let calls = 0;
+  const client = new AirtableClient({
+    apiKey: 'test',
+    reviewOwnerReassertionDelayMs: 0,
+    fetchFn: async () => {
+      calls += 1;
+      return jsonResponse({
+        id: 'rec_version_reassert_mismatch',
+        createdTime: '2026-03-18T00:00:00.000Z',
+        fields: {
+          [CONFIRMED_VERSION_FIELDS.assetRecordId]: 'rec_asset_current',
+          [CONFIRMED_VERSION_FIELDS.reviewOwner]: calls === 1 ? ericReviewer : { id: 'usr_micah', email: 'micah@webflow.com' },
+          [CONFIRMED_VERSION_FIELDS.reviewStatus]: '🏃🏾In Review',
+        },
+      });
+    },
+  });
+
+  await assert.rejects(
+    client.updateVersionReview('rec_version_reassert_mismatch', {
+      review_owner: { id: ericReviewer.id },
+      review_status: '🏃🏾In Review',
+    }),
+    (error: unknown) => {
+      assert.equal((error as { code?: string }).code, 'REVIEW_OWNER_REASSERTION_FAILED');
+      assert.deepEqual((error as { details?: unknown }).details, {
+        version_id: 'rec_version_reassert_mismatch',
+        expected_reviewer_id: ericReviewer.id,
+        actual_reviewer_id: 'usr_micah',
+        reassertion_delay_ms: 0,
       });
       return true;
     },
