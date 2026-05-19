@@ -6,6 +6,7 @@ import { AirtableClientError } from './airtable.js';
 import { TEMPLATE_REVIEW_FIELD_MAP } from './schema.js';
 import { REVIEW_WORKFLOW } from './prompts.js';
 import type { ReviewerProfile } from './reviewer-directory.js';
+import { PUBLISHED_SITE_VALIDATION_CHECKS, runPublishedSiteValidation, type ValidationToolConfig } from './validation.js';
 
 type ClientFactory = () => AirtableClient;
 type ReviewerFactory = () => ReviewerProfile | null;
@@ -112,7 +113,7 @@ function assertReviewerScopedReviewOwner(value: unknown, reviewer: ReviewerProfi
   });
 }
 
-export function registerTools(server: McpServer, getClient: ClientFactory, getReviewer: ReviewerFactory = () => null): void {
+export function registerTools(server: McpServer, getClient: ClientFactory, getReviewer: ReviewerFactory = () => null, validationConfig: ValidationToolConfig = {}): void {
   server.tool('template_review_workflow', 'Reviewer onboarding guide — call this FIRST to learn the complete review workflow, tool sequence, analyzer interpretation, and decision criteria. No parameters needed.', {}, async () => ({
     content: [{ type: 'text' as const, text: REVIEW_WORKFLOW }],
   }));
@@ -200,6 +201,36 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
       try {
         return asSuccess({
           context: await getClient().getReviewContext(version_id, currentReviewerAsCollaborator(getReviewer)),
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'template_review_run_published_site_validation',
+    'Read-only: run published-site validators for content, assets, accessibility signals, interactions/IX2, GSAP, and custom-code policy evidence. Uses published_url only; does not use Designer/Preview data or write to Airtable.',
+    {
+      published_url: z.string().url(),
+      page_slugs: z.array(z.string().min(1)).max(100).optional(),
+      checks: z.array(z.enum(PUBLISHED_SITE_VALIDATION_CHECKS)).min(1).optional(),
+      max_pages: z.number().int().min(1).max(100).optional(),
+      include_raw: z.boolean().optional(),
+    },
+    async ({ published_url, page_slugs, checks, max_pages, include_raw }) => {
+      try {
+        return asSuccess({
+          validation: await runPublishedSiteValidation(
+            {
+              published_url,
+              page_slugs,
+              checks,
+              max_pages,
+              include_raw,
+            },
+            validationConfig,
+          ),
         });
       } catch (error) {
         return asError(error);

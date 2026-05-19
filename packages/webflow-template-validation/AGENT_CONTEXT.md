@@ -13,7 +13,7 @@ Purpose: Validate Webflow projects/templates against the "Webflow Way" guideline
     - `analyzeNaming(html)`: Detect dominant class naming scheme, outliers, combo class depth violations
     - `analyzeTypography(html, css)`: Placeholder text detection, percentage line-height usage, body font presence
     - `analyzeStyles(css)`: Baseline tag style presence (H1–H6, p, ul/ol, blockquote, figure, figcaption, a), :hover/:focus/:active presence, CSS variable usage
-    - `analyzeVariablesDesigner(designerPayload)`: Validates variable naming (Title Case with spaces) and counts using Designer data
+    - Designer-sourced checks live in `src/app/api/validate/route.ts`; keep `src/lib/analyzers.ts` focused on crawl/published-site helpers
   - `types.ts`: Shared types (`ValidationIssue`, `CategoryResult`, `ValidationResponse`)
 - `extension` (Designer Extension)
   - `webflow.json`: Manifest (apiVersion 2, size large, publicDir public)
