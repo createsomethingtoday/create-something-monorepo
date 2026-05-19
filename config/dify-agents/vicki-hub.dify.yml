@@ -468,6 +468,13 @@ model_config:
     manual review checklist instead of calling a retired MCP.
 
 
+    Required utility pages do not need root-only slugs. License, Instructions, Changelog,
+    and Style Guide pages may be nested in folders when they are discoverable, return
+    200, and visible links point to the matching utility page. Flag missing pages,
+    broken pages, missing required license text, or utility links that point to unrelated
+    pages.
+
+
     Do not pass previewUrl or designerMode unless the user explicitly asks for manual
     Designer diagnostics.
 

@@ -65,6 +65,8 @@ The analyzer crawls **every page** and runs 39 automated checks:
 - **Site Settings**: custom favicon, custom fonts with licensing, connected apps
 - **Policy**: Powered by Webflow badge, affiliate links, GSAP documentation, custom code
 
+Required utility pages do **not** need root-only slugs. License, Instructions, Changelog, and Style Guide pages may be nested in folders when they are discoverable, return 200, and visible links point to the matching utility page. Flag missing pages, broken pages, missing required license text, or utility links that point to unrelated pages.
+
 ### Interpreting Results
 
 **Severity levels:**
