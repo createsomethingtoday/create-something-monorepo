@@ -26,7 +26,11 @@ function createServerHarness() {
 }
 
 function parsePayload(result: ToolResult) {
-  return JSON.parse(result.content[0]?.text ?? '{}') as { ok: boolean; data?: Record<string, unknown>; error?: Record<string, unknown> };
+  return JSON.parse(result.content[0]?.text ?? '{}') as {
+    ok: boolean;
+    data?: Record<string, unknown>;
+    error?: Record<string, unknown>;
+  };
 }
 
 const reviewer: ReviewerProfile = {
@@ -41,7 +45,11 @@ test('registerTools places reviewer-safe write tools before admin and broad muta
   const { server, names } = createServerHarness();
   const client = {} as AirtableClient;
 
-  registerTools(server, () => client, () => reviewer);
+  registerTools(
+    server,
+    () => client,
+    () => reviewer,
+  );
 
   assert.notEqual(names.indexOf('template_review_assign_self'), -1);
   assert.notEqual(names.indexOf('template_review_request_changes'), -1);
@@ -63,7 +71,11 @@ test('assign_self routes through reviewer-safe self-assignment', async () => {
     },
   } as unknown as AirtableClient;
 
-  registerTools(server, () => client, () => reviewer);
+  registerTools(
+    server,
+    () => client,
+    () => reviewer,
+  );
 
   const result = await handlers.get('template_review_assign_self')?.({
     version_id: 'rec_version_1',
@@ -97,7 +109,11 @@ test('request_changes requires reviewer ownership before mutation', async () => 
     },
   } as unknown as AirtableClient;
 
-  registerTools(server, () => client, () => reviewer);
+  registerTools(
+    server,
+    () => client,
+    () => reviewer,
+  );
 
   const result = await handlers.get('template_review_request_changes')?.({
     version_id: 'rec_version_1',
@@ -146,7 +162,11 @@ test('approve_version requires reviewer ownership before mutation', async () => 
     },
   } as unknown as AirtableClient;
 
-  registerTools(server, () => client, () => reviewer);
+  registerTools(
+    server,
+    () => client,
+    () => reviewer,
+  );
 
   const result = await handlers.get('template_review_approve_version')?.({
     version_id: 'rec_version_1',
@@ -199,7 +219,11 @@ test('complete_publishing requires reviewer ownership before workflow mutation',
     },
   } as unknown as AirtableClient;
 
-  registerTools(server, () => client, () => reviewer);
+  registerTools(
+    server,
+    () => client,
+    () => reviewer,
+  );
 
   const result = await handlers.get('template_review_complete_publishing')?.({
     version_id: 'rec_version_1',
@@ -229,6 +253,7 @@ test('complete_publishing requires reviewer ownership before workflow mutation',
         time_zone: undefined,
         approve_version: true,
         mrp_id_overwrite: undefined,
+        review_owner: { id: 'usr_eric' },
       },
     ],
   });
@@ -246,7 +271,11 @@ test('update_version_review rejects reviewer-scoped owner changes before mutatio
     },
   } as unknown as AirtableClient;
 
-  registerTools(server, () => client, () => reviewer);
+  registerTools(
+    server,
+    () => client,
+    () => reviewer,
+  );
 
   const result = await handlers.get('template_review_update_version_review')?.({
     version_id: 'rec_version_1',
@@ -277,7 +306,11 @@ test('update_version_review writes supplemental agent review feedback through re
     },
   } as unknown as AirtableClient;
 
-  registerTools(server, () => client, () => reviewer);
+  registerTools(
+    server,
+    () => client,
+    () => reviewer,
+  );
 
   const result = await handlers.get('template_review_update_version_review')?.({
     version_id: 'rec_version_1',
@@ -301,7 +334,7 @@ test('update_version_review writes supplemental agent review feedback through re
     args: [
       'rec_version_1',
       {
-        review_owner: undefined,
+        review_owner: { id: 'usr_eric' },
         review_status: undefined,
         quality_rating: undefined,
         improvement_areas: undefined,
@@ -332,7 +365,11 @@ test('save_draft_feedback writes validated improvement areas through to the clie
     },
   } as unknown as AirtableClient;
 
-  registerTools(server, () => client, () => reviewer);
+  registerTools(
+    server,
+    () => client,
+    () => reviewer,
+  );
 
   const result = await handlers.get('template_review_save_draft_feedback')?.({
     version_id: 'rec_version_1',
@@ -366,7 +403,11 @@ test('save_draft_feedback rejects empty payloads before any mutation runs', asyn
     },
   } as unknown as AirtableClient;
 
-  registerTools(server, () => client, () => reviewer);
+  registerTools(
+    server,
+    () => client,
+    () => reviewer,
+  );
 
   const result = await handlers.get('template_review_save_draft_feedback')?.({
     version_id: 'rec_version_1',
@@ -392,7 +433,11 @@ test('save_draft_feedback writes review feedback without mutating improvement ar
     },
   } as unknown as AirtableClient;
 
-  registerTools(server, () => client, () => reviewer);
+  registerTools(
+    server,
+    () => client,
+    () => reviewer,
+  );
 
   const result = await handlers.get('template_review_save_draft_feedback')?.({
     version_id: 'rec_version_1',
@@ -429,7 +474,11 @@ test('get_field_map exposes stable table ids and metrics field ids', async () =>
   const { server, handlers } = createServerHarness();
   const client = {} as AirtableClient;
 
-  registerTools(server, () => client, () => reviewer);
+  registerTools(
+    server,
+    () => client,
+    () => reviewer,
+  );
 
   const result = await handlers.get('template_review_get_field_map')?.({});
 

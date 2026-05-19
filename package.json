@@ -76,6 +76,7 @@
     "dify:abundance-hub:smoke": "pnpm dify:agent:smoke -- --agent-id abundance-hub",
     "dify:reviewer-hubs:smoke": "pnpm dify:agent:smoke -- --agent-id eric-hub && pnpm dify:agent:smoke -- --agent-id natalia-hub && pnpm dify:agent:smoke -- --agent-id mariana-hub && pnpm dify:agent:smoke -- --agent-id vicki-hub",
     "dify:reviewer-hubs:e2b-smoke": "pnpm dify:agent:smoke -- --agent-id eric-hub --case e2b-run-code-sanity && pnpm dify:agent:smoke -- --agent-id natalia-hub --case e2b-run-code-sanity && pnpm dify:agent:smoke -- --agent-id mariana-hub --case e2b-run-code-sanity && pnpm dify:agent:smoke -- --agent-id vicki-hub --case e2b-run-code-sanity",
+    "dify:reviewer-hubs:identity-smoke": "tsx scripts/dify-reviewer-identity-smoke.ts",
     "dify:agent:scaffold": "tsx scripts/dify-agent-scaffold.ts",
     "dify:agent:import-dsl": "tsx scripts/dify-agent-import-dsl.ts",
     "dify:agent:smoke": "tsx scripts/dify-agent-smoke.ts",

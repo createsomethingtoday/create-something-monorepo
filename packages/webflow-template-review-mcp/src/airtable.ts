@@ -185,6 +185,7 @@ export interface CompletePublishingInput {
   time_zone?: string;
   approve_version?: boolean;
   mrp_id_overwrite?: string;
+  review_owner?: unknown;
 }
 
 export interface VersionReviewUpdateInput {
@@ -227,6 +228,7 @@ export interface AirtableClientOptions {
   apiKey: string;
   baseId?: string;
   fetchFn?: typeof fetch;
+  reviewOwnerReassertionDelayMs?: number;
 }
 
 export interface AgentFeedbackQueueQuery {
@@ -242,10 +244,31 @@ interface AirtableRecord {
   fields: Record<string, unknown>;
 }
 
-type MetricsAssetSnapshot = Pick<
-  TemplateReviewAsset,
-  'submittedDate' | 'publishedDate' | 'decisionDate' | 'marketplaceStatus' | 'latestReviewStatus' | 'latestReviewDate' | 'qualityRating'
->;
+interface NormalizedReviewOwner {
+  fieldValue: { id: string } | null;
+  id: string | null;
+}
+
+function sleep(ms: number): Promise<void> {
+  if (ms <= 0) return Promise.resolve();
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function normalizeReviewOwnerInput(value: unknown): NormalizedReviewOwner {
+  if (value === null) {
+    return { fieldValue: null, id: null };
+  }
+  if (typeof value === 'string') {
+    return { fieldValue: { id: value }, id: value };
+  }
+  if (value && typeof value === 'object' && typeof (value as { id?: unknown }).id === 'string') {
+    const id = (value as { id: string }).id;
+    return { fieldValue: { id }, id };
+  }
+  throw new AirtableClientError('INVALID_REVIEW_OWNER', 'review_owner must be null, a collaborator id string, or an object with an id.', 400);
+}
+
+type MetricsAssetSnapshot = Pick<TemplateReviewAsset, 'submittedDate' | 'publishedDate' | 'decisionDate' | 'marketplaceStatus' | 'latestReviewStatus' | 'latestReviewDate' | 'qualityRating'>;
 
 const QUEUE_ASSET_FIELD_NAMES = [
   CONFIRMED_ASSET_FIELDS.type,
@@ -403,11 +426,7 @@ function mapAsset(record: AirtableRecord): TemplateReviewAsset {
 
 function toQueueItem(asset: TemplateReviewAsset, version?: TemplateReviewVersion | null, query: TemplateReviewQueueQuery = {}): TemplateReviewQueueItem {
   const reviewOwner = version?.reviewOwner ?? null;
-  const isAssignedToCurrentReviewer = Boolean(
-    query.currentReviewer?.id &&
-      reviewOwner?.id &&
-      query.currentReviewer.id === reviewOwner.id,
-  );
+  const isAssignedToCurrentReviewer = Boolean(query.currentReviewer?.id && reviewOwner?.id && query.currentReviewer.id === reviewOwner.id);
   const normalizedStatus = normalizeQueueStatus(asset, version);
 
   return {
@@ -444,11 +463,7 @@ function queueItemMatchesQuery(item: TemplateReviewQueueItem, query: TemplateRev
   return true;
 }
 
-function selectQueueVersion(
-  asset: TemplateReviewAsset,
-  versions: TemplateReviewVersion[],
-  query: TemplateReviewQueueQuery = {},
-): TemplateReviewVersion | null {
+function selectQueueVersion(asset: TemplateReviewAsset, versions: TemplateReviewVersion[], query: TemplateReviewQueueQuery = {}): TemplateReviewVersion | null {
   if (versions.length === 0) return null;
 
   for (const version of versions) {
@@ -460,18 +475,11 @@ function selectQueueVersion(
   return versions[0] ?? null;
 }
 
-function normalizeQueueStatus(
-  asset: Pick<TemplateReviewAsset, 'latestReviewStatus' | 'marketplaceStatus'>,
-  version?: TemplateReviewVersion | null,
-): TemplateReviewQueueStatus | null {
+function normalizeQueueStatus(asset: Pick<TemplateReviewAsset, 'latestReviewStatus' | 'marketplaceStatus'>, version?: TemplateReviewVersion | null): TemplateReviewQueueStatus | null {
   const marketplaceStatus = normalizeQueueStatusLabel(asset.marketplaceStatus);
   if (marketplaceStatus === 'published') return 'published';
 
-  const candidates = [
-    version?.reviewStatus,
-    asset.latestReviewStatus,
-    asset.marketplaceStatus,
-  ].filter((value): value is string => Boolean(value));
+  const candidates = [version?.reviewStatus, asset.latestReviewStatus, asset.marketplaceStatus].filter((value): value is string => Boolean(value));
 
   for (const candidate of candidates) {
     const normalized = normalizeQueueStatusLabel(candidate);
@@ -543,10 +551,7 @@ function containsLowerFormula(fieldName: string, value: string): string {
 }
 
 function assetStatusFormula(status: TemplateReviewQueueStatus): string {
-  const clauses = ASSET_QUEUE_STATUS_PATTERNS[status].flatMap((pattern) => [
-    containsLowerFormula(CONFIRMED_ASSET_FIELDS.latestReviewStatus, pattern),
-    containsLowerFormula(CONFIRMED_ASSET_FIELDS.marketplaceStatus, pattern),
-  ]);
+  const clauses = ASSET_QUEUE_STATUS_PATTERNS[status].flatMap((pattern) => [containsLowerFormula(CONFIRMED_ASSET_FIELDS.latestReviewStatus, pattern), containsLowerFormula(CONFIRMED_ASSET_FIELDS.marketplaceStatus, pattern)]);
   return clauses.length === 1 ? clauses[0] : `OR(${clauses.join(', ')})`;
 }
 
@@ -574,27 +579,17 @@ function versionAssignmentFormula(query: TemplateReviewQueueQuery): string | nul
 }
 
 function shouldUseVersionFirstQueue(query: TemplateReviewQueueQuery): boolean {
-  return Boolean(
-    query.onlyAssignedToCurrentReviewer ||
-      (query.assigned && query.assigned !== 'any') ||
-      (query.status && query.status !== 'published'),
-  );
+  return Boolean(query.onlyAssignedToCurrentReviewer || (query.assigned && query.assigned !== 'any') || (query.status && query.status !== 'published'));
 }
 
 function reviewerLookupFormula(fieldName: string, reviewer: CollaboratorRef): string {
   const identifiers = [...new Set([reviewer.id, reviewer.email, reviewer.name].filter((value): value is string => Boolean(value?.trim())))];
   if (identifiers.length === 0) {
-    throw new AirtableClientError(
-      'REVIEWER_IDENTITY_UNAVAILABLE',
-      'Current reviewer identity is not configured for this MCP runtime.',
-      503,
-    );
+    throw new AirtableClientError('REVIEWER_IDENTITY_UNAVAILABLE', 'Current reviewer identity is not configured for this MCP runtime.', 503);
   }
 
   const exactClauses = identifiers.map((value) => `{${fieldName}} = '${escapeFormulaValue(value)}'`);
-  const searchClauses = identifiers.map(
-    (value) => `FIND(LOWER("${escapeFormulaStringValue(value)}"), LOWER(ARRAYJOIN({${fieldName}}))) > 0`,
-  );
+  const searchClauses = identifiers.map((value) => `FIND(LOWER("${escapeFormulaStringValue(value)}"), LOWER(ARRAYJOIN({${fieldName}}))) > 0`);
   return `OR(${[...exactClauses, ...searchClauses].join(', ')})`;
 }
 
@@ -641,9 +636,7 @@ function sortQueueItems(items: TemplateReviewQueueItem[], sort: TemplateReviewQu
 function mapVersion(record: AirtableRecord): TemplateReviewVersion {
   return {
     versionId: record.id,
-    assetId:
-      firstString(record.fields[CONFIRMED_VERSION_FIELDS.assetRecordId]) ??
-      firstString(record.fields[CONFIRMED_VERSION_FIELDS.assetLink]),
+    assetId: firstString(record.fields[CONFIRMED_VERSION_FIELDS.assetRecordId]) ?? firstString(record.fields[CONFIRMED_VERSION_FIELDS.assetLink]),
     releaseId: firstString(record.fields[CONFIRMED_VERSION_FIELDS.release]),
     reviewOwner: collaboratorValue(record.fields[CONFIRMED_VERSION_FIELDS.reviewOwner]),
     reviewStatus: firstString(record.fields[CONFIRMED_VERSION_FIELDS.reviewStatus]),
@@ -691,11 +684,13 @@ export class AirtableClient {
   private apiKey: string;
   private baseId: string;
   private fetchFn: typeof fetch;
+  private reviewOwnerReassertionDelayMs: number;
 
   constructor(options: AirtableClientOptions) {
     this.apiKey = options.apiKey;
     this.baseId = options.baseId ?? DEFAULT_AIRTABLE_BASE_ID;
     this.fetchFn = options.fetchFn ?? ((input, init) => fetch(input, init));
+    this.reviewOwnerReassertionDelayMs = options.reviewOwnerReassertionDelayMs ?? 20_000;
   }
 
   private async request(path: string, init?: RequestInit): Promise<Response> {
@@ -793,11 +788,7 @@ export class AirtableClient {
     return (await response.json()) as AirtableRecord;
   }
 
-  private async updateRecord(
-    tableId: string,
-    recordId: string,
-    fields: Record<string, unknown>,
-  ): Promise<AirtableRecord> {
+  private async updateRecord(tableId: string, recordId: string, fields: Record<string, unknown>): Promise<AirtableRecord> {
     const response = await this.request(`/${tableId}/${recordId}`, {
       method: 'PATCH',
       body: JSON.stringify({ fields }),
@@ -887,10 +878,7 @@ export class AirtableClient {
       };
     }
 
-    const filterByFormula = andFormula([
-      `{${CONFIRMED_ASSET_FIELDS.type}} = 'Template🏗️'`,
-      query.status ? assetStatusFormula(query.status) : null,
-    ]);
+    const filterByFormula = andFormula([`{${CONFIRMED_ASSET_FIELDS.type}} = 'Template🏗️'`, query.status ? assetStatusFormula(query.status) : null]);
     const assets = await this.listAssetQueue(limit, {
       filterByFormula,
       sortField: airtableSort.field,
@@ -917,10 +905,7 @@ export class AirtableClient {
       tableId: TABLE_IDS.assetVersions,
       fieldNames: [...QUEUE_VERSION_FIELD_NAMES],
       limit,
-      filterByFormula: andFormula([
-        versionStatusFormula(query.status),
-        versionAssignmentFormula(query),
-      ]),
+      filterByFormula: andFormula([versionStatusFormula(query.status), versionAssignmentFormula(query)]),
       sortField: CONFIRMED_VERSION_FIELDS.submissionDatetime,
       sortDirection: 'desc',
     });
@@ -959,9 +944,7 @@ export class AirtableClient {
       sortDirection: 'desc',
     });
 
-    return records
-      .map((record) => mapVersion(record))
-      .filter((version) => version.reviewOwner?.id === currentReviewer.id);
+    return records.map((record) => mapVersion(record)).filter((version) => version.reviewOwner?.id === currentReviewer.id);
   }
 
   async listMyQueueDetailed(query: TemplateReviewQueueQuery = {}): Promise<{
@@ -970,11 +953,7 @@ export class AirtableClient {
   }> {
     const currentReviewer = query.currentReviewer;
     if (!currentReviewer?.id) {
-      throw new AirtableClientError(
-        'REVIEWER_IDENTITY_UNAVAILABLE',
-        'Current reviewer identity is not configured for this MCP runtime.',
-        503,
-      );
+      throw new AirtableClientError('REVIEWER_IDENTITY_UNAVAILABLE', 'Current reviewer identity is not configured for this MCP runtime.', 503);
     }
 
     const sort = query.sort ?? 'submittedDate_desc';
@@ -987,10 +966,7 @@ export class AirtableClient {
 
     // Bound the reviewer-version scan so large historical queues do not time out
     // before we can apply the requested queue limit.
-    const assignedVersions = await this.listVersionsAssignedToReviewer(
-      currentReviewer,
-      myQueueScanLimit(query.limit),
-    );
+    const assignedVersions = await this.listVersionsAssignedToReviewer(currentReviewer, myQueueScanLimit(query.limit));
     const versionsByAsset = new Map<string, TemplateReviewVersion[]>();
     for (const version of assignedVersions) {
       if (!version.assetId) continue;
@@ -1123,10 +1099,7 @@ export class AirtableClient {
     };
   }
 
-  async searchAssetsByName(
-    query: string,
-    options?: { limit?: number; mode?: TemplateReviewAssetSearchMode },
-  ): Promise<TemplateReviewAsset[]> {
+  async searchAssetsByName(query: string, options?: { limit?: number; mode?: TemplateReviewAssetSearchMode }): Promise<TemplateReviewAsset[]> {
     const normalizedQuery = query.trim();
     if (!normalizedQuery) {
       throw new AirtableClientError('INVALID_SEARCH_QUERY', 'query must be a non-empty string.', 400);
@@ -1186,9 +1159,7 @@ export class AirtableClient {
       limit,
       filterByFormula: formula,
     });
-    return records
-      .map((record) => mapVersion(record))
-      .sort((a, b) => (b.versionNumber ?? 0) - (a.versionNumber ?? 0));
+    return records.map((record) => mapVersion(record)).sort((a, b) => (b.versionNumber ?? 0) - (a.versionNumber ?? 0));
   }
 
   async listVersionsForAgentFeedback(query: AgentFeedbackQueueQuery = {}): Promise<TemplateReviewVersion[]> {
@@ -1196,9 +1167,7 @@ export class AirtableClient {
     const statusFormula =
       statuses.length === 1
         ? `{${CONFIRMED_VERSION_FIELDS.reviewStatus}} = '${escapeFormulaValue(statuses[0]!)}'`
-        : `OR(${statuses
-            .map((status) => `{${CONFIRMED_VERSION_FIELDS.reviewStatus}} = '${escapeFormulaValue(status)}'`)
-            .join(', ')})`;
+        : `OR(${statuses.map((status) => `{${CONFIRMED_VERSION_FIELDS.reviewStatus}} = '${escapeFormulaValue(status)}'`).join(', ')})`;
 
     const formulaParts = [statusFormula];
     if (!query.includeExistingFeedback) {
@@ -1226,7 +1195,9 @@ export class AirtableClient {
   private async getScopedVersion(versionId: string): Promise<{ version: TemplateReviewVersion; asset: TemplateReviewAsset }> {
     const version = await this.getVersionById(versionId);
     if (!version) {
-      throw new AirtableClientError('VERSION_NOT_FOUND', 'Template version not found.', 404, { version_id: versionId });
+      throw new AirtableClientError('VERSION_NOT_FOUND', 'Template version not found.', 404, {
+        version_id: versionId,
+      });
     }
     if (!version.assetId) {
       throw new AirtableClientError('VERSION_ASSET_ID_MISSING', 'Template version is missing its asset linkage.', 500, {
@@ -1290,45 +1261,28 @@ export class AirtableClient {
 
   async updateVersionReview(versionId: string, input: VersionReviewUpdateInput): Promise<TemplateReviewVersion> {
     const fields: Record<string, unknown> = {};
+    let requestedReviewOwner: NormalizedReviewOwner | undefined;
 
     if (input.release_date !== undefined) {
-      throw new AirtableClientError(
-        'UNSUPPORTED_WRITE_FIELD',
-        'release_date is a read-only rollup on template versions. Use release_record_id to link a 🚀Release record instead.',
-        501,
-        {
-          field: 'release_date',
-          airtableField: CONFIRMED_VERSION_FIELDS.releaseDate,
-          useInstead: 'release_record_id',
-          writableField: CONFIRMED_VERSION_FIELDS.release,
-          writableFieldId: CONFIRMED_WRITE_FIELD_IDS.versions.release,
-        },
-      );
+      throw new AirtableClientError('UNSUPPORTED_WRITE_FIELD', 'release_date is a read-only rollup on template versions. Use release_record_id to link a 🚀Release record instead.', 501, {
+        field: 'release_date',
+        airtableField: CONFIRMED_VERSION_FIELDS.releaseDate,
+        useInstead: 'release_record_id',
+        writableField: CONFIRMED_VERSION_FIELDS.release,
+        writableFieldId: CONFIRMED_WRITE_FIELD_IDS.versions.release,
+      });
     }
 
     if (input.mrp_id_overwrite !== undefined) {
-      throw new AirtableClientError(
-        'UNSUPPORTED_WRITE_FIELD',
-        'mrp_id_overwrite appears to belong to asset-level publishing overrides and is not yet wired for template review mutations.',
-        501,
-        { field: 'mrp_id_overwrite', suspectedScope: 'asset' },
-      );
+      throw new AirtableClientError('UNSUPPORTED_WRITE_FIELD', 'mrp_id_overwrite appears to belong to asset-level publishing overrides and is not yet wired for template review mutations.', 501, {
+        field: 'mrp_id_overwrite',
+        suspectedScope: 'asset',
+      });
     }
 
     if (input.review_owner !== undefined) {
-      if (input.review_owner === null) {
-        fields[CONFIRMED_VERSION_FIELDS.reviewOwner] = null;
-      } else if (typeof input.review_owner === 'string') {
-        fields[CONFIRMED_VERSION_FIELDS.reviewOwner] = { id: input.review_owner };
-      } else if (
-        input.review_owner &&
-        typeof input.review_owner === 'object' &&
-        typeof (input.review_owner as { id?: unknown }).id === 'string'
-      ) {
-        fields[CONFIRMED_VERSION_FIELDS.reviewOwner] = { id: (input.review_owner as { id: string }).id };
-      } else {
-        throw new AirtableClientError('INVALID_REVIEW_OWNER', 'review_owner must be null, a collaborator id string, or an object with an id.', 400);
-      }
+      requestedReviewOwner = normalizeReviewOwnerInput(input.review_owner);
+      fields[CONFIRMED_VERSION_FIELDS.reviewOwner] = requestedReviewOwner.fieldValue;
     }
 
     if (input.review_status !== undefined) {
@@ -1352,9 +1306,7 @@ export class AirtableClient {
     }
 
     if (input.improvement_areas !== undefined) {
-      const invalidImprovementAreas = input.improvement_areas.filter(
-        (area) => !(IMPROVEMENT_AREA_OPTIONS as readonly string[]).includes(area),
-      );
+      const invalidImprovementAreas = input.improvement_areas.filter((area) => !(IMPROVEMENT_AREA_OPTIONS as readonly string[]).includes(area));
       if (invalidImprovementAreas.length > 0) {
         throw new AirtableClientError('INVALID_IMPROVEMENT_AREAS', 'Unsupported improvement areas.', 400, {
           invalid: invalidImprovementAreas,
@@ -1383,8 +1335,32 @@ export class AirtableClient {
       throw new AirtableClientError('NO_MUTATION_FIELDS', 'No version review fields were provided.', 400);
     }
 
+    const shouldReassertReviewOwner = requestedReviewOwner !== undefined && Object.keys(fields).some((fieldName) => fieldName !== CONFIRMED_VERSION_FIELDS.reviewOwner);
+
     const updated = await this.updateRecord(TABLE_IDS.assetVersions, versionId, fields);
+    if (shouldReassertReviewOwner && requestedReviewOwner !== undefined) {
+      return this.reassertVersionReviewOwner(versionId, requestedReviewOwner);
+    }
     return mapVersion(updated);
+  }
+
+  private async reassertVersionReviewOwner(versionId: string, reviewOwner: NormalizedReviewOwner): Promise<TemplateReviewVersion> {
+    await sleep(this.reviewOwnerReassertionDelayMs);
+
+    const updated = await this.updateRecord(TABLE_IDS.assetVersions, versionId, {
+      [CONFIRMED_VERSION_FIELDS.reviewOwner]: reviewOwner.fieldValue,
+    });
+    const version = mapVersion(updated);
+    const actualId = version.reviewOwner?.id ?? null;
+    if (actualId !== reviewOwner.id) {
+      throw new AirtableClientError('REVIEW_OWNER_REASSERTION_FAILED', 'Airtable did not preserve the expected review owner after the review mutation.', 409, {
+        version_id: versionId,
+        expected_reviewer_id: reviewOwner.id,
+        actual_reviewer_id: actualId,
+        reassertion_delay_ms: this.reviewOwnerReassertionDelayMs,
+      });
+    }
+    return version;
   }
 
   async assignVersionReviewer(versionId: string, input: AssignReviewerInput): Promise<TemplateReviewVersion> {
@@ -1393,25 +1369,16 @@ export class AirtableClient {
 
   async assignSelfToVersion(versionId: string, currentReviewer?: CollaboratorRef | null): Promise<TemplateReviewVersion> {
     if (!currentReviewer?.id) {
-      throw new AirtableClientError(
-        'REVIEWER_IDENTITY_UNAVAILABLE',
-        'Current reviewer identity is not configured for this MCP runtime.',
-        503,
-      );
+      throw new AirtableClientError('REVIEWER_IDENTITY_UNAVAILABLE', 'Current reviewer identity is not configured for this MCP runtime.', 503);
     }
 
     const { version } = await this.getScopedVersion(versionId);
     if (version.reviewOwner?.id && version.reviewOwner.id !== currentReviewer.id) {
-      throw new AirtableClientError(
-        'REVIEWER_ASSIGNMENT_CONFLICT',
-        'Version is already assigned to a different reviewer.',
-        409,
-        {
-          version_id: versionId,
-          current_reviewer_id: currentReviewer.id,
-          assigned_reviewer_id: version.reviewOwner.id,
-        },
-      );
+      throw new AirtableClientError('REVIEWER_ASSIGNMENT_CONFLICT', 'Version is already assigned to a different reviewer.', 409, {
+        version_id: versionId,
+        current_reviewer_id: currentReviewer.id,
+        assigned_reviewer_id: version.reviewOwner.id,
+      });
     }
     if (version.reviewOwner?.id === currentReviewer.id) {
       return version;
@@ -1423,26 +1390,17 @@ export class AirtableClient {
   async unassignVersionReviewer(versionId: string, currentReviewer?: CollaboratorRef | null): Promise<TemplateReviewVersion> {
     const { version } = await this.getScopedVersion(versionId);
     if (!currentReviewer?.id) {
-      throw new AirtableClientError(
-        'REVIEWER_IDENTITY_UNAVAILABLE',
-        'Current reviewer identity is not configured for this MCP runtime.',
-        503,
-      );
+      throw new AirtableClientError('REVIEWER_IDENTITY_UNAVAILABLE', 'Current reviewer identity is not configured for this MCP runtime.', 503);
     }
     if (!version.reviewOwner?.id) {
       return version;
     }
     if (version.reviewOwner.id !== currentReviewer.id) {
-      throw new AirtableClientError(
-        'REVIEWER_ASSIGNMENT_CONFLICT',
-        'Version is assigned to a different reviewer and cannot be unassigned from this lane.',
-        409,
-        {
-          version_id: versionId,
-          current_reviewer_id: currentReviewer.id,
-          assigned_reviewer_id: version.reviewOwner.id,
-        },
-      );
+      throw new AirtableClientError('REVIEWER_ASSIGNMENT_CONFLICT', 'Version is assigned to a different reviewer and cannot be unassigned from this lane.', 409, {
+        version_id: versionId,
+        current_reviewer_id: currentReviewer.id,
+        assigned_reviewer_id: version.reviewOwner.id,
+      });
     }
     return this.assignVersionReviewer(versionId, { review_owner: null });
   }
@@ -1450,34 +1408,20 @@ export class AirtableClient {
   async requireAssignedVersion(versionId: string, currentReviewer?: CollaboratorRef | null): Promise<TemplateReviewVersion> {
     const { version } = await this.getScopedVersion(versionId);
     if (!currentReviewer?.id) {
-      throw new AirtableClientError(
-        'REVIEWER_IDENTITY_UNAVAILABLE',
-        'Current reviewer identity is not configured for this MCP runtime.',
-        503,
-      );
+      throw new AirtableClientError('REVIEWER_IDENTITY_UNAVAILABLE', 'Current reviewer identity is not configured for this MCP runtime.', 503);
     }
     if (!version.reviewOwner?.id) {
-      throw new AirtableClientError(
-        'REVIEWER_ASSIGNMENT_REQUIRED',
-        'Version must be assigned to the authenticated reviewer before this action can run.',
-        409,
-        {
-          version_id: versionId,
-          current_reviewer_id: currentReviewer.id,
-        },
-      );
+      throw new AirtableClientError('REVIEWER_ASSIGNMENT_REQUIRED', 'Version must be assigned to the authenticated reviewer before this action can run.', 409, {
+        version_id: versionId,
+        current_reviewer_id: currentReviewer.id,
+      });
     }
     if (version.reviewOwner.id !== currentReviewer.id) {
-      throw new AirtableClientError(
-        'REVIEWER_ASSIGNMENT_CONFLICT',
-        'Version is assigned to a different reviewer.',
-        409,
-        {
-          version_id: versionId,
-          current_reviewer_id: currentReviewer.id,
-          assigned_reviewer_id: version.reviewOwner.id,
-        },
-      );
+      throw new AirtableClientError('REVIEWER_ASSIGNMENT_CONFLICT', 'Version is assigned to a different reviewer.', 409, {
+        version_id: versionId,
+        current_reviewer_id: currentReviewer.id,
+        assigned_reviewer_id: version.reviewOwner.id,
+      });
     }
     return version;
   }
@@ -1485,15 +1429,13 @@ export class AirtableClient {
   async getReviewContext(versionId: string, currentReviewer?: CollaboratorRef | null): Promise<TemplateReviewContext> {
     const version = await this.getVersionById(versionId);
     if (!version) {
-      throw new AirtableClientError('VERSION_NOT_FOUND', 'Template version not found.', 404, { version_id: versionId });
+      throw new AirtableClientError('VERSION_NOT_FOUND', 'Template version not found.', 404, {
+        version_id: versionId,
+      });
     }
 
     const asset = version.assetId ? await this.getAssetById(version.assetId) : null;
-    const isAssignedToCurrentReviewer = Boolean(
-      currentReviewer?.id &&
-        version.reviewOwner?.id &&
-        currentReviewer.id === version.reviewOwner.id,
-    );
+    const isAssignedToCurrentReviewer = Boolean(currentReviewer?.id && version.reviewOwner?.id && currentReviewer.id === version.reviewOwner.id);
 
     return {
       versionId: version.versionId,
@@ -1532,7 +1474,9 @@ export class AirtableClient {
       fields[CONFIRMED_ASSET_FIELDS.thumbnailImageSecondary] = input.thumbnail_image_secondary_urls.map((url) => ({ url }));
     }
     if (input.carousel_image_urls !== undefined) {
-      fields[CONFIRMED_ASSET_FIELDS.carouselImages] = input.carousel_image_urls.map((url) => ({ url }));
+      fields[CONFIRMED_ASSET_FIELDS.carouselImages] = input.carousel_image_urls.map((url) => ({
+        url,
+      }));
     }
 
     if (Object.keys(fields).length === 0) {
@@ -1563,7 +1507,10 @@ export class AirtableClient {
     return mapAsset(updated);
   }
 
-  async completePublishing(versionId: string, input: CompletePublishingInput): Promise<{
+  async completePublishing(
+    versionId: string,
+    input: CompletePublishingInput,
+  ): Promise<{
     updatedVersion: TemplateReviewVersion;
     updatedAsset: TemplateReviewAsset | null;
     resolvedRelease: TemplateReviewRelease;
@@ -1571,7 +1518,9 @@ export class AirtableClient {
   }> {
     const currentVersion = await this.getVersionById(versionId);
     if (!currentVersion) {
-      throw new AirtableClientError('VERSION_NOT_FOUND', 'Template version not found.', 404, { version_id: versionId });
+      throw new AirtableClientError('VERSION_NOT_FOUND', 'Template version not found.', 404, {
+        version_id: versionId,
+      });
     }
     if (!currentVersion.assetId) {
       throw new AirtableClientError('VERSION_ASSET_ID_MISSING', 'Template version is missing its asset linkage.', 500, {
@@ -1588,10 +1537,7 @@ export class AirtableClient {
     }
 
     const releaseLocalDate = input.release_date_local ?? currentLocalDate(input.time_zone ?? 'UTC');
-    const releaseRecord =
-      input.release_record_id !== undefined
-        ? (await this.getRecord(TABLE_IDS.assetReleases, input.release_record_id))
-        : null;
+    const releaseRecord = input.release_record_id !== undefined ? await this.getRecord(TABLE_IDS.assetReleases, input.release_record_id) : null;
 
     if (input.release_record_id !== undefined && !releaseRecord) {
       throw new AirtableClientError('RELEASE_NOT_FOUND', 'Asset Release record not found.', 404, {
@@ -1599,10 +1545,7 @@ export class AirtableClient {
       });
     }
 
-    const release =
-      releaseRecord !== null
-        ? mapRelease(releaseRecord)
-        : await this.findReleaseByLocalDate(releaseLocalDate);
+    const release = releaseRecord !== null ? mapRelease(releaseRecord) : await this.findReleaseByLocalDate(releaseLocalDate);
 
     const checklist = currentVersion.publishingChecklist;
     if (!checklist) {
@@ -1612,6 +1555,7 @@ export class AirtableClient {
     }
 
     const updatedVersion = await this.updateVersionReview(versionId, {
+      review_owner: input.review_owner,
       publishing_checklist: markChecklistComplete(checklist),
       release_record_id: release.releaseId,
       ...(input.approve_version ? { review_status: '✅Approved' } : {}),
@@ -1619,7 +1563,9 @@ export class AirtableClient {
 
     const updatedAsset =
       input.mrp_id_overwrite !== undefined
-        ? await this.updateAssetPublishing(currentAsset.assetId, { mrp_id_overwrite: input.mrp_id_overwrite })
+        ? await this.updateAssetPublishing(currentAsset.assetId, {
+            mrp_id_overwrite: input.mrp_id_overwrite,
+          })
         : currentAsset;
 
     return {
@@ -1629,5 +1575,4 @@ export class AirtableClient {
       resolvedLocalDate: releaseLocalDate,
     };
   }
-
 }

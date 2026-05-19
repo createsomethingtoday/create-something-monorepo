@@ -36,6 +36,7 @@ pnpm dify:agent:smoke -- --agent-id <agent-slug> --dry-run
 pnpm dify:agent:smoke -- --agent-id <agent-slug> --query <prompt> --require-tool <tool>
 pnpm dify:reviewer-hubs:smoke
 pnpm dify:reviewer-hubs:e2b-smoke
+pnpm dify:reviewer-hubs:identity-smoke -- --version-id <asset-version-id>
 pnpm dify:coverage:generate
 pnpm dify:coverage:check
 pnpm dify:inventory:validate
@@ -96,6 +97,15 @@ positive E2B case that intentionally allows `run_code` while forbidding Hub
 calls and file transfer tools. Use `pnpm dify:reviewer-hubs:e2b-smoke` when the
 change only needs the E2B lane, or `pnpm dify:reviewer-hubs:smoke` when both the
 Hub and E2B cases should run for every reviewer lane.
+
+Use `pnpm dify:reviewer-hubs:identity-smoke` before allowing Dify reviewer
+agents to perform review-write workflows. It asks each reviewer agent to route a
+read-only `template_review_get_review_context` call through its Hub card and
+asserts that `data.context.currentReviewer.email` matches the expected reviewer
+lane. Pass `--version-id` or `DIFY_REVIEWER_IDENTITY_VERSION_ID` for the Asset
+Version used as a stable read target; if omitted, the agent first reads one
+queue item. The smoke fails if the agent attempts downstream reviewer writes,
+Hub state refresh, or Hub state mutation.
 
 For Hub MCP server cards, do not treat Dify Studio's `Authorized` badge as a
 complete readiness signal. That badge can be satisfied by MCP initialization and
