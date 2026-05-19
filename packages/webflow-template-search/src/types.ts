@@ -55,6 +55,7 @@ export interface AirtableAssetFields extends Record<string, unknown> {
   '🥞💲Template Price Filter (🏗️ only)'?: number;
   '🚀📅Published Date'?: string;
   '🥞CMS Slug (formula)'?: string;
+  '🎨Creator'?: string[];
   '🎨Creator Name'?: string;
   '🖼️Thumbnail Image'?: AirtableAttachment[];
   '🖼️Thumbnail Image (Secondary)'?: AirtableAttachment[];
@@ -79,10 +80,20 @@ export interface ChildCategoryLookupValue extends LookupValue {
   relatedKeywords: string[];
 }
 
+export interface CreatorLookupValue {
+  id: string;
+  name: string;
+  slug: string;
+  profileUrl: string;
+  avatarUrl: string | null;
+  avatarAlt: string | null;
+}
+
 export interface LookupMaps {
   styles: Map<string, LookupValue>;
   childCategories: Map<string, ChildCategoryLookupValue>;
   tags: Map<string, LookupValue>;
+  creators: Map<string, CreatorLookupValue>;
 }
 
 export interface TemplateDocumentInput {
@@ -93,6 +104,10 @@ export interface TemplateDocumentInput {
   previewUrl: string | null;
   websiteUrl: string | null;
   creatorName: string | null;
+  creatorRecordId: string | null;
+  creatorProfileUrl: string | null;
+  creatorAvatarUrl: string | null;
+  creatorAvatarAlt: string | null;
   thumbnailImageUrl: string | null;
   thumbnailImageSecondaryUrl: string | null;
   carouselImageUrls: string[];
@@ -142,6 +157,9 @@ export interface SearchItem {
   preview_url: string | null;
   website_url: string | null;
   creator_name: string | null;
+  creator_profile_url: string | null;
+  creator_avatar_url: string | null;
+  creator_avatar_alt: string | null;
   thumbnail_image_url: string | null;
   thumbnail_image_secondary_url: string | null;
   price: number | null;
@@ -203,6 +221,9 @@ export interface DocumentRow {
   preview_url: string | null;
   website_url: string | null;
   creator_name: string | null;
+  creator_profile_url: string | null;
+  creator_avatar_url: string | null;
+  creator_avatar_alt: string | null;
   thumbnail_image_url: string | null;
   thumbnail_image_secondary_url: string | null;
   carousel_image_urls_json: string;

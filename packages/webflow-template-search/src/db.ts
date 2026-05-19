@@ -10,6 +10,10 @@ const UPSERT_TEMPLATE_SQL = `
     preview_url,
     website_url,
     creator_name,
+    creator_record_id,
+    creator_profile_url,
+    creator_avatar_url,
+    creator_avatar_alt,
     thumbnail_image_url,
     thumbnail_image_secondary_url,
     carousel_image_urls_json,
@@ -41,7 +45,7 @@ const UPSERT_TEMPLATE_SQL = `
     styles_text,
     tags_text
   ) VALUES (
-    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
   )
   ON CONFLICT(id) DO UPDATE SET
     template_slug = excluded.template_slug,
@@ -50,6 +54,10 @@ const UPSERT_TEMPLATE_SQL = `
     preview_url = excluded.preview_url,
     website_url = excluded.website_url,
     creator_name = excluded.creator_name,
+    creator_record_id = excluded.creator_record_id,
+    creator_profile_url = excluded.creator_profile_url,
+    creator_avatar_url = excluded.creator_avatar_url,
+    creator_avatar_alt = excluded.creator_avatar_alt,
     thumbnail_image_url = excluded.thumbnail_image_url,
     thumbnail_image_secondary_url = excluded.thumbnail_image_secondary_url,
     carousel_image_urls_json = excluded.carousel_image_urls_json,
@@ -113,6 +121,10 @@ export async function upsertTemplateDocuments(db: D1Database, documents: Templat
         document.previewUrl,
         document.websiteUrl,
         document.creatorName,
+        document.creatorRecordId,
+        document.creatorProfileUrl,
+        document.creatorAvatarUrl,
+        document.creatorAvatarAlt,
         document.thumbnailImageUrl,
         document.thumbnailImageSecondaryUrl,
         JSON.stringify(document.carouselImageUrls),

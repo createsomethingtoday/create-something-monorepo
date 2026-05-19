@@ -63,6 +63,25 @@ function normalizeTemplateRecord(
     previewUrl: typeof record.fields['🔗Preview Site URL'] === 'string' ? record.fields['🔗Preview Site URL'] : null,
     websiteUrl: typeof record.fields['🔗Website URL'] === 'string' ? record.fields['🔗Website URL'] : null,
     creatorName: typeof record.fields['🎨Creator Name'] === 'string' ? record.fields['🎨Creator Name'] : null,
+    creatorRecordId: (() => {
+      const ids = ensureStringArray(record.fields['🎨Creator']);
+      return ids[0] ?? null;
+    })(),
+    creatorProfileUrl: (() => {
+      const ids = ensureStringArray(record.fields['🎨Creator']);
+      const creator = ids[0] ? lookups.creators.get(ids[0]) : undefined;
+      return creator?.profileUrl || null;
+    })(),
+    creatorAvatarUrl: (() => {
+      const ids = ensureStringArray(record.fields['🎨Creator']);
+      const creator = ids[0] ? lookups.creators.get(ids[0]) : undefined;
+      return creator?.avatarUrl ?? null;
+    })(),
+    creatorAvatarAlt: (() => {
+      const ids = ensureStringArray(record.fields['🎨Creator']);
+      const creator = ids[0] ? lookups.creators.get(ids[0]) : undefined;
+      return creator?.avatarAlt ?? (creator?.name ?? null);
+    })(),
     thumbnailImageUrl: attachmentUrl(record.fields['🖼️Thumbnail Image']),
     thumbnailImageSecondaryUrl: attachmentUrl(record.fields['🖼️Thumbnail Image (Secondary)']),
     carouselImageUrls: attachmentUrls(record.fields['🖼️Carousel Images']),

@@ -1,6 +1,7 @@
 name = "webflow-template-search"
 main = "src/index.ts"
 compatibility_date = "2025-01-01"
+account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
 compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
 workers_dev = true
 
@@ -10,7 +11,7 @@ enabled = true
 [[d1_databases]]
 binding = "DB"
 database_name = "webflow-template-search"
-database_id = "REPLACE_ME"
+database_id = "bffab674-a86b-456b-a72d-f620b2755396"
 
 [vars]
 ENVIRONMENT = "development"
@@ -19,7 +20,7 @@ AIRTABLE_ASSETS_TABLE_ID = "tblRwzpWoLgE9MrUm"
 AIRTABLE_STYLES_TABLE_ID = "tblG7E9LbQj0sBX0o"
 AIRTABLE_CHILD_CATEGORIES_TABLE_ID = "tblWJXy3M6R8SeoFi"
 AIRTABLE_TAGS_TABLE_ID = "tblb4969G7O75gVWV"
-ALLOWED_ORIGINS = "https://webflow.com,https://www.webflow.com,https://templates.webflow.com,https://template-marketplace.webflow.io"
+ALLOWED_ORIGINS = "https://webflow.com,https://www.webflow.com,https://templates.webflow.com,https://template-marketplace.webflow.io,*.webflow.com"
 DEFAULT_PAGE_SIZE = "24"
 DEFAULT_CLIENT_MODE = "shadow"
 

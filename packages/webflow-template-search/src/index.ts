@@ -1,4 +1,3 @@
-import { getClientScript } from './client-script.js';
 import { healthCounts } from './db.js';
 import { corsPreflight, jsonResponse, textResponse } from './http.js';
 import { parseSearchParams } from './query.js';
@@ -61,7 +60,8 @@ export default {
       }
 
       if ((url.pathname === '/api/templates/client.js' || url.pathname === '/client.js') && request.method === 'GET') {
-        return textResponse(request, env, getClientScript(env.DEFAULT_CLIENT_MODE ?? 'shadow'), 'application/javascript; charset=utf-8');
+        // Deprecated: TemplateGrid code component now handles search/filter.
+        return textResponse(request, env, '/* webflow-template-search client-script deprecated */', 'application/javascript; charset=utf-8');
       }
 
       if (url.pathname === '/api/templates/admin/rebuild' && request.method === 'POST') {

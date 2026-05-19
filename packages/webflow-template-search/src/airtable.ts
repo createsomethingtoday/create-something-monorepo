@@ -3,6 +3,7 @@ import type {
   AirtableListResponse,
   AirtableRecord,
   ChildCategoryLookupValue,
+  CreatorLookupValue,
   Env,
   LookupMaps,
   LookupValue,
@@ -19,6 +20,7 @@ const DEFAULT_ASSETS_TABLE_ID = 'tblRwzpWoLgE9MrUm';
 const DEFAULT_STYLES_TABLE_ID = 'tblG7E9LbQj0sBX0o';
 const DEFAULT_CHILD_CATEGORIES_TABLE_ID = 'tblWJXy3M6R8SeoFi';
 const DEFAULT_TAGS_TABLE_ID = 'tblb4969G7O75gVWV';
+const DEFAULT_CREATORS_TABLE_ID = 'tbljt0plqxdMARZXb';
 
 export const ASSET_FIELDS = [
   'Name',
@@ -41,6 +43,7 @@ export const ASSET_FIELDS = [
   '🥞💲Template Price Filter (🏗️ only)',
   '🚀📅Published Date',
   '🥞CMS Slug (formula)',
+  '🎨Creator',
   '🎨Creator Name',
   '🖼️Thumbnail Image',
   '🖼️Thumbnail Image (Secondary)',
@@ -63,6 +66,12 @@ function buildPublishedTemplateFormula(): string {
 
 function buildModifiedAfterFormula(cursor: string): string {
   return `IS_AFTER({📅LMT}, DATETIME_PARSE("${cursor}"))`;
+}
+
+function attachmentUrl(value: unknown): string | null {
+  if (!Array.isArray(value) || value.length === 0) return null;
+  const first = value[0] as { url?: string } | undefined;
+  return first?.url ?? null;
 }
 
 function splitLookupText(value: unknown): string[] {
@@ -142,7 +151,7 @@ export async function fetchModifiedAssetsSince(
 }
 
 export async function loadLookupMaps(env: Env): Promise<LookupMaps> {
-  const [styles, childCategories, tags] = await Promise.all([
+  const [styles, childCategories, tags, creators] = await Promise.all([
     fetchAirtableRecords(env, {
       tableId: env.AIRTABLE_STYLES_TABLE_ID ?? DEFAULT_STYLES_TABLE_ID,
       fields: ['Name', '🥞CMS Slug'],
@@ -154,6 +163,10 @@ export async function loadLookupMaps(env: Env): Promise<LookupMaps> {
     fetchAirtableRecords(env, {
       tableId: env.AIRTABLE_TAGS_TABLE_ID ?? DEFAULT_TAGS_TABLE_ID,
       fields: ['Name', '🥞CMS Slug'],
+    }),
+    fetchAirtableRecords(env, {
+      tableId: DEFAULT_CREATORS_TABLE_ID,
+      fields: ['Name', '🥞CMS Slug', '🖼️Avatar (Primary)', '🖼️Avatar Alt Text'],
     }),
   ]);
 
@@ -201,9 +214,27 @@ export async function loadLookupMaps(env: Env): Promise<LookupMaps> {
     });
   }
 
+  const creatorMap = new Map<string, CreatorLookupValue>();
+  for (const record of creators) {
+    const name = String(record.fields.Name ?? '').trim();
+    if (!name) continue;
+    const slug = typeof record.fields['🥞CMS Slug'] === 'string' ? record.fields['🥞CMS Slug'].trim() : '';
+    const avatarValue = record.fields['🖼️Avatar (Primary)'];
+    const avatarAltValue = record.fields['🖼️Avatar Alt Text'];
+    creatorMap.set(record.id, {
+      id: record.id,
+      name,
+      slug,
+      profileUrl: slug ? `https://webflow.com/templates/designers/${slug}` : '',
+      avatarUrl: attachmentUrl(avatarValue),
+      avatarAlt: typeof avatarAltValue === 'string' ? avatarAltValue.trim() || null : null,
+    });
+  }
+
   return {
     styles: styleMap,
     childCategories: childCategoryMap,
     tags: tagMap,
+    creators: creatorMap,
   };
 }
