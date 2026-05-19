@@ -9,6 +9,8 @@ enabled = true
 
 [vars]
 AIRTABLE_BASE_ID = "appMoIgXMTTTNIc3p"
+WEBFLOW_TEMPLATE_VALIDATION_WORKER_URL = "https://validation-worker.createsomething.workers.dev/validate"
+GSAP_VALIDATION_WORKER_URL = "https://gsap-validation-worker.createsomething.workers.dev/validateGsap"
 
 [[d1_databases]]
 binding = "TELEMETRY_DB"
