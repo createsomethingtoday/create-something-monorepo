@@ -85,8 +85,9 @@ export interface TemplateGridProps {
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 // Cloud App proxy (CSP-safe on webflow.com) is the production default.
-// Falls back to the Worker directly for local/staging environments.
 const DEFAULT_API_BASE = 'https://webflow-template-marketplace.webflow.io/templates';
+// The direct Worker origin is blocked by webflow.com's CSP — rewrite to proxy.
+const WORKER_ORIGIN = 'https://webflow-template-search.createsomething.workers.dev';
 const DEFAULT_PAGE_SIZE = 24;
 
 // Selectors matching the existing Webflow filter/sort UI (same as client-script.ts)
@@ -324,7 +325,10 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
 }) => {
   // Webflow passes defaultValue strings (including '') as actual values, not undefined.
   // Fall back to the production URL whenever the prop is blank.
-  const apiBase = apiBaseProp || DEFAULT_API_BASE;
+  // Rewrite the direct Worker origin to the CSP-safe proxy — webflow.com's CSP
+  // blocks the Worker domain, and old Designer configs may still reference it.
+  const rawBase = apiBaseProp || DEFAULT_API_BASE;
+  const apiBase = rawBase.startsWith(WORKER_ORIGIN) ? DEFAULT_API_BASE : rawBase;
   const resolvedPageSize = pageSize || DEFAULT_PAGE_SIZE;
   // Parse initial filter state from URL on first render
   const [filters, setFilters] = useState<FilterState>(() =>
