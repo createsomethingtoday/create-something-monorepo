@@ -83,7 +83,6 @@ const S: Record<string, CSSProperties> = {
     lineHeight: '20px',
     color: 'rgb(51, 51, 51)',
     boxSizing: 'border-box',
-    contain: 'style',
   },
   link: {
     display: 'block',
@@ -341,21 +340,21 @@ const INJECTED_STYLES = `
 
 /* Secondary image hover swap */
 .tmcard-secondary-img {
-  opacity: 0;
+  opacity: 0 !important;
   transition: opacity 280ms ease, transform 350ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 .tmcard-link:hover .tmcard-secondary-img {
-  opacity: 1;
+  opacity: 1 !important;
   transform: scale(1.04);
 }
 
 /* Hover overlay */
 .tmcard-hover-overlay {
-  opacity: 0;
+  opacity: 0 !important;
   transition: opacity 220ms ease;
 }
 .tmcard-link:hover .tmcard-hover-overlay {
-  opacity: 1;
+  opacity: 1 !important;
 }
 .tmcard-hover-content {
   transform: scale(0.96);
