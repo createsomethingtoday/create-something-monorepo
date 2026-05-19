@@ -84,10 +84,13 @@ export interface TemplateGridProps {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-// Cloud App proxy (CSP-safe on webflow.com) is the production default.
-const DEFAULT_API_BASE = 'https://webflow-template-marketplace.webflow.io/templates';
+// Relative path — the Cloud App is mounted at /templates-api on webflow.com, so
+// requests resolve to webflow.com/templates-api/api/... (same-origin, CSP-safe).
+const DEFAULT_API_BASE = '/templates-api';
 // The direct Worker origin is blocked by webflow.com's CSP — rewrite to proxy.
 const WORKER_ORIGIN = 'https://webflow-template-search.createsomething.workers.dev';
+// Preview URL used during Cloud App development — also rewrite to relative.
+const CLOUD_APP_PREVIEW_ORIGIN = 'https://webflow-template-marketplace.webflow.io';
 const DEFAULT_PAGE_SIZE = 24;
 
 // Selectors matching the existing Webflow filter/sort UI (same as client-script.ts)
@@ -185,8 +188,11 @@ function parseRouteState(
 }
 
 function buildApiUrl(base: string, filters: FilterState, page: number, pageSize: number): string {
-  // Use string concatenation — new URL('/path', base) strips any basePath from `base`
-  const url = new URL(`${base}/api/templates/search`);
+  // Resolve relative paths against the current origin so new URL() doesn't throw.
+  const absolute = base.startsWith('/') && typeof window !== 'undefined'
+    ? `${window.location.origin}${base}`
+    : base;
+  const url = new URL(`${absolute}/api/templates/search`);
   if (filters.q) url.searchParams.set('q', filters.q);
   if (filters.scope !== 'all') url.searchParams.set('scope', filters.scope);
   if (filters.categoryGroupSlug) url.searchParams.set('category_group_slug', filters.categoryGroupSlug);
@@ -324,11 +330,15 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
   pageSize = DEFAULT_PAGE_SIZE,
 }) => {
   // Webflow passes defaultValue strings (including '') as actual values, not undefined.
-  // Fall back to the production URL whenever the prop is blank.
-  // Rewrite the direct Worker origin to the CSP-safe proxy — webflow.com's CSP
-  // blocks the Worker domain, and old Designer configs may still reference it.
+  // Fall back to the relative path whenever the prop is blank.
+  // Rewrite any absolute origin that webflow.com's CSP blocks to the relative default:
+  //   - Direct Worker URL (always blocked)
+  //   - Cloud App preview subdomain (different origin from webflow.com)
   const rawBase = apiBaseProp || DEFAULT_API_BASE;
-  const apiBase = rawBase.startsWith(WORKER_ORIGIN) ? DEFAULT_API_BASE : rawBase;
+  const apiBase =
+    rawBase.startsWith(WORKER_ORIGIN) || rawBase.startsWith(CLOUD_APP_PREVIEW_ORIGIN)
+      ? DEFAULT_API_BASE
+      : rawBase;
   const resolvedPageSize = pageSize || DEFAULT_PAGE_SIZE;
   // Parse initial filter state from URL on first render
   const [filters, setFilters] = useState<FilterState>(() =>
