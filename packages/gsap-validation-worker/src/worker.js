@@ -10,6 +10,11 @@ var __require = /* @__PURE__ */ ((x) => typeof require !== "undefined" ? require
 // cloudflare-worker/lib/shared-validator.js
 var IX2_REJECTION_MESSAGE = "Legacy Webflow IX2 interactions detected. As of May 1, 2026, Marketplace templates submitted with IX2 interactions are rejected. Rebuild interactions with Webflow Interactions powered by GSAP (IX3), publish again, and rerun validation.";
 var UNICORN_STUDIO_REJECTION_MESSAGE = "Unicorn Studio embed detected. Marketplace templates may only use custom code for approved exceptions such as GSAP, font smoothing, no-index tags on licensing/changelog pages, or documented SVG snippets. Replace the Unicorn Studio effect with Webflow-native or approved GSAP implementation, publish again, and rerun validation.";
+var LOTTIE_IX2_ACTION_TYPES = /* @__PURE__ */ new Set([
+  "GENERAL_START_ACTION",
+  "PLUGIN_LOTTIE",
+  "PLUGIN_LOTTIE_EFFECT"
+]);
 var LEGACY_IX2_EXEMPT_HOSTNAMES = /* @__PURE__ */ new Set([
   // Zendesk 1124554: approved exception for pre-cutoff Bergamo submission.
   "az-bergamo.webflow.io"
@@ -28,18 +33,23 @@ function isLegacyIx2ExemptUrl(pageUrl) {
 }
 __name(isLegacyIx2ExemptUrl, "isLegacyIx2ExemptUrl");
 function detectIx2Interactions(html) {
+  const htmlWithoutLottieElements = stripLottieElementTags(html);
+  const dataWIdCount = countPatternMatches(htmlWithoutLottieElements, /\sdata-w-id\s*=/gi);
+  const dataIsIx2TargetCount = countPatternMatches(htmlWithoutLottieElements, /\sdata-is-ix2-target\s*=/gi);
+  const nonLottieElementMarkerCount = dataWIdCount + dataIsIx2TargetCount;
+  const ix2RuntimeCallCount = countLegacyIx2RuntimeCalls(html, nonLottieElementMarkerCount > 0);
   const matches = [
     {
       label: "data-w-id attributes",
-      count: countPatternMatches(html, /\sdata-w-id\s*=/gi)
+      count: dataWIdCount
     },
     {
       label: "data-is-ix2-target attributes",
-      count: countPatternMatches(html, /\sdata-is-ix2-target\s*=/gi)
+      count: dataIsIx2TargetCount
     },
     {
       label: "Webflow IX2 runtime calls",
-      count: countPatternMatches(html, /Webflow\.require\s*\(\s*["']ix2["']\s*\)/gi)
+      count: ix2RuntimeCallCount
     },
     {
       label: "w-mod-ix CSS/runtime markers",
@@ -54,6 +64,40 @@ function detectIx2Interactions(html) {
   };
 }
 __name(detectIx2Interactions, "detectIx2Interactions");
+function stripLottieElementTags(html) {
+  return html.replace(
+    /<[^>]*\sdata-animation-type\s*=\s*(?:"lottie"|'lottie'|lottie(?=[\s>]))[^>]*>/gi,
+    ""
+  );
+}
+__name(stripLottieElementTags, "stripLottieElementTags");
+function countLegacyIx2RuntimeCalls(html, hasNonLottieElementMarkers) {
+  const runtimeCallCount = countPatternMatches(
+    html,
+    /Webflow\.require\s*\(\s*["']ix2["']\s*\)/gi
+  );
+  if (runtimeCallCount === 0) {
+    return 0;
+  }
+  if (hasNonLottieElementMarkers) {
+    return runtimeCallCount;
+  }
+  if (hasLottieIx2Usage(html) && !hasNonLottieIx2ActionTypes(html)) {
+    return 0;
+  }
+  return runtimeCallCount;
+}
+__name(countLegacyIx2RuntimeCalls, "countLegacyIx2RuntimeCalls");
+function hasLottieIx2Usage(html) {
+  return /PLUGIN_LOTTIE/i.test(html) || /<[^>]*\sdata-animation-type\s*=\s*(?:"lottie"|'lottie'|lottie(?=[\s>]))[^>]*>/i.test(html);
+}
+__name(hasLottieIx2Usage, "hasLottieIx2Usage");
+function hasNonLottieIx2ActionTypes(html) {
+  return Array.from(html.matchAll(/["']?actionTypeId["']?\s*:\s*["']([^"']+)["']/gi)).some(
+    ([, actionTypeId]) => !LOTTIE_IX2_ACTION_TYPES.has(actionTypeId)
+  );
+}
+__name(hasNonLottieIx2ActionTypes, "hasNonLottieIx2ActionTypes");
 function detectUnicornStudioUsage(html) {
   const matches = [
     {

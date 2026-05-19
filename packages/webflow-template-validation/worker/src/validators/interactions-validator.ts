@@ -10,6 +10,11 @@ import { fetchHTML } from '../utils/fetch-utils';
 
 const IX2_REJECTION_MESSAGE =
 	'Legacy Webflow IX2 interactions detected. As of May 1, 2026, Marketplace templates submitted with IX2 interactions are rejected.';
+const LOTTIE_IX2_ACTION_TYPES = new Set([
+	'GENERAL_START_ACTION',
+	'PLUGIN_LOTTIE',
+	'PLUGIN_LOTTIE_EFFECT'
+]);
 
 type Ix2Match = {
 	label: string;
@@ -146,20 +151,28 @@ async function analyzeInteractionsPage(url: string): Promise<Ix2PageResult> {
 }
 
 function detectIx2Interactions(html: string) {
+	const htmlWithoutLottieElements = stripLottieElementTags(html);
+	const dataWIdCount = countPatternMatches(htmlWithoutLottieElements, /\sdata-w-id\s*=/gi);
+	const dataIsIx2TargetCount = countPatternMatches(
+		htmlWithoutLottieElements,
+		/\sdata-is-ix2-target\s*=/gi
+	);
+	const nonLottieElementMarkerCount = dataWIdCount + dataIsIx2TargetCount;
+	const ix2RuntimeCallCount = countLegacyIx2RuntimeCalls(html, nonLottieElementMarkerCount > 0);
 	const matches: Ix2Match[] = [
 		{
 			label: 'data-w-id attributes',
-			count: countPatternMatches(html, /\sdata-w-id\s*=/gi),
+			count: dataWIdCount,
 			strong: true
 		},
 		{
 			label: 'data-is-ix2-target attributes',
-			count: countPatternMatches(html, /\sdata-is-ix2-target\s*=/gi),
+			count: dataIsIx2TargetCount,
 			strong: true
 		},
 		{
 			label: 'Webflow IX2 runtime calls',
-			count: countPatternMatches(html, /Webflow\.require\s*\(\s*["']ix2["']\s*\)/gi),
+			count: ix2RuntimeCallCount,
 			strong: true
 		},
 		{
@@ -175,6 +188,46 @@ function detectIx2Interactions(html: string) {
 		count: strongMatches.reduce((total, item) => total + item.count, 0),
 		matches
 	};
+}
+
+function stripLottieElementTags(html: string) {
+	return html.replace(
+		/<[^>]*\sdata-animation-type\s*=\s*(?:"lottie"|'lottie'|lottie(?=[\s>]))[^>]*>/gi,
+		''
+	);
+}
+
+function countLegacyIx2RuntimeCalls(html: string, hasNonLottieElementMarkers: boolean) {
+	const runtimeCallCount = countPatternMatches(
+		html,
+		/Webflow\.require\s*\(\s*["']ix2["']\s*\)/gi
+	);
+	if (runtimeCallCount === 0) {
+		return 0;
+	}
+
+	if (hasNonLottieElementMarkers) {
+		return runtimeCallCount;
+	}
+
+	if (hasLottieIx2Usage(html) && !hasNonLottieIx2ActionTypes(html)) {
+		return 0;
+	}
+
+	return runtimeCallCount;
+}
+
+function hasLottieIx2Usage(html: string) {
+	return (
+		/PLUGIN_LOTTIE/i.test(html) ||
+		/<[^>]*\sdata-animation-type\s*=\s*(?:"lottie"|'lottie'|lottie(?=[\s>]))[^>]*>/i.test(html)
+	);
+}
+
+function hasNonLottieIx2ActionTypes(html: string) {
+	return Array.from(html.matchAll(/["']?actionTypeId["']?\s*:\s*["']([^"']+)["']/gi)).some(
+		([, actionTypeId]) => !LOTTIE_IX2_ACTION_TYPES.has(actionTypeId)
+	);
 }
 
 function countPatternMatches(value: string, pattern: RegExp): number {
