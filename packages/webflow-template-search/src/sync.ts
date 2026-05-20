@@ -267,11 +267,13 @@ async function runIncrementalSync(env: Env): Promise<SyncSummary> {
   const isCaughtUp = windowEnd.getTime() >= now.getTime();
   const windowEndIso = isCaughtUp ? undefined : windowEnd.toISOString();
 
-  const [lookups, assets, webflowImageIndex] = await Promise.all([
+  const [lookups, assets] = await Promise.all([
     loadLookupMaps(env),
     fetchModifiedAssetsSince(env, currentCursor, windowEndIso),
-    loadWebflowTemplateImageIndex(env),
   ]);
+  // Only fetch the Webflow asset index when there are records to process — avoids
+  // paginating the full asset list on the majority of 5-min polls that find nothing.
+  const webflowImageIndex = assets.length > 0 ? await loadWebflowTemplateImageIndex(env) : null;
   const toUpsert: TemplateDocumentInput[] = [];
   const toDelete: string[] = [];
 
