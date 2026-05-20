@@ -481,8 +481,9 @@ function FeaturedQualityShowcase() {
             const imageUrl = featuredTemplateImage(item);
             return (
               <a
+                aria-label={`Review Featured templates like ${item.name}`}
                 className="featured-quality-card"
-                href={item.url || FEATURED_TEMPLATES_URL}
+                href={FEATURED_TEMPLATES_URL}
                 key={item.id || item.template_slug}
                 rel="noreferrer"
                 target="_blank"
