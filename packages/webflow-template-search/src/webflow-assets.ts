@@ -250,38 +250,100 @@ function extractMetaImage(html: string): string | null {
   return null;
 }
 
-function publishedTemplateUrl(templateSlug: string, listingUrl: string | null | undefined) {
-  if (listingUrl && isHttpUrl(listingUrl)) return listingUrl;
-  return `https://webflow.com/templates/html/${templateSlug}`;
+function isGenericMarketplaceImage(value: string | null): boolean {
+  if (!value) return false;
+  try {
+    const url = new URL(value);
+    const pathname = decodeURIComponent(url.pathname);
+    return (
+      pathname.includes('/5e593fb060cf87bbaf75dd20/') &&
+      /(?:brand-refresh-templates-og|Group 25@2x|favicon|webclip)/i.test(pathname)
+    );
+  } catch {
+    return false;
+  }
+}
+
+function extractPublishedSiteImage(html: string): string | null {
+  const candidates = new Set<string>();
+  const patterns = [
+    /\bsrc=["']([^"']+)["']/gi,
+    /\bsrcset=["']([^"']+)["']/gi,
+    /"url"\s*:\s*"([^"]+)"/gi,
+  ];
+
+  for (const pattern of patterns) {
+    for (const match of html.matchAll(pattern)) {
+      const rawValue = decodeHtmlAttribute(match[1] ?? '');
+      for (const value of rawValue.split(',')) {
+        const url = value.trim().split(/\s+/)[0] ?? '';
+        if (isImageUrl(url) && /(?:cdn\.prod\.website-files\.com|assets-global\.website-files\.com|uploads-ssl\.webflow\.com)/i.test(url)) {
+          candidates.add(url);
+        }
+      }
+    }
+  }
+
+  return Array.from(candidates).find((url) => !/\b(?:favicon|icon|logo|avatar)\b/i.test(url)) ?? candidates.values().next().value ?? null;
+}
+
+function publishedTemplateUrls(template: {
+  templateSlug: string;
+  listingUrl?: string | null;
+  websiteUrl?: string | null;
+}) {
+  const urls = new Map<string, { url: string; source: 'project' | 'listing' }>();
+  if (template.websiteUrl && isHttpUrl(template.websiteUrl)) {
+    urls.set(template.websiteUrl, { url: template.websiteUrl, source: 'project' });
+  }
+  if (template.listingUrl && isHttpUrl(template.listingUrl)) {
+    urls.set(template.listingUrl, { url: template.listingUrl, source: 'listing' });
+  }
+  const fallbackListingUrl = `https://webflow.com/templates/html/${template.templateSlug}`;
+  if (!urls.has(fallbackListingUrl)) {
+    urls.set(fallbackListingUrl, { url: fallbackListingUrl, source: 'listing' });
+  }
+  return Array.from(urls.values());
 }
 
 export async function resolvePublishedTemplateImages(template: {
   templateSlug: string;
   listingUrl?: string | null;
+  websiteUrl?: string | null;
 }): Promise<ResolvedWebflowTemplateImages | null> {
-  const abortController = new AbortController();
-  const timeoutId = setTimeout(() => abortController.abort(), PUBLISHED_TEMPLATE_FETCH_TIMEOUT_MS);
+  for (const { url, source } of publishedTemplateUrls(template)) {
+    const abortController = new AbortController();
+    const timeoutId = setTimeout(() => abortController.abort(), PUBLISHED_TEMPLATE_FETCH_TIMEOUT_MS);
 
-  try {
-    const response = await fetch(publishedTemplateUrl(template.templateSlug, template.listingUrl), {
-      headers: { Accept: 'text/html' },
-      signal: abortController.signal,
-    });
-    if (!response.ok) return null;
+    try {
+      const response = await fetch(url, {
+        headers: { Accept: 'text/html' },
+        signal: abortController.signal,
+      });
+      if (!response.ok) continue;
 
-    const html = await response.text();
-    const primary = extractMetaImage(html);
-    return primary
-      ? {
+      const html = await response.text();
+      const metaImage = extractMetaImage(html);
+      const primary =
+        metaImage && !isGenericMarketplaceImage(metaImage)
+          ? metaImage
+          : source === 'project'
+            ? extractPublishedSiteImage(html)
+            : null;
+      if (primary) {
+        return {
           thumbnailImageUrl: primary,
           thumbnailImageSecondaryUrl: null,
-        }
-      : null;
-  } catch {
-    return null;
-  } finally {
-    clearTimeout(timeoutId);
+        };
+      }
+    } catch {
+      continue;
+    } finally {
+      clearTimeout(timeoutId);
+    }
   }
+
+  return null;
 }
 
 function extractImageUrls(value: unknown, depth = 0): string[] {

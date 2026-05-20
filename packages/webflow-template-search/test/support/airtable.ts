@@ -52,8 +52,8 @@ export function installAirtableFetchMock(dataset: MockDataset) {
       });
     }
 
-    if (url.hostname === 'webflow.com' || url.hostname === 'www.webflow.com') {
-      const html = dataset.publishedTemplatePages?.[url.pathname];
+    if (url.hostname === 'webflow.com' || url.hostname === 'www.webflow.com' || url.hostname.endsWith('.webflow.io')) {
+      const html = dataset.publishedTemplatePages?.[`${url.origin}${url.pathname}`] ?? dataset.publishedTemplatePages?.[url.pathname];
       return html ? new Response(html, { headers: { 'content-type': 'text/html' } }) : new Response('Not Found', { status: 404 });
     }
 

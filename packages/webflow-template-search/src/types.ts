@@ -21,7 +21,6 @@ export interface Env {
   DEFAULT_CLIENT_MODE?: string;
   ENVIRONMENT?: string;
   SYNC_ADMIN_TOKEN?: string;
-  CMS_READ_ONLY?: string;
   WEBFLOW_WEBHOOK_SECRET?: string;
 }
 
@@ -251,6 +250,7 @@ export interface TemplateImageBackfillSummary {
   started_at: string;
   finished_at: string;
   requested_limit: number;
+  requested_template_slugs?: string[];
   scanned_records: number;
   updated_records: number;
   remaining_temp_airtable_rows: number;

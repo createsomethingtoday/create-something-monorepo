@@ -12,6 +12,7 @@ import type {
   TemplateSort,
 } from './types.js';
 import { parseJsonArray } from './utils.js';
+import { stableAttachmentUrl } from './webflow-assets.js';
 
 function placeholderList(count: number): string {
   return Array.from({ length: count }, () => '?').join(', ');
@@ -34,6 +35,15 @@ function sortClause(sort: TemplateSort): string {
     default:
       return "COALESCE(d.popularity_score, 0) DESC, COALESCE(d.cumulative_purchases, 0) DESC, COALESCE(d.unique_viewers, 0) DESC, COALESCE(d.published_date, '') DESC, d.id ASC";
   }
+}
+
+function firstDistinctImage(
+  preferred: string | null,
+  carouselImages: string[],
+  exclude?: string | null,
+): string | null {
+  if (preferred) return preferred;
+  return carouselImages.map(stableAttachmentUrl).find((url) => url && url !== exclude) ?? null;
 }
 
 interface FilterOptions {
@@ -338,6 +348,13 @@ export async function searchTemplates(env: Env, rawParams: SearchParams): Promis
     const styleSlugs = parseJsonArray(row.style_slugs_json);
     const tags = parseJsonArray(row.tags_json);
     const tagSlugs = parseJsonArray(row.tag_slugs_json);
+    const carouselImages = parseJsonArray(row.carousel_image_urls_json);
+    const thumbnailImageUrl = firstDistinctImage(row.thumbnail_image_url, carouselImages);
+    const thumbnailImageSecondaryUrl = firstDistinctImage(
+      row.thumbnail_image_secondary_url,
+      carouselImages,
+      thumbnailImageUrl,
+    );
 
     return {
       id: row.id,
@@ -350,8 +367,8 @@ export async function searchTemplates(env: Env, rawParams: SearchParams): Promis
       creator_profile_url: row.creator_profile_url,
       creator_avatar_url: row.creator_avatar_url,
       creator_avatar_alt: row.creator_avatar_alt,
-      thumbnail_image_url: row.thumbnail_image_url,
-      thumbnail_image_secondary_url: row.thumbnail_image_secondary_url,
+      thumbnail_image_url: thumbnailImageUrl,
+      thumbnail_image_secondary_url: thumbnailImageSecondaryUrl,
       price: row.price,
       is_free: row.is_free === 1,
       is_featured: row.is_featured === 1,

@@ -97,7 +97,7 @@ const DEFAULT_PAGE_SIZE = 24;
 // Hosts whose images need to be routed through the Cloud App proxy.
 // Airtable signed attachment URLs expire after ~2 hours; the proxy caches
 // them at Cloudflare edge for 24 h so expiry gaps don't cause broken images.
-const IMAGE_PROXY_BLOCKLIST = ['airtableusercontent.com'];
+const IMAGE_PROXY_BLOCKLIST = ['airtableusercontent.com', 'dl.airtable.com'];
 
 function proxyImageUrl(imageUrl: string, apiBase: string): string {
   try {

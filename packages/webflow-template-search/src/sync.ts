@@ -81,6 +81,7 @@ async function resolveAndUpdateTemplateImages(
           (await resolvePublishedTemplateImages({
             templateSlug: row.templateSlug,
             listingUrl: row.listingUrl,
+            websiteUrl: row.websiteUrl,
           }));
         return { row, webflowImages };
       }),
@@ -108,13 +109,14 @@ async function resolveAndUpdateTemplateImages(
 }
 
 async function refreshIndexedWebflowImages(
-  db: D1Database,
+  env: Env,
   webflowImageIndex: WebflowTemplateImageIndex | null,
   syncedAt: string,
   changedTemplateIds: string[] = [],
 ): Promise<number> {
-  const rows = await listTemplateImageRefreshRows(db, changedTemplateIds);
-  return resolveAndUpdateTemplateImages(db, rows, webflowImageIndex, syncedAt);
+  const rows = await listTemplateImageRefreshRows(env.DB, changedTemplateIds);
+  const resolvedImageIndex = webflowImageIndex ?? (rows.length > 0 ? await loadWebflowTemplateImageIndex(env) : null);
+  return resolveAndUpdateTemplateImages(env.DB, rows, resolvedImageIndex, syncedAt);
 }
 
 function normalizeTemplateRecord(
@@ -228,7 +230,7 @@ async function runFullSync(env: Env): Promise<SyncSummary> {
   await upsertTemplateDocuments(env.DB, documents);
   const [backfilledRecords, imageRefreshedRecords] = await Promise.all([
     backfillCreatorFieldsByName(env.DB, startedAt),
-    refreshIndexedWebflowImages(env.DB, webflowImageIndex, startedAt),
+    refreshIndexedWebflowImages(env, webflowImageIndex, startedAt),
   ]);
 
   const summary: SyncSummary = {
@@ -289,7 +291,7 @@ async function runIncrementalSync(env: Env): Promise<SyncSummary> {
   if (toDelete.length > 0) await deleteTemplateDocuments(env.DB, toDelete);
   if (toUpsert.length > 0) await upsertTemplateDocuments(env.DB, toUpsert);
   const imageRefreshedRecords = await refreshIndexedWebflowImages(
-    env.DB,
+    env,
     webflowImageIndex,
     startedAt,
     toUpsert.map((document) => document.id),
@@ -401,11 +403,12 @@ export async function refreshImages(env: Env): Promise<ImageRefreshSummary> {
 
 export async function backfillTemplateImages(
   env: Env,
-  options: { limit?: number } = {},
+  options: { limit?: number; templateSlugs?: string[] } = {},
 ): Promise<TemplateImageBackfillSummary> {
   const startedAt = nowIso();
   const requestedLimit = clamp(Math.floor(options.limit ?? IMAGE_BACKFILL_DEFAULT_LIMIT), 1, IMAGE_BACKFILL_MAX_LIMIT);
-  const rows = await listTemplateImageBackfillRows(env.DB, requestedLimit);
+  const requestedTemplateSlugs = uniqueStrings((options.templateSlugs ?? []).map((slug) => slug.trim()).filter(Boolean));
+  const rows = await listTemplateImageBackfillRows(env.DB, requestedLimit, requestedTemplateSlugs);
   const webflowImageIndex = rows.length > 0 ? await loadWebflowTemplateImageIndex(env) : null;
   const updatedRecords = await resolveAndUpdateTemplateImages(
     env.DB,
@@ -421,6 +424,7 @@ export async function backfillTemplateImages(
     started_at: startedAt,
     finished_at: nowIso(),
     requested_limit: requestedLimit,
+    requested_template_slugs: requestedTemplateSlugs.length > 0 ? requestedTemplateSlugs : undefined,
     scanned_records: rows.length,
     updated_records: updatedRecords,
     remaining_temp_airtable_rows: imageSourceStats.rows_with_temp_airtable_image,

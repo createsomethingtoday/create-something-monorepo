@@ -7,6 +7,7 @@ export interface TemplateImageRefreshRow {
   templateSlug: string;
   name: string;
   listingUrl: string | null;
+  websiteUrl: string | null;
   thumbnailImageUrl: string | null;
   thumbnailImageSecondaryUrl: string | null;
 }
@@ -17,7 +18,7 @@ export interface TemplateImageUpdateInput {
   thumbnailImageSecondaryUrl: string | null;
 }
 
-const TEMPLATE_IMAGE_REFRESH_SELECT = `SELECT id, template_slug AS templateSlug, name, listing_url AS listingUrl, thumbnail_image_url AS thumbnailImageUrl, thumbnail_image_secondary_url AS thumbnailImageSecondaryUrl
+const TEMPLATE_IMAGE_REFRESH_SELECT = `SELECT id, template_slug AS templateSlug, name, listing_url AS listingUrl, website_url AS websiteUrl, thumbnail_image_url AS thumbnailImageUrl, thumbnail_image_secondary_url AS thumbnailImageSecondaryUrl
        FROM template_documents`;
 
 const STALE_IMAGE_WHERE = `thumbnail_image_url IS NULL
@@ -30,6 +31,12 @@ const TEMP_ATTACHMENT_IMAGE_WHERE = `thumbnail_image_url LIKE '%airtableusercont
           OR thumbnail_image_url LIKE '%dl.airtable.com%'
           OR thumbnail_image_secondary_url LIKE '%airtableusercontent.com%'
           OR thumbnail_image_secondary_url LIKE '%dl.airtable.com%'`;
+
+const STALE_IMAGE_ORDER_BY = `ORDER BY
+          CASE WHEN thumbnail_image_url IS NULL AND thumbnail_image_secondary_url IS NULL THEN 0 ELSE 1 END,
+          COALESCE(published_date, source_last_modified_time, '') DESC,
+          is_featured DESC,
+          COALESCE(popularity_score, 0) DESC`;
 
 const STALE_IMAGE_REFRESH_LIMIT = 24;
 
@@ -541,7 +548,7 @@ export async function listTemplateImageRefreshRows(
     .prepare(
       `${TEMPLATE_IMAGE_REFRESH_SELECT}
        WHERE ${STALE_IMAGE_WHERE}
-       ORDER BY is_featured DESC, COALESCE(popularity_score, 0) DESC, COALESCE(source_last_modified_time, '') DESC
+       ${STALE_IMAGE_ORDER_BY}
        LIMIT ${STALE_IMAGE_REFRESH_LIMIT}`,
     )
     .all<TemplateImageRefreshRow>();
@@ -553,12 +560,32 @@ export async function listTemplateImageRefreshRows(
   return Array.from(rowsById.values());
 }
 
-export async function listTemplateImageBackfillRows(db: D1Database, limit: number): Promise<TemplateImageRefreshRow[]> {
+export async function listTemplateImageBackfillRows(
+  db: D1Database,
+  limit: number,
+  templateSlugs: string[] = [],
+): Promise<TemplateImageRefreshRow[]> {
+  const uniqueTemplateSlugs = Array.from(new Set(templateSlugs.map((slug) => slug.trim()).filter(Boolean)));
+  if (uniqueTemplateSlugs.length > 0) {
+    const result = await db
+      .prepare(
+        `${TEMPLATE_IMAGE_REFRESH_SELECT}
+         WHERE template_slug IN (${placeholderList(uniqueTemplateSlugs.length)})
+           AND (${STALE_IMAGE_WHERE})
+         ${STALE_IMAGE_ORDER_BY}
+         LIMIT ?`,
+      )
+      .bind(...uniqueTemplateSlugs, limit)
+      .all<TemplateImageRefreshRow>();
+
+    return result.results ?? [];
+  }
+
   const result = await db
     .prepare(
       `${TEMPLATE_IMAGE_REFRESH_SELECT}
-       WHERE ${TEMP_ATTACHMENT_IMAGE_WHERE}
-       ORDER BY is_featured DESC, COALESCE(popularity_score, 0) DESC, COALESCE(source_last_modified_time, '') DESC
+       WHERE ${STALE_IMAGE_WHERE}
+       ${STALE_IMAGE_ORDER_BY}
        LIMIT ?`,
     )
     .bind(limit)

@@ -114,8 +114,17 @@ async function handleImageBackfill(request: Request, env: Env): Promise<Response
   const authError = validateAdminToken(request, env);
   if (authError) return authError;
 
-  const limit = Number(new URL(request.url).searchParams.get('limit') ?? '');
-  return jsonResponse(request, env, await backfillTemplateImages(env, { limit: Number.isFinite(limit) ? limit : undefined }));
+  const url = new URL(request.url);
+  const limitParam = url.searchParams.get('limit');
+  const limit = limitParam ? Number(limitParam) : undefined;
+  const templateSlugs = [
+    ...url.searchParams.getAll('slug'),
+    ...(url.searchParams.get('slugs') ?? '')
+      .split(',')
+      .map((slug) => slug.trim())
+      .filter(Boolean),
+  ];
+  return jsonResponse(request, env, await backfillTemplateImages(env, { limit: Number.isFinite(limit) ? limit : undefined, templateSlugs }));
 }
 
 export default {

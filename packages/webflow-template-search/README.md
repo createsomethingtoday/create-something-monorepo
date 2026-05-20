@@ -39,6 +39,9 @@ when Airtable review status changes first and Whalesync publishes or updates the
 Webflow image shortly afterward.
 
 Use `POST /api/templates/admin/backfill-images?limit=48` for historical cleanup. The endpoint scans
-existing rows with temporary Airtable thumbnail URLs, resolves stable Webflow thumbnails from the
-published template page or configured Webflow sources, and clears the temporary URL when no stable
-replacement is available.
+newest missing thumbnails plus rows with temporary Airtable thumbnail URLs, resolves stable Webflow
+thumbnails from configured Webflow sources or the published project site, and clears the temporary
+URL when no stable replacement is available.
+
+For an observed broken listing, target exact templates with `slug` or comma-separated `slugs`, e.g.
+`POST /api/templates/admin/backfill-images?slugs=qrello-website-template,gemfit-website-template`.
