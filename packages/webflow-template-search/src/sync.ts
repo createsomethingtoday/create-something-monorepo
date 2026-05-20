@@ -1,24 +1,31 @@
-import { fetchModifiedAssetsSince, fetchPublishedTemplateAssets, loadLookupMaps } from './airtable.js';
+import { fetchModifiedAssetsSince, fetchPublishedTemplateAssets, fetchPublishedTemplateImageFields, loadLookupMaps } from './airtable.js';
 import {
+  backfillCreatorAvatars,
+  backfillCreatorFieldsByName,
   clearIndex,
   deleteTemplateDocuments,
   getSyncCursor,
   listTemplateImageBackfillRows,
   listTemplateImageRefreshRows,
   recordSyncSummary,
+  refreshTemplateImageUrls,
   setSyncCursor,
   templateImageSourceStats,
   type TemplateImageUpdateInput,
   type TemplateImageRefreshRow,
+  updateCreatorAvatarsFromWebflow,
   updateTemplateDocumentImages,
+  updateTemplateImagesFromWebflow,
   upsertTemplateDocuments,
 } from './db.js';
+import { fetchWebflowDesignerAvatars, fetchWebflowTemplateImages } from './webflow.js';
 import { stripHtml } from './html.js';
 import { canonicalizeCategoryGroupSlug } from './slug.js';
 import type {
   AirtableAssetFields,
   AirtableRecord,
   Env,
+  ImageRefreshSummary,
   LookupMaps,
   SyncSummary,
   TemplateDocumentInput,
@@ -155,6 +162,25 @@ function normalizeTemplateRecord(
     previewUrl: typeof record.fields['🔗Preview Site URL'] === 'string' ? record.fields['🔗Preview Site URL'] : null,
     websiteUrl: typeof record.fields['🔗Website URL'] === 'string' ? record.fields['🔗Website URL'] : null,
     creatorName: typeof record.fields['🎨Creator Name'] === 'string' ? record.fields['🎨Creator Name'] : null,
+    creatorRecordId: (() => {
+      const ids = ensureStringArray(record.fields['🎨Creator']);
+      return ids[0] ?? null;
+    })(),
+    creatorProfileUrl: (() => {
+      const ids = ensureStringArray(record.fields['🎨Creator']);
+      const creator = ids[0] ? lookups.creators.get(ids[0]) : undefined;
+      return creator?.profileUrl || null;
+    })(),
+    creatorAvatarUrl: (() => {
+      const ids = ensureStringArray(record.fields['🎨Creator']);
+      const creator = ids[0] ? lookups.creators.get(ids[0]) : undefined;
+      return creator?.avatarUrl ?? null;
+    })(),
+    creatorAvatarAlt: (() => {
+      const ids = ensureStringArray(record.fields['🎨Creator']);
+      const creator = ids[0] ? lookups.creators.get(ids[0]) : undefined;
+      return creator?.avatarAlt ?? (creator?.name ?? null);
+    })(),
     thumbnailImageUrl: webflowImages?.thumbnailImageUrl ?? airtableThumbnailUrl,
     thumbnailImageSecondaryUrl: webflowImages?.thumbnailImageSecondaryUrl ?? airtableSecondaryThumbnailUrl,
     carouselImageUrls: attachmentUrls(record.fields['🖼️Carousel Images']),
@@ -200,7 +226,10 @@ async function runFullSync(env: Env): Promise<SyncSummary> {
 
   await clearIndex(env.DB);
   await upsertTemplateDocuments(env.DB, documents);
-  const imageRefreshedRecords = await refreshIndexedWebflowImages(env.DB, webflowImageIndex, startedAt);
+  const [backfilledRecords, imageRefreshedRecords] = await Promise.all([
+    backfillCreatorFieldsByName(env.DB, startedAt),
+    refreshIndexedWebflowImages(env.DB, webflowImageIndex, startedAt),
+  ]);
 
   const summary: SyncSummary = {
     mode: 'full',
@@ -209,6 +238,7 @@ async function runFullSync(env: Env): Promise<SyncSummary> {
     fetched_records: assets.length,
     indexed_records: documents.length,
     removed_records: 0,
+    backfilled_records: backfilledRecords,
     image_refreshed_records: imageRefreshedRecords,
     cursor: startedAt,
   };
@@ -218,14 +248,28 @@ async function runFullSync(env: Env): Promise<SyncSummary> {
   return summary;
 }
 
+// Cloudflare Workers cap at 1,000 subrequests per invocation. Each record needs
+// ~10 D1 statements (slug-eviction DELETEs + UPSERT + style/category INSERTs) and
+// lookup tables consume ~65 Airtable subrequests. To stay comfortably under the
+// limit we target ≤ 600 records per run. Bulk Airtable updates can modify thousands
+// of records in a short window, so we cap each invocation to 15 minutes of LMT
+// range — even at peak density (~4,918 records over 117 min) that yields ~630 records
+// per window, for ~800 total subrequests with safe headroom.
+const MAX_SYNC_WINDOW_MS = 15 * 60 * 1000;
+
 async function runIncrementalSync(env: Env): Promise<SyncSummary> {
   const currentCursor = await getSyncCursor(env.DB);
   if (!currentCursor) return runFullSync(env);
 
   const startedAt = nowIso();
+  const now = new Date();
+  const windowEnd = new Date(Math.min(new Date(currentCursor).getTime() + MAX_SYNC_WINDOW_MS, now.getTime()));
+  const isCaughtUp = windowEnd.getTime() >= now.getTime();
+  const windowEndIso = isCaughtUp ? undefined : windowEnd.toISOString();
+
   const [lookups, assets, webflowImageIndex] = await Promise.all([
     loadLookupMaps(env),
-    fetchModifiedAssetsSince(env, currentCursor),
+    fetchModifiedAssetsSince(env, currentCursor, windowEndIso),
     loadWebflowTemplateImageIndex(env),
   ]);
   const toUpsert: TemplateDocumentInput[] = [];
@@ -249,6 +293,17 @@ async function runIncrementalSync(env: Env): Promise<SyncSummary> {
     toUpsert.map((document) => document.id),
   );
 
+  // Creator avatar/profile updates in Airtable don't bump template LMT, so templates
+  // linked to creators who recently added avatars are missed by the window query above.
+  // Apply a targeted UPDATE pass using the freshly-loaded creator map to patch any
+  // template_document whose stored creator fields have drifted from current values.
+  const airtableBackfilledRecords = await backfillCreatorAvatars(env.DB, lookups.creators, startedAt);
+  const nameBackfilledRecords = await backfillCreatorFieldsByName(env.DB, startedAt);
+  const backfilledRecords = airtableBackfilledRecords + nameBackfilledRecords;
+
+  // When catching up, advance cursor to end of the processed window so the next
+  // invocation picks up the next 24-hour slice. When caught up, record startedAt.
+  const newCursor = isCaughtUp ? startedAt : windowEnd.toISOString();
   const summary: SyncSummary = {
     mode: 'incremental',
     started_at: startedAt,
@@ -256,17 +311,90 @@ async function runIncrementalSync(env: Env): Promise<SyncSummary> {
     fetched_records: assets.length,
     indexed_records: toUpsert.length,
     removed_records: toDelete.length,
+    backfilled_records: backfilledRecords,
     image_refreshed_records: imageRefreshedRecords,
-    cursor: startedAt,
+    cursor: newCursor,
   };
 
-  await setSyncCursor(env.DB, startedAt);
+  await setSyncCursor(env.DB, newCursor);
   await recordSyncSummary(env.DB, summary, 'last_incremental_sync');
   return summary;
 }
 
 export async function syncTemplates(env: Env, mode: 'full' | 'incremental'): Promise<SyncSummary> {
   return mode === 'full' ? runFullSync(env) : runIncrementalSync(env);
+}
+
+// Image URL refresh: prefers stable Webflow CDN URLs (never expire) when CMS_READ_ONLY
+// is configured. Falls back to Airtable signed URLs (expire ~2h) otherwise.
+// Always runs backfillCreatorAvatars from Airtable as a fallback for designers whose
+// Webflow CMS item has no sync-record-id (e.g. designers not yet linked in Webflow).
+async function runImageUrlRefresh(env: Env): Promise<ImageRefreshSummary> {
+  const startedAt = nowIso();
+
+  if (env.CMS_READ_ONLY) {
+    // Webflow path: fetch stable CDN URLs for templates and designer avatars.
+    const [templateImages, designerAvatars, lookups] = await Promise.all([
+      fetchWebflowTemplateImages(env),
+      fetchWebflowDesignerAvatars(env),
+      loadLookupMaps(env),
+    ]);
+
+    const [refreshedImages, refreshedAvatars, backfilledAvatars] = await Promise.all([
+      updateTemplateImagesFromWebflow(env.DB, templateImages, startedAt),
+      updateCreatorAvatarsFromWebflow(env.DB, designerAvatars, startedAt),
+      // Catch any designers missing from Webflow CMS (no sync-record-id) via Airtable.
+      backfillCreatorAvatars(env.DB, lookups.creators, startedAt),
+    ]);
+    const nameBackfilledAvatars = await backfillCreatorFieldsByName(env.DB, startedAt);
+
+    const summary: ImageRefreshSummary = {
+      mode: 'image_refresh',
+      started_at: startedAt,
+      finished_at: nowIso(),
+      fetched_records: templateImages.length + designerAvatars.length,
+      refreshed_records: refreshedImages + refreshedAvatars,
+      backfilled_records: backfilledAvatars + nameBackfilledAvatars,
+    };
+
+    await recordSyncSummary(env.DB, summary, 'last_image_refresh');
+    return summary;
+  }
+
+  // Airtable fallback: re-fetches only image attachment fields (~110 subrequests).
+  const [lookups, assets] = await Promise.all([
+    loadLookupMaps(env),
+    fetchPublishedTemplateImageFields(env),
+  ]);
+
+  const records = assets.map((record) => ({
+    id: record.id,
+    thumbnailImageUrl: attachmentUrl(record.fields['🖼️Thumbnail Image']),
+    thumbnailImageSecondaryUrl: attachmentUrl(record.fields['🖼️Thumbnail Image (Secondary)']),
+    carouselImageUrls: attachmentUrls(record.fields['🖼️Carousel Images']),
+  }));
+
+  const [refreshedImages, backfilledAvatars] = await Promise.all([
+    refreshTemplateImageUrls(env.DB, records, startedAt),
+    backfillCreatorAvatars(env.DB, lookups.creators, startedAt),
+  ]);
+  const nameBackfilledAvatars = await backfillCreatorFieldsByName(env.DB, startedAt);
+
+  const summary: ImageRefreshSummary = {
+    mode: 'image_refresh',
+    started_at: startedAt,
+    finished_at: nowIso(),
+    fetched_records: assets.length,
+    refreshed_records: refreshedImages,
+    backfilled_records: backfilledAvatars + nameBackfilledAvatars,
+  };
+
+  await recordSyncSummary(env.DB, summary, 'last_image_refresh');
+  return summary;
+}
+
+export async function refreshImages(env: Env): Promise<ImageRefreshSummary> {
+  return runImageUrlRefresh(env);
 }
 
 export async function backfillTemplateImages(

@@ -1,13 +1,17 @@
-import { getClientScript } from './client-script.js';
-import { healthCounts } from './db.js';
+import {
+  backfillCreatorFieldsByName,
+  healthCounts,
+  updateCreatorAvatarsFromWebflow,
+  updateTemplateImagesFromWebflow,
+} from './db.js';
 import { corsPreflight, jsonResponse, textResponse } from './http.js';
 import { parseSearchParams } from './query.js';
 import { searchTemplates } from './search.js';
-import { backfillTemplateImages, syncTemplates } from './sync.js';
+import { backfillTemplateImages, refreshImages, syncTemplates } from './sync.js';
 import type { Env } from './types.js';
+import { DESIGNERS_COLLECTION_ID, TEMPLATES_COLLECTION_ID, mapWebhookDesignerItem, mapWebhookTemplateItem, verifyWebflowSignature } from './webflow.js';
+import type { WebflowWebhookPayload } from './webflow.js';
 
-const INCREMENTAL_CRON = '*/5 * * * *';
-const FULL_REBUILD_CRON = '17 3 * * *';
 
 function parseBearerToken(request: Request): string | null {
   const auth = request.headers.get('Authorization');
@@ -35,10 +39,75 @@ async function handleSearch(request: Request, env: Env): Promise<Response> {
   return jsonResponse(request, env, await searchTemplates(env, params));
 }
 
-async function handleManualSync(request: Request, env: Env, mode: 'full' | 'incremental'): Promise<Response> {
+async function handleManualSync(
+  request: Request,
+  env: Env,
+  ctx: ExecutionContext,
+  mode: 'full' | 'incremental',
+): Promise<Response> {
   const authError = validateAdminToken(request, env);
   if (authError) return authError;
+
+  if (mode === 'full') {
+    // Full rebuild takes 5–15 min — run in background so HTTP request doesn't time out.
+    ctx.waitUntil(syncTemplates(env, mode));
+    return jsonResponse(request, env, { status: 'rebuild_started', message: 'Full rebuild started in background.' });
+  }
+
   return jsonResponse(request, env, await syncTemplates(env, mode));
+}
+
+const WEBHOOK_TRIGGER_TYPES = new Set(['collection_item_created', 'collection_item_changed', 'collection_item_published']);
+
+async function handleWebflowWebhook(request: Request, env: Env): Promise<Response> {
+  const rawBody = await request.text();
+
+  if (env.WEBFLOW_WEBHOOK_SECRET) {
+    const signature = request.headers.get('x-webflow-signature') ?? '';
+    // WEBFLOW_WEBHOOK_SECRET may be comma-separated when multiple webhook subscriptions
+    // are registered (Webflow generates a unique secret per subscription/trigger type).
+    const secrets = env.WEBFLOW_WEBHOOK_SECRET.split(',').map((s) => s.trim()).filter(Boolean);
+    let valid = false;
+    for (const secret of secrets) {
+      if (await verifyWebflowSignature(secret, rawBody, signature)) {
+        valid = true;
+        break;
+      }
+    }
+    if (!valid) return jsonResponse(request, env, { error: 'Invalid signature' }, 401);
+  }
+
+  let webhook: WebflowWebhookPayload;
+  try {
+    webhook = JSON.parse(rawBody) as WebflowWebhookPayload;
+  } catch {
+    return jsonResponse(request, env, { error: 'Invalid JSON body' }, 400);
+  }
+
+  const { triggerType, payload } = webhook;
+
+  if (!WEBHOOK_TRIGGER_TYPES.has(triggerType)) {
+    return jsonResponse(request, env, { status: 'ignored', triggerType });
+  }
+
+  const syncedAt = new Date().toISOString();
+
+  if (payload.cid === TEMPLATES_COLLECTION_ID) {
+    const record = mapWebhookTemplateItem(webhook);
+    if (!record) return jsonResponse(request, env, { status: 'ignored', reason: 'no sync-record-id or item not live' });
+    await updateTemplateImagesFromWebflow(env.DB, [record], syncedAt);
+    return jsonResponse(request, env, { status: 'updated', collection: 'templates', id: record.id });
+  }
+
+  if (payload.cid === DESIGNERS_COLLECTION_ID) {
+    const record = mapWebhookDesignerItem(webhook);
+    if (!record) return jsonResponse(request, env, { status: 'ignored', reason: 'no sync-record-id, no avatar, or item not live' });
+    const updated = await updateCreatorAvatarsFromWebflow(env.DB, [record], syncedAt);
+    const backfilled = await backfillCreatorFieldsByName(env.DB, syncedAt);
+    return jsonResponse(request, env, { status: 'updated', collection: 'designers', id: record.syncRecordId, updated, backfilled });
+  }
+
+  return jsonResponse(request, env, { status: 'ignored', reason: 'unknown collection' });
 }
 
 async function handleImageBackfill(request: Request, env: Env): Promise<Response> {
@@ -50,7 +119,7 @@ async function handleImageBackfill(request: Request, env: Env): Promise<Response
 }
 
 export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
+  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
     try {
       if (request.method === 'OPTIONS') return corsPreflight(request, env);
@@ -69,15 +138,26 @@ export default {
       }
 
       if ((url.pathname === '/api/templates/client.js' || url.pathname === '/client.js') && request.method === 'GET') {
-        return textResponse(request, env, getClientScript(env.DEFAULT_CLIENT_MODE ?? 'shadow'), 'application/javascript; charset=utf-8');
+        // Deprecated: TemplateGrid code component now handles search/filter.
+        return textResponse(request, env, '/* webflow-template-search client-script deprecated */', 'application/javascript; charset=utf-8');
       }
 
       if (url.pathname === '/api/templates/admin/rebuild' && request.method === 'POST') {
-        return handleManualSync(request, env, 'full');
+        return handleManualSync(request, env, ctx, 'full');
       }
 
       if (url.pathname === '/api/templates/admin/sync' && request.method === 'POST') {
-        return handleManualSync(request, env, 'incremental');
+        return handleManualSync(request, env, ctx, 'incremental');
+      }
+
+      if (url.pathname === '/api/templates/admin/refresh-images' && request.method === 'POST') {
+        const authError = validateAdminToken(request, env);
+        if (authError) return authError;
+        return jsonResponse(request, env, await refreshImages(env));
+      }
+
+      if (url.pathname === '/api/templates/webhooks/webflow' && request.method === 'POST') {
+        return handleWebflowWebhook(request, env);
       }
 
       if (url.pathname === '/api/templates/admin/backfill-images' && request.method === 'POST') {
@@ -96,16 +176,34 @@ export default {
   },
 
   async scheduled(controller: ScheduledController, env: Env): Promise<void> {
-    if (controller.cron === FULL_REBUILD_CRON) {
-      await syncTemplates(env, 'full');
-      return;
+    // */5 cron: incremental sync — picks up Airtable records modified since last cursor.
+    // 0 */2 cron: image URL refresh — re-fetches all thumbnail/carousel attachment URLs
+    //   (Airtable signed URLs expire in ~2h; this keeps D1 URLs fresh for the proxy).
+    const isImageRefreshCron = controller.cron === '0 */2 * * *';
+    const mode = isImageRefreshCron ? 'image_refresh' : 'incremental';
+    try {
+      if (isImageRefreshCron) {
+        await refreshImages(env);
+      } else {
+        await syncTemplates(env, 'incremental');
+      }
+    } catch (err) {
+      // Record the error so it's visible in sync_state rather than silently swallowed.
+      const errorRecord = {
+        cron: controller.cron,
+        mode,
+        failed_at: new Date().toISOString(),
+        error: err instanceof Error ? err.message : String(err),
+      };
+      try {
+        await env.DB.prepare(
+          'INSERT INTO sync_state (key, value_json, updated_at) VALUES (?, ?, ?) ON CONFLICT(key) DO UPDATE SET value_json = excluded.value_json, updated_at = excluded.updated_at',
+        )
+          .bind('last_sync_error', JSON.stringify(errorRecord), errorRecord.failed_at)
+          .run();
+      } catch {
+        // Best-effort — don't throw if DB write fails
+      }
     }
-
-    if (controller.cron === INCREMENTAL_CRON) {
-      await syncTemplates(env, 'incremental');
-      return;
-    }
-
-    await syncTemplates(env, 'incremental');
   },
 };
