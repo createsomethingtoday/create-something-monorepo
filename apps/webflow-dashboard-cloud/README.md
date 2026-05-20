@@ -27,7 +27,7 @@ The canonical parity inventory lives in [specs/webflow-dashboard-cloud-parity-ma
 Webflow Cloud should provision these Cloudflare bindings from [wrangler.json](/Volumes/LaCie/Create%20Something/create-something-monorepo/apps/webflow-dashboard-cloud/wrangler.json):
 
 - `ASSETS`: OpenNext static asset binding for the generated Next.js build
-- `DB`: D1 database for future app-owned persistence
+- `DB`: D1 database for marketplace snapshot history and future app-owned persistence
 - `SESSIONS`: KV namespace for login rate limits and session storage
 - `UPLOADS`: R2 bucket for dashboard uploads
 
@@ -109,6 +109,7 @@ API routes:
 - `DELETE /api/keys/revoke`
 - `GET /api/analytics/leaderboard`
 - `GET /api/analytics/categories`
+- `GET|POST /api/cron/snapshot`
 - `GET /api/submission-status`
 - `GET|POST /api/cron/cleanup`
 - `POST /api/intake/check-email`
@@ -136,4 +137,4 @@ API routes:
 - Webflow Cloud injects the mount path. The app reads `BASE_URL`, `ASSETS_PREFIX`, and `window.__NEXT_DATA__.assetPrefix` to resolve paths correctly under a prefixed deployment.
 - The app now includes [open-next.config.ts](/Volumes/LaCie/Create%20Something/create-something-monorepo/apps/webflow-dashboard-cloud/open-next.config.ts) and [cloudflare-env.d.ts](/Volumes/LaCie/Create%20Something/create-something-monorepo/apps/webflow-dashboard-cloud/cloudflare-env.d.ts) to match the current Webflow Cloud Next.js deployment docs.
 - The Cloud app depends on [packages/webflow-dashboard-core](/Volumes/LaCie/Create%20Something/create-something-monorepo/packages/webflow-dashboard-core) through a local `file:` dependency so a subdirectory npm install has a better chance of working in Webflow Cloud.
-- The cron cleanup route exists, but scheduling should stay external until Webflow Cloud scheduling is confirmed for this app.
+- The cron cleanup and marketplace snapshot routes exist, but scheduling should stay external until Webflow Cloud scheduling is confirmed for this app.

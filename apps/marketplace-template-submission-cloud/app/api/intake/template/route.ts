@@ -41,6 +41,7 @@ type TemplateSubmissionBody = {
   thumbnailUrl?: string;
   secondaryThumbnailUrl?: string;
   galleryUrls?: string[];
+  qualityBenchmarkConfirmed?: boolean;
   checklistConfirmed?: boolean;
   agreementConfirmed?: boolean;
   turnstileToken?: string;
@@ -233,6 +234,13 @@ export async function POST(request: Request) {
 
     if (galleryUrls.length === 0) {
       return jsonNoStore({ error: 'At least one gallery image is required.' }, { status: 400 });
+    }
+
+    if (!body.qualityBenchmarkConfirmed) {
+      return jsonNoStore(
+        { error: 'Featured quality benchmark acknowledgement is required.' },
+        { status: 400 }
+      );
     }
 
     if (!body.checklistConfirmed || !body.agreementConfirmed) {

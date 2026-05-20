@@ -18,6 +18,9 @@ interface Env {
   AIRTABLE_API_KEY?: string;
   AIRTABLE_BASE_ID?: string;
   REVIEWER_DIRECTORY_JSON?: string;
+  WEBFLOW_TEMPLATE_VALIDATION_WORKER_URL?: string;
+  GSAP_VALIDATION_WORKER_URL?: string;
+  TEMPLATE_REVIEW_VALIDATION_TIMEOUT_MS?: string;
 }
 
 type RequestProps = {
@@ -61,7 +64,11 @@ export class WebflowTemplateReviewMCP extends McpAgent<Env, unknown, RequestProp
     const getReviewer = () => getReviewerProfileForAccount(reviewerDirectory, this.props?.accountId ?? null);
 
     registerResources(this.server, getClient, getReviewer);
-    registerTools(this.server, getClient, getReviewer);
+    registerTools(this.server, getClient, getReviewer, {
+      webflowValidationWorkerUrl: this.env.WEBFLOW_TEMPLATE_VALIDATION_WORKER_URL,
+      gsapValidationWorkerUrl: this.env.GSAP_VALIDATION_WORKER_URL,
+      timeoutMs: this.env.TEMPLATE_REVIEW_VALIDATION_TIMEOUT_MS ? Number(this.env.TEMPLATE_REVIEW_VALIDATION_TIMEOUT_MS) : undefined,
+    });
     registerPrompts(this.server);
   }
 }

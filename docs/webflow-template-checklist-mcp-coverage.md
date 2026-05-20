@@ -200,9 +200,9 @@ Automation sources used for this historical matrix:
 | Required Pages | Required pages include noindex head code | Partial | Per-page robots meta checks |
 | Required Pages | Style Guide page exists and includes all tags | Partial | Page existence auto; “all tags” partial |
 | Required Pages | Instructions page exists when needed | Partial | Interaction complexity heuristics + page existence |
-| Required Pages | License page exists with `/licenses` slug | Partial | Sitemap/page checks |
+| Required Pages | License page exists and is discoverable at root or a nested folder path | Partial | Sitemap/page checks; root `/licenses` is not required |
 | Required Pages | Exact required license text at top | Auto | Page-content exact-match check |
-| Required Pages | Footer links to Licenses on every page | Partial | Multi-page footer-link crawl |
+| Required Pages | Footer links to Licenses on every page | Partial | Multi-page footer-link crawl; flag broken or misdirected utility links |
 | Required Pages | License info for custom fonts/assets with links | Partial | Content/link presence check; legal sufficiency manual |
 
 ## Coverage Totals (This Checklist)

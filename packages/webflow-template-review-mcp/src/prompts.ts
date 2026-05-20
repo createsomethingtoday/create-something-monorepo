@@ -51,48 +51,28 @@ Every review follows these phases:
 
 | Tool | What it does | When |
 |------|-------------|------|
-| \`template_review_enqueue_analyzer_review\` | Queue browser-backed analysis | Start analysis |
-| \`template_review_get_analyzer_review\` | Get results for a specific job | Poll after ~90s |
-| \`template_review_list_analyzer_reviews\` | List all jobs for a version | Check prior runs |
+| \`template_review_run_published_site_validation\` | Runs the working published-site validators: content/assets/accessibility signals, legacy IX2 interactions, GSAP/custom-code policy signals | After \`get_review_context\`, using \`publishedUrl\` only |
 
-The analyzer crawls **every page** and runs 39 automated checks:
-- **Structure**: H1 hierarchy, heading levels, required pages (license, instructions, changelog, style guide)
-- **Images**: alt text, dimensions, loading strategy, modern formats
-- **Links**: broken internal links, empty hrefs, external target="_blank"
-- **SEO**: title formula, meta tags (description, og:image), canonical URL
-- **Accessibility**: WCAG contrast, form labels, accessible link names
-- **Content**: Lorem ipsum detection, placeholder text
-- **Site Settings**: custom favicon, custom fonts with licensing, connected apps
-- **Policy**: Powered by Webflow badge, affiliate links, GSAP documentation, custom code
+This validation path is **read-only** and does not use Designer API data, Preview URLs, or Airtable writes. Treat it as supplemental published-site evidence for review triage, not as a final decision.
+
+The published-site validators cover:
+- **Content**: lorem/placeholder signals, headings, SEO metadata, links, content quality
+- **Images/assets**: asset/image issues available from the published-site worker and supplied asset data
+- **Accessibility**: validator-detectable alt text, heading, and accessibility signals
+- **Interactions**: legacy IX2 markers detected from published HTML
+- **Custom code / GSAP**: GSAP usage, flagged custom code, security-risk patterns, legacy IX2, and Unicorn Studio embeds
+
+Required utility pages do **not** need root-only slugs. License, Instructions, Changelog, and Style Guide pages may be nested in folders when they are discoverable, return 200, and visible links point to the matching utility page. Flag missing pages, broken pages, missing required license text, or utility links that point to unrelated pages.
 
 ### Interpreting Results
 
-**Severity levels:**
-| Severity | Meaning | Action |
-|----------|---------|--------|
-| \`critical\` | Blocks publishing | Must fix before approval |
-| \`major\` | Significant quality issue | Should fix, request changes |
-| \`minor\` | Nice to have | Note in feedback, don't block |
-| \`info\` | Informational | No action needed |
-
-**Check statuses:**
-| Status | Meaning |
-|--------|---------|
-| \`pass\` | Check passed |
-| \`fail\` | Failed — see \`evidence\` and \`fixHint\` |
-| \`partial\` | Partially met — see evidence |
-| \`manual\` | Requires human verification |
-
-**Overall score & grade:**
-- **A (90+)**: Strong candidate for approval
-- **B (75-89)**: Likely approvable with minor feedback
-- **C (60-74)**: Needs changes
-- **D/F (<60)**: Significant issues
+Report \`rubricCoverage\` as \`partial_published_site_validation\` unless a separate current artifact produces fuller rubric coverage. Do not invent analyzer job IDs, check IDs, score, or grade.
 
 **Common failure patterns that mean Changes Requested:**
 - Pervasive missing alt text across all pages
 - Skipped heading levels on most pages
-- Missing Instructions page when interactions exist
+- Legacy IX2 interactions detected
+- Flagged unsupported custom code or third-party embeds
 - Missing image dimensions on all pages
 - Lorem ipsum or placeholder text detected
 - Connected third-party apps (GA, FB Pixel, etc.)
@@ -142,8 +122,8 @@ The analyzer crawls **every page** and runs 39 automated checks:
 1. \`template_review_health\` — confirm connected
 2. \`template_review_list_queue\` — find work
 3. \`template_review_get_review_context\` — check capabilities
-4. \`template_review_enqueue_analyzer_review\` — start analysis
-5. \`template_review_get_analyzer_review\` — read results (~90s)
+4. \`template_review_run_published_site_validation\` — run published-site validators on \`publishedUrl\`
+5. Review supplemental evidence and manual Designer checks separately
 6. \`template_review_assign_self\` — claim the version
 7. \`template_review_request_changes\` / \`approve_version\` / \`reject_version\` — decide
 

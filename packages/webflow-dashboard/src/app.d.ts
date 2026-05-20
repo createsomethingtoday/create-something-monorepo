@@ -12,6 +12,7 @@ declare global {
 				CRON_SECRET?: string;
 				ADMIN_EMAILS?: string;
 				CSRF_TRUSTED_ORIGINS?: string;
+				SUBMISSION_STATUS_API_URL?: string;
 				ENVIRONMENT?: string;
 				DEBUG_LOGS?: string;
 				DEBUG_AIRTABLE?: string;

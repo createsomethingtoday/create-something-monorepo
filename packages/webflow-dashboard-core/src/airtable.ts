@@ -1324,7 +1324,7 @@ export function getAirtableClient(env: AirtableEnvLike | undefined) {
       };
     },
 
-    async getLeaderboard(): Promise<{
+    async getLeaderboard(options: { maxRecords?: number | null } = {}): Promise<{
       records: Array<{
         templateName: string;
         category: string;
@@ -1340,7 +1340,7 @@ export function getAirtableClient(env: AirtableEnvLike | undefined) {
       const records = await base(TABLES.LEADERBOARD)
         .select({
           view: VIEWS.LEADERBOARD,
-          maxRecords: 50,
+          ...(options.maxRecords === null ? {} : { maxRecords: options.maxRecords ?? 50 }),
           sort: [{ field: 'SALES_RANK', direction: 'asc' }]
         })
         .all();

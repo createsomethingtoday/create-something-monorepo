@@ -155,6 +155,7 @@
 	title="MCP Tools | CREATE SOMETHING AGENCY"
 	description="Composio toolkit inventory and Hub-scoped readiness for your CREATE SOMETHING access lane."
 	propertyName="agency"
+	noindex={true}
 />
 
 <ReportShell

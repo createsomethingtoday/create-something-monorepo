@@ -1,6 +1,7 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { getAirtableClient } from '$lib/server/airtable';
+import { enrichCategoriesWithHistory } from '$lib/server/marketplace-history';
 import { requireTemplateAssetAccess } from '$lib/server/template-access';
 import { getSyncMetadata } from '$lib/utils/sync-schedule';
 
@@ -34,7 +35,11 @@ export const GET: RequestHandler = async ({ locals, platform }) => {
 
 		// Fetch category performance data
 		const categoryResult = await airtable.getCategoryPerformance();
-		const categories = categoryResult.records;
+		const categories = await enrichCategoriesWithHistory(
+			platform?.env?.DB,
+			categoryResult.records,
+			categoryResult.freshness
+		);
 
 		// Calculate summary statistics
 		const topCategories = categories.slice(0, 5);

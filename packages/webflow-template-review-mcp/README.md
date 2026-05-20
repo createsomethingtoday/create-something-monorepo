@@ -45,6 +45,9 @@ Optional:
 
 - `AIRTABLE_BASE_ID` (defaults to `appMoIgXMTTTNIc3p`)
 - `REVIEWER_DIRECTORY_JSON` (JSON map from hub `account_id` to reviewer identity, used by `template_review_assign_self` and reviewer resources)
+- `WEBFLOW_TEMPLATE_VALIDATION_WORKER_URL` (defaults to `https://validation-worker.createsomething.workers.dev/validate`)
+- `GSAP_VALIDATION_WORKER_URL` (defaults to `https://gsap-validation-worker.createsomething.workers.dev/validateGsap`)
+- `TEMPLATE_REVIEW_VALIDATION_TIMEOUT_MS` (defaults to `45000`)
 
 ## Tools
 
@@ -58,6 +61,7 @@ Optional:
 - `template_review_list_versions`
 - `template_review_get_version`
 - `template_review_get_review_context`
+- `template_review_run_published_site_validation` (read-only published-site validation; no Designer/Preview data or Airtable writes)
 - `template_review_list_releases`
 - `template_review_complete_publishing`
 - `template_review_assign_reviewer`

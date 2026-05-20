@@ -10,6 +10,12 @@ export interface Env {
   AIRTABLE_STYLES_TABLE_ID?: string;
   AIRTABLE_CHILD_CATEGORIES_TABLE_ID?: string;
   AIRTABLE_TAGS_TABLE_ID?: string;
+  WEBFLOW_API_TOKEN?: string;
+  CMS_READ_ONLY?: string;
+  WEBFLOW_TEMPLATE_ASSET_SITE_ID?: string;
+  WEBFLOW_TEMPLATE_ASSET_FOLDER_ID?: string;
+  WEBFLOW_TEMPLATE_COLLECTION_ID?: string;
+  WEBFLOW_TEMPLATE_ENABLE_CMS_INDEX?: string;
   ALLOWED_ORIGINS?: string;
   DEFAULT_PAGE_SIZE?: string;
   DEFAULT_CLIENT_MODE?: string;
@@ -228,7 +234,27 @@ export interface SyncSummary {
   indexed_records: number;
   removed_records: number;
   backfilled_records: number;
+  image_refreshed_records: number;
   cursor: string;
+}
+
+export interface TemplateImageSourceStats {
+  total_rows: number;
+  rows_with_image: number;
+  rows_with_webflow_image: number;
+  rows_with_temp_airtable_image: number;
+  rows_missing_image: number;
+}
+
+export interface TemplateImageBackfillSummary {
+  mode: 'image_backfill';
+  started_at: string;
+  finished_at: string;
+  requested_limit: number;
+  scanned_records: number;
+  updated_records: number;
+  remaining_temp_airtable_rows: number;
+  image_source_stats: TemplateImageSourceStats;
 }
 
 export interface DocumentRow {

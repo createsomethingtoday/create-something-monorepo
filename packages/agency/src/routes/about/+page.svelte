@@ -39,8 +39,8 @@
 </script>
 
 <SEO
-  title={`About | Micah Johnson — ${agencyCoreMessaging.categoryLabel}`}
-  description="I build calm, transparent, reliable workflow systems for operator-owned outcomes: governed workflows, policy artifacts, and escalation surfaces that protect human judgment."
+  title="Micah Johnson | CREATE SOMETHING .agency"
+  description="Micah Johnson builds calm workflow systems for operator-owned outcomes: governed workflows, policy artifacts, and escalation surfaces for human judgment."
   keywords="Micah Johnson, governed workflow systems, production automation, systems architecture, automation reliability, workflow governance"
   ogImage="/og-image.svg"
   propertyName="agency"

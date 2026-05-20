@@ -7,7 +7,7 @@ import {
 import { corsPreflight, jsonResponse, textResponse } from './http.js';
 import { parseSearchParams } from './query.js';
 import { searchTemplates } from './search.js';
-import { refreshImages, syncTemplates } from './sync.js';
+import { backfillTemplateImages, refreshImages, syncTemplates } from './sync.js';
 import type { Env } from './types.js';
 import { DESIGNERS_COLLECTION_ID, TEMPLATES_COLLECTION_ID, mapWebhookDesignerItem, mapWebhookTemplateItem, verifyWebflowSignature } from './webflow.js';
 import type { WebflowWebhookPayload } from './webflow.js';
@@ -110,6 +110,14 @@ async function handleWebflowWebhook(request: Request, env: Env): Promise<Respons
   return jsonResponse(request, env, { status: 'ignored', reason: 'unknown collection' });
 }
 
+async function handleImageBackfill(request: Request, env: Env): Promise<Response> {
+  const authError = validateAdminToken(request, env);
+  if (authError) return authError;
+
+  const limit = Number(new URL(request.url).searchParams.get('limit') ?? '');
+  return jsonResponse(request, env, await backfillTemplateImages(env, { limit: Number.isFinite(limit) ? limit : undefined }));
+}
+
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
@@ -150,6 +158,10 @@ export default {
 
       if (url.pathname === '/api/templates/webhooks/webflow' && request.method === 'POST') {
         return handleWebflowWebhook(request, env);
+      }
+
+      if (url.pathname === '/api/templates/admin/backfill-images' && request.method === 'POST') {
+        return handleImageBackfill(request, env);
       }
 
       return jsonResponse(request, env, { error: 'Not found' }, 404);

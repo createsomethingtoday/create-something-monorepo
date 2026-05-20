@@ -154,6 +154,7 @@
 	title="Dashboard | CREATE SOMETHING AGENCY"
 	description="Access state, personal bearer token status, and ChatGPT connection status for your CREATE SOMETHING AGENCY account."
 	propertyName="agency"
+	noindex={true}
 />
 
 <ReportShell

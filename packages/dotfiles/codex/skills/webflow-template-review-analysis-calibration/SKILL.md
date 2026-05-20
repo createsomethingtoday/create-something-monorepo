@@ -6,8 +6,9 @@ description: Calibrate reviewer-facing findings for the Webflow Template Review 
 # Webflow Template Review Analysis Calibration
 
 Use this skill after the reviewer has Airtable/context access through the
-Template Review Hub and a sandbox available for bounded published-site analysis.
-The retired site analyzer MCP is no longer an active dependency.
+Template Review Hub and either `template_review_run_published_site_validation`
+or a sandbox available for bounded published-site analysis. The retired site
+analyzer MCP is no longer an active dependency.
 
 If `webflow-local` is missing, do not run plagiarism/framework checks. Fall back
 to [$webflow-template-review-reviewer](/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/dotfiles/codex/skills/webflow-template-review-reviewer/SKILL.md).
@@ -31,16 +32,27 @@ Source of truth:
 
 ## Tool Framing
 
+Use `template_review_run_published_site_validation` for:
+
+- published-site content/assets/accessibility-signal checks
+- legacy IX2 interaction markers
+- GSAP/custom-code policy signals
+- Unicorn Studio and security-risk pattern signals
+
+Treat its `rubricCoverage` as `partial_published_site_validation` unless a
+separate current artifact produces fuller rubric coverage.
+
 Use the agent sandbox for:
 
 - page structure
 - SEO extraction
 - screenshots
 - published-site media and performance evidence
+- responsive behavior, visual accessibility, and interaction behavior beyond validator coverage
 
-Do not claim Designer metadata, Audit Panel results, Library state, or custom-code
-state unless those are directly available from the reviewer context or a manual
-inspection artifact.
+Do not claim Designer metadata, Audit Panel results, or Library state unless those
+are directly available from the reviewer context or a manual inspection artifact.
+Only claim custom-code state when it comes from validator output or manual inspection.
 
 Use `webflow-local` for:
 

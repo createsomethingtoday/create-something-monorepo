@@ -1,23 +1,69 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { uploadToR2 } from '$lib/server/r2';
+import { checkRateLimit } from '$lib/server/kv';
+import { isSameOriginRequest } from '$lib/server/security';
 import { getWebPDimensions, validateMimeType, validateWebP } from '$lib/utils/upload-validation';
 
 const AVATAR_MAX_FILE_SIZE = 100 * 1024;
 const AVATAR_WIDTH = 256;
 const AVATAR_HEIGHT = 256;
 
-export const POST: RequestHandler = async ({ request, platform }) => {
+export const POST: RequestHandler = async ({ request, platform, getClientAddress }) => {
 	const uploads = platform?.env?.UPLOADS;
+	const sessions = platform?.env?.SESSIONS;
 
 	if (!uploads) {
 		return json({ error: 'Storage not configured.' }, { status: 500 });
 	}
 
+	if (!sessions) {
+		return json({ error: 'Upload rate limiting is not configured.' }, { status: 503 });
+	}
+
+	if (!isSameOriginRequest(request, new URL(request.url).origin)) {
+		return json({ error: 'Invalid request origin.' }, { status: 403 });
+	}
+
 	try {
+		const ipLimit = await checkRateLimit(
+			sessions,
+			`auth:signup-upload:${getClientAddress()}`,
+			10,
+			900,
+			{ failOpen: false }
+		);
+
+		if (!ipLimit.allowed) {
+			return json(
+				{ error: 'Too many upload attempts. Please try again later.', retryAfter: ipLimit.retryAfter },
+				{ status: 429 }
+			);
+		}
+
 		const formData = await request.formData();
 		const file = formData.get('file');
 		const email = String(formData.get('email') || '').trim().toLowerCase();
+
+		if (email) {
+			const emailLimit = await checkRateLimit(
+				sessions,
+				`auth:signup-upload-email:${email}`,
+				5,
+				900,
+				{ failOpen: false }
+			);
+
+			if (!emailLimit.allowed) {
+				return json(
+					{
+						error: 'Too many upload attempts for this email. Please try again later.',
+						retryAfter: emailLimit.retryAfter
+					},
+					{ status: 429 }
+				);
+			}
+		}
 
 		if (!file || !(file instanceof File)) {
 			return json({ error: 'No file uploaded.' }, { status: 400 });

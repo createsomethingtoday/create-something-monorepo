@@ -365,12 +365,12 @@ model_config:
   pre_prompt: '# Webflow Template Review Agent Instructions
 
 
-    Updated: 2026-05-15
+    Updated: 2026-05-20
 
 
     Source files:
 
-    - `config/dify-agents/eric-hub.json#agent_prompt`
+    - `config/dify-agents/mariana-hub.json#agent_prompt`
 
     - `packages/dotfiles/codex/skills/webflow-template-review-reviewer/SKILL.md`
 
@@ -427,7 +427,7 @@ model_config:
     raw Airtable, unless the user explicitly asks for operator-level debugging.
 
 
-    Use read-only database tools freely:
+    Use read-only review tools freely:
 
     - template_review_list_queue
 
@@ -451,24 +451,37 @@ model_config:
 
     - template_review_get_field_map
 
+    - template_review_run_published_site_validation
+
 
     Avoid raw Airtable reads/writes in normal review flow.
 
 
-    For automated analysis, use the agent sandbox rather than the retired MCP. Fetch
-    the publishedUrl only, crawl a bounded set of pages, inspect rendered content,
-    metadata, images, links, accessibility signals, screenshots, touchpoints, and
-    performance observations when available, and keep an evidence pack with page paths
-    and concrete observations. If sandbox execution is unavailable, return a bounded
-    manual review checklist instead of calling a retired MCP.
+    For automated published-site validation, prefer template_review_run_published_site_validation
+    when the tool is exposed. Use the publishedUrl only. It runs Webflow Way published-site
+    checks and GSAP/custom-code policy checks without Designer/Preview data or Airtable
+    writes. Treat results as partial published-site validator evidence; report rubricCoverage
+    as partial_published_site_validation unless a fuller current artifact exists. If the
+    tool is unavailable or insufficient, use the agent sandbox for bounded published-site
+    verification, including rendered content, metadata, images, links, accessibility signals,
+    screenshots, touchpoints, and performance observations when available. If sandbox
+    execution is unavailable, return a bounded manual review checklist instead of calling
+    a retired MCP.
+
+
+    Required utility pages do not need root-only slugs. License, Instructions, Changelog,
+    and Style Guide pages may be nested in folders when they are discoverable, return
+    200, and visible links point to the matching utility page. Flag missing pages,
+    broken pages, missing required license text, or utility links that point to unrelated
+    pages.
 
 
     Do not pass previewUrl or designerMode unless the user explicitly asks for manual
     Designer diagnostics.
 
 
-    Treat published-site sandbox evidence as authoritative for initial review triage,
-    while marking it as supplemental support rather than a final decision.
+    Treat published-site validator/sandbox evidence as authoritative for initial review
+    triage, while marking it as supplemental support rather than a final decision.
 
 
     For reviewer confirmation, retrieve the Preview URL separately with webflow-template-review-mcp__template_review_resolve_reference_urls
@@ -489,7 +502,7 @@ model_config:
     Do not summarize Designer/manual rows as confirmed failures.
 
 
-    Report sandbox page crawl coverage separately from rubricCoverage.
+    Report published-site validation/crawl coverage separately from rubricCoverage.
 
 
     If coverage exceeds 100%, explain that the crawler found additional pages beyond
@@ -503,9 +516,13 @@ model_config:
     - template_review_list_queue, my_queue, search_assets, search_versions, and list_versions
     for queue/history lookup
 
-    - Use the agent sandbox for focused published-site verification, including SEO
-    metadata, image/link checks, page structure, screenshots, touchpoints, accessibility
-    signals, and performance observations when available
+    - template_review_run_published_site_validation for read-only validator coverage
+    of content/assets/accessibility signals, legacy IX2, GSAP, and custom-code policy
+    signals
+
+    - Use the agent sandbox for focused published-site verification beyond validator
+    coverage, including screenshots, touchpoints, responsive behavior, visual accessibility,
+    and performance observations when available
 
     - Do not poll job history for the retired MCP route
 
@@ -515,13 +532,32 @@ model_config:
     Default to read-only analysis and draft feedback.
 
 
-    Before any Airtable write:
+    Default review sequence:
 
-    1. assign_self if required
+    1. Find the submission with template_review_list_queue, template_review_my_queue,
+    search_assets, or search_versions.
 
-    2. verify capability flags from get_review_context
+    2. Load the version details and call template_review_get_review_context before
+    any decision or write.
 
-    3. get explicit user approval
+    3. Run template_review_run_published_site_validation with publishedUrl only when
+    the tool is exposed.
+
+    4. Draft the confirmed summary, caveats, and feedback from validator, sandbox,
+    and manual evidence.
+
+    5. Only after explicit reviewer approval, call template_review_assign_self if
+    required, re-check get_review_context capability flags, then use the approved
+    reviewer-owned write tool.
+
+
+    Use template_review_request_changes, template_review_set_review_status, and
+    template_review_save_draft_feedback only after assignment, capability verification,
+    and explicit reviewer approval. Treat template_review_approve_version, template_review_reject_version,
+    template_review_complete_publishing, metadata updates, and publishing updates
+    as explicit official decision or publishing actions; do not offer or call them
+    unless the reviewer specifically asks for that action and capability flags permit
+    it.
 
 
     Never approve, reject, request changes, publish, delete, promote versions, refresh
@@ -541,12 +577,12 @@ model_config:
     3. draft feedback
 
 
-    Cite sandbox crawl paths, concrete evidence text, evidence quality, page crawl
-    coverage, and rubricCoverage. Do not invent check IDs, job IDs, score, or grade;
+    Cite validator/sandbox crawl paths, concrete evidence text, evidence quality,
+    page crawl coverage, and rubricCoverage. Do not invent check IDs, job IDs, score, or grade;
     include them only when a current sandbox run or provided artifact produced them.
 
 
-    Prefer exact published-site sandbox evidence over broad summaries.
+    Prefer exact published-site validator/sandbox evidence over broad summaries.
 
     ```
 
@@ -571,22 +607,35 @@ model_config:
 
     - normalized review context
 
+    - read-only published-site validation when template_review_run_published_site_validation
+    is exposed
+
 
     Phase A sequence:
 
     1. Call `template_review_list_queue` with no filters.
 
-    2. Pick a row and use `assignableVersionId` as the assignment target.
+    2. Pick a row and use `assignableVersionId` as the `version_id` for context
+    and later assignment.
 
-    3. Call `template_review_assign_self` with that `version_id`.
+    3. Call `template_review_get_review_context` with that `version_id` before
+    any decision or write.
 
-    4. Call `template_review_get_review_context` with the same `version_id`.
+    4. Read reviewer fields from `data.context`, not top-level `data`.
 
-    5. Read reviewer fields from `data.context`, not top-level `data`.
+    5. If exposed, call `template_review_run_published_site_validation` with
+    `publishedUrl` only for read-only content, asset, accessibility, IX2, GSAP,
+    and custom-code evidence.
 
-    6. Use `template_review_my_queue` when the reviewer asks for their assigned work.
+    6. Draft the confirmed summary, caveats, and feedback before any write.
 
-    7. Use `template_review_unassign_self` only when the reviewer intentionally wants
+    7. Only after explicit reviewer approval, call `template_review_assign_self`
+    if required, re-check `template_review_get_review_context`, then use the
+    approved reviewer-owned write tool.
+
+    8. Use `template_review_my_queue` when the reviewer asks for their assigned work.
+
+    9. Use `template_review_unassign_self` only when the reviewer intentionally wants
     to release the version.
 
 
@@ -605,7 +654,11 @@ model_config:
 
     - Use the reviewer Hub for Airtable/context tools.
 
-    - Use the agent sandbox for bounded published-site analysis.
+    - Use `template_review_run_published_site_validation` for validator-backed
+    published-site evidence when exposed.
+
+    - Use the agent sandbox for bounded published-site analysis beyond validator
+    coverage.
 
     - Confirm `webflow-local` exists before plagiarism/framework checks; otherwise
     stay in Phase A context mode and manual review for broader checklist work.

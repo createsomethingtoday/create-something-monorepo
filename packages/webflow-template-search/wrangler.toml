@@ -20,6 +20,8 @@ AIRTABLE_ASSETS_TABLE_ID = "tblRwzpWoLgE9MrUm"
 AIRTABLE_STYLES_TABLE_ID = "tblG7E9LbQj0sBX0o"
 AIRTABLE_CHILD_CATEGORIES_TABLE_ID = "tblWJXy3M6R8SeoFi"
 AIRTABLE_TAGS_TABLE_ID = "tblb4969G7O75gVWV"
+WEBFLOW_TEMPLATE_ASSET_SITE_ID = "5e593fb060cf877cf875dd1f"
+WEBFLOW_TEMPLATE_COLLECTION_ID = "641b464e78789f611a5d4496"
 ALLOWED_ORIGINS = "https://webflow.com,https://www.webflow.com,https://templates.webflow.com,https://template-marketplace.webflow.io,*.webflow.com"
 DEFAULT_PAGE_SIZE = "24"
 DEFAULT_CLIENT_MODE = "shadow"
@@ -30,5 +32,6 @@ crons = ["*/5 * * * *", "0 */2 * * *"]
 # Secrets:
 # - AIRTABLE_API_KEY
 # - SYNC_ADMIN_TOKEN
+# - WEBFLOW_API_TOKEN
 # - CMS_READ_ONLY           (Webflow Data API read-only token; enables stable CDN image URLs)
 # - WEBFLOW_WEBHOOK_SECRET  (Webflow webhook signing secret; validates incoming webhook payloads)

@@ -23,9 +23,22 @@ import {
 const IMAGE_CONSTRAINTS = {
   avatar: { width: 256, height: 256, maxSize: 100 * 1024, label: 'Profile image' },
   thumbnail: { width: 750, height: 995, maxSize: 300 * 1024, label: 'Thumbnail' },
-  'secondary-thumbnail': { width: 750, height: 995, maxSize: 300 * 1024, label: 'Secondary thumbnail' },
+  'secondary-thumbnail': {
+    width: 750,
+    height: 995,
+    maxSize: 300 * 1024,
+    label: 'Secondary thumbnail'
+  },
   gallery: { width: 1440, height: 900, maxSize: 250 * 1024, label: 'Gallery image' }
 } as const;
+const TEMPLATE_SEARCH_API_BASE = (
+  process.env.NEXT_PUBLIC_TEMPLATE_SEARCH_API_BASE ||
+  'https://webflow-template-search.createsomething.workers.dev'
+).replace(/\/$/, '');
+const ASSET_DASHBOARD_URL = 'https://webflow.com/templates/dashboard/assets';
+const FEATURED_TEMPLATES_URL = 'https://webflow.com/templates/featured';
+const FEATURED_QUALITY_VISIBLE_COUNT = 4;
+const FEATURED_QUALITY_POOL_SIZE = 16;
 
 type ImageKind = keyof typeof IMAGE_CONSTRAINTS;
 
@@ -140,8 +153,31 @@ type TemplateFormState = {
   thumbnailFile: File | null;
   secondaryThumbnailFile: File | null;
   galleryFiles: File[];
+  qualityBenchmarkConfirmed: boolean;
   checklistConfirmed: boolean;
   agreementConfirmed: boolean;
+};
+
+type FeaturedTemplateItem = {
+  id: string;
+  template_slug: string;
+  name: string;
+  url: string | null;
+  creator_name: string | null;
+  thumbnail_image_url: string | null;
+  thumbnail_image_secondary_url: string | null;
+  is_featured: boolean;
+  is_free?: boolean;
+  template_type?: string | null;
+  category_groups?: Array<{ name: string; slug: string; url: string }>;
+};
+
+type FeaturedTemplateSearchResponse = {
+  items?: FeaturedTemplateItem[];
+  pagination?: {
+    page?: number;
+    total_pages?: number;
+  };
 };
 
 type TemplateAutofillState = Partial<
@@ -176,6 +212,11 @@ type TemplateAutofillPayload = {
 type TemplateAutofillAssets = {
   screenshotCount: number;
   screenshotsDownloadUrl: string;
+};
+
+type SubmittedTemplateState = {
+  name: string;
+  warning?: string;
 };
 
 type VerificationState = {
@@ -228,6 +269,7 @@ const initialTemplateState: TemplateFormState = {
   thumbnailFile: null,
   secondaryThumbnailFile: null,
   galleryFiles: [],
+  qualityBenchmarkConfirmed: false,
   checklistConfirmed: false,
   agreementConfirmed: false
 };
@@ -246,14 +288,14 @@ function shouldAutofillArray(current: readonly string[], previous?: readonly str
 
 function shouldAutofillPriceModel(
   current: TemplateFormState['priceModel'],
-  previous?: TemplateFormState['priceModel'],
+  previous?: TemplateFormState['priceModel']
 ) {
   return current === 'Free' || current === previous;
 }
 
 function shouldAutofillPageCount(
   current: TemplateFormState['pageCount'],
-  previous?: TemplateFormState['pageCount'],
+  previous?: TemplateFormState['pageCount']
 ) {
   return current === '' || current === previous;
 }
@@ -300,6 +342,312 @@ function statusClassName(tone: Tone) {
   return 'submission-status submission-status-info';
 }
 
+function isUsableFeaturedImageUrl(value: string) {
+  try {
+    const url = new URL(value);
+    if (url.protocol !== 'https:' && url.protocol !== 'http:') return false;
+    return !url.hostname.endsWith('airtableusercontent.com') && url.hostname !== 'dl.airtable.com';
+  } catch {
+    return false;
+  }
+}
+
+function featuredTemplateImage(item: FeaturedTemplateItem) {
+  return (
+    [item.thumbnail_image_url, item.thumbnail_image_secondary_url].find(
+      (value): value is string => Boolean(value && isUsableFeaturedImageUrl(value))
+    ) || ''
+  );
+}
+
+function featuredTemplateDetail(item: FeaturedTemplateItem) {
+  return item.category_groups?.[0]?.name || item.template_type || (item.is_free ? 'Free' : 'Featured');
+}
+
+function visibleFeaturedTemplates(templates: FeaturedTemplateItem[], offset: number) {
+  if (templates.length <= FEATURED_QUALITY_VISIBLE_COUNT) return templates;
+  return Array.from(
+    { length: FEATURED_QUALITY_VISIBLE_COUNT },
+    (_, index) => templates[(offset + index) % templates.length]
+  );
+}
+
+function FeaturedQualityShowcase() {
+  const [templates, setTemplates] = useState<FeaturedTemplateItem[]>([]);
+  const [status, setStatus] = useState<'loading' | 'ready' | 'refreshing' | 'fallback'>(
+    'loading'
+  );
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [offset, setOffset] = useState(0);
+  const requestRef = useRef<AbortController | null>(null);
+
+  async function loadFeaturedTemplates(nextPage: number, mode: 'initial' | 'refresh' = 'initial') {
+    requestRef.current?.abort();
+    const controller = new AbortController();
+    requestRef.current = controller;
+    setStatus(mode === 'refresh' && templates.length > 0 ? 'refreshing' : 'loading');
+
+    try {
+      const url = new URL('/api/templates/search', TEMPLATE_SEARCH_API_BASE);
+      url.searchParams.set('scope', 'featured');
+      url.searchParams.set('page_size', String(FEATURED_QUALITY_POOL_SIZE));
+      url.searchParams.set('page', String(nextPage));
+      url.searchParams.set('sort', 'popular');
+
+      const response = await fetch(url.toString(), {
+        signal: controller.signal
+      });
+      if (!response.ok) throw new Error('Failed to load featured templates.');
+
+      const payload = (await response.json()) as FeaturedTemplateSearchResponse;
+      const items = (payload.items ?? [])
+        .filter((item) => item.name && featuredTemplateImage(item))
+        .slice(0, FEATURED_QUALITY_POOL_SIZE);
+
+      if (!controller.signal.aborted) {
+        setTemplates(items);
+        setOffset(0);
+        setPage(payload.pagination?.page || nextPage);
+        setTotalPages(Math.max(1, payload.pagination?.total_pages || 1));
+        setStatus(items.length > 0 ? 'ready' : 'fallback');
+      }
+    } catch {
+      if (!controller.signal.aborted) setStatus(templates.length > 0 ? 'ready' : 'fallback');
+    }
+  }
+
+  useEffect(() => {
+    void loadFeaturedTemplates(1);
+    return () => requestRef.current?.abort();
+  }, []);
+
+  const isBusy = status === 'loading' || status === 'refreshing';
+  const visibleTemplates = visibleFeaturedTemplates(templates, offset);
+  const canCycle = templates.length > FEATURED_QUALITY_VISIBLE_COUNT || totalPages > 1;
+
+  function cycleFeaturedTemplates() {
+    if (isBusy) return;
+
+    if (
+      templates.length > FEATURED_QUALITY_VISIBLE_COUNT &&
+      offset + FEATURED_QUALITY_VISIBLE_COUNT < templates.length
+    ) {
+      setOffset(offset + FEATURED_QUALITY_VISIBLE_COUNT);
+      return;
+    }
+
+    const nextPage = totalPages > 1 && page < totalPages ? page + 1 : 1;
+    void loadFeaturedTemplates(nextPage, 'refresh');
+  }
+
+  return (
+    <section className="featured-quality-showcase" aria-labelledby="featured-quality-title">
+      <div className="featured-quality-header">
+        <div className="featured-quality-heading-row">
+          <div className="submission-step-label submission-step-label-secondary">
+            Quality benchmark
+          </div>
+          <button
+            aria-label="Refresh Featured template examples"
+            className={isBusy ? 'featured-quality-refresh is-refreshing' : 'featured-quality-refresh'}
+            disabled={!canCycle || isBusy}
+            onClick={cycleFeaturedTemplates}
+            title="Refresh Featured template examples"
+            type="button"
+          >
+            <span aria-hidden="true" className="featured-quality-refresh-icon">
+              ↻
+            </span>
+            <span>Refresh</span>
+          </button>
+        </div>
+        <h3 className="featured-quality-title" id="featured-quality-title">
+          Build toward Featured quality
+        </h3>
+        <p className="featured-quality-copy">
+          Featured templates set the bar for Marketplace-ready work: a sharp first impression,
+          complete content, polished breakpoints, and category clarity.
+        </p>
+      </div>
+
+      {visibleTemplates.length > 0 ? (
+        <div
+          aria-busy={isBusy}
+          aria-label="Featured template examples"
+          className="featured-quality-grid"
+        >
+          {visibleTemplates.map((item) => {
+            const imageUrl = featuredTemplateImage(item);
+            return (
+              <a
+                className="featured-quality-card"
+                href={item.url || FEATURED_TEMPLATES_URL}
+                key={item.id || item.template_slug}
+                rel="noreferrer"
+                target="_blank"
+              >
+                <span className="featured-quality-image-wrap">
+                  <img
+                    alt={`${item.name} template thumbnail`}
+                    className="featured-quality-image"
+                    loading="lazy"
+                    onError={() => {
+                      setTemplates((current) =>
+                        current.filter((template) => template.id !== item.id)
+                      );
+                      setOffset(0);
+                    }}
+                    src={imageUrl}
+                  />
+                </span>
+                <span className="featured-quality-card-copy">
+                  <span className="featured-quality-card-title">{item.name}</span>
+                  {item.creator_name ? (
+                    <span className="featured-quality-card-meta">{item.creator_name}</span>
+                  ) : null}
+                  <span className="featured-quality-card-detail">
+                    {featuredTemplateDetail(item)}
+                  </span>
+                </span>
+              </a>
+            );
+          })}
+        </div>
+      ) : (
+        <div
+          className="featured-quality-fallback"
+          aria-live={status === 'loading' ? 'polite' : undefined}
+        >
+          {status === 'loading'
+            ? 'Loading Featured examples...'
+            : 'Review Featured templates before submitting, then compare your spacing, responsive behavior, content completeness, and category fit.'}
+        </div>
+      )}
+
+      <div className="featured-quality-checks" aria-label="Quality signals">
+        <span>Complete content</span>
+        <span>Responsive polish</span>
+        <span>Sharp first impression</span>
+        <span>Review-ready assets</span>
+      </div>
+
+      <div className="featured-quality-actions">
+        <a
+          className="featured-quality-link"
+          href={FEATURED_TEMPLATES_URL}
+          rel="noreferrer"
+          target="_blank"
+        >
+          <span>Review Featured templates</span>
+          <span aria-hidden="true" className="featured-quality-link-icon">
+            -&gt;
+          </span>
+        </a>
+        {templates.length > FEATURED_QUALITY_VISIBLE_COUNT ? (
+          <span className="featured-quality-count">
+            {offset + 1}-{Math.min(offset + FEATURED_QUALITY_VISIBLE_COUNT, templates.length)} of{' '}
+            {templates.length}
+          </span>
+        ) : null}
+      </div>
+    </section>
+  );
+}
+
+function TemplateSubmissionSuccessPanel({
+  submission,
+  onSubmitAnother
+}: {
+  submission: SubmittedTemplateState;
+  onSubmitAnother: () => void;
+}) {
+  return (
+    <div className="submission-form submission-success-panel" aria-live="polite">
+      <div>
+        <div className="submission-success-kicker">Submission received</div>
+        <h3 className="submission-success-title">Template submitted for review</h3>
+        <p className="submission-success-copy">
+          Reviewers will process this submission next. The Asset Dashboard gives creators a place to
+          review assets, track review activity, run validation checks, and see Marketplace Insights
+          when available.
+        </p>
+      </div>
+
+      <div className="submission-status submission-status-success">
+        {submission.name
+          ? `${submission.name} is now in the review queue.`
+          : 'Your template is now in the review queue.'}
+      </div>
+
+      {submission.warning ? (
+        <div className="submission-status submission-status-warning">{submission.warning}</div>
+      ) : null}
+
+      <div className="submission-dashboard-handoff">
+        <div className="submission-dashboard-handoff-copy">
+          <div className="submission-step-label submission-step-label-secondary">
+            Creator workspace
+          </div>
+          <h4 className="submission-dashboard-title">Use the Asset Dashboard while reviewers work</h4>
+          <p className="submission-dashboard-copy">
+            It gives creators one place to follow review activity, prepare the next submission, and
+            use the same quality tools our team references.
+          </p>
+        </div>
+        <a className="submission-dashboard-cta" href={ASSET_DASHBOARD_URL} target="_top">
+          <span>Open Asset Dashboard</span>
+          <span aria-hidden="true" className="submission-dashboard-cta-icon">
+            -&gt;
+          </span>
+        </a>
+      </div>
+
+      <div className="submission-success-tool-list" aria-label="Asset Dashboard tools">
+        <div className="submission-success-tool">
+          <span className="submission-success-tool-marker" aria-hidden="true">
+            01
+          </span>
+          <div>
+            <span className="submission-success-tool-label">Review status</span>
+            <span className="submission-success-tool-copy">
+              Check existing asset status and updates.
+            </span>
+          </div>
+        </div>
+        <div className="submission-success-tool">
+          <span className="submission-success-tool-marker" aria-hidden="true">
+            02
+          </span>
+          <div>
+            <span className="submission-success-tool-label">Validator</span>
+            <span className="submission-success-tool-copy">
+              Run checks before the next submission.
+            </span>
+          </div>
+        </div>
+        <div className="submission-success-tool">
+          <span className="submission-success-tool-marker" aria-hidden="true">
+            03
+          </span>
+          <div>
+            <span className="submission-success-tool-label">Insights</span>
+            <span className="submission-success-tool-copy">
+              See Marketplace signals when access is available.
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div className="submission-actions">
+        <button className="button-sp cc-white" type="button" onClick={onSubmitAnother}>
+          Submit another template
+        </button>
+      </div>
+    </div>
+  );
+}
+
 const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '';
 
 export function TemplateIntake() {
@@ -317,6 +665,7 @@ export function TemplateIntake() {
   });
   const [creatorStatus, setCreatorStatus] = useState<StatusMessage | null>(null);
   const [templateStatus, setTemplateStatus] = useState<StatusMessage | null>(null);
+  const [submittedTemplate, setSubmittedTemplate] = useState<SubmittedTemplateState | null>(null);
   const [creatorSubmitting, setCreatorSubmitting] = useState(false);
   const [templateSubmitting, setTemplateSubmitting] = useState(false);
   const [fieldFeedback, setFieldFeedback] = useState<Record<string, StatusMessage | null>>({});
@@ -378,10 +727,7 @@ export function TemplateIntake() {
 
     let lastHeight = 0;
     const postHeight = () => {
-      const height = Math.max(
-        document.documentElement.scrollHeight,
-        document.body.scrollHeight
-      );
+      const height = Math.max(document.documentElement.scrollHeight, document.body.scrollHeight);
       if (height === lastHeight) return;
       lastHeight = height;
       window.parent.postMessage({ type: 'ts-submission:resize', height }, '*');
@@ -442,7 +788,12 @@ export function TemplateIntake() {
   }
 
   function ensureTurnstile(stepName: TurnstileStep) {
-    if (!turnstileEnabled || !turnstileReady || typeof window === 'undefined' || !window.turnstile) {
+    if (
+      !turnstileEnabled ||
+      !turnstileReady ||
+      typeof window === 'undefined' ||
+      !window.turnstile
+    ) {
       return;
     }
 
@@ -501,17 +852,17 @@ export function TemplateIntake() {
     creator.webflowEmail.trim() !== '';
   const creatorIdentityStarted = Boolean(
     creator.country ||
-      creator.legalName ||
-      creator.biography ||
-      creator.avatarFile ||
-      creator.agreedToTerms
+    creator.legalName ||
+    creator.biography ||
+    creator.avatarFile ||
+    creator.agreedToTerms
   );
   const creatorIdentityComplete = Boolean(
     creator.country.trim() &&
-      creator.legalName.trim() &&
-      creator.biography.trim() &&
-      creator.avatarFile &&
-      creator.agreedToTerms
+    creator.legalName.trim() &&
+    creator.biography.trim() &&
+    creator.avatarFile &&
+    creator.agreedToTerms
   );
   const creatorVerificationStarted = Boolean(
     creator.primaryEmail.trim() || creator.webflowEmail.trim()
@@ -542,40 +893,45 @@ export function TemplateIntake() {
     template.publishedUrl.trim() !== '';
   const templateValidationStarted = Boolean(
     template.creatorEmail.trim() ||
-      template.templateName.trim() ||
-      template.publishedUrl.trim() ||
-      template.previewUrl.trim()
+    template.templateName.trim() ||
+    template.publishedUrl.trim() ||
+    template.previewUrl.trim()
   );
   const templateValidationComplete =
-    templateCreatorEligible && templateNameVerified && templatePublishedValidated && previewUrlValid;
+    templateCreatorEligible &&
+    templateNameVerified &&
+    templatePublishedValidated &&
+    previewUrlValid;
   const templatePriceReady = template.priceModel === 'Free' || template.selectedPrice !== null;
   const templateDetailsStarted = Boolean(
     template.creatorName.trim() ||
-      template.categories.length ||
-      template.styles.length ||
-      template.shortDescription.trim() ||
-      template.longDescription.trim() ||
-      template.thumbnailFile ||
-      template.galleryFiles.length ||
-      template.checklistConfirmed ||
-      template.agreementConfirmed
+    template.categories.length ||
+    template.styles.length ||
+    template.shortDescription.trim() ||
+    template.longDescription.trim() ||
+    template.thumbnailFile ||
+    template.galleryFiles.length ||
+    template.qualityBenchmarkConfirmed ||
+    template.checklistConfirmed ||
+    template.agreementConfirmed
   );
   const templateDetailsComplete = Boolean(
     template.creatorName.trim() &&
-      template.creatorEmail.trim() &&
-      template.templateName.trim() &&
-      template.publishedUrl.trim() &&
-      template.previewUrl.trim() &&
-      template.pageCount &&
-      template.categories.length > 0 &&
-      template.styles.length > 0 &&
-      template.shortDescription.trim() &&
-      template.longDescription.trim() &&
-      template.thumbnailFile &&
-      template.galleryFiles.length > 0 &&
-      template.checklistConfirmed &&
-      template.agreementConfirmed &&
-      templatePriceReady
+    template.creatorEmail.trim() &&
+    template.templateName.trim() &&
+    template.publishedUrl.trim() &&
+    template.previewUrl.trim() &&
+    template.pageCount &&
+    template.categories.length > 0 &&
+    template.styles.length > 0 &&
+    template.shortDescription.trim() &&
+    template.longDescription.trim() &&
+    template.thumbnailFile &&
+    template.galleryFiles.length > 0 &&
+    template.qualityBenchmarkConfirmed &&
+    template.checklistConfirmed &&
+    template.agreementConfirmed &&
+    templatePriceReady
   );
   const templateSubmitted = templateStatus?.tone === 'success';
   const templateReadyToSubmit =
@@ -645,10 +1001,7 @@ export function TemplateIntake() {
             next.typeCms
           ).prices;
 
-          if (
-            next.selectedPrice !== null &&
-            !allowedPrices.includes(next.selectedPrice)
-          ) {
+          if (next.selectedPrice !== null && !allowedPrices.includes(next.selectedPrice)) {
             next.selectedPrice = null;
           }
         }
@@ -692,7 +1045,7 @@ export function TemplateIntake() {
 
   function applyTemplateAutofill(
     autofill: TemplateAutofillPayload | undefined,
-    options: { gsapDetected: boolean },
+    options: { gsapDetected: boolean }
   ) {
     let detailsApplied = false;
     const managedNext: TemplateAutofillState = {};
@@ -705,7 +1058,7 @@ export function TemplateIntake() {
 
         return {
           ...current,
-          featureIds: [...new Set([...current.featureIds, 'gsap'])],
+          featureIds: [...new Set([...current.featureIds, 'gsap'])]
         };
       }
 
@@ -724,10 +1077,7 @@ export function TemplateIntake() {
       if (
         autofill.shortDescription &&
         autofill.shortDescription !== current.shortDescription &&
-        shouldAutofillText(
-          current.shortDescription,
-          autofillManaged.shortDescription,
-        )
+        shouldAutofillText(current.shortDescription, autofillManaged.shortDescription)
       ) {
         next.shortDescription = autofill.shortDescription;
         managedNext.shortDescription = autofill.shortDescription;
@@ -777,10 +1127,7 @@ export function TemplateIntake() {
       if (
         typeof autofill.typeEcommerce === 'boolean' &&
         autofill.typeEcommerce !== current.typeEcommerce &&
-        shouldAutofillBoolean(
-          current.typeEcommerce,
-          autofillManaged.typeEcommerce,
-        )
+        shouldAutofillBoolean(current.typeEcommerce, autofillManaged.typeEcommerce)
       ) {
         next.typeEcommerce = autofill.typeEcommerce;
         managedNext.typeEcommerce = autofill.typeEcommerce;
@@ -811,8 +1158,8 @@ export function TemplateIntake() {
         ...new Set([
           ...DEFAULT_FEATURE_IDS,
           ...(autofill.featureIds ?? []),
-          ...(options.gsapDetected ? ['gsap'] : []),
-        ]),
+          ...(options.gsapDetected ? ['gsap'] : [])
+        ])
       ];
 
       if (shouldAutofillFeatureIds(current.featureIds, autofillManaged.featureIds)) {
@@ -831,10 +1178,7 @@ export function TemplateIntake() {
         next.selectedPrice = null;
       } else {
         const allowedPrices = getPricingTiers(next.pageCount, next.typeCms).prices;
-        if (
-          next.selectedPrice !== null &&
-          !allowedPrices.includes(next.selectedPrice)
-        ) {
+        if (next.selectedPrice !== null && !allowedPrices.includes(next.selectedPrice)) {
           next.selectedPrice = null;
         }
       }
@@ -970,7 +1314,10 @@ export function TemplateIntake() {
   async function verifyPublishedUrl() {
     const url = template.publishedUrl.trim();
     if (!url) {
-      setFeedback('publishedUrl', { tone: 'error', message: 'Enter the published Webflow URL first.' });
+      setFeedback('publishedUrl', {
+        tone: 'error',
+        message: 'Enter the published Webflow URL first.'
+      });
       return;
     }
 
@@ -1008,16 +1355,16 @@ export function TemplateIntake() {
     }
 
     const autofillApplied = applyTemplateAutofill(data.autofill, {
-      gsapDetected: Boolean(data.gsapDetected),
+      gsapDetected: Boolean(data.gsapDetected)
     });
 
     setAutofillAssets(
       data.screenshotsDownloadUrl
         ? {
             screenshotCount: data.screenshotCount ?? 0,
-            screenshotsDownloadUrl: data.screenshotsDownloadUrl,
+            screenshotsDownloadUrl: data.screenshotsDownloadUrl
           }
-        : null,
+        : null
     );
 
     setFeedback('publishedUrl', {
@@ -1028,10 +1375,10 @@ export function TemplateIntake() {
         data.gsapDetected ? 'GSAP was detected automatically.' : '',
         data.autofillWarning
           ? 'Template suggestions were unavailable, so finish the remaining fields manually.'
-          : '',
+          : ''
       ]
         .filter(Boolean)
-        .join(' '),
+        .join(' ')
     });
     setVerification((current) => ({
       ...current,
@@ -1148,12 +1495,11 @@ export function TemplateIntake() {
     event.preventDefault();
     setTemplateSubmitting(true);
     setTemplateStatus(null);
+    setSubmittedTemplate(null);
     let shouldResetTurnstile = false;
 
     try {
-      if (
-        verification.creatorEligibilityEmail !== template.creatorEmail.trim().toLowerCase()
-      ) {
+      if (verification.creatorEligibilityEmail !== template.creatorEmail.trim().toLowerCase()) {
         throw new Error('Verify creator eligibility before submitting the template.');
       }
 
@@ -1177,6 +1523,10 @@ export function TemplateIntake() {
         throw new Error('Preview URL must contain https://preview.webflow.com/preview/.');
       }
 
+      if (!template.qualityBenchmarkConfirmed) {
+        throw new Error('Review the Featured quality benchmark before submitting.');
+      }
+
       if (turnstileEnabled && !turnstileTokens.template) {
         throw new Error('Complete the bot check before submitting the template.');
       }
@@ -1194,8 +1544,8 @@ export function TemplateIntake() {
       shouldResetTurnstile = turnstileEnabled;
 
       const mappedFeatureLabels = WEBFLOW_FEATURES.filter((f) =>
-        template.featureIds.includes(f.id),
-      ).map((f) => f.label === 'Components' ? 'Symbols' : f.label);
+        template.featureIds.includes(f.id)
+      ).map((f) => (f.label === 'Components' ? 'Symbols' : f.label));
 
       const response = await fetch(appPath('/api/intake/template'), {
         method: 'POST',
@@ -1211,7 +1561,11 @@ export function TemplateIntake() {
           categories: template.categories,
           styleTags: template.styles,
           siteTypes: [
-            ...(template.pageCount === 'Multi-layout' ? ['multi-layout'] : template.pageCount === 'Multi' ? ['static'] : ['static']),
+            ...(template.pageCount === 'Multi-layout'
+              ? ['multi-layout']
+              : template.pageCount === 'Multi'
+                ? ['static']
+                : ['static']),
             ...(template.typeCms ? ['cms'] : []),
             ...(template.typeEcommerce ? ['ecommerce'] : [])
           ],
@@ -1226,6 +1580,7 @@ export function TemplateIntake() {
           thumbnailUrl,
           secondaryThumbnailUrl,
           galleryUrls,
+          qualityBenchmarkConfirmed: template.qualityBenchmarkConfirmed,
           checklistConfirmed: template.checklistConfirmed,
           agreementConfirmed: template.agreementConfirmed,
           turnstileToken: turnstileTokens.template,
@@ -1251,6 +1606,10 @@ export function TemplateIntake() {
         message: data.warning
           ? `Template submitted. ${data.warning}`
           : 'Template submitted for review.'
+      });
+      setSubmittedTemplate({
+        name: data.asset.name || template.templateName,
+        warning: data.warning
       });
       setAutofillAssets(null);
       setAutofillManaged({});
@@ -1283,6 +1642,14 @@ export function TemplateIntake() {
     return values.includes(value) ? values.filter((item) => item !== value) : [...values, value];
   }
 
+  function handleSubmitAnotherTemplate() {
+    setSubmittedTemplate(null);
+    setTemplateStatus(null);
+    requestAnimationFrame(() => {
+      templateSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }
+
   return (
     <main className="submission-app">
       {turnstileEnabled ? (
@@ -1305,16 +1672,14 @@ export function TemplateIntake() {
               <div className="submission-sidecar-steps">
                 <div className={sidecarStepClass(creatorIdentityState)}>
                   <div className="submission-step-meta">
-                    <p className="submission-step-label submission-step-label-secondary">
-                      Profile
-                    </p>
+                    <p className="submission-step-label submission-step-label-secondary">Profile</p>
                     <span className={sidecarBadgeClass(creatorIdentityState)}>
                       {sidecarBadgeLabel(creatorIdentityState)}
                     </span>
                   </div>
                   <p className="submission-panel-copy">
-                    Complete the creator details once. The template step below reuses the same
-                    name and email automatically.
+                    Complete the creator details once. The template step below reuses the same name
+                    and email automatically.
                   </p>
                 </div>
                 <div className={sidecarStepClass(creatorVerificationState)}>
@@ -1327,8 +1692,8 @@ export function TemplateIntake() {
                     </span>
                   </div>
                   <p className="submission-panel-copy">
-                    Verify the creator and Webflow account emails before the first submission so
-                    the review team starts with clean identity and correspondence data.
+                    Verify the creator and Webflow account emails before the first submission so the
+                    review team starts with clean identity and correspondence data.
                   </p>
                 </div>
                 <div className={sidecarStepClass(creatorReadyState)}>
@@ -1517,8 +1882,7 @@ export function TemplateIntake() {
                       <span className="submission-required"> *</span>
                     </label>
                     <p className="field-help cc-library-application-form_field-desc">
-                      Keep it short and specific. This is used as the first pass of creator
-                      context.
+                      Keep it short and specific. This is used as the first pass of creator context.
                     </p>
                     <textarea
                       className="field-textarea input w-input submission-textarea"
@@ -1562,7 +1926,7 @@ export function TemplateIntake() {
                       }}
                       required
                     />
-                  {imageErrors.avatarFile ? (
+                    {imageErrors.avatarFile ? (
                       <div className="submission-field-feedback submission-field-feedback-error">
                         {imageErrors.avatarFile}
                       </div>
@@ -1600,7 +1964,9 @@ export function TemplateIntake() {
                   ) : null}
 
                   {creatorStatus ? (
-                    <div className={statusClassName(creatorStatus.tone)}>{creatorStatus.message}</div>
+                    <div className={statusClassName(creatorStatus.tone)}>
+                      {creatorStatus.message}
+                    </div>
                   ) : null}
 
                   <div className="submission-actions">
@@ -1614,7 +1980,7 @@ export function TemplateIntake() {
                         requestAnimationFrame(() => {
                           templateSectionRef.current?.scrollIntoView({
                             behavior: 'smooth',
-                            block: 'start',
+                            block: 'start'
                           });
                         })
                       }
@@ -1641,8 +2007,8 @@ export function TemplateIntake() {
               <h2 className="submission-panel-title">Submit a template</h2>
               <p className="application-subheading-2-2 submission-panel-copy">
                 Once the creator profile exists, this form runs the marketplace checks for creator
-                eligibility, naming policy, published-site validation, preview URL format, and
-                image requirements.
+                eligibility, naming policy, published-site validation, preview URL format, and image
+                requirements.
               </p>
               <div className="submission-sidecar-steps">
                 <div className={sidecarStepClass(templateValidationState)}>
@@ -1655,8 +2021,8 @@ export function TemplateIntake() {
                     </span>
                   </div>
                   <p className="submission-panel-copy">
-                    Use the inline checks before submit so the final handoff matches the live
-                    review workflow.
+                    Use the inline checks before submit so the final handoff matches the live review
+                    workflow.
                   </p>
                 </div>
                 <div className={sidecarStepClass(templateDetailsState)}>
@@ -1686,684 +2052,725 @@ export function TemplateIntake() {
                   </p>
                 </div>
               </div>
+              <FeaturedQualityShowcase />
             </div>
 
             <div className="submission-form-column">
               <div className="w-form">
-                <form
-                  className="form-2 cc-library-application-form submission-form"
-                  id="wf-form-Marketplace-Template-Submission"
-                  name="wf-form-Marketplace-Template-Submission"
-                  onSubmit={submitTemplate}
-                >
-                  <div className="submission-field">
-                    <label
-                      className="field-label template-application-form_field-label"
-                      htmlFor="templateCreatorName"
-                    >
-                      Creator name
-                      <span className="submission-required"> *</span>
-                    </label>
-                    <input
-                      className="field-input input w-input"
-                      id="templateCreatorName"
-                      value={template.creatorName}
-                      onChange={(event) => updateTemplate('creatorName', event.target.value)}
-                      required
-                    />
-                  </div>
-
-                  <div className="submission-field-inline">
+                {submittedTemplate ? (
+                  <TemplateSubmissionSuccessPanel
+                    submission={submittedTemplate}
+                    onSubmitAnother={handleSubmitAnotherTemplate}
+                  />
+                ) : (
+                  <form
+                    className="form-2 cc-library-application-form submission-form"
+                    id="wf-form-Marketplace-Template-Submission"
+                    name="wf-form-Marketplace-Template-Submission"
+                    onSubmit={submitTemplate}
+                  >
                     <div className="submission-field">
                       <label
-                        className="field-label template-application-form_field-label cc-with-desc"
-                        htmlFor="templateCreatorEmail"
+                        className="field-label template-application-form_field-label"
+                        htmlFor="templateCreatorName"
                       >
-                        Creator email
+                        Creator name
                         <span className="submission-required"> *</span>
                       </label>
-                      <p className="field-help cc-library-application-form_field-desc">
-                        Existing creators can enter their creator email here directly.
-                      </p>
                       <input
                         className="field-input input w-input"
-                        id="templateCreatorEmail"
-                        type="email"
-                        value={template.creatorEmail}
-                        onChange={(event) => updateTemplate('creatorEmail', event.target.value)}
+                        id="templateCreatorName"
+                        value={template.creatorName}
+                        onChange={(event) => updateTemplate('creatorName', event.target.value)}
                         required
                       />
                     </div>
-                    <button className="button-sp cc-white" type="button" onClick={verifyCreatorEligibility}>
-                      Check creator
-                    </button>
-                  </div>
-                  {fieldFeedback.creatorEligibility ? (
-                    <div className={feedbackClass(fieldFeedback.creatorEligibility.tone)}>
-                      {fieldFeedback.creatorEligibility.message}
-                    </div>
-                  ) : null}
 
-                  <div className="submission-field-inline">
-                    <div className="submission-field">
-                      <label
-                        className="field-label template-application-form_field-label cc-with-desc"
-                        htmlFor="templateName"
+                    <div className="submission-field-inline">
+                      <div className="submission-field">
+                        <label
+                          className="field-label template-application-form_field-label cc-with-desc"
+                          htmlFor="templateCreatorEmail"
+                        >
+                          Creator email
+                          <span className="submission-required"> *</span>
+                        </label>
+                        <p className="field-help cc-library-application-form_field-desc">
+                          Existing creators can enter their creator email here directly.
+                        </p>
+                        <input
+                          className="field-input input w-input"
+                          id="templateCreatorEmail"
+                          type="email"
+                          value={template.creatorEmail}
+                          onChange={(event) => updateTemplate('creatorEmail', event.target.value)}
+                          required
+                        />
+                      </div>
+                      <button
+                        className="button-sp cc-white"
+                        type="button"
+                        onClick={verifyCreatorEligibility}
                       >
-                        Template name
-                        <span className="submission-required"> *</span>
-                      </label>
-                      <p className="field-help cc-library-application-form_field-desc">
-                        First word must be capitalized. Avoid emoji, category names, tag names, and
-                        the standalone term &quot;AI&quot;.
-                      </p>
-                      <input
-                        className="field-input input w-input"
-                        id="templateName"
-                        value={template.templateName}
-                        onChange={(event) => updateTemplate('templateName', event.target.value)}
-                        required
-                      />
+                        Check creator
+                      </button>
                     </div>
-                    <button className="button-sp cc-white" type="button" onClick={verifyTemplateName}>
-                      Check name
-                    </button>
-                  </div>
-                  {fieldFeedback.templateName ? (
-                    <div className={feedbackClass(fieldFeedback.templateName!.tone)}>
-                      {fieldFeedback.templateName.message}
-                    </div>
-                  ) : null}
+                    {fieldFeedback.creatorEligibility ? (
+                      <div className={feedbackClass(fieldFeedback.creatorEligibility.tone)}>
+                        {fieldFeedback.creatorEligibility.message}
+                      </div>
+                    ) : null}
 
-                  <div className="submission-field-inline">
-                    <div className="submission-field">
-                      <label
-                        className="field-label template-application-form_field-label cc-with-desc"
-                        htmlFor="publishedUrl"
+                    <div className="submission-field-inline">
+                      <div className="submission-field">
+                        <label
+                          className="field-label template-application-form_field-label cc-with-desc"
+                          htmlFor="templateName"
+                        >
+                          Template name
+                          <span className="submission-required"> *</span>
+                        </label>
+                        <p className="field-help cc-library-application-form_field-desc">
+                          First word must be capitalized. Avoid emoji, category names, tag names,
+                          and the standalone term &quot;AI&quot;.
+                        </p>
+                        <input
+                          className="field-input input w-input"
+                          id="templateName"
+                          value={template.templateName}
+                          onChange={(event) => updateTemplate('templateName', event.target.value)}
+                          required
+                        />
+                      </div>
+                      <button
+                        className="button-sp cc-white"
+                        type="button"
+                        onClick={verifyTemplateName}
                       >
-                        Published URL
-                        <span className="submission-required"> *</span>
-                      </label>
-                      <p className="field-help cc-library-application-form_field-desc">
-                        Must be an HTTPS <code className="submission-inline-code">*.webflow.io</code>{' '}
-                        URL. The full site crawl can take a few minutes.
-                      </p>
-                      <input
-                        className="field-input input w-input"
-                        id="publishedUrl"
-                        type="url"
-                        value={template.publishedUrl}
-                        onChange={(event) => updateTemplate('publishedUrl', event.target.value)}
-                        required
-                      />
+                        Check name
+                      </button>
                     </div>
-                    <button className="button-sp cc-white" type="button" onClick={verifyPublishedUrl}>
-                      Validate template
-                    </button>
-                  </div>
-                  {fieldFeedback.publishedUrl ? (
-                    <div className={feedbackClass(fieldFeedback.publishedUrl!.tone)}>
-                      {fieldFeedback.publishedUrl.message}
-                    </div>
-                  ) : null}
+                    {fieldFeedback.templateName ? (
+                      <div className={feedbackClass(fieldFeedback.templateName!.tone)}>
+                        {fieldFeedback.templateName.message}
+                      </div>
+                    ) : null}
 
-                  <div className="submission-grid-2">
-                    <div className="submission-field">
-                      <label
-                        className="field-label template-application-form_field-label cc-with-desc"
-                        htmlFor="previewUrl"
+                    <div className="submission-field-inline">
+                      <div className="submission-field">
+                        <label
+                          className="field-label template-application-form_field-label cc-with-desc"
+                          htmlFor="publishedUrl"
+                        >
+                          Published URL
+                          <span className="submission-required"> *</span>
+                        </label>
+                        <p className="field-help cc-library-application-form_field-desc">
+                          Must be an HTTPS{' '}
+                          <code className="submission-inline-code">*.webflow.io</code> URL. The full
+                          site crawl can take a few minutes.
+                        </p>
+                        <input
+                          className="field-input input w-input"
+                          id="publishedUrl"
+                          type="url"
+                          value={template.publishedUrl}
+                          onChange={(event) => updateTemplate('publishedUrl', event.target.value)}
+                          required
+                        />
+                      </div>
+                      <button
+                        className="button-sp cc-white"
+                        type="button"
+                        onClick={verifyPublishedUrl}
                       >
-                        Preview URL
-                        <span className="submission-required"> *</span>
-                      </label>
-                      <p className="field-help cc-library-application-form_field-desc">
-                        Must contain{' '}
-                        <code className="submission-inline-code">
-                          https://preview.webflow.com/preview/
-                        </code>
-                        .
-                      </p>
-                      <input
-                        className="field-input input w-input"
-                        id="previewUrl"
-                        type="url"
-                        value={template.previewUrl}
-                        onChange={(event) => updateTemplate('previewUrl', event.target.value)}
-                        required
-                      />
-                      {!previewUrlValid ? (
-                        <div className="submission-field-feedback submission-field-feedback-error">
-                          Preview URLs must contain https://preview.webflow.com/preview/.
+                        Validate template
+                      </button>
+                    </div>
+                    {fieldFeedback.publishedUrl ? (
+                      <div className={feedbackClass(fieldFeedback.publishedUrl!.tone)}>
+                        {fieldFeedback.publishedUrl.message}
+                      </div>
+                    ) : null}
+
+                    <div className="submission-grid-2">
+                      <div className="submission-field">
+                        <label
+                          className="field-label template-application-form_field-label cc-with-desc"
+                          htmlFor="previewUrl"
+                        >
+                          Preview URL
+                          <span className="submission-required"> *</span>
+                        </label>
+                        <p className="field-help cc-library-application-form_field-desc">
+                          Must contain{' '}
+                          <code className="submission-inline-code">
+                            https://preview.webflow.com/preview/
+                          </code>
+                          .
+                        </p>
+                        <input
+                          className="field-input input w-input"
+                          id="previewUrl"
+                          type="url"
+                          value={template.previewUrl}
+                          onChange={(event) => updateTemplate('previewUrl', event.target.value)}
+                          required
+                        />
+                        {!previewUrlValid ? (
+                          <div className="submission-field-feedback submission-field-feedback-error">
+                            Preview URLs must contain https://preview.webflow.com/preview/.
+                          </div>
+                        ) : null}
+                      </div>
+
+                      <div className="submission-field">
+                        <label className="field-label template-application-form_field-label cc-with-desc">
+                          Free or paid
+                        </label>
+                        <p className="field-help cc-library-application-form_field-desc">
+                          Choose whether this template is distributed for free or sold through
+                          marketplace pricing.
+                        </p>
+                        <div className="submission-choice-grid">
+                          {[
+                            {
+                              value: 'Free' as const,
+                              label: 'Free',
+                              detail: 'No price tier is required for free submissions.'
+                            },
+                            {
+                              value: 'Paid' as const,
+                              label: 'Paid',
+                              detail: 'Choose a marketplace price tier below.'
+                            }
+                          ].map((option) => (
+                            <label
+                              className="submission-choice input-block cc-check cc-template-application-form-choice"
+                              key={option.value}
+                            >
+                              <input
+                                type="radio"
+                                name="priceModel"
+                                checked={template.priceModel === option.value}
+                                onChange={() => updateTemplate('priceModel', option.value)}
+                              />
+                              <span className="submission-choice-copy">
+                                <strong>{option.label}</strong>
+                                <br />
+                                {option.detail}
+                              </span>
+                            </label>
+                          ))}
                         </div>
-                      ) : null}
-                    </div>
-
-                    <div className="submission-field">
-                      <label
-                        className="field-label template-application-form_field-label cc-with-desc"
-                      >
-                        Free or paid
-                      </label>
-                      <p className="field-help cc-library-application-form_field-desc">
-                        Choose whether this template is distributed for free or sold through
-                        marketplace pricing.
-                      </p>
-                      <div className="submission-choice-grid">
-                        {[
-                          {
-                            value: 'Free' as const,
-                            label: 'Free',
-                            detail: 'No price tier is required for free submissions.',
-                          },
-                          {
-                            value: 'Paid' as const,
-                            label: 'Paid',
-                            detail: 'Choose a marketplace price tier below.',
-                          },
-                        ].map((option) => (
-                          <label
-                            className="submission-choice input-block cc-check cc-template-application-form-choice"
-                            key={option.value}
-                          >
-                            <input
-                              type="radio"
-                              name="priceModel"
-                              checked={template.priceModel === option.value}
-                              onChange={() => updateTemplate('priceModel', option.value)}
-                            />
-                            <span className="submission-choice-copy">
-                              <strong>{option.label}</strong>
-                              <br />
-                              {option.detail}
-                            </span>
-                          </label>
-                        ))}
                       </div>
                     </div>
-                  </div>
 
-                  <div className="submission-field">
-                    <span className="field-label template-application-form_field-label cc-with-desc">
-                      Category
-                      <span className="submission-required"> *</span>
-                    </span>
-                    <p className="field-help cc-library-application-form_field-desc">
-                      Select up to 2 options that best describe your template.
-                    </p>
-                    <div className="submission-choice-grid is-scroll">
-                      {CATEGORY_OPTIONS.map((category) => {
-                        const checked = template.categories.includes(category);
-                        const atMax = template.categories.length >= 2;
-                        return (
+                    <div className="submission-field">
+                      <span className="field-label template-application-form_field-label cc-with-desc">
+                        Category
+                        <span className="submission-required"> *</span>
+                      </span>
+                      <p className="field-help cc-library-application-form_field-desc">
+                        Select up to 2 options that best describe your template.
+                      </p>
+                      <div className="submission-choice-grid is-scroll">
+                        {CATEGORY_OPTIONS.map((category) => {
+                          const checked = template.categories.includes(category);
+                          const atMax = template.categories.length >= 2;
+                          return (
+                            <label
+                              className="submission-choice input-block cc-check cc-template-application-form-choice"
+                              key={category}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={checked}
+                                disabled={!checked && atMax}
+                                onChange={() =>
+                                  updateTemplate(
+                                    'categories',
+                                    toggleCheckbox(template.categories, category)
+                                  )
+                                }
+                              />
+                              <span className="submission-choice-copy">{category}</span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                      <div className="field-help submission-counter">
+                        {template.categories.length} of 2 categories selected
+                      </div>
+                    </div>
+
+                    <div className="submission-grid-2">
+                      <div className="submission-field">
+                        <span className="field-label template-application-form_field-label cc-with-desc">
+                          Page count
+                          <span className="submission-required"> *</span>
+                        </span>
+                        <p className="field-help cc-library-application-form_field-desc">
+                          One page, multi page, or multi-layout.
+                        </p>
+                        <div className="submission-choice-grid">
+                          {(['One', 'Multi', 'Multi-layout'] as const).map((option) => (
+                            <label
+                              className="submission-choice input-block cc-check cc-template-application-form-choice"
+                              key={option}
+                            >
+                              <input
+                                type="radio"
+                                name="pageCount"
+                                checked={template.pageCount === option}
+                                onChange={() => updateTemplate('pageCount', option)}
+                              />
+                              <span className="submission-choice-copy">
+                                {option === 'One'
+                                  ? 'One page'
+                                  : option === 'Multi'
+                                    ? 'Multi page'
+                                    : 'Multi-layout (3+ layouts with 3+ pages)'}
+                              </span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="submission-field">
+                        <span className="field-label template-application-form_field-label cc-with-desc">
+                          Template type
+                        </span>
+                        <p className="field-help cc-library-application-form_field-desc">
+                          Check the Webflow product surfaces used by the template.
+                        </p>
+                        <div className="submission-choice-grid">
+                          <label className="submission-choice input-block cc-check cc-template-application-form-choice">
+                            <input
+                              type="checkbox"
+                              checked={template.typeCms}
+                              onChange={(event) => updateTemplate('typeCms', event.target.checked)}
+                            />
+                            <span className="submission-choice-copy">CMS</span>
+                          </label>
+                          <label className="submission-choice input-block cc-check cc-template-application-form-choice">
+                            <input
+                              type="checkbox"
+                              checked={template.typeEcommerce}
+                              onChange={(event) =>
+                                updateTemplate('typeEcommerce', event.target.checked)
+                              }
+                            />
+                            <span className="submission-choice-copy">Ecommerce</span>
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+
+                    {template.priceModel === 'Paid' && template.pageCount ? (
+                      <div className="submission-field">
+                        <span className="field-label template-application-form_field-label cc-with-desc">
+                          Template price
+                          <span className="submission-required"> *</span>
+                        </span>
+                        <p className="field-help cc-library-application-form_field-desc">
+                          Available price points are determined by page count and CMS usage.
+                        </p>
+                        <div className="submission-choice-grid">
+                          {getPricingTiers(
+                            template.pageCount as PageCountOption,
+                            template.typeCms
+                          ).prices.map((price) => (
+                            <label
+                              className="submission-choice input-block cc-check cc-template-application-form-choice"
+                              key={price}
+                            >
+                              <input
+                                type="radio"
+                                name="selectedPrice"
+                                checked={template.selectedPrice === price}
+                                onChange={() => updateTemplate('selectedPrice', price)}
+                              />
+                              <span className="submission-choice-copy">${price}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
+
+                    <div className="submission-field">
+                      <span className="field-label template-application-form_field-label cc-with-desc">
+                        Styles
+                        <span className="submission-required"> *</span>
+                      </span>
+                      <p className="field-help cc-library-application-form_field-desc">
+                        Select up to 2 styles.
+                      </p>
+                      <div className="submission-choice-grid">
+                        {TEMPLATE_STYLES.map((style) => {
+                          const checked = template.styles.includes(style);
+                          const atMax = template.styles.length >= 2;
+                          return (
+                            <label
+                              className="submission-choice input-block cc-check cc-template-application-form-choice"
+                              key={style}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={checked}
+                                disabled={!checked && atMax}
+                                onChange={() =>
+                                  updateTemplate('styles', toggleCheckbox(template.styles, style))
+                                }
+                              />
+                              <span className="submission-choice-copy">{style}</span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                      <div className="field-help submission-counter">
+                        {template.styles.length} of 2 styles selected
+                      </div>
+                    </div>
+
+                    <div className="submission-field">
+                      <span className="field-label template-application-form_field-label cc-with-desc">
+                        Features
+                        <span className="submission-required"> *</span>
+                      </span>
+                      <p className="field-help cc-library-application-form_field-desc">
+                        Choose the Webflow features used by the template.
+                      </p>
+                      <div className="submission-choice-grid">
+                        {WEBFLOW_FEATURES.filter((f) => !f.hidden).map((option) => (
                           <label
                             className="submission-choice input-block cc-check cc-template-application-form-choice"
-                            key={category}
+                            key={option.id}
                           >
                             <input
                               type="checkbox"
-                              checked={checked}
-                              disabled={!checked && atMax}
+                              checked={template.featureIds.includes(option.id)}
                               onChange={() =>
                                 updateTemplate(
-                                  'categories',
-                                  toggleCheckbox(template.categories, category),
+                                  'featureIds',
+                                  toggleCheckbox(template.featureIds, option.id)
                                 )
                               }
                             />
-                            <span className="submission-choice-copy">{category}</span>
-                          </label>
-                        );
-                      })}
-                    </div>
-                    <div className="field-help submission-counter">
-                      {template.categories.length} of 2 categories selected
-                    </div>
-                  </div>
-
-                  <div className="submission-grid-2">
-                    <div className="submission-field">
-                      <span className="field-label template-application-form_field-label cc-with-desc">
-                        Page count
-                        <span className="submission-required"> *</span>
-                      </span>
-                      <p className="field-help cc-library-application-form_field-desc">
-                        One page, multi page, or multi-layout.
-                      </p>
-                      <div className="submission-choice-grid">
-                        {(['One', 'Multi', 'Multi-layout'] as const).map((option) => (
-                          <label
-                            className="submission-choice input-block cc-check cc-template-application-form-choice"
-                            key={option}
-                          >
-                            <input
-                              type="radio"
-                              name="pageCount"
-                              checked={template.pageCount === option}
-                              onChange={() => updateTemplate('pageCount', option)}
-                            />
-                            <span className="submission-choice-copy">
-                              {option === 'One'
-                                ? 'One page'
-                                : option === 'Multi'
-                                  ? 'Multi page'
-                                  : 'Multi-layout (3+ layouts with 3+ pages)'}
-                            </span>
+                            <span className="submission-choice-copy">{option.label}</span>
                           </label>
                         ))}
                       </div>
+                      {verification.gsapDetected ? (
+                        <div className="field-help">
+                          GSAP was detected automatically during validation.
+                        </div>
+                      ) : null}
                     </div>
 
-                    <div className="submission-field">
-                      <span className="field-label template-application-form_field-label cc-with-desc">
-                        Template type
-                      </span>
-                      <p className="field-help cc-library-application-form_field-desc">
-                        Check the Webflow product surfaces used by the template.
-                      </p>
-                      <div className="submission-choice-grid">
-                        <label className="submission-choice input-block cc-check cc-template-application-form-choice">
-                          <input
-                            type="checkbox"
-                            checked={template.typeCms}
-                            onChange={(event) => updateTemplate('typeCms', event.target.checked)}
-                          />
-                          <span className="submission-choice-copy">CMS</span>
-                        </label>
-                        <label className="submission-choice input-block cc-check cc-template-application-form-choice">
-                          <input
-                            type="checkbox"
-                            checked={template.typeEcommerce}
-                            onChange={(event) =>
-                              updateTemplate('typeEcommerce', event.target.checked)
-                            }
-                          />
-                          <span className="submission-choice-copy">Ecommerce</span>
-                        </label>
-                      </div>
-                    </div>
-                  </div>
-
-                  {template.priceModel === 'Paid' && template.pageCount ? (
-                    <div className="submission-field">
-                      <span className="field-label template-application-form_field-label cc-with-desc">
-                        Template price
-                        <span className="submission-required"> *</span>
-                      </span>
-                      <p className="field-help cc-library-application-form_field-desc">
-                        Available price points are determined by page count and CMS usage.
-                      </p>
-                      <div className="submission-choice-grid">
-                        {getPricingTiers(template.pageCount as PageCountOption, template.typeCms).prices.map((price) => (
-                          <label
-                            className="submission-choice input-block cc-check cc-template-application-form-choice"
-                            key={price}
-                          >
-                            <input
-                              type="radio"
-                              name="selectedPrice"
-                              checked={template.selectedPrice === price}
-                              onChange={() => updateTemplate('selectedPrice', price)}
-                            />
-                            <span className="submission-choice-copy">${price}</span>
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-                  ) : null}
-
-                  <div className="submission-field">
-                    <span className="field-label template-application-form_field-label cc-with-desc">
-                      Styles
-                      <span className="submission-required"> *</span>
-                    </span>
-                    <p className="field-help cc-library-application-form_field-desc">
-                      Select up to 2 styles.
-                    </p>
-                    <div className="submission-choice-grid">
-                      {TEMPLATE_STYLES.map((style) => {
-                        const checked = template.styles.includes(style);
-                        const atMax = template.styles.length >= 2;
-                        return (
-                          <label
-                            className="submission-choice input-block cc-check cc-template-application-form-choice"
-                            key={style}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={checked}
-                              disabled={!checked && atMax}
-                              onChange={() =>
-                                updateTemplate('styles', toggleCheckbox(template.styles, style))
-                              }
-                            />
-                            <span className="submission-choice-copy">{style}</span>
-                          </label>
-                        );
-                      })}
-                    </div>
-                    <div className="field-help submission-counter">
-                      {template.styles.length} of 2 styles selected
-                    </div>
-                  </div>
-
-                  <div className="submission-field">
-                    <span className="field-label template-application-form_field-label cc-with-desc">
-                      Features
-                      <span className="submission-required"> *</span>
-                    </span>
-                    <p className="field-help cc-library-application-form_field-desc">
-                      Choose the Webflow features used by the template.
-                    </p>
-                    <div className="submission-choice-grid">
-                      {WEBFLOW_FEATURES.filter((f) => !f.hidden).map((option) => (
-                        <label
-                          className="submission-choice input-block cc-check cc-template-application-form-choice"
-                          key={option.id}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={template.featureIds.includes(option.id)}
-                            onChange={() =>
-                              updateTemplate(
-                                'featureIds',
-                                toggleCheckbox(template.featureIds, option.id),
-                              )
-                            }
-                          />
-                          <span className="submission-choice-copy">{option.label}</span>
-                        </label>
-                      ))}
-                    </div>
-                    {verification.gsapDetected ? (
-                      <div className="field-help">
-                        GSAP was detected automatically during validation.
-                      </div>
-                    ) : null}
-                  </div>
-
-                  <div className="submission-field">
-                    <label
-                      className="field-label template-application-form_field-label cc-with-desc"
-                      htmlFor="shortDescription"
-                    >
-                      Short description
-                      <span className="submission-required"> *</span>
-                    </label>
-                    <p className="field-help cc-library-application-form_field-desc">
-                      Keep the short summary concise and reviewer-friendly.
-                    </p>
-                    <textarea
-                      className="field-textarea input w-input submission-textarea submission-textarea-short"
-                      id="shortDescription"
-                      value={template.shortDescription}
-                      onChange={(event) => updateTemplate('shortDescription', event.target.value)}
-                      maxLength={250}
-                      required
-                    />
-                    <div className="field-help submission-counter">
-                      {template.shortDescription.length}/250 characters
-                    </div>
-                  </div>
-
-                  <div className="submission-field">
-                    <label
-                      className="field-label template-application-form_field-label cc-with-desc"
-                      htmlFor="longDescription"
-                    >
-                      Long description
-                      <span className="submission-required"> *</span>
-                    </label>
-                    <p className="field-help cc-library-application-form_field-desc">
-                      Rich text is allowed for emphasis and lists. Image embeds are stripped.
-                    </p>
-                    <QuillEditor
-                      id="longDescription"
-                      value={template.longDescription}
-                      onChange={(html) => updateTemplate('longDescription', html)}
-                      placeholder="Write the Template Overview content..."
-                    />
-                  </div>
-
-                  <div className="submission-field">
-                    <label
-                      className="field-label template-application-form_field-label cc-with-desc"
-                      htmlFor="notes"
-                    >
-                      Notes
-                    </label>
-                    <p className="field-help cc-library-application-form_field-desc">
-                      Optional internal notes for the review queue.
-                    </p>
-                    <textarea
-                      className="field-textarea input w-input submission-textarea submission-textarea-notes"
-                      id="notes"
-                      value={template.notes}
-                      maxLength={400}
-                      onChange={(event) => updateTemplate('notes', event.target.value)}
-                    />
-                    <div className="field-help">{template.notes.length}/400 characters</div>
-                  </div>
-
-                  {autofillAssets ? (
-                    <div className="submission-status submission-status-info submission-status-stack">
-                      <div>
-                        Generated screenshots are ready from the analyzer.
-                        {autofillAssets.screenshotCount > 0
-                          ? ` ${autofillAssets.screenshotCount} screenshot${autofillAssets.screenshotCount === 1 ? '' : 's'} were prepared for upload.`
-                          : ''}
-                      </div>
-                      <div>
-                        Download the ZIP, then drag each file into the matching upload field
-                        below.
-                      </div>
-                      <a
-                        className="submission-status-link"
-                        href={autofillAssets.screenshotsDownloadUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        Download generated screenshots (ZIP)
-                      </a>
-                    </div>
-                  ) : null}
-
-                  <div className="submission-grid-2">
                     <div className="submission-field">
                       <label
                         className="field-label template-application-form_field-label cc-with-desc"
-                        htmlFor="thumbnailFile"
+                        htmlFor="shortDescription"
                       >
-                        Primary thumbnail
+                        Short description
                         <span className="submission-required"> *</span>
                       </label>
                       <p className="field-help cc-library-application-form_field-desc">
-                        WebP only, exactly 750x995, under 300KB.
+                        Keep the short summary concise and reviewer-friendly.
+                      </p>
+                      <textarea
+                        className="field-textarea input w-input submission-textarea submission-textarea-short"
+                        id="shortDescription"
+                        value={template.shortDescription}
+                        onChange={(event) => updateTemplate('shortDescription', event.target.value)}
+                        maxLength={250}
+                        required
+                      />
+                      <div className="field-help submission-counter">
+                        {template.shortDescription.length}/250 characters
+                      </div>
+                    </div>
+
+                    <div className="submission-field">
+                      <label
+                        className="field-label template-application-form_field-label cc-with-desc"
+                        htmlFor="longDescription"
+                      >
+                        Long description
+                        <span className="submission-required"> *</span>
+                      </label>
+                      <p className="field-help cc-library-application-form_field-desc">
+                        Rich text is allowed for emphasis and lists. Image embeds are stripped.
+                      </p>
+                      <QuillEditor
+                        id="longDescription"
+                        value={template.longDescription}
+                        onChange={(html) => updateTemplate('longDescription', html)}
+                        placeholder="Write the Template Overview content..."
+                      />
+                    </div>
+
+                    <div className="submission-field">
+                      <label
+                        className="field-label template-application-form_field-label cc-with-desc"
+                        htmlFor="notes"
+                      >
+                        Notes
+                      </label>
+                      <p className="field-help cc-library-application-form_field-desc">
+                        Optional internal notes for the review queue.
+                      </p>
+                      <textarea
+                        className="field-textarea input w-input submission-textarea submission-textarea-notes"
+                        id="notes"
+                        value={template.notes}
+                        maxLength={400}
+                        onChange={(event) => updateTemplate('notes', event.target.value)}
+                      />
+                      <div className="field-help">{template.notes.length}/400 characters</div>
+                    </div>
+
+                    {autofillAssets ? (
+                      <div className="submission-status submission-status-info submission-status-stack">
+                        <div>
+                          Generated screenshots are ready from the analyzer.
+                          {autofillAssets.screenshotCount > 0
+                            ? ` ${autofillAssets.screenshotCount} screenshot${autofillAssets.screenshotCount === 1 ? '' : 's'} were prepared for upload.`
+                            : ''}
+                        </div>
+                        <div>
+                          Download the ZIP, then drag each file into the matching upload field
+                          below.
+                        </div>
+                        <a
+                          className="submission-status-link"
+                          href={autofillAssets.screenshotsDownloadUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          Download generated screenshots (ZIP)
+                        </a>
+                      </div>
+                    ) : null}
+
+                    <div className="submission-grid-2">
+                      <div className="submission-field">
+                        <label
+                          className="field-label template-application-form_field-label cc-with-desc"
+                          htmlFor="thumbnailFile"
+                        >
+                          Primary thumbnail
+                          <span className="submission-required"> *</span>
+                        </label>
+                        <p className="field-help cc-library-application-form_field-desc">
+                          WebP only, exactly 750x995, under 300KB.
+                        </p>
+                        <input
+                          className="submission-file-input"
+                          id="thumbnailFile"
+                          type="file"
+                          accept="image/webp"
+                          onChange={async (event) => {
+                            const file = event.target.files?.[0] || null;
+                            if (!file) {
+                              setImageErrors((c) => ({ ...c, thumbnailFile: null }));
+                              updateTemplate('thumbnailFile', null);
+                              return;
+                            }
+                            const err = await validateImageClient(file, 'thumbnail');
+                            setImageErrors((c) => ({ ...c, thumbnailFile: err }));
+                            updateTemplate('thumbnailFile', err ? null : file);
+                          }}
+                          required
+                        />
+                        {imageErrors.thumbnailFile ? (
+                          <div className="submission-field-feedback submission-field-feedback-error">
+                            {imageErrors.thumbnailFile}
+                          </div>
+                        ) : null}
+                        {template.thumbnailFile && !imageErrors.thumbnailFile ? (
+                          <div className="submission-file-list">
+                            <span className="submission-file-pill submission-file-pill-success">
+                              Selected: {fileSummary(template.thumbnailFile)}
+                            </span>
+                          </div>
+                        ) : null}
+                      </div>
+
+                      <div className="submission-field">
+                        <label
+                          className="field-label template-application-form_field-label cc-with-desc"
+                          htmlFor="secondaryThumbnailFile"
+                        >
+                          Secondary thumbnail
+                        </label>
+                        <p className="field-help cc-library-application-form_field-desc">
+                          Optional. Same 750x995 WebP constraint as the primary thumbnail.
+                        </p>
+                        <input
+                          className="submission-file-input"
+                          id="secondaryThumbnailFile"
+                          type="file"
+                          accept="image/webp"
+                          onChange={async (event) => {
+                            const file = event.target.files?.[0] || null;
+                            if (!file) {
+                              setImageErrors((c) => ({ ...c, secondaryThumbnailFile: null }));
+                              updateTemplate('secondaryThumbnailFile', null);
+                              return;
+                            }
+                            const err = await validateImageClient(file, 'secondary-thumbnail');
+                            setImageErrors((c) => ({ ...c, secondaryThumbnailFile: err }));
+                            updateTemplate('secondaryThumbnailFile', err ? null : file);
+                          }}
+                        />
+                        {imageErrors.secondaryThumbnailFile ? (
+                          <div className="submission-field-feedback submission-field-feedback-error">
+                            {imageErrors.secondaryThumbnailFile}
+                          </div>
+                        ) : null}
+                        {template.secondaryThumbnailFile && !imageErrors.secondaryThumbnailFile ? (
+                          <div className="submission-file-list">
+                            <span className="submission-file-pill submission-file-pill-neutral">
+                              Selected: {fileSummary(template.secondaryThumbnailFile)}
+                            </span>
+                          </div>
+                        ) : null}
+                      </div>
+                    </div>
+
+                    <div className="submission-field">
+                      <label
+                        className="field-label template-application-form_field-label cc-with-desc"
+                        htmlFor="galleryFiles"
+                      >
+                        Gallery images
+                        <span className="submission-required"> *</span>
+                      </label>
+                      <p className="field-help cc-library-application-form_field-desc">
+                        Upload 1 to 5 WebP images, each exactly 1440x900 and under 250KB.
                       </p>
                       <input
                         className="submission-file-input"
-                        id="thumbnailFile"
+                        id="galleryFiles"
                         type="file"
                         accept="image/webp"
+                        multiple
                         onChange={async (event) => {
-                          const file = event.target.files?.[0] || null;
-                          if (!file) {
-                            setImageErrors((c) => ({ ...c, thumbnailFile: null }));
-                            updateTemplate('thumbnailFile', null);
-                            return;
+                          const files = Array.from(event.target.files || []).slice(0, 5);
+                          const validated: File[] = [];
+                          const newErrors: Record<string, string | null> = {};
+                          // Clear any prior gallery errors first.
+                          setImageErrors((c) => {
+                            const next = { ...c };
+                            for (const key of Object.keys(next)) {
+                              if (key.startsWith('gallery-')) next[key] = null;
+                            }
+                            return next;
+                          });
+                          for (let i = 0; i < files.length; i++) {
+                            const err = await validateImageClient(files[i], 'gallery');
+                            newErrors[`gallery-${i}`] = err;
+                            if (!err) validated.push(files[i]);
                           }
-                          const err = await validateImageClient(file, 'thumbnail');
-                          setImageErrors((c) => ({ ...c, thumbnailFile: err }));
-                          updateTemplate('thumbnailFile', err ? null : file);
+                          setImageErrors((c) => ({ ...c, ...newErrors }));
+                          updateTemplate('galleryFiles', validated);
                         }}
                         required
                       />
-                      {imageErrors.thumbnailFile ? (
-                        <div className="submission-field-feedback submission-field-feedback-error">
-                          {imageErrors.thumbnailFile}
-                        </div>
-                      ) : null}
-                      {template.thumbnailFile && !imageErrors.thumbnailFile ? (
-                        <div className="submission-file-list">
-                          <span className="submission-file-pill submission-file-pill-success">
-                            Selected: {fileSummary(template.thumbnailFile)}
-                          </span>
-                        </div>
-                      ) : null}
-                    </div>
-
-                    <div className="submission-field">
-                      <label
-                        className="field-label template-application-form_field-label cc-with-desc"
-                        htmlFor="secondaryThumbnailFile"
-                      >
-                        Secondary thumbnail
-                      </label>
-                      <p className="field-help cc-library-application-form_field-desc">
-                        Optional. Same 750x995 WebP constraint as the primary thumbnail.
-                      </p>
-                      <input
-                        className="submission-file-input"
-                        id="secondaryThumbnailFile"
-                        type="file"
-                        accept="image/webp"
-                        onChange={async (event) => {
-                          const file = event.target.files?.[0] || null;
-                          if (!file) {
-                            setImageErrors((c) => ({ ...c, secondaryThumbnailFile: null }));
-                            updateTemplate('secondaryThumbnailFile', null);
-                            return;
-                          }
-                          const err = await validateImageClient(file, 'secondary-thumbnail');
-                          setImageErrors((c) => ({ ...c, secondaryThumbnailFile: err }));
-                          updateTemplate('secondaryThumbnailFile', err ? null : file);
-                        }}
-                      />
-                      {imageErrors.secondaryThumbnailFile ? (
-                        <div className="submission-field-feedback submission-field-feedback-error">
-                          {imageErrors.secondaryThumbnailFile}
-                        </div>
-                      ) : null}
-                      {template.secondaryThumbnailFile && !imageErrors.secondaryThumbnailFile ? (
-                        <div className="submission-file-list">
-                          <span className="submission-file-pill submission-file-pill-neutral">
-                            Selected: {fileSummary(template.secondaryThumbnailFile)}
-                          </span>
-                        </div>
-                      ) : null}
-                    </div>
-                  </div>
-
-                  <div className="submission-field">
-                    <label
-                      className="field-label template-application-form_field-label cc-with-desc"
-                      htmlFor="galleryFiles"
-                    >
-                      Gallery images
-                      <span className="submission-required"> *</span>
-                    </label>
-                    <p className="field-help cc-library-application-form_field-desc">
-                      Upload 1 to 5 WebP images, each exactly 1440x900 and under 250KB.
-                    </p>
-                    <input
-                      className="submission-file-input"
-                      id="galleryFiles"
-                      type="file"
-                      accept="image/webp"
-                      multiple
-                      onChange={async (event) => {
-                        const files = Array.from(event.target.files || []).slice(0, 5);
-                        const validated: File[] = [];
-                        const newErrors: Record<string, string | null> = {};
-                        // Clear any prior gallery errors first.
-                        setImageErrors((c) => {
-                          const next = { ...c };
-                          for (const key of Object.keys(next)) {
-                            if (key.startsWith('gallery-')) next[key] = null;
-                          }
-                          return next;
-                        });
-                        for (let i = 0; i < files.length; i++) {
-                          const err = await validateImageClient(files[i], 'gallery');
-                          newErrors[`gallery-${i}`] = err;
-                          if (!err) validated.push(files[i]);
-                        }
-                        setImageErrors((c) => ({ ...c, ...newErrors }));
-                        updateTemplate('galleryFiles', validated);
-                      }}
-                      required
-                    />
-                    {Object.entries(imageErrors)
-                      .filter(([k, v]) => k.startsWith('gallery-') && v)
-                      .map(([k, v]) => (
-                        <div key={k} className="submission-field-feedback submission-field-feedback-error">
-                          {v}
-                        </div>
-                      ))}
-                    {template.galleryFiles.length > 0 ? (
-                      <div className="field-help submission-counter">
-                        {template.galleryFiles.length} of 5 gallery images selected
-                      </div>
-                    ) : null}
-                    {template.galleryFiles.length > 0 ? (
-                      <div className="submission-file-list">
-                        {template.galleryFiles.map((file) => (
-                          <span
-                            key={`${file.name}-${file.size}-${file.lastModified}`}
-                            className="submission-file-pill submission-file-pill-success"
+                      {Object.entries(imageErrors)
+                        .filter(([k, v]) => k.startsWith('gallery-') && v)
+                        .map(([k, v]) => (
+                          <div
+                            key={k}
+                            className="submission-field-feedback submission-field-feedback-error"
                           >
-                            {fileSummary(file)}
-                          </span>
+                            {v}
+                          </div>
                         ))}
+                      {template.galleryFiles.length > 0 ? (
+                        <div className="field-help submission-counter">
+                          {template.galleryFiles.length} of 5 gallery images selected
+                        </div>
+                      ) : null}
+                      {template.galleryFiles.length > 0 ? (
+                        <div className="submission-file-list">
+                          {template.galleryFiles.map((file) => (
+                            <span
+                              key={`${file.name}-${file.size}-${file.lastModified}`}
+                              className="submission-file-pill submission-file-pill-success"
+                            >
+                              {fileSummary(file)}
+                            </span>
+                          ))}
+                        </div>
+                      ) : null}
+                    </div>
+
+                    <label className="submission-choice submission-choice-checkbox w-checkbox input-block cc-check u-mb-0">
+                      <input
+                        type="checkbox"
+                        checked={template.qualityBenchmarkConfirmed}
+                        onChange={(event) =>
+                          updateTemplate('qualityBenchmarkConfirmed', event.target.checked)
+                        }
+                      />
+                      <span className="submission-choice-copy">
+                        I reviewed the Featured quality benchmark and checked that this template is
+                        ready for marketplace review.
+                      </span>
+                    </label>
+
+                    <label className="submission-choice submission-choice-checkbox w-checkbox input-block cc-check u-mb-0">
+                      <input
+                        type="checkbox"
+                        checked={template.checklistConfirmed}
+                        onChange={(event) =>
+                          updateTemplate('checklistConfirmed', event.target.checked)
+                        }
+                      />
+                      <span className="submission-choice-copy">
+                        I completed the submission checklist.
+                      </span>
+                    </label>
+
+                    <label className="submission-choice submission-choice-checkbox w-checkbox input-block cc-check u-mb-0">
+                      <input
+                        type="checkbox"
+                        checked={template.agreementConfirmed}
+                        onChange={(event) =>
+                          updateTemplate('agreementConfirmed', event.target.checked)
+                        }
+                      />
+                      <span className="submission-choice-copy">
+                        I agree to the marketplace submission agreement.
+                      </span>
+                    </label>
+
+                    {turnstileEnabled ? (
+                      <div className="submission-field">
+                        <span className="field-label template-application-form_field-label">
+                          Bot check
+                        </span>
+                        <div className="turnstile-wrap" ref={templateTurnstileRef} />
+                        <div className="field-help">Required before submitting the template.</div>
                       </div>
                     ) : null}
-                  </div>
 
-                  <label className="submission-choice submission-choice-checkbox w-checkbox input-block cc-check u-mb-0">
-                    <input
-                      type="checkbox"
-                      checked={template.checklistConfirmed}
-                      onChange={(event) =>
-                        updateTemplate('checklistConfirmed', event.target.checked)
-                      }
-                    />
-                    <span className="submission-choice-copy">
-                      I completed the submission checklist.
-                    </span>
-                  </label>
+                    {templateStatus ? (
+                      <div className={statusClassName(templateStatus.tone)}>
+                        {templateStatus.message}
+                      </div>
+                    ) : null}
 
-                  <label className="submission-choice submission-choice-checkbox w-checkbox input-block cc-check u-mb-0">
-                    <input
-                      type="checkbox"
-                      checked={template.agreementConfirmed}
-                      onChange={(event) =>
-                        updateTemplate('agreementConfirmed', event.target.checked)
-                      }
-                    />
-                    <span className="submission-choice-copy">
-                      I agree to the marketplace submission agreement.
-                    </span>
-                  </label>
-
-                  {turnstileEnabled ? (
-                    <div className="submission-field">
-                      <span className="field-label template-application-form_field-label">
-                        Bot check
-                      </span>
-                      <div className="turnstile-wrap" ref={templateTurnstileRef} />
-                      <div className="field-help">Required before submitting the template.</div>
+                    <div className="submission-actions">
+                      <button className="button-sp" type="submit" disabled={templateSubmitting}>
+                        {templateSubmitting ? 'Submitting...' : 'Submit template'}
+                      </button>
                     </div>
-                  ) : null}
-
-                  {templateStatus ? (
-                    <div className={statusClassName(templateStatus.tone)}>{templateStatus.message}</div>
-                  ) : null}
-
-                  <div className="submission-actions">
-                    <button className="button-sp" type="submit" disabled={templateSubmitting}>
-                      {templateSubmitting ? 'Submitting...' : 'Submit template'}
-                    </button>
-                  </div>
-                </form>
+                  </form>
+                )}
               </div>
             </div>
           </div>
