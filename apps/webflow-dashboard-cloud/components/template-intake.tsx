@@ -26,6 +26,7 @@ const IMAGE_CONSTRAINTS = {
   'secondary-thumbnail': { width: 750, height: 995, maxSize: 300 * 1024, label: 'Secondary thumbnail' },
   gallery: { width: 1440, height: 900, maxSize: 250 * 1024, label: 'Gallery image' }
 } as const;
+const ASSET_DASHBOARD_URL = 'https://webflow.com/templates/dashboard/assets';
 
 type ImageKind = keyof typeof IMAGE_CONSTRAINTS;
 
@@ -178,6 +179,11 @@ type TemplateAutofillAssets = {
   screenshotsDownloadUrl: string;
 };
 
+type SubmittedTemplateState = {
+  name: string;
+  warning?: string;
+};
+
 type VerificationState = {
   primaryEmailVerified: string;
   webflowEmailVerified: string;
@@ -300,6 +306,62 @@ function statusClassName(tone: Tone) {
   return 'submission-status submission-status-info';
 }
 
+function TemplateSubmissionSuccessPanel({
+  submission,
+  onSubmitAnother
+}: {
+  submission: SubmittedTemplateState;
+  onSubmitAnother: () => void;
+}) {
+  return (
+    <div className="submission-form submission-success-panel" aria-live="polite">
+      <div>
+        <div className="submission-success-kicker">Submission received</div>
+        <h3 className="submission-success-title">Template submitted for review</h3>
+        <p className="submission-success-copy">
+          Reviewers will process this submission next. The Asset Dashboard gives creators a place
+          to review assets, track review activity, run validation checks, and see Marketplace
+          Insights when available.
+        </p>
+      </div>
+
+      <div className="submission-status submission-status-success">
+        {submission.name
+          ? `${submission.name} is now in the review queue.`
+          : 'Your template is now in the review queue.'}
+      </div>
+
+      {submission.warning ? (
+        <div className="submission-status submission-status-warning">{submission.warning}</div>
+      ) : null}
+
+      <div className="submission-success-tool-list" aria-label="Asset Dashboard tools">
+        <div className="submission-success-tool">
+          <span className="submission-success-tool-label">Review</span>
+          <span className="submission-success-tool-copy">Check existing asset status and updates.</span>
+        </div>
+        <div className="submission-success-tool">
+          <span className="submission-success-tool-label">Validate</span>
+          <span className="submission-success-tool-copy">Run checks before the next submission.</span>
+        </div>
+        <div className="submission-success-tool">
+          <span className="submission-success-tool-label">Insights</span>
+          <span className="submission-success-tool-copy">See Marketplace signals when access is available.</span>
+        </div>
+      </div>
+
+      <div className="submission-actions">
+        <a className="button-sp" href={ASSET_DASHBOARD_URL} target="_top">
+          Open Asset Dashboard
+        </a>
+        <button className="button-sp cc-white" type="button" onClick={onSubmitAnother}>
+          Submit another template
+        </button>
+      </div>
+    </div>
+  );
+}
+
 const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '';
 
 export function TemplateIntake() {
@@ -317,6 +379,7 @@ export function TemplateIntake() {
   });
   const [creatorStatus, setCreatorStatus] = useState<StatusMessage | null>(null);
   const [templateStatus, setTemplateStatus] = useState<StatusMessage | null>(null);
+  const [submittedTemplate, setSubmittedTemplate] = useState<SubmittedTemplateState | null>(null);
   const [creatorSubmitting, setCreatorSubmitting] = useState(false);
   const [templateSubmitting, setTemplateSubmitting] = useState(false);
   const [fieldFeedback, setFieldFeedback] = useState<Record<string, StatusMessage | null>>({});
@@ -1148,6 +1211,7 @@ export function TemplateIntake() {
     event.preventDefault();
     setTemplateSubmitting(true);
     setTemplateStatus(null);
+    setSubmittedTemplate(null);
     let shouldResetTurnstile = false;
 
     try {
@@ -1252,6 +1316,10 @@ export function TemplateIntake() {
           ? `Template submitted. ${data.warning}`
           : 'Template submitted for review.'
       });
+      setSubmittedTemplate({
+        name: data.asset.name || template.templateName,
+        warning: data.warning
+      });
       setAutofillAssets(null);
       setAutofillManaged({});
       setTemplate((current) => ({
@@ -1281,6 +1349,14 @@ export function TemplateIntake() {
 
   function toggleCheckbox(values: string[], value: string) {
     return values.includes(value) ? values.filter((item) => item !== value) : [...values, value];
+  }
+
+  function handleSubmitAnotherTemplate() {
+    setSubmittedTemplate(null);
+    setTemplateStatus(null);
+    requestAnimationFrame(() => {
+      templateSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
   }
 
   return (
@@ -1690,12 +1766,18 @@ export function TemplateIntake() {
 
             <div className="submission-form-column">
               <div className="w-form">
-                <form
-                  className="form-2 cc-library-application-form submission-form"
-                  id="wf-form-Marketplace-Template-Submission"
-                  name="wf-form-Marketplace-Template-Submission"
-                  onSubmit={submitTemplate}
-                >
+                {submittedTemplate ? (
+                  <TemplateSubmissionSuccessPanel
+                    submission={submittedTemplate}
+                    onSubmitAnother={handleSubmitAnotherTemplate}
+                  />
+                ) : (
+                  <form
+                    className="form-2 cc-library-application-form submission-form"
+                    id="wf-form-Marketplace-Template-Submission"
+                    name="wf-form-Marketplace-Template-Submission"
+                    onSubmit={submitTemplate}
+                  >
                   <div className="submission-field">
                     <label
                       className="field-label template-application-form_field-label"
@@ -2363,7 +2445,8 @@ export function TemplateIntake() {
                       {templateSubmitting ? 'Submitting...' : 'Submit template'}
                     </button>
                   </div>
-                </form>
+                  </form>
+                )}
               </div>
             </div>
           </div>

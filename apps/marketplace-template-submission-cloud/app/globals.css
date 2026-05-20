@@ -1264,6 +1264,58 @@ select {
   text-decoration: underline;
 }
 
+.submission-success-panel {
+  gap: 1.25rem;
+}
+
+.submission-success-kicker {
+  margin-bottom: 0.5rem;
+  color: var(--_apps---colors--primary, #146ef5);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.submission-success-title {
+  margin: 0;
+  font-size: clamp(1.8rem, 1.3rem + 1vw, 2.5rem);
+  line-height: 1.08;
+}
+
+.submission-success-copy {
+  max-width: 44rem;
+  margin: 0.75rem 0 0;
+  color: var(--_apps---colors--muted-foreground, #7d797a);
+  line-height: 1.6;
+}
+
+.submission-success-tool-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.submission-success-tool {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--border, #d9d9d9);
+  border-radius: 0.75rem;
+  background: var(--_apps---colors--muted, #f8f8f8);
+}
+
+.submission-success-tool-label {
+  font-weight: 700;
+}
+
+.submission-success-tool-copy {
+  color: var(--_apps---colors--muted-foreground, #7d797a);
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
 .submission-actions {
   display: flex;
   flex-wrap: wrap;
@@ -1389,6 +1441,10 @@ select {
 
   .submission-review-progress {
     white-space: normal;
+  }
+
+  .submission-success-tool-list {
+    grid-template-columns: 1fr;
   }
 
   .submission-choice-grid {
