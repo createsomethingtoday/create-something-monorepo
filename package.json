@@ -72,6 +72,8 @@
     "braintrust:eval:dify:abundance-hub": "pnpm exec braintrust eval ./evals/braintrust/dify/abundance-hub.eval.ts",
     "braintrust:eval:dify:abundance-hub:local": "pnpm exec braintrust eval ./evals/braintrust/dify/abundance-hub.eval.ts --no-send-logs --no-progress-bars",
     "braintrust:eval:dify:bettermode-creator": "pnpm exec braintrust eval ./evals/braintrust/dify/bettermode-marketplace-creator-agent.eval.ts",
+    "braintrust:eval:dify:reviewer-hubs": "pnpm exec braintrust eval ./evals/braintrust/dify/webflow-template-reviewer-hubs.eval.ts",
+    "braintrust:eval:dify:reviewer-hubs:local": "pnpm exec braintrust eval ./evals/braintrust/dify/webflow-template-reviewer-hubs.eval.ts --no-send-logs --no-progress-bars",
     "dify:youtube-transcript:smoke": "pnpm dify:agent:smoke -- --agent-id youtube-transcript-notion-agent",
     "dify:abundance-hub:smoke": "pnpm dify:agent:smoke -- --agent-id abundance-hub",
     "dify:reviewer-hubs:smoke": "pnpm dify:agent:smoke -- --agent-id eric-hub && pnpm dify:agent:smoke -- --agent-id natalia-hub && pnpm dify:agent:smoke -- --agent-id mariana-hub && pnpm dify:agent:smoke -- --agent-id vicki-hub",
