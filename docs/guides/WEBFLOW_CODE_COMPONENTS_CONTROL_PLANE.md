@@ -17,6 +17,7 @@ The UI must remain a rendering and interaction layer. Durable source data, polic
 
 - Control-plane contract: `config/webflow/control-plane.json`
 - Generated contract view: `docs/WEBFLOW_CODE_COMPONENTS_CONTROL_PLANE.generated.md`
+- Export-first agent workflow: `docs/guides/WEBFLOW_EXPORT_FIRST_AGENT_WORKFLOW.md`
 - Component package: `packages/webflow-components`
 - Webflow library config: `packages/webflow-components/webflow.json`
 
@@ -102,6 +103,14 @@ Approval Request Credentials: include
 Endpoint defaults should stay empty in reusable components. Promotion to a specific Webflow site should set Cloudflare URLs in the Webflow Designer or a site-specific composition layer.
 
 `CanonControlPanel` is intentionally shared with Webflow Code Component SSR disabled. The console is an authenticated operator surface that hydrates from Cloudflare/D1 after load; client rendering avoids React SSR recovery errors in Webflow code islands and keeps the published runtime smoke deterministic.
+
+## Export-Assisted Authoring
+
+When a Code Component needs to match an existing Webflow site surface, start with a fresh Webflow project export when possible. The export is the fastest local read model for static HTML, CSS, class vocabulary, breakpoints, and assets. It is not the source of truth for live state.
+
+Use the export to analyze structure and style locally, then implement through the component package and `.webflow.tsx` declaration files. Use MCP, Designer APIs, Data APIs, and Webflow CLI for live element coordinates, bindings, variables, CMS data, publication, and library sharing.
+
+See `docs/guides/WEBFLOW_EXPORT_FIRST_AGENT_WORKFLOW.md` for the full decision table and export limitations.
 
 ## Share
 

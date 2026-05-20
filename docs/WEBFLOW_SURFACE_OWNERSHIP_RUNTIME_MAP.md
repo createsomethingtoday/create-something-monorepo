@@ -22,6 +22,8 @@ Default rule:
 | Automation | Embed apps, extensions, snippets, and Code Components.                         | Own workers, MCPs, analyzers, queue jobs, sync jobs, and deployment commands.           |
 | Judgment   | Show reviewer or operator affordances only after policy is resolved elsewhere. | Own reviewer write boundaries, approval rules, prompt contracts, and escalation policy. |
 
+For agent-assisted Webflow development, a fresh project export can be the fastest local read model for static HTML, CSS, classes, breakpoints, and assets. It is not the live source of truth. Use `docs/guides/WEBFLOW_EXPORT_FIRST_AGENT_WORKFLOW.md` for the export-first workflow, and keep MCP/API/CLI as the mutation, binding, and publication layer.
+
 ## Relationship Graphs
 
 These graphs are intentionally flow-oriented. They show the operational relationships that matter during ownership review, incident triage, and promotion planning.
