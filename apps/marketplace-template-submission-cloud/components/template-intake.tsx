@@ -1213,12 +1213,15 @@ function FeaturedQualityShowcase() {
 
       <div className="featured-quality-actions">
         <a
-          className="submission-status-link featured-quality-link"
+          className="featured-quality-link"
           href={FEATURED_TEMPLATES_URL}
           rel="noreferrer"
           target="_blank"
         >
-          Review Featured templates
+          <span>Review Featured templates</span>
+          <span aria-hidden="true" className="featured-quality-link-icon">
+            -&gt;
+          </span>
         </a>
         {templates.length > FEATURED_QUALITY_VISIBLE_COUNT ? (
           <span className="featured-quality-count">
@@ -1260,31 +1263,62 @@ function TemplateSubmissionSuccessPanel({
         <div className="submission-status submission-status-warning">{submission.warning}</div>
       ) : null}
 
+      <div className="submission-dashboard-handoff">
+        <div className="submission-dashboard-handoff-copy">
+          <div className="submission-step-label submission-step-label-secondary">
+            Creator workspace
+          </div>
+          <h4 className="submission-dashboard-title">Use the Asset Dashboard while reviewers work</h4>
+          <p className="submission-dashboard-copy">
+            It gives creators one place to follow review activity, prepare the next submission, and
+            use the same quality tools our team references.
+          </p>
+        </div>
+        <a className="submission-dashboard-cta" href={ASSET_DASHBOARD_URL} target="_top">
+          <span>Open Asset Dashboard</span>
+          <span aria-hidden="true" className="submission-dashboard-cta-icon">
+            -&gt;
+          </span>
+        </a>
+      </div>
+
       <div className="submission-success-tool-list" aria-label="Asset Dashboard tools">
         <div className="submission-success-tool">
-          <span className="submission-success-tool-label">Review</span>
-          <span className="submission-success-tool-copy">
-            Check existing asset status and updates.
+          <span className="submission-success-tool-marker" aria-hidden="true">
+            01
           </span>
+          <div>
+            <span className="submission-success-tool-label">Review status</span>
+            <span className="submission-success-tool-copy">
+              Check existing asset status and updates.
+            </span>
+          </div>
         </div>
         <div className="submission-success-tool">
-          <span className="submission-success-tool-label">Validate</span>
-          <span className="submission-success-tool-copy">
-            Run checks before the next submission.
+          <span className="submission-success-tool-marker" aria-hidden="true">
+            02
           </span>
+          <div>
+            <span className="submission-success-tool-label">Validator</span>
+            <span className="submission-success-tool-copy">
+              Run checks before the next submission.
+            </span>
+          </div>
         </div>
         <div className="submission-success-tool">
-          <span className="submission-success-tool-label">Insights</span>
-          <span className="submission-success-tool-copy">
-            See Marketplace signals when access is available.
+          <span className="submission-success-tool-marker" aria-hidden="true">
+            03
           </span>
+          <div>
+            <span className="submission-success-tool-label">Insights</span>
+            <span className="submission-success-tool-copy">
+              See Marketplace signals when access is available.
+            </span>
+          </div>
         </div>
       </div>
 
       <div className="submission-actions">
-        <a className="button-sp" href={ASSET_DASHBOARD_URL} target="_top">
-          Open Asset Dashboard
-        </a>
         <button className="button-sp cc-white" type="button" onClick={onSubmitAnother}>
           Submit another template
         </button>
