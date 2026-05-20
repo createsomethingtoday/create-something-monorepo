@@ -39,6 +39,9 @@ export type { TemplateCardProps, TemplateCardBadge, TemplateCardImage, TemplateC
 export { TemplateGrid } from './components/grid/TemplateGrid';
 export type { TemplateGridProps } from './components/grid/TemplateGrid';
 
+export { TemplateFilterBar } from './components/filter/TemplateFilterBar';
+export type { TemplateFilterBarProps } from './components/filter/TemplateFilterBar';
+
 // Canon Form Components
 export { TextField } from './components/form/TextField';
 export type { TextFieldProps, TextFieldSize, TextFieldType } from './components/form/TextField';

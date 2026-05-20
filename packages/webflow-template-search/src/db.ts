@@ -1,4 +1,5 @@
-import type { AliasType, DocumentCountRow, TemplateDocumentInput } from './types.js';
+import type { AliasType, CreatorLookupValue, DocumentCountRow, TemplateDocumentInput } from './types.js';
+import type { WebflowDesignerAvatarRecord, WebflowTemplateImageRecord } from './webflow.js';
 import { chunk, nowIso } from './utils.js';
 
 const UPSERT_TEMPLATE_SQL = `
@@ -99,17 +100,38 @@ function placeholderList(count: number): string {
 }
 
 export async function clearIndex(db: D1Database): Promise<void> {
-  await db.exec(`
-    DELETE FROM template_styles;
-    DELETE FROM template_child_categories;
-    DELETE FROM template_documents;
-  `);
+  // Delete in chunks to avoid D1's per-statement CPU time limit on large tables.
+  for (const table of ['template_styles', 'template_child_categories', 'template_documents'] as const) {
+    let hasMore = true;
+    while (hasMore) {
+      const result = await db.prepare(`DELETE FROM ${table} WHERE rowid IN (SELECT rowid FROM ${table} LIMIT 1000)`).run();
+      hasMore = (result.meta?.changes ?? 0) > 0;
+    }
+  }
 }
 
 export async function upsertTemplateDocuments(db: D1Database, documents: TemplateDocumentInput[]): Promise<void> {
   const statements: D1PreparedStatement[] = [];
 
   for (const document of documents) {
+    // If a different record has claimed this slug, evict it before inserting.
+    statements.push(
+      db
+        .prepare(
+          'DELETE FROM template_styles WHERE template_document_id = (SELECT id FROM template_documents WHERE template_slug = ? AND id != ?)',
+        )
+        .bind(document.templateSlug, document.id),
+    );
+    statements.push(
+      db
+        .prepare(
+          'DELETE FROM template_child_categories WHERE template_document_id = (SELECT id FROM template_documents WHERE template_slug = ? AND id != ?)',
+        )
+        .bind(document.templateSlug, document.id),
+    );
+    statements.push(
+      db.prepare('DELETE FROM template_documents WHERE template_slug = ? AND id != ?').bind(document.templateSlug, document.id),
+    );
     statements.push(db.prepare('DELETE FROM template_styles WHERE template_document_id = ?').bind(document.id));
     statements.push(db.prepare('DELETE FROM template_child_categories WHERE template_document_id = ?').bind(document.id));
     statements.push(
@@ -196,6 +218,274 @@ export async function deleteTemplateDocuments(db: D1Database, ids: string[]): Pr
   for (const group of chunk(statements, 50)) {
     await db.batch(group);
   }
+}
+
+// Bulk-refresh thumbnail and carousel image URLs for all published templates.
+// Airtable signed URLs expire in ~2 hours; this is called on the hourly cron so
+// URLs in D1 are always fresh enough for the proxy to fetch from Airtable.
+export async function refreshTemplateImageUrls(
+  db: D1Database,
+  records: Array<{ id: string; thumbnailImageUrl: string | null; thumbnailImageSecondaryUrl: string | null; carouselImageUrls: string[] }>,
+  syncedAt: string,
+): Promise<number> {
+  if (records.length === 0) return 0;
+
+  const statements: D1PreparedStatement[] = records.map((record) =>
+    db
+      .prepare(
+        `UPDATE template_documents
+         SET thumbnail_image_url = ?,
+             thumbnail_image_secondary_url = ?,
+             carousel_image_urls_json = ?,
+             synced_at = ?
+         WHERE id = ?`,
+      )
+      .bind(
+        record.thumbnailImageUrl,
+        record.thumbnailImageSecondaryUrl,
+        JSON.stringify(record.carouselImageUrls),
+        syncedAt,
+        record.id,
+      ),
+  );
+
+  let totalChanges = 0;
+  for (const group of chunk(statements, 50)) {
+    const results = await db.batch(group);
+    for (const result of results) {
+      totalChanges += result.meta?.changes ?? 0;
+    }
+  }
+
+  return totalChanges;
+}
+
+// Bulk-update thumbnail and carousel URLs sourced from stable Webflow CDN URLs.
+// Unlike Airtable signed URLs (which expire in ~2h), Webflow CDN URLs are permanent.
+// Keyed by sync-record-id which equals the D1 template id.
+export async function updateTemplateImagesFromWebflow(
+  db: D1Database,
+  records: WebflowTemplateImageRecord[],
+  syncedAt: string,
+): Promise<number> {
+  if (records.length === 0) return 0;
+
+  const statements: D1PreparedStatement[] = records.map((record) =>
+    db
+      .prepare(
+        `UPDATE template_documents
+         SET thumbnail_image_url = ?,
+             thumbnail_image_secondary_url = ?,
+             carousel_image_urls_json = ?,
+             synced_at = ?
+         WHERE id = ?`,
+      )
+      .bind(
+        record.thumbnailImageUrl,
+        record.thumbnailImageSecondaryUrl,
+        JSON.stringify(record.carouselImageUrls),
+        syncedAt,
+        record.id,
+      ),
+  );
+
+  let totalChanges = 0;
+  for (const group of chunk(statements, 50)) {
+    const results = await db.batch(group);
+    for (const result of results) {
+      totalChanges += result.meta?.changes ?? 0;
+    }
+  }
+
+  return totalChanges;
+}
+
+// Bulk-update creator avatar URLs sourced from stable Webflow CDN URLs.
+// Prefer sync-record-id when available, then exact creator name for rows that
+// never received the linked creator record.
+export async function updateCreatorAvatarsFromWebflow(
+  db: D1Database,
+  records: WebflowDesignerAvatarRecord[],
+  syncedAt: string,
+): Promise<number> {
+  if (records.length === 0) return 0;
+
+  const statements: D1PreparedStatement[] = [];
+
+  for (const record of records) {
+    if (record.syncRecordId) {
+      statements.push(
+        db
+          .prepare(
+            `UPDATE template_documents
+             SET creator_avatar_url = ?,
+                 creator_avatar_alt = ?,
+                 creator_profile_url = COALESCE(NULLIF(creator_profile_url, ''), ?),
+                 synced_at = ?
+             WHERE creator_record_id = ?`,
+          )
+          .bind(record.avatarUrl, record.avatarAlt ?? record.name, record.profileUrl, syncedAt, record.syncRecordId),
+      );
+    }
+
+    statements.push(
+      db
+        .prepare(
+          `UPDATE template_documents
+           SET creator_avatar_url = ?,
+               creator_avatar_alt = ?,
+               creator_profile_url = COALESCE(NULLIF(creator_profile_url, ''), ?),
+               creator_record_id = COALESCE(NULLIF(creator_record_id, ''), ?),
+               synced_at = ?
+           WHERE creator_name = ?
+             AND (
+               creator_record_id IS NULL
+               OR creator_record_id = ''
+               OR creator_record_id = ?
+               OR ? IS NULL
+             )`,
+        )
+        .bind(
+          record.avatarUrl,
+          record.avatarAlt ?? record.name,
+          record.profileUrl,
+          record.syncRecordId,
+          syncedAt,
+          record.name,
+          record.syncRecordId,
+          record.syncRecordId,
+        ),
+    );
+  }
+
+  let totalChanges = 0;
+  for (const group of chunk(statements, 50)) {
+    const results = await db.batch(group);
+    for (const result of results) {
+      totalChanges += result.meta?.changes ?? 0;
+    }
+  }
+
+  return totalChanges;
+}
+
+// Some template rows have a creator display name but no linked creator record ID.
+// When another row with the same exact creator name has complete creator metadata,
+// copy that metadata across. The HAVING guard avoids ambiguous duplicate names.
+export async function backfillCreatorFieldsByName(db: D1Database, syncedAt: string): Promise<number> {
+  const result = await db
+    .prepare(
+      `WITH known_creators AS (
+         SELECT
+           creator_name,
+           MAX(creator_record_id) AS creator_record_id,
+           MAX(creator_profile_url) AS creator_profile_url,
+           MAX(creator_avatar_url) AS creator_avatar_url,
+           MAX(creator_avatar_alt) AS creator_avatar_alt
+         FROM template_documents
+         WHERE creator_name IS NOT NULL
+           AND creator_name != ''
+           AND creator_record_id IS NOT NULL
+           AND creator_record_id != ''
+           AND (
+             (creator_profile_url IS NOT NULL AND creator_profile_url != '')
+             OR (creator_avatar_url IS NOT NULL AND creator_avatar_url != '')
+           )
+         GROUP BY creator_name
+         HAVING COUNT(DISTINCT creator_record_id) = 1
+       )
+       UPDATE template_documents
+       SET creator_record_id = CASE
+             WHEN creator_record_id IS NULL OR creator_record_id = ''
+               THEN (SELECT known_creators.creator_record_id FROM known_creators WHERE known_creators.creator_name = template_documents.creator_name)
+             ELSE creator_record_id
+           END,
+           creator_profile_url = CASE
+             WHEN creator_profile_url IS NULL OR creator_profile_url = ''
+               THEN (SELECT known_creators.creator_profile_url FROM known_creators WHERE known_creators.creator_name = template_documents.creator_name)
+             ELSE creator_profile_url
+           END,
+           creator_avatar_url = CASE
+             WHEN creator_avatar_url IS NULL OR creator_avatar_url = ''
+               THEN (SELECT known_creators.creator_avatar_url FROM known_creators WHERE known_creators.creator_name = template_documents.creator_name)
+             ELSE creator_avatar_url
+           END,
+           creator_avatar_alt = CASE
+             WHEN creator_avatar_alt IS NULL OR creator_avatar_alt = ''
+               THEN COALESCE(
+                 (SELECT known_creators.creator_avatar_alt FROM known_creators WHERE known_creators.creator_name = template_documents.creator_name),
+                 creator_name
+               )
+             ELSE creator_avatar_alt
+           END,
+           synced_at = ?
+       WHERE creator_name IN (SELECT creator_name FROM known_creators)
+         AND (
+           creator_record_id IS NULL
+           OR creator_record_id = ''
+           OR creator_profile_url IS NULL
+           OR creator_profile_url = ''
+           OR creator_avatar_url IS NULL
+           OR creator_avatar_url = ''
+           OR creator_avatar_alt IS NULL
+           OR creator_avatar_alt = ''
+         )`,
+    )
+    .bind(syncedAt)
+    .run();
+
+  return result.meta?.changes ?? 0;
+}
+
+// Creator avatar/profile URL updates in Airtable do not bump the template's LMT,
+// so incremental sync misses them. This function uses the freshly-loaded creator map
+// to patch any template_document whose stored creator fields differ from current values.
+export async function backfillCreatorAvatars(
+  db: D1Database,
+  creators: Map<string, CreatorLookupValue>,
+  syncedAt: string,
+): Promise<number> {
+  if (creators.size === 0) return 0;
+
+  const statements: D1PreparedStatement[] = [];
+
+  for (const [creatorId, creator] of creators) {
+    const avatarUrl = creator.avatarUrl;
+    const profileUrl = creator.profileUrl || null;
+    const avatarAlt = creator.avatarAlt ?? creator.name;
+
+    // Skip creators with no useful data to backfill.
+    if (!avatarUrl && !profileUrl) continue;
+
+    statements.push(
+      db
+        .prepare(
+          `UPDATE template_documents
+           SET creator_avatar_url = ?,
+               creator_avatar_alt = ?,
+               creator_profile_url = ?,
+               synced_at = ?
+           WHERE creator_record_id = ?
+             AND (
+               NOT (creator_avatar_url IS ?)
+               OR NOT (creator_profile_url IS ?)
+             )`,
+        )
+        .bind(avatarUrl, avatarAlt, profileUrl, syncedAt, creatorId, avatarUrl, profileUrl),
+    );
+  }
+
+  if (statements.length === 0) return 0;
+
+  let totalChanges = 0;
+  for (const group of chunk(statements, 50)) {
+    const results = await db.batch(group);
+    for (const result of results) {
+      totalChanges += result.meta?.changes ?? 0;
+    }
+  }
+
+  return totalChanges;
 }
 
 export async function getSyncCursor(db: D1Database, key = 'airtable_last_modified_cursor'): Promise<string | null> {

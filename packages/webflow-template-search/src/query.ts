@@ -3,6 +3,7 @@ import { clamp, ensureStringArray, normalizeSort } from './utils.js';
 
 const VALID_TYPES = new Set(['One Page', 'Multi Page', 'Multi Layout']);
 const VALID_SCOPES = new Set<TemplateScope>(['all', 'featured', 'free', 'landing_pages']);
+const VALID_INCLUDES = new Set(['items', 'facets', 'pills']);
 
 function parseList(params: URLSearchParams, key: string): string[] {
   const values = params.getAll(key).flatMap((value) => value.split(','));
@@ -26,6 +27,29 @@ function parseScope(params: URLSearchParams): TemplateScope {
   return 'all';
 }
 
+function parseIncludes(params: URLSearchParams): SearchParams['include'] {
+  const rawIncludes = params
+    .getAll('include')
+    .flatMap((value) => value.split(','))
+    .map((value) => value.trim().toLowerCase())
+    .filter(Boolean);
+
+  if (rawIncludes.length === 0 || rawIncludes.includes('all')) {
+    return { items: true, facets: true, pills: true };
+  }
+
+  const includes = rawIncludes.filter((value) => VALID_INCLUDES.has(value));
+  if (includes.length === 0) {
+    return { items: true, facets: true, pills: true };
+  }
+
+  return {
+    items: includes.includes('items'),
+    facets: includes.includes('facets'),
+    pills: includes.includes('pills'),
+  };
+}
+
 export function parseSearchParams(url: URL, defaultPageSize = 24): SearchParams {
   const params = url.searchParams;
   const q = params.get('q') ?? params.get('query') ?? params.get('search');
@@ -41,5 +65,6 @@ export function parseSearchParams(url: URL, defaultPageSize = 24): SearchParams 
     sort: normalizeSort(params.get('sort')),
     page: clamp(Number(params.get('page') ?? 1) || 1, 1, 500),
     pageSize: clamp(Number(params.get('page_size') ?? defaultPageSize) || defaultPageSize, 1, 100),
+    include: parseIncludes(params),
   };
 }

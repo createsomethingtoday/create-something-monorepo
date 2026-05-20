@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { backfillCreatorFieldsByName } from '../src/db.js';
 import { installAirtableFetchMock } from './support/airtable.js';
 import { callWorker, createTestEnv } from './support/worker.js';
 
@@ -144,6 +145,74 @@ describe('webflow-template-search worker', () => {
     }
   });
 
+  it('backfills missing creator metadata from matching creator names', async () => {
+    const { env, close } = createTestEnv();
+
+    try {
+      await env.DB.prepare(
+        `INSERT INTO template_documents (
+          id,
+          template_slug,
+          name,
+          creator_name,
+          creator_record_id,
+          creator_profile_url,
+          creator_avatar_url,
+          creator_avatar_alt,
+          synced_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      )
+        .bind(
+          'recKnownEclipso',
+          'known-eclipso-template',
+          'Known Eclipso',
+          'Eclipso Studio',
+          'recWm0pLj5ytkkPYm',
+          'https://webflow.com/templates/designers/eclipso-studio',
+          'https://assets.example.com/eclipso-avatar.png',
+          'Eclipso Studio',
+          '2026-05-19T00:00:00.000Z',
+        )
+        .run();
+
+      await env.DB.prepare(
+        `INSERT INTO template_documents (
+          id,
+          template_slug,
+          name,
+          creator_name,
+          synced_at
+        ) VALUES (?, ?, ?, ?, ?)`,
+      )
+        .bind('recAluro', 'aluro-website-template', 'Aluro', 'Eclipso Studio', '2026-05-19T00:00:00.000Z')
+        .run();
+
+      await backfillCreatorFieldsByName(env.DB, '2026-05-20T00:00:00.000Z');
+
+      const row = await env.DB.prepare(
+        `SELECT creator_record_id, creator_profile_url, creator_avatar_url, creator_avatar_alt
+         FROM template_documents
+         WHERE id = ?`,
+      )
+        .bind('recAluro')
+        .first<{
+          creator_record_id: string | null;
+          creator_profile_url: string | null;
+          creator_avatar_url: string | null;
+          creator_avatar_alt: string | null;
+        }>();
+
+      expect(row).toEqual({
+        creator_record_id: 'recWm0pLj5ytkkPYm',
+        creator_profile_url: 'https://webflow.com/templates/designers/eclipso-studio',
+        creator_avatar_url: 'https://assets.example.com/eclipso-avatar.png',
+        creator_avatar_alt: 'Eclipso Studio',
+      });
+    } finally {
+      close();
+    }
+  });
+
   it('rebuilds the index and serves filtered search results', async () => {
     const fetchMock = installAirtableFetchMock({
       publishedAssets: PUBLISHED_ASSETS,
@@ -178,6 +247,45 @@ describe('webflow-template-search worker', () => {
       expect(categoryPayload.available_facets.types.map((item) => item.value)).toEqual(['Multi Layout', 'Multi Page']);
       expect(categoryPayload.subcategory_pills.map((pill) => pill.slug)).toEqual(['ai-websites', 'software-and-saas-websites']);
       expect(categoryPayload.subcategory_pills.find((pill) => pill.slug === 'ai-websites')?.active).toBe(true);
+
+      const itemsOnlySearch = await callWorker(
+        new Request('https://templates.test/api/templates/search?include=items&category_group_slug=technology-websites'),
+        env,
+      );
+      const itemsOnlyPayload = (await itemsOnlySearch.json()) as {
+        items: Array<{ name: string }>;
+        available_facets: { styles: unknown[]; types: unknown[] };
+        category_pills: unknown[];
+        subcategory_pills: unknown[];
+      };
+
+      expect(itemsOnlyPayload.items.map((item) => item.name)).toEqual(['Setrex', 'Agentflow', 'Catalis']);
+      expect(itemsOnlyPayload.available_facets.styles).toEqual([]);
+      expect(itemsOnlyPayload.available_facets.types).toEqual([]);
+      expect(itemsOnlyPayload.category_pills).toEqual([]);
+      expect(itemsOnlyPayload.subcategory_pills).toEqual([]);
+
+      const facetsAndPillsSearch = await callWorker(
+        new Request('https://templates.test/api/templates/search?include=facets,pills&category_group_slug=technology-websites'),
+        env,
+      );
+      const facetsAndPillsPayload = (await facetsAndPillsSearch.json()) as {
+        items: unknown[];
+        available_facets: { styles: Array<{ slug: string }>; types: Array<{ value: string }> };
+        subcategory_pills: Array<{ slug: string }>;
+      };
+
+      expect(facetsAndPillsPayload.items).toEqual([]);
+      expect(facetsAndPillsPayload.available_facets.styles.map((item) => item.slug)).toEqual(['dark-websites', 'modern']);
+      expect(facetsAndPillsPayload.available_facets.types.map((item) => item.value)).toEqual([
+        'Multi Layout',
+        'Multi Page',
+        'One Page',
+      ]);
+      expect(facetsAndPillsPayload.subcategory_pills.map((pill) => pill.slug)).toEqual([
+        'ai-websites',
+        'software-and-saas-websites',
+      ]);
 
       const search = await callWorker(new Request('https://templates.test/api/templates/search?q=workflow'), env);
       const searchPayload = (await search.json()) as { items: Array<{ name: string }> };

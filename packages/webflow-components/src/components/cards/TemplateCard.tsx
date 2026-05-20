@@ -136,6 +136,10 @@ const S: Record<string, CSSProperties> = {
     color: 'rgb(255, 255, 255)',
     cursor: 'pointer',
     pointerEvents: 'none',
+    // Hidden by default — driven by React state so it works even when the
+    // injected <style> tag is blocked by a page CSP.
+    opacity: 0,
+    transition: 'opacity 220ms ease',
   },
   hoverContent: {
     display: 'flex',
@@ -149,6 +153,8 @@ const S: Record<string, CSSProperties> = {
     fontSize: '14px',
     fontWeight: 600,
     boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+    transform: 'scale(0.96)',
+    transition: 'transform 220ms cubic-bezier(0.25, 0.46, 0.45, 0.94)',
   },
   content: {
     display: 'flex',
@@ -469,6 +475,7 @@ const TemplateCardInner: React.FC<TemplateCardProps> = ({
   const [primaryError, setPrimaryError] = useState(false);
   const [showShimmer, setShowShimmer] = useState(true);
   const [iconError, setIconError] = useState(false);
+  const [isLinkHovered, setIsLinkHovered] = useState(false);
   // DOM position within Collection List — used for image loading priority only
   const [domIndex, setDomIndex] = useState(0);
 
@@ -555,6 +562,10 @@ const TemplateCardInner: React.FC<TemplateCardProps> = ({
         aria-label={`View ${templateName} template`}
         className="tmcard-link"
         style={S.link}
+        onMouseEnter={() => setIsLinkHovered(true)}
+        onMouseLeave={() => setIsLinkHovered(false)}
+        onFocus={() => setIsLinkHovered(true)}
+        onBlur={() => setIsLinkHovered(false)}
       >
         {showShimmer && (
           <div
@@ -585,7 +596,11 @@ const TemplateCardInner: React.FC<TemplateCardProps> = ({
             src={primaryImage?.src ?? FALLBACK_IMAGE}
             onLoad={handlePrimaryLoad}
             onError={handlePrimaryError}
-            style={S.primaryImage}
+            style={{
+              ...S.primaryImage,
+              transform: isLinkHovered ? 'scale(1.04)' : 'scale(1)',
+              transition: 'transform 350ms cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+            }}
           />
         )}
 
@@ -596,13 +611,25 @@ const TemplateCardInner: React.FC<TemplateCardProps> = ({
             loading="lazy"
             decoding="async"
             src={secondaryImage.src}
-            style={S.secondaryImage}
+            style={{
+              ...S.secondaryImage,
+              opacity: isLinkHovered ? 1 : 0,
+              transform: isLinkHovered ? 'scale(1.04)' : 'scale(1)',
+              transition: 'opacity 280ms ease, transform 350ms cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+            }}
           />
         )}
 
         {/* Hover overlay — aria-hidden: announced by the parent link's aria-label */}
-        <div aria-hidden="true" className="tmcard-hover-overlay" style={S.hoverOverlay}>
-          <div className="tmcard-hover-content" style={S.hoverContent}>
+        <div
+          aria-hidden="true"
+          className="tmcard-hover-overlay"
+          style={{ ...S.hoverOverlay, opacity: isLinkHovered ? 1 : 0 }}
+        >
+          <div
+            className="tmcard-hover-content"
+            style={{ ...S.hoverContent, transform: isLinkHovered ? 'scale(1.04)' : 'scale(0.96)' }}
+          >
             <span>View details</span>
             <img loading="lazy" decoding="async" src={ARROW_ICON_URL} alt="" width="16" height="16" />
           </div>

@@ -15,6 +15,8 @@ export interface Env {
   DEFAULT_CLIENT_MODE?: string;
   ENVIRONMENT?: string;
   SYNC_ADMIN_TOKEN?: string;
+  CMS_READ_ONLY?: string;
+  WEBFLOW_WEBHOOK_SECRET?: string;
 }
 
 export interface AirtableAttachment {
@@ -147,6 +149,11 @@ export interface SearchParams {
   sort: TemplateSort;
   page: number;
   pageSize: number;
+  include: {
+    items: boolean;
+    facets: boolean;
+    pills: boolean;
+  };
 }
 
 export interface SearchItem {
@@ -200,7 +207,17 @@ export interface SearchResponsePayload {
     styles: Array<{ name: string; slug: string; count: number }>;
     types: Array<{ value: string; count: number }>;
   };
+  category_pills: Array<{ name: string; slug: string; url: string; count: number; active: boolean }>;
   subcategory_pills: Array<{ name: string; slug: string; url: string; count: number; active: boolean }>;
+}
+
+export interface ImageRefreshSummary {
+  mode: 'image_refresh';
+  started_at: string;
+  finished_at: string;
+  fetched_records: number;
+  refreshed_records: number;
+  backfilled_records: number;
 }
 
 export interface SyncSummary {
@@ -210,6 +227,7 @@ export interface SyncSummary {
   fetched_records: number;
   indexed_records: number;
   removed_records: number;
+  backfilled_records: number;
   cursor: string;
 }
 

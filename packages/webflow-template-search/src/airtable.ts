@@ -64,7 +64,10 @@ function buildPublishedTemplateFormula(): string {
   return 'AND({⚙️🆎Type (Text)}="Template🏗️",{🚀Marketplace Status}="3️⃣Published🚀")';
 }
 
-function buildModifiedAfterFormula(cursor: string): string {
+function buildModifiedAfterFormula(cursor: string, until?: string): string {
+  if (until) {
+    return `AND(IS_AFTER({📅LMT}, DATETIME_PARSE("${cursor}")), NOT(IS_AFTER({📅LMT}, DATETIME_PARSE("${until}"))))`;
+  }
   return `IS_AFTER({📅LMT}, DATETIME_PARSE("${cursor}"))`;
 }
 
@@ -129,6 +132,25 @@ async function fetchAirtableRecords<TFields extends Record<string, unknown>>(
   return records;
 }
 
+// Minimal field list for periodic image URL refresh — much cheaper than full ASSET_FIELDS.
+const IMAGE_REFRESH_FIELDS = [
+  '⚙️🆎Type (Text)',
+  '🚀Marketplace Status',
+  '🖼️Thumbnail Image',
+  '🖼️Thumbnail Image (Secondary)',
+  '🖼️Carousel Images',
+];
+
+export async function fetchPublishedTemplateImageFields(
+  env: Env,
+): Promise<Array<AirtableRecord<AirtableAssetFields>>> {
+  return fetchAirtableRecords<AirtableAssetFields>(env, {
+    tableId: env.AIRTABLE_ASSETS_TABLE_ID ?? DEFAULT_ASSETS_TABLE_ID,
+    fields: IMAGE_REFRESH_FIELDS,
+    formula: buildPublishedTemplateFormula(),
+  });
+}
+
 export async function fetchPublishedTemplateAssets(env: Env): Promise<Array<AirtableRecord<AirtableAssetFields>>> {
   return fetchAirtableRecords<AirtableAssetFields>(env, {
     tableId: env.AIRTABLE_ASSETS_TABLE_ID ?? DEFAULT_ASSETS_TABLE_ID,
@@ -141,11 +163,12 @@ export async function fetchPublishedTemplateAssets(env: Env): Promise<Array<Airt
 export async function fetchModifiedAssetsSince(
   env: Env,
   cursor: string,
+  until?: string,
 ): Promise<Array<AirtableRecord<AirtableAssetFields>>> {
   return fetchAirtableRecords<AirtableAssetFields>(env, {
     tableId: env.AIRTABLE_ASSETS_TABLE_ID ?? DEFAULT_ASSETS_TABLE_ID,
     fields: ASSET_FIELDS,
-    formula: buildModifiedAfterFormula(cursor),
+    formula: buildModifiedAfterFormula(cursor, until),
     sortField: '📅LMT',
   });
 }

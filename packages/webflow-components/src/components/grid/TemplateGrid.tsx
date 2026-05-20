@@ -41,6 +41,7 @@ interface ApiResponse {
 
 // ─── Filter / route state ─────────────────────────────────────────────────────
 
+type TemplateSort = 'popular' | 'newest' | 'price_asc' | 'price_desc';
 type TemplateScope = 'all' | 'featured' | 'free' | 'landing_pages';
 
 interface FilterState {
@@ -51,7 +52,7 @@ interface FilterState {
   styles: string[];
   types: string[];
   freeOnly: boolean;
-  sort: string;
+  sort: TemplateSort;
 }
 
 // ─── Props ────────────────────────────────────────────────────────────────────
@@ -59,7 +60,7 @@ interface FilterState {
 export interface TemplateGridProps {
   /**
    * Base URL for the template search API, no trailing slash.
-   * Production default: https://webflow-template-marketplace.webflow.io/templates
+   * Production default: https://templates.webflow.com/templates-api
    * (Cloud App proxy — CSP-safe from webflow.com pages).
    * Override to https://webflow-template-search.createsomething.workers.dev for local dev.
    */
@@ -77,21 +78,41 @@ export interface TemplateGridProps {
    */
   scopeOverride?: TemplateScope;
   /** Fallback sort when no ?sort= param is present in the URL */
-  initialSort?: 'popular' | 'newest' | 'price_asc' | 'price_desc';
+  initialSort?: TemplateSort;
   /** Items per page per infinite-scroll fetch */
   pageSize?: number;
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-// Relative path — the Cloud App is mounted at /templates-api on webflow.com, so
-// requests resolve to webflow.com/templates-api/api/... (same-origin, CSP-safe).
-const DEFAULT_API_BASE = '/templates-api';
+// Production Cloud App URL — hosted on *.webflow.com so it passes the
+// webflow.com page CSP (connect-src https://*.webflow.com).
+const DEFAULT_API_BASE = 'https://templates.webflow.com/templates-api';
 // The direct Worker origin is blocked by webflow.com's CSP — rewrite to proxy.
 const WORKER_ORIGIN = 'https://webflow-template-search.createsomething.workers.dev';
-// Preview URL used during Cloud App development — also rewrite to relative.
+// Legacy preview URL — rewrite to the production base.
 const CLOUD_APP_PREVIEW_ORIGIN = 'https://webflow-template-marketplace.webflow.io';
 const DEFAULT_PAGE_SIZE = 24;
+
+// Hosts whose images need to be routed through the Cloud App proxy.
+// Airtable signed attachment URLs expire after ~2 hours; the proxy caches
+// them at Cloudflare edge for 24 h so expiry gaps don't cause broken images.
+const IMAGE_PROXY_BLOCKLIST = ['airtableusercontent.com'];
+
+function proxyImageUrl(imageUrl: string, apiBase: string): string {
+  try {
+    const host = new URL(imageUrl).hostname;
+    if (IMAGE_PROXY_BLOCKLIST.some((blocked) => host.includes(blocked))) {
+      const proxyBase = apiBase.startsWith('/') && typeof window !== 'undefined'
+        ? `${window.location.origin}${apiBase}`
+        : apiBase;
+      return `${proxyBase}/api/avatar?url=${encodeURIComponent(imageUrl)}`;
+    }
+  } catch {
+    // malformed URL — return as-is
+  }
+  return imageUrl;
+}
 
 // Selectors matching the existing Webflow filter/sort UI (same as client-script.ts)
 const SEL_SORT = '[data-template-search-sort], select[name="sort"]';
@@ -102,12 +123,39 @@ const SEL_SEARCH = '[data-template-search-input], input[type="search"]';
 
 // ─── URL helpers ──────────────────────────────────────────────────────────────
 
-function normalizeSort(value: string | null, fallback = 'popular'): string {
-  if (!value) return fallback;
-  if (value === 'approval-date-desc') return 'newest';
-  if (value === 'price-asc') return 'price_asc';
-  if (value === 'price-desc') return 'price_desc';
-  return value;
+// Style slugs in the DB are lowercase-hyphenated (mirrors the search-worker's
+// slugifySegment). Convert display names from the filter UI to the same format.
+function toStyleSlug(name: string): string {
+  return name
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+function normalizeSort(value: string | null | undefined, fallback: TemplateSort = 'popular'): TemplateSort {
+  switch ((value ?? '').trim()) {
+    case 'newest':
+    case 'approval-date':
+    case 'approval-date-desc':
+      return 'newest';
+    case 'price_asc':
+    case 'price-asc':
+      return 'price_asc';
+    case 'price_desc':
+    case 'price-desc':
+      return 'price_desc';
+    case 'popular':
+    case 'popularity-score':
+    case 'popularity-score-desc':
+      return 'popular';
+    default:
+      return fallback;
+  }
+}
+
+function resolveScopeOverride(scopeOverrideParam?: TemplateScope): TemplateScope | undefined {
+  return scopeOverrideParam && scopeOverrideParam !== 'all' ? scopeOverrideParam : undefined;
 }
 
 /**
@@ -124,16 +172,20 @@ function normalizeSort(value: string | null, fallback = 'popular'): string {
  *   /templates/landing-pages           → scope=landing_pages
  *   /templates/category/{slug}         → category_group_slug={slug}
  *   /templates/subcategory/{slug}      → child_category_slug={slug}
+ *   ?category={slug}                   → category_group_slug={slug}
+ *   ?subcategory={slug}                → child_category_slug={slug}
  */
 function parseRouteState(
-  defaultSort = 'popular',
+  defaultSort: TemplateSort = 'popular',
   slugOverride?: string,
   scopeOverrideParam?: TemplateScope,
 ): FilterState {
+  const resolvedScopeOverride = resolveScopeOverride(scopeOverrideParam);
+
   if (typeof window === 'undefined') {
     return {
       q: '',
-      scope: scopeOverrideParam ?? 'all',
+      scope: resolvedScopeOverride ?? 'all',
       categoryGroupSlug: slugOverride || null,
       childCategorySlug: null,
       styles: [],
@@ -164,27 +216,77 @@ function parseRouteState(
     scope = 'landing_pages';
   }
 
-  // Slug detection from path
+  // Slug detection from path or query param
+  // Path: /templates/category/{slug}
+  // Query: ?category={slug} (used on e.g. /templates/free-website-templates?category=architecture-design)
   const categoryMatch = pathname.match(/\/templates\/category\/([^/?#]+)/);
   const subcategoryMatch = pathname.match(/\/templates\/subcategory\/([^/?#]+)/);
+  const categoryParam = params.get('category');
+  const subcategoryParam = params.get('subcategory');
 
   // Query-param filters (user-applied via filter UI)
   const qRaw = params.get('q') ?? params.get('query') ?? params.get('search') ?? '';
   const freeParam = ['1', 'true', 'yes', 'on'].includes((params.get('free_only') ?? '').toLowerCase());
-  const styles = params.getAll('styles').flatMap((v) => v.split(',')).filter(Boolean);
+  // Style slugs in the DB are lowercase-hyphenated (slugifySegment), so normalize incoming URL values.
+  const styles = params.getAll('styles').flatMap((v) => v.split(',')).filter(Boolean).map(toStyleSlug);
   const types = params.getAll('types').flatMap((v) => v.split(',')).filter(Boolean);
 
   return {
     q: qRaw.trim(),
-    scope: scopeOverrideParam ?? scope,
+    scope: resolvedScopeOverride ?? scope,
     // Designer preview slug prop takes precedence over URL detection
-    categoryGroupSlug: slugOverride || (categoryMatch ? categoryMatch[1] : null),
-    childCategorySlug: subcategoryMatch ? subcategoryMatch[1] : null,
+    categoryGroupSlug: slugOverride || (categoryMatch ? categoryMatch[1] : categoryParam || null),
+    childCategorySlug: subcategoryMatch ? subcategoryMatch[1] : subcategoryParam || null,
     styles,
     types,
     freeOnly: freeOnly || freeParam,
     sort: normalizeSort(params.get('sort'), defaultSort),
   };
+}
+
+function mergeExternalFilterState(base: FilterState, detail: unknown): FilterState {
+  if (!detail || typeof detail !== 'object') return base;
+  const patch = detail as Partial<{
+    q: unknown;
+    styles: unknown;
+    types: unknown;
+    freeOnly: unknown;
+    sort: unknown;
+  }>;
+
+  return {
+    ...base,
+    q: typeof patch.q === 'string' ? patch.q.trim() : base.q,
+    styles: Array.isArray(patch.styles) ? patch.styles.filter((value): value is string => typeof value === 'string') : base.styles,
+    types: Array.isArray(patch.types) ? patch.types.filter((value): value is string => typeof value === 'string') : base.types,
+    freeOnly: typeof patch.freeOnly === 'boolean' ? patch.freeOnly : base.freeOnly,
+    sort: typeof patch.sort === 'string' ? normalizeSort(patch.sort, base.sort) : base.sort,
+  };
+}
+
+function readSharedFilterState(href: string): unknown {
+  if (typeof window === 'undefined') return undefined;
+  const detail = (window as unknown as Record<string, unknown>).__templateMarketplaceFilters;
+  if (!detail || typeof detail !== 'object') return undefined;
+  const shared = detail as { href?: unknown };
+  return shared.href === href ? detail : undefined;
+}
+
+function areStringArraysEqual(a: string[], b: string[]): boolean {
+  return a.length === b.length && a.every((value, index) => value === b[index]);
+}
+
+function areFiltersEqual(a: FilterState, b: FilterState): boolean {
+  return (
+    a.q === b.q &&
+    a.scope === b.scope &&
+    a.categoryGroupSlug === b.categoryGroupSlug &&
+    a.childCategorySlug === b.childCategorySlug &&
+    a.freeOnly === b.freeOnly &&
+    a.sort === b.sort &&
+    areStringArraysEqual(a.styles, b.styles) &&
+    areStringArraysEqual(a.types, b.types)
+  );
 }
 
 function buildApiUrl(base: string, filters: FilterState, page: number, pageSize: number): string {
@@ -198,6 +300,7 @@ function buildApiUrl(base: string, filters: FilterState, page: number, pageSize:
   if (filters.categoryGroupSlug) url.searchParams.set('category_group_slug', filters.categoryGroupSlug);
   if (filters.childCategorySlug) url.searchParams.set('child_category_slug', filters.childCategorySlug);
   if (filters.freeOnly) url.searchParams.set('free_only', 'true');
+  url.searchParams.set('include', 'items');
   url.searchParams.set('sort', filters.sort);
   url.searchParams.set('page', String(page));
   url.searchParams.set('page_size', String(pageSize));
@@ -297,12 +400,6 @@ const S: Record<string, CSSProperties> = {
     color: 'rgba(0,0,0,0.5)',
     fontSize: '14px',
   },
-  emptyBox: {
-    padding: '64px 32px',
-    textAlign: 'center',
-    color: 'rgba(0,0,0,0.4)',
-    fontSize: '14px',
-  },
   countLabel: {
     paddingBottom: '20px',
     fontSize: '13px',
@@ -356,6 +453,15 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
   const sentinelRef = useRef<HTMLDivElement>(null);
   // Stale-fetch guard: every new filter/sort change increments this
   const fetchEpochRef = useRef(0);
+  const lastHrefRef = useRef(typeof window === 'undefined' ? '' : window.location.href);
+
+  // Keep Designer prop edits and production URL changes aligned after mount.
+  useEffect(() => {
+    setFilters((prev) => {
+      const next = parseRouteState(initialSort, categorySlugProp || undefined, scopeOverride);
+      return areFiltersEqual(prev, next) ? prev : next;
+    });
+  }, [initialSort, categorySlugProp, scopeOverride]);
 
   // ── Fetch ─────────────────────────────────────────────────────────────────
 
@@ -420,24 +526,15 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
 
   // ── Wire Webflow filter/sort UI controls ──────────────────────────────────
   //
-  // The existing Webflow Designer filter form (sort dropdown, style select,
-  // type select, free toggle, search input) uses the same DOM selectors as
-  // client-script.ts. TemplateGrid listens to those elements and updates its
-  // own filter state — no Finsweet required.
+  // Two wiring paths coexist:
+  //   1. Custom-attribute controls (data-template-search-*) — original design
+  //   2. Webflow native Finsweet-style controls (fs-cmssort-field / fs-cmsfilter-field)
+  //      used by the live webflow.com template marketplace
+  //
+  // Both paths call the same applyFilters() function.
 
   useLayoutEffect(() => {
     let debounceId: ReturnType<typeof setTimeout> | null = null;
-
-    const sortEl = document.querySelector<HTMLSelectElement>(SEL_SORT);
-    const styleEl = document.querySelector<HTMLSelectElement>(SEL_STYLE);
-    const typeEl = document.querySelector<HTMLSelectElement>(SEL_TYPE);
-    const freeEl = document.querySelector<HTMLInputElement>(SEL_FREE);
-    const searchEl = document.querySelector<HTMLInputElement>(SEL_SEARCH);
-
-    // Sync initial UI state → form values
-    if (sortEl) sortEl.value = filters.sort;
-    if (freeEl) freeEl.checked = filters.freeOnly;
-    if (searchEl) searchEl.value = filters.q;
 
     function applyFilters(patch: Partial<FilterState>) {
       setFilters((prev) => {
@@ -446,6 +543,17 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
         return next;
       });
     }
+
+    // ── Path 1: custom-attribute controls ────────────────────────────────────
+    const sortEl = document.querySelector<HTMLSelectElement>(SEL_SORT);
+    const styleEl = document.querySelector<HTMLSelectElement>(SEL_STYLE);
+    const typeEl = document.querySelector<HTMLSelectElement>(SEL_TYPE);
+    const freeEl = document.querySelector<HTMLInputElement>(SEL_FREE);
+    const searchEl = document.querySelector<HTMLInputElement>(SEL_SEARCH);
+
+    if (sortEl) sortEl.value = filters.sort;
+    if (freeEl) freeEl.checked = filters.freeOnly;
+    if (searchEl) searchEl.value = filters.q;
 
     const onSort = (e: Event) => {
       applyFilters({ sort: normalizeSort((e.target as HTMLSelectElement).value, 'popular') });
@@ -473,25 +581,154 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
     freeEl?.addEventListener('change', onFree);
     searchEl?.addEventListener('input', onSearch);
 
+    // ── Path 2: Webflow native Finsweet-style controls ───────────────────────
+
+    // Sort: <a href="#" fs-cmssort-field="popularity-score-desc">Popular</a>
+    // Intercept click, map field value to our sort key, let Webflow dropdown
+    // JS continue (no stopPropagation) so it closes the menu + updates the label.
+    const onFsSortClick = (e: MouseEvent) => {
+      e.preventDefault(); // prevent href="#" page-jump; dropdown close still fires
+      const field = (e.currentTarget as HTMLElement).getAttribute('fs-cmssort-field') ?? '';
+      applyFilters({ sort: normalizeSort(field, 'popular') });
+    };
+    const fsSortLinks = Array.from(document.querySelectorAll<HTMLAnchorElement>('a[fs-cmssort-field]'));
+    fsSortLinks.forEach((link) => link.addEventListener('click', onFsSortClick));
+
+    // Filters: listen to the Finsweet filter form for checkbox/radio changes.
+    // Style checkboxes: <label><input type="checkbox"><span fs-cmsfilter-field="styles">Modern</span></label>
+    // Type radios:      <input type="radio" name="Type" value="One Page">
+    // Free toggle:      <input fs-cmsfilter-field="free" type="checkbox">
+    function collectFsStyles(): string[] {
+      return Array.from(document.querySelectorAll<HTMLElement>('[fs-cmsfilter-field="styles"]'))
+        .filter((span) => {
+          const label = span.closest('label');
+          return (label?.querySelector<HTMLInputElement>('input[type="checkbox"]'))?.checked ?? false;
+        })
+        // Convert display names to slugs so they match style_slug in the DB.
+        .map((span) => toStyleSlug(span.textContent ?? ''))
+        .filter(Boolean);
+    }
+
+    const onFsFilterChange = () => {
+      const typeInput = document.querySelector<HTMLInputElement>('input[name="Type"]:checked');
+      const freeInput = document.querySelector<HTMLInputElement>('[fs-cmsfilter-field="free"]');
+      applyFilters({
+        styles: collectFsStyles(),
+        types: typeInput?.value ? [typeInput.value] : [],
+        freeOnly: freeInput?.checked ?? false,
+      });
+    };
+    const fsFilterForm = document.querySelector<HTMLElement>('[fs-cmsfilter-element="filters"]');
+    fsFilterForm?.addEventListener('change', onFsFilterChange);
+
+    // ── categoryFilterUpdated integration ───────────────────────────────────────
+    // Category pill clicks update URL state via replaceState, which does not
+    // trigger popstate. Listen for the bridge event and re-read the category
+    // slugs from either the legacy analytics global or the URL fallback.
+    type CategoryFilterAnalyticsGlobal = {
+      getContext: () => { current_category?: string | null; current_subcategory?: string | null };
+    };
+    const onCategoryFilterUpdated = () => {
+      const href = window.location.href;
+      lastHrefRef.current = href;
+      const analytics = (window as unknown as Record<string, unknown>).CategoryFilterAnalytics as
+        | CategoryFilterAnalyticsGlobal
+        | undefined;
+      if (typeof analytics?.getContext === 'function') {
+        const ctx = analytics.getContext();
+        setFilters((prev) => ({
+          ...prev,
+          categoryGroupSlug: ctx.current_category || null,
+          childCategorySlug: ctx.current_subcategory || null,
+        }));
+      } else {
+        // Fallback: re-parse URL (assumes the filter script called pushState first)
+        setFilters((prev) => {
+          const next = mergeExternalFilterState(
+            parseRouteState(initialSort, categorySlugProp || undefined, scopeOverride),
+            readSharedFilterState(href),
+          );
+          return areFiltersEqual(prev, next) ? prev : next;
+        });
+      }
+    };
+    document.addEventListener('categoryFilterUpdated', onCategoryFilterUpdated);
+
     return () => {
       sortEl?.removeEventListener('change', onSort);
       styleEl?.removeEventListener('change', onStyle);
       typeEl?.removeEventListener('change', onType);
       freeEl?.removeEventListener('change', onFree);
       searchEl?.removeEventListener('input', onSearch);
+      fsSortLinks.forEach((link) => link.removeEventListener('click', onFsSortClick));
+      fsFilterForm?.removeEventListener('change', onFsFilterChange);
+      document.removeEventListener('categoryFilterUpdated', onCategoryFilterUpdated);
       if (debounceId) clearTimeout(debounceId);
     };
     // Only run once on mount — selectors are stable page-level elements
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // ── Drive the native Webflow empty-state element ─────────────────────────
+  // Finsweet normally controls [fs-cmsfilter-element="empty"]; since we own
+  // the filtering we hide/show it ourselves based on our result state.
+  useEffect(() => {
+    const emptyEl = document.querySelector<HTMLElement>('[fs-cmsfilter-element="empty"]');
+    if (!emptyEl) return;
+    const shouldShow = !loading && !error && items.length === 0;
+    emptyEl.style.display = shouldShow ? '' : 'none';
+  }, [loading, error, items]);
+
   // Re-parse from URL on browser back/forward navigation
   useEffect(() => {
     const onPop = () => {
+      lastHrefRef.current = window.location.href;
       setFilters(parseRouteState(initialSort, categorySlugProp || undefined, scopeOverride));
     };
     window.addEventListener('popstate', onPop);
     return () => window.removeEventListener('popstate', onPop);
+  }, [initialSort, categorySlugProp, scopeOverride]);
+
+  // Re-parse from URL when TemplateFilterBar (code component) updates filter state.
+  // TemplateFilterBar writes to URL params then dispatches this event — we just
+  // re-read the URL, then merge the event payload so explicit default-sort
+  // selections remain distinguishable from "no sort param" URLs.
+  useEffect(() => {
+    const onFilterBarChange = (event: Event) => {
+      const href = window.location.href;
+      lastHrefRef.current = href;
+      setFilters((prev) => {
+        const next = mergeExternalFilterState(
+          parseRouteState(initialSort, categorySlugProp || undefined, scopeOverride),
+          (event as CustomEvent).detail ?? readSharedFilterState(href),
+        );
+        return areFiltersEqual(prev, next) ? prev : next;
+      });
+    };
+    window.addEventListener('templateFiltersChanged', onFilterBarChange);
+    document.addEventListener('templateFiltersChanged', onFilterBarChange);
+    return () => {
+      window.removeEventListener('templateFiltersChanged', onFilterBarChange);
+      document.removeEventListener('templateFiltersChanged', onFilterBarChange);
+    };
+  }, [initialSort, categorySlugProp, scopeOverride]);
+
+  // replaceState() does not fire popstate. Poll the URL as a low-cost fallback
+  // so the grid still refreshes if Webflow isolates or drops the custom event.
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      const href = window.location.href;
+      if (href === lastHrefRef.current) return;
+      lastHrefRef.current = href;
+      setFilters((prev) => {
+        const next = mergeExternalFilterState(
+          parseRouteState(initialSort, categorySlugProp || undefined, scopeOverride),
+          readSharedFilterState(href),
+        );
+        return areFiltersEqual(prev, next) ? prev : next;
+      });
+    }, 250);
+    return () => window.clearInterval(id);
   }, [initialSort, categorySlugProp, scopeOverride]);
 
   // ── Render ─────────────────────────────────────────────────────────────────
@@ -533,15 +770,9 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
     );
   }
 
-  if (items.length === 0) {
-    return (
-      <div style={S.root}>
-        <div style={S.emptyBox}>
-          <p>No templates found.</p>
-        </div>
-      </div>
-    );
-  }
+  // When items is empty (but not loading/error), render nothing — the native
+  // [fs-cmsfilter-element="empty"] element is shown by the effect above.
+  if (items.length === 0) return null;
 
   return (
     <div style={S.root}>
@@ -574,17 +805,17 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
               }
               creatorIcon={
                 item.creator_avatar_url
-                  ? { src: item.creator_avatar_url, alt: item.creator_avatar_alt ?? item.creator_name ?? '' }
+                  ? { src: proxyImageUrl(item.creator_avatar_url, apiBase), alt: item.creator_avatar_alt ?? item.creator_name ?? '' }
                   : undefined
               }
               primaryImage={
                 item.thumbnail_image_url
-                  ? { src: item.thumbnail_image_url, alt: item.name }
+                  ? { src: proxyImageUrl(item.thumbnail_image_url, apiBase), alt: item.name }
                   : undefined
               }
               secondaryImage={
                 item.thumbnail_image_secondary_url
-                  ? { src: item.thumbnail_image_secondary_url, alt: item.name }
+                  ? { src: proxyImageUrl(item.thumbnail_image_secondary_url, apiBase), alt: item.name }
                   : undefined
               }
               approvalDate={item.published_date ?? ''}
