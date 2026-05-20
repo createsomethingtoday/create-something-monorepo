@@ -187,4 +187,329 @@ describe('webflow-template-search worker', () => {
       close();
     }
   });
+
+  it('prefers Webflow CMS item images over temporary Airtable attachments', async () => {
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: [
+        {
+          ...PUBLISHED_ASSETS[0],
+          fields: {
+            ...PUBLISHED_ASSETS[0].fields,
+            '🖼️Thumbnail Image': [{ url: 'https://v5.airtableusercontent.com/v3/u/53/temporary-agentflow' }],
+            '🖼️Thumbnail Image (Secondary)': [
+              { url: 'https://v5.airtableusercontent.com/v3/u/53/temporary-agentflow-secondary' },
+            ],
+          },
+        },
+      ],
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+      webflowCollections: [{ id: 'collection-templates', slug: 'templates', displayName: 'Templates' }],
+      webflowCollectionItems: {
+        'collection-templates': [
+          {
+            id: 'item-agentflow',
+            fieldData: {
+              slug: 'agentflow-website-template',
+              name: 'Agentflow',
+              'thumbnail-image': { url: 'https://cdn.prod.website-files.com/site/agentflow.webp' },
+              'thumbnail-image-secondary': {
+                url: 'https://cdn.prod.website-files.com/site/agentflow-hover.webp',
+              },
+            },
+          },
+        ],
+      },
+    });
+    const { env, close } = createTestEnv();
+    env.CMS_READ_ONLY = 'test-webflow-cms-token';
+    env.WEBFLOW_TEMPLATE_ASSET_SITE_ID = '5e593fb060cf877cf875dd1f';
+    env.WEBFLOW_TEMPLATE_ENABLE_CMS_INDEX = 'true';
+
+    try {
+      const rebuild = await callWorker(
+        new Request('https://templates.test/api/templates/admin/rebuild', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(rebuild.status).toBe(200);
+
+      const response = await callWorker(new Request('https://templates.test/api/templates/search?q=agentflow'), env);
+      const payload = (await response.json()) as {
+        items: Array<{ thumbnail_image_url: string | null; thumbnail_image_secondary_url: string | null }>;
+      };
+
+      expect(payload.items[0]?.thumbnail_image_url).toBe('https://cdn.prod.website-files.com/site/agentflow.webp');
+      expect(payload.items[0]?.thumbnail_image_secondary_url).toBe(
+        'https://cdn.prod.website-files.com/site/agentflow-hover.webp',
+      );
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
+  it('prefers stable Webflow project thumbnails over temporary Airtable attachments', async () => {
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: [
+        {
+          ...PUBLISHED_ASSETS[0],
+          fields: {
+            ...PUBLISHED_ASSETS[0].fields,
+            '🖼️Thumbnail Image': [{ url: 'https://v5.airtableusercontent.com/v3/u/53/temporary-agentflow' }],
+            '🖼️Thumbnail Image (Secondary)': [
+              { url: 'https://v5.airtableusercontent.com/v3/u/53/temporary-agentflow-secondary' },
+            ],
+          },
+        },
+        {
+          ...PUBLISHED_ASSETS[1],
+          fields: {
+            ...PUBLISHED_ASSETS[1].fields,
+            '🖼️Thumbnail Image': [{ url: 'https://v5.airtableusercontent.com/v3/u/53/temporary-setrex' }],
+          },
+        },
+      ],
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+      webflowAssets: [
+        {
+          id: 'asset-agentflow',
+          contentType: 'image/webp',
+          hostedUrl: 'https://cdn.prod.website-files.com/site/agentflow.webp',
+          originalFileName: 'agentflow.webp',
+          displayName: 'agentflow.webp',
+        },
+      ],
+    });
+    const { env, close } = createTestEnv();
+    env.WEBFLOW_API_TOKEN = 'test-webflow-token';
+    env.WEBFLOW_TEMPLATE_ASSET_SITE_ID = '5e593fb060cf877cf875dd1f';
+
+    try {
+      const rebuild = await callWorker(
+        new Request('https://templates.test/api/templates/admin/rebuild', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(rebuild.status).toBe(200);
+
+      const response = await callWorker(new Request('https://templates.test/api/templates/search?scope=featured&page_size=10'), env);
+      const payload = (await response.json()) as {
+        items: Array<{ name: string; thumbnail_image_url: string | null; thumbnail_image_secondary_url: string | null }>;
+      };
+
+      expect(payload.items.find((item) => item.name === 'Agentflow')?.thumbnail_image_url).toBe(
+        'https://cdn.prod.website-files.com/site/agentflow.webp',
+      );
+      expect(payload.items.find((item) => item.name === 'Agentflow')?.thumbnail_image_secondary_url).toBeNull();
+
+      const setrexResponse = await callWorker(new Request('https://templates.test/api/templates/search?q=setrex'), env);
+      const setrexPayload = (await setrexResponse.json()) as {
+        items: Array<{ name: string; thumbnail_image_url: string | null }>;
+      };
+      expect(setrexPayload.items.find((item) => item.name === 'Setrex')?.thumbnail_image_url).toBeNull();
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
+  it('refreshes indexed thumbnails when Webflow assets appear after Airtable sync', async () => {
+    const dataset = {
+      publishedAssets: [
+        {
+          ...PUBLISHED_ASSETS[0],
+          fields: {
+            ...PUBLISHED_ASSETS[0].fields,
+            '🖼️Thumbnail Image': [{ url: 'https://v5.airtableusercontent.com/v3/u/53/temporary-agentflow' }],
+          },
+        },
+      ],
+      incrementalAssets: [],
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+      webflowAssets: [] as Array<Record<string, unknown>>,
+    };
+    const fetchMock = installAirtableFetchMock(dataset);
+    const { env, close } = createTestEnv();
+    env.WEBFLOW_API_TOKEN = 'test-webflow-token';
+    env.WEBFLOW_TEMPLATE_ASSET_SITE_ID = '5e593fb060cf877cf875dd1f';
+
+    try {
+      const rebuild = await callWorker(
+        new Request('https://templates.test/api/templates/admin/rebuild', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(rebuild.status).toBe(200);
+
+      const beforeRefresh = await callWorker(new Request('https://templates.test/api/templates/search?q=agentflow'), env);
+      const beforePayload = (await beforeRefresh.json()) as { items: Array<{ thumbnail_image_url: string | null }> };
+      expect(beforePayload.items[0]?.thumbnail_image_url).toBeNull();
+
+      dataset.webflowAssets.push({
+        id: 'asset-agentflow',
+        contentType: 'image/webp',
+        hostedUrl: 'https://cdn.prod.website-files.com/site/agentflow-updated.webp',
+        originalFileName: 'agentflow.webp',
+        displayName: 'agentflow.webp',
+      });
+
+      const sync = await callWorker(
+        new Request('https://templates.test/api/templates/admin/sync', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(sync.status).toBe(200);
+      expect((await sync.json()) as { image_refreshed_records: number }).toMatchObject({
+        image_refreshed_records: 1,
+      });
+
+      const afterRefresh = await callWorker(new Request('https://templates.test/api/templates/search?q=agentflow'), env);
+      const afterPayload = (await afterRefresh.json()) as { items: Array<{ thumbnail_image_url: string | null }> };
+      expect(afterPayload.items[0]?.thumbnail_image_url).toBe(
+        'https://cdn.prod.website-files.com/site/agentflow-updated.webp',
+      );
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
+  it('refreshes stale rows from the published Webflow template page', async () => {
+    const dataset = {
+      publishedAssets: [
+        {
+          ...PUBLISHED_ASSETS[0],
+          fields: {
+            ...PUBLISHED_ASSETS[0].fields,
+            '🖼️Thumbnail Image': [{ url: 'https://v5.airtableusercontent.com/v3/u/53/temporary-agentflow' }],
+          },
+        },
+      ],
+      incrementalAssets: [],
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+      publishedTemplatePages: {} as Record<string, string>,
+    };
+    const fetchMock = installAirtableFetchMock(dataset);
+    const { env, close } = createTestEnv();
+
+    try {
+      const rebuild = await callWorker(
+        new Request('https://templates.test/api/templates/admin/rebuild', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(rebuild.status).toBe(200);
+
+      const beforeRefresh = await callWorker(new Request('https://templates.test/api/templates/search?q=agentflow'), env);
+      const beforePayload = (await beforeRefresh.json()) as { items: Array<{ thumbnail_image_url: string | null }> };
+      expect(beforePayload.items[0]?.thumbnail_image_url).toBeNull();
+
+      dataset.publishedTemplatePages['/templates/html/agentflow-website-template'] =
+        '<html><head><meta property="og:image" content="https://cdn.prod.website-files.com/site/agentflow-published.webp"></head></html>';
+
+      const sync = await callWorker(
+        new Request('https://templates.test/api/templates/admin/sync', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(sync.status).toBe(200);
+      expect((await sync.json()) as { image_refreshed_records: number }).toMatchObject({
+        image_refreshed_records: 1,
+      });
+
+      const response = await callWorker(new Request('https://templates.test/api/templates/search?q=agentflow'), env);
+      const payload = (await response.json()) as { items: Array<{ thumbnail_image_url: string | null }> };
+      expect(payload.items[0]?.thumbnail_image_url).toBe(
+        'https://cdn.prod.website-files.com/site/agentflow-published.webp',
+      );
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
+  it('refreshes changed Airtable rows from Webflow when the stored thumbnail is already stable', async () => {
+    const staleStableAsset = {
+      ...PUBLISHED_ASSETS[0],
+      fields: {
+        ...PUBLISHED_ASSETS[0].fields,
+        '🖼️Thumbnail Image': [{ url: 'https://cdn.prod.website-files.com/site/agentflow-old.webp' }],
+      },
+    };
+    const dataset = {
+      publishedAssets: [staleStableAsset],
+      incrementalAssets: [
+        {
+          ...staleStableAsset,
+          fields: {
+            ...staleStableAsset.fields,
+            '📅LMT': '2026-03-17T05:13:07.000Z',
+          },
+        },
+      ],
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+      publishedTemplatePages: {
+        '/templates/html/agentflow-website-template':
+          '<html><head><meta property="og:image" content="https://cdn.prod.website-files.com/site/agentflow-new.webp"></head></html>',
+      },
+    };
+    const fetchMock = installAirtableFetchMock(dataset);
+    const { env, close } = createTestEnv();
+
+    try {
+      const rebuild = await callWorker(
+        new Request('https://templates.test/api/templates/admin/rebuild', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(rebuild.status).toBe(200);
+
+      const beforeRefresh = await callWorker(new Request('https://templates.test/api/templates/search?q=agentflow'), env);
+      const beforePayload = (await beforeRefresh.json()) as { items: Array<{ thumbnail_image_url: string | null }> };
+      expect(beforePayload.items[0]?.thumbnail_image_url).toBe('https://cdn.prod.website-files.com/site/agentflow-old.webp');
+
+      const sync = await callWorker(
+        new Request('https://templates.test/api/templates/admin/sync', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(sync.status).toBe(200);
+      expect((await sync.json()) as { image_refreshed_records: number }).toMatchObject({
+        image_refreshed_records: 1,
+      });
+
+      const response = await callWorker(new Request('https://templates.test/api/templates/search?q=agentflow'), env);
+      const payload = (await response.json()) as { items: Array<{ thumbnail_image_url: string | null }> };
+      expect(payload.items[0]?.thumbnail_image_url).toBe('https://cdn.prod.website-files.com/site/agentflow-new.webp');
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
 });

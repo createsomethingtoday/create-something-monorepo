@@ -10,6 +10,12 @@ export interface Env {
   AIRTABLE_STYLES_TABLE_ID?: string;
   AIRTABLE_CHILD_CATEGORIES_TABLE_ID?: string;
   AIRTABLE_TAGS_TABLE_ID?: string;
+  WEBFLOW_API_TOKEN?: string;
+  CMS_READ_ONLY?: string;
+  WEBFLOW_TEMPLATE_ASSET_SITE_ID?: string;
+  WEBFLOW_TEMPLATE_ASSET_FOLDER_ID?: string;
+  WEBFLOW_TEMPLATE_COLLECTION_ID?: string;
+  WEBFLOW_TEMPLATE_ENABLE_CMS_INDEX?: string;
   ALLOWED_ORIGINS?: string;
   DEFAULT_PAGE_SIZE?: string;
   DEFAULT_CLIENT_MODE?: string;
@@ -192,6 +198,7 @@ export interface SyncSummary {
   fetched_records: number;
   indexed_records: number;
   removed_records: number;
+  image_refreshed_records: number;
   cursor: string;
 }
 

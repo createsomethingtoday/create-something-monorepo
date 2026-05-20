@@ -1,6 +1,32 @@
 import type { AliasType, DocumentCountRow, TemplateDocumentInput } from './types.js';
 import { chunk, nowIso } from './utils.js';
 
+export interface TemplateImageRefreshRow {
+  id: string;
+  templateSlug: string;
+  name: string;
+  listingUrl: string | null;
+  thumbnailImageUrl: string | null;
+  thumbnailImageSecondaryUrl: string | null;
+}
+
+export interface TemplateImageUpdateInput {
+  id: string;
+  thumbnailImageUrl: string | null;
+  thumbnailImageSecondaryUrl: string | null;
+}
+
+const TEMPLATE_IMAGE_REFRESH_SELECT = `SELECT id, template_slug AS templateSlug, name, listing_url AS listingUrl, thumbnail_image_url AS thumbnailImageUrl, thumbnail_image_secondary_url AS thumbnailImageSecondaryUrl
+       FROM template_documents`;
+
+const STALE_IMAGE_WHERE = `thumbnail_image_url IS NULL
+          OR thumbnail_image_url LIKE '%airtableusercontent.com%'
+          OR thumbnail_image_url LIKE '%dl.airtable.com%'
+          OR thumbnail_image_secondary_url LIKE '%airtableusercontent.com%'
+          OR thumbnail_image_secondary_url LIKE '%dl.airtable.com%'`;
+
+const STALE_IMAGE_REFRESH_LIMIT = 24;
+
 const UPSERT_TEMPLATE_SQL = `
   INSERT INTO template_documents (
     id,
@@ -184,6 +210,62 @@ export async function deleteTemplateDocuments(db: D1Database, ids: string[]): Pr
   for (const group of chunk(statements, 50)) {
     await db.batch(group);
   }
+}
+
+export async function listTemplateImageRefreshRows(
+  db: D1Database,
+  changedIds: string[] = [],
+): Promise<TemplateImageRefreshRow[]> {
+  const rowsById = new Map<string, TemplateImageRefreshRow>();
+  const uniqueChangedIds = Array.from(new Set(changedIds.filter(Boolean)));
+
+  if (uniqueChangedIds.length > 0) {
+    const changedResult = await db
+      .prepare(`${TEMPLATE_IMAGE_REFRESH_SELECT} WHERE id IN (${placeholderList(uniqueChangedIds.length)})`)
+      .bind(...uniqueChangedIds)
+      .all<TemplateImageRefreshRow>();
+
+    for (const row of changedResult.results ?? []) {
+      rowsById.set(row.id, row);
+    }
+  }
+
+  const staleResult = await db
+    .prepare(
+      `${TEMPLATE_IMAGE_REFRESH_SELECT}
+       WHERE ${STALE_IMAGE_WHERE}
+       ORDER BY is_featured DESC, COALESCE(popularity_score, 0) DESC, COALESCE(source_last_modified_time, '') DESC
+       LIMIT ${STALE_IMAGE_REFRESH_LIMIT}`,
+    )
+    .all<TemplateImageRefreshRow>();
+
+  for (const row of staleResult.results ?? []) {
+    if (!rowsById.has(row.id)) rowsById.set(row.id, row);
+  }
+
+  return Array.from(rowsById.values());
+}
+
+export async function updateTemplateDocumentImages(
+  db: D1Database,
+  updates: TemplateImageUpdateInput[],
+  syncedAt = nowIso(),
+): Promise<number> {
+  if (updates.length === 0) return 0;
+
+  const statements = updates.map((update) =>
+    db
+      .prepare(
+        'UPDATE template_documents SET thumbnail_image_url = ?, thumbnail_image_secondary_url = ?, synced_at = ? WHERE id = ?',
+      )
+      .bind(update.thumbnailImageUrl, update.thumbnailImageSecondaryUrl, syncedAt, update.id),
+  );
+
+  for (const group of chunk(statements, 50)) {
+    await db.batch(group);
+  }
+
+  return updates.length;
 }
 
 export async function getSyncCursor(db: D1Database, key = 'airtable_last_modified_cursor'): Promise<string | null> {

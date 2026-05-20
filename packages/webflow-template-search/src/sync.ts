@@ -1,9 +1,26 @@
 import { fetchModifiedAssetsSince, fetchPublishedTemplateAssets, loadLookupMaps } from './airtable.js';
-import { clearIndex, deleteTemplateDocuments, getSyncCursor, recordSyncSummary, setSyncCursor, upsertTemplateDocuments } from './db.js';
+import {
+  clearIndex,
+  deleteTemplateDocuments,
+  getSyncCursor,
+  listTemplateImageRefreshRows,
+  recordSyncSummary,
+  setSyncCursor,
+  type TemplateImageUpdateInput,
+  updateTemplateDocumentImages,
+  upsertTemplateDocuments,
+} from './db.js';
 import { stripHtml } from './html.js';
 import { canonicalizeCategoryGroupSlug } from './slug.js';
 import type { AirtableAssetFields, AirtableRecord, Env, LookupMaps, SyncSummary, TemplateDocumentInput } from './types.js';
-import { ensureBoolean, ensureNumber, ensureStringArray, nowIso, uniqueStrings } from './utils.js';
+import { chunk, ensureBoolean, ensureNumber, ensureStringArray, nowIso, uniqueStrings } from './utils.js';
+import {
+  loadWebflowTemplateImageIndex,
+  resolvePublishedTemplateImages,
+  resolveWebflowTemplateImages,
+  stableAttachmentUrl,
+  type WebflowTemplateImageIndex,
+} from './webflow-assets.js';
 
 function isPublishedTemplate(record: AirtableRecord<AirtableAssetFields>): boolean {
   return record.fields['⚙️🆎Type (Text)'] === 'Template🏗️' && record.fields['🚀Marketplace Status'] === '3️⃣Published🚀';
@@ -22,10 +39,57 @@ function attachmentUrls(value: unknown): string[] {
     .filter(Boolean);
 }
 
+async function refreshIndexedWebflowImages(
+  db: D1Database,
+  webflowImageIndex: WebflowTemplateImageIndex | null,
+  syncedAt: string,
+  changedTemplateIds: string[] = [],
+): Promise<number> {
+  const rows = await listTemplateImageRefreshRows(db, changedTemplateIds);
+  const updates: TemplateImageUpdateInput[] = [];
+
+  for (const rowBatch of chunk(rows, 6)) {
+    const resolvedRows = await Promise.all(
+      rowBatch.map(async (row) => {
+        const webflowImages =
+          resolveWebflowTemplateImages(webflowImageIndex, {
+            templateSlug: row.templateSlug,
+            name: row.name,
+          }) ??
+          (await resolvePublishedTemplateImages({
+            templateSlug: row.templateSlug,
+            listingUrl: row.listingUrl,
+          }));
+        return { row, webflowImages };
+      }),
+    );
+
+    for (const { row, webflowImages } of resolvedRows) {
+      const currentThumbnailUrl = stableAttachmentUrl(row.thumbnailImageUrl);
+      const currentSecondaryThumbnailUrl = stableAttachmentUrl(row.thumbnailImageSecondaryUrl);
+      const nextThumbnailUrl = webflowImages?.thumbnailImageUrl ?? currentThumbnailUrl;
+      const nextSecondaryThumbnailUrl = webflowImages?.thumbnailImageSecondaryUrl ?? currentSecondaryThumbnailUrl;
+
+      if (row.thumbnailImageUrl === nextThumbnailUrl && row.thumbnailImageSecondaryUrl === nextSecondaryThumbnailUrl) {
+        continue;
+      }
+
+      updates.push({
+        id: row.id,
+        thumbnailImageUrl: nextThumbnailUrl,
+        thumbnailImageSecondaryUrl: nextSecondaryThumbnailUrl,
+      });
+    }
+  }
+
+  return updateTemplateDocumentImages(db, updates, syncedAt);
+}
+
 function normalizeTemplateRecord(
   record: AirtableRecord<AirtableAssetFields>,
   lookups: LookupMaps,
   syncedAt: string,
+  webflowImageIndex: WebflowTemplateImageIndex | null,
 ): TemplateDocumentInput | null {
   if (!isPublishedTemplate(record)) return null;
 
@@ -54,6 +118,9 @@ function normalizeTemplateRecord(
   const descriptionLongHtml = String(record.fields['ℹ️Description (Long).html'] ?? '').trim();
   const templateType =
     typeof record.fields['🥞Template Type (🏗️ only)'] === 'string' ? record.fields['🥞Template Type (🏗️ only)'] : null;
+  const webflowImages = resolveWebflowTemplateImages(webflowImageIndex, { templateSlug, name });
+  const airtableThumbnailUrl = stableAttachmentUrl(attachmentUrl(record.fields['🖼️Thumbnail Image']));
+  const airtableSecondaryThumbnailUrl = stableAttachmentUrl(attachmentUrl(record.fields['🖼️Thumbnail Image (Secondary)']));
 
   return {
     id: record.id,
@@ -63,8 +130,8 @@ function normalizeTemplateRecord(
     previewUrl: typeof record.fields['🔗Preview Site URL'] === 'string' ? record.fields['🔗Preview Site URL'] : null,
     websiteUrl: typeof record.fields['🔗Website URL'] === 'string' ? record.fields['🔗Website URL'] : null,
     creatorName: typeof record.fields['🎨Creator Name'] === 'string' ? record.fields['🎨Creator Name'] : null,
-    thumbnailImageUrl: attachmentUrl(record.fields['🖼️Thumbnail Image']),
-    thumbnailImageSecondaryUrl: attachmentUrl(record.fields['🖼️Thumbnail Image (Secondary)']),
+    thumbnailImageUrl: webflowImages?.thumbnailImageUrl ?? airtableThumbnailUrl,
+    thumbnailImageSecondaryUrl: webflowImages?.thumbnailImageSecondaryUrl ?? airtableSecondaryThumbnailUrl,
     carouselImageUrls: attachmentUrls(record.fields['🖼️Carousel Images']),
     descriptionShort,
     descriptionLongHtml,
@@ -97,13 +164,18 @@ function normalizeTemplateRecord(
 
 async function runFullSync(env: Env): Promise<SyncSummary> {
   const startedAt = nowIso();
-  const [lookups, assets] = await Promise.all([loadLookupMaps(env), fetchPublishedTemplateAssets(env)]);
+  const [lookups, assets, webflowImageIndex] = await Promise.all([
+    loadLookupMaps(env),
+    fetchPublishedTemplateAssets(env),
+    loadWebflowTemplateImageIndex(env),
+  ]);
   const documents = assets
-    .map((record) => normalizeTemplateRecord(record, lookups, startedAt))
+    .map((record) => normalizeTemplateRecord(record, lookups, startedAt, webflowImageIndex))
     .filter((value): value is NonNullable<typeof value> => Boolean(value));
 
   await clearIndex(env.DB);
   await upsertTemplateDocuments(env.DB, documents);
+  const imageRefreshedRecords = await refreshIndexedWebflowImages(env.DB, webflowImageIndex, startedAt);
 
   const summary: SyncSummary = {
     mode: 'full',
@@ -112,6 +184,7 @@ async function runFullSync(env: Env): Promise<SyncSummary> {
     fetched_records: assets.length,
     indexed_records: documents.length,
     removed_records: 0,
+    image_refreshed_records: imageRefreshedRecords,
     cursor: startedAt,
   };
 
@@ -125,12 +198,16 @@ async function runIncrementalSync(env: Env): Promise<SyncSummary> {
   if (!currentCursor) return runFullSync(env);
 
   const startedAt = nowIso();
-  const [lookups, assets] = await Promise.all([loadLookupMaps(env), fetchModifiedAssetsSince(env, currentCursor)]);
+  const [lookups, assets, webflowImageIndex] = await Promise.all([
+    loadLookupMaps(env),
+    fetchModifiedAssetsSince(env, currentCursor),
+    loadWebflowTemplateImageIndex(env),
+  ]);
   const toUpsert: TemplateDocumentInput[] = [];
   const toDelete: string[] = [];
 
   for (const record of assets) {
-    const normalized = normalizeTemplateRecord(record, lookups, startedAt);
+    const normalized = normalizeTemplateRecord(record, lookups, startedAt, webflowImageIndex);
     if (normalized) {
       toUpsert.push(normalized);
     } else {
@@ -140,6 +217,12 @@ async function runIncrementalSync(env: Env): Promise<SyncSummary> {
 
   if (toDelete.length > 0) await deleteTemplateDocuments(env.DB, toDelete);
   if (toUpsert.length > 0) await upsertTemplateDocuments(env.DB, toUpsert);
+  const imageRefreshedRecords = await refreshIndexedWebflowImages(
+    env.DB,
+    webflowImageIndex,
+    startedAt,
+    toUpsert.map((document) => document.id),
+  );
 
   const summary: SyncSummary = {
     mode: 'incremental',
@@ -148,6 +231,7 @@ async function runIncrementalSync(env: Env): Promise<SyncSummary> {
     fetched_records: assets.length,
     indexed_records: toUpsert.length,
     removed_records: toDelete.length,
+    image_refreshed_records: imageRefreshedRecords,
     cursor: startedAt,
   };
 
