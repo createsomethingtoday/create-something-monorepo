@@ -42,7 +42,8 @@ const TEMPLATE_SEARCH_API_BASE = (
 const TEMPLATE_SUGGESTIONS_TIMEOUT_MS = 90_000;
 const ASSET_DASHBOARD_URL = 'https://webflow.com/templates/dashboard/assets';
 const FEATURED_TEMPLATES_URL = 'https://webflow.com/templates/featured';
-const FEATURED_QUALITY_LIMIT = 4;
+const FEATURED_QUALITY_VISIBLE_COUNT = 4;
+const FEATURED_QUALITY_POOL_SIZE = 16;
 
 type ImageKind = keyof typeof IMAGE_CONSTRAINTS;
 
@@ -405,6 +406,17 @@ type FeaturedTemplateItem = {
   thumbnail_image_url: string | null;
   thumbnail_image_secondary_url: string | null;
   is_featured: boolean;
+  is_free?: boolean;
+  template_type?: string | null;
+  category_groups?: Array<{ name: string; slug: string; url: string }>;
+};
+
+type FeaturedTemplateSearchResponse = {
+  items?: FeaturedTemplateItem[];
+  pagination?: {
+    page?: number;
+    total_pages?: number;
+  };
 };
 
 type TemplateAutofillState = Partial<
@@ -1029,65 +1041,129 @@ function TemplateReadinessBanner({
   );
 }
 
+function featuredTemplateImage(item: FeaturedTemplateItem) {
+  return item.thumbnail_image_url || item.thumbnail_image_secondary_url || '';
+}
+
+function featuredTemplateDetail(item: FeaturedTemplateItem) {
+  return item.category_groups?.[0]?.name || item.template_type || (item.is_free ? 'Free' : 'Featured');
+}
+
+function visibleFeaturedTemplates(templates: FeaturedTemplateItem[], offset: number) {
+  if (templates.length <= FEATURED_QUALITY_VISIBLE_COUNT) return templates;
+  return Array.from(
+    { length: FEATURED_QUALITY_VISIBLE_COUNT },
+    (_, index) => templates[(offset + index) % templates.length]
+  );
+}
+
 function FeaturedQualityShowcase() {
   const [templates, setTemplates] = useState<FeaturedTemplateItem[]>([]);
-  const [status, setStatus] = useState<'loading' | 'ready' | 'fallback'>('loading');
+  const [status, setStatus] = useState<'loading' | 'ready' | 'refreshing' | 'fallback'>(
+    'loading'
+  );
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [offset, setOffset] = useState(0);
+  const requestRef = useRef<AbortController | null>(null);
+
+  async function loadFeaturedTemplates(nextPage: number, mode: 'initial' | 'refresh' = 'initial') {
+    requestRef.current?.abort();
+    const controller = new AbortController();
+    requestRef.current = controller;
+    setStatus(mode === 'refresh' && templates.length > 0 ? 'refreshing' : 'loading');
+
+    try {
+      const url = new URL('/api/templates/search', TEMPLATE_SEARCH_API_BASE);
+      url.searchParams.set('scope', 'featured');
+      url.searchParams.set('page_size', String(FEATURED_QUALITY_POOL_SIZE));
+      url.searchParams.set('page', String(nextPage));
+      url.searchParams.set('sort', 'popular');
+
+      const response = await fetch(url.toString(), {
+        signal: controller.signal
+      });
+      if (!response.ok) throw new Error('Failed to load featured templates.');
+
+      const payload = (await response.json()) as FeaturedTemplateSearchResponse;
+      const items = (payload.items ?? [])
+        .filter((item) => item.name && featuredTemplateImage(item))
+        .slice(0, FEATURED_QUALITY_POOL_SIZE);
+
+      if (!controller.signal.aborted) {
+        setTemplates(items);
+        setOffset(0);
+        setPage(payload.pagination?.page || nextPage);
+        setTotalPages(Math.max(1, payload.pagination?.total_pages || 1));
+        setStatus(items.length > 0 ? 'ready' : 'fallback');
+      }
+    } catch {
+      if (!controller.signal.aborted) setStatus(templates.length > 0 ? 'ready' : 'fallback');
+    }
+  }
 
   useEffect(() => {
-    const controller = new AbortController();
+    void loadFeaturedTemplates(1);
+    return () => requestRef.current?.abort();
+  }, []);
 
-    async function loadFeaturedTemplates() {
-      try {
-        const url = new URL('/api/templates/search', TEMPLATE_SEARCH_API_BASE);
-        url.searchParams.set('scope', 'featured');
-        url.searchParams.set('page_size', String(FEATURED_QUALITY_LIMIT));
-        url.searchParams.set('sort', 'popular');
+  const isBusy = status === 'loading' || status === 'refreshing';
+  const visibleTemplates = visibleFeaturedTemplates(templates, offset);
+  const canCycle = templates.length > FEATURED_QUALITY_VISIBLE_COUNT || totalPages > 1;
 
-        const response = await fetch(url.toString(), {
-          signal: controller.signal
-        });
-        if (!response.ok) throw new Error('Failed to load featured templates.');
+  function cycleFeaturedTemplates() {
+    if (isBusy) return;
 
-        const payload = (await response.json()) as { items?: FeaturedTemplateItem[] };
-        const items = (payload.items ?? [])
-          .filter(
-            (item) => item.name && (item.thumbnail_image_url || item.thumbnail_image_secondary_url)
-          )
-          .slice(0, FEATURED_QUALITY_LIMIT);
-
-        if (!controller.signal.aborted) {
-          setTemplates(items);
-          setStatus(items.length > 0 ? 'ready' : 'fallback');
-        }
-      } catch {
-        if (!controller.signal.aborted) setStatus('fallback');
-      }
+    if (
+      templates.length > FEATURED_QUALITY_VISIBLE_COUNT &&
+      offset + FEATURED_QUALITY_VISIBLE_COUNT < templates.length
+    ) {
+      setOffset(offset + FEATURED_QUALITY_VISIBLE_COUNT);
+      return;
     }
 
-    loadFeaturedTemplates();
-
-    return () => controller.abort();
-  }, []);
+    const nextPage = totalPages > 1 && page < totalPages ? page + 1 : 1;
+    void loadFeaturedTemplates(nextPage, 'refresh');
+  }
 
   return (
     <section className="featured-quality-showcase" aria-labelledby="featured-quality-title">
       <div className="featured-quality-header">
-        <div className="submission-step-label submission-step-label-secondary">
-          Quality benchmark
+        <div className="featured-quality-heading-row">
+          <div className="submission-step-label submission-step-label-secondary">
+            Quality benchmark
+          </div>
+          <button
+            aria-label="Refresh Featured template examples"
+            className={isBusy ? 'featured-quality-refresh is-refreshing' : 'featured-quality-refresh'}
+            disabled={!canCycle || isBusy}
+            onClick={cycleFeaturedTemplates}
+            title="Refresh Featured template examples"
+            type="button"
+          >
+            <span aria-hidden="true" className="featured-quality-refresh-icon">
+              ↻
+            </span>
+            <span>Refresh</span>
+          </button>
         </div>
         <h3 className="featured-quality-title" id="featured-quality-title">
           Build toward Featured quality
         </h3>
         <p className="featured-quality-copy">
-          Featured templates are the clearest examples of Marketplace-ready work: complete content,
-          polished responsive states, careful spacing, and clear category fit.
+          Featured templates set the bar for Marketplace-ready work: a sharp first impression,
+          complete content, polished breakpoints, and category clarity.
         </p>
       </div>
 
-      {templates.length > 0 ? (
-        <div className="featured-quality-grid" aria-label="Featured template examples">
-          {templates.map((item) => {
-            const imageUrl = item.thumbnail_image_url || item.thumbnail_image_secondary_url || '';
+      {visibleTemplates.length > 0 ? (
+        <div
+          aria-busy={isBusy}
+          aria-label="Featured template examples"
+          className="featured-quality-grid"
+        >
+          {visibleTemplates.map((item) => {
+            const imageUrl = featuredTemplateImage(item);
             return (
               <a
                 className="featured-quality-card"
@@ -1109,6 +1185,9 @@ function FeaturedQualityShowcase() {
                   {item.creator_name ? (
                     <span className="featured-quality-card-meta">{item.creator_name}</span>
                   ) : null}
+                  <span className="featured-quality-card-detail">
+                    {featuredTemplateDetail(item)}
+                  </span>
                 </span>
               </a>
             );
@@ -1128,17 +1207,26 @@ function FeaturedQualityShowcase() {
       <div className="featured-quality-checks" aria-label="Quality signals">
         <span>Complete content</span>
         <span>Responsive polish</span>
+        <span>Sharp first impression</span>
         <span>Review-ready assets</span>
       </div>
 
-      <a
-        className="submission-status-link featured-quality-link"
-        href={FEATURED_TEMPLATES_URL}
-        rel="noreferrer"
-        target="_blank"
-      >
-        Review Featured templates
-      </a>
+      <div className="featured-quality-actions">
+        <a
+          className="submission-status-link featured-quality-link"
+          href={FEATURED_TEMPLATES_URL}
+          rel="noreferrer"
+          target="_blank"
+        >
+          Review Featured templates
+        </a>
+        {templates.length > FEATURED_QUALITY_VISIBLE_COUNT ? (
+          <span className="featured-quality-count">
+            {offset + 1}-{Math.min(offset + FEATURED_QUALITY_VISIBLE_COUNT, templates.length)} of{' '}
+            {templates.length}
+          </span>
+        ) : null}
+      </div>
     </section>
   );
 }
