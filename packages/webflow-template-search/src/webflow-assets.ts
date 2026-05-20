@@ -58,7 +58,7 @@ interface WebflowTemplateImageCandidate {
   scoreName: string;
 }
 
-const PUBLISHED_TEMPLATE_FETCH_TIMEOUT_MS = 5000;
+const PUBLISHED_TEMPLATE_FETCH_TIMEOUT_MS = 3000;
 
 export interface WebflowTemplateImageIndex {
   byTemplateKey: Map<string, WebflowTemplateImageCandidate[]>;

@@ -512,4 +512,65 @@ describe('webflow-template-search worker', () => {
       close();
     }
   });
+
+  it('backfills historical temporary Airtable thumbnails from Webflow pages', async () => {
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: PUBLISHED_ASSETS,
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+      publishedTemplatePages: {
+        '/templates/html/agentflow-website-template':
+          '<html><head><meta property="og:image" content="https://cdn.prod.website-files.com/site/agentflow-backfill.webp"></head></html>',
+        '/templates/html/setrex-website-template':
+          '<html><head><meta property="og:image" content="https://cdn.prod.website-files.com/site/setrex-backfill.webp"></head></html>',
+      },
+    });
+    const { env, close } = createTestEnv();
+
+    try {
+      const rebuild = await callWorker(
+        new Request('https://templates.test/api/templates/admin/rebuild', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(rebuild.status).toBe(200);
+
+      await env.DB.prepare('UPDATE template_documents SET thumbnail_image_url = ? WHERE id = ?')
+        .bind('https://v5.airtableusercontent.com/v3/u/53/temporary-agentflow', 'recAgentflow')
+        .run();
+      await env.DB.prepare('UPDATE template_documents SET thumbnail_image_url = ? WHERE id = ?')
+        .bind('https://v5.airtableusercontent.com/v3/u/53/temporary-setrex', 'recSetrex')
+        .run();
+
+      const backfill = await callWorker(
+        new Request('https://templates.test/api/templates/admin/backfill-images?limit=2', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(backfill.status).toBe(200);
+      expect((await backfill.json()) as { scanned_records: number; updated_records: number; remaining_temp_airtable_rows: number }).toMatchObject({
+        scanned_records: 2,
+        updated_records: 2,
+        remaining_temp_airtable_rows: 0,
+      });
+
+      const agentflowResponse = await callWorker(new Request('https://templates.test/api/templates/search?q=agentflow'), env);
+      const agentflowPayload = (await agentflowResponse.json()) as { items: Array<{ thumbnail_image_url: string | null }> };
+      expect(agentflowPayload.items[0]?.thumbnail_image_url).toBe(
+        'https://cdn.prod.website-files.com/site/agentflow-backfill.webp',
+      );
+
+      const setrexResponse = await callWorker(new Request('https://templates.test/api/templates/search?q=setrex'), env);
+      const setrexPayload = (await setrexResponse.json()) as { items: Array<{ thumbnail_image_url: string | null }> };
+      expect(setrexPayload.items[0]?.thumbnail_image_url).toBe('https://cdn.prod.website-files.com/site/setrex-backfill.webp');
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
 });

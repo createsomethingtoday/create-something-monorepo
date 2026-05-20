@@ -3,7 +3,7 @@ import { healthCounts } from './db.js';
 import { corsPreflight, jsonResponse, textResponse } from './http.js';
 import { parseSearchParams } from './query.js';
 import { searchTemplates } from './search.js';
-import { syncTemplates } from './sync.js';
+import { backfillTemplateImages, syncTemplates } from './sync.js';
 import type { Env } from './types.js';
 
 const INCREMENTAL_CRON = '*/5 * * * *';
@@ -41,6 +41,14 @@ async function handleManualSync(request: Request, env: Env, mode: 'full' | 'incr
   return jsonResponse(request, env, await syncTemplates(env, mode));
 }
 
+async function handleImageBackfill(request: Request, env: Env): Promise<Response> {
+  const authError = validateAdminToken(request, env);
+  if (authError) return authError;
+
+  const limit = Number(new URL(request.url).searchParams.get('limit') ?? '');
+  return jsonResponse(request, env, await backfillTemplateImages(env, { limit: Number.isFinite(limit) ? limit : undefined }));
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
@@ -70,6 +78,10 @@ export default {
 
       if (url.pathname === '/api/templates/admin/sync' && request.method === 'POST') {
         return handleManualSync(request, env, 'incremental');
+      }
+
+      if (url.pathname === '/api/templates/admin/backfill-images' && request.method === 'POST') {
+        return handleImageBackfill(request, env);
       }
 
       return jsonResponse(request, env, { error: 'Not found' }, 404);

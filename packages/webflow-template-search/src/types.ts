@@ -202,6 +202,25 @@ export interface SyncSummary {
   cursor: string;
 }
 
+export interface TemplateImageSourceStats {
+  total_rows: number;
+  rows_with_image: number;
+  rows_with_webflow_image: number;
+  rows_with_temp_airtable_image: number;
+  rows_missing_image: number;
+}
+
+export interface TemplateImageBackfillSummary {
+  mode: 'image_backfill';
+  started_at: string;
+  finished_at: string;
+  requested_limit: number;
+  scanned_records: number;
+  updated_records: number;
+  remaining_temp_airtable_rows: number;
+  image_source_stats: TemplateImageSourceStats;
+}
+
 export interface DocumentRow {
   id: string;
   template_slug: string;

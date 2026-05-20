@@ -1,4 +1,4 @@
-import type { AliasType, DocumentCountRow, TemplateDocumentInput } from './types.js';
+import type { AliasType, DocumentCountRow, TemplateDocumentInput, TemplateImageSourceStats } from './types.js';
 import { chunk, nowIso } from './utils.js';
 
 export interface TemplateImageRefreshRow {
@@ -21,6 +21,11 @@ const TEMPLATE_IMAGE_REFRESH_SELECT = `SELECT id, template_slug AS templateSlug,
 
 const STALE_IMAGE_WHERE = `thumbnail_image_url IS NULL
           OR thumbnail_image_url LIKE '%airtableusercontent.com%'
+          OR thumbnail_image_url LIKE '%dl.airtable.com%'
+          OR thumbnail_image_secondary_url LIKE '%airtableusercontent.com%'
+          OR thumbnail_image_secondary_url LIKE '%dl.airtable.com%'`;
+
+const TEMP_ATTACHMENT_IMAGE_WHERE = `thumbnail_image_url LIKE '%airtableusercontent.com%'
           OR thumbnail_image_url LIKE '%dl.airtable.com%'
           OR thumbnail_image_secondary_url LIKE '%airtableusercontent.com%'
           OR thumbnail_image_secondary_url LIKE '%dl.airtable.com%'`;
@@ -246,6 +251,20 @@ export async function listTemplateImageRefreshRows(
   return Array.from(rowsById.values());
 }
 
+export async function listTemplateImageBackfillRows(db: D1Database, limit: number): Promise<TemplateImageRefreshRow[]> {
+  const result = await db
+    .prepare(
+      `${TEMPLATE_IMAGE_REFRESH_SELECT}
+       WHERE ${TEMP_ATTACHMENT_IMAGE_WHERE}
+       ORDER BY is_featured DESC, COALESCE(popularity_score, 0) DESC, COALESCE(source_last_modified_time, '') DESC
+       LIMIT ?`,
+    )
+    .bind(limit)
+    .all<TemplateImageRefreshRow>();
+
+  return result.results ?? [];
+}
+
 export async function updateTemplateDocumentImages(
   db: D1Database,
   updates: TemplateImageUpdateInput[],
@@ -266,6 +285,34 @@ export async function updateTemplateDocumentImages(
   }
 
   return updates.length;
+}
+
+export async function templateImageSourceStats(db: D1Database): Promise<TemplateImageSourceStats> {
+  const row = await db
+    .prepare(
+      `SELECT
+        COUNT(*) AS total_rows,
+        SUM(CASE WHEN thumbnail_image_url IS NOT NULL OR thumbnail_image_secondary_url IS NOT NULL THEN 1 ELSE 0 END) AS rows_with_image,
+        SUM(CASE
+          WHEN COALESCE(thumbnail_image_url, '') LIKE '%website-files.com%'
+            OR COALESCE(thumbnail_image_secondary_url, '') LIKE '%website-files.com%'
+            OR COALESCE(thumbnail_image_url, '') LIKE '%uploads-ssl.webflow.com%'
+            OR COALESCE(thumbnail_image_secondary_url, '') LIKE '%uploads-ssl.webflow.com%'
+          THEN 1 ELSE 0
+        END) AS rows_with_webflow_image,
+        SUM(CASE WHEN ${TEMP_ATTACHMENT_IMAGE_WHERE} THEN 1 ELSE 0 END) AS rows_with_temp_airtable_image,
+        SUM(CASE WHEN thumbnail_image_url IS NULL AND thumbnail_image_secondary_url IS NULL THEN 1 ELSE 0 END) AS rows_missing_image
+       FROM template_documents`,
+    )
+    .first<TemplateImageSourceStats>();
+
+  return {
+    total_rows: Number(row?.total_rows ?? 0),
+    rows_with_image: Number(row?.rows_with_image ?? 0),
+    rows_with_webflow_image: Number(row?.rows_with_webflow_image ?? 0),
+    rows_with_temp_airtable_image: Number(row?.rows_with_temp_airtable_image ?? 0),
+    rows_missing_image: Number(row?.rows_missing_image ?? 0),
+  };
 }
 
 export async function getSyncCursor(db: D1Database, key = 'airtable_last_modified_cursor'): Promise<string | null> {

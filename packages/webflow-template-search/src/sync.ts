@@ -3,17 +3,28 @@ import {
   clearIndex,
   deleteTemplateDocuments,
   getSyncCursor,
+  listTemplateImageBackfillRows,
   listTemplateImageRefreshRows,
   recordSyncSummary,
   setSyncCursor,
+  templateImageSourceStats,
   type TemplateImageUpdateInput,
+  type TemplateImageRefreshRow,
   updateTemplateDocumentImages,
   upsertTemplateDocuments,
 } from './db.js';
 import { stripHtml } from './html.js';
 import { canonicalizeCategoryGroupSlug } from './slug.js';
-import type { AirtableAssetFields, AirtableRecord, Env, LookupMaps, SyncSummary, TemplateDocumentInput } from './types.js';
-import { chunk, ensureBoolean, ensureNumber, ensureStringArray, nowIso, uniqueStrings } from './utils.js';
+import type {
+  AirtableAssetFields,
+  AirtableRecord,
+  Env,
+  LookupMaps,
+  SyncSummary,
+  TemplateDocumentInput,
+  TemplateImageBackfillSummary,
+} from './types.js';
+import { chunk, clamp, ensureBoolean, ensureNumber, ensureStringArray, nowIso, uniqueStrings } from './utils.js';
 import {
   loadWebflowTemplateImageIndex,
   resolvePublishedTemplateImages,
@@ -21,6 +32,10 @@ import {
   stableAttachmentUrl,
   type WebflowTemplateImageIndex,
 } from './webflow-assets.js';
+
+const IMAGE_BACKFILL_DEFAULT_LIMIT = 48;
+const IMAGE_BACKFILL_MAX_LIMIT = 480;
+const IMAGE_BACKFILL_FETCH_BATCH_SIZE = 24;
 
 function isPublishedTemplate(record: AirtableRecord<AirtableAssetFields>): boolean {
   return record.fields['⚙️🆎Type (Text)'] === 'Template🏗️' && record.fields['🚀Marketplace Status'] === '3️⃣Published🚀';
@@ -39,16 +54,16 @@ function attachmentUrls(value: unknown): string[] {
     .filter(Boolean);
 }
 
-async function refreshIndexedWebflowImages(
+async function resolveAndUpdateTemplateImages(
   db: D1Database,
+  rows: TemplateImageRefreshRow[],
   webflowImageIndex: WebflowTemplateImageIndex | null,
   syncedAt: string,
-  changedTemplateIds: string[] = [],
+  fetchBatchSize = 6,
 ): Promise<number> {
-  const rows = await listTemplateImageRefreshRows(db, changedTemplateIds);
   const updates: TemplateImageUpdateInput[] = [];
 
-  for (const rowBatch of chunk(rows, 6)) {
+  for (const rowBatch of chunk(rows, fetchBatchSize)) {
     const resolvedRows = await Promise.all(
       rowBatch.map(async (row) => {
         const webflowImages =
@@ -83,6 +98,16 @@ async function refreshIndexedWebflowImages(
   }
 
   return updateTemplateDocumentImages(db, updates, syncedAt);
+}
+
+async function refreshIndexedWebflowImages(
+  db: D1Database,
+  webflowImageIndex: WebflowTemplateImageIndex | null,
+  syncedAt: string,
+  changedTemplateIds: string[] = [],
+): Promise<number> {
+  const rows = await listTemplateImageRefreshRows(db, changedTemplateIds);
+  return resolveAndUpdateTemplateImages(db, rows, webflowImageIndex, syncedAt);
 }
 
 function normalizeTemplateRecord(
@@ -242,4 +267,36 @@ async function runIncrementalSync(env: Env): Promise<SyncSummary> {
 
 export async function syncTemplates(env: Env, mode: 'full' | 'incremental'): Promise<SyncSummary> {
   return mode === 'full' ? runFullSync(env) : runIncrementalSync(env);
+}
+
+export async function backfillTemplateImages(
+  env: Env,
+  options: { limit?: number } = {},
+): Promise<TemplateImageBackfillSummary> {
+  const startedAt = nowIso();
+  const requestedLimit = clamp(Math.floor(options.limit ?? IMAGE_BACKFILL_DEFAULT_LIMIT), 1, IMAGE_BACKFILL_MAX_LIMIT);
+  const rows = await listTemplateImageBackfillRows(env.DB, requestedLimit);
+  const webflowImageIndex = rows.length > 0 ? await loadWebflowTemplateImageIndex(env) : null;
+  const updatedRecords = await resolveAndUpdateTemplateImages(
+    env.DB,
+    rows,
+    webflowImageIndex,
+    startedAt,
+    IMAGE_BACKFILL_FETCH_BATCH_SIZE,
+  );
+  const imageSourceStats = await templateImageSourceStats(env.DB);
+
+  const summary: TemplateImageBackfillSummary = {
+    mode: 'image_backfill',
+    started_at: startedAt,
+    finished_at: nowIso(),
+    requested_limit: requestedLimit,
+    scanned_records: rows.length,
+    updated_records: updatedRecords,
+    remaining_temp_airtable_rows: imageSourceStats.rows_with_temp_airtable_image,
+    image_source_stats: imageSourceStats,
+  };
+
+  await recordSyncSummary(env.DB, summary, 'last_image_backfill');
+  return summary;
 }

@@ -9,6 +9,7 @@ Cloudflare Worker and D1 search index for the Webflow template marketplace.
 - `GET /api/templates/client.js`
 - `POST /api/templates/admin/rebuild`
 - `POST /api/templates/admin/sync`
+- `POST /api/templates/admin/backfill-images`
 
 ## Sync auth
 
@@ -36,3 +37,8 @@ already-indexed templates. The bounded refresh prioritizes Featured/popular temp
 published Webflow template detail page as a fallback, which keeps the search/API response aligned
 when Airtable review status changes first and Whalesync publishes or updates the corresponding
 Webflow image shortly afterward.
+
+Use `POST /api/templates/admin/backfill-images?limit=48` for historical cleanup. The endpoint scans
+existing rows with temporary Airtable thumbnail URLs, resolves stable Webflow thumbnails from the
+published template page or configured Webflow sources, and clears the temporary URL when no stable
+replacement is available.
