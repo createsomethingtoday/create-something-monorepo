@@ -342,8 +342,22 @@ function statusClassName(tone: Tone) {
   return 'submission-status submission-status-info';
 }
 
+function isUsableFeaturedImageUrl(value: string) {
+  try {
+    const url = new URL(value);
+    if (url.protocol !== 'https:' && url.protocol !== 'http:') return false;
+    return !url.hostname.endsWith('airtableusercontent.com') && url.hostname !== 'dl.airtable.com';
+  } catch {
+    return false;
+  }
+}
+
 function featuredTemplateImage(item: FeaturedTemplateItem) {
-  return item.thumbnail_image_url || item.thumbnail_image_secondary_url || '';
+  return (
+    [item.thumbnail_image_url, item.thumbnail_image_secondary_url].find(
+      (value): value is string => Boolean(value && isUsableFeaturedImageUrl(value))
+    ) || ''
+  );
 }
 
 function featuredTemplateDetail(item: FeaturedTemplateItem) {
@@ -478,6 +492,12 @@ function FeaturedQualityShowcase() {
                     alt={`${item.name} template thumbnail`}
                     className="featured-quality-image"
                     loading="lazy"
+                    onError={() => {
+                      setTemplates((current) =>
+                        current.filter((template) => template.id !== item.id)
+                      );
+                      setOffset(0);
+                    }}
                     src={imageUrl}
                   />
                 </span>
