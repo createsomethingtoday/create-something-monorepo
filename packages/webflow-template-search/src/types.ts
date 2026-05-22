@@ -1,6 +1,6 @@
 export type TemplateScope = 'all' | 'featured' | 'free' | 'landing_pages';
 export type TemplateSort = 'popular' | 'newest' | 'price_asc' | 'price_desc';
-export type AliasType = 'child_category';
+export type AliasType = 'category_group' | 'child_category';
 
 export interface Env {
   DB: D1Database;
@@ -101,6 +101,28 @@ export interface LookupMaps {
   childCategories: Map<string, ChildCategoryLookupValue>;
   tags: Map<string, LookupValue>;
   creators: Map<string, CreatorLookupValue>;
+}
+
+export interface CategoryGroupInput {
+  slug: string;
+  name: string;
+  sortOrder: number;
+  syncedAt: string;
+}
+
+export interface CategoryGroupChildInput {
+  categoryGroupSlug: string;
+  childCategorySlug: string;
+  childCategoryName: string;
+  sortOrder: number;
+  syncedAt: string;
+}
+
+export interface SlugAliasInput {
+  slugType: AliasType;
+  aliasSlug: string;
+  canonicalSlug: string;
+  note: string;
 }
 
 export interface TemplateDocumentInput {

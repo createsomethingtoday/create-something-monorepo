@@ -53,6 +53,7 @@ interface SqlParts {
 async function resolveAliases(env: Env, params: SearchParams): Promise<SearchParams> {
   return {
     ...params,
+    categoryGroupSlug: await resolveAlias(env.DB, 'category_group', params.categoryGroupSlug),
     childCategorySlug: await resolveAlias(env.DB, 'child_category', params.childCategorySlug),
   };
 }
@@ -120,6 +121,19 @@ async function getTotalCount(db: D1Database, sqlParts: SqlParts): Promise<number
 }
 
 async function resolveCategoryGroupSlugForChild(env: Env, childCategorySlug: string): Promise<string | null> {
+  const taxonomyRow = await env.DB
+    .prepare(
+      `SELECT category_group_slug AS slug
+       FROM category_group_children
+       WHERE child_category_slug = ?
+       ORDER BY sort_order ASC, category_group_slug ASC
+       LIMIT 1`,
+    )
+    .bind(childCategorySlug)
+    .first<{ slug: string }>();
+
+  if (taxonomyRow?.slug) return taxonomyRow.slug;
+
   const row = await env.DB
     .prepare(`
       SELECT json_each.value AS slug, COUNT(*) AS total
@@ -218,7 +232,10 @@ async function loadFacetTypes(env: Env, params: SearchParams): Promise<FacetType
   return result.results ?? [];
 }
 
-async function loadSubcategoryPills(env: Env, params: SearchParams): Promise<Array<{ name: string; slug: string; count: number }>> {
+async function loadDocumentDerivedSubcategoryPills(
+  env: Env,
+  params: SearchParams,
+): Promise<Array<{ name: string; slug: string; count: number }>> {
   const groupSlug =
     params.categoryGroupSlug ?? (params.childCategorySlug ? await resolveCategoryGroupSlugForChild(env, params.childCategorySlug) : null);
   if (!groupSlug) return [];
@@ -253,6 +270,55 @@ async function loadSubcategoryPills(env: Env, params: SearchParams): Promise<Arr
     slug: row.slug,
     count: Number(row.count),
   }));
+}
+
+async function loadSubcategoryPills(env: Env, params: SearchParams): Promise<Array<{ name: string; slug: string; count: number }>> {
+  const groupSlug =
+    params.categoryGroupSlug ?? (params.childCategorySlug ? await resolveCategoryGroupSlugForChild(env, params.childCategorySlug) : null);
+  if (!groupSlug) return [];
+
+  const scopedParams: SearchParams = {
+    ...params,
+    categoryGroupSlug: groupSlug,
+    childCategorySlug: null,
+    styles: [],
+    types: [],
+  };
+  const sqlParts = buildSqlParts(scopedParams, { excludeChildCategory: true, excludeStyles: true, excludeTypes: true });
+
+  const result = await env.DB
+    .prepare(`
+      WITH taxonomy AS (
+        SELECT child_category_name AS name, child_category_slug AS slug, sort_order
+        FROM category_group_children
+        WHERE category_group_slug = ?
+      ),
+      filtered AS (
+        SELECT d.id
+        ${sqlParts.fromClause}
+        ${sqlParts.whereClause}
+      ),
+      counts AS (
+        SELECT tcc.child_category_slug AS slug, COUNT(DISTINCT tcc.template_document_id) AS count
+        FROM filtered
+        JOIN template_child_categories tcc ON tcc.template_document_id = filtered.id
+        GROUP BY tcc.child_category_slug
+      )
+      SELECT taxonomy.name, taxonomy.slug, COALESCE(counts.count, 0) AS count
+      FROM taxonomy
+      LEFT JOIN counts ON counts.slug = taxonomy.slug
+      ORDER BY taxonomy.sort_order ASC, taxonomy.name ASC
+    `)
+    .bind(groupSlug, ...sqlParts.binds)
+    .all<PillRow>();
+
+  const taxonomyPills = (result.results ?? []).map((row) => ({
+    name: row.name,
+    slug: row.slug,
+    count: Number(row.count),
+  }));
+
+  return taxonomyPills.length > 0 ? taxonomyPills.filter((pill) => pill.count > 0) : loadDocumentDerivedSubcategoryPills(env, params);
 }
 
 function toTemplateUrl(row: DocumentRow): string | null {

@@ -12,6 +12,8 @@ import {
   publicSyncJobRecord,
   recordSyncSummary,
   refreshTemplateImageUrls,
+  replaceCategoryTaxonomy,
+  replaceGeneratedSlugAliases,
   setSyncCursor,
   templateImageSourceStats,
   type TemplateImageUpdateInput,
@@ -23,13 +25,17 @@ import {
 } from './db.js';
 import { fetchWebflowDesignerAvatars, fetchWebflowTemplateImages } from './webflow.js';
 import { stripHtml } from './html.js';
-import { canonicalizeCategoryGroupSlug } from './slug.js';
+import { canonicalizeCategoryGroupSlug, slugAliasCandidates, withoutWebsitesSuffixes } from './slug.js';
 import type {
   AirtableAssetFields,
   AirtableRecord,
+  ChildCategoryLookupValue,
+  CategoryGroupChildInput,
+  CategoryGroupInput,
   Env,
   ImageRefreshSummary,
   LookupMaps,
+  SlugAliasInput,
   SyncSummary,
   TemplateDocumentInput,
   TemplateImageBackfillSummary,
@@ -46,6 +52,7 @@ import {
 const IMAGE_BACKFILL_DEFAULT_LIMIT = 48;
 const IMAGE_BACKFILL_MAX_LIMIT = 480;
 const IMAGE_BACKFILL_FETCH_BATCH_SIZE = 24;
+const GENERATED_ALIAS_NOTE = 'generated_template_taxonomy';
 
 export class SyncAlreadyRunningError extends Error {
   readonly activeJob: ReturnType<typeof publicSyncJobRecord>;
@@ -75,6 +82,107 @@ async function runWithSyncJobLock<T>(env: Env, mode: string, task: () => Promise
 
 function isPublishedTemplate(record: AirtableRecord<AirtableAssetFields>): boolean {
   return record.fields['⚙️🆎Type (Text)'] === 'Template🏗️' && record.fields['🚀Marketplace Status'] === '3️⃣Published🚀';
+}
+
+function titleFromSlug(slug: string): string {
+  return withoutWebsitesSuffixes(slug)
+    .split('-')
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+}
+
+function aliasInputs(slugType: SlugAliasInput['slugType'], canonicalSlug: string): SlugAliasInput[] {
+  return slugAliasCandidates(canonicalSlug).map((aliasSlug) => ({
+    slugType,
+    aliasSlug,
+    canonicalSlug,
+    note: GENERATED_ALIAS_NOTE,
+  }));
+}
+
+function categoryGroupSlugsForChild(entry: ChildCategoryLookupValue): string[] {
+  if (entry.categoryGroups.length > 0) return entry.categoryGroups;
+  return entry.parentCategoryName ? [canonicalizeCategoryGroupSlug(entry.parentCategoryName)] : [];
+}
+
+function buildTemplateTaxonomy(
+  lookups: LookupMaps,
+  documents: TemplateDocumentInput[],
+  syncedAt: string,
+): {
+  groups: CategoryGroupInput[];
+  children: CategoryGroupChildInput[];
+  aliases: SlugAliasInput[];
+} {
+  const groups = new Map<string, CategoryGroupInput>();
+  const childLinks = new Map<string, CategoryGroupChildInput>();
+  const aliases = new Map<string, SlugAliasInput>();
+  let groupSortOrder = 0;
+  let childSortOrder = 0;
+
+  function addAlias(alias: SlugAliasInput) {
+    aliases.set(`${alias.slugType}:${alias.aliasSlug}`, alias);
+  }
+
+  function addGroup(slug: string, name?: string | null) {
+    if (!slug) return;
+    const existing = groups.get(slug);
+    if (existing) {
+      if (name && existing.name === titleFromSlug(slug)) existing.name = name;
+      return;
+    }
+    groups.set(slug, {
+      slug,
+      name: name || titleFromSlug(slug),
+      sortOrder: groupSortOrder++,
+      syncedAt,
+    });
+    aliasInputs('category_group', slug).forEach(addAlias);
+  }
+
+  for (const document of documents) {
+    for (const [index, slug] of document.categoryGroupSlugs.entries()) {
+      addGroup(slug, document.categoryGroups[index] ?? null);
+    }
+    for (const childSlug of document.childCategorySlugs) {
+      aliasInputs('child_category', childSlug).forEach(addAlias);
+    }
+  }
+
+  for (const child of lookups.childCategories.values()) {
+    aliasInputs('child_category', child.slug).forEach(addAlias);
+    for (const groupSlug of categoryGroupSlugsForChild(child)) {
+      addGroup(groupSlug, child.parentCategoryName || null);
+      const linkKey = `${groupSlug}:${child.slug}`;
+      if (!childLinks.has(linkKey)) {
+        childLinks.set(linkKey, {
+          categoryGroupSlug: groupSlug,
+          childCategorySlug: child.slug,
+          childCategoryName: child.displayName || child.name,
+          sortOrder: childSortOrder++,
+          syncedAt,
+        });
+      }
+    }
+  }
+
+  return {
+    groups: Array.from(groups.values()),
+    children: Array.from(childLinks.values()),
+    aliases: Array.from(aliases.values()),
+  };
+}
+
+async function syncTemplateTaxonomy(
+  env: Env,
+  lookups: LookupMaps,
+  documents: TemplateDocumentInput[],
+  syncedAt: string,
+): Promise<void> {
+  const taxonomy = buildTemplateTaxonomy(lookups, documents, syncedAt);
+  await replaceCategoryTaxonomy(env.DB, taxonomy.groups, taxonomy.children);
+  await replaceGeneratedSlugAliases(env.DB, taxonomy.aliases);
 }
 
 function attachmentUrl(value: unknown): string | null {
@@ -255,6 +363,7 @@ async function runFullSync(env: Env): Promise<SyncSummary> {
 
   await clearIndex(env.DB);
   await upsertTemplateDocuments(env.DB, documents);
+  await syncTemplateTaxonomy(env, lookups, documents, startedAt);
   const [backfilledRecords, imageRefreshedRecords] = await Promise.all([
     backfillCreatorFieldsByName(env.DB, startedAt),
     refreshIndexedWebflowImages(env.DB, webflowImageIndex, startedAt),
@@ -279,7 +388,7 @@ async function runFullSync(env: Env): Promise<SyncSummary> {
 
 // Cloudflare Workers cap at 1,000 subrequests per invocation. Each record needs
 // ~10 D1 statements (slug-eviction DELETEs + UPSERT + style/category INSERTs) and
-// lookup tables consume ~65 Airtable subrequests. To stay comfortably under the
+// lookup tables and taxonomy/alias persistence add a bounded overhead. To stay comfortably under the
 // limit we target ≤ 600 records per run. Bulk Airtable updates can modify thousands
 // of records in a short window, so we cap each invocation to 15 minutes of LMT
 // range — even at peak density (~4,918 records over 117 min) that yields ~630 records
@@ -315,6 +424,7 @@ async function runIncrementalSync(env: Env): Promise<SyncSummary> {
 
   if (toDelete.length > 0) await deleteTemplateDocuments(env.DB, toDelete);
   if (toUpsert.length > 0) await upsertTemplateDocuments(env.DB, toUpsert);
+  await syncTemplateTaxonomy(env, lookups, toUpsert, startedAt);
   const imageRefreshedRecords = await refreshIndexedWebflowImages(
     env.DB,
     webflowImageIndex,

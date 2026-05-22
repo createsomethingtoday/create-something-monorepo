@@ -133,6 +133,17 @@ const PUBLISHED_ASSETS = [
   },
 ];
 
+const BUSINESS_CHILD_CATEGORY = {
+  id: 'child-consulting',
+  fields: {
+    Category: 'Consulting',
+    'Display name': 'Consulting',
+    'Parent Category Name': 'Business',
+    '🪣Category Groups': 'business-websites',
+    'Related Keywords': 'consulting, services',
+  },
+};
+
 afterEach(() => {
   vi.restoreAllMocks();
 });
@@ -580,6 +591,111 @@ describe('webflow-template-search worker', () => {
       const search = await callWorker(new Request('https://templates.test/api/templates/search?q=workflow'), env);
       const searchPayload = (await search.json()) as { items: Array<{ name: string }> };
       expect(searchPayload.items.map((item) => item.name)).toEqual(['Agentflow']);
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
+  it('resolves category group and child category slug aliases to canonical filters', async () => {
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: PUBLISHED_ASSETS,
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+    });
+    const { env, close } = createTestEnv();
+
+    try {
+      const rebuild = await callWorker(
+        new Request('https://templates.test/api/templates/admin/rebuild', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(rebuild.status).toBe(200);
+
+      const categoryVariants = ['technology', 'technology-websites', 'technology-websites-websites'];
+      for (const slug of categoryVariants) {
+        const response = await callWorker(
+          new Request(`https://templates.test/api/templates/search?category_group_slug=${slug}`),
+          env,
+        );
+        const payload = (await response.json()) as {
+          items: Array<{ name: string }>;
+          applied_filters: { category_group_slug: string | null };
+        };
+
+        expect(payload.applied_filters.category_group_slug).toBe('technology-websites');
+        expect(payload.items.map((item) => item.name)).toEqual(['Setrex', 'Agentflow', 'Catalis']);
+      }
+
+      const childAliasResponse = await callWorker(
+        new Request('https://templates.test/api/templates/search?category_group_slug=technology&child_category_slug=ai'),
+        env,
+      );
+      const childAliasPayload = (await childAliasResponse.json()) as {
+        items: Array<{ name: string }>;
+        applied_filters: { category_group_slug: string | null; child_category_slug: string | null };
+      };
+
+      expect(childAliasPayload.applied_filters).toMatchObject({
+        category_group_slug: 'technology-websites',
+        child_category_slug: 'ai-websites',
+      });
+      expect(childAliasPayload.items.map((item) => item.name)).toEqual(['Setrex', 'Agentflow']);
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
+  it('scopes subcategory pills to the synced category hierarchy', async () => {
+    const crossListedBusinessAsset = {
+      ...PUBLISHED_ASSETS[0],
+      id: 'recCrossListedBusiness',
+      fields: {
+        ...PUBLISHED_ASSETS[0].fields,
+        Name: 'AgencyAI',
+        '🪣Category Group(s) Display Name': ['Business'],
+        '🪣Category Group(s) CMS Slug': ['business'],
+        '🔍Algolia Child Category (🏗️ only)': ['child-ai', 'child-consulting'],
+        '🥞CMS Slug (formula)': 'agencyai-website-template',
+        '🖌️Popularity Score': 99,
+      },
+    };
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: [...PUBLISHED_ASSETS, crossListedBusinessAsset],
+      styles: LOOKUPS.styles,
+      childCategories: [...LOOKUPS.childCategories, BUSINESS_CHILD_CATEGORY],
+      tags: LOOKUPS.tags,
+    });
+    const { env, close } = createTestEnv();
+
+    try {
+      const rebuild = await callWorker(
+        new Request('https://templates.test/api/templates/admin/rebuild', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(rebuild.status).toBe(200);
+
+      const response = await callWorker(
+        new Request('https://templates.test/api/templates/search?include=facets,pills&category_group_slug=business'),
+        env,
+      );
+      const payload = (await response.json()) as {
+        applied_filters: { category_group_slug: string | null };
+        subcategory_pills: Array<{ slug: string; count: number }>;
+      };
+
+      expect(payload.applied_filters.category_group_slug).toBe('business-websites');
+      expect(payload.subcategory_pills.map((pill) => ({ slug: pill.slug, count: pill.count }))).toEqual([
+        { slug: 'consulting-websites', count: 1 },
+      ]);
     } finally {
       fetchMock.mockRestore();
       close();

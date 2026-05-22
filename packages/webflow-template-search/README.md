@@ -60,6 +60,17 @@ existing rows with temporary Airtable thumbnail URLs, resolves stable Webflow th
 published template page or configured Webflow sources, and clears the temporary URL when no stable
 replacement is available.
 
+## Taxonomy and slug compatibility
+
+Full and incremental syncs persist the Airtable/CMS category hierarchy into D1
+`category_groups` and `category_group_children` tables. Search uses that taxonomy to keep
+subcategory pills scoped to the active category group, while still joining live template counts.
+
+Sync also generates compatibility rows in `slug_aliases` for category groups and child categories.
+Canonical slugs keep the `-websites` suffix, while legacy query variants such as `technology` and
+old double-suffix variants such as `technology-websites-websites` resolve to the same canonical
+filter.
+
 ## Sync locking
 
 Rebuild, incremental sync, image refresh, and image backfill all share a D1 lease in the

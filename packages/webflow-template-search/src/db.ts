@@ -1,4 +1,13 @@
-import type { AliasType, CreatorLookupValue, DocumentCountRow, TemplateDocumentInput, TemplateImageSourceStats } from './types.js';
+import type {
+  AliasType,
+  CategoryGroupChildInput,
+  CategoryGroupInput,
+  CreatorLookupValue,
+  DocumentCountRow,
+  SlugAliasInput,
+  TemplateDocumentInput,
+  TemplateImageSourceStats,
+} from './types.js';
 import type { WebflowDesignerAvatarRecord, WebflowTemplateImageRecord } from './webflow.js';
 import { chunk, nowIso } from './utils.js';
 
@@ -34,6 +43,7 @@ const TEMP_ATTACHMENT_IMAGE_WHERE = `thumbnail_image_url LIKE '%airtableusercont
 const STALE_IMAGE_REFRESH_LIMIT = 24;
 const IMAGE_REFRESH_LOOKUP_BATCH_SIZE = 50;
 const SYNC_JOB_LOCK_KEY = 'template_sync';
+const GENERATED_ALIAS_NOTE = 'generated_template_taxonomy';
 
 export interface SyncJobRecord {
   lock_key: string;
@@ -161,6 +171,10 @@ function toJson(value: string[]): string {
 
 function placeholderList(count: number): string {
   return Array.from({ length: count }, () => '?').join(', ');
+}
+
+function valueRows(rowCount: number, columnCount: number): string {
+  return Array.from({ length: rowCount }, () => `(${placeholderList(columnCount)})`).join(', ');
 }
 
 function addMilliseconds(iso: string, milliseconds: number): string {
@@ -303,6 +317,75 @@ export async function clearIndex(db: D1Database): Promise<void> {
       const result = await db.prepare(`DELETE FROM ${table} WHERE rowid IN (SELECT rowid FROM ${table} LIMIT 1000)`).run();
       hasMore = (result.meta?.changes ?? 0) > 0;
     }
+  }
+}
+
+export async function replaceCategoryTaxonomy(
+  db: D1Database,
+  groups: CategoryGroupInput[],
+  children: CategoryGroupChildInput[],
+): Promise<void> {
+  await db.prepare('DELETE FROM category_group_children').run();
+  await db.prepare('DELETE FROM category_groups').run();
+
+  for (const groupBatch of chunk(groups, 25)) {
+    await db
+      .prepare(
+        `INSERT INTO category_groups (slug, name, sort_order, synced_at)
+         VALUES ${valueRows(groupBatch.length, 4)}
+         ON CONFLICT(slug) DO UPDATE SET
+           name = excluded.name,
+           sort_order = excluded.sort_order,
+           synced_at = excluded.synced_at`,
+      )
+      .bind(...groupBatch.flatMap((group) => [group.slug, group.name, group.sortOrder, group.syncedAt]))
+      .run();
+  }
+
+  for (const childBatch of chunk(children, 20)) {
+    await db
+      .prepare(
+        `INSERT INTO category_group_children (
+           category_group_slug,
+           child_category_slug,
+           child_category_name,
+           sort_order,
+           synced_at
+         )
+         VALUES ${valueRows(childBatch.length, 5)}
+         ON CONFLICT(category_group_slug, child_category_slug) DO UPDATE SET
+           child_category_name = excluded.child_category_name,
+           sort_order = excluded.sort_order,
+           synced_at = excluded.synced_at`,
+      )
+      .bind(
+        ...childBatch.flatMap((child) => [
+          child.categoryGroupSlug,
+          child.childCategorySlug,
+          child.childCategoryName,
+          child.sortOrder,
+          child.syncedAt,
+        ]),
+      )
+      .run();
+  }
+}
+
+export async function replaceGeneratedSlugAliases(db: D1Database, aliases: SlugAliasInput[]): Promise<void> {
+  await db.prepare('DELETE FROM slug_aliases WHERE note = ?').bind(GENERATED_ALIAS_NOTE).run();
+
+  for (const aliasBatch of chunk(aliases, 20)) {
+    await db
+      .prepare(
+        `INSERT INTO slug_aliases (slug_type, alias_slug, canonical_slug, note)
+         VALUES ${valueRows(aliasBatch.length, 4)}
+         ON CONFLICT(slug_type, alias_slug) DO UPDATE SET
+           canonical_slug = excluded.canonical_slug,
+           note = excluded.note,
+           updated_at = CURRENT_TIMESTAMP`,
+      )
+      .bind(...aliasBatch.flatMap((alias) => [alias.slugType, alias.aliasSlug, alias.canonicalSlug, GENERATED_ALIAS_NOTE]))
+      .run();
   }
 }
 
@@ -875,7 +958,7 @@ export async function lookupPublicSlugMap(
        FROM slug_aliases
        WHERE slug_type = ?
          AND canonical_slug IN (${placeholderList(unique.length)})
-       ORDER BY canonical_slug, alias_slug`,
+       ORDER BY canonical_slug, canonical_slug = alias_slug DESC, alias_slug`,
     )
     .bind(slugType, ...unique)
     .all<{ canonical_slug: string; alias_slug: string }>();
