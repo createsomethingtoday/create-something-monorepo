@@ -2,7 +2,7 @@ import { createHmac } from 'node:crypto';
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { acquireSyncJobLock, backfillCreatorFieldsByName } from '../src/db.js';
+import { acquireSyncJobLock, backfillCreatorFieldsByName, listTemplateImageRefreshRows } from '../src/db.js';
 import { DESIGNERS_COLLECTION_ID, TEMPLATES_COLLECTION_ID } from '../src/webflow.js';
 import { installAirtableFetchMock } from './support/airtable.js';
 import { callWorker, createTestEnv } from './support/worker.js';
@@ -834,6 +834,44 @@ describe('webflow-template-search worker', () => {
       expect(payload.items[0]?.thumbnail_image_url).toBe('https://cdn.prod.website-files.com/site/agentflow-new.webp');
     } finally {
       fetchMock.mockRestore();
+      close();
+    }
+  });
+
+  it('chunks changed template image refresh lookups within D1 bind limits', async () => {
+    const { env, close } = createTestEnv();
+
+    try {
+      const changedIds = Array.from({ length: 130 }, (_, index) => `recBulk${String(index).padStart(3, '0')}`);
+      for (let offset = 0; offset < changedIds.length; offset += 25) {
+        const statements = changedIds.slice(offset, offset + 25).map((id, index) => {
+          const rowNumber = offset + index;
+          return env.DB.prepare(
+            `INSERT INTO template_documents (
+              id,
+              template_slug,
+              name,
+              listing_url,
+              thumbnail_image_url,
+              synced_at
+            ) VALUES (?, ?, ?, ?, ?, ?)`,
+          ).bind(
+            id,
+            `bulk-template-${rowNumber}`,
+            `Bulk Template ${rowNumber}`,
+            `https://webflow.com/templates/html/bulk-template-${rowNumber}`,
+            `https://cdn.prod.website-files.com/site/bulk-template-${rowNumber}.webp`,
+            '2026-05-22T00:00:00.000Z',
+          );
+        });
+        await env.DB.batch(statements);
+      }
+
+      const rows = await listTemplateImageRefreshRows(env.DB, changedIds);
+
+      expect(rows).toHaveLength(changedIds.length);
+      expect(new Set(rows.map((row) => row.id))).toEqual(new Set(changedIds));
+    } finally {
       close();
     }
   });

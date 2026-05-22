@@ -68,6 +68,17 @@ Manual endpoints return `409` with `active_job` when another job is still runnin
 cron invocations record lock skips in `sync_state.last_sync_skipped` instead of treating an
 overlap as a sync failure.
 
+## D1 migration history
+
+The production D1 database had creator metadata columns before this repository's consolidated
+`0002_creator_fields.sql` migration name was recorded. On 2026-05-22, the remote migration
+ledger was reconciled by confirming those columns already existed, inserting the missing
+`0002_creator_fields.sql` ledger row, and then applying `0003_sync_jobs.sql`.
+
+Before re-running older migrations against production, compare `PRAGMA table_info(...)` and
+`SELECT name FROM d1_migrations ORDER BY applied_at` so schema drift is reconciled in the
+ledger instead of replaying an already-applied `ALTER TABLE`.
+
 ## Webflow webhooks
 
 Register Webflow API v2 `collection_item_created`, `collection_item_changed`, and

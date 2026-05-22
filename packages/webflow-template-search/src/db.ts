@@ -32,6 +32,7 @@ const TEMP_ATTACHMENT_IMAGE_WHERE = `thumbnail_image_url LIKE '%airtableusercont
           OR thumbnail_image_secondary_url LIKE '%dl.airtable.com%'`;
 
 const STALE_IMAGE_REFRESH_LIMIT = 24;
+const IMAGE_REFRESH_LOOKUP_BATCH_SIZE = 50;
 const SYNC_JOB_LOCK_KEY = 'template_sync';
 
 export interface SyncJobRecord {
@@ -665,13 +666,15 @@ export async function listTemplateImageRefreshRows(
   const uniqueChangedIds = Array.from(new Set(changedIds.filter(Boolean)));
 
   if (uniqueChangedIds.length > 0) {
-    const changedResult = await db
-      .prepare(`${TEMPLATE_IMAGE_REFRESH_SELECT} WHERE id IN (${placeholderList(uniqueChangedIds.length)})`)
-      .bind(...uniqueChangedIds)
-      .all<TemplateImageRefreshRow>();
+    for (const idBatch of chunk(uniqueChangedIds, IMAGE_REFRESH_LOOKUP_BATCH_SIZE)) {
+      const changedResult = await db
+        .prepare(`${TEMPLATE_IMAGE_REFRESH_SELECT} WHERE id IN (${placeholderList(idBatch.length)})`)
+        .bind(...idBatch)
+        .all<TemplateImageRefreshRow>();
 
-    for (const row of changedResult.results ?? []) {
-      rowsById.set(row.id, row);
+      for (const row of changedResult.results ?? []) {
+        rowsById.set(row.id, row);
+      }
     }
   }
 
