@@ -1,6 +1,9 @@
+import { createHmac } from 'node:crypto';
+
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { backfillCreatorFieldsByName } from '../src/db.js';
+import { acquireSyncJobLock, backfillCreatorFieldsByName } from '../src/db.js';
+import { DESIGNERS_COLLECTION_ID, TEMPLATES_COLLECTION_ID } from '../src/webflow.js';
 import { installAirtableFetchMock } from './support/airtable.js';
 import { callWorker, createTestEnv } from './support/worker.js';
 
@@ -134,12 +137,47 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
+function signedWebhookRequest(payload: unknown, secret = 'webhook-secret') {
+  const body = JSON.stringify(payload);
+  return new Request('https://templates.test/api/templates/webhooks/webflow', {
+    method: 'POST',
+    body,
+    headers: {
+      'content-type': 'application/json',
+      'x-webflow-signature': createHmac('sha256', secret).update(body).digest('hex'),
+    },
+  });
+}
+
 describe('webflow-template-search worker', () => {
   it('requires auth for manual rebuild', async () => {
     const { env, close } = createTestEnv();
     try {
       const response = await callWorker(new Request('https://templates.test/api/templates/admin/rebuild', { method: 'POST' }), env);
       expect(response.status).toBe(401);
+    } finally {
+      close();
+    }
+  });
+
+  it('returns 409 when another sync job is running', async () => {
+    const { env, close } = createTestEnv();
+
+    try {
+      await acquireSyncJobLock(env.DB, 'incremental');
+
+      const response = await callWorker(
+        new Request('https://templates.test/api/templates/admin/sync', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      const payload = (await response.json()) as { error: string; active_job: { mode: string; status: string } | null };
+
+      expect(response.status).toBe(409);
+      expect(payload.error).toBe('A template sync job is already running.');
+      expect(payload.active_job).toMatchObject({ mode: 'incremental', status: 'running' });
     } finally {
       close();
     }
@@ -209,6 +247,185 @@ describe('webflow-template-search worker', () => {
         creator_avatar_alt: 'Eclipso Studio',
       });
     } finally {
+      close();
+    }
+  });
+
+  it('rejects Webflow webhooks with an invalid signature', async () => {
+    const { env, close } = createTestEnv();
+    env.WEBFLOW_WEBHOOK_SECRET = 'webhook-secret';
+
+    try {
+      const response = await callWorker(
+        new Request('https://templates.test/api/templates/webhooks/webflow', {
+          method: 'POST',
+          body: JSON.stringify({
+            triggerType: 'collection_item_changed',
+            payload: {
+              id: 'item-agentflow',
+              cid: TEMPLATES_COLLECTION_ID,
+              isArchived: false,
+              isDraft: false,
+              fieldData: { 'sync-record-id': 'recAgentflow' },
+            },
+          }),
+          headers: { 'x-webflow-signature': 'bad-signature' },
+        }),
+        env,
+      );
+
+      expect(response.status).toBe(401);
+      await expect(response.json()).resolves.toEqual({ error: 'Invalid signature' });
+    } finally {
+      close();
+    }
+  });
+
+  it('updates template images from signed Webflow collection webhooks', async () => {
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: PUBLISHED_ASSETS,
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+    });
+    const { env, close } = createTestEnv();
+    env.WEBFLOW_WEBHOOK_SECRET = 'webhook-secret';
+
+    try {
+      const rebuild = await callWorker(
+        new Request('https://templates.test/api/templates/admin/rebuild', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(rebuild.status).toBe(200);
+
+      const response = await callWorker(
+        signedWebhookRequest({
+          triggerType: 'collection_item_changed',
+          payload: {
+            id: 'item-agentflow',
+            cid: TEMPLATES_COLLECTION_ID,
+            isArchived: false,
+            isDraft: false,
+            fieldData: {
+              'sync-record-id': 'recAgentflow',
+              thumbnail: { url: 'https://cdn.prod.website-files.com/site/agentflow-webhook.webp' },
+              'thumbnail-secondary': { url: 'https://cdn.prod.website-files.com/site/agentflow-hover-webhook.webp' },
+              'slider-images': [
+                { url: 'https://cdn.prod.website-files.com/site/agentflow-slide-1.webp' },
+                { url: 'https://cdn.prod.website-files.com/site/agentflow-slide-2.webp' },
+              ],
+            },
+          },
+        }),
+        env,
+      );
+
+      expect(response.status).toBe(200);
+      await expect(response.json()).resolves.toMatchObject({
+        status: 'updated',
+        collection: 'templates',
+        id: 'recAgentflow',
+      });
+
+      const row = await env.DB.prepare(
+        `SELECT thumbnail_image_url, thumbnail_image_secondary_url, carousel_image_urls_json
+         FROM template_documents
+         WHERE id = ?`,
+      )
+        .bind('recAgentflow')
+        .first<{
+          thumbnail_image_url: string | null;
+          thumbnail_image_secondary_url: string | null;
+          carousel_image_urls_json: string;
+        }>();
+
+      expect(row).toMatchObject({
+        thumbnail_image_url: 'https://cdn.prod.website-files.com/site/agentflow-webhook.webp',
+        thumbnail_image_secondary_url: 'https://cdn.prod.website-files.com/site/agentflow-hover-webhook.webp',
+      });
+      expect(JSON.parse(row?.carousel_image_urls_json ?? '[]')).toEqual([
+        'https://cdn.prod.website-files.com/site/agentflow-slide-1.webp',
+        'https://cdn.prod.website-files.com/site/agentflow-slide-2.webp',
+      ]);
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
+  it('updates creator avatars from signed Webflow designer webhooks', async () => {
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: PUBLISHED_ASSETS,
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+    });
+    const { env, close } = createTestEnv();
+    env.WEBFLOW_WEBHOOK_SECRET = 'webhook-secret';
+
+    try {
+      const rebuild = await callWorker(
+        new Request('https://templates.test/api/templates/admin/rebuild', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(rebuild.status).toBe(200);
+
+      const response = await callWorker(
+        signedWebhookRequest({
+          triggerType: 'collection_item_published',
+          payload: {
+            id: 'designer-brix',
+            cid: DESIGNERS_COLLECTION_ID,
+            isArchived: false,
+            isDraft: false,
+            fieldData: {
+              'sync-record-id': 'recDesignerBrix',
+              name: 'BRIX Templates',
+              slug: 'brix-templates',
+              avatar: {
+                url: 'https://cdn.prod.website-files.com/site/brix-avatar.webp',
+                alt: 'BRIX Templates',
+              },
+            },
+          },
+        }),
+        env,
+      );
+
+      expect(response.status).toBe(200);
+      await expect(response.json()).resolves.toMatchObject({
+        status: 'updated',
+        collection: 'designers',
+        id: 'recDesignerBrix',
+      });
+
+      const row = await env.DB.prepare(
+        `SELECT creator_record_id, creator_profile_url, creator_avatar_url, creator_avatar_alt
+         FROM template_documents
+         WHERE id = ?`,
+      )
+        .bind('recAgentflow')
+        .first<{
+          creator_record_id: string | null;
+          creator_profile_url: string | null;
+          creator_avatar_url: string | null;
+          creator_avatar_alt: string | null;
+        }>();
+
+      expect(row).toEqual({
+        creator_record_id: 'recDesignerBrix',
+        creator_profile_url: 'https://webflow.com/templates/designers/brix-templates',
+        creator_avatar_url: 'https://cdn.prod.website-files.com/site/brix-avatar.webp',
+        creator_avatar_alt: 'BRIX Templates',
+      });
+    } finally {
+      fetchMock.mockRestore();
       close();
     }
   });

@@ -2,11 +2,14 @@ import { fetchModifiedAssetsSince, fetchPublishedTemplateAssets, fetchPublishedT
 import {
   backfillCreatorAvatars,
   backfillCreatorFieldsByName,
+  acquireSyncJobLock,
   clearIndex,
   deleteTemplateDocuments,
+  finishSyncJobLock,
   getSyncCursor,
   listTemplateImageBackfillRows,
   listTemplateImageRefreshRows,
+  publicSyncJobRecord,
   recordSyncSummary,
   refreshTemplateImageUrls,
   setSyncCursor,
@@ -43,6 +46,32 @@ import {
 const IMAGE_BACKFILL_DEFAULT_LIMIT = 48;
 const IMAGE_BACKFILL_MAX_LIMIT = 480;
 const IMAGE_BACKFILL_FETCH_BATCH_SIZE = 24;
+
+export class SyncAlreadyRunningError extends Error {
+  readonly activeJob: ReturnType<typeof publicSyncJobRecord>;
+
+  constructor(activeJob: Parameters<typeof publicSyncJobRecord>[0]) {
+    super('A template sync job is already running.');
+    this.name = 'SyncAlreadyRunningError';
+    this.activeJob = publicSyncJobRecord(activeJob);
+  }
+}
+
+async function runWithSyncJobLock<T>(env: Env, mode: string, task: () => Promise<T>): Promise<T> {
+  const lockResult = await acquireSyncJobLock(env.DB, mode);
+  if (!lockResult.acquired) {
+    throw new SyncAlreadyRunningError(lockResult.activeJob);
+  }
+
+  try {
+    const result = await task();
+    await finishSyncJobLock(env.DB, lockResult.lock, { status: 'succeeded', summary: result });
+    return result;
+  } catch (error) {
+    await finishSyncJobLock(env.DB, lockResult.lock, { status: 'failed', error });
+    throw error;
+  }
+}
 
 function isPublishedTemplate(record: AirtableRecord<AirtableAssetFields>): boolean {
   return record.fields['⚙️🆎Type (Text)'] === 'Template🏗️' && record.fields['🚀Marketplace Status'] === '3️⃣Published🚀';
@@ -322,7 +351,7 @@ async function runIncrementalSync(env: Env): Promise<SyncSummary> {
 }
 
 export async function syncTemplates(env: Env, mode: 'full' | 'incremental'): Promise<SyncSummary> {
-  return mode === 'full' ? runFullSync(env) : runIncrementalSync(env);
+  return runWithSyncJobLock(env, mode, () => (mode === 'full' ? runFullSync(env) : runIncrementalSync(env)));
 }
 
 // Image URL refresh: prefers stable Webflow CDN URLs (never expire) when CMS_READ_ONLY
@@ -394,37 +423,39 @@ async function runImageUrlRefresh(env: Env): Promise<ImageRefreshSummary> {
 }
 
 export async function refreshImages(env: Env): Promise<ImageRefreshSummary> {
-  return runImageUrlRefresh(env);
+  return runWithSyncJobLock(env, 'image_refresh', () => runImageUrlRefresh(env));
 }
 
 export async function backfillTemplateImages(
   env: Env,
   options: { limit?: number } = {},
 ): Promise<TemplateImageBackfillSummary> {
-  const startedAt = nowIso();
-  const requestedLimit = clamp(Math.floor(options.limit ?? IMAGE_BACKFILL_DEFAULT_LIMIT), 1, IMAGE_BACKFILL_MAX_LIMIT);
-  const rows = await listTemplateImageBackfillRows(env.DB, requestedLimit);
-  const webflowImageIndex = rows.length > 0 ? await loadWebflowTemplateImageIndex(env) : null;
-  const updatedRecords = await resolveAndUpdateTemplateImages(
-    env.DB,
-    rows,
-    webflowImageIndex,
-    startedAt,
-    IMAGE_BACKFILL_FETCH_BATCH_SIZE,
-  );
-  const imageSourceStats = await templateImageSourceStats(env.DB);
+  return runWithSyncJobLock(env, 'image_backfill', async () => {
+    const startedAt = nowIso();
+    const requestedLimit = clamp(Math.floor(options.limit ?? IMAGE_BACKFILL_DEFAULT_LIMIT), 1, IMAGE_BACKFILL_MAX_LIMIT);
+    const rows = await listTemplateImageBackfillRows(env.DB, requestedLimit);
+    const webflowImageIndex = rows.length > 0 ? await loadWebflowTemplateImageIndex(env) : null;
+    const updatedRecords = await resolveAndUpdateTemplateImages(
+      env.DB,
+      rows,
+      webflowImageIndex,
+      startedAt,
+      IMAGE_BACKFILL_FETCH_BATCH_SIZE,
+    );
+    const imageSourceStats = await templateImageSourceStats(env.DB);
 
-  const summary: TemplateImageBackfillSummary = {
-    mode: 'image_backfill',
-    started_at: startedAt,
-    finished_at: nowIso(),
-    requested_limit: requestedLimit,
-    scanned_records: rows.length,
-    updated_records: updatedRecords,
-    remaining_temp_airtable_rows: imageSourceStats.rows_with_temp_airtable_image,
-    image_source_stats: imageSourceStats,
-  };
+    const summary: TemplateImageBackfillSummary = {
+      mode: 'image_backfill',
+      started_at: startedAt,
+      finished_at: nowIso(),
+      requested_limit: requestedLimit,
+      scanned_records: rows.length,
+      updated_records: updatedRecords,
+      remaining_temp_airtable_rows: imageSourceStats.rows_with_temp_airtable_image,
+      image_source_stats: imageSourceStats,
+    };
 
-  await recordSyncSummary(env.DB, summary, 'last_image_backfill');
-  return summary;
+    await recordSyncSummary(env.DB, summary, 'last_image_backfill');
+    return summary;
+  });
 }
