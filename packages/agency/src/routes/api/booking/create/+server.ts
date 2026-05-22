@@ -1,10 +1,16 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { env } from '$env/dynamic/private';
+import {
+	recordServerConversion,
+	upsertWarmLead,
+	type ServerConversionInput
+} from '@create-something/canon/analytics';
 import { createLogger } from '@create-something/canon/utils';
 import { getLinkId, SAVVYCAL_API_BASE } from '$lib/utils/savvycal';
 
 const logger = createLogger('BookingCreateAPI');
+const validSourceProperties = new Set(['space', 'io', 'agency', 'ltd', 'lms']);
 
 interface CreateEventRequest {
 	start_at: string;
@@ -16,6 +22,13 @@ interface CreateEventRequest {
 	notes?: string;
 	experiment_id?: string;
 	tag_id?: string;
+	session_id?: string;
+	source_property?: string;
+	source?: string;
+	intent?: string;
+	lane?: string;
+	landing_url?: string;
+	referrer?: string;
 }
 
 interface SavvyCalEvent {
@@ -25,6 +38,12 @@ interface SavvyCalEvent {
 	display_name: string;
 	email: string;
 	time_zone: string;
+}
+
+function normalizeSourceProperty(value: string | undefined): ServerConversionInput['sourceProperty'] {
+	return value && validSourceProperties.has(value)
+		? (value as ServerConversionInput['sourceProperty'])
+		: undefined;
 }
 
 export const POST: RequestHandler = async ({ request, platform }) => {
@@ -43,7 +62,24 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 	}
 
 	// Validate required fields
-	const { start_at, end_at, name, email, timezone, company, notes, experiment_id, tag_id } = body;
+	const {
+		start_at,
+		end_at,
+		name,
+		email,
+		timezone,
+		company,
+		notes,
+		experiment_id,
+		tag_id,
+		session_id,
+		source_property,
+		source = 'book',
+		intent = 'workflow-mapping',
+		lane = 'not_sure',
+		landing_url,
+		referrer
+	} = body;
 
 	if (!start_at || !end_at || !name || !email || !timezone) {
 		throw error(400, 'Missing required fields: start_at, end_at, name, email, timezone');
@@ -124,6 +160,46 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		// Track booking completion
 		if (platform?.env?.DB) {
 			try {
+				await recordServerConversion(
+					platform.env.DB,
+					{
+						property: 'agency',
+						action: 'booking_completed',
+						sessionId: session_id,
+						sourceProperty: normalizeSourceProperty(source_property),
+						url: landing_url || 'https://createsomething.agency/book',
+						referrer,
+						target: '/book',
+						metadata: {
+							eventId: event.id,
+							source,
+							intent,
+							lane,
+							experimentId: experiment_id,
+							tagId: tag_id,
+							companyProvided: Boolean(company)
+						}
+					},
+					{
+						userAgent: request.headers.get('user-agent') || undefined,
+						ipCountry: request.headers.get('cf-ipcountry') || undefined
+					}
+				);
+
+				await upsertWarmLead(platform.env.DB, {
+					name,
+					email,
+					company,
+					source: 'website',
+					sourceDetail: `booking:${source}:${intent}:${lane}`,
+					campaign: tag_id,
+					stage: 'decision',
+					serviceInterest: lane,
+					discoveryCallAt: event.start_at,
+					notes,
+					touchedAt: new Date().toISOString()
+				});
+
 				await platform.env.DB.prepare(
 					`INSERT INTO analytics_events (event_type, property, path, experiment_id, tag_id, metadata, created_at)
 					 VALUES (?, ?, ?, ?, ?, ?, datetime('now'))`

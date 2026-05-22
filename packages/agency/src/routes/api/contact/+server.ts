@@ -1,9 +1,21 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { contactSchema, parseBody, type ContactInput } from '@create-something/canon/validation';
+import {
+	recordServerConversion,
+	upsertWarmLead,
+	type ServerConversionInput
+} from '@create-something/canon/analytics';
 import { createLogger } from '@create-something/canon/utils';
 
 const logger = createLogger('ContactAPI');
+const validSourceProperties = new Set(['space', 'io', 'agency', 'ltd', 'lms']);
+
+function normalizeSourceProperty(value: string | undefined): ServerConversionInput['sourceProperty'] {
+	return value && validSourceProperties.has(value)
+		? (value as ServerConversionInput['sourceProperty'])
+		: undefined;
+}
 
 export const POST: RequestHandler = async ({ request, platform }) => {
 	try {
@@ -19,7 +31,22 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 			);
 		}
 
-		const { name, email, message, service, company, assessment_id } = parseResult.data as ContactInput;
+		const {
+			name,
+			email,
+			message,
+			service,
+			company,
+			assessment_id,
+			source = 'contact',
+			intent = 'workflow-mapping',
+			lane = 'not_sure',
+			campaign,
+			source_property,
+			session_id,
+			landing_url,
+			referrer
+		} = parseResult.data as ContactInput;
 
 		// Access Cloudflare bindings via platform.env
 		if (!platform?.env) {
@@ -60,6 +87,49 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 			}
 		} catch (dbError) {
 			logger.warn('Contact submissions table not found - skipping DB insert', { error: dbError });
+		}
+
+		try {
+			await recordServerConversion(
+				env.DB,
+				{
+					property: 'agency',
+					action: 'contact_submitted',
+					sessionId: session_id,
+					sourceProperty: normalizeSourceProperty(source_property),
+					url: landing_url || 'https://createsomething.agency/contact',
+					referrer,
+					target: '/contact',
+					metadata: {
+						source,
+						intent,
+						lane,
+						campaign,
+						service,
+						companyProvided: Boolean(company),
+						assessmentConverted: Boolean(assessment_id)
+					}
+				},
+				{
+					userAgent: request.headers.get('user-agent') || undefined,
+					ipCountry: request.headers.get('cf-ipcountry') || undefined
+				}
+			);
+
+			await upsertWarmLead(env.DB, {
+				name,
+				email,
+				company,
+				source: 'website',
+				sourceDetail: `contact:${source}:${intent}:${lane}`,
+				campaign,
+				stage: 'consideration',
+				serviceInterest: service || lane,
+				notes: message,
+				touchedAt: new Date().toISOString()
+			});
+		} catch (conversionError) {
+			logger.warn('Contact conversion tracking failed', { error: conversionError });
 		}
 
 		// Send auto-response to the person who contacted us

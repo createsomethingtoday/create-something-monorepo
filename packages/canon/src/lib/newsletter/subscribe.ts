@@ -8,6 +8,8 @@
  */
 
 import type { NewsletterRequest, NewsletterResult, TurnstileResponse, PropertyDomain } from './types.js';
+import { recordServerConversion } from '../analytics/conversions.js';
+import type { Property } from '../analytics/types.js';
 
 /**
  * Environment bindings required for newsletter operations
@@ -21,16 +23,19 @@ interface NewsletterEnv {
 
 interface D1Database {
 	prepare(query: string): D1PreparedStatement;
+	batch<T = unknown>(statements: D1PreparedStatement[]): Promise<Array<D1Result<T>>>;
 }
 
 interface D1PreparedStatement {
 	bind(...args: unknown[]): D1PreparedStatement;
 	run(): Promise<D1Result>;
 	first<T = unknown>(): Promise<T | null>;
+	all<T = unknown>(): Promise<D1Result<T>>;
 }
 
-interface D1Result {
+interface D1Result<T = unknown> {
 	success: boolean;
+	results?: T[];
 }
 
 interface ExistingSubscriber {
@@ -47,6 +52,13 @@ interface KVNamespace {
 
 const RATE_LIMIT_WINDOW = 60 * 60; // 1 hour in seconds
 const RATE_LIMIT_MAX = 3; // Max signups per IP per hour
+const VALID_PROPERTIES: Property[] = ['space', 'io', 'agency', 'ltd', 'lms'];
+
+function normalizeProperty(value: unknown): Property | null {
+	return typeof value === 'string' && VALID_PROPERTIES.includes(value as Property)
+		? (value as Property)
+		: null;
+}
 
 // =============================================================================
 // SHARED REQUEST HANDLER
@@ -363,6 +375,29 @@ export async function processSubscription(
 			result: { success: false, message: 'Failed to send confirmation email' },
 			status: 500,
 		};
+	}
+
+	try {
+		await recordServerConversion(
+			env.DB,
+			{
+				property,
+				action: 'newsletter_requested',
+				sessionId: body.sessionId,
+				sourceProperty: normalizeProperty(body.sourceProperty),
+				url: body.landingUrl || `https://createsomething.${property}/`,
+				referrer: body.referrer,
+				metadata: {
+					source: subscriberSource,
+					intent: body.intent,
+					lane: body.lane,
+					emailId: resendData.id
+				}
+			},
+			{}
+		);
+	} catch (conversionError) {
+		console.warn('Newsletter conversion tracking failed:', conversionError);
 	}
 
 	return {

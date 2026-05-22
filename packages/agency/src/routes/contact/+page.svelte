@@ -1,5 +1,6 @@
 <script lang="ts">
   import { SEO } from '@create-something/canon';
+  import { getAnalytics } from '@create-something/canon/analytics';
   import { SavvyCalButton } from '@create-something/canon/domains/agency';
   import { AnimatedGridPattern, BlurFade } from '@create-something/canon/magicui';
   let submitting = $state(false);
@@ -15,6 +16,7 @@
     const formData = new FormData(form);
 
     try {
+      const analytics = getAnalytics();
       const response = await fetch('/api/contact', {
         method: 'POST',
         headers: {
@@ -23,7 +25,14 @@
         body: JSON.stringify({
           name: formData.get('name'),
           email: formData.get('email'),
-          message: formData.get('message')
+          message: formData.get('message'),
+          source: 'contact',
+          intent: 'workflow-mapping',
+          lane: 'not_sure',
+          session_id: analytics?.getSessionId(),
+          source_property: analytics?.getSourceProperty() ?? undefined,
+          landing_url: typeof window !== 'undefined' ? window.location.href : undefined,
+          referrer: typeof document !== 'undefined' ? document.referrer : undefined
         })
       });
 
@@ -32,6 +41,12 @@
       if (response.ok && result.success) {
         submitSuccess = true;
         submitMessage = "Sent. We'll be in touch.";
+        analytics?.conversion('contact_submitted', {
+          source: 'contact',
+          intent: 'workflow-mapping',
+          lane: 'not_sure',
+          surface: 'contact_form'
+        });
         form.reset();
       } else {
         submitSuccess = false;
