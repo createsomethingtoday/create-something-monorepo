@@ -199,7 +199,10 @@
     <div class="shell-inner-pad hero-layout">
       <div class="hero-copy">
         <BlurFade delay={0}>
-          <span class="product-kicker">{agencyCoreMessaging.categoryLabel}</span>
+          <span class="product-kicker hero-kicker">
+            <span class="hero-kicker__desktop">{agencyCoreMessaging.categoryLabel}</span>
+            <span class="hero-kicker__mobile">Reliable AI Workflow Systems</span>
+          </span>
         </BlurFade>
 
         <BlurFade delay={0.05}>
@@ -284,7 +287,10 @@
   <div class="shell-inner-pad showcase-stack">
     <div class="section-lead">
       <BlurFade>
-        <span class="product-kicker">Inspect the full control room</span>
+        <span class="product-kicker control-kicker">
+          <span class="control-kicker__desktop">Inspect the full control room</span>
+          <span class="control-kicker__mobile">Full Control Room</span>
+        </span>
       </BlurFade>
       <BlurFade delay={0.05}>
         <h2>The detailed decision surface belongs below the fold.</h2>
@@ -526,6 +532,7 @@
     align-items: center;
     gap: 0.45rem;
     width: fit-content;
+    max-width: 100%;
     padding: 0.38rem 0.7rem 0.4rem;
     border: 1px solid rgba(91, 125, 255, 0.16);
     border-radius: 999px;
@@ -534,6 +541,9 @@
       inset 0 0 0 1px rgba(255, 255, 255, 0.02),
       0 10px 30px rgba(0, 0, 0, 0.18);
     backdrop-filter: blur(12px);
+    letter-spacing: 0;
+    line-height: 1.15;
+    white-space: nowrap;
   }
 
   .hero-copy .product-kicker::before {
@@ -543,6 +553,14 @@
     border-radius: 999px;
     background: rgba(59, 109, 255, 0.96);
     box-shadow: 0 0 14px rgba(70, 154, 255, 0.38);
+  }
+
+  .hero-kicker__mobile {
+    display: none;
+  }
+
+  .control-kicker__mobile {
+    display: none;
   }
 
   .hero-title {
@@ -880,6 +898,31 @@
     .hero-copy .product-kicker {
       gap: 0.38rem;
       padding: 0.34rem 0.58rem 0.36rem;
+      min-height: 2rem;
+      font-size: 0.72rem;
+    }
+
+    .hero-kicker__desktop {
+      display: none;
+    }
+
+    .hero-kicker__mobile {
+      display: inline;
+    }
+
+    .control-kicker {
+      max-width: 100%;
+      letter-spacing: 0.08em;
+      line-height: 1.15;
+      white-space: nowrap;
+    }
+
+    .control-kicker__desktop {
+      display: none;
+    }
+
+    .control-kicker__mobile {
+      display: inline;
     }
 
     .signal-shell,
