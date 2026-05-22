@@ -2,7 +2,7 @@ import { createHmac } from 'node:crypto';
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { acquireSyncJobLock, backfillCreatorFieldsByName, listTemplateImageRefreshRows } from '../src/db.js';
+import { acquireSyncJobLock, backfillCreatorFieldsByName, listTemplateImageRefreshRows, recordSyncSummary } from '../src/db.js';
 import { DESIGNERS_COLLECTION_ID, TEMPLATES_COLLECTION_ID } from '../src/webflow.js';
 import { installAirtableFetchMock } from './support/airtable.js';
 import { callWorker, createTestEnv } from './support/worker.js';
@@ -160,6 +160,16 @@ describe('webflow-template-search worker', () => {
     }
   });
 
+  it('requires auth for sync status', async () => {
+    const { env, close } = createTestEnv();
+    try {
+      const response = await callWorker(new Request('https://templates.test/api/templates/admin/sync-status'), env);
+      expect(response.status).toBe(401);
+    } finally {
+      close();
+    }
+  });
+
   it('returns 409 when another sync job is running', async () => {
     const { env, close } = createTestEnv();
 
@@ -178,6 +188,69 @@ describe('webflow-template-search worker', () => {
       expect(response.status).toBe(409);
       expect(payload.error).toBe('A template sync job is already running.');
       expect(payload.active_job).toMatchObject({ mode: 'incremental', status: 'running' });
+    } finally {
+      close();
+    }
+  });
+
+  it('returns authenticated sync status and clears stale same-mode sync errors', async () => {
+    const { env, close } = createTestEnv();
+
+    try {
+      await env.DB.prepare(
+        'INSERT INTO sync_state (key, value_json, updated_at) VALUES (?, ?, ?)',
+      )
+        .bind(
+          'last_sync_error',
+          JSON.stringify({
+            cron: '*/5 * * * *',
+            mode: 'incremental',
+            failed_at: '2026-05-22T14:57:09.882Z',
+            error: 'D1_ERROR: too many SQL variables at offset 521: SQLITE_ERROR',
+          }),
+          '2026-05-22T14:57:09.882Z',
+        )
+        .run();
+
+      await recordSyncSummary(
+        env.DB,
+        {
+          mode: 'incremental',
+          started_at: '2026-05-22T15:00:37.856Z',
+          finished_at: '2026-05-22T15:12:36.124Z',
+          fetched_records: 542,
+          indexed_records: 524,
+          removed_records: 18,
+          backfilled_records: 201535,
+          image_refreshed_records: 15,
+          cursor: '2026-05-21T03:25:50.403Z',
+        },
+        'last_incremental_sync',
+      );
+      await acquireSyncJobLock(env.DB, 'image_refresh');
+
+      const response = await callWorker(
+        new Request('https://templates.test/api/templates/admin/sync-status', {
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      const payload = (await response.json()) as {
+        status: string;
+        active_job: { mode: string; status: string; summary: unknown } | null;
+        latest_job: { mode: string; status: string; summary: unknown } | null;
+        sync_state: Record<string, { value: { mode?: string; fetched_records?: number } }>;
+      };
+
+      expect(response.status).toBe(200);
+      expect(payload.status).toBe('ok');
+      expect(payload.active_job).toMatchObject({ mode: 'image_refresh', status: 'running', summary: null });
+      expect(payload.latest_job).toMatchObject({ mode: 'image_refresh', status: 'running', summary: null });
+      expect(payload.sync_state.last_incremental_sync.value).toMatchObject({
+        mode: 'incremental',
+        fetched_records: 542,
+      });
+      expect(payload.sync_state.last_sync_error).toBeUndefined();
     } finally {
       close();
     }

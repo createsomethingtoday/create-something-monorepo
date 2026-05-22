@@ -1,7 +1,11 @@
 import {
   backfillCreatorFieldsByName,
   getActiveSyncJob,
+  getLatestSyncJob,
+  getSyncStateRecords,
   healthCounts,
+  publicSyncJobRecord,
+  publicSyncStateRecord,
   updateCreatorAvatarsFromWebflow,
   updateTemplateImagesFromWebflow,
 } from './db.js';
@@ -13,6 +17,14 @@ import type { Env } from './types.js';
 import { DESIGNERS_COLLECTION_ID, TEMPLATES_COLLECTION_ID, mapWebhookDesignerItem, mapWebhookTemplateItem, verifyWebflowSignature } from './webflow.js';
 import type { WebflowWebhookPayload } from './webflow.js';
 
+const SYNC_STATUS_STATE_KEYS = [
+  'last_full_sync',
+  'last_incremental_sync',
+  'last_image_refresh',
+  'last_image_backfill',
+  'last_sync_error',
+  'last_sync_skipped',
+];
 
 function parseBearerToken(request: Request): string | null {
   const auth = request.headers.get('Authorization');
@@ -122,6 +134,27 @@ async function handleImageBackfill(request: Request, env: Env): Promise<Response
   return jsonResponse(request, env, await backfillTemplateImages(env, { limit: Number.isFinite(limit) ? limit : undefined }));
 }
 
+async function handleSyncStatus(request: Request, env: Env): Promise<Response> {
+  const authError = validateAdminToken(request, env);
+  if (authError) return authError;
+
+  const [activeJob, latestJob, stateRecords, counts] = await Promise.all([
+    getActiveSyncJob(env.DB),
+    getLatestSyncJob(env.DB),
+    getSyncStateRecords(env.DB, SYNC_STATUS_STATE_KEYS),
+    healthCounts(env.DB),
+  ]);
+  const syncState = Object.fromEntries(stateRecords.map((record) => [record.key, publicSyncStateRecord(record)]));
+
+  return jsonResponse(request, env, {
+    status: 'ok',
+    active_job: publicSyncJobRecord(activeJob),
+    latest_job: publicSyncJobRecord(latestJob),
+    sync_state: syncState,
+    counts,
+  });
+}
+
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
@@ -152,6 +185,10 @@ export default {
 
       if (url.pathname === '/api/templates/admin/sync' && request.method === 'POST') {
         return await handleManualSync(request, env, ctx, 'incremental');
+      }
+
+      if (url.pathname === '/api/templates/admin/sync-status' && request.method === 'GET') {
+        return await handleSyncStatus(request, env);
       }
 
       if (url.pathname === '/api/templates/admin/refresh-images' && request.method === 'POST') {
