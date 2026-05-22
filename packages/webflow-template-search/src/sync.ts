@@ -354,14 +354,14 @@ export async function syncTemplates(env: Env, mode: 'full' | 'incremental'): Pro
   return runWithSyncJobLock(env, mode, () => (mode === 'full' ? runFullSync(env) : runIncrementalSync(env)));
 }
 
-// Image URL refresh: prefers stable Webflow CDN URLs (never expire) when CMS_READ_ONLY
-// is configured. Falls back to Airtable signed URLs (expire ~2h) otherwise.
+// Image URL refresh: prefers stable Webflow CMS/CDN URLs (never expire) when a
+// Webflow API token is configured. Falls back to Airtable signed URLs otherwise.
 // Always runs backfillCreatorAvatars from Airtable as a fallback for designers whose
 // Webflow CMS item has no sync-record-id (e.g. designers not yet linked in Webflow).
 async function runImageUrlRefresh(env: Env): Promise<ImageRefreshSummary> {
   const startedAt = nowIso();
 
-  if (env.CMS_READ_ONLY) {
+  if (env.CMS_READ_ONLY || env.WEBFLOW_API_TOKEN) {
     // Webflow path: fetch stable CDN URLs for templates and designer avatars.
     const [templateImages, designerAvatars, lookups] = await Promise.all([
       fetchWebflowTemplateImages(env),

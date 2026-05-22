@@ -51,7 +51,14 @@ export default declareComponent(TemplateFilterBar, {
     showSort: props.Boolean({
       name: 'Show Sort',
       defaultValue: true,
-      tooltip: 'Show the Sort dropdown (Popular, Newest, Price).',
+      tooltip: 'Show sort controls. Presentation is controlled by Sort Display.',
+    }),
+    sortDisplay: props.Variant({
+      name: 'Sort Display',
+      options: ['auto', 'dropdown', 'segmented'],
+      defaultValue: 'auto',
+      tooltip:
+        'Controls sort presentation. Auto and Dropdown use Landing page dropdown styling; Segmented uses the two-button Free page style.',
     }),
     showFreeOnly: props.Boolean({
       name: 'Show Free Only',
