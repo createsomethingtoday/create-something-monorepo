@@ -19,7 +19,7 @@ const LOOKUPS = {
         Category: 'AI',
         'Display name': 'AI',
         'Parent Category Name': 'Technology',
-        '🪣Category Groups': 'technology-websites',
+        '🪣Category Groups': 'legacy-technology-websites, technology-websites',
         'Related Keywords': 'automation, agent',
       },
     },
@@ -587,6 +587,22 @@ describe('webflow-template-search worker', () => {
         'ai-websites',
         'software-and-saas-websites',
       ]);
+
+      const childOnlyPillsSearch = await callWorker(
+        new Request('https://templates.test/api/templates/search?include=pills&child_category_slug=ai'),
+        env,
+      );
+      const childOnlyPillsPayload = (await childOnlyPillsSearch.json()) as {
+        applied_filters: { child_category_slug: string | null };
+        subcategory_pills: Array<{ slug: string; active: boolean }>;
+      };
+
+      expect(childOnlyPillsPayload.applied_filters.child_category_slug).toBe('ai-websites');
+      expect(childOnlyPillsPayload.subcategory_pills.map((pill) => pill.slug)).toEqual([
+        'ai-websites',
+        'software-and-saas-websites',
+      ]);
+      expect(childOnlyPillsPayload.subcategory_pills.find((pill) => pill.slug === 'ai-websites')?.active).toBe(true);
 
       const search = await callWorker(new Request('https://templates.test/api/templates/search?q=workflow'), env);
       const searchPayload = (await search.json()) as { items: Array<{ name: string }> };

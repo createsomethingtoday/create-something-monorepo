@@ -123,14 +123,29 @@ async function getTotalCount(db: D1Database, sqlParts: SqlParts): Promise<number
 async function resolveCategoryGroupSlugForChild(env: Env, childCategorySlug: string): Promise<string | null> {
   const taxonomyRow = await env.DB
     .prepare(
-      `SELECT category_group_slug AS slug
-       FROM category_group_children
-       WHERE child_category_slug = ?
-       ORDER BY sort_order ASC, category_group_slug ASC
+      `SELECT
+         c.category_group_slug AS slug,
+         COUNT(DISTINCT d.id) AS total
+       FROM category_group_children c
+       LEFT JOIN template_documents d
+         ON EXISTS (
+           SELECT 1
+           FROM json_each(d.category_group_slugs_json) category_group_slug
+           WHERE category_group_slug.value = c.category_group_slug
+         )
+         AND EXISTS (
+           SELECT 1
+           FROM template_child_categories tcc
+           WHERE tcc.template_document_id = d.id
+             AND tcc.child_category_slug = c.child_category_slug
+         )
+       WHERE c.child_category_slug = ?
+       GROUP BY c.category_group_slug, c.sort_order
+       ORDER BY (total > 0) DESC, total DESC, c.sort_order ASC, c.category_group_slug ASC
        LIMIT 1`,
     )
     .bind(childCategorySlug)
-    .first<{ slug: string }>();
+    .first<{ slug: string; total: number }>();
 
   if (taxonomyRow?.slug) return taxonomyRow.slug;
 
