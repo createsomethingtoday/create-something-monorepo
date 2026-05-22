@@ -41,11 +41,18 @@ export function corsPreflight(request: Request, env: Env): Response {
   return new Response(null, { status: 204, headers: withCorsHeaders(request, env) });
 }
 
-export function jsonResponse(request: Request, env: Env, data: unknown, status = 200): Response {
+export function jsonResponse(
+  request: Request,
+  env: Env,
+  data: unknown,
+  status = 200,
+  headers: HeadersInit = {},
+): Response {
   return new Response(JSON.stringify(data), {
     status,
     headers: withCorsHeaders(request, env, {
       'Content-Type': 'application/json; charset=utf-8',
+      ...headers,
     }),
   });
 }

@@ -93,6 +93,9 @@ const WORKER_ORIGIN = 'https://webflow-template-search.createsomething.workers.d
 // Legacy preview URL — rewrite to the production base.
 const CLOUD_APP_PREVIEW_ORIGIN = 'https://webflow-template-marketplace.webflow.io';
 const DEFAULT_PAGE_SIZE = 24;
+const SEARCH_CACHE_TTL_MS = 5 * 60 * 1000;
+
+const gridResponseCache = new Map<string, { timestamp: number; data: ApiResponse }>();
 
 // Hosts whose images need to be routed through the Cloud App proxy.
 // Airtable signed attachment URLs expire after ~2 hours; the proxy caches
@@ -331,6 +334,10 @@ function formatPrice(item: ApiItem): string {
   return `${item.price} USD`;
 }
 
+function primaryThumbnailUrl(item: ApiItem): string | null {
+  return item.thumbnail_image_url ?? item.thumbnail_image_secondary_url;
+}
+
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
 const GRID_STYLES = `
@@ -355,6 +362,34 @@ const GRID_STYLES = `
   border-top-color: rgba(0,0,0,0.45);
   border-radius: 50%;
   animation: tmgrid-spin 0.8s linear infinite;
+}
+.tmgrid-grid-wrap {
+  position: relative;
+}
+.tmgrid-grid-wrap[data-refreshing="true"] .tmgrid-grid {
+  opacity: 0.58;
+  pointer-events: none;
+  transition: opacity 160ms ease;
+}
+.tmgrid-refresh-indicator {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.92);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.14);
+  backdrop-filter: blur(6px);
+}
+.tmgrid-refresh-indicator .tmgrid-spinner {
+  width: 18px;
+  height: 18px;
+  border-width: 2px;
 }
 
 @keyframes tmgrid-shimmer {
@@ -468,20 +503,32 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
   const fetchPage = useCallback(
     async (targetPage: number, currentFilters: FilterState, append: boolean) => {
       const epoch = ++fetchEpochRef.current;
+      const url = buildApiUrl(apiBase, currentFilters, targetPage, resolvedPageSize);
+      const cached = gridResponseCache.get(url);
+
+      if (cached && Date.now() - cached.timestamp < SEARCH_CACHE_TTL_MS) {
+        setError(null);
+        setItems((prev) => (append ? [...prev, ...cached.data.items] : cached.data.items));
+        setPage(cached.data.pagination.page);
+        setHasNextPage(cached.data.pagination.has_next_page);
+        setTotalItems(cached.data.pagination.total_items);
+        setLoading(false);
+        setLoadingMore(false);
+        return;
+      }
 
       if (!append) {
         setLoading(true);
         setError(null);
-        setItems([]);
       } else {
         setLoadingMore(true);
       }
 
       try {
-        const url = buildApiUrl(apiBase, currentFilters, targetPage, resolvedPageSize);
         const res = await fetch(url);
         if (!res.ok) throw new Error(`API ${res.status}`);
         const data: ApiResponse = await res.json();
+        gridResponseCache.set(url, { timestamp: Date.now(), data });
 
         if (epoch !== fetchEpochRef.current) return;
 
@@ -733,7 +780,7 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
 
   // ── Render ─────────────────────────────────────────────────────────────────
 
-  if (loading) {
+  if (loading && items.length === 0) {
     return (
       <div style={S.root}>
         <style dangerouslySetInnerHTML={{ __html: GRID_STYLES }} />
@@ -746,7 +793,7 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
     );
   }
 
-  if (error) {
+  if (error && items.length === 0) {
     return (
       <div style={S.root}>
         <div style={S.errorBox}>
@@ -774,8 +821,10 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
   // [fs-cmsfilter-element="empty"] element is shown by the effect above.
   if (items.length === 0) return null;
 
+  const isRefreshing = loading && items.length > 0;
+
   return (
-    <div style={S.root}>
+    <div style={S.root} aria-busy={isRefreshing ? true : undefined}>
       <style dangerouslySetInnerHTML={{ __html: GRID_STYLES }} />
       {totalItems !== null && (
         <div style={S.countLabel}>
@@ -783,46 +832,54 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
         </div>
       )}
 
-      <div className="tmgrid-grid">
-        {items.map((item, i) => (
-          <div
-            key={item.id}
-            className="tmgrid-item"
-            style={{ animationDelay: `${Math.min(i % resolvedPageSize, 11) * 40}ms` }}
-            data-template-slug={item.template_slug}
-          >
-            <TemplateCard
-              templateName={item.name}
-              templateLink={{ href: item.url ?? '#' }}
-              price={formatPrice(item)}
-              priceNumeric={String(item.price ?? '0')}
-              isFree={item.is_free}
-              creatorName={item.creator_name ?? ''}
-              creatorLink={
-                item.creator_profile_url
-                  ? { href: item.creator_profile_url, target: '_blank' }
-                  : undefined
-              }
-              creatorIcon={
-                item.creator_avatar_url
-                  ? { src: proxyImageUrl(item.creator_avatar_url, apiBase), alt: item.creator_avatar_alt ?? item.creator_name ?? '' }
-                  : undefined
-              }
-              primaryImage={
-                item.thumbnail_image_url
-                  ? { src: proxyImageUrl(item.thumbnail_image_url, apiBase), alt: item.name }
-                  : undefined
-              }
-              secondaryImage={
-                item.thumbnail_image_secondary_url
-                  ? { src: proxyImageUrl(item.thumbnail_image_secondary_url, apiBase), alt: item.name }
-                  : undefined
-              }
-              approvalDate={item.published_date ?? ''}
-              popularityScore={String(item.popularity_score ?? '')}
-            />
+      <div className="tmgrid-grid-wrap" data-refreshing={isRefreshing ? 'true' : undefined}>
+        {isRefreshing && (
+          <div className="tmgrid-refresh-indicator" aria-hidden="true">
+            <div className="tmgrid-spinner" />
           </div>
-        ))}
+        )}
+        <div className="tmgrid-grid">
+          {items.map((item, i) => {
+            const primaryImageUrl = primaryThumbnailUrl(item);
+            return (
+              <div
+                key={item.id}
+                className="tmgrid-item"
+                style={{ animationDelay: `${Math.min(i % resolvedPageSize, 11) * 40}ms` }}
+                data-template-slug={item.template_slug}
+              >
+                <TemplateCard
+                  templateName={item.name}
+                  templateLink={{ href: item.url ?? '#' }}
+                  price={formatPrice(item)}
+                  priceNumeric={String(item.price ?? '0')}
+                  isFree={item.is_free}
+                  creatorName={item.creator_name ?? ''}
+                  creatorLink={
+                    item.creator_profile_url
+                      ? { href: item.creator_profile_url, target: '_blank' }
+                      : undefined
+                  }
+                  creatorIcon={
+                    item.creator_avatar_url
+                      ? { src: proxyImageUrl(item.creator_avatar_url, apiBase), alt: item.creator_avatar_alt ?? item.creator_name ?? '' }
+                      : undefined
+                  }
+                  primaryImage={primaryImageUrl ? { src: proxyImageUrl(primaryImageUrl, apiBase), alt: item.name } : undefined}
+                  secondaryImage={
+                    item.thumbnail_image_secondary_url
+                      ? { src: proxyImageUrl(item.thumbnail_image_secondary_url, apiBase), alt: item.name }
+                      : undefined
+                  }
+                  priorityIndex={i}
+                  deferSecondaryImage
+                  approvalDate={item.published_date ?? ''}
+                  popularityScore={String(item.popularity_score ?? '')}
+                />
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       {/* Infinite scroll sentinel */}

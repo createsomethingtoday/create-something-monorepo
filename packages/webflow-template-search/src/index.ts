@@ -26,6 +26,11 @@ const SYNC_STATUS_STATE_KEYS = [
   'last_sync_skipped',
 ];
 
+const PUBLIC_SEARCH_CACHE_HEADERS = {
+  'Cache-Control': 'public, max-age=60, s-maxage=300, stale-while-revalidate=86400',
+  'CDN-Cache-Control': 'public, max-age=300, stale-while-revalidate=86400',
+};
+
 function parseBearerToken(request: Request): string | null {
   const auth = request.headers.get('Authorization');
   if (!auth?.startsWith('Bearer ')) return null;
@@ -49,7 +54,7 @@ function validateAdminToken(request: Request, env: Env): Response | null {
 async function handleSearch(request: Request, env: Env): Promise<Response> {
   const defaultPageSize = Number(env.DEFAULT_PAGE_SIZE ?? '24') || 24;
   const params = parseSearchParams(new URL(request.url), defaultPageSize);
-  return jsonResponse(request, env, await searchTemplates(env, params));
+  return jsonResponse(request, env, await searchTemplates(env, params), 200, PUBLIC_SEARCH_CACHE_HEADERS);
 }
 
 async function handleManualSync(
@@ -110,9 +115,9 @@ async function handleWebflowWebhook(request: Request, env: Env): Promise<Respons
 
   if (payload.cid === TEMPLATES_COLLECTION_ID) {
     const record = mapWebhookTemplateItem(webhook);
-    if (!record) return jsonResponse(request, env, { status: 'ignored', reason: 'no sync-record-id or item not live' });
+    if (!record) return jsonResponse(request, env, { status: 'ignored', reason: 'no template identity or item not live' });
     await updateTemplateImagesFromWebflow(env.DB, [record], syncedAt);
-    return jsonResponse(request, env, { status: 'updated', collection: 'templates', id: record.id });
+    return jsonResponse(request, env, { status: 'updated', collection: 'templates', id: record.id ?? record.templateSlug ?? record.name });
   }
 
   if (payload.cid === DESIGNERS_COLLECTION_ID) {

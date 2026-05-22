@@ -1,4 +1,4 @@
-import React, { CSSProperties, useState, useCallback, useLayoutEffect, useRef, memo } from 'react';
+import React, { CSSProperties, useState, useCallback, useLayoutEffect, memo } from 'react';
 
 export type TemplateCardBadge = 'none' | 'new' | 'featured' | 'reviewed' | 'top-rated';
 
@@ -45,6 +45,11 @@ export interface TemplateCardProps {
   aiScore?: number;
   showAiBadge?: boolean;
   agentNote?: string;
+
+  // Grid-managed rendering hints. Passing these avoids each card scanning the
+  // DOM to infer its position when infinite scroll appends large result sets.
+  priorityIndex?: number;
+  deferSecondaryImage?: boolean;
 }
 
 const ARROW_ICON_URL =
@@ -469,15 +474,15 @@ const TemplateCardInner: React.FC<TemplateCardProps> = ({
   aiScore,
   showAiBadge = false,
   agentNote = '',
+  priorityIndex = 0,
+  deferSecondaryImage = false,
 }) => {
-  const cardRef = useRef<HTMLDivElement>(null);
   const [primaryLoaded, setPrimaryLoaded] = useState(false);
   const [primaryError, setPrimaryError] = useState(false);
   const [showShimmer, setShowShimmer] = useState(true);
   const [iconError, setIconError] = useState(false);
   const [isLinkHovered, setIsLinkHovered] = useState(false);
-  // DOM position within Collection List — used for image loading priority only
-  const [domIndex, setDomIndex] = useState(0);
+  const [hasRequestedSecondary, setHasRequestedSecondary] = useState(!deferSecondaryImage);
 
   const handlePrimaryLoad = useCallback(() => {
     setPrimaryLoaded(true);
@@ -489,20 +494,11 @@ const TemplateCardInner: React.FC<TemplateCardProps> = ({
     setTimeout(() => setShowShimmer(false), 350);
   }, []);
   const handleIconError = useCallback(() => setIconError(true), []);
-
-  // Compute DOM position before first paint.
-  // Sets --tmcard-stagger CSS custom property directly on the element so the
-  // entrance animation cascades correctly — no React re-render needed for it.
-  useLayoutEffect(() => {
-    const el = cardRef.current;
-    if (!el) return;
-    const collectionItem = el.parentElement;
-    const collectionList = collectionItem?.parentElement;
-    const siblings = collectionList ? Array.from(collectionList.children) : [];
-    const index = collectionItem ? Math.max(0, siblings.indexOf(collectionItem)) : 0;
-    setDomIndex(index);
-    el.style.setProperty('--tmcard-stagger', `${Math.min(index, 8) * 60}ms`);
+  const revealHoverAssets = useCallback(() => {
+    setIsLinkHovered(true);
+    setHasRequestedSecondary(true);
   }, []);
+  const hideHoverAssets = useCallback(() => setIsLinkHovered(false), []);
 
   // Inject global styles once, synchronously before first paint (useLayoutEffect
   // fires before the browser paints, so the overlay is never visible without CSS)
@@ -514,7 +510,12 @@ const TemplateCardInner: React.FC<TemplateCardProps> = ({
     document.head.appendChild(styleEl);
   }, []);
 
-  const imageLoading: 'eager' | 'lazy' = domIndex < 6 ? 'eager' : 'lazy';
+  const resolvedPriorityIndex = Math.max(0, priorityIndex);
+  const imageLoading: 'eager' | 'lazy' = resolvedPriorityIndex < 6 ? 'eager' : 'lazy';
+  const cardStyle = {
+    ...S.card,
+    '--tmcard-stagger': `${Math.min(resolvedPriorityIndex, 8) * 60}ms`,
+  } as CSSProperties;
 
   // Auto-apply 'new' badge when approvalDate is within 30 days and no explicit variant
   const effectiveBadgeVariant: TemplateCardBadge =
@@ -550,9 +551,8 @@ const TemplateCardInner: React.FC<TemplateCardProps> = ({
 
   return (
     <div
-      ref={cardRef}
       className="tmcard-wrapper"
-      style={S.card}
+      style={cardStyle}
     >
       {/* Primary card link with images */}
       <a
@@ -562,10 +562,10 @@ const TemplateCardInner: React.FC<TemplateCardProps> = ({
         aria-label={`View ${templateName} template`}
         className="tmcard-link"
         style={S.link}
-        onMouseEnter={() => setIsLinkHovered(true)}
-        onMouseLeave={() => setIsLinkHovered(false)}
-        onFocus={() => setIsLinkHovered(true)}
-        onBlur={() => setIsLinkHovered(false)}
+        onMouseEnter={revealHoverAssets}
+        onMouseLeave={hideHoverAssets}
+        onFocus={revealHoverAssets}
+        onBlur={hideHoverAssets}
       >
         {showShimmer && (
           <div
@@ -591,7 +591,7 @@ const TemplateCardInner: React.FC<TemplateCardProps> = ({
             width="150"
             height="199"
             loading={imageLoading}
-            fetchPriority={domIndex === 0 ? 'high' : undefined}
+            fetchPriority={resolvedPriorityIndex === 0 ? 'high' : undefined}
             decoding="async"
             src={primaryImage?.src ?? FALLBACK_IMAGE}
             onLoad={handlePrimaryLoad}
@@ -604,7 +604,7 @@ const TemplateCardInner: React.FC<TemplateCardProps> = ({
           />
         )}
 
-        {secondaryImage?.src && (
+        {secondaryImage?.src && hasRequestedSecondary && (
           <img
             className="tmcard-secondary-img"
             alt={secondaryImage.alt ?? ''}

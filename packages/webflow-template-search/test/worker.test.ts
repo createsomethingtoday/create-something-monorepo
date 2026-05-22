@@ -384,6 +384,8 @@ describe('webflow-template-search worker', () => {
             isDraft: false,
             fieldData: {
               'sync-record-id': 'recAgentflow',
+              name: 'Agentflow',
+              slug: 'agentflow-updated-website-template',
               thumbnail: { url: 'https://cdn.prod.website-files.com/site/agentflow-webhook.webp' },
               'thumbnail-secondary': { url: 'https://cdn.prod.website-files.com/site/agentflow-hover-webhook.webp' },
               'slider-images': [
@@ -404,18 +406,22 @@ describe('webflow-template-search worker', () => {
       });
 
       const row = await env.DB.prepare(
-        `SELECT thumbnail_image_url, thumbnail_image_secondary_url, carousel_image_urls_json
+        `SELECT template_slug, listing_url, thumbnail_image_url, thumbnail_image_secondary_url, carousel_image_urls_json
          FROM template_documents
          WHERE id = ?`,
       )
         .bind('recAgentflow')
         .first<{
+          template_slug: string;
+          listing_url: string | null;
           thumbnail_image_url: string | null;
           thumbnail_image_secondary_url: string | null;
           carousel_image_urls_json: string;
         }>();
 
       expect(row).toMatchObject({
+        template_slug: 'agentflow-updated-website-template',
+        listing_url: 'https://webflow.com/templates/html/agentflow-updated-website-template',
         thumbnail_image_url: 'https://cdn.prod.website-files.com/site/agentflow-webhook.webp',
         thumbnail_image_secondary_url: 'https://cdn.prod.website-files.com/site/agentflow-hover-webhook.webp',
       });
@@ -526,6 +532,12 @@ describe('webflow-template-search worker', () => {
         new Request('https://templates.test/api/templates/search?category_group_slug=technology-websites&child_category_slug=ai-websites'),
         env,
       );
+      expect(categorySearch.headers.get('cache-control')).toBe(
+        'public, max-age=60, s-maxage=300, stale-while-revalidate=86400',
+      );
+      expect(categorySearch.headers.get('cdn-cache-control')).toBe(
+        'public, max-age=300, stale-while-revalidate=86400',
+      );
       const categoryPayload = (await categorySearch.json()) as {
         items: Array<{ name: string }>;
         available_facets: { styles: Array<{ slug: string }>; types: Array<{ value: string }> };
@@ -621,7 +633,7 @@ describe('webflow-template-search worker', () => {
       },
     });
     const { env, close } = createTestEnv();
-    env.CMS_READ_ONLY = 'test-webflow-cms-token';
+    env.WEBFLOW_API_TOKEN = 'test-webflow-cms-token';
     env.WEBFLOW_TEMPLATE_ASSET_SITE_ID = '5e593fb060cf877cf875dd1f';
     env.WEBFLOW_TEMPLATE_ENABLE_CMS_INDEX = 'true';
 
@@ -644,6 +656,75 @@ describe('webflow-template-search worker', () => {
       expect(payload.items[0]?.thumbnail_image_secondary_url).toBe(
         'https://cdn.prod.website-files.com/site/agentflow-hover.webp',
       );
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
+  it('repairs stale template slugs and images from Webflow CMS by exact template name', async () => {
+    const equalizeAsset = {
+      ...PUBLISHED_ASSETS[0],
+      id: 'recEqualize',
+      fields: {
+        ...PUBLISHED_ASSETS[0].fields,
+        Name: 'Equalize',
+        '🥞CMS Slug (formula)': 'equalize-website-template',
+        '🖼️Thumbnail Image': [{ url: 'https://v5.airtableusercontent.com/v3/u/53/temporary-equalize' }],
+        '🔗Listing URL': 'https://webflow.com/templates/html/equalize-website-template',
+        '🔗Preview Site URL': 'https://equalize.webflow.io',
+        '🔗Website URL': 'https://equalize.webflow.io',
+      },
+    };
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: [equalizeAsset],
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+      webflowCollectionItems: {
+        [TEMPLATES_COLLECTION_ID]: [
+          {
+            id: 'item-equalize',
+            fieldData: {
+              name: 'Equalize',
+              slug: 'equalize-charity-website-template',
+              thumbnail: { url: 'https://cdn.prod.website-files.com/site/equalize.webp' },
+            },
+          },
+        ],
+      },
+    });
+    const { env, close } = createTestEnv();
+    env.WEBFLOW_API_TOKEN = 'test-webflow-cms-token';
+
+    try {
+      const rebuild = await callWorker(
+        new Request('https://templates.test/api/templates/admin/rebuild', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(rebuild.status).toBe(200);
+
+      const refresh = await callWorker(
+        new Request('https://templates.test/api/templates/admin/refresh-images', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(refresh.status).toBe(200);
+
+      const response = await callWorker(new Request('https://templates.test/api/templates/search?q=equalize'), env);
+      const payload = (await response.json()) as {
+        items: Array<{ template_slug: string; url: string | null; thumbnail_image_url: string | null }>;
+      };
+      expect(payload.items[0]).toMatchObject({
+        template_slug: 'equalize-charity-website-template',
+        url: 'https://webflow.com/templates/html/equalize-charity-website-template',
+        thumbnail_image_url: 'https://cdn.prod.website-files.com/site/equalize.webp',
+      });
     } finally {
       fetchMock.mockRestore();
       close();

@@ -23,10 +23,10 @@ Use `Authorization: Bearer <SYNC_ADMIN_TOKEN>` or `X-API-Key`.
 The sync pipeline indexes Marketplace template metadata from Airtable, then resolves public
 asset URLs from the most stable configured source. Source precedence:
 
-1. Airtable `Marketplace Assets` remains the metadata source of truth for names, slugs,
+1. Airtable `Marketplace Assets` remains the metadata source of truth for names,
    categories, styles, tags, creator links, price, popularity, and published status.
-2. Webflow CMS template image fields are preferred for thumbnails, hover thumbnails, and
-   carousel images when `CMS_READ_ONLY` is configured.
+2. Webflow CMS template fields are preferred for canonical slugs, listing URLs,
+   thumbnails, hover thumbnails, and carousel images when a Webflow API token is configured.
 3. Webflow site assets are used as a fallback image index when `WEBFLOW_API_TOKEN` and
    `WEBFLOW_TEMPLATE_ASSET_SITE_ID` are configured.
 4. The published Webflow template page `og:image` is used as a bounded fallback for stale
@@ -45,8 +45,8 @@ Configure:
   existing `CMS_READ_ONLY` secret as a fallback. `cms:read` is enough for the preferred CMS item
   lookup.
 
-When Webflow lookup is configured, sync prefers stable Webflow image URLs matched by template
-slug/name. Airtable attachment URLs from known temporary attachment hosts are ignored so expired
+When Webflow lookup is configured, sync prefers stable Webflow slugs and image URLs matched by
+sync-record-id, template slug, or exact template name. Airtable attachment URLs from known temporary attachment hosts are ignored so expired
 attachment links do not enter the public search index.
 
 Incremental sync also refreshes recently changed Airtable rows plus stale or missing images on

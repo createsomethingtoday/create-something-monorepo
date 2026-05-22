@@ -11,6 +11,7 @@ import React, {
 
 type TemplateSort = 'popular' | 'newest' | 'price_asc' | 'price_desc';
 type TemplateScope = 'all' | 'featured' | 'free' | 'landing_pages';
+type SortDisplay = 'auto' | 'dropdown' | 'segmented';
 
 interface StyleFacet {
   name: string;
@@ -88,6 +89,8 @@ export interface TemplateFilterBarProps {
   showTypes?: boolean;
   /** Show the Sort dropdown */
   showSort?: boolean;
+  /** Visual presentation for sort controls */
+  sortDisplay?: SortDisplay;
   /** Show the Free Only checkbox */
   showFreeOnly?: boolean;
   /** Show category-scoped subcategory pills above the filters */
@@ -113,6 +116,9 @@ export interface TemplateFilterBarProps {
 const DEFAULT_API_BASE = 'https://templates.webflow.com/templates-api';
 const WORKER_ORIGIN = 'https://webflow-template-search.createsomething.workers.dev';
 const CLOUD_APP_PREVIEW_ORIGIN = 'https://webflow-template-marketplace.webflow.io';
+const FACETS_CACHE_TTL_MS = 5 * 60 * 1000;
+
+const facetsPayloadCache = new Map<string, { timestamp: number; data: FacetsPayload }>();
 
 const SORT_OPTIONS: Array<{ value: TemplateSort; label: string }> = [
   { value: 'popular', label: 'Popular' },
@@ -833,6 +839,7 @@ export const TemplateFilterBar: React.FC<TemplateFilterBarProps> = ({
   showStyles = true,
   showTypes = true,
   showSort = true,
+  sortDisplay = 'auto',
   showFreeOnly = false,
   showSubcategoryPills = true,
   defaultSort = 'popular',
@@ -902,10 +909,25 @@ export const TemplateFilterBar: React.FC<TemplateFilterBarProps> = ({
       setPillsLoading(Boolean(context.categoryGroupSlug || context.childCategorySlug || context.scope));
     }
 
-    fetch(url.toString(), { signal: ac.signal })
+    const cacheKey = url.toString();
+    const cached = facetsPayloadCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < FACETS_CACHE_TTL_MS) {
+      const data = cached.data;
+      if (showStyles) setStyleFacets(data.available_facets.styles ?? []);
+      if (showTypes) setTypeFacets(data.available_facets.types ?? []);
+      if (showSubcategoryPills) {
+        setCategoryPills(data.category_pills ?? []);
+        setSubcategoryPills(data.subcategory_pills ?? []);
+        setPillsLoading(false);
+      }
+      return () => ac.abort();
+    }
+
+    fetch(cacheKey, { signal: ac.signal })
       .then((r) => (r.ok ? (r.json() as Promise<FacetsPayload>) : null))
       .then((data) => {
         if (!data) return;
+        facetsPayloadCache.set(cacheKey, { timestamp: Date.now(), data });
         if (showStyles) setStyleFacets(data.available_facets.styles ?? []);
         if (showTypes) setTypeFacets(data.available_facets.types ?? []);
         if (showSubcategoryPills) {
@@ -1060,6 +1082,54 @@ export const TemplateFilterBar: React.FC<TemplateFilterBarProps> = ({
     [filters, hasSubcategoryPillContext],
   );
 
+  const onClearCategoryContext = useCallback(
+    (event: React.MouseEvent<HTMLAnchorElement>) => {
+      if (typeof window === 'undefined') return;
+      event.preventDefault();
+
+      const url = new URL(window.location.href);
+      url.searchParams.delete('category');
+      url.searchParams.delete('subcategory');
+      url.searchParams.delete('page');
+
+      window.history.replaceState({}, '', url.toString());
+      setRouteVersion((value) => value + 1);
+      notifyTemplateFiltersChanged(filters);
+      document.dispatchEvent(
+        new CustomEvent('categoryFilterUpdated', {
+          detail: { parent: null, category: null, subcategory: null },
+        }),
+      );
+    },
+    [filters],
+  );
+
+  const onParentCategoryPillClick = useCallback(
+    (event: React.MouseEvent<HTMLAnchorElement>) => {
+      if (typeof window === 'undefined' || !routeContext.categoryGroupSlug) return;
+      event.preventDefault();
+
+      const url = new URL(window.location.href);
+      url.searchParams.set('category', routeContext.categoryGroupSlug);
+      url.searchParams.delete('subcategory');
+      url.searchParams.delete('page');
+
+      window.history.replaceState({}, '', url.toString());
+      setRouteVersion((value) => value + 1);
+      notifyTemplateFiltersChanged(filters);
+      document.dispatchEvent(
+        new CustomEvent('categoryFilterUpdated', {
+          detail: {
+            parent: routeContext.categoryGroupSlug,
+            category: routeContext.categoryGroupSlug,
+            subcategory: null,
+          },
+        }),
+      );
+    },
+    [filters, routeContext.categoryGroupSlug],
+  );
+
   const onSubcategoryPillClick = useCallback(
     (slug: string, active: boolean, event: React.MouseEvent<HTMLAnchorElement>) => {
       if (typeof window === 'undefined') return;
@@ -1106,16 +1176,24 @@ export const TemplateFilterBar: React.FC<TemplateFilterBarProps> = ({
 
   const activeTypeLabel = filters.types[0] || typesLabel;
   const activeSortLabel = sortOptions.find((option) => option.value === filters.sort)?.label ?? 'Popular';
-  const useSegmentedSort = isFreeSortContext && sortOptions.length === 2;
+  const useSegmentedSort = sortDisplay === 'segmented';
 
   const rootStyle: CSSProperties = {};
   const showCategoryPillRow = showSubcategoryPills && !hasSubcategoryPillContext;
-  const visiblePills = hasSubcategoryPillContext ? subcategoryPills : categoryPills;
+  const parentCategoryPill = routeContext.categoryGroupSlug
+    ? categoryPills.find((pill) => pill.slug === routeContext.categoryGroupSlug)
+    : null;
+  const parentCategoryLabel = parentCategoryPill?.name ?? routeContext.categoryGroupSlug ?? '';
+  const visiblePills = hasSubcategoryPillContext
+    ? subcategoryPills.filter((pill) => pill.slug !== routeContext.categoryGroupSlug)
+    : categoryPills;
   const allCategoriesActive = showCategoryPillRow && !routeContext.categoryGroupSlug && !routeContext.childCategorySlug;
+  const parentCategoryActive = hasSubcategoryPillContext && !routeContext.childCategorySlug;
+  const showAllCategoriesPill = showCategoryPillRow || hasSubcategoryPillContext;
   const shouldShowSubcategoryPills =
     showSubcategoryPills &&
     (hasSubcategoryPillContext || showCategoryPillRow) &&
-    (pillsLoading || visiblePills.length > 0);
+    (pillsLoading || visiblePills.length > 0 || Boolean(routeContext.categoryGroupSlug));
 
   let dropdownContent: React.ReactNode = null;
   if (openPanel === 'styles') {
@@ -1237,19 +1315,35 @@ export const TemplateFilterBar: React.FC<TemplateFilterBarProps> = ({
                 </div>
               ) : (
                 <>
-                  {showCategoryPillRow && (
+                  {showAllCategoriesPill && (
                     <React.Fragment>
                       <div className="tmfilter-subcategory-slide" role="listitem">
                         <a
                           className={`cc-subcategory tmfilter-pill${allCategoriesActive ? ' w--current active' : ''}`}
                           href={buildScopedCategoryHref(null)}
                           aria-current={allCategoriesActive ? 'page' : undefined}
-                          onClick={(event) => onCategoryPillClick(null, allCategoriesActive, event)}
+                          onClick={
+                            hasSubcategoryPillContext
+                              ? onClearCategoryContext
+                              : (event) => onCategoryPillClick(null, allCategoriesActive, event)
+                          }
                         >
                           All Categories
                         </a>
                       </div>
                     </React.Fragment>
+                  )}
+                  {hasSubcategoryPillContext && routeContext.categoryGroupSlug && (
+                    <div className="tmfilter-subcategory-slide" role="listitem">
+                      <a
+                        className={`cc-subcategory tmfilter-pill${parentCategoryActive ? ' w--current active' : ''}`}
+                        href={buildScopedSubcategoryHref(null, routeContext)}
+                        aria-current={parentCategoryActive ? 'page' : undefined}
+                        onClick={onParentCategoryPillClick}
+                      >
+                        {parentCategoryLabel}
+                      </a>
+                    </div>
                   )}
                   {visiblePills.map((pill) => {
                     const active = hasSubcategoryPillContext

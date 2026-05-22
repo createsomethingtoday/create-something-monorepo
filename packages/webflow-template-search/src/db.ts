@@ -466,24 +466,94 @@ export async function updateTemplateImagesFromWebflow(
 ): Promise<number> {
   if (records.length === 0) return 0;
 
-  const statements: D1PreparedStatement[] = records.map((record) =>
-    db
-      .prepare(
-        `UPDATE template_documents
-         SET thumbnail_image_url = ?,
-             thumbnail_image_secondary_url = ?,
-             carousel_image_urls_json = ?,
-             synced_at = ?
-         WHERE id = ?`,
-      )
-      .bind(
-        record.thumbnailImageUrl,
-        record.thumbnailImageSecondaryUrl,
-        JSON.stringify(record.carouselImageUrls),
-        syncedAt,
-        record.id,
-      ),
-  );
+  const statements: D1PreparedStatement[] = [];
+
+  for (const record of records) {
+    if (record.id && record.templateSlug) {
+      // Match upsertTemplateDocuments behavior: if another D1 row still owns
+      // this canonical Webflow slug, evict it before the stable CMS record wins.
+      statements.push(
+        db
+          .prepare(
+            'DELETE FROM template_styles WHERE template_document_id = (SELECT id FROM template_documents WHERE template_slug = ? AND id != ?)',
+          )
+          .bind(record.templateSlug, record.id),
+      );
+      statements.push(
+        db
+          .prepare(
+            'DELETE FROM template_child_categories WHERE template_document_id = (SELECT id FROM template_documents WHERE template_slug = ? AND id != ?)',
+          )
+          .bind(record.templateSlug, record.id),
+      );
+      statements.push(db.prepare('DELETE FROM template_documents WHERE template_slug = ? AND id != ?').bind(record.templateSlug, record.id));
+    }
+
+    if (record.id) {
+      statements.push(
+        db
+          .prepare(
+            `UPDATE template_documents
+             SET template_slug = COALESCE(?, template_slug),
+                 listing_url = COALESCE(?, listing_url),
+                 thumbnail_image_url = ?,
+                 thumbnail_image_secondary_url = ?,
+                 carousel_image_urls_json = ?,
+                 synced_at = ?
+             WHERE id = ?`,
+          )
+          .bind(
+            record.templateSlug,
+            record.listingUrl,
+            record.thumbnailImageUrl,
+            record.thumbnailImageSecondaryUrl,
+            JSON.stringify(record.carouselImageUrls),
+            syncedAt,
+            record.id,
+          ),
+      );
+      continue;
+    }
+
+    if (record.name) {
+      statements.push(
+        db
+          .prepare(
+            `UPDATE template_documents
+             SET template_slug = COALESCE(?, template_slug),
+                 listing_url = COALESCE(?, listing_url),
+                 thumbnail_image_url = ?,
+                 thumbnail_image_secondary_url = ?,
+                 carousel_image_urls_json = ?,
+                 synced_at = ?
+             WHERE name = ?
+               AND (SELECT COUNT(*) FROM template_documents WHERE name = ?) = 1
+               AND (
+                 ? IS NULL
+                 OR NOT EXISTS (
+                   SELECT 1
+                   FROM template_documents
+                   WHERE template_slug = ?
+                     AND name != ?
+                 )
+               )`,
+          )
+          .bind(
+            record.templateSlug,
+            record.listingUrl,
+            record.thumbnailImageUrl,
+            record.thumbnailImageSecondaryUrl,
+            JSON.stringify(record.carouselImageUrls),
+            syncedAt,
+            record.name,
+            record.name,
+            record.templateSlug,
+            record.templateSlug,
+            record.name,
+          ),
+      );
+    }
+  }
 
   let totalChanges = 0;
   for (const group of chunk(statements, 50)) {
