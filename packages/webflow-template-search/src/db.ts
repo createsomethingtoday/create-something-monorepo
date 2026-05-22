@@ -32,6 +32,32 @@ const TEMP_ATTACHMENT_IMAGE_WHERE = `thumbnail_image_url LIKE '%airtableusercont
           OR thumbnail_image_secondary_url LIKE '%dl.airtable.com%'`;
 
 const STALE_IMAGE_REFRESH_LIMIT = 24;
+const SYNC_JOB_LOCK_KEY = 'template_sync';
+
+export interface SyncJobRecord {
+  lock_key: string;
+  job_id: string;
+  mode: string;
+  status: 'running' | 'succeeded' | 'failed';
+  started_at: string;
+  heartbeat_at: string;
+  expires_at: string;
+  finished_at: string | null;
+  summary_json: string | null;
+  error: string | null;
+}
+
+export interface SyncJobLock {
+  lockKey: string;
+  jobId: string;
+  mode: string;
+}
+
+export interface SyncJobAcquireResult {
+  acquired: boolean;
+  lock: SyncJobLock;
+  activeJob: SyncJobRecord | null;
+}
 
 const UPSERT_TEMPLATE_SQL = `
   INSERT INTO template_documents (
@@ -128,6 +154,118 @@ function toJson(value: string[]): string {
 
 function placeholderList(count: number): string {
   return Array.from({ length: count }, () => '?').join(', ');
+}
+
+function addMilliseconds(iso: string, milliseconds: number): string {
+  return new Date(new Date(iso).getTime() + milliseconds).toISOString();
+}
+
+export function publicSyncJobRecord(record: SyncJobRecord | null) {
+  if (!record) return null;
+  return {
+    job_id: record.job_id,
+    mode: record.mode,
+    status: record.status,
+    started_at: record.started_at,
+    heartbeat_at: record.heartbeat_at,
+    expires_at: record.expires_at,
+    finished_at: record.finished_at,
+    error: record.error,
+  };
+}
+
+export async function getActiveSyncJob(db: D1Database, now = nowIso()): Promise<SyncJobRecord | null> {
+  return db
+    .prepare(
+      `SELECT *
+       FROM sync_jobs
+       WHERE lock_key = ?
+         AND status = 'running'
+         AND expires_at > ?
+       LIMIT 1`,
+    )
+    .bind(SYNC_JOB_LOCK_KEY, now)
+    .first<SyncJobRecord>();
+}
+
+export async function acquireSyncJobLock(
+  db: D1Database,
+  mode: string,
+  options: { ttlMs?: number; now?: string } = {},
+): Promise<SyncJobAcquireResult> {
+  const startedAt = options.now ?? nowIso();
+  const ttlMs = options.ttlMs ?? 20 * 60 * 1000;
+  const expiresAt = addMilliseconds(startedAt, ttlMs);
+  const jobId = `${mode}-${crypto.randomUUID()}`;
+
+  await db
+    .prepare(
+      `INSERT INTO sync_jobs (
+         lock_key,
+         job_id,
+         mode,
+         status,
+         started_at,
+         heartbeat_at,
+         expires_at,
+         finished_at,
+         summary_json,
+         error
+       ) VALUES (?, ?, ?, 'running', ?, ?, ?, NULL, NULL, NULL)
+       ON CONFLICT(lock_key) DO UPDATE SET
+         job_id = excluded.job_id,
+         mode = excluded.mode,
+         status = excluded.status,
+         started_at = excluded.started_at,
+         heartbeat_at = excluded.heartbeat_at,
+         expires_at = excluded.expires_at,
+         finished_at = NULL,
+         summary_json = NULL,
+         error = NULL
+       WHERE sync_jobs.status != 'running'
+          OR sync_jobs.expires_at <= ?`,
+    )
+    .bind(SYNC_JOB_LOCK_KEY, jobId, mode, startedAt, startedAt, expiresAt, startedAt)
+    .run();
+
+  const activeJob = await db.prepare('SELECT * FROM sync_jobs WHERE lock_key = ?').bind(SYNC_JOB_LOCK_KEY).first<SyncJobRecord>();
+  const acquired = activeJob?.job_id === jobId && activeJob.status === 'running';
+
+  return {
+    acquired,
+    lock: {
+      lockKey: SYNC_JOB_LOCK_KEY,
+      jobId,
+      mode,
+    },
+    activeJob: acquired ? null : activeJob,
+  };
+}
+
+export async function finishSyncJobLock(
+  db: D1Database,
+  lock: SyncJobLock,
+  result:
+    | { status: 'succeeded'; summary: unknown; finishedAt?: string }
+    | { status: 'failed'; error: unknown; finishedAt?: string },
+): Promise<void> {
+  const finishedAt = result.finishedAt ?? nowIso();
+  const summaryJson = result.status === 'succeeded' ? JSON.stringify(result.summary) : null;
+  const error = result.status === 'failed' ? (result.error instanceof Error ? result.error.message : String(result.error)) : null;
+
+  await db
+    .prepare(
+      `UPDATE sync_jobs
+       SET status = ?,
+           heartbeat_at = ?,
+           finished_at = ?,
+           summary_json = ?,
+           error = ?
+       WHERE lock_key = ?
+         AND job_id = ?`,
+    )
+    .bind(result.status, finishedAt, finishedAt, summaryJson, error, lock.lockKey, lock.jobId)
+    .run();
 }
 
 export async function clearIndex(db: D1Database): Promise<void> {

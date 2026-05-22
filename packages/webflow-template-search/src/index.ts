@@ -1,5 +1,6 @@
 import {
   backfillCreatorFieldsByName,
+  getActiveSyncJob,
   healthCounts,
   updateCreatorAvatarsFromWebflow,
   updateTemplateImagesFromWebflow,
@@ -7,7 +8,7 @@ import {
 import { corsPreflight, jsonResponse, textResponse } from './http.js';
 import { parseSearchParams } from './query.js';
 import { searchTemplates } from './search.js';
-import { backfillTemplateImages, refreshImages, syncTemplates } from './sync.js';
+import { SyncAlreadyRunningError, backfillTemplateImages, refreshImages, syncTemplates } from './sync.js';
 import type { Env } from './types.js';
 import { DESIGNERS_COLLECTION_ID, TEMPLATES_COLLECTION_ID, mapWebhookDesignerItem, mapWebhookTemplateItem, verifyWebflowSignature } from './webflow.js';
 import type { WebflowWebhookPayload } from './webflow.js';
@@ -49,6 +50,9 @@ async function handleManualSync(
   if (authError) return authError;
 
   if (mode === 'full') {
+    const activeJob = await getActiveSyncJob(env.DB);
+    if (activeJob) throw new SyncAlreadyRunningError(activeJob);
+
     // Full rebuild takes 5–15 min — run in background so HTTP request doesn't time out.
     ctx.waitUntil(syncTemplates(env, mode));
     return jsonResponse(request, env, { status: 'rebuild_started', message: 'Full rebuild started in background.' });
@@ -134,7 +138,7 @@ export default {
       }
 
       if (url.pathname === '/api/templates/search' && request.method === 'GET') {
-        return handleSearch(request, env);
+        return await handleSearch(request, env);
       }
 
       if ((url.pathname === '/api/templates/client.js' || url.pathname === '/client.js') && request.method === 'GET') {
@@ -143,11 +147,11 @@ export default {
       }
 
       if (url.pathname === '/api/templates/admin/rebuild' && request.method === 'POST') {
-        return handleManualSync(request, env, ctx, 'full');
+        return await handleManualSync(request, env, ctx, 'full');
       }
 
       if (url.pathname === '/api/templates/admin/sync' && request.method === 'POST') {
-        return handleManualSync(request, env, ctx, 'incremental');
+        return await handleManualSync(request, env, ctx, 'incremental');
       }
 
       if (url.pathname === '/api/templates/admin/refresh-images' && request.method === 'POST') {
@@ -157,15 +161,19 @@ export default {
       }
 
       if (url.pathname === '/api/templates/webhooks/webflow' && request.method === 'POST') {
-        return handleWebflowWebhook(request, env);
+        return await handleWebflowWebhook(request, env);
       }
 
       if (url.pathname === '/api/templates/admin/backfill-images' && request.method === 'POST') {
-        return handleImageBackfill(request, env);
+        return await handleImageBackfill(request, env);
       }
 
       return jsonResponse(request, env, { error: 'Not found' }, 404);
     } catch (error) {
+      if (error instanceof SyncAlreadyRunningError) {
+        return jsonResponse(request, env, { error: error.message, active_job: error.activeJob }, 409);
+      }
+
       return jsonResponse(
         request,
         env,
@@ -188,6 +196,26 @@ export default {
         await syncTemplates(env, 'incremental');
       }
     } catch (err) {
+      if (err instanceof SyncAlreadyRunningError) {
+        const skippedRecord = {
+          cron: controller.cron,
+          mode,
+          skipped_at: new Date().toISOString(),
+          reason: err.message,
+          active_job: err.activeJob,
+        };
+        try {
+          await env.DB.prepare(
+            'INSERT INTO sync_state (key, value_json, updated_at) VALUES (?, ?, ?) ON CONFLICT(key) DO UPDATE SET value_json = excluded.value_json, updated_at = excluded.updated_at',
+          )
+            .bind('last_sync_skipped', JSON.stringify(skippedRecord), skippedRecord.skipped_at)
+            .run();
+        } catch {
+          // Best-effort — don't throw if DB write fails
+        }
+        return;
+      }
+
       // Record the error so it's visible in sync_state rather than silently swallowed.
       const errorRecord = {
         cron: controller.cron,

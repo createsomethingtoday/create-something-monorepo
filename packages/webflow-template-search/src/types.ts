@@ -21,7 +21,6 @@ export interface Env {
   DEFAULT_CLIENT_MODE?: string;
   ENVIRONMENT?: string;
   SYNC_ADMIN_TOKEN?: string;
-  CMS_READ_ONLY?: string;
   WEBFLOW_WEBHOOK_SECRET?: string;
 }
 
