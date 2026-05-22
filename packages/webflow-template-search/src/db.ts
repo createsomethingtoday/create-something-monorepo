@@ -48,6 +48,12 @@ export interface SyncJobRecord {
   error: string | null;
 }
 
+export interface SyncStateRecord {
+  key: string;
+  value_json: string;
+  updated_at: string;
+}
+
 export interface SyncJobLock {
   lockKey: string;
   jobId: string;
@@ -161,6 +167,21 @@ function addMilliseconds(iso: string, milliseconds: number): string {
   return new Date(new Date(iso).getTime() + milliseconds).toISOString();
 }
 
+function parseJson(value: string | null): unknown {
+  if (!value) return null;
+  try {
+    return JSON.parse(value);
+  } catch {
+    return null;
+  }
+}
+
+function getSummaryMode(summary: unknown): string | null {
+  if (!summary || typeof summary !== 'object' || !('mode' in summary)) return null;
+  const mode = (summary as { mode?: unknown }).mode;
+  return typeof mode === 'string' && mode.length > 0 ? mode : null;
+}
+
 export function publicSyncJobRecord(record: SyncJobRecord | null) {
   if (!record) return null;
   return {
@@ -172,6 +193,7 @@ export function publicSyncJobRecord(record: SyncJobRecord | null) {
     expires_at: record.expires_at,
     finished_at: record.finished_at,
     error: record.error,
+    summary: parseJson(record.summary_json),
   };
 }
 
@@ -187,6 +209,10 @@ export async function getActiveSyncJob(db: D1Database, now = nowIso()): Promise<
     )
     .bind(SYNC_JOB_LOCK_KEY, now)
     .first<SyncJobRecord>();
+}
+
+export async function getLatestSyncJob(db: D1Database): Promise<SyncJobRecord | null> {
+  return db.prepare('SELECT * FROM sync_jobs WHERE lock_key = ? LIMIT 1').bind(SYNC_JOB_LOCK_KEY).first<SyncJobRecord>();
 }
 
 export async function acquireSyncJobLock(
@@ -785,6 +811,45 @@ export async function recordSyncSummary(db: D1Database, summary: unknown, key: s
     )
     .bind(key, JSON.stringify(summary), nowIso())
     .run();
+
+  const mode = getSummaryMode(summary);
+  if (mode) await clearSyncErrorForMode(db, mode);
+}
+
+async function clearSyncErrorForMode(db: D1Database, mode: string): Promise<void> {
+  const row = await db
+    .prepare('SELECT value_json FROM sync_state WHERE key = ?')
+    .bind('last_sync_error')
+    .first<{ value_json: string }>();
+  const errorMode = getSummaryMode(parseJson(row?.value_json ?? null));
+  if (errorMode && errorMode !== mode) return;
+
+  await db.prepare('DELETE FROM sync_state WHERE key = ?').bind('last_sync_error').run();
+}
+
+export async function getSyncStateRecords(db: D1Database, keys: string[]): Promise<SyncStateRecord[]> {
+  const uniqueKeys = Array.from(new Set(keys.filter(Boolean)));
+  if (uniqueKeys.length === 0) return [];
+
+  const result = await db
+    .prepare(
+      `SELECT key, value_json, updated_at
+       FROM sync_state
+       WHERE key IN (${placeholderList(uniqueKeys.length)})
+       ORDER BY key`,
+    )
+    .bind(...uniqueKeys)
+    .all<SyncStateRecord>();
+
+  return result.results ?? [];
+}
+
+export function publicSyncStateRecord(record: SyncStateRecord) {
+  return {
+    key: record.key,
+    updated_at: record.updated_at,
+    value: parseJson(record.value_json),
+  };
 }
 
 export async function resolveAlias(db: D1Database, slugType: AliasType, input: string | null): Promise<string | null> {

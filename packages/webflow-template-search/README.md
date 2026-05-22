@@ -9,6 +9,7 @@ Cloudflare Worker and D1 search index for the Webflow template marketplace.
 - `GET /api/templates/client.js`
 - `POST /api/templates/admin/rebuild`
 - `POST /api/templates/admin/sync`
+- `GET /api/templates/admin/sync-status`
 - `POST /api/templates/admin/refresh-images`
 - `POST /api/templates/admin/backfill-images`
 - `POST /api/templates/webhooks/webflow`
@@ -67,6 +68,11 @@ row records the current mode, status, start/finish timestamps, summary JSON, or 
 Manual endpoints return `409` with `active_job` when another job is still running. Scheduled
 cron invocations record lock skips in `sync_state.last_sync_skipped` instead of treating an
 overlap as a sync failure.
+
+Use `GET /api/templates/admin/sync-status` with the sync admin token to inspect the active
+lock, latest sync job, health counts, and recent sync summaries/errors/skips in one response.
+Successful sync summaries clear a stale `sync_state.last_sync_error` for the same mode; failed
+jobs remain visible on the latest job row until another job replaces the lock record.
 
 ## D1 migration history
 
