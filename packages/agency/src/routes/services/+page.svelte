@@ -260,7 +260,10 @@
 
     <BlurFade delay={0.2}>
       <aside class="product-surface product-surface--soft hero-brief" aria-label="Calm transparent workflow service brief">
-        <span class="product-kicker">Calm, transparent delivery</span>
+        <span class="product-kicker hero-brief__kicker">
+          <span class="hero-brief__kicker-desktop">Calm, transparent delivery</span>
+          <span class="hero-brief__kicker-mobile">Calm Delivery</span>
+        </span>
         <h2>CREATE SOMETHING turns the toolchain into one workflow outcome.</h2>
         <div class="hero-brief__grid" role="list">
           {#each heroSignals as signal}
@@ -591,6 +594,10 @@
     padding: clamp(1rem, 2.4vw, 1.35rem);
   }
 
+  .hero-brief__kicker-mobile {
+    display: none;
+  }
+
   .hero-brief h2 {
     margin: 0;
     max-width: 18rem;
@@ -815,6 +822,21 @@
   }
 
   @media (max-width: 768px) {
+    .hero-brief__kicker {
+      max-width: 100%;
+      letter-spacing: 0.08em;
+      line-height: 1.15;
+      white-space: nowrap;
+    }
+
+    .hero-brief__kicker-desktop {
+      display: none;
+    }
+
+    .hero-brief__kicker-mobile {
+      display: inline;
+    }
+
     .offer-grid,
     .faq-grid,
     .trust-grid,
