@@ -225,7 +225,12 @@
 				...bookingExperimentMetadata,
 				serviceLane: selectedLane,
 				bookingSource,
-				bookingIntent
+				bookingIntent,
+				source: bookingSource,
+				intent: bookingIntent,
+				lane: selectedLane,
+				surface: 'booking_form',
+				landingUrl: browser ? window.location.href : bookingPath
 			});
 
 			// Track booking initiated
@@ -254,7 +259,14 @@
 					company: data.company || undefined,
 					notes: mergeLaneIntoNotes(data.notes),
 					experiment_id: AGENCY_MARKETING_COPY_EXPERIMENT.id,
-					tag_id: AGENCY_MARKETING_COPY_EXPERIMENT.variant
+					tag_id: AGENCY_MARKETING_COPY_EXPERIMENT.variant,
+					session_id: getAnalytics()?.getSessionId(),
+					source_property: getAnalytics()?.getSourceProperty() ?? undefined,
+					source: bookingSource,
+					intent: bookingIntent,
+					lane: selectedLane,
+					landing_url: browser ? window.location.href : undefined,
+					referrer: browser ? document.referrer : undefined
 				})
 			});
 
@@ -269,7 +281,12 @@
 				...bookingExperimentMetadata,
 				serviceLane: selectedLane,
 				bookingSource,
-				bookingIntent
+				bookingIntent,
+				source: bookingSource,
+				intent: bookingIntent,
+				lane: selectedLane,
+				surface: 'booking_form',
+				landingUrl: browser ? window.location.href : bookingPath
 			});
 			step = 'confirm';
 		} catch (err) {

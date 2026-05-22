@@ -26,6 +26,7 @@ import { shouldTrackAnalytics, initializeConsent, getConsentState } from '../gdp
 
 const SESSION_KEY = 'cs_analytics_session';
 const SESSION_TIMEOUT = 30 * 60 * 1000; // 30 minutes
+const MAX_SESSION_DURATION_SECONDS = 4 * 60 * 60;
 
 interface SessionData {
 	id: string;
@@ -150,6 +151,22 @@ function getSessionStartedAt(): number {
 	return Date.now();
 }
 
+function getStoredSessionSourceProperty(currentProperty: Property): Property | null {
+	if (typeof window === 'undefined') return null;
+
+	try {
+		const stored = sessionStorage.getItem(SESSION_KEY);
+		if (!stored) return null;
+
+		const session: SessionData = JSON.parse(stored);
+		return session.sourceProperty && session.sourceProperty !== currentProperty
+			? session.sourceProperty
+			: null;
+	} catch {
+		return null;
+	}
+}
+
 // =============================================================================
 // PRIVACY
 // =============================================================================
@@ -205,16 +222,19 @@ export class AnalyticsClient {
 		this.sessionStartedAt = getSessionStartedAt();
 
 		// Detect cross-property navigation
-		this.sourceProperty = getSourcePropertyFromReferrer(config.property);
-		if (this.sourceProperty) {
+		const referrerSourceProperty = getSourcePropertyFromReferrer(config.property);
+		this.sourceProperty =
+			referrerSourceProperty ?? getStoredSessionSourceProperty(config.property);
+
+		if (referrerSourceProperty) {
 			// Store source property in session for persistence
-			this.updateSessionSourceProperty(this.sourceProperty);
+			this.updateSessionSourceProperty(referrerSourceProperty);
 
 			// Fire property_transition event
-			this.propertyTransition(this.sourceProperty, config.property);
+			this.propertyTransition(referrerSourceProperty, config.property);
 
 			if (this.config.debug) {
-				console.log('[Analytics] Cross-property navigation detected:', this.sourceProperty, '→', config.property);
+				console.log('[Analytics] Cross-property navigation detected:', referrerSourceProperty, '→', config.property);
 			}
 		}
 
@@ -593,7 +613,10 @@ export class AnalyticsClient {
 			!this.sessionEndSent
 		) {
 			this.sessionEndSent = true;
-			const elapsedSeconds = Math.floor((Date.now() - this.sessionStartedAt) / 1000);
+			const elapsedSeconds = Math.min(
+				Math.floor((Date.now() - this.sessionStartedAt) / 1000),
+				MAX_SESSION_DURATION_SECONDS
+			);
 			this.track('navigation', 'session_end', { value: elapsedSeconds });
 		}
 

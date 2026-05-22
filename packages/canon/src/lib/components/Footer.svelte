@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { getAnalytics } from '../analytics/client.js';
 
   interface QuickLink {
     label: string;
@@ -128,6 +129,7 @@
     message = null;
 
     try {
+      const analytics = getAnalytics();
       const response = await fetch('/api/newsletter', {
         method: 'POST',
         headers: {
@@ -135,7 +137,12 @@
         },
         body: JSON.stringify({
           email,
-          turnstileToken: turnstileToken || undefined
+          turnstileToken: turnstileToken || undefined,
+          source: mode,
+          sessionId: analytics?.getSessionId(),
+          sourceProperty: analytics?.getSourceProperty() ?? undefined,
+          landingUrl: typeof window !== 'undefined' ? window.location.href : undefined,
+          referrer: typeof document !== 'undefined' ? document.referrer : undefined
         })
       });
 
@@ -143,6 +150,10 @@
 
       if (data.success) {
         message = { type: 'success', text: data.message };
+        analytics?.conversion('newsletter_requested', {
+          source: mode,
+          surface: 'footer_newsletter'
+        });
         email = '';
         // Reset Turnstile for next submission
         if ((window as any).turnstile && turnstileWidgetId) {

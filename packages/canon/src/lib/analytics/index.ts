@@ -85,6 +85,7 @@ export {
 // Server utilities (import in +server.ts routes)
 export {
 	createAnalyticsEventsHandler,
+	createAnalyticsHealthHandler,
 	createUserAnalyticsHandler,
 	processEventBatch,
 	updateSessionSummary,
@@ -95,6 +96,13 @@ export {
 
 // Shared tracking handler (for /api/analytics/track endpoints)
 export { trackAnalyticsEvent, type TrackAnalyticsResult } from './track.js';
+
+export {
+	recordServerConversion,
+	upsertWarmLead,
+	type ServerConversionInput,
+	type WarmLeadInput
+} from './conversions.js';
 
 // Components
 export { default as PopularContent } from './PopularContent.svelte';
