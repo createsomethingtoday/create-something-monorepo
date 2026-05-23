@@ -469,6 +469,8 @@ export async function updateTemplateImagesFromWebflow(
   const statements: D1PreparedStatement[] = [];
 
   for (const record of records) {
+    const carouselImageUrlsJson = JSON.stringify(record.carouselImageUrls);
+
     if (record.id && record.templateSlug) {
       // Match upsertTemplateDocuments behavior: if another D1 row still owns
       // this canonical Webflow slug, evict it before the stable CMS record wins.
@@ -500,16 +502,30 @@ export async function updateTemplateImagesFromWebflow(
                  thumbnail_image_secondary_url = ?,
                  carousel_image_urls_json = ?,
                  synced_at = ?
-             WHERE id = ?`,
+             WHERE id = ?
+               AND (
+                 (? IS NOT NULL AND NOT (template_slug IS ?))
+                 OR (? IS NOT NULL AND NOT (listing_url IS ?))
+                 OR NOT (thumbnail_image_url IS ?)
+                 OR NOT (thumbnail_image_secondary_url IS ?)
+                 OR NOT (carousel_image_urls_json IS ?)
+               )`,
           )
           .bind(
             record.templateSlug,
             record.listingUrl,
             record.thumbnailImageUrl,
             record.thumbnailImageSecondaryUrl,
-            JSON.stringify(record.carouselImageUrls),
+            carouselImageUrlsJson,
             syncedAt,
             record.id,
+            record.templateSlug,
+            record.templateSlug,
+            record.listingUrl,
+            record.listingUrl,
+            record.thumbnailImageUrl,
+            record.thumbnailImageSecondaryUrl,
+            carouselImageUrlsJson,
           ),
       );
       continue;
@@ -536,6 +552,13 @@ export async function updateTemplateImagesFromWebflow(
                    WHERE template_slug = ?
                      AND name != ?
                  )
+               )
+               AND (
+                 (? IS NOT NULL AND NOT (template_slug IS ?))
+                 OR (? IS NOT NULL AND NOT (listing_url IS ?))
+                 OR NOT (thumbnail_image_url IS ?)
+                 OR NOT (thumbnail_image_secondary_url IS ?)
+                 OR NOT (carousel_image_urls_json IS ?)
                )`,
           )
           .bind(
@@ -543,13 +566,20 @@ export async function updateTemplateImagesFromWebflow(
             record.listingUrl,
             record.thumbnailImageUrl,
             record.thumbnailImageSecondaryUrl,
-            JSON.stringify(record.carouselImageUrls),
+            carouselImageUrlsJson,
             syncedAt,
             record.name,
             record.name,
             record.templateSlug,
             record.templateSlug,
             record.name,
+            record.templateSlug,
+            record.templateSlug,
+            record.listingUrl,
+            record.listingUrl,
+            record.thumbnailImageUrl,
+            record.thumbnailImageSecondaryUrl,
+            carouselImageUrlsJson,
           ),
       );
     }
@@ -594,9 +624,27 @@ export async function updateCreatorAvatarsFromWebflow(
                  END,
                  creator_profile_url = COALESCE(?, creator_profile_url),
                  synced_at = ?
-             WHERE creator_record_id = ?`,
+             WHERE creator_record_id = ?
+               AND (
+                 (? IS NOT NULL AND NOT (creator_avatar_url IS ?))
+                 OR (? IS NOT NULL AND NOT (creator_avatar_alt IS ?))
+                 OR (? IS NOT NULL AND NOT (creator_profile_url IS ?))
+               )`,
           )
-          .bind(avatarUrl, avatarUrl, avatarAlt, record.profileUrl, syncedAt, record.syncRecordId),
+          .bind(
+            avatarUrl,
+            avatarUrl,
+            avatarAlt,
+            record.profileUrl,
+            syncedAt,
+            record.syncRecordId,
+            avatarUrl,
+            avatarUrl,
+            avatarUrl,
+            avatarAlt,
+            record.profileUrl,
+            record.profileUrl,
+          ),
       );
     }
 
@@ -618,6 +666,12 @@ export async function updateCreatorAvatarsFromWebflow(
                OR creator_record_id = ''
                OR creator_record_id = ?
                OR ? IS NULL
+             )
+             AND (
+               (? IS NOT NULL AND NOT (creator_avatar_url IS ?))
+               OR (? IS NOT NULL AND NOT (creator_avatar_alt IS ?))
+               OR (? IS NOT NULL AND NOT (creator_profile_url IS ?))
+               OR (? IS NOT NULL AND (creator_record_id IS NULL OR creator_record_id = ''))
              )`,
         )
         .bind(
@@ -629,6 +683,13 @@ export async function updateCreatorAvatarsFromWebflow(
           syncedAt,
           record.name,
           record.syncRecordId,
+          record.syncRecordId,
+          avatarUrl,
+          avatarUrl,
+          avatarUrl,
+          avatarAlt,
+          record.profileUrl,
+          record.profileUrl,
           record.syncRecordId,
         ),
     );
