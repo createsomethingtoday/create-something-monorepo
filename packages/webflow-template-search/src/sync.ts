@@ -457,6 +457,35 @@ export async function refreshImages(env: Env): Promise<ImageRefreshSummary> {
   return runWithSyncJobLock(env, 'image_refresh', () => runImageUrlRefresh(env));
 }
 
+export async function refreshCreatorProfiles(env: Env): Promise<ImageRefreshSummary> {
+  return runWithSyncJobLock(env, 'creator_refresh', async () => {
+    const startedAt = nowIso();
+    if (!hasWebflowCmsToken(env)) {
+      throw new Error('A Webflow CMS read token is not configured.');
+    }
+
+    const [designerAvatars, lookups] = await Promise.all([fetchWebflowDesignerAvatars(env), loadLookupMaps(env)]);
+    const airtableFallbackCreators = airtableCreatorFallbackMap(lookups.creators, designerAvatars);
+    const refreshedAvatars = await updateCreatorAvatarsFromWebflow(env.DB, designerAvatars, startedAt);
+    const backfilledAvatars = await backfillCreatorAvatars(env.DB, airtableFallbackCreators, startedAt, {
+      overwriteExisting: true,
+    });
+    const nameBackfilledAvatars = await backfillCreatorFieldsByName(env.DB, startedAt);
+
+    const summary: ImageRefreshSummary = {
+      mode: 'creator_refresh',
+      started_at: startedAt,
+      finished_at: nowIso(),
+      fetched_records: designerAvatars.length,
+      refreshed_records: refreshedAvatars,
+      backfilled_records: backfilledAvatars + nameBackfilledAvatars,
+    };
+
+    await recordSyncSummary(env.DB, summary, 'last_creator_refresh');
+    return summary;
+  });
+}
+
 export async function backfillTemplateImages(
   env: Env,
   options: { limit?: number } = {},

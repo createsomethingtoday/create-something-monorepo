@@ -12,7 +12,7 @@ import {
 import { corsPreflight, jsonResponse, textResponse } from './http.js';
 import { parseSearchParams } from './query.js';
 import { searchTemplates } from './search.js';
-import { SyncAlreadyRunningError, backfillTemplateImages, refreshImages, syncTemplates } from './sync.js';
+import { SyncAlreadyRunningError, backfillTemplateImages, refreshCreatorProfiles, refreshImages, syncTemplates } from './sync.js';
 import type { Env } from './types.js';
 import { DESIGNERS_COLLECTION_ID, TEMPLATES_COLLECTION_ID, mapWebhookDesignerItem, mapWebhookTemplateItem, verifyWebflowSignature } from './webflow.js';
 import type { WebflowWebhookPayload } from './webflow.js';
@@ -21,6 +21,7 @@ const SYNC_STATUS_STATE_KEYS = [
   'last_full_sync',
   'last_incremental_sync',
   'last_image_refresh',
+  'last_creator_refresh',
   'last_image_backfill',
   'last_sync_error',
   'last_sync_skipped',
@@ -200,6 +201,12 @@ export default {
         const authError = validateAdminToken(request, env);
         if (authError) return authError;
         return jsonResponse(request, env, await refreshImages(env));
+      }
+
+      if (url.pathname === '/api/templates/admin/refresh-creators' && request.method === 'POST') {
+        const authError = validateAdminToken(request, env);
+        if (authError) return authError;
+        return jsonResponse(request, env, await refreshCreatorProfiles(env));
       }
 
       if (url.pathname === '/api/templates/webhooks/webflow' && request.method === 'POST') {

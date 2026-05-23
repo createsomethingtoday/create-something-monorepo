@@ -217,7 +217,7 @@ export interface SearchResponsePayload {
 }
 
 export interface ImageRefreshSummary {
-  mode: 'image_refresh';
+  mode: 'image_refresh' | 'creator_refresh';
   started_at: string;
   finished_at: string;
   fetched_records: number;
