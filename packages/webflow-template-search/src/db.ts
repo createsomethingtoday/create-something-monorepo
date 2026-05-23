@@ -603,10 +603,12 @@ export async function updateCreatorAvatarsFromWebflow(
   db: D1Database,
   records: WebflowDesignerAvatarRecord[],
   syncedAt: string,
+  options: { matchByName?: boolean } = {},
 ): Promise<number> {
   if (records.length === 0) return 0;
 
   const statements: D1PreparedStatement[] = [];
+  const matchByName = options.matchByName !== false;
 
   for (const record of records) {
     const avatarUrl = record.avatarUrl;
@@ -647,6 +649,8 @@ export async function updateCreatorAvatarsFromWebflow(
           ),
       );
     }
+
+    if (!matchByName) continue;
 
     statements.push(
       db
