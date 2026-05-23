@@ -357,12 +357,10 @@ async function runIncrementalSync(env: Env): Promise<SyncSummary> {
     toUpsert.map((document) => document.id),
   );
 
-  // Creator avatar/profile updates in Airtable don't bump template LMT. In the
-  // frequent incremental path, Airtable only fills blank/temporary creator fields
-  // so it cannot overwrite Webflow CMS-owned designer slugs or stable avatars.
-  const airtableBackfilledRecords = await backfillCreatorAvatars(env.DB, lookups.creators, startedAt);
-  const nameBackfilledRecords = await backfillCreatorFieldsByName(env.DB, startedAt);
-  const backfilledRecords = airtableBackfilledRecords + nameBackfilledRecords;
+  // Keep the frequent 5-minute incremental path limited to changed template rows.
+  // Creator metadata is repaired by Webflow designer webhooks and image refresh,
+  // while normalized changed templates already receive lookup creator fields.
+  const backfilledRecords = 0;
 
   // When catching up, advance cursor to end of the processed window so the next
   // invocation picks up the next 24-hour slice. When caught up, record startedAt.
