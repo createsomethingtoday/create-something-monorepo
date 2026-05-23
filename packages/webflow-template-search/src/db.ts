@@ -566,7 +566,7 @@ export async function updateTemplateImagesFromWebflow(
   return totalChanges;
 }
 
-// Bulk-update creator avatar URLs sourced from stable Webflow CDN URLs.
+// Bulk-update creator profile URLs and avatar URLs sourced from Webflow CMS.
 // Prefer sync-record-id when available, then exact creator name for rows that
 // never received the linked creator record.
 export async function updateCreatorAvatarsFromWebflow(
@@ -579,18 +579,24 @@ export async function updateCreatorAvatarsFromWebflow(
   const statements: D1PreparedStatement[] = [];
 
   for (const record of records) {
+    const avatarUrl = record.avatarUrl;
+    const avatarAlt = avatarUrl ? record.avatarAlt ?? record.name : null;
+
     if (record.syncRecordId) {
       statements.push(
         db
           .prepare(
             `UPDATE template_documents
-             SET creator_avatar_url = ?,
-                 creator_avatar_alt = ?,
-                 creator_profile_url = COALESCE(NULLIF(creator_profile_url, ''), ?),
+             SET creator_avatar_url = COALESCE(?, creator_avatar_url),
+                 creator_avatar_alt = CASE
+                   WHEN ? IS NOT NULL THEN ?
+                   ELSE creator_avatar_alt
+                 END,
+                 creator_profile_url = COALESCE(?, creator_profile_url),
                  synced_at = ?
              WHERE creator_record_id = ?`,
           )
-          .bind(record.avatarUrl, record.avatarAlt ?? record.name, record.profileUrl, syncedAt, record.syncRecordId),
+          .bind(avatarUrl, avatarUrl, avatarAlt, record.profileUrl, syncedAt, record.syncRecordId),
       );
     }
 
@@ -598,9 +604,12 @@ export async function updateCreatorAvatarsFromWebflow(
       db
         .prepare(
           `UPDATE template_documents
-           SET creator_avatar_url = ?,
-               creator_avatar_alt = ?,
-               creator_profile_url = COALESCE(NULLIF(creator_profile_url, ''), ?),
+           SET creator_avatar_url = COALESCE(?, creator_avatar_url),
+               creator_avatar_alt = CASE
+                 WHEN ? IS NOT NULL THEN ?
+                 ELSE creator_avatar_alt
+               END,
+               creator_profile_url = COALESCE(?, creator_profile_url),
                creator_record_id = COALESCE(NULLIF(creator_record_id, ''), ?),
                synced_at = ?
            WHERE creator_name = ?
@@ -612,8 +621,9 @@ export async function updateCreatorAvatarsFromWebflow(
              )`,
         )
         .bind(
-          record.avatarUrl,
-          record.avatarAlt ?? record.name,
+          avatarUrl,
+          avatarUrl,
+          avatarAlt,
           record.profileUrl,
           record.syncRecordId,
           syncedAt,
@@ -710,10 +720,12 @@ export async function backfillCreatorAvatars(
   db: D1Database,
   creators: Map<string, CreatorLookupValue>,
   syncedAt: string,
+  options: { overwriteExisting?: boolean } = {},
 ): Promise<number> {
   if (creators.size === 0) return 0;
 
   const statements: D1PreparedStatement[] = [];
+  const overwriteExisting = options.overwriteExisting === true;
 
   for (const [creatorId, creator] of creators) {
     const avatarUrl = creator.avatarUrl;
@@ -723,21 +735,71 @@ export async function backfillCreatorAvatars(
     // Skip creators with no useful data to backfill.
     if (!avatarUrl && !profileUrl) continue;
 
+    if (overwriteExisting) {
+      statements.push(
+        db
+          .prepare(
+            `UPDATE template_documents
+             SET creator_avatar_url = ?,
+                 creator_avatar_alt = ?,
+                 creator_profile_url = ?,
+                 synced_at = ?
+             WHERE creator_record_id = ?
+               AND (
+                 NOT (creator_avatar_url IS ?)
+                 OR NOT (creator_profile_url IS ?)
+               )`,
+          )
+          .bind(avatarUrl, avatarAlt, profileUrl, syncedAt, creatorId, avatarUrl, profileUrl),
+      );
+      continue;
+    }
+
     statements.push(
       db
         .prepare(
           `UPDATE template_documents
-           SET creator_avatar_url = ?,
-               creator_avatar_alt = ?,
-               creator_profile_url = ?,
+           SET creator_avatar_url = CASE
+                 WHEN ? IS NOT NULL
+                   AND (
+                     creator_avatar_url IS NULL
+                     OR creator_avatar_url = ''
+                     OR creator_avatar_url LIKE '%airtableusercontent.com%'
+                     OR creator_avatar_url LIKE '%dl.airtable.com%'
+                   )
+                   THEN ?
+                 ELSE creator_avatar_url
+               END,
+               creator_avatar_alt = CASE
+                 WHEN ? IS NOT NULL
+                   AND (
+                     creator_avatar_url IS NULL
+                     OR creator_avatar_url = ''
+                     OR creator_avatar_url LIKE '%airtableusercontent.com%'
+                     OR creator_avatar_url LIKE '%dl.airtable.com%'
+                   )
+                   THEN ?
+                 WHEN creator_avatar_alt IS NULL OR creator_avatar_alt = '' THEN ?
+                 ELSE creator_avatar_alt
+               END,
+               creator_profile_url = CASE
+                 WHEN ? IS NOT NULL AND (creator_profile_url IS NULL OR creator_profile_url = '') THEN ?
+                 ELSE creator_profile_url
+               END,
                synced_at = ?
            WHERE creator_record_id = ?
              AND (
-               NOT (creator_avatar_url IS ?)
-               OR NOT (creator_profile_url IS ?)
+               creator_avatar_url IS NULL
+               OR creator_avatar_url = ''
+               OR creator_avatar_url LIKE '%airtableusercontent.com%'
+               OR creator_avatar_url LIKE '%dl.airtable.com%'
+               OR creator_avatar_alt IS NULL
+               OR creator_avatar_alt = ''
+               OR creator_profile_url IS NULL
+               OR creator_profile_url = ''
              )`,
         )
-        .bind(avatarUrl, avatarAlt, profileUrl, syncedAt, creatorId, avatarUrl, profileUrl),
+        .bind(avatarUrl, avatarUrl, avatarUrl, avatarAlt, avatarAlt, profileUrl, profileUrl, syncedAt, creatorId),
     );
   }
 

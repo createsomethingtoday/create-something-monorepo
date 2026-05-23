@@ -21,7 +21,7 @@ import {
   updateTemplateImagesFromWebflow,
   upsertTemplateDocuments,
 } from './db.js';
-import { fetchWebflowDesignerAvatars, fetchWebflowTemplateImages } from './webflow.js';
+import { fetchWebflowDesignerAvatars, fetchWebflowTemplateImages, type WebflowDesignerAvatarRecord } from './webflow.js';
 import { stripHtml } from './html.js';
 import { canonicalizeCategoryGroupSlug } from './slug.js';
 import type {
@@ -33,6 +33,7 @@ import type {
   SyncSummary,
   TemplateDocumentInput,
   TemplateImageBackfillSummary,
+  CreatorLookupValue,
 } from './types.js';
 import { chunk, clamp, ensureBoolean, ensureNumber, ensureStringArray, nowIso, uniqueStrings } from './utils.js';
 import {
@@ -146,6 +147,38 @@ async function refreshIndexedWebflowImages(
   return resolveAndUpdateTemplateImages(db, rows, webflowImageIndex, syncedAt);
 }
 
+function hasWebflowCmsToken(env: Env): boolean {
+  return Boolean(env.CMS_READ_ONLY?.trim() || env.WEBFLOW_API_TOKEN?.trim());
+}
+
+function normalizeCreatorName(name: string): string {
+  return name.trim().toLowerCase();
+}
+
+function airtableCreatorFallbackMap(
+  creators: Map<string, CreatorLookupValue>,
+  webflowDesigners: WebflowDesignerAvatarRecord[],
+): Map<string, CreatorLookupValue> {
+  if (creators.size === 0 || webflowDesigners.length === 0) return creators;
+
+  const webflowIds = new Set<string>();
+  const webflowNames = new Set<string>();
+
+  for (const designer of webflowDesigners) {
+    if (designer.syncRecordId) webflowIds.add(designer.syncRecordId);
+    webflowNames.add(normalizeCreatorName(designer.name));
+  }
+
+  const fallbackCreators = new Map<string, CreatorLookupValue>();
+  for (const [creatorId, creator] of creators) {
+    if (webflowIds.has(creatorId)) continue;
+    if (webflowNames.has(normalizeCreatorName(creator.name))) continue;
+    fallbackCreators.set(creatorId, creator);
+  }
+
+  return fallbackCreators;
+}
+
 function normalizeTemplateRecord(
   record: AirtableRecord<AirtableAssetFields>,
   lookups: LookupMaps,
@@ -244,10 +277,11 @@ function normalizeTemplateRecord(
 
 async function runFullSync(env: Env): Promise<SyncSummary> {
   const startedAt = nowIso();
-  const [lookups, assets, webflowImageIndex] = await Promise.all([
+  const [lookups, assets, webflowImageIndex, webflowDesigners] = await Promise.all([
     loadLookupMaps(env),
     fetchPublishedTemplateAssets(env),
     loadWebflowTemplateImageIndex(env),
+    hasWebflowCmsToken(env) ? fetchWebflowDesignerAvatars(env) : Promise.resolve([]),
   ]);
   const documents = assets
     .map((record) => normalizeTemplateRecord(record, lookups, startedAt, webflowImageIndex))
@@ -255,6 +289,7 @@ async function runFullSync(env: Env): Promise<SyncSummary> {
 
   await clearIndex(env.DB);
   await upsertTemplateDocuments(env.DB, documents);
+  const webflowCreatorRecords = await updateCreatorAvatarsFromWebflow(env.DB, webflowDesigners, startedAt);
   const [backfilledRecords, imageRefreshedRecords] = await Promise.all([
     backfillCreatorFieldsByName(env.DB, startedAt),
     refreshIndexedWebflowImages(env.DB, webflowImageIndex, startedAt),
@@ -267,7 +302,7 @@ async function runFullSync(env: Env): Promise<SyncSummary> {
     fetched_records: assets.length,
     indexed_records: documents.length,
     removed_records: 0,
-    backfilled_records: backfilledRecords,
+    backfilled_records: backfilledRecords + webflowCreatorRecords,
     image_refreshed_records: imageRefreshedRecords,
     cursor: startedAt,
   };
@@ -322,10 +357,9 @@ async function runIncrementalSync(env: Env): Promise<SyncSummary> {
     toUpsert.map((document) => document.id),
   );
 
-  // Creator avatar/profile updates in Airtable don't bump template LMT, so templates
-  // linked to creators who recently added avatars are missed by the window query above.
-  // Apply a targeted UPDATE pass using the freshly-loaded creator map to patch any
-  // template_document whose stored creator fields have drifted from current values.
+  // Creator avatar/profile updates in Airtable don't bump template LMT. In the
+  // frequent incremental path, Airtable only fills blank/temporary creator fields
+  // so it cannot overwrite Webflow CMS-owned designer slugs or stable avatars.
   const airtableBackfilledRecords = await backfillCreatorAvatars(env.DB, lookups.creators, startedAt);
   const nameBackfilledRecords = await backfillCreatorFieldsByName(env.DB, startedAt);
   const backfilledRecords = airtableBackfilledRecords + nameBackfilledRecords;
@@ -356,24 +390,23 @@ export async function syncTemplates(env: Env, mode: 'full' | 'incremental'): Pro
 
 // Image URL refresh: prefers stable Webflow CMS/CDN URLs (never expire) when a
 // Webflow API token is configured. Falls back to Airtable signed URLs otherwise.
-// Always runs backfillCreatorAvatars from Airtable as a fallback for designers whose
-// Webflow CMS item has no sync-record-id (e.g. designers not yet linked in Webflow).
+// Airtable remains the fallback for designers missing from Webflow CMS.
 async function runImageUrlRefresh(env: Env): Promise<ImageRefreshSummary> {
   const startedAt = nowIso();
 
-  if (env.CMS_READ_ONLY || env.WEBFLOW_API_TOKEN) {
+  if (hasWebflowCmsToken(env)) {
     // Webflow path: fetch stable CDN URLs for templates and designer avatars.
     const [templateImages, designerAvatars, lookups] = await Promise.all([
       fetchWebflowTemplateImages(env),
       fetchWebflowDesignerAvatars(env),
       loadLookupMaps(env),
     ]);
+    const airtableFallbackCreators = airtableCreatorFallbackMap(lookups.creators, designerAvatars);
 
     const [refreshedImages, refreshedAvatars, backfilledAvatars] = await Promise.all([
       updateTemplateImagesFromWebflow(env.DB, templateImages, startedAt),
       updateCreatorAvatarsFromWebflow(env.DB, designerAvatars, startedAt),
-      // Catch any designers missing from Webflow CMS (no sync-record-id) via Airtable.
-      backfillCreatorAvatars(env.DB, lookups.creators, startedAt),
+      backfillCreatorAvatars(env.DB, airtableFallbackCreators, startedAt, { overwriteExisting: true }),
     ]);
     const nameBackfilledAvatars = await backfillCreatorFieldsByName(env.DB, startedAt);
 
@@ -405,7 +438,7 @@ async function runImageUrlRefresh(env: Env): Promise<ImageRefreshSummary> {
 
   const [refreshedImages, backfilledAvatars] = await Promise.all([
     refreshTemplateImageUrls(env.DB, records, startedAt),
-    backfillCreatorAvatars(env.DB, lookups.creators, startedAt),
+    backfillCreatorAvatars(env.DB, lookups.creators, startedAt, { overwriteExisting: true }),
   ]);
   const nameBackfilledAvatars = await backfillCreatorFieldsByName(env.DB, startedAt);
 
