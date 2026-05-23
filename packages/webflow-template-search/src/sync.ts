@@ -464,13 +464,10 @@ export async function refreshCreatorProfiles(env: Env): Promise<ImageRefreshSumm
       throw new Error('A Webflow CMS read token is not configured.');
     }
 
-    const [designerAvatars, lookups] = await Promise.all([fetchWebflowDesignerAvatars(env), loadLookupMaps(env)]);
-    const airtableFallbackCreators = airtableCreatorFallbackMap(lookups.creators, designerAvatars);
-    const refreshedAvatars = await updateCreatorAvatarsFromWebflow(env.DB, designerAvatars, startedAt);
-    const backfilledAvatars = await backfillCreatorAvatars(env.DB, airtableFallbackCreators, startedAt, {
-      overwriteExisting: true,
+    const designerAvatars = await fetchWebflowDesignerAvatars(env);
+    const refreshedAvatars = await updateCreatorAvatarsFromWebflow(env.DB, designerAvatars, startedAt, {
+      matchByName: false,
     });
-    const nameBackfilledAvatars = await backfillCreatorFieldsByName(env.DB, startedAt);
 
     const summary: ImageRefreshSummary = {
       mode: 'creator_refresh',
@@ -478,7 +475,7 @@ export async function refreshCreatorProfiles(env: Env): Promise<ImageRefreshSumm
       finished_at: nowIso(),
       fetched_records: designerAvatars.length,
       refreshed_records: refreshedAvatars,
-      backfilled_records: backfilledAvatars + nameBackfilledAvatars,
+      backfilled_records: 0,
     };
 
     await recordSyncSummary(env.DB, summary, 'last_creator_refresh');
