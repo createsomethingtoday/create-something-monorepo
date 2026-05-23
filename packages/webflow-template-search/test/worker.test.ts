@@ -455,6 +455,23 @@ describe('webflow-template-search worker', () => {
       );
       expect(rebuild.status).toBe(200);
 
+      await env.DB.prepare(
+        `UPDATE template_documents
+         SET creator_record_id = ?,
+             creator_profile_url = ?,
+             creator_avatar_url = ?,
+             creator_avatar_alt = ?
+         WHERE id = ?`,
+      )
+        .bind(
+          'recDesignerBrix',
+          'https://webflow.com/templates/designers/old-brix',
+          'https://v5.airtableusercontent.com/v3/u/53/temporary-brix',
+          'Old BRIX',
+          'recAgentflow',
+        )
+        .run();
+
       const response = await callWorker(
         signedWebhookRequest({
           triggerType: 'collection_item_published',
@@ -502,6 +519,91 @@ describe('webflow-template-search worker', () => {
         creator_profile_url: 'https://webflow.com/templates/designers/brix-templates',
         creator_avatar_url: 'https://cdn.prod.website-files.com/site/brix-avatar.webp',
         creator_avatar_alt: 'BRIX Templates',
+      });
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
+  it('repairs creator profile URLs from slug-only Webflow designer webhooks', async () => {
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: PUBLISHED_ASSETS,
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+    });
+    const { env, close } = createTestEnv();
+    env.WEBFLOW_WEBHOOK_SECRET = 'webhook-secret';
+
+    try {
+      const rebuild = await callWorker(
+        new Request('https://templates.test/api/templates/admin/rebuild', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(rebuild.status).toBe(200);
+
+      await env.DB.prepare(
+        `UPDATE template_documents
+         SET creator_record_id = ?,
+             creator_profile_url = ?,
+             creator_avatar_url = ?,
+             creator_avatar_alt = ?
+         WHERE id = ?`,
+      )
+        .bind(
+          'recDesignerBrix',
+          'https://webflow.com/templates/designers/old-brix',
+          'https://assets.example.com/brix-old.png',
+          'Old BRIX',
+          'recAgentflow',
+        )
+        .run();
+
+      const response = await callWorker(
+        signedWebhookRequest({
+          triggerType: 'collection_item_changed',
+          payload: {
+            id: 'designer-brix',
+            cid: DESIGNERS_COLLECTION_ID,
+            isArchived: false,
+            isDraft: false,
+            fieldData: {
+              'sync-record-id': 'recDesignerBrix',
+              name: 'BRIX Templates',
+              slug: 'brix-templates',
+            },
+          },
+        }),
+        env,
+      );
+
+      expect(response.status).toBe(200);
+      await expect(response.json()).resolves.toMatchObject({
+        status: 'updated',
+        collection: 'designers',
+        id: 'recDesignerBrix',
+      });
+
+      const row = await env.DB.prepare(
+        `SELECT creator_profile_url, creator_avatar_url, creator_avatar_alt
+         FROM template_documents
+         WHERE id = ?`,
+      )
+        .bind('recAgentflow')
+        .first<{
+          creator_profile_url: string | null;
+          creator_avatar_url: string | null;
+          creator_avatar_alt: string | null;
+        }>();
+
+      expect(row).toEqual({
+        creator_profile_url: 'https://webflow.com/templates/designers/brix-templates',
+        creator_avatar_url: 'https://assets.example.com/brix-old.png',
+        creator_avatar_alt: 'Old BRIX',
       });
     } finally {
       fetchMock.mockRestore();
@@ -724,6 +826,111 @@ describe('webflow-template-search worker', () => {
         template_slug: 'equalize-charity-website-template',
         url: 'https://webflow.com/templates/html/equalize-charity-website-template',
         thumbnail_image_url: 'https://cdn.prod.website-files.com/site/equalize.webp',
+      });
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
+  it('uses Webflow designer CMS records before Airtable creator fallback during image refresh', async () => {
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: [
+        {
+          ...PUBLISHED_ASSETS[0],
+          fields: {
+            ...PUBLISHED_ASSETS[0].fields,
+            '🎨Creator': ['recDesignerBrix'],
+            '🎨Creator Name': 'BRIX Templates',
+          },
+        },
+      ],
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+      creators: [
+        {
+          id: 'recDesignerBrix',
+          fields: {
+            Name: 'BRIX Templates',
+            '🥞CMS Slug': 'airtable-brix',
+            '🖼️Avatar (Primary)': [{ url: 'https://v5.airtableusercontent.com/v3/u/53/temporary-brix' }],
+            '🖼️Avatar Alt Text': 'Airtable BRIX',
+          },
+        },
+      ],
+      webflowCollectionItems: {
+        [DESIGNERS_COLLECTION_ID]: [
+          {
+            id: 'designer-brix',
+            isArchived: false,
+            isDraft: false,
+            fieldData: {
+              'sync-record-id': 'recDesignerBrix',
+              name: 'BRIX Templates',
+              slug: 'brix-templates',
+              avatar: {
+                url: 'https://cdn.prod.website-files.com/site/brix-avatar.webp',
+                alt: 'BRIX Templates',
+              },
+            },
+          },
+        ],
+      },
+    });
+    const { env, close } = createTestEnv();
+    env.WEBFLOW_API_TOKEN = 'test-webflow-cms-token';
+
+    try {
+      const rebuild = await callWorker(
+        new Request('https://templates.test/api/templates/admin/rebuild', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(rebuild.status).toBe(200);
+
+      await env.DB.prepare(
+        `UPDATE template_documents
+         SET creator_profile_url = ?,
+             creator_avatar_url = ?,
+             creator_avatar_alt = ?
+         WHERE id = ?`,
+      )
+        .bind(
+          'https://webflow.com/templates/designers/airtable-brix',
+          'https://v5.airtableusercontent.com/v3/u/53/temporary-brix',
+          'Airtable BRIX',
+          'recAgentflow',
+        )
+        .run();
+
+      const refresh = await callWorker(
+        new Request('https://templates.test/api/templates/admin/refresh-images', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(refresh.status).toBe(200);
+
+      const row = await env.DB.prepare(
+        `SELECT creator_profile_url, creator_avatar_url, creator_avatar_alt
+         FROM template_documents
+         WHERE id = ?`,
+      )
+        .bind('recAgentflow')
+        .first<{
+          creator_profile_url: string | null;
+          creator_avatar_url: string | null;
+          creator_avatar_alt: string | null;
+        }>();
+
+      expect(row).toEqual({
+        creator_profile_url: 'https://webflow.com/templates/designers/brix-templates',
+        creator_avatar_url: 'https://cdn.prod.website-files.com/site/brix-avatar.webp',
+        creator_avatar_alt: 'BRIX Templates',
       });
     } finally {
       fetchMock.mockRestore();

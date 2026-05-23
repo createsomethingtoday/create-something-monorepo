@@ -10,6 +10,7 @@ interface MockDataset {
   styles?: Array<{ id: string; fields: Record<string, unknown> }>;
   childCategories?: Array<{ id: string; fields: Record<string, unknown> }>;
   tags?: Array<{ id: string; fields: Record<string, unknown> }>;
+  creators?: Array<{ id: string; fields: Record<string, unknown> }>;
 }
 
 export function installAirtableFetchMock(dataset: MockDataset) {
@@ -77,6 +78,10 @@ export function installAirtableFetchMock(dataset: MockDataset) {
 
     if (tableId === 'tblb4969G7O75gVWV') {
       return Response.json({ records: dataset.tags ?? [] });
+    }
+
+    if (tableId === 'tbljt0plqxdMARZXb') {
+      return Response.json({ records: dataset.creators ?? [] });
     }
 
     return Response.json({ records: [] });

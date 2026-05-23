@@ -35,7 +35,7 @@ export interface WebflowDesignerAvatarRecord {
   syncRecordId: string | null;
   name: string;
   profileUrl: string | null;
-  avatarUrl: string;
+  avatarUrl: string | null;
   avatarAlt: string | null;
 }
 
@@ -89,6 +89,10 @@ function webflowTemplateListingUrl(templateSlug: string | null): string | null {
   return templateSlug ? `https://webflow.com/templates/html/${templateSlug}` : null;
 }
 
+function webflowDesignerProfileUrl(slug: string | null): string | null {
+  return slug ? `https://webflow.com/templates/designers/${slug}` : null;
+}
+
 function imageUrl(fields: Record<string, unknown>, keys: string[]): string | null {
   for (const key of keys) {
     const image = fields[key] as WebflowImage | null | undefined;
@@ -122,6 +126,27 @@ function mapTemplateFieldData(fieldData: Record<string, unknown>): WebflowTempla
   };
 }
 
+function mapDesignerFieldData(fieldData: Record<string, unknown>): WebflowDesignerAvatarRecord | null {
+  const syncRecordId = trimString(fieldData['sync-record-id']);
+  const name = trimString(fieldData.name);
+  if (!name) return null;
+
+  const slug = trimString(fieldData.slug);
+  const avatar = fieldData.avatar as WebflowImage | null | undefined;
+  const avatarUrl = avatar?.url ?? null;
+  const profileUrl = webflowDesignerProfileUrl(slug);
+
+  if (!profileUrl && !avatarUrl) return null;
+
+  return {
+    syncRecordId,
+    name,
+    profileUrl,
+    avatarUrl,
+    avatarAlt: avatarUrl ? avatar?.alt ?? name : null,
+  };
+}
+
 export async function fetchWebflowTemplateImages(env: Env): Promise<WebflowTemplateImageRecord[]> {
   const token = webflowApiToken(env);
   if (!token) throw new Error('A Webflow CMS read token is not configured.');
@@ -151,28 +176,13 @@ export function mapWebhookTemplateItem(webhook: WebflowWebhookPayload): WebflowT
   return mapTemplateFieldData(item.fieldData);
 }
 
-// Maps a single webhook payload to a designer avatar record. Returns null if the
-// item is archived/draft, lacks a sync-record-id, or has no avatar URL.
+// Maps a single webhook payload to a designer profile record. Returns null if the
+// item is archived/draft or lacks both a published slug and avatar URL.
 export function mapWebhookDesignerItem(webhook: WebflowWebhookPayload): WebflowDesignerAvatarRecord | null {
   const item = webhook.payload;
   if (item.isArchived || item.isDraft) return null;
 
-  const syncRecordId = item.fieldData['sync-record-id'];
-  const name = item.fieldData.name;
-  if (typeof name !== 'string' || !name.trim()) return null;
-
-  const avatar = item.fieldData['avatar'] as WebflowImage | null | undefined;
-  if (!avatar?.url) return null;
-
-  const slug = item.fieldData.slug;
-
-  return {
-    syncRecordId: typeof syncRecordId === 'string' && syncRecordId ? syncRecordId : null,
-    name: name.trim(),
-    profileUrl: typeof slug === 'string' && slug ? `https://webflow.com/templates/designers/${slug}` : null,
-    avatarUrl: avatar.url,
-    avatarAlt: avatar.alt ?? name.trim(),
-  };
+  return mapDesignerFieldData(item.fieldData);
 }
 
 // Verifies a Webflow webhook signature (HMAC-SHA256, hex-encoded).
@@ -194,22 +204,5 @@ export async function fetchWebflowDesignerAvatars(env: Env): Promise<WebflowDesi
   const token = webflowApiToken(env);
   if (!token) throw new Error('A Webflow CMS read token is not configured.');
 
-  return paginateWebflow(token, DESIGNERS_COLLECTION_ID, (item) => {
-    const syncRecordId = item.fieldData['sync-record-id'];
-    const name = item.fieldData.name;
-    if (typeof name !== 'string' || !name.trim()) return null;
-
-    const avatar = item.fieldData['avatar'] as WebflowImage | null | undefined;
-    if (!avatar?.url) return null;
-
-    const slug = item.fieldData.slug;
-
-    return {
-      syncRecordId: typeof syncRecordId === 'string' && syncRecordId ? syncRecordId : null,
-      name: name.trim(),
-      profileUrl: typeof slug === 'string' && slug ? `https://webflow.com/templates/designers/${slug}` : null,
-      avatarUrl: avatar.url,
-      avatarAlt: avatar.alt ?? name.trim(),
-    };
-  });
+  return paginateWebflow(token, DESIGNERS_COLLECTION_ID, (item) => mapDesignerFieldData(item.fieldData));
 }

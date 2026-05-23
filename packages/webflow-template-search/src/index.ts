@@ -122,7 +122,7 @@ async function handleWebflowWebhook(request: Request, env: Env): Promise<Respons
 
   if (payload.cid === DESIGNERS_COLLECTION_ID) {
     const record = mapWebhookDesignerItem(webhook);
-    if (!record) return jsonResponse(request, env, { status: 'ignored', reason: 'no sync-record-id, no avatar, or item not live' });
+    if (!record) return jsonResponse(request, env, { status: 'ignored', reason: 'no designer identity or item not live' });
     const updated = await updateCreatorAvatarsFromWebflow(env.DB, [record], syncedAt);
     const backfilled = await backfillCreatorFieldsByName(env.DB, syncedAt);
     return jsonResponse(request, env, { status: 'updated', collection: 'designers', id: record.syncRecordId, updated, backfilled });
