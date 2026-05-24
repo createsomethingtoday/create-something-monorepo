@@ -37,3 +37,17 @@ export async function callWorker(request: Request, env: Env): Promise<Response> 
   await Promise.all(waitUntilPromises);
   return response;
 }
+
+export async function callScheduled(cron: string, env: Env): Promise<void> {
+  const waitUntilPromises: Promise<unknown>[] = [];
+  const ctx = {
+    waitUntil(promise: Promise<unknown>) {
+      waitUntilPromises.push(promise);
+    },
+    passThroughOnException() {},
+    props: {},
+  } satisfies ExecutionContext;
+
+  await worker.scheduled({ cron, scheduledTime: Date.now() }, env, ctx);
+  await Promise.all(waitUntilPromises);
+}

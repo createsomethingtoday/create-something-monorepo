@@ -70,6 +70,8 @@ Configure:
 - `WEBFLOW_TEMPLATE_ASSET_SITE_ID`: Webflow site ID that owns stable template image assets.
 - `WEBFLOW_TEMPLATE_COLLECTION_ID`: optional Webflow collection ID for template CMS items. When
   omitted, the Worker discovers likely template collections from the site.
+- `WEBFLOW_TEMPLATE_ENABLE_CMS_INDEX`: optional flag. CMS image indexing is enabled by default
+  when a Webflow token is configured; set this to `false` only to disable CMS image indexing.
 - `WEBFLOW_TEMPLATE_ASSET_FOLDER_ID`: optional asset folder filter when template assets live in a dedicated folder.
 - `WEBFLOW_API_TOKEN`: secret with Webflow `assets:read` access. The Worker also accepts the
   existing `CMS_READ_ONLY` secret as a fallback. `cms:read` is enough for the preferred CMS item
@@ -86,9 +88,22 @@ when Airtable review status changes first and Whalesync publishes or updates the
 Webflow image shortly afterward.
 
 Use `POST /api/templates/admin/backfill-images?limit=48` for historical cleanup. The endpoint scans
-existing rows with temporary Airtable thumbnail URLs, resolves stable Webflow thumbnails from the
-published template page or configured Webflow sources, and clears the temporary URL when no stable
-replacement is available.
+existing rows with missing or temporary Airtable thumbnail URLs, resolves stable Webflow thumbnails
+from the published template page or configured Webflow sources, and clears temporary URLs when no
+stable replacement is available.
+
+Use `slug=<template-slug>` or comma-separated `slugs=<template-slug>,<template-slug>` to target
+specific broken rows before broad batch cleanup.
+
+Use `POST /api/templates/admin/prune-missing-images` for stale rows that still have no resolvable
+Webflow image after backfill. This endpoint only removes rows whose configured Webflow listing URL
+returns `404`; rows with a live listing or Webflow image candidate are skipped.
+
+Scheduled maintenance keeps this path hands-off:
+
+- `17 * * * *`: runs a bounded `image_backfill` pass (`limit=96`) for missing or temporary thumbnails.
+- `47 3 * * *`: runs a conservative `image_prune` pass (`limit=24`) for unresolved missing-image rows
+  whose Webflow listing returns `404`.
 
 ## Sync locking
 
