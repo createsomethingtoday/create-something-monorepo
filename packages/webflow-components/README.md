@@ -111,6 +111,15 @@ The current package contains both Canon exports and compatibility exports. The l
 | **Glass Card** | Glassmorphism container | `glassVariant`, `showShine`, `padding` |
 | **Icon Card** | Feature card with icon | `title`, `icon`, `cardVariant`, `variant` |
 
+### Marketplace (Group: Marketplace)
+
+| Component | Description | Key Props |
+|-----------|-------------|-----------|
+| **Template Card** | CMS-bindable marketplace template card | `templateName`, `templateLink`, `primaryImage`, `creatorName`, `creatorIcon`, `popularityScore` |
+| **Template Grid** | Worker-backed template search grid | `apiBase`, `categorySlug`, `scopeOverride`, `initialSort`, `pageSize` |
+| **Template Filter Bar** | Worker-backed marketplace filters and pills | `apiBase`, `categorySlug`, `scopeOverride`, `defaultSort` |
+| **Featured Creator Card** | CMS-bindable monthly featured creator card | `creatorName`, `creatorLink`, `creatorAvatar`, `headline`, `featuredTemplateCount`, `newTemplates90d`, `buyerDemand`, `categoryBreadth`, `topTemplateName`, `topTemplateImage` |
+
 ### Forms (Group: Forms)
 
 | Component | Description | Key Props |
@@ -183,6 +192,35 @@ These remain for compatibility while the package is moved toward Canon-first com
   {"value": 50, "suffix": "+", "label": "Installations"},
   {"value": 24, "suffix": "/7", "label": "Support"}
 ]
+```
+
+### Featured Creator Card
+
+Bind each card inside a Webflow CMS Collection List. The monthly batch should be generated server-side, reviewed editorially, and stored in CMS fields instead of exposing Airtable or Webflow API tokens in browser props.
+
+Suggested CMS fields:
+
+```json
+{
+  "month": "2026-06",
+  "sortOrder": 1,
+  "creatorRecordId": "recdfcBmYwaBCAuma",
+  "creatorName": "BRIX Templates",
+  "creatorSlug": "brix-templates",
+  "creatorProfileUrl": "https://webflow.com/templates/designers/brix-templates",
+  "creatorAvatar": "Webflow asset or CMS image",
+  "rankLabel": "#1",
+  "accent": "demand",
+  "headline": "12 featured templates",
+  "curationNote": "Selected for sustained buyer demand across 26 category groups.",
+  "featuredTemplateCount": "12",
+  "newTemplates90d": "9",
+  "buyerDemand": "52.6k buys",
+  "categoryBreadth": "26",
+  "topTemplateName": "Dark X",
+  "topTemplateUrl": "https://webflow.com/templates/html/dark-x",
+  "topTemplateImage": "Webflow asset or CMS image"
+}
 ```
 
 ### Product Showcase
