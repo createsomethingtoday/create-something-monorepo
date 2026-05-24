@@ -917,11 +917,31 @@ export async function listTemplateImageRefreshRows(
   return Array.from(rowsById.values());
 }
 
-export async function listTemplateImageBackfillRows(db: D1Database, limit: number): Promise<TemplateImageRefreshRow[]> {
+export async function listTemplateImageBackfillRows(
+  db: D1Database,
+  limit: number,
+  templateSlugs: string[] = [],
+): Promise<TemplateImageRefreshRow[]> {
+  const uniqueTemplateSlugs = Array.from(new Set(templateSlugs.map((slug) => slug.trim()).filter(Boolean)));
+  if (uniqueTemplateSlugs.length > 0) {
+    const result = await db
+      .prepare(
+        `${TEMPLATE_IMAGE_REFRESH_SELECT}
+         WHERE template_slug IN (${placeholderList(uniqueTemplateSlugs.length)})
+           AND (${STALE_IMAGE_WHERE})
+         ORDER BY is_featured DESC, COALESCE(popularity_score, 0) DESC, COALESCE(source_last_modified_time, '') DESC
+         LIMIT ?`,
+      )
+      .bind(...uniqueTemplateSlugs, limit)
+      .all<TemplateImageRefreshRow>();
+
+    return result.results ?? [];
+  }
+
   const result = await db
     .prepare(
       `${TEMPLATE_IMAGE_REFRESH_SELECT}
-       WHERE ${TEMP_ATTACHMENT_IMAGE_WHERE}
+       WHERE ${STALE_IMAGE_WHERE}
        ORDER BY is_featured DESC, COALESCE(popularity_score, 0) DESC, COALESCE(source_last_modified_time, '') DESC
        LIMIT ?`,
     )

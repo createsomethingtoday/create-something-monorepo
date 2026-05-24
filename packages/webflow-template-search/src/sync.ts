@@ -33,11 +33,13 @@ import type {
   SyncSummary,
   TemplateDocumentInput,
   TemplateImageBackfillSummary,
+  TemplateImagePruneSummary,
   CreatorLookupValue,
 } from './types.js';
 import { chunk, clamp, ensureBoolean, ensureNumber, ensureStringArray, nowIso, uniqueStrings } from './utils.js';
 import {
   loadWebflowTemplateImageIndex,
+  fetchPublishedTemplateStatus,
   resolvePublishedTemplateImages,
   resolveWebflowTemplateImages,
   stableAttachmentUrl,
@@ -485,12 +487,13 @@ export async function refreshCreatorProfiles(env: Env): Promise<ImageRefreshSumm
 
 export async function backfillTemplateImages(
   env: Env,
-  options: { limit?: number } = {},
+  options: { limit?: number; templateSlugs?: string[] } = {},
 ): Promise<TemplateImageBackfillSummary> {
   return runWithSyncJobLock(env, 'image_backfill', async () => {
     const startedAt = nowIso();
     const requestedLimit = clamp(Math.floor(options.limit ?? IMAGE_BACKFILL_DEFAULT_LIMIT), 1, IMAGE_BACKFILL_MAX_LIMIT);
-    const rows = await listTemplateImageBackfillRows(env.DB, requestedLimit);
+    const requestedTemplateSlugs = uniqueStrings((options.templateSlugs ?? []).map((slug) => slug.trim()).filter(Boolean));
+    const rows = await listTemplateImageBackfillRows(env.DB, requestedLimit, requestedTemplateSlugs);
     const webflowImageIndex = rows.length > 0 ? await loadWebflowTemplateImageIndex(env) : null;
     const updatedRecords = await resolveAndUpdateTemplateImages(
       env.DB,
@@ -506,6 +509,7 @@ export async function backfillTemplateImages(
       started_at: startedAt,
       finished_at: nowIso(),
       requested_limit: requestedLimit,
+      requested_template_slugs: requestedTemplateSlugs.length > 0 ? requestedTemplateSlugs : undefined,
       scanned_records: rows.length,
       updated_records: updatedRecords,
       remaining_temp_airtable_rows: imageSourceStats.rows_with_temp_airtable_image,
@@ -513,6 +517,76 @@ export async function backfillTemplateImages(
     };
 
     await recordSyncSummary(env.DB, summary, 'last_image_backfill');
+    return summary;
+  });
+}
+
+export async function pruneMissingTemplateImages(
+  env: Env,
+  options: { limit?: number; templateSlugs?: string[] } = {},
+): Promise<TemplateImagePruneSummary> {
+  return runWithSyncJobLock(env, 'image_prune', async () => {
+    const startedAt = nowIso();
+    const requestedLimit = clamp(Math.floor(options.limit ?? IMAGE_BACKFILL_DEFAULT_LIMIT), 1, IMAGE_BACKFILL_MAX_LIMIT);
+    const requestedTemplateSlugs = uniqueStrings((options.templateSlugs ?? []).map((slug) => slug.trim()).filter(Boolean));
+    const rows = await listTemplateImageBackfillRows(env.DB, requestedLimit, requestedTemplateSlugs);
+    const webflowImageIndex = rows.length > 0 ? await loadWebflowTemplateImageIndex(env) : null;
+    const idsToDelete: string[] = [];
+    const skippedRecords: TemplateImagePruneSummary['skipped_records'] = [];
+
+    for (const rowBatch of chunk(rows, IMAGE_BACKFILL_FETCH_BATCH_SIZE)) {
+      const checkedRows = await Promise.all(
+        rowBatch.map(async (row) => {
+          const webflowImages = resolveWebflowTemplateImages(webflowImageIndex, {
+            templateSlug: row.templateSlug,
+            name: row.name,
+          });
+          if (webflowImages?.thumbnailImageUrl) {
+            return { row, status: null, reason: 'webflow_image_found' as const };
+          }
+
+          const pageStatus = await fetchPublishedTemplateStatus({
+            templateSlug: row.templateSlug,
+            listingUrl: row.listingUrl,
+          });
+          return {
+            row,
+            status: pageStatus.status,
+            reason: pageStatus.status === 404 ? null : ('listing_not_404' as const),
+          };
+        }),
+      );
+
+      for (const checked of checkedRows) {
+        if (checked.reason === null) {
+          idsToDelete.push(checked.row.id);
+        } else {
+          skippedRecords.push({
+            id: checked.row.id,
+            name: checked.row.name,
+            template_slug: checked.row.templateSlug,
+            status: checked.status,
+            reason: checked.reason,
+          });
+        }
+      }
+    }
+
+    await deleteTemplateDocuments(env.DB, idsToDelete);
+    const imageSourceStats = await templateImageSourceStats(env.DB);
+    const summary: TemplateImagePruneSummary = {
+      mode: 'image_prune',
+      started_at: startedAt,
+      finished_at: nowIso(),
+      requested_limit: requestedLimit,
+      requested_template_slugs: requestedTemplateSlugs.length > 0 ? requestedTemplateSlugs : undefined,
+      scanned_records: rows.length,
+      pruned_records: idsToDelete.length,
+      skipped_records: skippedRecords,
+      image_source_stats: imageSourceStats,
+    };
+
+    await recordSyncSummary(env.DB, summary, 'last_image_prune');
     return summary;
   });
 }

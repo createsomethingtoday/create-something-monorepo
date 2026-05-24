@@ -170,7 +170,9 @@ function appendCandidate(
   byTemplateKey: WebflowTemplateImageIndex['byTemplateKey'],
   key: string,
   candidate: WebflowTemplateImageCandidate,
+  options: { preserveExisting?: boolean } = {},
 ) {
+  if (options.preserveExisting && byTemplateKey.has(key)) return;
   const current = byTemplateKey.get(key) ?? [];
   current.push(candidate);
   byTemplateKey.set(key, current);
@@ -250,9 +252,30 @@ function extractMetaImage(html: string): string | null {
   return null;
 }
 
-function publishedTemplateUrl(templateSlug: string, listingUrl: string | null | undefined) {
+export function publishedTemplateUrl(templateSlug: string, listingUrl: string | null | undefined) {
   if (listingUrl && isHttpUrl(listingUrl)) return listingUrl;
   return `https://webflow.com/templates/html/${templateSlug}`;
+}
+
+export async function fetchPublishedTemplateStatus(template: {
+  templateSlug: string;
+  listingUrl?: string | null;
+}): Promise<{ ok: boolean; status: number | null; url: string }> {
+  const url = publishedTemplateUrl(template.templateSlug, template.listingUrl);
+  const abortController = new AbortController();
+  const timeoutId = setTimeout(() => abortController.abort(), PUBLISHED_TEMPLATE_FETCH_TIMEOUT_MS);
+
+  try {
+    const response = await fetch(url, {
+      headers: { Accept: 'text/html' },
+      signal: abortController.signal,
+    });
+    return { ok: response.ok, status: response.status, url };
+  } catch {
+    return { ok: false, status: null, url };
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
 
 export async function resolvePublishedTemplateImages(template: {
@@ -450,7 +473,7 @@ async function appendWebflowAssetImages(
           scoreName: normalizeScoreName(rawNames.join(' ')),
         };
         for (const key of assetLookupKeys(asset)) {
-          appendCandidate(byTemplateKey, key, candidate);
+          appendCandidate(byTemplateKey, key, candidate, { preserveExisting: true });
         }
         added += 1;
       }
@@ -473,13 +496,13 @@ export async function loadWebflowTemplateImageIndex(env: Env): Promise<WebflowTe
 
   const byTemplateKey = new Map<string, WebflowTemplateImageCandidate[]>();
   const cmsToken = env.WEBFLOW_API_TOKEN?.trim() || env.CMS_READ_ONLY?.trim();
-  const cmsIndexEnabled = env.WEBFLOW_TEMPLATE_ENABLE_CMS_INDEX === 'true';
+  const cmsIndexEnabled = env.WEBFLOW_TEMPLATE_ENABLE_CMS_INDEX !== 'false';
   if (cmsToken && cmsIndexEnabled) {
     await appendWebflowCmsImages(env, siteId, cmsToken, byTemplateKey);
   }
 
   const assetToken = env.WEBFLOW_API_TOKEN?.trim();
-  if (byTemplateKey.size === 0 && assetToken) {
+  if (assetToken) {
     await appendWebflowAssetImages(env, siteId, assetToken, byTemplateKey);
   }
 

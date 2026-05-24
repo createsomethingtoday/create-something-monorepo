@@ -250,9 +250,28 @@ export interface TemplateImageBackfillSummary {
   started_at: string;
   finished_at: string;
   requested_limit: number;
+  requested_template_slugs?: string[];
   scanned_records: number;
   updated_records: number;
   remaining_temp_airtable_rows: number;
+  image_source_stats: TemplateImageSourceStats;
+}
+
+export interface TemplateImagePruneSummary {
+  mode: 'image_prune';
+  started_at: string;
+  finished_at: string;
+  requested_limit: number;
+  requested_template_slugs?: string[];
+  scanned_records: number;
+  pruned_records: number;
+  skipped_records: Array<{
+    id: string;
+    name: string;
+    template_slug: string;
+    status: number | null;
+    reason: 'webflow_image_found' | 'listing_not_404';
+  }>;
   image_source_stats: TemplateImageSourceStats;
 }
 
