@@ -170,6 +170,16 @@ Sync design rules:
 - Use `Schema.relation()` and `Builder.relation()` only between Worker-managed
   databases. Existing client-owned relation fields should stay on the direct
   Notion API/MCP path until Worker Syncs can target those schemas.
+- Keep Notion/Linear reconciliation review-only at first. Linear remains the
+  engineering source of truth, Notion remains the PM/operator layer, and the
+  Linear Issues sync remains a read model for comparison. Reconciliation output
+  should create or suggest PM review items before any system mutates status
+  fields across tools.
+- For the current Agency Ops prototype, use
+  `pnpm --filter @create-something/notion-worker-experiments reconcile:agency-ops -- --live --snapshot-out ./agency-ops-snapshot.json`
+  to export a live PM snapshot, then run against `--input` for repeatable
+  review. Use `--write-suggestions` only after inspecting the report; it should
+  create review-only `Tasks / Actions` rows and skip duplicate action titles.
 
 Operator flow:
 
