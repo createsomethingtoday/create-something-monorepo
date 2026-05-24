@@ -12,7 +12,8 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "sync": "node scripts/sync.mjs",
-    "rebuild": "node scripts/rebuild.mjs"
+    "rebuild": "node scripts/rebuild.mjs",
+    "featured-creators": "node scripts/featured-creators.mjs"
   },
   "dependencies": {
     "zod": "^3.23.0"

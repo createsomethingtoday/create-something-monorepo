@@ -18,6 +18,36 @@ Cloudflare Worker and D1 search index for the Webflow template marketplace.
 
 Use `Authorization: Bearer <SYNC_ADMIN_TOKEN>` or `X-API-Key`.
 
+## Featured creator monthly batch
+
+Generate a read-only monthly candidate batch from Airtable for the Webflow CMS-backed
+`Featured Creator Card` component:
+
+```bash
+infisical run --env=prod --path=/ -- \
+  pnpm --filter @create-something/webflow-template-search featured-creators -- \
+  --month 2026-06 \
+  --as-of 2026-06-01 \
+  --limit 12
+```
+
+The script outputs CMS-friendly JSON by default. Use `--format csv` for spreadsheet or
+manual CMS-import review. Ranking is intentionally server-side and uses Airtable
+Marketplace Assets fields already indexed by this package:
+
+- current featured template count
+- templates published in the last 90 days
+- cumulative purchases
+- unique viewers
+- average popularity score
+- category breadth
+
+Review the generated rows before publishing. Public Webflow component props should receive
+rounded display labels such as `52.6k buys`, not raw Airtable credentials or direct Airtable
+API URLs. The generator labels Airtable attachment values as `creatorAvatarSourceUrl` and
+`topTemplateImageSourceUrl`; upload those sources into Webflow assets or CMS image fields
+before binding them to the public Code Component.
+
 ## Template thumbnails
 
 The sync pipeline indexes Marketplace template metadata from Airtable, then resolves public

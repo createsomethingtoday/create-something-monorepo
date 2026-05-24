@@ -36,6 +36,14 @@ export type { IconCardProps, IconCardVariant } from './components/cards/IconCard
 export { TemplateCard } from './components/cards/TemplateCard';
 export type { TemplateCardProps, TemplateCardBadge, TemplateCardImage, TemplateCardLink } from './components/cards/TemplateCard';
 
+export { FeaturedCreatorCard } from './components/cards/FeaturedCreatorCard';
+export type {
+  FeaturedCreatorAccent,
+  FeaturedCreatorCardImage,
+  FeaturedCreatorCardLink,
+  FeaturedCreatorCardProps,
+} from './components/cards/FeaturedCreatorCard';
+
 export { TemplateGrid } from './components/grid/TemplateGrid';
 export type { TemplateGridProps } from './components/grid/TemplateGrid';
 
