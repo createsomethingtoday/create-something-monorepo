@@ -399,7 +399,7 @@
 />
 
 <!-- Unified Search - Cmd/Ctrl+K to open -->
-<UnifiedSearch currentProperty="agency" localItems={quickAccessItems} />
+<UnifiedSearch currentProperty="agency" localItems={quickAccessItems} showMobileButton={false} />
 
 <div class="layout-root min-h-screen">
   <Navigation
