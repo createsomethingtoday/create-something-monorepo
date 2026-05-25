@@ -51,7 +51,8 @@
     display: block;
     width: 100%;
     aspect-ratio: 16 / 9;
-    object-fit: cover;
+    object-fit: contain;
+    background: #060607;
   }
 
   .visual-copy {
