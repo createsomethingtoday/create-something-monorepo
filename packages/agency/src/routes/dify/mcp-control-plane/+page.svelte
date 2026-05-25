@@ -1,6 +1,7 @@
 <script lang="ts">
   import { Button, HeroSignalField, SEO } from '@create-something/canon';
   import { BlurFade } from '@create-something/canon/magicui';
+  import ArticleVisualFigure from '$lib/components/ArticleVisualFigure.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
   const layers = [
@@ -106,6 +107,19 @@
   </div>
 </section>
 
+<section class="visual-section">
+  <div class="shell-inner-pad article-shell">
+    <ArticleVisualFigure
+      src="/images/articles/dify-mcp-control-plane/dify-mcp-control-plane.svg"
+      alt="Diagram showing Dify as the visible surface, MCP as the access boundary, and Policy OS as the operating rule."
+      eyebrow="Original diagram"
+      title="The control plane only works when each layer has a named job."
+      caption="This owned visual makes the article's architecture explicit: Dify carries the app, MCP defines the tool boundary, and Policy OS decides allowed, ask, or blocked."
+      sourceLabel="Created by CREATE SOMETHING for this article."
+    />
+  </div>
+</section>
+
 <section class="layer-section">
   <div class="shell-inner-pad article-shell">
     <div class="section-heading">
@@ -122,6 +136,20 @@
         </article>
       {/each}
     </div>
+  </div>
+</section>
+
+<section class="visual-section">
+  <div class="shell-inner-pad article-shell">
+    <ArticleVisualFigure
+      src="/images/articles/dify-mcp-control-plane/dify-mcp-tools-docs-20260525.png"
+      alt="Screenshot of Dify documentation for using MCP tools."
+      eyebrow="Collected screenshot"
+      title="Dify's MCP docs make the tool-boundary question concrete."
+      caption="Collected from Dify's official documentation on 2026-05-25. The screenshot supports the article's focus on MCP server cards, HTTP transport, and app-level tool access."
+      sourceLabel="Source: Dify Use MCP Tools docs"
+      sourceHref="https://docs.dify.ai/en/use-dify/build/mcp"
+    />
   </div>
 </section>
 
@@ -318,6 +346,7 @@
   }
 
   .layer-section,
+  .visual-section,
   .build-section,
   .use-section,
   .cta-section {

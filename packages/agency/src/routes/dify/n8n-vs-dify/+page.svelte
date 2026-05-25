@@ -1,6 +1,7 @@
 <script lang="ts">
   import { Button, HeroSignalField, SEO } from '@create-something/canon';
   import { BlurFade } from '@create-something/canon/magicui';
+  import ArticleVisualFigure from '$lib/components/ArticleVisualFigure.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
   const timeline = [
@@ -175,6 +176,19 @@
   </div>
 </section>
 
+<section class="visual-section">
+  <div class="shell-inner-pad compare-shell">
+    <ArticleVisualFigure
+      src="/images/articles/dify-vs-n8n/dify-n8n-layer-map.svg"
+      alt="Diagram comparing n8n as the automation workflow layer, Cloudflare as the runtime layer, Dify as the agent app layer, and Policy OS as the governance layer."
+      eyebrow="Original diagram"
+      title="The practical comparison is a layer map, not a winner-take-all tool ranking."
+      caption="This owned visual turns the article's recommendation into a reusable operating model: n8n for workflow automation, Cloudflare for runtime ownership, Dify for agent apps, and Policy OS for governance."
+      sourceLabel="Created by CREATE SOMETHING for this article."
+    />
+  </div>
+</section>
+
 <section class="timeline-section">
   <div class="shell-inner-pad compare-shell">
     <div class="section-heading wide">
@@ -195,6 +209,30 @@
         </article>
       {/each}
     </div>
+  </div>
+</section>
+
+<section class="visual-section">
+  <div class="shell-inner-pad compare-shell evidence-grid">
+    <ArticleVisualFigure
+      src="/images/articles/dify-vs-n8n/n8n-mcp-server-docs-20260525.png"
+      alt="Screenshot of n8n documentation describing instance-level MCP access."
+      eyebrow="Collected screenshot"
+      title="n8n's MCP surface is real, but it points to workflow access."
+      caption="Collected from n8n's official documentation on 2026-05-25. It supports the article's claim that n8n is strongest when the job is internal workflow exposure and orchestration."
+      sourceLabel="Source: n8n MCP server docs"
+      sourceHref="https://docs.n8n.io/advanced-ai/mcp/accessing-n8n-mcp-server/"
+    />
+
+    <ArticleVisualFigure
+      src="/images/articles/dify-content-engine/dify-workflow-chatflow-docs-20260525.png"
+      alt="Screenshot of Dify documentation describing Workflow and Chatflow concepts."
+      eyebrow="Collected screenshot"
+      title="Dify's center of gravity is the agent workflow surface."
+      caption="Collected from Dify's official documentation on 2026-05-25. It anchors the Dify side of the comparison in app packaging and structured agentic workflows."
+      sourceLabel="Source: Dify Workflow and Chatflow docs"
+      sourceHref="https://docs.dify.ai/en/use-dify/build/workflow-chatflow"
+    />
   </div>
 </section>
 
@@ -469,6 +507,7 @@
   }
 
   .timeline-section,
+  .visual-section,
   .fit-section,
   .matrix-section,
   .comparison-section,
@@ -514,6 +553,11 @@
   .source-list {
     display: grid;
     gap: 0.85rem;
+  }
+
+  .evidence-grid {
+    display: grid;
+    gap: 1rem;
   }
 
   .decision-table {

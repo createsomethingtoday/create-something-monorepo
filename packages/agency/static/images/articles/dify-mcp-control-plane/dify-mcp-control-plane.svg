@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" role="img" aria-labelledby="title desc">
+  <title id="title">Dify MCP control plane</title>
+  <desc id="desc">Original CREATE SOMETHING diagram showing Dify, MCP, and Policy OS decision states.</desc>
+  <rect width="1280" height="720" fill="#060607"/>
+  <text x="84" y="92" fill="#f5f5f4" font-family="Inter, Arial, sans-serif" font-size="36" font-weight="700">Dify is the surface. MCP is the boundary. Policy OS is the rule.</text>
+  <text x="84" y="130" fill="#a8a29e" font-family="Inter, Arial, sans-serif" font-size="18">The agent gets useful only when tool access, approvals, and evidence are explicit.</text>
+  <g fill="none" stroke="#292524" stroke-width="1">
+    <path d="M90 190h1100M90 310h1100M90 430h1100M90 550h1100"/>
+  </g>
+  <g>
+    <rect x="110" y="245" width="260" height="170" rx="18" fill="#111114" stroke="#60a5fa" stroke-opacity=".7"/>
+    <text x="142" y="298" fill="#93c5fd" font-family="Inter, Arial, sans-serif" font-size="16" letter-spacing="2">VISIBLE SURFACE</text>
+    <text x="142" y="344" fill="#f5f5f4" font-family="Inter, Arial, sans-serif" font-size="32" font-weight="700">Dify app</text>
+    <text x="142" y="383" fill="#d6d3d1" font-family="Inter, Arial, sans-serif" font-size="18">Chat, workflow, app</text>
+    <text x="142" y="411" fill="#d6d3d1" font-family="Inter, Arial, sans-serif" font-size="18">template, operator UX.</text>
+  </g>
+  <path d="M390 330h110" stroke="#78716c" stroke-width="4" stroke-linecap="round"/>
+  <path d="M490 318l18 12-18 12z" fill="#78716c"/>
+  <g>
+    <rect x="520" y="245" width="260" height="170" rx="18" fill="#111114" stroke="#34d399" stroke-opacity=".7"/>
+    <text x="552" y="298" fill="#86efac" font-family="Inter, Arial, sans-serif" font-size="16" letter-spacing="2">ACCESS BOUNDARY</text>
+    <text x="552" y="344" fill="#f5f5f4" font-family="Inter, Arial, sans-serif" font-size="32" font-weight="700">MCP card</text>
+    <text x="552" y="383" fill="#d6d3d1" font-family="Inter, Arial, sans-serif" font-size="18">Tools, resources, auth</text>
+    <text x="552" y="411" fill="#d6d3d1" font-family="Inter, Arial, sans-serif" font-size="18">scope, transport.</text>
+  </g>
+  <path d="M800 330h110" stroke="#78716c" stroke-width="4" stroke-linecap="round"/>
+  <path d="M900 318l18 12-18 12z" fill="#78716c"/>
+  <g>
+    <rect x="930" y="245" width="260" height="170" rx="18" fill="#111114" stroke="#fbbf24" stroke-opacity=".8"/>
+    <text x="962" y="298" fill="#fde68a" font-family="Inter, Arial, sans-serif" font-size="16" letter-spacing="2">OPERATING RULE</text>
+    <text x="962" y="344" fill="#f5f5f4" font-family="Inter, Arial, sans-serif" font-size="32" font-weight="700">Policy OS</text>
+    <text x="962" y="383" fill="#d6d3d1" font-family="Inter, Arial, sans-serif" font-size="18">Decides, logs, blocks,</text>
+    <text x="962" y="411" fill="#d6d3d1" font-family="Inter, Arial, sans-serif" font-size="18">and routes approval.</text>
+  </g>
+  <g font-family="Inter, Arial, sans-serif" font-size="20" font-weight="700">
+    <rect x="210" y="505" width="230" height="70" rx="35" fill="#102016" stroke="#34d399" stroke-opacity=".8"/>
+    <text x="286" y="548" fill="#86efac">Allowed</text>
+    <rect x="525" y="505" width="230" height="70" rx="35" fill="#251f0a" stroke="#fbbf24" stroke-opacity=".85"/>
+    <text x="617" y="548" fill="#fde68a">Ask</text>
+    <rect x="840" y="505" width="230" height="70" rx="35" fill="#2a1216" stroke="#fb7185" stroke-opacity=".85"/>
+    <text x="914" y="548" fill="#fda4af">Blocked</text>
+  </g>
+  <text x="362" y="630" fill="#a8a29e" font-family="Inter, Arial, sans-serif" font-size="18">Evidence trail: manifest, eval gate, approval state, rollback note.</text>
+</svg>

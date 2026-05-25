@@ -2,6 +2,7 @@
   import '../app.css';
   import { Navigation, Footer, Analytics, ModeIndicator } from '@create-something/canon';
   import { UnifiedSearch } from '@create-something/canon/navigation';
+  import { getAgencyContentAssetAnalyticsMetadata } from '$lib/analytics/content-assets';
   import { getAgencyMarketingExperimentMetadata } from '$lib/analytics/marketing-experiment';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
   import { page } from '$app/stores';
@@ -49,6 +50,60 @@
   const primaryBookingHref = $derived(
     $page.url.pathname === '/services' ? agencyCoreMessaging.servicesMappingSessionHref : '/book'
   );
+  const globalAnalyticsMetadata = $derived(getAgencyGlobalAnalyticsMetadata($page.url.pathname));
+  const footerQuickLinkGroups = [
+    {
+      title: 'Commercial',
+      ariaLabel: 'Commercial paths',
+      links: [
+        { label: 'How I Work', href: '/services' },
+        { label: 'Stack', href: '/stack' },
+        { label: 'Proof Surfaces', href: '/products' },
+        { label: 'About', href: '/about' }
+      ]
+    },
+    {
+      title: 'Partner Lanes',
+      ariaLabel: 'Partner lanes',
+      links: [
+        { label: 'Partners', href: '/partners' },
+        { label: 'Cloudflare', href: '/cloudflare' },
+        { label: 'Dify', href: '/dify' },
+        { label: 'Notion', href: '/notion' }
+      ]
+    },
+    {
+      title: 'Guides',
+      ariaLabel: 'Guides and articles',
+      links: [
+        { label: 'Dify MCP Control Plane', href: '/dify/mcp-control-plane' },
+        { label: 'Dify Content Engine', href: '/dify/content-engine' },
+        { label: 'Dify vs n8n', href: '/dify/n8n-vs-dify' }
+      ]
+    },
+    {
+      title: 'Trust',
+      ariaLabel: 'Trust and policy',
+      links: [
+        { label: 'Security', href: '/security' },
+        { label: 'Bearer Token Policy', href: '/bearer-token-policy' }
+      ]
+    }
+  ];
+
+  function getAgencyGlobalAnalyticsMetadata(pathname: string): Record<string, unknown> | undefined {
+    const experimentMetadata = getAgencyMarketingExperimentMetadata(pathname);
+    const contentMetadata = getAgencyContentAssetAnalyticsMetadata(pathname);
+
+    if (!experimentMetadata && !contentMetadata) {
+      return undefined;
+    }
+
+    return {
+      ...(experimentMetadata ?? {}),
+      ...(contentMetadata ?? {})
+    };
+  }
 
   // Quick access items for unified search
   const quickAccessItems = [
@@ -337,7 +392,7 @@
   property="agency"
   userId={data.user?.id}
   userOptedOut={data.user?.analytics_opt_out ?? false}
-  globalMetadata={getAgencyMarketingExperimentMetadata($page.url.pathname)}
+  globalMetadata={globalAnalyticsMetadata}
 />
 
 <!-- Unified Search - Cmd/Ctrl+K to open -->
@@ -366,21 +421,12 @@
     mode="agency"
     showNewsletter={false}
     aboutText="Calm, transparent, reliable workflow systems for operator-owned outcomes: clear trust boundaries, artifact-backed delivery, and escalation only when judgment is required."
-    quickLinks={[
-      { label: 'How I Work', href: '/services' },
-      { label: 'Stack', href: '/stack' },
-      { label: 'Partners', href: '/partners' },
-      { label: 'Cloudflare', href: '/cloudflare' },
-      { label: 'Dify', href: '/dify' },
-      { label: 'Dify Content Engine', href: '/dify/content-engine' },
-      { label: 'Dify vs n8n', href: '/dify/n8n-vs-dify' },
-      { label: 'Notion', href: '/notion' },
-      { label: 'Proof Surfaces', href: '/products' },
-      { label: 'About', href: '/about' },
-      { label: 'Security', href: '/security' },
-      { label: 'Bearer Token Policy', href: '/bearer-token-policy' },
-      { label: agencyCoreMessaging.bookMappingSessionLabel, href: primaryBookingHref }
-    ]}
+    quickLinkGroups={footerQuickLinkGroups}
+    footerCta={{
+      label: agencyCoreMessaging.bookMappingSessionLabel,
+      href: primaryBookingHref,
+      description: 'Map one governed workflow, its approval states, and the recovery path.'
+    }}
     showSocial={true}
     isAuthenticated={!!data.user}
   />
