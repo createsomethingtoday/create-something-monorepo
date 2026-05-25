@@ -1,6 +1,7 @@
 <script lang="ts">
   import { Button, HeroSignalField, SEO } from '@create-something/canon';
   import { BlurFade } from '@create-something/canon/magicui';
+  import ArticleVisualFigure from '$lib/components/ArticleVisualFigure.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
   const channelRoles = [
@@ -183,6 +184,19 @@
   </div>
 </section>
 
+<section class="visual-section">
+  <div class="shell-inner-pad content-shell">
+    <ArticleVisualFigure
+      src="/images/articles/dify-content-engine/content-engine-funnel.svg"
+      alt="Diagram showing the CREATE SOMETHING canonical article feeding Substack, social/video discovery, analytics tracking, and lead routing."
+      eyebrow="Original diagram"
+      title="Canonical first. Distribution second. Measurement always."
+      caption="This is the owned visual for the Dify content engine: one custom-domain article produces dispatches, social clips, ledger evidence, and the lead split."
+      sourceLabel="Created by CREATE SOMETHING for this article."
+    />
+  </div>
+</section>
+
 <section class="role-section">
   <div class="shell-inner-pad content-shell">
     <div class="section-heading">
@@ -199,6 +213,20 @@
         </article>
       {/each}
     </div>
+  </div>
+</section>
+
+<section class="visual-section">
+  <div class="shell-inner-pad content-shell">
+    <ArticleVisualFigure
+      src="/images/articles/dify-content-engine/dify-workflow-chatflow-docs-20260525.png"
+      alt="Screenshot of Dify documentation describing Workflow and Chatflow concepts."
+      eyebrow="Collected screenshot"
+      title="Dify frames workflow and chatflow as structured agentic workflows."
+      caption="Collected from Dify's official documentation on 2026-05-25. This is evidence for the article's claim that Dify content should explain workflow packaging, not only chatbot prompts."
+      sourceLabel="Source: Dify Workflow and Chatflow docs"
+      sourceHref="https://docs.dify.ai/en/use-dify/build/workflow-chatflow"
+    />
   </div>
 </section>
 
@@ -454,6 +482,7 @@
   }
 
   .role-section,
+  .visual-section,
   .target-section,
   .cluster-section,
   .economics-section,

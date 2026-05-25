@@ -2,6 +2,7 @@
   import { Button, HeroSignalField, SEO } from '@create-something/canon';
   import { BlurFade } from '@create-something/canon/magicui';
   import ArtifactSystemStrip from '$lib/components/ArtifactSystemStrip.svelte';
+  import ArticleVisualFigure from '$lib/components/ArticleVisualFigure.svelte';
   import BrandLogo from '$lib/components/BrandLogo.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
@@ -54,13 +55,15 @@
     {
       displayName: 'notion_workers.md',
       name: 'notion_workers.md',
-      summary: 'Decision guide for Notion Workers, Custom Agent tools, Syncs, hosted MCP, and CLI usage.',
+      summary:
+        'Decision guide for Notion Workers, Custom Agent tools, Syncs, hosted MCP, and CLI usage.',
       tag: 'Build'
     },
     {
       displayName: 'agency_ops_pm.md',
       name: 'agency_ops_pm.md',
-      summary: 'The conservative PM model: Substrate canonical, Linear tracked work, Notion operator view.',
+      summary:
+        'The conservative PM model: Substrate canonical, Linear tracked work, Notion operator view.',
       tag: 'Ops'
     },
     {
@@ -72,7 +75,8 @@
     {
       displayName: 'template_candidates.md',
       name: 'template_candidates.md',
-      summary: 'Sanitized templates for Agency Ops, eval review, evidence index, and builder examples.',
+      summary:
+        'Sanitized templates for Agency Ops, eval review, evidence index, and builder examples.',
       tag: 'Proof'
     }
   ];
@@ -93,8 +97,7 @@
     {
       audience: 'Teams',
       title: 'Keep source-of-truth boundaries legible.',
-      detail:
-        'Make it explicit what Notion owns, what Linear owns, and what canonical systems own.'
+      detail: 'Make it explicit what Notion owns, what Linear owns, and what canonical systems own.'
     }
   ];
 
@@ -124,13 +127,15 @@
       label: 'Agent runtime',
       name: 'Dify',
       href: '/dify',
-      detail: 'Client-facing agent workflows, eval gates, marketplace proof, and affiliate-ready adoption.'
+      detail:
+        'Client-facing agent workflows, eval gates, marketplace proof, and affiliate-ready adoption.'
     },
     {
       label: 'Runtime substrate',
       name: 'Cloudflare',
       href: '/cloudflare',
-      detail: 'Workers, Pages, D1, and hosted MCP surfaces for the workflows Notion makes reviewable.'
+      detail:
+        'Workers, Pages, D1, and hosted MCP surfaces for the workflows Notion makes reviewable.'
     },
     {
       label: 'Vendor boundary',
@@ -224,6 +229,19 @@
   </div>
 </section>
 
+<section class="content-section visual-section">
+  <div class="shell-inner-pad notion-shell">
+    <ArticleVisualFigure
+      src="/images/articles/notion-ops-workspace/notion-operator-workspace.svg"
+      alt="Diagram showing Notion as the operator workspace connected to Linear, client systems, MCP tools, and Policy OS."
+      eyebrow="Original diagram"
+      title="Notion works best when it is the reviewable operator layer, not the whole system."
+      caption="This owned visual makes the Notion recommendation explicit: Notion carries PM views and approvals while Linear, client systems, MCP tools, and Policy OS keep their own responsibilities."
+      sourceLabel="Created by CREATE SOMETHING for this article."
+    />
+  </div>
+</section>
+
 <section class="status-band">
   <div class="shell-inner-pad notion-shell">
     <div class="status-grid" role="list">
@@ -259,6 +277,20 @@
         </article>
       {/each}
     </div>
+  </div>
+</section>
+
+<section class="content-section visual-section">
+  <div class="shell-inner-pad notion-shell">
+    <ArticleVisualFigure
+      src="/images/articles/notion-ops-workspace/notion-database-automations-docs-20260525.png"
+      alt="Screenshot of Notion documentation describing database automations."
+      eyebrow="Collected screenshot"
+      title="Notion automations are useful inside Notion, but the operating model still needs boundaries."
+      caption="Collected from Notion's official documentation on 2026-05-25. It supports the article's point that Notion is a strong operator surface while cross-tool governance still needs explicit architecture."
+      sourceLabel="Source: Notion database automations docs"
+      sourceHref="https://www.notion.com/help/database-automations"
+    />
   </div>
 </section>
 
@@ -340,7 +372,9 @@
       </p>
       <div class="external-actions">
         <Button href="https://www.notion.com/partners" variant="secondary">Partner Programs</Button>
-        <Button href="https://www.notion.com/templates" variant="secondary">Template Marketplace</Button>
+        <Button href="https://www.notion.com/templates" variant="secondary"
+          >Template Marketplace</Button
+        >
       </div>
     </div>
   </div>

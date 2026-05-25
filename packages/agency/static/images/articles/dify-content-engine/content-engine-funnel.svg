@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" role="img" aria-labelledby="title desc">
+  <title id="title">Dify content engine funnel</title>
+  <desc id="desc">Original CREATE SOMETHING diagram showing canonical content feeding Substack, social, analytics, and lead routing.</desc>
+  <rect width="1280" height="720" fill="#060607"/>
+  <g stroke="#202127" stroke-width="1">
+    <path d="M80 120h1120M80 240h1120M80 360h1120M80 480h1120M80 600h1120"/>
+    <path d="M200 80v560M400 80v560M600 80v560M800 80v560M1000 80v560"/>
+  </g>
+  <text x="90" y="88" fill="#f5f5f4" font-family="Inter, Arial, sans-serif" font-size="34" font-weight="700">Custom-domain content owns the funnel</text>
+  <text x="90" y="124" fill="#a8a29e" font-family="Inter, Arial, sans-serif" font-size="18">Substack distributes. The website measures. The ledger decides what converts.</text>
+  <g fill="none" stroke="#78716c" stroke-width="3" stroke-linecap="round">
+    <path d="M315 360h210"/>
+    <path d="M755 360h210"/>
+    <path d="M640 275v-95"/>
+    <path d="M640 445v95"/>
+  </g>
+  <g>
+    <rect x="500" y="260" width="280" height="200" rx="18" fill="#111114" stroke="#f5f5f4" stroke-opacity=".25"/>
+    <text x="536" y="320" fill="#a8a29e" font-family="Inter, Arial, sans-serif" font-size="16" letter-spacing="2">CANONICAL</text>
+    <text x="536" y="364" fill="#f5f5f4" font-family="Inter, Arial, sans-serif" font-size="32" font-weight="700">Agency article</text>
+    <text x="536" y="402" fill="#d6d3d1" font-family="Inter, Arial, sans-serif" font-size="18">Proof, disclosures, CTA,</text>
+    <text x="536" y="430" fill="#d6d3d1" font-family="Inter, Arial, sans-serif" font-size="18">analytics and lead routing.</text>
+  </g>
+  <g>
+    <rect x="90" y="285" width="225" height="150" rx="16" fill="#111114" stroke="#60a5fa" stroke-opacity=".65"/>
+    <text x="122" y="337" fill="#93c5fd" font-family="Inter, Arial, sans-serif" font-size="16" letter-spacing="2">DISPATCH</text>
+    <text x="122" y="378" fill="#f5f5f4" font-family="Inter, Arial, sans-serif" font-size="27" font-weight="700">Substack</text>
+    <text x="122" y="410" fill="#d6d3d1" font-family="Inter, Arial, sans-serif" font-size="16">Short idea, one link back.</text>
+  </g>
+  <g>
+    <rect x="525" y="70" width="230" height="140" rx="16" fill="#111114" stroke="#34d399" stroke-opacity=".65"/>
+    <text x="557" y="122" fill="#86efac" font-family="Inter, Arial, sans-serif" font-size="16" letter-spacing="2">DISCOVERY</text>
+    <text x="557" y="162" fill="#f5f5f4" font-family="Inter, Arial, sans-serif" font-size="27" font-weight="700">Social + video</text>
+    <text x="557" y="192" fill="#d6d3d1" font-family="Inter, Arial, sans-serif" font-size="16">Native snippets.</text>
+  </g>
+  <g>
+    <rect x="965" y="285" width="225" height="150" rx="16" fill="#111114" stroke="#fbbf24" stroke-opacity=".75"/>
+    <text x="997" y="337" fill="#fde68a" font-family="Inter, Arial, sans-serif" font-size="16" letter-spacing="2">MEASURE</text>
+    <text x="997" y="378" fill="#f5f5f4" font-family="Inter, Arial, sans-serif" font-size="27" font-weight="700">Tracker</text>
+    <text x="997" y="410" fill="#d6d3d1" font-family="Inter, Arial, sans-serif" font-size="16">Sessions, leads, revenue.</text>
+  </g>
+  <g>
+    <rect x="510" y="525" width="260" height="125" rx="16" fill="#111114" stroke="#fb7185" stroke-opacity=".75"/>
+    <text x="542" y="575" fill="#fda4af" font-family="Inter, Arial, sans-serif" font-size="16" letter-spacing="2">ROUTE</text>
+    <text x="542" y="615" fill="#f5f5f4" font-family="Inter, Arial, sans-serif" font-size="27" font-weight="700">Lead split</text>
+    <text x="542" y="644" fill="#d6d3d1" font-family="Inter, Arial, sans-serif" font-size="16">Affiliate vs implementation.</text>
+  </g>
+  <g font-family="Inter, Arial, sans-serif" font-size="16" fill="#d6d3d1">
+    <rect x="90" y="625" width="125" height="38" rx="19" fill="#111114" stroke="#44403c"/>
+    <text x="119" y="650">UTM</text>
+    <rect x="230" y="625" width="150" height="38" rx="19" fill="#111114" stroke="#44403c"/>
+    <text x="254" y="650">Disclosure</text>
+    <rect x="395" y="625" width="142" height="38" rx="19" fill="#111114" stroke="#44403c"/>
+    <text x="421" y="650">Source note</text>
+  </g>
+</svg>
