@@ -31,7 +31,17 @@ const AGENCY_CONTENT_ASSETS_BY_PATH: Record<string, AgencyContentAssetAnalytics>
     contentBuyer: 'operator evaluating governed workflow implementation support',
     contentFunnelStage: 'decision',
     contentPrimaryKeyword: 'AI workflow systems consultant',
-    contentPrimaryCta: 'book-mapping-session'
+    contentPrimaryCta: 'request-workflow-teardown'
+  },
+  '/contact': {
+    contentAssetId: 'conversion.contact-funnel.v20260525',
+    contentType: 'conversion-page',
+    contentCluster: 'workflow-infrastructure-services',
+    contentIntent: 'service',
+    contentBuyer: 'reader choosing between checklist, teardown, and mapping session',
+    contentFunnelStage: 'consideration',
+    contentPrimaryKeyword: 'AI workflow governance checklist',
+    contentPrimaryCta: 'choose-conversion-path'
   },
   '/book': {
     contentAssetId: 'conversion.book-mapping-session.v20260518',
@@ -51,7 +61,7 @@ const AGENCY_CONTENT_ASSETS_BY_PATH: Record<string, AgencyContentAssetAnalytics>
     contentBuyer: 'operator evaluating vendor-neutral implementation support',
     contentFunnelStage: 'consideration',
     contentPrimaryKeyword: 'AI implementation partner',
-    contentPrimaryCta: 'book-mapping-session'
+    contentPrimaryCta: 'request-workflow-teardown'
   },
   '/cloudflare': {
     contentAssetId: 'partner.cloudflare-runtime.v20260518',
@@ -61,7 +71,7 @@ const AGENCY_CONTENT_ASSETS_BY_PATH: Record<string, AgencyContentAssetAnalytics>
     contentBuyer: 'operator evaluating Cloudflare-backed AI workflow infrastructure',
     contentFunnelStage: 'consideration',
     contentPrimaryKeyword: 'Cloudflare AI workflow implementation partner',
-    contentPrimaryCta: 'book-mapping-session'
+    contentPrimaryCta: 'request-workflow-teardown'
   },
   '/dify': {
     contentAssetId: 'partner.dify-agent-systems.v20260518',
@@ -71,7 +81,7 @@ const AGENCY_CONTENT_ASSETS_BY_PATH: Record<string, AgencyContentAssetAnalytics>
     contentBuyer: 'operator evaluating Dify implementation support',
     contentFunnelStage: 'consideration',
     contentPrimaryKeyword: 'Dify implementation partner',
-    contentPrimaryCta: 'book-mapping-session'
+    contentPrimaryCta: 'request-workflow-teardown'
   },
   '/dify/content-engine': {
     contentAssetId: 'article.dify-content-engine.v20260518',
@@ -81,7 +91,7 @@ const AGENCY_CONTENT_ASSETS_BY_PATH: Record<string, AgencyContentAssetAnalytics>
     contentBuyer: 'agency consultant or operator building a Dify acquisition lane',
     contentFunnelStage: 'consideration',
     contentPrimaryKeyword: 'Dify affiliate content strategy',
-    contentPrimaryCta: 'book-mapping-session',
+    contentPrimaryCta: 'get-governance-checklist',
     contentLinearIssue: 'CRE-373'
   },
   '/dify/mcp-control-plane': {
@@ -92,7 +102,7 @@ const AGENCY_CONTENT_ASSETS_BY_PATH: Record<string, AgencyContentAssetAnalytics>
     contentBuyer: 'technical operator connecting Dify to governed MCP tools',
     contentFunnelStage: 'decision',
     contentPrimaryKeyword: 'Dify MCP control plane',
-    contentPrimaryCta: 'book-mapping-session',
+    contentPrimaryCta: 'request-workflow-teardown',
     contentLinearIssue: 'CRE-444'
   },
   '/dify/n8n-vs-dify': {
@@ -103,7 +113,7 @@ const AGENCY_CONTENT_ASSETS_BY_PATH: Record<string, AgencyContentAssetAnalytics>
     contentBuyer: 'operator comparing workflow automation and agent app tools',
     contentFunnelStage: 'decision',
     contentPrimaryKeyword: 'Dify vs n8n',
-    contentPrimaryCta: 'book-mapping-session',
+    contentPrimaryCta: 'request-workflow-teardown',
     contentLinearIssue: 'CRE-374'
   },
   '/notion': {
@@ -114,7 +124,7 @@ const AGENCY_CONTENT_ASSETS_BY_PATH: Record<string, AgencyContentAssetAnalytics>
     contentBuyer: 'operator evaluating Notion implementation support',
     contentFunnelStage: 'consideration',
     contentPrimaryKeyword: 'Notion operations workspace consultant',
-    contentPrimaryCta: 'book-mapping-session'
+    contentPrimaryCta: 'request-workflow-teardown'
   }
 };
 

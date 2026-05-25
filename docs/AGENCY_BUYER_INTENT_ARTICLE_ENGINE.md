@@ -52,13 +52,13 @@ The core offer language:
 
 Use these formats before general essays:
 
-| Format                                           | Search Intent | Default CTA                         |
-| ------------------------------------------------ | ------------- | ----------------------------------- |
-| `Best [Category] for [Buyer / Use Case] in 2026` | compare       | Map your first governed AI workflow |
-| `[Tool] vs [Tool] vs [Tool]`                     | versus        | Book Mapping Session                |
-| `How to build [governed workflow]`               | how-to        | Workflow Mapping Session            |
-| `[Risk / governance] checklist`                  | checklist     | Download checklist or book mapping  |
-| `What is [category] for [buyer]?`                | definition    | Read implementation path            |
+| Format                                           | Search Intent | Default CTA                    |
+| ------------------------------------------------ | ------------- | ------------------------------ |
+| `Best [Category] for [Buyer / Use Case] in 2026` | compare       | Request workflow teardown      |
+| `[Tool] vs [Tool] vs [Tool]`                     | versus        | Request workflow teardown      |
+| `How to build [governed workflow]`               | how-to        | Request workflow teardown      |
+| `[Risk / governance] checklist`                  | checklist     | Get governance checklist       |
+| `What is [category] for [buyer]?`                | definition    | Open implementation path       |
 
 ## Core Article Template
 
@@ -72,7 +72,8 @@ Every flagship article should include:
 6. Best fit by use case.
 7. Common mistakes.
 8. Recommended implementation path.
-9. CTA: `Map your first governed AI workflow`.
+9. CTA ladder: checklist for cold readers, teardown for warm readers, mapping
+   session for high-intent buyers.
 10. Source notes and last-updated date.
 
 The internal point of view must be visible by the first third of the article.
@@ -106,6 +107,22 @@ and a source or review workspace note. Stale screenshots reduce trust, so tool
 comparison screenshots should be refreshed every 60 days or replaced with an
 original diagram.
 
+## Funnel Ladder
+
+Do not make "book a session" the only conversion path for cold article traffic.
+
+Use three CTAs:
+
+| Stage | Reader State | CTA | Destination |
+| ----- | ------------ | --- | ----------- |
+| Cold | Learning language for risk, approvals, and governance | `Get Governance Checklist` | `/contact?intent=governance-checklist` |
+| Warm | Can name a workflow, stack, and bottleneck | `Request Workflow Teardown` | `/contact?intent=workflow-teardown` |
+| Hot | Has owner, timeline, approval authority, and decision pressure | `Book Mapping Session` | `/book?intent=workflow-mapping` |
+
+Whitepapers should be short operating artifacts, not generic PDFs. Prefer
+checklists, teardown templates, approval-path worksheets, and field guides that
+make the buyer's workflow easier to describe.
+
 ## First 90-Day Content Sprint
 
 Cadence:
@@ -126,18 +143,18 @@ Expected 90-day output:
 
 | Week | Content Asset ID                                                    | Working Title                                                        | Intent     | Buyer                  | Funnel Stage  | Primary CTA                         |
 | ---: | ------------------------------------------------------------------- | -------------------------------------------------------------------- | ---------- | ---------------------- | ------------- | ----------------------------------- |
-|    1 | `article.best-ai-workflow-automation-platforms-agencies.v20260601`  | Best AI Workflow Automation Platforms for Agencies in 2026           | compare    | agency owner           | consideration | Map your first governed AI workflow |
-|    2 | `article.dify-vs-langflow-vs-flowise-vs-vellum.v20260608`           | Dify vs Langflow vs Flowise vs Vellum: Which Should You Use?         | versus     | technical operator     | decision      | Book Mapping Session                |
-|    3 | `article.human-approval-ai-workflow.v20260615`                      | How to Build an AI Workflow With Human Approval Steps                | how-to     | ops lead               | decision      | Workflow Mapping Session            |
-|    4 | `article.ai-automation-agency-vs-workflow-consultant.v20260622`     | AI Automation Agency vs AI Workflow Consultant                       | compare    | founder                | consideration | Book Mapping Session                |
-|    5 | `article.governed-ai-workflows-notion-slack-hubspot.v20260629`      | How to Build Governed AI Workflows Across Notion, Slack, and HubSpot | how-to     | RevOps lead            | decision      | Workflow Mapping Session            |
-|    6 | `article.best-mcp-tools-business-workflow-automation.v20260706`     | Best MCP Tools for Business Workflow Automation                      | compare    | builder                | consideration | Map your first governed AI workflow |
-|    7 | `article.approvals-audit-trails-ai-agents.v20260713`                | How to Add Approvals and Audit Trails to AI Agents                   | how-to     | operator               | decision      | Workflow Mapping Session            |
-|    8 | `article.ai-workflow-governance-checklist-small-business.v20260720` | AI Workflow Governance Checklist for Small Businesses                | checklist  | founder                | awareness     | Download checklist                  |
-|    9 | `article.no-code-ai-automation-tools-client-onboarding.v20260727`   | Best No-Code AI Automation Tools for Client Onboarding               | compare    | agency owner           | consideration | Book Mapping Session                |
-|   10 | `article.ai-operating-system-service-business.v20260803`            | What Is an AI Operating System for a Service Business?               | definition | service business owner | awareness     | Read implementation path            |
-|   11 | `article.sales-follow-up-ai-agent-governance.v20260810`             | How to Govern AI Sales Follow-Up Across Gmail, CRM, and Slack        | how-to     | sales lead             | decision      | Workflow Mapping Session            |
-|   12 | `article.support-escalation-ai-agent-operating-manual.v20260817`    | AI Support Escalation Agent Operating Manual                         | checklist  | support lead           | decision      | Book Mapping Session                |
+|    1 | `article.best-ai-workflow-automation-platforms-agencies.v20260601`  | Best AI Workflow Automation Platforms for Agencies in 2026           | compare    | agency owner           | consideration | Request Workflow Teardown           |
+|    2 | `article.dify-vs-langflow-vs-flowise-vs-vellum.v20260608`           | Dify vs Langflow vs Flowise vs Vellum: Which Should You Use?         | versus     | technical operator     | decision      | Request Workflow Teardown           |
+|    3 | `article.human-approval-ai-workflow.v20260615`                      | How to Build an AI Workflow With Human Approval Steps                | how-to     | ops lead               | decision      | Request Workflow Teardown           |
+|    4 | `article.ai-automation-agency-vs-workflow-consultant.v20260622`     | AI Automation Agency vs AI Workflow Consultant                       | compare    | founder                | consideration | Request Workflow Teardown           |
+|    5 | `article.governed-ai-workflows-notion-slack-hubspot.v20260629`      | How to Build Governed AI Workflows Across Notion, Slack, and HubSpot | how-to     | RevOps lead            | decision      | Request Workflow Teardown           |
+|    6 | `article.best-mcp-tools-business-workflow-automation.v20260706`     | Best MCP Tools for Business Workflow Automation                      | compare    | builder                | consideration | Request Workflow Teardown           |
+|    7 | `article.approvals-audit-trails-ai-agents.v20260713`                | How to Add Approvals and Audit Trails to AI Agents                   | how-to     | operator               | decision      | Request Workflow Teardown           |
+|    8 | `article.ai-workflow-governance-checklist-small-business.v20260720` | AI Workflow Governance Checklist for Small Businesses                | checklist  | founder                | awareness     | Get Governance Checklist            |
+|    9 | `article.no-code-ai-automation-tools-client-onboarding.v20260727`   | Best No-Code AI Automation Tools for Client Onboarding               | compare    | agency owner           | consideration | Request Workflow Teardown           |
+|   10 | `article.ai-operating-system-service-business.v20260803`            | What Is an AI Operating System for a Service Business?               | definition | service business owner | awareness     | Open Implementation Path            |
+|   11 | `article.sales-follow-up-ai-agent-governance.v20260810`             | How to Govern AI Sales Follow-Up Across Gmail, CRM, and Slack        | how-to     | sales lead             | decision      | Request Workflow Teardown           |
+|   12 | `article.support-escalation-ai-agent-operating-manual.v20260817`    | AI Support Escalation Agent Operating Manual                         | checklist  | support lead           | decision      | Request Workflow Teardown           |
 
 ## Operating Workflow
 

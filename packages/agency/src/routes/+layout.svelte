@@ -47,8 +47,10 @@
     { label: 'Proof Surfaces', href: '/products' },
     { label: 'About', href: '/about' }
   ];
-  const primaryBookingHref = $derived(
-    $page.url.pathname === '/services' ? agencyCoreMessaging.servicesMappingSessionHref : '/book'
+  const primaryCtaHref = $derived(
+    $page.url.pathname === '/book'
+      ? agencyCoreMessaging.servicesMappingSessionHref
+      : agencyCoreMessaging.startWithWorkflowHref
   );
   const globalAnalyticsMetadata = $derived(getAgencyGlobalAnalyticsMetadata($page.url.pathname));
   const footerQuickLinkGroups = [
@@ -78,7 +80,8 @@
       links: [
         { label: 'Dify MCP Control Plane', href: '/dify/mcp-control-plane' },
         { label: 'Dify Content Engine', href: '/dify/content-engine' },
-        { label: 'Dify vs n8n', href: '/dify/n8n-vs-dify' }
+        { label: 'Dify vs n8n', href: '/dify/n8n-vs-dify' },
+        { label: 'Governance Checklist', href: agencyCoreMessaging.governanceChecklistHref }
       ]
     },
     {
@@ -254,11 +257,11 @@
     },
     {
       id: 'nav-book',
-      label: agencyCoreMessaging.bookMappingSessionLabel,
-      description: 'Map the workflow, MCP wedge, and decision states',
-      href: '/book',
-      icon: '📞',
-      keywords: ['contact', 'hire', 'start', 'book', 'mapping', 'session', 'workflow system']
+      label: agencyCoreMessaging.startWithWorkflowLabel,
+      description: 'Choose the checklist, teardown, or mapping path',
+      href: agencyCoreMessaging.startWithWorkflowHref,
+      icon: 'WF',
+      keywords: ['contact', 'hire', 'start', 'workflow', 'teardown', 'checklist', 'mapping']
     },
     {
       id: 'nav-mcp-access',
@@ -405,8 +408,8 @@
     links={navLinks}
     currentPath={$page.url.pathname}
     fixed={true}
-    ctaLabel={agencyCoreMessaging.bookMappingSessionLabel}
-    ctaHref={primaryBookingHref}
+    ctaLabel={agencyCoreMessaging.startWithWorkflowLabel}
+    ctaHref={primaryCtaHref}
     user={data.user}
     onLogout={handleLogout}
     showLogin={true}
@@ -423,9 +426,9 @@
     aboutText="Calm, transparent, reliable workflow systems for operator-owned outcomes: clear trust boundaries, artifact-backed delivery, and escalation only when judgment is required."
     quickLinkGroups={footerQuickLinkGroups}
     footerCta={{
-      label: agencyCoreMessaging.bookMappingSessionLabel,
-      href: primaryBookingHref,
-      description: 'Map one governed workflow, its approval states, and the recovery path.'
+      label: agencyCoreMessaging.startWithWorkflowLabel,
+      href: primaryCtaHref,
+      description: 'Choose the checklist, teardown, or mapping path for one governed workflow.'
     }}
     showSocial={true}
     isAuthenticated={!!data.user}

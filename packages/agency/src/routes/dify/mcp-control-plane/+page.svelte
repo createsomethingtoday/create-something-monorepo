@@ -2,6 +2,7 @@
   import { Button, HeroSignalField, SEO } from '@create-something/canon';
   import { BlurFade } from '@create-something/canon/magicui';
   import ArticleVisualFigure from '$lib/components/ArticleVisualFigure.svelte';
+  import FunnelLadder from '$lib/components/FunnelLadder.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
   const layers = [
@@ -84,7 +85,9 @@
         </BlurFade>
         <BlurFade delay={0.15}>
           <div class="hero-actions">
-            <Button href="/book">{agencyCoreMessaging.bookMappingSessionLabel}</Button>
+            <Button href="/contact?source=dify-mcp-control-plane&intent=workflow-teardown&lane=reliability_and_control">
+              {agencyCoreMessaging.workflowTeardownLabel}
+            </Button>
             <Button href="/dify" variant="secondary">Back To Dify Lane</Button>
           </div>
         </BlurFade>
@@ -190,21 +193,11 @@
   </div>
 </section>
 
-<section class="cta-section">
-  <div class="shell-inner-pad article-shell">
-    <div class="product-surface product-surface--accent cta-grid">
-      <div>
-        <span class="product-kicker">Next Step</span>
-        <h2>Map one Dify workflow with the boundary attached.</h2>
-        <p>
-          Bring the workflow, systems, and approval owner. The first output is the Dify surface, MCP
-          scope, eval gate, and policy state map.
-        </p>
-      </div>
-      <Button href="/book">{agencyCoreMessaging.bookMappingSessionLabel}</Button>
-    </div>
-  </div>
-</section>
+<FunnelLadder
+  eyebrow="Next Step"
+  title="Use the control-plane article to qualify the next action."
+  description="Readers can take the governance checklist, ask for a workflow teardown, or book the mapping session once the Dify workflow and approval owner are clear."
+/>
 
 <style>
   .article-shell {
@@ -258,8 +251,7 @@
   }
 
   .hero-grid,
-  .build-grid,
-  .cta-grid {
+  .build-grid {
     position: relative;
     z-index: 2;
     display: grid;
@@ -274,8 +266,7 @@
   }
 
   .hero-copy,
-  .section-heading,
-  .cta-grid div {
+  .section-heading {
     display: grid;
     gap: 0.9rem;
   }
@@ -294,8 +285,7 @@
   }
 
   .hero-copy h1,
-  .section-heading h2,
-  .cta-grid h2 {
+  .section-heading h2 {
     margin: 0;
     color: var(--color-fg-primary);
     letter-spacing: 0;
@@ -308,8 +298,7 @@
     line-height: 1;
   }
 
-  .section-heading h2,
-  .cta-grid h2 {
+  .section-heading h2 {
     font-size: clamp(1.65rem, 3vw, 2.75rem);
   }
 
@@ -318,7 +307,6 @@
   .section-heading p,
   .layer-card p,
   .use-card p,
-  .cta-grid p,
   .step-list li {
     margin: 0;
     color: var(--color-fg-secondary);
@@ -348,8 +336,7 @@
   .layer-section,
   .visual-section,
   .build-section,
-  .use-section,
-  .cta-section {
+  .use-section {
     padding-top: clamp(1.25rem, 3vw, 2rem);
     padding-bottom: clamp(3.5rem, 6vw, 5rem);
   }
@@ -416,23 +403,14 @@
     font-size: 0.78rem;
   }
 
-  .cta-grid {
-    align-items: center;
-    padding: clamp(1.35rem, 3vw, 2rem);
-  }
-
   @media (max-width: 900px) {
     .hero-grid,
     .build-grid,
-    .cta-grid,
     .layer-grid,
     .use-grid {
       grid-template-columns: 1fr;
     }
 
-    .cta-grid {
-      justify-items: start;
-    }
   }
 
   @media (max-width: 680px) {

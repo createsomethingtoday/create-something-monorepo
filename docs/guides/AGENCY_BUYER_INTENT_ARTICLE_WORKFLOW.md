@@ -67,11 +67,16 @@ review cadence.
 
 ## Approved CTAs
 
-- `Map your first governed AI workflow`
-- `Book Mapping Session`
-- `Workflow Mapping Session`
-- `Download checklist`
-- `Read implementation path`
+- `Get Governance Checklist` for awareness-stage readers.
+- `Request Workflow Teardown` for consideration and most decision-stage
+  readers.
+- `Book Mapping Session` for high-intent buyers with a named workflow, owner,
+  approval authority, and decision timeline.
+- `Open Implementation Path` for definition or strategy articles.
+
+Do not force cold article traffic straight into the calendar. Use checklists,
+templates, and teardown requests as the bridge from anonymous reader to warm
+lead.
 
 ## Analytics Instrumentation
 
@@ -157,7 +162,8 @@ Decision rules:
 - If impressions rise but clicks are weak, revise title and meta description.
 - If clicks rise but CTA clicks are weak, revise intro, decision table, and CTA
   placement.
-- If CTA clicks rise but leads are weak, review booking or form friction.
+- If CTA clicks rise but leads are weak, review whether the page is forcing a
+  booking when a checklist or teardown request would fit better.
 - If rankings fall after a vendor release, refresh the article and source notes.
 - If screenshots are stale, refresh them or replace them with original diagrams.
 
