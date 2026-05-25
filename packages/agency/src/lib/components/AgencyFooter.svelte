@@ -5,6 +5,7 @@
 	 * Features the signature large brand text that bleeds off the bottom,
 	 * matching WORKWAY's footer design language with proper glass effects.
 	 */
+	import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 </script>
 
 <footer class="agency-footer">
@@ -21,7 +22,7 @@
 						<li><a href="/services">How I Work</a></li>
 						<li><a href="/stack">Stack & Boundaries</a></li>
 						<li><a href="/products">Proof Surfaces</a></li>
-						<li><a href="/book">Book Mapping Session</a></li>
+						<li><a href={agencyCoreMessaging.startWithWorkflowHref}>Start With a Workflow</a></li>
 					</ul>
 				</div>
 

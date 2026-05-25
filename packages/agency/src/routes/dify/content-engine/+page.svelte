@@ -2,6 +2,7 @@
   import { Button, HeroSignalField, SEO } from '@create-something/canon';
   import { BlurFade } from '@create-something/canon/magicui';
   import ArticleVisualFigure from '$lib/components/ArticleVisualFigure.svelte';
+  import FunnelLadder from '$lib/components/FunnelLadder.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
   const channelRoles = [
@@ -161,7 +162,9 @@
         </BlurFade>
         <BlurFade delay={0.15}>
           <div class="hero-actions">
-            <Button href="/book">{agencyCoreMessaging.bookMappingSessionLabel}</Button>
+            <Button href="/contact?source=dify-content-engine&intent=governance-checklist&lane=not_sure">
+              {agencyCoreMessaging.governanceChecklistLabel}
+            </Button>
             <Button href="/dify" variant="secondary">Back To Dify Lane</Button>
           </div>
         </BlurFade>
@@ -318,21 +321,11 @@
   </div>
 </section>
 
-<section class="cta-section">
-  <div class="shell-inner-pad content-shell">
-    <div class="product-surface product-surface--accent cta-grid">
-      <div>
-        <span class="product-kicker">Next Step</span>
-        <h2>Turn the first content piece into a measurable Dify surface.</h2>
-        <p>
-          Start with one canonical page, one Substack dispatch, one ledger row, and one clean lead
-          split between affiliate and implementation.
-        </p>
-      </div>
-      <Button href="/dify/mcp-control-plane">Open First Canonical Piece</Button>
-    </div>
-  </div>
-</section>
+<FunnelLadder
+  eyebrow="Next Step"
+  title="Route Dify readers by readiness, not only by booking intent."
+  description="Use the checklist for cold readers, the teardown for operators with a live workflow, and the mapping session for buyers ready to scope implementation."
+/>
 
 <style>
   .content-shell {
@@ -387,8 +380,7 @@
 
   .hero-grid,
   .cluster-grid,
-  .loop-grid,
-  .cta-grid {
+  .loop-grid {
     position: relative;
     z-index: 2;
     display: grid;
@@ -403,8 +395,7 @@
   }
 
   .hero-copy,
-  .section-heading,
-  .cta-grid div {
+  .section-heading {
     display: grid;
     gap: 0.9rem;
   }
@@ -426,8 +417,7 @@
   }
 
   .hero-copy h1,
-  .section-heading h2,
-  .cta-grid h2 {
+  .section-heading h2 {
     margin: 0;
     color: var(--color-fg-primary);
     letter-spacing: 0;
@@ -440,8 +430,7 @@
     line-height: 1;
   }
 
-  .section-heading h2,
-  .cta-grid h2 {
+  .section-heading h2 {
     font-size: clamp(1.65rem, 3vw, 2.75rem);
   }
 
@@ -452,7 +441,6 @@
   .target-card p,
   .cluster-item p,
   .economics-card p,
-  .cta-grid p,
   .loop-list li {
     margin: 0;
     color: var(--color-fg-secondary);
@@ -486,8 +474,7 @@
   .target-section,
   .cluster-section,
   .economics-section,
-  .loop-section,
-  .cta-section {
+  .loop-section {
     padding-top: clamp(1.25rem, 3vw, 2rem);
     padding-bottom: clamp(3.5rem, 6vw, 5rem);
   }
@@ -537,6 +524,10 @@
   .cluster-list {
     display: grid;
     gap: 0.85rem;
+  }
+
+  .cluster-grid {
+    align-items: start;
   }
 
   .cluster-item {
@@ -597,16 +588,20 @@
     font-size: 0.78rem;
   }
 
-  .cta-grid {
-    align-items: center;
-    padding: clamp(1.35rem, 3vw, 2rem);
+  @media (min-width: 981px) {
+    .cluster-list {
+      position: sticky;
+      top: 6.5rem;
+      max-height: calc(100vh - 8rem);
+      overflow-y: auto;
+      padding-right: 0.25rem;
+    }
   }
 
   @media (max-width: 980px) {
     .hero-grid,
     .cluster-grid,
     .loop-grid,
-    .cta-grid,
     .role-grid,
     .target-grid,
     .economics-grid {
@@ -619,9 +614,6 @@
       min-height: auto;
     }
 
-    .cta-grid {
-      justify-items: start;
-    }
   }
 
   @media (max-width: 680px) {

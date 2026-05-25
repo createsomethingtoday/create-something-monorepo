@@ -2,6 +2,7 @@
   import { Button, HeroSignalField, SEO } from '@create-something/canon';
   import { BlurFade } from '@create-something/canon/magicui';
   import ArticleVisualFigure from '$lib/components/ArticleVisualFigure.svelte';
+  import FunnelLadder from '$lib/components/FunnelLadder.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
   const timeline = [
@@ -153,7 +154,9 @@
         </BlurFade>
         <BlurFade delay={0.15}>
           <div class="hero-actions">
-            <Button href="/book">{agencyCoreMessaging.bookMappingSessionLabel}</Button>
+            <Button href="/contact?source=dify-n8n-vs-dify&intent=workflow-teardown&lane=workflow_infrastructure">
+              {agencyCoreMessaging.workflowTeardownLabel}
+            </Button>
             <Button href="/dify/content-engine" variant="secondary">Back To Content Engine</Button>
           </div>
         </BlurFade>
@@ -345,21 +348,11 @@
   </div>
 </section>
 
-<section class="cta-section">
-  <div class="shell-inner-pad compare-shell">
-    <div class="product-surface product-surface--accent cta-grid">
-      <div>
-        <span class="product-kicker">Next Step</span>
-        <h2>Map the workflow to the right layer.</h2>
-        <p>
-          Bring the workflow and the user who needs to operate it. The first decision is whether it
-          belongs in n8n, Cloudflare, Dify, or a split across all three.
-        </p>
-      </div>
-      <Button href="/book">{agencyCoreMessaging.bookMappingSessionLabel}</Button>
-    </div>
-  </div>
-</section>
+<FunnelLadder
+  eyebrow="Next Step"
+  title="Use the comparison to choose the right conversion path."
+  description="Cold readers can start with governance criteria. Operators with a live automation can request a teardown. Buyers with an owner and timeline can book the mapping session."
+/>
 
 <style>
   .compare-shell {
@@ -416,8 +409,7 @@
   .layer-grid,
   .matrix-grid,
   .migration-grid,
-  .source-layout,
-  .cta-grid {
+  .source-layout {
     position: relative;
     z-index: 2;
     display: grid;
@@ -432,8 +424,7 @@
   }
 
   .hero-copy,
-  .section-heading,
-  .cta-grid div {
+  .section-heading {
     display: grid;
     gap: 0.9rem;
   }
@@ -454,8 +445,7 @@
   }
 
   .hero-copy h1,
-  .section-heading h2,
-  .cta-grid h2 {
+  .section-heading h2 {
     margin: 0;
     color: var(--color-fg-primary);
     letter-spacing: 0;
@@ -468,8 +458,7 @@
     line-height: 1;
   }
 
-  .section-heading h2,
-  .cta-grid h2 {
+  .section-heading h2 {
     font-size: clamp(1.65rem, 3vw, 2.75rem);
   }
 
@@ -479,7 +468,6 @@
   .timeline-card p,
   .fit-card p,
   .comparison-row p,
-  .cta-grid p,
   .migration-list li {
     margin: 0;
     color: var(--color-fg-secondary);
@@ -512,8 +500,7 @@
   .matrix-section,
   .comparison-section,
   .migration-section,
-  .source-section,
-  .cta-section {
+  .source-section {
     padding-top: clamp(1.25rem, 3vw, 2rem);
     padding-bottom: clamp(3.5rem, 6vw, 5rem);
   }
@@ -653,18 +640,12 @@
     transform: translateY(-1px);
   }
 
-  .cta-grid {
-    align-items: center;
-    padding: clamp(1.35rem, 3vw, 2rem);
-  }
-
   @media (max-width: 980px) {
     .hero-grid,
     .layer-grid,
     .matrix-grid,
     .migration-grid,
     .source-layout,
-    .cta-grid,
     .timeline-grid {
       grid-template-columns: 1fr;
     }
@@ -678,9 +659,6 @@
       grid-template-columns: 1fr;
     }
 
-    .cta-grid {
-      justify-items: start;
-    }
   }
 
   @media (max-width: 680px) {
