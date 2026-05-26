@@ -31,7 +31,8 @@
 		name: '',
 		legalName: '',
 		biography: '',
-		avatarUrl: null as string | null
+		avatarUrl: null as string | null,
+		websiteUrl: ''
 	});
 
 	/** Track initial avatar to detect changes — avoids re-submitting unchanged Airtable URLs */
@@ -52,6 +53,7 @@
 		legalName?: string;
 		biography?: string;
 		avatarUrl?: string | null;
+		websiteUrl?: string | null;
 		email?: string;
 	}
 
@@ -71,7 +73,8 @@
 				name: profile.name || '',
 				legalName: profile.legalName || '',
 				biography: profile.biography || '',
-				avatarUrl: loadedAvatarUrl
+				avatarUrl: loadedAvatarUrl,
+				websiteUrl: profile.websiteUrl || ''
 			};
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Failed to load profile';
@@ -103,7 +106,8 @@
 			const updateData: Record<string, unknown> = {
 				name: formData.name,
 				legalName: formData.legalName,
-				biography: formData.biography
+				biography: formData.biography,
+				websiteUrl: formData.websiteUrl
 			};
 			if (formData.avatarUrl !== initialAvatarUrl) {
 				updateData.avatarUrl = formData.avatarUrl;
@@ -131,7 +135,8 @@
 				name: updated.name || '',
 				legalName: updated.legalName || '',
 				biography: updated.biography || '',
-				avatarUrl: savedAvatarUrl
+				avatarUrl: savedAvatarUrl,
+				websiteUrl: updated.websiteUrl || ''
 			};
 
 			successMessage = 'Profile saved successfully';
@@ -226,6 +231,16 @@
 										type="text"
 										bind:value={formData.legalName}
 										placeholder="Legal name for contracts"
+									/>
+								</div>
+
+								<div class="form-field">
+									<Label for="websiteUrl">Personal website URL</Label>
+									<Input
+										id="websiteUrl"
+										type="url"
+										bind:value={formData.websiteUrl}
+										placeholder="https://your-site.com"
 									/>
 								</div>
 

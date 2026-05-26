@@ -21,6 +21,23 @@ function getBase(env: { AIRTABLE_API_KEY: string; AIRTABLE_BASE_ID: string }) {
 	return new Airtable({ apiKey: env.AIRTABLE_API_KEY }).base(env.AIRTABLE_BASE_ID);
 }
 
+function normalizeOptionalUrl(value: string | null): string {
+	if (value === null) return '';
+
+	const trimmed = value.trim();
+	if (!trimmed) return '';
+
+	try {
+		const url = new URL(trimmed);
+		if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+			throw new Error('Invalid URL protocol');
+		}
+		return trimmed;
+	} catch {
+		throw error(400, 'Personal website URL is invalid');
+	}
+}
+
 async function getRecordsByEmail(base: ReturnType<typeof getBase>, email: string) {
 	const formula = `OR(FIND("${email}", ARRAYJOIN({📧Email}, ",")) > 0, FIND("${email}", ARRAYJOIN({📧WF Account Email}, ",")) > 0, FIND("${email}", ARRAYJOIN({📧Emails}, ",")) > 0)`;
 	const records = await base(CREATORS_TABLE)
@@ -66,7 +83,8 @@ export const GET: RequestHandler = async ({ locals, platform }) => {
 				email: email,
 				avatarUrl: (record.fields['🖼️Avatar (Primary)'] as { url: string }[] | undefined)?.[0]?.url,
 				biography: record.fields['ℹ️Biography'] as string,
-				legalName: record.fields['ℹ️Legal Name'] as string
+				legalName: record.fields['ℹ️Legal Name'] as string,
+				websiteUrl: (record.fields['🔗Personal Site'] as string) || ''
 			},
 			{ headers: noCacheHeaders }
 		);
@@ -85,6 +103,7 @@ interface ProfileUpdateData {
 	biography?: string;
 	legalName?: string;
 	avatarUrl?: string | null;
+	websiteUrl?: string | null;
 }
 
 /**
@@ -114,9 +133,9 @@ export const PATCH: RequestHandler = async ({ request, locals, platform }) => {
 		// Step 1: Find creator (same query as GET — errors propagate, not swallowed)
 		const records = await getRecordsByEmail(base, email);
 
-			if (!records || records.length === 0) {
-				throw error(404, 'Profile not found');
-			}
+		if (!records || records.length === 0) {
+			throw error(404, 'Profile not found');
+		}
 
 		const recordId = records[0].id;
 
@@ -127,6 +146,7 @@ export const PATCH: RequestHandler = async ({ request, locals, platform }) => {
 		if (data.name !== undefined) fields['Name'] = data.name;
 		if (data.biography !== undefined) fields['ℹ️Biography'] = data.biography;
 		if (data.legalName !== undefined) fields['ℹ️Legal Name'] = data.legalName;
+		if (data.websiteUrl !== undefined) fields['🔗Personal Site'] = normalizeOptionalUrl(data.websiteUrl);
 		// Avatar: use field ID (fldyddTon9Lu8BR8G) to match original dashboard exactly
 		if (data.avatarUrl !== undefined) {
 			fields['fldyddTon9Lu8BR8G'] = data.avatarUrl ? [{ url: data.avatarUrl }] : [];
@@ -153,7 +173,8 @@ export const PATCH: RequestHandler = async ({ request, locals, platform }) => {
 				email: email,
 				avatarUrl: (updated.fields['🖼️Avatar (Primary)'] as { url: string }[] | undefined)?.[0]?.url,
 				biography: updated.fields['ℹ️Biography'] as string,
-				legalName: updated.fields['ℹ️Legal Name'] as string
+				legalName: updated.fields['ℹ️Legal Name'] as string,
+				websiteUrl: (updated.fields['🔗Personal Site'] as string) || ''
 			},
 			{ headers: noCacheHeaders }
 		);
