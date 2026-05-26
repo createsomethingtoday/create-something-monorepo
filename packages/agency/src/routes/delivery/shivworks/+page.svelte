@@ -3,6 +3,7 @@
   import {
     shivworksAccessLanes,
     shivworksArtifactLinks,
+    shivworksDeliveryPackage,
     shivworksDeliverySummary,
     shivworksNextReview,
     shivworksOperatingLayers,
@@ -34,8 +35,36 @@
       <p><strong>Client</strong><span>{shivworksDeliverySummary.client}</span></p>
       <p><strong>Owner</strong><span>{shivworksDeliverySummary.owner}</span></p>
       <p><strong>Phase</strong><span>{shivworksDeliverySummary.phase}</span></p>
+      <p><strong>Recipient</strong><span>PM forwards to developer</span></p>
       <p><strong>Secrets</strong><span>Infisical, not chat or GitHub</span></p>
     </aside>
+  </div>
+</section>
+
+<section class="delivery-section">
+  <div class="shell-inner-pad">
+    <div class="section-lead">
+      <span class="product-kicker">Delivery Package</span>
+      <h2>What needs to be delivered, and how.</h2>
+      <p>
+        This is written so a non-technical PM can forward the page, while the technical recipient
+        can take ownership without guessing where the repo, secrets, database, and acceptance checks
+        live.
+      </p>
+    </div>
+
+    <div class="package-grid">
+      {#each shivworksDeliveryPackage as item}
+        <article class="product-surface package-card">
+          <div>
+            <span>{item.label}</span>
+            <h3>{item.audience}</h3>
+          </div>
+          <p><strong>Deliver</strong>{item.deliverable}</p>
+          <p><strong>How</strong>{item.how}</p>
+        </article>
+      {/each}
+    </div>
   </div>
 </section>
 
@@ -46,7 +75,7 @@
       <h2>What the developer needs.</h2>
       <p>
         These references are safe to share. Secret values, production member data, and Cloudflare
-        write permissions stay in the approved access systems.
+        write permissions stay in GitHub, Infisical, Cloudflare, and the app admin workflow.
       </p>
     </div>
 
@@ -94,8 +123,8 @@
       <span class="product-kicker">Developer Runbook</span>
       <h2>Start with dev secrets and local data.</h2>
       <p>
-        The normal path is GitHub access plus Infisical dev access. Direct production D1 access is
-        a separate approval because it exposes real member and session data.
+        The normal path is GitHub access plus Infisical dev access. Cloudflare D1 access can be
+        granted now to the named technical owner who needs direct production database operations.
       </p>
     </div>
 
@@ -260,6 +289,7 @@
 
   .artifact-grid,
   .layer-grid,
+  .package-grid,
   .runbook-grid {
     display: grid;
     gap: 16px;
@@ -271,6 +301,10 @@
 
   .layer-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .package-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .runbook-grid {
@@ -300,6 +334,7 @@
   .artifact-link span,
   .layer-tier,
   .layer-status,
+  .package-card span,
   .runbook-card > span,
   .access-table article > span {
     color: #5eead4;
@@ -315,17 +350,38 @@
   }
 
   .layer-card,
+  .package-card,
   .runbook-card {
     padding: 24px;
     border-top: 4px solid rgba(167, 184, 255, 0.76);
   }
 
   .layer-card h3,
+  .package-card h3,
   .evidence-panel h2 {
     margin: 14px 0 10px;
     font-size: clamp(24px, 3vw, 36px);
     line-height: 1.05;
     letter-spacing: 0;
+  }
+
+  .package-card {
+    display: grid;
+    gap: 16px;
+    align-content: start;
+  }
+
+  .package-card p {
+    display: grid;
+    gap: 7px;
+    margin: 0;
+    color: rgba(246, 247, 251, 0.72);
+    line-height: 1.5;
+  }
+
+  .package-card strong {
+    color: rgba(246, 247, 251, 0.9);
+    font-size: 0.9rem;
   }
 
   .runbook-card {
@@ -416,6 +472,7 @@
     .delivery-hero__inner,
     .artifact-grid,
     .layer-grid,
+    .package-grid,
     .evidence-layout {
       grid-template-columns: 1fr;
     }
