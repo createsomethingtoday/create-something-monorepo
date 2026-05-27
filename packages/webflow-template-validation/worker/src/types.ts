@@ -149,6 +149,13 @@ export interface ValidationSubmitResponse {
 		flagged: boolean;
 		reasons: string[];
 	};
+	artifact?: {
+		persisted: boolean;
+		key?: string;
+		sha256?: string;
+		byteSize?: number;
+		reason?: 'r2_not_configured' | 'r2_write_failed';
+	};
 }
 
 export interface ValidationOptions {

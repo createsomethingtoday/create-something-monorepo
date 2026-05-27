@@ -1,0 +1,11 @@
+{
+  "generated_at": "2026-05-27T00:00:00.000Z",
+  "selected_count": 30,
+  "completed_count": 30,
+  "failed_count": 0,
+  "approved_control_medium_or_high_proxy_rate": 0.267,
+  "rejected_visual_any_proxy_signal_rate": 1,
+  "notes": [
+    "Approved controls can still carry medium/high visual proxy load, so this proxy lane is useful for reviewer focus but not autonomous quality-band classification."
+  ]
+}
