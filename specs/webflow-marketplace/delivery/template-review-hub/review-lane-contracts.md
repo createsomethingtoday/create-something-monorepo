@@ -126,9 +126,12 @@ allowed_sources:
   - webflow_cloud_app_template_form_payload
   - validator_script_marker
   - validator_script_src
+  - persisted_validator_latest_status
 may_emit:
   - validator_script_present
   - validator_script_missing_requirement_finding
+  - validator_result_missing_requirement_finding
+  - validator_result_failed_requirement_finding
   - validator_contract_unavailable
 must_not_emit:
   - validation_result_finding_without_result_artifact
@@ -159,6 +162,12 @@ This lane makes Validator app use enforceable once Marketplace policy requires
 it. The first check is script presence on the submitted asset or published
 review surface. Script presence proves the submission contract was followed; it
 does not, by itself, prove the template passed validation.
+
+The template submission form now uses this lane as a preflight gate when policy
+is enabled: it checks the published URL for the bridge and calls
+`/app-validator/submission/latest` to confirm the latest persisted run reached a
+100% category pass. That result is still an objective submission requirement,
+not a final marketplace quality rating.
 
 Do not store raw bridge tokens in logs, prompts, creator-facing feedback, or
 review artifacts. Store only marker presence, allowed script source evidence,

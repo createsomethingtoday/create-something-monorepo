@@ -107,7 +107,17 @@ type PublishedUrlValidationResponse = {
   siteResults?: {
     passedCount?: number;
   };
+  validatorPreflight?: ValidatorAppPreflightPayload;
   error?: string;
+};
+
+type ValidatorAppPreflightPayload = {
+  required?: boolean;
+  passed?: boolean;
+  status?: string;
+  message?: string;
+  issues?: string[];
+  installUrl?: string;
 };
 
 type RawTemplateAnalyzerPayload = {
@@ -286,6 +296,7 @@ type ValidationFailurePayload = {
   validationIssues?: unknown;
   message?: unknown;
   error?: unknown;
+  validatorPreflight?: ValidatorAppPreflightPayload;
 };
 
 function validationFailureIssues(data: ValidationFailurePayload) {
@@ -1372,6 +1383,7 @@ export function TemplateIntake() {
   const [imageErrors, setImageErrors] = useState<Record<string, string | null>>({});
   const [autofillManaged, setAutofillManaged] = useState<TemplateAutofillState>({});
   const [analyzerSummary, setAnalyzerSummary] = useState<TemplateAnalyzerSummary | null>(null);
+  const [validatorAppActionUrl, setValidatorAppActionUrl] = useState<string | null>(null);
   const [isEmbedded, setIsEmbedded] = useState(false);
   const [optionSearch, setOptionSearch] = useState({
     categories: '',
@@ -1466,6 +1478,17 @@ export function TemplateIntake() {
     return {
       label: creatorProfileExistsActionLabel,
       onClick: () => scrollToSubmissionSection('submit-today')
+    };
+  }
+
+  function getValidatorAppAction(feedback?: StatusMessage | null): FeedbackAction | undefined {
+    if (!validatorAppActionUrl || feedback?.tone !== 'error') {
+      return undefined;
+    }
+
+    return {
+      label: 'Open Asset Dashboard Validator',
+      onClick: () => window.open(validatorAppActionUrl, '_blank', 'noopener,noreferrer')
     };
   }
 
@@ -1822,6 +1845,7 @@ export function TemplateIntake() {
     if (key === 'publishedUrl') {
       setFeedback('publishedUrl', null);
       setAnalyzerSummary(null);
+      setValidatorAppActionUrl(null);
       setVerification((current) => ({
         ...current,
         publishedUrlVerified: '',
@@ -2226,6 +2250,7 @@ export function TemplateIntake() {
     }
 
     setAnalyzerSummary(null);
+    setValidatorAppActionUrl(null);
     setFeedback('publishedUrl', {
       tone: 'info',
       message: 'Running the full published-site crawl. This can take a few minutes.'
@@ -2241,6 +2266,7 @@ export function TemplateIntake() {
 
     if (!response.ok || !validationData.passed || !validationData.normalizedUrl) {
       const status = validationFailureStatus(response, validationData);
+      setValidatorAppActionUrl(validationData.validatorPreflight?.installUrl || null);
       setTemplateStatus(status);
       setFeedback('publishedUrl', status);
       return;
@@ -2299,6 +2325,7 @@ export function TemplateIntake() {
         .filter(Boolean)
         .join(' ')
     });
+    setValidatorAppActionUrl(null);
     setVerification((current) => ({
       ...current,
       publishedUrlVerified: validationData.normalizedUrl || '',
@@ -2538,12 +2565,13 @@ export function TemplateIntake() {
         };
         error?: string;
         validationIssues?: string[];
+        validatorPreflight?: ValidatorAppPreflightPayload;
         warning?: string;
       };
 
       if (!response.ok || !data.asset) {
         const validationIssues = validationFailureIssues(data);
-        setTemplateStatus({
+        const status: StatusMessage = {
           tone: 'error',
           message:
             validationIssues.length === 1
@@ -2552,7 +2580,12 @@ export function TemplateIntake() {
                 ? `Published URL validation found ${validationIssues.length} blocking issues.`
                 : data.error || 'Failed to submit template.',
           details: validationIssues.length > 1 ? validationIssues : undefined
-        });
+        };
+        setValidatorAppActionUrl(data.validatorPreflight?.installUrl || null);
+        if (data.validatorPreflight) {
+          setFeedback('publishedUrl', status);
+        }
+        setTemplateStatus(status);
         return;
       }
 
@@ -2568,6 +2601,7 @@ export function TemplateIntake() {
       });
       setAutofillManaged({});
       setAnalyzerSummary(null);
+      setValidatorAppActionUrl(null);
       setTemplate((current) => ({
         ...initialTemplateState,
         creatorEmail: current.creatorEmail,
@@ -3086,6 +3120,7 @@ export function TemplateIntake() {
                     <InlineActionField
                       actionLabel="Validate template"
                       feedback={fieldFeedback.publishedUrl}
+                      feedbackAction={getValidatorAppAction(fieldFeedback.publishedUrl)}
                       onAction={verifyPublishedUrl}
                     >
                       <label
@@ -3100,7 +3135,8 @@ export function TemplateIntake() {
                         <code className="submission-inline-code">*.webflow.io</code> URL. The full
                         site crawl can take a few minutes. As of May 1, 2026, legacy IX2
                         interactions are rejected; rebuild interactions with Webflow Interactions
-                        powered by GSAP (IX3).
+                        powered by GSAP (IX3). The Webflow Way Validator bridge and 100% pass result
+                        must also be confirmed from the Asset Dashboard before submission.
                       </p>
                       <input
                         className="field-input input w-input"

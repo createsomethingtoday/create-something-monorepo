@@ -132,6 +132,37 @@ interface ValidationResultArtifactPersistResult {
 	reason?: 'r2_not_configured' | 'r2_write_failed';
 }
 
+interface ValidationSubmissionSummary {
+	totalErrors: number;
+	totalWarnings: number;
+	totalInfo: number;
+	passedCategories: number;
+	failedCategories: number;
+	totalCategories: number;
+	score: number;
+	passed: boolean;
+}
+
+interface ValidationResultRecord {
+	schemaVersion: 'validator_app_submission_latest.v0.1';
+	siteId: string;
+	siteName: string | null;
+	siteUrl?: string;
+	submittedAt: string;
+	correlationId: string;
+	payloadHash: string;
+	rawBridgeTokenStored: false;
+	summary: ValidationSubmissionSummary;
+	artifact: ValidationResultArtifactPersistResult;
+}
+
+interface SnippetTokenLookupRecord {
+	bridgeTokenSha256: string;
+	siteId: string;
+	updatedAt: string;
+	rawBridgeTokenStored: false;
+}
+
 interface R2BucketLike {
 	put(
 		key: string,
@@ -145,7 +176,9 @@ interface R2BucketLike {
 
 const reviewJobs = new Map<string, ReviewJobState>();
 const snippetTokens = new Map<string, SnippetTokenRecord>();
+const snippetTokenLookups = new Map<string, SnippetTokenLookupRecord>();
 const submissionStates = new Map<string, SubmissionRateLimitState>();
+const validationResultRecords = new Map<string, ValidationResultRecord>();
 
 export class ReviewJobsDurableObject {
 	private readonly state: DurableObjectState;
@@ -285,6 +318,11 @@ export default {
 				return await handleValidationSubmit(request, env, ctx, correlationId);
 			}
 
+			if (url.pathname === '/app-validator/submission/latest') {
+				if (request.method !== 'GET') return methodNotAllowed(request);
+				return await handleValidationSubmissionLatest(request, env, correlationId);
+			}
+
 			switch (url.pathname) {
 				case '/api/validate':
 					if (request.method !== 'POST') return methodNotAllowed(request);
@@ -316,7 +354,8 @@ export default {
 								'/app-validator/snippet/status',
 								'/app-validator/snippet/rotate-token',
 								REVIEW_SNIPPET_ASSET_PATH,
-								'/app-validator/submit'
+								'/app-validator/submit',
+								'/app-validator/submission/latest'
 							]
 						},
 						200,
@@ -529,7 +568,7 @@ async function handleSnippetInstall(
 
 	const existing = await getSnippetTokenState(env, body.siteId);
 	const bridgeToken = existing?.bridgeToken || generateBridgeToken();
-	const snippet = buildSnippetPayload(bridgeToken, request);
+	const snippet = buildSnippetPayload(bridgeToken, request, body.siteId);
 
 	const now = new Date().toISOString();
 	const record: SnippetTokenRecord = {
@@ -556,7 +595,14 @@ async function handleSnippetInstall(
 	);
 
 	if (body.mode === 'programmatic' || body.mode === 'webflow-api') {
-		const programmatic = await attemptProgrammaticSnippetInstall(env, body.siteId, snippet, correlationId, body.idToken);
+		const programmatic = await attemptProgrammaticSnippetInstall(
+			env,
+			body.siteId,
+			bridgeToken,
+			snippet,
+			correlationId,
+			body.idToken
+		);
 		if (programmatic.ok) {
 			record.installMethod = 'webflow-api';
 			record.status = 'active';
@@ -617,7 +663,7 @@ async function handleSnippetStatus(request: Request, env: unknown): Promise<Resp
 			status: 'pending_manual',
 			message: 'Published review surface not installed yet.',
 			updatedAt: new Date().toISOString(),
-			snippet: buildSnippetPayload('__REPLACE_WITH_TOKEN__', request)
+			snippet: buildSnippetPayload('__REPLACE_WITH_TOKEN__', request, siteId)
 		};
 		return jsonResponse(response, 200, request);
 	}
@@ -628,7 +674,7 @@ async function handleSnippetStatus(request: Request, env: unknown): Promise<Resp
 
 	const response: SnippetStatusResponse & { snippet: string } = {
 		...existing,
-		snippet: buildSnippetPayload(existing.bridgeToken, request)
+		snippet: buildSnippetPayload(existing.bridgeToken, request, existing.siteId)
 	};
 	return jsonResponse(response, 200, request);
 }
@@ -647,7 +693,7 @@ async function handleSnippetRotateToken(
 	const existing = await getSnippetTokenState(env, body.siteId);
 	const bridgeToken = generateBridgeToken();
 	const now = new Date().toISOString();
-	const snippet = buildSnippetPayload(bridgeToken, request);
+	const snippet = buildSnippetPayload(bridgeToken, request, body.siteId);
 	let record: SnippetTokenRecord = {
 		siteId: body.siteId,
 		siteName: body.siteName || existing?.siteName || null,
@@ -664,6 +710,7 @@ async function handleSnippetRotateToken(
 		const programmatic = await attemptProgrammaticSnippetInstall(
 			env,
 			body.siteId,
+			bridgeToken,
 			snippet,
 			correlationId
 		);
@@ -844,6 +891,19 @@ async function handleValidationSubmit(
 		payloadHash,
 		validationResults: sanitizedResults
 	});
+	const latestResult: ValidationResultRecord = {
+		schemaVersion: 'validator_app_submission_latest.v0.1',
+		siteId,
+		siteName,
+		siteUrl,
+		submittedAt,
+		correlationId,
+		payloadHash,
+		rawBridgeTokenStored: false,
+		summary: summarizeValidationSubmission(sanitizedResults),
+		artifact: artifactResult
+	};
+	await persistValidationResultState(env, latestResult);
 
 	const remaining = Math.max(limitConfig.maxSubmissions - nextState.attempts.length, 0);
 	const response: ValidationSubmitResponse = {
@@ -892,6 +952,81 @@ async function handleValidationSubmit(
 	);
 
 	return jsonResponse(response, 200, request);
+}
+
+async function handleValidationSubmissionLatest(
+	request: Request,
+	env: unknown,
+	correlationId: string
+): Promise<Response> {
+	const url = new URL(request.url);
+	const siteIdParam = normalizeSiteId(url.searchParams.get('siteId'));
+	const bridgeTokenSha256 = normalizeSha256(url.searchParams.get('bridgeTokenSha256'));
+	let siteId = siteIdParam;
+
+	if (!siteId && bridgeTokenSha256) {
+		const lookup = await getSnippetTokenLookupState(env, bridgeTokenSha256);
+		siteId = lookup?.siteId || null;
+	}
+
+	if (!siteId && !bridgeTokenSha256) {
+		return jsonResponse(
+			{ error: 'Missing required query param: siteId or bridgeTokenSha256', correlationId },
+			400,
+			request
+		);
+	}
+
+	if (!siteId) {
+		return jsonResponse(
+			{
+				status: 'missing',
+				accepted: false,
+				passed: false,
+				message: 'No Validator app site mapping was found for this bridge token.',
+				correlationId,
+				rawBridgeTokenStored: false
+			},
+			404,
+			request
+		);
+	}
+
+	const record = await getValidationResultState(env, siteId);
+	if (!record) {
+		return jsonResponse(
+			{
+				status: 'missing',
+				accepted: false,
+				passed: false,
+				siteId,
+				message: 'No Validator app result has been submitted for this site yet.',
+				correlationId,
+				rawBridgeTokenStored: false
+			},
+			404,
+			request
+		);
+	}
+
+	return jsonResponse(
+		{
+			status: 'available',
+			accepted: true,
+			passed: record.summary.passed,
+			siteId: record.siteId,
+			siteName: record.siteName,
+			siteUrl: record.siteUrl,
+			submittedAt: record.submittedAt,
+			correlationId: record.correlationId,
+			payloadHash: record.payloadHash,
+			rawBridgeTokenStored: false,
+			summary: record.summary,
+			artifact: record.artifact
+		},
+		200,
+		request
+	);
 }
 
 async function runReviewJob(jobId: string, env: unknown): Promise<void> {
@@ -1468,6 +1603,33 @@ async function persistSnippetTokenState(
 ): Promise<void> {
 	snippetTokens.set(record.siteId, record);
 	await writeDurableState(env, `snippet:${record.siteId}`, record);
+
+	if (record.bridgeToken) {
+		const bridgeTokenSha256 = await sha256Hex(record.bridgeToken);
+		const lookup: SnippetTokenLookupRecord = {
+			bridgeTokenSha256,
+			siteId: record.siteId,
+			updatedAt: record.updatedAt,
+			rawBridgeTokenStored: false
+		};
+		snippetTokenLookups.set(bridgeTokenSha256, lookup);
+		await writeDurableState(env, `snippet-token:${bridgeTokenSha256}`, lookup);
+	}
+}
+
+async function getSnippetTokenLookupState(
+	env: unknown,
+	bridgeTokenSha256: string
+): Promise<SnippetTokenLookupRecord | null> {
+	const inMemory = snippetTokenLookups.get(bridgeTokenSha256);
+	if (inMemory) return inMemory;
+
+	const persisted = await readDurableState(env, `snippet-token:${bridgeTokenSha256}`);
+	if (!persisted) return null;
+
+	const record = persisted as SnippetTokenLookupRecord;
+	snippetTokenLookups.set(bridgeTokenSha256, record);
+	return record;
 }
 
 async function getSubmissionState(
@@ -1492,6 +1654,29 @@ async function persistSubmissionState(
 	const normalized = reviveSubmissionState(record);
 	submissionStates.set(record.siteId, normalized);
 	await writeDurableState(env, `submission:${record.siteId}`, normalized);
+}
+
+async function getValidationResultState(
+	env: unknown,
+	siteId: string
+): Promise<ValidationResultRecord | null> {
+	const inMemory = validationResultRecords.get(siteId);
+	if (inMemory) return inMemory;
+
+	const persisted = await readDurableState(env, `validation-result:${siteId}`);
+	if (!persisted) return null;
+
+	const record = persisted as ValidationResultRecord;
+	validationResultRecords.set(siteId, record);
+	return record;
+}
+
+async function persistValidationResultState(
+	env: unknown,
+	record: ValidationResultRecord
+): Promise<void> {
+	validationResultRecords.set(record.siteId, record);
+	await writeDurableState(env, `validation-result:${record.siteId}`, record);
 }
 
 function pruneReviewJobState(job: ReviewJobState): ReviewJobState {
@@ -1701,6 +1886,12 @@ function normalizeSiteId(value: unknown): string | null {
 	return trimmed;
 }
 
+function normalizeSha256(value: unknown): string | null {
+	if (typeof value !== 'string') return null;
+	const normalized = value.trim().toLowerCase();
+	return /^[a-f0-9]{64}$/.test(normalized) ? normalized : null;
+}
+
 function sanitizeValidationResults(
 	validationResults: ValidationSubmitRequest['validationResults']
 ): ValidationSubmitRequest['validationResults'] {
@@ -1746,6 +1937,54 @@ function sanitizeValidationResults(
 				: undefined,
 		summary,
 		categories
+	};
+}
+
+function summarizeValidationSubmission(
+	validationResults: ValidationSubmitRequest['validationResults']
+): ValidationSubmissionSummary {
+	const summary =
+		validationResults.summary && typeof validationResults.summary === 'object'
+			? validationResults.summary
+			: {};
+	const categories = Array.isArray(validationResults.categories)
+		? validationResults.categories
+		: [];
+	const categoryErrors = categories.reduce((total, category) => {
+		const issues = Array.isArray(category.issues) ? category.issues : [];
+		return total + issues.filter((issue) => issue.severity === 'error').length;
+	}, 0);
+	const categoryPassed = categories.filter((category) => category.passed === true).length;
+	const categoryFailed = categories.filter((category) => category.passed !== true).length;
+	const summaryErrors = readSummaryCount(summary, ['totalErrors', 'errors']);
+	const totalErrors = Math.max(summaryErrors, categoryErrors);
+	const totalWarnings = readSummaryCount(summary, ['totalWarnings', 'warnings']);
+	const totalInfo = readSummaryCount(summary, ['totalInfo', 'infos']);
+	const summaryPassedCategories = readSummaryCount(summary, ['passedCategories']);
+	const summaryFailedCategories = readSummaryCount(summary, ['failedCategories']);
+	const passedCategories =
+		summaryPassedCategories > 0 || summaryFailedCategories > 0
+			? summaryPassedCategories
+			: categoryPassed;
+	const failedCategories =
+		summaryPassedCategories > 0 || summaryFailedCategories > 0
+			? summaryFailedCategories
+			: categoryFailed;
+	const totalCategories =
+		passedCategories + failedCategories > 0
+			? passedCategories + failedCategories
+			: categories.length;
+	const score = totalCategories > 0 ? Math.round((passedCategories / totalCategories) * 100) : 0;
+
+	return {
+		totalErrors,
+		totalWarnings,
+		totalInfo,
+		passedCategories,
+		failedCategories,
+		totalCategories,
+		score,
+		passed: totalCategories > 0 && score === 100 && failedCategories === 0 && totalErrors === 0
 	};
 }
 
@@ -2058,6 +2297,7 @@ async function persistValidationResultArtifact(
 async function attemptProgrammaticSnippetInstall(
 	env: unknown,
 	siteId: string,
+	bridgeToken: string,
 	snippet: string,
 	correlationId: string,
 	idToken?: string
@@ -2114,7 +2354,10 @@ async function attemptProgrammaticSnippetInstall(
 		// The inline script sets the bridge config and loads the hosted review.js.
 		// Validated against Template Marketplace (5e593fb060cf87bbaf75dd20).
 		const reviewScriptUrl = `${readEnvString(env, 'WORKER_PUBLIC_URL') || 'https://validation-worker.createsomething.workers.dev'}${REVIEW_SNIPPET_ASSET_PATH}`;
-		const inlineSource = `window.__WF_REVIEW_BRIDGE={version:"${REVIEW_SNIPPET_VERSION}",marker:"${REVIEW_SNIPPET_MARKER}",bridgeToken:"${siteId.slice(0, 8)}",reviewSurface:"published-review",reviewScriptUrl:"${reviewScriptUrl}"};var s=document.createElement("script");s.src="${reviewScriptUrl}";document.head.appendChild(s);`;
+		const inlineSource = [
+			buildReviewBridgeConfigSource(bridgeToken, reviewScriptUrl, siteId),
+			`var s=document.createElement("script");s.src=${JSON.stringify(reviewScriptUrl)};document.head.appendChild(s);`
+		].join('');
 
 		const registerResponse = await fetch(
 			`${webflowApiBase}/beta/sites/${siteId}/registered_scripts/inline`,
@@ -2165,18 +2408,23 @@ async function attemptProgrammaticSnippetInstall(
 	}
 }
 
-function buildSnippetPayload(token: string, request: Request): string {
+function buildSnippetPayload(token: string, request: Request, siteId?: string): string {
 	const reviewScriptUrl = getReviewSnippetUrl(request);
 	return `<script>
-window.__WF_REVIEW_BRIDGE = {
-  version: "${REVIEW_SNIPPET_VERSION}",
-  marker: "${REVIEW_SNIPPET_MARKER}",
-  bridgeToken: "${token}",
-  reviewSurface: "published-review",
-  reviewScriptUrl: "${reviewScriptUrl}"
-};
+${buildReviewBridgeConfigSource(token, reviewScriptUrl, siteId)}
 </script>
 <script src="${reviewScriptUrl}"></script>`;
+}
+
+function buildReviewBridgeConfigSource(token: string, reviewScriptUrl: string, siteId?: string): string {
+	const siteIdLine = siteId ? `  siteId: ${JSON.stringify(siteId)},\n` : '';
+	return `window.__WF_REVIEW_BRIDGE = {
+${siteIdLine}  version: ${JSON.stringify(REVIEW_SNIPPET_VERSION)},
+  marker: ${JSON.stringify(REVIEW_SNIPPET_MARKER)},
+  bridgeToken: ${JSON.stringify(token)},
+  reviewSurface: "published-review",
+  reviewScriptUrl: ${JSON.stringify(reviewScriptUrl)}
+};`;
 }
 
 function generateBridgeToken(): string {

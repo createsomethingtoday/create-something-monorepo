@@ -50,6 +50,18 @@ Optional analyzer autofill:
   and is used by `POST /api/intake/validate-published-url` to suggest template details and
   expose screenshot-download links after a successful validation pass.
 
+Validator app submission preflight:
+
+- `VALIDATOR_APP_PREFLIGHT_POLICY`
+  defaults to `enforce`. Use `warn` to collect bridge/result evidence without blocking the
+  form, or `disabled` for rollback.
+- `VALIDATOR_APP_WORKER_URL`
+  defaults to `https://validation-worker.createsomething.workers.dev` and is used to confirm
+  the published bridge plus latest persisted Validator result.
+- `VALIDATOR_APP_INSTALL_URL`
+  defaults to `https://webflow.com/templates/dashboard/assets`, where creators can open the
+  Asset Dashboard Validator if the bridge or latest 100% pass result is missing.
+
 Required upload worker:
 
 - `UPLOADS_WORKER_SECRET`

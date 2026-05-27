@@ -14,6 +14,7 @@ import {
   getPublishedUrlValidationIssues,
   runPublishedUrlValidation
 } from '../../../../lib/intake/published-url';
+import { runValidatorAppSubmissionPreflight } from '../../../../lib/intake/validator-app';
 import { validateTemplateNameSyntax } from '../../../../lib/intake/template-name';
 import { checkTemplateNameAvailability } from '../../../../lib/server/template-name-availability';
 import { verifyTurnstileToken } from '../../../../lib/server/turnstile';
@@ -295,6 +296,22 @@ export async function POST(request: Request) {
       );
     }
 
+    const validatorPreflight = await runValidatorAppSubmissionPreflight(
+      publishedValidation.normalizedUrl
+    );
+    if (validatorPreflight.required && !validatorPreflight.passed) {
+      return jsonNoStore(
+        {
+          error: validatorPreflight.message,
+          validationIssues: validatorPreflight.issues,
+          validatorPreflight
+        },
+        {
+          status: validatorPreflight.status === 'validator_app_unavailable' ? 503 : 400
+        }
+      );
+    }
+
     const previewUrl = normalizePreviewUrl(body.previewUrl || '');
     const combinedFeatures = new Set(featureFlags);
     if (publishedValidation.summary.gsapDetected) {
@@ -343,6 +360,9 @@ export async function POST(request: Request) {
         ? `<li>Feature flags: ${escapeHtml([...combinedFeatures].join(', '))}</li>`
         : '',
       `<li>Published URL verified: ${escapeHtml(publishedValidation.normalizedUrl)}</li>`,
+      validatorPreflight.passed
+        ? `<li>Webflow Way Validator confirmed: ${escapeHtml(validatorPreflight.result?.score ? `${validatorPreflight.result.score}% pass` : 'passed')}.</li>`
+        : '',
       publishedValidation.summary.gsapDetected
         ? '<li>GSAP detected during published-site crawl.</li>'
         : '',

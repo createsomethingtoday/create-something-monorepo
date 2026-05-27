@@ -16,9 +16,10 @@ the app run writes a stable, policy-versioned artifact to the review ledger or
 R2.
 
 The current app already requests the review bridge and can inject the script.
-The missing piece is Marketplace enforcement: new submissions need a policy that
-requires the app/bridge script and a checker that verifies it on the submitted
-asset or published review surface.
+Marketplace enforcement now has a first implementation path: the template
+submission form checks the published review surface for the bridge and confirms a
+latest persisted Validator result before allowing submission when the policy is
+enabled.
 
 ## Current Role
 
@@ -85,15 +86,25 @@ and the review agent receives either:
 - script-presence evidence, which proves the app requirement was followed
 - a persisted validation-result artifact, which can support objective findings
 
+Current implementation details:
+
+- the Webflow Cloud template submission form owns the preflight gate
+- the first enforced surface is the submitted `*.webflow.io` published URL
+- the form checks both bridge presence and `/app-validator/submission/latest`
+- latest Validator status can be looked up by `siteId` when the bridge includes
+  it, or by SHA-256 bridge-token hash for older snippets
+- missing bridge, missing result, failed result, and validator-unavailable states
+  are returned separately
+- creators are sent to the Asset Dashboard Validator to install/run the app,
+  publish, and validate again
+
 Details still to codify:
 
-- which submission surface owns and enforces the required validation step
-- whether validation runs against the submitted asset, the published URL, or both
-- how the artifact is written to D1/R2 and linked to the Asset Version
-- how failed, skipped, or unavailable validation is represented
-- which rule catalog version and policy snapshot the form uses
-- whether creators can resubmit after fixing validator findings without reviewer
-  intervention
+- how the latest Validator artifact is linked to the Airtable Asset Version
+- which rule catalog version and policy snapshot the form should expose in the
+  persisted review ledger
+- when warnings should become blocking versus allowed under a 100% category-pass
+  result
 
 ## Current First-Class Lanes
 

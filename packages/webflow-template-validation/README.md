@@ -45,6 +45,16 @@ artifact to R2 when a bucket binding is configured:
 If neither binding exists, submissions are still accepted and the response
 returns `artifact.persisted: false` with `reason: "r2_not_configured"`.
 
+The worker also stores the latest sanitized submission status per site for the
+Marketplace form:
+
+- `GET /app-validator/submission/latest?siteId=<site-id>`
+- `GET /app-validator/submission/latest?bridgeTokenSha256=<sha256>`
+
+This endpoint returns whether the latest Validator run reached a 100% pass
+without exposing the raw bridge token. It is submission-contract evidence only;
+it does not emit approval, rejection, final rating, or visual quality judgment.
+
 Persisted artifacts use schema `validator_app_results_submission.v0.1`, store
 only sanitized summary/category/issue fields, and set
 `raw_bridge_token_stored: false`. The review MCP can normalize those artifacts
