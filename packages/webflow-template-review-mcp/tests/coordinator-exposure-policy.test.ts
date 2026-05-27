@@ -10,6 +10,7 @@ const execFileAsync = promisify(execFile);
 const packageRoot = path.resolve(import.meta.dirname, '..');
 const readinessScript = path.join(packageRoot, 'scripts/score-quality-band-readiness.ts');
 const exposurePolicyScript = path.join(packageRoot, 'scripts/derive-coordinator-exposure-policy.ts');
+const contractSmokeScript = path.join(packageRoot, 'scripts/run-coordinator-contract-smoke.ts');
 const fixtureDir = path.join(packageRoot, 'fixtures/quality-band-readiness');
 
 async function runScript(script: string, args: string[]) {
@@ -326,5 +327,49 @@ test('coordinator output gate requires reviewer confirmation for reviewer-facing
     assert.deepEqual(allowed.allowed_requested_outputs, ['reviewer_facing_quality_cue']);
     assert.deepEqual(allowed.blocked_outputs, []);
     assert.deepEqual(allowed.missing_human_gates, []);
+  });
+});
+
+test('coordinator contract smoke validates reusable output request fixtures', async () => {
+  await withTempDir(async (outDir) => {
+    const { stdout } = await runScript(contractSmokeScript, ['--out', outDir]);
+    const result = JSON.parse(stdout) as { ok: boolean; status: string; case_count: number };
+    assert.equal(result.ok, true);
+    assert.equal(result.status, 'pass');
+    assert.equal(result.case_count, 3);
+
+    const summary = await readJson<{
+      status: string;
+      case_results: Array<{ case_id: string; expected_status: string; actual_status: string; ok: boolean }>;
+    }>(path.join(outDir, 'coordinator-contract-smoke-summary.json'));
+    assert.equal(summary.status, 'pass');
+    assert.deepEqual(
+      summary.case_results.map((item) => ({
+        case_id: item.case_id,
+        expected_status: item.expected_status,
+        actual_status: item.actual_status,
+        ok: item.ok,
+      })),
+      [
+        {
+          case_id: 'creator_guidance_allowed',
+          expected_status: 'allowed',
+          actual_status: 'allowed',
+          ok: true,
+        },
+        {
+          case_id: 'final_quality_band_blocked',
+          expected_status: 'blocked',
+          actual_status: 'blocked',
+          ok: true,
+        },
+        {
+          case_id: 'sales_input_blocked',
+          expected_status: 'blocked',
+          actual_status: 'blocked',
+          ok: true,
+        },
+      ],
+    );
   });
 });

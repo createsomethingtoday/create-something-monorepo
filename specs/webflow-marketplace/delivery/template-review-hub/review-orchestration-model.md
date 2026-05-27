@@ -233,6 +233,8 @@ It should not receive:
 
 The coordinator should not directly emit reviewer-visible or creator-visible content. It should first produce a small output request that names `requested_outputs`, `requested_lanes`, `input_sources`, `intended_audience`, and `human_gate_confirmations`; the output gate should then allow or block the emission against the current coordinator exposure policy.
 
+The reusable fixture contract is `fixtures/coordinator-output-requests/manifest.json` in `packages/webflow-template-review-mcp`. Run `pnpm --filter @create-something/webflow-template-review-mcp coordinator:contract-smoke` before changing Dify coordinator output wiring.
+
 ## Stability Rule
 
 The model can be powerful, but the review standard should live in artifacts.

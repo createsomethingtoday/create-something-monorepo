@@ -91,6 +91,15 @@ The output request is intentionally small:
 
 The output gate writes `coordinator-output-gate.json` and `.md`. It exits with code `2` when blocked. Dify should treat that status as a hard stop and should not show or write the requested output.
 
+Run the reusable fixture smoke:
+
+```bash
+pnpm --filter @create-something/webflow-template-review-mcp coordinator:contract-smoke -- \
+  --out /tmp/webflow-template-review-coordinator-contract-smoke
+```
+
+This command derives a readiness-backed exposure policy and validates the output request fixtures in `fixtures/coordinator-output-requests/manifest.json`. The smoke must pass before changing Dify coordinator prompt/output wiring.
+
 ## Readiness Levels
 
 | Level | Meaning |
