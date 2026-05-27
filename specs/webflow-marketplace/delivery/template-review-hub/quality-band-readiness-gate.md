@@ -67,6 +67,30 @@ This writes:
 
 The exposure policy is the Dify-facing contract. It translates readiness into allowed outputs, blocked outputs, required human gates, and lead-approval requirements. It does not call providers, does not write D1 or Airtable, and does not authorize marketplace decisions.
 
+Gate a concrete coordinator output request against that policy:
+
+```bash
+pnpm --filter @create-something/webflow-template-review-mcp coordinator:output-gate -- \
+  --policy /tmp/webflow-template-review-coordinator-exposure-policy-fixture-smoke/coordinator-exposure-policy.json \
+  --request /tmp/template-review-coordinator-output-request.json \
+  --out /tmp/webflow-template-review-coordinator-output-gate-smoke
+```
+
+The output request is intentionally small:
+
+```json
+{
+  "schema_version": "template_review_coordinator_output_request.v0.1",
+  "request_id": "example_creator_guidance_request",
+  "intended_audience": "reviewer",
+  "requested_lanes": ["creator_guidance_draft"],
+  "requested_outputs": ["creator_guidance_draft"],
+  "input_sources": ["published_site_validation"]
+}
+```
+
+The output gate writes `coordinator-output-gate.json` and `.md`. It exits with code `2` when blocked. Dify should treat that status as a hard stop and should not show or write the requested output.
+
 ## Readiness Levels
 
 | Level | Meaning |
@@ -112,6 +136,8 @@ Dify should read a coordinator exposure policy derived from the readiness artifa
 - `quality_band_shadow_expansion_candidate`: expand shadow evaluation; still not autonomous approval/rejection
 
 Dify must not convert a readiness artifact or coordinator exposure policy into a final marketplace decision. The readiness artifact and exposure policy are control-plane gates, not review outcomes.
+
+Before emitting any coordinator-authored output, Dify should pass the proposed `requested_outputs`, `requested_lanes`, `input_sources`, `intended_audience`, and known `human_gate_confirmations` through the output gate. This makes blocked decisions machine-checkable instead of relying on prompt memory.
 
 The exposure policy must always block:
 

@@ -19,6 +19,17 @@ async function runScript(script: string, args: string[]) {
   });
 }
 
+async function runScriptExpectingExitCode(script: string, args: string[], expectedCode: number) {
+  try {
+    const result = await runScript(script, args);
+    assert.fail(`Expected exit code ${expectedCode}, got success: ${result.stdout}`);
+  } catch (error) {
+    const actual = error as { code?: number; stdout?: string; stderr?: string };
+    assert.equal(actual.code, expectedCode, actual.stderr);
+    return actual;
+  }
+}
+
 async function readJson<T>(filePath: string): Promise<T> {
   return JSON.parse(await readFile(filePath, 'utf8')) as T;
 }
@@ -143,5 +154,177 @@ test('reviewer-assist candidate requires lead approval before reviewer-facing qu
     assert.ok(approved.required_human_gates.includes('reviewer_confirms_quality_cue'));
     assert.ok(approved.blocked_outputs.includes('final_quality_band'));
     assert.ok(approved.dify_contract.must_not_emit.includes('final_quality_band'));
+  });
+});
+
+test('coordinator output gate blocks final decisions and excluded quality inputs', async () => {
+  await withTempDir(async (dir) => {
+    const readinessOut = path.join(dir, 'readiness');
+    const policyOut = path.join(dir, 'policy');
+    const gateOut = path.join(dir, 'gate');
+    const requestPath = path.join(dir, 'blocked-output-request.json');
+    await runScript(readinessScript, [
+      '--subjective-panel-summary',
+      path.join(fixtureDir, 'subjective-panel-eval-score-summary.blocked.sample.json'),
+      '--rubric-reviewer-summary',
+      path.join(fixtureDir, 'rubric-reviewer-score-summary.blocked.sample.json'),
+      '--exceptional-lane-summary',
+      path.join(fixtureDir, 'exceptional-candidate-score-summary.blocked.sample.json'),
+      '--visual-proxy-canary-summary',
+      path.join(fixtureDir, 'visual-proxy-canary-summary.blocked.sample.json'),
+      '--out',
+      readinessOut,
+    ]);
+    await runScript(exposurePolicyScript, [
+      '--input',
+      path.join(readinessOut, 'quality-band-readiness-summary.json'),
+      '--out',
+      policyOut,
+    ]);
+    await writeFile(
+      requestPath,
+      `${JSON.stringify(
+        {
+          schema_version: 'template_review_coordinator_output_request.v0.1',
+          request_id: 'blocked_quality_decision_request',
+          intended_audience: 'reviewer',
+          requested_lanes: ['creator_guidance_draft'],
+          requested_outputs: ['creator_guidance_draft', 'final_quality_band'],
+          input_sources: ['published_site_validation', 'sales'],
+        },
+        null,
+        2,
+      )}\n`,
+    );
+
+    await runScriptExpectingExitCode(
+      path.join(packageRoot, 'scripts/gate-coordinator-output.ts'),
+      [
+        '--policy',
+        path.join(policyOut, 'coordinator-exposure-policy.json'),
+        '--request',
+        requestPath,
+        '--out',
+        gateOut,
+      ],
+      2,
+    );
+
+    const gate = await readJson<{
+      status: string;
+      allowed_requested_outputs: string[];
+      blocked_outputs: Array<{ value: string; reason: string }>;
+      blocked_input_sources: Array<{ value: string; reason: string }>;
+    }>(path.join(gateOut, 'coordinator-output-gate.json'));
+
+    assert.equal(gate.status, 'blocked');
+    assert.ok(gate.allowed_requested_outputs.includes('creator_guidance_draft'));
+    assert.deepEqual(gate.blocked_outputs, [
+      { value: 'final_quality_band', reason: 'output_explicitly_blocked_by_exposure_policy' },
+    ]);
+    assert.deepEqual(gate.blocked_input_sources, [
+      { value: 'sales', reason: 'input_source_excluded_from_quality_review' },
+    ]);
+  });
+});
+
+test('coordinator output gate requires reviewer confirmation for reviewer-facing quality cues', async () => {
+  await withTempDir(async (dir) => {
+    const summaryPath = path.join(dir, 'reviewer-assist-candidate.json');
+    const policyOut = path.join(dir, 'policy');
+    const blockedGateOut = path.join(dir, 'blocked-gate');
+    const allowedGateOut = path.join(dir, 'allowed-gate');
+    const blockedRequestPath = path.join(dir, 'blocked-reviewer-cue-request.json');
+    const allowedRequestPath = path.join(dir, 'allowed-reviewer-cue-request.json');
+
+    await writeFile(
+      summaryPath,
+      `${JSON.stringify(
+        {
+          schema_version: 'quality_band_readiness.v0.2',
+          run_id: 'reviewer_assist_output_gate_test',
+          readiness_level: 'reviewer_assist_candidate',
+          promotion_gate: { status: 'candidate_for_human_review', reasons: [] },
+          input_exclusions: ['popularity', 'sales', 'views', 'favorites', 'marketplace_engagement'],
+        },
+        null,
+        2,
+      )}\n`,
+    );
+    await runScript(exposurePolicyScript, [
+      '--input',
+      summaryPath,
+      '--out',
+      policyOut,
+      '--lead-approved-reviewer-assist',
+    ]);
+
+    const baseRequest = {
+      schema_version: 'template_review_coordinator_output_request.v0.1',
+      request_id: 'reviewer_cue_request',
+      intended_audience: 'reviewer',
+      requested_outputs: ['reviewer_facing_quality_cue'],
+      input_sources: ['published_site_validation'],
+    };
+    await writeFile(blockedRequestPath, `${JSON.stringify(baseRequest, null, 2)}\n`);
+    await writeFile(
+      allowedRequestPath,
+      `${JSON.stringify(
+        {
+          ...baseRequest,
+          request_id: 'reviewer_cue_request_confirmed',
+          human_gate_confirmations: ['reviewer_confirms_quality_cue'],
+        },
+        null,
+        2,
+      )}\n`,
+    );
+
+    await runScriptExpectingExitCode(
+      path.join(packageRoot, 'scripts/gate-coordinator-output.ts'),
+      [
+        '--policy',
+        path.join(policyOut, 'coordinator-exposure-policy.json'),
+        '--request',
+        blockedRequestPath,
+        '--out',
+        blockedGateOut,
+      ],
+      2,
+    );
+    const blocked = await readJson<{
+      status: string;
+      missing_human_gates: Array<{ value: string; reason: string }>;
+    }>(path.join(blockedGateOut, 'coordinator-output-gate.json'));
+    assert.equal(blocked.status, 'blocked');
+    assert.deepEqual(blocked.missing_human_gates, [
+      {
+        value: 'reviewer_facing_quality_cue:reviewer_confirms_quality_cue',
+        reason: 'human_gate_confirmation_required',
+      },
+    ]);
+
+    const { stdout } = await runScript(path.join(packageRoot, 'scripts/gate-coordinator-output.ts'), [
+      '--policy',
+      path.join(policyOut, 'coordinator-exposure-policy.json'),
+      '--request',
+      allowedRequestPath,
+      '--out',
+      allowedGateOut,
+    ]);
+    const result = JSON.parse(stdout) as { ok: boolean; status: string };
+    assert.equal(result.ok, true);
+    assert.equal(result.status, 'allowed');
+
+    const allowed = await readJson<{
+      status: string;
+      allowed_requested_outputs: string[];
+      blocked_outputs: unknown[];
+      missing_human_gates: unknown[];
+    }>(path.join(allowedGateOut, 'coordinator-output-gate.json'));
+    assert.equal(allowed.status, 'allowed');
+    assert.deepEqual(allowed.allowed_requested_outputs, ['reviewer_facing_quality_cue']);
+    assert.deepEqual(allowed.blocked_outputs, []);
+    assert.deepEqual(allowed.missing_human_gates, []);
   });
 });

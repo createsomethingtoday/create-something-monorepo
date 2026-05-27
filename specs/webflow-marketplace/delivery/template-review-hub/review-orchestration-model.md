@@ -203,6 +203,7 @@ input URL / Asset Version
   -> optional similarity node
   -> optional appeal/equity comparison node
   -> coordinator LLM node
+  -> coordinator exposure output gate
   -> reviewer summary node
 ```
 
@@ -229,6 +230,8 @@ It should not receive:
 - unbounded screenshots without extracted evidence
 - missing manual Validator app output as a defect
 - unapproved policy proposals as active policy
+
+The coordinator should not directly emit reviewer-visible or creator-visible content. It should first produce a small output request that names `requested_outputs`, `requested_lanes`, `input_sources`, `intended_audience`, and `human_gate_confirmations`; the output gate should then allow or block the emission against the current coordinator exposure policy.
 
 ## Stability Rule
 

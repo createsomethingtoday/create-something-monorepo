@@ -27,6 +27,8 @@
     "exceptional:lane:score": "node --import tsx scripts/score-exceptional-candidate-lane.ts",
     "coordinator:exposure-policy": "node --import tsx scripts/derive-coordinator-exposure-policy.ts",
     "coordinator:exposure-policy:typecheck": "tsc --noEmit --target ES2022 --module NodeNext --moduleResolution NodeNext --lib ES2022,DOM --types node scripts/derive-coordinator-exposure-policy.ts",
+    "coordinator:output-gate": "node --import tsx scripts/gate-coordinator-output.ts",
+    "coordinator:output-gate:typecheck": "tsc --noEmit --target ES2022 --module NodeNext --moduleResolution NodeNext --lib ES2022,DOM --types node scripts/gate-coordinator-output.ts",
     "quality:readiness:score": "node --import tsx scripts/score-quality-band-readiness.ts",
     "quality:readiness:typecheck": "tsc --noEmit --target ES2022 --module NodeNext --moduleResolution NodeNext --lib ES2022,DOM --types node scripts/score-quality-band-readiness.ts",
     "guidance:draft": "node --import tsx scripts/draft-template-improvement-guidance.ts",

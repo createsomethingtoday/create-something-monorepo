@@ -136,6 +136,17 @@ pnpm coordinator:exposure-policy -- \
 
 The exposure policy writes `coordinator-exposure-policy.json` and `.md`. It is the artifact a Dify coordinator should consume before deciding which lanes or outputs may be shown. It preserves the quality-readiness exclusions and blocks autonomous approvals, autonomous rejections, final quality bands, featured decisions, creator-facing final decision language, and quality decisions from popularity, sales, views, favorites, or marketplace engagement. `reviewer_assist_candidate` only enables reviewer-facing quality cues when the command is run with `--lead-approved-reviewer-assist`.
 
+Gate a proposed coordinator output before Dify shows it:
+
+```bash
+pnpm coordinator:output-gate -- \
+  --policy /tmp/webflow-template-review-coordinator-exposure-policy-fixture-smoke/coordinator-exposure-policy.json \
+  --request /tmp/template-review-coordinator-output-request.json \
+  --out /tmp/webflow-template-review-coordinator-output-gate-smoke
+```
+
+The request should declare `requested_outputs`, `requested_lanes`, `input_sources`, `intended_audience`, and any `human_gate_confirmations`. The gate writes `coordinator-output-gate.json` and `.md`, exits with code `2` when blocked, and fails closed on outputs outside the exposure policy, explicitly blocked outputs, excluded inputs such as sales/views/popularity, missing human gates, or internal-only outputs aimed at reviewers or creators.
+
 For broader calibration, build a reviewer-balanced blind/private sample before tuning subjective prompts:
 
 ```bash
