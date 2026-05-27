@@ -18,6 +18,13 @@ import { getNotionClients } from '../src/lib/notion.js';
 import { registerNotionTools } from '../src/tools/index.js';
 import { NOTION_TOOLS, registerWorkspacesResource, registerToolsResource } from '../src/resources.js';
 import { registerTaskWorkflowPrompt } from '../src/prompts.js';
+import {
+  extractSourcePageIdFromWebhook,
+  preflightBlondishTicketSync,
+  syncBlondishDeliveryMirrorStatusToClient,
+  syncBlondishTicketCreateOnly,
+  syncBlondishTicketStatusToClient,
+} from '../src/blondish-ticket-sync.js';
 
 // =============================================================================
 // Types
@@ -30,6 +37,7 @@ interface Env {
   BRAINTRUST_PROJECT_NAME?: string;
   NOTION_API_KEY?: string;
   NOTION_CLIENT_API_KEY?: string;
+  NOTION_CREATE_SOMETHING_API_KEY?: string;
   WORKSPACE_HALFDOZEN_LABEL?: string;
   WORKSPACE_HALFDOZEN_DESCRIPTION?: string;
   WORKSPACE_CLIENT_LABEL?: string;
@@ -37,6 +45,18 @@ interface Env {
   MCP_DISPLAY_NAME?: string;
   MCP_DESCRIPTION?: string;
   MCP_BEARER_TOKEN?: string;
+  BLONDISH_TICKET_SYNC_ENABLED?: string;
+  BLONDISH_TICKET_SYNC_WEBHOOK_SECRET?: string;
+  BLONDISH_SUPPORT_TICKETS_DATA_SOURCE_ID?: string;
+  BLONDISH_SUPPORT_TICKETS_DATA_SOURCE_TITLE?: string;
+  BLONDISH_HD_TICKETS_DATABASE_ID?: string;
+  BLONDISH_HD_TICKETS_DATA_SOURCE_ID?: string;
+  BLONDISH_HD_TICKETS_DATA_SOURCE_TITLE?: string;
+  BLONDISH_DELIVERY_REVERSE_SYNC_ENABLED?: string;
+  BLONDISH_DELIVERY_REVERSE_SYNC_DRY_RUN?: string;
+  BLONDISH_DELIVERY_MIRROR_DATA_SOURCE_ID?: string;
+  BLONDISH_DELIVERY_MIRROR_DATA_SOURCE_TITLE?: string;
+  BLONDISH_OS_STATUS_PROPERTY?: string;
 }
 
 const SERVER_NAME = 'notion-halfdozen-create-something';
@@ -121,6 +141,98 @@ function checkBearer(request: Request, env: Env): boolean {
   return !!match && match[1] === env.MCP_BEARER_TOKEN;
 }
 
+function isBlondishTicketSyncEnabled(env: Env): boolean {
+  return env.BLONDISH_TICKET_SYNC_ENABLED === 'true';
+}
+
+function isBlondishDeliveryReverseSyncEnabled(env: Env): boolean {
+  return env.BLONDISH_DELIVERY_REVERSE_SYNC_ENABLED === 'true';
+}
+
+function checkTicketSyncAuth(request: Request, env: Env): boolean {
+  const configured = [env.BLONDISH_TICKET_SYNC_WEBHOOK_SECRET, env.MCP_BEARER_TOKEN].filter(Boolean);
+  if (configured.length === 0) return false;
+  const auth = request.headers.get('Authorization') ?? '';
+  const bearer = /^Bearer\s+(.+)$/i.exec(auth)?.[1];
+  const explicitSecret =
+    request.headers.get('X-Webhook-Secret') ??
+    request.headers.get('X-BLONDISH-Ticket-Sync-Secret') ??
+    request.headers.get('X-Ticket-Sync-Secret');
+  return configured.includes(bearer) || configured.includes(explicitSecret);
+}
+
+function jsonResponse(payload: unknown, init?: ResponseInit): Response {
+  return new Response(JSON.stringify(payload, null, 2), {
+    ...init,
+    headers: {
+      'Content-Type': 'application/json',
+      ...CORS_HEADERS,
+      ...(init?.headers ?? {}),
+    },
+  });
+}
+
+async function readJsonBody(request: Request): Promise<Record<string, unknown>> {
+  if (request.method === 'GET' || request.method === 'HEAD') return {};
+  try {
+    const parsed = await request.json();
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+      ? parsed as Record<string, unknown>
+      : {};
+  } catch {
+    return {};
+  }
+}
+
+async function runBlondishTicketSyncRequest(request: Request, env: Env, action: string): Promise<Response> {
+  if (
+    action !== 'preflight' &&
+    action !== 'delivery_mirror_status_to_client' &&
+    !isBlondishTicketSyncEnabled(env)
+  ) {
+    return jsonResponse({ ok: false, error: 'blondish_ticket_sync_disabled' }, { status: 404 });
+  }
+  if (action === 'preflight') {
+    if (!checkTicketSyncAuth(request, env)) return unauthorized();
+  } else if (!checkTicketSyncAuth(request, env)) {
+    return unauthorized();
+  }
+
+  const clients = getNotionClients(env);
+  const body = await readJsonBody(request);
+  if (action === 'preflight') {
+    return jsonResponse(await preflightBlondishTicketSync(clients, env));
+  }
+  if (action === 'create_from_client') {
+    const sourcePageId =
+      typeof body.source_page_id === 'string'
+        ? body.source_page_id
+        : typeof body.page_id === 'string'
+          ? body.page_id
+          : action === 'create_from_client'
+            ? extractSourcePageIdFromWebhook(body)
+            : null;
+    return jsonResponse(await syncBlondishTicketCreateOnly(clients, env, { sourcePageId }));
+  }
+  if (action === 'status_to_client') {
+    return jsonResponse(await syncBlondishTicketStatusToClient(clients, env));
+  }
+  if (action === 'delivery_mirror_status_to_client') {
+    const requestedDryRun = body.dry_run === true || body.dryRun === true
+      ? true
+      : body.dry_run === false || body.dryRun === false
+        ? false
+        : undefined;
+    if (!isBlondishDeliveryReverseSyncEnabled(env) && requestedDryRun !== true) {
+      return jsonResponse({ ok: false, error: 'blondish_delivery_reverse_sync_disabled' }, { status: 404 });
+    }
+    return jsonResponse(await syncBlondishDeliveryMirrorStatusToClient(clients, env, {
+      dryRun: requestedDryRun,
+    }));
+  }
+  return jsonResponse({ ok: false, error: 'unsupported_action' }, { status: 404 });
+}
+
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext) {
     const url = new URL(request.url);
@@ -138,6 +250,22 @@ export default {
       return NotionHalfDozenMcp.serve('/sse').fetch(request, env, ctx);
     }
 
+    if (url.pathname === '/blondish-ticket-sync/preflight') {
+      return runBlondishTicketSyncRequest(request, env, 'preflight');
+    }
+
+    if (url.pathname === '/blondish-ticket-sync/webhook' || url.pathname === '/blondish-ticket-sync/run-create') {
+      return runBlondishTicketSyncRequest(request, env, 'create_from_client');
+    }
+
+    if (url.pathname === '/blondish-ticket-sync/run-status') {
+      return runBlondishTicketSyncRequest(request, env, 'status_to_client');
+    }
+
+    if (url.pathname === '/blondish-ticket-sync/run-delivery-status') {
+      return runBlondishTicketSyncRequest(request, env, 'delivery_mirror_status_to_client');
+    }
+
     if (url.pathname === '/' || url.pathname === '/health') {
       const config = getWorkspaceConfig(env);
       return new Response(
@@ -153,6 +281,18 @@ export default {
               client: `NOTION_CLIENT_API_KEY — ${config.client.label}`,
             },
             endpoints: { mcp: '/mcp', sse: '/sse' },
+            blondish_ticket_sync: {
+              enabled: isBlondishTicketSyncEnabled(env),
+              delivery_reverse_sync_enabled: isBlondishDeliveryReverseSyncEnabled(env),
+              delivery_reverse_sync_dry_run: env.BLONDISH_DELIVERY_REVERSE_SYNC_DRY_RUN !== 'false',
+              endpoints: {
+                preflight: '/blondish-ticket-sync/preflight',
+                webhook: '/blondish-ticket-sync/webhook',
+                run_create: '/blondish-ticket-sync/run-create',
+                run_status: '/blondish-ticket-sync/run-status',
+                run_delivery_status: '/blondish-ticket-sync/run-delivery-status',
+              },
+            },
           },
           null,
           2
@@ -162,5 +302,15 @@ export default {
     }
 
     return new Response('Not found', { status: 404 });
+  },
+
+  async scheduled(_event: ScheduledEvent, env: Env, ctx: ExecutionContext) {
+    const clients = getNotionClients(env);
+    if (isBlondishTicketSyncEnabled(env)) {
+      ctx.waitUntil(syncBlondishTicketStatusToClient(clients, env));
+    }
+    if (isBlondishDeliveryReverseSyncEnabled(env)) {
+      ctx.waitUntil(syncBlondishDeliveryMirrorStatusToClient(clients, env));
+    }
   },
 };
