@@ -1,0 +1,8 @@
+{
+  "schema_version": "template_review_coordinator_output_request.v0.1",
+  "request_id": "fixture_creator_guidance_allowed",
+  "intended_audience": "reviewer",
+  "requested_lanes": ["creator_guidance_draft"],
+  "requested_outputs": ["creator_guidance_draft"],
+  "input_sources": ["published_site_validation", "validator_app_submission_contract"]
+}
