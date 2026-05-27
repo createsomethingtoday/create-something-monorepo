@@ -291,7 +291,7 @@ async function validateProject(): Promise<void> {
     btn.disabled = true;
     btn.setAttribute('aria-busy', 'true');
   }
-  if (btnLabel) btnLabel.textContent = 'Validating...';
+  if (btnLabel) btnLabel.textContent = 'Running...';
   
   showLoading();
   hideError();
@@ -339,11 +339,73 @@ async function validateProject(): Promise<void> {
       console.warn('⚠️ No site URL available - Worker validation will be skipped');
     }
 
-    if (!bridgeStatus || bridgeStatus.status !== 'active') {
-      setBridgeMessage('Bridge is not active yet. Validation will still run using fallback methods.');
+    const correlationId = createCorrelationId();
+    const bridgeActive = bridgeStatus && bridgeStatus.status === 'active';
+
+    if (!bridgeActive) {
+      setValidationProgress({
+        status: 'running',
+        progress: 20,
+        message: 'Running Designer checks. Add the Validator script for full published-site checks...',
+      });
+      showBridgeDrawer();
+      setBridgeMessage(
+        'Add the Validator script, publish the site, then re-check. Full submission validation needs this script on the published site.'
+      );
+      setBridgeSetupStep('install');
+      setToolbarStatus('Validator script required for submission checks', 'warning');
+
+      const designerResults = await runDesignerValidation(projectData, siteUrl, correlationId);
+      designerResults.collectedData = [projectData];
+      enhanceValidationResults(designerResults, projectData);
+
+      if (!designerResults.categories) designerResults.categories = [];
+      designerResults.categories.push({
+        category: 'Published Site Checks (Requires Validator Script)',
+        passed: false,
+        issues: [{
+          id: 'validator-script-required',
+          category: 'Published Site Checks',
+          severity: 'warning',
+          message: 'Additional published-site checks require the Validator script to be added and published.',
+          details: {
+            howToFix:
+              'Click "Add Validator script", publish your site, then click "Re-check script". The script enables submitted-result evidence for the marketplace form plus published-site checks such as image loading, contrast, broken links, custom 404, SEO formula, license text, favicon, connected apps, and placeholder content.',
+          }
+        }],
+        stats: { checked: 0, available: 22, status: 'validator_script_required' }
+      });
+      if (!designerResults.summary) {
+        designerResults.summary = {
+          errors: 0,
+          warnings: 0,
+          infos: 0,
+          passedCategories: 0,
+          failedCategories: 0,
+        };
+      }
+      designerResults.summary.warnings = (designerResults.summary.warnings || 0) + 1;
+      designerResults.summary.failedCategories = (designerResults.summary.failedCategories || 0) + 1;
+
+      setValidationProgress({
+        status: 'completed',
+        progress: 100,
+        message: 'Designer validation complete. Add and publish the Validator script for full coverage.',
+      });
+      showResults(designerResults);
+      void submitValidationResults({
+        siteId: bridgeContext?.siteId || projectData.siteInfo?.id || null,
+        siteName: bridgeContext?.siteName || projectData.siteInfo?.name || undefined,
+        siteUrl,
+        validationResults: designerResults,
+        correlationId,
+      });
+      return;
     }
 
-    const correlationId = createCorrelationId();
+    hideBridgeDrawer();
+    setBridgeSetupStep('run');
+    setToolbarStatus('Running full Validator checks...', 'active');
     const validationResults = await runUnifiedValidation({
       siteUrl,
       projectData,
@@ -378,7 +440,7 @@ async function validateProject(): Promise<void> {
       btn.disabled = false;
       btn.setAttribute('aria-busy', 'false');
     }
-    if (btnLabel) btnLabel.textContent = 'Validate This Project';
+    if (btnLabel) btnLabel.textContent = 'Run Validator';
   }
 }
 
@@ -1047,7 +1109,7 @@ async function bootstrapBridgePanel(): Promise<void> {
   const webflow = (window as any).webflow;
   if (!webflow) {
     setBridgeBadge('neutral');
-    setBridgeMessage('Webflow Designer API unavailable. Bridge controls are disabled.');
+    setBridgeMessage('Webflow Designer API unavailable. Validator script setup is disabled.');
     setBridgeActionsDisabled(true);
     return;
   }
@@ -1059,7 +1121,7 @@ async function bootstrapBridgePanel(): Promise<void> {
     const siteUrl = await getSiteUrl(webflow);
     if (!siteId) {
       setBridgeBadge('failed');
-      setBridgeMessage('Could not determine site ID. Bridge install unavailable.');
+      setBridgeMessage('Could not determine site ID. Validator script setup unavailable.');
       setBridgeActionsDisabled(true);
       return;
     }
@@ -1070,13 +1132,16 @@ async function bootstrapBridgePanel(): Promise<void> {
   } catch (error) {
     console.warn('Bridge bootstrap failed:', error);
     setBridgeBadge('failed');
-    setBridgeMessage('Failed to initialize bridge panel.');
+    setBridgeMessage('Failed to initialize Validator script setup.');
     setBridgeActionsDisabled(true);
   }
 }
 
 async function refreshBridgeStatus(): Promise<void> {
   if (!bridgeContext?.siteId) return;
+  setBridgeSetupStep('recheck');
+  setBridgeMessage('Checking the published site for the Validator script...');
+  setToolbarStatus('Checking Validator script...', 'neutral');
   try {
     const correlationId = createCorrelationId();
     const statusUrl = new URL(`${APP_VALIDATOR_BASE}/app-validator/snippet/status`);
@@ -1096,17 +1161,29 @@ async function refreshBridgeStatus(): Promise<void> {
   } catch (error) {
     console.warn('Failed to refresh bridge status:', error);
     setBridgeBadge('failed');
-    setBridgeMessage('Bridge status check failed.');
+    setBridgeMessage('Validator script status check failed. Publish the site, then try again.');
+    setBridgeSetupStep('recheck');
+    setToolbarStatus('Validator script check failed', 'failed');
   }
 }
 
 async function installBridge(): Promise<void> {
   if (!bridgeContext?.siteId) return;
   setBridgeActionsDisabled(true);
-  setBridgeMessage('Installing bridge...');
+  setBridgeMessage('Adding the Validator script to this site...');
+  setBridgeSetupStep('install');
+  setToolbarStatus('Adding Validator script...', 'neutral');
   try {
     const correlationId = createCorrelationId();
-    bridgeStatus = await fetchJsonWithRetry<SnippetStatusResponse>(
+    const webflow = (window as any).webflow;
+    let idToken: string | null = null;
+    try {
+      idToken = await webflow?.getIdToken?.();
+    } catch (error) {
+      console.warn('getIdToken failed:', error);
+    }
+
+    const installStatus = await fetchJsonWithRetry<SnippetStatusResponse>(
       `${APP_VALIDATOR_BASE}/app-validator/snippet/install`,
       {
         method: 'POST',
@@ -1118,16 +1195,30 @@ async function installBridge(): Promise<void> {
           siteId: bridgeContext.siteId,
           siteName: bridgeContext.siteName,
           installTarget: 'head',
-          mode: 'programmatic',
+          mode: idToken ? 'webflow-api' : 'programmatic',
+          idToken: idToken || undefined,
         }),
       },
       { timeoutMs: NETWORK_TIMEOUT_MS, retries: MAX_NETWORK_RETRIES }
     );
+
+    bridgeStatus =
+      installStatus.status === 'active'
+        ? {
+            ...installStatus,
+            status: 'pending_manual',
+            message: 'Validator script added. Publish your site, then click Re-check script.',
+          }
+        : installStatus;
     renderBridgeStatus(bridgeStatus);
   } catch (error) {
     console.warn('Bridge install failed:', error);
     setBridgeBadge('failed');
-    setBridgeMessage('Bridge install failed. Use Re-check or manual install.');
+    setBridgeMessage(
+      'Automatic script install failed. Use the manual fallback snippet, publish, then re-check.'
+    );
+    setBridgeSetupStep('install');
+    setToolbarStatus('Validator script install failed', 'failed');
   } finally {
     setBridgeActionsDisabled(false);
   }
@@ -1136,7 +1227,8 @@ async function installBridge(): Promise<void> {
 async function rotateBridgeToken(): Promise<void> {
   if (!bridgeContext?.siteId) return;
   setBridgeActionsDisabled(true);
-  setBridgeMessage('Rotating bridge token...');
+  setBridgeMessage('Rotating the Validator script token...');
+  setBridgeSetupStep('publish');
   try {
     const correlationId = createCorrelationId();
     bridgeStatus = await fetchJsonWithRetry<SnippetStatusResponse>(
@@ -1158,7 +1250,8 @@ async function rotateBridgeToken(): Promise<void> {
   } catch (error) {
     console.warn('Token rotation failed:', error);
     setBridgeBadge('failed');
-    setBridgeMessage('Token rotation failed.');
+    setBridgeMessage('Token rotation failed. Keep the existing script or try again.');
+    setBridgeSetupStep('publish');
   } finally {
     setBridgeActionsDisabled(false);
   }
@@ -1166,14 +1259,20 @@ async function rotateBridgeToken(): Promise<void> {
 
 function renderBridgeStatus(status: SnippetStatusResponse): void {
   setBridgeBadge(status.status);
-  const defaultMessage =
-    status.status === 'active'
-      ? 'Bridge active. Async validation + streaming enabled.'
-      : status.status === 'pending_manual'
-      ? 'Bridge not fully active. Manual snippet update may be required.'
-      : 'Bridge install failed or unavailable.';
 
-  setBridgeMessage(status.message || defaultMessage);
+  setBridgeMessage(getValidatorScriptStatusMessage(status));
+
+  if (status.status === 'active') {
+    setBridgeSetupStep('run');
+    setToolbarStatus('Validator script detected. Run Validator.', 'active');
+    hideBridgeDrawer();
+  } else {
+    const snippet = (status as any).snippet;
+    const hasGeneratedToken = Boolean(status.bridgeToken);
+    setBridgeSetupStep(status.status === 'pending_manual' && snippet && hasGeneratedToken ? 'publish' : 'install');
+    setToolbarStatus('Validator script required for submission checks', 'warning');
+    showBridgeDrawer();
+  }
 
   const tokenRow = document.getElementById('bridge-token-row');
   const tokenValue = document.getElementById('bridge-token-value');
@@ -1217,17 +1316,89 @@ function setBridgeBadge(status: 'active' | 'pending_manual' | 'failed' | 'neutra
   badge.classList.add(status);
 
   const labels: Record<string, string> = {
-    active: 'Active',
-    pending_manual: 'Pending Manual',
+    active: 'Ready',
+    pending_manual: 'Script Needed',
     failed: 'Error',
     neutral: 'Unknown',
   };
-  badge.textContent = labels[status] || status;
+  badge.textContent = '●';
+  badge.setAttribute('aria-label', labels[status] || status);
+  badge.setAttribute('title', labels[status] || status);
 }
 
 function setBridgeMessage(message: string): void {
   const messageEl = document.getElementById('bridge-message');
   if (messageEl) messageEl.textContent = message;
+}
+
+function getValidatorScriptStatusMessage(status: SnippetStatusResponse): string {
+  const snippet = (status as any).snippet;
+  if (status.status === 'active') {
+    return 'Validator script detected on the published site. Run Validator to confirm a 100% pass.';
+  }
+  if (status.status === 'pending_manual' && typeof snippet === 'string' && snippet.trim()) {
+    return 'Add the Validator script, publish the site, then re-check. If automatic install did not work, use the manual fallback snippet below.';
+  }
+  if (status.status === 'pending_manual') {
+    return 'Validator script is not detected on the published site yet. Add it, publish, then re-check.';
+  }
+  return 'Validator script install is unavailable. Try again or use the manual fallback snippet.';
+}
+
+function showBridgeDrawer(): void {
+  const drawer = document.getElementById('review-bridge');
+  if (drawer) drawer.style.display = 'flex';
+}
+
+function hideBridgeDrawer(): void {
+  const drawer = document.getElementById('review-bridge');
+  if (drawer) drawer.style.display = 'none';
+}
+
+function setToolbarStatus(
+  text: string,
+  type: 'active' | 'warning' | 'failed' | 'neutral'
+): void {
+  const statusText = document.getElementById('toolbar-status-text');
+  const badge = document.getElementById('bridge-status-badge');
+  if (statusText) {
+    statusText.textContent = text;
+    statusText.classList.add('updated');
+    setTimeout(() => statusText.classList.remove('updated'), 300);
+  }
+  if (badge) {
+    badge.classList.remove('active', 'pending_manual', 'failed', 'neutral');
+    badge.classList.add(
+      type === 'active'
+        ? 'active'
+        : type === 'warning'
+          ? 'pending_manual'
+          : type === 'failed'
+            ? 'failed'
+            : 'neutral'
+    );
+    badge.textContent = '●';
+  }
+}
+
+function setBridgeSetupStep(activeStep: 'install' | 'publish' | 'recheck' | 'run'): void {
+  const steps: Array<'install' | 'publish' | 'recheck' | 'run'> = [
+    'install',
+    'publish',
+    'recheck',
+    'run',
+  ];
+  const activeIndex = steps.indexOf(activeStep);
+  steps.forEach((step, index) => {
+    const element = document.getElementById(`bridge-step-${step}`);
+    if (!element) return;
+    element.classList.remove('is-active', 'is-complete');
+    if (index < activeIndex) {
+      element.classList.add('is-complete');
+    } else if (index === activeIndex) {
+      element.classList.add('is-active');
+    }
+  });
 }
 
 // Merge enhanced validation results from Worker
