@@ -124,6 +124,25 @@ interface SubmissionRateLimitState {
 	attempts: SubmissionAttemptRecord[];
 }
 
+interface ValidationResultArtifactPersistResult {
+	persisted: boolean;
+	key?: string;
+	sha256?: string;
+	byteSize?: number;
+	reason?: 'r2_not_configured' | 'r2_write_failed';
+}
+
+interface R2BucketLike {
+	put(
+		key: string,
+		value: string,
+		options?: {
+			httpMetadata?: { contentType?: string };
+			customMetadata?: Record<string, string>;
+		}
+	): Promise<unknown>;
+}
+
 const reviewJobs = new Map<string, ReviewJobState>();
 const snippetTokens = new Map<string, SnippetTokenRecord>();
 const submissionStates = new Map<string, SubmissionRateLimitState>();
@@ -816,6 +835,15 @@ async function handleValidationSubmit(
 		siteUrl,
 		validationResults: sanitizedResults
 	});
+	const artifactResult = await persistValidationResultArtifact(env, {
+		siteId,
+		siteName,
+		siteUrl,
+		submittedAt,
+		correlationId,
+		payloadHash,
+		validationResults: sanitizedResults
+	});
 
 	const remaining = Math.max(limitConfig.maxSubmissions - nextState.attempts.length, 0);
 	const response: ValidationSubmitResponse = {
@@ -839,7 +867,8 @@ async function handleValidationSubmit(
 		anomaly: {
 			flagged: anomalyReasons.length > 0,
 			reasons: anomalyReasons
-		}
+		},
+		artifact: artifactResult
 	};
 
 	ctx.waitUntil(
@@ -853,6 +882,9 @@ async function handleValidationSubmit(
 				recordId: persistResult.recordId,
 				persisted: persistResult.persisted,
 				reason: persistResult.reason,
+				artifactPersisted: artifactResult.persisted,
+				artifactKey: artifactResult.key,
+				artifactReason: artifactResult.reason,
 				remaining,
 				anomalyReasons
 			}
@@ -1937,6 +1969,90 @@ async function persistValidationSubmission(
 		recordId,
 		message: 'Validation results persisted to Airtable.'
 	};
+}
+
+function getValidationResultArtifactBucket(env: unknown): R2BucketLike | null {
+	const candidate = (env as { VALIDATOR_RESULT_ARTIFACTS?: R2BucketLike; VALIDATION_RESULT_ARTIFACTS?: R2BucketLike } | undefined);
+	if (candidate?.VALIDATOR_RESULT_ARTIFACTS?.put) return candidate.VALIDATOR_RESULT_ARTIFACTS;
+	if (candidate?.VALIDATION_RESULT_ARTIFACTS?.put) return candidate.VALIDATION_RESULT_ARTIFACTS;
+	return null;
+}
+
+async function sha256Hex(value: string): Promise<string> {
+	const digest = await crypto.subtle.digest('SHA-256', encoder.encode(value));
+	return Array.from(new Uint8Array(digest))
+		.map((byte) => byte.toString(16).padStart(2, '0'))
+		.join('');
+}
+
+function artifactSafeTimestamp(value: string): string {
+	return value.replace(/[^0-9A-Za-z-]+/g, '-').replace(/-+$/g, '');
+}
+
+async function persistValidationResultArtifact(
+	env: unknown,
+	input: {
+		siteId: string;
+		siteName: string | null;
+		siteUrl?: string;
+		submittedAt: string;
+		correlationId: string;
+		payloadHash: string;
+		validationResults: ValidationSubmitRequest['validationResults'];
+	}
+): Promise<ValidationResultArtifactPersistResult> {
+	const bucket = getValidationResultArtifactBucket(env);
+	if (!bucket) return { persisted: false, reason: 'r2_not_configured' };
+
+	const artifact = {
+		schema_version: 'validator_app_results_submission.v0.1',
+		source_lane: 'validator_app_supplemental_results',
+		site_id: input.siteId,
+		site_name: input.siteName,
+		site_url: input.siteUrl,
+		submitted_at: input.submittedAt,
+		correlation_id: input.correlationId,
+		payload_hash: input.payloadHash,
+		raw_bridge_token_stored: false,
+		validation_results: input.validationResults
+	};
+	const body = JSON.stringify(artifact, null, 2);
+	const sha256 = await sha256Hex(body);
+	const key = [
+		'validator-app-results',
+		`site=${encodeURIComponent(input.siteId)}`,
+		`${artifactSafeTimestamp(input.submittedAt)}_${input.payloadHash}.json`
+	].join('/');
+
+	try {
+		await bucket.put(key, body, {
+			httpMetadata: { contentType: 'application/json' },
+			customMetadata: {
+				siteId: input.siteId,
+				sha256,
+				submittedAt: input.submittedAt,
+				correlationId: input.correlationId
+			}
+		});
+		return {
+			persisted: true,
+			key,
+			sha256,
+			byteSize: encoder.encode(body).byteLength
+		};
+	} catch (error) {
+		await emitTelemetry(env, {
+			event: 'submission.artifact_persist_failed',
+			correlationId: input.correlationId,
+			level: 'error',
+			payload: {
+				siteId: input.siteId,
+				siteUrl: input.siteUrl,
+				message: error instanceof Error ? error.message : String(error)
+			}
+		});
+		return { persisted: false, reason: 'r2_write_failed' };
+	}
 }
 
 async function attemptProgrammaticSnippetInstall(

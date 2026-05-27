@@ -767,6 +767,65 @@ describe('Validation Submission Endpoint', () => {
 		expect(fetchMock).toHaveBeenCalledTimes(1);
 	});
 
+	it('persists sanitized validation result artifacts when R2 binding is configured', async () => {
+		const putMock = vi.fn(async () => undefined);
+
+		const response = await worker.fetch(
+			new Request('https://validation-worker.createsomething.workers.dev/app-validator/submit', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					Origin: 'https://app.webflow.com',
+					'CF-Connecting-IP': '203.0.113.22'
+				},
+				body: JSON.stringify({
+					siteId: 'site_artifact',
+					siteName: 'Artifact Site',
+					siteUrl: 'https://artifact.example.com',
+					validationResults: {
+						url: 'https://artifact.example.com',
+						summary: { totalErrors: 1, totalWarnings: 0, passedCategories: 1, failedCategories: 1 },
+						categories: [
+							{
+								category: 'Assets & Images',
+								passed: false,
+								issues: [
+									{
+										severity: 'error',
+										message: 'Oversized asset found',
+										details: { bridgeToken: 'wfbt_should_not_persist' }
+									}
+								]
+							}
+						]
+					}
+				})
+			}),
+			{
+				VALIDATOR_RESULT_ARTIFACTS: { put: putMock }
+			} as any,
+			createExecutionContext()
+		);
+
+		expect(response.status).toBe(200);
+		const payload = await response.json() as any;
+		expect(payload.accepted).toBe(true);
+		expect(payload.persisted).toBe(false);
+		expect(payload.reason).toBe('airtable_not_configured');
+		expect(payload.artifact.persisted).toBe(true);
+		expect(payload.artifact.key).toContain('validator-app-results/site=site_artifact/');
+		expect(payload.artifact.sha256).toMatch(/^[a-f0-9]{64}$/);
+		expect(putMock).toHaveBeenCalledTimes(1);
+
+		const [key, body, options] = putMock.mock.calls[0];
+		expect(key).toContain('validator-app-results/site=site_artifact/');
+		expect(options.httpMetadata.contentType).toBe('application/json');
+		expect(options.customMetadata.siteId).toBe('site_artifact');
+		expect(body).not.toContain('wfbt_should_not_persist');
+		expect(body).toContain('"raw_bridge_token_stored": false');
+		expect(body).toContain('Oversized asset found');
+	});
+
 	it('rate limits repeated submissions per site', async () => {
 		const responseOne = await worker.fetch(
 			new Request('https://validation-worker.createsomething.workers.dev/app-validator/submit', {
