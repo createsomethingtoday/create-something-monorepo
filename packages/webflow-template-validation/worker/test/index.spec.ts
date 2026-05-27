@@ -80,6 +80,13 @@ function createExecutionContext() {
 	} as unknown as ExecutionContext;
 }
 
+async function sha256ForTest(value: string) {
+	const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value));
+	return Array.from(new Uint8Array(digest))
+		.map((byte) => byte.toString(16).padStart(2, '0'))
+		.join('');
+}
+
 describe('Designer Validator', () => {
 	it('reports missing core designer primitives instead of skipping the categories', async () => {
 		const result = await validateDesignerData({
@@ -726,6 +733,150 @@ describe('Validation Submission Endpoint', () => {
 
 		expect(response.status).toBe(200);
 		expect(response.headers.get('Access-Control-Allow-Origin')).toBe(origin);
+	});
+
+	it('exposes latest submitted Validator result by site ID and bridge token hash', async () => {
+		const installResponse = await worker.fetch(
+			new Request('https://validation-worker.createsomething.workers.dev/app-validator/snippet/install', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					Origin: 'https://designer.webflow-ext.com'
+				},
+				body: JSON.stringify({
+					siteId: 'site_latest_result',
+					siteName: 'Latest Result',
+					installTarget: 'head',
+					mode: 'manual-fallback'
+				})
+			}),
+			{} as any,
+			createExecutionContext()
+		);
+		const installPayload = await installResponse.json() as any;
+		const bridgeTokenSha256 = await sha256ForTest(installPayload.bridgeToken);
+
+		const submitResponse = await worker.fetch(
+			new Request('https://validation-worker.createsomething.workers.dev/app-validator/submit', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					Origin: 'https://app.webflow.com'
+				},
+				body: JSON.stringify({
+					siteId: 'site_latest_result',
+					siteName: 'Latest Result',
+					siteUrl: 'https://latest-result.webflow.io',
+					validationResults: {
+						url: 'https://latest-result.webflow.io',
+						summary: { totalErrors: 0, totalWarnings: 1, passedCategories: 4, failedCategories: 0 },
+						categories: [
+							{ category: 'Assets & Images', passed: true, issues: [] },
+							{ category: 'Content & Accessibility', passed: true, issues: [] },
+							{ category: 'Interactions and GSAP', passed: true, issues: [] },
+							{ category: 'Designer Structure', passed: true, issues: [] }
+						]
+					}
+				})
+			}),
+			{} as any,
+			createExecutionContext()
+		);
+		expect(submitResponse.status).toBe(200);
+
+		const bySiteResponse = await worker.fetch(
+			new Request('https://validation-worker.createsomething.workers.dev/app-validator/submission/latest?siteId=site_latest_result', {
+				method: 'GET',
+				headers: {
+					Origin: 'https://webflow.com'
+				}
+			}),
+			{} as any,
+			createExecutionContext()
+		);
+		const byTokenResponse = await worker.fetch(
+			new Request(`https://validation-worker.createsomething.workers.dev/app-validator/submission/latest?bridgeTokenSha256=${bridgeTokenSha256}`, {
+				method: 'GET',
+				headers: {
+					Origin: 'https://webflow.com'
+				}
+			}),
+			{} as any,
+			createExecutionContext()
+		);
+
+		expect(bySiteResponse.status).toBe(200);
+		expect(byTokenResponse.status).toBe(200);
+		const byTokenPayload = await byTokenResponse.json() as any;
+		expect(byTokenPayload.status).toBe('available');
+		expect(byTokenPayload.passed).toBe(true);
+		expect(byTokenPayload.summary.score).toBe(100);
+		expect(byTokenPayload.summary.totalCategories).toBe(4);
+		expect(byTokenPayload.rawBridgeTokenStored).toBe(false);
+		expect(JSON.stringify(byTokenPayload)).not.toContain(installPayload.bridgeToken);
+	});
+
+	it('marks latest Validator result as failed when errors or failed categories remain', async () => {
+		await worker.fetch(
+			new Request('https://validation-worker.createsomething.workers.dev/app-validator/submit', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					Origin: 'https://app.webflow.com'
+				},
+				body: JSON.stringify({
+					siteId: 'site_latest_failed_result',
+					siteName: 'Latest Failed Result',
+					validationResults: {
+						summary: { totalErrors: 1, totalWarnings: 0, passedCategories: 3, failedCategories: 1 },
+						categories: [
+							{
+								category: 'Assets & Images',
+								passed: false,
+								issues: [{ severity: 'error', message: 'Image exceeds the maximum size.' }]
+							}
+						]
+					}
+				})
+			}),
+			{} as any,
+			createExecutionContext()
+		);
+
+		const latestResponse = await worker.fetch(
+			new Request('https://validation-worker.createsomething.workers.dev/app-validator/submission/latest?siteId=site_latest_failed_result', {
+				method: 'GET',
+				headers: {
+					Origin: 'https://webflow.com'
+				}
+			}),
+			{} as any,
+			createExecutionContext()
+		);
+
+		expect(latestResponse.status).toBe(200);
+		const payload = await latestResponse.json() as any;
+		expect(payload.passed).toBe(false);
+		expect(payload.summary.failedCategories).toBe(1);
+		expect(payload.summary.totalErrors).toBe(1);
+	});
+
+	it('returns missing when no latest Validator result has been submitted', async () => {
+		const response = await worker.fetch(
+			new Request('https://validation-worker.createsomething.workers.dev/app-validator/submission/latest?siteId=site_no_latest_result', {
+				method: 'GET',
+				headers: {
+					Origin: 'https://webflow.com'
+				}
+			}),
+			{} as any,
+			createExecutionContext()
+		);
+
+		expect(response.status).toBe(404);
+		const payload = await response.json() as any;
+		expect(payload.status).toBe('missing');
+		expect(payload.rawBridgeTokenStored).toBe(false);
 	});
 
 	it('accepts submissions for sites that are not in Airtable without failing the client flow', async () => {
