@@ -60,6 +60,7 @@ type CoordinatorOutputGate = {
   blocked_outputs: BlockedItem[];
   blocked_input_sources: BlockedItem[];
   missing_human_gates: BlockedItem[];
+  contract_errors: BlockedItem[];
   notes: string[];
 };
 
@@ -70,6 +71,16 @@ const OUTPUT_HUMAN_GATES: Record<string, string[]> = {
   reviewer_facing_quality_cue: ['reviewer_confirms_quality_cue'],
   shadow_expansion_case_selection: ['shadow_expansion_plan_approval'],
 };
+const REQUEST_FIELDS = new Set([
+  'schema_version',
+  'request_id',
+  'intended_audience',
+  'requested_lanes',
+  'requested_outputs',
+  'input_sources',
+  'human_gate_confirmations',
+  'notes',
+]);
 
 function parseArgs(argv: string[]): CliOptions {
   const options: Partial<CliOptions> = {
@@ -147,6 +158,14 @@ function list(value: string[] | undefined): string[] {
   return Array.isArray(value) ? value : [];
 }
 
+function isNonEmptyString(value: unknown): value is string {
+  return typeof value === 'string' && value.trim().length > 0;
+}
+
+function isStringArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every(isNonEmptyString);
+}
+
 function set(value: string[] | undefined): Set<string> {
   return new Set(list(value));
 }
@@ -155,19 +174,87 @@ function unique(values: string[]): string[] {
   return Array.from(new Set(values));
 }
 
-function intendedAudience(value: unknown): IntendedAudience {
-  if (value === undefined) return 'internal';
+function safeIntendedAudience(value: unknown): IntendedAudience {
   if (value === 'internal' || value === 'reviewer' || value === 'creator') return value;
-  throw new Error(`Unsupported intended_audience: ${String(value)}`);
+  return 'internal';
 }
 
-function validateInputs(policy: ExposurePolicy, request: CoordinatorOutputRequest) {
+function validationError(value: string, reason: string): BlockedItem {
+  return { value, reason };
+}
+
+function validateInputs(policy: ExposurePolicy, request: CoordinatorOutputRequest): BlockedItem[] {
+  const errors: BlockedItem[] = [];
   if (policy.schema_version !== EXPECTED_POLICY_SCHEMA) {
-    throw new Error(`Unsupported policy schema_version: ${String(policy.schema_version ?? 'missing')}`);
+    errors.push(validationError('policy.schema_version', 'missing_or_unsupported_policy_schema_version'));
   }
-  if (request.schema_version !== undefined && request.schema_version !== EXPECTED_REQUEST_SCHEMA) {
-    throw new Error(`Unsupported request schema_version: ${String(request.schema_version)}`);
+  if (!isNonEmptyString(policy.policy_id)) errors.push(validationError('policy.policy_id', 'missing_policy_id'));
+  if (!isStringArray(policy.allowed_lanes)) {
+    errors.push(validationError('policy.allowed_lanes', 'missing_or_invalid_policy_allowed_lanes'));
   }
+  if (!isStringArray(policy.allowed_outputs)) {
+    errors.push(validationError('policy.allowed_outputs', 'missing_or_invalid_policy_allowed_outputs'));
+  }
+  if (!isStringArray(policy.blocked_outputs)) {
+    errors.push(validationError('policy.blocked_outputs', 'missing_or_invalid_policy_blocked_outputs'));
+  }
+  if (!isStringArray(policy.input_exclusions)) {
+    errors.push(validationError('policy.input_exclusions', 'missing_or_invalid_policy_input_exclusions'));
+  }
+  if (!policy.dify_contract || typeof policy.dify_contract !== 'object') {
+    errors.push(validationError('policy.dify_contract', 'missing_policy_dify_contract'));
+  } else {
+    if (!isStringArray(policy.dify_contract.may_show_to_reviewer)) {
+      errors.push(
+        validationError('policy.dify_contract.may_show_to_reviewer', 'missing_or_invalid_policy_reviewer_outputs'),
+      );
+    }
+    if (!isStringArray(policy.dify_contract.must_keep_internal)) {
+      errors.push(
+        validationError('policy.dify_contract.must_keep_internal', 'missing_or_invalid_policy_internal_outputs'),
+      );
+    }
+    if (!isStringArray(policy.dify_contract.must_not_emit)) {
+      errors.push(validationError('policy.dify_contract.must_not_emit', 'missing_or_invalid_policy_blocked_outputs'));
+    }
+    if (!isStringArray(policy.dify_contract.requires_lead_approval)) {
+      errors.push(
+        validationError('policy.dify_contract.requires_lead_approval', 'missing_or_invalid_policy_lead_approval_outputs'),
+      );
+    }
+  }
+
+  if (request.schema_version !== EXPECTED_REQUEST_SCHEMA) {
+    errors.push(validationError('request.schema_version', 'missing_or_unsupported_request_schema_version'));
+  }
+  if (!isNonEmptyString(request.request_id)) errors.push(validationError('request.request_id', 'missing_request_id'));
+  if (
+    request.intended_audience !== 'internal' &&
+    request.intended_audience !== 'reviewer' &&
+    request.intended_audience !== 'creator'
+  ) {
+    errors.push(validationError('request.intended_audience', 'missing_or_invalid_intended_audience'));
+  }
+  if (!isStringArray(request.requested_lanes) || request.requested_lanes.length === 0) {
+    errors.push(validationError('request.requested_lanes', 'missing_or_empty_requested_lanes'));
+  }
+  if (!isStringArray(request.requested_outputs) || request.requested_outputs.length === 0) {
+    errors.push(validationError('request.requested_outputs', 'missing_or_empty_requested_outputs'));
+  }
+  if (!isStringArray(request.input_sources) || request.input_sources.length === 0) {
+    errors.push(validationError('request.input_sources', 'missing_or_empty_input_sources'));
+  }
+  if (request.human_gate_confirmations !== undefined && !isStringArray(request.human_gate_confirmations)) {
+    errors.push(validationError('request.human_gate_confirmations', 'invalid_human_gate_confirmations'));
+  }
+  if (request.notes !== undefined && !isStringArray(request.notes)) {
+    errors.push(validationError('request.notes', 'invalid_request_notes'));
+  }
+  for (const key of Object.keys(request)) {
+    if (!REQUEST_FIELDS.has(key)) errors.push(validationError(key, 'unknown_request_field'));
+  }
+
+  return errors;
 }
 
 function buildOutputGate(
@@ -175,9 +262,9 @@ function buildOutputGate(
   request: CoordinatorOutputRequest,
   options: CliOptions,
 ): CoordinatorOutputGate {
-  validateInputs(policy, request);
+  const contractErrors = validateInputs(policy, request);
 
-  const audience = intendedAudience(request.intended_audience);
+  const audience = safeIntendedAudience(request.intended_audience);
   const requestedLanes = unique(list(request.requested_lanes));
   const requestedOutputs = unique(list(request.requested_outputs));
   const inputSources = unique(list(request.input_sources));
@@ -244,7 +331,11 @@ function buildOutputGate(
   }
 
   const blockedCount =
-    blockedLanes.length + blockedOutputs.length + blockedInputSources.length + missingHumanGates.length;
+    blockedLanes.length +
+    blockedOutputs.length +
+    blockedInputSources.length +
+    missingHumanGates.length +
+    contractErrors.length;
 
   return {
     schema_version: 'template_review_coordinator_output_gate.v0.1',
@@ -271,6 +362,7 @@ function buildOutputGate(
     blocked_outputs: blockedOutputs,
     blocked_input_sources: blockedInputSources,
     missing_human_gates: missingHumanGates,
+    contract_errors: contractErrors,
     notes: [
       'This gate validates a proposed coordinator output against a coordinator exposure policy.',
       'A blocked gate means Dify or another coordinator must not emit the requested output.',
@@ -285,6 +377,7 @@ function markdown(gate: CoordinatorOutputGate): string {
     ...gate.blocked_outputs.map((item) => `- output ${item.value}: ${item.reason}`),
     ...gate.blocked_input_sources.map((item) => `- input ${item.value}: ${item.reason}`),
     ...gate.missing_human_gates.map((item) => `- gate ${item.value}: ${item.reason}`),
+    ...gate.contract_errors.map((item) => `- contract ${item.value}: ${item.reason}`),
   ];
   return `# Coordinator Output Gate
 

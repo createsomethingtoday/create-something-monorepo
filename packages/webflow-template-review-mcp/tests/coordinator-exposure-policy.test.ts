@@ -264,6 +264,7 @@ test('coordinator output gate requires reviewer confirmation for reviewer-facing
       schema_version: 'template_review_coordinator_output_request.v0.1',
       request_id: 'reviewer_cue_request',
       intended_audience: 'reviewer',
+      requested_lanes: ['published_site_validation'],
       requested_outputs: ['reviewer_facing_quality_cue'],
       input_sources: ['published_site_validation'],
     };
@@ -330,13 +331,88 @@ test('coordinator output gate requires reviewer confirmation for reviewer-facing
   });
 });
 
+test('coordinator output gate fails closed on malformed output requests', async () => {
+  await withTempDir(async (dir) => {
+    const readinessOut = path.join(dir, 'readiness');
+    const policyOut = path.join(dir, 'policy');
+    const gateOut = path.join(dir, 'gate');
+    const requestPath = path.join(dir, 'malformed-output-request.json');
+    await runScript(readinessScript, [
+      '--subjective-panel-summary',
+      path.join(fixtureDir, 'subjective-panel-eval-score-summary.blocked.sample.json'),
+      '--rubric-reviewer-summary',
+      path.join(fixtureDir, 'rubric-reviewer-score-summary.blocked.sample.json'),
+      '--exceptional-lane-summary',
+      path.join(fixtureDir, 'exceptional-candidate-score-summary.blocked.sample.json'),
+      '--visual-proxy-canary-summary',
+      path.join(fixtureDir, 'visual-proxy-canary-summary.blocked.sample.json'),
+      '--out',
+      readinessOut,
+    ]);
+    await runScript(exposurePolicyScript, [
+      '--input',
+      path.join(readinessOut, 'quality-band-readiness-summary.json'),
+      '--out',
+      policyOut,
+    ]);
+    await writeFile(
+      requestPath,
+      `${JSON.stringify(
+        {
+          request_id: '',
+          intended_audience: 'review-panel',
+          requested_outputs: [],
+          input_sources: [],
+          final_decision: 'approve',
+        },
+        null,
+        2,
+      )}\n`,
+    );
+
+    await runScriptExpectingExitCode(
+      path.join(packageRoot, 'scripts/gate-coordinator-output.ts'),
+      [
+        '--policy',
+        path.join(policyOut, 'coordinator-exposure-policy.json'),
+        '--request',
+        requestPath,
+        '--out',
+        gateOut,
+      ],
+      2,
+    );
+
+    const gate = await readJson<{
+      status: string;
+      contract_errors: Array<{ value: string; reason: string }>;
+      allowed_requested_outputs: string[];
+    }>(path.join(gateOut, 'coordinator-output-gate.json'));
+    assert.equal(gate.status, 'blocked');
+    assert.deepEqual(gate.allowed_requested_outputs, []);
+    assert.deepEqual(
+      gate.contract_errors.map((item) => item.value).sort(),
+      [
+        'final_decision',
+        'request.input_sources',
+        'request.intended_audience',
+        'request.request_id',
+        'request.requested_lanes',
+        'request.requested_outputs',
+        'request.schema_version',
+      ],
+    );
+    assert.ok(gate.contract_errors.some((item) => item.reason === 'unknown_request_field'));
+  });
+});
+
 test('coordinator contract smoke validates reusable output request fixtures', async () => {
   await withTempDir(async (outDir) => {
     const { stdout } = await runScript(contractSmokeScript, ['--out', outDir]);
     const result = JSON.parse(stdout) as { ok: boolean; status: string; case_count: number };
     assert.equal(result.ok, true);
     assert.equal(result.status, 'pass');
-    assert.equal(result.case_count, 3);
+    assert.equal(result.case_count, 4);
 
     const summary = await readJson<{
       status: string;
@@ -365,6 +441,12 @@ test('coordinator contract smoke validates reusable output request fixtures', as
         },
         {
           case_id: 'sales_input_blocked',
+          expected_status: 'blocked',
+          actual_status: 'blocked',
+          ok: true,
+        },
+        {
+          case_id: 'malformed_request_blocked',
           expected_status: 'blocked',
           actual_status: 'blocked',
           ok: true,

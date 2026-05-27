@@ -31,6 +31,7 @@ type OutputGate = {
   blocked_outputs?: Array<{ value?: string; reason?: string }>;
   blocked_input_sources?: Array<{ value?: string; reason?: string }>;
   missing_human_gates?: Array<{ value?: string; reason?: string }>;
+  contract_errors?: Array<{ value?: string; reason?: string }>;
 };
 
 type SmokeCaseResult = {
@@ -131,6 +132,7 @@ function allBlockers(gate: OutputGate): string[] {
     ...(gate.blocked_outputs ?? []).map((item) => item.value ?? ''),
     ...(gate.blocked_input_sources ?? []).map((item) => item.value ?? ''),
     ...(gate.missing_human_gates ?? []).map((item) => item.value ?? ''),
+    ...(gate.contract_errors ?? []).map((item) => item.value ?? ''),
   ].filter(Boolean);
 }
 
