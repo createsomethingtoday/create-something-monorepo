@@ -75,6 +75,7 @@ type ArtifactManifestEntry = {
 
 const DEFAULT_OUT_DIR = '/tmp/webflow-template-review-quality-band-readiness';
 const INPUT_EXCLUSIONS = ['popularity', 'sales', 'views', 'favorites', 'marketplace_engagement'] as const;
+const REQUIRED_SOURCES = ['subjective_panel', 'rubric_reviewer', 'exceptional_lane', 'visual_proxy_canary'] as const;
 
 function parseArgs(argv: string[]): CliOptions {
   const options: Partial<CliOptions> = {
@@ -352,6 +353,7 @@ function rateOk(value: number | undefined, comparator: 'lte' | 'gte', threshold:
 
 function buildGateReasons(options: CliOptions, snapshots: MetricSnapshot[]) {
   const reasons: string[] = [];
+  const presentSources = new Set(snapshots.map((snapshot) => snapshot.source));
   const combinedScoredCount = snapshots.reduce((sum, snapshot) => sum + (snapshot.scored_output_count ?? 0), 0);
   const falseApprovalRate = maxDefined(snapshots.map((snapshot) => snapshot.false_approval_risk_rate));
   const falseRejectionRate = maxDefined(snapshots.map((snapshot) => snapshot.false_rejection_risk_rate));
@@ -365,6 +367,11 @@ function buildGateReasons(options: CliOptions, snapshots: MetricSnapshot[]) {
   const rejectedVisualProxyRecall = minDefined(snapshots.map((snapshot) => snapshot.rejected_visual_any_proxy_signal_rate));
 
   if (snapshots.length === 0) reasons.push('no calibration score summaries were provided');
+  if (snapshots.length > 0) {
+    for (const source of REQUIRED_SOURCES) {
+      if (!presentSources.has(source)) reasons.push(`missing_required_summary ${source}`);
+    }
+  }
   if (combinedScoredCount < options.minScoredCount) {
     reasons.push(`combined_scored_output_count ${combinedScoredCount} below ${options.minScoredCount}`);
   }
