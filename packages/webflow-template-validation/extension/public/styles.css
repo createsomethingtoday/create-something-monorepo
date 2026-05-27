@@ -307,7 +307,7 @@ body {
   margin: var(--space-2) 0;
 }
 
-/* Review Bridge: collapsible drawer, only shown when action needed */
+/* Validator script setup: collapsible drawer, only shown when action needed */
 .review-bridge {
   padding: var(--space-2) var(--space-3);
   border-bottom: 1px solid var(--border);
@@ -352,6 +352,62 @@ body {
 .bridge-message {
   font-size: var(--text-xs);
   color: var(--text-secondary);
+}
+
+.bridge-setup-steps {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-1);
+  list-style: none;
+}
+
+.bridge-setup-step {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-width: 0;
+  padding: var(--space-1);
+  font-size: var(--text-2xs);
+  color: var(--text-muted);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-xs);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.bridge-step-index {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  flex: 0 0 14px;
+  font-size: 9px;
+  color: var(--text-muted);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+}
+
+.bridge-setup-step.is-active {
+  color: var(--text-primary);
+  border-color: rgba(96, 165, 250, 0.5);
+  background: rgba(96, 165, 250, 0.12);
+}
+
+.bridge-setup-step.is-active .bridge-step-index {
+  color: #fff;
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+.bridge-setup-step.is-complete {
+  color: var(--success);
+  border-color: rgba(74, 222, 128, 0.35);
+  background: rgba(74, 222, 128, 0.08);
+}
+
+.bridge-setup-step.is-complete .bridge-step-index {
+  color: var(--success);
+  border-color: rgba(74, 222, 128, 0.45);
 }
 
 .review-bridge-actions {
@@ -426,6 +482,13 @@ body {
   font-size: var(--text-2xs);
   color: var(--text-secondary);
   user-select: none;
+}
+
+.bridge-snippet-help {
+  margin: 0;
+  padding: 0 var(--space-2) var(--space-2);
+  font-size: var(--text-2xs);
+  color: var(--text-muted);
 }
 
 .bridge-snippet-code {
