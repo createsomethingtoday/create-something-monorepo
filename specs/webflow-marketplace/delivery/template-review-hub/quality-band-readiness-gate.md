@@ -91,6 +91,8 @@ The output request is intentionally small:
 
 The output gate writes `coordinator-output-gate.json` and `.md`. It exits with code `2` when blocked. Dify should treat that status as a hard stop and should not show or write the requested output.
 
+The request schema is strict. Missing `schema_version`, missing `request_id`, empty `requested_outputs`, empty `requested_lanes`, empty `input_sources`, invalid `intended_audience`, malformed optional arrays, or unknown request fields are contract errors. Contract errors produce a blocked gate artifact and exit code `2`.
+
 Run the reusable fixture smoke:
 
 ```bash
@@ -98,7 +100,7 @@ pnpm --filter @create-something/webflow-template-review-mcp coordinator:contract
   --out /tmp/webflow-template-review-coordinator-contract-smoke
 ```
 
-This command derives a readiness-backed exposure policy and validates the output request fixtures in `fixtures/coordinator-output-requests/manifest.json`. The smoke must pass before changing Dify coordinator prompt/output wiring.
+This command derives a readiness-backed exposure policy and validates the output request fixtures in `fixtures/coordinator-output-requests/manifest.json`. The fixture set covers allowed creator guidance, blocked final quality-band output, blocked sales-derived input, and malformed request shape. The smoke must pass before changing Dify coordinator prompt/output wiring.
 
 ## Readiness Levels
 

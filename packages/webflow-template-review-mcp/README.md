@@ -145,7 +145,7 @@ pnpm coordinator:output-gate -- \
   --out /tmp/webflow-template-review-coordinator-output-gate-smoke
 ```
 
-The request should declare `requested_outputs`, `requested_lanes`, `input_sources`, `intended_audience`, and any `human_gate_confirmations`. The gate writes `coordinator-output-gate.json` and `.md`, exits with code `2` when blocked, and fails closed on outputs outside the exposure policy, explicitly blocked outputs, excluded inputs such as sales/views/popularity, missing human gates, or internal-only outputs aimed at reviewers or creators.
+The request must use `schema_version: "template_review_coordinator_output_request.v0.1"` and declare a `request_id`, `requested_outputs`, `requested_lanes`, `input_sources`, `intended_audience`, and any `human_gate_confirmations`. The gate writes `coordinator-output-gate.json` and `.md`, exits with code `2` when blocked, and fails closed on malformed request shape, unknown request fields, outputs outside the exposure policy, explicitly blocked outputs, excluded inputs such as sales/views/popularity, missing human gates, or internal-only outputs aimed at reviewers or creators.
 
 Run the fixture-backed coordinator contract smoke:
 
@@ -154,7 +154,7 @@ pnpm coordinator:contract-smoke -- \
   --out /tmp/webflow-template-review-coordinator-contract-smoke
 ```
 
-The smoke uses `fixtures/coordinator-output-requests/manifest.json`, derives an exposure policy from the quality-readiness fixtures, and verifies that allowed creator guidance passes while final quality-band output and sales-derived quality input are blocked. It writes `coordinator-contract-smoke-summary.json` and `.md`.
+The smoke uses `fixtures/coordinator-output-requests/manifest.json`, derives an exposure policy from the quality-readiness fixtures, and verifies that allowed creator guidance passes while final quality-band output, sales-derived quality input, and malformed coordinator requests are blocked. It writes `coordinator-contract-smoke-summary.json` and `.md`.
 
 For broader calibration, build a reviewer-balanced blind/private sample before tuning subjective prompts:
 

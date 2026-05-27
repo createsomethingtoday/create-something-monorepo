@@ -17,6 +17,12 @@
       "request_file": "sales-input.blocked.json",
       "expected_status": "blocked",
       "expected_blockers": ["sales"]
+    },
+    {
+      "case_id": "malformed_request_blocked",
+      "request_file": "malformed-request.blocked.json",
+      "expected_status": "blocked",
+      "expected_blockers": ["request.schema_version", "request.requested_outputs", "final_decision"]
     }
   ]
 }
