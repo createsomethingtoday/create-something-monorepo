@@ -311,6 +311,20 @@
     return await tool.execute(input);
   }
 
+  function isWebflowBackgroundVideoPosterImage(img) {
+    if (!img || typeof img.closest !== 'function') return false;
+    if (img.getAttribute('alt') !== '') return false;
+
+    return Boolean(img.closest('.w-background-video, [data-video-urls][data-poster-url]'));
+  }
+
+  function isImageMissingAltText(img) {
+    const alt = img.getAttribute('alt');
+    if (alt === null) return true;
+    if (alt.trim() === '') return !isWebflowBackgroundVideoPosterImage(img);
+    return false;
+  }
+
   registerTool({
     name: 'get_site_info',
     description: 'Return basic information about the current Webflow-published page.',
@@ -392,7 +406,7 @@
       additionalProperties: false,
     },
     execute: async ({ maxExamples = 20 } = {}) => {
-      const imagesMissingAlt = Array.from(document.querySelectorAll('img:not([alt]), img[alt=""]'));
+      const imagesMissingAlt = Array.from(document.querySelectorAll('img')).filter(isImageMissingAltText);
       const linksMissingHref = Array.from(document.querySelectorAll('a:not([href]), a[href=""]'));
 
       const imgExamples = imagesMissingAlt.slice(0, maxExamples).map((img) => ({
