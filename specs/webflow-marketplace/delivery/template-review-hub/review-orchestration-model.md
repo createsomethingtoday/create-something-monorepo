@@ -241,6 +241,7 @@ Stable:
 - deterministic tools
 - D1 review ledger
 - quality-band readiness artifacts
+- coordinator exposure policy artifacts
 - golden-set canaries
 - approved precedent sets
 - shadow-mode judge-panel evals
