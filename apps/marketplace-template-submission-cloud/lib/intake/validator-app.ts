@@ -1,5 +1,6 @@
 const DEFAULT_VALIDATOR_WORKER_URL = 'https://validation-worker.createsomething.workers.dev';
-const DEFAULT_ASSET_VALIDATOR_URL = 'https://webflow.com/templates/dashboard/assets';
+const DEFAULT_VALIDATOR_APP_INSTALL_URL =
+  'https://webflow.com/oauth/authorize?response_type=code&client_id=28685cff5fef23c426a670bb57bf383b25cd16125bc5bba2103d899b3f4a7092&workspace=createsomethingagency';
 const REVIEW_SNIPPET_MARKER = '__wf_review_snippet_v1';
 const REVIEW_SNIPPET_PATH = '/app-validator/snippet/review.js';
 const HTML_FETCH_TIMEOUT_MS = 12_000;
@@ -88,8 +89,9 @@ function getValidatorWorkerUrl() {
 export function getValidatorAppInstallUrl() {
   return (
     process.env.VALIDATOR_APP_INSTALL_URL ||
+    process.env.NEXT_PUBLIC_VALIDATOR_APP_INSTALL_URL ||
     process.env.NEXT_PUBLIC_ASSET_VALIDATOR_URL ||
-    DEFAULT_ASSET_VALIDATOR_URL
+    DEFAULT_VALIDATOR_APP_INSTALL_URL
   ).trim();
 }
 
@@ -297,7 +299,7 @@ export async function runValidatorAppSubmissionPreflight(
       message: 'Run the Webflow Way Validator before submitting this template.',
       issues: [
         'The published site is missing the required Validator bridge script or allowed review script source.',
-        'Use the Webflow Way Validator action in this form, or open the Asset Dashboard Validator, install or confirm the bridge, publish the site, and validate again.'
+        'Use the Webflow Way Validator action in this form to install the app, confirm the bridge, publish the site, and validate again.'
       ],
       bridge
     });
@@ -325,7 +327,7 @@ export async function runValidatorAppSubmissionPreflight(
       message: 'Run the Webflow Way Validator before submitting this template.',
       issues: [
         'The bridge is present, but no persisted Validator app result was found for this site.',
-        'Use the Webflow Way Validator action in this form, or open the Asset Dashboard Validator, run validation until the report shows a 100% pass, publish, and validate again.'
+        'Use the Webflow Way Validator action in this form, run validation until the report shows a 100% pass, publish the site, and validate again.'
       ],
       bridge
     });

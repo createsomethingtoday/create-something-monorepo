@@ -755,7 +755,7 @@ function getValidatorAppActionLabel(actionUrl: string) {
     return 'Open Webflow Way Validator';
   }
 
-  return 'Open Asset Dashboard Validator';
+  return 'Open Webflow Way Validator';
 }
 
 function formatFileSize(size: number) {
@@ -3148,8 +3148,8 @@ export function TemplateIntake() {
                         <code className="submission-inline-code">*.webflow.io</code> URL. The full
                         site crawl can take a few minutes. As of May 1, 2026, legacy IX2
                         interactions are rejected; rebuild interactions with Webflow Interactions
-                        powered by GSAP (IX3). The Webflow Way Validator bridge and 100% pass result
-                        must also be confirmed from the Asset Dashboard before submission.
+                        powered by GSAP (IX3). Install and run the Webflow Way Validator app before
+                        submission; a confirmed 100% pass result is required.
                       </p>
                       <input
                         className="field-input input w-input"
