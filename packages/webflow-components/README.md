@@ -164,6 +164,24 @@ The current package contains both Canon exports and compatibility exports. The l
 | **Process Steps** | Step navigator | `heading`, `steps` (JSON), `variant` |
 | **Icon Card Grid** | Grid of icon cards | `heading`, `cards` (JSON), `columns` |
 
+### Cato Supply (Group: Cato Supply)
+
+These components are based on the exported project at `/Users/micahjohnson/Downloads/cato-supply.webflow` and are meant to replace the slow native/MCP delivery path for the remaining Cato surfaces.
+
+| Component | Description | Key Props |
+|-----------|-------------|-----------|
+| **Cato Supply Search Hero** | Homepage hero with Product Search redirect and Risk Radar catalog | `heading`, `productSearchUrl`, `apiUrl`, `showRiskRadar` |
+| **Cato Product Search Form** | Standalone search form redirecting to Cato Product Search | `placeholder`, `buttonLabel`, `productSearchUrl` |
+| **Cato Risk Radar Catalog** | Live Risk Radar table replacing the custom-code embed | `apiUrl`, `riskRadarUrl`, `rowsJson`, `fetchEnabled`, `autoScroll` |
+| **Cato Insights Mega Menu** | Self-contained Insights mega-menu content | `heading`, `summary`, `categoriesJson`, `itemsJson` |
+| **Cato Insights Hub** | Insights landing page with category cards and latest content | `categoriesJson`, `itemsJson`, `itemLimit`, `showFilterRail` |
+| **Cato Insights Archive** | Focused archive page for Resiliency, Research, Resources, or Newsroom | `categoryId`, `showSubscribe`, `itemsJson` |
+| **Cato Insight Category Archive** | CMS category template archive that resolves the active Insight Category from the slug | `categorySlug`, `categoryId`, `showSubscribe`, `itemsJson` |
+| **Cato Insight Detail** | CMS-bindable detail-page article shell | `title`, `summary`, `bodyJson`, `takeawaysJson`, `categoryId` |
+| **Cato About Page** | Improved About page experience with hero, platform focus, proof metrics, values, mission, leadership, and board sections | `valuesJson`, `leadershipJson`, `boardJson`, `metricsJson`, `showMission`, `showTeam` |
+| **Cato Case Studies Landing** | Improved Case Studies landing page with featured story, result proof, and customer story grid | `caseStudiesJson`, `showFeatured`, `linkMode`, `pathPrefix` |
+| **Cato Case Study Detail** | CMS-bindable case study detail template with customer profile, challenge, solution, results, and related stories | `slug`, `clientName`, `challengeHtml`, `solutionHtml`, `challengeImage`, `solutionImage`, `resultsJson`, `caseStudiesJson`, `backHref` |
+
 ### Layout (Group: Layout)
 
 | Component | Description | Key Props |
