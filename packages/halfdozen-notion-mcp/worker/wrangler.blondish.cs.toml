@@ -13,6 +13,9 @@ custom_domain = true
 [observability]
 enabled = true
 
+[triggers]
+crons = ["0 13 * * *"]
+
 [[durable_objects.bindings]]
 name = "MCP_OBJECT"
 class_name = "NotionHalfDozenMcp"
@@ -34,8 +37,17 @@ WORKSPACE_CLIENT_LABEL = "BLOND:ISH"
 WORKSPACE_CLIENT_DESCRIPTION = "BLOND:ISH Notion workspace"
 MCP_DISPLAY_NAME = "Notion Half Dozen × BLOND:ISH"
 MCP_DESCRIPTION = "Half Dozen internal and BLOND:ISH Notion. Full Notion tools; no Composio."
+BLONDISH_TICKET_SYNC_ENABLED = "false"
+BLONDISH_SUPPORT_TICKETS_DATA_SOURCE_ID = "fda87fb8-b156-820b-9542-8774717a42f6"
+BLONDISH_HD_TICKETS_DATABASE_ID = "368019187ac58071a25af2bed93a8abb"
+BLONDISH_HD_TICKETS_DATA_SOURCE_TITLE = "Tickets [HD]"
+BLONDISH_DELIVERY_REVERSE_SYNC_ENABLED = "true"
+BLONDISH_DELIVERY_REVERSE_SYNC_DRY_RUN = "false"
+BLONDISH_DELIVERY_MIRROR_DATA_SOURCE_ID = "561b555e-b8d7-4516-b374-31a253f88c29"
+BLONDISH_DELIVERY_MIRROR_DATA_SOURCE_TITLE = "BLOND:ISH Support Tickets [HD Delivery]"
 
 # Secrets (set via wrangler secret put --config wrangler.blondish.toml)
 # NOTION_API_KEY        — Half Dozen (used for workspace "halfdozen")
 # NOTION_CLIENT_API_KEY — BLOND:ISH (used for workspace "client")
-
+# NOTION_CREATE_SOMETHING_API_KEY — CREATE SOMETHING mirror database
+# BLONDISH_TICKET_SYNC_WEBHOOK_SECRET — optional; falls back to MCP_BEARER_TOKEN
