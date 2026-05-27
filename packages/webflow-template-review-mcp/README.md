@@ -126,6 +126,16 @@ The readiness scorer writes `quality-band-readiness-summary.json` and `.md`. It 
 
 It also writes `quality-band-readiness-ledger-import.sql`, `quality-band-readiness-ledger-summary.json`, and `quality-band-readiness-artifact-manifest.json`. Those files are D1/R2 import artifacts only; the scorer does not write D1, Airtable, reviewer feedback, approvals, rejections, ratings, or featured decisions.
 
+Derive the Dify/coordinator exposure policy from a readiness summary:
+
+```bash
+pnpm coordinator:exposure-policy -- \
+  --input /tmp/webflow-template-review-quality-band-readiness-fixture-smoke/quality-band-readiness-summary.json \
+  --out /tmp/webflow-template-review-coordinator-exposure-policy-fixture-smoke
+```
+
+The exposure policy writes `coordinator-exposure-policy.json` and `.md`. It is the artifact a Dify coordinator should consume before deciding which lanes or outputs may be shown. It preserves the quality-readiness exclusions and blocks autonomous approvals, autonomous rejections, final quality bands, featured decisions, creator-facing final decision language, and quality decisions from popularity, sales, views, favorites, or marketplace engagement. `reviewer_assist_candidate` only enables reviewer-facing quality cues when the command is run with `--lead-approved-reviewer-assist`.
+
 For broader calibration, build a reviewer-balanced blind/private sample before tuning subjective prompts:
 
 ```bash

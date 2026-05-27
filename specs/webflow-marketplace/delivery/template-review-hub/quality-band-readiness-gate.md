@@ -52,6 +52,21 @@ The ledger SQL targets `quality_band_readiness_runs` and
 `quality_band_readiness_artifacts` in `review-ledger.phase1.sql`. The script
 only writes local artifacts; it does not apply D1 migrations or insert rows.
 
+Derive the coordinator exposure artifact:
+
+```bash
+pnpm --filter @create-something/webflow-template-review-mcp coordinator:exposure-policy -- \
+  --input /tmp/webflow-template-review-quality-band-readiness-fixture-smoke/quality-band-readiness-summary.json \
+  --out /tmp/webflow-template-review-coordinator-exposure-policy-fixture-smoke
+```
+
+This writes:
+
+- `coordinator-exposure-policy.json`
+- `coordinator-exposure-policy.md`
+
+The exposure policy is the Dify-facing contract. It translates readiness into allowed outputs, blocked outputs, required human gates, and lead-approval requirements. It does not call providers, does not write D1 or Airtable, and does not authorize marketplace decisions.
+
 ## Readiness Levels
 
 | Level | Meaning |
@@ -89,12 +104,21 @@ The next measurable improvement is to reduce false approval risk and Exceptional
 
 ## Dify Exposure Boundary
 
-Dify may read a readiness artifact to decide which review lanes are allowed:
+Dify should read a coordinator exposure policy derived from the readiness artifact to decide which review lanes are allowed:
 
 - `creator_guidance_only`: evidence and creator coaching only
 - `shadow_only`: internal calibration only; no reviewer-facing quality band
 - `reviewer_assist_candidate`: human lead must approve before exposing assistive quality cues
 - `quality_band_shadow_expansion_candidate`: expand shadow evaluation; still not autonomous approval/rejection
 
-Dify must not convert a readiness artifact into a final marketplace decision.
-The readiness artifact is a control-plane gate, not a review outcome.
+Dify must not convert a readiness artifact or coordinator exposure policy into a final marketplace decision. The readiness artifact and exposure policy are control-plane gates, not review outcomes.
+
+The exposure policy must always block:
+
+- autonomous approval
+- autonomous rejection
+- final quality bands
+- featured or Exceptional decisions
+- Airtable writes without reviewer confirmation
+- creator-facing final decision language
+- quality decisions from popularity, sales, views, favorites, or marketplace engagement
