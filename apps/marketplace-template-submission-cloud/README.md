@@ -60,7 +60,9 @@ Validator app submission preflight:
   the published bridge plus latest persisted Validator result.
 - `VALIDATOR_APP_INSTALL_URL`
   defaults to `https://webflow.com/templates/dashboard/assets`, where creators can open the
-  Asset Dashboard Validator if the bridge or latest 100% pass result is missing.
+  Asset Dashboard Validator if the bridge or latest 100% pass result is missing. Set this to
+  the Webflow OAuth install URL when the submission form should send creators directly into the
+  Validator app install flow.
 
 Required upload worker:
 
