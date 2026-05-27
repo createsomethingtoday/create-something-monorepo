@@ -297,7 +297,7 @@ export async function runValidatorAppSubmissionPreflight(
       message: 'Run the Webflow Way Validator before submitting this template.',
       issues: [
         'The published site is missing the required Validator bridge script or allowed review script source.',
-        'Open the Asset Dashboard Validator, install or confirm the bridge, publish the site, and validate again.'
+        'Use the Webflow Way Validator action in this form, or open the Asset Dashboard Validator, install or confirm the bridge, publish the site, and validate again.'
       ],
       bridge
     });
@@ -325,7 +325,7 @@ export async function runValidatorAppSubmissionPreflight(
       message: 'Run the Webflow Way Validator before submitting this template.',
       issues: [
         'The bridge is present, but no persisted Validator app result was found for this site.',
-        'Open the Asset Dashboard Validator, run validation until the report shows a 100% pass, publish, and validate again.'
+        'Use the Webflow Way Validator action in this form, or open the Asset Dashboard Validator, run validation until the report shows a 100% pass, publish, and validate again.'
       ],
       bridge
     });

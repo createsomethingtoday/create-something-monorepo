@@ -745,6 +745,19 @@ function statusClassName(tone: Tone) {
   return 'submission-status submission-status-info';
 }
 
+function getValidatorAppActionLabel(actionUrl: string) {
+  try {
+    const parsed = new URL(actionUrl);
+    if (parsed.hostname === 'webflow.com' && parsed.pathname === '/oauth/authorize') {
+      return 'Install Webflow Way Validator';
+    }
+  } catch {
+    return 'Open Webflow Way Validator';
+  }
+
+  return 'Open Asset Dashboard Validator';
+}
+
 function formatFileSize(size: number) {
   if (size < 1024) return `${size} B`;
   if (size < 1024 * 1024) return `${Math.round(size / 1024)} KB`;
@@ -1487,7 +1500,7 @@ export function TemplateIntake() {
     }
 
     return {
-      label: 'Open Asset Dashboard Validator',
+      label: getValidatorAppActionLabel(validatorAppActionUrl),
       onClick: () => window.open(validatorAppActionUrl, '_blank', 'noopener,noreferrer')
     };
   }

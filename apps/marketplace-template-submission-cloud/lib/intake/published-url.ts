@@ -470,10 +470,9 @@ export async function runPublishedUrlValidation(input: string): Promise<{
     };
   } catch (error) {
     const typedError = error instanceof Error ? error : new Error('Validation failed.');
-    if (typedError.name === 'AbortError') {
-      throw new Error('Published URL validation took longer than expected. Try again in a minute.');
-    }
-    if (!isRetryableWorkerError(typedError)) {
+    const shouldTryAsyncWorkflow =
+      typedError.name === 'AbortError' || isRetryableWorkerError(typedError);
+    if (!shouldTryAsyncWorkflow) {
       throw typedError;
     }
   }
