@@ -65,6 +65,7 @@ def fetch_broken_records(api_key: str) -> list[dict]:
     params = {
         "filterByFormula": filter_formula,
         "fields[]": [FIELD_ID_NAME, FIELD_ID_STATUS, FIELD_ID_LONG_DESC, FIELD_ID_MRP],
+        "returnFieldsByFieldId": "true",
     }
 
     records = []
@@ -166,10 +167,16 @@ def main() -> None:
     records = fetch_broken_records(airtable_key)
     print(f"Found {len(records)} record(s) with broken descriptions")
 
+    def _status_name(raw) -> str:
+        """Extract status name from single-select field value (dict or string)."""
+        if isinstance(raw, dict):
+            return raw.get("name", "")
+        return raw or ""
+
     # Filter out rejected records
     eligible = [
         r for r in records
-        if r["fields"].get(FIELD_ID_STATUS) != REJECTED_STATUS
+        if _status_name(r["fields"].get(FIELD_ID_STATUS)) != REJECTED_STATUS
     ]
     print(f"Eligible (non-rejected): {len(eligible)}")
 
@@ -178,7 +185,7 @@ def main() -> None:
         return
 
     # Sort by status priority
-    eligible.sort(key=lambda r: STATUS_ORDER.get(r["fields"].get(FIELD_ID_STATUS, ""), 99))
+    eligible.sort(key=lambda r: STATUS_ORDER.get(_status_name(r["fields"].get(FIELD_ID_STATUS)), 99))
 
     if args.limit:
         eligible = eligible[: args.limit]
@@ -193,7 +200,7 @@ def main() -> None:
         record_id = record["id"]
         fields = record["fields"]
         name = fields.get(FIELD_ID_NAME, "Unknown")
-        status = fields.get(FIELD_ID_STATUS, "Unknown")
+        status = _status_name(fields.get(FIELD_ID_STATUS, "Unknown"))
         mrp_id = fields.get(FIELD_ID_MRP, "")
         desc = fields.get(FIELD_ID_LONG_DESC, "")
 
