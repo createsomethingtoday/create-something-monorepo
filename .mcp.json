@@ -41,6 +41,13 @@
       "headers": {
         "Authorization": "Bearer ${POSTMAN_API_KEY}"
       }
+    },
+    "clarity": {
+      "command": "npx",
+      "args": [
+        "@microsoft/clarity-mcp-server",
+        "--clarity_api_token=${CLARITY_API_TOKEN}"
+      ]
     }
   }
 }

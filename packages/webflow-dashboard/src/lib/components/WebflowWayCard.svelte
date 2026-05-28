@@ -1,13 +1,15 @@
 <script lang="ts">
 	import { Button, Badge, Dialog } from './ui';
 	import { env } from '$env/dynamic/public';
+	import { trackEvent } from '$lib/utils/analytics';
 	import { ShieldCheck, Check, Info, ExternalLink } from 'lucide-svelte';
 
 	interface Props {
 		userEmail?: string;
+		compact?: boolean;
 	}
 
-	let { userEmail }: Props = $props();
+	let { userEmail, compact = false }: Props = $props();
 
 	let showInstallModal = $state(false);
 
@@ -18,18 +20,29 @@
 	const externalUrl = env.PUBLIC_WEBFLOW_WAY_VALIDATOR_URL || 'https://webflow-way-validator.vercel.app';
 
 	function handleLearnMore() {
+		trackEvent('webflow_way_validator_learn_more_opened', {
+			surface: compact ? 'validation_required_card' : 'validation_tool_card'
+		});
 		showInstallModal = true;
 	}
 
 	function handleInstall() {
+		trackEvent('webflow_way_validator_install_clicked', {
+			surface: compact ? 'validation_required_card' : 'validation_tool_card'
+		});
+		trackEvent('validator_install_link_clicked', {
+			validator_type: 'webflow_way',
+			link_destination: installUrl,
+			surface: compact ? 'validation_required_card' : 'validation_tool_card'
+		});
 		window.open(installUrl, '_blank', 'noopener,noreferrer');
 	}
 </script>
 
-<div class="webflow-way-card">
+<div class="webflow-way-card" class:compact>
 	<div class="tool-header">
 		<div class="tool-icon webflow-way">
-			<ShieldCheck size={24} />
+			<ShieldCheck size={compact ? 20 : 24} />
 		</div>
 		<div class="tool-title-group">
 			<h3 class="tool-title">Webflow Way Validator</h3>
@@ -41,50 +54,76 @@
 	</div>
 
 	<p class="tool-description">
-		Designer App that validates templates against Webflow Way best practices before submission.
-		Use it to add the Validator script, publish, re-check, and fix required items until the
-		project reaches a confirmed 100% pass.
+		{#if compact}
+			Required app pass for submission. Install the app, add the bridge script, publish, and
+			run the Validator until the project reaches 100%.
+		{:else}
+			Designer App that validates templates against Webflow Way best practices before submission.
+			Use it to add the Validator script, publish, re-check, and fix required items until the
+			project reaches a confirmed 100% pass.
+		{/if}
 	</p>
 
-	<div class="how-it-works">
-		<div class="how-it-works-icon">
-			<Info size={16} />
+	{#if compact}
+		<ol class="compact-steps" aria-label="Validator app steps">
+			<li>Install app</li>
+			<li>Add bridge</li>
+			<li>Publish site</li>
+			<li>Run to 100%</li>
+		</ol>
+	{:else}
+		<div class="how-it-works">
+			<div class="how-it-works-icon">
+				<Info size={16} />
+			</div>
+			<div class="how-it-works-content">
+				<p class="how-it-works-title">How it works:</p>
+				<ul class="how-it-works-list">
+					<li>Install the app from Webflow</li>
+					<li>Open the app from the Designer Apps panel</li>
+					<li>Add the Validator script, publish, and re-check</li>
+					<li>Run Validator &mdash; completes in 30&ndash;60 seconds</li>
+					<li>Get step-by-step fix instructions for each issue</li>
+				</ul>
+			</div>
 		</div>
-		<div class="how-it-works-content">
-			<p class="how-it-works-title">How it works:</p>
-			<ul class="how-it-works-list">
-				<li>Install the app from Webflow</li>
-				<li>Open the app from the Designer Apps panel</li>
-				<li>Add the Validator script, publish, and re-check</li>
-				<li>Run Validator &mdash; completes in 30&ndash;60 seconds</li>
-				<li>Get step-by-step fix instructions for each issue</li>
-			</ul>
-		</div>
-	</div>
+	{/if}
 
-	<ul class="tool-features">
-		<li>
-			<Check size={16} />
-			Design system &amp; naming conventions
-		</li>
-		<li>
-			<Check size={16} />
-			Page structure, SEO &amp; metadata
-		</li>
-		<li>
-			<Check size={16} />
-			Required 100% Validator pass before submission
-		</li>
-	</ul>
+	{#if !compact}
+		<ul class="tool-features">
+			<li>
+				<Check size={16} />
+				Design system &amp; naming conventions
+			</li>
+			<li>
+				<Check size={16} />
+				Page structure, SEO &amp; metadata
+			</li>
+			<li>
+				<Check size={16} />
+				Required 100% Validator pass before submission
+			</li>
+		</ul>
+	{/if}
 
 	<div class="tool-actions">
-		<Button variant="secondary" onclick={handleLearnMore} class="tool-button">
-			<Info size={16} />
-			Learn More
-		</Button>
-		<Button onclick={handleInstall} class="tool-button">
+		<Button
+			variant={compact ? 'default' : 'secondary'}
+			onclick={handleInstall}
+			class="tool-button"
+			data-dd-action-name="webflow way validator install clicked"
+		>
 			Install App
 			<ExternalLink size={16} />
+		</Button>
+		<Button
+			variant={compact ? 'secondary' : 'default'}
+			onclick={handleLearnMore}
+			class="tool-button"
+			data-dd-action-name="webflow way validator learn more opened"
+		>
+			<Info size={16} />
+			Learn More
 		</Button>
 	</div>
 </div>
@@ -253,8 +292,14 @@
 		padding: var(--space-md);
 		background: var(--color-bg-surface);
 		border: 1px solid var(--color-shell-border-default);
-		border-radius: var(--radius-lg);
+		border-radius: var(--radius-sm);
 		box-shadow: var(--shadow-sm);
+	}
+
+	.webflow-way-card.compact {
+		gap: 0.85rem;
+		padding: 0.95rem;
+		box-shadow: none;
 	}
 
 	.tool-header {
@@ -271,6 +316,12 @@
 		height: 40px;
 		border-radius: var(--radius-md);
 		flex-shrink: 0;
+	}
+
+	.compact .tool-icon {
+		width: 34px;
+		height: 34px;
+		border-radius: var(--radius-sm);
 	}
 
 	.tool-icon.webflow-way {
@@ -294,6 +345,11 @@
 		margin: 0;
 	}
 
+	.compact .tool-title {
+		font-size: var(--text-body-lg);
+		line-height: 1.2;
+	}
+
 	.badge-row {
 		display: flex;
 		gap: var(--space-xs);
@@ -304,6 +360,42 @@
 		color: var(--color-fg-secondary);
 		margin: 0;
 		line-height: 1.5;
+	}
+
+	.compact-steps {
+		display: grid;
+		grid-template-columns: repeat(4, minmax(0, 1fr));
+		gap: 0.45rem;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+		counter-reset: compact-step;
+	}
+
+	.compact-steps li {
+		counter-increment: compact-step;
+		min-width: 0;
+		padding: 0.55rem;
+		border: 1px solid color-mix(in srgb, var(--color-shell-border-default) 72%, transparent);
+		border-radius: var(--radius-sm);
+		color: var(--color-fg-secondary);
+		font-size: var(--text-caption);
+		line-height: 1.25;
+	}
+
+	.compact-steps li::before {
+		content: counter(compact-step);
+		display: block;
+		width: 1rem;
+		height: 1rem;
+		margin-bottom: 0.25rem;
+		border-radius: 999px;
+		background: color-mix(in srgb, var(--color-info-muted) 44%, transparent);
+		color: var(--color-info);
+		font-size: 0.68rem;
+		font-weight: var(--font-semibold);
+		line-height: 1rem;
+		text-align: center;
 	}
 
 	.how-it-works {
@@ -375,6 +467,10 @@
 		margin-top: auto;
 		padding-top: var(--space-sm);
 		border-top: 1px solid var(--color-shell-border-default);
+	}
+
+	.compact .tool-actions {
+		padding-top: 0.8rem;
 	}
 
 	:global(.tool-button) {
@@ -495,5 +591,15 @@
 		gap: var(--space-sm);
 		padding-top: var(--space-sm);
 		border-top: 1px solid var(--color-shell-border-default);
+	}
+
+	@media (max-width: 520px) {
+		.compact-steps {
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+		}
+
+		.tool-actions {
+			flex-direction: column;
+		}
 	}
 </style>

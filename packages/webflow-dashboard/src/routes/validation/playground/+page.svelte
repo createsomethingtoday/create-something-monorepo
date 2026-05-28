@@ -63,16 +63,22 @@
     isValidating = true;
     result = null;
     const startedAt = Date.now();
+    const targetHost = (() => {
+      try {
+        return new URL(url.trim()).hostname;
+      } catch {
+        return null;
+      }
+    })();
 
     trackEvent('validation_run_started', {
       validator: 'gsap',
-      target_host: (() => {
-        try {
-          return new URL(url.trim()).hostname;
-        } catch {
-          return null;
-        }
-      })()
+      surface: 'playground',
+      target_host: targetHost
+    });
+    trackEvent('gsap_validation_started', {
+      surface: 'playground',
+      target_host: targetHost
     });
 
     try {
@@ -92,8 +98,16 @@
 
       trackEvent('validation_run_completed', {
         validator: 'gsap',
+        surface: 'playground',
         duration_ms: Date.now() - startedAt,
         passed: validationResult.passed,
+        total_pages: validationResult.summary.totalPages,
+        flagged_code_count: validationResult.issues.totalFlaggedCode
+      });
+      trackEvent('gsap_validation_completed', {
+        surface: 'playground',
+        result: validationResult.passed ? 'pass' : 'fail',
+        duration_seconds: Math.round((Date.now() - startedAt) / 1000),
         total_pages: validationResult.summary.totalPages,
         flagged_code_count: validationResult.issues.totalFlaggedCode
       });
@@ -102,7 +116,12 @@
 
       trackEvent('validation_run_failed', {
         validator: 'gsap',
+        surface: 'playground',
         duration_ms: Date.now() - startedAt,
+        error_message: error
+      });
+      trackEvent('gsap_validation_error', {
+        surface: 'playground',
         error_message: error
       });
     } finally {
@@ -186,7 +205,12 @@
                   class="url-input"
                   disabled={isValidating}
                 />
-                <button type="submit" class="validate-btn" disabled={isValidating}>
+                <button
+                  type="submit"
+                  class="validate-btn"
+                  disabled={isValidating}
+                  data-dd-action-name="gsap playground validate site"
+                >
                   {#if isValidating}
                     <span class="spinner"></span>
                     Checking...

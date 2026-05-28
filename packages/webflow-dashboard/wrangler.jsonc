@@ -32,7 +32,10 @@
 
 	// Environment variables (secrets set via wrangler secret put)
 	"vars": {
-		"ENVIRONMENT": "production"
+		"ENVIRONMENT": "production",
+		// Set to deployed webflow-template-search worker URL to enable /search and /api/templates/*
+		// Example: "https://webflow-template-search.<account>.workers.dev"
+		"TEMPLATE_SEARCH_WORKER_URL": ""
 	}
 
 	// Cron triggers: Configure in Cloudflare Dashboard > Workers & Pages > webflow-dashboard > Triggers

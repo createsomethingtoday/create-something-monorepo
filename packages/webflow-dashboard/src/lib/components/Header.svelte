@@ -16,6 +16,7 @@
     [
       { href: '/dashboard', label: 'Dashboard' },
       showMarketplace ? { href: '/marketplace', label: 'Marketplace' } : null,
+      showMarketplace ? { href: '/search', label: 'Search' } : null,
       { href: '/validation', label: 'Validation' }
     ].filter((item): item is { href: string; label: string } => item !== null)
   );

@@ -197,8 +197,10 @@
   );
 
   function handleSort(key: CategorySortKey) {
+    const newDirection = sortKey === key ? (sortDirection === 'asc' ? 'desc' : 'asc') : 'asc';
+    trackEvent('marketplace_table_sorted', { sort_key: key, sort_direction: newDirection });
     if (sortKey === key) {
-      sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+      sortDirection = newDirection;
     } else {
       sortKey = key;
       sortDirection = 'asc';
@@ -311,6 +313,19 @@
       filter_state: userCategoryFilter
     });
   }
+
+  // Track filter changes after initial preferences hydration to avoid spurious events on load
+  $effect(() => {
+    if (!preferencesLoaded) return;
+    if (categoryFilter === 'all') return;
+    trackEvent('marketplace_category_filter_changed', { category: categoryFilter });
+  });
+
+  $effect(() => {
+    if (!preferencesLoaded) return;
+    if (competitionFilter === 'all') return;
+    trackEvent('marketplace_competition_filter_changed', { competition_level: competitionFilter });
+  });
 </script>
 
 <div class="marketplace-insights">

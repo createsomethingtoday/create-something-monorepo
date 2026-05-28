@@ -187,8 +187,11 @@
   }
 
   onMount(() => {
+    const params = new URLSearchParams(window.location.search);
     trackEvent('marketplace_opened', {
-      has_user: Boolean(data.user?.email)
+      has_user: Boolean(data.user?.email),
+      referrer: document.referrer ? new URL(document.referrer).pathname : null,
+      utm_source: params.get('utm_source')
     });
   });
 </script>

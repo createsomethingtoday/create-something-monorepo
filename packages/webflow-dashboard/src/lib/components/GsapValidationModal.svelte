@@ -1,17 +1,19 @@
 <script lang="ts">
 	import { Button, Dialog, Input, Label } from './ui';
 	import type { ValidationResult } from '$lib/types/validation';
+	import { trackEvent } from '$lib/utils/analytics';
 	import { Loader2 } from 'lucide-svelte';
 
 	interface Props {
 		isOpen: boolean;
-		onClose: () => void;
+		onClose?: () => void;
 		userEmail?: string;
+		initialUrl?: string;
 	}
 
-	let { isOpen, onClose, userEmail }: Props = $props();
+	let { isOpen, onClose, userEmail, initialUrl = '' }: Props = $props();
 
-	let url = $state('');
+	let url = $state(initialUrl);
 	let isValidating = $state(false);
 	let validationResults = $state<ValidationResult | null>(null);
 	let error = $state<string | null>(null);
@@ -23,6 +25,24 @@
 
 		isValidating = true;
 		error = null;
+		const startedAt = Date.now();
+		const targetHost = (() => {
+			try {
+				return new URL(url.trim()).hostname;
+			} catch {
+				return null;
+			}
+		})();
+
+		trackEvent('validation_run_started', {
+			validator: 'gsap',
+			surface: 'quick_modal',
+			target_host: targetHost
+		});
+		trackEvent('gsap_validation_started', {
+			surface: 'quick_modal',
+			target_host: targetHost
+		});
 
 		try {
 			const response = await fetch('/api/validation/gsap', {
@@ -37,8 +57,35 @@
 			}
 
 			validationResults = await response.json();
+
+			trackEvent('validation_run_completed', {
+				validator: 'gsap',
+				surface: 'quick_modal',
+				duration_ms: Date.now() - startedAt,
+				passed: validationResults?.passed,
+				total_pages: validationResults?.summary.totalPages,
+				flagged_code_count: validationResults?.issues.totalFlaggedCode
+			});
+			trackEvent('gsap_validation_completed', {
+				surface: 'quick_modal',
+				result: validationResults?.passed ? 'pass' : 'fail',
+				duration_seconds: Math.round((Date.now() - startedAt) / 1000),
+				total_pages: validationResults?.summary.totalPages,
+				flagged_code_count: validationResults?.issues.totalFlaggedCode
+			});
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Validation failed';
+
+			trackEvent('validation_run_failed', {
+				validator: 'gsap',
+				surface: 'quick_modal',
+				duration_ms: Date.now() - startedAt,
+				error_message: error
+			});
+			trackEvent('gsap_validation_error', {
+				surface: 'quick_modal',
+				error_message: error
+			});
 		} finally {
 			isValidating = false;
 		}
@@ -56,6 +103,9 @@
 
 	function handleViewDetails() {
 		// Navigate to playground with results
+		trackEvent('validation_playground_entry_clicked', {
+			source: 'quick_modal_details'
+		});
 		window.location.href = '/validation/playground';
 	}
 </script>
@@ -79,7 +129,12 @@
 						placeholder="https://your-site.webflow.io"
 						disabled={isValidating}
 					/>
-					<Button type="submit" disabled={isValidating || !url.trim()} size="sm">
+					<Button
+						type="submit"
+						disabled={isValidating || !url.trim()}
+						size="sm"
+						data-dd-action-name="gsap quick modal run check"
+					>
 						{#if isValidating}
 							<Loader2 class="spinner" size={16} />
 							Checking...
@@ -88,7 +143,13 @@
 						{/if}
 					</Button>
 					{#if validationResults}
-						<Button type="button" onclick={handleClear} variant="secondary" size="sm">
+						<Button
+							type="button"
+							onclick={handleClear}
+							variant="secondary"
+							size="sm"
+							data-dd-action-name="gsap quick modal clear"
+						>
 							Clear
 						</Button>
 					{/if}
@@ -185,10 +246,23 @@
 
 				<!-- View Details Link -->
 				<div class="results-footer">
-					<Button variant="secondary" size="sm" onclick={handleViewDetails}>
+					<Button
+						variant="secondary"
+						size="sm"
+						onclick={handleViewDetails}
+						data-dd-action-name="gsap quick modal details opened"
+					>
 						View GSAP Details
 					</Button>
-					<a href="/validation/playground" class="playground-link">
+					<a
+						href="/validation/playground"
+						class="playground-link"
+						data-dd-action-name="gsap quick modal playground link opened"
+						onclick={() =>
+							trackEvent('validation_playground_entry_clicked', {
+								source: 'quick_modal_link'
+							})}
+					>
 						Open in Playground →
 					</a>
 				</div>
