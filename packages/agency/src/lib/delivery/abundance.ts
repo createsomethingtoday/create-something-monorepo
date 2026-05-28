@@ -91,6 +91,7 @@ export const abundancePrivateArtifacts = [
 	'Dify Abundance Hub configuration is tracked as an external operational artifact and was production-smoked through the Service API.',
 	'Braintrust eval coverage for Abundance Hub is published under create-something-dify-agents / abundance_hub and verifies Dify API health, Abundance Jobs MCP tool routing, forbidden writes, secret refusal, latency, and trace IDs for Langfuse inspection.',
 	'MCP credentials remain in Infisical; Staff MCP, Jobs MCP, and the NPG scoped hub were smoked without exposing token values.',
+	'Public job ingestion now has a provider-independent D1 contract and Bright Data adapter path; the deployed Jobs MCP remains the serving surface until its backing source is pointed at the normalized table.',
 	'Cloudflare Pages production has AGENCY_INTERNAL_API_KEY, but WHATSAPP_VERIFY_TOKEN and WHATSAPP_APP_SECRET still need to be provisioned before enabling the Meta webhook.',
 	'NPG scoped hub status calls are reachable, but Jotform, Mailchimp, and WhatsApp currently report connected=false and need account-owner authorization before write-capable automation.'
 ];
@@ -100,6 +101,7 @@ export const abundanceNextReview = [
 	'Promote the secured Abundance API build from a clean release branch or clean deployment workspace.',
 	'Have NPG account owners review or reauthorize Jotform, Mailchimp, and WhatsApp before write-capable automation.',
 	'Confirm how Paylocity fields map into staff/operator records.',
+	'Point the Abundance Jobs MCP backing source at the normalized public jobs table after Bright Data credentials and dataset IDs are provisioned.',
 	'Decide which operator roster receives MCP/database access.'
 ];
 

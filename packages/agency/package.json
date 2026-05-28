@@ -25,7 +25,7 @@
 		"prepare": "pnpm prepare:build-dir && pnpm prepare:local-deps && node ./scripts/run-pinned-bin.mjs @sveltejs/kit svelte-kit sync || echo ''",
 		"check": "pnpm prepare:build-dir && pnpm prepare:local-deps && node ./scripts/run-pinned-bin.mjs @sveltejs/kit svelte-kit sync && node ./scripts/run-pinned-bin.mjs svelte-check svelte-check --tsconfig ./tsconfig.json --fail-on-warnings",
 		"check:watch": "pnpm prepare:build-dir && pnpm prepare:local-deps && node ./scripts/run-pinned-bin.mjs @sveltejs/kit svelte-kit sync && node ./scripts/run-pinned-bin.mjs svelte-check svelte-check --tsconfig ./tsconfig.json --fail-on-warnings --watch",
-		"test:abundance": "node --import tsx --test test/abundance-production-hardening.test.ts",
+		"test:abundance": "node --import tsx --test test/abundance-*.test.ts",
 		"smoke:mobile": "pnpm --filter @create-something/canon package && pnpm --filter @create-something/tufte package && pnpm build && playwright test --config playwright.mobile-smoke.config.ts",
 		"db:migrate": "node ../../scripts/run-wrangler.mjs d1 migrations apply create-something-db",
 		"db:migrate:local": "node ../../scripts/run-wrangler.mjs d1 migrations apply create-something-db --local",
