@@ -96,6 +96,7 @@ const DEFAULT_PAGE_SIZE = 24;
 const SEARCH_CACHE_TTL_MS = 5 * 60 * 1000;
 
 const gridResponseCache = new Map<string, { timestamp: number; data: ApiResponse }>();
+let gridStylesInjected = false;
 
 // Hosts whose images need to be routed through the Cloud App proxy.
 // Airtable signed attachment URLs expire after ~2 hours; the proxy caches
@@ -452,6 +453,8 @@ const GRID_STYLES = `
 const S: Record<string, CSSProperties> = {
   root: {
     width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
     fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
     boxSizing: 'border-box',
   },
@@ -518,11 +521,51 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [containerWidth, setContainerWidth] = useState<number | null>(null);
 
+  const rootRef = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
   // Stale-fetch guard: every new filter/sort change increments this
   const fetchEpochRef = useRef(0);
   const lastHrefRef = useRef(typeof window === 'undefined' ? '' : window.location.href);
+
+  useLayoutEffect(() => {
+    if (gridStylesInjected) return;
+    gridStylesInjected = true;
+    const styleEl = document.createElement('style');
+    styleEl.textContent = GRID_STYLES;
+    document.head.appendChild(styleEl);
+  }, []);
+
+  useLayoutEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    const root = rootRef.current;
+    if (!root) return undefined;
+
+    const container =
+      root.closest<HTMLElement>('.mp-main') ??
+      root.closest<HTMLElement>('.mp-collection-list') ??
+      root.parentElement;
+    if (!container) return undefined;
+
+    const updateContainerWidth = () => {
+      const nextWidth = Math.floor(container.getBoundingClientRect().width);
+      if (nextWidth > 0) {
+        setContainerWidth((current) => (current === nextWidth ? current : nextWidth));
+      }
+    };
+
+    updateContainerWidth();
+
+    if (typeof ResizeObserver === 'undefined') {
+      window.addEventListener('resize', updateContainerWidth);
+      return () => window.removeEventListener('resize', updateContainerWidth);
+    }
+
+    const observer = new ResizeObserver(updateContainerWidth);
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, []);
 
   // Keep Designer prop edits and production URL changes aligned after mount.
   useEffect(() => {
@@ -884,10 +927,23 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
   if (items.length === 0) return null;
 
   const isRefreshing = loading && items.length > 0;
+  const measuredWidth = containerWidth ?? 1200;
+  const gridColumns = measuredWidth < 480 ? 1 : measuredWidth < 768 ? 2 : measuredWidth < 992 ? 3 : 4;
+  const gridColumnGap = measuredWidth < 480 ? '0px' : measuredWidth < 768 ? '16px' : measuredWidth < 992 ? '20px' : '24px';
+  const gridRowGap = measuredWidth < 480 ? '28px' : '24px';
+  const gridStyle: CSSProperties = {
+    display: 'grid',
+    gridTemplateColumns: `repeat(${gridColumns}, minmax(0, 1fr))`,
+    columnGap: gridColumnGap,
+    rowGap: gridRowGap,
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    overflow: 'visible',
+  };
 
   return (
-    <div style={S.root} aria-busy={isRefreshing ? true : undefined}>
-      <style dangerouslySetInnerHTML={{ __html: GRID_STYLES }} />
+    <div ref={rootRef} className="tmgrid-shell" style={S.root} aria-busy={isRefreshing ? true : undefined}>
       {totalItems !== null && (
         <div style={S.countLabel}>
           {totalItems.toLocaleString()} template{totalItems !== 1 ? 's' : ''}
@@ -900,7 +956,7 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
             <div className="tmgrid-spinner" />
           </div>
         )}
-        <div className="tmgrid-grid">
+        <div className="tmgrid-grid" style={gridStyle}>
           {items.map((item, i) => {
             const primaryImageUrl = primaryThumbnailUrl(item);
             return (

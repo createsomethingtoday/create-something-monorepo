@@ -2,6 +2,7 @@ import React, {
   CSSProperties,
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -135,7 +136,7 @@ const ARROW_ICON_URL =
 const FILTER_STYLES = `
 .tmfilter-shell {
   width: 100%;
-  max-width: 100%;
+  max-width: var(--tmfilter-max-width, 100%);
   min-width: 0;
   box-sizing: border-box;
   color: #080808;
@@ -145,6 +146,7 @@ const FILTER_STYLES = `
   position: relative;
   z-index: 20;
   overflow: visible;
+  contain: inline-size;
 }
 
 .tmfilter-shell,
@@ -172,7 +174,7 @@ const FILTER_STYLES = `
   justify-content: space-between;
   gap: 8px;
   width: 100%;
-  max-width: 100%;
+  max-width: var(--tmfilter-max-width, 100%);
   min-width: 0;
   position: relative;
   inset: auto;
@@ -191,10 +193,12 @@ const FILTER_STYLES = `
 }
 
 .tmfilter-subcategory {
+  display: block;
   width: 100%;
-  max-width: 100%;
+  max-width: var(--tmfilter-max-width, 100%);
   min-width: 0;
   overflow: hidden;
+  contain: inline-size;
 }
 
 .mp-subcategory.margin-bottom-1 {
@@ -205,7 +209,7 @@ const FILTER_STYLES = `
   display: block;
   position: relative;
   width: 100%;
-  max-width: 100%;
+  max-width: var(--tmfilter-max-width, 100%);
   min-width: 0;
   overflow: hidden;
   box-sizing: border-box;
@@ -883,6 +887,7 @@ export const TemplateFilterBar: React.FC<TemplateFilterBarProps> = ({
   const [pillsLoading, setPillsLoading] = useState(false);
   const [routeVersion, setRouteVersion] = useState(0);
   const [openPanel, setOpenPanel] = useState<OpenPanel>(null);
+  const [containerWidth, setContainerWidth] = useState<number | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastFilterSyncKeyRef = useRef('');
@@ -1234,7 +1239,73 @@ export const TemplateFilterBar: React.FC<TemplateFilterBarProps> = ({
   const activeSortLabel = sortOptions.find((option) => option.value === filters.sort)?.label ?? 'Popular';
   const useSegmentedSort = sortDisplay === 'segmented';
 
-  const rootStyle: CSSProperties = {};
+  useLayoutEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    const root = rootRef.current;
+    if (!root) return undefined;
+
+    const container =
+      root.closest<HTMLElement>('.mp-main') ??
+      root.closest<HTMLElement>('.mp-title-sort') ??
+      root.parentElement;
+    if (!container) return undefined;
+
+    const updateContainerWidth = () => {
+      const nextWidth = Math.floor(container.getBoundingClientRect().width);
+      if (nextWidth > 0) {
+        setContainerWidth((current) => (current === nextWidth ? current : nextWidth));
+      }
+    };
+
+    updateContainerWidth();
+
+    if (typeof ResizeObserver === 'undefined') {
+      window.addEventListener('resize', updateContainerWidth);
+      return () => window.removeEventListener('resize', updateContainerWidth);
+    }
+
+    const observer = new ResizeObserver(updateContainerWidth);
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, []);
+
+  const rootStyle: CSSProperties & { '--tmfilter-max-width'?: string } = containerWidth
+    ? { '--tmfilter-max-width': `${containerWidth}px` }
+    : {};
+  const containedWidth = containerWidth ? `${containerWidth}px` : '100%';
+  const subcategoryRailStyle: CSSProperties = {
+    display: 'block',
+    width: '100%',
+    maxWidth: containedWidth,
+    minWidth: 0,
+    overflow: 'hidden',
+    boxSizing: 'border-box',
+    contain: 'inline-size',
+  };
+  const subcategoryScrollStyle: CSSProperties = {
+    display: 'block',
+    position: 'relative',
+    width: '100%',
+    maxWidth: containedWidth,
+    minWidth: 0,
+    overflow: 'hidden',
+    boxSizing: 'border-box',
+  };
+  const subcategoryTrackStyle: CSSProperties = {
+    display: 'flex',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    flexWrap: 'nowrap',
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    overflowX: 'auto',
+    overflowY: 'hidden',
+    WebkitOverflowScrolling: 'touch',
+    overscrollBehaviorX: 'contain',
+    scrollSnapType: 'x proximity',
+    scrollbarWidth: 'none',
+  };
   const showCategoryPillRow = showSubcategoryPills && !hasSubcategoryPillContext;
   const parentCategoryPill = routeContext.categoryGroupSlug
     ? categoryPills.find((pill) => pill.slug === routeContext.categoryGroupSlug)
@@ -1362,9 +1433,13 @@ export const TemplateFilterBar: React.FC<TemplateFilterBarProps> = ({
       <style dangerouslySetInnerHTML={{ __html: FILTER_STYLES }} />
 
       {shouldShowSubcategoryPills && (
-        <div className="mp-subcategory margin-bottom-1 tmfilter-subcategory" data-template-subcategory-pills="">
-          <div className="tmfilter-subcategory-scroll">
-            <div className="tmfilter-subcategory-track" role="list">
+        <div
+          className="mp-subcategory margin-bottom-1 tmfilter-subcategory"
+          data-template-subcategory-pills=""
+          style={subcategoryRailStyle}
+        >
+          <div className="tmfilter-subcategory-scroll" style={subcategoryScrollStyle}>
+            <div className="tmfilter-subcategory-track" role="list" style={subcategoryTrackStyle}>
               {pillsLoading && visiblePills.length === 0 ? (
                 <div className="tmfilter-subcategory-slide" role="listitem">
                   <span className="cc-subcategory tmfilter-pill is-loading">Loading categories</span>
