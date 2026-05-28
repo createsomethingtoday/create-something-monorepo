@@ -1,0 +1,18 @@
+name = "halfdozen-agent-review-webhook"
+main = "src/index.ts"
+account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
+compatibility_date = "2024-12-01"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+LINEAR_TEAM_KEY = "CRE"
+LINEAR_LABELS = "linear-coordination"
+ASSIGN_TO_TOKEN_OWNER = "true"
+
+# Secrets:
+# - WEBHOOK_SECRET
+# - LINEAR_API_KEY
+# Optional:
+# - SLACK_WEBHOOK_URL
+# - LINEAR_API_URL
+# - LINEAR_PROJECT

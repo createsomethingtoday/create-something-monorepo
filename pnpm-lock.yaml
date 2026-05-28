@@ -1118,6 +1118,18 @@ importers:
         specifier: ^4.62.0
         version: 4.64.0(@cloudflare/workers-types@4.20260205.0)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
 
+  packages/halfdozen-agent-review-webhook:
+    devDependencies:
+      '@cloudflare/workers-types':
+        specifier: ^4.20260317.1
+        version: 4.20260317.1
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      wrangler:
+        specifier: ^4.75.0
+        version: 4.75.0(@cloudflare/workers-types@4.20260317.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+
   packages/halfdozen-dm-mcp:
     dependencies:
       '@create-something/composio-bridge':
