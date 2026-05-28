@@ -416,13 +416,37 @@ const GRID_STYLES = `
 /* Responsive grid breakpoints injected here so Webflow classes don't override */
 .tmgrid-grid {
   display: grid !important;
-  grid-template-columns: repeat(4, 1fr) !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
   gap: 24px !important;
   width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  overflow: visible !important;
 }
-@media (max-width: 991px) { .tmgrid-grid { grid-template-columns: repeat(3, 1fr) !important; } }
-@media (max-width: 767px) { .tmgrid-grid { grid-template-columns: repeat(2, 1fr) !important; } }
-@media (max-width: 479px) { .tmgrid-grid { grid-template-columns: 1fr !important; } }
+.tmgrid-item {
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+@media (max-width: 991px) {
+  .tmgrid-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    column-gap: 20px !important;
+    row-gap: 24px !important;
+  }
+}
+@media (max-width: 767px) {
+  .tmgrid-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    column-gap: 16px !important;
+    row-gap: 24px !important;
+  }
+}
+@media (max-width: 479px) {
+  .tmgrid-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 28px !important;
+  }
+}
 `;
 
 const S: Record<string, CSSProperties> = {

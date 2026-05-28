@@ -256,9 +256,11 @@ const S: Record<string, CSSProperties> = {
   },
   creatorWrap: {
     display: 'block',
+    minWidth: '0',
   },
   creatorLink: {
-    display: 'inline-block',
+    display: 'block',
+    maxWidth: '100%',
     color: 'rgba(0, 0, 0, 0.6)',
     textDecoration: 'none',
   },
@@ -269,6 +271,9 @@ const S: Record<string, CSSProperties> = {
     fontWeight: 400,
     lineHeight: '24px',
     color: 'inherit',
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
   },
   agentNote: {
     margin: '2px 0 0 0',
@@ -374,6 +379,22 @@ const INJECTED_STYLES = `
 }
 .tmcard-link:hover .tmcard-hover-content {
   transform: scale(1.04);
+}
+
+@media (hover: none) {
+  .tmcard-wrapper:hover {
+    transform: none;
+    box-shadow: none;
+  }
+  .tmcard-link:hover .tmcard-primary-img,
+  .tmcard-link:hover .tmcard-secondary-img,
+  .tmcard-link:hover .tmcard-hover-content {
+    transform: none;
+  }
+  .tmcard-link:hover .tmcard-hover-overlay,
+  .tmcard-link:hover .tmcard-secondary-img {
+    opacity: 0;
+  }
 }
 
 /* Creator link hover */
