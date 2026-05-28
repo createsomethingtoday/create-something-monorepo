@@ -130,8 +130,14 @@ export const TemplateSearch: React.FC<TemplateSearchProps> = ({
 
       // Update URL and dispatch event so Template Grid can re-fetch
       window.history.pushState({}, '', url.toString());
-      window.dispatchEvent(new PopStateEvent('popstate', { state: {} }));
-      window.dispatchEvent(new CustomEvent('template-search-query', { detail: { query: q } }));
+      const popStateEvent =
+        typeof PopStateEvent === 'function'
+          ? new PopStateEvent('popstate', { state: {} })
+          : new Event('popstate');
+      const queryEventDetail = { q, query: q, source: 'TemplateSearch' };
+      window.dispatchEvent(popStateEvent);
+      window.dispatchEvent(new CustomEvent('template-search-query', { detail: queryEventDetail }));
+      document.dispatchEvent(new CustomEvent('template-search-query', { detail: queryEventDetail }));
 
       setIsOpen(false);
       setItems([]);

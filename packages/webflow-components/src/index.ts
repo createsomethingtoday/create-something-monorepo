@@ -33,6 +33,15 @@ export type { GlassCardProps, GlassVariant } from './components/cards/GlassCard'
 export { IconCard } from './components/cards/IconCard';
 export type { IconCardProps, IconCardVariant } from './components/cards/IconCard';
 
+export { TemplateCard } from './components/cards/TemplateCard';
+export type { TemplateCardProps, TemplateCardBadge, TemplateCardImage, TemplateCardLink } from './components/cards/TemplateCard';
+
+export { TemplateGrid } from './components/grid/TemplateGrid';
+export type { TemplateGridProps } from './components/grid/TemplateGrid';
+
+export { TemplateFilterBar } from './components/filter/TemplateFilterBar';
+export type { TemplateFilterBarProps } from './components/filter/TemplateFilterBar';
+
 // Canon Form Components
 export { TextField } from './components/form/TextField';
 export type { TextFieldProps, TextFieldSize, TextFieldType } from './components/form/TextField';
