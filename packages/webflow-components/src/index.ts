@@ -172,5 +172,8 @@ export type {
   TemplateSearchBoxVariant,
 } from './components/marketplace/TemplateSearchBox';
 
+export { TemplateMarketplaceHeading } from './components/marketplace/TemplateMarketplaceHeading';
+export type { TemplateMarketplaceHeadingProps } from './components/marketplace/TemplateMarketplaceHeading';
+
 export { TemplateSearchSidebar } from './components/marketplace/TemplateSearchSidebar';
 export type { TemplateSearchSidebarProps } from './components/marketplace/TemplateSearchSidebar';
