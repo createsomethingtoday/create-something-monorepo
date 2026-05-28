@@ -1,9 +1,36 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { clearLookupMapsCache } from '../src/airtable.js';
 import { installAirtableFetchMock } from './support/airtable.js';
 import { callWorker, createTestEnv } from './support/worker.js';
 
 const LOOKUPS = {
+  categoryGroups: [
+    {
+      id: 'group-technology',
+      fields: {
+        Name: 'Technology',
+        'Display Name': 'Technology',
+        '🥞CMS Slug': 'technology-websites',
+        'ℹ️Description (Short)': 'Software, startups, AI, apps, and digital products.',
+        'ℹ️Description (Landing page)': 'Launch software, SaaS, and AI websites with Webflow technology templates.',
+        '❓Related Keywords for Algolia': 'software, saas, AI',
+        '🥞CMS Status': 'Active',
+      },
+    },
+    {
+      id: 'group-blog',
+      fields: {
+        Name: 'Blog & Editorial',
+        'Display Name': 'Blog & Editorial',
+        '🥞CMS Slug': 'blog-and-editorial-websites',
+        'ℹ️Description (Short)': 'Journalism, articles, publishing, and storytelling.',
+        'ℹ️Description (Landing page)': 'Publish editorial sites, magazines, and content hubs with Webflow blog templates.',
+        '❓Related Keywords for Algolia': 'blog, magazine',
+        '🥞CMS Status': 'Active',
+      },
+    },
+  ],
   styles: [
     { id: 'style-dark', fields: { Name: 'Dark', '🥞CMS Slug': 'dark-websites' } },
     { id: 'style-modern', fields: { Name: 'Modern', '🥞CMS Slug': 'modern' } },
@@ -130,6 +157,7 @@ const PUBLISHED_ASSETS = [
 ];
 
 afterEach(() => {
+  clearLookupMapsCache();
   vi.restoreAllMocks();
 });
 
@@ -147,6 +175,7 @@ describe('webflow-template-search worker', () => {
   it('rebuilds the index and serves filtered search results', async () => {
     const fetchMock = installAirtableFetchMock({
       publishedAssets: PUBLISHED_ASSETS,
+      categoryGroups: LOOKUPS.categoryGroups,
       styles: LOOKUPS.styles,
       childCategories: LOOKUPS.childCategories,
       tags: LOOKUPS.tags,
@@ -189,6 +218,7 @@ describe('webflow-template-search worker', () => {
       expect(categoryPayload.category_pills.map((pill) => pill.slug)).toEqual(['technology-websites']);
       expect(categoryPayload.category_pills[0]?.url).toBe('https://webflow.com/templates/category/technology-websites');
       expect(categoryPayload.subcategory_pills.map((pill) => pill.slug)).toEqual(['ai-websites', 'software-and-saas-websites']);
+      expect(categoryPayload.subcategory_pills.map((pill) => pill.name)).toEqual(['AI', 'Software & SaaS']);
       expect(categoryPayload.subcategory_pills.map((pill) => pill.url)).toEqual([
         'https://webflow.com/templates/subcategory/ai-websites',
         'https://webflow.com/templates/subcategory/software-and-saas-websites',
@@ -223,6 +253,37 @@ describe('webflow-template-search worker', () => {
         items: Array<{ name: string; template_slug: string }>;
       };
       expect(suggestPayload.items).toMatchObject([{ name: 'Agentflow', template_slug: 'agentflow-website-template' }]);
+
+      const taxonomy = await callWorker(
+        new Request('https://templates.test/api/templates/taxonomy?category_group_slug=technology-websites'),
+        env,
+      );
+      const taxonomyPayload = (await taxonomy.json()) as {
+        description: string;
+        category_group: { slug: string; description_short: string; description_landing_page: string; related_keywords: string[] } | null;
+      };
+      expect(taxonomyPayload.description).toBe('Launch software, SaaS, and AI websites with Webflow technology templates.');
+      expect(taxonomyPayload.category_group).toMatchObject({
+        slug: 'technology-websites',
+        description_short: 'Software, startups, AI, apps, and digital products.',
+        description_landing_page: 'Launch software, SaaS, and AI websites with Webflow technology templates.',
+        related_keywords: ['software', 'saas', 'AI'],
+      });
+
+      const childTaxonomy = await callWorker(
+        new Request('https://templates.test/api/templates/taxonomy?child_category_slug=ai-websites'),
+        env,
+      );
+      const childTaxonomyPayload = (await childTaxonomy.json()) as {
+        description: string;
+        child_category: { slug: string; parent_category_group_slug: string | null; related_keywords: string[] } | null;
+      };
+      expect(childTaxonomyPayload.description).toBe('Launch software, SaaS, and AI websites with Webflow technology templates.');
+      expect(childTaxonomyPayload.child_category).toMatchObject({
+        slug: 'ai-websites',
+        parent_category_group_slug: 'technology-websites',
+        related_keywords: ['automation', 'agent'],
+      });
     } finally {
       fetchMock.mockRestore();
       close();
@@ -244,6 +305,7 @@ describe('webflow-template-search worker', () => {
     };
     const fetchMock = installAirtableFetchMock({
       publishedAssets: [parentOnlyAsset],
+      categoryGroups: LOOKUPS.categoryGroups,
       styles: LOOKUPS.styles,
       childCategories: [
         {
@@ -339,6 +401,112 @@ describe('webflow-template-search worker', () => {
       expect(repairedPayload.items[0]?.category_groups).toMatchObject([{ slug: 'blog-and-editorial-websites' }]);
       expect(repairedPayload.items[0]?.child_categories).toEqual([]);
       expect(repairedPayload.subcategory_pills).toEqual([]);
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
+  it('prefers the live CMS slug over the stale formula slug for template detail URLs', async () => {
+    const staleFormulaAsset = {
+      ...PUBLISHED_ASSETS[0],
+      id: 'recFleety',
+      fields: {
+        ...PUBLISHED_ASSETS[0].fields,
+        Name: 'Fleety Studio',
+        '🥞CMS Slug': 'fleety-website-template',
+        'Slug (from 🥞CMS Sync Records)': ['fleety-website-template'],
+        '🥞CMS Slug (formula)': 'fleetytemplate-website-template',
+        '🔗Listing URL': '',
+      },
+    };
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: [staleFormulaAsset],
+      categoryGroups: LOOKUPS.categoryGroups,
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+    });
+    const { env, close } = createTestEnv();
+
+    try {
+      const rebuild = await callWorker(
+        new Request('https://templates.test/api/templates/admin/rebuild', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(rebuild.status).toBe(200);
+
+      const response = await callWorker(
+        new Request('https://templates.test/api/templates/search?q=fleety&include=items,count&page_size=10'),
+        env,
+      );
+      const payload = (await response.json()) as {
+        items: Array<{ name: string; template_slug: string; url: string | null }>;
+        pagination: { total_items: number };
+      };
+
+      expect(payload.pagination.total_items).toBe(1);
+      expect(payload.items[0]).toMatchObject({
+        name: 'Fleety Studio',
+        template_slug: 'fleety-website-template',
+        url: 'https://webflow.com/templates/html/fleety-website-template',
+      });
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
+  it('falls back to live CMS category fields when the Algolia child category field is empty', async () => {
+    const cmsCategoryOnlyAsset = {
+      ...PUBLISHED_ASSETS[2],
+      id: 'recCmsCategoryOnly',
+      fields: {
+        ...PUBLISHED_ASSETS[2].fields,
+        Name: 'Course Funnel',
+        '🔍Algolia Child Category (🏗️ only)': [],
+        'ℹ️🪣Categories (Text)': ['AI', 'Software & SaaS'],
+        '🥞CMS Slug (from ℹ️🪣Categories)': ['ai-websites', 'software-and-saas-websites'],
+        '🥞CMS Slug (formula)': 'course-funnel-website-template',
+      },
+    };
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: [cmsCategoryOnlyAsset],
+      categoryGroups: LOOKUPS.categoryGroups,
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+    });
+    const { env, close } = createTestEnv();
+
+    try {
+      const rebuild = await callWorker(
+        new Request('https://templates.test/api/templates/admin/rebuild', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(rebuild.status).toBe(200);
+
+      const response = await callWorker(
+        new Request('https://templates.test/api/templates/search?child_category_slug=ai-websites&include=items,count&page_size=10'),
+        env,
+      );
+      const payload = (await response.json()) as {
+        items: Array<{ name: string; child_categories: Array<{ slug: string }> }>;
+        pagination: { total_items: number };
+      };
+      expect(payload.pagination.total_items).toBe(1);
+      expect(payload.items).toMatchObject([
+        {
+          name: 'Course Funnel',
+          child_categories: [{ slug: 'ai-websites' }, { slug: 'software-and-saas-websites' }],
+        },
+      ]);
     } finally {
       fetchMock.mockRestore();
       close();

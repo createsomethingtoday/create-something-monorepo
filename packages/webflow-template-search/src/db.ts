@@ -1,4 +1,12 @@
-import type { AliasType, ChildCategoryTaxonomyInput, DocumentCountRow, TemplateDocumentInput } from './types.js';
+import type {
+  AliasType,
+  ChildCategoryTaxonomyInput,
+  DocumentCountRow,
+  TaxonomyMetadataInput,
+  TaxonomyMetadataItem,
+  TaxonomyMetadataType,
+  TemplateDocumentInput,
+} from './types.js';
 import { chunk, nowIso } from './utils.js';
 
 const UPSERT_TEMPLATE_SQL = `
@@ -92,10 +100,12 @@ function placeholderList(count: number): string {
 
 export async function clearIndex(db: D1Database): Promise<void> {
   await ensureChildCategoryTaxonomySchema(db);
+  await ensureTaxonomyMetadataSchema(db);
   await db.exec(`
     DELETE FROM template_styles;
     DELETE FROM template_child_categories;
     DELETE FROM child_category_taxonomy;
+    DELETE FROM taxonomy_metadata;
     DELETE FROM template_documents;
   `);
 }
@@ -123,6 +133,12 @@ export async function ensureChildCategoryTaxonomySchema(db: D1Database): Promise
     `,
     )
     .run();
+}
+
+async function ensureTextColumn(db: D1Database, tableName: string, columnName: string): Promise<void> {
+  const existing = await db.prepare(`PRAGMA table_info(${tableName})`).all<{ name: string }>();
+  if ((existing.results ?? []).some((row) => row.name === columnName)) return;
+  await db.prepare(`ALTER TABLE ${tableName} ADD COLUMN ${columnName} TEXT NOT NULL DEFAULT ''`).run();
 }
 
 export async function upsertChildCategoryTaxonomy(db: D1Database, taxonomy: ChildCategoryTaxonomyInput[]): Promise<void> {
@@ -155,6 +171,152 @@ export async function upsertChildCategoryTaxonomy(db: D1Database, taxonomy: Chil
   for (const group of chunk(statements, 50)) {
     await db.batch(group);
   }
+}
+
+export async function ensureTaxonomyMetadataSchema(db: D1Database): Promise<void> {
+  await db
+    .prepare(
+      `
+      CREATE TABLE IF NOT EXISTS taxonomy_metadata (
+        taxonomy_type TEXT NOT NULL,
+        slug TEXT NOT NULL,
+        name TEXT NOT NULL,
+        description_short TEXT NOT NULL DEFAULT '',
+        description_landing_page TEXT NOT NULL DEFAULT '',
+        related_keywords_json TEXT NOT NULL DEFAULT '[]',
+        parent_category_group_slug TEXT,
+        parent_category_group_name TEXT,
+        synced_at TEXT NOT NULL,
+        PRIMARY KEY (taxonomy_type, slug)
+      )
+    `,
+    )
+    .run();
+
+  await ensureTextColumn(db, 'taxonomy_metadata', 'description_landing_page');
+
+  await db
+    .prepare(
+      `
+      CREATE INDEX IF NOT EXISTS idx_taxonomy_metadata_parent
+        ON taxonomy_metadata (taxonomy_type, parent_category_group_slug)
+    `,
+    )
+    .run();
+}
+
+export async function upsertTaxonomyMetadata(db: D1Database, metadata: TaxonomyMetadataInput[]): Promise<void> {
+  await ensureTaxonomyMetadataSchema(db);
+  if (metadata.length === 0) return;
+
+  const statements = [
+    db.prepare('DELETE FROM taxonomy_metadata'),
+    ...metadata.map((entry) =>
+      db
+        .prepare(
+          `
+          INSERT OR REPLACE INTO taxonomy_metadata (
+            taxonomy_type,
+            slug,
+            name,
+            description_short,
+            description_landing_page,
+            related_keywords_json,
+            parent_category_group_slug,
+            parent_category_group_name,
+            synced_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `,
+        )
+        .bind(
+          entry.taxonomyType,
+          entry.slug,
+          entry.name,
+          entry.descriptionShort,
+          entry.descriptionLandingPage,
+          JSON.stringify(entry.relatedKeywords),
+          entry.parentCategoryGroupSlug,
+          entry.parentCategoryGroupName,
+          entry.syncedAt,
+        ),
+    ),
+  ];
+
+  for (const group of chunk(statements, 50)) {
+    await db.batch(group);
+  }
+}
+
+function toTaxonomyMetadataItem(row: {
+  taxonomy_type: TaxonomyMetadataType;
+  slug: string;
+  name: string;
+  description_short: string;
+  description_landing_page: string;
+  related_keywords_json: string;
+  parent_category_group_slug: string | null;
+  parent_category_group_name: string | null;
+}): TaxonomyMetadataItem {
+  let relatedKeywords: string[] = [];
+  try {
+    const parsed = JSON.parse(row.related_keywords_json) as unknown;
+    if (Array.isArray(parsed)) {
+      relatedKeywords = parsed.filter((value): value is string => typeof value === 'string');
+    }
+  } catch {
+    relatedKeywords = [];
+  }
+
+  return {
+    type: row.taxonomy_type,
+    slug: row.slug,
+    name: row.name,
+    description_short: row.description_short,
+    description_landing_page: row.description_landing_page,
+    related_keywords: relatedKeywords,
+    parent_category_group_slug: row.parent_category_group_slug,
+    parent_category_group_name: row.parent_category_group_name,
+  };
+}
+
+export async function getTaxonomyMetadata(
+  db: D1Database,
+  taxonomyType: TaxonomyMetadataType,
+  slug: string | null,
+): Promise<TaxonomyMetadataItem | null> {
+  if (!slug) return null;
+  await ensureTaxonomyMetadataSchema(db);
+
+  const row = await db
+    .prepare(
+      `
+      SELECT
+        taxonomy_type,
+        slug,
+        name,
+        description_short,
+        description_landing_page,
+        related_keywords_json,
+        parent_category_group_slug,
+        parent_category_group_name
+      FROM taxonomy_metadata
+      WHERE taxonomy_type = ?
+        AND slug = ?
+    `,
+    )
+    .bind(taxonomyType, slug)
+    .first<{
+      taxonomy_type: TaxonomyMetadataType;
+      slug: string;
+      name: string;
+      description_short: string;
+      description_landing_page: string;
+      related_keywords_json: string;
+      parent_category_group_slug: string | null;
+      parent_category_group_name: string | null;
+    }>();
+
+  return row ? toTaxonomyMetadataItem(row) : null;
 }
 
 export async function upsertTemplateDocuments(db: D1Database, documents: TemplateDocumentInput[]): Promise<void> {

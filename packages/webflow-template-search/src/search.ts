@@ -46,6 +46,18 @@ function placeholderList(count: number): string {
   return Array.from({ length: count }, () => '?').join(', ');
 }
 
+function formatTaxonomyName(value: string): string {
+  return value
+    .replace(/\bIt\b/g, 'IT')
+    .replace(/\bIT company\b/g, 'IT Company')
+    .replace(/\bUi\b/g, 'UI')
+    .replace(/\bHr\b/g, 'HR')
+    .replace(/\bAi\b/g, 'AI')
+    .replace(/\bSaas\b/g, 'SaaS')
+    .replace(/\bNfts\b/g, 'NFTs')
+    .replace(/\bNft\b/g, 'NFT');
+}
+
 function buildFtsQuery(input: string): string {
   const tokens = input.toLowerCase().match(/[a-z0-9]+/g) ?? [];
   if (tokens.length === 0) return '""';
@@ -203,7 +215,7 @@ async function loadCategoryPills(env: Env, params: SearchParams): Promise<Array<
   return (result.results ?? [])
     .filter((row) => PUBLIC_CATEGORY_ROUTE_SLUGS.has(row.slug))
     .map((row) => ({
-      name: row.name,
+      name: formatTaxonomyName(row.name),
       slug: row.slug,
       count: Number(row.count),
     }));
@@ -280,7 +292,7 @@ async function loadSubcategoryPills(env: Env, params: SearchParams): Promise<Arr
       .all<PillRow>();
 
     return (result.results ?? []).map((row) => ({
-      name: row.name,
+      name: formatTaxonomyName(row.name),
       slug: row.slug,
       count: Number(row.count),
     }));
@@ -308,7 +320,7 @@ async function loadSubcategoryPills(env: Env, params: SearchParams): Promise<Arr
     .all<PillRow>();
 
   return (result.results ?? []).map((row) => ({
-    name: row.name,
+    name: formatTaxonomyName(row.name),
     slug: row.slug,
     count: Number(row.count),
   }));
@@ -320,7 +332,7 @@ function toTemplateUrl(row: DocumentRow): string | null {
 
 function buildCategoryGroups(names: string[], slugs: string[]): Array<{ name: string; slug: string; url: string }> {
   return names.map((name, index) => ({
-    name,
+    name: formatTaxonomyName(name),
     slug: slugs[index] ?? slugs[0] ?? '',
     url: `https://webflow.com/templates/category/${slugs[index] ?? slugs[0] ?? ''}`,
   }));
@@ -338,7 +350,7 @@ function buildChildCategories(names: string[], slugs: string[]): Array<{ name: s
   return names.map((name, index) => {
     const canonicalSlug = slugs[index] ?? '';
     return {
-      name,
+      name: formatTaxonomyName(name),
       slug: canonicalSlug,
       url: `https://webflow.com/templates/subcategory/${canonicalSlug}`,
     };

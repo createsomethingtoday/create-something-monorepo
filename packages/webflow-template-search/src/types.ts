@@ -8,6 +8,7 @@ export interface Env {
   AIRTABLE_API_KEY?: string;
   AIRTABLE_BASE_ID: string;
   AIRTABLE_ASSETS_TABLE_ID?: string;
+  AIRTABLE_CATEGORY_GROUPS_TABLE_ID?: string;
   AIRTABLE_STYLES_TABLE_ID?: string;
   AIRTABLE_CHILD_CATEGORIES_TABLE_ID?: string;
   AIRTABLE_TAGS_TABLE_ID?: string;
@@ -44,6 +45,8 @@ export interface AirtableAssetFields extends Record<string, unknown> {
   '🪣Category Group(s) Display Name'?: string[] | string;
   '🪣Category Group(s) CMS Slug'?: string[] | string;
   '🔍Algolia Child Category (🏗️ only)'?: string[];
+  'ℹ️🪣Categories (Text)'?: string[] | string;
+  '🥞CMS Slug (from ℹ️🪣Categories)'?: string[] | string;
   'ℹ️👘Styles'?: string[];
   'ℹ️🏷️Tags (Multi)'?: string[];
   '🥞Template Type (🏗️ only)'?: string;
@@ -55,6 +58,8 @@ export interface AirtableAssetFields extends Record<string, unknown> {
   '📋 Cumulative Purchases'?: number;
   '🥞💲Template Price Filter (🏗️ only)'?: number;
   '🚀📅Published Date'?: string;
+  '🥞CMS Slug'?: string;
+  'Slug (from 🥞CMS Sync Records)'?: string[] | string;
   '🥞CMS Slug (formula)'?: string;
   '🎨Creator Name'?: string;
   '🖼️Thumbnail Image'?: AirtableAttachment[];
@@ -76,6 +81,7 @@ export interface ChildCategoryLookupValue extends LookupValue {
   category: string;
   displayName: string;
   parentCategoryName: string;
+  descriptionShort: string;
   categoryGroups: string[];
   relatedKeywords: string[];
   tier: string | null;
@@ -83,7 +89,17 @@ export interface ChildCategoryLookupValue extends LookupValue {
   isCategoryGroup: boolean;
 }
 
+export interface CategoryGroupLookupValue extends LookupValue {
+  displayName: string;
+  descriptionShort: string;
+  descriptionLandingPage: string;
+  relatedKeywords: string[];
+  cmsSlug: string | null;
+  status: string | null;
+}
+
 export interface LookupMaps {
+  categoryGroups: Map<string, CategoryGroupLookupValue>;
   styles: Map<string, LookupValue>;
   childCategories: Map<string, ChildCategoryLookupValue>;
   tags: Map<string, LookupValue>;
@@ -251,6 +267,31 @@ export interface ChildCategoryTaxonomyInput {
   childCategoryName: string;
   categoryGroupSlug: string;
   categoryGroupName: string;
+}
+
+export type TaxonomyMetadataType = 'category_group' | 'child_category';
+
+export interface TaxonomyMetadataInput {
+  taxonomyType: TaxonomyMetadataType;
+  slug: string;
+  name: string;
+  descriptionShort: string;
+  descriptionLandingPage: string;
+  relatedKeywords: string[];
+  parentCategoryGroupSlug: string | null;
+  parentCategoryGroupName: string | null;
+  syncedAt: string;
+}
+
+export interface TaxonomyMetadataItem {
+  type: TaxonomyMetadataType;
+  slug: string;
+  name: string;
+  description_short: string;
+  description_landing_page: string;
+  related_keywords: string[];
+  parent_category_group_slug: string | null;
+  parent_category_group_name: string | null;
 }
 
 export interface FacetStyleRow {

@@ -3,6 +3,7 @@ import { vi } from 'vitest';
 interface MockDataset {
   publishedAssets: Array<{ id: string; fields: Record<string, unknown> }>;
   incrementalAssets?: Array<{ id: string; fields: Record<string, unknown> }>;
+  categoryGroups?: Array<{ id: string; fields: Record<string, unknown> }>;
   styles?: Array<{ id: string; fields: Record<string, unknown> }>;
   childCategories?: Array<{ id: string; fields: Record<string, unknown> }>;
   tags?: Array<{ id: string; fields: Record<string, unknown> }>;
@@ -22,6 +23,10 @@ export function installAirtableFetchMock(dataset: MockDataset) {
       return Response.json({
         records: formula.includes('IS_AFTER(') ? dataset.incrementalAssets ?? [] : dataset.publishedAssets,
       });
+    }
+
+    if (tableId === 'tblZyofRhtLchXSH9') {
+      return Response.json({ records: dataset.categoryGroups ?? [] });
     }
 
     if (tableId === 'tblG7E9LbQj0sBX0o') {

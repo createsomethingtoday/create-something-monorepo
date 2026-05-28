@@ -666,9 +666,10 @@ const TemplateCardInner: React.FC<TemplateCardProps> = ({
       </a>
 
       {/* Template metadata */}
-      <div style={S.content}>
+      <div className="tmcard-meta" style={S.content}>
         {showIcon ? (
           <img
+            className="tmcard-creator-icon"
             width="28"
             height="28"
             src={creatorIcon!.src}
@@ -679,12 +680,12 @@ const TemplateCardInner: React.FC<TemplateCardProps> = ({
             onError={handleIconError}
           />
         ) : (
-          <div style={S.creatorInitials} title={creatorName}>
+          <div className="tmcard-creator-initials" style={S.creatorInitials} title={creatorName}>
             {getInitials(creatorName)}
           </div>
         )}
-        <div style={S.details}>
-          <div style={S.detailsWrap}>
+        <div className="tmcard-details" style={S.details}>
+          <div className="tmcard-details-row" style={S.detailsWrap}>
             <div style={S.nameWrap}>
               <a
                 href={templateLink?.href ?? '#'}
@@ -694,11 +695,11 @@ const TemplateCardInner: React.FC<TemplateCardProps> = ({
                 style={S.nameLink}
                 title={templateName}
               >
-                <h4 style={S.name}>{templateName}</h4>
+                <h4 className="tmcard-name" style={S.name}>{templateName}</h4>
               </a>
             </div>
-            <div style={S.priceWrap}>
-              <h4 style={isFreePrice ? S.priceFree : S.price}>{price}</h4>
+            <div className="tmcard-price-wrap" style={S.priceWrap}>
+              <h4 className="tmcard-price" style={isFreePrice ? S.priceFree : S.price}>{price}</h4>
             </div>
           </div>
           <div style={S.creatorWrap}>
@@ -710,7 +711,7 @@ const TemplateCardInner: React.FC<TemplateCardProps> = ({
               aria-label={`Browse templates by ${creatorName}`}
               style={S.creatorLink}
             >
-              <h4 style={S.creator}>{creatorName}</h4>
+              <h4 className="tmcard-creator" style={S.creator}>{creatorName}</h4>
             </a>
           </div>
 

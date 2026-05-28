@@ -386,12 +386,59 @@ const GRID_STYLES = `
   max-width: 100% !important;
   min-width: 0 !important;
   overflow: visible !important;
+  box-sizing: border-box !important;
 }
 .tmgrid-item {
   flex: 0 1 calc((100% - 72px) / 4) !important;
   width: calc((100% - 72px) / 4) !important;
   min-width: 0 !important;
   max-width: 100% !important;
+  box-sizing: border-box !important;
+  content-visibility: auto;
+  contain-intrinsic-size: 360px 560px;
+}
+.tmgrid-grid[data-columns="1"] .tmgrid-item {
+  flex-basis: 100% !important;
+  width: 100% !important;
+}
+.tmgrid-grid[data-columns="2"] .tmgrid-item {
+  flex-basis: calc((100% - 16px) / 2) !important;
+  width: calc((100% - 16px) / 2) !important;
+}
+.tmgrid-grid[data-columns="3"] .tmgrid-item {
+  flex-basis: calc((100% - 40px) / 3) !important;
+  width: calc((100% - 40px) / 3) !important;
+}
+.tmgrid-grid[data-columns="4"] .tmgrid-item {
+  flex-basis: calc((100% - 72px) / 4) !important;
+  width: calc((100% - 72px) / 4) !important;
+}
+.tmgrid-grid[data-columns="2"] .tmcard-link {
+  margin-bottom: 10px !important;
+}
+.tmgrid-grid[data-columns="2"] .tmcard-meta {
+  gap: 6px !important;
+}
+.tmgrid-grid[data-columns="2"] .tmcard-creator-icon,
+.tmgrid-grid[data-columns="2"] .tmcard-creator-initials {
+  width: 24px !important;
+  height: 24px !important;
+}
+.tmgrid-grid[data-columns="2"] .tmcard-details-row {
+  flex-direction: column !important;
+  gap: 2px !important;
+}
+.tmgrid-grid[data-columns="2"] .tmcard-price-wrap {
+  margin-left: 0 !important;
+}
+.tmgrid-grid[data-columns="2"] .tmcard-name,
+.tmgrid-grid[data-columns="2"] .tmcard-price {
+  font-size: 13px !important;
+  line-height: 17px !important;
+}
+.tmgrid-grid[data-columns="2"] .tmcard-creator {
+  font-size: 12px !important;
+  line-height: 16px !important;
 }
 @media (max-width: 991px) {
   .tmgrid-grid {
@@ -414,6 +461,16 @@ const GRID_STYLES = `
   }
 }
 @media (max-width: 479px) {
+  .tmgrid-grid {
+    column-gap: 14px !important;
+    row-gap: 26px !important;
+  }
+  .tmgrid-item {
+    flex-basis: calc((100% - 14px) / 2) !important;
+    width: calc((100% - 14px) / 2) !important;
+  }
+}
+@media (max-width: 359px) {
   .tmgrid-grid {
     gap: 28px !important;
   }
@@ -456,26 +513,37 @@ const S: Record<string, CSSProperties> = {
 // ─── Skeleton ─────────────────────────────────────────────────────────────────
 
 function getColumnCount(width: number): number {
-  if (width < 480) return 1;
+  if (width < 360) return 1;
   if (width < 768) return 2;
   if (width < 992) return 3;
   return 4;
 }
 
 function getColumnGap(width: number): number {
-  if (width < 480) return 0;
+  if (width < 360) return 0;
   if (width < 768) return 16;
   if (width < 992) return 20;
   return 24;
 }
 
 function getRowGap(width: number): number {
-  return width < 480 ? 28 : 24;
+  return width < 360 ? 28 : 24;
 }
 
 function getFlexBasis(columns: number, columnGap: number): string {
   if (columns <= 1) return '100%';
   return `calc((100% - ${(columns - 1) * columnGap}px) / ${columns})`;
+}
+
+function getViewportWidth(): number | null {
+  if (typeof window === 'undefined') return null;
+  const visualWidth = window.visualViewport?.width ?? window.innerWidth;
+  const documentWidth = document.documentElement.clientWidth || window.innerWidth;
+  // Webflow Code Components can be hosted inside a wider runtime container on
+  // mobile. The physical screen width is the most reliable cap for card layout.
+  const screenWidth = window.screen?.width || Number.POSITIVE_INFINITY;
+  const width = Math.floor(Math.min(visualWidth, documentWidth, screenWidth));
+  return width > 0 ? width : null;
 }
 
 const SkeletonCard: React.FC<{ index: number; itemStyle: CSSProperties }> = ({ index, itemStyle }) => (
@@ -521,7 +589,7 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
   const [loading, setLoading] = useState(() => !initialGridData);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [containerWidth, setContainerWidth] = useState<number | null>(null);
+  const [containerWidth, setContainerWidth] = useState<number | null>(() => getViewportWidth());
 
   const rootRef = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
@@ -562,7 +630,9 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
     if (!container) return undefined;
 
     const updateContainerWidth = () => {
-      const nextWidth = Math.floor(container.getBoundingClientRect().width);
+      const measuredWidth = Math.floor(container.getBoundingClientRect().width);
+      const viewportWidth = getViewportWidth();
+      const nextWidth = viewportWidth ? Math.min(measuredWidth, viewportWidth) : measuredWidth;
       if (nextWidth > 0) {
         setContainerWidth((current) => (current === nextWidth ? current : nextWidth));
       }
@@ -572,12 +642,20 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
 
     if (typeof ResizeObserver === 'undefined') {
       window.addEventListener('resize', updateContainerWidth);
-      return () => window.removeEventListener('resize', updateContainerWidth);
+      window.visualViewport?.addEventListener('resize', updateContainerWidth);
+      return () => {
+        window.removeEventListener('resize', updateContainerWidth);
+        window.visualViewport?.removeEventListener('resize', updateContainerWidth);
+      };
     }
 
     const observer = new ResizeObserver(updateContainerWidth);
     observer.observe(container);
-    return () => observer.disconnect();
+    window.visualViewport?.addEventListener('resize', updateContainerWidth);
+    return () => {
+      observer.disconnect();
+      window.visualViewport?.removeEventListener('resize', updateContainerWidth);
+    };
   }, []);
 
   // Keep Designer prop edits and production URL changes aligned after mount.
@@ -975,7 +1053,7 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
         data-template-component="TemplateGrid"
         data-template-component-version={TEMPLATE_MARKETPLACE_COMPONENT_VERSION}
       >
-        <div className="tmgrid-grid" style={gridStyle}>
+        <div className="tmgrid-grid" data-columns={flexColumns} style={gridStyle}>
           {Array.from({ length: Math.min(resolvedPageSize, 12) }).map((_, i) => (
             <SkeletonCard key={i} index={i} itemStyle={gridItemStyle} />
           ))}
@@ -1039,7 +1117,7 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
             <div className="tmgrid-spinner" />
           </div>
         )}
-        <div className="tmgrid-grid" style={gridStyle}>
+        <div className="tmgrid-grid" data-columns={flexColumns} style={gridStyle}>
           {items.map((item, i) => {
             const primaryImageUrl = primaryThumbnailUrl(item);
             return (

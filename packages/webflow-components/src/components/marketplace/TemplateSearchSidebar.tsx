@@ -245,6 +245,10 @@ const SIDEBAR_STYLES = `
   display: none;
 }
 
+.tmsidebar-mobile-disclosure {
+  display: none;
+}
+
 .tmsidebar-title {
   margin: 0 0 16px;
   color: #080808;
@@ -384,9 +388,89 @@ const SIDEBAR_STYLES = `
 @media (max-width: 991px) {
   .tmsidebar {
     max-height: none;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
     overflow: visible;
     position: relative;
     top: auto;
+  }
+
+  .tmsidebar-desktop-panel {
+    display: none;
+  }
+
+  .tmsidebar-mobile-disclosure {
+    display: block;
+    width: 100%;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background: #fff;
+    overflow: hidden;
+  }
+
+  .tmsidebar-mobile-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 48px;
+    padding: 12px 14px;
+    color: #080808;
+    cursor: pointer;
+    list-style: none;
+    user-select: none;
+  }
+
+  .tmsidebar-mobile-summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .tmsidebar-mobile-summary-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .tmsidebar-mobile-summary-title {
+    font-size: 13px;
+    font-weight: 650;
+    line-height: 18px;
+  }
+
+  .tmsidebar-mobile-summary-current {
+    max-width: 100%;
+    overflow: hidden;
+    color: #757575;
+    font-size: 12px;
+    line-height: 16px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .tmsidebar-mobile-summary-icon {
+    flex: 0 0 auto;
+    color: #5a5a5a;
+    font-size: 18px;
+    line-height: 1;
+    transform: rotate(90deg);
+    transition: transform 160ms ease;
+  }
+
+  .tmsidebar-mobile-disclosure[open] .tmsidebar-mobile-summary-icon {
+    transform: rotate(-90deg);
+  }
+
+  .tmsidebar-mobile-panel {
+    max-height: min(68vh, 560px);
+    padding: 0 12px 12px;
+    overflow: auto;
+    scrollbar-width: none;
+  }
+
+  .tmsidebar-mobile-panel::-webkit-scrollbar {
+    display: none;
   }
 }
 `;
@@ -753,15 +837,17 @@ export const TemplateSearchSidebar: React.FC<TemplateSearchSidebarProps> = ({
   const shouldUseFallbackCategories =
     showCategories && categories.length === 0 && !loading && (Boolean(error) || countMode === 'global');
   const displayCategories = shouldUseFallbackCategories ? FALLBACK_CATEGORIES : categories;
+  const activeCategoryLabel = activeCategory
+    ? displayCategories.find((category) => category.slug === activeCategory)?.name
+    : null;
+  const activeSpecialLabel = !activeCategory
+    ? SPECIAL_ROWS.find((row) => activeScope === row.scope)?.label
+    : null;
+  const mobileSummaryLabel = activeCategoryLabel ?? activeSpecialLabel ?? 'All templates';
 
-  return (
-    <div
-      className={`tmsidebar ${shouldUseFilterMode ? 'tmsidebar--filter' : 'tmsidebar--navigate'}`}
-      data-template-component="TemplateSearchSidebar"
-      data-template-component-version={TEMPLATE_MARKETPLACE_COMPONENT_VERSION}
-    >
-      <style>{SIDEBAR_STYLES}</style>
-      {title ? <p className="tmsidebar-title">{title}</p> : null}
+  const renderSidebarContent = (includeTitle = true) => (
+    <>
+      {includeTitle && title ? <p className="tmsidebar-title">{title}</p> : null}
 
       {showSearch && (
         <TemplateSearchBox
@@ -833,6 +919,27 @@ export const TemplateSearchSidebar: React.FC<TemplateSearchSidebarProps> = ({
           </ul>
         </nav>
       )}
+    </>
+  );
+
+  return (
+    <div
+      className={`tmsidebar ${shouldUseFilterMode ? 'tmsidebar--filter' : 'tmsidebar--navigate'}`}
+      data-template-component="TemplateSearchSidebar"
+      data-template-component-version={TEMPLATE_MARKETPLACE_COMPONENT_VERSION}
+    >
+      <style>{SIDEBAR_STYLES}</style>
+      <div className="tmsidebar-desktop-panel">{renderSidebarContent()}</div>
+      <details className="tmsidebar-mobile-disclosure">
+        <summary className="tmsidebar-mobile-summary">
+          <span className="tmsidebar-mobile-summary-text">
+            <span className="tmsidebar-mobile-summary-title">{title || 'Categories'}</span>
+            <span className="tmsidebar-mobile-summary-current">{mobileSummaryLabel}</span>
+          </span>
+          <span className="tmsidebar-mobile-summary-icon" aria-hidden="true">›</span>
+        </summary>
+        <div className="tmsidebar-mobile-panel">{renderSidebarContent(false)}</div>
+      </details>
     </div>
   );
 };

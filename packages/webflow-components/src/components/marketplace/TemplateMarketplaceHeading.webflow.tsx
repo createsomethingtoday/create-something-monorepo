@@ -8,9 +8,15 @@ export default declareComponent(TemplateMarketplaceHeading, {
     'Dynamic marketplace breadcrumb, headline, and description that follows Template Grid/Search V2 filter state without replacing page SEO settings.',
   group: 'Marketplace',
   props: {
+    apiBase: props.Text({
+      name: 'API Base URL',
+      defaultValue: '',
+      tooltip:
+        'Base URL for taxonomy metadata (no trailing slash). Leave blank to use the production Cloud App proxy. Use the direct Worker only for local testing.',
+    }),
     pageKind: props.Variant({
       name: 'Page Kind',
-      options: ['auto', 'search', 'all', 'featured', 'free', 'landing_pages', 'category'],
+      options: ['auto', 'search', 'all', 'featured', 'free', 'landing_pages', 'category', 'subcategory', 'style', 'tag'],
       defaultValue: 'auto',
       tooltip:
         'Use Search for /templates/search-v2, Landing Pages for /templates/landing-page, Free for /templates/free-website-templates, or Auto on routed pages.',
@@ -43,7 +49,7 @@ export default declareComponent(TemplateMarketplaceHeading, {
       options: ['preserve_static', 'dynamic'],
       defaultValue: 'preserve_static',
       tooltip:
-        'Preserve static keeps live Webflow/Airtable SEO/AEO copy on category and subcategory pages. Dynamic is for Search V2/filter-only pages.',
+        'Preserve static keeps live Webflow/Airtable SEO/AEO copy on category and subcategory pages, then falls back to taxonomy metadata when the static text is empty or generic. Dynamic is for Search V2/filter-only pages.',
     }),
     showBreadcrumbs: props.Boolean({
       name: 'Show Breadcrumbs',

@@ -6,6 +6,11 @@ type HeadingPageKind = TemplatePathKind;
 type DescriptionMode = 'preserve_static' | 'dynamic';
 
 export interface TemplateMarketplaceHeadingProps {
+  /**
+   * Base URL for taxonomy metadata fallback, no trailing slash.
+   * Leave blank to use the production Cloud App proxy.
+   */
+  apiBase?: string;
   /** Page context used when the URL does not provide a more specific state. */
   pageKind?: HeadingPageKind;
   /** Designer preview category slug, e.g. "architecture-and-design-websites". */
@@ -50,6 +55,15 @@ interface HeadingContent {
   description: string;
   breadcrumbs: Array<{ label: string; href?: string }>;
   hasDynamicFilter: boolean;
+}
+
+interface TaxonomyMetadataPayload {
+  description: string;
+}
+
+interface TaxonomyDescriptionState {
+  key: string;
+  description: string;
 }
 
 const HEADING_STYLES = `
@@ -151,6 +165,9 @@ const BREADCRUMB_LABELS: Record<TemplateScope, string> = {
 };
 
 const GENERIC_FALLBACK_DESCRIPTION = 'Explore Webflow templates by category, style, type, price, and popularity.';
+const DEFAULT_API_BASE = 'https://templates.webflow.com/templates-api';
+const WORKER_ORIGIN = 'https://webflow-template-search.createsomething.workers.dev';
+const CLOUD_APP_PREVIEW_ORIGIN = 'https://webflow-template-marketplace.webflow.io';
 
 function titleCase(value: string): string {
   return value
@@ -161,6 +178,11 @@ function titleCase(value: string): string {
       if (lower === 'and') return '&';
       if (lower === 'ui') return 'UI';
       if (lower === 'hr') return 'HR';
+      if (lower === 'it') return 'IT';
+      if (lower === 'ai') return 'AI';
+      if (lower === 'nft') return 'NFT';
+      if (lower === 'nfts') return 'NFTs';
+      if (lower === 'saas') return 'SaaS';
       return lower.charAt(0).toUpperCase() + lower.slice(1);
     })
     .join(' ')
@@ -238,17 +260,52 @@ function hasRouteOwnedDescription(state: HeadingState): boolean {
   );
 }
 
+function resolveApiBase(apiBase?: string): string {
+  const rawBase = apiBase || DEFAULT_API_BASE;
+  return rawBase.startsWith(WORKER_ORIGIN) || rawBase.startsWith(CLOUD_APP_PREVIEW_ORIGIN)
+    ? DEFAULT_API_BASE
+    : rawBase.replace(/\/+$/, '');
+}
+
+function taxonomyDescriptionKey(state: HeadingState): string {
+  return `${state.categorySlug ?? ''}:${state.subcategorySlug ?? ''}`;
+}
+
+function shouldFetchTaxonomyDescription(
+  state: HeadingState,
+  fallbackDescription: string,
+  descriptionMode: DescriptionMode,
+): boolean {
+  if (descriptionMode !== 'preserve_static') return false;
+  if (!hasRouteOwnedDescription(state)) return false;
+  if (fallbackDescription.trim() && !isGenericDescription(fallbackDescription)) return false;
+  return Boolean(state.categorySlug || state.subcategorySlug);
+}
+
+function buildTaxonomyApiUrl(apiBase: string, state: HeadingState): string {
+  const absolute = apiBase.startsWith('/') && typeof window !== 'undefined'
+    ? `${window.location.origin}${apiBase}`
+    : apiBase;
+  const url = new URL(`${absolute.replace(/\/+$/, '')}/api/templates/taxonomy`);
+  if (state.categorySlug) url.searchParams.set('category_group_slug', state.categorySlug);
+  if (state.subcategorySlug) url.searchParams.set('child_category_slug', state.subcategorySlug);
+  return url.toString();
+}
+
 function buildDescription(
   title: string,
   state: HeadingState,
   fallbackDescription: string,
   hasDynamicFilter: boolean,
   descriptionMode: DescriptionMode,
+  taxonomyDescription: string,
 ): string {
   const staticDescription = fallbackDescription.trim();
+  const syncedTaxonomyDescription = taxonomyDescription.trim();
 
   if (descriptionMode === 'preserve_static' && hasRouteOwnedDescription(state)) {
-    return staticDescription && !isGenericDescription(staticDescription) ? staticDescription : '';
+    if (staticDescription && !isGenericDescription(staticDescription)) return staticDescription;
+    return syncedTaxonomyDescription;
   }
 
   if (!hasDynamicFilter && staticDescription) return staticDescription;
@@ -265,6 +322,7 @@ function buildContent(
   descriptionMode: DescriptionMode,
   templatesLabel: string,
   templatesUrl: string,
+  taxonomyDescription: string,
 ): HeadingContent {
   const baseTitle = buildBaseTitle(state, fallbackTitle);
   const prefix = buildDescriptorPrefix(state);
@@ -281,8 +339,13 @@ function buildContent(
 
   let title = baseTitle;
   if (state.q) {
-    title = baseTitle === SCOPE_LABELS.all || baseTitle === fallbackTitle
-      ? `Results for "${state.q}"`
+    const isGenericSearchBase =
+      state.pathKind === 'search' ||
+      baseTitle === SCOPE_LABELS.all ||
+      baseTitle === fallbackTitle ||
+      /search webflow templates/i.test(baseTitle);
+    title = isGenericSearchBase
+      ? `Search results for "${state.q}"`
       : `Results for "${state.q}" in ${baseTitle}`;
   } else if (hasFilterPrefix && !baseTitle.toLowerCase().startsWith(prefix.toLowerCase())) {
     title = `${prefix} ${baseTitle}`;
@@ -310,7 +373,7 @@ function buildContent(
   if (state.categorySlug && (state.pathKind === 'search' || state.categoryIsRoute)) {
     breadcrumbs.push({ label: humanizeSlug(state.categorySlug) });
   }
-  if (state.subcategorySlug && (state.pathKind === 'search' || state.subcategoryIsRoute)) {
+  if (state.subcategorySlug && (state.pathKind === 'search' || state.subcategoryIsRoute || state.categoryIsRoute)) {
     breadcrumbs.push({ label: humanizeSlug(state.subcategorySlug) });
   }
   if (state.pathKind === 'style' && state.styles[0]) {
@@ -319,13 +382,14 @@ function buildContent(
 
   return {
     title,
-    description: buildDescription(title, state, fallbackDescription, hasDynamicFilter, descriptionMode),
+    description: buildDescription(title, state, fallbackDescription, hasDynamicFilter, descriptionMode, taxonomyDescription),
     breadcrumbs,
     hasDynamicFilter,
   };
 }
 
 export const TemplateMarketplaceHeading: React.FC<TemplateMarketplaceHeadingProps> = ({
+  apiBase: apiBaseProp = '',
   pageKind = 'auto',
   categorySlug = '',
   subcategorySlug = '',
@@ -340,6 +404,7 @@ export const TemplateMarketplaceHeading: React.FC<TemplateMarketplaceHeadingProp
   updateDocumentTitle = false,
 }) => {
   const [version, setVersion] = useState(0);
+  const [taxonomyDescription, setTaxonomyDescription] = useState<TaxonomyDescriptionState | null>(null);
   const lastHrefRef = useRef(typeof window === 'undefined' ? '' : window.location.href);
 
   useEffect(() => {
@@ -370,10 +435,72 @@ export const TemplateMarketplaceHeading: React.FC<TemplateMarketplaceHeadingProp
     };
   }, []);
 
+  const apiBase = useMemo(() => resolveApiBase(apiBaseProp), [apiBaseProp]);
+  const headingState = useMemo(
+    () => readHeadingState(pageKind, queryParam, categorySlug || undefined, subcategorySlug || undefined),
+    [categorySlug, pageKind, queryParam, subcategorySlug, version],
+  );
+  const currentTaxonomyKey = taxonomyDescriptionKey(headingState);
+
+  useEffect(() => {
+    if (!shouldFetchTaxonomyDescription(headingState, fallbackDescription, descriptionMode)) {
+      setTaxonomyDescription(null);
+      return;
+    }
+
+    const key = taxonomyDescriptionKey(headingState);
+    const controller = new AbortController();
+
+    async function fetchTaxonomyDescription() {
+      try {
+        const response = await fetch(buildTaxonomyApiUrl(apiBase, headingState), {
+          headers: { Accept: 'application/json' },
+          signal: controller.signal,
+        });
+        if (!response.ok) return;
+        const payload = (await response.json()) as TaxonomyMetadataPayload;
+        if (controller.signal.aborted) return;
+        setTaxonomyDescription({ key, description: payload.description || '' });
+      } catch {
+        if (!controller.signal.aborted) setTaxonomyDescription({ key, description: '' });
+      }
+    }
+
+    fetchTaxonomyDescription();
+    return () => controller.abort();
+  }, [
+    apiBase,
+    descriptionMode,
+    fallbackDescription,
+    headingState.categorySlug,
+    headingState.subcategorySlug,
+    headingState.categoryIsRoute,
+    headingState.subcategoryIsRoute,
+    headingState.pathKind,
+    currentTaxonomyKey,
+  ]);
+
   const content = useMemo(() => {
-    const state = readHeadingState(pageKind, queryParam, categorySlug || undefined, subcategorySlug || undefined);
-    return buildContent(state, fallbackTitle, fallbackDescription, descriptionMode, templatesLabel, templatesUrl);
-  }, [categorySlug, descriptionMode, fallbackDescription, fallbackTitle, pageKind, queryParam, subcategorySlug, templatesLabel, templatesUrl, version]);
+    const syncedDescription = taxonomyDescription?.key === currentTaxonomyKey ? taxonomyDescription.description : '';
+    return buildContent(
+      headingState,
+      fallbackTitle,
+      fallbackDescription,
+      descriptionMode,
+      templatesLabel,
+      templatesUrl,
+      syncedDescription,
+    );
+  }, [
+    currentTaxonomyKey,
+    descriptionMode,
+    fallbackDescription,
+    fallbackTitle,
+    headingState,
+    taxonomyDescription,
+    templatesLabel,
+    templatesUrl,
+  ]);
 
   useEffect(() => {
     if (!updateDocumentTitle || typeof document === 'undefined') return;

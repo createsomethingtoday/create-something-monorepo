@@ -4,7 +4,8 @@ import { corsPreflight, jsonResponse, textResponse } from './http.js';
 import { parseSearchParams } from './query.js';
 import { searchTemplates } from './search.js';
 import { suggestTemplates } from './suggest.js';
-import { repairParentTaxonomy, syncTemplates } from './sync.js';
+import { backfillCmsCategoryPage, repairParentTaxonomy, syncTemplateBySlug, syncTemplates } from './sync.js';
+import { getTemplateTaxonomyMetadata } from './taxonomy.js';
 import type { Env } from './types.js';
 
 const INCREMENTAL_CRON = '*/5 * * * *';
@@ -68,6 +69,10 @@ export default {
         return jsonResponse(request, env, await suggestTemplates(env, url), 200, SEARCH_CACHE_HEADERS);
       }
 
+      if (url.pathname === '/api/templates/taxonomy' && request.method === 'GET') {
+        return jsonResponse(request, env, await getTemplateTaxonomyMetadata(env, url), 200, SEARCH_CACHE_HEADERS);
+      }
+
       if ((url.pathname === '/api/templates/client.js' || url.pathname === '/client.js') && request.method === 'GET') {
         return textResponse(request, env, getClientScript(env.DEFAULT_CLIENT_MODE ?? 'shadow'), 'application/javascript; charset=utf-8');
       }
@@ -78,6 +83,19 @@ export default {
 
       if (url.pathname === '/api/templates/admin/sync' && request.method === 'POST') {
         return handleManualSync(request, env, 'incremental');
+      }
+
+      if (url.pathname === '/api/templates/admin/sync-template' && request.method === 'POST') {
+        const authError = validateAdminToken(request, env);
+        if (authError) return authError;
+        const templateSlug = url.searchParams.get('template_slug') ?? url.searchParams.get('slug') ?? '';
+        return jsonResponse(request, env, await syncTemplateBySlug(env, templateSlug));
+      }
+
+      if (url.pathname === '/api/templates/admin/backfill-cms-categories' && request.method === 'POST') {
+        const authError = validateAdminToken(request, env);
+        if (authError) return authError;
+        return jsonResponse(request, env, await backfillCmsCategoryPage(env, url.searchParams.get('offset')));
       }
 
       if (url.pathname === '/api/templates/admin/repair-taxonomy' && request.method === 'POST') {
@@ -99,7 +117,10 @@ export default {
 
   async scheduled(controller: ScheduledController, env: Env): Promise<void> {
     if (controller.cron === FULL_REBUILD_CRON) {
-      await syncTemplates(env, 'full');
+      // Full rebuilds exceed Worker CPU/runtime limits at current marketplace size.
+      // Use the paginated admin backfill endpoint for full re-syncs; scheduled
+      // maintenance stays incremental so production does not enter 1102 loops.
+      await syncTemplates(env, 'incremental');
       return;
     }
 
