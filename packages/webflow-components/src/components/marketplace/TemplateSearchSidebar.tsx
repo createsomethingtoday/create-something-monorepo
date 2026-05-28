@@ -368,11 +368,13 @@ function normalizeScope(value: string | null): TemplateScope | null {
   }
 }
 
-function readCurrentScope(): TemplateScope {
+function readCurrentScope(includeFilterParams = false): TemplateScope {
   if (typeof window === 'undefined') return 'all';
   const url = new URL(window.location.href);
-  const scopeParam = normalizeScope(url.searchParams.get('scope'));
-  if (scopeParam) return scopeParam;
+  if (includeFilterParams) {
+    const scopeParam = normalizeScope(url.searchParams.get('scope'));
+    if (scopeParam) return scopeParam;
+  }
   const pathname = url.pathname.replace(/\/+$/, '');
   if (pathname === '/templates/featured') return 'featured';
   if (pathname === '/templates/free' || pathname === '/templates/free-website-templates') return 'free';
@@ -380,13 +382,15 @@ function readCurrentScope(): TemplateScope {
   return 'all';
 }
 
-function readCurrentCategory(categorySlugOverride?: string): string | null {
+function readCurrentCategory(categorySlugOverride?: string, includeFilterParams = false): string | null {
   if (categorySlugOverride) return categorySlugOverride;
   if (typeof window === 'undefined') return null;
   const url = new URL(window.location.href);
   const pathname = url.pathname.replace(/\/+$/, '');
   const categoryMatch = pathname.match(/\/templates\/category\/([^/?#]+)/);
-  return categoryMatch ? categoryMatch[1] : url.searchParams.get('category') || url.searchParams.get('category_group_slug');
+  if (categoryMatch) return categoryMatch[1];
+  if (!includeFilterParams) return null;
+  return url.searchParams.get('category') || url.searchParams.get('category_group_slug');
 }
 
 function readCurrentQuery(): string {
@@ -401,7 +405,7 @@ function readCountContext(countMode: SidebarCountMode, styleSlugOverride?: strin
   }
   const url = new URL(window.location.href);
   const params = url.searchParams;
-  const scope = readCurrentScope();
+  const scope = readCurrentScope(true);
   return {
     q: (params.get('q') ?? params.get('query') ?? params.get('search') ?? '').trim(),
     scope,
@@ -501,9 +505,9 @@ export const TemplateSearchSidebar: React.FC<TemplateSearchSidebarProps> = ({
   const [searchValue, setSearchValue] = useState('');
   const [routeVersion, setRouteVersion] = useState(0);
 
-  const activeScope = scopeOverride !== 'all' ? scopeOverride : readCurrentScope();
-  const activeCategory = readCurrentCategory(categorySlug);
   const shouldUseFilterMode = interactionMode === 'filter';
+  const activeScope = scopeOverride !== 'all' ? scopeOverride : readCurrentScope(shouldUseFilterMode);
+  const activeCategory = readCurrentCategory(categorySlug, shouldUseFilterMode);
 
   const countContext = useMemo(
     () => readCountContext(countMode, styleSlug || undefined, tagSlug || undefined),
