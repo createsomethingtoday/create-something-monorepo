@@ -284,6 +284,27 @@ describe('webflow-template-search worker', () => {
         parent_category_group_slug: 'technology-websites',
         related_keywords: ['automation', 'agent'],
       });
+
+      const pageMetadata = await callWorker(
+        new Request('https://templates.test/api/templates/page-metadata?path=/templates/subcategory/ai-websites'),
+        env,
+      );
+      const pageMetadataPayload = (await pageMetadata.json()) as {
+        canonical_path: string;
+        heading: { title: string; description: string };
+        breadcrumbs: Array<{ label: string; href?: string }>;
+      };
+      expect(pageMetadataPayload.canonical_path).toBe('/templates/subcategory/ai-websites');
+      expect(pageMetadataPayload.heading).toMatchObject({
+        title: 'AI Website Templates',
+        description: 'Launch software, SaaS, and AI websites with Webflow technology templates.',
+      });
+      expect(pageMetadataPayload.breadcrumbs).toMatchObject([
+        { label: 'Templates', href: '/templates' },
+        { label: 'Categories', href: '/templates/categories' },
+        { label: 'Technology', href: '/templates/category/technology-websites' },
+        { label: 'AI' },
+      ]);
     } finally {
       fetchMock.mockRestore();
       close();

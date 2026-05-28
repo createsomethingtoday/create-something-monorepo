@@ -34,15 +34,23 @@ export default declareComponent(TemplateMarketplaceHeading, {
       defaultValue: 'q',
       tooltip: 'Search V2 uses q. Native /templates/search uses query.',
     }),
-    fallbackTitle: props.Text({
-      name: 'Fallback Title',
+    staticRoutePath: props.Text({
+      name: 'Static Route Path',
       defaultValue: '',
       tooltip:
-        'Optional static title fallback. Leave empty on routed pages so /templates/all renders "All Website Templates" and category routes use their route title.',
+        'Optional no-JS/SEO fallback path, e.g. /templates/category/technology-websites. Bind this from Airtable/Webflow CMS slug fields on category pages.',
+    }),
+    fallbackTitle: props.Text({
+      name: 'Static SEO Title',
+      defaultValue: '',
+      tooltip:
+        'Static title for server-rendered fallback markup. Bind to Airtable/Webflow SEO or AEO title where available.',
     }),
     fallbackDescription: props.Text({
-      name: 'Fallback Description',
+      name: 'Static SEO/AEO Description',
       defaultValue: 'Explore Webflow templates by category, style, type, price, and popularity.',
+      tooltip:
+        'Static supporting copy for server-rendered fallback markup. Bind to Airtable/Webflow category or subcategory descriptions on SEO pages.',
     }),
     descriptionMode: props.Variant({
       name: 'Description Source',

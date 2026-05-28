@@ -5,7 +5,7 @@ import { parseSearchParams } from './query.js';
 import { searchTemplates } from './search.js';
 import { suggestTemplates } from './suggest.js';
 import { backfillCmsCategoryPage, repairParentTaxonomy, syncTemplateBySlug, syncTemplates } from './sync.js';
-import { getTemplateTaxonomyMetadata } from './taxonomy.js';
+import { getTemplatePageMetadata, getTemplateTaxonomyMetadata } from './taxonomy.js';
 import type { Env } from './types.js';
 
 const INCREMENTAL_CRON = '*/5 * * * *';
@@ -71,6 +71,10 @@ export default {
 
       if (url.pathname === '/api/templates/taxonomy' && request.method === 'GET') {
         return jsonResponse(request, env, await getTemplateTaxonomyMetadata(env, url), 200, SEARCH_CACHE_HEADERS);
+      }
+
+      if (url.pathname === '/api/templates/page-metadata' && request.method === 'GET') {
+        return jsonResponse(request, env, await getTemplatePageMetadata(env, url), 200, SEARCH_CACHE_HEADERS);
       }
 
       if ((url.pathname === '/api/templates/client.js' || url.pathname === '/client.js') && request.method === 'GET') {

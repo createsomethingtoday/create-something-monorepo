@@ -19,6 +19,11 @@ export interface TemplateMarketplaceHeadingProps {
   subcategorySlug?: string;
   /** Search query param key. Search V2 uses "q"; native search uses "query". */
   queryParam?: string;
+  /**
+   * Static route path used for server-rendered/no-JS fallback markup.
+   * Example: /templates/category/technology-websites
+   */
+  staticRoutePath?: string;
   /** Static title used when no route/filter state is available. */
   fallbackTitle?: string;
   /** Static description used before the user applies a filter. */
@@ -58,12 +63,22 @@ interface HeadingContent {
 }
 
 interface TaxonomyMetadataPayload {
+  title: string | null;
   description: string;
+  category_group?: {
+    name: string;
+  } | null;
+  child_category?: {
+    name: string;
+  } | null;
 }
 
 interface TaxonomyDescriptionState {
   key: string;
+  title: string;
   description: string;
+  categoryLabel: string;
+  childCategoryLabel: string;
 }
 
 const HEADING_STYLES = `
@@ -198,13 +213,29 @@ function humanizeSlug(slug: string): string {
   );
 }
 
+function normalizeStaticRoutePath(path: string): string | undefined {
+  const trimmed = path.trim();
+  if (!trimmed) return undefined;
+
+  try {
+    if (/^https?:\/\//i.test(trimmed)) return trimmed;
+    const normalizedPath = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
+    return `https://webflow.com${normalizedPath}`;
+  } catch {
+    return undefined;
+  }
+}
+
 function readHeadingState(
   pageKind: HeadingPageKind,
   queryParam: string,
   categorySlugOverride?: string,
   subcategorySlugOverride?: string,
+  staticRoutePath?: string,
 ): HeadingState {
+  const staticHref = typeof window === 'undefined' ? normalizeStaticRoutePath(staticRoutePath ?? '') : undefined;
   const route = parseTemplateRoute({
+    href: staticHref,
     pageKind,
     queryParam,
     categorySlugOverride,
@@ -224,10 +255,15 @@ function readHeadingState(
   };
 }
 
-function buildBaseTitle(state: HeadingState, fallbackTitle: string): string {
+function buildBaseTitle(state: HeadingState, fallbackTitle: string, activeTaxonomyTitle: string): string {
+  const trimmedFallbackTitle = fallbackTitle.trim();
+  const trimmedTaxonomyTitle = activeTaxonomyTitle.trim();
+  if (state.pathKind === 'auto' && trimmedFallbackTitle) return trimmedFallbackTitle;
+
   const categoryLabel = state.subcategorySlug || state.categorySlug;
-  if (categoryLabel && state.scope !== 'all') return `${humanizeSlug(categoryLabel)} ${SCOPE_LABELS[state.scope]}`;
-  if (categoryLabel) return `${humanizeSlug(categoryLabel)} Website Templates`;
+  const resolvedCategoryLabel = trimmedTaxonomyTitle || (categoryLabel ? humanizeSlug(categoryLabel) : '');
+  if (categoryLabel && state.scope !== 'all') return `${resolvedCategoryLabel} ${SCOPE_LABELS[state.scope]}`;
+  if (categoryLabel) return `${resolvedCategoryLabel} Website Templates`;
   if (state.pathKind === 'style' && state.styles[0]) return `${humanizeSlug(state.styles[0])} Website Templates`;
   if (state.scope !== 'all') return SCOPE_LABELS[state.scope];
   if (state.pathKind === 'search') return fallbackTitle || 'Search Webflow templates';
@@ -323,8 +359,11 @@ function buildContent(
   templatesLabel: string,
   templatesUrl: string,
   taxonomyDescription: string,
+  taxonomyTitle: string,
+  categoryLabel: string,
+  childCategoryLabel: string,
 ): HeadingContent {
-  const baseTitle = buildBaseTitle(state, fallbackTitle);
+  const baseTitle = buildBaseTitle(state, fallbackTitle, taxonomyTitle);
   const prefix = buildDescriptorPrefix(state);
   const hasFilterPrefix = Boolean(prefix);
   const hasDynamicFilter = Boolean(
@@ -371,10 +410,10 @@ function buildContent(
   }
 
   if (state.categorySlug && (state.pathKind === 'search' || state.categoryIsRoute)) {
-    breadcrumbs.push({ label: humanizeSlug(state.categorySlug) });
+    breadcrumbs.push({ label: categoryLabel || humanizeSlug(state.categorySlug) });
   }
   if (state.subcategorySlug && (state.pathKind === 'search' || state.subcategoryIsRoute || state.categoryIsRoute)) {
-    breadcrumbs.push({ label: humanizeSlug(state.subcategorySlug) });
+    breadcrumbs.push({ label: childCategoryLabel || humanizeSlug(state.subcategorySlug) });
   }
   if (state.pathKind === 'style' && state.styles[0]) {
     breadcrumbs.push({ label: humanizeSlug(state.styles[0]) });
@@ -394,6 +433,7 @@ export const TemplateMarketplaceHeading: React.FC<TemplateMarketplaceHeadingProp
   categorySlug = '',
   subcategorySlug = '',
   queryParam = 'q',
+  staticRoutePath = '',
   fallbackTitle = 'Search Webflow templates',
   fallbackDescription = GENERIC_FALLBACK_DESCRIPTION,
   descriptionMode = 'preserve_static',
@@ -437,8 +477,8 @@ export const TemplateMarketplaceHeading: React.FC<TemplateMarketplaceHeadingProp
 
   const apiBase = useMemo(() => resolveApiBase(apiBaseProp), [apiBaseProp]);
   const headingState = useMemo(
-    () => readHeadingState(pageKind, queryParam, categorySlug || undefined, subcategorySlug || undefined),
-    [categorySlug, pageKind, queryParam, subcategorySlug, version],
+    () => readHeadingState(pageKind, queryParam, categorySlug || undefined, subcategorySlug || undefined, staticRoutePath),
+    [categorySlug, pageKind, queryParam, staticRoutePath, subcategorySlug, version],
   );
   const currentTaxonomyKey = taxonomyDescriptionKey(headingState);
 
@@ -460,9 +500,17 @@ export const TemplateMarketplaceHeading: React.FC<TemplateMarketplaceHeadingProp
         if (!response.ok) return;
         const payload = (await response.json()) as TaxonomyMetadataPayload;
         if (controller.signal.aborted) return;
-        setTaxonomyDescription({ key, description: payload.description || '' });
+        setTaxonomyDescription({
+          key,
+          title: payload.title || '',
+          description: payload.description || '',
+          categoryLabel: payload.category_group?.name || '',
+          childCategoryLabel: payload.child_category?.name || '',
+        });
       } catch {
-        if (!controller.signal.aborted) setTaxonomyDescription({ key, description: '' });
+        if (!controller.signal.aborted) {
+          setTaxonomyDescription({ key, title: '', description: '', categoryLabel: '', childCategoryLabel: '' });
+        }
       }
     }
 
@@ -481,7 +529,11 @@ export const TemplateMarketplaceHeading: React.FC<TemplateMarketplaceHeadingProp
   ]);
 
   const content = useMemo(() => {
-    const syncedDescription = taxonomyDescription?.key === currentTaxonomyKey ? taxonomyDescription.description : '';
+    const hasCurrentTaxonomy = taxonomyDescription?.key === currentTaxonomyKey;
+    const syncedDescription = hasCurrentTaxonomy ? taxonomyDescription.description : '';
+    const syncedTitle = hasCurrentTaxonomy ? taxonomyDescription.title : '';
+    const syncedCategoryLabel = hasCurrentTaxonomy ? taxonomyDescription.categoryLabel : '';
+    const syncedChildCategoryLabel = hasCurrentTaxonomy ? taxonomyDescription.childCategoryLabel : '';
     return buildContent(
       headingState,
       fallbackTitle,
@@ -490,6 +542,9 @@ export const TemplateMarketplaceHeading: React.FC<TemplateMarketplaceHeadingProp
       templatesLabel,
       templatesUrl,
       syncedDescription,
+      syncedTitle,
+      syncedCategoryLabel,
+      syncedChildCategoryLabel,
     );
   }, [
     currentTaxonomyKey,
