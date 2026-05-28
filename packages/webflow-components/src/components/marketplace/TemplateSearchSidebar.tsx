@@ -382,6 +382,12 @@ function readCurrentScope(includeFilterParams = false): TemplateScope {
   return 'all';
 }
 
+function readIsSearchRoute(): boolean {
+  if (typeof window === 'undefined') return false;
+  const pathname = new URL(window.location.href).pathname.replace(/\/+$/, '');
+  return pathname === '/templates/search' || pathname === '/templates/search-v2';
+}
+
 function readCurrentCategory(categorySlugOverride?: string, includeFilterParams = false): string | null {
   if (categorySlugOverride) return categorySlugOverride;
   if (typeof window === 'undefined') return null;
@@ -506,6 +512,7 @@ export const TemplateSearchSidebar: React.FC<TemplateSearchSidebarProps> = ({
   const [routeVersion, setRouteVersion] = useState(0);
 
   const shouldUseFilterMode = interactionMode === 'filter';
+  const isSearchRoute = readIsSearchRoute();
   const activeScope = scopeOverride !== 'all' ? scopeOverride : readCurrentScope(shouldUseFilterMode);
   const activeCategory = readCurrentCategory(categorySlug, shouldUseFilterMode);
 
@@ -653,7 +660,7 @@ export const TemplateSearchSidebar: React.FC<TemplateSearchSidebarProps> = ({
           <ul className="tmsidebar-list">
             {showSpecialLinks &&
               SPECIAL_ROWS.map((row) => {
-                const active = activeScope === row.scope && !activeCategory;
+                const active = (shouldUseFilterMode || !isSearchRoute) && activeScope === row.scope && !activeCategory;
                 return (
                   <li key={row.key}>
                     <a
