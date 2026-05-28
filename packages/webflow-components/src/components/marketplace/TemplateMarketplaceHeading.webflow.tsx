@@ -30,7 +30,9 @@ export default declareComponent(TemplateMarketplaceHeading, {
     }),
     fallbackTitle: props.Text({
       name: 'Fallback Title',
-      defaultValue: 'Search Webflow templates',
+      defaultValue: '',
+      tooltip:
+        'Optional static title fallback. Leave empty on routed pages so /templates/all renders "All Website Templates" and category routes use their route title.',
     }),
     fallbackDescription: props.Text({
       name: 'Fallback Description',

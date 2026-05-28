@@ -3,7 +3,7 @@ import { clearIndex, deleteTemplateDocuments, getSyncCursor, recordSyncSummary, 
 import { stripHtml } from './html.js';
 import { canonicalizeCategoryGroupSlug } from './slug.js';
 import type { AirtableAssetFields, AirtableRecord, Env, LookupMaps, SyncSummary, TemplateDocumentInput } from './types.js';
-import { ensureBoolean, ensureNumber, ensureStringArray, nowIso, uniqueStrings } from './utils.js';
+import { chunk, ensureBoolean, ensureNumber, ensureStringArray, nowIso, parseJsonArray, uniqueStrings } from './utils.js';
 
 function isPublishedTemplate(record: AirtableRecord<AirtableAssetFields>): boolean {
   return record.fields['⚙️🆎Type (Text)'] === 'Template🏗️' && record.fields['🚀Marketplace Status'] === '3️⃣Published🚀';
@@ -164,4 +164,131 @@ async function runIncrementalSync(env: Env): Promise<SyncSummary> {
 
 export async function syncTemplates(env: Env, mode: 'full' | 'incremental'): Promise<SyncSummary> {
   return mode === 'full' ? runFullSync(env) : runIncrementalSync(env);
+}
+
+interface ParentTaxonomyRepairRow {
+  id: string;
+  category_groups_json: string;
+  category_group_slugs_json: string;
+  child_categories_json: string;
+  child_category_slugs_json: string;
+}
+
+interface ParentTaxonomyGroup {
+  name: string;
+  slug: string;
+}
+
+export interface ParentTaxonomyRepairSummary {
+  mode: 'parent-taxonomy-repair';
+  started_at: string;
+  finished_at: string;
+  parent_groups: number;
+  updated_documents: number;
+  removed_child_links: number;
+}
+
+export async function repairParentTaxonomy(env: Env): Promise<ParentTaxonomyRepairSummary> {
+  const startedAt = nowIso();
+  const lookups = await loadLookupMaps(env);
+  const groupMap = new Map<string, ParentTaxonomyGroup>();
+
+  for (const entry of lookups.childCategories.values()) {
+    if (!entry.isCategoryGroup) continue;
+    const slug = canonicalizeCategoryGroupSlug(entry.displayName);
+    if (!slug) continue;
+    groupMap.set(slug, { name: entry.displayName, slug });
+  }
+
+  let updatedDocuments = 0;
+  let removedChildLinks = 0;
+  const statements: D1PreparedStatement[] = [];
+
+  for (const group of groupMap.values()) {
+    const result = await env.DB
+      .prepare(
+        `
+        SELECT
+          id,
+          category_groups_json,
+          category_group_slugs_json,
+          child_categories_json,
+          child_category_slugs_json
+        FROM template_documents d
+        WHERE EXISTS (
+          SELECT 1
+          FROM template_child_categories tcc
+          WHERE tcc.template_document_id = d.id
+            AND tcc.child_category_slug = ?
+        )
+      `,
+      )
+      .bind(group.slug)
+      .all<ParentTaxonomyRepairRow>();
+
+    for (const row of result.results ?? []) {
+      const categoryGroups = parseJsonArray(row.category_groups_json);
+      const categoryGroupSlugs = parseJsonArray(row.category_group_slugs_json);
+      const childCategories = parseJsonArray(row.child_categories_json);
+      const childCategorySlugs = parseJsonArray(row.child_category_slugs_json);
+      const nextCategoryGroups = uniqueStrings([...categoryGroups, group.name]);
+      const nextCategoryGroupSlugs = uniqueStrings([...categoryGroupSlugs, group.slug]);
+      const nextChildCategories: string[] = [];
+      const nextChildCategorySlugs: string[] = [];
+
+      childCategorySlugs.forEach((slug, index) => {
+        if (slug === group.slug) return;
+        nextChildCategorySlugs.push(slug);
+        nextChildCategories.push(childCategories[index] ?? slug);
+      });
+
+      statements.push(
+        env.DB
+          .prepare(
+            `
+            UPDATE template_documents
+            SET
+              category_groups_json = ?,
+              category_group_slugs_json = ?,
+              child_categories_json = ?,
+              child_category_slugs_json = ?,
+              category_groups_text = ?,
+              child_categories_text = ?
+            WHERE id = ?
+          `,
+          )
+          .bind(
+            JSON.stringify(nextCategoryGroups),
+            JSON.stringify(nextCategoryGroupSlugs),
+            JSON.stringify(nextChildCategories),
+            JSON.stringify(nextChildCategorySlugs),
+            nextCategoryGroups.join(' '),
+            nextChildCategories.join(' '),
+            row.id,
+          ),
+        env.DB
+          .prepare('DELETE FROM template_child_categories WHERE template_document_id = ? AND child_category_slug = ?')
+          .bind(row.id, group.slug),
+      );
+
+      updatedDocuments += 1;
+      removedChildLinks += 1;
+    }
+  }
+
+  for (const group of chunk(statements, 50)) {
+    await env.DB.batch(group);
+  }
+
+  const summary: ParentTaxonomyRepairSummary = {
+    mode: 'parent-taxonomy-repair',
+    started_at: startedAt,
+    finished_at: nowIso(),
+    parent_groups: groupMap.size,
+    updated_documents: updatedDocuments,
+    removed_child_links: removedChildLinks,
+  };
+
+  await recordSyncSummary(env.DB, summary, 'parent_taxonomy_repair_summary');
+  return summary;
 }

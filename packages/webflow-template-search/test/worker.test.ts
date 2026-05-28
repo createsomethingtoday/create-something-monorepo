@@ -297,6 +297,48 @@ describe('webflow-template-search worker', () => {
         },
       ]);
       expect(payload.subcategory_pills).toEqual([]);
+
+      await env.DB.prepare(
+        `
+        UPDATE template_documents
+        SET
+          category_groups_json = '[]',
+          category_group_slugs_json = '[]',
+          child_categories_json = '["Blog & Editorial"]',
+          child_category_slugs_json = '["blog-and-editorial-websites"]',
+          category_groups_text = '',
+          child_categories_text = 'Blog & Editorial'
+        WHERE id = 'recParentOnly'
+      `,
+      ).run();
+      await env.DB.prepare(
+        "INSERT OR REPLACE INTO template_child_categories (template_document_id, child_category_name, child_category_slug) VALUES ('recParentOnly', 'Blog & Editorial', 'blog-and-editorial-websites')",
+      ).run();
+
+      const repair = await callWorker(
+        new Request('https://templates.test/api/templates/admin/repair-taxonomy', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      const repairPayload = (await repair.json()) as { updated_documents: number; removed_child_links: number };
+      expect(repair.status).toBe(200);
+      expect(repairPayload.updated_documents).toBe(1);
+      expect(repairPayload.removed_child_links).toBe(1);
+
+      const repaired = await callWorker(
+        new Request('https://templates.test/api/templates/search?category_group_slug=blog-and-editorial-websites&include=facets,pills'),
+        env,
+      );
+      const repairedPayload = (await repaired.json()) as {
+        items: Array<{ name: string; category_groups: Array<{ slug: string }>; child_categories: Array<{ slug: string }> }>;
+        subcategory_pills: Array<{ slug: string }>;
+      };
+      expect(repairedPayload.items.map((item) => item.name)).toEqual(['Editorial Base']);
+      expect(repairedPayload.items[0]?.category_groups).toMatchObject([{ slug: 'blog-and-editorial-websites' }]);
+      expect(repairedPayload.items[0]?.child_categories).toEqual([]);
+      expect(repairedPayload.subcategory_pills).toEqual([]);
     } finally {
       fetchMock.mockRestore();
       close();

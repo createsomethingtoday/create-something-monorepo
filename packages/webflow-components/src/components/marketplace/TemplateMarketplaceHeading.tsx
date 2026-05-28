@@ -136,7 +136,7 @@ const HEADING_STYLES = `
 `;
 
 const SCOPE_LABELS: Record<TemplateScope, string> = {
-  all: 'Webflow Website Templates',
+  all: 'All Website Templates',
   featured: 'Featured Website Templates',
   free: 'Free Website Templates',
   landing_pages: 'Landing Page Website Templates',
@@ -262,6 +262,7 @@ function buildBaseTitle(state: HeadingState, fallbackTitle: string): string {
   if (categoryLabel) return `${humanizeSlug(categoryLabel)} Website Templates`;
   if (state.scope !== 'all') return SCOPE_LABELS[state.scope];
   if (state.pathKind === 'search') return fallbackTitle || 'Search Webflow templates';
+  if (state.pathKind === 'all') return SCOPE_LABELS.all;
   return fallbackTitle || SCOPE_LABELS.all;
 }
 
@@ -278,7 +279,14 @@ function isGenericDescription(description: string): boolean {
 }
 
 function hasRouteOwnedDescription(state: HeadingState): boolean {
-  return Boolean(state.categoryIsRoute || state.subcategoryIsRoute);
+  return Boolean(
+    state.categoryIsRoute ||
+      state.subcategoryIsRoute ||
+      state.pathKind === 'all' ||
+      state.pathKind === 'featured' ||
+      state.pathKind === 'free' ||
+      state.pathKind === 'landing_pages',
+  );
 }
 
 function buildDescription(
@@ -343,6 +351,9 @@ function buildContent(
     }
   } else if (state.categoryIsRoute || state.subcategoryIsRoute) {
     breadcrumbs.push({ label: 'Categories', href: '/templates/categories' });
+  } else if (state.pathKind === 'all') {
+    breadcrumbs.push({ label: 'Categories', href: '/templates/categories' });
+    breadcrumbs.push({ label: 'All' });
   } else {
     breadcrumbs.push({ label: BREADCRUMB_LABELS[state.scope] ?? 'Templates' });
   }

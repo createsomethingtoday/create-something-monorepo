@@ -4,7 +4,7 @@ import { corsPreflight, jsonResponse, textResponse } from './http.js';
 import { parseSearchParams } from './query.js';
 import { searchTemplates } from './search.js';
 import { suggestTemplates } from './suggest.js';
-import { syncTemplates } from './sync.js';
+import { repairParentTaxonomy, syncTemplates } from './sync.js';
 import type { Env } from './types.js';
 
 const INCREMENTAL_CRON = '*/5 * * * *';
@@ -75,6 +75,12 @@ export default {
 
       if (url.pathname === '/api/templates/admin/sync' && request.method === 'POST') {
         return handleManualSync(request, env, 'incremental');
+      }
+
+      if (url.pathname === '/api/templates/admin/repair-taxonomy' && request.method === 'POST') {
+        const authError = validateAdminToken(request, env);
+        if (authError) return authError;
+        return jsonResponse(request, env, await repairParentTaxonomy(env));
       }
 
       return jsonResponse(request, env, { error: 'Not found' }, 404);
