@@ -175,9 +175,10 @@ describe('webflow-template-search worker', () => {
         env,
       );
       const categoryPayload = (await categorySearch.json()) as {
-        items: Array<{ name: string }>;
+        items: Array<{ name: string; creator_profile_url: string | null; creator_avatar_url: string | null; creator_avatar_alt: string | null }>;
         available_facets: { styles: Array<{ slug: string }>; types: Array<{ value: string }> };
         applied_filters: { child_category_slug: string | null };
+        category_pills: Array<{ slug: string; url: string; active: boolean }>;
         subcategory_pills: Array<{ slug: string; url: string; active: boolean }>;
       };
 
@@ -185,6 +186,8 @@ describe('webflow-template-search worker', () => {
       expect(categoryPayload.available_facets.styles.map((item) => item.slug)).toEqual(['dark-websites', 'modern']);
       expect(categoryPayload.available_facets.types.map((item) => item.value)).toEqual(['Multi Layout', 'Multi Page']);
       expect(categoryPayload.applied_filters.child_category_slug).toBe('ai-websites');
+      expect(categoryPayload.category_pills.map((pill) => pill.slug)).toEqual(['technology-websites']);
+      expect(categoryPayload.category_pills[0]?.url).toBe('https://webflow.com/templates/category/technology-websites');
       expect(categoryPayload.subcategory_pills.map((pill) => pill.slug)).toEqual(['ai-websites', 'software-and-saas-websites']);
       expect(categoryPayload.subcategory_pills.map((pill) => pill.url)).toEqual([
         'https://webflow.com/templates/subcategory/ai-websites',
@@ -192,9 +195,18 @@ describe('webflow-template-search worker', () => {
       ]);
       expect(categoryPayload.subcategory_pills.find((pill) => pill.slug === 'ai-websites')?.active).toBe(true);
 
+      await env.DB.prepare(
+        "UPDATE template_documents SET creator_profile_url = 'https://webflow.com/templates/designers/brix-templates', creator_avatar_url = 'https://example.com/brix.png', creator_avatar_alt = 'BRIX Templates' WHERE id = 'recAgentflow'",
+      ).run();
+
       const search = await callWorker(new Request('https://templates.test/api/templates/search?q=workflow'), env);
-      const searchPayload = (await search.json()) as { items: Array<{ name: string }> };
+      const searchPayload = (await search.json()) as {
+        items: Array<{ name: string; creator_profile_url: string | null; creator_avatar_url: string | null; creator_avatar_alt: string | null }>;
+      };
       expect(searchPayload.items.map((item) => item.name)).toEqual(['Agentflow']);
+      expect(searchPayload.items[0]?.creator_profile_url).toBe('https://webflow.com/templates/designers/brix-templates');
+      expect(searchPayload.items[0]?.creator_avatar_url).toBe('https://example.com/brix.png');
+      expect(searchPayload.items[0]?.creator_avatar_alt).toBe('BRIX Templates');
     } finally {
       fetchMock.mockRestore();
       close();

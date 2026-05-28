@@ -37,6 +37,7 @@ function sortClause(sort: TemplateSort): string {
 }
 
 interface FilterOptions {
+  excludeCategoryGroup?: boolean;
   excludeStyles?: boolean;
   excludeTypes?: boolean;
   excludeChildCategory?: boolean;
@@ -74,7 +75,7 @@ function buildSqlParts(params: SearchParams, options: FilterOptions = {}): SqlPa
   if (params.scope === 'landing_pages') clauses.push('d.is_landing_page = 1');
   if (params.freeOnly) clauses.push('d.is_free = 1');
 
-  if (params.categoryGroupSlug) {
+  if (params.categoryGroupSlug && !options.excludeCategoryGroup) {
     clauses.push('EXISTS (SELECT 1 FROM json_each(d.category_group_slugs_json) WHERE json_each.value = ?)');
     binds.push(params.categoryGroupSlug);
   }
@@ -137,6 +138,48 @@ async function resolveCategoryGroupSlugForChild(env: Env, childCategorySlug: str
     .first<{ slug: string }>();
 
   return row?.slug ?? null;
+}
+
+async function loadCategoryPills(env: Env, params: SearchParams): Promise<Array<{ name: string; slug: string; count: number }>> {
+  const scopedParams: SearchParams = {
+    ...params,
+    categoryGroupSlug: null,
+    childCategorySlug: null,
+    styles: [],
+    types: [],
+  };
+  const sqlParts = buildSqlParts(scopedParams, {
+    excludeCategoryGroup: true,
+    excludeChildCategory: true,
+    excludeStyles: true,
+    excludeTypes: true,
+  });
+
+  const result = await env.DB
+    .prepare(`
+      WITH filtered AS (
+        SELECT d.id, d.category_groups_json, d.category_group_slugs_json
+        ${sqlParts.fromClause}
+        ${sqlParts.whereClause}
+      )
+      SELECT
+        names.value AS name,
+        slugs.value AS slug,
+        COUNT(DISTINCT filtered.id) AS count
+      FROM filtered
+      JOIN json_each(filtered.category_group_slugs_json) slugs
+      JOIN json_each(filtered.category_groups_json) names ON names.key = slugs.key
+      GROUP BY slugs.value, names.value
+      ORDER BY names.value ASC
+    `)
+    .bind(...sqlParts.binds)
+    .all<PillRow>();
+
+  return (result.results ?? []).map((row) => ({
+    name: row.name,
+    slug: row.slug,
+    count: Number(row.count),
+  }));
 }
 
 async function loadFacetStyles(env: Env, params: SearchParams): Promise<FacetStyleRow[]> {
@@ -249,7 +292,7 @@ export async function searchTemplates(env: Env, rawParams: SearchParams): Promis
   const offset = (params.page - 1) * params.pageSize;
   const orderClause = queryOrderClause(params, sqlParts.queryMode);
 
-  const [totalItems, rows, styleFacets, typeFacets, pills] = await Promise.all([
+  const [totalItems, rows, styleFacets, typeFacets, categoryPills, pills] = await Promise.all([
     getTotalCount(env.DB, sqlParts),
     env.DB
       .prepare(`
@@ -265,6 +308,7 @@ export async function searchTemplates(env: Env, rawParams: SearchParams): Promis
       .all<DocumentRow>(),
     loadFacetStyles(env, params),
     loadFacetTypes(env, params),
+    loadCategoryPills(env, params),
     loadSubcategoryPills(env, params),
   ]);
 
@@ -287,6 +331,9 @@ export async function searchTemplates(env: Env, rawParams: SearchParams): Promis
       preview_url: row.preview_url,
       website_url: row.website_url,
       creator_name: row.creator_name,
+      creator_profile_url: row.creator_profile_url,
+      creator_avatar_url: row.creator_avatar_url,
+      creator_avatar_alt: row.creator_avatar_alt,
       thumbnail_image_url: row.thumbnail_image_url,
       thumbnail_image_secondary_url: row.thumbnail_image_secondary_url,
       price: row.price,
@@ -330,6 +377,13 @@ export async function searchTemplates(env: Env, rawParams: SearchParams): Promis
       styles: styleFacets.map((row) => ({ name: row.name, slug: row.slug, count: Number(row.count) })),
       types: typeFacets.map((row) => ({ value: row.value, count: Number(row.count) })),
     },
+    category_pills: categoryPills.map((pill) => ({
+      name: pill.name,
+      slug: pill.slug,
+      url: `https://webflow.com/templates/category/${pill.slug}`,
+      count: Number(pill.count),
+      active: pill.slug === params.categoryGroupSlug,
+    })),
     subcategory_pills: pills.map((pill) => ({
       name: pill.name,
       slug: pill.slug,

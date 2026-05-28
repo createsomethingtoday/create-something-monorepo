@@ -142,6 +142,9 @@ export interface SearchItem {
   preview_url: string | null;
   website_url: string | null;
   creator_name: string | null;
+  creator_profile_url: string | null;
+  creator_avatar_url: string | null;
+  creator_avatar_alt: string | null;
   thumbnail_image_url: string | null;
   thumbnail_image_secondary_url: string | null;
   price: number | null;
@@ -182,6 +185,7 @@ export interface SearchResponsePayload {
     styles: Array<{ name: string; slug: string; count: number }>;
     types: Array<{ value: string; count: number }>;
   };
+  category_pills: Array<{ name: string; slug: string; url: string; count: number; active: boolean }>;
   subcategory_pills: Array<{ name: string; slug: string; url: string; count: number; active: boolean }>;
 }
 
@@ -203,6 +207,9 @@ export interface DocumentRow {
   preview_url: string | null;
   website_url: string | null;
   creator_name: string | null;
+  creator_profile_url: string | null;
+  creator_avatar_url: string | null;
+  creator_avatar_alt: string | null;
   thumbnail_image_url: string | null;
   thumbnail_image_secondary_url: string | null;
   carousel_image_urls_json: string;
