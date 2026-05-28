@@ -46,6 +46,7 @@ interface FacetsPayload {
 interface LocalFilters {
   q: string;
   styles: string[];
+  tags: string[];
   types: string[];
   freeOnly: boolean;
   sort: TemplateSort;
@@ -81,6 +82,16 @@ export interface TemplateFilterBarProps {
    * In production the slug is auto-detected from /templates/subcategory/{slug}.
    */
   subcategorySlug?: string;
+  /**
+   * Style slug for Designer preview.
+   * In production the slug is auto-detected from /templates/style/{slug}.
+   */
+  styleSlug?: string;
+  /**
+   * Tag slug for Designer preview.
+   * In production the slug is auto-detected from /templates/tag/{slug}.
+   */
+  tagSlug?: string;
   /** Show the search input */
   showSearch?: boolean;
   /** Show the Styles dropdown */
@@ -668,8 +679,12 @@ const FILTER_STYLES = `
 
 // ─── URL helpers ──────────────────────────────────────────────────────────────
 
-function toStyleSlug(name: string): string {
+function toFilterSlug(name: string): string {
   return name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+}
+
+function toStyleSlug(name: string): string {
+  return toFilterSlug(name);
 }
 
 function normalizeSort(value: string | null, fallback: TemplateSort = 'popular'): TemplateSort {
@@ -695,12 +710,13 @@ function normalizeSort(value: string | null, fallback: TemplateSort = 'popular')
 
 function readUrlFilters(defaultSort: TemplateSort = 'popular'): LocalFilters {
   if (typeof window === 'undefined') {
-    return { q: '', styles: [], types: [], freeOnly: false, sort: defaultSort };
+    return { q: '', styles: [], tags: [], types: [], freeOnly: false, sort: defaultSort };
   }
   const params = new URL(window.location.href).searchParams;
   return {
     q: (params.get('q') ?? params.get('query') ?? params.get('search') ?? '').trim(),
     styles: params.getAll('styles').flatMap((v) => v.split(',')).filter(Boolean).map(toStyleSlug),
+    tags: params.getAll('tags').flatMap((v) => v.split(',')).filter(Boolean).map(toFilterSlug),
     types: params.getAll('types').flatMap((v) => v.split(',')).filter(Boolean),
     freeOnly: ['1', 'true', 'yes', 'on'].includes((params.get('free_only') ?? '').toLowerCase()),
     sort: normalizeSort(params.get('sort'), defaultSort),
@@ -711,18 +727,24 @@ interface RouteContext {
   scope: 'featured' | 'free' | 'landing_pages' | null;
   categoryGroupSlug: string | null;
   childCategorySlug: string | null;
+  styleSlug: string | null;
+  tagSlug: string | null;
 }
 
 function readRouteContext(
   scopeOverride?: TemplateScope,
   categorySlugOverride?: string,
   subcategorySlugOverride?: string,
+  styleSlugOverride?: string,
+  tagSlugOverride?: string,
 ): RouteContext {
   if (typeof window === 'undefined') {
     return {
       scope: scopeOverride && scopeOverride !== 'all' ? scopeOverride : null,
       categoryGroupSlug: categorySlugOverride || null,
       childCategorySlug: subcategorySlugOverride || null,
+      styleSlug: styleSlugOverride || null,
+      tagSlug: tagSlugOverride || null,
     };
   }
 
@@ -730,6 +752,8 @@ function readRouteContext(
   const pathname = url.pathname.replace(/\/+$/, '');
   const categoryMatch = pathname.match(/\/templates\/category\/([^/?#]+)/);
   const subcategoryMatch = pathname.match(/\/templates\/subcategory\/([^/?#]+)/);
+  const styleMatch = pathname.match(/\/templates\/style\/([^/?#]+)/);
+  const tagMatch = pathname.match(/\/templates\/tag\/([^/?#]+)/);
 
   let scope: RouteContext['scope'] = null;
   if (pathname === '/templates/featured') {
@@ -748,6 +772,12 @@ function readRouteContext(
     scope: scopeOverride && scopeOverride !== 'all' ? scopeOverride : scope,
     categoryGroupSlug: categorySlugOverride || (categoryMatch ? categoryMatch[1] : url.searchParams.get('category') || null),
     childCategorySlug: subcategorySlugOverride || (subcategoryMatch ? subcategoryMatch[1] : url.searchParams.get('subcategory') || null),
+    styleSlug:
+      styleSlugOverride ||
+      (styleMatch ? styleMatch[1] : (url.searchParams.get('style_slug') ?? url.searchParams.get('style')) || null),
+    tagSlug:
+      tagSlugOverride ||
+      (tagMatch ? tagMatch[1] : (url.searchParams.get('tag_slug') ?? url.searchParams.get('tag')) || null),
   };
 }
 
@@ -755,6 +785,8 @@ function applyRouteContextToUrl(url: URL, context: RouteContext): void {
   if (context.scope) url.searchParams.set('scope', context.scope);
   if (context.categoryGroupSlug) url.searchParams.set('category_group_slug', context.categoryGroupSlug);
   if (context.childCategorySlug) url.searchParams.set('child_category_slug', context.childCategorySlug);
+  if (context.styleSlug) url.searchParams.set('style_slug', toFilterSlug(context.styleSlug));
+  if (context.tagSlug) url.searchParams.set('tag_slug', toFilterSlug(context.tagSlug));
 }
 
 function buildScopedCategoryHref(slug: string | null): string {
@@ -787,13 +819,14 @@ function writeUrlFilters(state: LocalFilters): void {
   if (typeof window === 'undefined') return;
   const url = new URL(window.location.href);
   // Clear filter params only — preserve path-based scope/category
-  ['q', 'query', 'search', 'styles', 'types', 'free_only', 'sort', 'page'].forEach((k) =>
+  ['q', 'query', 'search', 'styles', 'tags', 'types', 'free_only', 'sort', 'page'].forEach((k) =>
     url.searchParams.delete(k),
   );
   if (state.q) url.searchParams.set('q', state.q);
   if (state.sort !== 'popular') url.searchParams.set('sort', state.sort);
   if (state.freeOnly) url.searchParams.set('free_only', 'true');
   state.styles.forEach((v) => url.searchParams.append('styles', v));
+  state.tags.forEach((v) => url.searchParams.append('tags', v));
   state.types.forEach((v) => url.searchParams.append('types', v));
   window.history.replaceState({}, '', url.toString());
   notifyTemplateFiltersChanged(state);
@@ -803,6 +836,7 @@ function buildFilterEventDetail(state: LocalFilters): FilterEventDetail {
   return {
     ...state,
     styles: [...state.styles],
+    tags: [...state.tags],
     types: [...state.types],
     href: typeof window === 'undefined' ? '' : window.location.href,
     source: 'TemplateFilterBar',
@@ -835,6 +869,8 @@ export const TemplateFilterBar: React.FC<TemplateFilterBarProps> = ({
   scopeOverride = 'all',
   categorySlug: categorySlugProp = '',
   subcategorySlug: subcategorySlugProp = '',
+  styleSlug: styleSlugProp = '',
+  tagSlug: tagSlugProp = '',
   showSearch = false,
   showStyles = true,
   showTypes = true,
@@ -869,8 +905,15 @@ export const TemplateFilterBar: React.FC<TemplateFilterBarProps> = ({
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const routeContext = useMemo(
-    () => readRouteContext(scopeOverride, categorySlugProp || undefined, subcategorySlugProp || undefined),
-    [categorySlugProp, routeVersion, scopeOverride, subcategorySlugProp],
+    () =>
+      readRouteContext(
+        scopeOverride,
+        categorySlugProp || undefined,
+        subcategorySlugProp || undefined,
+        styleSlugProp || undefined,
+        tagSlugProp || undefined,
+      ),
+    [categorySlugProp, routeVersion, scopeOverride, styleSlugProp, subcategorySlugProp, tagSlugProp],
   );
   const hasSubcategoryPillContext = Boolean(routeContext.categoryGroupSlug || routeContext.childCategorySlug);
   const isFreeSortContext = routeContext.scope === 'free' || filters.freeOnly;
@@ -906,7 +949,7 @@ export const TemplateFilterBar: React.FC<TemplateFilterBarProps> = ({
     applyRouteContextToUrl(url, context);
 
     if (showSubcategoryPills) {
-      setPillsLoading(Boolean(context.categoryGroupSlug || context.childCategorySlug || context.scope));
+      setPillsLoading(Boolean(context.categoryGroupSlug || context.childCategorySlug || context.scope || context.styleSlug || context.tagSlug));
     }
 
     const cacheKey = url.toString();

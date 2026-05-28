@@ -39,6 +39,9 @@ function sortClause(sort: TemplateSort): string {
 interface FilterOptions {
   excludeCategoryGroup?: boolean;
   excludeStyles?: boolean;
+  excludeStyleSlug?: boolean;
+  excludeTags?: boolean;
+  excludeTagSlug?: boolean;
   excludeTypes?: boolean;
   excludeChildCategory?: boolean;
 }
@@ -49,6 +52,8 @@ interface SqlParts {
   binds: unknown[];
   queryMode: boolean;
 }
+
+const FREE_TEMPLATE_CLAUSE = '(d.price = 0 OR (d.price IS NULL AND d.is_free = 1))';
 
 async function resolveAliases(env: Env, params: SearchParams): Promise<SearchParams> {
   return {
@@ -71,9 +76,9 @@ function buildSqlParts(params: SearchParams, options: FilterOptions = {}): SqlPa
   }
 
   if (params.scope === 'featured') clauses.push('d.is_featured = 1');
-  if (params.scope === 'free') clauses.push('d.is_free = 1');
+  if (params.scope === 'free') clauses.push(FREE_TEMPLATE_CLAUSE);
   if (params.scope === 'landing_pages') clauses.push('d.is_landing_page = 1');
-  if (params.freeOnly) clauses.push('d.is_free = 1');
+  if (params.freeOnly) clauses.push(FREE_TEMPLATE_CLAUSE);
 
   if (params.categoryGroupSlug && !options.excludeCategoryGroup) {
     clauses.push('EXISTS (SELECT 1 FROM json_each(d.category_group_slugs_json) WHERE json_each.value = ?)');
@@ -87,11 +92,28 @@ function buildSqlParts(params: SearchParams, options: FilterOptions = {}): SqlPa
     binds.push(params.childCategorySlug);
   }
 
+  if (params.styleSlug && !options.excludeStyleSlug) {
+    clauses.push('EXISTS (SELECT 1 FROM template_styles ts WHERE ts.template_document_id = d.id AND ts.style_slug = ?)');
+    binds.push(params.styleSlug);
+  }
+
   if (!options.excludeStyles && params.styles.length > 0) {
     clauses.push(
       `EXISTS (SELECT 1 FROM template_styles ts WHERE ts.template_document_id = d.id AND ts.style_slug IN (${placeholderList(params.styles.length)}))`,
     );
     binds.push(...params.styles);
+  }
+
+  if (params.tagSlug && !options.excludeTagSlug) {
+    clauses.push('EXISTS (SELECT 1 FROM json_each(d.tag_slugs_json) WHERE json_each.value = ?)');
+    binds.push(params.tagSlug);
+  }
+
+  if (!options.excludeTags && params.tags.length > 0) {
+    clauses.push(
+      `EXISTS (SELECT 1 FROM json_each(d.tag_slugs_json) WHERE json_each.value IN (${placeholderList(params.tags.length)}))`,
+    );
+    binds.push(...params.tags);
   }
 
   if (!options.excludeTypes && params.types.length > 0) {
@@ -146,12 +168,14 @@ async function loadCategoryPills(env: Env, params: SearchParams): Promise<Array<
     categoryGroupSlug: null,
     childCategorySlug: null,
     styles: [],
+    tags: [],
     types: [],
   };
   const sqlParts = buildSqlParts(scopedParams, {
     excludeCategoryGroup: true,
     excludeChildCategory: true,
     excludeStyles: true,
+    excludeTags: true,
     excludeTypes: true,
   });
 
@@ -228,9 +252,15 @@ async function loadSubcategoryPills(env: Env, params: SearchParams): Promise<Arr
     categoryGroupSlug: groupSlug,
     childCategorySlug: null,
     styles: [],
+    tags: [],
     types: [],
   };
-  const sqlParts = buildSqlParts(scopedParams, { excludeChildCategory: true, excludeStyles: true, excludeTypes: true });
+  const sqlParts = buildSqlParts(scopedParams, {
+    excludeChildCategory: true,
+    excludeStyles: true,
+    excludeTags: true,
+    excludeTypes: true,
+  });
 
   const result = await env.DB
     .prepare(`
@@ -353,7 +383,7 @@ export async function searchTemplates(env: Env, rawParams: SearchParams): Promis
       thumbnail_image_url: row.thumbnail_image_url,
       thumbnail_image_secondary_url: row.thumbnail_image_secondary_url,
       price: row.price,
-      is_free: row.is_free === 1,
+      is_free: typeof row.price === 'number' ? row.price === 0 : row.is_free === 1,
       is_featured: row.is_featured === 1,
       template_type: row.template_type,
       popularity_score: row.popularity_score,
@@ -385,7 +415,10 @@ export async function searchTemplates(env: Env, rawParams: SearchParams): Promis
       scope: params.scope,
       category_group_slug: params.categoryGroupSlug,
       child_category_slug: params.childCategorySlug ? childSlugMap[params.childCategorySlug] ?? params.childCategorySlug : null,
+      style_slug: params.styleSlug,
+      tag_slug: params.tagSlug,
       styles: params.styles,
+      tags: params.tags,
       types: params.types,
       free_only: params.freeOnly,
     },

@@ -50,6 +50,18 @@ export type { TemplateGridProps } from './components/grid/TemplateGrid';
 export { TemplateFilterBar } from './components/filter/TemplateFilterBar';
 export type { TemplateFilterBarProps } from './components/filter/TemplateFilterBar';
 
+export { TemplateSearchPage } from './components/marketplace/TemplateSearchPage';
+export type { TemplateSearchPageProps } from './components/marketplace/TemplateSearchPage';
+
+export { TemplateSearchBox } from './components/marketplace/TemplateSearchBox';
+export type { TemplateSearchBoxMode, TemplateSearchBoxProps, TemplateSearchBoxVariant } from './components/marketplace/TemplateSearchBox';
+
+export { TemplateSearchResults } from './components/marketplace/TemplateSearchResults';
+export type { TemplateSearchResultsProps } from './components/marketplace/TemplateSearchResults';
+
+export { TemplateSearchSidebar } from './components/marketplace/TemplateSearchSidebar';
+export type { TemplateSearchSidebarProps } from './components/marketplace/TemplateSearchSidebar';
+
 // Canon Form Components
 export { TextField } from './components/form/TextField';
 export type { TextFieldProps, TextFieldSize, TextFieldType } from './components/form/TextField';

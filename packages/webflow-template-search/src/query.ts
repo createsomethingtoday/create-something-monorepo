@@ -10,6 +10,14 @@ function parseList(params: URLSearchParams, key: string): string[] {
   return ensureStringArray(values);
 }
 
+function firstParam(params: URLSearchParams, keys: string[]): string | null {
+  for (const key of keys) {
+    const value = params.get(key)?.trim();
+    if (value) return value;
+  }
+  return null;
+}
+
 function toBoolean(value: string | null): boolean {
   if (!value) return false;
   return ['1', 'true', 'yes', 'on'].includes(value.toLowerCase());
@@ -59,7 +67,10 @@ export function parseSearchParams(url: URL, defaultPageSize = 24): SearchParams 
     scope: parseScope(params),
     categoryGroupSlug: params.get('category_group_slug')?.trim() || null,
     childCategorySlug: params.get('child_category_slug')?.trim() || null,
+    styleSlug: firstParam(params, ['style_slug', 'style']),
+    tagSlug: firstParam(params, ['tag_slug', 'tag']),
     styles: parseList(params, 'styles'),
+    tags: parseList(params, 'tags'),
     types: parseList(params, 'types').filter((value) => VALID_TYPES.has(value)),
     freeOnly: toBoolean(params.get('free_only')) || toBoolean(params.get('free')) || (params.get('pricing') ?? '') === 'free',
     sort: normalizeSort(params.get('sort')),

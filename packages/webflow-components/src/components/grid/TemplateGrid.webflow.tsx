@@ -5,7 +5,7 @@ import { TemplateGrid } from './TemplateGrid';
 export default declareComponent(TemplateGrid, {
   name: 'Template Grid',
   description:
-    'Infinite-scroll template marketplace grid. Fetches from the template search API and renders cards with lazy loading. Drop this on any category page to replace the Webflow Collection List.',
+    'Infinite-scroll template marketplace grid. Fetches from the template search API and renders cards with lazy loading. Drop this on category, subcategory, style, tag, or special template-list pages to replace the Webflow Collection List.',
   group: 'Marketplace',
   props: {
     apiBase: props.Text({
@@ -19,6 +19,18 @@ export default declareComponent(TemplateGrid, {
       defaultValue: '',
       tooltip:
         'Category group slug for Designer preview (e.g. "architecture-and-design-websites"). In production the slug is auto-detected from the page URL (/templates/category/{slug}).',
+    }),
+    styleSlug: props.Text({
+      name: 'Style Slug (preview)',
+      defaultValue: '',
+      tooltip:
+        'Style slug for Designer preview (e.g. "modern"). In production the slug is auto-detected from the page URL (/templates/style/{slug}).',
+    }),
+    tagSlug: props.Text({
+      name: 'Tag Slug (preview)',
+      defaultValue: '',
+      tooltip:
+        'Tag slug for Designer preview (e.g. "automation"). In production the slug is auto-detected from the page URL (/templates/tag/{slug}).',
     }),
     scopeOverride: props.Variant({
       name: 'Scope (preview)',
@@ -37,6 +49,24 @@ export default declareComponent(TemplateGrid, {
       name: 'Items Per Page',
       defaultValue: 24,
       tooltip: 'Number of templates to fetch per infinite-scroll batch.',
+    }),
+    showEmptyState: props.Boolean({
+      name: 'Show Empty State',
+      defaultValue: false,
+      tooltip:
+        'Render an inline no-results state. Leave off when the page already has a native Webflow/Finsweet empty-state element.',
+    }),
+    emptyTitle: props.Text({
+      name: 'Empty Title',
+      defaultValue: 'No templates found',
+    }),
+    emptyDescription: props.Text({
+      name: 'Empty Description',
+      defaultValue: 'Try a broader search or clear filters to see more templates.',
+    }),
+    emptyActionLabel: props.Text({
+      name: 'Empty Action Label',
+      defaultValue: 'Clear filters',
     }),
   },
 });

@@ -42,6 +42,7 @@ export const ASSET_FIELDS = [
   '📋 Cumulative Purchases',
   '🥞💲Template Price Filter (🏗️ only)',
   '🚀📅Published Date',
+  '🥞CMS Slug',
   '🥞CMS Slug (formula)',
   '🎨Creator',
   '🎨Creator Name',
@@ -69,6 +70,16 @@ function buildModifiedAfterFormula(cursor: string, until?: string): string {
     return `AND(IS_AFTER({📅LMT}, DATETIME_PARSE("${cursor}")), NOT(IS_AFTER({📅LMT}, DATETIME_PARSE("${until}"))))`;
   }
   return `IS_AFTER({📅LMT}, DATETIME_PARSE("${cursor}"))`;
+}
+
+function buildRecordIdFormula(recordIds: string[]): string {
+  for (const id of recordIds) {
+    if (!/^rec[A-Za-z0-9]+$/.test(id)) {
+      throw new Error(`Invalid Airtable record ID: ${id}`);
+    }
+  }
+  const clauses = recordIds.map((id) => `RECORD_ID()="${id}"`);
+  return clauses.length === 1 ? clauses[0] : `OR(${clauses.join(',')})`;
 }
 
 function attachmentUrl(value: unknown): string | null {
@@ -169,6 +180,21 @@ export async function fetchModifiedAssetsSince(
     tableId: env.AIRTABLE_ASSETS_TABLE_ID ?? DEFAULT_ASSETS_TABLE_ID,
     fields: ASSET_FIELDS,
     formula: buildModifiedAfterFormula(cursor, until),
+    sortField: '📅LMT',
+  });
+}
+
+export async function fetchAssetRecordsByIds(
+  env: Env,
+  recordIds: string[],
+): Promise<Array<AirtableRecord<AirtableAssetFields>>> {
+  const uniqueIds = uniqueStrings(recordIds.map((id) => id.trim()).filter(Boolean));
+  if (uniqueIds.length === 0) return [];
+
+  return fetchAirtableRecords<AirtableAssetFields>(env, {
+    tableId: env.AIRTABLE_ASSETS_TABLE_ID ?? DEFAULT_ASSETS_TABLE_ID,
+    fields: ASSET_FIELDS,
+    formula: buildRecordIdFormula(uniqueIds),
     sortField: '📅LMT',
   });
 }

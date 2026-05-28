@@ -63,6 +63,12 @@ export function installAirtableFetchMock(dataset: MockDataset) {
     }
 
     if (tableId === 'tblRwzpWoLgE9MrUm') {
+      if (formula.includes('RECORD_ID()')) {
+        return Response.json({
+          records: dataset.publishedAssets.filter((record) => formula.includes(`"${record.id}"`)),
+        });
+      }
+
       return Response.json({
         records: formula.includes('IS_AFTER(') ? dataset.incrementalAssets ?? [] : dataset.publishedAssets,
       });

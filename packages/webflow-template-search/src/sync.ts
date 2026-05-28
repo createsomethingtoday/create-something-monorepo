@@ -1,4 +1,10 @@
-import { fetchModifiedAssetsSince, fetchPublishedTemplateAssets, fetchPublishedTemplateImageFields, loadLookupMaps } from './airtable.js';
+import {
+  fetchAssetRecordsByIds,
+  fetchModifiedAssetsSince,
+  fetchPublishedTemplateAssets,
+  fetchPublishedTemplateImageFields,
+  loadLookupMaps,
+} from './airtable.js';
 import {
   backfillCreatorAvatars,
   backfillCreatorFieldsByName,
@@ -181,16 +187,57 @@ function airtableCreatorFallbackMap(
   return fallbackCreators;
 }
 
+interface WebflowDesignerAvatarIndex {
+  bySyncRecordId: Map<string, WebflowDesignerAvatarRecord>;
+  byName: Map<string, WebflowDesignerAvatarRecord>;
+}
+
+function buildWebflowDesignerAvatarIndex(records: WebflowDesignerAvatarRecord[]): WebflowDesignerAvatarIndex | null {
+  if (records.length === 0) return null;
+
+  const bySyncRecordId = new Map<string, WebflowDesignerAvatarRecord>();
+  const byName = new Map<string, WebflowDesignerAvatarRecord>();
+
+  for (const record of records) {
+    if (record.syncRecordId) bySyncRecordId.set(record.syncRecordId, record);
+    byName.set(normalizeCreatorName(record.name), record);
+  }
+
+  return { bySyncRecordId, byName };
+}
+
+function resolveCreatorMetadata(
+  record: AirtableRecord<AirtableAssetFields>,
+  lookups: LookupMaps,
+  webflowDesignerIndex: WebflowDesignerAvatarIndex | null,
+) {
+  const ids = ensureStringArray(record.fields['🎨Creator']);
+  const creatorRecordId = ids[0] ?? null;
+  const creatorName = typeof record.fields['🎨Creator Name'] === 'string' ? record.fields['🎨Creator Name'].trim() : '';
+  const airtableCreator = creatorRecordId ? lookups.creators.get(creatorRecordId) : undefined;
+  const webflowCreator =
+    (creatorRecordId ? webflowDesignerIndex?.bySyncRecordId.get(creatorRecordId) : undefined) ??
+    (creatorName ? webflowDesignerIndex?.byName.get(normalizeCreatorName(creatorName)) : undefined);
+
+  return {
+    creatorRecordId,
+    creatorProfileUrl: webflowCreator?.profileUrl || airtableCreator?.profileUrl || null,
+    creatorAvatarUrl: webflowCreator?.avatarUrl ?? airtableCreator?.avatarUrl ?? null,
+    creatorAvatarAlt: webflowCreator?.avatarAlt ?? airtableCreator?.avatarAlt ?? (airtableCreator?.name ?? null),
+  };
+}
+
 function normalizeTemplateRecord(
   record: AirtableRecord<AirtableAssetFields>,
   lookups: LookupMaps,
   syncedAt: string,
   webflowImageIndex: WebflowTemplateImageIndex | null,
+  webflowDesignerIndex: WebflowDesignerAvatarIndex | null = null,
 ): TemplateDocumentInput | null {
   if (!isPublishedTemplate(record)) return null;
 
   const name = String(record.fields.Name ?? '').trim();
-  const templateSlug = String(record.fields['🥞CMS Slug (formula)'] ?? '').trim();
+  const templateSlug = String(record.fields['🥞CMS Slug'] ?? record.fields['🥞CMS Slug (formula)'] ?? '').trim();
   if (!name || !templateSlug) return null;
 
   const categoryGroups = ensureStringArray(record.fields['🪣Category Group(s) Display Name']);
@@ -217,6 +264,8 @@ function normalizeTemplateRecord(
   const webflowImages = resolveWebflowTemplateImages(webflowImageIndex, { templateSlug, name });
   const airtableThumbnailUrl = stableAttachmentUrl(attachmentUrl(record.fields['🖼️Thumbnail Image']));
   const airtableSecondaryThumbnailUrl = stableAttachmentUrl(attachmentUrl(record.fields['🖼️Thumbnail Image (Secondary)']));
+  const price = ensureNumber(record.fields['🥞💲Template Price Filter (🏗️ only)']);
+  const creator = resolveCreatorMetadata(record, lookups, webflowDesignerIndex);
 
   return {
     id: record.id,
@@ -226,25 +275,10 @@ function normalizeTemplateRecord(
     previewUrl: typeof record.fields['🔗Preview Site URL'] === 'string' ? record.fields['🔗Preview Site URL'] : null,
     websiteUrl: typeof record.fields['🔗Website URL'] === 'string' ? record.fields['🔗Website URL'] : null,
     creatorName: typeof record.fields['🎨Creator Name'] === 'string' ? record.fields['🎨Creator Name'] : null,
-    creatorRecordId: (() => {
-      const ids = ensureStringArray(record.fields['🎨Creator']);
-      return ids[0] ?? null;
-    })(),
-    creatorProfileUrl: (() => {
-      const ids = ensureStringArray(record.fields['🎨Creator']);
-      const creator = ids[0] ? lookups.creators.get(ids[0]) : undefined;
-      return creator?.profileUrl || null;
-    })(),
-    creatorAvatarUrl: (() => {
-      const ids = ensureStringArray(record.fields['🎨Creator']);
-      const creator = ids[0] ? lookups.creators.get(ids[0]) : undefined;
-      return creator?.avatarUrl ?? null;
-    })(),
-    creatorAvatarAlt: (() => {
-      const ids = ensureStringArray(record.fields['🎨Creator']);
-      const creator = ids[0] ? lookups.creators.get(ids[0]) : undefined;
-      return creator?.avatarAlt ?? (creator?.name ?? null);
-    })(),
+    creatorRecordId: creator.creatorRecordId,
+    creatorProfileUrl: creator.creatorProfileUrl,
+    creatorAvatarUrl: creator.creatorAvatarUrl,
+    creatorAvatarAlt: creator.creatorAvatarAlt,
     thumbnailImageUrl: webflowImages?.thumbnailImageUrl ?? airtableThumbnailUrl,
     thumbnailImageSecondaryUrl: webflowImages?.thumbnailImageSecondaryUrl ?? airtableSecondaryThumbnailUrl,
     carouselImageUrls: attachmentUrls(record.fields['🖼️Carousel Images']),
@@ -260,7 +294,7 @@ function normalizeTemplateRecord(
     tags: tags.map((entry) => entry.name),
     tagSlugs: tags.map((entry) => entry.slug),
     templateType,
-    isFree: ensureBoolean(record.fields['Is free?']) || ensureNumber(record.fields['🥞💲Template Price Filter (🏗️ only)']) === 0,
+    isFree: price === null ? ensureBoolean(record.fields['Is free?']) : price === 0,
     isFeatured:
       ensureBoolean(record.fields['🥞Is Currently Featured? (🏗️ only)']) ||
       ensureBoolean(record.fields['ℹ️Is Featured? (🖥️, 🏗️only)']),
@@ -268,7 +302,7 @@ function normalizeTemplateRecord(
     popularityScore: ensureNumber(record.fields['🖌️Popularity Score']),
     uniqueViewers: ensureNumber(record.fields['📋 Unique Viewers']),
     cumulativePurchases: ensureNumber(record.fields['📋 Cumulative Purchases']),
-    price: ensureNumber(record.fields['🥞💲Template Price Filter (🏗️ only)']),
+    price,
     publishedDate: typeof record.fields['🚀📅Published Date'] === 'string' ? record.fields['🚀📅Published Date'] : null,
     marketplaceStatus:
       typeof record.fields['🚀Marketplace Status'] === 'string' ? record.fields['🚀Marketplace Status'] : null,
@@ -285,8 +319,9 @@ async function runFullSync(env: Env): Promise<SyncSummary> {
     loadWebflowTemplateImageIndex(env),
     hasWebflowCmsToken(env) ? fetchWebflowDesignerAvatars(env) : Promise.resolve([]),
   ]);
+  const webflowDesignerIndex = buildWebflowDesignerAvatarIndex(webflowDesigners);
   const documents = assets
-    .map((record) => normalizeTemplateRecord(record, lookups, startedAt, webflowImageIndex))
+    .map((record) => normalizeTemplateRecord(record, lookups, startedAt, webflowImageIndex, webflowDesignerIndex))
     .filter((value): value is NonNullable<typeof value> => Boolean(value));
 
   await clearIndex(env.DB);
@@ -333,16 +368,18 @@ async function runIncrementalSync(env: Env): Promise<SyncSummary> {
   const isCaughtUp = windowEnd.getTime() >= now.getTime();
   const windowEndIso = isCaughtUp ? undefined : windowEnd.toISOString();
 
-  const [lookups, assets, webflowImageIndex] = await Promise.all([
+  const [lookups, assets, webflowImageIndex, webflowDesigners] = await Promise.all([
     loadLookupMaps(env),
     fetchModifiedAssetsSince(env, currentCursor, windowEndIso),
     loadWebflowTemplateImageIndex(env),
+    hasWebflowCmsToken(env) ? fetchWebflowDesignerAvatars(env) : Promise.resolve([]),
   ]);
+  const webflowDesignerIndex = buildWebflowDesignerAvatarIndex(webflowDesigners);
   const toUpsert: TemplateDocumentInput[] = [];
   const toDelete: string[] = [];
 
   for (const record of assets) {
-    const normalized = normalizeTemplateRecord(record, lookups, startedAt, webflowImageIndex);
+    const normalized = normalizeTemplateRecord(record, lookups, startedAt, webflowImageIndex, webflowDesignerIndex);
     if (normalized) {
       toUpsert.push(normalized);
     } else {
@@ -386,6 +423,57 @@ async function runIncrementalSync(env: Env): Promise<SyncSummary> {
 
 export async function syncTemplates(env: Env, mode: 'full' | 'incremental'): Promise<SyncSummary> {
   return runWithSyncJobLock(env, mode, () => (mode === 'full' ? runFullSync(env) : runIncrementalSync(env)));
+}
+
+export async function syncTemplateRecordsByIds(env: Env, recordIds: string[]): Promise<SyncSummary> {
+  return runWithSyncJobLock(env, 'records', async () => {
+    const startedAt = nowIso();
+    const uniqueRecordIds = uniqueStrings(recordIds.map((id) => id.trim()).filter(Boolean));
+    const [lookups, assets, webflowImageIndex, webflowDesigners] = await Promise.all([
+      loadLookupMaps(env),
+      fetchAssetRecordsByIds(env, uniqueRecordIds),
+      loadWebflowTemplateImageIndex(env),
+      hasWebflowCmsToken(env) ? fetchWebflowDesignerAvatars(env) : Promise.resolve([]),
+    ]);
+    const webflowDesignerIndex = buildWebflowDesignerAvatarIndex(webflowDesigners);
+    const documents: TemplateDocumentInput[] = [];
+    const toDelete: string[] = [];
+
+    for (const record of assets) {
+      const normalized = normalizeTemplateRecord(record, lookups, startedAt, webflowImageIndex, webflowDesignerIndex);
+      if (normalized) {
+        documents.push(normalized);
+      } else {
+        toDelete.push(record.id);
+      }
+    }
+
+    if (toDelete.length > 0) await deleteTemplateDocuments(env.DB, toDelete);
+    if (documents.length > 0) await upsertTemplateDocuments(env.DB, documents);
+    const imageRefreshedRecords = documents.length
+      ? await refreshIndexedWebflowImages(
+          env.DB,
+          webflowImageIndex,
+          startedAt,
+          documents.map((document) => document.id),
+        )
+      : 0;
+
+    const summary: SyncSummary = {
+      mode: 'records',
+      started_at: startedAt,
+      finished_at: nowIso(),
+      fetched_records: assets.length,
+      indexed_records: documents.length,
+      removed_records: toDelete.length,
+      backfilled_records: 0,
+      image_refreshed_records: imageRefreshedRecords,
+      cursor: startedAt,
+    };
+
+    await recordSyncSummary(env.DB, summary, 'last_record_sync');
+    return summary;
+  });
 }
 
 // Image URL refresh: prefers stable Webflow CMS/CDN URLs (never expire) when a
@@ -459,30 +547,63 @@ export async function refreshImages(env: Env): Promise<ImageRefreshSummary> {
   return runWithSyncJobLock(env, 'image_refresh', () => runImageUrlRefresh(env));
 }
 
-export async function refreshCreatorProfiles(env: Env): Promise<ImageRefreshSummary> {
-  return runWithSyncJobLock(env, 'creator_refresh', async () => {
-    const startedAt = nowIso();
-    if (!hasWebflowCmsToken(env)) {
-      throw new Error('A Webflow CMS read token is not configured.');
-    }
+async function runCreatorProfileRefresh(env: Env): Promise<ImageRefreshSummary> {
+  const startedAt = nowIso();
+  if (!hasWebflowCmsToken(env)) {
+    throw new Error('A Webflow CMS read token is not configured.');
+  }
 
-    const designerAvatars = await fetchWebflowDesignerAvatars(env);
-    const refreshedAvatars = await updateCreatorAvatarsFromWebflow(env.DB, designerAvatars, startedAt, {
-      matchByName: false,
-    });
-
-    const summary: ImageRefreshSummary = {
-      mode: 'creator_refresh',
-      started_at: startedAt,
-      finished_at: nowIso(),
-      fetched_records: designerAvatars.length,
-      refreshed_records: refreshedAvatars,
-      backfilled_records: 0,
-    };
-
-    await recordSyncSummary(env.DB, summary, 'last_creator_refresh');
-    return summary;
+  const designerAvatars = await fetchWebflowDesignerAvatars(env);
+  const refreshedAvatars = await updateCreatorAvatarsFromWebflow(env.DB, designerAvatars, startedAt, {
+    matchByName: false,
   });
+
+  const summary: ImageRefreshSummary = {
+    mode: 'creator_refresh',
+    started_at: startedAt,
+    finished_at: nowIso(),
+    fetched_records: designerAvatars.length,
+    refreshed_records: refreshedAvatars,
+    backfilled_records: 0,
+  };
+
+  await recordSyncSummary(env.DB, summary, 'last_creator_refresh');
+  return summary;
+}
+
+async function runForcedCreatorProfileRefresh(env: Env, creatorNames: string[] = []): Promise<ImageRefreshSummary> {
+  const startedAt = nowIso();
+  if (!hasWebflowCmsToken(env)) {
+    throw new Error('A Webflow CMS read token is not configured.');
+  }
+
+  const requestedNames = new Set(creatorNames.map((name) => normalizeCreatorName(name)).filter(Boolean));
+  const designerAvatars = (await fetchWebflowDesignerAvatars(env)).filter(
+    (record) => requestedNames.size === 0 || requestedNames.has(normalizeCreatorName(record.name)),
+  );
+  const refreshedAvatars = await updateCreatorAvatarsFromWebflow(env.DB, designerAvatars, startedAt, {
+    forceMatchByName: true,
+  });
+
+  const summary: ImageRefreshSummary = {
+    mode: 'creator_refresh',
+    started_at: startedAt,
+    finished_at: nowIso(),
+    fetched_records: designerAvatars.length,
+    refreshed_records: refreshedAvatars,
+    backfilled_records: 0,
+  };
+
+  await recordSyncSummary(env.DB, summary, 'last_creator_refresh');
+  return summary;
+}
+
+export async function refreshCreatorProfiles(env: Env): Promise<ImageRefreshSummary> {
+  return runWithSyncJobLock(env, 'creator_refresh', () => runCreatorProfileRefresh(env));
+}
+
+export async function forceRefreshCreatorProfiles(env: Env, creatorNames: string[] = []): Promise<ImageRefreshSummary> {
+  return runForcedCreatorProfileRefresh(env, creatorNames);
 }
 
 export async function backfillTemplateImages(
