@@ -41,6 +41,48 @@ declare global {
 }
 
 export const MARKETPLACE_LANDING_ANALYTICS_EVENT = 'marketplaceLandingAnalytics';
+const COMPONENT_ERROR_EVENT_NAME = 'Code Component Event';
+const MAX_ERROR_MESSAGE_LENGTH = 300;
+
+function getBrowserContext(): Record<string, string | boolean> {
+  if (typeof navigator === 'undefined') return {};
+
+  const uaData = (navigator as Navigator & {
+    userAgentData?: {
+      brands?: Array<{ brand: string; version: string }>;
+      mobile?: boolean;
+      platform?: string;
+    };
+  }).userAgentData;
+  const userAgent = navigator.userAgent || '';
+  const platform = uaData?.platform || navigator.platform || 'unknown';
+  const browserMatch =
+    userAgent.match(/Edg\/([\d.]+)/) ||
+    userAgent.match(/EdgiOS\/([\d.]+)/) ||
+    userAgent.match(/OPR\/([\d.]+)/) ||
+    userAgent.match(/CriOS\/([\d.]+)/) ||
+    userAgent.match(/Chrome\/([\d.]+)/) ||
+    userAgent.match(/FxiOS\/([\d.]+)/) ||
+    userAgent.match(/Firefox\/([\d.]+)/) ||
+    userAgent.match(/Version\/([\d.]+).*Safari\//);
+
+  let browser = 'unknown';
+  if (/Edg\/|EdgiOS\//.test(userAgent)) browser = 'Edge';
+  else if (/OPR\//.test(userAgent)) browser = 'Opera';
+  else if (/Chrome\/|CriOS\//.test(userAgent) && !/Chromium\//.test(userAgent)) browser = 'Chrome';
+  else if (/Firefox\/|FxiOS\//.test(userAgent)) browser = 'Firefox';
+  else if (/Safari\//.test(userAgent)) browser = 'Safari';
+
+  const uaBrand = uaData?.brands?.find((brand) => !/Not.?A.?Brand/i.test(brand.brand));
+  if (browser === 'unknown' && uaBrand) browser = uaBrand.brand;
+
+  return {
+    browser,
+    browser_version: browserMatch?.[1] || uaBrand?.version || 'unknown',
+    browser_platform: platform,
+    browser_is_mobile: Boolean(uaData?.mobile ?? /Mobi|Android|iPhone|iPad|iPod/i.test(userAgent)),
+  };
+}
 
 function getUrlParams(): Record<string, string> {
   if (typeof window === 'undefined') return {};
@@ -61,6 +103,8 @@ function getPageContext(): Record<string, unknown> {
   const experimentState = window.__templateMarketplaceLandingExperiment;
   return {
     page_url: window.location.href,
+    pathname: window.location.pathname,
+    search: window.location.search,
     page_title: typeof document !== 'undefined' ? document.title : '',
     referrer: typeof document !== 'undefined' ? document.referrer || 'direct' : 'direct',
     current_category: urlParams.category || null,
@@ -69,6 +113,7 @@ function getPageContext(): Record<string, unknown> {
     experiment_variant: experimentState?.variant ?? null,
     experiment_assignment_source: experimentState?.source ?? null,
     timestamp: new Date().toISOString(),
+    ...getBrowserContext(),
   };
 }
 
@@ -125,6 +170,43 @@ export function trackMarketplaceEvent(
   } catch {
     // Analytics must not block navigation or component interaction.
   }
+}
+
+function normalizeErrorMessage(error: unknown): string {
+  let message = '';
+  if (error instanceof Error) {
+    message = error.message;
+  } else if (typeof error === 'string') {
+    message = error;
+  } else if (error && typeof error === 'object' && 'message' in error) {
+    const candidate = (error as { message?: unknown }).message;
+    if (typeof candidate === 'string') message = candidate;
+  }
+
+  return (message || 'Unknown component error').slice(0, MAX_ERROR_MESSAGE_LENGTH);
+}
+
+function getErrorName(error: unknown): string {
+  return error instanceof Error && error.name ? error.name : 'Error';
+}
+
+export function trackMarketplaceComponentError(
+  component: string,
+  error: unknown,
+  detail: MarketplaceAnalyticsData = {},
+  enabled = true,
+): void {
+  trackMarketplaceEvent(
+    COMPONENT_ERROR_EVENT_NAME,
+    {
+      component,
+      scope: 'error',
+      message: normalizeErrorMessage(error),
+      error_name: getErrorName(error),
+      ...detail,
+    },
+    enabled,
+  );
 }
 
 export function trackOptimizelyEvent(
