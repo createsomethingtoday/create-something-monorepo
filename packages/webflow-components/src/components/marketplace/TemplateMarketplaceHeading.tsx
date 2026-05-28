@@ -18,6 +18,8 @@ export interface TemplateMarketplaceHeadingProps {
   fallbackDescription?: string;
   /** Show visible breadcrumb links above the headline. */
   showBreadcrumbs?: boolean;
+  /** Show visible supporting description below the headline. */
+  showDescription?: boolean;
   /** First breadcrumb label. */
   templatesLabel?: string;
   /** First breadcrumb URL. */
@@ -55,17 +57,21 @@ const HEADING_STYLES = `
   min-width: 0;
   color: #080808;
   font-family: "WF Visual Sans Variable", "WF Visual Sans", "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .tmheading-breadcrumbs {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 6px;
-  margin: 0 0 16px;
+  gap: 4px;
+  margin: 0;
   color: #757575;
+  font-variation-settings: "wght" 470, "opsz" 14;
   font-size: 14px;
-  line-height: 20px;
+  line-height: 22.4px;
 }
 
 .tmheading-breadcrumb-link {
@@ -82,37 +88,36 @@ const HEADING_STYLES = `
 }
 
 .tmheading-title {
+  font-variation-settings: "wght" 600, "opsz" 48;
   margin: 0;
   color: #080808;
-  font-size: clamp(32px, 4vw, 48px);
-  font-weight: 700;
-  line-height: 1.08;
+  font-size: 2rem;
+  font-weight: 600;
+  line-height: 1.04;
   letter-spacing: 0;
 }
 
 .tmheading-description {
   max-width: 920px;
-  margin: 16px 0 0;
-  color: #5e5e5e;
-  font-size: 17px;
-  line-height: 1.55;
+  margin: 0;
+  color: #5a5a5a;
+  font-size: 14px;
+  line-height: 20px;
   letter-spacing: 0;
 }
 
 @media (max-width: 767px) {
   .tmheading-breadcrumbs {
-    margin-bottom: 12px;
     font-size: 13px;
     line-height: 18px;
   }
 
   .tmheading-title {
-    font-size: 34px;
-    line-height: 1.12;
+    font-size: 1.625rem;
+    line-height: 1.04;
   }
 
   .tmheading-description {
-    margin-top: 12px;
     font-size: 15px;
     line-height: 1.5;
   }
@@ -120,7 +125,7 @@ const HEADING_STYLES = `
 
 @media (max-width: 479px) {
   .tmheading-title {
-    font-size: 30px;
+    font-size: 1.4rem;
   }
 }
 `;
@@ -330,6 +335,7 @@ export const TemplateMarketplaceHeading: React.FC<TemplateMarketplaceHeadingProp
   fallbackTitle = 'Search Webflow templates',
   fallbackDescription = 'Explore Webflow templates by category, style, type, price, and popularity.',
   showBreadcrumbs = true,
+  showDescription = true,
   templatesLabel = 'Templates',
   templatesUrl = '/templates',
   updateDocumentTitle = false,
@@ -393,7 +399,7 @@ export const TemplateMarketplaceHeading: React.FC<TemplateMarketplaceHeadingProp
         </nav>
       )}
       <h1 className="tmheading-title">{content.title}</h1>
-      {content.description && <p className="tmheading-description">{content.description}</p>}
+      {showDescription && content.description && <p className="tmheading-description">{content.description}</p>}
     </header>
   );
 };

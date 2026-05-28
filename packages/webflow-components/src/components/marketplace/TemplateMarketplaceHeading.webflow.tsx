@@ -40,6 +40,11 @@ export default declareComponent(TemplateMarketplaceHeading, {
       name: 'Show Breadcrumbs',
       defaultValue: true,
     }),
+    showDescription: props.Boolean({
+      name: 'Show Description',
+      defaultValue: true,
+      tooltip: 'Turn off on Search V2 if the page should match the native search heading-only layout.',
+    }),
     templatesLabel: props.Text({
       name: 'Templates Label',
       defaultValue: 'Templates',
