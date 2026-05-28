@@ -163,20 +163,33 @@ describe('webflow-template-search worker', () => {
       );
       expect(rebuild.status).toBe(200);
 
+      await env.DB.prepare(
+        "INSERT INTO slug_aliases (slug_type, alias_slug, canonical_slug, note) VALUES ('child_category', 'ai', 'ai-websites', 'legacy unsuffixed route')",
+      ).run();
+      await env.DB.prepare(
+        "INSERT INTO slug_aliases (slug_type, alias_slug, canonical_slug, note) VALUES ('child_category', 'software-and-saas', 'software-and-saas-websites', 'legacy unsuffixed route')",
+      ).run();
+
       const categorySearch = await callWorker(
-        new Request('https://templates.test/api/templates/search?category_group_slug=technology-websites&child_category_slug=ai-websites'),
+        new Request('https://templates.test/api/templates/search?category_group_slug=technology-websites&child_category_slug=ai'),
         env,
       );
       const categoryPayload = (await categorySearch.json()) as {
         items: Array<{ name: string }>;
         available_facets: { styles: Array<{ slug: string }>; types: Array<{ value: string }> };
-        subcategory_pills: Array<{ slug: string; active: boolean }>;
+        applied_filters: { child_category_slug: string | null };
+        subcategory_pills: Array<{ slug: string; url: string; active: boolean }>;
       };
 
       expect(categoryPayload.items.map((item) => item.name)).toEqual(['Setrex', 'Agentflow']);
       expect(categoryPayload.available_facets.styles.map((item) => item.slug)).toEqual(['dark-websites', 'modern']);
       expect(categoryPayload.available_facets.types.map((item) => item.value)).toEqual(['Multi Layout', 'Multi Page']);
+      expect(categoryPayload.applied_filters.child_category_slug).toBe('ai-websites');
       expect(categoryPayload.subcategory_pills.map((pill) => pill.slug)).toEqual(['ai-websites', 'software-and-saas-websites']);
+      expect(categoryPayload.subcategory_pills.map((pill) => pill.url)).toEqual([
+        'https://webflow.com/templates/subcategory/ai-websites',
+        'https://webflow.com/templates/subcategory/software-and-saas-websites',
+      ]);
       expect(categoryPayload.subcategory_pills.find((pill) => pill.slug === 'ai-websites')?.active).toBe(true);
 
       const search = await callWorker(new Request('https://templates.test/api/templates/search?q=workflow'), env);

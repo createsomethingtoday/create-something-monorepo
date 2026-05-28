@@ -1,4 +1,4 @@
-import { lookupPublicSlugMap, resolveAlias } from './db.js';
+import { resolveAlias } from './db.js';
 import type {
   DocumentCountRow,
   DocumentRow,
@@ -232,18 +232,13 @@ function buildTags(names: string[], slugs: string[]): Array<{ name: string; slug
   return names.map((name, index) => ({ name, slug: slugs[index] ?? '' }));
 }
 
-function buildChildCategories(
-  names: string[],
-  slugs: string[],
-  publicSlugMap: Record<string, string>,
-): Array<{ name: string; slug: string; url: string }> {
+function buildChildCategories(names: string[], slugs: string[]): Array<{ name: string; slug: string; url: string }> {
   return names.map((name, index) => {
     const canonicalSlug = slugs[index] ?? '';
-    const publicSlug = publicSlugMap[canonicalSlug] ?? canonicalSlug;
     return {
       name,
-      slug: publicSlug,
-      url: `https://webflow.com/templates/subcategory/${publicSlug}`,
+      slug: canonicalSlug,
+      url: `https://webflow.com/templates/subcategory/${canonicalSlug}`,
     };
   });
 }
@@ -274,12 +269,6 @@ export async function searchTemplates(env: Env, rawParams: SearchParams): Promis
   ]);
 
   const rowResults = rows.results ?? [];
-  const childSlugMap = await lookupPublicSlugMap(
-    env.DB,
-    'child_category',
-    rowResults.flatMap((row) => parseJsonArray(row.child_category_slugs_json)).concat(pills.map((pill) => pill.slug)),
-  );
-
   const items: SearchItem[] = rowResults.map((row) => {
     const categoryGroups = parseJsonArray(row.category_groups_json);
     const categoryGroupSlugs = parseJsonArray(row.category_group_slugs_json);
@@ -309,7 +298,7 @@ export async function searchTemplates(env: Env, rawParams: SearchParams): Promis
       cumulative_purchases: row.cumulative_purchases,
       published_date: row.published_date,
       category_groups: buildCategoryGroups(categoryGroups, categoryGroupSlugs),
-      child_categories: buildChildCategories(childCategories, childCategorySlugs, childSlugMap),
+      child_categories: buildChildCategories(childCategories, childCategorySlugs),
       styles: buildStyles(styles, styleSlugs),
       tags: buildTags(tags, tagSlugs),
     };
@@ -332,7 +321,7 @@ export async function searchTemplates(env: Env, rawParams: SearchParams): Promis
       q: params.q,
       scope: params.scope,
       category_group_slug: params.categoryGroupSlug,
-      child_category_slug: params.childCategorySlug ? childSlugMap[params.childCategorySlug] ?? params.childCategorySlug : null,
+      child_category_slug: params.childCategorySlug,
       styles: params.styles,
       types: params.types,
       free_only: params.freeOnly,
@@ -341,15 +330,12 @@ export async function searchTemplates(env: Env, rawParams: SearchParams): Promis
       styles: styleFacets.map((row) => ({ name: row.name, slug: row.slug, count: Number(row.count) })),
       types: typeFacets.map((row) => ({ value: row.value, count: Number(row.count) })),
     },
-    subcategory_pills: pills.map((pill) => {
-      const publicSlug = childSlugMap[pill.slug] ?? pill.slug;
-      return {
-        name: pill.name,
-        slug: publicSlug,
-        url: `https://webflow.com/templates/subcategory/${publicSlug}`,
-        count: Number(pill.count),
-        active: publicSlug === (params.childCategorySlug ? childSlugMap[params.childCategorySlug] ?? params.childCategorySlug : ''),
-      };
-    }),
+    subcategory_pills: pills.map((pill) => ({
+      name: pill.name,
+      slug: pill.slug,
+      url: `https://webflow.com/templates/subcategory/${pill.slug}`,
+      count: Number(pill.count),
+      active: pill.slug === params.childCategorySlug,
+    })),
   };
 }
