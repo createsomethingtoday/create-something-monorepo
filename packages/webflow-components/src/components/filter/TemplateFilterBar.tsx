@@ -792,6 +792,21 @@ function buildScopedCategoryHref(slug: string | null): string {
   return url.toString();
 }
 
+function toSameOriginPath(href: string): string {
+  if (!href) return '#';
+  try {
+    const url = new URL(href, typeof window === 'undefined' ? 'https://webflow.com' : window.location.origin);
+    return `${url.pathname}${url.search}${url.hash}`;
+  } catch {
+    return href;
+  }
+}
+
+function buildCategoryPageHref(slug: string | null): string {
+  if (!slug) return '/templates/all';
+  return `/templates/category/${slug}`;
+}
+
 function buildScopedSubcategoryHref(slug: string | null, context: RouteContext): string {
   if (typeof window === 'undefined') return slug ? `?subcategory=${slug}` : '';
   const url = new URL(window.location.href);
@@ -803,6 +818,10 @@ function buildScopedSubcategoryHref(slug: string | null, context: RouteContext):
     url.searchParams.delete('subcategory');
   }
   return url.toString();
+}
+
+function buildSubcategoryPageHref(pill: SubcategoryPill): string {
+  return toSameOriginPath(pill.url || `/templates/subcategory/${pill.slug}`);
 }
 
 function writeUrlFilters(state: LocalFilters): void {
@@ -1317,6 +1336,7 @@ export const TemplateFilterBar: React.FC<TemplateFilterBarProps> = ({
   const allCategoriesActive = showCategoryPillRow && !routeContext.categoryGroupSlug && !routeContext.childCategorySlug;
   const parentCategoryActive = hasSubcategoryPillContext && !routeContext.childCategorySlug;
   const showAllCategoriesPill = showCategoryPillRow || hasSubcategoryPillContext;
+  const useCanonicalCategoryLinks = hasSubcategoryPillContext;
   const shouldShowSubcategoryPills =
     showSubcategoryPills &&
     (hasSubcategoryPillContext || showCategoryPillRow) &&
@@ -1451,10 +1471,12 @@ export const TemplateFilterBar: React.FC<TemplateFilterBarProps> = ({
                       <div className="tmfilter-subcategory-slide" role="listitem">
                         <a
                           className={`cc-subcategory tmfilter-pill${allCategoriesActive ? ' w--current active' : ''}`}
-                          href={buildScopedCategoryHref(null)}
+                          href={useCanonicalCategoryLinks ? '/templates/all' : buildScopedCategoryHref(null)}
                           aria-current={allCategoriesActive ? 'page' : undefined}
                           onClick={
-                            hasSubcategoryPillContext
+                            useCanonicalCategoryLinks
+                              ? undefined
+                              : hasSubcategoryPillContext
                               ? onClearCategoryContext
                               : (event) => onCategoryPillClick(null, allCategoriesActive, event)
                           }
@@ -1468,9 +1490,8 @@ export const TemplateFilterBar: React.FC<TemplateFilterBarProps> = ({
                     <div className="tmfilter-subcategory-slide" role="listitem">
                       <a
                         className={`cc-subcategory tmfilter-pill${parentCategoryActive ? ' w--current active' : ''}`}
-                        href={buildScopedSubcategoryHref(null, routeContext)}
+                        href={buildCategoryPageHref(routeContext.categoryGroupSlug)}
                         aria-current={parentCategoryActive ? 'page' : undefined}
-                        onClick={onParentCategoryPillClick}
                       >
                         {parentCategoryLabel}
                       </a>
@@ -1480,8 +1501,10 @@ export const TemplateFilterBar: React.FC<TemplateFilterBarProps> = ({
                     const active = hasSubcategoryPillContext
                       ? pill.active || routeContext.childCategorySlug === pill.slug
                       : pill.active || routeContext.categoryGroupSlug === pill.slug;
-                    const href = hasSubcategoryPillContext
-                      ? buildScopedSubcategoryHref(active ? null : pill.slug, routeContext)
+                    const href = useCanonicalCategoryLinks
+                      ? buildSubcategoryPageHref(pill)
+                      : hasSubcategoryPillContext
+                        ? buildScopedSubcategoryHref(active ? null : pill.slug, routeContext)
                       : buildScopedCategoryHref(active ? null : pill.slug);
                     return (
                       <div className="tmfilter-subcategory-slide" key={pill.slug} role="listitem">
@@ -1490,7 +1513,9 @@ export const TemplateFilterBar: React.FC<TemplateFilterBarProps> = ({
                           href={href}
                           aria-current={active ? 'page' : undefined}
                           onClick={
-                            hasSubcategoryPillContext
+                            useCanonicalCategoryLinks
+                              ? undefined
+                              : hasSubcategoryPillContext
                               ? (event) => onSubcategoryPillClick(pill.slug, active, event)
                               : (event) => onCategoryPillClick(pill.slug, active, event)
                           }
