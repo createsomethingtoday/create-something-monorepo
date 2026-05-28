@@ -44,6 +44,9 @@ export type { TextAreaProps } from './components/form/TextArea';
 export { Field } from './components/forms/Field';
 export type { FieldProps } from './components/forms/Field';
 
+export { ResiliencyAlertSignup } from './components/forms/ResiliencyAlertSignup';
+export type { ResiliencyAlertSignupProps } from './components/forms/ResiliencyAlertSignup';
+
 export { Select } from './components/forms/Select';
 export type { SelectProps, SelectItem } from './components/forms/Select';
 
@@ -147,3 +150,7 @@ export type { HeaderProps, NavItem } from './components/layout/Header';
 // Canon parity component with implementation cleanup still pending
 export { Footer } from './components/layout/Footer';
 export type { FooterProps, FooterColumn, SocialLink } from './components/layout/Footer';
+
+// Template Marketplace
+export { TemplateSearch } from './components/search/TemplateSearch';
+export type { TemplateSearchProps, SuggestItem } from './components/search/TemplateSearch';
