@@ -155,6 +155,11 @@
     return sortConfig.direction === 'asc' ? ' ↑' : ' ↓';
   }
 
+  function getAriaSort(key: string): 'ascending' | 'descending' | 'none' {
+    if (sortConfig.key !== key) return 'none';
+    return sortConfig.direction === 'asc' ? 'ascending' : 'descending';
+  }
+
   function getVisibleAssets(groupKey: string, allAssets: Asset[]): Asset[] {
     if (expandedGroups.includes(groupKey)) {
       return allAssets;
@@ -220,14 +225,15 @@
   function getTypeOrderLabel() {
     return typeSortDirection === 'asc' ? 'A-Z' : 'Z-A';
   }
-
 </script>
 
 <div class="assets-display">
   <div class="section-header">
     <div class="section-heading">
       <h2 class="section-title">Your Assets</h2>
-      <p class="section-description">Search, sort, and review the assets in your portfolio, grouped by type.</p>
+      <p class="section-description">
+        Search, sort, and review the assets in your portfolio, grouped by type.
+      </p>
     </div>
     <div class="section-actions">
       <div class="section-search">
@@ -310,7 +316,9 @@
         <div class="type-header">
           <div class="type-meta">
             <h3 class="type-title">{typeGroup.type}</h3>
-            <span class="type-summary">{typeGroup.totalCount} {typeGroup.totalCount === 1 ? 'asset' : 'assets'}</span>
+            <span class="type-summary"
+              >{typeGroup.totalCount} {typeGroup.totalCount === 1 ? 'asset' : 'assets'}</span
+            >
           </div>
         </div>
 
@@ -320,7 +328,8 @@
             {@const visibleAssets = getVisibleAssets(statusGroup.key, statusAssets)}
             {@const normalizedStatus = normalizeAssetStatus(statusGroup.status)}
             {@const config = statusConfig[normalizedStatus]}
-            {@const showTotals = showPerformance && !['Upcoming', 'Rejected'].includes(normalizedStatus)}
+            {@const showTotals =
+              showPerformance && !['Upcoming', 'Rejected'].includes(normalizedStatus)}
             {@const totals = showTotals ? calculateTotals(statusAssets) : null}
 
             <section class="status-section">
@@ -336,7 +345,10 @@
                   <div class="status-meta">
                     <div class="status-line">
                       <h4 class="status-title">{normalizedStatus}</h4>
-                      <span class="status-count">{statusAssets.length} {statusAssets.length === 1 ? 'asset' : 'assets'}</span>
+                      <span class="status-count"
+                        >{statusAssets.length}
+                        {statusAssets.length === 1 ? 'asset' : 'assets'}</span
+                      >
                     </div>
                     <span class="sort-summary">{getSortLabel()}</span>
                   </div>
@@ -361,7 +373,7 @@
                     <TableHeader>
                       <TableRow>
                         <TableHead class="thumbnail-head"></TableHead>
-                        <TableHead class="asset-title-head">
+                        <TableHead class="asset-title-head" aria-sort={getAriaSort('name')}>
                           <button
                             type="button"
                             class="sort-btn"
@@ -372,7 +384,7 @@
                             Name{getSortIndicator('name')}
                           </button>
                         </TableHead>
-                        <TableHead class="submitted-head">
+                        <TableHead class="submitted-head" aria-sort={getAriaSort('submittedDate')}>
                           <button
                             type="button"
                             class="sort-btn"
@@ -385,7 +397,11 @@
                         </TableHead>
                         <TableHead class="type-head">Type</TableHead>
                         {#if showPerformance}
-                          <TableHead align="right" class="metric-head">
+                          <TableHead
+                            align="right"
+                            class="metric-head"
+                            aria-sort={getAriaSort('uniqueViewers')}
+                          >
                             <button
                               type="button"
                               class="sort-btn"
@@ -396,7 +412,11 @@
                               Viewers{getSortIndicator('uniqueViewers')}
                             </button>
                           </TableHead>
-                          <TableHead align="right" class="metric-head">
+                          <TableHead
+                            align="right"
+                            class="metric-head"
+                            aria-sort={getAriaSort('cumulativePurchases')}
+                          >
                             <button
                               type="button"
                               class="sort-btn"
@@ -407,7 +427,11 @@
                               Purchases{getSortIndicator('cumulativePurchases')}
                             </button>
                           </TableHead>
-                          <TableHead align="right" class="metric-head">
+                          <TableHead
+                            align="right"
+                            class="metric-head"
+                            aria-sort={getAriaSort('cumulativeRevenue')}
+                          >
                             <div class="revenue-header">
                               <button
                                 type="button"
@@ -427,13 +451,7 @@
                     </TableHeader>
                     <TableBody>
                       {#each visibleAssets as asset (asset.id)}
-                        <AssetTableRow
-                          {asset}
-                          {showPerformance}
-                          {onView}
-                          {onEdit}
-                          {onArchive}
-                        />
+                        <AssetTableRow {asset} {showPerformance} {onView} {onEdit} {onArchive} />
                       {/each}
                       {#if totals}
                         <TableRow class="totals-row">
@@ -444,7 +462,10 @@
                           </TableCell>
                           <TableCell class="totals-label-cell">
                             <strong>Group total</strong>
-                            <span>{statusAssets.length} {statusAssets.length === 1 ? 'asset' : 'assets'}</span>
+                            <span
+                              >{statusAssets.length}
+                              {statusAssets.length === 1 ? 'asset' : 'assets'}</span
+                            >
                           </TableCell>
                           <TableCell></TableCell>
                           <TableCell></TableCell>
@@ -485,8 +506,7 @@
                               : 'N/A'}
                           </span>
                         </div>
-                        {#if showPerformance &&
-                          !['Upcoming', 'Rejected'].includes(normalizeAssetStatus(asset.status))}
+                        {#if showPerformance && !['Upcoming', 'Rejected'].includes(normalizeAssetStatus(asset.status))}
                           <div>
                             <span class="mobile-label">Viewers</span>
                             <span class="mobile-value"
@@ -511,7 +531,9 @@
                       <div class="mobile-actions">
                         <Button
                           size="sm"
-                          variant={actionConfig.primary.handler === 'edit' ? 'default' : 'secondary'}
+                          variant={actionConfig.primary.handler === 'edit'
+                            ? 'default'
+                            : 'secondary'}
                           onclick={() => runPrimaryAction(asset, actionConfig.primary)}
                         >
                           {actionConfig.primary.label}
