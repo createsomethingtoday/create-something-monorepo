@@ -163,3 +163,14 @@ export type { FooterProps, FooterColumn, SocialLink } from './components/layout/
 // Template Marketplace
 export { TemplateSearch } from './components/search/TemplateSearch';
 export type { TemplateSearchProps, SuggestItem } from './components/search/TemplateSearch';
+
+export { TemplateSearchBox } from './components/marketplace/TemplateSearchBox';
+export type {
+  TemplateSearchBoxMode,
+  TemplateSearchBoxProps,
+  TemplateSearchBoxSubmitContext,
+  TemplateSearchBoxVariant,
+} from './components/marketplace/TemplateSearchBox';
+
+export { TemplateSearchSidebar } from './components/marketplace/TemplateSearchSidebar';
+export type { TemplateSearchSidebarProps } from './components/marketplace/TemplateSearchSidebar';
