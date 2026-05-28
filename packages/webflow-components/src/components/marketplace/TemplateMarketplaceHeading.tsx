@@ -33,6 +33,8 @@ interface HeadingState {
   scope: TemplateScope;
   categorySlug: string | null;
   subcategorySlug: string | null;
+  categoryIsRoute: boolean;
+  subcategoryIsRoute: boolean;
   styles: string[];
   types: string[];
   freeOnly: boolean;
@@ -208,6 +210,8 @@ function readHeadingState(
       scope: fallbackScope,
       categorySlug: categorySlugOverride || null,
       subcategorySlug: subcategorySlugOverride || null,
+      categoryIsRoute: Boolean(categorySlugOverride && pageKind === 'category'),
+      subcategoryIsRoute: Boolean(subcategorySlugOverride && pageKind === 'category'),
       styles: [],
       types: [],
       freeOnly: fallbackScope === 'free',
@@ -221,6 +225,8 @@ function readHeadingState(
   const effectiveKind = pageKind !== 'auto' ? pageKind : pathKind;
   const categoryMatch = url.pathname.match(/\/templates\/category\/([^/?#]+)/);
   const subcategoryMatch = url.pathname.match(/\/templates\/subcategory\/([^/?#]+)/);
+  const queryCategorySlug = params.get('category') || params.get('category_group_slug') || null;
+  const querySubcategorySlug = params.get('subcategory') || params.get('child_category_slug') || null;
   const queryValue =
     params.get(queryParam) ?? params.get('q') ?? params.get('query') ?? params.get('search') ?? '';
 
@@ -232,10 +238,12 @@ function readHeadingState(
     scope,
     categorySlug:
       categorySlugOverride ||
-      (categoryMatch ? categoryMatch[1] : params.get('category') || params.get('category_group_slug') || null),
+      (categoryMatch ? categoryMatch[1] : queryCategorySlug),
     subcategorySlug:
       subcategorySlugOverride ||
-      (subcategoryMatch ? subcategoryMatch[1] : params.get('subcategory') || params.get('child_category_slug') || null),
+      (subcategoryMatch ? subcategoryMatch[1] : querySubcategorySlug),
+    categoryIsRoute: Boolean(categorySlugOverride ? effectiveKind === 'category' : categoryMatch),
+    subcategoryIsRoute: Boolean(subcategorySlugOverride ? effectiveKind === 'category' : subcategoryMatch),
     styles: readArrayParam(params, 'styles').concat(readArrayParam(params, 'style_slug')),
     types: readArrayParam(params, 'types'),
     freeOnly: ['1', 'true', 'yes', 'on'].includes((params.get('free_only') ?? '').toLowerCase()) || scope === 'free',
@@ -244,8 +252,9 @@ function readHeadingState(
 }
 
 function buildBaseTitle(state: HeadingState, fallbackTitle: string): string {
-  if (state.subcategorySlug) return `${humanizeSlug(state.subcategorySlug)} Website Templates`;
-  if (state.categorySlug) return `${humanizeSlug(state.categorySlug)} Website Templates`;
+  const categoryLabel = state.subcategorySlug || state.categorySlug;
+  if (categoryLabel && state.scope !== 'all') return `${humanizeSlug(categoryLabel)} ${SCOPE_LABELS[state.scope]}`;
+  if (categoryLabel) return `${humanizeSlug(categoryLabel)} Website Templates`;
   if (state.scope !== 'all') return SCOPE_LABELS[state.scope];
   if (state.pathKind === 'search') return fallbackTitle || 'Search Webflow templates';
   return fallbackTitle || SCOPE_LABELS.all;
@@ -279,8 +288,8 @@ function buildContent(
   const hasFilterPrefix = Boolean(prefix);
   const hasDynamicFilter = Boolean(
     state.q ||
-      state.categorySlug ||
-      state.subcategorySlug ||
+      (state.categorySlug && !state.categoryIsRoute) ||
+      (state.subcategorySlug && !state.subcategoryIsRoute) ||
       state.styles.length ||
       state.types.length ||
       (state.freeOnly && state.scope !== 'free') ||
@@ -306,18 +315,18 @@ function buildContent(
     if (state.scope !== 'all') {
       breadcrumbs.push({ label: BREADCRUMB_LABELS[state.scope] });
     }
-  } else if (state.categorySlug || state.subcategorySlug) {
+  } else if (state.categoryIsRoute || state.subcategoryIsRoute) {
     breadcrumbs.push({ label: 'Categories', href: '/templates/categories' });
   } else {
     breadcrumbs.push({ label: BREADCRUMB_LABELS[state.scope] ?? 'Templates' });
   }
 
-  if (state.categorySlug && state.pathKind === 'search') {
-    breadcrumbs.push({ label: humanizeSlug(state.categorySlug) });
-  } else if (state.categorySlug && state.pathKind !== 'search') {
+  if (state.categorySlug && (state.pathKind === 'search' || state.categoryIsRoute)) {
     breadcrumbs.push({ label: humanizeSlug(state.categorySlug) });
   }
-  if (state.subcategorySlug) breadcrumbs.push({ label: humanizeSlug(state.subcategorySlug) });
+  if (state.subcategorySlug && (state.pathKind === 'search' || state.subcategoryIsRoute)) {
+    breadcrumbs.push({ label: humanizeSlug(state.subcategorySlug) });
+  }
 
   return {
     title,
