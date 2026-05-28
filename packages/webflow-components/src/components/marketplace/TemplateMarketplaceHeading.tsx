@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 type HeadingPageKind = 'auto' | 'search' | 'all' | 'featured' | 'free' | 'landing_pages' | 'category';
 type TemplateScope = 'all' | 'featured' | 'free' | 'landing_pages';
+type DescriptionMode = 'preserve_static' | 'dynamic';
 
 export interface TemplateMarketplaceHeadingProps {
   /** Page context used when the URL does not provide a more specific state. */
@@ -16,6 +17,8 @@ export interface TemplateMarketplaceHeadingProps {
   fallbackTitle?: string;
   /** Static description used before the user applies a filter. */
   fallbackDescription?: string;
+  /** Preserve live Webflow/Airtable SEO copy on route-owned category/subcategory pages. */
+  descriptionMode?: DescriptionMode;
   /** Show visible breadcrumb links above the headline. */
   showBreadcrumbs?: boolean;
   /** Show visible supporting description below the headline. */
@@ -146,6 +149,8 @@ const BREADCRUMB_LABELS: Record<TemplateScope, string> = {
   landing_pages: 'Landing Pages',
 };
 
+const GENERIC_FALLBACK_DESCRIPTION = 'Explore Webflow templates by category, style, type, price, and popularity.';
+
 function titleCase(value: string): string {
   return value
     .split(/[\s-]+/)
@@ -268,8 +273,28 @@ function buildDescriptorPrefix(state: HeadingState): string {
   return Array.from(new Set(descriptors)).join(' ');
 }
 
-function buildDescription(title: string, state: HeadingState, fallbackDescription: string, hasDynamicFilter: boolean): string {
-  if (!hasDynamicFilter && fallbackDescription) return fallbackDescription;
+function isGenericDescription(description: string): boolean {
+  return description.trim().toLowerCase() === GENERIC_FALLBACK_DESCRIPTION.toLowerCase();
+}
+
+function hasRouteOwnedDescription(state: HeadingState): boolean {
+  return Boolean(state.categoryIsRoute || state.subcategoryIsRoute);
+}
+
+function buildDescription(
+  title: string,
+  state: HeadingState,
+  fallbackDescription: string,
+  hasDynamicFilter: boolean,
+  descriptionMode: DescriptionMode,
+): string {
+  const staticDescription = fallbackDescription.trim();
+
+  if (descriptionMode === 'preserve_static' && hasRouteOwnedDescription(state)) {
+    return staticDescription && !isGenericDescription(staticDescription) ? staticDescription : '';
+  }
+
+  if (!hasDynamicFilter && staticDescription) return staticDescription;
   if (state.q) {
     return `Browse Webflow templates matching "${state.q}" with filters for category, style, type, price, and popularity.`;
   }
@@ -280,6 +305,7 @@ function buildContent(
   state: HeadingState,
   fallbackTitle: string,
   fallbackDescription: string,
+  descriptionMode: DescriptionMode,
   templatesLabel: string,
   templatesUrl: string,
 ): HeadingContent {
@@ -330,7 +356,7 @@ function buildContent(
 
   return {
     title,
-    description: buildDescription(title, state, fallbackDescription, hasDynamicFilter),
+    description: buildDescription(title, state, fallbackDescription, hasDynamicFilter, descriptionMode),
     breadcrumbs,
     hasDynamicFilter,
   };
@@ -342,7 +368,8 @@ export const TemplateMarketplaceHeading: React.FC<TemplateMarketplaceHeadingProp
   subcategorySlug = '',
   queryParam = 'q',
   fallbackTitle = 'Search Webflow templates',
-  fallbackDescription = 'Explore Webflow templates by category, style, type, price, and popularity.',
+  fallbackDescription = GENERIC_FALLBACK_DESCRIPTION,
+  descriptionMode = 'preserve_static',
   showBreadcrumbs = true,
   showDescription = true,
   templatesLabel = 'Templates',
@@ -382,8 +409,8 @@ export const TemplateMarketplaceHeading: React.FC<TemplateMarketplaceHeadingProp
 
   const content = useMemo(() => {
     const state = readHeadingState(pageKind, queryParam, categorySlug || undefined, subcategorySlug || undefined);
-    return buildContent(state, fallbackTitle, fallbackDescription, templatesLabel, templatesUrl);
-  }, [categorySlug, fallbackDescription, fallbackTitle, pageKind, queryParam, subcategorySlug, templatesLabel, templatesUrl, version]);
+    return buildContent(state, fallbackTitle, fallbackDescription, descriptionMode, templatesLabel, templatesUrl);
+  }, [categorySlug, descriptionMode, fallbackDescription, fallbackTitle, pageKind, queryParam, subcategorySlug, templatesLabel, templatesUrl, version]);
 
   useEffect(() => {
     if (!updateDocumentTitle || typeof document === 'undefined') return;

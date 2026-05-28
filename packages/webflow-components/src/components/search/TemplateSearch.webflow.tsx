@@ -9,8 +9,8 @@ export default declareComponent(TemplateSearch, {
   props: {
     apiBaseUrl: props.Text({
       name: 'API Base URL',
-      defaultValue: '',
-      tooltip: 'Base URL of the webflow-template-search worker, e.g. https://webflow-template-search.workers.dev. Leave empty to use the same origin.',
+      defaultValue: 'https://templates.webflow.com/templates-api',
+      tooltip: 'Base URL of the CSP-safe template search proxy. Use https://templates.webflow.com/templates-api on webflow.com.',
     }),
     searchResultsUrl: props.Text({
       name: 'Search Results URL',
@@ -18,9 +18,9 @@ export default declareComponent(TemplateSearch, {
       tooltip: 'URL to navigate to on Enter — query is appended as ?query=. Leave empty to stay on the current page (search-v2 pattern).',
     }),
     collectionBase: props.Text({
-      name: 'Category Base URL',
-      defaultValue: '/templates/category/',
-      tooltip: 'Base path for category pages. Suggestion clicks navigate here + the template slug.',
+      name: 'Template Detail Base URL',
+      defaultValue: '/templates/html/',
+      tooltip: 'Fallback base path for template detail pages. Used only if the search API item has no URL.',
     }),
     placeholder: props.Text({
       name: 'Placeholder',

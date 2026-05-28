@@ -36,6 +36,13 @@ export default declareComponent(TemplateMarketplaceHeading, {
       name: 'Fallback Description',
       defaultValue: 'Explore Webflow templates by category, style, type, price, and popularity.',
     }),
+    descriptionMode: props.Variant({
+      name: 'Description Source',
+      options: ['preserve_static', 'dynamic'],
+      defaultValue: 'preserve_static',
+      tooltip:
+        'Preserve static keeps live Webflow/Airtable SEO/AEO copy on category and subcategory pages. Dynamic is for Search V2/filter-only pages.',
+    }),
     showBreadcrumbs: props.Boolean({
       name: 'Show Breadcrumbs',
       defaultValue: true,

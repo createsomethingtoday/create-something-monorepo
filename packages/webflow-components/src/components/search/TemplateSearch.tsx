@@ -4,18 +4,19 @@ export interface SuggestItem {
   name: string;
   template_slug: string;
   url: string | null;
-  category_group_name: string | null;
+  category_group_name?: string | null;
+  category_groups?: Array<{ name: string; slug: string; url?: string | null }>;
   is_free: boolean;
   price: number | null;
-  highlight: Array<{ offset: number; length: number }>;
+  highlight?: Array<{ offset: number; length: number }>;
 }
 
 export interface TemplateSearchProps {
-  /** Base URL of the webflow-template-search worker, e.g. https://webflow-template-search.workers.dev */
+  /** Base URL of the webflow-template-search API/proxy, e.g. https://templates.webflow.com/templates-api */
   apiBaseUrl?: string;
   /** URL to navigate to on Enter (query appended as ?query=). Defaults to current page. */
   searchResultsUrl?: string;
-  /** Base URL for category navigation, e.g. /templates/category/ */
+  /** Fallback base URL for template detail navigation when the API item has no url. */
   collectionBase?: string;
   /** Input placeholder text */
   placeholder?: string;
@@ -27,7 +28,14 @@ export interface TemplateSearchProps {
   className?: string;
 }
 
-function highlight(name: string, ranges: Array<{ offset: number; length: number }>): React.ReactNode {
+function buildHighlight(name: string, query: string): Array<{ offset: number; length: number }> {
+  const q = query.trim().toLowerCase();
+  if (!q) return [];
+  const offset = name.toLowerCase().indexOf(q);
+  return offset >= 0 ? [{ offset, length: q.length }] : [];
+}
+
+function highlight(name: string, ranges: Array<{ offset: number; length: number }> = []): React.ReactNode {
   if (!ranges.length) return name;
   const { offset, length } = ranges[0];
   return (
@@ -39,10 +47,14 @@ function highlight(name: string, ranges: Array<{ offset: number; length: number 
   );
 }
 
+function getCategoryLabel(item: SuggestItem): string | null {
+  return item.category_group_name ?? item.category_groups?.[0]?.name ?? null;
+}
+
 export const TemplateSearch: React.FC<TemplateSearchProps> = ({
-  apiBaseUrl = '',
+  apiBaseUrl = 'https://templates.webflow.com/templates-api',
   searchResultsUrl = '',
-  collectionBase = '/templates/category/',
+  collectionBase = '/templates/html/',
   placeholder = 'Search templates…',
   maxSuggestions: maxSuggestionsRaw = 5,
   queryParamKey = 'query',
@@ -94,17 +106,24 @@ export const TemplateSearch: React.FC<TemplateSearchProps> = ({
         try {
           const base = (apiBaseUrl || '').replace(/\/$/, '');
           const endpoint = base
-            ? `${base}/api/templates/suggest`
-            : '/api/templates/suggest';
+            ? `${base}/api/templates/search`
+            : '/api/templates/search';
           const url = new URL(endpoint, window.location.origin);
           url.searchParams.set('q', trimmed);
-          url.searchParams.set('limit', String(maxSuggestions));
+          url.searchParams.set('page', '1');
+          url.searchParams.set('page_size', String(maxSuggestions));
+          url.searchParams.set('sort', 'popular');
 
           const res = await fetch(url.toString(), { signal: abortRef.current.signal });
           if (!res.ok) throw new Error(`${res.status}`);
           const data = await res.json() as { items?: SuggestItem[] };
-          setItems(data.items ?? []);
-          setActiveIndex(data.items?.length ? 0 : -1);
+          const suggestions = (data.items ?? []).map((item) => ({
+            ...item,
+            category_group_name: getCategoryLabel(item),
+            highlight: item.highlight ?? buildHighlight(item.name, trimmed),
+          }));
+          setItems(suggestions);
+          setActiveIndex(suggestions.length ? 0 : -1);
           setIsOpen(true);
         } catch (err) {
           if (err instanceof Error && err.name !== 'AbortError') {
@@ -149,9 +168,8 @@ export const TemplateSearch: React.FC<TemplateSearchProps> = ({
     (item: SuggestItem) => {
       setIsOpen(false);
       setItems([]);
-      // Category suggestions navigate directly; template suggestions navigate to search
-      const base = (collectionBase || '/templates/category/').replace(/\/$/, '');
-      window.location.href = `${base}/${item.template_slug}`;
+      const base = (collectionBase || '/templates/html/').replace(/\/$/, '');
+      window.location.href = item.url || `${base}/${item.template_slug}`;
     },
     [collectionBase]
   );
@@ -325,7 +343,7 @@ export const TemplateSearch: React.FC<TemplateSearchProps> = ({
               {highlight(item.name, item.highlight)}
             </span>
             <span style={{ fontSize: '12px', color: '#9b9b9b', whiteSpace: 'nowrap', flexShrink: 0 }}>
-              {item.category_group_name && `${item.category_group_name} · `}
+              {getCategoryLabel(item) && `${getCategoryLabel(item)} · `}
               {item.is_free ? 'Free' : item.price ? `$${item.price}` : ''}
             </span>
           </div>
