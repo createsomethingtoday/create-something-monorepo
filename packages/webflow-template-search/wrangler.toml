@@ -10,7 +10,7 @@ enabled = true
 [[d1_databases]]
 binding = "DB"
 database_name = "webflow-template-search"
-database_id = "REPLACE_ME"
+database_id = "bffab674-a86b-456b-a72d-f620b2755396"
 
 [vars]
 ENVIRONMENT = "development"
