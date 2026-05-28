@@ -707,6 +707,24 @@ function readUrlFilters(defaultSort: TemplateSort = 'popular'): LocalFilters {
   };
 }
 
+function readFiltersFromEvent(event: Event, defaultSort: TemplateSort): LocalFilters {
+  const fallback = readUrlFilters(defaultSort);
+  const detail = (event as CustomEvent<Partial<LocalFilters>>).detail;
+  if (!detail || typeof detail !== 'object') return fallback;
+
+  return {
+    q: typeof detail.q === 'string' ? detail.q.trim() : fallback.q,
+    styles: Array.isArray(detail.styles)
+      ? detail.styles.filter((value): value is string => typeof value === 'string').map(toStyleSlug)
+      : fallback.styles,
+    types: Array.isArray(detail.types)
+      ? detail.types.filter((value): value is string => typeof value === 'string')
+      : fallback.types,
+    freeOnly: typeof detail.freeOnly === 'boolean' ? detail.freeOnly : fallback.freeOnly,
+    sort: normalizeSort(typeof detail.sort === 'string' ? detail.sort : null, fallback.sort),
+  };
+}
+
 interface RouteContext {
   scope: 'featured' | 'free' | 'landing_pages' | null;
   categoryGroupSlug: string | null;
@@ -867,6 +885,7 @@ export const TemplateFilterBar: React.FC<TemplateFilterBarProps> = ({
   const [openPanel, setOpenPanel] = useState<OpenPanel>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastFilterSyncKeyRef = useRef('');
 
   const routeContext = useMemo(
     () => readRouteContext(scopeOverride, categorySlugProp || undefined, subcategorySlugProp || undefined),
@@ -951,6 +970,43 @@ export const TemplateFilterBar: React.FC<TemplateFilterBarProps> = ({
     };
     window.addEventListener('popstate', onPop);
     return () => window.removeEventListener('popstate', onPop);
+  }, [defaultSort]);
+
+  // Re-sync when another filter-capable component updates the URL.
+  // replaceState() does not emit popstate, so this custom event keeps
+  // duplicate/legacy filter surfaces visually consistent.
+  useEffect(() => {
+    const onFiltersChanged = (event: Event) => {
+      const detail = (event as CustomEvent<Partial<FilterEventDetail>>).detail;
+      const syncKey =
+        detail && typeof detail === 'object'
+          ? [
+              detail.updatedAt ?? '',
+              detail.href ?? '',
+              detail.q ?? '',
+              Array.isArray(detail.styles) ? detail.styles.join(',') : '',
+              Array.isArray(detail.types) ? detail.types.join(',') : '',
+              detail.freeOnly ?? '',
+              detail.sort ?? '',
+            ].join('|')
+          : `event:${event.timeStamp}`;
+
+      if (syncKey === lastFilterSyncKeyRef.current) return;
+      lastFilterSyncKeyRef.current = syncKey;
+
+      const next = readFiltersFromEvent(event, defaultSort);
+      queueMicrotask(() => {
+        setFilters(next);
+        setRouteVersion((value) => value + 1);
+      });
+    };
+
+    window.addEventListener('templateFiltersChanged', onFiltersChanged);
+    document.addEventListener('templateFiltersChanged', onFiltersChanged);
+    return () => {
+      window.removeEventListener('templateFiltersChanged', onFiltersChanged);
+      document.removeEventListener('templateFiltersChanged', onFiltersChanged);
+    };
   }, [defaultSort]);
 
   useEffect(() => {

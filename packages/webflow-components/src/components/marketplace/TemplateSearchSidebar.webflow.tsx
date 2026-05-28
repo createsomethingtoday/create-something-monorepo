@@ -5,7 +5,7 @@ import { TemplateSearchSidebar } from './TemplateSearchSidebar';
 export default declareComponent(TemplateSearchSidebar, {
   name: 'Template Search Sidebar',
   description:
-    'Standalone vertical marketplace filter sidebar for webflow-template-search pages. Dispatches the same filter events consumed by Template Grid and Template Search Results.',
+    'Marketplace category and search sidebar for template pages. Use Template Filter Bar as the single style, type, and sort filter surface.',
   group: 'Marketplace',
   props: {
     apiBase: props.Text({
@@ -26,10 +26,6 @@ export default declareComponent(TemplateSearchSidebar, {
       name: 'Category Slug (preview)',
       defaultValue: '',
     }),
-    subcategorySlug: props.Text({
-      name: 'Subcategory Slug (preview)',
-      defaultValue: '',
-    }),
     styleSlug: props.Text({
       name: 'Style Slug (preview)',
       defaultValue: '',
@@ -37,11 +33,6 @@ export default declareComponent(TemplateSearchSidebar, {
     tagSlug: props.Text({
       name: 'Tag Slug (preview)',
       defaultValue: '',
-    }),
-    defaultSort: props.Variant({
-      name: 'Default Sort',
-      options: ['popular', 'newest', 'price_asc', 'price_desc'],
-      defaultValue: 'popular',
     }),
     interactionMode: props.Variant({
       name: 'Interaction Mode',
@@ -90,22 +81,6 @@ export default declareComponent(TemplateSearchSidebar, {
     }),
     showCounts: props.Boolean({
       name: 'Show Counts',
-      defaultValue: true,
-    }),
-    showStyles: props.Boolean({
-      name: 'Show Styles',
-      defaultValue: true,
-    }),
-    showTypes: props.Boolean({
-      name: 'Show Types',
-      defaultValue: true,
-    }),
-    showSort: props.Boolean({
-      name: 'Show Sort',
-      defaultValue: true,
-    }),
-    showFreeOnly: props.Boolean({
-      name: 'Show Free Only',
       defaultValue: true,
     }),
   },

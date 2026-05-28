@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { TemplateFilterBar } from '../filter/TemplateFilterBar';
 import { TemplateSearchBox } from './TemplateSearchBox';
 
 type TemplateSort = 'popular' | 'newest' | 'price_asc' | 'price_desc';
@@ -46,14 +45,10 @@ export interface TemplateSearchSidebarProps {
   scopeOverride?: TemplateScope;
   /** Designer preview category slug. */
   categorySlug?: string;
-  /** Designer preview subcategory slug. */
-  subcategorySlug?: string;
   /** Designer preview style slug. */
   styleSlug?: string;
   /** Designer preview tag slug. */
   tagSlug?: string;
-  /** Default sort used by the filter bar. */
-  defaultSort?: TemplateSort;
   /** Click behavior for category/special rows. Navigate matches the native sidebar; Filter keeps the current page and updates URL state. */
   interactionMode?: SidebarInteractionMode;
   /** Count behavior. Global matches the native sidebar; Contextual reflects the current query/style/tag/free context. */
@@ -74,14 +69,6 @@ export interface TemplateSearchSidebarProps {
   showCategories?: boolean;
   /** Show counts next to rows. */
   showCounts?: boolean;
-  /** Show style filters. */
-  showStyles?: boolean;
-  /** Show type filters. */
-  showTypes?: boolean;
-  /** Show sort controls. */
-  showSort?: boolean;
-  /** Show the free-only toggle. */
-  showFreeOnly?: boolean;
 }
 
 const DEFAULT_API_BASE = 'https://templates.webflow.com/templates-api';
@@ -96,12 +83,93 @@ const SPECIAL_ROWS: Array<{
   scope: TemplateScope;
   label: string;
   href: string;
+  iconUrl: string;
 }> = [
-  { key: 'all', scope: 'all', label: 'All', href: '/templates/all' },
-  { key: 'featured', scope: 'featured', label: 'Featured', href: '/templates/featured' },
-  { key: 'landing_pages', scope: 'landing_pages', label: 'Landing Pages', href: '/templates/landing-page' },
-  { key: 'free', scope: 'free', label: 'Free', href: '/templates/free-website-templates' },
+  {
+    key: 'all',
+    scope: 'all',
+    label: 'All',
+    href: '/templates/all',
+    iconUrl: 'https://cdn.prod.website-files.com/5e593fb060cf87bbaf75dd20/670e6774244fae7c3beb91e0_Size%3D24px.svg',
+  },
+  {
+    key: 'featured',
+    scope: 'featured',
+    label: 'Featured',
+    href: '/templates/featured',
+    iconUrl:
+      'https://cdn.prod.website-files.com/5e593fb060cf87bbaf75dd20/670e68dbb4f6baeae8b9cbcb_CapabilityAnalytics24%20(1).svg',
+  },
+  {
+    key: 'landing_pages',
+    scope: 'landing_pages',
+    label: 'Landing Pages',
+    href: '/templates/landing-page',
+    iconUrl: 'https://cdn.prod.website-files.com/5e593fb060cf87bbaf75dd20/686f2395e5b4dac6d8658ead_map-marker.svg',
+  },
+  {
+    key: 'free',
+    scope: 'free',
+    label: 'Free',
+    href: '/templates/free-website-templates',
+    iconUrl: 'https://cdn.prod.website-files.com/5e593fb060cf87bbaf75dd20/670e6764d8568093c6f4f208_tag%20(1).svg',
+  },
 ];
+
+const CATEGORY_ICON_URLS: Record<string, string> = {
+  'architecture-and-design-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/6706cd38713733aafac171b0_Brush-(1).svg',
+  'arts-and-entertainment-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/6706cd5b8ea070ac1f6f09d5_microphone-rotated-(1).svg',
+  'blog-and-editorial-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/6706cd544ea9af6934f62a4f_Blog-(1).svg',
+  'community-and-nonprofit-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/6706cd790202d15dd35c8964_heart-globe-(1).svg',
+  'documentation-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/6706cd75713733aafac1c287_clipboard-(1).svg',
+  'education-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/67108ca5557a7e0287bed9a4_University-(1).svg',
+  'environment-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/6706cd2bc46e4abf254db245_sunrise.svg',
+  'food-and-drink-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/67108c96215b682a860be340_drink-2-(1).svg',
+  'government-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/6706cd735abd261a7f080744_bank-(1).svg',
+  'hair-and-beauty-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/6706cd32352bd54b0587ecfe_sparkles.svg',
+  'home-services-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/670948ff793d4e96cf024d19_home-services-icon.svg',
+  'hr-and-hiring-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/6706cd3c4cfa0fe9a2251a36_TeamMedium.svg',
+  'launch-and-coming-soon-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/670949025d74574ad09d0336_lighting-icon.svg',
+  'medical-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/67108ca1bf381ac9e0b4629c_Motion-(1).svg',
+  'music-and-audio-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/6706cd6fdb237a95d5837068_MusicNote.svg',
+  'personal-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/6706cd8106f5ecd98e795b74_Docs.svg',
+  'portfolio-and-agency-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/6706cd5751b1e01601445e5c_User-(1).svg',
+  'professional-services-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/670db20ed0f2784e9e8e0335_target.svg',
+  'real-estate-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/6706cd45c5f83dd2187bfdb1_location.svg',
+  'retail-and-e-commerce-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/670db2115402ce59747c0c81_shopping-cart.svg',
+  'technology-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/6711342ea3d7f258ad5e7943_CodeBrackets.svg',
+  'transportation-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/6706cd8b5abd261a7f0827b7_train-track-(1).svg',
+  'travel-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/67114e638bb1446cc23ec252_map-(1).svg',
+  'ui-kit-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/6706cd43352bd54b05880da4_Apps-(1).svg',
+  'weddings-and-events-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/6706cd83ddd640e52bafbd4d_Calendar-(1).svg',
+  'wellness-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/6706cd49c46e4abf254dd5ec_bike-(1).svg',
+};
 
 const SIDEBAR_STYLES = `
 .tmsidebar,
@@ -204,67 +272,36 @@ const SIDEBAR_STYLES = `
   outline-offset: 2px;
 }
 
-.tmsidebar-indicator {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+.tmsidebar-icon {
+  display: block;
   width: 16px;
   height: 16px;
   flex: 0 0 auto;
-  color: #757575;
-  opacity: 0.8;
+  object-fit: contain;
+  filter: grayscale(100%) brightness(60%);
+  opacity: 0.9;
+  transition: filter 120ms ease, opacity 120ms ease;
 }
 
-.tmsidebar-indicator--dot {
+.tmsidebar-icon-fallback {
+  display: inline-flex;
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
   border-radius: 50%;
   background: #d9d9d9;
 }
 
-.tmsidebar-indicator--dot::after {
-  content: "";
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: currentColor;
-  opacity: 0;
-}
-
-.tmsidebar-row[aria-current="page"] .tmsidebar-indicator,
-.tmsidebar-row:hover .tmsidebar-indicator {
-  color: #146ef5;
+.tmsidebar-row:hover .tmsidebar-icon,
+.tmsidebar-row:focus-visible .tmsidebar-icon,
+.tmsidebar-row[aria-current="page"] .tmsidebar-icon {
+  filter: grayscale(0%) brightness(100%);
   opacity: 1;
 }
 
-.tmsidebar-row[aria-current="page"] .tmsidebar-indicator--dot,
-.tmsidebar-row:hover .tmsidebar-indicator--dot {
+.tmsidebar-row[aria-current="page"] .tmsidebar-icon-fallback,
+.tmsidebar-row:hover .tmsidebar-icon-fallback {
   background: #e8f0ff;
-}
-
-.tmsidebar-row[aria-current="page"] .tmsidebar-indicator--dot::after {
-  opacity: 1;
-}
-
-.tmsidebar-indicator--check {
-  border: 1px solid currentColor;
-  border-radius: 4px;
-  background: transparent;
-}
-
-.tmsidebar-indicator--check::after {
-  content: "";
-  width: 8px;
-  height: 8px;
-  border-radius: 2px;
-  background: currentColor;
-  opacity: 0;
-}
-
-.tmsidebar-row[aria-current="page"] .tmsidebar-indicator--check {
-  color: #146ef5;
-}
-
-.tmsidebar-row[aria-current="page"] .tmsidebar-indicator--check::after {
-  opacity: 1;
 }
 
 .tmsidebar-label {
@@ -296,40 +333,6 @@ const SIDEBAR_STYLES = `
   color: #757575;
   font-size: 13px;
   line-height: 1.35;
-}
-
-.tmsidebar-filters {
-  margin-top: 16px;
-}
-
-.tmsidebar .tmfilter-filter-sort-container,
-.tmsidebar .tmfilter-root {
-  flex-direction: column;
-  align-items: stretch;
-}
-
-.tmsidebar .tmfilter-dropdown,
-.tmsidebar .tmfilter-search-wrap,
-.tmsidebar .tmfilter-sort,
-.tmsidebar .tmfilter-sort-toggle {
-  width: 100%;
-  min-width: 0;
-  margin-left: 0;
-}
-
-.tmsidebar .tmfilter-sort-toggle {
-  flex-direction: column;
-}
-
-.tmsidebar .tmfilter-sort-option {
-  width: 100%;
-  border-left: 0;
-  border-top: 1px solid #e0e0e0;
-  text-align: left;
-}
-
-.tmsidebar .tmfilter-sort-option:first-child {
-  border-top: 0;
 }
 
 @media (max-width: 991px) {
@@ -444,6 +447,15 @@ function formatCount(value: number | null): string {
   return typeof value === 'number' ? value.toLocaleString() : '';
 }
 
+function getCategoryIconUrl(slug: string): string | null {
+  return CATEGORY_ICON_URLS[slug] ?? CATEGORY_ICON_URLS[`${slug}-websites`] ?? null;
+}
+
+function renderRowIcon(iconUrl: string | null): React.ReactNode {
+  if (!iconUrl) return <span className="tmsidebar-icon-fallback" aria-hidden="true" />;
+  return <img className="tmsidebar-icon" src={iconUrl} width={16} height={16} alt="" loading="lazy" aria-hidden="true" />;
+}
+
 function notifySidebarFiltersChanged(source: string): void {
   if (typeof window === 'undefined') return;
   const url = new URL(window.location.href);
@@ -468,10 +480,8 @@ export const TemplateSearchSidebar: React.FC<TemplateSearchSidebarProps> = ({
   title = 'Categories',
   scopeOverride = 'all',
   categorySlug = '',
-  subcategorySlug = '',
   styleSlug = '',
   tagSlug = '',
-  defaultSort = 'popular',
   interactionMode = 'navigate',
   countMode = 'global',
   showSearch = true,
@@ -482,15 +492,11 @@ export const TemplateSearchSidebar: React.FC<TemplateSearchSidebarProps> = ({
   showSpecialLinks = true,
   showCategories = true,
   showCounts = true,
-  showStyles = true,
-  showTypes = true,
-  showSort = true,
-  showFreeOnly = true,
 }) => {
   const apiBase = resolveApiBase(apiBaseProp);
   const [counts, setCounts] = useState<SidebarCounts>({ all: null, featured: null, landing_pages: null, free: null });
   const [categories, setCategories] = useState<SidebarCategory[]>([]);
-  const [loading, setLoading] = useState(showCategories || showSpecialLinks);
+  const [loading, setLoading] = useState(showCategories || (showSpecialLinks && showCounts));
   const [error, setError] = useState<string | null>(null);
   const [searchValue, setSearchValue] = useState('');
   const [routeVersion, setRouteVersion] = useState(0);
@@ -505,6 +511,17 @@ export const TemplateSearchSidebar: React.FC<TemplateSearchSidebarProps> = ({
   );
 
   useEffect(() => {
+    const needsCategoryPayload = showCategories || (showSpecialLinks && showCounts);
+    const needsSpecialCounts = showSpecialLinks && showCounts;
+
+    if (!needsCategoryPayload) {
+      setLoading(false);
+      setError(null);
+      setCategories([]);
+      setCounts({ all: null, featured: null, landing_pages: null, free: null });
+      return undefined;
+    }
+
     const ac = new AbortController();
     setLoading(true);
     setError(null);
@@ -517,19 +534,18 @@ export const TemplateSearchSidebar: React.FC<TemplateSearchSidebarProps> = ({
 
     Promise.all([
       fetchSidebarPayload(categoryUrl, ac.signal),
-      fetchSidebarPayload(specialUrls.all, ac.signal),
-      fetchSidebarPayload(specialUrls.featured, ac.signal),
-      fetchSidebarPayload(specialUrls.landing_pages, ac.signal),
-      fetchSidebarPayload(specialUrls.free, ac.signal),
+      needsSpecialCounts ? fetchSidebarPayload(specialUrls.featured, ac.signal) : Promise.resolve(null),
+      needsSpecialCounts ? fetchSidebarPayload(specialUrls.landing_pages, ac.signal) : Promise.resolve(null),
+      needsSpecialCounts ? fetchSidebarPayload(specialUrls.free, ac.signal) : Promise.resolve(null),
     ])
-      .then(([categoryPayload, allPayload, featuredPayload, landingPayload, freePayload]) => {
+      .then(([categoryPayload, featuredPayload, landingPayload, freePayload]) => {
         if (ac.signal.aborted) return;
-        setCategories(categoryPayload.category_pills ?? []);
+        setCategories(showCategories ? categoryPayload.category_pills ?? [] : []);
         setCounts({
-          all: Number(allPayload.pagination?.total_items ?? 0),
-          featured: Number(featuredPayload.pagination?.total_items ?? 0),
-          landing_pages: Number(landingPayload.pagination?.total_items ?? 0),
-          free: Number(freePayload.pagination?.total_items ?? 0),
+          all: needsSpecialCounts ? Number(categoryPayload.pagination?.total_items ?? 0) : null,
+          featured: featuredPayload ? Number(featuredPayload.pagination?.total_items ?? 0) : null,
+          landing_pages: landingPayload ? Number(landingPayload.pagination?.total_items ?? 0) : null,
+          free: freePayload ? Number(freePayload.pagination?.total_items ?? 0) : null,
         });
       })
       .catch((err) => {
@@ -540,7 +556,7 @@ export const TemplateSearchSidebar: React.FC<TemplateSearchSidebarProps> = ({
       });
 
     return () => ac.abort();
-  }, [apiBase, countContext, countMode]);
+  }, [apiBase, countContext, countMode, showCategories, showCounts, showSpecialLinks]);
 
   useEffect(() => {
     if (!shouldUseFilterMode) return;
@@ -607,15 +623,6 @@ export const TemplateSearchSidebar: React.FC<TemplateSearchSidebarProps> = ({
     return <span className="tmsidebar-count">{formatCount(value)}</span>;
   };
 
-  const renderIndicator = () => (
-    <span
-      className={`tmsidebar-indicator ${
-        shouldUseFilterMode ? 'tmsidebar-indicator--check' : 'tmsidebar-indicator--dot'
-      }`}
-      aria-hidden="true"
-    />
-  );
-
   return (
     <div className={`tmsidebar ${shouldUseFilterMode ? 'tmsidebar--filter' : 'tmsidebar--navigate'}`}>
       <style>{SIDEBAR_STYLES}</style>
@@ -651,7 +658,7 @@ export const TemplateSearchSidebar: React.FC<TemplateSearchSidebarProps> = ({
                       aria-current={active ? 'page' : undefined}
                       onClick={(event) => onSpecialClick(row.scope, event)}
                     >
-                      {renderIndicator()}
+                      {renderRowIcon(row.iconUrl)}
                       <span className="tmsidebar-label">{row.label}</span>
                       {renderCount(counts[row.key])}
                     </a>
@@ -673,6 +680,7 @@ export const TemplateSearchSidebar: React.FC<TemplateSearchSidebarProps> = ({
               categories.map((category) => {
                 const active = activeCategory === category.slug;
                 const href = category.url || `https://webflow.com/templates/category/${category.slug}`;
+                const iconUrl = getCategoryIconUrl(category.slug);
                 return (
                   <li key={category.slug}>
                     <a
@@ -681,7 +689,7 @@ export const TemplateSearchSidebar: React.FC<TemplateSearchSidebarProps> = ({
                       aria-current={active ? 'page' : undefined}
                       onClick={(event) => onCategoryClick(category, event)}
                     >
-                      {renderIndicator()}
+                      {renderRowIcon(iconUrl)}
                       <span className="tmsidebar-label">{category.name}</span>
                       {renderCount(category.count)}
                     </a>
@@ -690,25 +698,6 @@ export const TemplateSearchSidebar: React.FC<TemplateSearchSidebarProps> = ({
               })}
           </ul>
         </nav>
-      )}
-
-      {(showStyles || showTypes || showSort || showFreeOnly) && (
-        <div className="tmsidebar-filters">
-          <TemplateFilterBar
-            apiBase={apiBase}
-            scopeOverride={scopeOverride}
-            categorySlug={categorySlug}
-            subcategorySlug={subcategorySlug}
-            showSearch={false}
-            showStyles={showStyles}
-            showTypes={showTypes}
-            showSort={showSort}
-            sortDisplay="segmented"
-            showFreeOnly={showFreeOnly && activeScope !== 'free'}
-            showSubcategoryPills={false}
-            defaultSort={defaultSort}
-          />
-        </div>
       )}
     </div>
   );
