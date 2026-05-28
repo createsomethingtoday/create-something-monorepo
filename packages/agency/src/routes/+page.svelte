@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Button, HeroSignalField, SEO } from '@create-something/canon';
+  import { Button, HeroSignalField, PropertyFunnel, SEO } from '@create-something/canon';
   import { BlurFade } from '@create-something/canon/magicui';
   import ArtifactSystemStrip from '$lib/components/ArtifactSystemStrip.svelte';
   import BrandLogo from '$lib/components/BrandLogo.svelte';
@@ -153,8 +153,7 @@
     {
       name: 'Workflow System',
       featured: true,
-      summary:
-        'The first reliable operating path. Fix one workflow your team still does by hand.',
+      summary: 'The first reliable operating path. Fix one workflow your team still does by hand.',
       points: [
         'Business-rule mapping',
         'Workflow implementation',
@@ -165,8 +164,7 @@
     {
       name: 'Policy OS',
       featured: false,
-      summary:
-        'The governed execution layer once speed touches revenue, trust, or compliance.',
+      summary: 'The governed execution layer once speed touches revenue, trust, or compliance.',
       points: [
         'Approval and block boundaries',
         'Release checks and eval gates',
@@ -219,7 +217,9 @@
 
         <BlurFade delay={0.15}>
           <div class="hero-actions">
-            <Button href="/book">{agencyCoreMessaging.bookMappingSessionLabel}</Button>
+            <Button href={agencyCoreMessaging.workflowMappingSessionHref}
+              >{agencyCoreMessaging.bookMappingSessionLabel}</Button
+            >
             <Button href="/services" variant="secondary">See The Operating Model</Button>
           </div>
         </BlurFade>
@@ -297,8 +297,8 @@
       </BlurFade>
       <BlurFade delay={0.1}>
         <p>
-          Once the hero establishes the workflow boundaries, the full surface can show tabs,
-          checks, artifacts, and release logic without crushing the copy.
+          Once the hero establishes the workflow boundaries, the full surface can show tabs, checks,
+          artifacts, and release logic without crushing the copy.
         </p>
       </BlurFade>
     </div>
@@ -365,10 +365,7 @@
     <div class="offer-grid">
       {#each offerCards as offer, index}
         <BlurFade delay={0.15 + index * 0.08}>
-          <article
-            class="product-surface offer-card"
-            class:offerFeatured={offer.featured}
-          >
+          <article class="product-surface offer-card" class:offerFeatured={offer.featured}>
             <span class="offer-tag">{offer.featured ? 'Primary build' : 'Entry or expansion'}</span>
             <h3>{offer.name}</h3>
             <p>{offer.summary}</p>
@@ -436,6 +433,12 @@
   </div>
 </section>
 
+<PropertyFunnel
+  current="agency"
+  heading="Show how every property arrives at the mapping session."
+  description="Visitors can enter through canon, research, or the workbench. The agency surface turns that context into one scoped workflow, the control layer it needs, and the artifacts the team keeps."
+/>
+
 <section class="cta-section">
   <div class="shell-inner-pad">
     <div class="product-surface product-surface--accent cta-panel">
@@ -450,7 +453,9 @@
       </BlurFade>
       <BlurFade delay={0.15}>
         <div class="hero-actions hero-actions--center">
-          <Button href="/book">{agencyCoreMessaging.bookMappingSessionLabel}</Button>
+          <Button href={agencyCoreMessaging.workflowMappingSessionHref}
+            >{agencyCoreMessaging.bookMappingSessionLabel}</Button
+          >
           <Button href="/services" variant="secondary">See The Operating Model</Button>
         </div>
       </BlurFade>

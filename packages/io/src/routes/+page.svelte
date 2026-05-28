@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { PageData } from './$types';
-  import { Button, PapersGrid, SEO } from '@create-something/canon';
+  import { Button, PapersGrid, PropertyFunnel, SEO } from '@create-something/canon';
   import { BlurFade } from '@create-something/canon/magicui';
   import type { Paper } from '@create-something/canon/types';
 
@@ -118,7 +118,7 @@
       eyebrow: '.agency',
       title: 'Operationalize the pattern',
       body: 'Move from research into governed workflow delivery when the operating path becomes commercially or reputationally important.',
-      href: 'https://createsomething.agency'
+      href: 'https://createsomething.agency/book?source=io&intent=research-to-implementation&lane=workflow_infrastructure'
     },
     {
       eyebrow: '.ltd',
@@ -151,8 +151,8 @@
       <BlurFade delay={0.1}>
         <p class="hero-detail">
           CREATE SOMETHING .io turns experiments, papers, and field notes into a usable research
-          layer for operators. The goal is not content volume. It is evidence you can carry into
-          the next build, review, or production decision.
+          layer for operators. The goal is not content volume. It is evidence you can carry into the
+          next build, review, or production decision.
         </p>
       </BlurFade>
 
@@ -289,8 +289,8 @@
       </BlurFade>
       <BlurFade delay={0.1}>
         <p>
-          Research only matters if it transfers cleanly into practice, delivery, or philosophy.
-          That handoff is the point of the network.
+          Research only matters if it transfers cleanly into practice, delivery, or philosophy. That
+          handoff is the point of the network.
         </p>
       </BlurFade>
     </div>
@@ -314,6 +314,12 @@
     </div>
   </div>
 </section>
+
+<PropertyFunnel
+  current="io"
+  heading="Let the research tell the visitor where to go next."
+  description="Use .io to understand the evidence, move to .space when the pattern needs runtime validation, and move to .agency when the workflow is ready to be scoped."
+/>
 
 <section class="cta-section">
   <div class="shell-inner-pad">
