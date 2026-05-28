@@ -4,11 +4,14 @@ interface Env {
   WEBHOOK_SECRET?: string;
   LINEAR_API_KEY?: string;
   LINEAR_API_URL?: string;
+  NOTION_API_KEY?: string;
+  NOTION_API_VERSION?: string;
   LINEAR_TEAM_KEY?: string;
   LINEAR_LABELS?: string;
   LINEAR_PROJECT?: string;
   ASSIGN_TO_TOKEN_OWNER?: string;
   SLACK_WEBHOOK_URL?: string;
+  PAGE_URL_BY_AGENT_NAME_JSON?: string;
 }
 
 interface NormalizedReviewRequest {
@@ -23,6 +26,14 @@ interface NormalizedReviewRequest {
   description?: string;
   pageUrl?: string;
   properties: Record<string, string>;
+  enrichment?: ReviewEnrichment;
+}
+
+interface ReviewEnrichment {
+  notionPageId?: string;
+  notionPageUrl?: string;
+  pageContent?: string;
+  warning?: string;
 }
 
 interface LinearIssue {
@@ -47,9 +58,12 @@ interface DestinationResult {
 }
 
 const DEFAULT_LINEAR_TEAM_KEY = 'CRE';
-const DEFAULT_LINEAR_LABELS = 'linear-coordination';
+const DEFAULT_LINEAR_LABELS = 'linear-coordination,code-quality';
 const LINEAR_API_FALLBACK = 'https://api.linear.app/graphql';
 const MAX_FIELD_LENGTH = 600;
+const MAX_NOTION_CONTENT_LENGTH = 12000;
+const NOTION_API_BASE = 'https://api.notion.com/v1';
+const NOTION_API_VERSION_DEFAULT = '2022-06-28';
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
@@ -81,7 +95,7 @@ export default {
     const payload = await readJson(request);
     if (!payload.ok) return payload.response;
 
-    const review = normalizeReviewRequest(payload.value);
+    const review = await enrichReviewWithNotionContent(env, normalizeReviewRequest(payload.value));
     const destinations: DestinationResult[] = [];
     let linearIssue: LinearIssue | undefined;
 
@@ -304,6 +318,218 @@ function isRecord(value: unknown): value is UnknownRecord {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
+async function enrichReviewWithNotionContent(
+  env: Env,
+  review: NormalizedReviewRequest
+): Promise<NormalizedReviewRequest> {
+  const notionPageUrl = findNotionPageUrl(env, review);
+  const notionPageId = notionPageUrl ? notionPageIdFromUrl(notionPageUrl) : undefined;
+
+  if (!notionPageId) {
+    return {
+      ...review,
+      enrichment: {
+        warning:
+          'No Notion page URL or page ID was available in the webhook payload, so page content could not be fetched.'
+      }
+    };
+  }
+
+  if (!env.NOTION_API_KEY) {
+    return {
+      ...review,
+      pageUrl: review.pageUrl ?? notionPageUrl,
+      enrichment: {
+        notionPageId,
+        notionPageUrl,
+        warning:
+          'NOTION_API_KEY is not configured on the Worker, so page content could not be fetched.'
+      }
+    };
+  }
+
+  const content = await fetchNotionPageContent(env, notionPageId);
+  return {
+    ...review,
+    pageUrl: review.pageUrl ?? notionPageUrl,
+    enrichment: {
+      notionPageId,
+      notionPageUrl,
+      ...content
+    }
+  };
+}
+
+function findNotionPageUrl(env: Env, review: NormalizedReviewRequest): string | undefined {
+  const configuredUrl = pageUrlFromAgentNameMapping(env.PAGE_URL_BY_AGENT_NAME_JSON, review.agentName);
+  const candidates = [
+    review.pageUrl,
+    review.agentUrl,
+    configuredUrl,
+    ...Object.values(review.properties)
+  ];
+
+  return candidates.find((candidate) => Boolean(candidate && notionPageIdFromUrl(candidate)));
+}
+
+function pageUrlFromAgentNameMapping(mappingJson: string | undefined, agentName: string): string | undefined {
+  if (!mappingJson) return undefined;
+
+  try {
+    const mapping = JSON.parse(mappingJson) as unknown;
+    if (!isRecord(mapping)) return undefined;
+    return stringFromUnknown(mapping[agentName]);
+  } catch {
+    return undefined;
+  }
+}
+
+function notionPageIdFromUrl(value: string): string | undefined {
+  const withoutDashes = value.replace(/-/g, '');
+  const match = withoutDashes.match(/[0-9a-f]{32}/i);
+  if (!match) return undefined;
+
+  const id = match[0].toLowerCase();
+  return `${id.slice(0, 8)}-${id.slice(8, 12)}-${id.slice(12, 16)}-${id.slice(16, 20)}-${id.slice(20)}`;
+}
+
+async function fetchNotionPageContent(
+  env: Env,
+  pageId: string
+): Promise<Pick<ReviewEnrichment, 'pageContent' | 'warning'>> {
+  const result = await fetchNotionBlockChildren(env, pageId, 0);
+  if (!result.ok) {
+    return { warning: result.warning };
+  }
+
+  const pageContent = truncate(result.lines.join('\n').replace(/\n{3,}/g, '\n\n').trim(), MAX_NOTION_CONTENT_LENGTH);
+  if (!pageContent) {
+    return { warning: 'Notion API returned no readable page content for this page.' };
+  }
+
+  return { pageContent };
+}
+
+async function fetchNotionBlockChildren(
+  env: Env,
+  blockId: string,
+  depth: number
+): Promise<{ ok: true; lines: string[] } | { ok: false; warning: string }> {
+  if (depth > 5) return { ok: true, lines: [] };
+
+  const lines: string[] = [];
+  let cursor: string | undefined;
+
+  do {
+    const url = new URL(`${NOTION_API_BASE}/blocks/${blockId}/children`);
+    url.searchParams.set('page_size', '100');
+    if (cursor) url.searchParams.set('start_cursor', cursor);
+
+    const response = await fetch(url.toString(), {
+      headers: {
+        Authorization: `Bearer ${env.NOTION_API_KEY ?? ''}`,
+        'Notion-Version': env.NOTION_API_VERSION ?? NOTION_API_VERSION_DEFAULT
+      }
+    });
+    const body = (await response.json()) as UnknownRecord;
+
+    if (!response.ok) {
+      return {
+        ok: false,
+        warning: `Notion page content fetch failed with HTTP ${response.status}: ${notionErrorMessage(body)}`
+      };
+    }
+
+    const results = Array.isArray(body.results) ? body.results : [];
+    for (const block of results) {
+      if (!isRecord(block)) continue;
+
+      const text = textFromNotionBlock(block);
+      if (text) lines.push(text);
+
+      if (block.has_children === true && typeof block.id === 'string') {
+        const childResult = await fetchNotionBlockChildren(env, block.id, depth + 1);
+        if (!childResult.ok) return childResult;
+        lines.push(...childResult.lines.map((line) => `  ${line}`));
+      }
+    }
+
+    cursor = typeof body.next_cursor === 'string' ? body.next_cursor : undefined;
+  } while (cursor);
+
+  return { ok: true, lines };
+}
+
+function notionErrorMessage(body: UnknownRecord): string {
+  const code = stringFromUnknown(body.code);
+  const message = stringFromUnknown(body.message) ?? code ?? 'unknown Notion API error';
+
+  if (code === 'object_not_found') {
+    return `${message} Share the source page or database with the Notion integration configured as NOTION_API_KEY.`;
+  }
+
+  if (code === 'unauthorized') {
+    return `${message} Replace NOTION_API_KEY with a valid Notion integration secret.`;
+  }
+
+  return message;
+}
+
+function textFromNotionBlock(block: UnknownRecord): string | undefined {
+  const type = stringFromUnknown(block.type);
+  if (!type) return undefined;
+
+  const value = isRecord(block[type]) ? block[type] : {};
+  const richText = richTextPlain(value.rich_text ?? value.title ?? value.caption);
+  const checked = typeof value.checked === 'boolean' ? value.checked : undefined;
+
+  switch (type) {
+    case 'heading_1':
+      return richText ? `# ${richText}` : undefined;
+    case 'heading_2':
+      return richText ? `## ${richText}` : undefined;
+    case 'heading_3':
+      return richText ? `### ${richText}` : undefined;
+    case 'heading_4':
+      return richText ? `#### ${richText}` : undefined;
+    case 'bulleted_list_item':
+      return richText ? `- ${richText}` : undefined;
+    case 'numbered_list_item':
+      return richText ? `1. ${richText}` : undefined;
+    case 'to_do':
+      return richText ? `- [${checked ? 'x' : ' '}] ${richText}` : undefined;
+    case 'quote':
+      return richText ? `> ${richText}` : undefined;
+    case 'code':
+      return richText ? `\`\`\`\n${richText}\n\`\`\`` : undefined;
+    case 'callout':
+    case 'paragraph':
+    case 'toggle':
+      return richText;
+    case 'child_page':
+    case 'child_database':
+      return stringFromUnknown(value.title);
+    case 'divider':
+      return '---';
+    default:
+      return richText;
+  }
+}
+
+function richTextPlain(value: unknown): string | undefined {
+  if (!Array.isArray(value)) return undefined;
+
+  const text = value
+    .map((item) => {
+      if (!isRecord(item)) return undefined;
+      return stringFromUnknown(item.plain_text) ?? stringFromUnknown(isRecord(item.text) ? item.text.content : undefined);
+    })
+    .filter(Boolean)
+    .join('');
+
+  return text.trim() || undefined;
+}
+
 async function createLinearReviewIssue(
   env: Env,
   review: NormalizedReviewRequest
@@ -501,7 +727,9 @@ function duplicateWebhookComment(review: NormalizedReviewRequest): string {
     `Webhook request id: ${review.requestId}`,
     `Status: ${review.status ?? 'not provided'}`,
     `Priority: ${review.priority ?? 'not provided'}`,
-    `Type: ${review.type ?? 'not provided'}`
+    `Type: ${review.type ?? 'not provided'}`,
+    '',
+    ...notionContentLines(review)
   ].join('\n');
 }
 
@@ -529,10 +757,33 @@ function issueDescription(review: NormalizedReviewRequest): string {
       .sort(([left], [right]) => left.localeCompare(right))
       .map(([key, value]) => `- ${key}: ${value}`),
     '',
+    ...notionContentLines(review),
+    '',
     'Next action: review the agent build request, decide CREATE SOMETHING ownership, and record implementation evidence here.'
   ];
 
   return lines.join('\n');
+}
+
+function notionContentLines(review: NormalizedReviewRequest): string[] {
+  const enrichment = review.enrichment;
+  if (!enrichment) return ['Notion page content', 'No Notion page enrichment was attempted.'];
+
+  const lines = [
+    'Notion page content',
+    `- Page ID: ${enrichment.notionPageId ?? 'not provided'}`,
+    `- Page URL: ${enrichment.notionPageUrl ?? review.pageUrl ?? 'not provided'}`
+  ];
+
+  if (enrichment.warning) {
+    lines.push(`- Fetch status: ${enrichment.warning}`);
+  }
+
+  if (enrichment.pageContent) {
+    lines.push('', enrichment.pageContent);
+  }
+
+  return lines;
 }
 
 function priorityValue(priority?: string): number {

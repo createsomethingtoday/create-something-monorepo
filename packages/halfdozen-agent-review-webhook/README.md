@@ -7,6 +7,12 @@ CREATE SOMETHING Linear issue and optionally sends a Slack webhook notification.
 Open Linear issues are deduplicated by agent title. A repeated Notion fire for the same agent
 reuses the existing open review issue and appends a duplicate-fire comment.
 
+When a Notion page URL or page ID is present, the Worker reads the page's block children through
+the Notion API and appends the flattened page instructions to the Linear issue. The Notion
+connection used by `NOTION_API_KEY` must have read access to the target page. In Notion, share the
+source page or its parent database with that integration before expecting page-body content to
+appear in Linear.
+
 ## Notion Setup
 
 Use the deployed Worker URL in the Notion action:
@@ -30,10 +36,14 @@ Select these Notion properties in the webhook content when present:
 - `Agent URL`
 - `Agent Description`
 - `Activated`
+- a page URL or formula property containing the Notion page URL
 
 If CREATE SOMETHING needs a direct link back to the Notion record, expose that as a database URL
 property and select it in the webhook content. Notion webhook actions only send selected database
 properties, not page contents.
+
+For one-off pages that do not yet have a URL property, configure `PAGE_URL_BY_AGENT_NAME_JSON`
+with a JSON object mapping agent names to Notion page URLs.
 
 ## Runtime
 
@@ -47,10 +57,12 @@ Required secrets:
 ```bash
 wrangler secret put WEBHOOK_SECRET
 wrangler secret put LINEAR_API_KEY
+wrangler secret put NOTION_API_KEY
 ```
 
 Optional secrets:
 
 ```bash
 wrangler secret put SLACK_WEBHOOK_URL
+wrangler secret put PAGE_URL_BY_AGENT_NAME_JSON
 ```
