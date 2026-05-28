@@ -7,11 +7,18 @@ import React, {
   useRef,
   useState,
 } from 'react';
+import {
+  normalizeTemplateSort,
+  parseTemplateRoute,
+  SUPPORTED_TEMPLATE_CATEGORY_ROUTE_SLUGS,
+  TemplateScope,
+  TemplateSort,
+  toTemplateStyleSlug,
+} from '../marketplace/templateRoute';
+import { TEMPLATE_MARKETPLACE_COMPONENT_VERSION } from '../marketplace/templateTelemetry';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type TemplateSort = 'popular' | 'newest' | 'price_asc' | 'price_desc';
-type TemplateScope = 'all' | 'featured' | 'free' | 'landing_pages';
 type SortDisplay = 'auto' | 'dropdown' | 'segmented';
 
 interface StyleFacet {
@@ -672,68 +679,14 @@ const FILTER_STYLES = `
 
 // ─── URL helpers ──────────────────────────────────────────────────────────────
 
-const STYLE_SLUG_ALIASES: Record<string, string> = {
-  bold: 'bold-websites',
-  casual: 'casual-websites',
-  clean: 'clean-websites',
-  corporate: 'corporate-websites',
-  dark: 'dark-websites',
-  elegant: 'elegant-websites',
-  illustration: 'illustration-websites',
-  light: 'light-websites',
-  luxurious: 'luxury-websites',
-  luxury: 'luxury-websites',
-  minimal: 'minimal-websites',
-  organic: 'organic-websites',
-  retro: 'retro-websites',
-  sidebar: 'sidebar-websites',
-};
-
-function toStyleSlug(name: string): string {
-  const slug = name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
-  return STYLE_SLUG_ALIASES[slug] ?? slug;
-}
-
-function readListParams(params: URLSearchParams, keys: string[]): string[] {
-  return keys.flatMap((key) => params.getAll(key).flatMap((value) => value.split(','))).filter(Boolean);
-}
-
-function normalizeSort(value: string | null, fallback: TemplateSort = 'popular'): TemplateSort {
-  switch ((value ?? '').trim()) {
-    case 'newest':
-    case 'approval-date':
-    case 'approval-date-desc':
-      return 'newest';
-    case 'price_asc':
-    case 'price-asc':
-      return 'price_asc';
-    case 'price_desc':
-    case 'price-desc':
-      return 'price_desc';
-    case 'popular':
-    case 'popularity-score':
-    case 'popularity-score-desc':
-      return 'popular';
-    default:
-      return fallback;
-  }
-}
-
 function readUrlFilters(defaultSort: TemplateSort = 'popular'): LocalFilters {
-  if (typeof window === 'undefined') {
-    return { q: '', styles: [], types: [], freeOnly: false, sort: defaultSort };
-  }
-  const url = new URL(window.location.href);
-  const params = url.searchParams;
-  const stylePathMatch = url.pathname.replace(/\/+$/, '').match(/\/templates\/style\/([^/?#]+)/);
-  const stylePathSlug = stylePathMatch ? toStyleSlug(stylePathMatch[1]) : null;
-  const stylesFromParam = readListParams(params, ['styles', 'style_slug', 'style']).map(toStyleSlug);
+  const route = parseTemplateRoute({ defaultSort });
   return {
-    q: (params.get('q') ?? params.get('query') ?? params.get('search') ?? '').trim(),
-    styles: Array.from(new Set(stylePathSlug ? [stylePathSlug, ...stylesFromParam] : stylesFromParam)),
-    types: params.getAll('types').flatMap((v) => v.split(',')).filter(Boolean),
-    freeOnly: ['1', 'true', 'yes', 'on'].includes((params.get('free_only') ?? '').toLowerCase()),
-    sort: normalizeSort(params.get('sort'), defaultSort),
+    q: route.q,
+    styles: route.styles,
+    types: route.types,
+    freeOnly: route.freeOnly,
+    sort: route.sort,
   };
 }
 
@@ -745,13 +698,13 @@ function readFiltersFromEvent(event: Event, defaultSort: TemplateSort): LocalFil
   return {
     q: typeof detail.q === 'string' ? detail.q.trim() : fallback.q,
     styles: Array.isArray(detail.styles)
-      ? detail.styles.filter((value): value is string => typeof value === 'string').map(toStyleSlug)
+      ? detail.styles.filter((value): value is string => typeof value === 'string').map(toTemplateStyleSlug)
       : fallback.styles,
     types: Array.isArray(detail.types)
       ? detail.types.filter((value): value is string => typeof value === 'string')
       : fallback.types,
     freeOnly: typeof detail.freeOnly === 'boolean' ? detail.freeOnly : fallback.freeOnly,
-    sort: normalizeSort(typeof detail.sort === 'string' ? detail.sort : null, fallback.sort),
+    sort: normalizeTemplateSort(typeof detail.sort === 'string' ? detail.sort : null, fallback.sort),
   };
 }
 
@@ -766,36 +719,16 @@ function readRouteContext(
   categorySlugOverride?: string,
   subcategorySlugOverride?: string,
 ): RouteContext {
-  if (typeof window === 'undefined') {
-    return {
-      scope: scopeOverride && scopeOverride !== 'all' ? scopeOverride : null,
-      categoryGroupSlug: categorySlugOverride || null,
-      childCategorySlug: subcategorySlugOverride || null,
-    };
-  }
-
-  const url = new URL(window.location.href);
-  const pathname = url.pathname.replace(/\/+$/, '');
-  const categoryMatch = pathname.match(/\/templates\/category\/([^/?#]+)/);
-  const subcategoryMatch = pathname.match(/\/templates\/subcategory\/([^/?#]+)/);
-
-  let scope: RouteContext['scope'] = null;
-  if (pathname === '/templates/featured') {
-    scope = 'featured';
-  } else if (
-    pathname === '/templates/free' ||
-    pathname === '/templates/free-website-templates' ||
-    url.searchParams.get('pricing') === 'free'
-  ) {
-    scope = 'free';
-  } else if (/\/templates\/landing-page(s)?($|\/)/.test(pathname)) {
-    scope = 'landing_pages';
-  }
+  const route = parseTemplateRoute({
+    scopeOverride,
+    categorySlugOverride,
+    childCategorySlugOverride: subcategorySlugOverride,
+  });
 
   return {
-    scope: scopeOverride && scopeOverride !== 'all' ? scopeOverride : scope,
-    categoryGroupSlug: categorySlugOverride || (categoryMatch ? categoryMatch[1] : url.searchParams.get('category') || null),
-    childCategorySlug: subcategorySlugOverride || (subcategoryMatch ? subcategoryMatch[1] : url.searchParams.get('subcategory') || null),
+    scope: route.scope === 'all' ? null : route.scope,
+    categoryGroupSlug: route.categoryGroupSlug,
+    childCategorySlug: route.childCategorySlug,
   };
 }
 
@@ -1148,7 +1081,7 @@ export const TemplateFilterBar: React.FC<TemplateFilterBarProps> = ({
 
   const onSortChange = useCallback(
     (value: string) => {
-      applyFilter({ sort: normalizeSort(value, defaultSort) });
+      applyFilter({ sort: normalizeTemplateSort(value, defaultSort) });
       setOpenPanel(null);
     },
     [applyFilter, defaultSort],
@@ -1356,13 +1289,16 @@ export const TemplateFilterBar: React.FC<TemplateFilterBarProps> = ({
     ? categoryPills.find((pill) => pill.slug === routeContext.categoryGroupSlug)
     : null;
   const parentCategoryLabel = parentCategoryPill?.name ?? routeContext.categoryGroupSlug ?? '';
+  const routeSupportedCategoryPills = categoryPills.filter((pill) =>
+    SUPPORTED_TEMPLATE_CATEGORY_ROUTE_SLUGS.has(pill.slug),
+  );
   const visiblePills = hasSubcategoryPillContext
     ? subcategoryPills.filter((pill) => pill.slug !== routeContext.categoryGroupSlug)
-    : categoryPills;
+    : routeSupportedCategoryPills;
   const allCategoriesActive = showCategoryPillRow && !routeContext.categoryGroupSlug && !routeContext.childCategorySlug;
   const parentCategoryActive = hasSubcategoryPillContext && !routeContext.childCategorySlug;
   const showAllCategoriesPill = showCategoryPillRow || hasSubcategoryPillContext;
-  const useCanonicalCategoryLinks = hasSubcategoryPillContext;
+  const useCanonicalCategoryLinks = false;
   const shouldShowSubcategoryPills =
     showSubcategoryPills &&
     (hasSubcategoryPillContext || showCategoryPillRow) &&
@@ -1475,7 +1411,14 @@ export const TemplateFilterBar: React.FC<TemplateFilterBarProps> = ({
   }
 
   return (
-    <div ref={rootRef} className="tmfilter-shell" style={rootStyle} data-template-filter-bar="">
+    <div
+      ref={rootRef}
+      className="tmfilter-shell"
+      style={rootStyle}
+      data-template-filter-bar=""
+      data-template-component="TemplateFilterBar"
+      data-template-component-version={TEMPLATE_MARKETPLACE_COMPONENT_VERSION}
+    >
       <style dangerouslySetInnerHTML={{ __html: FILTER_STYLES }} />
 
       {shouldShowSubcategoryPills && (
@@ -1497,13 +1440,11 @@ export const TemplateFilterBar: React.FC<TemplateFilterBarProps> = ({
                       <div className="tmfilter-subcategory-slide" role="listitem">
                         <a
                           className={`cc-subcategory tmfilter-pill${allCategoriesActive ? ' w--current active' : ''}`}
-                          href={useCanonicalCategoryLinks ? '/templates/all' : buildScopedCategoryHref(null)}
+                          href={hasSubcategoryPillContext ? '/templates/all' : buildScopedCategoryHref(null)}
                           aria-current={allCategoriesActive ? 'page' : undefined}
                           onClick={
-                            useCanonicalCategoryLinks
+                            hasSubcategoryPillContext
                               ? undefined
-                              : hasSubcategoryPillContext
-                              ? onClearCategoryContext
                               : (event) => onCategoryPillClick(null, allCategoriesActive, event)
                           }
                         >

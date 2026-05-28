@@ -9,6 +9,9 @@ import type { Env } from './types.js';
 
 const INCREMENTAL_CRON = '*/5 * * * *';
 const FULL_REBUILD_CRON = '17 3 * * *';
+const SEARCH_CACHE_HEADERS = {
+  'Cache-Control': 'public, max-age=60, s-maxage=300, stale-while-revalidate=300',
+};
 
 function parseBearerToken(request: Request): string | null {
   const auth = request.headers.get('Authorization');
@@ -33,7 +36,7 @@ function validateAdminToken(request: Request, env: Env): Response | null {
 async function handleSearch(request: Request, env: Env): Promise<Response> {
   const defaultPageSize = Number(env.DEFAULT_PAGE_SIZE ?? '24') || 24;
   const params = parseSearchParams(new URL(request.url), defaultPageSize);
-  return jsonResponse(request, env, await searchTemplates(env, params));
+  return jsonResponse(request, env, await searchTemplates(env, params), 200, SEARCH_CACHE_HEADERS);
 }
 
 async function handleManualSync(request: Request, env: Env, mode: 'full' | 'incremental'): Promise<Response> {
@@ -62,7 +65,7 @@ export default {
       }
 
       if (url.pathname === '/api/templates/suggest' && request.method === 'GET') {
-        return jsonResponse(request, env, await suggestTemplates(env, url));
+        return jsonResponse(request, env, await suggestTemplates(env, url), 200, SEARCH_CACHE_HEADERS);
       }
 
       if ((url.pathname === '/api/templates/client.js' || url.pathname === '/client.js') && request.method === 'GET') {

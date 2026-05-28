@@ -10,6 +10,7 @@
     "share": "npx webflow library share",
     "check": "pnpm run typecheck",
     "lint": "pnpm run typecheck",
+    "smoke:routes": "node scripts/smoke-template-routes.mjs",
     "typecheck": "tsc --noEmit",
     "verify": "pnpm run typecheck && pnpm run bundle"
   },

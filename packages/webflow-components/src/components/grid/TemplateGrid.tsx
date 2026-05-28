@@ -7,6 +7,18 @@ import React, {
   useState,
 } from 'react';
 import { TemplateCard } from '../cards/TemplateCard';
+import {
+  areTemplateStringArraysEqual,
+  normalizeTemplateSort,
+  parseTemplateRoute,
+  TemplateScope,
+  TemplateSort,
+  toTemplateStyleSlug,
+} from '../marketplace/templateRoute';
+import {
+  emitTemplateComponentEvent,
+  TEMPLATE_MARKETPLACE_COMPONENT_VERSION,
+} from '../marketplace/templateTelemetry';
 
 // ─── API types ────────────────────────────────────────────────────────────────
 
@@ -40,9 +52,6 @@ interface ApiResponse {
 }
 
 // ─── Filter / route state ─────────────────────────────────────────────────────
-
-type TemplateSort = 'popular' | 'newest' | 'price_asc' | 'price_desc';
-type TemplateScope = 'all' | 'featured' | 'free' | 'landing_pages';
 
 interface FilterState {
   q: string;
@@ -183,153 +192,25 @@ const SEL_SEARCH = '[data-template-search-input], input[type="search"]';
 
 // ─── URL helpers ──────────────────────────────────────────────────────────────
 
-const STYLE_SLUG_ALIASES: Record<string, string> = {
-  bold: 'bold-websites',
-  casual: 'casual-websites',
-  clean: 'clean-websites',
-  corporate: 'corporate-websites',
-  dark: 'dark-websites',
-  elegant: 'elegant-websites',
-  illustration: 'illustration-websites',
-  light: 'light-websites',
-  luxurious: 'luxury-websites',
-  luxury: 'luxury-websites',
-  minimal: 'minimal-websites',
-  organic: 'organic-websites',
-  retro: 'retro-websites',
-  sidebar: 'sidebar-websites',
-};
-
-// Style slugs in the DB are lowercase-hyphenated (mirrors the search-worker's
-// slugifySegment). Convert display names from the filter UI to the same format.
-function toStyleSlug(name: string): string {
-  const slug = name
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-  return STYLE_SLUG_ALIASES[slug] ?? slug;
-}
-
-function readListParams(params: URLSearchParams, keys: string[]): string[] {
-  return keys.flatMap((key) => params.getAll(key).flatMap((value) => value.split(','))).filter(Boolean);
-}
-
-function normalizeSort(value: string | null | undefined, fallback: TemplateSort = 'popular'): TemplateSort {
-  switch ((value ?? '').trim()) {
-    case 'newest':
-    case 'approval-date':
-    case 'approval-date-desc':
-      return 'newest';
-    case 'price_asc':
-    case 'price-asc':
-      return 'price_asc';
-    case 'price_desc':
-    case 'price-desc':
-      return 'price_desc';
-    case 'popular':
-    case 'popularity-score':
-    case 'popularity-score-desc':
-      return 'popular';
-    default:
-      return fallback;
-  }
-}
-
-function resolveScopeOverride(scopeOverrideParam?: TemplateScope): TemplateScope | undefined {
-  return scopeOverrideParam && scopeOverrideParam !== 'all' ? scopeOverrideParam : undefined;
-}
-
-/**
- * Derives the full filter state from the current page URL.
- * Mirrors client-script.ts parseRouteState() so all Webflow template URL
- * patterns map correctly to API parameters.
- *
- * Supported paths:
- *   /templates/all                     → scope=all
- *   /templates/featured                → scope=featured
- *   /templates/free                    → scope=free
- *   /templates/free-website-templates  → scope=free
- *   /templates/landing-page            → scope=landing_pages
- *   /templates/landing-pages           → scope=landing_pages
- *   /templates/category/{slug}         → category_group_slug={slug}
- *   /templates/subcategory/{slug}      → child_category_slug={slug}
- *   ?category={slug}                   → category_group_slug={slug}
- *   ?subcategory={slug}                → child_category_slug={slug}
- */
 function parseRouteState(
   defaultSort: TemplateSort = 'popular',
   slugOverride?: string,
   scopeOverrideParam?: TemplateScope,
 ): FilterState {
-  const resolvedScopeOverride = resolveScopeOverride(scopeOverrideParam);
-
-  if (typeof window === 'undefined') {
-    return {
-      q: '',
-      scope: resolvedScopeOverride ?? 'all',
-      categoryGroupSlug: slugOverride || null,
-      childCategorySlug: null,
-      styles: [],
-      types: [],
-      freeOnly: false,
-      sort: defaultSort,
-    };
-  }
-
-  const url = new URL(window.location.href);
-  const params = url.searchParams;
-  const pathname = url.pathname.replace(/\/+$/, '');
-
-  let scope: TemplateScope = 'all';
-  let freeOnly = false;
-
-  // Path-based scope detection
-  if (pathname === '/templates/featured') scope = 'featured';
-  if (
-    pathname === '/templates/free' ||
-    pathname === '/templates/free-website-templates' ||
-    params.get('pricing') === 'free'
-  ) {
-    scope = 'free';
-    freeOnly = true;
-  }
-  if (/\/templates\/landing-page(s)?($|\/)/.test(pathname)) {
-    scope = 'landing_pages';
-  }
-
-  // Slug detection from path or query param
-  // Path: /templates/category/{slug}
-  // Query: ?category={slug} (used on e.g. /templates/free-website-templates?category=architecture-design)
-  const categoryMatch = pathname.match(/\/templates\/category\/([^/?#]+)/);
-  const subcategoryMatch = pathname.match(/\/templates\/subcategory\/([^/?#]+)/);
-  const categoryParam = params.get('category');
-  const subcategoryParam = params.get('subcategory');
-
-  // Style pages: /templates/style/{style-slug} (e.g. /templates/style/light-websites)
-  // The path segment is the canonical style slug (for example, light-websites).
-  const stylePathMatch = pathname.match(/\/templates\/style\/([^/?#]+)/);
-  const stylePathSlug = stylePathMatch ? toStyleSlug(stylePathMatch[1]) : null;
-
-  // Query-param filters (user-applied via filter UI)
-  const qRaw = params.get('q') ?? params.get('query') ?? params.get('search') ?? '';
-  const freeParam = ['1', 'true', 'yes', 'on'].includes((params.get('free_only') ?? '').toLowerCase());
-  // Style slugs in the DB are lowercase-hyphenated (slugifySegment), so normalize incoming URL values.
-  // Path-based style takes precedence over ?styles= query param.
-  const stylesFromParam = readListParams(params, ['styles', 'style_slug', 'style']).map(toStyleSlug);
-  const styles = Array.from(new Set(stylePathSlug ? [stylePathSlug, ...stylesFromParam] : stylesFromParam));
-  const types = params.getAll('types').flatMap((v) => v.split(',')).filter(Boolean);
-
+  const route = parseTemplateRoute({
+    defaultSort,
+    categorySlugOverride: slugOverride,
+    scopeOverride: scopeOverrideParam,
+  });
   return {
-    q: qRaw.trim(),
-    scope: resolvedScopeOverride ?? scope,
-    // Designer preview slug prop takes precedence over URL detection
-    categoryGroupSlug: slugOverride || (categoryMatch ? categoryMatch[1] : categoryParam || null),
-    childCategorySlug: subcategoryMatch ? subcategoryMatch[1] : subcategoryParam || null,
-    styles,
-    types,
-    freeOnly: freeOnly || freeParam,
-    sort: normalizeSort(params.get('sort'), defaultSort),
+    q: route.q,
+    scope: route.scope,
+    categoryGroupSlug: route.categoryGroupSlug,
+    childCategorySlug: route.childCategorySlug,
+    styles: route.styles,
+    types: route.types,
+    freeOnly: route.freeOnly,
+    sort: route.sort,
   };
 }
 
@@ -359,7 +240,7 @@ function mergeExternalFilterState(base: FilterState, detail: unknown): FilterSta
     styles: Array.isArray(patch.styles) ? patch.styles.filter((value): value is string => typeof value === 'string') : base.styles,
     types: Array.isArray(patch.types) ? patch.types.filter((value): value is string => typeof value === 'string') : base.types,
     freeOnly: typeof patch.freeOnly === 'boolean' ? patch.freeOnly : base.freeOnly,
-    sort: typeof patch.sort === 'string' ? normalizeSort(patch.sort, base.sort) : base.sort,
+    sort: typeof patch.sort === 'string' ? normalizeTemplateSort(patch.sort, base.sort) : base.sort,
   };
 }
 
@@ -371,10 +252,6 @@ function readSharedFilterState(href: string): unknown {
   return shared.href === href ? detail : undefined;
 }
 
-function areStringArraysEqual(a: string[], b: string[]): boolean {
-  return a.length === b.length && a.every((value, index) => value === b[index]);
-}
-
 function areFiltersEqual(a: FilterState, b: FilterState): boolean {
   return (
     a.q === b.q &&
@@ -383,8 +260,8 @@ function areFiltersEqual(a: FilterState, b: FilterState): boolean {
     a.childCategorySlug === b.childCategorySlug &&
     a.freeOnly === b.freeOnly &&
     a.sort === b.sort &&
-    areStringArraysEqual(a.styles, b.styles) &&
-    areStringArraysEqual(a.types, b.types)
+    areTemplateStringArraysEqual(a.styles, b.styles) &&
+    areTemplateStringArraysEqual(a.types, b.types)
   );
 }
 
@@ -653,6 +530,18 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
   const fetchAbortRef = useRef<AbortController | null>(null);
   const lastHrefRef = useRef(typeof window === 'undefined' ? '' : window.location.href);
 
+  useEffect(() => {
+    emitTemplateComponentEvent('TemplateGrid', 'mounted', {
+      scope: initialFilters.scope,
+      category_group_slug: initialFilters.categoryGroupSlug,
+      child_category_slug: initialFilters.childCategorySlug,
+      styles: initialFilters.styles,
+      page_size: resolvedPageSize,
+    });
+    // Initial route state is intentionally captured once for component health telemetry.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useLayoutEffect(() => {
     if (gridStylesInjected) return;
     gridStylesInjected = true;
@@ -715,6 +604,17 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
         setTotalItems(cached.pagination.total_items);
         setLoading(false);
         setLoadingMore(false);
+        if (targetPage === 1) {
+          emitTemplateComponentEvent('TemplateGrid', 'results_loaded', {
+            source: 'cache',
+            total_items: cached.pagination.total_items,
+            item_count: cached.items.length,
+            scope: currentFilters.scope,
+            category_group_slug: currentFilters.categoryGroupSlug,
+            child_category_slug: currentFilters.childCategorySlug,
+            styles: currentFilters.styles,
+          });
+        }
         if (!append && cached.pagination.has_next_page) {
           prefetchGridPage(buildApiUrl(apiBase, currentFilters, targetPage + 1, resolvedPageSize));
         }
@@ -744,6 +644,17 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
         setPage(data.pagination.page);
         setHasNextPage(data.pagination.has_next_page);
         setTotalItems(data.pagination.total_items);
+        if (targetPage === 1) {
+          emitTemplateComponentEvent('TemplateGrid', 'results_loaded', {
+            source: 'network',
+            total_items: data.pagination.total_items,
+            item_count: data.items.length,
+            scope: currentFilters.scope,
+            category_group_slug: currentFilters.categoryGroupSlug,
+            child_category_slug: currentFilters.childCategorySlug,
+            styles: currentFilters.styles,
+          });
+        }
         if (!append && data.pagination.has_next_page) {
           prefetchGridPage(buildApiUrl(apiBase, currentFilters, targetPage + 1, resolvedPageSize));
         }
@@ -751,6 +662,15 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
         if (epoch !== fetchEpochRef.current) return;
         if (e instanceof DOMException && e.name === 'AbortError') return;
         setError(e instanceof Error ? e.message : 'Failed to load templates');
+        if (targetPage === 1) {
+          emitTemplateComponentEvent('TemplateGrid', 'results_error', {
+            message: e instanceof Error ? e.message : 'Failed to load templates',
+            scope: currentFilters.scope,
+            category_group_slug: currentFilters.categoryGroupSlug,
+            child_category_slug: currentFilters.childCategorySlug,
+            styles: currentFilters.styles,
+          });
+        }
       } finally {
         if (epoch === fetchEpochRef.current) {
           setLoading(false);
@@ -818,7 +738,7 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
     if (searchEl) searchEl.value = filters.q;
 
     const onSort = (e: Event) => {
-      applyFilters({ sort: normalizeSort((e.target as HTMLSelectElement).value, 'popular') });
+      applyFilters({ sort: normalizeTemplateSort((e.target as HTMLSelectElement).value, 'popular') });
     };
     const onStyle = (e: Event) => {
       const v = (e.target as HTMLSelectElement).value;
@@ -851,7 +771,7 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
     const onFsSortClick = (e: MouseEvent) => {
       e.preventDefault(); // prevent href="#" page-jump; dropdown close still fires
       const field = (e.currentTarget as HTMLElement).getAttribute('fs-cmssort-field') ?? '';
-      applyFilters({ sort: normalizeSort(field, 'popular') });
+      applyFilters({ sort: normalizeTemplateSort(field, 'popular') });
     };
     const fsSortLinks = Array.from(document.querySelectorAll<HTMLAnchorElement>('a[fs-cmssort-field]'));
     fsSortLinks.forEach((link) => link.addEventListener('click', onFsSortClick));
@@ -867,7 +787,7 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
           return (label?.querySelector<HTMLInputElement>('input[type="checkbox"]'))?.checked ?? false;
         })
         // Convert display names to slugs so they match style_slug in the DB.
-        .map((span) => toStyleSlug(span.textContent ?? ''))
+        .map((span) => toTemplateStyleSlug(span.textContent ?? ''))
         .filter(Boolean);
     }
 
@@ -1048,7 +968,13 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
 
   if (loading && items.length === 0) {
     return (
-      <div ref={rootRef} className="tmgrid-shell" style={S.root}>
+      <div
+        ref={rootRef}
+        className="tmgrid-shell"
+        style={S.root}
+        data-template-component="TemplateGrid"
+        data-template-component-version={TEMPLATE_MARKETPLACE_COMPONENT_VERSION}
+      >
         <div className="tmgrid-grid" style={gridStyle}>
           {Array.from({ length: Math.min(resolvedPageSize, 12) }).map((_, i) => (
             <SkeletonCard key={i} index={i} itemStyle={gridItemStyle} />
@@ -1060,7 +986,11 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
 
   if (error && items.length === 0) {
     return (
-      <div style={S.root}>
+      <div
+        style={S.root}
+        data-template-component="TemplateGrid"
+        data-template-component-version={TEMPLATE_MARKETPLACE_COMPONENT_VERSION}
+      >
         <div style={S.errorBox}>
           <p>Unable to load templates. Please try refreshing the page.</p>
           <button
@@ -1089,7 +1019,14 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
   const isRefreshing = loading && items.length > 0;
 
   return (
-    <div ref={rootRef} className="tmgrid-shell" style={S.root} aria-busy={isRefreshing ? true : undefined}>
+    <div
+      ref={rootRef}
+      className="tmgrid-shell"
+      style={S.root}
+      aria-busy={isRefreshing ? true : undefined}
+      data-template-component="TemplateGrid"
+      data-template-component-version={TEMPLATE_MARKETPLACE_COMPONENT_VERSION}
+    >
       {totalItems !== null && (
         <div style={S.countLabel}>
           {totalItems.toLocaleString()} template{totalItems !== 1 ? 's' : ''}

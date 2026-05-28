@@ -1,8 +1,15 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { TemplateSearchBox } from './TemplateSearchBox';
-
-type TemplateSort = 'popular' | 'newest' | 'price_asc' | 'price_desc';
-type TemplateScope = 'all' | 'featured' | 'free' | 'landing_pages';
+import {
+  normalizeTemplateSlug,
+  parseTemplateRoute,
+  TemplateScope,
+  TemplateSort,
+} from './templateRoute';
+import {
+  emitTemplateComponentEvent,
+  TEMPLATE_MARKETPLACE_COMPONENT_VERSION,
+} from './templateTelemetry';
 type SidebarInteractionMode = 'navigate' | 'filter';
 type SidebarCountMode = 'global' | 'contextual';
 
@@ -391,79 +398,39 @@ function resolveApiBase(apiBase?: string): string {
     : rawBase;
 }
 
-function toFilterSlug(value: string): string {
-  return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
-}
-
-function normalizeScope(value: string | null): TemplateScope | null {
-  switch (value) {
-    case 'all':
-    case 'featured':
-    case 'free':
-    case 'landing_pages':
-      return value;
-    default:
-      return null;
-  }
-}
-
 function readCurrentScope(includeFilterParams = false): TemplateScope {
-  if (typeof window === 'undefined') return 'all';
-  const url = new URL(window.location.href);
-  if (includeFilterParams) {
-    const scopeParam = normalizeScope(url.searchParams.get('scope'));
-    if (scopeParam) return scopeParam;
-  }
-  const pathname = url.pathname.replace(/\/+$/, '');
-  if (pathname === '/templates/featured') return 'featured';
-  if (pathname === '/templates/free' || pathname === '/templates/free-website-templates') return 'free';
-  if (/\/templates\/landing-page(s)?($|\/)/.test(pathname)) return 'landing_pages';
-  return 'all';
+  return parseTemplateRoute({ includeFilterParams }).scope;
 }
 
 function readIsSearchRoute(): boolean {
-  if (typeof window === 'undefined') return false;
-  const pathname = new URL(window.location.href).pathname.replace(/\/+$/, '');
-  return pathname === '/templates/search' || pathname === '/templates/search-v2';
+  return parseTemplateRoute({ includeFilterParams: false }).isSearchRoute;
 }
 
 function readCurrentCategory(categorySlugOverride?: string, includeFilterParams = false): string | null {
-  if (categorySlugOverride) return categorySlugOverride;
-  if (typeof window === 'undefined') return null;
-  const url = new URL(window.location.href);
-  const pathname = url.pathname.replace(/\/+$/, '');
-  const categoryMatch = pathname.match(/\/templates\/category\/([^/?#]+)/);
-  if (categoryMatch) return categoryMatch[1];
-  if (!includeFilterParams) return null;
-  return url.searchParams.get('category') || url.searchParams.get('category_group_slug');
+  return parseTemplateRoute({
+    categorySlugOverride,
+    includeFilterParams,
+  }).categoryGroupSlug;
 }
 
 function readCurrentQuery(): string {
-  if (typeof window === 'undefined') return '';
-  const params = new URL(window.location.href).searchParams;
-  return (params.get('q') ?? params.get('query') ?? params.get('search') ?? '').trim();
-}
-
-function readPathFilterSlug(kind: 'style' | 'tag'): string | null {
-  if (typeof window === 'undefined') return null;
-  const pathname = new URL(window.location.href).pathname.replace(/\/+$/, '');
-  const match = pathname.match(new RegExp(`/templates/${kind}/([^/?#]+)`));
-  return match ? toFilterSlug(match[1]) : null;
+  return parseTemplateRoute().q;
 }
 
 function readCountContext(countMode: SidebarCountMode, styleSlugOverride?: string, tagSlugOverride?: string): CountContext {
   if (typeof window === 'undefined' || countMode === 'global') {
     return { q: '', scope: 'all', styleSlug: null, tagSlug: null, freeOnly: false };
   }
-  const url = new URL(window.location.href);
-  const params = url.searchParams;
-  const scope = readCurrentScope(true);
+  const route = parseTemplateRoute({
+    styleSlugOverride,
+    tagSlugOverride,
+  });
   return {
-    q: (params.get('q') ?? params.get('query') ?? params.get('search') ?? '').trim(),
-    scope,
-    styleSlug: styleSlugOverride || readPathFilterSlug('style') || params.get('style_slug') || params.get('style'),
-    tagSlug: tagSlugOverride || readPathFilterSlug('tag') || params.get('tag_slug') || params.get('tag'),
-    freeOnly: ['1', 'true', 'yes', 'on'].includes((params.get('free_only') ?? '').toLowerCase()),
+    q: route.q,
+    scope: route.scope,
+    styleSlug: route.styleSlug,
+    tagSlug: route.tagSlug,
+    freeOnly: route.freeOnly,
   };
 }
 
@@ -471,8 +438,8 @@ function appendCountContext(url: URL, context: CountContext, scope?: TemplateSco
   if (context.q) url.searchParams.set('q', context.q);
   const resolvedScope = scope ?? context.scope;
   if (resolvedScope !== 'all') url.searchParams.set('scope', resolvedScope);
-  if (context.styleSlug) url.searchParams.set('style_slug', toFilterSlug(context.styleSlug));
-  if (context.tagSlug) url.searchParams.set('tag_slug', toFilterSlug(context.tagSlug));
+  if (context.styleSlug) url.searchParams.set('style_slug', normalizeTemplateSlug(context.styleSlug));
+  if (context.tagSlug) url.searchParams.set('tag_slug', normalizeTemplateSlug(context.tagSlug));
   if (context.freeOnly || resolvedScope === 'free') url.searchParams.set('free_only', 'true');
 }
 
@@ -613,6 +580,7 @@ export const TemplateSearchSidebar: React.FC<TemplateSearchSidebarProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [searchValue, setSearchValue] = useState('');
   const [routeVersion, setRouteVersion] = useState(0);
+  const hydrationEventRef = useRef(false);
 
   const shouldUseFilterMode = interactionMode === 'filter';
   const isSearchRoute = readIsSearchRoute();
@@ -623,6 +591,17 @@ export const TemplateSearchSidebar: React.FC<TemplateSearchSidebarProps> = ({
     () => readCountContext(countMode, styleSlug || undefined, tagSlug || undefined),
     [countMode, routeVersion, styleSlug, tagSlug],
   );
+
+  useEffect(() => {
+    emitTemplateComponentEvent('TemplateSearchSidebar', 'mounted', {
+      interaction_mode: interactionMode,
+      count_mode: countMode,
+      active_scope: activeScope,
+      active_category: activeCategory,
+    });
+    // Initial route state is intentionally captured once for component health telemetry.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     const needsCategoryPayload = showCategories || (showSpecialLinks && showCounts);
@@ -658,6 +637,15 @@ export const TemplateSearchSidebar: React.FC<TemplateSearchSidebarProps> = ({
         ...current,
         all: needsSpecialCounts ? Number(cachedCategoryPayload.pagination?.total_items ?? 0) : null,
       }));
+      if (!hydrationEventRef.current) {
+        hydrationEventRef.current = true;
+        emitTemplateComponentEvent('TemplateSearchSidebar', 'navigation_hydrated', {
+          source: 'cache',
+          category_count: cachedCategoryPayload.category_pills?.length ?? 0,
+          total_items: cachedCategoryPayload.pagination?.total_items ?? null,
+          count_mode: countMode,
+        });
+      }
       setLoading(false);
     }
 
@@ -669,9 +657,25 @@ export const TemplateSearchSidebar: React.FC<TemplateSearchSidebarProps> = ({
           ...current,
           all: needsSpecialCounts ? Number(categoryPayload.pagination?.total_items ?? 0) : null,
         }));
+        if (!hydrationEventRef.current) {
+          hydrationEventRef.current = true;
+          emitTemplateComponentEvent('TemplateSearchSidebar', 'navigation_hydrated', {
+            source: 'network',
+            category_count: categoryPayload.category_pills?.length ?? 0,
+            total_items: categoryPayload.pagination?.total_items ?? null,
+            count_mode: countMode,
+          });
+        }
       })
       .catch((err) => {
-        if (!ac.signal.aborted) setError(err instanceof Error ? err.message : 'Unable to load sidebar counts');
+        if (!ac.signal.aborted) {
+          const message = err instanceof Error ? err.message : 'Unable to load sidebar counts';
+          setError(message);
+          emitTemplateComponentEvent('TemplateSearchSidebar', 'navigation_error', {
+            message,
+            count_mode: countMode,
+          });
+        }
       })
       .finally(() => {
         if (!ac.signal.aborted) setLoading(false);
@@ -751,7 +755,11 @@ export const TemplateSearchSidebar: React.FC<TemplateSearchSidebarProps> = ({
   const displayCategories = shouldUseFallbackCategories ? FALLBACK_CATEGORIES : categories;
 
   return (
-    <div className={`tmsidebar ${shouldUseFilterMode ? 'tmsidebar--filter' : 'tmsidebar--navigate'}`}>
+    <div
+      className={`tmsidebar ${shouldUseFilterMode ? 'tmsidebar--filter' : 'tmsidebar--navigate'}`}
+      data-template-component="TemplateSearchSidebar"
+      data-template-component-version={TEMPLATE_MARKETPLACE_COMPONENT_VERSION}
+    >
       <style>{SIDEBAR_STYLES}</style>
       {title ? <p className="tmsidebar-title">{title}</p> : null}
 
@@ -766,7 +774,7 @@ export const TemplateSearchSidebar: React.FC<TemplateSearchSidebarProps> = ({
           searchAction={searchAction}
           queryParam={queryParam}
           showButton={false}
-          enableAnalytics
+          enableAnalytics={enableAnalytics}
           source="TemplateSearchSidebar"
         />
       )}

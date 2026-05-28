@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { parseTemplateRoute, TemplatePathKind, TemplateScope } from './templateRoute';
+import { TEMPLATE_MARKETPLACE_COMPONENT_VERSION } from './templateTelemetry';
 
-type HeadingPageKind = 'auto' | 'search' | 'all' | 'featured' | 'free' | 'landing_pages' | 'category';
-type TemplateScope = 'all' | 'featured' | 'free' | 'landing_pages';
+type HeadingPageKind = TemplatePathKind;
 type DescriptionMode = 'preserve_static' | 'dynamic';
 
 export interface TemplateMarketplaceHeadingProps {
@@ -175,84 +176,29 @@ function humanizeSlug(slug: string): string {
   );
 }
 
-function normalizeScope(value: string | null | undefined): TemplateScope | null {
-  switch (value) {
-    case 'all':
-    case 'featured':
-    case 'free':
-    case 'landing_pages':
-      return value;
-    default:
-      return null;
-  }
-}
-
-function inferPathKind(pathname: string): HeadingPageKind {
-  const path = pathname.replace(/\/+$/, '');
-  if (path === '/templates/search' || path === '/templates/search-v2') return 'search';
-  if (path === '/templates/featured') return 'featured';
-  if (path === '/templates/free' || path === '/templates/free-website-templates') return 'free';
-  if (/\/templates\/landing-page(s)?($|\/)/.test(path)) return 'landing_pages';
-  if (/\/templates\/category\/([^/?#]+)/.test(path)) return 'category';
-  if (path === '/templates' || path === '/templates/all') return 'all';
-  return 'auto';
-}
-
-function readArrayParam(params: URLSearchParams, key: string): string[] {
-  return params.getAll(key).flatMap((value) => value.split(',')).map((value) => value.trim()).filter(Boolean);
-}
-
 function readHeadingState(
   pageKind: HeadingPageKind,
   queryParam: string,
   categorySlugOverride?: string,
   subcategorySlugOverride?: string,
 ): HeadingState {
-  if (typeof window === 'undefined') {
-    const fallbackScope = normalizeScope(pageKind === 'category' ? null : pageKind) ?? 'all';
-    return {
-      q: '',
-      scope: fallbackScope,
-      categorySlug: categorySlugOverride || null,
-      subcategorySlug: subcategorySlugOverride || null,
-      categoryIsRoute: Boolean(categorySlugOverride && pageKind === 'category'),
-      subcategoryIsRoute: Boolean(subcategorySlugOverride && pageKind === 'category'),
-      styles: [],
-      types: [],
-      freeOnly: fallbackScope === 'free',
-      pathKind: pageKind,
-    };
-  }
-
-  const url = new URL(window.location.href);
-  const params = url.searchParams;
-  const pathKind = inferPathKind(url.pathname);
-  const effectiveKind = pageKind !== 'auto' ? pageKind : pathKind;
-  const categoryMatch = url.pathname.match(/\/templates\/category\/([^/?#]+)/);
-  const subcategoryMatch = url.pathname.match(/\/templates\/subcategory\/([^/?#]+)/);
-  const queryCategorySlug = params.get('category') || params.get('category_group_slug') || null;
-  const querySubcategorySlug = params.get('subcategory') || params.get('child_category_slug') || null;
-  const queryValue =
-    params.get(queryParam) ?? params.get('q') ?? params.get('query') ?? params.get('search') ?? '';
-
-  let scope = normalizeScope(params.get('scope')) ?? normalizeScope(effectiveKind) ?? 'all';
-  if (params.get('pricing') === 'free') scope = 'free';
-
+  const route = parseTemplateRoute({
+    pageKind,
+    queryParam,
+    categorySlugOverride,
+    childCategorySlugOverride: subcategorySlugOverride,
+  });
   return {
-    q: queryValue.trim(),
-    scope,
-    categorySlug:
-      categorySlugOverride ||
-      (categoryMatch ? categoryMatch[1] : queryCategorySlug),
-    subcategorySlug:
-      subcategorySlugOverride ||
-      (subcategoryMatch ? subcategoryMatch[1] : querySubcategorySlug),
-    categoryIsRoute: Boolean(categorySlugOverride ? effectiveKind === 'category' : categoryMatch),
-    subcategoryIsRoute: Boolean(subcategorySlugOverride ? effectiveKind === 'category' : subcategoryMatch),
-    styles: readArrayParam(params, 'styles').concat(readArrayParam(params, 'style_slug')),
-    types: readArrayParam(params, 'types'),
-    freeOnly: ['1', 'true', 'yes', 'on'].includes((params.get('free_only') ?? '').toLowerCase()) || scope === 'free',
-    pathKind: effectiveKind,
+    q: route.q,
+    scope: route.scope,
+    categorySlug: route.categoryGroupSlug,
+    subcategorySlug: route.childCategorySlug,
+    categoryIsRoute: route.categoryIsRoute,
+    subcategoryIsRoute: route.childCategoryIsRoute,
+    styles: route.styles,
+    types: route.types,
+    freeOnly: route.freeOnly,
+    pathKind: route.pathKind as HeadingPageKind,
   };
 }
 
@@ -260,6 +206,7 @@ function buildBaseTitle(state: HeadingState, fallbackTitle: string): string {
   const categoryLabel = state.subcategorySlug || state.categorySlug;
   if (categoryLabel && state.scope !== 'all') return `${humanizeSlug(categoryLabel)} ${SCOPE_LABELS[state.scope]}`;
   if (categoryLabel) return `${humanizeSlug(categoryLabel)} Website Templates`;
+  if (state.pathKind === 'style' && state.styles[0]) return `${humanizeSlug(state.styles[0])} Website Templates`;
   if (state.scope !== 'all') return SCOPE_LABELS[state.scope];
   if (state.pathKind === 'search') return fallbackTitle || 'Search Webflow templates';
   if (state.pathKind === 'all') return SCOPE_LABELS.all;
@@ -285,7 +232,9 @@ function hasRouteOwnedDescription(state: HeadingState): boolean {
       state.pathKind === 'all' ||
       state.pathKind === 'featured' ||
       state.pathKind === 'free' ||
-      state.pathKind === 'landing_pages',
+      state.pathKind === 'landing_pages' ||
+      state.pathKind === 'style' ||
+      state.pathKind === 'tag',
   );
 }
 
@@ -364,6 +313,9 @@ function buildContent(
   if (state.subcategorySlug && (state.pathKind === 'search' || state.subcategoryIsRoute)) {
     breadcrumbs.push({ label: humanizeSlug(state.subcategorySlug) });
   }
+  if (state.pathKind === 'style' && state.styles[0]) {
+    breadcrumbs.push({ label: humanizeSlug(state.styles[0]) });
+  }
 
   return {
     title,
@@ -429,7 +381,12 @@ export const TemplateMarketplaceHeading: React.FC<TemplateMarketplaceHeadingProp
   }, [content.title, updateDocumentTitle]);
 
   return (
-    <header className="tmheading" data-template-marketplace-heading="">
+    <header
+      className="tmheading"
+      data-template-marketplace-heading=""
+      data-template-component="TemplateMarketplaceHeading"
+      data-template-component-version={TEMPLATE_MARKETPLACE_COMPONENT_VERSION}
+    >
       <style>{HEADING_STYLES}</style>
       {showBreadcrumbs && (
         <nav className="tmheading-breadcrumbs" aria-label="Breadcrumb">
