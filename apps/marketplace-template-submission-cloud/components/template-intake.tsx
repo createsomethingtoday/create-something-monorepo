@@ -812,6 +812,40 @@ function FieldFeedback({
   );
 }
 
+function ValidatorAppRecoveryPanel({
+  actionLabel,
+  onAction
+}: {
+  actionLabel: string;
+  onAction: () => void;
+}) {
+  return (
+    <div className="submission-validator-callout" role="alert">
+      <div className="submission-validator-callout-copy">
+        <div className="submission-validator-callout-label">Validator required</div>
+        <h4 className="submission-validator-callout-title">Complete Validator checks before submitting</h4>
+        <p className="submission-validator-callout-text">
+          The submission form needs a confirmed 100% pass from the Webflow Way Validator app before
+          this template can enter review.
+        </p>
+      </div>
+      <ol className="submission-validator-steps" aria-label="Validator setup steps">
+        <li>Install the Webflow Way Validator app.</li>
+        <li>Run validation inside the Designer.</li>
+        <li>Publish the site after fixes.</li>
+        <li>Return here and validate the template again.</li>
+      </ol>
+      <button
+        className="button-sp submission-validator-callout-action"
+        type="button"
+        onClick={onAction}
+      >
+        {actionLabel}
+      </button>
+    </div>
+  );
+}
+
 function InlineActionField({
   actionLabel,
   children,
@@ -1504,6 +1538,8 @@ export function TemplateIntake() {
       onClick: () => window.open(validatorAppActionUrl, '_blank', 'noopener,noreferrer')
     };
   }
+
+  const validatorAppAction = getValidatorAppAction(fieldFeedback.publishedUrl);
 
   function scrollToSubmissionSection(section: 'join-today' | 'submit-today') {
     const target =
@@ -3133,7 +3169,6 @@ export function TemplateIntake() {
                     <InlineActionField
                       actionLabel="Validate template"
                       feedback={fieldFeedback.publishedUrl}
-                      feedbackAction={getValidatorAppAction(fieldFeedback.publishedUrl)}
                       onAction={verifyPublishedUrl}
                     >
                       <label
@@ -3145,12 +3180,17 @@ export function TemplateIntake() {
                       </label>
                       <p className="field-help cc-library-application-form_field-desc">
                         Must be an HTTPS{' '}
-                        <code className="submission-inline-code">*.webflow.io</code> URL. The full
-                        site crawl can take a few minutes. As of May 1, 2026, legacy IX2
-                        interactions are rejected; rebuild interactions with Webflow Interactions
-                        powered by GSAP (IX3). Install and run the Webflow Way Validator app before
-                        submission; a confirmed 100% pass result is required.
+                        <code className="submission-inline-code">*.webflow.io</code> URL. Run the
+                        Webflow Way Validator app before submitting; a confirmed 100% pass is
+                        required.
                       </p>
+                      <ul className="submission-published-url-requirements">
+                        <li>The full site crawl can take a few minutes.</li>
+                        <li>
+                          Legacy IX2 interactions are rejected; rebuild interactions with Webflow
+                          Interactions powered by GSAP (IX3).
+                        </li>
+                      </ul>
                       <input
                         className="field-input input w-input"
                         id="publishedUrl"
@@ -3160,6 +3200,13 @@ export function TemplateIntake() {
                         required
                       />
                     </InlineActionField>
+
+                    {validatorAppAction ? (
+                      <ValidatorAppRecoveryPanel
+                        actionLabel={validatorAppAction.label}
+                        onAction={validatorAppAction.onClick}
+                      />
+                    ) : null}
 
                     {analyzerSummary ? (
                       <div className="submission-analyzer-summary" ref={analyzerSummaryRef}>

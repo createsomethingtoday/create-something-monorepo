@@ -143,7 +143,7 @@
 </script>
 
 <svelte:head>
-  <title>Validation Playground | Webflow Asset Dashboard</title>
+  <title>GSAP Check Playground | Webflow Asset Dashboard</title>
 </svelte:head>
 
 <div class="playground">
@@ -154,11 +154,16 @@
       <!-- Header Section -->
       <section class="header-section">
         <BackNavigation href="/validation" label="Back to Validation Tools" />
-        <h1 class="page-title">GSAP Validation Playground</h1>
+        <h1 class="page-title">GSAP Check Playground</h1>
         <p class="page-subtitle">
-          Validate your Webflow site against GSAP template guidelines. The validator crawls up to 50
-          pages and checks for custom code compliance.
+          Crawl a published Webflow site for GSAP, legacy interaction, and custom-code compliance.
+          This is a fast technical check, not the full Webflow Way Validator app pass.
         </p>
+        <div class="scope-note" role="note">
+          <strong>Submission requirement:</strong>
+          A clean GSAP check is useful, but creators still need the Webflow Way Validator app to add
+          the bridge script and confirm a 100% Validator pass before submission.
+        </div>
       </section>
 
       <!-- URL Input Section -->
@@ -184,9 +189,9 @@
                 <button type="submit" class="validate-btn" disabled={isValidating}>
                   {#if isValidating}
                     <span class="spinner"></span>
-                    Validating...
+                    Checking...
                   {:else}
-                    Validate Site
+                    Run GSAP Check
                   {/if}
                 </button>
               </div>
@@ -206,7 +211,7 @@
             <div class="status-badge">
               <span class="status-icon">{result.passed ? '✓' : '✗'}</span>
               <span class="status-text">
-                {result.passed ? 'Validation Passed' : 'Validation Failed'}
+                {result.passed ? 'GSAP Check Passed' : 'GSAP Check Failed'}
               </span>
             </div>
             <div class="status-meta">
@@ -221,7 +226,7 @@
           <div class="stats-grid">
             <div class="stat-card">
               <div class="stat-value">{result.summary.passRate}%</div>
-              <div class="stat-label">Pass Rate</div>
+              <div class="stat-label">GSAP Pass Rate</div>
             </div>
             <div class="stat-card">
               <div class="stat-value">{result.summary.totalPages}</div>
@@ -482,6 +487,25 @@
     color: var(--color-fg-secondary);
     margin: 0;
     max-width: 48rem;
+  }
+
+  .scope-note {
+    display: flex;
+    gap: var(--space-xs);
+    max-width: 60rem;
+    margin-top: var(--space-md);
+    padding: 0.78rem 0.9rem;
+    border: 1px solid var(--color-info-border);
+    border-radius: var(--radius-sm);
+    background: color-mix(in srgb, var(--color-info-muted) 24%, transparent);
+    color: var(--color-fg-secondary);
+    font-size: var(--text-body-sm);
+    line-height: 1.5;
+  }
+
+  .scope-note strong {
+    color: var(--color-info);
+    white-space: nowrap;
   }
 
   /* Input Section */

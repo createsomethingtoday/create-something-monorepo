@@ -41,9 +41,9 @@
 	</div>
 
 	<p class="tool-description">
-		Designer App that validates templates against Webflow Way best practices. Automated checks for
-		design system, naming conventions, SEO, page structure, and more. ~48% fully automated
-		validation with step-by-step fix instructions.
+		Designer App that validates templates against Webflow Way best practices before submission.
+		Use it to add the Validator script, publish, re-check, and fix required items until the
+		project reaches a confirmed 100% pass.
 	</p>
 
 	<div class="how-it-works">
@@ -53,12 +53,11 @@
 		<div class="how-it-works-content">
 			<p class="how-it-works-title">How it works:</p>
 			<ul class="how-it-works-list">
-				<li>Install Designer App from Workspace Settings</li>
-				<li>Publish your project first (required for validation)</li>
-				<li>Run from Apps panel &mdash; completes in 30&ndash;60 seconds</li>
+				<li>Install the app from Webflow</li>
+				<li>Open the app from the Designer Apps panel</li>
+				<li>Add the Validator script, publish, and re-check</li>
+				<li>Run Validator &mdash; completes in 30&ndash;60 seconds</li>
 				<li>Get step-by-step fix instructions for each issue</li>
-				<li>Track progress with interactive checklist</li>
-				<li>Smart refresh verifies fixes automatically</li>
 			</ul>
 		</div>
 	</div>
@@ -74,7 +73,7 @@
 		</li>
 		<li>
 			<Check size={16} />
-			~48% automated (assets require manual review)
+			Required 100% Validator pass before submission
 		</li>
 	</ul>
 
@@ -103,6 +102,7 @@
 			<div class="guide-block">
 				<h4 class="guide-subheading">Install the App</h4>
 				<ol class="guide-steps">
+					<li>Click Install App and approve the Webflow app install</li>
 					<li>Open your project in Webflow Designer</li>
 					<li>Find the Apps panel on the left sidebar</li>
 					<li>Click the Webflow Way Validator to open it</li>
@@ -112,15 +112,17 @@
 			<div class="guide-block">
 				<h4 class="guide-subheading">Run Your First Validation</h4>
 				<ol class="guide-steps">
-					<li>Click the blue "Validate This Project" button</li>
+					<li>Click Add Validator script if the app asks for it</li>
+					<li>Publish the site and click Re-check script</li>
+					<li>Click the blue "Run Validator" button</li>
 					<li>Wait 30&ndash;60 seconds while the tool analyzes your project</li>
-					<li>Review your compliance score</li>
+					<li>Review your compliance score and fix required items</li>
 				</ol>
 			</div>
 
 			<div class="guide-callout info">
-				<strong>Important:</strong> Publish your project before validating. The app can only check
-				published changes.
+				<strong>Important:</strong> Publish after adding the Validator script. The submission form
+				checks the published site for the confirmed Validator pass.
 			</div>
 		</section>
 
