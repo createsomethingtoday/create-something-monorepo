@@ -1,4 +1,4 @@
-import { resolveAlias } from './db.js';
+import { ensureChildCategoryTaxonomySchema, resolveAlias } from './db.js';
 import type {
   DocumentCountRow,
   DocumentRow,
@@ -12,6 +12,35 @@ import type {
   TemplateSort,
 } from './types.js';
 import { parseJsonArray } from './utils.js';
+
+const PUBLIC_CATEGORY_ROUTE_SLUGS = new Set([
+  'architecture-and-design-websites',
+  'arts-and-entertainment-websites',
+  'blog-and-editorial-websites',
+  'community-and-nonprofit-websites',
+  'documentation-websites',
+  'education-websites',
+  'environment-websites',
+  'food-and-drink-websites',
+  'government-websites',
+  'hair-and-beauty-websites',
+  'home-services-websites',
+  'hr-and-hiring-websites',
+  'launch-and-coming-soon-websites',
+  'medical-websites',
+  'music-and-audio-websites',
+  'personal-websites',
+  'portfolio-and-agency-websites',
+  'professional-services-websites',
+  'real-estate-websites',
+  'retail-and-e-commerce-websites',
+  'technology-websites',
+  'transportation-websites',
+  'travel-websites',
+  'ui-kit-websites',
+  'weddings-and-events-websites',
+  'wellness-websites',
+]);
 
 function placeholderList(count: number): string {
   return Array.from({ length: count }, () => '?').join(', ');
@@ -171,11 +200,13 @@ async function loadCategoryPills(env: Env, params: SearchParams): Promise<Array<
     .bind(...sqlParts.binds)
     .all<PillRow>();
 
-  return (result.results ?? []).map((row) => ({
-    name: row.name,
-    slug: row.slug,
-    count: Number(row.count),
-  }));
+  return (result.results ?? [])
+    .filter((row) => PUBLIC_CATEGORY_ROUTE_SLUGS.has(row.slug))
+    .map((row) => ({
+      name: row.name,
+      slug: row.slug,
+      count: Number(row.count),
+    }));
 }
 
 async function loadFacetStyles(env: Env, params: SearchParams): Promise<FacetStyleRow[]> {
@@ -225,6 +256,40 @@ async function loadSubcategoryPills(env: Env, params: SearchParams): Promise<Arr
     childCategorySlug: null,
   };
   const sqlParts = buildSqlParts(scopedParams, { excludeChildCategory: true });
+
+  try {
+    await ensureChildCategoryTaxonomySchema(env.DB);
+
+    const result = await env.DB
+      .prepare(`
+        WITH filtered AS (
+          SELECT d.id
+          ${sqlParts.fromClause}
+          ${sqlParts.whereClause}
+        )
+        SELECT tcc.child_category_name AS name, tcc.child_category_slug AS slug, COUNT(DISTINCT tcc.template_document_id) AS count
+        FROM filtered
+        JOIN template_child_categories tcc ON tcc.template_document_id = filtered.id
+        JOIN child_category_taxonomy cct
+          ON cct.child_category_slug = tcc.child_category_slug
+         AND cct.category_group_slug = ?
+        GROUP BY tcc.child_category_slug, tcc.child_category_name
+        ORDER BY tcc.child_category_name ASC
+      `)
+      .bind(...sqlParts.binds, groupSlug)
+      .all<PillRow>();
+
+    return (result.results ?? []).map((row) => ({
+      name: row.name,
+      slug: row.slug,
+      count: Number(row.count),
+    }));
+  } catch (error) {
+    console.warn(
+      'Falling back to raw subcategory pills after taxonomy lookup failed',
+      error instanceof Error ? error.message : String(error),
+    );
+  }
 
   const result = await env.DB
     .prepare(`

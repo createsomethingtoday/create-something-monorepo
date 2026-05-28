@@ -1,8 +1,24 @@
 import { fetchModifiedAssetsSince, fetchPublishedTemplateAssets, loadLookupMaps } from './airtable.js';
-import { clearIndex, deleteTemplateDocuments, getSyncCursor, recordSyncSummary, setSyncCursor, upsertTemplateDocuments } from './db.js';
+import {
+  clearIndex,
+  deleteTemplateDocuments,
+  getSyncCursor,
+  recordSyncSummary,
+  setSyncCursor,
+  upsertChildCategoryTaxonomy,
+  upsertTemplateDocuments,
+} from './db.js';
 import { stripHtml } from './html.js';
 import { canonicalizeCategoryGroupSlug } from './slug.js';
-import type { AirtableAssetFields, AirtableRecord, Env, LookupMaps, SyncSummary, TemplateDocumentInput } from './types.js';
+import type {
+  AirtableAssetFields,
+  AirtableRecord,
+  ChildCategoryTaxonomyInput,
+  Env,
+  LookupMaps,
+  SyncSummary,
+  TemplateDocumentInput,
+} from './types.js';
 import { chunk, ensureBoolean, ensureNumber, ensureStringArray, nowIso, parseJsonArray, uniqueStrings } from './utils.js';
 
 function isPublishedTemplate(record: AirtableRecord<AirtableAssetFields>): boolean {
@@ -101,6 +117,47 @@ function normalizeTemplateRecord(
   };
 }
 
+function normalizeChildCategoryTaxonomy(lookups: LookupMaps): ChildCategoryTaxonomyInput[] {
+  const rows: ChildCategoryTaxonomyInput[] = [];
+  const seen = new Set<string>();
+  const parentGroups = new Map<string, { name: string; slug: string }>();
+
+  for (const entry of lookups.childCategories.values()) {
+    if (!entry.isCategoryGroup) continue;
+
+    const slug = canonicalizeCategoryGroupSlug(entry.displayName);
+    const group = { name: entry.displayName, slug };
+    for (const alias of [entry.category, entry.displayName, entry.name, entry.parentCategoryName]) {
+      if (alias) parentGroups.set(alias, group);
+    }
+  }
+
+  for (const entry of lookups.childCategories.values()) {
+    if (entry.isCategoryGroup) continue;
+
+    const groupNames = entry.categoryGroups.length > 0 ? entry.categoryGroups : [entry.parentCategoryName].filter(Boolean);
+
+    for (const groupName of groupNames) {
+      const parentGroup = parentGroups.get(groupName);
+      const normalizedGroupSlug = parentGroup?.slug ?? canonicalizeCategoryGroupSlug(groupName);
+      if (!normalizedGroupSlug) continue;
+
+      const key = `${entry.slug}:${normalizedGroupSlug}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+
+      rows.push({
+        childCategorySlug: entry.slug,
+        childCategoryName: entry.displayName,
+        categoryGroupSlug: normalizedGroupSlug,
+        categoryGroupName: parentGroup?.name ?? groupName,
+      });
+    }
+  }
+
+  return rows;
+}
+
 async function runFullSync(env: Env): Promise<SyncSummary> {
   const startedAt = nowIso();
   const [lookups, assets] = await Promise.all([loadLookupMaps(env), fetchPublishedTemplateAssets(env)]);
@@ -109,6 +166,7 @@ async function runFullSync(env: Env): Promise<SyncSummary> {
     .filter((value): value is NonNullable<typeof value> => Boolean(value));
 
   await clearIndex(env.DB);
+  await upsertChildCategoryTaxonomy(env.DB, normalizeChildCategoryTaxonomy(lookups));
   await upsertTemplateDocuments(env.DB, documents);
 
   const summary: SyncSummary = {
@@ -145,6 +203,7 @@ async function runIncrementalSync(env: Env): Promise<SyncSummary> {
   }
 
   if (toDelete.length > 0) await deleteTemplateDocuments(env.DB, toDelete);
+  await upsertChildCategoryTaxonomy(env.DB, normalizeChildCategoryTaxonomy(lookups));
   if (toUpsert.length > 0) await upsertTemplateDocuments(env.DB, toUpsert);
 
   const summary: SyncSummary = {

@@ -246,6 +246,13 @@ export interface DocumentCountRow {
   total: number;
 }
 
+export interface ChildCategoryTaxonomyInput {
+  childCategorySlug: string;
+  childCategoryName: string;
+  categoryGroupSlug: string;
+  categoryGroupName: string;
+}
+
 export interface FacetStyleRow {
   name: string;
   slug: string;

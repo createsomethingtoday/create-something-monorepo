@@ -1,4 +1,4 @@
-import type { AliasType, DocumentCountRow, TemplateDocumentInput } from './types.js';
+import type { AliasType, ChildCategoryTaxonomyInput, DocumentCountRow, TemplateDocumentInput } from './types.js';
 import { chunk, nowIso } from './utils.js';
 
 const UPSERT_TEMPLATE_SQL = `
@@ -91,11 +91,70 @@ function placeholderList(count: number): string {
 }
 
 export async function clearIndex(db: D1Database): Promise<void> {
+  await ensureChildCategoryTaxonomySchema(db);
   await db.exec(`
     DELETE FROM template_styles;
     DELETE FROM template_child_categories;
+    DELETE FROM child_category_taxonomy;
     DELETE FROM template_documents;
   `);
+}
+
+export async function ensureChildCategoryTaxonomySchema(db: D1Database): Promise<void> {
+  await db
+    .prepare(
+      `
+      CREATE TABLE IF NOT EXISTS child_category_taxonomy (
+        child_category_slug TEXT NOT NULL,
+        child_category_name TEXT NOT NULL,
+        category_group_slug TEXT NOT NULL,
+        category_group_name TEXT NOT NULL,
+        PRIMARY KEY (child_category_slug, category_group_slug)
+      )
+    `,
+    )
+    .run();
+
+  await db
+    .prepare(
+      `
+      CREATE INDEX IF NOT EXISTS idx_child_category_taxonomy_group
+        ON child_category_taxonomy (category_group_slug, child_category_slug)
+    `,
+    )
+    .run();
+}
+
+export async function upsertChildCategoryTaxonomy(db: D1Database, taxonomy: ChildCategoryTaxonomyInput[]): Promise<void> {
+  await ensureChildCategoryTaxonomySchema(db);
+  if (taxonomy.length === 0) return;
+
+  const statements = [
+    db.prepare('DELETE FROM child_category_taxonomy'),
+    ...taxonomy.map((entry) =>
+      db
+        .prepare(
+          `
+          INSERT OR REPLACE INTO child_category_taxonomy (
+            child_category_slug,
+            child_category_name,
+            category_group_slug,
+            category_group_name
+          ) VALUES (?, ?, ?, ?)
+        `,
+        )
+        .bind(
+          entry.childCategorySlug,
+          entry.childCategoryName,
+          entry.categoryGroupSlug,
+          entry.categoryGroupName,
+        ),
+    ),
+  ];
+
+  for (const group of chunk(statements, 50)) {
+    await db.batch(group);
+  }
 }
 
 export async function upsertTemplateDocuments(db: D1Database, documents: TemplateDocumentInput[]): Promise<void> {
