@@ -335,7 +335,7 @@
 
   function renderSuccess(state, summary, verifiedUrl) {
     resetMessages(state);
-    let message = "Success! All " + summary.siteResults.passedCount + " pages in the project meet our requirements.";
+    let message = "GSAP check passed. All " + summary.siteResults.passedCount + " pages in the project passed the published-site GSAP and custom-code crawl.";
     const gsapDetected = summary.pageResults.some(function (page) {
       return page.summary && page.summary.validGsapCount > 0;
     });
@@ -343,6 +343,8 @@
     if (gsapDetected) {
       message += " GSAP animations were detected and validated.";
     }
+
+    message += " Complete the Webflow Way Validator app pass before submitting.";
 
     show(state.success, message);
     if (state.verified) {
@@ -443,7 +445,7 @@
       if (state.input.value) {
         state.input.value = validated.value;
         resetMessages(state);
-        show(state.progress, "Valid URL format. Click 'Validate Template' to validate the full project.");
+        show(state.progress, "Valid URL format. Click 'Validate Template' to run the GSAP and custom-code crawl.");
       }
     });
 

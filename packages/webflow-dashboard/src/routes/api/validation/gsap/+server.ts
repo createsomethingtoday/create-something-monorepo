@@ -221,9 +221,10 @@ function generateRecommendations(data: WorkerResponse): Recommendation[] {
 	if (!data.passed) {
 		recommendations.push({
 			type: 'critical',
-			title: 'Template Failed Validation',
-			description: 'This template contains code that violates Webflow template guidelines.',
-			action: 'Review and fix all flagged code before submission.',
+			title: 'GSAP Check Failed',
+			description:
+				'This template contains GSAP, legacy interaction, or custom-code issues that may violate interaction guidelines.',
+			action: 'Review and fix all flagged code, then rerun the GSAP check before submission.',
 			required: true,
 			priority: 1
 		});
@@ -259,9 +260,10 @@ function generateRecommendations(data: WorkerResponse): Recommendation[] {
 	if (data.passed) {
 		recommendations.push({
 			type: 'success',
-			title: 'Template Validation Passed',
-			description: 'All pages comply with Webflow template guidelines.',
-			action: 'Template is ready for submission to the marketplace.',
+			title: 'GSAP Check Passed',
+			description:
+				'No GSAP, legacy interaction, or custom-code issues were found in the crawled pages.',
+			action: 'Run the Webflow Way Validator app for the required full submission pass.',
 			required: false,
 			priority: 3
 		});

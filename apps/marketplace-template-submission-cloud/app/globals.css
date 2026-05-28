@@ -969,6 +969,109 @@ select {
   font-weight: 700;
 }
 
+.submission-published-url-requirements {
+  margin: 0.45rem 0 0;
+  padding-left: 1.05rem;
+  color: #676767;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.submission-published-url-requirements li + li {
+  margin-top: 0.25rem;
+}
+
+.submission-validator-callout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.875rem 1rem;
+  align-items: start;
+  padding: 1rem 1.125rem;
+  border: 1px solid rgba(207, 49, 59, 0.18);
+  border-left: 3px solid var(--error-text, #cf313b);
+  border-radius: 0.875rem;
+  background: #fff8f8;
+  box-shadow: 0 1px 2px rgba(8, 8, 8, 0.04);
+}
+
+.submission-validator-callout-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.submission-validator-callout-label {
+  color: var(--error-text, #cf313b);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.submission-validator-callout-title {
+  margin: 0;
+  color: #191919;
+  font-size: 1rem;
+  line-height: 1.35;
+}
+
+.submission-validator-callout-text {
+  margin: 0;
+  color: #525252;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.submission-validator-steps {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: validator-step;
+}
+
+.submission-validator-steps li {
+  counter-increment: validator-step;
+  position: relative;
+  min-width: 0;
+  padding: 0.625rem 0.625rem 0.625rem 2rem;
+  border: 1px solid rgba(207, 49, 59, 0.12);
+  border-radius: 0.625rem;
+  background: #fff;
+  color: #3b3b3b;
+  font-size: 0.75rem;
+  font-weight: 650;
+  line-height: 1.3;
+}
+
+.submission-validator-steps li::before {
+  content: counter(validator-step);
+  position: absolute;
+  top: 0.625rem;
+  left: 0.625rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 999px;
+  background: rgba(207, 49, 59, 0.08);
+  color: var(--error-text, #cf313b);
+  font-size: 0.625rem;
+  font-weight: 700;
+}
+
+.submission-validator-callout-action.button-sp {
+  align-self: start;
+  justify-self: end;
+  margin: 0;
+  white-space: nowrap;
+}
+
 .submission-autofill-badge {
   display: inline-flex;
   align-items: center;
@@ -1786,6 +1889,19 @@ select {
 
   .submission-grid-2,
   .submission-field-inline {
+    grid-template-columns: 1fr;
+  }
+
+  .submission-validator-callout {
+    grid-template-columns: 1fr;
+  }
+
+  .submission-validator-callout-action.button-sp {
+    justify-self: stretch;
+    width: 100%;
+  }
+
+  .submission-validator-steps {
     grid-template-columns: 1fr;
   }
 
