@@ -193,20 +193,23 @@ const SIDEBAR_STYLES = `
   outline-offset: 2px;
 }
 
-.tmsidebar-icon {
+.tmsidebar-indicator {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 16px;
   height: 16px;
   flex: 0 0 auto;
-  border-radius: 50%;
-  background: #d9d9d9;
   color: #757575;
   opacity: 0.8;
 }
 
-.tmsidebar-icon::after {
+.tmsidebar-indicator--dot {
+  border-radius: 50%;
+  background: #d9d9d9;
+}
+
+.tmsidebar-indicator--dot::after {
   content: "";
   width: 6px;
   height: 6px;
@@ -215,27 +218,42 @@ const SIDEBAR_STYLES = `
   opacity: 0;
 }
 
-.tmsidebar-row[aria-current="page"] .tmsidebar-icon,
-.tmsidebar-row:hover .tmsidebar-icon {
-  background: #e8f0ff;
+.tmsidebar-row[aria-current="page"] .tmsidebar-indicator,
+.tmsidebar-row:hover .tmsidebar-indicator {
   color: #146ef5;
   opacity: 1;
 }
 
-.tmsidebar-row[aria-current="page"] .tmsidebar-icon::after {
+.tmsidebar-row[aria-current="page"] .tmsidebar-indicator--dot,
+.tmsidebar-row:hover .tmsidebar-indicator--dot {
+  background: #e8f0ff;
+}
+
+.tmsidebar-row[aria-current="page"] .tmsidebar-indicator--dot::after {
   opacity: 1;
 }
 
-.tmsidebar--filter .tmsidebar-icon {
+.tmsidebar-indicator--check {
   border: 1px solid currentColor;
   border-radius: 4px;
   background: transparent;
 }
 
-.tmsidebar--filter .tmsidebar-icon::after {
+.tmsidebar-indicator--check::after {
+  content: "";
   width: 8px;
   height: 8px;
   border-radius: 2px;
+  background: currentColor;
+  opacity: 0;
+}
+
+.tmsidebar-row[aria-current="page"] .tmsidebar-indicator--check {
+  color: #146ef5;
+}
+
+.tmsidebar-row[aria-current="page"] .tmsidebar-indicator--check::after {
+  opacity: 1;
 }
 
 .tmsidebar-label {
@@ -569,6 +587,15 @@ export const TemplateSearchSidebar: React.FC<TemplateSearchSidebarProps> = ({
     return <span className="tmsidebar-count">{formatCount(value)}</span>;
   };
 
+  const renderIndicator = () => (
+    <span
+      className={`tmsidebar-indicator ${
+        shouldUseFilterMode ? 'tmsidebar-indicator--check' : 'tmsidebar-indicator--dot'
+      }`}
+      aria-hidden="true"
+    />
+  );
+
   return (
     <div className={`tmsidebar ${shouldUseFilterMode ? 'tmsidebar--filter' : 'tmsidebar--navigate'}`}>
       <style>{SIDEBAR_STYLES}</style>
@@ -604,7 +631,7 @@ export const TemplateSearchSidebar: React.FC<TemplateSearchSidebarProps> = ({
                       aria-current={active ? 'page' : undefined}
                       onClick={(event) => onSpecialClick(row.scope, event)}
                     >
-                      <span className="tmsidebar-icon" aria-hidden="true" />
+                      {renderIndicator()}
                       <span className="tmsidebar-label">{row.label}</span>
                       {renderCount(counts[row.key])}
                     </a>
@@ -634,7 +661,7 @@ export const TemplateSearchSidebar: React.FC<TemplateSearchSidebarProps> = ({
                       aria-current={active ? 'page' : undefined}
                       onClick={(event) => onCategoryClick(category, event)}
                     >
-                      <span className="tmsidebar-icon" aria-hidden="true" />
+                      {renderIndicator()}
                       <span className="tmsidebar-label">{category.name}</span>
                       {renderCount(category.count)}
                     </a>
