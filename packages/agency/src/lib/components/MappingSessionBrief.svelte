@@ -6,8 +6,8 @@
   export let title = 'The first call turns the pitch into a scoped operating path.';
   export let description =
     'The buyer does not need a technical scavenger hunt. They need to see what agents and tools can do, what stays human, where MCPs fit, and how the stack stays governable before implementation starts.';
-  export let ctaHref = '/book';
-  export let ctaLabel = agencyCoreMessaging.bookMappingSessionLabel;
+  export let ctaHref: string = agencyCoreMessaging.workflowMappingSessionHref;
+  export let ctaLabel: string = agencyCoreMessaging.bookMappingSessionLabel;
 
   const sessionSteps = [
     {
@@ -23,12 +23,14 @@
     {
       label: 'Decide',
       title: 'The first wedge',
-      detail: 'Whether the right first move is MCP Wedge, Workflow System, Policy OS, referral, or governed agent capacity.'
+      detail:
+        'Whether the right first move is MCP Wedge, Workflow System, Policy OS, referral, or governed agent capacity.'
     },
     {
       label: 'Keep',
       title: 'The artifact trail',
-      detail: 'Workflow map, stack boundary, agent/MCP contract, policy notes, and implementation path.'
+      detail:
+        'Workflow map, stack boundary, agent/MCP contract, policy notes, and implementation path.'
     }
   ];
 </script>

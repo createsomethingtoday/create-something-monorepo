@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Button, SEO } from '@create-something/canon';
+  import { Button, PropertyFunnel, SEO } from '@create-something/canon';
   import { BlurFade } from '@create-something/canon/magicui';
   import RuntimeWorkbench from '$lib/components/RuntimeWorkbench.svelte';
 
@@ -118,7 +118,7 @@
       eyebrow: '.agency',
       title: 'Ship the workflow',
       body: 'When the pattern matters commercially, operationally, or reputationally, it moves into governed delivery.',
-      href: 'https://createsomething.agency'
+      href: 'https://createsomething.agency/book?source=space&intent=runtime-validation&lane=workflow_infrastructure'
     },
     {
       eyebrow: '.ltd',
@@ -198,9 +198,8 @@
       </BlurFade>
       <BlurFade delay={0.1}>
         <p>
-          The workbench is organized around live routes that expose execution, analysis, or
-          learning loops. Each surface should feel like a working tool, not a static marketing
-          panel.
+          The workbench is organized around live routes that expose execution, analysis, or learning
+          loops. Each surface should feel like a working tool, not a static marketing panel.
         </p>
       </BlurFade>
     </div>
@@ -302,6 +301,12 @@
     </div>
   </div>
 </section>
+
+<PropertyFunnel
+  current="space"
+  heading="Use the workbench as the bridge into a real workflow."
+  description="Try the runtime here, read the pattern when it holds up, and move to a mapping session when the workflow needs controls, owners, and a handoff."
+/>
 
 <section class="cta-section">
   <div class="shell-inner-pad">

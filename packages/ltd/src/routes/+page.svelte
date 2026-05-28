@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { SEO, NewsletterSignup } from '@create-something/canon';
+  import { SEO, NewsletterSignup, PropertyFunnel } from '@create-something/canon';
   import { AnimatedGridPattern, BlurFade, ShimmerButton } from '@create-something/canon/magicui';
 </script>
 
@@ -173,6 +173,12 @@
     </div>
   </div>
 </section>
+
+<PropertyFunnel
+  current="ltd"
+  heading="Turn the canon into the next operating decision."
+  description="Start with the principles, read the research when the claim needs evidence, use the workbench when it needs runtime proof, and book a mapping session when it belongs in the business."
+/>
 
 <!-- Newsletter CTA -->
 <NewsletterSignup
