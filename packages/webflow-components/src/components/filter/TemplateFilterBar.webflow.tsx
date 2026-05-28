@@ -5,7 +5,7 @@ import { TemplateFilterBar } from './TemplateFilterBar';
 export default declareComponent(TemplateFilterBar, {
   name: 'Template Filter Bar',
   description:
-    'Renders styled category/subcategory pills plus Style, Type, Sort, Search, and Free-Only filter controls for the template marketplace. Communicates with Template Grid via URL params — place both on the same page.',
+    'Renders Style, Type, Sort, Search, and Free-Only filter controls for the template marketplace. Use Template Search Sidebar for category navigation.',
   group: 'Marketplace',
   props: {
     apiBase: props.Text({
@@ -66,9 +66,10 @@ export default declareComponent(TemplateFilterBar, {
       tooltip: 'Show the Free Only checkbox. Not needed on pages that are already scoped to free.',
     }),
     showSubcategoryPills: props.Boolean({
-      name: 'Show Subcategory Pills',
-      defaultValue: true,
-      tooltip: 'Show the category/subcategory pill row above the Style/Type/Sort controls when the page has a scoped template listing.',
+      name: 'Show Category Pills',
+      defaultValue: false,
+      tooltip:
+        'Optional. Leave off when Template Search Sidebar is present so categories stay in one surface. Turn on only for page-specific horizontal category/subcategory navigation.',
     }),
     defaultSort: props.Variant({
       name: 'Default Sort',

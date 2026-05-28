@@ -93,7 +93,7 @@ export interface TemplateFilterBarProps {
   sortDisplay?: SortDisplay;
   /** Show the Free Only checkbox */
   showFreeOnly?: boolean;
-  /** Show category-scoped subcategory pills above the filters */
+  /** Opt into category/subcategory pills above the filters. Sidebar owns category navigation by default. */
   showSubcategoryPills?: boolean;
   /** Default sort when none is set in the URL */
   defaultSort?: TemplateSort;
@@ -859,7 +859,7 @@ export const TemplateFilterBar: React.FC<TemplateFilterBarProps> = ({
   showSort = true,
   sortDisplay = 'auto',
   showFreeOnly = false,
-  showSubcategoryPills = true,
+  showSubcategoryPills = false,
   defaultSort = 'popular',
   searchPlaceholder = 'Search templates…',
   stylesAllLabel = 'All Styles',
