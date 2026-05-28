@@ -1,15 +1,5 @@
 <script lang="ts">
-  import {
-    Button,
-    Card,
-    CardContent,
-    CardHeader,
-    CardTitle,
-    Dialog,
-    Input,
-    Label,
-    Textarea
-  } from './ui';
+  import { Button, Dialog, Input, Label, Textarea } from './ui';
   import CarouselUploader from './CarouselUploader.svelte';
   import ImageUploader from './ImageUploader.svelte';
   import SecondaryThumbnailUploader from './SecondaryThumbnailUploader.svelte';
@@ -229,7 +219,6 @@
   let nameError = $state<string | null>(null);
   let isCheckingName = $state(false);
   let nameCheckTimeout: ReturnType<typeof setTimeout> | null = null;
-  let modalRef: HTMLDivElement | undefined = $state();
   let showArchiveConfirm = $state(false);
 
   const originalName = $derived(asset.name);
@@ -241,16 +230,63 @@
   );
   const visibleScreenshotAltCount = $derived(Math.min(carouselImages.length, 5));
 
-  function handleClickOutside(event: MouseEvent) {
-    if (modalRef && !modalRef.contains(event.target as Node)) {
+  function formStatesEqual(left: EditFormState, right: EditFormState): boolean {
+    return (
+      left.name === right.name &&
+      left.descriptionShort === right.descriptionShort &&
+      left.descriptionLongHtml === right.descriptionLongHtml &&
+      left.websiteUrl === right.websiteUrl &&
+      left.previewUrl === right.previewUrl &&
+      left.appCapabilities === right.appCapabilities &&
+      left.appInstallUrl === right.appInstallUrl &&
+      arraysEqual(left.appScopes, right.appScopes) &&
+      left.appAvatarAltText === right.appAvatarAltText &&
+      arraysEqual(left.paymentType, right.paymentType) &&
+      left.visibility === right.visibility &&
+      arraysEqual(left.appCategory, right.appCategory) &&
+      left.creatorName === right.creatorName &&
+      left.creatorWebsite === right.creatorWebsite &&
+      left.creatorContactEmail === right.creatorContactEmail &&
+      arraysEqual(left.appFeaturesOverview, right.appFeaturesOverview) &&
+      left.appDeveloperNotes === right.appDeveloperNotes &&
+      left.appAccessCredentials === right.appAccessCredentials &&
+      left.appVideoUrl === right.appVideoUrl &&
+      left.appDemoVideoUrl === right.appDemoVideoUrl &&
+      left.appPrivacyPolicyUrl === right.appPrivacyPolicyUrl &&
+      left.appSupportEmail === right.appSupportEmail &&
+      left.appSupportUrl === right.appSupportUrl &&
+      left.appTermsUrl === right.appTermsUrl &&
+      arraysEqual(left.appScreenshotAltTexts, right.appScreenshotAltTexts)
+    );
+  }
+
+  const hasUnsavedChanges = $derived.by(() => {
+    const initialFormState = getInitialFormState(asset);
+    return (
+      !formStatesEqual(formData, initialFormState) ||
+      thumbnailUrl !== (asset.thumbnailUrl || null) ||
+      !arraysEqual(secondaryThumbnails, getInitialSecondaryThumbnails(asset)) ||
+      !arraysEqual(carouselImages, asset.carouselImages || [])
+    );
+  });
+
+  function canDismiss(): boolean {
+    if (isLoading || isArchiving) return false;
+    if (!hasUnsavedChanges) return true;
+    if (typeof window === 'undefined') return false;
+    return window.confirm('Discard unsaved changes?');
+  }
+
+  function handleDismiss() {
+    if (canDismiss()) {
       onClose();
     }
   }
 
-  function handleEscape(event: KeyboardEvent) {
-    if (event.key === 'Escape') {
-      onClose();
-    }
+  function handleBeforeUnload(event: BeforeUnloadEvent) {
+    if (!hasUnsavedChanges || isLoading || isArchiving) return;
+    event.preventDefault();
+    event.returnValue = '';
   }
 
   async function checkNameUniqueness(name: string) {
@@ -744,467 +780,453 @@
   }
 
   $effect(() => {
-    document.addEventListener('keydown', handleEscape);
     return () => {
-      document.removeEventListener('keydown', handleEscape);
       if (nameCheckTimeout) {
         clearTimeout(nameCheckTimeout);
       }
     };
   });
+
+  $effect(() => {
+    if (!hasUnsavedChanges || typeof window === 'undefined') return;
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  });
 </script>
 
-<!-- svelte-ignore a11y_click_events_have_key_events -->
-<!-- svelte-ignore a11y_no_static_element_interactions -->
-<div class="modal-overlay" onclick={handleClickOutside}>
-  <div class="modal-container" bind:this={modalRef}>
-    <Card class="modal-card">
-      <CardHeader>
-        <CardTitle>{isAppAsset ? 'Edit App' : 'Edit Asset'}</CardTitle>
-        <p class="modal-description">
-          {isAppAsset
-            ? 'Update the fields this app listing supports in the marketplace record.'
-            : 'Update your asset information and media.'}
-        </p>
-      </CardHeader>
-      <CardContent>
-        <form onsubmit={handleSubmit} class="form">
-          {#if error}
-            <div class="error-message">
-              {error}
-            </div>
+<Dialog
+  isOpen={true}
+  {onClose}
+  beforeClose={canDismiss}
+  closeOnBackdrop={!hasUnsavedChanges && !isLoading && !isArchiving}
+  title={isAppAsset ? 'Edit App' : 'Edit Asset'}
+  size="xl"
+>
+  <p class="modal-description">
+    {isAppAsset
+      ? 'Update the fields this app listing supports in the marketplace record.'
+      : 'Update your asset information and media.'}
+  </p>
+  <form onsubmit={handleSubmit} class="form">
+    {#if error}
+      <div class="error-message">
+        {error}
+      </div>
+    {/if}
+
+    <div class="form-section">
+      <h3 class="section-title">Basic Information</h3>
+      <div class="form-field">
+        <Label for="name">{isAppAsset ? 'App Name' : 'Name *'}</Label>
+        <Input
+          id="name"
+          type="text"
+          value={formData.name}
+          oninput={handleNameChange}
+          placeholder="Asset name"
+          required={canEditName}
+          disabled={!canEditName}
+        />
+        {#if canEditName}
+          {#if isCheckingName}
+            <span class="field-hint checking">Checking availability...</span>
+          {:else if nameError}
+            <span class="field-hint error">{nameError}</span>
+          {:else if formData.name !== originalName && formData.name.trim()}
+            <span class="field-hint success">Name is available</span>
           {/if}
+        {:else}
+          <span class="field-hint">
+            App name updates should stay aligned with the submission form and are read-only here.
+          </span>
+        {/if}
+      </div>
 
-          <div class="form-section">
-            <h3 class="section-title">Basic Information</h3>
-            <div class="form-field">
-              <Label for="name">{isAppAsset ? 'App Name' : 'Name *'}</Label>
-              <Input
-                id="name"
-                type="text"
-                value={formData.name}
-                oninput={handleNameChange}
-                placeholder="Asset name"
-                required={canEditName}
-                disabled={!canEditName}
-              />
-              {#if canEditName}
-                {#if isCheckingName}
-                  <span class="field-hint checking">Checking availability...</span>
-                {:else if nameError}
-                  <span class="field-hint error">{nameError}</span>
-                {:else if formData.name !== originalName && formData.name.trim()}
-                  <span class="field-hint success">Name is available</span>
-                {/if}
-              {:else}
-                <span class="field-hint">
-                  App name updates should stay aligned with the submission form and are read-only
-                  here.
-                </span>
-              {/if}
-            </div>
+      <div class="form-field">
+        <Label for="descriptionShort"
+          >{isAppAsset ? 'App Preview Description' : 'Short Description'}</Label
+        >
+        <Input
+          id="descriptionShort"
+          type="text"
+          bind:value={formData.descriptionShort}
+          placeholder={isAppAsset
+            ? 'Short app description for marketplace previews'
+            : 'Brief description (appears in search results)'}
+          maxlength={isAppAsset ? 100 : undefined}
+        />
+        {#if isAppAsset}
+          <span class="field-hint">{formData.descriptionShort.length}/100 characters</span>
+        {/if}
+      </div>
 
-            <div class="form-field">
-              <Label for="descriptionShort"
-                >{isAppAsset ? 'App Preview Description' : 'Short Description'}</Label
-              >
-              <Input
-                id="descriptionShort"
-                type="text"
-                bind:value={formData.descriptionShort}
-                placeholder={isAppAsset
-                  ? 'Short app description for marketplace previews'
-                  : 'Brief description (appears in search results)'}
-                maxlength={isAppAsset ? 100 : undefined}
-              />
-              {#if isAppAsset}
-                <span class="field-hint">{formData.descriptionShort.length}/100 characters</span>
-              {/if}
-            </div>
+      <div class="form-field">
+        <Label for="descriptionLongHtml"
+          >{isAppAsset ? 'App Detail Description' : 'Long Description'}</Label
+        >
+        <Textarea
+          id="descriptionLongHtml"
+          bind:value={formData.descriptionLongHtml}
+          placeholder="Detailed description"
+          rows={isAppAsset ? 6 : 4}
+        />
+        {#if isAppAsset}
+          <span class="field-hint">Long-form marketplace detail copy. HTML is preserved as-is.</span
+          >
+        {/if}
+      </div>
 
-            <div class="form-field">
-              <Label for="descriptionLongHtml"
-                >{isAppAsset ? 'App Detail Description' : 'Long Description'}</Label
-              >
-              <Textarea
-                id="descriptionLongHtml"
-                bind:value={formData.descriptionLongHtml}
-                placeholder="Detailed description"
-                rows={isAppAsset ? 6 : 4}
-              />
-              {#if isAppAsset}
-                <span class="field-hint"
-                  >Long-form marketplace detail copy. HTML is preserved as-is.</span
-                >
-              {/if}
-            </div>
+      <div class="form-row">
+        <div class="form-field">
+          <Label for="websiteUrl">Website URL</Label>
+          <Input
+            id="websiteUrl"
+            type="url"
+            bind:value={formData.websiteUrl}
+            placeholder="https://example.com"
+          />
+        </div>
 
-            <div class="form-row">
-              <div class="form-field">
-                <Label for="websiteUrl">Website URL</Label>
-                <Input
-                  id="websiteUrl"
-                  type="url"
-                  bind:value={formData.websiteUrl}
-                  placeholder="https://example.com"
-                />
-              </div>
-
-              {#if !isAppAsset}
-                <div class="form-field">
-                  <Label for="previewUrl">Preview URL</Label>
-                  <Input
-                    id="previewUrl"
-                    type="url"
-                    bind:value={formData.previewUrl}
-                    placeholder="https://preview.example.com"
-                  />
-                </div>
-              {/if}
-            </div>
-
-            {#if isAppAsset}
-              <div class="form-field">
-                <Label for="appVideoUrl">App Promo Video URL</Label>
-                <Input
-                  id="appVideoUrl"
-                  type="url"
-                  bind:value={formData.appVideoUrl}
-                  placeholder="https://www.youtube.com/watch?v=..."
-                />
-              </div>
-            {/if}
+        {#if !isAppAsset}
+          <div class="form-field">
+            <Label for="previewUrl">Preview URL</Label>
+            <Input
+              id="previewUrl"
+              type="url"
+              bind:value={formData.previewUrl}
+              placeholder="https://preview.example.com"
+            />
           </div>
+        {/if}
+      </div>
 
-          {#if isAppAsset}
-            <div class="form-section">
-              <h3 class="section-title">Capabilities & Access</h3>
-              <div class="form-field">
-                <Label for="appCapabilities">App Capabilities</Label>
-                <select
-                  id="appCapabilities"
-                  class="form-control native-select"
-                  bind:value={formData.appCapabilities}
-                  onchange={handleCapabilityChange}
-                >
-                  <option value="">Select one...</option>
-                  {#each APP_CAPABILITY_OPTIONS as option}
-                    <option value={option}>{option}</option>
-                  {/each}
-                </select>
-              </div>
+      {#if isAppAsset}
+        <div class="form-field">
+          <Label for="appVideoUrl">App Promo Video URL</Label>
+          <Input
+            id="appVideoUrl"
+            type="url"
+            bind:value={formData.appVideoUrl}
+            placeholder="https://www.youtube.com/watch?v=..."
+          />
+        </div>
+      {/if}
+    </div>
 
-              {#if requiresInstallUrl}
-                <div class="form-field">
-                  <Label for="appInstallUrl">App Install URL</Label>
-                  <Input
-                    id="appInstallUrl"
-                    type="url"
-                    bind:value={formData.appInstallUrl}
-                    placeholder="https://yourapp.com/auth/webflow"
-                  />
-                  <span class="field-hint">
-                    Use the install or authorization entry point, not the OAuth callback URL.
-                  </span>
-                </div>
-              {/if}
+    {#if isAppAsset}
+      <div class="form-section">
+        <h3 class="section-title">Capabilities & Access</h3>
+        <div class="form-field">
+          <Label for="appCapabilities">App Capabilities</Label>
+          <select
+            id="appCapabilities"
+            class="form-control native-select"
+            bind:value={formData.appCapabilities}
+            onchange={handleCapabilityChange}
+          >
+            <option value="">Select one...</option>
+            {#each APP_CAPABILITY_OPTIONS as option}
+              <option value={option}>{option}</option>
+            {/each}
+          </select>
+        </div>
 
-              <div class="form-field">
-                <Label for="scopeSelector">Scopes</Label>
-                <div class="scope-builder">
-                  <select
-                    id="scopeSelector"
-                    class="form-control native-select"
-                    bind:value={selectedScope}
-                    onchange={handleScopeSelection}
-                  >
-                    <option value="">Select a scope to add...</option>
-                    {#each APP_SCOPE_OPTIONS as option}
-                      <option value={option}>{option}</option>
-                    {/each}
-                  </select>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onclick={addScope}
-                    disabled={!selectedScope}
-                  >
-                    Add Scope
-                  </Button>
-                </div>
-                {#if formData.appScopes.length > 0}
-                  <div class="scope-list">
-                    {#each formData.appScopes as scope}
-                      <button type="button" class="scope-chip" onclick={() => removeScope(scope)}>
-                        <span>{scope}</span>
-                        <span aria-hidden="true">×</span>
-                      </button>
-                    {/each}
-                  </div>
-                {/if}
-              </div>
-
-              <div class="form-field">
-                <Label for="appAccessCredentials">App Access Credentials</Label>
-                <Textarea
-                  id="appAccessCredentials"
-                  bind:value={formData.appAccessCredentials}
-                  placeholder="Username, password, setup notes, or N/A"
-                  rows={5}
-                  maxlength={2000}
-                />
-                <span class="field-hint"
-                  >{formData.appAccessCredentials.length}/2000 characters</span
-                >
-              </div>
-            </div>
-
-            <div class="form-section">
-              <h3 class="section-title">Marketplace Settings</h3>
-              <div class="form-field">
-                <Label>Payment Type</Label>
-                <div class="option-grid">
-                  {#each PAYMENT_TYPE_OPTIONS as option}
-                    <label class="option-card">
-                      <input
-                        type="checkbox"
-                        checked={formData.paymentType.includes(option)}
-                        onchange={() => togglePaymentType(option)}
-                      />
-                      <span>{option}</span>
-                    </label>
-                  {/each}
-                </div>
-              </div>
-
-              <div class="form-field">
-                <Label>Marketplace Visibility</Label>
-                <div class="option-grid">
-                  {#each VISIBILITY_OPTIONS as option}
-                    <label class="option-card">
-                      <input
-                        type="checkbox"
-                        checked={formData.visibility === option}
-                        onchange={() => setVisibility(option)}
-                      />
-                      <span>{option}</span>
-                    </label>
-                  {/each}
-                </div>
-              </div>
-
-              <div class="form-field">
-                <Label for="appCategory">App Category</Label>
-                <select
-                  id="appCategory"
-                  class="form-control native-select native-select--multi"
-                  multiple
-                  size="8"
-                  onchange={handleCategoryChange}
-                >
-                  {#each APP_CATEGORY_OPTIONS as option}
-                    <option value={option} selected={formData.appCategory.includes(option)}>
-                      {option}
-                    </option>
-                  {/each}
-                </select>
-                <span class="field-hint"
-                  >{formData.appCategory.length} of 2 categories selected</span
-                >
-              </div>
-
-              <div class="form-field">
-                <Label>Features Overview</Label>
-                <div class="stacked-fields">
-                  {#each formData.appFeaturesOverview as feature, index}
-                    <Input
-                      type="text"
-                      value={feature}
-                      placeholder={`Feature ${index + 1}`}
-                      oninput={(event) =>
-                        updateFeature(index, (event.target as HTMLInputElement).value)}
-                    />
-                  {/each}
-                </div>
-              </div>
-            </div>
-
-            <div class="form-section">
-              <h3 class="section-title">Creator & Support</h3>
-              <div class="form-row">
-                <div class="form-field">
-                  <Label for="creatorName">Creator Name</Label>
-                  <Input id="creatorName" type="text" bind:value={formData.creatorName} />
-                </div>
-                <div class="form-field">
-                  <Label for="creatorWebsite">Creator Website</Label>
-                  <Input id="creatorWebsite" type="text" bind:value={formData.creatorWebsite} />
-                </div>
-              </div>
-
-              <div class="form-field">
-                <Label for="creatorContactEmail">Contact Email</Label>
-                <Input
-                  id="creatorContactEmail"
-                  type="email"
-                  bind:value={formData.creatorContactEmail}
-                />
-              </div>
-
-              <div class="form-row">
-                <div class="form-field">
-                  <Label for="appDemoVideoUrl">Review Team Demo Video URL</Label>
-                  <Input id="appDemoVideoUrl" type="url" bind:value={formData.appDemoVideoUrl} />
-                </div>
-                <div class="form-field">
-                  <Label for="appPrivacyPolicyUrl">Privacy Policy URL</Label>
-                  <Input
-                    id="appPrivacyPolicyUrl"
-                    type="url"
-                    bind:value={formData.appPrivacyPolicyUrl}
-                  />
-                </div>
-              </div>
-
-              <div class="form-row">
-                <div class="form-field">
-                  <Label for="appSupportEmail">Support Email</Label>
-                  <Input id="appSupportEmail" type="email" bind:value={formData.appSupportEmail} />
-                </div>
-                <div class="form-field">
-                  <Label for="appSupportUrl">Support URL</Label>
-                  <Input id="appSupportUrl" type="url" bind:value={formData.appSupportUrl} />
-                </div>
-              </div>
-
-              <div class="form-row">
-                <div class="form-field">
-                  <Label for="appTermsUrl">Terms and Conditions URL</Label>
-                  <Input id="appTermsUrl" type="url" bind:value={formData.appTermsUrl} />
-                </div>
-                <div class="form-field">
-                  <Label for="appDeveloperNotes">Developer Notes</Label>
-                  <Textarea
-                    id="appDeveloperNotes"
-                    bind:value={formData.appDeveloperNotes}
-                    rows={4}
-                    placeholder="Additional context for reviewers"
-                  />
-                </div>
-              </div>
-            </div>
-          {/if}
-
-          <div class="form-section">
-            <h3 class="section-title">Images</h3>
-            <div class="image-field">
-              <ImageUploader
-                value={thumbnailUrl}
-                onchange={handleThumbnailChange}
-                label={isAppAsset ? 'App Icon' : 'Primary Thumbnail'}
-                description={isAppAsset
-                  ? 'Square icon. Use a clean 1:1 image.'
-                  : '150:199 aspect ratio (e.g., 750×995px)'}
-                uploadType={isAppAsset ? 'image' : 'thumbnail'}
-                aspectRatio={isAppAsset ? { width: 1, height: 1 } : null}
-                disabled={isLoading}
-              />
-            </div>
-
-            {#if isAppAsset && thumbnailUrl}
-              <div class="form-field">
-                <Label for="appAvatarAltText">App Icon Alt Text</Label>
-                <Input
-                  id="appAvatarAltText"
-                  type="text"
-                  bind:value={formData.appAvatarAltText}
-                  placeholder="Describe the app icon"
-                />
-              </div>
-            {/if}
-
-            <div class="carousel-field">
-              <CarouselUploader
-                value={carouselImages}
-                onchange={handleCarouselImagesChange}
-                minImages={isAppAsset ? 0 : 3}
-                maxImages={isAppAsset ? 5 : 8}
-                aspectRatio={isAppAsset ? APP_SCREENSHOT_RATIO : { width: 16, height: 10 }}
-                disabled={isLoading}
-              />
-              {#if isAppAsset}
-                <span class="field-hint">
-                  App screenshots should follow the external submission form shape: up to 5 images.
-                </span>
-              {/if}
-            </div>
-
-            {#if isAppAsset}
-              {#if visibleScreenshotAltCount > 0}
-                <div class="stacked-fields">
-                  {#each Array.from({ length: visibleScreenshotAltCount }) as _, index}
-                    <div class="form-field">
-                      <Label for={`appScreenshotAltText-${index}`}
-                        >Screenshot {index + 1} Alt Text</Label
-                      >
-                      <Input
-                        id={`appScreenshotAltText-${index}`}
-                        type="text"
-                        value={formData.appScreenshotAltTexts[index] || ''}
-                        oninput={(event) =>
-                          updateScreenshotAltText(index, (event.target as HTMLInputElement).value)}
-                        placeholder="Describe this screenshot"
-                      />
-                    </div>
-                  {/each}
-                </div>
-              {:else}
-                <span class="field-hint">Upload screenshots to edit their alt text.</span>
-              {/if}
-            {:else}
-              <div class="secondary-field">
-                <SecondaryThumbnailUploader
-                  value={secondaryThumbnails}
-                  onchange={handleSecondaryThumbnailsChange}
-                  maxImages={1}
-                  disabled={isLoading}
-                />
-              </div>
-            {/if}
+        {#if requiresInstallUrl}
+          <div class="form-field">
+            <Label for="appInstallUrl">App Install URL</Label>
+            <Input
+              id="appInstallUrl"
+              type="url"
+              bind:value={formData.appInstallUrl}
+              placeholder="https://yourapp.com/auth/webflow"
+            />
+            <span class="field-hint">
+              Use the install or authorization entry point, not the OAuth callback URL.
+            </span>
           </div>
-        </form>
-      </CardContent>
-      <div class="modal-footer">
-        <div class="footer-left">
-          {#if canArchive && onArchive}
+        {/if}
+
+        <div class="form-field">
+          <Label for="scopeSelector">Scopes</Label>
+          <div class="scope-builder">
+            <select
+              id="scopeSelector"
+              class="form-control native-select"
+              bind:value={selectedScope}
+              onchange={handleScopeSelection}
+            >
+              <option value="">Select a scope to add...</option>
+              {#each APP_SCOPE_OPTIONS as option}
+                <option value={option}>{option}</option>
+              {/each}
+            </select>
             <Button
               type="button"
-              variant="destructive"
-              onclick={() => (showArchiveConfirm = true)}
-              disabled={isArchiving}
+              variant="outline"
+              size="sm"
+              onclick={addScope}
+              disabled={!selectedScope}
             >
-              {isArchiving ? 'Archiving...' : 'Archive Asset'}
+              Add Scope
             </Button>
+          </div>
+          {#if formData.appScopes.length > 0}
+            <div class="scope-list">
+              {#each formData.appScopes as scope}
+                <button type="button" class="scope-chip" onclick={() => removeScope(scope)}>
+                  <span>{scope}</span>
+                  <span aria-hidden="true">×</span>
+                </button>
+              {/each}
+            </div>
           {/if}
         </div>
-        <div class="footer-right">
-          <Button type="button" variant="secondary" onclick={onClose} disabled={isLoading}>
-            Cancel
-          </Button>
-          <Button
-            type="button"
-            variant="default"
-            onclick={handleSubmit}
-            disabled={isLoading || !!nameError || isCheckingName}
-          >
-            {isLoading ? 'Saving...' : 'Save Changes'}
-          </Button>
+
+        <div class="form-field">
+          <Label for="appAccessCredentials">App Access Credentials</Label>
+          <Textarea
+            id="appAccessCredentials"
+            bind:value={formData.appAccessCredentials}
+            placeholder="Username, password, setup notes, or N/A"
+            rows={5}
+            maxlength={2000}
+          />
+          <span class="field-hint">{formData.appAccessCredentials.length}/2000 characters</span>
         </div>
       </div>
-    </Card>
+
+      <div class="form-section">
+        <h3 class="section-title">Marketplace Settings</h3>
+        <div class="form-field">
+          <Label>Payment Type</Label>
+          <div class="option-grid">
+            {#each PAYMENT_TYPE_OPTIONS as option}
+              <label class="option-card">
+                <input
+                  type="checkbox"
+                  checked={formData.paymentType.includes(option)}
+                  onchange={() => togglePaymentType(option)}
+                />
+                <span>{option}</span>
+              </label>
+            {/each}
+          </div>
+        </div>
+
+        <div class="form-field">
+          <Label>Marketplace Visibility</Label>
+          <div class="option-grid">
+            {#each VISIBILITY_OPTIONS as option}
+              <label class="option-card">
+                <input
+                  type="checkbox"
+                  checked={formData.visibility === option}
+                  onchange={() => setVisibility(option)}
+                />
+                <span>{option}</span>
+              </label>
+            {/each}
+          </div>
+        </div>
+
+        <div class="form-field">
+          <Label for="appCategory">App Category</Label>
+          <select
+            id="appCategory"
+            class="form-control native-select native-select--multi"
+            multiple
+            size="8"
+            onchange={handleCategoryChange}
+          >
+            {#each APP_CATEGORY_OPTIONS as option}
+              <option value={option} selected={formData.appCategory.includes(option)}>
+                {option}
+              </option>
+            {/each}
+          </select>
+          <span class="field-hint">{formData.appCategory.length} of 2 categories selected</span>
+        </div>
+
+        <div class="form-field">
+          <Label>Features Overview</Label>
+          <div class="stacked-fields">
+            {#each formData.appFeaturesOverview as feature, index}
+              <Input
+                type="text"
+                value={feature}
+                placeholder={`Feature ${index + 1}`}
+                oninput={(event) => updateFeature(index, (event.target as HTMLInputElement).value)}
+              />
+            {/each}
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <h3 class="section-title">Creator & Support</h3>
+        <div class="form-row">
+          <div class="form-field">
+            <Label for="creatorName">Creator Name</Label>
+            <Input id="creatorName" type="text" bind:value={formData.creatorName} />
+          </div>
+          <div class="form-field">
+            <Label for="creatorWebsite">Creator Website</Label>
+            <Input id="creatorWebsite" type="text" bind:value={formData.creatorWebsite} />
+          </div>
+        </div>
+
+        <div class="form-field">
+          <Label for="creatorContactEmail">Contact Email</Label>
+          <Input id="creatorContactEmail" type="email" bind:value={formData.creatorContactEmail} />
+        </div>
+
+        <div class="form-row">
+          <div class="form-field">
+            <Label for="appDemoVideoUrl">Review Team Demo Video URL</Label>
+            <Input id="appDemoVideoUrl" type="url" bind:value={formData.appDemoVideoUrl} />
+          </div>
+          <div class="form-field">
+            <Label for="appPrivacyPolicyUrl">Privacy Policy URL</Label>
+            <Input id="appPrivacyPolicyUrl" type="url" bind:value={formData.appPrivacyPolicyUrl} />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-field">
+            <Label for="appSupportEmail">Support Email</Label>
+            <Input id="appSupportEmail" type="email" bind:value={formData.appSupportEmail} />
+          </div>
+          <div class="form-field">
+            <Label for="appSupportUrl">Support URL</Label>
+            <Input id="appSupportUrl" type="url" bind:value={formData.appSupportUrl} />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-field">
+            <Label for="appTermsUrl">Terms and Conditions URL</Label>
+            <Input id="appTermsUrl" type="url" bind:value={formData.appTermsUrl} />
+          </div>
+          <div class="form-field">
+            <Label for="appDeveloperNotes">Developer Notes</Label>
+            <Textarea
+              id="appDeveloperNotes"
+              bind:value={formData.appDeveloperNotes}
+              rows={4}
+              placeholder="Additional context for reviewers"
+            />
+          </div>
+        </div>
+      </div>
+    {/if}
+
+    <div class="form-section">
+      <h3 class="section-title">Images</h3>
+      <div class="image-field">
+        <ImageUploader
+          value={thumbnailUrl}
+          onchange={handleThumbnailChange}
+          label={isAppAsset ? 'App Icon' : 'Primary Thumbnail'}
+          description={isAppAsset
+            ? 'Square icon. Use a clean 1:1 image.'
+            : '150:199 aspect ratio (e.g., 750×995px)'}
+          uploadType={isAppAsset ? 'image' : 'thumbnail'}
+          aspectRatio={isAppAsset ? { width: 1, height: 1 } : null}
+          disabled={isLoading}
+        />
+      </div>
+
+      {#if isAppAsset && thumbnailUrl}
+        <div class="form-field">
+          <Label for="appAvatarAltText">App Icon Alt Text</Label>
+          <Input
+            id="appAvatarAltText"
+            type="text"
+            bind:value={formData.appAvatarAltText}
+            placeholder="Describe the app icon"
+          />
+        </div>
+      {/if}
+
+      <div class="carousel-field">
+        <CarouselUploader
+          value={carouselImages}
+          onchange={handleCarouselImagesChange}
+          minImages={isAppAsset ? 0 : 3}
+          maxImages={isAppAsset ? 5 : 8}
+          aspectRatio={isAppAsset ? APP_SCREENSHOT_RATIO : { width: 16, height: 10 }}
+          disabled={isLoading}
+        />
+        {#if isAppAsset}
+          <span class="field-hint">
+            App screenshots should follow the external submission form shape: up to 5 images.
+          </span>
+        {/if}
+      </div>
+
+      {#if isAppAsset}
+        {#if visibleScreenshotAltCount > 0}
+          <div class="stacked-fields">
+            {#each Array.from({ length: visibleScreenshotAltCount }) as _, index}
+              <div class="form-field">
+                <Label for={`appScreenshotAltText-${index}`}>Screenshot {index + 1} Alt Text</Label>
+                <Input
+                  id={`appScreenshotAltText-${index}`}
+                  type="text"
+                  value={formData.appScreenshotAltTexts[index] || ''}
+                  oninput={(event) =>
+                    updateScreenshotAltText(index, (event.target as HTMLInputElement).value)}
+                  placeholder="Describe this screenshot"
+                />
+              </div>
+            {/each}
+          </div>
+        {:else}
+          <span class="field-hint">Upload screenshots to edit their alt text.</span>
+        {/if}
+      {:else}
+        <div class="secondary-field">
+          <SecondaryThumbnailUploader
+            value={secondaryThumbnails}
+            onchange={handleSecondaryThumbnailsChange}
+            maxImages={1}
+            disabled={isLoading}
+          />
+        </div>
+      {/if}
+    </div>
+  </form>
+  <div class="modal-footer">
+    <div class="footer-left">
+      {#if canArchive && onArchive}
+        <Button
+          type="button"
+          variant="destructive"
+          onclick={() => (showArchiveConfirm = true)}
+          disabled={isArchiving}
+        >
+          {isArchiving ? 'Archiving...' : 'Archive Asset'}
+        </Button>
+      {/if}
+    </div>
+    <div class="footer-right">
+      <Button type="button" variant="secondary" onclick={handleDismiss} disabled={isLoading}>
+        Cancel
+      </Button>
+      <Button
+        type="button"
+        variant="default"
+        onclick={handleSubmit}
+        disabled={isLoading || !!nameError || isCheckingName}
+      >
+        {isLoading ? 'Saving...' : 'Save Changes'}
+      </Button>
+    </div>
   </div>
-</div>
+</Dialog>
 
 <Dialog
   isOpen={showArchiveConfirm}
@@ -1233,34 +1255,17 @@
 </Dialog>
 
 <style>
-  .modal-overlay {
-    position: fixed;
-    inset: 0;
-    background: var(--color-overlay);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 100;
-    padding: var(--space-md);
-  }
-
-  .modal-container {
-    width: 100%;
-    max-width: 58rem;
-    max-height: 90vh;
-    overflow-y: auto;
-  }
-
   .modal-description {
     font-size: var(--text-body-sm);
     color: var(--color-fg-secondary);
-    margin: var(--space-xs) 0 0;
+    margin: 0;
   }
 
   .form {
     display: flex;
     flex-direction: column;
     gap: var(--space-lg);
+    margin-top: var(--space-lg);
   }
 
   .form-section {
@@ -1409,7 +1414,8 @@
     justify-content: space-between;
     align-items: center;
     gap: var(--space-md);
-    padding: var(--space-md) var(--space-lg) var(--space-lg);
+    padding: var(--space-md) 0 0;
+    margin-top: var(--space-md);
     border-top: 1px solid var(--color-border-default);
   }
 
