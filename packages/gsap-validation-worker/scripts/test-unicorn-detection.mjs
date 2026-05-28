@@ -104,4 +104,38 @@ assert.equal(
   false
 );
 
+const reviewBridgeHtml = `
+<!doctype html>
+<html>
+	<head>
+		<script>
+			window.__WF_REVIEW_BRIDGE = {
+				version: "2026-05-01",
+				marker: "__wf_review_snippet_v1",
+				bridgeToken: "wfbt_0123456789abcdef0123456789abcdef",
+				reviewSurface: "published-review",
+				reviewScriptUrl: "https://validation-worker.createsomething.workers.dev/app-validator/snippet/review.js"
+			};
+		</script>
+		<script src="https://validation-worker.createsomething.workers.dev/app-validator/snippet/review.js"></script>
+	</head>
+	<body>
+		<main>Template content</main>
+	</body>
+</html>`;
+
+const reviewBridgeResult = sandbox.validateGsapUsage(
+  reviewBridgeHtml,
+  'https://review-bridge-template.webflow.io/'
+);
+
+assert.equal(reviewBridgeResult.passed, true);
+assert.equal(reviewBridgeResult.summary.flaggedCodeCount, 0);
+assert.ok(
+  reviewBridgeResult.details.allowedCustomCode.some(
+    (issue) => issue.policy === 'webflow-way-validator-bridge'
+  ),
+  'expected Webflow Way Validator bridge config to be allowed'
+);
+
 console.log('GSAP validation regression passed.');

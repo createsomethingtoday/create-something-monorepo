@@ -14,6 +14,17 @@ var LEGACY_IX2_EXEMPT_HOSTNAMES = /* @__PURE__ */ new Set([
   // Zendesk 1124554: approved exception for pre-cutoff Bergamo submission.
   "az-bergamo.webflow.io"
 ]);
+function isWebflowReviewBridgeConfigScript(script) {
+  const trimmed = script.trim();
+  if (!/^window\.__WF_REVIEW_BRIDGE\s*=/.test(trimmed)) {
+    return false;
+  }
+  if (!/^\s*window\.__WF_REVIEW_BRIDGE\s*=\s*\{[\s\S]*\}\s*;?\s*$/.test(trimmed)) {
+    return false;
+  }
+  return /marker\s*:\s*["']__wf_review_snippet_v1["']/.test(trimmed) && /bridgeToken\s*:\s*["'][^"']+["']/.test(trimmed) && /reviewSurface\s*:\s*["']published-review["']/.test(trimmed) && /reviewScriptUrl\s*:\s*["'][^"']*\/app-validator\/snippet\/review\.js["']/.test(trimmed);
+}
+__name(isWebflowReviewBridgeConfigScript, "isWebflowReviewBridgeConfigScript");
 function countPatternMatches(value, pattern) {
   const matches = value.match(pattern);
   return matches ? matches.length : 0;
@@ -524,6 +535,14 @@ function validateGsapUsage(html, pageUrl, customPatterns = []) {
       results.allowedCustomCode.push({
         scriptIndex: index,
         message: "Schema.org JSON-LD structured data (allowed)"
+      });
+      return;
+    }
+    if (isWebflowReviewBridgeConfigScript(script)) {
+      results.allowedCustomCode.push({
+        scriptIndex: index,
+        message: "Webflow Way Validator bridge config (allowed)",
+        policy: "webflow-way-validator-bridge"
       });
       return;
     }
