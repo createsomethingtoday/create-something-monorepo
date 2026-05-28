@@ -4,6 +4,9 @@ Cloudflare Worker endpoint for Notion Automation `Send webhook` actions from the
 `Agents / Tools` database. When Half Dozen flags an agent build for review, the webhook creates a
 CREATE SOMETHING Linear issue and optionally sends a Slack webhook notification.
 
+Open Linear issues are deduplicated by agent title. A repeated Notion fire for the same agent
+reuses the existing open review issue and appends a duplicate-fire comment.
+
 ## Notion Setup
 
 Use the deployed Worker URL in the Notion action:
@@ -27,6 +30,10 @@ Select these Notion properties in the webhook content when present:
 - `Agent URL`
 - `Agent Description`
 - `Activated`
+
+If CREATE SOMETHING needs a direct link back to the Notion record, expose that as a database URL
+property and select it in the webhook content. Notion webhook actions only send selected database
+properties, not page contents.
 
 ## Runtime
 

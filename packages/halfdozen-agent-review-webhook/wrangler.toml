@@ -6,7 +6,7 @@ compatibility_flags = ["nodejs_compat"]
 
 [vars]
 LINEAR_TEAM_KEY = "CRE"
-LINEAR_LABELS = "linear-coordination"
+LINEAR_LABELS = "linear-coordination,code-quality"
 ASSIGN_TO_TOKEN_OWNER = "true"
 
 # Secrets:
