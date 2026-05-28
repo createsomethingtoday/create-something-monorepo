@@ -207,27 +207,27 @@ const FILTER_STYLES = `
   width: 100%;
   max-width: 100%;
   min-width: 0;
-  overflow-x: auto;
-  overflow-y: hidden;
+  overflow: hidden;
   box-sizing: border-box;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior-x: contain;
-  scrollbar-width: none;
 }
 
 .tmfilter-subcategory-track {
   justify-content: flex-start;
   align-items: center;
   flex-wrap: nowrap;
-  width: max-content;
-  max-width: none;
-  min-width: 100%;
-  overflow: visible;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
   scroll-snap-type: x proximity;
+  scrollbar-width: none;
   display: flex;
 }
 
-.tmfilter-subcategory-scroll::-webkit-scrollbar {
+.tmfilter-subcategory-track::-webkit-scrollbar {
   display: none;
 }
 
