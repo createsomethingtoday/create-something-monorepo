@@ -414,10 +414,11 @@ const GRID_STYLES = `
   border-radius: 8px;
 }
 
-/* Responsive grid breakpoints injected here so Webflow classes don't override */
+/* Responsive flex breakpoints injected here so Webflow classes don't override */
 .tmgrid-grid {
-  display: grid !important;
-  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: flex-start !important;
   gap: 24px !important;
   width: 100% !important;
   max-width: 100% !important;
@@ -425,27 +426,38 @@ const GRID_STYLES = `
   overflow: visible !important;
 }
 .tmgrid-item {
+  flex: 0 1 calc((100% - 72px) / 4) !important;
+  width: calc((100% - 72px) / 4) !important;
   min-width: 0 !important;
   max-width: 100% !important;
 }
 @media (max-width: 991px) {
   .tmgrid-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
     column-gap: 20px !important;
     row-gap: 24px !important;
+  }
+  .tmgrid-item {
+    flex-basis: calc((100% - 40px) / 3) !important;
+    width: calc((100% - 40px) / 3) !important;
   }
 }
 @media (max-width: 767px) {
   .tmgrid-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     column-gap: 16px !important;
     row-gap: 24px !important;
+  }
+  .tmgrid-item {
+    flex-basis: calc((100% - 16px) / 2) !important;
+    width: calc((100% - 16px) / 2) !important;
   }
 }
 @media (max-width: 479px) {
   .tmgrid-grid {
-    grid-template-columns: minmax(0, 1fr) !important;
     gap: 28px !important;
+  }
+  .tmgrid-item {
+    flex-basis: 100% !important;
+    width: 100% !important;
   }
 }
 `;
@@ -481,8 +493,31 @@ const S: Record<string, CSSProperties> = {
 
 // ─── Skeleton ─────────────────────────────────────────────────────────────────
 
-const SkeletonCard: React.FC<{ index: number }> = ({ index }) => (
-  <div className="tmgrid-item" style={{ animationDelay: `${index * 40}ms` }}>
+function getColumnCount(width: number): number {
+  if (width < 480) return 1;
+  if (width < 768) return 2;
+  if (width < 992) return 3;
+  return 4;
+}
+
+function getColumnGap(width: number): number {
+  if (width < 480) return 0;
+  if (width < 768) return 16;
+  if (width < 992) return 20;
+  return 24;
+}
+
+function getRowGap(width: number): number {
+  return width < 480 ? 28 : 24;
+}
+
+function getFlexBasis(columns: number, columnGap: number): string {
+  if (columns <= 1) return '100%';
+  return `calc((100% - ${(columns - 1) * columnGap}px) / ${columns})`;
+}
+
+const SkeletonCard: React.FC<{ index: number; itemStyle: CSSProperties }> = ({ index, itemStyle }) => (
+  <div className="tmgrid-item" style={{ ...itemStyle, animationDelay: `${index * 40}ms` }}>
     <div className="tmgrid-skeleton" style={{ aspectRatio: '150 / 199', marginBottom: '14px' }} />
     <div className="tmgrid-skeleton" style={{ height: '14px', width: '70%', marginBottom: '6px' }} />
     <div className="tmgrid-skeleton" style={{ height: '14px', width: '45%' }} />
@@ -885,13 +920,35 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
 
   // ── Render ─────────────────────────────────────────────────────────────────
 
+  const measuredWidth = containerWidth ?? 1200;
+  const flexColumns = getColumnCount(measuredWidth);
+  const columnGap = getColumnGap(measuredWidth);
+  const rowGap = getRowGap(measuredWidth);
+  const flexBasis = getFlexBasis(flexColumns, columnGap);
+  const gridStyle: CSSProperties = {
+    display: 'flex',
+    flexWrap: 'wrap',
+    alignItems: 'flex-start',
+    columnGap: `${columnGap}px`,
+    rowGap: `${rowGap}px`,
+    width: '100%',
+    maxWidth: '100%',
+    minWidth: 0,
+    overflow: 'visible',
+  };
+  const gridItemStyle: CSSProperties = {
+    flex: `0 1 ${flexBasis}`,
+    width: flexBasis,
+    minWidth: 0,
+    maxWidth: '100%',
+  };
+
   if (loading && items.length === 0) {
     return (
-      <div style={S.root}>
-        <style dangerouslySetInnerHTML={{ __html: GRID_STYLES }} />
-        <div className="tmgrid-grid">
+      <div ref={rootRef} className="tmgrid-shell" style={S.root}>
+        <div className="tmgrid-grid" style={gridStyle}>
           {Array.from({ length: Math.min(resolvedPageSize, 12) }).map((_, i) => (
-            <SkeletonCard key={i} index={i} />
+            <SkeletonCard key={i} index={i} itemStyle={gridItemStyle} />
           ))}
         </div>
       </div>
@@ -927,20 +984,6 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
   if (items.length === 0) return null;
 
   const isRefreshing = loading && items.length > 0;
-  const measuredWidth = containerWidth ?? 1200;
-  const gridColumns = measuredWidth < 480 ? 1 : measuredWidth < 768 ? 2 : measuredWidth < 992 ? 3 : 4;
-  const gridColumnGap = measuredWidth < 480 ? '0px' : measuredWidth < 768 ? '16px' : measuredWidth < 992 ? '20px' : '24px';
-  const gridRowGap = measuredWidth < 480 ? '28px' : '24px';
-  const gridStyle: CSSProperties = {
-    display: 'grid',
-    gridTemplateColumns: `repeat(${gridColumns}, minmax(0, 1fr))`,
-    columnGap: gridColumnGap,
-    rowGap: gridRowGap,
-    width: '100%',
-    maxWidth: '100%',
-    minWidth: 0,
-    overflow: 'visible',
-  };
 
   return (
     <div ref={rootRef} className="tmgrid-shell" style={S.root} aria-busy={isRefreshing ? true : undefined}>
@@ -963,7 +1006,10 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
               <div
                 key={item.id}
                 className="tmgrid-item"
-                style={{ animationDelay: `${Math.min(i % resolvedPageSize, 11) * 40}ms` }}
+                style={{
+                  ...gridItemStyle,
+                  animationDelay: `${Math.min(i % resolvedPageSize, 11) * 40}ms`,
+                }}
                 data-template-slug={item.template_slug}
               >
                 <TemplateCard
