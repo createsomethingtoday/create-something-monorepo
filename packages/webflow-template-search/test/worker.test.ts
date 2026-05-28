@@ -217,6 +217,12 @@ describe('webflow-template-search worker', () => {
       expect(stylePayload.applied_filters.styles).toEqual(['dark-websites']);
       expect(stylePayload.items.map((item) => item.name)).toEqual(['Setrex']);
       expect(stylePayload.category_pills).toMatchObject([{ slug: 'technology-websites', count: 1 }]);
+
+      const suggest = await callWorker(new Request('https://templates.test/api/templates/suggest?q=agent&limit=1'), env);
+      const suggestPayload = (await suggest.json()) as {
+        items: Array<{ name: string; template_slug: string }>;
+      };
+      expect(suggestPayload.items).toMatchObject([{ name: 'Agentflow', template_slug: 'agentflow-website-template' }]);
     } finally {
       fetchMock.mockRestore();
       close();

@@ -62,7 +62,6 @@ export async function suggestTemplates(env: Env, url: URL): Promise<SuggestRespo
         SELECT name, template_slug, listing_url,
                category_groups_json, is_free, price, cumulative_purchases
         FROM template_documents
-        WHERE marketplace_status = 'Published'
         ORDER BY COALESCE(popularity_score, 0) DESC,
                  COALESCE(cumulative_purchases, 0) DESC
         LIMIT ?
@@ -83,9 +82,8 @@ export async function suggestTemplates(env: Env, url: URL): Promise<SuggestRespo
       SELECT d.name, d.template_slug, d.listing_url,
              d.category_groups_json, d.is_free, d.price, d.cumulative_purchases
       FROM template_documents d
-      JOIN template_documents_fts fts ON fts.template_document_id = d.id
-      WHERE fts MATCH ?
-        AND d.marketplace_status = 'Published'
+      JOIN template_documents_fts ON template_documents_fts.template_document_id = d.id
+      WHERE template_documents_fts MATCH ?
       ORDER BY bm25(template_documents_fts, 10.0, 6.0, 1.5, 2.5, 2.0, 1.2, 0.8) ASC,
                COALESCE(d.popularity_score, 0) DESC
       LIMIT ?
