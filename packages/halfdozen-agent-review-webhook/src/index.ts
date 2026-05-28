@@ -519,15 +519,26 @@ function textFromNotionBlock(block: UnknownRecord): string | undefined {
 function richTextPlain(value: unknown): string | undefined {
   if (!Array.isArray(value)) return undefined;
 
-  const text = value
+  const parts = value
     .map((item) => {
       if (!isRecord(item)) return undefined;
       return stringFromUnknown(item.plain_text) ?? stringFromUnknown(isRecord(item.text) ? item.text.content : undefined);
     })
-    .filter(Boolean)
-    .join('');
+    .filter((part): part is string => Boolean(part));
+
+  const text = joinRichTextParts(parts);
 
   return text.trim() || undefined;
+}
+
+function joinRichTextParts(parts: string[]): string {
+  return parts.reduce((text, part) => {
+    if (!text) return part;
+    if (!part) return text;
+    if (/\s$/.test(text) || /^\s/.test(part)) return `${text}${part}`;
+    if (/^[.,;:!?%)]/.test(part) || /[(]$/.test(text)) return `${text}${part}`;
+    return `${text} ${part}`;
+  }, '');
 }
 
 async function createLinearReviewIssue(
