@@ -94,6 +94,7 @@ const WORKER_ORIGIN = 'https://webflow-template-search.createsomething.workers.d
 const CLOUD_APP_PREVIEW_ORIGIN = 'https://webflow-template-marketplace.webflow.io';
 const DEFAULT_PAGE_SIZE = 24;
 const SEARCH_CACHE_TTL_MS = 5 * 60 * 1000;
+const GRID_STORAGE_PREFIX = 'wf-template-grid:';
 
 const gridResponseCache = new Map<string, { timestamp: number; data: ApiResponse }>();
 let gridStylesInjected = false;
@@ -116,6 +117,61 @@ function proxyImageUrl(imageUrl: string, apiBase: string): string {
     // malformed URL — return as-is
   }
   return imageUrl;
+}
+
+function readGridResponseCache(url: string): ApiResponse | null {
+  const cached = gridResponseCache.get(url);
+  if (cached && Date.now() - cached.timestamp < SEARCH_CACHE_TTL_MS) {
+    return cached.data;
+  }
+  if (typeof window === 'undefined') return null;
+
+  try {
+    const raw = window.localStorage.getItem(`${GRID_STORAGE_PREFIX}${url}`);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { timestamp?: unknown; data?: unknown };
+    if (typeof parsed.timestamp !== 'number' || Date.now() - parsed.timestamp >= SEARCH_CACHE_TTL_MS) {
+      return null;
+    }
+    const data = parsed.data as ApiResponse;
+    gridResponseCache.set(url, { timestamp: parsed.timestamp, data });
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+function writeGridResponseCache(url: string, data: ApiResponse): void {
+  const entry = { timestamp: Date.now(), data };
+  gridResponseCache.set(url, entry);
+  if (typeof window === 'undefined') return;
+
+  try {
+    window.localStorage.setItem(`${GRID_STORAGE_PREFIX}${url}`, JSON.stringify(entry));
+  } catch {
+    // Private browsing and quota limits can block storage; in-memory cache still helps.
+  }
+}
+
+function prefetchGridPage(url: string): void {
+  if (readGridResponseCache(url)) return;
+  const run = () => {
+    fetch(url)
+      .then((res) => (res.ok ? (res.json() as Promise<ApiResponse>) : null))
+      .then((data) => {
+        if (data) writeGridResponseCache(url, data);
+      })
+      .catch(() => {});
+  };
+
+  const idleWindow = window as typeof window & {
+    requestIdleCallback?: (callback: () => void, options?: { timeout?: number }) => number;
+  };
+  if (typeof idleWindow.requestIdleCallback === 'function') {
+    idleWindow.requestIdleCallback(run, { timeout: 1500 });
+  } else {
+    window.setTimeout(run, 300);
+  }
 }
 
 // Selectors matching the existing Webflow filter/sort UI (same as client-script.ts)
@@ -573,16 +629,19 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
       ? DEFAULT_API_BASE
       : rawBase;
   const resolvedPageSize = pageSize || DEFAULT_PAGE_SIZE;
+  const initialFilters = parseRouteState(initialSort, categorySlugProp || undefined, scopeOverride);
+  const initialGridData =
+    typeof window !== 'undefined'
+      ? readGridResponseCache(buildApiUrl(apiBase, initialFilters, 1, resolvedPageSize))
+      : null;
   // Parse initial filter state from URL on first render
-  const [filters, setFilters] = useState<FilterState>(() =>
-    parseRouteState(initialSort, categorySlugProp || undefined, scopeOverride),
-  );
+  const [filters, setFilters] = useState<FilterState>(() => initialFilters);
 
-  const [items, setItems] = useState<ApiItem[]>([]);
-  const [page, setPage] = useState(1);
-  const [hasNextPage, setHasNextPage] = useState(false);
-  const [totalItems, setTotalItems] = useState<number | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [items, setItems] = useState<ApiItem[]>(() => initialGridData?.items ?? []);
+  const [page, setPage] = useState(() => initialGridData?.pagination.page ?? 1);
+  const [hasNextPage, setHasNextPage] = useState(() => initialGridData?.pagination.has_next_page ?? false);
+  const [totalItems, setTotalItems] = useState<number | null>(() => initialGridData?.pagination.total_items ?? null);
+  const [loading, setLoading] = useState(() => !initialGridData);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [containerWidth, setContainerWidth] = useState<number | null>(null);
@@ -591,6 +650,7 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
   const sentinelRef = useRef<HTMLDivElement>(null);
   // Stale-fetch guard: every new filter/sort change increments this
   const fetchEpochRef = useRef(0);
+  const fetchAbortRef = useRef<AbortController | null>(null);
   const lastHrefRef = useRef(typeof window === 'undefined' ? '' : window.location.href);
 
   useLayoutEffect(() => {
@@ -645,18 +705,25 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
     async (targetPage: number, currentFilters: FilterState, append: boolean) => {
       const epoch = ++fetchEpochRef.current;
       const url = buildApiUrl(apiBase, currentFilters, targetPage, resolvedPageSize);
-      const cached = gridResponseCache.get(url);
+      const cached = readGridResponseCache(url);
 
-      if (cached && Date.now() - cached.timestamp < SEARCH_CACHE_TTL_MS) {
+      if (cached) {
         setError(null);
-        setItems((prev) => (append ? [...prev, ...cached.data.items] : cached.data.items));
-        setPage(cached.data.pagination.page);
-        setHasNextPage(cached.data.pagination.has_next_page);
-        setTotalItems(cached.data.pagination.total_items);
+        setItems((prev) => (append ? [...prev, ...cached.items] : cached.items));
+        setPage(cached.pagination.page);
+        setHasNextPage(cached.pagination.has_next_page);
+        setTotalItems(cached.pagination.total_items);
         setLoading(false);
         setLoadingMore(false);
+        if (!append && cached.pagination.has_next_page) {
+          prefetchGridPage(buildApiUrl(apiBase, currentFilters, targetPage + 1, resolvedPageSize));
+        }
         return;
       }
+
+      fetchAbortRef.current?.abort();
+      const controller = new AbortController();
+      fetchAbortRef.current = controller;
 
       if (!append) {
         setLoading(true);
@@ -666,10 +733,10 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
       }
 
       try {
-        const res = await fetch(url);
+        const res = await fetch(url, { signal: controller.signal });
         if (!res.ok) throw new Error(`API ${res.status}`);
         const data: ApiResponse = await res.json();
-        gridResponseCache.set(url, { timestamp: Date.now(), data });
+        writeGridResponseCache(url, data);
 
         if (epoch !== fetchEpochRef.current) return;
 
@@ -677,13 +744,20 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
         setPage(data.pagination.page);
         setHasNextPage(data.pagination.has_next_page);
         setTotalItems(data.pagination.total_items);
+        if (!append && data.pagination.has_next_page) {
+          prefetchGridPage(buildApiUrl(apiBase, currentFilters, targetPage + 1, resolvedPageSize));
+        }
       } catch (e) {
         if (epoch !== fetchEpochRef.current) return;
+        if (e instanceof DOMException && e.name === 'AbortError') return;
         setError(e instanceof Error ? e.message : 'Failed to load templates');
       } finally {
         if (epoch === fetchEpochRef.current) {
           setLoading(false);
           setLoadingMore(false);
+          if (fetchAbortRef.current === controller) {
+            fetchAbortRef.current = null;
+          }
         }
       }
     },

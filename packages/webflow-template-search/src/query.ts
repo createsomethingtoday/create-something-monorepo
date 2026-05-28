@@ -1,8 +1,10 @@
-import type { SearchParams, TemplateScope } from './types.js';
+import type { SearchInclude, SearchParams, TemplateScope } from './types.js';
 import { clamp, ensureStringArray, normalizeSort } from './utils.js';
 
 const VALID_TYPES = new Set(['One Page', 'Multi Page', 'Multi Layout']);
 const VALID_SCOPES = new Set<TemplateScope>(['all', 'featured', 'free', 'landing_pages']);
+const VALID_INCLUDES = new Set<SearchInclude>(['items', 'facets', 'pills', 'count']);
+const DEFAULT_INCLUDE: SearchInclude[] = ['items', 'facets', 'pills'];
 const STYLE_SLUG_ALIASES: Record<string, string> = {
   bold: 'bold-websites',
   casual: 'casual-websites',
@@ -41,6 +43,14 @@ function parseStyleList(params: URLSearchParams): string[] {
   }).filter(Boolean)));
 }
 
+function parseInclude(params: URLSearchParams): SearchInclude[] {
+  const requested = parseList(params, 'include').filter((value): value is SearchInclude =>
+    VALID_INCLUDES.has(value as SearchInclude),
+  );
+  if (requested.length === 0) return DEFAULT_INCLUDE;
+  return Array.from(new Set(requested));
+}
+
 function toBoolean(value: string | null): boolean {
   if (!value) return false;
   return ['1', 'true', 'yes', 'on'].includes(value.toLowerCase());
@@ -73,5 +83,6 @@ export function parseSearchParams(url: URL, defaultPageSize = 24): SearchParams 
     sort: normalizeSort(params.get('sort')),
     page: clamp(Number(params.get('page') ?? 1) || 1, 1, 500),
     pageSize: clamp(Number(params.get('page_size') ?? defaultPageSize) || defaultPageSize, 1, 100),
+    include: parseInclude(params),
   };
 }

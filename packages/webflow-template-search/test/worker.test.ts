@@ -272,7 +272,7 @@ describe('webflow-template-search worker', () => {
       expect(rebuild.status).toBe(200);
 
       const response = await callWorker(
-        new Request('https://templates.test/api/templates/search?category_group_slug=blog-and-editorial-websites&include=facets,pills'),
+        new Request('https://templates.test/api/templates/search?category_group_slug=blog-and-editorial-websites&include=items,facets,pills'),
         env,
       );
       const payload = (await response.json()) as {
@@ -328,7 +328,7 @@ describe('webflow-template-search worker', () => {
       expect(repairPayload.removed_child_links).toBe(1);
 
       const repaired = await callWorker(
-        new Request('https://templates.test/api/templates/search?category_group_slug=blog-and-editorial-websites&include=facets,pills'),
+        new Request('https://templates.test/api/templates/search?category_group_slug=blog-and-editorial-websites&include=items,facets,pills'),
         env,
       );
       const repairedPayload = (await repaired.json()) as {

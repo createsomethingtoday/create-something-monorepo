@@ -285,25 +285,30 @@ export async function searchTemplates(env: Env, rawParams: SearchParams): Promis
   const sqlParts = buildSqlParts(params);
   const offset = (params.page - 1) * params.pageSize;
   const orderClause = queryOrderClause(params, sqlParts.queryMode);
+  const includeItems = params.include.includes('items');
+  const includeFacets = params.include.includes('facets');
+  const includePills = params.include.includes('pills');
 
   const [totalItems, rows, styleFacets, typeFacets, categoryPills, pills] = await Promise.all([
     getTotalCount(env.DB, sqlParts),
-    env.DB
-      .prepare(`
-        SELECT
-          d.*,
-          ${sqlParts.queryMode ? 'bm25(template_documents_fts, 10.0, 6.0, 1.5, 2.5, 2.0, 1.2, 0.8)' : 'NULL'} AS text_rank
-        ${sqlParts.fromClause}
-        ${sqlParts.whereClause}
-        ORDER BY ${orderClause}
-        LIMIT ? OFFSET ?
-      `)
-      .bind(...sqlParts.binds, params.pageSize, offset)
-      .all<DocumentRow>(),
-    loadFacetStyles(env, params),
-    loadFacetTypes(env, params),
-    loadCategoryPills(env, params),
-    loadSubcategoryPills(env, params),
+    includeItems
+      ? env.DB
+          .prepare(`
+            SELECT
+              d.*,
+              ${sqlParts.queryMode ? 'bm25(template_documents_fts, 10.0, 6.0, 1.5, 2.5, 2.0, 1.2, 0.8)' : 'NULL'} AS text_rank
+            ${sqlParts.fromClause}
+            ${sqlParts.whereClause}
+            ORDER BY ${orderClause}
+            LIMIT ? OFFSET ?
+          `)
+          .bind(...sqlParts.binds, params.pageSize, offset)
+          .all<DocumentRow>()
+      : Promise.resolve({ results: [] as DocumentRow[] }),
+    includeFacets ? loadFacetStyles(env, params) : Promise.resolve([]),
+    includeFacets ? loadFacetTypes(env, params) : Promise.resolve([]),
+    includePills ? loadCategoryPills(env, params) : Promise.resolve([]),
+    includePills ? loadSubcategoryPills(env, params) : Promise.resolve([]),
   ]);
 
   const rowResults = rows.results ?? [];

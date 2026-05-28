@@ -75,6 +75,7 @@ const DEFAULT_API_BASE = 'https://templates.webflow.com/templates-api';
 const WORKER_ORIGIN = 'https://webflow-template-search.createsomething.workers.dev';
 const CLOUD_APP_PREVIEW_ORIGIN = 'https://webflow-template-marketplace.webflow.io';
 const SIDEBAR_CACHE_TTL_MS = 5 * 60 * 1000;
+const SIDEBAR_STORAGE_PREFIX = 'wf-template-sidebar:';
 
 const sidebarPayloadCache = new Map<string, { timestamp: number; data: SidebarPayload }>();
 
@@ -207,6 +208,7 @@ const FALLBACK_CATEGORIES: SidebarCategory[] = [
     count: null,
   };
 });
+const FALLBACK_CATEGORY_SLUGS = new Set(FALLBACK_CATEGORIES.map((category) => category.slug));
 
 const SIDEBAR_STYLES = `
 .tmsidebar,
@@ -474,12 +476,17 @@ function appendCountContext(url: URL, context: CountContext, scope?: TemplateSco
   if (context.freeOnly || resolvedScope === 'free') url.searchParams.set('free_only', 'true');
 }
 
-function buildSearchApiUrl(apiBase: string, context: CountContext, scope?: TemplateScope): string {
+function buildSearchApiUrl(
+  apiBase: string,
+  context: CountContext,
+  scope?: TemplateScope,
+  include = 'items,pills',
+): string {
   const absolute = apiBase.startsWith('/') && typeof window !== 'undefined'
     ? `${window.location.origin}${apiBase}`
     : apiBase;
   const url = new URL(`${absolute}/api/templates/search`);
-  url.searchParams.set('include', 'items,pills');
+  url.searchParams.set('include', include);
   url.searchParams.set('page', '1');
   url.searchParams.set('page_size', '1');
   url.searchParams.set('sort', 'popular');
@@ -487,14 +494,64 @@ function buildSearchApiUrl(apiBase: string, context: CountContext, scope?: Templ
   return url.toString();
 }
 
-async function fetchSidebarPayload(url: string, signal: AbortSignal): Promise<SidebarPayload> {
+function readSidebarPayloadCache(url: string): SidebarPayload | null {
   const cached = sidebarPayloadCache.get(url);
-  if (cached && Date.now() - cached.timestamp < SIDEBAR_CACHE_TTL_MS) return cached.data;
+  if (cached && Date.now() - cached.timestamp < SIDEBAR_CACHE_TTL_MS) {
+    return cached.data;
+  }
+  if (typeof window === 'undefined') return null;
+
+  try {
+    const raw = window.localStorage.getItem(`${SIDEBAR_STORAGE_PREFIX}${url}`);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { timestamp?: unknown; data?: unknown };
+    if (typeof parsed.timestamp !== 'number' || Date.now() - parsed.timestamp >= SIDEBAR_CACHE_TTL_MS) {
+      return null;
+    }
+    const data = parsed.data as SidebarPayload;
+    sidebarPayloadCache.set(url, { timestamp: parsed.timestamp, data });
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+function writeSidebarPayloadCache(url: string, data: SidebarPayload): void {
+  const entry = { timestamp: Date.now(), data };
+  sidebarPayloadCache.set(url, entry);
+  if (typeof window === 'undefined') return;
+
+  try {
+    window.localStorage.setItem(`${SIDEBAR_STORAGE_PREFIX}${url}`, JSON.stringify(entry));
+  } catch {
+    // Storage can be unavailable in privacy modes; in-memory cache still applies.
+  }
+}
+
+async function fetchSidebarPayload(url: string, signal: AbortSignal): Promise<SidebarPayload> {
+  const cached = readSidebarPayloadCache(url);
+  if (cached) return cached;
   const response = await fetch(url, { signal });
   if (!response.ok) throw new Error(`Sidebar counts failed with ${response.status}`);
   const data = (await response.json()) as SidebarPayload;
-  sidebarPayloadCache.set(url, { timestamp: Date.now(), data });
+  writeSidebarPayloadCache(url, data);
   return data;
+}
+
+function toCanonicalSidebarCategories(categories: SidebarCategory[] | undefined): SidebarCategory[] {
+  const bySlug = new Map(
+    (categories ?? [])
+      .filter((category) => FALLBACK_CATEGORY_SLUGS.has(category.slug))
+      .map((category) => [category.slug, category]),
+  );
+
+  return FALLBACK_CATEGORIES.map((category) => {
+    const live = bySlug.get(category.slug);
+    return {
+      ...category,
+      count: typeof live?.count === 'number' ? live.count : category.count,
+    };
+  });
 }
 
 function formatCount(value: number | null): string {
@@ -549,8 +606,10 @@ export const TemplateSearchSidebar: React.FC<TemplateSearchSidebarProps> = ({
 }) => {
   const apiBase = resolveApiBase(apiBaseProp);
   const [counts, setCounts] = useState<SidebarCounts>({ all: null, featured: null, landing_pages: null, free: null });
-  const [categories, setCategories] = useState<SidebarCategory[]>([]);
-  const [loading, setLoading] = useState(showCategories || (showSpecialLinks && showCounts));
+  const [categories, setCategories] = useState<SidebarCategory[]>(() =>
+    showCategories ? FALLBACK_CATEGORIES : [],
+  );
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchValue, setSearchValue] = useState('');
   const [routeVersion, setRouteVersion] = useState(0);
@@ -578,30 +637,38 @@ export const TemplateSearchSidebar: React.FC<TemplateSearchSidebarProps> = ({
     }
 
     const ac = new AbortController();
-    setLoading(true);
+    setLoading(showCategories && categories.length === 0);
     setError(null);
 
-    const categoryUrl = buildSearchApiUrl(apiBase, countContext, countMode === 'contextual' ? undefined : 'all');
+    const categoryUrl = buildSearchApiUrl(
+      apiBase,
+      countContext,
+      countMode === 'contextual' ? undefined : 'all',
+      'pills',
+    );
     const specialUrls = SPECIAL_ROWS.reduce<Record<keyof SidebarCounts, string>>((acc, row) => {
-      acc[row.key] = buildSearchApiUrl(apiBase, countContext, row.scope);
+      acc[row.key] = buildSearchApiUrl(apiBase, countContext, row.scope, 'count');
       return acc;
     }, { all: categoryUrl, featured: categoryUrl, landing_pages: categoryUrl, free: categoryUrl });
 
-    Promise.all([
-      fetchSidebarPayload(categoryUrl, ac.signal),
-      needsSpecialCounts ? fetchSidebarPayload(specialUrls.featured, ac.signal) : Promise.resolve(null),
-      needsSpecialCounts ? fetchSidebarPayload(specialUrls.landing_pages, ac.signal) : Promise.resolve(null),
-      needsSpecialCounts ? fetchSidebarPayload(specialUrls.free, ac.signal) : Promise.resolve(null),
-    ])
-      .then(([categoryPayload, featuredPayload, landingPayload, freePayload]) => {
+    const cachedCategoryPayload = readSidebarPayloadCache(categoryUrl);
+    if (cachedCategoryPayload) {
+      setCategories(showCategories ? toCanonicalSidebarCategories(cachedCategoryPayload.category_pills) : []);
+      setCounts((current) => ({
+        ...current,
+        all: needsSpecialCounts ? Number(cachedCategoryPayload.pagination?.total_items ?? 0) : null,
+      }));
+      setLoading(false);
+    }
+
+    fetchSidebarPayload(categoryUrl, ac.signal)
+      .then((categoryPayload) => {
         if (ac.signal.aborted) return;
-        setCategories(showCategories ? categoryPayload.category_pills ?? [] : []);
-        setCounts({
+        setCategories(showCategories ? toCanonicalSidebarCategories(categoryPayload.category_pills) : []);
+        setCounts((current) => ({
+          ...current,
           all: needsSpecialCounts ? Number(categoryPayload.pagination?.total_items ?? 0) : null,
-          featured: featuredPayload ? Number(featuredPayload.pagination?.total_items ?? 0) : null,
-          landing_pages: landingPayload ? Number(landingPayload.pagination?.total_items ?? 0) : null,
-          free: freePayload ? Number(freePayload.pagination?.total_items ?? 0) : null,
-        });
+        }));
       })
       .catch((err) => {
         if (!ac.signal.aborted) setError(err instanceof Error ? err.message : 'Unable to load sidebar counts');
@@ -609,6 +676,24 @@ export const TemplateSearchSidebar: React.FC<TemplateSearchSidebarProps> = ({
       .finally(() => {
         if (!ac.signal.aborted) setLoading(false);
       });
+
+    if (needsSpecialCounts) {
+      Promise.all([
+        fetchSidebarPayload(specialUrls.featured, ac.signal),
+        fetchSidebarPayload(specialUrls.landing_pages, ac.signal),
+        fetchSidebarPayload(specialUrls.free, ac.signal),
+      ])
+        .then(([featuredPayload, landingPayload, freePayload]) => {
+          if (ac.signal.aborted) return;
+          setCounts((current) => ({
+            ...current,
+            featured: Number(featuredPayload.pagination?.total_items ?? 0),
+            landing_pages: Number(landingPayload.pagination?.total_items ?? 0),
+            free: Number(freePayload.pagination?.total_items ?? 0),
+          }));
+        })
+        .catch(() => {});
+    }
 
     return () => ac.abort();
   }, [apiBase, countContext, countMode, showCategories, showCounts, showSpecialLinks]);

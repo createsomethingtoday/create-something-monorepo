@@ -1,5 +1,6 @@
 export type TemplateScope = 'all' | 'featured' | 'free' | 'landing_pages';
 export type TemplateSort = 'popular' | 'newest' | 'price_asc' | 'price_desc';
+export type SearchInclude = 'items' | 'facets' | 'pills' | 'count';
 export type AliasType = 'child_category';
 
 export interface Env {
@@ -135,6 +136,7 @@ export interface SearchParams {
   sort: TemplateSort;
   page: number;
   pageSize: number;
+  include: SearchInclude[];
 }
 
 export interface SearchItem {
