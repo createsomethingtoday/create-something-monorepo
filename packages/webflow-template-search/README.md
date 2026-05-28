@@ -9,6 +9,7 @@ Cloudflare Worker and D1 search index for the Webflow template marketplace.
 - `GET /api/templates/client.js`
 - `POST /api/templates/admin/rebuild`
 - `POST /api/templates/admin/sync`
+- `POST /api/templates/admin/sync-records`
 - `GET /api/templates/admin/sync-status`
 - `POST /api/templates/admin/refresh-images`
 - `POST /api/templates/admin/backfill-images`
@@ -17,6 +18,17 @@ Cloudflare Worker and D1 search index for the Webflow template marketplace.
 ## Sync auth
 
 Use `Authorization: Bearer <SYNC_ADMIN_TOKEN>` or `X-API-Key`.
+
+## Search filters
+
+`GET /api/templates/search` accepts page context filters and user refinement filters:
+
+- `scope`: `all`, `featured`, `free`, or `landing_pages`
+- `category_group_slug` / `child_category_slug`: category collection-page context
+- `style_slug` / `tag_slug`: style or tag collection-page context
+- `styles` / `tags`: one or more user-selected refinement slugs
+- `types`: one or more template types
+- `free_only`, `sort`, `page`, `page_size`, and `include`
 
 ## Featured creator monthly batch
 

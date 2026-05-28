@@ -61,6 +61,7 @@ export interface AirtableAssetFields extends Record<string, unknown> {
   '📋 Cumulative Purchases'?: number;
   '🥞💲Template Price Filter (🏗️ only)'?: number;
   '🚀📅Published Date'?: string;
+  '🥞CMS Slug'?: string;
   '🥞CMS Slug (formula)'?: string;
   '🎨Creator'?: string[];
   '🎨Creator Name'?: string;
@@ -148,7 +149,10 @@ export interface SearchParams {
   scope: TemplateScope;
   categoryGroupSlug: string | null;
   childCategorySlug: string | null;
+  styleSlug: string | null;
+  tagSlug: string | null;
   styles: string[];
+  tags: string[];
   types: string[];
   freeOnly: boolean;
   sort: TemplateSort;
@@ -204,7 +208,10 @@ export interface SearchResponsePayload {
     scope: TemplateScope;
     category_group_slug: string | null;
     child_category_slug: string | null;
+    style_slug: string | null;
+    tag_slug: string | null;
     styles: string[];
+    tags: string[];
     types: string[];
     free_only: boolean;
   };
@@ -226,7 +233,7 @@ export interface ImageRefreshSummary {
 }
 
 export interface SyncSummary {
-  mode: 'full' | 'incremental';
+  mode: 'full' | 'incremental' | 'records';
   started_at: string;
   finished_at: string;
   fetched_records: number;

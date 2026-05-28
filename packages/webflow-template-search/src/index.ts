@@ -15,9 +15,11 @@ import { searchTemplates } from './search.js';
 import {
   SyncAlreadyRunningError,
   backfillTemplateImages,
+  forceRefreshCreatorProfiles,
   pruneMissingTemplateImages,
   refreshCreatorProfiles,
   refreshImages,
+  syncTemplateRecordsByIds,
   syncTemplates,
 } from './sync.js';
 import type { Env } from './types.js';
@@ -27,6 +29,7 @@ import type { WebflowWebhookPayload } from './webflow.js';
 const SYNC_STATUS_STATE_KEYS = [
   'last_full_sync',
   'last_incremental_sync',
+  'last_record_sync',
   'last_image_refresh',
   'last_creator_refresh',
   'last_image_backfill',
@@ -92,6 +95,54 @@ async function handleManualSync(
   }
 
   return jsonResponse(request, env, await syncTemplates(env, mode));
+}
+
+async function parseRecordIds(request: Request): Promise<string[]> {
+  const url = new URL(request.url);
+  const ids = [
+    ...url.searchParams.getAll('id'),
+    ...(url.searchParams.get('ids') ?? '')
+      .split(',')
+      .map((id) => id.trim())
+      .filter(Boolean),
+  ];
+
+  if ((request.headers.get('content-type') ?? '').includes('application/json')) {
+    const body = (await request.json()) as { ids?: unknown; record_ids?: unknown };
+    const bodyIds = Array.isArray(body.ids) ? body.ids : Array.isArray(body.record_ids) ? body.record_ids : [];
+    ids.push(...bodyIds.filter((id): id is string => typeof id === 'string'));
+  }
+
+  return Array.from(new Set(ids.map((id) => id.trim()).filter(Boolean)));
+}
+
+async function handleRecordSync(request: Request, env: Env): Promise<Response> {
+  const authError = validateAdminToken(request, env);
+  if (authError) return authError;
+
+  const ids = await parseRecordIds(request);
+  if (ids.length === 0) return jsonResponse(request, env, { error: 'At least one Airtable record ID is required.' }, 400);
+  if (ids.length > 50) return jsonResponse(request, env, { error: 'Record sync is limited to 50 records per request.' }, 400);
+  const invalidId = ids.find((id) => !/^rec[A-Za-z0-9]+$/.test(id));
+  if (invalidId) return jsonResponse(request, env, { error: `Invalid Airtable record ID: ${invalidId}` }, 400);
+
+  return jsonResponse(request, env, await syncTemplateRecordsByIds(env, ids));
+}
+
+function parseCreatorNames(url: URL): string[] {
+  return Array.from(
+    new Set(
+      [
+        ...url.searchParams.getAll('name'),
+        ...(url.searchParams.get('names') ?? '')
+          .split(',')
+          .map((name) => name.trim())
+          .filter(Boolean),
+      ]
+        .map((name) => name.trim())
+        .filter(Boolean),
+    ),
+  );
 }
 
 const WEBHOOK_TRIGGER_TYPES = new Set(['collection_item_created', 'collection_item_changed', 'collection_item_published']);
@@ -268,6 +319,10 @@ export default {
         return await handleManualSync(request, env, ctx, 'incremental');
       }
 
+      if (url.pathname === '/api/templates/admin/sync-records' && request.method === 'POST') {
+        return await handleRecordSync(request, env);
+      }
+
       if (url.pathname === '/api/templates/admin/sync-status' && request.method === 'GET') {
         return await handleSyncStatus(request, env);
       }
@@ -281,7 +336,13 @@ export default {
       if (url.pathname === '/api/templates/admin/refresh-creators' && request.method === 'POST') {
         const authError = validateAdminToken(request, env);
         if (authError) return authError;
-        return jsonResponse(request, env, await refreshCreatorProfiles(env));
+        return jsonResponse(
+          request,
+          env,
+          url.searchParams.get('force') === 'true'
+            ? await forceRefreshCreatorProfiles(env, parseCreatorNames(url))
+            : await refreshCreatorProfiles(env),
+        );
       }
 
       if (url.pathname === '/api/templates/webhooks/webflow' && request.method === 'POST') {

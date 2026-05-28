@@ -33,6 +33,18 @@ export default declareComponent(TemplateFilterBar, {
       tooltip:
         'Subcategory slug for Designer preview, e.g. "ai-websites". Production auto-detects from /templates/subcategory/{slug}.',
     }),
+    styleSlug: props.Text({
+      name: 'Style Slug (preview)',
+      defaultValue: '',
+      tooltip:
+        'Style slug for Designer preview, e.g. "modern". Production auto-detects from /templates/style/{slug}.',
+    }),
+    tagSlug: props.Text({
+      name: 'Tag Slug (preview)',
+      defaultValue: '',
+      tooltip:
+        'Tag slug for Designer preview, e.g. "automation". Production auto-detects from /templates/tag/{slug}.',
+    }),
     showSearch: props.Boolean({
       name: 'Show Search',
       defaultValue: false,

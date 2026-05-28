@@ -49,7 +49,10 @@ interface FilterState {
   scope: TemplateScope;
   categoryGroupSlug: string | null;
   childCategorySlug: string | null;
+  styleSlug: string | null;
+  tagSlug: string | null;
   styles: string[];
+  tags: string[];
   types: string[];
   freeOnly: boolean;
   sort: TemplateSort;
@@ -72,6 +75,16 @@ export interface TemplateGridProps {
    */
   categorySlug?: string;
   /**
+   * Style slug for Designer preview. In production the slug is auto-detected
+   * from /templates/style/{slug}.
+   */
+  styleSlug?: string;
+  /**
+   * Tag slug for Designer preview. In production the slug is auto-detected
+   * from /templates/tag/{slug}.
+   */
+  tagSlug?: string;
+  /**
    * Override scope for Designer preview of special pages
    * (featured, free, landing_pages).
    * In production the scope is auto-detected from the URL path.
@@ -81,6 +94,17 @@ export interface TemplateGridProps {
   initialSort?: TemplateSort;
   /** Items per page per infinite-scroll fetch */
   pageSize?: number;
+  /**
+   * Render an inline no-results state instead of relying on a native Webflow
+   * [fs-cmsfilter-element="empty"] element.
+   */
+  showEmptyState?: boolean;
+  /** No-results heading when showEmptyState is enabled. */
+  emptyTitle?: string;
+  /** No-results body copy when showEmptyState is enabled. */
+  emptyDescription?: string;
+  /** Clear-filters button label when showEmptyState is enabled. */
+  emptyActionLabel?: string;
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -126,14 +150,18 @@ const SEL_SEARCH = '[data-template-search-input], input[type="search"]';
 
 // ─── URL helpers ──────────────────────────────────────────────────────────────
 
-// Style slugs in the DB are lowercase-hyphenated (mirrors the search-worker's
+// Slugs in the DB are lowercase-hyphenated (mirrors the search-worker's
 // slugifySegment). Convert display names from the filter UI to the same format.
-function toStyleSlug(name: string): string {
+function toFilterSlug(name: string): string {
   return name
     .trim()
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
+}
+
+function toStyleSlug(name: string): string {
+  return toFilterSlug(name);
 }
 
 function normalizeSort(value: string | null | undefined, fallback: TemplateSort = 'popular'): TemplateSort {
@@ -161,6 +189,18 @@ function resolveScopeOverride(scopeOverrideParam?: TemplateScope): TemplateScope
   return scopeOverrideParam && scopeOverrideParam !== 'all' ? scopeOverrideParam : undefined;
 }
 
+function normalizeScope(value: string | null): TemplateScope | null {
+  switch (value) {
+    case 'all':
+    case 'featured':
+    case 'free':
+    case 'landing_pages':
+      return value;
+    default:
+      return null;
+  }
+}
+
 /**
  * Derives the full filter state from the current page URL.
  * Mirrors client-script.ts parseRouteState() so all Webflow template URL
@@ -175,13 +215,17 @@ function resolveScopeOverride(scopeOverrideParam?: TemplateScope): TemplateScope
  *   /templates/landing-pages           → scope=landing_pages
  *   /templates/category/{slug}         → category_group_slug={slug}
  *   /templates/subcategory/{slug}      → child_category_slug={slug}
+ *   /templates/style/{slug}            → style_slug={slug}
+ *   /templates/tag/{slug}              → tag_slug={slug}
  *   ?category={slug}                   → category_group_slug={slug}
  *   ?subcategory={slug}                → child_category_slug={slug}
  */
 function parseRouteState(
   defaultSort: TemplateSort = 'popular',
-  slugOverride?: string,
+  categorySlugOverride?: string,
   scopeOverrideParam?: TemplateScope,
+  styleSlugOverride?: string,
+  tagSlugOverride?: string,
 ): FilterState {
   const resolvedScopeOverride = resolveScopeOverride(scopeOverrideParam);
 
@@ -189,9 +233,12 @@ function parseRouteState(
     return {
       q: '',
       scope: resolvedScopeOverride ?? 'all',
-      categoryGroupSlug: slugOverride || null,
+      categoryGroupSlug: categorySlugOverride || null,
       childCategorySlug: null,
+      styleSlug: styleSlugOverride || null,
+      tagSlug: tagSlugOverride || null,
       styles: [],
+      tags: [],
       types: [],
       freeOnly: false,
       sort: defaultSort,
@@ -201,6 +248,7 @@ function parseRouteState(
   const url = new URL(window.location.href);
   const params = url.searchParams;
   const pathname = url.pathname.replace(/\/+$/, '');
+  const scopeParam = normalizeScope(params.get('scope'));
 
   let scope: TemplateScope = 'all';
   let freeOnly = false;
@@ -218,29 +266,53 @@ function parseRouteState(
   if (/\/templates\/landing-page(s)?($|\/)/.test(pathname)) {
     scope = 'landing_pages';
   }
+  if (scopeParam) {
+    scope = scopeParam;
+    if (scopeParam === 'free') freeOnly = true;
+  }
 
   // Slug detection from path or query param
   // Path: /templates/category/{slug}
   // Query: ?category={slug} (used on e.g. /templates/free-website-templates?category=architecture-design)
   const categoryMatch = pathname.match(/\/templates\/category\/([^/?#]+)/);
   const subcategoryMatch = pathname.match(/\/templates\/subcategory\/([^/?#]+)/);
+  const styleMatch = pathname.match(/\/templates\/style\/([^/?#]+)/);
+  const tagMatch = pathname.match(/\/templates\/tag\/([^/?#]+)/);
   const categoryParam = params.get('category');
   const subcategoryParam = params.get('subcategory');
+  const styleParam = params.get('style_slug') ?? params.get('style');
+  const tagParam = params.get('tag_slug') ?? params.get('tag');
 
   // Query-param filters (user-applied via filter UI)
   const qRaw = params.get('q') ?? params.get('query') ?? params.get('search') ?? '';
   const freeParam = ['1', 'true', 'yes', 'on'].includes((params.get('free_only') ?? '').toLowerCase());
   // Style slugs in the DB are lowercase-hyphenated (slugifySegment), so normalize incoming URL values.
   const styles = params.getAll('styles').flatMap((v) => v.split(',')).filter(Boolean).map(toStyleSlug);
+  const tags = params.getAll('tags').flatMap((v) => v.split(',')).filter(Boolean).map(toFilterSlug);
   const types = params.getAll('types').flatMap((v) => v.split(',')).filter(Boolean);
 
   return {
     q: qRaw.trim(),
     scope: resolvedScopeOverride ?? scope,
     // Designer preview slug prop takes precedence over URL detection
-    categoryGroupSlug: slugOverride || (categoryMatch ? categoryMatch[1] : categoryParam || null),
+    categoryGroupSlug: categorySlugOverride || (categoryMatch ? categoryMatch[1] : categoryParam || null),
     childCategorySlug: subcategoryMatch ? subcategoryMatch[1] : subcategoryParam || null,
+    styleSlug: styleSlugOverride
+      ? toFilterSlug(styleSlugOverride)
+      : styleMatch
+        ? toFilterSlug(styleMatch[1])
+        : styleParam
+          ? toFilterSlug(styleParam)
+          : null,
+    tagSlug: tagSlugOverride
+      ? toFilterSlug(tagSlugOverride)
+      : tagMatch
+        ? toFilterSlug(tagMatch[1])
+        : tagParam
+          ? toFilterSlug(tagParam)
+          : null,
     styles,
+    tags,
     types,
     freeOnly: freeOnly || freeParam,
     sort: normalizeSort(params.get('sort'), defaultSort),
@@ -252,6 +324,7 @@ function mergeExternalFilterState(base: FilterState, detail: unknown): FilterSta
   const patch = detail as Partial<{
     q: unknown;
     styles: unknown;
+    tags: unknown;
     types: unknown;
     freeOnly: unknown;
     sort: unknown;
@@ -261,6 +334,7 @@ function mergeExternalFilterState(base: FilterState, detail: unknown): FilterSta
     ...base,
     q: typeof patch.q === 'string' ? patch.q.trim() : base.q,
     styles: Array.isArray(patch.styles) ? patch.styles.filter((value): value is string => typeof value === 'string') : base.styles,
+    tags: Array.isArray(patch.tags) ? patch.tags.filter((value): value is string => typeof value === 'string') : base.tags,
     types: Array.isArray(patch.types) ? patch.types.filter((value): value is string => typeof value === 'string') : base.types,
     freeOnly: typeof patch.freeOnly === 'boolean' ? patch.freeOnly : base.freeOnly,
     sort: typeof patch.sort === 'string' ? normalizeSort(patch.sort, base.sort) : base.sort,
@@ -285,9 +359,12 @@ function areFiltersEqual(a: FilterState, b: FilterState): boolean {
     a.scope === b.scope &&
     a.categoryGroupSlug === b.categoryGroupSlug &&
     a.childCategorySlug === b.childCategorySlug &&
+    a.styleSlug === b.styleSlug &&
+    a.tagSlug === b.tagSlug &&
     a.freeOnly === b.freeOnly &&
     a.sort === b.sort &&
     areStringArraysEqual(a.styles, b.styles) &&
+    areStringArraysEqual(a.tags, b.tags) &&
     areStringArraysEqual(a.types, b.types)
   );
 }
@@ -302,12 +379,15 @@ function buildApiUrl(base: string, filters: FilterState, page: number, pageSize:
   if (filters.scope !== 'all') url.searchParams.set('scope', filters.scope);
   if (filters.categoryGroupSlug) url.searchParams.set('category_group_slug', filters.categoryGroupSlug);
   if (filters.childCategorySlug) url.searchParams.set('child_category_slug', filters.childCategorySlug);
+  if (filters.styleSlug) url.searchParams.set('style_slug', toFilterSlug(filters.styleSlug));
+  if (filters.tagSlug) url.searchParams.set('tag_slug', toFilterSlug(filters.tagSlug));
   if (filters.freeOnly) url.searchParams.set('free_only', 'true');
   url.searchParams.set('include', 'items');
   url.searchParams.set('sort', filters.sort);
   url.searchParams.set('page', String(page));
   url.searchParams.set('page_size', String(pageSize));
   filters.styles.forEach((v) => url.searchParams.append('styles', v));
+  filters.tags.forEach((v) => url.searchParams.append('tags', v));
   filters.types.forEach((v) => url.searchParams.append('types', v));
   return url.toString();
 }
@@ -315,13 +395,14 @@ function buildApiUrl(base: string, filters: FilterState, page: number, pageSize:
 function updateUrlParams(filters: FilterState): void {
   if (typeof window === 'undefined') return;
   const url = new URL(window.location.href);
-  ['q', 'query', 'search', 'styles', 'types', 'free_only', 'sort', 'page'].forEach((k) =>
+  ['q', 'query', 'search', 'styles', 'tags', 'types', 'free_only', 'sort', 'page'].forEach((k) =>
     url.searchParams.delete(k),
   );
   if (filters.q) url.searchParams.set('q', filters.q);
   if (filters.sort && filters.sort !== 'popular') url.searchParams.set('sort', filters.sort);
   if (filters.freeOnly && filters.scope !== 'free') url.searchParams.set('free_only', 'true');
   filters.styles.forEach((v) => url.searchParams.append('styles', v));
+  filters.tags.forEach((v) => url.searchParams.append('tags', v));
   filters.types.forEach((v) => url.searchParams.append('types', v));
   window.history.replaceState({}, '', url.toString());
 }
@@ -329,9 +410,18 @@ function updateUrlParams(filters: FilterState): void {
 // ─── Price helper ─────────────────────────────────────────────────────────────
 
 function formatPrice(item: ApiItem): string {
-  if (item.is_free || item.price === 0) return 'Free';
-  if (typeof item.price !== 'number') return '';
-  return `${item.price} USD`;
+  if (typeof item.price === 'number' && item.price > 0) return `${item.price} USD`;
+  if (item.price === 0 || item.is_free) return 'Free';
+  return '';
+}
+
+function isFreeTemplate(item: ApiItem): boolean {
+  if (typeof item.price === 'number') return item.price === 0;
+  return item.is_free;
+}
+
+function priceNumeric(item: ApiItem): string {
+  return typeof item.price === 'number' ? String(item.price) : '';
 }
 
 function primaryThumbnailUrl(item: ApiItem): string | null {
@@ -440,6 +530,41 @@ const S: Record<string, CSSProperties> = {
     fontSize: '13px',
     color: 'rgba(0,0,0,0.45)',
   },
+  emptyBox: {
+    width: '100%',
+    padding: '56px 24px',
+    border: '1px solid #e0e0e0',
+    borderRadius: '8px',
+    background: '#fff',
+    textAlign: 'center',
+  },
+  emptyTitle: {
+    margin: 0,
+    color: '#080808',
+    fontSize: '22px',
+    fontWeight: 600,
+    lineHeight: 1.2,
+  },
+  emptyDescription: {
+    maxWidth: '520px',
+    margin: '12px auto 0',
+    color: '#5f5f5f',
+    fontSize: '15px',
+    lineHeight: 1.5,
+  },
+  emptyButton: {
+    marginTop: '22px',
+    minHeight: '40px',
+    padding: '9px 16px',
+    border: '1px solid #d9d9d9',
+    borderRadius: '4px',
+    background: '#fff',
+    color: '#080808',
+    cursor: 'pointer',
+    font: 'inherit',
+    fontSize: '14px',
+    fontWeight: 600,
+  },
 };
 
 // ─── Skeleton ─────────────────────────────────────────────────────────────────
@@ -457,9 +582,15 @@ const SkeletonCard: React.FC<{ index: number }> = ({ index }) => (
 export const TemplateGrid: React.FC<TemplateGridProps> = ({
   apiBase: apiBaseProp = '',
   categorySlug: categorySlugProp = '',
+  styleSlug: styleSlugProp = '',
+  tagSlug: tagSlugProp = '',
   scopeOverride,
   initialSort = 'popular',
   pageSize = DEFAULT_PAGE_SIZE,
+  showEmptyState = false,
+  emptyTitle = 'No templates found',
+  emptyDescription = 'Try a broader search or clear filters to see more templates.',
+  emptyActionLabel = 'Clear filters',
 }) => {
   // Webflow passes defaultValue strings (including '') as actual values, not undefined.
   // Fall back to the relative path whenever the prop is blank.
@@ -474,7 +605,7 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
   const resolvedPageSize = pageSize || DEFAULT_PAGE_SIZE;
   // Parse initial filter state from URL on first render
   const [filters, setFilters] = useState<FilterState>(() =>
-    parseRouteState(initialSort, categorySlugProp || undefined, scopeOverride),
+    parseRouteState(initialSort, categorySlugProp || undefined, scopeOverride, styleSlugProp || undefined, tagSlugProp || undefined),
   );
 
   const [items, setItems] = useState<ApiItem[]>([]);
@@ -493,10 +624,16 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
   // Keep Designer prop edits and production URL changes aligned after mount.
   useEffect(() => {
     setFilters((prev) => {
-      const next = parseRouteState(initialSort, categorySlugProp || undefined, scopeOverride);
+      const next = parseRouteState(
+        initialSort,
+        categorySlugProp || undefined,
+        scopeOverride,
+        styleSlugProp || undefined,
+        tagSlugProp || undefined,
+      );
       return areFiltersEqual(prev, next) ? prev : next;
     });
-  }, [initialSort, categorySlugProp, scopeOverride]);
+  }, [initialSort, categorySlugProp, scopeOverride, styleSlugProp, tagSlugProp]);
 
   // ── Fetch ─────────────────────────────────────────────────────────────────
 
@@ -692,7 +829,13 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
         // Fallback: re-parse URL (assumes the filter script called pushState first)
         setFilters((prev) => {
           const next = mergeExternalFilterState(
-            parseRouteState(initialSort, categorySlugProp || undefined, scopeOverride),
+            parseRouteState(
+              initialSort,
+              categorySlugProp || undefined,
+              scopeOverride,
+              styleSlugProp || undefined,
+              tagSlugProp || undefined,
+            ),
             readSharedFilterState(href),
           );
           return areFiltersEqual(prev, next) ? prev : next;
@@ -730,11 +873,19 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
   useEffect(() => {
     const onPop = () => {
       lastHrefRef.current = window.location.href;
-      setFilters(parseRouteState(initialSort, categorySlugProp || undefined, scopeOverride));
+      setFilters(
+        parseRouteState(
+          initialSort,
+          categorySlugProp || undefined,
+          scopeOverride,
+          styleSlugProp || undefined,
+          tagSlugProp || undefined,
+        ),
+      );
     };
     window.addEventListener('popstate', onPop);
     return () => window.removeEventListener('popstate', onPop);
-  }, [initialSort, categorySlugProp, scopeOverride]);
+  }, [initialSort, categorySlugProp, scopeOverride, styleSlugProp, tagSlugProp]);
 
   // Re-parse from URL when TemplateFilterBar (code component) updates filter state.
   // TemplateFilterBar writes to URL params then dispatches this event — we just
@@ -746,7 +897,13 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
       lastHrefRef.current = href;
       setFilters((prev) => {
         const next = mergeExternalFilterState(
-          parseRouteState(initialSort, categorySlugProp || undefined, scopeOverride),
+          parseRouteState(
+            initialSort,
+            categorySlugProp || undefined,
+            scopeOverride,
+            styleSlugProp || undefined,
+            tagSlugProp || undefined,
+          ),
           (event as CustomEvent).detail ?? readSharedFilterState(href),
         );
         return areFiltersEqual(prev, next) ? prev : next;
@@ -758,7 +915,7 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
       window.removeEventListener('templateFiltersChanged', onFilterBarChange);
       document.removeEventListener('templateFiltersChanged', onFilterBarChange);
     };
-  }, [initialSort, categorySlugProp, scopeOverride]);
+  }, [initialSort, categorySlugProp, scopeOverride, styleSlugProp, tagSlugProp]);
 
   // replaceState() does not fire popstate. Poll the URL as a low-cost fallback
   // so the grid still refreshes if Webflow isolates or drops the custom event.
@@ -769,14 +926,52 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
       lastHrefRef.current = href;
       setFilters((prev) => {
         const next = mergeExternalFilterState(
-          parseRouteState(initialSort, categorySlugProp || undefined, scopeOverride),
+          parseRouteState(
+            initialSort,
+            categorySlugProp || undefined,
+            scopeOverride,
+            styleSlugProp || undefined,
+            tagSlugProp || undefined,
+          ),
           readSharedFilterState(href),
         );
         return areFiltersEqual(prev, next) ? prev : next;
       });
     }, 250);
     return () => window.clearInterval(id);
-  }, [initialSort, categorySlugProp, scopeOverride]);
+  }, [initialSort, categorySlugProp, scopeOverride, styleSlugProp, tagSlugProp]);
+
+  const clearFilters = useCallback(() => {
+    const next: FilterState = {
+      ...filters,
+      q: '',
+      styles: [],
+      tags: [],
+      types: [],
+      freeOnly: filters.scope === 'free',
+      sort: initialSort,
+    };
+    updateUrlParams(next);
+
+    if (typeof window !== 'undefined') {
+      const detail = {
+        q: next.q,
+        styles: [...next.styles],
+        tags: [...next.tags],
+        types: [...next.types],
+        freeOnly: next.freeOnly,
+        sort: next.sort,
+        href: window.location.href,
+        source: 'TemplateGrid',
+        updatedAt: Date.now(),
+      };
+      (window as unknown as Record<string, unknown>).__templateMarketplaceFilters = detail;
+      window.dispatchEvent(new CustomEvent('templateFiltersChanged', { detail }));
+      document.dispatchEvent(new CustomEvent('templateFiltersChanged', { detail }));
+    }
+
+    setFilters(next);
+  }, [filters, initialSort]);
 
   // ── Render ─────────────────────────────────────────────────────────────────
 
@@ -819,7 +1014,20 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
 
   // When items is empty (but not loading/error), render nothing — the native
   // [fs-cmsfilter-element="empty"] element is shown by the effect above.
-  if (items.length === 0) return null;
+  if (items.length === 0) {
+    if (!showEmptyState) return null;
+    return (
+      <div style={S.root}>
+        <div style={S.emptyBox} role="status">
+          <p style={S.emptyTitle}>{emptyTitle}</p>
+          <p style={S.emptyDescription}>{emptyDescription}</p>
+          <button type="button" style={S.emptyButton} onClick={clearFilters}>
+            {emptyActionLabel}
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const isRefreshing = loading && items.length > 0;
 
@@ -852,8 +1060,8 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
                   templateName={item.name}
                   templateLink={{ href: item.url ?? '#' }}
                   price={formatPrice(item)}
-                  priceNumeric={String(item.price ?? '0')}
-                  isFree={item.is_free}
+                  priceNumeric={priceNumeric(item)}
+                  isFree={isFreeTemplate(item)}
                   creatorName={item.creator_name ?? ''}
                   creatorLink={
                     item.creator_profile_url

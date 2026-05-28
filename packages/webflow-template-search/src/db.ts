@@ -603,12 +603,13 @@ export async function updateCreatorAvatarsFromWebflow(
   db: D1Database,
   records: WebflowDesignerAvatarRecord[],
   syncedAt: string,
-  options: { matchByName?: boolean } = {},
+  options: { matchByName?: boolean; forceMatchByName?: boolean } = {},
 ): Promise<number> {
   if (records.length === 0) return 0;
 
   const statements: D1PreparedStatement[] = [];
   const matchByName = options.matchByName !== false;
+  const forceMatchByName = options.forceMatchByName === true;
 
   for (const record of records) {
     const avatarUrl = record.avatarUrl;
@@ -652,51 +653,92 @@ export async function updateCreatorAvatarsFromWebflow(
 
     if (!matchByName) continue;
 
-    statements.push(
-      db
-        .prepare(
-          `UPDATE template_documents
-           SET creator_avatar_url = COALESCE(?, creator_avatar_url),
-               creator_avatar_alt = CASE
-                 WHEN ? IS NOT NULL THEN ?
-                 ELSE creator_avatar_alt
-               END,
-               creator_profile_url = COALESCE(?, creator_profile_url),
-               creator_record_id = COALESCE(NULLIF(creator_record_id, ''), ?),
-               synced_at = ?
-           WHERE creator_name = ?
-             AND (
-               creator_record_id IS NULL
-               OR creator_record_id = ''
-               OR creator_record_id = ?
-               OR ? IS NULL
-             )
-             AND (
-               (? IS NOT NULL AND NOT (creator_avatar_url IS ?))
-               OR (? IS NOT NULL AND NOT (creator_avatar_alt IS ?))
-               OR (? IS NOT NULL AND NOT (creator_profile_url IS ?))
-               OR (? IS NOT NULL AND (creator_record_id IS NULL OR creator_record_id = ''))
-             )`,
-        )
-        .bind(
-          avatarUrl,
-          avatarUrl,
-          avatarAlt,
-          record.profileUrl,
-          record.syncRecordId,
-          syncedAt,
-          record.name,
-          record.syncRecordId,
-          record.syncRecordId,
-          avatarUrl,
-          avatarUrl,
-          avatarUrl,
-          avatarAlt,
-          record.profileUrl,
-          record.profileUrl,
-          record.syncRecordId,
-        ),
-    );
+    if (forceMatchByName) {
+      statements.push(
+        db
+          .prepare(
+            `UPDATE template_documents
+             SET creator_avatar_url = COALESCE(?, creator_avatar_url),
+                 creator_avatar_alt = CASE
+                   WHEN ? IS NOT NULL THEN ?
+                   ELSE creator_avatar_alt
+                 END,
+                 creator_profile_url = COALESCE(?, creator_profile_url),
+                 creator_record_id = COALESCE(?, creator_record_id),
+                 synced_at = ?
+             WHERE creator_name = ?
+               AND (
+                 (? IS NOT NULL AND NOT (creator_avatar_url IS ?))
+                 OR (? IS NOT NULL AND NOT (creator_avatar_alt IS ?))
+                 OR (? IS NOT NULL AND NOT (creator_profile_url IS ?))
+                 OR (? IS NOT NULL AND NOT (creator_record_id IS ?))
+               )`,
+          )
+          .bind(
+            avatarUrl,
+            avatarUrl,
+            avatarAlt,
+            record.profileUrl,
+            record.syncRecordId,
+            syncedAt,
+            record.name,
+            avatarUrl,
+            avatarUrl,
+            avatarUrl,
+            avatarAlt,
+            record.profileUrl,
+            record.profileUrl,
+            record.syncRecordId,
+            record.syncRecordId,
+          ),
+      );
+    } else {
+      statements.push(
+        db
+          .prepare(
+            `UPDATE template_documents
+             SET creator_avatar_url = COALESCE(?, creator_avatar_url),
+                 creator_avatar_alt = CASE
+                   WHEN ? IS NOT NULL THEN ?
+                   ELSE creator_avatar_alt
+                 END,
+                 creator_profile_url = COALESCE(?, creator_profile_url),
+                 creator_record_id = COALESCE(NULLIF(creator_record_id, ''), ?),
+                 synced_at = ?
+             WHERE creator_name = ?
+               AND (
+                 creator_record_id IS NULL
+                 OR creator_record_id = ''
+                 OR creator_record_id = ?
+                 OR ? IS NULL
+               )
+               AND (
+                 (? IS NOT NULL AND NOT (creator_avatar_url IS ?))
+                 OR (? IS NOT NULL AND NOT (creator_avatar_alt IS ?))
+                 OR (? IS NOT NULL AND NOT (creator_profile_url IS ?))
+                 OR (? IS NOT NULL AND (creator_record_id IS NULL OR creator_record_id = ''))
+               )`,
+          )
+          .bind(
+            avatarUrl,
+            avatarUrl,
+            avatarAlt,
+            record.profileUrl,
+            record.syncRecordId,
+            syncedAt,
+            record.name,
+            record.syncRecordId,
+            record.syncRecordId,
+            avatarUrl,
+            avatarUrl,
+            avatarUrl,
+            avatarAlt,
+            record.profileUrl,
+            record.profileUrl,
+            record.syncRecordId,
+          ),
+      );
+    }
   }
 
   let totalChanges = 0;

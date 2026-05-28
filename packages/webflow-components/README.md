@@ -118,6 +118,10 @@ The current package contains both Canon exports and compatibility exports. The l
 | **Template Card** | CMS-bindable marketplace template card | `templateName`, `templateLink`, `primaryImage`, `creatorName`, `creatorIcon`, `popularityScore` |
 | **Template Grid** | Worker-backed template search grid | `apiBase`, `categorySlug`, `scopeOverride`, `initialSort`, `pageSize` |
 | **Template Filter Bar** | Worker-backed marketplace filters and pills | `apiBase`, `categorySlug`, `scopeOverride`, `defaultSort` |
+| **Template Search Box** | Shared marketplace search input that routes to the standalone search page or filters the current page | `mode`, `variant`, `searchAction`, `queryParam`, `placeholder`, `showButton` |
+| **Template Search Page** | Standalone marketplace search experiment surface with search, filter sidebar, active chips, result grid, and no-results recovery | `apiBase`, `title`, `quickSearches`, `scopeOverride`, `defaultSort`, `noindex` |
+| **Template Search Sidebar** | Standalone marketplace sidebar with search, All/Featured/Landing/Free rows, dynamic category counts, and vertical filters | `apiBase`, `title`, `interactionMode`, `countMode`, `showSearch`, `showCategories`, `showCounts` |
+| **Template Search Results** | Standalone search results grid with inline no-results recovery | `apiBase`, `scopeOverride`, `defaultSort`, `pageSize`, `emptyTitle` |
 | **Marketplace Landing Hero** | Search-backed landing hero with template search form, popular category suggestions, and native-vs-template-search experiment routing | `apiBase`, `title`, `searchExperience`, `searchAction`, `templateSearchAction`, `queryParam`, `useSearchSuggestions`, `enableAnalytics` |
 | **Template Carousel Section** | Worker-backed editorial carousel for marketplace landing sections | `preset`, `title`, `ctaLink`, `scopeOverride`, `sortOverride`, `itemLimit`, `enableAnalytics` |
 | **Popular Category Grid** | Search-backed marketplace use-case grid with live counts and optional thumbnails | `apiBase`, `layout`, `categories`, `useSearchCategories`, `maxCategories`, `enableAnalytics` |
