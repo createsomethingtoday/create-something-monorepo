@@ -3,6 +3,7 @@ import { healthCounts } from './db.js';
 import { corsPreflight, jsonResponse, textResponse } from './http.js';
 import { parseSearchParams } from './query.js';
 import { searchTemplates } from './search.js';
+import { suggestTemplates } from './suggest.js';
 import { syncTemplates } from './sync.js';
 import type { Env } from './types.js';
 
@@ -58,6 +59,10 @@ export default {
 
       if (url.pathname === '/api/templates/search' && request.method === 'GET') {
         return handleSearch(request, env);
+      }
+
+      if (url.pathname === '/api/templates/suggest' && request.method === 'GET') {
+        return jsonResponse(request, env, await suggestTemplates(env, url));
       }
 
       if ((url.pathname === '/api/templates/client.js' || url.pathname === '/client.js') && request.method === 'GET') {
