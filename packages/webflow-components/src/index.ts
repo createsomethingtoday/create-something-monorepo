@@ -50,6 +50,43 @@ export type { TemplateGridProps } from './components/grid/TemplateGrid';
 export { TemplateFilterBar } from './components/filter/TemplateFilterBar';
 export type { TemplateFilterBarProps } from './components/filter/TemplateFilterBar';
 
+export { TemplateCarouselSection } from './components/marketplace/TemplateCarouselSection';
+export type {
+  TemplateCarouselPreset,
+  TemplateCarouselSectionProps,
+} from './components/marketplace/TemplateCarouselSection';
+
+export { MarketplaceLandingHero } from './components/marketplace/MarketplaceLandingHero';
+export type {
+  MarketplaceLandingHeroProps,
+  MarketplaceLandingHeroSearchExperience,
+  MarketplaceLandingHeroSuggestion,
+} from './components/marketplace/MarketplaceLandingHero';
+
+export { PopularCategoryGrid } from './components/marketplace/PopularCategoryGrid';
+export type {
+  PopularCategoryGridCategory,
+  PopularCategoryGridProps,
+} from './components/marketplace/PopularCategoryGrid';
+
+export { MarketplaceFaq } from './components/marketplace/MarketplaceFaq';
+export type {
+  MarketplaceFaqItem,
+  MarketplaceFaqProps,
+} from './components/marketplace/MarketplaceFaq';
+
+export { MarketplaceLandingExperimentGate } from './components/marketplace/MarketplaceLandingExperimentGate';
+export type {
+  MarketplaceLandingExperimentGateProps,
+} from './components/marketplace/MarketplaceLandingExperimentGate';
+
+export type {
+  MarketplaceAnalyticsData,
+  MarketplaceExperimentRole,
+  MarketplaceExperimentState,
+  MarketplaceExperimentVariant,
+} from './components/marketplace/analytics';
+
 // Canon Form Components
 export { TextField } from './components/form/TextField';
 export type { TextFieldProps, TextFieldSize, TextFieldType } from './components/form/TextField';
