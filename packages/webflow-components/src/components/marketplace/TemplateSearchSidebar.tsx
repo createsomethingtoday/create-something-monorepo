@@ -110,14 +110,25 @@ const SIDEBAR_STYLES = `
 }
 
 .tmsidebar {
+  align-self: flex-start;
   width: 100%;
   min-width: 0;
+  height: fit-content;
+  max-height: calc(100vh - 96px);
   padding: 18px;
   border: 1px solid #e0e0e0;
   border-radius: 8px;
   background: #fff;
   color: #080808;
   font-family: "WF Visual Sans Variable", "WF Visual Sans", "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  overflow: auto;
+  position: sticky;
+  top: 80px;
+  scrollbar-width: none;
+}
+
+.tmsidebar::-webkit-scrollbar {
+  display: none;
 }
 
 .tmsidebar-title {
@@ -319,6 +330,15 @@ const SIDEBAR_STYLES = `
 
 .tmsidebar .tmfilter-sort-option:first-child {
   border-top: 0;
+}
+
+@media (max-width: 991px) {
+  .tmsidebar {
+    max-height: none;
+    overflow: visible;
+    position: relative;
+    top: auto;
+  }
 }
 `;
 
