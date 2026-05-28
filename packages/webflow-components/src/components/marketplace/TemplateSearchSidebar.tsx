@@ -10,7 +10,7 @@ interface SidebarCategory {
   name: string;
   slug: string;
   url?: string;
-  count: number;
+  count: number | null;
   active?: boolean;
 }
 
@@ -170,6 +170,43 @@ const CATEGORY_ICON_URLS: Record<string, string> = {
   'wellness-websites':
     'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/6706cd49c46e4abf254dd5ec_bike-(1).svg',
 };
+
+const FALLBACK_CATEGORIES: SidebarCategory[] = [
+  'Architecture & Design|architecture-and-design-websites',
+  'Arts & Entertainment|arts-and-entertainment-websites',
+  'Blog & Editorial|blog-and-editorial-websites',
+  'Community & Nonprofit|community-and-nonprofit-websites',
+  'Documentation|documentation-websites',
+  'Education|education-websites',
+  'Environment|environment-websites',
+  'Food & Drink|food-and-drink-websites',
+  'Government|government-websites',
+  'Hair & Beauty|hair-and-beauty-websites',
+  'Home Services|home-services-websites',
+  'HR & Hiring|hr-and-hiring-websites',
+  'Launch & Coming Soon|launch-and-coming-soon-websites',
+  'Medical|medical-websites',
+  'Music & Audio|music-and-audio-websites',
+  'Personal|personal-websites',
+  'Portfolio & Agency|portfolio-and-agency-websites',
+  'Professional Services|professional-services-websites',
+  'Real Estate|real-estate-websites',
+  'Retail & E-Commerce|retail-and-e-commerce-websites',
+  'Technology|technology-websites',
+  'Transportation|transportation-websites',
+  'Travel|travel-websites',
+  'UI Kit|ui-kit-websites',
+  'Weddings & Events|weddings-and-events-websites',
+  'Wellness|wellness-websites',
+].map((entry) => {
+  const [name, slug] = entry.split('|');
+  return {
+    name,
+    slug,
+    url: `https://webflow.com/templates/category/${slug}`,
+    count: null,
+  };
+});
 
 const SIDEBAR_STYLES = `
 .tmsidebar,
@@ -405,6 +442,13 @@ function readCurrentQuery(): string {
   return (params.get('q') ?? params.get('query') ?? params.get('search') ?? '').trim();
 }
 
+function readPathFilterSlug(kind: 'style' | 'tag'): string | null {
+  if (typeof window === 'undefined') return null;
+  const pathname = new URL(window.location.href).pathname.replace(/\/+$/, '');
+  const match = pathname.match(new RegExp(`/templates/${kind}/([^/?#]+)`));
+  return match ? toFilterSlug(match[1]) : null;
+}
+
 function readCountContext(countMode: SidebarCountMode, styleSlugOverride?: string, tagSlugOverride?: string): CountContext {
   if (typeof window === 'undefined' || countMode === 'global') {
     return { q: '', scope: 'all', styleSlug: null, tagSlug: null, freeOnly: false };
@@ -415,8 +459,8 @@ function readCountContext(countMode: SidebarCountMode, styleSlugOverride?: strin
   return {
     q: (params.get('q') ?? params.get('query') ?? params.get('search') ?? '').trim(),
     scope,
-    styleSlug: styleSlugOverride || params.get('style_slug') || params.get('style'),
-    tagSlug: tagSlugOverride || params.get('tag_slug') || params.get('tag'),
+    styleSlug: styleSlugOverride || readPathFilterSlug('style') || params.get('style_slug') || params.get('style'),
+    tagSlug: tagSlugOverride || readPathFilterSlug('tag') || params.get('tag_slug') || params.get('tag'),
     freeOnly: ['1', 'true', 'yes', 'on'].includes((params.get('free_only') ?? '').toLowerCase()),
   };
 }
@@ -617,6 +661,10 @@ export const TemplateSearchSidebar: React.FC<TemplateSearchSidebarProps> = ({
     return <span className="tmsidebar-count">{formatCount(value)}</span>;
   };
 
+  const shouldUseFallbackCategories =
+    showCategories && categories.length === 0 && !loading && (Boolean(error) || countMode === 'global');
+  const displayCategories = shouldUseFallbackCategories ? FALLBACK_CATEGORIES : categories;
+
   return (
     <div className={`tmsidebar ${shouldUseFilterMode ? 'tmsidebar--filter' : 'tmsidebar--navigate'}`}>
       <style>{SIDEBAR_STYLES}</style>
@@ -661,16 +709,16 @@ export const TemplateSearchSidebar: React.FC<TemplateSearchSidebarProps> = ({
 
             {showSpecialLinks && showCategories && <li className="tmsidebar-divider" aria-hidden="true" />}
 
-            {showCategories && loading && categories.length === 0 && (
+            {showCategories && loading && displayCategories.length === 0 && (
               <li className="tmsidebar-loading">Loading categories</li>
             )}
 
-            {showCategories && error && categories.length === 0 && (
+            {showCategories && error && displayCategories.length === 0 && (
               <li className="tmsidebar-error">Unable to load categories</li>
             )}
 
             {showCategories &&
-              categories.map((category) => {
+              displayCategories.map((category) => {
                 const active = activeCategory === category.slug;
                 const href = category.url || `https://webflow.com/templates/category/${category.slug}`;
                 const iconUrl = getCategoryIconUrl(category.slug);

@@ -145,14 +145,10 @@ async function loadCategoryPills(env: Env, params: SearchParams): Promise<Array<
     ...params,
     categoryGroupSlug: null,
     childCategorySlug: null,
-    styles: [],
-    types: [],
   };
   const sqlParts = buildSqlParts(scopedParams, {
     excludeCategoryGroup: true,
     excludeChildCategory: true,
-    excludeStyles: true,
-    excludeTypes: true,
   });
 
   const result = await env.DB
@@ -227,10 +223,8 @@ async function loadSubcategoryPills(env: Env, params: SearchParams): Promise<Arr
     ...params,
     categoryGroupSlug: groupSlug,
     childCategorySlug: null,
-    styles: [],
-    types: [],
   };
-  const sqlParts = buildSqlParts(scopedParams, { excludeChildCategory: true, excludeStyles: true, excludeTypes: true });
+  const sqlParts = buildSqlParts(scopedParams, { excludeChildCategory: true });
 
   const result = await env.DB
     .prepare(`

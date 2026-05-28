@@ -207,6 +207,16 @@ describe('webflow-template-search worker', () => {
       expect(searchPayload.items[0]?.creator_profile_url).toBe('https://webflow.com/templates/designers/brix-templates');
       expect(searchPayload.items[0]?.creator_avatar_url).toBe('https://example.com/brix.png');
       expect(searchPayload.items[0]?.creator_avatar_alt).toBe('BRIX Templates');
+
+      const styleSearch = await callWorker(new Request('https://templates.test/api/templates/search?style_slug=dark'), env);
+      const stylePayload = (await styleSearch.json()) as {
+        items: Array<{ name: string }>;
+        applied_filters: { styles: string[] };
+        category_pills: Array<{ slug: string; count: number }>;
+      };
+      expect(stylePayload.applied_filters.styles).toEqual(['dark-websites']);
+      expect(stylePayload.items.map((item) => item.name)).toEqual(['Setrex']);
+      expect(stylePayload.category_pills).toMatchObject([{ slug: 'technology-websites', count: 1 }]);
     } finally {
       fetchMock.mockRestore();
       close();

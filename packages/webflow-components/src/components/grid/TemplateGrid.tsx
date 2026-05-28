@@ -127,14 +127,36 @@ const SEL_SEARCH = '[data-template-search-input], input[type="search"]';
 
 // ─── URL helpers ──────────────────────────────────────────────────────────────
 
+const STYLE_SLUG_ALIASES: Record<string, string> = {
+  bold: 'bold-websites',
+  casual: 'casual-websites',
+  clean: 'clean-websites',
+  corporate: 'corporate-websites',
+  dark: 'dark-websites',
+  elegant: 'elegant-websites',
+  illustration: 'illustration-websites',
+  light: 'light-websites',
+  luxurious: 'luxury-websites',
+  luxury: 'luxury-websites',
+  minimal: 'minimal-websites',
+  organic: 'organic-websites',
+  retro: 'retro-websites',
+  sidebar: 'sidebar-websites',
+};
+
 // Style slugs in the DB are lowercase-hyphenated (mirrors the search-worker's
 // slugifySegment). Convert display names from the filter UI to the same format.
 function toStyleSlug(name: string): string {
-  return name
+  const slug = name
     .trim()
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
+  return STYLE_SLUG_ALIASES[slug] ?? slug;
+}
+
+function readListParams(params: URLSearchParams, keys: string[]): string[] {
+  return keys.flatMap((key) => params.getAll(key).flatMap((value) => value.split(','))).filter(Boolean);
 }
 
 function normalizeSort(value: string | null | undefined, fallback: TemplateSort = 'popular'): TemplateSort {
@@ -228,11 +250,18 @@ function parseRouteState(
   const categoryParam = params.get('category');
   const subcategoryParam = params.get('subcategory');
 
+  // Style pages: /templates/style/{style-slug} (e.g. /templates/style/light-websites)
+  // The path segment is the canonical style slug (for example, light-websites).
+  const stylePathMatch = pathname.match(/\/templates\/style\/([^/?#]+)/);
+  const stylePathSlug = stylePathMatch ? toStyleSlug(stylePathMatch[1]) : null;
+
   // Query-param filters (user-applied via filter UI)
   const qRaw = params.get('q') ?? params.get('query') ?? params.get('search') ?? '';
   const freeParam = ['1', 'true', 'yes', 'on'].includes((params.get('free_only') ?? '').toLowerCase());
   // Style slugs in the DB are lowercase-hyphenated (slugifySegment), so normalize incoming URL values.
-  const styles = params.getAll('styles').flatMap((v) => v.split(',')).filter(Boolean).map(toStyleSlug);
+  // Path-based style takes precedence over ?styles= query param.
+  const stylesFromParam = readListParams(params, ['styles', 'style_slug', 'style']).map(toStyleSlug);
+  const styles = Array.from(new Set(stylePathSlug ? [stylePathSlug, ...stylesFromParam] : stylesFromParam));
   const types = params.getAll('types').flatMap((v) => v.split(',')).filter(Boolean);
 
   return {

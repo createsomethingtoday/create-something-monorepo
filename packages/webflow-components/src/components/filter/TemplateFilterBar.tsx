@@ -672,8 +672,30 @@ const FILTER_STYLES = `
 
 // ─── URL helpers ──────────────────────────────────────────────────────────────
 
+const STYLE_SLUG_ALIASES: Record<string, string> = {
+  bold: 'bold-websites',
+  casual: 'casual-websites',
+  clean: 'clean-websites',
+  corporate: 'corporate-websites',
+  dark: 'dark-websites',
+  elegant: 'elegant-websites',
+  illustration: 'illustration-websites',
+  light: 'light-websites',
+  luxurious: 'luxury-websites',
+  luxury: 'luxury-websites',
+  minimal: 'minimal-websites',
+  organic: 'organic-websites',
+  retro: 'retro-websites',
+  sidebar: 'sidebar-websites',
+};
+
 function toStyleSlug(name: string): string {
-  return name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  const slug = name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  return STYLE_SLUG_ALIASES[slug] ?? slug;
+}
+
+function readListParams(params: URLSearchParams, keys: string[]): string[] {
+  return keys.flatMap((key) => params.getAll(key).flatMap((value) => value.split(','))).filter(Boolean);
 }
 
 function normalizeSort(value: string | null, fallback: TemplateSort = 'popular'): TemplateSort {
@@ -701,10 +723,14 @@ function readUrlFilters(defaultSort: TemplateSort = 'popular'): LocalFilters {
   if (typeof window === 'undefined') {
     return { q: '', styles: [], types: [], freeOnly: false, sort: defaultSort };
   }
-  const params = new URL(window.location.href).searchParams;
+  const url = new URL(window.location.href);
+  const params = url.searchParams;
+  const stylePathMatch = url.pathname.replace(/\/+$/, '').match(/\/templates\/style\/([^/?#]+)/);
+  const stylePathSlug = stylePathMatch ? toStyleSlug(stylePathMatch[1]) : null;
+  const stylesFromParam = readListParams(params, ['styles', 'style_slug', 'style']).map(toStyleSlug);
   return {
     q: (params.get('q') ?? params.get('query') ?? params.get('search') ?? '').trim(),
-    styles: params.getAll('styles').flatMap((v) => v.split(',')).filter(Boolean).map(toStyleSlug),
+    styles: Array.from(new Set(stylePathSlug ? [stylePathSlug, ...stylesFromParam] : stylesFromParam)),
     types: params.getAll('types').flatMap((v) => v.split(',')).filter(Boolean),
     freeOnly: ['1', 'true', 'yes', 'on'].includes((params.get('free_only') ?? '').toLowerCase()),
     sort: normalizeSort(params.get('sort'), defaultSort),
