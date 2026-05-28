@@ -31,10 +31,18 @@ interface LinearIssue {
   url: string;
 }
 
+interface LinearIssueCandidate extends LinearIssue {
+  id: string;
+  state: {
+    type: string;
+  } | null;
+}
+
 interface DestinationResult {
   type: 'linear' | 'slack';
   ok: boolean;
   issue?: LinearIssue;
+  reused?: boolean;
   error?: string;
 }
 
@@ -81,7 +89,12 @@ export default {
       const issueResult = await createLinearReviewIssue(env, review);
       if (!issueResult.ok) return issueResult.response;
       linearIssue = issueResult.issue;
-      destinations.push({ type: 'linear', ok: true, issue: linearIssue });
+      destinations.push({
+        type: 'linear',
+        ok: true,
+        issue: linearIssue,
+        reused: issueResult.reused
+      });
     }
 
     if (env.SLACK_WEBHOOK_URL) {
@@ -294,7 +307,7 @@ function isRecord(value: unknown): value is UnknownRecord {
 async function createLinearReviewIssue(
   env: Env,
   review: NormalizedReviewRequest
-): Promise<{ ok: true; issue: LinearIssue } | { ok: false; response: Response }> {
+): Promise<{ ok: true; issue: LinearIssue; reused: boolean } | { ok: false; response: Response }> {
   if (!env.LINEAR_API_KEY) {
     return { ok: false, response: jsonResponse({ error: 'LINEAR_API_KEY is not configured.' }, 500) };
   }
@@ -335,6 +348,29 @@ async function createLinearReviewIssue(
     ? context.data.projects.nodes.find((project) => project.name === configuredProject)?.id
     : undefined;
 
+  const title = issueTitle(review);
+  const existingIssue = await findOpenLinearIssueByTitle(env, title);
+  if (!existingIssue.ok) return { ok: false, response: existingIssue.response };
+
+  if (existingIssue.issue) {
+    const comment = await commentLinearIssue(
+      env,
+      existingIssue.issue.id,
+      duplicateWebhookComment(review)
+    );
+    if (!comment.ok) return { ok: false, response: comment.response };
+
+    return {
+      ok: true,
+      issue: {
+        identifier: existingIssue.issue.identifier,
+        title: existingIssue.issue.title,
+        url: existingIssue.issue.url
+      },
+      reused: true
+    };
+  }
+
   const assignToTokenOwner = env.ASSIGN_TO_TOKEN_OWNER !== 'false';
   const result = await linearGraphql<{
     issueCreate: {
@@ -350,7 +386,7 @@ async function createLinearReviewIssue(
     {
       input: {
         teamId: team.id,
-        title: issueTitle(review),
+        title,
         description: issueDescription(review),
         priority: priorityValue(review.priority),
         ...(assignToTokenOwner ? { assigneeId: context.data.viewer.id } : {}),
@@ -362,7 +398,7 @@ async function createLinearReviewIssue(
 
   if (!result.ok) return { ok: false, response: result.response };
 
-  return { ok: true, issue: result.data.issueCreate.issue };
+  return { ok: true, issue: result.data.issueCreate.issue, reused: false };
 }
 
 async function linearGraphql<T>(
@@ -389,6 +425,84 @@ async function linearGraphql<T>(
 
 function issueTitle(review: NormalizedReviewRequest): string {
   return truncate(`Review Half Dozen agent build: ${review.agentName}`, 120);
+}
+
+async function findOpenLinearIssueByTitle(
+  env: Env,
+  title: string
+): Promise<{ ok: true; issue?: LinearIssueCandidate } | { ok: false; response: Response }> {
+  const result = await linearGraphql<{
+    issues: {
+      nodes: LinearIssueCandidate[];
+    };
+  }>(
+    env,
+    `query ExistingAgentReviewIssue($filter: IssueFilter) {
+      issues(first: 10, filter: $filter) {
+        nodes {
+          id
+          identifier
+          title
+          url
+          state { type }
+        }
+      }
+    }`,
+    {
+      filter: {
+        title: {
+          eq: title
+        }
+      }
+    }
+  );
+
+  if (!result.ok) return { ok: false, response: result.response };
+
+  const issue = result.data.issues.nodes.find(
+    (node) => node.state?.type !== 'completed' && node.state?.type !== 'canceled'
+  );
+  return { ok: true, issue };
+}
+
+async function commentLinearIssue(
+  env: Env,
+  issueId: string,
+  body: string
+): Promise<{ ok: true } | { ok: false; response: Response }> {
+  const result = await linearGraphql<{
+    commentCreate: {
+      success: boolean;
+    };
+  }>(
+    env,
+    `mutation CommentAgentReviewIssue($input: CommentCreateInput!) {
+      commentCreate(input: $input) {
+        success
+      }
+    }`,
+    {
+      input: {
+        issueId,
+        body
+      }
+    }
+  );
+
+  if (!result.ok) return { ok: false, response: result.response };
+  return { ok: true };
+}
+
+function duplicateWebhookComment(review: NormalizedReviewRequest): string {
+  return [
+    'Duplicate Notion webhook fire received for this agent review request.',
+    '',
+    `Received: ${review.receivedAt}`,
+    `Webhook request id: ${review.requestId}`,
+    `Status: ${review.status ?? 'not provided'}`,
+    `Priority: ${review.priority ?? 'not provided'}`,
+    `Type: ${review.type ?? 'not provided'}`
+  ].join('\n');
 }
 
 function issueDescription(review: NormalizedReviewRequest): string {
