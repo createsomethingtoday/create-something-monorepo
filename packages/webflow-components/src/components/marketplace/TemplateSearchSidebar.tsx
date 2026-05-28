@@ -588,23 +588,6 @@ export const TemplateSearchSidebar: React.FC<TemplateSearchSidebarProps> = ({
     };
   }, []);
 
-  const onSpecialClick = (scope: TemplateScope, event: React.MouseEvent<HTMLAnchorElement>) => {
-    if (!shouldUseFilterMode || typeof window === 'undefined') return;
-    event.preventDefault();
-    const url = new URL(window.location.href);
-    url.searchParams.delete('category');
-    url.searchParams.delete('category_group_slug');
-    url.searchParams.delete('subcategory');
-    url.searchParams.delete('child_category_slug');
-    url.searchParams.delete('page');
-    url.searchParams.delete('scope');
-    url.searchParams.delete('free_only');
-    if (scope !== 'all') url.searchParams.set('scope', scope);
-    if (scope === 'free') url.searchParams.set('free_only', 'true');
-    window.history.replaceState({}, '', url.toString());
-    notifySidebarFiltersChanged('TemplateSearchSidebar');
-  };
-
   const onCategoryClick = (category: SidebarCategory, event: React.MouseEvent<HTMLAnchorElement>) => {
     if (!shouldUseFilterMode || typeof window === 'undefined') return;
     event.preventDefault();
@@ -667,7 +650,6 @@ export const TemplateSearchSidebar: React.FC<TemplateSearchSidebarProps> = ({
                       className="tmsidebar-row"
                       href={row.href}
                       aria-current={active ? 'page' : undefined}
-                      onClick={(event) => onSpecialClick(row.scope, event)}
                     >
                       {renderRowIcon(row.iconUrl)}
                       <span className="tmsidebar-label">{row.label}</span>
