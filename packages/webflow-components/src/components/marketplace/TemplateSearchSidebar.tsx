@@ -200,16 +200,42 @@ const SIDEBAR_STYLES = `
   width: 16px;
   height: 16px;
   flex: 0 0 auto;
-  border: 1px solid currentColor;
-  border-radius: 4px;
+  border-radius: 50%;
+  background: #d9d9d9;
   color: #757575;
   opacity: 0.8;
 }
 
+.tmsidebar-icon::after {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0;
+}
+
 .tmsidebar-row[aria-current="page"] .tmsidebar-icon,
 .tmsidebar-row:hover .tmsidebar-icon {
+  background: #e8f0ff;
   color: #146ef5;
   opacity: 1;
+}
+
+.tmsidebar-row[aria-current="page"] .tmsidebar-icon::after {
+  opacity: 1;
+}
+
+.tmsidebar--filter .tmsidebar-icon {
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  background: transparent;
+}
+
+.tmsidebar--filter .tmsidebar-icon::after {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
 }
 
 .tmsidebar-label {
@@ -544,7 +570,7 @@ export const TemplateSearchSidebar: React.FC<TemplateSearchSidebarProps> = ({
   };
 
   return (
-    <div className="tmsidebar">
+    <div className={`tmsidebar ${shouldUseFilterMode ? 'tmsidebar--filter' : 'tmsidebar--navigate'}`}>
       <style>{SIDEBAR_STYLES}</style>
       {title ? <p className="tmsidebar-title">{title}</p> : null}
 
