@@ -50,6 +50,20 @@ Optional analyzer autofill:
   and is used by `POST /api/intake/validate-published-url` to suggest template details and
   expose screenshot-download links after a successful validation pass.
 
+Validator app submission preflight:
+
+- `VALIDATOR_APP_PREFLIGHT_POLICY`
+  defaults to `enforce`. Use `warn` to collect bridge/result evidence without blocking the
+  form, or `disabled` for rollback.
+- `VALIDATOR_APP_WORKER_URL`
+  defaults to `https://validation-worker.createsomething.workers.dev` and is used to confirm
+  the published bridge plus latest persisted Validator result.
+- `VALIDATOR_APP_INSTALL_URL`
+  defaults to the Webflow OAuth install URL for the Webflow Way Validator app. The submission
+  form uses this URL when the bridge or latest 100% pass result is missing so creators can
+  install the app directly from the failed validation state. `NEXT_PUBLIC_VALIDATOR_APP_INSTALL_URL`
+  is also supported as a public build/runtime alias.
+
 Required upload worker:
 
 - `UPLOADS_WORKER_SECRET`

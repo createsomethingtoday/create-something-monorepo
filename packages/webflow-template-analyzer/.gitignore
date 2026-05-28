@@ -5,6 +5,8 @@ backend/.env
 backend/.venv/
 backend/__pycache__/
 backend/output/
+backend/daily_check_log.json
+backend/batch_results.json
 
 cloudflare/runtime/
 cloudflare/.dev.vars

@@ -122,6 +122,11 @@ The current package contains both Canon exports and compatibility exports. The l
 | **Template Search Page** | Standalone marketplace search experiment surface with search, filter sidebar, active chips, result grid, and no-results recovery | `apiBase`, `title`, `quickSearches`, `scopeOverride`, `defaultSort`, `noindex` |
 | **Template Search Sidebar** | Standalone marketplace sidebar with search, All/Featured/Landing/Free rows, dynamic category counts, and vertical filters | `apiBase`, `title`, `interactionMode`, `countMode`, `showSearch`, `showCategories`, `showCounts` |
 | **Template Search Results** | Standalone search results grid with inline no-results recovery | `apiBase`, `scopeOverride`, `defaultSort`, `pageSize`, `emptyTitle` |
+| **Marketplace Landing Hero** | Search-backed landing hero with template search form, popular category suggestions, and native-vs-template-search experiment routing | `apiBase`, `title`, `searchExperience`, `searchAction`, `templateSearchAction`, `queryParam`, `useSearchSuggestions`, `enableAnalytics` |
+| **Template Carousel Section** | Worker-backed editorial carousel for marketplace landing sections | `preset`, `title`, `ctaLink`, `scopeOverride`, `sortOverride`, `itemLimit`, `enableAnalytics` |
+| **Popular Category Grid** | Search-backed marketplace use-case grid with live counts and optional thumbnails | `apiBase`, `layout`, `categories`, `useSearchCategories`, `maxCategories`, `enableAnalytics` |
+| **Marketplace FAQ** | Accessible marketplace FAQ accordion with optional FAQPage JSON-LD | `items`, `openFirst`, `allowMultipleOpen`, `includeStructuredData`, `enableAnalytics` |
+| **Marketplace Landing Experiment Gate** | Optimizely-compatible test gate for control/treatment reveal and exposure tracking | `mode`, `trafficPercent`, `controlSelector`, `treatmentSelector`, `optimizelyExposureEvent` |
 | **Featured Creator Card** | CMS-bindable monthly featured creator card | `creatorName`, `creatorLink`, `creatorAvatar`, `headline`, `featuredTemplateCount`, `newTemplates90d`, `buyerDemand`, `categoryBreadth`, `topTemplateName`, `topTemplateImage` |
 
 ### Forms (Group: Forms)
@@ -167,6 +172,24 @@ The current package contains both Canon exports and compatibility exports. The l
 | **Solutions** | Tabbed content | `heading`, `tabs` (JSON), `variant` |
 | **Process Steps** | Step navigator | `heading`, `steps` (JSON), `variant` |
 | **Icon Card Grid** | Grid of icon cards | `heading`, `cards` (JSON), `columns` |
+
+### Cato Supply (Group: Cato Supply)
+
+These components are based on the exported project at `/Users/micahjohnson/Downloads/cato-supply.webflow` and are meant to replace the slow native/MCP delivery path for the remaining Cato surfaces.
+
+| Component | Description | Key Props |
+|-----------|-------------|-----------|
+| **Cato Supply Search Hero** | Homepage hero with Product Search redirect and Risk Radar catalog | `heading`, `productSearchUrl`, `apiUrl`, `showRiskRadar` |
+| **Cato Product Search Form** | Standalone search form redirecting to Cato Product Search | `placeholder`, `buttonLabel`, `productSearchUrl` |
+| **Cato Risk Radar Catalog** | Live Risk Radar table replacing the custom-code embed | `apiUrl`, `riskRadarUrl`, `rowsJson`, `fetchEnabled`, `autoScroll` |
+| **Cato Insights Mega Menu** | Self-contained Insights mega-menu content | `heading`, `summary`, `categoriesJson`, `itemsJson` |
+| **Cato Insights Hub** | Insights landing page with category cards and latest content | `categoriesJson`, `itemsJson`, `itemLimit`, `showFilterRail` |
+| **Cato Insights Archive** | Focused archive page for Resiliency, Research, Resources, or Newsroom | `categoryId`, `showSubscribe`, `itemsJson` |
+| **Cato Insight Category Archive** | CMS category template archive that resolves the active Insight Category from the slug | `categorySlug`, `categoryId`, `showSubscribe`, `itemsJson` |
+| **Cato Insight Detail** | CMS-bindable detail-page article shell | `title`, `summary`, `bodyJson`, `takeawaysJson`, `categoryId` |
+| **Cato About Page** | Improved About page experience with hero, platform focus, proof metrics, values, mission, leadership, and board sections | `valuesJson`, `leadershipJson`, `boardJson`, `metricsJson`, `showMission`, `showTeam` |
+| **Cato Case Studies Landing** | Improved Case Studies landing page with featured story, result proof, and customer story grid | `caseStudiesJson`, `showFeatured`, `linkMode`, `pathPrefix` |
+| **Cato Case Study Detail** | CMS-bindable case study detail template with customer profile, challenge, solution, results, and related stories | `slug`, `clientName`, `challengeHtml`, `solutionHtml`, `challengeImage`, `solutionImage`, `resultsJson`, `caseStudiesJson`, `backHref` |
 
 ### Layout (Group: Layout)
 

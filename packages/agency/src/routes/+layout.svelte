@@ -2,6 +2,7 @@
   import '../app.css';
   import { Navigation, Footer, Analytics, ModeIndicator } from '@create-something/canon';
   import { UnifiedSearch } from '@create-something/canon/navigation';
+  import { getAgencyContentAssetAnalyticsMetadata } from '$lib/analytics/content-assets';
   import { getAgencyMarketingExperimentMetadata } from '$lib/analytics/marketing-experiment';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
   import { page } from '$app/stores';
@@ -46,9 +47,66 @@
     { label: 'Proof Surfaces', href: '/products' },
     { label: 'About', href: '/about' }
   ];
-  const primaryBookingHref = $derived(
-    $page.url.pathname === '/services' ? agencyCoreMessaging.servicesMappingSessionHref : '/book'
+  const primaryCtaHref = $derived(
+    $page.url.pathname === '/book'
+      ? agencyCoreMessaging.servicesMappingSessionHref
+      : agencyCoreMessaging.startWithWorkflowHref
   );
+  const globalAnalyticsMetadata = $derived(getAgencyGlobalAnalyticsMetadata($page.url.pathname));
+  const footerQuickLinkGroups = [
+    {
+      title: 'Commercial',
+      ariaLabel: 'Commercial paths',
+      links: [
+        { label: 'How I Work', href: '/services' },
+        { label: 'Stack', href: '/stack' },
+        { label: 'Proof Surfaces', href: '/products' },
+        { label: 'About', href: '/about' }
+      ]
+    },
+    {
+      title: 'Partner Lanes',
+      ariaLabel: 'Partner lanes',
+      links: [
+        { label: 'Partners', href: '/partners' },
+        { label: 'Cloudflare', href: '/cloudflare' },
+        { label: 'Dify', href: '/dify' },
+        { label: 'Notion', href: '/notion' }
+      ]
+    },
+    {
+      title: 'Guides',
+      ariaLabel: 'Guides and articles',
+      links: [
+        { label: 'Dify MCP Control Plane', href: '/dify/mcp-control-plane' },
+        { label: 'Dify Content Engine', href: '/dify/content-engine' },
+        { label: 'Dify vs n8n', href: '/dify/n8n-vs-dify' },
+        { label: 'Governance Checklist', href: agencyCoreMessaging.governanceChecklistHref }
+      ]
+    },
+    {
+      title: 'Trust',
+      ariaLabel: 'Trust and policy',
+      links: [
+        { label: 'Security', href: '/security' },
+        { label: 'Bearer Token Policy', href: '/bearer-token-policy' }
+      ]
+    }
+  ];
+
+  function getAgencyGlobalAnalyticsMetadata(pathname: string): Record<string, unknown> | undefined {
+    const experimentMetadata = getAgencyMarketingExperimentMetadata(pathname);
+    const contentMetadata = getAgencyContentAssetAnalyticsMetadata(pathname);
+
+    if (!experimentMetadata && !contentMetadata) {
+      return undefined;
+    }
+
+    return {
+      ...(experimentMetadata ?? {}),
+      ...(contentMetadata ?? {})
+    };
+  }
 
   // Quick access items for unified search
   const quickAccessItems = [
@@ -199,11 +257,11 @@
     },
     {
       id: 'nav-book',
-      label: agencyCoreMessaging.bookMappingSessionLabel,
-      description: 'Map the workflow, MCP wedge, and decision states',
-      href: '/book',
-      icon: '📞',
-      keywords: ['contact', 'hire', 'start', 'book', 'mapping', 'session', 'workflow system']
+      label: agencyCoreMessaging.startWithWorkflowLabel,
+      description: 'Choose the checklist, teardown, or mapping path',
+      href: agencyCoreMessaging.startWithWorkflowHref,
+      icon: 'WF',
+      keywords: ['contact', 'hire', 'start', 'workflow', 'teardown', 'checklist', 'mapping']
     },
     {
       id: 'nav-mcp-access',
@@ -337,11 +395,11 @@
   property="agency"
   userId={data.user?.id}
   userOptedOut={data.user?.analytics_opt_out ?? false}
-  globalMetadata={getAgencyMarketingExperimentMetadata($page.url.pathname)}
+  globalMetadata={globalAnalyticsMetadata}
 />
 
 <!-- Unified Search - Cmd/Ctrl+K to open -->
-<UnifiedSearch currentProperty="agency" localItems={quickAccessItems} />
+<UnifiedSearch currentProperty="agency" localItems={quickAccessItems} showMobileButton={false} />
 
 <div class="layout-root min-h-screen">
   <Navigation
@@ -350,8 +408,8 @@
     links={navLinks}
     currentPath={$page.url.pathname}
     fixed={true}
-    ctaLabel={agencyCoreMessaging.bookMappingSessionLabel}
-    ctaHref={primaryBookingHref}
+    ctaLabel={agencyCoreMessaging.startWithWorkflowLabel}
+    ctaHref={primaryCtaHref}
     user={data.user}
     onLogout={handleLogout}
     showLogin={true}
@@ -366,21 +424,12 @@
     mode="agency"
     showNewsletter={false}
     aboutText="Calm, transparent, reliable workflow systems for operator-owned outcomes: clear trust boundaries, artifact-backed delivery, and escalation only when judgment is required."
-    quickLinks={[
-      { label: 'How I Work', href: '/services' },
-      { label: 'Stack', href: '/stack' },
-      { label: 'Partners', href: '/partners' },
-      { label: 'Cloudflare', href: '/cloudflare' },
-      { label: 'Dify', href: '/dify' },
-      { label: 'Dify Content Engine', href: '/dify/content-engine' },
-      { label: 'Dify vs n8n', href: '/dify/n8n-vs-dify' },
-      { label: 'Notion', href: '/notion' },
-      { label: 'Proof Surfaces', href: '/products' },
-      { label: 'About', href: '/about' },
-      { label: 'Security', href: '/security' },
-      { label: 'Bearer Token Policy', href: '/bearer-token-policy' },
-      { label: agencyCoreMessaging.bookMappingSessionLabel, href: primaryBookingHref }
-    ]}
+    quickLinkGroups={footerQuickLinkGroups}
+    footerCta={{
+      label: agencyCoreMessaging.startWithWorkflowLabel,
+      href: primaryCtaHref,
+      description: 'Choose the checklist, teardown, or mapping path for one governed workflow.'
+    }}
     showSocial={true}
     isAuthenticated={!!data.user}
   />

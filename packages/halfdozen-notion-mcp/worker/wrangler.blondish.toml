@@ -38,4 +38,3 @@ MCP_DESCRIPTION = "Half Dozen internal and BLOND:ISH Notion. Full Notion tools; 
 # Secrets (set via wrangler secret put --config wrangler.blondish.toml)
 # NOTION_API_KEY        — Half Dozen (used for workspace "halfdozen")
 # NOTION_CLIENT_API_KEY — BLOND:ISH (used for workspace "client")
-

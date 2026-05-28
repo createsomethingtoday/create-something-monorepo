@@ -1,0 +1,1757 @@
+import React, { FormEvent, useEffect, useId, useState } from 'react';
+
+export interface CatoInsightCategory {
+  id: string;
+  page: string;
+  title: string;
+  filterLabel: string;
+  cardLabel: string;
+  cardTitle: string;
+  cardSummary: string;
+  cardCta: string;
+  heroSummary: string;
+  panelLabel: string;
+  panelTitle: string;
+  panelSummary: string;
+  archiveEyebrow: string;
+  archiveTitle: string;
+  archiveSummary: string;
+  hasSubscribe?: boolean;
+}
+
+export interface CatoInsightBodySection {
+  heading: string;
+  paragraphs: string[];
+  bullets?: string[];
+}
+
+export interface CatoInsightItem {
+  id: string;
+  slug: string;
+  category: string;
+  resourceType: string;
+  pill: string;
+  title: string;
+  summary: string;
+  date: string;
+  ctaLabel: string;
+  featured?: boolean;
+  menuFeature?: boolean;
+  audience: string;
+  body: CatoInsightBodySection[];
+  takeaways: string[];
+}
+
+export interface CatoInsightsDataProps {
+  categoriesJson?: string;
+  itemsJson?: string;
+  linkMode?: 'webflow' | 'export';
+  pathPrefix?: string;
+}
+
+export interface CatoInsightsHubProps extends CatoInsightsDataProps {
+  title?: string;
+  summary?: string;
+  featuredPanelLabel?: string;
+  featuredPanelTitle?: string;
+  featuredPanelSummary?: string;
+  featuredPanelCta?: string;
+  previewEyebrow?: string;
+  previewTitle?: string;
+  previewSummary?: string;
+  itemLimit?: number;
+  showFilterRail?: boolean;
+  showCmsModel?: boolean;
+}
+
+export interface CatoInsightsArchiveProps extends CatoInsightsDataProps {
+  categoryId?: string;
+  categorySlug?: string;
+  showSubscribe?: boolean;
+}
+
+export interface CatoInsightDetailProps extends CatoInsightsDataProps {
+  slug?: string;
+  title?: string;
+  summary?: string;
+  resourceType?: string;
+  date?: string;
+  pill?: string;
+  audience?: string;
+  categoryId?: string;
+  bodyHtml?: React.ReactNode;
+  bodyJson?: string;
+  takeawaysHtml?: React.ReactNode;
+  takeawaysJson?: string;
+}
+
+export interface CatoInsightsMegaMenuProps extends CatoInsightsDataProps {
+  heading?: string;
+  summary?: string;
+  featureTitle?: string;
+  featureSummary?: string;
+  featureCta?: string;
+}
+
+const DEFAULT_CATEGORIES: CatoInsightCategory[] = [
+  {
+    id: 'resiliency',
+    page: 'resiliency-reports.html',
+    title: 'Resiliency Report Alerts',
+    filterLabel: 'Reports',
+    cardLabel: 'Resiliency Report',
+    cardTitle: 'Supply volatility tracking.',
+    cardSummary: 'Access market signals for active supply disruptions.',
+    cardCta: 'Explore alerts',
+    heroSummary:
+      "Subscribe for recurring healthcare supply risk alerts and browse Cato's archive of disruption reports, sourcing signals, and care continuity analysis.",
+    panelLabel: 'Subscribe + archive',
+    panelTitle: 'Built for recurring supply risk reports.',
+    panelSummary: 'Use this page as the entry point for Resiliency Report Alerts and the archive for recurring healthcare supply risk analysis.',
+    archiveEyebrow: 'Archive',
+    archiveTitle: 'Latest Resiliency Reports',
+    archiveSummary: 'Published reports collect here so supply chain, procurement, and clinical operations teams can scan recent disruption signals.',
+    hasSubscribe: true,
+  },
+  {
+    id: 'research',
+    page: 'cato-research.html',
+    title: 'Cato Research',
+    filterLabel: 'Research',
+    cardLabel: 'Cato Research',
+    cardTitle: 'Procurement strategy unpacked.',
+    cardSummary: 'Explore supply chain resilience best practices.',
+    cardCta: 'Browse research',
+    heroSummary: 'Whitepapers and research on intelligent procurement, supply optionality, and healthcare supply chain resilience.',
+    panelLabel: 'Research archive',
+    panelTitle: "A home for Cato's procurement point of view.",
+    panelSummary: "Approved research, whitepapers, and annual reports collect here as Cato's market perspective grows.",
+    archiveEyebrow: 'Research archive',
+    archiveTitle: 'Latest Cato Research',
+    archiveSummary: 'Whitepapers and analysis organized for executives, procurement leaders, and supply chain operators.',
+  },
+  {
+    id: 'resources',
+    page: 'resource-library.html',
+    title: 'Resource Library',
+    filterLabel: 'Resources',
+    cardLabel: 'Whitepapers',
+    cardTitle: 'Executive thought leadership.',
+    cardSummary: 'Implement sourcing frameworks for operational continuity.',
+    cardCta: 'Learn best practices',
+    heroSummary: 'Guides, explainers, and operational resources for healthcare procurement, supply chain, and clinical value teams.',
+    panelLabel: 'Resource archive',
+    panelTitle: 'A practical library for supply gap response.',
+    panelSummary: 'Guides, explainers, and briefings collect here for teams managing substitution, shortage, and backorder response.',
+    archiveEyebrow: 'Resource library',
+    archiveTitle: 'Latest Operational Resources',
+    archiveSummary: 'Practical resources for procurement, supply chain, and clinical value teams protecting care continuity.',
+  },
+  {
+    id: 'newsroom',
+    page: 'newsroom.html',
+    title: 'Newsroom',
+    filterLabel: 'News',
+    cardLabel: 'Newsroom',
+    cardTitle: 'Press releases, events, and company updates.',
+    cardSummary: 'Follow Cato launches, events, press notes, and milestones.',
+    cardCta: 'Visit newsroom',
+    heroSummary: 'Company news, launch updates, events, and announcements from Cato.',
+    panelLabel: 'Latest updates',
+    panelTitle: 'Launches, events, and company milestones.',
+    panelSummary: 'Track Cato announcements, event field notes, media mentions, and product milestones in one newsroom archive.',
+    archiveEyebrow: 'Newsroom archive',
+    archiveTitle: 'Latest Company Updates',
+    archiveSummary: 'Launch notes, event recaps, media mentions, and company announcements collect here as approved Newsroom entries are published.',
+  },
+];
+
+const REVIEW_ITEMS: CatoInsightItem[] = [
+  {
+    id: 'supply-disruption-preparedness-brief',
+    slug: '2026-supply-disruption-preparedness-brief',
+    category: 'resiliency',
+    resourceType: 'Resiliency Report',
+    pill: 'Featured report',
+    title: '2026 Supply Disruption Preparedness Brief',
+    summary: 'A planning brief for healthcare procurement teams preparing for supplier shortages, backorders, and regional disruption risk.',
+    date: 'May 8, 2026',
+    ctaLabel: 'Read report',
+    featured: true,
+    menuFeature: true,
+    audience: 'Procurement, supply chain, and clinical operations teams.',
+    body: [
+      {
+        heading: 'Why this matters',
+        paragraphs: [
+          'Healthcare supply disruption planning is moving from exception handling to routine operating discipline. Teams need a repeatable way to identify pressure, evaluate alternatives, and decide when clinical partners should be involved.',
+          'This brief gives procurement and supply chain teams a shared frame for reviewing shortage exposure before backorders turn into care continuity risk.',
+        ],
+      },
+      {
+        heading: 'What to watch',
+        paragraphs: ['Monitor supplier concentration, substitute availability, contract constraints, regional logistics pressure, and product categories with known recall or allocation patterns.'],
+        bullets: ['Identify SKUs with limited clinical substitutes.', 'Track lead-time changes before formal backorder notices arrive.', 'Document escalation owners for high-risk categories.'],
+      },
+      {
+        heading: 'How teams can use it',
+        paragraphs: ['Use the checklist as a meeting artifact for sourcing reviews, value analysis conversations, and recurring supply continuity planning.'],
+      },
+    ],
+    takeaways: ['Use recurring signals, not one-off alerts.', 'Prioritize categories that affect clinical workflows.', 'Keep substitute paths visible before disruption.'],
+  },
+  {
+    id: 'backorder-response-planning',
+    slug: 'backorder-response-planning-clinical-teams',
+    category: 'resiliency',
+    resourceType: 'Alert',
+    pill: 'Alert',
+    title: 'Backorder Response Planning for Clinical Teams',
+    summary: 'A rapid-response note for care teams evaluating disrupted items, substitutions, and timing risk.',
+    date: 'May 8, 2026',
+    ctaLabel: 'View alert',
+    audience: 'Clinical value analysis, procurement, and supply chain teams.',
+    body: [
+      {
+        heading: 'Response planning frame',
+        paragraphs: ['Backorder response works best when procurement, supply chain, and clinical teams share the same decision sequence. Start with patient impact, then evaluate substitution quality, cost, availability, and training requirements.'],
+      },
+      {
+        heading: 'Operational checks',
+        paragraphs: ['A response plan should show who owns supplier outreach, who approves clinical substitutions, and when the team will revisit the risk.'],
+        bullets: ['Confirm projected available inventory.', 'Separate clinically acceptable substitutes from purchasing alternatives.', 'Record communication needs for affected departments.'],
+      },
+    ],
+    takeaways: ['Make clinical acceptance visible.', 'Separate temporary substitutions from standardization decisions.', 'Set a review date for every disruption response.'],
+  },
+  {
+    id: 'regional-sourcing-signal-watchlist',
+    slug: 'regional-sourcing-signal-watchlist',
+    category: 'resiliency',
+    resourceType: 'Watchlist',
+    pill: 'Watchlist',
+    title: 'Regional Sourcing Signal Watchlist',
+    summary: 'A focused scan of sourcing pressure, alternate supply paths, and continuity considerations for healthcare teams.',
+    date: 'May 8, 2026',
+    ctaLabel: 'Open watchlist',
+    audience: 'Healthcare supply chain and sourcing teams.',
+    body: [
+      {
+        heading: 'Signals to monitor',
+        paragraphs: ['Regional sourcing pressure often appears first as pricing volatility, delayed confirmations, or tighter substitute availability. Watchlist reporting gives teams a simple place to track those early indicators.'],
+      },
+      {
+        heading: 'Suggested review rhythm',
+        paragraphs: ['Review the watchlist weekly during active pressure periods, then move to a monthly rhythm once supplier confirmations and substitute paths stabilize.'],
+      },
+    ],
+    takeaways: ['Watch regional availability patterns.', 'Keep alternate supply paths current.', 'Review sourcing pressure on a recurring cadence.'],
+  },
+  {
+    id: 'intelligent-procurement-optionality',
+    slug: 'intelligent-procurement-expands-supply-optionality',
+    category: 'research',
+    resourceType: 'Cato Research',
+    pill: 'Cato Research',
+    title: 'How Intelligent Procurement Expands Supply Optionality',
+    summary: 'Cato research on how better market visibility helps care teams evaluate alternatives before shortages become operational blockers.',
+    date: 'May 8, 2026',
+    ctaLabel: 'Read research',
+    audience: 'Executives, procurement leaders, and supply chain operators.',
+    body: [
+      {
+        heading: 'Research premise',
+        paragraphs: ['Supply optionality depends on visibility. Teams that can see alternative items, supplier paths, and clinical constraints earlier are better positioned to respond without forcing rushed purchasing decisions.'],
+      },
+      {
+        heading: 'Procurement implications',
+        paragraphs: ['The strongest procurement programs treat intelligence as an operating layer that connects sourcing, value analysis, and clinical planning.'],
+        bullets: ['Map equivalent products before disruption.', 'Use demand and availability signals together.', 'Treat supplier optionality as resilience infrastructure.'],
+      },
+    ],
+    takeaways: ['Visibility creates optionality.', 'Optionality reduces rushed substitutions.', 'Procurement intelligence should be shared across functions.'],
+  },
+  {
+    id: 'healthcare-supply-optionality-outlook',
+    slug: 'healthcare-supply-optionality-outlook',
+    category: 'research',
+    resourceType: 'Whitepaper',
+    pill: 'Whitepaper',
+    title: 'Healthcare Supply Optionality Outlook',
+    summary: 'A research perspective on how healthcare organizations can build resilience by widening safe sourcing options.',
+    date: 'May 8, 2026',
+    ctaLabel: 'Read whitepaper',
+    audience: 'Healthcare executives and procurement leaders.',
+    body: [
+      {
+        heading: 'Outlook summary',
+        paragraphs: ['Healthcare systems are rethinking sourcing resilience as margin pressure, supplier volatility, and clinical standardization requirements converge.'],
+      },
+      {
+        heading: 'What changes',
+        paragraphs: ['The next phase of procurement intelligence will favor teams that can evaluate availability, clinical acceptance, and financial impact in one repeatable workflow.'],
+      },
+    ],
+    takeaways: ['Optionality is a strategic capability.', 'Sourcing decisions need clinical and financial context.', 'Repeatable workflows scale better than ad hoc workarounds.'],
+  },
+  {
+    id: 'medical-supply-sourcing-checklist',
+    slug: 'medical-supply-sourcing-checklist',
+    category: 'resources',
+    resourceType: 'Resource Library',
+    pill: 'Resource Library',
+    title: 'Medical Supply Sourcing Checklist',
+    summary: 'A practical checklist for teams evaluating disrupted SKUs, substitution options, supplier readiness, and delivery timelines.',
+    date: 'May 8, 2026',
+    ctaLabel: 'View resource',
+    audience: 'Procurement, supply chain, and clinical value teams.',
+    body: [
+      {
+        heading: 'When to use this checklist',
+        paragraphs: ['Use this checklist when a product disruption requires a fast, repeatable comparison of alternate SKUs, supplier paths, clinical constraints, and timing risk.'],
+      },
+      {
+        heading: 'Triage the disruption',
+        paragraphs: ['Start with the facts that determine urgency and decision ownership before comparing substitutions.'],
+        bullets: [
+          'Current item, manufacturer, contract status, and affected facilities.',
+          'Known inventory, open orders, backorder timing, and supplier confidence.',
+          'Clinical use case, frequency of use, and potential patient-care impact.',
+          'Teams that need to approve substitutions before a switch can happen.',
+        ],
+      },
+      {
+        heading: 'Compare viable alternatives',
+        paragraphs: ['A substitute should be evaluated against supply availability and adoption risk together, not as a purchasing-only decision.'],
+        bullets: [
+          'Functional match, sizing, sterility, packaging, and documentation requirements.',
+          'Training impact for clinical teams and any change in workflow.',
+          'Pricing variance, freight impact, contract constraints, and approval path.',
+          'Supplier reliability, delivery confidence, and contingency options.',
+        ],
+      },
+      {
+        heading: 'Create the decision record',
+        paragraphs: ['Close the review with a clear recommendation, named owners, and the trigger that would cause the team to revisit the decision.'],
+        bullets: ['Recommended path and backup option.', 'Approvers and implementation owner.', 'Expected review date or inventory threshold.', 'Open questions for sourcing, clinical, or supplier teams.'],
+      },
+    ],
+    takeaways: ['Use one repeatable checklist for every disruption review.', 'Document clinical constraints before purchasing substitutes.', 'Compare availability, cost, and adoption risk in the same decision.'],
+  },
+  {
+    id: 'supply-continuity-briefing',
+    slug: 'supply-continuity-briefing-backorder-risk',
+    category: 'resources',
+    resourceType: 'Webinar',
+    pill: 'Webinar',
+    title: 'Supply Continuity Briefing: Preparing for Backorder Risk',
+    summary: 'A briefing format for procurement, supply chain, and clinical operations teams monitoring supply pressure.',
+    date: 'May 8, 2026',
+    ctaLabel: 'Watch briefing',
+    audience: 'Supply chain, sourcing, and clinical operations leaders.',
+    body: [
+      {
+        heading: 'Briefing format',
+        paragraphs: ['This briefing model helps teams move from raw supply updates to coordinated operational decisions.'],
+      },
+      {
+        heading: 'Discussion prompts',
+        paragraphs: ['Each briefing should answer what changed, what categories are exposed, what alternatives are viable, and which decisions need clinical input.'],
+      },
+    ],
+    takeaways: ['Make the briefing recurring.', 'Tie every signal to an owner.', 'Capture decisions for future reviews.'],
+  },
+  {
+    id: 'procurement-intelligence-hub-launch',
+    slug: 'cato-launches-expanded-procurement-intelligence-hub',
+    category: 'newsroom',
+    resourceType: 'Company update',
+    pill: 'Company update',
+    title: 'Cato Launches Expanded Procurement Intelligence Hub',
+    summary: "A company update introducing Cato's expanded Insights structure for reports, research, resources, and launch news.",
+    date: 'May 8, 2026',
+    ctaLabel: 'Read update',
+    audience: 'Customers, partners, investors, and media contacts.',
+    body: [
+      {
+        heading: 'Launch summary',
+        paragraphs: ["Cato is expanding its Insights experience to give healthcare procurement teams a clearer home for recurring reports, research, practical resources, and company news."],
+      },
+      {
+        heading: 'Why it matters',
+        paragraphs: ['The new structure makes it easier to publish high-priority updates once and surface them across the hub, category pages, and navigation feature areas.'],
+      },
+    ],
+    takeaways: ["Insights becomes the hub for Cato's publishing system.", 'Category pages can grow as content volume increases.', 'Featured items can be promoted in the menu and hub.'],
+  },
+  {
+    id: 'idm-summit-field-notes',
+    slug: 'idm-summit-field-notes-healthcare-sourcing',
+    category: 'newsroom',
+    resourceType: 'Event recap',
+    pill: 'Event recap',
+    title: 'IDM Summit Field Notes for Healthcare Sourcing Teams',
+    summary: 'Event takeaways, customer conversations, and procurement themes worth surfacing for the wider Cato audience.',
+    date: 'May 8, 2026',
+    ctaLabel: 'Read recap',
+    audience: 'Healthcare sourcing leaders, customers, and partners.',
+    body: [
+      {
+        heading: 'Field notes',
+        paragraphs: ['The IDM Summit surfaced recurring questions around supply visibility, substitution planning, and how procurement teams can make better use of market signals.'],
+      },
+      {
+        heading: 'What Cato heard',
+        paragraphs: ['Teams want fewer disconnected updates and more practical intelligence that supports sourcing decisions before a shortage becomes urgent.'],
+      },
+    ],
+    takeaways: ['Event recaps can become durable audience content.', 'Customer questions should feed future research topics.', 'The newsroom should connect events back to the Insights hub.'],
+  },
+  {
+    id: 'capstone-launch-brief',
+    slug: 'capstone-launch-brief',
+    category: 'newsroom',
+    resourceType: 'Launch brief',
+    pill: 'Launch brief',
+    title: 'Capstone Launch Brief',
+    summary: 'A short launch brief on how Cato is expanding procurement intelligence for healthcare supply teams.',
+    date: 'May 8, 2026',
+    ctaLabel: 'Read brief',
+    audience: 'Customers, partners, and healthcare procurement leaders.',
+    body: [
+      {
+        heading: 'Launch context',
+        paragraphs: ['Capstone gives Cato a way to package product and market updates as concise launch briefs for audiences that need the operational context, not just the announcement.'],
+      },
+      {
+        heading: 'Publishing use',
+        paragraphs: ['This format can support future partner launches, product milestones, and market-facing announcements.'],
+      },
+    ],
+    takeaways: ['Launch briefs should stay concise.', 'Each brief should connect announcement value to user impact.', 'The newsroom can preserve launch history over time.'],
+  },
+  {
+    id: 'healthcare-procurement-coverage',
+    slug: 'healthcare-procurement-coverage',
+    category: 'newsroom',
+    resourceType: 'Media note',
+    pill: 'Media note',
+    title: 'Cato Supply Featured in Healthcare Procurement Coverage',
+    summary: "Media notes and partner mentions for teams tracking Cato's work across healthcare supply and procurement resilience.",
+    date: 'May 8, 2026',
+    ctaLabel: 'Read note',
+    audience: 'Media, partners, customers, and investors.',
+    body: [
+      {
+        heading: 'Coverage note',
+        paragraphs: ['Media notes give Cato a lightweight format for collecting third-party mentions, partner coverage, and relevant market commentary.'],
+      },
+      {
+        heading: 'How to use it',
+        paragraphs: ['Use this content type when an update is externally visible but does not need a full launch announcement or research treatment.'],
+      },
+    ],
+    takeaways: ['Keep media notes short and attributable.', 'Link back to coverage when available.', 'Use the newsroom archive for discoverability.'],
+  },
+];
+
+const PUBLISHED_CMS_ITEMS: CatoInsightItem[] = [
+  {
+    id: 'vascular-angiographic-dialysis-kits-shortages',
+    slug: 'vascular-angiographic-dialysis-kits-shortages',
+    category: 'resiliency',
+    resourceType: 'Resiliency Report',
+    pill: 'Alert',
+    title: 'Vascular, Angiographic, and Dialysis Kits Shortages',
+    summary: 'Resiliency report alert tracking vascular, angiographic, and dialysis kits shortages, sourcing pressure, and care continuity considerations for healthcare procurement teams.',
+    date: 'May 26, 2026',
+    ctaLabel: 'View alert',
+    audience: 'Healthcare procurement, sourcing, supply chain, and clinical value teams.',
+    body: [
+      {
+        heading: 'Alert context',
+        paragraphs: ['This resiliency report alert tracks vascular, angiographic, and dialysis kits shortages as a healthcare supply signal for procurement, sourcing, and care continuity teams.'],
+      },
+    ],
+    takeaways: ['Review the original Cato post for the source update.', 'Use the signal to evaluate affected categories and sourcing exposure.', 'Coordinate next steps across procurement, supply chain, and clinical stakeholders.'],
+  },
+  {
+    id: 'nasal-oral-ett-backorders',
+    slug: 'nasal-oral-ett-backorders',
+    category: 'resiliency',
+    resourceType: 'Resiliency Report',
+    pill: 'Alert',
+    title: 'Nasal Oral ETT Backorders',
+    summary: 'Resiliency report alert tracking nasal and oral ETT backorders, sourcing pressure, and care continuity considerations for healthcare procurement teams.',
+    date: 'May 26, 2026',
+    ctaLabel: 'View alert',
+    audience: 'Healthcare procurement, sourcing, supply chain, and clinical value teams.',
+    body: [
+      {
+        heading: 'Alert context',
+        paragraphs: ['This resiliency report alert tracks nasal and oral ETT backorders as a healthcare supply signal for procurement, sourcing, and care continuity teams.'],
+      },
+    ],
+    takeaways: ['Review the original Cato post for the source update.', 'Use the signal to evaluate affected categories and sourcing exposure.', 'Coordinate next steps across procurement, supply chain, and clinical stakeholders.'],
+  },
+  {
+    id: 'neurosponges-disruption',
+    slug: 'neurosponges-disruption',
+    category: 'resiliency',
+    resourceType: 'Resiliency Report',
+    pill: 'Alert',
+    title: 'Neurosponges Disruption',
+    summary: 'Resiliency report alert tracking neurosponges disruption, sourcing pressure, and care continuity considerations for healthcare procurement teams.',
+    date: 'May 26, 2026',
+    ctaLabel: 'View alert',
+    audience: 'Healthcare procurement, sourcing, supply chain, and clinical value teams.',
+    body: [
+      {
+        heading: 'Alert context',
+        paragraphs: ['This resiliency report alert tracks neurosponges disruption as a healthcare supply signal for procurement, sourcing, and care continuity teams.'],
+      },
+    ],
+    takeaways: ['Review the original Cato post for the source update.', 'Use the signal to evaluate affected categories and sourcing exposure.', 'Coordinate next steps across procurement, supply chain, and clinical stakeholders.'],
+  },
+  {
+    id: 'capstone-partnership',
+    slug: 'capstone-partnership',
+    category: 'newsroom',
+    resourceType: 'Newsroom',
+    pill: 'Company update',
+    title: 'Capstone Partnership',
+    summary: 'Company update from Cato covering the Capstone partnership for customers, partners, and healthcare procurement teams.',
+    date: 'May 26, 2026',
+    ctaLabel: 'Read update',
+    audience: 'Customers, partners, media contacts, and healthcare procurement leaders.',
+    body: [
+      {
+        heading: 'Announcement context',
+        paragraphs: ["This newsroom entry captures Cato's update on the Capstone partnership for audiences following healthcare procurement intelligence and company milestones."],
+      },
+    ],
+    takeaways: ['Track the company update in the Newsroom archive.', "Connect the announcement back to Cato's broader procurement intelligence story.", 'Use the source link for original context.'],
+  },
+  {
+    id: 'nbr-medical-supplies',
+    slug: 'nbr-medical-supplies',
+    category: 'resiliency',
+    resourceType: 'Resiliency Report',
+    pill: 'Alert',
+    title: 'NBR Medical Supplies',
+    summary: 'Resiliency report alert tracking NBR medical supplies, sourcing pressure, and care continuity considerations for healthcare procurement teams.',
+    date: 'May 26, 2026',
+    ctaLabel: 'View alert',
+    audience: 'Healthcare procurement, sourcing, supply chain, and clinical value teams.',
+    body: [
+      {
+        heading: 'Alert context',
+        paragraphs: ['This resiliency report alert tracks NBR medical supplies as a healthcare supply signal for procurement, sourcing, and care continuity teams.'],
+      },
+    ],
+    takeaways: ['Review the original Cato post for the source update.', 'Use the signal to evaluate affected categories and sourcing exposure.', 'Coordinate next steps across procurement, supply chain, and clinical stakeholders.'],
+  },
+  {
+    id: 'avagard-shortage',
+    slug: 'avagard-shortage',
+    category: 'resiliency',
+    resourceType: 'Resiliency Report',
+    pill: 'Alert',
+    title: 'Avagard Shortage',
+    summary: 'Resiliency report alert tracking Avagard shortage, sourcing pressure, and care continuity considerations for healthcare procurement teams.',
+    date: 'May 26, 2026',
+    ctaLabel: 'View alert',
+    audience: 'Healthcare procurement, sourcing, supply chain, and clinical value teams.',
+    body: [
+      {
+        heading: 'Alert context',
+        paragraphs: ['This resiliency report alert tracks Avagard shortage as a healthcare supply signal for procurement, sourcing, and care continuity teams.'],
+      },
+    ],
+    takeaways: ['Review the original Cato post for the source update.', 'Use the signal to evaluate affected categories and sourcing exposure.', 'Coordinate next steps across procurement, supply chain, and clinical stakeholders.'],
+  },
+  {
+    id: 'stryker-cyberattack',
+    slug: 'stryker-cyberattack',
+    category: 'resiliency',
+    resourceType: 'Resiliency Report',
+    pill: 'Alert',
+    title: 'Stryker Cyberattack',
+    summary: 'Resiliency report alert tracking the Stryker cyberattack, sourcing pressure, and care continuity considerations for healthcare procurement teams.',
+    date: 'May 26, 2026',
+    ctaLabel: 'View alert',
+    audience: 'Healthcare procurement, sourcing, supply chain, and clinical value teams.',
+    body: [
+      {
+        heading: 'Alert context',
+        paragraphs: ['This resiliency report alert tracks the Stryker cyberattack as a healthcare supply signal for procurement, sourcing, and care continuity teams.'],
+      },
+    ],
+    takeaways: ['Review the original Cato post for the source update.', 'Use the signal to evaluate affected categories and sourcing exposure.', 'Coordinate next steps across procurement, supply chain, and clinical stakeholders.'],
+  },
+  {
+    id: 'iv-sets-allocation',
+    slug: 'iv-sets-allocation',
+    category: 'resiliency',
+    resourceType: 'Resiliency Report',
+    pill: 'Alert',
+    title: 'IV Sets Allocation',
+    summary: 'Procurement teams are managing tight allocations on Baxter IV administration sets, particularly ClearLink and Continu-Flo product lines.',
+    date: 'May 26, 2026',
+    ctaLabel: 'View alert',
+    audience: 'Healthcare procurement, sourcing, supply chain, and clinical value teams.',
+    body: [
+      {
+        heading: 'Supply gap analysis',
+        paragraphs: [
+          'Procurement teams are managing increasingly tight allocations on Baxter IV administration sets, particularly ClearLink and Continu-Flo product lines.',
+          'The shortage pressure is tied to compounding quality events and recall activity related to manufacturing process controls. ClearLink recalls involved active leaks that can create contamination, therapy interruption, and serious harm risks, while prior Continu-Flo recalls involved inverted slide clamps that could cause pumps to draw blood back from patients.',
+          'Root cause analysis pointed to manufacturing process drift from validated parameters, including bonding temperatures and assembly torques. Corrective action can require slower line speeds, more inspection, and tighter acceptance criteria before product release.',
+          'The Baxter North Cove, NC plant shutdown after Hurricane Helene also increased broader IV ecosystem strain, compressing recovery timelines and quality bandwidth across related production programs.',
+        ],
+      },
+      {
+        heading: 'What health systems can do',
+        paragraphs: [
+          'For facilities using Baxter Sigma Spectrum infusion pumps, the current disruption creates a critical bottleneck because the platform relies on proprietary channel-detection systems.',
+          'There are currently no FDA-cleared third-party IV sets compatible with that hardware, which means teams need to protect available tubing for the highest-acuity cases while creating secondary paths for flexible clinical areas.',
+        ],
+        bullets: [
+          'Audit pump utilization and rebalance flexible areas toward gravity infusions or syringe pumps where clinically appropriate.',
+          'Evaluate secondary pump platforms, such as B. Braun Infusomat or ICU Medical Plum 360, to create an independent consumable pipeline.',
+          'Monitor daily availability because tubing often sits outside major drug shortage reserve programs.',
+        ],
+      },
+      {
+        heading: 'How Cato can support',
+        paragraphs: ['Cato can review specifications and quantities, monitor the IV ecosystem as inventory shifts, and respond with viable sourcing options or mitigation pathways for affected care teams.'],
+      },
+    ],
+    takeaways: ['Protect constrained Baxter tubing for highest-acuity use cases.', 'Build secondary platform coverage where clinical workflows allow.', 'Use Risk Radar and Cato sourcing support to monitor constrained categories as inventory moves.'],
+  },
+  {
+    id: 'bair-hugger-backorders',
+    slug: 'bair-hugger-backorders',
+    category: 'resiliency',
+    resourceType: 'Resiliency Report',
+    pill: 'Alert',
+    title: 'Bair Hugger Backorders',
+    summary: 'Health systems are reporting prolonged allocation constraints on Bair Hugger warming blankets, including the 55000, 63000, and 63500 series.',
+    date: 'May 26, 2026',
+    ctaLabel: 'View alert',
+    audience: 'Healthcare procurement, sourcing, supply chain, and clinical value teams.',
+    body: [
+      {
+        heading: 'Supply gap analysis',
+        paragraphs: [
+          'Health systems are reporting prolonged allocation constraints on Bair Hugger warming blankets, specifically the 55000, 63000, and 63500 series.',
+          'Cato sourcing intelligence indicates the disruption is not only a traditional demand spike. Constraints arose from a quality containment event that required requalification of upstream materials, validation runs, updated documentation, and stability testing.',
+          'The gap has been exacerbated by the manufacturer spinoff into Solventum, multiple ERP cutovers since 2025, allocation logic changes, safety stock resets, and a cost-savings plan that includes manufacturing consolidation.',
+        ],
+      },
+      {
+        heading: 'Single-source exposure',
+        paragraphs: [
+          'The product design compounds risk for operating rooms because Bair Hugger functions as a two-part system: a heating blower connected to proprietary disposable blankets used in each case.',
+          'Because hose fittings and air distribution are physically incompatible with competitor blankets, many ORs are locked into a single consumable supplier during backorders.',
+        ],
+      },
+      {
+        heading: 'Mitigation paths',
+        paragraphs: ['Cato is supporting health systems with spot buys, cross-reference review, secondary-channel inventory searches, and equipment diversification planning.'],
+        bullets: [
+          'Review functional cross-overs and available inventory while manufacturer lots stabilize.',
+          'Evaluate secondary warming platforms, including Gentherm, Stryker Mistral-Air, or conductive systems such as HotDog.',
+          'Track actual fill rates across 30-, 60-, and 90-day windows rather than relying only on moving recovery dates.',
+        ],
+      },
+    ],
+    takeaways: ['Treat proprietary blanket dependency as an operational risk, not only a purchasing issue.', 'Diversify a portion of warming platforms to keep cases moving during allocation periods.', 'Send SKUs and case volumes to Cato for real-time availability checks.'],
+  },
+  {
+    id: 'gowns-drapes-disruption',
+    slug: 'gowns-drapes-disruption',
+    category: 'resiliency',
+    resourceType: 'Resiliency Report',
+    pill: 'Alert',
+    title: 'Gowns and Drapes Disruption',
+    summary: 'Sterile surgical gown and drape supply is seeing disruption from recalls, distributor allocations, and raw material and capacity constraints.',
+    date: 'May 26, 2026',
+    ctaLabel: 'View alert',
+    audience: 'Healthcare procurement, sourcing, supply chain, and clinical value teams.',
+    body: [
+      {
+        heading: 'Supply gap analysis',
+        paragraphs: [
+          'Cato is seeing increasing disruption in the sterile surgical gown and drape market.',
+          'The fluctuations trace to a combination of recent recalls affecting certain sterile SMS and meltblown nonwoven textile products, distributor allocation effects, and raw material and capacity constraints that are creating near-term gaps.',
+          'These events have led to rising backorders, tighter allocation limits, and increased last-minute substitution requests across health systems. Market intelligence suggests some issues may continue through the spring and into the summer window.',
+        ],
+      },
+      {
+        heading: 'Current support paths',
+        paragraphs: ['Cato can support procurement teams with immediate inventory visibility across multiple OEMs and brands, functional cross-over review, and real-time availability confirmation.'],
+        bullets: [
+          'Surgical gowns: current availability includes Cardinal, Halyard, Medline, and select Regard options.',
+          'Surgical drapes: current availability includes Halyard, Cardinal, Solventum/3M, and Dukal options.',
+          'AAMI Level 3 substitutes can provide brand-agnostic and cost-conscious alternatives when name-brand items are constrained.',
+        ],
+      },
+      {
+        heading: 'How to respond',
+        paragraphs: ['Teams facing gaps should send SKUs, specifications, and quantities so Cato can confirm real-time availability and respond with specific matches or viable substitutes. Risk Radar can also surface impacted SKUs and constrained categories with active availability.'],
+      },
+    ],
+    takeaways: ['Plan for last-minute substitution demand across sterile gowns and drapes.', 'Compare brand-name availability with AAMI Level 3 alternatives when appropriate.', 'Use Risk Radar and Cato sourcing support for current SKU-level visibility.'],
+  },
+];
+
+const DEFAULT_ITEMS = PUBLISHED_CMS_ITEMS.length ? PUBLISHED_CMS_ITEMS : REVIEW_ITEMS;
+
+const CATO_CSS = `
+  .cato-cc {
+    --cato-bg: var(--background-color--background-primary, #ffffff);
+    --cato-bg-soft: var(--background-color--background-secondary, #fbf9f4);
+    --cato-text: var(--text-color--text-primary, #282723);
+    --cato-muted: var(--text-color--text-secondary, rgba(40, 39, 35, 0.72));
+    --cato-border: var(--border-color--border-primary, rgba(40, 39, 35, 0.14));
+    --cato-border-strong: var(--border-color--border-secondary, rgba(40, 39, 35, 0.24));
+    --cato-green: var(--base-color-green--green-900, #0a452e);
+    --cato-green-mid: var(--base-color-green--green-800, #125a3b);
+    --cato-green-bright: var(--base-color-green--green-400, #18a56d);
+    --cato-white: var(--base-color-charcoal--white, #ffffff);
+    color: var(--cato-text);
+    background: var(--cato-bg-soft);
+    font-family: "Inter Variable", Inter, Arial, sans-serif;
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+  .cato-cc *, .cato-cc *::before, .cato-cc *::after { box-sizing: border-box; }
+  .cato-cc a { color: inherit; }
+  .cato-cc-section { padding: 4rem 2.5rem; }
+  .cato-cc-hero { position: relative; overflow: hidden; background: var(--cato-bg-soft); padding-top: 10rem; }
+  .cato-cc-container { width: min(100%, 80rem); margin: 0 auto; }
+  .cato-cc-hero-grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(20rem, .65fr); gap: 2rem; align-items: stretch; margin-bottom: 3rem; }
+  .cato-cc-copy { display: flex; flex-direction: column; gap: 1.25rem; justify-content: center; max-width: 58rem; }
+  .cato-cc-eyebrow { color: var(--cato-green); margin: 0; font-weight: 600; }
+  .cato-cc h1, .cato-cc h2, .cato-cc h3 { margin: 0; color: var(--cato-text); font-family: Switzer, Arial, sans-serif; font-weight: 400; }
+  .cato-cc h1 { max-width: 56rem; font-size: 3.5rem; line-height: 1.2; letter-spacing: -.14rem; }
+  .cato-cc h2 { font-size: clamp(1.55rem, 2vw, 1.9rem); line-height: 1.22; letter-spacing: 0; }
+  .cato-cc h3 { font-size: 1.5rem; line-height: 1.4; letter-spacing: -.03rem; }
+  .cato-cc-preview-header h2,
+  .cato-cc-system-copy > h2 {
+    font-size: 3rem;
+    line-height: 1.2;
+    letter-spacing: -.06rem;
+  }
+  .cato-cc-lede { color: var(--cato-muted); max-width: 54rem; margin: 0; font-size: 1.125rem; line-height: 1.55; }
+  .cato-cc-panel { display: flex; flex-direction: column; justify-content: space-between; gap: 1.5rem; min-height: 100%; padding: 2rem; overflow: hidden; border-radius: .75rem; color: var(--cato-white); background: var(--background-color--background-tertiary, var(--cato-green)); }
+  .cato-cc-panel h2, .cato-cc-panel h3, .cato-cc-panel p { color: var(--cato-white); margin: 0; }
+  .cato-cc-panel h2, .cato-cc-panel h3 { font-size: 1.5rem; line-height: 1.4; letter-spacing: -.03rem; }
+  .cato-cc-panel p:not(.cato-cc-panel-label) { font-size: 1rem; line-height: 1.5; }
+  .cato-cc-panel-link { color: var(--cato-white); font-weight: 600; text-decoration: none; margin-top: auto; }
+  .cato-cc-panel-link:hover { text-decoration: underline; }
+  .cato-cc-panel-label, .cato-cc-pill { display: inline-flex; align-items: center; width: fit-content; max-width: 100%; border-radius: 999rem; line-height: 1; }
+  .cato-cc-panel-label { text-transform: uppercase; border: 1px solid rgba(255,255,255,.18); background: rgba(255,255,255,.10); padding: .38rem .75rem; font-family: Switzer, Arial, sans-serif; font-size: .8125rem; font-weight: 600; }
+  .cato-cc-pill { color: rgba(40,39,35,.72); background: rgba(10,69,46,.06); border: 1px solid rgba(10,69,46,.14); padding: .38rem .75rem; font-size: .8125rem; text-transform: uppercase; }
+  .cato-cc-card-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1.25rem; }
+  .cato-cc-card, .cato-cc-cms-card, .cato-cc-detail-card, .cato-cc-sidebar-card { border: 1px solid var(--cato-border); background: var(--cato-bg); border-radius: .75rem; box-shadow: 0 1px 2px rgba(17,16,15,.04); }
+  .cato-cc-card, .cato-cc-cms-card { display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; gap: 1rem; color: var(--cato-text); text-decoration: none; transition: transform .18s, border-color .18s, box-shadow .18s; }
+  .cato-cc-card { min-height: 21rem; padding: 2rem; }
+  .cato-cc-card:hover, .cato-cc-cms-card:hover { border-color: var(--cato-border-strong); transform: translate3d(0, -.25rem, 0); box-shadow: 0 1rem 2rem rgba(17,16,15,.08); }
+  .cato-cc-card p, .cato-cc-cms-card p { color: var(--cato-muted); margin: 0; line-height: 1.5; }
+  .cato-cc-link { color: var(--cato-green); margin-top: auto; font-weight: 600; display: inline-block; transition: transform .18s, color .18s; }
+  .cato-cc-card:hover .cato-cc-link, .cato-cc-cms-card:hover .cato-cc-link { transform: translate3d(.18rem, 0, 0); }
+  .cato-cc-preview-header { display: flex; flex-direction: column; gap: 1rem; max-width: 54rem; margin-bottom: 2rem; }
+  .cato-cc-layout { display: grid; grid-template-columns: minmax(14rem, .34fr) minmax(0, 1fr); gap: 1.5rem; align-items: start; }
+  .cato-cc-filter-rail { display: flex; flex-direction: column; gap: 1rem; position: sticky; top: 7rem; border: 1px solid var(--cato-border); background: var(--cato-bg); border-radius: .75rem; padding: 1.25rem; }
+  .cato-cc-filter-title { font-weight: 800; }
+  .cato-cc-filter-list { display: flex; flex-direction: column; gap: .5rem; }
+  .cato-cc-filter { display: flex; align-items: center; justify-content: space-between; gap: 1rem; border: 1px solid transparent; border-radius: .5rem; color: var(--cato-muted); padding: .65rem .75rem; font-weight: 700; text-decoration: none; transition: background-color .18s, border-color .18s, color .18s, transform .18s; }
+  .cato-cc-filter:hover, .cato-cc-filter[data-active="true"] { color: var(--cato-green); background: rgba(10,69,46,.05); border-color: rgba(10,69,46,.14); }
+  .cato-cc-filter-count { color: var(--cato-muted); background: rgba(10,69,46,.05); border-radius: 999rem; min-width: 1.65rem; padding: .16rem .48rem; text-align: center; font-size: .78rem; }
+  .cato-cc-filter-note { color: var(--cato-muted); margin: 0; font-size: .92rem; line-height: 1.45; }
+  .cato-cc-cms-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; align-items: stretch; }
+  .cato-cc-cms-card { min-height: 18rem; padding: 1.5rem; }
+  .cato-cc-cms-card[data-featured="true"] { grid-column: 1 / -1; padding: 2rem; }
+  .cato-cc-card-top { display: flex; align-items: center; justify-content: space-between; gap: 1rem; width: 100%; }
+  .cato-cc-card-body { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 2rem; width: 100%; }
+  .cato-cc-meta { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem; color: var(--cato-muted); font-size: .875rem; line-height: 1.35; }
+  .cato-cc-system-band { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); align-items: center; gap: 3rem; border: 1px solid var(--cato-border); background: var(--cato-bg); border-radius: .75rem; padding: 3rem; }
+  .cato-cc-system-band[data-subscribe="true"] { align-items: stretch; }
+  .cato-cc-system-band[data-archive="true"] { align-items: start; }
+  .cato-cc-system-copy { display: flex; flex-direction: column; gap: 1rem; }
+  .cato-cc-system-list { display: flex; flex-direction: column; gap: .75rem; }
+  .cato-cc-system-card { display: flex; flex-direction: column; gap: .35rem; background: rgba(10,69,46,.055); border: 0; border-radius: .625rem; box-shadow: none; padding: 1.25rem; }
+  .cato-cc-system-card p { margin: 0; color: var(--cato-muted); line-height: 1.5; }
+  .cato-cc-archive-list { display: flex; flex-direction: column; gap: .875rem; }
+  .cato-cc-archive-list .cato-cc-cms-card { min-height: auto; padding: 1.25rem; }
+  .cato-cc-back-link { color: var(--cato-green); margin-top: .25rem; font-weight: 700; text-decoration: none; display: inline-block; }
+  .cato-cc-subscribe-card { background: var(--cato-bg); border: 1px solid var(--cato-border); box-shadow: 0 1px 2px rgba(17,16,15,.04); }
+  .cato-cc-note-card { background: rgba(10,69,46,.04); }
+  .cato-cc-form-intro { display: flex; flex-direction: column; gap: .65rem; }
+  .cato-cc-form-intro p { color: var(--cato-muted); max-width: 34rem; margin: 0; line-height: 1.5; }
+  .cato-cc-benefits { display: flex; flex-wrap: wrap; gap: .5rem; margin: 0; padding: 0; list-style: none; }
+  .cato-cc-benefits li { display: flex; align-items: center; gap: .4rem; color: var(--cato-green); background: rgba(10,69,46,.05); border: 1px solid rgba(10,69,46,.14); border-radius: 999rem; padding: .38rem .7rem; font-size: .84rem; font-weight: 700; line-height: 1.2; }
+  .cato-cc-benefits li::before { content: ""; width: .38rem; height: .38rem; flex: none; border-radius: 999rem; background: var(--cato-green-bright); }
+  .cato-cc-form { margin-top: .25rem; }
+  .cato-cc-form label { display: block; color: var(--cato-text); margin-bottom: .5rem; font-weight: 600; }
+  .cato-cc-form-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .75rem; align-items: stretch; }
+  .cato-cc-input { min-height: 3.25rem; border: 1px solid var(--cato-border); border-radius: .45rem; padding: .7rem .875rem; font: inherit; color: var(--cato-text); background: var(--cato-bg); transition: border-color .18s, box-shadow .18s, background-color .18s; }
+  .cato-cc-input:hover { border-color: var(--cato-border-strong); }
+  .cato-cc-input:focus, .cato-cc-input:focus-visible { border-color: var(--cato-green-bright); outline: 0; box-shadow: 0 0 0 .25rem rgba(70,183,138,.14); }
+  .cato-cc-input::placeholder { color: rgba(40,39,35,.42); }
+  .cato-cc-button, .cato-cc-cta,
+  .cato-cc button.cato-cc-button,
+  .cato-cc a.cato-cc-cta {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 3.25rem;
+    border: 1px solid var(--cato-green-mid);
+    border-radius: .5rem;
+    background: var(--cato-green-mid);
+    color: var(--cato-white) !important;
+    -webkit-text-fill-color: var(--cato-white);
+    padding: .85rem 1.15rem;
+    font: inherit;
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: 0;
+    text-decoration: none;
+    text-transform: none;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background-color .18s, border-color .18s, box-shadow .18s, transform .18s;
+  }
+  .cato-cc-button:hover, .cato-cc-cta:hover,
+  .cato-cc-button:focus-visible, .cato-cc-cta:focus-visible,
+  .cato-cc-button:visited, .cato-cc-cta:visited {
+    color: var(--cato-white) !important;
+    -webkit-text-fill-color: var(--cato-white);
+  }
+  .cato-cc-button:hover, .cato-cc-cta:hover { background: var(--cato-green); border-color: var(--cato-green); transform: translate3d(0, -.1rem, 0); box-shadow: 0 .7rem 1.25rem rgba(10,69,46,.14); }
+  .cato-cc-button:active, .cato-cc-cta:active { transform: translate3d(0, 0, 0); box-shadow: none; }
+  .cato-cc-form-note { color: var(--cato-muted); margin: .65rem 0 0; font-size: .86rem; line-height: 1.4; }
+  .cato-cc-form-status { border-radius: .5rem; margin: .75rem 0 0; padding: .8rem .95rem; font-weight: 700; line-height: 1.4; }
+  .cato-cc-form-status[data-status="success"] { color: var(--cato-green); background: rgba(10,69,46,.08); border: 1px solid rgba(10,69,46,.16); }
+  .cato-cc-form-status[data-status="error"] { color: #8f332b; background: rgba(143,51,43,.08); border: 1px solid rgba(143,51,43,.16); }
+  .cato-cc-archive-cta { display: flex; align-items: center; justify-content: space-between; gap: 1rem; position: relative; z-index: 1; isolation: isolate; border: 1px solid rgba(10,69,46,.14); background: rgba(10,69,46,.05); border-radius: .75rem; margin-top: 1.75rem; padding: 1.25rem; box-shadow: inset 0 1px 0 rgba(255,255,255,.7), 0 .75rem 1.5rem rgba(10,69,46,.05); }
+  .cato-cc-archive-cta span { display: block; color: var(--cato-muted); margin-top: .2rem; line-height: 1.45; }
+  .cato-cc-archive-cta .cato-cc-cta { flex: none; padding: .75rem 1rem; font-weight: 800; }
+  .cato-cc-detail-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(18rem, .38fr); align-items: start; gap: 2.5rem; }
+  .cato-cc-detail-card { padding: clamp(1.5rem, 3vw, 2.5rem); }
+  .cato-cc-detail-meta { display: flex; align-items: center; flex-wrap: wrap; gap: .75rem; color: var(--cato-muted); margin-bottom: 2rem; }
+  .cato-cc-rich { max-width: 44rem; }
+  .cato-cc-rich section + section { margin-top: 2.5rem; }
+  .cato-cc-rich > *:first-child, .cato-cc-rich-content > *:first-child, .cato-cc-rich [class*="w-richtext"] > *:first-child { margin-top: 0; }
+  .cato-cc-rich > *:last-child, .cato-cc-rich-content > *:last-child, .cato-cc-rich [class*="w-richtext"] > *:last-child { margin-bottom: 0; }
+  .cato-cc-rich h1, .cato-cc-rich h2, .cato-cc-rich h3, .cato-cc-rich h4,
+  .cato-cc .cato-cc-detail-card .cato-cc-rich-content h1,
+  .cato-cc .cato-cc-detail-card .cato-cc-rich-content h2,
+  .cato-cc .cato-cc-detail-card .cato-cc-rich-content h3,
+  .cato-cc .cato-cc-detail-card .cato-cc-rich-content h4 {
+    max-width: 42rem;
+    margin: 2rem 0 .85rem !important;
+    color: var(--cato-text) !important;
+    font-family: Switzer, Arial, sans-serif !important;
+    font-weight: 400 !important;
+    letter-spacing: 0 !important;
+  }
+  .cato-cc-rich h1, .cato-cc .cato-cc-detail-card .cato-cc-rich-content h1 { font-size: 2rem !important; line-height: 1.18 !important; }
+  .cato-cc-rich h2, .cato-cc .cato-cc-detail-card .cato-cc-rich-content h2 { font-size: 1.75rem !important; line-height: 1.25 !important; }
+  .cato-cc-rich h3, .cato-cc .cato-cc-detail-card .cato-cc-rich-content h3 { font-size: 1.35rem !important; line-height: 1.3 !important; }
+  .cato-cc-rich .cato-cc-rich-section-heading { font-size: 1.75rem !important; line-height: 1.25 !important; }
+  .cato-cc-rich h4, .cato-cc .cato-cc-detail-card .cato-cc-rich-content h4 { font-size: 1.12rem !important; line-height: 1.35 !important; font-weight: 600 !important; }
+  .cato-cc .cato-cc-detail-card :where(h1, h2, h3, h4) {
+    max-width: 42rem;
+    margin: 2rem 0 .75rem !important;
+    color: var(--cato-text) !important;
+    font-family: Switzer, Arial, sans-serif !important;
+    font-weight: 500 !important;
+    letter-spacing: 0 !important;
+  }
+  .cato-cc .cato-cc-detail-card :where(h1, h2) { font-size: clamp(1.55rem, 2vw, 1.9rem) !important; line-height: 1.22 !important; }
+  .cato-cc .cato-cc-detail-card :where(h3) { font-size: 1.28rem !important; line-height: 1.32 !important; }
+  .cato-cc .cato-cc-detail-card :where(h4) { font-size: 1.08rem !important; line-height: 1.38 !important; }
+  .cato-cc-rich p, .cato-cc-rich li,
+  .cato-cc .cato-cc-detail-card .cato-cc-rich-content p,
+  .cato-cc .cato-cc-detail-card .cato-cc-rich-content li {
+    color: var(--cato-muted) !important;
+    font-size: 1.0625rem !important;
+    line-height: 1.65 !important;
+  }
+  .cato-cc .cato-cc-detail-card :where(p, li) {
+    color: var(--cato-muted) !important;
+    font-size: 1rem !important;
+    line-height: 1.68 !important;
+  }
+  .cato-cc .cato-cc-detail-card :where(li strong) { color: var(--cato-text) !important; font-weight: 700 !important; }
+  .cato-cc-rich p, .cato-cc .cato-cc-detail-card .cato-cc-rich-content p { margin: 0 0 1rem !important; }
+  .cato-cc-rich ul, .cato-cc-rich ol, .cato-cc .cato-cc-detail-card .cato-cc-rich-content ul, .cato-cc .cato-cc-detail-card .cato-cc-rich-content ol, .cato-cc .cato-cc-detail-card :where(ul, ol) { display: flex; flex-direction: column; gap: .65rem; margin: 1rem 0 1.25rem !important; padding-left: 1.25rem !important; }
+  .cato-cc-rich blockquote, .cato-cc .cato-cc-detail-card .cato-cc-rich-content blockquote { margin: 1.5rem 0 !important; border-left: .2rem solid rgba(10,69,46,.24); padding: .25rem 0 .25rem 1rem; color: var(--cato-text) !important; }
+  .cato-cc-rich a, .cato-cc .cato-cc-detail-card .cato-cc-rich-content a { color: var(--cato-green) !important; font-weight: 600; text-decoration-thickness: .06em; text-underline-offset: .18em; }
+  .cato-cc-rich img, .cato-cc-rich figure, .cato-cc .cato-cc-detail-card .cato-cc-rich-content img, .cato-cc .cato-cc-detail-card .cato-cc-rich-content figure { max-width: 100%; border-radius: .5rem; }
+  .cato-cc-rich-content slot::slotted(h1) { font-size: 2rem !important; line-height: 1.18 !important; margin: 2rem 0 .85rem !important; }
+  .cato-cc-rich-content slot::slotted(h2) { font-size: 1.75rem !important; line-height: 1.25 !important; margin: 2rem 0 .85rem !important; }
+  .cato-cc-rich-content slot::slotted(h3) { font-size: 1.35rem !important; line-height: 1.3 !important; margin: 2rem 0 .85rem !important; }
+  .cato-cc-rich-content slot::slotted(p), .cato-cc-rich-content slot::slotted(li) { font-size: 1.0625rem !important; line-height: 1.65 !important; color: var(--cato-muted) !important; }
+  .cato-cc-sidebar { display: flex; flex-direction: column; gap: 1rem; position: sticky; top: 7rem; }
+  .cato-cc-sidebar-card { display: flex; flex-direction: column; gap: 1rem; padding: 1.5rem; }
+  .cato-cc-field { display: flex; flex-direction: column; gap: .35rem; }
+  .cato-cc-field span, .cato-cc-field a, .cato-cc-takeaways, .cato-cc-takeaways-html { color: var(--cato-muted); }
+  .cato-cc-field a { font-weight: 700; text-decoration: none; }
+  .cato-cc-takeaways { display: flex; flex-direction: column; gap: .65rem; margin: 0; padding-left: 1.25rem; }
+  .cato-cc-takeaways-html h1, .cato-cc-takeaways-html h2, .cato-cc-takeaways-html h3 { margin: 0 0 .75rem; font-size: 1rem; line-height: 1.35; font-weight: 700; letter-spacing: 0; }
+  .cato-cc-takeaways-html ul, .cato-cc-takeaways-html ol { display: flex; flex-direction: column; gap: .65rem; margin: 0; padding-left: 1.25rem; }
+  .cato-cc-takeaways-html p { margin: 0 0 .75rem; line-height: 1.5; }
+  .cato-cc-mega { background: var(--cato-bg); color: var(--cato-text); border-top: 1px solid rgba(40,39,35,.08); border-bottom: 1px solid rgba(40,39,35,.12); box-shadow: 0 28px 70px rgba(46,34,27,.16); }
+  .cato-cc-mega-inner { display: grid; grid-template-columns: .78fr 1.4fr .82fr; gap: 2.5rem; align-items: stretch; width: min(100%, 80rem); min-height: 25.5rem; margin: 0 auto; padding: 2.75rem 2rem; }
+  .cato-cc-mega-intro { border-right: 1px solid rgba(40,39,35,.10); padding-right: 2rem; }
+  .cato-cc-mega-kicker { color: var(--cato-muted); text-transform: uppercase; margin: 0 0 1rem; font-size: .76rem; font-weight: 800; }
+  .cato-cc-mega-title { max-width: 23rem; margin: 0 0 .9rem; font-size: clamp(2rem, 3vw, 3rem); line-height: 1.02; font-weight: 800; }
+  .cato-cc-mega-copy { color: var(--cato-muted); max-width: 18rem; margin: 0 0 1.6rem; font-size: .95rem; line-height: 1.5; }
+  .cato-cc-mega-home { font-weight: 800; text-decoration: none; }
+  .cato-cc-mega-links { display: grid; grid-template-columns: 1fr 1fr; align-content: start; gap: .35rem 2rem; }
+  .cato-cc-mega-link { display: flex; flex-direction: column; align-items: flex-start; gap: .35rem; border-radius: .5rem; padding: .72rem .8rem; text-decoration: none; }
+  .cato-cc-mega-link:hover { background: var(--base-color-cream--cream-200, #f2eee8); }
+  .cato-cc-mega-link strong { font-size: .98rem; line-height: 1.2; }
+  .cato-cc-mega-link span { color: var(--cato-muted); font-size: .86rem; line-height: 1.4; }
+  .cato-cc-mega-feature { display: flex; flex-direction: column; gap: 1.35rem; min-height: 20rem; background: var(--cato-green-mid); color: var(--cato-white); border-radius: .5rem; padding: 1.65rem; text-decoration: none; }
+  .cato-cc-mega-feature span, .cato-cc-mega-feature p, .cato-cc-mega-feature strong { color: var(--cato-white); }
+  .cato-cc-mega-feature .cato-cc-pill { color: var(--cato-white); border-color: rgba(255,255,255,.35); background: transparent; }
+  .cato-cc-mega-feature-list { display: flex; flex-direction: column; gap: .45rem; border-top: 1px solid rgba(255,255,255,.16); border-bottom: 1px solid rgba(255,255,255,.16); padding: .9rem 0; }
+  .cato-cc-mega-feature-list span { opacity: .72; text-transform: uppercase; font-size: .78rem; }
+  .cato-cc a:focus-visible, .cato-cc button:focus-visible { outline: 2px solid var(--cato-green-bright); outline-offset: 3px; }
+  @media (prefers-reduced-motion: reduce) {
+    .cato-cc *, .cato-cc *::before, .cato-cc *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
+  }
+  @media (max-width: 991px) {
+    .cato-cc-hero-grid, .cato-cc-system-band, .cato-cc-layout, .cato-cc-detail-layout { grid-template-columns: 1fr; }
+    .cato-cc-card-grid, .cato-cc-cms-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .cato-cc-filter-rail, .cato-cc-sidebar { position: static; }
+    .cato-cc-filter-list { flex-flow: row wrap; }
+    .cato-cc-hero { padding-top: 8rem; }
+    .cato-cc-mega-inner { grid-template-columns: 1fr; min-height: auto; }
+    .cato-cc-mega-intro { border-right: 0; padding-right: 0; }
+  }
+  @media (max-width: 767px) {
+    .cato-cc-section { padding: 4rem 1.25rem; }
+    .cato-cc-hero { padding-top: 7rem; }
+    .cato-cc h1 { font-size: 3.5rem; line-height: 1.2; }
+    .cato-cc h2 { font-size: 1.65rem; line-height: 1.25; }
+    .cato-cc-preview-header h2,
+    .cato-cc-system-copy > h2 { font-size: 2rem; }
+    .cato-cc h3 { font-size: 1.25rem; }
+    .cato-cc-card-grid, .cato-cc-cms-grid, .cato-cc-card-body { grid-template-columns: 1fr; }
+    .cato-cc-card, .cato-cc-cms-card, .cato-cc-cms-card[data-featured="true"], .cato-cc-panel, .cato-cc-detail-card, .cato-cc-sidebar-card { min-height: auto; padding: 1.25rem; }
+    .cato-cc-system-band { padding: 1.25rem; }
+    .cato-cc-form-row, .cato-cc-archive-cta { grid-template-columns: 1fr; flex-direction: column; align-items: stretch; }
+    .cato-cc-button, .cato-cc-cta { width: 100%; }
+    .cato-cc-filter-list { flex-direction: column; }
+    .cato-cc-mega-intro, .cato-cc-mega-feature { display: none; }
+    .cato-cc-mega-inner { display: block; padding: .75rem 0; }
+    .cato-cc-mega-links { display: block; }
+    .cato-cc-mega-kicker { padding: 1rem 1.25rem .25rem; }
+    .cato-cc-mega-link { border-radius: 0; padding: 1rem 1.25rem; }
+  }
+`;
+
+const CATO_DETAIL_GLOBAL_STYLE_ID = 'cato-cc-detail-richtext-styles';
+
+const CATO_DETAIL_GLOBAL_CSS = `
+  .cato-cc .cato-cc-detail-card .w-richtext,
+  .cato-cc .cato-cc-detail-card [class*="w-richtext"],
+  .cato-cc .cato-cc-detail-card .cato-cc-rich-content {
+    max-width: 44rem;
+  }
+  .cato-cc .cato-cc-detail-card :is(h1, h2, h3, h4) {
+    max-width: 42rem !important;
+    color: var(--cato-text, #282723) !important;
+    font-family: Switzer, Arial, sans-serif !important;
+    font-weight: 500 !important;
+    letter-spacing: 0 !important;
+  }
+  .cato-cc .cato-cc-detail-card :is(h1, h2) {
+    margin: 2.15rem 0 .85rem !important;
+    font-size: clamp(1.55rem, 2vw, 1.9rem) !important;
+    line-height: 1.22 !important;
+  }
+  .cato-cc .cato-cc-detail-card :is(h3) {
+    margin: 1.75rem 0 .7rem !important;
+    font-size: 1.28rem !important;
+    line-height: 1.32 !important;
+  }
+  .cato-cc .cato-cc-detail-card :is(h4) {
+    margin: 1.5rem 0 .6rem !important;
+    font-size: 1.08rem !important;
+    line-height: 1.38 !important;
+  }
+  .cato-cc .cato-cc-detail-card :is(p, li) {
+    color: var(--cato-muted, #706e68) !important;
+    font-size: 1rem !important;
+    line-height: 1.7 !important;
+  }
+  .cato-cc .cato-cc-detail-card p {
+    margin: 0 0 1.1rem !important;
+  }
+  .cato-cc .cato-cc-detail-card :is(h1, h2, h3, h4) + p {
+    margin-top: 0 !important;
+  }
+  .cato-cc .cato-cc-detail-card :is(ul, ol) {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: .65rem !important;
+    margin: 1rem 0 1.35rem !important;
+    padding-left: 1.35rem !important;
+  }
+  .cato-cc .cato-cc-detail-card :is(li strong) {
+    color: var(--cato-text, #282723) !important;
+    font-weight: 700 !important;
+  }
+  .cato-cc .cato-cc-detail-card :is(a) {
+    color: var(--cato-green, #0a452e) !important;
+    font-weight: 600 !important;
+    text-decoration-thickness: .06em !important;
+    text-underline-offset: .18em !important;
+  }
+  .cato-cc .cato-cc-detail-card :is(p, ul, ol, blockquote):last-child {
+    margin-bottom: 0 !important;
+  }
+`;
+
+function CatoDetailGlobalStyles() {
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+
+    const existing = document.getElementById(CATO_DETAIL_GLOBAL_STYLE_ID);
+    const style = existing ?? document.createElement('style');
+    style.id = CATO_DETAIL_GLOBAL_STYLE_ID;
+    style.textContent = CATO_DETAIL_GLOBAL_CSS;
+
+    if (!existing) {
+      document.head.appendChild(style);
+    }
+  }, []);
+
+  return <style>{CATO_DETAIL_GLOBAL_CSS}</style>;
+}
+
+function parseJsonArray<T>(json: string | undefined, fallback: T[]): T[] {
+  if (!json?.trim()) return fallback;
+
+  try {
+    const parsed = JSON.parse(json) as unknown;
+    return Array.isArray(parsed) ? (parsed as T[]) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function normalizeTextContent(value: string): string {
+  return value
+    .replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, '')
+    .replace(/<style[\s\S]*?>[\s\S]*?<\/style>/gi, '')
+    .replace(/<br\s*\/?>/gi, '')
+    .replace(/<[^>]*>/g, '')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&#160;/gi, ' ')
+    .replace(/\u00a0/g, ' ')
+    .replace(/\u200b/g, '')
+    .trim();
+}
+
+function richTextHasContent(value: unknown): boolean {
+  if (typeof value === 'string') return Boolean(normalizeTextContent(value)) || /<(img|video|iframe|figure)\b/i.test(value);
+  if (typeof value === 'number' || typeof value === 'boolean') return true;
+  if (React.isValidElement(value)) {
+    const props = value.props as Record<string, unknown> | undefined;
+    const html = (props?.dangerouslySetInnerHTML as Record<string, unknown> | undefined)?.__html;
+    if (props?.children !== undefined || html !== undefined) {
+      return richTextHasContent(props?.children) || richTextHasContent(html);
+    }
+    return true;
+  }
+  if (Array.isArray(value)) return value.some(richTextHasContent);
+
+  if (value && typeof value === 'object') {
+    const record = value as Record<string, unknown>;
+    return richTextHasContent(record.html) ||
+      richTextHasContent(record.innerHTML) ||
+      richTextHasContent(record.children) ||
+      richTextHasContent(record.innerText) ||
+      richTextHasContent(record.text) ||
+      richTextHasContent((record.props as Record<string, unknown> | undefined)?.children);
+  }
+
+  return false;
+}
+
+function richTextToHtml(value: unknown): string {
+  if (typeof value === 'string') return value;
+  if (value && typeof value === 'object' && !React.isValidElement(value)) {
+    const record = value as Record<string, unknown>;
+    const html = record.html ?? record.innerHTML;
+    if (typeof html === 'string') return html;
+  }
+  return '';
+}
+
+function richTextToPlain(value: unknown): string {
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+  if (Array.isArray(value)) return value.map(richTextToPlain).filter(Boolean).join(' ');
+  if (value && typeof value === 'object' && !React.isValidElement(value)) {
+    const record = value as Record<string, unknown>;
+    return richTextToPlain(record.innerText ?? record.text ?? record.children ?? (record.props as Record<string, unknown> | undefined)?.children);
+  }
+  return '';
+}
+
+function displayText(value: unknown, fallback = ''): string {
+  const text = richTextToPlain(value).trim();
+  return text || fallback;
+}
+
+function cleanHtml(html: unknown): string {
+  const rawHtml = richTextToHtml(html);
+  if (!rawHtml.trim()) return '';
+  return rawHtml
+    .replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, '')
+    .replace(/\son\w+="[^"]*"/gi, '')
+    .replace(/\son\w+='[^']*'/gi, '')
+    .replace(/\sjavascript:/gi, '');
+}
+
+function RichHtml({ html, className }: { html?: unknown; className?: string }) {
+  if (React.isValidElement(html) || Array.isArray(html)) {
+    return <div className={className}>{html as React.ReactNode}</div>;
+  }
+
+  const sanitized = cleanHtml(html);
+  if (!sanitized) {
+    const text = richTextToPlain(html);
+    if (!text.trim()) return null;
+    return <div className={className}>{text}</div>;
+  }
+
+  return <div className={className} dangerouslySetInnerHTML={{ __html: sanitized }} />;
+}
+
+function resolveData({ categoriesJson, itemsJson }: CatoInsightsDataProps) {
+  return {
+    categories: parseJsonArray<CatoInsightCategory>(categoriesJson, DEFAULT_CATEGORIES),
+    items: parseJsonArray<CatoInsightItem>(itemsJson, DEFAULT_ITEMS),
+  };
+}
+
+function normalizePrefix(prefix = '') {
+  if (!prefix) return '';
+  return prefix.endsWith('/') ? prefix.slice(0, -1) : prefix;
+}
+
+function hrefForPage(page: string, linkMode: CatoInsightsDataProps['linkMode'] = 'webflow', pathPrefix = '') {
+  const prefix = normalizePrefix(pathPrefix);
+  const clean = linkMode === 'export' ? page : page.replace(/\.html$/, '');
+  return `${prefix}/${clean}`.replace(/\/{2,}/g, '/');
+}
+
+function hrefForItem(item: CatoInsightItem, linkMode: CatoInsightsDataProps['linkMode'] = 'webflow', pathPrefix = '') {
+  const suffix = linkMode === 'export' ? '.html' : '';
+  const prefix = normalizePrefix(pathPrefix);
+  return `${prefix}/${item.slug}${suffix}`.replace(/\/{2,}/g, '/');
+}
+
+function normalizeCategoryKey(value?: string) {
+  return value?.trim().toLowerCase().replace(/\.html$/, '').replace(/^\/+|\/+$/g, '');
+}
+
+function slugifyCategoryTitle(value?: string) {
+  return normalizeCategoryKey(value)?.replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+}
+
+function categoryKeyFromResourceType(value?: string) {
+  const normalized = normalizeCategoryKey(value);
+  if (!normalized) return '';
+  if (normalized.includes('research') || normalized.includes('whitepaper')) return 'research';
+  if (normalized.includes('resource') || normalized.includes('webinar')) return 'resources';
+  if (normalized.includes('news') || normalized.includes('event') || normalized.includes('announcement') || normalized.includes('launch')) return 'newsroom';
+  if (normalized.includes('resiliency') || normalized.includes('report') || normalized.includes('alert') || normalized.includes('watchlist')) return 'resiliency';
+  return '';
+}
+
+function inferCategorySlugFromLocation() {
+  if (typeof window === 'undefined') return '';
+  const parts = window.location.pathname.split('/').filter(Boolean);
+  return parts[parts.length - 1] || '';
+}
+
+function inferItemSlugFromLocation() {
+  if (typeof window === 'undefined') return '';
+  const parts = window.location.pathname.split('/').filter(Boolean);
+  return parts[parts.length - 1]?.replace(/\.html$/, '') || '';
+}
+
+function categoryByKey(categories: CatoInsightCategory[], primaryKey?: string, fallbackKey?: string) {
+  const keys = [primaryKey, fallbackKey].map(normalizeCategoryKey).filter(Boolean);
+  const match = categories.find((category) => {
+    const candidates = [
+      category.id,
+      category.page,
+      category.page.replace(/\.html$/, ''),
+      slugifyCategoryTitle(category.title),
+      slugifyCategoryTitle(category.cardLabel),
+    ].map(normalizeCategoryKey);
+
+    return keys.some((key) => candidates.includes(key));
+  });
+
+  return match || categories[0] || DEFAULT_CATEGORIES[0];
+}
+
+function Hero({
+  title,
+  summary,
+  panelLabel,
+  panelTitle,
+  panelSummary,
+  panelCta,
+  panelHref,
+  backLink,
+  children,
+}: {
+  title: string;
+  summary: string;
+  panelLabel: string;
+  panelTitle: string;
+  panelSummary: string;
+  panelCta?: string;
+  panelHref?: string;
+  backLink?: React.ReactNode;
+  children?: React.ReactNode;
+}) {
+  return (
+    <section className="cato-cc-section cato-cc-hero">
+      <div className="cato-cc-container">
+        <div className="cato-cc-hero-grid">
+          <div className="cato-cc-copy">
+            <p className="cato-cc-eyebrow">Insights</p>
+            <h1>{title}</h1>
+            <p className="cato-cc-lede">{summary}</p>
+            {backLink}
+          </div>
+          <div className="cato-cc-panel">
+            <p className="cato-cc-panel-label">{panelLabel}</p>
+            <h2>{panelTitle}</h2>
+            <p>{panelSummary}</p>
+            {panelCta && panelHref ? (
+              <a className="cato-cc-panel-link" href={panelHref}>
+                {panelCta}
+              </a>
+            ) : null}
+          </div>
+        </div>
+        {children}
+      </div>
+    </section>
+  );
+}
+
+function CategoryCard({ category, href }: { category: CatoInsightCategory; href: string }) {
+  return (
+    <a href={href} className="cato-cc-card">
+      <span className="cato-cc-pill">{category.cardLabel}</span>
+      <h3>{category.cardTitle}</h3>
+      <p>{category.cardSummary}</p>
+      <span className="cato-cc-link">{category.cardCta}</span>
+    </a>
+  );
+}
+
+function InsightCard({
+  item,
+  href,
+  featured = false,
+}: {
+  item: CatoInsightItem;
+  href: string;
+  featured?: boolean;
+}) {
+  return (
+    <a href={href} className="cato-cc-cms-card" data-featured={featured ? 'true' : undefined}>
+      {featured ? (
+        <>
+          <div className="cato-cc-card-top">
+            <span className="cato-cc-pill">{item.pill}</span>
+            <span className="cato-cc-meta">{item.date}</span>
+          </div>
+          <div className="cato-cc-card-body">
+            <div>
+              <h3>{item.title}</h3>
+              <p>{item.summary}</p>
+            </div>
+            <span className="cato-cc-link">{item.ctaLabel}</span>
+          </div>
+        </>
+      ) : (
+        <>
+          <span className="cato-cc-pill">{item.pill}</span>
+          <div>
+            <div className="cato-cc-meta">{item.date}</div>
+            <h3>{item.title}</h3>
+            <p>{item.summary}</p>
+          </div>
+          <span className="cato-cc-link">{item.ctaLabel}</span>
+        </>
+      )}
+    </a>
+  );
+}
+
+function SubscribeBlock() {
+  const emailId = useId();
+  const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle');
+
+  function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    if (!form.checkValidity()) {
+      setStatus('error');
+      return;
+    }
+    setStatus('success');
+    form.reset();
+  }
+
+  return (
+    <section className="cato-cc-section" id="cato-resiliency-alerts">
+      <div className="cato-cc-container">
+        <div className="cato-cc-system-band" data-subscribe="true">
+          <div className="cato-cc-system-copy">
+            <p className="cato-cc-eyebrow">Resiliency Report Alerts</p>
+            <h2>Subscribe for Resiliency Report Alerts.</h2>
+            <p className="cato-cc-lede">Receive updates when Cato publishes new healthcare supply risk signals, disruption analysis, and report archive entries.</p>
+          </div>
+          <div className="cato-cc-system-list">
+            <div className="cato-cc-system-card cato-cc-subscribe-card">
+              <div className="cato-cc-form-intro">
+                <span className="cato-cc-pill">Email alerts</span>
+                <h3>Receive new Resiliency Report Alerts.</h3>
+                <p>Get healthcare supply risk signals, disruption reports, and sourcing notes as they publish.</p>
+              </div>
+              <ul className="cato-cc-benefits">
+                <li>New report releases</li>
+                <li>Supply disruption signals</li>
+                <li>Procurement response notes</li>
+              </ul>
+              <form className="cato-cc-form" method="get" onSubmit={submit} noValidate>
+                <label htmlFor={emailId}>Work email address</label>
+                <div className="cato-cc-form-row">
+                  <input id={emailId} className="cato-cc-input" type="email" name="email" placeholder="you@organization.com" required />
+                  <button className="cato-cc-button" type="submit">
+                    Subscribe to alerts
+                  </button>
+                </div>
+                <p className="cato-cc-form-note">No spam. Unsubscribe anytime.</p>
+                {status === 'success' ? (
+                  <div className="cato-cc-form-status" data-status="success" role="status">
+                    You are subscribed. New Resiliency Report Alerts will be sent to your inbox.
+                  </div>
+                ) : null}
+                {status === 'error' ? (
+                  <div className="cato-cc-form-status" data-status="error" role="alert">
+                    Something went wrong. Please try again.
+                  </div>
+                ) : null}
+              </form>
+            </div>
+            <div className="cato-cc-system-card cato-cc-note-card">
+              <strong>Archive status</strong>
+              <p>Browse published resiliency reports below as the archive grows from recurring market signals and care continuity analysis.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export const CatoInsightsHub: React.FC<CatoInsightsHubProps> = ({
+  title = 'Supply Chain Insights for Outstanding Patient Care',
+  summary = 'Stay ahead of disruptions with practical procurement intelligence.',
+  featuredPanelLabel = 'Featured now',
+  featuredPanelTitle = 'Relevant disruptions and strategic resources.',
+  featuredPanelSummary = 'Use this area to feature the market signals, whitepapers, and company updates that matter most from a business perspective.',
+  featuredPanelCta = '',
+  previewEyebrow = 'Insights hub',
+  previewTitle = 'Actionable Supply Chain Insights for Healthcare Leaders',
+  previewSummary = 'Browse by content type to access active supply disruptions, overcome market volatility, and apply sourcing strategies that increase supply chain resilience.',
+  itemLimit = 4,
+  showFilterRail = false,
+  showCmsModel = false,
+  linkMode = 'webflow',
+  pathPrefix = '',
+  ...dataProps
+}) => {
+  const { categories, items } = resolveData(dataProps);
+  const featured = items.find((item) => item.featured) || items[0];
+  const rest = items.filter((item) => item.id !== featured?.id);
+  const previewItems = showFilterRail
+    ? [featured, ...rest].filter((item): item is CatoInsightItem => Boolean(item))
+    : items.slice(0, Math.max(1, itemLimit));
+
+  return (
+    <div className="cato-cc">
+      <style>{CATO_CSS}</style>
+      <Hero
+        title={title}
+        summary={summary}
+        panelLabel={featuredPanelLabel}
+        panelTitle={featuredPanelTitle}
+        panelSummary={featuredPanelSummary}
+        panelCta={featuredPanelCta}
+        panelHref={hrefForPage('resiliency-reports.html', linkMode, pathPrefix)}
+      >
+        <div className="cato-cc-card-grid">
+          {categories.map((category) => (
+            <CategoryCard key={category.id} category={category} href={hrefForPage(category.page, linkMode, pathPrefix)} />
+          ))}
+        </div>
+      </Hero>
+      <section className="cato-cc-section">
+        <div className="cato-cc-container">
+          <div className="cato-cc-preview-header">
+            <p className="cato-cc-eyebrow">{previewEyebrow}</p>
+            <h2>{previewTitle}</h2>
+            <p className="cato-cc-lede">{previewSummary}</p>
+          </div>
+          {showFilterRail ? (
+            <div className="cato-cc-layout">
+              <aside className="cato-cc-filter-rail" aria-label="Browse insights by content type">
+                <div className="cato-cc-filter-title">Browse by type</div>
+                <div className="cato-cc-filter-list">
+                  <a href={hrefForPage('insights.html', linkMode, pathPrefix)} className="cato-cc-filter" data-active="true">
+                    <span>All insights</span>
+                    <span className="cato-cc-filter-count">{items.length}</span>
+                  </a>
+                  {categories.map((category) => (
+                    <a key={category.id} href={hrefForPage(category.page, linkMode, pathPrefix)} className="cato-cc-filter">
+                      <span>{category.filterLabel}</span>
+                      <span className="cato-cc-filter-count">{items.filter((item) => item.category === category.id).length}</span>
+                    </a>
+                  ))}
+                </div>
+                <p className="cato-cc-filter-note">Start with one hub, then split high-volume categories into focused pages as publishing grows.</p>
+              </aside>
+              <div className="cato-cc-cms-grid">
+                {previewItems.map((item, index) => (
+                  <InsightCard key={item.id} item={item} href={hrefForItem(item, linkMode, pathPrefix)} featured={index === 0} />
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="cato-cc-cms-grid">
+              {previewItems.map((item) => (
+                <InsightCard key={item.id} item={item} href={hrefForItem(item, linkMode, pathPrefix)} />
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+      {showCmsModel ? (
+        <section className="cato-cc-section">
+          <div className="cato-cc-container">
+            <div className="cato-cc-system-band">
+              <div className="cato-cc-system-copy">
+                <p className="cato-cc-eyebrow">CMS model</p>
+                <h2>A local preview of the Webflow collection shape.</h2>
+                <p className="cato-cc-lede">This component mirrors the exported fields needed in Webflow: title, slug, type, category, summary, body, date, featured state, menu feature state, CTA label, audience, and archive routing.</p>
+              </div>
+              <div className="cato-cc-system-list">
+                <div className="cato-cc-system-card">
+                  <strong>Collection</strong>
+                  <p>Insights entries power the hub, focused archive pages, detail pages, and featured navigation content.</p>
+                </div>
+                <div className="cato-cc-system-card">
+                  <strong>Focused archives</strong>
+                  <p>Resiliency Reports, Newsroom, Research, and Resources can each filter the same collection by category.</p>
+                </div>
+                <div className="cato-cc-system-card">
+                  <strong>Native target</strong>
+                  <p>Drop the component into Webflow now; replace JSON props with CMS-bound fields when the live collection is ready.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      ) : null}
+    </div>
+  );
+};
+
+export const CatoInsightsArchive: React.FC<CatoInsightsArchiveProps> = ({
+  categoryId = 'resiliency',
+  categorySlug = '',
+  showSubscribe = true,
+  linkMode = 'webflow',
+  pathPrefix = '',
+  ...dataProps
+}) => {
+  const { categories, items } = resolveData(dataProps);
+  const normalizedCategorySlug = categorySlug.trim().toLowerCase();
+
+  if (['__detail__', 'detail', 'insight-detail'].includes(normalizedCategorySlug)) {
+    return <CatoInsightDetail linkMode={linkMode} pathPrefix={pathPrefix} {...dataProps} />;
+  }
+
+  const category = categoryByKey(categories, categorySlug || inferCategorySlugFromLocation(), categoryId);
+  const categoryItems = items.filter((item) => item.category === category.id);
+  const shouldShowSubscribe = showSubscribe && category.hasSubscribe;
+
+  return (
+    <div className="cato-cc">
+      <style>{CATO_CSS}</style>
+      <Hero
+        title={category.title}
+        summary={category.heroSummary}
+        panelLabel={category.panelLabel}
+        panelTitle={category.panelTitle}
+        panelSummary={category.panelSummary}
+        backLink={
+          <a href={hrefForPage('insights.html', linkMode, pathPrefix)} className="cato-cc-back-link">
+            Back to all Insights
+          </a>
+        }
+      />
+      {shouldShowSubscribe ? <SubscribeBlock /> : null}
+      <section className="cato-cc-section">
+        <div className="cato-cc-container">
+          <div className="cato-cc-system-band" data-archive="true">
+            <div className="cato-cc-system-copy">
+              <p className="cato-cc-eyebrow">{category.archiveEyebrow}</p>
+              <h2>{category.archiveTitle}</h2>
+              <p className="cato-cc-lede">{category.archiveSummary}</p>
+            </div>
+            <div className="cato-cc-archive-list">
+              {categoryItems.map((item) => (
+                <InsightCard key={item.id} item={item} href={hrefForItem(item, linkMode, pathPrefix)} />
+              ))}
+              {shouldShowSubscribe ? (
+                <div className="cato-cc-archive-cta">
+                  <div>
+                    <strong>Want future alerts?</strong>
+                    <span>Subscribe once and receive new Resiliency Report Alerts as they publish.</span>
+                  </div>
+                  <a href="#cato-resiliency-alerts" className="cato-cc-cta">
+                    Subscribe for alerts
+                  </a>
+                </div>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+export const CatoInsightDetail: React.FC<CatoInsightDetailProps> = ({
+  slug = '2026-supply-disruption-preparedness-brief',
+  title,
+  summary,
+  resourceType,
+  date,
+  pill,
+  audience,
+  categoryId,
+  bodyHtml,
+  bodyJson,
+  takeawaysHtml,
+  takeawaysJson,
+  linkMode = 'webflow',
+  pathPrefix = '',
+  ...dataProps
+}) => {
+  const { categories, items } = resolveData(dataProps);
+  const inferredSlug = inferItemSlugFromLocation();
+  const configuredSlug = displayText(slug, '2026-supply-disruption-preparedness-brief');
+  const selectedSlug = inferredSlug || configuredSlug;
+  const titleText = displayText(title);
+  const normalizedTitle = normalizeTextContent(titleText).toLowerCase();
+  const fallbackItem =
+    items.find((candidate) => candidate.slug === selectedSlug) ||
+    items.find((candidate) => candidate.slug === configuredSlug) ||
+    (normalizedTitle ? items.find((candidate) => candidate.title.toLowerCase() === normalizedTitle) : undefined) ||
+    items[0] ||
+    DEFAULT_ITEMS[0];
+  const resourceTypeText = displayText(resourceType, fallbackItem.resourceType);
+  const inferredCategory = categoryKeyFromResourceType(resourceTypeText);
+  const category = categoryByKey(categories, inferredCategory || categoryId || fallbackItem.category);
+  const body = parseJsonArray<CatoInsightBodySection>(bodyJson, fallbackItem.body);
+  const takeaways = parseJsonArray<string>(takeawaysJson, fallbackItem.takeaways);
+  const item = {
+    ...fallbackItem,
+    title: displayText(title, fallbackItem.title),
+    summary: displayText(summary, fallbackItem.summary),
+    resourceType: resourceTypeText,
+    date: displayText(date, fallbackItem.date),
+    pill: displayText(pill, fallbackItem.pill),
+    audience: displayText(audience, fallbackItem.audience),
+    body,
+    takeaways,
+  };
+  const audienceContext = item.audience ? `Designed for ${item.audience.toLowerCase()}` : 'Designed for healthcare procurement teams';
+
+  return (
+    <div className="cato-cc">
+      <style>{CATO_CSS}</style>
+      <CatoDetailGlobalStyles />
+      <Hero
+        title={item.title}
+        summary={item.summary}
+        panelLabel={item.resourceType}
+        panelTitle={category.title}
+        panelSummary={audienceContext}
+        backLink={
+          <a href={hrefForPage(category.page, linkMode, pathPrefix)} className="cato-cc-back-link">
+            Back to {category.title}
+          </a>
+        }
+      />
+      <section className="cato-cc-section">
+        <div className="cato-cc-container">
+          <div className="cato-cc-detail-layout">
+            <article className="cato-cc-detail-card">
+              <div className="cato-cc-detail-meta">
+                <span className="cato-cc-pill">{item.pill}</span>
+                <span>{item.date}</span>
+              </div>
+              <div className="cato-cc-rich">
+                {richTextHasContent(bodyHtml) ? (
+                  <RichHtml html={bodyHtml} className="cato-cc-rich-content" />
+                ) : (
+                  item.body.map((section) => (
+                    <section key={section.heading}>
+                      <h3 className="cato-cc-rich-section-heading">{section.heading}</h3>
+                      {section.paragraphs.map((paragraph) => (
+                        <p key={paragraph}>{paragraph}</p>
+                      ))}
+                      {section.bullets?.length ? (
+                        <ul>
+                          {section.bullets.map((bullet) => (
+                            <li key={bullet}>{bullet}</li>
+                          ))}
+                        </ul>
+                      ) : null}
+                    </section>
+                  ))
+                )}
+              </div>
+            </article>
+            <aside className="cato-cc-sidebar" aria-label="Resource details">
+              <div className="cato-cc-sidebar-card">
+                <p className="cato-cc-eyebrow">Resource details</p>
+                <div className="cato-cc-field">
+                  <strong>Resource type</strong>
+                  <span>{item.resourceType}</span>
+                </div>
+                <div className="cato-cc-field">
+                  <strong>Archive</strong>
+                  <a href={hrefForPage(category.page, linkMode, pathPrefix)}>{category.title}</a>
+                </div>
+                <div className="cato-cc-field">
+                  <strong>Built for</strong>
+                  <span>{item.audience}</span>
+                </div>
+                <div className="cato-cc-field">
+                  <strong>Published</strong>
+                  <span>{item.date}</span>
+                </div>
+              </div>
+              <div className="cato-cc-sidebar-card">
+                <p className="cato-cc-eyebrow">Key takeaways</p>
+                {richTextHasContent(takeawaysHtml) ? (
+                  <RichHtml html={takeawaysHtml} className="cato-cc-takeaways-html" />
+                ) : (
+                  <ul className="cato-cc-takeaways">
+                    {item.takeaways.map((takeaway) => (
+                      <li key={takeaway}>{takeaway}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </aside>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+export const CatoInsightsMegaMenu: React.FC<CatoInsightsMegaMenuProps> = ({
+  heading = 'Procurement Intelligence for Resilient Care',
+  summary = 'Current analysis of the dynamics shaping the healthcare supply chain.',
+  featureTitle = 'Resiliency Report Alerts',
+  featureSummary = 'Active supply disruptions and market signals for care continuity.',
+  featureCta = 'Explore Our Insights',
+  linkMode = 'webflow',
+  pathPrefix = '',
+  ...dataProps
+}) => {
+  const { categories, items } = resolveData(dataProps);
+  const featureItems = items.filter((item) => item.category === 'resiliency').slice(0, 3);
+
+  return (
+    <div className="cato-cc">
+      <style>{CATO_CSS}</style>
+      <div className="cato-cc-mega">
+        <div className="cato-cc-mega-inner">
+          <section className="cato-cc-mega-intro" aria-label="Insights overview">
+            <p className="cato-cc-mega-kicker">Insights</p>
+            <h2 className="cato-cc-mega-title">{heading}</h2>
+            <p className="cato-cc-mega-copy">{summary}</p>
+            <a href={hrefForPage('insights.html', linkMode, pathPrefix)} className="cato-cc-mega-home">
+              Explore Cato Insights
+            </a>
+          </section>
+          <section aria-label="Insights navigation">
+            <p className="cato-cc-mega-kicker">Browse insights</p>
+            <div className="cato-cc-mega-links">
+              <a href={hrefForPage('insights.html', linkMode, pathPrefix)} className="cato-cc-mega-link">
+                <strong>Insights Home</strong>
+                <span>All reports, research, resources, and newsroom updates.</span>
+              </a>
+              {categories.map((category) => (
+                <a key={category.id} href={hrefForPage(category.page, linkMode, pathPrefix)} className="cato-cc-mega-link">
+                  <strong>{category.title}</strong>
+                  <span>{category.cardSummary}</span>
+                </a>
+              ))}
+            </div>
+          </section>
+          <a href={hrefForPage('resiliency-reports.html', linkMode, pathPrefix)} className="cato-cc-mega-feature">
+            <span className="cato-cc-pill">Featured</span>
+            <div>
+              <h3>{featureTitle}</h3>
+              <p>{featureSummary}</p>
+              <div className="cato-cc-mega-feature-list">
+                {featureItems.map((item) => (
+                  <div key={item.id}>
+                    <strong>{item.title}</strong>
+                    <span>{item.resourceType}</span>
+                  </div>
+                ))}
+              </div>
+              <strong>{featureCta}</strong>
+            </div>
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export const catoInsightsDefaults = {
+  categories: DEFAULT_CATEGORIES,
+  items: DEFAULT_ITEMS,
+};

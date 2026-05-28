@@ -25,7 +25,7 @@ export const lithxSolutions: LithxSolution[] = [
 			'Target chalcopyrite, transition ores, and more with advanced chelation chemistry designed for complex copper mineralogy.',
 		details:
 			'LithX enhances copper dissolution by disrupting passivation layers that limit recovery from chalcopyrite and mixed oxide-sulfide ores. The technology also improves performance on high acid-consuming and transition ores with mixed oxide-sulfide mineralogy.',
-		image: '/images/lithx-copper.jpg',
+		image: '/images/lithx-cu.jpg',
 		features: [
 			'Target chalcopyrite, transition ores, and more',
 			'Breakthrough passivation barriers',
@@ -47,7 +47,7 @@ export const lithxSolutions: LithxSolution[] = [
 			'Advanced recovery solutions for refractory gold ores and complex mineralogy that resist conventional processing.',
 		details:
 			'LithX Gold enables extraction from carbonaceous, preg-robbing, and double refractory ores using specialized chelation chemistry. The technology disrupts mineral matrices that trap gold, enabling higher recovery rates from challenging ore bodies.',
-		image: '/images/lithx-mining.jpg',
+		image: '/images/lithx-au.jpg',
 		features: [
 			'Enhanced gold dissolution',
 			'Works on refractory ores',
@@ -69,7 +69,7 @@ export const lithxSolutions: LithxSolution[] = [
 			'Platinum group metals recovery from complex ores and recycling streams with ambient temperature processing.',
 		details:
 			'LithX PGM technology targets platinum, palladium, and rhodium from difficult-to-process sources including automotive catalysts and complex sulfide ores. The chelation chemistry operates at ambient conditions while achieving high selectivity.',
-		image: '/images/lithx-mining.jpg',
+		image: '/images/lithx-pgm.jpg',
 		features: [
 			'Selective PGM extraction',
 			'High purity recovery',
@@ -91,7 +91,7 @@ export const lithxSolutions: LithxSolution[] = [
 			'Extract rare earth elements and critical minerals from coal ash, industrial waste, and low-grade deposits.',
 		details:
 			'LithX Rare Earth technology recovers neodymium, dysprosium, and other critical elements from coal fly ash and industrial waste streams. The process transforms waste materials into valuable rare earth concentrates without traditional rare earth mining.',
-		image: '/images/lithx-sustainable.jpg',
+		image: '/images/lithx-ree.jpg',
 		features: [
 			'Extract from diverse sources',
 			'Selective separation',
@@ -113,7 +113,7 @@ export const lithxSolutions: LithxSolution[] = [
 			'Custom formulations designed to address your specific mineralogy and operational requirements.',
 		details:
 			"Our chemistry team works directly with your operations to develop tailored solutions for unique challenges. Whether you're dealing with complex mineralogy, unusual contaminants, or specific recovery targets, we create custom formulations optimized for your conditions.",
-		image: '/images/lithx-sustainable.jpg',
+		image: '/images/lithx-custom.jpg',
 		features: [
 			'Custom formulation development',
 			'Site-specific optimization',
@@ -149,7 +149,7 @@ export const lithxMethods: LithxMethod[] = [
 			'Powerful, versatile chemistry that seamlessly integrates into existing infrastructure',
 		details:
 			'Our chelation technology enhances heap leach operations by improving metal dissolution rates and recovery from low-grade ores. The chemistry works effectively across a wide range of ore types and pH conditions, making it suitable for diverse mining operations.',
-		image: '/images/lithx-heap-leach.jpg'
+		image: '/images/lithx-heap-leaching.jpg'
 	},
 	{
 		id: 'in-situ',
@@ -158,6 +158,6 @@ export const lithxMethods: LithxMethod[] = [
 			'Direct extraction from ore bodies without traditional mining, reducing environmental impact',
 		details:
 			'In-situ recovery using LithX chemistry enables metal extraction directly from ore deposits through controlled injection and recovery wells. This approach minimizes surface disturbance while accessing resources that would be uneconomical with conventional mining.',
-		image: '/images/lithx-sustainable.jpg'
+		image: '/images/lithx-in-situ-recovery.jpg'
 	}
 ];

@@ -107,7 +107,17 @@ type PublishedUrlValidationResponse = {
   siteResults?: {
     passedCount?: number;
   };
+  validatorPreflight?: ValidatorAppPreflightPayload;
   error?: string;
+};
+
+type ValidatorAppPreflightPayload = {
+  required?: boolean;
+  passed?: boolean;
+  status?: string;
+  message?: string;
+  issues?: string[];
+  installUrl?: string;
 };
 
 type RawTemplateAnalyzerPayload = {
@@ -286,6 +296,7 @@ type ValidationFailurePayload = {
   validationIssues?: unknown;
   message?: unknown;
   error?: unknown;
+  validatorPreflight?: ValidatorAppPreflightPayload;
 };
 
 function validationFailureIssues(data: ValidationFailurePayload) {
@@ -734,6 +745,19 @@ function statusClassName(tone: Tone) {
   return 'submission-status submission-status-info';
 }
 
+function getValidatorAppActionLabel(actionUrl: string) {
+  try {
+    const parsed = new URL(actionUrl);
+    if (parsed.hostname === 'webflow.com' && parsed.pathname === '/oauth/authorize') {
+      return 'Install Webflow Way Validator';
+    }
+  } catch {
+    return 'Open Webflow Way Validator';
+  }
+
+  return 'Open Webflow Way Validator';
+}
+
 function formatFileSize(size: number) {
   if (size < 1024) return `${size} B`;
   if (size < 1024 * 1024) return `${Math.round(size / 1024)} KB`;
@@ -784,6 +808,40 @@ function FieldFeedback({
           </button>
         </>
       ) : null}
+    </div>
+  );
+}
+
+function ValidatorAppRecoveryPanel({
+  actionLabel,
+  onAction
+}: {
+  actionLabel: string;
+  onAction: () => void;
+}) {
+  return (
+    <div className="submission-validator-callout" role="alert">
+      <div className="submission-validator-callout-copy">
+        <div className="submission-validator-callout-label">Validator required</div>
+        <h4 className="submission-validator-callout-title">Complete Validator checks before submitting</h4>
+        <p className="submission-validator-callout-text">
+          The submission form needs a confirmed 100% pass from the Webflow Way Validator app before
+          this template can enter review.
+        </p>
+      </div>
+      <ol className="submission-validator-steps" aria-label="Validator setup steps">
+        <li>Install the Webflow Way Validator app.</li>
+        <li>Run validation inside the Designer.</li>
+        <li>Publish the site after fixes.</li>
+        <li>Return here and validate the template again.</li>
+      </ol>
+      <button
+        className="button-sp submission-validator-callout-action"
+        type="button"
+        onClick={onAction}
+      >
+        {actionLabel}
+      </button>
     </div>
   );
 }
@@ -1372,6 +1430,7 @@ export function TemplateIntake() {
   const [imageErrors, setImageErrors] = useState<Record<string, string | null>>({});
   const [autofillManaged, setAutofillManaged] = useState<TemplateAutofillState>({});
   const [analyzerSummary, setAnalyzerSummary] = useState<TemplateAnalyzerSummary | null>(null);
+  const [validatorAppActionUrl, setValidatorAppActionUrl] = useState<string | null>(null);
   const [isEmbedded, setIsEmbedded] = useState(false);
   const [optionSearch, setOptionSearch] = useState({
     categories: '',
@@ -1468,6 +1527,19 @@ export function TemplateIntake() {
       onClick: () => scrollToSubmissionSection('submit-today')
     };
   }
+
+  function getValidatorAppAction(feedback?: StatusMessage | null): FeedbackAction | undefined {
+    if (!validatorAppActionUrl || feedback?.tone !== 'error') {
+      return undefined;
+    }
+
+    return {
+      label: getValidatorAppActionLabel(validatorAppActionUrl),
+      onClick: () => window.open(validatorAppActionUrl, '_blank', 'noopener,noreferrer')
+    };
+  }
+
+  const validatorAppAction = getValidatorAppAction(fieldFeedback.publishedUrl);
 
   function scrollToSubmissionSection(section: 'join-today' | 'submit-today') {
     const target =
@@ -1822,6 +1894,7 @@ export function TemplateIntake() {
     if (key === 'publishedUrl') {
       setFeedback('publishedUrl', null);
       setAnalyzerSummary(null);
+      setValidatorAppActionUrl(null);
       setVerification((current) => ({
         ...current,
         publishedUrlVerified: '',
@@ -2226,6 +2299,7 @@ export function TemplateIntake() {
     }
 
     setAnalyzerSummary(null);
+    setValidatorAppActionUrl(null);
     setFeedback('publishedUrl', {
       tone: 'info',
       message: 'Running the full published-site crawl. This can take a few minutes.'
@@ -2241,6 +2315,7 @@ export function TemplateIntake() {
 
     if (!response.ok || !validationData.passed || !validationData.normalizedUrl) {
       const status = validationFailureStatus(response, validationData);
+      setValidatorAppActionUrl(validationData.validatorPreflight?.installUrl || null);
       setTemplateStatus(status);
       setFeedback('publishedUrl', status);
       return;
@@ -2299,6 +2374,7 @@ export function TemplateIntake() {
         .filter(Boolean)
         .join(' ')
     });
+    setValidatorAppActionUrl(null);
     setVerification((current) => ({
       ...current,
       publishedUrlVerified: validationData.normalizedUrl || '',
@@ -2538,12 +2614,13 @@ export function TemplateIntake() {
         };
         error?: string;
         validationIssues?: string[];
+        validatorPreflight?: ValidatorAppPreflightPayload;
         warning?: string;
       };
 
       if (!response.ok || !data.asset) {
         const validationIssues = validationFailureIssues(data);
-        setTemplateStatus({
+        const status: StatusMessage = {
           tone: 'error',
           message:
             validationIssues.length === 1
@@ -2552,7 +2629,12 @@ export function TemplateIntake() {
                 ? `Published URL validation found ${validationIssues.length} blocking issues.`
                 : data.error || 'Failed to submit template.',
           details: validationIssues.length > 1 ? validationIssues : undefined
-        });
+        };
+        setValidatorAppActionUrl(data.validatorPreflight?.installUrl || null);
+        if (data.validatorPreflight) {
+          setFeedback('publishedUrl', status);
+        }
+        setTemplateStatus(status);
         return;
       }
 
@@ -2568,6 +2650,7 @@ export function TemplateIntake() {
       });
       setAutofillManaged({});
       setAnalyzerSummary(null);
+      setValidatorAppActionUrl(null);
       setTemplate((current) => ({
         ...initialTemplateState,
         creatorEmail: current.creatorEmail,
@@ -3097,11 +3180,17 @@ export function TemplateIntake() {
                       </label>
                       <p className="field-help cc-library-application-form_field-desc">
                         Must be an HTTPS{' '}
-                        <code className="submission-inline-code">*.webflow.io</code> URL. The full
-                        site crawl can take a few minutes. As of May 1, 2026, legacy IX2
-                        interactions are rejected; rebuild interactions with Webflow Interactions
-                        powered by GSAP (IX3).
+                        <code className="submission-inline-code">*.webflow.io</code> URL. Run the
+                        Webflow Way Validator app before submitting; a confirmed 100% pass is
+                        required.
                       </p>
+                      <ul className="submission-published-url-requirements">
+                        <li>The full site crawl can take a few minutes.</li>
+                        <li>
+                          Legacy IX2 interactions are rejected; rebuild interactions with Webflow
+                          Interactions powered by GSAP (IX3).
+                        </li>
+                      </ul>
                       <input
                         className="field-input input w-input"
                         id="publishedUrl"
@@ -3111,6 +3200,13 @@ export function TemplateIntake() {
                         required
                       />
                     </InlineActionField>
+
+                    {validatorAppAction ? (
+                      <ValidatorAppRecoveryPanel
+                        actionLabel={validatorAppAction.label}
+                        onAction={validatorAppAction.onClick}
+                      />
+                    ) : null}
 
                     {analyzerSummary ? (
                       <div className="submission-analyzer-summary" ref={analyzerSummaryRef}>

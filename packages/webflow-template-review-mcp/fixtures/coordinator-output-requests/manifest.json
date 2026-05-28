@@ -1,0 +1,28 @@
+{
+  "schema_version": "template_review_coordinator_output_request_manifest.v0.1",
+  "cases": [
+    {
+      "case_id": "creator_guidance_allowed",
+      "request_file": "creator-guidance.allowed.json",
+      "expected_status": "allowed"
+    },
+    {
+      "case_id": "final_quality_band_blocked",
+      "request_file": "final-quality-band.blocked.json",
+      "expected_status": "blocked",
+      "expected_blockers": ["final_quality_band"]
+    },
+    {
+      "case_id": "sales_input_blocked",
+      "request_file": "sales-input.blocked.json",
+      "expected_status": "blocked",
+      "expected_blockers": ["sales"]
+    },
+    {
+      "case_id": "malformed_request_blocked",
+      "request_file": "malformed-request.blocked.json",
+      "expected_status": "blocked",
+      "expected_blockers": ["request.schema_version", "request.requested_outputs", "final_decision"]
+    }
+  ]
+}
