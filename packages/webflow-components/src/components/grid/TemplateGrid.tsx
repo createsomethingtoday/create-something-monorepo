@@ -7,6 +7,10 @@ import React, {
   useState,
 } from 'react';
 import { TemplateCard } from '../cards/TemplateCard';
+import {
+  MarketplaceComponentErrorBoundary,
+  useMarketplaceComponentErrorTracking,
+} from '../marketplace/MarketplaceComponentErrorBoundary';
 
 // ─── API types ────────────────────────────────────────────────────────────────
 
@@ -579,7 +583,7 @@ const SkeletonCard: React.FC<{ index: number }> = ({ index }) => (
 
 // ─── TemplateGrid ─────────────────────────────────────────────────────────────
 
-export const TemplateGrid: React.FC<TemplateGridProps> = ({
+const TemplateGridInner: React.FC<TemplateGridProps> = ({
   apiBase: apiBaseProp = '',
   categorySlug: categorySlugProp = '',
   styleSlug: styleSlugProp = '',
@@ -592,6 +596,8 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
   emptyDescription = 'Try a broader search or clear filters to see more templates.',
   emptyActionLabel = 'Clear filters',
 }) => {
+  useMarketplaceComponentErrorTracking('TemplateGrid');
+
   // Webflow passes defaultValue strings (including '') as actual values, not undefined.
   // Fall back to the relative path whenever the prop is blank.
   // Rewrite any absolute origin that webflow.com's CSP blocks to the relative default:
@@ -1113,5 +1119,11 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
     </div>
   );
 };
+
+export const TemplateGrid: React.FC<TemplateGridProps> = (props) => (
+  <MarketplaceComponentErrorBoundary component="TemplateGrid">
+    <TemplateGridInner {...props} />
+  </MarketplaceComponentErrorBoundary>
+);
 
 export default TemplateGrid;

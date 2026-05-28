@@ -1,5 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { TemplateFilterBar } from '../filter/TemplateFilterBar';
+import {
+  MarketplaceComponentErrorBoundary,
+  useMarketplaceComponentErrorTracking,
+} from './MarketplaceComponentErrorBoundary';
 import { TemplateSearchBox } from './TemplateSearchBox';
 
 type TemplateSort = 'popular' | 'newest' | 'price_asc' | 'price_desc';
@@ -399,7 +403,7 @@ function notifySidebarFiltersChanged(source: string): void {
   document.dispatchEvent(new CustomEvent('templateFiltersChanged', { detail }));
 }
 
-export const TemplateSearchSidebar: React.FC<TemplateSearchSidebarProps> = ({
+const TemplateSearchSidebarInner: React.FC<TemplateSearchSidebarProps> = ({
   apiBase: apiBaseProp = '',
   title = 'Categories',
   scopeOverride = 'all',
@@ -423,6 +427,8 @@ export const TemplateSearchSidebar: React.FC<TemplateSearchSidebarProps> = ({
   showSort = true,
   showFreeOnly = true,
 }) => {
+  useMarketplaceComponentErrorTracking('TemplateSearchSidebar', enableAnalytics);
+
   const apiBase = resolveApiBase(apiBaseProp);
   const [counts, setCounts] = useState<SidebarCounts>({ all: null, featured: null, landing_pages: null, free: null });
   const [categories, setCategories] = useState<SidebarCategory[]>([]);
@@ -642,5 +648,11 @@ export const TemplateSearchSidebar: React.FC<TemplateSearchSidebarProps> = ({
     </div>
   );
 };
+
+export const TemplateSearchSidebar: React.FC<TemplateSearchSidebarProps> = (props) => (
+  <MarketplaceComponentErrorBoundary component="TemplateSearchSidebar" enabled={props.enableAnalytics}>
+    <TemplateSearchSidebarInner {...props} />
+  </MarketplaceComponentErrorBoundary>
+);
 
 export default TemplateSearchSidebar;
