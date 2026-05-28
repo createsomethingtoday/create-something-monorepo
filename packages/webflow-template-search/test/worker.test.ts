@@ -228,4 +228,78 @@ describe('webflow-template-search worker', () => {
       close();
     }
   });
+
+  it('indexes parent taxonomy lookup records as category groups, not subcategories', async () => {
+    const parentOnlyAsset = {
+      ...PUBLISHED_ASSETS[0],
+      id: 'recParentOnly',
+      fields: {
+        ...PUBLISHED_ASSETS[0].fields,
+        Name: 'Editorial Base',
+        '🪣Category Group(s) Display Name': [],
+        '🪣Category Group(s) CMS Slug': [],
+        '🔍Algolia Child Category (🏗️ only)': ['child-blog-parent'],
+        '🥞CMS Slug (formula)': 'editorial-base-website-template',
+      },
+    };
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: [parentOnlyAsset],
+      styles: LOOKUPS.styles,
+      childCategories: [
+        {
+          id: 'child-blog-parent',
+          fields: {
+            Category: 'Blog & Editorial',
+            'Display name': 'Blog & Editorial',
+            Tier: 'Parent',
+            type: 'group',
+            '🪣Category Groups': 'Blog & Editorial',
+          },
+        },
+      ],
+      tags: LOOKUPS.tags,
+    });
+    const { env, close } = createTestEnv();
+
+    try {
+      const rebuild = await callWorker(
+        new Request('https://templates.test/api/templates/admin/rebuild', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(rebuild.status).toBe(200);
+
+      const response = await callWorker(
+        new Request('https://templates.test/api/templates/search?category_group_slug=blog-and-editorial-websites&include=facets,pills'),
+        env,
+      );
+      const payload = (await response.json()) as {
+        items: Array<{ name: string; category_groups: Array<{ slug: string; url: string }>; child_categories: Array<{ slug: string; url: string }> }>;
+        category_pills: Array<{ slug: string; url: string; active: boolean }>;
+        subcategory_pills: Array<{ slug: string; url: string; active: boolean }>;
+      };
+
+      expect(payload.items.map((item) => item.name)).toEqual(['Editorial Base']);
+      expect(payload.items[0]?.category_groups).toMatchObject([
+        {
+          slug: 'blog-and-editorial-websites',
+          url: 'https://webflow.com/templates/category/blog-and-editorial-websites',
+        },
+      ]);
+      expect(payload.items[0]?.child_categories).toEqual([]);
+      expect(payload.category_pills).toMatchObject([
+        {
+          slug: 'blog-and-editorial-websites',
+          url: 'https://webflow.com/templates/category/blog-and-editorial-websites',
+          active: true,
+        },
+      ]);
+      expect(payload.subcategory_pills).toEqual([]);
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
 });

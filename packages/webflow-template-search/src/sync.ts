@@ -33,14 +33,20 @@ function normalizeTemplateRecord(
   const templateSlug = String(record.fields['🥞CMS Slug (formula)'] ?? '').trim();
   if (!name || !templateSlug) return null;
 
-  const categoryGroups = ensureStringArray(record.fields['🪣Category Group(s) Display Name']);
-  const categoryGroupSlugs = uniqueStrings(
-    ensureStringArray(record.fields['🪣Category Group(s) CMS Slug']).map((entry) => canonicalizeCategoryGroupSlug(entry)),
-  );
-
-  const childCategories = ensureStringArray(record.fields['🔍Algolia Child Category (🏗️ only)'])
+  const childCategoryLookups = ensureStringArray(record.fields['🔍Algolia Child Category (🏗️ only)'])
     .map((id) => lookups.childCategories.get(id))
     .filter((value): value is NonNullable<typeof value> => Boolean(value));
+  const parentCategoryLookups = childCategoryLookups.filter((entry) => entry.isCategoryGroup);
+  const childCategories = childCategoryLookups.filter((entry) => !entry.isCategoryGroup);
+
+  const categoryGroups = uniqueStrings([
+    ...ensureStringArray(record.fields['🪣Category Group(s) Display Name']),
+    ...parentCategoryLookups.map((entry) => entry.displayName),
+  ]);
+  const categoryGroupSlugs = uniqueStrings([
+    ...ensureStringArray(record.fields['🪣Category Group(s) CMS Slug']).map((entry) => canonicalizeCategoryGroupSlug(entry)),
+    ...parentCategoryLookups.map((entry) => canonicalizeCategoryGroupSlug(entry.displayName)),
+  ]);
 
   const styles = ensureStringArray(record.fields['ℹ️👘Styles'])
     .map((id) => lookups.styles.get(id))

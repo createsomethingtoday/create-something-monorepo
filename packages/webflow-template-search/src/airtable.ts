@@ -149,7 +149,7 @@ export async function loadLookupMaps(env: Env): Promise<LookupMaps> {
     }),
     fetchAirtableRecords(env, {
       tableId: env.AIRTABLE_CHILD_CATEGORIES_TABLE_ID ?? DEFAULT_CHILD_CATEGORIES_TABLE_ID,
-      fields: ['Category', 'Display name', 'Parent Category Name', '🪣Category Groups', 'Related Keywords'],
+      fields: ['Category', 'Display name', 'Parent Category Name', '🪣Category Groups', 'Related Keywords', 'Tier', 'type'],
     }),
     fetchAirtableRecords(env, {
       tableId: env.AIRTABLE_TAGS_TABLE_ID ?? DEFAULT_TAGS_TABLE_ID,
@@ -174,8 +174,11 @@ export async function loadLookupMaps(env: Env): Promise<LookupMaps> {
     const category = String(record.fields.Category ?? '').trim();
     const displayName = String(record.fields['Display name'] ?? category).trim();
     const parentCategoryName = String(record.fields['Parent Category Name'] ?? '').trim();
+    const tier = typeof record.fields.Tier === 'string' ? record.fields.Tier.trim() : null;
+    const type = typeof record.fields.type === 'string' ? record.fields.type.trim() : null;
     const name = displayName || category;
     if (!name) continue;
+    const isCategoryGroup = tier?.toLowerCase() === 'parent' || type?.toLowerCase() === 'group';
 
     childCategoryMap.set(record.id, {
       id: record.id,
@@ -186,6 +189,9 @@ export async function loadLookupMaps(env: Env): Promise<LookupMaps> {
       parentCategoryName,
       categoryGroups: uniqueStrings(splitLookupText(record.fields['🪣Category Groups']).map((entry) => canonicalizeCategoryGroupSlug(entry))),
       relatedKeywords: splitLookupText(record.fields['Related Keywords']),
+      tier,
+      type,
+      isCategoryGroup,
     });
   }
 

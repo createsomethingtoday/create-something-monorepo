@@ -77,6 +77,9 @@ export interface ChildCategoryLookupValue extends LookupValue {
   parentCategoryName: string;
   categoryGroups: string[];
   relatedKeywords: string[];
+  tier: string | null;
+  type: string | null;
+  isCategoryGroup: boolean;
 }
 
 export interface LookupMaps {
