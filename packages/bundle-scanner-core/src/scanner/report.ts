@@ -1,10 +1,11 @@
-import type { 
-  Finding, 
-  Ruleset, 
-  ScanConfig, 
-  ScanReport, 
+import type {
+  Finding,
+  Ruleset,
+  ScanConfig,
+  ScanReport,
   Verdict,
-  FindingGroup 
+  FindingGroup,
+  SourceMapSummary
 } from '../types';
 
 /**
@@ -22,22 +23,22 @@ function calculateVerdict(
   ruleset: Ruleset
 ): { verdict: Verdict; reasons: string[] } {
   const reasons: string[] = [];
-  
+
   // Build rule lookup
-  const ruleMap = new Map(ruleset.rules.map(r => [r.ruleId, r]));
-  
+  const ruleMap = new Map(ruleset.rules.map((r) => [r.ruleId, r]));
+
   // Check for blockers
   let hasBlocker = false;
   let hasActionRequired = false;
-  
+
   for (const finding of findings) {
     const rule = ruleMap.get(finding.ruleId);
     if (!rule) continue;
-    
+
     // Use finding-level overrides if present, otherwise use rule defaults
     const severity = finding.severity ?? rule.severity;
     const reviewBucket = finding.reviewBucket ?? rule.reviewBucket;
-    
+
     if (severity === 'BLOCKER' || reviewBucket === 'AUTO_REJECT') {
       hasBlocker = true;
       if (!reasons.includes(`BLOCKER: ${rule.name}`)) {
@@ -50,32 +51,29 @@ function calculateVerdict(
       }
     }
   }
-  
+
   if (hasBlocker) {
     return { verdict: 'REJECTED', reasons };
   }
-  
+
   if (hasActionRequired) {
     return { verdict: 'ACTION_REQUIRED', reasons };
   }
-  
+
   return { verdict: 'PASS', reasons: ['No blocking issues found'] };
 }
 
 /**
  * Group findings by rule
  */
-function groupFindings(
-  findings: Finding[],
-  ruleset: Ruleset
-): Record<string, FindingGroup> {
-  const ruleMap = new Map(ruleset.rules.map(r => [r.ruleId, r]));
+function groupFindings(findings: Finding[], ruleset: Ruleset): Record<string, FindingGroup> {
+  const ruleMap = new Map(ruleset.rules.map((r) => [r.ruleId, r]));
   const groups: Record<string, FindingGroup> = {};
-  
+
   for (const finding of findings) {
     const rule = ruleMap.get(finding.ruleId);
     if (!rule) continue;
-    
+
     if (!groups[finding.ruleId]) {
       groups[finding.ruleId] = {
         rule,
@@ -83,14 +81,14 @@ function groupFindings(
         items: []
       };
     }
-    
+
     const group = groups[finding.ruleId];
     if (group) {
       group.count++;
       group.items.push(finding);
     }
   }
-  
+
   return groups;
 }
 
@@ -102,11 +100,12 @@ export interface ReportSummaryInput {
   totalBytes: number;
   textFilesScanned: number;
   skippedFileCount: number;
+  sourceMapSummary?: SourceMapSummary;
 }
 
 /**
  * Generate a complete scan report
- * 
+ *
  * @param findings - Array of findings from the scanner
  * @param ruleset - The ruleset used for scanning
  * @param config - Scanner configuration
@@ -121,27 +120,29 @@ export function generateReport(
 ): ScanReport {
   const { verdict, reasons } = calculateVerdict(findings, ruleset);
   const groupedFindings = groupFindings(findings, ruleset);
-  
+
   return {
     scanReportVersion: '1.1.0',
     runId: generateRunId(),
     createdAt: new Date().toISOString(),
-    
+
     policyMetadata: {
       rulesetVersion: ruleset.rulesetVersion,
       configVersion: config.configVersion
     },
-    
+
     verdict,
     verdictReasons: reasons,
-    
+
     bundleSummary: {
       fileCount: summary.fileCount,
       totalBytes: summary.totalBytes,
       scannedFileCount: summary.textFilesScanned,
       skippedFileCount: summary.skippedFileCount
     },
-    
+
+    ...(summary.sourceMapSummary ? { sourceMapSummary: summary.sourceMapSummary } : {}),
+
     findings: groupedFindings
   };
 }
