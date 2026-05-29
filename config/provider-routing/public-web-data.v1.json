@@ -1,0 +1,381 @@
+{
+  "version": 1,
+  "status": "draft",
+  "owner": "CREATE SOMETHING integration architecture",
+  "linearIssue": "CRE-420",
+  "lastReviewed": "2026-05-22",
+  "policyDocument": "docs/PUBLIC_WEB_DATA_PROVIDER_ROUTING.md",
+  "principles": [
+    "codify_house_capabilities_before_provider_names",
+    "public_data_only",
+    "broker_broad_provider_catalogs",
+    "use_bright_data_for_durable_public_web_data",
+    "keep_apify_for_actor_speed_fallbacks_and_existing_low_volume_flows",
+    "promote_routes_only_after_smoke_evidence"
+  ],
+  "secrets": {
+    "brightDataApiToken": "BRIGHT_DATA_API_TOKEN",
+    "apifyApiToken": "APIFY_API_TOKEN"
+  },
+  "providers": {
+    "bright_data": {
+      "role": "default durable public-web and public-social data backend",
+      "brokeredMcpServer": "composio-toolkit-brightdata",
+      "bestFor": [
+        "production public social monitoring",
+        "high-volume public web extraction",
+        "javascript-heavy public websites",
+        "warehouse or webhook delivery",
+        "enterprise support and unblocking requirements"
+      ]
+    },
+    "apify": {
+      "role": "actor marketplace, prototype lane, fallback lane, and existing low-volume workflow provider",
+      "brokeredMcpServer": "composio-toolkit-apify",
+      "bestFor": [
+        "fast validation with maintained actors",
+        "low-volume public data workflows",
+        "scheduled automations where actor output already fits",
+        "fallback while Bright Data field maps are still being validated"
+      ]
+    }
+  },
+  "houseCapabilities": [
+    "public_social_posts",
+    "public_social_profiles",
+    "public_web_page_extract",
+    "public_web_browser_session",
+    "serp_results"
+  ],
+  "routes": [
+    {
+      "id": "bright_data.instagram.posts.discover_by_url",
+      "provider": "bright_data",
+      "capability": "public_social_posts",
+      "platform": "instagram",
+      "routeKind": "social_media_scraper_api",
+      "accessPath": "direct_bright_data_api",
+      "datasetId": "gd_lk5ns7kz21pck8jpis",
+      "method": "POST",
+      "path": "/datasets/v3/scrape",
+      "query": {
+        "notify": "false",
+        "include_errors": "true",
+        "type": "discover_new",
+        "discover_by": "url"
+      },
+      "requiredInputFields": [
+        "url"
+      ],
+      "optionalInputFields": [
+        "num_of_posts",
+        "start_date",
+        "end_date",
+        "post_type",
+        "posts_to_not_include"
+      ],
+      "recommendedSmokeInput": {
+        "num_of_posts": 10,
+        "post_type": "Post"
+      },
+      "mode": {
+        "smoke": "synchronous",
+        "production": "asynchronous_after_validation"
+      },
+      "status": "validated_direct_smoke",
+      "observedHubBehavior": {
+        "checkedAt": "2026-05-22",
+        "tool": "composio-toolkit-brightdata__brightdata_crawl_api",
+        "status": "not_equivalent_to_direct_discover_by_url",
+        "profileUrlResult": {
+          "records": 0,
+          "errors": 1,
+          "error": "It is not a post URL"
+        }
+      },
+      "recommendedFor": [
+        "kickstand.instagram_monitoring.shadow_pilot"
+      ],
+      "observedDirectBehavior": {
+        "checkedAt": "2026-05-22",
+        "command": "infisical run --env=prod --path=/kickstand -- pnpm brightdata:instagram:smoke -- --mode posts-discover-by-url --url https://www.instagram.com/zoobarcelona/ --limit 1 --post-type Post",
+        "httpStatus": 200,
+        "contentType": "application/jsonl; charset=utf-8",
+        "recordCount": 1,
+        "responseShape": "single_record_json_object",
+        "adapterRequirement": "handle_array_single_record_json_object_jsonl_and_snapshot_id",
+        "representativeFields": [
+          "url",
+          "user_posted",
+          "description",
+          "hashtags",
+          "num_comments",
+          "date_posted",
+          "likes",
+          "photos",
+          "location",
+          "location_details",
+          "latest_comments",
+          "post_id",
+          "shortcode",
+          "content_type",
+          "pk",
+          "content_id",
+          "thumbnail",
+          "tagged_users",
+          "followers",
+          "post_content",
+          "profile_url"
+        ]
+      }
+    },
+    {
+      "id": "bright_data.instagram.posts.collect_by_url",
+      "provider": "bright_data",
+      "capability": "public_social_posts",
+      "platform": "instagram",
+      "routeKind": "social_media_scraper_api",
+      "accessPath": "direct_bright_data_api_or_composio_crawl_api",
+      "datasetId": "gd_lk5ns7kz21pck8jpis",
+      "method": "POST",
+      "path": "/datasets/v3/scrape",
+      "query": {
+        "notify": "false",
+        "include_errors": "true"
+      },
+      "requiredInputFields": [
+        "url"
+      ],
+      "optionalInputFields": [],
+      "mode": {
+        "smoke": "synchronous",
+        "production": "on_demand"
+      },
+      "status": "validated_hub_smoke",
+      "observedHubBehavior": {
+        "checkedAt": "2026-05-22",
+        "tool": "composio-toolkit-brightdata__brightdata_crawl_api",
+        "snapshotId": "sd_mph2g3a31vsn4lm52p",
+        "records": 1,
+        "errors": 0,
+        "representativeFields": [
+          "url",
+          "shortcode",
+          "description",
+          "date_posted",
+          "likes",
+          "num_comments",
+          "hashtags",
+          "images",
+          "photos",
+          "thumbnail",
+          "profile_url",
+          "user_posted",
+          "followers",
+          "location",
+          "latest_comments"
+        ]
+      },
+      "recommendedFor": [
+        "permalink_backfill",
+        "spot_check_verification"
+      ]
+    },
+    {
+      "id": "bright_data.instagram.profiles.discover_by_user_name",
+      "provider": "bright_data",
+      "capability": "public_social_profiles",
+      "platform": "instagram",
+      "routeKind": "social_media_scraper_api",
+      "accessPath": "direct_bright_data_api",
+      "datasetId": "gd_l1vikfch901nx3by4",
+      "method": "POST",
+      "path": "/datasets/v3/scrape",
+      "query": {
+        "notify": "false",
+        "include_errors": "true",
+        "type": "discover_new",
+        "discover_by": "user_name"
+      },
+      "requiredInputFields": [
+        "user_name"
+      ],
+      "optionalInputFields": [],
+      "mode": {
+        "smoke": "synchronous",
+        "production": "asynchronous_after_validation"
+      },
+      "status": "candidate_supporting_route",
+      "recommendedFor": [
+        "profile_enrichment",
+        "account_health_check"
+      ]
+    },
+    {
+      "id": "bright_data.public_web.browser_api",
+      "provider": "bright_data",
+      "capability": "public_web_browser_session",
+      "platform": "public_web",
+      "routeKind": "browser_api",
+      "datasetId": null,
+      "method": null,
+      "path": null,
+      "query": {},
+      "requiredInputFields": [
+        "url"
+      ],
+      "optionalInputFields": [
+        "rendering",
+        "interaction_script",
+        "wait_strategy"
+      ],
+      "mode": {
+        "smoke": "manual_console_or_adapter_test",
+        "production": "job_specific_adapter"
+      },
+      "status": "candidate_general_route",
+      "recommendedFor": [
+        "javascript_heavy_public_venue_pages",
+        "pages_requiring_navigation_or_interaction"
+      ]
+    },
+    {
+      "id": "apify.instagram.posts.actor",
+      "provider": "apify",
+      "capability": "public_social_posts",
+      "platform": "instagram",
+      "routeKind": "actor",
+      "datasetId": null,
+      "actorId": "nH2AHrwxeTRJoN5hX",
+      "status": "current_kickstand_control_path",
+      "recommendedFor": [
+        "existing_kickstand_instagram_monitoring",
+        "fallback_until_bright_data_shadow_passes",
+        "quick_low_volume_actor_tests"
+      ]
+    },
+    {
+      "id": "apify.twitter.posts.actor",
+      "provider": "apify",
+      "capability": "public_social_posts",
+      "platform": "x_twitter",
+      "routeKind": "actor",
+      "datasetId": null,
+      "actorId": "CJdippxWmn9uRfooo",
+      "status": "current_kickstand_control_path",
+      "recommendedFor": [
+        "existing_kickstand_twitter_monitoring",
+        "fallback_until_bright_data_or_official_api_route_is_validated"
+      ]
+    }
+  ],
+  "routingRules": [
+    {
+      "useCase": "production_public_instagram_post_monitoring",
+      "defaultRoute": "bright_data.instagram.posts.discover_by_url",
+      "fallbackRoute": "apify.instagram.posts.actor",
+      "promotionRequired": true
+    },
+    {
+      "useCase": "known_instagram_post_backfill_or_spot_check",
+      "defaultRoute": "bright_data.instagram.posts.collect_by_url",
+      "fallbackRoute": "apify.instagram.posts.actor",
+      "promotionRequired": false
+    },
+    {
+      "useCase": "public_instagram_profile_enrichment",
+      "defaultRoute": "bright_data.instagram.profiles.discover_by_user_name",
+      "fallbackRoute": null,
+      "promotionRequired": true
+    },
+    {
+      "useCase": "javascript_heavy_public_venue_page_extraction",
+      "defaultRoute": "bright_data.public_web.browser_api",
+      "fallbackRoute": null,
+      "promotionRequired": true
+    }
+  ],
+  "pilots": {
+    "kickstand_instagram": {
+      "status": "recommended_shadow_pilot",
+      "controlRoute": "apify.instagram.posts.actor",
+      "candidateRoute": "bright_data.instagram.posts.discover_by_url",
+      "accessDecision": {
+        "productionAdapter": "direct_bright_data_api",
+        "operatorTesting": "composio_bright_data",
+        "fallback": "apify_direct_api",
+        "rationale": "Composio Bright Data validated dataset inventory and known-post collection, but the current crawl_api wrapper does not expose Instagram profile discover_by=url. Kickstand monitoring needs profile discovery, so production should use the direct Bright Data scraper API behind a house adapter."
+      },
+      "actualRecordComparison": {
+        "checkedAt": "2026-05-22",
+        "source": "kickstand_airtable_instagram_posts",
+        "airtableRecordId": "recw8pzCWwaBiWufW",
+        "postUrl": "https://www.instagram.com/p/DYkjh7HlNPO/",
+        "brightDataSnapshotId": "sd_mph2n51y288l4wpcca",
+        "result": "core_fields_match",
+        "matchingFields": [
+          "post_id",
+          "url",
+          "caption_or_description",
+          "date_posted",
+          "likes",
+          "comments",
+          "media_type"
+        ],
+        "providerEnrichmentFields": [
+          "shortcode",
+          "hashtags",
+          "photos",
+          "images",
+          "thumbnail",
+          "profile_url",
+          "user_posted",
+          "followers",
+          "location_details",
+          "tagged_users"
+        ],
+        "systemComputedFields": [
+          "discovered_at",
+          "engagement_score",
+          "status",
+          "urgency_keywords",
+          "artist_extraction"
+        ]
+      },
+      "initialScope": {
+        "profileCount": "1-3",
+        "postsPerProfile": 10,
+        "mode": "synchronous"
+      },
+      "compareFields": [
+        "permalink",
+        "caption_or_text",
+        "timestamp",
+        "media_url",
+        "engagement_counts",
+        "duplicate_key",
+        "artist_or_event_extraction_yield"
+      ]
+    }
+  },
+  "promotionGates": [
+    "representative_public_profiles_return_non_empty_data",
+    "normalized_field_map_documented",
+    "duplicate_behavior_understood",
+    "provider_errors_captured_and_classified",
+    "cost_per_successful_record_estimated",
+    "latency_fits_job_schedule",
+    "secrets_stored_outside_repo",
+    "rollback_or_fallback_route_documented"
+  ],
+  "disallowedUses": [
+    "private_or_logged_in_only_data",
+    "direct_messages",
+    "restricted_or_access_controlled_content",
+    "fake_engagement",
+    "fake_accounts",
+    "spam",
+    "impersonation",
+    "account_automation_without_official_api_authorization"
+  ]
+}

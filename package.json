@@ -95,6 +95,7 @@
     "braintrust:smoke": "tsx scripts/braintrust-openai-smoke.ts",
     "braintrust:mcp:telemetry-smoke": "tsx scripts/braintrust-mcp-telemetry-smoke.ts",
     "braintrust:playbook-smoke": "tsx scripts/braintrust-playbook-mcp-smoke.ts",
+    "brightdata:instagram:smoke": "node scripts/bright-data-instagram-smoke.mjs",
     "ink:bridge:smoke": "pnpm --dir packages/calm-operator-ink-bridge smoke:production",
     "graph:build": "tsx scripts/build-knowledge-graph/index.ts",
     "graph:build:incremental": "tsx scripts/build-knowledge-graph/index.ts --incremental",
