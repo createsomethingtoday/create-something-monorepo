@@ -1,15 +1,17 @@
 <script lang="ts">
 	import { Button, Badge, Dialog } from './ui';
 	import { env } from '$env/dynamic/public';
-	import { ShieldCheck, Check, Info, ExternalLink } from 'lucide-svelte';
+	import { ShieldCheck, Check, Info, ExternalLink, Copy } from 'lucide-svelte';
 
 	interface Props {
 		userEmail?: string;
+		featured?: boolean;
 	}
 
-	let { userEmail }: Props = $props();
+	let { userEmail, featured = false }: Props = $props();
 
 	let showInstallModal = $state(false);
+	let installUrlCopied = $state(false);
 
 	const installUrl =
 		env.PUBLIC_WEBFLOW_WAY_INSTALL_URL ||
@@ -24,9 +26,21 @@
 	function handleInstall() {
 		window.open(installUrl, '_blank', 'noopener,noreferrer');
 	}
+
+	async function handleCopyInstallUrl() {
+		try {
+			await navigator.clipboard.writeText(installUrl);
+			installUrlCopied = true;
+			setTimeout(() => {
+				installUrlCopied = false;
+			}, 2000);
+		} catch {
+			installUrlCopied = false;
+		}
+	}
 </script>
 
-<div class="webflow-way-card">
+<div class="webflow-way-card {featured ? 'webflow-way-card--featured' : ''}">
 	<div class="tool-header">
 		<div class="tool-icon webflow-way">
 			<ShieldCheck size={24} />
@@ -45,6 +59,33 @@
 		Use it to add the Validator script, publish, re-check, and fix required items until the
 		project reaches a confirmed 100% pass.
 	</p>
+
+	{#if featured}
+		<div class="install-access" aria-label="Validator install URL">
+			<div>
+				<p class="install-access-title">Webflow install URL</p>
+				<p class="install-access-copy">Open the Webflow install link or copy it for a teammate.</p>
+			</div>
+			<div class="install-access-actions">
+				<code title={installUrl}>{installUrl}</code>
+				<Button
+					variant="outline"
+					size="sm"
+					onclick={handleCopyInstallUrl}
+					class="copy-url-button"
+					aria-label="Copy Webflow Way Validator install URL"
+				>
+					{#if installUrlCopied}
+						<Check size={14} />
+						Copied
+					{:else}
+						<Copy size={14} />
+						Copy URL
+					{/if}
+				</Button>
+			</div>
+		</div>
+	{/if}
 
 	<div class="how-it-works">
 		<div class="how-it-works-icon">
@@ -257,6 +298,13 @@
 		box-shadow: var(--shadow-sm);
 	}
 
+	.webflow-way-card--featured {
+		gap: var(--space-md);
+		padding: var(--space-lg);
+		border-radius: var(--radius-sm);
+		box-shadow: var(--shadow-md);
+	}
+
 	.tool-header {
 		display: flex;
 		align-items: flex-start;
@@ -304,6 +352,49 @@
 		color: var(--color-fg-secondary);
 		margin: 0;
 		line-height: 1.5;
+	}
+
+	.install-access {
+		display: grid;
+		gap: var(--space-sm);
+		padding: var(--space-sm);
+		background: color-mix(in srgb, var(--color-info-muted) 18%, var(--color-bg-surface));
+		border: 1px solid var(--color-info-border);
+		border-radius: var(--radius-sm);
+	}
+
+	.install-access-title {
+		margin: 0;
+		color: var(--color-fg-primary);
+		font-size: var(--text-body-sm);
+		font-weight: var(--font-semibold);
+	}
+
+	.install-access-copy {
+		margin: 0.15rem 0 0;
+		color: var(--color-fg-secondary);
+		font-size: var(--text-caption);
+		line-height: 1.4;
+	}
+
+	.install-access-actions {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) auto;
+		gap: var(--space-sm);
+		align-items: center;
+	}
+
+	.install-access code {
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		padding: 0.55rem 0.7rem;
+		border: 1px solid color-mix(in srgb, var(--color-info-border) 76%, transparent);
+		border-radius: var(--radius-sm);
+		background: color-mix(in srgb, var(--color-bg-pure) 72%, transparent);
+		color: var(--color-fg-primary);
+		font-size: var(--text-caption);
 	}
 
 	.how-it-works {
@@ -379,6 +470,11 @@
 
 	:global(.tool-button) {
 		flex: 1;
+		justify-content: center;
+		gap: var(--space-xs);
+	}
+
+	:global(.copy-url-button) {
 		justify-content: center;
 		gap: var(--space-xs);
 	}
@@ -495,5 +591,17 @@
 		gap: var(--space-sm);
 		padding-top: var(--space-sm);
 		border-top: 1px solid var(--color-shell-border-default);
+	}
+
+	@media (max-width: 640px) {
+		.webflow-way-card--featured {
+			padding: var(--space-md);
+		}
+
+		.install-access-actions,
+		.tool-actions {
+			grid-template-columns: 1fr;
+			display: grid;
+		}
 	}
 </style>
