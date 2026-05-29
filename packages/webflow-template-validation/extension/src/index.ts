@@ -152,6 +152,11 @@ interface ProjectData {
     id: string;
     name: string;
     slug: string;
+    path?: string;
+    publishPath?: string | null;
+    collectionId?: string | null;
+    collectionName?: string | null;
+    isCmsTemplate?: boolean;
     type: string;
     isHomePage?: boolean;
     hasValidNaming?: boolean;
@@ -167,6 +172,7 @@ interface ProjectData {
     id: string;
     name: string;
     slug: string;
+    publishPath?: string | null;
     seo: {
       title?: string;
       description?: string;
@@ -447,21 +453,75 @@ async function validateProject(): Promise<void> {
 // Extract page slugs from project data for comprehensive validation
 function extractPageSlugs(projectData: ProjectData): string[] {
   const slugs: string[] = [];
+  const seen = new Set<string>();
+  const skippedCmsTemplateSlugs: string[] = [];
 
   if (projectData.pages && projectData.pages.length > 0) {
     projectData.pages.forEach((page: any) => {
-      if (page.slug && page.slug.trim() !== '') {
-        slugs.push(page.slug);
+      const primaryPath = getFirstUsablePagePath(page);
+      if (!primaryPath) return;
+
+      const pathname = getSlugPathname(primaryPath);
+      if (isInternalCmsTemplateSlug(pathname)) {
+        skippedCmsTemplateSlugs.push(pathname);
+        return;
       }
-      // Also check for nested properties that might contain slugs
-      if (page.path && page.path.trim() !== '') {
-        slugs.push(page.path);
+
+      if (!seen.has(pathname)) {
+        seen.add(pathname);
+        slugs.push(pathname);
       }
     });
   }
 
+  if (skippedCmsTemplateSlugs.length > 0) {
+    console.log(
+      `Skipped ${skippedCmsTemplateSlugs.length} internal CMS template slugs for published-site validation:`,
+      skippedCmsTemplateSlugs
+    );
+  }
   console.log(`Extracted ${slugs.length} page slugs for enhanced validation:`, slugs);
   return slugs;
+}
+
+function getFirstUsablePagePath(page: {
+  publishPath?: string | null;
+  path?: string | null;
+  slug?: string | null;
+  isHomePage?: boolean;
+}): string | null {
+  const candidates = [
+    page.publishPath,
+    page.isHomePage ? '/' : null,
+    page.path,
+    page.slug,
+  ];
+
+  for (const candidate of candidates) {
+    if (typeof candidate === 'string' && candidate.trim() !== '') {
+      return candidate;
+    }
+  }
+
+  return null;
+}
+
+function isInternalCmsTemplateSlug(value: string): boolean {
+  const pathname = getSlugPathname(value);
+  return /^\/detail_[^/]+\/?$/i.test(pathname);
+}
+
+function getSlugPathname(value: string): string {
+  const trimmed = value.trim();
+  if (trimmed === '') return '';
+
+  try {
+    const path = trimmed.startsWith('/') || /^[a-z][a-z0-9+.-]*:/i.test(trimmed) ? trimmed : `/${trimmed}`;
+    return new URL(path, 'https://example.com').pathname;
+  } catch {
+    const withoutQuery = trimmed.split(/[?#]/, 1)[0] || '';
+    return withoutQuery.startsWith('/') ? withoutQuery : `/${withoutQuery}`;
+  }
 }
 
 // Ensure URL has HTTPS protocol
@@ -789,7 +849,7 @@ function getWorkerOptions(projectData: ProjectData): Record<string, any> {
   const includeStyleGuide = !isOptionEnabled('opt-exclude-style-guide', true);
   const pageScopeCurrent = isOptionEnabled('opt-page-scope-current', false);
 
-  const excludePageSlugs = includeStyleGuide ? [] : ['style-guide', '/style-guide', 'styleguide', '/styleguide'];
+  const excludePageSlugs = includeStyleGuide ? [] : getStyleGuideExclusionSlugs(projectData);
 
   return {
     skipAssets: !runAssets,
@@ -797,7 +857,7 @@ function getWorkerOptions(projectData: ProjectData): Record<string, any> {
     skipAccessibility: !runContent,
     excludePageSlugs,
     pageScope: pageScopeCurrent ? 'current' : 'all',
-    currentPageSlug: projectData.currentPage?.slug || '/',
+    currentPageSlug: projectData.currentPage?.publishPath || projectData.currentPage?.slug || '/',
     contentChecks: {
       lorem: isOptionEnabled('opt-content-lorem', true),
       headings: isOptionEnabled('opt-content-headings', true),
@@ -807,6 +867,27 @@ function getWorkerOptions(projectData: ProjectData): Record<string, any> {
       contentQuality: isOptionEnabled('opt-content-contentQuality', true),
     },
   };
+}
+
+function getStyleGuideExclusionSlugs(projectData: ProjectData): string[] {
+  const excluded = new Set<string>(['/style-guide', '/styleguide']);
+
+  for (const page of projectData.pages || []) {
+    const name = (page.name || '').toLowerCase();
+    const path = getFirstUsablePagePath(page);
+    const pathname = path ? getSlugPathname(path).toLowerCase() : '';
+    const isStyleGuide =
+      name.includes('style guide') ||
+      name.includes('styleguide') ||
+      pathname.endsWith('/style-guide') ||
+      pathname.endsWith('/styleguide');
+
+    if (isStyleGuide && pathname) {
+      excluded.add(pathname);
+    }
+  }
+
+  return Array.from(excluded);
 }
 
 async function runUnifiedValidation({
@@ -1821,6 +1902,38 @@ async function collectProjectData(webflow: any): Promise<ProjectData> {
                         item.name || item.title || item.displayName || 'Unnamed';
             const slug = item.getSlug ? await item.getSlug() : 
                         item.slug || item.path || '';
+            const publishPath = item.getPublishPath ? await item.getPublishPath() :
+                        item.publishPath || null;
+            let collectionId: string | null = null;
+            let collectionName: string | null = null;
+
+            try {
+              if (item.getCollectionId) {
+                collectionId = await item.getCollectionId();
+              } else if (item.getCollectionID) {
+                collectionId = await item.getCollectionID();
+              } else if (item.collectionId || item.collectionID) {
+                collectionId = item.collectionId || item.collectionID;
+              }
+            } catch {
+              collectionId = null;
+            }
+
+            try {
+              if (item.getCollectionName) {
+                collectionName = await item.getCollectionName();
+              } else if (item.collectionName) {
+                collectionName = item.collectionName;
+              }
+            } catch {
+              collectionName = null;
+            }
+            const isCmsTemplate = Boolean(
+              collectionId ||
+              collectionName ||
+              isInternalCmsTemplateSlug(slug) ||
+              (publishPath && isInternalCmsTemplateSlug(publishPath))
+            );
             
             // Enhanced page analysis for Webflow Way requirements
             let isHomePage = false;
@@ -1904,6 +2017,11 @@ async function collectProjectData(webflow: any): Promise<ProjectData> {
               id: item.id,
               name: name,
               slug: slug,
+              path: item.path || slug,
+              publishPath: publishPath,
+              collectionId: collectionId,
+              collectionName: collectionName,
+              isCmsTemplate: isCmsTemplate,
               type: item.type,
               isHomePage: isHomePage,
               hasValidNaming: hasValidNaming,
@@ -2492,6 +2610,7 @@ async function collectCurrentPageSEOData(webflow: any): Promise<any> {
     
     const pageName = currentPage.getName ? await currentPage.getName() : 'Current Page';
     const pageSlug = currentPage.getSlug ? await currentPage.getSlug() : '';
+    const pagePublishPath = currentPage.getPublishPath ? await currentPage.getPublishPath() : null;
     const pageId = currentPage.getId ? await currentPage.getId() : currentPage.id;
     
     console.log(`Analyzing SEO for current page: ${pageName}`);
@@ -2604,6 +2723,7 @@ async function collectCurrentPageSEOData(webflow: any): Promise<any> {
       id: pageId,
       name: pageName,
       slug: pageSlug,
+      publishPath: pagePublishPath,
       seo: seoData
     };
     
@@ -3743,6 +3863,7 @@ function formatDetailedStats(category: string, stats: Record<string, any>): stri
       if (typeof stats.pagesRequested === 'number') details.push(`${stats.pagesRequested} page${stats.pagesRequested === 1 ? '' : 's'} requested`);
       if (typeof stats.pagesAnalyzed === 'number') details.push(`${stats.pagesAnalyzed} page${stats.pagesAnalyzed === 1 ? '' : 's'} analyzed`);
       if (typeof stats.pagesFailed === 'number' && stats.pagesFailed > 0) details.push(`${stats.pagesFailed} page${stats.pagesFailed === 1 ? '' : 's'} not checked`);
+      if (typeof stats.pagesSkipped === 'number' && stats.pagesSkipped > 0) details.push(`${stats.pagesSkipped} internal CMS template page${stats.pagesSkipped === 1 ? '' : 's'} skipped`);
       if (typeof stats.pagesWithLegacyIx2 === 'number') details.push(`${stats.pagesWithLegacyIx2} page${stats.pagesWithLegacyIx2 === 1 ? '' : 's'} with IX2`);
       if (typeof stats.errorMessage === 'string') details.push(stats.errorMessage);
       break;

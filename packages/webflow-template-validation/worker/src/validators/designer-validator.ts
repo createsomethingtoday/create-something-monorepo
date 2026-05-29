@@ -417,8 +417,8 @@ function validateRequiredPages(pages: DesignerData['pages']): CategoryResult {
       id: 'required-pages.missing-license',
       category: 'Required Pages',
       severity: 'error',
-      message: 'License page is required with slug "/licenses".',
-      howToFix: 'Create a License page with licensing info for all custom assets.'
+      message: 'License page is required for template submission.',
+      howToFix: 'Create a License page with licensing info for all custom assets. It may be nested in a folder if its published URL is accessible.'
     });
   }
 

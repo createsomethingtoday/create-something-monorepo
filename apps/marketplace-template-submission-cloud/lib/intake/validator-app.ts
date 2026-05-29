@@ -50,6 +50,8 @@ export type ValidatorAppPreflight = {
       key?: string;
       sha256?: string;
     };
+    failedCategoryDetails?: ValidatorCategoryDetail[];
+    warningCategoryDetails?: ValidatorCategoryDetail[];
   };
 };
 
@@ -76,6 +78,17 @@ type LatestValidatorResult = {
     key?: string;
     sha256?: string;
   };
+  failedCategoryDetails?: ValidatorCategoryDetail[];
+  warningCategoryDetails?: ValidatorCategoryDetail[];
+};
+
+type ValidatorCategoryDetail = {
+  category?: string;
+  passed?: boolean;
+  issues?: Array<{
+    severity?: string;
+    message?: string;
+  }>;
 };
 
 function getValidatorWorkerUrl() {
@@ -236,8 +249,44 @@ function toResult(data: LatestValidatorResult | null): NonNullable<ValidatorAppP
     failedCategories: summary.failedCategories || 0,
     totalCategories: summary.totalCategories || 0,
     score: summary.score || 0,
-    artifact: data?.artifact
+    artifact: data?.artifact,
+    failedCategoryDetails: Array.isArray(data?.failedCategoryDetails)
+      ? data.failedCategoryDetails
+      : [],
+    warningCategoryDetails: Array.isArray(data?.warningCategoryDetails)
+      ? data.warningCategoryDetails
+      : []
   };
+}
+
+function formatCategoryDetail(detail: ValidatorCategoryDetail) {
+  const category = typeof detail.category === 'string' && detail.category.trim() !== ''
+    ? detail.category.trim()
+    : 'Uncategorized';
+  const issueMessages = Array.isArray(detail.issues)
+    ? detail.issues
+        .filter((issue) => typeof issue.message === 'string' && issue.message.trim() !== '')
+        .map((issue) => issue.message!.trim())
+        .slice(0, 2)
+    : [];
+  return issueMessages.length > 0 ? `${category}: ${issueMessages.join('; ')}` : category;
+}
+
+function buildValidatorResultIssues(result: NonNullable<ValidatorAppPreflight['result']>) {
+  const issues = [
+    `Latest Validator result: ${result.score}% pass, ${result.totalErrors} error${result.totalErrors === 1 ? '' : 's'}, ${result.failedCategories} failed categor${result.failedCategories === 1 ? 'y' : 'ies'}.`
+  ];
+  const failedDetails = result.failedCategoryDetails || [];
+
+  if (failedDetails.length > 0) {
+    const label = failedDetails.length === 1 ? 'Failed category' : 'Failed categories';
+    issues.push(`${label}: ${failedDetails.map(formatCategoryDetail).join(' | ')}`);
+  }
+
+  issues.push(
+    'Fix the Validator issues in Designer, publish the site, rerun validation, and submit again after it reaches 100%.'
+  );
+  return issues;
 }
 
 async function fetchLatestValidatorResult(bridge: BridgeInspection) {
@@ -356,10 +405,7 @@ export async function runValidatorAppSubmissionPreflight(
       policy,
       status: 'result_failed',
       message: 'The latest Webflow Way Validator run must be a 100% pass before submission.',
-      issues: [
-        `Latest Validator result: ${result.score}% pass, ${result.totalErrors} error${result.totalErrors === 1 ? '' : 's'}, ${result.failedCategories} failed categor${result.failedCategories === 1 ? 'y' : 'ies'}.`,
-        'Fix the Validator issues in Designer, publish the site, rerun validation, and submit again after it reaches 100%.'
-      ],
+      issues: buildValidatorResultIssues(result),
       bridge,
       result
     });

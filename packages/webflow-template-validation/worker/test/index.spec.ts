@@ -447,6 +447,44 @@ describe('Accessibility Validator', () => {
 		expect(result.stats.contrastViolations).toBe(0);
 		expect(result.issues.some((issue) => issue.id === 'color-contrast-violations')).toBe(false);
 	});
+
+	it('does not require labels for submit-style inputs with their own accessible value', async () => {
+		const emailInput = {
+			tagName: 'INPUT',
+			getAttribute: (name: string) => {
+				if (name === 'type') return 'email';
+				if (name === 'id') return 'email';
+				if (name === 'placeholder') return 'Enter your email';
+				return null;
+			},
+			hasAttribute: () => false
+		};
+		const submitInput = {
+			tagName: 'INPUT',
+			getAttribute: (name: string) => {
+				if (name === 'type') return 'submit';
+				if (name === 'value') return 'Subscribe';
+				return null;
+			},
+			hasAttribute: () => false
+		};
+		vi.mocked(parseHTML).mockReturnValue(createParsedHTML({
+			forms: [{
+				querySelectorAll: () => [emailInput, submitInput],
+				querySelector: () => null
+			}],
+			headings: [{ tagName: 'H1', textContent: 'Home' }]
+		}));
+
+		const result = await validateAccessibility('https://example.com');
+		const formIssue = result.issues.find((issue) => issue.id === 'form-labels-missing');
+
+		expect(formIssue?.message).toBe('1 form inputs missing labels');
+		expect(formIssue?.details).toMatchObject({
+			totalInputs: 1,
+			unlabeledInputs: [{ type: 'email', id: 'email', placeholder: 'Enter your email' }]
+		});
+	});
 });
 
 describe('Interactions Validator', () => {
@@ -474,6 +512,328 @@ describe('Interactions Validator', () => {
 		expect(result.stats.analysisStatus).toBe('partial');
 		expect(result.issues.some((issue) => issue.id === 'legacy-ix2-interactions-detected' && issue.severity === 'error')).toBe(true);
 		expect(result.issues.some((issue) => issue.id === 'interactions-analysis-incomplete' && issue.severity === 'warning')).toBe(true);
+	});
+
+	it('skips internal CMS template detail slugs instead of fetching them as published pages', async () => {
+		const fetchMock = vi.mocked(fetchHTML);
+		vi.stubGlobal('fetch', vi.fn(async () => new Response('', { status: 404 })));
+		fetchMock.mockClear();
+		fetchMock.mockImplementation(async (url: string) => {
+			if (url.includes('/detail_')) {
+				throw new Error('Internal CMS template slug should not be fetched');
+			}
+
+			return {
+				html: '<!doctype html><html><head><title>Published Page</title></head><body></body></html>',
+				status: 200,
+				headers: { 'content-type': 'text/html' },
+				size: 0,
+				loadTime: 0
+			};
+		});
+
+		const result = await validateInteractions('https://example.com', [
+			'/detail_blog-posts',
+			'detail_portofolios',
+			'/blog-posts/real-item'
+		]);
+
+		expect(result.stats.pagesRequested).toBe(2);
+		expect(result.stats.pagesAnalyzed).toBe(2);
+		expect(result.stats.pagesFailed).toBe(0);
+		expect(result.stats.pagesSkipped).toBe(2);
+		expect(result.stats.analysisStatus).toBe('completed');
+		expect(result.stats.skippedCmsTemplateSlugs).toEqual(['/detail_blog-posts', '/detail_portofolios']);
+		expect(result.stats.cmsTemplateCoverageStatus).toBe('uncovered');
+		expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
+			'https://example.com/',
+			'https://example.com/blog-posts/real-item'
+		]);
+		expect(result.issues.some((issue) => issue.id === 'interactions-analysis-incomplete')).toBe(false);
+	});
+
+	it('validates CMS template coverage with real published item URLs from sitemap', async () => {
+		const fetchMock = vi.mocked(fetchHTML);
+		fetchMock.mockClear();
+		fetchMock.mockImplementation(async (url: string) => {
+			if (url.includes('/detail_')) {
+				throw new Error('Internal CMS template slug should not be fetched');
+			}
+
+			return {
+				html: '<!doctype html><html><head><title>Published Page</title></head><body></body></html>',
+				status: 200,
+				headers: { 'content-type': 'text/html' },
+				size: 0,
+				loadTime: 0
+			};
+		});
+		vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
+			const url = input instanceof Request ? input.url : String(input);
+			if (url.endsWith('/sitemap.xml')) {
+				return new Response(`<?xml version="1.0" encoding="UTF-8"?>
+					<urlset>
+						<url><loc>https://kitpro-aurix.webflow.io/</loc></url>
+						<url><loc>https://kitpro-aurix.webflow.io/blog-posts/innovative-branding-strategies-for</loc></url>
+						<url><loc>https://kitpro-aurix.webflow.io/portofolios/rejuve</loc></url>
+					</urlset>`, {
+					status: 200,
+					headers: { 'Content-Type': 'application/xml' }
+				});
+			}
+			return new Response('', { status: 404 });
+		}));
+
+		const result = await validateInteractions('https://kitpro-aurix.webflow.io', [], {
+			cmsTemplateHints: [
+				{ templateSlug: '/detail_blog-posts', collectionName: 'Blog Posts' },
+				{ templateSlug: '/detail_portofolios', collectionName: 'Portofolios' }
+			]
+		});
+
+		expect(result.stats.pagesRequested).toBe(3);
+		expect(result.stats.pagesAnalyzed).toBe(3);
+		expect(result.stats.pagesFailed).toBe(0);
+		expect(result.stats.pagesSkipped).toBe(2);
+		expect(result.stats.cmsItemUrlsDiscovered).toBe(2);
+		expect(result.stats.cmsItemUrlsValidated).toBe(2);
+		expect(result.stats.cmsTemplateCoverageStatus).toBe('covered');
+		expect(result.stats.cmsTemplateCoverage).toEqual([
+			expect.objectContaining({
+				templateSlug: '/detail_blog-posts',
+				source: 'sitemap',
+				status: 'covered',
+				validatedUrls: ['https://kitpro-aurix.webflow.io/blog-posts/innovative-branding-strategies-for']
+			}),
+			expect.objectContaining({
+				templateSlug: '/detail_portofolios',
+				source: 'sitemap',
+				status: 'covered',
+				validatedUrls: ['https://kitpro-aurix.webflow.io/portofolios/rejuve']
+			})
+		]);
+		expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
+			'https://kitpro-aurix.webflow.io/',
+			'https://kitpro-aurix.webflow.io/blog-posts/innovative-branding-strategies-for',
+			'https://kitpro-aurix.webflow.io/portofolios/rejuve'
+		]);
+	});
+
+	it('falls back to homepage links when sitemap does not expose CMS item URLs', async () => {
+		vi.mocked(fetchHTML).mockResolvedValue({
+			html: '<!doctype html><html><head><title>Published Page</title></head><body></body></html>',
+			status: 200,
+			headers: { 'content-type': 'text/html' },
+			size: 0,
+			loadTime: 0
+		});
+		vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
+			const url = input instanceof Request ? input.url : String(input);
+			if (url.endsWith('/sitemap.xml')) {
+				return new Response('', { status: 404 });
+			}
+			if (url === 'https://example.com/' || url === 'https://example.com') {
+				return new Response('<a href="/blog-posts/from-homepage">Post</a>', {
+					status: 200,
+					headers: { 'Content-Type': 'text/html' }
+				});
+			}
+			return new Response('', { status: 404 });
+		}));
+
+		const result = await validateInteractions('https://example.com', [], {
+			cmsTemplateHints: [{ templateSlug: '/detail_blog-posts', collectionName: 'Blog Posts' }]
+		});
+
+		expect(result.stats.cmsTemplateCoverageStatus).toBe('covered');
+		expect(result.stats.cmsTemplateCoverage?.[0]).toEqual(expect.objectContaining({
+			source: 'link',
+			validatedUrls: ['https://example.com/blog-posts/from-homepage']
+		}));
+	});
+
+	it('uses homepage links when an available sitemap misses a CMS collection', async () => {
+		const fetchHtmlMock = vi.mocked(fetchHTML);
+		fetchHtmlMock.mockClear();
+		fetchHtmlMock.mockResolvedValue({
+			html: '<!doctype html><html><head><title>Published Page</title></head><body></body></html>',
+			status: 200,
+			headers: { 'content-type': 'text/html' },
+			size: 0,
+			loadTime: 0
+		});
+		const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+			const url = input instanceof Request ? input.url : String(input);
+			if (url.endsWith('/sitemap.xml')) {
+				return new Response(`<?xml version="1.0" encoding="UTF-8"?>
+					<urlset>
+						<url><loc>https://example.webflow.io/</loc></url>
+						<url><loc>https://example.webflow.io/utility/style-guide</loc></url>
+					</urlset>`, {
+					status: 200,
+					headers: { 'Content-Type': 'application/xml' }
+				});
+			}
+				if (url === 'https://example.webflow.io/' || url === 'https://example.webflow.io') {
+					return new Response('<a href="/blog-posts/from-homepage">Post</a><a href="/project/from-homepage">Project</a>', {
+					status: 200,
+					headers: { 'Content-Type': 'text/html' }
+				});
+			}
+			return new Response('', { status: 404 });
+		});
+		vi.stubGlobal('fetch', fetchMock);
+
+		const response = await worker.fetch(
+			new Request('https://validation-worker.createsomething.workers.dev/validate', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					siteUrl: 'https://example.webflow.io',
+					pageSlugs: [],
+					designerData: {
+						components: [],
+						styles: [],
+							pages: [
+								{
+									id: 'page_blog',
+									name: 'Blog Posts Template',
+									slug: '/detail_blog-posts',
+									type: 'Page',
+									collectionId: 'collection_blog',
+									collectionName: 'Blog Posts',
+									isCmsTemplate: true
+								},
+								{
+									id: 'page_project',
+									name: 'Projects Template',
+									slug: '/detail_projects',
+									type: 'Page',
+									collectionId: 'collection_project',
+									collectionName: 'Projects',
+									isCmsTemplate: true
+								}
+							],
+						assets: [],
+						siteInfo: { id: 'site_123' }
+					},
+					options: {
+						skipAssets: true,
+						skipContent: true,
+						skipAccessibility: true
+					}
+				})
+			}),
+			{},
+			createExecutionContext()
+		);
+
+		expect(response.status).toBe(200);
+		const payload = await response.json() as any;
+		expect(payload.analysis.interactions.stats.cmsTemplateCoverageStatus).toBe('covered');
+		expect(payload.analysis.interactions.stats.cmsTemplateCoverage).toEqual([
+			expect.objectContaining({
+				templateSlug: '/detail_blog-posts',
+				source: 'link',
+				validatedUrls: ['https://example.webflow.io/blog-posts/from-homepage']
+			}),
+			expect.objectContaining({
+				templateSlug: '/detail_projects',
+				candidateSlugs: ['projects', 'project'],
+				source: 'link',
+				validatedUrls: ['https://example.webflow.io/project/from-homepage']
+			})
+		]);
+		expect(fetchHtmlMock.mock.calls.map(([url]) => url)).toEqual([
+			'https://example.webflow.io/',
+			'https://example.webflow.io/blog-posts/from-homepage',
+			'https://example.webflow.io/project/from-homepage'
+		]);
+		expect(fetchMock.mock.calls.map(([input]) => input instanceof Request ? input.url : String(input))).toEqual([
+			'https://example.webflow.io/sitemap.xml',
+			'https://example.webflow.io'
+		]);
+	});
+
+	it('uses sitemap URLs before homepage links when both expose the CMS collection', async () => {
+		const fetchHtmlMock = vi.mocked(fetchHTML);
+		fetchHtmlMock.mockClear();
+		fetchHtmlMock.mockResolvedValue({
+			html: '<!doctype html><html><head><title>Published Page</title></head><body></body></html>',
+			status: 200,
+			headers: { 'content-type': 'text/html' },
+			size: 0,
+			loadTime: 0
+		});
+		const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+			const url = input instanceof Request ? input.url : String(input);
+			if (url.endsWith('/sitemap.xml')) {
+				return new Response(`<?xml version="1.0" encoding="UTF-8"?>
+					<urlset>
+						<url><loc>https://example.webflow.io/blog-posts/from-sitemap</loc></url>
+					</urlset>`, {
+					status: 200,
+					headers: { 'Content-Type': 'application/xml' }
+				});
+			}
+			if (url === 'https://example.webflow.io/' || url === 'https://example.webflow.io') {
+				return new Response('<a href="/blog-posts/from-homepage">Post</a>', {
+					status: 200,
+					headers: { 'Content-Type': 'text/html' }
+				});
+			}
+			return new Response('', { status: 404 });
+		});
+		vi.stubGlobal('fetch', fetchMock);
+
+		const response = await worker.fetch(
+			new Request('https://validation-worker.createsomething.workers.dev/validate', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					siteUrl: 'https://example.webflow.io',
+					pageSlugs: [],
+					designerData: {
+						components: [],
+						styles: [],
+						pages: [{
+							id: 'page_blog',
+							name: 'Blog Posts Template',
+							slug: '/detail_blog-posts',
+							type: 'Page',
+							collectionId: 'collection_blog',
+							collectionName: 'Blog Posts',
+							isCmsTemplate: true
+						}],
+						assets: [],
+						siteInfo: { id: 'site_123' }
+					},
+					options: {
+						skipAssets: true,
+						skipContent: true,
+						skipAccessibility: true
+					}
+				})
+			}),
+			{},
+			createExecutionContext()
+		);
+
+		expect(response.status).toBe(200);
+		const payload = await response.json() as any;
+		expect(payload.analysis.interactions.stats.cmsTemplateCoverageStatus).toBe('covered');
+		expect(payload.analysis.interactions.stats.cmsTemplateCoverage[0]).toEqual(expect.objectContaining({
+			source: 'sitemap',
+			validatedUrls: ['https://example.webflow.io/blog-posts/from-sitemap']
+		}));
+		expect(fetchHtmlMock.mock.calls.map(([url]) => url)).toEqual([
+			'https://example.webflow.io/',
+			'https://example.webflow.io/blog-posts/from-sitemap'
+		]);
+		expect(fetchMock.mock.calls.map(([input]) => input instanceof Request ? input.url : String(input))).toEqual([
+			'https://example.webflow.io/sitemap.xml',
+			'https://example.webflow.io'
+		]);
 	});
 
 	it('does not treat Webflow Lottie element markers as legacy IX2', async () => {
@@ -843,16 +1203,21 @@ describe('Validation Submission Endpoint', () => {
 				body: JSON.stringify({
 					siteId: 'site_latest_failed_result',
 					siteName: 'Latest Failed Result',
-					validationResults: {
-						summary: { totalErrors: 1, totalWarnings: 0, passedCategories: 3, failedCategories: 1 },
-						categories: [
-							{
-								category: 'Assets & Images',
-								passed: false,
-								issues: [{ severity: 'error', message: 'Image exceeds the maximum size.' }]
-							}
-						]
-					}
+						validationResults: {
+							summary: { totalErrors: 1, totalWarnings: 0, passedCategories: 3, failedCategories: 1 },
+							categories: [
+								{
+									category: 'Assets & Images',
+									passed: false,
+									issues: [{ severity: 'error', message: 'Image exceeds the maximum size.' }]
+								},
+								{
+									category: 'Page Structure',
+									passed: true,
+									issues: [{ severity: 'warning', message: 'Some pages need title-case names.' }]
+								}
+							]
+						}
 				})
 			}),
 			{} as any,
@@ -872,10 +1237,24 @@ describe('Validation Submission Endpoint', () => {
 
 		expect(latestResponse.status).toBe(200);
 		const payload = await latestResponse.json() as any;
-		expect(payload.passed).toBe(false);
-		expect(payload.summary.failedCategories).toBe(1);
-		expect(payload.summary.totalErrors).toBe(1);
-	});
+			expect(payload.passed).toBe(false);
+			expect(payload.summary.failedCategories).toBe(1);
+			expect(payload.summary.totalErrors).toBe(1);
+			expect(payload.failedCategoryDetails).toEqual([
+				{
+					category: 'Assets & Images',
+					passed: false,
+					issues: [{ severity: 'error', message: 'Image exceeds the maximum size.' }]
+				}
+			]);
+			expect(payload.warningCategoryDetails).toEqual([
+				{
+					category: 'Page Structure',
+					passed: true,
+					issues: [{ severity: 'warning', message: 'Some pages need title-case names.' }]
+				}
+			]);
+		});
 
 	it('returns missing when no latest Validator result has been submitted', async () => {
 		const response = await worker.fetch(

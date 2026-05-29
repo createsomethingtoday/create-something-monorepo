@@ -305,11 +305,14 @@ function analyzeFormLabels(parsedHTML: ParsedHTML): any {
 		const inputs = Array.from(form.querySelectorAll<HTMLElement>('input, textarea, select'));
 
 		inputs.forEach(input => {
-			totalInputs++;
-
 			const id = input.getAttribute('id');
-			const type = input.getAttribute('type') || 'text';
+			const type = (input.getAttribute('type') || 'text').toLowerCase();
 			const placeholder = input.getAttribute('placeholder');
+			if (input.tagName.toLowerCase() === 'input' && isNonLabelableInputType(type)) {
+				return;
+			}
+
+			totalInputs++;
 
 			// Check for associated label
 			const hasLabel = id && form.querySelector(`label[for="${id}"]`) !== null;
@@ -334,6 +337,10 @@ function analyzeFormLabels(parsedHTML: ParsedHTML): any {
 		inputsWithLabels,
 		unlabeledInputs
 	};
+}
+
+function isNonLabelableInputType(type: string): boolean {
+	return ['button', 'hidden', 'image', 'reset', 'submit'].includes(type);
 }
 
 function analyzeFocusManagement(parsedHTML: ParsedHTML): any {
