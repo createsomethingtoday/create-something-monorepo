@@ -10,11 +10,21 @@ enabled = true
 # Optional default; can also be set as Worker secret/var.
 [vars]
 AIRTABLE_BASE_ID = "appMoIgXMTTTNIc3p"
+ASSET_ATTRIBUTION_LOOKBACK_HOURS = "72"
+ASSET_ATTRIBUTION_SYNC_START_AT = "2026-05-29T00:00:00.000Z"
+
+[triggers]
+crons = ["0 */6 * * *"]
 
 [[d1_databases]]
 binding = "TELEMETRY_DB"
 database_name = "cs-telemetry"
 database_id = "f710641a-0c85-4a7b-bb73-2c16f8d024c3"
+
+[[workflows]]
+name = "webflow-app-asset-attribution-sync"
+binding = "ASSET_ATTRIBUTION_WORKFLOW"
+class_name = "AppAssetAttributionWorkflow"
 
 [[durable_objects.bindings]]
 name = "MCP_OBJECT"
@@ -23,4 +33,3 @@ class_name = "WebflowAppReviewMCP"
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["WebflowAppReviewMCP"]
-
