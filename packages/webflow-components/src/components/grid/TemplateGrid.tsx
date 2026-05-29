@@ -497,16 +497,38 @@ const GRID_STYLES = `
   border-radius: 8px;
 }
 
-/* Responsive grid breakpoints injected here so Webflow classes don't override */
+/* Flex-based template list; mirrors the native Webflow collection list behavior. */
 .tmgrid-grid {
-  display: grid !important;
-  grid-template-columns: repeat(4, 1fr) !important;
+  display: flex !important;
+  flex-wrap: wrap !important;
   gap: 24px !important;
   width: 100% !important;
+  align-items: flex-start !important;
 }
-@media (max-width: 991px) { .tmgrid-grid { grid-template-columns: repeat(3, 1fr) !important; } }
-@media (max-width: 767px) { .tmgrid-grid { grid-template-columns: repeat(2, 1fr) !important; } }
-@media (max-width: 479px) { .tmgrid-grid { grid-template-columns: 1fr !important; } }
+.tmgrid-grid > .tmgrid-item {
+  flex: 0 1 calc((100% - 72px) / 4) !important;
+  max-width: calc((100% - 72px) / 4) !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+}
+@media (max-width: 991px) {
+  .tmgrid-grid > .tmgrid-item {
+    flex-basis: calc((100% - 48px) / 3) !important;
+    max-width: calc((100% - 48px) / 3) !important;
+  }
+}
+@media (max-width: 767px) {
+  .tmgrid-grid > .tmgrid-item {
+    flex-basis: calc((100% - 24px) / 2) !important;
+    max-width: calc((100% - 24px) / 2) !important;
+  }
+}
+@media (max-width: 479px) {
+  .tmgrid-grid > .tmgrid-item {
+    flex-basis: 100% !important;
+    max-width: 100% !important;
+  }
+}
 `;
 
 const S: Record<string, CSSProperties> = {
