@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Archive, Eye, MoreVertical, Pencil } from 'lucide-svelte';
+	import { Archive, Eye, LoaderCircle, MoreVertical, Pencil } from 'lucide-svelte';
 	import { trackEvent } from '$lib/utils/analytics';
 	import type { AssetActionDescriptor } from '$lib/utils/asset-actions';
 
@@ -7,12 +7,23 @@
 		assetId: string;
 		status: string;
 		actions?: AssetActionDescriptor[];
+		isEditDisabled?: boolean;
+		isEditLoading?: boolean;
 		onView?: (id: string) => void;
 		onEdit?: (id: string) => void;
 		onArchive?: (id: string) => Promise<void>;
 	}
 
-	let { assetId, status, actions = [], onView, onEdit, onArchive }: Props = $props();
+	let {
+		assetId,
+		status,
+		actions = [],
+		isEditDisabled = false,
+		isEditLoading = false,
+		onView,
+		onEdit,
+		onArchive
+	}: Props = $props();
 
 	let isOpen = $state(false);
 	let isArchiving = $state(false);
@@ -59,6 +70,8 @@
 	}
 
 	function handleEdit() {
+		if (isEditDisabled) return;
+
 		trackOverflowAction('edit');
 		onEdit?.(assetId);
 		isOpen = false;
@@ -118,23 +131,37 @@
 				type="button"
 				class="dropdown-item"
 				class:dropdown-item-danger={action.handler === 'archive'}
+				class:dropdown-item-loading={action.handler === 'edit' && isEditLoading}
 				onclick={() =>
 					action.handler === 'view'
 						? handleView(action.label.toLowerCase().replace(/\s+/g, '_'))
 						: action.handler === 'edit'
 							? handleEdit()
 							: handleArchive()}
-				disabled={action.handler === 'archive' && isArchiving}
+				disabled={
+					(action.handler === 'archive' && isArchiving) ||
+					(action.handler === 'edit' && isEditDisabled)
+				}
 				role="menuitem"
 			>
 				{#if action.handler === 'view'}
 					<Eye size={16} />
 				{:else if action.handler === 'edit'}
-					<Pencil size={16} />
+					{#if isEditLoading}
+						<LoaderCircle size={16} class="spinner" />
+					{:else}
+						<Pencil size={16} />
+					{/if}
 				{:else}
 					<Archive size={16} />
 				{/if}
-				{action.handler === 'archive' && isArchiving ? 'Archiving...' : action.label}
+				{#if action.handler === 'archive' && isArchiving}
+					Archiving...
+				{:else if action.handler === 'edit' && isEditLoading}
+					Opening...
+				{:else}
+					{action.label}
+				{/if}
 			</button>
 		{/each}
 	</div>
@@ -215,6 +242,20 @@
 	.dropdown-item:disabled {
 		opacity: 0.5;
 		cursor: not-allowed;
+	}
+
+	.dropdown-item-loading:disabled {
+		opacity: 0.8;
+	}
+
+	:global(.spinner) {
+		animation: spin 0.8s linear infinite;
+	}
+
+	@keyframes spin {
+		to {
+			transform: rotate(360deg);
+		}
 	}
 
 	.dropdown-item :global(svg) {

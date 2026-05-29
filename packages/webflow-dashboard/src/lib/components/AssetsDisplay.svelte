@@ -35,13 +35,15 @@
     AlertTriangle,
     XCircle,
     SearchX,
-    RefreshCw
+    RefreshCw,
+    LoaderCircle
   } from 'lucide-svelte';
 
   interface Props {
     assets: Asset[];
     errorMessage?: string | null;
     searchTerm?: string;
+    openingEditAssetId?: string | null;
     onSearch?: (term: string) => void;
     onView?: (id: string) => void;
     onEdit?: (id: string) => void;
@@ -53,6 +55,7 @@
     assets,
     errorMessage = null,
     searchTerm = '',
+    openingEditAssetId = null,
     onSearch,
     onView,
     onEdit,
@@ -203,6 +206,7 @@
     }
 
     if (action.handler === 'edit') {
+      if (openingEditAssetId) return;
       onEdit?.(asset.id);
       return;
     }
@@ -451,7 +455,15 @@
                     </TableHeader>
                     <TableBody>
                       {#each visibleAssets as asset (asset.id)}
-                        <AssetTableRow {asset} {showPerformance} {onView} {onEdit} {onArchive} />
+                        <AssetTableRow
+                          {asset}
+                          {showPerformance}
+                          isEditDisabled={openingEditAssetId !== null}
+                          isEditLoading={openingEditAssetId === asset.id}
+                          {onView}
+                          {onEdit}
+                          {onArchive}
+                        />
                       {/each}
                       {#if totals}
                         <TableRow class="totals-row">
@@ -534,14 +546,23 @@
                           variant={actionConfig.primary.handler === 'edit'
                             ? 'default'
                             : 'secondary'}
+                          disabled={
+                            actionConfig.primary.handler === 'edit' && openingEditAssetId !== null
+                          }
                           onclick={() => runPrimaryAction(asset, actionConfig.primary)}
                         >
-                          {actionConfig.primary.label}
+                          {#if actionConfig.primary.handler === 'edit' && openingEditAssetId === asset.id}
+                            <LoaderCircle size={14} class="button-spinner" />
+                            Opening...
+                          {:else}
+                            {actionConfig.primary.label}
+                          {/if}
                         </Button>
                         {#each actionConfig.secondary as action}
                           <Button
                             size="sm"
                             variant={action.handler === 'archive' ? 'destructive' : 'outline'}
+                            disabled={action.handler === 'edit' && openingEditAssetId !== null}
                             onclick={() =>
                               action.handler === 'view'
                                 ? onView?.(asset.id)
@@ -549,7 +570,12 @@
                                   ? onEdit?.(asset.id)
                                   : onArchive?.(asset.id)}
                           >
-                            {action.label}
+                            {#if action.handler === 'edit' && openingEditAssetId === asset.id}
+                              <LoaderCircle size={14} class="button-spinner" />
+                              Opening...
+                            {:else}
+                              {action.label}
+                            {/if}
                           </Button>
                         {/each}
                       </div>
@@ -1075,6 +1101,16 @@
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-xs);
+  }
+
+  .button-spinner {
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
   }
 
   @media (max-width: 900px) {
