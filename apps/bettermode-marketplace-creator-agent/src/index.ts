@@ -131,6 +131,19 @@ async function handleWebhook(
 
   const webhook = parseJson<WebhookPayload>(rawBody);
 
+  // Diagnostic logging — surfaces the exact event type Bettermode sends so we
+  // can verify our POST_EVENT_TYPES filter matches reality. Cheap and safe:
+  // single structured line per inbound webhook, no payload contents.
+  console.log('webhook received', {
+    pathname,
+    type: webhook.type,
+    entityId: webhook.entityId,
+    context: webhook.context,
+    objectId: webhook.data?.object?.id,
+    spaceId: webhook.data?.object?.spaceId,
+    targetId: webhook.data?.target?.id,
+  });
+
   if (webhook.type === 'TEST') {
     return jsonResponse(
       {
@@ -150,11 +163,21 @@ async function handleWebhook(
   if (pathname === '/webhook' && webhook.type && POST_EVENT_TYPES.has(webhook.type)) {
     const postId = webhook.data?.object?.id || webhook.entityId;
     const spaceId = webhook.data?.object?.spaceId;
+    console.log('matched post event', { type: webhook.type, postId, spaceId });
     if (postId && shouldHandleSpace(spaceId, env)) {
       ctx.waitUntil(generateDraftForPost(postId, env).catch((err) => {
         console.error('draft generation failed', { postId, error: errorMessage(err) });
       }));
+    } else {
+      console.warn('event matched type but filtered out', {
+        type: webhook.type,
+        postId,
+        spaceId,
+        marketplace_space: env.BETTERMODE_MARKETPLACE_SPACE_ID,
+      });
     }
+  } else if (pathname === '/webhook' && webhook.type) {
+    console.warn('unhandled webhook type', { type: webhook.type });
   }
 
   // Federated search and unknown types: ack with success.
@@ -403,6 +426,19 @@ async function generateDraftForPost(
   const email = author?.email || '';
   const isTopLevel = !post.parentId;
 
+  // Skip drafting when the author is internal Webflow staff (e.g. team
+  // announcements like "Interactions with GSAP training"). The agent's
+  // job is to draft admin replies to creator questions, not to reply
+  // to its own team's announcements.
+  if (isStaffAuthorEmail(email, env)) {
+    console.log('skipping draft for staff author', {
+      postId,
+      authorEmail: email,
+      reason: 'matches staff domain allowlist',
+    });
+    return;
+  }
+
   // Prefer the Dify agent when configured: it owns the prompt, the policy
   // knowledge base, and the connected bettermode-creator MCP, so it can
   // ground answers in actual marketplace policy. Falls back to direct
@@ -501,6 +537,26 @@ function shouldHandleSpace(spaceId: string | null | undefined, env: Env): boolea
     return true;
   }
   return !!spaceId && spaceId === required;
+}
+
+// Returns true when the post author's email matches a configured staff
+// domain (comma-separated in BETTERMODE_STAFF_AUTHOR_DOMAINS, defaulting
+// to `webflow.com`). Staff-authored posts are typically announcements
+// from the Marketplace team itself, not creator questions the agent
+// should draft replies to.
+function isStaffAuthorEmail(
+  email: string | undefined | null,
+  env: Env,
+): boolean {
+  if (!email) return false;
+  const lower = email.trim().toLowerCase();
+  if (!lower.includes('@')) return false;
+  const configured = env.BETTERMODE_STAFF_AUTHOR_DOMAINS;
+  const domains = (configured && configured.trim() ? configured : 'webflow.com')
+    .split(',')
+    .map((d) => d.trim().toLowerCase())
+    .filter(Boolean);
+  return domains.some((d) => lower.endsWith(`@${d}`));
 }
 
 function resolvePostId(webhook: WebhookPayload): string | undefined {

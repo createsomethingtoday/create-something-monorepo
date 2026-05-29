@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="620" viewBox="0 0 1200 620">
+<rect width="1200" height="620" fill="#f8fafc"/>
+<text x="70" y="72" font-size="34" font-weight="800" fill="#0f172a">Abundance Evidence Map</text>
+<text x="70" y="108" font-size="18" fill="#475569">Generated 2026-05-14 - client-facing proof paths from the monorepo</text>
+<text x="96" y="146" font-size="14" font-weight="700" fill="#64748b">DELIVERED COMPONENT</text>
+<text x="595" y="146" font-size="14" font-weight="700" fill="#64748b">REPO EVIDENCE</text>
+
+<rect x="70" y="165" width="1060" height="116" rx="9" fill="#ffffff" stroke="#cbd5e1"/>
+<text x="96" y="199" font-size="19" fill="#0f172a">Created DB: D1 schema for profiles, intakes, and</text>
+<text x="96" y="223" font-size="19" fill="#0f172a">matches</text>
+<text x="96" y="255" font-size="15" fill="#475569">created - Database</text>
+<text x="660" y="199" font-size="14" fill="#334155">- packages/agency/migrations/0001_abundance_network.sql</text>
+<text x="660" y="221" font-size="14" fill="#334155">- packages/agency/src/app.d.ts</text>
+<text x="660" y="243" font-size="14" fill="#334155">- packages/agency/docs/ABUNDANCE_NETWORK_SYSTEM_DOCUMENTATION.md</text>
+
+<rect x="70" y="303" width="1060" height="116" rx="9" fill="#ffffff" stroke="#cbd5e1"/>
+<text x="96" y="337" font-size="19" fill="#0f172a">MCP/API surface: Callable Abundance actions for</text>
+<text x="96" y="361" font-size="19" fill="#0f172a">agents and workflow tools</text>
+<text x="96" y="393" font-size="15" fill="#475569">production-smoked - Automation</text>
+<text x="660" y="337" font-size="14" fill="#334155">- packages/agency/static/openapi-abundance.yaml</text>
+<text x="660" y="359" font-size="14" fill="#334155">- packages/agency/src/routes/api/abundance</text>
+<text x="660" y="381" font-size="14" fill="#334155">- config/mcp-hub/registry.json</text>
+
+<rect x="70" y="441" width="1060" height="116" rx="9" fill="#ffffff" stroke="#cbd5e1"/>
+<text x="96" y="475" font-size="19" fill="#0f172a">Matching agent: Agent boundary for intake,</text>
+<text x="96" y="499" font-size="19" fill="#0f172a">shortlist, and escalation</text>
+<text x="96" y="531" font-size="15" fill="#475569">ready-for-review - Judgment</text>
+<text x="660" y="475" font-size="14" fill="#334155">- evals/braintrust/dify/abundance-hub.eval.ts</text>
+<text x="660" y="497" font-size="14" fill="#334155">- config/dify-agents/abundance-hub.json</text>
+<text x="660" y="519" font-size="14" fill="#334155">- config/dify/inventory.json</text>
+</svg>

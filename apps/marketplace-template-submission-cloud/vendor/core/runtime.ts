@@ -1,6 +1,9 @@
+import { getCloudflareContext } from '@opennextjs/cloudflare';
+
 export interface DashboardCloudflareEnv {
   DB?: D1Database;
   SESSIONS?: KVNamespace;
+  GSAP_VALIDATION_WORKER?: Fetcher;
   UPLOADS_WORKER_URL?: string;
   UPLOADS_WORKER_SECRET?: string;
   AIRTABLE_API_KEY?: string;
@@ -65,15 +68,6 @@ export async function getCloudflareEnv(
   }
 
   try {
-    const moduleName = '@opennextjs/cloudflare';
-    const { getCloudflareContext } = (await import(moduleName)) as {
-      getCloudflareContext?: (options: { async: true }) => Promise<{ env?: DashboardCloudflareEnv }>;
-    };
-
-    if (!getCloudflareContext) {
-      return null;
-    }
-
     const context = await getCloudflareContext({ async: true });
     return (context?.env as DashboardCloudflareEnv | undefined) || getProcessEnvFallback();
   } catch {

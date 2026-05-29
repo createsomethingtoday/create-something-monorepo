@@ -24,9 +24,30 @@ export function createTestEnv() {
 }
 
 export async function callWorker(request: Request, env: Env): Promise<Response> {
-  return worker.fetch(request, env);
+  const waitUntilPromises: Promise<unknown>[] = [];
+  const ctx = {
+    waitUntil(promise: Promise<unknown>) {
+      waitUntilPromises.push(promise);
+    },
+    passThroughOnException() {},
+    props: {},
+  } satisfies ExecutionContext;
+
+  const response = await worker.fetch(request, env, ctx);
+  await Promise.all(waitUntilPromises);
+  return response;
 }
 
 export async function callScheduled(cron: string, env: Env): Promise<void> {
-  await worker.scheduled({ cron, scheduledTime: Date.now() }, env);
+  const waitUntilPromises: Promise<unknown>[] = [];
+  const ctx = {
+    waitUntil(promise: Promise<unknown>) {
+      waitUntilPromises.push(promise);
+    },
+    passThroughOnException() {},
+    props: {},
+  } satisfies ExecutionContext;
+
+  await worker.scheduled({ cron, scheduledTime: Date.now() }, env, ctx);
+  await Promise.all(waitUntilPromises);
 }

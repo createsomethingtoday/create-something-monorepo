@@ -224,7 +224,7 @@ export function createFormTracker(
 // =============================================================================
 
 interface CTATrackingOptions {
-	/** Selector for CTA buttons (default: '[data-cta], .cta, button[type="submit"]') */
+	/** Selector for CTA buttons. */
 	selector?: string;
 }
 
@@ -239,7 +239,7 @@ export function createCTATracker(
 		return () => {};
 	}
 
-	const selector = options.selector ?? '[data-cta], .cta, button[type="submit"]';
+	const selector = options.selector ?? '[data-cta], .cta, .btn, .nav-cta, button[type="submit"]';
 
 	function onClick(event: MouseEvent): void {
 		const target = event.target as HTMLElement;
@@ -257,6 +257,27 @@ export function createCTATracker(
 		const buttonType = cta.getAttribute('data-cta-type') as 'cta' | 'nav' | 'action' | null;
 
 		client.buttonClick(ctaId, buttonType ?? 'cta');
+
+		const href = cta instanceof HTMLAnchorElement ? cta.href : cta.getAttribute('href');
+		if (href) {
+			try {
+				const parsed = new URL(href, window.location.href);
+				if (parsed.pathname === '/book') {
+					client.track('conversion', 'booking_cta_click', {
+						target: ctaId,
+						metadata: {
+							href: parsed.pathname + parsed.search,
+							source: parsed.searchParams.get('source') ?? undefined,
+							intent: parsed.searchParams.get('intent') ?? undefined,
+							lane: parsed.searchParams.get('lane') ?? undefined,
+							ctaType: buttonType ?? 'cta'
+						}
+					});
+				}
+			} catch {
+				// Ignore invalid hrefs.
+			}
+		}
 	}
 
 	document.addEventListener('click', onClick);

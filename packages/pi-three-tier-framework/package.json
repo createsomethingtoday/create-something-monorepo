@@ -1,0 +1,21 @@
+{
+  "name": "@create-something/pi-three-tier-framework",
+  "version": "1.0.0",
+  "description": "The Three-Tier Framework (Database, Automation, Judgment) for agent systems — as a Pi coding agent package. Classify components, debug systems, and design MCP servers using the structural model behind CREATE SOMETHING.",
+  "keywords": ["pi-package", "three-tier-framework", "agent-systems", "mcp", "architecture"],
+  "author": "CREATE SOMETHING <hello@createsomething.agency>",
+  "license": "MIT",
+  "files": ["skills", "prompts", "README.md"],
+  "scripts": {
+    "prepublishOnly": "echo 'Publishing @create-something/pi-three-tier-framework'"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/createsomethingtoday/create-something-monorepo.git",
+    "directory": "packages/pi-three-tier-framework"
+  },
+  "pi": {
+    "skills": ["./skills"],
+    "prompts": ["./prompts"]
+  }
+}

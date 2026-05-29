@@ -3,6 +3,7 @@
  *
  * Provides consistent upload, delete, and URL operations for R2 storage.
  */
+import { createHash, randomUUID } from 'node:crypto';
 
 export interface UploadOptions {
 	/** User email for organizing uploads */
@@ -45,11 +46,14 @@ export function sanitizeFilename(name: string): string {
  * Format: {userPrefix}/{timestamp}_{random}_{sanitizedFilename}
  */
 export function generateStorageKey(filename: string, userEmail?: string): string {
-	const uniqueSuffix = `${Date.now()}_${Math.round(Math.random() * 1e9)}`;
+	const uniqueSuffix = `${Date.now()}_${randomUUID()}`;
 	const safeName = sanitizeFilename(filename || 'upload.webp');
 
 	if (userEmail) {
-		const userPrefix = userEmail.split('@')[0].replace(/[^a-zA-Z0-9]/g, '_');
+		const userPrefix = createHash('sha256')
+			.update(userEmail.trim().toLowerCase())
+			.digest('hex')
+			.slice(0, 16);
 		return `${userPrefix}/${uniqueSuffix}_${safeName}`;
 	}
 

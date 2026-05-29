@@ -218,8 +218,8 @@
 </script>
 
 <SEO
-  title="How I Work | Calm, Transparent AI Workflow Systems"
-  description="CREATE SOMETHING .agency installs calm, transparent, reliable AI workflow systems: one workflow, clear stack boundaries, decision states, and governed escalation only when judgment is required."
+  title="Calm AI Workflow Systems | CREATE SOMETHING .agency"
+  description="How CREATE SOMETHING installs calm AI workflow systems: one workflow, clear stack boundaries, decision states, and governed escalation when judgment is required."
   keywords="calm transparent AI workflow systems, Policy OS, workflow system, MCP wedge, production automation, agent reliability"
   ogImage="/og-image.svg"
   propertyName="agency"
@@ -248,7 +248,7 @@
 
       <BlurFade delay={0.15}>
         <div class="hero-actions">
-          <Button href="/book">{agencyCoreMessaging.bookMappingSessionLabel}</Button>
+          <Button href={agencyCoreMessaging.servicesMappingSessionHref}>{agencyCoreMessaging.bookMappingSessionLabel}</Button>
           <Button href="#offer-ladder" variant="secondary">See Offer Ladder</Button>
         </div>
       </BlurFade>
@@ -260,7 +260,10 @@
 
     <BlurFade delay={0.2}>
       <aside class="product-surface product-surface--soft hero-brief" aria-label="Calm transparent workflow service brief">
-        <span class="product-kicker">Calm, transparent delivery</span>
+        <span class="product-kicker hero-brief__kicker">
+          <span class="hero-brief__kicker-desktop">Calm, transparent delivery</span>
+          <span class="hero-brief__kicker-mobile">Calm Delivery</span>
+        </span>
         <h2>CREATE SOMETHING turns the toolchain into one workflow outcome.</h2>
         <div class="hero-brief__grid" role="list">
           {#each heroSignals as signal}
@@ -457,6 +460,7 @@
         eyebrow="First call"
         title="The mapping session is where the buyer stops guessing."
         description="We turn the messy workflow into an inspectable plan: what connects, what runs, what pauses, what stops, and what artifact proves the first build."
+        ctaHref={agencyCoreMessaging.servicesMappingSessionHref}
       />
     </BlurFade>
   </div>
@@ -503,7 +507,7 @@
       </BlurFade>
       <BlurFade delay={0.15}>
         <div class="hero-actions hero-actions--center">
-          <Button href="/book">{agencyCoreMessaging.bookMappingSessionLabel}</Button>
+          <Button href={agencyCoreMessaging.servicesMappingSessionHref}>{agencyCoreMessaging.bookMappingSessionLabel}</Button>
           <Button href="/products" variant="secondary">See Proof Surfaces</Button>
         </div>
       </BlurFade>
@@ -590,6 +594,10 @@
     padding: clamp(1rem, 2.4vw, 1.35rem);
   }
 
+  .hero-brief__kicker-mobile {
+    display: none;
+  }
+
   .hero-brief h2 {
     margin: 0;
     max-width: 18rem;
@@ -657,6 +665,7 @@
     display: grid;
     gap: 0.85rem;
     max-width: 44rem;
+    margin-bottom: clamp(1.5rem, 3vw, 2.25rem);
   }
 
   .section-lead--center {
@@ -813,6 +822,21 @@
   }
 
   @media (max-width: 768px) {
+    .hero-brief__kicker {
+      max-width: 100%;
+      letter-spacing: 0.08em;
+      line-height: 1.15;
+      white-space: nowrap;
+    }
+
+    .hero-brief__kicker-desktop {
+      display: none;
+    }
+
+    .hero-brief__kicker-mobile {
+      display: inline;
+    }
+
     .offer-grid,
     .faq-grid,
     .trust-grid,

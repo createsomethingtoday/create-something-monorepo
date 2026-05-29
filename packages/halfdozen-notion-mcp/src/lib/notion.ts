@@ -10,6 +10,7 @@ export type Workspace = 'halfdozen' | 'client';
 export interface NotionClients {
   halfdozen: Client | null;
   client: Client | null;
+  createSomething?: Client | null;
 }
 
 /**
@@ -21,10 +22,17 @@ const workerFetch: typeof fetch = (input, init) => globalThis.fetch(input, init)
 /**
  * Build both Notion clients from env. Either or both may be null if secret is missing.
  */
-export function getNotionClients(env: { NOTION_API_KEY?: string; NOTION_CLIENT_API_KEY?: string }): NotionClients {
+export function getNotionClients(env: {
+  NOTION_API_KEY?: string;
+  NOTION_CLIENT_API_KEY?: string;
+  NOTION_CREATE_SOMETHING_API_KEY?: string;
+}): NotionClients {
   return {
     halfdozen: env.NOTION_API_KEY ? new Client({ auth: env.NOTION_API_KEY, fetch: workerFetch }) : null,
     client: env.NOTION_CLIENT_API_KEY ? new Client({ auth: env.NOTION_CLIENT_API_KEY, fetch: workerFetch }) : null,
+    createSomething: env.NOTION_CREATE_SOMETHING_API_KEY
+      ? new Client({ auth: env.NOTION_CREATE_SOMETHING_API_KEY, fetch: workerFetch })
+      : null,
   };
 }
 

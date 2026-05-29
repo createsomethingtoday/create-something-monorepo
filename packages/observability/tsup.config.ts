@@ -4,7 +4,9 @@ export default defineConfig({
   entry: ['src/index.ts', 'src/atlas.ts', 'src/mcp.ts', 'src/braintrust.ts', 'src/openai-agents.ts'],
   format: ['esm'],
   dts: true,
-  clean: true,
+  // This package is built by multiple downstream prebuild hooks in parallel.
+  // Avoid cleaning dist/ so concurrent builds do not race on unlinking the same files.
+  clean: false,
   splitting: false,
   sourcemap: true,
   external: ['@modelcontextprotocol/sdk']

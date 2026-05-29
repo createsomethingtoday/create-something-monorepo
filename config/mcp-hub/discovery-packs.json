@@ -104,6 +104,16 @@
       ],
       "maxProxyTools": null
     },
+    "abundance-thenpgroup-review": {
+      "description": "NPG Abundance review pack: compact brokered access for Jotform, Mailchimp, and WhatsApp account status during final delivery review.",
+      "mode": "compact",
+      "activeServers": [
+        "composio-toolkit-jotform",
+        "composio-toolkit-mailchimp",
+        "composio-toolkit-whatsapp"
+      ],
+      "maxProxyTools": 30
+    },
     "webflow-marketplace-review-phase-a": {
       "description": "Phase A reviewer pack for Webflow Marketplace template review. Compact reviewer workflow reads plus bounded reviewer-safe actions and metrics.",
       "mode": "compact",
@@ -117,7 +127,6 @@
       "mode": "compact",
       "activeServers": [
         "webflow-template-review-mcp",
-        "webflow-site-analyzer-mcp",
         "webflow-local"
       ],
       "maxProxyTools": 30

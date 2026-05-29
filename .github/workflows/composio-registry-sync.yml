@@ -83,10 +83,16 @@ jobs:
           body: |
             Automated nightly sync of Composio toolkit inventory into the MCP Hub registry.
 
+            The sync writes to `config/mcp-hub/registry.composio.generated.json`
+            (the composio source layer) and then runs `pnpm mcp:registry:generate`
+            to rebuild the merged `config/mcp-hub/registry.json`, the playbook
+            catalog, and the fleet doc.
+
             Changes include:
-            - `composio-toolkit-*` server entries
-            - `composio-all` bundle
-            - `composio-category-*` bundles
+            - `composio-toolkit-*` server entries (in the composio source layer)
+            - `composio-all` bundle (in the composio source layer)
+            - `composio-category-*` bundles (in the composio source layer)
+            - regenerated `config/mcp-hub/registry.json`
             - regenerated MCP registry artifacts
           labels: |
             automation

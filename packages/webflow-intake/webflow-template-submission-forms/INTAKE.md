@@ -43,7 +43,7 @@
 | Form | Complexity | Notes | Translatable? |
 |------|------------|-------|---------------|
 | Marketplace Creator Submission | Medium | Country gating, 2 email checks, asset upload constraints, agreement gate | Yes |
-| Marketplace Template Submission | High | Creator eligibility check, template name policy, remote published-site crawl, preview URL rule, image dimension checks, throttling rules | Yes, with backend work |
+| Marketplace Template Submission | High | Creator eligibility check, template name policy, remote published-site GSAP/custom-code crawl, required Webflow Way Validator app pass, preview URL rule, image dimension checks, throttling rules | Yes, with backend work |
 
 ### 2.3 Dependencies
 
@@ -156,9 +156,12 @@
   - normalizes to `https://*.webflow.io`
   - requires HTTPS
   - rejects non-`webflow.io` hosts
-  - runs a full-project crawl through `gsap-validation-worker.createsomething.workers.dev`
+  - runs a GSAP/custom-code crawl through `gsap-validation-worker.createsomething.workers.dev`
   - marks hidden checkbox `Published-URL-Check-Success`
   - auto-checks or clears the `Features-GSAP` checkbox based on crawl results
+- The GSAP/custom-code crawl is not the full submission validator. The full cloud intake
+  flow must also confirm the Webflow Way Validator bridge and latest 100% Validator app
+  result before accepting a template submission.
 - `Preview-URL` only checks that the URL contains `https://preview.webflow.com/preview/`.
   - This is client feedback only. There is no hidden required gate tied to preview validation.
 - Category, type, style, feature, and tag checkboxes are mirrored into hidden JSON inputs.

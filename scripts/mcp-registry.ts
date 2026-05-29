@@ -7,7 +7,7 @@ type CatalogCategory = 'create-something' | 'workway';
 type CatalogAuthType = 'bearer' | 'oauth';
 type CatalogTransport = 'http' | 'sse';
 type ServerLifecycle = 'active' | 'dormant' | 'local';
-type CatalogExposureMode = 'direct' | 'brokered' | 'exception_direct';
+type CatalogExposureMode = 'direct' | 'brokered' | 'exception_direct' | 'dormant';
 
 type CatalogConfig = {
   include: boolean;
@@ -28,6 +28,7 @@ type BaseServer = {
   package_path?: string;
   catalog_exposure_mode?: CatalogExposureMode;
   estimated_tool_count?: number;
+  setupNotes?: string;
   exposure_exception_reason?: string;
   exposure_review_owner?: string;
   catalog?: CatalogConfig;
@@ -78,28 +79,144 @@ type GeneratedCatalogEntry = {
 
 const ROOT = process.cwd();
 const REGISTRY_PATH = resolve(ROOT, 'config/mcp-hub/registry.json');
+const REGISTRY_CORE_PATH = resolve(ROOT, 'config/mcp-hub/registry.core.json');
+const REGISTRY_COMPOSIO_PATH = resolve(ROOT, 'config/mcp-hub/registry.composio.generated.json');
 const SCHEMA_PATH = resolve(ROOT, 'config/mcp-hub/registry.schema.json');
+const CORE_SCHEMA_PATH = resolve(ROOT, 'config/mcp-hub/registry.core.schema.json');
+const COMPOSIO_SCHEMA_PATH = resolve(ROOT, 'config/mcp-hub/registry.composio.generated.schema.json');
+const STATE_PATH = resolve(ROOT, 'config/mcp-hub/state.json');
 const GENERATED_CATALOG_PATH = resolve(ROOT, 'packages/playbook-mcp/src/catalog.registry.generated.ts');
 const GENERATED_FLEET_DOC_PATH = resolve(ROOT, 'docs/MCP_FLEET_REGISTRY.generated.md');
 
-const command = (process.argv[2] ?? 'check').trim().toLowerCase();
+/**
+ * Two-layer source of truth for the registry (see CRE-267).
+ *
+ * - `registry.core.json` is hand-authored: the 44 CREATE SOMETHING + WORKWAY
+ *   MCP servers plus the hand-curated bundles plus `defaults`.
+ * - `registry.composio.generated.json` is overwritten nightly by
+ *   `scripts/composio-registry-sync.ts`: `composio-toolkit-*` servers plus
+ *   `composio-all` and `composio-category-*` bundles.
+ * - `registry.json` is the merge of the two and is the file every consumer
+ *   reads at runtime.
+ *
+ * Hand edits target the core layer. The merge step (`mcp:registry:generate`)
+ * reconstructs `registry.json`. The drift check (`mcp:registry:check`) fails
+ * the build if `registry.json` is not equal to `merge(core, composio)`.
+ */
+const COMPOSIO_SERVER_PREFIX = 'composio-toolkit-';
+const COMPOSIO_BUNDLE_PREFIXES = ['composio-category-'];
+const COMPOSIO_BUNDLE_NAMES = new Set<string>(['composio-all']);
 
-if (!['annotate-exposure', 'check', 'generate', 'validate'].includes(command)) {
-  console.error('Usage: tsx scripts/mcp-registry.ts [annotate-exposure|check|generate|validate]');
+/**
+ * Server name policy.
+ *
+ * Hand-authored entries must be kebab-case alphanumeric, optionally with
+ * a trailing `-mcp` suffix. Machine-generated Composio toolkit entries
+ * (`composio-toolkit-<slug>`) are exempt because their slug comes from
+ * an upstream provider and may contain `_`.
+ *
+ * Legacy entries are listed in `GRANDFATHERED_SERVER_NAMES`. New entries
+ * must conform to `SERVER_NAME_PATTERN`. Plan a rename + state.json /
+ * routing.json migration to drain the grandfathered list.
+ */
+const SERVER_NAME_PATTERN = /^[a-z][a-z0-9-]*$/;
+const COMPOSIO_NAME_PREFIX = 'composio-toolkit-';
+
+/**
+ * Exposure-policy thresholds (see docs/MCP_CATALOG_EXPOSURE_POLICY.md).
+ *
+ * - `<=` `EXPOSURE_DIRECT_TOOL_THRESHOLD`: direct registration acceptable
+ * - `>` threshold and `<=` brokered cap: direct allowed with documented justification
+ * - `>` `EXPOSURE_BROKERED_REQUIRED_THRESHOLD`: brokered discovery required
+ *
+ * When a broad-connector surface has no declared `estimated_tool_count`, we
+ * impute `BROAD_CONNECTOR_DEFAULT_TOOL_COUNT` so the >=75 brokered rule fires.
+ */
+const EXPOSURE_DIRECT_TOOL_THRESHOLD = 25;
+const EXPOSURE_BROKERED_REQUIRED_THRESHOLD = 75;
+const BROAD_CONNECTOR_DEFAULT_TOOL_COUNT = 100;
+// Empty by design: CRE-263 migrated slack_* legacy names to kebab-case.
+// Re-add an entry here ONLY if a rename is impossible and a sunset plan
+// is documented; new non-kebab names are otherwise rejected.
+const GRANDFATHERED_SERVER_NAMES = new Set<string>([]);
+
+const command = (process.argv[2] ?? 'check').trim().toLowerCase();
+const KNOWN_COMMANDS = [
+  'annotate-exposure',
+  'check',
+  'generate',
+  'merge',
+  'split',
+  'validate',
+] as const;
+
+if (!KNOWN_COMMANDS.includes(command as (typeof KNOWN_COMMANDS)[number])) {
+  console.error(`Usage: tsx scripts/mcp-registry.ts [${KNOWN_COMMANDS.join('|')}]`);
   process.exit(2);
 }
 
-if (!existsSync(REGISTRY_PATH)) {
-  console.error(`Registry missing: ${REGISTRY_PATH}`);
-  process.exit(1);
-}
 if (!existsSync(SCHEMA_PATH)) {
   console.error(`Schema missing: ${SCHEMA_PATH}`);
   process.exit(1);
 }
 
-const registry = loadRegistry(REGISTRY_PATH);
-const errors = validateRegistry(registry);
+// The `split` subcommand is a one-time bootstrap: it produces the two layer
+// files from the current registry.json. It bypasses validation because the
+// point is to seed the new files, not gate on them.
+if (command === 'split') {
+  if (!existsSync(REGISTRY_PATH)) {
+    console.error(`Registry missing: ${REGISTRY_PATH}`);
+    process.exit(1);
+  }
+  const source = loadRegistry(REGISTRY_PATH);
+  const { core, composio } = splitRegistry(source);
+  writeFileSync(REGISTRY_CORE_PATH, `${JSON.stringify(core, null, 2)}\n`, 'utf8');
+  writeFileSync(REGISTRY_COMPOSIO_PATH, `${JSON.stringify(composio, null, 2)}\n`, 'utf8');
+  console.log(`Wrote ${relativeToRoot(REGISTRY_CORE_PATH)}`);
+  console.log(`Wrote ${relativeToRoot(REGISTRY_COMPOSIO_PATH)}`);
+  console.log(
+    `Core: ${Object.keys(core.servers).length} servers, ${Object.keys(core.bundles).length} bundles.`,
+  );
+  console.log(
+    `Composio: ${Object.keys(composio.servers).length} servers, ${Object.keys(composio.bundles).length} bundles.`,
+  );
+  process.exit(0);
+}
+
+// The `merge` subcommand reconstructs registry.json from the two layers.
+// It is run automatically as part of `generate`; we keep it exposed for
+// scripts (e.g. the composio sync workflow) that want to write the merged
+// output directly after refreshing the generated layer.
+if (command === 'merge') {
+  const { merged, mergeErrors } = readAndMergeLayers();
+  if (mergeErrors.length > 0) {
+    console.error('Registry merge failed:');
+    for (const error of mergeErrors) console.error(`- ${error}`);
+    process.exit(1);
+  }
+  writeFileSync(REGISTRY_PATH, `${JSON.stringify(merged, null, 2)}\n`, 'utf8');
+  console.log(`Wrote ${relativeToRoot(REGISTRY_PATH)}`);
+  process.exit(0);
+}
+
+// For every other subcommand the runtime view is the merged registry. When
+// the layer files exist we treat them as the source of truth; otherwise we
+// fall back to reading registry.json directly so a partial migration still
+// works.
+const registry = loadEffectiveRegistry();
+const errors: string[] = [];
+const schemaErrors = await validateRegistryAgainstSchema(registry);
+errors.push(...schemaErrors);
+errors.push(...validateRegistry(registry));
+errors.push(...validateStateFile(STATE_PATH, registry));
+if (existsSync(REGISTRY_CORE_PATH) && existsSync(REGISTRY_COMPOSIO_PATH)) {
+  errors.push(...validateLayerInvariants(REGISTRY_CORE_PATH, REGISTRY_COMPOSIO_PATH));
+  errors.push(...(await validateLayerAgainstSchema(REGISTRY_CORE_PATH, CORE_SCHEMA_PATH, 'core')));
+  errors.push(
+    ...(await validateLayerAgainstSchema(REGISTRY_COMPOSIO_PATH, COMPOSIO_SCHEMA_PATH, 'composio')),
+  );
+}
+const warnings = collectRegistryWarnings(registry);
 if (errors.length > 0) {
   console.error('Registry validation failed:');
   for (const error of errors) {
@@ -113,11 +230,21 @@ const generatedCatalog = renderCatalogFile(catalogEntries);
 const generatedFleetDoc = renderFleetDoc(registry);
 
 if (command === 'validate') {
-  console.log('Registry validation passed.');
+  if (warnings.length > 0) {
+    console.warn('Registry warnings (non-failing):');
+    for (const warning of warnings) console.warn(`- ${warning}`);
+  }
+  console.log(`Registry validation passed (${warnings.length} warning${warnings.length === 1 ? '' : 's'}).`);
   process.exit(0);
 }
 
 if (command === 'generate') {
+  // When the two-layer source exists, regenerate registry.json from them
+  // so the merged file is always authoritative.
+  if (existsSync(REGISTRY_CORE_PATH) && existsSync(REGISTRY_COMPOSIO_PATH)) {
+    writeFileSync(REGISTRY_PATH, `${JSON.stringify(registry, null, 2)}\n`, 'utf8');
+    console.log(`Wrote ${relativeToRoot(REGISTRY_PATH)}`);
+  }
   writeFileSync(GENERATED_CATALOG_PATH, generatedCatalog, 'utf8');
   writeFileSync(GENERATED_FLEET_DOC_PATH, generatedFleetDoc, 'utf8');
   console.log(`Wrote ${relativeToRoot(GENERATED_CATALOG_PATH)}`);
@@ -145,6 +272,14 @@ if (!isFileContentEqual(GENERATED_CATALOG_PATH, generatedCatalog)) {
 if (!isFileContentEqual(GENERATED_FLEET_DOC_PATH, generatedFleetDoc)) {
   drift.push(relativeToRoot(GENERATED_FLEET_DOC_PATH));
 }
+// If the two-layer source exists, also fail when the merged registry.json
+// has drifted from merge(core, composio).
+if (existsSync(REGISTRY_CORE_PATH) && existsSync(REGISTRY_COMPOSIO_PATH)) {
+  const expectedRegistryJson = `${JSON.stringify(registry, null, 2)}\n`;
+  if (!existsSync(REGISTRY_PATH) || readFileSync(REGISTRY_PATH, 'utf8') !== expectedRegistryJson) {
+    drift.push(relativeToRoot(REGISTRY_PATH));
+  }
+}
 
 if (drift.length > 0) {
   console.error('Registry artifacts are out of date:');
@@ -159,6 +294,274 @@ console.log('Registry check passed.');
 
 function loadRegistry(path: string): Registry {
   return JSON.parse(readFileSync(path, 'utf8')) as Registry;
+}
+
+/**
+ * Read the effective merged registry view. When both layer files exist they
+ * are the source of truth; otherwise we fall back to reading the flat
+ * registry.json (covers the pre-split state and any consumer running before
+ * the migration completes).
+ */
+function loadEffectiveRegistry(): Registry {
+  if (existsSync(REGISTRY_CORE_PATH) && existsSync(REGISTRY_COMPOSIO_PATH)) {
+    const { merged, mergeErrors } = readAndMergeLayers();
+    if (mergeErrors.length > 0) {
+      console.error('Registry merge failed during validation:');
+      for (const error of mergeErrors) console.error(`- ${error}`);
+      process.exit(1);
+    }
+    return merged;
+  }
+  if (!existsSync(REGISTRY_PATH)) {
+    console.error(`Registry missing: ${REGISTRY_PATH}`);
+    process.exit(1);
+  }
+  return loadRegistry(REGISTRY_PATH);
+}
+
+type RegistryLayer = {
+  servers: Record<string, RegistryServer>;
+  bundles: Record<string, string[]>;
+};
+
+type CoreLayer = RegistryLayer & {
+  version: 1;
+  defaults?: Registry['defaults'];
+};
+
+type ComposioLayer = RegistryLayer & {
+  version: 1;
+};
+
+function isComposioServer(name: string): boolean {
+  return name.startsWith(COMPOSIO_SERVER_PREFIX);
+}
+
+function isComposioBundle(name: string): boolean {
+  if (COMPOSIO_BUNDLE_NAMES.has(name)) return true;
+  return COMPOSIO_BUNDLE_PREFIXES.some((prefix) => name.startsWith(prefix));
+}
+
+/**
+ * Partition a flat registry into the two layers. Servers are sorted by name
+ * and bundles by name to keep the output deterministic so split is
+ * idempotent and the resulting files diff cleanly.
+ */
+function splitRegistry(source: Registry): { core: CoreLayer; composio: ComposioLayer } {
+  const coreServers: Record<string, RegistryServer> = {};
+  const composioServers: Record<string, RegistryServer> = {};
+  for (const [name, config] of Object.entries(source.servers).sort(([a], [b]) => a.localeCompare(b))) {
+    if (isComposioServer(name)) composioServers[name] = config;
+    else coreServers[name] = config;
+  }
+
+  const coreBundles: Record<string, string[]> = {};
+  const composioBundles: Record<string, string[]> = {};
+  for (const [name, members] of Object.entries(source.bundles).sort(([a], [b]) => a.localeCompare(b))) {
+    if (isComposioBundle(name)) composioBundles[name] = members;
+    else coreBundles[name] = members;
+  }
+
+  const core: CoreLayer = {
+    version: 1,
+    servers: coreServers,
+    bundles: coreBundles,
+  };
+  if (source.defaults) {
+    core.defaults = source.defaults;
+  }
+  const composio: ComposioLayer = {
+    version: 1,
+    servers: composioServers,
+    bundles: composioBundles,
+  };
+  return { core, composio };
+}
+
+function mergeLayers(core: CoreLayer, composio: ComposioLayer): { merged: Registry; errors: string[] } {
+  const errors: string[] = [];
+
+  // Detect collisions before merging so downstream consumers see one error
+  // per duplicated key rather than a silently overwritten entry.
+  for (const name of Object.keys(composio.servers)) {
+    if (name in core.servers) {
+      errors.push(`server ${name}: present in both core and composio layers`);
+    }
+    if (!isComposioServer(name)) {
+      errors.push(`server ${name}: in composio layer but does not match ${COMPOSIO_SERVER_PREFIX}* prefix`);
+    }
+  }
+  for (const name of Object.keys(core.servers)) {
+    if (isComposioServer(name)) {
+      errors.push(`server ${name}: matches ${COMPOSIO_SERVER_PREFIX}* prefix but lives in core layer`);
+    }
+  }
+  for (const name of Object.keys(composio.bundles)) {
+    if (name in core.bundles) {
+      errors.push(`bundle ${name}: present in both core and composio layers`);
+    }
+    if (!isComposioBundle(name)) {
+      errors.push(`bundle ${name}: in composio layer but is not a composio-* bundle name`);
+    }
+  }
+  for (const name of Object.keys(core.bundles)) {
+    if (isComposioBundle(name)) {
+      errors.push(`bundle ${name}: composio-* bundle name lives in core layer`);
+    }
+  }
+
+  if (errors.length > 0) {
+    return { merged: { version: 1, servers: {}, bundles: {} }, errors };
+  }
+
+  // Sorted merge for deterministic output.
+  const servers: Record<string, RegistryServer> = {};
+  for (const [name, config] of Object.entries({ ...core.servers, ...composio.servers }).sort(
+    ([a], [b]) => a.localeCompare(b),
+  )) {
+    servers[name] = config;
+  }
+
+  const bundles: Record<string, string[]> = {};
+  for (const [name, members] of Object.entries({ ...core.bundles, ...composio.bundles }).sort(
+    ([a], [b]) => a.localeCompare(b),
+  )) {
+    bundles[name] = members;
+  }
+
+  const merged: Registry = {
+    version: 1,
+    servers,
+    bundles,
+  };
+  if (core.defaults) {
+    merged.defaults = core.defaults;
+  }
+  return { merged, errors };
+}
+
+function readAndMergeLayers(): { merged: Registry; mergeErrors: string[] } {
+  if (!existsSync(REGISTRY_CORE_PATH)) {
+    return {
+      merged: { version: 1, servers: {}, bundles: {} },
+      mergeErrors: [`missing layer file: ${relativeToRoot(REGISTRY_CORE_PATH)}`],
+    };
+  }
+  if (!existsSync(REGISTRY_COMPOSIO_PATH)) {
+    return {
+      merged: { version: 1, servers: {}, bundles: {} },
+      mergeErrors: [`missing layer file: ${relativeToRoot(REGISTRY_COMPOSIO_PATH)}`],
+    };
+  }
+  const core = JSON.parse(readFileSync(REGISTRY_CORE_PATH, 'utf8')) as CoreLayer;
+  const composio = JSON.parse(readFileSync(REGISTRY_COMPOSIO_PATH, 'utf8')) as ComposioLayer;
+  const { merged, errors } = mergeLayers(core, composio);
+  return { merged, mergeErrors: errors };
+}
+
+/**
+ * Run Ajv against a single layer file using its dedicated schema. The merged
+ * registry schema is still applied at the top level for the merged result;
+ * this catches per-layer-only constraints (e.g. composio layer must not have
+ * `defaults`, core layer must not contain composio-toolkit-* keys) closer to
+ * the actual source of the error.
+ */
+async function validateLayerAgainstSchema(
+  layerPath: string,
+  schemaPath: string,
+  label: 'core' | 'composio',
+): Promise<string[]> {
+  if (!existsSync(schemaPath)) {
+    return [];
+  }
+  let AjvCtor: any;
+  try {
+    const mod: any = await import('ajv/dist/2020.js').catch(() => import('ajv'));
+    AjvCtor = mod.default ?? mod.Ajv ?? mod;
+  } catch {
+    return [];
+  }
+  let layer: unknown;
+  try {
+    layer = JSON.parse(readFileSync(layerPath, 'utf8'));
+  } catch (error: unknown) {
+    return [
+      `${relativeToRoot(layerPath)}: failed to parse: ${error instanceof Error ? error.message : String(error)}`,
+    ];
+  }
+  let schema: unknown;
+  try {
+    schema = JSON.parse(readFileSync(schemaPath, 'utf8'));
+  } catch (error: unknown) {
+    return [
+      `${relativeToRoot(schemaPath)}: failed to parse: ${error instanceof Error ? error.message : String(error)}`,
+    ];
+  }
+  // Per-layer schemas intentionally do not $ref the merged schema; server
+  // shape is already enforced by validateRegistryAgainstSchema on the merged
+  // result. The per-layer schemas only enforce layer-specific invariants
+  // (property-name prefixes, no extra top-level keys, no `defaults` in the
+  // composio layer, etc.).
+  try {
+    const ajv = new AjvCtor({ allErrors: true, strict: false });
+    const validate = ajv.compile(schema);
+    if (validate(layer)) return [];
+    const errors: string[] = [];
+    for (const err of validate.errors ?? []) {
+      const path = err.instancePath || '/';
+      errors.push(`layer ${label} ${path}: ${err.message ?? 'invalid'}`);
+    }
+    return errors;
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    return [`ajv (layer ${label}): failed to compile/validate schema: ${message}`];
+  }
+}
+
+/**
+ * Non-failing soft signals about the registry. Surfaced by `validate` output
+ * so reviewers see them without blocking the build. Keep entries cheap and
+ * unambiguously actionable; promote to a hard error if a pattern matures.
+ */
+function collectRegistryWarnings(data: Registry): string[] {
+  const warnings: string[] = [];
+
+  for (const serverName of Object.keys(data.servers)) {
+    if (serverName.startsWith(COMPOSIO_NAME_PREFIX)) continue;
+    if (serverName.endsWith('-mcp-server')) {
+      warnings.push(
+        `server ${serverName}: name ends with -mcp-server (uncommon); consider renaming to -mcp to match the convention used by ground-mcp, harness-mcp, loom-mcp, etc.`,
+      );
+    }
+  }
+
+  return warnings;
+}
+
+function validateLayerInvariants(corePath: string, composioPath: string): string[] {
+  const errors: string[] = [];
+  let core: CoreLayer;
+  let composio: ComposioLayer;
+  try {
+    core = JSON.parse(readFileSync(corePath, 'utf8')) as CoreLayer;
+  } catch (error: unknown) {
+    errors.push(`failed to parse ${relativeToRoot(corePath)}: ${error instanceof Error ? error.message : String(error)}`);
+    return errors;
+  }
+  try {
+    composio = JSON.parse(readFileSync(composioPath, 'utf8')) as ComposioLayer;
+  } catch (error: unknown) {
+    errors.push(`failed to parse ${relativeToRoot(composioPath)}: ${error instanceof Error ? error.message : String(error)}`);
+    return errors;
+  }
+  if (core.version !== 1) errors.push(`${relativeToRoot(corePath)}: version must be 1`);
+  if (composio.version !== 1) errors.push(`${relativeToRoot(composioPath)}: version must be 1`);
+  if ((composio as { defaults?: unknown }).defaults) {
+    errors.push(`${relativeToRoot(composioPath)}: defaults must live in the core layer`);
+  }
+  const { errors: mergeErrors } = mergeLayers(core, composio);
+  errors.push(...mergeErrors);
+  return errors;
 }
 
 function validateRegistry(data: Registry): string[] {
@@ -210,6 +613,7 @@ function validateRegistry(data: Registry): string[] {
       catalogSlugs.add(slug);
     }
 
+    validateServerName(serverName, errors);
     validateCatalogExposurePolicy(serverName, server, errors);
   }
 
@@ -246,6 +650,121 @@ function validateRegistry(data: Registry): string[] {
   return errors;
 }
 
+function validateServerName(serverName: string, errors: string[]): void {
+  // Composio toolkit names are mechanically generated from upstream provider
+  // slugs (which can contain `_`); exempt them from the hand-author rule.
+  if (serverName.startsWith(COMPOSIO_NAME_PREFIX)) {
+    const remainder = serverName.slice(COMPOSIO_NAME_PREFIX.length);
+    if (!remainder || !/^[a-z0-9_]+$/.test(remainder)) {
+      errors.push(
+        `server ${serverName}: composio toolkit name must match composio-toolkit-<lowercase_slug>`,
+      );
+    }
+    return;
+  }
+
+  if (GRANDFATHERED_SERVER_NAMES.has(serverName)) {
+    return;
+  }
+
+  if (!SERVER_NAME_PATTERN.test(serverName)) {
+    errors.push(
+      `server ${serverName}: server names must be kebab-case (^[a-z][a-z0-9-]*$); rename or add to GRANDFATHERED_SERVER_NAMES in scripts/mcp-registry.ts`,
+    );
+  }
+}
+
+type StateFile = {
+  enabledBundles?: string[];
+  enabledServers?: string[];
+  disabledServers?: string[];
+};
+
+function validateStateFile(statePath: string, data: Registry): string[] {
+  const errors: string[] = [];
+  if (!existsSync(statePath)) {
+    return errors;
+  }
+
+  let raw: unknown;
+  try {
+    raw = JSON.parse(readFileSync(statePath, 'utf8'));
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    errors.push(`state.json: failed to parse: ${message}`);
+    return errors;
+  }
+
+  if (!isPlainObject(raw)) {
+    errors.push('state.json: must be an object');
+    return errors;
+  }
+
+  const state = raw as StateFile;
+  const bundles = new Set(Object.keys(data.bundles ?? {}));
+  const servers = new Set(Object.keys(data.servers ?? {}));
+
+  for (const bundleName of state.enabledBundles ?? []) {
+    if (!bundles.has(bundleName)) {
+      errors.push(`state.json: enabledBundles references unknown bundle: ${bundleName}`);
+    }
+  }
+  for (const serverName of state.enabledServers ?? []) {
+    if (!servers.has(serverName)) {
+      errors.push(`state.json: enabledServers references unknown server: ${serverName}`);
+    }
+  }
+  for (const serverName of state.disabledServers ?? []) {
+    if (!servers.has(serverName)) {
+      errors.push(`state.json: disabledServers references unknown server: ${serverName}`);
+    }
+  }
+
+  return errors;
+}
+
+/**
+ * Best-effort JSON Schema validation. We dynamic-import Ajv so that contributors
+ * running this script before `pnpm install` (or in environments where Ajv is
+ * unavailable) still get the hand-rolled checks below. When Ajv is present,
+ * the schema is the structural source of truth.
+ */
+async function validateRegistryAgainstSchema(data: Registry): Promise<string[]> {
+  let AjvCtor: any;
+  try {
+    const mod: any = await import('ajv/dist/2020.js').catch(() => import('ajv'));
+    AjvCtor = mod.default ?? mod.Ajv ?? mod;
+  } catch {
+    console.warn(
+      '[mcp-registry] Ajv not installed; falling back to custom validator only. Run `pnpm install` for schema validation.',
+    );
+    return [];
+  }
+
+  let schema: unknown;
+  try {
+    schema = JSON.parse(readFileSync(SCHEMA_PATH, 'utf8'));
+  } catch (error: unknown) {
+    return [`registry.schema.json: failed to parse: ${error instanceof Error ? error.message : String(error)}`];
+  }
+
+  try {
+    const ajv = new AjvCtor({ allErrors: true, strict: false });
+    const validate = ajv.compile(schema);
+    const valid = validate(data);
+    if (valid) return [];
+    const errors: string[] = [];
+    for (const err of validate.errors ?? []) {
+      const path = err.instancePath || '/';
+      errors.push(`schema ${path}: ${err.message ?? 'invalid'}`);
+    }
+    return errors;
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    return [`ajv: failed to compile/validate schema: ${message}`];
+  }
+}
+
 function validateCatalogExposurePolicy(
   serverName: string,
   server: RegistryServer,
@@ -256,16 +775,20 @@ function validateCatalogExposurePolicy(
   const reason = server.exposure_exception_reason?.trim();
   const owner = server.exposure_review_owner?.trim();
 
-  if (estimatedToolCount >= 75 && exposureMode === 'direct') {
+  if (estimatedToolCount >= EXPOSURE_BROKERED_REQUIRED_THRESHOLD && exposureMode === 'direct') {
     errors.push(
-      `server ${serverName}: direct catalog exposure is not allowed for estimated_tool_count >= 75; use brokered or exception_direct`,
+      `server ${serverName}: direct catalog exposure is not allowed for estimated_tool_count >= ${EXPOSURE_BROKERED_REQUIRED_THRESHOLD}; use brokered or exception_direct`,
     );
   }
 
-  if (estimatedToolCount >= 26 && estimatedToolCount <= 75 && exposureMode === 'direct') {
+  if (
+    estimatedToolCount > EXPOSURE_DIRECT_TOOL_THRESHOLD &&
+    estimatedToolCount <= EXPOSURE_BROKERED_REQUIRED_THRESHOLD &&
+    exposureMode === 'direct'
+  ) {
     if (!reason || !owner) {
       errors.push(
-        `server ${serverName}: direct catalog exposure for estimated_tool_count 26-75 requires exposure_exception_reason and exposure_review_owner`,
+        `server ${serverName}: direct catalog exposure for estimated_tool_count ${EXPOSURE_DIRECT_TOOL_THRESHOLD + 1}-${EXPOSURE_BROKERED_REQUIRED_THRESHOLD} requires exposure_exception_reason and exposure_review_owner`,
       );
     }
   }
@@ -278,7 +801,11 @@ function validateCatalogExposurePolicy(
     }
   }
 
-  if (isBroadConnectorSurface(serverName, server) && exposureMode === 'direct' && estimatedToolCount >= 75) {
+  if (
+    isBroadConnectorSurface(serverName, server) &&
+    exposureMode === 'direct' &&
+    estimatedToolCount >= EXPOSURE_BROKERED_REQUIRED_THRESHOLD
+  ) {
     errors.push(
       `server ${serverName}: broad connector surfaces should not be marked direct at large-catalog scale`,
     );
@@ -330,7 +857,7 @@ function inferEstimatedToolCount(serverName: string, server: RegistryServer): nu
     return Math.max(0, Math.trunc(server.estimated_tool_count));
   }
   if (isBroadConnectorSurface(serverName, server)) {
-    return 100;
+    return BROAD_CONNECTOR_DEFAULT_TOOL_COUNT;
   }
   return 0;
 }
@@ -432,39 +959,84 @@ function renderFleetDoc(data: Registry): string {
     '',
     '> Auto-generated from `config/mcp-hub/registry.json`.',
     '> Regenerate with `pnpm mcp:registry:generate`.',
+    '>',
+    '> The Active section is split into a hand-curated core table (always inline)',
+    '> and a Composio toolkit summary (count + per-category bundles only). The full',
+    '> `composio-toolkit-*` server list lives in',
+    '> [`config/mcp-hub/registry.composio.generated.json`](../config/mcp-hub/registry.composio.generated.json).',
     '',
   ];
 
   for (const lifecycle of ['active', 'dormant', 'local'] as const) {
-    const rows = byLifecycle[lifecycle];
-    lines.push(`## ${titleCase(lifecycle)} (${rows.length})`, '');
-    lines.push('| Server | Transport | Endpoint | Exposure | Est. Tools | Tags |');
-    lines.push('| --- | --- | --- | --- | --- | --- |');
-    for (const row of rows) {
-      const endpoint =
-        row.server.transport === 'http'
-          ? `\`${row.server.url}\``
-          : `\`${row.server.command}${row.server.args?.length ? ` ${row.server.args.join(' ')}` : ''}\``;
-      const exposure = row.server.catalog_exposure_mode ?? inferCatalogExposureMode(row.name, row.server);
-      const estimatedToolCount = inferEstimatedToolCount(row.name, row.server);
-      const tags = row.server.tags?.length ? row.server.tags.map((tag) => `\`${tag}\``).join(', ') : '—';
+    const allRows = byLifecycle[lifecycle];
+    if (lifecycle === 'active') {
+      const coreRows = allRows.filter((row) => !isComposioServer(row.name));
+      const composioRows = allRows.filter((row) => isComposioServer(row.name));
+      lines.push(`## Active (core, ${coreRows.length})`, '');
+      renderFleetRowTable(lines, coreRows);
+      lines.push('');
+      lines.push(`## Active (composio toolkits, ${composioRows.length} — summarized)`, '');
       lines.push(
-        `| \`${row.name}\` | \`${row.server.transport}\` | ${endpoint} | \`${exposure}\` | \`${estimatedToolCount}\` | ${tags} |`,
+        'Per-toolkit detail is in `registry.composio.generated.json`. This section shows',
+        'category bundles only so reviewers can audit the routing surface without scrolling',
+        'past a thousand near-identical rows.',
+        '',
       );
+      const composioBundleSummary = Object.entries(data.bundles)
+        .filter(([name]) => isComposioBundle(name))
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([name, members]) => ({ name, count: members.length }));
+      if (composioBundleSummary.length > 0) {
+        lines.push('| Composio Bundle | Toolkit Count |');
+        lines.push('| --- | ---: |');
+        for (const entry of composioBundleSummary) {
+          lines.push(`| \`${entry.name}\` | ${entry.count} |`);
+        }
+        lines.push('');
+      }
+    } else {
+      lines.push(`## ${titleCase(lifecycle)} (${allRows.length})`, '');
+      renderFleetRowTable(lines, allRows);
+      lines.push('');
     }
-    lines.push('');
   }
 
   lines.push('## Bundles', '');
+  lines.push(
+    'Hand-curated bundles are listed inline. Composio category bundles are listed in the Active',
+    '(composio toolkits) section above.',
+    '',
+  );
   lines.push('| Bundle | Servers |');
   lines.push('| --- | --- |');
   for (const [bundleName, members] of Object.entries(data.bundles).sort(([a], [b]) => a.localeCompare(b))) {
+    if (isComposioBundle(bundleName)) continue;
     const memberText = members.map((member) => `\`${member}\``).join(', ');
     lines.push(`| \`${bundleName}\` | ${memberText} |`);
   }
   lines.push('');
 
   return lines.join('\n');
+}
+
+function renderFleetRowTable(
+  lines: string[],
+  rows: Array<{ name: string; server: RegistryServer }>,
+): void {
+  lines.push('| Server | Transport | Endpoint | Exposure | Est. Tools | Tags |');
+  lines.push('| --- | --- | --- | --- | --- | --- |');
+  for (const row of rows) {
+    const endpoint =
+      row.server.transport === 'http'
+        ? `\`${row.server.url}\``
+        : `\`${row.server.command}${row.server.args?.length ? ` ${row.server.args.join(' ')}` : ''}\``;
+    const exposure = row.server.catalog_exposure_mode ?? inferCatalogExposureMode(row.name, row.server);
+    const estimatedToolCount = inferEstimatedToolCount(row.name, row.server);
+    const tags = row.server.tags?.length ? row.server.tags.map((tag) => `\`${tag}\``).join(', ') : '—';
+    lines.push(
+      `| \`${row.name}\` | \`${row.server.transport}\` | ${endpoint} | \`${exposure}\` | \`${estimatedToolCount}\` | ${tags} |`,
+    );
+  }
 }
 
 function resolveLifecycle(server: RegistryServer): ServerLifecycle {

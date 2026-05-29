@@ -3,10 +3,14 @@ import { vi } from 'vitest';
 interface MockDataset {
   publishedAssets: Array<{ id: string; fields: Record<string, unknown> }>;
   incrementalAssets?: Array<{ id: string; fields: Record<string, unknown> }>;
+  webflowAssets?: Array<Record<string, unknown>>;
+  webflowCollections?: Array<Record<string, unknown>>;
+  webflowCollectionItems?: Record<string, Array<Record<string, unknown>>>;
+  publishedTemplatePages?: Record<string, string>;
   styles?: Array<{ id: string; fields: Record<string, unknown> }>;
   childCategories?: Array<{ id: string; fields: Record<string, unknown> }>;
   tags?: Array<{ id: string; fields: Record<string, unknown> }>;
-  webflowItems?: Array<{ id: string; fieldData: Record<string, unknown> }>;
+  creators?: Array<{ id: string; fields: Record<string, unknown> }>;
 }
 
 export function installAirtableFetchMock(dataset: MockDataset) {
@@ -16,17 +20,42 @@ export function installAirtableFetchMock(dataset: MockDataset) {
     const formula = url.searchParams.get('filterByFormula') ?? '';
 
     if (url.hostname === 'api.webflow.com') {
-      const limit = Number(url.searchParams.get('limit') ?? 100) || 100;
-      const offset = Number(url.searchParams.get('offset') ?? 0) || 0;
-      const allItems = dataset.webflowItems ?? [];
+      if (/\/v2\/sites\/[^/]+\/collections$/.test(url.pathname)) {
+        return Response.json({ collections: dataset.webflowCollections ?? [] });
+      }
+
+      const collectionItemsMatch = url.pathname.match(/\/v2\/collections\/([^/]+)\/items$/);
+      if (collectionItemsMatch) {
+        const collectionId = collectionItemsMatch[1] ?? '';
+        const offset = Number(url.searchParams.get('offset') ?? '0') || 0;
+        const limit = Number(url.searchParams.get('limit') ?? '100') || 100;
+        const items = dataset.webflowCollectionItems?.[collectionId] ?? [];
+        return Response.json({
+          items: items.slice(offset, offset + limit),
+          pagination: {
+            limit,
+            offset,
+            total: items.length,
+          },
+        });
+      }
+
+      const offset = Number(url.searchParams.get('offset') ?? '0') || 0;
+      const limit = Number(url.searchParams.get('limit') ?? '100') || 100;
+      const assets = dataset.webflowAssets ?? [];
       return Response.json({
-        items: allItems.slice(offset, offset + limit),
+        assets: assets.slice(offset, offset + limit),
         pagination: {
           limit,
           offset,
-          total: allItems.length,
+          total: assets.length,
         },
       });
+    }
+
+    if (url.hostname === 'webflow.com' || url.hostname === 'www.webflow.com') {
+      const html = dataset.publishedTemplatePages?.[url.pathname];
+      return html ? new Response(html, { headers: { 'content-type': 'text/html' } }) : new Response('Not Found', { status: 404 });
     }
 
     if (!url.hostname.includes('airtable.com')) {
@@ -34,6 +63,12 @@ export function installAirtableFetchMock(dataset: MockDataset) {
     }
 
     if (tableId === 'tblRwzpWoLgE9MrUm') {
+      if (formula.includes('RECORD_ID()')) {
+        return Response.json({
+          records: dataset.publishedAssets.filter((record) => formula.includes(`"${record.id}"`)),
+        });
+      }
+
       return Response.json({
         records: formula.includes('IS_AFTER(') ? dataset.incrementalAssets ?? [] : dataset.publishedAssets,
       });
@@ -49,6 +84,10 @@ export function installAirtableFetchMock(dataset: MockDataset) {
 
     if (tableId === 'tblb4969G7O75gVWV') {
       return Response.json({ records: dataset.tags ?? [] });
+    }
+
+    if (tableId === 'tbljt0plqxdMARZXb') {
+      return Response.json({ records: dataset.creators ?? [] });
     }
 
     return Response.json({ records: [] });

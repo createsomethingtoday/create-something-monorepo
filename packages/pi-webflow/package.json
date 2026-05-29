@@ -1,0 +1,13 @@
+{
+  "name": "@create-something/pi-webflow",
+  "version": "1.0.0",
+  "description": "Webflow MCP fleet knowledge for Pi agents — template review, app review, site analysis, dashboard, and automation patterns.",
+  "private": true,
+  "keywords": ["pi-package", "webflow", "mcp", "template-review"],
+  "author": "CREATE SOMETHING <hello@createsomething.agency>",
+  "license": "UNLICENSED",
+  "pi": {
+    "skills": ["./skills"],
+    "prompts": ["./prompts"]
+  }
+}

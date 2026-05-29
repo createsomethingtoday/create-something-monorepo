@@ -35,8 +35,13 @@ export function CountryPicker({
   const [open, setOpen] = useState(false);
   const [focusedIndex, setFocusedIndex] = useState(-1);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const skipNextQuerySyncRef = useRef(false);
 
   useEffect(() => {
+    if (skipNextQuerySyncRef.current) {
+      skipNextQuerySyncRef.current = false;
+      return;
+    }
     setQuery(value);
   }, [value]);
 
@@ -109,12 +114,15 @@ export function CountryPicker({
         required={required}
         onChange={(event) => {
           const nextValue = event.target.value;
-          setQuery(nextValue);
+          const exactMatch = countries.find(
+            (country) => normalize(country) === normalize(nextValue)
+          );
+          const nextCountry = exactMatch ?? '';
+          setQuery(exactMatch ?? nextValue);
           setOpen(true);
           setFocusedIndex(-1);
-          if (nextValue === '') {
-            onChange('');
-          }
+          if (nextCountry !== value) skipNextQuerySyncRef.current = true;
+          onChange(nextCountry);
         }}
         onFocus={() => setOpen(true)}
         onKeyDown={onKeyDown}

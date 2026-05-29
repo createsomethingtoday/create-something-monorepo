@@ -4,6 +4,8 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+const MOCK_D1_MAX_BOUND_VALUES = 100;
+
 function sqliteEscape(value: unknown): string {
   if (value == null) return 'NULL';
   if (typeof value === 'number') return Number.isFinite(value) ? String(value) : 'NULL';
@@ -34,6 +36,9 @@ class MockPreparedStatement {
   ) {}
 
   bind(...values: unknown[]) {
+    if (values.length > MOCK_D1_MAX_BOUND_VALUES) {
+      throw new Error(`D1_ERROR: too many SQL variables: ${values.length} > ${MOCK_D1_MAX_BOUND_VALUES}`);
+    }
     return new MockPreparedStatement(this.dbPath, this.sql, values);
   }
 

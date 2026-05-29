@@ -55,6 +55,12 @@ const PACKAGE_COVERAGE = {
     note: 'local companion to outerfields-pcn',
     registry: ['outerfields-pcn']
   },
+  'packages/bettermode-creator-mcp': {
+    registry: ['bettermode-creator']
+  },
+  'packages/bettermode-creator-mcp/worker': {
+    registry: ['bettermode-creator']
+  },
   'packages/community-mcp': {
     registry: ['community-mcp']
   },
@@ -115,6 +121,12 @@ const PACKAGE_COVERAGE = {
   'packages/harness-mcp': {
     registry: ['harness-mcp']
   },
+  'packages/hydra-db-recall-mcp': {
+    registry: ['hydra-db-recall-mcp']
+  },
+  'packages/hydra-db-recall-mcp/worker': {
+    registry: ['hydra-db-recall-mcp']
+  },
   'packages/interaction-atlas-mcp': {
     registry: ['interaction-atlas-mcp']
   },
@@ -158,6 +170,12 @@ const PACKAGE_COVERAGE = {
   'packages/social-mcp': {
     registry: ['social-mcp']
   },
+  'packages/spotify-mcp': {
+    registry: ['spotify-mcp']
+  },
+  'packages/spotify-mcp/worker': {
+    registry: ['spotify-mcp']
+  },
   'packages/substrate-mcp': {
     registry: ['substrate-mcp']
   },
@@ -186,13 +204,13 @@ const PACKAGE_COVERAGE = {
     registry: ['webflow-local']
   },
   'packages/webflow-site-analyzer-mcp': {
-    registry: ['webflow-site-analyzer-mcp']
+    note: 'retired Webflow analyzer implementation; not registered in active Hub routing'
   },
   'packages/webflow-site-analyzer-mcp/worker': {
-    registry: ['webflow-site-analyzer-mcp']
+    note: 'retired Webflow analyzer Worker; deployment route removed from active Hub routing'
   },
   'packages/webflow-site-analyzer-mcp/workers/remote': {
-    registry: ['webflow-site-analyzer-mcp']
+    note: 'retired Webflow analyzer remote Worker; deployment route removed from active Hub routing'
   },
   'packages/webflow-template-review-mcp': {
     registry: ['webflow-template-review-mcp']

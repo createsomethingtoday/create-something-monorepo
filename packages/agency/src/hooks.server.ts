@@ -1,6 +1,7 @@
 import { redirect, type Handle } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
 import { createAuthHooks } from '@create-something/canon/auth';
+import { abundanceApiAuthHandle } from './lib/server/abundance-api-auth';
 
 /**
  * Redirects for deprecated routes (post-MCP pivot)
@@ -36,4 +37,4 @@ const authHandle = createAuthHooks({
 	includeRedirect: true,
 }) as Handle;
 
-export const handle = sequence(redirectHandle, authHandle);
+export const handle = sequence(redirectHandle, authHandle, abundanceApiAuthHandle);

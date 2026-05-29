@@ -4,7 +4,7 @@
   "owner": "create-something",
   "created_at": "2026-04-30",
   "registry_server": {
-    "id": "slack_create_something",
+    "id": "slack-create-something",
     "transport": "http",
     "url": "https://mcp.slack.com/mcp",
     "description": "Slack MCP for CREATE SOMETHING workspace",
@@ -21,7 +21,7 @@
       "type": "bearer",
       "infisical": {
         "environment": "prod",
-        "path": "/slack_create_something",
+        "path": "/slack-create-something",
         "secret_key": "MCP_BEARER_TOKEN"
       }
     }
@@ -30,7 +30,8 @@
     "Open Dify Studio -> Tools -> MCP.",
     "Create an HTTP MCP server card with server ID slack-create-something.",
     "Set the MCP URL to https://mcp.slack.com/mcp.",
-    "Configure bearer auth from Infisical prod:/slack_create_something:MCP_BEARER_TOKEN.",
+    "Configure bearer auth from Infisical prod:/slack-create-something:MCP_BEARER_TOKEN.",
+    "NOTE: as of CRE-263 registry rename, the live secret currently still injects via root env var SLACK_CREATE_SOMETHING_MCP_TOKEN (Infisical path '/'). Provision the kebab-case path before flipping Dify card to it.",
     "Refresh/discover tools in Dify Studio.",
     "Transcribe every discovered tool into config/dify/inventory.json with risk classification.",
     "Run pnpm dify:inventory:generate and pnpm dify:coverage:generate."
@@ -38,14 +39,14 @@
   "inventory_fragment_after_tool_discovery": {
     "slack-create-something": {
       "display_name": "Slack Create Something",
-      "source_mcp_registry_server": "slack_create_something",
+      "source_mcp_registry_server": "slack-create-something",
       "transport": "http",
       "url": "https://mcp.slack.com/mcp",
       "auth": {
         "type": "bearer",
         "infisical": {
           "environment": "prod",
-          "path": "/slack_create_something",
+          "path": "/slack-create-something",
           "secret_key": "MCP_BEARER_TOKEN"
         }
       },

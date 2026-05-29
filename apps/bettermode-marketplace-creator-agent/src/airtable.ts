@@ -63,8 +63,12 @@ export async function fetchCreatorContext(
   const normalized = email.trim().toLowerCase();
   if (!normalized) return null;
 
-  // Match emails case-insensitively.
-  const formula = `LOWER({${config.emailField}}) = "${escapeFormula(normalized)}"`;
+  // The Email field on Creators is a rollup that can return an array of
+  // strings even when a single linked email exists. Direct equality
+  // (`LOWER({Email}) = "x"`) compares against the array and always fails.
+  // ARRAYJOIN coerces to a comma-joined string; FIND does substring match.
+  const formula =
+    `FIND("${escapeFormula(normalized)}", LOWER(ARRAYJOIN({${config.emailField}}))) > 0`;
   const url = new URL(`${config.apiBase}/v0/${config.baseId}/${config.creatorsTable}`);
   url.searchParams.set('filterByFormula', formula);
   url.searchParams.set('maxRecords', '1');
@@ -129,8 +133,38 @@ function arrayField(fields: Record<string, unknown>, name: string): string[] {
 
 function stringField(fields: Record<string, unknown>, names: string[]): string | undefined {
   for (const name of names) {
-    const value = fields[name];
-    if (typeof value === 'string' && value.trim()) return value;
+    const s = coerceFieldToString(fields[name]);
+    if (s) return s;
+  }
+  const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const targets = names.map(norm).filter(Boolean);
+  if (targets.length === 0) return undefined;
+  for (const [key, value] of Object.entries(fields)) {
+    const nk = norm(key);
+    if (!targets.some((t) => nk.includes(t))) continue;
+    const s = coerceFieldToString(value);
+    if (s) return s;
+  }
+  return undefined;
+}
+
+function coerceFieldToString(value: unknown): string | undefined {
+  if (typeof value === 'string') {
+    const t = value.trim();
+    return t || undefined;
+  }
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const s = coerceFieldToString(item);
+      if (s) return s;
+    }
+    return undefined;
+  }
+  if (value && typeof value === 'object') {
+    const obj = value as Record<string, unknown>;
+    const candidate = obj.name ?? obj.email ?? obj.text;
+    if (typeof candidate === 'string' && candidate.trim()) return candidate.trim();
   }
   return undefined;
 }

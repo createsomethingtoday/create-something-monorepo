@@ -33,6 +33,72 @@ export type { GlassCardProps, GlassVariant } from './components/cards/GlassCard'
 export { IconCard } from './components/cards/IconCard';
 export type { IconCardProps, IconCardVariant } from './components/cards/IconCard';
 
+export { TemplateCard } from './components/cards/TemplateCard';
+export type { TemplateCardProps, TemplateCardBadge, TemplateCardImage, TemplateCardLink } from './components/cards/TemplateCard';
+
+export { FeaturedCreatorCard } from './components/cards/FeaturedCreatorCard';
+export type {
+  FeaturedCreatorAccent,
+  FeaturedCreatorCardImage,
+  FeaturedCreatorCardLink,
+  FeaturedCreatorCardProps,
+} from './components/cards/FeaturedCreatorCard';
+
+export { TemplateGrid } from './components/grid/TemplateGrid';
+export type { TemplateGridProps } from './components/grid/TemplateGrid';
+
+export { TemplateFilterBar } from './components/filter/TemplateFilterBar';
+export type { TemplateFilterBarProps } from './components/filter/TemplateFilterBar';
+
+export { TemplateSearchPage } from './components/marketplace/TemplateSearchPage';
+export type { TemplateSearchPageProps } from './components/marketplace/TemplateSearchPage';
+
+export { TemplateSearchBox } from './components/marketplace/TemplateSearchBox';
+export type { TemplateSearchBoxMode, TemplateSearchBoxProps, TemplateSearchBoxVariant } from './components/marketplace/TemplateSearchBox';
+
+export { TemplateSearchResults } from './components/marketplace/TemplateSearchResults';
+export type { TemplateSearchResultsProps } from './components/marketplace/TemplateSearchResults';
+
+export { TemplateSearchSidebar } from './components/marketplace/TemplateSearchSidebar';
+export type { TemplateSearchSidebarProps } from './components/marketplace/TemplateSearchSidebar';
+
+export { TemplateCarouselSection } from './components/marketplace/TemplateCarouselSection';
+export type {
+  TemplateCarouselPreset,
+  TemplateCarouselSectionProps,
+} from './components/marketplace/TemplateCarouselSection';
+
+export { MarketplaceLandingHero } from './components/marketplace/MarketplaceLandingHero';
+export type {
+  MarketplaceLandingHeroProps,
+  MarketplaceLandingHeroSearchExperience,
+  MarketplaceLandingHeroSuggestion,
+} from './components/marketplace/MarketplaceLandingHero';
+
+export { PopularCategoryGrid } from './components/marketplace/PopularCategoryGrid';
+export type {
+  PopularCategoryGridCategory,
+  PopularCategoryGridProps,
+} from './components/marketplace/PopularCategoryGrid';
+
+export { MarketplaceFaq } from './components/marketplace/MarketplaceFaq';
+export type {
+  MarketplaceFaqItem,
+  MarketplaceFaqProps,
+} from './components/marketplace/MarketplaceFaq';
+
+export { MarketplaceLandingExperimentGate } from './components/marketplace/MarketplaceLandingExperimentGate';
+export type {
+  MarketplaceLandingExperimentGateProps,
+} from './components/marketplace/MarketplaceLandingExperimentGate';
+
+export type {
+  MarketplaceAnalyticsData,
+  MarketplaceExperimentRole,
+  MarketplaceExperimentState,
+  MarketplaceExperimentVariant,
+} from './components/marketplace/analytics';
+
 // Canon Form Components
 export { TextField } from './components/form/TextField';
 export type { TextFieldProps, TextFieldSize, TextFieldType } from './components/form/TextField';
@@ -139,6 +205,54 @@ export type { ProcessStepsProps, ProcessStep } from './components/sections/Proce
 
 export { IconCardGrid } from './components/sections/IconCardGrid';
 export type { IconCardGridProps, IconCardGridItem } from './components/sections/IconCardGrid';
+
+// Cato Supply delivery components
+export {
+  CatoInsightDetail,
+  CatoInsightsArchive,
+  CatoInsightsHub,
+  CatoInsightsMegaMenu,
+  catoInsightsDefaults,
+} from './components/cato/CatoInsights';
+export type {
+  CatoInsightBodySection,
+  CatoInsightCategory,
+  CatoInsightDetailProps,
+  CatoInsightItem,
+  CatoInsightsArchiveProps,
+  CatoInsightsDataProps,
+  CatoInsightsHubProps,
+  CatoInsightsMegaMenuProps,
+} from './components/cato/CatoInsights';
+
+export {
+  CatoProductSearchForm,
+  CatoRiskRadarCatalog,
+  CatoSupplySearchHero,
+} from './components/cato/CatoProductSearch';
+export type {
+  CatoProductSearchFormProps,
+  CatoRiskRadarCatalogProps,
+  CatoRiskRadarRow,
+  CatoSupplySearchHeroProps,
+} from './components/cato/CatoProductSearch';
+
+export {
+  CatoAboutPage,
+  CatoCaseStudiesLanding,
+  CatoCaseStudyDetail,
+} from './components/cato/CatoCompanyPages';
+export type {
+  CatoAboutPageProps,
+  CatoCaseStudiesLandingProps,
+  CatoCaseStudyDetailProps,
+  CatoCaseStudyItem,
+  CatoCaseStudyResult,
+  CatoCompanyLinkMode,
+  CatoImpactMetric,
+  CatoTeamMember,
+  CatoValueItem,
+} from './components/cato/CatoCompanyPages';
 
 // Legacy compatibility layout components
 export { Header } from './components/layout/Header';

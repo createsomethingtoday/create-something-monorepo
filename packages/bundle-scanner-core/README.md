@@ -28,6 +28,7 @@ import {
   buildInventory,
   runScan,
   generateReport,
+  analyzeSourceMaps,
   defaultRuleset,
   defaultConfig
 } from '@create-something/bundle-scanner-core';
@@ -35,21 +36,25 @@ import {
 async function scanBundle(file: File) {
   // 1. Extract ZIP
   const files = await processZipFile(file, defaultConfig, console.log);
-  
+
   // 2. Build inventory
   const inventory = buildInventory(files, defaultConfig);
-  
+
   // 3. Run rules
   const findings = runScan(inventory, defaultRuleset, defaultConfig, console.log);
-  
-  // 4. Generate report
+
+  // 4. Analyze private source maps if the form supplied them
+  const sourceMapSummary = analyzeSourceMaps(inventory, sourceMapFiles);
+
+  // 5. Generate report
   const report = generateReport(findings, defaultRuleset, defaultConfig, {
     fileCount: inventory.length,
     totalBytes: inventory.reduce((acc, f) => acc + f.sizeBytes, 0),
-    textFilesScanned: inventory.filter(f => f.isTextCandidate).length,
-    skippedFileCount: inventory.filter(f => f.isIgnored).length
+    textFilesScanned: inventory.filter((f) => f.isTextCandidate).length,
+    skippedFileCount: inventory.filter((f) => f.isIgnored).length,
+    sourceMapSummary
   });
-  
+
   return report;
 }
 ```
@@ -103,27 +108,28 @@ console.log(aiAnalysis.reviewStatusRecommendation);
 
 ### Scanner Functions
 
-| Function | Description |
-|----------|-------------|
-| `processZipFile(file, config, onProgress)` | Extracts ZIP with safety checks |
-| `buildInventory(files, config)` | Classifies files and builds inventory |
-| `runScan(inventory, ruleset, config, onProgress)` | Runs rule engine |
-| `generateReport(findings, ruleset, config, summary)` | Creates final report |
+| Function                                             | Description                                                  |
+| ---------------------------------------------------- | ------------------------------------------------------------ |
+| `processZipFile(file, config, onProgress)`           | Extracts ZIP with safety checks                              |
+| `buildInventory(files, config)`                      | Classifies files and builds inventory                        |
+| `runScan(inventory, ruleset, config, onProgress)`    | Runs rule engine                                             |
+| `analyzeSourceMaps(inventory, sourceMapFiles?)`      | Checks private source-map artifact match and public exposure |
+| `generateReport(findings, ruleset, config, summary)` | Creates final report                                         |
 
 ### Policy Exports
 
-| Export | Description |
-|--------|-------------|
+| Export           | Description                                      |
+| ---------------- | ------------------------------------------------ |
 | `defaultRuleset` | 18 rules covering security, network, privacy, UX |
-| `defaultConfig` | Standard scanner configuration |
+| `defaultConfig`  | Standard scanner configuration                   |
 
 ### Utility Functions
 
-| Function | Description |
-|----------|-------------|
-| `generateRejectionEmail(report)` | Generates rejection email draft |
-| `analyzeReportWithAi(report)` | AI-powered analysis (requires @google/genai) |
-| `matchesAnyGlob(path, patterns)` | Glob pattern matching |
+| Function                         | Description                                  |
+| -------------------------------- | -------------------------------------------- |
+| `generateRejectionEmail(report)` | Generates rejection email draft              |
+| `analyzeReportWithAi(report)`    | AI-powered analysis (requires @google/genai) |
+| `matchesAnyGlob(path, patterns)` | Glob pattern matching                        |
 
 ## Types
 

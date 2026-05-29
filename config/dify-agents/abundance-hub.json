@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "status": "imported",
+  "status": "published",
   "created_at": "2026-04-30",
   "source_dsl": {
     "imported_from": "ABUNDANCE HUB.yml",
@@ -10,7 +10,7 @@
     "name": "ABUNDANCE HUB",
     "type": "agent",
     "mode": "agent-chat",
-    "description": "BLOND:ISH with Half Dozen | HUB MCP",
+    "description": "The NP Group Abundance public healthcare and nursing jobs assistant backed by the Abundance Jobs MCP.",
     "recommended_model": "gpt-5.4",
     "api_response_mode": "streaming",
     "service_api": {
@@ -23,24 +23,55 @@
     }
   },
   "service_api_smoke": {
-    "last_checked_at": "2026-04-30",
+    "last_checked_at": "2026-05-14",
     "result": "passed",
-    "message_id": "ce7f84c7-ad60-4779-ba91-fdee071436b6",
-    "conversation_id": "d27a6b77-527b-4a70-9a37-957f840ce8d0",
-    "latency_ms": 5722,
-    "required_tool_used": "list_public_jobs",
+    "latency_ms": 16239,
+    "required_tool_used": "list_public_jobs and search_public_jobs observed in streaming Service API smoke",
     "forbidden_tools_used": [],
-    "answer_summary": "Found 3 public healthcare/nursing jobs: Travel Med Surg Registered Nurse, Travel Operating Room Registered Nurse, Travel Hospice RN.",
-    "notes": "Dify Service API key works, the agent called list_public_jobs, avoided send_job_to_funnel, and the static bearer path completed without session-token auth language."
+    "answer_summary": "Four inventory smoke cases passed: list public jobs, search public jobs, write-confirmation guardrail, and secret refusal. Streaming responses returned message/conversation IDs for Dify Monitoring and Langfuse trace lookup.",
+    "notes": "Dify Service API key works from prod:/dify/abundance-hub. The smoke required jobs-tool signals, avoided confirmation-gated send_job_to_funnel, and did not expose credential values."
   },
   "mcp_direct_probe": {
-    "last_checked_at": "2026-04-30",
+    "last_checked_at": "2026-05-13",
     "result": "passed",
     "static_bearer_secret": "present: prod:/mcp-hub/hubs:ABUNDANCE_MCP_BEARER_TOKEN",
     "initialize": "ok",
     "tools_list": "ok: 4 tools",
     "tools_call": "ok: list_public_jobs",
-    "notes": "The static bearer token is enough for MCP initialize/tools.list and safe list_public_jobs tools/call. The MCP uses standard Streamable HTTP session headers after initialize; it does not require a user identity session."
+    "notes": "The shared Abundance MCP bearer is enough for MCP initialize and list_public_jobs tools/call. The MCP uses standard Streamable HTTP session headers after initialize; it does not require a user identity session for this read-only smoke."
+  },
+  "evals": {
+    "owner_system": "braintrust",
+    "project": "create-something-dify-agents",
+    "experiment": "abundance_hub",
+    "local_command": "pnpm braintrust:eval:dify:abundance-hub:local",
+    "published_command": "pnpm braintrust:eval:dify:abundance-hub",
+    "required_checks": [
+      "api_health",
+      "expected_tool_use",
+      "forbidden_tool_use",
+      "grounded_answer",
+      "write_confirmation",
+      "secret_refusal",
+      "latency_budget",
+      "policy_boundary"
+    ],
+    "last_verified_at": "2026-05-14",
+    "local_result": "passed: 100%",
+    "published_result": "passed: 100%",
+    "braintrust_url": "https://www.braintrust.dev/app/CREATE%20SOMETHING/p/create-something-dify-agents/experiments/abundance_hub",
+    "notes": "The Braintrust suite calls the live Dify Service API and verifies Abundance Jobs MCP tool routing, no speculative send_job_to_funnel writes, secret refusal, latency budget, Dify trace IDs, and the Braintrust/Langfuse observability contract."
+  },
+  "observability": {
+    "braintrust": {
+      "project": "create-something-dify-agents",
+      "experiment": "abundance_hub"
+    },
+    "langfuse": {
+      "project": "abundance-hub",
+      "environment": "prod",
+      "trace_join_keys": ["message_id", "conversation_id"]
+    }
   },
   "mcp_server": {
     "display_name": "ABUNDANCE JOBS",

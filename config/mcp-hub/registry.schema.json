@@ -246,6 +246,9 @@
           "type": "integer",
           "minimum": 0
         },
+        "setupNotes": {
+          "type": "string"
+        },
         "exposure_exception_reason": {
           "type": "string"
         },
@@ -290,6 +293,14 @@
           "type": "integer",
           "minimum": 1
         },
+        "tool_call_timeout_ms": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "timeout_ms": {
+          "type": "integer",
+          "minimum": 1
+        },
         "headers": {
           "$ref": "#/$defs/stringMap"
         },
@@ -316,6 +327,9 @@
         "estimated_tool_count": {
           "type": "integer",
           "minimum": 0
+        },
+        "setupNotes": {
+          "type": "string"
         },
         "exposure_exception_reason": {
           "type": "string"
@@ -355,6 +369,14 @@
         "cwd": {
           "type": "string"
         },
+        "tool_call_timeout_ms": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "timeout_ms": {
+          "type": "integer",
+          "minimum": 1
+        },
         "description": {
           "type": "string"
         },
@@ -378,6 +400,9 @@
         "estimated_tool_count": {
           "type": "integer",
           "minimum": 0
+        },
+        "setupNotes": {
+          "type": "string"
         },
         "exposure_exception_reason": {
           "type": "string"

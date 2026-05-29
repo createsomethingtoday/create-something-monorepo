@@ -35,15 +35,19 @@
     AlertTriangle,
     XCircle,
     SearchX,
-    RefreshCw
+    RefreshCw,
+    LoaderCircle
   } from 'lucide-svelte';
 
   interface Props {
     assets: Asset[];
     errorMessage?: string | null;
     searchTerm?: string;
+    openingViewAssetId?: string | null;
+    openingEditAssetId?: string | null;
     onSearch?: (term: string) => void;
     onView?: (id: string) => void;
+    onPreloadView?: (id: string) => void;
     onEdit?: (id: string) => void;
     onArchive?: (id: string) => Promise<void>;
     onRefresh?: () => void;
@@ -53,8 +57,11 @@
     assets,
     errorMessage = null,
     searchTerm = '',
+    openingViewAssetId = null,
+    openingEditAssetId = null,
     onSearch,
     onView,
+    onPreloadView,
     onEdit,
     onArchive,
     onRefresh
@@ -155,6 +162,11 @@
     return sortConfig.direction === 'asc' ? ' ↑' : ' ↓';
   }
 
+  function getAriaSort(key: string): 'ascending' | 'descending' | 'none' {
+    if (sortConfig.key !== key) return 'none';
+    return sortConfig.direction === 'asc' ? 'ascending' : 'descending';
+  }
+
   function getVisibleAssets(groupKey: string, allAssets: Asset[]): Asset[] {
     if (expandedGroups.includes(groupKey)) {
       return allAssets;
@@ -193,16 +205,53 @@
     });
 
     if (action.handler === 'view') {
+      if (openingViewAssetId) return;
       onView?.(asset.id);
       return;
     }
 
     if (action.handler === 'edit') {
+      if (openingEditAssetId || openingViewAssetId) return;
       onEdit?.(asset.id);
       return;
     }
 
     onArchive?.(asset.id);
+  }
+
+  function runSecondaryAction(asset: Asset, action: AssetActionDescriptor) {
+    if (action.handler === 'view') {
+      if (openingViewAssetId) return;
+      onView?.(asset.id);
+      return;
+    }
+
+    if (action.handler === 'edit') {
+      if (openingEditAssetId || openingViewAssetId) return;
+      onEdit?.(asset.id);
+      return;
+    }
+
+    onArchive?.(asset.id);
+  }
+
+  function preloadViewAction(asset: Asset, action: AssetActionDescriptor) {
+    if (action.handler === 'view') {
+      onPreloadView?.(asset.id);
+    }
+  }
+
+  function isActionDisabled(action: AssetActionDescriptor) {
+    if (action.handler === 'view') return openingViewAssetId !== null || openingEditAssetId !== null;
+    if (action.handler === 'edit') return openingEditAssetId !== null || openingViewAssetId !== null;
+    return false;
+  }
+
+  function isActionLoading(asset: Asset, action: AssetActionDescriptor) {
+    return (
+      (action.handler === 'view' && openingViewAssetId === asset.id) ||
+      (action.handler === 'edit' && openingEditAssetId === asset.id)
+    );
   }
 
   function getSortLabel() {
@@ -220,14 +269,15 @@
   function getTypeOrderLabel() {
     return typeSortDirection === 'asc' ? 'A-Z' : 'Z-A';
   }
-
 </script>
 
 <div class="assets-display">
   <div class="section-header">
     <div class="section-heading">
       <h2 class="section-title">Your Assets</h2>
-      <p class="section-description">Search, sort, and review the assets in your portfolio, grouped by type.</p>
+      <p class="section-description">
+        Search, sort, and review the assets in your portfolio, grouped by type.
+      </p>
     </div>
     <div class="section-actions">
       <div class="section-search">
@@ -310,7 +360,9 @@
         <div class="type-header">
           <div class="type-meta">
             <h3 class="type-title">{typeGroup.type}</h3>
-            <span class="type-summary">{typeGroup.totalCount} {typeGroup.totalCount === 1 ? 'asset' : 'assets'}</span>
+            <span class="type-summary"
+              >{typeGroup.totalCount} {typeGroup.totalCount === 1 ? 'asset' : 'assets'}</span
+            >
           </div>
         </div>
 
@@ -320,7 +372,8 @@
             {@const visibleAssets = getVisibleAssets(statusGroup.key, statusAssets)}
             {@const normalizedStatus = normalizeAssetStatus(statusGroup.status)}
             {@const config = statusConfig[normalizedStatus]}
-            {@const showTotals = showPerformance && !['Upcoming', 'Rejected'].includes(normalizedStatus)}
+            {@const showTotals =
+              showPerformance && !['Upcoming', 'Rejected'].includes(normalizedStatus)}
             {@const totals = showTotals ? calculateTotals(statusAssets) : null}
 
             <section class="status-section">
@@ -336,7 +389,10 @@
                   <div class="status-meta">
                     <div class="status-line">
                       <h4 class="status-title">{normalizedStatus}</h4>
-                      <span class="status-count">{statusAssets.length} {statusAssets.length === 1 ? 'asset' : 'assets'}</span>
+                      <span class="status-count"
+                        >{statusAssets.length}
+                        {statusAssets.length === 1 ? 'asset' : 'assets'}</span
+                      >
                     </div>
                     <span class="sort-summary">{getSortLabel()}</span>
                   </div>
@@ -361,7 +417,7 @@
                     <TableHeader>
                       <TableRow>
                         <TableHead class="thumbnail-head"></TableHead>
-                        <TableHead class="asset-title-head">
+                        <TableHead class="asset-title-head" aria-sort={getAriaSort('name')}>
                           <button
                             type="button"
                             class="sort-btn"
@@ -372,7 +428,7 @@
                             Name{getSortIndicator('name')}
                           </button>
                         </TableHead>
-                        <TableHead class="submitted-head">
+                        <TableHead class="submitted-head" aria-sort={getAriaSort('submittedDate')}>
                           <button
                             type="button"
                             class="sort-btn"
@@ -385,7 +441,11 @@
                         </TableHead>
                         <TableHead class="type-head">Type</TableHead>
                         {#if showPerformance}
-                          <TableHead align="right" class="metric-head">
+                          <TableHead
+                            align="right"
+                            class="metric-head"
+                            aria-sort={getAriaSort('uniqueViewers')}
+                          >
                             <button
                               type="button"
                               class="sort-btn"
@@ -396,7 +456,11 @@
                               Viewers{getSortIndicator('uniqueViewers')}
                             </button>
                           </TableHead>
-                          <TableHead align="right" class="metric-head">
+                          <TableHead
+                            align="right"
+                            class="metric-head"
+                            aria-sort={getAriaSort('cumulativePurchases')}
+                          >
                             <button
                               type="button"
                               class="sort-btn"
@@ -407,7 +471,11 @@
                               Purchases{getSortIndicator('cumulativePurchases')}
                             </button>
                           </TableHead>
-                          <TableHead align="right" class="metric-head">
+                          <TableHead
+                            align="right"
+                            class="metric-head"
+                            aria-sort={getAriaSort('cumulativeRevenue')}
+                          >
                             <div class="revenue-header">
                               <button
                                 type="button"
@@ -430,7 +498,12 @@
                         <AssetTableRow
                           {asset}
                           {showPerformance}
+                          isViewDisabled={openingViewAssetId !== null || openingEditAssetId !== null}
+                          isViewLoading={openingViewAssetId === asset.id}
+                          isEditDisabled={openingEditAssetId !== null || openingViewAssetId !== null}
+                          isEditLoading={openingEditAssetId === asset.id}
                           {onView}
+                          {onPreloadView}
                           {onEdit}
                           {onArchive}
                         />
@@ -444,7 +517,10 @@
                           </TableCell>
                           <TableCell class="totals-label-cell">
                             <strong>Group total</strong>
-                            <span>{statusAssets.length} {statusAssets.length === 1 ? 'asset' : 'assets'}</span>
+                            <span
+                              >{statusAssets.length}
+                              {statusAssets.length === 1 ? 'asset' : 'assets'}</span
+                            >
                           </TableCell>
                           <TableCell></TableCell>
                           <TableCell></TableCell>
@@ -485,8 +561,7 @@
                               : 'N/A'}
                           </span>
                         </div>
-                        {#if showPerformance &&
-                          !['Upcoming', 'Rejected'].includes(normalizeAssetStatus(asset.status))}
+                        {#if showPerformance && !['Upcoming', 'Rejected'].includes(normalizeAssetStatus(asset.status))}
                           <div>
                             <span class="mobile-label">Viewers</span>
                             <span class="mobile-value"
@@ -511,23 +586,36 @@
                       <div class="mobile-actions">
                         <Button
                           size="sm"
-                          variant={actionConfig.primary.handler === 'edit' ? 'default' : 'secondary'}
+                          variant={actionConfig.primary.handler === 'edit'
+                            ? 'default'
+                            : 'secondary'}
+                          disabled={isActionDisabled(actionConfig.primary)}
+                          onmouseenter={() => preloadViewAction(asset, actionConfig.primary)}
+                          onfocus={() => preloadViewAction(asset, actionConfig.primary)}
                           onclick={() => runPrimaryAction(asset, actionConfig.primary)}
                         >
-                          {actionConfig.primary.label}
+                          {#if isActionLoading(asset, actionConfig.primary)}
+                            <LoaderCircle size={14} class="button-spinner" />
+                            Opening...
+                          {:else}
+                            {actionConfig.primary.label}
+                          {/if}
                         </Button>
                         {#each actionConfig.secondary as action}
                           <Button
                             size="sm"
                             variant={action.handler === 'archive' ? 'destructive' : 'outline'}
-                            onclick={() =>
-                              action.handler === 'view'
-                                ? onView?.(asset.id)
-                                : action.handler === 'edit'
-                                  ? onEdit?.(asset.id)
-                                  : onArchive?.(asset.id)}
+                            disabled={isActionDisabled(action)}
+                            onmouseenter={() => preloadViewAction(asset, action)}
+                            onfocus={() => preloadViewAction(asset, action)}
+                            onclick={() => runSecondaryAction(asset, action)}
                           >
-                            {action.label}
+                            {#if isActionLoading(asset, action)}
+                              <LoaderCircle size={14} class="button-spinner" />
+                              Opening...
+                            {:else}
+                              {action.label}
+                            {/if}
                           </Button>
                         {/each}
                       </div>
@@ -1053,6 +1141,16 @@
     display: flex;
     flex-wrap: wrap;
     gap: var(--space-xs);
+  }
+
+  .button-spinner {
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
   }
 
   @media (max-width: 900px) {

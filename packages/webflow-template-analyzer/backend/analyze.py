@@ -504,13 +504,13 @@ Return ONLY this JSON (no markdown, no explanation):
 
         raw = response.content[0].text.strip()
         try:
-            result = json.loads(raw)
+            result = json.loads(raw, strict=False)
         except json.JSONDecodeError:
             import re
             m = re.search(r"\{[\s\S]*\}", raw)
             if not m:
                 raise ValueError(f"Could not parse AI response as JSON:\n{raw}")
-            result = json.loads(m.group(0))
+            result = json.loads(m.group(0), strict=False)
 
         result["screenshots"] = screenshots
 

@@ -15,6 +15,7 @@ import { json, text } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import type { Seeker, Talent, Intake, ApiResponse } from '$lib/types/abundance';
 import { generateId } from '$lib/abundance/matching';
+import { isValidMetaSignature } from '$lib/server/abundance-whatsapp-auth';
 
 // Types for WhatsApp webhook payloads
 interface WhatsAppWebhookEntry {
@@ -80,8 +81,12 @@ export const GET: RequestHandler = async ({ url, platform }) => {
 	const token = url.searchParams.get('hub.verify_token');
 	const challenge = url.searchParams.get('hub.challenge');
 
-	// Get verify token from environment (must be set in Cloudflare dashboard)
-	const verifyToken = platform?.env?.WHATSAPP_VERIFY_TOKEN || 'abundance-network-verify';
+	const verifyToken = platform?.env?.WHATSAPP_VERIFY_TOKEN?.trim();
+
+	if (!verifyToken) {
+		console.error('WhatsApp webhook verify token is not configured');
+		return json({ error: 'Webhook verification is not configured' }, { status: 503 });
+	}
 
 	if (mode === 'subscribe' && token === verifyToken) {
 		console.log('WhatsApp webhook verified');
@@ -89,7 +94,7 @@ export const GET: RequestHandler = async ({ url, platform }) => {
 		return text(challenge || '', { status: 200 });
 	}
 
-	console.warn('WhatsApp webhook verification failed', { mode, token });
+	console.warn('WhatsApp webhook verification failed', { mode });
 	return json({ error: 'Verification failed' }, { status: 403 });
 };
 
@@ -98,13 +103,32 @@ export const GET: RequestHandler = async ({ url, platform }) => {
  */
 export const POST: RequestHandler = async ({ request, platform }) => {
 	try {
+		const appSecret = platform?.env?.WHATSAPP_APP_SECRET?.trim();
+
+		if (!appSecret) {
+			console.error('WhatsApp app secret is not configured');
+			return json({ success: false, error: 'Webhook signature verification is not configured' }, { status: 503 });
+		}
+
+		const rawBody = await request.text();
+		const isSignatureValid = await isValidMetaSignature(
+			rawBody,
+			request.headers.get('x-hub-signature-256'),
+			appSecret
+		);
+
+		if (!isSignatureValid) {
+			console.warn('WhatsApp webhook signature verification failed');
+			return json({ success: false, error: 'Invalid signature' }, { status: 401 });
+		}
+
 		if (!platform?.env?.DB) {
 			console.error('Database not available');
 			// Still return 200 to acknowledge receipt (Meta requires this)
 			return json({ success: false, error: 'Database not available' }, { status: 200 });
 		}
 
-		const payload = (await request.json()) as WhatsAppWebhookPayload;
+		const payload = JSON.parse(rawBody) as WhatsAppWebhookPayload;
 
 		// Validate it's from WhatsApp
 		if (payload.object !== 'whatsapp_business_account') {

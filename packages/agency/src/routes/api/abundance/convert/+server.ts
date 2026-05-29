@@ -61,13 +61,20 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 
 		// If converting to Talent
 		if (target_type === 'talent') {
+			const seekerIsActive = existingSeeker && existingSeeker.status !== 'inactive';
+			const talentIsActive = existingTalent && existingTalent.status !== 'inactive';
+
 			// Validate required fields
 			if (!body.skills || !Array.isArray(body.skills) || body.skills.length === 0) {
 				return json({ success: false, error: 'skills array is required when converting to talent' } as ApiResponse<never>, { status: 400 });
 			}
 
 			// Already a talent?
-			if (existingTalent) {
+			if (talentIsActive) {
+				if (seekerIsActive) {
+					await db.prepare("UPDATE seekers SET status = 'inactive' WHERE phone = ?").bind(phone.trim()).run();
+				}
+
 				return json({
 					success: true,
 					data: {
@@ -80,37 +87,54 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 			}
 
 			// Get name from existing seeker or require it
-			const name = existingSeeker?.name as string;
+			const name = (existingSeeker?.name || existingTalent?.name) as string;
 			if (!name) {
 				return json({ success: false, error: 'User not found. Create via POST /talent instead.' } as ApiResponse<never>, { status: 404 });
 			}
 
-			// Create talent record
-			const talentId = generateId();
-			await db.prepare(`
-				INSERT INTO talent (id, phone, name, email, skills, styles, hourly_rate_min, hourly_rate_max, availability, status)
-				VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'active')
-			`).bind(
-				talentId,
-				phone.trim(),
-				name,
-				existingSeeker?.email || null,
-				JSON.stringify(body.skills),
-				body.styles ? JSON.stringify(body.styles) : null,
-				body.hourly_rate_min || null,
-				body.hourly_rate_max || null,
-				body.availability || 'available'
-			).run();
+			const talentId = existingTalent?.id as string | undefined;
+			const activeTalentId = talentId || generateId();
 
-			// Remove from seekers if they were there
-			if (existingSeeker) {
-				await db.prepare('DELETE FROM seekers WHERE phone = ?').bind(phone.trim()).run();
+			if (talentId) {
+				await db.prepare(`
+					UPDATE talent
+					SET name = ?, email = ?, skills = ?, styles = ?, hourly_rate_min = ?, hourly_rate_max = ?, availability = ?, status = 'active'
+					WHERE id = ?
+				`).bind(
+					name,
+					existingSeeker?.email || existingTalent?.email || null,
+					JSON.stringify(body.skills),
+					body.styles ? JSON.stringify(body.styles) : null,
+					body.hourly_rate_min || null,
+					body.hourly_rate_max || null,
+					body.availability || 'available',
+					activeTalentId
+				).run();
+			} else {
+				await db.prepare(`
+					INSERT INTO talent (id, phone, name, email, skills, styles, hourly_rate_min, hourly_rate_max, availability, status)
+					VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'active')
+				`).bind(
+					activeTalentId,
+					phone.trim(),
+					name,
+					existingSeeker?.email || null,
+					JSON.stringify(body.skills),
+					body.styles ? JSON.stringify(body.styles) : null,
+					body.hourly_rate_min || null,
+					body.hourly_rate_max || null,
+					body.availability || 'available'
+				).run();
+			}
+
+			if (seekerIsActive) {
+				await db.prepare("UPDATE seekers SET status = 'inactive' WHERE phone = ?").bind(phone.trim()).run();
 			}
 
 			// Fetch created talent
 			const created = await db.prepare(
 				'SELECT * FROM talent WHERE id = ?'
-			).bind(talentId).first<Record<string, unknown>>();
+			).bind(activeTalentId).first<Record<string, unknown>>();
 
 			return json({
 				success: true,
@@ -125,8 +149,15 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 
 		// If converting to Seeker
 		if (target_type === 'seeker') {
+			const seekerIsActive = existingSeeker && existingSeeker.status !== 'inactive';
+			const talentIsActive = existingTalent && existingTalent.status !== 'inactive';
+
 			// Already a seeker?
-			if (existingSeeker) {
+			if (seekerIsActive) {
+				if (talentIsActive) {
+					await db.prepare("UPDATE talent SET status = 'inactive' WHERE phone = ?").bind(phone.trim()).run();
+				}
+
 				return json({
 					success: true,
 					data: {
@@ -138,37 +169,54 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 			}
 
 			// Get name from existing talent or require it
-			const name = existingTalent?.name as string;
+			const name = (existingTalent?.name || existingSeeker?.name) as string;
 			if (!name) {
 				return json({ success: false, error: 'User not found. Create via POST /seekers instead.' } as ApiResponse<never>, { status: 404 });
 			}
 
-			// Create seeker record
-			const seekerId = generateId();
-			await db.prepare(`
-				INSERT INTO seekers (id, phone, name, email, brand_name, brand_vibe, typical_budget_min, typical_budget_max, preferred_formats, status)
-				VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'active')
-			`).bind(
-				seekerId,
-				phone.trim(),
-				name,
-				existingTalent?.email || null,
-				body.brand_name || null,
-				body.brand_vibe || null,
-				body.typical_budget_min || null,
-				body.typical_budget_max || null,
-				body.preferred_formats ? JSON.stringify(body.preferred_formats) : null
-			).run();
+			const seekerId = existingSeeker?.id as string | undefined;
+			const activeSeekerId = seekerId || generateId();
 
-			// Remove from talent if they were there
-			if (existingTalent) {
-				await db.prepare('DELETE FROM talent WHERE phone = ?').bind(phone.trim()).run();
+			if (seekerId) {
+				await db.prepare(`
+					UPDATE seekers
+					SET name = ?, email = ?, brand_name = ?, brand_vibe = ?, typical_budget_min = ?, typical_budget_max = ?, preferred_formats = ?, status = 'active'
+					WHERE id = ?
+				`).bind(
+					name,
+					existingTalent?.email || existingSeeker?.email || null,
+					body.brand_name || existingSeeker?.brand_name || null,
+					body.brand_vibe || existingSeeker?.brand_vibe || null,
+					body.typical_budget_min || existingSeeker?.typical_budget_min || null,
+					body.typical_budget_max || existingSeeker?.typical_budget_max || null,
+					body.preferred_formats ? JSON.stringify(body.preferred_formats) : existingSeeker?.preferred_formats || null,
+					activeSeekerId
+				).run();
+			} else {
+				await db.prepare(`
+					INSERT INTO seekers (id, phone, name, email, brand_name, brand_vibe, typical_budget_min, typical_budget_max, preferred_formats, status)
+					VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'active')
+				`).bind(
+					activeSeekerId,
+					phone.trim(),
+					name,
+					existingTalent?.email || null,
+					body.brand_name || null,
+					body.brand_vibe || null,
+					body.typical_budget_min || null,
+					body.typical_budget_max || null,
+					body.preferred_formats ? JSON.stringify(body.preferred_formats) : null
+				).run();
+			}
+
+			if (talentIsActive) {
+				await db.prepare("UPDATE talent SET status = 'inactive' WHERE phone = ?").bind(phone.trim()).run();
 			}
 
 			// Fetch created seeker
 			const created = await db.prepare(
 				'SELECT * FROM seekers WHERE id = ?'
-			).bind(seekerId).first<Record<string, unknown>>();
+			).bind(activeSeekerId).first<Record<string, unknown>>();
 
 			return json({
 				success: true,

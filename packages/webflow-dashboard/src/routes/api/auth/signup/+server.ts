@@ -2,6 +2,7 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { getAirtableClient, validateEmail } from '$lib/server/airtable';
 import { checkRateLimit } from '$lib/server/kv';
+import { isSameOriginRequest } from '$lib/server/security';
 import { v4 as uuidv4 } from 'uuid';
 import { isSupportedCountry } from '$lib/intake/countries';
 
@@ -42,6 +43,10 @@ export const POST: RequestHandler = async ({ request, platform, getClientAddress
 
 	if (!sessions) {
 		return json({ error: 'Authentication service unavailable' }, { status: 503 });
+	}
+
+	if (!isSameOriginRequest(request, new URL(request.url).origin)) {
+		return json({ error: 'Invalid request origin.' }, { status: 403 });
 	}
 
 	const rateLimitResult = await checkRateLimit(

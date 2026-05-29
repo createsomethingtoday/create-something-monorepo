@@ -10,7 +10,10 @@
     "deploy": "node ../../scripts/run-wrangler.mjs deploy --config wrangler.toml",
     "lint": "pnpm run typecheck",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "sync": "node scripts/sync.mjs",
+    "rebuild": "node scripts/rebuild.mjs",
+    "featured-creators": "node scripts/featured-creators.mjs"
   },
   "dependencies": {
     "zod": "^3.23.0"

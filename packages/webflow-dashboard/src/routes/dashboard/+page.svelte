@@ -1,11 +1,12 @@
 <script lang="ts">
   import type { PageData } from './$types';
   import type { Asset, AssetUpdateData } from '$lib/server/airtable';
-  import { goto, invalidate } from '$app/navigation';
+  import { goto, invalidate, preloadData } from '$app/navigation';
   import { onMount } from 'svelte';
   import {
     Header,
     Button,
+    Dialog,
     AssetsDisplay,
     OverviewStats,
     SubmissionTracker,
@@ -14,14 +15,17 @@
   import { toast } from '$lib/stores/toast';
   import { trackEvent } from '$lib/utils/analytics';
   import { getPortfolioTitle } from '$lib/utils/portfolio-title';
+  import { LoaderCircle } from 'lucide-svelte';
 
   let { data }: { data: PageData } = $props();
 
   let searchTerm = $state('');
   let isProfileOpen = $state(false);
   let isEditModalOpen = $state(false);
-  let isLoadingEditAsset = $state(false);
+  let openingViewAssetId = $state<string | null>(null);
+  let openingEditAssetId = $state<string | null>(null);
   let currentEditingAsset = $state<Asset | null>(null);
+  const preloadedAssetDetailIds = new Set<string>();
 
   // Lazy-loaded modal components
   // NOTE: Svelte 5 dynamic component typing is a bit different; keep this permissive for lazy-loading.
@@ -30,12 +34,18 @@
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let EditAssetModal = $state<any>(null);
 
-  const publishedCount = $derived((data.assets || []).filter((asset) => asset.status === 'Published').length);
-  const delistedCount = $derived((data.assets || []).filter((asset) => asset.status === 'Delisted').length);
+  const publishedCount = $derived(
+    (data.assets || []).filter((asset) => asset.status === 'Published').length
+  );
+  const delistedCount = $derived(
+    (data.assets || []).filter((asset) => asset.status === 'Delisted').length
+  );
   const scheduledCount = $derived(
     (data.assets || []).filter((asset) => ['Scheduled', 'Upcoming'].includes(asset.status)).length
   );
-  const rejectedCount = $derived((data.assets || []).filter((asset) => asset.status === 'Rejected').length);
+  const rejectedCount = $derived(
+    (data.assets || []).filter((asset) => asset.status === 'Rejected').length
+  );
   const uniqueAssetTypes = $derived(
     Array.from(new Set((data.assets || []).map((asset) => asset.type).filter(Boolean)))
   );
@@ -55,6 +65,12 @@
       : `Track published ${heroAssetLabelPlural}, upcoming submissions, and marketplace signals in one place.`
   );
   const portfolioTitle = $derived(getPortfolioTitle(data.assets || []));
+  const openingViewAssetName = $derived(
+    (data.assets || []).find((asset) => asset.id === openingViewAssetId)?.name ?? 'asset'
+  );
+  const openingEditAssetName = $derived(
+    (data.assets || []).find((asset) => asset.id === openingEditAssetId)?.name ?? 'asset'
+  );
 
   async function handleLogout() {
     await fetch('/api/auth/logout', { method: 'POST' });
@@ -78,7 +94,22 @@
     isProfileOpen = false;
   }
 
+  function getAssetDetailHref(id: string) {
+    return `/assets/${id}`;
+  }
+
+  function preloadAssetDetail(id: string) {
+    if (preloadedAssetDetailIds.has(id)) return;
+
+    preloadedAssetDetailIds.add(id);
+    void preloadData(getAssetDetailHref(id)).catch(() => {
+      preloadedAssetDetailIds.delete(id);
+    });
+  }
+
   function handleViewAsset(id: string) {
+    if (openingViewAssetId || openingEditAssetId) return;
+
     const selectedAsset = (data.assets || []).find((asset) => asset.id === id);
     trackEvent('dashboard_asset_opened', {
       asset_id: id,
@@ -86,10 +117,24 @@
       asset_category: selectedAsset?.category,
       asset_subcategory: selectedAsset?.subcategory
     });
-    goto(`/assets/${id}`);
+
+    openingViewAssetId = id;
+    void goto(getAssetDetailHref(id)).catch(() => {
+      openingViewAssetId = null;
+      toast.error('Failed to open asset details');
+    });
+  }
+
+  async function loadEditAssetModal() {
+    if (EditAssetModal) return;
+
+    const module = await import('$lib/components/EditAssetModal.svelte');
+    EditAssetModal = module.default;
   }
 
   async function handleEditAsset(id: string) {
+    if (openingEditAssetId || openingViewAssetId) return;
+
     const selectedAsset = (data.assets || []).find((asset) => asset.id === id);
     trackEvent('dashboard_asset_edit_opened', {
       asset_id: id,
@@ -98,31 +143,15 @@
       asset_subcategory: selectedAsset?.subcategory
     });
 
-    // Lazy load the EditAssetModal component
-    if (!EditAssetModal) {
-      const module = await import('$lib/components/EditAssetModal.svelte');
-      EditAssetModal = module.default;
-    }
-
-    isLoadingEditAsset = true;
+    openingEditAssetId = id;
+    currentEditingAsset = null;
     try {
-      // Fetch full asset details (includes short + long description fields)
-      const response = await fetch(`/api/assets/${id}`);
+      const [, response] = await Promise.all([
+        loadEditAssetModal(),
+        // Fetch full asset details (includes short + long description fields)
+        fetch(`/api/assets/${id}`)
+      ]);
       if (!response.ok) {
-        // If forbidden, fetch debug payload (same session/cookies) to help troubleshoot Airtable ownership matching
-        if (response.status === 403) {
-          try {
-            const dbgRes = await fetch(`/api/assets/${id}?debug=1`);
-            const dbgJson = await dbgRes.json();
-            // eslint-disable-next-line no-console
-            console.error('[EditAssetModal][OwnershipDebug]', dbgJson);
-            toast.error('Permission denied loading asset details. Debug info logged to console.');
-          } catch (e) {
-            // eslint-disable-next-line no-console
-            console.error('[EditAssetModal][OwnershipDebug] Failed to load debug info', e);
-          }
-        }
-
         const errorData = (await response.json().catch(() => ({}))) as { message?: string };
         throw new Error(errorData.message || 'Failed to load asset details');
       }
@@ -135,7 +164,7 @@
       currentEditingAsset = null;
       isEditModalOpen = false;
     } finally {
-      isLoadingEditAsset = false;
+      openingEditAssetId = null;
     }
   }
 
@@ -186,7 +215,9 @@
 
   function handleReviewAssets() {
     trackEvent('dashboard_quick_action_clicked', { action: 'review_assets' });
-    document.getElementById('asset-portfolio')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    document
+      .getElementById('asset-portfolio')
+      ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   function handleOpenValidation() {
@@ -206,6 +237,12 @@
       published_assets: assets.filter((asset) => asset.status === 'Published').length,
       draft_assets: assets.filter((asset) => asset.status === 'Draft').length
     });
+
+    const preloadTimer = window.setTimeout(() => {
+      void loadEditAssetModal();
+    }, 750);
+
+    return () => window.clearTimeout(preloadTimer);
   });
 </script>
 
@@ -245,8 +282,12 @@
                   <span><strong>{(data.assets || []).length}</strong> total assets</span>
                 </div>
                 <div class="quick-actions">
-                  <Button variant="secondary" size="sm" onclick={handleReviewAssets}>Review assets</Button>
-                  <Button variant="outline" size="sm" onclick={handleOpenValidation}>Open validation</Button>
+                  <Button variant="secondary" size="sm" onclick={handleReviewAssets}
+                    >Review assets</Button
+                  >
+                  <Button variant="outline" size="sm" onclick={handleOpenValidation}
+                    >Open validation</Button
+                  >
                   {#if data.hasTemplateAsset}
                     <Button variant="outline" size="sm" onclick={handleExploreMarketplace}
                       >Explore marketplace</Button
@@ -276,6 +317,9 @@
           onEdit={handleEditAsset}
           onArchive={handleArchiveAsset}
           onRefresh={handleRefreshAssets}
+          onPreloadView={preloadAssetDetail}
+          {openingViewAssetId}
+          {openingEditAssetId}
         />
       </section>
     </div>
@@ -284,6 +328,32 @@
   {#if isProfileOpen && EditProfileModal}
     {@const ProfileModal = EditProfileModal}
     <ProfileModal onClose={handleProfileClose} />
+  {/if}
+
+  {#if openingViewAssetId}
+    <div class="navigation-loading" role="status" aria-live="polite">
+      <LoaderCircle size={18} class="navigation-loading-spinner" />
+      <span>Opening {openingViewAssetName}</span>
+    </div>
+  {/if}
+
+  {#if openingEditAssetId && !isEditModalOpen}
+    <Dialog
+      isOpen={true}
+      onClose={() => undefined}
+      title={`Edit ${openingEditAssetName}`}
+      size="xl"
+      closeOnBackdrop={false}
+      closeOnEscape={false}
+    >
+      <div class="edit-loading-state" role="status" aria-live="polite">
+        <LoaderCircle size={22} class="loading-spinner" />
+        <div>
+          <p class="edit-loading-title">Opening editor</p>
+          <p class="edit-loading-copy">Loading the latest marketplace fields.</p>
+        </div>
+      </div>
+    </Dialog>
   {/if}
 
   {#if isEditModalOpen && currentEditingAsset && EditAssetModal}
@@ -305,6 +375,70 @@
   .content-wrapper {
     max-width: var(--layout-content-max-width);
     margin: 0 auto;
+  }
+
+  .edit-loading-state {
+    min-height: 18rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+    color: var(--color-fg-secondary);
+  }
+
+  .edit-loading-title {
+    margin: 0;
+    color: var(--color-fg-primary);
+    font-weight: var(--font-semibold);
+  }
+
+  .edit-loading-copy {
+    margin: 0.15rem 0 0;
+    font-size: var(--text-body-sm);
+    color: var(--color-fg-muted);
+  }
+
+  :global(.loading-spinner) {
+    color: var(--color-info);
+    animation: spin 0.8s linear infinite;
+  }
+
+  .navigation-loading {
+    position: fixed;
+    top: 5.25rem;
+    right: var(--space-md);
+    z-index: 1100;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    max-width: min(24rem, calc(100vw - 2rem));
+    padding: 0.75rem 0.95rem;
+    color: var(--color-fg-primary);
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    font-size: var(--text-body-sm);
+    font-weight: var(--font-medium);
+  }
+
+  .navigation-loading span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  :global(.navigation-loading-spinner) {
+    flex-shrink: 0;
+    color: var(--color-info);
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
   }
 
   .overview-section {
@@ -437,6 +571,13 @@
   @media (max-width: 640px) {
     .main-content {
       padding: var(--space-md);
+    }
+
+    .navigation-loading {
+      top: 4.75rem;
+      right: var(--space-sm);
+      left: var(--space-sm);
+      justify-content: center;
     }
 
     .overview-section {

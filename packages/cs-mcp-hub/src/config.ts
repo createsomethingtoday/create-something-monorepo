@@ -233,8 +233,13 @@ function loadTomlObject(path: string): Record<string, unknown> {
   try {
     const parsed = TOML.parse(readFileSync(path, 'utf-8'));
     return isRecord(parsed) ? parsed : {};
-  } catch {
-    // Preserve momentum: invalid file should not block writing a clean config.
+  } catch (error: unknown) {
+    // Preserve momentum: invalid file should not block writing a clean config,
+    // but make the failure observable so operators don't silently lose hand
+    // edits when the hub rewrites .codex/config.toml.
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(`[cs-mcp-hub] warning: failed to parse existing TOML at ${path}: ${message}`);
+    console.error(`[cs-mcp-hub] warning: the file will be replaced with hub-managed contents.`);
     return {};
   }
 }

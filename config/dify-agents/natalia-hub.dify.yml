@@ -10,7 +10,12 @@ dependencies:
   - current_identifier: null
     type: marketplace
     value:
-      marketplace_plugin_unique_identifier: langgenius/anthropic:0.3.12@c01af3d595a1da1cf8875c9b5d71a5fc91413b6113ab1f08e9f8c4afad62bdc7
+      marketplace_plugin_unique_identifier: langgenius/e2b:0.0.5@6fa7dbc656ff5645849039ff8429728018fc30950aa310e4c0d892d6ebb03acc
+      version: null
+  - current_identifier: null
+    type: marketplace
+    value:
+      marketplace_plugin_unique_identifier: langgenius/openai:0.4.0@beafb5a726eda839a1839f61a0456ae7e068c98624c53f59b07be9a71fbf72da
       version: null
 kind: app
 model_config:
@@ -20,6 +25,58 @@ model_config:
     prompt: null
     strategy: function_call
     tools:
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: langgenius/e2b/e2b
+        provider_name: langgenius/e2b/e2b
+        provider_type: builtin
+        tool_label: Run Code
+        tool_name: run_code
+        tool_parameters:
+          code: null
+          language: python
+          sandbox_id: ''
+          timeout: 120
+        type: builtin
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: langgenius/e2b/e2b
+        provider_name: langgenius/e2b/e2b
+        provider_type: builtin
+        tool_label: Run Command
+        tool_name: run_command
+        tool_parameters:
+          command: null
+          sandbox_id: ''
+          timeout: 120
+        type: builtin
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: langgenius/e2b/e2b
+        provider_name: langgenius/e2b/e2b
+        provider_type: builtin
+        tool_label: Upload File
+        tool_name: upload_file
+        tool_parameters:
+          file: null
+          file_path: null
+          sandbox_id: null
+        type: builtin
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: langgenius/e2b/e2b
+        provider_name: langgenius/e2b/e2b
+        provider_type: builtin
+        tool_label: Download File
+        tool_name: download_file
+        tool_parameters:
+          file_path: null
+          sandbox_id: null
+        type: builtin
       - enabled: true
         isDeleted: false
         notAuthor: false
@@ -239,10 +296,35 @@ model_config:
       text: ''
   dataset_configs:
     datasets:
-      datasets: []
-    metadata_filtering_mode: disabled
+      datasets:
+        - dataset:
+            enabled: true
+            id: 34c9cb64-086b-45f1-bff0-ca726fb40bbb
+        - dataset:
+            enabled: true
+            id: a74b203d-c397-4189-a4f4-328f64a808c8
+    metadata_filtering_mode: automatic
+    metadata_model_config:
+      completion_params:
+        temperature: 0.7
+      mode: chat
+      name: gpt-5.4
+      provider: langgenius/openai/openai
+    reranking_enable: false
+    reranking_mode: weighted_score
+    reranking_model:
+      reranking_model_name: ''
+      reranking_provider_name: ''
     retrieval_model: multiple
     top_k: 4
+    weights:
+      keyword_setting:
+        keyword_weight: 0.3
+      vector_setting:
+        embedding_model_name: text-embedding-3-large
+        embedding_provider_name: langgenius/openai/openai
+        vector_weight: 0.7
+      weight_type: customized
   dataset_query_variable: ''
   external_data_tools: []
   file_upload:
@@ -274,15 +356,33 @@ model_config:
   model:
     completion_params:
       stop: []
-      temperature: 0.2
-      top_p: 0.75
     mode: chat
-    name: claude-sonnet-4-20250514
-    provider: langgenius/anthropic/anthropic
+    name: gpt-5.5
+    provider: langgenius/openai/openai
   more_like_this:
     enabled: false
   opening_statement: ''
-  pre_prompt: 'Use Hub MCP in broker mode.
+  pre_prompt: '# Webflow Template Review Agent Instructions
+
+
+    Updated: 2026-05-20
+
+
+    Source files:
+
+    - `config/dify-agents/natalia-hub.json#agent_prompt`
+
+    - `packages/dotfiles/codex/skills/webflow-template-review-reviewer/SKILL.md`
+
+    - `packages/dotfiles/codex/skills/webflow-template-review-analysis-calibration/SKILL.md`
+
+
+    ## Paste-Ready Dify Instructions
+
+
+    ```text
+
+    Use Hub MCP in broker mode.
 
 
     Start with:
@@ -327,7 +427,7 @@ model_config:
     raw Airtable, unless the user explicitly asks for operator-level debugging.
 
 
-    Use read-only database tools freely:
+    Use read-only review tools freely:
 
     - template_review_list_queue
 
@@ -351,26 +451,44 @@ model_config:
 
     - template_review_get_field_map
 
+    - template_review_run_published_site_validation
+
 
     Avoid raw Airtable reads/writes in normal review flow.
 
 
-    For automated analysis, use webflow-site-analyzer-mcp__enqueue_template_review
-    via hub_execute_proxy_tool with publishedUrl only, then poll webflow-site-analyzer-mcp__get_template_review_job.
+    For automated published-site validation, prefer template_review_run_published_site_validation
+    when the tool is exposed. Use the publishedUrl only. It runs Webflow Way published-site
+    checks and GSAP/custom-code policy checks without Designer/Preview data or Airtable
+    writes. Treat results as partial published-site validator evidence; report rubricCoverage
+    as partial_published_site_validation unless a fuller current artifact exists. If the
+    tool is unavailable or insufficient, use the agent sandbox for bounded published-site
+    verification, including rendered content, metadata, images, links, accessibility signals,
+    screenshots, touchpoints, and performance observations when available. If sandbox
+    execution is unavailable, return a bounded manual review checklist instead of calling
+    a retired MCP.
+
+
+    Required utility pages do not need root-only slugs. License, Instructions, Changelog,
+    and Style Guide pages may be nested in folders when they are discoverable, return
+    200, and visible links point to the matching utility page. Flag missing pages,
+    broken pages, missing required license text, or utility links that point to unrelated
+    pages.
 
 
     Do not pass previewUrl or designerMode unless the user explicitly asks for manual
     Designer diagnostics.
 
 
-    Treat published-site evidence as authoritative.
+    Treat published-site validator/sandbox evidence as authoritative for initial review
+    triage, while marking it as supplemental support rather than a final decision.
 
 
     For reviewer confirmation, retrieve the Preview URL separately with webflow-template-review-mcp__template_review_resolve_reference_urls
     using version_id, asset_id, published_url, or reference_url.
 
 
-    Do not use the Preview URL as analyzer input during normal reviews.
+    Do not use the Preview URL as automated-analysis input during normal reviews.
 
 
     If multiple URL matches are returned, share the selected match and note the duplicate
@@ -384,7 +502,7 @@ model_config:
     Do not summarize Designer/manual rows as confirmed failures.
 
 
-    Report page crawl coverage separately from rubricCoverage.
+    Report published-site validation/crawl coverage separately from rubricCoverage.
 
 
     If coverage exceeds 100%, explain that the crawler found additional pages beyond
@@ -398,25 +516,48 @@ model_config:
     - template_review_list_queue, my_queue, search_assets, search_versions, and list_versions
     for queue/history lookup
 
-    - webflow-site-analyzer-mcp__get_performance, extract_seo, analyze_images, get_page_structure,
-    analyze_touchpoints, and capture_screenshot for focused published-site verification
+    - template_review_run_published_site_validation for read-only validator coverage
+    of content/assets/accessibility signals, legacy IX2, GSAP, and custom-code policy
+    signals
 
-    - webflow-site-analyzer-mcp__list_template_review_jobs for analyzer history
+    - Use the agent sandbox for focused published-site verification beyond validator
+    coverage, including screenshots, touchpoints, responsive behavior, visual accessibility,
+    and performance observations when available
 
-    - get_provider_status and get_webflow_review_policy for analyzer policy/status
-    debugging
+    - Do not poll job history for the retired MCP route
+
+    - Use Hub policy/status tools only for Hub routing or authorization debugging
 
 
     Default to read-only analysis and draft feedback.
 
 
-    Before any Airtable write:
+    Default review sequence:
 
-    1. assign_self if required
+    1. Find the submission with template_review_list_queue, template_review_my_queue,
+    search_assets, or search_versions.
 
-    2. verify capability flags from get_review_context
+    2. Load the version details and call template_review_get_review_context before
+    any decision or write.
 
-    3. get explicit user approval
+    3. Run template_review_run_published_site_validation with publishedUrl only when
+    the tool is exposed.
+
+    4. Draft the confirmed summary, caveats, and feedback from validator, sandbox,
+    and manual evidence.
+
+    5. Only after explicit reviewer approval, call template_review_assign_self if
+    required, re-check get_review_context capability flags, then use the approved
+    reviewer-owned write tool.
+
+
+    Use template_review_request_changes, template_review_set_review_status, and
+    template_review_save_draft_feedback only after assignment, capability verification,
+    and explicit reviewer approval. Treat template_review_approve_version, template_review_reject_version,
+    template_review_complete_publishing, metadata updates, and publishing updates
+    as explicit official decision or publishing actions; do not offer or call them
+    unless the reviewer specifically asks for that action and capability flags permit
+    it.
 
 
     Never approve, reject, request changes, publish, delete, promote versions, refresh
@@ -436,11 +577,93 @@ model_config:
     3. draft feedback
 
 
-    Cite check IDs, page paths, evidenceItems or evidence text, evidenceQuality, job
-    IDs, score, grade, page crawl coverage, and rubricCoverage.
+    Cite validator/sandbox crawl paths, concrete evidence text, evidence quality,
+    page crawl coverage, and rubricCoverage. Do not invent check IDs, job IDs, score, or grade;
+    include them only when a current sandbox run or provided artifact produced them.
 
 
-    Prefer exact published-site evidence over broad summaries.'
+    Prefer exact published-site validator/sandbox evidence over broad summaries.
+
+    ```
+
+
+    ## Reviewer Skill Notes
+
+
+    Use this for Marketplace reviewers working inside the reviewer Hub lane.
+
+
+    Core rule: default to the live-safe Phase A flow unless runtime evidence proves
+    richer analysis tools are connected and approved for reviewer use.
+
+
+    Phase A guarantees:
+
+    - queue reads
+
+    - self-assignment
+
+    - self-unassignment
+
+    - normalized review context
+
+    - read-only published-site validation when template_review_run_published_site_validation
+    is exposed
+
+
+    Phase A sequence:
+
+    1. Call `template_review_list_queue` with no filters.
+
+    2. Pick a row and use `assignableVersionId` as the `version_id` for context
+    and later assignment.
+
+    3. Call `template_review_get_review_context` with that `version_id` before
+    any decision or write.
+
+    4. Read reviewer fields from `data.context`, not top-level `data`.
+
+    5. If exposed, call `template_review_run_published_site_validation` with
+    `publishedUrl` only for read-only content, asset, accessibility, IX2, GSAP,
+    and custom-code evidence.
+
+    6. Draft the confirmed summary, caveats, and feedback before any write.
+
+    7. Only after explicit reviewer approval, call `template_review_assign_self`
+    if required, re-check `template_review_get_review_context`, then use the
+    approved reviewer-owned write tool.
+
+    8. Use `template_review_my_queue` when the reviewer asks for their assigned work.
+
+    9. Use `template_review_unassign_self` only when the reviewer intentionally wants
+    to release the version.
+
+
+    Evidence classes:
+
+    - `Auto`: deterministic evidence that can be trusted quickly
+
+    - `Partial`: useful signal that still needs reviewer validation
+
+    - `Manual`: intentionally human-owned judgment
+
+
+    Phase awareness:
+
+    - The retired site analyzer MCP is no longer part of the reviewer flow.
+
+    - Use the reviewer Hub for Airtable/context tools.
+
+    - Use `template_review_run_published_site_validation` for validator-backed
+    published-site evidence when exposed.
+
+    - Use the agent sandbox for bounded published-site analysis beyond validator
+    coverage.
+
+    - Confirm `webflow-local` exists before plagiarism/framework checks; otherwise
+    stay in Phase A context mode and manual review for broader checklist work.
+
+    '
   prompt_type: simple
   retriever_resource:
     enabled: true

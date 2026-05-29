@@ -26,7 +26,11 @@ function createServerHarness() {
 }
 
 function parsePayload(result: ToolResult) {
-  return JSON.parse(result.content[0]?.text ?? '{}') as { ok: boolean; data?: Record<string, unknown>; error?: Record<string, unknown> };
+  return JSON.parse(result.content[0]?.text ?? '{}') as {
+    ok: boolean;
+    data?: Record<string, unknown>;
+    error?: Record<string, unknown>;
+  };
 }
 
 const reviewer: ReviewerProfile = {
@@ -41,16 +45,137 @@ test('registerTools places reviewer-safe write tools before admin and broad muta
   const { server, names } = createServerHarness();
   const client = {} as AirtableClient;
 
-  registerTools(server, () => client, () => reviewer);
+  registerTools(
+    server,
+    () => client,
+    () => reviewer,
+  );
 
   assert.notEqual(names.indexOf('template_review_assign_self'), -1);
   assert.notEqual(names.indexOf('template_review_request_changes'), -1);
   assert.notEqual(names.indexOf('template_review_set_review_status'), -1);
   assert.notEqual(names.indexOf('template_review_save_draft_feedback'), -1);
+  assert.notEqual(names.indexOf('template_review_run_published_site_validation'), -1);
+  assert.ok(names.indexOf('template_review_run_published_site_validation') < names.indexOf('template_review_assign_self'));
   assert.ok(names.indexOf('template_review_assign_self') < names.indexOf('template_review_assign_reviewer'));
   assert.ok(names.indexOf('template_review_request_changes') < names.indexOf('template_review_complete_publishing'));
   assert.ok(names.indexOf('template_review_set_review_status') < names.indexOf('template_review_update_version_review'));
   assert.ok(names.indexOf('template_review_save_draft_feedback') < names.indexOf('template_review_approve_version'));
+});
+
+test('published-site validation tool calls working validators without Airtable writes', async () => {
+  const { server, handlers } = createServerHarness();
+  const requests: Array<{ url: string; body: Record<string, unknown> }> = [];
+  const client = {} as AirtableClient;
+  const fetcher: typeof fetch = async (input, init) => {
+    const url = String(input);
+    const body = JSON.parse(String(init?.body ?? '{}')) as Record<string, unknown>;
+    requests.push({ url, body });
+
+    if (url.includes('webflow-way.local')) {
+      return new Response(
+        JSON.stringify({
+          siteUrl: body.siteUrl,
+          timestamp: '2026-05-19T00:00:00.000Z',
+          analysis: {
+            assets: { issues: [], stats: { totalAssets: 0 }, assets: [] },
+            content: {
+              issues: [{ id: 'seo-title-repeated', category: 'Content', severity: 'warning', message: 'Repeated title detected' }],
+              stats: { totalPages: 1 },
+              pages: [{ url: body.siteUrl }],
+            },
+            accessibility: { issues: [], stats: { missingAltText: 0 }, audit: {} },
+            interactions: {
+              issues: [{ id: 'legacy-ix2-interactions-detected', category: 'Interactions and GSAP', severity: 'error', message: 'Legacy IX2 detected' }],
+              stats: { legacyIx2Detected: true, legacyIx2Count: 2, pagesRequested: 1, pagesAnalyzed: 1, pagesFailed: 0, pagesWithLegacyIx2: 1, analysisComplete: true, analysisStatus: 'completed' },
+              pages: [{ url: body.siteUrl, legacyIx2Detected: true, legacyIx2Count: 2, matches: [] }],
+            },
+          },
+          summary: { totalIssues: 2, criticalErrors: 1 },
+        }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } },
+      );
+    }
+
+    return new Response(
+      JSON.stringify({
+        success: true,
+        passed: false,
+        totalPagesFound: 1,
+        validatedPages: 1,
+        passedPages: 0,
+        failedPages: 1,
+        pageResults: [
+          {
+            url: body.url,
+            success: true,
+            passed: false,
+            summary: {
+              scriptCount: 2,
+              validGsapCount: 1,
+              flaggedCodeCount: 1,
+              legacyIx2Detected: true,
+              legacyIx2Count: 1,
+            },
+            details: {
+              flaggedCode: [{ message: 'Legacy Webflow IX2 interactions detected.', policy: 'ix2-rejected' }],
+            },
+          },
+        ],
+      }),
+      { status: 200, headers: { 'Content-Type': 'application/json' } },
+    );
+  };
+
+  registerTools(
+    server,
+    () => client,
+    () => reviewer,
+    {
+      webflowValidationWorkerUrl: 'https://webflow-way.local/validate',
+      gsapValidationWorkerUrl: 'https://gsap.local/validateGsap',
+      fetcher,
+    },
+  );
+
+  const result = await handlers.get('template_review_run_published_site_validation')?.({
+    published_url: 'https://example-template.webflow.io/',
+    max_pages: 5,
+    page_slugs: ['/about'],
+  });
+
+  assert.ok(result);
+  const payload = parsePayload(result);
+  assert.equal(payload.ok, true);
+
+  const validation = payload.data?.validation as {
+    publishedUrl: string;
+    rubricCoverage: string;
+    results: {
+      webflow_way: { ok: boolean; categories: Array<{ key: string; issueCount: number }> };
+      gsap_custom_code: { ok: boolean; detections: { legacyIx2Detected: boolean; flaggedCodeCount: number } };
+    };
+  };
+
+  assert.equal(validation.publishedUrl, 'https://example-template.webflow.io/');
+  assert.equal(validation.rubricCoverage, 'partial_published_site_validation');
+  assert.equal(validation.results.webflow_way.ok, true);
+  assert.deepEqual(
+    validation.results.webflow_way.categories.map((category) => [category.key, category.issueCount]),
+    [
+      ['assets', 0],
+      ['content', 1],
+      ['accessibility', 0],
+      ['interactions', 1],
+    ],
+  );
+  assert.equal(validation.results.gsap_custom_code.ok, true);
+  assert.equal(validation.results.gsap_custom_code.detections.legacyIx2Detected, true);
+  assert.equal(validation.results.gsap_custom_code.detections.flaggedCodeCount, 1);
+  assert.equal(requests.length, 2);
+  assert.equal(requests[0]?.body.siteUrl, 'https://example-template.webflow.io/');
+  assert.deepEqual(requests[0]?.body.designerData, { components: [], styles: [], pages: [], assets: [] });
+  assert.equal(requests[1]?.body.url, 'https://example-template.webflow.io/');
 });
 
 test('assign_self routes through reviewer-safe self-assignment', async () => {
@@ -63,7 +188,11 @@ test('assign_self routes through reviewer-safe self-assignment', async () => {
     },
   } as unknown as AirtableClient;
 
-  registerTools(server, () => client, () => reviewer);
+  registerTools(
+    server,
+    () => client,
+    () => reviewer,
+  );
 
   const result = await handlers.get('template_review_assign_self')?.({
     version_id: 'rec_version_1',
@@ -97,7 +226,11 @@ test('request_changes requires reviewer ownership before mutation', async () => 
     },
   } as unknown as AirtableClient;
 
-  registerTools(server, () => client, () => reviewer);
+  registerTools(
+    server,
+    () => client,
+    () => reviewer,
+  );
 
   const result = await handlers.get('template_review_request_changes')?.({
     version_id: 'rec_version_1',
@@ -146,7 +279,11 @@ test('approve_version requires reviewer ownership before mutation', async () => 
     },
   } as unknown as AirtableClient;
 
-  registerTools(server, () => client, () => reviewer);
+  registerTools(
+    server,
+    () => client,
+    () => reviewer,
+  );
 
   const result = await handlers.get('template_review_approve_version')?.({
     version_id: 'rec_version_1',
@@ -199,7 +336,11 @@ test('complete_publishing requires reviewer ownership before workflow mutation',
     },
   } as unknown as AirtableClient;
 
-  registerTools(server, () => client, () => reviewer);
+  registerTools(
+    server,
+    () => client,
+    () => reviewer,
+  );
 
   const result = await handlers.get('template_review_complete_publishing')?.({
     version_id: 'rec_version_1',
@@ -229,6 +370,7 @@ test('complete_publishing requires reviewer ownership before workflow mutation',
         time_zone: undefined,
         approve_version: true,
         mrp_id_overwrite: undefined,
+        review_owner: { id: 'usr_eric' },
       },
     ],
   });
@@ -246,7 +388,11 @@ test('update_version_review rejects reviewer-scoped owner changes before mutatio
     },
   } as unknown as AirtableClient;
 
-  registerTools(server, () => client, () => reviewer);
+  registerTools(
+    server,
+    () => client,
+    () => reviewer,
+  );
 
   const result = await handlers.get('template_review_update_version_review')?.({
     version_id: 'rec_version_1',
@@ -258,6 +404,68 @@ test('update_version_review rejects reviewer-scoped owner changes before mutatio
   const payload = parsePayload(result);
   assert.equal(payload.ok, false);
   assert.equal(payload.error?.code, 'REVIEWER_WRITE_SCOPE_VIOLATION');
+});
+
+test('update_version_review writes supplemental agent review feedback through reviewer scope', async () => {
+  const { server, handlers } = createServerHarness();
+  const calls: Array<{ method: string; args: unknown[] }> = [];
+  const client = {
+    requireAssignedVersion: async (...args: unknown[]) => {
+      calls.push({ method: 'requireAssignedVersion', args });
+      return { versionId: 'rec_version_1' };
+    },
+    updateVersionReview: async (...args: unknown[]) => {
+      calls.push({ method: 'updateVersionReview', args });
+      return {
+        versionId: 'rec_version_1',
+        agentReviewFeedback: 'AI supplemental draft',
+      };
+    },
+  } as unknown as AirtableClient;
+
+  registerTools(
+    server,
+    () => client,
+    () => reviewer,
+  );
+
+  const result = await handlers.get('template_review_update_version_review')?.({
+    version_id: 'rec_version_1',
+    agent_review_feedback: 'AI supplemental draft',
+  });
+
+  assert.ok(result);
+  assert.deepEqual(calls[0], {
+    method: 'requireAssignedVersion',
+    args: [
+      'rec_version_1',
+      {
+        id: 'usr_eric',
+        email: 'eric.unger@webflow.com',
+        name: 'Eric Unger',
+      },
+    ],
+  });
+  assert.deepEqual(calls[1], {
+    method: 'updateVersionReview',
+    args: [
+      'rec_version_1',
+      {
+        review_owner: { id: 'usr_eric' },
+        review_status: undefined,
+        quality_rating: undefined,
+        improvement_areas: undefined,
+        review_feedback: undefined,
+        review_checklist: undefined,
+        publishing_checklist: undefined,
+        release_record_id: undefined,
+        reject_reason: undefined,
+        rejection_feedback: undefined,
+        agent_review_feedback: 'AI supplemental draft',
+      },
+    ],
+  });
+  assert.equal(parsePayload(result).ok, true);
 });
 
 test('save_draft_feedback writes validated improvement areas through to the client', async () => {
@@ -274,7 +482,11 @@ test('save_draft_feedback writes validated improvement areas through to the clie
     },
   } as unknown as AirtableClient;
 
-  registerTools(server, () => client, () => reviewer);
+  registerTools(
+    server,
+    () => client,
+    () => reviewer,
+  );
 
   const result = await handlers.get('template_review_save_draft_feedback')?.({
     version_id: 'rec_version_1',
@@ -308,7 +520,11 @@ test('save_draft_feedback rejects empty payloads before any mutation runs', asyn
     },
   } as unknown as AirtableClient;
 
-  registerTools(server, () => client, () => reviewer);
+  registerTools(
+    server,
+    () => client,
+    () => reviewer,
+  );
 
   const result = await handlers.get('template_review_save_draft_feedback')?.({
     version_id: 'rec_version_1',
@@ -334,7 +550,11 @@ test('save_draft_feedback writes review feedback without mutating improvement ar
     },
   } as unknown as AirtableClient;
 
-  registerTools(server, () => client, () => reviewer);
+  registerTools(
+    server,
+    () => client,
+    () => reviewer,
+  );
 
   const result = await handlers.get('template_review_save_draft_feedback')?.({
     version_id: 'rec_version_1',
@@ -371,7 +591,11 @@ test('get_field_map exposes stable table ids and metrics field ids', async () =>
   const { server, handlers } = createServerHarness();
   const client = {} as AirtableClient;
 
-  registerTools(server, () => client, () => reviewer);
+  registerTools(
+    server,
+    () => client,
+    () => reviewer,
+  );
 
   const result = await handlers.get('template_review_get_field_map')?.({});
 

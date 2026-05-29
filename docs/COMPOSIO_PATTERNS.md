@@ -4,13 +4,27 @@ When to use Composio for app connectivity, how we wrap it, and where the SDK sur
 
 ## When to use Composio vs custom
 
-| Use Composio                                                         | Use custom                                                                                                  |
+| Use Composio                                                         | Use custom CREATE SOMETHING MCPs                                                                            |
 | -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
 | Commodity app connectivity (Gmail, Notion, Slack, HubSpot, etc.)     | Deep or client-specific integrations (e.g. Half Dozen Gmail Sync: custom OAuth, Notion schema, automations) |
 | You want managed auth (OAuth, connect links) and standard CRUD tools | You need full control over tokens, lifecycle, or an app not on Composio                                     |
 | New MCP for "most users" or multi-tenant with generic app actions    | Single-client MCP with fixed schema and custom workflows                                                    |
 
 **Default**: For new MCPs that need "connect to Gmail/Notion/Slack/…", consider Composio first via `@create-something/composio-bridge`. Use custom when the integration is strategic or client-specific.
+
+## Notion-specific decision matrix
+
+Notion now has first-party Worker and hosted MCP surfaces. Treat them as delivery channels, not replacements for the house MCP pattern.
+
+| Surface                         | Use when                                                                                                                            | Avoid when                                                                                                         |
+| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| **Composio wrapped by our MCP** | The workflow needs generic Notion plus other SaaS CRUD tools with managed OAuth.                                                    | The workflow needs fixed client schema semantics, our custom Notion policies, or deep workspace-specific behavior. |
+| **CREATE SOMETHING MCP**        | The workflow needs cross-client governed execution, telemetry, bearer-token routing, headless agents, or dual-workspace operations. | The workflow only needs a small capability inside a Notion Custom Agent.                                           |
+| **Notion hosted MCP**           | A human user wants to connect their Notion workspace to ChatGPT, Claude, Cursor, or another supported AI client.                    | The agent is headless, bearer-token based, or needs CREATE SOMETHING resources/prompts/telemetry.                  |
+| **Notion Workers Agent Tools**  | A capability should run inside a Notion Custom Agent with `context.notion` and Notion-scoped permissions.                           | The tool needs our fleet gateway, non-Notion runtime controls, or broad external orchestration.                    |
+| **Notion Workers Syncs**        | The target is a greenfield Notion-managed mirror database.                                                                          | The client already owns the target database/schema; current Syncs do not yet sync into existing databases.         |
+
+See [guides/NOTION_WORKERS_AND_CLI_2026.md](./guides/NOTION_WORKERS_AND_CLI_2026.md) and [packages/notion-worker-experiments](../packages/notion-worker-experiments) for the repo-local spike path.
 
 ## Commercial packaging (Codex vector)
 

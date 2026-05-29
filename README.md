@@ -128,6 +128,19 @@ pnpm meeting-capture:install:user
 - [packages/create-something-mcp](./packages/create-something-mcp): deployable service package
 - [packages/agency](./packages/agency): first-party service/product surface
 
+## Pi Packages
+
+Publishable [Pi](https://pi.dev) coding agent packages that deliver CREATE SOMETHING's framework and governance as installable agent knowledge:
+
+| Package | Install | Purpose |
+|---------|---------|--------|
+| [@create-something/pi-three-tier-framework](./packages/pi-three-tier-framework) | `pi install npm:@create-something/pi-three-tier-framework` | Three-Tier Framework skills and prompts |
+| [@create-something/pi-policy-os](./packages/pi-policy-os) | `pi install npm:@create-something/pi-policy-os` | Policy OS governance starter |
+| [@create-something/pi-halfdozen](./packages/pi-halfdozen) | Private | Half Dozen client fleet knowledge |
+| [@create-something/pi-webflow](./packages/pi-webflow) | Private | Webflow fleet knowledge |
+
+The project-local `.pi/` directory provides the full development harness configuration. See [AGENTS.md](./AGENTS.md) and [docs/AGENCY_CODEX_VECTOR_STRATEGY.md](./docs/AGENCY_CODEX_VECTOR_STRATEGY.md).
+
 ## Contributing
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md). At minimum, run the relevant lane checks for the code you changed.

@@ -9,6 +9,12 @@
     "binding": "ASSETS",
     "directory": ".open-next/assets"
   },
+  "services": [
+    {
+      "binding": "GSAP_VALIDATION_WORKER",
+      "service": "gsap-validation-worker"
+    }
+  ],
   "vars": {
     "ENVIRONMENT": "production"
   }

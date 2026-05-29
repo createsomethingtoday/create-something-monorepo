@@ -1,16 +1,17 @@
 ---
 name: webflow-template-review-analysis-calibration
-description: Calibrate reviewer-facing findings for the Webflow Template Review Hub once analysis servers are enabled, using Auto versus Partial versus Manual evidence correctly and drafting feedback without overstating confidence.
+description: Calibrate reviewer-facing findings for the Webflow Template Review Hub using sandbox, plagiarism, Auto, Partial, and Manual evidence correctly and drafting feedback without overstating confidence.
 ---
 
 # Webflow Template Review Analysis Calibration
 
-Use this skill only after the live reviewer Hub exposes both analysis servers:
+Use this skill after the reviewer has Airtable/context access through the
+Template Review Hub and either `template_review_run_published_site_validation`
+or a sandbox available for bounded published-site analysis. The retired site
+analyzer MCP is no longer an active dependency.
 
-- `webflow-site-analyzer-mcp`
-- `webflow-local`
-
-If either server is missing, do not run an analysis-led review flow. Fall back to [$webflow-template-review-reviewer](/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/dotfiles/codex/skills/webflow-template-review-reviewer/SKILL.md).
+If `webflow-local` is missing, do not run plagiarism/framework checks. Fall back
+to [$webflow-template-review-reviewer](/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo/packages/dotfiles/codex/skills/webflow-template-review-reviewer/SKILL.md).
 
 ## Objective
 
@@ -31,13 +32,27 @@ Source of truth:
 
 ## Tool Framing
 
-Use `webflow-site-analyzer-mcp` for:
+Use `template_review_run_published_site_validation` for:
+
+- published-site content/assets/accessibility-signal checks
+- legacy IX2 interaction markers
+- GSAP/custom-code policy signals
+- Unicorn Studio and security-risk pattern signals
+
+Treat its `rubricCoverage` as `partial_published_site_validation` unless a
+separate current artifact produces fuller rubric coverage.
+
+Use the agent sandbox for:
 
 - page structure
 - SEO extraction
 - screenshots
-- designer metadata
-- media and performance evidence
+- published-site media and performance evidence
+- responsive behavior, visual accessibility, and interaction behavior beyond validator coverage
+
+Do not claim Designer metadata, Audit Panel results, or Library state unless those
+are directly available from the reviewer context or a manual inspection artifact.
+Only claim custom-code state when it comes from validator output or manual inspection.
 
 Use `webflow-local` for:
 

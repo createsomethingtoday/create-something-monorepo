@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { getAnalytics } from '../analytics/client.js';
+
   /**
    * NewsletterSignup Component
    *
@@ -55,13 +57,18 @@
     message = '';
 
     try {
+      const analytics = getAnalytics();
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email: email.trim(),
           website: honeypot, // Honeypot field
-          source
+          source,
+          sessionId: analytics?.getSessionId(),
+          sourceProperty: analytics?.getSourceProperty() ?? undefined,
+          landingUrl: typeof window !== 'undefined' ? window.location.href : undefined,
+          referrer: typeof document !== 'undefined' ? document.referrer : undefined
         })
       });
 
@@ -70,6 +77,10 @@
       if (response.ok && data.success) {
         status = 'success';
         message = data.message || 'Check your email to confirm.';
+        analytics?.conversion('newsletter_requested', {
+          source,
+          surface: 'newsletter_signup'
+        });
         email = '';
       } else {
         status = 'error';

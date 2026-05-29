@@ -12,10 +12,10 @@
 
     <div id="toolbar-status" class="toolbar-status">
       <span id="bridge-status-badge" class="bridge-status-badge neutral">●</span>
-      <span id="toolbar-status-text" class="toolbar-status-text">Checking bridge...</span>
+      <span id="toolbar-status-text" class="toolbar-status-text">Checking Validator script...</span>
     </div>
 
-    <button id="validate-btn" class="validate-btn">Validate</button>
+    <button id="validate-btn" class="validate-btn">Run Validator</button>
 
     <!-- Options dropdown (absolute positioned from toolbar) -->
     <div id="options-panel" class="options-panel" hidden>
@@ -81,23 +81,42 @@
     </div>
   </header>
 
-  <!-- Bridge detail drawer: only visible when bridge needs attention -->
+  <!-- Validator script setup: visible when the published-site script needs attention -->
   <section id="review-bridge" class="review-bridge" style="display:none">
+    <ol class="bridge-setup-steps" aria-label="Validator setup steps">
+      <li id="bridge-step-install" class="bridge-setup-step">
+        <span class="bridge-step-index">1</span>
+        <span>Add Validator script</span>
+      </li>
+      <li id="bridge-step-publish" class="bridge-setup-step">
+        <span class="bridge-step-index">2</span>
+        <span>Publish site</span>
+      </li>
+      <li id="bridge-step-recheck" class="bridge-setup-step">
+        <span class="bridge-step-index">3</span>
+        <span>Re-check script</span>
+      </li>
+      <li id="bridge-step-run" class="bridge-setup-step">
+        <span class="bridge-step-index">4</span>
+        <span>Run Validator</span>
+      </li>
+    </ol>
     <div id="bridge-message" class="bridge-message"></div>
     <div class="review-bridge-actions">
-      <button id="bridge-install-btn" class="validate-btn" style="font-size: var(--text-xs); padding: var(--space-1) var(--space-3);">Install Bridge</button>
-      <button id="bridge-rotate-btn" class="secondary-btn">Rotate</button>
-      <button id="bridge-recheck-btn" class="secondary-btn">Re-check</button>
+      <button id="bridge-install-btn" class="validate-btn" style="font-size: var(--text-xs); padding: var(--space-1) var(--space-3);">Add Validator script</button>
+      <button id="bridge-rotate-btn" class="secondary-btn">Rotate script token</button>
+      <button id="bridge-recheck-btn" class="secondary-btn">Re-check script</button>
     </div>
     <div class="bridge-note" style="font-size: var(--text-2xs, 10px); color: var(--text-muted, #6d6d6d); margin-top: var(--space-1, 4px);">
-      One-click install via Webflow API. Publish after to activate.
+      The submission form detects this script on the published site. Publish after adding it.
     </div>
     <div id="bridge-token-row" class="bridge-token-row" style="display:none;">
       <span class="token-label">Token:</span>
       <code id="bridge-token-value" class="bridge-token-value"></code>
     </div>
     <details id="bridge-snippet-wrap" class="bridge-snippet-wrap" style="display:none;">
-      <summary>Manual snippet</summary>
+      <summary>Manual fallback snippet</summary>
+      <p class="bridge-snippet-help">If automatic install fails, paste this in Site Settings &gt; Custom Code &gt; Head code, publish, then re-check.</p>
       <pre id="bridge-snippet-code" class="bridge-snippet-code"></pre>
     </details>
     <div id="bridge-progress" class="bridge-progress" style="display:none;">

@@ -192,6 +192,15 @@ img {
   border-color: var(--color-border-strong);
 }
 
+.button-danger {
+  background: var(--color-error);
+  color: #ffffff;
+}
+
+.button-danger:hover {
+  background: #8f1d14;
+}
+
 .card {
   background: rgba(255, 255, 255, 0.96);
   border: 1px solid var(--color-border);
@@ -321,6 +330,44 @@ img {
   color: var(--color-error);
   background: var(--color-error-soft);
   border-color: rgba(238, 29, 54, 0.25);
+}
+
+.dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(8, 8, 8, 0.48);
+}
+
+.dialog-panel {
+  width: min(100%, 28rem);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  background: #ffffff;
+  box-shadow: var(--shadow-md);
+  padding: 1.25rem;
+}
+
+.dialog-title {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.dialog-description {
+  margin: 0.75rem 0 0;
+  color: var(--color-fg-muted);
+  line-height: 1.55;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+  flex-wrap: wrap;
 }
 
 .asset-list {

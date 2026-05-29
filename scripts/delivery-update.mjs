@@ -212,6 +212,8 @@ function markdownLink(fromFile, targetPath, label = targetPath) {
 function renderMarkdown(project, outputPath, imagePaths, date, image2PromptPaths = []) {
   const evidence = collectEvidence(project);
   const recentCommits = gitLogFor(project);
+  const notionContextLine = project.notionContext?.contextLine
+    ?? `This delivery is tied to ${project.notionContext?.engagementTitle ?? project.client} in ${project.notionContext?.source ?? 'the private Notion engagement workspace'}. The Notion context was reviewed from the ${project.notionContext?.workspaceRoot ?? 'CREATE SOMETHING'} root and its Agency Ops records. The public artifact names the client context, but does not expose private Notion URLs, contacts, or raw workspace data.`;
 
   const lines = [
     `# ${project.title} Project Update`,
@@ -227,7 +229,7 @@ function renderMarkdown(project, outputPath, imagePaths, date, image2PromptPaths
     ...(project.notionContext ? [
       '## Client Context',
       '',
-      `This delivery is tied to ${project.notionContext.engagementTitle ?? project.client} in ${project.notionContext.source ?? 'the private Notion engagement workspace'}. The Notion context was reviewed from the ${project.notionContext.workspaceRoot ?? 'CREATE SOMETHING'} root and its Agency Ops records. The public artifact names the client context, but does not expose private Notion URLs, contacts, or raw workspace data.`,
+      notionContextLine,
       '',
     ] : []),
     '## Client Summary',
@@ -343,6 +345,7 @@ ${cards.join('\n')}
 }
 
 function renderEvidenceMapSvg(project, date) {
+  const evidenceTitle = project.imageSpecs?.[1]?.title ?? `${project.title} Evidence Map`;
   const rows = project.components.map((component, index) => {
     const y = 165 + index * 138;
     const titleLines = wrapText(`${component.label}: ${component.title}`, 48).slice(0, 2);
@@ -356,7 +359,7 @@ ${renderTextBlock({ lines: evidenceLines, x: 660, y: y + 34, size: 14, fill: '#3
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="620" viewBox="0 0 1200 620">
 <rect width="1200" height="620" fill="#f8fafc"/>
-<text x="70" y="72" font-size="34" font-weight="800" fill="#0f172a">Abundance Evidence Map</text>
+<text x="70" y="72" font-size="34" font-weight="800" fill="#0f172a">${escapeHtml(evidenceTitle)}</text>
 <text x="70" y="108" font-size="18" fill="#475569">Generated ${escapeHtml(date)} - client-facing proof paths from the monorepo</text>
 <text x="96" y="146" font-size="14" font-weight="700" fill="#64748b">DELIVERED COMPONENT</text>
 <text x="595" y="146" font-size="14" font-weight="700" fill="#64748b">REPO EVIDENCE</text>

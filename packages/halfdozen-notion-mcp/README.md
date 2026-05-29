@@ -10,6 +10,7 @@ This MCP gives **Half Dozen** access to both its own internal Notion and its **C
 |------------|------------------------|----------|
 | **halfdozen** | `NOTION_API_KEY`       | Half Dozen internal: Meeting Capture, meeting transcripts (e.g. Danny meeting). |
 | **client**    | `NOTION_CLIENT_API_KEY`| **CREATE SOMETHING agency client’s** Notion — work Half Dozen does for that client. |
+| **createSomething** | `NOTION_CREATE_SOMETHING_API_KEY` | CREATE SOMETHING-owned Notion mirror databases, including worker-managed delivery-ticket mirrors. |
 
 Every tool call includes `workspace: "halfdozen"` or `workspace: "client"` so the right workspace is targeted.
 
@@ -25,6 +26,7 @@ Every tool call includes `workspace: "halfdozen"` or `workspace: "client"` so th
    ```bash
    wrangler secret put NOTION_API_KEY
    wrangler secret put NOTION_CLIENT_API_KEY
+   wrangler secret put NOTION_CREATE_SOMETHING_API_KEY
    ```
 
 3. **Run locally**
@@ -114,6 +116,33 @@ Verify the deployment labels:
 
 ```bash
 curl -s https://<client>-notion.mcp.workway.co/ | jq
+```
+
+### BLOND:ISH delivery-ticket reverse poller
+
+The CREATE SOMETHING BLOND:ISH deployment can run a daily Cloudflare cron that
+reads `HD Status` from the Notion Worker-managed `BLOND:ISH Support Tickets [HD Delivery]`
+mirror and updates only the matching BLOND:ISH source ticket status when the
+mapped status differs.
+
+Required config:
+
+- `NOTION_CLIENT_API_KEY`: BLOND:ISH workspace integration token.
+- `NOTION_CREATE_SOMETHING_API_KEY`: CREATE SOMETHING workspace integration token.
+- `BLONDISH_DELIVERY_MIRROR_DATA_SOURCE_ID`: default mirror data source ID.
+- `BLONDISH_DELIVERY_REVERSE_SYNC_ENABLED=true`: enables the scheduled write path.
+- `BLONDISH_DELIVERY_REVERSE_SYNC_DRY_RUN=false`: allows writes after dry-run validation.
+
+The CREATE SOMETHING Notion integration must be connected to the managed mirror
+database before enabling the cron. Until then, keep
+`BLONDISH_DELIVERY_REVERSE_SYNC_ENABLED=false` and use the manual endpoint with
+`{"dry_run": true}` for validation:
+
+```bash
+curl -sS -X POST https://blondish-notion.mcp.createsomething.agency/blondish-ticket-sync/run-delivery-status \
+  -H "Authorization: Bearer $MCP_BEARER_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"dry_run":true}' | jq
 ```
 
 ## Client config

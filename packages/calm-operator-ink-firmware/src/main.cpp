@@ -14,7 +14,7 @@
 
 namespace {
 
-constexpr const char* FIRMWARE_VERSION = "0.1.3";
+constexpr const char* FIRMWARE_VERSION = "0.1.5";
 constexpr uint32_t AUTO_SYNC_INTERVAL_MS = 5UL * 60UL * 1000UL;
 constexpr uint32_t WIFI_TIMEOUT_MS = 15000;
 constexpr const char* SETTINGS_NAMESPACE = "calm-ink";
@@ -69,9 +69,9 @@ uint32_t lastSyncAt = 0;
 String lastSyncStatus = "boot";
 String lastHttpError = "";
 String lastFrameKey = "";
-String pendingNotice = "";
 String clockLine1 = "";
 String clockLine2 = "";
+bool briefIsCached = false;
 int stoneCursor = 0;
 int stoneCount = 0;
 const int STONE_SLOTS = 9;
@@ -106,6 +106,7 @@ int batteryPercent() {
 String batteryLabel() {
   const int pct = batteryPercent();
   if (pct <= 0) return "";
+  if (pct <= 15) return "LOW";
   if (pct >= 98 && batteryMillivolts() >= 4150) return "FULL";
   return String(pct) + "%";
 }
@@ -126,6 +127,34 @@ void loadSettings() {
 void saveSettings() {
   prefs.putBool("alerts", alertsEnabled);
   prefs.putBool("quiet", quietMode);
+}
+
+void saveCachedBrief() {
+  prefs.putString("br_h", activeBrief.headline);
+  prefs.putString("br_l1", activeBrief.line1);
+  prefs.putString("br_l2", activeBrief.line2);
+  prefs.putString("br_d", activeBrief.detail);
+  prefs.putString("br_a", activeBrief.action);
+  prefs.putString("br_st", activeBrief.state);
+  prefs.putString("br_g", activeBrief.generatedAt);
+  prefs.putBool("br_u", activeBrief.urgent);
+}
+
+bool loadCachedBrief() {
+  const String headline = prefs.getString("br_h", "");
+  if (headline.length() == 0) return false;
+
+  activeBrief.headline = headline;
+  activeBrief.line1 = prefs.getString("br_l1", activeBrief.line1);
+  activeBrief.line2 = prefs.getString("br_l2", activeBrief.line2);
+  activeBrief.detail = prefs.getString("br_d", activeBrief.detail);
+  activeBrief.action = prefs.getString("br_a", activeBrief.action);
+  activeBrief.state = prefs.getString("br_st", activeBrief.state);
+  activeBrief.generatedAt = prefs.getString("br_g", "");
+  activeBrief.urgent = prefs.getBool("br_u", false);
+  briefIsCached = true;
+  lastSyncStatus = "cached";
+  return true;
 }
 
 void beepSoft() {
@@ -155,8 +184,9 @@ String screenKey(
   const String& a = "",
   const String& b = "",
   const String& c = "",
-  const String& d = "") {
-  return type + "|" + a + "|" + b + "|" + c + "|" + d;
+  const String& d = "",
+  const String& e = "") {
+  return type + "|" + a + "|" + b + "|" + c + "|" + d + "|" + e;
 }
 
 void drawWrapped(const String& text, int x, int y, int width, int lineHeight, int maxLines) {
@@ -233,7 +263,6 @@ void drawFooter(const String& left = "") {
   canvas.drawLine(8, 180, 192, 180, TFT_BLACK);
   canvas.setTextSize(1);
   String status = left;
-  if (pendingNotice.length() > 0 && left.length() == 0) status = pendingNotice;
   if (status.length() == 0) status = WiFi.status() == WL_CONNECTED ? "Wi-Fi" : "Offline";
   const String meta = footerMeta();
   const int metaWidth = canvas.textWidth(meta.c_str());
@@ -243,22 +272,37 @@ void drawFooter(const String& left = "") {
   canvas.drawString(meta, metaX, 186);
 }
 
+String briefFooterLabel() {
+  if (activeBrief.urgent) return "ATTENTION";
+  if (briefIsCached) return "Cached";
+  if (lastSyncAt == 0) return "CS";
+
+  const uint32_t ageMinutes = (millis() - lastSyncAt) / 60000UL;
+  if (ageMinutes == 0) return "Synced now";
+  if (ageMinutes < 60) return "Synced " + String(ageMinutes) + "m";
+
+  const uint32_t ageHours = ageMinutes / 60UL;
+  if (ageHours < 24) return "Synced " + String(ageHours) + "h";
+  return "Stale";
+}
+
 void renderBrief() {
   screen = Screen::Brief;
+  const String footer = briefFooterLabel();
   startFrame(activeBrief.headline, true);
   canvas.setTextSize(1);
   drawWrapped(activeBrief.line1, 12, 42, 176, 16, 2);
   drawWrapped(activeBrief.line2, 12, 78, 176, 15, 2);
   canvas.drawLine(26, 118, 174, 118, TFT_BLACK);
   drawWrapped(activeBrief.action, 12, 132, 176, 14, 2);
-  drawFooter(activeBrief.urgent ? "ATTENTION" : "CS");
+  drawFooter(footer);
   flushFrame(
-    screenKey("brief", activeBrief.headline, activeBrief.line1, activeBrief.line2, activeBrief.action));
+    screenKey("brief", activeBrief.headline, activeBrief.line1, activeBrief.line2, activeBrief.action, footer));
 
-  if (activeBrief.urgent && !lastUrgentRendered) {
+  if (activeBrief.urgent && !briefIsCached && !lastUrgentRendered) {
     beepUrgent();
   }
-  lastUrgentRendered = activeBrief.urgent;
+  if (!briefIsCached) lastUrgentRendered = activeBrief.urgent;
 }
 
 void renderStatus(const String& title, const String& a, const String& b = "", const String& c = "") {
@@ -288,7 +332,8 @@ String menuHint(const String& label) {
   if (label == "Stone Garden") return "Slow tactile play";
   if (label == "Alerts") return "Toggle beeps";
   if (label == "Quiet Mode") return "Mute all beeps";
-  return "Device status";
+  if (label == "Status") return "Device status";
+  return "";
 }
 
 void renderMenu() {
@@ -408,7 +453,7 @@ void postHeartbeat() {
   requestBridge("POST", "/ink/device-heartbeat", body, ignored);
 }
 
-void applyBriefPayload(const String& payload) {
+bool applyBriefPayload(const String& payload) {
   JsonDocument doc;
   const DeserializationError error = deserializeJson(doc, payload);
   if (error) {
@@ -418,7 +463,7 @@ void applyBriefPayload(const String& payload) {
     activeBrief.detail = payload.substring(0, 60);
     activeBrief.action = "Try Sync again";
     activeBrief.urgent = false;
-    return;
+    return false;
   }
 
   activeBrief.state = String((const char*)(doc["state"] | "unknown"));
@@ -433,14 +478,15 @@ void applyBriefPayload(const String& payload) {
   JsonVariantConst clock = doc["clock"];
   if (!clock.isNull()) {
     clockLine1 = String((const char*)(clock["display_time"] | ""));
-    clockLine2 = String((const char*)(clock["display_date"] | ""));
+    clockLine2 = String((const char*)(clock["display_date"] | clock["local_date"] | ""));
   }
+  return true;
 }
 
 bool fetchBrief(bool announce = true) {
   Serial.println("[ink] syncing brief");
+  briefIsCached = false;
   if (announce) {
-    pendingNotice = "Syncing...";
     beepSoft();
   }
   String payload;
@@ -453,31 +499,38 @@ bool fetchBrief(bool announce = true) {
     activeBrief.detail = payload.substring(0, 70);
     activeBrief.action = "Check Wi-Fi/token";
     activeBrief.urgent = false;
-    pendingNotice = "";
     renderBrief();
     return false;
   }
 
-  applyBriefPayload(payload);
+  if (!applyBriefPayload(payload)) {
+    lastSyncStatus = "bad json";
+    renderBrief();
+    return false;
+  }
   lastSyncAt = millis();
   lastSyncStatus = "synced";
+  saveCachedBrief();
   postHeartbeat();
-  pendingNotice = "";
   renderBrief();
   return true;
 }
 
 void requestMcpReview() {
   Serial.println("[ink] requesting MCP review");
-  pendingNotice = "MCP review...";
+  briefIsCached = false;
   beepSoft();
   String payload;
   const int status = requestBridge("POST", "/ink/health-review/request", "{}", payload);
   if (status >= 200 && status < 300) {
-    applyBriefPayload(payload);
+    if (!applyBriefPayload(payload)) {
+      lastSyncStatus = "bad json";
+      renderBrief();
+      return;
+    }
     lastSyncAt = millis();
     lastSyncStatus = "mcp reviewed";
-    pendingNotice = "";
+    saveCachedBrief();
     renderBrief();
     return;
   }
@@ -487,7 +540,6 @@ void requestMcpReview() {
   activeBrief.line2 = "MCP review not updated";
   activeBrief.action = "Check bridge logs";
   activeBrief.urgent = true;
-  pendingNotice = "";
   renderBrief();
 }
 
@@ -512,7 +564,6 @@ void operatorCheckIn() {
 
 void fetchClock() {
   Serial.println("[ink] fetching clock");
-  pendingNotice = "Clock...";
   String payload;
   const int status = requestBridge("GET", "/ink/clock", "", payload);
   if (status >= 200 && status < 300) {
@@ -527,8 +578,6 @@ void fetchClock() {
     clockLine1 = "Clock failed";
     clockLine2 = lastHttpError.length() ? lastHttpError : "Bridge unavailable";
   }
-  pendingNotice = "";
-
   screen = Screen::Clock;
   startFrame("CLOCK", false);
   canvas.setTextSize(2);
@@ -572,9 +621,10 @@ void renderStoneGarden() {
     }
   }
   canvas.drawRect(STONE_X[stoneCursor] - 14, STONE_Y[stoneCursor] - 14, 28, 28, TFT_BLACK);
-  canvas.drawString("A/C move  B place", 28, 162);
+  const bool full = stoneCount >= STONE_SLOTS;
+  canvas.drawString(full ? "B clears garden" : "A/C move  B place", 28, 162);
   drawFooter("PWR sync");
-  flushFrame(screenKey("stone", String(stoneCursor), String(stoneCount)));
+  flushFrame(screenKey("stone", String(stoneCursor), String(stoneCount), full ? "full" : "place"));
 }
 
 void renderSettingsStatus() {
@@ -628,6 +678,12 @@ void handleSelect() {
   }
 
   if (screen == Screen::StoneGarden) {
+    if (stoneCount >= STONE_SLOTS) {
+      stoneCount = 0;
+      stoneCursor = 0;
+      renderStoneGarden();
+      return;
+    }
     if (stoneCount < STONE_SLOTS && stoneCursor == stoneCount) stoneCount++;
     renderStoneGarden();
     return;
@@ -689,6 +745,11 @@ void setup() {
     return;
   }
 
+  if (loadCachedBrief()) {
+    renderBrief();
+  } else {
+    renderBoot();
+  }
   fetchBrief(true);
 }
 

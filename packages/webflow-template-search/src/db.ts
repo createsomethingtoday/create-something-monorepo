@@ -1,5 +1,70 @@
-import type { AliasType, DocumentCountRow, TemplateDocumentInput, TemplateImageUrls } from './types.js';
+import type { AliasType, CreatorLookupValue, DocumentCountRow, TemplateDocumentInput, TemplateImageSourceStats } from './types.js';
+import type { WebflowDesignerAvatarRecord, WebflowTemplateImageRecord } from './webflow.js';
 import { chunk, nowIso } from './utils.js';
+
+export interface TemplateImageRefreshRow {
+  id: string;
+  templateSlug: string;
+  name: string;
+  listingUrl: string | null;
+  thumbnailImageUrl: string | null;
+  thumbnailImageSecondaryUrl: string | null;
+}
+
+export interface TemplateImageUpdateInput {
+  id: string;
+  thumbnailImageUrl: string | null;
+  thumbnailImageSecondaryUrl: string | null;
+}
+
+const TEMPLATE_IMAGE_REFRESH_SELECT = `SELECT id, template_slug AS templateSlug, name, listing_url AS listingUrl, thumbnail_image_url AS thumbnailImageUrl, thumbnail_image_secondary_url AS thumbnailImageSecondaryUrl
+       FROM template_documents`;
+
+const STALE_IMAGE_WHERE = `thumbnail_image_url IS NULL
+          OR thumbnail_image_url LIKE '%airtableusercontent.com%'
+          OR thumbnail_image_url LIKE '%dl.airtable.com%'
+          OR thumbnail_image_secondary_url LIKE '%airtableusercontent.com%'
+          OR thumbnail_image_secondary_url LIKE '%dl.airtable.com%'`;
+
+const TEMP_ATTACHMENT_IMAGE_WHERE = `thumbnail_image_url LIKE '%airtableusercontent.com%'
+          OR thumbnail_image_url LIKE '%dl.airtable.com%'
+          OR thumbnail_image_secondary_url LIKE '%airtableusercontent.com%'
+          OR thumbnail_image_secondary_url LIKE '%dl.airtable.com%'`;
+
+const STALE_IMAGE_REFRESH_LIMIT = 24;
+const IMAGE_REFRESH_LOOKUP_BATCH_SIZE = 50;
+const SYNC_JOB_LOCK_KEY = 'template_sync';
+
+export interface SyncJobRecord {
+  lock_key: string;
+  job_id: string;
+  mode: string;
+  status: 'running' | 'succeeded' | 'failed';
+  started_at: string;
+  heartbeat_at: string;
+  expires_at: string;
+  finished_at: string | null;
+  summary_json: string | null;
+  error: string | null;
+}
+
+export interface SyncStateRecord {
+  key: string;
+  value_json: string;
+  updated_at: string;
+}
+
+export interface SyncJobLock {
+  lockKey: string;
+  jobId: string;
+  mode: string;
+}
+
+export interface SyncJobAcquireResult {
+  acquired: boolean;
+  lock: SyncJobLock;
+  activeJob: SyncJobRecord | null;
+}
 
 const UPSERT_TEMPLATE_SQL = `
   INSERT INTO template_documents (
@@ -10,6 +75,10 @@ const UPSERT_TEMPLATE_SQL = `
     preview_url,
     website_url,
     creator_name,
+    creator_record_id,
+    creator_profile_url,
+    creator_avatar_url,
+    creator_avatar_alt,
     thumbnail_image_url,
     thumbnail_image_secondary_url,
     carousel_image_urls_json,
@@ -41,7 +110,7 @@ const UPSERT_TEMPLATE_SQL = `
     styles_text,
     tags_text
   ) VALUES (
-    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
   )
   ON CONFLICT(id) DO UPDATE SET
     template_slug = excluded.template_slug,
@@ -50,6 +119,10 @@ const UPSERT_TEMPLATE_SQL = `
     preview_url = excluded.preview_url,
     website_url = excluded.website_url,
     creator_name = excluded.creator_name,
+    creator_record_id = excluded.creator_record_id,
+    creator_profile_url = excluded.creator_profile_url,
+    creator_avatar_url = excluded.creator_avatar_url,
+    creator_avatar_alt = excluded.creator_avatar_alt,
     thumbnail_image_url = excluded.thumbnail_image_url,
     thumbnail_image_secondary_url = excluded.thumbnail_image_secondary_url,
     carousel_image_urls_json = excluded.carousel_image_urls_json,
@@ -90,18 +163,171 @@ function placeholderList(count: number): string {
   return Array.from({ length: count }, () => '?').join(', ');
 }
 
+function addMilliseconds(iso: string, milliseconds: number): string {
+  return new Date(new Date(iso).getTime() + milliseconds).toISOString();
+}
+
+function parseJson(value: string | null): unknown {
+  if (!value) return null;
+  try {
+    return JSON.parse(value);
+  } catch {
+    return null;
+  }
+}
+
+function getSummaryMode(summary: unknown): string | null {
+  if (!summary || typeof summary !== 'object' || !('mode' in summary)) return null;
+  const mode = (summary as { mode?: unknown }).mode;
+  return typeof mode === 'string' && mode.length > 0 ? mode : null;
+}
+
+export function publicSyncJobRecord(record: SyncJobRecord | null) {
+  if (!record) return null;
+  return {
+    job_id: record.job_id,
+    mode: record.mode,
+    status: record.status,
+    started_at: record.started_at,
+    heartbeat_at: record.heartbeat_at,
+    expires_at: record.expires_at,
+    finished_at: record.finished_at,
+    error: record.error,
+    summary: parseJson(record.summary_json),
+  };
+}
+
+export async function getActiveSyncJob(db: D1Database, now = nowIso()): Promise<SyncJobRecord | null> {
+  return db
+    .prepare(
+      `SELECT *
+       FROM sync_jobs
+       WHERE lock_key = ?
+         AND status = 'running'
+         AND expires_at > ?
+       LIMIT 1`,
+    )
+    .bind(SYNC_JOB_LOCK_KEY, now)
+    .first<SyncJobRecord>();
+}
+
+export async function getLatestSyncJob(db: D1Database): Promise<SyncJobRecord | null> {
+  return db.prepare('SELECT * FROM sync_jobs WHERE lock_key = ? LIMIT 1').bind(SYNC_JOB_LOCK_KEY).first<SyncJobRecord>();
+}
+
+export async function acquireSyncJobLock(
+  db: D1Database,
+  mode: string,
+  options: { ttlMs?: number; now?: string } = {},
+): Promise<SyncJobAcquireResult> {
+  const startedAt = options.now ?? nowIso();
+  const ttlMs = options.ttlMs ?? 20 * 60 * 1000;
+  const expiresAt = addMilliseconds(startedAt, ttlMs);
+  const jobId = `${mode}-${crypto.randomUUID()}`;
+
+  await db
+    .prepare(
+      `INSERT INTO sync_jobs (
+         lock_key,
+         job_id,
+         mode,
+         status,
+         started_at,
+         heartbeat_at,
+         expires_at,
+         finished_at,
+         summary_json,
+         error
+       ) VALUES (?, ?, ?, 'running', ?, ?, ?, NULL, NULL, NULL)
+       ON CONFLICT(lock_key) DO UPDATE SET
+         job_id = excluded.job_id,
+         mode = excluded.mode,
+         status = excluded.status,
+         started_at = excluded.started_at,
+         heartbeat_at = excluded.heartbeat_at,
+         expires_at = excluded.expires_at,
+         finished_at = NULL,
+         summary_json = NULL,
+         error = NULL
+       WHERE sync_jobs.status != 'running'
+          OR sync_jobs.expires_at <= ?`,
+    )
+    .bind(SYNC_JOB_LOCK_KEY, jobId, mode, startedAt, startedAt, expiresAt, startedAt)
+    .run();
+
+  const activeJob = await db.prepare('SELECT * FROM sync_jobs WHERE lock_key = ?').bind(SYNC_JOB_LOCK_KEY).first<SyncJobRecord>();
+  const acquired = activeJob?.job_id === jobId && activeJob.status === 'running';
+
+  return {
+    acquired,
+    lock: {
+      lockKey: SYNC_JOB_LOCK_KEY,
+      jobId,
+      mode,
+    },
+    activeJob: acquired ? null : activeJob,
+  };
+}
+
+export async function finishSyncJobLock(
+  db: D1Database,
+  lock: SyncJobLock,
+  result:
+    | { status: 'succeeded'; summary: unknown; finishedAt?: string }
+    | { status: 'failed'; error: unknown; finishedAt?: string },
+): Promise<void> {
+  const finishedAt = result.finishedAt ?? nowIso();
+  const summaryJson = result.status === 'succeeded' ? JSON.stringify(result.summary) : null;
+  const error = result.status === 'failed' ? (result.error instanceof Error ? result.error.message : String(result.error)) : null;
+
+  await db
+    .prepare(
+      `UPDATE sync_jobs
+       SET status = ?,
+           heartbeat_at = ?,
+           finished_at = ?,
+           summary_json = ?,
+           error = ?
+       WHERE lock_key = ?
+         AND job_id = ?`,
+    )
+    .bind(result.status, finishedAt, finishedAt, summaryJson, error, lock.lockKey, lock.jobId)
+    .run();
+}
+
 export async function clearIndex(db: D1Database): Promise<void> {
-  await db.exec(`
-    DELETE FROM template_styles;
-    DELETE FROM template_child_categories;
-    DELETE FROM template_documents;
-  `);
+  // Delete in chunks to avoid D1's per-statement CPU time limit on large tables.
+  for (const table of ['template_styles', 'template_child_categories', 'template_documents'] as const) {
+    let hasMore = true;
+    while (hasMore) {
+      const result = await db.prepare(`DELETE FROM ${table} WHERE rowid IN (SELECT rowid FROM ${table} LIMIT 1000)`).run();
+      hasMore = (result.meta?.changes ?? 0) > 0;
+    }
+  }
 }
 
 export async function upsertTemplateDocuments(db: D1Database, documents: TemplateDocumentInput[]): Promise<void> {
   const statements: D1PreparedStatement[] = [];
 
   for (const document of documents) {
+    // If a different record has claimed this slug, evict it before inserting.
+    statements.push(
+      db
+        .prepare(
+          'DELETE FROM template_styles WHERE template_document_id = (SELECT id FROM template_documents WHERE template_slug = ? AND id != ?)',
+        )
+        .bind(document.templateSlug, document.id),
+    );
+    statements.push(
+      db
+        .prepare(
+          'DELETE FROM template_child_categories WHERE template_document_id = (SELECT id FROM template_documents WHERE template_slug = ? AND id != ?)',
+        )
+        .bind(document.templateSlug, document.id),
+    );
+    statements.push(
+      db.prepare('DELETE FROM template_documents WHERE template_slug = ? AND id != ?').bind(document.templateSlug, document.id),
+    );
     statements.push(db.prepare('DELETE FROM template_styles WHERE template_document_id = ?').bind(document.id));
     statements.push(db.prepare('DELETE FROM template_child_categories WHERE template_document_id = ?').bind(document.id));
     statements.push(
@@ -113,6 +339,10 @@ export async function upsertTemplateDocuments(db: D1Database, documents: Templat
         document.previewUrl,
         document.websiteUrl,
         document.creatorName,
+        document.creatorRecordId,
+        document.creatorProfileUrl,
+        document.creatorAvatarUrl,
+        document.creatorAvatarAlt,
         document.thumbnailImageUrl,
         document.thumbnailImageSecondaryUrl,
         JSON.stringify(document.carouselImageUrls),
@@ -172,97 +402,6 @@ export async function upsertTemplateDocuments(db: D1Database, documents: Templat
   }
 }
 
-export async function loadTemplateImageUrls(db: D1Database, slugs: string[]): Promise<Map<string, TemplateImageUrls>> {
-  const unique = Array.from(new Set(slugs.filter(Boolean)));
-  const images = new Map<string, TemplateImageUrls>();
-  if (unique.length === 0) return images;
-
-  for (const group of chunk(unique, 50)) {
-    const result = await db
-      .prepare(
-        `SELECT template_slug, thumbnail_image_url, thumbnail_image_secondary_url
-         FROM template_documents
-         WHERE template_slug IN (${placeholderList(group.length)})`,
-      )
-      .bind(...group)
-      .all<TemplateImageUrls>();
-
-    for (const row of result.results ?? []) {
-      images.set(row.template_slug, row);
-    }
-  }
-
-  return images;
-}
-
-export async function updateTemplateImageUrls(db: D1Database, images: Iterable<TemplateImageUrls>): Promise<number> {
-  const updates = Array.from(images).filter((image) => image.thumbnail_image_url || image.thumbnail_image_secondary_url);
-  if (updates.length === 0) return 0;
-
-  const matchedSlugs = new Set<string>();
-  for (const group of chunk(updates, 50)) {
-    const slugs = group.map((image) => image.template_slug).filter(Boolean);
-    const names = group
-      .map((image) => image.template_name)
-      .filter((name): name is string => Boolean(name));
-    const clauses: string[] = [];
-    const params: string[] = [];
-
-    if (slugs.length > 0) {
-      clauses.push(`template_slug IN (${placeholderList(slugs.length)})`);
-      params.push(...slugs);
-    }
-
-    if (names.length > 0) {
-      clauses.push(`name IN (${placeholderList(names.length)})`);
-      params.push(...names);
-    }
-
-    if (clauses.length === 0) continue;
-
-    const result = await db
-      .prepare(
-        `SELECT template_slug
-         FROM template_documents
-         WHERE ${clauses.join(' OR ')}`,
-      )
-      .bind(...params)
-      .all<{ template_slug: string }>();
-
-    for (const row of result.results ?? []) {
-      matchedSlugs.add(row.template_slug);
-    }
-  }
-
-  const statements: D1PreparedStatement[] = [];
-
-  for (const image of updates) {
-    statements.push(
-      db
-        .prepare(
-          `UPDATE template_documents
-           SET
-             thumbnail_image_url = COALESCE(?, thumbnail_image_url),
-             thumbnail_image_secondary_url = COALESCE(?, thumbnail_image_secondary_url)
-           WHERE template_slug = ? OR (? IS NOT NULL AND name = ?)`,
-        )
-        .bind(
-          image.thumbnail_image_url,
-          image.thumbnail_image_secondary_url,
-          image.template_slug,
-          image.template_name ?? null,
-          image.template_name ?? null,
-        ),
-    );
-  }
-
-  for (const group of chunk(statements, 50)) {
-    await db.batch(group);
-  }
-
-  return matchedSlugs.size;
-}
-
 export async function deleteTemplateDocuments(db: D1Database, ids: string[]): Promise<void> {
   if (ids.length === 0) return;
 
@@ -275,6 +414,633 @@ export async function deleteTemplateDocuments(db: D1Database, ids: string[]): Pr
   for (const group of chunk(statements, 50)) {
     await db.batch(group);
   }
+}
+
+// Bulk-refresh thumbnail and carousel image URLs for all published templates.
+// Airtable signed URLs expire in ~2 hours; this is called on the hourly cron so
+// URLs in D1 are always fresh enough for the proxy to fetch from Airtable.
+export async function refreshTemplateImageUrls(
+  db: D1Database,
+  records: Array<{ id: string; thumbnailImageUrl: string | null; thumbnailImageSecondaryUrl: string | null; carouselImageUrls: string[] }>,
+  syncedAt: string,
+): Promise<number> {
+  if (records.length === 0) return 0;
+
+  const statements: D1PreparedStatement[] = records.map((record) =>
+    db
+      .prepare(
+        `UPDATE template_documents
+         SET thumbnail_image_url = ?,
+             thumbnail_image_secondary_url = ?,
+             carousel_image_urls_json = ?,
+             synced_at = ?
+         WHERE id = ?`,
+      )
+      .bind(
+        record.thumbnailImageUrl,
+        record.thumbnailImageSecondaryUrl,
+        JSON.stringify(record.carouselImageUrls),
+        syncedAt,
+        record.id,
+      ),
+  );
+
+  let totalChanges = 0;
+  for (const group of chunk(statements, 50)) {
+    const results = await db.batch(group);
+    for (const result of results) {
+      totalChanges += result.meta?.changes ?? 0;
+    }
+  }
+
+  return totalChanges;
+}
+
+// Bulk-update thumbnail and carousel URLs sourced from stable Webflow CDN URLs.
+// Unlike Airtable signed URLs (which expire in ~2h), Webflow CDN URLs are permanent.
+// Keyed by sync-record-id which equals the D1 template id.
+export async function updateTemplateImagesFromWebflow(
+  db: D1Database,
+  records: WebflowTemplateImageRecord[],
+  syncedAt: string,
+): Promise<number> {
+  if (records.length === 0) return 0;
+
+  const statements: D1PreparedStatement[] = [];
+
+  for (const record of records) {
+    const carouselImageUrlsJson = JSON.stringify(record.carouselImageUrls);
+
+    if (record.id && record.templateSlug) {
+      // Match upsertTemplateDocuments behavior: if another D1 row still owns
+      // this canonical Webflow slug, evict it before the stable CMS record wins.
+      statements.push(
+        db
+          .prepare(
+            'DELETE FROM template_styles WHERE template_document_id = (SELECT id FROM template_documents WHERE template_slug = ? AND id != ?)',
+          )
+          .bind(record.templateSlug, record.id),
+      );
+      statements.push(
+        db
+          .prepare(
+            'DELETE FROM template_child_categories WHERE template_document_id = (SELECT id FROM template_documents WHERE template_slug = ? AND id != ?)',
+          )
+          .bind(record.templateSlug, record.id),
+      );
+      statements.push(db.prepare('DELETE FROM template_documents WHERE template_slug = ? AND id != ?').bind(record.templateSlug, record.id));
+    }
+
+    if (record.id) {
+      statements.push(
+        db
+          .prepare(
+            `UPDATE template_documents
+             SET template_slug = COALESCE(?, template_slug),
+                 listing_url = COALESCE(?, listing_url),
+                 thumbnail_image_url = ?,
+                 thumbnail_image_secondary_url = ?,
+                 carousel_image_urls_json = ?,
+                 synced_at = ?
+             WHERE id = ?
+               AND (
+                 (? IS NOT NULL AND NOT (template_slug IS ?))
+                 OR (? IS NOT NULL AND NOT (listing_url IS ?))
+                 OR NOT (thumbnail_image_url IS ?)
+                 OR NOT (thumbnail_image_secondary_url IS ?)
+                 OR NOT (carousel_image_urls_json IS ?)
+               )`,
+          )
+          .bind(
+            record.templateSlug,
+            record.listingUrl,
+            record.thumbnailImageUrl,
+            record.thumbnailImageSecondaryUrl,
+            carouselImageUrlsJson,
+            syncedAt,
+            record.id,
+            record.templateSlug,
+            record.templateSlug,
+            record.listingUrl,
+            record.listingUrl,
+            record.thumbnailImageUrl,
+            record.thumbnailImageSecondaryUrl,
+            carouselImageUrlsJson,
+          ),
+      );
+      continue;
+    }
+
+    if (record.name) {
+      statements.push(
+        db
+          .prepare(
+            `UPDATE template_documents
+             SET template_slug = COALESCE(?, template_slug),
+                 listing_url = COALESCE(?, listing_url),
+                 thumbnail_image_url = ?,
+                 thumbnail_image_secondary_url = ?,
+                 carousel_image_urls_json = ?,
+                 synced_at = ?
+             WHERE name = ?
+               AND (SELECT COUNT(*) FROM template_documents WHERE name = ?) = 1
+               AND (
+                 ? IS NULL
+                 OR NOT EXISTS (
+                   SELECT 1
+                   FROM template_documents
+                   WHERE template_slug = ?
+                     AND name != ?
+                 )
+               )
+               AND (
+                 (? IS NOT NULL AND NOT (template_slug IS ?))
+                 OR (? IS NOT NULL AND NOT (listing_url IS ?))
+                 OR NOT (thumbnail_image_url IS ?)
+                 OR NOT (thumbnail_image_secondary_url IS ?)
+                 OR NOT (carousel_image_urls_json IS ?)
+               )`,
+          )
+          .bind(
+            record.templateSlug,
+            record.listingUrl,
+            record.thumbnailImageUrl,
+            record.thumbnailImageSecondaryUrl,
+            carouselImageUrlsJson,
+            syncedAt,
+            record.name,
+            record.name,
+            record.templateSlug,
+            record.templateSlug,
+            record.name,
+            record.templateSlug,
+            record.templateSlug,
+            record.listingUrl,
+            record.listingUrl,
+            record.thumbnailImageUrl,
+            record.thumbnailImageSecondaryUrl,
+            carouselImageUrlsJson,
+          ),
+      );
+    }
+  }
+
+  let totalChanges = 0;
+  for (const group of chunk(statements, 50)) {
+    const results = await db.batch(group);
+    for (const result of results) {
+      totalChanges += result.meta?.changes ?? 0;
+    }
+  }
+
+  return totalChanges;
+}
+
+// Bulk-update creator profile URLs and avatar URLs sourced from Webflow CMS.
+// Prefer sync-record-id when available, then exact creator name for rows that
+// never received the linked creator record.
+export async function updateCreatorAvatarsFromWebflow(
+  db: D1Database,
+  records: WebflowDesignerAvatarRecord[],
+  syncedAt: string,
+  options: { matchByName?: boolean; forceMatchByName?: boolean } = {},
+): Promise<number> {
+  if (records.length === 0) return 0;
+
+  const statements: D1PreparedStatement[] = [];
+  const matchByName = options.matchByName !== false;
+  const forceMatchByName = options.forceMatchByName === true;
+
+  for (const record of records) {
+    const avatarUrl = record.avatarUrl;
+    const avatarAlt = avatarUrl ? record.avatarAlt ?? record.name : null;
+
+    if (record.syncRecordId) {
+      statements.push(
+        db
+          .prepare(
+            `UPDATE template_documents
+             SET creator_avatar_url = COALESCE(?, creator_avatar_url),
+                 creator_avatar_alt = CASE
+                   WHEN ? IS NOT NULL THEN ?
+                   ELSE creator_avatar_alt
+                 END,
+                 creator_profile_url = COALESCE(?, creator_profile_url),
+                 synced_at = ?
+             WHERE creator_record_id = ?
+               AND (
+                 (? IS NOT NULL AND NOT (creator_avatar_url IS ?))
+                 OR (? IS NOT NULL AND NOT (creator_avatar_alt IS ?))
+                 OR (? IS NOT NULL AND NOT (creator_profile_url IS ?))
+               )`,
+          )
+          .bind(
+            avatarUrl,
+            avatarUrl,
+            avatarAlt,
+            record.profileUrl,
+            syncedAt,
+            record.syncRecordId,
+            avatarUrl,
+            avatarUrl,
+            avatarUrl,
+            avatarAlt,
+            record.profileUrl,
+            record.profileUrl,
+          ),
+      );
+    }
+
+    if (!matchByName) continue;
+
+    if (forceMatchByName) {
+      statements.push(
+        db
+          .prepare(
+            `UPDATE template_documents
+             SET creator_avatar_url = COALESCE(?, creator_avatar_url),
+                 creator_avatar_alt = CASE
+                   WHEN ? IS NOT NULL THEN ?
+                   ELSE creator_avatar_alt
+                 END,
+                 creator_profile_url = COALESCE(?, creator_profile_url),
+                 creator_record_id = COALESCE(?, creator_record_id),
+                 synced_at = ?
+             WHERE creator_name = ?
+               AND (
+                 (? IS NOT NULL AND NOT (creator_avatar_url IS ?))
+                 OR (? IS NOT NULL AND NOT (creator_avatar_alt IS ?))
+                 OR (? IS NOT NULL AND NOT (creator_profile_url IS ?))
+                 OR (? IS NOT NULL AND NOT (creator_record_id IS ?))
+               )`,
+          )
+          .bind(
+            avatarUrl,
+            avatarUrl,
+            avatarAlt,
+            record.profileUrl,
+            record.syncRecordId,
+            syncedAt,
+            record.name,
+            avatarUrl,
+            avatarUrl,
+            avatarUrl,
+            avatarAlt,
+            record.profileUrl,
+            record.profileUrl,
+            record.syncRecordId,
+            record.syncRecordId,
+          ),
+      );
+    } else {
+      statements.push(
+        db
+          .prepare(
+            `UPDATE template_documents
+             SET creator_avatar_url = COALESCE(?, creator_avatar_url),
+                 creator_avatar_alt = CASE
+                   WHEN ? IS NOT NULL THEN ?
+                   ELSE creator_avatar_alt
+                 END,
+                 creator_profile_url = COALESCE(?, creator_profile_url),
+                 creator_record_id = COALESCE(NULLIF(creator_record_id, ''), ?),
+                 synced_at = ?
+             WHERE creator_name = ?
+               AND (
+                 creator_record_id IS NULL
+                 OR creator_record_id = ''
+                 OR creator_record_id = ?
+                 OR ? IS NULL
+               )
+               AND (
+                 (? IS NOT NULL AND NOT (creator_avatar_url IS ?))
+                 OR (? IS NOT NULL AND NOT (creator_avatar_alt IS ?))
+                 OR (? IS NOT NULL AND NOT (creator_profile_url IS ?))
+                 OR (? IS NOT NULL AND (creator_record_id IS NULL OR creator_record_id = ''))
+               )`,
+          )
+          .bind(
+            avatarUrl,
+            avatarUrl,
+            avatarAlt,
+            record.profileUrl,
+            record.syncRecordId,
+            syncedAt,
+            record.name,
+            record.syncRecordId,
+            record.syncRecordId,
+            avatarUrl,
+            avatarUrl,
+            avatarUrl,
+            avatarAlt,
+            record.profileUrl,
+            record.profileUrl,
+            record.syncRecordId,
+          ),
+      );
+    }
+  }
+
+  let totalChanges = 0;
+  for (const group of chunk(statements, 50)) {
+    const results = await db.batch(group);
+    for (const result of results) {
+      totalChanges += result.meta?.changes ?? 0;
+    }
+  }
+
+  return totalChanges;
+}
+
+// Some template rows have a creator display name but no linked creator record ID.
+// When another row with the same exact creator name has complete creator metadata,
+// copy that metadata across. The HAVING guard avoids ambiguous duplicate names.
+export async function backfillCreatorFieldsByName(db: D1Database, syncedAt: string): Promise<number> {
+  const result = await db
+    .prepare(
+      `WITH known_creators AS (
+         SELECT
+           creator_name,
+           MAX(creator_record_id) AS creator_record_id,
+           MAX(creator_profile_url) AS creator_profile_url,
+           MAX(creator_avatar_url) AS creator_avatar_url,
+           MAX(creator_avatar_alt) AS creator_avatar_alt
+         FROM template_documents
+         WHERE creator_name IS NOT NULL
+           AND creator_name != ''
+           AND creator_record_id IS NOT NULL
+           AND creator_record_id != ''
+           AND (
+             (creator_profile_url IS NOT NULL AND creator_profile_url != '')
+             OR (creator_avatar_url IS NOT NULL AND creator_avatar_url != '')
+           )
+         GROUP BY creator_name
+         HAVING COUNT(DISTINCT creator_record_id) = 1
+       )
+       UPDATE template_documents
+       SET creator_record_id = CASE
+             WHEN creator_record_id IS NULL OR creator_record_id = ''
+               THEN (SELECT known_creators.creator_record_id FROM known_creators WHERE known_creators.creator_name = template_documents.creator_name)
+             ELSE creator_record_id
+           END,
+           creator_profile_url = CASE
+             WHEN creator_profile_url IS NULL OR creator_profile_url = ''
+               THEN (SELECT known_creators.creator_profile_url FROM known_creators WHERE known_creators.creator_name = template_documents.creator_name)
+             ELSE creator_profile_url
+           END,
+           creator_avatar_url = CASE
+             WHEN creator_avatar_url IS NULL OR creator_avatar_url = ''
+               THEN (SELECT known_creators.creator_avatar_url FROM known_creators WHERE known_creators.creator_name = template_documents.creator_name)
+             ELSE creator_avatar_url
+           END,
+           creator_avatar_alt = CASE
+             WHEN creator_avatar_alt IS NULL OR creator_avatar_alt = ''
+               THEN COALESCE(
+                 (SELECT known_creators.creator_avatar_alt FROM known_creators WHERE known_creators.creator_name = template_documents.creator_name),
+                 creator_name
+               )
+             ELSE creator_avatar_alt
+           END,
+           synced_at = ?
+       WHERE creator_name IN (SELECT creator_name FROM known_creators)
+         AND (
+           creator_record_id IS NULL
+           OR creator_record_id = ''
+           OR creator_profile_url IS NULL
+           OR creator_profile_url = ''
+           OR creator_avatar_url IS NULL
+           OR creator_avatar_url = ''
+           OR creator_avatar_alt IS NULL
+           OR creator_avatar_alt = ''
+         )`,
+    )
+    .bind(syncedAt)
+    .run();
+
+  return result.meta?.changes ?? 0;
+}
+
+// Creator avatar/profile URL updates in Airtable do not bump the template's LMT,
+// so incremental sync misses them. This function uses the freshly-loaded creator map
+// to patch any template_document whose stored creator fields differ from current values.
+export async function backfillCreatorAvatars(
+  db: D1Database,
+  creators: Map<string, CreatorLookupValue>,
+  syncedAt: string,
+  options: { overwriteExisting?: boolean } = {},
+): Promise<number> {
+  if (creators.size === 0) return 0;
+
+  const statements: D1PreparedStatement[] = [];
+  const overwriteExisting = options.overwriteExisting === true;
+
+  for (const [creatorId, creator] of creators) {
+    const avatarUrl = creator.avatarUrl;
+    const profileUrl = creator.profileUrl || null;
+    const avatarAlt = creator.avatarAlt ?? creator.name;
+
+    // Skip creators with no useful data to backfill.
+    if (!avatarUrl && !profileUrl) continue;
+
+    if (overwriteExisting) {
+      statements.push(
+        db
+          .prepare(
+            `UPDATE template_documents
+             SET creator_avatar_url = ?,
+                 creator_avatar_alt = ?,
+                 creator_profile_url = ?,
+                 synced_at = ?
+             WHERE creator_record_id = ?
+               AND (
+                 NOT (creator_avatar_url IS ?)
+                 OR NOT (creator_profile_url IS ?)
+               )`,
+          )
+          .bind(avatarUrl, avatarAlt, profileUrl, syncedAt, creatorId, avatarUrl, profileUrl),
+      );
+      continue;
+    }
+
+    statements.push(
+      db
+        .prepare(
+          `UPDATE template_documents
+           SET creator_avatar_url = CASE
+                 WHEN ? IS NOT NULL
+                   AND (
+                     creator_avatar_url IS NULL
+                     OR creator_avatar_url = ''
+                     OR creator_avatar_url LIKE '%airtableusercontent.com%'
+                     OR creator_avatar_url LIKE '%dl.airtable.com%'
+                   )
+                   THEN ?
+                 ELSE creator_avatar_url
+               END,
+               creator_avatar_alt = CASE
+                 WHEN ? IS NOT NULL
+                   AND (
+                     creator_avatar_url IS NULL
+                     OR creator_avatar_url = ''
+                     OR creator_avatar_url LIKE '%airtableusercontent.com%'
+                     OR creator_avatar_url LIKE '%dl.airtable.com%'
+                   )
+                   THEN ?
+                 WHEN creator_avatar_alt IS NULL OR creator_avatar_alt = '' THEN ?
+                 ELSE creator_avatar_alt
+               END,
+               creator_profile_url = CASE
+                 WHEN ? IS NOT NULL AND (creator_profile_url IS NULL OR creator_profile_url = '') THEN ?
+                 ELSE creator_profile_url
+               END,
+               synced_at = ?
+           WHERE creator_record_id = ?
+             AND (
+               creator_avatar_url IS NULL
+               OR creator_avatar_url = ''
+               OR creator_avatar_url LIKE '%airtableusercontent.com%'
+               OR creator_avatar_url LIKE '%dl.airtable.com%'
+               OR creator_avatar_alt IS NULL
+               OR creator_avatar_alt = ''
+               OR creator_profile_url IS NULL
+               OR creator_profile_url = ''
+             )`,
+        )
+        .bind(avatarUrl, avatarUrl, avatarUrl, avatarAlt, avatarAlt, profileUrl, profileUrl, syncedAt, creatorId),
+    );
+  }
+
+  if (statements.length === 0) return 0;
+
+  let totalChanges = 0;
+  for (const group of chunk(statements, 50)) {
+    const results = await db.batch(group);
+    for (const result of results) {
+      totalChanges += result.meta?.changes ?? 0;
+    }
+  }
+
+  return totalChanges;
+}
+
+export async function listTemplateImageRefreshRows(
+  db: D1Database,
+  changedIds: string[] = [],
+): Promise<TemplateImageRefreshRow[]> {
+  const rowsById = new Map<string, TemplateImageRefreshRow>();
+  const uniqueChangedIds = Array.from(new Set(changedIds.filter(Boolean)));
+
+  if (uniqueChangedIds.length > 0) {
+    for (const idBatch of chunk(uniqueChangedIds, IMAGE_REFRESH_LOOKUP_BATCH_SIZE)) {
+      const changedResult = await db
+        .prepare(`${TEMPLATE_IMAGE_REFRESH_SELECT} WHERE id IN (${placeholderList(idBatch.length)})`)
+        .bind(...idBatch)
+        .all<TemplateImageRefreshRow>();
+
+      for (const row of changedResult.results ?? []) {
+        rowsById.set(row.id, row);
+      }
+    }
+  }
+
+  const staleResult = await db
+    .prepare(
+      `${TEMPLATE_IMAGE_REFRESH_SELECT}
+       WHERE ${STALE_IMAGE_WHERE}
+       ORDER BY is_featured DESC, COALESCE(popularity_score, 0) DESC, COALESCE(source_last_modified_time, '') DESC
+       LIMIT ${STALE_IMAGE_REFRESH_LIMIT}`,
+    )
+    .all<TemplateImageRefreshRow>();
+
+  for (const row of staleResult.results ?? []) {
+    if (!rowsById.has(row.id)) rowsById.set(row.id, row);
+  }
+
+  return Array.from(rowsById.values());
+}
+
+export async function listTemplateImageBackfillRows(
+  db: D1Database,
+  limit: number,
+  templateSlugs: string[] = [],
+): Promise<TemplateImageRefreshRow[]> {
+  const uniqueTemplateSlugs = Array.from(new Set(templateSlugs.map((slug) => slug.trim()).filter(Boolean)));
+  if (uniqueTemplateSlugs.length > 0) {
+    const result = await db
+      .prepare(
+        `${TEMPLATE_IMAGE_REFRESH_SELECT}
+         WHERE template_slug IN (${placeholderList(uniqueTemplateSlugs.length)})
+           AND (${STALE_IMAGE_WHERE})
+         ORDER BY is_featured DESC, COALESCE(popularity_score, 0) DESC, COALESCE(source_last_modified_time, '') DESC
+         LIMIT ?`,
+      )
+      .bind(...uniqueTemplateSlugs, limit)
+      .all<TemplateImageRefreshRow>();
+
+    return result.results ?? [];
+  }
+
+  const result = await db
+    .prepare(
+      `${TEMPLATE_IMAGE_REFRESH_SELECT}
+       WHERE ${STALE_IMAGE_WHERE}
+       ORDER BY is_featured DESC, COALESCE(popularity_score, 0) DESC, COALESCE(source_last_modified_time, '') DESC
+       LIMIT ?`,
+    )
+    .bind(limit)
+    .all<TemplateImageRefreshRow>();
+
+  return result.results ?? [];
+}
+
+export async function updateTemplateDocumentImages(
+  db: D1Database,
+  updates: TemplateImageUpdateInput[],
+  syncedAt = nowIso(),
+): Promise<number> {
+  if (updates.length === 0) return 0;
+
+  const statements = updates.map((update) =>
+    db
+      .prepare(
+        'UPDATE template_documents SET thumbnail_image_url = ?, thumbnail_image_secondary_url = ?, synced_at = ? WHERE id = ?',
+      )
+      .bind(update.thumbnailImageUrl, update.thumbnailImageSecondaryUrl, syncedAt, update.id),
+  );
+
+  for (const group of chunk(statements, 50)) {
+    await db.batch(group);
+  }
+
+  return updates.length;
+}
+
+export async function templateImageSourceStats(db: D1Database): Promise<TemplateImageSourceStats> {
+  const row = await db
+    .prepare(
+      `SELECT
+        COUNT(*) AS total_rows,
+        SUM(CASE WHEN thumbnail_image_url IS NOT NULL OR thumbnail_image_secondary_url IS NOT NULL THEN 1 ELSE 0 END) AS rows_with_image,
+        SUM(CASE
+          WHEN COALESCE(thumbnail_image_url, '') LIKE '%website-files.com%'
+            OR COALESCE(thumbnail_image_secondary_url, '') LIKE '%website-files.com%'
+            OR COALESCE(thumbnail_image_url, '') LIKE '%uploads-ssl.webflow.com%'
+            OR COALESCE(thumbnail_image_secondary_url, '') LIKE '%uploads-ssl.webflow.com%'
+          THEN 1 ELSE 0
+        END) AS rows_with_webflow_image,
+        SUM(CASE WHEN ${TEMP_ATTACHMENT_IMAGE_WHERE} THEN 1 ELSE 0 END) AS rows_with_temp_airtable_image,
+        SUM(CASE WHEN thumbnail_image_url IS NULL AND thumbnail_image_secondary_url IS NULL THEN 1 ELSE 0 END) AS rows_missing_image
+       FROM template_documents`,
+    )
+    .first<TemplateImageSourceStats>();
+
+  return {
+    total_rows: Number(row?.total_rows ?? 0),
+    rows_with_image: Number(row?.rows_with_image ?? 0),
+    rows_with_webflow_image: Number(row?.rows_with_webflow_image ?? 0),
+    rows_with_temp_airtable_image: Number(row?.rows_with_temp_airtable_image ?? 0),
+    rows_missing_image: Number(row?.rows_missing_image ?? 0),
+  };
 }
 
 export async function getSyncCursor(db: D1Database, key = 'airtable_last_modified_cursor'): Promise<string | null> {
@@ -304,6 +1070,45 @@ export async function recordSyncSummary(db: D1Database, summary: unknown, key: s
     )
     .bind(key, JSON.stringify(summary), nowIso())
     .run();
+
+  const mode = getSummaryMode(summary);
+  if (mode) await clearSyncErrorForMode(db, mode);
+}
+
+async function clearSyncErrorForMode(db: D1Database, mode: string): Promise<void> {
+  const row = await db
+    .prepare('SELECT value_json FROM sync_state WHERE key = ?')
+    .bind('last_sync_error')
+    .first<{ value_json: string }>();
+  const errorMode = getSummaryMode(parseJson(row?.value_json ?? null));
+  if (errorMode && errorMode !== mode) return;
+
+  await db.prepare('DELETE FROM sync_state WHERE key = ?').bind('last_sync_error').run();
+}
+
+export async function getSyncStateRecords(db: D1Database, keys: string[]): Promise<SyncStateRecord[]> {
+  const uniqueKeys = Array.from(new Set(keys.filter(Boolean)));
+  if (uniqueKeys.length === 0) return [];
+
+  const result = await db
+    .prepare(
+      `SELECT key, value_json, updated_at
+       FROM sync_state
+       WHERE key IN (${placeholderList(uniqueKeys.length)})
+       ORDER BY key`,
+    )
+    .bind(...uniqueKeys)
+    .all<SyncStateRecord>();
+
+  return result.results ?? [];
+}
+
+export function publicSyncStateRecord(record: SyncStateRecord) {
+  return {
+    key: record.key,
+    updated_at: record.updated_at,
+    value: parseJson(record.value_json),
+  };
 }
 
 export async function resolveAlias(db: D1Database, slugType: AliasType, input: string | null): Promise<string | null> {

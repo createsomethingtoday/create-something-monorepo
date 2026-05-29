@@ -1,0 +1,48 @@
+{
+  "schema_version": "template_guidance_rule_catalog.phase1.v0.1",
+  "status": "draft",
+  "purpose": "Versioned detector configuration for creator-safe improvement guidance. The code should consume this as policy input, not embed case-specific strings in the generator.",
+  "thresholds": {
+    "large_asset_bytes": 1000000,
+    "clipped_text_candidate_count": 30,
+    "animation_class_count": 10
+  },
+  "copy_watchlist": [
+    {
+      "id": "copy.watchlist.dthe",
+      "severity": "major",
+      "pattern": "\\bdthe\\b",
+      "evidence": "dthe",
+      "suggestion": "Fix the apparent typo to the intended word."
+    },
+    {
+      "id": "copy.watchlist.non_english_consultores",
+      "severity": "minor",
+      "pattern": "\\bconsultores\\b",
+      "evidence": "consultores",
+      "suggestion": "Use one language consistently for Marketplace demo copy."
+    },
+    {
+      "id": "copy.watchlist.missing_noun_after_ambitious",
+      "severity": "major",
+      "pattern": "partner with ambitious to turn",
+      "evidence": "We partner with ambitious to turn ideas...",
+      "suggestion": "Add the missing noun, for example ambitious teams or ambitious brands."
+    },
+    {
+      "id": "copy.watchlist.conversation_rate",
+      "severity": "minor",
+      "pattern": "\\bConversation rate\\b",
+      "evidence": "Conversation rate",
+      "suggestion": "Confirm whether this should be conversion rate."
+    }
+  ],
+  "link_label_expectations": [
+    {
+      "id": "link.label.process_to_contact",
+      "label_pattern": "^(process|how it works)$",
+      "flag_href_patterns": ["^/contact/?$"],
+      "suggestion": "Confirm whether this label should route to a Process section/page instead of Contact."
+    }
+  ]
+}

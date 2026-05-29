@@ -172,3 +172,109 @@ export interface PaginatedResponse<T> {
 	limit?: number;
 	error?: string;
 }
+
+// ============================================
+// Public Jobs Types
+// ============================================
+
+export type PublicJobProvider = 'abundance_jobs_mcp' | 'bright_data' | 'rapidapi' | 'manual' | 'unknown';
+export type PublicJobStatus = 'open' | 'closed' | 'expired' | 'unknown';
+export type PublicJobIngestionStatus = 'pending' | 'running' | 'snapshot_pending' | 'succeeded' | 'failed';
+
+export interface PublicJob {
+	id: string;
+	provider: PublicJobProvider | string;
+	source_system: string;
+	source_url?: string;
+	external_job_id: string;
+	raw_payload_hash: string;
+	title: string;
+	employer?: string;
+	city?: string;
+	state?: string;
+	country?: string;
+	location_text?: string;
+	specialty?: string;
+	discipline?: string;
+	employment_type?: string;
+	shift?: string;
+	duration?: string;
+	start_date?: string;
+	pay_min?: number;
+	pay_max?: number;
+	pay_text?: string;
+	currency?: string;
+	openings?: number;
+	status: PublicJobStatus;
+	application_url?: string;
+	posted_at?: string;
+	last_seen_at: string;
+	fetched_at: string;
+	normalized_at: string;
+	provider_snapshot_id?: string;
+	raw_payload_json: string;
+	raw_payload_expires_at?: string;
+	metadata_json: string;
+	created_at?: string;
+	updated_at?: string;
+}
+
+export interface NormalizedPublicJobInput {
+	provider: PublicJobProvider | string;
+	source_system: string;
+	source_url?: string;
+	external_job_id?: string;
+	title: string;
+	employer?: string;
+	city?: string;
+	state?: string;
+	country?: string;
+	location_text?: string;
+	specialty?: string;
+	discipline?: string;
+	employment_type?: string;
+	shift?: string;
+	duration?: string;
+	start_date?: string;
+	pay_min?: number;
+	pay_max?: number;
+	pay_text?: string;
+	currency?: string;
+	openings?: number;
+	status?: PublicJobStatus;
+	application_url?: string;
+	posted_at?: string;
+	fetched_at?: string;
+	normalized_at?: string;
+	last_seen_at?: string;
+	provider_snapshot_id?: string;
+	raw_payload: Record<string, unknown>;
+	raw_payload_expires_at?: string;
+	metadata?: Record<string, unknown>;
+}
+
+export interface PublicJobSearchFilters {
+	provider?: string;
+	source_system?: string;
+	status?: PublicJobStatus;
+	state?: string;
+	specialty?: string;
+	query?: string;
+	limit?: number;
+	offset?: number;
+}
+
+export interface PublicJobIngestionRun {
+	id: string;
+	provider: PublicJobProvider | string;
+	source_system?: string;
+	status: PublicJobIngestionStatus;
+	provider_snapshot_id?: string;
+	requested_filters_json: string;
+	result_count: number;
+	error?: string;
+	metadata_json: string;
+	started_at: string;
+	finished_at?: string;
+	created_at?: string;
+}

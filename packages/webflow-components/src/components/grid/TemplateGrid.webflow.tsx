@@ -1,0 +1,72 @@
+import { declareComponent } from '@webflow/react';
+import { props } from '@webflow/data-types';
+import { TemplateGrid } from './TemplateGrid';
+
+export default declareComponent(TemplateGrid, {
+  name: 'Template Grid',
+  description:
+    'Infinite-scroll template marketplace grid. Fetches from the template search API and renders cards with lazy loading. Drop this on category, subcategory, style, tag, or special template-list pages to replace the Webflow Collection List.',
+  group: 'Marketplace',
+  props: {
+    apiBase: props.Text({
+      name: 'API Base URL',
+      defaultValue: '',
+      tooltip:
+        'Base URL for the template search API (no trailing slash). Leave blank to use the production default: https://webflow-template-marketplace.webflow.io/templates (Cloud App proxy — CSP-safe). Override to https://webflow-template-search.createsomething.workers.dev for local dev.',
+    }),
+    categorySlug: props.Text({
+      name: 'Category Slug (preview)',
+      defaultValue: '',
+      tooltip:
+        'Category group slug for Designer preview (e.g. "architecture-and-design-websites"). In production the slug is auto-detected from the page URL (/templates/category/{slug}).',
+    }),
+    styleSlug: props.Text({
+      name: 'Style Slug (preview)',
+      defaultValue: '',
+      tooltip:
+        'Style slug for Designer preview (e.g. "modern"). In production the slug is auto-detected from the page URL (/templates/style/{slug}).',
+    }),
+    tagSlug: props.Text({
+      name: 'Tag Slug (preview)',
+      defaultValue: '',
+      tooltip:
+        'Tag slug for Designer preview (e.g. "automation"). In production the slug is auto-detected from the page URL (/templates/tag/{slug}).',
+    }),
+    scopeOverride: props.Variant({
+      name: 'Scope (preview)',
+      options: ['all', 'featured', 'free', 'landing_pages'],
+      defaultValue: 'all',
+      tooltip:
+        'For Designer preview of special pages. "all" = auto-detect from URL in production. Set "featured", "free", or "landing_pages" to preview those page types in the Designer.',
+    }),
+    initialSort: props.Variant({
+      name: 'Default Sort',
+      options: ['popular', 'newest', 'price_asc', 'price_desc'],
+      defaultValue: 'popular',
+      tooltip: 'Fallback sort when no ?sort= query param is present in the URL.',
+    }),
+    pageSize: props.Number({
+      name: 'Items Per Page',
+      defaultValue: 24,
+      tooltip: 'Number of templates to fetch per infinite-scroll batch.',
+    }),
+    showEmptyState: props.Boolean({
+      name: 'Show Empty State',
+      defaultValue: false,
+      tooltip:
+        'Render an inline no-results state. Leave off when the page already has a native Webflow/Finsweet empty-state element.',
+    }),
+    emptyTitle: props.Text({
+      name: 'Empty Title',
+      defaultValue: 'No templates found',
+    }),
+    emptyDescription: props.Text({
+      name: 'Empty Description',
+      defaultValue: 'Try a broader search or clear filters to see more templates.',
+    }),
+    emptyActionLabel: props.Text({
+      name: 'Empty Action Label',
+      defaultValue: 'Clear filters',
+    }),
+  },
+});
