@@ -13,12 +13,22 @@
 	interface Props {
 		asset: Asset;
 		showPerformance?: boolean;
+		isEditDisabled?: boolean;
+		isEditLoading?: boolean;
 		onView?: (id: string) => void;
 		onEdit?: (id: string) => void;
 		onArchive?: (id: string) => Promise<void>;
 	}
 
-	let { asset, showPerformance = false, onView, onEdit, onArchive }: Props = $props();
+	let {
+		asset,
+		showPerformance = false,
+		isEditDisabled = false,
+		isEditLoading = false,
+		onView,
+		onEdit,
+		onArchive
+	}: Props = $props();
 
 	let imageError = $state(false);
 
@@ -110,6 +120,8 @@
 			assetId={asset.id}
 			status={asset.status}
 			actions={[actionConfig.primary, ...actionConfig.secondary]}
+			{isEditDisabled}
+			{isEditLoading}
 			{onView}
 			{onEdit}
 			{onArchive}

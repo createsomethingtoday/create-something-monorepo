@@ -6,6 +6,7 @@
   import {
     Header,
     Button,
+    Dialog,
     AssetsDisplay,
     OverviewStats,
     SubmissionTracker,
@@ -14,13 +15,14 @@
   import { toast } from '$lib/stores/toast';
   import { trackEvent } from '$lib/utils/analytics';
   import { getPortfolioTitle } from '$lib/utils/portfolio-title';
+  import { LoaderCircle } from 'lucide-svelte';
 
   let { data }: { data: PageData } = $props();
 
   let searchTerm = $state('');
   let isProfileOpen = $state(false);
   let isEditModalOpen = $state(false);
-  let isLoadingEditAsset = $state(false);
+  let openingEditAssetId = $state<string | null>(null);
   let currentEditingAsset = $state<Asset | null>(null);
 
   // Lazy-loaded modal components
@@ -61,6 +63,9 @@
       : `Track published ${heroAssetLabelPlural}, upcoming submissions, and marketplace signals in one place.`
   );
   const portfolioTitle = $derived(getPortfolioTitle(data.assets || []));
+  const openingEditAssetName = $derived(
+    (data.assets || []).find((asset) => asset.id === openingEditAssetId)?.name ?? 'asset'
+  );
 
   async function handleLogout() {
     await fetch('/api/auth/logout', { method: 'POST' });
@@ -95,7 +100,16 @@
     goto(`/assets/${id}`);
   }
 
+  async function loadEditAssetModal() {
+    if (EditAssetModal) return;
+
+    const module = await import('$lib/components/EditAssetModal.svelte');
+    EditAssetModal = module.default;
+  }
+
   async function handleEditAsset(id: string) {
+    if (openingEditAssetId) return;
+
     const selectedAsset = (data.assets || []).find((asset) => asset.id === id);
     trackEvent('dashboard_asset_edit_opened', {
       asset_id: id,
@@ -104,16 +118,14 @@
       asset_subcategory: selectedAsset?.subcategory
     });
 
-    // Lazy load the EditAssetModal component
-    if (!EditAssetModal) {
-      const module = await import('$lib/components/EditAssetModal.svelte');
-      EditAssetModal = module.default;
-    }
-
-    isLoadingEditAsset = true;
+    openingEditAssetId = id;
+    currentEditingAsset = null;
     try {
-      // Fetch full asset details (includes short + long description fields)
-      const response = await fetch(`/api/assets/${id}`);
+      const [, response] = await Promise.all([
+        loadEditAssetModal(),
+        // Fetch full asset details (includes short + long description fields)
+        fetch(`/api/assets/${id}`)
+      ]);
       if (!response.ok) {
         const errorData = (await response.json().catch(() => ({}))) as { message?: string };
         throw new Error(errorData.message || 'Failed to load asset details');
@@ -127,7 +139,7 @@
       currentEditingAsset = null;
       isEditModalOpen = false;
     } finally {
-      isLoadingEditAsset = false;
+      openingEditAssetId = null;
     }
   }
 
@@ -200,6 +212,12 @@
       published_assets: assets.filter((asset) => asset.status === 'Published').length,
       draft_assets: assets.filter((asset) => asset.status === 'Draft').length
     });
+
+    const preloadTimer = window.setTimeout(() => {
+      void loadEditAssetModal();
+    }, 750);
+
+    return () => window.clearTimeout(preloadTimer);
   });
 </script>
 
@@ -274,6 +292,7 @@
           onEdit={handleEditAsset}
           onArchive={handleArchiveAsset}
           onRefresh={handleRefreshAssets}
+          {openingEditAssetId}
         />
       </section>
     </div>
@@ -282,6 +301,25 @@
   {#if isProfileOpen && EditProfileModal}
     {@const ProfileModal = EditProfileModal}
     <ProfileModal onClose={handleProfileClose} />
+  {/if}
+
+  {#if openingEditAssetId && !isEditModalOpen}
+    <Dialog
+      isOpen={true}
+      onClose={() => undefined}
+      title={`Edit ${openingEditAssetName}`}
+      size="xl"
+      closeOnBackdrop={false}
+      closeOnEscape={false}
+    >
+      <div class="edit-loading-state" role="status" aria-live="polite">
+        <LoaderCircle size={22} class="loading-spinner" />
+        <div>
+          <p class="edit-loading-title">Opening editor</p>
+          <p class="edit-loading-copy">Loading the latest marketplace fields.</p>
+        </div>
+      </div>
+    </Dialog>
   {/if}
 
   {#if isEditModalOpen && currentEditingAsset && EditAssetModal}
@@ -303,6 +341,38 @@
   .content-wrapper {
     max-width: var(--layout-content-max-width);
     margin: 0 auto;
+  }
+
+  .edit-loading-state {
+    min-height: 18rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+    color: var(--color-fg-secondary);
+  }
+
+  .edit-loading-title {
+    margin: 0;
+    color: var(--color-fg-primary);
+    font-weight: var(--font-semibold);
+  }
+
+  .edit-loading-copy {
+    margin: 0.15rem 0 0;
+    font-size: var(--text-body-sm);
+    color: var(--color-fg-muted);
+  }
+
+  :global(.loading-spinner) {
+    color: var(--color-info);
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
   }
 
   .overview-section {
