@@ -14,6 +14,7 @@ import {
   upsertChildCategoryTaxonomy,
   upsertTaxonomyMetadata,
   upsertTemplateDocuments,
+  updateTemplateImagesBySlug,
 } from './db.js';
 import { stripHtml } from './html.js';
 import { canonicalizeCategoryGroupSlug, deriveChildCategorySlug } from './slug.js';
@@ -29,6 +30,7 @@ import type {
   TemplateDocumentInput,
 } from './types.js';
 import { chunk, ensureBoolean, ensureNumber, ensureStringArray, nowIso, parseJsonArray, uniqueStrings } from './utils.js';
+import { fetchWebflowTemplateImagesPage, fetchWebflowTemplateMetadata, resolveWebflowCmsItemId } from './webflow.js';
 
 function isPublishedTemplate(record: AirtableRecord<AirtableAssetFields>): boolean {
   return record.fields['⚙️🆎Type (Text)'] === 'Template🏗️' && record.fields['🚀Marketplace Status'] === '3️⃣Published🚀';
@@ -82,6 +84,11 @@ function attachmentUrls(value: unknown): string[] {
   return value
     .map((entry) => (typeof entry === 'object' && entry && 'url' in entry ? String((entry as { url?: string }).url ?? '') : ''))
     .filter(Boolean);
+}
+
+function stripAirtableAttachmentUrl(value: string | null): string | null {
+  if (!value) return null;
+  return /airtableusercontent\.com/i.test(value) ? null : value;
 }
 
 function uniqueChildCategoryLookups(entries: ChildCategoryLookupValue[]): ChildCategoryLookupValue[] {
@@ -193,7 +200,26 @@ async function filterConflictingTemplateSlugs(
   return { documents: safeDocuments, skippedSlugConflicts };
 }
 
-function normalizeTemplateRecord(
+function filterDuplicateTemplateSlugs(
+  documents: TemplateDocumentInput[],
+): { documents: TemplateDocumentInput[]; skippedSlugConflicts: number } {
+  const safeDocuments: TemplateDocumentInput[] = [];
+  let skippedSlugConflicts = 0;
+  const seenSlugs = new Set<string>();
+
+  for (const document of documents) {
+    if (seenSlugs.has(document.templateSlug)) {
+      skippedSlugConflicts += 1;
+      continue;
+    }
+    seenSlugs.add(document.templateSlug);
+    safeDocuments.push(document);
+  }
+
+  return { documents: safeDocuments, skippedSlugConflicts };
+}
+
+function normalizeTemplateRecordBase(
   record: AirtableRecord<AirtableAssetFields>,
   lookups: LookupMaps,
   syncedAt: string,
@@ -238,8 +264,10 @@ function normalizeTemplateRecord(
     previewUrl: typeof record.fields['🔗Preview Site URL'] === 'string' ? record.fields['🔗Preview Site URL'] : null,
     websiteUrl: typeof record.fields['🔗Website URL'] === 'string' ? record.fields['🔗Website URL'] : null,
     creatorName: typeof record.fields['🎨Creator Name'] === 'string' ? record.fields['🎨Creator Name'] : null,
-    thumbnailImageUrl: attachmentUrl(record.fields['🖼️Thumbnail Image']),
-    thumbnailImageSecondaryUrl: attachmentUrl(record.fields['🖼️Thumbnail Image (Secondary)']),
+    thumbnailImageUrl: stripAirtableAttachmentUrl(attachmentUrl(record.fields['🖼️Thumbnail Image'])),
+    thumbnailImageSecondaryUrl: stripAirtableAttachmentUrl(
+      attachmentUrl(record.fields['🖼️Thumbnail Image (Secondary)']),
+    ),
     carouselImageUrls: attachmentUrls(record.fields['🖼️Carousel Images']),
     descriptionShort,
     descriptionLongHtml,
@@ -268,6 +296,46 @@ function normalizeTemplateRecord(
     sourceLastModifiedTime: typeof record.fields['📅LMT'] === 'string' ? record.fields['📅LMT'] : null,
     syncedAt,
   };
+}
+
+async function normalizeTemplateRecord(
+  env: Env,
+  record: AirtableRecord<AirtableAssetFields>,
+  lookups: LookupMaps,
+  syncedAt: string,
+): Promise<TemplateDocumentInput | null> {
+  const document = normalizeTemplateRecordBase(record, lookups, syncedAt);
+  if (!document) return null;
+
+  const cmsItemId = resolveWebflowCmsItemId(record.fields['🥞CMS Record ID']);
+  const webflowMetadata = await fetchWebflowTemplateMetadata(env, cmsItemId);
+  const templateSlug = webflowMetadata.templateSlug ?? document.templateSlug;
+
+  return {
+    ...document,
+    templateSlug,
+    listingUrl: normalizeListingUrl(record.fields['🔗Listing URL'], templateSlug),
+    thumbnailImageUrl: webflowMetadata.thumbnailImageUrl ?? document.thumbnailImageUrl,
+    thumbnailImageSecondaryUrl: webflowMetadata.thumbnailImageSecondaryUrl ?? document.thumbnailImageSecondaryUrl,
+  };
+}
+
+async function normalizeTemplateRecords(
+  env: Env,
+  records: Array<AirtableRecord<AirtableAssetFields>>,
+  lookups: LookupMaps,
+  syncedAt: string,
+): Promise<TemplateDocumentInput[]> {
+  const normalized: TemplateDocumentInput[] = [];
+
+  for (const recordGroup of chunk(records, 6)) {
+    const documents = await Promise.all(
+      recordGroup.map((record) => normalizeTemplateRecord(env, record, lookups, syncedAt)),
+    );
+    normalized.push(...documents.filter((value): value is TemplateDocumentInput => Boolean(value)));
+  }
+
+  return normalized;
 }
 
 function normalizeChildCategoryTaxonomy(lookups: LookupMaps): ChildCategoryTaxonomyInput[] {
@@ -404,21 +472,20 @@ function normalizeTaxonomyMetadata(lookups: LookupMaps, syncedAt: string): Taxon
 async function runFullSync(env: Env): Promise<SyncSummary> {
   const startedAt = nowIso();
   const [lookups, assets] = await Promise.all([loadLookupMaps(env), fetchPublishedTemplateAssets(env)]);
-  const documents = assets
-    .map((record) => normalizeTemplateRecord(record, lookups, startedAt))
-    .filter((value): value is NonNullable<typeof value> => Boolean(value));
+  const documents = await normalizeTemplateRecords(env, assets, lookups, startedAt);
+  const filtered = filterDuplicateTemplateSlugs(documents);
 
   await clearIndex(env.DB);
   await upsertChildCategoryTaxonomy(env.DB, normalizeChildCategoryTaxonomy(lookups));
   await upsertTaxonomyMetadata(env.DB, normalizeTaxonomyMetadata(lookups, startedAt));
-  await upsertTemplateDocuments(env.DB, documents);
+  await upsertTemplateDocuments(env.DB, filtered.documents);
 
   const summary: SyncSummary = {
     mode: 'full',
     started_at: startedAt,
     finished_at: nowIso(),
     fetched_records: assets.length,
-    indexed_records: documents.length,
+    indexed_records: filtered.documents.length,
     removed_records: 0,
     cursor: startedAt,
   };
@@ -438,7 +505,7 @@ async function runIncrementalSync(env: Env): Promise<SyncSummary> {
   const toDelete: string[] = [];
 
   for (const record of assets) {
-    const normalized = normalizeTemplateRecord(record, lookups, startedAt);
+    const normalized = await normalizeTemplateRecord(env, record, lookups, startedAt);
     if (normalized) {
       toUpsert.push(normalized);
     } else {
@@ -446,17 +513,19 @@ async function runIncrementalSync(env: Env): Promise<SyncSummary> {
     }
   }
 
+  const filtered = await filterConflictingTemplateSlugs(env.DB, toUpsert);
+
   if (toDelete.length > 0) await deleteTemplateDocuments(env.DB, toDelete);
   await upsertChildCategoryTaxonomy(env.DB, normalizeChildCategoryTaxonomy(lookups));
   await upsertTaxonomyMetadata(env.DB, normalizeTaxonomyMetadata(lookups, startedAt));
-  if (toUpsert.length > 0) await upsertTemplateDocuments(env.DB, toUpsert);
+  if (filtered.documents.length > 0) await upsertTemplateDocuments(env.DB, filtered.documents);
 
   const summary: SyncSummary = {
     mode: 'incremental',
     started_at: startedAt,
     finished_at: nowIso(),
     fetched_records: assets.length,
-    indexed_records: toUpsert.length,
+    indexed_records: filtered.documents.length,
     removed_records: toDelete.length,
     cursor: startedAt,
   };
@@ -490,9 +559,7 @@ export async function syncTemplateBySlug(env: Env, templateSlug: string): Promis
 
   const startedAt = nowIso();
   const [lookups, assets] = await Promise.all([loadLookupMaps(env), fetchTemplateAssetBySlug(env, normalizedSlug)]);
-  const normalized = assets
-    .map((record) => normalizeTemplateRecord(record, lookups, startedAt))
-    .filter((value): value is NonNullable<typeof value> => Boolean(value));
+  const normalized = await normalizeTemplateRecords(env, assets, lookups, startedAt);
 
   let status: TemplateSlugSyncSummary['status'] = 'not_found';
   let skippedSlugConflicts = 0;
@@ -542,9 +609,7 @@ export async function backfillCmsCategoryPage(
 ): Promise<CmsCategoryBackfillSummary> {
   const startedAt = nowIso();
   const [lookups, page] = await Promise.all([loadLookupMaps(env), fetchPublishedTemplateAssetsPage(env, offset ?? undefined)]);
-  const documents = page.records
-    .map((record) => normalizeTemplateRecord(record, lookups, startedAt))
-    .filter((value): value is NonNullable<typeof value> => Boolean(value));
+  const documents = await normalizeTemplateRecords(env, page.records, lookups, startedAt);
   const filtered = await filterConflictingTemplateSlugs(env.DB, documents);
 
   await upsertChildCategoryTaxonomy(env.DB, normalizeChildCategoryTaxonomy(lookups));
@@ -564,6 +629,43 @@ export async function backfillCmsCategoryPage(
   };
 
   await recordSyncSummary(env.DB, summary, 'cms_category_backfill_latest');
+  return summary;
+}
+
+export interface WebflowImageRepairSummary {
+  mode: 'webflow-image-repair';
+  started_at: string;
+  finished_at: string;
+  fetched_records: number;
+  updated_records: number;
+  offset: number;
+  next_offset: number | null;
+  total_records: number;
+  has_next_page: boolean;
+}
+
+export async function repairWebflowImagesPage(
+  env: Env,
+  offset: number,
+  limit = 100,
+): Promise<WebflowImageRepairSummary> {
+  const startedAt = nowIso();
+  const page = await fetchWebflowTemplateImagesPage(env, offset, limit);
+  const updatedRecords = await updateTemplateImagesBySlug(env.DB, page.items, startedAt);
+
+  const summary: WebflowImageRepairSummary = {
+    mode: 'webflow-image-repair',
+    started_at: startedAt,
+    finished_at: nowIso(),
+    fetched_records: page.items.length,
+    updated_records: updatedRecords,
+    offset: page.offset,
+    next_offset: page.nextOffset,
+    total_records: page.total,
+    has_next_page: page.hasNextPage,
+  };
+
+  await recordSyncSummary(env.DB, summary, 'webflow_image_repair_latest');
   return summary;
 }
 

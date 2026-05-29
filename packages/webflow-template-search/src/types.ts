@@ -17,6 +17,10 @@ export interface Env {
   DEFAULT_CLIENT_MODE?: string;
   ENVIRONMENT?: string;
   SYNC_ADMIN_TOKEN?: string;
+  CMS_READ_ONLY?: string;
+  WEBFLOW_API_TOKEN?: string;
+  WEBFLOW_DATA_API_TOKEN?: string;
+  WEBFLOW_TEMPLATE_COLLECTION_ID?: string;
 }
 
 export interface AirtableAttachment {
@@ -61,6 +65,7 @@ export interface AirtableAssetFields extends Record<string, unknown> {
   '🥞CMS Slug'?: string;
   'Slug (from 🥞CMS Sync Records)'?: string[] | string;
   '🥞CMS Slug (formula)'?: string;
+  '🥞CMS Record ID'?: string[] | string;
   '🎨Creator Name'?: string;
   '🖼️Thumbnail Image'?: AirtableAttachment[];
   '🖼️Thumbnail Image (Secondary)'?: AirtableAttachment[];

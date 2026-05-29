@@ -54,6 +54,7 @@ export const ASSET_FIELDS = [
   '🥞CMS Slug',
   'Slug (from 🥞CMS Sync Records)',
   '🥞CMS Slug (formula)',
+  '🥞CMS Record ID',
   '🎨Creator Name',
   '🖼️Thumbnail Image',
   '🖼️Thumbnail Image (Secondary)',

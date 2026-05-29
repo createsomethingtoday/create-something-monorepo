@@ -4,7 +4,13 @@ import { corsPreflight, jsonResponse, textResponse } from './http.js';
 import { parseSearchParams } from './query.js';
 import { searchTemplates } from './search.js';
 import { suggestTemplates } from './suggest.js';
-import { backfillCmsCategoryPage, repairParentTaxonomy, syncTemplateBySlug, syncTemplates } from './sync.js';
+import {
+  backfillCmsCategoryPage,
+  repairParentTaxonomy,
+  repairWebflowImagesPage,
+  syncTemplateBySlug,
+  syncTemplates,
+} from './sync.js';
 import { getTemplatePageMetadata, getTemplateTaxonomyMetadata } from './taxonomy.js';
 import type { Env } from './types.js';
 
@@ -100,6 +106,14 @@ export default {
         const authError = validateAdminToken(request, env);
         if (authError) return authError;
         return jsonResponse(request, env, await backfillCmsCategoryPage(env, url.searchParams.get('offset')));
+      }
+
+      if (url.pathname === '/api/templates/admin/repair-images' && request.method === 'POST') {
+        const authError = validateAdminToken(request, env);
+        if (authError) return authError;
+        const offset = Number(url.searchParams.get('offset') ?? '0') || 0;
+        const limit = Number(url.searchParams.get('limit') ?? '100') || 100;
+        return jsonResponse(request, env, await repairWebflowImagesPage(env, offset, limit));
       }
 
       if (url.pathname === '/api/templates/admin/repair-taxonomy' && request.method === 'POST') {

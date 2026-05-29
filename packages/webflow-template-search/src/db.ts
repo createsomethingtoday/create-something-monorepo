@@ -9,6 +9,12 @@ import type {
 } from './types.js';
 import { chunk, nowIso } from './utils.js';
 
+export interface TemplateImagePatch {
+  templateSlug: string;
+  thumbnailImageUrl: string | null;
+  thumbnailImageSecondaryUrl: string | null;
+}
+
 const UPSERT_TEMPLATE_SQL = `
   INSERT INTO template_documents (
     id,
@@ -108,6 +114,43 @@ export async function clearIndex(db: D1Database): Promise<void> {
     DELETE FROM taxonomy_metadata;
     DELETE FROM template_documents;
   `);
+}
+
+export async function updateTemplateImagesBySlug(
+  db: D1Database,
+  patches: TemplateImagePatch[],
+  syncedAt: string = nowIso(),
+): Promise<number> {
+  const filtered = patches.filter((patch) => patch.templateSlug && (patch.thumbnailImageUrl || patch.thumbnailImageSecondaryUrl));
+  if (filtered.length === 0) return 0;
+
+  let updated = 0;
+  for (const group of chunk(filtered, 50)) {
+    const matched = await db
+      .prepare(`SELECT COUNT(*) AS total FROM template_documents WHERE template_slug IN (${placeholderList(group.length)})`)
+      .bind(...group.map((patch) => patch.templateSlug))
+      .first<{ total: number }>();
+
+    await db.batch(
+      group.map((patch) =>
+        db
+          .prepare(
+            `
+            UPDATE template_documents
+            SET
+              thumbnail_image_url = COALESCE(?, thumbnail_image_url),
+              thumbnail_image_secondary_url = COALESCE(?, thumbnail_image_secondary_url),
+              synced_at = ?
+            WHERE template_slug = ?
+          `,
+          )
+          .bind(patch.thumbnailImageUrl, patch.thumbnailImageSecondaryUrl, syncedAt, patch.templateSlug),
+      ),
+    );
+    updated += matched?.total ?? 0;
+  }
+
+  return updated;
 }
 
 export async function ensureChildCategoryTaxonomySchema(db: D1Database): Promise<void> {

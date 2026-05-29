@@ -481,6 +481,144 @@ describe('webflow-template-search worker', () => {
     }
   });
 
+  it('prefers live Webflow CMS thumbnail URLs over expiring Airtable attachment URLs', async () => {
+    const airtableImageAsset = {
+      ...PUBLISHED_ASSETS[0],
+      id: 'recAgentflow',
+      fields: {
+        ...PUBLISHED_ASSETS[0].fields,
+        '🥞CMS Record ID': ['cms-agentflow'],
+        '🖼️Thumbnail Image': [{ url: 'https://v5.airtableusercontent.com/stale-primary.webp' }],
+        '🖼️Thumbnail Image (Secondary)': [{ url: 'https://v5.airtableusercontent.com/stale-secondary.webp' }],
+      },
+    };
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: [airtableImageAsset],
+      categoryGroups: LOOKUPS.categoryGroups,
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+      webflowItems: {
+        'cms-agentflow': {
+          fieldData: {
+            slug: 'agentflow-current-website-template',
+            thumbnail: {
+              url: 'https://cdn.prod.website-files.com/site/cms-agentflow-primary.webp',
+            },
+            'thumbnail-secondary': {
+              url: 'https://cdn.prod.website-files.com/site/cms-agentflow-secondary.webp',
+            },
+          },
+        },
+      },
+    });
+    const { env, close } = createTestEnv();
+    env.CMS_READ_ONLY = 'test-webflow-token';
+
+    try {
+      const rebuild = await callWorker(
+        new Request('https://templates.test/api/templates/admin/rebuild', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(rebuild.status).toBe(200);
+
+      const response = await callWorker(
+        new Request('https://templates.test/api/templates/search?q=agentflow&include=items,count&page_size=10'),
+        env,
+      );
+      const payload = (await response.json()) as {
+        items: Array<{
+          template_slug: string;
+          url: string;
+          thumbnail_image_url: string | null;
+          thumbnail_image_secondary_url: string | null;
+        }>;
+      };
+
+      expect(payload.items[0]).toMatchObject({
+        template_slug: 'agentflow-current-website-template',
+        url: 'https://webflow.com/templates/html/agentflow-current-website-template',
+        thumbnail_image_url: 'https://cdn.prod.website-files.com/site/cms-agentflow-primary.webp',
+        thumbnail_image_secondary_url: 'https://cdn.prod.website-files.com/site/cms-agentflow-secondary.webp',
+      });
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
+  it('repairs already-indexed thumbnails from the Webflow CMS list by slug', async () => {
+    const staleIndexedAsset = {
+      ...PUBLISHED_ASSETS[0],
+      id: 'recAgentflow',
+      fields: {
+        ...PUBLISHED_ASSETS[0].fields,
+        '🖼️Thumbnail Image': [{ url: 'https://v5.airtableusercontent.com/stale-primary.webp' }],
+        '🖼️Thumbnail Image (Secondary)': [{ url: 'https://v5.airtableusercontent.com/stale-secondary.webp' }],
+      },
+    };
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: [staleIndexedAsset],
+      categoryGroups: LOOKUPS.categoryGroups,
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+      webflowListItems: [
+        {
+          fieldData: {
+            slug: 'agentflow-website-template',
+            thumbnail: { url: 'https://cdn.prod.website-files.com/site/repaired-primary.webp' },
+            'thumbnail-secondary': { url: 'https://cdn.prod.website-files.com/site/repaired-secondary.webp' },
+          },
+        },
+      ],
+    });
+    const { env, close } = createTestEnv();
+    env.CMS_READ_ONLY = 'test-webflow-token';
+
+    try {
+      const rebuild = await callWorker(
+        new Request('https://templates.test/api/templates/admin/rebuild', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(rebuild.status).toBe(200);
+
+      const repair = await callWorker(
+        new Request('https://templates.test/api/templates/admin/repair-images?offset=0&limit=1', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      const repairPayload = (await repair.json()) as { fetched_records: number; has_next_page: boolean };
+      expect(repair.status).toBe(200);
+      expect(repairPayload.fetched_records).toBe(1);
+      expect(repairPayload.has_next_page).toBe(false);
+
+      const response = await callWorker(
+        new Request('https://templates.test/api/templates/search?q=agentflow&include=items,count&page_size=10'),
+        env,
+      );
+      const payload = (await response.json()) as {
+        items: Array<{ thumbnail_image_url: string | null; thumbnail_image_secondary_url: string | null }>;
+      };
+
+      expect(payload.items[0]).toMatchObject({
+        thumbnail_image_url: 'https://cdn.prod.website-files.com/site/repaired-primary.webp',
+        thumbnail_image_secondary_url: 'https://cdn.prod.website-files.com/site/repaired-secondary.webp',
+      });
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
   it('falls back to live CMS category fields when the Algolia child category field is empty', async () => {
     const cmsCategoryOnlyAsset = {
       ...PUBLISHED_ASSETS[2],
