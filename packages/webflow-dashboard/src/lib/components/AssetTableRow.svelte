@@ -3,6 +3,7 @@
 	import ActionsDropdown from './ActionsDropdown.svelte';
 	import type { Asset } from '$lib/server/airtable';
 	import { getAssetActionConfig, normalizeAssetStatus } from '$lib/utils/asset-actions';
+	import { LoaderCircle } from 'lucide-svelte';
 	import {
 		formatCompactCurrency,
 		formatCompactNumber,
@@ -13,9 +14,12 @@
 	interface Props {
 		asset: Asset;
 		showPerformance?: boolean;
+		isViewDisabled?: boolean;
+		isViewLoading?: boolean;
 		isEditDisabled?: boolean;
 		isEditLoading?: boolean;
 		onView?: (id: string) => void;
+		onPreloadView?: (id: string) => void;
 		onEdit?: (id: string) => void;
 		onArchive?: (id: string) => Promise<void>;
 	}
@@ -23,9 +27,12 @@
 	let {
 		asset,
 		showPerformance = false,
+		isViewDisabled = false,
+		isViewLoading = false,
 		isEditDisabled = false,
 		isEditLoading = false,
 		onView,
+		onPreloadView,
 		onEdit,
 		onArchive
 	}: Props = $props();
@@ -35,6 +42,15 @@
 	const actionConfig = $derived(getAssetActionConfig(asset.status));
 	const cleanedStatus = $derived(normalizeAssetStatus(asset.status));
 	const showMetrics = $derived(!['Upcoming', 'Rejected'].includes(cleanedStatus));
+
+	function handleView() {
+		if (isViewDisabled) return;
+		onView?.(asset.id);
+	}
+
+	function preloadView() {
+		onPreloadView?.(asset.id);
+	}
 
 	// Tufte: Show relationships, not just numbers
 	// Conversion rate = purchases / viewers (key performance indicator)
@@ -56,7 +72,11 @@
 		<button
 			type="button"
 			class="asset-thumbnail-link"
-			onclick={() => onView?.(asset.id)}
+			class:loading={isViewLoading}
+			disabled={isViewDisabled}
+			onmouseenter={preloadView}
+			onfocus={preloadView}
+			onclick={handleView}
 			aria-label={`Open ${asset.name}`}
 		>
 			{#if asset.thumbnailUrl && !imageError}
@@ -74,8 +94,21 @@
 		</button>
 	</TableCell>
 	<TableCell class="asset-title-cell">
-		<button type="button" class="asset-name-link" onclick={() => onView?.(asset.id)}>
-			<span class="asset-name">{asset.name}</span>
+		<button
+			type="button"
+			class="asset-name-link"
+			class:loading={isViewLoading}
+			disabled={isViewDisabled}
+			onmouseenter={preloadView}
+			onfocus={preloadView}
+			onclick={handleView}
+		>
+			<span class="asset-name-row">
+				{#if isViewLoading}
+					<LoaderCircle size={14} class="row-spinner" />
+				{/if}
+				<span class="asset-name">{asset.name}</span>
+			</span>
 			{#if asset.category}
 				<span class="asset-meta">{asset.category}</span>
 			{/if}
@@ -120,9 +153,12 @@
 			assetId={asset.id}
 			status={asset.status}
 			actions={[actionConfig.primary, ...actionConfig.secondary]}
+			{isViewDisabled}
+			{isViewLoading}
 			{isEditDisabled}
 			{isEditLoading}
 			{onView}
+			{onPreloadView}
 			{onEdit}
 			{onArchive}
 		/>
@@ -161,6 +197,17 @@
 		outline-offset: 2px;
 	}
 
+	.asset-thumbnail-link:disabled,
+	.asset-name-link:disabled {
+		cursor: wait;
+		opacity: 0.65;
+	}
+
+	.asset-thumbnail-link.loading,
+	.asset-name-link.loading {
+		opacity: 1;
+	}
+
 	.thumbnail {
 		width: 30px;
 		height: 38px;
@@ -188,6 +235,25 @@
 		letter-spacing: 0;
 		color: var(--color-fg-primary);
 		line-height: 1.16;
+	}
+
+	.asset-name-row {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.35rem;
+		min-width: 0;
+	}
+
+	:global(.row-spinner) {
+		flex-shrink: 0;
+		color: var(--color-info);
+		animation: spin 0.8s linear infinite;
+	}
+
+	@keyframes spin {
+		to {
+			transform: rotate(360deg);
+		}
 	}
 
 	.asset-meta {
