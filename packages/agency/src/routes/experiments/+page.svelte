@@ -41,6 +41,7 @@
 	title="All Experiments ({data.papers.length})"
 	description="Browse agency experiments and case studies. Real projects, real results."
 	propertyName="agency"
+	noindex={true}
 	breadcrumbs={[
 		{ name: 'Home', url: '/' },
 		{ name: 'Experiments', url: '/experiments' }

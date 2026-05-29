@@ -1,0 +1,8 @@
+{
+  "schema_version": "template_review_coordinator_output_request.v0.1",
+  "request_id": "fixture_final_quality_band_blocked",
+  "intended_audience": "reviewer",
+  "requested_lanes": ["creator_guidance_draft"],
+  "requested_outputs": ["creator_guidance_draft", "final_quality_band"],
+  "input_sources": ["published_site_validation", "validator_app_submission_contract"]
+}

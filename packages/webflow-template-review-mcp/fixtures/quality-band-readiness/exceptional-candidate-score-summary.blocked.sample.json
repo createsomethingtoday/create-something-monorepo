@@ -1,0 +1,18 @@
+{
+  "generated_at": "2026-05-27T00:00:00.000Z",
+  "total_rows": 25,
+  "scored_output_count": 25,
+  "false_exceptional_rate": 0.04,
+  "approved_good_overpromotion_rate": 0.08,
+  "missed_exceptional_candidate_rate": 0.5,
+  "provider_failure_rate": 0,
+  "safety_failure_count": 0,
+  "promotion_gate": {
+    "status": "blocked",
+    "reasons": [
+      "false_exceptional_rate 0.04 exceeded 0",
+      "approved_good_overpromotion_rate 0.08 exceeded 0",
+      "missed_exceptional_rate 0.5 exceeded 0"
+    ]
+  }
+}

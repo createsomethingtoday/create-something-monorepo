@@ -37,6 +37,12 @@ export interface NewsletterRequest {
 	website?: string; // Honeypot field - should be empty
 	turnstileToken?: string;
 	source?: string; // Optional source override, defaults to property
+	sessionId?: string;
+	sourceProperty?: Property;
+	landingUrl?: string;
+	referrer?: string;
+	intent?: string;
+	lane?: string;
 }
 
 /**
@@ -69,16 +75,20 @@ interface KVNamespace {
  */
 interface D1Database {
 	prepare(query: string): D1PreparedStatement;
+	batch<T = unknown>(statements: D1PreparedStatement[]): Promise<Array<D1Result<T>>>;
 }
 
 interface D1PreparedStatement {
 	bind(...args: unknown[]): D1PreparedStatement;
 	run(): Promise<D1Result>;
+	first<T = unknown>(): Promise<T | null>;
+	all<T = unknown>(): Promise<D1Result<T>>;
 }
 
-interface D1Result {
+interface D1Result<T = unknown> {
 	success: boolean;
 	meta: { changes: number };
+	results?: T[];
 }
 
 /**

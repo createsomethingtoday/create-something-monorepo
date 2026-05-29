@@ -1,9 +1,44 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { contactSchema, parseBody, type ContactInput } from '@create-something/canon/validation';
+import {
+	recordServerConversion,
+	upsertWarmLead,
+	type ServerConversionInput,
+	type WarmLeadInput
+} from '@create-something/canon/analytics';
 import { createLogger } from '@create-something/canon/utils';
 
 const logger = createLogger('ContactAPI');
+const validSourceProperties = new Set(['space', 'io', 'agency', 'ltd', 'lms']);
+type ContactLeadStage = NonNullable<WarmLeadInput['stage']>;
+
+function normalizeSourceProperty(value: string | undefined): ServerConversionInput['sourceProperty'] {
+	return value && validSourceProperties.has(value)
+		? (value as ServerConversionInput['sourceProperty'])
+		: undefined;
+}
+
+function resolveLeadStage(intent: string | undefined): ContactLeadStage {
+	switch (intent) {
+		case 'governance-checklist':
+			return 'awareness';
+		case 'workflow-mapping':
+			return 'decision';
+		case 'workflow-teardown':
+		default:
+			return 'consideration';
+	}
+}
+
+function escapeHtml(value: string | null | undefined): string {
+	return (value ?? '')
+		.replace(/&/g, '&amp;')
+		.replace(/</g, '&lt;')
+		.replace(/>/g, '&gt;')
+		.replace(/"/g, '&quot;')
+		.replace(/'/g, '&#39;');
+}
 
 export const POST: RequestHandler = async ({ request, platform }) => {
 	try {
@@ -19,7 +54,23 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 			);
 		}
 
-		const { name, email, message, service, company, assessment_id } = parseResult.data as ContactInput;
+		const {
+			name,
+			email,
+			message,
+			service,
+			company,
+			assessment_id,
+			source = 'contact',
+			intent = 'workflow-mapping',
+			lane = 'not_sure',
+			campaign,
+			source_property,
+			session_id,
+			landing_url,
+			referrer
+		} = parseResult.data as ContactInput;
+		const leadStage = resolveLeadStage(intent);
 
 		// Access Cloudflare bindings via platform.env
 		if (!platform?.env) {
@@ -62,6 +113,50 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 			logger.warn('Contact submissions table not found - skipping DB insert', { error: dbError });
 		}
 
+		try {
+			await recordServerConversion(
+				env.DB,
+				{
+					property: 'agency',
+					action: 'contact_submitted',
+					sessionId: session_id,
+					sourceProperty: normalizeSourceProperty(source_property),
+					url: landing_url || 'https://createsomething.agency/contact',
+					referrer,
+					target: '/contact',
+					metadata: {
+						source,
+						intent,
+						lane,
+						campaign,
+						leadStage,
+						service,
+						companyProvided: Boolean(company),
+						assessmentConverted: Boolean(assessment_id)
+					}
+				},
+				{
+					userAgent: request.headers.get('user-agent') || undefined,
+					ipCountry: request.headers.get('cf-ipcountry') || undefined
+				}
+			);
+
+			await upsertWarmLead(env.DB, {
+				name,
+				email,
+				company,
+				source: 'website',
+				sourceDetail: `contact:${source}:${intent}:${lane}`,
+				campaign,
+				stage: leadStage,
+				serviceInterest: service || lane,
+				notes: message,
+				touchedAt: new Date().toISOString()
+			});
+		} catch (conversionError) {
+			logger.warn('Contact conversion tracking failed', { error: conversionError });
+		}
+
 		// Send auto-response to the person who contacted us
 		const autoResponsePromise = fetch('https://api.resend.com/emails', {
 			method: 'POST',
@@ -89,11 +184,12 @@ export const POST: RequestHandler = async ({ request, platform }) => {
     <div class="content">
       <h1>Thanks for reaching out</h1>
       <p>Hi ${name},</p>
-      <p>I've received your inquiry${service ? ` about ${service}` : ''} and will get back to you within 24 hours to scope your first outcome stack.</p>
+      <p>I've received your inquiry${service ? ` about ${escapeHtml(service)}` : ''} and will get back to you within 24 hours to scope your first outcome stack.</p>
       <div class="message-box">
-        ${service ? `<p style="color: rgba(255, 255, 255, 0.4); font-size: 14px; margin-bottom: 10px;">Service: ${service}</p>` : ''}
+        ${service ? `<p style="color: rgba(255, 255, 255, 0.4); font-size: 14px; margin-bottom: 10px;">Service: ${escapeHtml(service)}</p>` : ''}
+        <p style="color: rgba(255, 255, 255, 0.4); font-size: 14px; margin-bottom: 10px;">Next step: ${escapeHtml(intent)} / ${escapeHtml(lane)}</p>
         <p style="color: rgba(255, 255, 255, 0.4); font-size: 14px; margin-bottom: 10px;">Your Message:</p>
-        <p style="color: rgba(255, 255, 255, 0.9);">${message.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')}</p>
+        <p style="color: rgba(255, 255, 255, 0.9);">${escapeHtml(message).replace(/\n/g, '<br>')}</p>
       </div>
       <p>— Micah Johnson<br>CREATE SOMETHING Agency</p>
     </div>
@@ -130,10 +226,14 @@ export const POST: RequestHandler = async ({ request, platform }) => {
     <h2>${service ? `Service Inquiry: ${service}` : 'New Contact Form Submission'}</h2>
   </div>
   <div class="content">
-    <p><strong>From:</strong> ${name} (${email})</p>
-    ${company ? `<p><strong>Company:</strong> ${company}</p>` : ''}
-    ${service ? `<p><strong>Service:</strong> ${service}</p>` : ''}
-    <p><strong>Message:</strong><br>${message.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')}</p>
+    <p><strong>From:</strong> ${escapeHtml(name)} (${escapeHtml(email)})</p>
+    ${company ? `<p><strong>Company:</strong> ${escapeHtml(company)}</p>` : ''}
+    ${service ? `<p><strong>Service:</strong> ${escapeHtml(service)}</p>` : ''}
+    <p><strong>Intent:</strong> ${escapeHtml(intent)}</p>
+    <p><strong>Lane:</strong> ${escapeHtml(lane)}</p>
+    <p><strong>Lead stage:</strong> ${leadStage}</p>
+    ${campaign ? `<p><strong>Campaign:</strong> ${escapeHtml(campaign)}</p>` : ''}
+    <p><strong>Message:</strong><br>${escapeHtml(message).replace(/\n/g, '<br>')}</p>
     <p><strong>Submitted:</strong> ${new Date().toUTCString()}</p>
   </div>
 </body>

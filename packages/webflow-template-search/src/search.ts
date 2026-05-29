@@ -37,7 +37,11 @@ function sortClause(sort: TemplateSort): string {
 }
 
 interface FilterOptions {
+  excludeCategoryGroup?: boolean;
   excludeStyles?: boolean;
+  excludeStyleSlug?: boolean;
+  excludeTags?: boolean;
+  excludeTagSlug?: boolean;
   excludeTypes?: boolean;
   excludeChildCategory?: boolean;
 }
@@ -48,6 +52,8 @@ interface SqlParts {
   binds: unknown[];
   queryMode: boolean;
 }
+
+const FREE_TEMPLATE_CLAUSE = '(d.price = 0 OR (d.price IS NULL AND d.is_free = 1))';
 
 async function resolveAliases(env: Env, params: SearchParams): Promise<SearchParams> {
   return {
@@ -70,11 +76,11 @@ function buildSqlParts(params: SearchParams, options: FilterOptions = {}): SqlPa
   }
 
   if (params.scope === 'featured') clauses.push('d.is_featured = 1');
-  if (params.scope === 'free') clauses.push('d.is_free = 1');
+  if (params.scope === 'free') clauses.push(FREE_TEMPLATE_CLAUSE);
   if (params.scope === 'landing_pages') clauses.push('d.is_landing_page = 1');
-  if (params.freeOnly) clauses.push('d.is_free = 1');
+  if (params.freeOnly) clauses.push(FREE_TEMPLATE_CLAUSE);
 
-  if (params.categoryGroupSlug) {
+  if (params.categoryGroupSlug && !options.excludeCategoryGroup) {
     clauses.push('EXISTS (SELECT 1 FROM json_each(d.category_group_slugs_json) WHERE json_each.value = ?)');
     binds.push(params.categoryGroupSlug);
   }
@@ -86,11 +92,28 @@ function buildSqlParts(params: SearchParams, options: FilterOptions = {}): SqlPa
     binds.push(params.childCategorySlug);
   }
 
+  if (params.styleSlug && !options.excludeStyleSlug) {
+    clauses.push('EXISTS (SELECT 1 FROM template_styles ts WHERE ts.template_document_id = d.id AND ts.style_slug = ?)');
+    binds.push(params.styleSlug);
+  }
+
   if (!options.excludeStyles && params.styles.length > 0) {
     clauses.push(
       `EXISTS (SELECT 1 FROM template_styles ts WHERE ts.template_document_id = d.id AND ts.style_slug IN (${placeholderList(params.styles.length)}))`,
     );
     binds.push(...params.styles);
+  }
+
+  if (params.tagSlug && !options.excludeTagSlug) {
+    clauses.push('EXISTS (SELECT 1 FROM json_each(d.tag_slugs_json) WHERE json_each.value = ?)');
+    binds.push(params.tagSlug);
+  }
+
+  if (!options.excludeTags && params.tags.length > 0) {
+    clauses.push(
+      `EXISTS (SELECT 1 FROM json_each(d.tag_slugs_json) WHERE json_each.value IN (${placeholderList(params.tags.length)}))`,
+    );
+    binds.push(...params.tags);
   }
 
   if (!options.excludeTypes && params.types.length > 0) {
@@ -139,6 +162,50 @@ async function resolveCategoryGroupSlugForChild(env: Env, childCategorySlug: str
   return row?.slug ?? null;
 }
 
+async function loadCategoryPills(env: Env, params: SearchParams): Promise<Array<{ name: string; slug: string; count: number }>> {
+  const scopedParams: SearchParams = {
+    ...params,
+    categoryGroupSlug: null,
+    childCategorySlug: null,
+    styles: [],
+    tags: [],
+    types: [],
+  };
+  const sqlParts = buildSqlParts(scopedParams, {
+    excludeCategoryGroup: true,
+    excludeChildCategory: true,
+    excludeStyles: true,
+    excludeTags: true,
+    excludeTypes: true,
+  });
+
+  const result = await env.DB
+    .prepare(`
+      WITH filtered AS (
+        SELECT d.id, d.category_groups_json, d.category_group_slugs_json
+        ${sqlParts.fromClause}
+        ${sqlParts.whereClause}
+      )
+      SELECT
+        names.value AS name,
+        slugs.value AS slug,
+        COUNT(DISTINCT filtered.id) AS count
+      FROM filtered
+      JOIN json_each(filtered.category_group_slugs_json) slugs
+      JOIN json_each(filtered.category_groups_json) names ON names.key = slugs.key
+      GROUP BY slugs.value, names.value
+      ORDER BY names.value ASC
+    `)
+    .bind(...sqlParts.binds)
+    .all<PillRow>();
+
+  return (result.results ?? []).map((row) => ({
+    name: row.name,
+    slug: row.slug,
+    count: Number(row.count),
+  }));
+}
+
 async function loadFacetStyles(env: Env, params: SearchParams): Promise<FacetStyleRow[]> {
   const sqlParts = buildSqlParts(params, { excludeStyles: true, excludeTypes: true });
   const result = await env.DB
@@ -185,9 +252,15 @@ async function loadSubcategoryPills(env: Env, params: SearchParams): Promise<Arr
     categoryGroupSlug: groupSlug,
     childCategorySlug: null,
     styles: [],
+    tags: [],
     types: [],
   };
-  const sqlParts = buildSqlParts(scopedParams, { excludeChildCategory: true, excludeStyles: true, excludeTypes: true });
+  const sqlParts = buildSqlParts(scopedParams, {
+    excludeChildCategory: true,
+    excludeStyles: true,
+    excludeTags: true,
+    excludeTypes: true,
+  });
 
   const result = await env.DB
     .prepare(`
@@ -253,24 +326,30 @@ export async function searchTemplates(env: Env, rawParams: SearchParams): Promis
   const sqlParts = buildSqlParts(params);
   const offset = (params.page - 1) * params.pageSize;
   const orderClause = queryOrderClause(params, sqlParts.queryMode);
+  const includeItems = params.include.items;
+  const includeFacets = params.include.facets;
+  const includePills = params.include.pills;
 
-  const [totalItems, rows, styleFacets, typeFacets, pills] = await Promise.all([
-    getTotalCount(env.DB, sqlParts),
-    env.DB
-      .prepare(`
-        SELECT
-          d.*,
-          ${sqlParts.queryMode ? 'bm25(template_documents_fts, 10.0, 6.0, 1.5, 2.5, 2.0, 1.2, 0.8)' : 'NULL'} AS text_rank
-        ${sqlParts.fromClause}
-        ${sqlParts.whereClause}
-        ORDER BY ${orderClause}
-        LIMIT ? OFFSET ?
-      `)
-      .bind(...sqlParts.binds, params.pageSize, offset)
-      .all<DocumentRow>(),
-    loadFacetStyles(env, params),
-    loadFacetTypes(env, params),
-    loadSubcategoryPills(env, params),
+  const [totalItems, rows, styleFacets, typeFacets, categoryPills, pills] = await Promise.all([
+    includeItems ? getTotalCount(env.DB, sqlParts) : Promise.resolve(0),
+    includeItems
+      ? env.DB
+          .prepare(`
+            SELECT
+              d.*,
+              ${sqlParts.queryMode ? 'bm25(template_documents_fts, 10.0, 6.0, 1.5, 2.5, 2.0, 1.2, 0.8)' : 'NULL'} AS text_rank
+            ${sqlParts.fromClause}
+            ${sqlParts.whereClause}
+            ORDER BY ${orderClause}
+            LIMIT ? OFFSET ?
+          `)
+          .bind(...sqlParts.binds, params.pageSize, offset)
+          .all<DocumentRow>()
+      : Promise.resolve({ results: [] as DocumentRow[] }),
+    includeFacets ? loadFacetStyles(env, params) : Promise.resolve([]),
+    includeFacets ? loadFacetTypes(env, params) : Promise.resolve([]),
+    includePills ? loadCategoryPills(env, params) : Promise.resolve([]),
+    includePills ? loadSubcategoryPills(env, params) : Promise.resolve([]),
   ]);
 
   const rowResults = rows.results ?? [];
@@ -298,10 +377,13 @@ export async function searchTemplates(env: Env, rawParams: SearchParams): Promis
       preview_url: row.preview_url,
       website_url: row.website_url,
       creator_name: row.creator_name,
+      creator_profile_url: row.creator_profile_url,
+      creator_avatar_url: row.creator_avatar_url,
+      creator_avatar_alt: row.creator_avatar_alt,
       thumbnail_image_url: row.thumbnail_image_url,
       thumbnail_image_secondary_url: row.thumbnail_image_secondary_url,
       price: row.price,
-      is_free: row.is_free === 1,
+      is_free: typeof row.price === 'number' ? row.price === 0 : row.is_free === 1,
       is_featured: row.is_featured === 1,
       template_type: row.template_type,
       popularity_score: row.popularity_score,
@@ -333,7 +415,10 @@ export async function searchTemplates(env: Env, rawParams: SearchParams): Promis
       scope: params.scope,
       category_group_slug: params.categoryGroupSlug,
       child_category_slug: params.childCategorySlug ? childSlugMap[params.childCategorySlug] ?? params.childCategorySlug : null,
+      style_slug: params.styleSlug,
+      tag_slug: params.tagSlug,
       styles: params.styles,
+      tags: params.tags,
       types: params.types,
       free_only: params.freeOnly,
     },
@@ -341,6 +426,13 @@ export async function searchTemplates(env: Env, rawParams: SearchParams): Promis
       styles: styleFacets.map((row) => ({ name: row.name, slug: row.slug, count: Number(row.count) })),
       types: typeFacets.map((row) => ({ value: row.value, count: Number(row.count) })),
     },
+    category_pills: categoryPills.map((pill) => ({
+      name: pill.name,
+      slug: pill.slug,
+      url: `https://webflow.com/templates/category/${pill.slug}`,
+      count: Number(pill.count),
+      active: pill.slug === params.categoryGroupSlug,
+    })),
     subcategory_pills: pills.map((pill) => {
       const publicSlug = childSlugMap[pill.slug] ?? pill.slug;
       return {

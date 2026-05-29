@@ -1,7 +1,22 @@
 import type { PageServerLoad } from './$types';
 import { error } from '@sveltejs/kit';
+import { recordServerConversion, upsertWarmLead } from '@create-something/canon/analytics';
+import type { Property } from '@create-something/canon/analytics';
 
-export const load: PageServerLoad = async ({ url, platform }) => {
+const validProperties: Property[] = ['space', 'io', 'agency', 'ltd', 'lms'];
+
+function propertyFromSource(source: unknown): Property {
+	if (typeof source !== 'string') return 'io';
+
+	const normalized = source.toLowerCase();
+	if (normalized === 'learn') return 'lms';
+	const exact = validProperties.find((property) => property === normalized);
+	if (exact) return exact;
+
+	return validProperties.find((property) => normalized.startsWith(property)) ?? 'io';
+}
+
+export const load: PageServerLoad = async ({ url, platform, request }) => {
 	const token = url.searchParams.get('token');
 
 	if (!token) {
@@ -18,7 +33,7 @@ export const load: PageServerLoad = async ({ url, platform }) => {
 		// Find subscriber by confirmation token
 		const subscriber = await db
 			.prepare(
-				`SELECT id, email, confirmed_at, unsubscribed_at FROM newsletter_subscribers
+				`SELECT id, email, confirmed_at, unsubscribed_at, source FROM newsletter_subscribers
 				 WHERE confirmation_token = ?`
 			)
 			.bind(token)
@@ -55,6 +70,8 @@ export const load: PageServerLoad = async ({ url, platform }) => {
 
 		// Send welcome email now that subscription is confirmed
 		const email = subscriber.email as string;
+		const source = subscriber.source as string | null;
+		const property = propertyFromSource(source);
 
 		// Get unsubscribe token from the subscriber record
 		const subscriberData = await db
@@ -119,6 +136,39 @@ export const load: PageServerLoad = async ({ url, platform }) => {
 			} catch (emailError) {
 				console.error('Failed to send welcome email:', emailError);
 			}
+		}
+
+		try {
+			await recordServerConversion(
+				db,
+				{
+					property,
+					action: 'newsletter_confirmed',
+					url: url.toString(),
+					target: '/confirm',
+					metadata: {
+						source: source || property,
+						surface: 'newsletter_confirmation'
+					}
+				},
+				{
+					userAgent: request.headers.get('user-agent') || undefined,
+					ipCountry: request.headers.get('cf-ipcountry') || undefined
+				}
+			);
+
+			await upsertWarmLead(db, {
+				name: 'Newsletter subscriber',
+				email,
+				source: 'website',
+				sourceDetail: `newsletter:${source || property}`,
+				stage: 'awareness',
+				serviceInterest: 'newsletter',
+				notes: `Confirmed newsletter subscription from ${source || property}.`,
+				touchedAt: new Date().toISOString()
+			});
+		} catch (conversionError) {
+			console.warn('Newsletter confirmation conversion tracking failed:', conversionError);
 		}
 
 		return {

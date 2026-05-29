@@ -71,25 +71,50 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		const savedMatches: Match[] = [];
 
 		for (const result of matchResults) {
-			const matchId = generateId();
 			const deliverablesJson = deliverables ? JSON.stringify(deliverables) : null;
 			const breakdownJson = JSON.stringify(result.fit_breakdown);
-
-			await platform.env.DB.prepare(`
-				INSERT INTO matches (id, seeker_id, talent_id, job_title, job_description, deliverables, budget, deadline, fit_score, fit_breakdown, status)
-				VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'suggested')
+			const existingMatch = await platform.env.DB.prepare(`
+				SELECT id, created_at FROM matches
+				WHERE seeker_id = ? AND talent_id = ? AND job_title = ?
 			`).bind(
-				matchId,
 				seeker_id.trim(),
 				result.talent.id,
-				job_title.trim(),
-				job_description?.trim() || null,
-				deliverablesJson,
-				budget || null,
-				deadline || null,
-				result.fit_score,
-				breakdownJson
-			).run();
+				job_title.trim()
+			).first<{ id: string; created_at?: string }>();
+
+			const matchId = existingMatch?.id ?? generateId();
+
+			if (existingMatch) {
+				await platform.env.DB.prepare(`
+					UPDATE matches
+					SET job_description = ?, deliverables = ?, budget = ?, deadline = ?, fit_score = ?, fit_breakdown = ?, status = 'suggested', resolved_at = NULL
+					WHERE id = ?
+				`).bind(
+					job_description?.trim() || null,
+					deliverablesJson,
+					budget || null,
+					deadline || null,
+					result.fit_score,
+					breakdownJson,
+					matchId
+				).run();
+			} else {
+				await platform.env.DB.prepare(`
+					INSERT INTO matches (id, seeker_id, talent_id, job_title, job_description, deliverables, budget, deadline, fit_score, fit_breakdown, status)
+					VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'suggested')
+				`).bind(
+					matchId,
+					seeker_id.trim(),
+					result.talent.id,
+					job_title.trim(),
+					job_description?.trim() || null,
+					deliverablesJson,
+					budget || null,
+					deadline || null,
+					result.fit_score,
+					breakdownJson
+				).run();
+			}
 
 			savedMatches.push({
 				id: matchId,
@@ -103,7 +128,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 				fit_score: result.fit_score,
 				fit_breakdown: result.fit_breakdown,
 				status: 'suggested',
-				created_at: new Date().toISOString()
+				created_at: existingMatch?.created_at || new Date().toISOString()
 			});
 		}
 

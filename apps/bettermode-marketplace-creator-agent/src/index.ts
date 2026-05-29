@@ -426,6 +426,19 @@ async function generateDraftForPost(
   const email = author?.email || '';
   const isTopLevel = !post.parentId;
 
+  // Skip drafting when the author is internal Webflow staff (e.g. team
+  // announcements like "Interactions with GSAP training"). The agent's
+  // job is to draft admin replies to creator questions, not to reply
+  // to its own team's announcements.
+  if (isStaffAuthorEmail(email, env)) {
+    console.log('skipping draft for staff author', {
+      postId,
+      authorEmail: email,
+      reason: 'matches staff domain allowlist',
+    });
+    return;
+  }
+
   // Prefer the Dify agent when configured: it owns the prompt, the policy
   // knowledge base, and the connected bettermode-creator MCP, so it can
   // ground answers in actual marketplace policy. Falls back to direct
@@ -524,6 +537,26 @@ function shouldHandleSpace(spaceId: string | null | undefined, env: Env): boolea
     return true;
   }
   return !!spaceId && spaceId === required;
+}
+
+// Returns true when the post author's email matches a configured staff
+// domain (comma-separated in BETTERMODE_STAFF_AUTHOR_DOMAINS, defaulting
+// to `webflow.com`). Staff-authored posts are typically announcements
+// from the Marketplace team itself, not creator questions the agent
+// should draft replies to.
+function isStaffAuthorEmail(
+  email: string | undefined | null,
+  env: Env,
+): boolean {
+  if (!email) return false;
+  const lower = email.trim().toLowerCase();
+  if (!lower.includes('@')) return false;
+  const configured = env.BETTERMODE_STAFF_AUTHOR_DOMAINS;
+  const domains = (configured && configured.trim() ? configured : 'webflow.com')
+    .split(',')
+    .map((d) => d.trim().toLowerCase())
+    .filter(Boolean);
+  return domains.some((d) => lower.endsWith(`@${d}`));
 }
 
 function resolvePostId(webhook: WebhookPayload): string | undefined {

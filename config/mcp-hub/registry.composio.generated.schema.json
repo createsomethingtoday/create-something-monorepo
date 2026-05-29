@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://create-something.dev/schemas/mcp-hub-registry.composio.generated.schema.json",
+  "title": "MCP Hub Registry — composio-generated layer",
+  "description": "Schema for config/mcp-hub/registry.composio.generated.json. This layer is overwritten by scripts/composio-registry-sync.ts. It contains only composio-toolkit-* servers and composio-* bundles, and must NOT contain a defaults block — defaults live in the core layer.",
+  "type": "object",
+  "required": ["version", "servers", "bundles"],
+  "additionalProperties": false,
+  "properties": {
+    "version": { "type": "integer", "const": 1 },
+    "servers": {
+      "type": "object",
+      "propertyNames": {
+        "pattern": "^composio-toolkit-",
+        "description": "Every server in the composio-generated layer must start with composio-toolkit-."
+      },
+      "additionalProperties": { "type": "object" }
+    },
+    "bundles": {
+      "type": "object",
+      "propertyNames": {
+        "anyOf": [
+          { "const": "composio-all" },
+          { "pattern": "^composio-category-" }
+        ],
+        "description": "Bundles in the composio-generated layer must be composio-all or start with composio-category-."
+      },
+      "additionalProperties": {
+        "type": "array",
+        "items": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

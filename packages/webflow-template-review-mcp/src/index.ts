@@ -32,7 +32,16 @@ async function main() {
   });
 
   registerResources(server, () => client);
-  registerTools(server, () => client);
+  registerTools(
+    server,
+    () => client,
+    () => null,
+    {
+      webflowValidationWorkerUrl: process.env.WEBFLOW_TEMPLATE_VALIDATION_WORKER_URL,
+      gsapValidationWorkerUrl: process.env.GSAP_VALIDATION_WORKER_URL,
+      timeoutMs: process.env.TEMPLATE_REVIEW_VALIDATION_TIMEOUT_MS ? Number(process.env.TEMPLATE_REVIEW_VALIDATION_TIMEOUT_MS) : undefined,
+    },
+  );
   registerPrompts(server);
 
   const transport = new StdioServerTransport();

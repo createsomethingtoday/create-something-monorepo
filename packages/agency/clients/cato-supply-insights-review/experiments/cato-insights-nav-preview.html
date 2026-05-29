@@ -1,0 +1,553 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Cato Insights Navigation Preview</title>
+    <style>
+      :root {
+        --ink: #2b1d15;
+        --muted: #6e625b;
+        --line: #ded8d2;
+        --paper: #f6f1eb;
+        --panel: #fffaf4;
+        --accent: #758c42;
+        --accent-dark: #4f6429;
+        --clay: #c87a4a;
+        --cream: #fbf7f0;
+        --shadow: 0 24px 80px rgba(43, 29, 21, 0.12);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at 12% 20%, rgba(117, 140, 66, 0.12), transparent 24rem),
+          linear-gradient(180deg, #fffaf4 0%, var(--paper) 100%);
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", sans-serif;
+      }
+
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      .page {
+        min-height: 100vh;
+      }
+
+      .nav-shell {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        border-bottom: 1px solid rgba(43, 29, 21, 0.1);
+        background: rgba(255, 250, 244, 0.92);
+        backdrop-filter: blur(16px);
+      }
+
+      .nav {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 2rem;
+        width: min(1180px, calc(100% - 48px));
+        min-height: 76px;
+        margin: 0 auto;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+        font-weight: 700;
+        letter-spacing: 0;
+      }
+
+      .brand-mark {
+        display: grid;
+        width: 34px;
+        height: 34px;
+        place-items: center;
+        border: 1px solid rgba(43, 29, 21, 0.12);
+        border-radius: 6px;
+        background: var(--ink);
+        color: var(--cream);
+        font-size: 0.9rem;
+      }
+
+      .links {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        color: var(--muted);
+        font-size: 0.94rem;
+      }
+
+      .nav-link,
+      .nav-trigger {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        min-height: 40px;
+        border: 0;
+        border-radius: 6px;
+        padding: 0 0.85rem;
+        background: transparent;
+        color: inherit;
+        font: inherit;
+        cursor: pointer;
+      }
+
+      .nav-trigger {
+        background: #ebe5dd;
+        color: var(--ink);
+      }
+
+      .chevron {
+        width: 0.55rem;
+        height: 0.55rem;
+        border-right: 1.5px solid currentColor;
+        border-bottom: 1.5px solid currentColor;
+        transform: translateY(-1px) rotate(45deg);
+      }
+
+      .actions {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+      }
+
+      .button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 42px;
+        border: 1px solid var(--ink);
+        border-radius: 6px;
+        padding: 0 1rem;
+        font-size: 0.92rem;
+        font-weight: 650;
+      }
+
+      .button.primary {
+        background: var(--ink);
+        color: var(--cream);
+      }
+
+      .mega {
+        border-top: 1px solid rgba(43, 29, 21, 0.08);
+        background: rgba(255, 250, 244, 0.98);
+        box-shadow: var(--shadow);
+      }
+
+      .mega-inner {
+        display: grid;
+        grid-template-columns: minmax(220px, 0.78fr) minmax(0, 1.35fr) minmax(280px, 0.9fr);
+        gap: 2rem;
+        width: min(1180px, calc(100% - 48px));
+        margin: 0 auto;
+        padding: 2rem 0;
+      }
+
+      .eyebrow {
+        margin: 0 0 0.75rem;
+        color: var(--accent-dark);
+        font-size: 0.76rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin: 0;
+      }
+
+      .menu-title {
+        margin-bottom: 0.8rem;
+        font-size: clamp(1.9rem, 4vw, 3.8rem);
+        line-height: 0.96;
+        letter-spacing: 0;
+      }
+
+      .menu-copy,
+      .hero-copy,
+      .card p,
+      .archive-card p {
+        color: var(--muted);
+        line-height: 1.55;
+      }
+
+      .menu-list {
+        display: grid;
+        gap: 0.65rem;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .menu-item {
+        display: grid;
+        gap: 0.24rem;
+        border-radius: 6px;
+        padding: 0.85rem;
+      }
+
+      .menu-item.featured {
+        background: #ebe5dd;
+      }
+
+      .menu-item strong {
+        font-size: 1rem;
+      }
+
+      .menu-item span {
+        color: var(--muted);
+        font-size: 0.9rem;
+        line-height: 1.4;
+      }
+
+      .flagship {
+        display: grid;
+        align-content: space-between;
+        min-height: 280px;
+        border: 1px solid rgba(43, 29, 21, 0.1);
+        border-radius: 8px;
+        padding: 1.25rem;
+        background:
+          linear-gradient(135deg, rgba(117, 140, 66, 0.88), rgba(43, 29, 21, 0.9)),
+          url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='640' height='400' viewBox='0 0 640 400'%3E%3Cpath fill='%23fbf7f0' fill-opacity='.14' d='M0 260c70-40 145-38 224-10 88 31 157 19 224-30 62-45 122-57 192-31v211H0z'/%3E%3Ccircle cx='488' cy='104' r='84' fill='%23fbf7f0' fill-opacity='.12'/%3E%3C/svg%3E");
+        background-size: cover;
+        color: var(--cream);
+      }
+
+      .flagship-label {
+        width: fit-content;
+        border: 1px solid rgba(255, 250, 244, 0.28);
+        border-radius: 99px;
+        padding: 0.35rem 0.65rem;
+        color: rgba(255, 250, 244, 0.82);
+        font-size: 0.75rem;
+        font-weight: 750;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+      }
+
+      .flagship h3 {
+        max-width: 16ch;
+        margin-bottom: 0.7rem;
+        font-size: 1.55rem;
+        line-height: 1.04;
+        letter-spacing: 0;
+      }
+
+      .flagship p {
+        max-width: 31ch;
+        color: rgba(255, 250, 244, 0.78);
+        line-height: 1.45;
+      }
+
+      .flagship-link,
+      .text-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        width: fit-content;
+        margin-top: 1rem;
+        font-weight: 750;
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: minmax(0, 0.9fr) minmax(280px, 0.65fr);
+        gap: 2.5rem;
+        width: min(1180px, calc(100% - 48px));
+        margin: 0 auto;
+        padding: 5rem 0 4rem;
+      }
+
+      .hero h1 {
+        max-width: 12ch;
+        font-size: clamp(3rem, 7vw, 6.6rem);
+        line-height: 0.93;
+        letter-spacing: 0;
+      }
+
+      .hero-copy {
+        max-width: 44rem;
+        margin-top: 1.2rem;
+        font-size: 1.08rem;
+      }
+
+      .subscribe-panel {
+        align-self: end;
+        border: 1px solid rgba(43, 29, 21, 0.12);
+        border-radius: 8px;
+        padding: 1.15rem;
+        background: var(--panel);
+        box-shadow: 0 16px 50px rgba(43, 29, 21, 0.08);
+      }
+
+      .subscribe-panel h2 {
+        margin-bottom: 0.45rem;
+        font-size: 1.18rem;
+        line-height: 1.2;
+      }
+
+      .subscribe-form {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 0.6rem;
+        margin-top: 1rem;
+      }
+
+      input {
+        min-height: 44px;
+        width: 100%;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        padding: 0 0.85rem;
+        background: #fff;
+        color: var(--ink);
+        font: inherit;
+      }
+
+      .section {
+        width: min(1180px, calc(100% - 48px));
+        margin: 0 auto;
+        padding: 2.25rem 0 4rem;
+      }
+
+      .section-head {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        gap: 1.5rem;
+        margin-bottom: 1.2rem;
+      }
+
+      .section-head h2 {
+        font-size: clamp(1.7rem, 3vw, 2.6rem);
+        line-height: 1.04;
+        letter-spacing: 0;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 1rem;
+      }
+
+      .archive-card {
+        min-height: 250px;
+        border: 1px solid rgba(43, 29, 21, 0.1);
+        border-radius: 8px;
+        padding: 1rem;
+        background: rgba(255, 250, 244, 0.76);
+      }
+
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        width: fit-content;
+        min-height: 28px;
+        border: 1px solid rgba(117, 140, 66, 0.24);
+        border-radius: 999px;
+        padding: 0 0.62rem;
+        background: rgba(117, 140, 66, 0.08);
+        color: var(--accent-dark);
+        font-size: 0.76rem;
+        font-weight: 800;
+      }
+
+      .archive-card h3 {
+        margin: 1rem 0 0.6rem;
+        font-size: 1.2rem;
+        line-height: 1.15;
+      }
+
+      .meta {
+        margin-top: 1.1rem;
+        color: var(--muted);
+        font-size: 0.82rem;
+      }
+
+      @media (max-width: 900px) {
+        .links,
+        .actions {
+          display: none;
+        }
+
+        .mega-inner,
+        .hero {
+          grid-template-columns: 1fr;
+        }
+
+        .grid {
+          grid-template-columns: 1fr;
+        }
+
+        .subscribe-form {
+          grid-template-columns: 1fr;
+        }
+
+        .section-head {
+          display: grid;
+        }
+      }
+
+      @media (max-width: 520px) {
+        .nav,
+        .mega-inner,
+        .hero,
+        .section {
+          width: min(100% - 28px, 1180px);
+        }
+
+        .hero {
+          padding-top: 3rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <header class="nav-shell">
+        <nav class="nav" aria-label="Main navigation">
+          <a class="brand" href="#">
+            <span class="brand-mark">C</span>
+            <span>Cato Supply</span>
+          </a>
+          <div class="links" aria-label="Primary">
+            <a class="nav-link" href="#">About Us</a>
+            <button class="nav-trigger" type="button" aria-expanded="true">
+              Insights
+              <span class="chevron" aria-hidden="true"></span>
+            </button>
+            <a class="nav-link" href="#">Case Studies</a>
+            <a class="nav-link" href="#">Technology</a>
+          </div>
+          <div class="actions">
+            <a class="button" href="#">Product Search</a>
+            <a class="button primary" href="#">Contact Us</a>
+          </div>
+        </nav>
+        <section class="mega" aria-label="Insights menu preview">
+          <div class="mega-inner">
+            <div>
+              <p class="eyebrow">Insights</p>
+              <h2 class="menu-title">Procurement intelligence for resilient care.</h2>
+              <p class="menu-copy">
+                Reports, research, resources, and Cato updates organized around supply continuity.
+              </p>
+            </div>
+            <ul class="menu-list">
+              <li>
+                <a class="menu-item" href="/insights">
+                  <strong>Insights Home</strong>
+                  <span>All reports, research, resources, and newsroom updates.</span>
+                </a>
+              </li>
+              <li>
+                <a class="menu-item featured" href="/resiliency-reports">
+                  <strong>Resiliency Report Alerts</strong>
+                  <span>Subscribe for supply risk alerts and browse the report archive.</span>
+                </a>
+              </li>
+              <li>
+                <a class="menu-item" href="/cato-research">
+                  <strong>Cato Research</strong>
+                  <span>Whitepapers, annual reports, and Cato's procurement point of view.</span>
+                </a>
+              </li>
+              <li>
+                <a class="menu-item" href="/resource-library">
+                  <strong>Resource Library</strong>
+                  <span>Guides, explainers, webinars, and operational resources.</span>
+                </a>
+              </li>
+              <li>
+                <a class="menu-item" href="/newsroom">
+                  <strong>Newsroom</strong>
+                  <span>Press releases, events, company news, and Cato in the news.</span>
+                </a>
+              </li>
+            </ul>
+            <a class="flagship" href="/resiliency-reports">
+              <span class="flagship-label">Signature product</span>
+              <span>
+                <h3>Resiliency Report Alerts</h3>
+                <p>Stay ahead of healthcare supply disruptions with recurring market signals and practical risk analysis.</p>
+                <span class="flagship-link">Subscribe and view archive</span>
+              </span>
+            </a>
+          </div>
+        </section>
+      </header>
+
+      <main>
+        <section class="hero">
+          <div>
+            <p class="eyebrow">Resiliency Report Alerts</p>
+            <h1>Supply risk signals for care continuity.</h1>
+            <p class="hero-copy">
+              Get recurring Cato alerts on shortage patterns, supplier disruption, and sourcing risk,
+              then browse the archive as new reports are published.
+            </p>
+          </div>
+          <aside class="subscribe-panel" aria-label="Subscribe preview">
+            <p class="eyebrow">Subscribe</p>
+            <h2>Receive new Resiliency Report Alerts.</h2>
+            <p class="menu-copy">A focused email entry point for supply chain, procurement, and clinical operations teams.</p>
+            <form class="subscribe-form">
+              <label>
+                <span class="eyebrow">Work email</span>
+                <input type="email" placeholder="name@healthsystem.org">
+              </label>
+              <button class="button primary" type="submit">Subscribe</button>
+            </form>
+          </aside>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">Archive</p>
+              <h2>Latest Resiliency Reports</h2>
+            </div>
+            <a class="text-link" href="/resiliency-reports">View all reports</a>
+          </div>
+          <div class="grid">
+            <article class="archive-card">
+              <span class="pill">Resiliency Report</span>
+              <h3>2026 Supply Disruption Preparedness Brief</h3>
+              <p>A planning brief for healthcare procurement teams preparing for supplier shortages, backorders, and regional disruption risk.</p>
+              <p class="meta">May 8, 2026</p>
+            </article>
+            <article class="archive-card">
+              <span class="pill">Cato Research</span>
+              <h3>How Intelligent Procurement Expands Supply Optionality</h3>
+              <p>Research on market visibility and alternative evaluation before shortages become operational blockers.</p>
+              <p class="meta">May 8, 2026</p>
+            </article>
+            <article class="archive-card">
+              <span class="pill">Resource Library</span>
+              <h3>Medical Supply Sourcing Checklist</h3>
+              <p>A practical checklist for evaluating disrupted SKUs, substitution options, supplier readiness, and delivery timelines.</p>
+              <p class="meta">May 8, 2026</p>
+            </article>
+          </div>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>

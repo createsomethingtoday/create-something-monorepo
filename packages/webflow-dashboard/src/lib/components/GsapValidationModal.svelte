@@ -60,9 +60,12 @@
 	}
 </script>
 
-<Dialog {isOpen} onClose={handleClose} title="GSAP Validation" size="lg">
+<Dialog {isOpen} onClose={handleClose} title="GSAP Check" size="lg">
 	<div class="modal-content">
-		<p class="subtitle">Test your Webflow templates for GSAP compliance before submission</p>
+		<p class="subtitle">
+			Run a fast published-site check for GSAP, legacy interaction, and custom-code compliance.
+			This does not replace the required Webflow Way Validator app pass.
+		</p>
 
 		<!-- URL Input Form -->
 		<form onsubmit={handleValidation} class="url-form">
@@ -76,14 +79,14 @@
 						placeholder="https://your-site.webflow.io"
 						disabled={isValidating}
 					/>
-				<Button type="submit" disabled={isValidating || !url.trim()} size="sm">
-					{#if isValidating}
-						<Loader2 class="spinner" size={16} />
-						Validating...
-					{:else}
-						Validate
-					{/if}
-				</Button>
+					<Button type="submit" disabled={isValidating || !url.trim()} size="sm">
+						{#if isValidating}
+							<Loader2 class="spinner" size={16} />
+							Checking...
+						{:else}
+							Run Check
+						{/if}
+					</Button>
 					{#if validationResults}
 						<Button type="button" onclick={handleClear} variant="secondary" size="sm">
 							Clear
@@ -97,16 +100,16 @@
 			{/if}
 		</form>
 
-	<!-- Validation Progress -->
-	{#if isValidating}
-		<div class="progress-card">
-			<Loader2 class="spinner large" size={24} />
-			<div>
-				<p class="progress-title">Analyzing template...</p>
-				<p class="progress-subtitle">Checking for GSAP compliance</p>
+		<!-- Validation Progress -->
+		{#if isValidating}
+			<div class="progress-card">
+				<Loader2 class="spinner large" size={24} />
+				<div>
+					<p class="progress-title">Analyzing template...</p>
+					<p class="progress-subtitle">Checking GSAP and custom-code compliance</p>
+				</div>
 			</div>
-		</div>
-	{/if}
+		{/if}
 
 		<!-- Validation Results -->
 		{#if validationResults}
@@ -114,7 +117,7 @@
 				<!-- Overall Status Header -->
 				<div class="results-header" class:passed={validationResults.passed} class:failed={!validationResults.passed}>
 					<div class="results-title">
-						<h3>Validation {validationResults.passed ? 'Passed' : 'Failed'}</h3>
+						<h3>GSAP Check {validationResults.passed ? 'Passed' : 'Failed'}</h3>
 						<p class="results-url">{validationResults.url}</p>
 					</div>
 					<div class="status-badge" class:passed={validationResults.passed}>
@@ -126,7 +129,7 @@
 				<div class="stats-grid">
 					<div class="stat">
 						<div class="stat-value">{validationResults.summary.passRate}%</div>
-						<div class="stat-label">Pass Rate</div>
+						<div class="stat-label">GSAP Pass Rate</div>
 					</div>
 					<div class="stat">
 						<div class="stat-value">{validationResults.summary.totalPages}</div>
@@ -183,7 +186,7 @@
 				<!-- View Details Link -->
 				<div class="results-footer">
 					<Button variant="secondary" size="sm" onclick={handleViewDetails}>
-						View Full Details
+						View GSAP Details
 					</Button>
 					<a href="/validation/playground" class="playground-link">
 						Open in Playground →

@@ -7,16 +7,18 @@
 
 import type { RequestHandler } from './$types';
 import { json, error } from '@sveltejs/kit';
-import { createStripeClient, getProductIdByStripePriceId, HANDLED_WEBHOOK_EVENTS } from '$lib/services/stripe';
+import { createStripeClient, getProductIdByStripePriceId } from '$lib/services/stripe';
 import { createPersistentLogger, createLogger, type Logger } from '@create-something/canon/utils';
 import type Stripe from 'stripe';
 import { normalizeAgencyServiceTier } from '$lib/server/mcp-entitlements';
 
 export const POST: RequestHandler = async ({ request, platform }) => {
+	const waitUntil = platform?.context?.waitUntil?.bind(platform.context);
 	// Create persistent logger for agent-queryable error tracking
 	const logger: Logger = platform?.env?.DB
 		? createPersistentLogger('StripeWebhook', {
 				db: platform.env.DB,
+				waitUntil,
 				minPersistLevel: 'warn'
 			}, {
 				path: '/api/stripe/webhook',
@@ -51,10 +53,173 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		throw error(400, 'Invalid webhook signature');
 	}
 
-	// Log event for debugging
-	logger.info('Webhook received', { eventType: event.type });
+	const db = platform?.env?.DB;
+	if (!db) {
+		logger.error('Missing D1 binding for Stripe webhook receipt', { eventType: event.type });
+		throw error(500, 'Webhook receipt store unavailable');
+	}
 
-	// Handle specific events
+	try {
+		const receipt = await recordStripeWebhookReceipt(db, event, body);
+		logger.info('Webhook received', { eventType: event.type, eventId: event.id, status: receipt.status });
+
+		if (receipt.status === 'processed' || receipt.status === 'processing' || receipt.status === 'ignored') {
+			return json({ received: true, duplicate: true, status: receipt.status });
+		}
+
+		const processPromise = processStripeWebhookEvent({
+			db,
+			event,
+			platform,
+			logger,
+			stripe
+		});
+
+		if (waitUntil) {
+			waitUntil(processPromise);
+		} else {
+			void processPromise;
+		}
+
+		return json({ received: true, status: 'queued' });
+	} catch (err) {
+		logger.error('Failed to persist Stripe webhook receipt', { eventType: event.type, eventId: event.id, error: err });
+		throw error(500, 'Webhook receipt failed');
+	}
+};
+
+type StripeWebhookStatus = 'received' | 'processing' | 'processed' | 'failed' | 'ignored';
+
+interface StripeWebhookReceipt {
+	status: StripeWebhookStatus;
+	processing_attempts: number;
+}
+
+interface StripeWebhookProcessInput {
+	db: D1Database;
+	event: Stripe.Event;
+	platform: App.Platform | undefined;
+	logger: Logger;
+	stripe: Stripe;
+}
+
+function getEventObjectIdentity(event: Stripe.Event): { objectId: string | null; objectType: string | null } {
+	const object = event.data.object as { id?: unknown; object?: unknown };
+	return {
+		objectId: typeof object.id === 'string' ? object.id : null,
+		objectType: typeof object.object === 'string' ? object.object : null
+	};
+}
+
+async function recordStripeWebhookReceipt(
+	db: D1Database,
+	event: Stripe.Event,
+	rawBody: string
+): Promise<StripeWebhookReceipt> {
+	const { objectId, objectType } = getEventObjectIdentity(event);
+
+	await db
+		.prepare(
+			`INSERT INTO stripe_webhook_events (
+				event_id, event_type, api_version, livemode, object_id, object_type, payload_json
+			) VALUES (?, ?, ?, ?, ?, ?, ?)
+			ON CONFLICT(event_id) DO UPDATE SET
+				delivery_count = delivery_count + 1,
+				last_received_at = datetime('now'),
+				payload_json = excluded.payload_json,
+				status = CASE
+					WHEN stripe_webhook_events.status = 'failed' THEN 'received'
+					WHEN stripe_webhook_events.status = 'processing'
+						AND stripe_webhook_events.last_attempt_at < datetime('now', '-15 minutes') THEN 'received'
+					ELSE stripe_webhook_events.status
+				END,
+				updated_at = datetime('now')`
+		)
+		.bind(
+			event.id,
+			event.type,
+			event.api_version ?? null,
+			event.livemode ? 1 : 0,
+			objectId,
+			objectType,
+			rawBody
+		)
+		.run();
+
+	const receipt = await db
+		.prepare(
+			`SELECT status, processing_attempts
+			 FROM stripe_webhook_events
+			 WHERE event_id = ?`
+		)
+		.bind(event.id)
+		.first<StripeWebhookReceipt>();
+
+	if (!receipt) {
+		throw new Error(`Stripe webhook receipt was not persisted for ${event.id}`);
+	}
+
+	return receipt;
+}
+
+async function claimStripeWebhookEvent(db: D1Database, eventId: string): Promise<boolean> {
+	const result = await db
+		.prepare(
+			`UPDATE stripe_webhook_events
+			 SET status = 'processing',
+			     processing_attempts = processing_attempts + 1,
+			     last_attempt_at = datetime('now'),
+			     last_error = NULL,
+			     updated_at = datetime('now')
+			 WHERE event_id = ?
+			   AND status IN ('received', 'failed')`
+		)
+		.bind(eventId)
+		.run();
+
+	return (result.meta?.changes ?? 0) > 0;
+}
+
+async function markStripeWebhookEventProcessed(db: D1Database, eventId: string): Promise<void> {
+	await db
+		.prepare(
+			`UPDATE stripe_webhook_events
+			 SET status = 'processed',
+			     processed_at = datetime('now'),
+			     updated_at = datetime('now'),
+			     last_error = NULL
+			 WHERE event_id = ?`
+		)
+		.bind(eventId)
+		.run();
+}
+
+async function markStripeWebhookEventFailed(
+	db: D1Database,
+	eventId: string,
+	err: unknown
+): Promise<void> {
+	const message = err instanceof Error ? err.message : String(err);
+	await db
+		.prepare(
+			`UPDATE stripe_webhook_events
+			 SET status = 'failed',
+			     last_error = ?,
+			     updated_at = datetime('now')
+			 WHERE event_id = ?`
+		)
+		.bind(message, eventId)
+		.run();
+}
+
+async function processStripeWebhookEvent(input: StripeWebhookProcessInput): Promise<void> {
+	const { db, event, platform, logger, stripe } = input;
+	const claimed = await claimStripeWebhookEvent(db, event.id);
+	if (!claimed) {
+		logger.debug('Stripe webhook event already claimed or processed', { eventId: event.id, eventType: event.type });
+		return;
+	}
+
 	try {
 		switch (event.type) {
 			case 'checkout.session.completed':
@@ -79,15 +244,23 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 				break;
 
 			default:
-				logger.debug('Unhandled event type', { eventType: event.type });
+				logger.debug('Unhandled event type', { eventType: event.type, eventId: event.id });
 		}
 
-		return json({ received: true });
+		await markStripeWebhookEventProcessed(db, event.id);
 	} catch (err) {
-		logger.error('Error handling webhook', { eventType: event.type, error: err });
-		throw error(500, 'Webhook handler failed');
+		logger.error('Error handling webhook', { eventType: event.type, eventId: event.id, error: err });
+		try {
+			await markStripeWebhookEventFailed(db, event.id, err);
+		} catch (markErr) {
+			logger.error('Failed to mark Stripe webhook event failed', {
+				eventType: event.type,
+				eventId: event.id,
+				error: markErr
+			});
+		}
 	}
-};
+}
 
 /**
  * Handle successful checkout completion
@@ -116,8 +289,10 @@ async function handleCheckoutComplete(
 	});
 
 	// Handle Agent-in-a-Box provisioning
-	if (productId === 'agent-in-a-box') {
-		await provisionAgentInABox(session, tier, platform, logger);
+	const agentKitTier = deriveAgentKitTier(productId, tier);
+	if (agentKitTier) {
+		await provisionAgentInABox(session, agentKitTier, platform, logger);
+		await upsertCommercialStateFromCheckout(session, platform, logger);
 		return;
 	}
 
@@ -318,6 +493,30 @@ async function provisionAgentInABox(
 		return;
 	}
 
+	const db = platform?.env?.DB;
+	if (!db) {
+		throw new Error('Agent-in-a-Box provisioning failed: DB binding unavailable');
+	}
+
+	const existingPurchase = await db
+		.prepare(
+			`SELECT email, tier, license_key
+			 FROM agent_kit_purchases
+			 WHERE stripe_session_id = ?`
+		)
+		.bind(session.id)
+		.first<{ email: string; tier: string; license_key: string }>();
+
+	if (existingPurchase) {
+		logger.info('Agent-in-a-Box purchase already recorded', {
+			email: existingPurchase.email,
+			tier: existingPurchase.tier,
+			sessionId: session.id,
+			licenseKey: `${existingPurchase.license_key.slice(0, 10)}...`
+		});
+		return;
+	}
+
 	// Generate license key (ak_ prefix for easy identification)
 	const licenseKey = `ak_${crypto.randomUUID().replace(/-/g, '')}`;
 
@@ -337,43 +536,39 @@ async function provisionAgentInABox(
 	};
 	const teamSeatsTotal = teamSeatsMap[validTier] || 1;
 
-	const db = platform?.env?.DB;
-
-	if (db) {
-		try {
-			// Store purchase in D1
-			await db
-				.prepare(
-					`
+	try {
+		// Store purchase in D1
+		await db
+			.prepare(
+				`
 				INSERT INTO agent_kit_purchases (
 					id, email, tier, license_key, stripe_session_id, stripe_customer_id,
 					office_hours_remaining, team_seats_total, team_seats_used, created_at, updated_at
 				) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, datetime('now'), datetime('now'))
 			`
-				)
-				.bind(
-					crypto.randomUUID(),
-					customerEmail,
-					validTier,
-					licenseKey,
-					session.id,
-					session.customer as string | null,
-					officeHoursRemaining,
-					teamSeatsTotal
-				)
-				.run();
-
-			logger.info('Agent-in-a-Box purchase recorded', {
-				email: customerEmail,
-				tier: validTier,
-				licenseKey: licenseKey.substring(0, 10) + '...',
+			)
+			.bind(
+				crypto.randomUUID(),
+				customerEmail,
+				validTier,
+				licenseKey,
+				session.id,
+				normalizeIdentifier(session.customer),
 				officeHoursRemaining,
 				teamSeatsTotal
-			});
-		} catch (err) {
-			logger.error('Failed to store Agent-in-a-Box purchase in D1', { error: err });
-			// Continue to send email even if D1 fails - support can manually fix
-		}
+			)
+			.run();
+
+		logger.info('Agent-in-a-Box purchase recorded', {
+			email: customerEmail,
+			tier: validTier,
+			licenseKey: licenseKey.substring(0, 10) + '...',
+			officeHoursRemaining,
+			teamSeatsTotal
+		});
+	} catch (err) {
+		logger.error('Failed to store Agent-in-a-Box purchase in D1', { error: err });
+		throw err;
 	}
 
 	// Provision LMS account via identity worker
@@ -805,6 +1000,19 @@ function normalizeProductId(raw: string | undefined): string | null {
 	if (!raw) return null;
 	const value = raw.trim();
 	return value.length > 0 ? value : null;
+}
+
+function deriveAgentKitTier(productId: string | undefined, tier: string | undefined): 'solo' | 'team' | 'org' | null {
+	if (tier === 'solo' || tier === 'team' || tier === 'org') {
+		return tier;
+	}
+
+	if (productId === 'agent-in-a-box') {
+		return 'solo';
+	}
+
+	const match = productId?.match(/^agent-in-a-box-(solo|team|org)$/);
+	return match ? (match[1] as 'solo' | 'team' | 'org') : null;
 }
 
 function deriveServiceTier(productId: string | null): string | null {

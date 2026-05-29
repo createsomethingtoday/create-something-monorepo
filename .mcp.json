@@ -34,6 +34,13 @@
       "headers": {
         "Authorization": "Bearer ${CS_HUB_MORGAN_YOUNG_C3_MANAGEMENT_API_TOKEN}"
       }
+    },
+    "postman": {
+      "type": "http",
+      "url": "https://mcp.postman.com/minimal",
+      "headers": {
+        "Authorization": "Bearer ${POSTMAN_API_KEY}"
+      }
     }
   }
 }

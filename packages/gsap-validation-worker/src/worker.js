@@ -9,38 +9,137 @@ var __require = /* @__PURE__ */ ((x) => typeof require !== "undefined" ? require
 
 // cloudflare-worker/lib/shared-validator.js
 var IX2_REJECTION_MESSAGE = "Legacy Webflow IX2 interactions detected. As of May 1, 2026, Marketplace templates submitted with IX2 interactions are rejected. Rebuild interactions with Webflow Interactions powered by GSAP (IX3), publish again, and rerun validation.";
+var UNICORN_STUDIO_REJECTION_MESSAGE = "Unicorn Studio embed detected. Marketplace templates may only use custom code for approved exceptions such as GSAP, font smoothing, no-index tags on licensing/changelog pages, or documented SVG snippets. Replace the Unicorn Studio effect with Webflow-native or approved GSAP implementation, publish again, and rerun validation.";
+var LOTTIE_IX2_ACTION_TYPES = /* @__PURE__ */ new Set([
+  "GENERAL_START_ACTION",
+  "PLUGIN_LOTTIE",
+  "PLUGIN_LOTTIE_EFFECT"
+]);
+var LEGACY_IX2_EXEMPT_HOSTNAMES = /* @__PURE__ */ new Set([
+  // Zendesk 1124554: approved exception for pre-cutoff Bergamo submission.
+  "az-bergamo.webflow.io"
+]);
 function countPatternMatches(value, pattern) {
   const matches = value.match(pattern);
   return matches ? matches.length : 0;
 }
 __name(countPatternMatches, "countPatternMatches");
+function isLegacyIx2ExemptUrl(pageUrl) {
+  try {
+    return LEGACY_IX2_EXEMPT_HOSTNAMES.has(new URL(pageUrl).hostname.toLowerCase());
+  } catch {
+    return false;
+  }
+}
+__name(isLegacyIx2ExemptUrl, "isLegacyIx2ExemptUrl");
 function detectIx2Interactions(html) {
+  const htmlWithoutLottieElements = stripLottieElementTags(html);
+  const dataWIdCount = countPatternMatches(htmlWithoutLottieElements, /\sdata-w-id\s*=/gi);
+  const dataIsIx2TargetCount = countPatternMatches(htmlWithoutLottieElements, /\sdata-is-ix2-target\s*=/gi);
+  const nonLottieElementMarkerCount = dataWIdCount + dataIsIx2TargetCount;
+  const ix2RuntimeCallCount = countLegacyIx2RuntimeCalls(html, nonLottieElementMarkerCount > 0);
+  const nonLottieActionTypeCount = countNonLottieIx2ActionTypes(html);
   const matches = [
     {
       label: "data-w-id attributes",
-      count: countPatternMatches(html, /\sdata-w-id\s*=/gi)
+      count: dataWIdCount,
+      strong: false
     },
     {
       label: "data-is-ix2-target attributes",
-      count: countPatternMatches(html, /\sdata-is-ix2-target\s*=/gi)
+      count: dataIsIx2TargetCount,
+      strong: false
     },
     {
       label: "Webflow IX2 runtime calls",
-      count: countPatternMatches(html, /Webflow\.require\s*\(\s*["']ix2["']\s*\)/gi)
+      count: ix2RuntimeCallCount,
+      strong: true
+    },
+    {
+      label: "non-Lottie IX2 action types",
+      count: nonLottieActionTypeCount,
+      strong: true
     },
     {
       label: "w-mod-ix CSS/runtime markers",
-      count: countPatternMatches(html, /w-mod-ix/gi)
+      count: countPatternMatches(html, /w-mod-ix/gi),
+      strong: false
     }
   ].filter((item) => item.count > 0);
-  const strongMatches = matches.filter((item) => item.label !== "w-mod-ix CSS/runtime markers");
+  const strongMatches = matches.filter((item) => item.strong);
+  const detected = strongMatches.length > 0;
+  return {
+    detected,
+    count: detected ? strongMatches.reduce((total, item) => total + item.count, nonLottieElementMarkerCount) : 0,
+    matches
+  };
+}
+__name(detectIx2Interactions, "detectIx2Interactions");
+function stripLottieElementTags(html) {
+  return html.replace(
+    /<[^>]*\sdata-animation-type\s*=\s*(?:"lottie"|'lottie'|lottie(?=[\s>]))[^>]*>/gi,
+    ""
+  );
+}
+__name(stripLottieElementTags, "stripLottieElementTags");
+function countLegacyIx2RuntimeCalls(html, hasNonLottieElementMarkers) {
+  const runtimeCallCount = countPatternMatches(
+    html,
+    /Webflow\.require\s*\(\s*["']ix2["']\s*\)/gi
+  );
+  if (runtimeCallCount === 0) {
+    return 0;
+  }
+  if (hasNonLottieElementMarkers) {
+    return runtimeCallCount;
+  }
+  if (hasLottieIx2Usage(html) && !hasNonLottieIx2ActionTypes(html)) {
+    return 0;
+  }
+  return runtimeCallCount;
+}
+__name(countLegacyIx2RuntimeCalls, "countLegacyIx2RuntimeCalls");
+function hasLottieIx2Usage(html) {
+  return /PLUGIN_LOTTIE/i.test(html) || /<[^>]*\sdata-animation-type\s*=\s*(?:"lottie"|'lottie'|lottie(?=[\s>]))[^>]*>/i.test(html);
+}
+__name(hasLottieIx2Usage, "hasLottieIx2Usage");
+function hasNonLottieIx2ActionTypes(html) {
+  return countNonLottieIx2ActionTypes(html) > 0;
+}
+__name(hasNonLottieIx2ActionTypes, "hasNonLottieIx2ActionTypes");
+function countNonLottieIx2ActionTypes(html) {
+  return Array.from(html.matchAll(/["']?actionTypeId["']?\s*:\s*["']([^"']+)["']/gi)).filter(
+    ([, actionTypeId]) => !LOTTIE_IX2_ACTION_TYPES.has(actionTypeId)
+  ).length;
+}
+__name(countNonLottieIx2ActionTypes, "countNonLottieIx2ActionTypes");
+function detectUnicornStudioUsage(html) {
+  const matches = [
+    {
+      label: "Unicorn Studio project embeds",
+      count: countPatternMatches(html, /\sdata-us-project\s*=/gi)
+    },
+    {
+      label: "Unicorn Studio runtime loader URLs",
+      count: countPatternMatches(html, /(?:hiunicornstudio\/unicornstudio\.js|unicornStudio\.umd\.js|cdn\.unicorn\.studio)/gi)
+    },
+    {
+      label: "Unicorn Studio initialization calls",
+      count: countPatternMatches(html, /UnicornStudio\.init\s*\(/g)
+    },
+    {
+      label: "Unicorn Studio runtime globals",
+      count: countPatternMatches(html, /\bUnicornStudio\b/g)
+    }
+  ].filter((item) => item.count > 0);
+  const strongMatches = matches.filter((item) => item.label !== "Unicorn Studio runtime globals");
   return {
     detected: strongMatches.length > 0,
     count: strongMatches.reduce((total, item) => total + item.count, 0),
     matches
   };
 }
-__name(detectIx2Interactions, "detectIx2Interactions");
+__name(detectUnicornStudioUsage, "detectUnicornStudioUsage");
 function validateGsapUsage(html, pageUrl, customPatterns = []) {
   const defaultPatterns = [
     // Core GSAP object and method access
@@ -430,12 +529,35 @@ function validateGsapUsage(html, pageUrl, customPatterns = []) {
   if (ix2Detection.detected) {
     results.legacyIx2Detected = true;
     results.legacyIx2Count = ix2Detection.count;
+    if (isLegacyIx2ExemptUrl(pageUrl)) {
+      results.legacyIx2Exempted = true;
+      results.allowedCustomCode.push({
+        scriptIndex: "document",
+        message: "Approved legacy IX2 exception",
+        reason: "Zendesk 1124554 approved this pre-cutoff template to proceed with existing IX2 interactions.",
+        policy: "ix2-approved-exception",
+        flaggedCode: ix2Detection.matches.map((item) => `${item.label}: ${item.count}`)
+      });
+    } else {
+      results.flaggedCode.push({
+        scriptIndex: "document",
+        message: IX2_REJECTION_MESSAGE,
+        reason: "Legacy IX2 interactions are no longer accepted for Marketplace templates submitted on or after May 1, 2026.",
+        policy: "ix2-rejected",
+        flaggedCode: ix2Detection.matches.map((item) => `${item.label}: ${item.count}`)
+      });
+    }
+  }
+  const unicornStudioDetection = detectUnicornStudioUsage(html);
+  if (unicornStudioDetection.detected) {
+    results.unicornStudioDetected = true;
+    results.unicornStudioCount = unicornStudioDetection.count;
     results.flaggedCode.push({
       scriptIndex: "document",
-      message: IX2_REJECTION_MESSAGE,
-      reason: "Legacy IX2 interactions are no longer accepted for Marketplace templates submitted on or after May 1, 2026.",
-      policy: "ix2-rejected",
-      flaggedCode: ix2Detection.matches.map((item) => `${item.label}: ${item.count}`)
+      message: UNICORN_STUDIO_REJECTION_MESSAGE,
+      reason: "Unicorn Studio is a third-party custom-code runtime and is not one of the Marketplace custom-code exceptions.",
+      policy: "custom-code-third-party-unicorn-studio",
+      flaggedCode: unicornStudioDetection.matches.map((item) => `${item.label}: ${item.count}`)
     });
   }
   const scriptContents = extractScriptContents(html);
@@ -644,6 +766,9 @@ function validateGsapUsage(html, pageUrl, customPatterns = []) {
       securityRiskCount: results.securityRisks.length,
       legacyIx2Detected: results.legacyIx2Detected === true,
       legacyIx2Count: results.legacyIx2Count || 0,
+      legacyIx2Exempted: results.legacyIx2Exempted === true,
+      unicornStudioDetected: results.unicornStudioDetected === true,
+      unicornStudioCount: results.unicornStudioCount || 0,
       passed
     },
     details: results
@@ -690,43 +815,60 @@ function extractStyleContents(html) {
   return styles;
 }
 __name(extractStyleContents, "extractStyleContents");
+function appendExternalScript(externalScripts, seenScriptSources, src, source = "script-src", type = "text/javascript") {
+  if (!src || seenScriptSources.has(src)) {
+    return;
+  }
+  seenScriptSources.add(src);
+  externalScripts.push({
+    src,
+    type,
+    source
+  });
+}
+__name(appendExternalScript, "appendExternalScript");
+function appendDynamicExternalScripts(html, externalScripts, seenScriptSources) {
+  const dynamicScriptRegex = /\.src\s*=\s*['"](https?:\/\/[^'"]+)['"]/gi;
+  let match;
+  while ((match = dynamicScriptRegex.exec(html)) !== null) {
+    appendExternalScript(externalScripts, seenScriptSources, match[1], "dynamic-script-assignment");
+  }
+}
+__name(appendDynamicExternalScripts, "appendDynamicExternalScripts");
 function extractExternalScripts(html) {
   if (typeof window === "undefined" && typeof __require === "undefined") {
     const scriptRegex = /<script[^>]+src\s*=\s*['"]([^'"]+)['"][^>]*>/gi;
     const externalScripts = [];
+    const seenScriptSources = /* @__PURE__ */ new Set();
     let match;
     while ((match = scriptRegex.exec(html)) !== null) {
-      externalScripts.push({
-        src: match[1],
-        type: "text/javascript"
-      });
+      appendExternalScript(externalScripts, seenScriptSources, match[1]);
     }
+    appendDynamicExternalScripts(html, externalScripts, seenScriptSources);
     return externalScripts;
   } else {
     try {
       const cheerio = __require("cheerio");
       const $ = cheerio.load(html);
       const externalScripts = [];
+      const seenScriptSources = /* @__PURE__ */ new Set();
       $("script[src]").each((_, element) => {
         const src = $(element).attr("src");
         if (src) {
-          externalScripts.push({
-            src,
-            type: $(element).attr("type") || "text/javascript"
-          });
+          appendExternalScript(externalScripts, seenScriptSources, src, "script-src", $(element).attr("type") || "text/javascript");
         }
       });
+      appendDynamicExternalScripts(html, externalScripts, seenScriptSources);
       return externalScripts;
     } catch (error) {
       const scriptRegex = /<script[^>]+src\s*=\s*['"]([^'"]+)['"][^>]*>/gi;
       const externalScripts = [];
+      const seenScriptSources = /* @__PURE__ */ new Set();
       let match;
       while ((match = scriptRegex.exec(html)) !== null) {
-        externalScripts.push({
-          src: match[1],
-          type: "text/javascript"
-        });
+        appendExternalScript(externalScripts, seenScriptSources, match[1]);
       }
+      appendDynamicExternalScripts(html, externalScripts, seenScriptSources);
       return externalScripts;
     }
   }
@@ -1400,6 +1542,8 @@ var GsapValidationWorkflow = class extends WorkflowEntrypoint {
                 securityRiskCount: validationSummary.securityRiskCount || 0,
                 legacyIx2Detected: validationSummary.legacyIx2Detected === true,
                 legacyIx2Count: validationSummary.legacyIx2Count || 0,
+                unicornStudioDetected: validationSummary.unicornStudioDetected === true,
+                unicornStudioCount: validationSummary.unicornStudioCount || 0,
                 passed: validation.passed
               },
               details: {
@@ -1408,6 +1552,8 @@ var GsapValidationWorkflow = class extends WorkflowEntrypoint {
                 allowedCustomCode: validationDetails.allowedCustomCode || [],
                 flaggedCode: validationDetails.flaggedCode || [],
                 securityRisks: validationDetails.securityRisks || [],
+                unicornStudioDetected: validationDetails.unicornStudioDetected === true,
+                unicornStudioCount: validationDetails.unicornStudioCount || 0,
                 externalScripts: validationDetails.externalScripts || []
               },
               flaggedCodeCount: validationSummary.flaggedCodeCount || 0

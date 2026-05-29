@@ -17,6 +17,7 @@ Phase A guarantees:
 - self-assignment
 - self-unassignment
 - normalized review context
+- read-only published-site validation when `template_review_run_published_site_validation` is exposed
 
 Do not invent analysis, feedback drafting, or approval-state writes when the live Hub only exposes `webflow-template-review-mcp`.
 
@@ -27,8 +28,9 @@ Do not invent analysis, feedback drafting, or approval-state writes when the liv
 3. Call `template_review_assign_self` with that `version_id`.
 4. Call `template_review_get_review_context` with the same `version_id`.
 5. Read reviewer fields from `data.context`, not top-level `data`.
-6. Use `template_review_my_queue` when the reviewer asks for their assigned work.
-7. Use `template_review_unassign_self` only when the reviewer intentionally wants to release the version.
+6. If available, call `template_review_run_published_site_validation` with `publishedUrl` only for read-only content/assets/accessibility-signal/IX2/GSAP/custom-code evidence.
+7. Use `template_review_my_queue` when the reviewer asks for their assigned work.
+8. Use `template_review_unassign_self` only when the reviewer intentionally wants to release the version.
 
 ## Response Rules
 
@@ -76,9 +78,11 @@ Use [reviewer-playbook.md](/Users/micahjohnson/Documents/Github/Create Something
 
 ## Phase Awareness
 
-Before using any richer review flow, confirm the reviewer Hub actually exposes:
+The retired site analyzer MCP is no longer part of the reviewer flow. Use the
+reviewer Hub for Airtable/context tools, use `template_review_run_published_site_validation`
+for validator-backed published-site evidence when exposed, and use the agent sandbox
+for bounded published-site analysis beyond validator coverage.
 
-- `webflow-site-analyzer-mcp`
-- `webflow-local`
-
-If those servers are not connected, stay in Phase A context mode and manual review for broader checklist work.
+Before using any richer review flow, confirm the reviewer Hub actually exposes
+`webflow-local` for plagiarism/framework checks. If it is not connected, stay in
+Phase A context mode and manual review for broader checklist work.

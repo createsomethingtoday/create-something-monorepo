@@ -8,9 +8,9 @@ Legend:
 - `Partial`: Some signal is available, but policy-complete validation still needs human review or deeper extraction.
 - `Manual`: Not realistically automatable with current MCP data access.
 
-Automation sources used for this matrix:
+Automation sources used for this historical matrix:
 - Published-site checks: `window.__wfReview` tools (`audit_webflow_way`, `audit_meta`, `audit_headings`, `audit_links`, `audit_images`, `audit_forms`, `audit_media`, `audit_404`, `audit_ix2`, `audit_ix3`, `get_sitemap_urls`).
-- Designer checks: `extract_designer_metadata` from `@create-something/webflow-site-analyzer-mcp` (Steel/Browerless-backed Playwright extraction).
+- Designer checks: retired analyzer extraction is no longer an active reviewer route. Treat Designer-only assertions as manual unless a current sandbox/manual inspection artifact supplies direct evidence.
 
 ## CMS and Ecommerce
 
@@ -200,9 +200,9 @@ Automation sources used for this matrix:
 | Required Pages | Required pages include noindex head code | Partial | Per-page robots meta checks |
 | Required Pages | Style Guide page exists and includes all tags | Partial | Page existence auto; “all tags” partial |
 | Required Pages | Instructions page exists when needed | Partial | Interaction complexity heuristics + page existence |
-| Required Pages | License page exists with `/licenses` slug | Partial | Sitemap/page checks |
+| Required Pages | License page exists and is discoverable at root or a nested folder path | Partial | Sitemap/page checks; root `/licenses` is not required |
 | Required Pages | Exact required license text at top | Auto | Page-content exact-match check |
-| Required Pages | Footer links to Licenses on every page | Partial | Multi-page footer-link crawl |
+| Required Pages | Footer links to Licenses on every page | Partial | Multi-page footer-link crawl; flag broken or misdirected utility links |
 | Required Pages | License info for custom fonts/assets with links | Partial | Content/link presence check; legal sufficiency manual |
 
 ## Coverage Totals (This Checklist)

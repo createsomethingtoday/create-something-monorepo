@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Button, HeroSignalField, SEO } from '@create-something/canon';
+  import { Button, HeroSignalField, PropertyFunnel, SEO } from '@create-something/canon';
   import { BlurFade } from '@create-something/canon/magicui';
   import ArtifactSystemStrip from '$lib/components/ArtifactSystemStrip.svelte';
   import BrandLogo from '$lib/components/BrandLogo.svelte';
@@ -48,6 +48,7 @@
     'Cloudflare Workers',
     'Composio',
     'Dify',
+    'Notion',
     'OpenAI',
     'Webflow',
     'Linear',
@@ -152,8 +153,7 @@
     {
       name: 'Workflow System',
       featured: true,
-      summary:
-        'The first reliable operating path. Fix one workflow your team still does by hand.',
+      summary: 'The first reliable operating path. Fix one workflow your team still does by hand.',
       points: [
         'Business-rule mapping',
         'Workflow implementation',
@@ -164,8 +164,7 @@
     {
       name: 'Policy OS',
       featured: false,
-      summary:
-        'The governed execution layer once speed touches revenue, trust, or compliance.',
+      summary: 'The governed execution layer once speed touches revenue, trust, or compliance.',
       points: [
         'Approval and block boundaries',
         'Release checks and eval gates',
@@ -183,8 +182,8 @@
 </script>
 
 <SEO
-  title={`${agencyCoreMessaging.categoryLabel} | CREATE SOMETHING .agency`}
-  description="CREATE SOMETHING .agency builds calm, transparent, reliable AI workflow systems for business operators: one workflow, clear vendor boundaries, portable artifacts, and escalation only when judgment is required."
+  title="Calm AI Workflow Systems | CREATE SOMETHING .agency"
+  description="CREATE SOMETHING .agency builds calm AI workflow systems for operators: one workflow, clear vendor boundaries, portable artifacts, and governed escalation."
   keywords="calm transparent reliable AI workflow systems, Policy OS, MCP wedge, transparent AI stack, workflow system, production automation, technical operators"
   ogImage="/og-image.svg"
   propertyName="agency"
@@ -198,30 +197,35 @@
     <div class="shell-inner-pad hero-layout">
       <div class="hero-copy">
         <BlurFade delay={0}>
-          <span class="product-kicker">{agencyCoreMessaging.categoryLabel}</span>
+          <span class="product-kicker hero-kicker">
+            <span class="hero-kicker__desktop">{agencyCoreMessaging.categoryLabel}</span>
+            <span class="hero-kicker__mobile">Reliable AI Workflow Systems</span>
+          </span>
         </BlurFade>
 
         <BlurFade delay={0.05}>
-          <h1 class="hero-title">Calm, transparent AI systems for the operator who has to own the outcome.</h1>
+          <h1 class="hero-title">Make the workflow safe enough to trust.</h1>
         </BlurFade>
 
         <BlurFade delay={0.1}>
           <p class="hero-detail">
-            CREATE SOMETHING is the operating toolchain I use as a solo operator to complete the
-            outcome. Reputable services make the work transparent; the moat is the calm, reliable
-            workflow built around your business.
+            For the operator who has to answer for what happens next. CREATE SOMETHING fixes the
+            workflow creating the most drag, then adds approvals, visibility, and recovery paths as
+            the stakes rise.
           </p>
         </BlurFade>
 
         <BlurFade delay={0.15}>
           <div class="hero-actions">
-            <Button href="/book">{agencyCoreMessaging.bookMappingSessionLabel}</Button>
-            <Button href="/stack" variant="secondary">See The Stack</Button>
+            <Button href={agencyCoreMessaging.workflowMappingSessionHref}
+              >{agencyCoreMessaging.bookMappingSessionLabel}</Button
+            >
+            <Button href="/services" variant="secondary">See The Operating Model</Button>
           </div>
         </BlurFade>
 
         <BlurFade delay={0.2}>
-          <p class="hero-note">Connect. Automate. Govern. Operate.</p>
+          <p class="hero-note">Scoped delivery. Clear controls. Portable artifacts.</p>
         </BlurFade>
       </div>
     </div>
@@ -263,7 +267,10 @@
         {/each}
       </div>
 
-      <a class="stack-link" href="/stack">Review stack boundaries</a>
+      <div class="signal-actions">
+        <a class="stack-link" href="/stack">Review stack boundaries</a>
+        <a class="stack-link" href="/partners">Review partner stack</a>
+      </div>
     </div>
   </div>
 </section>
@@ -280,15 +287,18 @@
   <div class="shell-inner-pad showcase-stack">
     <div class="section-lead">
       <BlurFade>
-        <span class="product-kicker">Inspect the full control room</span>
+        <span class="product-kicker control-kicker">
+          <span class="control-kicker__desktop">Inspect the full control room</span>
+          <span class="control-kicker__mobile">Full Control Room</span>
+        </span>
       </BlurFade>
       <BlurFade delay={0.05}>
         <h2>The detailed decision surface belongs below the fold.</h2>
       </BlurFade>
       <BlurFade delay={0.1}>
         <p>
-          Once the hero establishes the workflow boundaries, the full surface can show tabs,
-          checks, artifacts, and release logic without crushing the copy.
+          Once the hero establishes the workflow boundaries, the full surface can show tabs, checks,
+          artifacts, and release logic without crushing the copy.
         </p>
       </BlurFade>
     </div>
@@ -355,10 +365,7 @@
     <div class="offer-grid">
       {#each offerCards as offer, index}
         <BlurFade delay={0.15 + index * 0.08}>
-          <article
-            class="product-surface offer-card"
-            class:offerFeatured={offer.featured}
-          >
+          <article class="product-surface offer-card" class:offerFeatured={offer.featured}>
             <span class="offer-tag">{offer.featured ? 'Primary build' : 'Entry or expansion'}</span>
             <h3>{offer.name}</h3>
             <p>{offer.summary}</p>
@@ -426,6 +433,12 @@
   </div>
 </section>
 
+<PropertyFunnel
+  current="agency"
+  heading="Show how every property arrives at the mapping session."
+  description="Visitors can enter through canon, research, or the workbench. The agency surface turns that context into one scoped workflow, the control layer it needs, and the artifacts the team keeps."
+/>
+
 <section class="cta-section">
   <div class="shell-inner-pad">
     <div class="product-surface product-surface--accent cta-panel">
@@ -440,8 +453,10 @@
       </BlurFade>
       <BlurFade delay={0.15}>
         <div class="hero-actions hero-actions--center">
-          <Button href="/book">{agencyCoreMessaging.bookMappingSessionLabel}</Button>
-          <Button href="/stack" variant="secondary">See The Stack</Button>
+          <Button href={agencyCoreMessaging.workflowMappingSessionHref}
+            >{agencyCoreMessaging.bookMappingSessionLabel}</Button
+          >
+          <Button href="/services" variant="secondary">See The Operating Model</Button>
         </div>
       </BlurFade>
     </div>
@@ -522,6 +537,7 @@
     align-items: center;
     gap: 0.45rem;
     width: fit-content;
+    max-width: 100%;
     padding: 0.38rem 0.7rem 0.4rem;
     border: 1px solid rgba(91, 125, 255, 0.16);
     border-radius: 999px;
@@ -530,6 +546,9 @@
       inset 0 0 0 1px rgba(255, 255, 255, 0.02),
       0 10px 30px rgba(0, 0, 0, 0.18);
     backdrop-filter: blur(12px);
+    letter-spacing: 0;
+    line-height: 1.15;
+    white-space: nowrap;
   }
 
   .hero-copy .product-kicker::before {
@@ -539,6 +558,14 @@
     border-radius: 999px;
     background: rgba(59, 109, 255, 0.96);
     box-shadow: 0 0 14px rgba(70, 154, 255, 0.38);
+  }
+
+  .hero-kicker__mobile {
+    display: none;
+  }
+
+  .control-kicker__mobile {
+    display: none;
   }
 
   .hero-title {
@@ -645,8 +672,15 @@
 
   .signal-strip {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 0.7rem;
+  }
+
+  .signal-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: center;
   }
 
   .stack-link {
@@ -862,10 +896,6 @@
       grid-template-columns: 1fr;
     }
 
-    .signal-strip {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
     .hero-title {
       font-size: clamp(2.6rem, 11vw, 4rem);
     }
@@ -873,6 +903,31 @@
     .hero-copy .product-kicker {
       gap: 0.38rem;
       padding: 0.34rem 0.58rem 0.36rem;
+      min-height: 2rem;
+      font-size: 0.72rem;
+    }
+
+    .hero-kicker__desktop {
+      display: none;
+    }
+
+    .hero-kicker__mobile {
+      display: inline;
+    }
+
+    .control-kicker {
+      max-width: 100%;
+      letter-spacing: 0.08em;
+      line-height: 1.15;
+      white-space: nowrap;
+    }
+
+    .control-kicker__desktop {
+      display: none;
+    }
+
+    .control-kicker__mobile {
+      display: inline;
     }
 
     .signal-shell,
@@ -887,7 +942,7 @@
     }
   }
 
-  @media (max-width: 420px) {
+  @media (max-width: 520px) {
     .signal-strip {
       grid-template-columns: 1fr;
     }

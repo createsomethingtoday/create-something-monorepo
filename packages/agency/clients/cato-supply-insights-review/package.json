@@ -1,0 +1,15 @@
+{
+  "name": "@create-something/cato-supply-insights-review",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "python3 -m http.server 8097 --directory site",
+    "check": "node scripts/check-static-review.mjs",
+    "deploy:review": "pnpm exec wrangler pages deploy site --project-name=cato-supply-insights-review --branch=client-review --commit-dirty=true",
+    "deploy:preview": "pnpm exec wrangler pages deploy site --project-name=cato-supply-insights-review --branch=main --commit-dirty=true"
+  },
+  "devDependencies": {
+    "wrangler": "^4.64.0"
+  }
+}

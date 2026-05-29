@@ -10,6 +10,10 @@
 import type { AnalyticsEvent, EventBatch, BatchResponse, Property, PropertyAnalytics, DailyActivityPoint, CategoryBreakdown } from './types.js';
 import { json, error } from '@sveltejs/kit';
 
+const VALID_PROPERTIES: Property[] = ['space', 'io', 'agency', 'ltd', 'lms'];
+const DEFAULT_HEALTH_STALE_AFTER_HOURS = 24;
+const MAX_SESSION_DURATION_SECONDS = 4 * 60 * 60;
+
 // =============================================================================
 // SHARED REQUEST HANDLERS
 // =============================================================================
@@ -57,6 +61,84 @@ export function createAnalyticsEventsHandler() {
 
 		GET: async () => {
 			return Response.json({ status: 'ok', endpoint: 'unified-analytics' });
+		}
+	};
+}
+
+export function createAnalyticsHealthHandler(
+	options: {
+		properties?: Property[];
+		staleAfterHours?: number;
+	} = {}
+) {
+	const configuredProperties = options.properties ?? VALID_PROPERTIES;
+	const staleAfterHours = options.staleAfterHours ?? DEFAULT_HEALTH_STALE_AFTER_HOURS;
+
+	return {
+		GET: async ({ platform, url }: {
+			platform?: { env?: { DB?: D1Database } };
+			url?: URL;
+		}) => {
+			const db = platform?.env?.DB;
+			if (!db) {
+				return Response.json({ status: 'error', error: 'Database not available' }, { status: 500 });
+			}
+
+			const requestedProperty = url?.searchParams.get('property');
+			const properties =
+				requestedProperty && isProperty(requestedProperty)
+					? [requestedProperty]
+					: configuredProperties;
+
+			const placeholders = properties.map(() => '?').join(', ');
+			const result = await db
+				.prepare(
+					`SELECT
+						property,
+						COUNT(*) AS total_events,
+						COUNT(DISTINCT session_id) AS total_sessions,
+						MAX(created_at) AS latest_event_at
+					FROM unified_events
+					WHERE property IN (${placeholders})
+					GROUP BY property`
+				)
+				.bind(...properties)
+				.run();
+
+			const rows = new Map(
+				((result.results ?? []) as Array<{
+					property: Property;
+					total_events: number;
+					total_sessions: number;
+					latest_event_at: string | null;
+				}>).map((row) => [row.property, row])
+			);
+
+			const checkedAt = new Date();
+			const propertyHealth = properties.map((property) => {
+				const row = rows.get(property);
+				const latestEventAt = row?.latest_event_at ?? null;
+				const ageHours = latestEventAt
+					? (checkedAt.getTime() - new Date(latestEventAt).getTime()) / (1000 * 60 * 60)
+					: null;
+				const status = ageHours === null ? 'missing' : ageHours > staleAfterHours ? 'stale' : 'ok';
+
+				return {
+					property,
+					status,
+					latestEventAt,
+					ageHours: ageHours === null ? null : Number(ageHours.toFixed(2)),
+					totalEvents: row?.total_events ?? 0,
+					totalSessions: row?.total_sessions ?? 0
+				};
+			});
+
+			return Response.json({
+				status: propertyHealth.every((item) => item.status === 'ok') ? 'ok' : 'stale',
+				checkedAt: checkedAt.toISOString(),
+				staleAfterHours,
+				properties: propertyHealth
+			});
 		}
 	};
 }
@@ -205,6 +287,27 @@ interface D1Result<T = unknown> {
 	error?: string;
 }
 
+function isProperty(value: unknown): value is Property {
+	return typeof value === 'string' && VALID_PROPERTIES.includes(value as Property);
+}
+
+function getEventSourceProperty(event: AnalyticsEvent): Property | null {
+	const metadata = event.metadata ?? {};
+	const metadataSource = metadata.sourceProperty ?? metadata.source_property;
+	const sourceProperty = event.sourceProperty ?? metadataSource;
+
+	if (isProperty(sourceProperty) && sourceProperty !== event.property) {
+		return sourceProperty;
+	}
+
+	return null;
+}
+
+function clampDurationSeconds(value: number): number {
+	if (!Number.isFinite(value)) return 0;
+	return Math.max(0, Math.min(Math.round(value), MAX_SESSION_DURATION_SECONDS));
+}
+
 // =============================================================================
 // EVENT PROCESSING
 // =============================================================================
@@ -305,8 +408,7 @@ function validateEvent(event: AnalyticsEvent): boolean {
 	if (!event.property || !event.category || !event.action) return false;
 	if (!event.url || !event.timestamp) return false;
 
-	const validProperties: Property[] = ['space', 'io', 'agency', 'ltd', 'lms'];
-	if (!validProperties.includes(event.property)) return false;
+	if (!VALID_PROPERTIES.includes(event.property)) return false;
 
 	const validCategories = [
 		'navigation',
@@ -424,10 +526,15 @@ async function updateSessionSummaries(
 		const conversions = sessionEvts.filter(e => e.category === 'conversion').length;
 		const errors = sessionEvts.filter(e => e.category === 'error').length;
 		const maxScrollDepth = Math.max(0, ...sessionEvts.filter(e => e.action === 'scroll_depth' && e.value).map(e => e.value || 0));
+		const eventUserId = sessionEvts.find(e => e.userId)?.userId || null;
+		const sourceProperty = sessionEvts.map(getEventSourceProperty).find(Boolean) ?? null;
 
 		// Look for session_end event with client-reported duration
 		const sessionEndEvent = sessionEvts.find(e => e.action === 'session_end');
-		const clientReportedDuration = sessionEndEvent?.value;
+		const clientReportedDuration =
+			typeof sessionEndEvent?.value === 'number'
+				? clampDurationSeconds(sessionEndEvent.value)
+				: undefined;
 
 		// Check if session exists
 		const existing = await db
@@ -436,10 +543,6 @@ async function updateSessionSummaries(
 			.run();
 
 		if (existing.results && existing.results.length > 0) {
-			// Update existing session
-			// Get user_id from first event with one (in case user logged in mid-session)
-			const eventUserId = sessionEvts.find(e => e.userId)?.userId || null;
-
 			// Prefer client-reported duration from session_end event if available
 			if (clientReportedDuration !== undefined && clientReportedDuration > 0) {
 				// Use client-reported active time (more accurate)
@@ -447,6 +550,7 @@ async function updateSessionSummaries(
 					.prepare(
 						`UPDATE unified_sessions SET
 						 user_id = COALESCE(user_id, ?),
+						 source_property = COALESCE(source_property, ?),
 						 ended_at = ?,
 						 duration_seconds = ?,
 						 page_views = page_views + ?,
@@ -460,8 +564,9 @@ async function updateSessionSummaries(
 					)
 					.bind(
 						eventUserId,
+						sourceProperty,
 						lastEvent.timestamp,
-						Math.round(clientReportedDuration),
+						clientReportedDuration,
 						pageViews,
 						interactions,
 						conversions,
@@ -478,11 +583,12 @@ async function updateSessionSummaries(
 					.prepare(
 						`UPDATE unified_sessions SET
 						 user_id = COALESCE(user_id, ?),
+						 source_property = COALESCE(source_property, ?),
 						 ended_at = ?,
-						 duration_seconds = CASE
+						 duration_seconds = MIN(CASE
 						   WHEN page_views + ? > 0 THEN MAX(CAST((julianday(?) - julianday(started_at)) * 86400 AS INTEGER), 1)
-						   ELSE CAST((julianday(?) - julianday(started_at)) * 86400 AS INTEGER)
-						 END,
+						   ELSE MAX(CAST((julianday(?) - julianday(started_at)) * 86400 AS INTEGER), 0)
+						 END, ?),
 						 page_views = page_views + ?,
 						 interactions = interactions + ?,
 						 conversions = conversions + ?,
@@ -494,10 +600,12 @@ async function updateSessionSummaries(
 					)
 					.bind(
 						eventUserId,
+						sourceProperty,
 						lastEvent.timestamp,
 						pageViews,
 						lastEvent.timestamp,
 						lastEvent.timestamp,
+						MAX_SESSION_DURATION_SECONDS,
 						pageViews,
 						interactions,
 						conversions,
@@ -514,12 +622,12 @@ async function updateSessionSummaries(
 
 			if (clientReportedDuration !== undefined && clientReportedDuration > 0) {
 				// Prefer client-reported active time (more accurate, excludes hidden tab time)
-				durationSeconds = Math.round(clientReportedDuration);
+				durationSeconds = clientReportedDuration;
 			} else {
 				// Fall back to timestamp calculation
 				const startTime = new Date(firstEvent.timestamp).getTime();
 				const endTime = new Date(lastEvent.timestamp).getTime();
-				durationSeconds = Math.round((endTime - startTime) / 1000);
+				durationSeconds = clampDurationSeconds((endTime - startTime) / 1000);
 
 				// Minimum duration fallback: if session has page_view but duration is 0,
 				// use 1 second minimum (evidence of user presence)
@@ -532,13 +640,14 @@ async function updateSessionSummaries(
 			await db
 				.prepare(
 					`INSERT INTO unified_sessions
-					 (id, property, user_id, started_at, ended_at, duration_seconds, page_views, interactions, conversions, errors, max_scroll_depth, entry_url, exit_url, referrer, user_agent, ip_country)
-					 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+					 (id, property, user_id, source_property, started_at, ended_at, duration_seconds, page_views, interactions, conversions, errors, max_scroll_depth, entry_url, exit_url, referrer, user_agent, ip_country)
+					 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 				)
 				.bind(
 					sessionId,
 					firstEvent.property,
 					firstEvent.userId || null,
+					sourceProperty,
 					firstEvent.timestamp,
 					lastEvent.timestamp,
 					durationSeconds,
@@ -575,8 +684,13 @@ export async function updateSessionSummary(
 
 	if (existing.results && existing.results.length > 0) {
 		// Update existing session
-		const updates: string[] = ['ended_at = ?', 'updated_at = datetime(\'now\')'];
-		const values: unknown[] = [event.timestamp];
+		const sourceProperty = getEventSourceProperty(event);
+		const updates: string[] = [
+			'ended_at = ?',
+			'source_property = COALESCE(source_property, ?)',
+			'updated_at = datetime(\'now\')'
+		];
+		const values: unknown[] = [event.timestamp, sourceProperty];
 
 		if (event.category === 'navigation' && event.action === 'page_view') {
 			updates.push('page_views = page_views + 1');
@@ -605,16 +719,18 @@ export async function updateSessionSummary(
 			.run();
 	} else {
 		// Create new session
+		const sourceProperty = getEventSourceProperty(event);
 		await db
 			.prepare(
 				`INSERT INTO unified_sessions
-         (id, property, user_id, started_at, ended_at, page_views, entry_url, referrer, user_agent, ip_country)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+         (id, property, user_id, source_property, started_at, ended_at, page_views, entry_url, referrer, user_agent, ip_country)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 			)
 			.bind(
 				sessionId,
 				event.property,
 				event.userId || null,
+				sourceProperty,
 				event.timestamp,
 				event.timestamp,
 				event.category === 'navigation' && event.action === 'page_view' ? 1 : 0,

@@ -1,4 +1,6 @@
+import { enrichLeaderboardWithHistory } from '@create-something/webflow-dashboard-core/marketplace-history';
 import { getSyncMetadata } from '@create-something/webflow-dashboard-core/sync-schedule';
+import { getOptionalEnv } from '../../../../lib/server/env';
 import { jsonNoStore } from '../../../../lib/server/responses';
 import { getUserFromRequest } from '../../../../lib/server/session';
 import { getServerAirtable } from '../../../../lib/server/airtable';
@@ -24,7 +26,14 @@ export async function GET(request: Request) {
       }
     }
 
-    const leaderboard = leaderboardResult.records.map((record) => {
+    const env = await getOptionalEnv();
+    const records = await enrichLeaderboardWithHistory(
+      env?.DB,
+      leaderboardResult.records,
+      leaderboardResult.freshness
+    );
+
+    const leaderboard = records.map((record) => {
       const creatorEmail = record.creatorEmail || '';
       const isUserTemplate = userEmails.has(creatorEmail.toLowerCase());
 
@@ -37,13 +46,17 @@ export async function GET(request: Request) {
         avgRevenuePerSale: isUserTemplate ? record.avgRevenuePerSale || 0 : undefined,
         salesRank: record.salesRank || 0,
         revenueRank: record.revenueRank || 0,
+        trendData: record.trendData,
         isUserTemplate
       };
     });
 
     const userTemplates = leaderboard.filter((template) => template.isUserTemplate);
     const topTemplate = leaderboard[0] || null;
-    const totalMarketplaceSales = leaderboard.reduce((sum, template) => sum + template.totalSales30d, 0);
+    const totalMarketplaceSales = leaderboard.reduce(
+      (sum, template) => sum + template.totalSales30d,
+      0
+    );
     const userTotalRevenue = userTemplates.reduce(
       (sum, template) => sum + (template.totalRevenue30d || 0),
       0
@@ -67,7 +80,9 @@ export async function GET(request: Request) {
         totalMarketplaceSales,
         userTotalRevenue,
         userBestRank:
-          userTemplates.length > 0 ? Math.min(...userTemplates.map((template) => template.revenueRank)) : null,
+          userTemplates.length > 0
+            ? Math.min(...userTemplates.map((template) => template.revenueRank))
+            : null,
         userTemplateCount: userTemplates.length,
         lastUpdated: syncMetadata.lastSyncTime,
         nextUpdateDate: syncMetadata.nextSyncTime,

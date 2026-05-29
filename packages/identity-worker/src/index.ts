@@ -791,6 +791,7 @@ const WEBFLOW_TEMPLATE_REVIEW_PHASE_A_ALLOWED_TOOL_PREFIXES = [
 	'webflow-template-review-mcp__template_review_get_review_context',
 	'webflow-template-review-mcp__template_review_list_releases',
 	'webflow-template-review-mcp__template_review_get_field_map',
+	'webflow-template-review-mcp__template_review_run_published_site_validation',
 	'webflow-template-review-mcp__template_review_assign_self',
 	'webflow-template-review-mcp__template_review_unassign_self',
 	'webflow-template-review-mcp__template_review_request_changes',
@@ -3590,12 +3591,17 @@ function normalizeOptionalHostName(raw: string | null | undefined): string | nul
 	return normalized || null;
 }
 
-function getHostBindingFailure(boundHost: string | null | undefined, resourceHost: string | null): string | null {
+export function getHostBindingFailure(boundHost: string | null | undefined, resourceHost: string | null): string | null {
 	const normalizedBoundHost = normalizeOptionalHostName(boundHost);
 	if (!normalizedBoundHost) return null;
 	if (!resourceHost) return 'resource_host_required';
-	if (resourceHost !== normalizedBoundHost) return 'host_mismatch';
-	return null;
+	if (resourceHost === normalizedBoundHost) return null;
+	if (isCentralWebflowTemplateReviewHostBinding(normalizedBoundHost, resourceHost)) return null;
+	return 'host_mismatch';
+}
+
+function isCentralWebflowTemplateReviewHostBinding(boundHost: string, resourceHost: string): boolean {
+	return resourceHost === 'wf-template-review' && boundHost.startsWith('wf-template-review-');
 }
 
 function normalizeToolMode(raw: McpToolMode | undefined): McpToolMode {

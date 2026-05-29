@@ -39,6 +39,8 @@ Source of truth: `packages/webflow-dashboard` code inventory as of 2026-03-18.
   - `/marketplace`
   - `/api/analytics/leaderboard`
   - `/api/analytics/categories`
+  - Marketplace trend-history enrichment (`trendData`, `trend`, and `changePercent`)
+  - Snapshot maintenance (`/api/cron/snapshot` or an equivalent Cloud scheduled job)
   - `MarketplaceInsights`
   - `OverviewStats`
   - `KineticNumber`
@@ -61,8 +63,6 @@ Source of truth: `packages/webflow-dashboard` code inventory as of 2026-03-18.
   - `/api/analytics/track`
 - Feedback flow
   - `/api/feedback`
-- Snapshot maintenance
-  - `/api/cron/snapshot`
 
 ## Deferred
 
@@ -78,3 +78,4 @@ Source of truth: `packages/webflow-dashboard` code inventory as of 2026-03-18.
 
 - This matrix intentionally prefers code inventory over repository docs such as `PRODUCTION_READINESS.md` and `FEATURE_PARITY_ANALYSIS.md`, which currently disagree.
 - The Webflow Cloud migration target is a new Next.js app, not an in-place SvelteKit conversion.
+- Marketplace trend history is part of the creator-critical marketplace surface. Do not promote the Cloud port without either sharing the SvelteKit D1 history reader/writer or explicitly replacing it with an equivalent scheduled snapshot path.

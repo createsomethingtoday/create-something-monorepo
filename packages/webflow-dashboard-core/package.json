@@ -11,6 +11,7 @@
     "./hash": "./src/hash.ts",
     "./knock": "./src/knock.ts",
     "./kv": "./src/kv.ts",
+    "./marketplace-history": "./src/marketplace-history.ts",
     "./marketplace-webhook": "./src/marketplace-webhook.ts",
     "./r2": "./src/r2.ts",
     "./runtime": "./src/runtime.ts",

@@ -10,9 +10,11 @@ import { getServerAirtable } from '../../../../lib/server/airtable';
 import { getPricingTiers, WEBFLOW_FEATURES } from '../../../../lib/intake/constants';
 import { evaluateCreatorEligibility } from '../../../../lib/intake/creator-eligibility';
 import {
-  LEGACY_IX2_VALIDATION_MESSAGE,
+  buildPublishedUrlValidationMessage,
+  getPublishedUrlValidationIssues,
   runPublishedUrlValidation
 } from '../../../../lib/intake/published-url';
+import { runValidatorAppSubmissionPreflight } from '../../../../lib/intake/validator-app';
 import { validateTemplateNameSyntax } from '../../../../lib/intake/template-name';
 import { checkTemplateNameAvailability } from '../../../../lib/server/template-name-availability';
 import { verifyTurnstileToken } from '../../../../lib/server/turnstile';
@@ -40,6 +42,7 @@ type TemplateSubmissionBody = {
   thumbnailUrl?: string;
   secondaryThumbnailUrl?: string;
   galleryUrls?: string[];
+  qualityBenchmarkConfirmed?: boolean;
   checklistConfirmed?: boolean;
   agreementConfirmed?: boolean;
   turnstileToken?: string;
@@ -234,6 +237,13 @@ export async function POST(request: Request) {
       return jsonNoStore({ error: 'At least one gallery image is required.' }, { status: 400 });
     }
 
+    if (!body.qualityBenchmarkConfirmed) {
+      return jsonNoStore(
+        { error: 'Featured quality benchmark acknowledgement is required.' },
+        { status: 400 }
+      );
+    }
+
     if (!body.checklistConfirmed || !body.agreementConfirmed) {
       return jsonNoStore(
         { error: 'Submission checklist and agreement are required.' },
@@ -276,13 +286,29 @@ export async function POST(request: Request) {
 
     const publishedValidation = await runPublishedUrlValidation(body.publishedUrl || '');
     if (!publishedValidation.summary.passed) {
+      const validationIssues = getPublishedUrlValidationIssues(publishedValidation.summary);
       return jsonNoStore(
         {
-          error: publishedValidation.summary.legacyIx2Detected
-            ? LEGACY_IX2_VALIDATION_MESSAGE
-            : 'Published URL validation failed.'
+          error: buildPublishedUrlValidationMessage(publishedValidation.summary),
+          validationIssues
         },
         { status: 400 }
+      );
+    }
+
+    const validatorPreflight = await runValidatorAppSubmissionPreflight(
+      publishedValidation.normalizedUrl
+    );
+    if (validatorPreflight.required && !validatorPreflight.passed) {
+      return jsonNoStore(
+        {
+          error: validatorPreflight.message,
+          validationIssues: validatorPreflight.issues,
+          validatorPreflight
+        },
+        {
+          status: validatorPreflight.status === 'validator_app_unavailable' ? 503 : 400
+        }
       );
     }
 
@@ -334,6 +360,9 @@ export async function POST(request: Request) {
         ? `<li>Feature flags: ${escapeHtml([...combinedFeatures].join(', '))}</li>`
         : '',
       `<li>Published URL verified: ${escapeHtml(publishedValidation.normalizedUrl)}</li>`,
+      validatorPreflight.passed
+        ? `<li>Webflow Way Validator confirmed: ${escapeHtml(validatorPreflight.result?.score ? `${validatorPreflight.result.score}% pass` : 'passed')}.</li>`
+        : '',
       publishedValidation.summary.gsapDetected
         ? '<li>GSAP detected during published-site crawl.</li>'
         : '',

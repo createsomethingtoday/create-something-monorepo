@@ -2,6 +2,7 @@
 
 import type { Asset } from '@create-something/webflow-dashboard-core/airtable';
 import { useMemo, useState } from 'react';
+import { ConfirmDialog } from './confirm-dialog';
 import { appPath } from '../lib/runtime-paths';
 
 async function uploadFile(file: File, type: 'thumbnail' | 'image') {
@@ -29,9 +30,12 @@ export function AssetEditor({ asset }: { asset: Asset }) {
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const [secondaryFiles, setSecondaryFiles] = useState<File[]>([]);
   const [carouselFiles, setCarouselFiles] = useState<File[]>([]);
+  const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
 
   const existingSecondaryThumbnails = useMemo(
-    () => asset.secondaryThumbnails || (asset.secondaryThumbnailUrl ? [asset.secondaryThumbnailUrl] : []),
+    () =>
+      asset.secondaryThumbnails ||
+      (asset.secondaryThumbnailUrl ? [asset.secondaryThumbnailUrl] : []),
     [asset.secondaryThumbnails, asset.secondaryThumbnailUrl]
   );
 
@@ -46,7 +50,9 @@ export function AssetEditor({ asset }: { asset: Asset }) {
     try {
       const formData = new FormData(event.currentTarget);
 
-      const thumbnailUrl = thumbnailFile ? await uploadFile(thumbnailFile, 'thumbnail') : asset.thumbnailUrl;
+      const thumbnailUrl = thumbnailFile
+        ? await uploadFile(thumbnailFile, 'thumbnail')
+        : asset.thumbnailUrl;
       const secondaryThumbnails =
         secondaryFiles.length > 0
           ? await Promise.all(secondaryFiles.map((file) => uploadFile(file, 'image')))
@@ -105,6 +111,7 @@ export function AssetEditor({ asset }: { asset: Asset }) {
       window.location.assign(appPath('/dashboard'));
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : 'Failed to archive asset');
+      setShowArchiveConfirm(false);
       setSaving(false);
     }
   }
@@ -127,7 +134,13 @@ export function AssetEditor({ asset }: { asset: Asset }) {
             <label className="field-label" htmlFor="name">
               Asset name
             </label>
-            <input className="field-input" id="name" name="name" defaultValue={asset.name} required />
+            <input
+              className="field-input"
+              id="name"
+              name="name"
+              defaultValue={asset.name}
+              required
+            />
           </div>
 
           <div className="field">
@@ -159,13 +172,23 @@ export function AssetEditor({ asset }: { asset: Asset }) {
               <label className="field-label" htmlFor="websiteUrl">
                 Website URL
               </label>
-              <input className="field-input" id="websiteUrl" name="websiteUrl" defaultValue={asset.websiteUrl || ''} />
+              <input
+                className="field-input"
+                id="websiteUrl"
+                name="websiteUrl"
+                defaultValue={asset.websiteUrl || ''}
+              />
             </div>
             <div className="field">
               <label className="field-label" htmlFor="previewUrl">
                 Preview URL
               </label>
-              <input className="field-input" id="previewUrl" name="previewUrl" defaultValue={asset.previewUrl || ''} />
+              <input
+                className="field-input"
+                id="previewUrl"
+                name="previewUrl"
+                defaultValue={asset.previewUrl || ''}
+              />
             </div>
           </div>
 
@@ -245,12 +268,27 @@ export function AssetEditor({ asset }: { asset: Asset }) {
             <button className="button button-primary" type="submit" disabled={saving}>
               {saving ? 'Saving…' : 'Save changes'}
             </button>
-            <button className="button button-secondary" type="button" onClick={handleArchive} disabled={saving}>
+            <button
+              className="button button-secondary"
+              type="button"
+              onClick={() => setShowArchiveConfirm(true)}
+              disabled={saving}
+            >
               Archive asset
             </button>
           </div>
         </form>
       </section>
+
+      <ConfirmDialog
+        open={showArchiveConfirm}
+        title="Archive asset?"
+        description={`This will archive "${asset.name}" and remove it from the active dashboard view.`}
+        confirmLabel="Archive asset"
+        busy={saving}
+        onCancel={() => setShowArchiveConfirm(false)}
+        onConfirm={handleArchive}
+      />
     </div>
   );
 }

@@ -99,9 +99,9 @@ export function getClientScript(defaultMode = 'shadow'): string {
   }
 
   function formatPrice(item) {
-    if (item.is_free || item.price === 0) return 'Free';
-    if (typeof item.price !== 'number') return '';
-    return '$' + item.price + ' USD';
+    if (typeof item.price === 'number' && item.price > 0) return '$' + item.price + ' USD';
+    if (item.price === 0 || item.is_free) return 'Free';
+    return '';
   }
 
   function cloneCardTemplate() {

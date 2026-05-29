@@ -80,6 +80,13 @@ function createExecutionContext() {
 	} as unknown as ExecutionContext;
 }
 
+async function sha256ForTest(value: string) {
+	const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value));
+	return Array.from(new Uint8Array(digest))
+		.map((byte) => byte.toString(16).padStart(2, '0'))
+		.join('');
+}
+
 describe('Designer Validator', () => {
 	it('reports missing core designer primitives instead of skipping the categories', async () => {
 		const result = await validateDesignerData({
@@ -469,6 +476,61 @@ describe('Interactions Validator', () => {
 		expect(result.issues.some((issue) => issue.id === 'interactions-analysis-incomplete' && issue.severity === 'warning')).toBe(true);
 	});
 
+	it('does not treat Webflow Lottie element markers as legacy IX2', async () => {
+		vi.mocked(fetchHTML).mockResolvedValue({
+			html: `<!doctype html><html><body>
+				<div data-w-id="lottie-1" data-is-ix2-target="0" data-animation-type="lottie" data-src="/animation.json" data-renderer="svg" data-default-duration="0"></div>
+				<script>Webflow.require("ix2").init({ events: { "e-1": { action: { actionTypeId: "PLUGIN_LOTTIE_EFFECT" } } }, actionLists: { pluginLottie: { actionItemGroups: [{ actionItems: [{ actionTypeId: "PLUGIN_LOTTIE" }] }] } } })</script>
+			</body></html>`,
+			status: 200,
+			headers: { 'content-type': 'text/html' },
+			size: 0,
+			loadTime: 0
+		});
+
+		const result = await validateInteractions('https://example.com');
+
+		expect(result.stats.legacyIx2Detected).toBe(false);
+		expect(result.stats.legacyIx2Count).toBe(0);
+		expect(result.issues.some((issue) => issue.id === 'legacy-ix2-interactions-detected')).toBe(false);
+	});
+
+	it('does not reject bare Webflow DOM markers without IX2 runtime or action evidence', async () => {
+		vi.mocked(fetchHTML).mockResolvedValue({
+			html: '<!doctype html><html class="w-mod-js w-mod-ix"><body><div data-w-id="decorative-motion"></div></body></html>',
+			status: 200,
+			headers: { 'content-type': 'text/html' },
+			size: 0,
+			loadTime: 0
+		});
+
+		const result = await validateInteractions('https://example.com');
+
+		expect(result.stats.legacyIx2Detected).toBe(false);
+		expect(result.stats.legacyIx2Count).toBe(0);
+		expect(result.issues.some((issue) => issue.id === 'legacy-ix2-interactions-detected')).toBe(false);
+	});
+
+	it('still detects non-Lottie IX2 markers on pages that also include Lottie', async () => {
+		vi.mocked(fetchHTML).mockResolvedValue({
+			html: `<!doctype html><html><body>
+				<div data-w-id="lottie-1" data-is-ix2-target="0" data-animation-type="lottie" data-src="/animation.json" data-renderer="svg" data-default-duration="0"></div>
+				<div data-w-id="legacy-card"></div>
+				<script>Webflow.require("ix2").init({})</script>
+			</body></html>`,
+			status: 200,
+			headers: { 'content-type': 'text/html' },
+			size: 0,
+			loadTime: 0
+		});
+
+		const result = await validateInteractions('https://example.com');
+
+		expect(result.stats.legacyIx2Detected).toBe(true);
+		expect(result.stats.legacyIx2Count).toBe(2);
+		expect(result.issues.some((issue) => issue.id === 'legacy-ix2-interactions-detected')).toBe(true);
+	});
+
 	it('blocks validation when no pages can be checked for IX2', async () => {
 		vi.mocked(fetchHTML).mockRejectedValue(new Error('HTTP 404: Not Found'));
 
@@ -689,6 +751,150 @@ describe('Validation Submission Endpoint', () => {
 		expect(response.headers.get('Access-Control-Allow-Origin')).toBe(origin);
 	});
 
+	it('exposes latest submitted Validator result by site ID and bridge token hash', async () => {
+		const installResponse = await worker.fetch(
+			new Request('https://validation-worker.createsomething.workers.dev/app-validator/snippet/install', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					Origin: 'https://designer.webflow-ext.com'
+				},
+				body: JSON.stringify({
+					siteId: 'site_latest_result',
+					siteName: 'Latest Result',
+					installTarget: 'head',
+					mode: 'manual-fallback'
+				})
+			}),
+			{} as any,
+			createExecutionContext()
+		);
+		const installPayload = await installResponse.json() as any;
+		const bridgeTokenSha256 = await sha256ForTest(installPayload.bridgeToken);
+
+		const submitResponse = await worker.fetch(
+			new Request('https://validation-worker.createsomething.workers.dev/app-validator/submit', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					Origin: 'https://app.webflow.com'
+				},
+				body: JSON.stringify({
+					siteId: 'site_latest_result',
+					siteName: 'Latest Result',
+					siteUrl: 'https://latest-result.webflow.io',
+					validationResults: {
+						url: 'https://latest-result.webflow.io',
+						summary: { totalErrors: 0, totalWarnings: 1, passedCategories: 4, failedCategories: 0 },
+						categories: [
+							{ category: 'Assets & Images', passed: true, issues: [] },
+							{ category: 'Content & Accessibility', passed: true, issues: [] },
+							{ category: 'Interactions and GSAP', passed: true, issues: [] },
+							{ category: 'Designer Structure', passed: true, issues: [] }
+						]
+					}
+				})
+			}),
+			{} as any,
+			createExecutionContext()
+		);
+		expect(submitResponse.status).toBe(200);
+
+		const bySiteResponse = await worker.fetch(
+			new Request('https://validation-worker.createsomething.workers.dev/app-validator/submission/latest?siteId=site_latest_result', {
+				method: 'GET',
+				headers: {
+					Origin: 'https://webflow.com'
+				}
+			}),
+			{} as any,
+			createExecutionContext()
+		);
+		const byTokenResponse = await worker.fetch(
+			new Request(`https://validation-worker.createsomething.workers.dev/app-validator/submission/latest?bridgeTokenSha256=${bridgeTokenSha256}`, {
+				method: 'GET',
+				headers: {
+					Origin: 'https://webflow.com'
+				}
+			}),
+			{} as any,
+			createExecutionContext()
+		);
+
+		expect(bySiteResponse.status).toBe(200);
+		expect(byTokenResponse.status).toBe(200);
+		const byTokenPayload = await byTokenResponse.json() as any;
+		expect(byTokenPayload.status).toBe('available');
+		expect(byTokenPayload.passed).toBe(true);
+		expect(byTokenPayload.summary.score).toBe(100);
+		expect(byTokenPayload.summary.totalCategories).toBe(4);
+		expect(byTokenPayload.rawBridgeTokenStored).toBe(false);
+		expect(JSON.stringify(byTokenPayload)).not.toContain(installPayload.bridgeToken);
+	});
+
+	it('marks latest Validator result as failed when errors or failed categories remain', async () => {
+		await worker.fetch(
+			new Request('https://validation-worker.createsomething.workers.dev/app-validator/submit', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					Origin: 'https://app.webflow.com'
+				},
+				body: JSON.stringify({
+					siteId: 'site_latest_failed_result',
+					siteName: 'Latest Failed Result',
+					validationResults: {
+						summary: { totalErrors: 1, totalWarnings: 0, passedCategories: 3, failedCategories: 1 },
+						categories: [
+							{
+								category: 'Assets & Images',
+								passed: false,
+								issues: [{ severity: 'error', message: 'Image exceeds the maximum size.' }]
+							}
+						]
+					}
+				})
+			}),
+			{} as any,
+			createExecutionContext()
+		);
+
+		const latestResponse = await worker.fetch(
+			new Request('https://validation-worker.createsomething.workers.dev/app-validator/submission/latest?siteId=site_latest_failed_result', {
+				method: 'GET',
+				headers: {
+					Origin: 'https://webflow.com'
+				}
+			}),
+			{} as any,
+			createExecutionContext()
+		);
+
+		expect(latestResponse.status).toBe(200);
+		const payload = await latestResponse.json() as any;
+		expect(payload.passed).toBe(false);
+		expect(payload.summary.failedCategories).toBe(1);
+		expect(payload.summary.totalErrors).toBe(1);
+	});
+
+	it('returns missing when no latest Validator result has been submitted', async () => {
+		const response = await worker.fetch(
+			new Request('https://validation-worker.createsomething.workers.dev/app-validator/submission/latest?siteId=site_no_latest_result', {
+				method: 'GET',
+				headers: {
+					Origin: 'https://webflow.com'
+				}
+			}),
+			{} as any,
+			createExecutionContext()
+		);
+
+		expect(response.status).toBe(404);
+		const payload = await response.json() as any;
+		expect(payload.status).toBe('missing');
+		expect(payload.rawBridgeTokenStored).toBe(false);
+	});
+
 	it('accepts submissions for sites that are not in Airtable without failing the client flow', async () => {
 		const fetchMock = vi.fn(async () =>
 			new Response(JSON.stringify({ records: [] }), {
@@ -726,6 +932,65 @@ describe('Validation Submission Endpoint', () => {
 		expect(payload.persisted).toBe(false);
 		expect(payload.reason).toBe('record_not_found');
 		expect(fetchMock).toHaveBeenCalledTimes(1);
+	});
+
+	it('persists sanitized validation result artifacts when R2 binding is configured', async () => {
+		const putMock = vi.fn(async () => undefined);
+
+		const response = await worker.fetch(
+			new Request('https://validation-worker.createsomething.workers.dev/app-validator/submit', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					Origin: 'https://app.webflow.com',
+					'CF-Connecting-IP': '203.0.113.22'
+				},
+				body: JSON.stringify({
+					siteId: 'site_artifact',
+					siteName: 'Artifact Site',
+					siteUrl: 'https://artifact.example.com',
+					validationResults: {
+						url: 'https://artifact.example.com',
+						summary: { totalErrors: 1, totalWarnings: 0, passedCategories: 1, failedCategories: 1 },
+						categories: [
+							{
+								category: 'Assets & Images',
+								passed: false,
+								issues: [
+									{
+										severity: 'error',
+										message: 'Oversized asset found',
+										details: { bridgeToken: 'wfbt_should_not_persist' }
+									}
+								]
+							}
+						]
+					}
+				})
+			}),
+			{
+				VALIDATOR_RESULT_ARTIFACTS: { put: putMock }
+			} as any,
+			createExecutionContext()
+		);
+
+		expect(response.status).toBe(200);
+		const payload = await response.json() as any;
+		expect(payload.accepted).toBe(true);
+		expect(payload.persisted).toBe(false);
+		expect(payload.reason).toBe('airtable_not_configured');
+		expect(payload.artifact.persisted).toBe(true);
+		expect(payload.artifact.key).toContain('validator-app-results/site=site_artifact/');
+		expect(payload.artifact.sha256).toMatch(/^[a-f0-9]{64}$/);
+		expect(putMock).toHaveBeenCalledTimes(1);
+
+		const [key, body, options] = putMock.mock.calls[0];
+		expect(key).toContain('validator-app-results/site=site_artifact/');
+		expect(options.httpMetadata.contentType).toBe('application/json');
+		expect(options.customMetadata.siteId).toBe('site_artifact');
+		expect(body).not.toContain('wfbt_should_not_persist');
+		expect(body).toContain('"raw_bridge_token_stored": false');
+		expect(body).toContain('Oversized asset found');
 	});
 
 	it('rate limits repeated submissions per site', async () => {

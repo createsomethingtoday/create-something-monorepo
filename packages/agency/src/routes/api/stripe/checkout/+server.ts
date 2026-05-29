@@ -37,17 +37,17 @@ export const POST: RequestHandler = async ({ request, platform, url }) => {
 
 	// Validate product exists
 	const product = getOfferingBySlug(productId);
-	if (!product) {
+	const priceConfig = getStripePrice(productId);
+	if (!product && !priceConfig) {
 		throw error(404, 'Product not found');
 	}
 
 	// Check if product has a price (currently all are free)
-	if (product.pricing === 'Free') {
+	if (product?.pricing === 'Free' && !priceConfig) {
 		throw error(400, 'This product is free and does not require checkout');
 	}
 
 	// Get Stripe price configuration
-	const priceConfig = getStripePrice(productId);
 	if (!priceConfig) {
 		throw error(400, 'No pricing configured for this product');
 	}
@@ -62,8 +62,9 @@ export const POST: RequestHandler = async ({ request, platform, url }) => {
 
 	// Build checkout session
 	const baseUrl = url.origin;
-	const defaultSuccessUrl = `${baseUrl}/products/${productId}?success=true&session_id={CHECKOUT_SESSION_ID}`;
-	const defaultCancelUrl = `${baseUrl}/products/${productId}?canceled=true`;
+	const defaultProductUrl = product?.href?.startsWith('/') ? product.href : '/products';
+	const defaultSuccessUrl = `${baseUrl}${defaultProductUrl}?success=true&session_id={CHECKOUT_SESSION_ID}`;
+	const defaultCancelUrl = `${baseUrl}${defaultProductUrl}?canceled=true`;
 
 	try {
 		const session = await stripe.checkout.sessions.create({
@@ -78,7 +79,10 @@ export const POST: RequestHandler = async ({ request, platform, url }) => {
 			cancel_url: cancelUrl || defaultCancelUrl,
 			customer_email: customerEmail,
 			metadata: {
-				product_id: productId
+				product_id: productId,
+				...(productId.startsWith('agent-in-a-box-') && {
+					tier: productId.replace('agent-in-a-box-', '')
+				})
 			},
 			// For subscriptions, allow promotion codes
 			...(priceConfig.mode === 'subscription' && {

@@ -146,7 +146,7 @@
 </script>
 
 <SEO
-	title="Policy OS For Enterprise Judgment Operations | CREATE SOMETHING .agency"
+	title="Policy OS for Enterprise Judgment | CREATE SOMETHING .agency"
 	description="Policy OS for teams already running automation. Add policy operations, orchestration, and ongoing safeguards once the first workflow wedge is live."
 	keywords="enterprise automation reliability, workflow controls, policy operations, ai governance, mcp wedge"
 	ogImage="/og-image.svg"

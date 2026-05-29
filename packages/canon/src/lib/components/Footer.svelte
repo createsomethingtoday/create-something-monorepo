@@ -1,9 +1,22 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { getAnalytics } from '../analytics/client.js';
 
   interface QuickLink {
     label: string;
     href: string;
+  }
+
+  interface QuickLinkGroup {
+    title: string;
+    ariaLabel?: string;
+    links: QuickLink[];
+  }
+
+  interface FooterCta {
+    label: string;
+    href: string;
+    description?: string;
   }
 
   interface Props {
@@ -13,6 +26,8 @@
     newsletterTitle?: string;
     newsletterDescription?: string;
     quickLinks?: QuickLink[];
+    quickLinkGroups?: QuickLinkGroup[];
+    footerCta?: FooterCta;
     showRamsQuote?: boolean;
     copyrightText?: string;
     showSocial?: boolean;
@@ -32,6 +47,8 @@
     newsletterTitle = 'Stay updated with new experiments',
     newsletterDescription = 'Get notified when new research is published. Real metrics, tracked experiments, honest learnings.',
     quickLinks = [],
+    quickLinkGroups = [],
+    footerCta,
     showRamsQuote = false,
     copyrightText,
     showSocial = false,
@@ -128,6 +145,7 @@
     message = null;
 
     try {
+      const analytics = getAnalytics();
       const response = await fetch('/api/newsletter', {
         method: 'POST',
         headers: {
@@ -135,7 +153,12 @@
         },
         body: JSON.stringify({
           email,
-          turnstileToken: turnstileToken || undefined
+          turnstileToken: turnstileToken || undefined,
+          source: mode,
+          sessionId: analytics?.getSessionId(),
+          sourceProperty: analytics?.getSourceProperty() ?? undefined,
+          landingUrl: typeof window !== 'undefined' ? window.location.href : undefined,
+          referrer: typeof document !== 'undefined' ? document.referrer : undefined
         })
       });
 
@@ -143,6 +166,10 @@
 
       if (data.success) {
         message = { type: 'success', text: data.message };
+        analytics?.conversion('newsletter_requested', {
+          source: mode,
+          surface: 'footer_newsletter'
+        });
         email = '';
         // Reset Turnstile for next submission
         if ((window as any).turnstile && turnstileWidgetId) {
@@ -164,6 +191,13 @@
 
   const currentYear = new Date().getFullYear();
   const defaultCopyright = `© ${currentYear} Create Something. The canon for "less, but better."`;
+  const footerLinkGroups = $derived(
+    quickLinkGroups.length > 0
+      ? quickLinkGroups
+      : quickLinks.length > 0
+        ? [{ title: 'Quick Links', ariaLabel: 'Quick links', links: quickLinks }]
+        : []
+  );
 
   // Cross-property transition handler
   function handleCrossPropertyClick(
@@ -289,7 +323,7 @@
   <!-- Footer Links -->
   <div class="footer-links py-12 px-6" class:with-newsletter={showNewsletter}>
     <div class="footer-inner shell-inner">
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
+      <div class="footer-links-grid">
         <!-- About / Brand Column -->
         <div>
           {#if aboutText}
@@ -303,6 +337,15 @@
               The philosophical foundation for the Create Something ecosystem. Curated wisdom from
               masters who embody "less, but better."
             </p>
+          {/if}
+
+          {#if footerCta}
+            <a href={footerCta.href} class="footer-cta">
+              <span class="footer-cta-label">{footerCta.label}</span>
+              {#if footerCta.description}
+                <span class="footer-cta-description">{footerCta.description}</span>
+              {/if}
+            </a>
           {/if}
 
           <!-- Social Links -->
@@ -343,19 +386,23 @@
         </div>
 
         <!-- Quick Links (Optional) -->
-        {#if quickLinks.length > 0}
-          <nav aria-label="Quick links">
-            <h3 class="section-title mb-4">Quick Links</h3>
-            <ul class="space-y-3">
-              {#each quickLinks as link}
-                <li>
-                  <a href={link.href} class="footer-link">
-                    {link.label}
-                  </a>
-                </li>
-              {/each}
-            </ul>
-          </nav>
+        {#if footerLinkGroups.length > 0}
+          <div class="footer-link-groups" aria-label="Footer links">
+            {#each footerLinkGroups as group}
+              <nav aria-label={group.ariaLabel ?? group.title}>
+                <h3 class="section-title mb-4">{group.title}</h3>
+                <ul class="space-y-3">
+                  {#each group.links as link}
+                    <li>
+                      <a href={link.href} class="footer-link">
+                        {link.label}
+                      </a>
+                    </li>
+                  {/each}
+                </ul>
+              </nav>
+            {/each}
+          </div>
         {/if}
 
         <!-- Modes of Being (REQUIRED) - With Hermeneutic Transitions -->
@@ -562,6 +609,55 @@
     color: var(--color-fg-tertiary);
   }
 
+  .footer-links-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 3rem;
+  }
+
+  .footer-link-groups {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+    gap: 2rem 2.5rem;
+  }
+
+  .footer-cta {
+    display: inline-flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    max-width: 22rem;
+    margin-bottom: 1.5rem;
+    padding: 0.85rem 1rem;
+    border: 1px solid var(--color-border-emphasis);
+    border-radius: var(--radius-md);
+    color: var(--color-fg-primary);
+    text-decoration: none;
+    transition:
+      border-color var(--duration-micro) var(--ease-standard),
+      transform var(--duration-micro) var(--ease-standard);
+  }
+
+  .footer-cta:hover {
+    border-color: var(--color-shell-border-strong);
+    text-decoration: none;
+    transform: translateY(-1px);
+  }
+
+  .footer-cta:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+
+  .footer-cta-label {
+    font-size: var(--text-body-sm);
+    font-weight: var(--font-semibold);
+  }
+
+  .footer-cta-description {
+    font-size: var(--text-caption);
+    color: var(--color-fg-tertiary);
+  }
+
   /* Section Titles */
   .section-title {
     font-size: var(--text-body-sm);
@@ -697,5 +793,17 @@
   .turnstile-container {
     display: flex;
     justify-content: center;
+  }
+
+  @media (min-width: 768px) {
+    .footer-links-grid {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .footer-links-grid {
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.55fr) minmax(0, 1.1fr);
+    }
   }
 </style>

@@ -470,6 +470,12 @@
             "pattern": "^[^.]+[.][^.]+$"
           }
         },
+        "builtin_tools": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/tool"
+          }
+        },
         "policy_pack": {
           "type": "string",
           "minLength": 1

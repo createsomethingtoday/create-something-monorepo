@@ -37,7 +37,10 @@
 
 <div class="ink-surface product-surface product-surface--soft">
   <div class="ink-surface__copy">
-    <span class="product-kicker">TRMNL + Ink operator surface</span>
+    <span class="product-kicker ink-surface__kicker">
+      <span class="ink-surface__kicker-desktop">TRMNL + Ink operator surface</span>
+      <span class="ink-surface__kicker-mobile">TRMNL + Ink Surface</span>
+    </span>
     <h2>The operator should not have to watch the dashboard.</h2>
     <p>
       TRMNL gives the delivery a ready ePaper companion for all-clear, approval-needed, blocked,
@@ -135,6 +138,10 @@
     align-content: center;
     gap: 1rem;
     max-width: 34rem;
+  }
+
+  .ink-surface__kicker-mobile {
+    display: none;
   }
 
   .ink-surface__copy h2 {
@@ -339,6 +346,21 @@
   }
 
   @media (max-width: 760px) {
+    .ink-surface__kicker {
+      max-width: 100%;
+      letter-spacing: 0.08em;
+      line-height: 1.15;
+      white-space: nowrap;
+    }
+
+    .ink-surface__kicker-desktop {
+      display: none;
+    }
+
+    .ink-surface__kicker-mobile {
+      display: inline;
+    }
+
     .ink-state-grid,
     .ink-surface__cards,
     .ink-detail-card {

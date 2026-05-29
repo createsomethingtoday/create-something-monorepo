@@ -12,6 +12,7 @@ INFISICAL_PATH="${INFISICAL_PATH:-/}"
 INFISICAL_INCLUDE_IMPORTS="${INFISICAL_INCLUDE_IMPORTS:-true}"
 DRY_RUN="${DRY_RUN:-false}"
 REVIEWER="${REVIEWER:-all}"
+INCLUDE_CENTRAL="${INCLUDE_CENTRAL:-0}"
 
 REVIEWERS=(
   "WF_TEMPLATE_REVIEW_NATALIA|cs-hub-wf-template-review-natalia"
@@ -21,6 +22,11 @@ REVIEWERS=(
   "WF_TEMPLATE_REVIEW_MARIANA|cs-hub-wf-template-review-mariana"
   "WF_TEMPLATE_REVIEW_MICAH|cs-hub-wf-template-review-micah"
 )
+
+TARGETS=("${REVIEWERS[@]}")
+if [[ "$INCLUDE_CENTRAL" == "1" || "$INCLUDE_CENTRAL" == "true" || "$REVIEWER" == "central" || "$REVIEWER" == "shared" || "$REVIEWER" == "wf-template-review" ]]; then
+  TARGETS+=("WF_TEMPLATE_REVIEW|cs-hub-wf-template-review")
+fi
 
 require_cmd() {
   if ! command -v "$1" >/dev/null 2>&1; then
@@ -121,6 +127,10 @@ reviewer_key_matches() {
   if [[ "$reviewer" == "all" ]]; then
     return 0
   fi
+  if [[ "$reviewer" == "central" || "$reviewer" == "shared" || "$reviewer" == "wf-template-review" ]]; then
+    [[ "$reviewer_key" == "WF_TEMPLATE_REVIEW" ]]
+    return $?
+  fi
   reviewer_upper="$(printf '%s' "$reviewer" | tr '[:lower:]' '[:upper:]')"
   [[ "$reviewer_key" == "WF_TEMPLATE_REVIEW_${reviewer_upper}" ]]
 }
@@ -140,12 +150,16 @@ require_secret "WEBFLOW_TEMPLATE_REVIEW_MCP_API_KEY" || missing=1
 require_secret "BRAINTRUST_API_KEY" || missing=1
 require_secret "BRAINTRUST_PROJECT_ID" || missing=1
 
-for entry in "${REVIEWERS[@]}"; do
+for entry in "${TARGETS[@]}"; do
   IFS='|' read -r reviewer_key _worker <<<"$entry"
   if ! reviewer_key_matches "$reviewer_key" "$REVIEWER"; then
     continue
   fi
-  require_secret "CS_HUB_${reviewer_key}_API_TOKEN" || missing=1
+  if [[ "$reviewer_key" == "WF_TEMPLATE_REVIEW" ]]; then
+    require_secret "CS_HUB_WF_TEMPLATE_REVIEW_API_TOKEN" || missing=1
+  else
+    require_secret "CS_HUB_${reviewer_key}_API_TOKEN" || missing=1
+  fi
 done
 
 if [[ "$missing" == "1" ]]; then
@@ -153,14 +167,18 @@ if [[ "$missing" == "1" ]]; then
   exit 1
 fi
 
-for entry in "${REVIEWERS[@]}"; do
+for entry in "${TARGETS[@]}"; do
   IFS='|' read -r reviewer_key worker <<<"$entry"
   if ! reviewer_key_matches "$reviewer_key" "$REVIEWER"; then
     continue
   fi
-  reviewer_token_var="CS_HUB_${reviewer_key}_API_TOKEN"
   echo "syncing ${worker}"
-  put_versioned_secret "$worker" "HUB_API_TOKEN" "${!reviewer_token_var}"
+  if [[ "$reviewer_key" == "WF_TEMPLATE_REVIEW" ]]; then
+    put_versioned_secret "$worker" "HUB_API_TOKEN" "$CS_HUB_WF_TEMPLATE_REVIEW_API_TOKEN"
+  else
+    reviewer_token_var="CS_HUB_${reviewer_key}_API_TOKEN"
+    put_versioned_secret "$worker" "HUB_API_TOKEN" "${!reviewer_token_var}"
+  fi
   put_versioned_secret "$worker" "HUB_SESSION_RESOLVE_TOKEN" "$HUB_SESSION_RESOLVE_TOKEN"
   put_versioned_secret "$worker" "WEBFLOW_TEMPLATE_REVIEW_MCP_API_KEY" "$WEBFLOW_TEMPLATE_REVIEW_MCP_API_KEY"
   put_versioned_secret "$worker" "BRAINTRUST_API_KEY" "$BRAINTRUST_API_KEY"

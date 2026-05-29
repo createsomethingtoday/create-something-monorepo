@@ -6,6 +6,19 @@
 
 export const REGISTRY_CATALOG_ENTRIES = [
   {
+    "name": "Bettermode Creator",
+    "slug": "bettermode-creator",
+    "url": "https://bettermode-creator.mcp.createsomething.agency",
+    "description": "Bettermode Marketplace Creator drafting MCP — read-only Bettermode + Airtable + community queue helpers consumed by the Dify drafter agent.",
+    "category": "create-something",
+    "transports": [
+      "http",
+      "sse"
+    ],
+    "requiresAuth": true,
+    "authType": "bearer"
+  },
+  {
     "name": "CREATE SOMETHING Content",
     "slug": "create-something",
     "url": "https://mcp.createsomething.ltd",
@@ -16,6 +29,19 @@ export const REGISTRY_CATALOG_ENTRIES = [
       "sse"
     ],
     "requiresAuth": false
+  },
+  {
+    "name": "Hydra DB Recall",
+    "slug": "hydra-db-recall",
+    "url": "https://hydra-db-recall-mcp.createsomething.workers.dev",
+    "description": "CREATE SOMETHING governed read-only HydraDB recall wrapper with D1 and Braintrust telemetry",
+    "category": "create-something",
+    "transports": [
+      "http",
+      "sse"
+    ],
+    "requiresAuth": true,
+    "authType": "bearer"
   },
   {
     "name": "Outerfields PCN",
@@ -54,6 +80,19 @@ export const REGISTRY_CATALOG_ENTRIES = [
     "requiresAuth": false
   },
   {
+    "name": "Spotify",
+    "slug": "spotify",
+    "url": "https://spotify-mcp.createsomething.workers.dev",
+    "description": "CREATE SOMETHING governed Spotify MCP wrapper over RapidAPI with D1 and Braintrust telemetry",
+    "category": "create-something",
+    "transports": [
+      "http",
+      "sse"
+    ],
+    "requiresAuth": true,
+    "authType": "bearer"
+  },
+  {
     "name": "Substrate",
     "slug": "substrate",
     "url": "https://substrate.mcp.createsomething.agency",
@@ -87,18 +126,6 @@ export const REGISTRY_CATALOG_ENTRIES = [
     "transports": [
       "http",
       "sse"
-    ],
-    "requiresAuth": true,
-    "authType": "bearer"
-  },
-  {
-    "name": "Webflow Site Analyzer",
-    "slug": "webflow-site-analyzer",
-    "url": "https://analyzer.mcp.createsomething.agency",
-    "description": "Webflow Site Analyzer MCP — browser-backed template validation with Steel + Groq",
-    "category": "create-something",
-    "transports": [
-      "http"
     ],
     "requiresAuth": true,
     "authType": "bearer"

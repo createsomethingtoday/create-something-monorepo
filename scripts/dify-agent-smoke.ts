@@ -8,8 +8,6 @@ import {
   buildDifyClientConfig,
   callDifyChat,
   observationsContain,
-  usedForbiddenTool,
-  usedTool,
   type DifyChatInput,
   type DifyChatOutput,
   type DifyClientConfig
@@ -53,6 +51,7 @@ type DifyAgent = {
     api_key_secret: SecretRef;
   };
   enabled_tools: string[];
+  builtin_tools?: DifyTool[];
   smoke_command?: string;
   smoke_cases?: DifySmokeCase[];
 };
@@ -67,12 +66,14 @@ type SmokeOptions = {
   agentId?: string;
   caseIds: string[];
   query?: string;
+  queryFile?: string;
   expectedTools: string[];
   forbiddenTools: string[];
   expectedAnswers: string[];
   forbiddenAnswers: string[];
   expectedObservations: string[];
   allowWriteTools: boolean;
+  includeToolObservations: boolean;
   user?: string;
   baseUrl?: string;
   apiKeyEnv?: string;
@@ -123,6 +124,7 @@ type SmokeAttemptResult = {
   missingExpectedObservations: string[];
   usage?: unknown;
   error?: string;
+  toolCalls?: DifyToolCall[];
 };
 
 type SmokeCaseResult = Omit<SmokeAttemptResult, 'attempt'> & {
@@ -141,12 +143,14 @@ function parseArgs(argv: string[]): SmokeOptions {
     agentId: process.env.DIFY_AGENT_ID?.trim(),
     caseIds: splitEnvList(process.env.DIFY_AGENT_SMOKE_CASE),
     query: process.env.DIFY_AGENT_SMOKE_QUERY?.trim(),
+    queryFile: process.env.DIFY_AGENT_SMOKE_QUERY_FILE?.trim(),
     expectedTools: splitEnvList(process.env.DIFY_AGENT_SMOKE_EXPECT_TOOL),
     forbiddenTools: splitEnvList(process.env.DIFY_AGENT_SMOKE_FORBID_TOOL),
     expectedAnswers: splitEnvList(process.env.DIFY_AGENT_SMOKE_EXPECT_ANSWER),
     forbiddenAnswers: splitEnvList(process.env.DIFY_AGENT_SMOKE_FORBID_ANSWER),
     expectedObservations: splitEnvList(process.env.DIFY_AGENT_SMOKE_EXPECT_OBSERVATION),
     allowWriteTools: process.env.DIFY_AGENT_SMOKE_ALLOW_WRITE_TOOLS === 'true',
+    includeToolObservations: process.env.DIFY_AGENT_SMOKE_INCLUDE_TOOL_OBSERVATIONS === 'true',
     user: process.env.DIFY_AGENT_SMOKE_USER?.trim(),
     baseUrl: process.env.DIFY_AGENT_BASE_URL?.trim(),
     apiKeyEnv: process.env.DIFY_AGENT_API_KEY_ENV?.trim(),
@@ -184,6 +188,10 @@ function parseArgs(argv: string[]): SmokeOptions {
         options.query = readFlagValue(arg, next);
         index += 1;
         break;
+      case '--query-file':
+        options.queryFile = readFlagValue(arg, next);
+        index += 1;
+        break;
       case '--expect-tool':
       case '--require-tool':
         options.expectedTools.push(readFlagValue(arg, next));
@@ -208,6 +216,9 @@ function parseArgs(argv: string[]): SmokeOptions {
         break;
       case '--allow-write-tools':
         options.allowWriteTools = true;
+        break;
+      case '--include-tool-observations':
+        options.includeToolObservations = true;
         break;
       case '--user':
         options.user = readFlagValue(arg, next);
@@ -262,6 +273,7 @@ function parseArgs(argv: string[]): SmokeOptions {
 
   return {
     ...options,
+    query: options.query ?? readQueryFile(options.queryFile),
     expectedTools: uniqueTools(options.expectedTools),
     forbiddenTools: uniqueTools(options.forbiddenTools),
     caseIds: Array.from(new Set(options.caseIds.filter(Boolean)))
@@ -285,6 +297,15 @@ function numericEnv(value: string | undefined): number | undefined {
 function readFlagValue(flag: string, value: string | undefined): string {
   if (!value?.trim()) throw new Error(`Missing value for ${flag}.`);
   return value.trim();
+}
+
+function readQueryFile(filePath: string | undefined): string | undefined {
+  if (!filePath?.trim()) return undefined;
+  const absolutePath = resolve(ROOT, filePath);
+  if (!existsSync(absolutePath)) throw new Error(`Missing query file: ${filePath}`);
+  const content = readFileSync(absolutePath, 'utf8').trim();
+  if (!content) throw new Error(`Query file is empty: ${filePath}`);
+  return content;
 }
 
 function parsePositiveInt(value: string, flag: string): number {
@@ -332,6 +353,17 @@ function uniqueTools(tools: string[]): string[] {
   return Array.from(new Set(tools.map(localToolName).filter(Boolean)));
 }
 
+function outputUsedTool(output: DifyChatOutput, toolName: string | undefined): boolean {
+  if (!toolName) return true;
+  const expected = localToolName(toolName);
+  return output.toolCalls.some((call) => localToolName(call.tool) === expected);
+}
+
+function outputUsedForbiddenTool(output: DifyChatOutput, toolName: string): boolean {
+  const forbidden = localToolName(toolName);
+  return output.toolCalls.some((call) => localToolName(call.tool) === forbidden);
+}
+
 function inferWriteTools(inventory: DifyInventory, agent: DifyAgent): string[] {
   const forbidden = new Set<string>();
 
@@ -344,6 +376,12 @@ function inferWriteTools(inventory: DifyInventory, agent: DifyAgent): string[] {
     const tool = inventory.mcp_servers?.[serverId]?.tools.find(
       (candidate) => candidate.name === toolName
     );
+    if (tool?.risk === 'write' || tool?.risk === 'external_side_effect') {
+      forbidden.add(tool.name);
+    }
+  }
+
+  for (const tool of agent.builtin_tools ?? []) {
     if (tool?.risk === 'write' || tool?.risk === 'external_side_effect') {
       forbidden.add(tool.name);
     }
@@ -485,14 +523,15 @@ function buildConfig(
 function buildAttemptResult(
   attempt: number,
   output: DifyChatOutput,
-  smokeCase: SmokeRunCase
+  smokeCase: SmokeRunCase,
+  includeToolObservations = false
 ): SmokeAttemptResult {
   const requiredTools = smokeCase.requiredTools.map((tool) => ({
     tool,
-    used: usedTool(output, tool)
+    used: outputUsedTool(output, tool)
   }));
   const forbiddenToolsUsed = smokeCase.forbiddenTools.filter((tool) =>
-    usedForbiddenTool(output, [tool])
+    outputUsedForbiddenTool(output, tool)
   );
   const expectedAnswers = smokeCase.expectedAnswers.map((text) => ({
     text,
@@ -550,7 +589,8 @@ function buildAttemptResult(
     expectedObservations,
     missingExpectedObservations,
     usage: output.usage,
-    error: output.error
+    error: output.error,
+    ...(includeToolObservations ? { toolCalls: output.toolCalls } : {})
   };
 }
 
@@ -573,7 +613,7 @@ async function runSmokeCase(
     };
     const output = await callDifyChat(input, config);
 
-    finalAttempt = buildAttemptResult(attempt, output, smokeCase);
+    finalAttempt = buildAttemptResult(attempt, output, smokeCase, options.includeToolObservations);
     attempts.push(finalAttempt);
     if (finalAttempt.ok) break;
   }
@@ -620,6 +660,7 @@ Options:
   --agent, --agent-id <id>            Dify agent id from inventory. Optional when only one exists.
   --case <id>                         Run one inventory-declared smoke case. Repeatable.
   --query <text>                      One-off prompt sent to the Dify Service API.
+  --query-file <path>                 Read a one-off prompt from a file.
   --expect-tool, --require-tool <name> Require a tool call for a one-off prompt. Repeatable.
   --forbid-tool <name>                Fail if a tool is used. Repeatable.
   --expect-answer, --expect <text>    Require answer text. Repeatable.
@@ -627,6 +668,7 @@ Options:
   --expect-observation <text>         Require tool observation text. Repeatable.
   --max-attempts <1-5>                Retry transient failures for each case.
   --allow-write-tools                 Do not infer write-capable tools as forbidden.
+  --include-tool-observations         Include raw tool observations in JSON output.
   --user <id>                         Dify API user id.
   --base-url <url>                    Override Service API base URL.
   --api-key-env <name>                Environment variable to read before Infisical lookup.
@@ -693,7 +735,8 @@ async function main(): Promise<void> {
           secretKey: secretRef?.secret_key,
           caseCount: smokeCases.length,
           cases: smokeCases,
-          enabledTools: agent.enabled_tools
+          enabledTools: agent.enabled_tools,
+          builtinTools: agent.builtin_tools ?? []
         },
         null,
         2

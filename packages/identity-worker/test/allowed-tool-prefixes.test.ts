@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { resolveEffectiveAllowedToolPrefixes } from '../src/index.ts';
+import { getHostBindingFailure, resolveEffectiveAllowedToolPrefixes } from '../src/index.ts';
 
 test('Webflow template reviewer accounts resolve to the current Phase A tool surface', () => {
 	const prefixes = resolveEffectiveAllowedToolPrefixes({
@@ -13,8 +13,9 @@ test('Webflow template reviewer accounts resolve to the current Phase A tool sur
 		allowedToolPrefixes: ['webflow-template-review-mcp__template_review_assign_self'],
 	});
 
-	assert.equal(prefixes?.length, 17);
+	assert.equal(prefixes?.length, 18);
 	assert.ok(prefixes?.includes('webflow-template-review-mcp__template_review_get_metrics'));
+	assert.ok(prefixes?.includes('webflow-template-review-mcp__template_review_run_published_site_validation'));
 	assert.ok(prefixes?.includes('webflow-template-review-mcp__template_review_request_changes'));
 	assert.ok(prefixes?.includes('webflow-template-review-mcp__template_review_set_review_status'));
 	assert.ok(prefixes?.includes('webflow-template-review-mcp__template_review_save_draft_feedback'));
@@ -29,8 +30,18 @@ test('Webflow template reviewer host binding resolves stale empty prefixes to th
 		allowedToolPrefixes: [],
 	});
 
-	assert.equal(prefixes?.length, 17);
+	assert.equal(prefixes?.length, 18);
 	assert.ok(prefixes?.includes('webflow-template-review-mcp__template_review_get_metrics'));
+	assert.ok(prefixes?.includes('webflow-template-review-mcp__template_review_run_published_site_validation'));
+});
+
+test('Webflow template reviewer tokens may resolve against the central review host', () => {
+	assert.equal(getHostBindingFailure('wf-template-review-eric', 'wf-template-review'), null);
+	assert.equal(
+		getHostBindingFailure('wf-template-review-mariana.mcp.createsomething.agency', 'wf-template-review'),
+		null,
+	);
+	assert.equal(getHostBindingFailure('wf-template-review-eric', 'c3denver'), 'host_mismatch');
 });
 
 test('non-reviewer lanes keep their stored allowed prefix behavior', () => {

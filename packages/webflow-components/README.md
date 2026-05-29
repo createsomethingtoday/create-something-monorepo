@@ -111,6 +111,24 @@ The current package contains both Canon exports and compatibility exports. The l
 | **Glass Card** | Glassmorphism container | `glassVariant`, `showShine`, `padding` |
 | **Icon Card** | Feature card with icon | `title`, `icon`, `cardVariant`, `variant` |
 
+### Marketplace (Group: Marketplace)
+
+| Component | Description | Key Props |
+|-----------|-------------|-----------|
+| **Template Card** | CMS-bindable marketplace template card | `templateName`, `templateLink`, `primaryImage`, `creatorName`, `creatorIcon`, `popularityScore` |
+| **Template Grid** | Worker-backed template search grid | `apiBase`, `categorySlug`, `scopeOverride`, `initialSort`, `pageSize` |
+| **Template Filter Bar** | Worker-backed marketplace filters and pills | `apiBase`, `categorySlug`, `scopeOverride`, `defaultSort` |
+| **Template Search Box** | Shared marketplace search input that routes to the standalone search page or filters the current page | `mode`, `variant`, `searchAction`, `queryParam`, `placeholder`, `showButton` |
+| **Template Search Page** | Standalone marketplace search experiment surface with search, filter sidebar, active chips, result grid, and no-results recovery | `apiBase`, `title`, `quickSearches`, `scopeOverride`, `defaultSort`, `noindex` |
+| **Template Search Sidebar** | Standalone marketplace sidebar with search, All/Featured/Landing/Free rows, dynamic category counts, and vertical filters | `apiBase`, `title`, `interactionMode`, `countMode`, `showSearch`, `showCategories`, `showCounts` |
+| **Template Search Results** | Standalone search results grid with inline no-results recovery | `apiBase`, `scopeOverride`, `defaultSort`, `pageSize`, `emptyTitle` |
+| **Marketplace Landing Hero** | Search-backed landing hero with template search form, popular category suggestions, and native-vs-template-search experiment routing | `apiBase`, `title`, `searchExperience`, `searchAction`, `templateSearchAction`, `queryParam`, `useSearchSuggestions`, `enableAnalytics` |
+| **Template Carousel Section** | Worker-backed editorial carousel for marketplace landing sections | `preset`, `title`, `ctaLink`, `scopeOverride`, `sortOverride`, `itemLimit`, `enableAnalytics` |
+| **Popular Category Grid** | Search-backed marketplace use-case grid with live counts and optional thumbnails | `apiBase`, `layout`, `categories`, `useSearchCategories`, `maxCategories`, `enableAnalytics` |
+| **Marketplace FAQ** | Accessible marketplace FAQ accordion with optional FAQPage JSON-LD | `items`, `openFirst`, `allowMultipleOpen`, `includeStructuredData`, `enableAnalytics` |
+| **Marketplace Landing Experiment Gate** | Optimizely-compatible test gate for control/treatment reveal and exposure tracking | `mode`, `trafficPercent`, `controlSelector`, `treatmentSelector`, `optimizelyExposureEvent` |
+| **Featured Creator Card** | CMS-bindable monthly featured creator card | `creatorName`, `creatorLink`, `creatorAvatar`, `headline`, `featuredTemplateCount`, `newTemplates90d`, `buyerDemand`, `categoryBreadth`, `topTemplateName`, `topTemplateImage` |
+
 ### Forms (Group: Forms)
 
 | Component | Description | Key Props |
@@ -155,6 +173,24 @@ The current package contains both Canon exports and compatibility exports. The l
 | **Process Steps** | Step navigator | `heading`, `steps` (JSON), `variant` |
 | **Icon Card Grid** | Grid of icon cards | `heading`, `cards` (JSON), `columns` |
 
+### Cato Supply (Group: Cato Supply)
+
+These components are based on the exported project at `/Users/micahjohnson/Downloads/cato-supply.webflow` and are meant to replace the slow native/MCP delivery path for the remaining Cato surfaces.
+
+| Component | Description | Key Props |
+|-----------|-------------|-----------|
+| **Cato Supply Search Hero** | Homepage hero with Product Search redirect and Risk Radar catalog | `heading`, `productSearchUrl`, `apiUrl`, `showRiskRadar` |
+| **Cato Product Search Form** | Standalone search form redirecting to Cato Product Search | `placeholder`, `buttonLabel`, `productSearchUrl` |
+| **Cato Risk Radar Catalog** | Live Risk Radar table replacing the custom-code embed | `apiUrl`, `riskRadarUrl`, `rowsJson`, `fetchEnabled`, `autoScroll` |
+| **Cato Insights Mega Menu** | Self-contained Insights mega-menu content | `heading`, `summary`, `categoriesJson`, `itemsJson` |
+| **Cato Insights Hub** | Insights landing page with category cards and latest content | `categoriesJson`, `itemsJson`, `itemLimit`, `showFilterRail` |
+| **Cato Insights Archive** | Focused archive page for Resiliency, Research, Resources, or Newsroom | `categoryId`, `showSubscribe`, `itemsJson` |
+| **Cato Insight Category Archive** | CMS category template archive that resolves the active Insight Category from the slug | `categorySlug`, `categoryId`, `showSubscribe`, `itemsJson` |
+| **Cato Insight Detail** | CMS-bindable detail-page article shell | `title`, `summary`, `bodyJson`, `takeawaysJson`, `categoryId` |
+| **Cato About Page** | Improved About page experience with hero, platform focus, proof metrics, values, mission, leadership, and board sections | `valuesJson`, `leadershipJson`, `boardJson`, `metricsJson`, `showMission`, `showTeam` |
+| **Cato Case Studies Landing** | Improved Case Studies landing page with featured story, result proof, and customer story grid | `caseStudiesJson`, `showFeatured`, `linkMode`, `pathPrefix` |
+| **Cato Case Study Detail** | CMS-bindable case study detail template with customer profile, challenge, solution, results, and related stories | `slug`, `clientName`, `challengeHtml`, `solutionHtml`, `challengeImage`, `solutionImage`, `resultsJson`, `caseStudiesJson`, `backHref` |
+
 ### Layout (Group: Layout)
 
 | Component | Description | Key Props |
@@ -183,6 +219,35 @@ These remain for compatibility while the package is moved toward Canon-first com
   {"value": 50, "suffix": "+", "label": "Installations"},
   {"value": 24, "suffix": "/7", "label": "Support"}
 ]
+```
+
+### Featured Creator Card
+
+Bind each card inside a Webflow CMS Collection List. The monthly batch should be generated server-side, reviewed editorially, and stored in CMS fields instead of exposing Airtable or Webflow API tokens in browser props.
+
+Suggested CMS fields:
+
+```json
+{
+  "month": "2026-06",
+  "sortOrder": 1,
+  "creatorRecordId": "recdfcBmYwaBCAuma",
+  "creatorName": "BRIX Templates",
+  "creatorSlug": "brix-templates",
+  "creatorProfileUrl": "https://webflow.com/templates/designers/brix-templates",
+  "creatorAvatar": "Webflow asset or CMS image",
+  "rankLabel": "#1",
+  "accent": "demand",
+  "headline": "12 featured templates",
+  "curationNote": "Selected for sustained buyer demand across 26 category groups.",
+  "featuredTemplateCount": "12",
+  "newTemplates90d": "9",
+  "buyerDemand": "52.6k buys",
+  "categoryBreadth": "26",
+  "topTemplateName": "Dark X",
+  "topTemplateUrl": "https://webflow.com/templates/html/dark-x",
+  "topTemplateImage": "Webflow asset or CMS image"
+}
 ```
 
 ### Product Showcase

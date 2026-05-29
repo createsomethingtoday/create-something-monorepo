@@ -67,8 +67,7 @@ Active MCPs use `cs-telemetry` D1 for telemetry. Fleet-wide queries via the **CS
 | 22 | `cs-telemetry-mcp` | `cs-telemetry` | Active | `cs-telemetry-mcp.createsomething.workers.dev` | — (reads telemetry) | `cs-telemetry` |
 | 23 | `webflow-app-review-mcp` | `webflow-app-review-mcp` | Active | `webflow-app-review-mcp.createsomething.workers.dev` | Yes | `cs-telemetry` |
 | 24 | `webflow-template-review-mcp` | `webflow-template-review-mcp` | Active | `webflow-template-review-mcp.createsomething.workers.dev` | Yes | `cs-telemetry` |
-| 25 | `webflow-site-analyzer-mcp` | `webflow-site-analyzer-mcp-remote` | Planned | `analyzer.mcp.createsomething.agency` | Observability env | — |
-| 26 | `webflow-mcp` | `webflow-mcp` | Planned | `webflow-mcp.createsomething.workers.dev` | Observability env | — |
+| 25 | `webflow-mcp` | `webflow-mcp` | Planned | `webflow-mcp.createsomething.workers.dev` | Observability env | — |
 
 ---
 

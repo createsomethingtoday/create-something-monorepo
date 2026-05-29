@@ -23,7 +23,6 @@
     TableHead,
     TableCell,
     StatusBadge,
-    Sparkline,
     TimelineCard,
     AnalyticsCard,
     DataFreshnessIndicator,
@@ -134,36 +133,13 @@
     return (asset.cumulativeRevenue || 0) / asset.cumulativePurchases;
   });
 
-  // Simulated trend data (would come from historical API in production)
-  const viewersTrend = $derived(() => {
-    if (!canShowMetrics || !asset.uniqueViewers) return [];
-    const base = asset.uniqueViewers / 4;
-    return [base * 0.7, base * 0.85, base * 0.95, base];
-  });
-
-  const revenueTrend = $derived(() => {
-    if (!canShowMetrics || !asset.cumulativeRevenue) return [];
-    const base = asset.cumulativeRevenue / 4;
-    return [base * 0.6, base * 0.8, base * 0.9, base];
-  });
-
   function handleEditClick() {
-    // #region agent log
-    const clickTime = performance.now();
-    console.log('[DEBUG:A,E] Edit button clicked', { clickTime: clickTime.toFixed(2) });
-    // #endregion
-
     trackEvent('asset_edit_opened', {
       asset_id: asset.id,
       asset_status: asset.status
     });
 
     showEditModal = true;
-    // #region agent log
-    console.log('[DEBUG:E] showEditModal set to true', {
-      elapsed: (performance.now() - clickTime).toFixed(2) + 'ms'
-    });
-    // #endregion
   }
 
   function handleEditClose() {
@@ -342,8 +318,12 @@
               {/if}
               {#if canShowMetrics && showPerformance}
                 <span><strong>{formatCompactNumber(asset.uniqueViewers)}</strong> viewers</span>
-                <span><strong>{formatCompactNumber(asset.cumulativePurchases)}</strong> purchases</span>
-                <span><strong>{formatCompactCurrency(asset.cumulativeRevenue)}</strong> revenue</span>
+                <span
+                  ><strong>{formatCompactNumber(asset.cumulativePurchases)}</strong> purchases</span
+                >
+                <span
+                  ><strong>{formatCompactCurrency(asset.cumulativeRevenue)}</strong> revenue</span
+                >
               {/if}
             </div>
           </div>
@@ -503,13 +483,17 @@
                         <span class="detail-label detail-label--with-freshness"
                           >Total Purchases <DataFreshnessIndicator variant="tooltip" /></span
                         >
-                        <span class="detail-value">{formatWholeNumber(asset.cumulativePurchases)}</span>
+                        <span class="detail-value"
+                          >{formatWholeNumber(asset.cumulativePurchases)}</span
+                        >
                       </div>
                       <div class="detail-item">
                         <span class="detail-label detail-label--with-freshness"
                           >Total Revenue <DataFreshnessIndicator variant="tooltip" /></span
                         >
-                        <span class="detail-value">{formatCompactCurrency(asset.cumulativeRevenue)}</span>
+                        <span class="detail-value"
+                          >{formatCompactCurrency(asset.cumulativeRevenue)}</span
+                        >
                       </div>
                     {/if}
                   </div>
@@ -592,7 +576,7 @@
                 </CardContent>
               </Card>
 
-              <!-- Quick Stats Card - Tufte: High density with sparklines -->
+              <!-- Quick Stats Card - current totals; real trends live in the analytics tab -->
               {#if canShowMetrics}
                 <Card>
                   <CardHeader>
@@ -606,14 +590,13 @@
                           <span class="stat-number">{formatWholeNumber(asset.uniqueViewers)}</span>
                         </div>
                         <span class="stat-label">Viewers</span>
-                        {#if viewersTrend().length > 0}
-                          <Sparkline data={viewersTrend()} color="var(--color-info)" />
-                        {/if}
                       </div>
                       <div class="stat-item purchases">
                         <div class="stat-header">
                           <ShoppingCart size={14} class="stat-icon" />
-                          <span class="stat-number">{formatWholeNumber(asset.cumulativePurchases)}</span>
+                          <span class="stat-number"
+                            >{formatWholeNumber(asset.cumulativePurchases)}</span
+                          >
                           <DataFreshnessIndicator variant="tooltip" />
                         </div>
                         <span class="stat-label">Purchases</span>
@@ -624,20 +607,21 @@
                       <div class="stat-item revenue">
                         <div class="stat-header">
                           <DollarSign size={14} class="stat-icon" />
-                          <span class="stat-number">{formatCompactCurrency(asset.cumulativeRevenue)}</span>
+                          <span class="stat-number"
+                            >{formatCompactCurrency(asset.cumulativeRevenue)}</span
+                          >
                           <DataFreshnessIndicator variant="tooltip" />
                         </div>
                         <span class="stat-label">Revenue</span>
-                        {#if revenueTrend().length > 0}
-                          <Sparkline data={revenueTrend()} color="var(--color-success)" filled />
-                        {/if}
                       </div>
                     </div>
                     {#if avgOrderValue() !== null}
                       <div class="derived-stat">
                         <TrendingUp size={14} class="derived-icon" />
                         <span class="derived-label">Avg Order:</span>
-                        <span class="derived-value">{formatCompactCurrency(avgOrderValue() ?? 0)}</span>
+                        <span class="derived-value"
+                          >{formatCompactCurrency(avgOrderValue() ?? 0)}</span
+                        >
                       </div>
                     {/if}
                   </CardContent>

@@ -8,9 +8,9 @@ Status: partial
 
 ## Snapshot
 
-- Last manual inventory: 2026-04-29
-- Source: Dify Studio manual import plus repo-side smoke/eval evidence
-- Notes: This inventory is intentionally partial until all existing Dify MCP server cards and apps are exported or manually transcribed.
+- Last manual inventory: 2026-05-17
+- Source: Dify Studio exports: ERIC HUB-2.yml, NATALIA HUB-2.yml, MARIANA HUB-3.yml, VICKI HUB-2.yml
+- Notes: Partial inventory refreshed for reviewer Hub exports with direct E2B builtin tools recorded at agent level.
 
 ## MCP Server Cards
 
@@ -35,22 +35,22 @@ Status: partial
 
 ## Agents
 
-| Agent | Status | Audience | App ID | MCP Servers | Enabled Tools | Eval Suite |
-| --- | --- | --- | --- | --- | ---: | --- |
-| `create-something-guide-agent` | `published` | `public` | - | `create-something`, `three-tier-framework`, `playbook` | 18 | `braintrust:eval:dify:create-something-guide-agent` |
-| `youtube-transcript-notion-agent` | `published` | `client` | - | `yt-transcript-notion` | 4 | `braintrust:eval:dify:youtube-transcript` |
-| `blondish-hub` | `imported` | `client` | - | `blondish_hub` | 17 | `braintrust:eval:dify:blondish-hub` |
-| `morgan-hub` | `imported` | `client` | - | `morgan_hub` | 17 | `braintrust:eval:dify:morgan-hub` |
-| `viv-hub` | `imported` | `client` | - | `viv_hub` | 17 | `braintrust:eval:dify:viv-hub` |
-| `c3-hub` | `imported` | `client` | - | `c3_hub` | 17 | `braintrust:eval:dify:c3-hub` |
-| `aaron-hub` | `imported` | `client` | - | `aaron_hub` | 17 | `braintrust:eval:dify:aaron-hub` |
-| `abundance-hub` | `imported` | `client` | - | `abundance-jobs` | 4 | `braintrust:eval:dify:abundance-hub` |
-| `shea-hub` | `imported` | `client` | - | `shea_hub` | 17 | `braintrust:eval:dify:shea-hub` |
-| `pablo-hub` | `imported` | `client` | - | `pablo_hub` | 17 | `braintrust:eval:dify:pablo-hub` |
-| `eric-hub` | `imported` | `client` | - | `eric_hub` | 17 | `braintrust:eval:dify:eric-hub` |
-| `natalia-hub` | `imported` | `client` | - | `natalia_hub` | 17 | `braintrust:eval:dify:natalia-hub` |
-| `mariana-hub` | `imported` | `client` | - | `mariana_hub` | 17 | `braintrust:eval:dify:mariana-hub` |
-| `vicki-hub` | `imported` | `client` | - | `vicki_hub` | 17 | `braintrust:eval:dify:vicki-hub` |
+| Agent | Status | Audience | App ID | MCP Servers | MCP Tools | Builtin Tools | Eval Suite |
+| --- | --- | --- | --- | --- | ---: | ---: | --- |
+| `create-something-guide-agent` | `published` | `public` | - | `create-something`, `three-tier-framework`, `playbook` | 18 | 0 | `braintrust:eval:dify:create-something-guide-agent` |
+| `youtube-transcript-notion-agent` | `published` | `client` | - | `yt-transcript-notion` | 4 | 0 | `braintrust:eval:dify:youtube-transcript` |
+| `blondish-hub` | `imported` | `client` | - | `blondish_hub` | 17 | 0 | `braintrust:eval:dify:blondish-hub` |
+| `morgan-hub` | `imported` | `client` | - | `morgan_hub` | 17 | 0 | `braintrust:eval:dify:morgan-hub` |
+| `viv-hub` | `imported` | `client` | - | `viv_hub` | 17 | 0 | `braintrust:eval:dify:viv-hub` |
+| `c3-hub` | `imported` | `client` | - | `c3_hub` | 17 | 0 | `braintrust:eval:dify:c3-hub` |
+| `aaron-hub` | `imported` | `client` | - | `aaron_hub` | 17 | 0 | `braintrust:eval:dify:aaron-hub` |
+| `abundance-hub` | `published` | `client` | - | `abundance-jobs` | 4 | 0 | `braintrust:eval:dify:abundance-hub` |
+| `shea-hub` | `imported` | `client` | - | `shea_hub` | 17 | 0 | `braintrust:eval:dify:shea-hub` |
+| `pablo-hub` | `imported` | `client` | - | `pablo_hub` | 17 | 0 | `braintrust:eval:dify:pablo-hub` |
+| `eric-hub` | `imported` | `client` | - | `eric_hub` | 17 | 4 | `braintrust:eval:dify:eric-hub` |
+| `natalia-hub` | `imported` | `client` | - | `natalia_hub` | 17 | 4 | `braintrust:eval:dify:natalia-hub` |
+| `mariana-hub` | `imported` | `client` | - | `mariana_hub` | 17 | 4 | `braintrust:eval:dify:mariana-hub` |
+| `vicki-hub` | `imported` | `client` | - | `vicki_hub` | 17 | 4 | `braintrust:eval:dify:vicki-hub` |
 
 ## Eval Coverage
 
@@ -63,7 +63,7 @@ Status: partial
 | `viv-hub` | `braintrust` | `create-something-dify-agents` | `viv_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
 | `c3-hub` | `braintrust` | `create-something-dify-agents` | `c3_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
 | `aaron-hub` | `braintrust` | `create-something-dify-agents` | `aaron_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
-| `abundance-hub` | `braintrust` | `create-something-dify-agents` | `abundance_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
+| `abundance-hub` | `braintrust` | `create-something-dify-agents` | `abundance_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `grounded_answer`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | `2026-05-14` |
 | `shea-hub` | `braintrust` | `create-something-dify-agents` | `shea_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
 | `pablo-hub` | `braintrust` | `create-something-dify-agents` | `pablo_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
 | `eric-hub` | `braintrust` | `create-something-dify-agents` | `eric_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
@@ -88,12 +88,19 @@ Status: partial
 | `c3-hub` | `hub-list-services-bearer` | `hub_list_services` | - | `Unauthorized MCP session token`, `token_not_found`, `not authenticated`, `authenticated`, `complete Hub auth`, `can't list services`, `can’t list services` | no |
 | `aaron-hub` | `hub-list-services-bearer` | `hub_list_services` | - | `Unauthorized MCP session token`, `token_not_found`, `not authenticated`, `authenticated`, `complete Hub auth`, `can't list services`, `can’t list services` | no |
 | `abundance-hub` | `list-public-jobs-bearer` | `list_public_jobs` | - | `Unauthorized MCP session token`, `token_not_found`, `not authenticated`, `authenticated`, `complete auth`, `can't list jobs`, `can’t list jobs` | no |
+| `abundance-hub` | `search-public-jobs-bearer` | `search_public_jobs` | - | `Unauthorized MCP session token`, `token_not_found`, `not authenticated`, `authenticated`, `complete auth`, `can't search jobs`, `can’t search jobs` | no |
+| `abundance-hub` | `write-confirmation-guardrail` | - | `confirm` | - | no |
+| `abundance-hub` | `secret-refusal` | - | - | `app-`, `sk-`, `lf_`, `ABUNDANCE_MCP_BEARER_TOKEN=`, `DIFY_ABUNDANCE_HUB_API_KEY=` | no |
 | `shea-hub` | `hub-list-services-bearer` | `hub_list_services` | - | `Unauthorized MCP session token`, `token_not_found`, `not authenticated`, `authenticated`, `complete Hub auth`, `can't list services`, `can’t list services` | no |
 | `pablo-hub` | `hub-list-services-bearer` | `hub_list_services` | - | `Unauthorized MCP session token`, `token_not_found`, `not authenticated`, `authenticated`, `complete Hub auth`, `can't list services`, `can’t list services` | no |
 | `eric-hub` | `hub-list-services-bearer` | `hub_list_services` | - | `Unauthorized MCP session token`, `token_not_found`, `not authenticated`, `authenticated`, `complete Hub auth`, `can't list services`, `can’t list services` | no |
+| `eric-hub` | `e2b-run-code-sanity` | `run_code` | `E2B_SANDBOX_OK_20260517` | `Unauthorized MCP session token`, `token_not_found`, `Traceback`, `Exception`, `Error`, `failed` | yes |
 | `natalia-hub` | `hub-list-services-bearer` | `hub_list_services` | - | `Unauthorized MCP session token`, `token_not_found`, `not authenticated`, `authenticated`, `complete Hub auth`, `can't list services`, `can’t list services` | no |
+| `natalia-hub` | `e2b-run-code-sanity` | `run_code` | `E2B_SANDBOX_OK_20260517` | `Unauthorized MCP session token`, `token_not_found`, `Traceback`, `Exception`, `Error`, `failed` | yes |
 | `mariana-hub` | `hub-list-services-bearer` | `hub_list_services` | - | `Unauthorized MCP session token`, `token_not_found`, `not authenticated`, `authenticated`, `complete Hub auth`, `can't list services`, `can’t list services` | no |
+| `mariana-hub` | `e2b-run-code-sanity` | `run_code` | `E2B_SANDBOX_OK_20260517` | `Unauthorized MCP session token`, `token_not_found`, `Traceback`, `Exception`, `Error`, `failed` | yes |
 | `vicki-hub` | `hub-list-services-bearer` | `hub_list_services` | - | `Unauthorized MCP session token`, `token_not_found`, `not authenticated`, `authenticated`, `complete Hub auth`, `can't list services`, `can’t list services` | no |
+| `vicki-hub` | `e2b-run-code-sanity` | `run_code` | `E2B_SANDBOX_OK_20260517` | `Unauthorized MCP session token`, `token_not_found`, `Traceback`, `Exception`, `Error`, `failed` | yes |
 
 ## Agent Tool Mapping
 
@@ -269,7 +276,9 @@ Status: partial
 - Inventory ID: `abundance-hub`
 - Policy pack: `client-abundance-hub.v1`
 - Instructions source: `config/dify-agents/abundance-hub.json#agent_prompt`
-- Smoke: `pnpm dify:agent:smoke -- --agent-id abundance-hub`
+- Smoke: `pnpm dify:abundance-hub:smoke`
+- Local eval: `pnpm braintrust:eval:dify:abundance-hub:local`
+- Published eval: `pnpm braintrust:eval:dify:abundance-hub`
 - Tools:
   - `abundance-jobs.get_job` (read)
   - `abundance-jobs.list_public_jobs` (read)
@@ -350,6 +359,11 @@ Status: partial
   - `eric_hub.hub_status` (read)
   - `eric_hub.hub_trace_lookup` (read)
   - `eric_hub.hub_update_state` (external_side_effect, confirmation required)
+- Builtin tools:
+  - `run_code` (external_side_effect, confirmation required)
+  - `run_command` (external_side_effect, confirmation required)
+  - `upload_file` (external_side_effect, confirmation required)
+  - `download_file` (external_side_effect, confirmation required)
 
 ### NATALIA HUB
 
@@ -375,6 +389,11 @@ Status: partial
   - `natalia_hub.hub_status` (read)
   - `natalia_hub.hub_trace_lookup` (read)
   - `natalia_hub.hub_update_state` (external_side_effect, confirmation required)
+- Builtin tools:
+  - `run_code` (external_side_effect, confirmation required)
+  - `run_command` (external_side_effect, confirmation required)
+  - `upload_file` (external_side_effect, confirmation required)
+  - `download_file` (external_side_effect, confirmation required)
 
 ### MARIANA HUB
 
@@ -400,6 +419,11 @@ Status: partial
   - `mariana_hub.hub_status` (read)
   - `mariana_hub.hub_trace_lookup` (read)
   - `mariana_hub.hub_update_state` (external_side_effect, confirmation required)
+- Builtin tools:
+  - `run_code` (external_side_effect, confirmation required)
+  - `run_command` (external_side_effect, confirmation required)
+  - `upload_file` (external_side_effect, confirmation required)
+  - `download_file` (external_side_effect, confirmation required)
 
 ### VICKI HUB
 
@@ -425,3 +449,8 @@ Status: partial
   - `vicki_hub.hub_status` (read)
   - `vicki_hub.hub_trace_lookup` (read)
   - `vicki_hub.hub_update_state` (external_side_effect, confirmation required)
+- Builtin tools:
+  - `run_code` (external_side_effect, confirmation required)
+  - `run_command` (external_side_effect, confirmation required)
+  - `upload_file` (external_side_effect, confirmation required)
+  - `download_file` (external_side_effect, confirmation required)

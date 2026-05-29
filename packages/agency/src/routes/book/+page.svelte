@@ -63,6 +63,27 @@
 	];
 
 	const bookingExperimentMetadata = getAgencyMarketingExperimentMetadata('/book') ?? {};
+	const bookingUrlParams = browser ? new URLSearchParams(window.location.search) : new URLSearchParams();
+
+	function normalizeQueryToken(value: string | null, fallback: string) {
+		const normalized = (value ?? fallback)
+			.toLowerCase()
+			.replace(/[^a-z0-9_-]+/g, '-')
+			.replace(/^-+|-+$/g, '')
+			.slice(0, 64);
+
+		return normalized || fallback;
+	}
+
+	function normalizeLane(value: string | null): ServiceLane | null {
+		if (!value) return null;
+		return laneOptions.some((option) => option.value === value) ? (value as ServiceLane) : null;
+	}
+
+	const bookingSource = normalizeQueryToken(bookingUrlParams.get('source'), 'direct');
+	const bookingIntent = normalizeQueryToken(bookingUrlParams.get('intent'), 'workflow-mapping');
+	const bookingPath = browser ? `${window.location.pathname}${window.location.search}` : '/book';
+	const initialLane = normalizeLane(bookingUrlParams.get('lane')) ?? 'not_sure';
 
 	const mappingSessionOutcomes = [
 		{
@@ -94,7 +115,7 @@
 	let step = $state<BookingStep>('date');
 	let selectedDate = $state<Date | null>(null);
 	let selectedSlot = $state<TimeSlot | null>(null);
-	let selectedLane = $state<ServiceLane>('not_sure');
+	let selectedLane = $state<ServiceLane>(initialLane);
 	let slots = $state<TimeSlot[]>([]);
 	let confirmedEvent = $state<BookingEvent | null>(null);
 
@@ -182,8 +203,9 @@
 	function mergeLaneIntoNotes(notes: string): string {
 		const lane = laneOptions.find((option) => option.value === selectedLane);
 		const laneLine = `Intake lane: ${lane?.label ?? 'Not sure yet'}`;
+		const sourceLine = `Booking source: ${bookingSource} / ${bookingIntent}`;
 		const trimmedNotes = notes.trim();
-		return trimmedNotes ? `${laneLine}\n${trimmedNotes}` : laneLine;
+		return trimmedNotes ? `${laneLine}\n${sourceLine}\n${trimmedNotes}` : `${laneLine}\n${sourceLine}`;
 	}
 
 	// Handle form submission
@@ -201,7 +223,14 @@
 		try {
 			getAnalytics()?.conversion('booking_initiated', {
 				...bookingExperimentMetadata,
-				serviceLane: selectedLane
+				serviceLane: selectedLane,
+				bookingSource,
+				bookingIntent,
+				source: bookingSource,
+				intent: bookingIntent,
+				lane: selectedLane,
+				surface: 'booking_form',
+				landingUrl: browser ? window.location.href : bookingPath
 			});
 
 			// Track booking initiated
@@ -211,9 +240,10 @@
 				body: JSON.stringify({
 					event_type: 'booking_initiated',
 					property: 'agency',
-					path: '/book',
+					path: bookingPath,
 					experiment_id: AGENCY_MARKETING_COPY_EXPERIMENT.id,
-					tag_id: AGENCY_MARKETING_COPY_EXPERIMENT.variant
+					tag_id: AGENCY_MARKETING_COPY_EXPERIMENT.variant,
+					referrer: browser ? document.referrer : undefined
 				})
 			}).catch(() => {});
 
@@ -229,7 +259,14 @@
 					company: data.company || undefined,
 					notes: mergeLaneIntoNotes(data.notes),
 					experiment_id: AGENCY_MARKETING_COPY_EXPERIMENT.id,
-					tag_id: AGENCY_MARKETING_COPY_EXPERIMENT.variant
+					tag_id: AGENCY_MARKETING_COPY_EXPERIMENT.variant,
+					session_id: getAnalytics()?.getSessionId(),
+					source_property: getAnalytics()?.getSourceProperty() ?? undefined,
+					source: bookingSource,
+					intent: bookingIntent,
+					lane: selectedLane,
+					landing_url: browser ? window.location.href : undefined,
+					referrer: browser ? document.referrer : undefined
 				})
 			});
 
@@ -242,7 +279,14 @@
 			confirmedEvent = result.event;
 			getAnalytics()?.conversion('booking_completed', {
 				...bookingExperimentMetadata,
-				serviceLane: selectedLane
+				serviceLane: selectedLane,
+				bookingSource,
+				bookingIntent,
+				source: bookingSource,
+				intent: bookingIntent,
+				lane: selectedLane,
+				surface: 'booking_form',
+				landingUrl: browser ? window.location.href : bookingPath
 			});
 			step = 'confirm';
 		} catch (err) {

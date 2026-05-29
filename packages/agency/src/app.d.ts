@@ -46,8 +46,11 @@ declare global {
 				TEMPLATES_PLATFORM_API_SECRET?: string;
 				// Abundance Network
 				WHATSAPP_VERIFY_TOKEN?: string;
+				WHATSAPP_APP_SECRET?: string;
 				WHATSAPP_ACCESS_TOKEN?: string;
 				WHATSAPP_PHONE_NUMBER_ID?: string;
+				DIFY_ABUNDANCE_HUB_API_KEY?: string;
+				DIFY_ABUNDANCE_HUB_BASE_URL?: string;
 				// SavvyCal
 				SAVVYCAL_API_KEY?: string;
 				// Identity Worker (LMS provisioning)

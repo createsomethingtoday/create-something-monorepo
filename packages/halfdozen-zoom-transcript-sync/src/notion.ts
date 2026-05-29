@@ -37,6 +37,7 @@ interface HubToolResult {
 
 interface NotionTransport {
   queryDatabase(filter: unknown, pageSize: number): Promise<QueryResult>;
+  getPage(pageId: string): Promise<PageObject>;
   createPage(properties: Record<string, unknown>): Promise<PageObject>;
   updatePage(pageId: string, properties: Record<string, unknown>): Promise<PageObject>;
   appendBlocks(blockId: string, children: BlockObject[]): Promise<void>;
@@ -51,15 +52,7 @@ export async function syncTranscriptToNotion(
   existingPageHint?: { pageId: string; pageUrl: string | null } | null,
 ): Promise<NotionWriteResult> {
   const notion = createNotionTransport(env);
-  const existing = existingPageHint
-    ? {
-      id: existingPageHint.pageId,
-      url: existingPageHint.pageUrl ?? notionUrl(existingPageHint.pageId),
-      title: candidate.meetingTitle,
-      sourceUrl: candidate.sourceUrl,
-      date: candidate.meetingDate,
-    }
-    : await findExistingMeetingPage(notion, candidate);
+  const existing = await resolveExistingMeetingPage(notion, candidate, existingPageHint);
   const properties = buildPageProperties(env, candidate, parsedTranscript);
   const transcriptBlocks = buildTranscriptBlocks(parsedTranscript);
 
@@ -101,6 +94,29 @@ export async function syncTranscriptToNotion(
     pageUrl: existing.url,
     action: 'updated',
   };
+}
+
+async function resolveExistingMeetingPage(
+  notion: NotionTransport,
+  candidate: TranscriptCandidate,
+  existingPageHint?: { pageId: string; pageUrl: string | null } | null,
+): Promise<NotionPageSummary | null> {
+  if (existingPageHint) {
+    const hintedPage = toPageSummary(await notion.getPage(existingPageHint.pageId));
+    if (isMatchingMeetingPageHint(hintedPage, candidate)) {
+      return {
+        ...hintedPage,
+        url: existingPageHint.pageUrl ?? hintedPage.url,
+      };
+    }
+
+    console.warn(
+      `Ignoring stale Notion page hint ${existingPageHint.pageId} for ${candidate.meetingTitle} on ${candidate.meetingDate}; ` +
+      `hint resolved to ${hintedPage.title} on ${hintedPage.date ?? 'unknown date'}.`,
+    );
+  }
+
+  return findExistingMeetingPage(notion, candidate);
 }
 
 function createNotionTransport(env: Env): NotionTransport {
@@ -152,7 +168,7 @@ function pickSourceUrlMatch(pages: PageObject[], candidate: TranscriptCandidate)
 
   for (const page of pages) {
     const summary = toPageSummary(page);
-    if (summary.sourceUrl === candidate.sourceUrl) {
+    if (summary.sourceUrl === candidate.sourceUrl && summary.date === candidate.meetingDate) {
       return summary;
     }
   }
@@ -181,7 +197,19 @@ function pickTitleDateMatch(pages: PageObject[], candidate: TranscriptCandidate)
     return emptySourceUrl;
   }
 
+  if (hasOccurrenceFragment(candidate.sourceUrl)) {
+    return null;
+  }
+
   return matchingPages.find((summary) => summary.sourceUrl?.includes('/recording/management/detail?meeting_id=')) ?? null;
+}
+
+function isMatchingMeetingPageHint(summary: NotionPageSummary, candidate: TranscriptCandidate): boolean {
+  return summary.title === candidate.meetingTitle && summary.date === candidate.meetingDate;
+}
+
+function hasOccurrenceFragment(sourceUrl: string | null): boolean {
+  return sourceUrl?.includes('#occurrence=') ?? false;
 }
 
 function buildPageProperties(
@@ -367,6 +395,13 @@ function toPageSummary(page: PageObject): NotionPageSummary {
   };
 }
 
+export const notionTestExports = {
+  hasOccurrenceFragment,
+  isMatchingMeetingPageHint,
+  pickSourceUrlMatch,
+  pickTitleDateMatch,
+};
+
 function resolveWriteMode(env: Env): 'api' | 'hub' {
   const configured = env.NOTION_WRITE_MODE?.trim();
   if (configured === 'api' || configured === 'hub') {
@@ -501,6 +536,10 @@ class DirectNotionTransport implements NotionTransport {
     });
   }
 
+  getPage(pageId: string): Promise<PageObject> {
+    return this.request<PageObject>(`/pages/${pageId}`);
+  }
+
   async createPage(properties: Record<string, unknown>): Promise<PageObject> {
     return this.requestWithOptionalPropertyFallback<PageObject>(
       '/pages',
@@ -616,6 +655,12 @@ class HubNotionTransport implements NotionTransport {
       has_more: Boolean(data.has_more),
       next_cursor: typeof data.next_cursor === 'string' ? data.next_cursor : null,
     };
+  }
+
+  getPage(pageId: string): Promise<PageObject> {
+    return this.call<PageObject>('get_page', {
+      page_id: pageId,
+    });
   }
 
   createPage(properties: Record<string, unknown>): Promise<PageObject> {
