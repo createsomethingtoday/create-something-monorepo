@@ -28,7 +28,9 @@ Real-time source-to-target sync:
     property
   - `External Page ID` or `Ext Page ID`, `External URL`,
     `External Files & Media`
-  - page body starting with `Created By`, then source `Details`
+  - page body starting with `Created By`, then source `Details`; if `Details`
+    is empty, the Worker syncs plain text from the source page body before
+    falling back to `No details provided.`
 - Existing matched rows are normalized for the forward-sync fields covered by
   this contract: `Ticket`, `Source`, `Owner`, optional `Client`, `External Page
   ID` / `Ext Page ID`, `External URL`, `External Files & Media`, and the synced
@@ -190,6 +192,9 @@ Production validation completed on May 29, 2026:
 - The launch repair corrected legacy-generated HD titles so `Ticket` exactly
   matches the source ticket title, backfilled 2 attachment fields, and
   normalized older matched rows for the governed forward-sync fields.
+- Source page body fallback is enabled for source tickets whose `Details`
+  property is empty; the current production audit found no remaining HD
+  `No details provided.` body where the source page has readable body text.
 - A follow-up full pass returned `created: 0`, `updated: 0`, and `errors: 0`
   for both sync directions.
 - Notion webhook subscription is active and signed events are validated against

@@ -155,7 +155,7 @@ export async function syncSourceTicketsToHalfDozen(
 
         const latestSourcePage = await retrievePage(env, 'blondish', sourcePage.id);
         const properties = await buildTargetCreateProperties(env, config.targetSchema, latestSourcePage, ownerUserId);
-        const children = buildTicketBody(latestSourcePage);
+        const children = await buildTicketBody(env, latestSourcePage);
         const created = await createPage(env, config.targetDataSourceId, properties, children);
 
         const confirmationPatch = await buildExistingTargetPatch(env, config.targetSchema, latestSourcePage, created, ownerUserId);
@@ -517,7 +517,7 @@ async function buildExistingTargetPatch(
 }
 
 async function syncTargetPageBody(env: Env, sourcePage: NotionPage, targetPageId: string): Promise<boolean> {
-  const desiredChildren = buildTicketBody(sourcePage);
+  const desiredChildren = await buildTicketBody(env, sourcePage);
   const desiredTexts = desiredChildren.map(blockPlainText).filter(Boolean);
   const existingBlocks = await listAllBlockChildren(env, 'halfdozen', targetPageId);
   const existingTexts = existingBlocks.map(blockPlainText).filter(Boolean);
@@ -597,9 +597,9 @@ function writableValue(type: string, value: WritableValue, userId?: string | nul
   }
 }
 
-function buildTicketBody(sourcePage: NotionPage): Array<Record<string, unknown>> {
+async function buildTicketBody(env: Env, sourcePage: NotionPage): Promise<Array<Record<string, unknown>>> {
   const createdBy = readText(sourcePage, 'Created By') || 'Unknown';
-  const details = readText(sourcePage, 'Details');
+  const bodyContent = await readSourceBodyContent(env, sourcePage);
   const children: Array<Record<string, unknown>> = [
     {
       object: 'block',
@@ -612,7 +612,7 @@ function buildTicketBody(sourcePage: NotionPage): Array<Record<string, unknown>>
       },
     },
   ];
-  for (const chunk of chunks(details || 'No details provided.', 1900)) {
+  for (const chunk of chunks(bodyContent || 'No details provided.', 1900)) {
     children.push({
       object: 'block',
       type: 'paragraph',
@@ -620,6 +620,13 @@ function buildTicketBody(sourcePage: NotionPage): Array<Record<string, unknown>>
     });
   }
   return children;
+}
+
+async function readSourceBodyContent(env: Env, sourcePage: NotionPage): Promise<string> {
+  const details = readText(sourcePage, 'Details');
+  if (details) return details;
+  const sourceBlocks = await listAllBlockChildren(env, 'blondish', sourcePage.id);
+  return sourceBlocks.map(blockPlainText).filter(Boolean).join('\n\n');
 }
 
 function blockPlainText(block: NotionBlock | Record<string, unknown>): string {
