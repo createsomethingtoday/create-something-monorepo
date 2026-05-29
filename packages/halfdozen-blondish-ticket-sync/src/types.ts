@@ -33,6 +33,13 @@ export interface NotionPage {
 export type NotionProperty = Record<string, unknown> & { type?: string };
 export type DataSourceSchema = Record<string, { id?: string; type?: string; name?: string }>;
 
+export interface NotionBlock {
+  id: string;
+  type?: string;
+  archived?: boolean;
+  [key: string]: unknown;
+}
+
 export interface SyncConfig {
   sourceDataSourceId: string;
   targetDataSourceId: string;

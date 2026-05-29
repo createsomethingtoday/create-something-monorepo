@@ -1,4 +1,4 @@
-import type { DataSourceSchema, Env, NotionPage, Workspace } from './types.js';
+import type { DataSourceSchema, Env, NotionBlock, NotionPage, Workspace } from './types.js';
 
 const NOTION_API = 'https://api.notion.com/v1';
 const NOTION_VERSION = '2026-03-11';
@@ -97,6 +97,38 @@ export async function updatePage(
     method: 'PATCH',
     body: { properties },
   });
+}
+
+export async function appendBlockChildren(
+  env: Env,
+  workspace: Workspace,
+  blockId: string,
+  children: Array<Record<string, unknown>>,
+): Promise<void> {
+  if (children.length === 0) return;
+  await notionFetch<Record<string, unknown>>(env, workspace, `/blocks/${blockId}/children`, {
+    method: 'PATCH',
+    body: { children },
+  });
+}
+
+export async function archiveBlock(env: Env, workspace: Workspace, blockId: string): Promise<void> {
+  await notionFetch<Record<string, unknown>>(env, workspace, `/blocks/${blockId}`, {
+    method: 'DELETE',
+  });
+}
+
+export async function listAllBlockChildren(env: Env, workspace: Workspace, blockId: string): Promise<NotionBlock[]> {
+  const blocks: NotionBlock[] = [];
+  let startCursor: string | null = null;
+  do {
+    const params = new URLSearchParams({ page_size: '100' });
+    if (startCursor) params.set('start_cursor', startCursor);
+    const response = await notionFetch<NotionListResponse<NotionBlock>>(env, workspace, `/blocks/${blockId}/children?${params.toString()}`);
+    blocks.push(...(response.results ?? []).filter((block) => !block.archived));
+    startCursor = response.has_more ? response.next_cursor ?? null : null;
+  } while (startCursor);
+  return blocks;
 }
 
 export async function uploadFileToNotion(

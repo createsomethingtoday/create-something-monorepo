@@ -29,9 +29,13 @@ Real-time source-to-target sync:
   - `External Page ID` or `Ext Page ID`, `External URL`,
     `External Files & Media`
   - page body starting with `Created By`, then source `Details`
-- Existing matched rows are updated only for the synced fields covered by this
-  contract: `Ticket`, `External URL`, and `External Files & Media`. `Ticket` is
-  one-to-one with the source title, not a generated summary.
+- Existing matched rows are normalized for the forward-sync fields covered by
+  this contract: `Ticket`, `Source`, `Owner`, optional `Client`, `External Page
+  ID` / `Ext Page ID`, `External URL`, `External Files & Media`, and the synced
+  page body. `Ticket` is one-to-one with the source title, not a generated
+  summary.
+- HD `Status` is not overwritten from BLOND:ISH during forward sync. HD remains
+  the source of truth for reverse status sync.
 
 Real-time target-to-source status sync:
 
@@ -184,7 +188,8 @@ Production validation completed on May 29, 2026:
   API and then attached to `External Files & Media`; external files are written
   as `type=external`.
 - The launch repair corrected legacy-generated HD titles so `Ticket` exactly
-  matches the source ticket title, and backfilled 2 attachment fields.
+  matches the source ticket title, backfilled 2 attachment fields, and
+  normalized older matched rows for the governed forward-sync fields.
 - A follow-up full pass returned `created: 0`, `updated: 0`, and `errors: 0`
   for both sync directions.
 - Notion webhook subscription is active and signed events are validated against

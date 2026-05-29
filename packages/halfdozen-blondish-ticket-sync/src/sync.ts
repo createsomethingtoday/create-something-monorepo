@@ -1,8 +1,11 @@
 import {
+  appendBlockChildren,
+  archiveBlock,
   createPage,
   findDataSourceIdByTitle,
   findUserIdByEmail,
   getFirstDataSourceIdForDatabase,
+  listAllBlockChildren,
   queryAllPages,
   retrieveDataSourceSchema,
   retrievePage,
@@ -12,6 +15,7 @@ import {
 import type {
   DataSourceSchema,
   Env,
+  NotionBlock,
   NotionPage,
   NotionWebhookPayload,
   SyncConfig,
@@ -100,6 +104,8 @@ export async function syncSourceTicketsToHalfDozen(
   const result = emptyResult('source_to_hd', options.trigger ?? 'manual');
   let externalReferenceUpdates = 0;
   let titleRepairs = 0;
+  let propertyRepairs = 0;
+  let bodyRepairs = 0;
   try {
     const config = await resolveSyncConfig(env);
     result.source_data_source_id = config.sourceDataSourceId;
@@ -132,15 +138,18 @@ export async function syncSourceTicketsToHalfDozen(
 
         const existingTargetPage = targetByExtPageId.get(extPageId);
         if (existingTargetPage) {
-          const externalPatch = await buildExistingTargetPatch(env, config.targetSchema, sourcePage, existingTargetPage);
+          const externalPatch = await buildExistingTargetPatch(env, config.targetSchema, sourcePage, existingTargetPage, ownerUserId);
           if (Object.keys(externalPatch).length > 0) {
             await updatePage(env, 'halfdozen', existingTargetPage.id, externalPatch);
             result.updated += 1;
             if (externalPatch.Ticket) titleRepairs += 1;
+            propertyRepairs += Object.keys(externalPatch).filter((propertyName) => propertyName !== 'Ticket').length;
             if (externalPatch['External URL'] || externalPatch['External Files & Media']) externalReferenceUpdates += 1;
-          } else {
-            result.skipped += 1;
           }
+          const bodyUpdated = await syncTargetPageBody(env, sourcePage, existingTargetPage.id);
+          if (bodyUpdated) bodyRepairs += 1;
+          if (Object.keys(externalPatch).length > 0 || bodyUpdated) result.updated += bodyUpdated && Object.keys(externalPatch).length === 0 ? 1 : 0;
+          else result.skipped += 1;
           continue;
         }
 
@@ -149,10 +158,11 @@ export async function syncSourceTicketsToHalfDozen(
         const children = buildTicketBody(latestSourcePage);
         const created = await createPage(env, config.targetDataSourceId, properties, children);
 
-        const confirmationPatch = await buildExistingTargetPatch(env, config.targetSchema, latestSourcePage, created);
+        const confirmationPatch = await buildExistingTargetPatch(env, config.targetSchema, latestSourcePage, created, ownerUserId);
         if (Object.keys(confirmationPatch).length > 0) {
           await updatePage(env, 'halfdozen', created.id, confirmationPatch);
           if (confirmationPatch.Ticket) titleRepairs += 1;
+          propertyRepairs += Object.keys(confirmationPatch).filter((propertyName) => propertyName !== 'Ticket').length;
           if (confirmationPatch['External URL'] || confirmationPatch['External Files & Media']) externalReferenceUpdates += 1;
         }
 
@@ -174,6 +184,8 @@ export async function syncSourceTicketsToHalfDozen(
       target_rows_checked: targetPages.length,
       external_reference_updates: externalReferenceUpdates,
       title_repairs: titleRepairs,
+      property_repairs: propertyRepairs,
+      body_repairs: bodyRepairs,
     };
     return result;
   } catch (error) {
@@ -458,16 +470,39 @@ async function buildExistingTargetPatch(
   targetSchema: DataSourceSchema,
   sourcePage: NotionPage,
   targetPage: NotionPage,
+  ownerUserId: string | null,
 ): Promise<Record<string, unknown>> {
+  if (targetSchema.Owner?.type === 'people' && !ownerUserId) {
+    throw new Error(`Could not find target Owner user ${OWNER_EMAIL}.`);
+  }
+
   const properties: Record<string, unknown> = {};
   const externalUrl = readExternalUrl(sourcePage);
   const sourceFiles = readFiles(sourcePage, 'Files & Media');
   const ticket = readText(sourcePage, 'Ticket');
   const desiredTitle = buildTicketTitle(ticket);
   const currentTitle = readText(targetPage, 'Ticket');
+  const targetExtPageId = requiredTargetExtPageIdProperty(targetSchema);
+  const extPageId = readText(sourcePage, 'Page ID');
 
   if (currentTitle !== desiredTitle) {
     writeRequired(properties, targetSchema, 'Ticket', desiredTitle);
+  }
+
+  if (readText(targetPage, 'Source') !== SOURCE_LABEL) {
+    writeRequired(properties, targetSchema, 'Source', SOURCE_LABEL);
+  }
+
+  if (targetSchema.Owner && readText(targetPage, 'Owner') !== OWNER_LABEL) {
+    writeRequired(properties, targetSchema, 'Owner', OWNER_LABEL, ownerUserId);
+  }
+
+  if (targetSchema.Client && readText(targetPage, 'Client') !== CLIENT_LABEL) {
+    writeRequired(properties, targetSchema, 'Client', CLIENT_LABEL);
+  }
+
+  if (extPageId && readText(targetPage, targetExtPageId) !== extPageId) {
+    writeRequired(properties, targetSchema, targetExtPageId, extPageId);
   }
 
   if (externalUrl && readText(targetPage, 'External URL') !== externalUrl) {
@@ -479,6 +514,20 @@ async function buildExistingTargetPatch(
   }
 
   return properties;
+}
+
+async function syncTargetPageBody(env: Env, sourcePage: NotionPage, targetPageId: string): Promise<boolean> {
+  const desiredChildren = buildTicketBody(sourcePage);
+  const desiredTexts = desiredChildren.map(blockPlainText).filter(Boolean);
+  const existingBlocks = await listAllBlockChildren(env, 'halfdozen', targetPageId);
+  const existingTexts = existingBlocks.map(blockPlainText).filter(Boolean);
+  if (stringArraysEqual(existingTexts, desiredTexts)) return false;
+
+  for (const block of existingBlocks) {
+    await archiveBlock(env, 'halfdozen', block.id);
+  }
+  await appendBlockChildren(env, 'halfdozen', targetPageId, desiredChildren);
+  return true;
 }
 
 async function buildWritableFiles(env: Env, sourceFiles: SyncFile[]): Promise<Array<Record<string, unknown>>> {
@@ -571,6 +620,13 @@ function buildTicketBody(sourcePage: NotionPage): Array<Record<string, unknown>>
     });
   }
   return children;
+}
+
+function blockPlainText(block: NotionBlock | Record<string, unknown>): string {
+  const type = typeof block.type === 'string' ? block.type : '';
+  const payload = isRecord(block[type]) ? block[type] : {};
+  const richText = Array.isArray(payload.rich_text) ? payload.rich_text : [];
+  return richText.map((entry) => readString(entry, 'plain_text') || readString(isRecord(entry) ? entry.text : null, 'content')).join('').trim();
 }
 
 export function readText(page: NotionPage, propertyName: string): string {
@@ -710,6 +766,10 @@ function chunks(text: string, size: number): string[] {
   const output: string[] = [];
   for (let index = 0; index < text.length; index += size) output.push(text.slice(index, index + size));
   return output;
+}
+
+function stringArraysEqual(left: string[], right: string[]): boolean {
+  return left.length === right.length && left.every((value, index) => value === right[index]);
 }
 
 function optionName(value: unknown): string {
