@@ -60,6 +60,11 @@ Optional BLOND:ISH ticket mirror env:
 | `BLONDISH_OS_STATUS_PROPERTY`             | `Status`                               | BLOND:ISH status property to update. |
 | `NOTION_WORKER_AUTOMATIONS_ENABLED`       | unset                                  | Registers the optional Notion automation capability only when set to `true`. |
 
+Credential note: source Notion setup pages may contain PAT values while the
+client is staging the Worker. Do not copy those values into this repo or commit
+them to `.env`; load them from a secret manager or with `ntn workers env set`,
+and rotate any token that has been exposed in exported setup docs.
+
 ## Local Tool Tests
 
 ```bash
@@ -210,6 +215,10 @@ resolve pnpm workspace transitive dependency symlinks.
 
 - Agent Tools are the preferred Notion Worker spike because they make CREATE SOMETHING capabilities available directly inside Notion.
 - Syncs should be piloted only for greenfield Notion-managed databases until Notion supports syncing into existing client-owned databases.
+- For BLOND:ISH `Support Tickets [OS]` -> Half Dozen `Tickets [HD]`, use the
+  standalone `packages/halfdozen-blondish-ticket-sync` Cloudflare Worker. This
+  package's `blondishDeliveryTicketsSync` remains the Notion-managed mirror
+  experiment.
 - `linearIssuesSync` intentionally treats Linear as the source of truth and Notion as a managed read model. It uses replace-mode pagination so stale rows are removed after a complete successful sync run.
 - `blondishDeliveryTicketsSync` intentionally mirrors BLOND:ISH into a CREATE SOMETHING PM/operator database under the Agency Ops PM Cockpit. Synced source fields are canonical; `HD Status` is the operator-owned progress field for pushing status back to BLOND:ISH.
 - Notion Worker Sync relation `twoWay` is not a true two-way sync between BLOND:ISH and CREATE SOMETHING databases. Reverse status updates are implemented as a Notion tool, with an optional Notion automation once the workspace/user has Automation capabilities. Writes only run for the selected/edited mirror row and only when `BLONDISH_DELIVERY_STATUS_PUSH_ENABLED=true`.
