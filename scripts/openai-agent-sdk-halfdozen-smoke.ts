@@ -1,5 +1,7 @@
 #!/usr/bin/env tsx
 
+import { dirname } from 'node:path';
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import {
   Agent,
   type MCPServer,
@@ -45,6 +47,8 @@ type ParsedCliArgs = {
   listServers: boolean;
   listScenarios: boolean;
   connectOnly: boolean;
+  governanceEval: boolean;
+  outputPath?: string;
 };
 
 type CliOptions = {
@@ -85,7 +89,7 @@ const SERVER_ENDPOINTS: Record<ServerKey, { url: string; description: string }> 
   },
 };
 
-const DEFAULT_MODEL = 'gpt-4.1-mini';
+const DEFAULT_MODEL = 'gpt-5.5';
 const DEFAULT_MAX_TURNS = 8;
 const DEFAULT_TIMEOUT_MS = 20_000;
 const DEFAULT_SERVERS: ServerKey[] = ['telemetry'];
@@ -191,6 +195,8 @@ Options:
   --max-turns <number>   Max agent turns (default: ${DEFAULT_MAX_TURNS})
   --timeout-ms <number>  MCP request timeout in ms (default: ${DEFAULT_TIMEOUT_MS})
   --connect-only         Validate MCP connectivity + tool discovery only (no OpenAI call)
+  --governance-eval      Validate scenario governance without Notion/OpenAI execution
+  --output "<path>"      Write governance eval JSON to a file
   --list-servers         Print available server keys and exit
   --list-scenarios       Print available scenarios and linked contract bundles
   --help                 Show this help
@@ -238,9 +244,15 @@ function parseArgs(argv: string[]): ParsedCliArgs {
   let listServers = false;
   let listScenarios = false;
   let connectOnly = false;
+  let governanceEval = false;
+  let outputPath: string | undefined;
 
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
+
+    if (arg === '--') {
+      continue;
+    }
 
     if (arg === '--help' || arg === '-h') {
       printUsage();
@@ -259,6 +271,21 @@ function parseArgs(argv: string[]): ParsedCliArgs {
 
     if (arg === '--connect-only') {
       connectOnly = true;
+      continue;
+    }
+
+    if (arg === '--governance-eval') {
+      governanceEval = true;
+      continue;
+    }
+
+    if (arg === '--output') {
+      const raw = argv[i + 1]?.trim();
+      if (!raw) {
+        throw new Error('--output requires a file path.');
+      }
+      outputPath = raw;
+      i += 1;
       continue;
     }
 
@@ -321,6 +348,8 @@ function parseArgs(argv: string[]): ParsedCliArgs {
     listServers,
     listScenarios,
     connectOnly,
+    governanceEval,
+    outputPath,
   };
 }
 
@@ -428,6 +457,154 @@ function getScenarioInfo(): Array<{
     default_required_tools: [...preset.defaults.requiredToolNames],
     contract_bundle: preset.contractBundle,
   }));
+}
+
+type GovernanceCheck = {
+  scenario: ScenarioKey;
+  id: string;
+  status: 'pass' | 'fail';
+  message: string;
+  evidence?: unknown;
+};
+
+function emitJson(payload: unknown, outputPath?: string): void {
+  const json = JSON.stringify(payload, null, 2);
+  if (outputPath) {
+    mkdirSync(dirname(outputPath), { recursive: true });
+    writeFileSync(outputPath, `${json}\n`);
+  }
+  console.log(json);
+}
+
+function addGovernanceCheck(
+  checks: GovernanceCheck[],
+  scenario: ScenarioKey,
+  id: string,
+  passed: boolean,
+  message: string,
+  evidence?: unknown,
+): void {
+  checks.push({
+    scenario,
+    id,
+    status: passed ? 'pass' : 'fail',
+    message,
+    evidence,
+  });
+}
+
+function runGovernanceEval(): Record<string, unknown> {
+  const requiredGenericBlockedTools = ['search', 'fetch', 'submit_feedback'];
+  const requiredFleetTools = ['query_health', 'query_errors', 'query_activity', 'query_trends'];
+  const checks: GovernanceCheck[] = [];
+
+  for (const [rawScenario, preset] of Object.entries(SCENARIO_PRESETS)) {
+    const scenario = rawScenario as ScenarioKey;
+    const blockedTools = new Set(preset.defaults.blockedToolNames);
+    const instructionText = `${preset.defaults.query}\n${preset.defaults.agentInstructions}`.toLowerCase();
+    const contractPaths = Object.values(preset.contractBundle);
+
+    addGovernanceCheck(
+      checks,
+      scenario,
+      'default_model',
+      preset.defaults.model === DEFAULT_MODEL && DEFAULT_MODEL === 'gpt-5.5',
+      'Scenario uses the repo default model gpt-5.5.',
+      { model: preset.defaults.model },
+    );
+
+    addGovernanceCheck(
+      checks,
+      scenario,
+      'contract_bundle_files',
+      contractPaths.every((path) => existsSync(path)),
+      'Scenario points to existing agent, MCP, outcome, and golden-task contract files.',
+      { contract_bundle: preset.contractBundle },
+    );
+
+    addGovernanceCheck(
+      checks,
+      scenario,
+      'generic_tool_collision_blocklist',
+      requiredGenericBlockedTools.every((tool) => blockedTools.has(tool)),
+      'Scenario blocks generic MCP tool names that can collide across servers.',
+      { required_blocked_tools: requiredGenericBlockedTools, blocked_tools: preset.defaults.blockedToolNames },
+    );
+
+    addGovernanceCheck(
+      checks,
+      scenario,
+      'destructive_action_guard',
+      blockedTools.has('delete_automation') &&
+        preset.defaults.blockedToolNames.some((tool) => /archive|cleanup|create_database|update_database/.test(tool)),
+      'Scenario blocks destructive or high-blast-radius actions at tool-registration time.',
+      { blocked_tools: preset.defaults.blockedToolNames },
+    );
+
+    addGovernanceCheck(
+      checks,
+      scenario,
+      'human_approval_language',
+      /human approval|explicit|escalation|avoid destructive|without performing writes/.test(instructionText),
+      'Scenario prompt/instructions include an explicit approval, escalation, or no-write boundary.',
+    );
+
+    if (scenario === 'fleet-watchdog') {
+      addGovernanceCheck(
+        checks,
+        scenario,
+        'required_evidence_tools',
+        requiredFleetTools.every((tool) => preset.defaults.requiredToolNames.includes(tool)),
+        'Fleet watchdog requires health, error, activity, and trend evidence before final output.',
+        { required_tools: preset.defaults.requiredToolNames },
+      );
+    }
+  }
+
+  const failedChecks = checks.filter((check) => check.status === 'fail');
+  const generatedAt = new Date().toISOString();
+  const status = failedChecks.length === 0 ? 'pass' : 'fail';
+  const markdown = [
+    '# Half Dozen Agent Governance Eval',
+    '',
+    `- Status: ${status}`,
+    `- Generated: ${generatedAt}`,
+    `- Current execution target: coded OpenAI Agents SDK runner`,
+    `- Future execution target: Notion agent API/private beta when available`,
+    `- Default model: ${DEFAULT_MODEL}`,
+    `- Scenarios: ${Object.keys(SCENARIO_PRESETS).join(', ')}`,
+    '',
+    '## Result',
+    '',
+    failedChecks.length === 0
+      ? 'All scenario governance checks passed.'
+      : `${failedChecks.length} governance check(s) failed. Review the JSON checks before publishing.`,
+  ].join('\n');
+
+  return {
+    success: failedChecks.length === 0,
+    mode: 'governance-eval',
+    generated_at: generatedAt,
+    execution_target: 'coded-openai-agents-sdk',
+    future_execution_target: 'notion-agent-api-private-beta',
+    default_model: DEFAULT_MODEL,
+    summary: {
+      status,
+      scenarios: Object.keys(SCENARIO_PRESETS).length,
+      checks_total: checks.length,
+      checks_passed: checks.length - failedChecks.length,
+      checks_failed: failedChecks.length,
+    },
+    checks,
+    notion_test_report: {
+      database_name: 'Test Reports [OS]',
+      title: `Half Dozen Agent Governance Eval - ${generatedAt.slice(0, 10)}`,
+      status,
+      source: 'OpenAI Agents SDK coded runner',
+      beta_dependency: 'Switch execution target when Notion programmatic agent testing becomes available.',
+      markdown,
+    },
+  };
 }
 
 type ToolCallSummary = {
@@ -625,6 +802,10 @@ function summarizeRequiredToolCoverageLegacy(requiredToolNames: string[], toolCa
 async function main(): Promise<void> {
   const parsedArgs = parseArgs(process.argv.slice(2));
 
+  if (parsedArgs.outputPath && !parsedArgs.governanceEval) {
+    throw new Error('--output is currently supported with --governance-eval.');
+  }
+
   if (parsedArgs.listServers || parsedArgs.listScenarios) {
     const output: Record<string, unknown> = {};
     if (parsedArgs.listServers) {
@@ -634,6 +815,11 @@ async function main(): Promise<void> {
       output.scenarios = getScenarioInfo();
     }
     console.log(JSON.stringify(output, null, 2));
+    return;
+  }
+
+  if (parsedArgs.governanceEval) {
+    emitJson(runGovernanceEval(), parsedArgs.outputPath);
     return;
   }
 
