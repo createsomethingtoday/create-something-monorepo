@@ -4,10 +4,11 @@ import { healthCounts } from './db.js';
 import { corsPreflight, jsonResponse, textResponse } from './http.js';
 import { parseSearchParams } from './query.js';
 import { searchTemplates } from './search.js';
-import { syncTemplates, syncWebflowTemplateImages } from './sync.js';
+import { syncTemplates, syncWebflowTemplateImageBatch, syncWebflowTemplateImages } from './sync.js';
 import type { Env } from './types.js';
 
 const INCREMENTAL_CRON = '*/5 * * * *';
+const WEBFLOW_IMAGE_SYNC_CRON = '37 * * * *';
 const FULL_REBUILD_CRON = '17 3 * * *';
 
 function parseBearerToken(request: Request): string | null {
@@ -87,7 +88,12 @@ export default {
       if (url.pathname === '/api/templates/admin/webflow-images' && request.method === 'POST') {
         const authError = validateAdminToken(request, env);
         if (authError) return authError;
-        return jsonResponse(request, env, await syncWebflowTemplateImages(env));
+        const mode = url.searchParams.get('mode') === 'batch' ? 'batch' : 'full';
+        return jsonResponse(
+          request,
+          env,
+          mode === 'batch' ? await syncWebflowTemplateImageBatch(env) : await syncWebflowTemplateImages(env),
+        );
       }
 
       return jsonResponse(request, env, { error: 'Not found' }, 404);
@@ -104,6 +110,11 @@ export default {
   async scheduled(controller: ScheduledController, env: Env): Promise<void> {
     if (controller.cron === FULL_REBUILD_CRON) {
       await syncTemplates(env, 'full');
+      return;
+    }
+
+    if (controller.cron === WEBFLOW_IMAGE_SYNC_CRON) {
+      await syncWebflowTemplateImageBatch(env);
       return;
     }
 

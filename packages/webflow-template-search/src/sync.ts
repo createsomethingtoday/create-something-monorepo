@@ -24,6 +24,11 @@ import type {
 import { ensureBoolean, ensureNumber, ensureStringArray, nowIso, uniqueStrings } from './utils.js';
 import { fetchWebflowTemplateImages, isWebflowImageSyncRequired, type WebflowImageSyncResult } from './webflow-cms.js';
 
+const WEBFLOW_IMAGE_SYNC_CURSOR_KEY = 'webflow_image_sync_offset';
+const DEFAULT_WEBFLOW_IMAGE_SYNC_MAX_ITEMS = 500;
+const MIN_WEBFLOW_IMAGE_SYNC_MAX_ITEMS = 1;
+const MAX_WEBFLOW_IMAGE_SYNC_MAX_ITEMS = 2000;
+
 function isPublishedTemplate(record: AirtableRecord<AirtableAssetFields>): boolean {
   return record.fields['⚙️🆎Type (Text)'] === 'Template🏗️' && record.fields['🚀Marketplace Status'] === '3️⃣Published🚀';
 }
@@ -115,9 +120,14 @@ function normalizeTemplateRecord(
 }
 
 function applyImageOverrides(documents: TemplateDocumentInput[], images: Map<string, TemplateImageUrls>): number {
+  const imagesByName = new Map<string, TemplateImageUrls>();
+  for (const image of images.values()) {
+    if (image.template_name) imagesByName.set(image.template_name.toLowerCase(), image);
+  }
+
   let matched = 0;
   for (const document of documents) {
-    const image = images.get(document.templateSlug);
+    const image = images.get(document.templateSlug) ?? imagesByName.get(document.name.toLowerCase());
     if (!image) continue;
     document.thumbnailImageUrl = image.thumbnail_image_url ?? document.thumbnailImageUrl;
     document.thumbnailImageSecondaryUrl = image.thumbnail_image_secondary_url ?? document.thumbnailImageSecondaryUrl;
@@ -133,8 +143,29 @@ async function fetchOptionalWebflowImages(env: Env): Promise<WebflowImageSyncRes
     if (isWebflowImageSyncRequired(env)) throw error;
 
     console.error('webflow image sync skipped', error instanceof Error ? error.message : String(error));
-    return { images: new Map(), fetchedItems: 0, configured: Boolean(env.CMS_READ_ONLY || env.WEBFLOW_API_TOKEN) };
+    return {
+      images: new Map(),
+      fetchedItems: 0,
+      configured: Boolean(env.CMS_READ_ONLY || env.WEBFLOW_API_TOKEN),
+      offset: 0,
+      nextOffset: 0,
+      totalItems: null,
+    };
   }
+}
+
+function readImageSyncOffset(cursor: string | null): number {
+  const value = Number(cursor ?? '0');
+  return Number.isFinite(value) && value > 0 ? Math.floor(value) : 0;
+}
+
+function getImageSyncMaxItems(env: Env): number {
+  const configured = Number(env.WEBFLOW_IMAGE_SYNC_MAX_ITEMS ?? DEFAULT_WEBFLOW_IMAGE_SYNC_MAX_ITEMS);
+  if (!Number.isFinite(configured) || configured <= 0) return DEFAULT_WEBFLOW_IMAGE_SYNC_MAX_ITEMS;
+  return Math.min(
+    Math.max(Math.floor(configured), MIN_WEBFLOW_IMAGE_SYNC_MAX_ITEMS),
+    MAX_WEBFLOW_IMAGE_SYNC_MAX_ITEMS,
+  );
 }
 
 async function runFullSync(env: Env): Promise<SyncSummary> {
@@ -223,12 +254,43 @@ export async function syncWebflowTemplateImages(env: Env): Promise<WebflowImageS
   const result = await fetchWebflowTemplateImages(env);
   const matchedRecords = await updateTemplateImageUrls(env.DB, result.images.values());
   const summary: WebflowImageSyncSummary = {
+    mode: 'full',
     started_at: startedAt,
     finished_at: nowIso(),
     fetched_items: result.fetchedItems,
     matched_records: matchedRecords,
     configured: result.configured,
+    total_items: result.totalItems,
   };
   await recordSyncSummary(env.DB, summary, 'last_webflow_image_sync');
+  return summary;
+}
+
+export async function syncWebflowTemplateImageBatch(env: Env): Promise<WebflowImageSyncSummary> {
+  const startedAt = nowIso();
+  const offset = readImageSyncOffset(await getSyncCursor(env.DB, WEBFLOW_IMAGE_SYNC_CURSOR_KEY));
+  const result = await fetchWebflowTemplateImages(env, {
+    offset,
+    maxItems: getImageSyncMaxItems(env),
+  });
+  const matchedRecords = await updateTemplateImageUrls(env.DB, result.images.values());
+  const wrapped = result.configured && result.nextOffset === 0 && result.totalItems !== null;
+  const summary: WebflowImageSyncSummary = {
+    mode: 'batch',
+    started_at: startedAt,
+    finished_at: nowIso(),
+    fetched_items: result.fetchedItems,
+    matched_records: matchedRecords,
+    configured: result.configured,
+    offset: result.offset,
+    next_offset: result.nextOffset,
+    total_items: result.totalItems,
+    wrapped,
+  };
+
+  if (result.configured) {
+    await setSyncCursor(env.DB, String(result.nextOffset), WEBFLOW_IMAGE_SYNC_CURSOR_KEY);
+  }
+  await recordSyncSummary(env.DB, summary, 'last_webflow_image_batch_sync');
   return summary;
 }

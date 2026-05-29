@@ -20,6 +20,7 @@ export interface Env {
   WEBFLOW_API_BASE?: string;
   WEBFLOW_TEMPLATES_COLLECTION_ID?: string;
   WEBFLOW_IMAGE_SYNC_REQUIRED?: string;
+  WEBFLOW_IMAGE_SYNC_MAX_ITEMS?: string;
 }
 
 export interface AirtableAttachment {
@@ -128,6 +129,7 @@ export interface TemplateDocumentInput {
 
 export interface TemplateImageUrls {
   template_slug: string;
+  template_name?: string | null;
   thumbnail_image_url: string | null;
   thumbnail_image_secondary_url: string | null;
 }
@@ -206,11 +208,16 @@ export interface CategoryMetadataPayload {
 }
 
 export interface WebflowImageSyncSummary {
+  mode: 'full' | 'batch';
   started_at: string;
   finished_at: string;
   fetched_items: number;
   matched_records: number;
   configured: boolean;
+  offset?: number;
+  next_offset?: number;
+  total_items?: number | null;
+  wrapped?: boolean;
 }
 
 export interface SyncSummary {

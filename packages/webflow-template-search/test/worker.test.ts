@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { installAirtableFetchMock } from './support/airtable.js';
-import { callWorker, createTestEnv } from './support/worker.js';
+import { callScheduled, callWorker, createTestEnv } from './support/worker.js';
 
 const LOOKUPS = {
   styles: [
@@ -315,6 +315,74 @@ describe('webflow-template-search worker', () => {
       };
       expect(payload.items[0].thumbnail_image_url).toBe(durableThumbnail);
       expect(payload.items[0].thumbnail_image_secondary_url).toBe(durableSecondary);
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
+  it('refreshes Webflow image updates in bounded scheduled batches', async () => {
+    const agentflowInitial = 'https://cdn.prod.website-files.com/templates/agentflow-old.webp';
+    const agentflowUpdated = 'https://cdn.prod.website-files.com/templates/agentflow-updated.webp';
+    const setrexInitial = 'https://cdn.prod.website-files.com/templates/setrex-old.webp';
+    const setrexUpdated = 'https://cdn.prod.website-files.com/templates/setrex-updated.webp';
+    const webflowItems = [
+      {
+        id: 'wf-agentflow',
+        fieldData: {
+          name: 'Agentflow',
+          slug: 'agentflow-webflow-slug',
+          'thumbnail-image': { url: agentflowInitial },
+        },
+      },
+      {
+        id: 'wf-setrex',
+        fieldData: {
+          name: 'Setrex',
+          slug: 'setrex-website-template',
+          'thumbnail-image': { url: setrexInitial },
+        },
+      },
+    ];
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: PUBLISHED_ASSETS,
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+      webflowItems,
+    });
+    const { env, close } = createTestEnv();
+    env.CMS_READ_ONLY = 'test-webflow-token';
+    env.WEBFLOW_IMAGE_SYNC_MAX_ITEMS = '1';
+
+    try {
+      const rebuild = await callWorker(
+        new Request('https://templates.test/api/templates/admin/rebuild', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(rebuild.status).toBe(200);
+
+      webflowItems[0].fieldData['thumbnail-image'] = { url: agentflowUpdated };
+      webflowItems[1].fieldData['thumbnail-image'] = { url: setrexUpdated };
+
+      await callScheduled('37 * * * *', env);
+
+      const firstSearch = await callWorker(new Request('https://templates.test/api/templates/search?q=Agentflow'), env);
+      const firstPayload = (await firstSearch.json()) as { items: Array<{ thumbnail_image_url: string | null }> };
+      expect(firstPayload.items[0].thumbnail_image_url).toBe(agentflowUpdated);
+
+      const setrexBeforeSecondBatch = await callWorker(new Request('https://templates.test/api/templates/search?q=Setrex'), env);
+      const setrexBeforePayload = (await setrexBeforeSecondBatch.json()) as { items: Array<{ thumbnail_image_url: string | null }> };
+      expect(setrexBeforePayload.items[0].thumbnail_image_url).toBe(setrexInitial);
+
+      await callScheduled('37 * * * *', env);
+
+      const setrexAfterSecondBatch = await callWorker(new Request('https://templates.test/api/templates/search?q=Setrex'), env);
+      const setrexAfterPayload = (await setrexAfterSecondBatch.json()) as { items: Array<{ thumbnail_image_url: string | null }> };
+      expect(setrexAfterPayload.items[0].thumbnail_image_url).toBe(setrexUpdated);
     } finally {
       fetchMock.mockRestore();
       close();

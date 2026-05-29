@@ -26,3 +26,7 @@ export function createTestEnv() {
 export async function callWorker(request: Request, env: Env): Promise<Response> {
   return worker.fetch(request, env);
 }
+
+export async function callScheduled(cron: string, env: Env): Promise<void> {
+  await worker.scheduled({ cron, scheduledTime: Date.now() }, env);
+}

@@ -199,20 +199,39 @@ export async function updateTemplateImageUrls(db: D1Database, images: Iterable<T
   const updates = Array.from(images).filter((image) => image.thumbnail_image_url || image.thumbnail_image_secondary_url);
   if (updates.length === 0) return 0;
 
-  let matched = 0;
-  for (const group of chunk(
-    updates.map((image) => image.template_slug),
-    50,
-  )) {
+  const matchedSlugs = new Set<string>();
+  for (const group of chunk(updates, 50)) {
+    const slugs = group.map((image) => image.template_slug).filter(Boolean);
+    const names = group
+      .map((image) => image.template_name)
+      .filter((name): name is string => Boolean(name));
+    const clauses: string[] = [];
+    const params: string[] = [];
+
+    if (slugs.length > 0) {
+      clauses.push(`template_slug IN (${placeholderList(slugs.length)})`);
+      params.push(...slugs);
+    }
+
+    if (names.length > 0) {
+      clauses.push(`name IN (${placeholderList(names.length)})`);
+      params.push(...names);
+    }
+
+    if (clauses.length === 0) continue;
+
     const result = await db
       .prepare(
         `SELECT template_slug
          FROM template_documents
-         WHERE template_slug IN (${placeholderList(group.length)})`,
+         WHERE ${clauses.join(' OR ')}`,
       )
-      .bind(...group)
+      .bind(...params)
       .all<{ template_slug: string }>();
-    matched += result.results?.length ?? 0;
+
+    for (const row of result.results ?? []) {
+      matchedSlugs.add(row.template_slug);
+    }
   }
 
   const statements: D1PreparedStatement[] = [];
@@ -225,9 +244,15 @@ export async function updateTemplateImageUrls(db: D1Database, images: Iterable<T
            SET
              thumbnail_image_url = COALESCE(?, thumbnail_image_url),
              thumbnail_image_secondary_url = COALESCE(?, thumbnail_image_secondary_url)
-           WHERE template_slug = ?`,
+           WHERE template_slug = ? OR (? IS NOT NULL AND name = ?)`,
         )
-        .bind(image.thumbnail_image_url, image.thumbnail_image_secondary_url, image.template_slug),
+        .bind(
+          image.thumbnail_image_url,
+          image.thumbnail_image_secondary_url,
+          image.template_slug,
+          image.template_name ?? null,
+          image.template_name ?? null,
+        ),
     );
   }
 
@@ -235,7 +260,7 @@ export async function updateTemplateImageUrls(db: D1Database, images: Iterable<T
     await db.batch(group);
   }
 
-  return matched;
+  return matchedSlugs.size;
 }
 
 export async function deleteTemplateDocuments(db: D1Database, ids: string[]): Promise<void> {

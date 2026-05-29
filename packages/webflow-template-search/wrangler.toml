@@ -24,9 +24,10 @@ ALLOWED_ORIGINS = "https://webflow.com,https://www.webflow.com,https://templates
 DEFAULT_PAGE_SIZE = "24"
 DEFAULT_CLIENT_MODE = "shadow"
 WEBFLOW_TEMPLATES_COLLECTION_ID = "641b464e78789f611a5d4496"
+WEBFLOW_IMAGE_SYNC_MAX_ITEMS = "500"
 
 [triggers]
-crons = ["*/5 * * * *", "17 3 * * *"]
+crons = ["*/5 * * * *", "37 * * * *", "17 3 * * *"]
 
 # Secrets:
 # - AIRTABLE_API_KEY

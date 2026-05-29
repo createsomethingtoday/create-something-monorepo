@@ -30,6 +30,14 @@ export interface WebflowImageSyncResult {
   images: Map<string, TemplateImageUrls>;
   fetchedItems: number;
   configured: boolean;
+  offset: number;
+  nextOffset: number;
+  totalItems: number | null;
+}
+
+export interface FetchWebflowTemplateImagesOptions {
+  offset?: number;
+  maxItems?: number;
 }
 
 function getApiToken(env: Env): string | null {
@@ -93,6 +101,7 @@ function readSlug(fields: Record<string, unknown>): string {
 function readImageUrls(item: WebflowCmsItem): TemplateImageUrls | null {
   const fields = item.fieldData ?? item.field_data ?? item.fields ?? {};
   const templateSlug = readSlug(fields);
+  const templateName = typeof fields.name === 'string' && fields.name.trim() ? fields.name.trim() : null;
   if (!templateSlug) return null;
 
   const thumbnail = pickImageUrl(
@@ -111,6 +120,7 @@ function readImageUrls(item: WebflowCmsItem): TemplateImageUrls | null {
 
   return {
     template_slug: templateSlug,
+    template_name: templateName,
     thumbnail_image_url: thumbnail,
     thumbnail_image_secondary_url: secondary,
   };
@@ -156,23 +166,40 @@ async function fetchWebflowList(url: string, token: string): Promise<WebflowCmsL
   throw lastError ?? new Error('Webflow CMS image sync request failed after retries.');
 }
 
-export async function fetchWebflowTemplateImages(env: Env): Promise<WebflowImageSyncResult> {
+function normalizeOffset(value: number | undefined): number {
+  return Number.isFinite(value) && Number(value) > 0 ? Math.floor(Number(value)) : 0;
+}
+
+function normalizeMaxItems(value: number | undefined): number | null {
+  return Number.isFinite(value) && Number(value) > 0 ? Math.floor(Number(value)) : null;
+}
+
+export async function fetchWebflowTemplateImages(
+  env: Env,
+  options: FetchWebflowTemplateImagesOptions = {},
+): Promise<WebflowImageSyncResult> {
   const token = getApiToken(env);
   if (!token) {
     if (isWebflowImageSyncRequired(env)) {
       throw new Error('CMS_READ_ONLY or WEBFLOW_API_TOKEN is required for Webflow image sync.');
     }
-    return { images: new Map(), fetchedItems: 0, configured: false };
+    return { images: new Map(), fetchedItems: 0, configured: false, offset: 0, nextOffset: 0, totalItems: null };
   }
 
   const images = new Map<string, TemplateImageUrls>();
   let fetchedItems = 0;
-  let offset = 0;
+  const startOffset = normalizeOffset(options.offset);
+  const maxItems = normalizeMaxItems(options.maxItems);
+  let offset = startOffset;
   let total: number | null = null;
 
   do {
+    const remaining = maxItems === null ? PAGE_SIZE : maxItems - fetchedItems;
+    if (remaining <= 0) break;
+    const pageSize = Math.min(PAGE_SIZE, remaining);
+
     const url = new URL(`${getApiBase(env)}/collections/${getCollectionId(env)}/items/live`);
-    url.searchParams.set('limit', String(PAGE_SIZE));
+    url.searchParams.set('limit', String(pageSize));
     url.searchParams.set('offset', String(offset));
 
     const payload = await fetchWebflowList(url.toString(), token);
@@ -185,10 +212,18 @@ export async function fetchWebflowTemplateImages(env: Env): Promise<WebflowImage
       if (imageUrls) images.set(imageUrls.template_slug, imageUrls);
     }
 
-    offset += typeof payload.pagination?.limit === 'number' && payload.pagination.limit > 0 ? payload.pagination.limit : PAGE_SIZE;
+    offset += typeof payload.pagination?.limit === 'number' && payload.pagination.limit > 0 ? payload.pagination.limit : pageSize;
 
     if (items.length === 0) break;
+    if (maxItems !== null && fetchedItems >= maxItems) break;
   } while (total === null ? true : offset < total);
 
-  return { images, fetchedItems, configured: true };
+  return {
+    images,
+    fetchedItems,
+    configured: true,
+    offset: startOffset,
+    nextOffset: total !== null && offset >= total ? 0 : offset,
+    totalItems: total,
+  };
 }
