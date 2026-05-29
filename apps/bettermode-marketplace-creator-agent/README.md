@@ -4,14 +4,14 @@ Cloudflare Worker for the **Marketplace Creator Agent** Bettermode app. Drafts a
 
 ## Behavior
 
-| Phase | What happens |
-|---|---|
-| Webhook (`post.published` / `reply.published` / `*.updated`) | Verify Bettermode signature → enqueue draft generation in `ctx.waitUntil` |
-| Draft generation (async) | Fetch post + thread via Bettermode GraphQL → resolve author email → look up Airtable Creator + linked Assets → assemble system+user prompt → call OpenAI → upsert `community_signals` + `community_queue` row |
-| Dynamic block render | On admin view of a post, return a Slate UI: post excerpt, editable draft textarea, [Send / Regenerate / Dismiss]. Non-admins see a small hint block. |
-| Send | Mint a member-context Bettermode token using the admin's `actorId` → `createReply` mutation posts as the admin → mark queue row `sent` |
-| Regenerate | Re-run draft generation in `ctx.waitUntil` |
-| Dismiss | Mark queue row `rejected` |
+| Phase                                                        | What happens                                                                                                                                                                                                                  |
+| ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Webhook (`post.published` / `reply.published` / `*.updated`) | Verify Bettermode signature → enqueue draft generation in `ctx.waitUntil`                                                                                                                                                     |
+| Draft generation (async)                                     | Fetch post + thread via Bettermode GraphQL → call the published Dify agent with post metadata → Dify uses the BetterMode Creator MCP + Marketplace policy knowledge base → upsert `community_signals` + `community_queue` row |
+| Dynamic block render                                         | On admin view of a post, return a Slate UI: post excerpt, editable draft textarea, [Send / Regenerate / Dismiss]. Non-admins see a small hint block.                                                                          |
+| Send                                                         | Mint a member-context Bettermode token using the admin's `actorId` → `createReply` mutation posts as the admin → mark queue row `sent`                                                                                        |
+| Regenerate                                                   | Re-run draft generation in `ctx.waitUntil`                                                                                                                                                                                    |
+| Dismiss                                                      | Mark queue row `rejected`                                                                                                                                                                                                     |
 
 ## Endpoints
 
@@ -46,13 +46,12 @@ wrangler d1 migrations apply create-something-db
 
 Stored in Infisical workspace `e1532079-…-cf7a025eb803` under `dev`:
 
-| Infisical name | Worker secret name |
-|---|---|
-| `WEBFLOW_BETTERMODE_CLIENT_ID` | `BETTERMODE_CLIENT_ID` |
-| `WEBFLOW_BETTERMODE_CLIENT_SECRET` | `BETTERMODE_CLIENT_SECRET` |
+| Infisical name                      | Worker secret name          |
+| ----------------------------------- | --------------------------- |
+| `WEBFLOW_BETTERMODE_CLIENT_ID`      | `BETTERMODE_CLIENT_ID`      |
+| `WEBFLOW_BETTERMODE_CLIENT_SECRET`  | `BETTERMODE_CLIENT_SECRET`  |
 | `WEBFLOW_BETTERMODE_SIGNING_SECRET` | `BETTERMODE_SIGNING_SECRET` |
-| `WEBFLOW_OPENAI_API_KEY` | `OPENAI_API_KEY` |
-| `AIRTABLE_API_KEY` (existing in repo) | `AIRTABLE_API_KEY` |
+| `WEBFLOW_DIFY_AGENT_API_KEY`        | `DIFY_AGENT_API_KEY`        |
 
 Push secrets to the Worker:
 
@@ -64,24 +63,19 @@ infisical run --env=dev -- bash apps/bettermode-marketplace-creator-agent/script
 
 The script never echoes secret values; it pipes them straight into `wrangler secret put` over stdin.
 
-> **Rotation reminder.** The OpenAI key, Bettermode Client Secret, and Bettermode Signing Secret were transmitted via chat plaintext during initial provisioning. Rotate all three (OpenAI dashboard + Bettermode app settings) before letting the Worker carry production traffic. Update Infisical, then re-run `secrets:push`. Bettermode Client ID generally cannot be rotated without recreating the app.
+> **Rotation reminder.** Bettermode Client Secret and Bettermode Signing Secret were transmitted via chat plaintext during initial provisioning. Rotate both in Bettermode app settings before letting the Worker carry production traffic. Update Infisical, then re-run `secrets:push`. Bettermode Client ID generally cannot be rotated without recreating the app.
 
 ## Public vars (in `wrangler.jsonc`)
 
-| Var | Purpose |
-|---|---|
-| `BETTERMODE_DEFAULT_NETWORK_ID` | `BuRv7sR1po` (Webflow Community network) |
-| `BETTERMODE_MARKETPLACE_SPACE_ID` | The Bettermode space ID for `/marketplace-creators`. Leave empty to handle every space until you capture the real ID from the first webhook payload (visible in Worker logs). |
-| `BETTERMODE_MARKETPLACE_SPACE_SLUG` | `marketplace-creators` (informational) |
-| `BETTERMODE_ADMIN_USER_IDS` | Comma-separated Bettermode user IDs allowed to send drafts. **Leave empty to fail closed** (no one can send). |
-| `AIRTABLE_BASE_ID` | `appMoIgXMTTTNIc3p` |
-| `AIRTABLE_CREATORS_TABLE` | `tbljt0plqxdMARZXb` |
-| `AIRTABLE_ASSETS_TABLE` | `tblRwzpWoLgE9MrUm` |
-| `AIRTABLE_CREATORS_EMAIL_FIELD` | `Email` (override if your column is named differently) |
-| `AIRTABLE_CREATORS_ASSETS_LINK_FIELD` | `Assets` (override if your linked-record column is named differently) |
-| `OPENAI_MODEL_DEFAULT` | `gpt-4o-mini` (used for replies) |
-| `OPENAI_MODEL_RICH` | `gpt-4o` (used for top-level posts) |
-| `ALLOWED_ORIGINS` | CORS allowlist for `OPTIONS` requests |
+| Var                                 | Purpose                                                                                                                                                                       |
+| ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `BETTERMODE_DEFAULT_NETWORK_ID`     | `BuRv7sR1po` (Webflow Community network)                                                                                                                                      |
+| `BETTERMODE_MARKETPLACE_SPACE_ID`   | The Bettermode space ID for `/marketplace-creators`. Leave empty to handle every space until you capture the real ID from the first webhook payload (visible in Worker logs). |
+| `BETTERMODE_MARKETPLACE_SPACE_SLUG` | `marketplace-creators` (informational)                                                                                                                                        |
+| `BETTERMODE_ADMIN_USER_IDS`         | Comma-separated Bettermode user IDs allowed to send drafts. **Leave empty to fail closed** (no one can send).                                                                 |
+| `DIFY_API_BASE`                     | `https://api.dify.ai/v1`                                                                                                                                                      |
+| `DIFY_AGENT_USER`                   | Stable Service API user id for Worker calls                                                                                                                                   |
+| `ALLOWED_ORIGINS`                   | CORS allowlist for `OPTIONS` requests                                                                                                                                         |
 
 ## Deploy
 

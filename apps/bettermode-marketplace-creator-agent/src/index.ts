@@ -9,35 +9,23 @@
 //   POST /webhook/interaction  dynamic block render + button callbacks
 
 import {
-  airtableConfig,
-  fetchCreatorContext,
-  type CreatorContext,
-} from './airtable';
-import {
   appAccessToken,
   bettermodeAuth,
   BettermodeError,
   createReply,
   fetchPostThread,
   memberAccessToken,
-  type BettermodePost,
+  type BettermodePost
 } from './bettermode';
 import { difyAgentConfig, generateDraftViaDify } from './dify-agent';
-import { generateDraft, openaiConfig } from './openai';
 import { verifySignature } from './signature';
-import {
-  adminDraftSlate,
-  interactionResponse,
-  nonAdminSlate,
-  type DraftBlockState,
-} from './slate';
+import { adminDraftSlate, interactionResponse, nonAdminSlate, type DraftBlockState } from './slate';
 import {
   getLatestDraftByPostId,
-  listRecentApprovedDrafts,
   markRejected,
   markSent,
   upsertPendingDraft,
-  upsertSignal,
+  upsertSignal
 } from './store';
 
 type WebhookPayload = {
@@ -66,7 +54,7 @@ const POST_EVENT_TYPES = new Set([
   'post.updated',
   'reply.published',
   'reply.created',
-  'reply.updated',
+  'reply.updated'
 ]);
 
 export default {
@@ -87,10 +75,10 @@ export default {
           {
             ok: true,
             service: 'bettermode-marketplace-creator-agent',
-            environment: env.ENVIRONMENT || 'development',
+            environment: env.ENVIRONMENT || 'development'
           },
           request,
-          env,
+          env
         );
       }
 
@@ -104,21 +92,21 @@ export default {
       return jsonResponse(
         {
           error: status >= 500 ? 'Internal server error' : 'Bad request',
-          message: error instanceof Error ? error.message : 'Unknown error',
+          message: error instanceof Error ? error.message : 'Unknown error'
         },
         request,
         env,
-        { status },
+        { status }
       );
     }
-  },
+  }
 } satisfies ExportedHandler<Env>;
 
 async function handleWebhook(
   request: Request,
   env: Env,
   ctx: ExecutionContext,
-  pathname: string,
+  pathname: string
 ): Promise<Response> {
   const rawBody = await request.text();
 
@@ -141,7 +129,7 @@ async function handleWebhook(
     context: webhook.context,
     objectId: webhook.data?.object?.id,
     spaceId: webhook.data?.object?.spaceId,
-    targetId: webhook.data?.target?.id,
+    targetId: webhook.data?.target?.id
   });
 
   if (webhook.type === 'TEST') {
@@ -149,10 +137,10 @@ async function handleWebhook(
       {
         type: 'TEST',
         status: 'SUCCEEDED',
-        data: { challenge: webhook.data?.challenge },
+        data: { challenge: webhook.data?.challenge }
       },
       request,
-      env,
+      env
     );
   }
 
@@ -165,15 +153,17 @@ async function handleWebhook(
     const spaceId = webhook.data?.object?.spaceId;
     console.log('matched post event', { type: webhook.type, postId, spaceId });
     if (postId && shouldHandleSpace(spaceId, env)) {
-      ctx.waitUntil(generateDraftForPost(postId, env).catch((err) => {
-        console.error('draft generation failed', { postId, error: errorMessage(err) });
-      }));
+      ctx.waitUntil(
+        generateDraftForPost(postId, env).catch((err) => {
+          console.error('draft generation failed', { postId, error: errorMessage(err) });
+        })
+      );
     } else {
       console.warn('event matched type but filtered out', {
         type: webhook.type,
         postId,
         spaceId,
-        marketplace_space: env.BETTERMODE_MARKETPLACE_SPACE_ID,
+        marketplace_space: env.BETTERMODE_MARKETPLACE_SPACE_ID
       });
     }
   } else if (pathname === '/webhook' && webhook.type) {
@@ -181,17 +171,13 @@ async function handleWebhook(
   }
 
   // Federated search and unknown types: ack with success.
-  return jsonResponse(
-    { type: webhook.type || 'WEBHOOK', status: 'SUCCEEDED' },
-    request,
-    env,
-  );
+  return jsonResponse({ type: webhook.type || 'WEBHOOK', status: 'SUCCEEDED' }, request, env);
 }
 
 async function handleInteraction(
   webhook: WebhookPayload,
   env: Env,
-  ctx: ExecutionContext,
+  ctx: ExecutionContext
 ): Promise<Record<string, unknown>> {
   const callbackId = webhook.data?.callbackId;
   const actorId = webhook.data?.actorId;
@@ -204,8 +190,8 @@ async function handleInteraction(
         {
           id: webhook.data?.interactionId || 'creator-agent-block',
           type: 'SHOW',
-          slate: nonAdminSlate(),
-        },
+          slate: nonAdminSlate()
+        }
       ]);
     }
     const postId = resolvePostId(webhook);
@@ -214,8 +200,8 @@ async function handleInteraction(
       {
         id: webhook.data?.interactionId || 'creator-agent-block',
         type: 'SHOW',
-        slate: adminDraftSlate(state),
-      },
+        slate: adminDraftSlate(state)
+      }
     ]);
   }
 
@@ -227,9 +213,9 @@ async function handleInteraction(
         props: {
           status: 'ERROR',
           title: 'Not authorized',
-          description: 'Only admins can act on drafted replies.',
-        },
-      },
+          description: 'Only admins can act on drafted replies.'
+        }
+      }
     ]);
   }
 
@@ -246,10 +232,7 @@ async function handleInteraction(
   return interactionResponse(webhook, []);
 }
 
-async function handleSend(
-  webhook: WebhookPayload,
-  env: Env,
-): Promise<Record<string, unknown>> {
+async function handleSend(webhook: WebhookPayload, env: Env): Promise<Record<string, unknown>> {
   try {
     const postId = stringInput(webhook, 'postId') || resolvePostId(webhook);
     const draftText = stringInput(webhook, 'draft');
@@ -272,7 +255,7 @@ async function handleSend(
       state.signal.metadata?.space_id ?? null,
       draftToHtml(draftText),
       memberToken,
-      auth,
+      auth
     );
 
     await markSent(env.DB, state.draft.id, draftText, reply.id ?? null);
@@ -283,13 +266,13 @@ async function handleSend(
       {
         id: 'send-toast',
         type: 'OPEN_TOAST',
-        props: { status: 'SUCCESS', title: 'Reply sent', description: '' },
+        props: { status: 'SUCCESS', title: 'Reply sent', description: '' }
       },
       {
         id: webhook.data?.interactionId || 'creator-agent-block',
         type: 'SHOW',
-        slate: adminDraftSlate(refreshed),
-      },
+        slate: adminDraftSlate(refreshed)
+      }
     ]);
   } catch (error) {
     return interactionResponse(webhook, [
@@ -299,9 +282,9 @@ async function handleSend(
         props: {
           status: 'ERROR',
           title: 'Could not send reply',
-          description: errorMessage(error),
-        },
-      },
+          description: errorMessage(error)
+        }
+      }
     ]);
   }
 }
@@ -309,7 +292,7 @@ async function handleSend(
 async function handleRegenerate(
   webhook: WebhookPayload,
   env: Env,
-  ctx: ExecutionContext,
+  ctx: ExecutionContext
 ): Promise<Record<string, unknown>> {
   const postId = stringInput(webhook, 'postId') || resolvePostId(webhook);
   if (!postId) {
@@ -317,14 +300,14 @@ async function handleRegenerate(
       {
         id: 'regen-error',
         type: 'OPEN_TOAST',
-        props: { status: 'ERROR', title: 'Missing post ID' },
-      },
+        props: { status: 'ERROR', title: 'Missing post ID' }
+      }
     ]);
   }
   ctx.waitUntil(
     generateDraftForPost(postId, env, { regenerate: true }).catch((err) => {
       console.error('regenerate failed', { postId, error: errorMessage(err) });
-    }),
+    })
   );
   const state = await loadDraftState(postId, env);
   state.notice = { kind: 'info', title: 'Regenerating draft...' };
@@ -332,15 +315,12 @@ async function handleRegenerate(
     {
       id: webhook.data?.interactionId || 'creator-agent-block',
       type: 'SHOW',
-      slate: adminDraftSlate(state),
-    },
+      slate: adminDraftSlate(state)
+    }
   ]);
 }
 
-async function handleDismiss(
-  webhook: WebhookPayload,
-  env: Env,
-): Promise<Record<string, unknown>> {
+async function handleDismiss(webhook: WebhookPayload, env: Env): Promise<Record<string, unknown>> {
   const postId = stringInput(webhook, 'postId') || resolvePostId(webhook);
   if (!postId) {
     return interactionResponse(webhook, []);
@@ -355,8 +335,8 @@ async function handleDismiss(
     {
       id: webhook.data?.interactionId || 'creator-agent-block',
       type: 'SHOW',
-      slate: adminDraftSlate(refreshed),
-    },
+      slate: adminDraftSlate(refreshed)
+    }
   ]);
 }
 
@@ -376,7 +356,7 @@ async function loadDraftState(postId: string | undefined, env: Env): Promise<Loa
       draftStatus: 'none',
       excerpt: undefined,
       signal: { id: '', metadata: {} },
-      draft: null,
+      draft: null
     };
   }
 
@@ -388,7 +368,7 @@ async function loadDraftState(postId: string | undefined, env: Env): Promise<Loa
       draftStatus: 'none',
       excerpt: undefined,
       signal: { id: '', metadata: {} },
-      draft: null,
+      draft: null
     };
   }
 
@@ -398,14 +378,14 @@ async function loadDraftState(postId: string | undefined, env: Env): Promise<Loa
     draftStatus: found.draft.status,
     excerpt: clip(found.signal.content, 240),
     signal: { id: found.signal.id, metadata: found.signal.metadata },
-    draft: { id: found.draft.id },
+    draft: { id: found.draft.id }
   };
 }
 
 async function generateDraftForPost(
   postId: string,
   env: Env,
-  opts: { regenerate?: boolean } = {},
+  opts: { regenerate?: boolean } = {}
 ): Promise<void> {
   const auth = bettermodeAuth(env);
   const networkId = env.BETTERMODE_DEFAULT_NETWORK_ID;
@@ -434,68 +414,38 @@ async function generateDraftForPost(
     console.log('skipping draft for staff author', {
       postId,
       authorEmail: email,
-      reason: 'matches staff domain allowlist',
+      reason: 'matches staff domain allowlist'
     });
     return;
   }
 
-  // Prefer the Dify agent when configured: it owns the prompt, the policy
-  // knowledge base, and the connected bettermode-creator MCP, so it can
-  // ground answers in actual marketplace policy. Falls back to direct
-  // OpenAI (no policy KB) only if DIFY_AGENT_API_KEY is unset.
   const difyConfig = difyAgentConfig(env);
-  let draft: string | null = null;
-  if (difyConfig) {
-    try {
-      const result = await generateDraftViaDify(
-        {
-          postId: post.id,
-          isTopLevel,
-          spaceId: post.spaceId || post.space?.id || null,
-          authorMemberId: author?.id || null,
-          authorEmail: email || null,
-          authorName: author?.name || null,
-          regenerate: opts.regenerate === true,
-        },
-        difyConfig,
-      );
-      draft = result.answer;
-    } catch (err) {
-      console.error('dify draft failed; falling back to direct OpenAI', {
-        postId,
-        error: errorMessage(err),
-      });
-    }
+  if (!difyConfig) {
+    console.error('Dify agent is not configured; skipping policy-grounded draft', { postId });
+    return;
   }
 
-  if (draft === null) {
-    let creator: CreatorContext | null = null;
-    const aConfig = airtableConfig(env);
-    if (aConfig && email) {
-      try {
-        creator = await fetchCreatorContext(email, aConfig);
-      } catch (err) {
-        console.error('airtable lookup failed', { email, error: errorMessage(err) });
-      }
-    }
-
-    const oConfig = openaiConfig(env);
-    if (!oConfig) {
-      console.warn('Neither Dify nor OpenAI configured; skipping draft', { postId });
-      return;
-    }
-
-    const fewShot = await listRecentApprovedDrafts(env.DB, 5);
-    draft = await generateDraft(
+  let draft: string;
+  try {
+    const result = await generateDraftViaDify(
       {
-        post,
+        postId: post.id,
         isTopLevel,
-        creator,
-        fewShotApprovedDrafts: fewShot,
-        regenerate: opts.regenerate === true,
+        spaceId: post.spaceId || post.space?.id || null,
+        authorMemberId: author?.id || null,
+        authorEmail: email || null,
+        authorName: author?.name || null,
+        regenerate: opts.regenerate === true
       },
-      oConfig,
+      difyConfig
     );
+    draft = result.answer;
+  } catch (err) {
+    console.error('Dify draft failed; skipping draft without policy grounding', {
+      postId,
+      error: errorMessage(err)
+    });
+    return;
   }
 
   const signalId = await upsertSignal(env.DB, {
@@ -509,8 +459,8 @@ async function generateDraftForPost(
       is_top_level: isTopLevel,
       author_member_id: author?.id || null,
       author_email: email || null,
-      author_name: author?.name || null,
-    },
+      author_name: author?.name || null
+    }
   });
 
   await upsertPendingDraft(env.DB, { signalId, draftContent: draft });
@@ -544,10 +494,7 @@ function shouldHandleSpace(spaceId: string | null | undefined, env: Env): boolea
 // to `webflow.com`). Staff-authored posts are typically announcements
 // from the Marketplace team itself, not creator questions the agent
 // should draft replies to.
-function isStaffAuthorEmail(
-  email: string | undefined | null,
-  env: Env,
-): boolean {
+function isStaffAuthorEmail(email: string | undefined | null, env: Env): boolean {
   if (!email) return false;
   const lower = email.trim().toLowerCase();
   if (!lower.includes('@')) return false;
@@ -560,12 +507,7 @@ function isStaffAuthorEmail(
 }
 
 function resolvePostId(webhook: WebhookPayload): string | undefined {
-  return (
-    webhook.data?.target?.id ||
-    webhook.data?.object?.id ||
-    webhook.entityId ||
-    undefined
-  );
+  return webhook.data?.target?.id || webhook.data?.object?.id || webhook.entityId || undefined;
 }
 
 function stringInput(webhook: WebhookPayload, key: string): string {
@@ -575,14 +517,14 @@ function stringInput(webhook: WebhookPayload, key: string): string {
 
 function stripBettermodeContent(post: BettermodePost): string {
   const raw = post.shortContent || post.description || post.title || '';
-  return raw.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+  return raw
+    .replace(/<[^>]+>/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 function draftToHtml(text: string): string {
-  const escaped = text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
+  const escaped = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   return escaped
     .split(/\n{2,}/)
     .map((para) => `<p>${para.replace(/\n/g, '<br>')}</p>`)
@@ -610,15 +552,15 @@ function jsonResponse(
   data: unknown,
   request: Request,
   env: Env,
-  init: ResponseInit = {},
+  init: ResponseInit = {}
 ): Response {
   return new Response(JSON.stringify(data), {
     ...init,
     headers: {
       'content-type': 'application/json; charset=utf-8',
       ...corsHeaders(request, env),
-      ...init.headers,
-    },
+      ...init.headers
+    }
   });
 }
 
@@ -626,8 +568,8 @@ function htmlResponse(html: string, request: Request, env: Env): Response {
   return new Response(html, {
     headers: {
       'content-type': 'text/html; charset=utf-8',
-      ...corsHeaders(request, env),
-    },
+      ...corsHeaders(request, env)
+    }
   });
 }
 
@@ -647,7 +589,7 @@ function corsHeaders(request: Request, env: Env): HeadersInit {
     ...(allowOrigin ? { 'access-control-allow-origin': allowOrigin } : {}),
     'access-control-allow-methods': 'GET,POST,OPTIONS',
     'access-control-allow-headers': 'authorization,content-type',
-    'access-control-max-age': '86400',
+    'access-control-max-age': '86400'
   };
 }
 

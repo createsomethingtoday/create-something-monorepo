@@ -11,20 +11,20 @@ Brokered, local, dormant, and non-HTTP servers are summarized but excluded from 
 - MCP registry servers: 1034
 - Dify-direct candidates: 39
 - Dify inventory status: `partial`
-- Dify MCP server cards in inventory: 16
-- Dify agents in inventory: 14
+- Dify MCP server cards in inventory: 17
+- Dify agents in inventory: 15
 - Dify MCP intake artifacts: 22
 
 ## Candidate Status
 
 | Status | Count | Meaning |
 | --- | ---: | --- |
-| `ready` | 5 | Mapped to a Dify server and published agent with smoke/eval gates. |
+| `ready` | 6 | Mapped to a Dify server and published agent with smoke/eval gates. |
 | `agent-needs-gates` | 0 | Published agent exists but smoke/eval evidence is incomplete. |
 | `agent-draft` | 0 | Agent exists but is not published yet. |
 | `intake-ready` | 22 | Repo has a Dify Studio intake artifact, but the server card and discovered tools are not codified yet. |
 | `server-only` | 0 | Dify MCP server exists but no Dify agent uses it yet. |
-| `missing-dify-server` | 12 | No Dify MCP server card is codified for this registry server. |
+| `missing-dify-server` | 11 | No Dify MCP server card is codified for this registry server. |
 
 ## Excluded From Direct Dify Coverage
 
@@ -40,7 +40,6 @@ Brokered, local, dormant, and non-HTTP servers are summarized but excluded from 
 | MCP Registry Server | Status | Dify Server Card | Intake Artifact | Dify Agents | Published Agents | Est. Tools | Exposure | Next Action |
 | --- | --- | --- | --- | --- | --- | ---: | --- | --- |
 | `abundance-staff-mcp` | `missing-dify-server` | - | - | - | - | 1 | `direct` | Run pnpm dify:mcp:intake -- --registry-server-id abundance-staff-mcp --write. |
-| `bettermode-creator` | `missing-dify-server` | - | - | - | - | 4 | `direct` | Run pnpm dify:mcp:intake -- --registry-server-id bettermode-creator --write. |
 | `hydra-db-recall-mcp` | `missing-dify-server` | - | - | - | - | 4 | `direct` | Run pnpm dify:mcp:intake -- --registry-server-id hydra-db-recall-mcp --write. |
 | `interaction-atlas-mcp` | `missing-dify-server` | - | - | - | - | 0 | `direct` | Run pnpm dify:mcp:intake -- --registry-server-id interaction-atlas-mcp --write. |
 | `notion-halfdozen-cracked` | `missing-dify-server` | - | - | - | - | 0 | `direct` | Run pnpm dify:mcp:intake -- --registry-server-id notion-halfdozen-cracked --write. |
@@ -74,6 +73,7 @@ Brokered, local, dormant, and non-HTTP servers are summarized but excluded from 
 | `webflow-local` | `intake-ready` | - | `config/dify-mcp-intake/webflow-local.json` | - | - | 10 | `direct` | Register the Dify MCP server card from the intake artifact, discover tools, then codify inventory. |
 | `webflow-template-review-mcp` | `intake-ready` | - | `config/dify-mcp-intake/webflow-template-review.json` | - | - | 0 | `direct` | Register the Dify MCP server card from the intake artifact, discover tools, then codify inventory. |
 | `abundance-jobs-mcp` | `ready` | `abundance-jobs` | - | `abundance-hub` | `abundance-hub` | 4 | `direct` | Keep smoke/eval evidence current. |
+| `bettermode-creator` | `ready` | `bettermode-creator` | - | `bettermode-marketplace-creator-agent` | `bettermode-marketplace-creator-agent` | 4 | `direct` | Keep smoke/eval evidence current. |
 | `create-something` | `ready` | `create-something` | - | `create-something-guide-agent` | `create-something-guide-agent` | 5 | `direct` | Keep smoke/eval evidence current. |
 | `playbook` | `ready` | `playbook` | - | `create-something-guide-agent` | `create-something-guide-agent` | 14 | `direct` | Keep smoke/eval evidence current. |
 | `three-tier-framework` | `ready` | `three-tier-framework` | - | `create-something-guide-agent` | `create-something-guide-agent` | 6 | `direct` | Keep smoke/eval evidence current. |
@@ -111,7 +111,6 @@ Brokered, local, dormant, and non-HTTP servers are summarized but excluded from 
 | MCP Registry Server | URL | Description |
 | --- | --- | --- |
 | `abundance-staff-mcp` | `https://abundance-staff-mcp.createsomething.workers.dev/mcp` | Abundance Staff MCP for NPG staff/operator headcount and private staffing context. Token-bearing access stays in Infisical and is excluded from public delivery artifacts. |
-| `bettermode-creator` | `https://bettermode-creator.mcp.createsomething.agency/mcp` | Bettermode Marketplace Creator drafting MCP — read-only Bettermode + Airtable + community queue helpers consumed by the Dify drafter agent. |
 | `hydra-db-recall-mcp` | `https://hydra-db-recall-mcp.createsomething.workers.dev/mcp` | CREATE SOMETHING governed read-only HydraDB recall wrapper with D1 and Braintrust telemetry |
 | `interaction-atlas-mcp` | `https://interaction-atlas-mcp.createsomething.workers.dev/mcp` | Interaction Atlas MCP for policy, workflow, and agent/MCP capability mapping |
 | `notion-halfdozen-cracked` | `https://cracked-notion.mcp.workway.co/mcp` | Half Dozen Notion MCP for Cracked |

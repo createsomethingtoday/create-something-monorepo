@@ -358,6 +358,12 @@
           "type": "string",
           "minLength": 1
         },
+        "inputs": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
         "required_tools": {
           "type": "array",
           "uniqueItems": true,

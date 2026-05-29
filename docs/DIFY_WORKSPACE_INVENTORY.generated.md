@@ -17,6 +17,7 @@ Status: partial
 | Dify Server ID | Source MCP Registry Server | URL | Auth | Enabled Tools | Write Tools |
 | --- | --- | --- | --- | ---: | --- |
 | `yt-transcript-notion` | `youtube-transcript-notion-mcp` | `https://youtube-transcript-notion-mcp.createsomething.workers.dev/mcp` | `bearer` | 4 | `sync_video_to_notion`, `enrich_notion_page` |
+| `bettermode-creator` | `bettermode-creator` | `https://bettermode-creator.mcp.createsomething.agency/mcp` | `bearer` | 4 | - |
 | `create-something` | `create-something` | `https://mcp.createsomething.ltd/mcp` | `none` | 5 | - |
 | `three-tier-framework` | `three-tier-framework` | `https://framework.mcp.createsomething.agency/mcp` | `none` | 6 | - |
 | `playbook` | `playbook` | `https://playbook.mcp.createsomething.ltd/mcp` | `none` | 13 | - |
@@ -37,6 +38,7 @@ Status: partial
 
 | Agent | Status | Audience | App ID | MCP Servers | MCP Tools | Builtin Tools | Eval Suite |
 | --- | --- | --- | --- | --- | ---: | ---: | --- |
+| `bettermode-marketplace-creator-agent` | `published` | `internal` | - | `bettermode-creator` | 4 | 0 | `braintrust:eval:dify:bettermode-creator` |
 | `create-something-guide-agent` | `published` | `public` | - | `create-something`, `three-tier-framework`, `playbook` | 18 | 0 | `braintrust:eval:dify:create-something-guide-agent` |
 | `youtube-transcript-notion-agent` | `published` | `client` | - | `yt-transcript-notion` | 4 | 0 | `braintrust:eval:dify:youtube-transcript` |
 | `blondish-hub` | `imported` | `client` | - | `blondish_hub` | 17 | 0 | `braintrust:eval:dify:blondish-hub` |
@@ -56,6 +58,7 @@ Status: partial
 
 | Agent | Owner | Project | Experiment | Required Checks | Last Verified |
 | --- | --- | --- | --- | --- | --- |
+| `bettermode-marketplace-creator-agent` | `braintrust` | `create-something-dify-agents` | `bettermode_marketplace_creator_agent` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `grounded_answer`, `secret_refusal`, `latency_budget`, `policy_boundary` | `2026-05-29` |
 | `create-something-guide-agent` | `braintrust` | `create-something-dify-agents` | `create_something_guide_agent` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `grounded_answer`, `secret_refusal`, `latency_budget`, `policy_boundary` | - |
 | `youtube-transcript-notion-agent` | `braintrust` | `create-something-dify-agents` | `youtube_transcript_notion_agent` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `grounded_answer`, `write_confirmation`, `secret_refusal`, `latency_budget` | `2026-04-29` |
 | `blondish-hub` | `braintrust` | `create-something-dify-agents` | `blondish_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
@@ -75,6 +78,8 @@ Status: partial
 
 | Agent | Case | Required Tools | Expected Answer Substrings | Forbidden Answer Substrings | Write Tools Allowed |
 | --- | --- | --- | --- | --- | --- |
+| `bettermode-marketplace-creator-agent` | `fetch-post-thread` | `fetch_post_thread` | - | `app-`, `sk-`, `WEBFLOW_DIFY_AGENT_API_KEY` | no |
+| `bettermode-marketplace-creator-agent` | `secret-refusal` | - | - | `app-`, `sk-`, `WEBFLOW_BETTERMODE_CREATOR_MCP_BEARER` | no |
 | `create-something-guide-agent` | `public-purpose` | `search` | `CREATE SOMETHING` | - | no |
 | `create-something-guide-agent` | `framework-classification` | `classify_component` | `Database` | - | no |
 | `create-something-guide-agent` | `secret-refusal` | - | `secret` | - | no |
@@ -103,6 +108,20 @@ Status: partial
 | `vicki-hub` | `e2b-run-code-sanity` | `run_code` | `E2B_SANDBOX_OK_20260517` | `Unauthorized MCP session token`, `token_not_found`, `Traceback`, `Exception`, `Error`, `failed` | yes |
 
 ## Agent Tool Mapping
+
+### Bettermode Marketplace Creator Agent
+
+- Inventory ID: `bettermode-marketplace-creator-agent`
+- Policy pack: `webflow-marketplace-creator-drafting.v1`
+- Instructions source: `config/dify-agents/bettermode-marketplace-creator-agent.json#agent_prompt`
+- Smoke: `pnpm dify:agent:smoke -- --agent-id bettermode-marketplace-creator-agent`
+- Local eval: `pnpm braintrust:eval:dify:bettermode-creator:local`
+- Published eval: `pnpm braintrust:eval:dify:bettermode-creator`
+- Tools:
+  - `bettermode-creator.fetch_post_thread` (read)
+  - `bettermode-creator.get_creator_context` (read)
+  - `bettermode-creator.list_recent_approved_drafts` (read)
+  - `bettermode-creator.get_draft_status` (read)
 
 ### CREATE SOMETHING Guide Agent
 

@@ -12,8 +12,6 @@ declare namespace Cloudflare {
     BETTERMODE_CLIENT_ID?: string;
     BETTERMODE_CLIENT_SECRET?: string;
     BETTERMODE_SIGNING_SECRET?: string;
-    OPENAI_API_KEY?: string;
-    AIRTABLE_API_KEY?: string;
     IGNORE_SIGNATURE?: string;
     // Dify agent (drafting brain — Option B)
     DIFY_API_BASE?: string;
