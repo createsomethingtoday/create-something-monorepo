@@ -50,6 +50,9 @@ export type { TemplateGridProps } from './components/grid/TemplateGrid';
 export { TemplateFilterBar } from './components/filter/TemplateFilterBar';
 export type { TemplateFilterBarProps } from './components/filter/TemplateFilterBar';
 
+export { TemplateSearch } from './components/search/TemplateSearch';
+export type { SuggestItem, TemplateSearchProps } from './components/search/TemplateSearch';
+
 export { TemplateSearchPage } from './components/marketplace/TemplateSearchPage';
 export type { TemplateSearchPageProps } from './components/marketplace/TemplateSearchPage';
 
@@ -61,6 +64,9 @@ export type { TemplateSearchResultsProps } from './components/marketplace/Templa
 
 export { TemplateSearchSidebar } from './components/marketplace/TemplateSearchSidebar';
 export type { TemplateSearchSidebarProps } from './components/marketplace/TemplateSearchSidebar';
+
+export { TemplateMarketplaceHeading } from './components/marketplace/TemplateMarketplaceHeading';
+export type { TemplateMarketplaceHeadingProps } from './components/marketplace/TemplateMarketplaceHeading';
 
 export { TemplateCarouselSection } from './components/marketplace/TemplateCarouselSection';
 export type {
@@ -109,6 +115,9 @@ export type { TextAreaProps } from './components/form/TextArea';
 // Legacy compatibility form components
 export { Field } from './components/forms/Field';
 export type { FieldProps } from './components/forms/Field';
+
+export { ResiliencyAlertSignup } from './components/forms/ResiliencyAlertSignup';
+export type { ResiliencyAlertSignupProps } from './components/forms/ResiliencyAlertSignup';
 
 export { Select } from './components/forms/Select';
 export type { SelectProps, SelectItem } from './components/forms/Select';

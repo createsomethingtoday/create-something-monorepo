@@ -15,7 +15,7 @@ interface SidebarCategory {
   name: string;
   slug: string;
   url?: string;
-  count: number;
+  count: number | null;
   active?: boolean;
 }
 
@@ -92,6 +92,7 @@ const DEFAULT_API_BASE = 'https://templates.webflow.com/templates-api';
 const WORKER_ORIGIN = 'https://webflow-template-search.createsomething.workers.dev';
 const CLOUD_APP_PREVIEW_ORIGIN = 'https://webflow-template-marketplace.webflow.io';
 const SIDEBAR_CACHE_TTL_MS = 5 * 60 * 1000;
+const SIDEBAR_STORAGE_PREFIX = 'wf-template-sidebar:';
 
 const sidebarPayloadCache = new Map<string, { timestamp: number; data: SidebarPayload }>();
 
@@ -100,12 +101,131 @@ const SPECIAL_ROWS: Array<{
   scope: TemplateScope;
   label: string;
   href: string;
+  iconUrl: string;
 }> = [
-  { key: 'all', scope: 'all', label: 'All', href: '/templates/all' },
-  { key: 'featured', scope: 'featured', label: 'Featured', href: '/templates/featured' },
-  { key: 'landing_pages', scope: 'landing_pages', label: 'Landing Pages', href: '/templates/landing-page' },
-  { key: 'free', scope: 'free', label: 'Free', href: '/templates/free-website-templates' },
+  {
+    key: 'all',
+    scope: 'all',
+    label: 'All',
+    href: '/templates/all',
+    iconUrl: 'https://cdn.prod.website-files.com/5e593fb060cf87bbaf75dd20/670e6774244fae7c3beb91e0_Size%3D24px.svg',
+  },
+  {
+    key: 'featured',
+    scope: 'featured',
+    label: 'Featured',
+    href: '/templates/featured',
+    iconUrl:
+      'https://cdn.prod.website-files.com/5e593fb060cf87bbaf75dd20/670e68dbb4f6baeae8b9cbcb_CapabilityAnalytics24%20(1).svg',
+  },
+  {
+    key: 'landing_pages',
+    scope: 'landing_pages',
+    label: 'Landing Pages',
+    href: '/templates/landing-page',
+    iconUrl: 'https://cdn.prod.website-files.com/5e593fb060cf87bbaf75dd20/686f2395e5b4dac6d8658ead_map-marker.svg',
+  },
+  {
+    key: 'free',
+    scope: 'free',
+    label: 'Free',
+    href: '/templates/free-website-templates',
+    iconUrl: 'https://cdn.prod.website-files.com/5e593fb060cf87bbaf75dd20/670e6764d8568093c6f4f208_tag%20(1).svg',
+  },
 ];
+
+const CATEGORY_ICON_URLS: Record<string, string> = {
+  'architecture-and-design-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/6706cd38713733aafac171b0_Brush-(1).svg',
+  'arts-and-entertainment-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/6706cd5b8ea070ac1f6f09d5_microphone-rotated-(1).svg',
+  'blog-and-editorial-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/6706cd544ea9af6934f62a4f_Blog-(1).svg',
+  'community-and-nonprofit-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/6706cd790202d15dd35c8964_heart-globe-(1).svg',
+  'documentation-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/6706cd75713733aafac1c287_clipboard-(1).svg',
+  'education-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/67108ca5557a7e0287bed9a4_University-(1).svg',
+  'environment-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/6706cd2bc46e4abf254db245_sunrise.svg',
+  'food-and-drink-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/67108c96215b682a860be340_drink-2-(1).svg',
+  'government-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/6706cd735abd261a7f080744_bank-(1).svg',
+  'hair-and-beauty-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/6706cd32352bd54b0587ecfe_sparkles.svg',
+  'home-services-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/670948ff793d4e96cf024d19_home-services-icon.svg',
+  'hr-and-hiring-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/6706cd3c4cfa0fe9a2251a36_TeamMedium.svg',
+  'launch-and-coming-soon-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/670949025d74574ad09d0336_lighting-icon.svg',
+  'medical-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/67108ca1bf381ac9e0b4629c_Motion-(1).svg',
+  'music-and-audio-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/6706cd6fdb237a95d5837068_MusicNote.svg',
+  'personal-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/6706cd8106f5ecd98e795b74_Docs.svg',
+  'portfolio-and-agency-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/6706cd5751b1e01601445e5c_User-(1).svg',
+  'professional-services-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/670db20ed0f2784e9e8e0335_target.svg',
+  'real-estate-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/6706cd45c5f83dd2187bfdb1_location.svg',
+  'retail-and-e-commerce-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/670db2115402ce59747c0c81_shopping-cart.svg',
+  'technology-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/6711342ea3d7f258ad5e7943_CodeBrackets.svg',
+  'transportation-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/6706cd8b5abd261a7f0827b7_train-track-(1).svg',
+  'travel-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/67114e638bb1446cc23ec252_map-(1).svg',
+  'ui-kit-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/6706cd43352bd54b05880da4_Apps-(1).svg',
+  'weddings-and-events-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/6706cd83ddd640e52bafbd4d_Calendar-(1).svg',
+  'wellness-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/6706cd49c46e4abf254dd5ec_bike-(1).svg',
+};
+
+const FALLBACK_CATEGORIES: SidebarCategory[] = [
+  'Architecture & Design|architecture-and-design-websites',
+  'Arts & Entertainment|arts-and-entertainment-websites',
+  'Blog & Editorial|blog-and-editorial-websites',
+  'Community & Nonprofit|community-and-nonprofit-websites',
+  'Documentation|documentation-websites',
+  'Education|education-websites',
+  'Environment|environment-websites',
+  'Food & Drink|food-and-drink-websites',
+  'Government|government-websites',
+  'Hair & Beauty|hair-and-beauty-websites',
+  'Home Services|home-services-websites',
+  'HR & Hiring|hr-and-hiring-websites',
+  'Launch & Coming Soon|launch-and-coming-soon-websites',
+  'Medical|medical-websites',
+  'Music & Audio|music-and-audio-websites',
+  'Personal|personal-websites',
+  'Portfolio & Agency|portfolio-and-agency-websites',
+  'Professional Services|professional-services-websites',
+  'Real Estate|real-estate-websites',
+  'Retail & E-Commerce|retail-and-e-commerce-websites',
+  'Technology|technology-websites',
+  'Transportation|transportation-websites',
+  'Travel|travel-websites',
+  'UI Kit|ui-kit-websites',
+  'Weddings & Events|weddings-and-events-websites',
+  'Wellness|wellness-websites',
+].map((entry) => {
+  const [name, slug] = entry.split('|');
+  return {
+    name,
+    slug,
+    url: `https://webflow.com/templates/category/${slug}`,
+    count: null,
+  };
+});
+const FALLBACK_CATEGORY_SLUGS = new Set(FALLBACK_CATEGORIES.map((category) => category.slug));
 
 const SIDEBAR_STYLES = `
 .tmsidebar,
@@ -122,6 +242,10 @@ const SIDEBAR_STYLES = `
   background: #fff;
   color: #080808;
   font-family: "WF Visual Sans Variable", "WF Visual Sans", "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.tmsidebar-mobile-disclosure {
+  display: none;
 }
 
 .tmsidebar-title {
@@ -198,22 +322,35 @@ const SIDEBAR_STYLES = `
 }
 
 .tmsidebar-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  display: block;
   width: 16px;
   height: 16px;
   flex: 0 0 auto;
-  border: 1px solid currentColor;
-  border-radius: 4px;
-  color: #757575;
-  opacity: 0.8;
+  object-fit: contain;
+  filter: grayscale(100%) brightness(60%);
+  opacity: 0.9;
+  transition: filter 120ms ease, opacity 120ms ease;
 }
 
-.tmsidebar-row[aria-current="page"] .tmsidebar-icon,
-.tmsidebar-row:hover .tmsidebar-icon {
-  color: #146ef5;
+.tmsidebar-icon-fallback {
+  display: inline-flex;
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: #d9d9d9;
+}
+
+.tmsidebar-row:hover .tmsidebar-icon,
+.tmsidebar-row:focus-visible .tmsidebar-icon,
+.tmsidebar-row[aria-current="page"] .tmsidebar-icon {
+  filter: grayscale(0%) brightness(100%);
   opacity: 1;
+}
+
+.tmsidebar-row[aria-current="page"] .tmsidebar-icon-fallback,
+.tmsidebar-row:hover .tmsidebar-icon-fallback {
+  background: #e8f0ff;
 }
 
 .tmsidebar-label {
@@ -279,6 +416,91 @@ const SIDEBAR_STYLES = `
 
 .tmsidebar .tmfilter-sort-option:first-child {
   border-top: 0;
+}
+
+@media (max-width: 991px) {
+  .tmsidebar {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+  }
+
+  .tmsidebar-desktop-panel {
+    display: none;
+  }
+
+  .tmsidebar-mobile-disclosure {
+    display: block;
+    width: 100%;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background: #fff;
+    overflow: hidden;
+  }
+
+  .tmsidebar-mobile-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 48px;
+    padding: 12px 14px;
+    color: #080808;
+    cursor: pointer;
+    list-style: none;
+    user-select: none;
+  }
+
+  .tmsidebar-mobile-summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .tmsidebar-mobile-summary-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .tmsidebar-mobile-summary-title {
+    font-size: 13px;
+    font-weight: 650;
+    line-height: 18px;
+  }
+
+  .tmsidebar-mobile-summary-current {
+    max-width: 100%;
+    overflow: hidden;
+    color: #757575;
+    font-size: 12px;
+    line-height: 16px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .tmsidebar-mobile-summary-icon {
+    flex: 0 0 auto;
+    color: #5a5a5a;
+    font-size: 18px;
+    line-height: 1;
+    transform: rotate(90deg);
+    transition: transform 160ms ease;
+  }
+
+  .tmsidebar-mobile-disclosure[open] .tmsidebar-mobile-summary-icon {
+    transform: rotate(-90deg);
+  }
+
+  .tmsidebar-mobile-panel {
+    max-height: min(68vh, 560px);
+    padding: 0 12px 12px;
+    overflow: auto;
+    scrollbar-width: none;
+  }
+
+  .tmsidebar-mobile-panel::-webkit-scrollbar {
+    display: none;
+  }
 }
 `;
 
@@ -370,18 +592,77 @@ function buildSearchApiUrl(apiBase: string, context: CountContext, scope?: Templ
   return url.toString();
 }
 
-async function fetchSidebarPayload(url: string, signal: AbortSignal): Promise<SidebarPayload> {
+function readSidebarPayloadCache(url: string): SidebarPayload | null {
   const cached = sidebarPayloadCache.get(url);
-  if (cached && Date.now() - cached.timestamp < SIDEBAR_CACHE_TTL_MS) return cached.data;
+  if (cached && Date.now() - cached.timestamp < SIDEBAR_CACHE_TTL_MS) {
+    return cached.data;
+  }
+  if (typeof window === 'undefined') return null;
+
+  try {
+    const raw = window.localStorage.getItem(`${SIDEBAR_STORAGE_PREFIX}${url}`);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { timestamp?: unknown; data?: unknown };
+    if (typeof parsed.timestamp !== 'number' || Date.now() - parsed.timestamp >= SIDEBAR_CACHE_TTL_MS) {
+      return null;
+    }
+    const data = parsed.data as SidebarPayload;
+    sidebarPayloadCache.set(url, { timestamp: parsed.timestamp, data });
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+function writeSidebarPayloadCache(url: string, data: SidebarPayload): void {
+  const entry = { timestamp: Date.now(), data };
+  sidebarPayloadCache.set(url, entry);
+  if (typeof window === 'undefined') return;
+
+  try {
+    window.localStorage.setItem(`${SIDEBAR_STORAGE_PREFIX}${url}`, JSON.stringify(entry));
+  } catch {
+    // Storage can be unavailable in privacy modes; in-memory cache still applies.
+  }
+}
+
+async function fetchSidebarPayload(url: string, signal: AbortSignal): Promise<SidebarPayload> {
+  const cached = readSidebarPayloadCache(url);
+  if (cached) return cached;
   const response = await fetch(url, { signal });
   if (!response.ok) throw new Error(`Sidebar counts failed with ${response.status}`);
   const data = (await response.json()) as SidebarPayload;
-  sidebarPayloadCache.set(url, { timestamp: Date.now(), data });
+  writeSidebarPayloadCache(url, data);
   return data;
+}
+
+function toCanonicalSidebarCategories(categories: SidebarCategory[] | undefined): SidebarCategory[] {
+  const bySlug = new Map(
+    (categories ?? [])
+      .filter((category) => FALLBACK_CATEGORY_SLUGS.has(category.slug))
+      .map((category) => [category.slug, category]),
+  );
+
+  return FALLBACK_CATEGORIES.map((category) => {
+    const live = bySlug.get(category.slug);
+    return {
+      ...category,
+      count: typeof live?.count === 'number' ? live.count : category.count,
+    };
+  });
 }
 
 function formatCount(value: number | null): string {
   return typeof value === 'number' ? value.toLocaleString() : '';
+}
+
+function getCategoryIconUrl(slug: string): string | null {
+  return CATEGORY_ICON_URLS[slug] ?? CATEGORY_ICON_URLS[`${slug}-websites`] ?? null;
+}
+
+function renderRowIcon(iconUrl: string | null): React.ReactNode {
+  if (!iconUrl) return <span className="tmsidebar-icon-fallback" aria-hidden="true" />;
+  return <img className="tmsidebar-icon" src={iconUrl} width={16} height={16} alt="" loading="lazy" aria-hidden="true" />;
 }
 
 function notifySidebarFiltersChanged(source: string): void {
@@ -431,7 +712,9 @@ const TemplateSearchSidebarInner: React.FC<TemplateSearchSidebarProps> = ({
 
   const apiBase = resolveApiBase(apiBaseProp);
   const [counts, setCounts] = useState<SidebarCounts>({ all: null, featured: null, landing_pages: null, free: null });
-  const [categories, setCategories] = useState<SidebarCategory[]>([]);
+  const [categories, setCategories] = useState<SidebarCategory[]>(() =>
+    showCategories ? FALLBACK_CATEGORIES : [],
+  );
   const [loading, setLoading] = useState(showCategories || showSpecialLinks);
   const [error, setError] = useState<string | null>(null);
   const [searchValue, setSearchValue] = useState('');
@@ -466,7 +749,7 @@ const TemplateSearchSidebarInner: React.FC<TemplateSearchSidebarProps> = ({
     ])
       .then(([categoryPayload, allPayload, featuredPayload, landingPayload, freePayload]) => {
         if (ac.signal.aborted) return;
-        setCategories(categoryPayload.category_pills ?? []);
+        setCategories(showCategories ? toCanonicalSidebarCategories(categoryPayload.category_pills) : []);
         setCounts({
           all: Number(allPayload.pagination?.total_items ?? 0),
           featured: Number(featuredPayload.pagination?.total_items ?? 0),
@@ -549,10 +832,17 @@ const TemplateSearchSidebarInner: React.FC<TemplateSearchSidebarProps> = ({
     return <span className="tmsidebar-count">{formatCount(value)}</span>;
   };
 
-  return (
-    <div className="tmsidebar">
-      <style>{SIDEBAR_STYLES}</style>
-      {title ? <p className="tmsidebar-title">{title}</p> : null}
+  const activeCategoryLabel = activeCategory
+    ? categories.find((category) => category.slug === activeCategory)?.name
+    : null;
+  const activeSpecialLabel = !activeCategory
+    ? SPECIAL_ROWS.find((row) => activeScope === row.scope)?.label
+    : null;
+  const mobileSummaryLabel = activeCategoryLabel ?? activeSpecialLabel ?? 'All templates';
+
+  const renderSidebarContent = (includeTitle = true) => (
+    <>
+      {includeTitle && title ? <p className="tmsidebar-title">{title}</p> : null}
 
       {showSearch && (
         <TemplateSearchBox
@@ -565,7 +855,7 @@ const TemplateSearchSidebarInner: React.FC<TemplateSearchSidebarProps> = ({
           searchAction={searchAction}
           queryParam={queryParam}
           showButton={false}
-          enableAnalytics
+          enableAnalytics={enableAnalytics}
           source="TemplateSearchSidebar"
         />
       )}
@@ -584,7 +874,7 @@ const TemplateSearchSidebarInner: React.FC<TemplateSearchSidebarProps> = ({
                       aria-current={active ? 'page' : undefined}
                       onClick={(event) => onSpecialClick(row.scope, event)}
                     >
-                      <span className="tmsidebar-icon" aria-hidden="true" />
+                      {renderRowIcon(row.iconUrl)}
                       <span className="tmsidebar-label">{row.label}</span>
                       {renderCount(counts[row.key])}
                     </a>
@@ -606,6 +896,7 @@ const TemplateSearchSidebarInner: React.FC<TemplateSearchSidebarProps> = ({
               categories.map((category) => {
                 const active = activeCategory === category.slug;
                 const href = category.url || `https://webflow.com/templates/category/${category.slug}`;
+                const iconUrl = getCategoryIconUrl(category.slug);
                 return (
                   <li key={category.slug}>
                     <a
@@ -614,7 +905,7 @@ const TemplateSearchSidebarInner: React.FC<TemplateSearchSidebarProps> = ({
                       aria-current={active ? 'page' : undefined}
                       onClick={(event) => onCategoryClick(category, event)}
                     >
-                      <span className="tmsidebar-icon" aria-hidden="true" />
+                      {renderRowIcon(iconUrl)}
                       <span className="tmsidebar-label">{category.name}</span>
                       {renderCount(category.count)}
                     </a>
@@ -645,6 +936,23 @@ const TemplateSearchSidebarInner: React.FC<TemplateSearchSidebarProps> = ({
           />
         </div>
       )}
+    </>
+  );
+
+  return (
+    <div className="tmsidebar">
+      <style>{SIDEBAR_STYLES}</style>
+      <div className="tmsidebar-desktop-panel">{renderSidebarContent()}</div>
+      <details className="tmsidebar-mobile-disclosure">
+        <summary className="tmsidebar-mobile-summary">
+          <span className="tmsidebar-mobile-summary-text">
+            <span className="tmsidebar-mobile-summary-title">{title || 'Categories'}</span>
+            <span className="tmsidebar-mobile-summary-current">{mobileSummaryLabel}</span>
+          </span>
+          <span className="tmsidebar-mobile-summary-icon" aria-hidden="true">{'>'}</span>
+        </summary>
+        <div className="tmsidebar-mobile-panel">{renderSidebarContent(false)}</div>
+      </details>
     </div>
   );
 };
