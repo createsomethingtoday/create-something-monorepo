@@ -2250,6 +2250,14 @@ importers:
         specifier: ^1.0.0
         version: 1.6.1(@types/node@24.10.9)(jsdom@27.4.0(@noble/hashes@1.8.0)(bufferutil@4.1.0)(utf-8-validate@6.0.6))(terser@5.46.0)
 
+  packages/pi-halfdozen: {}
+
+  packages/pi-policy-os: {}
+
+  packages/pi-three-tier-framework: {}
+
+  packages/pi-webflow: {}
+
   packages/playbook-mcp:
     dependencies:
       '@modelcontextprotocol/sdk':
