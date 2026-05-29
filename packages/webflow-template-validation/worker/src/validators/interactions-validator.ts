@@ -159,20 +159,26 @@ function detectIx2Interactions(html: string) {
 	);
 	const nonLottieElementMarkerCount = dataWIdCount + dataIsIx2TargetCount;
 	const ix2RuntimeCallCount = countLegacyIx2RuntimeCalls(html, nonLottieElementMarkerCount > 0);
+	const nonLottieActionTypeCount = countNonLottieIx2ActionTypes(html);
 	const matches: Ix2Match[] = [
 		{
 			label: 'data-w-id attributes',
 			count: dataWIdCount,
-			strong: true
+			strong: false
 		},
 		{
 			label: 'data-is-ix2-target attributes',
 			count: dataIsIx2TargetCount,
-			strong: true
+			strong: false
 		},
 		{
 			label: 'Webflow IX2 runtime calls',
 			count: ix2RuntimeCallCount,
+			strong: true
+		},
+		{
+			label: 'non-Lottie IX2 action types',
+			count: nonLottieActionTypeCount,
 			strong: true
 		},
 		{
@@ -182,10 +188,11 @@ function detectIx2Interactions(html: string) {
 		}
 	].filter((item) => item.count > 0);
 	const strongMatches = matches.filter((item) => item.strong);
+	const detected = strongMatches.length > 0;
 
 	return {
-		detected: strongMatches.length > 0,
-		count: strongMatches.reduce((total, item) => total + item.count, 0),
+		detected,
+		count: detected ? strongMatches.reduce((total, item) => total + item.count, nonLottieElementMarkerCount) : 0,
 		matches
 	};
 }
@@ -225,9 +232,13 @@ function hasLottieIx2Usage(html: string) {
 }
 
 function hasNonLottieIx2ActionTypes(html: string) {
-	return Array.from(html.matchAll(/["']?actionTypeId["']?\s*:\s*["']([^"']+)["']/gi)).some(
+	return countNonLottieIx2ActionTypes(html) > 0;
+}
+
+function countNonLottieIx2ActionTypes(html: string) {
+	return Array.from(html.matchAll(/["']?actionTypeId["']?\s*:\s*["']([^"']+)["']/gi)).filter(
 		([, actionTypeId]) => !LOTTIE_IX2_ACTION_TYPES.has(actionTypeId)
-	);
+	).length;
 }
 
 function countPatternMatches(value: string, pattern: RegExp): number {

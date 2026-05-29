@@ -495,6 +495,22 @@ describe('Interactions Validator', () => {
 		expect(result.issues.some((issue) => issue.id === 'legacy-ix2-interactions-detected')).toBe(false);
 	});
 
+	it('does not reject bare Webflow DOM markers without IX2 runtime or action evidence', async () => {
+		vi.mocked(fetchHTML).mockResolvedValue({
+			html: '<!doctype html><html class="w-mod-js w-mod-ix"><body><div data-w-id="decorative-motion"></div></body></html>',
+			status: 200,
+			headers: { 'content-type': 'text/html' },
+			size: 0,
+			loadTime: 0
+		});
+
+		const result = await validateInteractions('https://example.com');
+
+		expect(result.stats.legacyIx2Detected).toBe(false);
+		expect(result.stats.legacyIx2Count).toBe(0);
+		expect(result.issues.some((issue) => issue.id === 'legacy-ix2-interactions-detected')).toBe(false);
+	});
+
 	it('still detects non-Lottie IX2 markers on pages that also include Lottie', async () => {
 		vi.mocked(fetchHTML).mockResolvedValue({
 			html: `<!doctype html><html><body>
