@@ -38,28 +38,39 @@ function detectIx2Interactions(html) {
   const dataIsIx2TargetCount = countPatternMatches(htmlWithoutLottieElements, /\sdata-is-ix2-target\s*=/gi);
   const nonLottieElementMarkerCount = dataWIdCount + dataIsIx2TargetCount;
   const ix2RuntimeCallCount = countLegacyIx2RuntimeCalls(html, nonLottieElementMarkerCount > 0);
+  const nonLottieActionTypeCount = countNonLottieIx2ActionTypes(html);
   const matches = [
     {
       label: "data-w-id attributes",
-      count: dataWIdCount
+      count: dataWIdCount,
+      strong: false
     },
     {
       label: "data-is-ix2-target attributes",
-      count: dataIsIx2TargetCount
+      count: dataIsIx2TargetCount,
+      strong: false
     },
     {
       label: "Webflow IX2 runtime calls",
-      count: ix2RuntimeCallCount
+      count: ix2RuntimeCallCount,
+      strong: true
+    },
+    {
+      label: "non-Lottie IX2 action types",
+      count: nonLottieActionTypeCount,
+      strong: true
     },
     {
       label: "w-mod-ix CSS/runtime markers",
-      count: countPatternMatches(html, /w-mod-ix/gi)
+      count: countPatternMatches(html, /w-mod-ix/gi),
+      strong: false
     }
   ].filter((item) => item.count > 0);
-  const strongMatches = matches.filter((item) => item.label !== "w-mod-ix CSS/runtime markers");
+  const strongMatches = matches.filter((item) => item.strong);
+  const detected = strongMatches.length > 0;
   return {
-    detected: strongMatches.length > 0,
-    count: strongMatches.reduce((total, item) => total + item.count, 0),
+    detected,
+    count: detected ? strongMatches.reduce((total, item) => total + item.count, nonLottieElementMarkerCount) : 0,
     matches
   };
 }
@@ -93,11 +104,15 @@ function hasLottieIx2Usage(html) {
 }
 __name(hasLottieIx2Usage, "hasLottieIx2Usage");
 function hasNonLottieIx2ActionTypes(html) {
-  return Array.from(html.matchAll(/["']?actionTypeId["']?\s*:\s*["']([^"']+)["']/gi)).some(
-    ([, actionTypeId]) => !LOTTIE_IX2_ACTION_TYPES.has(actionTypeId)
-  );
+  return countNonLottieIx2ActionTypes(html) > 0;
 }
 __name(hasNonLottieIx2ActionTypes, "hasNonLottieIx2ActionTypes");
+function countNonLottieIx2ActionTypes(html) {
+  return Array.from(html.matchAll(/["']?actionTypeId["']?\s*:\s*["']([^"']+)["']/gi)).filter(
+    ([, actionTypeId]) => !LOTTIE_IX2_ACTION_TYPES.has(actionTypeId)
+  ).length;
+}
+__name(countNonLottieIx2ActionTypes, "countNonLottieIx2ActionTypes");
 function detectUnicornStudioUsage(html) {
   const matches = [
     {

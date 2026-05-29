@@ -119,8 +119,22 @@ const lottieRuntimeDetection = sandbox.detectIx2Interactions(`
 assert.equal(lottieRuntimeDetection.detected, false);
 assert.equal(lottieRuntimeDetection.count, 0);
 
+const markerOnlyResult = sandbox.validateGsapUsage(
+  '<!doctype html><html><body><div data-w-id="decorative-motion"></div></body></html>',
+  'https://marker-only-template.webflow.io/'
+);
+
+assert.equal(markerOnlyResult.passed, true);
+assert.equal(markerOnlyResult.summary.legacyIx2Detected, false);
+assert.equal(markerOnlyResult.summary.legacyIx2Count, 0);
+assert.equal(
+  markerOnlyResult.details.flaggedCode.some((issue) => issue.policy === 'ix2-rejected'),
+  false,
+  'expected bare Webflow DOM markers to require runtime/action evidence before rejection'
+);
+
 const mixedLottieIx2Result = sandbox.validateGsapUsage(
-  `${lottieHtml}<div data-w-id="legacy-card"></div>`,
+  `${lottieHtml}<div data-w-id="legacy-card"></div><script>Webflow.require("ix2").init({})</script>`,
   'https://mixed-template.webflow.io/'
 );
 
