@@ -372,6 +372,7 @@
       { label: 'Partners', href: '/partners' },
       { label: 'Cloudflare', href: '/cloudflare' },
       { label: 'Dify', href: '/dify' },
+      { label: 'Dify MCP Control Plane', href: '/dify/mcp-control-plane' },
       { label: 'Dify Content Engine', href: '/dify/content-engine' },
       { label: 'Dify vs n8n', href: '/dify/n8n-vs-dify' },
       { label: 'Notion', href: '/notion' },
