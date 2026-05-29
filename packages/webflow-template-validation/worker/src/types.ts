@@ -249,6 +249,11 @@ export interface PageData {
 	name: string;
 	slug: string;
 	type: string;
+	path?: string;
+	publishPath?: string | null;
+	collectionId?: string | null;
+	collectionName?: string | null;
+	isCmsTemplate?: boolean;
 	isHomePage?: boolean;
 	seo?: {
 		title?: string;
@@ -334,21 +339,41 @@ export interface InteractionsAnalysisResult {
 		pagesRequested: number;
 		pagesAnalyzed: number;
 		pagesFailed: number;
+		pagesSkipped?: number;
 		pagesWithLegacyIx2: number;
 		analysisComplete: boolean;
-		analysisStatus: 'completed' | 'partial' | 'failed';
-		errorMessage?: string;
-	};
-	pages: Array<{
-		url: string;
-		legacyIx2Detected: boolean;
-		legacyIx2Count: number;
-		matches: Array<{
-			label: string;
-			count: number;
+			analysisStatus: 'completed' | 'partial' | 'failed';
+			errorMessage?: string;
+			skippedCmsTemplateSlugs?: string[];
+			cmsItemUrlsDiscovered?: number;
+			cmsItemUrlsValidated?: number;
+			cmsTemplateCoverageStatus?: 'none' | 'covered' | 'partial' | 'uncovered';
+			cmsTemplateCoverage?: CmsTemplateCoverage[];
+		};
+		pages: Array<{
+			url: string;
+			legacyIx2Detected: boolean;
+			legacyIx2Count: number;
+			source?: 'page' | 'cms-item';
+			cmsTemplateSlug?: string;
+			discoverySource?: 'sitemap' | 'link';
+			matches: Array<{
+				label: string;
+				count: number;
+			}>;
 		}>;
-	}>;
-}
+	}
+
+export interface CmsTemplateCoverage {
+	templateSlug: string;
+	collectionId?: string;
+	collectionName?: string;
+	candidateSlugs: string[];
+	discoveredUrls: string[];
+	validatedUrls: string[];
+	status: 'covered' | 'uncovered';
+		source?: 'sitemap' | 'link';
+	}
 
 // Detailed Analysis Types
 export interface AnalyzedAsset {

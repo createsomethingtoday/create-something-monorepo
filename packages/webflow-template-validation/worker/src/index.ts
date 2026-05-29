@@ -13,7 +13,7 @@ import { validateAssets, validateAssetBatch } from './validators/asset-validator
 import { validateContent } from './validators/content-validator';
 import { validateAccessibility } from './validators/accessibility-validator';
 import { validateDesignerData } from './validators/designer-validator';
-import { validateInteractions } from './validators/interactions-validator';
+import { validateInteractions, type CmsTemplateHint } from './validators/interactions-validator';
 import { fetchHTML } from './utils/fetch-utils';
 import {
 	ValidationRequest,
@@ -143,6 +143,17 @@ interface ValidationSubmissionSummary {
 	passed: boolean;
 }
 
+interface ValidationCategoryIssueDetail {
+	severity: 'error' | 'warning' | 'info';
+	message: string;
+}
+
+interface ValidationCategoryDetail {
+	category: string;
+	passed: boolean;
+	issues: ValidationCategoryIssueDetail[];
+}
+
 interface ValidationResultRecord {
 	schemaVersion: 'validator_app_submission_latest.v0.1';
 	siteId: string;
@@ -153,6 +164,8 @@ interface ValidationResultRecord {
 	payloadHash: string;
 	rawBridgeTokenStored: false;
 	summary: ValidationSubmissionSummary;
+	failedCategoryDetails?: ValidationCategoryDetail[];
+	warningCategoryDetails?: ValidationCategoryDetail[];
 	artifact: ValidationResultArtifactPersistResult;
 }
 
@@ -901,6 +914,8 @@ async function handleValidationSubmit(
 		payloadHash,
 		rawBridgeTokenStored: false,
 		summary: summarizeValidationSubmission(sanitizedResults),
+		failedCategoryDetails: getFailedCategoryDetails(sanitizedResults),
+		warningCategoryDetails: getWarningCategoryDetails(sanitizedResults),
 		artifact: artifactResult
 	};
 	await persistValidationResultState(env, latestResult);
@@ -1022,6 +1037,8 @@ async function handleValidationSubmissionLatest(
 			payloadHash: record.payloadHash,
 			rawBridgeTokenStored: false,
 			summary: record.summary,
+			failedCategoryDetails: record.failedCategoryDetails || [],
+			warningCategoryDetails: record.warningCategoryDetails || [],
 			artifact: record.artifact
 		},
 		200,
@@ -1201,6 +1218,7 @@ async function performDesignerValidation(
 
 async function performEnhancedValidation(body: ValidationRequest): Promise<ValidationResponse> {
 	const options = body.options || {};
+	const cmsTemplateHints = extractCmsTemplateHints(body.designerData);
 
 	const assetPromise = options.skipAssets
 		? Promise.resolve(createEmptyAssetAnalysis())
@@ -1215,7 +1233,8 @@ async function performEnhancedValidation(body: ValidationRequest): Promise<Valid
 		: validateAccessibility(body.siteUrl);
 
 	const interactionsPromise = validateInteractions(body.siteUrl, body.pageSlugs, {
-		maxPages: options.maxPages
+		maxPages: options.maxPages,
+		cmsTemplateHints
 	});
 
 	const [assetAnalysis, contentAnalysis, accessibilityAnalysis, interactionsAnalysis] = await Promise.all([
@@ -1940,6 +1959,66 @@ function sanitizeValidationResults(
 	};
 }
 
+function getCategoryDetails(
+	validationResults: ValidationSubmitRequest['validationResults'],
+	predicate: (category: NonNullable<ValidationSubmitRequest['validationResults']['categories']>[number]) => boolean
+): ValidationCategoryDetail[] {
+	const categories = Array.isArray(validationResults.categories)
+		? validationResults.categories
+		: [];
+
+	return categories
+		.filter(predicate)
+		.map((category) => ({
+			category:
+				typeof category.category === 'string' && category.category.trim() !== ''
+					? category.category.trim()
+					: 'Uncategorized',
+			passed: category.passed === true,
+			issues: Array.isArray(category.issues)
+				? category.issues
+						.filter(
+							(issue): issue is ValidationCategoryIssueDetail =>
+								Boolean(issue) &&
+								(issue.severity === 'error' ||
+									issue.severity === 'warning' ||
+									issue.severity === 'info') &&
+								typeof issue.message === 'string' &&
+								issue.message.trim() !== ''
+						)
+						.map((issue) => ({
+							severity: issue.severity,
+							message: issue.message.trim()
+						}))
+				: []
+		}))
+		.slice(0, 10);
+}
+
+function getFailedCategoryDetails(
+	validationResults: ValidationSubmitRequest['validationResults']
+): ValidationCategoryDetail[] {
+	return getCategoryDetails(
+		validationResults,
+		(category) =>
+			category.passed !== true ||
+			(Array.isArray(category.issues) &&
+				category.issues.some((issue) => issue.severity === 'error'))
+	);
+}
+
+function getWarningCategoryDetails(
+	validationResults: ValidationSubmitRequest['validationResults']
+): ValidationCategoryDetail[] {
+	return getCategoryDetails(
+		validationResults,
+		(category) =>
+			category.passed === true &&
+			Array.isArray(category.issues) &&
+			category.issues.some((issue) => issue.severity === 'warning')
+	);
+}
+
 function summarizeValidationSubmission(
 	validationResults: ValidationSubmitRequest['validationResults']
 ): ValidationSubmissionSummary {
@@ -2533,6 +2612,50 @@ function getCORSHeaders(
 		Vary: 'Origin',
 		...extraHeaders
 	};
+}
+
+function extractCmsTemplateHints(designerData: DesignerData): CmsTemplateHint[] {
+	const pages = Array.isArray(designerData?.pages) ? designerData.pages : [];
+	const hints = new Map<string, CmsTemplateHint>();
+
+	for (const page of pages) {
+		const candidates = [page.slug, page.path, page.publishPath]
+			.filter((value): value is string => typeof value === 'string' && value.trim() !== '');
+		const templateSlug = candidates.find(isInternalCmsTemplateSlug);
+		if (!templateSlug) continue;
+
+		const normalizedTemplateSlug = normalizeCmsTemplateSlug(templateSlug);
+		hints.set(normalizedTemplateSlug, {
+			templateSlug: normalizedTemplateSlug,
+			publishPath: page.publishPath || null,
+			collectionId: page.collectionId || null,
+			collectionName: page.collectionName || null
+		});
+	}
+
+	return Array.from(hints.values());
+}
+
+function isInternalCmsTemplateSlug(value: string): boolean {
+	return /^\/detail_[^/]+\/?$/i.test(getPathname(value));
+}
+
+function normalizeCmsTemplateSlug(value: string): string {
+	const pathname = getPathname(value);
+	return pathname || value.trim();
+}
+
+function getPathname(value: string): string {
+	const trimmed = value.trim();
+	if (trimmed === '') return '';
+
+	try {
+		const path = trimmed.startsWith('/') || /^[a-z][a-z0-9+.-]*:/i.test(trimmed) ? trimmed : `/${trimmed}`;
+		return new URL(path, 'https://example.com').pathname;
+	} catch {
+		const withoutQuery = trimmed.split(/[?#]/, 1)[0] || '';
+		return withoutQuery.startsWith('/') ? withoutQuery : `/${withoutQuery}`;
+	}
 }
 
 function createEmptyAssetAnalysis(): AssetAnalysisResult {
