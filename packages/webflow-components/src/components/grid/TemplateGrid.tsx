@@ -506,26 +506,31 @@ const GRID_STYLES = `
   align-items: flex-start !important;
 }
 .tmgrid-grid > .tmgrid-item {
-  flex: 0 1 calc((100% - 72px) / 4) !important;
-  max-width: calc((100% - 72px) / 4) !important;
+  /* Avoid calc division syntax here; Designer/Safari can ignore it and stretch items full-width. */
+  flex: 0 0 calc(25% - 18px) !important;
+  width: calc(25% - 18px) !important;
+  max-width: calc(25% - 18px) !important;
   min-width: 0 !important;
   box-sizing: border-box !important;
 }
 @media (max-width: 991px) {
   .tmgrid-grid > .tmgrid-item {
-    flex-basis: calc((100% - 48px) / 3) !important;
-    max-width: calc((100% - 48px) / 3) !important;
+    flex-basis: calc(33.333333% - 16px) !important;
+    width: calc(33.333333% - 16px) !important;
+    max-width: calc(33.333333% - 16px) !important;
   }
 }
 @media (max-width: 767px) {
   .tmgrid-grid > .tmgrid-item {
-    flex-basis: calc((100% - 24px) / 2) !important;
-    max-width: calc((100% - 24px) / 2) !important;
+    flex-basis: calc(50% - 12px) !important;
+    width: calc(50% - 12px) !important;
+    max-width: calc(50% - 12px) !important;
   }
 }
 @media (max-width: 479px) {
   .tmgrid-grid > .tmgrid-item {
     flex-basis: 100% !important;
+    width: 100% !important;
     max-width: 100% !important;
   }
 }
