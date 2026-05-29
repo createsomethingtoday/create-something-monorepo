@@ -1,0 +1,35 @@
+name = "codebase-vector-database"
+main = "src/index.ts"
+compatibility_date = "2026-05-12"
+compatibility_flags = ["nodejs_compat"]
+account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
+workers_dev = true
+
+# Create with:
+#   wrangler d1 create codebase-vector-database
+[[d1_databases]]
+binding = "DB"
+database_name = "codebase-vector-database"
+database_id = "3f1dbc94-d806-4840-bb63-5878b39b09cb"
+migrations_dir = "migrations"
+
+# Create with:
+#   wrangler vectorize create codebase-code-similarity --dimensions 768 --metric cosine
+[[vectorize]]
+binding = "VECTORIZE"
+index_name = "codebase-code-similarity"
+
+[ai]
+binding = "AI"
+
+[vars]
+ENVIRONMENT = "production"
+ALLOWED_ORIGINS = "*"
+EMBEDDING_MODEL = "@cf/baai/bge-base-en-v1.5"
+CODE_EMBEDDING_MAX_CHARS = "4000"
+CODE_EMBEDDING_CONTEXT_RESERVE_CHARS = "800"
+CODE_CHUNK_MAX_CHARS = "3200"
+CODE_CHUNK_OVERLAP_LINES = "8"
+
+# Secret:
+#   wrangler secret put CODE_INDEX_ADMIN_TOKEN

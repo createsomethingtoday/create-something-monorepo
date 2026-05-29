@@ -538,6 +538,87 @@ test('listMyQueueDetailed reads reviewer-owned versions directly and hydrates on
   assert.equal(queue.items[0]?.reviewOwner?.id, ericReviewer.id);
 });
 
+test('listMyQueueDetailed defaults to active assigned statuses', async () => {
+  let capturedVersionUrl: URL | null = null;
+  const client = new AirtableClient({
+    apiKey: 'test',
+    fetchFn: async (input) => {
+      const url = new URL(String(input));
+
+      if (url.pathname.includes(`/${TABLE_IDS.assetVersions}`)) {
+        capturedVersionUrl = url;
+        return jsonResponse({
+          records: [
+            {
+              id: 'rec_active_v1',
+              createdTime: '2026-03-12T00:00:00.000Z',
+              fields: {
+                [CONFIRMED_VERSION_FIELDS.assetRecordId]: 'rec_asset_active',
+                [CONFIRMED_VERSION_FIELDS.versionNumber]: 1,
+                [CONFIRMED_VERSION_FIELDS.reviewStatus]: '🏃🏾In Review',
+                [CONFIRMED_VERSION_FIELDS.reviewOwner]: ericReviewer,
+                [CONFIRMED_VERSION_FIELDS.submissionDatetime]: '2026-03-12T12:00:00.000Z',
+              },
+            },
+            {
+              id: 'rec_done_v1',
+              createdTime: '2026-03-11T00:00:00.000Z',
+              fields: {
+                [CONFIRMED_VERSION_FIELDS.assetRecordId]: 'rec_asset_done',
+                [CONFIRMED_VERSION_FIELDS.versionNumber]: 1,
+                [CONFIRMED_VERSION_FIELDS.reviewStatus]: '✅Approved',
+                [CONFIRMED_VERSION_FIELDS.reviewOwner]: ericReviewer,
+                [CONFIRMED_VERSION_FIELDS.submissionDatetime]: '2026-03-11T12:00:00.000Z',
+              },
+            },
+          ],
+        });
+      }
+
+      if (url.pathname.includes(`/${TABLE_IDS.assets}`)) {
+        return jsonResponse({
+          records: [
+            {
+              id: 'rec_asset_active',
+              createdTime: '2026-03-12T00:00:00.000Z',
+              fields: {
+                [CONFIRMED_ASSET_FIELDS.type]: 'Template🏗️',
+                [CONFIRMED_ASSET_FIELDS.name]: 'Active Template',
+                [CONFIRMED_ASSET_FIELDS.latestReviewStatus]: '🏃🏾In Review',
+              },
+            },
+            {
+              id: 'rec_asset_done',
+              createdTime: '2026-03-11T00:00:00.000Z',
+              fields: {
+                [CONFIRMED_ASSET_FIELDS.type]: 'Template🏗️',
+                [CONFIRMED_ASSET_FIELDS.name]: 'Done Template',
+                [CONFIRMED_ASSET_FIELDS.latestReviewStatus]: '✅Approved',
+              },
+            },
+          ],
+        });
+      }
+
+      throw new Error(`Unexpected fetch: ${url.toString()}`);
+    },
+  });
+
+  const queue = await client.listMyQueueDetailed({
+    currentReviewer: ericReviewer,
+  });
+
+  assert.ok(capturedVersionUrl);
+  const formula = capturedVersionUrl.searchParams.get('filterByFormula') ?? '';
+  assert.match(formula, /Ready for Review/);
+  assert.match(formula, /In Review/);
+  assert.match(formula, /Changes Requested/);
+  assert.doesNotMatch(formula, /Approved/);
+  assert.equal(queue.items.length, 1);
+  assert.equal(queue.items[0]?.templateName, 'Active Template');
+  assert.equal(queue.items[0]?.normalizedStatus, 'in_review');
+});
+
 test('listMyQueueDetailed bounds reviewer scans to a buffered limit', async () => {
   let capturedVersionUrl: URL | null = null;
   const client = new AirtableClient({

@@ -1,7 +1,7 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 
-import type { AirtableClient } from './airtable.js';
+import type { AirtableClient, TemplateReviewQueueItem } from './airtable.js';
 import { AirtableClientError } from './airtable.js';
 import { TEMPLATE_REVIEW_FIELD_MAP } from './schema.js';
 import { REVIEW_WORKFLOW } from './prompts.js';
@@ -12,6 +12,9 @@ type ClientFactory = () => AirtableClient;
 type ReviewerFactory = () => ReviewerProfile | null;
 
 const REVIEWER_CONTROLLED_STATUS_OPTIONS = ['🏃🏾In Review', '👀Admin Feedback Review', '🔁Response to Review'] as const;
+
+const MY_QUEUE_DEFAULT_LIMIT = 25;
+const MY_QUEUE_FEEDBACK_PREVIEW_CHARS = 320;
 
 function jsonContent(value: unknown, isError = false) {
   return {
@@ -93,6 +96,22 @@ function reviewerPayload(reviewer: ReviewerProfile) {
   };
 }
 
+function truncateText(value: string, maxLength: number): string {
+  if (value.length <= maxLength) return value;
+  return `${value.slice(0, maxLength - 3).trimEnd()}...`;
+}
+
+function compactQueueItem(item: TemplateReviewQueueItem, includeFeedback: boolean): Omit<TemplateReviewQueueItem, 'latestReviewFeedback'> & {
+  latestReviewFeedback?: string;
+} {
+  const { latestReviewFeedback, ...compactItem } = item;
+  if (!includeFeedback || !latestReviewFeedback) return compactItem;
+  return {
+    ...compactItem,
+    latestReviewFeedback: truncateText(latestReviewFeedback, MY_QUEUE_FEEDBACK_PREVIEW_CHARS),
+  };
+}
+
 function reviewOwnerInputId(value: unknown): string | null | undefined {
   if (value === undefined) return undefined;
   if (value === null) return null;
@@ -160,30 +179,38 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
 
   server.tool(
     'template_review_my_queue',
-    'List compact template review queue summaries currently assigned to the authenticated reviewer.',
+    'List compact active template review queue summaries currently assigned to the authenticated reviewer.',
     {
       status: z.enum(['ready_to_review', 'in_review', 'changes_requested', 'approved', 'published']).optional(),
       sort: z.enum(['submittedDate_desc', 'submittedDate_asc', 'decisionDate_desc', 'decisionDate_asc']).optional(),
-      limit: z.number().int().min(1).max(500).optional(),
+      limit: z.number().int().min(1).max(100).optional(),
+      include_completed: z.boolean().optional(),
+      include_feedback: z.boolean().optional(),
     },
-    async ({ limit, status, sort }) => {
+    async ({ limit, status, sort, include_completed, include_feedback }) => {
       try {
         const currentReviewer = currentReviewerAsCollaborator(getReviewer);
         if (!currentReviewer?.id) {
           throw new AirtableClientError('REVIEWER_IDENTITY_UNAVAILABLE', 'Current reviewer identity is not configured for this MCP runtime.', 503);
         }
+        const effectiveLimit = limit ?? MY_QUEUE_DEFAULT_LIMIT;
+        const includeCompleted = include_completed ?? false;
+        const includeFeedback = include_feedback ?? false;
         const queue = await getClient().listMyQueueDetailed({
           status,
           sort: sort ?? 'submittedDate_desc',
-          limit: limit ?? 100,
+          limit: effectiveLimit,
           currentReviewer,
+          includeCompleted,
         });
         return asSuccess({
           count: queue.items.length,
           sortApplied: queue.sortApplied,
-          statusApplied: status ?? null,
+          statusApplied: status ?? (includeCompleted ? 'all_assigned' : 'active'),
           assignedApplied: 'assigned_to_current_reviewer',
-          items: queue.items,
+          limitApplied: effectiveLimit,
+          feedbackApplied: includeFeedback ? 'preview_truncated' : 'omitted',
+          items: queue.items.map((item) => compactQueueItem(item, includeFeedback)),
         });
       } catch (error) {
         return asError(error);
