@@ -212,6 +212,49 @@ test('assign_self routes through reviewer-safe self-assignment', async () => {
   assert.equal(parsePayload(result).ok, true);
 });
 
+test('my_queue defaults to compact active assigned work', async () => {
+  const { server, handlers } = createServerHarness();
+  const calls: Array<Record<string, unknown>> = [];
+  const client = {
+    listMyQueueDetailed: async (query: Record<string, unknown>) => {
+      calls.push(query);
+      return {
+        sortApplied: query.sort,
+        items: [
+          {
+            assetId: 'rec_asset_1',
+            templateName: 'Finoraa',
+            assignableVersionId: 'rec_version_1',
+            normalizedStatus: 'in_review',
+            latestReviewFeedback: 'Long feedback '.repeat(100),
+          },
+        ],
+      };
+    },
+  } as unknown as AirtableClient;
+
+  registerTools(server, () => client, () => reviewer);
+
+  const result = await handlers.get('template_review_my_queue')?.({});
+
+  assert.ok(result);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0]?.limit, 25);
+  assert.equal(calls[0]?.sort, 'submittedDate_desc');
+  assert.equal(calls[0]?.includeCompleted, false);
+
+  const payload = parsePayload(result);
+  assert.equal(payload.ok, true);
+  assert.equal(payload.data?.statusApplied, 'active');
+  assert.equal(payload.data?.limitApplied, 25);
+  assert.equal(payload.data?.feedbackApplied, 'omitted');
+
+  const items = payload.data?.items as Array<Record<string, unknown>>;
+  assert.equal(items.length, 1);
+  assert.equal(items[0]?.templateName, 'Finoraa');
+  assert.equal(items[0]?.latestReviewFeedback, undefined);
+});
+
 test('request_changes requires reviewer ownership before mutation', async () => {
   const { server, handlers } = createServerHarness();
   const calls: Array<{ method: string; args: unknown[] }> = [];

@@ -34,7 +34,7 @@ Every review follows these phases:
 | Tool | What it does | When |
 |------|-------------|------|
 | \`template_review_list_queue\` | Templates ready for review, sorted by date | Find new work |
-| \`template_review_my_queue\` | Your assigned reviews, all statuses | Resume work |
+| \`template_review_my_queue\` | Your assigned active reviews, compact by default | Resume work |
 | \`template_review_search_versions\` | Find specific version cycles by name | Track re-submissions |
 
 ## Phase 3 — Inspect the Submission

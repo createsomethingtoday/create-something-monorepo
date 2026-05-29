@@ -112,6 +112,7 @@ export interface TemplateReviewQueueQuery {
   sort?: TemplateReviewQueueSort;
   currentReviewer?: CollaboratorRef | null;
   onlyAssignedToCurrentReviewer?: boolean;
+  includeCompleted?: boolean;
 }
 
 export interface TemplateReviewContext {
@@ -309,6 +310,14 @@ const ASSET_QUEUE_STATUS_PATTERNS: Record<TemplateReviewQueueStatus, readonly st
   approved: ['approved'],
   published: ['published', 'live'],
 };
+
+const DEFAULT_MY_QUEUE_LIMIT = 25;
+const MAX_MY_QUEUE_LIMIT = 100;
+const MY_QUEUE_ACTIVE_STATUSES = new Set<TemplateReviewQueueStatus>([
+  'ready_to_review',
+  'in_review',
+  'changes_requested',
+]);
 
 function escapeFormulaValue(value: string): string {
   return value.replace(/'/g, "''");
@@ -524,8 +533,12 @@ function chunkArray<T>(values: T[], size: number): T[][] {
 }
 
 function myQueueScanLimit(limit?: number): number {
-  const requested = Math.max(limit ?? 100, 1);
+  const requested = Math.min(Math.max(limit ?? DEFAULT_MY_QUEUE_LIMIT, 1), MAX_MY_QUEUE_LIMIT);
   return Math.min(Math.max(requested * 5, 100), 500);
+}
+
+function myQueueResultLimit(limit?: number): number {
+  return Math.min(Math.max(limit ?? DEFAULT_MY_QUEUE_LIMIT, 1), MAX_MY_QUEUE_LIMIT);
 }
 
 function queueVersionScanLimit(limit?: number): number | undefined {
@@ -559,6 +572,15 @@ function versionStatusFormula(status?: TemplateReviewQueueStatus): string | null
   if (!status || status === 'published') return null;
   const statuses = VERSION_QUEUE_STATUS_OPTIONS[status];
   const clauses = statuses.map((value) => `{${CONFIRMED_VERSION_FIELDS.reviewStatus}} = '${escapeFormulaValue(value)}'`);
+  return clauses.length === 1 ? clauses[0] : `OR(${clauses.join(', ')})`;
+}
+
+function versionStatusesFormula(statuses?: Iterable<TemplateReviewQueueStatus>): string | null {
+  if (!statuses) return null;
+  const clauses = [...statuses]
+    .map((status) => versionStatusFormula(status))
+    .filter((formula): formula is string => Boolean(formula));
+  if (clauses.length === 0) return null;
   return clauses.length === 1 ? clauses[0] : `OR(${clauses.join(', ')})`;
 }
 
@@ -935,11 +957,18 @@ export class AirtableClient {
     );
   }
 
-  private async listVersionsAssignedToReviewer(currentReviewer: CollaboratorRef, limit?: number): Promise<TemplateReviewVersion[]> {
+  private async listVersionsAssignedToReviewer(
+    currentReviewer: CollaboratorRef,
+    limit?: number,
+    statusFilters?: Iterable<TemplateReviewQueueStatus>,
+  ): Promise<TemplateReviewVersion[]> {
     const records = await this.listRecords({
       tableId: TABLE_IDS.assetVersions,
       limit,
-      filterByFormula: reviewerLookupFormula(CONFIRMED_VERSION_FIELDS.reviewOwner, currentReviewer),
+      filterByFormula: andFormula([
+        reviewerLookupFormula(CONFIRMED_VERSION_FIELDS.reviewOwner, currentReviewer),
+        versionStatusesFormula(statusFilters),
+      ]),
       sortField: CONFIRMED_VERSION_FIELDS.submissionDatetime,
       sortDirection: 'desc',
     });
@@ -963,10 +992,20 @@ export class AirtableClient {
       currentReviewer,
       onlyAssignedToCurrentReviewer: true,
     };
+    const resultLimit = myQueueResultLimit(query.limit);
+    const activeStatusFilters = query.status
+      ? [query.status]
+      : query.includeCompleted
+        ? undefined
+        : MY_QUEUE_ACTIVE_STATUSES;
 
     // Bound the reviewer-version scan so large historical queues do not time out
     // before we can apply the requested queue limit.
-    const assignedVersions = await this.listVersionsAssignedToReviewer(currentReviewer, myQueueScanLimit(query.limit));
+    const assignedVersions = await this.listVersionsAssignedToReviewer(
+      currentReviewer,
+      myQueueScanLimit(resultLimit),
+      activeStatusFilters,
+    );
     const versionsByAsset = new Map<string, TemplateReviewVersion[]>();
     for (const version of assignedVersions) {
       if (!version.assetId) continue;
@@ -989,10 +1028,13 @@ export class AirtableClient {
       }
     }
 
-    const sorted = sortQueueItems(items, sort);
+    const visibleItems = query.status || query.includeCompleted
+      ? items
+      : items.filter((item) => item.normalizedStatus && MY_QUEUE_ACTIVE_STATUSES.has(item.normalizedStatus));
+    const sorted = sortQueueItems(visibleItems, sort);
     return {
       sortApplied: sort,
-      items: query.limit ? sorted.slice(0, query.limit) : sorted,
+      items: sorted.slice(0, resultLimit),
     };
   }
 
