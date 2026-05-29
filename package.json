@@ -115,6 +115,7 @@
     "harness:status": "pnpm --filter @create-something/harness harness status",
     "harness:resume": "pnpm --filter @create-something/harness harness resume",
     "agent:halfdozen:smoke": "tsx scripts/openai-agent-sdk-halfdozen-smoke.ts",
+    "agent:halfdozen:governance-eval": "tsx scripts/openai-agent-sdk-halfdozen-smoke.ts --governance-eval",
     "agent:halfdozen:dedup": "tsx scripts/openai-agent-sdk-halfdozen-smoke.ts --scenario dedup",
     "agent:halfdozen:dedup:connect": "tsx scripts/openai-agent-sdk-halfdozen-smoke.ts --scenario dedup --connect-only",
     "agent:halfdozen:inbox-triage": "tsx scripts/openai-agent-sdk-halfdozen-smoke.ts --scenario inbox-triage",
