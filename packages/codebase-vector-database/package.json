@@ -1,0 +1,25 @@
+{
+  "name": "@create-something/codebase-vector-database",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Cloudflare Worker vector database for uploaded code bundle similarity search",
+  "scripts": {
+    "check": "pnpm run typecheck && pnpm run test",
+    "dev": "node ../../scripts/run-wrangler.mjs dev --config wrangler.toml",
+    "deploy": "node ../../scripts/run-wrangler.mjs deploy --config wrangler.toml",
+    "lint": "pnpm run typecheck",
+    "test": "vitest run",
+    "typecheck": "pnpm --filter @create-something/bundle-scanner-core build && tsc --noEmit"
+  },
+  "dependencies": {
+    "@create-something/bundle-scanner-core": "workspace:*"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260205.0",
+    "@types/node": "^24.10.9",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.18",
+    "wrangler": "^4.64.0"
+  }
+}
