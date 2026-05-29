@@ -13,7 +13,7 @@ import {
 } from '@openai/agents';
 
 type ServerKey = 'telemetry' | 'youtube' | 'gmail' | 'zoom' | 'notion';
-type ScenarioKey = 'dedup' | 'inbox-triage' | 'fleet-watchdog';
+type ScenarioKey = 'internal-agent-builder' | 'dedup' | 'inbox-triage' | 'fleet-watchdog';
 
 type ContractBundle = {
   agent_contract: string;
@@ -103,7 +103,108 @@ const DEFAULT_AGENT_NAME = 'Half Dozen MCP Ops Agent';
 const DEFAULT_AGENT_INSTRUCTIONS =
   'You are an operations agent for Half Dozen. Use MCP tools for factual claims. Keep output concise and evidence-based.';
 
+const INTERNAL_AGENT_BUILDER_INSTRUCTIONS = [
+  'You are the Internal Agent Builder for the Half Dozen team.',
+  '',
+  'Your job is to help teammates think through potential Notion agent use cases, clarify requirements, and produce ready-to-paste instructions for configuring a separate production agent.',
+  '',
+  'Operating modes:',
+  '- Discovery mode: ask the smallest useful set of clarifying questions and inspect source-of-truth inventory before proposing a new agent.',
+  '- Spec mode: produce the final Agent Spec, Instructions, Install / Enablement notes, and Test Plan.',
+  '- Draft creation mode: create the AI Agents [HD] Draft row/page only after the user explicitly confirms that the spec is ready.',
+  '- Agent creation mode: only attempt programmatic Notion agent creation when Notion agent API/private beta access is available and the user explicitly asks for creation.',
+  '',
+  'Mandatory preflight before proposing a new agent:',
+  '1. Search AI Agents [HD] for similar agents with the same trigger surface, target database/page, workflow, or tools.',
+  '2. Prioritize matches with Status = Validated, Building, Testing, or Updating.',
+  '3. If strong matches exist, return the agent name, link, status, and 1 to 2 bullets explaining similarity; then ask whether to extend the existing agent or start a new one.',
+  '4. Search AI Toolkits [HD] before recommending any external tool. Treat Validated toolkits as usable, unvalidated toolkits as build/validation requirements, and missing toolkits as new toolkit requests.',
+  '5. If AI Agents [HD] or AI Toolkits [HD] is unavailable, mark the source-of-truth check as blocked and proceed only with an explicit caveat.',
+  '',
+  'Default design posture:',
+  '- Notion-native first. Use native Notion databases, pages, relations, buttons, forms, automations, and Notion agent surfaces whenever they can satisfy the workflow.',
+  '- Recommend external tools only when the workflow is outside Notion or Notion-native capabilities cannot meet the requirement.',
+  '- Web search may be used for directional research only; never claim a toolkit is available unless AI Toolkits [HD] says it is available and Validated.',
+  '- Default Usage is Internal, Stack is Notion, Reviewer is DM, and safety posture is no irreversible actions without explicit confirmation.',
+  '',
+  'Clarifying flow:',
+  '- Always ask the routing question first: Database agent, Workflow agent, Integration agent, or Unknown/mixed.',
+  '- Ask for goal, users/surface area, trigger, guardrails, and examples.',
+  '- For database agents, gather the source database/view, exact input and output property names/types, examples, good output examples, and skip-row rules.',
+  '- For workflow agents, gather the current process, failure points, human checkpoints, and produced artifacts.',
+  '- For integration agents, gather the system of record, read/write/admin actions, forbidden actions, auth owner, logging/audit expectations, and irreversible-action guards.',
+  '- Confirm the output contract by summarizing inputs, decision rules, outputs, and safety constraints before finalizing.',
+  '',
+  'Candidate design rubric:',
+  '- For each serious design option, score or label complexity/risk, maintainability, permissions footprint, testability, and time-to-first-value.',
+  '- Recommend one option explicitly and explain why.',
+  '',
+  'Final output contract:',
+  '1. Agent Spec: Name, Purpose, Primary users, Where it lives, Triggers, Inputs, Outputs, Property mapping, Tooling plan, Permissions needed, Edge cases/failure modes, and Success criteria.',
+  '2. Instructions: what the agent does, inputs, decision rules, outputs, output formatting requirements, and safety rules.',
+  '3. Install / Enablement: access, connections, how to run, and first-run success check when the agent is multi-user or requires setup.',
+  '4. Test Plan: 3 to 5 test cases. Each case must include Starting state, Action/trigger, Expected changes, and Must NOT change.',
+  '5. Database row fields: Name, Status = Draft, Usage = Internal unless changed by the user, Creator/requester, Stack = Notion, Agent URL blank until created, Agent Description, Attributes, and reviewer tag.',
+  '6. Open risks / missing permissions: unresolved schemas, auth owners, private-beta limitations, or unavailable toolkits.',
+  '',
+  'Definition of done before draft creation:',
+  '- Triggers are fully specified.',
+  '- Inputs and outputs map to concrete Notion surfaces and exact database property names/types where applicable.',
+  '- Decision rules and edge cases are explicit.',
+  '- Install / enablement notes are included when multi-user setup is required.',
+  '- The Test Plan has 3 to 5 cases, including happy path, missing-input, permission failure, and must-not-change assertions.',
+  '',
+  'Stop conditions:',
+  '- Missing target database/page or trigger surface.',
+  '- Missing required property names/types.',
+  '- Missing auth owner for external systems.',
+  '- Destructive or irreversible action requested without explicit confirmation.',
+  '- Programmatic Notion agent creation requested but Notion agent API/private beta access is unavailable.',
+  '- No examples are available for a judgment-heavy workflow.',
+  '',
+  'Failure behavior:',
+  '- If required inputs are missing or ambiguous, ask a targeted follow-up instead of guessing.',
+  '- If a destructive or irreversible action is requested, require explicit confirmation before continuing.',
+  '- If a required tool or permission is missing, say so, propose the closest Notion-native alternative, and list the ideal permission/tool.',
+  '- Do not create or modify other agents unless the user explicitly asks to proceed with agent creation.',
+  '- Do not change existing database schemas.',
+  '- Do not include credentials, secrets, bearer tokens, API keys, or private connection tokens in specs, tests, logs, or draft pages.',
+  '',
+  'Style: direct, practical, neutral, with checklists and short sections over long prose.',
+].join('\n');
+
 const SCENARIO_PRESETS: Record<ScenarioKey, ScenarioPreset> = {
+  'internal-agent-builder': {
+    description: 'Notion-first agent-building agent for Half Dozen production-agent specs, drafts, and governance checks.',
+    defaults: {
+      query:
+        'Help a teammate design a Notion-native agent for classifying new internal requests. Start with AI Agents [HD] and AI Toolkits [HD] source-of-truth checks, ask only the next most important clarifying questions, and do not create a Draft row until the user confirms the spec is ready.',
+      servers: ['notion'],
+      model: DEFAULT_MODEL,
+      maxTurns: 12,
+      agentName: 'Half Dozen Internal Agent Builder',
+      agentInstructions: INTERNAL_AGENT_BUILDER_INSTRUCTIONS,
+      blockedToolNames: [
+        'notion_create_database',
+        'notion_update_database',
+        'notion_archive_page',
+        'notion_archive_block',
+        'notion_bulk_update',
+        'notion_bulk_archive',
+        'delete_automation',
+        'search',
+        'fetch',
+        'submit_feedback',
+      ],
+      requiredToolNames: [],
+    },
+    contractBundle: {
+      agent_contract: 'templates/agent_contract_halfdozen_internal_agent_builder.yaml',
+      mcp_contract: 'templates/mcp_contract_halfdozen_internal_agent_builder.yaml',
+      outcome_contract: 'templates/outcome_contract_halfdozen_internal_agent_builder.md',
+      golden_tasks: 'templates/golden_tasks_halfdozen_internal_agent_builder.yaml',
+    },
+  },
   dedup: {
     description: 'Duplicate detection, canonicalization, and safe merge planning.',
     defaults: {
@@ -188,7 +289,7 @@ function printUsage(): void {
   pnpm exec tsx scripts/openai-agent-sdk-halfdozen-smoke.ts [options]
 
 Options:
-  --scenario "<name>"    Scenario preset (dedup,inbox-triage,fleet-watchdog)
+  --scenario "<name>"    Scenario preset (${Object.keys(SCENARIO_PRESETS).join(',')})
   --query "<text>"       Prompt to run through the agent
   --servers "<list>"     Comma-separated server keys (telemetry,youtube,gmail,zoom,notion)
   --model "<name>"       Model name (default: ${DEFAULT_MODEL})
@@ -493,9 +594,31 @@ function addGovernanceCheck(
   });
 }
 
+function hasAllNeedles(text: string, needles: string[]): boolean {
+  return needles.every((needle) => text.includes(needle.toLowerCase()));
+}
+
 function runGovernanceEval(): Record<string, unknown> {
   const requiredGenericBlockedTools = ['search', 'fetch', 'submit_feedback'];
   const requiredFleetTools = ['query_health', 'query_errors', 'query_activity', 'query_trends'];
+  const builderPreflightNeedles = ['ai agents [hd]', 'ai toolkits [hd]', 'validated'];
+  const builderModeNeedles = ['discovery mode', 'spec mode', 'draft creation mode', 'agent creation mode'];
+  const builderOutputNeedles = [
+    'agent spec',
+    'instructions',
+    'install / enablement',
+    'test plan',
+    'database row fields',
+    'open risks / missing permissions',
+  ];
+  const builderStopNeedles = [
+    'missing target database/page',
+    'missing required property names/types',
+    'missing auth owner',
+    'destructive or irreversible action',
+    'notion agent api/private beta access is unavailable',
+  ];
+  const builderTestNeedles = ['happy path', 'missing-input', 'permission failure', 'must-not-change'];
   const checks: GovernanceCheck[] = [];
 
   for (const [rawScenario, preset] of Object.entries(SCENARIO_PRESETS)) {
@@ -557,6 +680,63 @@ function runGovernanceEval(): Record<string, unknown> {
         requiredFleetTools.every((tool) => preset.defaults.requiredToolNames.includes(tool)),
         'Fleet watchdog requires health, error, activity, and trend evidence before final output.',
         { required_tools: preset.defaults.requiredToolNames },
+      );
+    }
+
+    if (scenario === 'internal-agent-builder') {
+      addGovernanceCheck(
+        checks,
+        scenario,
+        'builder_source_of_truth_preflights',
+        hasAllNeedles(instructionText, builderPreflightNeedles),
+        'Builder instructions require AI Agents [HD] and AI Toolkits [HD] source-of-truth checks before recommendations.',
+        { required_terms: builderPreflightNeedles },
+      );
+
+      addGovernanceCheck(
+        checks,
+        scenario,
+        'builder_mode_gating',
+        hasAllNeedles(instructionText, builderModeNeedles) &&
+          instructionText.includes('explicitly confirms') &&
+          instructionText.includes('private beta'),
+        'Builder instructions split discovery, spec, draft creation, and agent creation modes with explicit confirmation gates.',
+        { required_terms: builderModeNeedles },
+      );
+
+      addGovernanceCheck(
+        checks,
+        scenario,
+        'builder_output_contract',
+        hasAllNeedles(instructionText, builderOutputNeedles),
+        'Builder instructions include the required final output sections.',
+        { required_terms: builderOutputNeedles },
+      );
+
+      addGovernanceCheck(
+        checks,
+        scenario,
+        'builder_stop_conditions',
+        hasAllNeedles(instructionText, builderStopNeedles),
+        'Builder instructions define stop conditions for missing schemas, auth, destructive actions, and unavailable Notion agent creation.',
+        { required_terms: builderStopNeedles },
+      );
+
+      addGovernanceCheck(
+        checks,
+        scenario,
+        'builder_test_plan_coverage',
+        hasAllNeedles(instructionText, builderTestNeedles),
+        'Builder instructions require happy-path, missing-input, permission-failure, and must-not-change test coverage.',
+        { required_terms: builderTestNeedles },
+      );
+
+      addGovernanceCheck(
+        checks,
+        scenario,
+        'builder_secret_redaction',
+        /credentials|secrets|bearer tokens|api keys|private connection tokens/.test(instructionText),
+        'Builder instructions prohibit secrets, bearer tokens, API keys, and private connection tokens in specs or draft pages.',
       );
     }
   }
