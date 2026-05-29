@@ -1,20 +1,20 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
-  buildConciseTicketSummary,
+  buildTicketTitle,
   extractWebhookPageIds,
   mapHdStatusToOsStatus,
   normalizeFileUrl,
 } from '../src/sync.js';
 
-test('buildConciseTicketSummary limits combined title/details to six words', () => {
+test('buildTicketTitle mirrors the source ticket title exactly', () => {
   assert.equal(
-    buildConciseTicketSummary('Need guestlist support today', 'Cannot find the latest RSVP exports'),
-    'Need guestlist support today Cannot find',
+    buildTicketTitle('i need a way to have an agent monitor my whatsapp threads'),
+    'i need a way to have an agent monitor my whatsapp threads',
   );
   assert.equal(
-    buildConciseTicketSummary('Create Database for all Merch + data & sales', ''),
-    'Create Database for all Merch data',
+    buildTicketTitle('Create Database for all Merch + data & sales'),
+    'Create Database for all Merch + data & sales',
   );
 });
 

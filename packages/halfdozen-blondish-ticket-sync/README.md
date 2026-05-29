@@ -20,7 +20,7 @@ Real-time source-to-target sync:
 - Trigger: Notion webhook events for BLOND:ISH source data source/page changes.
 - Match key: source `Page ID` -> target `External Page ID` or `Ext Page ID`.
 - Create missing HD rows with:
-  - concise ticket title, six words or fewer
+  - `Ticket` exactly matching the source ticket title
   - `Status = Not Started`
   - `Source = Portal / Tag`
   - `Owner = FG (fillip@halfdozen.co)`
@@ -29,11 +29,9 @@ Real-time source-to-target sync:
   - `External Page ID` or `Ext Page ID`, `External URL`,
     `External Files & Media`
   - page body starting with `Created By`, then source `Details`
-- Existing matched rows are not generally updated. The only allowed matched-row
-  update is to backfill/correct `External URL` and `External Files & Media`.
-  During the May 29 launch repair, the Worker also corrected HD titles that
-  exactly matched the old generated three-word truncation so user-edited titles
-  were not overwritten.
+- Existing matched rows are updated only for the synced fields covered by this
+  contract: `Ticket`, `External URL`, and `External Files & Media`. `Ticket` is
+  one-to-one with the source title, not a generated summary.
 
 Real-time target-to-source status sync:
 
@@ -185,9 +183,8 @@ Production validation completed on May 29, 2026:
 - Notion-hosted source attachments are copied into HD with Notion's File Upload
   API and then attached to `External Files & Media`; external files are written
   as `type=external`.
-- The launch repair corrected 12 legacy-generated HD titles, including
-  `ST-ISH-1` from `Create Database for` to `Create Database for all Merch data`,
-  and backfilled 2 attachment fields.
+- The launch repair corrected legacy-generated HD titles so `Ticket` exactly
+  matches the source ticket title, and backfilled 2 attachment fields.
 - A follow-up full pass returned `created: 0`, `updated: 0`, and `errors: 0`
   for both sync directions.
 - Notion webhook subscription is active and signed events are validated against

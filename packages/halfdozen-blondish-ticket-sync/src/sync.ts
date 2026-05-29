@@ -360,17 +360,8 @@ export function mapHdStatusToOsStatus(value: string): string | null {
   return HD_TO_OS_STATUS[value] ?? null;
 }
 
-export function buildConciseTicketSummary(ticket: string, details: string): string {
-  const ticketWords = words(ticket);
-  const combined = ticketWords.length >= 6
-    ? ticketWords.slice(0, 6)
-    : [...ticketWords, ...words(details)].slice(0, 6);
-  return combined.length > 0 ? combined.join(' ') : 'BLONDISH support ticket';
-}
-
-function buildLegacyConciseTicketSummary(ticket: string, details: string): string {
-  const combined = [...words(ticket).slice(0, 3), ...words(details)].slice(0, 6);
-  return combined.length > 0 ? combined.join(' ') : 'BLONDISH support ticket';
+export function buildTicketTitle(ticket: string): string {
+  return ticket.trim() || 'BLONDISH support ticket';
 }
 
 async function resolveSyncConfig(env: Env): Promise<SyncConfig> {
@@ -447,10 +438,9 @@ async function buildTargetCreateProperties(
   const properties: Record<string, unknown> = {};
   const sourceFiles = readFiles(sourcePage, 'Files & Media');
   const ticket = readText(sourcePage, 'Ticket');
-  const details = readText(sourcePage, 'Details');
   const externalUrl = readExternalUrl(sourcePage);
 
-  writeRequired(properties, targetSchema, 'Ticket', buildConciseTicketSummary(ticket, details));
+  writeRequired(properties, targetSchema, 'Ticket', buildTicketTitle(ticket));
   writeRequired(properties, targetSchema, 'Status', DEFAULT_HD_STATUS);
   writeRequired(properties, targetSchema, 'Source', SOURCE_LABEL);
   writeRequired(properties, targetSchema, 'Owner', OWNER_LABEL, ownerUserId);
@@ -473,11 +463,10 @@ async function buildExistingTargetPatch(
   const externalUrl = readExternalUrl(sourcePage);
   const sourceFiles = readFiles(sourcePage, 'Files & Media');
   const ticket = readText(sourcePage, 'Ticket');
-  const details = readText(sourcePage, 'Details');
-  const desiredTitle = buildConciseTicketSummary(ticket, details);
-  const legacyTitle = buildLegacyConciseTicketSummary(ticket, details);
+  const desiredTitle = buildTicketTitle(ticket);
+  const currentTitle = readText(targetPage, 'Ticket');
 
-  if (desiredTitle !== legacyTitle && readText(targetPage, 'Ticket') === legacyTitle) {
+  if (currentTitle !== desiredTitle) {
     writeRequired(properties, targetSchema, 'Ticket', desiredTitle);
   }
 
@@ -721,14 +710,6 @@ function chunks(text: string, size: number): string[] {
   const output: string[] = [];
   for (let index = 0; index < text.length; index += size) output.push(text.slice(index, index + size));
   return output;
-}
-
-function words(text: string): string[] {
-  return text
-    .replace(/[\n\r\t]+/g, ' ')
-    .split(/\s+/)
-    .map((word) => word.replace(/^[^\w]+|[^\w:.-]+$/g, ''))
-    .filter(Boolean);
 }
 
 function optionName(value: unknown): string {
