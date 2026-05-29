@@ -43,9 +43,11 @@
     assets: Asset[];
     errorMessage?: string | null;
     searchTerm?: string;
+    openingViewAssetId?: string | null;
     openingEditAssetId?: string | null;
     onSearch?: (term: string) => void;
     onView?: (id: string) => void;
+    onPreloadView?: (id: string) => void;
     onEdit?: (id: string) => void;
     onArchive?: (id: string) => Promise<void>;
     onRefresh?: () => void;
@@ -55,9 +57,11 @@
     assets,
     errorMessage = null,
     searchTerm = '',
+    openingViewAssetId = null,
     openingEditAssetId = null,
     onSearch,
     onView,
+    onPreloadView,
     onEdit,
     onArchive,
     onRefresh
@@ -201,17 +205,53 @@
     });
 
     if (action.handler === 'view') {
+      if (openingViewAssetId) return;
       onView?.(asset.id);
       return;
     }
 
     if (action.handler === 'edit') {
-      if (openingEditAssetId) return;
+      if (openingEditAssetId || openingViewAssetId) return;
       onEdit?.(asset.id);
       return;
     }
 
     onArchive?.(asset.id);
+  }
+
+  function runSecondaryAction(asset: Asset, action: AssetActionDescriptor) {
+    if (action.handler === 'view') {
+      if (openingViewAssetId) return;
+      onView?.(asset.id);
+      return;
+    }
+
+    if (action.handler === 'edit') {
+      if (openingEditAssetId || openingViewAssetId) return;
+      onEdit?.(asset.id);
+      return;
+    }
+
+    onArchive?.(asset.id);
+  }
+
+  function preloadViewAction(asset: Asset, action: AssetActionDescriptor) {
+    if (action.handler === 'view') {
+      onPreloadView?.(asset.id);
+    }
+  }
+
+  function isActionDisabled(action: AssetActionDescriptor) {
+    if (action.handler === 'view') return openingViewAssetId !== null || openingEditAssetId !== null;
+    if (action.handler === 'edit') return openingEditAssetId !== null || openingViewAssetId !== null;
+    return false;
+  }
+
+  function isActionLoading(asset: Asset, action: AssetActionDescriptor) {
+    return (
+      (action.handler === 'view' && openingViewAssetId === asset.id) ||
+      (action.handler === 'edit' && openingEditAssetId === asset.id)
+    );
   }
 
   function getSortLabel() {
@@ -458,9 +498,12 @@
                         <AssetTableRow
                           {asset}
                           {showPerformance}
-                          isEditDisabled={openingEditAssetId !== null}
+                          isViewDisabled={openingViewAssetId !== null || openingEditAssetId !== null}
+                          isViewLoading={openingViewAssetId === asset.id}
+                          isEditDisabled={openingEditAssetId !== null || openingViewAssetId !== null}
                           isEditLoading={openingEditAssetId === asset.id}
                           {onView}
+                          {onPreloadView}
                           {onEdit}
                           {onArchive}
                         />
@@ -546,12 +589,12 @@
                           variant={actionConfig.primary.handler === 'edit'
                             ? 'default'
                             : 'secondary'}
-                          disabled={
-                            actionConfig.primary.handler === 'edit' && openingEditAssetId !== null
-                          }
+                          disabled={isActionDisabled(actionConfig.primary)}
+                          onmouseenter={() => preloadViewAction(asset, actionConfig.primary)}
+                          onfocus={() => preloadViewAction(asset, actionConfig.primary)}
                           onclick={() => runPrimaryAction(asset, actionConfig.primary)}
                         >
-                          {#if actionConfig.primary.handler === 'edit' && openingEditAssetId === asset.id}
+                          {#if isActionLoading(asset, actionConfig.primary)}
                             <LoaderCircle size={14} class="button-spinner" />
                             Opening...
                           {:else}
@@ -562,15 +605,12 @@
                           <Button
                             size="sm"
                             variant={action.handler === 'archive' ? 'destructive' : 'outline'}
-                            disabled={action.handler === 'edit' && openingEditAssetId !== null}
-                            onclick={() =>
-                              action.handler === 'view'
-                                ? onView?.(asset.id)
-                                : action.handler === 'edit'
-                                  ? onEdit?.(asset.id)
-                                  : onArchive?.(asset.id)}
+                            disabled={isActionDisabled(action)}
+                            onmouseenter={() => preloadViewAction(asset, action)}
+                            onfocus={() => preloadViewAction(asset, action)}
+                            onclick={() => runSecondaryAction(asset, action)}
                           >
-                            {#if action.handler === 'edit' && openingEditAssetId === asset.id}
+                            {#if isActionLoading(asset, action)}
                               <LoaderCircle size={14} class="button-spinner" />
                               Opening...
                             {:else}

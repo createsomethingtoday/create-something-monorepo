@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { PageData } from './$types';
   import type { Asset, AssetUpdateData } from '$lib/server/airtable';
-  import { goto, invalidate } from '$app/navigation';
+  import { goto, invalidate, preloadData } from '$app/navigation';
   import { onMount } from 'svelte';
   import {
     Header,
@@ -22,8 +22,10 @@
   let searchTerm = $state('');
   let isProfileOpen = $state(false);
   let isEditModalOpen = $state(false);
+  let openingViewAssetId = $state<string | null>(null);
   let openingEditAssetId = $state<string | null>(null);
   let currentEditingAsset = $state<Asset | null>(null);
+  const preloadedAssetDetailIds = new Set<string>();
 
   // Lazy-loaded modal components
   // NOTE: Svelte 5 dynamic component typing is a bit different; keep this permissive for lazy-loading.
@@ -63,6 +65,9 @@
       : `Track published ${heroAssetLabelPlural}, upcoming submissions, and marketplace signals in one place.`
   );
   const portfolioTitle = $derived(getPortfolioTitle(data.assets || []));
+  const openingViewAssetName = $derived(
+    (data.assets || []).find((asset) => asset.id === openingViewAssetId)?.name ?? 'asset'
+  );
   const openingEditAssetName = $derived(
     (data.assets || []).find((asset) => asset.id === openingEditAssetId)?.name ?? 'asset'
   );
@@ -89,7 +94,22 @@
     isProfileOpen = false;
   }
 
+  function getAssetDetailHref(id: string) {
+    return `/assets/${id}`;
+  }
+
+  function preloadAssetDetail(id: string) {
+    if (preloadedAssetDetailIds.has(id)) return;
+
+    preloadedAssetDetailIds.add(id);
+    void preloadData(getAssetDetailHref(id)).catch(() => {
+      preloadedAssetDetailIds.delete(id);
+    });
+  }
+
   function handleViewAsset(id: string) {
+    if (openingViewAssetId || openingEditAssetId) return;
+
     const selectedAsset = (data.assets || []).find((asset) => asset.id === id);
     trackEvent('dashboard_asset_opened', {
       asset_id: id,
@@ -97,7 +117,12 @@
       asset_category: selectedAsset?.category,
       asset_subcategory: selectedAsset?.subcategory
     });
-    goto(`/assets/${id}`);
+
+    openingViewAssetId = id;
+    void goto(getAssetDetailHref(id)).catch(() => {
+      openingViewAssetId = null;
+      toast.error('Failed to open asset details');
+    });
   }
 
   async function loadEditAssetModal() {
@@ -108,7 +133,7 @@
   }
 
   async function handleEditAsset(id: string) {
-    if (openingEditAssetId) return;
+    if (openingEditAssetId || openingViewAssetId) return;
 
     const selectedAsset = (data.assets || []).find((asset) => asset.id === id);
     trackEvent('dashboard_asset_edit_opened', {
@@ -292,6 +317,8 @@
           onEdit={handleEditAsset}
           onArchive={handleArchiveAsset}
           onRefresh={handleRefreshAssets}
+          onPreloadView={preloadAssetDetail}
+          {openingViewAssetId}
           {openingEditAssetId}
         />
       </section>
@@ -301,6 +328,13 @@
   {#if isProfileOpen && EditProfileModal}
     {@const ProfileModal = EditProfileModal}
     <ProfileModal onClose={handleProfileClose} />
+  {/if}
+
+  {#if openingViewAssetId}
+    <div class="navigation-loading" role="status" aria-live="polite">
+      <LoaderCircle size={18} class="navigation-loading-spinner" />
+      <span>Opening {openingViewAssetName}</span>
+    </div>
   {/if}
 
   {#if openingEditAssetId && !isEditModalOpen}
@@ -365,6 +399,38 @@
   }
 
   :global(.loading-spinner) {
+    color: var(--color-info);
+    animation: spin 0.8s linear infinite;
+  }
+
+  .navigation-loading {
+    position: fixed;
+    top: 5.25rem;
+    right: var(--space-md);
+    z-index: 1100;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    max-width: min(24rem, calc(100vw - 2rem));
+    padding: 0.75rem 0.95rem;
+    color: var(--color-fg-primary);
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    font-size: var(--text-body-sm);
+    font-weight: var(--font-medium);
+  }
+
+  .navigation-loading span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  :global(.navigation-loading-spinner) {
+    flex-shrink: 0;
     color: var(--color-info);
     animation: spin 0.8s linear infinite;
   }
@@ -505,6 +571,13 @@
   @media (max-width: 640px) {
     .main-content {
       padding: var(--space-md);
+    }
+
+    .navigation-loading {
+      top: 4.75rem;
+      right: var(--space-sm);
+      left: var(--space-sm);
+      justify-content: center;
     }
 
     .overview-section {

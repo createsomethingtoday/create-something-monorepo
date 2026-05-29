@@ -7,9 +7,12 @@
 		assetId: string;
 		status: string;
 		actions?: AssetActionDescriptor[];
+		isViewDisabled?: boolean;
+		isViewLoading?: boolean;
 		isEditDisabled?: boolean;
 		isEditLoading?: boolean;
 		onView?: (id: string) => void;
+		onPreloadView?: (id: string) => void;
 		onEdit?: (id: string) => void;
 		onArchive?: (id: string) => Promise<void>;
 	}
@@ -18,9 +21,12 @@
 		assetId,
 		status,
 		actions = [],
+		isViewDisabled = false,
+		isViewLoading = false,
 		isEditDisabled = false,
 		isEditLoading = false,
 		onView,
+		onPreloadView,
 		onEdit,
 		onArchive
 	}: Props = $props();
@@ -64,9 +70,15 @@
 	}
 
 	function handleView(label = 'view_details') {
+		if (isViewDisabled) return;
+
 		trackOverflowAction(label);
 		onView?.(assetId);
 		isOpen = false;
+	}
+
+	function preloadView() {
+		onPreloadView?.(assetId);
 	}
 
 	function handleEdit() {
@@ -131,7 +143,12 @@
 				type="button"
 				class="dropdown-item"
 				class:dropdown-item-danger={action.handler === 'archive'}
-				class:dropdown-item-loading={action.handler === 'edit' && isEditLoading}
+				class:dropdown-item-loading={
+					(action.handler === 'view' && isViewLoading) ||
+					(action.handler === 'edit' && isEditLoading)
+				}
+				onmouseenter={() => action.handler === 'view' && preloadView()}
+				onfocus={() => action.handler === 'view' && preloadView()}
 				onclick={() =>
 					action.handler === 'view'
 						? handleView(action.label.toLowerCase().replace(/\s+/g, '_'))
@@ -140,12 +157,17 @@
 							: handleArchive()}
 				disabled={
 					(action.handler === 'archive' && isArchiving) ||
+					(action.handler === 'view' && isViewDisabled) ||
 					(action.handler === 'edit' && isEditDisabled)
 				}
 				role="menuitem"
 			>
 				{#if action.handler === 'view'}
-					<Eye size={16} />
+					{#if isViewLoading}
+						<LoaderCircle size={16} class="spinner" />
+					{:else}
+						<Eye size={16} />
+					{/if}
 				{:else if action.handler === 'edit'}
 					{#if isEditLoading}
 						<LoaderCircle size={16} class="spinner" />
@@ -157,6 +179,8 @@
 				{/if}
 				{#if action.handler === 'archive' && isArchiving}
 					Archiving...
+				{:else if action.handler === 'view' && isViewLoading}
+					Opening...
 				{:else if action.handler === 'edit' && isEditLoading}
 					Opening...
 				{:else}
