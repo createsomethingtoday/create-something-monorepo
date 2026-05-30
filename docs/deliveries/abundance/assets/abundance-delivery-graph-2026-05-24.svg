@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="620" viewBox="0 0 1200 620">
+<rect width="1200" height="620" fill="#f8fafc"/>
+<text x="60" y="72" font-size="34" font-weight="800" fill="#0f172a">Abundance Nurse Staffing System</text>
+<text x="60" y="108" font-size="18" fill="#475569">Generated 2026-05-24 - DB, MCP/API, and agent delivery relationship</text>
+<line x1="390" y1="305" x2="435" y2="305" stroke="#64748b" stroke-width="3"/>
+<polygon points="435,305 421,296 421,314" fill="#64748b"/>
+<line x1="765" y1="305" x2="810" y2="305" stroke="#64748b" stroke-width="3"/>
+<polygon points="810,305 796,296 796,314" fill="#64748b"/>
+
+<rect x="60" y="155" width="330" height="300" rx="10" fill="#ffffff" stroke="#0f766e" stroke-width="3"/>
+<text x="84" y="197" font-size="17" font-weight="700" fill="#0f766e">Database</text>
+<text x="84" y="231" font-size="26" font-weight="700" fill="#0f172a">Created DB</text>
+<text x="84" y="263" font-size="17" fill="#475569">created</text>
+<text x="84" y="303" font-size="15" fill="#334155">The Abundance database model captures</text>
+<text x="84" y="325" font-size="15" fill="#334155">seekers/open demand, talent/nurse-side</text>
+<text x="84" y="347" font-size="15" fill="#334155">supply, matches, and intake history.</text>
+<text x="84" y="369" font-size="15" fill="#334155">The schema is intentionally small so</text>
+<text x="84" y="391" font-size="15" fill="#334155">the workflow can be explained and</text>
+<text x="84" y="413" font-size="15" fill="#334155">audited. The received Paylocity export</text>
+<text x="84" y="435" font-size="15" fill="#334155">is treated as private source data for</text>
+
+<rect x="435" y="155" width="330" height="300" rx="10" fill="#ffffff" stroke="#2563eb" stroke-width="3"/>
+<text x="459" y="197" font-size="17" font-weight="700" fill="#2563eb">Automation</text>
+<text x="459" y="231" font-size="26" font-weight="700" fill="#0f172a">MCP/API surface</text>
+<text x="459" y="263" font-size="17" fill="#475569">production-smoked</text>
+<text x="459" y="303" font-size="15" fill="#334155">The Abundance API has route handlers</text>
+<text x="459" y="325" font-size="15" fill="#334155">and an OpenAPI contract, plus tokenless</text>
+<text x="459" y="347" font-size="15" fill="#334155">references for Staff MCP, Jobs MCP, and</text>
+<text x="459" y="369" font-size="15" fill="#334155">the NPG scoped hub. Bearer credentials</text>
+<text x="459" y="391" font-size="15" fill="#334155">remain outside public delivery</text>
+<text x="459" y="413" font-size="15" fill="#334155">artifacts. Production smoke passed for</text>
+<text x="459" y="435" font-size="15" fill="#334155">Staff MCP, Jobs MCP, and Dify job-tool</text>
+
+<rect x="810" y="155" width="330" height="300" rx="10" fill="#ffffff" stroke="#a16207" stroke-width="3"/>
+<text x="834" y="197" font-size="17" font-weight="700" fill="#a16207">Judgment</text>
+<text x="834" y="231" font-size="26" font-weight="700" fill="#0f172a">Matching agent</text>
+<text x="834" y="263" font-size="17" fill="#475569">ready-for-review</text>
+<text x="834" y="303" font-size="15" fill="#334155">The matching logic can produce an</text>
+<text x="834" y="325" font-size="15" fill="#334155">explainable shortlist using skills,</text>
+<text x="834" y="347" font-size="15" fill="#334155">budget, and availability. The Dify</text>
+<text x="834" y="369" font-size="15" fill="#334155">Abundance Hub agent was</text>
+<text x="834" y="391" font-size="15" fill="#334155">production-smoked through streaming</text>
+<text x="834" y="413" font-size="15" fill="#334155">Service API with jobs-tool usage after</text>
+<text x="834" y="435" font-size="15" fill="#334155">the live jobs feed refresh, and the</text>
+<rect x="60" y="505" width="1080" height="64" rx="8" fill="#e2e8f0"/>
+<text x="84" y="545" font-size="18" fill="#0f172a">Delivery rule: repo artifacts stay authoritative; the client surface renders the current state instead of becoming the source of truth.</text>
+</svg>

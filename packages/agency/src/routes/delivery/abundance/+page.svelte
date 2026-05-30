@@ -7,6 +7,7 @@
     abundanceNextReview,
     abundanceOperatingLayers,
     abundancePrivateArtifacts,
+    abundanceRecentUpdates,
     abundanceSuggestedPrompts
   } from '$lib/delivery/abundance';
 
@@ -189,6 +190,28 @@
       <p><strong>Phase</strong><span>{abundanceDeliverySummary.phase}</span></p>
       <p><strong>Private data</strong><span>Paylocity export received</span></p>
     </aside>
+  </div>
+</section>
+
+<section class="delivery-section delivery-section--tight">
+  <div class="shell-inner-pad">
+    <div class="section-lead">
+      <span class="product-kicker">Recent Operating Update</span>
+      <h2>Live jobs feed refreshed for review.</h2>
+      <p>
+        The public delivery page stays client-safe: provider subscriptions, credentials, and internal
+        pricing remain outside this surface.
+      </p>
+    </div>
+
+    <div class="update-grid">
+      {#each abundanceRecentUpdates as update}
+        <article class="product-surface update-card">
+          <span>{update.label}</span>
+          <p>{update.value}</p>
+        </article>
+      {/each}
+    </div>
   </div>
 </section>
 
@@ -497,6 +520,10 @@
     padding: clamp(36px, 6vw, 76px) 0;
   }
 
+  .delivery-section--tight {
+    padding-top: clamp(20px, 4vw, 48px);
+  }
+
   .section-lead {
     max-width: 760px;
     margin-bottom: 28px;
@@ -512,7 +539,8 @@
   }
 
   .artifact-grid,
-  .layer-grid {
+  .layer-grid,
+  .update-grid {
     display: grid;
     gap: 16px;
   }
@@ -525,16 +553,13 @@
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
-  .artifact-link:nth-child(-n + 3) {
-    grid-column: span 2;
-  }
-
-  .artifact-link:nth-child(n + 4) {
-    grid-column: span 3;
+  .update-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .artifact-link {
     display: grid;
+    grid-column: span 2;
     min-height: 170px;
     align-content: space-between;
     padding: 20px;
@@ -542,6 +567,7 @@
   }
 
   .artifact-link span,
+  .update-card span,
   .layer-tier,
   .layer-status {
     color: #5eead4;
@@ -554,6 +580,19 @@
   .artifact-link strong {
     font-size: 1.2rem;
     line-height: 1.15;
+  }
+
+  .update-card {
+    display: grid;
+    gap: 16px;
+    padding: 22px;
+    border-top: 4px solid rgba(94, 234, 212, 0.78);
+  }
+
+  .update-card p {
+    margin: 0;
+    color: rgba(246, 247, 251, 0.74);
+    line-height: 1.48;
   }
 
   .delivery-agent {
@@ -779,6 +818,7 @@
     .delivery-hero__inner,
     .artifact-grid,
     .layer-grid,
+    .update-grid,
     .evidence-layout,
     .delivery-agent__form div {
       grid-template-columns: 1fr;

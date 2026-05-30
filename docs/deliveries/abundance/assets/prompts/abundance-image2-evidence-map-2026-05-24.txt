@@ -1,0 +1,7 @@
+Model: gpt-image-2
+Snapshot: gpt-image-2-2026-04-21
+Quality: high
+Size: 1536x1024
+Source: https://openai.com/index/introducing-chatgpt-images-2-0/
+
+Create a polished client-facing evidence map titled "Abundance Project Evidence". Show three proof lanes labeled "Database", "Automation", and "Judgment". Database lane should represent schema, D1 tables, profile history, intakes, and matches. Automation lane should represent API routes, OpenAPI contract, MCP-ready tool surface, and workflow calls. Judgment lane should represent matching logic, fit-score explanation, escalation, and recruiter approval. Include visual proof cards and connector lines, but avoid tiny unreadable file paths. Style: editorial technical diagram, clean modern layout, practical consulting delivery artifact, muted neutral background with teal, blue, and amber accents, no real people, no sensitive data, no fake UI screenshots, no watermarks.

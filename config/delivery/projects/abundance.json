@@ -7,8 +7,8 @@
   "clientRegistryKey": "npg",
   "audience": "client_summary",
   "targetKind": "project",
-  "deliveryDate": "2026-05-06",
-  "headline": "Abundance now has a hardened API surface, production-smoked Staff and Jobs MCPs, an NPG scoped hub, and a client-safe delivery package for final review.",
+  "deliveryDate": "2026-05-24",
+  "headline": "Abundance now has a refreshed live jobs feed, production-smoked Staff and Jobs MCPs, and a client-safe operating review package.",
   "recentChangePaths": [
     "docs/ABUNDANCE_NURSE_STAFFING_MEDIA_PLAN_2026-03-12.md",
     "packages/agency/migrations/0001_abundance_network.sql",
@@ -36,7 +36,7 @@
       "kind": "delivery_page_embedded_agent",
       "visibility": "client_summary",
       "url": "https://createsomething.agency/delivery/abundance#job-agent",
-      "summary": "Client-facing embedded chat panel for the Abundance Hub Dify jobs agent. The page calls the Dify Service API from the server, keeps credentials private, and constrains the public panel to read-only public job discovery."
+      "summary": "Client-facing embedded chat panel for the Abundance Hub Dify jobs agent. The page calls the Dify Service API from the server, keeps credentials private, and constrains the public panel to read-only public job discovery with the managed jobs feed refreshed."
     },
     {
       "id": "nurse-staffing-concierge-progress-walkthrough",
@@ -55,6 +55,14 @@
       "summary": "Pilot walkthrough for the Abundance nurse intake and concierge experience."
     },
     {
+      "id": "book-operating-review",
+      "label": "Book Operating Review",
+      "kind": "booking_link",
+      "visibility": "client_summary",
+      "url": "https://createsomething.agency/book",
+      "summary": "Client-safe booking path for the next operating review. Next available meeting windows are Tuesday."
+    },
+    {
       "id": "abundance-staff-mcp",
       "label": "Abundance Staff MCP",
       "kind": "remote_mcp_server",
@@ -68,7 +76,7 @@
       "kind": "remote_mcp_server",
       "visibility": "private_internal",
       "url": "https://abundance-jobs-mcp.createsomething.workers.dev/mcp",
-      "summary": "Tokenless endpoint reference for job capture and job-source workflow access. Production smoke passed for public job listing."
+      "summary": "Tokenless endpoint reference for job capture and job-source workflow access. Production smoke passed for public job listing after the managed live jobs feed was refreshed."
     },
     {
       "id": "paylocity-active-headcount",
@@ -82,7 +90,7 @@
       "label": "Abundance Hub Dify agent config",
       "kind": "external_agent_config",
       "visibility": "private_internal",
-      "summary": "Dify Abundance Hub agent configuration for public nursing job discovery. The delivery page now embeds the agent through a server-side read-only chat panel. The Service API key remains in Infisical, and Dify smoke plus the published Braintrust eval passed without exposing secret values."
+      "summary": "Dify Abundance Hub agent configuration for public nursing job discovery. The delivery page embeds the agent through a server-side read-only chat panel. The Service API key remains in Infisical, and the Dify smoke passed after the live jobs feed refresh without exposing secret values."
     }
   ],
   "coordination": {
@@ -93,11 +101,13 @@
     ],
     "linearIssueIds": [
       "CRE-182",
-      "CRE-183"
+      "CRE-183",
+      "CRE-442"
     ],
     "linearUrls": [
       "https://linear.app/createsomething/issue/CRE-182/ship-monorepo-generated-client-delivery-pages",
-      "https://linear.app/createsomething/issue/CRE-183/correct-abundance-delivery-client-context-to-npg"
+      "https://linear.app/createsomething/issue/CRE-183/correct-abundance-delivery-client-context-to-npg",
+      "https://linear.app/createsomething/issue/CRE-442/abundance-rapidapi-subscription-and-jobs-pipeline-validation"
     ]
   },
   "notionContext": {
@@ -112,12 +122,12 @@
     "phase": "Build",
     "status": "Active",
     "visibility": "private_internal",
-    "reviewedAt": "2026-05-06"
+    "reviewedAt": "2026-05-24"
   },
   "summary": [
-    "The project has moved from concept into a concrete operating system shape: a live concierge app, profile data, matching data, intake history, hardened API routes, Staff and Jobs MCP endpoints, an NPG scoped hub, walkthrough artifacts, and a client-facing explanation layer.",
+    "The project has moved from concept into a concrete operating system shape: a live concierge app, profile data, matching data, intake history, hardened API routes, Staff and Jobs MCP endpoints, a refreshed live jobs feed, walkthrough artifacts, and a client-facing explanation layer.",
     "The current delivery shows the relationship between the created database, the staff/jobs MCP surfaces, the embedded Dify Abundance Hub jobs agent, the Braintrust/Langfuse eval evidence, and the human review boundary: what the system stores, what tools can be called, how behavior is observed, and where recruiter/operator approval still belongs.",
-    "Production smoke passed on 2026-05-13 for the public delivery page, delivery ask endpoint, Staff MCP headcount summary, Jobs MCP public listing, NPG scoped hub service/status calls, and Dify Abundance Hub streaming tool use. On 2026-05-14 the Abundance Dify smoke passed all four inventory cases and the published Braintrust eval passed 100%, including Dify Service API health, expected MCP tool use, forbidden write tools, secret refusal, latency, and trace IDs for Langfuse inspection. The scoped hub is reachable, but Jotform, Mailchimp, and WhatsApp currently report connected=false and require NPG account-owner authorization before write-capable automation.",
+    "Production smoke passed on 2026-05-24 after the managed public jobs data feed was refreshed. The delivery page, delivery ask endpoint, Staff MCP headcount summary, Jobs MCP public listing, and Dify Abundance Hub streaming tool use all returned expected results. The NPG scoped hub service inventory remains a separate operating follow-up for Jotform/Mailchimp/WhatsApp exposure and authorization before write-capable automation.",
     "A private Paylocity active-headcount export has been received for staff/operator context. Employee-level rows, token-bearing MCP access, Dify keys, and NPG external account authorization details remain private and are not included in the public delivery.",
     "Remaining production promotion work is operational rather than architectural: provision WhatsApp webhook secrets before enabling Meta webhooks, promote the secured agency build from a clean release branch, confirm Paylocity field mapping, and have NPG account owners review or reauthorize Jotform, Mailchimp, and WhatsApp before write-capable automation."
   ],
@@ -141,7 +151,7 @@
       "label": "MCP/API surface",
       "title": "Callable Abundance actions for agents and workflow tools",
       "status": "production-smoked",
-      "summary": "The Abundance API has route handlers and an OpenAPI contract, plus tokenless references for Staff MCP, Jobs MCP, and the NPG scoped hub. Bearer credentials remain outside public delivery artifacts. Production smoke passed for Staff MCP, Jobs MCP, and NPG hub management/status calls; Jotform, Mailchimp, and WhatsApp still need NPG authorization because connection_status reports connected=false.",
+      "summary": "The Abundance API has route handlers and an OpenAPI contract, plus tokenless references for Staff MCP, Jobs MCP, and the NPG scoped hub. Bearer credentials remain outside public delivery artifacts. Production smoke passed for Staff MCP, Jobs MCP, and Dify job-tool usage after the managed jobs feed refresh. NPG scoped hub service exposure and Jotform/Mailchimp/WhatsApp authorization remain separate operating follow-ups.",
       "evidence": [
         "packages/agency/static/openapi-abundance.yaml",
         "packages/agency/src/routes/api/abundance",
@@ -155,7 +165,7 @@
       "label": "Matching agent",
       "title": "Agent boundary for intake, shortlist, and escalation",
       "status": "ready-for-review",
-      "summary": "The matching logic can produce an explainable shortlist using skills, budget, and availability. The Dify Abundance Hub agent was production-smoked through streaming Service API with jobs-tool usage, and the published Braintrust eval passed against the Dify/MCP path. The delivery page now embeds a server-side read-only jobs chat for client review. The client-facing rule remains recommendation support, not autonomous staffing decisions.",
+      "summary": "The matching logic can produce an explainable shortlist using skills, budget, and availability. The Dify Abundance Hub agent was production-smoked through streaming Service API with jobs-tool usage after the live jobs feed refresh, and the published Braintrust eval passed against the Dify/MCP path. The delivery page embeds a server-side read-only jobs chat for client review. The client-facing rule remains recommendation support, not autonomous staffing decisions.",
       "evidence": [
         "evals/braintrust/dify/abundance-hub.eval.ts",
         "config/dify-agents/abundance-hub.json",
@@ -168,16 +178,18 @@
     }
   ],
   "clientUpdate": [
-    "We have the first durable Abundance system shape in place: a live nurse-facing concierge app, a database for nurse/candidate-side profile history and matching state, hardened callable workflow routes, deployed Staff and Jobs MCP endpoints, an NPG scoped hub, and a matching layer that returns visible reasons rather than black-box decisions.",
+    "We have the first durable Abundance system shape in place: a live nurse-facing concierge app, a database for nurse/candidate-side profile history and matching state, hardened callable workflow routes, deployed Staff and Jobs MCP endpoints, a refreshed live jobs feed, and a matching layer that returns visible reasons rather than black-box decisions.",
     "The current implementation supports the core operating path: capture profile context, preserve intake history, create or update demand/supply records, generate suggested matches idempotently, and keep the recruiter/human review boundary visible.",
-    "The production smoke on 2026-05-13 passed for the public delivery surface, Staff MCP headcount summary, Jobs MCP public listing, NPG scoped hub service/status calls, and Dify Abundance Hub streaming job-tool use. On 2026-05-14 the Dify smoke and published Braintrust eval passed for the Abundance agent/MCP path, with Dify message and conversation IDs available for Langfuse trace inspection. The delivery page now includes a server-side embedded jobs chat panel constrained to read-only public job discovery. The scoped hub is reachable, but Jotform, Mailchimp, and WhatsApp still need account-owner authorization before write-capable automation.",
+    "The production smoke on 2026-05-24 passed for the public delivery surface, Staff MCP headcount summary, Jobs MCP public listing, and Dify Abundance Hub streaming job-tool use after the managed public jobs data feed was refreshed. The delivery page includes a server-side embedded jobs chat panel constrained to read-only public job discovery. The NPG scoped hub service inventory and Jotform/Mailchimp/WhatsApp authorization remain separate operating follow-ups before write-capable automation.",
     "We also received the Paylocity active-headcount export as private source data for the next staff/operator integration pass. That data is acknowledged here as an artifact, but employee-level records are not included in the public delivery.",
-    "The next useful review is a walkthrough of the live app, DB, callable actions, Staff/Jobs MCP boundaries, NPG hub boundaries, and agent recommendation boundary using the generated delivery page and walkthrough artifacts."
+    "The next useful review is a 30-minute operating walkthrough with Stacey, Latasha, and any operations team members who should give input on priority markets, operator access, Staff/Jobs MCP boundaries, and the agent recommendation boundary."
   ],
   "nextReview": [
+    "Book the next available operating review with Stacey, Latasha, and any operations team members who should give input.",
+    "Confirm priority staffing markets and the first employer/facility source list for live jobs review.",
     "Provision WHATSAPP_VERIFY_TOKEN and WHATSAPP_APP_SECRET in the Cloudflare Pages production environment before enabling the Meta webhook route.",
     "Promote the secured Abundance API build from a clean release branch or clean deployment workspace after the Abundance hardening tests and agency check pass.",
-    "Have NPG account owners review or reauthorize Jotform, Mailchimp, and WhatsApp before allowing write-capable automation through the scoped hub.",
+    "Review NPG scoped hub service exposure and have account owners reauthorize Jotform, Mailchimp, and WhatsApp before allowing write-capable automation through the scoped hub.",
     "Confirm how Paylocity active-headcount fields should map into staff/operator records before importing or enriching production data.",
     "Confirm the operator roster and access owner for MCP/database access."
   ],

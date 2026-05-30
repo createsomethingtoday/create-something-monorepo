@@ -23,11 +23,29 @@ export type DeliveryKnowledgeCard = {
 export const abundanceDeliverySummary = {
 	client: 'The NP Group / NPG',
 	owner: 'CREATE SOMETHING',
-	phase: 'Build / delivery review',
+	phase: 'Build / operating review',
 	headline: 'Abundance nurse staffing system.',
 	description:
-		'The NP Group now has a live concierge app, a repo-backed database, hardened Abundance API routes, production-smoked Staff and Jobs MCPs, an NPG scoped hub, Braintrust/Langfuse eval evidence for the Dify agent path, walkthrough artifacts, and a clear agent boundary for recruiter-led review.'
+		'The NP Group now has a live concierge app, a repo-backed data layer, a refreshed live jobs feed, production-smoked Staff and Jobs MCPs, walkthrough artifacts, and a clear recruiter review boundary.'
 };
+
+export const abundanceRecentUpdates = [
+	{
+		label: 'Live jobs feed',
+		value:
+			'The managed public jobs data feed has been reactivated for review. A May 24 production smoke confirmed the Jobs MCP returns current healthcare and nursing roles.'
+	},
+	{
+		label: 'Agent path',
+		value:
+			'The Abundance Hub agent completed the Dify streaming check after the feed refresh, keeping the public page read-only while preserving tool-use evidence.'
+	},
+	{
+		label: 'Next interaction',
+		value:
+			'The next client step is a 30-minute operating review with Stacey, Latasha, and any operations team members who should help define priority markets, access, and cadence.'
+	}
+];
 
 export const abundanceArtifactLinks: DeliveryArtifact[] = [
 	{
@@ -39,7 +57,7 @@ export const abundanceArtifactLinks: DeliveryArtifact[] = [
 	{
 		label: 'Abundance Jobs Agent',
 		href: 'https://createsomething.agency/delivery/abundance#job-agent',
-		meta: 'Embedded read-only Dify job discovery agent',
+		meta: 'Read-only Dify job discovery agent with refreshed feed',
 		visibility: 'client-safe'
 	},
 	{
@@ -56,8 +74,14 @@ export const abundanceArtifactLinks: DeliveryArtifact[] = [
 	},
 	{
 		label: 'Generated delivery package',
-		href: 'https://create-something-deliveries.pages.dev/projects/abundance/',
+		href: 'https://main.create-something-deliveries.pages.dev/projects/abundance/',
 		meta: 'Portable monorepo-generated delivery page',
+		visibility: 'client-safe'
+	},
+	{
+		label: 'Book operating review',
+		href: 'https://createsomething.agency/book',
+		meta: 'Next available Tuesday meeting windows',
 		visibility: 'client-safe'
 	}
 ];
@@ -72,10 +96,10 @@ export const abundanceOperatingLayers: DeliveryLayer[] = [
 	},
 	{
 		tier: 'Automation',
-		title: 'Staff, Jobs, and NPG Hub',
-		status: 'Production-smoked',
+		title: 'Staff and Jobs MCP',
+		status: 'Live jobs feed refreshed',
 		body:
-			'Staff MCP, Jobs MCP, the NPG scoped hub, and Dify Abundance Hub have passed production smoke checks. The Abundance Dify agent also has a published Braintrust eval suite with Langfuse trace join keys. Credentials stay in secret storage and are not published in the delivery surface.'
+			'Staff MCP, Jobs MCP, and Dify Abundance Hub have passed production smoke checks with the managed jobs feed active. The Abundance Dify agent also has a published Braintrust eval suite with Langfuse trace join keys. Credentials stay in secret storage and are not published in the delivery surface.'
 	},
 	{
 		tier: 'Judgment',
@@ -88,14 +112,17 @@ export const abundanceOperatingLayers: DeliveryLayer[] = [
 
 export const abundancePrivateArtifacts = [
 	'Paylocity active-headcount CSV received for private staff/operator context.',
+	'Managed public jobs data feed reactivated for Abundance operating review; the provider subscription and credentials stay outside this public delivery surface.',
 	'Dify Abundance Hub configuration is tracked as an external operational artifact and was production-smoked through the Service API.',
 	'Braintrust eval coverage for Abundance Hub is published under create-something-dify-agents / abundance_hub and verifies Dify API health, Abundance Jobs MCP tool routing, forbidden writes, secret refusal, latency, and trace IDs for Langfuse inspection.',
 	'MCP credentials remain in Infisical; Staff MCP, Jobs MCP, and the NPG scoped hub were smoked without exposing token values.',
 	'Cloudflare Pages production has AGENCY_INTERNAL_API_KEY, but WHATSAPP_VERIFY_TOKEN and WHATSAPP_APP_SECRET still need to be provisioned before enabling the Meta webhook.',
-	'NPG scoped hub status calls are reachable, but Jotform, Mailchimp, and WhatsApp currently report connected=false and need account-owner authorization before write-capable automation.'
+	'NPG scoped hub service exposure and Jotform/Mailchimp/WhatsApp authorization remain separate operating follow-ups before write-capable automation.'
 ];
 
 export const abundanceNextReview = [
+	'Book the next available operating review with Stacey, Latasha, and any operations team members who should give input.',
+	'Confirm priority staffing markets and the first employer/facility source list for live jobs review.',
 	'Provision WhatsApp webhook secrets in Cloudflare Pages production.',
 	'Promote the secured Abundance API build from a clean release branch or clean deployment workspace.',
 	'Have NPG account owners review or reauthorize Jotform, Mailchimp, and WhatsApp before write-capable automation.',
@@ -123,7 +150,7 @@ export const abundanceKnowledgeCards: DeliveryKnowledgeCard[] = [
 		label: 'Delivery status',
 		keywords: ['changed', 'shipped', 'status', 'summary', 'plain', 'english', 'update', 'ready'],
 		answer:
-			'Abundance has moved from a concept into a working delivery shape: a live nurse-facing concierge app, a repo-backed data layer, hardened API routes, production-smoked Staff and Jobs MCP endpoints, an NPG scoped hub, walkthrough artifacts, and an agent boundary for recruiter-led review. The useful summary is that the workflow now has durable data, callable actions, and explainable recommendations instead of a loose chatbot or one-off demo.',
+			'Abundance has moved from a concept into a working delivery shape: a live nurse-facing concierge app, a repo-backed data layer, hardened API routes, production-smoked Staff and Jobs MCP endpoints, a refreshed live jobs feed, walkthrough artifacts, and an agent boundary for recruiter-led review. The useful summary is that the workflow now has durable data, callable actions, and explainable recommendations instead of a loose chatbot or one-off demo.',
 		followUpQuestions: [
 			'Who should receive the client-safe walkthrough?',
 			'Should the next update use nurse staffing language, or should it preserve the generic Seeker/Talent/Match vocabulary underneath?'
@@ -156,7 +183,7 @@ export const abundanceKnowledgeCards: DeliveryKnowledgeCard[] = [
 		label: 'MCP and automation',
 		keywords: ['mcp', 'api', 'tool', 'tools', 'automation', 'staff', 'jobs', 'endpoint', 'credentials'],
 		answer:
-			'The MCP layer is the callable automation surface. Staff MCP, Jobs MCP, and the NPG scoped hub are tracked as tokenless references so agents and workflow tools can be connected without putting secrets in the delivery page. Production smoke passed for Staff headcount, Jobs public listing, NPG hub service/status calls, and Dify jobs-tool usage. The Abundance Dify smoke now covers list, search, write-confirmation, and secret-refusal cases. The NPG hub is reachable, but Jotform, Mailchimp, and WhatsApp currently report connected=false and need account-owner authorization before write-capable automation. Credentials stay in Infisical or equivalent secret storage.',
+			'The MCP layer is the callable automation surface. Staff MCP and Jobs MCP are tracked as tokenless references so agents and workflow tools can be connected without putting secrets in the delivery page. Production smoke passed for Staff headcount, Jobs public listing, and Dify jobs-tool usage after the live jobs feed refresh. The Abundance Dify smoke covers list, search, write-confirmation, and secret-refusal cases. The NPG hub service exposure and Jotform/Mailchimp/WhatsApp authorization remain separate operating follow-ups before write-capable automation. Credentials stay in Infisical or equivalent secret storage.',
 		followUpQuestions: [
 			'Who should have MCP/database access?',
 			'Should Staff MCP and Jobs MCP stay separate, or should they eventually sit behind one client-facing registry?'
@@ -189,7 +216,7 @@ export const abundanceKnowledgeCards: DeliveryKnowledgeCard[] = [
 		label: 'Decisions needed',
 		keywords: ['decision', 'decisions', 'need', 'next', 'review', 'approve', 'owner', 'owners', 'access'],
 		answer:
-			'The current decisions are: provision WhatsApp webhook secrets before enabling Meta webhooks, map Paylocity fields into staff/operator records, have NPG account owners review or reauthorize Jotform/Mailchimp/WhatsApp before write-capable automation, review the live app and MCP boundaries with NPG, and decide which operator roster should receive MCP/database access.',
+			'The current decisions are: schedule the operating review with Stacey, Latasha, and the right operations team members; confirm priority staffing markets and employer/facility source priorities; provision WhatsApp webhook secrets before enabling Meta webhooks; map Paylocity fields into staff/operator records; have NPG account owners review or reauthorize Jotform/Mailchimp/WhatsApp before write-capable automation; and decide which operator roster should receive MCP/database access.',
 		followUpQuestions: [
 			'Who is the approval owner for operator access?',
 			'Which decision needs to be made before the next build pass?'
