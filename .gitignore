@@ -62,6 +62,13 @@ apps/marketplace-template-submission-cloud/node_modules*/
 apps/marketplace-template-submission-cloud/.next/
 apps/marketplace-template-submission-cloud/.open-next/
 apps/marketplace-template-submission-cloud/tsconfig.tsbuildinfo
+!apps/webflow-marketplace-category-cloud/
+!apps/webflow-marketplace-category-cloud/**
+apps/webflow-marketplace-category-cloud/node_modules/
+apps/webflow-marketplace-category-cloud/node_modules*/
+apps/webflow-marketplace-category-cloud/.next/
+apps/webflow-marketplace-category-cloud/.open-next/
+apps/webflow-marketplace-category-cloud/tsconfig.tsbuildinfo
 !apps/bettermode-marketplace-creator-agent/
 !apps/bettermode-marketplace-creator-agent/**
 apps/bettermode-marketplace-creator-agent/node_modules/

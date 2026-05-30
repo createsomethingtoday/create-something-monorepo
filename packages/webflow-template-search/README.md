@@ -62,13 +62,13 @@ before binding them to the public Code Component.
 
 ## Template thumbnails
 
-The sync pipeline indexes Marketplace template metadata from Airtable, then resolves public
-asset URLs from the most stable configured source. Source precedence:
+The sync pipeline indexes Marketplace template metadata from Airtable, but Webflow is the
+source of truth for public template thumbnails. Source precedence:
 
-1. Airtable `Marketplace Assets` remains the metadata source of truth for names,
-   categories, styles, tags, creator links, price, popularity, and published status.
-2. Webflow CMS template fields are preferred for canonical slugs, listing URLs,
+1. Webflow CMS template fields are preferred for canonical slugs, listing URLs,
    thumbnails, hover thumbnails, and carousel images when a Webflow API token is configured.
+2. Airtable `Marketplace Assets` remains the metadata source of truth for names,
+   categories, styles, tags, creator links, price, popularity, and published status.
 3. Webflow site assets are used as a fallback image index when `WEBFLOW_API_TOKEN` and
    `WEBFLOW_TEMPLATE_ASSET_SITE_ID` are configured.
 4. The published Webflow template page `og:image` is used as a bounded fallback for stale

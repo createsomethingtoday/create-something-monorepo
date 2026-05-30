@@ -1,0 +1,18 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "webflow-marketplace-category-cloud",
+  "main": "worker.mjs",
+  "account_id": "9645bd52e640b8a4f40a3a55ff1dd75a",
+  "compatibility_date": "2026-03-18",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "binding": "ASSETS",
+    "directory": ".open-next/assets"
+  },
+  "vars": {
+    "ENVIRONMENT": "production",
+    "MARKETPLACE_BASE_URL": "https://webflow.com",
+    "TEMPLATE_SEARCH_API_BASE": "https://webflow-template-search.createsomething.workers.dev",
+    "NEXT_PUBLIC_BASE_PATH": "/templates/category"
+  }
+}
