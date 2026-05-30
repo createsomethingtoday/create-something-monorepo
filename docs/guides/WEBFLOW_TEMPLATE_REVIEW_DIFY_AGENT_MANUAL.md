@@ -2,6 +2,8 @@
 
 Plain-language guide for the Natalia, Mariana, Eric, and Vicki Webflow Template Review agents in Dify.
 
+For reviewer onboarding, batch-review training, screenshot/list prompt examples, and the time-savings pilot model, use `docs/guides/WEBFLOW_TEMPLATE_REVIEW_DIFY_AGENT_COURSE.md`.
+
 ## Start Here
 
 The Dify agent is a review assistant. It helps you find template submissions, check public-site evidence, draft feedback, and prepare review actions.
@@ -23,16 +25,17 @@ The human reviewer still makes the decision. The agent should not approve, rejec
 
 Copy one of these into the chat box in Dify Studio.
 
-| Goal                   | Prompt                                                                         |
-| ---------------------- | ------------------------------------------------------------------------------ |
-| Check the system       | `Check whether the review tools are connected.`                                |
-| Find work              | `Show me the current review queue.`                                            |
-| Resume work            | `Show my assigned reviews.`                                                    |
-| Look up a template     | `Find the template named [name] and summarize the review context.`             |
-| Validate a site        | `Run published-site validation for this template and explain the main issues.` |
-| Draft feedback         | `Draft creator feedback, but do not send or save it yet.`                      |
-| Request changes        | `I approve this feedback. Request changes for this version.`                   |
-| Get a manual checklist | `The validator is unavailable. Give me a manual review checklist.`             |
+| Goal                   | Prompt                                                                           |
+| ---------------------- | -------------------------------------------------------------------------------- |
+| Check the system       | `Check whether the review tools are connected.`                                  |
+| Find work              | `Show me the current review queue.`                                              |
+| Resume work            | `Show my assigned reviews.`                                                      |
+| Look up a template     | `Find the template named [name] and summarize the review context.`               |
+| Validate a site        | `Run published-site validation for this template and explain the main issues.`   |
+| Draft feedback         | `Draft creator feedback, but do not send or save it yet.`                        |
+| Fill a validator gap   | `Use sandbox/run_code to check [specific public URL/path] for [specific issue].` |
+| Request changes        | `I approve this feedback. Request changes for this version.`                     |
+| Get a manual checklist | `The validator is unavailable. Give me a manual review checklist.`               |
 
 ## Normal Review Flow
 
@@ -100,6 +103,12 @@ The sandbox can help inspect:
 
 The sandbox is for extra evidence. It is not a replacement for reviewer judgment.
 
+The agent should not use E2B `run_code` as the automatic first pass for every review. Every assisted review should use current published-site evidence, and the normal first pass is `template_review_run_published_site_validation` when available. For a comprehensive report, the agent should then use `run_code` or `run_command` as a targeted gap-fill pass for what the validator misses. For lightweight triage, use `run_code` or `run_command` when validator coverage is unavailable, incomplete, contradicted, too shallow for the reviewer question, or when the reviewer asks for a bounded public-site check.
+
+Reviewers can ask for sandbox/run_code at any point when they need reassurance on a specific public-site question. Keep the ask bounded, such as checking visible page copy, one utility page, form labels, metadata, same-origin links, or a typo/content pass. The agent should then state exactly which URLs or paths it fetched and label findings as Auto, Partial, or Manual.
+
+The comprehensive gap-fill pass should focus on visible page text, typo/content issues, utility-page content, page-by-page heading and metadata detail, same-origin links when validator coverage is incomplete, form labels, button copy, and additional same-origin pages when the validator crawl looks narrow.
+
 ## What Published-Site Validation Checks
 
 Published-site validation checks the public template site. It does not use Designer data, Preview URLs, or Airtable writes.
@@ -116,6 +125,24 @@ It can help find:
 - GSAP and custom-code policy signals.
 
 Treat this as review evidence, not the final decision.
+
+## Evidence Visibility
+
+When possible, keep the evidence trail visible for the reviewer.
+
+Useful evidence includes:
+
+- Dify message or conversation IDs.
+- Validator coverage and crawl paths.
+- Sandbox URLs or paths fetched.
+- Latency, tool-use, and no-write-boundary checks.
+
+For reviewer onboarding, show Dify backend conversation logs in a separate facilitator tab when
+needed. Keep Braintrust/Langfuse traces and eval details as internal training-owner evidence unless a
+sanitized summary has been prepared outside the Webflow component.
+
+Do not expose API keys, raw prompts with private payloads, creator PII, bearer tokens, private
+Airtable notes, or hidden system instructions.
 
 ## How The Agent Should Answer
 

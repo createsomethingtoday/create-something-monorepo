@@ -19,7 +19,7 @@ export type {
   HeadingAlign,
   HeadingLevel,
   HeadingProps,
-  HeadingScale,
+  HeadingScale
 } from './components/typography/Heading';
 
 // Canon Surfaces
@@ -32,6 +32,20 @@ export type { GlassCardProps, GlassVariant } from './components/cards/GlassCard'
 
 export { IconCard } from './components/cards/IconCard';
 export type { IconCardProps, IconCardVariant } from './components/cards/IconCard';
+
+export { TemplateCard } from './components/cards/TemplateCard';
+export type {
+  TemplateCardBadge,
+  TemplateCardImage,
+  TemplateCardLink,
+  TemplateCardProps
+} from './components/cards/TemplateCard';
+
+export { TemplateGrid } from './components/grid/TemplateGrid';
+export type { TemplateGridProps } from './components/grid/TemplateGrid';
+
+export { TemplateFilterBar } from './components/filter/TemplateFilterBar';
+export type { TemplateFilterBarProps } from './components/filter/TemplateFilterBar';
 
 // Canon Form Components
 export { TextField } from './components/form/TextField';
@@ -75,7 +89,7 @@ export {
   RuntimeStatus,
   SourceTruthStatus,
   WorkflowMetricsStrip,
-  canonControlDefaults,
+  canonControlDefaults
 } from './components/control/ControlComponents';
 export type {
   ActionExecutionItem,
@@ -114,7 +128,7 @@ export type {
   SuggestedPrompt,
   TriadTier,
   WorkflowMetricItem,
-  WorkflowMetricsStripProps,
+  WorkflowMetricsStripProps
 } from './components/control/ControlComponents';
 
 // Data Components
@@ -139,6 +153,16 @@ export type { ProcessStepsProps, ProcessStep } from './components/sections/Proce
 
 export { IconCardGrid } from './components/sections/IconCardGrid';
 export type { IconCardGridProps, IconCardGridItem } from './components/sections/IconCardGrid';
+
+// Training Components
+export { TemplateReviewerDifyCourse } from './components/training/TemplateReviewerDifyCourse';
+export type {
+  ReviewerAgentEmbed,
+  ReviewerCourseView,
+  ScreenshotAsset,
+  TemplateReviewerDifyCourseProps,
+  WalkthroughReviewItem
+} from './components/training/TemplateReviewerDifyCourse';
 
 // Legacy compatibility layout components
 export { Header } from './components/layout/Header';

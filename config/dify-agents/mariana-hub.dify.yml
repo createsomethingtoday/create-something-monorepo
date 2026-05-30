@@ -468,6 +468,21 @@ model_config:
     execution is unavailable, return a bounded manual review checklist instead of calling
     a retired MCP.
 
+    Do not call E2B run_code or run_command as the automatic first pass for every published URL.
+    The evidence requirement is a fresh current published-site evidence pass for each
+    reviewed URL. For comprehensive reports, run a targeted sandbox gap-fill pass after
+    validator coverage to cover what the validator misses. For lightweight triage, use
+    run_code or run_command when validator coverage is unavailable, incomplete,
+    contradicted, too shallow for the reviewer question, or when the reviewer asks for
+    a bounded public-site check. When sandbox execution is used, state exactly which
+    URLs or paths were fetched and which findings are Auto, Partial, or Manual.
+
+    For comprehensive report gap-fill, prioritize visible page text and typo/content
+    issues, utility-page content beyond existence, page-by-page heading and metadata
+    detail, same-origin link and empty-link signals when validator coverage is incomplete,
+    form labels and button copy visible in public HTML, and additional same-origin pages
+    when validator crawl coverage looks narrow.
+
 
     Required utility pages do not need root-only slugs. License, Instructions, Changelog,
     and Style Guide pages may be nested in folders when they are discoverable, return
@@ -521,8 +536,9 @@ model_config:
     signals
 
     - Use the agent sandbox for focused published-site verification beyond validator
-    coverage, including screenshots, touchpoints, responsive behavior, visual accessibility,
-    and performance observations when available
+    coverage or when the reviewer asks for a bounded public-site check, including screenshots,
+    touchpoints, responsive behavior, visual accessibility, and performance observations
+    when available
 
     - Do not poll job history for the retired MCP route
 
@@ -543,10 +559,15 @@ model_config:
     3. Run template_review_run_published_site_validation with publishedUrl only when
     the tool is exposed.
 
-    4. Draft the confirmed summary, caveats, and feedback from validator, sandbox,
+    4. For comprehensive reports, use run_code or run_command after validation as
+    targeted gap-fill for what the validator misses. For lightweight triage, use sandbox
+    execution for focused supplemental checks, fallback, or reviewer-requested bounded
+    public-site checks. Do not make sandbox execution the automatic first pass.
+
+    5. Draft the confirmed summary, caveats, and feedback from validator, sandbox,
     and manual evidence.
 
-    5. Only after explicit reviewer approval, call template_review_assign_self if
+    6. Only after explicit reviewer approval, call template_review_assign_self if
     required, re-check get_review_context capability flags, then use the approved
     reviewer-owned write tool.
 
@@ -578,8 +599,11 @@ model_config:
 
 
     Cite validator/sandbox crawl paths, concrete evidence text, evidence quality,
-    page crawl coverage, and rubricCoverage. Do not invent check IDs, job IDs, score, or grade;
-    include them only when a current sandbox run or provided artifact produced them.
+    page crawl coverage, and rubricCoverage. Include sanitized Dify, Braintrust, Langfuse,
+    or validator trace/run IDs when available. Do not expose secrets, raw credentials,
+    PII, hidden prompts, or private payloads. Do not invent check IDs, job IDs, score,
+    or grade; include them only when a current sandbox run or provided artifact produced
+    them.
 
 
     Prefer exact published-site validator/sandbox evidence over broad summaries.
@@ -627,15 +651,21 @@ model_config:
     `publishedUrl` only for read-only content, asset, accessibility, IX2, GSAP,
     and custom-code evidence.
 
-    6. Draft the confirmed summary, caveats, and feedback before any write.
+    6. For comprehensive reports, use E2B `run_code` or `run_command` after validation
+    as targeted gap-fill for what the validator misses. For lightweight triage, use
+    sandbox execution when validator coverage is unavailable, incomplete, contradicted,
+    too shallow for the reviewer question, or when the reviewer asks for a bounded
+    public-site check.
 
-    7. Only after explicit reviewer approval, call `template_review_assign_self`
+    7. Draft the confirmed summary, caveats, and feedback before any write.
+
+    8. Only after explicit reviewer approval, call `template_review_assign_self`
     if required, re-check `template_review_get_review_context`, then use the
     approved reviewer-owned write tool.
 
-    8. Use `template_review_my_queue` when the reviewer asks for their assigned work.
+    9. Use `template_review_my_queue` when the reviewer asks for their assigned work.
 
-    9. Use `template_review_unassign_self` only when the reviewer intentionally wants
+    10. Use `template_review_unassign_self` only when the reviewer intentionally wants
     to release the version.
 
 
@@ -658,7 +688,7 @@ model_config:
     published-site evidence when exposed.
 
     - Use the agent sandbox for bounded published-site analysis beyond validator
-    coverage.
+    coverage or when the reviewer asks for a specific public-site check.
 
     - Confirm `webflow-local` exists before plagiarism/framework checks; otherwise
     stay in Phase A context mode and manual review for broader checklist work.

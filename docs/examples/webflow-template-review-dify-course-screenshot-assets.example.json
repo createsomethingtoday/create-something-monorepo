@@ -1,0 +1,98 @@
+[
+  {
+    "id": "S1",
+    "url": "https://example.com/template-reviewer-course/s1-dify-studio.png",
+    "alt": "Dify Studio configuration for the reviewer agent",
+    "caption": "Correctly configured reviewer agent with instructions, model, knowledge, rubric, and tools visible."
+  },
+  {
+    "id": "S2",
+    "url": "https://example.com/template-reviewer-course/s2-dify-chat-home.png",
+    "alt": "Published Dify chat home for the reviewer agent",
+    "caption": "Reviewer-facing chat app with Start New chat and saved queue starters."
+  },
+  {
+    "id": "S4",
+    "url": "https://example.com/template-reviewer-course/s4-queue-output.png",
+    "alt": "Reviewer queue output with template names and published URLs",
+    "caption": "Queue output showing the row data reviewers should use before asking for review."
+  },
+  {
+    "id": "S5",
+    "url": "https://example.com/template-reviewer-course/s5-typed-list-batch.png",
+    "alt": "Typed list of templates and published URLs pasted into Dify",
+    "caption": "Clean parallel-review input format with 3-5 templates."
+  },
+  {
+    "id": "S6",
+    "url": "https://example.com/template-reviewer-course/s6-airtable-screenshot-batch.png",
+    "alt": "Airtable queue screenshot with published URLs visible",
+    "caption": "Screenshot workflow input after unrelated rows, emails, and internal fields are redacted."
+  },
+  {
+    "id": "S7",
+    "url": "https://example.com/template-reviewer-course/s7-screenshot-extraction-confirmation.png",
+    "alt": "Agent-confirmed extracted template list from screenshot",
+    "caption": "Agent confirms extracted names and URLs before beginning review."
+  },
+  {
+    "id": "S8",
+    "url": "https://example.com/template-reviewer-course/s8-validator-first-evidence.png",
+    "alt": "Validator-first published-site evidence",
+    "caption": "Validator output showing coverage and caveats before sandbox gap-fill."
+  },
+  {
+    "id": "S9",
+    "url": "https://example.com/template-reviewer-course/s9-run-code-gap-fill.png",
+    "alt": "Comprehensive sandbox gap-fill after validator coverage",
+    "caption": "Targeted run_code result filling validator gaps for a comprehensive report."
+  },
+  {
+    "id": "S10",
+    "url": "https://example.com/template-reviewer-course/s10-evidence-labels.png",
+    "alt": "Findings labeled Auto Partial and Manual",
+    "caption": "Evidence labels showing which findings are automated, partial, or manual."
+  },
+  {
+    "id": "S12",
+    "url": "https://example.com/template-reviewer-course/s12-draft-feedback.png",
+    "alt": "Agent draft feedback output with caveats and manual checks",
+    "caption": "Expected answer shape with confirmed summary, caveats, draft feedback, and manual checks."
+  },
+  {
+    "id": "S13",
+    "url": "https://example.com/template-reviewer-course/s13-write-approval.png",
+    "alt": "Reviewer prompt approving exact draft feedback",
+    "caption": "Safe approval prompt that names the exact write action and limits status changes."
+  },
+  {
+    "id": "S14",
+    "url": "https://example.com/template-reviewer-course/s14-no-write-confirmation.png",
+    "alt": "Agent confirms whether an external write was made",
+    "caption": "No-write confirmation or approved saved result after explicit reviewer approval."
+  },
+  {
+    "id": "S15",
+    "url": "https://example.com/template-reviewer-course/s15-manual-fallback.png",
+    "alt": "Manual fallback checklist from the reviewer agent",
+    "caption": "Fallback checklist when validator or sandbox evidence is unavailable, partial, or contradictory."
+  },
+  {
+    "id": "S16",
+    "url": "https://example.com/template-reviewer-course/s16-pilot-measurement.png",
+    "alt": "Pilot measurement tracker for reviewer time savings",
+    "caption": "Timing tracker with active minutes, tool switches, draft reuse, corrections, and rework."
+  },
+  {
+    "id": "S17",
+    "url": "https://example.com/template-reviewer-course/s17-multiple-dify-chat-tabs.png",
+    "alt": "Several Dify chat tabs open for parallel template review lanes",
+    "caption": "Multi-tab workflow with each tab tied to one template or small batch."
+  },
+  {
+    "id": "S18",
+    "url": "https://example.com/template-reviewer-course/s18-lane-comparison-before-approval.png",
+    "alt": "Reviewer compares Dify lane summaries before approving feedback",
+    "caption": "Reviewer compares compact lane summaries before approving any write action."
+  }
+]

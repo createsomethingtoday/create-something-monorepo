@@ -1,0 +1,26 @@
+[
+  {
+    "name": "Example SaaS Template",
+    "versionId": "ver_example_001",
+    "assetId": "asset_example_001",
+    "status": "Ready for review",
+    "publishedUrl": "https://example-saas-template.webflow.io",
+    "notes": "Training placeholder. Replace with an approved public training URL."
+  },
+  {
+    "name": "Example Portfolio Template",
+    "versionId": "ver_example_002",
+    "assetId": "asset_example_002",
+    "status": "Ready for review",
+    "publishedUrl": "https://example-portfolio-template.webflow.io",
+    "notes": "Training placeholder. Replace with an approved public training URL."
+  },
+  {
+    "name": "Example Agency Template",
+    "versionId": "ver_example_003",
+    "assetId": "asset_example_003",
+    "status": "Ready for review",
+    "publishedUrl": "https://example-agency-template.webflow.io",
+    "notes": "Training placeholder. Replace with an approved public training URL."
+  }
+]
