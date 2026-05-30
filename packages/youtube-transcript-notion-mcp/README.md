@@ -4,11 +4,11 @@ Remote MCP server for Notion-first YouTube transcript enrichment with a Supadata
 
 ## What It Exposes
 
-| Tier | Primitive | Surface |
-|------|-----------|---------|
-| Database | Resources | `youtube://status`, `youtube://video/{id}/transcript` |
-| Automation | Tools | `extract_transcript`, `enrich_notion_page`, `sync_video_to_notion`, `get_database_schema`, `search`, `fetch` |
-| Judgment | Prompts | `transcript_analysis` |
+| Tier       | Primitive | Surface                                                                                                      |
+| ---------- | --------- | ------------------------------------------------------------------------------------------------------------ |
+| Database   | Resources | `youtube://status`, `youtube://video/{id}/transcript`                                                        |
+| Automation | Tools     | `extract_transcript`, `enrich_notion_page`, `sync_video_to_notion`, `get_database_schema`, `search`, `fetch` |
+| Judgment   | Prompts   | `transcript_analysis`                                                                                        |
 
 ## Runtime Model
 
@@ -19,18 +19,18 @@ Remote MCP server for Notion-first YouTube transcript enrichment with a Supadata
 
 ## Environment
 
-| Variable | Required | Purpose |
-|----------|----------|---------|
-| `NOTION_API_KEY` | for Notion tools | Operator-managed Notion integration token |
-| `NOTION_DATABASE_ID` | optional | Default Notion database/data source ID |
-| `NOTION_PROPERTY_MAPPING_JSON` | optional | Default property mapping override |
-| `SUPADATA_API_KEY` | optional, recommended for production | Hosted transcript provider that avoids most YouTube session-trust failures |
-| `SUPADATA_TRANSCRIPT_MODE` | optional | `native` (default), `auto`, or `generate`; `native` keeps behavior closest to the original MCP and avoids AI-generated transcripts unless you opt in |
-| `STEEL_API_KEY` | optional | Enables browser fallback when direct transcript extraction fails |
-| `STEEL_PROFILE_ID` | optional, strongly recommended for YouTube | Reuses a persistent Steel profile so browser fallback is less likely to hit sign-in or anti-bot checks |
-| `YOUTUBE_TRANSCRIPT_LANGUAGE` | optional | Default transcript language, defaults to `en` |
-| `YOUTUBE_DIRECT_PROVIDER_MODE` | optional | `auto` (default) or `browser-first`; the deployed Worker uses `browser-first` because Cloudflare fetches are currently rate-limited on YouTube watch surfaces |
-| `MCP_BEARER_TOKEN` | optional, strongly recommended for public/shared deployments | Simple bearer protection for remote MCP endpoints |
+| Variable                       | Required                                                     | Purpose                                                                                                                                                       |
+| ------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `NOTION_API_KEY`               | for Notion tools                                             | Operator-managed Notion integration token                                                                                                                     |
+| `NOTION_DATABASE_ID`           | optional                                                     | Default Notion database/data source ID                                                                                                                        |
+| `NOTION_PROPERTY_MAPPING_JSON` | optional                                                     | Default property mapping override                                                                                                                             |
+| `SUPADATA_API_KEY`             | optional, recommended for production                         | Hosted transcript provider that avoids most YouTube session-trust failures                                                                                    |
+| `SUPADATA_TRANSCRIPT_MODE`     | optional                                                     | `native` (default), `auto`, or `generate`; `native` keeps behavior closest to the original MCP and avoids AI-generated transcripts unless you opt in          |
+| `STEEL_API_KEY`                | optional                                                     | Enables browser fallback when direct transcript extraction fails                                                                                              |
+| `STEEL_PROFILE_ID`             | optional, strongly recommended for YouTube                   | Reuses a persistent Steel profile so browser fallback is less likely to hit sign-in or anti-bot checks                                                        |
+| `YOUTUBE_TRANSCRIPT_LANGUAGE`  | optional                                                     | Default transcript language, defaults to `en`                                                                                                                 |
+| `YOUTUBE_DIRECT_PROVIDER_MODE` | optional                                                     | `auto` (default) or `browser-first`; the deployed Worker uses `browser-first` because Cloudflare fetches are currently rate-limited on YouTube watch surfaces |
+| `MCP_BEARER_TOKEN`             | optional, strongly recommended for public/shared deployments | Simple bearer protection for remote MCP endpoints                                                                                                             |
 
 To sync runtime secrets from Infisical into the deployed Worker, use:
 
@@ -58,6 +58,7 @@ If `SUPADATA_API_KEY`, `STEEL_API_KEY`, or `NOTION_API_KEY` are configured witho
 - `enrich_notion_page` reads that reference from page properties first, then falls back to page content if needed.
 - The tool extracts transcript + metadata and rewrites the transcript section on that same page instead of creating a second record.
 - `sync_video_to_notion` remains useful when the caller starts from a YouTube URL and wants the MCP to dedupe/create the matching Notion row.
+- Notion write tools require `confirmed=true`; callers must ask for explicit user confirmation before passing that input.
 
 ## Dormant Playlist Path
 
@@ -67,14 +68,14 @@ If `SUPADATA_API_KEY`, `STEEL_API_KEY`, or `NOTION_API_KEY` are configured witho
 
 ## Agent Legibility Contract
 
-| Field | Value |
-|-------|-------|
-| Entry point | `README.md`, `worker/index.ts`, `src/tools.ts` |
-| Boot command | `pnpm --filter youtube-transcript-notion-mcp-worker dev` |
-| Smoke command | `pnpm --filter @create-something/youtube-transcript-notion-mcp test && pnpm --filter @create-something/youtube-transcript-notion-mcp typecheck` |
-| Validation surfaces | vitest output, typecheck output, Worker health JSON at `/`, MCP Inspector against `/mcp`, remote Worker logs/telemetry |
-| UI validation path | none |
-| Escalation rule | Stop if direct extraction fails, Steel fallback is unavailable, and the target workflow depends on a live transcript or Notion credentials that are not present in the current environment. |
+| Field               | Value                                                                                                                                                                                       |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Entry point         | `README.md`, `worker/index.ts`, `src/tools.ts`                                                                                                                                              |
+| Boot command        | `pnpm --filter youtube-transcript-notion-mcp-worker dev`                                                                                                                                    |
+| Smoke command       | `pnpm --filter @create-something/youtube-transcript-notion-mcp test && pnpm --filter @create-something/youtube-transcript-notion-mcp typecheck`                                             |
+| Validation surfaces | vitest output, typecheck output, Worker health JSON at `/`, MCP Inspector against `/mcp`, remote Worker logs/telemetry                                                                      |
+| UI validation path  | none                                                                                                                                                                                        |
+| Escalation rule     | Stop if direct extraction fails, Steel fallback is unavailable, and the target workflow depends on a live transcript or Notion credentials that are not present in the current environment. |
 
 ## Local Workflow
 

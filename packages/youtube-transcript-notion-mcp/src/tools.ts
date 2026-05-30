@@ -26,13 +26,48 @@ const propertyMappingSchema = z
     playlistTitle: z.string().optional(),
     extractionMethod: z.string().optional(),
     transcriptStatus: z.string().optional(),
-    syncedAt: z.string().optional(),
+    syncedAt: z.string().optional()
   })
   .partial();
 
+const writeConfirmationSchema = z
+  .boolean()
+  .optional()
+  .describe(
+    'Must be true only after the user explicitly confirms the Notion write in the conversation.'
+  );
+
+function buildVisibleToolContent(
+  resultType: string,
+  narration: string,
+  data: Record<string, unknown>
+): string {
+  return JSON.stringify({
+    resultType,
+    summary: narration,
+    ...data
+  });
+}
+
+function writeConfirmationRequired(toolName: string, intendedAction: string) {
+  return appErrorResult(
+    'WRITE_CONFIRMATION_REQUIRED',
+    'Notion writes require explicit user confirmation before this tool can run. Ask the user to confirm the specific write, then call this tool with confirmed=true only after that confirmation.',
+    {
+      details: {
+        toolName,
+        intendedAction,
+        requiredInput: {
+          confirmed: true
+        }
+      }
+    }
+  );
+}
+
 function buildTranscriptPayload(
   record: TranscriptRecord,
-  includeTimestamps: boolean,
+  includeTimestamps: boolean
 ): Record<string, unknown> {
   return {
     videoId: record.videoId,
@@ -48,11 +83,11 @@ function buildTranscriptPayload(
     transcript: record.transcript,
     ...(includeTimestamps
       ? {
-          transcriptWithTimestamps: segmentsToTimestampedTranscript(record.segments),
+          transcriptWithTimestamps: segmentsToTimestampedTranscript(record.segments)
         }
       : {}),
     segments: record.segments,
-    segmentSummary: buildSegmentSummary(record.segments),
+    segmentSummary: buildSegmentSummary(record.segments)
   };
 }
 
@@ -62,7 +97,7 @@ function buildUnavailableRecord(
     videoId: string;
     videoUrl: string;
   },
-  error: TranscriptExtractionError,
+  error: TranscriptExtractionError
 ): TranscriptRecord {
   return {
     videoId: source.videoId,
@@ -73,11 +108,10 @@ function buildUnavailableRecord(
     extractionMethod: 'unavailable',
     language: undefined,
     warnings: [error.message],
-    sourceDiagnostics:
-      (error.diagnostics as TranscriptRecord['sourceDiagnostics']) ?? {
-        attempts: [],
-      },
-    captionsSource: 'none',
+    sourceDiagnostics: (error.diagnostics as TranscriptRecord['sourceDiagnostics']) ?? {
+      attempts: []
+    },
+    captionsSource: 'none'
   };
 }
 
@@ -86,13 +120,13 @@ function toToolError(error: unknown) {
     return appErrorResult(error.code, error.message, {
       details: error.diagnostics,
       warnings: error.warnings,
-      sourceDiagnostics: error.diagnostics,
+      sourceDiagnostics: error.diagnostics
     });
   }
 
   if (error instanceof NotionSyncServiceError) {
     return appErrorResult(error.code, error.message, {
-      details: error.details,
+      details: error.details
     });
   }
 
@@ -112,32 +146,45 @@ export function registerTools(server: McpServer, deps: RuntimeDependencies): voi
         'Extract a transcript from a YouTube watch URL. Uses Supadata first when configured, then falls back to the direct and Steel browser extraction chain if needed.',
       inputSchema: {
         videoUrl: z.string().describe('YouTube video URL or video ID'),
-        language: z.string().optional().describe('Preferred transcript language, defaults to the configured server language'),
+        language: z
+          .string()
+          .optional()
+          .describe('Preferred transcript language, defaults to the configured server language'),
         includeTimestamps: z
           .boolean()
           .optional()
-          .describe('Include a timestamped transcript string alongside the normalized transcript output'),
+          .describe(
+            'Include a timestamped transcript string alongside the normalized transcript output'
+          )
       },
       annotations: {
-        readOnlyHint: true,
-      },
+        readOnlyHint: true
+      }
     },
     async ({ videoUrl, language, includeTimestamps = false }) => {
       try {
         const record = await deps.transcriptService.extract({
           videoUrl,
           language,
-          includeTimestamps,
+          includeTimestamps
         });
 
         return appToolResult(
           buildTranscriptPayload(record, includeTimestamps),
           `Extracted ${record.segments.length} transcript segments for "${record.title}" using ${record.extractionMethod}.`,
+          undefined,
+          {
+            visibleContent: buildVisibleToolContent(
+              'youtube_transcript',
+              `Extracted ${record.segments.length} transcript segments for "${record.title}" using ${record.extractionMethod}.`,
+              buildTranscriptPayload(record, includeTimestamps)
+            )
+          }
         );
       } catch (error) {
         return toToolError(error);
       }
-    },
+    }
   );
 
   server.registerTool(
@@ -151,30 +198,44 @@ export function registerTools(server: McpServer, deps: RuntimeDependencies): voi
         videoUrl: z
           .string()
           .optional()
-          .describe('Optional YouTube URL or video ID override. If omitted, the tool reads the video reference from the page.'),
+          .describe(
+            'Optional YouTube URL or video ID override. If omitted, the tool reads the video reference from the page.'
+          ),
         propertyMapping: propertyMappingSchema
           .optional()
-          .describe('Optional Notion property mapping override for locating the source URL and writing metadata'),
+          .describe(
+            'Optional Notion property mapping override for locating the source URL and writing metadata'
+          ),
         includeTimestamps: z
           .boolean()
           .optional()
-          .describe('Write the transcript body with timestamp labels when a transcript is available'),
+          .describe(
+            'Write the transcript body with timestamp labels when a transcript is available'
+          ),
+        confirmed: writeConfirmationSchema
       },
       annotations: {
-        readOnlyHint: false,
-      },
+        readOnlyHint: false
+      }
     },
-    async ({ pageId, videoUrl, propertyMapping, includeTimestamps = false }) => {
+    async ({ pageId, videoUrl, propertyMapping, includeTimestamps = false, confirmed = false }) => {
       try {
+        if (confirmed !== true) {
+          return writeConfirmationRequired(
+            'enrich_notion_page',
+            `Update Notion page ${pageId} from its YouTube video reference.`
+          );
+        }
+
         const source = await deps.notionService.resolvePageVideoSource(pageId, {
           propertyMapping,
-          videoUrl,
+          videoUrl
         });
 
         let record: TranscriptRecord;
         try {
           record = await deps.transcriptService.extract({
-            videoUrl: source.videoUrl,
+            videoUrl: source.videoUrl
           });
         } catch (error) {
           if (!(error instanceof TranscriptExtractionError)) {
@@ -184,9 +245,9 @@ export function registerTools(server: McpServer, deps: RuntimeDependencies): voi
             {
               pageTitle: source.title,
               videoId: source.videoId,
-              videoUrl: source.videoUrl,
+              videoUrl: source.videoUrl
             },
-            error,
+            error
           );
         }
 
@@ -198,7 +259,7 @@ export function registerTools(server: McpServer, deps: RuntimeDependencies): voi
           includeTimestamps: includeTimestamps && Boolean(record.transcript.trim()),
           replaceExistingTranscript: true,
           transcriptHeaderLines: buildDefaultTranscriptHeaderLines(record),
-          transcriptBodyText,
+          transcriptBodyText
         });
 
         return appToolResult(
@@ -211,7 +272,7 @@ export function registerTools(server: McpServer, deps: RuntimeDependencies): voi
               videoId: source.videoId,
               source: source.source,
               sourceProperty: source.sourceProperty,
-              warnings: source.warnings,
+              warnings: source.warnings
             },
             video: {
               videoId: record.videoId,
@@ -220,16 +281,44 @@ export function registerTools(server: McpServer, deps: RuntimeDependencies): voi
               extractionMethod: record.extractionMethod,
               language: record.language,
               warnings: record.warnings,
-              sourceDiagnostics: record.sourceDiagnostics,
+              sourceDiagnostics: record.sourceDiagnostics
             },
-            notion: syncResult,
+            notion: syncResult
           },
           `Updated Notion page ${syncResult.pageId} from YouTube video "${record.title}".`,
+          undefined,
+          {
+            visibleContent: buildVisibleToolContent(
+              'notion_page_enrichment',
+              `Updated Notion page ${syncResult.pageId} from YouTube video "${record.title}".`,
+              {
+                source: {
+                  pageId: source.pageId,
+                  pageUrl: source.pageUrl,
+                  pageTitle: source.title,
+                  videoUrl: source.videoUrl,
+                  videoId: source.videoId,
+                  source: source.source,
+                  sourceProperty: source.sourceProperty,
+                  warnings: source.warnings
+                },
+                video: {
+                  videoId: record.videoId,
+                  url: record.url,
+                  title: record.title,
+                  extractionMethod: record.extractionMethod,
+                  language: record.language,
+                  warnings: record.warnings
+                },
+                notion: syncResult
+              }
+            )
+          }
         );
       } catch (error) {
         return toToolError(error);
       }
-    },
+    }
   );
 
   server.registerTool(
@@ -251,18 +340,32 @@ export function registerTools(server: McpServer, deps: RuntimeDependencies): voi
           .boolean()
           .optional()
           .describe('Append the transcript body to Notion with timestamp labels'),
+        confirmed: writeConfirmationSchema
       },
       annotations: {
-        readOnlyHint: false,
-      },
+        readOnlyHint: false
+      }
     },
-    async ({ videoUrl, databaseId, propertyMapping, includeTimestamps = false }) => {
+    async ({
+      videoUrl,
+      databaseId,
+      propertyMapping,
+      includeTimestamps = false,
+      confirmed = false
+    }) => {
       try {
+        if (confirmed !== true) {
+          return writeConfirmationRequired(
+            'sync_video_to_notion',
+            `Create or update a Notion transcript record for ${videoUrl}.`
+          );
+        }
+
         const record = await deps.transcriptService.extract({ videoUrl });
         const syncResult = await deps.notionService.syncTranscript(record, {
           databaseId,
           propertyMapping,
-          includeTimestamps,
+          includeTimestamps
         });
 
         return appToolResult(
@@ -274,18 +377,38 @@ export function registerTools(server: McpServer, deps: RuntimeDependencies): voi
               extractionMethod: record.extractionMethod,
               language: record.language,
               warnings: record.warnings,
-              sourceDiagnostics: record.sourceDiagnostics,
+              sourceDiagnostics: record.sourceDiagnostics
             },
-            notion: syncResult,
+            notion: syncResult
           },
           `${syncResult.action === 'created' ? 'Created' : 'Updated'} Notion page ${
             syncResult.pageId
           } for "${record.title}".`,
+          undefined,
+          {
+            visibleContent: buildVisibleToolContent(
+              'notion_video_sync',
+              `${syncResult.action === 'created' ? 'Created' : 'Updated'} Notion page ${
+                syncResult.pageId
+              } for "${record.title}".`,
+              {
+                video: {
+                  videoId: record.videoId,
+                  url: record.url,
+                  title: record.title,
+                  extractionMethod: record.extractionMethod,
+                  language: record.language,
+                  warnings: record.warnings
+                },
+                notion: syncResult
+              }
+            )
+          }
         );
       } catch (error) {
         return toToolError(error);
       }
-    },
+    }
   );
 
   server.registerTool(
@@ -298,28 +421,38 @@ export function registerTools(server: McpServer, deps: RuntimeDependencies): voi
         databaseId: z
           .string()
           .optional()
-          .describe('Optional override for the default Notion database/data source ID'),
+          .describe('Optional override for the default Notion database/data source ID')
       },
       annotations: {
-        readOnlyHint: true,
-      },
+        readOnlyHint: true
+      }
     },
     async ({ databaseId }) => {
       try {
         const schema = await deps.notionService.getDatabaseSchema(databaseId);
+        const schemaPayload = {
+          databaseId: schema.databaseId,
+          dataSourceId: schema.dataSourceId,
+          title: schema.title,
+          properties: schema.properties
+        };
+
         return appToolResult(
-          {
-            databaseId: schema.databaseId,
-            dataSourceId: schema.dataSourceId,
-            title: schema.title,
-            properties: schema.properties,
-          },
+          schemaPayload,
           `Loaded schema for Notion data source ${schema.dataSourceId}.`,
+          undefined,
+          {
+            visibleContent: buildVisibleToolContent(
+              'notion_database_schema',
+              `Loaded schema for Notion data source ${schema.dataSourceId}.`,
+              schemaPayload
+            )
+          }
         );
       } catch (error) {
         return toToolError(error);
       }
-    },
+    }
   );
 
   server.registerTool(
@@ -327,11 +460,11 @@ export function registerTools(server: McpServer, deps: RuntimeDependencies): voi
     {
       title: 'Search synced transcript records',
       inputSchema: {
-        query: z.string(),
+        query: z.string()
       },
       annotations: {
-        readOnlyHint: true,
-      },
+        readOnlyHint: true
+      }
     },
     async ({ query }) => {
       try {
@@ -340,7 +473,7 @@ export function registerTools(server: McpServer, deps: RuntimeDependencies): voi
       } catch (error) {
         return toToolError(error);
       }
-    },
+    }
   );
 
   server.registerTool(
@@ -348,11 +481,11 @@ export function registerTools(server: McpServer, deps: RuntimeDependencies): voi
     {
       title: 'Fetch a synced transcript record',
       inputSchema: {
-        id: z.string(),
+        id: z.string()
       },
       annotations: {
-        readOnlyHint: true,
-      },
+        readOnlyHint: true
+      }
     },
     async ({ id }) => {
       try {
@@ -361,6 +494,6 @@ export function registerTools(server: McpServer, deps: RuntimeDependencies): voi
       } catch (error) {
         return toToolError(error);
       }
-    },
+    }
   );
 }
