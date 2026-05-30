@@ -62,6 +62,7 @@ type DifyAgent = {
   allowed_mcp_servers: string[];
   enabled_tools: string[];
   builtin_tools?: DifyTool[];
+  knowledge_sources?: DifyKnowledgeSource[];
   policy_pack: string;
   instructions_source?: string;
   eval_suite: string;
@@ -79,6 +80,14 @@ type DifyAgent = {
   smoke_cases?: DifySmokeCase[];
   owner: string;
   write_policy?: WritePolicy;
+  notes?: string;
+};
+
+type DifyKnowledgeSource = {
+  name: string;
+  source: string;
+  dify_dataset_id?: string;
+  required: boolean;
   notes?: string;
 };
 
@@ -647,6 +656,13 @@ function renderInventoryDoc(inventory: DifyInventory): string {
     lines.push(`- Policy pack: ${code(agent.policy_pack)}`);
     if (agent.instructions_source)
       lines.push(`- Instructions source: ${code(agent.instructions_source)}`);
+    if (agent.knowledge_sources?.length) {
+      lines.push(
+        `- Knowledge sources: ${agent.knowledge_sources
+          .map((source) => code(source.name))
+          .join(', ')}`
+      );
+    }
     if (agent.smoke_command) lines.push(`- Smoke: ${code(agent.smoke_command)}`);
     if (agent.evals.local_command) lines.push(`- Local eval: ${code(agent.evals.local_command)}`);
     if (agent.evals.published_command)

@@ -2525,6 +2525,22 @@
         "eric_hub.hub_trace_lookup",
         "eric_hub.hub_update_state"
       ],
+      "knowledge_sources": [
+        {
+          "name": "Submission Guidelines",
+          "source": "Submission Guidelines Updates V2.md (internal; effective_2026-05; supersedes published guidelines on conflict)",
+          "dify_dataset_id": "34c9cb64-086b-45f1-bff0-ca726fb40bbb",
+          "required": true,
+          "notes": "Dify Knowledge attachment exported in config/dify-agents/eric-hub.dify.yml. Reviewer guideline evals require answers to cite and apply this source."
+        },
+        {
+          "name": "Grading Rubric",
+          "source": "Webflow template grading rubric knowledge attachment",
+          "dify_dataset_id": "a74b203d-c397-4189-a4f4-328f64a808c8",
+          "required": true,
+          "notes": "Dify Knowledge attachment exported in config/dify-agents/eric-hub.dify.yml. Used with Submission Guidelines for publishability judgment."
+        }
+      ],
       "policy_pack": "client-eric-hub.v1",
       "instructions_source": "config/dify-agents/eric-hub.json#agent_prompt",
       "eval_suite": "braintrust:eval:dify:eric-hub",
@@ -2536,12 +2552,15 @@
           "api_health",
           "expected_tool_use",
           "forbidden_tool_use",
+          "grounded_answer",
           "secret_refusal",
           "latency_budget",
           "policy_boundary",
           "write_confirmation"
         ],
-        "notes": "Imported from Dify DSL. Static-bearer Hub tools/call is covered by the inventory smoke case; direct E2B builtin tools are covered by the e2b-run-code-sanity smoke case."
+        "local_command": "pnpm braintrust:eval:dify:eric-hub:local",
+        "published_command": "pnpm braintrust:eval:dify:eric-hub",
+        "notes": "Imported from Dify DSL. Static-bearer Hub tools/call is covered by the inventory smoke case; direct E2B builtin tools are covered by the e2b-run-code-sanity smoke case. Reviewer guideline-alignment cases cover Submission Guidelines Updates V2 source citation and representative policy clauses."
       },
       "smoke_command": "pnpm dify:agent:smoke -- --agent-id eric-hub",
       "smoke_cases": [
@@ -2684,6 +2703,22 @@
         "natalia_hub.hub_trace_lookup",
         "natalia_hub.hub_update_state"
       ],
+      "knowledge_sources": [
+        {
+          "name": "Submission Guidelines",
+          "source": "Submission Guidelines Updates V2.md (internal; effective_2026-05; supersedes published guidelines on conflict)",
+          "dify_dataset_id": "34c9cb64-086b-45f1-bff0-ca726fb40bbb",
+          "required": true,
+          "notes": "Dify Knowledge attachment exported in config/dify-agents/natalia-hub.dify.yml. Reviewer guideline evals require answers to cite and apply this source."
+        },
+        {
+          "name": "Grading Rubric",
+          "source": "Webflow template grading rubric knowledge attachment",
+          "dify_dataset_id": "a74b203d-c397-4189-a4f4-328f64a808c8",
+          "required": true,
+          "notes": "Dify Knowledge attachment exported in config/dify-agents/natalia-hub.dify.yml. Used with Submission Guidelines for publishability judgment."
+        }
+      ],
       "policy_pack": "client-natalia-hub.v1",
       "instructions_source": "config/dify-agents/natalia-hub.json#agent_prompt",
       "eval_suite": "braintrust:eval:dify:natalia-hub",
@@ -2695,12 +2730,15 @@
           "api_health",
           "expected_tool_use",
           "forbidden_tool_use",
+          "grounded_answer",
           "secret_refusal",
           "latency_budget",
           "policy_boundary",
           "write_confirmation"
         ],
-        "notes": "Imported from Dify DSL. Static-bearer Hub tools/call is covered by the inventory smoke case; direct E2B builtin tools are covered by the e2b-run-code-sanity smoke case."
+        "local_command": "pnpm braintrust:eval:dify:natalia-hub:local",
+        "published_command": "pnpm braintrust:eval:dify:natalia-hub",
+        "notes": "Imported from Dify DSL. Static-bearer Hub tools/call is covered by the inventory smoke case; direct E2B builtin tools are covered by the e2b-run-code-sanity smoke case. Reviewer guideline-alignment cases cover Submission Guidelines Updates V2 source citation and representative policy clauses."
       },
       "smoke_command": "pnpm dify:agent:smoke -- --agent-id natalia-hub",
       "smoke_cases": [
@@ -2843,6 +2881,22 @@
         "mariana_hub.hub_trace_lookup",
         "mariana_hub.hub_update_state"
       ],
+      "knowledge_sources": [
+        {
+          "name": "Submission Guidelines",
+          "source": "Submission Guidelines Updates V2.md (internal; effective_2026-05; supersedes published guidelines on conflict)",
+          "dify_dataset_id": "34c9cb64-086b-45f1-bff0-ca726fb40bbb",
+          "required": true,
+          "notes": "Dify Knowledge attachment exported in config/dify-agents/mariana-hub.dify.yml. Reviewer guideline evals require answers to cite and apply this source."
+        },
+        {
+          "name": "Grading Rubric",
+          "source": "Webflow template grading rubric knowledge attachment",
+          "dify_dataset_id": "a74b203d-c397-4189-a4f4-328f64a808c8",
+          "required": true,
+          "notes": "Dify Knowledge attachment exported in config/dify-agents/mariana-hub.dify.yml. Used with Submission Guidelines for publishability judgment."
+        }
+      ],
       "policy_pack": "client-mariana-hub.v1",
       "instructions_source": "config/dify-agents/mariana-hub.json#agent_prompt",
       "eval_suite": "braintrust:eval:dify:mariana-hub",
@@ -2854,12 +2908,15 @@
           "api_health",
           "expected_tool_use",
           "forbidden_tool_use",
+          "grounded_answer",
           "secret_refusal",
           "latency_budget",
           "policy_boundary",
           "write_confirmation"
         ],
-        "notes": "Imported from Dify DSL. Static-bearer Hub tools/call is covered by the inventory smoke case; direct E2B builtin tools are covered by the e2b-run-code-sanity smoke case."
+        "local_command": "pnpm braintrust:eval:dify:mariana-hub:local",
+        "published_command": "pnpm braintrust:eval:dify:mariana-hub",
+        "notes": "Imported from Dify DSL. Static-bearer Hub tools/call is covered by the inventory smoke case; direct E2B builtin tools are covered by the e2b-run-code-sanity smoke case. Reviewer guideline-alignment cases cover Submission Guidelines Updates V2 source citation and representative policy clauses."
       },
       "smoke_command": "pnpm dify:agent:smoke -- --agent-id mariana-hub",
       "smoke_cases": [
@@ -3002,6 +3059,22 @@
         "vicki_hub.hub_trace_lookup",
         "vicki_hub.hub_update_state"
       ],
+      "knowledge_sources": [
+        {
+          "name": "Submission Guidelines",
+          "source": "Submission Guidelines Updates V2.md (internal; effective_2026-05; supersedes published guidelines on conflict)",
+          "dify_dataset_id": "34c9cb64-086b-45f1-bff0-ca726fb40bbb",
+          "required": true,
+          "notes": "Dify Knowledge attachment exported in config/dify-agents/vicki-hub.dify.yml. Reviewer guideline evals require answers to cite and apply this source."
+        },
+        {
+          "name": "Grading Rubric",
+          "source": "Webflow template grading rubric knowledge attachment",
+          "dify_dataset_id": "a74b203d-c397-4189-a4f4-328f64a808c8",
+          "required": true,
+          "notes": "Dify Knowledge attachment exported in config/dify-agents/vicki-hub.dify.yml. Used with Submission Guidelines for publishability judgment."
+        }
+      ],
       "policy_pack": "client-vicki-hub.v1",
       "instructions_source": "config/dify-agents/vicki-hub.json#agent_prompt",
       "eval_suite": "braintrust:eval:dify:vicki-hub",
@@ -3013,12 +3086,15 @@
           "api_health",
           "expected_tool_use",
           "forbidden_tool_use",
+          "grounded_answer",
           "secret_refusal",
           "latency_budget",
           "policy_boundary",
           "write_confirmation"
         ],
-        "notes": "Imported from Dify DSL. Static-bearer Hub tools/call is covered by the inventory smoke case; direct E2B builtin tools are covered by the e2b-run-code-sanity smoke case."
+        "local_command": "pnpm braintrust:eval:dify:vicki-hub:local",
+        "published_command": "pnpm braintrust:eval:dify:vicki-hub",
+        "notes": "Imported from Dify DSL. Static-bearer Hub tools/call is covered by the inventory smoke case; direct E2B builtin tools are covered by the e2b-run-code-sanity smoke case. Reviewer guideline-alignment cases cover Submission Guidelines Updates V2 source citation and representative policy clauses."
       },
       "smoke_command": "pnpm dify:agent:smoke -- --agent-id vicki-hub",
       "smoke_cases": [

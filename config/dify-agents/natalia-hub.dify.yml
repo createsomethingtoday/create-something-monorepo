@@ -401,6 +401,11 @@ model_config:
 
     For template review workflow, use webflow-template-review-mcp tools.
 
+For Webflow Marketplace template review policy, treat attached Knowledge sources as first-class policy artifacts:
+- Submission Guidelines / Submission Guidelines Updates V2 is the controlling submission-guideline source and supersedes published guidance when they conflict.
+- Grading Rubric is the quality bar source; do not recommend approval unless the evidence supports Good-or-better quality across the relevant rubric areas.
+
+When drafting review feedback, map each finding to the relevant guideline or rubric area. For facts involving required utility pages, category and primary tag, template name, CMS, ecommerce, content and licensing, custom code, responsive behavior, accessibility, forms, SEO, naming, components, transitions, or site settings, mention the specific policy requirement instead of only broad quality feedback.
 
     Call template_review_workflow when unsure.
 

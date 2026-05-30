@@ -66,10 +66,10 @@ Status: partial
 | `abundance-hub` | `braintrust` | `create-something-dify-agents` | `abundance_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `grounded_answer`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | `2026-05-14` |
 | `shea-hub` | `braintrust` | `create-something-dify-agents` | `shea_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
 | `pablo-hub` | `braintrust` | `create-something-dify-agents` | `pablo_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
-| `eric-hub` | `braintrust` | `create-something-dify-agents` | `eric_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
-| `natalia-hub` | `braintrust` | `create-something-dify-agents` | `natalia_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
-| `mariana-hub` | `braintrust` | `create-something-dify-agents` | `mariana_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
-| `vicki-hub` | `braintrust` | `create-something-dify-agents` | `vicki_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
+| `eric-hub` | `braintrust` | `create-something-dify-agents` | `eric_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `grounded_answer`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
+| `natalia-hub` | `braintrust` | `create-something-dify-agents` | `natalia_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `grounded_answer`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
+| `mariana-hub` | `braintrust` | `create-something-dify-agents` | `mariana_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `grounded_answer`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
+| `vicki-hub` | `braintrust` | `create-something-dify-agents` | `vicki_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `grounded_answer`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
 
 ## Smoke Cases
 
@@ -340,7 +340,10 @@ Status: partial
 - Inventory ID: `eric-hub`
 - Policy pack: `client-eric-hub.v1`
 - Instructions source: `config/dify-agents/eric-hub.json#agent_prompt`
+- Knowledge sources: `Submission Guidelines`, `Grading Rubric`
 - Smoke: `pnpm dify:agent:smoke -- --agent-id eric-hub`
+- Local eval: `pnpm braintrust:eval:dify:eric-hub:local`
+- Published eval: `pnpm braintrust:eval:dify:eric-hub`
 - Tools:
   - `eric_hub.hub_describe_proxy_tool` (read)
   - `eric_hub.hub_execute_proxy_tool` (external_side_effect, confirmation required)
@@ -370,7 +373,10 @@ Status: partial
 - Inventory ID: `natalia-hub`
 - Policy pack: `client-natalia-hub.v1`
 - Instructions source: `config/dify-agents/natalia-hub.json#agent_prompt`
+- Knowledge sources: `Submission Guidelines`, `Grading Rubric`
 - Smoke: `pnpm dify:agent:smoke -- --agent-id natalia-hub`
+- Local eval: `pnpm braintrust:eval:dify:natalia-hub:local`
+- Published eval: `pnpm braintrust:eval:dify:natalia-hub`
 - Tools:
   - `natalia_hub.hub_describe_proxy_tool` (read)
   - `natalia_hub.hub_execute_proxy_tool` (external_side_effect, confirmation required)
@@ -400,7 +406,10 @@ Status: partial
 - Inventory ID: `mariana-hub`
 - Policy pack: `client-mariana-hub.v1`
 - Instructions source: `config/dify-agents/mariana-hub.json#agent_prompt`
+- Knowledge sources: `Submission Guidelines`, `Grading Rubric`
 - Smoke: `pnpm dify:agent:smoke -- --agent-id mariana-hub`
+- Local eval: `pnpm braintrust:eval:dify:mariana-hub:local`
+- Published eval: `pnpm braintrust:eval:dify:mariana-hub`
 - Tools:
   - `mariana_hub.hub_describe_proxy_tool` (read)
   - `mariana_hub.hub_execute_proxy_tool` (external_side_effect, confirmation required)
@@ -430,7 +439,10 @@ Status: partial
 - Inventory ID: `vicki-hub`
 - Policy pack: `client-vicki-hub.v1`
 - Instructions source: `config/dify-agents/vicki-hub.json#agent_prompt`
+- Knowledge sources: `Submission Guidelines`, `Grading Rubric`
 - Smoke: `pnpm dify:agent:smoke -- --agent-id vicki-hub`
+- Local eval: `pnpm braintrust:eval:dify:vicki-hub:local`
+- Published eval: `pnpm braintrust:eval:dify:vicki-hub`
 - Tools:
   - `vicki_hub.hub_describe_proxy_tool` (read)
   - `vicki_hub.hub_execute_proxy_tool` (external_side_effect, confirmation required)
