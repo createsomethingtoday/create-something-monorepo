@@ -871,6 +871,36 @@ search_visible_connection_status_tool() {
   )
   rm -f "$services_body"
 
+  local -a preferred_services=(
+    "composio-toolkit-notion"
+    "composio-toolkit-gmail"
+    "composio-toolkit-googledrive"
+    "composio-toolkit-googlesheets"
+    "composio-toolkit-slack"
+  )
+  local -a ordered_services=()
+  local preferred candidate
+  for preferred in "${preferred_services[@]}"; do
+    for candidate in "${services[@]}"; do
+      if [[ "$candidate" == "$preferred" ]]; then
+        ordered_services+=("$candidate")
+      fi
+    done
+  done
+  for candidate in "${services[@]}"; do
+    local already_added=0
+    for preferred in "${ordered_services[@]}"; do
+      if [[ "$candidate" == "$preferred" ]]; then
+        already_added=1
+        break
+      fi
+    done
+    if [[ "$already_added" -eq 0 ]]; then
+      ordered_services+=("$candidate")
+    fi
+  done
+  services=("${ordered_services[@]}")
+
   local service_name
   for service_name in "${services[@]}"; do
     local body_file status payload
