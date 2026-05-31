@@ -128,13 +128,14 @@ Eval files:
 - `evals/braintrust/dify/youtube-transcript-notion-agent.eval.ts`
 - `scripts/dify-youtube-transcript-agent-smoke.ts`
 - `scripts/braintrust-dify-evals.env.example`
+- `docs/guides/DIFY_BRAINTRUST_EVAL_COMPLETION.md`
 
 Commands:
 
 ```bash
 pnpm dify:youtube-transcript:smoke
 pnpm dify:agent:smoke -- --agent-id youtube-transcript-notion-agent --case extract-known-video
-pnpm braintrust:eval:dify:local
+pnpm braintrust:eval:dify:youtube-transcript:local
 pnpm braintrust:eval:dify:youtube-transcript
 ```
 

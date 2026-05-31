@@ -103,7 +103,28 @@ pnpm braintrust:eval:mcp:hub-coverage
 pnpm braintrust:eval:mcp:intent-routing
 ```
 
-## 4) Integrate In Your App
+## 4) Run Dify Agent Evals
+
+For Dify-hosted agents, use the Dify completion runbook:
+
+- [guides/DIFY_BRAINTRUST_EVAL_COMPLETION.md](./guides/DIFY_BRAINTRUST_EVAL_COMPLETION.md)
+
+Core commands:
+
+```bash
+pnpm braintrust:eval:dify:list
+pnpm dify:inventory:check
+pnpm dify:coverage:check
+pnpm dify:agent:smoke -- --agent-id <agent-id>
+pnpm braintrust:eval:dify:<agent-script>:local
+pnpm braintrust:eval:dify:<agent-script>
+```
+
+Dify evals resolve per-agent Service API keys from the local environment or
+Infisical references declared in `config/dify/inventory.json`. Store and share
+only the Infisical reference, never the resolved key.
+
+## 5) Integrate In Your App
 
 Use the wrapper entrypoint:
 

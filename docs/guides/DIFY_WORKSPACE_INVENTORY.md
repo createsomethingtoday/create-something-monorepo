@@ -195,6 +195,11 @@ The eval gates should be implemented by a Braintrust eval file under
 must resolve from Infisical or the local process environment, never from checked-in
 files.
 
+Use [DIFY_BRAINTRUST_EVAL_COMPLETION.md](./DIFY_BRAINTRUST_EVAL_COMPLETION.md)
+for the operator process that turns an inventory-declared eval gate into a
+completed Braintrust run with Infisical-backed Dify Service API keys and Linear
+evidence.
+
 ## Relationship To MCP Registry
 
 The Dify inventory should point back to `config/mcp-hub/registry.json` through `source_mcp_registry_server` whenever a Dify MCP server is backed by one of our canonical MCPs.

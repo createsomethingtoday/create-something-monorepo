@@ -112,6 +112,10 @@ eval acceptance.
 13. Add and run the dedicated Braintrust eval.
 14. Publish or keep published only after the eval gates pass.
 
+Use [DIFY_BRAINTRUST_EVAL_COMPLETION.md](./DIFY_BRAINTRUST_EVAL_COMPLETION.md)
+for the eval completion checklist, current Dify eval commands, and the
+Infisical-backed Service API key pattern.
+
 The scaffold command defaults to a dry run. Use `--write-manifest` and
 `--write-inventory` only when you are ready to add the draft agent contract to
 the repo.
