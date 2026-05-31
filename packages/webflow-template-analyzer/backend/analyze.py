@@ -427,14 +427,34 @@ def analyze_template(url: str) -> dict:
 
         system_prompt = (
             "You are a Webflow template marketplace curator. Analyze templates and generate "
-            "accurate, compelling submission details. Be specific — avoid generic phrases like "
-            "'modern design' or 'perfect for any business'."
+            "accurate, compelling submission details for the Webflow marketplace. Be specific, "
+            "evidence-led, and commercially clear. Never invent pages, integrations, assets, "
+            "Figma files, support terms, refund terms, or alternate product names."
         )
 
         styles_list = ", ".join(STYLE_IDS.keys())
         features_list = ", ".join(FEATURE_IDS.keys())
         categories_list = ", ".join(CATEGORIES)
         secondary_tags_list = ", ".join(SECONDARY_TAGS)
+        description_guidance = """Description quality guidance derived from published Webflow Template asset listings:
+
+Short description:
+- Hard limit: 250 characters. Target 120-240 characters.
+- Use one polished sentence unless a second very short sentence materially improves clarity.
+- Name the template once, then state the specific audience/use case and the outcome it helps with.
+- Include one concrete differentiator only if visible in the evidence, such as CMS structure, ecommerce, booking forms, bento layouts, dark aesthetic, animations, property listings, course pages, or portfolio galleries.
+- Avoid vague marketplace filler and superlatives: "ultimate", "perfect for any business", "best ever", "revolutionize", "cutting-edge", "seamless solutions", "take your brand to the next level".
+- Do not use line breaks, markdown, emoji, HTML, quotes, or exclamation marks.
+
+Long description:
+- Return plain text only. Do not include HTML, markdown bullets, contact details, support links, refunds, license text, image references, or Figma claims unless the page evidence explicitly shows them.
+- Target 850-1,600 characters across 4 concise paragraphs separated by blank lines.
+- Paragraph 1: define the template, audience, and primary business/job-to-be-done.
+- Paragraph 2: describe the visible page/section coverage and content model. Mention exact page counts only when the crawl evidence supports them; otherwise use observed section names.
+- Paragraph 3: describe the visual direction and UX behavior using concrete language from the evidence, not generic "modern and clean" language alone.
+- Paragraph 4: describe customization and Webflow-specific capabilities that are actually detected, such as CMS, ecommerce, forms, interactions, responsive navigation, sliders, lightboxes, or CSS Grid.
+- Use the generated template name consistently. Do not mention any other template, brand, or product name.
+- If evidence is thin, write a narrower description instead of guessing."""
 
         user_prompt = f"""Analyze this Webflow template and return a JSON object for the marketplace submission form.
 
@@ -464,11 +484,13 @@ Available styles (pick 1–3):
 Available features (pick all that clearly apply):
 {features_list}
 
+{description_guidance}
+
 Return ONLY this JSON (no markdown, no explanation):
 {{
   "template_name": "2–4 word name specific to this template's purpose",
-  "short_description": "Max 250 chars. What it's for, who it's for, what makes it stand out.",
-  "long_description": "3–5 sentences: purpose, target audience, key sections, design style, what's unique.",
+  "short_description": "One marketplace-ready sentence, max 250 chars, specific audience/use case/outcome.",
+  "long_description": "Plain text, 4 concise paragraphs separated by blank lines, 850-1600 chars, evidence-led.",
   "categories": ["1–3 from the categories list above"],
   "secondary_tags": ["0–6 from the secondary tags list above"],
   "pricing": "Free or Paid",
@@ -504,13 +526,13 @@ Return ONLY this JSON (no markdown, no explanation):
 
         raw = response.content[0].text.strip()
         try:
-            result = json.loads(raw)
+            result = json.loads(raw, strict=False)
         except json.JSONDecodeError:
-            import re
-            m = re.search(r"\{[\s\S]*\}", raw)
+            import re as _re
+            m = _re.search(r"\{[\s\S]*\}", raw)
             if not m:
                 raise ValueError(f"Could not parse AI response as JSON:\n{raw}")
-            result = json.loads(m.group(0))
+            result = json.loads(m.group(0), strict=False)
 
         result["screenshots"] = screenshots
 
