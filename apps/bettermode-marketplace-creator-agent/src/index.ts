@@ -65,6 +65,15 @@ const POST_EVENT_TYPES = new Set([
 ]);
 const DEFAULT_REPLY_POST_TYPE_ID = 'xrkGxJPY9j4QOCB';
 const DEFAULT_SWEEP_LIMIT = 50;
+const DEFAULT_SWEEP_DRAFT_LIMIT = 5;
+
+type DraftOutcome =
+  | 'draft_ready'
+  | 'escalated'
+  | 'existing'
+  | 'externally_resolved'
+  | 'ignored'
+  | 'skipped';
 
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
@@ -485,7 +494,7 @@ async function generateDraftForPost(
   postId: string,
   env: Env,
   opts: { regenerate?: boolean } = {}
-): Promise<void> {
+): Promise<DraftOutcome> {
   const auth = bettermodeAuth(env);
   const networkId = env.BETTERMODE_DEFAULT_NETWORK_ID;
   if (!networkId) throw new Error('Missing BETTERMODE_DEFAULT_NETWORK_ID.');
@@ -494,11 +503,11 @@ async function generateDraftForPost(
   const post = await fetchPostThread(postId, token, auth);
   if (!post) {
     console.warn('post not found for draft', { postId });
-    return;
+    return 'ignored';
   }
 
   if (!shouldHandleSpace(post.spaceId || post.space?.id, env)) {
-    return;
+    return 'ignored';
   }
 
   const author = post.owner || post.createdBy;
@@ -526,7 +535,7 @@ async function generateDraftForPost(
       authorId: author?.id,
       reason: isAppAuthored ? 'app-authored post' : 'matches staff domain allowlist'
     });
-    return;
+    return 'skipped';
   }
 
   const internalReply = findInternalReply(post, env);
@@ -544,7 +553,7 @@ async function generateDraftForPost(
       replyId: internalReply.replyId,
       reason: internalReply.reason,
     });
-    return;
+    return 'externally_resolved';
   }
 
   const signalId = await upsertSignal(env.DB, {
@@ -570,7 +579,7 @@ async function generateDraftForPost(
       queueId: queueBefore.queue_id,
       status: queueBefore.status
     });
-    return;
+    return 'existing';
   }
 
   const difyConfig = difyAgentConfig(env);
@@ -583,7 +592,7 @@ async function generateDraftForPost(
       escalationReason: 'missing_dify_config',
     });
     console.error('Dify agent is not configured; skipping policy-grounded draft', { postId });
-    return;
+    return 'escalated';
   }
 
   let draft: string;
@@ -613,7 +622,7 @@ async function generateDraftForPost(
       postId,
       error: errorMessage(err)
     });
-    return;
+    return 'escalated';
   }
 
   const queueId = await upsertPendingDraft(env.DB, { signalId, draftContent: draft });
@@ -624,6 +633,7 @@ async function generateDraftForPost(
     nextAction: 'Review the drafted BetterMode reply in the admin block, then send, regenerate, or dismiss.',
     lastDraftedAt: new Date().toISOString(),
   });
+  return 'draft_ready';
 }
 
 async function runCommunitySweep(env: Env): Promise<void> {
@@ -639,19 +649,24 @@ async function runCommunitySweep(env: Env): Promise<void> {
   }
 
   const limit = parseInteger(env.COMMUNITY_SWEEP_LIMIT, DEFAULT_SWEEP_LIMIT, 1, 100);
+  const draftLimit = parseInteger(env.COMMUNITY_SWEEP_DRAFT_LIMIT, DEFAULT_SWEEP_DRAFT_LIMIT, 0, 20);
   const token = await appAccessToken(networkId, auth);
   const { nodes, totalCount } = await listRecentPostsBySpace(spaceId, limit, token, auth);
   let inspected = 0;
   let drafted = 0;
+  let draftAttempts = 0;
+  let deferred = 0;
+  let existing = 0;
   let skipped = 0;
   let escalated = 0;
+  let externallyResolved = 0;
 
   await recordCommunityEvent(env.DB, {
     eventType: 'community.sweep.started',
     eventSource: 'scheduled_sweep',
     dedupeKey: dedupeKey('sweep', 'community.sweep.started', String(Date.now()), null),
     spaceId,
-    metadata: { limit, bettermode_total_count: totalCount },
+    metadata: { limit, draft_limit: draftLimit, bettermode_total_count: totalCount },
   });
 
   for (const post of nodes) {
@@ -664,9 +679,27 @@ async function runCommunitySweep(env: Env): Promise<void> {
 
     const queue = await getQueueStatusByPostId(env.DB, post.id);
     await syncCommunityWorkItemForPost(env, post, { queue });
-    if (!queue.queue_id) {
-      await generateDraftForPost(post.id, env);
+    if (queue.queue_id) {
+      existing += 1;
+      continue;
+    }
+    if (draftAttempts >= draftLimit) {
+      deferred += 1;
+      continue;
+    }
+
+    draftAttempts += 1;
+    const outcome = await generateDraftForPost(post.id, env);
+    if (outcome === 'draft_ready') {
       drafted += 1;
+    } else if (outcome === 'escalated') {
+      escalated += 1;
+    } else if (outcome === 'externally_resolved') {
+      externallyResolved += 1;
+    } else if (outcome === 'skipped') {
+      skipped += 1;
+    } else if (outcome === 'existing') {
+      existing += 1;
     }
   }
 
@@ -676,10 +709,33 @@ async function runCommunitySweep(env: Env): Promise<void> {
     dedupeKey: dedupeKey('sweep', 'community.sweep.completed', String(Date.now()), null),
     spaceId,
     status: 'completed',
-    metadata: { inspected, drafted, skipped, escalated, limit, bettermode_total_count: totalCount },
+    metadata: {
+      inspected,
+      drafted,
+      draft_attempts: draftAttempts,
+      draft_limit: draftLimit,
+      deferred,
+      existing,
+      skipped,
+      externally_resolved: externallyResolved,
+      escalated,
+      limit,
+      bettermode_total_count: totalCount,
+    },
   });
 
-  console.log('community sweep completed', { inspected, drafted, skipped, escalated, totalCount });
+  console.log('community sweep completed', {
+    inspected,
+    drafted,
+    draftAttempts,
+    draftLimit,
+    deferred,
+    existing,
+    skipped,
+    externallyResolved,
+    escalated,
+    totalCount,
+  });
 }
 
 type WorkItemSyncOptions = {
