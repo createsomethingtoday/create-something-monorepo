@@ -161,4 +161,53 @@ assert.equal(
   false
 );
 
+const validatorBridgeHtml = `
+<!doctype html>
+<html>
+  <head>
+    <script>
+      window.__WF_REVIEW_BRIDGE = {
+        siteId: "69d649b3043481cc6f479fad",
+        version: "0.3.0",
+        marker: "__wf_review_snippet_v1",
+        bridgeToken: "wfbt_0123456789abcdef0123456789abcdef",
+        reviewSurface: "published-review",
+        reviewScriptUrl: "https://validation-worker.createsomething.workers.dev/app-validator/snippet/review.js"
+      };
+    </script>
+    <script src="https://validation-worker.createsomething.workers.dev/app-validator/snippet/review.js"></script>
+  </head>
+  <body></body>
+</html>`;
+
+const validatorBridgeResult = sandbox.validateGsapUsage(
+  validatorBridgeHtml,
+  'https://validator-bridge-template.webflow.io/'
+);
+
+assert.equal(validatorBridgeResult.passed, true);
+assert.equal(validatorBridgeResult.summary.flaggedCodeCount, 0);
+assert.ok(
+  validatorBridgeResult.details.allowedCustomCode.some(
+    (issue) => issue.policy === 'validator-review-bridge'
+  ),
+  'expected Webflow Way Validator bridge config to be allowed'
+);
+
+const bridgeWithExtraCodeResult = sandbox.validateGsapUsage(
+  validatorBridgeHtml.replace(
+    '</script>',
+    'window.location = "https://example.com";</script>'
+  ),
+  'https://validator-bridge-template.webflow.io/'
+);
+
+assert.equal(bridgeWithExtraCodeResult.passed, false);
+assert.ok(
+  bridgeWithExtraCodeResult.details.flaggedCode.some(
+    (issue) => issue.message === 'Custom script detected without approved GSAP patterns'
+  ),
+  'expected extra code appended to bridge config to remain blocked'
+);
+
 console.log('GSAP validation regression passed.');

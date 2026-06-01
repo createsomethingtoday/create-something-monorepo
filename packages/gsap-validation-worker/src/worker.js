@@ -10,6 +10,8 @@ var __require = /* @__PURE__ */ ((x) => typeof require !== "undefined" ? require
 // cloudflare-worker/lib/shared-validator.js
 var IX2_REJECTION_MESSAGE = "Legacy Webflow IX2 interactions detected. As of May 1, 2026, Marketplace templates submitted with IX2 interactions are rejected. Rebuild interactions with Webflow Interactions powered by GSAP (IX3), publish again, and rerun validation.";
 var UNICORN_STUDIO_REJECTION_MESSAGE = "Unicorn Studio embed detected. Marketplace templates may only use custom code for approved exceptions such as GSAP, font smoothing, no-index tags on licensing/changelog pages, or documented SVG snippets. Replace the Unicorn Studio effect with Webflow-native or approved GSAP implementation, publish again, and rerun validation.";
+var REVIEW_BRIDGE_MARKER = "__wf_review_snippet_v1";
+var REVIEW_BRIDGE_SCRIPT_PATH = "/app-validator/snippet/review.js";
 var LOTTIE_IX2_ACTION_TYPES = /* @__PURE__ */ new Set([
   "GENERAL_START_ACTION",
   "PLUGIN_LOTTIE",
@@ -140,6 +142,24 @@ function detectUnicornStudioUsage(html) {
   };
 }
 __name(detectUnicornStudioUsage, "detectUnicornStudioUsage");
+function isValidatorReviewBridgeScript(script) {
+  if (!/window\.__WF_REVIEW_BRIDGE\s*=/.test(script)) {
+    return false;
+  }
+  if (!script.includes(REVIEW_BRIDGE_MARKER) || !/bridgeToken\s*:\s*["']wfbt_[a-f0-9]+["']/i.test(script)) {
+    return false;
+  }
+  const withoutBridgeConfig = script.replace(/window\.__WF_REVIEW_BRIDGE\s*=\s*\{[\s\S]*?\}\s*;?/, "");
+  const withoutAllowedLoader = withoutBridgeConfig.replace(
+    /var\s+s\s*=\s*document\.createElement\(["']script["']\)\s*;\s*s\.src\s*=\s*["'][^"']*\/app-validator\/snippet\/review\.js["']\s*;\s*document\.head\.appendChild\(s\)\s*;?/,
+    ""
+  );
+  const hasReviewScriptUrl =
+    script.includes(REVIEW_BRIDGE_SCRIPT_PATH) ||
+    /reviewScriptUrl\s*:\s*["'][^"']+\/app-validator\/snippet\/review\.js["']/i.test(script);
+  return hasReviewScriptUrl && withoutAllowedLoader.trim() === "";
+}
+__name(isValidatorReviewBridgeScript, "isValidatorReviewBridgeScript");
 function validateGsapUsage(html, pageUrl, customPatterns = []) {
   const defaultPatterns = [
     // Core GSAP object and method access
@@ -583,6 +603,14 @@ function validateGsapUsage(html, pageUrl, customPatterns = []) {
       results.allowedCustomCode.push({
         scriptIndex: index,
         message: "Schema.org JSON-LD structured data (allowed)"
+      });
+      return;
+    }
+    if (isValidatorReviewBridgeScript(script)) {
+      results.allowedCustomCode.push({
+        scriptIndex: index,
+        message: "Webflow Way Validator bridge script (allowed)",
+        policy: "validator-review-bridge"
       });
       return;
     }
