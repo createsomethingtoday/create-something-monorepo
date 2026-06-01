@@ -50,7 +50,7 @@ The **Webflow Way Validator** provides **70-75% automated coverage** of standard
 | **CMS used for repeatable content** | ✅ FULL | 🌐 SERVER | Detects CMS collections and dynamic content usage, validates collection structure | None - fully automated |
 | **Modern image formats used (WebP, AVIF, JPEG)** | ⚠️ PARTIAL | 🌐 SERVER | Identifies image formats and suggests optimizations, checks for outdated formats | **Manual**: Verify format appropriateness for use case |
 | **Interactions cleaned of unused animations** | ❌ MANUAL | N/A | Not accessible via API | **Manual**: Review all interactions for unused/broken animations |
-| **Variable Modes for responsive breakpoints** | ❌ MANUAL | N/A | Variable modes not accessible via API | **Manual**: Verify responsive variable implementation |
+| **Variable Modes for responsive breakpoints** | ✅ FULL | 🔧 API `collection.getAllVariableModes()` | Checks collection variable modes and flags missing or non-responsive mode naming when mode data is available | **Manual**: Verify values are applied appropriately across breakpoints |
 | **No more than 3-4 combo classes per element** | ❌ MANUAL | N/A | Element-level analysis not available | **Manual**: Spot-check complex elements for class stacking |
 | **Below-fold images lazy-loaded** | ⚠️ PARTIAL | 🌐 SERVER | Basic lazy loading detection | **Manual**: Verify implementation quality and performance impact |
 | **Videos compressed, no autoplay without controls** | ❌ MANUAL | N/A | Video analysis not available | **Manual**: Test all video elements for compression and UX |
@@ -137,6 +137,7 @@ The validator uses **live Webflow Designer APIs** to collect current project dat
 ```javascript
 // Example API usage
 const variables = await webflow.getAllVariableCollections()
+const variableModes = await variables[0]?.getAllVariableModes()
 const components = await webflow.getAllComponents()
 const styles = await webflow.getAllStyles()
 const pages = await webflow.getAllPagesAndFolders()

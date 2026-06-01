@@ -176,21 +176,53 @@ function validateVariableModes(variables: DesignerData['variables']): CategoryRe
   const issues: ValidationIssue[] = [];
   let totalModes = 0;
   let collectionsWithModes = 0;
-  let hasResponsiveModes = false;
+  let responsiveModeNamesDetected = false;
   const responsiveModeNames = ['tablet', 'mobile', 'landscape', 'portrait', 'breakpoint', 'responsive'];
+  const collections = variables?.collections || [];
+  const modeAwareCollections = collections.filter(collection => Array.isArray(collection.modes));
+  const allCollectionsModeAware = collections.length > 0 && modeAwareCollections.length === collections.length;
+  const modeNames: string[] = [];
 
-  if (variables?.collections) {
-    for (const collection of variables.collections) {
+  if (collections.length > 0 && modeAwareCollections.length === 0) {
+    issues.push({
+      id: 'modes.unavailable',
+      category: 'Variable Modes',
+      severity: 'info',
+      message: 'Variable mode data was not available from the Designer payload.',
+      howToFix: 'Update the Validator app and rerun validation to inspect variable modes.'
+    });
+
+    return {
+      category: 'Variable Modes',
+      passed: true,
+      issues,
+      stats: {
+        totalModes,
+        collectionsWithModes,
+        hasResponsiveModes: responsiveModeNamesDetected,
+        responsiveModeNamesDetected,
+        modeNames: [],
+        modeDataAvailable: false,
+        collectionsCheckedForModes: 0
+      }
+    };
+  }
+
+  if (collections.length > 0) {
+    for (const collection of modeAwareCollections) {
       const modes = collection.modes || [];
       if (modes.length > 0) {
         collectionsWithModes++;
         totalModes += modes.length;
 
-        // Check if any mode suggests responsive design
+        // Mode names are user-defined. Track responsive-looking names for detail,
+        // but do not fail the category on names alone.
         for (const mode of modes) {
-          const modeName = (mode.name || '').toLowerCase();
+          const modeNameRaw = typeof mode.name === 'string' ? mode.name.trim() : '';
+          if (modeNameRaw) modeNames.push(modeNameRaw);
+          const modeName = modeNameRaw.toLowerCase();
           if (responsiveModeNames.some(keyword => modeName.includes(keyword))) {
-            hasResponsiveModes = true;
+            responsiveModeNamesDetected = true;
           }
         }
       }
@@ -198,29 +230,31 @@ function validateVariableModes(variables: DesignerData['variables']): CategoryRe
   }
 
   // Generate issues
-  if (variables?.collections && variables.collections.length > 0) {
+  if (collections.length > 0) {
     if (collectionsWithModes === 0) {
-      issues.push({
-        id: 'modes.none',
-        category: 'Variable Modes',
-        severity: 'warning',
-        message: 'No variable modes found. Modes enable responsive variable values.',
-        howToFix: 'Create modes like "Tablet" and "Mobile" to adjust spacing and typography for smaller screens.'
-      });
-    } else if (!hasResponsiveModes) {
-      issues.push({
-        id: 'modes.no-responsive',
-        category: 'Variable Modes',
-        severity: 'warning',
-        message: `${totalModes} modes found, but none appear to be for responsive breakpoints.`,
-        howToFix: 'Add modes for Tablet, Mobile Landscape, and Mobile Portrait to handle different screen sizes.'
-      });
+      if (allCollectionsModeAware) {
+        issues.push({
+          id: 'modes.none',
+          category: 'Variable Modes',
+          severity: 'warning',
+          message: 'No variable modes found. Modes enable responsive variable values.',
+          howToFix: 'Create modes like "Tablet" and "Mobile" to adjust spacing and typography for smaller screens.'
+        });
+      } else {
+        issues.push({
+          id: 'modes.partial-data',
+          category: 'Variable Modes',
+          severity: 'info',
+          message: 'Variable modes could not be checked for every variable collection.',
+          howToFix: 'Rerun validation after refreshing the Validator app so all collections include mode data.'
+        });
+      }
     } else {
       issues.push({
         id: 'modes.good',
         category: 'Variable Modes',
         severity: 'info',
-        message: `${totalModes} modes configured across ${collectionsWithModes} collections with responsive support.`
+        message: `${totalModes} modes configured across ${collectionsWithModes} collections.`
       });
     }
   }
@@ -229,7 +263,15 @@ function validateVariableModes(variables: DesignerData['variables']): CategoryRe
     category: 'Variable Modes',
     passed: issues.filter(i => i.severity === 'error').length === 0,
     issues,
-    stats: { totalModes, collectionsWithModes, hasResponsiveModes }
+    stats: {
+      totalModes,
+      collectionsWithModes,
+      hasResponsiveModes: responsiveModeNamesDetected,
+      responsiveModeNamesDetected,
+      modeNames: modeNames.slice(0, 10),
+      modeDataAvailable: true,
+      collectionsCheckedForModes: modeAwareCollections.length
+    }
   };
 }
 
