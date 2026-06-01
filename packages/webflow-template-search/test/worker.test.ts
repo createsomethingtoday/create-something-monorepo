@@ -90,6 +90,7 @@ const PUBLISHED_ASSETS = [
       '📋 Unique Viewers': 1900,
       '📋 Cumulative Purchases': 18,
       '🥞💲Template Price Filter (🏗️ only)': 79,
+      '👀📅Decision Date (Override)': '2026-04-05',
       '🚀📅Published Date': '2026-02-15',
       '🥞CMS Slug (formula)': 'setrex-website-template',
       '🎨Creator Name': 'Arini Studio',
@@ -894,6 +895,14 @@ describe('webflow-template-search worker', () => {
       const search = await callWorker(new Request('https://templates.test/api/templates/search?q=workflow'), env);
       const searchPayload = (await search.json()) as { items: Array<{ name: string }> };
       expect(searchPayload.items.map((item) => item.name)).toEqual(['Agentflow']);
+
+      const newestSearch = await callWorker(new Request('https://templates.test/api/templates/search?sort=newest&page_size=10'), env);
+      const newestPayload = (await newestSearch.json()) as { items: Array<{ name: string; published_date: string | null }> };
+      expect(newestPayload.items.map((item) => ({ name: item.name, published_date: item.published_date }))).toEqual([
+        { name: 'Setrex', published_date: '2026-04-05' },
+        { name: 'Catalis', published_date: '2026-03-10' },
+        { name: 'Agentflow', published_date: '2026-03-01' },
+      ]);
 
       const stylePageSearch = await callWorker(
         new Request('https://templates.test/api/templates/search?style_slug=modern&page_size=10'),

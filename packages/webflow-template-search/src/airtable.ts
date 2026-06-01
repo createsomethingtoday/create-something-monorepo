@@ -41,6 +41,7 @@ export const ASSET_FIELDS = [
   '📋 Unique Viewers',
   '📋 Cumulative Purchases',
   '🥞💲Template Price Filter (🏗️ only)',
+  '👀📅Decision Date (Override)',
   '🚀📅Published Date',
   '🥞CMS Slug',
   '🥞CMS Slug (formula)',
