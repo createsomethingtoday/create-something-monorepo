@@ -10,6 +10,7 @@
 		"tail": "node ../../../scripts/run-wrangler.mjs tail --config wrangler.jsonc",
 		"check": "tsc --noEmit",
 		"test": "vitest run",
+		"test:snippet": "node --test test/review-snippet-alt-regression.mjs",
 		"cf-typegen": "node ../../../scripts/run-wrangler.mjs types --config wrangler.jsonc",
 		"test:suite": "node test-suite.js",
 		"test:suite:dev": "WORKER_URL=http://localhost:8787 node test-suite.js",

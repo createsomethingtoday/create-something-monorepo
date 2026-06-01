@@ -236,6 +236,10 @@ export interface AccessibilityAnalysisResult {
   missingAltCount: number
 }
 
+function isWebflowBackgroundVideoPosterImage($img: cheerio.Cheerio<any>): boolean {
+  return $img.attr('alt') === '' && $img.closest('.w-background-video, [data-video-urls][data-poster-url]').length > 0
+}
+
 export function analyzeAccessibility(html: string): AccessibilityAnalysisResult {
   const $ = cheerio.load(html)
   
@@ -287,7 +291,7 @@ export function analyzeAccessibility(html: string): AccessibilityAnalysisResult 
     const alt = $img.attr('alt')
     const src = $img.attr('src') || 'unknown'
     
-    if (alt === undefined || alt.trim() === '') {
+    if (alt === undefined || (alt.trim() === '' && !isWebflowBackgroundVideoPosterImage($img))) {
       const context = $img.closest('[class]').attr('class') || 'unknown'
       const parentElement = $img.parent().get(0)?.tagName?.toLowerCase() || 'unknown'
       const elementPosition = index + 1

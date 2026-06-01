@@ -268,7 +268,7 @@ export function parseHTMLWorker(html: string): ParsedHTML {
 					if (metaMatch) {
 						const attributes = extractAttributes(metaMatch[0]);
 						return {
-							getAttribute: (name: string) => attributes[name] || null,
+							getAttribute: (name: string) => getExtractedAttribute(attributes, name),
 							hasAttribute: (name: string) => name in attributes,
 							tagName: 'META'
 						};
@@ -278,7 +278,7 @@ export function parseHTMLWorker(html: string): ParsedHTML {
 					if (metaMatch) {
 						const attributes = extractAttributes(metaMatch[0]);
 						return {
-							getAttribute: (name: string) => attributes[name] || null,
+							getAttribute: (name: string) => getExtractedAttribute(attributes, name),
 							hasAttribute: (name: string) => name in attributes,
 							tagName: 'META'
 						};
@@ -288,7 +288,7 @@ export function parseHTMLWorker(html: string): ParsedHTML {
 					if (metaMatch) {
 						const attributes = extractAttributes(metaMatch[0]);
 						return {
-							getAttribute: (name: string) => attributes[name] || null,
+							getAttribute: (name: string) => getExtractedAttribute(attributes, name),
 							hasAttribute: (name: string) => name in attributes,
 							tagName: 'META'
 						};
@@ -298,7 +298,7 @@ export function parseHTMLWorker(html: string): ParsedHTML {
 					if (metaMatch) {
 						const attributes = extractAttributes(metaMatch[0]);
 						return {
-							getAttribute: (name: string) => attributes[name] || null,
+							getAttribute: (name: string) => getExtractedAttribute(attributes, name),
 							hasAttribute: (name: string) => name in attributes,
 							tagName: 'META'
 						};
@@ -308,7 +308,7 @@ export function parseHTMLWorker(html: string): ParsedHTML {
 					if (metaMatch) {
 						const attributes = extractAttributes(metaMatch[0]);
 						return {
-							getAttribute: (name: string) => attributes[name] || null,
+							getAttribute: (name: string) => getExtractedAttribute(attributes, name),
 							hasAttribute: (name: string) => name in attributes,
 							tagName: 'META'
 						};
@@ -318,7 +318,7 @@ export function parseHTMLWorker(html: string): ParsedHTML {
 					if (metaMatch) {
 						const attributes = extractAttributes(metaMatch[0]);
 						return {
-							getAttribute: (name: string) => attributes[name] || null,
+							getAttribute: (name: string) => getExtractedAttribute(attributes, name),
 							hasAttribute: (name: string) => name in attributes,
 							tagName: 'META'
 						};
@@ -328,7 +328,7 @@ export function parseHTMLWorker(html: string): ParsedHTML {
 					if (metaMatch) {
 						const attributes = extractAttributes(metaMatch[0]);
 						return {
-							getAttribute: (name: string) => attributes[name] || null,
+							getAttribute: (name: string) => getExtractedAttribute(attributes, name),
 							hasAttribute: (name: string) => name in attributes,
 							tagName: 'META'
 						};
@@ -338,7 +338,7 @@ export function parseHTMLWorker(html: string): ParsedHTML {
 					if (metaMatch) {
 						const attributes = extractAttributes(metaMatch[0]);
 						return {
-							getAttribute: (name: string) => attributes[name] || null,
+							getAttribute: (name: string) => getExtractedAttribute(attributes, name),
 							hasAttribute: (name: string) => name in attributes,
 							tagName: 'META'
 						};
@@ -348,7 +348,7 @@ export function parseHTMLWorker(html: string): ParsedHTML {
 					if (metaMatch) {
 						const attributes = extractAttributes(metaMatch[0]);
 						return {
-							getAttribute: (name: string) => attributes[name] || null,
+							getAttribute: (name: string) => getExtractedAttribute(attributes, name),
 							hasAttribute: (name: string) => name in attributes,
 							tagName: 'META'
 						};
@@ -363,7 +363,7 @@ export function parseHTMLWorker(html: string): ParsedHTML {
 				if (linkMatch) {
 					const attributes = extractAttributes(linkMatch[0]);
 					return {
-						getAttribute: (name: string) => attributes[name] || null,
+						getAttribute: (name: string) => getExtractedAttribute(attributes, name),
 						hasAttribute: (name: string) => name in attributes,
 						tagName: 'LINK'
 					};
@@ -403,7 +403,7 @@ function createMockElement(htmlString: string): any {
 	const tagName = htmlString.match(/<(\w+)/)?.[1]?.toUpperCase() || 'UNKNOWN';
 
 	const mockElement: any = {
-		getAttribute: (name: string) => attributes[name] || null,
+		getAttribute: (name: string) => getExtractedAttribute(attributes, name),
 		hasAttribute: (name: string) => name in attributes,
 		textContent: htmlString.replace(/<[^>]*>/g, '').trim(),
 		tagName: tagName,
@@ -453,6 +453,10 @@ function createMockElement(htmlString: string): any {
 	}
 
 	return mockElement;
+}
+
+function getExtractedAttribute(attributes: Record<string, string>, name: string): string | null {
+	return Object.prototype.hasOwnProperty.call(attributes, name) ? attributes[name] : null;
 }
 
 function extractAttributes(htmlString: string): Record<string, string> {
