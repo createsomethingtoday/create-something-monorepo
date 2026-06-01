@@ -14,6 +14,8 @@ declare namespace Cloudflare {
     BETTERMODE_SIGNING_SECRET?: string;
     IGNORE_SIGNATURE?: string;
     BETTERMODE_REPLY_POST_TYPE_ID?: string;
+    COMMUNITY_SWEEP_ENABLED?: string;
+    COMMUNITY_SWEEP_LIMIT?: string;
     // Dify agent (drafting brain — Option B)
     DIFY_API_BASE?: string;
     DIFY_AGENT_API_KEY?: string;

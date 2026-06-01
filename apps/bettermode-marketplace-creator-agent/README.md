@@ -7,6 +7,8 @@ Cloudflare Worker for the **Marketplace Creator Agent** Bettermode app. Drafts a
 | Phase                                                        | What happens                                                                                                                                                                                                                  |
 | ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Webhook (`post.published` / `reply.published` / `*.updated`) | Verify Bettermode signature → enqueue draft generation in `ctx.waitUntil`                                                                                                                                                     |
+| Notification webhook                                          | Verify Bettermode signature → record observe-only `community_events` + upsert a normalized `community_work_items` row when a post ID is present. No drafts or replies are created directly from notifications.              |
+| Scheduled sweep                                               | Every 15 minutes, list recent Marketplace Creator posts, normalize `community_work_items`, and backfill drafts for creator-authored posts with no queue row.                                                                 |
 | Draft generation (async)                                     | Fetch post + thread via Bettermode GraphQL → call the published Dify agent with post metadata → Dify uses the BetterMode Creator MCP + Marketplace policy knowledge base → upsert `community_signals` + `community_queue` row |
 | Dynamic block render                                         | On admin view of a post, return a Slate UI: post excerpt, editable draft textarea, [Send / Regenerate / Dismiss]. Non-admins see a small hint block.                                                                          |
 | Send                                                         | Mint a member-context Bettermode token using the admin's `actorId` → `createReply` with the Comment post type → `publishPost` → mark queue row `sent`. Bettermode currently records the published comment as authored by the app account. |
@@ -18,6 +20,7 @@ Cloudflare Worker for the **Marketplace Creator Agent** Bettermode app. Drafts a
 - `GET /` — status page
 - `GET /health` — JSON smoke check
 - `POST /webhook` — Bettermode lifecycle and content events (signature required)
+- `POST /webhook/notification` or `/webhook/notifications` — Bettermode notification events (signature required, observe-only)
 - `POST /webhook/interaction` — dynamic block render + button callbacks (signature required)
 
 ## Storage
@@ -28,15 +31,17 @@ Reuses the `create-something-agency` D1 database (`a74e70ae-…-b90719c8dfd2`) a
 - `community_signals.source_id = <bettermode post ID>`
 - `community_signals.metadata` (JSON) — `{ network_id, space_id, parent_post_id, is_top_level, author_member_id, author_email, author_name }`
 - `community_queue` — `draft_content` is the AI-generated draft; `approved_content` is the (possibly edited) text the admin actually sent.
+- `community_events` — raw attention signals from content webhooks, notification webhooks, and scheduled sweeps.
+- `community_work_items` — normalized operator cockpit state: lane, status, priority, urgency, due time, draft linkage, and next action.
 
-Indexes added by `packages/agency/migrations/0021_bettermode_creator_agent_indexes.sql`:
+Core indexes added by `packages/agency/migrations/0021_bettermode_creator_agent_indexes.sql`:
 
 ```sql
 CREATE INDEX IF NOT EXISTS idx_signals_platform_source ON community_signals(platform, source_id);
 CREATE INDEX IF NOT EXISTS idx_queue_signal_status ON community_queue(signal_id, status);
 ```
 
-Apply once before first deploy:
+Apply pending agency D1 migrations before deploy:
 
 ```bash
 wrangler d1 migrations apply create-something-db
@@ -74,6 +79,8 @@ The script never echoes secret values; it pipes them straight into `wrangler sec
 | `BETTERMODE_MARKETPLACE_SPACE_SLUG` | `marketplace-creators` (informational)                                                                                                                                        |
 | `BETTERMODE_REPLY_POST_TYPE_ID`      | Bettermode Comment post type ID used for replies. Current Webflow Community value: `xrkGxJPY9j4QOCB`.                                                                          |
 | `BETTERMODE_ADMIN_USER_IDS`         | Comma-separated Bettermode user IDs allowed to send drafts. **Leave empty to fail closed** (no one can send).                                                                 |
+| `COMMUNITY_SWEEP_ENABLED`           | Set to `false` to pause the scheduled sweep without removing the cron trigger.                                                                                                 |
+| `COMMUNITY_SWEEP_LIMIT`             | Number of recent BetterMode rows to inspect on each sweep. Default `50`, max `100`.                                                                                            |
 | `DIFY_API_BASE`                     | `https://api.dify.ai/v1`                                                                                                                                                      |
 | `DIFY_AGENT_USER`                   | Stable Service API user id for Worker calls                                                                                                                                   |
 | `ALLOWED_ORIGINS`                   | CORS allowlist for `OPTIONS` requests                                                                                                                                         |
@@ -81,7 +88,7 @@ The script never echoes secret values; it pipes them straight into `wrangler sec
 ## Deploy
 
 ```bash
-# One-time: apply the index migration
+# Apply pending D1 migrations
 wrangler d1 migrations apply create-something-db
 
 # Push secrets from Infisical

@@ -1,6 +1,6 @@
 // Bettermode app: drafts admin replies for posts in the Webflow Community
 // Marketplace Creators space, then renders an admin-only dynamic block on
-// each post so the admin can edit and send the draft as themselves.
+// each post so the admin can edit and publish the drafted reply.
 //
 // Endpoints:
 //   GET  /                   status page
@@ -14,6 +14,7 @@ import {
   BettermodeError,
   createReply,
   fetchPostThread,
+  listRecentPostsBySpace,
   memberAccessToken,
   type BettermodePost
 } from './bettermode';
@@ -21,11 +22,17 @@ import { difyAgentConfig, generateDraftViaDify } from './dify-agent';
 import { verifySignature } from './signature';
 import { adminDraftSlate, interactionResponse, nonAdminSlate, type DraftBlockState } from './slate';
 import {
+  getQueueStatusByPostId,
   getLatestDraftByPostId,
+  markCommunityWorkItemSent,
+  markCommunityWorkItemSkipped,
   markRejected,
   markSent,
+  recordCommunityEvent,
   upsertPendingDraft,
-  upsertSignal
+  upsertSignal,
+  upsertCommunityWorkItem,
+  type QueueStatus
 } from './store';
 
 type WebhookPayload = {
@@ -57,6 +64,7 @@ const POST_EVENT_TYPES = new Set([
   'reply.updated'
 ]);
 const DEFAULT_REPLY_POST_TYPE_ID = 'xrkGxJPY9j4QOCB';
+const DEFAULT_SWEEP_LIMIT = 50;
 
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
@@ -83,6 +91,13 @@ export default {
         );
       }
 
+      if (
+        request.method === 'POST' &&
+        (url.pathname === '/webhook/notification' || url.pathname === '/webhook/notifications')
+      ) {
+        return await handleNotificationWebhook(request, env);
+      }
+
       if (request.method === 'POST' && url.pathname.startsWith('/webhook')) {
         return await handleWebhook(request, env, ctx, url.pathname);
       }
@@ -100,8 +115,72 @@ export default {
         { status }
       );
     }
+  },
+
+  async scheduled(_controller: ScheduledController, env: Env, ctx: ExecutionContext): Promise<void> {
+    ctx.waitUntil(runCommunitySweep(env));
   }
 } satisfies ExportedHandler<Env>;
+
+async function handleNotificationWebhook(request: Request, env: Env): Promise<Response> {
+  const rawBody = await request.text();
+
+  if (env.IGNORE_SIGNATURE !== 'true') {
+    const valid = await verifySignature(request, rawBody, env.BETTERMODE_SIGNING_SECRET);
+    if (!valid) {
+      return jsonResponse({ error: 'Invalid signature' }, request, env, { status: 403 });
+    }
+  }
+
+  const payload = parseJson<Record<string, unknown>>(rawBody);
+  const postId = extractPostId(payload);
+  const actor = extractActor(payload);
+  const eventType = stringValue(payload.type) || stringValue(payload.eventType) || 'notification';
+  const spaceId = extractSpaceId(payload);
+
+  await recordCommunityEvent(env.DB, {
+    eventType,
+    eventSource: 'notification_webhook',
+    dedupeKey: dedupeKey('notification', eventType, postId, stringValue(payload.id)),
+    sourceId: postId,
+    sourceUrl: extractSourceUrl(payload),
+    spaceId,
+    actorId: actor.id,
+    actorName: actor.name,
+    actorEmail: actor.email,
+    payload,
+    metadata: { observed_only: true },
+  });
+
+  if (postId) {
+    await upsertCommunityWorkItem(env.DB, {
+      postId,
+      sourceUrl: extractSourceUrl(payload),
+      title: stringValue(payload.title) || stringValue((payload.data as Record<string, unknown> | undefined)?.title),
+      lane: 'notification',
+      status: 'new',
+      priority: 5,
+      urgency: 'medium',
+      nextAction: 'Inspect BetterMode thread and decide whether a draft, escalation, or no-op is needed.',
+      dueAt: dueAtForUrgency('medium'),
+      authorId: actor.id,
+      authorName: actor.name,
+      authorEmail: actor.email,
+      metadata: { source: 'notification_webhook', event_type: eventType },
+    });
+  }
+
+  return jsonResponse(
+    {
+      type: eventType,
+      status: 'SUCCEEDED',
+      observed_only: true,
+      source_id: postId ?? null,
+    },
+    request,
+    env,
+  );
+}
 
 async function handleWebhook(
   request: Request,
@@ -145,12 +224,28 @@ async function handleWebhook(
     );
   }
 
+  const webhookPostId = webhook.data?.object?.id || webhook.entityId;
+  ctx.waitUntil(
+    recordCommunityEvent(env.DB, {
+      eventType: webhook.type || 'webhook',
+      eventSource: 'content_webhook',
+      dedupeKey: dedupeKey('content', webhook.type || 'webhook', webhookPostId, webhook.data?.interactionId),
+      sourceId: webhookPostId ?? null,
+      spaceId: webhook.data?.object?.spaceId ?? webhook.data?.target?.spaceId ?? null,
+      actorId: webhook.data?.actorId ?? null,
+      payload: webhook,
+      metadata: { pathname },
+    }).catch((err) => {
+      console.error('community event record failed', { error: errorMessage(err) });
+    }),
+  );
+
   if (pathname === '/webhook/interaction') {
     return jsonResponse(await handleInteraction(webhook, env, ctx), request, env);
   }
 
   if (pathname === '/webhook' && webhook.type && POST_EVENT_TYPES.has(webhook.type)) {
-    const postId = webhook.data?.object?.id || webhook.entityId;
+    const postId = webhookPostId;
     const spaceId = webhook.data?.object?.spaceId;
     console.log('matched post event', { type: webhook.type, postId, spaceId });
     if (postId && shouldHandleSpace(spaceId, env)) {
@@ -261,6 +356,7 @@ async function handleSend(webhook: WebhookPayload, env: Env): Promise<Record<str
     );
 
     await markSent(env.DB, state.draft.id, draftText, reply.id ?? null);
+    await markCommunityWorkItemSent(env.DB, postId, state.draft.id);
 
     const refreshed = await loadDraftState(postId, env);
     refreshed.notice = { kind: 'success', title: 'Reply sent.' };
@@ -330,6 +426,7 @@ async function handleDismiss(webhook: WebhookPayload, env: Env): Promise<Record<
   const state = await loadDraftState(postId, env);
   if (state.draft) {
     await markRejected(env.DB, state.draft.id);
+    await markCommunityWorkItemSkipped(env.DB, postId, 'Draft dismissed by admin.');
   }
   const refreshed = await loadDraftState(postId, env);
   refreshed.notice = { kind: 'info', title: 'Draft dismissed.' };
@@ -407,22 +504,84 @@ async function generateDraftForPost(
   const author = post.owner || post.createdBy;
   const email = author?.email || '';
   const isTopLevel = !post.parentId;
+  const isAppAuthored = isAppAuthor(author);
+  const isStaffAuthored = isStaffAuthorEmail(email, env);
+  const queueBefore = await getQueueStatusByPostId(env.DB, post.id);
 
   // Skip drafting when the author is internal Webflow staff (e.g. team
   // announcements like "Interactions with GSAP training"). The agent's
   // job is to draft admin replies to creator questions, not to reply
   // to its own team's announcements.
-  if (isStaffAuthorEmail(email, env)) {
+  if (isStaffAuthored || isAppAuthored) {
+    await syncCommunityWorkItemForPost(env, post, {
+      queue: queueBefore,
+      status: 'skipped',
+      nextAction: isAppAuthored
+        ? 'No action needed: post was authored by the Marketplace Creator Agent.'
+        : 'No action needed: staff-authored post is outside creator-reply drafting scope.',
+    });
     console.log('skipping draft for staff author', {
       postId,
       authorEmail: email,
-      reason: 'matches staff domain allowlist'
+      authorId: author?.id,
+      reason: isAppAuthored ? 'app-authored post' : 'matches staff domain allowlist'
+    });
+    return;
+  }
+
+  const internalReply = findInternalReply(post, env);
+  if (internalReply) {
+    await syncCommunityWorkItemForPost(env, post, {
+      queue: queueBefore,
+      status: 'externally_resolved',
+      nextAction:
+        internalReply.reason === 'app_reply'
+          ? 'No action needed: the Marketplace Creator Agent has already replied in this thread.'
+          : 'No action needed: Webflow staff has already replied in this thread.',
+    });
+    console.log('skipping draft for already answered thread', {
+      postId,
+      replyId: internalReply.replyId,
+      reason: internalReply.reason,
+    });
+    return;
+  }
+
+  const signalId = await upsertSignal(env.DB, {
+    postId: post.id,
+    postUrl: post.url,
+    postContent: stripBettermodeContent(post),
+    metadata: {
+      network_id: networkId,
+      space_id: post.spaceId || post.space?.id || null,
+      parent_post_id: post.parentId || null,
+      is_top_level: isTopLevel,
+      author_member_id: author?.id || null,
+      author_email: email || null,
+      author_name: author?.name || null
+    }
+  });
+
+  await syncCommunityWorkItemForPost(env, post, { queue: queueBefore, signalId });
+
+  if (queueBefore.queue_id && opts.regenerate !== true) {
+    console.log('skipping draft because queue row already exists', {
+      postId,
+      queueId: queueBefore.queue_id,
+      status: queueBefore.status
     });
     return;
   }
 
   const difyConfig = difyAgentConfig(env);
   if (!difyConfig) {
+    await syncCommunityWorkItemForPost(env, post, {
+      queue: queueBefore,
+      signalId,
+      status: 'escalated',
+      nextAction: 'Dify is not configured; inspect manually and restore drafting credentials.',
+      escalationReason: 'missing_dify_config',
+    });
     console.error('Dify agent is not configured; skipping policy-grounded draft', { postId });
     return;
   }
@@ -443,6 +602,13 @@ async function generateDraftForPost(
     );
     draft = result.answer;
   } catch (err) {
+    await syncCommunityWorkItemForPost(env, post, {
+      queue: queueBefore,
+      signalId,
+      status: 'escalated',
+      nextAction: 'Dify draft generation failed; inspect manually and retry once Dify is healthy.',
+      escalationReason: errorMessage(err),
+    });
     console.error('Dify draft failed; skipping draft without policy grounding', {
       postId,
       error: errorMessage(err)
@@ -450,22 +616,188 @@ async function generateDraftForPost(
     return;
   }
 
-  const signalId = await upsertSignal(env.DB, {
-    postId: post.id,
-    postUrl: post.url,
-    postContent: stripBettermodeContent(post),
-    metadata: {
-      network_id: networkId,
-      space_id: post.spaceId || post.space?.id || null,
-      parent_post_id: post.parentId || null,
-      is_top_level: isTopLevel,
-      author_member_id: author?.id || null,
-      author_email: email || null,
-      author_name: author?.name || null
-    }
+  const queueId = await upsertPendingDraft(env.DB, { signalId, draftContent: draft });
+  await syncCommunityWorkItemForPost(env, post, {
+    queue: { ...queueBefore, signal_id: signalId, queue_id: queueId, status: 'pending', created_at: null, sent_at: null },
+    signalId,
+    status: 'draft_ready',
+    nextAction: 'Review the drafted BetterMode reply in the admin block, then send, regenerate, or dismiss.',
+    lastDraftedAt: new Date().toISOString(),
+  });
+}
+
+async function runCommunitySweep(env: Env): Promise<void> {
+  if (env.COMMUNITY_SWEEP_ENABLED === 'false') {
+    return;
+  }
+
+  const auth = bettermodeAuth(env);
+  const networkId = env.BETTERMODE_DEFAULT_NETWORK_ID;
+  const spaceId = env.BETTERMODE_MARKETPLACE_SPACE_ID;
+  if (!networkId || !spaceId) {
+    throw new Error('Missing Bettermode network or marketplace space ID.');
+  }
+
+  const limit = parseInteger(env.COMMUNITY_SWEEP_LIMIT, DEFAULT_SWEEP_LIMIT, 1, 100);
+  const token = await appAccessToken(networkId, auth);
+  const { nodes, totalCount } = await listRecentPostsBySpace(spaceId, limit, token, auth);
+  let inspected = 0;
+  let drafted = 0;
+  let skipped = 0;
+  let escalated = 0;
+
+  await recordCommunityEvent(env.DB, {
+    eventType: 'community.sweep.started',
+    eventSource: 'scheduled_sweep',
+    dedupeKey: dedupeKey('sweep', 'community.sweep.started', String(Date.now()), null),
+    spaceId,
+    metadata: { limit, bettermode_total_count: totalCount },
   });
 
-  await upsertPendingDraft(env.DB, { signalId, draftContent: draft });
+  for (const post of nodes) {
+    inspected += 1;
+    const author = post.owner || post.createdBy;
+    if (isStaffAuthorEmail(author?.email, env) || isAppAuthor(author)) {
+      skipped += 1;
+      continue;
+    }
+
+    const queue = await getQueueStatusByPostId(env.DB, post.id);
+    await syncCommunityWorkItemForPost(env, post, { queue });
+    if (!queue.queue_id) {
+      await generateDraftForPost(post.id, env);
+      drafted += 1;
+    }
+  }
+
+  await recordCommunityEvent(env.DB, {
+    eventType: 'community.sweep.completed',
+    eventSource: 'scheduled_sweep',
+    dedupeKey: dedupeKey('sweep', 'community.sweep.completed', String(Date.now()), null),
+    spaceId,
+    status: 'completed',
+    metadata: { inspected, drafted, skipped, escalated, limit, bettermode_total_count: totalCount },
+  });
+
+  console.log('community sweep completed', { inspected, drafted, skipped, escalated, totalCount });
+}
+
+type WorkItemSyncOptions = {
+  queue?: QueueStatus;
+  signalId?: string | null;
+  status?: string;
+  nextAction?: string | null;
+  lastDraftedAt?: string | null;
+  escalationReason?: string | null;
+};
+
+async function syncCommunityWorkItemForPost(
+  env: Env,
+  post: BettermodePost,
+  opts: WorkItemSyncOptions = {},
+): Promise<void> {
+  const queue = opts.queue ?? (await getQueueStatusByPostId(env.DB, post.id));
+  const classification = classifyPost(post);
+  const status = opts.status ?? statusFromQueue(queue);
+  const author = post.owner || post.createdBy;
+
+  await upsertCommunityWorkItem(env.DB, {
+    postId: post.id,
+    sourceUrl: post.url ?? null,
+    title: post.title ?? null,
+    lane: classification.lane,
+    status,
+    priority: classification.priority,
+    urgency: classification.urgency,
+    nextAction: opts.nextAction ?? nextActionForStatus(status, classification.lane),
+    dueAt: dueAtForUrgency(classification.urgency),
+    authorId: author?.id ?? null,
+    authorName: author?.name ?? null,
+    authorEmail: author?.email ?? null,
+    signalId: opts.signalId ?? queue.signal_id,
+    queueId: queue.queue_id,
+    draftStatus: queue.status,
+    lastActivityAt: post.lastActivityAt ?? post.updatedAt ?? post.publishedAt ?? post.createdAt ?? null,
+    lastDraftedAt: opts.lastDraftedAt ?? (queue.queue_id ? queue.created_at : null),
+    lastSentAt: queue.sent_at,
+    escalationReason: opts.escalationReason ?? classification.escalationReason,
+    metadata: {
+      is_top_level: !post.parentId,
+      parent_post_id: post.parentId ?? null,
+      space_id: post.spaceId || post.space?.id || null,
+      replies_count: post.repliesCount ?? null,
+      total_replies_count: post.totalRepliesCount ?? null,
+      classification_reason: classification.reason,
+    },
+  });
+}
+
+function classifyPost(post: BettermodePost): {
+  lane: string;
+  priority: number;
+  urgency: string;
+  reason: string;
+  escalationReason: string | null;
+} {
+  const text = `${post.title ?? ''} ${stripBettermodeContent(post)}`.toLowerCase();
+  if (matches(text, ['copyright', 'copied', 'plagiar', 'ip issue', 'originality'])) {
+    return {
+      lane: 'ip_review',
+      priority: 9,
+      urgency: 'high',
+      reason: 'possible copied design or intellectual property issue',
+      escalationReason: 'private_marketplace_review_required',
+    };
+  }
+  if (matches(text, ['validator', 'validation', 'gsap', 'lottie', 'ix2', 'custom script'])) {
+    return { lane: 'validation_bug', priority: 8, urgency: 'high', reason: 'validator or submission blocker', escalationReason: null };
+  }
+  if (matches(text, ['page not found', 'not showing', 'missing', 'category', 'marketplace update', 'published yet'])) {
+    return { lane: 'listing_bug', priority: 8, urgency: 'high', reason: 'marketplace listing or indexing issue', escalationReason: null };
+  }
+  if (matches(text, ['refund', 'stripe'])) {
+    return { lane: 'policy_refund', priority: 7, urgency: 'medium', reason: 'refund or policy question', escalationReason: null };
+  }
+  if (matches(text, ['reject', 'rejection', 'review ticket', 'ticket #'])) {
+    return { lane: 'review_followup', priority: 7, urgency: 'medium', reason: 'template review follow-up', escalationReason: null };
+  }
+  if (matches(text, ['profile', 'account mapping', 'dashboard'])) {
+    return { lane: 'creator_account', priority: 5, urgency: 'medium', reason: 'creator profile or account question', escalationReason: null };
+  }
+  if (matches(text, ['affiliate', 'redemption', 'workspace limit', 'feature request', 'should allow', 'propose'])) {
+    return { lane: 'product_feedback', priority: 4, urgency: 'low', reason: 'creator product feedback', escalationReason: null };
+  }
+  if (matches(text, ['customization', 'recommend', 'services', 'introduce'])) {
+    return { lane: 'creator_to_creator', priority: 3, urgency: 'low', reason: 'creator-to-creator services discussion', escalationReason: null };
+  }
+  return { lane: 'support_question', priority: 6, urgency: 'medium', reason: 'general creator support question', escalationReason: null };
+}
+
+function statusFromQueue(queue: QueueStatus): string {
+  if (queue.status === 'sent') return 'sent';
+  if (queue.status === 'pending' || queue.status === 'approved') return 'draft_ready';
+  if (queue.status === 'rejected' || queue.status === 'expired') return 'skipped';
+  return 'new';
+}
+
+function nextActionForStatus(status: string, lane: string): string {
+  if (status === 'draft_ready') return 'Review drafted reply in BetterMode admin block; send, regenerate, or dismiss.';
+  if (status === 'sent') return 'No action needed unless the creator replies again.';
+  if (status === 'externally_resolved') return 'No action needed unless the creator replies again.';
+  if (status === 'escalated') return 'Inspect manually and resolve the escalation before drafting.';
+  if (status === 'skipped') return 'No drafting action needed.';
+  if (lane === 'ip_review') return 'Route privately to Marketplace review; do not litigate the claim publicly.';
+  if (lane === 'product_feedback') return 'Acknowledge and route product feedback if a public response is appropriate.';
+  return 'Generate or review a grounded BetterMode reply draft.';
+}
+
+function dueAtForUrgency(urgency: string): string {
+  const hours = urgency === 'high' ? 4 : urgency === 'medium' ? 24 : 72;
+  return new Date(Date.now() + hours * 60 * 60 * 1000).toISOString();
+}
+
+function matches(value: string, needles: string[]): boolean {
+  return needles.some((needle) => value.includes(needle));
 }
 
 function isAdminUser(actorId: string | undefined, env: Env): boolean {
@@ -479,6 +811,26 @@ function isAdminUser(actorId: string | undefined, env: Env): boolean {
     return false;
   }
   return allow.includes(actorId);
+}
+
+function isAppAuthor(author: { id?: string | null } | null | undefined): boolean {
+  return !!author?.id && author.id.startsWith('APP::');
+}
+
+function findInternalReply(
+  post: BettermodePost,
+  env: Env,
+): { replyId: string; reason: 'app_reply' | 'staff_reply' } | null {
+  for (const reply of post.replies?.nodes ?? []) {
+    const author = reply.owner || reply.createdBy;
+    if (isAppAuthor(author)) {
+      return { replyId: reply.id, reason: 'app_reply' };
+    }
+    if (isStaffAuthorEmail(author?.email, env)) {
+      return { replyId: reply.id, reason: 'staff_reply' };
+    }
+  }
+  return null;
 }
 
 function replyPostTypeId(env: Env): string {
@@ -519,6 +871,97 @@ function resolvePostId(webhook: WebhookPayload): string | undefined {
 function stringInput(webhook: WebhookPayload, key: string): string {
   const value = webhook.data?.inputs?.[key];
   return typeof value === 'string' ? value : '';
+}
+
+function extractPostId(payload: Record<string, unknown>): string | null {
+  return (
+    stringAt(payload, ['postId']) ||
+    stringAt(payload, ['entityId']) ||
+    stringAt(payload, ['data', 'postId']) ||
+    stringAt(payload, ['data', 'entityId']) ||
+    stringAt(payload, ['data', 'object', 'id']) ||
+    stringAt(payload, ['data', 'target', 'id']) ||
+    stringAt(payload, ['object', 'id']) ||
+    stringAt(payload, ['target', 'id']) ||
+    stringAt(payload, ['notification', 'postId']) ||
+    stringAt(payload, ['notification', 'entityId'])
+  );
+}
+
+function extractSpaceId(payload: Record<string, unknown>): string | null {
+  return (
+    stringAt(payload, ['spaceId']) ||
+    stringAt(payload, ['data', 'spaceId']) ||
+    stringAt(payload, ['data', 'object', 'spaceId']) ||
+    stringAt(payload, ['data', 'target', 'spaceId']) ||
+    stringAt(payload, ['object', 'spaceId']) ||
+    stringAt(payload, ['target', 'spaceId'])
+  );
+}
+
+function extractSourceUrl(payload: Record<string, unknown>): string | null {
+  return (
+    stringAt(payload, ['url']) ||
+    stringAt(payload, ['sourceUrl']) ||
+    stringAt(payload, ['data', 'url']) ||
+    stringAt(payload, ['data', 'object', 'url']) ||
+    stringAt(payload, ['object', 'url']) ||
+    stringAt(payload, ['notification', 'url'])
+  );
+}
+
+function extractActor(payload: Record<string, unknown>): {
+  id: string | null;
+  name: string | null;
+  email: string | null;
+} {
+  return {
+    id:
+      stringAt(payload, ['actorId']) ||
+      stringAt(payload, ['data', 'actorId']) ||
+      stringAt(payload, ['actor', 'id']) ||
+      stringAt(payload, ['data', 'actor', 'id']),
+    name: stringAt(payload, ['actor', 'name']) || stringAt(payload, ['data', 'actor', 'name']),
+    email: stringAt(payload, ['actor', 'email']) || stringAt(payload, ['data', 'actor', 'email']),
+  };
+}
+
+function stringAt(value: unknown, path: string[]): string | null {
+  let cursor: unknown = value;
+  for (const key of path) {
+    if (!cursor || typeof cursor !== 'object') return null;
+    cursor = (cursor as Record<string, unknown>)[key];
+  }
+  return stringValue(cursor);
+}
+
+function stringValue(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed || null;
+}
+
+function dedupeKey(
+  source: string,
+  eventType: string,
+  sourceId: string | null | undefined,
+  extra: string | null | undefined,
+): string | null {
+  const parts = ['bettermode', source, eventType, sourceId, extra]
+    .map((part) => part?.trim())
+    .filter(Boolean);
+  return parts.length >= 4 ? parts.join(':') : null;
+}
+
+function parseInteger(
+  value: string | undefined,
+  fallback: number,
+  min: number,
+  max: number,
+): number {
+  const parsed = value ? Number.parseInt(value, 10) : fallback;
+  if (!Number.isFinite(parsed)) return fallback;
+  return Math.max(min, Math.min(max, parsed));
 }
 
 function stripBettermodeContent(post: BettermodePost): string {

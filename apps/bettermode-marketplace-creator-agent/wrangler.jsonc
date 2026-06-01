@@ -9,6 +9,9 @@
   "observability": {
     "enabled": true
   },
+  "triggers": {
+    "crons": ["*/15 * * * *"]
+  },
   "d1_databases": [
     {
       "binding": "DB",
@@ -25,6 +28,8 @@
     "BETTERMODE_REPLY_POST_TYPE_ID": "xrkGxJPY9j4QOCB",
     "BETTERMODE_ADMIN_USER_IDS": "lgjO9fjLNn",
     "BETTERMODE_STAFF_AUTHOR_DOMAINS": "webflow.com",
+    "COMMUNITY_SWEEP_ENABLED": "true",
+    "COMMUNITY_SWEEP_LIMIT": "50",
     "DIFY_API_BASE": "https://api.dify.ai/v1",
     "DIFY_AGENT_USER": "bettermode-marketplace-creator-agent",
     "ALLOWED_ORIGINS": "https://app.bettermode.com,https://community.webflow.com,https://webflow.com,https://www.webflow.com"

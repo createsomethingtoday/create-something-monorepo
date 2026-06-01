@@ -5,6 +5,8 @@
 //   get_creator_context        (Airtable → Creator + linked Assets/templates)
 //   list_recent_approved_drafts (D1 → few-shot examples for Dify)
 //   get_draft_status           (D1 → audit lookup by post ID)
+//   list_pending_community_actions (D1 → community cockpit)
+//   get_community_work_item     (D1 → per-thread community state)
 //
 // Each tool returns a single text content block with JSON. The Dify agent
 // (or any MCP client) parses JSON for downstream use.
@@ -23,7 +25,9 @@ import {
   type BettermodePost,
 } from '../lib/bettermode.js';
 import {
+  getCommunityWorkItemByPostId,
   getDraftStatusByPostId,
+  listPendingCommunityActions,
   listRecentApprovedDrafts,
 } from '../lib/store.js';
 
@@ -194,6 +198,67 @@ export function registerCreatorTools(server: McpServer, env: McpEnv): void {
             text: JSON.stringify(body, null, 2),
           },
         ],
+      };
+    },
+  );
+
+  server.tool(
+    'list_pending_community_actions',
+    [
+      'Operator cockpit tool: list Bettermode Marketplace Creator community',
+      'work items that still need attention, including lane, priority, urgency,',
+      'draft status, due time, and next action. Read-only; does not generate,',
+      'approve, publish, or mutate any community state.',
+    ].join(' '),
+    {
+      statuses: z
+        .array(
+          z.enum([
+            'new',
+            'draft_ready',
+            'escalated',
+            'follow_up_due',
+            'triaged',
+            'externally_resolved',
+            'skipped',
+            'sent',
+          ]),
+        )
+        .default(['new', 'draft_ready', 'escalated', 'follow_up_due'])
+        .describe('Work-item statuses to include'),
+      limit: z
+        .number()
+        .int()
+        .min(1)
+        .max(100)
+        .default(25)
+        .describe('Maximum work items to return; default 25, max 100'),
+    },
+    async ({ statuses, limit }) => {
+      const actions = await listPendingCommunityActions(env.DB, { statuses, limit });
+      return {
+        content: [
+          {
+            type: 'text' as const,
+            text: JSON.stringify({ actions }, null, 2),
+          },
+        ],
+      };
+    },
+  );
+
+  server.tool(
+    'get_community_work_item',
+    [
+      'Return the normalized community operations state for a Bettermode post',
+      'ID, including lane, status, next action, queue linkage, metadata, and the',
+      'last notification/webhook/sweep events observed for that post.',
+    ].join(' '),
+    { post_id: z.string().min(1).describe('Bettermode post ID') },
+    async ({ post_id }) => {
+      const item = await getCommunityWorkItemByPostId(env.DB, post_id);
+      return {
+        content: [{ type: 'text' as const, text: JSON.stringify({ item }, null, 2) }],
       };
     },
   );
