@@ -13,6 +13,7 @@ declare namespace Cloudflare {
     BETTERMODE_CLIENT_SECRET?: string;
     BETTERMODE_SIGNING_SECRET?: string;
     IGNORE_SIGNATURE?: string;
+    BETTERMODE_REPLY_POST_TYPE_ID?: string;
     // Dify agent (drafting brain — Option B)
     DIFY_API_BASE?: string;
     DIFY_AGENT_API_KEY?: string;

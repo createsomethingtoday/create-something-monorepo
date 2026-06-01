@@ -56,6 +56,7 @@ const POST_EVENT_TYPES = new Set([
   'reply.created',
   'reply.updated'
 ]);
+const DEFAULT_REPLY_POST_TYPE_ID = 'xrkGxJPY9j4QOCB';
 
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
@@ -255,7 +256,8 @@ async function handleSend(webhook: WebhookPayload, env: Env): Promise<Record<str
       state.signal.metadata?.space_id ?? null,
       draftToHtml(draftText),
       memberToken,
-      auth
+      auth,
+      replyPostTypeId(env)
     );
 
     await markSent(env.DB, state.draft.id, draftText, reply.id ?? null);
@@ -477,6 +479,10 @@ function isAdminUser(actorId: string | undefined, env: Env): boolean {
     return false;
   }
   return allow.includes(actorId);
+}
+
+function replyPostTypeId(env: Env): string {
+  return env.BETTERMODE_REPLY_POST_TYPE_ID?.trim() || DEFAULT_REPLY_POST_TYPE_ID;
 }
 
 function shouldHandleSpace(spaceId: string | null | undefined, env: Env): boolean {

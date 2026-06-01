@@ -172,10 +172,11 @@ export async function fetchPostThread(
 
 export async function createReply(
   parentPostId: string,
-  spaceId: string | null | undefined,
+  _spaceId: string | null | undefined,
   htmlContent: string,
   memberToken: string,
   auth: BettermodeAuth,
+  replyPostTypeId: string,
 ): Promise<{ id: string; url?: string | null }> {
   const data = await graphQl<{
     createReply: { id: string; url?: string | null };
@@ -191,8 +192,7 @@ export async function createReply(
     {
       postId: parentPostId,
       input: {
-        publish: true,
-        ...(spaceId ? { spaceId } : {}),
+        postTypeId: replyPostTypeId,
         mappingFields: [
           {
             key: 'content',
@@ -203,7 +203,26 @@ export async function createReply(
       },
     },
   );
-  return data.createReply;
+
+  const reply = data.createReply;
+  if (!reply?.id) {
+    return reply;
+  }
+
+  const published = await graphQl<{
+    publishPost: { id: string; url?: string | null };
+  }>(
+    auth.endpoint,
+    bearer(memberToken),
+    `mutation PublishPost($postId: ID!) {
+      publishPost(postId: $postId) {
+        id
+        url
+      }
+    }`,
+    { postId: reply.id },
+  );
+  return published.publishPost;
 }
 
 async function graphQl<T>(

@@ -1,6 +1,6 @@
 # Bettermode Marketplace Creator Agent
 
-Cloudflare Worker for the **Marketplace Creator Agent** Bettermode app. Drafts admin replies for posts and replies in `community.webflow.com/marketplace-creators`, then renders an admin-only dynamic block on each post so the admin can edit and send the draft as themselves.
+Cloudflare Worker for the **Marketplace Creator Agent** Bettermode app. Drafts admin replies for posts and replies in `community.webflow.com/marketplace-creators`, then renders an admin-only dynamic block on each post so the admin can edit and publish an app-authored reply.
 
 ## Behavior
 
@@ -9,7 +9,7 @@ Cloudflare Worker for the **Marketplace Creator Agent** Bettermode app. Drafts a
 | Webhook (`post.published` / `reply.published` / `*.updated`) | Verify Bettermode signature → enqueue draft generation in `ctx.waitUntil`                                                                                                                                                     |
 | Draft generation (async)                                     | Fetch post + thread via Bettermode GraphQL → call the published Dify agent with post metadata → Dify uses the BetterMode Creator MCP + Marketplace policy knowledge base → upsert `community_signals` + `community_queue` row |
 | Dynamic block render                                         | On admin view of a post, return a Slate UI: post excerpt, editable draft textarea, [Send / Regenerate / Dismiss]. Non-admins see a small hint block.                                                                          |
-| Send                                                         | Mint a member-context Bettermode token using the admin's `actorId` → `createReply` mutation posts as the admin → mark queue row `sent`                                                                                        |
+| Send                                                         | Mint a member-context Bettermode token using the admin's `actorId` → `createReply` with the Comment post type → `publishPost` → mark queue row `sent`. Bettermode currently records the published comment as authored by the app account. |
 | Regenerate                                                   | Re-run draft generation in `ctx.waitUntil`                                                                                                                                                                                    |
 | Dismiss                                                      | Mark queue row `rejected`                                                                                                                                                                                                     |
 
@@ -72,6 +72,7 @@ The script never echoes secret values; it pipes them straight into `wrangler sec
 | `BETTERMODE_DEFAULT_NETWORK_ID`     | `BuRv7sR1po` (Webflow Community network)                                                                                                                                      |
 | `BETTERMODE_MARKETPLACE_SPACE_ID`   | The Bettermode space ID for `/marketplace-creators`. Leave empty to handle every space until you capture the real ID from the first webhook payload (visible in Worker logs). |
 | `BETTERMODE_MARKETPLACE_SPACE_SLUG` | `marketplace-creators` (informational)                                                                                                                                        |
+| `BETTERMODE_REPLY_POST_TYPE_ID`      | Bettermode Comment post type ID used for replies. Current Webflow Community value: `xrkGxJPY9j4QOCB`.                                                                          |
 | `BETTERMODE_ADMIN_USER_IDS`         | Comma-separated Bettermode user IDs allowed to send drafts. **Leave empty to fail closed** (no one can send).                                                                 |
 | `DIFY_API_BASE`                     | `https://api.dify.ai/v1`                                                                                                                                                      |
 | `DIFY_AGENT_USER`                   | Stable Service API user id for Worker calls                                                                                                                                   |
@@ -100,7 +101,7 @@ In the Bettermode app admin (https://app.bettermode.com → Apps → Marketplace
 2. **Interaction URL** → `https://bettermode-marketplace-creator-agent.<account-subdomain>.workers.dev/webhook/interaction`
 3. **Webhook events** — enable: `post.published`, `post.updated`, `reply.published`, `reply.updated`, plus `TEST` (for the challenge handshake).
 4. **Dynamic block** — register a block that mounts on post detail pages. Bettermode will call `/webhook/interaction` with `dynamicBlockKey` and the post ID in `target.id`.
-5. **Scopes** — at minimum: read posts/replies/members/spaces, and create replies on behalf of users (member-context tokens). Without the latter the **Send** button cannot post as the admin.
+5. **Scopes** — at minimum: read posts/replies/members/spaces, create replies, and publish posts. Without create/publish scopes the **Send** button cannot publish the approved reply.
 
 ## Smoke test
 
@@ -117,4 +118,4 @@ Signed `TEST` webhook (loop back through Bettermode's "Send test" button in the 
 - **Confirm full Client ID** (`WEBFLOW_BETTERMODE_CLIENT_ID` is currently 21 chars; UUIDs are 36). Copy via the copy button in Bettermode and run `infisical secrets set WEBFLOW_BETTERMODE_CLIENT_ID="<full>" --env=dev`, then `secrets:push`.
 - **Capture the marketplace-creators space ID** from the first webhook payload (Worker logs) and set `BETTERMODE_MARKETPLACE_SPACE_ID` in `wrangler.jsonc`.
 - **Set `BETTERMODE_ADMIN_USER_IDS`** before going live — empty means nobody can send a draft.
-- **Verify `MEMBER`-context `limitedToken` permissions** on the Bettermode app. If posting-as-user isn't supported by the granted scopes, the `Send` button errors. Fallback options: render a copy button only, or post as the app account.
+- **Verify `MEMBER`-context `limitedToken` permissions** on the Bettermode app. Current API behavior publishes comments as the Marketplace Creator Agent app account, even when the request uses a member-context admin token.
