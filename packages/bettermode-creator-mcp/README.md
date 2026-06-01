@@ -15,6 +15,7 @@ Read-only MCP server exposing Bettermode + Airtable + community queue helpers to
 | Tool | Returns | Used to |
 |---|---|---|
 | `fetch_post_thread(post_id)` | post + reply thread + author | Ground the draft in actual content |
+| `list_recent_marketplace_posts(since, limit, include_staff)` | recent Marketplace Creator posts/replies + draft queue status | Audit missed draft coverage without returning post bodies |
 | `get_creator_context(email)` | Airtable Creator + linked Assets | Reference templates the creator owns |
 | `list_recent_approved_drafts(limit)` | Recent admin replies that were sent | Few-shot voice examples |
 | `get_draft_status(post_id)` | Existing draft status if any | Avoid double-drafting on retries |

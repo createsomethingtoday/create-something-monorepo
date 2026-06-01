@@ -26,9 +26,14 @@ export type BettermodePost = {
   url?: string | null;
   publishedAt?: string | null;
   createdAt?: string | null;
+  updatedAt?: string | null;
+  lastActivityAt?: string | null;
   spaceId?: string | null;
   space?: { id: string; name?: string | null; slug?: string | null } | null;
   parentId?: string | null;
+  repliedTo?: { id: string; title?: string | null; url?: string | null } | null;
+  repliesCount?: number | null;
+  totalRepliesCount?: number | null;
   owner?: BettermodeMember | null;
   createdBy?: BettermodeMember | null;
   replies?: { nodes?: BettermodePost[] } | null;
@@ -127,6 +132,60 @@ export async function fetchPostThread(
     { id: postId },
   );
   return data.post ? normalizePost(data.post) : null;
+}
+
+export async function listRecentPostsBySpace(
+  spaceId: string,
+  limit: number,
+  appToken: string,
+  auth: BettermodeAuth,
+): Promise<{ nodes: BettermodePost[]; totalCount: number | null }> {
+  const data = await graphQl<{ posts: { nodes?: RawBettermodePost[] | null; totalCount?: number | null } }>(
+    auth.endpoint,
+    bearer(appToken),
+    `query RecentPosts($limit: Int!, $spaceIds: [ID!]!) {
+      posts(
+        limit: $limit
+        spaceIds: $spaceIds
+        orderBy: createdAt
+        reverse: true
+        excludePins: true
+      ) {
+        totalCount
+        nodes {
+          id
+          slug
+          title
+          url
+          publishedAt
+          createdAt
+          updatedAt
+          lastActivityAt
+          spaceId
+          space { id name slug }
+          owner { member { ...MemberFields } }
+          createdBy { member { ...MemberFields } }
+          repliedToId
+          repliedTo { id title url }
+          repliesCount
+          totalRepliesCount
+        }
+      }
+    }
+    fragment MemberFields on Member {
+      id
+      name
+      username
+      email
+      role { id name type }
+    }`,
+    { limit, spaceIds: [spaceId] },
+  );
+
+  return {
+    nodes: (data.posts.nodes ?? []).map(normalizePost),
+    totalCount: data.posts.totalCount ?? null,
+  };
 }
 
 async function graphQl<T>(

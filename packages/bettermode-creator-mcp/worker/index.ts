@@ -36,6 +36,7 @@ const SERVER_VERSION = '0.1.0';
 
 const TOOL_NAMES = [
   'fetch_post_thread',
+  'list_recent_marketplace_posts',
   'get_creator_context',
   'list_recent_approved_drafts',
   'get_draft_status',
