@@ -139,6 +139,143 @@ describe('Designer Validator', () => {
 		expect(namingIssue).toBeUndefined();
 	});
 
+	it('does not report missing variable modes when mode data is absent from the Designer payload', async () => {
+		const result = await validateDesignerData({
+			variables: {
+				collections: [
+					{
+						id: 'col_colors',
+						name: 'Colors',
+						variables: [
+							{ id: 'v1', name: 'Primary 100', type: 'color', value: null },
+							{ id: 'v2', name: 'Primary 200', type: 'color', value: null },
+							{ id: 'v3', name: 'Primary 300', type: 'color', value: null }
+						]
+					}
+				]
+			},
+			components: [],
+			styles: [],
+			pages: [],
+			assets: []
+		});
+
+		const modesCategory = result.categories.find(c => c.category === 'Variable Modes');
+		expect(modesCategory).toBeTruthy();
+		expect(modesCategory!.passed).toBe(true);
+		expect(modesCategory!.issues.find(i => i.id === 'modes.none')).toBeUndefined();
+		expect(modesCategory!.issues.find(i => i.id === 'modes.unavailable')).toBeTruthy();
+		expect(modesCategory!.stats?.modeDataAvailable).toBe(false);
+	});
+
+	it('reports missing variable modes only when mode data was collected and empty', async () => {
+		const result = await validateDesignerData({
+			variables: {
+				collections: [
+					{
+						id: 'col_colors',
+						name: 'Colors',
+						variables: [
+							{ id: 'v1', name: 'Primary 100', type: 'color', value: null },
+							{ id: 'v2', name: 'Primary 200', type: 'color', value: null },
+							{ id: 'v3', name: 'Primary 300', type: 'color', value: null }
+						],
+						modes: []
+					}
+				]
+			},
+			components: [],
+			styles: [],
+			pages: [],
+			assets: []
+		});
+
+		const modesCategory = result.categories.find(c => c.category === 'Variable Modes');
+		expect(modesCategory).toBeTruthy();
+		expect(modesCategory!.issues.find(i => i.id === 'modes.none')).toBeTruthy();
+		expect(modesCategory!.issues.find(i => i.id === 'modes.unavailable')).toBeUndefined();
+		expect(modesCategory!.stats?.modeDataAvailable).toBe(true);
+	});
+
+	it('recognizes responsive variable modes collected from Designer collections', async () => {
+		const result = await validateDesignerData({
+			variables: {
+				collections: [
+					{
+						id: 'col_spacing',
+						name: 'Spacing',
+						variables: [
+							{ id: 'v1', name: 'Spacing 100', type: 'size', value: null },
+							{ id: 'v2', name: 'Spacing 200', type: 'size', value: null },
+							{ id: 'v3', name: 'Spacing 300', type: 'size', value: null }
+						],
+						modes: [
+							{ id: 'mode_tablet', name: 'Tablet' },
+							{ id: 'mode_mobile', name: 'Mobile' }
+						]
+					}
+				]
+			},
+			components: [],
+			styles: [],
+			pages: [],
+			assets: []
+		});
+
+		const modesCategory = result.categories.find(c => c.category === 'Variable Modes');
+		expect(modesCategory).toBeTruthy();
+		expect(modesCategory!.issues.find(i => i.id === 'modes.good')).toBeTruthy();
+		expect(modesCategory!.issues.find(i => i.id === 'modes.none')).toBeUndefined();
+		expect(modesCategory!.stats).toMatchObject({
+			totalModes: 2,
+			collectionsWithModes: 1,
+			hasResponsiveModes: true,
+			responsiveModeNamesDetected: true,
+			modeDataAvailable: true
+		});
+	});
+
+	it('does not warn when variable modes exist but their names are not breakpoint keywords', async () => {
+		const result = await validateDesignerData({
+			variables: {
+				collections: [
+					{
+						id: 'col_modes',
+						name: 'Design Modes',
+						variables: [
+							{ id: 'v1', name: 'Spacing 100', type: 'size', value: null },
+							{ id: 'v2', name: 'Spacing 200', type: 'size', value: null },
+							{ id: 'v3', name: 'Spacing 300', type: 'size', value: null }
+						],
+						modes: [
+							{ id: 'mode_1', name: 'Compact' },
+							{ id: 'mode_2', name: 'Comfortable' },
+							{ id: 'mode_3', name: 'Dense' },
+							{ id: 'mode_4', name: 'Expanded' }
+						]
+					}
+				]
+			},
+			components: [],
+			styles: [],
+			pages: [],
+			assets: []
+		});
+
+		const modesCategory = result.categories.find(c => c.category === 'Variable Modes');
+		expect(modesCategory).toBeTruthy();
+		expect(modesCategory!.passed).toBe(true);
+		expect(modesCategory!.issues.find(i => i.id === 'modes.good')).toBeTruthy();
+		expect(modesCategory!.issues.find(i => i.id === 'modes.no-responsive')).toBeUndefined();
+		expect(modesCategory!.stats).toMatchObject({
+			totalModes: 4,
+			collectionsWithModes: 1,
+			responsiveModeNamesDetected: false,
+			modeNames: ['Compact', 'Comfortable', 'Dense', 'Expanded'],
+			modeDataAvailable: true
+		});
+	});
+
 	it('accepts common Webflow class naming formats (combo-like, acronyms, numeric modifiers)', async () => {
 		const result = await validateDesignerData({
 			variables: undefined,

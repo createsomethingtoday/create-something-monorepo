@@ -33,6 +33,8 @@
 *List the specific changes and fixes being implemented in this version*
 
 ### Core Functionality
+- ✅ Fixed Variable Modes false warnings by collecting modes with `collection.getAllVariableModes()`
+- ✅ Treats unavailable mode data as an informational state instead of reporting zero modes
 - ✅ Converted from URL-based to Designer-only validation approach
 - ✅ Implemented proper TypeScript structure following Webflow extension guidelines
 - ✅ Added comprehensive error handling and loading states

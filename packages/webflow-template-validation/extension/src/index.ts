@@ -131,6 +131,10 @@ interface ProjectData {
         type?: string;
         value?: any;
       }>;
+      modes?: Array<{
+        id: string;
+        name: string;
+      }>;
     }>;
   };
   components?: Array<{
@@ -1640,12 +1644,15 @@ async function collectProjectData(webflow: any): Promise<ProjectData> {
       const collections = await webflow.getAllVariableCollections() || [];
       const variableData: any[] = [];
       let totalVariables = 0;
+      let totalVariableModes = 0;
 
       for (const collection of collections) {
         try {
           const collectionName = collection.getName ? await collection.getName() : collection.name || 'Unnamed Collection';
           const variables = collection.getAllVariables ? await collection.getAllVariables() : [];
           const variableList: any[] = [];
+          const modeList: Array<{ id: string; name: string }> = [];
+          let modeDataAvailable = false;
 
           for (const variable of variables) {
             try {
@@ -1685,15 +1692,59 @@ async function collectProjectData(webflow: any): Promise<ProjectData> {
             }
           }
 
-          variableData.push({
+          try {
+            const modes = typeof collection.getAllVariableModes === 'function'
+              ? await collection.getAllVariableModes()
+              : Array.isArray(collection.modes)
+                ? collection.modes
+                : undefined;
+
+            if (Array.isArray(modes)) {
+              modeDataAvailable = true;
+
+              for (const mode of modes) {
+                try {
+                  const modeName = typeof mode.getName === 'function'
+                    ? await mode.getName()
+                    : mode.name || mode.id || 'Unnamed Mode';
+                  const modeId = typeof mode.getId === 'function'
+                    ? await mode.getId()
+                    : mode.id || modeName;
+
+                  modeList.push({
+                    id: String(modeId),
+                    name: String(modeName)
+                  });
+                } catch (modeError) {
+                  console.warn('Error processing variable mode:', modeError);
+                }
+              }
+            }
+          } catch (modeCollectionError) {
+            console.warn(`Error processing variable modes for collection "${collectionName}":`, modeCollectionError);
+            data.collectionWarnings!.push({
+              source: 'Variable Modes',
+              message: `Failed to collect variable modes for ${collectionName}`,
+              error: modeCollectionError instanceof Error ? modeCollectionError.message : String(modeCollectionError)
+            });
+          }
+
+          const collectionPayload: any = {
             id: collection.id,
             name: collectionName,
             variables: variableList,
             variableCount: variableList.length
-          });
+          };
+
+          if (modeDataAvailable) {
+            collectionPayload.modes = modeList;
+            totalVariableModes += modeList.length;
+          }
+
+          variableData.push(collectionPayload);
 
           totalVariables += variableList.length;
-          console.log(`Variables in collection "${collectionName}": ${variableList.length}`);
+          console.log(`Variables in collection "${collectionName}": ${variableList.length}, Modes: ${modeDataAvailable ? modeList.length : 'unavailable'}`);
 
         } catch (collectionError) {
           console.warn('Error processing variable collection:', collectionError);
@@ -1704,7 +1755,8 @@ async function collectProjectData(webflow: any): Promise<ProjectData> {
         data.variables = { collections: variableData };
         data.collectionMetadata!.variableCollections = variableData.length;
         data.collectionMetadata!.totalVariables = totalVariables;
-        console.log(`Variable collections collected: ${variableData.length}, Total variables: ${totalVariables}`);
+        data.collectionMetadata!.totalVariableModes = totalVariableModes;
+        console.log(`Variable collections collected: ${variableData.length}, Total variables: ${totalVariables}, Total modes: ${totalVariableModes}`);
       }
     }
   } catch (error) {
@@ -2480,6 +2532,39 @@ function addStyleSystemValidation(results: ValidationResponse, projectData: Proj
   }
 }
 
+function normalizeVariableModesCategory(results: ValidationResponse): void {
+  const variableModesCategory = results.categories.find(cat => cat.category === 'Variable Modes');
+  if (!variableModesCategory?.stats) return;
+
+  const totalModes = typeof variableModesCategory.stats.totalModes === 'number'
+    ? variableModesCategory.stats.totalModes
+    : 0;
+  if (totalModes <= 0) return;
+
+  let convertedWarning = false;
+  variableModesCategory.issues = (variableModesCategory.issues || []).map((issue) => {
+    const isNameOnlyModeWarning =
+      issue.id === 'modes.no-responsive' ||
+      /modes found, but none appear to be for responsive breakpoints/i.test(issue.message || '');
+
+    if (!isNameOnlyModeWarning) return issue;
+    convertedWarning = true;
+
+    return {
+      ...issue,
+      id: 'modes.good',
+      severity: 'info',
+      message: `${totalModes} modes configured across ${variableModesCategory.stats?.collectionsWithModes || 1} collections.`,
+      howToFix: undefined
+    };
+  });
+
+  if (convertedWarning) {
+    variableModesCategory.passed = true;
+    variableModesCategory.stats.modeDataAvailable = true;
+  }
+}
+
 // Enhance validation results with client-side analysis
 function enhanceValidationResults(results: ValidationResponse, projectData: ProjectData): void {
   console.log('Enhancing validation results with client-side analysis...');
@@ -2488,6 +2573,7 @@ function enhanceValidationResults(results: ValidationResponse, projectData: Proj
   // addVariableValidation(results, projectData); // Creates duplicate "Design System" category
   // addComponentValidation(results, projectData); // Creates duplicate "Component Architecture" category
   addStyleSystemValidation(results, projectData);
+  normalizeVariableModesCategory(results);
   
   // Find Page Structure category
   const pageStructureCategory = results.categories.find(cat => cat.category === 'Page Structure');
@@ -3812,6 +3898,21 @@ function formatDetailedStats(category: string, stats: Record<string, any>): stri
       if (stats.totalVariables !== undefined) details.push(`${stats.totalVariables} variables`);
       if (stats.hasOrganizedCollections !== undefined) details.push(`Organized: ${stats.hasOrganizedCollections ? 'Yes' : 'No'}`);
       if (stats.hasOrderedRamps !== undefined) details.push(`Color ramps: ${stats.hasOrderedRamps ? 'Yes' : 'No'}`);
+      break;
+
+    case 'Variable Modes':
+      if (stats.totalModes !== undefined) details.push(`${stats.totalModes} modes`);
+      if (stats.collectionsWithModes !== undefined) details.push(`${stats.collectionsWithModes} collections with modes`);
+      if (stats.responsiveModeNamesDetected !== undefined) {
+        details.push(`Responsive names detected: ${stats.responsiveModeNamesDetected ? 'Yes' : 'No'}`);
+      } else if (stats.hasResponsiveModes !== undefined) {
+        details.push(`Responsive names detected: ${stats.hasResponsiveModes ? 'Yes' : 'No'}`);
+      }
+      if (stats.modeDataAvailable !== undefined) details.push(`Mode data: ${stats.modeDataAvailable ? 'Available' : 'Unavailable'}`);
+      if (stats.collectionsCheckedForModes !== undefined) details.push(`${stats.collectionsCheckedForModes} collections checked`);
+      if (Array.isArray(stats.modeNames) && stats.modeNames.length > 0) {
+        details.push(`Modes: ${stats.modeNames.slice(0, 5).join(', ')}`);
+      }
       break;
 
     case 'Components':
