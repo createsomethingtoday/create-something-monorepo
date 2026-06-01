@@ -1329,6 +1329,114 @@ describe('Validation Submission Endpoint', () => {
 		expect(JSON.stringify(byTokenPayload)).not.toContain(installPayload.bridgeToken);
 	});
 
+	it('tracks bridge usage for retroactive lookup without exposing raw bridge tokens', async () => {
+		const installResponse = await worker.fetch(
+			new Request('https://validation-worker.createsomething.workers.dev/app-validator/snippet/install', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					Origin: 'https://designer.webflow-ext.com'
+				},
+				body: JSON.stringify({
+					siteId: 'site_bridge_usage',
+					siteName: 'Bridge Usage Site',
+					installTarget: 'head',
+					mode: 'manual-fallback'
+				})
+			}),
+			{} as any,
+			createExecutionContext()
+		);
+		const installPayload = await installResponse.json() as any;
+
+		vi.mocked(fetchHTML).mockResolvedValueOnce({
+			html: `<!doctype html><html><head><script>window.__WF_REVIEW_BRIDGE = { marker: "__wf_review_snippet_v1", bridgeToken: "${installPayload.bridgeToken}" };</script><script src="https://validation-worker.createsomething.workers.dev/app-validator/snippet/review.js"></script></head><body></body></html>`,
+			status: 200,
+			headers: { 'content-type': 'text/html' },
+			size: 0,
+			loadTime: 0
+		});
+
+		await worker.fetch(
+			new Request('https://validation-worker.createsomething.workers.dev/app-validator/snippet/status?siteId=site_bridge_usage&siteUrl=https%3A%2F%2Fbridge-usage.webflow.io', {
+				method: 'GET',
+				headers: {
+					Origin: 'https://designer.webflow-ext.com'
+				}
+			}),
+			{} as any,
+			createExecutionContext()
+		);
+
+		await worker.fetch(
+			new Request('https://validation-worker.createsomething.workers.dev/app-validator/submit', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					Origin: 'https://app.webflow.com'
+				},
+				body: JSON.stringify({
+					siteId: 'site_bridge_usage',
+					siteName: 'Bridge Usage Site',
+					siteUrl: 'https://bridge-usage.webflow.io',
+					validationResults: {
+						url: 'https://bridge-usage.webflow.io',
+						summary: { totalErrors: 0, totalWarnings: 0, passedCategories: 2, failedCategories: 0 },
+						categories: [
+							{ category: 'Assets & Images', passed: true, issues: [] },
+							{ category: 'Content & Accessibility', passed: true, issues: [] }
+						]
+					}
+				})
+			}),
+			{} as any,
+			createExecutionContext()
+		);
+
+		const unauthorizedResponse = await worker.fetch(
+			new Request('https://validation-worker.createsomething.workers.dev/app-validator/bridge/usage?siteId=site_bridge_usage', {
+				method: 'GET',
+				headers: { Origin: 'https://webflow.com' }
+			}),
+			{} as any,
+			createExecutionContext()
+		);
+		expect(unauthorizedResponse.status).toBe(503);
+
+		const usageResponse = await worker.fetch(
+			new Request('https://validation-worker.createsomething.workers.dev/app-validator/bridge/usage?siteId=site_bridge_usage', {
+				method: 'GET',
+				headers: {
+					Origin: 'https://webflow.com',
+					Authorization: 'Bearer test-admin-token'
+				}
+			}),
+			{ VALIDATOR_BRIDGE_USAGE_ADMIN_TOKEN: 'test-admin-token' } as any,
+			createExecutionContext()
+		);
+
+		expect(usageResponse.status).toBe(200);
+		const usagePayload = await usageResponse.json() as any;
+		expect(usagePayload.count).toBe(1);
+		expect(usagePayload.rawBridgeTokenStored).toBe(false);
+		expect(usagePayload.items[0]).toEqual(expect.objectContaining({
+			siteId: 'site_bridge_usage',
+			siteName: 'Bridge Usage Site',
+			siteUrl: 'https://bridge-usage.webflow.io/',
+			status: 'active',
+			installed: true,
+			lastEvent: 'validation_submit',
+			rawBridgeTokenStored: false
+		}));
+		expect(usagePayload.items[0].latestResult.passed).toBe(true);
+		expect(usagePayload.items[0].eventCounts).toEqual(expect.objectContaining({
+			install: 1,
+			status: 1,
+			submit: 1
+		}));
+		expect(JSON.stringify(usagePayload)).not.toContain(installPayload.bridgeToken);
+	});
+
 	it('marks latest Validator result as failed when errors or failed categories remain', async () => {
 		await worker.fetch(
 			new Request('https://validation-worker.createsomething.workers.dev/app-validator/submit', {
@@ -1340,21 +1448,21 @@ describe('Validation Submission Endpoint', () => {
 				body: JSON.stringify({
 					siteId: 'site_latest_failed_result',
 					siteName: 'Latest Failed Result',
-						validationResults: {
-							summary: { totalErrors: 1, totalWarnings: 0, passedCategories: 3, failedCategories: 1 },
-							categories: [
-								{
-									category: 'Assets & Images',
-									passed: false,
-									issues: [{ severity: 'error', message: 'Image exceeds the maximum size.' }]
-								},
-								{
-									category: 'Page Structure',
-									passed: true,
-									issues: [{ severity: 'warning', message: 'Some pages need title-case names.' }]
-								}
-							]
-						}
+					validationResults: {
+						summary: { totalErrors: 1, totalWarnings: 0, passedCategories: 3, failedCategories: 1 },
+						categories: [
+							{
+								category: 'Assets & Images',
+								passed: false,
+								issues: [{ severity: 'error', message: 'Image exceeds the maximum size.' }]
+							},
+							{
+								category: 'Page Structure',
+								passed: true,
+								issues: [{ severity: 'warning', message: 'Some pages need title-case names.' }]
+							}
+						]
+					}
 				})
 			}),
 			{} as any,
@@ -1374,24 +1482,24 @@ describe('Validation Submission Endpoint', () => {
 
 		expect(latestResponse.status).toBe(200);
 		const payload = await latestResponse.json() as any;
-			expect(payload.passed).toBe(false);
-			expect(payload.summary.failedCategories).toBe(1);
-			expect(payload.summary.totalErrors).toBe(1);
-			expect(payload.failedCategoryDetails).toEqual([
-				{
-					category: 'Assets & Images',
-					passed: false,
-					issues: [{ severity: 'error', message: 'Image exceeds the maximum size.' }]
-				}
-			]);
-			expect(payload.warningCategoryDetails).toEqual([
-				{
-					category: 'Page Structure',
-					passed: true,
-					issues: [{ severity: 'warning', message: 'Some pages need title-case names.' }]
-				}
-			]);
-		});
+		expect(payload.passed).toBe(false);
+		expect(payload.summary.failedCategories).toBe(1);
+		expect(payload.summary.totalErrors).toBe(1);
+		expect(payload.failedCategoryDetails).toEqual([
+			{
+				category: 'Assets & Images',
+				passed: false,
+				issues: [{ severity: 'error', message: 'Image exceeds the maximum size.' }]
+			}
+		]);
+		expect(payload.warningCategoryDetails).toEqual([
+			{
+				category: 'Page Structure',
+				passed: true,
+				issues: [{ severity: 'warning', message: 'Some pages need title-case names.' }]
+			}
+		]);
+	});
 
 	it('returns missing when no latest Validator result has been submitted', async () => {
 		const response = await worker.fetch(
