@@ -48,6 +48,11 @@ const DEFAULT_SUBMISSION_MAX = 6;
 const SUBMISSION_BURST_WINDOW_MS = 90 * 1000;
 const SUBMISSION_BURST_THRESHOLD = 3;
 const SUBMISSION_CLIENT_CHURN_THRESHOLD = 3;
+const BRIDGE_USAGE_INDEX_STATE_KEY = 'bridge-usage-index';
+const BRIDGE_USAGE_SCHEMA_VERSION = 'validator_bridge_usage_index.v0.1';
+const BRIDGE_USAGE_MAX_RECORDS = 1000;
+const BRIDGE_USAGE_DEFAULT_LIMIT = 50;
+const BRIDGE_USAGE_MAX_LIMIT = 250;
 const encoder = new TextEncoder();
 
 const TERMINAL_STATUSES = new Set<ReviewStatusResponse['status']>([
@@ -169,6 +174,80 @@ interface ValidationResultRecord {
 	artifact: ValidationResultArtifactPersistResult;
 }
 
+type BridgeUsageEvent =
+	| 'snippet_install'
+	| 'snippet_status'
+	| 'snippet_rotate'
+	| 'validation_submit'
+	| 'latest_lookup';
+
+interface BridgeUsageEventCounters {
+	install: number;
+	status: number;
+	rotate: number;
+	submit: number;
+	latestLookup: number;
+}
+
+interface BridgeUsageLatestResultSnapshot {
+	submittedAt: string;
+	correlationId: string;
+	payloadHash: string;
+	passed: boolean;
+	summary: ValidationSubmissionSummary;
+	artifact: ValidationResultArtifactPersistResult;
+}
+
+interface BridgeUsageIndexRecord {
+	schemaVersion: typeof BRIDGE_USAGE_SCHEMA_VERSION;
+	siteId: string;
+	siteName: string | null;
+	siteUrl?: string;
+	snippetVersion?: string;
+	installMethod?: SnippetTokenRecord['installMethod'];
+	status: SnippetTokenRecord['status'];
+	installed: boolean;
+	firstSeenAt: string;
+	lastSeenAt: string;
+	lastEvent: BridgeUsageEvent;
+	lastInstallAt?: string;
+	lastStatusCheckAt?: string;
+	lastTokenRotatedAt?: string;
+	lastSubmissionAt?: string;
+	lastLatestLookupAt?: string;
+	lastKnownMessage?: string;
+	latestResult?: BridgeUsageLatestResultSnapshot;
+	eventCounts: BridgeUsageEventCounters;
+	rawBridgeTokenStored: false;
+}
+
+interface BridgeUsageIndexState {
+	schemaVersion: typeof BRIDGE_USAGE_SCHEMA_VERSION;
+	updatedAt: string;
+	rawBridgeTokenStored: false;
+	records: BridgeUsageIndexRecord[];
+}
+
+interface BridgeUsageIndexUpdate {
+	event: BridgeUsageEvent;
+	siteId: string;
+	siteName?: string | null;
+	siteUrl?: string;
+	snippetVersion?: string;
+	installMethod?: SnippetTokenRecord['installMethod'];
+	status?: SnippetTokenRecord['status'];
+	installed?: boolean;
+	eventAt?: string;
+	lastInstallAt?: string;
+	lastStatusCheckAt?: string;
+	lastTokenRotatedAt?: string;
+	lastSubmissionAt?: string;
+	lastLatestLookupAt?: string;
+	lastKnownMessage?: string;
+	latestResult?: BridgeUsageLatestResultSnapshot;
+	correlationId?: string;
+}
+
 interface SnippetTokenLookupRecord {
 	bridgeTokenSha256: string;
 	siteId: string;
@@ -192,6 +271,7 @@ const snippetTokens = new Map<string, SnippetTokenRecord>();
 const snippetTokenLookups = new Map<string, SnippetTokenLookupRecord>();
 const submissionStates = new Map<string, SubmissionRateLimitState>();
 const validationResultRecords = new Map<string, ValidationResultRecord>();
+const bridgeUsageRecords = new Map<string, BridgeUsageIndexRecord>();
 
 export class ReviewJobsDurableObject {
 	private readonly state: DurableObjectState;
@@ -336,6 +416,11 @@ export default {
 				return await handleValidationSubmissionLatest(request, env, correlationId);
 			}
 
+			if (url.pathname === '/app-validator/bridge/usage') {
+				if (request.method !== 'GET') return methodNotAllowed(request);
+				return await handleBridgeUsageList(request, env, correlationId);
+			}
+
 			switch (url.pathname) {
 				case '/api/validate':
 					if (request.method !== 'POST') return methodNotAllowed(request);
@@ -368,7 +453,8 @@ export default {
 								'/app-validator/snippet/rotate-token',
 								REVIEW_SNIPPET_ASSET_PATH,
 								'/app-validator/submit',
-								'/app-validator/submission/latest'
+								'/app-validator/submission/latest',
+								'/app-validator/bridge/usage'
 							]
 						},
 						200,
@@ -629,6 +715,19 @@ async function handleSnippetInstall(
 	}
 
 	await persistSnippetTokenState(env, record);
+	await recordBridgeUsage(env, {
+		event: 'snippet_install',
+		siteId: record.siteId,
+		siteName: record.siteName,
+		snippetVersion: record.snippetVersion,
+		installMethod: record.installMethod,
+		status: record.status,
+		installed: record.installed,
+		eventAt: now,
+		lastInstallAt: now,
+		lastKnownMessage: record.message,
+		correlationId
+	});
 
 	const response: SnippetInstallResponse & { snippet: string; siteId: string; updatedAt: string } = {
 		installed: record.installed,
@@ -678,6 +777,18 @@ async function handleSnippetStatus(request: Request, env: unknown): Promise<Resp
 			updatedAt: new Date().toISOString(),
 			snippet: buildSnippetPayload('__REPLACE_WITH_TOKEN__', request, siteId)
 		};
+		await recordBridgeUsage(env, {
+			event: 'snippet_status',
+			siteId,
+			siteName: null,
+			status: response.status,
+			installed: response.installed,
+			snippetVersion: response.snippetVersion,
+			installMethod: response.installMethod,
+			eventAt: response.updatedAt,
+			lastStatusCheckAt: response.updatedAt,
+			lastKnownMessage: response.message
+		});
 		return jsonResponse(response, 200, request);
 	}
 
@@ -689,6 +800,19 @@ async function handleSnippetStatus(request: Request, env: unknown): Promise<Resp
 		...existing,
 		snippet: buildSnippetPayload(existing.bridgeToken, request, existing.siteId)
 	};
+	await recordBridgeUsage(env, {
+		event: 'snippet_status',
+		siteId: existing.siteId,
+		siteName: existing.siteName,
+		siteUrl: siteUrl || undefined,
+		snippetVersion: existing.snippetVersion,
+		installMethod: existing.installMethod,
+		status: existing.status,
+		installed: existing.installed,
+		eventAt: existing.updatedAt,
+		lastStatusCheckAt: existing.updatedAt,
+		lastKnownMessage: existing.message
+	});
 	return jsonResponse(response, 200, request);
 }
 
@@ -743,6 +867,19 @@ async function handleSnippetRotateToken(
 		}
 	}
 	await persistSnippetTokenState(env, record);
+	await recordBridgeUsage(env, {
+		event: 'snippet_rotate',
+		siteId: record.siteId,
+		siteName: record.siteName,
+		snippetVersion: record.snippetVersion,
+		installMethod: record.installMethod,
+		status: record.status,
+		installed: record.installed,
+		eventAt: now,
+		lastTokenRotatedAt: now,
+		lastKnownMessage: record.message,
+		correlationId
+	});
 
 	ctx.waitUntil(
 		emitTelemetry(env, {
@@ -919,6 +1056,21 @@ async function handleValidationSubmit(
 		artifact: artifactResult
 	};
 	await persistValidationResultState(env, latestResult);
+	const knownSnippetState = await getSnippetTokenState(env, siteId);
+	await recordBridgeUsage(env, {
+		event: 'validation_submit',
+		siteId,
+		siteName,
+		siteUrl,
+		status: knownSnippetState?.status,
+		installed: knownSnippetState?.installed,
+		snippetVersion: knownSnippetState?.snippetVersion,
+		installMethod: knownSnippetState?.installMethod,
+		eventAt: submittedAt,
+		lastSubmissionAt: submittedAt,
+		latestResult: snapshotLatestResultForBridgeUsage(latestResult),
+		correlationId
+	});
 
 	const remaining = Math.max(limitConfig.maxSubmissions - nextState.attempts.length, 0);
 	const response: ValidationSubmitResponse = {
@@ -1024,6 +1176,18 @@ async function handleValidationSubmissionLatest(
 		);
 	}
 
+	const lookupAt = new Date().toISOString();
+	await recordBridgeUsage(env, {
+		event: 'latest_lookup',
+		siteId: record.siteId,
+		siteName: record.siteName,
+		siteUrl: record.siteUrl,
+		eventAt: lookupAt,
+		lastLatestLookupAt: lookupAt,
+		latestResult: snapshotLatestResultForBridgeUsage(record),
+		correlationId
+	});
+
 	return jsonResponse(
 		{
 			status: 'available',
@@ -1040,6 +1204,83 @@ async function handleValidationSubmissionLatest(
 			failedCategoryDetails: record.failedCategoryDetails || [],
 			warningCategoryDetails: record.warningCategoryDetails || [],
 			artifact: record.artifact
+		},
+		200,
+		request
+	);
+}
+
+async function handleBridgeUsageList(
+	request: Request,
+	env: unknown,
+	correlationId: string
+): Promise<Response> {
+	const auth = authorizeBridgeUsageRequest(request, env);
+	if (!auth.authorized) {
+		return jsonResponse(
+			{
+				status: auth.status === 503 ? 'unconfigured' : 'unauthorized',
+				accepted: false,
+				message: auth.message,
+				correlationId,
+				rawBridgeTokenStored: false
+			},
+			auth.status,
+			request
+		);
+	}
+
+	const url = new URL(request.url);
+	const filters = parseBridgeUsageFilters(url);
+	if ('error' in filters) {
+		return jsonResponse({ error: filters.error, correlationId }, 400, request);
+	}
+
+	const state = await getBridgeUsageIndexState(env);
+	const filtered = state.records
+		.filter((record) => {
+			if (filters.siteId && record.siteId !== filters.siteId) return false;
+			if (filters.status && record.status !== filters.status) return false;
+			if (typeof filters.installed === 'boolean' && record.installed !== filters.installed) return false;
+			if (typeof filters.hasLatestResult === 'boolean' && Boolean(record.latestResult) !== filters.hasLatestResult) return false;
+			if (filters.sinceMs) {
+				const lastSeen = Date.parse(record.lastSeenAt);
+				if (!Number.isFinite(lastSeen) || lastSeen < filters.sinceMs) return false;
+			}
+			if (filters.query) {
+				const haystack = [
+					record.siteId,
+					record.siteName || '',
+					record.siteUrl || '',
+					record.lastKnownMessage || ''
+				].join(' ').toLowerCase();
+				if (!haystack.includes(filters.query)) return false;
+			}
+			return true;
+		})
+		.sort((a, b) => Date.parse(b.lastSeenAt) - Date.parse(a.lastSeenAt));
+
+	const items = filtered.slice(0, filters.limit).map(sanitizeBridgeUsageRecordForResponse);
+
+	return jsonResponse(
+		{
+			schemaVersion: BRIDGE_USAGE_SCHEMA_VERSION,
+			status: 'available',
+			accepted: true,
+			count: items.length,
+			totalMatched: filtered.length,
+			limit: filters.limit,
+			filters: {
+				siteId: filters.siteId,
+				status: filters.status,
+				installed: filters.installed,
+				hasLatestResult: filters.hasLatestResult,
+				since: filters.since,
+				query: filters.query
+			},
+			updatedAt: state.updatedAt,
+			rawBridgeTokenStored: false,
+			items
 		},
 		200,
 		request
@@ -1696,6 +1937,328 @@ async function persistValidationResultState(
 ): Promise<void> {
 	validationResultRecords.set(record.siteId, record);
 	await writeDurableState(env, `validation-result:${record.siteId}`, record);
+}
+
+async function getBridgeUsageIndexState(env: unknown): Promise<BridgeUsageIndexState> {
+	const persisted = await readDurableState(env, BRIDGE_USAGE_INDEX_STATE_KEY);
+	if (persisted) {
+		const restored = reviveBridgeUsageIndexState(persisted);
+		bridgeUsageRecords.clear();
+		for (const record of restored.records) {
+			bridgeUsageRecords.set(record.siteId, record);
+		}
+		return restored;
+	}
+
+	const records = Array.from(bridgeUsageRecords.values()).sort(sortBridgeUsageRecords);
+	return {
+		schemaVersion: BRIDGE_USAGE_SCHEMA_VERSION,
+		updatedAt: records[0]?.lastSeenAt || new Date(0).toISOString(),
+		rawBridgeTokenStored: false,
+		records
+	};
+}
+
+async function persistBridgeUsageIndexState(
+	env: unknown,
+	state: BridgeUsageIndexState
+): Promise<void> {
+	bridgeUsageRecords.clear();
+	for (const record of state.records) {
+		bridgeUsageRecords.set(record.siteId, record);
+	}
+	await writeDurableState(env, BRIDGE_USAGE_INDEX_STATE_KEY, state);
+}
+
+async function recordBridgeUsage(env: unknown, update: BridgeUsageIndexUpdate): Promise<void> {
+	try {
+		const siteId = normalizeSiteId(update.siteId);
+		if (!siteId) return;
+
+		const eventAt = normalizeIsoTimestamp(update.eventAt) || new Date().toISOString();
+		const state = await getBridgeUsageIndexState(env);
+		const bySite = new Map(state.records.map((record) => [record.siteId, record]));
+		const existing = bySite.get(siteId);
+		const eventCounts = incrementBridgeUsageEventCount(existing?.eventCounts, update.event);
+		const siteUrl = normalizeSiteUrl(update.siteUrl || null) || existing?.siteUrl;
+		const next: BridgeUsageIndexRecord = {
+			schemaVersion: BRIDGE_USAGE_SCHEMA_VERSION,
+			siteId,
+			siteName: update.siteName !== undefined ? update.siteName : existing?.siteName || null,
+			siteUrl,
+			snippetVersion: update.snippetVersion || existing?.snippetVersion,
+			installMethod: update.installMethod || existing?.installMethod,
+			status: update.status || existing?.status || 'pending_manual',
+			installed: typeof update.installed === 'boolean' ? update.installed : existing?.installed || false,
+			firstSeenAt: existing?.firstSeenAt || eventAt,
+			lastSeenAt: eventAt,
+			lastEvent: update.event,
+			lastInstallAt: update.lastInstallAt || existing?.lastInstallAt,
+			lastStatusCheckAt: update.lastStatusCheckAt || existing?.lastStatusCheckAt,
+			lastTokenRotatedAt: update.lastTokenRotatedAt || existing?.lastTokenRotatedAt,
+			lastSubmissionAt: update.lastSubmissionAt || existing?.lastSubmissionAt,
+			lastLatestLookupAt: update.lastLatestLookupAt || existing?.lastLatestLookupAt,
+			lastKnownMessage: sanitizeBridgeUsageMessage(update.lastKnownMessage) || existing?.lastKnownMessage,
+			latestResult: update.latestResult || existing?.latestResult,
+			eventCounts,
+			rawBridgeTokenStored: false
+		};
+
+		bySite.set(siteId, next);
+		const records = Array.from(bySite.values())
+			.sort(sortBridgeUsageRecords)
+			.slice(0, BRIDGE_USAGE_MAX_RECORDS);
+		await persistBridgeUsageIndexState(env, {
+			schemaVersion: BRIDGE_USAGE_SCHEMA_VERSION,
+			updatedAt: eventAt,
+			rawBridgeTokenStored: false,
+			records
+		});
+	} catch (error) {
+		await emitTelemetry(env, {
+			event: 'bridge_usage.persist_failed',
+			correlationId: normalizeCorrelationId(update.correlationId || `bridge_usage_${update.siteId}`),
+			level: 'error',
+			payload: {
+				siteId: update.siteId,
+				usageEvent: update.event,
+				message: error instanceof Error ? error.message : String(error)
+			}
+		});
+	}
+}
+
+function snapshotLatestResultForBridgeUsage(record: ValidationResultRecord): BridgeUsageLatestResultSnapshot {
+	return {
+		submittedAt: record.submittedAt,
+		correlationId: record.correlationId,
+		payloadHash: record.payloadHash,
+		passed: record.summary.passed,
+		summary: record.summary,
+		artifact: record.artifact
+	};
+}
+
+function reviveBridgeUsageIndexState(raw: unknown): BridgeUsageIndexState {
+	const maybeState = raw as Partial<BridgeUsageIndexState> | null;
+	const records = Array.isArray(maybeState?.records)
+		? maybeState.records
+			.map(reviveBridgeUsageRecord)
+			.filter((record): record is BridgeUsageIndexRecord => Boolean(record))
+			.sort(sortBridgeUsageRecords)
+			.slice(0, BRIDGE_USAGE_MAX_RECORDS)
+		: [];
+	return {
+		schemaVersion: BRIDGE_USAGE_SCHEMA_VERSION,
+		updatedAt: normalizeIsoTimestamp(maybeState?.updatedAt) || records[0]?.lastSeenAt || new Date(0).toISOString(),
+		rawBridgeTokenStored: false,
+		records
+	};
+}
+
+function reviveBridgeUsageRecord(raw: unknown): BridgeUsageIndexRecord | null {
+	const value = raw as Partial<BridgeUsageIndexRecord> | null;
+	const siteId = normalizeSiteId(value?.siteId);
+	if (!siteId) return null;
+	const lastSeenAt = normalizeIsoTimestamp(value?.lastSeenAt) || new Date(0).toISOString();
+	const firstSeenAt = normalizeIsoTimestamp(value?.firstSeenAt) || lastSeenAt;
+	const status = value?.status === 'active' || value?.status === 'failed' || value?.status === 'pending_manual'
+		? value.status
+		: 'pending_manual';
+	const lastEvent = isBridgeUsageEvent(value?.lastEvent) ? value.lastEvent : 'snippet_status';
+
+	return {
+		schemaVersion: BRIDGE_USAGE_SCHEMA_VERSION,
+		siteId,
+		siteName: typeof value?.siteName === 'string' ? value.siteName : null,
+		siteUrl: typeof value?.siteUrl === 'string' ? value.siteUrl : undefined,
+		snippetVersion: typeof value?.snippetVersion === 'string' ? value.snippetVersion : undefined,
+		installMethod: value?.installMethod === 'webflow-api' || value?.installMethod === 'manual-fallback'
+			? value.installMethod
+			: undefined,
+		status,
+		installed: Boolean(value?.installed),
+		firstSeenAt,
+		lastSeenAt,
+		lastEvent,
+		lastInstallAt: normalizeIsoTimestamp(value?.lastInstallAt) || undefined,
+		lastStatusCheckAt: normalizeIsoTimestamp(value?.lastStatusCheckAt) || undefined,
+		lastTokenRotatedAt: normalizeIsoTimestamp(value?.lastTokenRotatedAt) || undefined,
+		lastSubmissionAt: normalizeIsoTimestamp(value?.lastSubmissionAt) || undefined,
+		lastLatestLookupAt: normalizeIsoTimestamp(value?.lastLatestLookupAt) || undefined,
+		lastKnownMessage: sanitizeBridgeUsageMessage(value?.lastKnownMessage),
+		latestResult: reviveBridgeUsageLatestResult(value?.latestResult),
+		eventCounts: reviveBridgeUsageEventCounts(value?.eventCounts),
+		rawBridgeTokenStored: false
+	};
+}
+
+function reviveBridgeUsageLatestResult(raw: unknown): BridgeUsageLatestResultSnapshot | undefined {
+	const value = raw as Partial<BridgeUsageLatestResultSnapshot> | null;
+	const submittedAt = normalizeIsoTimestamp(value?.submittedAt);
+	if (!submittedAt || !value?.summary) return undefined;
+	return {
+		submittedAt,
+		correlationId: typeof value.correlationId === 'string' ? value.correlationId : '',
+		payloadHash: typeof value.payloadHash === 'string' ? value.payloadHash : '',
+		passed: Boolean(value.passed),
+		summary: value.summary as ValidationSubmissionSummary,
+		artifact: value.artifact || { persisted: false, reason: 'r2_not_configured' }
+	};
+}
+
+function reviveBridgeUsageEventCounts(raw: unknown): BridgeUsageEventCounters {
+	const value = raw as Partial<BridgeUsageEventCounters> | null;
+	return {
+		install: toNonNegativeInteger(value?.install),
+		status: toNonNegativeInteger(value?.status),
+		rotate: toNonNegativeInteger(value?.rotate),
+		submit: toNonNegativeInteger(value?.submit),
+		latestLookup: toNonNegativeInteger(value?.latestLookup)
+	};
+}
+
+function incrementBridgeUsageEventCount(
+	raw: BridgeUsageEventCounters | undefined,
+	event: BridgeUsageEvent
+): BridgeUsageEventCounters {
+	const counts = reviveBridgeUsageEventCounts(raw);
+	switch (event) {
+		case 'snippet_install':
+			counts.install++;
+			break;
+		case 'snippet_status':
+			counts.status++;
+			break;
+		case 'snippet_rotate':
+			counts.rotate++;
+			break;
+		case 'validation_submit':
+			counts.submit++;
+			break;
+		case 'latest_lookup':
+			counts.latestLookup++;
+			break;
+	}
+	return counts;
+}
+
+function parseBridgeUsageFilters(url: URL): {
+	limit: number;
+	siteId?: string;
+	status?: SnippetTokenRecord['status'];
+	installed?: boolean;
+	hasLatestResult?: boolean;
+	since?: string;
+	sinceMs?: number;
+	query?: string;
+} | { error: string } {
+	const limitRaw = url.searchParams.get('limit');
+	const limit = limitRaw
+		? Math.min(Math.max(Number.parseInt(limitRaw, 10) || BRIDGE_USAGE_DEFAULT_LIMIT, 1), BRIDGE_USAGE_MAX_LIMIT)
+		: BRIDGE_USAGE_DEFAULT_LIMIT;
+	const siteId = normalizeSiteId(url.searchParams.get('siteId')) || undefined;
+	const statusRaw = url.searchParams.get('status');
+	const status = statusRaw && statusRaw !== 'any'
+		? statusRaw === 'active' || statusRaw === 'pending_manual' || statusRaw === 'failed'
+			? statusRaw
+			: null
+		: undefined;
+	if (statusRaw && statusRaw !== 'any' && !status) return { error: 'Invalid status filter.' };
+
+	const installed = parseBooleanFilter(url.searchParams.get('installed'));
+	if (installed === 'invalid') return { error: 'Invalid installed filter. Use true or false.' };
+	const hasLatestResult = parseBooleanFilter(url.searchParams.get('hasLatestResult'));
+	if (hasLatestResult === 'invalid') return { error: 'Invalid hasLatestResult filter. Use true or false.' };
+
+	const since = url.searchParams.get('since') || undefined;
+	const sinceMs = since ? Date.parse(since) : undefined;
+	if (since && !Number.isFinite(sinceMs)) return { error: 'Invalid since filter. Use an ISO timestamp.' };
+
+	const query = url.searchParams.get('q')?.trim().toLowerCase() || undefined;
+	return {
+		limit,
+		siteId,
+		status: status || undefined,
+		installed: installed === undefined ? undefined : installed,
+		hasLatestResult: hasLatestResult === undefined ? undefined : hasLatestResult,
+		since,
+		sinceMs,
+		query
+	};
+}
+
+function parseBooleanFilter(value: string | null): boolean | undefined | 'invalid' {
+	if (value === null || value === '') return undefined;
+	if (/^(true|1|yes)$/i.test(value)) return true;
+	if (/^(false|0|no)$/i.test(value)) return false;
+	return 'invalid';
+}
+
+function authorizeBridgeUsageRequest(
+	request: Request,
+	env: unknown
+): { authorized: true } | { authorized: false; status: number; message: string } {
+	const configuredToken =
+		readEnvString(env, 'VALIDATOR_BRIDGE_USAGE_ADMIN_TOKEN') ||
+		readEnvString(env, 'VALIDATOR_ADMIN_TOKEN');
+	if (!configuredToken) {
+		return {
+			authorized: false,
+			status: 503,
+			message: 'Bridge usage listing is not configured. Set VALIDATOR_BRIDGE_USAGE_ADMIN_TOKEN or VALIDATOR_ADMIN_TOKEN.'
+		};
+	}
+
+	const authHeader = request.headers.get('Authorization') || '';
+	const bearerMatch = authHeader.match(/^Bearer\s+(.+)$/i);
+	const providedToken = bearerMatch?.[1] || request.headers.get('X-Validator-Admin-Token') || '';
+	if (!providedToken) {
+		return { authorized: false, status: 401, message: 'Missing bridge usage admin token.' };
+	}
+	if (providedToken !== configuredToken) {
+		return { authorized: false, status: 403, message: 'Invalid bridge usage admin token.' };
+	}
+	return { authorized: true };
+}
+
+function sanitizeBridgeUsageRecordForResponse(record: BridgeUsageIndexRecord) {
+	return {
+		...record,
+		rawBridgeTokenStored: false
+	};
+}
+
+function isBridgeUsageEvent(value: unknown): value is BridgeUsageEvent {
+	return value === 'snippet_install' ||
+		value === 'snippet_status' ||
+		value === 'snippet_rotate' ||
+		value === 'validation_submit' ||
+		value === 'latest_lookup';
+}
+
+function sortBridgeUsageRecords(a: BridgeUsageIndexRecord, b: BridgeUsageIndexRecord): number {
+	return Date.parse(b.lastSeenAt) - Date.parse(a.lastSeenAt);
+}
+
+function normalizeIsoTimestamp(value: unknown): string | undefined {
+	if (typeof value !== 'string') return undefined;
+	const parsed = Date.parse(value);
+	if (!Number.isFinite(parsed)) return undefined;
+	return new Date(parsed).toISOString();
+}
+
+function sanitizeBridgeUsageMessage(value: unknown): string | undefined {
+	if (typeof value !== 'string') return undefined;
+	const trimmed = value.replace(/\s+/g, ' ').trim();
+	if (!trimmed) return undefined;
+	return trimmed.length > 300 ? `${trimmed.slice(0, 297)}...` : trimmed;
+}
+
+function toNonNegativeInteger(value: unknown): number {
+	return typeof value === 'number' && Number.isFinite(value) && value > 0
+		? Math.floor(value)
+		: 0;
 }
 
 function pruneReviewJobState(job: ReviewJobState): ReviewJobState {
@@ -2607,7 +3170,7 @@ function getCORSHeaders(
 		'Access-Control-Allow-Headers':
 			requestedHeaders && requestedHeaders.trim() !== ''
 				? requestedHeaders
-				: 'Content-Type, Authorization, X-Correlation-Id',
+				: 'Content-Type, Authorization, X-Correlation-Id, X-Validator-Admin-Token',
 		'Access-Control-Max-Age': '86400',
 		Vary: 'Origin',
 		...extraHeaders
