@@ -79,5 +79,31 @@ export default declareComponent(TemplateSearchPage, {
       tooltip:
         'Dispatches templateSearchExperienceAnalytics DOM events and wf_analytics.track calls when available.',
     }),
+    showCategoryMeta: props.Boolean({
+      name: 'Show Category Metadata',
+      defaultValue: false,
+      tooltip: 'Show primary category and subcategory metadata on result cards.',
+    }),
+    showTemplateType: props.Boolean({
+      name: 'Show Template Type',
+      defaultValue: false,
+      tooltip: 'Show One Page, Multi Page, or Multi Layout on result cards.',
+    }),
+    showPreviewLink: props.Boolean({
+      name: 'Show Preview Link',
+      defaultValue: false,
+      tooltip: 'Show a secondary preview link on cards when the search API has a preview URL.',
+    }),
+    showFeaturedBadge: props.Boolean({
+      name: 'Show Featured Badge',
+      defaultValue: false,
+      tooltip: 'Show a Featured badge on templates marked as featured by the search API.',
+    }),
+    showMarketplaceSignals: props.Boolean({
+      name: 'Show Marketplace Signals',
+      defaultValue: false,
+      tooltip:
+        'Show compact display-only signals from the search API, such as Popular, purchases, and views on result cards.',
+    }),
   },
 });

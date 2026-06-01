@@ -6,19 +6,34 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { TemplateCard } from '../cards/TemplateCard';
+import { TemplateCard, type TemplateCardBadge, type TemplateCardLink } from '../cards/TemplateCard';
+import { trackMarketplaceEvent } from '../marketplace/analytics';
 import {
   MarketplaceComponentErrorBoundary,
   useMarketplaceComponentErrorTracking,
 } from '../marketplace/MarketplaceComponentErrorBoundary';
+import {
+  getSafeAnalyticsOverrides,
+  MARKETPLACE_SIGNAL_WINDOW,
+  writeTemplateAttribution,
+  type TemplateMarketplaceAttribution,
+} from '../marketplace/templateAttribution';
 
 // ─── API types ────────────────────────────────────────────────────────────────
+
+interface ApiTerm {
+  name: string;
+  slug: string;
+  url?: string;
+}
 
 interface ApiItem {
   id: string;
   template_slug: string;
   name: string;
   url: string | null;
+  preview_url: string | null;
+  website_url: string | null;
   creator_name: string | null;
   creator_profile_url: string | null;
   creator_avatar_url: string | null;
@@ -27,8 +42,14 @@ interface ApiItem {
   thumbnail_image_secondary_url: string | null;
   price: number | null;
   is_free: boolean;
+  is_featured: boolean;
+  template_type: string | null;
   popularity_score: number | null;
+  unique_viewers: number | null;
+  cumulative_purchases: number | null;
   published_date: string | null;
+  category_groups?: ApiTerm[];
+  child_categories?: ApiTerm[];
 }
 
 interface ApiResponse {
@@ -40,6 +61,11 @@ interface ApiResponse {
     total_pages: number;
     has_next_page: boolean;
     has_previous_page: boolean;
+  };
+  client_filter?: {
+    strict_free: boolean;
+    dropped_paid_items: number;
+    source_total_items: number;
   };
 }
 
@@ -109,6 +135,22 @@ export interface TemplateGridProps {
   emptyDescription?: string;
   /** Clear-filters button label when showEmptyState is enabled. */
   emptyActionLabel?: string;
+  /** Show category/subcategory metadata below the creator name. */
+  showCategoryMeta?: boolean;
+  /** Show the template type alongside category metadata. */
+  showTemplateType?: boolean;
+  /** Show a secondary Preview link when the API has a preview URL. */
+  showPreviewLink?: boolean;
+  /** Show Featured badge on API-featured templates. */
+  showFeaturedBadge?: boolean;
+  /** Show compact social-proof signals from the search API on each card. */
+  showMarketplaceSignals?: boolean;
+  /**
+   * Emit aggregate marketplace health telemetry for successful result batches
+   * and component errors. Does not send raw query text, template names, or
+   * creator names.
+   */
+  enableAnalytics?: boolean;
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -122,8 +164,16 @@ const WORKER_ORIGIN = 'https://webflow-template-search.createsomething.workers.d
 const CLOUD_APP_PREVIEW_ORIGIN = 'https://webflow-template-marketplace.webflow.io';
 const DEFAULT_PAGE_SIZE = 24;
 const SEARCH_CACHE_TTL_MS = 5 * 60 * 1000;
+const NEW_TEMPLATE_WINDOW_DAYS = 30;
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+const STRICT_FREE_FETCH_PAGE_SIZE = 100;
+const STRICT_FREE_MAX_FETCH_PAGES = 20;
 
 const gridResponseCache = new Map<string, { timestamp: number; data: ApiResponse }>();
+const strictFreeCollectionCache = new Map<
+  string,
+  { timestamp: number; items: ApiItem[]; sourceTotalItems: number; droppedPaidItems: number }
+>();
 
 // Hosts whose images need to be routed through the Cloud App proxy.
 // Airtable signed attachment URLs expire after ~2 hours; the proxy caches
@@ -282,8 +332,8 @@ function parseRouteState(
   const subcategoryMatch = pathname.match(/\/templates\/subcategory\/([^/?#]+)/);
   const styleMatch = pathname.match(/\/templates\/style\/([^/?#]+)/);
   const tagMatch = pathname.match(/\/templates\/tag\/([^/?#]+)/);
-  const categoryParam = params.get('category');
-  const subcategoryParam = params.get('subcategory');
+  const categoryParam = params.get('category') ?? params.get('category_group_slug');
+  const subcategoryParam = params.get('subcategory') ?? params.get('child_category_slug');
   const styleParam = params.get('style_slug') ?? params.get('style');
   const tagParam = params.get('tag_slug') ?? params.get('tag');
 
@@ -327,6 +377,8 @@ function mergeExternalFilterState(base: FilterState, detail: unknown): FilterSta
   if (!detail || typeof detail !== 'object') return base;
   const patch = detail as Partial<{
     q: unknown;
+    categoryGroupSlug: unknown;
+    childCategorySlug: unknown;
     styles: unknown;
     tags: unknown;
     types: unknown;
@@ -337,6 +389,18 @@ function mergeExternalFilterState(base: FilterState, detail: unknown): FilterSta
   return {
     ...base,
     q: typeof patch.q === 'string' ? patch.q.trim() : base.q,
+    categoryGroupSlug:
+      typeof patch.categoryGroupSlug === 'string'
+        ? patch.categoryGroupSlug.trim() || null
+        : patch.categoryGroupSlug === null
+          ? null
+          : base.categoryGroupSlug,
+    childCategorySlug:
+      typeof patch.childCategorySlug === 'string'
+        ? patch.childCategorySlug.trim() || null
+        : patch.childCategorySlug === null
+          ? null
+          : base.childCategorySlug,
     styles: Array.isArray(patch.styles) ? patch.styles.filter((value): value is string => typeof value === 'string') : base.styles,
     tags: Array.isArray(patch.tags) ? patch.tags.filter((value): value is string => typeof value === 'string') : base.tags,
     types: Array.isArray(patch.types) ? patch.types.filter((value): value is string => typeof value === 'string') : base.types,
@@ -424,12 +488,277 @@ function isFreeTemplate(item: ApiItem): boolean {
   return item.is_free;
 }
 
+function requiresStrictFreeFilter(filters: FilterState): boolean {
+  return filters.scope === 'free' || filters.freeOnly;
+}
+
+function toPagedApiResponse(
+  items: ApiItem[],
+  page: number,
+  pageSize: number,
+  clientFilter?: ApiResponse['client_filter'],
+): ApiResponse {
+  const safePage = Math.max(1, page);
+  const safePageSize = Math.max(1, pageSize);
+  const totalItems = items.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / safePageSize));
+  const start = (safePage - 1) * safePageSize;
+  const pageItems = items.slice(start, start + safePageSize);
+
+  return {
+    items: pageItems,
+    pagination: {
+      page: safePage,
+      page_size: safePageSize,
+      total_items: totalItems,
+      total_pages: totalPages,
+      has_next_page: start + safePageSize < totalItems,
+      has_previous_page: safePage > 1,
+    },
+    client_filter: clientFilter,
+  };
+}
+
+async function fetchStrictFreePage(
+  apiBase: string,
+  filters: FilterState,
+  targetPage: number,
+  pageSize: number,
+): Promise<ApiResponse> {
+  const collectionKey = buildApiUrl(apiBase, filters, 1, STRICT_FREE_FETCH_PAGE_SIZE);
+  const cached = strictFreeCollectionCache.get(collectionKey);
+
+  if (cached && Date.now() - cached.timestamp < SEARCH_CACHE_TTL_MS) {
+    return toPagedApiResponse(cached.items, targetPage, pageSize, {
+      strict_free: true,
+      dropped_paid_items: cached.droppedPaidItems,
+      source_total_items: cached.sourceTotalItems,
+    });
+  }
+
+  const allItems: ApiItem[] = [];
+  let sourceTotalItems = 0;
+  let page = 1;
+  let hasNextPage = true;
+
+  while (hasNextPage && page <= STRICT_FREE_MAX_FETCH_PAGES) {
+    const response = await fetch(buildApiUrl(apiBase, filters, page, STRICT_FREE_FETCH_PAGE_SIZE));
+    if (!response.ok) throw new Error(`API ${response.status}`);
+    const data: ApiResponse = await response.json();
+    if (page === 1) sourceTotalItems = data.pagination.total_items;
+    allItems.push(...data.items);
+    hasNextPage = data.pagination.has_next_page;
+    page += 1;
+  }
+
+  const freeItems = allItems.filter(isFreeTemplate);
+  const droppedPaidItems = allItems.length - freeItems.length;
+  strictFreeCollectionCache.set(collectionKey, {
+    timestamp: Date.now(),
+    items: freeItems,
+    sourceTotalItems: sourceTotalItems || allItems.length,
+    droppedPaidItems,
+  });
+
+  return toPagedApiResponse(freeItems, targetPage, pageSize, {
+    strict_free: true,
+    dropped_paid_items: droppedPaidItems,
+    source_total_items: sourceTotalItems || allItems.length,
+  });
+}
+
 function priceNumeric(item: ApiItem): string {
   return typeof item.price === 'number' ? String(item.price) : '';
 }
 
 function primaryThumbnailUrl(item: ApiItem): string | null {
   return item.thumbnail_image_url ?? item.thumbnail_image_secondary_url;
+}
+
+function firstNamedTerm(terms?: ApiTerm[]): ApiTerm | null {
+  return terms?.find((term) => term.name.trim()) ?? null;
+}
+
+function toTermLink(term: ApiTerm | null): TemplateCardLink | undefined {
+  return term?.url ? { href: term.url } : undefined;
+}
+
+function previewTemplateLink(item: ApiItem): TemplateCardLink | undefined {
+  if (item.preview_url) return { href: item.preview_url, target: '_blank' };
+  if (item.website_url && item.website_url !== item.url) return { href: item.website_url, target: '_blank' };
+  return undefined;
+}
+
+function featuredBadge(item: ApiItem, enabled: boolean): { badgeText?: string; badgeVariant?: TemplateCardBadge } {
+  if (!enabled || !item.is_featured) return {};
+  return { badgeText: 'Featured', badgeVariant: 'featured' };
+}
+
+function formatCompactNumber(value: number): string {
+  if (value >= 1_000_000) return `${Number((value / 1_000_000).toFixed(value >= 10_000_000 ? 0 : 1))}M`;
+  if (value >= 1_000) return `${Number((value / 1_000).toFixed(value >= 10_000 ? 0 : 1))}k`;
+  return String(value);
+}
+
+function pluralize(value: number, singular: string, plural = `${singular}s`): string {
+  return `${formatCompactNumber(value)} ${value === 1 ? singular : plural}`;
+}
+
+type MarketplaceSignalDensity = 'full' | 'selective' | 'strict';
+
+function signalDensityForPosition(position: number): MarketplaceSignalDensity {
+  if (position <= 12) return 'full';
+  if (position <= 24) return 'selective';
+  return 'strict';
+}
+
+function marketplaceSignals(item: ApiItem, position: number): string[] {
+  // The backend field name is historical; the value is a rolling 30-day
+  // purchase count, so keep the card labels bucketed instead of implying
+  // lifetime proof from exact low counts.
+  const purchases = typeof item.cumulative_purchases === 'number' ? item.cumulative_purchases : 0;
+  const viewers = typeof item.unique_viewers === 'number' ? item.unique_viewers : 0;
+  const popularity = typeof item.popularity_score === 'number' ? item.popularity_score : 0;
+  const density = signalDensityForPosition(position);
+  const isPopular = popularity >= 5;
+  const hasSales = purchases > 0;
+  const hasHighViews = viewers >= 5_000;
+
+  if (purchases >= 250) return ['Marketplace favorite', '250+ purchases'];
+  if (purchases >= 100) return ['Top seller', '100+ purchases'];
+  if (purchases >= 50) return ['Strong seller', '50+ purchases'];
+  if (purchases >= 20 && density !== 'strict') return ['Sales momentum', '20+ purchases'];
+  if (purchases >= 10 && density === 'full') return ['Recently purchased', '10+ purchases'];
+  if (hasSales && isPopular && density === 'full') return ['Recently purchased'];
+  if (hasSales && hasHighViews && density === 'full') return ['Buyer interest'];
+  if (isPopular && hasHighViews && density !== 'strict') return ['High interest', pluralize(viewers, 'view')];
+  if (isPopular && density === 'full') return ['Popular'];
+  if (hasHighViews && density === 'full') return [pluralize(viewers, 'view')];
+  return [];
+}
+
+function isRecentlyPublished(publishedDate: string | null): boolean {
+  if (!publishedDate) return false;
+  const publishedAt = Date.parse(publishedDate);
+  if (Number.isNaN(publishedAt)) return false;
+  const age = Date.now() - publishedAt;
+  return age >= 0 && age <= NEW_TEMPLATE_WINDOW_DAYS * MS_PER_DAY;
+}
+
+function uniqueCreatorCount(items: ApiItem[]): number {
+  const creatorKeys = new Set<string>();
+  items.forEach((item) => {
+    const key = item.creator_profile_url || item.creator_name || item.creator_avatar_url;
+    if (key) creatorKeys.add(key);
+  });
+  return creatorKeys.size;
+}
+
+function trackGridHealthEvent(
+  data: ApiResponse,
+  filters: FilterState,
+  append: boolean,
+  showMarketplaceSignals: boolean,
+  enabled: boolean,
+): void {
+  const topResult = data.items[0];
+  trackMarketplaceEvent(
+    'Code Component Event',
+    {
+      ...getSafeAnalyticsOverrides(),
+      component: 'TemplateGrid',
+      scope: 'results_rendered',
+      append,
+      result_count: data.items.length,
+      total_items: data.pagination.total_items,
+      page: data.pagination.page,
+      page_size: data.pagination.page_size,
+      has_next_page: data.pagination.has_next_page,
+      has_results: data.items.length > 0,
+      sort: filters.sort,
+      q_present: Boolean(filters.q),
+      signal_window: MARKETPLACE_SIGNAL_WINDOW,
+      signal_density: 'mixed',
+      marketplace_signal_window: MARKETPLACE_SIGNAL_WINDOW,
+      styles_count: filters.styles.length,
+      tags_count: filters.tags.length,
+      types_count: filters.types.length,
+      free_only: filters.freeOnly,
+      scope_filter: filters.scope,
+      category_group_slug: filters.categoryGroupSlug,
+      child_category_slug: filters.childCategorySlug,
+      style_slug: filters.styleSlug,
+      tag_slug: filters.tagSlug,
+      marketplace_signals_enabled: showMarketplaceSignals,
+      visible_featured_count: data.items.filter((item) => item.is_featured).length,
+      visible_free_count: data.items.filter(isFreeTemplate).length,
+      visible_new_count: data.items.filter((item) => isRecentlyPublished(item.published_date)).length,
+      visible_with_purchases_count: data.items.filter((item) => (item.cumulative_purchases ?? 0) > 0).length,
+      visible_with_viewers_count: data.items.filter((item) => (item.unique_viewers ?? 0) > 0).length,
+      visible_unique_creators_count: uniqueCreatorCount(data.items),
+      top_result_popularity_score: topResult?.popularity_score ?? null,
+      client_filter_strict_free: data.client_filter?.strict_free ?? false,
+      client_filter_dropped_paid_count: data.client_filter?.dropped_paid_items ?? 0,
+      client_filter_source_total_items: data.client_filter?.source_total_items ?? data.pagination.total_items,
+    },
+    enabled,
+  );
+}
+
+function normalizeTemplateHref(href: string | null | undefined): string | null {
+  if (!href) return null;
+  try {
+    const url = new URL(href, typeof window !== 'undefined' ? window.location.origin : 'https://webflow.com');
+    return `${url.pathname.replace(/\/+$/, '')}${url.search}`;
+  } catch {
+    return href.replace(/\/+$/, '');
+  }
+}
+
+function isTemplateDetailAnchorClick(event: React.MouseEvent<HTMLDivElement>, itemUrl: string | null): boolean {
+  const target = event.target;
+  if (!(target instanceof Element)) return false;
+  const anchor = target.closest<HTMLAnchorElement>('a[href]');
+  if (!anchor) return false;
+  return normalizeTemplateHref(anchor.getAttribute('href')) === normalizeTemplateHref(itemUrl);
+}
+
+function sourcePathname(): string | null {
+  if (typeof window === 'undefined') return null;
+  return window.location.pathname || null;
+}
+
+function buildTemplateAttribution(
+  item: ApiItem,
+  filters: FilterState,
+  sourcePage: number,
+  sourcePosition: number,
+  signals: string[],
+): TemplateMarketplaceAttribution {
+  return {
+    version: 1,
+    source_component: 'TemplateGrid',
+    source_pathname: sourcePathname(),
+    source_scope: filters.scope,
+    source_sort: filters.sort,
+    source_category_group_slug: filters.categoryGroupSlug,
+    source_child_category_slug: filters.childCategorySlug,
+    source_style_slug: filters.styleSlug,
+    source_tag_slug: filters.tagSlug,
+    source_free_only: filters.freeOnly,
+    source_q_present: Boolean(filters.q),
+    source_styles_count: filters.styles.length,
+    source_tags_count: filters.tags.length,
+    source_types_count: filters.types.length,
+    source_page: sourcePage,
+    source_position: sourcePosition,
+    template_slug: item.template_slug,
+    signal_bucket: signals[0] ?? null,
+    signal_metric: signals[1] ?? null,
+    signal_window: MARKETPLACE_SIGNAL_WINDOW,
+    signal_density: signalDensityForPosition(sourcePosition),
+    created_at: new Date().toISOString(),
+  };
 }
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
@@ -622,8 +951,14 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
   emptyTitle = 'No templates found',
   emptyDescription = 'Try a broader search or clear filters to see more templates.',
   emptyActionLabel = 'Clear filters',
+  showCategoryMeta = false,
+  showTemplateType = false,
+  showPreviewLink = false,
+  showFeaturedBadge = false,
+  showMarketplaceSignals = false,
+  enableAnalytics = true,
 }) => {
-  useMarketplaceComponentErrorTracking('TemplateGrid');
+  useMarketplaceComponentErrorTracking('TemplateGrid', enableAnalytics);
 
   // Webflow passes defaultValue strings (including '') as actual values, not undefined.
   // Fall back to the relative path whenever the prop is blank.
@@ -682,6 +1017,7 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
         setPage(cached.data.pagination.page);
         setHasNextPage(cached.data.pagination.has_next_page);
         setTotalItems(cached.data.pagination.total_items);
+        trackGridHealthEvent(cached.data, currentFilters, append, showMarketplaceSignals, enableAnalytics);
         setLoading(false);
         setLoadingMore(false);
         return;
@@ -695,9 +1031,13 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
       }
 
       try {
-        const res = await fetch(url);
-        if (!res.ok) throw new Error(`API ${res.status}`);
-        const data: ApiResponse = await res.json();
+        const data = requiresStrictFreeFilter(currentFilters)
+          ? await fetchStrictFreePage(apiBase, currentFilters, targetPage, resolvedPageSize)
+          : await (async () => {
+              const res = await fetch(url);
+              if (!res.ok) throw new Error(`API ${res.status}`);
+              return (await res.json()) as ApiResponse;
+            })();
         gridResponseCache.set(url, { timestamp: Date.now(), data });
 
         if (epoch !== fetchEpochRef.current) return;
@@ -706,6 +1046,7 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
         setPage(data.pagination.page);
         setHasNextPage(data.pagination.has_next_page);
         setTotalItems(data.pagination.total_items);
+        trackGridHealthEvent(data, currentFilters, append, showMarketplaceSignals, enableAnalytics);
       } catch (e) {
         if (epoch !== fetchEpochRef.current) return;
         setError(e instanceof Error ? e.message : 'Failed to load templates');
@@ -716,7 +1057,7 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
         }
       }
     },
-    [apiBase, resolvedPageSize],
+    [apiBase, resolvedPageSize, showMarketplaceSignals, enableAnalytics],
   );
 
   // Re-fetch from page 1 whenever filters change
@@ -1006,6 +1347,46 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
     setFilters(next);
   }, [filters, initialSort]);
 
+  const handleTemplateCardClick = useCallback(
+    (event: React.MouseEvent<HTMLDivElement>, item: ApiItem, index: number, signals: string[]) => {
+      if (!isTemplateDetailAnchorClick(event, item.url)) return;
+
+      const sourcePosition = index + 1;
+      const sourcePage = Math.floor(index / resolvedPageSize) + 1;
+      const attribution = buildTemplateAttribution(item, filters, sourcePage, sourcePosition, signals);
+      writeTemplateAttribution(attribution);
+
+      trackMarketplaceEvent(
+        'Code Component Event',
+        {
+          ...getSafeAnalyticsOverrides(),
+          component: 'TemplateGrid',
+          scope: 'template_card_clicked',
+          source_scope: filters.scope,
+          source_sort: filters.sort,
+          source_category_group_slug: filters.categoryGroupSlug,
+          source_child_category_slug: filters.childCategorySlug,
+          source_style_slug: filters.styleSlug,
+          source_tag_slug: filters.tagSlug,
+          source_free_only: filters.freeOnly,
+          source_q_present: Boolean(filters.q),
+          source_styles_count: filters.styles.length,
+          source_tags_count: filters.tags.length,
+          source_types_count: filters.types.length,
+          source_page: sourcePage,
+          source_position: sourcePosition,
+          template_slug: item.template_slug,
+          signal_bucket: signals[0] ?? null,
+          signal_metric: signals[1] ?? null,
+          signal_window: MARKETPLACE_SIGNAL_WINDOW,
+          signal_density: signalDensityForPosition(sourcePosition),
+        },
+        enableAnalytics,
+      );
+    },
+    [enableAnalytics, filters, resolvedPageSize],
+  );
+
   // ── Render ─────────────────────────────────────────────────────────────────
 
   if (loading && items.length === 0) {
@@ -1082,12 +1463,18 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
         <div className="tmgrid-grid">
           {items.map((item, i) => {
             const primaryImageUrl = primaryThumbnailUrl(item);
+            const primaryCategory = firstNamedTerm(item.category_groups);
+            const primarySubcategory = firstNamedTerm(item.child_categories);
+            const badgeProps = featuredBadge(item, showFeaturedBadge);
+            const position = i + 1;
+            const signals = marketplaceSignals(item, position);
             return (
               <div
                 key={item.id}
                 className="tmgrid-item"
                 style={{ animationDelay: `${Math.min(i % resolvedPageSize, 11) * 40}ms` }}
                 data-template-slug={item.template_slug}
+                onClickCapture={(event) => handleTemplateCardClick(event, item, i, signals)}
               >
                 <TemplateCard
                   templateName={item.name}
@@ -1101,6 +1488,12 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
                       ? { href: item.creator_profile_url, target: '_blank' }
                       : undefined
                   }
+                  categoryName={primaryCategory?.name}
+                  categoryLink={toTermLink(primaryCategory)}
+                  subcategoryName={primarySubcategory?.name}
+                  subcategoryLink={toTermLink(primarySubcategory)}
+                  templateType={item.template_type ?? ''}
+                  previewLink={previewTemplateLink(item)}
                   creatorIcon={
                     item.creator_avatar_url
                       ? { src: proxyImageUrl(item.creator_avatar_url, apiBase), alt: item.creator_avatar_alt ?? item.creator_name ?? '' }
@@ -1116,6 +1509,12 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
                   deferSecondaryImage
                   approvalDate={item.published_date ?? ''}
                   popularityScore={String(item.popularity_score ?? '')}
+                  showCategoryMeta={showCategoryMeta}
+                  showTemplateType={showTemplateType}
+                  showPreviewLink={showPreviewLink}
+                  showMarketplaceSignals={showMarketplaceSignals}
+                  marketplaceSignals={signals}
+                  {...badgeProps}
                 />
               </div>
             );
@@ -1148,7 +1547,7 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
 };
 
 export const TemplateGrid: React.FC<TemplateGridProps> = (props) => (
-  <MarketplaceComponentErrorBoundary component="TemplateGrid">
+  <MarketplaceComponentErrorBoundary component="TemplateGrid" enabled={props.enableAnalytics}>
     <TemplateGridInner {...props} />
   </MarketplaceComponentErrorBoundary>
 );

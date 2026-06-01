@@ -2,7 +2,7 @@ import { createHmac } from 'node:crypto';
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { acquireSyncJobLock, backfillCreatorFieldsByName, listTemplateImageRefreshRows, recordSyncSummary } from '../src/db.js';
+import { acquireSyncJobLock, backfillCreatorFieldsByName, listTemplateImageRefreshRows, recordSyncSummary, setSyncCursor } from '../src/db.js';
 import { DESIGNERS_COLLECTION_ID, TEMPLATES_COLLECTION_ID } from '../src/webflow.js';
 import { installAirtableFetchMock } from './support/airtable.js';
 import { callScheduled, callWorker, createTestEnv } from './support/worker.js';
@@ -1478,6 +1478,7 @@ describe('webflow-template-search worker', () => {
       const beforeRefresh = await callWorker(new Request('https://templates.test/api/templates/search?q=agentflow'), env);
       const beforePayload = (await beforeRefresh.json()) as { items: Array<{ thumbnail_image_url: string | null }> };
       expect(beforePayload.items[0]?.thumbnail_image_url).toBe('https://cdn.prod.website-files.com/site/agentflow-old.webp');
+      await setSyncCursor(env.DB, '2026-03-17T05:00:00.000Z');
 
       const sync = await callWorker(
         new Request('https://templates.test/api/templates/admin/sync', {
@@ -1494,6 +1495,50 @@ describe('webflow-template-search worker', () => {
       const response = await callWorker(new Request('https://templates.test/api/templates/search?q=agentflow'), env);
       const payload = (await response.json()) as { items: Array<{ thumbnail_image_url: string | null }> };
       expect(payload.items[0]?.thumbnail_image_url).toBe('https://cdn.prod.website-files.com/site/agentflow-new.webp');
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
+  it('fast-forwards empty incremental windows before indexing newer changed rows', async () => {
+    const changedAsset = {
+      ...PUBLISHED_ASSETS[0],
+      fields: {
+        ...PUBLISHED_ASSETS[0].fields,
+        '📅LMT': '2026-03-17T05:13:07.000Z',
+      },
+    };
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: [],
+      incrementalAssets: [changedAsset],
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+    });
+    const { env, close } = createTestEnv();
+
+    try {
+      await setSyncCursor(env.DB, '2026-03-17T04:00:00.000Z');
+
+      const sync = await callWorker(
+        new Request('https://templates.test/api/templates/admin/sync', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(sync.status).toBe(200);
+      const syncPayload = (await sync.json()) as {
+        indexed_records: number;
+        skipped_empty_windows?: number;
+      };
+      expect(syncPayload.indexed_records).toBe(1);
+      expect(syncPayload.skipped_empty_windows).toBeGreaterThan(0);
+
+      const search = await callWorker(new Request('https://templates.test/api/templates/search?q=agentflow'), env);
+      const searchPayload = (await search.json()) as { items: Array<{ name: string }> };
+      expect(searchPayload.items.map((item) => item.name)).toEqual(['Agentflow']);
     } finally {
       fetchMock.mockRestore();
       close();

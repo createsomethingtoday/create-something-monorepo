@@ -8,6 +8,8 @@ type TemplateScope = 'all' | 'featured' | 'free' | 'landing_pages';
 
 interface SearchFilters {
   q: string;
+  categoryGroupSlug: string | null;
+  childCategorySlug: string | null;
   styles: string[];
   tags: string[];
   types: string[];
@@ -51,6 +53,16 @@ export interface TemplateSearchPageProps {
   noindex?: boolean;
   /** Dispatch DOM/wf_analytics search experience events. */
   enableAnalytics?: boolean;
+  /** Show category/subcategory metadata below card creator names. */
+  showCategoryMeta?: boolean;
+  /** Show template type alongside category metadata. */
+  showTemplateType?: boolean;
+  /** Show preview links on cards when available. */
+  showPreviewLink?: boolean;
+  /** Show Featured badges on API-featured templates. */
+  showFeaturedBadge?: boolean;
+  /** Show compact social-proof signals from the search API on result cards. */
+  showMarketplaceSignals?: boolean;
 }
 
 const DEFAULT_QUICK_SEARCHES = JSON.stringify([
@@ -228,36 +240,6 @@ const SEARCH_PAGE_STYLES = `
   font-size: 15px;
   font-weight: 650;
   line-height: 1.2;
-}
-
-.tmsearch-sidebar .tmfilter-filter-sort-container,
-.tmsearch-sidebar .tmfilter-root {
-  flex-direction: column;
-  align-items: stretch;
-}
-
-.tmsearch-sidebar .tmfilter-dropdown,
-.tmsearch-sidebar .tmfilter-search-wrap,
-.tmsearch-sidebar .tmfilter-sort,
-.tmsearch-sidebar .tmfilter-sort-toggle {
-  width: 100%;
-  min-width: 0;
-  margin-left: 0;
-}
-
-.tmsearch-sidebar .tmfilter-sort-toggle {
-  flex-direction: column;
-}
-
-.tmsearch-sidebar .tmfilter-sort-option {
-  width: 100%;
-  border-left: 0;
-  border-top: 1px solid #e0e0e0;
-  text-align: left;
-}
-
-.tmsearch-sidebar .tmfilter-sort-option:first-child {
-  border-top: 0;
 }
 
 .tmsearch-results {
@@ -472,13 +454,28 @@ function parseList(params: URLSearchParams, key: string): string[] {
   return params.getAll(key).flatMap((value) => value.split(',')).map(toFilterSlug).filter(Boolean);
 }
 
+function defaultFilters(defaultSort: TemplateSort): SearchFilters {
+  return {
+    q: '',
+    categoryGroupSlug: null,
+    childCategorySlug: null,
+    styles: [],
+    tags: [],
+    types: [],
+    freeOnly: false,
+    sort: defaultSort,
+  };
+}
+
 function readFilters(defaultSort: TemplateSort): SearchFilters {
   if (typeof window === 'undefined') {
-    return { q: '', styles: [], tags: [], types: [], freeOnly: false, sort: defaultSort };
+    return defaultFilters(defaultSort);
   }
   const params = new URL(window.location.href).searchParams;
   return {
     q: (params.get('q') ?? params.get('query') ?? params.get('search') ?? '').trim(),
+    categoryGroupSlug: params.get('category') || params.get('category_group_slug'),
+    childCategorySlug: params.get('subcategory') || params.get('child_category_slug'),
     styles: parseList(params, 'styles'),
     tags: parseList(params, 'tags'),
     types: params.getAll('types').flatMap((value) => value.split(',')).filter(Boolean),
@@ -490,10 +487,12 @@ function readFilters(defaultSort: TemplateSort): SearchFilters {
 function writeFilters(filters: SearchFilters, defaultSort: TemplateSort): string {
   if (typeof window === 'undefined') return '';
   const url = new URL(window.location.href);
-  ['q', 'query', 'search', 'styles', 'tags', 'types', 'free_only', 'sort', 'page'].forEach((key) => {
+  ['q', 'query', 'search', 'category', 'category_group_slug', 'subcategory', 'child_category_slug', 'styles', 'tags', 'types', 'free_only', 'sort', 'page'].forEach((key) => {
     url.searchParams.delete(key);
   });
   if (filters.q) url.searchParams.set('q', filters.q);
+  if (filters.categoryGroupSlug) url.searchParams.set('category', filters.categoryGroupSlug);
+  if (filters.childCategorySlug) url.searchParams.set('subcategory', filters.childCategorySlug);
   if (filters.sort !== defaultSort) url.searchParams.set('sort', filters.sort);
   if (filters.freeOnly) url.searchParams.set('free_only', 'true');
   filters.styles.forEach((style) => url.searchParams.append('styles', style));
@@ -545,6 +544,8 @@ function notifyFiltersChanged(filters: SearchFilters, source: string): void {
   if (typeof window === 'undefined') return;
   const detail = {
     ...filters,
+    categoryGroupSlug: filters.categoryGroupSlug,
+    childCategorySlug: filters.childCategorySlug,
     styles: [...filters.styles],
     tags: [...filters.tags],
     types: [...filters.types],
@@ -592,11 +593,16 @@ export const TemplateSearchPage: React.FC<TemplateSearchPageProps> = ({
   pageSize = 24,
   noindex = true,
   enableAnalytics = true,
+  showCategoryMeta = false,
+  showTemplateType = false,
+  showPreviewLink = false,
+  showFeaturedBadge = false,
+  showMarketplaceSignals = false,
 }) => {
   useExperimentNoindex(noindex);
 
-  const [filters, setFilters] = useState<SearchFilters>(() => readFilters(defaultSort));
-  const [searchInput, setSearchInput] = useState(filters.q);
+  const [filters, setFilters] = useState<SearchFilters>(() => defaultFilters(defaultSort));
+  const [searchInput, setSearchInput] = useState('');
   const [filterVersion, setFilterVersion] = useState(0);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const quickSearchItems = useMemo(() => parseQuickSearches(quickSearches), [quickSearches]);
@@ -609,6 +615,8 @@ export const TemplateSearchPage: React.FC<TemplateSearchPageProps> = ({
   };
 
   useEffect(() => {
+    syncFromUrl(true);
+
     const onPop = () => syncFromUrl(true);
     const onFiltersChanged = (event: Event) => {
       const source = (event as CustomEvent).detail?.source;
@@ -647,12 +655,13 @@ export const TemplateSearchPage: React.FC<TemplateSearchPageProps> = ({
     );
   };
 
-  const removeFilter = (kind: 'q' | 'style' | 'tag' | 'type' | 'free' | 'sort', value?: string) => {
+  const removeFilter = (kind: 'q' | 'category' | 'subcategory' | 'style' | 'type' | 'free' | 'sort', value?: string) => {
     const next: SearchFilters = {
       ...filters,
       q: kind === 'q' ? '' : filters.q,
+      categoryGroupSlug: kind === 'category' ? null : filters.categoryGroupSlug,
+      childCategorySlug: kind === 'category' || kind === 'subcategory' ? null : filters.childCategorySlug,
       styles: kind === 'style' && value ? filters.styles.filter((item) => item !== value) : filters.styles,
-      tags: kind === 'tag' && value ? filters.tags.filter((item) => item !== value) : filters.tags,
       types: kind === 'type' && value ? filters.types.filter((item) => item !== value) : filters.types,
       freeOnly: kind === 'free' ? false : filters.freeOnly,
       sort: kind === 'sort' ? defaultSort : filters.sort,
@@ -662,22 +671,23 @@ export const TemplateSearchPage: React.FC<TemplateSearchPageProps> = ({
 
   const clearAll = () => {
     commitFilters(
-      { q: '', styles: [], tags: [], types: [], freeOnly: false, sort: defaultSort },
+      { q: '', categoryGroupSlug: null, childCategorySlug: null, styles: [], tags: [], types: [], freeOnly: false, sort: defaultSort },
       'Template Search Page - Filters Cleared',
     );
   };
 
   const activeChipCount =
     (filters.q ? 1 : 0) +
+    (filters.categoryGroupSlug ? 1 : 0) +
+    (filters.childCategorySlug ? 1 : 0) +
     filters.styles.length +
-    filters.tags.length +
     filters.types.length +
     (filters.freeOnly ? 1 : 0) +
     (filters.sort !== defaultSort ? 1 : 0);
 
   return (
     <section className="tmsearch-page" data-drawer-open={drawerOpen ? 'true' : undefined}>
-      <style>{SEARCH_PAGE_STYLES}</style>
+      <style dangerouslySetInnerHTML={{ __html: SEARCH_PAGE_STYLES }} />
       <div className="tmsearch-header">
         {eyebrow ? <p className="tmsearch-eyebrow">{eyebrow}</p> : null}
         <h1 className="tmsearch-title">{title}</h1>
@@ -723,8 +733,8 @@ export const TemplateSearchPage: React.FC<TemplateSearchPageProps> = ({
             interactionMode="filter"
             countMode="contextual"
             showSearch={false}
-            showFreeOnly={scopeOverride !== 'free'}
-            defaultSort={defaultSort}
+            collapseOnMobile={false}
+            enableAnalytics={enableAnalytics}
           />
         </aside>
 
@@ -738,14 +748,19 @@ export const TemplateSearchPage: React.FC<TemplateSearchPageProps> = ({
                   Search: {filters.q} x
                 </button>
               ) : null}
+              {filters.categoryGroupSlug ? (
+                <button className="tmsearch-chip" type="button" onClick={() => removeFilter('category')}>
+                  Category: {displaySlug(filters.categoryGroupSlug)} x
+                </button>
+              ) : null}
+              {filters.childCategorySlug ? (
+                <button className="tmsearch-chip" type="button" onClick={() => removeFilter('subcategory')}>
+                  Subcategory: {displaySlug(filters.childCategorySlug)} x
+                </button>
+              ) : null}
               {filters.styles.map((style) => (
                 <button className="tmsearch-chip" type="button" key={`style-${style}`} onClick={() => removeFilter('style', style)}>
                   Style: {displaySlug(style)} x
-                </button>
-              ))}
-              {filters.tags.map((tag) => (
-                <button className="tmsearch-chip" type="button" key={`tag-${tag}`} onClick={() => removeFilter('tag', tag)}>
-                  Tag: {displaySlug(tag)} x
                 </button>
               ))}
               {filters.types.map((type) => (
@@ -785,6 +800,12 @@ export const TemplateSearchPage: React.FC<TemplateSearchPageProps> = ({
             emptyTitle="No matching templates"
             emptyDescription="Try a broader search, remove a filter, or start again from the full template catalog."
             emptyActionLabel="Clear filters"
+            showCategoryMeta={showCategoryMeta}
+            showTemplateType={showTemplateType}
+            showPreviewLink={showPreviewLink}
+            showFeaturedBadge={showFeaturedBadge}
+            showMarketplaceSignals={showMarketplaceSignals}
+            enableAnalytics={enableAnalytics}
           />
         </main>
       </div>

@@ -410,9 +410,36 @@ function proxyImageUrl(imageUrl: string, apiBase: string): string {
 }
 
 function formatPrice(item: ApiItem): string {
-  if (item.is_free || item.price === 0) return 'Free';
+  if (typeof item.price === 'number' && item.price > 0) return `${item.price} USD`;
+  if (item.price === 0 || item.is_free) return 'Free';
+  return '';
+}
+
+function isFreeTemplate(item: ApiItem): boolean {
+  if (typeof item.price === 'number') return item.price === 0;
+  return item.is_free;
+}
+
+function requiresStrictFreeFilter(scope: TemplateScope, preset: PresetConfig): boolean {
+  return scope === 'free' || preset.freeOnly === true;
+}
+
+function normalizeCarouselResponse(data: ApiResponse, scope: TemplateScope, preset: PresetConfig): ApiResponse {
+  if (!requiresStrictFreeFilter(scope, preset)) return data;
+  const items = data.items.filter(isFreeTemplate);
+  return {
+    ...data,
+    items,
+    pagination: {
+      ...data.pagination,
+      total_items: Math.max(0, data.pagination.total_items - (data.items.length - items.length)),
+    },
+  };
+}
+
+function priceNumeric(item: ApiItem): string {
   if (typeof item.price !== 'number') return '';
-  return `${item.price} USD`;
+  return String(item.price);
 }
 
 function primaryThumbnailUrl(item: ApiItem): string | null {
@@ -517,8 +544,9 @@ export const TemplateCarouselSection: React.FC<TemplateCarouselSectionProps> = (
     async (signal?: AbortSignal) => {
       const cached = responseCache.get(apiUrl);
       if (cached && Date.now() - cached.timestamp < SEARCH_CACHE_TTL_MS) {
-        setItems(cached.data.items);
-        setTotalItems(cached.data.pagination.total_items);
+        const data = normalizeCarouselResponse(cached.data, scope, selectedPreset);
+        setItems(data.items);
+        setTotalItems(data.pagination.total_items);
         setError(null);
         setLoading(false);
         return;
@@ -529,7 +557,7 @@ export const TemplateCarouselSection: React.FC<TemplateCarouselSectionProps> = (
       try {
         const response = await fetch(apiUrl, { signal });
         if (!response.ok) throw new Error(`API ${response.status}`);
-        const data = (await response.json()) as ApiResponse;
+        const data = normalizeCarouselResponse((await response.json()) as ApiResponse, scope, selectedPreset);
         responseCache.set(apiUrl, { timestamp: Date.now(), data });
         setItems(data.items);
         setTotalItems(data.pagination.total_items);
@@ -540,7 +568,7 @@ export const TemplateCarouselSection: React.FC<TemplateCarouselSectionProps> = (
         if (!signal?.aborted) setLoading(false);
       }
     },
-    [apiUrl],
+    [apiUrl, scope, selectedPreset],
   );
 
   useEffect(() => {
@@ -697,8 +725,8 @@ export const TemplateCarouselSection: React.FC<TemplateCarouselSectionProps> = (
                       templateName={item.name}
                       templateLink={{ href: item.url ?? '#' }}
                       price={formatPrice(item)}
-                      priceNumeric={String(item.price ?? '0')}
-                      isFree={item.is_free}
+                      priceNumeric={priceNumeric(item)}
+                      isFree={isFreeTemplate(item)}
                       creatorName={item.creator_name ?? ''}
                       creatorLink={
                         item.creator_profile_url

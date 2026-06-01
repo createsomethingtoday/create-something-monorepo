@@ -13,6 +13,16 @@ interface MockDataset {
   creators?: Array<{ id: string; fields: Record<string, unknown> }>;
 }
 
+function dateMatchesModifiedWindow(record: { fields: Record<string, unknown> }, formula: string): boolean {
+  const dates = Array.from(formula.matchAll(/DATETIME_PARSE\("([^"]+)"\)/g)).map((match) => match[1]).filter(Boolean);
+  const modifiedAt = record.fields['📅LMT'];
+  if (dates.length === 0 || typeof modifiedAt !== 'string') return true;
+  const modifiedTime = Date.parse(modifiedAt);
+  const afterTime = Date.parse(dates[0] ?? '');
+  const untilTime = dates[1] ? Date.parse(dates[1]) : null;
+  return modifiedTime > afterTime && (untilTime === null || modifiedTime <= untilTime);
+}
+
 export function installAirtableFetchMock(dataset: MockDataset) {
   return vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
     const url = new URL(typeof input === 'string' ? input : input.url);
@@ -69,9 +79,16 @@ export function installAirtableFetchMock(dataset: MockDataset) {
         });
       }
 
-      return Response.json({
-        records: formula.includes('IS_AFTER(') ? dataset.incrementalAssets ?? [] : dataset.publishedAssets,
-      });
+      if (formula.includes('IS_AFTER(')) {
+        const records = dataset.incrementalAssets ?? [];
+        return Response.json({
+          records: records.some((record) => typeof record.fields['📅LMT'] === 'string')
+            ? records.filter((record) => dateMatchesModifiedWindow(record, formula))
+            : records,
+        });
+      }
+
+      return Response.json({ records: dataset.publishedAssets });
     }
 
     if (tableId === 'tblG7E9LbQj0sBX0o') {
