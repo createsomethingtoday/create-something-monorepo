@@ -60,6 +60,7 @@ export interface AirtableAssetFields extends Record<string, unknown> {
   '📋 Unique Viewers'?: number;
   '📋 Cumulative Purchases'?: number;
   '🥞💲Template Price Filter (🏗️ only)'?: number;
+  '👀📅Decision Date (Override)'?: string;
   '🚀📅Published Date'?: string;
   '🥞CMS Slug'?: string;
   '🥞CMS Slug (formula)'?: string;

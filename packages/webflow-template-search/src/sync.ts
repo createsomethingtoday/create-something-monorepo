@@ -99,6 +99,10 @@ function attachmentUrls(value: unknown): string[] {
     .filter(Boolean);
 }
 
+function dateFieldValue(value: unknown): string | null {
+  return typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
+}
+
 async function resolveAndUpdateTemplateImages(
   db: D1Database,
   rows: TemplateImageRefreshRow[],
@@ -303,7 +307,7 @@ function normalizeTemplateRecord(
     uniqueViewers: ensureNumber(record.fields['📋 Unique Viewers']),
     cumulativePurchases: ensureNumber(record.fields['📋 Cumulative Purchases']),
     price,
-    publishedDate: typeof record.fields['🚀📅Published Date'] === 'string' ? record.fields['🚀📅Published Date'] : null,
+    publishedDate: dateFieldValue(record.fields['👀📅Decision Date (Override)']) ?? dateFieldValue(record.fields['🚀📅Published Date']),
     marketplaceStatus:
       typeof record.fields['🚀Marketplace Status'] === 'string' ? record.fields['🚀Marketplace Status'] : null,
     sourceLastModifiedTime: typeof record.fields['📅LMT'] === 'string' ? record.fields['📅LMT'] : null,
