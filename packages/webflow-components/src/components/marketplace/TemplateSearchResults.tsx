@@ -25,6 +25,18 @@ export interface TemplateSearchResultsProps {
   emptyDescription?: string;
   /** No-results clear action label. */
   emptyActionLabel?: string;
+  /** Show category/subcategory metadata below card creator names. */
+  showCategoryMeta?: boolean;
+  /** Show template type alongside category metadata. */
+  showTemplateType?: boolean;
+  /** Show preview links on cards when available. */
+  showPreviewLink?: boolean;
+  /** Show Featured badges on API-featured templates. */
+  showFeaturedBadge?: boolean;
+  /** Show compact social-proof signals from the search API on each card. */
+  showMarketplaceSignals?: boolean;
+  /** Emit aggregate grid health telemetry and component errors. */
+  enableAnalytics?: boolean;
 }
 
 export const TemplateSearchResults: React.FC<TemplateSearchResultsProps> = ({
@@ -38,6 +50,12 @@ export const TemplateSearchResults: React.FC<TemplateSearchResultsProps> = ({
   emptyTitle = 'No matching templates',
   emptyDescription = 'Try a broader search, remove a filter, or start again from the full template catalog.',
   emptyActionLabel = 'Clear filters',
+  showCategoryMeta = false,
+  showTemplateType = false,
+  showPreviewLink = false,
+  showFeaturedBadge = false,
+  showMarketplaceSignals = false,
+  enableAnalytics = true,
 }) => {
   return (
     <TemplateGrid
@@ -52,6 +70,12 @@ export const TemplateSearchResults: React.FC<TemplateSearchResultsProps> = ({
       emptyTitle={emptyTitle}
       emptyDescription={emptyDescription}
       emptyActionLabel={emptyActionLabel}
+      showCategoryMeta={showCategoryMeta}
+      showTemplateType={showTemplateType}
+      showPreviewLink={showPreviewLink}
+      showFeaturedBadge={showFeaturedBadge}
+      showMarketplaceSignals={showMarketplaceSignals}
+      enableAnalytics={enableAnalytics}
     />
   );
 };

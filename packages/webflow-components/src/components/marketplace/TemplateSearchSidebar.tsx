@@ -1,5 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { TemplateFilterBar } from '../filter/TemplateFilterBar';
+import React, { useEffect, useId, useMemo, useState } from 'react';
 import {
   MarketplaceComponentErrorBoundary,
   useMarketplaceComponentErrorTracking,
@@ -56,8 +55,6 @@ export interface TemplateSearchSidebarProps {
   styleSlug?: string;
   /** Designer preview tag slug. */
   tagSlug?: string;
-  /** Default sort used by the filter bar. */
-  defaultSort?: TemplateSort;
   /** Click behavior for category/special rows. Navigate matches the native sidebar; Filter keeps the current page and updates URL state. */
   interactionMode?: SidebarInteractionMode;
   /** Count behavior. Global matches the native sidebar; Contextual reflects the current query/style/tag/free context. */
@@ -78,14 +75,8 @@ export interface TemplateSearchSidebarProps {
   showCategories?: boolean;
   /** Show counts next to rows. */
   showCounts?: boolean;
-  /** Show style filters. */
-  showStyles?: boolean;
-  /** Show type filters. */
-  showTypes?: boolean;
-  /** Show sort controls. */
-  showSort?: boolean;
-  /** Show the free-only toggle. */
-  showFreeOnly?: boolean;
+  /** Collapse the standalone sidebar into a mobile accordion below the tablet breakpoint. */
+  collapseOnMobile?: boolean;
 }
 
 const DEFAULT_API_BASE = 'https://templates.webflow.com/templates-api';
@@ -100,12 +91,93 @@ const SPECIAL_ROWS: Array<{
   scope: TemplateScope;
   label: string;
   href: string;
+  iconUrl: string;
 }> = [
-  { key: 'all', scope: 'all', label: 'All', href: '/templates/all' },
-  { key: 'featured', scope: 'featured', label: 'Featured', href: '/templates/featured' },
-  { key: 'landing_pages', scope: 'landing_pages', label: 'Landing Pages', href: '/templates/landing-page' },
-  { key: 'free', scope: 'free', label: 'Free', href: '/templates/free-website-templates' },
+  {
+    key: 'all',
+    scope: 'all',
+    label: 'All',
+    href: '/templates/all',
+    iconUrl: 'https://cdn.prod.website-files.com/5e593fb060cf87bbaf75dd20/670e6774244fae7c3beb91e0_Size%3D24px.svg',
+  },
+  {
+    key: 'featured',
+    scope: 'featured',
+    label: 'Featured',
+    href: '/templates/featured',
+    iconUrl:
+      'https://cdn.prod.website-files.com/5e593fb060cf87bbaf75dd20/670e68dbb4f6baeae8b9cbcb_CapabilityAnalytics24%20(1).svg',
+  },
+  {
+    key: 'landing_pages',
+    scope: 'landing_pages',
+    label: 'Landing Pages',
+    href: '/templates/landing-page',
+    iconUrl: 'https://cdn.prod.website-files.com/5e593fb060cf87bbaf75dd20/686f2395e5b4dac6d8658ead_map-marker.svg',
+  },
+  {
+    key: 'free',
+    scope: 'free',
+    label: 'Free',
+    href: '/templates/free-website-templates',
+    iconUrl: 'https://cdn.prod.website-files.com/5e593fb060cf87bbaf75dd20/670e6764d8568093c6f4f208_tag%20(1).svg',
+  },
 ];
+
+const CATEGORY_ICON_URLS: Record<string, string> = {
+  'architecture-and-design-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/6706cd38713733aafac171b0_Brush-(1).svg',
+  'arts-and-entertainment-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/6706cd5b8ea070ac1f6f09d5_microphone-rotated-(1).svg',
+  'blog-and-editorial-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/6706cd544ea9af6934f62a4f_Blog-(1).svg',
+  'community-and-nonprofit-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/6706cd790202d15dd35c8964_heart-globe-(1).svg',
+  'documentation-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/6706cd75713733aafac1c287_clipboard-(1).svg',
+  'education-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/67108ca5557a7e0287bed9a4_University-(1).svg',
+  'environment-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/6706cd2bc46e4abf254db245_sunrise.svg',
+  'food-and-drink-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/67108c96215b682a860be340_drink-2-(1).svg',
+  'government-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/6706cd735abd261a7f080744_bank-(1).svg',
+  'hair-and-beauty-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/6706cd32352bd54b0587ecfe_sparkles.svg',
+  'home-services-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/670948ff793d4e96cf024d19_home-services-icon.svg',
+  'hr-and-hiring-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/6706cd3c4cfa0fe9a2251a36_TeamMedium.svg',
+  'launch-and-coming-soon-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/670949025d74574ad09d0336_lighting-icon.svg',
+  'medical-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/67108ca1bf381ac9e0b4629c_Motion-(1).svg',
+  'music-and-audio-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/6706cd6fdb237a95d5837068_MusicNote.svg',
+  'personal-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/6706cd8106f5ecd98e795b74_Docs.svg',
+  'portfolio-and-agency-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/6706cd5751b1e01601445e5c_User-(1).svg',
+  'professional-services-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/670db20ed0f2784e9e8e0335_target.svg',
+  'real-estate-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/6706cd45c5f83dd2187bfdb1_location.svg',
+  'retail-and-e-commerce-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/670db2115402ce59747c0c81_shopping-cart.svg',
+  'technology-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/6711342ea3d7f258ad5e7943_CodeBrackets.svg',
+  'transportation-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/6706cd8b5abd261a7f0827b7_train-track-(1).svg',
+  'travel-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/67114e638bb1446cc23ec252_map-(1).svg',
+  'ui-kit-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/6706cd43352bd54b05880da4_Apps-(1).svg',
+  'weddings-and-events-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/6706cd83ddd640e52bafbd4d_Calendar-(1).svg',
+  'wellness-websites':
+    'https://cdn.prod.website-files.com/5e593fb060cf877cf875dd1f/6706cd49c46e4abf254dd5ec_bike-(1).svg',
+};
 
 const SIDEBAR_STYLES = `
 .tmsidebar,
@@ -114,7 +186,9 @@ const SIDEBAR_STYLES = `
 }
 
 .tmsidebar {
+  align-self: start;
   width: 100%;
+  height: auto;
   min-width: 0;
   padding: 18px;
   border: 1px solid #e0e0e0;
@@ -131,6 +205,34 @@ const SIDEBAR_STYLES = `
   font-weight: 650;
   line-height: 1.2;
   letter-spacing: 0;
+}
+
+.tmsidebar-mobile-toggle {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 48px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #080808;
+  cursor: pointer;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 650;
+  line-height: 1.2;
+  text-align: left;
+  letter-spacing: 0;
+}
+
+.tmsidebar-mobile-chevron {
+  flex: 0 0 auto;
+  color: rgba(0, 0, 0, 0.48);
+  font-size: 18px;
+  line-height: 1;
+  transition: transform 160ms ease;
 }
 
 .tmsidebar-search {
@@ -198,22 +300,35 @@ const SIDEBAR_STYLES = `
 }
 
 .tmsidebar-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  display: block;
   width: 16px;
   height: 16px;
   flex: 0 0 auto;
-  border: 1px solid currentColor;
-  border-radius: 4px;
-  color: #757575;
-  opacity: 0.8;
+  object-fit: contain;
+  filter: grayscale(100%) brightness(60%);
+  opacity: 0.9;
+  transition: filter 120ms ease, opacity 120ms ease;
+}
+
+.tmsidebar-icon-fallback {
+  display: inline-flex;
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: #d9d9d9;
 }
 
 .tmsidebar-row[aria-current="page"] .tmsidebar-icon,
-.tmsidebar-row:hover .tmsidebar-icon {
-  color: #146ef5;
+.tmsidebar-row:hover .tmsidebar-icon,
+.tmsidebar-row:focus-visible .tmsidebar-icon {
+  filter: grayscale(0%) brightness(100%);
   opacity: 1;
+}
+
+.tmsidebar-row[aria-current="page"] .tmsidebar-icon-fallback,
+.tmsidebar-row:hover .tmsidebar-icon-fallback {
+  background: #e8f0ff;
 }
 
 .tmsidebar-label {
@@ -247,39 +362,35 @@ const SIDEBAR_STYLES = `
   line-height: 1.35;
 }
 
-.tmsidebar-filters {
-  margin-top: 16px;
+@media (max-width: 991px) {
+  .tmsidebar[data-collapse-mobile="true"] {
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .tmsidebar[data-collapse-mobile="true"] .tmsidebar-title {
+    display: none;
+  }
+
+  .tmsidebar[data-collapse-mobile="true"] .tmsidebar-mobile-toggle {
+    display: flex;
+    padding: 14px 16px;
+  }
+
+  .tmsidebar[data-collapse-mobile="true"] .tmsidebar-body {
+    display: none;
+    padding: 0 16px 16px;
+  }
+
+  .tmsidebar[data-collapse-mobile="true"][data-mobile-open="true"] .tmsidebar-body {
+    display: block;
+  }
+
+  .tmsidebar[data-collapse-mobile="true"][data-mobile-open="true"] .tmsidebar-mobile-chevron {
+    transform: rotate(180deg);
+  }
 }
 
-.tmsidebar .tmfilter-filter-sort-container,
-.tmsidebar .tmfilter-root {
-  flex-direction: column;
-  align-items: stretch;
-}
-
-.tmsidebar .tmfilter-dropdown,
-.tmsidebar .tmfilter-search-wrap,
-.tmsidebar .tmfilter-sort,
-.tmsidebar .tmfilter-sort-toggle {
-  width: 100%;
-  min-width: 0;
-  margin-left: 0;
-}
-
-.tmsidebar .tmfilter-sort-toggle {
-  flex-direction: column;
-}
-
-.tmsidebar .tmfilter-sort-option {
-  width: 100%;
-  border-left: 0;
-  border-top: 1px solid #e0e0e0;
-  text-align: left;
-}
-
-.tmsidebar .tmfilter-sort-option:first-child {
-  border-top: 0;
-}
 `;
 
 function resolveApiBase(apiBase?: string): string {
@@ -334,7 +445,7 @@ function readCurrentQuery(): string {
 
 function readCountContext(countMode: SidebarCountMode, styleSlugOverride?: string, tagSlugOverride?: string): CountContext {
   if (typeof window === 'undefined' || countMode === 'global') {
-    return { q: '', scope: 'all', styleSlug: null, tagSlug: null, freeOnly: false };
+    return defaultCountContext();
   }
   const url = new URL(window.location.href);
   const params = url.searchParams;
@@ -346,6 +457,10 @@ function readCountContext(countMode: SidebarCountMode, styleSlugOverride?: strin
     tagSlug: tagSlugOverride || params.get('tag_slug') || params.get('tag'),
     freeOnly: ['1', 'true', 'yes', 'on'].includes((params.get('free_only') ?? '').toLowerCase()),
   };
+}
+
+function defaultCountContext(): CountContext {
+  return { q: '', scope: 'all', styleSlug: null, tagSlug: null, freeOnly: false };
 }
 
 function appendCountContext(url: URL, context: CountContext, scope?: TemplateScope): void {
@@ -384,11 +499,22 @@ function formatCount(value: number | null): string {
   return typeof value === 'number' ? value.toLocaleString() : '';
 }
 
+function getCategoryIconUrl(slug: string): string | null {
+  return CATEGORY_ICON_URLS[slug] ?? CATEGORY_ICON_URLS[`${slug}-websites`] ?? null;
+}
+
+function renderRowIcon(iconUrl: string | null): React.ReactNode {
+  if (!iconUrl) return <span className="tmsidebar-icon-fallback" aria-hidden="true" />;
+  return <img className="tmsidebar-icon" src={iconUrl} width={16} height={16} alt="" loading="lazy" aria-hidden="true" />;
+}
+
 function notifySidebarFiltersChanged(source: string): void {
   if (typeof window === 'undefined') return;
   const url = new URL(window.location.href);
   const detail = {
     q: (url.searchParams.get('q') ?? url.searchParams.get('query') ?? url.searchParams.get('search') ?? '').trim(),
+    categoryGroupSlug: url.searchParams.get('category') ?? url.searchParams.get('category_group_slug'),
+    childCategorySlug: url.searchParams.get('subcategory') ?? url.searchParams.get('child_category_slug'),
     styles: url.searchParams.getAll('styles').flatMap((value) => value.split(',')).filter(Boolean),
     tags: url.searchParams.getAll('tags').flatMap((value) => value.split(',')).filter(Boolean),
     types: url.searchParams.getAll('types').flatMap((value) => value.split(',')).filter(Boolean),
@@ -411,7 +537,6 @@ const TemplateSearchSidebarInner: React.FC<TemplateSearchSidebarProps> = ({
   subcategorySlug = '',
   styleSlug = '',
   tagSlug = '',
-  defaultSort = 'popular',
   interactionMode = 'navigate',
   countMode = 'global',
   showSearch = true,
@@ -422,31 +547,42 @@ const TemplateSearchSidebarInner: React.FC<TemplateSearchSidebarProps> = ({
   showSpecialLinks = true,
   showCategories = true,
   showCounts = true,
-  showStyles = true,
-  showTypes = true,
-  showSort = true,
-  showFreeOnly = true,
+  collapseOnMobile = true,
 }) => {
   useMarketplaceComponentErrorTracking('TemplateSearchSidebar', enableAnalytics);
 
   const apiBase = resolveApiBase(apiBaseProp);
+  const bodyId = useId();
   const [counts, setCounts] = useState<SidebarCounts>({ all: null, featured: null, landing_pages: null, free: null });
   const [categories, setCategories] = useState<SidebarCategory[]>([]);
   const [loading, setLoading] = useState(showCategories || showSpecialLinks);
   const [error, setError] = useState<string | null>(null);
   const [searchValue, setSearchValue] = useState('');
+  const [mobileOpen, setMobileOpen] = useState(false);
   const [routeVersion, setRouteVersion] = useState(0);
+  const [hasHydrated, setHasHydrated] = useState(false);
 
-  const activeScope = scopeOverride !== 'all' ? scopeOverride : readCurrentScope();
-  const activeCategory = readCurrentCategory(categorySlug);
+  const activeScope = hasHydrated
+    ? scopeOverride !== 'all'
+      ? scopeOverride
+      : readCurrentScope()
+    : scopeOverride !== 'all'
+      ? scopeOverride
+      : 'all';
+  const activeCategory = hasHydrated ? readCurrentCategory(categorySlug) : categorySlug || null;
   const shouldUseFilterMode = interactionMode === 'filter';
 
   const countContext = useMemo(
-    () => readCountContext(countMode, styleSlug || undefined, tagSlug || undefined),
-    [countMode, routeVersion, styleSlug, tagSlug],
+    () =>
+      hasHydrated
+        ? readCountContext(countMode, styleSlug || undefined, tagSlug || undefined)
+        : defaultCountContext(),
+    [countMode, hasHydrated, routeVersion, styleSlug, tagSlug],
   );
 
   useEffect(() => {
+    if (!hasHydrated) return undefined;
+
     const ac = new AbortController();
     setLoading(true);
     setError(null);
@@ -482,14 +618,15 @@ const TemplateSearchSidebarInner: React.FC<TemplateSearchSidebarProps> = ({
       });
 
     return () => ac.abort();
-  }, [apiBase, countContext, countMode]);
+  }, [apiBase, countContext, countMode, hasHydrated]);
 
   useEffect(() => {
-    if (!shouldUseFilterMode) return;
+    if (!hasHydrated || !shouldUseFilterMode) return;
     setSearchValue(readCurrentQuery());
-  }, [routeVersion, shouldUseFilterMode]);
+  }, [hasHydrated, routeVersion, shouldUseFilterMode]);
 
   useEffect(() => {
+    setHasHydrated(true);
     const bump = () => setRouteVersion((value) => value + 1);
     window.addEventListener('popstate', bump);
     window.addEventListener('templateFiltersChanged', bump);
@@ -518,6 +655,7 @@ const TemplateSearchSidebarInner: React.FC<TemplateSearchSidebarProps> = ({
     if (scope === 'free') url.searchParams.set('free_only', 'true');
     window.history.replaceState({}, '', url.toString());
     notifySidebarFiltersChanged('TemplateSearchSidebar');
+    setMobileOpen(false);
   };
 
   const onCategoryClick = (category: SidebarCategory, event: React.MouseEvent<HTMLAnchorElement>) => {
@@ -537,6 +675,7 @@ const TemplateSearchSidebarInner: React.FC<TemplateSearchSidebarProps> = ({
     }
     window.history.replaceState({}, '', url.toString());
     notifySidebarFiltersChanged('TemplateSearchSidebar');
+    setMobileOpen(false);
     document.dispatchEvent(
       new CustomEvent('categoryFilterUpdated', {
         detail: { parent: isActive ? null : category.slug, category: isActive ? null : category.slug, subcategory: null },
@@ -550,101 +689,100 @@ const TemplateSearchSidebarInner: React.FC<TemplateSearchSidebarProps> = ({
   };
 
   return (
-    <div className="tmsidebar">
-      <style>{SIDEBAR_STYLES}</style>
+    <div
+      className="tmsidebar"
+      data-collapse-mobile={collapseOnMobile ? 'true' : undefined}
+      data-mobile-open={mobileOpen ? 'true' : undefined}
+    >
+      <style dangerouslySetInnerHTML={{ __html: SIDEBAR_STYLES }} />
+      <button
+        type="button"
+        className="tmsidebar-mobile-toggle"
+        aria-expanded={mobileOpen}
+        aria-controls={bodyId}
+        onClick={() => setMobileOpen((value) => !value)}
+      >
+        <span>{title || 'Filters'}</span>
+        <span className="tmsidebar-mobile-chevron" aria-hidden="true">
+          v
+        </span>
+      </button>
       {title ? <p className="tmsidebar-title">{title}</p> : null}
 
-      {showSearch && (
-        <TemplateSearchBox
-          className="tmsidebar-search"
-          mode={shouldUseFilterMode ? 'filter' : 'route'}
-          variant="sidebar"
-          value={searchValue}
-          onValueChange={setSearchValue}
-          placeholder={searchPlaceholder}
-          searchAction={searchAction}
-          queryParam={queryParam}
-          showButton={false}
-          enableAnalytics
-          source="TemplateSearchSidebar"
-        />
-      )}
-
-      {(showSpecialLinks || showCategories) && (
-        <nav aria-label="Template categories">
-          <ul className="tmsidebar-list">
-            {showSpecialLinks &&
-              SPECIAL_ROWS.map((row) => {
-                const active = activeScope === row.scope && !activeCategory;
-                return (
-                  <li key={row.key}>
-                    <a
-                      className="tmsidebar-row"
-                      href={row.href}
-                      aria-current={active ? 'page' : undefined}
-                      onClick={(event) => onSpecialClick(row.scope, event)}
-                    >
-                      <span className="tmsidebar-icon" aria-hidden="true" />
-                      <span className="tmsidebar-label">{row.label}</span>
-                      {renderCount(counts[row.key])}
-                    </a>
-                  </li>
-                );
-              })}
-
-            {showSpecialLinks && showCategories && <li className="tmsidebar-divider" aria-hidden="true" />}
-
-            {showCategories && loading && categories.length === 0 && (
-              <li className="tmsidebar-loading">Loading categories</li>
-            )}
-
-            {showCategories && error && categories.length === 0 && (
-              <li className="tmsidebar-error">Unable to load categories</li>
-            )}
-
-            {showCategories &&
-              categories.map((category) => {
-                const active = activeCategory === category.slug;
-                const href = category.url || `https://webflow.com/templates/category/${category.slug}`;
-                return (
-                  <li key={category.slug}>
-                    <a
-                      className="tmsidebar-row"
-                      href={href}
-                      aria-current={active ? 'page' : undefined}
-                      onClick={(event) => onCategoryClick(category, event)}
-                    >
-                      <span className="tmsidebar-icon" aria-hidden="true" />
-                      <span className="tmsidebar-label">{category.name}</span>
-                      {renderCount(category.count)}
-                    </a>
-                  </li>
-                );
-              })}
-          </ul>
-        </nav>
-      )}
-
-      {(showStyles || showTypes || showSort || showFreeOnly) && (
-        <div className="tmsidebar-filters">
-          <TemplateFilterBar
-            apiBase={apiBase}
-            scopeOverride={scopeOverride}
-            categorySlug={categorySlug}
-            subcategorySlug={subcategorySlug}
-            styleSlug={styleSlug}
-            tagSlug={tagSlug}
-            showSearch={false}
-            showStyles={showStyles}
-            showTypes={showTypes}
-            showSort={showSort}
-            sortDisplay="segmented"
-            showFreeOnly={showFreeOnly && activeScope !== 'free'}
-            showSubcategoryPills={false}
-            defaultSort={defaultSort}
+      <div id={bodyId} className="tmsidebar-body">
+        {showSearch && (
+          <TemplateSearchBox
+            className="tmsidebar-search"
+            mode={shouldUseFilterMode ? 'filter' : 'route'}
+            variant="sidebar"
+            value={searchValue}
+            onValueChange={setSearchValue}
+            placeholder={searchPlaceholder}
+            searchAction={searchAction}
+            queryParam={queryParam}
+            showButton={false}
+            enableAnalytics
+            source="TemplateSearchSidebar"
           />
-        </div>
-      )}
+        )}
+
+        {(showSpecialLinks || showCategories) && (
+          <nav aria-label="Template categories">
+            <ul className="tmsidebar-list">
+              {showSpecialLinks &&
+                SPECIAL_ROWS.map((row) => {
+                  const active = activeScope === row.scope && !activeCategory;
+                  return (
+                    <li key={row.key}>
+                      <a
+                        className="tmsidebar-row"
+                        href={row.href}
+                        aria-current={active ? 'page' : undefined}
+                        onClick={(event) => onSpecialClick(row.scope, event)}
+                      >
+                        {renderRowIcon(row.iconUrl)}
+                        <span className="tmsidebar-label">{row.label}</span>
+                        {renderCount(counts[row.key])}
+                      </a>
+                    </li>
+                  );
+                })}
+
+              {showSpecialLinks && showCategories && <li className="tmsidebar-divider" aria-hidden="true" />}
+
+              {showCategories && loading && categories.length === 0 && (
+                <li className="tmsidebar-loading">Loading categories</li>
+              )}
+
+              {showCategories && error && categories.length === 0 && (
+                <li className="tmsidebar-error">Unable to load categories</li>
+              )}
+
+              {showCategories &&
+                categories.map((category) => {
+                  const active = activeCategory === category.slug;
+                  const href = category.url || `https://webflow.com/templates/category/${category.slug}`;
+                  const iconUrl = getCategoryIconUrl(category.slug);
+                  return (
+                    <li key={category.slug}>
+                      <a
+                        className="tmsidebar-row"
+                        href={href}
+                        aria-current={active ? 'page' : undefined}
+                        onClick={(event) => onCategoryClick(category, event)}
+                      >
+                        {renderRowIcon(iconUrl)}
+                        <span className="tmsidebar-label">{category.name}</span>
+                        {renderCount(category.count)}
+                      </a>
+                    </li>
+                  );
+                })}
+            </ul>
+          </nav>
+        )}
+      </div>
+
     </div>
   );
 };

@@ -242,6 +242,7 @@ export interface SyncSummary {
   backfilled_records: number;
   image_refreshed_records: number;
   cursor: string;
+  skipped_empty_windows?: number;
 }
 
 export interface TemplateImageSourceStats {

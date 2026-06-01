@@ -5,7 +5,7 @@ import { TemplateSearchSidebar } from './TemplateSearchSidebar';
 export default declareComponent(TemplateSearchSidebar, {
   name: 'Template Search Sidebar',
   description:
-    'Standalone vertical marketplace filter sidebar for webflow-template-search pages. Dispatches the same filter events consumed by Template Grid and Template Search Results.',
+    'Standalone marketplace category sidebar for template pages. Renders search, special links, category rows, and counts; pair with Template Filter Bar for style, type, free, and sort controls.',
   group: 'Marketplace',
   props: {
     apiBase: props.Text({
@@ -29,19 +29,6 @@ export default declareComponent(TemplateSearchSidebar, {
     subcategorySlug: props.Text({
       name: 'Subcategory Slug (preview)',
       defaultValue: '',
-    }),
-    styleSlug: props.Text({
-      name: 'Style Slug (preview)',
-      defaultValue: '',
-    }),
-    tagSlug: props.Text({
-      name: 'Tag Slug (preview)',
-      defaultValue: '',
-    }),
-    defaultSort: props.Variant({
-      name: 'Default Sort',
-      options: ['popular', 'newest', 'price_asc', 'price_desc'],
-      defaultValue: 'popular',
     }),
     interactionMode: props.Variant({
       name: 'Interaction Mode',
@@ -92,21 +79,11 @@ export default declareComponent(TemplateSearchSidebar, {
       name: 'Show Counts',
       defaultValue: true,
     }),
-    showStyles: props.Boolean({
-      name: 'Show Styles',
+    collapseOnMobile: props.Boolean({
+      name: 'Collapse on Mobile',
       defaultValue: true,
-    }),
-    showTypes: props.Boolean({
-      name: 'Show Types',
-      defaultValue: true,
-    }),
-    showSort: props.Boolean({
-      name: 'Show Sort',
-      defaultValue: true,
-    }),
-    showFreeOnly: props.Boolean({
-      name: 'Show Free Only',
-      defaultValue: true,
+      tooltip:
+        'Collapse the standalone sidebar into a mobile accordion below the tablet breakpoint. Disable when the sidebar is already inside another mobile drawer.',
     }),
   },
 });

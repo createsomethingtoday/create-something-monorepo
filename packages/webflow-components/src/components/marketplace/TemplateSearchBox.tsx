@@ -306,7 +306,7 @@ export const TemplateSearchBox: React.FC<TemplateSearchBoxProps> = ({
 
   return (
     <form className={classes} onSubmit={submitSearch} role="search" action={searchAction} method="get">
-      <style>{SEARCH_BOX_STYLES}</style>
+      <style dangerouslySetInnerHTML={{ __html: SEARCH_BOX_STYLES }} />
       <div className="tmsearchbox-field">
         <input
           className="tmsearchbox-input"

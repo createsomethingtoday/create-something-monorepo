@@ -68,5 +68,37 @@ export default declareComponent(TemplateGrid, {
       name: 'Empty Action Label',
       defaultValue: 'Clear filters',
     }),
+    showCategoryMeta: props.Boolean({
+      name: 'Show Category Metadata',
+      defaultValue: false,
+      tooltip: 'Show primary category and subcategory metadata on each template card.',
+    }),
+    showTemplateType: props.Boolean({
+      name: 'Show Template Type',
+      defaultValue: false,
+      tooltip: 'Show One Page, Multi Page, or Multi Layout on each card.',
+    }),
+    showPreviewLink: props.Boolean({
+      name: 'Show Preview Link',
+      defaultValue: false,
+      tooltip: 'Show a secondary preview link on cards when the search API has a preview URL.',
+    }),
+    showFeaturedBadge: props.Boolean({
+      name: 'Show Featured Badge',
+      defaultValue: false,
+      tooltip: 'Show a Featured badge on templates marked as featured by the search API.',
+    }),
+    showMarketplaceSignals: props.Boolean({
+      name: 'Show Marketplace Signals',
+      defaultValue: false,
+      tooltip:
+        'Show compact display-only signals from the search API, such as Popular, purchases, and views. Does not add new filters or sorting.',
+    }),
+    enableAnalytics: props.Boolean({
+      name: 'Enable Analytics',
+      defaultValue: true,
+      tooltip:
+        'Emit aggregate marketplace health telemetry for successful result batches and component errors. Does not send raw query text, template names, or creator names.',
+    }),
   },
 });

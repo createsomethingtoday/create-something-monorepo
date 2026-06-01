@@ -357,6 +357,18 @@ async function runFullSync(env: Env): Promise<SyncSummary> {
 // range — even at peak density (~4,918 records over 117 min) that yields ~630 records
 // per window, for ~800 total subrequests with safe headroom.
 const MAX_SYNC_WINDOW_MS = 15 * 60 * 1000;
+const MAX_EMPTY_SYNC_WINDOWS_PER_RUN = 96;
+const MAX_INCREMENTAL_RECORDS_PER_RUN = 600;
+
+function resolveSyncWindow(cursor: string, now: Date): { end: Date; until: string | undefined; isCaughtUp: boolean } {
+  const end = new Date(Math.min(new Date(cursor).getTime() + MAX_SYNC_WINDOW_MS, now.getTime()));
+  const isCaughtUp = end.getTime() >= now.getTime();
+  return {
+    end,
+    until: isCaughtUp ? undefined : end.toISOString(),
+    isCaughtUp,
+  };
+}
 
 async function runIncrementalSync(env: Env): Promise<SyncSummary> {
   const currentCursor = await getSyncCursor(env.DB);
@@ -364,31 +376,61 @@ async function runIncrementalSync(env: Env): Promise<SyncSummary> {
 
   const startedAt = nowIso();
   const now = new Date();
-  const windowEnd = new Date(Math.min(new Date(currentCursor).getTime() + MAX_SYNC_WINDOW_MS, now.getTime()));
-  const isCaughtUp = windowEnd.getTime() >= now.getTime();
-  const windowEndIso = isCaughtUp ? undefined : windowEnd.toISOString();
+  let scanCursor = currentCursor;
+  let windowEnd = new Date(currentCursor);
+  let isCaughtUp = false;
+  const assets: Array<AirtableRecord<AirtableAssetFields>> = [];
+  let skippedEmptyWindows = 0;
+  let scannedWindows = 0;
 
-  const [lookups, assets, webflowImageIndex, webflowDesigners] = await Promise.all([
-    loadLookupMaps(env),
-    fetchModifiedAssetsSince(env, currentCursor, windowEndIso),
-    loadWebflowTemplateImageIndex(env),
-    hasWebflowCmsToken(env) ? fetchWebflowDesignerAvatars(env) : Promise.resolve([]),
-  ]);
-  const webflowDesignerIndex = buildWebflowDesignerAvatarIndex(webflowDesigners);
+  while (scannedWindows < MAX_EMPTY_SYNC_WINDOWS_PER_RUN) {
+    const syncWindow = resolveSyncWindow(scanCursor, now);
+    const windowAssets = await fetchModifiedAssetsSince(env, scanCursor, syncWindow.until);
+    scannedWindows += 1;
+    windowEnd = syncWindow.end;
+    isCaughtUp = syncWindow.isCaughtUp;
+
+    if (windowAssets.length === 0 && !syncWindow.isCaughtUp) {
+      skippedEmptyWindows += 1;
+    } else {
+      assets.push(...windowAssets);
+    }
+
+    if (isCaughtUp || assets.length >= MAX_INCREMENTAL_RECORDS_PER_RUN) {
+      break;
+    }
+
+    scanCursor = syncWindow.end.toISOString();
+  }
+
   const toUpsert: TemplateDocumentInput[] = [];
   const toDelete: string[] = [];
+  let webflowImageIndex: Awaited<ReturnType<typeof loadWebflowTemplateImageIndex>> = null;
 
-  for (const record of assets) {
-    const normalized = normalizeTemplateRecord(record, lookups, startedAt, webflowImageIndex, webflowDesignerIndex);
-    if (normalized) {
-      toUpsert.push(normalized);
-    } else {
-      toDelete.push(record.id);
+  if (assets.length > 0) {
+    const [lookups, loadedWebflowImageIndex, webflowDesigners] = await Promise.all([
+      loadLookupMaps(env),
+      loadWebflowTemplateImageIndex(env),
+      hasWebflowCmsToken(env) ? fetchWebflowDesignerAvatars(env) : Promise.resolve([]),
+    ]);
+    webflowImageIndex = loadedWebflowImageIndex;
+    const webflowDesignerIndex = buildWebflowDesignerAvatarIndex(webflowDesigners);
+
+    for (const record of assets) {
+      const normalized = normalizeTemplateRecord(record, lookups, startedAt, webflowImageIndex, webflowDesignerIndex);
+      if (normalized) {
+        toUpsert.push(normalized);
+      } else {
+        toDelete.push(record.id);
+      }
     }
   }
 
   if (toDelete.length > 0) await deleteTemplateDocuments(env.DB, toDelete);
   if (toUpsert.length > 0) await upsertTemplateDocuments(env.DB, toUpsert);
+  if (!webflowImageIndex) {
+    webflowImageIndex = await loadWebflowTemplateImageIndex(env);
+  }
   const imageRefreshedRecords = await refreshIndexedWebflowImages(
     env.DB,
     webflowImageIndex,
@@ -414,6 +456,7 @@ async function runIncrementalSync(env: Env): Promise<SyncSummary> {
     backfilled_records: backfilledRecords,
     image_refreshed_records: imageRefreshedRecords,
     cursor: newCursor,
+    skipped_empty_windows: skippedEmptyWindows,
   };
 
   await setSyncCursor(env.DB, newCursor);
