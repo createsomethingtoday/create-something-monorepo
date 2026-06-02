@@ -205,6 +205,42 @@ describe('webflow-template-search worker', () => {
     }
   });
 
+  it('uses an extended sync lock for manual full rebuilds', async () => {
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: PUBLISHED_ASSETS,
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+    });
+    const { env, close } = createTestEnv();
+
+    try {
+      const response = await callWorker(
+        new Request('https://templates.test/api/templates/admin/rebuild', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(response.status).toBe(200);
+
+      const row = await env.DB.prepare(
+        `SELECT mode, status, started_at, expires_at
+         FROM sync_jobs
+         WHERE lock_key = ?`,
+      )
+        .bind('template_sync')
+        .first<{ mode: string; status: string; started_at: string; expires_at: string }>();
+      const ttlMs = new Date(row?.expires_at ?? 0).getTime() - new Date(row?.started_at ?? 0).getTime();
+
+      expect(row).toMatchObject({ mode: 'full', status: 'succeeded' });
+      expect(ttlMs).toBe(3 * 60 * 60 * 1000);
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
   it('can force-refresh creator profiles when a stale sync lock is present', async () => {
     const fetchMock = installAirtableFetchMock({
       publishedAssets: [],

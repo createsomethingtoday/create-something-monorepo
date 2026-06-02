@@ -55,6 +55,8 @@ import {
 const IMAGE_BACKFILL_DEFAULT_LIMIT = 48;
 const IMAGE_BACKFILL_MAX_LIMIT = 480;
 const IMAGE_BACKFILL_FETCH_BATCH_SIZE = 24;
+const DEFAULT_SYNC_LOCK_TTL_MS = 20 * 60 * 1000;
+const FULL_SYNC_LOCK_TTL_MS = 3 * 60 * 60 * 1000;
 
 export class SyncAlreadyRunningError extends Error {
   readonly activeJob: ReturnType<typeof publicSyncJobRecord>;
@@ -67,7 +69,9 @@ export class SyncAlreadyRunningError extends Error {
 }
 
 async function runWithSyncJobLock<T>(env: Env, mode: string, task: () => Promise<T>): Promise<T> {
-  const lockResult = await acquireSyncJobLock(env.DB, mode);
+  const lockResult = await acquireSyncJobLock(env.DB, mode, {
+    ttlMs: mode === 'full' ? FULL_SYNC_LOCK_TTL_MS : DEFAULT_SYNC_LOCK_TTL_MS,
+  });
   if (!lockResult.acquired) {
     throw new SyncAlreadyRunningError(lockResult.activeJob);
   }
