@@ -344,27 +344,41 @@ export async function searchTemplates(env: Env, rawParams: SearchParams): Promis
   const includeFacets = params.include.facets;
   const includePills = params.include.pills;
 
-  const [totalItems, rows, styleFacets, typeFacets, categoryPills, pills] = await Promise.all([
-    includeItems ? getTotalCount(env.DB, sqlParts) : Promise.resolve(0),
-    includeItems
-      ? env.DB
-          .prepare(`
-            SELECT
-              d.*,
-              ${sqlParts.queryMode ? 'bm25(template_documents_fts, 10.0, 6.0, 1.5, 2.5, 2.0, 1.2, 0.8)' : 'NULL'} AS text_rank
-            ${sqlParts.fromClause}
-            ${sqlParts.whereClause}
-            ORDER BY ${orderClause}
-            LIMIT ? OFFSET ?
-          `)
-          .bind(...sqlParts.binds, params.pageSize, offset)
-          .all<DocumentRow>()
-      : Promise.resolve({ results: [] as DocumentRow[] }),
-    includeFacets ? loadFacetStyles(env, params) : Promise.resolve([]),
-    includeFacets ? loadFacetTypes(env, params) : Promise.resolve([]),
-    includePills ? loadCategoryPills(env, params) : Promise.resolve([]),
-    includePills ? loadSubcategoryPills(env, params) : Promise.resolve([]),
-  ]);
+  let totalItems = 0;
+  let rows: D1Result<DocumentRow> = { results: [] };
+  let styleFacets: Awaited<ReturnType<typeof loadFacetStyles>> = [];
+  let typeFacets: Awaited<ReturnType<typeof loadFacetTypes>> = [];
+  let categoryPills: Awaited<ReturnType<typeof loadCategoryPills>> = [];
+  let pills: Awaited<ReturnType<typeof loadSubcategoryPills>> = [];
+
+  // Marketplace pages mount multiple components that fetch concurrently. Keep
+  // each request's D1 work serial so page-level fan-out does not multiply into
+  // D1 queue overload during syncs.
+  if (includeItems) {
+    totalItems = await getTotalCount(env.DB, sqlParts);
+    rows = await env.DB
+      .prepare(`
+        SELECT
+          d.*,
+          ${sqlParts.queryMode ? 'bm25(template_documents_fts, 10.0, 6.0, 1.5, 2.5, 2.0, 1.2, 0.8)' : 'NULL'} AS text_rank
+        ${sqlParts.fromClause}
+        ${sqlParts.whereClause}
+        ORDER BY ${orderClause}
+        LIMIT ? OFFSET ?
+      `)
+      .bind(...sqlParts.binds, params.pageSize, offset)
+      .all<DocumentRow>();
+  }
+
+  if (includeFacets) {
+    styleFacets = await loadFacetStyles(env, params);
+    typeFacets = await loadFacetTypes(env, params);
+  }
+
+  if (includePills) {
+    categoryPills = await loadCategoryPills(env, params);
+    pills = await loadSubcategoryPills(env, params);
+  }
 
   const rowResults = rows.results ?? [];
   const childSlugMap = await lookupPublicSlugMap(
