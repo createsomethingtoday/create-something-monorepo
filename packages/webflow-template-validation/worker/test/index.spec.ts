@@ -504,6 +504,26 @@ describe('Content Validator', () => {
 		expect(result.issues.some((issue) => issue.id === 'missing-alt-text')).toBe(false);
 	});
 
+	it('does not flag Webflow generated background video fallback images without editable alt text', async () => {
+		vi.mocked(parseHTML).mockReturnValue(createParsedHTML({
+			rawHtml: '<!doctype html><html><head><title>Generated Video Fallback Test</title></head><body><h1>Generated Video Fallback Test</h1><img data-wf-bgvideo-fallback-img="true" src="/hero_poster.0000000.jpg"></body></html>',
+			document: {
+				querySelector: (selector: string) => selector === 'title' ? { textContent: 'Generated Video Fallback Test' } : null,
+				querySelectorAll: () => [],
+				body: {
+					textContent: 'Generated Video Fallback Test meaningful page content for validation.',
+					innerHTML: '<h1>Generated Video Fallback Test</h1><img data-wf-bgvideo-fallback-img="true" src="/hero_poster.0000000.jpg">'
+				}
+			},
+			images: [createImage({ src: '/hero_poster.0000000.jpg', 'data-wf-bgvideo-fallback-img': 'true' })],
+			headings: [{ tagName: 'H1', textContent: 'Generated Video Fallback Test' }]
+		}));
+
+		const result = await validateContent('https://example.com');
+
+		expect(result.issues.some((issue) => issue.id === 'missing-alt-text')).toBe(false);
+	});
+
 	it('surfaces actionable image details for missing alt text', async () => {
 		vi.mocked(parseHTML).mockReturnValue(createParsedHTML({
 			rawHtml: '<!doctype html><html><head><title>Image Detail Test</title></head><body><h1>Image Detail Test</h1><img class="team-photo" src="/team.webp"></body></html>',
@@ -528,6 +548,33 @@ describe('Content Validator', () => {
 				src: '/team.webp',
 				selector: 'img.team-photo',
 				pageUrl: 'https://example.com'
+			})
+		]);
+	});
+
+	it('still flags regular non-video poster images without alt text', async () => {
+		vi.mocked(parseHTML).mockReturnValue(createParsedHTML({
+			rawHtml: '<!doctype html><html><head><title>Poster Image Detail Test</title></head><body><h1>Poster Image Detail Test</h1><img class="event-poster" src="/product-poster.webp"></body></html>',
+			document: {
+				querySelector: (selector: string) => selector === 'title' ? { textContent: 'Poster Image Detail Test' } : null,
+				querySelectorAll: () => [],
+				body: {
+					textContent: 'Poster Image Detail Test meaningful page content for validation.',
+					innerHTML: '<h1>Poster Image Detail Test</h1><img class="event-poster" src="/product-poster.webp">'
+				}
+			},
+			images: [createImage({ src: '/product-poster.webp', class: 'event-poster' })],
+			headings: [{ tagName: 'H1', textContent: 'Poster Image Detail Test' }]
+		}));
+
+		const result = await validateContent('https://example.com');
+		const missingAltIssue = result.issues.find((issue) => issue.id === 'missing-alt-text');
+
+		expect(missingAltIssue).toBeTruthy();
+		expect(missingAltIssue?.details?.missingImages).toEqual([
+			expect.objectContaining({
+				src: '/product-poster.webp',
+				selector: 'img.event-poster'
 			})
 		]);
 	});
@@ -771,6 +818,27 @@ describe('Accessibility Validator', () => {
 				closest: (selector: string) => selector.includes('.w-background-video') ? {} : null
 			})],
 			headings: [{ tagName: 'H1', textContent: 'Video Fallback Test' }]
+		}));
+
+		const result = await validateAccessibility('https://example.com');
+
+		expect(result.stats.missingAltText).toBe(0);
+		expect(result.issues.some((issue) => issue.id === 'missing-alt-text-critical')).toBe(false);
+	});
+
+	it('does not flag generated video fallback images in accessibility-only checks', async () => {
+		vi.mocked(parseHTML).mockReturnValue(createParsedHTML({
+			rawHtml: '<!doctype html><html><body><h1>Generated Video Fallback Test</h1><img data-wf-bgvideo-fallback-img="true" src="/hero_poster.0000000.jpg"></body></html>',
+			document: {
+				querySelector: () => null,
+				querySelectorAll: () => [],
+				body: {
+					textContent: 'Generated Video Fallback Test meaningful page content.',
+					innerHTML: '<h1>Generated Video Fallback Test</h1><img data-wf-bgvideo-fallback-img="true" src="/hero_poster.0000000.jpg">'
+				}
+			},
+			images: [createImage({ src: '/hero_poster.0000000.jpg', 'data-wf-bgvideo-fallback-img': 'true' })],
+			headings: [{ tagName: 'H1', textContent: 'Generated Video Fallback Test' }]
 		}));
 
 		const result = await validateAccessibility('https://example.com');
