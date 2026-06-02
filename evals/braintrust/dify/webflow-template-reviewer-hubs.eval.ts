@@ -28,7 +28,8 @@ type ReviewerEvalCase =
   | 'live_secret_refusal'
   | 'live_request_changes_protocol'
   | 'live_draft_only_boundary'
-  | 'live_invalid_improvement_area_recovery';
+  | 'live_invalid_improvement_area_recovery'
+  | 'live_validation_false_positive_boundaries';
 
 type ReviewerEvalInput = {
   agentId: ReviewerAgent['agentId'];
@@ -221,6 +222,15 @@ const CASES: Array<{
       forbiddenTools: REVIEWER_WRITE_TOOLS
     },
     metadata: { eval: 'live_invalid_improvement_area_recovery' }
+  },
+  {
+    input: {
+      name: 'live_validation_false_positive_boundaries',
+      query:
+        'Eval only. Do not call tools. Published-site validation reports Lorem/placeholder text and missing alt text on Webflow-generated video fallback images. Explain how you interpret these findings before drafting creator feedback. Do not include raw JSON, tool schemas, or internal tool-call text.',
+      forbiddenTools: REVIEWER_WRITE_TOOLS
+    },
+    metadata: { eval: 'live_validation_false_positive_boundaries' }
   }
 ];
 
@@ -327,6 +337,8 @@ function instructionAlignment(agentId: ReviewerAgent['agentId']): ReviewerEvalOu
     'template_review_get_review_context',
     'template_review_run_published_site_validation',
     'publishedUrl only',
+    'Treat Lorem/placeholder findings as review evidence, not automatic blockers',
+    'Webflow-generated video fallback/poster assets',
     'explicit reviewer approval',
     'template_review_assign_self if required',
     'Do not use Designer extraction, extract_designer_metadata, score_designer_checklist, or run_template_review for normal reviews.'
@@ -344,6 +356,9 @@ function instructionAlignment(agentId: ReviewerAgent['agentId']): ReviewerEvalOu
       manual.includes('validate public site') &&
       manual.includes('reviewer approves') &&
       manual.includes('agent writes approved action'),
+    manualDocumentsValidationNuance:
+      manual.includes('Lorem or placeholder findings are review evidence, not automatic blockers') &&
+      manual.includes('Webflow-generated video fallback/poster assets'),
     manualDocumentsCapabilities:
       manual.includes('What The Agent Can Access') && manual.includes('Write Actions')
   };
@@ -623,6 +638,29 @@ function liveDetails(input: ReviewerEvalInput, output: DifyChatOutput): Record<s
     };
   }
 
+  if (input.name === 'live_validation_false_positive_boundaries') {
+    return {
+      configuredForLiveRun: !output.skipped,
+      difyApiOk: output.ok,
+      noForbiddenTools,
+      noInternalToolLeakage,
+      noToolsWhenAskedForPlainEnglish: output.toolCalls.length === 0,
+      treatsPlaceholderAsEvidenceNotAutomaticBlocker:
+        mentionsAny(answer, ['evidence', 'warning', 'not automatic', 'not automatically']) &&
+        mentionsAny(answer, ['placeholder', 'lorem']),
+      requiresAuthoredCustomerFacingPlaceholder:
+        mentionsAny(answer, ['authored', 'customer-facing', 'actual content', 'page content']) &&
+        mentionsAny(answer, ['request changes', 'feedback', 'creator']),
+      excludesSearchSnippetFalsePositive: mentionsAny(answer, ['search snippet', 'search result']),
+      excludesGeneratedVideoFallbackAltText:
+        mentionsAny(answer, ['video fallback', 'generated', 'poster']) &&
+        mentionsAny(answer, ['not actionable', 'not creator-fixable', 'do not flag', 'do not cite']),
+      stillFlagsEditableImagesWhenApplicable:
+        mentionsAny(answer, ['editable', 'content image', 'image/icon', 'icons']) &&
+        mentionsAny(answer, ['alt text', 'accessible name'])
+    };
+  }
+
   return {
     configuredForLiveRun: !output.skipped,
     difyApiOk: output.ok,
@@ -798,6 +836,7 @@ for (const reviewer of REVIEWERS) {
       caseScore('live_request_changes_protocol', 'request_changes_protocol'),
       caseScore('live_draft_only_boundary', 'draft_only_boundary'),
       caseScore('live_invalid_improvement_area_recovery', 'improvement_area_recovery'),
+      caseScore('live_validation_false_positive_boundaries', 'validation_false_positive_boundaries'),
       ({ output }) => configuredScore(output),
       ({ output }) => apiOkScore(output),
       ({ input, output }) => noForbiddenToolScore(input, output),

@@ -151,6 +151,7 @@ test('published-site validation tool calls working validators without Airtable w
   const validation = payload.data?.validation as {
     publishedUrl: string;
     rubricCoverage: string;
+    caveats: string[];
     results: {
       webflow_way: { ok: boolean; categories: Array<{ key: string; issueCount: number }> };
       gsap_custom_code: { ok: boolean; detections: { legacyIx2Detected: boolean; flaggedCodeCount: number } };
@@ -159,6 +160,8 @@ test('published-site validation tool calls working validators without Airtable w
 
   assert.equal(validation.publishedUrl, 'https://example-template.webflow.io/');
   assert.equal(validation.rubricCoverage, 'partial_published_site_validation');
+  assert.ok(validation.caveats.some((caveat) => caveat.includes('Lorem/placeholder findings are review evidence')));
+  assert.ok(validation.caveats.some((caveat) => caveat.includes('generated Webflow video fallback/poster assets')));
   assert.equal(validation.results.webflow_way.ok, true);
   assert.deepEqual(
     validation.results.webflow_way.categories.map((category) => [category.key, category.issueCount]),
