@@ -676,7 +676,7 @@ export function generateContentIssues(
 		issues.push({
 			id: 'lorem-ipsum-detected',
 			category: 'Content & Accessibility',
-			severity: 'error',
+			severity: 'warning',
 			message: `Lorem Ipsum or placeholder text detected on ${pagesWithLorem.length} page(s)`,
 			description: 'Webflow Way guidelines require all placeholder text to be replaced with real, relevant content.',
 			howToFix: 'Replace all Lorem Ipsum and placeholder text with actual content relevant to the template purpose',
@@ -1079,7 +1079,7 @@ function analyzeContentQuality(parsedHTML: ParsedHTML, url: string): ContentQual
 			type: 'lorem',
 			text: 'Lorem Ipsum content detected',
 			location: url,
-			severity: 'error'
+			severity: 'warning'
 		});
 	}
 
@@ -1091,7 +1091,7 @@ function analyzeContentQuality(parsedHTML: ParsedHTML, url: string): ContentQual
 			type: 'placeholder',
 			text: 'Placeholder content detected',
 			location: url,
-			severity: 'error'
+			severity: 'warning'
 		});
 	}
 
@@ -1175,7 +1175,7 @@ function generateContentQualityIssues(pages: AnalyzedPage[]): ValidationIssue[] 
 			issues.push({
 				id: 'placeholder-content-detected',
 				category: 'Content & Accessibility',
-				severity: 'error',
+				severity: 'warning',
 				message: `Placeholder content detected on ${placeholderPages.length} page(s)`,
 				description: 'Placeholder text should be replaced with real, relevant content before publishing.',
 				howToFix: 'Replace all placeholder text with actual content that serves your users',
