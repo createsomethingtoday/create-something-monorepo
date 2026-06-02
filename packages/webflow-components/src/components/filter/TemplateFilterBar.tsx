@@ -700,6 +700,28 @@ function toStyleSlug(name: string): string {
   return toFilterSlug(name);
 }
 
+function titleCaseSlug(value: string): string {
+  return value
+    .replace(/-websites?$/i, '')
+    .replace(/-templates?$/i, '')
+    .split('-')
+    .filter(Boolean)
+    .map((part) => {
+      const lower = part.toLowerCase();
+      if (lower === 'and') return '&';
+      if (lower === 'ui') return 'UI';
+      if (lower === 'hr') return 'HR';
+      if (lower === 'it') return 'IT';
+      if (lower === 'ai') return 'AI';
+      if (lower === 'nft') return 'NFT';
+      if (lower === 'nfts') return 'NFTs';
+      if (lower === 'saas') return 'SaaS';
+      return lower.charAt(0).toUpperCase() + lower.slice(1);
+    })
+    .join(' ')
+    .replace(/\s+&\s+/g, ' & ');
+}
+
 function normalizeSort(value: string | null, fallback: TemplateSort = 'popular'): TemplateSort {
   switch ((value ?? '').trim()) {
     case 'newest':
@@ -1332,7 +1354,7 @@ export const TemplateFilterBar: React.FC<TemplateFilterBarProps> = ({
   const parentCategoryPill = routeContext.categoryGroupSlug
     ? categoryPills.find((pill) => pill.slug === routeContext.categoryGroupSlug)
     : null;
-  const parentCategoryLabel = parentCategoryPill?.name ?? routeContext.categoryGroupSlug ?? '';
+  const parentCategoryLabel = parentCategoryPill?.name ?? (routeContext.categoryGroupSlug ? titleCaseSlug(routeContext.categoryGroupSlug) : '');
   const visiblePills = hasSubcategoryPillContext
     ? subcategoryPills.filter((pill) => pill.slug !== routeContext.categoryGroupSlug)
     : categoryPills;
