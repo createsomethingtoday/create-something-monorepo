@@ -46,6 +46,7 @@ import { generateContentIssues, validateContent } from '../src/validators/conten
 import { validateAccessibility } from '../src/validators/accessibility-validator';
 import { validateInteractions } from '../src/validators/interactions-validator';
 import { generateAssetIssues } from '../src/validators/asset-validator';
+import { analyzeImageOptimization } from '../src/utils/asset-utils';
 import { fetchHTML, parseHTML } from '../src/utils/fetch-utils';
 import worker from '../src/index';
 
@@ -849,6 +850,37 @@ describe('Accessibility Validator', () => {
 });
 
 describe('Asset Validator', () => {
+	it('treats SVG assets as optimized vector assets instead of raster conversion candidates', () => {
+		const optimization = analyzeImageOptimization(new ArrayBuffer(700 * 1024), 'image/svg+xml');
+		const issues = generateAssetIssues([
+			{
+				name: 'utility-lock.svg',
+				url: 'https://uploads-ssl.webflow.com/site/utility-lock.svg',
+				size: 700 * 1024,
+				format: 'image/svg+xml',
+				isOptimized: optimization.isOptimized,
+				usageCount: 1,
+				hasLicensingIssues: false
+			},
+			{
+				name: 'Frame 20 (5).svg',
+				url: 'https://uploads-ssl.webflow.com/site/Frame%2020%20(5).svg',
+				size: 280 * 1024,
+				format: 'application/octet-stream',
+				isOptimized: false,
+				usageCount: 1,
+				hasLicensingIssues: false
+			}
+		]);
+
+		expect(optimization).toEqual(expect.objectContaining({
+			isOptimized: true,
+			recommendation: undefined
+		}));
+		expect(issues.some((issue) => issue.id === 'assets-not-optimized')).toBe(false);
+		expect(issues.some((issue) => issue.id === 'assets-above-compression-target')).toBe(false);
+	});
+
 	it('treats 150KB as a review target and 4MB as the blocking maximum', () => {
 		const issues = generateAssetIssues([
 			{
