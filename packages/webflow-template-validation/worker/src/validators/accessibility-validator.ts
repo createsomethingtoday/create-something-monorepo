@@ -905,6 +905,7 @@ function isLikelyPlatformVideoFallbackImage(img: any): boolean {
 	const className = String(img.getAttribute?.('class') || img.className || '').toLowerCase();
 	const src = getImageSource(img).toLowerCase();
 	const attrs = [
+		img.getAttribute?.('data-wf-bgvideo-fallback-img'),
 		img.getAttribute?.('data-poster-url'),
 		img.getAttribute?.('data-video-urls'),
 		img.getAttribute?.('data-video-url')
@@ -913,8 +914,13 @@ function isLikelyPlatformVideoFallbackImage(img: any): boolean {
 	return (
 		/\b(w-background-video|w-video|video-fallback|fallback-image|poster-image)\b/.test(className) ||
 		/\b(video-fallback|fallback-image|poster-image)\b/.test(src) ||
+		isWebflowGeneratedVideoPosterSource(src) ||
 		attrs.length > 0
 	);
+}
+
+function isWebflowGeneratedVideoPosterSource(src: string): boolean {
+	return /(?:^|[/_-])[^/?#]*(?:[_-]poster|poster)\.\d+\.(?:jpe?g|png|webp|avif)(?:$|[?#])/.test(src);
 }
 
 function determineImageContext(img: any, index: number): string {
