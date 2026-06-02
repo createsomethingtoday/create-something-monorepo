@@ -394,6 +394,11 @@ export interface AnalyzedPage {
 	headingHierarchy: HeadingHierarchy;
 	imageCount: number;
 	imagesWithoutAlt: number;
+	imagesWithoutAltDetails?: Array<{
+		src: string;
+		context: string;
+		selector?: string;
+	}>;
 	seo: PageSEOData;
 	links: LinkAnalysis;
 	contentQuality: ContentQualityAnalysis;
@@ -508,6 +513,7 @@ export interface AltTextAudit {
 		src: string;
 		context: string;
 		isDecorative: boolean;
+		selector?: string;
 	}>;
 	coveragePercentage: number;
 }

@@ -75,6 +75,45 @@ const WEBFLOW_DEFAULT_PATTERNS = [
 	/text\s+block/i
 ];
 
+type ImageAltDetail = {
+	src: string;
+	context: string;
+	selector?: string;
+};
+
+const SEARCH_TEXT_IGNORE_SELECTORS = [
+	'script',
+	'style',
+	'noscript',
+	'template',
+	'input',
+	'textarea',
+	'select',
+	'[role="search"]',
+	'[data-wf-search]',
+	'[data-wf-search-results]',
+	'[data-search-result]',
+	'.w-search',
+	'.w-search-results',
+	'.w-search-result',
+	'.search-results',
+	'.search-result',
+	'.search-snippet',
+	'.search-summary',
+	'.search-description'
+];
+
+const SEARCH_TEXT_CONTAINER_ATTRIBUTE_PATTERN =
+	/\s(?:class|id|role|aria-label|data-[A-Za-z0-9_-]+)=["'][^"']*(?:w-search|search-results?|search-snippet|search-summary|search-description|wf-search)[^"']*["']/i;
+
+const VIDEO_FALLBACK_ANCESTOR_SELECTOR = [
+	'.w-background-video',
+	'.w-video',
+	'[data-video-urls]',
+	'[data-video-url]',
+	'[data-poster-url]'
+].join(', ');
+
 function normalizeSlugForComparison(slugOrUrl: string): string | null {
 	if (!slugOrUrl) return null;
 	let s = String(slugOrUrl).trim();
@@ -244,11 +283,9 @@ async function analyzePage(url: string, parsedHTML: ParsedHTML): Promise<Analyze
 	const headingHierarchy = analyzeHeadingHierarchy(parsedHTML.headings);
 
 	// Count images and alt text coverage
-	const imageCount = parsedHTML.images.length;
-	const imagesWithoutAlt = parsedHTML.images.filter(img => {
-		const alt = img.getAttribute('alt');
-		return alt === null;
-	}).length;
+	const imageAltAudit = analyzeContentImages(parsedHTML);
+	const imageCount = imageAltAudit.totalImages;
+	const imagesWithoutAlt = imageAltAudit.imagesWithoutAlt.length;
 
 	// Extract comprehensive SEO data
 	const seo = extractSEOData(parsedHTML);
@@ -266,6 +303,7 @@ async function analyzePage(url: string, parsedHTML: ParsedHTML): Promise<Analyze
 		headingHierarchy,
 		imageCount,
 		imagesWithoutAlt,
+		imagesWithoutAltDetails: imageAltAudit.imagesWithoutAlt,
 		seo,
 		links,
 		contentQuality
@@ -273,8 +311,7 @@ async function analyzePage(url: string, parsedHTML: ParsedHTML): Promise<Analyze
 }
 
 function checkForLoremIpsum(parsedHTML: ParsedHTML): boolean {
-	// Get all text content from the page
-	const textContent = parsedHTML.document.body?.textContent || '';
+	const textContent = getScannableContentText(parsedHTML);
 
 	// Check for Lorem Ipsum patterns
 	const hasLorem = LOREM_IPSUM_PATTERNS.some(pattern => pattern.test(textContent));
@@ -289,6 +326,156 @@ function checkForLoremIpsum(parsedHTML: ParsedHTML): boolean {
 	const hasWebflowDefaults = WEBFLOW_DEFAULT_PATTERNS.some(pattern => pattern.test(textContent));
 
 	return hasLorem || hasPlaceholders || hasGenericContent || hasWebflowDefaults;
+}
+
+function analyzeContentImages(parsedHTML: ParsedHTML): { totalImages: number; imagesWithoutAlt: ImageAltDetail[] } {
+	const imagesWithoutAlt: ImageAltDetail[] = [];
+	let totalImages = 0;
+
+	parsedHTML.images.forEach((img, index) => {
+		if (shouldIgnoreImageForAltAudit(img)) return;
+
+		totalImages++;
+		const alt = img.getAttribute('alt');
+		if (alt === null) {
+			imagesWithoutAlt.push({
+				src: getImageSource(img),
+				context: determineImageContext(img, index),
+				selector: buildImageSelector(img, index)
+			});
+		}
+	});
+
+	return { totalImages, imagesWithoutAlt };
+}
+
+function shouldIgnoreImageForAltAudit(img: HTMLImageElement | any): boolean {
+	const alt = img.getAttribute?.('alt');
+	if (typeof alt === 'string' && alt.trim() === '') return true;
+
+	const role = (img.getAttribute?.('role') || '').toLowerCase();
+	if (role === 'presentation' || role === 'none') return true;
+
+	if ((img.getAttribute?.('aria-hidden') || '').toLowerCase() === 'true') return true;
+
+	return isLikelyPlatformVideoFallbackImage(img);
+}
+
+function isLikelyPlatformVideoFallbackImage(img: HTMLImageElement | any): boolean {
+	if (typeof img.closest === 'function' && img.closest(VIDEO_FALLBACK_ANCESTOR_SELECTOR)) {
+		return true;
+	}
+
+	const className = String(img.getAttribute?.('class') || img.className || '').toLowerCase();
+	const src = getImageSource(img).toLowerCase();
+	const attrs = [
+		img.getAttribute?.('data-poster-url'),
+		img.getAttribute?.('data-video-urls'),
+		img.getAttribute?.('data-video-url')
+	].filter(Boolean).join(' ').toLowerCase();
+
+	return (
+		/\b(w-background-video|w-video|video-fallback|fallback-image|poster-image)\b/.test(className) ||
+		/\b(video-fallback|fallback-image|poster-image)\b/.test(src) ||
+		attrs.length > 0
+	);
+}
+
+function getImageSource(img: HTMLImageElement | any): string {
+	return img.getAttribute?.('src') || img.getAttribute?.('data-src') || img.src || 'unknown';
+}
+
+function determineImageContext(img: HTMLImageElement | any, index: number): string {
+	const src = getImageSource(img).toLowerCase();
+	const className = String(img.getAttribute?.('class') || img.className || '').toLowerCase();
+
+	if (src.includes('hero') || className.includes('hero') || index === 0) return 'hero-image';
+	if (src.includes('logo') || className.includes('logo')) return 'logo';
+	if (src.includes('thumb') || src.includes('preview') || className.includes('thumb')) return 'thumbnail';
+
+	return 'content-image';
+}
+
+function buildImageSelector(img: HTMLImageElement | any, index: number): string {
+	const id = img.getAttribute?.('id');
+	if (id) return `#${id}`;
+
+	const className = String(img.getAttribute?.('class') || '').trim();
+	if (className) {
+		const firstClass = className.split(/\s+/).find(Boolean);
+		if (firstClass) return `img.${firstClass}`;
+	}
+
+	const src = getImageSource(img);
+	if (src && src !== 'unknown') return `img[src*="${getAssetNameFromUrl(src)}"]`;
+
+	return `img:nth-of-type(${index + 1})`;
+}
+
+function getAssetNameFromUrl(value: string): string {
+	try {
+		const pathname = new URL(value, 'https://example.com').pathname;
+		return pathname.split('/').pop() || value;
+	} catch {
+		return value.split('/').pop() || value;
+	}
+}
+
+function getScannableContentText(parsedHTML: ParsedHTML): string {
+	const body = parsedHTML.document.body as any;
+
+	if (body && typeof body.cloneNode === 'function') {
+		const clonedBody = body.cloneNode(true) as Element;
+		for (const selector of SEARCH_TEXT_IGNORE_SELECTORS) {
+			clonedBody.querySelectorAll(selector).forEach((node) => node.remove());
+		}
+		return normalizeText(clonedBody.textContent || '');
+	}
+
+	const rawHtml = parsedHTML.rawHtml || body?.innerHTML || body?.textContent || '';
+	if (rawHtml && rawHtml.includes('<')) {
+		return normalizeText(stripTags(stripIgnoredSearchContent(rawHtml)));
+	}
+
+	return normalizeText(String(rawHtml || ''));
+}
+
+function stripIgnoredSearchContent(html: string): string {
+	let output = html
+		.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, ' ')
+		.replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, ' ')
+		.replace(/<noscript\b[^>]*>[\s\S]*?<\/noscript>/gi, ' ')
+		.replace(/<template\b[^>]*>[\s\S]*?<\/template>/gi, ' ')
+		.replace(/<(input|textarea|select)\b[^>]*>[\s\S]*?(?:<\/\1>)?/gi, ' ');
+
+	let previous: string;
+	do {
+		previous = output;
+		output = output.replace(
+			new RegExp(`<([a-z][\\w:-]*)\\b(?=[^>]*${SEARCH_TEXT_CONTAINER_ATTRIBUTE_PATTERN.source})[^>]*>[\\s\\S]*?<\\/\\1>`, 'gi'),
+			' '
+		);
+	} while (output !== previous);
+
+	return output;
+}
+
+function stripTags(html: string): string {
+	return html.replace(/<[^>]*>/g, ' ');
+}
+
+function normalizeText(value: string): string {
+	return decodeBasicHtmlEntities(value).replace(/\s+/g, ' ').trim();
+}
+
+function decodeBasicHtmlEntities(value: string): string {
+	return value
+		.replace(/&nbsp;/g, ' ')
+		.replace(/&amp;/g, '&')
+		.replace(/&lt;/g, '<')
+		.replace(/&gt;/g, '>')
+		.replace(/&quot;/g, '"')
+		.replace(/&#39;/g, "'");
 }
 
 function extractSEOData(parsedHTML: ParsedHTML): PageSEOData {
@@ -573,6 +760,13 @@ export function generateContentIssues(
 	// Check alt text coverage
 	const totalImages = pages.reduce((sum, page) => sum + page.imageCount, 0);
 	const totalImagesWithoutAlt = pages.reduce((sum, page) => sum + page.imagesWithoutAlt, 0);
+	const missingAltImageDetails = pages.flatMap(page =>
+		(page.imagesWithoutAltDetails || []).map(image => ({
+			...image,
+			page: page.title,
+			pageUrl: page.url
+		}))
+	);
 
 	if (resolvedChecks.altText && totalImagesWithoutAlt > 0 && totalImages > 0) {
 		const coveragePercentage = Math.round(((totalImages - totalImagesWithoutAlt) / totalImages) * 100);
@@ -588,6 +782,7 @@ export function generateContentIssues(
 				totalImages,
 				imagesWithoutAlt: totalImagesWithoutAlt,
 				coveragePercentage,
+				missingImages: missingAltImageDetails.slice(0, 20),
 				pagesWithIssues: pages.filter(p => p.imagesWithoutAlt > 0).map(p => ({
 					title: p.title,
 					url: p.url,

@@ -157,7 +157,7 @@
 					<li>Publish the site and click Re-check script</li>
 					<li>Click the blue "Run Validator" button</li>
 					<li>Wait 30&ndash;60 seconds while the tool analyzes your project</li>
-					<li>Review your compliance score and fix required items</li>
+					<li>Review your compliance score and fix required items until it reaches 100%</li>
 				</ol>
 			</div>
 
@@ -179,6 +179,7 @@
 				<p class="guide-text">The top section shows key metrics:</p>
 				<ul class="guide-list">
 					<li>Overall compliance score as a percentage</li>
+					<li>Failed categories that prevent the required 100% pass</li>
 					<li>Critical errors that block template submission</li>
 					<li>Warnings for recommended improvements</li>
 					<li>Number of categories that pass validation</li>
@@ -195,11 +196,11 @@
 			</div>
 		</section>
 
-		<!-- Error Checklist -->
+		<!-- Fix List -->
 		<section class="guide-section">
-			<h3 class="guide-heading">Using the Error Checklist</h3>
+			<h3 class="guide-heading">Using the Fix List</h3>
 			<p class="guide-text">
-				Switch to the Error Checklist tab to track fixes systematically.
+				Switch to the Fix List tab to track failed categories and blocking issues systematically.
 			</p>
 
 			<div class="guide-block">
@@ -215,7 +216,7 @@
 
 			<div class="guide-callout warning">
 				<strong>Note:</strong> Clicking Refresh Validation unchecks all boxes. This lets you verify
-				fixes are complete. Errors that persist after refresh need more work.
+				fixes are complete. Items that persist after refresh need more work.
 			</div>
 		</section>
 
@@ -226,7 +227,7 @@
 			<div class="guide-block">
 				<h4 class="guide-subheading">1. Plan Your Work</h4>
 				<p class="guide-text">
-					Review the Overview tab to understand all issues. Switch to Error Checklist for tracking.
+					Review the Overview tab to understand all issues. Switch to Fix List for tracking.
 				</p>
 			</div>
 
@@ -250,7 +251,8 @@
 		<section class="guide-section">
 			<h3 class="guide-heading">Target Scores</h3>
 			<ul class="guide-list">
-				<li>Overall score above 90%</li>
+				<li>Overall score at 100%</li>
+				<li>Zero failed categories</li>
 				<li>Zero critical errors</li>
 				<li>Variable usage above 80%</li>
 				<li>Complete SEO on all pages</li>
