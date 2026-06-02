@@ -409,7 +409,7 @@ async function findMeetingContext(env: Env, review: NormalizedReviewRequest): Pr
     if (!hint) return undefined;
     return {
       source: 'hint',
-      warning: `Meeting context hint found, but no readable Notion meeting page URL was selected: ${hint}`
+      warning: `Webhook expectation context hint found, but no readable Notion meeting page URL was selected: ${hint}`
     };
   }
 
@@ -1019,8 +1019,9 @@ function buildWorkflowIssueDescription(
       `Notion page URL: ${review.pageUrl ?? review.enrichment?.notionPageUrl ?? 'not provided'}`,
       '',
       'Build scope',
-      '- Review the intake payload, selected Notion properties, page content, and meeting context.',
+      '- Review the intake payload, selected Notion properties, page content, and webhook expectation context.',
       '- Create or update the target Notion agent record and instructions.',
+      '- Confirm this build issue represents the expected post-notification kickoff from the Notion webhook flow.',
       '- Confirm owner, status, type, tier, and agent URL before marking this complete.',
       '- Comment implementation evidence back on the parent intake issue.',
       '',
@@ -1038,6 +1039,7 @@ function buildWorkflowIssueDescription(
     '- Use `pnpm agent:halfdozen:governance-eval -- --output .cache/halfdozen-agent-governance-eval.json`.',
     '- If a live Notion/agent test surface is available, run the smallest safe live smoke after the governance eval passes.',
     '- Publish or mirror the `notion_test_report` payload to Test Reports [OS].',
+    '- Confirm the webhook expectation context is satisfied: notification received, agent work kicked off, eval completed, and eval evidence shared.',
     '- Share the eval URL and command evidence back on the parent intake issue.',
     '',
     'Expected report shape',
@@ -1052,6 +1054,7 @@ function agentWorkflowLines(review: NormalizedReviewRequest): string[] {
     'Workflow kickoff',
     '- Build/update follow-up issue: `Build Half Dozen agent: ' + review.agentName + '`',
     '- Eval/share follow-up issue: `Run and share Half Dozen agent eval: ' + review.agentName + '`',
+    '- Expected flow: notification received, agent work kicked off, eval completed, and eval evidence shared back to this intake.',
     '- Governance eval command: `pnpm agent:halfdozen:governance-eval -- --output .cache/halfdozen-agent-governance-eval.json`',
     '- Share target: publish or mirror the resulting `notion_test_report` into Test Reports [OS], then comment the URL here.'
   ];
@@ -1082,13 +1085,14 @@ function meetingContextLines(review: NormalizedReviewRequest): string[] {
   const context = review.meetingContext;
   if (!context) {
     return [
-      'Meeting context',
-      'No meeting context was selected in the webhook payload or configured for this agent.'
+      'Webhook expectation context',
+      'No meeting-derived webhook expectation context was selected in the webhook payload or configured for this agent.'
     ];
   }
 
   const lines = [
-    'Meeting context',
+    'Webhook expectation context',
+    '- Expected flow: notification received, agent work kicked off, eval completed, and eval evidence shared back to the intake.',
     `- Source: ${context.source}`,
     `- Page ID: ${context.notionPageId ?? 'not provided'}`,
     `- Page URL: ${context.notionPageUrl ?? 'not provided'}`

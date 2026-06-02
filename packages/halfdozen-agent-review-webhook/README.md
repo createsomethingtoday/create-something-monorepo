@@ -27,9 +27,11 @@ connection used by `NOTION_API_KEY` must have read access to the target page. In
 source page or its parent database with that integration before expecting page-body content to
 appear in Linear.
 
-Meeting context can be included the same way. Select a meeting-related property (`Meeting`,
-`Meeting Notes`, `Transcript`, `Internal LLM`, etc.) that contains the Notion meeting page URL, or
-configure `MEETING_PAGE_URL_BY_AGENT_NAME_JSON` as an agent-name to meeting-page URL mapping.
+Meeting/webhook expectation context can be included the same way. Select a meeting-related property
+(`Meeting`, `Meeting Notes`, `Transcript`, `Internal LLM`, etc.) that contains the Notion meeting
+page URL, or configure `MEETING_PAGE_URL_BY_AGENT_NAME_JSON` as an agent-name to meeting-page URL
+mapping. This context is treated as the expected webhook-flow contract: notification received,
+agent build kicked off, testing/eval completed, and eval evidence shared back to the intake.
 
 ## Notion Setup
 
