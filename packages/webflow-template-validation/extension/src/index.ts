@@ -530,7 +530,7 @@ function getPageSlugScope(projectData: ProjectData): {
       if (!primaryPath) return;
 
       const pathname = getSlugPathname(primaryPath);
-      if (isInternalCmsTemplateSlug(pathname)) {
+      if (isCollectionTemplatePage(page, pathname)) {
         skippedCmsTemplateSlugs.push(pathname);
         return;
       }
@@ -677,9 +677,31 @@ function getFirstUsablePagePath(page: {
   return null;
 }
 
+function isCollectionTemplatePage(page: {
+  publishPath?: string | null;
+  path?: string | null;
+  slug?: string | null;
+  isCmsTemplate?: boolean;
+  collectionId?: string | null;
+  collectionName?: string | null;
+}, pathname: string): boolean {
+  return Boolean(
+    page.isCmsTemplate ||
+    page.collectionId ||
+    page.collectionName ||
+    isInternalCmsTemplateSlug(pathname) ||
+    (page.publishPath && isInternalCmsTemplateSlug(page.publishPath)) ||
+    (page.path && isInternalCmsTemplateSlug(page.path)) ||
+    (page.slug && isInternalCmsTemplateSlug(page.slug))
+  );
+}
+
+const WEBFLOW_ECOMMERCE_TEMPLATE_ROOTS = new Set(['/product', '/sku', '/category']);
+
 function isInternalCmsTemplateSlug(value: string): boolean {
   const pathname = getSlugPathname(value);
-  return /^\/detail_[^/]+\/?$/i.test(pathname);
+  const normalizedPathname = pathname.length > 1 ? pathname.replace(/\/+$/, '') : pathname;
+  return /^\/detail_[^/]+\/?$/i.test(pathname) || WEBFLOW_ECOMMERCE_TEMPLATE_ROOTS.has(normalizedPathname.toLowerCase());
 }
 
 function getSlugPathname(value: string): string {
@@ -3842,10 +3864,20 @@ function createSuccessHTML(): string {
 }
 
 function createMetadataHTML(category: string, stats: Record<string, any>): string {
+  const statItems = getDetailedStatItems(category, stats);
+  if (statItems.length === 0) return '';
+
   return `
     <div class="category-metadata">
-      <div class="metadata-title">Category Details:</div>
-      <div class="metadata-content">${formatDetailedStats(category, stats)}</div>
+      <div class="metadata-title">Category Details</div>
+      <div class="metadata-grid">
+        ${statItems.map(item => `
+          <div class="metadata-stat ${item.tone ? `is-${item.tone}` : ''}">
+            <span class="metadata-label">${escapeHtml(item.label)}</span>
+            <span class="metadata-value">${escapeHtml(item.value)}</span>
+          </div>
+        `).join('')}
+      </div>
     </div>
   `;
 }
@@ -4387,71 +4419,106 @@ function getScoreDescription(summary: ValidationResponse['summary']): string {
 }
 
 function formatCategoryStats(stats: Record<string, any>): string {
-  const statPairs = Object.entries(stats)
-    .filter(([key, value]) => typeof value === 'number' && key.startsWith('total'))
-    .map(([key, value]) => `${value} ${key.replace('total', '').toLowerCase()}`);
+  const preferredStats: Array<[string, string]> = [
+    ['totalPages', 'pages'],
+    ['totalAssets', 'assets'],
+    ['totalImages', 'images'],
+    ['totalComponents', 'components'],
+    ['totalStyles', 'styles'],
+    ['totalClasses', 'classes'],
+    ['totalVariables', 'variables'],
+    ['totalLinks', 'links'],
+    ['totalBrokenLinks', 'broken links'],
+  ];
+
+  const statPairs = preferredStats
+    .filter(([key]) => typeof stats[key] === 'number')
+    .slice(0, 2)
+    .map(([key, label]) => `${stats[key]} ${label}`);
 
   return statPairs.length > 0 ? `(${statPairs.join(', ')})` : '';
 }
 
-function formatDetailedStats(category: string, stats: Record<string, any>): string {
-  const details: string[] = [];
+type MetadataTone = 'good' | 'warning' | 'muted';
+
+type MetadataStatItem = {
+  label: string;
+  value: string;
+  tone?: MetadataTone;
+};
+
+function getDetailedStatItems(category: string, stats: Record<string, any>): MetadataStatItem[] {
+  const details: MetadataStatItem[] = [];
 
   switch (category) {
     case 'Variables':
-      if (stats.totalCollections !== undefined) details.push(`${stats.totalCollections} collections`);
-      if (stats.totalVariables !== undefined) details.push(`${stats.totalVariables} variables`);
-      if (stats.hasOrganizedCollections !== undefined) details.push(`Organized: ${stats.hasOrganizedCollections ? 'Yes' : 'No'}`);
-      if (stats.hasOrderedRamps !== undefined) details.push(`Color ramps: ${stats.hasOrderedRamps ? 'Yes' : 'No'}`);
+      addMetadataStat(details, 'Collections', stats.totalCollections);
+      addMetadataStat(details, 'Variables', stats.totalVariables);
+      addMetadataStat(details, 'Organized', formatBooleanStat(stats.hasOrganizedCollections), { tone: booleanTone(stats.hasOrganizedCollections) });
+      addMetadataStat(details, 'Color ramps', formatBooleanStat(stats.hasOrderedRamps), { tone: booleanTone(stats.hasOrderedRamps) });
       break;
 
     case 'Variable Modes':
-      if (stats.totalModes !== undefined) details.push(`${stats.totalModes} modes`);
-      if (stats.collectionsWithModes !== undefined) details.push(`${stats.collectionsWithModes} collections with modes`);
+      addMetadataStat(details, 'Modes', stats.totalModes);
+      addMetadataStat(details, 'Collections with modes', stats.collectionsWithModes);
       if (stats.responsiveModeNamesDetected !== undefined) {
-        details.push(`Responsive names detected: ${stats.responsiveModeNamesDetected ? 'Yes' : 'No'}`);
+        addMetadataStat(details, 'Responsive names', formatBooleanStat(stats.responsiveModeNamesDetected), { tone: booleanTone(stats.responsiveModeNamesDetected) });
       } else if (stats.hasResponsiveModes !== undefined) {
-        details.push(`Responsive names detected: ${stats.hasResponsiveModes ? 'Yes' : 'No'}`);
+        addMetadataStat(details, 'Responsive names', formatBooleanStat(stats.hasResponsiveModes), { tone: booleanTone(stats.hasResponsiveModes) });
       }
-      if (stats.modeDataAvailable !== undefined) details.push(`Mode data: ${stats.modeDataAvailable ? 'Available' : 'Unavailable'}`);
-      if (stats.collectionsCheckedForModes !== undefined) details.push(`${stats.collectionsCheckedForModes} collections checked`);
+      addMetadataStat(details, 'Mode data', stats.modeDataAvailable === undefined ? undefined : stats.modeDataAvailable ? 'Available' : 'Unavailable', { tone: booleanTone(stats.modeDataAvailable) });
+      addMetadataStat(details, 'Collections checked', stats.collectionsCheckedForModes);
       if (Array.isArray(stats.modeNames) && stats.modeNames.length > 0) {
-        details.push(`Modes: ${stats.modeNames.slice(0, 5).join(', ')}`);
+        addMetadataStat(details, 'Mode names', stats.modeNames.slice(0, 5).join(', '));
       }
       break;
 
     case 'Components':
-      if (stats.totalComponents !== undefined) details.push(`${stats.totalComponents} components`);
-      if (stats.navComponents !== undefined) details.push(`${stats.navComponents} navigation`);
-      if (stats.footerComponents !== undefined) details.push(`${stats.footerComponents} footer`);
-      if (stats.ctaComponents !== undefined) details.push(`${stats.ctaComponents} CTA`);
+      addMetadataStat(details, 'Components', stats.totalComponents);
+      addMetadataStat(details, 'Navigation', stats.navComponents);
+      addMetadataStat(details, 'Footer', stats.footerComponents);
+      addMetadataStat(details, 'CTA', stats.ctaComponents);
       break;
 
     case 'Styles':
-      if (stats.totalClasses !== undefined) details.push(`${stats.totalClasses} classes`);
-      if (stats.hasTypographyClasses !== undefined) details.push(`Typography: ${stats.hasTypographyClasses ? 'Yes' : 'No'}`);
-      if (stats.hasHtmlTagStyles !== undefined) details.push(`HTML baseline: ${stats.hasHtmlTagStyles ? 'Yes' : 'No'}`);
+      addMetadataStat(details, 'Classes', stats.totalClasses);
+      addMetadataStat(details, 'Typography', formatBooleanStat(stats.hasTypographyClasses), { tone: booleanTone(stats.hasTypographyClasses) });
+      addMetadataStat(details, 'HTML baseline', formatBooleanStat(stats.hasHtmlTagStyles), { tone: booleanTone(stats.hasHtmlTagStyles) });
       break;
 
     case 'Design System':
-      if (stats.totalVariables !== undefined) details.push(`${stats.totalVariables} variables`);
-      if (stats.withTitleCase !== undefined) details.push(`${stats.withTitleCase} with Title Case`);
-      if (stats.hasColorVars !== undefined) details.push(`Color vars: ${stats.hasColorVars ? 'Yes' : 'No'}`);
-      if (stats.hasTypographyVars !== undefined) details.push(`Typography vars: ${stats.hasTypographyVars ? 'Yes' : 'No'}`);
-      if (stats.hasSpacingVars !== undefined) details.push(`Spacing vars: ${stats.hasSpacingVars ? 'Yes' : 'No'}`);
+      addMetadataStat(details, 'Variables', stats.totalVariables);
+      addMetadataStat(details, 'Title Case', stats.withTitleCase);
+      addMetadataStat(details, 'Color vars', formatBooleanStat(stats.hasColorVars), { tone: booleanTone(stats.hasColorVars) });
+      addMetadataStat(details, 'Typography vars', formatBooleanStat(stats.hasTypographyVars), { tone: booleanTone(stats.hasTypographyVars) });
+      addMetadataStat(details, 'Spacing vars', formatBooleanStat(stats.hasSpacingVars), { tone: booleanTone(stats.hasSpacingVars) });
       break;
 
     case 'Component Architecture':
-      if (stats.totalComponents !== undefined) details.push(`${stats.totalComponents} components`);
-      if (stats.requiredComponents !== undefined) details.push(`${stats.requiredComponents.found}/${stats.requiredComponents.total} required found`);
-      if (stats.componentsWithTitleCase !== undefined) details.push(`${stats.componentsWithTitleCase} with Title Case`);
+      addMetadataStat(details, 'Components', stats.totalComponents);
+      if (stats.requiredComponents !== undefined) addMetadataStat(details, 'Required found', `${stats.requiredComponents.found}/${stats.requiredComponents.total}`);
+      addMetadataStat(details, 'Title Case', stats.componentsWithTitleCase);
       break;
 
     case 'Style System':
-      if (stats.totalStyles !== undefined) details.push(`${stats.totalStyles} styles`);
-      if (stats.htmlTagStyles !== undefined) details.push(`${stats.htmlTagStyles.found}/${stats.htmlTagStyles.required} HTML tag styles`);
-      if (stats.stylesWithVariables !== undefined) details.push(`${stats.stylesWithVariables} using variables`);
-      if (stats.variableUsagePercent !== undefined) details.push(`${stats.variableUsagePercent}% variable usage`);
+      addMetadataStat(details, 'Styles', stats.totalStyles);
+      if (stats.htmlTagStyles !== undefined) addMetadataStat(details, 'HTML tag styles', `${stats.htmlTagStyles.found}/${stats.htmlTagStyles.required}`);
+      addMetadataStat(details, 'Using variables', stats.stylesWithVariables);
+      addMetadataStat(details, 'Variable usage', formatPercentStat(stats.variableUsagePercent), { tone: percentageTone(stats.variableUsagePercent, 90) });
+      break;
+
+    case 'Content & Accessibility':
+      addMetadataStat(details, 'Pages', stats.totalPages);
+      addMetadataStat(details, 'Lorem pages', stats.pagesWithLoremIpsum, { tone: zeroIsGoodTone(stats.pagesWithLoremIpsum) });
+      addMetadataStat(details, 'Heading issues', stats.headingHierarchyErrors, { tone: zeroIsGoodTone(stats.headingHierarchyErrors) });
+      addMetadataStat(details, 'Alt coverage', formatPercentStat(stats.altTextCoverage), { tone: percentageTone(stats.altTextCoverage, 100) });
+      addMetadataStat(details, 'SEO score', formatPercentStat(stats.seoComplianceScore), { tone: percentageTone(stats.seoComplianceScore, 90) });
+      addMetadataStat(details, 'SEO issue pages', stats.pagesWithSEOIssues, { tone: zeroIsGoodTone(stats.pagesWithSEOIssues) });
+      addMetadataStat(details, 'Content score', formatPercentStat(stats.averageContentScore), { tone: percentageTone(stats.averageContentScore, 90) });
+      addMetadataStat(details, 'Content issue pages', stats.pagesWithContentIssues, { tone: zeroIsGoodTone(stats.pagesWithContentIssues) });
+      addMetadataStat(details, 'Links', stats.totalLinks);
+      addMetadataStat(details, 'Broken links', stats.totalBrokenLinks, { tone: zeroIsGoodTone(stats.totalBrokenLinks) });
+      addMetadataStat(details, 'Links per page', stats.averageLinksPerPage);
       break;
 
     case 'Interactions and GSAP': {
@@ -4463,28 +4530,111 @@ function formatDetailedStats(category: string, stats: Record<string, any>): stri
           ? 'Not detected'
           : 'Not verified';
 
-      details.push(`Analysis: ${analysisComplete ? (stats.analysisStatus === 'partial' ? 'Partially verified' : 'Verified') : 'Not verified'}`);
-      details.push(`Legacy IX2: ${legacyIx2State}`);
-      if (typeof stats.legacyIx2Count === 'number') details.push(`${stats.legacyIx2Count} legacy IX2 marker${stats.legacyIx2Count === 1 ? '' : 's'}`);
-      if (typeof stats.pagesRequested === 'number') details.push(`${stats.pagesRequested} page${stats.pagesRequested === 1 ? '' : 's'} requested`);
-      if (typeof stats.pagesAnalyzed === 'number') details.push(`${stats.pagesAnalyzed} page${stats.pagesAnalyzed === 1 ? '' : 's'} analyzed`);
-      if (typeof stats.pagesFailed === 'number' && stats.pagesFailed > 0) details.push(`${stats.pagesFailed} page${stats.pagesFailed === 1 ? '' : 's'} not checked`);
-      if (typeof stats.pagesSkipped === 'number' && stats.pagesSkipped > 0) details.push(`${stats.pagesSkipped} internal CMS template page${stats.pagesSkipped === 1 ? '' : 's'} skipped`);
-      if (typeof stats.pagesWithLegacyIx2 === 'number') details.push(`${stats.pagesWithLegacyIx2} page${stats.pagesWithLegacyIx2 === 1 ? '' : 's'} with IX2`);
-      if (typeof stats.errorMessage === 'string') details.push(stats.errorMessage);
+      addMetadataStat(details, 'Analysis', analysisComplete ? (stats.analysisStatus === 'partial' ? 'Partially verified' : 'Verified') : 'Not verified', { tone: analysisComplete ? 'good' : 'warning' });
+      addMetadataStat(details, 'Legacy IX2', legacyIx2State, { tone: stats.legacyIx2Detected === true ? 'warning' : stats.legacyIx2Detected === false ? 'good' : 'muted' });
+      addMetadataStat(details, 'IX2 markers', stats.legacyIx2Count, { tone: zeroIsGoodTone(stats.legacyIx2Count) });
+      addMetadataStat(details, 'Pages requested', stats.pagesRequested);
+      addMetadataStat(details, 'Pages analyzed', stats.pagesAnalyzed);
+      addMetadataStat(details, 'Pages not checked', stats.pagesFailed, { tone: zeroIsGoodTone(stats.pagesFailed) });
+      addMetadataStat(details, 'Template routes skipped', stats.pagesSkipped);
+      addMetadataStat(details, 'Pages with IX2', stats.pagesWithLegacyIx2, { tone: zeroIsGoodTone(stats.pagesWithLegacyIx2) });
+      addMetadataStat(details, 'CMS item URLs', stats.cmsItemUrlsValidated);
+      addMetadataStat(details, 'Coverage', stats.cmsTemplateCoverageStatus, { tone: cmsTemplateCoverageTone(stats.cmsTemplateCoverageStatus) });
+      if (typeof stats.errorMessage === 'string') addMetadataStat(details, 'Note', stats.errorMessage, { tone: 'warning' });
       break;
     }
 
     default:
-      // Generic formatting
-      Object.entries(stats).forEach(([key, value]) => {
-        if (typeof value === 'number') {
-          details.push(`${key}: ${value}`);
-        } else if (typeof value === 'boolean') {
-          details.push(`${key}: ${value ? 'Yes' : 'No'}`);
-        }
-      });
+      details.push(...formatGenericMetadataStats(stats));
   }
 
-  return details.length > 0 ? details.join(', ') : 'No detailed stats available';
+  return details;
+}
+
+function addMetadataStat(
+  items: MetadataStatItem[],
+  label: string,
+  value: unknown,
+  options: { tone?: MetadataTone } = {}
+): void {
+  if (value === undefined || value === null || value === '') return;
+  items.push({
+    label,
+    value: String(value),
+    tone: options.tone
+  });
+}
+
+function formatGenericMetadataStats(stats: Record<string, any>): MetadataStatItem[] {
+  const items: MetadataStatItem[] = [];
+
+  Object.entries(stats).forEach(([key, value]) => {
+    if (Array.isArray(value) || (value && typeof value === 'object')) return;
+    if (typeof value === 'number') {
+      addMetadataStat(items, humanizeStatKey(key), value);
+    } else if (typeof value === 'boolean') {
+      addMetadataStat(items, humanizeStatKey(key), formatBooleanStat(value), { tone: booleanTone(value) });
+    } else if (typeof value === 'string' && value.trim() !== '') {
+      addMetadataStat(items, humanizeStatKey(key), value);
+    }
+  });
+
+  return items;
+}
+
+function humanizeStatKey(key: string): string {
+  return key
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .replace(/^total\s+/i, '')
+    .replace(/\b\w/g, char => char.toUpperCase());
+}
+
+function formatBooleanStat(value: unknown): string | undefined {
+  if (typeof value !== 'boolean') return undefined;
+  return value ? 'Yes' : 'No';
+}
+
+function formatPercentStat(value: unknown): string | undefined {
+  if (typeof value !== 'number') return undefined;
+  return `${value}%`;
+}
+
+function booleanTone(value: unknown): MetadataTone | undefined {
+  if (typeof value !== 'boolean') return undefined;
+  return value ? 'good' : 'warning';
+}
+
+function zeroIsGoodTone(value: unknown): MetadataTone | undefined {
+  if (typeof value !== 'number') return undefined;
+  return value === 0 ? 'good' : 'warning';
+}
+
+function percentageTone(value: unknown, target: number): MetadataTone | undefined {
+  if (typeof value !== 'number') return undefined;
+  return value >= target ? 'good' : 'warning';
+}
+
+function cmsTemplateCoverageTone(value: unknown): MetadataTone | undefined {
+  if (typeof value !== 'string') return undefined;
+  if (value === 'complete' || value === 'not-applicable') return 'good';
+  return 'warning';
+}
+
+function escapeHtml(value: string): string {
+  return value.replace(/[&<>"']/g, (char) => {
+    switch (char) {
+      case '&':
+        return '&amp;';
+      case '<':
+        return '&lt;';
+      case '>':
+        return '&gt;';
+      case '"':
+        return '&quot;';
+      case "'":
+        return '&#39;';
+      default:
+        return char;
+    }
+  });
 }

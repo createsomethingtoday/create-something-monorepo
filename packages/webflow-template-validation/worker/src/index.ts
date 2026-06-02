@@ -3184,7 +3184,8 @@ function extractCmsTemplateHints(designerData: DesignerData): CmsTemplateHint[] 
 	for (const page of pages) {
 		const candidates = [page.slug, page.path, page.publishPath]
 			.filter((value): value is string => typeof value === 'string' && value.trim() !== '');
-		const templateSlug = candidates.find(isInternalCmsTemplateSlug);
+		const hasTemplateMetadata = Boolean(page.isCmsTemplate || page.collectionId || page.collectionName);
+		const templateSlug = candidates.find(isInternalCmsTemplateSlug) || (hasTemplateMetadata ? candidates[0] : undefined);
 		if (!templateSlug) continue;
 
 		const normalizedTemplateSlug = normalizeCmsTemplateSlug(templateSlug);
@@ -3199,8 +3200,12 @@ function extractCmsTemplateHints(designerData: DesignerData): CmsTemplateHint[] 
 	return Array.from(hints.values());
 }
 
+const WEBFLOW_ECOMMERCE_TEMPLATE_ROOTS = new Set(['/product', '/sku', '/category']);
+
 function isInternalCmsTemplateSlug(value: string): boolean {
-	return /^\/detail_[^/]+\/?$/i.test(getPathname(value));
+	const pathname = getPathname(value);
+	const normalizedPathname = pathname.length > 1 ? pathname.replace(/\/+$/, '') : pathname;
+	return /^\/detail_[^/]+\/?$/i.test(pathname) || WEBFLOW_ECOMMERCE_TEMPLATE_ROOTS.has(normalizedPathname.toLowerCase());
 }
 
 function normalizeCmsTemplateSlug(value: string): string {

@@ -73,6 +73,7 @@ type PageUrlBuildResult = {
 const DISCOVERY_TIMEOUT = 5000;
 const MAX_DISCOVERY_TEXT_SIZE = 2 * 1024 * 1024;
 const MAX_CMS_ITEM_URLS_PER_TEMPLATE = 1;
+const WEBFLOW_ECOMMERCE_TEMPLATE_ROOTS = new Set(['/product', '/sku', '/category']);
 
 export async function validateInteractions(
 	siteUrl: string,
@@ -492,7 +493,8 @@ function normalizePageUrl(value: string, baseUrl: string): string {
 
 function isInternalCmsTemplateSlug(value: string): boolean {
 	const pathname = getPathname(value);
-	return /^\/detail_[^/]+\/?$/i.test(pathname);
+	const normalizedPathname = pathname.length > 1 ? pathname.replace(/\/+$/, '') : pathname;
+	return /^\/detail_[^/]+\/?$/i.test(pathname) || WEBFLOW_ECOMMERCE_TEMPLATE_ROOTS.has(normalizedPathname.toLowerCase());
 }
 
 function normalizeCmsTemplateSlug(value: string): string {

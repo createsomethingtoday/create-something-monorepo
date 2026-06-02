@@ -1053,6 +1053,52 @@ describe('Interactions Validator', () => {
 		}));
 	});
 
+	it('skips ecommerce template roots and validates real product/category URLs from homepage links', async () => {
+		const fetchHtmlMock = vi.mocked(fetchHTML);
+		fetchHtmlMock.mockClear();
+		fetchHtmlMock.mockImplementation(async (url: string) => {
+			if (url === 'https://example.com/product' || url === 'https://example.com/category' || url === 'https://example.com/sku') {
+				throw new Error('Template root should not be fetched');
+			}
+
+			return {
+				html: '<!doctype html><html><head><title>Published Page</title></head><body></body></html>',
+				status: 200,
+				headers: { 'content-type': 'text/html' },
+				size: 0,
+				loadTime: 0
+			};
+		});
+		vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
+			const url = input instanceof Request ? input.url : String(input);
+			if (url.endsWith('/sitemap.xml')) {
+				return new Response('', { status: 404 });
+			}
+			if (url === 'https://example.com/' || url === 'https://example.com') {
+				return new Response('<a href="/product/brightening-renewal-serum">Serum</a><a href="/category/toner">Toner</a>', {
+					status: 200,
+					headers: { 'Content-Type': 'text/html' }
+				});
+			}
+			return new Response('', { status: 404 });
+		}));
+
+		const result = await validateInteractions('https://example.com', ['/product', '/sku', '/category']);
+
+		expect(result.stats.pagesSkipped).toBe(3);
+		expect(result.stats.pagesFailed).toBe(0);
+		expect(result.stats.analysisStatus).toBe('completed');
+		expect(result.stats.cmsItemUrlsDiscovered).toBe(2);
+		expect(result.stats.cmsItemUrlsValidated).toBe(2);
+		expect(result.stats.cmsTemplateCoverageStatus).toBe('partial');
+		expect(result.issues.some((issue) => issue.id === 'interactions-analysis-incomplete')).toBe(false);
+		expect(fetchHtmlMock.mock.calls.map(([url]) => url)).toEqual([
+			'https://example.com/',
+			'https://example.com/product/brightening-renewal-serum',
+			'https://example.com/category/toner'
+		]);
+	});
+
 	it('uses homepage links when an available sitemap misses a CMS collection', async () => {
 		const fetchHtmlMock = vi.mocked(fetchHTML);
 		fetchHtmlMock.mockClear();
