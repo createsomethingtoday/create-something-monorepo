@@ -117,6 +117,12 @@ It can help find:
 
 Treat this as review evidence, not the final decision.
 
+### Interpreting Placeholder And Alt-Text Findings
+
+Lorem or placeholder findings are review evidence, not automatic blockers. The reviewer should request changes only when the current evidence points to authored, customer-facing placeholder content. Do not cite Webflow search result snippets or warning-only placeholder signals as confirmed blocking failures.
+
+Alt-text findings are actionable only when they point to editable content images or icons that need accessible names. Do not flag intentionally decorative empty-alt images or Webflow-generated video fallback/poster assets as creator-fixable missing-alt issues.
+
 ## How The Agent Should Answer
 
 A strong answer should usually have three parts.

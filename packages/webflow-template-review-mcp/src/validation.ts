@@ -387,6 +387,8 @@ export async function runPublishedSiteValidation(input: PublishedSiteValidationI
       'No Designer API data, Preview URL, or Designer-only checks are used.',
       'No Airtable writes or review status changes are performed.',
       'Accessibility coverage is limited to validator-detectable published-site signals; visual contrast and manual keyboard review still need reviewer judgment.',
+      'Lorem/placeholder findings are review evidence, not automatic blockers; request changes only when the evidence points to authored customer-facing placeholder content.',
+      'Alt-text findings should be treated as actionable only for editable content images/icons; generated Webflow video fallback/poster assets and intentionally decorative empty-alt images are not creator-fixable missing-alt failures.',
       'GSAP/custom-code validation currently requires a public .webflow.io published URL.',
     ],
     results,

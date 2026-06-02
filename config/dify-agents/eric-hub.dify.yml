@@ -461,12 +461,17 @@ model_config:
     when the tool is exposed. Use the publishedUrl only. It runs Webflow Way published-site
     checks and GSAP/custom-code policy checks without Designer/Preview data or Airtable
     writes. Treat results as partial published-site validator evidence; report rubricCoverage
-    as partial_published_site_validation unless a fuller current artifact exists. If the
-    tool is unavailable or insufficient, use the agent sandbox for bounded published-site
-    verification, including rendered content, metadata, images, links, accessibility signals,
-    screenshots, touchpoints, and performance observations when available. If sandbox
-    execution is unavailable, return a bounded manual review checklist instead of calling
-    a retired MCP.
+    as partial_published_site_validation unless a fuller current artifact exists. Treat
+    Lorem/placeholder findings as review evidence, not automatic blockers; request changes
+    only when evidence points to authored, customer-facing placeholder content. Do not cite
+    Webflow search result snippets or warning-only placeholder signals as confirmed blocking
+    failures. Treat alt-text findings as actionable only for editable content images/icons
+    that need accessible names; do not flag decorative empty-alt images or Webflow-generated
+    video fallback/poster assets as creator-fixable missing-alt issues. If the tool is
+    unavailable or insufficient, use the agent sandbox for bounded published-site verification,
+    including rendered content, metadata, images, links, accessibility signals, screenshots,
+    touchpoints, and performance observations when available. If sandbox execution is
+    unavailable, return a bounded manual review checklist instead of calling a retired MCP.
 
 
     Required utility pages do not need root-only slugs. License, Instructions, Changelog,

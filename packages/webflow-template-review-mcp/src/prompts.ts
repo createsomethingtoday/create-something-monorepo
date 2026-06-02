@@ -56,9 +56,9 @@ Every review follows these phases:
 This validation path is **read-only** and does not use Designer API data, Preview URLs, or Airtable writes. Treat it as supplemental published-site evidence for review triage, not as a final decision.
 
 The published-site validators cover:
-- **Content**: lorem/placeholder signals, headings, SEO metadata, links, content quality
+- **Content**: lorem/placeholder signals, headings, SEO metadata, links, content quality. Treat lorem/placeholder findings as review evidence, not automatic blockers.
 - **Images/assets**: asset/image issues available from the published-site worker and supplied asset data
-- **Accessibility**: validator-detectable alt text, heading, and accessibility signals
+- **Accessibility**: validator-detectable alt text, heading, and accessibility signals. Treat alt-text findings as actionable only when they point to editable content images/icons; do not cite decorative empty-alt images or Webflow-generated video fallback/poster assets as creator-fixable missing-alt issues.
 - **Interactions**: legacy IX2 markers detected from published HTML
 - **Custom code / GSAP**: GSAP usage, flagged custom code, security-risk patterns, legacy IX2, and Unicorn Studio embeds
 
@@ -69,12 +69,12 @@ Required utility pages do **not** need root-only slugs. License, Instructions, C
 Report \`rubricCoverage\` as \`partial_published_site_validation\` unless a separate current artifact produces fuller rubric coverage. Do not invent analyzer job IDs, check IDs, score, or grade.
 
 **Common failure patterns that mean Changes Requested:**
-- Pervasive missing alt text across all pages
+- Pervasive actionable missing alt text across editable content images/icons, after excluding decorative images and Webflow-generated video fallback/poster assets
 - Skipped heading levels on most pages
 - Legacy IX2 interactions detected
 - Flagged unsupported custom code or third-party embeds
 - Missing image dimensions on all pages
-- Lorem ipsum or placeholder text detected
+- Confirmed authored/customer-facing placeholder content, not Webflow search snippets or warning-only placeholder signals
 - Connected third-party apps (GA, FB Pixel, etc.)
 
 ## Phase 5 — Take Ownership & Decide
@@ -94,7 +94,7 @@ Report \`rubricCoverage\` as \`partial_published_site_validation\` unless a sepa
 
 **APPROVE** if: No critical failures, few major failures, grade B+, design quality is "Good", responsive works.
 
-**REQUEST CHANGES** if: Any critical failures, 3+ major failures, missing required pages, placeholder content, connected apps, design below "Good".
+**REQUEST CHANGES** if: Any critical failures, 3+ major failures, missing required pages, confirmed authored/customer-facing placeholder content, connected apps, design below "Good".
 
 **REJECT** if: Fundamentally below bar, non-functional, guidelines violated.
 
