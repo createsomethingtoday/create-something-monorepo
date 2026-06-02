@@ -402,8 +402,12 @@ describe('Content Validator', () => {
 		const first = await validateContent('https://example.com');
 		const second = await validateContent('https://example.com/about');
 
-		expect(first.issues.some((issue) => issue.id === 'lorem-ipsum-detected')).toBe(true);
-		expect(second.issues.some((issue) => issue.id === 'lorem-ipsum-detected')).toBe(true);
+		expect(first.issues.find((issue) => issue.id === 'lorem-ipsum-detected')).toEqual(expect.objectContaining({
+			severity: 'warning'
+		}));
+		expect(second.issues.find((issue) => issue.id === 'lorem-ipsum-detected')).toEqual(expect.objectContaining({
+			severity: 'warning'
+		}));
 	});
 
 	it('ignores placeholder text inside Webflow search result snippets', async () => {
@@ -449,7 +453,9 @@ describe('Content Validator', () => {
 
 		const result = await validateContent('https://example.com/about');
 
-		expect(result.issues.some((issue) => issue.id === 'lorem-ipsum-detected')).toBe(true);
+		expect(result.issues.find((issue) => issue.id === 'lorem-ipsum-detected')).toEqual(expect.objectContaining({
+			severity: 'warning'
+		}));
 	});
 
 	it('does not flag decorative images that use empty alt text', async () => {
@@ -634,6 +640,7 @@ describe('Content Validator', () => {
 		});
 
 		expect(issues.map(i => i.id)).toEqual(['lorem-ipsum-detected']);
+		expect(issues[0].severity).toBe('warning');
 	});
 
 	it('pageScope=current analyzes only the current page URL and does not crawl slugs', async () => {
