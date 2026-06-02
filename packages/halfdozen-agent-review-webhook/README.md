@@ -12,6 +12,9 @@ By default, each intake also creates or reuses two Linear follow-up issues:
 - `Build Half Dozen agent: <agent name>`
 - `Run and share Half Dozen agent eval: <agent name>`
 
+That makes the expected automated flow: Notion notification received, intake created or reused,
+build work kicked off, eval/share work kicked off, and eval evidence linked back to the intake.
+
 The eval follow-up points at the repo-owned governance gate:
 
 ```bash
@@ -26,12 +29,6 @@ the Notion API and appends the flattened page instructions to the Linear issue. 
 connection used by `NOTION_API_KEY` must have read access to the target page. In Notion, share the
 source page or its parent database with that integration before expecting page-body content to
 appear in Linear.
-
-Meeting/webhook expectation context can be included the same way. Select a meeting-related property
-(`Meeting`, `Meeting Notes`, `Transcript`, `Internal LLM`, etc.) that contains the Notion meeting
-page URL, or configure `MEETING_PAGE_URL_BY_AGENT_NAME_JSON` as an agent-name to meeting-page URL
-mapping. This context is treated as the expected webhook-flow contract: notification received,
-agent build kicked off, testing/eval completed, and eval evidence shared back to the intake.
 
 ## Notion Setup
 
@@ -57,7 +54,6 @@ Select these Notion properties in the webhook content when present:
 - `Agent Description`
 - `Activated`
 - a page URL or formula property containing the Notion page URL
-- a meeting/transcript/internal-LLM property containing the related meeting page URL, when available
 
 If CREATE SOMETHING needs a direct link back to the Notion record, expose that as a database URL
 property and select it in the webhook content. Notion webhook actions only send selected database
@@ -86,7 +82,6 @@ Optional secrets:
 ```bash
 wrangler secret put SLACK_WEBHOOK_URL
 wrangler secret put PAGE_URL_BY_AGENT_NAME_JSON
-wrangler secret put MEETING_PAGE_URL_BY_AGENT_NAME_JSON
 ```
 
 Optional vars:

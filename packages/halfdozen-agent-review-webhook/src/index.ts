@@ -12,7 +12,6 @@ interface Env {
   ASSIGN_TO_TOKEN_OWNER?: string;
   SLACK_WEBHOOK_URL?: string;
   PAGE_URL_BY_AGENT_NAME_JSON?: string;
-  MEETING_PAGE_URL_BY_AGENT_NAME_JSON?: string;
   CREATE_WORKFLOW_ISSUES?: string;
 }
 
@@ -29,7 +28,6 @@ interface NormalizedReviewRequest {
   pageUrl?: string;
   properties: Record<string, string>;
   enrichment?: ReviewEnrichment;
-  meetingContext?: MeetingContext;
 }
 
 interface ReviewEnrichment {
@@ -37,10 +35,6 @@ interface ReviewEnrichment {
   notionPageUrl?: string;
   pageContent?: string;
   warning?: string;
-}
-
-interface MeetingContext extends ReviewEnrichment {
-  source: string;
 }
 
 interface LinearIssue {
@@ -75,7 +69,6 @@ const DEFAULT_LINEAR_LABELS = 'linear-coordination,code-quality';
 const LINEAR_API_FALLBACK = 'https://api.linear.app/graphql';
 const MAX_FIELD_LENGTH = 600;
 const MAX_NOTION_CONTENT_LENGTH = 12000;
-const MAX_MEETING_CONTEXT_LENGTH = 6000;
 const NOTION_API_BASE = 'https://api.notion.com/v1';
 const NOTION_API_VERSION_DEFAULT = '2022-06-28';
 
@@ -109,7 +102,7 @@ export default {
     const payload = await readJson(request);
     if (!payload.ok) return payload.response;
 
-    const review = await enrichReviewWithContext(env, normalizeReviewRequest(payload.value));
+    const review = await enrichReviewWithNotionContent(env, normalizeReviewRequest(payload.value));
     const destinations: DestinationResult[] = [];
     let linearIssue: LinearIssue | undefined;
 
@@ -145,15 +138,6 @@ export default {
     });
   }
 } satisfies ExportedHandler<Env>;
-
-async function enrichReviewWithContext(env: Env, review: NormalizedReviewRequest): Promise<NormalizedReviewRequest> {
-  const enrichedReview = await enrichReviewWithNotionContent(env, review);
-  const meetingContext = await findMeetingContext(env, enrichedReview);
-  return {
-    ...enrichedReview,
-    ...(meetingContext ? { meetingContext } : {})
-  };
-}
 
 function validateWebhookSecret(request: Request, env: Env): Response | undefined {
   const expected = env.WEBHOOK_SECRET;
@@ -396,76 +380,6 @@ function findNotionPageUrl(env: Env, review: NormalizedReviewRequest): string | 
   ];
 
   return candidates.find((candidate) => Boolean(candidate && notionPageIdFromUrl(candidate)));
-}
-
-async function findMeetingContext(env: Env, review: NormalizedReviewRequest): Promise<MeetingContext | undefined> {
-  const configuredUrl = pageUrlFromAgentNameMapping(env.MEETING_PAGE_URL_BY_AGENT_NAME_JSON, review.agentName);
-  const propertyUrl = meetingPageUrlFromProperties(review.properties);
-  const meetingPageUrl = propertyUrl ?? configuredUrl;
-  const notionPageId = meetingPageUrl ? notionPageIdFromUrl(meetingPageUrl) : undefined;
-
-  if (!meetingPageUrl || !notionPageId) {
-    const hint = meetingHintFromProperties(review.properties) ?? meetingHintFromContent(review.enrichment?.pageContent);
-    if (!hint) return undefined;
-    return {
-      source: 'hint',
-      warning: `Webhook expectation context hint found, but no readable Notion meeting page URL was selected: ${hint}`
-    };
-  }
-
-  if (!env.NOTION_API_KEY) {
-    return {
-      source: propertyUrl ? 'webhook-property' : 'agent-name-mapping',
-      notionPageId,
-      notionPageUrl: meetingPageUrl,
-      warning: 'NOTION_API_KEY is not configured on the Worker, so meeting page content could not be fetched.'
-    };
-  }
-
-  const content = await fetchNotionPageContent(env, notionPageId);
-  return {
-    source: propertyUrl ? 'webhook-property' : 'agent-name-mapping',
-    notionPageId,
-    notionPageUrl: meetingPageUrl,
-    ...content,
-    ...(content.pageContent ? { pageContent: truncate(content.pageContent, MAX_MEETING_CONTEXT_LENGTH) } : {})
-  };
-}
-
-function meetingPageUrlFromProperties(properties: Record<string, string>): string | undefined {
-  for (const [key, value] of Object.entries(properties)) {
-    if (!isMeetingContextKey(key)) continue;
-    if (notionPageIdFromUrl(value)) return value;
-  }
-
-  return undefined;
-}
-
-function meetingHintFromProperties(properties: Record<string, string>): string | undefined {
-  for (const [key, value] of Object.entries(properties)) {
-    if (!isMeetingContextKey(key)) continue;
-    if (value) return `${key}: ${truncate(value, 180)}`;
-  }
-
-  return undefined;
-}
-
-function meetingHintFromContent(content: string | undefined): string | undefined {
-  if (!content) return undefined;
-  const match = content.match(/\b(?:MJ\s*x\s*DM|DM\s*x\s*MJ|meeting|transcript|notes)\b.{0,160}/i);
-  return match?.[0]?.trim();
-}
-
-function isMeetingContextKey(key: string): boolean {
-  const normalized = normalizeKey(key);
-  return (
-    normalized.includes('meeting') ||
-    normalized.includes('transcript') ||
-    normalized.includes('callnotes') ||
-    normalized.includes('meetingnotes') ||
-    normalized.includes('sourceconversation') ||
-    normalized.includes('internalllm')
-  );
 }
 
 function pageUrlFromAgentNameMapping(mappingJson: string | undefined, agentName: string): string | undefined {
@@ -994,8 +908,6 @@ function issueDescription(review: NormalizedReviewRequest): string {
     '',
     ...notionContentLines(review),
     '',
-    ...meetingContextLines(review),
-    '',
     ...agentWorkflowLines(review),
     '',
     'Next action: review the agent build request, decide CREATE SOMETHING ownership, and record implementation evidence here.'
@@ -1019,13 +931,11 @@ function buildWorkflowIssueDescription(
       `Notion page URL: ${review.pageUrl ?? review.enrichment?.notionPageUrl ?? 'not provided'}`,
       '',
       'Build scope',
-      '- Review the intake payload, selected Notion properties, page content, and webhook expectation context.',
+      '- Review the intake payload, selected Notion properties, and Notion page content.',
       '- Create or update the target Notion agent record and instructions.',
       '- Confirm this build issue represents the expected post-notification kickoff from the Notion webhook flow.',
       '- Confirm owner, status, type, tier, and agent URL before marking this complete.',
-      '- Comment implementation evidence back on the parent intake issue.',
-      '',
-      ...meetingContextLines(review)
+      '- Comment implementation evidence back on the parent intake issue.'
     ].join('\n');
   }
 
@@ -1039,13 +949,12 @@ function buildWorkflowIssueDescription(
     '- Use `pnpm agent:halfdozen:governance-eval -- --output .cache/halfdozen-agent-governance-eval.json`.',
     '- If a live Notion/agent test surface is available, run the smallest safe live smoke after the governance eval passes.',
     '- Publish or mirror the `notion_test_report` payload to Test Reports [OS].',
-    '- Confirm the webhook expectation context is satisfied: notification received, agent work kicked off, eval completed, and eval evidence shared.',
+    '- Confirm the automated flow is satisfied: Notion notification received, build/eval follow-ups created or reused, eval completed, and evidence shared.',
     '- Share the eval URL and command evidence back on the parent intake issue.',
     '',
     'Expected report shape',
     '- Report title, score, date, notes summary, scenario count, check count, and command evidence.',
-    '',
-    ...meetingContextLines(review)
+    ''
   ].join('\n');
 }
 
@@ -1076,34 +985,6 @@ function notionContentLines(review: NormalizedReviewRequest): string[] {
 
   if (enrichment.pageContent) {
     lines.push('', enrichment.pageContent);
-  }
-
-  return lines;
-}
-
-function meetingContextLines(review: NormalizedReviewRequest): string[] {
-  const context = review.meetingContext;
-  if (!context) {
-    return [
-      'Webhook expectation context',
-      'No meeting-derived webhook expectation context was selected in the webhook payload or configured for this agent.'
-    ];
-  }
-
-  const lines = [
-    'Webhook expectation context',
-    '- Expected flow: notification received, agent work kicked off, eval completed, and eval evidence shared back to the intake.',
-    `- Source: ${context.source}`,
-    `- Page ID: ${context.notionPageId ?? 'not provided'}`,
-    `- Page URL: ${context.notionPageUrl ?? 'not provided'}`
-  ];
-
-  if (context.warning) {
-    lines.push(`- Fetch status: ${context.warning}`);
-  }
-
-  if (context.pageContent) {
-    lines.push('', context.pageContent);
   }
 
   return lines;
