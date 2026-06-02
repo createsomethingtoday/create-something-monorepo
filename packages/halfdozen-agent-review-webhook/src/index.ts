@@ -12,6 +12,8 @@ interface Env {
   ASSIGN_TO_TOKEN_OWNER?: string;
   SLACK_WEBHOOK_URL?: string;
   PAGE_URL_BY_AGENT_NAME_JSON?: string;
+  MEETING_PAGE_URL_BY_AGENT_NAME_JSON?: string;
+  CREATE_WORKFLOW_ISSUES?: string;
 }
 
 interface NormalizedReviewRequest {
@@ -27,6 +29,7 @@ interface NormalizedReviewRequest {
   pageUrl?: string;
   properties: Record<string, string>;
   enrichment?: ReviewEnrichment;
+  meetingContext?: MeetingContext;
 }
 
 interface ReviewEnrichment {
@@ -34,6 +37,10 @@ interface ReviewEnrichment {
   notionPageUrl?: string;
   pageContent?: string;
   warning?: string;
+}
+
+interface MeetingContext extends ReviewEnrichment {
+  source: string;
 }
 
 interface LinearIssue {
@@ -54,7 +61,13 @@ interface DestinationResult {
   ok: boolean;
   issue?: LinearIssue;
   reused?: boolean;
+  workflowIssues?: LinearWorkflowIssue[];
   error?: string;
+}
+
+interface LinearWorkflowIssue extends LinearIssue {
+  step: 'build' | 'eval';
+  reused: boolean;
 }
 
 const DEFAULT_LINEAR_TEAM_KEY = 'CRE';
@@ -62,6 +75,7 @@ const DEFAULT_LINEAR_LABELS = 'linear-coordination,code-quality';
 const LINEAR_API_FALLBACK = 'https://api.linear.app/graphql';
 const MAX_FIELD_LENGTH = 600;
 const MAX_NOTION_CONTENT_LENGTH = 12000;
+const MAX_MEETING_CONTEXT_LENGTH = 6000;
 const NOTION_API_BASE = 'https://api.notion.com/v1';
 const NOTION_API_VERSION_DEFAULT = '2022-06-28';
 
@@ -95,7 +109,7 @@ export default {
     const payload = await readJson(request);
     if (!payload.ok) return payload.response;
 
-    const review = await enrichReviewWithNotionContent(env, normalizeReviewRequest(payload.value));
+    const review = await enrichReviewWithContext(env, normalizeReviewRequest(payload.value));
     const destinations: DestinationResult[] = [];
     let linearIssue: LinearIssue | undefined;
 
@@ -103,11 +117,14 @@ export default {
       const issueResult = await createLinearReviewIssue(env, review);
       if (!issueResult.ok) return issueResult.response;
       linearIssue = issueResult.issue;
+      const workflowResult = await createLinearWorkflowIssues(env, review, linearIssue);
+      if (!workflowResult.ok) return workflowResult.response;
       destinations.push({
         type: 'linear',
         ok: true,
         issue: linearIssue,
-        reused: issueResult.reused
+        reused: issueResult.reused,
+        workflowIssues: workflowResult.issues
       });
     }
 
@@ -128,6 +145,15 @@ export default {
     });
   }
 } satisfies ExportedHandler<Env>;
+
+async function enrichReviewWithContext(env: Env, review: NormalizedReviewRequest): Promise<NormalizedReviewRequest> {
+  const enrichedReview = await enrichReviewWithNotionContent(env, review);
+  const meetingContext = await findMeetingContext(env, enrichedReview);
+  return {
+    ...enrichedReview,
+    ...(meetingContext ? { meetingContext } : {})
+  };
+}
 
 function validateWebhookSecret(request: Request, env: Env): Response | undefined {
   const expected = env.WEBHOOK_SECRET;
@@ -370,6 +396,76 @@ function findNotionPageUrl(env: Env, review: NormalizedReviewRequest): string | 
   ];
 
   return candidates.find((candidate) => Boolean(candidate && notionPageIdFromUrl(candidate)));
+}
+
+async function findMeetingContext(env: Env, review: NormalizedReviewRequest): Promise<MeetingContext | undefined> {
+  const configuredUrl = pageUrlFromAgentNameMapping(env.MEETING_PAGE_URL_BY_AGENT_NAME_JSON, review.agentName);
+  const propertyUrl = meetingPageUrlFromProperties(review.properties);
+  const meetingPageUrl = propertyUrl ?? configuredUrl;
+  const notionPageId = meetingPageUrl ? notionPageIdFromUrl(meetingPageUrl) : undefined;
+
+  if (!meetingPageUrl || !notionPageId) {
+    const hint = meetingHintFromProperties(review.properties) ?? meetingHintFromContent(review.enrichment?.pageContent);
+    if (!hint) return undefined;
+    return {
+      source: 'hint',
+      warning: `Meeting context hint found, but no readable Notion meeting page URL was selected: ${hint}`
+    };
+  }
+
+  if (!env.NOTION_API_KEY) {
+    return {
+      source: propertyUrl ? 'webhook-property' : 'agent-name-mapping',
+      notionPageId,
+      notionPageUrl: meetingPageUrl,
+      warning: 'NOTION_API_KEY is not configured on the Worker, so meeting page content could not be fetched.'
+    };
+  }
+
+  const content = await fetchNotionPageContent(env, notionPageId);
+  return {
+    source: propertyUrl ? 'webhook-property' : 'agent-name-mapping',
+    notionPageId,
+    notionPageUrl: meetingPageUrl,
+    ...content,
+    ...(content.pageContent ? { pageContent: truncate(content.pageContent, MAX_MEETING_CONTEXT_LENGTH) } : {})
+  };
+}
+
+function meetingPageUrlFromProperties(properties: Record<string, string>): string | undefined {
+  for (const [key, value] of Object.entries(properties)) {
+    if (!isMeetingContextKey(key)) continue;
+    if (notionPageIdFromUrl(value)) return value;
+  }
+
+  return undefined;
+}
+
+function meetingHintFromProperties(properties: Record<string, string>): string | undefined {
+  for (const [key, value] of Object.entries(properties)) {
+    if (!isMeetingContextKey(key)) continue;
+    if (value) return `${key}: ${truncate(value, 180)}`;
+  }
+
+  return undefined;
+}
+
+function meetingHintFromContent(content: string | undefined): string | undefined {
+  if (!content) return undefined;
+  const match = content.match(/\b(?:MJ\s*x\s*DM|DM\s*x\s*MJ|meeting|transcript|notes)\b.{0,160}/i);
+  return match?.[0]?.trim();
+}
+
+function isMeetingContextKey(key: string): boolean {
+  const normalized = normalizeKey(key);
+  return (
+    normalized.includes('meeting') ||
+    normalized.includes('transcript') ||
+    normalized.includes('callnotes') ||
+    normalized.includes('meetingnotes') ||
+    normalized.includes('sourceconversation') ||
+    normalized.includes('internalllm')
+  );
 }
 
 function pageUrlFromAgentNameMapping(mappingJson: string | undefined, agentName: string): string | undefined {
@@ -638,6 +734,134 @@ async function createLinearReviewIssue(
   return { ok: true, issue: result.data.issueCreate.issue, reused: false };
 }
 
+async function createLinearWorkflowIssues(
+  env: Env,
+  review: NormalizedReviewRequest,
+  parentIssue: LinearIssue
+): Promise<{ ok: true; issues: LinearWorkflowIssue[] } | { ok: false; response: Response }> {
+  if (env.CREATE_WORKFLOW_ISSUES === 'false') {
+    return { ok: true, issues: [] };
+  }
+
+  const workflowSpecs: Array<{
+    step: LinearWorkflowIssue['step'];
+    title: string;
+    description: string;
+  }> = [
+    {
+      step: 'build',
+      title: truncate(`Build Half Dozen agent: ${review.agentName}`, 120),
+      description: buildWorkflowIssueDescription('build', review, parentIssue)
+    },
+    {
+      step: 'eval',
+      title: truncate(`Run and share Half Dozen agent eval: ${review.agentName}`, 120),
+      description: buildWorkflowIssueDescription('eval', review, parentIssue)
+    }
+  ];
+
+  const issues: LinearWorkflowIssue[] = [];
+  for (const spec of workflowSpecs) {
+    const result = await createOrReuseLinearIssue(env, {
+      title: spec.title,
+      description: spec.description,
+      priority: priorityValue(review.priority)
+    });
+    if (!result.ok) return result;
+    issues.push({
+      ...result.issue,
+      step: spec.step,
+      reused: result.reused
+    });
+  }
+
+  return { ok: true, issues };
+}
+
+async function createOrReuseLinearIssue(
+  env: Env,
+  input: { title: string; description: string; priority: number }
+): Promise<{ ok: true; issue: LinearIssue; reused: boolean } | { ok: false; response: Response }> {
+  const existingIssue = await findOpenLinearIssueByTitle(env, input.title);
+  if (!existingIssue.ok) return { ok: false, response: existingIssue.response };
+
+  if (existingIssue.issue) {
+    return {
+      ok: true,
+      issue: {
+        identifier: existingIssue.issue.identifier,
+        title: existingIssue.issue.title,
+        url: existingIssue.issue.url
+      },
+      reused: true
+    };
+  }
+
+  const context = await linearGraphql<{
+    viewer: { id: string };
+    teams: { nodes: Array<{ id: string; key: string }> };
+    issueLabels: { nodes: Array<{ id: string; name: string }> };
+    projects: { nodes: Array<{ id: string; name: string }> };
+  }>(
+    env,
+    `query AgentWorkflowIssueContext {
+      viewer { id }
+      teams(first: 100) { nodes { id key } }
+      issueLabels(first: 250) { nodes { id name } }
+      projects(first: 250) { nodes { id name } }
+    }`
+  );
+
+  if (!context.ok) return { ok: false, response: context.response };
+
+  const teamKey = env.LINEAR_TEAM_KEY ?? DEFAULT_LINEAR_TEAM_KEY;
+  const team = context.data.teams.nodes.find((node) => node.key === teamKey) ?? context.data.teams.nodes[0];
+  if (!team) {
+    return { ok: false, response: jsonResponse({ error: 'No Linear team is visible to the token.' }, 502) };
+  }
+
+  const configuredLabels = (env.LINEAR_LABELS ?? DEFAULT_LINEAR_LABELS)
+    .split(',')
+    .map((label) => label.trim())
+    .filter(Boolean);
+  const labelIds = configuredLabels
+    .map((label) => context.data.issueLabels.nodes.find((node) => node.name === label)?.id)
+    .filter((id): id is string => Boolean(id));
+
+  const configuredProject = env.LINEAR_PROJECT?.trim();
+  const projectId = configuredProject
+    ? context.data.projects.nodes.find((project) => project.name === configuredProject)?.id
+    : undefined;
+  const assignToTokenOwner = env.ASSIGN_TO_TOKEN_OWNER !== 'false';
+
+  const result = await linearGraphql<{
+    issueCreate: {
+      issue: LinearIssue;
+    };
+  }>(
+    env,
+    `mutation CreateAgentWorkflowIssue($input: IssueCreateInput!) {
+      issueCreate(input: $input) {
+        issue { identifier title url }
+      }
+    }`,
+    {
+      input: {
+        teamId: team.id,
+        title: input.title,
+        description: input.description,
+        priority: input.priority,
+        ...(assignToTokenOwner ? { assigneeId: context.data.viewer.id } : {}),
+        ...(labelIds.length ? { labelIds } : {}),
+        ...(projectId ? { projectId } : {})
+      }
+    }
+  );
+
+  if (!result.ok) return { ok: false, response: result.response };
+  return { ok: true, issue: result.data.issueCreate.issue, reused: false };
+}
+
 async function linearGraphql<T>(
   env: Env,
   query: string,
@@ -770,10 +994,67 @@ function issueDescription(review: NormalizedReviewRequest): string {
     '',
     ...notionContentLines(review),
     '',
+    ...meetingContextLines(review),
+    '',
+    ...agentWorkflowLines(review),
+    '',
     'Next action: review the agent build request, decide CREATE SOMETHING ownership, and record implementation evidence here.'
   ];
 
   return lines.join('\n');
+}
+
+function buildWorkflowIssueDescription(
+  step: LinearWorkflowIssue['step'],
+  review: NormalizedReviewRequest,
+  parentIssue: LinearIssue
+): string {
+  if (step === 'build') {
+    return [
+      `Parent intake: ${parentIssue.identifier} ${parentIssue.url}`,
+      '',
+      `Agent: ${review.agentName}`,
+      `Priority: ${review.priority ?? 'not provided'}`,
+      `Type: ${review.type ?? 'not provided'}`,
+      `Notion page URL: ${review.pageUrl ?? review.enrichment?.notionPageUrl ?? 'not provided'}`,
+      '',
+      'Build scope',
+      '- Review the intake payload, selected Notion properties, page content, and meeting context.',
+      '- Create or update the target Notion agent record and instructions.',
+      '- Confirm owner, status, type, tier, and agent URL before marking this complete.',
+      '- Comment implementation evidence back on the parent intake issue.',
+      '',
+      ...meetingContextLines(review)
+    ].join('\n');
+  }
+
+  return [
+    `Parent intake: ${parentIssue.identifier} ${parentIssue.url}`,
+    '',
+    `Agent: ${review.agentName}`,
+    '',
+    'Eval and share scope',
+    '- Run the repo-owned governance eval before any live promotion.',
+    '- Use `pnpm agent:halfdozen:governance-eval -- --output .cache/halfdozen-agent-governance-eval.json`.',
+    '- If a live Notion/agent test surface is available, run the smallest safe live smoke after the governance eval passes.',
+    '- Publish or mirror the `notion_test_report` payload to Test Reports [OS].',
+    '- Share the eval URL and command evidence back on the parent intake issue.',
+    '',
+    'Expected report shape',
+    '- Report title, score, date, notes summary, scenario count, check count, and command evidence.',
+    '',
+    ...meetingContextLines(review)
+  ].join('\n');
+}
+
+function agentWorkflowLines(review: NormalizedReviewRequest): string[] {
+  return [
+    'Workflow kickoff',
+    '- Build/update follow-up issue: `Build Half Dozen agent: ' + review.agentName + '`',
+    '- Eval/share follow-up issue: `Run and share Half Dozen agent eval: ' + review.agentName + '`',
+    '- Governance eval command: `pnpm agent:halfdozen:governance-eval -- --output .cache/halfdozen-agent-governance-eval.json`',
+    '- Share target: publish or mirror the resulting `notion_test_report` into Test Reports [OS], then comment the URL here.'
+  ];
 }
 
 function notionContentLines(review: NormalizedReviewRequest): string[] {
@@ -792,6 +1073,33 @@ function notionContentLines(review: NormalizedReviewRequest): string[] {
 
   if (enrichment.pageContent) {
     lines.push('', enrichment.pageContent);
+  }
+
+  return lines;
+}
+
+function meetingContextLines(review: NormalizedReviewRequest): string[] {
+  const context = review.meetingContext;
+  if (!context) {
+    return [
+      'Meeting context',
+      'No meeting context was selected in the webhook payload or configured for this agent.'
+    ];
+  }
+
+  const lines = [
+    'Meeting context',
+    `- Source: ${context.source}`,
+    `- Page ID: ${context.notionPageId ?? 'not provided'}`,
+    `- Page URL: ${context.notionPageUrl ?? 'not provided'}`
+  ];
+
+  if (context.warning) {
+    lines.push(`- Fetch status: ${context.warning}`);
+  }
+
+  if (context.pageContent) {
+    lines.push('', context.pageContent);
   }
 
   return lines;

@@ -7,11 +7,29 @@ CREATE SOMETHING Linear issue and optionally sends a Slack webhook notification.
 Open Linear issues are deduplicated by agent title. A repeated Notion fire for the same agent
 reuses the existing open review issue and appends a duplicate-fire comment.
 
+By default, each intake also creates or reuses two Linear follow-up issues:
+
+- `Build Half Dozen agent: <agent name>`
+- `Run and share Half Dozen agent eval: <agent name>`
+
+The eval follow-up points at the repo-owned governance gate:
+
+```bash
+pnpm agent:halfdozen:governance-eval -- --output .cache/halfdozen-agent-governance-eval.json
+```
+
+The generated `notion_test_report` payload should be mirrored into `Test Reports [OS]`, then linked
+back on the intake issue.
+
 When a Notion page URL or page ID is present, the Worker reads the page's block children through
 the Notion API and appends the flattened page instructions to the Linear issue. The Notion
 connection used by `NOTION_API_KEY` must have read access to the target page. In Notion, share the
 source page or its parent database with that integration before expecting page-body content to
 appear in Linear.
+
+Meeting context can be included the same way. Select a meeting-related property (`Meeting`,
+`Meeting Notes`, `Transcript`, `Internal LLM`, etc.) that contains the Notion meeting page URL, or
+configure `MEETING_PAGE_URL_BY_AGENT_NAME_JSON` as an agent-name to meeting-page URL mapping.
 
 ## Notion Setup
 
@@ -37,6 +55,7 @@ Select these Notion properties in the webhook content when present:
 - `Agent Description`
 - `Activated`
 - a page URL or formula property containing the Notion page URL
+- a meeting/transcript/internal-LLM property containing the related meeting page URL, when available
 
 If CREATE SOMETHING needs a direct link back to the Notion record, expose that as a database URL
 property and select it in the webhook content. Notion webhook actions only send selected database
@@ -65,4 +84,11 @@ Optional secrets:
 ```bash
 wrangler secret put SLACK_WEBHOOK_URL
 wrangler secret put PAGE_URL_BY_AGENT_NAME_JSON
+wrangler secret put MEETING_PAGE_URL_BY_AGENT_NAME_JSON
+```
+
+Optional vars:
+
+```toml
+CREATE_WORKFLOW_ISSUES = "false" # disables build/eval follow-up issue creation
 ```
