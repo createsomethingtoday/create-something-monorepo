@@ -222,8 +222,10 @@ export type { IconCardGridProps, IconCardGridItem } from './components/sections/
 
 // Cato Supply delivery components
 export {
+  CatoInsightCmsCard,
   CatoInsightDetail,
   CatoInsightsArchive,
+  CatoInsightsArchiveShell,
   CatoInsightsHub,
   CatoInsightsMegaMenu,
   catoInsightsDefaults,
@@ -231,9 +233,12 @@ export {
 export type {
   CatoInsightBodySection,
   CatoInsightCategory,
+  CatoInsightCmsCardProps,
   CatoInsightDetailProps,
+  CatoInsightLinkProp,
   CatoInsightItem,
   CatoInsightsArchiveProps,
+  CatoInsightsArchiveShellProps,
   CatoInsightsDataProps,
   CatoInsightsHubProps,
   CatoInsightsMegaMenuProps,

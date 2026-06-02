@@ -9,6 +9,10 @@ export interface TemplateSearchResultsProps {
   apiBase?: string;
   /** Designer preview category slug. */
   categorySlug?: string;
+  /** Designer preview creator/designer slug. Production can infer from /templates/designers/{slug}. */
+  creatorSlug?: string;
+  /** Optional exact creator Airtable/Webflow sync record ID for Designer profile pages. */
+  creatorRecordId?: string;
   /** Designer preview style slug. */
   styleSlug?: string;
   /** Designer preview tag slug. */
@@ -42,6 +46,8 @@ export interface TemplateSearchResultsProps {
 export const TemplateSearchResults: React.FC<TemplateSearchResultsProps> = ({
   apiBase = '',
   categorySlug = '',
+  creatorSlug = '',
+  creatorRecordId = '',
   styleSlug = '',
   tagSlug = '',
   scopeOverride = 'all',
@@ -61,6 +67,8 @@ export const TemplateSearchResults: React.FC<TemplateSearchResultsProps> = ({
     <TemplateGrid
       apiBase={apiBase}
       categorySlug={categorySlug}
+      creatorSlug={creatorSlug}
+      creatorRecordId={creatorRecordId}
       styleSlug={styleSlug}
       tagSlug={tagSlug}
       scopeOverride={scopeOverride}

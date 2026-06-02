@@ -116,18 +116,22 @@ The current package contains both Canon exports and compatibility exports. The l
 | Component | Description | Key Props |
 |-----------|-------------|-----------|
 | **Template Card** | CMS-bindable marketplace template card | `templateName`, `templateLink`, `primaryImage`, `creatorName`, `creatorIcon`, `popularityScore` |
-| **Template Grid** | Worker-backed template search grid | `apiBase`, `categorySlug`, `scopeOverride`, `initialSort`, `pageSize` |
-| **Template Filter Bar** | Worker-backed marketplace filters and pills | `apiBase`, `categorySlug`, `scopeOverride`, `defaultSort` |
+| **Template Grid** | Worker-backed template search grid | `apiBase`, `categorySlug`, `creatorSlug`, `creatorRecordId`, `scopeOverride`, `initialSort`, `pageSize` |
+| **Template Filter Bar** | Worker-backed marketplace filters and pills | `apiBase`, `categorySlug`, `creatorSlug`, `creatorRecordId`, `scopeOverride`, `defaultSort` |
 | **Template Search Box** | Shared marketplace search input that routes to the standalone search page or filters the current page | `mode`, `variant`, `searchAction`, `queryParam`, `placeholder`, `showButton` |
 | **Template Search Page** | Standalone marketplace search experiment surface with search, filter sidebar, active chips, result grid, and no-results recovery | `apiBase`, `title`, `quickSearches`, `scopeOverride`, `defaultSort`, `noindex` |
 | **Template Search Sidebar** | Standalone marketplace sidebar with search, All/Featured/Landing/Free rows, dynamic category counts, and vertical filters | `apiBase`, `title`, `interactionMode`, `countMode`, `showSearch`, `showCategories`, `showCounts` |
-| **Template Search Results** | Standalone search results grid with inline no-results recovery | `apiBase`, `scopeOverride`, `defaultSort`, `pageSize`, `emptyTitle` |
+| **Template Search Results** | Standalone search results grid with inline no-results recovery | `apiBase`, `creatorSlug`, `creatorRecordId`, `scopeOverride`, `defaultSort`, `pageSize`, `emptyTitle` |
 | **Marketplace Landing Hero** | Search-backed landing hero with template search form, popular category suggestions, and native-vs-template-search experiment routing | `apiBase`, `title`, `searchExperience`, `searchAction`, `templateSearchAction`, `queryParam`, `useSearchSuggestions`, `enableAnalytics` |
 | **Template Carousel Section** | Worker-backed editorial carousel for marketplace landing sections | `preset`, `title`, `ctaLink`, `scopeOverride`, `sortOverride`, `itemLimit`, `enableAnalytics` |
 | **Popular Category Grid** | Search-backed marketplace use-case grid with live counts and optional thumbnails | `apiBase`, `layout`, `categories`, `useSearchCategories`, `maxCategories`, `enableAnalytics` |
 | **Marketplace FAQ** | Accessible marketplace FAQ accordion with optional FAQPage JSON-LD | `items`, `openFirst`, `allowMultipleOpen`, `includeStructuredData`, `enableAnalytics` |
 | **Marketplace Landing Experiment Gate** | Optimizely-compatible test gate for control/treatment reveal and exposure tracking | `mode`, `trafficPercent`, `controlSelector`, `treatmentSelector`, `optimizelyExposureEvent` |
 | **Featured Creator Card** | CMS-bindable monthly featured creator card | `creatorName`, `creatorLink`, `creatorAvatar`, `headline`, `featuredTemplateCount`, `newTemplates90d`, `buyerDemand`, `categoryBreadth`, `topTemplateName`, `topTemplateImage` |
+
+#### Designer profile listings
+
+Use **Template Filter Bar** and **Template Grid** together on `/templates/designers/{slug}` pages to replace the native Webflow Collection List. Both components auto-detect the designer slug from the published URL and pass `creator_slug` to the template search API. When the Designer CMS item exposes the Airtable/Webflow sync record ID, bind it to `creatorRecordId` on both components for the narrowest possible match; otherwise the slug route is sufficient.
 
 ### Forms (Group: Forms)
 
@@ -182,14 +186,29 @@ These components are based on the exported project at `/Users/micahjohnson/Downl
 | **Cato Supply Search Hero** | Homepage hero with Product Search redirect and Risk Radar catalog | `heading`, `productSearchUrl`, `apiUrl`, `showRiskRadar` |
 | **Cato Product Search Form** | Standalone search form redirecting to Cato Product Search | `placeholder`, `buttonLabel`, `productSearchUrl` |
 | **Cato Risk Radar Catalog** | Live Risk Radar table replacing the custom-code embed | `apiUrl`, `riskRadarUrl`, `rowsJson`, `fetchEnabled`, `autoScroll` |
-| **Cato Insights Mega Menu** | Self-contained Insights mega-menu content | `heading`, `summary`, `categoriesJson`, `itemsJson` |
-| **Cato Insights Hub** | Insights landing page with category cards and latest content | `categoriesJson`, `itemsJson`, `itemLimit`, `showFilterRail` |
-| **Cato Insights Archive** | Focused archive page for Resiliency, Research, Resources, or Newsroom | `categoryId`, `showSubscribe`, `itemsJson` |
-| **Cato Insight Category Archive** | CMS category template archive that resolves the active Insight Category from the slug | `categorySlug`, `categoryId`, `showSubscribe`, `itemsJson` |
-| **Cato Insight Detail** | CMS-bindable detail-page article shell | `title`, `summary`, `bodyJson`, `takeawaysJson`, `categoryId` |
+| **Cato Insights Mega Menu** | Self-contained Insights mega-menu content | `heading`, `summary`, `itemsEndpointUrl`, `categoriesJson`, `itemsJson` |
+| **Cato Insights Hub** | Insights landing page with category cards and latest content | `itemsEndpointUrl`, `categoriesJson`, `itemsJson`, `itemLimit`, `showFilterRail` |
+| **Cato Insights Archive** | Focused archive page for Resiliency, Research, Resources, or Newsroom | `categoryId`, `showSubscribe`, `itemsEndpointUrl`, `itemsJson` |
+| **Cato Insights Archive Shell** | CMS-ready archive shell that renders endpoint items inside its archive panel | `categoryId`, `categorySlug`, `showItems`, `itemsEndpointUrl` |
+| **Cato Insight Category Archive** | CMS category template archive that resolves the active Insight Category from the slug | `categorySlug`, `categoryId`, `showSubscribe`, `itemsEndpointUrl` |
+| **Cato Insight CMS Card** | CMS-bindable Insight card for native Webflow Collection Lists | `title`, `summary`, `date`, `contentLabel`, `itemLink` |
+| **Cato Insight Detail** | CMS-bindable detail-page article shell | `title`, `summary`, `itemsEndpointUrl`, `bodyJson`, `takeawaysJson`, `categoryId` |
 | **Cato About Page** | Improved About page experience with hero, platform focus, proof metrics, values, mission, leadership, and board sections | `valuesJson`, `leadershipJson`, `boardJson`, `metricsJson`, `showMission`, `showTeam` |
 | **Cato Case Studies Landing** | Improved Case Studies landing page with featured story, result proof, and customer story grid | `caseStudiesJson`, `showFeatured`, `linkMode`, `pathPrefix` |
 | **Cato Case Study Detail** | CMS-bindable case study detail template with customer profile, challenge, solution, results, and related stories | `slug`, `clientName`, `challengeHtml`, `solutionHtml`, `challengeImage`, `solutionImage`, `resultsJson`, `caseStudiesJson`, `backHref` |
+
+#### Cato Insights CMS Archive Build
+
+Use a public cache endpoint for live CMS archives. The Code Component should never call the authenticated Webflow API directly from the browser.
+
+1. Deploy the Cato Insights CMS Worker from `packages/agency/clients/cato-supply-insights-review`.
+2. Set the component `Items Endpoint URL` to `/api/cato/insights` on the Worker route, or pass a filtered URL such as `/api/cato/insights?category=newsroom`.
+3. Use **Cato Insights Archive Shell** when the page should render the archive intro and item list inside one Code Component.
+4. Set `Archive` to `resiliency`, `research`, `resources`, or `newsroom`.
+5. Keep `Fetch Endpoint Items` enabled and use `Items JSON` only as fallback content before the endpoint responds.
+6. Do not place a native Collection List into the Shell unless intentionally using the legacy slot fallback.
+
+The native **Cato Insight CMS Card** remains available for a Webflow Collection List build, but the preferred route for this Cato implementation is the cached public endpoint rendered directly inside the Code Component.
 
 ### Layout (Group: Layout)
 

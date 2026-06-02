@@ -55,6 +55,8 @@ interface LocalFilters {
 interface FilterEventDetail extends LocalFilters {
   categoryGroupSlug: string | null;
   childCategorySlug: string | null;
+  creatorSlug: string | null;
+  creatorRecordId: string | null;
   href: string;
   source: 'TemplateFilterBar';
   updatedAt: number;
@@ -79,6 +81,15 @@ export interface TemplateFilterBarProps {
    * In production the slug is auto-detected from /templates/category/{slug}.
    */
   categorySlug?: string;
+  /**
+   * Creator/designer slug for Designer preview.
+   * In production the slug is auto-detected from /templates/designers/{slug}.
+   */
+  creatorSlug?: string;
+  /**
+   * Optional exact creator Airtable/Webflow sync record ID for Designer pages.
+   */
+  creatorRecordId?: string;
   /**
    * Subcategory slug for Designer preview.
    * In production the slug is auto-detected from /templates/subcategory/{slug}.
@@ -733,6 +744,8 @@ interface RouteContext {
   scope: 'featured' | 'free' | 'landing_pages' | null;
   categoryGroupSlug: string | null;
   childCategorySlug: string | null;
+  creatorSlug: string | null;
+  creatorRecordId: string | null;
   styleSlug: string | null;
   tagSlug: string | null;
 }
@@ -740,6 +753,8 @@ interface RouteContext {
 function readRouteContext(
   scopeOverride?: TemplateScope,
   categorySlugOverride?: string,
+  creatorSlugOverride?: string,
+  creatorRecordIdOverride?: string,
   subcategorySlugOverride?: string,
   styleSlugOverride?: string,
   tagSlugOverride?: string,
@@ -750,6 +765,8 @@ function readRouteContext(
       scope: scopeOverride && scopeOverride !== 'all' ? scopeOverride : null,
       categoryGroupSlug: categorySlugOverride || null,
       childCategorySlug: subcategorySlugOverride || null,
+      creatorSlug: creatorSlugOverride || null,
+      creatorRecordId: creatorRecordIdOverride || null,
       styleSlug: styleSlugOverride || null,
       tagSlug: tagSlugOverride || null,
     };
@@ -759,6 +776,7 @@ function readRouteContext(
   const pathname = url.pathname.replace(/\/+$/, '');
   const categoryMatch = pathname.match(/\/templates\/category\/([^/?#]+)/);
   const subcategoryMatch = pathname.match(/\/templates\/subcategory\/([^/?#]+)/);
+  const designerMatch = pathname.match(/\/templates\/designers\/([^/?#]+)/);
   const styleMatch = pathname.match(/\/templates\/style\/([^/?#]+)/);
   const tagMatch = pathname.match(/\/templates\/tag\/([^/?#]+)/);
 
@@ -787,6 +805,18 @@ function readRouteContext(
       (subcategoryMatch
         ? subcategoryMatch[1]
         : (url.searchParams.get('subcategory') ?? url.searchParams.get('child_category_slug')) || null),
+    creatorSlug:
+      creatorSlugOverride ||
+      (designerMatch
+        ? toFilterSlug(designerMatch[1])
+        : toFilterSlug(
+            url.searchParams.get('creator_slug') ??
+              url.searchParams.get('designer_slug') ??
+              url.searchParams.get('creator') ??
+              url.searchParams.get('designer') ??
+              '',
+          ) || null),
+    creatorRecordId: creatorRecordIdOverride || url.searchParams.get('creator_record_id') || url.searchParams.get('designer_record_id') || null,
     styleSlug:
       styleSlugOverride ||
       (styleMatch ? styleMatch[1] : (url.searchParams.get('style_slug') ?? url.searchParams.get('style')) || null),
@@ -800,6 +830,8 @@ function applyRouteContextToUrl(url: URL, context: RouteContext): void {
   if (context.scope) url.searchParams.set('scope', context.scope);
   if (context.categoryGroupSlug) url.searchParams.set('category_group_slug', context.categoryGroupSlug);
   if (context.childCategorySlug) url.searchParams.set('child_category_slug', context.childCategorySlug);
+  if (context.creatorSlug) url.searchParams.set('creator_slug', context.creatorSlug);
+  if (context.creatorRecordId) url.searchParams.set('creator_record_id', context.creatorRecordId);
   if (context.styleSlug) url.searchParams.set('style_slug', toFilterSlug(context.styleSlug));
   if (context.tagSlug) url.searchParams.set('tag_slug', toFilterSlug(context.tagSlug));
 }
@@ -852,11 +884,22 @@ function writeUrlFilters(state: LocalFilters): void {
 
 function buildFilterEventDetail(state: LocalFilters): FilterEventDetail {
   const url = typeof window === 'undefined' ? null : new URL(window.location.href);
-  const routeContext = readRouteContext(undefined, undefined, undefined, undefined, undefined, typeof window !== 'undefined');
+  const routeContext = readRouteContext(
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    typeof window !== 'undefined',
+  );
   return {
     ...state,
     categoryGroupSlug: routeContext.categoryGroupSlug ?? url?.searchParams.get('category_group_slug') ?? null,
     childCategorySlug: routeContext.childCategorySlug ?? url?.searchParams.get('child_category_slug') ?? null,
+    creatorSlug: routeContext.creatorSlug ?? url?.searchParams.get('creator_slug') ?? null,
+    creatorRecordId: routeContext.creatorRecordId ?? url?.searchParams.get('creator_record_id') ?? null,
     styles: [...state.styles],
     tags: [...state.tags],
     types: [...state.types],
@@ -890,6 +933,8 @@ export const TemplateFilterBar: React.FC<TemplateFilterBarProps> = ({
   apiBase: apiBaseProp = '',
   scopeOverride = 'all',
   categorySlug: categorySlugProp = '',
+  creatorSlug: creatorSlugProp = '',
+  creatorRecordId: creatorRecordIdProp = '',
   subcategorySlug: subcategorySlugProp = '',
   styleSlug: styleSlugProp = '',
   tagSlug: tagSlugProp = '',
@@ -932,12 +977,24 @@ export const TemplateFilterBar: React.FC<TemplateFilterBarProps> = ({
       readRouteContext(
         scopeOverride,
         categorySlugProp || undefined,
+        creatorSlugProp || undefined,
+        creatorRecordIdProp || undefined,
         subcategorySlugProp || undefined,
         styleSlugProp || undefined,
         tagSlugProp || undefined,
         hasHydrated,
       ),
-    [categorySlugProp, hasHydrated, routeVersion, scopeOverride, styleSlugProp, subcategorySlugProp, tagSlugProp],
+    [
+      categorySlugProp,
+      creatorRecordIdProp,
+      creatorSlugProp,
+      hasHydrated,
+      routeVersion,
+      scopeOverride,
+      styleSlugProp,
+      subcategorySlugProp,
+      tagSlugProp,
+    ],
   );
   const hasSubcategoryPillContext = Boolean(routeContext.categoryGroupSlug || routeContext.childCategorySlug);
   const isFreeSortContext = routeContext.scope === 'free' || filters.freeOnly;
@@ -974,7 +1031,17 @@ export const TemplateFilterBar: React.FC<TemplateFilterBarProps> = ({
     applyRouteContextToUrl(url, context);
 
     if (showSubcategoryPills) {
-      setPillsLoading(Boolean(context.categoryGroupSlug || context.childCategorySlug || context.scope || context.styleSlug || context.tagSlug));
+      setPillsLoading(
+        Boolean(
+          context.categoryGroupSlug ||
+            context.childCategorySlug ||
+            context.creatorSlug ||
+            context.creatorRecordId ||
+            context.scope ||
+            context.styleSlug ||
+            context.tagSlug,
+        ),
+      );
     }
 
     const cacheKey = url.toString();

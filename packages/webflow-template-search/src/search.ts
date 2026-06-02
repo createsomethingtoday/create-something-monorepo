@@ -55,6 +55,10 @@ interface SqlParts {
 
 const FREE_TEMPLATE_CLAUSE = '(d.price = 0 OR (d.price IS NULL AND d.is_free = 1))';
 
+function creatorProfileUrlForSlug(slug: string): string {
+  return `https://webflow.com/templates/designers/${slug}`;
+}
+
 async function resolveAliases(env: Env, params: SearchParams): Promise<SearchParams> {
   return {
     ...params,
@@ -90,6 +94,16 @@ function buildSqlParts(params: SearchParams, options: FilterOptions = {}): SqlPa
       'EXISTS (SELECT 1 FROM template_child_categories tcc WHERE tcc.template_document_id = d.id AND tcc.child_category_slug = ?)',
     );
     binds.push(params.childCategorySlug);
+  }
+
+  if (params.creatorRecordId) {
+    clauses.push('d.creator_record_id = ?');
+    binds.push(params.creatorRecordId);
+  }
+
+  if (params.creatorSlug) {
+    clauses.push("(d.creator_slug = ? OR lower(rtrim(d.creator_profile_url, '/')) = ?)");
+    binds.push(params.creatorSlug, creatorProfileUrlForSlug(params.creatorSlug));
   }
 
   if (params.styleSlug && !options.excludeStyleSlug) {
@@ -377,6 +391,7 @@ export async function searchTemplates(env: Env, rawParams: SearchParams): Promis
       preview_url: row.preview_url,
       website_url: row.website_url,
       creator_name: row.creator_name,
+      creator_slug: row.creator_slug,
       creator_profile_url: row.creator_profile_url,
       creator_avatar_url: row.creator_avatar_url,
       creator_avatar_alt: row.creator_avatar_alt,
@@ -415,6 +430,8 @@ export async function searchTemplates(env: Env, rawParams: SearchParams): Promis
       scope: params.scope,
       category_group_slug: params.categoryGroupSlug,
       child_category_slug: params.childCategorySlug ? childSlugMap[params.childCategorySlug] ?? params.childCategorySlug : null,
+      creator_slug: params.creatorSlug,
+      creator_record_id: params.creatorRecordId,
       style_slug: params.styleSlug,
       tag_slug: params.tagSlug,
       styles: params.styles,

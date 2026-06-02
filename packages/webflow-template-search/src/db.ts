@@ -76,6 +76,7 @@ const UPSERT_TEMPLATE_SQL = `
     website_url,
     creator_name,
     creator_record_id,
+    creator_slug,
     creator_profile_url,
     creator_avatar_url,
     creator_avatar_alt,
@@ -110,7 +111,7 @@ const UPSERT_TEMPLATE_SQL = `
     styles_text,
     tags_text
   ) VALUES (
-    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
   )
   ON CONFLICT(id) DO UPDATE SET
     template_slug = excluded.template_slug,
@@ -120,6 +121,7 @@ const UPSERT_TEMPLATE_SQL = `
     website_url = excluded.website_url,
     creator_name = excluded.creator_name,
     creator_record_id = excluded.creator_record_id,
+    creator_slug = excluded.creator_slug,
     creator_profile_url = excluded.creator_profile_url,
     creator_avatar_url = excluded.creator_avatar_url,
     creator_avatar_alt = excluded.creator_avatar_alt,
@@ -340,6 +342,7 @@ export async function upsertTemplateDocuments(db: D1Database, documents: Templat
         document.websiteUrl,
         document.creatorName,
         document.creatorRecordId,
+        document.creatorSlug,
         document.creatorProfileUrl,
         document.creatorAvatarUrl,
         document.creatorAvatarAlt,
@@ -625,12 +628,14 @@ export async function updateCreatorAvatarsFromWebflow(
                    WHEN ? IS NOT NULL THEN ?
                    ELSE creator_avatar_alt
                  END,
+                 creator_slug = COALESCE(?, creator_slug),
                  creator_profile_url = COALESCE(?, creator_profile_url),
                  synced_at = ?
              WHERE creator_record_id = ?
                AND (
                  (? IS NOT NULL AND NOT (creator_avatar_url IS ?))
                  OR (? IS NOT NULL AND NOT (creator_avatar_alt IS ?))
+                 OR (? IS NOT NULL AND NOT (creator_slug IS ?))
                  OR (? IS NOT NULL AND NOT (creator_profile_url IS ?))
                )`,
           )
@@ -638,6 +643,7 @@ export async function updateCreatorAvatarsFromWebflow(
             avatarUrl,
             avatarUrl,
             avatarAlt,
+            record.slug,
             record.profileUrl,
             syncedAt,
             record.syncRecordId,
@@ -645,6 +651,8 @@ export async function updateCreatorAvatarsFromWebflow(
             avatarUrl,
             avatarUrl,
             avatarAlt,
+            record.slug,
+            record.slug,
             record.profileUrl,
             record.profileUrl,
           ),
@@ -663,6 +671,7 @@ export async function updateCreatorAvatarsFromWebflow(
                    WHEN ? IS NOT NULL THEN ?
                    ELSE creator_avatar_alt
                  END,
+                 creator_slug = COALESCE(?, creator_slug),
                  creator_profile_url = COALESCE(?, creator_profile_url),
                  creator_record_id = COALESCE(?, creator_record_id),
                  synced_at = ?
@@ -670,6 +679,7 @@ export async function updateCreatorAvatarsFromWebflow(
                AND (
                  (? IS NOT NULL AND NOT (creator_avatar_url IS ?))
                  OR (? IS NOT NULL AND NOT (creator_avatar_alt IS ?))
+                 OR (? IS NOT NULL AND NOT (creator_slug IS ?))
                  OR (? IS NOT NULL AND NOT (creator_profile_url IS ?))
                  OR (? IS NOT NULL AND NOT (creator_record_id IS ?))
                )`,
@@ -678,6 +688,7 @@ export async function updateCreatorAvatarsFromWebflow(
             avatarUrl,
             avatarUrl,
             avatarAlt,
+            record.slug,
             record.profileUrl,
             record.syncRecordId,
             syncedAt,
@@ -686,6 +697,8 @@ export async function updateCreatorAvatarsFromWebflow(
             avatarUrl,
             avatarUrl,
             avatarAlt,
+            record.slug,
+            record.slug,
             record.profileUrl,
             record.profileUrl,
             record.syncRecordId,
@@ -702,6 +715,7 @@ export async function updateCreatorAvatarsFromWebflow(
                    WHEN ? IS NOT NULL THEN ?
                    ELSE creator_avatar_alt
                  END,
+                 creator_slug = COALESCE(?, creator_slug),
                  creator_profile_url = COALESCE(?, creator_profile_url),
                  creator_record_id = COALESCE(NULLIF(creator_record_id, ''), ?),
                  synced_at = ?
@@ -715,6 +729,7 @@ export async function updateCreatorAvatarsFromWebflow(
                AND (
                  (? IS NOT NULL AND NOT (creator_avatar_url IS ?))
                  OR (? IS NOT NULL AND NOT (creator_avatar_alt IS ?))
+                 OR (? IS NOT NULL AND NOT (creator_slug IS ?))
                  OR (? IS NOT NULL AND NOT (creator_profile_url IS ?))
                  OR (? IS NOT NULL AND (creator_record_id IS NULL OR creator_record_id = ''))
                )`,
@@ -723,6 +738,7 @@ export async function updateCreatorAvatarsFromWebflow(
             avatarUrl,
             avatarUrl,
             avatarAlt,
+            record.slug,
             record.profileUrl,
             record.syncRecordId,
             syncedAt,
@@ -733,6 +749,8 @@ export async function updateCreatorAvatarsFromWebflow(
             avatarUrl,
             avatarUrl,
             avatarAlt,
+            record.slug,
+            record.slug,
             record.profileUrl,
             record.profileUrl,
             record.syncRecordId,
@@ -762,6 +780,7 @@ export async function backfillCreatorFieldsByName(db: D1Database, syncedAt: stri
          SELECT
            creator_name,
            MAX(creator_record_id) AS creator_record_id,
+           MAX(creator_slug) AS creator_slug,
            MAX(creator_profile_url) AS creator_profile_url,
            MAX(creator_avatar_url) AS creator_avatar_url,
            MAX(creator_avatar_alt) AS creator_avatar_alt
@@ -782,8 +801,13 @@ export async function backfillCreatorFieldsByName(db: D1Database, syncedAt: stri
              WHEN creator_record_id IS NULL OR creator_record_id = ''
                THEN (SELECT known_creators.creator_record_id FROM known_creators WHERE known_creators.creator_name = template_documents.creator_name)
              ELSE creator_record_id
-           END,
-           creator_profile_url = CASE
+          END,
+          creator_slug = CASE
+            WHEN creator_slug IS NULL OR creator_slug = ''
+              THEN (SELECT known_creators.creator_slug FROM known_creators WHERE known_creators.creator_name = template_documents.creator_name)
+            ELSE creator_slug
+          END,
+          creator_profile_url = CASE
              WHEN creator_profile_url IS NULL OR creator_profile_url = ''
                THEN (SELECT known_creators.creator_profile_url FROM known_creators WHERE known_creators.creator_name = template_documents.creator_name)
              ELSE creator_profile_url
@@ -806,6 +830,8 @@ export async function backfillCreatorFieldsByName(db: D1Database, syncedAt: stri
          AND (
            creator_record_id IS NULL
            OR creator_record_id = ''
+           OR creator_slug IS NULL
+           OR creator_slug = ''
            OR creator_profile_url IS NULL
            OR creator_profile_url = ''
            OR creator_avatar_url IS NULL
@@ -837,10 +863,11 @@ export async function backfillCreatorAvatars(
   for (const [creatorId, creator] of creators) {
     const avatarUrl = creator.avatarUrl;
     const profileUrl = creator.profileUrl || null;
+    const creatorSlug = creator.slug || null;
     const avatarAlt = creator.avatarAlt ?? creator.name;
 
     // Skip creators with no useful data to backfill.
-    if (!avatarUrl && !profileUrl) continue;
+    if (!avatarUrl && !profileUrl && !creatorSlug) continue;
 
     if (overwriteExisting) {
       statements.push(
@@ -849,15 +876,28 @@ export async function backfillCreatorAvatars(
             `UPDATE template_documents
              SET creator_avatar_url = ?,
                  creator_avatar_alt = ?,
+                 creator_slug = COALESCE(?, creator_slug),
                  creator_profile_url = ?,
                  synced_at = ?
              WHERE creator_record_id = ?
                AND (
                  NOT (creator_avatar_url IS ?)
+                 OR (? IS NOT NULL AND NOT (creator_slug IS ?))
                  OR NOT (creator_profile_url IS ?)
                )`,
           )
-          .bind(avatarUrl, avatarAlt, profileUrl, syncedAt, creatorId, avatarUrl, profileUrl),
+          .bind(
+            avatarUrl,
+            avatarAlt,
+            creatorSlug,
+            profileUrl,
+            syncedAt,
+            creatorId,
+            avatarUrl,
+            creatorSlug,
+            creatorSlug,
+            profileUrl,
+          ),
       );
       continue;
     }
@@ -889,6 +929,10 @@ export async function backfillCreatorAvatars(
                  WHEN creator_avatar_alt IS NULL OR creator_avatar_alt = '' THEN ?
                  ELSE creator_avatar_alt
                END,
+               creator_slug = CASE
+                 WHEN ? IS NOT NULL AND (creator_slug IS NULL OR creator_slug = '') THEN ?
+                 ELSE creator_slug
+               END,
                creator_profile_url = CASE
                  WHEN ? IS NOT NULL AND (creator_profile_url IS NULL OR creator_profile_url = '') THEN ?
                  ELSE creator_profile_url
@@ -902,11 +946,25 @@ export async function backfillCreatorAvatars(
                OR creator_avatar_url LIKE '%dl.airtable.com%'
                OR creator_avatar_alt IS NULL
                OR creator_avatar_alt = ''
+               OR creator_slug IS NULL
+               OR creator_slug = ''
                OR creator_profile_url IS NULL
                OR creator_profile_url = ''
              )`,
         )
-        .bind(avatarUrl, avatarUrl, avatarUrl, avatarAlt, avatarAlt, profileUrl, profileUrl, syncedAt, creatorId),
+        .bind(
+          avatarUrl,
+          avatarUrl,
+          avatarUrl,
+          avatarAlt,
+          avatarAlt,
+          creatorSlug,
+          creatorSlug,
+          profileUrl,
+          profileUrl,
+          syncedAt,
+          creatorId,
+        ),
     );
   }
 

@@ -25,10 +25,14 @@ Use `Authorization: Bearer <SYNC_ADMIN_TOKEN>` or `X-API-Key`.
 
 - `scope`: `all`, `featured`, `free`, or `landing_pages`
 - `category_group_slug` / `child_category_slug`: category collection-page context
+- `creator_slug` / `designer_slug`: creator profile context for `/templates/designers/{slug}` pages
+- `creator_record_id`: optional exact creator sync record ID for designer profile pages
 - `style_slug` / `tag_slug`: style or tag collection-page context
 - `styles` / `tags`: one or more user-selected refinement slugs
 - `types`: one or more template types
 - `free_only`, `sort`, `page`, `page_size`, and `include`
+
+Designer profile pages should use the Webflow **Template Filter Bar** plus **Template Grid** components instead of a native Collection List when the page needs to show every published template for a creator. The components infer `creator_slug` from `/templates/designers/{slug}` automatically and can bind `creator_record_id` when the current Designer CMS item exposes the sync record ID.
 
 ## Featured creator monthly batch
 

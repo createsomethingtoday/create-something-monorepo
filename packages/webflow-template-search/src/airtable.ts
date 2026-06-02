@@ -2,15 +2,12 @@ import type {
   AirtableAssetFields,
   AirtableListResponse,
   AirtableRecord,
-  ChildCategoryLookupValue,
   CreatorLookupValue,
   Env,
   LookupMaps,
   LookupValue,
 } from './types.js';
 import {
-  canonicalizeCategoryGroupSlug,
-  deriveChildCategorySlug,
   normalizeStyleSlug,
   normalizeTagSlug,
 } from './slug.js';
@@ -18,7 +15,6 @@ import { ensureStringArray, uniqueStrings } from './utils.js';
 
 const DEFAULT_ASSETS_TABLE_ID = 'tblRwzpWoLgE9MrUm';
 const DEFAULT_STYLES_TABLE_ID = 'tblG7E9LbQj0sBX0o';
-const DEFAULT_CHILD_CATEGORIES_TABLE_ID = 'tblWJXy3M6R8SeoFi';
 const DEFAULT_TAGS_TABLE_ID = 'tblb4969G7O75gVWV';
 const DEFAULT_CREATORS_TABLE_ID = 'tbljt0plqxdMARZXb';
 
@@ -30,7 +26,8 @@ export const ASSET_FIELDS = [
   'ℹ️Description (Long).html',
   '🪣Category Group(s) Display Name',
   '🪣Category Group(s) CMS Slug',
-  '🔍Algolia Child Category (🏗️ only)',
+  'ℹ️🪣Categories (Text)',
+  '🥞CMS Slug (from ℹ️🪣Categories)',
   'ℹ️👘Styles',
   'ℹ️🏷️Tags (Multi)',
   '🥞Template Type (🏗️ only)',
@@ -87,14 +84,6 @@ function attachmentUrl(value: unknown): string | null {
   if (!Array.isArray(value) || value.length === 0) return null;
   const first = value[0] as { url?: string } | undefined;
   return first?.url ?? null;
-}
-
-function splitLookupText(value: unknown): string[] {
-  if (typeof value !== 'string') return ensureStringArray(value);
-  return value
-    .split(',')
-    .map((entry) => entry.trim())
-    .filter(Boolean);
 }
 
 interface FetchOptions {
@@ -201,14 +190,10 @@ export async function fetchAssetRecordsByIds(
 }
 
 export async function loadLookupMaps(env: Env): Promise<LookupMaps> {
-  const [styles, childCategories, tags, creators] = await Promise.all([
+  const [styles, tags, creators] = await Promise.all([
     fetchAirtableRecords(env, {
       tableId: env.AIRTABLE_STYLES_TABLE_ID ?? DEFAULT_STYLES_TABLE_ID,
       fields: ['Name', '🥞CMS Slug'],
-    }),
-    fetchAirtableRecords(env, {
-      tableId: env.AIRTABLE_CHILD_CATEGORIES_TABLE_ID ?? DEFAULT_CHILD_CATEGORIES_TABLE_ID,
-      fields: ['Category', 'Display name', 'Parent Category Name', '🪣Category Groups', 'Related Keywords'],
     }),
     fetchAirtableRecords(env, {
       tableId: env.AIRTABLE_TAGS_TABLE_ID ?? DEFAULT_TAGS_TABLE_ID,
@@ -229,26 +214,6 @@ export async function loadLookupMaps(env: Env): Promise<LookupMaps> {
       id: record.id,
       name,
       slug: normalizeStyleSlug(name, providedSlug),
-    });
-  }
-
-  const childCategoryMap = new Map<string, ChildCategoryLookupValue>();
-  for (const record of childCategories) {
-    const category = String(record.fields.Category ?? '').trim();
-    const displayName = String(record.fields['Display name'] ?? category).trim();
-    const parentCategoryName = String(record.fields['Parent Category Name'] ?? '').trim();
-    const name = displayName || category;
-    if (!name) continue;
-
-    childCategoryMap.set(record.id, {
-      id: record.id,
-      name,
-      slug: deriveChildCategorySlug(name),
-      category,
-      displayName: name,
-      parentCategoryName,
-      categoryGroups: uniqueStrings(splitLookupText(record.fields['🪣Category Groups']).map((entry) => canonicalizeCategoryGroupSlug(entry))),
-      relatedKeywords: splitLookupText(record.fields['Related Keywords']),
     });
   }
 
@@ -283,7 +248,6 @@ export async function loadLookupMaps(env: Env): Promise<LookupMaps> {
 
   return {
     styles: styleMap,
-    childCategories: childCategoryMap,
     tags: tagMap,
     creators: creatorMap,
   };

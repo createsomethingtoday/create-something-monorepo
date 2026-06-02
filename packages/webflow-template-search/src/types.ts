@@ -8,7 +8,6 @@ export interface Env {
   AIRTABLE_BASE_ID: string;
   AIRTABLE_ASSETS_TABLE_ID?: string;
   AIRTABLE_STYLES_TABLE_ID?: string;
-  AIRTABLE_CHILD_CATEGORIES_TABLE_ID?: string;
   AIRTABLE_TAGS_TABLE_ID?: string;
   WEBFLOW_API_TOKEN?: string;
   CMS_READ_ONLY?: string;
@@ -49,7 +48,8 @@ export interface AirtableAssetFields extends Record<string, unknown> {
   'ℹ️Description (Long).html'?: string;
   '🪣Category Group(s) Display Name'?: string[] | string;
   '🪣Category Group(s) CMS Slug'?: string[] | string;
-  '🔍Algolia Child Category (🏗️ only)'?: string[];
+  'ℹ️🪣Categories (Text)'?: string[] | string;
+  '🥞CMS Slug (from ℹ️🪣Categories)'?: string[] | string;
   'ℹ️👘Styles'?: string[];
   'ℹ️🏷️Tags (Multi)'?: string[];
   '🥞Template Type (🏗️ only)'?: string;
@@ -81,14 +81,6 @@ export interface LookupValue {
   slug: string;
 }
 
-export interface ChildCategoryLookupValue extends LookupValue {
-  category: string;
-  displayName: string;
-  parentCategoryName: string;
-  categoryGroups: string[];
-  relatedKeywords: string[];
-}
-
 export interface CreatorLookupValue {
   id: string;
   name: string;
@@ -100,7 +92,6 @@ export interface CreatorLookupValue {
 
 export interface LookupMaps {
   styles: Map<string, LookupValue>;
-  childCategories: Map<string, ChildCategoryLookupValue>;
   tags: Map<string, LookupValue>;
   creators: Map<string, CreatorLookupValue>;
 }
@@ -114,6 +105,7 @@ export interface TemplateDocumentInput {
   websiteUrl: string | null;
   creatorName: string | null;
   creatorRecordId: string | null;
+  creatorSlug: string | null;
   creatorProfileUrl: string | null;
   creatorAvatarUrl: string | null;
   creatorAvatarAlt: string | null;
@@ -150,6 +142,8 @@ export interface SearchParams {
   scope: TemplateScope;
   categoryGroupSlug: string | null;
   childCategorySlug: string | null;
+  creatorSlug: string | null;
+  creatorRecordId: string | null;
   styleSlug: string | null;
   tagSlug: string | null;
   styles: string[];
@@ -174,6 +168,7 @@ export interface SearchItem {
   preview_url: string | null;
   website_url: string | null;
   creator_name: string | null;
+  creator_slug: string | null;
   creator_profile_url: string | null;
   creator_avatar_url: string | null;
   creator_avatar_alt: string | null;
@@ -209,6 +204,8 @@ export interface SearchResponsePayload {
     scope: TemplateScope;
     category_group_slug: string | null;
     child_category_slug: string | null;
+    creator_slug: string | null;
+    creator_record_id: string | null;
     style_slug: string | null;
     tag_slug: string | null;
     styles: string[];
@@ -292,6 +289,7 @@ export interface DocumentRow {
   preview_url: string | null;
   website_url: string | null;
   creator_name: string | null;
+  creator_slug: string | null;
   creator_profile_url: string | null;
   creator_avatar_url: string | null;
   creator_avatar_alt: string | null;

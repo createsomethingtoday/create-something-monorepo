@@ -35,6 +35,7 @@ interface ApiItem {
   preview_url: string | null;
   website_url: string | null;
   creator_name: string | null;
+  creator_slug: string | null;
   creator_profile_url: string | null;
   creator_avatar_url: string | null;
   creator_avatar_alt: string | null;
@@ -79,6 +80,8 @@ interface FilterState {
   scope: TemplateScope;
   categoryGroupSlug: string | null;
   childCategorySlug: string | null;
+  creatorSlug: string | null;
+  creatorRecordId: string | null;
   styleSlug: string | null;
   tagSlug: string | null;
   styles: string[];
@@ -104,6 +107,16 @@ export interface TemplateGridProps {
    * (/templates/category/{slug}).
    */
   categorySlug?: string;
+  /**
+   * Creator/designer slug for Designer preview. In production the slug is
+   * auto-detected from /templates/designers/{slug}.
+   */
+  creatorSlug?: string;
+  /**
+   * Optional creator record ID for exact Designer-page binding when available.
+   * Production can infer by slug from the URL; record ID narrows duplicate-name cases.
+   */
+  creatorRecordId?: string;
   /**
    * Style slug for Designer preview. In production the slug is auto-detected
    * from /templates/style/{slug}.
@@ -269,6 +282,7 @@ function normalizeScope(value: string | null): TemplateScope | null {
  *   /templates/landing-pages           → scope=landing_pages
  *   /templates/category/{slug}         → category_group_slug={slug}
  *   /templates/subcategory/{slug}      → child_category_slug={slug}
+ *   /templates/designers/{slug}        → creator_slug={slug}
  *   /templates/style/{slug}            → style_slug={slug}
  *   /templates/tag/{slug}              → tag_slug={slug}
  *   ?category={slug}                   → category_group_slug={slug}
@@ -280,6 +294,8 @@ function parseRouteState(
   scopeOverrideParam?: TemplateScope,
   styleSlugOverride?: string,
   tagSlugOverride?: string,
+  creatorSlugOverride?: string,
+  creatorRecordIdOverride?: string,
 ): FilterState {
   const resolvedScopeOverride = resolveScopeOverride(scopeOverrideParam);
 
@@ -289,6 +305,8 @@ function parseRouteState(
       scope: resolvedScopeOverride ?? 'all',
       categoryGroupSlug: categorySlugOverride || null,
       childCategorySlug: null,
+      creatorSlug: creatorSlugOverride || null,
+      creatorRecordId: creatorRecordIdOverride || null,
       styleSlug: styleSlugOverride || null,
       tagSlug: tagSlugOverride || null,
       styles: [],
@@ -330,10 +348,13 @@ function parseRouteState(
   // Query: ?category={slug} (used on e.g. /templates/free-website-templates?category=architecture-design)
   const categoryMatch = pathname.match(/\/templates\/category\/([^/?#]+)/);
   const subcategoryMatch = pathname.match(/\/templates\/subcategory\/([^/?#]+)/);
+  const designerMatch = pathname.match(/\/templates\/designers\/([^/?#]+)/);
   const styleMatch = pathname.match(/\/templates\/style\/([^/?#]+)/);
   const tagMatch = pathname.match(/\/templates\/tag\/([^/?#]+)/);
   const categoryParam = params.get('category') ?? params.get('category_group_slug');
   const subcategoryParam = params.get('subcategory') ?? params.get('child_category_slug');
+  const creatorParam = params.get('creator_slug') ?? params.get('designer_slug') ?? params.get('creator') ?? params.get('designer');
+  const creatorRecordIdParam = params.get('creator_record_id') ?? params.get('designer_record_id');
   const styleParam = params.get('style_slug') ?? params.get('style');
   const tagParam = params.get('tag_slug') ?? params.get('tag');
 
@@ -351,6 +372,8 @@ function parseRouteState(
     // Designer preview slug prop takes precedence over URL detection
     categoryGroupSlug: categorySlugOverride || (categoryMatch ? categoryMatch[1] : categoryParam || null),
     childCategorySlug: subcategoryMatch ? subcategoryMatch[1] : subcategoryParam || null,
+    creatorSlug: creatorSlugOverride || (designerMatch ? toFilterSlug(designerMatch[1]) : creatorParam ? toFilterSlug(creatorParam) : null),
+    creatorRecordId: creatorRecordIdOverride || creatorRecordIdParam || null,
     styleSlug: styleSlugOverride
       ? toFilterSlug(styleSlugOverride)
       : styleMatch
@@ -379,6 +402,8 @@ function mergeExternalFilterState(base: FilterState, detail: unknown): FilterSta
     q: unknown;
     categoryGroupSlug: unknown;
     childCategorySlug: unknown;
+    creatorSlug: unknown;
+    creatorRecordId: unknown;
     styles: unknown;
     tags: unknown;
     types: unknown;
@@ -401,6 +426,18 @@ function mergeExternalFilterState(base: FilterState, detail: unknown): FilterSta
         : patch.childCategorySlug === null
           ? null
           : base.childCategorySlug,
+    creatorSlug:
+      typeof patch.creatorSlug === 'string'
+        ? toFilterSlug(patch.creatorSlug) || null
+        : patch.creatorSlug === null
+          ? null
+          : base.creatorSlug,
+    creatorRecordId:
+      typeof patch.creatorRecordId === 'string'
+        ? patch.creatorRecordId.trim() || null
+        : patch.creatorRecordId === null
+          ? null
+          : base.creatorRecordId,
     styles: Array.isArray(patch.styles) ? patch.styles.filter((value): value is string => typeof value === 'string') : base.styles,
     tags: Array.isArray(patch.tags) ? patch.tags.filter((value): value is string => typeof value === 'string') : base.tags,
     types: Array.isArray(patch.types) ? patch.types.filter((value): value is string => typeof value === 'string') : base.types,
@@ -427,6 +464,8 @@ function areFiltersEqual(a: FilterState, b: FilterState): boolean {
     a.scope === b.scope &&
     a.categoryGroupSlug === b.categoryGroupSlug &&
     a.childCategorySlug === b.childCategorySlug &&
+    a.creatorSlug === b.creatorSlug &&
+    a.creatorRecordId === b.creatorRecordId &&
     a.styleSlug === b.styleSlug &&
     a.tagSlug === b.tagSlug &&
     a.freeOnly === b.freeOnly &&
@@ -447,6 +486,8 @@ function buildApiUrl(base: string, filters: FilterState, page: number, pageSize:
   if (filters.scope !== 'all') url.searchParams.set('scope', filters.scope);
   if (filters.categoryGroupSlug) url.searchParams.set('category_group_slug', filters.categoryGroupSlug);
   if (filters.childCategorySlug) url.searchParams.set('child_category_slug', filters.childCategorySlug);
+  if (filters.creatorSlug) url.searchParams.set('creator_slug', filters.creatorSlug);
+  if (filters.creatorRecordId) url.searchParams.set('creator_record_id', filters.creatorRecordId);
   if (filters.styleSlug) url.searchParams.set('style_slug', toFilterSlug(filters.styleSlug));
   if (filters.tagSlug) url.searchParams.set('tag_slug', toFilterSlug(filters.tagSlug));
   if (filters.freeOnly) url.searchParams.set('free_only', 'true');
@@ -687,6 +728,8 @@ function trackGridHealthEvent(
       scope_filter: filters.scope,
       category_group_slug: filters.categoryGroupSlug,
       child_category_slug: filters.childCategorySlug,
+      creator_slug: filters.creatorSlug,
+      creator_record_id_present: Boolean(filters.creatorRecordId),
       style_slug: filters.styleSlug,
       tag_slug: filters.tagSlug,
       marketplace_signals_enabled: showMarketplaceSignals,
@@ -942,6 +985,8 @@ const SkeletonCard: React.FC<{ index: number }> = ({ index }) => (
 const TemplateGridInner: React.FC<TemplateGridProps> = ({
   apiBase: apiBaseProp = '',
   categorySlug: categorySlugProp = '',
+  creatorSlug: creatorSlugProp = '',
+  creatorRecordId: creatorRecordIdProp = '',
   styleSlug: styleSlugProp = '',
   tagSlug: tagSlugProp = '',
   scopeOverride,
@@ -973,7 +1018,15 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
   const resolvedPageSize = pageSize || DEFAULT_PAGE_SIZE;
   // Parse initial filter state from URL on first render
   const [filters, setFilters] = useState<FilterState>(() =>
-    parseRouteState(initialSort, categorySlugProp || undefined, scopeOverride, styleSlugProp || undefined, tagSlugProp || undefined),
+    parseRouteState(
+      initialSort,
+      categorySlugProp || undefined,
+      scopeOverride,
+      styleSlugProp || undefined,
+      tagSlugProp || undefined,
+      creatorSlugProp || undefined,
+      creatorRecordIdProp || undefined,
+    ),
   );
 
   const [items, setItems] = useState<ApiItem[]>([]);
@@ -998,10 +1051,12 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
         scopeOverride,
         styleSlugProp || undefined,
         tagSlugProp || undefined,
+        creatorSlugProp || undefined,
+        creatorRecordIdProp || undefined,
       );
       return areFiltersEqual(prev, next) ? prev : next;
     });
-  }, [initialSort, categorySlugProp, scopeOverride, styleSlugProp, tagSlugProp]);
+  }, [initialSort, categorySlugProp, creatorSlugProp, creatorRecordIdProp, scopeOverride, styleSlugProp, tagSlugProp]);
 
   // ── Fetch ─────────────────────────────────────────────────────────────────
 
@@ -1209,6 +1264,8 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
               scopeOverride,
               styleSlugProp || undefined,
               tagSlugProp || undefined,
+              creatorSlugProp || undefined,
+              creatorRecordIdProp || undefined,
             ),
             readSharedFilterState(href),
           );
@@ -1254,12 +1311,14 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
           scopeOverride,
           styleSlugProp || undefined,
           tagSlugProp || undefined,
+          creatorSlugProp || undefined,
+          creatorRecordIdProp || undefined,
         ),
       );
     };
     window.addEventListener('popstate', onPop);
     return () => window.removeEventListener('popstate', onPop);
-  }, [initialSort, categorySlugProp, scopeOverride, styleSlugProp, tagSlugProp]);
+  }, [initialSort, categorySlugProp, creatorSlugProp, creatorRecordIdProp, scopeOverride, styleSlugProp, tagSlugProp]);
 
   // Re-parse from URL when TemplateFilterBar (code component) updates filter state.
   // TemplateFilterBar writes to URL params then dispatches this event — we just
@@ -1277,6 +1336,8 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
             scopeOverride,
             styleSlugProp || undefined,
             tagSlugProp || undefined,
+            creatorSlugProp || undefined,
+            creatorRecordIdProp || undefined,
           ),
           (event as CustomEvent).detail ?? readSharedFilterState(href),
         );
@@ -1289,7 +1350,7 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
       window.removeEventListener('templateFiltersChanged', onFilterBarChange);
       document.removeEventListener('templateFiltersChanged', onFilterBarChange);
     };
-  }, [initialSort, categorySlugProp, scopeOverride, styleSlugProp, tagSlugProp]);
+  }, [initialSort, categorySlugProp, creatorSlugProp, creatorRecordIdProp, scopeOverride, styleSlugProp, tagSlugProp]);
 
   // replaceState() does not fire popstate. Poll the URL as a low-cost fallback
   // so the grid still refreshes if Webflow isolates or drops the custom event.
@@ -1306,6 +1367,8 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
             scopeOverride,
             styleSlugProp || undefined,
             tagSlugProp || undefined,
+            creatorSlugProp || undefined,
+            creatorRecordIdProp || undefined,
           ),
           readSharedFilterState(href),
         );
@@ -1313,7 +1376,7 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
       });
     }, 250);
     return () => window.clearInterval(id);
-  }, [initialSort, categorySlugProp, scopeOverride, styleSlugProp, tagSlugProp]);
+  }, [initialSort, categorySlugProp, creatorSlugProp, creatorRecordIdProp, scopeOverride, styleSlugProp, tagSlugProp]);
 
   const clearFilters = useCallback(() => {
     const next: FilterState = {

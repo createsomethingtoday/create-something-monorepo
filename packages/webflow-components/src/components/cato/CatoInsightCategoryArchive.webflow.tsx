@@ -33,6 +33,16 @@ export default declareComponent(CatoInsightsArchive, {
       name: 'Items JSON',
       defaultValue: '',
     }),
+    itemsEndpointUrl: props.Text({
+      name: 'Items Endpoint URL',
+      defaultValue: '',
+      tooltip: 'Public JSON endpoint that returns normalized Insight items. Do not use a secret Webflow API URL here.',
+    }),
+    fetchItems: props.Boolean({
+      name: 'Fetch Endpoint Items',
+      defaultValue: true,
+      tooltip: 'Fetch Items Endpoint URL in the browser and render returned archive items.',
+    }),
     linkMode: props.Variant({
       name: 'Link Mode',
       options: ['webflow', 'export'],
