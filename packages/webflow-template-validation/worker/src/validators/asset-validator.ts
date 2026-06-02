@@ -58,8 +58,8 @@ export async function validateAssetBatch(
 	});
 
 	// Separate SVGs (no fetch needed) from raster images
-	const svgAssets = webflowAssets.filter(a => a.mimeType?.includes('svg'));
-	const rasterAssets = webflowAssets.filter(a => !a.mimeType?.includes('svg'));
+	const svgAssets = webflowAssets.filter(isSvgAssetLike);
+	const rasterAssets = webflowAssets.filter(a => !isSvgAssetLike(a));
 
 	// Add SVGs without fetching (vectors are always optimized)
 	svgAssets.forEach(svgAsset => {
@@ -268,7 +268,7 @@ async function validateEntireMediaLibrary(designerAssets: any[], baseUrl: string
 
 	// Sort: larger files first (more likely to have issues), skip SVGs (vectors are fine)
 	const sortedAssets = webflowAssets
-		.filter(a => !a.mimeType?.includes('svg'))
+		.filter(a => !isSvgAssetLike(a))
 		.sort((a, b) => {
 			// Prioritize by mimeType - PNG/BMP likely larger than WebP
 			const priorityA = a.mimeType?.includes('png') ? 2 : a.mimeType?.includes('bmp') ? 3 : 1;
@@ -277,7 +277,7 @@ async function validateEntireMediaLibrary(designerAssets: any[], baseUrl: string
 		});
 
 	// Also include SVGs but mark them as already optimized (no fetch needed)
-	const svgAssets = webflowAssets.filter(a => a.mimeType?.includes('svg'));
+	const svgAssets = webflowAssets.filter(isSvgAssetLike);
 	svgAssets.forEach(svgAsset => {
 		analyzedAssets.push({
 			url: svgAsset.url,
@@ -350,7 +350,7 @@ async function analyzeDesignerAssetLightweight(designerAsset: any): Promise<Anal
 		const metadata = await fetchAssetMetadata(assetUrl);
 
 		// Use Designer data when available, fallback to metadata
-		const format = designerAsset.mimeType || metadata.mimeType || getFormatFromUrl(assetUrl);
+		const format = getAssetFormat(assetUrl, designerAsset.mimeType, metadata.mimeType);
 		const name = designerAsset.name || getAssetName(assetUrl);
 
 		// Analyze optimization from metadata (no buffer needed)
@@ -396,7 +396,7 @@ async function analyzeDesignerAsset(designerAsset: any, baseUrl: string): Promis
 		const assetResult = await fetchAsset(assetUrl);
 
 		// Use Designer data when available, fallback to URL analysis
-		const format = designerAsset.mimeType || assetResult.mimeType || getFormatFromUrl(assetUrl);
+		const format = getAssetFormat(assetUrl, designerAsset.mimeType, assetResult.mimeType);
 		const name = designerAsset.name || getAssetName(assetUrl);
 
 		// Analyze optimization
@@ -510,7 +510,7 @@ async function analyzeAsset(assetUrl: string, baseUrl: string): Promise<Analyzed
 		const assetResult = await fetchAsset(assetUrl);
 
 		// Determine format from MIME type or URL extension
-		const format = assetResult.mimeType || getFormatFromUrl(assetUrl);
+		const format = getAssetFormat(assetUrl, assetResult.mimeType);
 		const name = getAssetName(assetUrl);
 
 		// Analyze optimization
@@ -562,6 +562,7 @@ export function generateAssetIssues(assets: AnalyzedAsset[]): ValidationIssue[] 
 
 	// Check for assets above the 150KB compression target. This is a review target, not the hard maximum.
 	const assetsAboveCompressionTarget = assets.filter(asset =>
+		!isVectorAsset(asset) &&
 		asset.size > WEBFLOW_WAY_COMPRESSION_TARGET && asset.size <= EXTREME_SIZE_LIMIT
 	);
 	if (assetsAboveCompressionTarget.length > 0) {
@@ -571,7 +572,7 @@ export function generateAssetIssues(assets: AnalyzedAsset[]): ValidationIssue[] 
 			severity: 'warning',
 			message: `${assetsAboveCompressionTarget.length} assets are above the 150KB compression target`,
 			description: 'Submission guidelines recommend compressing images to 150KB where possible. Larger visual assets may be acceptable when quality would be harmed, but they should be reviewed.',
-			howToFix: 'Resize images to their rendered dimensions, use Webflow compression, and convert to WebP/AVIF where quality allows. Keep every asset under the 4MB maximum.',
+			howToFix: 'For raster imagery, resize images to their rendered dimensions, use Webflow compression, and convert to WebP/AVIF where quality allows. Keep every asset under the 4MB maximum.',
 			details: {
 				target: '150KB where possible',
 				maxFileSize: '4MB',
@@ -593,7 +594,7 @@ export function generateAssetIssues(assets: AnalyzedAsset[]): ValidationIssue[] 
 			severity: 'error',
 			message: `${extremelyLargeAssets.length} assets exceed the 4MB maximum file size`,
 			description: 'Submission guidelines set a 4MB maximum file size for media assets. These files can severely impact loading performance and template review.',
-			howToFix: 'Compress or replace these assets so each file is under 4MB. For large hero or portfolio imagery, resize to the displayed dimensions and export WebP/AVIF when practical.',
+			howToFix: 'Compress or replace these assets so each file is under 4MB. For SVGs, remove unused paths and metadata with an SVG optimizer. For raster imagery, resize to the displayed dimensions and export WebP/AVIF when practical.',
 			details: {
 				maxFileSize: '4MB',
 				extremeAssets: extremelyLargeAssets.map(asset => ({
@@ -606,7 +607,7 @@ export function generateAssetIssues(assets: AnalyzedAsset[]): ValidationIssue[] 
 	}
 
 	// Check for unoptimized formats
-	const unoptimizedAssets = assets.filter(asset => !asset.isOptimized);
+	const unoptimizedAssets = assets.filter(asset => !isVectorAsset(asset) && !asset.isOptimized);
 	if (unoptimizedAssets.length > 0) {
 		issues.push({
 			id: 'assets-not-optimized',
@@ -678,6 +679,35 @@ function getFormatFromUrl(url: string): string {
 			return 'image/svg+xml';
 		default:
 			return 'unknown';
+	}
+}
+
+function getAssetFormat(url: string, ...candidates: Array<string | undefined>): string {
+	const urlFormat = getFormatFromUrl(url);
+	if (urlFormat === 'image/svg+xml' || candidates.some(candidate => candidate?.toLowerCase().includes('svg'))) {
+		return 'image/svg+xml';
+	}
+	return candidates.find(candidate => candidate && candidate.trim() !== '') || urlFormat;
+}
+
+function isSvgAssetLike(asset: { mimeType?: string; url?: string; name?: string }): boolean {
+	return isSvgFormat(asset.mimeType) || isSvgPath(asset.url) || isSvgPath(asset.name);
+}
+
+function isVectorAsset(asset: AnalyzedAsset): boolean {
+	return isSvgFormat(asset.format) || isSvgPath(asset.url) || isSvgPath(asset.name);
+}
+
+function isSvgFormat(format: string | undefined): boolean {
+	return format?.toLowerCase().includes('svg') === true;
+}
+
+function isSvgPath(value: string | undefined): boolean {
+	if (!value) return false;
+	try {
+		return new URL(value).pathname.toLowerCase().endsWith('.svg');
+	} catch {
+		return value.toLowerCase().split('?')[0].endsWith('.svg');
 	}
 }
 
