@@ -8,6 +8,17 @@ vi.mock('../src/utils/fetch-utils', () => {
 		size: 0,
 		loadTime: 0
 	}));
+	const fetchAsset = vi.fn(async () => ({
+		buffer: new ArrayBuffer(0),
+		size: 0,
+		mimeType: 'image/webp',
+		headers: {}
+	}));
+	const fetchAssetMetadata = vi.fn(async () => ({
+		size: 0,
+		mimeType: 'image/webp',
+		headers: {}
+	}));
 
 	const parseHTML = vi.fn(() => ({
 		rawHtml: '<!doctype html><html><head><title>Test</title></head><body></body></html>',
@@ -27,13 +38,14 @@ vi.mock('../src/utils/fetch-utils', () => {
 		stylesheets: []
 	}));
 
-	return { fetchHTML, parseHTML };
+	return { fetchHTML, parseHTML, fetchAsset, fetchAssetMetadata };
 });
 
 import { validateDesignerData } from '../src/validators/designer-validator';
 import { generateContentIssues, validateContent } from '../src/validators/content-validator';
 import { validateAccessibility } from '../src/validators/accessibility-validator';
 import { validateInteractions } from '../src/validators/interactions-validator';
+import { generateAssetIssues } from '../src/validators/asset-validator';
 import { fetchHTML, parseHTML } from '../src/utils/fetch-utils';
 import worker from '../src/index';
 
@@ -55,6 +67,16 @@ function createParsedHTML(overrides: Partial<any> = {}) {
 		scripts: [],
 		stylesheets: [],
 		...overrides
+	};
+}
+
+function createImage(attrs: Record<string, string | null>, extras: Partial<any> = {}) {
+	return {
+		getAttribute: (name: string) => name in attrs ? attrs[name] : null,
+		hasAttribute: (name: string) => name in attrs,
+		className: attrs.class || '',
+		src: attrs.src || undefined,
+		...extras
 	};
 }
 
@@ -355,6 +377,14 @@ describe('Designer Validator', () => {
 });
 
 describe('Content Validator', () => {
+	it('preserves empty alt attributes in the Worker HTML parser', async () => {
+		const actual = await vi.importActual<typeof import('../src/utils/fetch-utils')>('../src/utils/fetch-utils');
+		const parsed = actual.parseHTMLWorker('<!doctype html><html><body><img src="/divider.svg" alt=""></body></html>');
+
+		expect(parsed.images[0].getAttribute('alt')).toBe('');
+		expect(parsed.images[0].hasAttribute('alt')).toBe(true);
+	});
+
 	it('detects placeholder content consistently across repeated runs', async () => {
 		vi.mocked(parseHTML).mockReturnValue(createParsedHTML({
 			rawHtml: '<!doctype html><html><head><title>Repeated Placeholder Test</title></head><body><main><h1>Lorem Ipsum</h1><p>Lorem ipsum dolor sit amet.</p></main></body></html>',
@@ -374,6 +404,52 @@ describe('Content Validator', () => {
 
 		expect(first.issues.some((issue) => issue.id === 'lorem-ipsum-detected')).toBe(true);
 		expect(second.issues.some((issue) => issue.id === 'lorem-ipsum-detected')).toBe(true);
+	});
+
+	it('ignores placeholder text inside Webflow search result snippets', async () => {
+		const rawHtml = `<!doctype html><html><head><title>Search</title></head><body>
+			<main><h1>Search</h1><p>Find articles, resources, and updates from this template.</p></main>
+			<div class="w-search-result"><p>Lorem ipsum dolor sit amet from a generated search snippet.</p></div>
+		</body></html>`;
+		vi.mocked(parseHTML).mockReturnValue(createParsedHTML({
+			rawHtml,
+			document: {
+				querySelector: (selector: string) => selector === 'title' ? { textContent: 'Search' } : null,
+				querySelectorAll: () => [],
+				body: {
+					textContent: 'Search Find articles, resources, and updates from this template. Lorem ipsum dolor sit amet from a generated search snippet.',
+					innerHTML: rawHtml
+				}
+			},
+			headings: [{ tagName: 'H1', textContent: 'Search' }]
+		}));
+
+		const result = await validateContent('https://example.com/search');
+
+		expect(result.issues.some((issue) => issue.id === 'lorem-ipsum-detected')).toBe(false);
+		expect(result.issues.some((issue) => issue.id === 'placeholder-content-detected')).toBe(false);
+	});
+
+	it('still flags authored placeholder text outside search result snippets', async () => {
+		const rawHtml = `<!doctype html><html><head><title>About</title></head><body>
+			<main><h1>About</h1><p>Lorem ipsum dolor sit amet in authored page copy.</p></main>
+		</body></html>`;
+		vi.mocked(parseHTML).mockReturnValue(createParsedHTML({
+			rawHtml,
+			document: {
+				querySelector: (selector: string) => selector === 'title' ? { textContent: 'About' } : null,
+				querySelectorAll: () => [],
+				body: {
+					textContent: 'About Lorem ipsum dolor sit amet in authored page copy.',
+					innerHTML: rawHtml
+				}
+			},
+			headings: [{ tagName: 'H1', textContent: 'About' }]
+		}));
+
+		const result = await validateContent('https://example.com/about');
+
+		expect(result.issues.some((issue) => issue.id === 'lorem-ipsum-detected')).toBe(true);
 	});
 
 	it('does not flag decorative images that use empty alt text', async () => {
@@ -398,6 +474,56 @@ describe('Content Validator', () => {
 		const result = await validateContent('https://example.com');
 
 		expect(result.issues.some((issue) => issue.id === 'missing-alt-text')).toBe(false);
+	});
+
+	it('does not flag platform-controlled video fallback images as actionable missing alt text', async () => {
+		vi.mocked(parseHTML).mockReturnValue(createParsedHTML({
+			rawHtml: '<!doctype html><html><head><title>Video Fallback Test</title></head><body><h1>Video Fallback Test</h1><div class="w-background-video"><img class="poster-image" src="/hero-poster.webp"></div></body></html>',
+			document: {
+				querySelector: (selector: string) => selector === 'title' ? { textContent: 'Video Fallback Test' } : null,
+				querySelectorAll: () => [],
+				body: {
+					textContent: 'Video Fallback Test meaningful page content for validation.',
+					innerHTML: '<h1>Video Fallback Test</h1><div class="w-background-video"><img class="poster-image" src="/hero-poster.webp"></div>'
+				}
+			},
+			images: [createImage({ src: '/hero-poster.webp', class: 'poster-image' }, {
+				closest: (selector: string) => selector.includes('.w-background-video') ? {} : null
+			})],
+			headings: [{ tagName: 'H1', textContent: 'Video Fallback Test' }]
+		}));
+
+		const result = await validateContent('https://example.com');
+
+		expect(result.issues.some((issue) => issue.id === 'missing-alt-text')).toBe(false);
+	});
+
+	it('surfaces actionable image details for missing alt text', async () => {
+		vi.mocked(parseHTML).mockReturnValue(createParsedHTML({
+			rawHtml: '<!doctype html><html><head><title>Image Detail Test</title></head><body><h1>Image Detail Test</h1><img class="team-photo" src="/team.webp"></body></html>',
+			document: {
+				querySelector: (selector: string) => selector === 'title' ? { textContent: 'Image Detail Test' } : null,
+				querySelectorAll: () => [],
+				body: {
+					textContent: 'Image Detail Test meaningful page content for validation.',
+					innerHTML: '<h1>Image Detail Test</h1><img class="team-photo" src="/team.webp">'
+				}
+			},
+			images: [createImage({ src: '/team.webp', class: 'team-photo' })],
+			headings: [{ tagName: 'H1', textContent: 'Image Detail Test' }]
+		}));
+
+		const result = await validateContent('https://example.com');
+		const missingAltIssue = result.issues.find((issue) => issue.id === 'missing-alt-text');
+
+		expect(missingAltIssue).toBeTruthy();
+		expect(missingAltIssue?.details?.missingImages).toEqual([
+			expect.objectContaining({
+				src: '/team.webp',
+				selector: 'img.team-photo',
+				pageUrl: 'https://example.com'
+			})
+		]);
 	});
 
 	it('can run only the alt text check', () => {
@@ -621,6 +747,69 @@ describe('Accessibility Validator', () => {
 			totalInputs: 1,
 			unlabeledInputs: [{ type: 'email', id: 'email', placeholder: 'Enter your email' }]
 		});
+	});
+
+	it('does not flag platform-controlled video fallback images in accessibility-only checks', async () => {
+		vi.mocked(parseHTML).mockReturnValue(createParsedHTML({
+			rawHtml: '<!doctype html><html><body><h1>Video Fallback Test</h1><div class="w-background-video"><img class="poster-image" src="/hero-poster.webp"></div></body></html>',
+			document: {
+				querySelector: () => null,
+				querySelectorAll: () => [],
+				body: {
+					textContent: 'Video Fallback Test meaningful page content.',
+					innerHTML: '<h1>Video Fallback Test</h1><div class="w-background-video"><img class="poster-image" src="/hero-poster.webp"></div>'
+				}
+			},
+			images: [createImage({ src: '/hero-poster.webp', class: 'poster-image' }, {
+				closest: (selector: string) => selector.includes('.w-background-video') ? {} : null
+			})],
+			headings: [{ tagName: 'H1', textContent: 'Video Fallback Test' }]
+		}));
+
+		const result = await validateAccessibility('https://example.com');
+
+		expect(result.stats.missingAltText).toBe(0);
+		expect(result.issues.some((issue) => issue.id === 'missing-alt-text-critical')).toBe(false);
+	});
+});
+
+describe('Asset Validator', () => {
+	it('treats 150KB as a review target and 4MB as the blocking maximum', () => {
+		const issues = generateAssetIssues([
+			{
+				name: 'portfolio-hero.webp',
+				url: 'https://uploads-ssl.webflow.com/site/portfolio-hero.webp',
+				size: 280 * 1024,
+				format: 'image/webp',
+				isOptimized: true,
+				usageCount: 1,
+				hasLicensingIssues: false
+			},
+			{
+				name: 'raw-gallery-image.png',
+				url: 'https://uploads-ssl.webflow.com/site/raw-gallery-image.png',
+				size: 5 * 1024 * 1024,
+				format: 'image/png',
+				isOptimized: false,
+				usageCount: 1,
+				hasLicensingIssues: false
+			}
+		]);
+
+		const compressionIssue = issues.find((issue) => issue.id === 'assets-above-compression-target');
+		const maxSizeIssue = issues.find((issue) => issue.id === 'assets-extremely-large');
+
+		expect(compressionIssue).toEqual(expect.objectContaining({
+			severity: 'warning',
+			message: '1 assets are above the 150KB compression target'
+		}));
+		expect(compressionIssue?.details?.oversizedAssets).toEqual([
+			expect.objectContaining({ name: 'portfolio-hero.webp', size: '280KB' })
+		]);
+		expect(maxSizeIssue).toEqual(expect.objectContaining({
+			severity: 'error',
+			message: '1 assets exceed the 4MB maximum file size'
+		}));
 	});
 });
 

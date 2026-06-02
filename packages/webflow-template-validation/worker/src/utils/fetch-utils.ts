@@ -403,7 +403,7 @@ function createMockElement(htmlString: string): any {
 	const tagName = htmlString.match(/<(\w+)/)?.[1]?.toUpperCase() || 'UNKNOWN';
 
 	const mockElement: any = {
-		getAttribute: (name: string) => attributes[name] || null,
+		getAttribute: (name: string) => name in attributes ? attributes[name] : null,
 		hasAttribute: (name: string) => name in attributes,
 		textContent: htmlString.replace(/<[^>]*>/g, '').trim(),
 		tagName: tagName,

@@ -210,13 +210,16 @@ async function analyzeColorContrast(parsedHTML: ParsedHTML): Promise<ContrastAud
 }
 
 function analyzeAltTextCoverage(parsedHTML: ParsedHTML): any {
-	const totalImages = parsedHTML.images.length;
+	let totalImages = 0;
 	let imagesWithAlt = 0;
-	const imagesWithoutAlt: Array<{ src: string; context: string; isDecorative: boolean }> = [];
+	const imagesWithoutAlt: Array<{ src: string; context: string; isDecorative: boolean; selector?: string }> = [];
 
 	parsedHTML.images.forEach((img, index) => {
+		if (shouldIgnoreImageForAltAudit(img)) return;
+
+		totalImages++;
 		const alt = img.getAttribute('alt');
-		const src = img.getAttribute('src') || 'unknown';
+		const src = getImageSource(img);
 
 		if (alt !== null) {
 			imagesWithAlt++;
@@ -227,7 +230,8 @@ function analyzeAltTextCoverage(parsedHTML: ParsedHTML): any {
 			imagesWithoutAlt.push({
 				src: src.substring(0, 100), // Truncate long URLs
 				context: determineImageContext(img, index),
-				isDecorative
+				isDecorative,
+				selector: buildImageSelector(img, index)
 			});
 		}
 	});
@@ -853,14 +857,21 @@ function clamp(value: number, min: number, max: number): number {
 	return Math.min(Math.max(value, min), max);
 }
 
+const VIDEO_FALLBACK_ANCESTOR_SELECTOR = [
+	'.w-background-video',
+	'.w-video',
+	'[data-video-urls]',
+	'[data-video-url]',
+	'[data-poster-url]'
+].join(', ');
+
 function isLikelyDecorativeImage(img: any): boolean {
 	// Heuristics to determine if image is likely decorative
-	const src = img.getAttribute('src') || '';
+	const src = getImageSource(img);
 	const className = img.getAttribute('class') || '';
 
 	// Check for common decorative patterns
 	const decorativePatterns = [
-		/icon/i,
 		/decoration/i,
 		/ornament/i,
 		/divider/i,
@@ -874,15 +885,76 @@ function isLikelyDecorativeImage(img: any): boolean {
 	);
 }
 
-function determineImageContext(img: any, index: number): string {
-	const src = img.getAttribute('src') || '';
+function shouldIgnoreImageForAltAudit(img: any): boolean {
+	const alt = img.getAttribute?.('alt');
+	if (typeof alt === 'string' && alt.trim() === '') return true;
 
-	if (src.includes('hero') || index === 0) return 'hero-image';
-	if (src.includes('logo')) return 'logo';
-	if (src.includes('icon')) return 'icon';
-	if (src.includes('thumb') || src.includes('preview')) return 'thumbnail';
+	const role = (img.getAttribute?.('role') || '').toLowerCase();
+	if (role === 'presentation' || role === 'none') return true;
+
+	if ((img.getAttribute?.('aria-hidden') || '').toLowerCase() === 'true') return true;
+
+	return isLikelyPlatformVideoFallbackImage(img);
+}
+
+function isLikelyPlatformVideoFallbackImage(img: any): boolean {
+	if (typeof img.closest === 'function' && img.closest(VIDEO_FALLBACK_ANCESTOR_SELECTOR)) {
+		return true;
+	}
+
+	const className = String(img.getAttribute?.('class') || img.className || '').toLowerCase();
+	const src = getImageSource(img).toLowerCase();
+	const attrs = [
+		img.getAttribute?.('data-poster-url'),
+		img.getAttribute?.('data-video-urls'),
+		img.getAttribute?.('data-video-url')
+	].filter(Boolean).join(' ').toLowerCase();
+
+	return (
+		/\b(w-background-video|w-video|video-fallback|fallback-image|poster-image)\b/.test(className) ||
+		/\b(video-fallback|fallback-image|poster-image)\b/.test(src) ||
+		attrs.length > 0
+	);
+}
+
+function determineImageContext(img: any, index: number): string {
+	const src = getImageSource(img);
+	const className = String(img.getAttribute?.('class') || img.className || '').toLowerCase();
+
+	if (src.includes('hero') || className.includes('hero') || index === 0) return 'hero-image';
+	if (src.includes('logo') || className.includes('logo')) return 'logo';
+	if (src.includes('thumb') || src.includes('preview') || className.includes('thumb')) return 'thumbnail';
 
 	return 'content-image';
+}
+
+function getImageSource(img: any): string {
+	return img.getAttribute?.('src') || img.getAttribute?.('data-src') || img.src || 'unknown';
+}
+
+function buildImageSelector(img: any, index: number): string {
+	const id = img.getAttribute?.('id');
+	if (id) return `#${id}`;
+
+	const className = String(img.getAttribute?.('class') || '').trim();
+	if (className) {
+		const firstClass = className.split(/\s+/).find(Boolean);
+		if (firstClass) return `img.${firstClass}`;
+	}
+
+	const src = getImageSource(img);
+	if (src && src !== 'unknown') return `img[src*="${getAssetNameFromUrl(src)}"]`;
+
+	return `img:nth-of-type(${index + 1})`;
+}
+
+function getAssetNameFromUrl(value: string): string {
+	try {
+		const pathname = new URL(value, 'https://example.com').pathname;
+		return pathname.split('/').pop() || value;
+	} catch {
+		return value.split('/').pop() || value;
+	}
 }
 
 function createEmptyAudit(): AccessibilityAudit {
