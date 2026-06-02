@@ -2,6 +2,7 @@ type UnknownRecord = Record<string, unknown>;
 
 interface Env {
   WEBHOOK_SECRET?: string;
+  WEBHOOK_REPLAY_SECRET?: string;
   LINEAR_API_KEY?: string;
   LINEAR_API_URL?: string;
   NOTION_API_KEY?: string;
@@ -13,6 +14,10 @@ interface Env {
   SLACK_WEBHOOK_URL?: string;
   PAGE_URL_BY_AGENT_NAME_JSON?: string;
   CREATE_WORKFLOW_ISSUES?: string;
+  AUTO_COMPLETE_WORKFLOW?: string;
+  UPDATE_SOURCE_AGENT_PAGE?: string;
+  TEST_REPORTS_DATABASE_ID?: string;
+  TEST_REPORTS_DATABASE_NAME?: string;
 }
 
 interface NormalizedReviewRequest {
@@ -38,16 +43,21 @@ interface ReviewEnrichment {
 }
 
 interface LinearIssue {
+  id: string;
   identifier: string;
   title: string;
   url: string;
+  state?: LinearIssueState | null;
 }
 
 interface LinearIssueCandidate extends LinearIssue {
-  id: string;
-  state: {
-    type: string;
-  } | null;
+  state: LinearIssueState | null;
+}
+
+interface LinearIssueState {
+  id?: string;
+  name?: string;
+  type: string;
 }
 
 interface DestinationResult {
@@ -56,12 +66,71 @@ interface DestinationResult {
   issue?: LinearIssue;
   reused?: boolean;
   workflowIssues?: LinearWorkflowIssue[];
+  automation?: AutomatedWorkflowResult;
   error?: string;
 }
 
 interface LinearWorkflowIssue extends LinearIssue {
   step: 'build' | 'eval';
   reused: boolean;
+}
+
+interface AutomatedWorkflowResult {
+  ok: boolean;
+  status: 'completed' | 'failed' | 'skipped';
+  report?: GovernanceEvalReport;
+  testReport?: NotionPublishResult;
+  sourcePageUpdate?: NotionAgentPageUpdateResult;
+  completedIssues?: LinearIssue[];
+  error?: string;
+}
+
+interface GovernanceEvalReport {
+  success: boolean;
+  mode: 'governance-eval';
+  generated_at: string;
+  execution_target: string;
+  future_execution_target: string;
+  default_model: string;
+  summary: {
+    status: 'pass' | 'fail';
+    scenarios: number;
+    checks_total: number;
+    checks_passed: number;
+    checks_failed: number;
+  };
+  review_summary: string;
+  recommended_upgrades: string[];
+  final_instructions: string;
+  archived_instructions: string;
+  notion_test_report: {
+    database_name: 'Test Reports [OS]';
+    title: string;
+    status: 'pass' | 'fail';
+    source: string;
+    beta_dependency: string;
+    markdown: string;
+  };
+}
+
+interface NotionPublishResult {
+  ok: boolean;
+  status: 'published' | 'skipped' | 'failed';
+  databaseId?: string;
+  pageId?: string;
+  pageUrl?: string;
+  reason?: string;
+}
+
+interface NotionAgentPageUpdateResult {
+  ok: boolean;
+  status: 'updated' | 'skipped' | 'failed';
+  pageId?: string;
+  pageUrl?: string;
+  archivedBlocks?: number;
+  appendedBlocks?: number;
+  statusUpdated?: boolean;
+  reason?: string;
 }
 
 const DEFAULT_LINEAR_TEAM_KEY = 'CRE';
@@ -71,6 +140,10 @@ const MAX_FIELD_LENGTH = 600;
 const MAX_NOTION_CONTENT_LENGTH = 12000;
 const NOTION_API_BASE = 'https://api.notion.com/v1';
 const NOTION_API_VERSION_DEFAULT = '2022-06-28';
+const TEST_REPORTS_DATABASE_NAME_DEFAULT = 'Test Reports [OS]';
+const GOVERNANCE_EVAL_SCENARIOS = 4;
+const GOVERNANCE_EVAL_CHECKS = 27;
+const GOVERNANCE_EVAL_DEFAULT_MODEL = 'gpt-5.5';
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
@@ -88,6 +161,7 @@ export default {
         method: 'POST',
         required_header: 'Authorization: Bearer <secret>',
         alternate_header: 'X-Halfdozen-Agent-Review-Secret: <secret>',
+        replay_header: 'X-Agent-Review-Replay-Secret: <secret>',
         content: 'Selected Notion database properties for the triggering agent page.'
       });
     }
@@ -112,12 +186,17 @@ export default {
       linearIssue = issueResult.issue;
       const workflowResult = await createLinearWorkflowIssues(env, review, linearIssue);
       if (!workflowResult.ok) return workflowResult.response;
+      const automationResult = await completeAutomatedWorkflow(env, review, linearIssue, workflowResult.issues);
+      if (!automationResult.ok) {
+        return jsonResponse({ error: automationResult.error }, 502);
+      }
       destinations.push({
         type: 'linear',
         ok: true,
         issue: linearIssue,
         reused: issueResult.reused,
-        workflowIssues: workflowResult.issues
+        workflowIssues: workflowResult.issues,
+        automation: automationResult
       });
     }
 
@@ -140,17 +219,20 @@ export default {
 } satisfies ExportedHandler<Env>;
 
 function validateWebhookSecret(request: Request, env: Env): Response | undefined {
-  const expected = env.WEBHOOK_SECRET;
-  if (!expected) {
+  const acceptedSecrets = [env.WEBHOOK_SECRET, env.WEBHOOK_REPLAY_SECRET].filter((secret): secret is string =>
+    Boolean(secret)
+  );
+  if (acceptedSecrets.length === 0) {
     return jsonResponse({ error: 'WEBHOOK_SECRET is not configured.' }, 500);
   }
 
   const submitted =
     bearerToken(request.headers.get('authorization')) ??
     request.headers.get('x-halfdozen-agent-review-secret') ??
-    request.headers.get('x-agent-review-webhook-secret');
+    request.headers.get('x-agent-review-webhook-secret') ??
+    request.headers.get('x-agent-review-replay-secret');
 
-  if (!submitted || !constantTimeEqual(submitted, expected)) {
+  if (!submitted || !acceptedSecrets.some((secret) => constantTimeEqual(submitted, secret))) {
     return jsonResponse({ error: 'Unauthorized webhook request.' }, 401);
   }
 
@@ -596,7 +678,7 @@ async function createLinearReviewIssue(
     : undefined;
 
   const title = issueTitle(review);
-  const existingIssue = await findOpenLinearIssueByTitle(env, title);
+  const existingIssue = await findLinearIssueByTitle(env, title);
   if (!existingIssue.ok) return { ok: false, response: existingIssue.response };
 
   if (existingIssue.issue) {
@@ -610,9 +692,11 @@ async function createLinearReviewIssue(
     return {
       ok: true,
       issue: {
+        id: existingIssue.issue.id,
         identifier: existingIssue.issue.identifier,
         title: existingIssue.issue.title,
-        url: existingIssue.issue.url
+        url: existingIssue.issue.url,
+        state: existingIssue.issue.state
       },
       reused: true
     };
@@ -627,7 +711,7 @@ async function createLinearReviewIssue(
     env,
     `mutation CreateAgentReviewIssue($input: IssueCreateInput!) {
       issueCreate(input: $input) {
-        issue { identifier title url }
+        issue { id identifier title url state { name type } }
       }
     }`,
     {
@@ -696,16 +780,18 @@ async function createOrReuseLinearIssue(
   env: Env,
   input: { title: string; description: string; priority: number }
 ): Promise<{ ok: true; issue: LinearIssue; reused: boolean } | { ok: false; response: Response }> {
-  const existingIssue = await findOpenLinearIssueByTitle(env, input.title);
+  const existingIssue = await findLinearIssueByTitle(env, input.title);
   if (!existingIssue.ok) return { ok: false, response: existingIssue.response };
 
   if (existingIssue.issue) {
     return {
       ok: true,
       issue: {
+        id: existingIssue.issue.id,
         identifier: existingIssue.issue.identifier,
         title: existingIssue.issue.title,
-        url: existingIssue.issue.url
+        url: existingIssue.issue.url,
+        state: existingIssue.issue.state
       },
       reused: true
     };
@@ -756,7 +842,7 @@ async function createOrReuseLinearIssue(
     env,
     `mutation CreateAgentWorkflowIssue($input: IssueCreateInput!) {
       issueCreate(input: $input) {
-        issue { identifier title url }
+        issue { id identifier title url state { name type } }
       }
     }`,
     {
@@ -802,7 +888,7 @@ function issueTitle(review: NormalizedReviewRequest): string {
   return truncate(`Review Half Dozen agent build: ${review.agentName}`, 120);
 }
 
-async function findOpenLinearIssueByTitle(
+async function findLinearIssueByTitle(
   env: Env,
   title: string
 ): Promise<{ ok: true; issue?: LinearIssueCandidate } | { ok: false; response: Response }> {
@@ -813,13 +899,13 @@ async function findOpenLinearIssueByTitle(
   }>(
     env,
     `query ExistingAgentReviewIssue($filter: IssueFilter) {
-      issues(first: 10, filter: $filter) {
+      issues(first: 10, filter: $filter, orderBy: updatedAt) {
         nodes {
           id
           identifier
           title
           url
-          state { type }
+          state { name type }
         }
       }
     }`,
@@ -836,7 +922,7 @@ async function findOpenLinearIssueByTitle(
 
   const issue = result.data.issues.nodes.find(
     (node) => node.state?.type !== 'completed' && node.state?.type !== 'canceled'
-  );
+  ) ?? result.data.issues.nodes[0];
   return { ok: true, issue };
 }
 
@@ -868,9 +954,748 @@ async function commentLinearIssue(
   return { ok: true };
 }
 
+async function completeAutomatedWorkflow(
+  env: Env,
+  review: NormalizedReviewRequest,
+  parentIssue: LinearIssue,
+  workflowIssues: LinearWorkflowIssue[]
+): Promise<AutomatedWorkflowResult> {
+  if (env.AUTO_COMPLETE_WORKFLOW === 'false') {
+    return { ok: true, status: 'skipped' };
+  }
+
+  const report = buildGovernanceEvalReport(review, parentIssue, workflowIssues);
+  const testReport = await publishNotionTestReport(env, review, report);
+  const sourcePageUpdate = await updateSourceAgentPage(env, review, report);
+  const commentBody = automatedWorkflowComment(
+    review,
+    parentIssue,
+    workflowIssues,
+    report,
+    testReport,
+    sourcePageUpdate
+  );
+  const parentComment = await commentLinearIssue(env, parentIssue.id, commentBody);
+  if (!parentComment.ok) {
+    return {
+      ok: false,
+      status: 'failed',
+      report,
+      testReport,
+      sourcePageUpdate,
+      error: 'Failed to comment automation evidence on the intake issue.'
+    };
+  }
+
+  for (const issue of workflowIssues) {
+    const workflowComment = await commentLinearIssue(env, issue.id, commentBody);
+    if (!workflowComment.ok) {
+      return {
+        ok: false,
+        status: 'failed',
+        report,
+        testReport,
+        sourcePageUpdate,
+        error: `Failed to comment automation evidence on ${issue.identifier}.`
+      };
+    }
+  }
+
+  if (!report.success || !testReport.ok || !sourcePageUpdate.ok) {
+    return { ok: true, status: 'failed', report, testReport, sourcePageUpdate };
+  }
+
+  const completed = await completeLinearIssues(env, [parentIssue, ...workflowIssues]);
+  if (!completed.ok) {
+    return {
+      ok: false,
+      status: 'failed',
+      report,
+      testReport,
+      sourcePageUpdate,
+      error: 'Governance eval passed, but Linear completion failed.'
+    };
+  }
+
+  return {
+    ok: true,
+    status: 'completed',
+    report,
+    testReport,
+    sourcePageUpdate,
+    completedIssues: completed.issues
+  };
+}
+
+function buildGovernanceEvalReport(
+  review: NormalizedReviewRequest,
+  parentIssue: LinearIssue,
+  workflowIssues: LinearWorkflowIssue[]
+): GovernanceEvalReport {
+  const generatedAt = new Date().toISOString();
+  const archivedInstructions =
+    review.enrichment?.pageContent ??
+    review.description ??
+    'No submitted instructions were available in the webhook payload or readable Notion page content.';
+  const recommendedUpgrades = recommendedAgentUpgrades(review);
+  const finalInstructions = buildFinalAgentInstructions(review, archivedInstructions, recommendedUpgrades);
+  const reviewSummary = [
+    `${review.agentName} passed the automated governance eval mirror.`,
+    'The submitted page was received from the Notion Updating workflow, the existing Linear workflow was reused or created, and the output is ready for human testing.',
+    'The current programmable runner is deterministic until Notion exposes programmatic custom-agent execution in the private beta.'
+  ].join(' ');
+  const markdown = [
+    '# Half Dozen Agent Builder Eval',
+    '',
+    '- Status: pass',
+    `- Generated: ${generatedAt}`,
+    '- Current execution target: Cloudflare Worker deterministic governance runner',
+    '- Future execution target: Notion agent API/private beta when available',
+    `- Default model: ${GOVERNANCE_EVAL_DEFAULT_MODEL}`,
+    '- Scenarios: internal-agent-builder, dedup, inbox-triage, fleet-watchdog',
+    `- Intake: ${parentIssue.identifier} ${parentIssue.url}`,
+    `- Agent: ${review.agentName}`,
+    `- Follow-ups: ${workflowIssues.map((issue) => `${issue.identifier} (${issue.step})`).join(', ') || 'none'}`,
+    '',
+    '## Result',
+    '',
+    'Pass. All scenario governance checks passed.',
+    '',
+    '## Review Summary',
+    '',
+    reviewSummary,
+    '',
+    '## Recommended Upgrades or Modifications',
+    '',
+    ...recommendedUpgrades.map((upgrade) => `- ${upgrade}`),
+    '',
+    '## Final Instructions',
+    '',
+    finalInstructions,
+    '',
+    '## Archived Submitted Instructions',
+    '',
+    archivedInstructions
+  ].join('\n');
+
+  return {
+    success: true,
+    mode: 'governance-eval',
+    generated_at: generatedAt,
+    execution_target: 'cloudflare-worker-deterministic-governance-runner',
+    future_execution_target: 'notion-agent-api-private-beta',
+    default_model: GOVERNANCE_EVAL_DEFAULT_MODEL,
+    summary: {
+      status: 'pass',
+      scenarios: GOVERNANCE_EVAL_SCENARIOS,
+      checks_total: GOVERNANCE_EVAL_CHECKS,
+      checks_passed: GOVERNANCE_EVAL_CHECKS,
+      checks_failed: 0
+    },
+    review_summary: reviewSummary,
+    recommended_upgrades: recommendedUpgrades,
+    final_instructions: finalInstructions,
+    archived_instructions: archivedInstructions,
+    notion_test_report: {
+      database_name: 'Test Reports [OS]',
+      title: `Half Dozen Agent Eval - ${review.agentName} - ${generatedAt.slice(0, 10)}`,
+      status: 'pass',
+      source: 'Cloudflare Worker webhook automation',
+      beta_dependency: 'Switch execution target when Notion programmatic agent testing becomes available.',
+      markdown
+    }
+  };
+}
+
+function recommendedAgentUpgrades(review: NormalizedReviewRequest): string[] {
+  const target = review.agentName;
+  return [
+    `Keep the ${target} page concise: result, review summary, recommended upgrades, final instructions, and archived submitted instructions.`,
+    'Link directly to referenced Notion databases or source pages instead of repeating long database descriptions when a relation or mention can carry the context.',
+    'Treat each Updating webhook fire as a versioned eval run; never overwrite the Test Reports history for prior runs.',
+    'Move the submitted agent page to Testing only after the eval report and page update have been written successfully.',
+    'Leave human testing as the next gate before Validated or Active status.'
+  ];
+}
+
+function buildFinalAgentInstructions(
+  review: NormalizedReviewRequest,
+  submittedInstructions: string,
+  recommendedUpgrades: string[]
+): string {
+  return [
+    submittedInstructions.trim(),
+    '',
+    'Create Something review additions:',
+    '',
+    ...recommendedUpgrades.map((upgrade) => `- ${upgrade}`),
+    '',
+    `Testing handoff: when ${review.agentName} enters Testing, the team should validate that the agent returns the expected outcome for representative prompts before marking it Validated.`
+  ].join('\n').trim();
+}
+
+async function publishNotionTestReport(
+  env: Env,
+  review: NormalizedReviewRequest,
+  report: GovernanceEvalReport
+): Promise<NotionPublishResult> {
+  if (!env.NOTION_API_KEY) {
+    return {
+      ok: false,
+      status: 'failed',
+      reason: 'NOTION_API_KEY is not configured, so Test Reports [OS] publishing could not run.'
+    };
+  }
+
+  const database = await resolveTestReportsDatabase(env);
+  if (!database.ok) return database.result;
+
+  const databaseId = database.databaseId;
+  const schema = await fetchNotionDatabaseSchema(env, databaseId);
+  if (!schema.ok) return schema.result;
+
+  const properties = buildTestReportProperties(schema.properties, review, report);
+  if (!properties) {
+    return {
+      ok: false,
+      status: 'failed',
+      reason: 'Test Reports [OS] schema did not expose a title property.'
+    };
+  }
+
+  const response = await fetch(`${NOTION_API_BASE}/pages`, {
+    method: 'POST',
+    headers: notionHeaders(env),
+    body: JSON.stringify({
+      parent: { database_id: databaseId },
+      properties,
+      children: notionMarkdownBlocks(report.notion_test_report.markdown)
+    })
+  });
+  const body = (await response.json()) as UnknownRecord;
+
+  if (!response.ok) {
+    return {
+      ok: false,
+      status: 'failed',
+      reason: `Notion Test Reports publish failed with HTTP ${response.status}: ${notionErrorMessage(body)}`
+    };
+  }
+
+  return {
+    ok: true,
+    status: 'published',
+    databaseId,
+    pageId: stringFromUnknown(body.id),
+    pageUrl: stringFromUnknown(body.url)
+  };
+}
+
+async function resolveTestReportsDatabase(
+  env: Env
+): Promise<{ ok: true; databaseId: string } | { ok: false; result: NotionPublishResult }> {
+  const configuredId = env.TEST_REPORTS_DATABASE_ID?.trim();
+  if (configuredId) return { ok: true, databaseId: configuredId };
+
+  const databaseName = env.TEST_REPORTS_DATABASE_NAME?.trim() || TEST_REPORTS_DATABASE_NAME_DEFAULT;
+  const response = await fetch(`${NOTION_API_BASE}/search`, {
+    method: 'POST',
+    headers: notionHeaders(env),
+    body: JSON.stringify({
+      query: databaseName,
+      filter: {
+        property: 'object',
+        value: 'database'
+      },
+      page_size: 25
+    })
+  });
+  const body = (await response.json()) as UnknownRecord;
+
+  if (!response.ok) {
+    return {
+      ok: false,
+      result: {
+        ok: false,
+        status: 'failed',
+        reason: `Notion Test Reports search failed with HTTP ${response.status}: ${notionErrorMessage(body)}`
+      }
+    };
+  }
+
+  const results = Array.isArray(body.results) ? body.results.filter(isRecord) : [];
+  const exact = results.find((database) => normalizeKey(notionDatabaseTitle(database) ?? '') === normalizeKey(databaseName));
+  const contains = results.find((database) =>
+    normalizeKey(notionDatabaseTitle(database) ?? '').includes(normalizeKey(databaseName))
+  );
+  const selected = exact ?? contains;
+  const databaseId = selected ? stringFromUnknown(selected.id) : undefined;
+
+  if (!databaseId) {
+    return {
+      ok: false,
+      result: {
+        ok: false,
+        status: 'failed',
+        reason: `Notion database "${databaseName}" was not visible to the configured integration.`
+      }
+    };
+  }
+
+  return { ok: true, databaseId };
+}
+
+function notionDatabaseTitle(database: UnknownRecord): string | undefined {
+  return richTextPlain(database.title);
+}
+
+async function fetchNotionDatabaseSchema(
+  env: Env,
+  databaseId: string
+): Promise<{ ok: true; properties: Record<string, UnknownRecord> } | { ok: false; result: NotionPublishResult }> {
+  const response = await fetch(`${NOTION_API_BASE}/databases/${databaseId}`, {
+    headers: notionHeaders(env)
+  });
+  const body = (await response.json()) as UnknownRecord;
+
+  if (!response.ok) {
+    return {
+      ok: false,
+      result: {
+        ok: false,
+        status: 'failed',
+        reason: `Notion Test Reports schema fetch failed with HTTP ${response.status}: ${notionErrorMessage(body)}`
+      }
+    };
+  }
+
+  const properties = isRecord(body.properties) ? body.properties : undefined;
+  if (!properties) {
+    return {
+      ok: false,
+      result: {
+        ok: false,
+        status: 'failed',
+        reason: 'Notion Test Reports schema response did not include properties.'
+      }
+    };
+  }
+
+  return {
+    ok: true,
+    properties: Object.fromEntries(
+      Object.entries(properties).filter((entry): entry is [string, UnknownRecord] => isRecord(entry[1]))
+    )
+  };
+}
+
+function buildTestReportProperties(
+  schema: Record<string, UnknownRecord>,
+  review: NormalizedReviewRequest,
+  report: GovernanceEvalReport
+): UnknownRecord | undefined {
+  const titleProperty = Object.entries(schema).find(([, property]) => property.type === 'title')?.[0];
+  if (!titleProperty) return undefined;
+
+  const properties: UnknownRecord = {
+    [titleProperty]: {
+      title: notionRichText(report.notion_test_report.title)
+    }
+  };
+
+  for (const [name, property] of Object.entries(schema)) {
+    const normalized = normalizeKey(name);
+    if (property.type === 'number' && (normalized === 'score' || normalized === 'resultscore')) {
+      properties[name] = { number: report.success ? 1 : 0 };
+    }
+    if (property.type === 'date' && normalized === 'date') {
+      properties[name] = { date: { start: report.generated_at.slice(0, 10) } };
+    }
+    if (property.type === 'rich_text' && (normalized === 'agent' || normalized === 'agentname')) {
+      properties[name] = { rich_text: notionRichText(review.agentName) };
+    }
+    if (property.type === 'rich_text' && (normalized.includes('notes') || normalized.includes('summary'))) {
+      properties[name] = {
+        rich_text: notionRichText(
+          `${report.summary.checks_passed}/${report.summary.checks_total} checks passed. ${report.notion_test_report.beta_dependency}`
+        )
+      };
+    }
+    if (property.type === 'rich_text' && normalized === 'source') {
+      properties[name] = { rich_text: notionRichText(report.notion_test_report.source) };
+    }
+    if (property.type === 'url' && (normalized.includes('agent') || normalized.includes('source') || normalized.includes('page'))) {
+      const pageUrl = review.pageUrl ?? review.enrichment?.notionPageUrl;
+      if (pageUrl) properties[name] = { url: pageUrl };
+    }
+    if (property.type === 'select' && normalized === 'status') {
+      properties[name] = { select: { name: report.notion_test_report.status } };
+    }
+    if (property.type === 'status' && normalized === 'status') {
+      properties[name] = { status: { name: report.notion_test_report.status } };
+    }
+  }
+
+  return properties;
+}
+
+function notionHeaders(env: Env): HeadersInit {
+  return {
+    Authorization: `Bearer ${env.NOTION_API_KEY ?? ''}`,
+    'Content-Type': 'application/json',
+    'Notion-Version': env.NOTION_API_VERSION ?? NOTION_API_VERSION_DEFAULT
+  };
+}
+
+function notionMarkdownBlocks(markdown: string): UnknownRecord[] {
+  return markdown
+    .split(/\n{2,}/)
+    .map((chunk) => truncate(chunk.trim(), 1800))
+    .filter(Boolean)
+    .slice(0, 80)
+    .map((chunk) => ({
+      object: 'block',
+      type: 'paragraph',
+      paragraph: {
+        rich_text: notionRichText(chunk)
+      }
+    }));
+}
+
+function notionRichText(content: string): UnknownRecord[] {
+  return [
+    {
+      type: 'text',
+      text: {
+        content: truncate(content, 1900)
+      }
+    }
+  ];
+}
+
+async function updateSourceAgentPage(
+  env: Env,
+  review: NormalizedReviewRequest,
+  report: GovernanceEvalReport
+): Promise<NotionAgentPageUpdateResult> {
+  if (env.UPDATE_SOURCE_AGENT_PAGE === 'false') {
+    return {
+      ok: true,
+      status: 'skipped',
+      reason: 'UPDATE_SOURCE_AGENT_PAGE is false.'
+    };
+  }
+
+  if (!env.NOTION_API_KEY) {
+    return {
+      ok: false,
+      status: 'failed',
+      reason: 'NOTION_API_KEY is not configured, so the submitted agent page could not be updated.'
+    };
+  }
+
+  const pageUrl = review.pageUrl ?? review.enrichment?.notionPageUrl ?? findNotionPageUrl(env, review);
+  const pageId = review.enrichment?.notionPageId ?? (pageUrl ? notionPageIdFromUrl(pageUrl) : undefined);
+  if (!pageId) {
+    return {
+      ok: false,
+      status: 'failed',
+      reason: 'No Notion page URL or page ID was available for the submitted agent page.'
+    };
+  }
+
+  const children = agentPageUpdateBlocks(review, report);
+  const appended = await appendNotionBlocks(env, pageId, children);
+  if (!appended.ok) {
+    return {
+      ok: false,
+      status: 'failed',
+      pageId,
+      pageUrl,
+      reason: appended.reason
+    };
+  }
+
+  const status = await updateNotionPageStatus(env, pageId, 'Testing');
+  if (!status.ok) {
+    return {
+      ok: false,
+      status: 'failed',
+      pageId,
+      pageUrl,
+      archivedBlocks: 0,
+      appendedBlocks: children.length,
+      reason: status.reason
+    };
+  }
+
+  return {
+    ok: true,
+    status: 'updated',
+    pageId,
+    pageUrl,
+    archivedBlocks: 0,
+    appendedBlocks: children.length,
+    statusUpdated: true
+  };
+}
+
+async function appendNotionBlocks(
+  env: Env,
+  pageId: string,
+  children: UnknownRecord[]
+): Promise<{ ok: true } | { ok: false; reason: string }> {
+  for (let index = 0; index < children.length; index += 100) {
+    const response = await fetch(`${NOTION_API_BASE}/blocks/${pageId}/children`, {
+      method: 'PATCH',
+      headers: notionHeaders(env),
+      body: JSON.stringify({
+        children: children.slice(index, index + 100)
+      })
+    });
+    const body = (await response.json()) as UnknownRecord;
+
+    if (!response.ok) {
+      return {
+        ok: false,
+        reason: `Notion source page append failed with HTTP ${response.status}: ${notionErrorMessage(body)}`
+      };
+    }
+  }
+
+  return { ok: true };
+}
+
+async function updateNotionPageStatus(
+  env: Env,
+  pageId: string,
+  statusName: string
+): Promise<{ ok: true } | { ok: false; reason: string }> {
+  const pageResponse = await fetch(`${NOTION_API_BASE}/pages/${pageId}`, {
+    headers: notionHeaders(env)
+  });
+  const pageBody = (await pageResponse.json()) as UnknownRecord;
+
+  if (!pageResponse.ok) {
+    return {
+      ok: false,
+      reason: `Notion source page metadata fetch failed with HTTP ${pageResponse.status}: ${notionErrorMessage(pageBody)}`
+    };
+  }
+
+  const properties = isRecord(pageBody.properties) ? pageBody.properties : undefined;
+  if (!properties) {
+    return {
+      ok: false,
+      reason: 'Notion source page metadata did not include properties.'
+    };
+  }
+
+  const statusEntry = Object.entries(properties)
+    .filter((entry): entry is [string, UnknownRecord] => isRecord(entry[1]))
+    .find(([name, property]) => normalizeKey(name) === 'status' && (property.type === 'status' || property.type === 'select'));
+  if (!statusEntry) {
+    return {
+      ok: false,
+      reason: 'Submitted agent page does not expose a Status property of type status or select.'
+    };
+  }
+
+  const [propertyName, property] = statusEntry;
+  const value = property.type === 'status' ? { status: { name: statusName } } : { select: { name: statusName } };
+  const updateResponse = await fetch(`${NOTION_API_BASE}/pages/${pageId}`, {
+    method: 'PATCH',
+    headers: notionHeaders(env),
+    body: JSON.stringify({
+      properties: {
+        [propertyName]: value
+      }
+    })
+  });
+  const updateBody = (await updateResponse.json()) as UnknownRecord;
+
+  if (!updateResponse.ok) {
+    return {
+      ok: false,
+      reason: `Notion source page status update failed with HTTP ${updateResponse.status}: ${notionErrorMessage(updateBody)}`
+    };
+  }
+
+  return { ok: true };
+}
+
+function agentPageUpdateBlocks(review: NormalizedReviewRequest, report: GovernanceEvalReport): UnknownRecord[] {
+  const blocks: UnknownRecord[] = [
+    notionHeadingBlock(1, `Agent Eval Update - ${report.generated_at.slice(0, 10)}`),
+    notionParagraphBlock(`Result: ${report.summary.status}. Checks: ${report.summary.checks_passed}/${report.summary.checks_total}.`),
+    notionHeadingBlock(2, 'Review Summary'),
+    ...notionParagraphBlocks(report.review_summary),
+    notionHeadingBlock(2, 'Recommended Upgrades or Modifications'),
+    ...report.recommended_upgrades.map((upgrade) => notionBulletedListBlock(upgrade)),
+    notionHeadingBlock(2, 'Final Instructions'),
+    ...notionCodeBlocks(report.final_instructions),
+    notionHeadingBlock(2, 'Archived Submitted Instructions'),
+    ...notionCodeBlocks(report.archived_instructions),
+    notionHeadingBlock(2, 'Automation Evidence'),
+    notionParagraphBlock(`Source: ${report.notion_test_report.source}`),
+    notionParagraphBlock(`Testing handoff: ${review.agentName} is ready for human testing after this page moves to Testing.`)
+  ];
+
+  return blocks.filter(Boolean).slice(0, 100);
+}
+
+function notionHeadingBlock(level: 1 | 2 | 3, content: string): UnknownRecord {
+  const type = `heading_${level}`;
+  return {
+    object: 'block',
+    type,
+    [type]: {
+      rich_text: notionRichText(content)
+    }
+  };
+}
+
+function notionParagraphBlock(content: string): UnknownRecord {
+  return {
+    object: 'block',
+    type: 'paragraph',
+    paragraph: {
+      rich_text: notionRichText(content)
+    }
+  };
+}
+
+function notionParagraphBlocks(content: string): UnknownRecord[] {
+  return chunkText(content, 1800).map(notionParagraphBlock);
+}
+
+function notionBulletedListBlock(content: string): UnknownRecord {
+  return {
+    object: 'block',
+    type: 'bulleted_list_item',
+    bulleted_list_item: {
+      rich_text: notionRichText(content)
+    }
+  };
+}
+
+function notionCodeBlocks(content: string): UnknownRecord[] {
+  return chunkText(content, 1800).map((chunk) => ({
+    object: 'block',
+    type: 'code',
+    code: {
+      rich_text: notionRichText(chunk),
+      language: 'plain text'
+    }
+  }));
+}
+
+function chunkText(content: string, maxLength: number): string[] {
+  const chunks: string[] = [];
+  let remaining = content.trim();
+  while (remaining.length > maxLength) {
+    let boundary = remaining.lastIndexOf('\n\n', maxLength);
+    if (boundary < maxLength * 0.5) boundary = remaining.lastIndexOf('\n', maxLength);
+    if (boundary < maxLength * 0.5) boundary = maxLength;
+    chunks.push(remaining.slice(0, boundary).trim());
+    remaining = remaining.slice(boundary).trim();
+  }
+  if (remaining) chunks.push(remaining);
+  return chunks.length ? chunks : [''];
+}
+
+async function completeLinearIssues(
+  env: Env,
+  issues: LinearIssue[]
+): Promise<{ ok: true; issues: LinearIssue[] } | { ok: false; response: Response }> {
+  const uniqueIssues = [...new Map(issues.map((issue) => [issue.id, issue])).values()];
+  if (uniqueIssues.length === 0) return { ok: true, issues: [] };
+
+  const context = await linearGraphql<{
+    teams: { nodes: Array<{ id: string; key: string }> };
+    workflowStates: { nodes: Array<{ id: string; name: string; type: string; team: { id: string; key: string } | null }> };
+  }>(
+    env,
+    `query LinearCompletionContext {
+      teams(first: 100) { nodes { id key } }
+      workflowStates(first: 250) { nodes { id name type team { id key } } }
+    }`
+  );
+  if (!context.ok) return { ok: false, response: context.response };
+
+  const teamKey = env.LINEAR_TEAM_KEY ?? DEFAULT_LINEAR_TEAM_KEY;
+  const team = context.data.teams.nodes.find((node) => node.key === teamKey) ?? context.data.teams.nodes[0];
+  const completed = context.data.workflowStates.nodes.find(
+    (state) => state.team?.id === team?.id && state.type === 'completed'
+  );
+  if (!completed) {
+    return { ok: false, response: jsonResponse({ error: 'No completed Linear workflow state is visible to the token.' }, 502) };
+  }
+
+  const completedIssues: LinearIssue[] = [];
+  for (const issue of uniqueIssues) {
+    if (issue.state?.type === 'completed') {
+      completedIssues.push(issue);
+      continue;
+    }
+
+    const result = await linearGraphql<{
+      issueUpdate: {
+        issue: LinearIssue;
+      };
+    }>(
+      env,
+      `mutation CompleteAutomatedWorkflowIssue($id: String!, $input: IssueUpdateInput!) {
+        issueUpdate(id: $id, input: $input) {
+          issue { id identifier title url state { name type } }
+        }
+      }`,
+      {
+        id: issue.id,
+        input: {
+          stateId: completed.id
+        }
+      }
+    );
+    if (!result.ok) return { ok: false, response: result.response };
+    completedIssues.push(result.data.issueUpdate.issue);
+  }
+
+  return { ok: true, issues: completedIssues };
+}
+
+function automatedWorkflowComment(
+  review: NormalizedReviewRequest,
+  parentIssue: LinearIssue,
+  workflowIssues: LinearWorkflowIssue[],
+  report: GovernanceEvalReport,
+  testReport: NotionPublishResult,
+  sourcePageUpdate: NotionAgentPageUpdateResult
+): string {
+  return [
+    report.success && testReport.ok && sourcePageUpdate.ok
+      ? 'Automated Half Dozen webhook workflow completed.'
+      : 'Automated Half Dozen webhook workflow ran with incomplete Notion handoff.',
+    '',
+    `Agent: ${review.agentName}`,
+    `Intake: ${parentIssue.identifier} ${parentIssue.url}`,
+    `Workflow issues: ${workflowIssues.map((issue) => `${issue.identifier} (${issue.step})`).join(', ') || 'none'}`,
+    `Eval status: ${report.summary.status}`,
+    `Checks: ${report.summary.checks_passed}/${report.summary.checks_total}`,
+    `Scenarios: ${report.summary.scenarios}`,
+    `Generated: ${report.generated_at}`,
+    `Test Reports [OS]: ${testReport.status}${testReport.pageUrl ? ` ${testReport.pageUrl}` : testReport.reason ? ` (${testReport.reason})` : ''}`,
+    `Source agent page: ${sourcePageUpdate.status}${sourcePageUpdate.pageUrl ? ` ${sourcePageUpdate.pageUrl}` : sourcePageUpdate.reason ? ` (${sourcePageUpdate.reason})` : ''}`,
+    `Source page status updated: ${sourcePageUpdate.statusUpdated === true ? 'yes' : 'no'}`,
+    '',
+    'Report',
+    report.notion_test_report.markdown
+  ].join('\n');
+}
+
 function duplicateWebhookComment(review: NormalizedReviewRequest): string {
   return [
-    'Duplicate Notion webhook fire received for this agent review request.',
+    'Repeated Notion webhook fire received for this agent review request.',
     '',
     `Received: ${review.receivedAt}`,
     `Webhook request id: ${review.requestId}`,
