@@ -11,7 +11,7 @@ const ASSET_FIELDS = [
   '🎨Creator',
   '🎨Creator Name',
   '🪣Category Group(s) Display Name',
-  '🔍Algolia Child Category (🏗️ only)',
+  'ℹ️🪣Categories (Text)',
   'ℹ️👘Styles',
   'ℹ️🏷️Tags (Multi)',
   '🥞Template Type (🏗️ only)',
@@ -263,7 +263,7 @@ function aggregateCreators(assetRecords, creatorRecords, options) {
     else creator.freeTemplates += 1;
 
     for (const value of arrayValue(fields['🪣Category Group(s) Display Name'])) creator.categories.add(String(value));
-    for (const value of arrayValue(fields['🔍Algolia Child Category (🏗️ only)'])) creator.childCategories.add(String(value));
+    for (const value of arrayValue(fields['ℹ️🪣Categories (Text)'])) creator.childCategories.add(String(value));
     for (const value of arrayValue(fields['ℹ️👘Styles'])) creator.styles.add(String(value));
     for (const value of arrayValue(fields['ℹ️🏷️Tags (Multi)'])) creator.tags.add(String(value));
 

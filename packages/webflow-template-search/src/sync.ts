@@ -29,7 +29,7 @@ import {
 } from './db.js';
 import { fetchWebflowDesignerAvatars, fetchWebflowTemplateImages, type WebflowDesignerAvatarRecord } from './webflow.js';
 import { stripHtml } from './html.js';
-import { canonicalizeCategoryGroupSlug } from './slug.js';
+import { canonicalizeCategoryGroupSlug, normalizeChildCategorySlug } from './slug.js';
 import type {
   AirtableAssetFields,
   AirtableRecord,
@@ -225,10 +225,34 @@ function resolveCreatorMetadata(
 
   return {
     creatorRecordId,
+    creatorSlug: webflowCreator?.slug || airtableCreator?.slug || null,
     creatorProfileUrl: webflowCreator?.profileUrl || airtableCreator?.profileUrl || null,
     creatorAvatarUrl: webflowCreator?.avatarUrl ?? airtableCreator?.avatarUrl ?? null,
     creatorAvatarAlt: webflowCreator?.avatarAlt ?? airtableCreator?.avatarAlt ?? (airtableCreator?.name ?? null),
   };
+}
+
+interface NormalizedChildCategory {
+  displayName: string;
+  slug: string;
+}
+
+function normalizeAssetChildCategories(record: AirtableRecord<AirtableAssetFields>): NormalizedChildCategory[] {
+  const names = ensureStringArray(record.fields['ℹ️🪣Categories (Text)']);
+  const slugs = ensureStringArray(record.fields['🥞CMS Slug (from ℹ️🪣Categories)']);
+  const categories = new Map<string, NormalizedChildCategory>();
+
+  names.forEach((name, index) => {
+    const displayName = name.trim();
+    if (!displayName) return;
+
+    const slug = normalizeChildCategorySlug(displayName, slugs[index]);
+    if (!slug || categories.has(slug)) return;
+
+    categories.set(slug, { displayName, slug });
+  });
+
+  return Array.from(categories.values());
 }
 
 function normalizeTemplateRecord(
@@ -249,9 +273,7 @@ function normalizeTemplateRecord(
     ensureStringArray(record.fields['🪣Category Group(s) CMS Slug']).map((entry) => canonicalizeCategoryGroupSlug(entry)),
   );
 
-  const childCategories = ensureStringArray(record.fields['🔍Algolia Child Category (🏗️ only)'])
-    .map((id) => lookups.childCategories.get(id))
-    .filter((value): value is NonNullable<typeof value> => Boolean(value));
+  const childCategories = normalizeAssetChildCategories(record);
 
   const styles = ensureStringArray(record.fields['ℹ️👘Styles'])
     .map((id) => lookups.styles.get(id))
@@ -280,6 +302,7 @@ function normalizeTemplateRecord(
     websiteUrl: typeof record.fields['🔗Website URL'] === 'string' ? record.fields['🔗Website URL'] : null,
     creatorName: typeof record.fields['🎨Creator Name'] === 'string' ? record.fields['🎨Creator Name'] : null,
     creatorRecordId: creator.creatorRecordId,
+    creatorSlug: creator.creatorSlug,
     creatorProfileUrl: creator.creatorProfileUrl,
     creatorAvatarUrl: creator.creatorAvatarUrl,
     creatorAvatarAlt: creator.creatorAvatarAlt,

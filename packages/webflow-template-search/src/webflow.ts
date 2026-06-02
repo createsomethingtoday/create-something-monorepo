@@ -34,6 +34,7 @@ export interface WebflowTemplateImageRecord {
 export interface WebflowDesignerAvatarRecord {
   syncRecordId: string | null;
   name: string;
+  slug: string | null;
   profileUrl: string | null;
   avatarUrl: string | null;
   avatarAlt: string | null;
@@ -141,6 +142,7 @@ function mapDesignerFieldData(fieldData: Record<string, unknown>): WebflowDesign
   return {
     syncRecordId,
     name,
+    slug,
     profileUrl,
     avatarUrl,
     avatarAlt: avatarUrl ? avatar?.alt ?? name : null,

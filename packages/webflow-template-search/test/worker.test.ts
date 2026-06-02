@@ -35,6 +35,11 @@ const LOOKUPS = {
     },
   ],
   tags: [{ id: 'tag-automation', fields: { Name: 'Automation', '🥞CMS Slug': 'automation' } }],
+  creators: [
+    { id: 'creator-brix', fields: { Name: 'BRIX Templates', '🥞CMS Slug': 'brix-templates' } },
+    { id: 'creator-arini', fields: { Name: 'Arini Studio', '🥞CMS Slug': 'arini-studio' } },
+    { id: 'creator-temlis', fields: { Name: 'Temlis', '🥞CMS Slug': 'temlis' } },
+  ],
 };
 
 const PUBLISHED_ASSETS = [
@@ -48,7 +53,8 @@ const PUBLISHED_ASSETS = [
       'ℹ️Description (Long).html': '<p>Workflow automation for AI teams and agent builders.</p>',
       '🪣Category Group(s) Display Name': ['Technology'],
       '🪣Category Group(s) CMS Slug': ['technology'],
-      '🔍Algolia Child Category (🏗️ only)': ['child-ai'],
+      'ℹ️🪣Categories (Text)': ['AI'],
+      '🥞CMS Slug (from ℹ️🪣Categories)': ['ai-websites'],
       'ℹ️👘Styles': ['style-modern'],
       'ℹ️🏷️Tags (Multi)': ['tag-automation'],
       '🥞Template Type (🏗️ only)': 'Multi Layout',
@@ -61,6 +67,7 @@ const PUBLISHED_ASSETS = [
       '🥞💲Template Price Filter (🏗️ only)': 169,
       '🚀📅Published Date': '2026-03-01',
       '🥞CMS Slug (formula)': 'agentflow-website-template',
+      '🎨Creator': ['creator-brix'],
       '🎨Creator Name': 'BRIX Templates',
       '🖼️Thumbnail Image': [{ url: 'https://example.com/agentflow.png' }],
       '🔗Listing URL': 'https://webflow.com/templates/html/agentflow-website-template',
@@ -79,7 +86,8 @@ const PUBLISHED_ASSETS = [
       'ℹ️Description (Long).html': '<p>Dark technology template for AI and fintech companies.</p>',
       '🪣Category Group(s) Display Name': ['Technology'],
       '🪣Category Group(s) CMS Slug': ['technology'],
-      '🔍Algolia Child Category (🏗️ only)': ['child-ai'],
+      'ℹ️🪣Categories (Text)': ['AI'],
+      '🥞CMS Slug (from ℹ️🪣Categories)': ['ai-websites'],
       'ℹ️👘Styles': ['style-dark'],
       'ℹ️🏷️Tags (Multi)': [],
       '🥞Template Type (🏗️ only)': 'Multi Page',
@@ -93,6 +101,7 @@ const PUBLISHED_ASSETS = [
       '👀📅Decision Date (Override)': '2026-04-05',
       '🚀📅Published Date': '2026-02-15',
       '🥞CMS Slug (formula)': 'setrex-website-template',
+      '🎨Creator': ['creator-arini'],
       '🎨Creator Name': 'Arini Studio',
       '🖼️Thumbnail Image': [{ url: 'https://example.com/setrex.png' }],
       '🔗Listing URL': 'https://webflow.com/templates/html/setrex-website-template',
@@ -111,7 +120,8 @@ const PUBLISHED_ASSETS = [
       'ℹ️Description (Long).html': '<p>Landing page for software teams with clean charts.</p>',
       '🪣Category Group(s) Display Name': ['Technology'],
       '🪣Category Group(s) CMS Slug': ['technology'],
-      '🔍Algolia Child Category (🏗️ only)': ['child-saas'],
+      'ℹ️🪣Categories (Text)': ['Software & SaaS'],
+      '🥞CMS Slug (from ℹ️🪣Categories)': ['software-and-saas-websites'],
       'ℹ️👘Styles': ['style-modern'],
       'ℹ️🏷️Tags (Multi)': [],
       '🥞Template Type (🏗️ only)': 'One Page',
@@ -124,6 +134,7 @@ const PUBLISHED_ASSETS = [
       '🥞💲Template Price Filter (🏗️ only)': 0,
       '🚀📅Published Date': '2026-03-10',
       '🥞CMS Slug (formula)': 'catalis-website-template',
+      '🎨Creator': ['creator-temlis'],
       '🎨Creator Name': 'Temlis',
       '🖼️Thumbnail Image': [{ url: 'https://example.com/catalis.png' }],
       '🔗Listing URL': 'https://webflow.com/templates/html/catalis-website-template',
@@ -810,6 +821,7 @@ describe('webflow-template-search worker', () => {
       styles: LOOKUPS.styles,
       childCategories: LOOKUPS.childCategories,
       tags: LOOKUPS.tags,
+      creators: LOOKUPS.creators,
     });
     const { env, close } = createTestEnv();
 
@@ -925,6 +937,31 @@ describe('webflow-template-search worker', () => {
       };
       expect(tagPagePayload.applied_filters.tag_slug).toBe('automation');
       expect(tagPagePayload.items.map((item) => item.name)).toEqual(['Agentflow']);
+
+      const indexedCreatorRow = await env.DB
+        .prepare('SELECT creator_record_id, creator_slug, creator_profile_url FROM template_documents WHERE id = ?')
+        .bind('recAgentflow')
+        .first<{ creator_record_id: string | null; creator_slug: string | null; creator_profile_url: string | null }>();
+      expect(indexedCreatorRow).toMatchObject({
+        creator_record_id: 'creator-brix',
+        creator_slug: 'brix-templates',
+        creator_profile_url: 'https://webflow.com/templates/designers/brix-templates',
+      });
+
+      const creatorProfileSearch = await callWorker(
+        new Request('https://templates.test/api/templates/search?designer_slug=brix-templates&page_size=10'),
+        env,
+      );
+      const creatorProfilePayload = (await creatorProfileSearch.json()) as {
+        items: Array<{ name: string; creator_slug: string | null; creator_profile_url: string | null }>;
+        applied_filters: { creator_slug: string | null };
+      };
+      expect(creatorProfilePayload.applied_filters.creator_slug).toBe('brix-templates');
+      expect(creatorProfilePayload.items.map((item) => item.name)).toEqual(['Agentflow']);
+      expect(creatorProfilePayload.items[0]).toMatchObject({
+        creator_slug: 'brix-templates',
+        creator_profile_url: 'https://webflow.com/templates/designers/brix-templates',
+      });
     } finally {
       fetchMock.mockRestore();
       close();

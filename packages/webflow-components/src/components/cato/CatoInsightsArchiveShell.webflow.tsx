@@ -1,10 +1,10 @@
 import { declareComponent } from '@webflow/react';
 import { props } from '@webflow/data-types';
-import { CatoInsightsArchive } from './CatoInsights';
+import { CatoInsightsArchiveShell } from './CatoInsights';
 
-export default declareComponent(CatoInsightsArchive, {
-  name: 'Cato Insights Archive',
-  description: 'Focused Cato archive page for Resiliency Reports, Research, Resources, or Newsroom.',
+export default declareComponent(CatoInsightsArchiveShell, {
+  name: 'Cato Insights Archive Shell',
+  description: 'CMS-ready archive page shell that renders a cached public Insights endpoint inside the archive panel.',
   group: 'Cato Supply',
   options: {
     applyTagSelectors: true,
@@ -20,10 +20,23 @@ export default declareComponent(CatoInsightsArchive, {
       defaultValue: '',
       tooltip: 'Optional CMS slug for Insight Categories, such as resource-library or newsroom.',
     }),
+    showHero: props.Boolean({
+      name: 'Show Hero',
+      defaultValue: true,
+    }),
+    showArchiveIntro: props.Boolean({
+      name: 'Show Archive Intro',
+      defaultValue: true,
+    }),
     showSubscribe: props.Boolean({
       name: 'Show Subscribe Block',
       defaultValue: true,
       tooltip: 'Only renders on categories configured with subscribe support.',
+    }),
+    showItems: props.Boolean({
+      name: 'Show Archive Items',
+      defaultValue: true,
+      tooltip: 'Renders the public endpoint items inside the archive panel.',
     }),
     categoriesJson: props.Text({
       name: 'Categories JSON',
@@ -32,6 +45,7 @@ export default declareComponent(CatoInsightsArchive, {
     itemsJson: props.Text({
       name: 'Items JSON',
       defaultValue: '',
+      tooltip: 'Fallback item JSON used before the endpoint responds.',
     }),
     itemsEndpointUrl: props.Text({
       name: 'Items Endpoint URL',

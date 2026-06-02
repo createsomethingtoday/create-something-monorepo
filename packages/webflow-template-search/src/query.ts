@@ -23,6 +23,11 @@ function toBoolean(value: string | null): boolean {
   return ['1', 'true', 'yes', 'on'].includes(value.toLowerCase());
 }
 
+function normalizeSlug(value: string | null): string | null {
+  const slug = value?.trim().toLowerCase().replace(/^\/+|\/+$/g, '');
+  return slug || null;
+}
+
 function parseScope(params: URLSearchParams): TemplateScope {
   const rawScope = params.get('scope');
   if (rawScope && VALID_SCOPES.has(rawScope as TemplateScope)) {
@@ -67,6 +72,8 @@ export function parseSearchParams(url: URL, defaultPageSize = 24): SearchParams 
     scope: parseScope(params),
     categoryGroupSlug: params.get('category_group_slug')?.trim() || null,
     childCategorySlug: params.get('child_category_slug')?.trim() || null,
+    creatorSlug: normalizeSlug(firstParam(params, ['creator_slug', 'designer_slug', 'creator', 'designer'])),
+    creatorRecordId: firstParam(params, ['creator_record_id', 'designer_record_id']),
     styleSlug: firstParam(params, ['style_slug', 'style']),
     tagSlug: firstParam(params, ['tag_slug', 'tag']),
     styles: parseList(params, 'styles'),

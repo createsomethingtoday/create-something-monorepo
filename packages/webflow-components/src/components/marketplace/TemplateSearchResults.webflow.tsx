@@ -17,6 +17,18 @@ export default declareComponent(TemplateSearchResults, {
       name: 'Category Slug (preview)',
       defaultValue: '',
     }),
+    creatorSlug: props.Text({
+      name: 'Creator Slug (preview)',
+      defaultValue: '',
+      tooltip:
+        'Creator/designer slug for Designer preview, e.g. "brix-templates". Production auto-detects from /templates/designers/{slug}.',
+    }),
+    creatorRecordId: props.Text({
+      name: 'Creator Record ID',
+      defaultValue: '',
+      tooltip:
+        'Optional exact creator Airtable/Webflow sync record ID. Bind this on designer profile pages when available; otherwise creator slug is used.',
+    }),
     styleSlug: props.Text({
       name: 'Style Slug (preview)',
       defaultValue: '',

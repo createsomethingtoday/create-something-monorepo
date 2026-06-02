@@ -40,11 +40,15 @@ export interface CatoInsightItem {
   audience: string;
   body: CatoInsightBodySection[];
   takeaways: string[];
+  href?: string;
+  externalUrl?: string;
 }
 
 export interface CatoInsightsDataProps {
   categoriesJson?: string;
   itemsJson?: string;
+  itemsEndpointUrl?: string;
+  fetchItems?: boolean;
   linkMode?: 'webflow' | 'export';
   pathPrefix?: string;
 }
@@ -68,6 +72,33 @@ export interface CatoInsightsArchiveProps extends CatoInsightsDataProps {
   categoryId?: string;
   categorySlug?: string;
   showSubscribe?: boolean;
+}
+
+export interface CatoInsightsArchiveShellProps extends CatoInsightsDataProps {
+  categoryId?: string;
+  categorySlug?: string;
+  showHero?: boolean;
+  showArchiveIntro?: boolean;
+  showSubscribe?: boolean;
+  showItems?: boolean;
+}
+
+export interface CatoInsightLinkProp {
+  href: string;
+  target?: string;
+  preload?: string;
+}
+
+export interface CatoInsightCmsCardProps extends Pick<CatoInsightsDataProps, 'linkMode' | 'pathPrefix'> {
+  title?: string;
+  summary?: string;
+  resourceType?: string;
+  contentLabel?: string;
+  date?: string;
+  ctaLabel?: string;
+  slug?: string;
+  itemLink?: CatoInsightLinkProp;
+  featured?: boolean;
 }
 
 export interface CatoInsightDetailProps extends CatoInsightsDataProps {
@@ -514,6 +545,38 @@ const PUBLISHED_CMS_ITEMS: CatoInsightItem[] = [
     takeaways: ['Review the original Cato post for the source update.', 'Use the signal to evaluate affected categories and sourcing exposure.', 'Coordinate next steps across procurement, supply chain, and clinical stakeholders.'],
   },
   {
+    id: 'capstone-partnership-copy',
+    slug: 'capstone-partnership-copy',
+    category: 'newsroom',
+    resourceType: 'News',
+    pill: 'News',
+    title: 'Capstone Partnership Copy',
+    summary: 'Cato announced a partnership with Capstone Health Alliance to support supply chain resiliency, sourcing initiatives, care continuity, and cost-saving opportunities for Capstone members.',
+    date: 'May 26, 2026',
+    ctaLabel: 'Read announcement',
+    audience: 'Customers, partners, media contacts, and healthcare procurement leaders.',
+    body: [
+      {
+        heading: 'Partnership announcement',
+        paragraphs: [
+          'Cato announced a new partnership with Capstone Health Alliance, a leading regional group purchasing organization that collaborates with hundreds of hospitals and thousands of healthcare providers across the nation.',
+          'The partnership is focused on driving collaboration, sharing best practices, and launching innovative sourcing initiatives to strengthen supply chain resiliency for Capstone members. Together, Cato and Capstone aim to improve patient outcomes while expanding access to meaningful cost-saving opportunities for stakeholders.',
+          'Cato was built to bring transparency and reliability to healthcare procurement during times of disruption. Partnering with Capstone represents an opportunity to advance that mission and expand access to essential medical supplies across a broader network of health systems nationwide.',
+          "Cato looks forward to supporting Capstone's members in keeping patient care moving without interruption.",
+        ],
+      },
+      {
+        heading: 'Capstone announcement',
+        paragraphs: ['Capstone also announced the partnership, noting that Cato will bring members a healthcare procurement platform designed to make supply chains nimbler and help guarantee care continuity.'],
+      },
+    ],
+    takeaways: [
+      'Cato and Capstone Health Alliance are partnering to support stronger healthcare supply chain resiliency.',
+      'The collaboration focuses on best practices, innovative sourcing initiatives, and broader access to essential medical supplies.',
+      'Capstone members gain access to a procurement platform designed to improve agility and continuity of care.',
+    ],
+  },
+  {
     id: 'capstone-partnership',
     slug: 'capstone-partnership',
     category: 'newsroom',
@@ -728,6 +791,8 @@ const CATO_CSS = `
   }
   .cato-cc *, .cato-cc *::before, .cato-cc *::after { box-sizing: border-box; }
   .cato-cc a { color: inherit; }
+  .cato-cc-card-component { background: transparent; }
+  .cato-cc-card-component .cato-cc-cms-card { height: 100%; min-height: 15rem; }
   .cato-cc-section { padding: 4rem 2.5rem; }
   .cato-cc-hero { position: relative; overflow: hidden; background: var(--cato-bg-soft); padding-top: 10rem; }
   .cato-cc-container { width: min(100%, 80rem); margin: 0 auto; }
@@ -780,6 +845,8 @@ const CATO_CSS = `
   .cato-cc-system-band { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); align-items: center; gap: 3rem; border: 1px solid var(--cato-border); background: var(--cato-bg); border-radius: .75rem; padding: 3rem; }
   .cato-cc-system-band[data-subscribe="true"] { align-items: stretch; }
   .cato-cc-system-band[data-archive="true"] { align-items: start; }
+  .cato-cc-system-band[data-archive-shell="true"] { grid-template-columns: 1fr; }
+  .cato-cc-system-band[data-archive-shell="true"] .cato-cc-system-copy { max-width: 56rem; }
   .cato-cc-system-copy { display: flex; flex-direction: column; gap: 1rem; }
   .cato-cc-system-list { display: flex; flex-direction: column; gap: .75rem; }
   .cato-cc-system-card { display: flex; flex-direction: column; gap: .35rem; background: rgba(10,69,46,.055); border: 0; border-radius: .625rem; box-shadow: none; padding: 1.25rem; }
@@ -1113,6 +1180,21 @@ function displayText(value: unknown, fallback = ''): string {
   return text || fallback;
 }
 
+function displayDate(value: unknown, fallback = ''): string {
+  const text = displayText(value, fallback);
+  if (!/^\d{4}-\d{2}-\d{2}/.test(text)) return text;
+
+  const date = new Date(text);
+  if (Number.isNaN(date.getTime())) return text;
+
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    timeZone: 'UTC',
+  }).format(date);
+}
+
 function cleanHtml(html: unknown): string {
   const rawHtml = richTextToHtml(html);
   if (!rawHtml.trim()) return '';
@@ -1145,6 +1227,137 @@ function resolveData({ categoriesJson, itemsJson }: CatoInsightsDataProps) {
   };
 }
 
+function pickRecordString(record: Record<string, unknown>, keys: string[]) {
+  for (const key of keys) {
+    const value = record[key];
+    if (typeof value === 'string' && value.trim()) return value.trim();
+    if (typeof value === 'number') return String(value);
+  }
+  return '';
+}
+
+function pickRecordBoolean(record: Record<string, unknown>, keys: string[]) {
+  for (const key of keys) {
+    const value = record[key];
+    if (typeof value === 'boolean') return value;
+    if (typeof value === 'string') {
+      const normalized = value.trim().toLowerCase();
+      if (['true', 'yes', '1'].includes(normalized)) return true;
+      if (['false', 'no', '0'].includes(normalized)) return false;
+    }
+  }
+  return false;
+}
+
+function recordsFromEndpointPayload(payload: unknown): unknown[] {
+  if (Array.isArray(payload)) return payload;
+  if (!payload || typeof payload !== 'object') return [];
+
+  const record = payload as Record<string, unknown>;
+  for (const key of ['items', 'results', 'data', 'collectionItems']) {
+    const value = record[key];
+    if (Array.isArray(value)) return value;
+    if (value && typeof value === 'object') {
+      const nested = value as Record<string, unknown>;
+      if (Array.isArray(nested.items)) return nested.items;
+      if (Array.isArray(nested.results)) return nested.results;
+    }
+  }
+
+  return [];
+}
+
+function normalizeEndpointItem(raw: unknown): CatoInsightItem | null {
+  if (!raw || typeof raw !== 'object') return null;
+
+  const rawRecord = raw as Record<string, unknown>;
+  const fieldData = rawRecord.fieldData && typeof rawRecord.fieldData === 'object' ? (rawRecord.fieldData as Record<string, unknown>) : {};
+  const record = { ...rawRecord, ...fieldData };
+  const title = pickRecordString(record, ['title', 'Title', 'name', 'Name']);
+  const slug = pickRecordString(record, ['slug', 'Slug']);
+  if (!title && !slug) return null;
+
+  const summary = pickRecordString(record, ['summary', 'Summary', 'shortSummary', 'short-summary', 'Short Summary', 'short_summary']);
+  const resourceType = pickRecordString(record, ['resourceType', 'resource-type', 'Resource Type', 'resource_type', 'type']);
+  const contentLabel = pickRecordString(record, ['contentLabel', 'content-label', 'Content Label', 'content_label', 'pill', 'Pill']);
+  const label = contentLabel || resourceType || 'Insight';
+  const category = pickRecordString(record, ['category', 'categoryId', 'category-id', 'archive', 'Archive']) || categoryKeyFromResourceType(label) || 'resources';
+  const date = pickRecordString(record, ['date', 'Date', 'publishDate', 'publish-date', 'Publish Date', 'publishedOn', 'lastPublished', 'createdOn']);
+  const ctaLabel = pickRecordString(record, ['ctaLabel', 'cta-label', 'CTA Label', 'cta_label']) || (category === 'newsroom' ? 'Read update' : 'Read report');
+
+  return {
+    id: pickRecordString(record, ['id', '_id', 'itemId', 'item-id']) || slug || title,
+    slug: slug || title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''),
+    category,
+    resourceType: resourceType || label,
+    pill: label,
+    title: title || slug,
+    summary: summary || 'Read the latest Cato insight.',
+    date: displayDate(date),
+    ctaLabel,
+    featured: pickRecordBoolean(record, ['featured', 'Featured']),
+    audience: pickRecordString(record, ['audience', 'Audience']),
+    body: [],
+    takeaways: [],
+  };
+}
+
+function normalizeEndpointItems(payload: unknown) {
+  return recordsFromEndpointPayload(payload).map(normalizeEndpointItem).filter((item): item is CatoInsightItem => Boolean(item));
+}
+
+function useInsightItems(dataProps: CatoInsightsDataProps) {
+  const { items } = resolveData(dataProps);
+  const [remoteItems, setRemoteItems] = useState<CatoInsightItem[] | null>(null);
+  const [status, setStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
+  const endpointUrl = dataProps.itemsEndpointUrl?.trim() || '';
+  const shouldFetch = dataProps.fetchItems !== false && Boolean(endpointUrl);
+
+  useEffect(() => {
+    if (!shouldFetch || typeof fetch === 'undefined') {
+      setRemoteItems(null);
+      setStatus('idle');
+      return;
+    }
+
+    let isMounted = true;
+    setStatus('loading');
+
+    fetch(endpointUrl, { headers: { Accept: 'application/json' } })
+      .then((response) => {
+        if (!response.ok) throw new Error(`Insights endpoint returned ${response.status}`);
+        return response.json();
+      })
+      .then((payload: unknown) => {
+        if (!isMounted) return;
+        const normalizedItems = normalizeEndpointItems(payload);
+        setRemoteItems(normalizedItems.length ? normalizedItems : null);
+        setStatus('ready');
+      })
+      .catch(() => {
+        if (!isMounted) return;
+        setRemoteItems(null);
+        setStatus('error');
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [endpointUrl, shouldFetch]);
+
+  return { items: remoteItems || items, status };
+}
+
+function useInsightsData(dataProps: CatoInsightsDataProps) {
+  const { categories } = resolveData(dataProps);
+  const itemsState = useInsightItems(dataProps);
+
+  return {
+    categories,
+    ...itemsState,
+  };
+}
+
 function normalizePrefix(prefix = '') {
   if (!prefix) return '';
   return prefix.endsWith('/') ? prefix.slice(0, -1) : prefix;
@@ -1157,9 +1370,19 @@ function hrefForPage(page: string, linkMode: CatoInsightsDataProps['linkMode'] =
 }
 
 function hrefForItem(item: CatoInsightItem, linkMode: CatoInsightsDataProps['linkMode'] = 'webflow', pathPrefix = '') {
+  if (item.href) return item.href;
+
   const suffix = linkMode === 'export' ? '.html' : '';
   const prefix = normalizePrefix(pathPrefix);
   return `${prefix}/${item.slug}${suffix}`.replace(/\/{2,}/g, '/');
+}
+
+function hrefFromLink(link: CatoInsightLinkProp | undefined, fallbackHref: string) {
+  return link?.href || fallbackHref || '#';
+}
+
+function relForTarget(target?: string) {
+  return target === '_blank' ? 'noreferrer' : undefined;
 }
 
 function normalizeCategoryKey(value?: string) {
@@ -1272,13 +1495,17 @@ function InsightCard({
   item,
   href,
   featured = false,
+  target,
+  rel,
 }: {
   item: CatoInsightItem;
   href: string;
   featured?: boolean;
+  target?: string;
+  rel?: string;
 }) {
   return (
-    <a href={href} className="cato-cc-cms-card" data-featured={featured ? 'true' : undefined}>
+    <a href={href} className="cato-cc-cms-card" data-featured={featured ? 'true' : undefined} target={target} rel={rel}>
       {featured ? (
         <>
           <div className="cato-cc-card-top">
@@ -1305,6 +1532,52 @@ function InsightCard({
         </>
       )}
     </a>
+  );
+}
+
+function ArchiveItemList({
+  items,
+  status,
+  linkMode,
+  pathPrefix,
+  shouldShowSubscribe,
+}: {
+  items: CatoInsightItem[];
+  status: 'idle' | 'loading' | 'ready' | 'error';
+  linkMode: CatoInsightsDataProps['linkMode'];
+  pathPrefix: string;
+  shouldShowSubscribe: boolean | undefined;
+}) {
+  return (
+    <div className="cato-cc-archive-list">
+      {items.map((item) => (
+        <InsightCard key={item.id} item={item} href={hrefForItem(item, linkMode, pathPrefix)} />
+      ))}
+      {status === 'loading' && items.length === 0 ? <div className="cato-cc-system-card">Loading latest insights...</div> : null}
+      {status === 'error' ? (
+        <div className="cato-cc-system-card cato-cc-note-card">
+          <strong>Showing cached archive items.</strong>
+          <p>The live CMS endpoint did not respond, so this component is using its configured fallback data.</p>
+        </div>
+      ) : null}
+      {items.length === 0 && status !== 'loading' ? (
+        <div className="cato-cc-system-card cato-cc-note-card">
+          <strong>No published items yet.</strong>
+          <p>Published CMS entries will appear here after the endpoint refreshes.</p>
+        </div>
+      ) : null}
+      {shouldShowSubscribe ? (
+        <div className="cato-cc-archive-cta">
+          <div>
+            <strong>Want future alerts?</strong>
+            <span>Subscribe once and receive new Resiliency Report Alerts as they publish.</span>
+          </div>
+          <a href="#cato-resiliency-alerts" className="cato-cc-cta">
+            Subscribe for alerts
+          </a>
+        </div>
+      ) : null}
+    </div>
   );
 }
 
@@ -1393,7 +1666,7 @@ export const CatoInsightsHub: React.FC<CatoInsightsHubProps> = ({
   pathPrefix = '',
   ...dataProps
 }) => {
-  const { categories, items } = resolveData(dataProps);
+  const { categories, items } = useInsightsData(dataProps);
   const featured = items.find((item) => item.featured) || items[0];
   const rest = items.filter((item) => item.id !== featured?.id);
   const previewItems = showFilterRail
@@ -1497,7 +1770,7 @@ export const CatoInsightsArchive: React.FC<CatoInsightsArchiveProps> = ({
   pathPrefix = '',
   ...dataProps
 }) => {
-  const { categories, items } = resolveData(dataProps);
+  const { categories, items, status } = useInsightsData(dataProps);
   const normalizedCategorySlug = categorySlug.trim().toLowerCase();
 
   if (['__detail__', 'detail', 'insight-detail'].includes(normalizedCategorySlug)) {
@@ -1532,25 +1805,105 @@ export const CatoInsightsArchive: React.FC<CatoInsightsArchiveProps> = ({
               <h2>{category.archiveTitle}</h2>
               <p className="cato-cc-lede">{category.archiveSummary}</p>
             </div>
-            <div className="cato-cc-archive-list">
-              {categoryItems.map((item) => (
-                <InsightCard key={item.id} item={item} href={hrefForItem(item, linkMode, pathPrefix)} />
-              ))}
-              {shouldShowSubscribe ? (
-                <div className="cato-cc-archive-cta">
-                  <div>
-                    <strong>Want future alerts?</strong>
-                    <span>Subscribe once and receive new Resiliency Report Alerts as they publish.</span>
-                  </div>
-                  <a href="#cato-resiliency-alerts" className="cato-cc-cta">
-                    Subscribe for alerts
-                  </a>
-                </div>
-              ) : null}
-            </div>
+            <ArchiveItemList items={categoryItems} status={status} linkMode={linkMode} pathPrefix={pathPrefix} shouldShowSubscribe={shouldShowSubscribe} />
           </div>
         </div>
       </section>
+    </div>
+  );
+};
+
+export const CatoInsightsArchiveShell: React.FC<CatoInsightsArchiveShellProps> = ({
+  categoryId = 'resiliency',
+  categorySlug = '',
+  showHero = true,
+  showArchiveIntro = true,
+  showSubscribe = true,
+  showItems = true,
+  linkMode = 'webflow',
+  pathPrefix = '',
+  ...dataProps
+}) => {
+  const { categories, items, status } = useInsightsData(dataProps);
+  const category = categoryByKey(categories, categorySlug || inferCategorySlugFromLocation(), categoryId);
+  const categoryItems = items.filter((item) => item.category === category.id);
+  const shouldShowSubscribe = showSubscribe && category.hasSubscribe;
+  const shouldRenderItems = showItems && (categoryItems.length > 0 || status !== 'idle');
+
+  return (
+    <div className="cato-cc">
+      <style>{CATO_CSS}</style>
+      {showHero ? (
+        <Hero
+          title={category.title}
+          summary={category.heroSummary}
+          panelLabel={category.panelLabel}
+          panelTitle={category.panelTitle}
+          panelSummary={category.panelSummary}
+          backLink={
+            <a href={hrefForPage('insights.html', linkMode, pathPrefix)} className="cato-cc-back-link">
+              Back to all Insights
+            </a>
+          }
+        />
+      ) : null}
+      {shouldShowSubscribe ? <SubscribeBlock /> : null}
+      {showArchiveIntro ? (
+        <section className="cato-cc-section">
+          <div className="cato-cc-container">
+            <div className="cato-cc-system-band" data-archive="true" data-archive-shell={shouldRenderItems ? undefined : 'true'}>
+              <div className="cato-cc-system-copy">
+                <p className="cato-cc-eyebrow">{category.archiveEyebrow}</p>
+                <h2>{category.archiveTitle}</h2>
+                <p className="cato-cc-lede">{category.archiveSummary}</p>
+              </div>
+              {showItems ? <ArchiveItemList items={categoryItems} status={status} linkMode={linkMode} pathPrefix={pathPrefix} shouldShowSubscribe={shouldShowSubscribe} /> : null}
+            </div>
+          </div>
+        </section>
+      ) : null}
+    </div>
+  );
+};
+
+export const CatoInsightCmsCard: React.FC<CatoInsightCmsCardProps> = ({
+  title = 'Insight title',
+  summary = 'Read the latest Cato insight.',
+  resourceType = '',
+  contentLabel = '',
+  date = '',
+  ctaLabel = 'Read update',
+  slug = '',
+  itemLink,
+  featured = false,
+  linkMode = 'webflow',
+  pathPrefix = '/insights',
+}) => {
+  const titleText = displayText(title, 'Insight title');
+  const label = displayText(contentLabel) || displayText(resourceType) || 'Insight';
+  const normalizedSlug = displayText(slug, titleText.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''));
+  const item: CatoInsightItem = {
+    id: normalizedSlug || titleText,
+    slug: normalizedSlug,
+    category: categoryKeyFromResourceType(label) || 'resources',
+    resourceType: displayText(resourceType, label),
+    pill: label,
+    title: titleText,
+    summary: displayText(summary, 'Read the latest Cato insight.'),
+    date: displayDate(date),
+    ctaLabel: displayText(ctaLabel, 'Read update'),
+    featured,
+    audience: '',
+    body: [],
+    takeaways: [],
+  };
+  const fallbackHref = item.slug ? hrefForItem(item, linkMode, pathPrefix) : '#';
+  const href = hrefFromLink(itemLink, fallbackHref);
+
+  return (
+    <div className="cato-cc cato-cc-card-component">
+      <style>{CATO_CSS}</style>
+      <InsightCard item={item} href={href} featured={featured} target={itemLink?.target} rel={relForTarget(itemLink?.target)} />
     </div>
   );
 };
@@ -1572,7 +1925,7 @@ export const CatoInsightDetail: React.FC<CatoInsightDetailProps> = ({
   pathPrefix = '',
   ...dataProps
 }) => {
-  const { categories, items } = resolveData(dataProps);
+  const { categories, items } = useInsightsData(dataProps);
   const inferredSlug = inferItemSlugFromLocation();
   const configuredSlug = displayText(slug, '2026-supply-disruption-preparedness-brief');
   const selectedSlug = inferredSlug || configuredSlug;
@@ -1698,7 +2051,7 @@ export const CatoInsightsMegaMenu: React.FC<CatoInsightsMegaMenuProps> = ({
   pathPrefix = '',
   ...dataProps
 }) => {
-  const { categories, items } = resolveData(dataProps);
+  const { categories, items } = useInsightsData(dataProps);
   const featureItems = items.filter((item) => item.category === 'resiliency').slice(0, 3);
 
   return (

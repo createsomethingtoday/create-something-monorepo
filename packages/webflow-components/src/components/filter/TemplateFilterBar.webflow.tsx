@@ -27,6 +27,18 @@ export default declareComponent(TemplateFilterBar, {
       tooltip:
         'Category group slug for Designer preview, e.g. "architecture-and-design-websites". Production auto-detects from /templates/category/{slug}.',
     }),
+    creatorSlug: props.Text({
+      name: 'Creator Slug (preview)',
+      defaultValue: '',
+      tooltip:
+        'Creator/designer slug for Designer preview, e.g. "brix-templates". Production auto-detects from /templates/designers/{slug}.',
+    }),
+    creatorRecordId: props.Text({
+      name: 'Creator Record ID',
+      defaultValue: '',
+      tooltip:
+        'Optional exact creator Airtable/Webflow sync record ID. Bind this on designer profile pages when available; otherwise creator slug is used.',
+    }),
     subcategorySlug: props.Text({
       name: 'Subcategory Slug (preview)',
       defaultValue: '',
