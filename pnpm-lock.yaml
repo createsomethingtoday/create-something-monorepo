@@ -3440,6 +3440,9 @@ importers:
       '@create-something/canon':
         specifier: workspace:^
         version: link:../canon
+      '@create-something/webflow-dashboard-core':
+        specifier: workspace:*
+        version: link:../webflow-dashboard-core
       airtable:
         specifier: ^0.12.2
         version: 0.12.2

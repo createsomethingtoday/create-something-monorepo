@@ -1,6 +1,7 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { getAirtableClient, type AssetUpdateData } from '$lib/server/airtable';
+import { sanitizeLongDescriptionHtml } from '@create-something/webflow-dashboard-core/long-description';
 
 function assertOptionalString(
   value: unknown,
@@ -76,6 +77,14 @@ function validateAssetUpdateBody(body: AssetUpdateData): void {
   );
 }
 
+function normalizeAssetUpdateBody(body: AssetUpdateData): AssetUpdateData {
+  if (body.descriptionLongHtml === undefined) return body;
+  return {
+    ...body,
+    descriptionLongHtml: sanitizeLongDescriptionHtml(body.descriptionLongHtml)
+  };
+}
+
 // GET - Fetch single asset
 export const GET: RequestHandler = async ({ params, locals, platform }) => {
   if (!locals.user?.email) {
@@ -119,7 +128,7 @@ export const PATCH: RequestHandler = async ({ params, request, locals, platform 
     throw error(403, 'You do not have permission to edit this asset');
   }
 
-  const body = (await request.json()) as AssetUpdateData;
+  const body = normalizeAssetUpdateBody((await request.json()) as AssetUpdateData);
   validateAssetUpdateBody(body);
 
   // Check name uniqueness if name is being changed
@@ -156,7 +165,7 @@ export const PUT: RequestHandler = async ({ params, request, locals, platform })
     throw error(403, 'You do not have permission to edit this asset');
   }
 
-  const body = (await request.json()) as AssetUpdateData;
+  const body = normalizeAssetUpdateBody((await request.json()) as AssetUpdateData);
   validateAssetUpdateBody(body);
 
   // Check name uniqueness if name is being changed

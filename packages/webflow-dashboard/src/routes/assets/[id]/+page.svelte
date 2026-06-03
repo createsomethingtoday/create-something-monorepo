@@ -3,7 +3,7 @@
   import type { Asset, AssetUpdateData } from '$lib/server/airtable';
   import { goto } from '$app/navigation';
   import { onMount } from 'svelte';
-  import DOMPurify from 'isomorphic-dompurify';
+  import { sanitizeLongDescriptionHtml } from '@create-something/webflow-dashboard-core/long-description';
   import {
     Header,
     Card,
@@ -42,29 +42,7 @@
 
   // Sanitize HTML to prevent XSS
   function sanitizeHtml(html: string | undefined): string {
-    if (!html) return '';
-    return DOMPurify.sanitize(html, {
-      ALLOWED_TAGS: [
-        'p',
-        'br',
-        'strong',
-        'em',
-        'ul',
-        'ol',
-        'li',
-        'a',
-        'h1',
-        'h2',
-        'h3',
-        'h4',
-        'h5',
-        'h6',
-        'blockquote',
-        'code',
-        'pre'
-      ],
-      ALLOWED_ATTR: ['href', 'target', 'rel']
-    });
+    return sanitizeLongDescriptionHtml(html);
   }
   import {
     Eye,
@@ -511,7 +489,7 @@
                   {/if}
                   {#if asset.descriptionLongHtml}
                     <div class="separator"></div>
-                    <div class="description-long">
+                    <div class="description-long marketplace-long-description">
                       {@html sanitizeHtml(asset.descriptionLongHtml)}
                     </div>
                   {:else if asset.description}
@@ -913,6 +891,58 @@
 
   .description-long :global(a) {
     color: var(--color-info);
+  }
+
+  .marketplace-long-description :global(h3),
+  .marketplace-long-description :global(h4),
+  .marketplace-long-description :global(h5),
+  .marketplace-long-description :global(h6) {
+    margin: var(--space-lg) 0 var(--space-sm);
+    color: var(--color-fg-primary);
+    line-height: 1.25;
+  }
+
+  .marketplace-long-description :global(h3) {
+    font-size: var(--text-body-lg);
+  }
+
+  .marketplace-long-description :global(h4),
+  .marketplace-long-description :global(h5),
+  .marketplace-long-description :global(h6) {
+    font-size: var(--text-body);
+  }
+
+  .marketplace-long-description :global(p),
+  .marketplace-long-description :global(ul),
+  .marketplace-long-description :global(ol),
+  .marketplace-long-description :global(figure),
+  .marketplace-long-description :global(blockquote),
+  .marketplace-long-description :global(pre) {
+    margin: 0 0 var(--space-md);
+  }
+
+  .marketplace-long-description :global(ul),
+  .marketplace-long-description :global(ol) {
+    padding-left: 1.35rem;
+  }
+
+  .marketplace-long-description :global(li + li) {
+    margin-top: var(--space-xs);
+  }
+
+  .marketplace-long-description :global(img) {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    margin: var(--space-md) 0;
+    border-radius: var(--radius-sm);
+  }
+
+  .marketplace-long-description :global(figcaption) {
+    margin-top: calc(var(--space-sm) * -1);
+    color: var(--color-fg-muted);
+    font-size: var(--text-caption);
+    line-height: 1.4;
   }
 
   :global(.rejection-card) {
