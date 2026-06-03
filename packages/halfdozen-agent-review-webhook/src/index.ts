@@ -3,6 +3,7 @@ type UnknownRecord = Record<string, unknown>;
 interface Env {
   WEBHOOK_SECRET?: string;
   WEBHOOK_REPLAY_SECRET?: string;
+  AGENT_REVIEW_QUEUE?: Queue<ReviewQueueMessage>;
   LINEAR_API_KEY?: string;
   LINEAR_API_URL?: string;
   NOTION_API_KEY?: string;
@@ -37,6 +38,12 @@ interface NormalizedReviewRequest {
   pageUrl?: string;
   properties: Record<string, string>;
   enrichment?: ReviewEnrichment;
+}
+
+interface ReviewQueueMessage {
+  type: 'agent-review';
+  enqueuedAt: string;
+  review: NormalizedReviewRequest;
 }
 
 interface ReviewEnrichment {
@@ -333,17 +340,65 @@ export default {
       return processReviewWorkflow(env, review);
     }
 
+    if (env.AGENT_REVIEW_QUEUE) {
+      await env.AGENT_REVIEW_QUEUE.send(
+        {
+          type: 'agent-review',
+          enqueuedAt: new Date().toISOString(),
+          review
+        },
+        { contentType: 'json' }
+      );
+
+      return jsonResponse({
+        success: true,
+        accepted: true,
+        status: 'queued',
+        queue: 'cloudflare-queues',
+        request_id: review.requestId,
+        agent_name: review.agentName
+      });
+    }
+
     ctx.waitUntil(processReviewWorkflowInBackground(env, review));
 
     return jsonResponse({
       success: true,
       accepted: true,
       status: 'queued',
+      queue: 'waitUntil-fallback',
       request_id: review.requestId,
       agent_name: review.agentName
     });
+  },
+
+  async queue(batch: MessageBatch<ReviewQueueMessage>, env: Env): Promise<void> {
+    for (const message of batch.messages) {
+      const body = message.body;
+      if (!body || body.type !== 'agent-review' || !body.review) {
+        console.error('Half Dozen agent review queue received an invalid message', JSON.stringify({ id: message.id }));
+        message.ack();
+        continue;
+      }
+
+      try {
+        await processReviewWorkflowInBackground(env, body.review);
+        message.ack();
+      } catch (error) {
+        console.error(
+          'Half Dozen agent review queue message crashed',
+          JSON.stringify({
+            id: message.id,
+            request_id: body.review.requestId,
+            agent_name: body.review.agentName,
+            error: error instanceof Error ? error.message : String(error)
+          })
+        );
+        message.retry({ delaySeconds: 60 });
+      }
+    }
   }
-} satisfies ExportedHandler<Env>;
+} satisfies ExportedHandler<Env, ReviewQueueMessage>;
 
 async function processReviewWorkflowInBackground(env: Env, review: NormalizedReviewRequest): Promise<void> {
   try {

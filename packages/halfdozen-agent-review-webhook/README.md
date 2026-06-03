@@ -8,6 +8,10 @@ Linear issues are deduplicated by agent title, including completed issues. A rep
 for the same agent reuses the existing review issue and appends a replay comment before rerunning
 automation.
 
+Normal webhook deliveries enqueue the long-running eval/writeback job in Cloudflare Queues so the
+Notion automation receives a fast 2xx response while Dify, Notion, and Linear work can continue
+outside the request lifecycle.
+
 By default, each intake creates or reuses two Linear follow-up issues:
 
 - `Build Half Dozen agent: <agent name>`
@@ -85,10 +89,11 @@ The Notion connection used by `NOTION_API_KEY` must have read/write access to th
 read/create access to `Test Reports [OS]`. In Notion, share the source page or its parent database
 and Test Reports database with that integration before expecting full automation.
 
-If the background automation fails after the initial Linear intake comment, the Worker now writes a
-failure comment back to the parent Linear issue with the webhook request ID and error. A received
-comment without a later completed, incomplete, skipped, or failed comment means the run used an
-older Worker version or the process failed before this failure-evidence guard existed.
+If the queued automation fails after the initial Linear intake comment, the Worker writes a failure
+comment back to the parent Linear issue with the webhook request ID and error. A received comment
+without a later completed, incomplete, skipped, or failed comment means the run used an older Worker
+version, the queue binding was unavailable and the Worker fell back to `waitUntil`, or the process
+failed before this failure-evidence guard existed.
 
 ## Notion Setup
 
@@ -129,6 +134,12 @@ pnpm --filter @create-something/halfdozen-agent-review-webhook check
 pnpm --filter @create-something/halfdozen-agent-review-webhook deploy
 ```
 
+Create the queue before the first deploy that uses the queue binding:
+
+```bash
+pnpm --filter @create-something/halfdozen-agent-review-webhook exec wrangler queues create halfdozen-agent-review-webhook-jobs
+```
+
 Required secrets:
 
 ```bash
@@ -161,6 +172,21 @@ TEST_REPORTS_DATABASE_NAME = "Test Reports [OS]" # overrides database discovery 
 DIFY_HALFDOZEN_AGENT_BUILDER_EVAL_BASE_URL = "https://api.dify.ai/v1"
 DIFY_HALFDOZEN_AGENT_BUILDER_EVAL_TIMEOUT_MS = "120000"
 DIFY_HALFDOZEN_AGENT_BUILDER_EVAL_REQUIRED = "true" # fail instead of fallback when Dify errors
+```
+
+Queue binding:
+
+```toml
+[[queues.producers]]
+binding = "AGENT_REVIEW_QUEUE"
+queue = "halfdozen-agent-review-webhook-jobs"
+
+[[queues.consumers]]
+queue = "halfdozen-agent-review-webhook-jobs"
+max_batch_size = 1
+max_batch_timeout = 5
+max_retries = 2
+retry_delay = 60
 ```
 
 ## Dify Agent Setup
