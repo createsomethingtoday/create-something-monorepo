@@ -119,7 +119,7 @@ export async function validateInteractions(
 		const cmsItemUrlsValidated = pages.filter((page) => page.source === 'cms-item').length;
 		const issues = [
 			...generateInteractionIssues(pagesWithLegacyIx2, legacyIx2Count),
-			...generateIncompleteAnalysisIssues(failedPages, pagesWithLegacyIx2.length > 0)
+			...generateIncompleteAnalysisIssues(failedPages)
 		];
 
 		return {
@@ -655,10 +655,7 @@ function generateInteractionIssues(pagesWithLegacyIx2: Ix2PageResult[], legacyIx
 	}];
 }
 
-function generateIncompleteAnalysisIssues(
-	failedPages: FailedPageResult[],
-	hasLegacyIx2Rejection: boolean
-): ValidationIssue[] {
+function generateIncompleteAnalysisIssues(failedPages: FailedPageResult[]): ValidationIssue[] {
 	if (failedPages.length === 0) {
 		return [];
 	}
@@ -666,12 +663,12 @@ function generateIncompleteAnalysisIssues(
 	return [{
 		id: 'interactions-analysis-incomplete',
 		category: 'Interactions and GSAP',
-		severity: hasLegacyIx2Rejection ? 'warning' : 'error',
+		severity: 'warning',
 		message: `${failedPages.length} page${failedPages.length === 1 ? '' : 's'} could not be checked for Interactions and GSAP`,
-		description: 'Interactions validation now continues when individual pages fail, but every submitted page still needs a verified IX2 policy check.',
-		howToFix: 'Publish all template pages, confirm each published URL is accessible, and rerun validation.',
+		description: 'Interactions validation could not verify every page. This does not block submission unless legacy IX2 interactions are detected on a page that was checked.',
+		howToFix: 'Publish all template pages, confirm each published URL is accessible, and rerun validation to complete the IX2 policy check.',
 		details: {
-			howToFix: 'Publish all template pages, confirm each published URL is accessible, and rerun validation.',
+			howToFix: 'Publish all template pages, confirm each published URL is accessible, and rerun validation to complete the IX2 policy check.',
 			affectedPages: failedPages.map((page) => ({
 				url: page.url,
 				error: page.error
