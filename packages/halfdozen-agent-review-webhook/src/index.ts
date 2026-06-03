@@ -260,7 +260,7 @@ const INSTRUCTION_READINESS_CLAIM_BOUNDARY =
 const LIVE_TESTING_HANDOFF_GUIDANCE =
   'Paste only the full text after "Prompt to paste" into the actual Notion agent. Do not paste the scenario label, expected behavior, report evidence, archived instructions, or any other eval text. Record pass/fail, the actual response, and notes on this Test Report. If any prompt fails, add the finding to the source page and move it back to Updating for a new eval run.';
 const DIFY_API_BASE_DEFAULT = 'https://api.dify.ai/v1';
-const DIFY_EVAL_TIMEOUT_MS_DEFAULT = 60_000;
+const DIFY_EVAL_TIMEOUT_MS_DEFAULT = 240_000;
 const DIFY_AGENT_BUILDER_EVAL_JSON_CONTRACT = [
   'Return only valid JSON. Do not wrap it in Markdown.',
   'Use exactly this top-level shape:',
@@ -269,11 +269,11 @@ const DIFY_AGENT_BUILDER_EVAL_JSON_CONTRACT = [
   '  "review_summary": "short human-readable summary of readiness for human testing",',
   '  "recommended_upgrades": ["useful modifications, not broad rewrites"],',
   '  "final_instructions": "complete updated instructions incorporating recommended upgrades",',
-  '  "archived_instructions": "the submitted instructions that were reviewed",',
+  '  "archived_instructions": "optional; omit or return an empty string because the Worker archives the submitted instructions",',
   '  "proposed_patch": {',
   '    "replace_section": {',
   '      "heading": "Current Instructions",',
-  '      "markdown": "copy-ready updated instructions for the canonical instruction section"',
+  '      "markdown": "optional when identical to final_instructions; omit or empty to avoid duplicate output"',
   '    },',
   '    "append_report": {',
   '      "summary": "compact summary to append to the Test Reports item",',
@@ -297,8 +297,10 @@ const DIFY_AGENT_BUILDER_EVAL_JSON_CONTRACT = [
   '}',
   'final_instructions must be copy-ready Markdown for the Half Dozen team to paste into a Notion agent: use clear headings, numbered workflow steps, acceptance criteria, test scenarios, and explicit mutation/tool-access guardrails.',
   'Do not place final_instructions inside one giant code fence. Preserve readable instruction structure.',
+  'Do not duplicate final_instructions in proposed_patch.replace_section.markdown unless the patch text intentionally differs.',
+  'Do not repeat the submitted instructions in archived_instructions; the Worker handles archival from the original source payload.',
   'Preserve linked Notion pages/databases as references. Prefer direct links or mentions over copying long database/page descriptions into final_instructions.',
-  'proposed_patch is advisory. The Worker, not Dify, is the Notion/Linear writer. proposed_patch.replace_section.markdown should match final_instructions unless there is a clear reason to keep them different.',
+  'proposed_patch is advisory. The Worker, not Dify, is the Notion/Linear writer. proposed_patch.replace_section.markdown may be omitted when final_instructions is the patch.',
   'Set proposed_patch.status_transition.allowed to false when the instructions are not ready for Testing or required access/reference context is missing.',
   'status must be either "pass" or "fail". checks must be an object with numeric scenarios, checks_total, checks_passed, and checks_failed.',
   'When readable page body content is absent, evaluate from selected_properties and review_description. Missing page body content is a caveat, not by itself a failure.'
@@ -1650,13 +1652,13 @@ function parseDifyEvalAnswer(
   const status = object.status === 'fail' ? 'fail' : object.status === 'pass' ? 'pass' : undefined;
   const reviewSummary = longStringFromUnknown(object.review_summary, 6000);
   const finalInstructions = longStringFromUnknown(object.final_instructions, 24000);
-  const archivedInstructions = longStringFromUnknown(object.archived_instructions, 24000);
+  const archivedInstructions = longStringFromUnknown(object.archived_instructions, 24000) ?? '';
 
-  if (!status || !reviewSummary || !finalInstructions || !archivedInstructions) {
+  if (!status || !reviewSummary || !finalInstructions) {
     return {
       ok: false,
       error:
-        'Dify response JSON was missing one of status, review_summary, final_instructions, or archived_instructions.'
+        'Dify response JSON was missing one of status, review_summary, or final_instructions.'
     };
   }
 
@@ -1977,7 +1979,7 @@ function buildGovernanceEvalReport(
   const recommendedUpgrades = difyOutput?.recommended_upgrades.length
     ? difyOutput.recommended_upgrades
     : recommendedAgentUpgrades(review);
-  const archivedInstructions = difyOutput?.archived_instructions ?? fallbackArchivedInstructions;
+  const archivedInstructions = difyOutput?.archived_instructions || fallbackArchivedInstructions;
   const fallbackFinalInstructions =
     difyOutput?.final_instructions ??
     buildFinalAgentInstructions(review, archivedInstructions, recommendedUpgrades);

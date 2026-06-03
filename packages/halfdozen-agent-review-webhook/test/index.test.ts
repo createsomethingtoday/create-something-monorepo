@@ -254,3 +254,46 @@ test('parseDifyEvalAnswer backfills proposed patch for the legacy JSON contract'
   assert.equal(parsed.output.proposed_patch.status_transition.to, 'Testing');
   assert.equal(parsed.output.proposed_patch.status_transition.allowed, true);
 });
+
+test('parseDifyEvalAnswer accepts compact output without archived instructions or duplicate patch markdown', () => {
+  const parsed = parseDifyEvalAnswer(
+    JSON.stringify({
+      status: 'pass',
+      review_summary: 'Ready for testing with compact Dify output.',
+      recommended_upgrades: ['Keep the live testing handoff explicit.'],
+      final_instructions: 'Compact final instructions.',
+      proposed_patch: {
+        replace_section: {
+          heading: 'Current Instructions'
+        },
+        append_report: {
+          summary: 'Compact report summary.',
+          rubric: ['Rubric passed.'],
+          test_plan: ['Paste the prompt into the live Notion agent.']
+        },
+        status_transition: {
+          from: 'Updating',
+          to: 'Testing',
+          allowed: true,
+          reason: 'Compact response passed the eval.'
+        }
+      },
+      checks: {
+        scenarios: 4,
+        checks_total: 27,
+        checks_passed: 27,
+        checks_failed: 0
+      },
+      caveats: []
+    })
+  );
+
+  assert.equal(parsed.ok, true);
+  if (!parsed.ok) return;
+
+  assert.equal(parsed.output.archived_instructions, '');
+  assert.equal(parsed.output.final_instructions, 'Compact final instructions.');
+  assert.equal(parsed.output.proposed_patch.replace_section.heading, 'Current Instructions');
+  assert.equal(parsed.output.proposed_patch.replace_section.markdown, 'Compact final instructions.');
+  assert.equal(parsed.output.proposed_patch.append_report.summary, 'Compact report summary.');
+});

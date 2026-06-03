@@ -156,11 +156,11 @@ model_config:
       "review_summary": "short human-readable summary",
       "recommended_upgrades": ["..."],
       "final_instructions": "complete updated instructions, incorporating recommended upgrades",
-      "archived_instructions": "the submitted instructions that were reviewed",
+      "archived_instructions": "optional; omit or return an empty string because the Worker archives the submitted instructions",
       "proposed_patch": {
         "replace_section": {
           "heading": "Current Instructions",
-          "markdown": "copy-ready updated instructions for the canonical instruction section"
+          "markdown": "optional when identical to final_instructions; omit or empty to avoid duplicate output"
         },
         "append_report": {
           "summary": "compact summary to append to the Test Reports item",
@@ -188,9 +188,9 @@ model_config:
     2. Review summary must explain whether the agent is ready for human testing.
     3. Recommended upgrades must focus on useful modifications, not broad rewrites.
     4. Final instructions must include the submitted intent plus recommended upgrades in a paste-ready form.
-    5. Archived instructions must preserve the submitted instructions for version history.
+    5. Do not repeat the submitted instructions in archived_instructions; the Worker handles archival from the original source payload.
     6. Proposed patch is advisory. The Worker, not Dify, is the Notion/Linear writer.
-    7. proposed_patch.replace_section.markdown should match final_instructions unless there is a clear reason to keep them different.
+    7. Do not duplicate final_instructions in proposed_patch.replace_section.markdown unless the patch text intentionally differs.
     8. Set proposed_patch.status_transition.allowed to false when the instructions are not ready for Testing or required access/reference context is missing.
     9. Mention any live Notion access gaps in caveats instead of fabricating evidence.
     10. Never expose API keys, bearer tokens, Infisical values, private connection tokens, or hidden tool credentials.

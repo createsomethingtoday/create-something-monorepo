@@ -170,7 +170,7 @@ AUTO_COMPLETE_WORKFLOW = "false" # disables eval report generation and Linear au
 UPDATE_SOURCE_AGENT_PAGE = "false" # disables source Notion page rewrite/status update
 TEST_REPORTS_DATABASE_NAME = "Test Reports [OS]" # overrides database discovery name
 DIFY_HALFDOZEN_AGENT_BUILDER_EVAL_BASE_URL = "https://api.dify.ai/v1"
-DIFY_HALFDOZEN_AGENT_BUILDER_EVAL_TIMEOUT_MS = "120000"
+DIFY_HALFDOZEN_AGENT_BUILDER_EVAL_TIMEOUT_MS = "240000"
 DIFY_HALFDOZEN_AGENT_BUILDER_EVAL_REQUIRED = "true" # fail instead of fallback when Dify errors
 ```
 
@@ -202,5 +202,9 @@ Notion integration that can read the source Half Dozen agent pages, publish the 
 Service API key in `DIFY_HALFDOZEN_AGENT_BUILDER_EVAL_API_KEY`. The import enables only Notion read
 tools (`search_notion`, `query_database`, `retrieve_page`, `retrieve_database`) plus E2B `run_code`
 for bounded JSON/lint checks. The Worker remains the Notion/Linear writer. The app response should
-include both `final_instructions` and `proposed_patch`; older responses without `proposed_patch`
-are still accepted and normalized by the Worker for backward compatibility.
+include `final_instructions` and may include `proposed_patch`. To keep long runs reliable, Dify
+does not need to duplicate `final_instructions` inside `proposed_patch.replace_section.markdown`
+and does not need to echo the submitted instructions in `archived_instructions`; the Worker
+normalizes missing patch text and archives the original submitted instructions from the source
+payload. Older responses without `proposed_patch` are still accepted and normalized by the Worker
+for backward compatibility.
