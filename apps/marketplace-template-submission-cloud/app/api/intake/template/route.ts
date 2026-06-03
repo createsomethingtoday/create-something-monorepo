@@ -8,7 +8,6 @@ import {
 import {
   extractLongDescriptionImages,
   getLongDescriptionText,
-  plainTextToLongDescriptionHtml,
   sanitizeLongDescriptionHtml
 } from '@create-something/webflow-dashboard-core/long-description';
 import { jsonNoStore } from '../../../../lib/server/responses';
@@ -94,15 +93,6 @@ const STYLE_TAG_TO_WEBFLOW_STYLE: Record<string, string> = {
   playful: 'Playful',
   retro: 'Retro'
 };
-
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
 
 function normalizePreviewUrl(value: string): string {
   const trimmed = value.trim();
@@ -340,36 +330,30 @@ export async function POST(request: Request) {
     const mappedFeatures = mapFeatureFlags([...combinedFeatures]);
     const categories =
       requestedCategories.length > 0 ? requestedCategories : category ? [category] : [];
-
-    const detailsHtml = [
-      `<h3>Submission notes</h3>${longDescriptionHtml}`,
-      notes ? `<h3>Internal notes</h3>${plainTextToLongDescriptionHtml(notes)}` : '',
-      '<h3>Metadata</h3>',
-      '<ul>',
-      categories.length > 0 ? `<li>Category: ${escapeHtml(categories.join(', '))}</li>` : '',
-      tags.length > 0 ? `<li>Tags: ${escapeHtml(tags.join(', '))}</li>` : '',
-      styleTags.length > 0 ? `<li>Style tags: ${escapeHtml(styleTags.join(', '))}</li>` : '',
-      pageCount ? `<li>Page count: ${escapeHtml(pageCount)}</li>` : '',
-      templateTypeCms ? '<li>Uses CMS.</li>' : '',
-      templateTypeEcommerce ? '<li>Uses Ecommerce.</li>' : '',
-      paymentType === 'Paid' && price !== undefined
-        ? `<li>Price: $${escapeHtml(String(price))}</li>`
-        : '',
-      siteTypes.length > 0 ? `<li>Site types: ${escapeHtml(siteTypes.join(', '))}</li>` : '',
-      combinedFeatures.size > 0
-        ? `<li>Feature flags: ${escapeHtml([...combinedFeatures].join(', '))}</li>`
-        : '',
-      `<li>Published URL verified: ${escapeHtml(publishedValidation.normalizedUrl)}</li>`,
+    const submissionMetadata = [
+      'Submission metadata',
+      categories.length > 0 ? `Category: ${categories.join(', ')}` : '',
+      tags.length > 0 ? `Tags: ${tags.join(', ')}` : '',
+      styleTags.length > 0 ? `Style tags: ${styleTags.join(', ')}` : '',
+      pageCount ? `Page count: ${pageCount}` : '',
+      templateTypeCms ? 'Uses CMS.' : '',
+      templateTypeEcommerce ? 'Uses Ecommerce.' : '',
+      paymentType === 'Paid' && price !== undefined ? `Price: $${price}` : '',
+      siteTypes.length > 0 ? `Site types: ${siteTypes.join(', ')}` : '',
+      combinedFeatures.size > 0 ? `Feature flags: ${[...combinedFeatures].join(', ')}` : '',
+      `Published URL verified: ${publishedValidation.normalizedUrl}`,
       validatorPreflight.passed
-        ? `<li>Webflow Way Validator confirmed: ${escapeHtml(validatorPreflight.result?.score ? `${validatorPreflight.result.score}% pass` : 'passed')}.</li>`
+        ? `Webflow Way Validator confirmed: ${
+            validatorPreflight.result?.score
+              ? `${validatorPreflight.result.score}% pass`
+              : 'passed'
+          }.`
         : '',
-      publishedValidation.summary.gsapDetected
-        ? '<li>GSAP detected during published-site crawl.</li>'
-        : '',
-      '</ul>'
+      publishedValidation.summary.gsapDetected ? 'GSAP detected during published-site crawl.' : ''
     ]
       .filter(Boolean)
-      .join('');
+      .join('\n');
+    const reviewNotes = [notes, submissionMetadata].filter(Boolean).join('\n\n');
 
     const submissionId = crypto.randomUUID();
     const envelope = buildTemplateEnvelope(
@@ -392,8 +376,8 @@ export async function POST(request: Request) {
         styles: mappedStyles,
         features: mappedFeatures,
         shortDescription,
-        longDescription: detailsHtml,
-        notes,
+        longDescription: longDescriptionHtml,
+        notes: reviewNotes,
         thumbnailImageUrl: thumbnailUrl,
         thumbnailImageSecondaryUrl: secondaryThumbnailUrl,
         galleryImageUrls: galleryUrls,
