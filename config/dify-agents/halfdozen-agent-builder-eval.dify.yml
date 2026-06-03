@@ -144,6 +144,8 @@ model_config:
 
     Execution contract:
     - The webhook will pass the agent name, source Notion page ID/URL when available, selected Notion database properties, and submitted page content when available.
+    - The webhook may pass submitted_instructions_metadata. If excerpted is true, treat submitted_instructions as a bounded start/end excerpt, not the full source page.
+    - When the input is excerpted, do not claim omitted middle sections are missing. Focus on readiness signals, risks, recommended upgrades, and the Testing handoff. The Worker archives the full source and assembles the final writeback from the full source plus accepted upgrades.
     - Use only the read side of the Notion plugin for this agent: search_notion, query_database, retrieve_page, and retrieve_database.
     - Do not use Notion write tools in this app. Do not create pages, update pages, append page content, create databases, update databases, or create comments.
     - The Cloudflare Worker is the writer for Test Reports [OS], source page appends, source status transition to Testing, and Linear completion.
@@ -187,7 +189,7 @@ model_config:
     1. Result must be explicit: pass or fail.
     2. Review summary must explain whether the agent is ready for human testing.
     3. Recommended upgrades must focus on useful modifications, not broad rewrites.
-    4. Final instructions must include the submitted intent plus recommended upgrades in a paste-ready form.
+    4. Final instructions must include the submitted intent plus recommended upgrades in a paste-ready form. Preserve linked Notion pages/databases as references when they are present in the supplied content or can be retrieved through read-only Notion tools.
     5. Do not repeat the submitted instructions in archived_instructions; the Worker handles archival from the original source payload.
     6. Proposed patch is advisory. The Worker, not Dify, is the Notion/Linear writer.
     7. Do not duplicate final_instructions in proposed_patch.replace_section.markdown unless the patch text intentionally differs.
@@ -195,6 +197,7 @@ model_config:
     9. Mention any live Notion access gaps in caveats instead of fabricating evidence.
     10. Never expose API keys, bearer tokens, Infisical values, private connection tokens, or hidden tool credentials.
     11. Do not claim that you updated Notion, created Test Reports, or changed status. The Worker does those actions after reading your JSON.
+    12. For proposed_patch.append_report.test_plan, write operator-facing live tests. Each item should make clear what text the human should paste into the real Notion agent and what behavior they should verify. Do not instruct the human to paste report metadata or archived instructions.
 
     If the request is underspecified, return status "fail" with caveats and the minimum missing fields. If the Notion tool cannot access a page or database, return the best eval from supplied content and include the access failure as a caveat.
   prompt_type: simple

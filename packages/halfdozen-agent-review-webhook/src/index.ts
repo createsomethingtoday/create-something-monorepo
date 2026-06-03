@@ -22,6 +22,7 @@ interface Env {
   DIFY_HALFDOZEN_AGENT_BUILDER_EVAL_API_KEY?: string;
   DIFY_HALFDOZEN_AGENT_BUILDER_EVAL_BASE_URL?: string;
   DIFY_HALFDOZEN_AGENT_BUILDER_EVAL_TIMEOUT_MS?: string;
+  DIFY_SUBMITTED_INSTRUCTIONS_MAX_LENGTH?: string;
   DIFY_HALFDOZEN_AGENT_BUILDER_EVAL_REQUIRED?: string;
 }
 
@@ -127,6 +128,9 @@ interface GovernanceEvalReport {
     message_id?: string;
     conversation_id?: string;
     error?: string;
+    input_characters?: number;
+    sent_characters?: number;
+    input_truncated?: boolean;
     raw_answer?: string;
   };
   notion_test_report: {
@@ -205,6 +209,9 @@ interface DifyAgentBuilderEvalResult {
   messageId?: string;
   conversationId?: string;
   error?: string;
+  inputCharacters?: number;
+  sentCharacters?: number;
+  inputTruncated?: boolean;
 }
 
 interface DifyAgentBuilderEvalOutput {
@@ -248,6 +255,7 @@ const DEFAULT_LINEAR_LABELS = 'linear-coordination,code-quality';
 const LINEAR_API_FALLBACK = 'https://api.linear.app/graphql';
 const MAX_FIELD_LENGTH = 600;
 const MAX_NOTION_CONTENT_LENGTH = 12000;
+const MAX_LINEAR_AUTOMATION_COMMENT_LENGTH = 6000;
 const NOTION_API_BASE = 'https://api.notion.com/v1';
 const NOTION_API_VERSION_DEFAULT = '2022-06-28';
 const TEST_REPORTS_DATABASE_NAME_DEFAULT = 'Test Reports [OS]';
@@ -260,7 +268,9 @@ const INSTRUCTION_READINESS_CLAIM_BOUNDARY =
 const LIVE_TESTING_HANDOFF_GUIDANCE =
   'Paste only the full text after "Prompt to paste" into the actual Notion agent. Do not paste the scenario label, expected behavior, report evidence, archived instructions, or any other eval text. Record pass/fail, the actual response, and notes on this Test Report. If any prompt fails, add the finding to the source page and move it back to Updating for a new eval run.';
 const DIFY_API_BASE_DEFAULT = 'https://api.dify.ai/v1';
-const DIFY_EVAL_TIMEOUT_MS_DEFAULT = 240_000;
+const DIFY_EVAL_TIMEOUT_MS_DEFAULT = 25_000;
+const DIFY_EVAL_TIMEOUT_MS_MAX = 25_000;
+const DIFY_SUBMITTED_INSTRUCTIONS_MAX_LENGTH_DEFAULT = 5000;
 const DIFY_AGENT_BUILDER_EVAL_JSON_CONTRACT = [
   'Return only valid JSON. Do not wrap it in Markdown.',
   'Use exactly this top-level shape:',
@@ -1461,9 +1471,17 @@ async function runDifyAgentBuilderEval(
   }
 
   const baseUrl = (env.DIFY_HALFDOZEN_AGENT_BUILDER_EVAL_BASE_URL ?? DIFY_API_BASE_DEFAULT).replace(/\/+$/, '');
-  const timeoutMs = positiveInteger(
+  const configuredTimeoutMs = positiveInteger(
     env.DIFY_HALFDOZEN_AGENT_BUILDER_EVAL_TIMEOUT_MS,
     DIFY_EVAL_TIMEOUT_MS_DEFAULT
+  );
+  const timeoutMs = Math.min(configuredTimeoutMs, DIFY_EVAL_TIMEOUT_MS_MAX);
+  const submittedInstructions = submittedInstructionsForDify(
+    review,
+    positiveInteger(
+      env.DIFY_SUBMITTED_INSTRUCTIONS_MAX_LENGTH,
+      DIFY_SUBMITTED_INSTRUCTIONS_MAX_LENGTH_DEFAULT
+    )
   );
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
@@ -1477,7 +1495,11 @@ async function runDifyAgentBuilderEval(
       },
       body: JSON.stringify({
         inputs: difyAgentBuilderInputs(review),
-        query: difyAgentBuilderQuery(review, parentIssue, workflowIssues),
+        query: difyAgentBuilderQuery(review, parentIssue, workflowIssues, submittedInstructions.text, {
+          inputCharacters: submittedInstructions.inputCharacters,
+          sentCharacters: submittedInstructions.sentCharacters,
+          truncated: submittedInstructions.truncated
+        }),
         response_mode: 'streaming',
         conversation_id: '',
         user: `halfdozen-agent-review-webhook-${review.requestId}`
@@ -1494,7 +1516,10 @@ async function runDifyAgentBuilderEval(
         answer: stream.answer,
         messageId: stream.messageId,
         conversationId: stream.conversationId,
-        error: `Dify Service API returned HTTP ${response.status}: ${stream.error ?? truncate(text, 500)}`
+        error: `Dify Service API returned HTTP ${response.status}: ${stream.error ?? truncate(text, 500)}`,
+        inputCharacters: submittedInstructions.inputCharacters,
+        sentCharacters: submittedInstructions.sentCharacters,
+        inputTruncated: submittedInstructions.truncated
       };
     }
 
@@ -1506,7 +1531,10 @@ async function runDifyAgentBuilderEval(
         answer: stream.answer,
         messageId: stream.messageId,
         conversationId: stream.conversationId,
-        error: parsed.error
+        error: parsed.error,
+        inputCharacters: submittedInstructions.inputCharacters,
+        sentCharacters: submittedInstructions.sentCharacters,
+        inputTruncated: submittedInstructions.truncated
       };
     }
 
@@ -1516,13 +1544,19 @@ async function runDifyAgentBuilderEval(
       output: parsed.output,
       answer: stream.answer,
       messageId: stream.messageId,
-      conversationId: stream.conversationId
+      conversationId: stream.conversationId,
+      inputCharacters: submittedInstructions.inputCharacters,
+      sentCharacters: submittedInstructions.sentCharacters,
+      inputTruncated: submittedInstructions.truncated
     };
   } catch (error) {
     return {
       ok: false,
       status: 'failed',
-      error: error instanceof Error ? error.message : String(error)
+      error: error instanceof Error ? error.message : String(error),
+      inputCharacters: submittedInstructions.inputCharacters,
+      sentCharacters: submittedInstructions.sentCharacters,
+      inputTruncated: submittedInstructions.truncated
     };
   } finally {
     clearTimeout(timeout);
@@ -1555,10 +1589,60 @@ function submittedInstructionsForReview(review: NormalizedReviewRequest): string
     : 'No submitted instructions were available in the webhook payload, source page properties, or readable Notion page content.';
 }
 
+function submittedInstructionsForDify(
+  review: NormalizedReviewRequest,
+  maxLength = DIFY_SUBMITTED_INSTRUCTIONS_MAX_LENGTH_DEFAULT
+): { text: string; inputCharacters: number; sentCharacters: number; truncated: boolean } {
+  const fullInstructions = submittedInstructionsForReview(review);
+  const inputCharacters = fullInstructions.length;
+  if (inputCharacters <= maxLength) {
+    return {
+      text: fullInstructions,
+      inputCharacters,
+      sentCharacters: inputCharacters,
+      truncated: false
+    };
+  }
+
+  const notice = [
+    `Bounded Dify eval excerpt. Full submitted instructions are ${inputCharacters} characters.`,
+    'The Cloudflare Worker archives the full submitted instructions separately and remains the Notion/Linear writer.',
+    'Review the excerpt for readiness signals, recommended upgrades, and Testing handoff risk; do not assume omitted middle sections are absent from the source page.'
+  ].join('\n');
+  const prefix = [notice, '', '--- SOURCE START EXCERPT ---', ''].join('\n');
+  const separator = '\n\n--- OMITTED MIDDLE OF LONG SOURCE PAGE ---\n\n--- SOURCE END EXCERPT ---\n';
+  const available = Math.max(0, maxLength - prefix.length - separator.length);
+  const tailLength = Math.min(
+    fullInstructions.length,
+    Math.max(200, Math.min(Math.floor(available * 0.35), Math.floor(available / 2)))
+  );
+  const headLength = Math.max(0, available - tailLength);
+  const text = [
+    notice,
+    '',
+    '--- SOURCE START EXCERPT ---',
+    fullInstructions.slice(0, headLength).trim(),
+    '',
+    '--- OMITTED MIDDLE OF LONG SOURCE PAGE ---',
+    '',
+    '--- SOURCE END EXCERPT ---',
+    fullInstructions.slice(-tailLength).trim()
+  ].join('\n');
+
+  return {
+    text,
+    inputCharacters,
+    sentCharacters: text.length,
+    truncated: true
+  };
+}
+
 function difyAgentBuilderQuery(
   review: NormalizedReviewRequest,
   parentIssue: LinearIssue,
-  workflowIssues: LinearWorkflowIssue[]
+  workflowIssues: LinearWorkflowIssue[],
+  submittedInstructions: string,
+  inputMetadata: { inputCharacters: number; sentCharacters: number; truncated: boolean }
 ): string {
   return [
     'Evaluate this Half Dozen agent page for the automated Updating -> Testing webhook flow.',
@@ -1578,7 +1662,12 @@ function difyAgentBuilderQuery(
         source_page_url: review.pageUrl ?? review.enrichment?.notionPageUrl,
         selected_properties: review.properties,
         review_description: review.description,
-        submitted_instructions: submittedInstructionsForReview(review),
+        submitted_instructions: submittedInstructions,
+        submitted_instructions_metadata: {
+          input_characters: inputMetadata.inputCharacters,
+          sent_characters: inputMetadata.sentCharacters,
+          excerpted: inputMetadata.truncated
+        },
         linear_intake: {
           identifier: parentIssue.identifier,
           url: parentIssue.url
@@ -1981,19 +2070,23 @@ function buildGovernanceEvalReport(
     : recommendedAgentUpgrades(review);
   const archivedInstructions = difyOutput?.archived_instructions || fallbackArchivedInstructions;
   const fallbackFinalInstructions =
-    difyOutput?.final_instructions ??
-    buildFinalAgentInstructions(review, archivedInstructions, recommendedUpgrades);
+    difyOutput?.final_instructions && !difyEval.inputTruncated
+      ? difyOutput.final_instructions
+      : buildFinalAgentInstructions(review, archivedInstructions, recommendedUpgrades);
   const proposedPatch =
-    difyOutput?.proposed_patch ??
-    normalizeDifyInstructionPatch(undefined, {
-      status: 'pass',
-      reviewSummary:
-        difyOutput?.review_summary ??
-        `${review.agentName} passed the automated governance eval mirror and is ready for human testing.`,
-      recommendedUpgrades,
-      finalInstructions: fallbackFinalInstructions
-    });
-  const finalInstructions = proposedPatch.replace_section.markdown || fallbackFinalInstructions;
+    difyOutput?.proposed_patch && !difyEval.inputTruncated
+      ? difyOutput.proposed_patch
+      : normalizeDifyInstructionPatch(undefined, {
+          status: difyOutput?.status ?? 'pass',
+          reviewSummary:
+            difyOutput?.review_summary ??
+            `${review.agentName} passed the automated governance eval mirror and is ready for human testing.`,
+          recommendedUpgrades,
+          finalInstructions: fallbackFinalInstructions
+        });
+  const finalInstructions = difyEval.inputTruncated
+    ? fallbackFinalInstructions
+    : proposedPatch.replace_section.markdown || fallbackFinalInstructions;
   const reviewSummary =
     difyOutput?.review_summary ??
     [
@@ -2057,6 +2150,11 @@ function buildGovernanceEvalReport(
     ...(behaviorSmokeTests.some((test) => !test.covered)
       ? ['Behavioral smoke coverage is incomplete; run or add scenario-specific tests before Validated or Active status.']
       : []),
+    ...(difyEval.inputTruncated
+      ? [
+          `Dify received a bounded instruction excerpt (${difyEval.sentCharacters ?? 0}/${difyEval.inputCharacters ?? 0} characters) to keep the queued webhook run reliable; the Worker archived the full submitted instructions and assembled the final instructions from the full source plus accepted upgrades.`
+        ]
+      : []),
     ...(difyEval.status === 'failed' ? [`Dify eval failed; Worker fallback used: ${difyEval.error ?? 'unknown error'}`] : []),
     ...(difyEval.status === 'skipped' ? ['Dify eval skipped because its Service API key is not configured on the Worker.'] : [])
   ];
@@ -2069,6 +2167,9 @@ function buildGovernanceEvalReport(
     message_id: difyEval.messageId,
     conversation_id: difyEval.conversationId,
     error: difyEval.error,
+    input_characters: difyEval.inputCharacters,
+    sent_characters: difyEval.sentCharacters,
+    input_truncated: difyEval.inputTruncated,
     raw_answer: difyEval.answer
   };
   const fullReviewDifyDetails = {
@@ -2127,6 +2228,7 @@ function buildGovernanceEvalReport(
     `- Dify checks: ${difySummary.checks_passed}/${difySummary.checks_total}`,
     `- Worker rubric: ${workerRubric.checks_passed}/${workerRubric.checks_total}`,
     `- Dify eval: ${difyEval.status}${difyEval.messageId ? ` (${difyEval.messageId})` : ''}`,
+    `- Dify input: ${difyEval.inputTruncated ? `excerpted ${difyEval.sentCharacters ?? 0}/${difyEval.inputCharacters ?? 0} characters` : difyEval.inputCharacters ? `full ${difyEval.inputCharacters} characters` : 'not sent'}`,
     `- Dify conversation: ${difyEval.conversationId ?? 'not recorded'}`,
     `- Webhook request: ${review.requestId}`,
     `- Intake: ${parentIssue.identifier} ${parentIssue.url}`,
@@ -2221,6 +2323,8 @@ function buildGovernanceEvalReport(
     `Dify conversation ID: ${difyEval.conversationId ?? 'not recorded'}`,
     '',
     `Dify error: ${difyEval.error ?? 'none'}`,
+    '',
+    `Dify input: ${difyEval.inputTruncated ? `excerpted ${difyEval.sentCharacters ?? 0}/${difyEval.inputCharacters ?? 0} characters` : difyEval.inputCharacters ? `full ${difyEval.inputCharacters} characters` : 'not sent'}`,
     '',
     `Webhook request ID: ${review.requestId}`,
     '',
@@ -3022,14 +3126,34 @@ function automatedWorkflowComment(
   testReport: NotionPublishResult,
   sourcePageUpdate: NotionAgentPageUpdateResult
 ): string {
-  return [
+  const recommendedUpgradeLines = compactBulletLines(report.recommended_upgrades, 5);
+  const caveatLines = compactBulletLines(report.caveats, 5);
+  const liveTestingLines = report.live_testing_checklist.flatMap((item) => [
+    `- ${item.label}`,
+    `  Prompt to paste: ${truncate(item.prompt, 240)}`,
+    `  Expected behavior: ${truncate(item.expected_behavior, 240)}`
+  ]);
+  const difyInput = report.dify_eval?.input_truncated
+    ? `excerpted ${report.dify_eval.sent_characters ?? 0}/${report.dify_eval.input_characters ?? 0} characters`
+    : report.dify_eval?.input_characters
+      ? `full ${report.dify_eval.input_characters} characters`
+      : 'not sent';
+  const fullReport =
+    testReport.ok && testReport.pageUrl
+      ? `Full eval details, final instructions, archived submitted instructions, and raw JSON: ${testReport.pageUrl}`
+      : `Full Test Reports [OS] publish not available: ${testReport.status}${testReport.reason ? ` (${testReport.reason})` : ''}`;
+  const body = [
     report.success && testReport.ok && sourcePageUpdate.ok
       ? 'Automated Half Dozen webhook workflow completed.'
       : 'Automated Half Dozen webhook workflow ran with incomplete Notion handoff.',
     '',
     `Agent: ${review.agentName}`,
+    `Webhook request: ${review.requestId}`,
     `Intake: ${parentIssue.identifier} ${parentIssue.url}`,
     `Workflow issues: ${workflowIssues.map((issue) => `${issue.identifier} (${issue.step})`).join(', ') || 'none'}`,
+    `Generated: ${report.generated_at}`,
+    '',
+    'Eval summary',
     `Eval status: ${report.summary.status}`,
     `Eval scope: ${report.eval_scope}`,
     `Claim boundary: ${report.claim_boundary}`,
@@ -3037,17 +3161,53 @@ function automatedWorkflowComment(
     `Dify patch transition: ${report.proposed_patch.status_transition.from} -> ${report.proposed_patch.status_transition.to}; allowed=${report.proposed_patch.status_transition.allowed}`,
     `Worker patch application: ${report.patch_application.applied ? 'accepted' : 'not accepted'} (${report.patch_application.mode})`,
     `Dify eval: ${report.dify_eval?.status ?? 'not recorded'}${report.dify_eval?.message_id ? ` (${report.dify_eval.message_id})` : report.dify_eval?.error ? ` (${report.dify_eval.error})` : ''}`,
+    `Dify input: ${difyInput}`,
     `Dify checks: ${report.summary.checks_passed}/${report.summary.checks_total}`,
     `Worker rubric: ${report.worker_rubric.checks_passed}/${report.worker_rubric.checks_total}`,
     `Scenarios: ${report.summary.scenarios}`,
-    `Generated: ${report.generated_at}`,
+    '',
+    'Notion writeback',
     `Test Reports [OS]: ${testReport.status}${testReport.pageUrl ? ` ${testReport.pageUrl}` : testReport.reason ? ` (${testReport.reason})` : ''}`,
     `Source agent page: ${sourcePageUpdate.status}${sourcePageUpdate.pageUrl ? ` ${sourcePageUpdate.pageUrl}` : sourcePageUpdate.reason ? ` (${sourcePageUpdate.reason})` : ''}`,
     `Source page status updated: ${sourcePageUpdate.statusUpdated === true ? 'yes' : 'no'}`,
     '',
-    'Report',
-    report.notion_test_report.markdown
+    'Full report',
+    fullReport,
+    '',
+    'Live testing handoff',
+    LIVE_TESTING_HANDOFF_GUIDANCE,
+    ...liveTestingLines,
+    '',
+    'Review summary',
+    truncate(report.review_summary, 800),
+    '',
+    'Recommended upgrades',
+    ...recommendedUpgradeLines,
+    '',
+    'Caveats',
+    ...caveatLines
   ].join('\n');
+
+  return truncateWithNotice(
+    body,
+    MAX_LINEAR_AUTOMATION_COMMENT_LENGTH,
+    '\n\n[Linear evidence was compacted. See the Test Reports [OS] item for the full eval, final instructions, archived source instructions, and raw review details.]'
+  );
+}
+
+function compactBulletLines(values: string[], maxItems: number): string[] {
+  if (!values.length) return ['- none'];
+  const visible = values.slice(0, maxItems).map((value) => `- ${truncate(value, 240)}`);
+  if (values.length > maxItems) {
+    visible.push(`- ${values.length - maxItems} more item(s) omitted from Linear; see the full Test Reports [OS] item.`);
+  }
+  return visible;
+}
+
+function truncateWithNotice(value: string, maxLength: number, notice: string): string {
+  if (value.length <= maxLength) return value;
+  const budget = Math.max(0, maxLength - notice.length);
+  return `${value.slice(0, budget).trimEnd()}${notice}`;
 }
 
 function automatedWorkflowSkippedComment(
@@ -3271,6 +3431,7 @@ function corsHeaders(): HeadersInit {
 }
 
 export {
+  automatedWorkflowComment,
   buildBehavioralSmokeTests,
   canonicalPageContent,
   evaluateWorkerRubric,
@@ -3278,5 +3439,6 @@ export {
   notionMarkdownBlocks,
   parseDifyEvalAnswer,
   richTextPlain,
-  shouldRunAutomatedEval
+  shouldRunAutomatedEval,
+  submittedInstructionsForDify
 };

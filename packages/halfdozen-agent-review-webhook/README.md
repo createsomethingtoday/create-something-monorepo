@@ -19,15 +19,21 @@ By default, each intake creates or reuses two Linear follow-up issues:
 
 The Worker then runs the Dify Agent Builder Eval app when
 `DIFY_HALFDOZEN_AGENT_BUILDER_EVAL_API_KEY` is configured. If that Dify app is not configured yet,
-the Worker falls back to the deterministic governance eval mirror that matches the same report
-contract. The generated handoff follows the meeting contract: result, review summary, recommended
-upgrades/modifications, final instructions, and archived submitted instructions. When the Notion integration can see the source page and
+times out, or returns invalid JSON, the Worker falls back to the deterministic governance eval
+mirror that matches the same report contract. The generated handoff follows the meeting contract:
+result, review summary, recommended upgrades/modifications, final instructions, and archived
+submitted instructions. When the Notion integration can see the source page and
 `Test Reports [OS]`, the Worker publishes the eval report to Test Reports, rewrites the submitted
 agent page by appending the updated handoff and archived submitted-instructions section, flips the
 source page from `Updating` to `Testing`, comments evidence back to Linear, and marks the
 intake/build/eval issues complete. If any Notion handoff step fails, the run is recorded in Linear
 but is not marked completed. If the eval result is `fail`, the Worker appends the report but leaves
 the source page status unchanged instead of moving it to `Testing`.
+
+Linear receives compact evidence only: status, links, Dify input metadata, recommended upgrades,
+caveats, and the live-testing paste boundary. The full eval details, final instructions, archived
+source instructions, raw Dify response, and full review JSON live in the versioned `Test Reports
+[OS]` item.
 
 ```bash
 pnpm agent:halfdozen:governance-eval -- --output .cache/halfdozen-agent-governance-eval.json
@@ -63,6 +69,11 @@ strongest role is reasoning over the submitted instructions, returning the final
 the review details, and a structured patch proposal. The Worker then validates that proposal with
 deterministic checks and applies the versioned Notion/Linear handoff only when the patch allows the
 `Updating` to `Testing` transition and the Worker rubric passes.
+
+Long source pages are sent to Dify as a bounded excerpt so the queued webhook run stays reliable.
+The Worker still archives the full submitted instructions in Notion and, when the Dify input was
+excerpted, assembles final instructions from the full source page plus accepted upgrades instead of
+trusting an instruction rewrite produced from a partial source.
 
 The Live Testing Handoff is intentionally operator-facing. Team members should paste only the full
 text after `Prompt to paste` into the actual Notion agent. They should not paste the scenario label,
@@ -170,7 +181,8 @@ AUTO_COMPLETE_WORKFLOW = "false" # disables eval report generation and Linear au
 UPDATE_SOURCE_AGENT_PAGE = "false" # disables source Notion page rewrite/status update
 TEST_REPORTS_DATABASE_NAME = "Test Reports [OS]" # overrides database discovery name
 DIFY_HALFDOZEN_AGENT_BUILDER_EVAL_BASE_URL = "https://api.dify.ai/v1"
-DIFY_HALFDOZEN_AGENT_BUILDER_EVAL_TIMEOUT_MS = "240000"
+DIFY_HALFDOZEN_AGENT_BUILDER_EVAL_TIMEOUT_MS = "25000"
+DIFY_SUBMITTED_INSTRUCTIONS_MAX_LENGTH = "5000"
 DIFY_HALFDOZEN_AGENT_BUILDER_EVAL_REQUIRED = "true" # fail instead of fallback when Dify errors
 ```
 
@@ -206,5 +218,7 @@ include `final_instructions` and may include `proposed_patch`. To keep long runs
 does not need to duplicate `final_instructions` inside `proposed_patch.replace_section.markdown`
 and does not need to echo the submitted instructions in `archived_instructions`; the Worker
 normalizes missing patch text and archives the original submitted instructions from the source
-payload. Older responses without `proposed_patch` are still accepted and normalized by the Worker
-for backward compatibility.
+payload. The Worker caps Dify execution at 25 seconds and sends long source pages as a bounded
+excerpt; if Dify cannot return a valid response in that budget, the Worker uses its deterministic
+fallback and continues the Notion/Linear handoff. Older responses without `proposed_patch` are
+still accepted and normalized by the Worker for backward compatibility.

@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {
+  automatedWorkflowComment,
   buildBehavioralSmokeTests,
   canonicalPageContent,
   evaluateWorkerRubric,
@@ -9,7 +10,8 @@ import {
   notionMarkdownBlocks,
   parseDifyEvalAnswer,
   richTextPlain,
-  shouldRunAutomatedEval
+  shouldRunAutomatedEval,
+  submittedInstructionsForDify
 } from '../src/index.ts';
 
 const deliveryReadyInstructions = [
@@ -136,6 +138,28 @@ test('shouldRunAutomatedEval only allows Updating status to trigger eval', () =>
   assert.equal(shouldRunAutomatedEval({ status: undefined }), false);
 });
 
+test('submittedInstructionsForDify excerpts long source pages while preserving edge context', () => {
+  const review = {
+    requestId: 'req-1',
+    receivedAt: '2026-06-03T00:00:00.000Z',
+    agentName: 'Internal Agent Builder',
+    properties: {},
+    enrichment: {
+      pageContent: ['start instructions', 'middle '.repeat(1000), 'end instructions'].join('\n')
+    }
+  };
+
+  const result = submittedInstructionsForDify(review, 1200);
+
+  assert.equal(result.truncated, true);
+  assert.ok(result.inputCharacters > result.sentCharacters);
+  assert.ok(result.sentCharacters <= 1200);
+  assert.match(result.text, /Bounded Dify eval excerpt/);
+  assert.match(result.text, /start instructions/);
+  assert.match(result.text, /end instructions/);
+  assert.match(result.text, /OMITTED MIDDLE/);
+});
+
 test('notionMarkdownBlocks preserves core report structure', () => {
   const blocks = notionMarkdownBlocks([
     '# Title',
@@ -178,6 +202,102 @@ test('richTextPlain preserves Notion mention hrefs as Markdown links', () => {
     text,
     '[AI Toolkits [HD]](https://www.notion.so/halfdozen/AI-Toolkits-HD-1234567890abcdef1234567890abcdef) reference'
   );
+});
+
+test('automatedWorkflowComment stays compact and points to the full Notion eval report', () => {
+  const comment = automatedWorkflowComment(
+    {
+      requestId: 'req-compact',
+      receivedAt: '2026-06-03T00:00:00.000Z',
+      agentName: 'Internal Agent Builder',
+      status: 'Updating',
+      properties: {}
+    },
+    {
+      id: 'issue-1',
+      identifier: 'CRE-469',
+      title: 'Review Half Dozen agent build',
+      url: 'https://linear.app/create-something/issue/CRE-469'
+    },
+    [
+      {
+        id: 'issue-2',
+        identifier: 'CRE-502',
+        title: 'Run and share Half Dozen agent eval',
+        url: 'https://linear.app/create-something/issue/CRE-502',
+        step: 'eval',
+        reused: true
+      }
+    ],
+    {
+      success: true,
+      generated_at: '2026-06-03T00:00:00.000Z',
+      eval_scope: 'instruction-readiness',
+      claim_boundary: 'Does not prove live Notion runtime behavior.',
+      execution_target: 'dify-agent-builder-eval-with-worker-notion-linear-writeback',
+      summary: {
+        status: 'pass',
+        scenarios: 4,
+        checks_total: 27,
+        checks_passed: 27,
+        checks_failed: 0
+      },
+      review_summary: 'Ready for live Notion testing. '.repeat(100),
+      recommended_upgrades: Array.from({ length: 8 }, (_, index) => `Upgrade ${index + 1}: ${'detail '.repeat(80)}`),
+      proposed_patch: {
+        status_transition: {
+          from: 'Updating',
+          to: 'Testing',
+          allowed: true
+        }
+      },
+      patch_application: {
+        applied: true,
+        mode: 'append_versioned_handoff'
+      },
+      worker_rubric: {
+        checks_total: 7,
+        checks_passed: 7
+      },
+      caveats: Array.from({ length: 8 }, (_, index) => `Caveat ${index + 1}: ${'detail '.repeat(80)}`),
+      live_testing_checklist: [
+        {
+          label: 'Complete request',
+          prompt: 'I need an agent that turns rough automation requests into Notion-native instructions.',
+          expected_behavior: 'Returns Agent Spec, Instructions, Build checklist, and Test plan.'
+        }
+      ],
+      dify_eval: {
+        status: 'used',
+        message_id: 'msg-1',
+        input_characters: 18000,
+        sent_characters: 5000,
+        input_truncated: true
+      },
+      notion_test_report: {
+        markdown: ['## Full Review JSON', 'x'.repeat(12000)].join('\n')
+      }
+    } as any,
+    {
+      ok: true,
+      status: 'published',
+      pageUrl: 'https://notion.so/test-report'
+    },
+    {
+      ok: true,
+      status: 'updated',
+      pageUrl: 'https://notion.so/source-page',
+      statusUpdated: true
+    }
+  );
+
+  assert.ok(comment.length <= 6000);
+  assert.match(comment, /Automated Half Dozen webhook workflow completed/);
+  assert.match(comment, /Dify input: excerpted 5000\/18000 characters/);
+  assert.match(comment, /Full eval details, final instructions, archived submitted instructions, and raw JSON/);
+  assert.match(comment, /Paste only the full text after "Prompt to paste"/);
+  assert.doesNotMatch(comment, /Full Review JSON/);
+  assert.doesNotMatch(comment, /x{1000}/);
 });
 
 test('parseDifyEvalAnswer preserves an advisory proposed patch', () => {
