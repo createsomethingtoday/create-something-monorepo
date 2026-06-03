@@ -51,6 +51,7 @@ interface ReviewEnrichment {
   notionPageId?: string;
   notionPageUrl?: string;
   pageContent?: string;
+  relationIds?: Record<string, string[]>;
   warning?: string;
 }
 
@@ -798,6 +799,7 @@ async function enrichReviewWithNotionContent(
       notionPageId,
       notionPageUrl,
       pageContent: content.pageContent ?? alternateContent?.pageContent,
+      relationIds: metadata.relationIds,
       warning: warnings.length ? warnings.join(' ') : undefined
     }
   };
@@ -895,7 +897,7 @@ function canonicalPageContent(content: string): string | undefined {
 async function fetchNotionPageMetadata(
   env: Env,
   pageId: string
-): Promise<{ properties?: Record<string, string>; warning?: string }> {
+): Promise<{ properties?: Record<string, string>; relationIds?: Record<string, string[]>; warning?: string }> {
   const response = await fetch(`${NOTION_API_BASE}/pages/${pageId}`, {
     headers: notionHeaders(env)
   });
@@ -913,8 +915,25 @@ async function fetchNotionPageMetadata(
   }
 
   return {
-    properties: normalizeProperties(properties)
+    properties: normalizeProperties(properties),
+    relationIds: extractRelationIds(properties)
   };
+}
+
+function extractRelationIds(properties: UnknownRecord): Record<string, string[]> {
+  const relationIds: Record<string, string[]> = {};
+
+  for (const [name, property] of Object.entries(properties)) {
+    if (!isRecord(property) || !Array.isArray(property.relation)) continue;
+
+    const ids = property.relation
+      .map((relation) => (isRecord(relation) ? stringFromUnknown(relation.id) : undefined))
+      .filter((id): id is string => Boolean(id));
+
+    if (ids.length) relationIds[name] = ids;
+  }
+
+  return relationIds;
 }
 
 async function fetchNotionBlockChildren(
@@ -2626,6 +2645,14 @@ function buildTestReportProperties(
       const pageUrl = review.pageUrl ?? review.enrichment?.notionPageUrl;
       if (pageUrl) properties[name] = { url: pageUrl };
     }
+    if (property.type === 'relation' && (normalized === 'agent' || normalized === 'agents')) {
+      const sourcePageId = review.enrichment?.notionPageId;
+      if (sourcePageId) properties[name] = notionRelationProperty([sourcePageId]);
+    }
+    if (property.type === 'relation' && (normalized === 'client' || normalized === 'clients')) {
+      const clientIds = pickRelationIds(review.enrichment?.relationIds, 'Client', 'Clients');
+      if (clientIds.length) properties[name] = notionRelationProperty(clientIds);
+    }
     if (property.type === 'select' && normalized === 'status') {
       properties[name] = { select: { name: report.notion_test_report.status } };
     }
@@ -2635,6 +2662,19 @@ function buildTestReportProperties(
   }
 
   return properties;
+}
+
+function notionRelationProperty(pageIds: string[]): UnknownRecord {
+  return {
+    relation: pageIds.map((id) => ({ id }))
+  };
+}
+
+function pickRelationIds(relations: Record<string, string[]> | undefined, ...names: string[]): string[] {
+  if (!relations) return [];
+  const normalizedNames = new Set(names.map(normalizeKey));
+  const match = Object.entries(relations).find(([name]) => normalizedNames.has(normalizeKey(name)));
+  return match?.[1] ?? [];
 }
 
 function notionHeaders(env: Env): HeadersInit {
@@ -3433,6 +3473,7 @@ function corsHeaders(): HeadersInit {
 export {
   automatedWorkflowComment,
   buildBehavioralSmokeTests,
+  buildTestReportProperties,
   canonicalPageContent,
   evaluateWorkerRubric,
   LIVE_TESTING_HANDOFF_GUIDANCE,

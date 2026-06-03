@@ -4,6 +4,7 @@ import test from 'node:test';
 import {
   automatedWorkflowComment,
   buildBehavioralSmokeTests,
+  buildTestReportProperties,
   canonicalPageContent,
   evaluateWorkerRubric,
   LIVE_TESTING_HANDOFF_GUIDANCE,
@@ -177,6 +178,61 @@ test('notionMarkdownBlocks preserves core report structure', () => {
   const types = blocks.map((block) => block.type);
 
   assert.deepEqual(types, ['heading_1', 'paragraph', 'to_do', 'bulleted_list_item', 'numbered_list_item', 'code']);
+});
+
+test('buildTestReportProperties links Test Reports back to source agent and client relations', () => {
+  const properties = buildTestReportProperties(
+    {
+      Report: { type: 'title' },
+      Date: { type: 'date' },
+      Score: { type: 'number' },
+      Agent: { type: 'relation' },
+      Client: { type: 'relation' },
+      Notes: { type: 'rich_text' }
+    },
+    {
+      requestId: 'req-relations',
+      receivedAt: '2026-06-03T00:00:00.000Z',
+      agentName: 'Internal Agent Builder',
+      properties: {},
+      enrichment: {
+        notionPageId: '34f01918-7ac5-8095-8ff2-dc2fa49f11fe',
+        relationIds: {
+          Client: ['client-page-id-1']
+        }
+      }
+    },
+    {
+      success: true,
+      generated_at: '2026-06-03T05:21:24.314Z',
+      summary: {
+        status: 'pass',
+        scenarios: 4,
+        checks_total: 27,
+        checks_passed: 27,
+        checks_failed: 0
+      },
+      worker_rubric: {
+        checks_total: 9,
+        checks_passed: 9
+      },
+      notion_test_report: {
+        title: 'Half Dozen Agent Eval - Internal Agent Builder',
+        status: 'pass',
+        beta_dependency: 'Dify fallback completed.',
+        source: 'Cloudflare Worker webhook automation',
+        database_name: 'Test Reports [OS]',
+        markdown: ''
+      }
+    } as any
+  );
+
+  assert.deepEqual(properties?.Agent, {
+    relation: [{ id: '34f01918-7ac5-8095-8ff2-dc2fa49f11fe' }]
+  });
+  assert.deepEqual(properties?.Client, {
+    relation: [{ id: 'client-page-id-1' }]
+  });
 });
 
 test('richTextPlain preserves Notion mention hrefs as Markdown links', () => {
