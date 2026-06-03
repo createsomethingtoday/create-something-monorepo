@@ -75,6 +75,49 @@ export interface TalentInput {
 	abundance_index?: number;
 }
 
+export interface StaffOnboardingConsent {
+	background_check: boolean;
+	compliance_screening: boolean;
+	submitted_at?: string;
+	source?: string;
+}
+
+export interface StaffOnboardingInput {
+	phone: string;
+	name: string;
+	email?: string;
+	specialties?: string[];
+	skills?: string[];
+	license_type?: string;
+	license_state?: string;
+	shift_preference?: string;
+	contract_preference?: string;
+	desired_location?: string;
+	start_date?: string;
+	hourly_rate_min?: number;
+	hourly_rate_max?: number;
+	availability?: 'available' | 'busy' | 'unavailable';
+	timezone?: string;
+	profile_url?: string;
+	resume_url?: string;
+	source?: string;
+	notes?: string;
+	metadata?: Record<string, unknown>;
+	consent: StaffOnboardingConsent;
+}
+
+export interface StaffOnboardingResponse {
+	action: 'created' | 'updated';
+	talent: Talent;
+	intake: {
+		id: string;
+		user_id: string;
+		user_type: 'talent';
+		intake_type: 'onboarding';
+	};
+	seeker_deactivated: boolean;
+}
+
 // ============================================
 // Match Types
 // ============================================

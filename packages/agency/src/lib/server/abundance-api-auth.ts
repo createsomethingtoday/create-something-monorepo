@@ -8,6 +8,10 @@ export function isProtectedAbundanceApiPath(pathname: string): boolean {
 	return isAbundanceApiPath && !isWhatsAppWebhookPath;
 }
 
+export function isStaffOnboardingApiPath(pathname: string): boolean {
+	return pathname === '/api/abundance/staff/onboarding' || pathname === '/api/abundance/staff/onboarding/';
+}
+
 export function extractBearerToken(authorizationHeader: string | null | undefined): string | null {
 	if (!authorizationHeader) {
 		return null;
@@ -67,7 +71,14 @@ export const abundanceApiAuthHandle: Handle = async ({ event, resolve }) => {
 		event.platform?.env?.AGENCY_INTERNAL_API_KEY
 	);
 
-	if (!isAuthorized) {
+	const isStaffOnboardingAuthorized = isStaffOnboardingApiPath(event.url.pathname)
+		? await isValidAbundanceApiBearer(
+				event.request.headers.get('authorization'),
+				event.platform?.env?.ABUNDANCE_STAFF_ONBOARDING_TOKEN
+			)
+		: false;
+
+	if (!isAuthorized && !isStaffOnboardingAuthorized) {
 		return json({ success: false, error: 'Unauthorized' }, { status: 401 });
 	}
 

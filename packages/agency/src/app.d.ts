@@ -51,6 +51,7 @@ declare global {
 				WHATSAPP_PHONE_NUMBER_ID?: string;
 				DIFY_ABUNDANCE_HUB_API_KEY?: string;
 				DIFY_ABUNDANCE_HUB_BASE_URL?: string;
+				ABUNDANCE_STAFF_ONBOARDING_TOKEN?: string;
 				// SavvyCal
 				SAVVYCAL_API_KEY?: string;
 				// Identity Worker (LMS provisioning)

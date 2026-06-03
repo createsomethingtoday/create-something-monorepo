@@ -439,11 +439,12 @@
         "bearer_token_env_var": "ABUNDANCE_MCP_BEARER_TOKEN",
         "infisical_path": "/mcp-hub/hubs"
       },
+      "package_path": "packages/abundance-jobs-mcp",
       "related_deployments": [
         "abundance-thenpgroup",
         "abundance-staff-mcp"
       ],
-      "notes": "Production smoke passed on 2026-05-13 via list_public_jobs; write-capable send_job_to_funnel remains confirmation-gated in the agent policy."
+      "notes": "Source-controlled Worker reads from the normalized abundance_public_jobs table and refreshes RapidAPI Active Jobs through an authenticated admin endpoint; write-capable send_job_to_funnel remains confirmation-gated in the agent policy."
     },
     "abundance-thenpgroup": {
       "type": "policy_os_hub",

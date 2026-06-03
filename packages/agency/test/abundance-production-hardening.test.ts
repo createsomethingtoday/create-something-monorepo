@@ -4,11 +4,13 @@ import assert from 'node:assert/strict';
 import {
 	abundanceApiAuthHandle,
 	isProtectedAbundanceApiPath,
+	isStaffOnboardingApiPath,
 	isValidAbundanceApiBearer
 } from '../src/lib/server/abundance-api-auth.ts';
 import { isValidMetaSignature } from '../src/lib/server/abundance-whatsapp-auth.ts';
 import { POST as matchPost } from '../src/routes/api/abundance/match/+server.ts';
 import { POST as convertPost } from '../src/routes/api/abundance/convert/+server.ts';
+import { POST as staffOnboardingPost } from '../src/routes/api/abundance/staff/onboarding/+server.ts';
 import { GET as whatsappGet } from '../src/routes/api/abundance/whatsapp/+server.ts';
 
 type StatementRecord = {
@@ -110,6 +112,167 @@ function createFakeDb() {
 	};
 }
 
+function createStaffOnboardingFakeDb(options: { existingTalent?: boolean; existingSeeker?: boolean; previousIntake?: boolean } = {}) {
+	const statements: StatementRecord[] = [];
+	let talentRow: Record<string, unknown> | null = options.existingTalent
+		? {
+				id: 'talent_existing',
+				phone: '+15550000001',
+				name: 'Existing Nurse',
+				email: 'existing@example.com',
+				portfolio_url: null,
+				instagram: null,
+				skills: JSON.stringify(['old-skill']),
+				styles: JSON.stringify(['old-tag']),
+				hourly_rate_min: 60,
+				hourly_rate_max: 80,
+				availability: 'busy',
+				timezone: 'America/Chicago',
+				abundance_index: 65,
+				status: 'active',
+				created_at: '2026-05-01T00:00:00.000Z',
+				updated_at: '2026-05-01T00:00:00.000Z'
+			}
+		: null;
+	let seekerRow: Record<string, unknown> | null = options.existingSeeker
+		? {
+				id: 'seeker_existing',
+				phone: '5550000001',
+				name: 'Placeholder Nurse',
+				email: 'placeholder@example.com',
+				status: 'onboarding'
+			}
+		: null;
+
+	return {
+		statements,
+		getTalent: () => talentRow,
+		getSeeker: () => seekerRow,
+		db: {
+			prepare(sql: string) {
+				const normalized = normalizeSql(sql);
+				const boundStatement = (args: unknown[]) => ({
+					async first() {
+						statements.push({ sql: normalized, args, operation: 'first' });
+
+						if (/SELECT \* FROM talent WHERE phone = \?/.test(normalized)) {
+							return talentRow && talentRow.phone === args[0] ? talentRow : null;
+						}
+
+						if (/SELECT \* FROM talent WHERE lower\(email\) = \?/.test(normalized)) {
+							return talentRow && String(talentRow.email).toLowerCase() === args[0] ? talentRow : null;
+						}
+
+						if (/SELECT \* FROM seekers WHERE phone = \?/.test(normalized)) {
+							return seekerRow && seekerRow.phone === args[0] ? seekerRow : null;
+						}
+
+						if (/SELECT \* FROM seekers WHERE lower\(email\) = \?/.test(normalized)) {
+							return seekerRow && String(seekerRow.email).toLowerCase() === args[0] ? seekerRow : null;
+						}
+
+						if (/SELECT id FROM intakes WHERE user_id = \? AND user_type = 'talent'/.test(normalized)) {
+							return options.previousIntake ? { id: 'intake_previous' } : null;
+						}
+
+						if (/SELECT \* FROM talent WHERE id = \?/.test(normalized)) {
+							return talentRow && talentRow.id === args[0] ? talentRow : null;
+						}
+
+						return null;
+					},
+					async all() {
+						statements.push({ sql: normalized, args, operation: 'all' });
+						return { results: [] };
+					},
+					async run() {
+						statements.push({ sql: normalized, args, operation: 'run' });
+
+						if (/INSERT INTO talent/.test(normalized)) {
+							const [
+								id,
+								phone,
+								name,
+								email,
+								portfolioUrl,
+								skills,
+								styles,
+								hourlyRateMin,
+								hourlyRateMax,
+								availability,
+								timezone,
+								abundanceIndex
+							] = args;
+							talentRow = {
+								id,
+								phone,
+								name,
+								email,
+								portfolio_url: portfolioUrl,
+								instagram: null,
+								skills,
+								styles,
+								hourly_rate_min: hourlyRateMin,
+								hourly_rate_max: hourlyRateMax,
+								availability,
+								timezone,
+								abundance_index: abundanceIndex,
+								status: 'active',
+								created_at: '2026-05-01T00:00:00.000Z',
+								updated_at: '2026-05-01T00:00:00.000Z'
+							};
+						}
+
+						if (/UPDATE talent SET/.test(normalized) && talentRow) {
+							const [
+								phone,
+								name,
+								email,
+								portfolioUrl,
+								skills,
+								styles,
+								hourlyRateMin,
+								hourlyRateMax,
+								availability,
+								timezone
+							] = args;
+							talentRow = {
+								...talentRow,
+								phone,
+								name,
+								email,
+								portfolio_url: portfolioUrl,
+								skills,
+								styles,
+								hourly_rate_min: hourlyRateMin,
+								hourly_rate_max: hourlyRateMax,
+								availability,
+								timezone,
+								status: 'active'
+							};
+						}
+
+						if (/UPDATE seekers SET status = 'inactive' WHERE id = \?/.test(normalized) && seekerRow) {
+							seekerRow = { ...seekerRow, status: 'inactive' };
+						}
+
+						return {};
+					}
+				});
+
+				return {
+					bind(...args: unknown[]) {
+						return boundStatement(args);
+					},
+					first: () => boundStatement([]).first(),
+					all: () => boundStatement([]).all(),
+					run: () => boundStatement([]).run()
+				};
+			}
+		} as unknown as D1Database
+	};
+}
+
 async function signMetaPayload(payload: string, secret: string): Promise<string> {
 	const key = await crypto.subtle.importKey(
 		'raw',
@@ -152,8 +315,38 @@ test('abundance API hook requires either a session user or internal bearer token
 	assert.equal(isProtectedAbundanceApiPath('/api/abundance/match'), true);
 	assert.equal(isProtectedAbundanceApiPath('/api/abundance/whatsapp'), false);
 	assert.equal(isProtectedAbundanceApiPath('/api/abundance/whatsapp/'), false);
+	assert.equal(isStaffOnboardingApiPath('/api/abundance/staff/onboarding'), true);
 	assert.equal(await isValidAbundanceApiBearer('Bearer expected-secret', 'expected-secret'), true);
 	assert.equal(await isValidAbundanceApiBearer('Bearer wrong-secret', 'expected-secret'), false);
+});
+
+test('abundance staff onboarding route accepts only the route-scoped onboarding token', async () => {
+	const staffUrl = new URL('https://example.com/api/abundance/staff/onboarding');
+	const matchUrl = new URL('https://example.com/api/abundance/match');
+
+	const staffAllowed = await abundanceApiAuthHandle({
+		event: {
+			url: staffUrl,
+			request: new Request(staffUrl, { headers: { authorization: 'Bearer staff-secret' } }),
+			locals: {},
+			platform: { env: { ABUNDANCE_STAFF_ONBOARDING_TOKEN: 'staff-secret' } }
+		},
+		resolve: async () => new Response('ok', { status: 200 })
+	} as any);
+
+	assert.equal(staffAllowed.status, 200);
+
+	const matchDenied = await abundanceApiAuthHandle({
+		event: {
+			url: matchUrl,
+			request: new Request(matchUrl, { headers: { authorization: 'Bearer staff-secret' } }),
+			locals: {},
+			platform: { env: { ABUNDANCE_STAFF_ONBOARDING_TOKEN: 'staff-secret' } }
+		},
+		resolve: async () => new Response('ok')
+	} as any);
+
+	assert.equal(matchDenied.status, 401);
 });
 
 test('abundance WhatsApp webhook rejects missing verification config and validates Meta signatures', async () => {
@@ -229,4 +422,121 @@ test('abundance conversion preserves the source record by marking it inactive', 
 	assert.ok(statements.some((entry) => /INSERT INTO talent/.test(entry.sql)));
 	assert.ok(statements.some((entry) => /UPDATE seekers SET status = 'inactive'/.test(entry.sql)));
 	assert.equal(statements.some((entry) => /DELETE FROM seekers|DELETE FROM talent/.test(entry.sql)), false);
+});
+
+test('staff onboarding creates a matchable talent profile and stores the full onboarding intake', async () => {
+	const { db, statements, getSeeker } = createStaffOnboardingFakeDb({ existingSeeker: true });
+	const response = await staffOnboardingPost({
+		request: new Request('https://example.com/api/abundance/staff/onboarding', {
+			method: 'POST',
+			body: JSON.stringify({
+				phone: '(555) 000-0001',
+				name: 'Avery Stone',
+				email: 'AVERY@example.com',
+				specialties: ['ICU', 'Telemetry', 'ICU'],
+				skills: ['Triage'],
+				license_type: 'RN',
+				license_state: 'TX',
+				shift_preference: 'Nights',
+				contract_preference: '13-week travel',
+				desired_location: 'Austin',
+				availability: 'available',
+				source: 'concierge',
+				consent: {
+					background_check: true,
+					compliance_screening: true,
+					submitted_at: '2026-06-03T12:00:00.000Z'
+				}
+			})
+		}),
+		platform: { env: { DB: db } }
+	} as any);
+
+	assert.equal(response.status, 201);
+
+	const payload = await response.json();
+	assert.equal(payload.success, true);
+	assert.equal(payload.data.action, 'created');
+	assert.deepEqual(payload.data.talent.skills, ['Triage', 'ICU', 'Telemetry']);
+	assert.equal(payload.data.intake.user_type, 'talent');
+	assert.equal(payload.data.intake.intake_type, 'onboarding');
+	assert.equal(payload.data.seeker_deactivated, true);
+	assert.equal(getSeeker()?.status, 'inactive');
+
+	assert.ok(statements.some((entry) => /INSERT INTO talent/.test(entry.sql)));
+	assert.ok(statements.some((entry) => /INSERT INTO intakes/.test(entry.sql)));
+	assert.ok(statements.some((entry) => /UPDATE seekers SET status = 'inactive'/.test(entry.sql)));
+
+	const intakeWrite = statements.find((entry) => /INSERT INTO intakes/.test(entry.sql));
+	assert.ok(intakeWrite);
+	const intakeData = JSON.parse(String(intakeWrite.args[2]));
+	assert.equal(intakeData.source, 'concierge');
+	assert.equal(intakeData.phone, '5550000001');
+	assert.deepEqual(intakeData.skills, ['Triage', 'ICU', 'Telemetry']);
+	assert.ok(intakeData.staff_tags.includes('license:RN'));
+	assert.ok(intakeData.staff_tags.includes('state:TX'));
+});
+
+test('staff onboarding updates an existing talent profile instead of returning stale data', async () => {
+	const { db, statements } = createStaffOnboardingFakeDb({ existingTalent: true, previousIntake: true });
+	const response = await staffOnboardingPost({
+		request: new Request('https://example.com/api/abundance/staff/onboarding', {
+			method: 'POST',
+			body: JSON.stringify({
+				phone: '+15550000001',
+				name: 'Existing Nurse',
+				email: 'existing@example.com',
+				specialties: ['ER', 'Pediatrics'],
+				license_type: 'RN',
+				license_state: 'CA',
+				shift_preference: 'Days',
+				availability: 'available',
+				timezone: 'America/Los_Angeles',
+				consent: {
+					background_check: true,
+					compliance_screening: true
+				}
+			})
+		}),
+		platform: { env: { DB: db } }
+	} as any);
+
+	assert.equal(response.status, 200);
+
+	const payload = await response.json();
+	assert.equal(payload.success, true);
+	assert.equal(payload.data.action, 'updated');
+	assert.deepEqual(payload.data.talent.skills, ['ER', 'Pediatrics']);
+	assert.equal(payload.data.talent.availability, 'available');
+	assert.equal(payload.data.talent.timezone, 'America/Los_Angeles');
+
+	assert.equal(statements.some((entry) => /INSERT INTO talent/.test(entry.sql)), false);
+	assert.ok(statements.some((entry) => /UPDATE talent SET/.test(entry.sql)));
+	assert.ok(statements.some((entry) => /INSERT INTO intakes/.test(entry.sql)));
+
+	const intakeWrite = statements.find((entry) => /INSERT INTO intakes/.test(entry.sql));
+	assert.ok(intakeWrite);
+	assert.equal(intakeWrite.args[4], 'intake_previous');
+});
+
+test('staff onboarding rejects profile writeback without explicit consent', async () => {
+	const { db, statements } = createStaffOnboardingFakeDb();
+	const response = await staffOnboardingPost({
+		request: new Request('https://example.com/api/abundance/staff/onboarding', {
+			method: 'POST',
+			body: JSON.stringify({
+				phone: '+15550000001',
+				name: 'No Consent Nurse',
+				specialties: ['ICU'],
+				consent: {
+					background_check: true,
+					compliance_screening: false
+				}
+			})
+		}),
+		platform: { env: { DB: db } }
+	} as any);
+
+	assert.equal(response.status, 400);
+	assert.equal(statements.some((entry) => /INSERT INTO talent|UPDATE talent SET|INSERT INTO intakes/.test(entry.sql)), false);
 });
