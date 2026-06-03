@@ -1370,7 +1370,7 @@ describe('Interactions Validator', () => {
 		expect(result.issues.some((issue) => issue.id === 'legacy-ix2-interactions-detected')).toBe(true);
 	});
 
-	it('blocks validation when no pages can be checked for IX2', async () => {
+	it('warns when no pages can be checked for IX2', async () => {
 		vi.mocked(fetchHTML).mockRejectedValue(new Error('HTTP 404: Not Found'));
 
 		const result = await validateInteractions('https://example.com', ['/missing']);
@@ -1383,7 +1383,7 @@ describe('Interactions Validator', () => {
 			expect.arrayContaining([
 				expect.objectContaining({
 					id: 'interactions-analysis-incomplete',
-					severity: 'error'
+					severity: 'warning'
 				})
 			])
 		);
