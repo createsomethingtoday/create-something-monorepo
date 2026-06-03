@@ -8,6 +8,7 @@
     "check": "tsc --noEmit",
     "deploy": "wrangler deploy",
     "dev": "wrangler dev",
+    "test": "node --import tsx --test test/*.test.ts",
     "types": "wrangler types"
   },
   "devDependencies": {

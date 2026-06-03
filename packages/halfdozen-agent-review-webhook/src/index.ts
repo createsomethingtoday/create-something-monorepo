@@ -107,6 +107,8 @@ interface GovernanceEvalReport {
   recommended_upgrades: string[];
   final_instructions: string;
   archived_instructions: string;
+  worker_rubric: WorkerRubricResult;
+  behavior_smoke_tests: BehavioralSmokeTest[];
   caveats: string[];
   dify_eval?: {
     status: DifyAgentBuilderEvalResult['status'];
@@ -123,6 +125,32 @@ interface GovernanceEvalReport {
     beta_dependency: string;
     markdown: string;
   };
+}
+
+interface WorkerRubricCheck {
+  id: string;
+  label: string;
+  passed: boolean;
+  critical: boolean;
+  detail: string;
+}
+
+interface WorkerRubricResult {
+  status: 'pass' | 'fail';
+  checks_total: number;
+  checks_passed: number;
+  checks_failed: number;
+  critical_failed: number;
+  checks: WorkerRubricCheck[];
+}
+
+interface BehavioralSmokeTest {
+  id: string;
+  scenario: string;
+  prompt: string;
+  expected_behavior: string;
+  covered: boolean;
+  evidence: string;
 }
 
 interface DifyAgentBuilderEvalResult {
@@ -200,6 +228,8 @@ const DIFY_AGENT_BUILDER_EVAL_JSON_CONTRACT = [
   '  },',
   '  "caveats": ["live Notion access gaps or material limitations"]',
   '}',
+  'final_instructions must be copy-ready Markdown for the Half Dozen team to paste into a Notion agent: use clear headings, numbered workflow steps, acceptance criteria, test scenarios, and explicit mutation/tool-access guardrails.',
+  'Do not place final_instructions inside one giant code fence. Preserve readable instruction structure.',
   'status must be either "pass" or "fail". checks must be an object with numeric scenarios, checks_total, checks_passed, and checks_failed.',
   'When readable page body content is absent, evaluate from selected_properties and review_description. Missing page body content is a caveat, not by itself a failure.'
 ].join('\n');
@@ -1514,6 +1544,176 @@ function positiveInteger(value: unknown, fallback: number): number {
   return Number.isFinite(parsed) && parsed >= 0 ? Math.floor(parsed) : fallback;
 }
 
+function evaluateWorkerRubric(finalInstructions: string): WorkerRubricResult {
+  const text = searchText(finalInstructions);
+  const checks: WorkerRubricCheck[] = [
+    rubricCheck(
+      'role_defined',
+      'Role and audience are explicit',
+      true,
+      text,
+      ['you are', 'role', 'assistant'],
+      'Names what the agent is and who it serves.'
+    ),
+    rubricCheck(
+      'primary_goal',
+      'Primary goal or purpose is explicit',
+      true,
+      text,
+      ['primary goal', 'goal', 'purpose', 'objective', 'mission'],
+      'Defines the outcome the agent is responsible for.'
+    ),
+    rubricCheck(
+      'intake_workflow',
+      'Intake workflow is defined',
+      false,
+      text,
+      ['intake', 'request', 'trigger', 'user asks', 'workflow'],
+      'Describes how the agent receives and frames work.'
+    ),
+    rubricCheck(
+      'similarity_check',
+      'Similar-agent or reuse check is required',
+      false,
+      text,
+      ['similar', 'duplicate', 'existing agent', 'reuse', 'extend'],
+      'Prevents unnecessary duplicate agents and points to reuse first.'
+    ),
+    rubricCheck(
+      'clarifying_questions',
+      'Clarifying-question behavior is defined',
+      false,
+      text,
+      ['clarifying', 'clarify', 'question', 'assumption', 'missing information'],
+      'Handles ambiguous or incomplete requests before drafting.'
+    ),
+    rubricCheck(
+      'delivery_contract',
+      'Delivery contract is concrete',
+      true,
+      text,
+      ['agent spec', 'instructions', 'enablement', 'test plan', 'deliverable'],
+      'States what the final handoff must include.'
+    ),
+    rubricCheck(
+      'mutation_guardrail',
+      'Notion mutation guardrail is explicit',
+      true,
+      text,
+      ['do not create', 'do not update', 'do not archive', 'do not delete', 'unless explicitly'],
+      'Prevents unintended live Notion writes by the delivered agent.'
+    ),
+    rubricCheck(
+      'testing_criteria',
+      'Testing and acceptance criteria are required',
+      true,
+      text,
+      ['test', 'testing', 'acceptance criteria', 'pass', 'fail', 'scenario'],
+      'Keeps human validation measurable before promotion.'
+    ),
+    rubricCheck(
+      'output_structure',
+      'Output structure is usable as final delivery',
+      false,
+      text,
+      ['output', 'format', 'include', 'produce', 'section'],
+      'Gives the team a predictable copy-ready final response.'
+    )
+  ];
+  const checksPassed = checks.filter((check) => check.passed).length;
+  const criticalFailed = checks.filter((check) => check.critical && !check.passed).length;
+  const checksFailed = checks.length - checksPassed;
+
+  return {
+    status: checksFailed === 0 && criticalFailed === 0 ? 'pass' : 'fail',
+    checks_total: checks.length,
+    checks_passed: checksPassed,
+    checks_failed: checksFailed,
+    critical_failed: criticalFailed,
+    checks
+  };
+}
+
+function buildBehavioralSmokeTests(finalInstructions: string): BehavioralSmokeTest[] {
+  const text = searchText(finalInstructions);
+
+  return [
+    {
+      id: 'complete_agent_request',
+      scenario: 'Complete agent request',
+      prompt: 'I need an agent that turns rough automation requests into Notion-native agent instructions.',
+      expected_behavior:
+        'The agent produces a clear Agent Spec, final instructions, enablement steps, and a concrete test plan.',
+      covered: hasAllTerms(text, ['agent spec', 'instructions']) && hasAnyTerm(text, ['test plan', 'acceptance criteria']),
+      evidence: evidenceForTerms(text, ['agent spec', 'instructions', 'test plan', 'acceptance criteria'])
+    },
+    {
+      id: 'ambiguous_request',
+      scenario: 'Ambiguous or incomplete request',
+      prompt: 'Build me something for client agents, but I am not sure what it should connect to.',
+      expected_behavior:
+        'The agent asks targeted clarifying questions or proceeds with clearly labeled assumptions only when asked.',
+      covered: hasAnyTerm(text, ['clarifying', 'clarify', 'question']) && hasAnyTerm(text, ['assumption', 'missing information']),
+      evidence: evidenceForTerms(text, ['clarifying', 'question', 'assumption', 'missing information'])
+    },
+    {
+      id: 'similar_agent_exists',
+      scenario: 'Similar agent or workflow may already exist',
+      prompt: 'Create a new agent for task triage that might overlap with the current builder.',
+      expected_behavior:
+        'The agent checks for similar agents or workflows and recommends reuse, extension, or creation.',
+      covered: hasAnyTerm(text, ['similar', 'duplicate', 'existing agent']) && hasAnyTerm(text, ['reuse', 'extend', 'create']),
+      evidence: evidenceForTerms(text, ['similar', 'duplicate', 'existing agent', 'reuse', 'extend'])
+    },
+    {
+      id: 'external_tool_request',
+      scenario: 'External tool or mutation risk',
+      prompt: 'Make the agent update Notion pages and use an external toolkit that has not been approved.',
+      expected_behavior:
+        'The agent flags validation/auth requirements and does not claim live write access unless explicitly approved.',
+      covered:
+        hasAnyTerm(text, ['external', 'toolkit', 'validation', 'auth']) &&
+        hasAnyTerm(text, ['do not create', 'do not update', 'do not archive', 'do not delete', 'unless explicitly']),
+      evidence: evidenceForTerms(text, ['external', 'toolkit', 'validation', 'auth', 'do not update', 'unless explicitly'])
+    }
+  ];
+}
+
+function rubricCheck(
+  id: string,
+  label: string,
+  critical: boolean,
+  text: string,
+  terms: string[],
+  passingDetail: string
+): WorkerRubricCheck {
+  const passed = hasAnyTerm(text, terms);
+  return {
+    id,
+    label,
+    critical,
+    passed,
+    detail: passed ? passingDetail : `Missing one of: ${terms.join(', ')}.`
+  };
+}
+
+function searchText(value: string): string {
+  return value.toLowerCase().replace(/\s+/g, ' ').trim();
+}
+
+function hasAnyTerm(text: string, terms: string[]): boolean {
+  return terms.some((term) => text.includes(term.toLowerCase()));
+}
+
+function hasAllTerms(text: string, terms: string[]): boolean {
+  return terms.every((term) => text.includes(term.toLowerCase()));
+}
+
+function evidenceForTerms(text: string, terms: string[]): string {
+  const found = terms.filter((term) => text.includes(term.toLowerCase()));
+  return found.length ? `Found: ${found.join(', ')}.` : `Missing: ${terms.join(', ')}.`;
+}
+
 function buildGovernanceEvalReport(
   review: NormalizedReviewRequest,
   parentIssue: LinearIssue,
@@ -1538,14 +1738,20 @@ function buildGovernanceEvalReport(
       'The submitted page was received from the Notion Updating workflow, the existing Linear workflow was reused or created, and the output is ready for human testing.',
       'Dify Agent Builder Eval was not used for this run, so the Worker used its deterministic fallback runner.'
     ].join(' ');
-  const summary = {
+  const difySummary = {
     status: difyOutput?.status ?? 'pass',
     scenarios: difyOutput?.checks.scenarios ?? GOVERNANCE_EVAL_SCENARIOS,
     checks_total: difyOutput?.checks.checks_total ?? GOVERNANCE_EVAL_CHECKS,
     checks_passed: difyOutput?.checks.checks_passed ?? GOVERNANCE_EVAL_CHECKS,
     checks_failed: difyOutput?.checks.checks_failed ?? 0
   } satisfies GovernanceEvalReport['summary'];
-  const success = summary.status === 'pass' && summary.checks_failed === 0;
+  const workerRubric = evaluateWorkerRubric(finalInstructions);
+  const behaviorSmokeTests = buildBehavioralSmokeTests(finalInstructions);
+  const success = difySummary.status === 'pass' && difySummary.checks_failed === 0 && workerRubric.status === 'pass';
+  const summary = {
+    ...difySummary,
+    status: success ? difySummary.status : 'fail'
+  } satisfies GovernanceEvalReport['summary'];
   const executionTarget =
     difyEval.status === 'used'
       ? 'dify-halfdozen-agent-builder-eval'
@@ -1556,6 +1762,12 @@ function buildGovernanceEvalReport(
       : 'dify-halfdozen-agent-builder-eval-after-studio-import-and-api-key';
   const caveats = [
     ...(difyOutput?.caveats ?? []),
+    ...(workerRubric.status === 'fail'
+      ? ['Worker rubric failed; source page status is left unchanged until critical instruction gaps are addressed.']
+      : []),
+    ...(behaviorSmokeTests.some((test) => !test.covered)
+      ? ['Behavioral smoke coverage is incomplete; run or add scenario-specific tests before Validated or Active status.']
+      : []),
     ...(difyEval.status === 'failed' ? [`Dify eval failed; Worker fallback used: ${difyEval.error ?? 'unknown error'}`] : []),
     ...(difyEval.status === 'skipped' ? ['Dify eval skipped because its Service API key is not configured on the Worker.'] : [])
   ];
@@ -1582,6 +1794,8 @@ function buildGovernanceEvalReport(
       recommended_upgrades: recommendedUpgrades,
       final_instructions: finalInstructions,
       archived_instructions: archivedInstructions,
+      worker_rubric: workerRubric,
+      behavior_smoke_tests: behaviorSmokeTests,
       caveats,
       dify_eval: fullReviewDifyDetails,
       source: {
@@ -1614,7 +1828,8 @@ function buildGovernanceEvalReport(
     `- Future execution target: ${futureExecutionTarget}`,
     `- Default model: ${GOVERNANCE_EVAL_DEFAULT_MODEL}`,
     `- Scenarios: ${summary.scenarios}`,
-    `- Checks: ${summary.checks_passed}/${summary.checks_total}`,
+    `- Dify checks: ${difySummary.checks_passed}/${difySummary.checks_total}`,
+    `- Worker rubric: ${workerRubric.checks_passed}/${workerRubric.checks_total}`,
     `- Dify eval: ${difyEval.status}${difyEval.messageId ? ` (${difyEval.messageId})` : ''}`,
     `- Dify conversation: ${difyEval.conversationId ?? 'not recorded'}`,
     `- Webhook request: ${review.requestId}`,
@@ -1625,7 +1840,22 @@ function buildGovernanceEvalReport(
     '',
     '## Result',
     '',
-    `${summary.status === 'pass' ? 'Pass' : 'Fail'}. ${summary.checks_passed}/${summary.checks_total} checks passed.`,
+    `${summary.status === 'pass' ? 'Pass' : 'Fail'}. Dify checks: ${difySummary.checks_passed}/${difySummary.checks_total}. Worker rubric: ${workerRubric.checks_passed}/${workerRubric.checks_total}.`,
+    '',
+    '## Worker Rubric',
+    '',
+    ...workerRubric.checks.map((check) =>
+      `- ${check.passed ? 'Pass' : 'Fail'}${check.critical ? ' (critical)' : ''}: ${check.label} - ${check.detail}`
+    ),
+    '',
+    '## Behavioral Smoke Coverage',
+    '',
+    ...behaviorSmokeTests.flatMap((test) => [
+      `- ${test.covered ? 'Covered' : 'Gap'}: ${test.scenario}`,
+      `  Prompt: ${test.prompt}`,
+      `  Expected behavior: ${test.expected_behavior}`,
+      `  Evidence: ${test.evidence}`
+    ]),
     '',
     '## Review Summary',
     '',
@@ -1704,6 +1934,8 @@ function buildGovernanceEvalReport(
     recommended_upgrades: recommendedUpgrades,
     final_instructions: finalInstructions,
     archived_instructions: archivedInstructions,
+    worker_rubric: workerRubric,
+    behavior_smoke_tests: behaviorSmokeTests,
     caveats,
     dify_eval: {
       ...difyEvalDetails
@@ -1947,7 +2179,7 @@ function buildTestReportProperties(
     if (property.type === 'rich_text' && (normalized.includes('notes') || normalized.includes('summary'))) {
       properties[name] = {
         rich_text: notionRichText(
-          `${report.summary.checks_passed}/${report.summary.checks_total} checks passed. ${report.notion_test_report.beta_dependency}`
+          `Dify checks ${report.summary.checks_passed}/${report.summary.checks_total}; Worker rubric ${report.worker_rubric.checks_passed}/${report.worker_rubric.checks_total}. ${report.notion_test_report.beta_dependency}`
         )
       };
     }
@@ -2230,8 +2462,22 @@ async function updateNotionPageStatus(
 function agentPageUpdateBlocks(review: NormalizedReviewRequest, report: GovernanceEvalReport): UnknownRecord[] {
   const blocks: UnknownRecord[] = [
     notionHeadingBlock(1, `Agent Eval Update - ${report.generated_at.replace(/\.\d{3}Z$/, 'Z')}`),
-    notionParagraphBlock(`Result: ${report.summary.status}. Checks: ${report.summary.checks_passed}/${report.summary.checks_total}.`),
+    notionParagraphBlock(
+      `Result: ${report.summary.status}. Dify checks: ${report.summary.checks_passed}/${report.summary.checks_total}. Worker rubric: ${report.worker_rubric.checks_passed}/${report.worker_rubric.checks_total}.`
+    ),
     notionParagraphBlock(`Webhook request: ${review.requestId}`),
+    notionHeadingBlock(2, 'Worker Rubric'),
+    ...report.worker_rubric.checks.map((check) =>
+      notionBulletedListBlock(
+        `${check.passed ? 'Pass' : 'Fail'}${check.critical ? ' (critical)' : ''}: ${check.label} - ${check.detail}`
+      )
+    ),
+    notionHeadingBlock(2, 'Behavioral Smoke Coverage'),
+    ...report.behavior_smoke_tests.map((test) =>
+      notionBulletedListBlock(
+        `${test.covered ? 'Covered' : 'Gap'}: ${test.scenario}. Expected: ${test.expected_behavior} Evidence: ${test.evidence}`
+      )
+    ),
     notionHeadingBlock(2, 'Review Summary'),
     ...notionParagraphBlocks(report.review_summary),
     notionHeadingBlock(2, 'Recommended Upgrades or Modifications'),
@@ -2408,7 +2654,8 @@ function automatedWorkflowComment(
     `Eval status: ${report.summary.status}`,
     `Eval engine: ${report.execution_target}`,
     `Dify eval: ${report.dify_eval?.status ?? 'not recorded'}${report.dify_eval?.message_id ? ` (${report.dify_eval.message_id})` : report.dify_eval?.error ? ` (${report.dify_eval.error})` : ''}`,
-    `Checks: ${report.summary.checks_passed}/${report.summary.checks_total}`,
+    `Dify checks: ${report.summary.checks_passed}/${report.summary.checks_total}`,
+    `Worker rubric: ${report.worker_rubric.checks_passed}/${report.worker_rubric.checks_total}`,
     `Scenarios: ${report.summary.scenarios}`,
     `Generated: ${report.generated_at}`,
     `Test Reports [OS]: ${testReport.status}${testReport.pageUrl ? ` ${testReport.pageUrl}` : testReport.reason ? ` (${testReport.reason})` : ''}`,
@@ -2594,3 +2841,10 @@ function corsHeaders(): HeadersInit {
       'Content-Type, Authorization, X-Halfdozen-Agent-Review-Secret, X-Agent-Review-Webhook-Secret'
   };
 }
+
+export {
+  buildBehavioralSmokeTests,
+  canonicalPageContent,
+  evaluateWorkerRubric,
+  notionMarkdownBlocks
+};
