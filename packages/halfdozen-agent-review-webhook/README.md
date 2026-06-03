@@ -109,7 +109,7 @@ AUTO_COMPLETE_WORKFLOW = "false" # disables eval report generation and Linear au
 UPDATE_SOURCE_AGENT_PAGE = "false" # disables source Notion page rewrite/status update
 TEST_REPORTS_DATABASE_NAME = "Test Reports [OS]" # overrides database discovery name
 DIFY_HALFDOZEN_AGENT_BUILDER_EVAL_BASE_URL = "https://api.dify.ai/v1"
-DIFY_HALFDOZEN_AGENT_BUILDER_EVAL_TIMEOUT_MS = "60000"
+DIFY_HALFDOZEN_AGENT_BUILDER_EVAL_TIMEOUT_MS = "120000"
 DIFY_HALFDOZEN_AGENT_BUILDER_EVAL_REQUIRED = "true" # fail instead of fallback when Dify errors
 ```
 
