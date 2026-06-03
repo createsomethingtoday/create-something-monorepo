@@ -147,6 +147,7 @@ const PUBLISHED_ASSETS = [
 
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
 });
 
 function signedWebhookRequest(payload: unknown, secret = 'webhook-secret') {
@@ -159,6 +160,20 @@ function signedWebhookRequest(payload: unknown, secret = 'webhook-secret') {
       'x-webflow-signature': createHmac('sha256', secret).update(body).digest('hex'),
     },
   });
+}
+
+function installSearchCacheStub() {
+  const store = new Map<string, Response>();
+  const match = vi.fn(async (request: Request) => store.get(request.url)?.clone());
+  const put = vi.fn(async (request: Request, response: Response) => {
+    store.set(request.url, response.clone());
+  });
+
+  vi.stubGlobal('caches', {
+    default: { match, put },
+  });
+
+  return { store, match, put };
 }
 
 describe('webflow-template-search worker', () => {
@@ -910,6 +925,18 @@ describe('webflow-template-search worker', () => {
       expect(itemsOnlyPayload.category_pills).toEqual([]);
       expect(itemsOnlyPayload.subcategory_pills).toEqual([]);
 
+      const gridItemsOnlySearch = await callWorker(
+        new Request('https://templates.test/api/templates/search?include=items&view=grid&category_group_slug=technology-websites'),
+        env,
+      );
+      const gridItemsOnlyPayload = (await gridItemsOnlySearch.json()) as {
+        items: Array<{ name: string; styles?: unknown[]; tags?: unknown[] }>;
+      };
+
+      expect(gridItemsOnlyPayload.items.map((item) => item.name)).toEqual(['Setrex', 'Agentflow', 'Catalis']);
+      expect(gridItemsOnlyPayload.items[0]).not.toHaveProperty('styles');
+      expect(gridItemsOnlyPayload.items[0]).not.toHaveProperty('tags');
+
       const freeSearch = await callWorker(new Request('https://templates.test/api/templates/search?scope=free&page_size=10'), env);
       const freePayload = (await freeSearch.json()) as {
         items: Array<{ name: string; price: number | null; is_free: boolean }>;
@@ -998,6 +1025,50 @@ describe('webflow-template-search worker', () => {
         creator_slug: 'brix-templates',
         creator_profile_url: 'https://webflow.com/templates/designers/brix-templates',
       });
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
+  it('serves cacheable first-page public searches from the edge cache', async () => {
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: PUBLISHED_ASSETS,
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+      creators: LOOKUPS.creators,
+    });
+    const cache = installSearchCacheStub();
+    const { env, close } = createTestEnv();
+
+    try {
+      const rebuild = await callWorker(
+        new Request('https://templates.test/api/templates/admin/rebuild', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(rebuild.status).toBe(200);
+
+      const request = new Request(
+        'https://templates.test/api/templates/search?category_group_slug=technology-websites&include=items&view=grid&page=1&page_size=24',
+      );
+      const first = await callWorker(request, env);
+      expect(first.headers.get('x-template-search-cache')).toBe('MISS');
+      expect(cache.put).toHaveBeenCalledTimes(1);
+
+      await env.DB.prepare('DELETE FROM template_child_categories').run();
+      await env.DB.prepare('DELETE FROM template_styles').run();
+      await env.DB.prepare('DELETE FROM template_documents').run();
+
+      const second = await callWorker(request, env);
+      const secondPayload = (await second.json()) as { items: Array<{ name: string }> };
+
+      expect(second.headers.get('x-template-search-cache')).toBe('HIT');
+      expect(cache.match).toHaveBeenCalledTimes(2);
+      expect(secondPayload.items.map((item) => item.name)).toEqual(['Setrex', 'Agentflow', 'Catalis']);
     } finally {
       fetchMock.mockRestore();
       close();

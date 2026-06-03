@@ -486,6 +486,7 @@ function buildApiUrl(base: string, filters: FilterState, page: number, pageSize:
   if (filters.tagSlug) url.searchParams.set('tag_slug', toFilterSlug(filters.tagSlug));
   if (filters.freeOnly) url.searchParams.set('free_only', 'true');
   url.searchParams.set('include', 'items');
+  url.searchParams.set('view', 'grid');
   url.searchParams.set('sort', filters.sort);
   url.searchParams.set('page', String(page));
   url.searchParams.set('page_size', String(pageSize));
