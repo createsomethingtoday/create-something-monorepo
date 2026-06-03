@@ -743,14 +743,8 @@ function normalizeSort(value: string | null, fallback: TemplateSort = 'popular')
   }
 }
 
-function defaultSortForRoute(fallback: TemplateSort = 'popular'): TemplateSort {
-  if (fallback !== 'popular' || typeof window === 'undefined') return fallback;
-  const pathname = new URL(window.location.href).pathname.replace(/\/+$/, '');
-  return pathname === '/templates/all' ? 'newest' : fallback;
-}
-
 function defaultUrlFilters(defaultSort: TemplateSort = 'popular'): LocalFilters {
-  return { q: '', styles: [], tags: [], types: [], freeOnly: false, sort: defaultSortForRoute(defaultSort) };
+  return { q: '', styles: [], tags: [], types: [], freeOnly: false, sort: defaultSort };
 }
 
 function readUrlFilters(defaultSort: TemplateSort = 'popular'): LocalFilters {
@@ -758,14 +752,13 @@ function readUrlFilters(defaultSort: TemplateSort = 'popular'): LocalFilters {
     return defaultUrlFilters(defaultSort);
   }
   const params = new URL(window.location.href).searchParams;
-  const effectiveDefaultSort = defaultSortForRoute(defaultSort);
   return {
     q: (params.get('q') ?? params.get('query') ?? params.get('search') ?? '').trim(),
     styles: params.getAll('styles').flatMap((v) => v.split(',')).filter(Boolean).map(toStyleSlug),
     tags: params.getAll('tags').flatMap((v) => v.split(',')).filter(Boolean).map(toFilterSlug),
     types: params.getAll('types').flatMap((v) => v.split(',')).filter(Boolean),
     freeOnly: ['1', 'true', 'yes', 'on'].includes((params.get('free_only') ?? '').toLowerCase()),
-    sort: normalizeSort(params.get('sort'), effectiveDefaultSort),
+    sort: normalizeSort(params.get('sort'), defaultSort),
   };
 }
 
@@ -897,13 +890,12 @@ function buildScopedSubcategoryHref(slug: string | null, context: RouteContext):
 function writeUrlFilters(state: LocalFilters, defaultSort: TemplateSort = 'popular'): void {
   if (typeof window === 'undefined') return;
   const url = new URL(window.location.href);
-  const effectiveDefaultSort = defaultSortForRoute(defaultSort);
   // Clear filter params only — preserve path-based scope/category
   ['q', 'query', 'search', 'styles', 'tags', 'types', 'free_only', 'sort', 'page'].forEach((k) =>
     url.searchParams.delete(k),
   );
   if (state.q) url.searchParams.set('q', state.q);
-  if (state.sort !== effectiveDefaultSort) url.searchParams.set('sort', state.sort);
+  if (state.sort !== defaultSort) url.searchParams.set('sort', state.sort);
   if (state.freeOnly) url.searchParams.set('free_only', 'true');
   state.styles.forEach((v) => url.searchParams.append('styles', v));
   state.tags.forEach((v) => url.searchParams.append('tags', v));
