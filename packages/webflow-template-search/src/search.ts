@@ -86,6 +86,16 @@ function creatorProfileUrlForSlug(slug: string): string {
   return `https://webflow.com/templates/designers/${slug}`;
 }
 
+function creatorSlugVariants(slug: string): string[] {
+  const variants = [slug];
+  if (slug.endsWith('-archive')) {
+    variants.push(slug.slice(0, -'-archive'.length));
+  } else {
+    variants.push(`${slug}-archive`);
+  }
+  return Array.from(new Set(variants.filter(Boolean)));
+}
+
 async function resolveAliases(env: Env, params: SearchParams): Promise<SearchParams> {
   return {
     ...params,
@@ -129,8 +139,12 @@ function buildSqlParts(params: SearchParams, options: FilterOptions = {}): SqlPa
   }
 
   if (params.creatorSlug) {
-    clauses.push("(d.creator_slug = ? OR lower(rtrim(d.creator_profile_url, '/')) = ?)");
-    binds.push(params.creatorSlug, creatorProfileUrlForSlug(params.creatorSlug));
+    const creatorSlugs = creatorSlugVariants(params.creatorSlug);
+    const creatorProfileUrls = creatorSlugs.map(creatorProfileUrlForSlug);
+    clauses.push(
+      `(d.creator_slug IN (${placeholderList(creatorSlugs.length)}) OR lower(rtrim(d.creator_profile_url, '/')) IN (${placeholderList(creatorProfileUrls.length)}))`,
+    );
+    binds.push(...creatorSlugs, ...creatorProfileUrls);
   }
 
   if (params.styleSlug && !options.excludeStyleSlug) {

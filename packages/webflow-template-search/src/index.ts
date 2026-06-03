@@ -49,6 +49,7 @@ const PUBLIC_SEARCH_CACHE_HEADERS = {
   'Cache-Control': 'public, max-age=60, s-maxage=300, stale-while-revalidate=86400',
   'CDN-Cache-Control': 'public, max-age=300, stale-while-revalidate=86400',
 };
+const PUBLIC_SEARCH_CACHE_VERSION = '2026-06-03-creator-slug-alias';
 const PUBLIC_SEARCH_CACHE_PARAM_ORDER = [
   'view',
   'include',
@@ -118,6 +119,7 @@ function buildPublicSearchCacheRequest(requestUrl: URL, params: SearchParams): R
   if (params.page !== 1 || params.q) return null;
 
   const cacheUrl = new URL(requestUrl.pathname, requestUrl.origin);
+  cacheUrl.searchParams.set('cache_version', PUBLIC_SEARCH_CACHE_VERSION);
   for (const key of PUBLIC_SEARCH_CACHE_PARAM_ORDER) {
     switch (key) {
       case 'view':
