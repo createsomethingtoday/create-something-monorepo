@@ -1,26 +1,32 @@
-import { error, fail } from '@sveltejs/kit';
+import { fail, redirect } from '@sveltejs/kit';
+import type { Actions, PageServerLoad } from './$types';
+import { CONCIERGE_SESSION_DEPENDENCY } from '$chat/api-contract';
+import { ensureConciergeSession, getRequiredHandoffThreadView } from '$lib/server/threads/session';
+import { getAgencyAccessStateForRequest } from '$lib/server/agency-access';
 import {
 	buildStaffOnboardingPayload,
 	getStaffOnboardingRuntime,
 	submitStaffOnboarding
-} from '$server/abundance/staff-onboarding';
-import { createHandoffPacket } from '$server/handoff/create-packet';
-import { getDemoThread } from '$server/threads/demo';
-import type { Actions, PageServerLoad } from './$types';
+} from '$lib/server/abundance/staff-onboarding';
 
-export const load: PageServerLoad = async ({ params, platform }) => {
-	const thread = getDemoThread(params.threadId);
+export const load: PageServerLoad = async ({ depends, cookies, params, platform, url, parent }) => {
+	depends(CONCIERGE_SESSION_DEPENDENCY);
+	const parentData = await parent();
 
-	if (!thread) {
-		throw error(404, `Unknown demo thread: ${params.threadId}`);
+	if (parentData.agencyAccess.status === 'anonymous') {
+		throw redirect(303, `/chat/${params.threadId}`);
 	}
 
-	const staffOnboarding = buildStaffOnboardingPayload(thread);
+	const threadView = await getRequiredHandoffThreadView(
+		ensureConciergeSession(cookies, url.protocol === 'https:', { platform, url }),
+		params.threadId,
+		platform
+	);
+	const staffOnboarding = buildStaffOnboardingPayload(threadView.thread);
 	const runtime = getStaffOnboardingRuntime(platform?.env);
 
 	return {
-		thread,
-		packet: createHandoffPacket(thread),
+		threadView,
 		staffOnboarding: {
 			ready: staffOnboarding.ready,
 			blockers: staffOnboarding.blockers,
@@ -31,14 +37,25 @@ export const load: PageServerLoad = async ({ params, platform }) => {
 };
 
 export const actions: Actions = {
-	submitStaffOnboarding: async ({ params, platform, fetch }) => {
-		const thread = getDemoThread(params.threadId);
+	submitStaffOnboarding: async ({ cookies, fetch, params, platform, request, url }) => {
+		const agencyAccess = await getAgencyAccessStateForRequest({
+			cookies,
+			fetch,
+			request,
+			platform
+		});
 
-		if (!thread) {
-			throw error(404, `Unknown demo thread: ${params.threadId}`);
+		if (agencyAccess.status === 'anonymous') {
+			throw redirect(303, `/chat/${params.threadId}`);
 		}
 
-		const staffOnboarding = buildStaffOnboardingPayload(thread);
+		const threadView = await getRequiredHandoffThreadView(
+			ensureConciergeSession(cookies, url.protocol === 'https:', { platform, url }),
+			params.threadId,
+			platform
+		);
+		const staffOnboarding = buildStaffOnboardingPayload(threadView.thread);
+
 		if (!staffOnboarding.ready || !staffOnboarding.payload) {
 			return fail(400, {
 				staffOnboardingResult: {
