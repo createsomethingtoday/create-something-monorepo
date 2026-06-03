@@ -109,6 +109,7 @@ interface GovernanceEvalReport {
   archived_instructions: string;
   worker_rubric: WorkerRubricResult;
   behavior_smoke_tests: BehavioralSmokeTest[];
+  live_testing_checklist: LiveTestingChecklistItem[];
   caveats: string[];
   dify_eval?: {
     status: DifyAgentBuilderEvalResult['status'];
@@ -151,6 +152,13 @@ interface BehavioralSmokeTest {
   expected_behavior: string;
   covered: boolean;
   evidence: string;
+}
+
+interface LiveTestingChecklistItem {
+  id: string;
+  label: string;
+  prompt: string;
+  expected_behavior: string;
 }
 
 interface DifyAgentBuilderEvalResult {
@@ -230,6 +238,7 @@ const DIFY_AGENT_BUILDER_EVAL_JSON_CONTRACT = [
   '}',
   'final_instructions must be copy-ready Markdown for the Half Dozen team to paste into a Notion agent: use clear headings, numbered workflow steps, acceptance criteria, test scenarios, and explicit mutation/tool-access guardrails.',
   'Do not place final_instructions inside one giant code fence. Preserve readable instruction structure.',
+  'Preserve linked Notion pages/databases as references. Prefer direct links or mentions over copying long database/page descriptions into final_instructions.',
   'status must be either "pass" or "fail". checks must be an object with numeric scenarios, checks_total, checks_passed, and checks_failed.',
   'When readable page body content is absent, evaluate from selected_properties and review_description. Missing page body content is a caveat, not by itself a failure.'
 ].join('\n');
@@ -677,6 +686,12 @@ function canonicalPageContent(content: string): string | undefined {
   if (!trimmed) return undefined;
 
   const lines = trimmed.split('\n');
+  const firstEvalUpdateIndex = lines.findIndex((line) => /^#{1,3}\s+Agent Eval Update\b/im.test(line.trim()));
+  if (firstEvalUpdateIndex > 0) {
+    const submittedInstructions = lines.slice(0, firstEvalUpdateIndex).join('\n').trim();
+    if (submittedInstructions) return truncate(submittedInstructions, MAX_NOTION_CONTENT_LENGTH);
+  }
+
   const finalInstructionIndices = lines
     .map((line, index) => ({ line: line.trim(), index }))
     .filter(({ line }) => /^#{1,3}\s+Final Instructions$/i.test(line))
@@ -835,7 +850,11 @@ function richTextPlain(value: unknown): string | undefined {
   const parts = value
     .map((item) => {
       if (!isRecord(item)) return undefined;
-      return stringFromUnknown(item.plain_text) ?? stringFromUnknown(isRecord(item.text) ? item.text.content : undefined);
+      const plainText =
+        stringFromUnknown(item.plain_text) ?? stringFromUnknown(isRecord(item.text) ? item.text.content : undefined);
+      const href = stringFromUnknown(item.href);
+      if (plainText && href) return `[${plainText}](${href})`;
+      return plainText;
     })
     .filter((part): part is string => Boolean(part));
 
@@ -1625,7 +1644,7 @@ function evaluateWorkerRubric(finalInstructions: string): WorkerRubricResult {
   const checksFailed = checks.length - checksPassed;
 
   return {
-    status: checksFailed === 0 && criticalFailed === 0 ? 'pass' : 'fail',
+    status: criticalFailed === 0 ? 'pass' : 'fail',
     checks_total: checks.length,
     checks_passed: checksPassed,
     checks_failed: checksFailed,
@@ -1677,6 +1696,15 @@ function buildBehavioralSmokeTests(finalInstructions: string): BehavioralSmokeTe
       evidence: evidenceForTerms(text, ['external', 'toolkit', 'validation', 'auth', 'do not update', 'unless explicitly'])
     }
   ];
+}
+
+function buildLiveTestingChecklist(behaviorSmokeTests: BehavioralSmokeTest[]): LiveTestingChecklistItem[] {
+  return behaviorSmokeTests.map((test) => ({
+    id: test.id,
+    label: test.scenario,
+    prompt: test.prompt,
+    expected_behavior: test.expected_behavior
+  }));
 }
 
 function rubricCheck(
@@ -1747,6 +1775,7 @@ function buildGovernanceEvalReport(
   } satisfies GovernanceEvalReport['summary'];
   const workerRubric = evaluateWorkerRubric(finalInstructions);
   const behaviorSmokeTests = buildBehavioralSmokeTests(finalInstructions);
+  const liveTestingChecklist = buildLiveTestingChecklist(behaviorSmokeTests);
   const success = difySummary.status === 'pass' && difySummary.checks_failed === 0 && workerRubric.status === 'pass';
   const summary = {
     ...difySummary,
@@ -1763,7 +1792,10 @@ function buildGovernanceEvalReport(
   const caveats = [
     ...(difyOutput?.caveats ?? []),
     ...(workerRubric.status === 'fail'
-      ? ['Worker rubric failed; source page status is left unchanged until critical instruction gaps are addressed.']
+      ? ['Worker rubric critical checks failed; source page status is left unchanged until critical instruction gaps are addressed.']
+      : []),
+    ...(workerRubric.status === 'pass' && workerRubric.checks_failed > 0
+      ? ['Worker rubric passed all critical checks but found non-critical instruction gaps; review those before Validated or Active status.']
       : []),
     ...(behaviorSmokeTests.some((test) => !test.covered)
       ? ['Behavioral smoke coverage is incomplete; run or add scenario-specific tests before Validated or Active status.']
@@ -1796,6 +1828,7 @@ function buildGovernanceEvalReport(
       archived_instructions: archivedInstructions,
       worker_rubric: workerRubric,
       behavior_smoke_tests: behaviorSmokeTests,
+      live_testing_checklist: liveTestingChecklist,
       caveats,
       dify_eval: fullReviewDifyDetails,
       source: {
@@ -1855,6 +1888,16 @@ function buildGovernanceEvalReport(
       `  Prompt: ${test.prompt}`,
       `  Expected behavior: ${test.expected_behavior}`,
       `  Evidence: ${test.evidence}`
+    ]),
+    '',
+    '## Live Testing Handoff',
+    '',
+    'Before moving this agent from Testing to Validated, run these prompts in the actual Notion agent experience and record pass/fail evidence on this Test Report. If any prompt fails, add the finding to the source page and move it back to Updating for a new eval run.',
+    '',
+    ...liveTestingChecklist.flatMap((item) => [
+      `- ${item.label}`,
+      `  Prompt: ${item.prompt}`,
+      `  Expected behavior: ${item.expected_behavior}`
     ]),
     '',
     '## Review Summary',
@@ -1936,6 +1979,7 @@ function buildGovernanceEvalReport(
     archived_instructions: archivedInstructions,
     worker_rubric: workerRubric,
     behavior_smoke_tests: behaviorSmokeTests,
+    live_testing_checklist: liveTestingChecklist,
     caveats,
     dify_eval: {
       ...difyEvalDetails
@@ -2262,6 +2306,13 @@ function notionMarkdownBlocks(markdown: string): UnknownRecord[] {
       continue;
     }
 
+    const todo = trimmed.match(/^-\s+\[( |x)\]\s+(.+)$/i);
+    if (todo) {
+      flushParagraph();
+      blocks.push(notionTodoBlock(todo[2], todo[1].toLowerCase() === 'x'));
+      continue;
+    }
+
     const bullet = trimmed.match(/^[-*]\s+(.+)$/);
     if (bullet) {
       flushParagraph();
@@ -2478,6 +2529,13 @@ function agentPageUpdateBlocks(review: NormalizedReviewRequest, report: Governan
         `${test.covered ? 'Covered' : 'Gap'}: ${test.scenario}. Expected: ${test.expected_behavior} Evidence: ${test.evidence}`
       )
     ),
+    notionHeadingBlock(2, 'Live Testing Handoff'),
+    notionParagraphBlock(
+      'Before moving this agent from Testing to Validated, run these prompts in the actual Notion agent experience. Record pass/fail evidence on the Test Report. If any prompt fails, add the finding to this source page and move it back to Updating.'
+    ),
+    ...report.live_testing_checklist.map((item) =>
+      notionTodoBlock(`${item.label}: ${item.prompt} Expected: ${item.expected_behavior}`)
+    ),
     notionHeadingBlock(2, 'Review Summary'),
     ...notionParagraphBlocks(report.review_summary),
     notionHeadingBlock(2, 'Recommended Upgrades or Modifications'),
@@ -2536,6 +2594,17 @@ function notionBulletedListBlock(content: string): UnknownRecord {
     type: 'bulleted_list_item',
     bulleted_list_item: {
       rich_text: notionRichText(content)
+    }
+  };
+}
+
+function notionTodoBlock(content: string, checked = false): UnknownRecord {
+  return {
+    object: 'block',
+    type: 'to_do',
+    to_do: {
+      rich_text: notionRichText(content),
+      checked
     }
   };
 }
@@ -2846,5 +2915,6 @@ export {
   buildBehavioralSmokeTests,
   canonicalPageContent,
   evaluateWorkerRubric,
-  notionMarkdownBlocks
+  notionMarkdownBlocks,
+  richTextPlain
 };

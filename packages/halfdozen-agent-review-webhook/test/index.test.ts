@@ -5,7 +5,8 @@ import {
   buildBehavioralSmokeTests,
   canonicalPageContent,
   evaluateWorkerRubric,
-  notionMarkdownBlocks
+  notionMarkdownBlocks,
+  richTextPlain
 } from '../src/index.ts';
 
 const deliveryReadyInstructions = [
@@ -47,6 +48,31 @@ test('canonicalPageContent extracts the latest final instructions section', () =
   assert.equal(canonicalPageContent(content), 'new instructions');
 });
 
+test('canonicalPageContent prefers canonical source content before eval history', () => {
+  const content = [
+    '# Overview',
+    'You are an agent-building agent for the Half Dozen team.',
+    '',
+    '## Output rules',
+    'Produce Agent Spec, Instructions, Build checklist, and Test plan.',
+    '',
+    '# Agent Eval Update - 2026-06-03T00:00:00Z',
+    '## Final Instructions',
+    'historical generated instructions'
+  ].join('\n');
+
+  assert.equal(
+    canonicalPageContent(content),
+    [
+      '# Overview',
+      'You are an agent-building agent for the Half Dozen team.',
+      '',
+      '## Output rules',
+      'Produce Agent Spec, Instructions, Build checklist, and Test plan.'
+    ].join('\n')
+  );
+});
+
 test('canonicalPageContent ignores eval history without final instructions', () => {
   const content = [
     '# Agent Eval Update - 2026-06-03T00:00:00Z',
@@ -69,6 +95,22 @@ test('evaluateWorkerRubric passes delivery-ready instructions and fails placehol
   assert.ok(failing.critical_failed > 0);
 });
 
+test('evaluateWorkerRubric allows non-critical gaps while preserving caveat signal', () => {
+  const missingSimilarityCheck = [
+    'You are Internal Agent Builder, a Half Dozen assistant for teammates.',
+    'Primary goal: help teammates define useful internal agents.',
+    'Workflow: intake the request and ask clarifying questions when information is missing.',
+    'Produce an Agent Spec, final instructions, enablement steps, output sections, and a test plan.',
+    'Do not create, update, archive, delete, or mutate Notion records unless explicitly requested.',
+    'Include acceptance criteria, pass/fail expectations, and test scenarios.'
+  ].join('\n');
+  const result = evaluateWorkerRubric(missingSimilarityCheck);
+
+  assert.equal(result.status, 'pass');
+  assert.equal(result.critical_failed, 0);
+  assert.ok(result.checks_failed > 0);
+});
+
 test('buildBehavioralSmokeTests reports covered and missing scenarios', () => {
   const covered = buildBehavioralSmokeTests(deliveryReadyInstructions);
   assert.equal(covered.every((item) => item.covered), true);
@@ -83,6 +125,7 @@ test('notionMarkdownBlocks preserves core report structure', () => {
     '',
     'Paragraph body.',
     '',
+    '- [ ] Todo',
     '- Bullet',
     '1. Numbered',
     '',
@@ -92,5 +135,30 @@ test('notionMarkdownBlocks preserves core report structure', () => {
   ].join('\n'));
   const types = blocks.map((block) => block.type);
 
-  assert.deepEqual(types, ['heading_1', 'paragraph', 'bulleted_list_item', 'numbered_list_item', 'code']);
+  assert.deepEqual(types, ['heading_1', 'paragraph', 'to_do', 'bulleted_list_item', 'numbered_list_item', 'code']);
+});
+
+test('richTextPlain preserves Notion mention hrefs as Markdown links', () => {
+  const text = richTextPlain([
+    {
+      type: 'mention',
+      plain_text: 'AI Toolkits [HD]',
+      href: 'https://www.notion.so/halfdozen/AI-Toolkits-HD-1234567890abcdef1234567890abcdef',
+      mention: {
+        type: 'database',
+        database: {
+          id: '12345678-90ab-cdef-1234-567890abcdef'
+        }
+      }
+    },
+    {
+      type: 'text',
+      plain_text: ' reference'
+    }
+  ]);
+
+  assert.equal(
+    text,
+    '[AI Toolkits [HD]](https://www.notion.so/halfdozen/AI-Toolkits-HD-1234567890abcdef1234567890abcdef) reference'
+  );
 });
