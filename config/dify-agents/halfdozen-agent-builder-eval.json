@@ -1,0 +1,142 @@
+{
+  "version": 1,
+  "status": "planned",
+  "created_at": "2026-06-03",
+  "dify_app": {
+    "name": "Half Dozen Agent Builder Eval",
+    "type": "agent",
+    "description": "Reviews Half Dozen Notion agent pages after Updating webhook events and returns JSON eval handoff for Worker Notion writeback.",
+    "recommended_model": "gpt-5.5",
+    "api_response_mode": "streaming",
+    "service_api": {
+      "base_url": "https://api.dify.ai/v1",
+      "api_key_secret": {
+        "environment": "prod",
+        "path": "/dify/halfdozen-agent-builder-eval",
+        "secret_key": "DIFY_HALFDOZEN_AGENT_BUILDER_EVAL_API_KEY"
+      }
+    }
+  },
+  "mcp_server": {
+    "display_name": "Half Dozen CREATE SOMETHING Notion MCP",
+    "server_id": "createsomething-notion",
+    "transport": "http",
+    "url": "https://createsomething-notion.mcp.createsomething.agency/mcp",
+    "auth": {
+      "type": "bearer",
+      "infisical": {
+        "environment": "prod",
+        "path": "/halfdozen-notion-mcp/halfdozen",
+        "secret_key": "MCP_BEARER_TOKEN"
+      }
+    }
+  },
+  "tools": [
+    {
+      "name": "notion_search",
+      "enabled": true,
+      "write_capability": false,
+      "required_parameters": [
+        "workspace"
+      ]
+    },
+    {
+      "name": "notion_list_databases",
+      "enabled": true,
+      "write_capability": false,
+      "required_parameters": [
+        "workspace"
+      ]
+    },
+    {
+      "name": "notion_get_database",
+      "enabled": true,
+      "write_capability": false,
+      "required_parameters": [
+        "workspace",
+        "data_source_id"
+      ]
+    },
+    {
+      "name": "notion_query_database",
+      "enabled": true,
+      "write_capability": false,
+      "required_parameters": [
+        "workspace",
+        "data_source_id"
+      ]
+    },
+    {
+      "name": "notion_get_page",
+      "enabled": true,
+      "write_capability": false,
+      "required_parameters": [
+        "workspace",
+        "page_id"
+      ]
+    },
+    {
+      "name": "notion_list_block_children",
+      "enabled": true,
+      "write_capability": false,
+      "required_parameters": [
+        "workspace",
+        "block_id"
+      ]
+    }
+  ],
+  "agent_prompt": "You are the Half Dozen Agent Builder Eval agent for CREATE SOMETHING.\n\nPurpose:\nReview a submitted Half Dozen Notion agent page after its Status is set to Updating. Produce a compact eval handoff that can be written back to Notion by the webhook Worker.\n\nExecution contract:\n- The webhook will pass the agent name, source Notion page ID/URL when available, selected Notion database properties, and submitted page content when available.\n- Use the installed Dify Notion tool first when you need live Notion context. Use only the read side of the Notion plugin for this agent: search_notion, query_database, retrieve_page, and retrieve_database. The plugin also exposes write tools, but this app must not use them in the webhook flow.\n- Keep Notion writes out of this agent by default. The Cloudflare Worker is the writer for Test Reports [OS], source page appends, source status transition to Testing, and Linear completion.\n- Use E2B sandbox only for bounded instruction linting or transformation checks. Do not use it to mutate Notion or external systems.\n\nRequired output:\nReturn only valid JSON. Do not wrap it in Markdown. Use this exact shape:\n{\n  \"status\": \"pass\" | \"fail\",\n  \"review_summary\": \"short human-readable summary\",\n  \"recommended_upgrades\": [\"...\"],\n  \"final_instructions\": \"complete updated instructions, incorporating recommended upgrades\",\n  \"archived_instructions\": \"the submitted instructions that were reviewed\",\n  \"checks\": {\n    \"scenarios\": 4,\n    \"checks_total\": 27,\n    \"checks_passed\": 27,\n    \"checks_failed\": 0\n  },\n  \"caveats\": [\"...\"]\n}\n\nReview criteria:\n1. Result must be explicit: pass or fail.\n2. Review summary must explain whether the agent is ready for human testing.\n3. Recommended upgrades must focus on useful modifications, not broad rewrites.\n4. Final instructions must include the submitted intent plus recommended upgrades in a paste-ready form.\n5. Archived instructions must preserve the submitted instructions for version history.\n6. Mention any live Notion access gaps in caveats instead of fabricating evidence.\n7. Never expose API keys, bearer tokens, Infisical values, private connection tokens, or hidden tool credentials.\n8. Do not claim that you updated Notion, created Test Reports, or changed status. The Worker does those actions after reading your JSON.\n\nIf the request is underspecified, return status \"fail\" with caveats and the minimum missing fields. If the Notion tool cannot access a page or database, return the best eval from supplied content and include the access failure as a caveat.",
+  "builtin_tools": [
+    {
+      "provider_id": "langgenius/notion/notion",
+      "provider_name": "Notion",
+      "provider_type": "builtin",
+      "name": "search_notion",
+      "label": "Search Notion",
+      "enabled": true,
+      "write_capability": false,
+      "notes": "Installed Dify Notion marketplace tool v0.0.10. Searches pages and databases by title or content."
+    },
+    {
+      "provider_id": "langgenius/notion/notion",
+      "provider_name": "Notion",
+      "provider_type": "builtin",
+      "name": "query_database",
+      "label": "Query Notion Database",
+      "enabled": true,
+      "write_capability": false,
+      "notes": "Reads filtered records from a specific Notion database when schema context is needed."
+    },
+    {
+      "provider_id": "langgenius/notion/notion",
+      "provider_name": "Notion",
+      "provider_type": "builtin",
+      "name": "retrieve_page",
+      "label": "Retrieve Notion Page",
+      "enabled": true,
+      "write_capability": false,
+      "notes": "Required for reading submitted agent page bodies when the webhook only passes a page ID/URL."
+    },
+    {
+      "provider_id": "langgenius/notion/notion",
+      "provider_name": "Notion",
+      "provider_type": "builtin",
+      "name": "retrieve_database",
+      "label": "Retrieve Notion Database",
+      "enabled": true,
+      "write_capability": false,
+      "notes": "Used to inspect AI Agents [HD] or Test Reports [OS] schema when needed."
+    },
+    {
+      "provider_id": "langgenius/e2b/e2b",
+      "provider_name": "E2B",
+      "provider_type": "builtin",
+      "name": "run_code",
+      "label": "Run Code",
+      "enabled": true,
+      "write_capability": true,
+      "requires_user_confirmation": true,
+      "notes": "Optional bounded sandbox lint/transform check, based on the VICKI HUB stability pattern."
+    }
+  ]
+}

@@ -13,14 +13,17 @@ By default, each intake creates or reuses two Linear follow-up issues:
 - `Build Half Dozen agent: <agent name>`
 - `Run and share Half Dozen agent eval: <agent name>`
 
-The Worker then runs the deterministic governance eval mirror. The generated handoff follows the
-meeting contract: result, review summary, recommended upgrades/modifications, final instructions,
-and archived submitted instructions. When the Notion integration can see the source page and
+The Worker then runs the Dify Agent Builder Eval app when
+`DIFY_HALFDOZEN_AGENT_BUILDER_EVAL_API_KEY` is configured. If that Dify app is not configured yet,
+the Worker falls back to the deterministic governance eval mirror that matches the same report
+contract. The generated handoff follows the meeting contract: result, review summary, recommended
+upgrades/modifications, final instructions, and archived submitted instructions. When the Notion integration can see the source page and
 `Test Reports [OS]`, the Worker publishes the eval report to Test Reports, rewrites the submitted
 agent page by appending the updated handoff and archived submitted-instructions section, flips the
 source page from `Updating` to `Testing`, comments evidence back to Linear, and marks the
 intake/build/eval issues complete. If any Notion handoff step fails, the run is recorded in Linear
-but is not marked completed.
+but is not marked completed. If the eval result is `fail`, the Worker appends the report but leaves
+the source page status unchanged instead of moving it to `Testing`.
 
 ```bash
 pnpm agent:halfdozen:governance-eval -- --output .cache/halfdozen-agent-governance-eval.json
@@ -91,6 +94,7 @@ wrangler secret put SLACK_WEBHOOK_URL
 wrangler secret put PAGE_URL_BY_AGENT_NAME_JSON
 wrangler secret put TEST_REPORTS_DATABASE_ID
 wrangler secret put WEBHOOK_REPLAY_SECRET
+wrangler secret put DIFY_HALFDOZEN_AGENT_BUILDER_EVAL_API_KEY
 ```
 
 `WEBHOOK_REPLAY_SECRET` is optional and intended for authenticated operator replay tests. It lets
@@ -104,4 +108,21 @@ CREATE_WORKFLOW_ISSUES = "false" # disables build/eval follow-up issue creation
 AUTO_COMPLETE_WORKFLOW = "false" # disables eval report generation and Linear auto-completion
 UPDATE_SOURCE_AGENT_PAGE = "false" # disables source Notion page rewrite/status update
 TEST_REPORTS_DATABASE_NAME = "Test Reports [OS]" # overrides database discovery name
+DIFY_HALFDOZEN_AGENT_BUILDER_EVAL_BASE_URL = "https://api.dify.ai/v1"
+DIFY_HALFDOZEN_AGENT_BUILDER_EVAL_TIMEOUT_MS = "60000"
+DIFY_HALFDOZEN_AGENT_BUILDER_EVAL_REQUIRED = "true" # fail instead of fallback when Dify errors
 ```
+
+## Dify Agent Setup
+
+The repo-owned Dify import file is:
+
+```text
+config/dify-agents/halfdozen-agent-builder-eval.dify.yml
+```
+
+Import it in Dify Studio as `Half Dozen Agent Builder Eval`, bind the installed Notion plugin to a
+Notion integration that can read the source Half Dozen agent pages, publish the app, then store the
+Service API key in `DIFY_HALFDOZEN_AGENT_BUILDER_EVAL_API_KEY`. The import enables only Notion read
+tools (`search_notion`, `query_database`, `retrieve_page`, `retrieve_database`) plus E2B `run_code`
+for bounded JSON/lint checks. The Worker remains the Notion/Linear writer.

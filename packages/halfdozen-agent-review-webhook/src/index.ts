@@ -18,6 +18,10 @@ interface Env {
   UPDATE_SOURCE_AGENT_PAGE?: string;
   TEST_REPORTS_DATABASE_ID?: string;
   TEST_REPORTS_DATABASE_NAME?: string;
+  DIFY_HALFDOZEN_AGENT_BUILDER_EVAL_API_KEY?: string;
+  DIFY_HALFDOZEN_AGENT_BUILDER_EVAL_BASE_URL?: string;
+  DIFY_HALFDOZEN_AGENT_BUILDER_EVAL_TIMEOUT_MS?: string;
+  DIFY_HALFDOZEN_AGENT_BUILDER_EVAL_REQUIRED?: string;
 }
 
 interface NormalizedReviewRequest {
@@ -103,6 +107,13 @@ interface GovernanceEvalReport {
   recommended_upgrades: string[];
   final_instructions: string;
   archived_instructions: string;
+  caveats: string[];
+  dify_eval?: {
+    status: DifyAgentBuilderEvalResult['status'];
+    message_id?: string;
+    conversation_id?: string;
+    error?: string;
+  };
   notion_test_report: {
     database_name: 'Test Reports [OS]';
     title: string;
@@ -111,6 +122,31 @@ interface GovernanceEvalReport {
     beta_dependency: string;
     markdown: string;
   };
+}
+
+interface DifyAgentBuilderEvalResult {
+  ok: boolean;
+  status: 'used' | 'skipped' | 'failed';
+  output?: DifyAgentBuilderEvalOutput;
+  answer?: string;
+  messageId?: string;
+  conversationId?: string;
+  error?: string;
+}
+
+interface DifyAgentBuilderEvalOutput {
+  status: 'pass' | 'fail';
+  review_summary: string;
+  recommended_upgrades: string[];
+  final_instructions: string;
+  archived_instructions: string;
+  checks: {
+    scenarios: number;
+    checks_total: number;
+    checks_passed: number;
+    checks_failed: number;
+  };
+  caveats: string[];
 }
 
 interface NotionPublishResult {
@@ -144,6 +180,8 @@ const TEST_REPORTS_DATABASE_NAME_DEFAULT = 'Test Reports [OS]';
 const GOVERNANCE_EVAL_SCENARIOS = 4;
 const GOVERNANCE_EVAL_CHECKS = 27;
 const GOVERNANCE_EVAL_DEFAULT_MODEL = 'gpt-5.5';
+const DIFY_API_BASE_DEFAULT = 'https://api.dify.ai/v1';
+const DIFY_EVAL_TIMEOUT_MS_DEFAULT = 60_000;
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
@@ -964,7 +1002,16 @@ async function completeAutomatedWorkflow(
     return { ok: true, status: 'skipped' };
   }
 
-  const report = buildGovernanceEvalReport(review, parentIssue, workflowIssues);
+  const difyEval = await runDifyAgentBuilderEval(env, review, parentIssue, workflowIssues);
+  if (!difyEval.ok && env.DIFY_HALFDOZEN_AGENT_BUILDER_EVAL_REQUIRED === 'true') {
+    return {
+      ok: false,
+      status: 'failed',
+      error: `Dify Agent Builder Eval failed and DIFY_HALFDOZEN_AGENT_BUILDER_EVAL_REQUIRED is true: ${difyEval.error ?? 'unknown error'}`
+    };
+  }
+
+  const report = buildGovernanceEvalReport(review, parentIssue, workflowIssues, difyEval);
   const testReport = await publishNotionTestReport(env, review, report);
   const sourcePageUpdate = await updateSourceAgentPage(env, review, report);
   const commentBody = automatedWorkflowComment(
@@ -1027,39 +1074,344 @@ async function completeAutomatedWorkflow(
   };
 }
 
-function buildGovernanceEvalReport(
+async function runDifyAgentBuilderEval(
+  env: Env,
   review: NormalizedReviewRequest,
   parentIssue: LinearIssue,
   workflowIssues: LinearWorkflowIssue[]
+): Promise<DifyAgentBuilderEvalResult> {
+  const apiKey = env.DIFY_HALFDOZEN_AGENT_BUILDER_EVAL_API_KEY?.trim();
+  if (!apiKey) {
+    return {
+      ok: true,
+      status: 'skipped',
+      error: 'DIFY_HALFDOZEN_AGENT_BUILDER_EVAL_API_KEY is not configured.'
+    };
+  }
+
+  const baseUrl = (env.DIFY_HALFDOZEN_AGENT_BUILDER_EVAL_BASE_URL ?? DIFY_API_BASE_DEFAULT).replace(/\/+$/, '');
+  const timeoutMs = positiveInteger(
+    env.DIFY_HALFDOZEN_AGENT_BUILDER_EVAL_TIMEOUT_MS,
+    DIFY_EVAL_TIMEOUT_MS_DEFAULT
+  );
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(`${baseUrl}/chat-messages`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        inputs: difyAgentBuilderInputs(review),
+        query: difyAgentBuilderQuery(review, parentIssue, workflowIssues),
+        response_mode: 'streaming',
+        conversation_id: '',
+        user: `halfdozen-agent-review-webhook-${review.requestId}`
+      }),
+      signal: controller.signal
+    });
+
+    const text = await response.text();
+    const stream = parseDifyStreamingResponse(text);
+    if (!response.ok) {
+      return {
+        ok: false,
+        status: 'failed',
+        answer: stream.answer,
+        messageId: stream.messageId,
+        conversationId: stream.conversationId,
+        error: `Dify Service API returned HTTP ${response.status}: ${stream.error ?? truncate(text, 500)}`
+      };
+    }
+
+    const parsed = parseDifyEvalAnswer(stream.answer);
+    if (!parsed.ok) {
+      return {
+        ok: false,
+        status: 'failed',
+        answer: stream.answer,
+        messageId: stream.messageId,
+        conversationId: stream.conversationId,
+        error: parsed.error
+      };
+    }
+
+    return {
+      ok: true,
+      status: 'used',
+      output: parsed.output,
+      answer: stream.answer,
+      messageId: stream.messageId,
+      conversationId: stream.conversationId
+    };
+  } catch (error) {
+    return {
+      ok: false,
+      status: 'failed',
+      error: error instanceof Error ? error.message : String(error)
+    };
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function difyAgentBuilderInputs(review: NormalizedReviewRequest): Record<string, string> {
+  return {
+    agent_name: review.agentName,
+    webhook_request_id: review.requestId,
+    source_page_id: review.enrichment?.notionPageId ?? '',
+    source_page_url: review.pageUrl ?? review.enrichment?.notionPageUrl ?? '',
+    has_page_content: review.enrichment?.pageContent ? 'true' : 'false'
+  };
+}
+
+function difyAgentBuilderQuery(
+  review: NormalizedReviewRequest,
+  parentIssue: LinearIssue,
+  workflowIssues: LinearWorkflowIssue[]
+): string {
+  return [
+    'Evaluate this Half Dozen agent page and return only the required JSON contract.',
+    '',
+    JSON.stringify(
+      {
+        agent_name: review.agentName,
+        status: review.status,
+        priority: review.priority,
+        type: review.type,
+        source_page_id: review.enrichment?.notionPageId,
+        source_page_url: review.pageUrl ?? review.enrichment?.notionPageUrl,
+        selected_properties: review.properties,
+        review_description: review.description,
+        submitted_instructions:
+          review.enrichment?.pageContent ??
+          review.description ??
+          'No submitted instructions were available in the webhook payload or readable Notion page content.',
+        linear_intake: {
+          identifier: parentIssue.identifier,
+          url: parentIssue.url
+        },
+        workflow_issues: workflowIssues.map((issue) => ({
+          identifier: issue.identifier,
+          step: issue.step,
+          url: issue.url
+        }))
+      },
+      null,
+      2
+    )
+  ].join('\n');
+}
+
+function parseDifyStreamingResponse(text: string): {
+  answer: string;
+  messageId?: string;
+  conversationId?: string;
+  error?: string;
+} {
+  const blocks = text.split(/\n\n+/);
+  let answer = '';
+  let messageId: string | undefined;
+  let conversationId: string | undefined;
+  let error: string | undefined;
+
+  for (const block of blocks) {
+    const data = block
+      .split('\n')
+      .map((line) => line.trimEnd())
+      .filter((line) => line.startsWith('data:'))
+      .map((line) => line.replace(/^data:\s?/, ''))
+      .join('\n')
+      .trim();
+
+    if (!data || data === '[DONE]') continue;
+
+    try {
+      const event = JSON.parse(data) as unknown;
+      if (!isRecord(event)) continue;
+      const answerChunk = typeof event.answer === 'string' ? event.answer : '';
+      answer += answerChunk;
+      messageId = stringFromUnknown(event.message_id) ?? messageId;
+      conversationId = stringFromUnknown(event.conversation_id) ?? conversationId;
+      const message = stringFromUnknown(event.message);
+      const code = stringFromUnknown(event.code);
+      if (message || code) error = [code, message].filter(Boolean).join(': ');
+    } catch {
+      error = data;
+    }
+  }
+
+  return {
+    answer: answer.trim(),
+    messageId,
+    conversationId,
+    error
+  };
+}
+
+function parseDifyEvalAnswer(
+  answer: string
+): { ok: true; output: DifyAgentBuilderEvalOutput } | { ok: false; error: string } {
+  const object = extractJsonObject(answer);
+  if (!object) {
+    return { ok: false, error: 'Dify response did not contain a valid JSON object.' };
+  }
+
+  const status = object.status === 'fail' ? 'fail' : object.status === 'pass' ? 'pass' : undefined;
+  const reviewSummary = longStringFromUnknown(object.review_summary, 6000);
+  const finalInstructions = longStringFromUnknown(object.final_instructions, 24000);
+  const archivedInstructions = longStringFromUnknown(object.archived_instructions, 24000);
+
+  if (!status || !reviewSummary || !finalInstructions || !archivedInstructions) {
+    return {
+      ok: false,
+      error:
+        'Dify response JSON was missing one of status, review_summary, final_instructions, or archived_instructions.'
+    };
+  }
+
+  const checks = isRecord(object.checks) ? object.checks : {};
+  const checksTotal = positiveInteger(checks.checks_total, GOVERNANCE_EVAL_CHECKS);
+  const checksFailed = positiveInteger(checks.checks_failed, status === 'pass' ? 0 : 1);
+  const checksPassed = positiveInteger(
+    checks.checks_passed,
+    Math.max(0, checksTotal - checksFailed)
+  );
+
+  return {
+    ok: true,
+    output: {
+      status,
+      review_summary: reviewSummary,
+      recommended_upgrades: stringArrayFromUnknown(object.recommended_upgrades, 12),
+      final_instructions: finalInstructions,
+      archived_instructions: archivedInstructions,
+      checks: {
+        scenarios: positiveInteger(checks.scenarios, GOVERNANCE_EVAL_SCENARIOS),
+        checks_total: checksTotal,
+        checks_passed: checksPassed,
+        checks_failed: checksFailed
+      },
+      caveats: stringArrayFromUnknown(object.caveats, 8)
+    }
+  };
+}
+
+function extractJsonObject(answer: string): UnknownRecord | undefined {
+  const withoutFence = answer.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '');
+  const candidates = [withoutFence];
+  const start = withoutFence.indexOf('{');
+  const end = withoutFence.lastIndexOf('}');
+  if (start >= 0 && end > start) candidates.push(withoutFence.slice(start, end + 1));
+
+  for (const candidate of candidates) {
+    try {
+      const parsed = JSON.parse(candidate) as unknown;
+      if (isRecord(parsed)) return parsed;
+    } catch {
+      continue;
+    }
+  }
+
+  return undefined;
+}
+
+function stringArrayFromUnknown(value: unknown, maxItems: number): string[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item) => longStringFromUnknown(item, 2000))
+    .filter((item): item is string => Boolean(item))
+    .slice(0, maxItems);
+}
+
+function longStringFromUnknown(value: unknown, maxLength: number): string | undefined {
+  if (typeof value !== 'string') return undefined;
+  const trimmed = value.trim();
+  return trimmed ? truncate(trimmed, maxLength) : undefined;
+}
+
+function positiveInteger(value: unknown, fallback: number): number {
+  const parsed =
+    typeof value === 'number'
+      ? value
+      : typeof value === 'string'
+        ? Number.parseInt(value, 10)
+        : Number.NaN;
+  return Number.isFinite(parsed) && parsed >= 0 ? Math.floor(parsed) : fallback;
+}
+
+function buildGovernanceEvalReport(
+  review: NormalizedReviewRequest,
+  parentIssue: LinearIssue,
+  workflowIssues: LinearWorkflowIssue[],
+  difyEval: DifyAgentBuilderEvalResult
 ): GovernanceEvalReport {
   const generatedAt = new Date().toISOString();
-  const archivedInstructions =
+  const fallbackArchivedInstructions =
     review.enrichment?.pageContent ??
     review.description ??
     'No submitted instructions were available in the webhook payload or readable Notion page content.';
-  const recommendedUpgrades = recommendedAgentUpgrades(review);
-  const finalInstructions = buildFinalAgentInstructions(review, archivedInstructions, recommendedUpgrades);
-  const reviewSummary = [
-    `${review.agentName} passed the automated governance eval mirror.`,
-    'The submitted page was received from the Notion Updating workflow, the existing Linear workflow was reused or created, and the output is ready for human testing.',
-    'The current programmable runner is deterministic until Notion exposes programmatic custom-agent execution in the private beta.'
-  ].join(' ');
+  const difyOutput = difyEval.status === 'used' ? difyEval.output : undefined;
+  const recommendedUpgrades = difyOutput?.recommended_upgrades.length
+    ? difyOutput.recommended_upgrades
+    : recommendedAgentUpgrades(review);
+  const archivedInstructions = difyOutput?.archived_instructions ?? fallbackArchivedInstructions;
+  const finalInstructions =
+    difyOutput?.final_instructions ??
+    buildFinalAgentInstructions(review, archivedInstructions, recommendedUpgrades);
+  const reviewSummary =
+    difyOutput?.review_summary ??
+    [
+      `${review.agentName} passed the automated governance eval mirror.`,
+      'The submitted page was received from the Notion Updating workflow, the existing Linear workflow was reused or created, and the output is ready for human testing.',
+      'Dify Agent Builder Eval was not used for this run, so the Worker used its deterministic fallback runner.'
+    ].join(' ');
+  const summary = {
+    status: difyOutput?.status ?? 'pass',
+    scenarios: difyOutput?.checks.scenarios ?? GOVERNANCE_EVAL_SCENARIOS,
+    checks_total: difyOutput?.checks.checks_total ?? GOVERNANCE_EVAL_CHECKS,
+    checks_passed: difyOutput?.checks.checks_passed ?? GOVERNANCE_EVAL_CHECKS,
+    checks_failed: difyOutput?.checks.checks_failed ?? 0
+  } satisfies GovernanceEvalReport['summary'];
+  const success = summary.status === 'pass' && summary.checks_failed === 0;
+  const executionTarget =
+    difyEval.status === 'used'
+      ? 'dify-halfdozen-agent-builder-eval'
+      : 'cloudflare-worker-deterministic-governance-runner';
+  const futureExecutionTarget =
+    difyEval.status === 'used'
+      ? 'dify-agent-builder-eval-with-worker-notion-linear-writeback'
+      : 'dify-halfdozen-agent-builder-eval-after-studio-import-and-api-key';
+  const caveats = [
+    ...(difyOutput?.caveats ?? []),
+    ...(difyEval.status === 'failed' ? [`Dify eval failed; Worker fallback used: ${difyEval.error ?? 'unknown error'}`] : []),
+    ...(difyEval.status === 'skipped' ? ['Dify eval skipped because its Service API key is not configured on the Worker.'] : [])
+  ];
+  const betaDependency =
+    difyEval.status === 'used'
+      ? 'Dify Agent Builder Eval completed through Service API; Worker handled Notion and Linear writes.'
+      : 'Set DIFY_HALFDOZEN_AGENT_BUILDER_EVAL_API_KEY after importing the Dify app to use the sandboxed eval engine.';
   const markdown = [
     '# Half Dozen Agent Builder Eval',
     '',
-    '- Status: pass',
+    `- Status: ${summary.status}`,
     `- Generated: ${generatedAt}`,
-    '- Current execution target: Cloudflare Worker deterministic governance runner',
-    '- Future execution target: Notion agent API/private beta when available',
+    `- Current execution target: ${executionTarget}`,
+    `- Future execution target: ${futureExecutionTarget}`,
     `- Default model: ${GOVERNANCE_EVAL_DEFAULT_MODEL}`,
-    '- Scenarios: internal-agent-builder, dedup, inbox-triage, fleet-watchdog',
+    `- Scenarios: ${summary.scenarios}`,
+    `- Checks: ${summary.checks_passed}/${summary.checks_total}`,
+    `- Dify eval: ${difyEval.status}${difyEval.messageId ? ` (${difyEval.messageId})` : ''}`,
     `- Intake: ${parentIssue.identifier} ${parentIssue.url}`,
     `- Agent: ${review.agentName}`,
     `- Follow-ups: ${workflowIssues.map((issue) => `${issue.identifier} (${issue.step})`).join(', ') || 'none'}`,
     '',
     '## Result',
     '',
-    'Pass. All scenario governance checks passed.',
+    `${summary.status === 'pass' ? 'Pass' : 'Fail'}. ${summary.checks_passed}/${summary.checks_total} checks passed.`,
     '',
     '## Review Summary',
     '',
@@ -1075,33 +1427,44 @@ function buildGovernanceEvalReport(
     '',
     '## Archived Submitted Instructions',
     '',
-    archivedInstructions
+    archivedInstructions,
+    ...(caveats.length
+      ? [
+          '',
+          '## Caveats',
+          '',
+          ...caveats.map((caveat) => `- ${caveat}`)
+        ]
+      : [])
   ].join('\n');
 
   return {
-    success: true,
+    success,
     mode: 'governance-eval',
     generated_at: generatedAt,
-    execution_target: 'cloudflare-worker-deterministic-governance-runner',
-    future_execution_target: 'notion-agent-api-private-beta',
+    execution_target: executionTarget,
+    future_execution_target: futureExecutionTarget,
     default_model: GOVERNANCE_EVAL_DEFAULT_MODEL,
-    summary: {
-      status: 'pass',
-      scenarios: GOVERNANCE_EVAL_SCENARIOS,
-      checks_total: GOVERNANCE_EVAL_CHECKS,
-      checks_passed: GOVERNANCE_EVAL_CHECKS,
-      checks_failed: 0
-    },
+    summary,
     review_summary: reviewSummary,
     recommended_upgrades: recommendedUpgrades,
     final_instructions: finalInstructions,
     archived_instructions: archivedInstructions,
+    caveats,
+    dify_eval: {
+      status: difyEval.status,
+      message_id: difyEval.messageId,
+      conversation_id: difyEval.conversationId,
+      error: difyEval.error
+    },
     notion_test_report: {
       database_name: 'Test Reports [OS]',
       title: `Half Dozen Agent Eval - ${review.agentName} - ${generatedAt.slice(0, 10)}`,
-      status: 'pass',
-      source: 'Cloudflare Worker webhook automation',
-      beta_dependency: 'Switch execution target when Notion programmatic agent testing becomes available.',
+      status: summary.status,
+      source: difyEval.status === 'used'
+        ? 'Dify Agent Builder Eval via Cloudflare Worker webhook automation'
+        : 'Cloudflare Worker webhook automation',
+      beta_dependency: betaDependency,
       markdown
     }
   };
@@ -1416,6 +1779,19 @@ async function updateSourceAgentPage(
     };
   }
 
+  if (!report.success) {
+    return {
+      ok: true,
+      status: 'updated',
+      pageId,
+      pageUrl,
+      archivedBlocks: 0,
+      appendedBlocks: children.length,
+      statusUpdated: false,
+      reason: 'Eval did not pass, so the source page Status was left unchanged.'
+    };
+  }
+
   const status = await updateNotionPageStatus(env, pageId, 'Testing');
   if (!status.ok) {
     return {
@@ -1536,9 +1912,20 @@ function agentPageUpdateBlocks(review: NormalizedReviewRequest, report: Governan
     ...notionCodeBlocks(report.final_instructions),
     notionHeadingBlock(2, 'Archived Submitted Instructions'),
     ...notionCodeBlocks(report.archived_instructions),
+    ...(report.caveats.length
+      ? [
+          notionHeadingBlock(2, 'Caveats'),
+          ...report.caveats.map((caveat) => notionBulletedListBlock(caveat))
+        ]
+      : []),
     notionHeadingBlock(2, 'Automation Evidence'),
     notionParagraphBlock(`Source: ${report.notion_test_report.source}`),
-    notionParagraphBlock(`Testing handoff: ${review.agentName} is ready for human testing after this page moves to Testing.`)
+    notionParagraphBlock(`Eval engine: ${report.execution_target}. Dify eval: ${report.dify_eval?.status ?? 'not recorded'}.`),
+    notionParagraphBlock(
+      report.success
+        ? `Testing handoff: ${review.agentName} is ready for human testing after this page moves to Testing.`
+        : `Testing handoff: ${review.agentName} is not ready for Testing until the failing eval findings are addressed.`
+    )
   ];
 
   return blocks.filter(Boolean).slice(0, 100);
@@ -1681,6 +2068,8 @@ function automatedWorkflowComment(
     `Intake: ${parentIssue.identifier} ${parentIssue.url}`,
     `Workflow issues: ${workflowIssues.map((issue) => `${issue.identifier} (${issue.step})`).join(', ') || 'none'}`,
     `Eval status: ${report.summary.status}`,
+    `Eval engine: ${report.execution_target}`,
+    `Dify eval: ${report.dify_eval?.status ?? 'not recorded'}${report.dify_eval?.message_id ? ` (${report.dify_eval.message_id})` : report.dify_eval?.error ? ` (${report.dify_eval.error})` : ''}`,
     `Checks: ${report.summary.checks_passed}/${report.summary.checks_total}`,
     `Scenarios: ${report.summary.scenarios}`,
     `Generated: ${report.generated_at}`,
