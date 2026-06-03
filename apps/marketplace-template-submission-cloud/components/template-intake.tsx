@@ -11,7 +11,7 @@ import {
   TEMPLATE_STYLES,
   WEBFLOW_FEATURES,
   getPricingTiers,
-  isSupportedCountry,
+  requiresSpecificStripeOnboarding,
   type PageCountOption
 } from '../lib/intake/constants';
 import {
@@ -1743,7 +1743,9 @@ export function TemplateIntake() {
     };
   }, [turnstileEnabled]);
 
-  const creatorCountrySupported = creator.country ? isSupportedCountry(creator.country) : true;
+  const creatorCountryRequiresStripeOnboarding = creator.country
+    ? requiresSpecificStripeOnboarding(creator.country)
+    : false;
   const previewUrlValue = template.previewUrl.trim();
   const previewUrlPresent = previewUrlValue !== '';
   const previewUrlValid =
@@ -2765,7 +2767,7 @@ export function TemplateIntake() {
                       placeholder="Select or search for a country…"
                       required
                     />
-                    {!creatorCountrySupported && creator.country ? (
+                    {creatorCountryRequiresStripeOnboarding ? (
                       <div className="submission-status submission-status-warning submission-country-onboarding-warning">
                         This country requires specific Stripe onboarding before payouts can
                         continue. Creators may need to meet Stripe requirements for another
