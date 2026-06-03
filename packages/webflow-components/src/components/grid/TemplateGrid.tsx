@@ -179,14 +179,8 @@ const DEFAULT_PAGE_SIZE = 24;
 const SEARCH_CACHE_TTL_MS = 5 * 60 * 1000;
 const NEW_TEMPLATE_WINDOW_DAYS = 30;
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
-const STRICT_FREE_FETCH_PAGE_SIZE = 100;
-const STRICT_FREE_MAX_FETCH_PAGES = 20;
 
 const gridResponseCache = new Map<string, { timestamp: number; data: ApiResponse }>();
-const strictFreeCollectionCache = new Map<
-  string,
-  { timestamp: number; items: ApiItem[]; sourceTotalItems: number; droppedPaidItems: number }
->();
 
 // Hosts whose images need to be routed through the Cloud App proxy.
 // Airtable signed attachment URLs expire after ~2 hours; the proxy caches
@@ -527,85 +521,6 @@ function formatPrice(item: ApiItem): string {
 function isFreeTemplate(item: ApiItem): boolean {
   if (typeof item.price === 'number') return item.price === 0;
   return item.is_free;
-}
-
-function requiresStrictFreeFilter(filters: FilterState): boolean {
-  return filters.scope === 'free' || filters.freeOnly;
-}
-
-function toPagedApiResponse(
-  items: ApiItem[],
-  page: number,
-  pageSize: number,
-  clientFilter?: ApiResponse['client_filter'],
-): ApiResponse {
-  const safePage = Math.max(1, page);
-  const safePageSize = Math.max(1, pageSize);
-  const totalItems = items.length;
-  const totalPages = Math.max(1, Math.ceil(totalItems / safePageSize));
-  const start = (safePage - 1) * safePageSize;
-  const pageItems = items.slice(start, start + safePageSize);
-
-  return {
-    items: pageItems,
-    pagination: {
-      page: safePage,
-      page_size: safePageSize,
-      total_items: totalItems,
-      total_pages: totalPages,
-      has_next_page: start + safePageSize < totalItems,
-      has_previous_page: safePage > 1,
-    },
-    client_filter: clientFilter,
-  };
-}
-
-async function fetchStrictFreePage(
-  apiBase: string,
-  filters: FilterState,
-  targetPage: number,
-  pageSize: number,
-): Promise<ApiResponse> {
-  const collectionKey = buildApiUrl(apiBase, filters, 1, STRICT_FREE_FETCH_PAGE_SIZE);
-  const cached = strictFreeCollectionCache.get(collectionKey);
-
-  if (cached && Date.now() - cached.timestamp < SEARCH_CACHE_TTL_MS) {
-    return toPagedApiResponse(cached.items, targetPage, pageSize, {
-      strict_free: true,
-      dropped_paid_items: cached.droppedPaidItems,
-      source_total_items: cached.sourceTotalItems,
-    });
-  }
-
-  const allItems: ApiItem[] = [];
-  let sourceTotalItems = 0;
-  let page = 1;
-  let hasNextPage = true;
-
-  while (hasNextPage && page <= STRICT_FREE_MAX_FETCH_PAGES) {
-    const response = await fetch(buildApiUrl(apiBase, filters, page, STRICT_FREE_FETCH_PAGE_SIZE));
-    if (!response.ok) throw new Error(`API ${response.status}`);
-    const data: ApiResponse = await response.json();
-    if (page === 1) sourceTotalItems = data.pagination.total_items;
-    allItems.push(...data.items);
-    hasNextPage = data.pagination.has_next_page;
-    page += 1;
-  }
-
-  const freeItems = allItems.filter(isFreeTemplate);
-  const droppedPaidItems = allItems.length - freeItems.length;
-  strictFreeCollectionCache.set(collectionKey, {
-    timestamp: Date.now(),
-    items: freeItems,
-    sourceTotalItems: sourceTotalItems || allItems.length,
-    droppedPaidItems,
-  });
-
-  return toPagedApiResponse(freeItems, targetPage, pageSize, {
-    strict_free: true,
-    dropped_paid_items: droppedPaidItems,
-    source_total_items: sourceTotalItems || allItems.length,
-  });
 }
 
 function priceNumeric(item: ApiItem): string {
@@ -1040,6 +955,7 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
   const sentinelRef = useRef<HTMLDivElement>(null);
   // Stale-fetch guard: every new filter/sort change increments this
   const fetchEpochRef = useRef(0);
+  const activeFetchAbortRef = useRef<AbortController | null>(null);
   const lastHrefRef = useRef(typeof window === 'undefined' ? '' : window.location.href);
 
   // Keep Designer prop edits and production URL changes aligned after mount.
@@ -1063,10 +979,14 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
   const fetchPage = useCallback(
     async (targetPage: number, currentFilters: FilterState, append: boolean) => {
       const epoch = ++fetchEpochRef.current;
+      activeFetchAbortRef.current?.abort();
+      const controller = new AbortController();
+      activeFetchAbortRef.current = controller;
       const url = buildApiUrl(apiBase, currentFilters, targetPage, resolvedPageSize);
       const cached = gridResponseCache.get(url);
 
       if (cached && Date.now() - cached.timestamp < SEARCH_CACHE_TTL_MS) {
+        if (activeFetchAbortRef.current === controller) activeFetchAbortRef.current = null;
         setError(null);
         setItems((prev) => (append ? [...prev, ...cached.data.items] : cached.data.items));
         setPage(cached.data.pagination.page);
@@ -1086,13 +1006,9 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
       }
 
       try {
-        const data = requiresStrictFreeFilter(currentFilters)
-          ? await fetchStrictFreePage(apiBase, currentFilters, targetPage, resolvedPageSize)
-          : await (async () => {
-              const res = await fetch(url);
-              if (!res.ok) throw new Error(`API ${res.status}`);
-              return (await res.json()) as ApiResponse;
-            })();
+        const res = await fetch(url, { signal: controller.signal });
+        if (!res.ok) throw new Error(`API ${res.status}`);
+        const data = (await res.json()) as ApiResponse;
         gridResponseCache.set(url, { timestamp: Date.now(), data });
 
         if (epoch !== fetchEpochRef.current) return;
@@ -1103,10 +1019,12 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
         setTotalItems(data.pagination.total_items);
         trackGridHealthEvent(data, currentFilters, append, showMarketplaceSignals, enableAnalytics);
       } catch (e) {
+        if (controller.signal.aborted) return;
         if (epoch !== fetchEpochRef.current) return;
         setError(e instanceof Error ? e.message : 'Failed to load templates');
       } finally {
-        if (epoch === fetchEpochRef.current) {
+        if (activeFetchAbortRef.current === controller) activeFetchAbortRef.current = null;
+        if (epoch === fetchEpochRef.current && !controller.signal.aborted) {
           setLoading(false);
           setLoadingMore(false);
         }
@@ -1119,6 +1037,10 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
   useEffect(() => {
     fetchPage(1, filters, false);
   }, [filters, fetchPage]);
+
+  useEffect(() => {
+    return () => activeFetchAbortRef.current?.abort();
+  }, []);
 
   // ── Infinite scroll ───────────────────────────────────────────────────────
 
