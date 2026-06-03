@@ -5,6 +5,12 @@ import {
   type PageCount,
   type PaymentType
 } from '../../../../vendor/core/marketplace-webhook';
+import {
+  extractLongDescriptionImages,
+  getLongDescriptionText,
+  plainTextToLongDescriptionHtml,
+  sanitizeLongDescriptionHtml
+} from '@create-something/webflow-dashboard-core/long-description';
 import { jsonNoStore } from '../../../../lib/server/responses';
 import { getServerAirtable } from '../../../../lib/server/airtable';
 import { getPricingTiers, WEBFLOW_FEATURES } from '../../../../lib/intake/constants';
@@ -98,15 +104,6 @@ function escapeHtml(value: string): string {
     .replace(/'/g, '&#39;');
 }
 
-function toParagraphs(value: string): string {
-  return value
-    .split(/\n{2,}/)
-    .map((paragraph) => paragraph.trim())
-    .filter(Boolean)
-    .map((paragraph) => `<p>${escapeHtml(paragraph).replace(/\n/g, '<br />')}</p>`)
-    .join('');
-}
-
 function normalizePreviewUrl(value: string): string {
   const trimmed = value.trim();
   if (!trimmed.includes('https://preview.webflow.com/preview/')) {
@@ -188,7 +185,10 @@ export async function POST(request: Request) {
     const creatorName = String(body.creatorName || '').trim();
     const templateName = String(body.templateName || '').trim();
     const shortDescription = String(body.shortDescription || '').trim();
-    const longDescription = String(body.longDescription || '').trim();
+    const rawLongDescription = String(body.longDescription || '').trim();
+    const longDescriptionHtml = sanitizeLongDescriptionHtml(rawLongDescription);
+    const longDescriptionText = getLongDescriptionText(longDescriptionHtml);
+    const longDescriptionImages = extractLongDescriptionImages(longDescriptionHtml);
     const notes = String(body.notes || '').trim();
     const thumbnailUrl = String(body.thumbnailUrl || '').trim();
     const secondaryThumbnailUrl = String(body.secondaryThumbnailUrl || '').trim();
@@ -225,7 +225,7 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!longDescription) {
+    if (!longDescriptionText && longDescriptionImages.length === 0) {
       return jsonNoStore({ error: 'Long description is required.' }, { status: 400 });
     }
 
@@ -342,8 +342,8 @@ export async function POST(request: Request) {
       requestedCategories.length > 0 ? requestedCategories : category ? [category] : [];
 
     const detailsHtml = [
-      `<h2>Submission notes</h2>${toParagraphs(longDescription)}`,
-      notes ? `<h3>Internal notes</h3>${toParagraphs(notes)}` : '',
+      `<h3>Submission notes</h3>${longDescriptionHtml}`,
+      notes ? `<h3>Internal notes</h3>${plainTextToLongDescriptionHtml(notes)}` : '',
       '<h3>Metadata</h3>',
       '<ul>',
       categories.length > 0 ? `<li>Category: ${escapeHtml(categories.join(', '))}</li>` : '',
