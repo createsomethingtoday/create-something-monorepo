@@ -69,16 +69,11 @@
 	{/if}
 
 	<form method="POST" action="?/submitStaffOnboarding" class="writeback-form">
-		<label>
-			<input
-				type="checkbox"
-				name="confirm_external_write"
-				value="yes"
-				disabled={!canSubmitStaffOnboarding}
-			/>
-			<span>Operator reviewed profile, consent, and blockers.</span>
-		</label>
-		<button type="submit" disabled={!canSubmitStaffOnboarding}>Submit to Staff DB</button>
+		<div class="graduation-boundary">
+			<span>Paylocity graduation</span>
+			<strong>Human approval required</strong>
+		</div>
+		<button type="submit" disabled={!canSubmitStaffOnboarding}>Save to Staff DB</button>
 	</form>
 </section>
 
@@ -180,11 +175,16 @@
 		margin-top: 1rem;
 	}
 
-	.writeback-form label {
+	.graduation-boundary {
 		display: inline-flex;
-		align-items: center;
+		flex-direction: column;
 		gap: 0.55rem;
 		color: var(--muted);
+	}
+
+	.graduation-boundary strong {
+		color: var(--ink);
+		font-size: 0.92rem;
 	}
 
 	.writeback-form button {
@@ -196,8 +196,7 @@
 		cursor: pointer;
 	}
 
-	.writeback-form button:disabled,
-	.writeback-form input:disabled {
+	.writeback-form button:disabled {
 		cursor: not-allowed;
 		opacity: 0.55;
 	}

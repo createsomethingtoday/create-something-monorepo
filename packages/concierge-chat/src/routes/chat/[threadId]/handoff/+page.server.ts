@@ -31,21 +31,11 @@ export const load: PageServerLoad = async ({ params, platform }) => {
 };
 
 export const actions: Actions = {
-	submitStaffOnboarding: async ({ request, params, platform, fetch }) => {
+	submitStaffOnboarding: async ({ params, platform, fetch }) => {
 		const thread = getDemoThread(params.threadId);
 
 		if (!thread) {
 			throw error(404, `Unknown demo thread: ${params.threadId}`);
-		}
-
-		const formData = await request.formData();
-		if (formData.get('confirm_external_write') !== 'yes') {
-			return fail(400, {
-				staffOnboardingResult: {
-					success: false,
-					message: 'Operator confirmation is required before Staff DB writeback.'
-				}
-			});
 		}
 
 		const staffOnboarding = buildStaffOnboardingPayload(thread);
@@ -73,7 +63,7 @@ export const actions: Actions = {
 		return {
 			staffOnboardingResult: {
 				success: true,
-				message: 'Staff DB writeback completed.',
+				message: 'Staff DB submission saved.',
 				status: result.status
 			}
 		};
