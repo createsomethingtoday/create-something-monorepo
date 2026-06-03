@@ -204,7 +204,12 @@ export function buildStaffOnboardingPayload(thread: ConciergeThread): StaffOnboa
 			profile_completion: thread.profile.completion,
 			confirmed_field_count: thread.profile.confirmedCount,
 			artifact_ids: thread.artifacts.map((artifact) => artifact.id),
-			policy_ref: thread.turn.policyRef
+			policy_ref: thread.turn.policyRef,
+			paylocity_graduation: {
+				state: 'requires_human_confirmation',
+				confirmed: false,
+				target_system: 'paylocity'
+			}
 		},
 		consent: {
 			background_check: true,
