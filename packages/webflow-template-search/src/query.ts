@@ -4,6 +4,7 @@ import { clamp, ensureStringArray, normalizeSort } from './utils.js';
 const VALID_TYPES = new Set(['One Page', 'Multi Page', 'Multi Layout']);
 const VALID_SCOPES = new Set<TemplateScope>(['all', 'featured', 'free', 'landing_pages']);
 const VALID_INCLUDES = new Set(['items', 'facets', 'pills']);
+const VALID_VIEWS = new Set(['full', 'grid']);
 
 function parseList(params: URLSearchParams, key: string): string[] {
   const values = params.getAll(key).flatMap((value) => value.split(','));
@@ -81,6 +82,7 @@ export function parseSearchParams(url: URL, defaultPageSize = 24): SearchParams 
     types: parseList(params, 'types').filter((value) => VALID_TYPES.has(value)),
     freeOnly: toBoolean(params.get('free_only')) || toBoolean(params.get('free')) || (params.get('pricing') ?? '') === 'free',
     sort: normalizeSort(params.get('sort')),
+    view: VALID_VIEWS.has(params.get('view') ?? '') ? (params.get('view') as SearchParams['view']) : 'full',
     page: clamp(Number(params.get('page') ?? 1) || 1, 1, 500),
     pageSize: clamp(Number(params.get('page_size') ?? defaultPageSize) || defaultPageSize, 1, 100),
     include: parseIncludes(params),
