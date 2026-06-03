@@ -743,8 +743,14 @@ function normalizeSort(value: string | null, fallback: TemplateSort = 'popular')
   }
 }
 
+function defaultSortForRoute(fallback: TemplateSort = 'popular'): TemplateSort {
+  if (fallback !== 'popular' || typeof window === 'undefined') return fallback;
+  const pathname = new URL(window.location.href).pathname.replace(/\/+$/, '');
+  return pathname === '/templates/all' ? 'newest' : fallback;
+}
+
 function defaultUrlFilters(defaultSort: TemplateSort = 'popular'): LocalFilters {
-  return { q: '', styles: [], tags: [], types: [], freeOnly: false, sort: defaultSort };
+  return { q: '', styles: [], tags: [], types: [], freeOnly: false, sort: defaultSortForRoute(defaultSort) };
 }
 
 function readUrlFilters(defaultSort: TemplateSort = 'popular'): LocalFilters {
@@ -752,13 +758,14 @@ function readUrlFilters(defaultSort: TemplateSort = 'popular'): LocalFilters {
     return defaultUrlFilters(defaultSort);
   }
   const params = new URL(window.location.href).searchParams;
+  const effectiveDefaultSort = defaultSortForRoute(defaultSort);
   return {
     q: (params.get('q') ?? params.get('query') ?? params.get('search') ?? '').trim(),
     styles: params.getAll('styles').flatMap((v) => v.split(',')).filter(Boolean).map(toStyleSlug),
     tags: params.getAll('tags').flatMap((v) => v.split(',')).filter(Boolean).map(toFilterSlug),
     types: params.getAll('types').flatMap((v) => v.split(',')).filter(Boolean),
     freeOnly: ['1', 'true', 'yes', 'on'].includes((params.get('free_only') ?? '').toLowerCase()),
-    sort: normalizeSort(params.get('sort'), defaultSort),
+    sort: normalizeSort(params.get('sort'), effectiveDefaultSort),
   };
 }
 
@@ -887,15 +894,16 @@ function buildScopedSubcategoryHref(slug: string | null, context: RouteContext):
   return url.toString();
 }
 
-function writeUrlFilters(state: LocalFilters): void {
+function writeUrlFilters(state: LocalFilters, defaultSort: TemplateSort = 'popular'): void {
   if (typeof window === 'undefined') return;
   const url = new URL(window.location.href);
+  const effectiveDefaultSort = defaultSortForRoute(defaultSort);
   // Clear filter params only — preserve path-based scope/category
   ['q', 'query', 'search', 'styles', 'tags', 'types', 'free_only', 'sort', 'page'].forEach((k) =>
     url.searchParams.delete(k),
   );
   if (state.q) url.searchParams.set('q', state.q);
-  if (state.sort !== 'popular') url.searchParams.set('sort', state.sort);
+  if (state.sort !== effectiveDefaultSort) url.searchParams.set('sort', state.sort);
   if (state.freeOnly) url.searchParams.set('free_only', 'true');
   state.styles.forEach((v) => url.searchParams.append('styles', v));
   state.tags.forEach((v) => url.searchParams.append('tags', v));
@@ -1153,10 +1161,10 @@ export const TemplateFilterBar: React.FC<TemplateFilterBarProps> = ({
   const applyFilter = useCallback((patch: Partial<LocalFilters>) => {
     setFilters((prev) => {
       const next = { ...prev, ...patch };
-      writeUrlFilters(next);
+      writeUrlFilters(next, defaultSort);
       return next;
     });
-  }, []);
+  }, [defaultSort]);
 
   useEffect(() => {
     if (!isFreeSortContext || (filters.sort !== 'price_asc' && filters.sort !== 'price_desc')) return;
@@ -1172,12 +1180,12 @@ export const TemplateFilterBar: React.FC<TemplateFilterBarProps> = ({
       debounceRef.current = setTimeout(() => {
         setFilters((prev) => {
           const next = { ...prev, q: q.trim() };
-          writeUrlFilters(next);
+          writeUrlFilters(next, defaultSort);
           return next;
         });
       }, 220);
     },
-    [],
+    [defaultSort],
   );
 
   const onStyleChange = useCallback(
@@ -1187,11 +1195,11 @@ export const TemplateFilterBar: React.FC<TemplateFilterBarProps> = ({
           ? prev.styles.filter((value) => value !== slug)
           : [...prev.styles, slug];
         const next = { ...prev, styles };
-        writeUrlFilters(next);
+        writeUrlFilters(next, defaultSort);
         return next;
       });
     },
-    [],
+    [defaultSort],
   );
 
   const onTypeChange = useCallback(

@@ -246,6 +246,12 @@ function normalizeSort(value: string | null | undefined, fallback: TemplateSort 
   }
 }
 
+function defaultSortForRoute(fallback: TemplateSort = 'popular'): TemplateSort {
+  if (fallback !== 'popular' || typeof window === 'undefined') return fallback;
+  const pathname = new URL(window.location.href).pathname.replace(/\/+$/, '');
+  return pathname === '/templates/all' ? 'newest' : fallback;
+}
+
 function resolveScopeOverride(scopeOverrideParam?: TemplateScope): TemplateScope | undefined {
   return scopeOverrideParam && scopeOverrideParam !== 'all' ? scopeOverrideParam : undefined;
 }
@@ -314,6 +320,7 @@ function parseRouteState(
   const url = new URL(window.location.href);
   const params = url.searchParams;
   const pathname = url.pathname.replace(/\/+$/, '');
+  const effectiveDefaultSort = defaultSortForRoute(defaultSort);
   const scopeParam = normalizeScope(params.get('scope'));
 
   let scope: TemplateScope = 'all';
@@ -386,7 +393,7 @@ function parseRouteState(
     tags,
     types,
     freeOnly: freeOnly || freeParam,
-    sort: normalizeSort(params.get('sort'), defaultSort),
+    sort: normalizeSort(params.get('sort'), effectiveDefaultSort),
   };
 }
 
@@ -496,14 +503,15 @@ function buildApiUrl(base: string, filters: FilterState, page: number, pageSize:
   return url.toString();
 }
 
-function updateUrlParams(filters: FilterState): void {
+function updateUrlParams(filters: FilterState, defaultSort: TemplateSort = 'popular'): void {
   if (typeof window === 'undefined') return;
   const url = new URL(window.location.href);
+  const effectiveDefaultSort = defaultSortForRoute(defaultSort);
   ['q', 'query', 'search', 'styles', 'tags', 'types', 'free_only', 'sort', 'page'].forEach((k) =>
     url.searchParams.delete(k),
   );
   if (filters.q) url.searchParams.set('q', filters.q);
-  if (filters.sort && filters.sort !== 'popular') url.searchParams.set('sort', filters.sort);
+  if (filters.sort && filters.sort !== effectiveDefaultSort) url.searchParams.set('sort', filters.sort);
   if (filters.freeOnly && filters.scope !== 'free') url.searchParams.set('free_only', 'true');
   filters.styles.forEach((v) => url.searchParams.append('styles', v));
   filters.tags.forEach((v) => url.searchParams.append('tags', v));
@@ -1075,7 +1083,7 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
     function applyFilters(patch: Partial<FilterState>) {
       setFilters((prev) => {
         const next = { ...prev, ...patch };
-        updateUrlParams(next);
+        updateUrlParams(next, initialSort);
         return next;
       });
     }
@@ -1309,9 +1317,9 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
       tags: [],
       types: [],
       freeOnly: filters.scope === 'free',
-      sort: initialSort,
+      sort: defaultSortForRoute(initialSort),
     };
-    updateUrlParams(next);
+    updateUrlParams(next, initialSort);
 
     if (typeof window !== 'undefined') {
       const detail = {
