@@ -1025,6 +1025,36 @@ describe('webflow-template-search worker', () => {
         creator_slug: 'brix-templates',
         creator_profile_url: 'https://webflow.com/templates/designers/brix-templates',
       });
+
+      await env.DB.prepare('UPDATE template_documents SET creator_slug = ?, creator_profile_url = ? WHERE id = ?')
+        .bind('brix-templates-archive', 'https://webflow.com/templates/designers/brix-templates-archive', 'recAgentflow')
+        .run();
+
+      const canonicalCreatorProfileSearch = await callWorker(
+        new Request('https://templates.test/api/templates/search?designer_slug=brix-templates&page_size=10'),
+        env,
+      );
+      const canonicalCreatorProfilePayload = (await canonicalCreatorProfileSearch.json()) as {
+        items: Array<{ name: string; creator_slug: string | null; creator_profile_url: string | null }>;
+        applied_filters: { creator_slug: string | null };
+      };
+      expect(canonicalCreatorProfilePayload.applied_filters.creator_slug).toBe('brix-templates');
+      expect(canonicalCreatorProfilePayload.items.map((item) => item.name)).toEqual(['Agentflow']);
+      expect(canonicalCreatorProfilePayload.items[0]).toMatchObject({
+        creator_slug: 'brix-templates-archive',
+        creator_profile_url: 'https://webflow.com/templates/designers/brix-templates-archive',
+      });
+
+      const archiveCreatorProfileSearch = await callWorker(
+        new Request('https://templates.test/api/templates/search?designer_slug=brix-templates-archive&page_size=10'),
+        env,
+      );
+      const archiveCreatorProfilePayload = (await archiveCreatorProfileSearch.json()) as {
+        items: Array<{ name: string }>;
+        applied_filters: { creator_slug: string | null };
+      };
+      expect(archiveCreatorProfilePayload.applied_filters.creator_slug).toBe('brix-templates-archive');
+      expect(archiveCreatorProfilePayload.items.map((item) => item.name)).toEqual(['Agentflow']);
     } finally {
       fetchMock.mockRestore();
       close();
