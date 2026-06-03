@@ -37,6 +37,7 @@ type DifySmokeCase = {
   required_tools?: string[];
   forbidden_tools?: string[];
   expected_answer_substrings?: string[];
+  expected_json_contract?: ExpectedJsonContract;
   forbidden_answer_substrings?: string[];
   allow_write_tools?: boolean;
   timeout_ms?: number;
@@ -93,12 +94,15 @@ type SmokeRunCase = {
   requiredTools: string[];
   forbiddenTools: string[];
   expectedAnswers: string[];
+  expectedJsonContract?: ExpectedJsonContract;
   forbiddenAnswers: string[];
   expectedObservations: string[];
   allowWriteTools: boolean;
   timeoutMs?: number;
   maxAttempts: number;
 };
+
+type ExpectedJsonContract = 'halfdozen_agent_builder_eval';
 
 type SmokeAttemptResult = {
   attempt: number;
@@ -122,6 +126,11 @@ type SmokeAttemptResult = {
   presentForbiddenAnswers: string[];
   expectedObservations: Array<{ text: string; present: boolean }>;
   missingExpectedObservations: string[];
+  jsonContract?: {
+    contract: ExpectedJsonContract;
+    ok: boolean;
+    errors: string[];
+  };
   usage?: unknown;
   error?: string;
   toolCalls?: DifyToolCall[];
@@ -433,6 +442,7 @@ function buildSmokeCases(
         requiredTools: options.expectedTools,
         forbiddenTools: uniqueTools([...inferredForbiddenTools, ...options.forbiddenTools]),
         expectedAnswers: options.expectedAnswers,
+        expectedJsonContract: undefined,
         forbiddenAnswers: options.forbiddenAnswers,
         expectedObservations: options.expectedObservations,
         allowWriteTools: options.allowWriteTools,
@@ -484,6 +494,7 @@ function buildSmokeCases(
         ? uniqueTools(smokeCase.forbidden_tools ?? [])
         : uniqueTools([...inferredForbiddenTools, ...(smokeCase.forbidden_tools ?? [])]),
       expectedAnswers: smokeCase.expected_answer_substrings ?? [],
+      expectedJsonContract: smokeCase.expected_json_contract,
       forbiddenAnswers: smokeCase.forbidden_answer_substrings ?? [],
       expectedObservations: [],
       allowWriteTools,
@@ -557,6 +568,9 @@ function buildAttemptResult(
   const missingExpectedObservations = expectedObservations
     .filter((result) => !result.present)
     .map((result) => result.text);
+  const jsonContract = smokeCase.expectedJsonContract
+    ? validateJsonContract(output.answer, smokeCase.expectedJsonContract)
+    : undefined;
   const ok =
     !output.skipped &&
     output.ok &&
@@ -564,7 +578,8 @@ function buildAttemptResult(
     forbiddenToolsUsed.length === 0 &&
     missingExpectedAnswers.length === 0 &&
     presentForbiddenAnswers.length === 0 &&
-    missingExpectedObservations.length === 0;
+    missingExpectedObservations.length === 0 &&
+    (jsonContract?.ok ?? true);
 
   return {
     attempt,
@@ -588,10 +603,111 @@ function buildAttemptResult(
     presentForbiddenAnswers,
     expectedObservations,
     missingExpectedObservations,
+    jsonContract,
     usage: output.usage,
     error: output.error,
     ...(includeToolObservations ? { toolCalls: output.toolCalls } : {})
   };
+}
+
+function validateJsonContract(
+  answer: string,
+  contract: ExpectedJsonContract
+): SmokeAttemptResult['jsonContract'] {
+  const object = extractJsonObject(answer);
+  if (!object) {
+    return {
+      contract,
+      ok: false,
+      errors: ['Answer did not contain a parseable JSON object.']
+    };
+  }
+
+  switch (contract) {
+    case 'halfdozen_agent_builder_eval':
+      return validateHalfdozenAgentBuilderEvalContract(object);
+    default:
+      return {
+        contract,
+        ok: false,
+        errors: [`Unsupported JSON contract: ${contract}`]
+      };
+  }
+}
+
+function validateHalfdozenAgentBuilderEvalContract(
+  object: Record<string, unknown>
+): SmokeAttemptResult['jsonContract'] {
+  const errors: string[] = [];
+
+  if (object.status !== 'pass' && object.status !== 'fail') {
+    errors.push('status must be "pass" or "fail".');
+  }
+  if (!nonEmptyString(object.review_summary)) {
+    errors.push('review_summary must be a non-empty string.');
+  }
+  if (!Array.isArray(object.recommended_upgrades)) {
+    errors.push('recommended_upgrades must be an array.');
+  } else if (!object.recommended_upgrades.every((item) => typeof item === 'string')) {
+    errors.push('recommended_upgrades must contain only strings.');
+  }
+  if (!nonEmptyString(object.final_instructions)) {
+    errors.push('final_instructions must be a non-empty string.');
+  }
+  if (!nonEmptyString(object.archived_instructions)) {
+    errors.push('archived_instructions must be a non-empty string.');
+  }
+  if (!isRecord(object.checks)) {
+    errors.push('checks must be an object.');
+  } else {
+    for (const field of ['scenarios', 'checks_total', 'checks_passed', 'checks_failed']) {
+      if (!nonNegativeNumber(object.checks[field])) {
+        errors.push(`checks.${field} must be a non-negative number.`);
+      }
+    }
+  }
+  if (!Array.isArray(object.caveats)) {
+    errors.push('caveats must be an array.');
+  } else if (!object.caveats.every((item) => typeof item === 'string')) {
+    errors.push('caveats must contain only strings.');
+  }
+
+  return {
+    contract: 'halfdozen_agent_builder_eval',
+    ok: errors.length === 0,
+    errors
+  };
+}
+
+function extractJsonObject(answer: string): Record<string, unknown> | undefined {
+  const withoutFence = answer.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '');
+  const candidates = [withoutFence];
+  const start = withoutFence.indexOf('{');
+  const end = withoutFence.lastIndexOf('}');
+  if (start >= 0 && end > start) candidates.push(withoutFence.slice(start, end + 1));
+
+  for (const candidate of candidates) {
+    try {
+      const parsed = JSON.parse(candidate) as unknown;
+      if (isRecord(parsed)) return parsed;
+    } catch {
+      continue;
+    }
+  }
+
+  return undefined;
+}
+
+function nonEmptyString(value: unknown): boolean {
+  return typeof value === 'string' && value.trim().length > 0;
+}
+
+function nonNegativeNumber(value: unknown): boolean {
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 async function runSmokeCase(

@@ -32,6 +32,7 @@ Status: partial
 | `natalia_hub` | - | `https://wf-template-review-natalia.mcp.createsomething.agency/mcp` | `bearer` | 17 | `hub_execute_proxy_tool`, `hub_refresh_connections`, `hub_run_intent`, `hub_run_proxy_tool`, `hub_set_discovery`, `hub_update_state` |
 | `mariana_hub` | - | `https://wf-template-review-mariana.mcp.createsomething.agency/mcp` | `bearer` | 17 | `hub_execute_proxy_tool`, `hub_refresh_connections`, `hub_run_intent`, `hub_run_proxy_tool`, `hub_set_discovery`, `hub_update_state` |
 | `vicki_hub` | - | `https://wf-template-review-vicki.mcp.createsomething.agency/mcp` | `bearer` | 17 | `hub_execute_proxy_tool`, `hub_refresh_connections`, `hub_run_intent`, `hub_run_proxy_tool`, `hub_set_discovery`, `hub_update_state` |
+| `createsomething-notion` | - | `https://createsomething-notion.mcp.createsomething.agency/mcp` | `bearer` | 6 | - |
 
 ## Agents
 
@@ -51,6 +52,7 @@ Status: partial
 | `natalia-hub` | `imported` | `client` | - | `natalia_hub` | 17 | 4 | `braintrust:eval:dify:natalia-hub` |
 | `mariana-hub` | `imported` | `client` | - | `mariana_hub` | 17 | 4 | `braintrust:eval:dify:mariana-hub` |
 | `vicki-hub` | `imported` | `client` | - | `vicki_hub` | 17 | 4 | `braintrust:eval:dify:vicki-hub` |
+| `halfdozen-agent-builder-eval` | `draft` | `internal` | - |  | 0 | 5 | `braintrust:eval:dify:halfdozen-agent-builder-eval` |
 
 ## Eval Coverage
 
@@ -70,6 +72,7 @@ Status: partial
 | `natalia-hub` | `braintrust` | `create-something-dify-agents` | `natalia_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
 | `mariana-hub` | `braintrust` | `create-something-dify-agents` | `mariana_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
 | `vicki-hub` | `braintrust` | `create-something-dify-agents` | `vicki_hub` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `secret_refusal`, `latency_budget`, `policy_boundary`, `write_confirmation` | - |
+| `halfdozen-agent-builder-eval` | `braintrust` | `create-something-dify-agents` | `halfdozen_agent_builder_eval` | `api_health`, `expected_tool_use`, `forbidden_tool_use`, `grounded_answer`, `write_confirmation`, `secret_refusal`, `latency_budget`, `policy_boundary` | - |
 
 ## Smoke Cases
 
@@ -101,6 +104,9 @@ Status: partial
 | `mariana-hub` | `e2b-run-code-sanity` | `run_code` | `E2B_SANDBOX_OK_20260517` | `Unauthorized MCP session token`, `token_not_found`, `Traceback`, `Exception`, `Error`, `failed` | yes |
 | `vicki-hub` | `hub-list-services-bearer` | `hub_list_services` | - | `Unauthorized MCP session token`, `token_not_found`, `not authenticated`, `authenticated`, `complete Hub auth`, `can't list services`, `can’t list services` | no |
 | `vicki-hub` | `e2b-run-code-sanity` | `run_code` | `E2B_SANDBOX_OK_20260517` | `Unauthorized MCP session token`, `token_not_found`, `Traceback`, `Exception`, `Error`, `failed` | yes |
+| `halfdozen-agent-builder-eval` | `json-contract-no-write` | - | `"status"`, `"review_summary"`, `"final_instructions"` | - | no |
+| `halfdozen-agent-builder-eval` | `notion-read-page-context` | `retrieve_page` | - | - | no |
+| `halfdozen-agent-builder-eval` | `e2b-json-parse-sanity` | `run_code` | `pass` | - | yes |
 
 ## Agent Tool Mapping
 
@@ -454,3 +460,22 @@ Status: partial
   - `run_command` (external_side_effect, confirmation required)
   - `upload_file` (external_side_effect, confirmation required)
   - `download_file` (external_side_effect, confirmation required)
+
+### Half Dozen Agent Builder Eval
+
+- Inventory ID: `halfdozen-agent-builder-eval`
+- Policy pack: `internal-halfdozen-agent-builder-eval.v1`
+- Instructions source: `config/dify-agents/halfdozen-agent-builder-eval.json#agent_prompt`
+- Smoke: `pnpm dify:agent:smoke -- --agent-id halfdozen-agent-builder-eval`
+- Tools:
+- Builtin tools:
+  - `search_notion` (read)
+  - `query_database` (read)
+  - `retrieve_page` (read)
+  - `retrieve_database` (read)
+  - `create_page` (write, confirmation required, disabled)
+  - `update_page` (write, confirmation required, disabled)
+  - `create_database` (write, confirmation required, disabled)
+  - `update_database` (write, confirmation required, disabled)
+  - `create_comment` (write, confirmation required, disabled)
+  - `run_code` (external_side_effect, confirmation required)

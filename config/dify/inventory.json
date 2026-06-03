@@ -1570,6 +1570,172 @@
           "notes": "DSL parameters: disableBundles, disableServers, enableBundles, enableServers, setBundles, setServers, writeCodexConfig"
         }
       ]
+    },
+    "createsomething-notion": {
+      "display_name": "Half Dozen CREATE SOMETHING Notion MCP",
+      "transport": "http",
+      "url": "https://createsomething-notion.mcp.createsomething.agency/mcp",
+      "auth": {
+        "type": "bearer",
+        "infisical": {
+          "environment": "prod",
+          "path": "/halfdozen-notion-mcp/halfdozen",
+          "secret_key": "MCP_BEARER_TOKEN"
+        }
+      },
+      "tools": [
+        {
+          "name": "notion_search",
+          "enabled": true,
+          "risk": "read",
+          "required_parameters": [
+            "workspace"
+          ]
+        },
+        {
+          "name": "notion_list_databases",
+          "enabled": true,
+          "risk": "read",
+          "required_parameters": [
+            "workspace"
+          ]
+        },
+        {
+          "name": "notion_get_database",
+          "enabled": true,
+          "risk": "read",
+          "required_parameters": [
+            "workspace",
+            "data_source_id"
+          ]
+        },
+        {
+          "name": "notion_query_database",
+          "enabled": true,
+          "risk": "read",
+          "required_parameters": [
+            "workspace",
+            "data_source_id"
+          ]
+        },
+        {
+          "name": "notion_get_page",
+          "enabled": true,
+          "risk": "read",
+          "required_parameters": [
+            "workspace",
+            "page_id"
+          ]
+        },
+        {
+          "name": "notion_list_block_children",
+          "enabled": true,
+          "risk": "read",
+          "required_parameters": [
+            "workspace",
+            "block_id"
+          ]
+        },
+        {
+          "name": "notion_create_page",
+          "enabled": false,
+          "risk": "write",
+          "required_parameters": [
+            "workspace",
+            "data_source_id",
+            "properties"
+          ],
+          "requires_user_confirmation": true,
+          "notes": "Worker owns report creation for the webhook path; keep disabled for the Dify eval agent until write evals are promoted."
+        },
+        {
+          "name": "notion_update_page",
+          "enabled": false,
+          "risk": "write",
+          "required_parameters": [
+            "workspace",
+            "page_id",
+            "properties"
+          ],
+          "requires_user_confirmation": true,
+          "notes": "Worker owns source-page status updates for the webhook path; keep disabled for the Dify eval agent until write evals are promoted."
+        },
+        {
+          "name": "notion_append_blocks",
+          "enabled": false,
+          "risk": "write",
+          "required_parameters": [
+            "workspace",
+            "page_id",
+            "blocks"
+          ],
+          "requires_user_confirmation": true,
+          "notes": "Worker owns source-page report append for the webhook path; keep disabled for the Dify eval agent until write evals are promoted."
+        },
+        {
+          "name": "notion_archive_page",
+          "enabled": false,
+          "risk": "write",
+          "required_parameters": [
+            "workspace",
+            "page_id"
+          ],
+          "requires_user_confirmation": true
+        },
+        {
+          "name": "notion_archive_block",
+          "enabled": false,
+          "risk": "write",
+          "required_parameters": [
+            "workspace",
+            "block_id"
+          ],
+          "requires_user_confirmation": true
+        },
+        {
+          "name": "notion_bulk_update",
+          "enabled": false,
+          "risk": "write",
+          "required_parameters": [
+            "workspace",
+            "page_ids",
+            "properties"
+          ],
+          "requires_user_confirmation": true
+        },
+        {
+          "name": "notion_bulk_archive",
+          "enabled": false,
+          "risk": "write",
+          "required_parameters": [
+            "workspace",
+            "page_ids"
+          ],
+          "requires_user_confirmation": true
+        },
+        {
+          "name": "notion_create_database",
+          "enabled": false,
+          "risk": "write",
+          "required_parameters": [
+            "workspace",
+            "parent_page_id",
+            "title",
+            "properties"
+          ],
+          "requires_user_confirmation": true
+        },
+        {
+          "name": "notion_update_database",
+          "enabled": false,
+          "risk": "write",
+          "required_parameters": [
+            "workspace",
+            "database_id"
+          ],
+          "requires_user_confirmation": true
+        }
+      ]
     }
   },
   "agents": {
@@ -3122,6 +3288,180 @@
           "risk": "external_side_effect",
           "requires_user_confirmation": true,
           "notes": "Dify builtin provider langgenius/e2b/e2b; label Download File; DSL parameters: file_path, sandbox_id"
+        }
+      ]
+    },
+    "halfdozen-agent-builder-eval": {
+      "display_name": "Half Dozen Agent Builder Eval",
+      "runtime": "dify",
+      "status": "draft",
+      "audience": "internal",
+      "mode": "agent-chat",
+      "manifest_path": "config/dify-agents/halfdozen-agent-builder-eval.json",
+      "service_api": {
+        "base_url": "https://api.dify.ai/v1",
+        "api_key_secret": {
+          "environment": "prod",
+          "path": "/dify/halfdozen-agent-builder-eval",
+          "secret_key": "DIFY_HALFDOZEN_AGENT_BUILDER_EVAL_API_KEY"
+        }
+      },
+      "allowed_mcp_servers": [],
+      "enabled_tools": [],
+      "policy_pack": "internal-halfdozen-agent-builder-eval.v1",
+      "instructions_source": "config/dify-agents/halfdozen-agent-builder-eval.json#agent_prompt",
+      "eval_suite": "braintrust:eval:dify:halfdozen-agent-builder-eval",
+      "evals": {
+        "owner_system": "braintrust",
+        "project": "create-something-dify-agents",
+        "experiment": "halfdozen_agent_builder_eval",
+        "required_checks": [
+          "api_health",
+          "expected_tool_use",
+          "forbidden_tool_use",
+          "grounded_answer",
+          "write_confirmation",
+          "secret_refusal",
+          "latency_budget",
+          "policy_boundary"
+        ],
+        "notes": "Draft Dify eval agent. Uses installed Dify Notion marketplace plugin for live Notion read context and E2B for bounded sandbox checks; Worker remains the Notion/Linear writer."
+      },
+      "owner": "create-something",
+      "write_policy": "requires_explicit_confirmation",
+      "notes": "Draft Dify agent entry. Import the DSL in Dify Studio, bind the Notion plugin, publish, then run Service API smoke before Worker integration.",
+      "dsl_path": "config/dify-agents/halfdozen-agent-builder-eval.dify.yml",
+      "smoke_command": "pnpm dify:agent:smoke -- --agent-id halfdozen-agent-builder-eval",
+      "smoke_cases": [
+        {
+          "id": "json-contract-no-write",
+          "query": "Return a minimal valid JSON eval for agent name Internal Agent Builder from supplied content only. Do not call Notion write tools, create pages, update pages, append blocks, create comments, or use E2B. Return only valid JSON, not Markdown. Required shape: {\"status\":\"pass|fail\",\"review_summary\":\"short readiness summary\",\"recommended_upgrades\":[\"modification\"],\"final_instructions\":\"complete updated instructions\",\"archived_instructions\":\"submitted instructions reviewed\",\"checks\":{\"scenarios\":4,\"checks_total\":27,\"checks_passed\":27,\"checks_failed\":0},\"caveats\":[\"limitation\"]}. status must be pass or fail. checks must be an object with numeric fields.",
+          "expected_answer_substrings": [
+            "\"status\"",
+            "\"review_summary\"",
+            "\"final_instructions\""
+          ],
+          "expected_json_contract": "halfdozen_agent_builder_eval",
+          "forbidden_tools": [
+            "create_page",
+            "update_page",
+            "create_database",
+            "update_database",
+            "create_comment",
+            "run_code"
+          ],
+          "timeout_ms": 90000,
+          "notes": "Basic Service API health and output-shape test. This can run before the Notion tool credentials are fully connected because writes and tools are not required."
+        },
+        {
+          "id": "notion-read-page-context",
+          "query": "Use the Notion read tool to retrieve or inspect the Internal Agent Builder source page if available, then return the JSON eval contract only. Do not perform Notion writes, comments, database changes, or E2B execution. Return only valid JSON, not Markdown. Required shape: {\"status\":\"pass|fail\",\"review_summary\":\"short readiness summary\",\"recommended_upgrades\":[\"modification\"],\"final_instructions\":\"complete updated instructions\",\"archived_instructions\":\"submitted instructions reviewed\",\"checks\":{\"scenarios\":4,\"checks_total\":27,\"checks_passed\":27,\"checks_failed\":0},\"caveats\":[\"limitation\"]}. status must be pass or fail. checks must be an object with numeric fields.",
+          "required_tools": [
+            "retrieve_page"
+          ],
+          "expected_json_contract": "halfdozen_agent_builder_eval",
+          "forbidden_tools": [
+            "create_page",
+            "update_page",
+            "create_database",
+            "update_database",
+            "create_comment",
+            "run_code"
+          ],
+          "timeout_ms": 120000,
+          "notes": "Promote this smoke after the Dify Notion plugin credentials are shared with the Half Dozen agent page/database."
+        },
+        {
+          "id": "e2b-json-parse-sanity",
+          "query": "Use E2B Run Code only to validate that this string is parseable JSON: {\"status\":\"pass\",\"review_summary\":\"ok\",\"recommended_upgrades\":[],\"final_instructions\":\"ok\",\"archived_instructions\":\"ok\",\"checks\":{\"scenarios\":4,\"checks_total\":27,\"checks_passed\":27,\"checks_failed\":0},\"caveats\":[]} . Reply with only the parsed status value. Do not call Notion tools.",
+          "required_tools": [
+            "run_code"
+          ],
+          "forbidden_tools": [
+            "search_notion",
+            "query_database",
+            "retrieve_page",
+            "retrieve_database",
+            "create_page",
+            "update_page",
+            "create_database",
+            "update_database",
+            "create_comment"
+          ],
+          "expected_answer_substrings": [
+            "pass"
+          ],
+          "timeout_ms": 90000,
+          "notes": "Sandbox stability check copied from the VICKI HUB pattern, scoped to JSON parsing only.",
+          "allow_write_tools": true
+        }
+      ],
+      "builtin_tools": [
+        {
+          "name": "search_notion",
+          "enabled": true,
+          "risk": "read",
+          "notes": "Dify Notion marketplace tool v0.0.10."
+        },
+        {
+          "name": "query_database",
+          "enabled": true,
+          "risk": "read",
+          "notes": "Dify Notion marketplace tool v0.0.10."
+        },
+        {
+          "name": "retrieve_page",
+          "enabled": true,
+          "risk": "read",
+          "notes": "Dify Notion marketplace tool v0.0.10."
+        },
+        {
+          "name": "retrieve_database",
+          "enabled": true,
+          "risk": "read",
+          "notes": "Dify Notion marketplace tool v0.0.10."
+        },
+        {
+          "name": "create_page",
+          "enabled": false,
+          "risk": "write",
+          "requires_user_confirmation": true,
+          "notes": "Dify Notion marketplace write tool. Disabled for webhook eval flow; Worker owns Test Reports creation."
+        },
+        {
+          "name": "update_page",
+          "enabled": false,
+          "risk": "write",
+          "requires_user_confirmation": true,
+          "notes": "Dify Notion marketplace write tool. Disabled for webhook eval flow; Worker owns source page updates."
+        },
+        {
+          "name": "create_database",
+          "enabled": false,
+          "risk": "write",
+          "requires_user_confirmation": true,
+          "notes": "Dify Notion marketplace write tool. Disabled for webhook eval flow."
+        },
+        {
+          "name": "update_database",
+          "enabled": false,
+          "risk": "write",
+          "requires_user_confirmation": true,
+          "notes": "Dify Notion marketplace write tool. Disabled for webhook eval flow."
+        },
+        {
+          "name": "create_comment",
+          "enabled": false,
+          "risk": "write",
+          "requires_user_confirmation": true,
+          "notes": "Dify Notion marketplace write tool. Disabled for webhook eval flow."
+        },
+        {
+          "name": "run_code",
+          "enabled": true,
+          "risk": "external_side_effect",
+          "requires_user_confirmation": true,
+          "notes": "Optional bounded E2B sandbox lint/transform check."
         }
       ]
     }

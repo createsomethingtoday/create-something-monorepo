@@ -1,0 +1,49 @@
+name = "halfdozen-agent-review-webhook"
+main = "src/index.ts"
+account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
+compatibility_date = "2024-12-01"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+LINEAR_TEAM_KEY = "CRE"
+LINEAR_LABELS = "linear-coordination,code-quality"
+ASSIGN_TO_TOKEN_OWNER = "true"
+DIFY_HALFDOZEN_AGENT_BUILDER_EVAL_BASE_URL = "https://api.dify.ai/v1"
+DIFY_HALFDOZEN_AGENT_BUILDER_EVAL_TIMEOUT_MS = "25000"
+DIFY_SUBMITTED_INSTRUCTIONS_MAX_LENGTH = "5000"
+
+[[queues.producers]]
+binding = "AGENT_REVIEW_QUEUE"
+queue = "halfdozen-agent-review-webhook-jobs"
+
+[[queues.consumers]]
+queue = "halfdozen-agent-review-webhook-jobs"
+max_batch_size = 1
+max_batch_timeout = 5
+max_retries = 2
+retry_delay = 60
+
+# Secrets:
+# - WEBHOOK_SECRET
+# - LINEAR_API_KEY
+# - NOTION_API_KEY
+# Optional:
+# - SLACK_WEBHOOK_URL
+# - LINEAR_API_URL
+# - LINEAR_PROJECT
+# - PAGE_URL_BY_AGENT_NAME_JSON
+# - TEST_REPORTS_DATABASE_ID
+# - TASKS_DATABASE_ID
+# - WEBHOOK_REPLAY_SECRET
+# - DIFY_HALFDOZEN_AGENT_BUILDER_EVAL_API_KEY
+# Optional var:
+# - CREATE_WORKFLOW_ISSUES = "false"
+# - AUTO_COMPLETE_WORKFLOW = "false"
+# - UPDATE_SOURCE_AGENT_PAGE = "false"
+# - TEST_REPORTS_DATABASE_NAME = "Test Reports [OS]"
+# - TASKS_DATABASE_NAME = "Tasks [HD]"
+# - PUBLISH_TASK_HANDOFF = "false"
+# - DIFY_HALFDOZEN_AGENT_BUILDER_EVAL_BASE_URL = "https://api.dify.ai/v1"
+# - DIFY_HALFDOZEN_AGENT_BUILDER_EVAL_TIMEOUT_MS = "25000"
+# - DIFY_SUBMITTED_INSTRUCTIONS_MAX_LENGTH = "5000"
+# - DIFY_HALFDOZEN_AGENT_BUILDER_EVAL_REQUIRED = "true"

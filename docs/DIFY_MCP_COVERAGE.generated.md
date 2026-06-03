@@ -11,8 +11,8 @@ Brokered, local, dormant, and non-HTTP servers are summarized but excluded from 
 - MCP registry servers: 1034
 - Dify-direct candidates: 39
 - Dify inventory status: `partial`
-- Dify MCP server cards in inventory: 16
-- Dify agents in inventory: 14
+- Dify MCP server cards in inventory: 17
+- Dify agents in inventory: 15
 - Dify MCP intake artifacts: 22
 
 ## Candidate Status
