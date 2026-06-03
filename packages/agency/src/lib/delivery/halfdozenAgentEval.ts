@@ -10,17 +10,17 @@ export type EvalWorkflowStep = {
 export const halfdozenAgentEvalSummary = {
 	client: 'Half Dozen',
 	owner: 'CREATE SOMETHING',
-	phase: 'Automated eval workflow / delivery review',
+	phase: 'Automated eval workflow / Testing handoff',
 	headline: 'Half Dozen agent eval workflow.',
 	description:
-		'Half Dozen now has a Notion-triggered external instruction-readiness eval path for agent drafts: Updating creates a versioned Test Reports item, appends final instructions and review evidence to the source page, moves passing drafts to Testing, and preserves the human runtime gate before validation.'
+		'Half Dozen now has a Notion-triggered instruction-readiness eval path for agent drafts: Updating creates a versioned Test Reports item, appends final instructions and review evidence to the source page, moves passing drafts to Testing, and preserves the human runtime gate before validation.'
 };
 
 export const halfdozenAgentEvalArtifacts: DeliveryArtifact[] = [
 	{
 		label: 'Agent review webhook',
 		href: 'https://halfdozen-agent-review-webhook.createsomething.workers.dev/webhook',
-		meta: 'Cloudflare Worker health surface',
+		meta: 'Cloudflare Worker protected webhook surface',
 		visibility: 'client-safe'
 	},
 	{
@@ -35,13 +35,13 @@ export const halfdozenAgentEvalArtifacts: DeliveryArtifact[] = [
 		visibility: 'private-reference'
 	},
 	{
-		label: 'Test Reports [OS]',
-		meta: 'Versioned Notion eval records',
+		label: 'Latest verified Test Report',
+		meta: 'Internal Agent Builder / request 432f68e8 / 2026-06-03 05:21 UTC',
 		visibility: 'private-reference'
 	},
 	{
 		label: 'Linear evidence lane',
-		meta: 'Intake, build, and eval completion comments',
+		meta: 'CRE-469, CRE-501, and CRE-502 completed with compact evidence',
 		visibility: 'private-reference'
 	}
 ];
@@ -63,10 +63,10 @@ export const halfdozenAgentEvalWorkflow: EvalWorkflowStep[] = [
 	},
 	{
 		label: 'Judgment',
-		title: 'Dify reviews instructions',
-		status: 'Bounded',
+		title: 'External eval is bounded',
+		status: 'Fallback-safe',
 		body:
-			'Dify reads the submitted instructions and returns structured JSON: result, review summary, recommended upgrades, final instructions, patch intent, checks, and caveats. It does not write to Notion or Linear.'
+			'Dify can review the submitted instructions and return structured JSON, but the Worker does not depend on an unbounded model call. If Dify times out or fails, the deterministic Worker rubric still produces the versioned handoff and records the caveat.'
 	},
 	{
 		label: 'Writeback',
@@ -88,23 +88,23 @@ export const halfdozenAgentEvalOperatingLayers: DeliveryLayer[] = [
 	{
 		tier: 'Database',
 		title: 'Notion source and reports',
-		status: 'Versioned',
+		status: 'Verified',
 		body:
-			'AI Agents [HD] stays the source page for draft instructions, while Test Reports [OS] stores each eval as a new historical record. Linked Notion pages and databases are preserved as references instead of copied into long prompt blobs.'
+			'AI Agents [HD] stays the source page for draft instructions, while Test Reports [OS] stores each eval as a new historical record. The latest run created a new report, appended final instructions, archived the submitted instructions, and moved the source page to Testing.'
 	},
 	{
 		tier: 'Automation',
 		title: 'Worker + Queue writeback',
-		status: 'Production deployed',
+		status: 'Production verified',
 		body:
-			'The Cloudflare Worker accepts the Notion webhook, enqueues the long-running job, reuses or creates Linear follow-up issues, publishes Notion report evidence, and owns all status/page mutations.'
+			'The Cloudflare Worker accepts the Notion webhook, enqueues the long-running job, reuses or creates Linear follow-up issues, publishes Notion report evidence, owns source-page mutations, and records compact completion evidence.'
 	},
 	{
 		tier: 'Judgment',
 		title: 'External instruction eval',
-		status: 'Ready for testing',
+		status: 'Ready for human testing',
 		body:
-			'The Dify app is a separate reviewer for instruction quality. Its output is advisory until the Worker rubric and the live human Testing checklist both pass.'
+			'The external reviewer is useful as an independent instruction-quality check, but it is not the promotion authority. The Worker rubric and the live human Testing checklist are the gates before Validated or Active.'
 	}
 ];
 
@@ -112,14 +112,14 @@ export const halfdozenAgentEvalPrivateArtifacts = [
 	'Webhook secrets, Notion integration tokens, Dify Service API keys, and Linear tokens stay in Cloudflare secrets or Infisical. They are not published in this delivery page.',
 	'Private Notion source pages, Test Reports records, and Linear comments are operational evidence, not public artifacts.',
 	'The Dify import file is repo-owned so the app instructions can be rebuilt or re-imported without copying sensitive runtime keys.',
-	'The Worker fallback runner is intentionally deterministic so the Notion handoff can complete even if Dify fails or times out.',
+	'The verified 2026-06-03 run used the deterministic fallback because Dify did not return before the configured timeout. The handoff still completed and recorded the caveat.',
 	'The eval is an instruction-readiness review. It does not prove that the live Notion agent runtime behaves correctly.'
 ];
 
 export const halfdozenAgentEvalNextReview = [
-	'Run one fresh post-deploy Updating transition and confirm the Linear receipt appears after the compact Dify contract deployment.',
-	'Confirm whether the full original instructions now complete through Dify, or whether Dify still needs a smaller input contract for long pages.',
-	'Inspect the new Test Reports item for final instructions, full review JSON, raw Dify response when available, and clear Live Testing Handoff paste boundaries.',
-	'Have the Half Dozen team run the live Notion prompts before moving any agent from Testing to Validated or Active.',
-	'After the final replay is clean, update this page from readiness review to completed delivery evidence.'
+	'Completed: a fresh post-deploy Updating transition fired webhook request 432f68e8-71a2-4013-b57a-50dc36904cd0 and generated a new Test Reports [OS] item.',
+	'Completed: the source Internal Agent Builder page was updated with the versioned handoff and moved to Testing.',
+	'Completed: Linear intake, build, and eval issues were completed with compact evidence comments.',
+	'Remaining gate: run the Live Testing Handoff prompts in the actual Notion agent. Paste only the text after each "Prompt to paste" label, then record pass/fail and actual response on the Test Report.',
+	'Improvement candidate: shorten or pre-bake the Dify eval contract if the team wants the external Dify response to be present on every run instead of relying on the deterministic fallback.'
 ];

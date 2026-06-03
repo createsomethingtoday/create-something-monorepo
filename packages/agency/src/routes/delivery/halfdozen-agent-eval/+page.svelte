@@ -33,7 +33,7 @@
       <p><strong>Client</strong><span>{halfdozenAgentEvalSummary.client}</span></p>
       <p><strong>Owner</strong><span>{halfdozenAgentEvalSummary.owner}</span></p>
       <p><strong>Phase</strong><span>{halfdozenAgentEvalSummary.phase}</span></p>
-      <p><strong>Runtime</strong><span>Worker + Queue + Dify</span></p>
+      <p><strong>Runtime</strong><span>Worker + Queue + Dify optional</span></p>
       <p><strong>Gate</strong><span>Testing before Validated</span></p>
     </aside>
   </div>
@@ -125,8 +125,8 @@
     </div>
 
     <div class="product-surface product-surface--soft evidence-panel evidence-panel--accent">
-      <span class="product-kicker">Next Review</span>
-      <h2>What needs final evidence.</h2>
+      <span class="product-kicker">Verified Run</span>
+      <h2>What is complete, and what still needs testing.</h2>
       <div class="evidence-list">
         {#each halfdozenAgentEvalNextReview as item}
           <p>{item}</p>
