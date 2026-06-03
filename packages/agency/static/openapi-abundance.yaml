@@ -231,6 +231,42 @@ paths:
         '200':
           description: Talent updated
 
+  /staff/onboarding:
+    post:
+      operationId: onboardStaffProfile
+      summary: Onboard a nurse/staff profile
+      description: |
+        Dedicated nurse/staff onboarding write path. This route validates
+        explicit background-check and compliance-screening consent, upserts
+        the matchable staff profile into Talent, stores the complete submitted
+        packet in Intakes, and deactivates any placeholder Seeker for the same
+        phone/email.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StaffOnboardingInput'
+      responses:
+        '201':
+          description: Staff profile created and onboarding intake stored
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StaffOnboardingResponse'
+        '200':
+          description: Existing staff profile updated and onboarding intake stored
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StaffOnboardingResponse'
+        '400':
+          description: Validation or missing consent error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
   /match:
     post:
       operationId: findMatches
@@ -531,6 +567,128 @@ components:
         status:
           type: string
           enum: [active, inactive, onboarding]
+
+    StaffOnboardingConsent:
+      type: object
+      required:
+        - background_check
+        - compliance_screening
+      properties:
+        background_check:
+          type: boolean
+          description: Candidate explicitly consents to background-check workflow.
+        compliance_screening:
+          type: boolean
+          description: Candidate explicitly consents to compliance screening.
+        submitted_at:
+          type: string
+          format: date-time
+        source:
+          type: string
+
+    StaffOnboardingInput:
+      type: object
+      required:
+        - phone
+        - name
+        - consent
+      properties:
+        phone:
+          type: string
+          description: Candidate phone number used as the primary profile key.
+          example: "+15550000001"
+        name:
+          type: string
+          example: "Avery Stone"
+        email:
+          type: string
+          format: email
+        specialties:
+          type: array
+          items:
+            type: string
+          description: Nurse specialties used to seed matchable Talent skills.
+          example: ["ICU", "Telemetry"]
+        skills:
+          type: array
+          items:
+            type: string
+          description: Additional matchable staff skills.
+          example: ["Triage", "IV"]
+        license_type:
+          type: string
+          example: "RN"
+        license_state:
+          type: string
+          example: "TX"
+        shift_preference:
+          type: string
+          example: "Nights"
+        contract_preference:
+          type: string
+          example: "13-week travel"
+        desired_location:
+          type: string
+          example: "Austin"
+        start_date:
+          type: string
+          format: date
+        hourly_rate_min:
+          type: integer
+        hourly_rate_max:
+          type: integer
+        availability:
+          type: string
+          enum: [available, busy, unavailable]
+          default: available
+        timezone:
+          type: string
+          example: "America/Chicago"
+        profile_url:
+          type: string
+          format: uri
+        resume_url:
+          type: string
+          format: uri
+        source:
+          type: string
+          example: "concierge"
+        notes:
+          type: string
+        metadata:
+          type: object
+          additionalProperties: true
+        consent:
+          $ref: '#/components/schemas/StaffOnboardingConsent'
+
+    StaffOnboardingResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            action:
+              type: string
+              enum: [created, updated]
+            talent:
+              $ref: '#/components/schemas/Talent'
+            intake:
+              type: object
+              properties:
+                id:
+                  type: string
+                user_id:
+                  type: string
+                user_type:
+                  type: string
+                  enum: [talent]
+                intake_type:
+                  type: string
+                  enum: [onboarding]
+            seeker_deactivated:
+              type: boolean
 
     MatchRequest:
       type: object

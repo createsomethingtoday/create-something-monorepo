@@ -74,9 +74,10 @@
         "jobs",
         "healthcare"
       ],
+      "package_path": "packages/abundance-jobs-mcp",
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 4,
-      "setupNotes": "Production smoke passed on 2026-05-13 via list_public_jobs using the shared Abundance MCP bearer from prod:/mcp-hub/hubs."
+      "setupNotes": "Source-controlled Worker reads from the normalized abundance_public_jobs table and refreshes RapidAPI Active Jobs through an authenticated admin endpoint. Uses the shared Abundance MCP bearer from prod:/mcp-hub/hubs."
     },
     "abundance-thenpgroup-hub": {
       "transport": "http",

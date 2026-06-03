@@ -1,7 +1,11 @@
 <script lang="ts">
-	import type { PageData } from './$types';
+	import type { ActionData, PageData } from './$types';
 
 	export let data: PageData;
+	export let form: ActionData;
+
+	$: canSubmitStaffOnboarding =
+		data.staffOnboarding.ready && data.staffOnboarding.runtimeConfigured;
 </script>
 
 <section class="glass panel">
@@ -29,6 +33,48 @@
 			<div class="muted">Confirmed fields</div>
 		</div>
 	</div>
+</section>
+
+<section class="glass panel section-gap">
+	<div class="section-header">
+		<div>
+			<div class="eyebrow">Staff DB Writeback</div>
+			<h2 class="section-title">Nurse staff profile submission</h2>
+		</div>
+		<span class={`status-pill ${canSubmitStaffOnboarding ? 'good' : 'warn'}`}>
+			{canSubmitStaffOnboarding ? 'ready' : 'blocked'}
+		</span>
+	</div>
+
+	{#if form?.staffOnboardingResult}
+		<div class={`writeback-result ${form.staffOnboardingResult.success ? 'good' : 'warn'}`}>
+			{form.staffOnboardingResult.message}
+		</div>
+	{/if}
+
+	{#if data.staffOnboarding.blockers.length > 0}
+		<ul class="blockers">
+			{#each data.staffOnboarding.blockers as blocker}
+				<li>{blocker}</li>
+			{/each}
+		</ul>
+	{/if}
+
+	{#if data.staffOnboarding.runtimeMissing.length > 0}
+		<ul class="blockers">
+			{#each data.staffOnboarding.runtimeMissing as item}
+				<li>{item}</li>
+			{/each}
+		</ul>
+	{/if}
+
+	<form method="POST" action="?/submitStaffOnboarding" class="writeback-form">
+		<div class="graduation-boundary">
+			<span>Paylocity graduation</span>
+			<strong>Human approval required</strong>
+		</div>
+		<button type="submit" disabled={!canSubmitStaffOnboarding}>Save to Staff DB</button>
+	</form>
 </section>
 
 <section class="split-layout section-gap">
@@ -95,6 +141,64 @@
 
 	.stats {
 		margin-top: 1rem;
+	}
+
+	.writeback-result {
+		margin: 1rem 0;
+		padding: 0.75rem 0.9rem;
+		border-radius: 0.75rem;
+	}
+
+	.writeback-result.good {
+		background: rgba(39, 141, 99, 0.12);
+		color: var(--good);
+	}
+
+	.writeback-result.warn {
+		background: rgba(162, 61, 53, 0.12);
+		color: var(--danger);
+	}
+
+	.blockers {
+		display: grid;
+		gap: 0.35rem;
+		margin: 1rem 0;
+		color: var(--muted);
+	}
+
+	.writeback-form {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 1rem;
+		flex-wrap: wrap;
+		margin-top: 1rem;
+	}
+
+	.graduation-boundary {
+		display: inline-flex;
+		flex-direction: column;
+		gap: 0.55rem;
+		color: var(--muted);
+	}
+
+	.graduation-boundary strong {
+		color: var(--ink);
+		font-size: 0.92rem;
+	}
+
+	.writeback-form button {
+		border: 0;
+		border-radius: 999px;
+		padding: 0.8rem 1.2rem;
+		background: var(--ink);
+		color: white;
+		cursor: pointer;
+	}
+
+	.writeback-form button:disabled {
+		cursor: not-allowed;
+		opacity: 0.55;
 	}
 
 	.split-layout {

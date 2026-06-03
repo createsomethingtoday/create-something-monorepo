@@ -6,7 +6,8 @@ The serving surface stays stable:
 
 - Dify users call `list_public_jobs`, `search_public_jobs`, `get_job`, and confirmation-gated `send_job_to_funnel`.
 - The normalized database contract stores public job records independently of the upstream provider.
-- Bright Data is the first direct provider adapter. RapidAPI is not part of the current Abundance jobs path; it can be added later as another provider behind this same table shape.
+- Bright Data was the first direct provider adapter.
+- RapidAPI Active Jobs is now the delivery refresh adapter through the source-controlled `packages/abundance-jobs-mcp` Worker.
 
 ## Database
 
@@ -110,6 +111,9 @@ Expected runtime values:
 - `AGENCY_INTERNAL_API_KEY`
 - `BRIGHT_DATA_API_TOKEN`
 - `ABUNDANCE_BRIGHT_DATA_JOBS_DATASET_ID` or `BRIGHT_DATA_JOBS_DATASET_ID`
+- `ABUNDANCE_MCP_BEARER_TOKEN`
+- `ACTIVE_JOBS_RAPIDAPI_HOST`
+- `ACTIVE_JOBS_RAPIDAPI_KEY`
 
 Suggested Infisical path:
 
@@ -117,15 +121,42 @@ Suggested Infisical path:
 /abundance/jobs
 ```
 
-Observed Infisical state on 2026-05-22:
+Observed Infisical state:
 
 - `/abundance/jobs` exists.
 - `/abundance/jobs` has `BRIGHT_DATA_API_TOKEN`, copied from the existing `/kickstand` token.
 - `/abundance/jobs` has `ABUNDANCE_BRIGHT_DATA_JOBS_DATASET_ID` set to the Bright Data `Indeed job listings information` dataset.
 - `/active-jobs-mcp` has `ACTIVE_JOBS_MCP_API_KEY`, `ACTIVE_JOBS_RAPIDAPI_HOST`, and `ACTIVE_JOBS_RAPIDAPI_KEY`.
-- A read-only `Get_Jobs_7_days_posted` probe against the Active Jobs MCP reached the provider, but RapidAPI returned HTTP 429 because the current BASIC plan has exceeded its monthly request quota.
+- On 2026-06-03, direct read-only RapidAPI probes for `/active-ats-7d` and `/modified-ats-24h` returned HTTP 200 with fresh nursing job records.
+- `/active-ats-expired` returned HTTP 200 but exceeded a 512 KB capped read even with `limit=10`, nursing/location filters, and a date filter; keep it manual/probed until pagination and filtering are bounded.
 
-Operationally, use Bright Data direct as the first production ingestion path. Treat the Active Jobs RapidAPI MCP as a fallback only after quota and plan limits are fixed.
+Operationally, use RapidAPI Active Jobs for delivery refreshes and keep Bright Data as a provider-compatible fallback.
+
+## RapidAPI Worker Refresh
+
+The source-controlled Jobs MCP Worker exposes the stable Dify tool surface at:
+
+```text
+https://abundance-jobs-mcp.createsomething.workers.dev/mcp
+```
+
+It also exposes an authenticated operator endpoint:
+
+```bash
+curl "$ABUNDANCE_JOBS_MCP_URL/admin/ingest/rapidapi" \
+  -H "Authorization: Bearer $ABUNDANCE_MCP_BEARER_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title_filter": "nurse",
+    "location_filter": "United States",
+    "limit": 100,
+    "endpoints": ["/active-ats-7d", "/modified-ats-24h"]
+  }'
+```
+
+The endpoint writes normalized `provider=rapidapi` rows into `abundance_public_jobs` and records a row in `abundance_public_job_ingestion_runs`.
+
+Do not schedule `/active-ats-expired` until the provider returns bounded responses for filtered requests. The Worker exposes `/admin/probe/rapidapi-expired` for capped operator checks, but expired job ingestion should stay disabled unless the response shape is proven safe.
 
 ## Live Smoke
 
@@ -139,4 +170,4 @@ The normalizer maps Bright Data Indeed `is_expired=true` records to `status=expi
 
 ## Handoff
 
-The remote `abundance-jobs-mcp` should read from `abundance_public_jobs` once its source is pulled into this repo or pointed at the same D1 binding. Until then, the MCP continues to serve from its current deployed source, and this ingestion contract can be smoke-tested independently.
+The remote `abundance-jobs-mcp` reads from `abundance_public_jobs` through the source-controlled Worker package. Keep Dify tool names stable when refreshing or redeploying the Worker.

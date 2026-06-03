@@ -1,4 +1,6 @@
 <script lang="ts">
+	import '../app.css';
+
 	const navItems = [
 		{ href: '/', label: 'Overview' },
 		{ href: '/chat', label: 'Chat' },
