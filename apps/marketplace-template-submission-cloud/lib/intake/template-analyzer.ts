@@ -2,9 +2,10 @@ import {
   CATEGORY_OPTIONS,
   TEMPLATE_STYLES,
   WEBFLOW_FEATURES,
-  type PageCountOption,
+  type PageCountOption
 } from './constants';
 import { normalizePublishedUrl } from './published-url';
+import { sanitizeLongDescriptionHtml } from '@create-something/webflow-dashboard-core/long-description';
 
 const DEFAULT_TEMPLATE_ANALYZER_API_BASE =
   'https://webflow-template-analyzer.createsomething.workers.dev';
@@ -50,12 +51,8 @@ export interface TemplateAnalyzerResult {
   screenshotsDownloadUrl?: string;
 }
 
-const CATEGORY_LOOKUP = new Map(
-  CATEGORY_OPTIONS.map((value) => [normalizeToken(value), value]),
-);
-const STYLE_LOOKUP = new Map(
-  TEMPLATE_STYLES.map((value) => [normalizeToken(value), value]),
-);
+const CATEGORY_LOOKUP = new Map(CATEGORY_OPTIONS.map((value) => [normalizeToken(value), value]));
+const STYLE_LOOKUP = new Map(TEMPLATE_STYLES.map((value) => [normalizeToken(value), value]));
 const FEATURE_LOOKUP = new Map<string, string>();
 
 for (const feature of WEBFLOW_FEATURES) {
@@ -67,10 +64,7 @@ FEATURE_LOOKUP.set(normalizeToken('Components'), 'symbols');
 
 function normalizeApiBase(value: string | undefined): string {
   const base = value?.trim();
-  return (base && base.length > 0 ? base : DEFAULT_TEMPLATE_ANALYZER_API_BASE).replace(
-    /\/$/,
-    '',
-  );
+  return (base && base.length > 0 ? base : DEFAULT_TEMPLATE_ANALYZER_API_BASE).replace(/\/$/, '');
 }
 
 function normalizeToken(value: string): string {
@@ -91,7 +85,7 @@ function dedupe<T>(values: readonly T[]): T[] {
 function mapValues(
   values: readonly string[] | undefined,
   lookup: Map<string, string>,
-  maxCount?: number,
+  maxCount?: number
 ): string[] {
   if (!Array.isArray(values)) return [];
 
@@ -108,7 +102,7 @@ function mapFeatureIds(values: readonly string[] | undefined): string[] {
   return dedupe(
     values
       .map((value) => FEATURE_LOOKUP.get(normalizeToken(value)))
-      .filter((value): value is string => Boolean(value)),
+      .filter((value): value is string => Boolean(value))
   );
 }
 
@@ -127,23 +121,11 @@ function mapPageCount(value: string | undefined): PageCountOption | undefined {
   return undefined;
 }
 
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
-
 function toParagraphs(value: string | undefined): string | undefined {
   const trimmed = value?.trim();
   if (!trimmed) return undefined;
 
-  return trimmed
-    .split(/\n{2,}/)
-    .map((paragraph) => `<p>${escapeHtml(paragraph).replace(/\n/g, '<br />')}</p>`)
-    .join('');
+  return sanitizeLongDescriptionHtml(trimmed);
 }
 
 function countScreenshots(screenshots: RawAnalyzerScreenshots | undefined): number {
@@ -152,7 +134,7 @@ function countScreenshots(screenshots: RawAnalyzerScreenshots | undefined): numb
   return [
     screenshots.primary ? 1 : 0,
     screenshots.secondary ? 1 : 0,
-    Array.isArray(screenshots.gallery) ? screenshots.gallery.length : 0,
+    Array.isArray(screenshots.gallery) ? screenshots.gallery.length : 0
   ].reduce((total, count) => total + count, 0);
 }
 
@@ -167,14 +149,14 @@ function mapPayload(payload: RawTemplateAnalyzerPayload): TemplateAnalyzerAutofi
     typeCms: payload.webflow_features_cms === true,
     typeEcommerce: payload.webflow_features_ecommerce === true,
     styles: mapValues(payload.styles, STYLE_LOOKUP, 2),
-    featureIds: mapFeatureIds(payload.features),
+    featureIds: mapFeatureIds(payload.features)
   };
 }
 
 async function fetchWithTimeout(
   url: string,
   options: RequestInit,
-  timeoutMs: number,
+  timeoutMs: number
 ): Promise<Response> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
@@ -186,9 +168,7 @@ async function fetchWithTimeout(
   }
 }
 
-export async function analyzePublishedTemplate(
-  url: string,
-): Promise<TemplateAnalyzerResult> {
+export async function analyzePublishedTemplate(url: string): Promise<TemplateAnalyzerResult> {
   const normalizedUrl = normalizePublishedUrl(url);
   const apiBase = normalizeApiBase(process.env.TEMPLATE_ANALYZER_API_BASE);
   const response = await fetchWithTimeout(
@@ -196,9 +176,9 @@ export async function analyzePublishedTemplate(
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url: normalizedUrl }),
+      body: JSON.stringify({ url: normalizedUrl })
     },
-    REQUEST_TIMEOUT_MS,
+    REQUEST_TIMEOUT_MS
   );
 
   const payload = (await response.json().catch(() => ({}))) as
@@ -211,7 +191,7 @@ export async function analyzePublishedTemplate(
         ? payload.detail
         : 'error' in payload && typeof payload.error === 'string'
           ? payload.error
-          : `Template analyzer request failed with status ${response.status}`,
+          : `Template analyzer request failed with status ${response.status}`
     );
   }
 
@@ -226,7 +206,6 @@ export async function analyzePublishedTemplate(
     apiBase,
     autofill: mapPayload(rawPayload),
     screenshotCount,
-    screenshotsDownloadUrl:
-      screenshotCount > 0 ? `${apiBase}/screenshots/download` : undefined,
+    screenshotsDownloadUrl: screenshotCount > 0 ? `${apiBase}/screenshots/download` : undefined
   };
 }

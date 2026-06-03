@@ -19,6 +19,11 @@ import {
   validateMimeType,
   validateWebP
 } from '../vendor/core/upload-validation';
+import {
+  extractLongDescriptionImages,
+  getLongDescriptionText,
+  sanitizeLongDescriptionHtml
+} from '@create-something/webflow-dashboard-core/long-description';
 
 const IMAGE_CONSTRAINTS = {
   avatar: { width: 256, height: 256, maxSize: 100 * 1024, label: 'Profile image' },
@@ -200,18 +205,7 @@ function analyzerLongDescriptionToHtml(value: string | undefined): string | unde
   const trimmed = value?.trim();
   if (!trimmed) return undefined;
 
-  const escapeHtml = (text: string) =>
-    text
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#39;');
-
-  return trimmed
-    .split(/\n{2,}/)
-    .map((paragraph) => `<p>${escapeHtml(paragraph).replace(/\n/g, '<br />')}</p>`)
-    .join('');
+  return sanitizeLongDescriptionHtml(trimmed);
 }
 
 function mapAnalyzerPageCount(value: string | undefined): PageCountOption | undefined {
@@ -584,13 +578,13 @@ function shouldAutofillText(current: string, previous?: string) {
 }
 
 function normalizeRichText(value: string | undefined) {
-  return (value || '')
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<\/(p|div|li|h[1-6]|blockquote)>/gi, '\n')
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/&nbsp;/gi, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
+  const sanitized = sanitizeLongDescriptionHtml(value);
+  const text = getLongDescriptionText(sanitized);
+  const images = extractLongDescriptionImages(sanitized)
+    .map((image) => `${image.src}|${image.alt}`)
+    .join('\n');
+
+  return [text, images].filter(Boolean).join('\n').trim();
 }
 
 function shouldAutofillRichText(current: string, previous?: string) {
@@ -823,7 +817,9 @@ function ValidatorAppRecoveryPanel({
     <div className="submission-validator-callout" role="alert">
       <div className="submission-validator-callout-copy">
         <div className="submission-validator-callout-label">Validator required</div>
-        <h4 className="submission-validator-callout-title">Complete Validator checks before submitting</h4>
+        <h4 className="submission-validator-callout-title">
+          Complete Validator checks before submitting
+        </h4>
         <p className="submission-validator-callout-text">
           The submission form needs a confirmed 100% pass from the Webflow Way Validator app before
           this template can enter review.
@@ -1111,14 +1107,16 @@ function isUsableFeaturedImageUrl(value: string) {
 
 function featuredTemplateImage(item: FeaturedTemplateItem) {
   return (
-    [item.thumbnail_image_url, item.thumbnail_image_secondary_url].find(
-      (value): value is string => Boolean(value && isUsableFeaturedImageUrl(value))
+    [item.thumbnail_image_url, item.thumbnail_image_secondary_url].find((value): value is string =>
+      Boolean(value && isUsableFeaturedImageUrl(value))
     ) || ''
   );
 }
 
 function featuredTemplateDetail(item: FeaturedTemplateItem) {
-  return item.category_groups?.[0]?.name || item.template_type || (item.is_free ? 'Free' : 'Featured');
+  return (
+    item.category_groups?.[0]?.name || item.template_type || (item.is_free ? 'Free' : 'Featured')
+  );
 }
 
 function visibleFeaturedTemplates(templates: FeaturedTemplateItem[], offset: number) {
@@ -1131,9 +1129,7 @@ function visibleFeaturedTemplates(templates: FeaturedTemplateItem[], offset: num
 
 function FeaturedQualityShowcase() {
   const [templates, setTemplates] = useState<FeaturedTemplateItem[]>([]);
-  const [status, setStatus] = useState<'loading' | 'ready' | 'refreshing' | 'fallback'>(
-    'loading'
-  );
+  const [status, setStatus] = useState<'loading' | 'ready' | 'refreshing' | 'fallback'>('loading');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [offset, setOffset] = useState(0);
@@ -1207,7 +1203,9 @@ function FeaturedQualityShowcase() {
           </div>
           <button
             aria-label="Refresh Featured template examples"
-            className={isBusy ? 'featured-quality-refresh is-refreshing' : 'featured-quality-refresh'}
+            className={
+              isBusy ? 'featured-quality-refresh is-refreshing' : 'featured-quality-refresh'
+            }
             disabled={!canCycle || isBusy}
             onClick={cycleFeaturedTemplates}
             title="Refresh Featured template examples"
@@ -1347,7 +1345,9 @@ function TemplateSubmissionSuccessPanel({
           <div className="submission-step-label submission-step-label-secondary">
             Creator workspace
           </div>
-          <h4 className="submission-dashboard-title">Use the Asset Dashboard while reviewers work</h4>
+          <h4 className="submission-dashboard-title">
+            Use the Asset Dashboard while reviewers work
+          </h4>
           <p className="submission-dashboard-copy">
             It gives creators one place to follow review activity, prepare the next submission, and
             use the same quality tools our team references.
@@ -3752,7 +3752,7 @@ export function TemplateIntake() {
                         {hasAutofilledLongDescription ? <AiUpdatedBadge /> : null}
                       </label>
                       <p className="field-help cc-library-application-form_field-desc">
-                        Rich text is allowed for emphasis and lists. Image embeds are stripped.
+                        Rich text is allowed for headings, lists, links, and HTTPS image URL embeds.
                       </p>
                       <QuillEditor
                         id="longDescription"
