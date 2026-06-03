@@ -8,7 +8,8 @@ import {
   LIVE_TESTING_HANDOFF_GUIDANCE,
   notionMarkdownBlocks,
   parseDifyEvalAnswer,
-  richTextPlain
+  richTextPlain,
+  shouldRunAutomatedEval
 } from '../src/index.ts';
 
 const deliveryReadyInstructions = [
@@ -125,6 +126,14 @@ test('LIVE_TESTING_HANDOFF_GUIDANCE makes the paste boundary explicit', () => {
   assert.match(LIVE_TESTING_HANDOFF_GUIDANCE, /Paste only the full text after "Prompt to paste"/);
   assert.match(LIVE_TESTING_HANDOFF_GUIDANCE, /Do not paste the scenario label/);
   assert.match(LIVE_TESTING_HANDOFF_GUIDANCE, /move it back to Updating/);
+});
+
+test('shouldRunAutomatedEval only allows Updating status to trigger eval', () => {
+  assert.equal(shouldRunAutomatedEval({ status: 'Updating' }), true);
+  assert.equal(shouldRunAutomatedEval({ status: 'updating' }), true);
+  assert.equal(shouldRunAutomatedEval({ status: 'Testing' }), false);
+  assert.equal(shouldRunAutomatedEval({ status: 'Validated' }), false);
+  assert.equal(shouldRunAutomatedEval({ status: undefined }), false);
 });
 
 test('notionMarkdownBlocks preserves core report structure', () => {

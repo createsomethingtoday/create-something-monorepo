@@ -383,10 +383,13 @@ async function processReviewWorkflow(env: Env, initialReview: NormalizedReviewRe
     linearIssue = issueResult.issue;
     const workflowResult = await createLinearWorkflowIssues(env, review, linearIssue);
     if (!workflowResult.ok) return workflowResult.response;
-    const automationResult = await completeAutomatedWorkflow(env, review, linearIssue, workflowResult.issues);
-    if (!automationResult.ok) {
-      return jsonResponse({ error: automationResult.error }, 502);
-    }
+    const automationResult = await runAutomationForEligibleStatus(
+      env,
+      review,
+      linearIssue,
+      workflowResult.issues
+    );
+    if (!automationResult.ok) return jsonResponse({ error: automationResult.error }, 502);
     destinations.push({
       type: 'linear',
       ok: true,
@@ -412,6 +415,61 @@ async function processReviewWorkflow(env: Env, initialReview: NormalizedReviewRe
     agent_name: review.agentName,
     destinations
   });
+}
+
+async function runAutomationForEligibleStatus(
+  env: Env,
+  review: NormalizedReviewRequest,
+  parentIssue: LinearIssue,
+  workflowIssues: LinearWorkflowIssue[]
+): Promise<AutomatedWorkflowResult> {
+  if (!shouldRunAutomatedEval(review)) {
+    const reason = `Automated eval skipped because source Status is ${review.status ?? 'empty'}; only Status = Updating runs the external eval handoff.`;
+    const comment = await commentLinearIssue(
+      env,
+      parentIssue.id,
+      automatedWorkflowSkippedComment(review, parentIssue, workflowIssues, reason)
+    );
+    if (!comment.ok) {
+      return {
+        ok: false,
+        status: 'failed',
+        error: 'Failed to comment skipped automation evidence on the intake issue.'
+      };
+    }
+
+    return { ok: true, status: 'skipped', error: reason };
+  }
+
+  try {
+    const automationResult = await completeAutomatedWorkflow(env, review, parentIssue, workflowIssues);
+    if (!automationResult.ok) {
+      await commentLinearIssue(
+        env,
+        parentIssue.id,
+        automatedWorkflowFailureComment(
+          review,
+          parentIssue,
+          workflowIssues,
+          automationResult.error ?? 'unknown automation failure'
+        )
+      );
+    }
+    return automationResult;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    await commentLinearIssue(
+      env,
+      parentIssue.id,
+      automatedWorkflowFailureComment(review, parentIssue, workflowIssues, message)
+    );
+    return { ok: false, status: 'failed', error: message };
+  }
+}
+
+function shouldRunAutomatedEval(review: Pick<NormalizedReviewRequest, 'status'>): boolean {
+  if (!review.status) return false;
+  return normalizeKey(review.status) === 'updating';
 }
 
 function validateWebhookSecret(request: Request, env: Env): Response | undefined {
@@ -2935,6 +2993,51 @@ function automatedWorkflowComment(
   ].join('\n');
 }
 
+function automatedWorkflowSkippedComment(
+  review: NormalizedReviewRequest,
+  parentIssue: LinearIssue,
+  workflowIssues: LinearWorkflowIssue[],
+  reason: string
+): string {
+  return [
+    'Automated Half Dozen webhook workflow skipped.',
+    '',
+    reason,
+    '',
+    `Agent: ${review.agentName}`,
+    `Status received: ${review.status ?? 'empty'}`,
+    `Webhook request: ${review.requestId}`,
+    `Intake: ${parentIssue.identifier} ${parentIssue.url}`,
+    `Workflow issues: ${workflowIssues.map((issue) => `${issue.identifier} (${issue.step})`).join(', ') || 'none'}`,
+    '',
+    'Expected process',
+    '- Status = Updating triggers the external instruction-readiness eval.',
+    '- Status = Testing is the human live-testing lane and must not start another eval run.',
+    '- If live testing fails, record the finding on the source page and move the page back to Updating.'
+  ].join('\n');
+}
+
+function automatedWorkflowFailureComment(
+  review: NormalizedReviewRequest,
+  parentIssue: LinearIssue,
+  workflowIssues: LinearWorkflowIssue[],
+  error: string
+): string {
+  return [
+    'Automated Half Dozen webhook workflow failed before completion evidence could be written.',
+    '',
+    `Agent: ${review.agentName}`,
+    `Status received: ${review.status ?? 'empty'}`,
+    `Webhook request: ${review.requestId}`,
+    `Intake: ${parentIssue.identifier} ${parentIssue.url}`,
+    `Workflow issues: ${workflowIssues.map((issue) => `${issue.identifier} (${issue.step})`).join(', ') || 'none'}`,
+    `Error: ${error}`,
+    '',
+    'Operator note',
+    'The source Notion page may still need manual review. Re-run by moving Status back to Updating after the failure is fixed.'
+  ].join('\n');
+}
+
 function duplicateWebhookComment(review: NormalizedReviewRequest): string {
   return [
     'Repeated Notion webhook fire received for this agent review request.',
@@ -3117,5 +3220,6 @@ export {
   LIVE_TESTING_HANDOFF_GUIDANCE,
   notionMarkdownBlocks,
   parseDifyEvalAnswer,
-  richTextPlain
+  richTextPlain,
+  shouldRunAutomatedEval
 };

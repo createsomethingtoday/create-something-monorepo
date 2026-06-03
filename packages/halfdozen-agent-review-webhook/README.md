@@ -68,6 +68,8 @@ behavior stays on the Test Reports item as the pass/fail rubric.
 This aligns with the June 2 MJ x DM workflow discussion:
 
 - `Status = Updating` is the external eval trigger.
+- Webhook fires for any other status, including `Testing`, are treated as echoes and skipped with
+  Linear evidence instead of starting another eval.
 - The eval result creates a new, versioned Test Reports item instead of overwriting prior evals.
 - The source agent page receives the final instructions, recommended upgrades, archived submitted
   instructions, and a Testing handoff.
@@ -82,6 +84,11 @@ the Notion API and appends the flattened page instructions to the Linear issue a
 The Notion connection used by `NOTION_API_KEY` must have read/write access to the target page and
 read/create access to `Test Reports [OS]`. In Notion, share the source page or its parent database
 and Test Reports database with that integration before expecting full automation.
+
+If the background automation fails after the initial Linear intake comment, the Worker now writes a
+failure comment back to the parent Linear issue with the webhook request ID and error. A received
+comment without a later completed, incomplete, skipped, or failed comment means the run used an
+older Worker version or the process failed before this failure-evidence guard existed.
 
 ## Notion Setup
 
