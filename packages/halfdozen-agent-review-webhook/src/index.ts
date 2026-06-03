@@ -93,6 +93,8 @@ interface GovernanceEvalReport {
   success: boolean;
   mode: 'governance-eval';
   generated_at: string;
+  eval_scope: string;
+  claim_boundary: string;
   execution_target: string;
   future_execution_target: string;
   default_model: string;
@@ -217,6 +219,9 @@ const TEST_REPORTS_DATABASE_NAME_DEFAULT = 'Test Reports [OS]';
 const GOVERNANCE_EVAL_SCENARIOS = 4;
 const GOVERNANCE_EVAL_CHECKS = 27;
 const GOVERNANCE_EVAL_DEFAULT_MODEL = 'gpt-5.5';
+const INSTRUCTION_READINESS_EVAL_SCOPE = 'Instruction-readiness review for a Notion agent draft';
+const INSTRUCTION_READINESS_CLAIM_BOUNDARY =
+  'This eval checks whether the submitted instructions are complete, safe, reference-aware, and ready for human testing. It does not prove the live Notion agent runtime behaves correctly; the Testing checklist is the required runtime gate before Validated or Active status.';
 const DIFY_API_BASE_DEFAULT = 'https://api.dify.ai/v1';
 const DIFY_EVAL_TIMEOUT_MS_DEFAULT = 60_000;
 const DIFY_AGENT_BUILDER_EVAL_JSON_CONTRACT = [
@@ -1821,6 +1826,8 @@ function buildGovernanceEvalReport(
   const fullReviewJson = JSON.stringify(
     {
       status: summary.status,
+      eval_scope: INSTRUCTION_READINESS_EVAL_SCOPE,
+      claim_boundary: INSTRUCTION_READINESS_CLAIM_BOUNDARY,
       checks: summary,
       review_summary: reviewSummary,
       recommended_upgrades: recommendedUpgrades,
@@ -1856,6 +1863,8 @@ function buildGovernanceEvalReport(
     '# Half Dozen Agent Builder Eval',
     '',
     `- Status: ${summary.status}`,
+    `- Eval scope: ${INSTRUCTION_READINESS_EVAL_SCOPE}`,
+    `- Claim boundary: ${INSTRUCTION_READINESS_CLAIM_BOUNDARY}`,
     `- Generated: ${generatedAt}`,
     `- Current execution target: ${executionTarget}`,
     `- Future execution target: ${futureExecutionTarget}`,
@@ -1874,6 +1883,10 @@ function buildGovernanceEvalReport(
     '## Result',
     '',
     `${summary.status === 'pass' ? 'Pass' : 'Fail'}. Dify checks: ${difySummary.checks_passed}/${difySummary.checks_total}. Worker rubric: ${workerRubric.checks_passed}/${workerRubric.checks_total}.`,
+    '',
+    '## Claim Boundary',
+    '',
+    INSTRUCTION_READINESS_CLAIM_BOUNDARY,
     '',
     '## Worker Rubric',
     '',
@@ -1969,6 +1982,8 @@ function buildGovernanceEvalReport(
     success,
     mode: 'governance-eval',
     generated_at: generatedAt,
+    eval_scope: INSTRUCTION_READINESS_EVAL_SCOPE,
+    claim_boundary: INSTRUCTION_READINESS_CLAIM_BOUNDARY,
     execution_target: executionTarget,
     future_execution_target: futureExecutionTarget,
     default_model: GOVERNANCE_EVAL_DEFAULT_MODEL,
@@ -2516,6 +2531,8 @@ function agentPageUpdateBlocks(review: NormalizedReviewRequest, report: Governan
     notionParagraphBlock(
       `Result: ${report.summary.status}. Dify checks: ${report.summary.checks_passed}/${report.summary.checks_total}. Worker rubric: ${report.worker_rubric.checks_passed}/${report.worker_rubric.checks_total}.`
     ),
+    notionParagraphBlock(`Eval scope: ${report.eval_scope}.`),
+    notionParagraphBlock(`Claim boundary: ${report.claim_boundary}`),
     notionParagraphBlock(`Webhook request: ${review.requestId}`),
     notionHeadingBlock(2, 'Worker Rubric'),
     ...report.worker_rubric.checks.map((check) =>
@@ -2552,6 +2569,8 @@ function agentPageUpdateBlocks(review: NormalizedReviewRequest, report: Governan
       : []),
     notionHeadingBlock(2, 'Automation Evidence'),
     notionParagraphBlock(`Source: ${report.notion_test_report.source}`),
+    notionParagraphBlock(`Eval scope: ${report.eval_scope}.`),
+    notionParagraphBlock(`Claim boundary: ${report.claim_boundary}`),
     notionParagraphBlock(`Eval engine: ${report.execution_target}. Dify eval: ${report.dify_eval?.status ?? 'not recorded'}.`),
     notionParagraphBlock(
       report.success
@@ -2721,6 +2740,8 @@ function automatedWorkflowComment(
     `Intake: ${parentIssue.identifier} ${parentIssue.url}`,
     `Workflow issues: ${workflowIssues.map((issue) => `${issue.identifier} (${issue.step})`).join(', ') || 'none'}`,
     `Eval status: ${report.summary.status}`,
+    `Eval scope: ${report.eval_scope}`,
+    `Claim boundary: ${report.claim_boundary}`,
     `Eval engine: ${report.execution_target}`,
     `Dify eval: ${report.dify_eval?.status ?? 'not recorded'}${report.dify_eval?.message_id ? ` (${report.dify_eval.message_id})` : report.dify_eval?.error ? ` (${report.dify_eval.error})` : ''}`,
     `Dify checks: ${report.summary.checks_passed}/${report.summary.checks_total}`,

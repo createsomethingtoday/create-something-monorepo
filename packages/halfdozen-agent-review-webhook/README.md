@@ -34,6 +34,25 @@ to Linear. If `TEST_REPORTS_DATABASE_ID` is configured, the same report is also 
 that database. Otherwise, the Worker searches the visible Notion workspace for `Test Reports [OS]`
 and writes there when the database is visible to `NOTION_API_KEY`.
 
+## Eval Scope
+
+This flow is an external instruction-readiness review for a Notion agent draft. It is useful because
+the Notion drafting agent and the external eval agent have separate jobs:
+
+- the Notion agent drafts or updates the source instructions in the Half Dozen workspace
+- the external eval agent reviews those instructions against a stable rubric
+- the Worker owns all Notion and Linear writes, versioning, status movement, and evidence comments
+
+The eval can say whether the submitted instructions are complete, safe, reference-aware, and ready
+for human testing. It does not prove that the live Notion agent runtime behaves correctly. The
+runtime proof remains the live testing checklist on the Test Reports item and source page before
+moving an agent from `Testing` to `Validated` or `Active`.
+
+Keep linked Notion pages and databases as references in the canonical instructions. The Worker
+preserves Notion mention hrefs as Markdown links for the external eval packet and prefers the
+canonical page content before historical `Agent Eval Update` sections. Historical eval sections are
+append-only evidence, not the primary source of truth for the next review.
+
 When a Notion page URL or page ID is present, the Worker reads the page's block children through
 the Notion API and appends the flattened page instructions to the Linear issue and eval archive.
 The Notion connection used by `NOTION_API_KEY` must have read/write access to the target page and
