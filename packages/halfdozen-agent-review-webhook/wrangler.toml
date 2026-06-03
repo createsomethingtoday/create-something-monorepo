@@ -8,6 +8,8 @@ compatibility_flags = ["nodejs_compat"]
 LINEAR_TEAM_KEY = "CRE"
 LINEAR_LABELS = "linear-coordination,code-quality"
 ASSIGN_TO_TOKEN_OWNER = "true"
+DIFY_HALFDOZEN_AGENT_BUILDER_EVAL_BASE_URL = "https://api.dify.ai/v1"
+DIFY_HALFDOZEN_AGENT_BUILDER_EVAL_TIMEOUT_MS = "120000"
 
 # Secrets:
 # - WEBHOOK_SECRET
