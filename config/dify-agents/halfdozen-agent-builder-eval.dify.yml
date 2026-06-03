@@ -157,6 +157,23 @@ model_config:
       "recommended_upgrades": ["..."],
       "final_instructions": "complete updated instructions, incorporating recommended upgrades",
       "archived_instructions": "the submitted instructions that were reviewed",
+      "proposed_patch": {
+        "replace_section": {
+          "heading": "Current Instructions",
+          "markdown": "copy-ready updated instructions for the canonical instruction section"
+        },
+        "append_report": {
+          "summary": "compact summary to append to the Test Reports item",
+          "rubric": ["pass/fail rubric findings"],
+          "test_plan": ["live Notion agent test prompts or checks"]
+        },
+        "status_transition": {
+          "from": "Updating",
+          "to": "Testing",
+          "allowed": true,
+          "reason": "why the Worker may or may not move the source page to Testing"
+        }
+      },
       "checks": {
         "scenarios": 4,
         "checks_total": 27,
@@ -172,9 +189,12 @@ model_config:
     3. Recommended upgrades must focus on useful modifications, not broad rewrites.
     4. Final instructions must include the submitted intent plus recommended upgrades in a paste-ready form.
     5. Archived instructions must preserve the submitted instructions for version history.
-    6. Mention any live Notion access gaps in caveats instead of fabricating evidence.
-    7. Never expose API keys, bearer tokens, Infisical values, private connection tokens, or hidden tool credentials.
-    8. Do not claim that you updated Notion, created Test Reports, or changed status. The Worker does those actions after reading your JSON.
+    6. Proposed patch is advisory. The Worker, not Dify, is the Notion/Linear writer.
+    7. proposed_patch.replace_section.markdown should match final_instructions unless there is a clear reason to keep them different.
+    8. Set proposed_patch.status_transition.allowed to false when the instructions are not ready for Testing or required access/reference context is missing.
+    9. Mention any live Notion access gaps in caveats instead of fabricating evidence.
+    10. Never expose API keys, bearer tokens, Infisical values, private connection tokens, or hidden tool credentials.
+    11. Do not claim that you updated Notion, created Test Reports, or changed status. The Worker does those actions after reading your JSON.
 
     If the request is underspecified, return status "fail" with caveats and the minimum missing fields. If the Notion tool cannot access a page or database, return the best eval from supplied content and include the access failure as a caveat.
   prompt_type: simple

@@ -5,7 +5,9 @@ import {
   buildBehavioralSmokeTests,
   canonicalPageContent,
   evaluateWorkerRubric,
+  LIVE_TESTING_HANDOFF_GUIDANCE,
   notionMarkdownBlocks,
+  parseDifyEvalAnswer,
   richTextPlain
 } from '../src/index.ts';
 
@@ -119,6 +121,12 @@ test('buildBehavioralSmokeTests reports covered and missing scenarios', () => {
   assert.equal(gaps.some((item) => !item.covered), true);
 });
 
+test('LIVE_TESTING_HANDOFF_GUIDANCE makes the paste boundary explicit', () => {
+  assert.match(LIVE_TESTING_HANDOFF_GUIDANCE, /Paste only the full text after "Prompt to paste"/);
+  assert.match(LIVE_TESTING_HANDOFF_GUIDANCE, /Do not paste the scenario label/);
+  assert.match(LIVE_TESTING_HANDOFF_GUIDANCE, /move it back to Updating/);
+});
+
 test('notionMarkdownBlocks preserves core report structure', () => {
   const blocks = notionMarkdownBlocks([
     '# Title',
@@ -161,4 +169,79 @@ test('richTextPlain preserves Notion mention hrefs as Markdown links', () => {
     text,
     '[AI Toolkits [HD]](https://www.notion.so/halfdozen/AI-Toolkits-HD-1234567890abcdef1234567890abcdef) reference'
   );
+});
+
+test('parseDifyEvalAnswer preserves an advisory proposed patch', () => {
+  const parsed = parseDifyEvalAnswer(
+    JSON.stringify({
+      status: 'pass',
+      review_summary: 'Ready for human testing after worker-controlled writeback.',
+      recommended_upgrades: ['Clarify mutation guardrails.'],
+      final_instructions: 'Final instructions from Dify.',
+      archived_instructions: 'Submitted instructions.',
+      proposed_patch: {
+        replace_section: {
+          heading: 'Final Instructions',
+          markdown: 'Patch instructions from Dify.'
+        },
+        append_report: {
+          summary: 'Patch summary.',
+          rubric: ['Rubric item.'],
+          test_plan: ['Run one live Notion prompt.']
+        },
+        status_transition: {
+          from: 'Updating',
+          to: 'Testing',
+          allowed: true,
+          reason: 'Instructions passed the eval and Worker rubric should decide final writeback.'
+        }
+      },
+      checks: {
+        scenarios: 4,
+        checks_total: 27,
+        checks_passed: 27,
+        checks_failed: 0
+      },
+      caveats: []
+    })
+  );
+
+  assert.equal(parsed.ok, true);
+  if (!parsed.ok) return;
+
+  assert.equal(parsed.output.proposed_patch.replace_section.heading, 'Final Instructions');
+  assert.equal(parsed.output.proposed_patch.replace_section.markdown, 'Patch instructions from Dify.');
+  assert.equal(parsed.output.proposed_patch.append_report.test_plan[0], 'Run one live Notion prompt.');
+  assert.equal(parsed.output.proposed_patch.status_transition.allowed, true);
+});
+
+test('parseDifyEvalAnswer backfills proposed patch for the legacy JSON contract', () => {
+  const parsed = parseDifyEvalAnswer(
+    JSON.stringify({
+      status: 'pass',
+      review_summary: 'Ready for testing.',
+      recommended_upgrades: ['Keep linked Notion references intact.'],
+      final_instructions: 'Legacy final instructions.',
+      archived_instructions: 'Legacy submitted instructions.',
+      checks: {
+        scenarios: 4,
+        checks_total: 27,
+        checks_passed: 27,
+        checks_failed: 0
+      },
+      caveats: []
+    })
+  );
+
+  assert.equal(parsed.ok, true);
+  if (!parsed.ok) return;
+
+  assert.equal(parsed.output.proposed_patch.replace_section.heading, 'Current Instructions');
+  assert.equal(parsed.output.proposed_patch.replace_section.markdown, 'Legacy final instructions.');
+  assert.deepEqual(parsed.output.proposed_patch.append_report.rubric, [
+    'Keep linked Notion references intact.'
+  ]);
+  assert.equal(parsed.output.proposed_patch.status_transition.from, 'Updating');
+  assert.equal(parsed.output.proposed_patch.status_transition.to, 'Testing');
+  assert.equal(parsed.output.proposed_patch.status_transition.allowed, true);
 });

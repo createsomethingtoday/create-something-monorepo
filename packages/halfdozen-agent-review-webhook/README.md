@@ -40,7 +40,8 @@ This flow is an external instruction-readiness review for a Notion agent draft. 
 the Notion drafting agent and the external eval agent have separate jobs:
 
 - the Notion agent drafts or updates the source instructions in the Half Dozen workspace
-- the external eval agent reviews those instructions against a stable rubric
+- the external eval agent reviews those instructions against a stable rubric and returns an
+  advisory `proposed_patch`
 - the Worker owns all Notion and Linear writes, versioning, status movement, and evidence comments
 
 The eval can say whether the submitted instructions are complete, safe, reference-aware, and ready
@@ -52,6 +53,29 @@ Keep linked Notion pages and databases as references in the canonical instructio
 preserves Notion mention hrefs as Markdown links for the external eval packet and prefers the
 canonical page content before historical `Agent Eval Update` sections. Historical eval sections are
 append-only evidence, not the primary source of truth for the next review.
+
+The Dify app should not be given responsibility for source-page mutation in this workflow. Its
+strongest role is reasoning over the submitted instructions, returning the final instruction text,
+the review details, and a structured patch proposal. The Worker then validates that proposal with
+deterministic checks and applies the versioned Notion/Linear handoff only when the patch allows the
+`Updating` to `Testing` transition and the Worker rubric passes.
+
+The Live Testing Handoff is intentionally operator-facing. Team members should paste only the full
+text after `Prompt to paste` into the actual Notion agent. They should not paste the scenario label,
+expected behavior, report evidence, archived instructions, or any other eval text. The expected
+behavior stays on the Test Reports item as the pass/fail rubric.
+
+This aligns with the June 2 MJ x DM workflow discussion:
+
+- `Status = Updating` is the external eval trigger.
+- The eval result creates a new, versioned Test Reports item instead of overwriting prior evals.
+- The source agent page receives the final instructions, recommended upgrades, archived submitted
+  instructions, and a Testing handoff.
+- A passing instruction-readiness eval moves the source page to `Testing`, not `Validated`.
+- Humans then test the actual Notion agent with the handoff prompts before any `Validated` or
+  `Active` promotion.
+- Failed live testing feedback should be added back to the source page and the page should move
+  through `Updating` again for the next eval version.
 
 When a Notion page URL or page ID is present, the Worker reads the page's block children through
 the Notion API and appends the flattened page instructions to the Linear issue and eval archive.
@@ -144,4 +168,6 @@ Import it in Dify Studio as `Half Dozen Agent Builder Eval`, bind the installed 
 Notion integration that can read the source Half Dozen agent pages, publish the app, then store the
 Service API key in `DIFY_HALFDOZEN_AGENT_BUILDER_EVAL_API_KEY`. The import enables only Notion read
 tools (`search_notion`, `query_database`, `retrieve_page`, `retrieve_database`) plus E2B `run_code`
-for bounded JSON/lint checks. The Worker remains the Notion/Linear writer.
+for bounded JSON/lint checks. The Worker remains the Notion/Linear writer. The app response should
+include both `final_instructions` and `proposed_patch`; older responses without `proposed_patch`
+are still accepted and normalized by the Worker for backward compatibility.

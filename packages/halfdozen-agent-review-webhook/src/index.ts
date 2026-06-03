@@ -109,6 +109,8 @@ interface GovernanceEvalReport {
   recommended_upgrades: string[];
   final_instructions: string;
   archived_instructions: string;
+  proposed_patch: DifyInstructionPatch;
+  patch_application: WorkerPatchApplication;
   worker_rubric: WorkerRubricResult;
   behavior_smoke_tests: BehavioralSmokeTest[];
   live_testing_checklist: LiveTestingChecklistItem[];
@@ -163,6 +165,31 @@ interface LiveTestingChecklistItem {
   expected_behavior: string;
 }
 
+interface DifyInstructionPatch {
+  replace_section: {
+    heading: string;
+    markdown: string;
+  };
+  append_report: {
+    summary: string;
+    rubric: string[];
+    test_plan: string[];
+  };
+  status_transition: {
+    from: string;
+    to: string;
+    allowed: boolean;
+    reason: string;
+  };
+}
+
+interface WorkerPatchApplication {
+  writer: 'cloudflare-worker';
+  mode: 'append_versioned_handoff';
+  applied: boolean;
+  notes: string[];
+}
+
 interface DifyAgentBuilderEvalResult {
   ok: boolean;
   status: 'used' | 'skipped' | 'failed';
@@ -179,6 +206,7 @@ interface DifyAgentBuilderEvalOutput {
   recommended_upgrades: string[];
   final_instructions: string;
   archived_instructions: string;
+  proposed_patch: DifyInstructionPatch;
   checks: {
     scenarios: number;
     checks_total: number;
@@ -222,6 +250,8 @@ const GOVERNANCE_EVAL_DEFAULT_MODEL = 'gpt-5.5';
 const INSTRUCTION_READINESS_EVAL_SCOPE = 'Instruction-readiness review for a Notion agent draft';
 const INSTRUCTION_READINESS_CLAIM_BOUNDARY =
   'This eval checks whether the submitted instructions are complete, safe, reference-aware, and ready for human testing. It does not prove the live Notion agent runtime behaves correctly; the Testing checklist is the required runtime gate before Validated or Active status.';
+const LIVE_TESTING_HANDOFF_GUIDANCE =
+  'Paste only the full text after "Prompt to paste" into the actual Notion agent. Do not paste the scenario label, expected behavior, report evidence, archived instructions, or any other eval text. Record pass/fail, the actual response, and notes on this Test Report. If any prompt fails, add the finding to the source page and move it back to Updating for a new eval run.';
 const DIFY_API_BASE_DEFAULT = 'https://api.dify.ai/v1';
 const DIFY_EVAL_TIMEOUT_MS_DEFAULT = 60_000;
 const DIFY_AGENT_BUILDER_EVAL_JSON_CONTRACT = [
@@ -233,6 +263,23 @@ const DIFY_AGENT_BUILDER_EVAL_JSON_CONTRACT = [
   '  "recommended_upgrades": ["useful modifications, not broad rewrites"],',
   '  "final_instructions": "complete updated instructions incorporating recommended upgrades",',
   '  "archived_instructions": "the submitted instructions that were reviewed",',
+  '  "proposed_patch": {',
+  '    "replace_section": {',
+  '      "heading": "Current Instructions",',
+  '      "markdown": "copy-ready updated instructions for the canonical instruction section"',
+  '    },',
+  '    "append_report": {',
+  '      "summary": "compact summary to append to the Test Reports item",',
+  '      "rubric": ["pass/fail rubric findings"],',
+  '      "test_plan": ["live Notion agent test prompts or checks"]',
+  '    },',
+  '    "status_transition": {',
+  '      "from": "Updating",',
+  '      "to": "Testing",',
+  '      "allowed": true,',
+  '      "reason": "why the Worker may or may not move the source page to Testing"',
+  '    }',
+  '  },',
   '  "checks": {',
   '    "scenarios": 4,',
   '    "checks_total": 27,',
@@ -244,6 +291,8 @@ const DIFY_AGENT_BUILDER_EVAL_JSON_CONTRACT = [
   'final_instructions must be copy-ready Markdown for the Half Dozen team to paste into a Notion agent: use clear headings, numbered workflow steps, acceptance criteria, test scenarios, and explicit mutation/tool-access guardrails.',
   'Do not place final_instructions inside one giant code fence. Preserve readable instruction structure.',
   'Preserve linked Notion pages/databases as references. Prefer direct links or mentions over copying long database/page descriptions into final_instructions.',
+  'proposed_patch is advisory. The Worker, not Dify, is the Notion/Linear writer. proposed_patch.replace_section.markdown should match final_instructions unless there is a clear reason to keep them different.',
+  'Set proposed_patch.status_transition.allowed to false when the instructions are not ready for Testing or required access/reference context is missing.',
   'status must be either "pass" or "fail". checks must be an object with numeric scenarios, checks_total, checks_passed, and checks_failed.',
   'When readable page body content is absent, evaluate from selected_properties and review_description. Missing page body content is a caveat, not by itself a failure.'
 ].join('\n');
@@ -1505,15 +1554,22 @@ function parseDifyEvalAnswer(
     checks.checks_passed,
     Math.max(0, checksTotal - checksFailed)
   );
+  const recommendedUpgrades = stringArrayFromUnknown(object.recommended_upgrades, 12);
 
   return {
     ok: true,
     output: {
       status,
       review_summary: reviewSummary,
-      recommended_upgrades: stringArrayFromUnknown(object.recommended_upgrades, 12),
+      recommended_upgrades: recommendedUpgrades,
       final_instructions: finalInstructions,
       archived_instructions: archivedInstructions,
+      proposed_patch: normalizeDifyInstructionPatch(object.proposed_patch, {
+        status,
+        reviewSummary,
+        recommendedUpgrades,
+        finalInstructions
+      }),
       checks: {
         scenarios: positiveInteger(checks.scenarios, GOVERNANCE_EVAL_SCENARIOS),
         checks_total: checksTotal,
@@ -1521,6 +1577,46 @@ function parseDifyEvalAnswer(
         checks_failed: checksFailed
       },
       caveats: stringArrayFromUnknown(object.caveats, 8)
+    }
+  };
+}
+
+function normalizeDifyInstructionPatch(
+  value: unknown,
+  fallback: {
+    status: 'pass' | 'fail';
+    reviewSummary: string;
+    recommendedUpgrades: string[];
+    finalInstructions: string;
+  }
+): DifyInstructionPatch {
+  const patch = isRecord(value) ? value : {};
+  const replaceSection = isRecord(patch.replace_section) ? patch.replace_section : {};
+  const appendReport = isRecord(patch.append_report) ? patch.append_report : {};
+  const statusTransition = isRecord(patch.status_transition) ? patch.status_transition : {};
+  const allowed = booleanFromUnknown(statusTransition.allowed) ?? fallback.status === 'pass';
+  const rubric = stringArrayFromUnknown(appendReport.rubric, 12);
+  const testPlan = stringArrayFromUnknown(appendReport.test_plan, 8);
+
+  return {
+    replace_section: {
+      heading: longStringFromUnknown(replaceSection.heading, 120) ?? 'Current Instructions',
+      markdown: longStringFromUnknown(replaceSection.markdown, 24000) ?? fallback.finalInstructions
+    },
+    append_report: {
+      summary: longStringFromUnknown(appendReport.summary, 6000) ?? fallback.reviewSummary,
+      rubric: rubric.length ? rubric : fallback.recommendedUpgrades,
+      test_plan: testPlan
+    },
+    status_transition: {
+      from: longStringFromUnknown(statusTransition.from, 80) ?? 'Updating',
+      to: longStringFromUnknown(statusTransition.to, 80) ?? 'Testing',
+      allowed,
+      reason:
+        longStringFromUnknown(statusTransition.reason, 1000) ??
+        (allowed
+          ? 'Dify eval indicated the instructions are ready for the Worker-controlled Testing handoff.'
+          : 'Dify eval indicated the instructions are not ready for Testing.')
     }
   };
 }
@@ -1556,6 +1652,14 @@ function longStringFromUnknown(value: unknown, maxLength: number): string | unde
   if (typeof value !== 'string') return undefined;
   const trimmed = value.trim();
   return trimmed ? truncate(trimmed, maxLength) : undefined;
+}
+
+function booleanFromUnknown(value: unknown): boolean | undefined {
+  if (typeof value === 'boolean') return value;
+  if (typeof value !== 'string') return undefined;
+  if (value.toLowerCase() === 'true') return true;
+  if (value.toLowerCase() === 'false') return false;
+  return undefined;
 }
 
 function positiveInteger(value: unknown, fallback: number): number {
@@ -1761,9 +1865,20 @@ function buildGovernanceEvalReport(
     ? difyOutput.recommended_upgrades
     : recommendedAgentUpgrades(review);
   const archivedInstructions = difyOutput?.archived_instructions ?? fallbackArchivedInstructions;
-  const finalInstructions =
+  const fallbackFinalInstructions =
     difyOutput?.final_instructions ??
     buildFinalAgentInstructions(review, archivedInstructions, recommendedUpgrades);
+  const proposedPatch =
+    difyOutput?.proposed_patch ??
+    normalizeDifyInstructionPatch(undefined, {
+      status: 'pass',
+      reviewSummary:
+        difyOutput?.review_summary ??
+        `${review.agentName} passed the automated governance eval mirror and is ready for human testing.`,
+      recommendedUpgrades,
+      finalInstructions: fallbackFinalInstructions
+    });
+  const finalInstructions = proposedPatch.replace_section.markdown || fallbackFinalInstructions;
   const reviewSummary =
     difyOutput?.review_summary ??
     [
@@ -1781,11 +1896,30 @@ function buildGovernanceEvalReport(
   const workerRubric = evaluateWorkerRubric(finalInstructions);
   const behaviorSmokeTests = buildBehavioralSmokeTests(finalInstructions);
   const liveTestingChecklist = buildLiveTestingChecklist(behaviorSmokeTests);
-  const success = difySummary.status === 'pass' && difySummary.checks_failed === 0 && workerRubric.status === 'pass';
+  const transitionAllowed =
+    proposedPatch.status_transition.allowed && normalizeKey(proposedPatch.status_transition.to) === 'testing';
+  const success =
+    difySummary.status === 'pass' &&
+    difySummary.checks_failed === 0 &&
+    workerRubric.status === 'pass' &&
+    transitionAllowed;
   const summary = {
     ...difySummary,
     status: success ? difySummary.status : 'fail'
   } satisfies GovernanceEvalReport['summary'];
+  const patchApplication: WorkerPatchApplication = {
+    writer: 'cloudflare-worker',
+    mode: 'append_versioned_handoff',
+    applied: success,
+    notes: [
+      'Dify proposed the instruction patch; the Cloudflare Worker validated the patch and remained the only Notion/Linear writer.',
+      `Replace section target: ${proposedPatch.replace_section.heading}.`,
+      `Status transition intent: ${proposedPatch.status_transition.from} -> ${proposedPatch.status_transition.to}; allowed=${proposedPatch.status_transition.allowed}.`,
+      success
+        ? 'Worker accepted the patch for the versioned Testing handoff.'
+        : 'Worker did not complete the Testing handoff because Dify checks, Worker rubric, or transition intent failed.'
+    ]
+  };
   const executionTarget =
     difyEval.status === 'used'
       ? 'dify-halfdozen-agent-builder-eval'
@@ -1801,6 +1935,9 @@ function buildGovernanceEvalReport(
       : []),
     ...(workerRubric.status === 'pass' && workerRubric.checks_failed > 0
       ? ['Worker rubric passed all critical checks but found non-critical instruction gaps; review those before Validated or Active status.']
+      : []),
+    ...(!transitionAllowed
+      ? [`Dify patch did not allow the Worker-controlled Testing transition: ${proposedPatch.status_transition.reason}`]
       : []),
     ...(behaviorSmokeTests.some((test) => !test.covered)
       ? ['Behavioral smoke coverage is incomplete; run or add scenario-specific tests before Validated or Active status.']
@@ -1833,6 +1970,8 @@ function buildGovernanceEvalReport(
       recommended_upgrades: recommendedUpgrades,
       final_instructions: finalInstructions,
       archived_instructions: archivedInstructions,
+      proposed_patch: proposedPatch,
+      patch_application: patchApplication,
       worker_rubric: workerRubric,
       behavior_smoke_tests: behaviorSmokeTests,
       live_testing_checklist: liveTestingChecklist,
@@ -1888,6 +2027,20 @@ function buildGovernanceEvalReport(
     '',
     INSTRUCTION_READINESS_CLAIM_BOUNDARY,
     '',
+    '## Dify Proposed Patch',
+    '',
+    `- Replace section: ${proposedPatch.replace_section.heading}`,
+    `- Status transition: ${proposedPatch.status_transition.from} -> ${proposedPatch.status_transition.to}`,
+    `- Transition allowed: ${proposedPatch.status_transition.allowed}`,
+    `- Transition reason: ${proposedPatch.status_transition.reason}`,
+    '',
+    '## Worker Patch Application',
+    '',
+    `- Writer: ${patchApplication.writer}`,
+    `- Mode: ${patchApplication.mode}`,
+    `- Applied: ${patchApplication.applied}`,
+    ...patchApplication.notes.map((note) => `- ${note}`),
+    '',
     '## Worker Rubric',
     '',
     ...workerRubric.checks.map((check) =>
@@ -1905,12 +2058,15 @@ function buildGovernanceEvalReport(
     '',
     '## Live Testing Handoff',
     '',
-    'Before moving this agent from Testing to Validated, run these prompts in the actual Notion agent experience and record pass/fail evidence on this Test Report. If any prompt fails, add the finding to the source page and move it back to Updating for a new eval run.',
+    'Before moving this agent from Testing to Validated, run these prompts in the actual Notion agent experience.',
+    '',
+    LIVE_TESTING_HANDOFF_GUIDANCE,
     '',
     ...liveTestingChecklist.flatMap((item) => [
       `- ${item.label}`,
-      `  Prompt: ${item.prompt}`,
-      `  Expected behavior: ${item.expected_behavior}`
+      `  Prompt to paste: ${item.prompt}`,
+      `  Expected behavior to verify: ${item.expected_behavior}`,
+      '  Evidence to record: Pass/Fail, actual Notion agent response, and any follow-up notes.'
     ]),
     '',
     '## Review Summary',
@@ -1992,6 +2148,8 @@ function buildGovernanceEvalReport(
     recommended_upgrades: recommendedUpgrades,
     final_instructions: finalInstructions,
     archived_instructions: archivedInstructions,
+    proposed_patch: proposedPatch,
+    patch_application: patchApplication,
     worker_rubric: workerRubric,
     behavior_smoke_tests: behaviorSmokeTests,
     live_testing_checklist: liveTestingChecklist,
@@ -2534,6 +2692,17 @@ function agentPageUpdateBlocks(review: NormalizedReviewRequest, report: Governan
     notionParagraphBlock(`Eval scope: ${report.eval_scope}.`),
     notionParagraphBlock(`Claim boundary: ${report.claim_boundary}`),
     notionParagraphBlock(`Webhook request: ${review.requestId}`),
+    notionHeadingBlock(2, 'Dify Proposed Patch'),
+    notionParagraphBlock(`Replace section: ${report.proposed_patch.replace_section.heading}`),
+    notionParagraphBlock(
+      `Status transition: ${report.proposed_patch.status_transition.from} -> ${report.proposed_patch.status_transition.to}; allowed=${report.proposed_patch.status_transition.allowed}.`
+    ),
+    notionParagraphBlock(`Transition reason: ${report.proposed_patch.status_transition.reason}`),
+    notionHeadingBlock(2, 'Worker Patch Application'),
+    notionParagraphBlock(
+      `Writer: ${report.patch_application.writer}. Mode: ${report.patch_application.mode}. Applied: ${report.patch_application.applied}.`
+    ),
+    ...report.patch_application.notes.map((note) => notionBulletedListBlock(note)),
     notionHeadingBlock(2, 'Worker Rubric'),
     ...report.worker_rubric.checks.map((check) =>
       notionBulletedListBlock(
@@ -2548,11 +2717,15 @@ function agentPageUpdateBlocks(review: NormalizedReviewRequest, report: Governan
     ),
     notionHeadingBlock(2, 'Live Testing Handoff'),
     notionParagraphBlock(
-      'Before moving this agent from Testing to Validated, run these prompts in the actual Notion agent experience. Record pass/fail evidence on the Test Report. If any prompt fails, add the finding to this source page and move it back to Updating.'
+      'Before moving this agent from Testing to Validated, run these prompts in the actual Notion agent experience.'
     ),
-    ...report.live_testing_checklist.map((item) =>
-      notionTodoBlock(`${item.label}: ${item.prompt} Expected: ${item.expected_behavior}`)
-    ),
+    notionParagraphBlock(LIVE_TESTING_HANDOFF_GUIDANCE),
+    ...report.live_testing_checklist.flatMap((item) => [
+      notionTodoBlock(item.label),
+      notionParagraphBlock(`Prompt to paste: ${item.prompt}`),
+      notionParagraphBlock(`Expected behavior to verify: ${item.expected_behavior}`),
+      notionParagraphBlock('Evidence to record: Pass/Fail, actual Notion agent response, and any follow-up notes.')
+    ]),
     notionHeadingBlock(2, 'Review Summary'),
     ...notionParagraphBlocks(report.review_summary),
     notionHeadingBlock(2, 'Recommended Upgrades or Modifications'),
@@ -2571,6 +2744,9 @@ function agentPageUpdateBlocks(review: NormalizedReviewRequest, report: Governan
     notionParagraphBlock(`Source: ${report.notion_test_report.source}`),
     notionParagraphBlock(`Eval scope: ${report.eval_scope}.`),
     notionParagraphBlock(`Claim boundary: ${report.claim_boundary}`),
+    notionParagraphBlock(
+      `Patch application: ${report.patch_application.applied ? 'accepted' : 'not accepted'} by ${report.patch_application.writer}.`
+    ),
     notionParagraphBlock(`Eval engine: ${report.execution_target}. Dify eval: ${report.dify_eval?.status ?? 'not recorded'}.`),
     notionParagraphBlock(
       report.success
@@ -2743,6 +2919,8 @@ function automatedWorkflowComment(
     `Eval scope: ${report.eval_scope}`,
     `Claim boundary: ${report.claim_boundary}`,
     `Eval engine: ${report.execution_target}`,
+    `Dify patch transition: ${report.proposed_patch.status_transition.from} -> ${report.proposed_patch.status_transition.to}; allowed=${report.proposed_patch.status_transition.allowed}`,
+    `Worker patch application: ${report.patch_application.applied ? 'accepted' : 'not accepted'} (${report.patch_application.mode})`,
     `Dify eval: ${report.dify_eval?.status ?? 'not recorded'}${report.dify_eval?.message_id ? ` (${report.dify_eval.message_id})` : report.dify_eval?.error ? ` (${report.dify_eval.error})` : ''}`,
     `Dify checks: ${report.summary.checks_passed}/${report.summary.checks_total}`,
     `Worker rubric: ${report.worker_rubric.checks_passed}/${report.worker_rubric.checks_total}`,
@@ -2936,6 +3114,8 @@ export {
   buildBehavioralSmokeTests,
   canonicalPageContent,
   evaluateWorkerRubric,
+  LIVE_TESTING_HANDOFF_GUIDANCE,
   notionMarkdownBlocks,
+  parseDifyEvalAnswer,
   richTextPlain
 };
