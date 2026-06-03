@@ -200,11 +200,12 @@ const DIFY_AGENT_BUILDER_EVAL_JSON_CONTRACT = [
   '  },',
   '  "caveats": ["live Notion access gaps or material limitations"]',
   '}',
-  'status must be either "pass" or "fail". checks must be an object with numeric scenarios, checks_total, checks_passed, and checks_failed.'
+  'status must be either "pass" or "fail". checks must be an object with numeric scenarios, checks_total, checks_passed, and checks_failed.',
+  'When readable page body content is absent, evaluate from selected_properties and review_description. Missing page body content is a caveat, not by itself a failure.'
 ].join('\n');
 
 export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
+  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
 
     if (request.method === 'OPTIONS') {
@@ -234,47 +235,91 @@ export default {
     const payload = await readJson(request);
     if (!payload.ok) return payload.response;
 
-    const review = await enrichReviewWithNotionContent(env, normalizeReviewRequest(payload.value));
-    const destinations: DestinationResult[] = [];
-    let linearIssue: LinearIssue | undefined;
-
-    if (env.LINEAR_API_KEY) {
-      const issueResult = await createLinearReviewIssue(env, review);
-      if (!issueResult.ok) return issueResult.response;
-      linearIssue = issueResult.issue;
-      const workflowResult = await createLinearWorkflowIssues(env, review, linearIssue);
-      if (!workflowResult.ok) return workflowResult.response;
-      const automationResult = await completeAutomatedWorkflow(env, review, linearIssue, workflowResult.issues);
-      if (!automationResult.ok) {
-        return jsonResponse({ error: automationResult.error }, 502);
-      }
-      destinations.push({
-        type: 'linear',
-        ok: true,
-        issue: linearIssue,
-        reused: issueResult.reused,
-        workflowIssues: workflowResult.issues,
-        automation: automationResult
-      });
+    const review = normalizeReviewRequest(payload.value);
+    if (url.searchParams.get('sync') === '1' || request.headers.get('x-agent-review-sync') === 'true') {
+      return processReviewWorkflow(env, review);
     }
 
-    if (env.SLACK_WEBHOOK_URL) {
-      const slackResult = await sendSlackNotification(env.SLACK_WEBHOOK_URL, review, linearIssue);
-      destinations.push(slackResult);
-    }
-
-    if (destinations.length === 0) {
-      return jsonResponse({ error: 'No notification destination is configured.' }, 500);
-    }
+    ctx.waitUntil(processReviewWorkflowInBackground(env, review));
 
     return jsonResponse({
       success: true,
+      accepted: true,
+      status: 'queued',
       request_id: review.requestId,
-      agent_name: review.agentName,
-      destinations
+      agent_name: review.agentName
     });
   }
 } satisfies ExportedHandler<Env>;
+
+async function processReviewWorkflowInBackground(env: Env, review: NormalizedReviewRequest): Promise<void> {
+  try {
+    const response = await processReviewWorkflow(env, review);
+    const logPayload = {
+      request_id: review.requestId,
+      agent_name: review.agentName,
+      status: response.status,
+      ok: response.ok
+    };
+
+    if (response.ok) {
+      console.log('Half Dozen agent review workflow completed', JSON.stringify(logPayload));
+    } else {
+      console.error('Half Dozen agent review workflow failed', JSON.stringify(logPayload));
+    }
+  } catch (error) {
+    console.error(
+      'Half Dozen agent review workflow crashed',
+      JSON.stringify({
+        request_id: review.requestId,
+        agent_name: review.agentName,
+        error: error instanceof Error ? error.message : String(error)
+      })
+    );
+  }
+}
+
+async function processReviewWorkflow(env: Env, initialReview: NormalizedReviewRequest): Promise<Response> {
+  const review = await enrichReviewWithNotionContent(env, initialReview);
+  const destinations: DestinationResult[] = [];
+  let linearIssue: LinearIssue | undefined;
+
+  if (env.LINEAR_API_KEY) {
+    const issueResult = await createLinearReviewIssue(env, review);
+    if (!issueResult.ok) return issueResult.response;
+    linearIssue = issueResult.issue;
+    const workflowResult = await createLinearWorkflowIssues(env, review, linearIssue);
+    if (!workflowResult.ok) return workflowResult.response;
+    const automationResult = await completeAutomatedWorkflow(env, review, linearIssue, workflowResult.issues);
+    if (!automationResult.ok) {
+      return jsonResponse({ error: automationResult.error }, 502);
+    }
+    destinations.push({
+      type: 'linear',
+      ok: true,
+      issue: linearIssue,
+      reused: issueResult.reused,
+      workflowIssues: workflowResult.issues,
+      automation: automationResult
+    });
+  }
+
+  if (env.SLACK_WEBHOOK_URL) {
+    const slackResult = await sendSlackNotification(env.SLACK_WEBHOOK_URL, review, linearIssue);
+    destinations.push(slackResult);
+  }
+
+  if (destinations.length === 0) {
+    return jsonResponse({ error: 'No notification destination is configured.' }, 500);
+  }
+
+  return jsonResponse({
+    success: true,
+    request_id: review.requestId,
+    agent_name: review.agentName,
+    destinations
+  });
+}
 
 function validateWebhookSecret(request: Request, env: Env): Response | undefined {
   const acceptedSecrets = [env.WEBHOOK_SECRET, env.WEBHOOK_REPLAY_SECRET].filter((secret): secret is string =>
@@ -498,16 +543,53 @@ async function enrichReviewWithNotionContent(
     };
   }
 
-  const content = await fetchNotionPageContent(env, notionPageId);
-  return {
+  const metadata = await fetchNotionPageMetadata(env, notionPageId);
+  const mergedProperties = {
+    ...(metadata.properties ?? {}),
+    ...review.properties
+  };
+  const lookup = buildLookup(mergedProperties);
+  const enrichedReview = {
     ...review,
     pageUrl: review.pageUrl ?? notionPageUrl,
+    properties: mergedProperties,
+    agentUrl: review.agentUrl ?? pick(lookup, 'Agent URL', 'Agent Link', 'URL'),
+    status: review.status ?? pick(lookup, 'Status', 'Agent Status'),
+    priority: review.priority ?? pick(lookup, 'Priority'),
+    type: review.type ?? pick(lookup, 'Type', 'Agent Type'),
+    activated: review.activated ?? pick(lookup, 'Activated', 'Active'),
+    description: review.description ?? pick(lookup, 'Agent Description', 'Description', 'Request', 'Review Notes')
+  };
+
+  const content = await fetchNotionPageContent(env, notionPageId);
+  const alternateContentUrl = alternateNotionContentUrl(enrichedReview.agentUrl, notionPageUrl);
+  const alternateContentId = alternateContentUrl ? notionPageIdFromUrl(alternateContentUrl) : undefined;
+  const alternateContent =
+    !content.pageContent && alternateContentId
+      ? await fetchNotionPageContent(env, alternateContentId)
+      : undefined;
+  const warnings = [
+    metadata.warning,
+    content.pageContent ? undefined : content.warning,
+    alternateContent?.pageContent ? undefined : alternateContent?.warning
+  ].filter((warning): warning is string => Boolean(warning));
+
+  return {
+    ...enrichedReview,
     enrichment: {
       notionPageId,
       notionPageUrl,
-      ...content
+      pageContent: content.pageContent ?? alternateContent?.pageContent,
+      warning: warnings.length ? warnings.join(' ') : undefined
     }
   };
+}
+
+function alternateNotionContentUrl(candidate: string | undefined, sourceUrl: string | undefined): string | undefined {
+  const candidateId = candidate ? notionPageIdFromUrl(candidate) : undefined;
+  if (!candidateId) return undefined;
+  const sourceId = sourceUrl ? notionPageIdFromUrl(sourceUrl) : undefined;
+  return candidateId !== sourceId ? candidate : undefined;
 }
 
 function findNotionPageUrl(env: Env, review: NormalizedReviewRequest): string | undefined {
@@ -552,12 +634,63 @@ async function fetchNotionPageContent(
     return { warning: result.warning };
   }
 
-  const pageContent = truncate(result.lines.join('\n').replace(/\n{3,}/g, '\n\n').trim(), MAX_NOTION_CONTENT_LENGTH);
+  const pageContent = canonicalPageContent(result.lines.join('\n').replace(/\n{3,}/g, '\n\n').trim());
   if (!pageContent) {
     return { warning: 'Notion API returned no readable page content for this page.' };
   }
 
   return { pageContent };
+}
+
+function canonicalPageContent(content: string): string | undefined {
+  const trimmed = content.trim();
+  if (!trimmed) return undefined;
+
+  const lines = trimmed.split('\n');
+  const finalInstructionIndices = lines
+    .map((line, index) => ({ line: line.trim(), index }))
+    .filter(({ line }) => /^#{1,3}\s+Final Instructions$/i.test(line))
+    .map(({ index }) => index);
+
+  const latestFinalInstructionsIndex = finalInstructionIndices.at(-1);
+  if (latestFinalInstructionsIndex !== undefined) {
+    const endIndex = lines.findIndex((line, index) =>
+      index > latestFinalInstructionsIndex && /^#{1,3}\s+Archived Submitted Instructions$/i.test(line.trim())
+    );
+    const extracted = lines
+      .slice(latestFinalInstructionsIndex + 1, endIndex === -1 ? undefined : endIndex)
+      .join('\n')
+      .trim();
+    if (extracted) return truncate(extracted, MAX_NOTION_CONTENT_LENGTH);
+  }
+
+  if (/^#{1,3}\s+Agent Eval Update\b/im.test(trimmed)) return undefined;
+  return truncate(trimmed, MAX_NOTION_CONTENT_LENGTH);
+}
+
+async function fetchNotionPageMetadata(
+  env: Env,
+  pageId: string
+): Promise<{ properties?: Record<string, string>; warning?: string }> {
+  const response = await fetch(`${NOTION_API_BASE}/pages/${pageId}`, {
+    headers: notionHeaders(env)
+  });
+  const body = (await response.json()) as UnknownRecord;
+
+  if (!response.ok) {
+    return {
+      warning: `Notion page metadata fetch failed with HTTP ${response.status}: ${notionErrorMessage(body)}`
+    };
+  }
+
+  const properties = isRecord(body.properties) ? body.properties : undefined;
+  if (!properties) {
+    return { warning: 'Notion page metadata did not include properties.' };
+  }
+
+  return {
+    properties: normalizeProperties(properties)
+  };
 }
 
 async function fetchNotionBlockChildren(
@@ -1188,6 +1321,22 @@ function difyAgentBuilderInputs(review: NormalizedReviewRequest): Record<string,
   };
 }
 
+function submittedInstructionsForReview(review: NormalizedReviewRequest): string {
+  if (review.enrichment?.pageContent) return review.enrichment.pageContent;
+
+  const propertyLines = Object.entries(review.properties)
+    .filter(([, value]) => Boolean(value))
+    .map(([key, value]) => `- ${key}: ${value}`);
+  const sections = [
+    review.description ? ['Review description:', review.description].join('\n') : undefined,
+    propertyLines.length ? ['Selected Notion properties:', ...propertyLines].join('\n') : undefined
+  ].filter((section): section is string => Boolean(section));
+
+  return sections.length
+    ? truncate(sections.join('\n\n'), MAX_NOTION_CONTENT_LENGTH)
+    : 'No submitted instructions were available in the webhook payload, source page properties, or readable Notion page content.';
+}
+
 function difyAgentBuilderQuery(
   review: NormalizedReviewRequest,
   parentIssue: LinearIssue,
@@ -1211,10 +1360,7 @@ function difyAgentBuilderQuery(
         source_page_url: review.pageUrl ?? review.enrichment?.notionPageUrl,
         selected_properties: review.properties,
         review_description: review.description,
-        submitted_instructions:
-          review.enrichment?.pageContent ??
-          review.description ??
-          'No submitted instructions were available in the webhook payload or readable Notion page content.',
+        submitted_instructions: submittedInstructionsForReview(review),
         linear_intake: {
           identifier: parentIssue.identifier,
           url: parentIssue.url
@@ -1376,10 +1522,7 @@ function buildGovernanceEvalReport(
 ): GovernanceEvalReport {
   const generatedAt = new Date().toISOString();
   const runLabel = `${generatedAt.replace(/\.\d{3}Z$/, 'Z')} ${review.requestId.slice(0, 8)}`;
-  const fallbackArchivedInstructions =
-    review.enrichment?.pageContent ??
-    review.description ??
-    'No submitted instructions were available in the webhook payload or readable Notion page content.';
+  const fallbackArchivedInstructions = submittedInstructionsForReview(review);
   const difyOutput = difyEval.status === 'used' ? difyEval.output : undefined;
   const recommendedUpgrades = difyOutput?.recommended_upgrades.length
     ? difyOutput.recommended_upgrades
@@ -1835,17 +1978,78 @@ function notionHeaders(env: Env): HeadersInit {
 }
 
 function notionMarkdownBlocks(markdown: string): UnknownRecord[] {
-  return markdown
-    .split(/\n{2,}/)
-    .flatMap((chunk) => chunkText(chunk.trim(), 1800))
-    .filter(Boolean)
-    .map((chunk) => ({
-      object: 'block',
-      type: 'paragraph',
-      paragraph: {
-        rich_text: notionRichText(chunk)
+  const blocks: UnknownRecord[] = [];
+  const paragraphLines: string[] = [];
+  let codeLines: string[] | undefined;
+  let codeLanguage = 'plain text';
+
+  const flushParagraph = () => {
+    const content = paragraphLines.join('\n').trim();
+    paragraphLines.length = 0;
+    if (!content) return;
+    blocks.push(...notionParagraphBlocks(content));
+  };
+
+  const flushCode = () => {
+    if (!codeLines) return;
+    blocks.push(...notionCodeBlocks(codeLines.join('\n'), codeLanguage));
+    codeLines = undefined;
+    codeLanguage = 'plain text';
+  };
+
+  for (const rawLine of markdown.split('\n')) {
+    const line = rawLine.trimEnd();
+    const trimmed = line.trim();
+    const codeFence = trimmed.match(/^```([a-zA-Z0-9_-]+)?$/);
+
+    if (codeFence) {
+      if (codeLines) {
+        flushCode();
+      } else {
+        flushParagraph();
+        codeLanguage = codeFence[1] ?? 'plain text';
+        codeLines = [];
       }
-    }));
+      continue;
+    }
+
+    if (codeLines) {
+      codeLines.push(line);
+      continue;
+    }
+
+    if (!trimmed) {
+      flushParagraph();
+      continue;
+    }
+
+    const heading = trimmed.match(/^(#{1,3})\s+(.+)$/);
+    if (heading) {
+      flushParagraph();
+      blocks.push(notionHeadingBlock(Math.min(heading[1].length, 3) as 1 | 2 | 3, heading[2]));
+      continue;
+    }
+
+    const bullet = trimmed.match(/^[-*]\s+(.+)$/);
+    if (bullet) {
+      flushParagraph();
+      blocks.push(notionBulletedListBlock(bullet[1]));
+      continue;
+    }
+
+    const numbered = trimmed.match(/^\d+[.)]\s+(.+)$/);
+    if (numbered) {
+      flushParagraph();
+      blocks.push(notionNumberedListBlock(numbered[1]));
+      continue;
+    }
+
+    paragraphLines.push(trimmed);
+  }
+
+  flushParagraph();
+  flushCode();
+  return blocks;
 }
 
 function notionRichText(content: string): UnknownRecord[] {
@@ -2033,7 +2237,7 @@ function agentPageUpdateBlocks(review: NormalizedReviewRequest, report: Governan
     notionHeadingBlock(2, 'Recommended Upgrades or Modifications'),
     ...report.recommended_upgrades.map((upgrade) => notionBulletedListBlock(upgrade)),
     notionHeadingBlock(2, 'Final Instructions'),
-    ...notionCodeBlocks(report.final_instructions),
+    ...notionMarkdownBlocks(report.final_instructions),
     notionHeadingBlock(2, 'Archived Submitted Instructions'),
     ...notionCodeBlocks(report.archived_instructions),
     ...(report.caveats.length
@@ -2090,13 +2294,23 @@ function notionBulletedListBlock(content: string): UnknownRecord {
   };
 }
 
-function notionCodeBlocks(content: string): UnknownRecord[] {
+function notionNumberedListBlock(content: string): UnknownRecord {
+  return {
+    object: 'block',
+    type: 'numbered_list_item',
+    numbered_list_item: {
+      rich_text: notionRichText(content)
+    }
+  };
+}
+
+function notionCodeBlocks(content: string, language = 'plain text'): UnknownRecord[] {
   return chunkText(content, 1800).map((chunk) => ({
     object: 'block',
     type: 'code',
     code: {
       rich_text: notionRichText(chunk),
-      language: 'plain text'
+      language
     }
   }));
 }
