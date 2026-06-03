@@ -1,0 +1,30 @@
+name = "halfdozen-blondish-sync-mcp"
+main = "src/index.ts"
+compatibility_date = "2026-05-28"
+compatibility_flags = ["nodejs_compat"]
+account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
+workers_dev = true
+
+[observability]
+enabled = true
+
+[[durable_objects.bindings]]
+name = "MCP_OBJECT"
+class_name = "BlondishSyncMcp"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["BlondishSyncMcp"]
+
+[vars]
+BLONDISH_SUPPORT_TICKETS_DATA_SOURCE_ID = "fda87fb8-b156-820b-9542-8774717a42f6"
+HALFDOZEN_TICKETS_DATA_SOURCE_TITLE = "Tickets [HD]"
+BLONDISH_OS_STATUS_PROPERTY = "Status"
+
+# Required secrets before live writes:
+# MCP_API_KEY
+# BLONDISH_NOTION_API_KEY
+# HALFDOZEN_NOTION_API_KEY
+#
+# Optional:
+# HALFDOZEN_TICKETS_DATA_SOURCE_ID
