@@ -2,10 +2,12 @@
   import { Button, Dialog, Input, Label, Textarea } from './ui';
   import CarouselUploader from './CarouselUploader.svelte';
   import ImageUploader from './ImageUploader.svelte';
+  import LongDescriptionEditor from './LongDescriptionEditor.svelte';
   import SecondaryThumbnailUploader from './SecondaryThumbnailUploader.svelte';
   import type { Asset, AssetUpdateData } from '$lib/server/airtable';
   import { toast } from '$lib/stores/toast';
   import { trackEvent } from '$lib/utils/analytics';
+  import { sanitizeLongDescriptionHtml } from '@create-something/webflow-dashboard-core/long-description';
 
   const APP_CAPABILITY_OPTIONS = ['Data Client v2', 'Designer Extension', 'Hybrid'] as const;
   const APP_SCOPE_OPTIONS = [
@@ -159,7 +161,9 @@
     return {
       name: currentAsset.name,
       descriptionShort: currentAsset.descriptionShort || '',
-      descriptionLongHtml: currentAsset.descriptionLongHtml || currentAsset.description || '',
+      descriptionLongHtml: sanitizeLongDescriptionHtml(
+        currentAsset.descriptionLongHtml || currentAsset.description || ''
+      ),
       websiteUrl: currentAsset.websiteUrl || '',
       previewUrl: currentAsset.previewUrl || '',
       appCapabilities: currentAsset.appCapabilities || '',
@@ -680,7 +684,7 @@
 
       const payload: AssetUpdateData = {
         descriptionShort: formData.descriptionShort,
-        descriptionLongHtml: formData.descriptionLongHtml,
+        descriptionLongHtml: sanitizeLongDescriptionHtml(formData.descriptionLongHtml),
         websiteUrl: formData.websiteUrl,
         thumbnailUrl,
         carouselImages
@@ -867,14 +871,16 @@
         <Label for="descriptionLongHtml"
           >{isAppAsset ? 'App Detail Description' : 'Long Description'}</Label
         >
-        <Textarea
+        <LongDescriptionEditor
           id="descriptionLongHtml"
-          bind:value={formData.descriptionLongHtml}
+          value={formData.descriptionLongHtml}
+          onchange={(value) => (formData.descriptionLongHtml = value)}
           placeholder="Detailed description"
-          rows={isAppAsset ? 6 : 4}
+          disabled={isLoading}
         />
         {#if isAppAsset}
-          <span class="field-hint">Long-form marketplace detail copy. HTML is preserved as-is.</span
+          <span class="field-hint"
+            >Long-form marketplace detail copy is saved as sanitized HTML.</span
           >
         {/if}
       </div>

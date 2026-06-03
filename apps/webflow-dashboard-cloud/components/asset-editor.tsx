@@ -1,9 +1,11 @@
 'use client';
 
 import type { Asset } from '@create-something/webflow-dashboard-core/airtable';
+import { sanitizeLongDescriptionHtml } from '@create-something/webflow-dashboard-core/long-description';
 import { useMemo, useState } from 'react';
 import { ConfirmDialog } from './confirm-dialog';
 import { appPath } from '../lib/runtime-paths';
+import { QuillEditor } from './quill-editor';
 
 async function uploadFile(file: File, type: 'thumbnail' | 'image') {
   const formData = new FormData();
@@ -31,6 +33,9 @@ export function AssetEditor({ asset }: { asset: Asset }) {
   const [secondaryFiles, setSecondaryFiles] = useState<File[]>([]);
   const [carouselFiles, setCarouselFiles] = useState<File[]>([]);
   const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
+  const [descriptionLongHtml, setDescriptionLongHtml] = useState(
+    sanitizeLongDescriptionHtml(asset.descriptionLongHtml || '')
+  );
 
   const existingSecondaryThumbnails = useMemo(
     () =>
@@ -65,7 +70,7 @@ export function AssetEditor({ asset }: { asset: Asset }) {
       const payload = {
         name: String(formData.get('name') || ''),
         descriptionShort: String(formData.get('descriptionShort') || ''),
-        descriptionLongHtml: String(formData.get('descriptionLongHtml') || ''),
+        descriptionLongHtml: sanitizeLongDescriptionHtml(descriptionLongHtml),
         websiteUrl: String(formData.get('websiteUrl') || ''),
         previewUrl: String(formData.get('previewUrl') || ''),
         thumbnailUrl: thumbnailUrl || null,
@@ -157,13 +162,20 @@ export function AssetEditor({ asset }: { asset: Asset }) {
 
           <div className="field">
             <label className="field-label" htmlFor="descriptionLongHtml">
-              Long description HTML
+              Long description
             </label>
-            <textarea
-              className="field-textarea"
+            <input
               id="descriptionLongHtml"
               name="descriptionLongHtml"
-              defaultValue={asset.descriptionLongHtml || ''}
+              type="hidden"
+              value={descriptionLongHtml}
+              readOnly
+            />
+            <QuillEditor
+              id="descriptionLongDescriptionEditor"
+              value={descriptionLongHtml}
+              onChange={setDescriptionLongHtml}
+              placeholder="Write the marketplace detail content..."
             />
           </div>
 
