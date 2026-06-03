@@ -113,6 +113,7 @@ interface GovernanceEvalReport {
     message_id?: string;
     conversation_id?: string;
     error?: string;
+    raw_answer?: string;
   };
   notion_test_report: {
     database_name: 'Test Reports [OS]';
@@ -1374,6 +1375,7 @@ function buildGovernanceEvalReport(
   difyEval: DifyAgentBuilderEvalResult
 ): GovernanceEvalReport {
   const generatedAt = new Date().toISOString();
+  const runLabel = `${generatedAt.replace(/\.\d{3}Z$/, 'Z')} ${review.requestId.slice(0, 8)}`;
   const fallbackArchivedInstructions =
     review.enrichment?.pageContent ??
     review.description ??
@@ -1418,6 +1420,48 @@ function buildGovernanceEvalReport(
     difyEval.status === 'used'
       ? 'Dify Agent Builder Eval completed through Service API; Worker handled Notion and Linear writes.'
       : 'Set DIFY_HALFDOZEN_AGENT_BUILDER_EVAL_API_KEY after importing the Dify app to use the sandboxed eval engine.';
+  const difyEvalDetails = {
+    status: difyEval.status,
+    message_id: difyEval.messageId,
+    conversation_id: difyEval.conversationId,
+    error: difyEval.error,
+    raw_answer: difyEval.answer
+  };
+  const fullReviewDifyDetails = {
+    ...difyEvalDetails,
+    raw_answer: difyEval.answer ? 'See Raw Dify Response section.' : undefined
+  };
+  const fullReviewJson = JSON.stringify(
+    {
+      status: summary.status,
+      checks: summary,
+      review_summary: reviewSummary,
+      recommended_upgrades: recommendedUpgrades,
+      final_instructions: finalInstructions,
+      archived_instructions: archivedInstructions,
+      caveats,
+      dify_eval: fullReviewDifyDetails,
+      source: {
+        webhook_request_id: review.requestId,
+        agent_name: review.agentName,
+        page_url: review.pageUrl ?? review.enrichment?.notionPageUrl,
+        page_id: review.enrichment?.notionPageId
+      },
+      linear: {
+        intake: {
+          identifier: parentIssue.identifier,
+          url: parentIssue.url
+        },
+        workflow_issues: workflowIssues.map((issue) => ({
+          identifier: issue.identifier,
+          step: issue.step,
+          url: issue.url
+        }))
+      }
+    },
+    null,
+    2
+  );
   const markdown = [
     '# Half Dozen Agent Builder Eval',
     '',
@@ -1429,8 +1473,11 @@ function buildGovernanceEvalReport(
     `- Scenarios: ${summary.scenarios}`,
     `- Checks: ${summary.checks_passed}/${summary.checks_total}`,
     `- Dify eval: ${difyEval.status}${difyEval.messageId ? ` (${difyEval.messageId})` : ''}`,
+    `- Dify conversation: ${difyEval.conversationId ?? 'not recorded'}`,
+    `- Webhook request: ${review.requestId}`,
     `- Intake: ${parentIssue.identifier} ${parentIssue.url}`,
     `- Agent: ${review.agentName}`,
+    `- Source page: ${review.pageUrl ?? review.enrichment?.notionPageUrl ?? 'not provided'}`,
     `- Follow-ups: ${workflowIssues.map((issue) => `${issue.identifier} (${issue.step})`).join(', ') || 'none'}`,
     '',
     '## Result',
@@ -1459,6 +1506,46 @@ function buildGovernanceEvalReport(
           '',
           ...caveats.map((caveat) => `- ${caveat}`)
         ]
+      : []),
+    '',
+    '## Eval Details',
+    '',
+    `Execution target: ${executionTarget}`,
+    '',
+    `Future execution target: ${futureExecutionTarget}`,
+    '',
+    `Dify status: ${difyEval.status}`,
+    '',
+    `Dify message ID: ${difyEval.messageId ?? 'not recorded'}`,
+    '',
+    `Dify conversation ID: ${difyEval.conversationId ?? 'not recorded'}`,
+    '',
+    `Dify error: ${difyEval.error ?? 'none'}`,
+    '',
+    `Webhook request ID: ${review.requestId}`,
+    '',
+    `Source page ID: ${review.enrichment?.notionPageId ?? 'not provided'}`,
+    '',
+    `Source page URL: ${review.pageUrl ?? review.enrichment?.notionPageUrl ?? 'not provided'}`,
+    '',
+    `Linear intake: ${parentIssue.identifier} ${parentIssue.url}`,
+    '',
+    `Linear follow-ups: ${workflowIssues.map((issue) => `${issue.identifier} (${issue.step}) ${issue.url}`).join(', ') || 'none'}`,
+    '',
+    '## Full Review JSON',
+    '',
+    '```json',
+    fullReviewJson,
+    '```',
+    ...(difyEval.answer
+      ? [
+          '',
+          '## Raw Dify Response',
+          '',
+          '```json',
+          difyEval.answer,
+          '```'
+        ]
       : [])
   ].join('\n');
 
@@ -1476,14 +1563,11 @@ function buildGovernanceEvalReport(
     archived_instructions: archivedInstructions,
     caveats,
     dify_eval: {
-      status: difyEval.status,
-      message_id: difyEval.messageId,
-      conversation_id: difyEval.conversationId,
-      error: difyEval.error
+      ...difyEvalDetails
     },
     notion_test_report: {
       database_name: 'Test Reports [OS]',
-      title: `Half Dozen Agent Eval - ${review.agentName} - ${generatedAt.slice(0, 10)}`,
+      title: `Half Dozen Agent Eval - ${review.agentName} - ${runLabel}`,
       status: summary.status,
       source: difyEval.status === 'used'
         ? 'Dify Agent Builder Eval via Cloudflare Worker webhook automation'
@@ -1550,13 +1634,14 @@ async function publishNotionTestReport(
     };
   }
 
+  const children = notionMarkdownBlocks(report.notion_test_report.markdown);
   const response = await fetch(`${NOTION_API_BASE}/pages`, {
     method: 'POST',
     headers: notionHeaders(env),
     body: JSON.stringify({
       parent: { database_id: databaseId },
       properties,
-      children: notionMarkdownBlocks(report.notion_test_report.markdown)
+      children: children.slice(0, 100)
     })
   });
   const body = (await response.json()) as UnknownRecord;
@@ -1569,11 +1654,26 @@ async function publishNotionTestReport(
     };
   }
 
+  const pageId = stringFromUnknown(body.id);
+  if (pageId && children.length > 100) {
+    const appended = await appendNotionBlocks(env, pageId, children.slice(100));
+    if (!appended.ok) {
+      return {
+        ok: false,
+        status: 'failed',
+        databaseId,
+        pageId,
+        pageUrl: stringFromUnknown(body.url),
+        reason: `Notion Test Reports detail append failed after page creation: ${appended.reason}`
+      };
+    }
+  }
+
   return {
     ok: true,
     status: 'published',
     databaseId,
-    pageId: stringFromUnknown(body.id),
+    pageId,
     pageUrl: stringFromUnknown(body.url)
   };
 }
@@ -1737,9 +1837,8 @@ function notionHeaders(env: Env): HeadersInit {
 function notionMarkdownBlocks(markdown: string): UnknownRecord[] {
   return markdown
     .split(/\n{2,}/)
-    .map((chunk) => truncate(chunk.trim(), 1800))
+    .flatMap((chunk) => chunkText(chunk.trim(), 1800))
     .filter(Boolean)
-    .slice(0, 80)
     .map((chunk) => ({
       object: 'block',
       type: 'paragraph',
@@ -1926,8 +2025,9 @@ async function updateNotionPageStatus(
 
 function agentPageUpdateBlocks(review: NormalizedReviewRequest, report: GovernanceEvalReport): UnknownRecord[] {
   const blocks: UnknownRecord[] = [
-    notionHeadingBlock(1, `Agent Eval Update - ${report.generated_at.slice(0, 10)}`),
+    notionHeadingBlock(1, `Agent Eval Update - ${report.generated_at.replace(/\.\d{3}Z$/, 'Z')}`),
     notionParagraphBlock(`Result: ${report.summary.status}. Checks: ${report.summary.checks_passed}/${report.summary.checks_total}.`),
+    notionParagraphBlock(`Webhook request: ${review.requestId}`),
     notionHeadingBlock(2, 'Review Summary'),
     ...notionParagraphBlocks(report.review_summary),
     notionHeadingBlock(2, 'Recommended Upgrades or Modifications'),
