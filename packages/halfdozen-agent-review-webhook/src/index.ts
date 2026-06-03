@@ -182,6 +182,25 @@ const GOVERNANCE_EVAL_CHECKS = 27;
 const GOVERNANCE_EVAL_DEFAULT_MODEL = 'gpt-5.5';
 const DIFY_API_BASE_DEFAULT = 'https://api.dify.ai/v1';
 const DIFY_EVAL_TIMEOUT_MS_DEFAULT = 60_000;
+const DIFY_AGENT_BUILDER_EVAL_JSON_CONTRACT = [
+  'Return only valid JSON. Do not wrap it in Markdown.',
+  'Use exactly this top-level shape:',
+  '{',
+  '  "status": "pass" | "fail",',
+  '  "review_summary": "short human-readable summary of readiness for human testing",',
+  '  "recommended_upgrades": ["useful modifications, not broad rewrites"],',
+  '  "final_instructions": "complete updated instructions incorporating recommended upgrades",',
+  '  "archived_instructions": "the submitted instructions that were reviewed",',
+  '  "checks": {',
+  '    "scenarios": 4,',
+  '    "checks_total": 27,',
+  '    "checks_passed": 27,',
+  '    "checks_failed": 0',
+  '  },',
+  '  "caveats": ["live Notion access gaps or material limitations"]',
+  '}',
+  'status must be either "pass" or "fail". checks must be an object with numeric scenarios, checks_total, checks_passed, and checks_failed.'
+].join('\n');
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
@@ -1174,7 +1193,12 @@ function difyAgentBuilderQuery(
   workflowIssues: LinearWorkflowIssue[]
 ): string {
   return [
-    'Evaluate this Half Dozen agent page and return only the required JSON contract.',
+    'Evaluate this Half Dozen agent page for the automated Updating -> Testing webhook flow.',
+    'Use Notion read tools only when useful: search_notion, query_database, retrieve_page, retrieve_database.',
+    'Do not call Notion write tools, create pages, update pages, create databases, update databases, create comments, or mutate external systems.',
+    'The Cloudflare Worker is the only writer for Test Reports [OS], source page append/status, and Linear completion.',
+    '',
+    DIFY_AGENT_BUILDER_EVAL_JSON_CONTRACT,
     '',
     JSON.stringify(
       {

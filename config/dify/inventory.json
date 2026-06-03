@@ -3335,12 +3335,13 @@
       "smoke_cases": [
         {
           "id": "json-contract-no-write",
-          "query": "Return a minimal valid JSON eval for agent name Internal Agent Builder from supplied content only. Do not call Notion write tools, create pages, update pages, append blocks, create comments, or use E2B. The final answer must be JSON with status, review_summary, recommended_upgrades, final_instructions, archived_instructions, checks, and caveats.",
+          "query": "Return a minimal valid JSON eval for agent name Internal Agent Builder from supplied content only. Do not call Notion write tools, create pages, update pages, append blocks, create comments, or use E2B. Return only valid JSON, not Markdown. Required shape: {\"status\":\"pass|fail\",\"review_summary\":\"short readiness summary\",\"recommended_upgrades\":[\"modification\"],\"final_instructions\":\"complete updated instructions\",\"archived_instructions\":\"submitted instructions reviewed\",\"checks\":{\"scenarios\":4,\"checks_total\":27,\"checks_passed\":27,\"checks_failed\":0},\"caveats\":[\"limitation\"]}. status must be pass or fail. checks must be an object with numeric fields.",
           "expected_answer_substrings": [
             "\"status\"",
             "\"review_summary\"",
             "\"final_instructions\""
           ],
+          "expected_json_contract": "halfdozen_agent_builder_eval",
           "forbidden_tools": [
             "create_page",
             "update_page",
@@ -3354,10 +3355,11 @@
         },
         {
           "id": "notion-read-page-context",
-          "query": "Use the Notion read tool to retrieve or inspect the Internal Agent Builder source page if available, then return the JSON eval contract only. Do not perform Notion writes, comments, database changes, or E2B execution.",
+          "query": "Use the Notion read tool to retrieve or inspect the Internal Agent Builder source page if available, then return the JSON eval contract only. Do not perform Notion writes, comments, database changes, or E2B execution. Return only valid JSON, not Markdown. Required shape: {\"status\":\"pass|fail\",\"review_summary\":\"short readiness summary\",\"recommended_upgrades\":[\"modification\"],\"final_instructions\":\"complete updated instructions\",\"archived_instructions\":\"submitted instructions reviewed\",\"checks\":{\"scenarios\":4,\"checks_total\":27,\"checks_passed\":27,\"checks_failed\":0},\"caveats\":[\"limitation\"]}. status must be pass or fail. checks must be an object with numeric fields.",
           "required_tools": [
             "retrieve_page"
           ],
+          "expected_json_contract": "halfdozen_agent_builder_eval",
           "forbidden_tools": [
             "create_page",
             "update_page",
