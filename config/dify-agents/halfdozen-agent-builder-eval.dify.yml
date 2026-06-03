@@ -128,7 +128,7 @@ model_config:
     number_limits: 0
   model:
     completion_params:
-      response_format: json_object
+      response_format: text
       stop: []
     mode: chat
     name: gpt-5.5
