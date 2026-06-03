@@ -771,6 +771,7 @@ const POLICY_LEGACY_COMPAT_SUNSET_ID = 'policy.legacy-compat-sunset.v1';
 const POLICY_MCP_SESSION_SELF_SERVICE_ID = 'policy.mcp-session-self-service.v1';
 const POLICY_USER_BEARER_TOKEN_GOVERNANCE_ID = 'policy.user-bearer-token-governance.v1';
 const WEBFLOW_TEMPLATE_REVIEW_REVIEWER_ACCOUNT_IDS = new Set([
+	'acct_wf_template_review',
 	'acct_wf_natalia',
 	'acct_wf_sudiksha',
 	'acct_wf_eric',
@@ -789,6 +790,9 @@ const WEBFLOW_TEMPLATE_REVIEW_PHASE_A_ALLOWED_TOOL_PREFIXES = [
 	'webflow-template-review-mcp__template_review_list_versions',
 	'webflow-template-review-mcp__template_review_get_version',
 	'webflow-template-review-mcp__template_review_get_review_context',
+	'webflow-template-review-mcp__template_review_get_comprehensive_review_contract',
+	'webflow-template-review-mcp__template_review_format_agent_review_feedback',
+	'webflow-template-review-mcp__template_review_prepare_published_site_sandbox',
 	'webflow-template-review-mcp__template_review_list_releases',
 	'webflow-template-review-mcp__template_review_get_field_map',
 	'webflow-template-review-mcp__template_review_run_published_site_validation',
@@ -796,6 +800,7 @@ const WEBFLOW_TEMPLATE_REVIEW_PHASE_A_ALLOWED_TOOL_PREFIXES = [
 	'webflow-template-review-mcp__template_review_unassign_self',
 	'webflow-template-review-mcp__template_review_request_changes',
 	'webflow-template-review-mcp__template_review_set_review_status',
+	'webflow-template-review-mcp__template_review_save_agent_feedback',
 	'webflow-template-review-mcp__template_review_save_draft_feedback',
 ];
 const DEFAULT_OAUTH_RESOURCE = DEFAULT_MCP_HUB_URL;
@@ -3664,12 +3669,12 @@ function isWebflowTemplateReviewReviewerLane(input: {
 	}
 
 	const host = normalizeOptionalHostName(input.host);
-	if (host?.startsWith('wf-template-review-')) {
+	if (host === 'wf-template-review' || host?.startsWith('wf-template-review-')) {
 		return true;
 	}
 
 	const boundHost = normalizeOptionalHostName(input.boundHost);
-	return Boolean(boundHost?.startsWith('wf-template-review-'));
+	return boundHost === 'wf-template-review' || Boolean(boundHost?.startsWith('wf-template-review-'));
 }
 
 function clampTtlSeconds(raw: number | undefined): number {

@@ -1,6 +1,8 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 
+import { COMPREHENSIVE_REVIEW_WORKFLOW_GUIDANCE } from './comprehensive-review-contract.js';
+
 const REVIEW_CONTEXT = `You are assisting Webflow's Template Review Team. Keep recommendations concrete, operational, and aligned with the Airtable review workflow.
 
 Prioritize:
@@ -51,6 +53,7 @@ Every review follows these phases:
 
 | Tool | What it does | When |
 |------|-------------|------|
+| \`template_review_get_comprehensive_review_contract\` | Returns the canonical comprehensive evidence shape, coverage matrix, rubric dimensions, manual checks, and Agent Review Feedback format | Before comprehensive reports or Agent Review Feedback summaries |
 | \`template_review_run_published_site_validation\` | Runs the working published-site validators: content/assets/accessibility signals, legacy IX2 interactions, GSAP/custom-code policy signals | After \`get_review_context\`, using \`publishedUrl\` only |
 
 This validation path is **read-only** and does not use Designer API data, Preview URLs, or Airtable writes. Treat it as supplemental published-site evidence for review triage, not as a final decision.
@@ -63,6 +66,8 @@ The published-site validators cover:
 - **Custom code / GSAP**: GSAP usage, flagged custom code, security-risk patterns, legacy IX2, and Unicorn Studio embeds
 
 Required utility pages do **not** need root-only slugs. License, Instructions, Changelog, and Style Guide pages may be nested in folders when they are discoverable, return 200, and visible links point to the matching utility page. Flag missing pages, broken pages, missing required license text, or utility links that point to unrelated pages.
+
+${COMPREHENSIVE_REVIEW_WORKFLOW_GUIDANCE}
 
 ### Interpreting Results
 

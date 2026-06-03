@@ -1,0 +1,96 @@
+name: Template Review Hub Agent Feedback
+
+on:
+  schedule:
+    # Bounded hourly sweep for newly submitted Ready for Review template versions.
+    - cron: '17 * * * *'
+  workflow_dispatch:
+    inputs:
+      write:
+        description: 'Authorize Agent Review Feedback writes'
+        type: boolean
+        default: false
+      limit:
+        description: 'Maximum candidate rows'
+        type: string
+        default: '5'
+      since_days:
+        description: 'Submission lookback window'
+        type: string
+        default: '7'
+      concurrency:
+        description: 'Concurrent Dify reviews'
+        type: string
+        default: '1'
+      timeout_ms:
+        description: 'Per-Dify-call timeout'
+        type: string
+        default: '600000'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: template-review-hub-agent-feedback
+  cancel-in-progress: false
+
+jobs:
+  review:
+    name: Review recent blank Agent Review Feedback rows
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    env:
+      AIRTABLE_API_KEY: ${{ secrets.AIRTABLE_API_KEY }}
+      DIFY_TEMPLATE_REVIEW_HUB_API_KEY: ${{ secrets.DIFY_TEMPLATE_REVIEW_HUB_API_KEY }}
+
+    steps:
+      - name: Check live review prerequisites
+        run: |
+          if [ -z "$AIRTABLE_API_KEY" ]; then
+            echo "Missing AIRTABLE_API_KEY secret." >&2
+            exit 1
+          fi
+          if [ -z "$DIFY_TEMPLATE_REVIEW_HUB_API_KEY" ]; then
+            echo "Missing DIFY_TEMPLATE_REVIEW_HUB_API_KEY secret." >&2
+            exit 1
+          fi
+
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.0
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run Template Review Hub queue
+        env:
+          WRITE_INPUT: ${{ github.event.inputs.write }}
+          LIMIT_INPUT: ${{ github.event.inputs.limit }}
+          SINCE_DAYS_INPUT: ${{ github.event.inputs.since_days }}
+          CONCURRENCY_INPUT: ${{ github.event.inputs.concurrency }}
+          TIMEOUT_MS_INPUT: ${{ github.event.inputs.timeout_ms }}
+        run: |
+          LIMIT="${LIMIT_INPUT:-5}"
+          SINCE_DAYS="${SINCE_DAYS_INPUT:-7}"
+          CONCURRENCY="${CONCURRENCY_INPUT:-1}"
+          TIMEOUT_MS="${TIMEOUT_MS_INPUT:-600000}"
+
+          ARGS="--since-days $SINCE_DAYS --limit $LIMIT --concurrency $CONCURRENCY --timeout-ms $TIMEOUT_MS"
+          if [ "$GITHUB_EVENT_NAME" = "schedule" ] || [ "$WRITE_INPUT" = "true" ]; then
+            ARGS="$ARGS --write"
+          else
+            ARGS="$ARGS --dry-run"
+          fi
+
+          pnpm template-review:hub-agent-feedback -- $ARGS
