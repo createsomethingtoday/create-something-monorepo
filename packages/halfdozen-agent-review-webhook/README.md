@@ -165,6 +165,7 @@ Optional secrets:
 wrangler secret put SLACK_WEBHOOK_URL
 wrangler secret put PAGE_URL_BY_AGENT_NAME_JSON
 wrangler secret put TEST_REPORTS_DATABASE_ID
+wrangler secret put TASKS_DATABASE_ID
 wrangler secret put WEBHOOK_REPLAY_SECRET
 wrangler secret put DIFY_HALFDOZEN_AGENT_BUILDER_EVAL_API_KEY
 ```
@@ -180,6 +181,8 @@ CREATE_WORKFLOW_ISSUES = "false" # disables build/eval follow-up issue creation
 AUTO_COMPLETE_WORKFLOW = "false" # disables eval report generation and Linear auto-completion
 UPDATE_SOURCE_AGENT_PAGE = "false" # disables source Notion page rewrite/status update
 TEST_REPORTS_DATABASE_NAME = "Test Reports [OS]" # overrides database discovery name
+TASKS_DATABASE_NAME = "Tasks [HD]" # overrides task handoff database discovery name
+PUBLISH_TASK_HANDOFF = "false" # disables testing task handoff create/update
 DIFY_HALFDOZEN_AGENT_BUILDER_EVAL_BASE_URL = "https://api.dify.ai/v1"
 DIFY_HALFDOZEN_AGENT_BUILDER_EVAL_TIMEOUT_MS = "25000"
 DIFY_SUBMITTED_INSTRUCTIONS_MAX_LENGTH = "5000"

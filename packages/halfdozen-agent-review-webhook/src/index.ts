@@ -19,6 +19,9 @@ interface Env {
   UPDATE_SOURCE_AGENT_PAGE?: string;
   TEST_REPORTS_DATABASE_ID?: string;
   TEST_REPORTS_DATABASE_NAME?: string;
+  TASKS_DATABASE_ID?: string;
+  TASKS_DATABASE_NAME?: string;
+  PUBLISH_TASK_HANDOFF?: string;
   DIFY_HALFDOZEN_AGENT_BUILDER_EVAL_API_KEY?: string;
   DIFY_HALFDOZEN_AGENT_BUILDER_EVAL_BASE_URL?: string;
   DIFY_HALFDOZEN_AGENT_BUILDER_EVAL_TIMEOUT_MS?: string;
@@ -94,6 +97,7 @@ interface AutomatedWorkflowResult {
   report?: GovernanceEvalReport;
   testReport?: NotionPublishResult;
   sourcePageUpdate?: NotionAgentPageUpdateResult;
+  taskHandoff?: NotionTaskHandoffResult;
   completedIssues?: LinearIssue[];
   error?: string;
 }
@@ -251,6 +255,15 @@ interface NotionAgentPageUpdateResult {
   reason?: string;
 }
 
+interface NotionTaskHandoffResult {
+  ok: boolean;
+  status: 'created' | 'updated' | 'skipped' | 'failed';
+  databaseId?: string;
+  pageId?: string;
+  pageUrl?: string;
+  reason?: string;
+}
+
 const DEFAULT_LINEAR_TEAM_KEY = 'CRE';
 const DEFAULT_LINEAR_LABELS = 'linear-coordination,code-quality';
 const LINEAR_API_FALLBACK = 'https://api.linear.app/graphql';
@@ -260,6 +273,8 @@ const MAX_LINEAR_AUTOMATION_COMMENT_LENGTH = 6000;
 const NOTION_API_BASE = 'https://api.notion.com/v1';
 const NOTION_API_VERSION_DEFAULT = '2022-06-28';
 const TEST_REPORTS_DATABASE_NAME_DEFAULT = 'Test Reports [OS]';
+const TASKS_DATABASE_NAME_DEFAULT = 'Tasks [HD]';
+const TASK_HANDOFF_EXISTING_WINDOW_MS = 30 * 60 * 1000;
 const GOVERNANCE_EVAL_SCENARIOS = 4;
 const GOVERNANCE_EVAL_CHECKS = 27;
 const GOVERNANCE_EVAL_DEFAULT_MODEL = 'gpt-5.5';
@@ -1414,13 +1429,15 @@ async function completeAutomatedWorkflow(
   const report = buildGovernanceEvalReport(review, parentIssue, workflowIssues, difyEval);
   const testReport = await publishNotionTestReport(env, review, report);
   const sourcePageUpdate = await updateSourceAgentPage(env, review, report);
+  const taskHandoff = await publishTestingTaskHandoff(env, review, report, testReport, sourcePageUpdate);
   const commentBody = automatedWorkflowComment(
     review,
     parentIssue,
     workflowIssues,
     report,
     testReport,
-    sourcePageUpdate
+    sourcePageUpdate,
+    taskHandoff
   );
   const parentComment = await commentLinearIssue(env, parentIssue.id, commentBody);
   if (!parentComment.ok) {
@@ -1430,6 +1447,7 @@ async function completeAutomatedWorkflow(
       report,
       testReport,
       sourcePageUpdate,
+      taskHandoff,
       error: 'Failed to comment automation evidence on the intake issue.'
     };
   }
@@ -1443,13 +1461,14 @@ async function completeAutomatedWorkflow(
         report,
         testReport,
         sourcePageUpdate,
+        taskHandoff,
         error: `Failed to comment automation evidence on ${issue.identifier}.`
       };
     }
   }
 
   if (!report.success || !testReport.ok || !sourcePageUpdate.ok) {
-    return { ok: true, status: 'failed', report, testReport, sourcePageUpdate };
+    return { ok: true, status: 'failed', report, testReport, sourcePageUpdate, taskHandoff };
   }
 
   const completed = await completeLinearIssues(env, [parentIssue, ...workflowIssues]);
@@ -1460,6 +1479,7 @@ async function completeAutomatedWorkflow(
       report,
       testReport,
       sourcePageUpdate,
+      taskHandoff,
       error: 'Governance eval passed, but Linear completion failed.'
     };
   }
@@ -1470,6 +1490,7 @@ async function completeAutomatedWorkflow(
     report,
     testReport,
     sourcePageUpdate,
+    taskHandoff,
     completedIssues: completed.issues
   };
 }
@@ -2664,6 +2685,398 @@ function buildTestReportProperties(
   return properties;
 }
 
+async function publishTestingTaskHandoff(
+  env: Env,
+  review: NormalizedReviewRequest,
+  report: GovernanceEvalReport,
+  testReport: NotionPublishResult,
+  sourcePageUpdate: NotionAgentPageUpdateResult
+): Promise<NotionTaskHandoffResult> {
+  if (env.PUBLISH_TASK_HANDOFF === 'false') {
+    return {
+      ok: true,
+      status: 'skipped',
+      reason: 'PUBLISH_TASK_HANDOFF is false.'
+    };
+  }
+
+  if (!env.NOTION_API_KEY) {
+    return {
+      ok: false,
+      status: 'failed',
+      reason: 'NOTION_API_KEY is not configured, so the Tasks [HD] testing handoff could not be written.'
+    };
+  }
+
+  if (!testReport.ok || !testReport.pageUrl) {
+    return {
+      ok: true,
+      status: 'skipped',
+      reason: 'The Test Reports [OS] page was not available, so the Tasks [HD] handoff was skipped.'
+    };
+  }
+
+  const database = await resolveTasksDatabase(env);
+  if (!database.ok) return database.result;
+
+  const databaseId = database.databaseId;
+  const schema = await fetchNotionDatabaseSchema(env, databaseId);
+  if (!schema.ok) {
+    return {
+      ok: false,
+      status: 'failed',
+      databaseId,
+      reason: schema.result.reason?.replaceAll('Test Reports', 'Tasks') ?? 'Tasks [HD] schema fetch failed.'
+    };
+  }
+
+  const properties = buildTestingTaskHandoffProperties(schema.properties, review, report, testReport);
+  if (!properties) {
+    return {
+      ok: false,
+      status: 'failed',
+      databaseId,
+      reason: 'Tasks [HD] schema did not expose a title property.'
+    };
+  }
+
+  const blocks = buildTestingTaskHandoffBlocks(review, report, testReport, sourcePageUpdate);
+  const titleProperty = titlePropertyName(schema.properties);
+  const existing = titleProperty
+    ? await findRecentTestingTaskHandoff(env, databaseId, titleProperty, review, report)
+    : { ok: true as const, page: undefined };
+  if (!existing.ok) {
+    return {
+      ok: false,
+      status: 'failed',
+      databaseId,
+      reason: existing.reason
+    };
+  }
+
+  if (existing.page) {
+    const update = await updateNotionPageProperties(env, existing.page.id, properties);
+    if (!update.ok) {
+      return {
+        ok: false,
+        status: 'failed',
+        databaseId,
+        pageId: existing.page.id,
+        pageUrl: existing.page.url,
+        reason: update.reason
+      };
+    }
+
+    const appended = await appendNotionBlocks(env, existing.page.id, blocks);
+    if (!appended.ok) {
+      return {
+        ok: false,
+        status: 'failed',
+        databaseId,
+        pageId: existing.page.id,
+        pageUrl: existing.page.url,
+        reason: appended.reason
+      };
+    }
+
+    return {
+      ok: true,
+      status: 'updated',
+      databaseId,
+      pageId: existing.page.id,
+      pageUrl: existing.page.url
+    };
+  }
+
+  const response = await fetch(`${NOTION_API_BASE}/pages`, {
+    method: 'POST',
+    headers: notionHeaders(env),
+    body: JSON.stringify({
+      parent: { database_id: databaseId },
+      properties,
+      children: blocks.slice(0, 100)
+    })
+  });
+  const body = (await response.json()) as UnknownRecord;
+
+  if (!response.ok) {
+    return {
+      ok: false,
+      status: 'failed',
+      databaseId,
+      reason: `Notion Tasks handoff create failed with HTTP ${response.status}: ${notionErrorMessage(body)}`
+    };
+  }
+
+  const pageId = stringFromUnknown(body.id);
+  if (pageId && blocks.length > 100) {
+    const appended = await appendNotionBlocks(env, pageId, blocks.slice(100));
+    if (!appended.ok) {
+      return {
+        ok: false,
+        status: 'failed',
+        databaseId,
+        pageId,
+        pageUrl: stringFromUnknown(body.url),
+        reason: `Notion Tasks handoff detail append failed after page creation: ${appended.reason}`
+      };
+    }
+  }
+
+  return {
+    ok: true,
+    status: 'created',
+    databaseId,
+    pageId,
+    pageUrl: stringFromUnknown(body.url)
+  };
+}
+
+async function resolveTasksDatabase(
+  env: Env
+): Promise<{ ok: true; databaseId: string } | { ok: false; result: NotionTaskHandoffResult }> {
+  const configuredId = env.TASKS_DATABASE_ID?.trim();
+  if (configuredId) return { ok: true, databaseId: configuredId };
+
+  const databaseName = env.TASKS_DATABASE_NAME?.trim() || TASKS_DATABASE_NAME_DEFAULT;
+  const response = await fetch(`${NOTION_API_BASE}/search`, {
+    method: 'POST',
+    headers: notionHeaders(env),
+    body: JSON.stringify({
+      query: databaseName,
+      filter: {
+        property: 'object',
+        value: 'database'
+      },
+      page_size: 25
+    })
+  });
+  const body = (await response.json()) as UnknownRecord;
+
+  if (!response.ok) {
+    return {
+      ok: false,
+      result: {
+        ok: false,
+        status: 'failed',
+        reason: `Notion Tasks search failed with HTTP ${response.status}: ${notionErrorMessage(body)}`
+      }
+    };
+  }
+
+  const results = Array.isArray(body.results) ? body.results.filter(isRecord) : [];
+  const exact = results.find((database) => normalizeKey(notionDatabaseTitle(database) ?? '') === normalizeKey(databaseName));
+  const contains = results.find((database) =>
+    normalizeKey(notionDatabaseTitle(database) ?? '').includes(normalizeKey(databaseName))
+  );
+  const selected = exact ?? contains;
+  const databaseId = selected ? stringFromUnknown(selected.id) : undefined;
+
+  if (!databaseId) {
+    return {
+      ok: false,
+      result: {
+        ok: false,
+        status: 'failed',
+        reason: `Notion database "${databaseName}" was not visible to the configured integration.`
+      }
+    };
+  }
+
+  return { ok: true, databaseId };
+}
+
+function buildTestingTaskHandoffProperties(
+  schema: Record<string, UnknownRecord>,
+  review: NormalizedReviewRequest,
+  report: GovernanceEvalReport,
+  testReport: NotionPublishResult
+): UnknownRecord | undefined {
+  const titleProperty = titlePropertyName(schema);
+  if (!titleProperty) return undefined;
+
+  const taskTitle = `Agent Test Report - @${review.agentName}`;
+  const properties: UnknownRecord = {
+    [titleProperty]: {
+      title: notionRichText(taskTitle)
+    }
+  };
+
+  for (const [name, property] of Object.entries(schema)) {
+    const normalized = normalizeKey(name);
+    if (name === titleProperty) continue;
+
+    if (property.type === 'date' && normalized === 'date') {
+      properties[name] = { date: { start: report.generated_at.slice(0, 10) } };
+    }
+    if (property.type === 'status' && normalized === 'status') {
+      properties[name] = { status: { name: 'To Do' } };
+    }
+    if (property.type === 'select' && normalized === 'status') {
+      properties[name] = { select: { name: 'To Do' } };
+    }
+    if (property.type === 'relation' && (normalized === 'agent' || normalized === 'agents')) {
+      const sourcePageId = review.enrichment?.notionPageId;
+      if (sourcePageId) properties[name] = notionRelationProperty([sourcePageId]);
+    }
+    if (property.type === 'relation' && (normalized === 'client' || normalized === 'clients')) {
+      const clientIds = pickRelationIds(review.enrichment?.relationIds, 'Client', 'Clients');
+      if (clientIds.length) properties[name] = notionRelationProperty(clientIds);
+    }
+    if (
+      property.type === 'url' &&
+      (normalized.includes('report') || normalized.includes('test') || normalized.includes('eval'))
+    ) {
+      if (testReport.pageUrl) properties[name] = { url: testReport.pageUrl };
+    }
+    if (property.type === 'rich_text' && (normalized.includes('notes') || normalized.includes('summary'))) {
+      const reportUrl = testReport.pageUrl ? ` Full report: ${testReport.pageUrl}` : '';
+      properties[name] = {
+        rich_text: notionRichText(
+          `Eval ${report.summary.status}; Dify checks ${report.summary.checks_passed}/${report.summary.checks_total}; Worker rubric ${report.worker_rubric.checks_passed}/${report.worker_rubric.checks_total}.${reportUrl}`
+        )
+      };
+    }
+  }
+
+  return properties;
+}
+
+function buildTestingTaskHandoffBlocks(
+  review: NormalizedReviewRequest,
+  report: GovernanceEvalReport,
+  testReport: NotionPublishResult,
+  sourcePageUpdate: NotionAgentPageUpdateResult
+): UnknownRecord[] {
+  const sourcePageUrl = sourcePageUpdate.pageUrl ?? review.pageUrl ?? review.enrichment?.notionPageUrl;
+  const blocks: UnknownRecord[] = [
+    notionHeadingBlock(2, `Agent Eval Testing Handoff - ${report.generated_at.replace(/\.\d{3}Z$/, 'Z')}`),
+    notionParagraphBlock(
+      `Result: ${report.summary.status}. Use the linked Test Report as the source of truth for eval details, final instructions, archived submitted instructions, and raw review evidence.`
+    ),
+    notionParagraphBlock(`Full Eval/Test Report: ${testReport.pageUrl ?? 'not available'}`),
+    sourcePageUrl ? notionParagraphBlock(`Source agent page: ${sourcePageUrl}`) : undefined,
+    notionParagraphBlock(`Webhook request: ${review.requestId}`),
+    notionHeadingBlock(3, 'Live Testing Handoff'),
+    notionParagraphBlock(
+      'For each scenario below, paste only the text after "Prompt to paste" into the live Notion agent. Do not paste scenario labels, expected behavior, report evidence, archived instructions, or any other eval text.'
+    ),
+    notionParagraphBlock(LIVE_TESTING_HANDOFF_GUIDANCE),
+    ...report.live_testing_checklist.flatMap((item) => [
+      notionTodoBlock(item.label),
+      notionParagraphBlock(`Prompt to paste: ${item.prompt}`),
+      notionParagraphBlock(`Expected behavior: ${item.expected_behavior}`),
+      notionParagraphBlock('Evidence to record on the Test Report: pass/fail, actual Notion agent response, and notes.')
+    ]),
+    notionHeadingBlock(3, 'Operator Checklist'),
+    notionTodoBlock('Open the full Eval/Test Report linked above.'),
+    notionTodoBlock('Use the Final Instructions section from the source page or Test Report for the live Notion agent setup.'),
+    notionTodoBlock('Run each Prompt to paste in the live Notion agent.'),
+    notionTodoBlock('Record pass/fail, actual response, and notes on the Test Report.'),
+    notionTodoBlock('If any prompt fails, add the finding to the source page and move Status back to Updating for a new eval run.'),
+    notionHeadingBlock(3, 'Review Summary'),
+    ...notionParagraphBlocks(report.review_summary),
+    notionHeadingBlock(3, 'Recommended Upgrades'),
+    ...report.recommended_upgrades.slice(0, 8).map((upgrade) => notionBulletedListBlock(upgrade))
+  ].filter((block): block is UnknownRecord => Boolean(block));
+
+  return blocks;
+}
+
+async function findRecentTestingTaskHandoff(
+  env: Env,
+  databaseId: string,
+  titleProperty: string,
+  review: NormalizedReviewRequest,
+  report: GovernanceEvalReport
+): Promise<{ ok: true; page?: { id: string; url?: string } } | { ok: false; reason: string }> {
+  const after = new Date(Date.parse(report.generated_at) - TASK_HANDOFF_EXISTING_WINDOW_MS).toISOString();
+  const response = await fetch(`${NOTION_API_BASE}/databases/${databaseId}/query`, {
+    method: 'POST',
+    headers: notionHeaders(env),
+    body: JSON.stringify({
+      filter: {
+        and: [
+          {
+            property: titleProperty,
+            title: {
+              contains: review.agentName
+            }
+          },
+          {
+            timestamp: 'created_time',
+            created_time: {
+              after
+            }
+          }
+        ]
+      },
+      sorts: [
+        {
+          timestamp: 'created_time',
+          direction: 'descending'
+        }
+      ],
+      page_size: 10
+    })
+  });
+  const body = (await response.json()) as UnknownRecord;
+
+  if (!response.ok) {
+    return {
+      ok: false,
+      reason: `Notion Tasks handoff lookup failed with HTTP ${response.status}: ${notionErrorMessage(body)}`
+    };
+  }
+
+  const results = Array.isArray(body.results) ? body.results.filter(isRecord) : [];
+  const selected =
+    results.find((page) => normalizeKey(notionPageTitle(page, titleProperty) ?? '').includes('agenttestreport')) ??
+    results[0];
+  const pageId = selected ? stringFromUnknown(selected.id) : undefined;
+  if (!pageId) return { ok: true };
+
+  return {
+    ok: true,
+    page: {
+      id: pageId,
+      url: stringFromUnknown(selected?.url)
+    }
+  };
+}
+
+function titlePropertyName(schema: Record<string, UnknownRecord>): string | undefined {
+  return Object.entries(schema).find(([, property]) => property.type === 'title')?.[0];
+}
+
+function notionPageTitle(page: UnknownRecord, titleProperty: string): string | undefined {
+  const properties = isRecord(page.properties) ? page.properties : undefined;
+  const titleValue = properties && isRecord(properties[titleProperty]) ? properties[titleProperty] : undefined;
+  return richTextPlain(titleValue?.title);
+}
+
+async function updateNotionPageProperties(
+  env: Env,
+  pageId: string,
+  properties: UnknownRecord
+): Promise<{ ok: true } | { ok: false; reason: string }> {
+  const response = await fetch(`${NOTION_API_BASE}/pages/${pageId}`, {
+    method: 'PATCH',
+    headers: notionHeaders(env),
+    body: JSON.stringify({ properties })
+  });
+  const body = (await response.json()) as UnknownRecord;
+
+  if (!response.ok) {
+    return {
+      ok: false,
+      reason: `Notion page properties update failed with HTTP ${response.status}: ${notionErrorMessage(body)}`
+    };
+  }
+
+  return { ok: true };
+}
+
 function notionRelationProperty(pageIds: string[]): UnknownRecord {
   return {
     relation: pageIds.map((id) => ({ id }))
@@ -3164,7 +3577,8 @@ function automatedWorkflowComment(
   workflowIssues: LinearWorkflowIssue[],
   report: GovernanceEvalReport,
   testReport: NotionPublishResult,
-  sourcePageUpdate: NotionAgentPageUpdateResult
+  sourcePageUpdate: NotionAgentPageUpdateResult,
+  taskHandoff?: NotionTaskHandoffResult
 ): string {
   const recommendedUpgradeLines = compactBulletLines(report.recommended_upgrades, 5);
   const caveatLines = compactBulletLines(report.caveats, 5);
@@ -3210,6 +3624,7 @@ function automatedWorkflowComment(
     `Test Reports [OS]: ${testReport.status}${testReport.pageUrl ? ` ${testReport.pageUrl}` : testReport.reason ? ` (${testReport.reason})` : ''}`,
     `Source agent page: ${sourcePageUpdate.status}${sourcePageUpdate.pageUrl ? ` ${sourcePageUpdate.pageUrl}` : sourcePageUpdate.reason ? ` (${sourcePageUpdate.reason})` : ''}`,
     `Source page status updated: ${sourcePageUpdate.statusUpdated === true ? 'yes' : 'no'}`,
+    `Tasks [HD] handoff: ${taskHandoff ? `${taskHandoff.status}${taskHandoff.pageUrl ? ` ${taskHandoff.pageUrl}` : taskHandoff.reason ? ` (${taskHandoff.reason})` : ''}` : 'not attempted'}`,
     '',
     'Full report',
     fullReport,
@@ -3473,6 +3888,8 @@ function corsHeaders(): HeadersInit {
 export {
   automatedWorkflowComment,
   buildBehavioralSmokeTests,
+  buildTestingTaskHandoffBlocks,
+  buildTestingTaskHandoffProperties,
   buildTestReportProperties,
   canonicalPageContent,
   evaluateWorkerRubric,

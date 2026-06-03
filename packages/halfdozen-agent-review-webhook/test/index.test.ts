@@ -4,6 +4,8 @@ import test from 'node:test';
 import {
   automatedWorkflowComment,
   buildBehavioralSmokeTests,
+  buildTestingTaskHandoffBlocks,
+  buildTestingTaskHandoffProperties,
   buildTestReportProperties,
   canonicalPageContent,
   evaluateWorkerRubric,
@@ -233,6 +235,110 @@ test('buildTestReportProperties links Test Reports back to source agent and clie
   assert.deepEqual(properties?.Client, {
     relation: [{ id: 'client-page-id-1' }]
   });
+});
+
+test('buildTestingTaskHandoffProperties links task handoff to source agent, client, and eval report', () => {
+  const properties = buildTestingTaskHandoffProperties(
+    {
+      Task: { type: 'title' },
+      Date: { type: 'date' },
+      Status: { type: 'status' },
+      Agent: { type: 'relation' },
+      Client: { type: 'relation' },
+      'Test Report': { type: 'url' },
+      Notes: { type: 'rich_text' }
+    },
+    {
+      requestId: 'req-task',
+      receivedAt: '2026-06-03T00:00:00.000Z',
+      agentName: 'Internal Agent Builder',
+      properties: {},
+      enrichment: {
+        notionPageId: '34f01918-7ac5-8095-8ff2-dc2fa49f11fe',
+        relationIds: {
+          Client: ['client-page-id-1']
+        }
+      }
+    },
+    {
+      generated_at: '2026-06-03T05:21:24.314Z',
+      summary: {
+        status: 'pass',
+        checks_total: 27,
+        checks_passed: 27
+      },
+      worker_rubric: {
+        checks_total: 9,
+        checks_passed: 9
+      }
+    } as any,
+    {
+      ok: true,
+      status: 'published',
+      pageUrl: 'https://notion.so/test-report'
+    }
+  );
+
+  assert.deepEqual(properties?.Task, {
+    title: [{ type: 'text', text: { content: 'Agent Test Report - @Internal Agent Builder' } }]
+  });
+  assert.deepEqual(properties?.Status, { status: { name: 'To Do' } });
+  assert.deepEqual(properties?.Agent, {
+    relation: [{ id: '34f01918-7ac5-8095-8ff2-dc2fa49f11fe' }]
+  });
+  assert.deepEqual(properties?.Client, {
+    relation: [{ id: 'client-page-id-1' }]
+  });
+  assert.deepEqual(properties?.['Test Report'], { url: 'https://notion.so/test-report' });
+  assert.match(JSON.stringify(properties?.Notes), /Eval pass/);
+});
+
+test('buildTestingTaskHandoffBlocks make the live testing paste boundary obvious', () => {
+  const blocks = buildTestingTaskHandoffBlocks(
+    {
+      requestId: 'req-task-blocks',
+      receivedAt: '2026-06-03T00:00:00.000Z',
+      agentName: 'Internal Agent Builder',
+      pageUrl: 'https://notion.so/source-page',
+      properties: {}
+    },
+    {
+      generated_at: '2026-06-03T05:21:24.314Z',
+      summary: {
+        status: 'pass',
+        checks_total: 27,
+        checks_passed: 27
+      },
+      review_summary: 'Ready for live Notion testing.',
+      recommended_upgrades: ['Keep linked Notion references intact.'],
+      live_testing_checklist: [
+        {
+          label: 'Happy path',
+          prompt: 'I need an agent that prepares a Notion-native spec.',
+          expected_behavior: 'Returns an Agent Spec, Instructions, Build checklist, and Test plan.'
+        }
+      ]
+    } as any,
+    {
+      ok: true,
+      status: 'published',
+      pageUrl: 'https://notion.so/test-report'
+    },
+    {
+      ok: true,
+      status: 'updated',
+      pageUrl: 'https://notion.so/source-page',
+      statusUpdated: true
+    }
+  );
+  const serialized = JSON.stringify(blocks);
+
+  assert.match(serialized, /Full Eval\/Test Report/);
+  assert.match(serialized, /https:\/\/notion\.so\/test-report/);
+  assert.match(serialized, /paste only the text after/);
+  assert.match(serialized, /Prompt to paste: I need an agent/);
+  assert.match(serialized, /Record pass\/fail/);
+  assert.match(serialized, /move Status back to Updating/);
 });
 
 test('richTextPlain preserves Notion mention hrefs as Markdown links', () => {
