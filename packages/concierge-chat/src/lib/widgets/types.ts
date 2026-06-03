@@ -1,4 +1,5 @@
 import type { ProfileFieldEvent } from '$lib/profile/types';
+import type { MatchingOpportunity } from '$chat/matching-model';
 
 export interface WidgetBase<TType extends string, TData> {
 	id: string;
@@ -47,9 +48,17 @@ export type ConciergeWidget =
 			'document_upload',
 			{
 				description: string;
-				requestedDocuments: string[];
-				acceptedTypes: string[];
-				status: 'needed' | 'uploaded';
+				documents: Array<{
+					key: string;
+					title: string;
+					acceptedTypes: string[];
+					accept: string;
+					status: 'needed' | 'uploaded';
+					fileName?: string;
+					byteSize?: number;
+					href?: string;
+				}>;
+				status: 'needed' | 'partial' | 'uploaded';
 				uploadLabel: string;
 			}
 	  >
@@ -57,6 +66,12 @@ export type ConciergeWidget =
 			'appointment_picker',
 			{
 				description: string;
+				recruiterName: string;
+				recruiterTitle: string;
+				status: 'ready' | 'booked' | 'completed';
+				selectedSlotId?: string;
+				bookedLabel?: string;
+				matches: MatchingOpportunity[];
 				slots: Array<{
 					id: string;
 					label: string;
@@ -64,6 +79,7 @@ export type ConciergeWidget =
 					availability: 'open' | 'limited' | 'held';
 				}>;
 				confirmLabel: string;
+				completionLabel?: string;
 			}
 	  >
 	| WidgetBase<
@@ -77,8 +93,70 @@ export type ConciergeWidget =
 			}
 	  >
 	| WidgetBase<
+			'staffing_queue',
+			{
+				status:
+					| 'queued'
+					| 'outreach_started'
+					| 'submitted'
+					| 'interview_requested'
+					| 'placement_confirmed'
+					| 'closed';
+				statusLabel: string;
+				coordinatorName: string;
+				roleTitle: string;
+				facility: string;
+				description: string;
+				completedSteps: string[];
+				pendingSteps: string[];
+				actionLabel?: string;
+				actionType?: 'start_staffing_outreach' | 'submit_to_facility';
+				actionPendingLabel?: string;
+			}
+	  >
+	| WidgetBase<
+			'onboarding_queue',
+			{
+				status: 'queued' | 'in_progress' | 'completed';
+				statusLabel: string;
+				ownerName: string;
+				roleTitle: string;
+				facility: string;
+				startDate: string;
+				description: string;
+				completedSteps: string[];
+				pendingSteps: string[];
+				actionLabel?: string;
+				actionType?: 'start_onboarding' | 'complete_onboarding';
+				actionPendingLabel?: string;
+			}
+	  >
+	| WidgetBase<
+			'facility_response',
+			{
+				status: 'submitted' | 'interview_requested' | 'placement_confirmed' | 'closed';
+				statusLabel: string;
+				summary: string;
+				detail: string;
+				completedSteps: string[];
+				pendingSteps: string[];
+				actions: Array<{
+					label: string;
+					type:
+						| 'record_facility_interview'
+						| 'confirm_placement'
+						| 'close_staffing_request';
+					pendingLabel: string;
+					tone: 'primary' | 'secondary' | 'danger';
+				}>;
+			}
+	  >
+	| WidgetBase<
 			'handoff',
 			{
+				kind: 'escalation' | 'staffing_queue' | 'onboarding_queue';
+				tone: 'danger' | 'good';
+				statusLabel: string;
 				queueName: string;
 				eta: string;
 				reasonCodes: string[];
