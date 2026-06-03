@@ -222,16 +222,17 @@
     border: 1px solid var(--color-border-default);
     border-radius: var(--radius-md);
     overflow: hidden;
-    background: var(--color-bg-primary);
+    background: var(--color-bg-surface);
   }
 
   .long-description-toolbar {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
     gap: 0.25rem;
     padding: 0.4rem;
     border-bottom: 1px solid var(--color-border-default);
-    background: var(--color-bg-secondary);
+    background: var(--color-bg-subtle);
   }
 
   .toolbar-select,
@@ -239,7 +240,7 @@
     height: 2rem;
     border: 1px solid var(--color-border-default);
     border-radius: var(--radius-sm);
-    background: var(--color-bg-primary);
+    background: var(--color-bg-surface);
     color: var(--color-fg-primary);
   }
 
@@ -265,6 +266,9 @@
   .long-description-surface {
     min-height: 12rem;
     padding: 0.85rem;
+    color: var(--color-fg-secondary);
+    font-size: var(--text-body-sm);
+    line-height: 1.5;
     outline: none;
   }
 
@@ -275,5 +279,70 @@
   .long-description-surface:empty::before {
     content: attr(data-placeholder);
     color: var(--color-fg-muted);
+  }
+
+  .long-description-surface :global(h3),
+  .long-description-surface :global(h4),
+  .long-description-surface :global(h5),
+  .long-description-surface :global(h6) {
+    margin: var(--space-lg) 0 var(--space-sm);
+    color: var(--color-fg-primary);
+    line-height: 1.25;
+  }
+
+  .long-description-surface :global(h3) {
+    font-size: var(--text-body-lg);
+  }
+
+  .long-description-surface :global(h4),
+  .long-description-surface :global(h5),
+  .long-description-surface :global(h6) {
+    font-size: var(--text-body);
+  }
+
+  .long-description-surface :global(p),
+  .long-description-surface :global(ul),
+  .long-description-surface :global(ol),
+  .long-description-surface :global(figure),
+  .long-description-surface :global(blockquote),
+  .long-description-surface :global(pre) {
+    margin: 0 0 var(--space-md);
+  }
+
+  .long-description-surface :global(ul),
+  .long-description-surface :global(ol) {
+    padding-left: 1.35rem;
+  }
+
+  .long-description-surface :global(li + li) {
+    margin-top: var(--space-xs);
+  }
+
+  .long-description-surface :global(a) {
+    color: var(--color-info);
+  }
+
+  .long-description-surface :global(img) {
+    display: block;
+    max-width: 100%;
+    max-height: 24rem;
+    width: auto;
+    height: auto;
+    margin: var(--space-md) 0;
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-sm);
+    object-fit: contain;
+    background: var(--color-bg-subtle);
+  }
+
+  .long-description-surface :global(figure img) {
+    margin-bottom: var(--space-sm);
+  }
+
+  .long-description-surface :global(figcaption) {
+    margin-top: calc(var(--space-sm) * -1);
+    color: var(--color-fg-muted);
+    font-size: var(--text-caption);
+    line-height: 1.4;
   }
 </style>
