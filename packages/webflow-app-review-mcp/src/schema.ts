@@ -53,6 +53,7 @@ export const FIELD_IDS = {
     submissionDatetime: 'fldWTKKh989L4lTTB',
     submissionDatetimeOverride: 'fldtAJZzh7oVHFmkF',
     daysInCurrentStage: 'fldbVdznI0sOQrEnX',
+    sourceMapArtifactUrl: 'fldNHNQcdbbV25Iqq',
   },
 } as const;
 
@@ -340,6 +341,7 @@ export const APP_REVIEW_FIELD_MAP = {
       submission_datetime: FIELD_IDS.versions.submissionDatetime,
       days_in_current_stage: FIELD_IDS.versions.daysInCurrentStage,
       version_number: FIELD_IDS.versions.versionNumber,
+      source_map_artifact_url: FIELD_IDS.versions.sourceMapArtifactUrl,
     },
   },
   canonicalMappings: CANONICAL_FIELD_MAPPINGS,
@@ -352,4 +354,3 @@ export const APP_REVIEW_FIELD_MAP = {
     rejectionReason: REJECTION_REASON_OPTIONS,
   },
 } as const;
-

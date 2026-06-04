@@ -87,6 +87,7 @@ const VERSION_FIELD_IDS = [
   FIELD_IDS.versions.rejectionReason,
   FIELD_IDS.versions.reviewFeedback,
   FIELD_IDS.versions.daysInCurrentStage,
+  FIELD_IDS.versions.sourceMapArtifactUrl,
   FIELD_IDS.versions.assetLink,
   FIELD_IDS.versions.assetRecordIdRollup,
 ] as const;
@@ -174,6 +175,7 @@ export interface AppReviewVersion {
   submissionDatetimeOverride?: string;
   rejectionReason?: string;
   reviewFeedback?: string;
+  sourceMapArtifactUrl?: string;
   daysInCurrentStage?: number;
   createdTime?: string;
 }
@@ -393,6 +395,7 @@ function mapVersionRecord(record: AirtableRecord): AppReviewVersion {
     submissionDatetimeOverride: firstString(fields[FIELD_IDS.versions.submissionDatetimeOverride]),
     rejectionReason: firstString(fields[FIELD_IDS.versions.rejectionReason]),
     reviewFeedback: firstString(fields[FIELD_IDS.versions.reviewFeedback]),
+    sourceMapArtifactUrl: firstString(fields[FIELD_IDS.versions.sourceMapArtifactUrl]),
     daysInCurrentStage: toNumberValue(fields[FIELD_IDS.versions.daysInCurrentStage]),
     createdTime: record.createdTime,
   };

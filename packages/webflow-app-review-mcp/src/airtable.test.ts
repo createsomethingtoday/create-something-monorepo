@@ -22,6 +22,7 @@ function versionRecord(id: string, reviewer?: CollaboratorRef | null) {
       [FIELD_IDS.versions.reviewType]: 'New Asset',
       [FIELD_IDS.versions.submissionDatetime]: '2026-03-10T18:00:00.000Z',
       [FIELD_IDS.versions.reviewFeedback]: 'Looks good so far.',
+      [FIELD_IDS.versions.sourceMapArtifactUrl]: 'https://example.com/private/source-map.zip',
       ...(reviewer === undefined ? {} : { [FIELD_IDS.versions.reviewer]: reviewer }),
     },
   };
@@ -228,6 +229,7 @@ describe('AirtableClient reviewer ownership helpers', () => {
     const context = await client.getReviewContext('rec-version-self', reviewer);
 
     expect(context.appName).toBe('Example App');
+    expect(context.version.sourceMapArtifactUrl).toBe('https://example.com/private/source-map.zip');
     expect(context.isAssignedToCurrentReviewer).toBe(true);
     expect(context.canAssign).toBe(false);
     expect(context.canReview).toBe(true);

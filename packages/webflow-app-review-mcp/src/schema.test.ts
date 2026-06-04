@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  APP_REVIEW_FIELD_MAP,
   FIELD_IDS,
   getReadOnlyAssetWriteHint,
   isAppLikeAsset,
@@ -49,6 +50,10 @@ describe('schema helpers', () => {
     expect(isReadOnlyAssetWriteKey('app_name')).toBe(false);
   });
 
+  it('exposes source-map artifacts as read-only version context', () => {
+    expect(APP_REVIEW_FIELD_MAP.versions.readOnly.source_map_artifact_url).toBe(FIELD_IDS.versions.sourceMapArtifactUrl);
+  });
+
   it('validates known enum options', () => {
     expect(isMarketplaceStatus('3️⃣Published🚀')).toBe(true);
     expect(isCapability('Hybrid')).toBe(true);
@@ -58,4 +63,3 @@ describe('schema helpers', () => {
     expect(isRejectionReason('Other')).toBe(true);
   });
 });
-

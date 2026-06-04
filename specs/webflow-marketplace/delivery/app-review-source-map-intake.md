@@ -109,6 +109,10 @@ Recommended `Asset Versions` fields:
 | `Source Map Orphan Files`    | Long text                                            | newline or JSON summary from `orphanSourceMaps`                    |
 | `Review Artifact Valid?`     | Formula or checkbox                                  | true when source maps are acceptable for automated review          |
 
+Live Airtable intake field:
+
+- `⚙️Source Map Artifact URL` (`fldNHNQcdbbV25Iqq`) stores the App Form private source-map artifact URL on `Asset Versions`.
+
 Recommended `Source Map Status` options should mirror the scanner status exactly:
 
 - `not_provided`
