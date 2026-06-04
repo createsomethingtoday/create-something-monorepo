@@ -565,6 +565,59 @@ test('buildTestingTaskHandoffProperties links task handoff to source agent, clie
   assert.match(JSON.stringify(properties?.Notes), /Eval pass/);
 });
 
+test('buildTestingTaskHandoffProperties creates a human-review task for failed evals', () => {
+  const properties = buildTestingTaskHandoffProperties(
+    {
+      Task: { type: 'title' },
+      Status: { type: 'status' },
+      Notes: { type: 'rich_text' }
+    },
+    {
+      requestId: 'req-human-review',
+      receivedAt: '2026-06-04T20:14:03.232Z',
+      agentName: 'Contacts Manager',
+      properties: {}
+    },
+    {
+      success: false,
+      generated_at: '2026-06-04T20:14:03.232Z',
+      summary: {
+        status: 'fail',
+        checks_total: 27,
+        checks_passed: 21
+      },
+      worker_rubric: {
+        checks_total: 9,
+        checks_passed: 9
+      },
+      proposed_patch: {
+        status_transition: {
+          from: 'Updating',
+          to: 'Testing',
+          allowed: false,
+          reason: 'Dify rejected the patch until missing context is resolved.'
+        }
+      },
+      patch_application: {
+        applied: false,
+        mode: 'replace_source_body'
+      }
+    } as any,
+    {
+      ok: true,
+      status: 'published',
+      pageUrl: 'https://notion.so/failed-test-report'
+    }
+  );
+
+  assert.deepEqual(properties?.Task, {
+    title: [{ type: 'text', text: { content: 'Agent Eval Needs Human Review - @Contacts Manager' } }]
+  });
+  assert.deepEqual(properties?.Status, { status: { name: 'To Do' } });
+  assert.match(JSON.stringify(properties?.Notes), /Human review required/);
+  assert.match(JSON.stringify(properties?.Notes), /21\/27/);
+});
+
 test('buildTestingTaskHandoffBlocks make the live testing paste boundary obvious', () => {
   const blocks = buildTestingTaskHandoffBlocks(
     {
@@ -611,6 +664,73 @@ test('buildTestingTaskHandoffBlocks make the live testing paste boundary obvious
   assert.match(serialized, /Prompt to paste: I need an agent/);
   assert.match(serialized, /Record pass\/fail/);
   assert.match(serialized, /move Status back to Updating/);
+});
+
+test('buildTestingTaskHandoffBlocks creates a human-review handoff when writeback is blocked', () => {
+  const blocks = buildTestingTaskHandoffBlocks(
+    {
+      requestId: 'req-human-review-blocks',
+      receivedAt: '2026-06-04T20:14:03.232Z',
+      agentName: 'Contacts Manager',
+      pageUrl: 'https://notion.so/source-page',
+      properties: {}
+    },
+    {
+      success: false,
+      generated_at: '2026-06-04T20:14:03.232Z',
+      summary: {
+        status: 'fail',
+        checks_total: 27,
+        checks_passed: 21
+      },
+      worker_rubric: {
+        checks_total: 9,
+        checks_passed: 9
+      },
+      proposed_patch: {
+        status_transition: {
+          from: 'Updating',
+          to: 'Testing',
+          allowed: false,
+          reason: 'Dify rejected the patch until missing context is resolved.'
+        }
+      },
+      patch_application: {
+        applied: false,
+        mode: 'replace_source_body'
+      },
+      review_summary: 'Missing context needs operator review before testing.',
+      recommended_upgrades: ['Add exact Contacts database references.'],
+      caveats: ['The source page was not replaced.'],
+      live_testing_checklist: [
+        {
+          label: 'Happy path',
+          prompt: 'Update a contact.',
+          expected_behavior: 'The agent updates the right record.'
+        }
+      ]
+    } as any,
+    {
+      ok: true,
+      status: 'published',
+      pageUrl: 'https://notion.so/failed-test-report'
+    },
+    {
+      ok: true,
+      status: 'skipped',
+      pageUrl: 'https://notion.so/source-page',
+      statusUpdated: false,
+      reason: 'Eval did not pass, so the source page body and Status were left unchanged.'
+    }
+  );
+  const serialized = JSON.stringify(blocks);
+
+  assert.match(serialized, /Agent Eval Human Review Required/);
+  assert.match(serialized, /Why It Stopped/);
+  assert.match(serialized, /Dify checks: 21\/27/);
+  assert.match(serialized, /Source page Status was not moved to Testing/);
+  assert.match(serialized, /Re-run by moving Status out of Updating/);
+  assert.doesNotMatch(serialized, /Prompt to paste: Update a contact/);
 });
 
 test('sourceAgentPageReplacementBlocks writes only final instructions, not eval evidence', () => {
@@ -756,6 +876,86 @@ test('automatedWorkflowComment stays compact and points to the full Notion eval 
   assert.match(comment, /Paste only the full text after "Prompt to paste"/);
   assert.doesNotMatch(comment, /Full Review JSON/);
   assert.doesNotMatch(comment, /x{1000}/);
+});
+
+test('automatedWorkflowComment calls out human review when eval writeback is blocked', () => {
+  const comment = automatedWorkflowComment(
+    {
+      requestId: 'req-human-review-comment',
+      receivedAt: '2026-06-04T20:14:03.232Z',
+      agentName: 'Contacts Manager',
+      status: 'Updating',
+      properties: {}
+    },
+    {
+      id: 'issue-1',
+      identifier: 'CRE-532',
+      title: 'Review Half Dozen agent build',
+      url: 'https://linear.app/create-something/issue/CRE-532'
+    },
+    [],
+    {
+      success: false,
+      generated_at: '2026-06-04T20:14:03.232Z',
+      eval_scope: 'instruction-readiness',
+      claim_boundary: 'Does not prove live Notion runtime behavior.',
+      execution_target: 'dify-agent-builder-eval-with-worker-notion-linear-writeback',
+      summary: {
+        status: 'fail',
+        scenarios: 4,
+        checks_total: 27,
+        checks_passed: 21,
+        checks_failed: 6
+      },
+      review_summary: 'Missing Contacts Manager context needs operator review before live testing.',
+      recommended_upgrades: ['Add exact Contacts database references.'],
+      proposed_patch: {
+        status_transition: {
+          from: 'Updating',
+          to: 'Testing',
+          allowed: false,
+          reason: 'Dify rejected the patch until missing context is resolved.'
+        }
+      },
+      patch_application: {
+        applied: false,
+        mode: 'replace_source_body'
+      },
+      worker_rubric: {
+        checks_total: 9,
+        checks_passed: 9
+      },
+      caveats: ['The source page was left unchanged.'],
+      live_testing_checklist: [],
+      dify_eval: {
+        status: 'used',
+        message_id: 'msg-human-review'
+      }
+    } as any,
+    {
+      ok: true,
+      status: 'published',
+      pageUrl: 'https://notion.so/failed-test-report'
+    },
+    {
+      ok: true,
+      status: 'skipped',
+      pageUrl: 'https://notion.so/source-page',
+      statusUpdated: false,
+      reason: 'Eval did not pass, so the source page body and Status were left unchanged.'
+    },
+    {
+      ok: true,
+      status: 'created',
+      pageUrl: 'https://notion.so/human-review-task'
+    }
+  );
+
+  assert.match(comment, /needs human review before Testing/);
+  assert.match(comment, /Human review required/);
+  assert.match(comment, /Dify checks: 21\/27/);
+  assert.match(comment, /Source page Status was not moved to Testing/);
+  assert.match(comment, /moving Status out of Updating and back to Updating/);
 });
 
 test('parseDifyEvalAnswer preserves an advisory proposed patch', () => {

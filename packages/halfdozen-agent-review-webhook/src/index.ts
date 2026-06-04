@@ -3716,7 +3716,7 @@ function buildTestingTaskHandoffProperties(
   const titleProperty = titlePropertyName(schema);
   if (!titleProperty) return undefined;
 
-  const taskTitle = `Agent Test Report - @${review.agentName}`;
+  const taskTitle = testingTaskHandoffTitle(review, report);
   const properties: UnknownRecord = {
     [titleProperty]: {
       title: notionRichText(taskTitle)
@@ -3752,15 +3752,64 @@ function buildTestingTaskHandoffProperties(
     }
     if (property.type === 'rich_text' && (normalized.includes('notes') || normalized.includes('summary'))) {
       const reportUrl = testReport.pageUrl ? ` Full report: ${testReport.pageUrl}` : '';
+      const prefix = requiresHumanReview(report)
+        ? 'Human review required.'
+        : `Eval ${report.summary.status}.`;
       properties[name] = {
         rich_text: notionRichText(
-          `Eval ${report.summary.status}; Dify checks ${report.summary.checks_passed}/${report.summary.checks_total}; Worker rubric ${report.worker_rubric.checks_passed}/${report.worker_rubric.checks_total}.${reportUrl}`
+          `${prefix} Dify checks ${report.summary.checks_passed}/${report.summary.checks_total}; Worker rubric ${report.worker_rubric.checks_passed}/${report.worker_rubric.checks_total}.${reportUrl}`
         )
       };
     }
   }
 
   return properties;
+}
+
+function requiresHumanReview(report: GovernanceEvalReport, sourcePageUpdate?: NotionAgentPageUpdateResult): boolean {
+  const reportSucceeded = report.success !== false && report.summary.status === 'pass';
+  const patchApplied = report.patch_application?.applied !== false;
+  const transitionAllowed = report.proposed_patch?.status_transition?.allowed !== false;
+
+  return (
+    !reportSucceeded ||
+    !patchApplied ||
+    !transitionAllowed ||
+    sourcePageUpdate?.ok === false ||
+    sourcePageUpdate?.status === 'failed'
+  );
+}
+
+function testingTaskHandoffTitle(review: NormalizedReviewRequest, report: GovernanceEvalReport): string {
+  return requiresHumanReview(report)
+    ? `Agent Eval Needs Human Review - @${review.agentName}`
+    : `Agent Test Report - @${review.agentName}`;
+}
+
+function humanReviewReasonLines(
+  report: GovernanceEvalReport,
+  sourcePageUpdate?: NotionAgentPageUpdateResult
+): string[] {
+  const lines = [
+    `Eval status: ${report.summary.status}.`,
+    `Dify checks: ${report.summary.checks_passed}/${report.summary.checks_total}.`,
+    `Worker rubric: ${report.worker_rubric.checks_passed}/${report.worker_rubric.checks_total}.`,
+    report.proposed_patch?.status_transition
+      ? `Status transition: ${report.proposed_patch.status_transition.from} -> ${report.proposed_patch.status_transition.to}; allowed=${report.proposed_patch.status_transition.allowed}.`
+      : undefined,
+    report.proposed_patch?.status_transition?.reason
+      ? `Transition reason: ${report.proposed_patch.status_transition.reason}`
+      : undefined,
+    report.patch_application
+      ? `Patch application: ${report.patch_application.applied ? 'accepted' : 'not accepted'} (${report.patch_application.mode}).`
+      : undefined,
+    sourcePageUpdate
+      ? `Source page writeback: ${sourcePageUpdate.status}${sourcePageUpdate.reason ? ` (${sourcePageUpdate.reason})` : ''}.`
+      : undefined,
+    sourcePageUpdate?.statusUpdated === false ? 'Source page Status was not moved to Testing.' : undefined
+  ].filter((line): line is string => Boolean(line));
+
+  return lines;
 }
 
 function buildTestingTaskHandoffBlocks(
@@ -3770,6 +3819,35 @@ function buildTestingTaskHandoffBlocks(
   sourcePageUpdate: NotionAgentPageUpdateResult
 ): UnknownRecord[] {
   const sourcePageUrl = sourcePageUpdate.pageUrl ?? review.pageUrl ?? review.enrichment?.notionPageUrl;
+  if (requiresHumanReview(report, sourcePageUpdate)) {
+    const blocks: UnknownRecord[] = [
+      notionHeadingBlock(2, `Agent Eval Human Review Required - ${report.generated_at.replace(/\.\d{3}Z$/, 'Z')}`),
+      notionParagraphBlock(
+        'The automated eval did not approve this agent for Testing. The Worker left the source agent page unchanged so the team can review the failed checks before another run.'
+      ),
+      notionParagraphBlock(`Full Eval/Test Report: ${testReport.pageUrl ?? 'not available'}`),
+      sourcePageUrl ? notionParagraphBlock(`Source agent page: ${sourcePageUrl}`) : undefined,
+      notionParagraphBlock(`Webhook request: ${review.requestId}`),
+      notionHeadingBlock(3, 'Why It Stopped'),
+      ...humanReviewReasonLines(report, sourcePageUpdate).map((line) => notionBulletedListBlock(line)),
+      notionHeadingBlock(3, 'Human Review Checklist'),
+      notionTodoBlock('Open the full Eval/Test Report linked above.'),
+      notionTodoBlock('Review the failed Dify checks, process tests, transition reason, and recommended upgrades.'),
+      notionTodoBlock('Confirm required Notion pages, databases, properties, linked references, and tool access are available.'),
+      notionTodoBlock('Update the source instructions or add source-page notes that resolve the failed checks.'),
+      notionTodoBlock('Re-run by moving Status out of Updating, then back to Updating after fixes are in place.'),
+      notionTodoBlock('Do not move this agent to Testing or Validated until a passing eval replaces the source page and live testing is complete.'),
+      notionHeadingBlock(3, 'Review Summary'),
+      ...notionParagraphBlocks(report.review_summary),
+      notionHeadingBlock(3, 'Recommended Upgrades'),
+      ...report.recommended_upgrades.slice(0, 8).map((upgrade) => notionBulletedListBlock(upgrade)),
+      notionHeadingBlock(3, 'Caveats'),
+      ...report.caveats.slice(0, 8).map((caveat) => notionBulletedListBlock(caveat))
+    ].filter((block): block is UnknownRecord => Boolean(block));
+
+    return blocks;
+  }
+
   const blocks: UnknownRecord[] = [
     notionHeadingBlock(2, `Agent Eval Testing Handoff - ${report.generated_at.replace(/\.\d{3}Z$/, 'Z')}`),
     notionParagraphBlock(
@@ -3851,8 +3929,11 @@ async function findRecentTestingTaskHandoff(
   }
 
   const results = Array.isArray(body.results) ? body.results.filter(isRecord) : [];
+  const expectedTitle = normalizeKey(testingTaskHandoffTitle(review, report));
+  const expectedKind = requiresHumanReview(report) ? 'agentevalneedshumanreview' : 'agenttestreport';
   const selected =
-    results.find((page) => normalizeKey(notionPageTitle(page, titleProperty) ?? '').includes('agenttestreport')) ??
+    results.find((page) => normalizeKey(notionPageTitle(page, titleProperty) ?? '') === expectedTitle) ??
+    results.find((page) => normalizeKey(notionPageTitle(page, titleProperty) ?? '').includes(expectedKind)) ??
     results[0];
   const pageId = selected ? stringFromUnknown(selected.id) : undefined;
   if (!pageId) return { ok: true };
@@ -4420,6 +4501,7 @@ function automatedWorkflowComment(
   sourcePageUpdate: NotionAgentPageUpdateResult,
   taskHandoff?: NotionTaskHandoffResult
 ): string {
+  const needsHumanReview = requiresHumanReview(report, sourcePageUpdate);
   const recommendedUpgradeLines = compactBulletLines(report.recommended_upgrades, 5);
   const caveatLines = compactBulletLines(report.caveats, 5);
   const liveTestingLines = report.live_testing_checklist.flatMap((item) => [
@@ -4439,7 +4521,9 @@ function automatedWorkflowComment(
   const body = [
     report.success && testReport.ok && sourcePageUpdate.ok
       ? 'Automated Half Dozen webhook workflow completed.'
-      : 'Automated Half Dozen webhook workflow ran with incomplete Notion handoff.',
+      : needsHumanReview
+        ? 'Automated Half Dozen webhook workflow needs human review before Testing.'
+        : 'Automated Half Dozen webhook workflow ran with incomplete Notion handoff.',
     '',
     `Agent: ${review.agentName}`,
     `Webhook request: ${review.requestId}`,
@@ -4465,6 +4549,15 @@ function automatedWorkflowComment(
     `Source agent page: ${sourcePageUpdate.status}${sourcePageUpdate.pageUrl ? ` ${sourcePageUpdate.pageUrl}` : sourcePageUpdate.reason ? ` (${sourcePageUpdate.reason})` : ''}`,
     `Source page status updated: ${sourcePageUpdate.statusUpdated === true ? 'yes' : 'no'}`,
     `Tasks [HD] handoff: ${taskHandoff ? `${taskHandoff.status}${taskHandoff.pageUrl ? ` ${taskHandoff.pageUrl}` : taskHandoff.reason ? ` (${taskHandoff.reason})` : ''}` : 'not attempted'}`,
+    ...(needsHumanReview
+      ? [
+          '',
+          'Human review required',
+          ...humanReviewReasonLines(report, sourcePageUpdate).map((line) => `- ${line}`),
+          '- Next step: fix the failed checks or missing context, then re-run by moving Status out of Updating and back to Updating.',
+          '- Do not move to Testing or Validated until a passing eval replaces the source page and live testing passes.'
+        ]
+      : []),
     '',
     'Full report',
     fullReport,
