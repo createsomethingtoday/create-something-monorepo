@@ -55,11 +55,29 @@ database polling or multi-client rollout, add an event-driven layer:
 In that future shape, webhooks do the normal incremental sync work and this MCP
 remains the agent/operator surface for audit, repair, backfill, and exceptions.
 
+## Braintrust
+
+Braintrust is included for runtime observability and MCP contract evaluation.
+When `BRAINTRUST_API_KEY` is configured, each tool call emits a sanitized trace
+with tool name, action, duration, success state, write counts, error scopes, row
+counts, drift counts, field drift categories, and repair scope.
+
+Traces intentionally do not include raw Notion page payloads, page body text,
+attachment URLs, bearer tokens, or full row lists. The MCP response remains the
+source of row-level operator evidence.
+
+Run the local no-log contract eval with:
+
+```bash
+pnpm braintrust:eval:mcp:halfdozen-blondish-sync:local
+```
+
 ## Deploy
 
 ```bash
 pnpm --filter @create-something/halfdozen-blondish-sync-mcp typecheck
 pnpm --filter @create-something/halfdozen-blondish-sync-mcp test
+pnpm braintrust:eval:mcp:halfdozen-blondish-sync:local
 pnpm deploy:halfdozen-blondish-sync-mcp
 ```
 
@@ -71,4 +89,6 @@ pnpm exec wrangler secret put MCP_API_KEY
 pnpm exec wrangler secret put BLONDISH_NOTION_API_KEY
 pnpm exec wrangler secret put HALFDOZEN_NOTION_API_KEY
 pnpm exec wrangler secret put HALFDOZEN_TICKETS_DATA_SOURCE_ID
+pnpm exec wrangler secret put BRAINTRUST_API_KEY
+pnpm exec wrangler secret put BRAINTRUST_PROJECT_ID # optional
 ```

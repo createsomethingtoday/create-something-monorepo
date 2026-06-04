@@ -9,6 +9,10 @@ export interface Env {
   HALFDOZEN_TICKETS_DATA_SOURCE_ID?: string;
   HALFDOZEN_TICKETS_DATA_SOURCE_TITLE?: string;
   BLONDISH_OS_STATUS_PROPERTY?: string;
+  BRAINTRUST_API_KEY?: string;
+  BRAINTRUST_PROJECT_ID?: string;
+  BRAINTRUST_PROJECT_NAME?: string;
+  BRAINTRUST_ENABLED?: string;
 }
 
 export type Workspace = 'blondish' | 'halfdozen';
