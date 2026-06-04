@@ -27,6 +27,10 @@ interface Env {
   DIFY_HALFDOZEN_AGENT_BUILDER_EVAL_TIMEOUT_MS?: string;
   DIFY_SUBMITTED_INSTRUCTIONS_MAX_LENGTH?: string;
   DIFY_HALFDOZEN_AGENT_BUILDER_EVAL_REQUIRED?: string;
+  DIFY_NOTION_WRITE_TEST_MODE?: string;
+  DIFY_NOTION_TEST_PAGE_ID?: string;
+  DIFY_NOTION_TEST_PAGE_URL?: string;
+  DIFY_NOTION_TEST_DATABASE_ID?: string;
 }
 
 interface NormalizedReviewRequest {
@@ -126,6 +130,7 @@ interface GovernanceEvalReport {
   proposed_patch: DifyInstructionPatch;
   patch_application: WorkerPatchApplication;
   worker_rubric: WorkerRubricResult;
+  process_tests: ProcessTestResult[];
   behavior_smoke_tests: BehavioralSmokeTest[];
   live_testing_checklist: LiveTestingChecklistItem[];
   caveats: string[];
@@ -173,6 +178,30 @@ interface BehavioralSmokeTest {
   expected_behavior: string;
   covered: boolean;
   evidence: string;
+}
+
+interface ProcessTestResult {
+  scenario: string;
+  prompt?: string;
+  result: 'pass' | 'fail' | 'blocked';
+  expected_value: string;
+  observed_behavior: string;
+  evidence: string;
+  artifacts: string[];
+  limitations: string[];
+}
+
+interface DifyWriteTestPolicy {
+  enabled: boolean;
+  mode: 'disabled' | 'sandbox';
+  allowed_targets: {
+    page_id?: string;
+    page_url?: string;
+    database_id?: string;
+  };
+  forbidden_targets: string[];
+  reason: string;
+  rules: string[];
 }
 
 interface LiveTestingChecklistItem {
@@ -235,6 +264,7 @@ interface DifyAgentBuilderEvalOutput {
   final_instructions: string;
   archived_instructions: string;
   proposed_patch: DifyInstructionPatch;
+  process_tests: ProcessTestResult[];
   checks: {
     scenarios: number;
     checks_total: number;
@@ -295,8 +325,8 @@ const LIVE_TESTING_HANDOFF_GUIDANCE =
 const FINAL_INSTRUCTIONS_UNAVAILABLE_MESSAGE =
   'Final instructions could not be safely isolated from eval/report evidence. Review the Test Report, restore the source instructions if needed, and rerun the Updating eval.';
 const DIFY_API_BASE_DEFAULT = 'https://api.dify.ai/v1';
-const DIFY_EVAL_TIMEOUT_MS_DEFAULT = 25_000;
-const DIFY_EVAL_TIMEOUT_MS_MAX = 90_000;
+const DIFY_EVAL_TIMEOUT_MS_DEFAULT = 120_000;
+const DIFY_EVAL_TIMEOUT_MS_MAX = 14 * 60 * 1000;
 const DIFY_SUBMITTED_INSTRUCTIONS_MAX_LENGTH_DEFAULT = 5000;
 const DIFY_AGENT_BUILDER_EVAL_JSON_CONTRACT = [
   'Return only valid JSON. Do not wrap it in Markdown.',
@@ -307,6 +337,18 @@ const DIFY_AGENT_BUILDER_EVAL_JSON_CONTRACT = [
   '  "recommended_upgrades": ["useful modifications, not broad rewrites"],',
   '  "final_instructions": "complete updated instructions incorporating recommended upgrades",',
   '  "archived_instructions": "optional; omit or return an empty string because the Worker archives the submitted instructions",',
+  '  "process_tests": [',
+  '    {',
+  '      "scenario": "test scenario from the submitted instructions or promotion plan",',
+  '      "prompt": "operator prompt or input used for the simulated test",',
+  '      "result": "pass" | "fail" | "blocked",',
+  '      "expected_value": "the value or behavior the target agent should produce",',
+  '      "observed_behavior": "what the instructions would cause or fail to cause in this scenario",',
+  '      "evidence": "specific instruction text, reference lookup, or reasoning that supports the result",',
+  '      "artifacts": ["sandbox Notion page/comment/database URLs or ids created during the test, if any"],',
+  '      "limitations": ["what was not actually executed in the live Notion runtime"]',
+  '    }',
+  '  ],',
   '  "proposed_patch": {',
   '    "replace_section": {',
   '      "heading": "Current Instructions",',
@@ -333,11 +375,17 @@ const DIFY_AGENT_BUILDER_EVAL_JSON_CONTRACT = [
   '  "caveats": ["live Notion access gaps or material limitations"]',
   '}',
   'final_instructions must be copy-ready Markdown for the Half Dozen team to paste into a Notion agent: use clear headings, numbered workflow steps, acceptance criteria, test scenarios, and explicit mutation/tool-access guardrails.',
+  'final_instructions must preserve the submitted agent goal, audience, trigger model, source workflow, and Notion-native operating model. Improve clarity, safety, references, process tests, and handoff quality only; do not repurpose the agent or replace the original objective with a different workflow.',
   'final_instructions must contain only the replacement instruction body for the source agent page. Do not include eval status, review summaries, recommended upgrades, patch evidence, archived instructions, raw JSON, worker notes, or live-testing handoff text in final_instructions.',
   'Do not place final_instructions inside one giant code fence. Preserve readable instruction structure.',
   'Do not duplicate final_instructions in proposed_patch.replace_section.markdown unless the patch text intentionally differs.',
   'Do not repeat the submitted instructions in archived_instructions; the Worker handles archival from the original source payload.',
   'Preserve linked Notion pages/databases as references. Prefer direct links or mentions over copying long database/page descriptions into final_instructions.',
+  'Do not stop at prompt review. Use the submitted instructions, promotion tests, and any retrieved read-only Notion references to run scenario-level simulated process tests. Put those results in process_tests.',
+  'When write_test_policy.enabled is true, you may use Notion write tools only against write_test_policy.allowed_targets to create/update sandbox artifacts that prove process behavior. Record each artifact in process_tests[].artifacts.',
+  'When write_test_policy.enabled is false or no allowed target can support the test, do not use write tools; mark write-backed process tests as blocked rather than pretending they ran.',
+  'Never mutate source agent pages, AI Agents [HD], Test Reports [OS], Tasks [HD], Linear, production pages, client pages, or any target outside write_test_policy.allowed_targets.',
+  'process_tests must be honest about boundaries: result can be pass, fail, or blocked, and limitations must say when the live Notion agent/runtime was not actually invoked.',
   'proposed_patch is advisory. The Worker, not Dify, is the Notion/Linear writer. proposed_patch.replace_section.markdown may be omitted when final_instructions is the patch.',
   'Set proposed_patch.status_transition.allowed to false when the instructions are not ready for Testing or required access/reference context is missing.',
   'status must be either "pass" or "fail". checks must be an object with numeric scenarios, checks_total, checks_passed, and checks_failed.',
@@ -1777,11 +1825,8 @@ async function runDifyAgentBuilderEval(
   }
 
   const baseUrl = (env.DIFY_HALFDOZEN_AGENT_BUILDER_EVAL_BASE_URL ?? DIFY_API_BASE_DEFAULT).replace(/\/+$/, '');
-  const configuredTimeoutMs = positiveInteger(
-    env.DIFY_HALFDOZEN_AGENT_BUILDER_EVAL_TIMEOUT_MS,
-    DIFY_EVAL_TIMEOUT_MS_DEFAULT
-  );
-  const timeoutMs = Math.min(configuredTimeoutMs, DIFY_EVAL_TIMEOUT_MS_MAX);
+  const timeoutMs = difyEvalTimeoutMs(env);
+  const writeTestPolicy = difyWriteTestPolicy(env);
   const submittedInstructions = submittedInstructionsForDify(
     review,
     positiveInteger(
@@ -1800,8 +1845,8 @@ async function runDifyAgentBuilderEval(
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        inputs: difyAgentBuilderInputs(review),
-        query: difyAgentBuilderQuery(review, parentIssue, workflowIssues, submittedInstructions.text, {
+        inputs: difyAgentBuilderInputs(review, writeTestPolicy),
+        query: difyAgentBuilderQuery(review, parentIssue, workflowIssues, submittedInstructions.text, writeTestPolicy, {
           inputCharacters: submittedInstructions.inputCharacters,
           sentCharacters: submittedInstructions.sentCharacters,
           truncated: submittedInstructions.truncated
@@ -1869,13 +1914,75 @@ async function runDifyAgentBuilderEval(
   }
 }
 
-function difyAgentBuilderInputs(review: NormalizedReviewRequest): Record<string, string> {
+function difyEvalTimeoutMs(env: Pick<Env, 'DIFY_HALFDOZEN_AGENT_BUILDER_EVAL_TIMEOUT_MS'>): number {
+  const configuredTimeoutMs = positiveInteger(
+    env.DIFY_HALFDOZEN_AGENT_BUILDER_EVAL_TIMEOUT_MS,
+    DIFY_EVAL_TIMEOUT_MS_DEFAULT
+  );
+  if (configuredTimeoutMs <= 0) return DIFY_EVAL_TIMEOUT_MS_DEFAULT;
+  return Math.min(configuredTimeoutMs, DIFY_EVAL_TIMEOUT_MS_MAX);
+}
+
+function difyWriteTestPolicy(env: Pick<
+  Env,
+  'DIFY_NOTION_WRITE_TEST_MODE' | 'DIFY_NOTION_TEST_PAGE_ID' | 'DIFY_NOTION_TEST_PAGE_URL' | 'DIFY_NOTION_TEST_DATABASE_ID'
+>): DifyWriteTestPolicy {
+  const requestedMode = normalizeKey(env.DIFY_NOTION_WRITE_TEST_MODE ?? '');
+  const requested =
+    requestedMode === 'sandbox' ||
+    requestedMode === 'true' ||
+    requestedMode === 'enabled' ||
+    requestedMode === 'write';
+  const allowedTargets = {
+    page_id: stringFromUnknown(env.DIFY_NOTION_TEST_PAGE_ID),
+    page_url: stringFromUnknown(env.DIFY_NOTION_TEST_PAGE_URL),
+    database_id: stringFromUnknown(env.DIFY_NOTION_TEST_DATABASE_ID)
+  };
+  const hasAllowedTarget = Boolean(
+    allowedTargets.page_id || allowedTargets.page_url || allowedTargets.database_id
+  );
+  const enabled = requested && hasAllowedTarget;
+
+  return {
+    enabled,
+    mode: enabled ? 'sandbox' : 'disabled',
+    allowed_targets: enabled ? allowedTargets : {},
+    forbidden_targets: [
+      'source agent page that triggered the webhook',
+      'AI Agents [HD]',
+      'Test Reports [OS]',
+      'Tasks [HD]',
+      'Linear',
+      'production or client workspace pages',
+      'any page/database not listed in allowed_targets'
+    ],
+    reason: enabled
+      ? 'Sandbox Notion write testing is enabled for the configured allowed target only.'
+      : requested
+        ? 'Sandbox Notion write testing was requested but no allowed test page or database was configured.'
+        : 'Sandbox Notion write testing is disabled.',
+    rules: [
+      'Read tools may be used for source/context inspection.',
+      'Write tools may be used only when enabled is true and only against allowed_targets.',
+      'Do not update the triggering source agent page, Test Reports, Tasks, AI Agents, Linear, production pages, or client pages.',
+      'Record any sandbox page, comment, or database artifact in process_tests[].artifacts.',
+      'If a process test needs writes and write testing is disabled, mark that test blocked.'
+    ]
+  };
+}
+
+function difyAgentBuilderInputs(review: NormalizedReviewRequest, writeTestPolicy: DifyWriteTestPolicy): Record<string, string> {
   return {
     agent_name: review.agentName,
     webhook_request_id: review.requestId,
     source_page_id: review.enrichment?.notionPageId ?? '',
     source_page_url: review.pageUrl ?? review.enrichment?.notionPageUrl ?? '',
-    has_page_content: review.enrichment?.pageContent ? 'true' : 'false'
+    has_page_content: review.enrichment?.pageContent ? 'true' : 'false',
+    write_test_mode: writeTestPolicy.mode,
+    write_test_enabled: String(writeTestPolicy.enabled),
+    notion_test_page_id: writeTestPolicy.allowed_targets.page_id ?? '',
+    notion_test_page_url: writeTestPolicy.allowed_targets.page_url ?? '',
+    notion_test_database_id: writeTestPolicy.allowed_targets.database_id ?? ''
   };
 }
 
@@ -1948,13 +2055,16 @@ function difyAgentBuilderQuery(
   parentIssue: LinearIssue,
   workflowIssues: LinearWorkflowIssue[],
   submittedInstructions: string,
+  writeTestPolicy: DifyWriteTestPolicy,
   inputMetadata: { inputCharacters: number; sentCharacters: number; truncated: boolean }
 ): string {
   return [
     'Evaluate this Half Dozen agent page for the automated Updating -> Testing webhook flow.',
-    'Use Notion read tools only when useful: search_notion, query_database, retrieve_page, retrieve_database.',
-    'Do not call Notion write tools, create pages, update pages, create databases, update databases, create comments, or mutate external systems.',
-    'The Cloudflare Worker is the only writer for Test Reports [OS], source page append/status, and Linear completion.',
+    'Use Notion read tools when useful to inspect accessible references and source context.',
+    'Use Notion write tools only when write_test_policy.enabled is true and only against write_test_policy.allowed_targets.',
+    'Never mutate source agent pages, AI Agents [HD], Test Reports [OS], Tasks [HD], Linear, production pages, client pages, or any target outside write_test_policy.allowed_targets.',
+    'If a scenario needs Notion writes but write_test_policy is disabled or insufficient, mark that process test blocked and explain what sandbox target is missing.',
+    'The Cloudflare Worker is the only production writer for Test Reports [OS], source page replacement/status, task handoff, and Linear completion.',
     '',
     DIFY_AGENT_BUILDER_EVAL_JSON_CONTRACT,
     '',
@@ -1974,6 +2084,7 @@ function difyAgentBuilderQuery(
           sent_characters: inputMetadata.sentCharacters,
           excerpted: inputMetadata.truncated
         },
+        write_test_policy: writeTestPolicy,
         linear_intake: {
           identifier: parentIssue.identifier,
           url: parentIssue.url
@@ -2065,6 +2176,7 @@ function parseDifyEvalAnswer(
     Math.max(0, checksTotal - checksFailed)
   );
   const recommendedUpgrades = stringArrayFromUnknown(object.recommended_upgrades, 12);
+  const processTests = processTestResultsFromUnknown(object.process_tests, 8);
 
   return {
     ok: true,
@@ -2080,6 +2192,7 @@ function parseDifyEvalAnswer(
         recommendedUpgrades,
         finalInstructions
       }),
+      process_tests: processTests,
       checks: {
         scenarios: positiveInteger(checks.scenarios, GOVERNANCE_EVAL_SCENARIOS),
         checks_total: checksTotal,
@@ -2089,6 +2202,41 @@ function parseDifyEvalAnswer(
       caveats: stringArrayFromUnknown(object.caveats, 8)
     }
   };
+}
+
+function processTestResultsFromUnknown(value: unknown, maxItems: number): ProcessTestResult[] {
+  if (!Array.isArray(value)) return [];
+
+  return value
+    .map((item): ProcessTestResult | undefined => {
+      if (!isRecord(item)) return undefined;
+
+      const scenario = longStringFromUnknown(item.scenario, 240);
+      const expectedValue = longStringFromUnknown(item.expected_value, 1000);
+      const observedBehavior = longStringFromUnknown(item.observed_behavior, 1000);
+      const evidence = longStringFromUnknown(item.evidence, 1000);
+      if (!scenario || !expectedValue || !observedBehavior || !evidence) return undefined;
+
+      return {
+        scenario,
+        prompt: longStringFromUnknown(item.prompt, 500),
+        result: processTestResultFromUnknown(item.result),
+        expected_value: expectedValue,
+        observed_behavior: observedBehavior,
+        evidence,
+        artifacts: stringArrayFromUnknown(item.artifacts, 8),
+        limitations: stringArrayFromUnknown(item.limitations, 5)
+      };
+    })
+    .filter((item): item is ProcessTestResult => Boolean(item))
+    .slice(0, maxItems);
+}
+
+function processTestResultFromUnknown(value: unknown): ProcessTestResult['result'] {
+  const normalized = normalizeKey(String(value ?? ''));
+  if (normalized === 'pass') return 'pass';
+  if (normalized === 'fail') return 'fail';
+  return 'blocked';
 }
 
 function normalizeDifyInstructionPatch(
@@ -2354,6 +2502,24 @@ function buildLiveTestingChecklist(behaviorSmokeTests: BehavioralSmokeTest[]): L
     label: test.scenario,
     prompt: test.prompt,
     expected_behavior: test.expected_behavior
+  }));
+}
+
+function buildFallbackProcessTests(behaviorSmokeTests: BehavioralSmokeTest[]): ProcessTestResult[] {
+  return behaviorSmokeTests.slice(0, 5).map((test) => ({
+    scenario: test.scenario,
+    prompt: test.prompt,
+    result: test.covered ? 'pass' : 'blocked',
+    expected_value: test.expected_behavior,
+    observed_behavior: test.covered
+      ? 'Static instruction review found enough coverage for this scenario to hand off for live Notion testing.'
+      : 'Static instruction review could not find explicit coverage for this scenario; human testing or additional scenario detail is required.',
+    evidence: test.evidence,
+    artifacts: [],
+    limitations: [
+      'Generated by Worker static review, not by live Notion agent execution.',
+      'Use the Live Testing Handoff to verify actual Notion runtime behavior before Validated or Active status.'
+    ]
   }));
 }
 
@@ -2693,6 +2859,10 @@ function searchText(value: string): string {
   return value.toLowerCase().replace(/\s+/g, ' ').trim();
 }
 
+function titleCase(value: string): string {
+  return value ? `${value[0].toUpperCase()}${value.slice(1).toLowerCase()}` : value;
+}
+
 function hasAnyTerm(text: string, terms: string[]): boolean {
   return terms.some((term) => text.includes(term.toLowerCase()));
 }
@@ -2767,7 +2937,11 @@ function buildGovernanceEvalReport(
     archivedInstructions,
     proposedPatch
   );
+  const processTests = difyOutput?.process_tests.length
+    ? difyOutput.process_tests
+    : buildFallbackProcessTests(behaviorSmokeTests);
   const liveTestingChecklist = buildLiveTestingChecklist(behaviorSmokeTests);
+  const processTestsFailed = processTests.some((test) => test.result === 'fail');
   const transitionAllowed =
     proposedPatch.status_transition.allowed && normalizeKey(proposedPatch.status_transition.to) === 'testing';
   const success =
@@ -2775,6 +2949,7 @@ function buildGovernanceEvalReport(
     difySummary.checks_failed === 0 &&
     cleanFinalInstructions.clean &&
     workerRubric.status === 'pass' &&
+    !processTestsFailed &&
     transitionAllowed;
   const summary = {
     ...difySummary,
@@ -2814,6 +2989,12 @@ function buildGovernanceEvalReport(
       : []),
     ...(behaviorSmokeTests.some((test) => !test.covered)
       ? ['Behavioral smoke coverage is incomplete; run or add scenario-specific tests before Validated or Active status.']
+      : []),
+    ...(processTestsFailed
+      ? ['One or more simulated process tests failed; source page status is left unchanged until the test failure is addressed.']
+      : []),
+    ...(processTests.some((test) => test.result === 'blocked')
+      ? ['One or more process tests were blocked or static-only; live Notion runtime testing remains required before Validated or Active status.']
       : []),
     ...(!cleanFinalInstructions.clean ? [cleanFinalInstructions.reason] : []),
     ...(difyEval.inputTruncated
@@ -2855,6 +3036,7 @@ function buildGovernanceEvalReport(
       proposed_patch: proposedPatch,
       patch_application: patchApplication,
       worker_rubric: workerRubric,
+      process_tests: processTests,
       behavior_smoke_tests: behaviorSmokeTests,
       live_testing_checklist: liveTestingChecklist,
       caveats,
@@ -2929,6 +3111,18 @@ function buildGovernanceEvalReport(
     ...workerRubric.checks.map((check) =>
       `- ${check.passed ? 'Pass' : 'Fail'}${check.critical ? ' (critical)' : ''}: ${check.label} - ${check.detail}`
     ),
+    '',
+    '## Process Test Results',
+    '',
+    ...processTests.flatMap((test) => [
+      `- ${titleCase(test.result)}: ${test.scenario}`,
+      ...(test.prompt ? [`  Prompt/input: ${test.prompt}`] : []),
+      `  Expected value: ${test.expected_value}`,
+      `  Observed behavior: ${test.observed_behavior}`,
+      `  Evidence: ${test.evidence}`,
+      ...(test.artifacts.length ? [`  Artifacts: ${test.artifacts.join('; ')}`] : []),
+      ...(test.limitations.length ? [`  Limitations: ${test.limitations.join('; ')}`] : [])
+    ]),
     '',
     '## Behavioral Smoke Coverage',
     '',
@@ -3036,6 +3230,7 @@ function buildGovernanceEvalReport(
     proposed_patch: proposedPatch,
     patch_application: patchApplication,
     worker_rubric: workerRubric,
+    process_tests: processTests,
     behavior_smoke_tests: behaviorSmokeTests,
     live_testing_checklist: liveTestingChecklist,
     caveats,
@@ -4539,6 +4734,8 @@ export {
   buildTestReportProperties,
   canonicalPageContent,
   cleanFinalInstructionsForWriteback,
+  difyEvalTimeoutMs,
+  difyWriteTestPolicy,
   enrichReviewWithNotionContent,
   evaluateWorkerRubric,
   LIVE_TESTING_HANDOFF_GUIDANCE,

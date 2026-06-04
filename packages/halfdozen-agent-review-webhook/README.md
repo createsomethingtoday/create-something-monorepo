@@ -23,12 +23,12 @@ times out, or returns invalid JSON, the Worker falls back to the deterministic g
 mirror that matches the same report contract. The generated handoff follows the meeting contract:
 result, review summary, recommended upgrades/modifications, final instructions, and archived
 submitted instructions. When the Notion integration can see the source page and
-`Test Reports [OS]`, the Worker publishes the eval report to Test Reports, rewrites the submitted
-agent page by appending the updated handoff and archived submitted-instructions section, flips the
-source page from `Updating` to `Testing`, comments evidence back to Linear, and marks the
-intake/build/eval issues complete. If any Notion handoff step fails, the run is recorded in Linear
-but is not marked completed. If the eval result is `fail`, the Worker appends the report but leaves
-the source page status unchanged instead of moving it to `Testing`.
+`Test Reports [OS]`, the Worker publishes the eval report to Test Reports, replaces the submitted
+agent page body with only the final instruction text, flips the source page from `Updating` to
+`Testing`, comments evidence back to Linear, and marks the intake/build/eval issues complete. If any
+Notion handoff step fails, the run is recorded in Linear but is not marked completed. If the eval
+result is `fail`, the Worker publishes the report but leaves the source page status unchanged
+instead of moving it to `Testing`.
 
 Linear receives compact evidence only: status, links, Dify input metadata, recommended upgrades,
 caveats, and the live-testing paste boundary. The full eval details, final instructions, archived
@@ -66,9 +66,17 @@ append-only evidence, not the primary source of truth for the next review.
 
 The Dify app should not be given responsibility for source-page mutation in this workflow. Its
 strongest role is reasoning over the submitted instructions, returning the final instruction text,
-the review details, and a structured patch proposal. The Worker then validates that proposal with
+process-test results, the review details, and a structured patch proposal. Dify may use Notion write
+tools only for sandbox process tests when `DIFY_NOTION_WRITE_TEST_MODE` and an allowed test target
+are configured. It must never mutate the source agent page, AI Agents [HD], Test Reports [OS], Tasks
+[HD], Linear, production pages, or client pages. The Worker then validates Dify's proposal with
 deterministic checks and applies the versioned Notion/Linear handoff only when the patch allows the
 `Updating` to `Testing` transition and the Worker rubric passes.
+
+The final instruction rewrite must preserve the original agent goal, audience, trigger model, source
+workflow, and Notion-native operating model. The eval should improve clarity, safety, references,
+process-test coverage, and live-testing handoff quality, not repurpose the agent or replace the
+original objective with a different workflow.
 
 Long source pages are sent to Dify as a bounded excerpt so the queued webhook run stays reliable.
 The Worker still archives the full submitted instructions in Notion and, when the Dify input was
@@ -86,8 +94,9 @@ This aligns with the June 2 MJ x DM workflow discussion:
 - Webhook fires for any other status, including `Testing`, are treated as echoes and skipped with
   Linear evidence instead of starting another eval.
 - The eval result creates a new, versioned Test Reports item instead of overwriting prior evals.
-- The source agent page receives the final instructions, recommended upgrades, archived submitted
-  instructions, and a Testing handoff.
+- The source agent page is replaced with the final instructions only.
+- Recommended upgrades, archived submitted instructions, raw Dify output, full review JSON, and
+  live-testing handoff evidence stay in the Test Reports item.
 - A passing instruction-readiness eval moves the source page to `Testing`, not `Validated`.
 - Humans then test the actual Notion agent with the handoff prompts before any `Validated` or
   `Active` promotion.
@@ -184,9 +193,13 @@ TEST_REPORTS_DATABASE_NAME = "Test Reports [OS]" # overrides database discovery 
 TASKS_DATABASE_NAME = "Tasks [HD]" # overrides task handoff database discovery name
 PUBLISH_TASK_HANDOFF = "false" # disables testing task handoff create/update
 DIFY_HALFDOZEN_AGENT_BUILDER_EVAL_BASE_URL = "https://api.dify.ai/v1"
-DIFY_HALFDOZEN_AGENT_BUILDER_EVAL_TIMEOUT_MS = "25000"
+DIFY_HALFDOZEN_AGENT_BUILDER_EVAL_TIMEOUT_MS = "720000"
 DIFY_SUBMITTED_INSTRUCTIONS_MAX_LENGTH = "5000"
 DIFY_HALFDOZEN_AGENT_BUILDER_EVAL_REQUIRED = "true" # fail instead of fallback when Dify errors
+DIFY_NOTION_WRITE_TEST_MODE = "sandbox" # enables write-backed process tests only against allowed test targets
+DIFY_NOTION_TEST_PAGE_ID = "..." # optional allowed sandbox page for Dify write tools
+DIFY_NOTION_TEST_PAGE_URL = "..." # optional allowed sandbox page URL for Dify write tools
+DIFY_NOTION_TEST_DATABASE_ID = "..." # optional allowed sandbox database for Dify write tools
 ```
 
 Queue binding:
@@ -214,14 +227,25 @@ config/dify-agents/halfdozen-agent-builder-eval.dify.yml
 
 Import it in Dify Studio as `Half Dozen Agent Builder Eval`, bind the installed Notion plugin to a
 Notion integration that can read the source Half Dozen agent pages, publish the app, then store the
-Service API key in `DIFY_HALFDOZEN_AGENT_BUILDER_EVAL_API_KEY`. The import enables only Notion read
-tools (`search_notion`, `query_database`, `retrieve_page`, `retrieve_database`) plus E2B `run_code`
-for bounded JSON/lint checks. The Worker remains the Notion/Linear writer. The app response should
-include `final_instructions` and may include `proposed_patch`. To keep long runs reliable, Dify
+Service API key in `DIFY_HALFDOZEN_AGENT_BUILDER_EVAL_API_KEY`. Enable Notion read tools for normal
+context retrieval. Write tools (`create_page`, `update_page`, `create_comment`, and database write
+tools) may be enabled only when Dify is configured to use a sandbox page or database, and only for
+write-backed process tests. Do not point Dify write access at the triggering source page, AI Agents
+[HD], Test Reports [OS], Tasks [HD], production pages, or client pages. The Worker remains the
+production Notion/Linear writer. The app response should include `final_instructions`,
+`process_tests`, and may include `proposed_patch`. To keep long runs reliable, Dify
 does not need to duplicate `final_instructions` inside `proposed_patch.replace_section.markdown`
 and does not need to echo the submitted instructions in `archived_instructions`; the Worker
 normalizes missing patch text and archives the original submitted instructions from the source
-payload. The Worker caps Dify execution at 25 seconds and sends long source pages as a bounded
+payload. The Worker calls Dify in streaming mode and uses
+`DIFY_HALFDOZEN_AGENT_BUILDER_EVAL_TIMEOUT_MS` as its Dify call budget. Production is configured for
+720000 ms, with a code-level clamp below the Cloudflare Queue consumer wall-time limit so Notion and
+Linear writeback still have headroom after Dify returns. Long source pages are sent as a bounded
 excerpt; if Dify cannot return a valid response in that budget, the Worker uses its deterministic
-fallback and continues the Notion/Linear handoff. Older responses without `proposed_patch` are
-still accepted and normalized by the Worker for backward compatibility.
+fallback and continues the Notion/Linear handoff. Older responses without `proposed_patch` are still
+accepted and normalized by the Worker for backward compatibility.
+
+Each `process_tests` item should show whether the scenario passed, failed, or was blocked, the exact
+prompt/input used, the expected value, the observed behavior, evidence, limitations, and any sandbox
+artifacts created during the test. If write tools are not enabled or the allowed sandbox target is
+missing, Dify should mark write-backed scenarios as `blocked` rather than claiming completion.

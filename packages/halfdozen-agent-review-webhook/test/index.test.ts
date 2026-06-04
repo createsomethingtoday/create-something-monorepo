@@ -10,6 +10,8 @@ import {
   buildTestReportProperties,
   canonicalPageContent,
   cleanFinalInstructionsForWriteback,
+  difyEvalTimeoutMs,
+  difyWriteTestPolicy,
   enrichReviewWithNotionContent,
   evaluateWorkerRubric,
   LIVE_TESTING_HANDOFF_GUIDANCE,
@@ -43,6 +45,42 @@ const deliveryReadyInstructions = [
   '4. Test Plan',
   '5. External toolkit validation or auth requirements'
 ].join('\n');
+
+test('difyEvalTimeoutMs defaults, honors configured values, and clamps under queue duration', () => {
+  assert.equal(difyEvalTimeoutMs({}), 120_000);
+  assert.equal(difyEvalTimeoutMs({ DIFY_HALFDOZEN_AGENT_BUILDER_EVAL_TIMEOUT_MS: '720000' }), 720_000);
+  assert.equal(difyEvalTimeoutMs({ DIFY_HALFDOZEN_AGENT_BUILDER_EVAL_TIMEOUT_MS: '9999999' }), 840_000);
+  assert.equal(difyEvalTimeoutMs({ DIFY_HALFDOZEN_AGENT_BUILDER_EVAL_TIMEOUT_MS: '0' }), 120_000);
+  assert.equal(difyEvalTimeoutMs({ DIFY_HALFDOZEN_AGENT_BUILDER_EVAL_TIMEOUT_MS: 'invalid' }), 120_000);
+});
+
+test('difyWriteTestPolicy enables writes only for configured sandbox targets', () => {
+  const disabled = difyWriteTestPolicy({});
+  assert.equal(disabled.enabled, false);
+  assert.equal(disabled.mode, 'disabled');
+  assert.deepEqual(disabled.allowed_targets, {});
+
+  const requestedWithoutTarget = difyWriteTestPolicy({
+    DIFY_NOTION_WRITE_TEST_MODE: 'sandbox'
+  });
+  assert.equal(requestedWithoutTarget.enabled, false);
+  assert.equal(requestedWithoutTarget.mode, 'disabled');
+  assert.match(requestedWithoutTarget.reason, /no allowed test page or database/);
+
+  const enabled = difyWriteTestPolicy({
+    DIFY_NOTION_WRITE_TEST_MODE: 'sandbox',
+    DIFY_NOTION_TEST_PAGE_ID: 'test-page-id',
+    DIFY_NOTION_TEST_DATABASE_ID: 'test-database-id'
+  });
+  assert.equal(enabled.enabled, true);
+  assert.equal(enabled.mode, 'sandbox');
+  assert.deepEqual(enabled.allowed_targets, {
+    page_id: 'test-page-id',
+    page_url: undefined,
+    database_id: 'test-database-id'
+  });
+  assert.ok(enabled.forbidden_targets.some((target) => target.includes('source agent page')));
+});
 
 test('canonicalPageContent extracts the latest final instructions section', () => {
   const content = [
@@ -728,6 +766,18 @@ test('parseDifyEvalAnswer preserves an advisory proposed patch', () => {
       recommended_upgrades: ['Clarify mutation guardrails.'],
       final_instructions: 'Final instructions from Dify.',
       archived_instructions: 'Submitted instructions.',
+      process_tests: [
+        {
+          scenario: 'Complete request',
+          prompt: 'Build a Notion-native intake agent.',
+          result: 'pass',
+          expected_value: 'The instructions produce an Agent Spec, final instructions, build checklist, and test plan.',
+          observed_behavior: 'The submitted instructions explicitly require those four output sections.',
+          evidence: 'Found required final output format and draft creation workflow.',
+          artifacts: ['https://www.notion.so/halfdozen/Sandbox-Test-Page-123'],
+          limitations: ['The live Notion agent runtime was not invoked.']
+        }
+      ],
       proposed_patch: {
         replace_section: {
           heading: 'Final Instructions',
@@ -762,6 +812,11 @@ test('parseDifyEvalAnswer preserves an advisory proposed patch', () => {
   assert.equal(parsed.output.proposed_patch.replace_section.markdown, 'Patch instructions from Dify.');
   assert.equal(parsed.output.proposed_patch.append_report.test_plan[0], 'Run one live Notion prompt.');
   assert.equal(parsed.output.proposed_patch.status_transition.allowed, true);
+  assert.equal(parsed.output.process_tests[0].result, 'pass');
+  assert.equal(parsed.output.process_tests[0].scenario, 'Complete request');
+  assert.deepEqual(parsed.output.process_tests[0].artifacts, [
+    'https://www.notion.so/halfdozen/Sandbox-Test-Page-123'
+  ]);
 });
 
 test('parseDifyEvalAnswer backfills proposed patch for the legacy JSON contract', () => {
@@ -790,6 +845,7 @@ test('parseDifyEvalAnswer backfills proposed patch for the legacy JSON contract'
   assert.deepEqual(parsed.output.proposed_patch.append_report.rubric, [
     'Keep linked Notion references intact.'
   ]);
+  assert.deepEqual(parsed.output.process_tests, []);
   assert.equal(parsed.output.proposed_patch.status_transition.from, 'Updating');
   assert.equal(parsed.output.proposed_patch.status_transition.to, 'Testing');
   assert.equal(parsed.output.proposed_patch.status_transition.allowed, true);
