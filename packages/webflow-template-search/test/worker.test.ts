@@ -448,6 +448,114 @@ describe('webflow-template-search worker', () => {
     }
   });
 
+  it('keeps canonical Airtable creator profile slugs when Webflow CMS has an archive designer slug', async () => {
+    const focusedAsset = {
+      ...PUBLISHED_ASSETS[0],
+      id: 'recFocused',
+      fields: {
+        ...PUBLISHED_ASSETS[0].fields,
+        Name: 'Focused',
+        '🥞CMS Slug (formula)': 'focused-website-template',
+        '🎨Creator': ['recDesignerGuilty'],
+        '🎨Creator Name': 'Guilty as Foxx',
+      },
+    };
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: [focusedAsset],
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+      creators: [
+        {
+          id: 'recDesignerGuilty',
+          fields: {
+            Name: 'Guilty as Foxx',
+            '🥞CMS Slug': 'guilty-as-foxx',
+            '🖼️Avatar (Primary)': [{ url: 'https://v5.airtableusercontent.com/v3/u/53/temporary-guilty' }],
+            '🖼️Avatar Alt Text': 'Guilty as Foxx',
+          },
+        },
+      ],
+      webflowCollectionItems: {
+        [DESIGNERS_COLLECTION_ID]: [
+          {
+            id: 'designer-guilty-archive',
+            isArchived: false,
+            isDraft: false,
+            fieldData: {
+              'sync-record-id': 'recDesignerGuilty',
+              name: 'Guilty as Foxx',
+              slug: 'guilty-as-foxx-archive',
+              avatar: {
+                url: 'https://cdn.prod.website-files.com/site/guilty-avatar.webp',
+                alt: 'Guilty as Foxx',
+              },
+            },
+          },
+        ],
+      },
+    });
+    const { env, close } = createTestEnv();
+    env.WEBFLOW_API_TOKEN = 'test-webflow-cms-token';
+
+    try {
+      const response = await callWorker(
+        new Request('https://templates.test/api/templates/admin/sync-records', {
+          method: 'POST',
+          headers: {
+            Authorization: 'Bearer sync-token',
+            'content-type': 'application/json',
+          },
+          body: JSON.stringify({ ids: ['recFocused'] }),
+        }),
+        env,
+      );
+      expect(response.status).toBe(200);
+
+      const search = await callWorker(new Request('https://templates.test/api/templates/search?q=focused'), env);
+      const searchPayload = (await search.json()) as {
+        items: Array<{
+          name: string;
+          creator_slug: string | null;
+          creator_profile_url: string | null;
+          creator_avatar_url: string | null;
+        }>;
+      };
+      expect(searchPayload.items).toHaveLength(1);
+      expect(searchPayload.items[0]).toMatchObject({
+        name: 'Focused',
+        creator_slug: 'guilty-as-foxx',
+        creator_profile_url: 'https://webflow.com/templates/designers/guilty-as-foxx',
+        creator_avatar_url: 'https://cdn.prod.website-files.com/site/guilty-avatar.webp',
+      });
+
+      const refresh = await callWorker(
+        new Request('https://templates.test/api/templates/admin/refresh-creators?force=true', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(refresh.status).toBe(200);
+
+      const refreshedRow = await env.DB.prepare(
+        `SELECT creator_slug, creator_profile_url, creator_avatar_url
+         FROM template_documents
+         WHERE id = ?`,
+      )
+        .bind('recFocused')
+        .first<{ creator_slug: string | null; creator_profile_url: string | null; creator_avatar_url: string | null }>();
+      expect(refreshedRow).toMatchObject({
+        creator_slug: 'guilty-as-foxx',
+        creator_profile_url: 'https://webflow.com/templates/designers/guilty-as-foxx',
+        creator_avatar_url: 'https://cdn.prod.website-files.com/site/guilty-avatar.webp',
+      });
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
   it('returns authenticated sync status and clears stale same-mode sync errors', async () => {
     const { env, close } = createTestEnv();
 
@@ -1041,8 +1149,8 @@ describe('webflow-template-search worker', () => {
       expect(canonicalCreatorProfilePayload.applied_filters.creator_slug).toBe('brix-templates');
       expect(canonicalCreatorProfilePayload.items.map((item) => item.name)).toEqual(['Agentflow']);
       expect(canonicalCreatorProfilePayload.items[0]).toMatchObject({
-        creator_slug: 'brix-templates-archive',
-        creator_profile_url: 'https://webflow.com/templates/designers/brix-templates-archive',
+        creator_slug: 'brix-templates',
+        creator_profile_url: 'https://webflow.com/templates/designers/brix-templates',
       });
 
       const archiveCreatorProfileSearch = await callWorker(
@@ -1055,6 +1163,10 @@ describe('webflow-template-search worker', () => {
       };
       expect(archiveCreatorProfilePayload.applied_filters.creator_slug).toBe('brix-templates-archive');
       expect(archiveCreatorProfilePayload.items.map((item) => item.name)).toEqual(['Agentflow']);
+      expect(archiveCreatorProfilePayload.items[0]).toMatchObject({
+        creator_slug: 'brix-templates',
+        creator_profile_url: 'https://webflow.com/templates/designers/brix-templates',
+      });
     } finally {
       fetchMock.mockRestore();
       close();

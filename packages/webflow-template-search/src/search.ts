@@ -86,6 +86,30 @@ function creatorProfileUrlForSlug(slug: string): string {
   return `https://webflow.com/templates/designers/${slug}`;
 }
 
+function publicCreatorSlug(slug: string | null): string | null {
+  if (!slug) return null;
+  return slug.endsWith('-archive') ? slug.slice(0, -'-archive'.length) : slug;
+}
+
+function publicCreatorProfileUrl(profileUrl: string | null, slug: string | null): string | null {
+  const publicSlug = publicCreatorSlug(slug);
+  if (publicSlug && publicSlug !== slug) return creatorProfileUrlForSlug(publicSlug);
+  if (!profileUrl) return null;
+
+  try {
+    const url = new URL(profileUrl);
+    const archiveMatch = url.pathname.match(/^\/templates\/designers\/([^/]+)-archive\/?$/);
+    if (archiveMatch?.[1]) {
+      url.pathname = `/templates/designers/${archiveMatch[1]}`;
+      return url.toString().replace(/\/$/, '');
+    }
+  } catch {
+    // Keep non-URL legacy values untouched.
+  }
+
+  return profileUrl;
+}
+
 function creatorSlugVariants(slug: string): string[] {
   const variants = [slug];
   if (slug.endsWith('-archive')) {
@@ -447,8 +471,8 @@ export async function searchTemplates(env: Env, rawParams: SearchParams): Promis
       preview_url: row.preview_url,
       website_url: row.website_url,
       creator_name: row.creator_name,
-      creator_slug: row.creator_slug,
-      creator_profile_url: row.creator_profile_url,
+      creator_slug: publicCreatorSlug(row.creator_slug),
+      creator_profile_url: publicCreatorProfileUrl(row.creator_profile_url, row.creator_slug),
       creator_avatar_url: row.creator_avatar_url,
       creator_avatar_alt: row.creator_avatar_alt,
       thumbnail_image_url: row.thumbnail_image_url,

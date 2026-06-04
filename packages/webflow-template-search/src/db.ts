@@ -628,8 +628,24 @@ export async function updateCreatorAvatarsFromWebflow(
                    WHEN ? IS NOT NULL THEN ?
                    ELSE creator_avatar_alt
                  END,
-                 creator_slug = COALESCE(?, creator_slug),
-                 creator_profile_url = COALESCE(?, creator_profile_url),
+                 creator_slug = CASE
+                   WHEN ? IS NOT NULL
+                    AND NOT (? LIKE '%-archive'
+                      AND creator_slug IS NOT NULL
+                      AND creator_slug != ''
+                      AND creator_slug NOT LIKE '%-archive')
+                     THEN ?
+                   ELSE creator_slug
+                 END,
+                 creator_profile_url = CASE
+                   WHEN ? IS NOT NULL
+                    AND NOT (? LIKE '%-archive'
+                      AND creator_profile_url IS NOT NULL
+                      AND creator_profile_url != ''
+                      AND creator_profile_url NOT LIKE '%-archive')
+                     THEN ?
+                   ELSE creator_profile_url
+                 END,
                  synced_at = ?
              WHERE creator_record_id = ?
                AND (
@@ -644,6 +660,10 @@ export async function updateCreatorAvatarsFromWebflow(
             avatarUrl,
             avatarAlt,
             record.slug,
+            record.slug,
+            record.slug,
+            record.profileUrl,
+            record.profileUrl,
             record.profileUrl,
             syncedAt,
             record.syncRecordId,
@@ -671,8 +691,24 @@ export async function updateCreatorAvatarsFromWebflow(
                    WHEN ? IS NOT NULL THEN ?
                    ELSE creator_avatar_alt
                  END,
-                 creator_slug = COALESCE(?, creator_slug),
-                 creator_profile_url = COALESCE(?, creator_profile_url),
+                 creator_slug = CASE
+                   WHEN ? IS NOT NULL
+                    AND NOT (? LIKE '%-archive'
+                      AND creator_slug IS NOT NULL
+                      AND creator_slug != ''
+                      AND creator_slug NOT LIKE '%-archive')
+                     THEN ?
+                   ELSE creator_slug
+                 END,
+                 creator_profile_url = CASE
+                   WHEN ? IS NOT NULL
+                    AND NOT (? LIKE '%-archive'
+                      AND creator_profile_url IS NOT NULL
+                      AND creator_profile_url != ''
+                      AND creator_profile_url NOT LIKE '%-archive')
+                     THEN ?
+                   ELSE creator_profile_url
+                 END,
                  creator_record_id = COALESCE(?, creator_record_id),
                  synced_at = ?
              WHERE creator_name = ?
@@ -689,6 +725,10 @@ export async function updateCreatorAvatarsFromWebflow(
             avatarUrl,
             avatarAlt,
             record.slug,
+            record.slug,
+            record.slug,
+            record.profileUrl,
+            record.profileUrl,
             record.profileUrl,
             record.syncRecordId,
             syncedAt,
@@ -715,8 +755,24 @@ export async function updateCreatorAvatarsFromWebflow(
                    WHEN ? IS NOT NULL THEN ?
                    ELSE creator_avatar_alt
                  END,
-                 creator_slug = COALESCE(?, creator_slug),
-                 creator_profile_url = COALESCE(?, creator_profile_url),
+                 creator_slug = CASE
+                   WHEN ? IS NOT NULL
+                    AND NOT (? LIKE '%-archive'
+                      AND creator_slug IS NOT NULL
+                      AND creator_slug != ''
+                      AND creator_slug NOT LIKE '%-archive')
+                     THEN ?
+                   ELSE creator_slug
+                 END,
+                 creator_profile_url = CASE
+                   WHEN ? IS NOT NULL
+                    AND NOT (? LIKE '%-archive'
+                      AND creator_profile_url IS NOT NULL
+                      AND creator_profile_url != ''
+                      AND creator_profile_url NOT LIKE '%-archive')
+                     THEN ?
+                   ELSE creator_profile_url
+                 END,
                  creator_record_id = COALESCE(NULLIF(creator_record_id, ''), ?),
                  synced_at = ?
              WHERE creator_name = ?
@@ -739,6 +795,10 @@ export async function updateCreatorAvatarsFromWebflow(
             avatarUrl,
             avatarAlt,
             record.slug,
+            record.slug,
+            record.slug,
+            record.profileUrl,
+            record.profileUrl,
             record.profileUrl,
             record.syncRecordId,
             syncedAt,
