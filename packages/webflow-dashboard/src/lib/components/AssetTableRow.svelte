@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { TableCell, TableRow } from './ui';
+	import { Badge, TableCell, TableRow } from './ui';
 	import ActionsDropdown from './ActionsDropdown.svelte';
 	import type { Asset } from '$lib/server/airtable';
 	import { getAssetActionConfig, normalizeAssetStatus } from '$lib/utils/asset-actions';
@@ -42,6 +42,16 @@
 	const actionConfig = $derived(getAssetActionConfig(asset.status));
 	const cleanedStatus = $derived(normalizeAssetStatus(asset.status));
 	const showMetrics = $derived(!['Upcoming', 'Rejected'].includes(cleanedStatus));
+	const hasActiveOffer = $derived(
+		Boolean(
+			asset.activeOfferLabel ||
+				asset.activeOfferCtaUrl ||
+				asset.activeOfferStrategy ||
+				asset.activeOfferEndsAt ||
+				asset.activeOfferVisibility ||
+				asset.activeOfferPrice !== undefined
+		)
+	);
 
 	function handleView() {
 		if (isViewDisabled) return;
@@ -111,6 +121,16 @@
 			</span>
 			{#if asset.category}
 				<span class="asset-meta">{asset.category}</span>
+			{/if}
+			{#if hasActiveOffer}
+				<span class="offer-badge-row">
+					<Badge variant="info">
+						{asset.activeOfferLabel || 'Limited offer'}
+						{#if asset.activeOfferPrice !== undefined}
+							· {formatCompactCurrency(asset.activeOfferPrice)}
+						{/if}
+					</Badge>
+				</span>
 			{/if}
 		</button>
 	</TableCell>
@@ -261,6 +281,12 @@
 		color: var(--color-fg-muted);
 		line-height: 1.15;
 		letter-spacing: 0;
+	}
+
+	.offer-badge-row {
+		display: inline-flex;
+		margin-top: 0.22rem;
+		max-width: 100%;
 	}
 
 	.asset-name-link:hover .asset-name {

@@ -79,6 +79,27 @@ export type {
   TemplateDetailConversionTrackerProps,
 } from './components/marketplace/TemplateDetailConversionTracker';
 
+export { TemplateDetailHero } from './components/marketplace/TemplateDetailHero';
+export type { TemplateDetailHeroProps } from './components/marketplace/TemplateDetailHero';
+
+export { TemplateDetailOfferPanel } from './components/marketplace/TemplateDetailOfferPanel';
+export type { TemplateDetailOfferPanelProps } from './components/marketplace/TemplateDetailOfferPanel';
+
+export { TemplateDetailHighlights } from './components/marketplace/TemplateDetailHighlights';
+export type {
+  TemplateDetailHighlightItem,
+  TemplateDetailHighlightsProps,
+} from './components/marketplace/TemplateDetailHighlights';
+
+export { TemplateDetailStickyBar } from './components/marketplace/TemplateDetailStickyBar';
+export type { TemplateDetailStickyBarProps } from './components/marketplace/TemplateDetailStickyBar';
+
+export { TemplateDetailAppExtensions } from './components/marketplace/TemplateDetailAppExtensions';
+export type {
+  TemplateDetailAppExtensionsProps,
+  TemplateDetailAppRecommendation,
+} from './components/marketplace/TemplateDetailAppExtensions';
+
 export { MarketplaceLandingHero } from './components/marketplace/MarketplaceLandingHero';
 export type {
   MarketplaceLandingHeroProps,
