@@ -1,6 +1,15 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
-import { auditSync, fullReconcile, preflight, syncHalfDozenStatusToSource, syncSourceTicketsToHalfDozen } from './sync.js';
+import {
+  auditSync,
+  fullReconcile,
+  planSourceToHalfDozenRepairs,
+  preflight,
+  repairExternalUrlDrift,
+  repairMissingHalfDozenRows,
+  syncHalfDozenStatusToSource,
+  syncSourceTicketsToHalfDozen,
+} from './sync.js';
 import type { Env, ToolResponse } from './types.js';
 
 const optionalPageIdsSchema = z.object({
@@ -23,6 +32,11 @@ const CONTRACT = {
     Roadblock: 'Roadblock',
   },
   unsupported: ['generic arbitrary property sync', 'delete propagation', 'field-level conflict resolution', 'reverse syncing HD edits to title/body/external references'],
+  scale_notes: [
+    'Use audit and plan tools for operator sessions.',
+    'Use scoped repair tools before broad reconcile tools.',
+    'Use Notion webhooks or a persisted sync index before frequent large-database polling.',
+  ],
 };
 
 export function createBlondishSyncMcpServer(env: Env): McpServer {
@@ -43,6 +57,27 @@ export function createBlondishSyncMcpServer(env: Env): McpServer {
     'Audit BLOND:ISH and Half Dozen ticket rows for missing HD rows, duplicate matches, contract-field drift, body drift, and reverse-status drift. No writes.',
     {},
     async () => jsonToolResponse(await auditSync(env)),
+  );
+
+  server.tool(
+    'blondish_sync_plan_source_to_hd_repairs',
+    'Plan source-to-HD repairs from a fresh audit. No writes. Prefer this before write tools so the operator sees scoped repair options.',
+    {},
+    async () => jsonToolResponse(await planSourceToHalfDozenRepairs(env)),
+  );
+
+  server.tool(
+    'blondish_sync_repair_missing_hd_rows',
+    'Create only HD rows that are currently missing from the source-to-HD match. Does not update existing rows and never overwrites HD Status.',
+    {},
+    async () => jsonToolResponse(await repairMissingHalfDozenRows(env)),
+  );
+
+  server.tool(
+    'blondish_sync_repair_external_url_drift',
+    'Repair only External URL drift on currently matched HD rows. Does not create rows, change page body, repair titles, or overwrite HD Status.',
+    {},
+    async () => jsonToolResponse(await repairExternalUrlDrift(env)),
   );
 
   server.tool(
@@ -98,8 +133,13 @@ export function createBlondishSyncMcpServer(env: Env): McpServer {
               'You are operating the BLOND:ISH / Half Dozen ticket sync MCP.',
               'Use blondish_sync_preflight before first use in a session if runtime health is unknown.',
               'For diagnosis, call blondish_sync_audit and summarize exact row IDs and drift categories.',
-              'For requested repair, use blondish_sync_source_to_hd for page-data contract fields or blondish_sync_hd_status_to_source for HD-owned status.',
+              'For repair planning, call blondish_sync_plan_source_to_hd_repairs and prefer scoped repair tools when they cover the drift.',
+              'Use blondish_sync_repair_missing_hd_rows only for missing source-to-HD rows.',
+              'Use blondish_sync_repair_external_url_drift only for matched rows whose External URL drifted.',
+              'Use blondish_sync_source_to_hd only when the operator explicitly wants broader page-data contract repair.',
+              'Use blondish_sync_hd_status_to_source only for HD-owned status drift.',
               'Do not claim this is generic bidirectional replication. HD title/body/source/owner/client/external-reference edits are not reverse-synced to BLOND:ISH.',
+              'For future scale, treat Notion webhooks and a persisted sync index as the normal event path; this MCP remains the operator control plane.',
               args.intent ? `Operator intent: ${args.intent}` : '',
             ].filter(Boolean).join('\n'),
           },

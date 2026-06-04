@@ -426,7 +426,7 @@
         "blondish-notion",
         "halfdozen-operator-notion-mcp"
       ],
-      "notes": "Operator-invoked reconciliation MCP for BLOND:ISH source ticket data to Half Dozen ticket rows and mapped HD status back to the source."
+      "notes": "Operator-invoked reconciliation MCP for BLOND:ISH source ticket data to Half Dozen ticket rows and mapped HD status back to the source. Current surface is agent/operator control; future scale should move normal incremental sync to Notion webhooks plus a persisted sync index."
     },
     "abundance-staff-mcp": {
       "type": "remote_mcp_server",

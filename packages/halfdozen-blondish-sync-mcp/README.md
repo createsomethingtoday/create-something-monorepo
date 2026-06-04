@@ -13,6 +13,12 @@ for diagnosis.
 - `blondish_sync_preflight` checks tokens, data source visibility, and schemas.
 - `blondish_sync_audit` reports missing rows, duplicate matches, contract-field
   drift, body drift, attachment drift, and reverse-status drift.
+- `blondish_sync_plan_source_to_hd_repairs` turns a fresh audit into a scoped
+  no-write repair plan.
+- `blondish_sync_repair_missing_hd_rows` creates only HD rows that are currently
+  missing from the source-to-HD match.
+- `blondish_sync_repair_external_url_drift` repairs only `External URL` drift on
+  matched HD rows.
 - `blondish_sync_source_to_hd` creates or repairs HD rows from BLOND:ISH source
   rows. It never overwrites HD `Status`.
 - `blondish_sync_hd_status_to_source` writes mapped HD statuses back to
@@ -33,6 +39,21 @@ Reverse sync updates only the BLOND:ISH status property:
 - `Complete` -> `Complete`
 - `Archive` -> `Archive`
 - `Roadblock` -> `Roadblock`
+
+## Scale path
+
+The current MCP is an operator control plane. For hundreds of rows per client,
+manual audit and scoped repair tools are acceptable. Before frequent large
+database polling or multi-client rollout, add an event-driven layer:
+
+- Notion Developer webhook subscriptions for source and target page events.
+- A persisted sync index keyed by client, source `Page ID`, source page ID, and
+  HD page ID.
+- Chunked background jobs for full audits and backfills.
+- Per-client or per-token Notion rate queues with `429`/`Retry-After` handling.
+
+In that future shape, webhooks do the normal incremental sync work and this MCP
+remains the agent/operator surface for audit, repair, backfill, and exceptions.
 
 ## Deploy
 
