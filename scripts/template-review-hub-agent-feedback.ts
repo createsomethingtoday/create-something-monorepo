@@ -1,6 +1,7 @@
 #!/usr/bin/env tsx
 
 import process from 'node:process';
+import { pathToFileURL } from 'node:url';
 
 import {
   buildDifyClientConfig,
@@ -50,6 +51,14 @@ type CandidateResult = {
   tools?: string[];
 };
 
+type ReturnedSaveAgentFeedbackRequest = {
+  proxyToolName?: unknown;
+  args?: {
+    version_id?: unknown;
+    agent_review_feedback?: unknown;
+  };
+};
+
 const READY_FOR_REVIEW_VIEW_ID = 'viwlVxrTFxnP0O9xp';
 const DEFAULT_LIMIT = 5;
 const DEFAULT_SINCE_DAYS = 7;
@@ -58,6 +67,25 @@ const DEFAULT_MAX_ATTEMPTS = 2;
 const DEFAULT_DIFY_USER = 'template-review-hub-agent-feedback-runner';
 const TEMPLATE_REVIEW_HUB_API_KEY_ENV = 'DIFY_TEMPLATE_REVIEW_HUB_API_KEY';
 const TEMPLATE_REVIEW_HUB_INFISICAL_PATH = '/dify/template-review-hub';
+export const REQUIRED_MANUAL_CHECK_TOPICS = [
+  'components',
+  'variables',
+  'unused styles/classes',
+  'interactions cleanup',
+  'Designer responsive QA',
+  'forms',
+  'CMS/dynamic page setup',
+  'site settings',
+  'custom fonts/licenses',
+  'asset thumbnail',
+  'template name/categories',
+  'pricing/page-count calculation',
+  'MRP/admin publishing prerequisites',
+  'visual quality',
+  'originality',
+  'similarity/flooding',
+  'category fit'
+] as const;
 
 function requireEnv(name: string): string {
   const value = process.env[name]?.trim();
@@ -275,19 +303,21 @@ function candidatePreview(candidate: Candidate): Record<string, unknown> {
   };
 }
 
-function buildDifyQuery(candidate: Candidate, write: boolean): string {
+export function buildDifyQuery(candidate: Candidate, write: boolean): string {
   const { version, asset } = candidate;
   const siteUrl = asset.websiteUrl ?? asset.previewSiteUrl ?? '';
+  const manualTopicList = REQUIRED_MANUAL_CHECK_TOPICS.map((topic) => `- ${topic}`).join('\n');
   const writeInstruction = write
     ? [
         'This run authorizes exactly one Airtable mutation: save the final summary to Agent Review Feedback.',
         'Use the narrow template_review_save_agent_feedback path only.',
         'Do not call template_review_update_version_review, do not change Review Status, Review Feedback, owner, publishing fields, or any creator-facing field.',
-        'After saving, reply with SAVED_AGENT_REVIEW_FEEDBACK and a concise evidence summary.'
+        'If template_review_format_agent_review_feedback returns COMPREHENSIVE_REVIEW_PACKET_INVALID or missing_manual_check_topics, correct the packet and retry the formatter before saving.',
+        'Only reply with SAVED_AGENT_REVIEW_FEEDBACK after template_review_save_agent_feedback reports success, and include a concise evidence summary.'
       ].join(' ')
     : [
         'Do not execute any write-capable tool and do not save feedback.',
-        'Return the Agent Review Feedback text you would save and reply with DRY_RUN_AGENT_REVIEW_FEEDBACK.'
+        'Return the Agent Review Feedback text you would save and reply with DRY_RUN_AGENT_REVIEW_FEEDBACK. If the formatter rejects the packet, correct the packet and retry before replying.'
       ].join(' ');
 
   return `Run a comprehensive supplemental initial review for this Webflow template Asset Version.
@@ -304,9 +334,146 @@ Required workflow:
 2. Use the comprehensive review contract and published-site sandbox bundle tools when available.
 3. Treat E2B tools as first-class review tools: run published-site validation and targeted page/content checks through E2B when a URL is available.
 4. Format the final result with the Agent Review Feedback formatter when available.
-5. Keep the summary internal and reviewer-safe: evidence, caveats, confirmed issues, and next human-review steps. Do not present it as an official review decision.
+5. The manual_checks_remaining array passed to template_review_format_agent_review_feedback must explicitly mention every required Designer/Admin/manual topic below. Use the exact topic wording when possible:
+${manualTopicList}
+6. Keep the summary internal and reviewer-safe: evidence, caveats, confirmed issues, and next human-review steps. Do not present it as an official review decision.
+7. Never end by returning a raw JSON object for a proxy tool call. Execute proxy calls through Hub MCP. If a formatter or save call fails, retry with corrected arguments or report the blocker plainly.
 
 ${writeInstruction}`;
+}
+
+function looksLikeFormattedAgentReviewFeedback(value: string): boolean {
+  const normalized = value.toLowerCase();
+  return (
+    normalized.includes('supplemental agent initial review evidence') &&
+    normalized.includes('manual checks remaining') &&
+    normalized.includes('decision boundary') &&
+    normalized.includes('not an official review decision')
+  );
+}
+
+function feedbackMentionsVersion(value: string, expectedVersionId: string): boolean {
+  return value.includes(expectedVersionId);
+}
+
+function parseLeadingJsonObject(value: string): ReturnedSaveAgentFeedbackRequest | null {
+  if (!value.startsWith('{')) return null;
+
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+
+  for (let index = 0; index < value.length; index += 1) {
+    const character = value[index];
+
+    if (inString) {
+      if (escaped) {
+        escaped = false;
+      } else if (character === '\\') {
+        escaped = true;
+      } else if (character === '"') {
+        inString = false;
+      }
+      continue;
+    }
+
+    if (character === '"') {
+      inString = true;
+      continue;
+    }
+    if (character === '{') {
+      depth += 1;
+      continue;
+    }
+    if (character === '}') {
+      depth -= 1;
+      if (depth === 0) {
+        try {
+          return JSON.parse(value.slice(0, index + 1)) as ReturnedSaveAgentFeedbackRequest;
+        } catch {
+          return null;
+        }
+      }
+    }
+  }
+
+  return null;
+}
+
+export function extractReturnedSaveAgentFeedback(
+  answer: string,
+  expectedVersionId: string
+): string | null {
+  const trimmed = answer.trim();
+  const parsed = parseLeadingJsonObject(trimmed);
+  if (!parsed) return null;
+
+  if (
+    parsed.proxyToolName !==
+    'webflow-template-review-mcp__template_review_save_agent_feedback'
+  ) {
+    return null;
+  }
+  if (!parsed.args || parsed.args.version_id !== expectedVersionId) return null;
+  if (typeof parsed.args.agent_review_feedback !== 'string') return null;
+
+  const feedback = parsed.args.agent_review_feedback.trim();
+  if (
+    !feedback ||
+    !looksLikeFormattedAgentReviewFeedback(feedback) ||
+    !feedbackMentionsVersion(feedback, expectedVersionId)
+  ) {
+    return null;
+  }
+  return feedback;
+}
+
+function parseJsonRecord(value: string): Record<string, unknown> | null {
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+      ? (parsed as Record<string, unknown>)
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+function parseHubExecuteObservation(observation: string): Record<string, unknown> | null {
+  const outer = parseJsonRecord(observation);
+  const payload = outer?.hub_execute_proxy_tool;
+  if (typeof payload === 'string') return parseJsonRecord(payload);
+  return payload && typeof payload === 'object' && !Array.isArray(payload)
+    ? (payload as Record<string, unknown>)
+    : null;
+}
+
+export function extractFormattedAgentFeedbackFromToolCalls(
+  toolCalls: DifyChatOutput['toolCalls'],
+  expectedVersionId: string
+): string | null {
+  for (const call of [...toolCalls].reverse()) {
+    if (!call.tool.includes('hub_execute_proxy_tool')) continue;
+    if (!call.toolInput.includes('template_review_format_agent_review_feedback')) continue;
+
+    const payload = parseHubExecuteObservation(call.observation);
+    const data = payload?.data;
+    if (!payload?.ok || !data || typeof data !== 'object' || Array.isArray(data)) continue;
+
+    const feedback = (data as Record<string, unknown>).agent_review_feedback;
+    if (typeof feedback !== 'string') continue;
+
+    const trimmed = feedback.trim();
+    if (
+      trimmed &&
+      looksLikeFormattedAgentReviewFeedback(trimmed) &&
+      feedbackMentionsVersion(trimmed, expectedVersionId)
+    ) {
+      return trimmed;
+    }
+  }
+
+  return null;
 }
 
 function buildDifyConfig(args: Args) {
@@ -442,8 +609,24 @@ async function processCandidate(
     };
   }
 
-  const saved = await airtableClient.getVersionById(candidate.version.versionId);
-  const feedback = saved?.agentReviewFeedback?.trim();
+  let saved = await airtableClient.getVersionById(candidate.version.versionId);
+  let feedback = saved?.agentReviewFeedback?.trim();
+  let savedFromReturnedPayload = false;
+
+  if (!feedback) {
+    const returnedFeedback =
+      extractReturnedSaveAgentFeedback(output.answer, candidate.version.versionId) ??
+      extractFormattedAgentFeedbackFromToolCalls(output.toolCalls, candidate.version.versionId);
+    if (returnedFeedback) {
+      await airtableClient.updateVersionReview(candidate.version.versionId, {
+        agent_review_feedback: returnedFeedback
+      });
+      saved = await airtableClient.getVersionById(candidate.version.versionId);
+      feedback = saved?.agentReviewFeedback?.trim();
+      savedFromReturnedPayload = true;
+    }
+  }
+
   if (!feedback) {
     return {
       versionId: latest.versionId,
@@ -463,7 +646,9 @@ async function processCandidate(
     assetId: candidate.asset.assetId,
     templateName: candidate.asset.templateName,
     status: 'saved',
-    reason: 'Agent Review Feedback saved.',
+    reason: savedFromReturnedPayload
+      ? 'Agent Review Feedback saved by runner from validated Dify feedback payload.'
+      : 'Agent Review Feedback saved.',
     messageId: output.messageId,
     conversationId: output.conversationId,
     durationMs: output.durationMs,
@@ -537,7 +722,12 @@ async function main(): Promise<void> {
   if (!summary.ok) process.exitCode = 1;
 }
 
-main().catch((error) => {
-  console.error(error instanceof Error ? (error.stack ?? error.message) : String(error));
-  process.exitCode = 1;
-});
+const invokedAsScript =
+  process.argv[1] ? import.meta.url === pathToFileURL(process.argv[1]).href : false;
+
+if (invokedAsScript) {
+  main().catch((error) => {
+    console.error(error instanceof Error ? (error.stack ?? error.message) : String(error));
+    process.exitCode = 1;
+  });
+}
