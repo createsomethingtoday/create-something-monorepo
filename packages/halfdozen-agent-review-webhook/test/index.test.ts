@@ -4,10 +4,12 @@ import test from 'node:test';
 import {
   automatedWorkflowComment,
   buildBehavioralSmokeTests,
+  buildBehavioralSmokeTestsForReview,
   buildTestingTaskHandoffBlocks,
   buildTestingTaskHandoffProperties,
   buildTestReportProperties,
   canonicalPageContent,
+  cleanFinalInstructionsForWriteback,
   enrichReviewWithNotionContent,
   evaluateWorkerRubric,
   LIVE_TESTING_HANDOFF_GUIDANCE,
@@ -16,6 +18,7 @@ import {
   parseDifyEvalAnswer,
   richTextPlain,
   shouldRunAutomatedEval,
+  sourceAgentPageReplacementBlocks,
   submittedInstructionsForDify
 } from '../src/index.ts';
 
@@ -95,6 +98,69 @@ test('canonicalPageContent ignores eval history without final instructions', () 
   assert.equal(canonicalPageContent(content), undefined);
 });
 
+test('cleanFinalInstructionsForWriteback extracts only final instructions from report text', () => {
+  const result = cleanFinalInstructionsForWriteback(
+    [
+      '# Half Dozen Agent Builder Eval',
+      '',
+      '## Dify Proposed Patch',
+      '',
+      '- Status transition: Updating -> Testing',
+      '',
+      '## Worker Patch Application',
+      '',
+      '- Writer: cloudflare-worker',
+      '',
+      '## Final Instructions',
+      '',
+      '## Overview',
+      'Use Contacts Manager to keep contact records complete and deduplicated.',
+      '',
+      '## Workflow',
+      '- Ask clarifying questions when required.',
+      '- Do not mutate records without explicit permission.',
+      '',
+      '## Archived Submitted Instructions',
+      '',
+      'Prior source body'
+    ].join('\n'),
+    'fallback instructions'
+  );
+
+  assert.equal(result.clean, true);
+  assert.equal(
+    result.markdown,
+    [
+      '## Overview',
+      'Use Contacts Manager to keep contact records complete and deduplicated.',
+      '',
+      '## Workflow',
+      '- Ask clarifying questions when required.',
+      '- Do not mutate records without explicit permission.'
+    ].join('\n')
+  );
+  assert.doesNotMatch(result.markdown, /Worker Patch Application/);
+  assert.doesNotMatch(result.markdown, /Archived Submitted Instructions/);
+});
+
+test('cleanFinalInstructionsForWriteback fails closed when no clean instructions are available', () => {
+  const result = cleanFinalInstructionsForWriteback(
+    [
+      'Status transition: Updating -> Testing; allowed=true.',
+      'Worker Patch Application',
+      'Worker rubric: 9/9.'
+    ].join('\n'),
+    [
+      '# Agent Eval Update - 2026-06-03T00:00:00Z',
+      '## Result',
+      'Pass'
+    ].join('\n')
+  );
+
+  assert.equal(result.clean, false);
+  assert.match(result.markdown, /Final instructions could not be safely isolated/);
+});
+
 test('evaluateWorkerRubric passes delivery-ready instructions and fails placeholders', () => {
   const passing = evaluateWorkerRubric(deliveryReadyInstructions);
   assert.equal(passing.status, 'pass');
@@ -127,6 +193,59 @@ test('buildBehavioralSmokeTests reports covered and missing scenarios', () => {
 
   const gaps = buildBehavioralSmokeTests('You are a simple helper.');
   assert.equal(gaps.some((item) => !item.covered), true);
+});
+
+test('buildBehavioralSmokeTestsForReview keeps live handoff prompts in the submitted agent context', () => {
+  const tests = buildBehavioralSmokeTestsForReview(
+    {
+      requestId: 'req-contacts',
+      receivedAt: '2026-06-04T00:00:00.000Z',
+      agentName: 'Contacts Manager',
+      status: 'Updating',
+      description: 'Keeps contact records clean and routes relationship follow-up.',
+      properties: {}
+    },
+    [
+      '## Contacts Manager Instructions',
+      'Keep contact records clean and route follow-up.',
+      '',
+      '## Promotion test plan',
+      '1. **Happy path: new relationship note**',
+      '   - **Action / trigger:** Ask Contacts Manager to summarize a new relationship note and update the contact follow-up fields.',
+      '   - **Expected changes:** The contact has a concise summary, next follow-up date, and owner recommendation.',
+      '   - **Must NOT change:** Do not overwrite unrelated contact history.',
+      '2. **Missing contact context**',
+      '   - **Action / trigger:** Ask Contacts Manager to route a note without a clear contact or company.',
+      '   - **Expected changes:** The agent asks for the missing contact or company before updating anything.'
+    ].join('\n'),
+    '',
+    {
+      replace_section: {
+        heading: 'Final Instructions',
+        markdown: ''
+      },
+      append_report: {
+        summary: '',
+        rubric: [],
+        test_plan: ['Prompt to paste: I need an agent that turns rough automation requests into Notion-native agent instructions.']
+      },
+      status_transition: {
+        from: 'Updating',
+        to: 'Testing',
+        allowed: true,
+        reason: 'Ready'
+      }
+    } as any
+  );
+
+  assert.equal(tests.length, 2);
+  assert.equal(tests.every((item) => item.covered), true);
+  assert.match(tests[0].prompt, /Contacts Manager/);
+  assert.match(tests[0].expected_behavior, /contact has a concise summary/);
+  assert.doesNotMatch(
+    tests.map((item) => item.prompt).join('\n'),
+    /rough automation requests|Notion-native agent instructions|Internal Agent Builder/
+  );
 });
 
 test('LIVE_TESTING_HANDOFF_GUIDANCE makes the paste boundary explicit', () => {
@@ -456,6 +575,30 @@ test('buildTestingTaskHandoffBlocks make the live testing paste boundary obvious
   assert.match(serialized, /move Status back to Updating/);
 });
 
+test('sourceAgentPageReplacementBlocks writes only final instructions, not eval evidence', () => {
+  const blocks = sourceAgentPageReplacementBlocks({
+    final_instructions: [
+      '## Overview',
+      'Use this as the current live agent instruction body.',
+      '',
+      '## Workflow',
+      'Run the approved Contacts Manager workflow in Notion.'
+    ].join('\n'),
+    review_summary: 'Review evidence should stay in Test Reports.',
+    archived_instructions: 'Original source instructions should stay archived in Test Reports.',
+    notion_test_report: {
+      markdown: 'Full raw eval JSON should stay in Test Reports.'
+    }
+  } as any);
+  const serialized = JSON.stringify(blocks);
+
+  assert.match(serialized, /Use this as the current live agent instruction body/);
+  assert.doesNotMatch(serialized, /Agent Eval Update/);
+  assert.doesNotMatch(serialized, /Review evidence should stay in Test Reports/);
+  assert.doesNotMatch(serialized, /Original source instructions should stay archived/);
+  assert.doesNotMatch(serialized, /Full raw eval JSON/);
+});
+
 test('richTextPlain preserves Notion mention hrefs as Markdown links', () => {
   const text = richTextPlain([
     {
@@ -530,7 +673,7 @@ test('automatedWorkflowComment stays compact and points to the full Notion eval 
       },
       patch_application: {
         applied: true,
-        mode: 'append_versioned_handoff'
+        mode: 'replace_source_body'
       },
       worker_rubric: {
         checks_total: 7,
