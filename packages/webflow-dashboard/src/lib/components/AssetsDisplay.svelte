@@ -1,5 +1,6 @@
 <script lang="ts">
   import {
+    Badge,
     Button,
     Card,
     CardContent,
@@ -25,6 +26,7 @@
     type AssetTypeSortDirection
   } from '$lib/utils/asset-actions';
   import { trackEvent } from '$lib/utils/analytics';
+  import { formatCompactCurrency } from '$lib/utils/format';
   import {
     BarChart3,
     Package,
@@ -268,6 +270,17 @@
 
   function getTypeOrderLabel() {
     return typeSortDirection === 'asc' ? 'A-Z' : 'Z-A';
+  }
+
+  function hasActiveOffer(asset: Asset): boolean {
+    return Boolean(
+      asset.activeOfferLabel ||
+        asset.activeOfferCtaUrl ||
+        asset.activeOfferStrategy ||
+        asset.activeOfferEndsAt ||
+        asset.activeOfferVisibility ||
+        asset.activeOfferPrice !== undefined
+    );
   }
 </script>
 
@@ -548,6 +561,16 @@
                         <div class="mobile-asset-meta">
                           <h4 class="mobile-asset-name">{asset.name}</h4>
                           <p class="mobile-asset-type">{asset.type}</p>
+                          {#if hasActiveOffer(asset)}
+                            <div class="mobile-offer-badge">
+                              <Badge variant="info">
+                                {asset.activeOfferLabel || 'Limited offer'}
+                                {#if asset.activeOfferPrice !== undefined}
+                                  · {formatCompactCurrency(asset.activeOfferPrice)}
+                                {/if}
+                              </Badge>
+                            </div>
+                          {/if}
                         </div>
                         <StatusBadge status={asset.status} size="sm" />
                       </div>
@@ -1102,6 +1125,9 @@
   }
 
   .mobile-asset-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
     min-width: 0;
   }
 
@@ -1115,6 +1141,11 @@
     margin: 0;
     font-size: var(--text-caption);
     color: var(--color-fg-muted);
+  }
+
+  .mobile-offer-badge {
+    display: inline-flex;
+    max-width: 100%;
   }
 
   .mobile-stats {

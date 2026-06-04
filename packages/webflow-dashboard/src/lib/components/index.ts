@@ -28,6 +28,8 @@ export { default as ImageUploader } from './ImageUploader.svelte';
 export { default as MarketplaceInsights } from './MarketplaceInsights.svelte';
 export { default as AnalyticsCard } from './AnalyticsCard.svelte';
 export { default as TimelineCard } from './TimelineCard.svelte';
+export { default as TemplateHealthCard } from './TemplateHealthCard.svelte';
+export { default as TemplateOfferRequestCard } from './TemplateOfferRequestCard.svelte';
 
 // Tufte-inspired data visualization
 export { default as Sparkline } from './Sparkline.svelte';
