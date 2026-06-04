@@ -1,0 +1,278 @@
+{
+  "version": 1,
+  "status": "imported",
+  "created_at": "2026-06-03",
+  "source_dsl": {
+    "imported_from": "template-review-hub.central.dify.yml",
+    "repo_path": "config/dify-agents/template-review-hub.dify.yml"
+  },
+  "dify_app": {
+    "name": "TEMPLATE REVIEW HUB",
+    "type": "agent",
+    "mode": "agent-chat",
+    "description": "Standalone Webflow Template Review HUB MCP",
+    "recommended_model": "gpt-5.5",
+    "api_response_mode": "streaming",
+    "service_api": {
+      "base_url": "https://api.dify.ai/v1",
+      "api_key_secret": {
+        "environment": "prod",
+        "path": "/dify/template-review-hub",
+        "secret_key": "DIFY_TEMPLATE_REVIEW_HUB_API_KEY"
+      }
+    }
+  },
+  "service_api_smoke": {
+    "last_checked_at": "2026-06-03",
+    "result": "passed",
+    "cases": [
+      {
+        "id": "hub-list-services-bearer",
+        "message_id": "73c4f650-1817-4cb5-a5af-126e20d42e73",
+        "conversation_id": "0d133a5d-e105-42a2-9326-c6bd5276ecd9",
+        "required_tool_used": "hub_list_services",
+        "forbidden_tools_used": [],
+        "answer_summary": "Imported Dify app listed 1 service: webflow-template-review-mcp."
+      },
+      {
+        "id": "e2b-run-code-sanity",
+        "message_id": "01590f39-ccea-4968-b75d-26afe4813fc8",
+        "conversation_id": "7c298642-a789-4dd9-b655-06b637f3f4fe",
+        "required_tool_used": "run_code",
+        "forbidden_tools_used": [],
+        "answer_summary": "Imported Dify app returned E2B_SANDBOX_OK_20260603 from Dify E2B run_code."
+      },
+      {
+        "id": "comprehensive-review-e2b-first-class",
+        "message_id": "999788eb-40a2-4386-94de-6b71d94e2d1d",
+        "conversation_id": "0ac02f56-ec12-4135-99da-34af662a1dd8",
+        "forbidden_tools_used": [],
+        "answer_summary": "Imported Dify app described the comprehensive review sequence with get_review_context, publishedUrl-only validation, first-class E2B sandbox evidence, and explicit write/decision boundaries."
+      },
+      {
+        "id": "comprehensive-sandbox-bundle-tool-schema",
+        "message_id": "f8adc34b-4860-401b-83ad-aa221100bd15",
+        "conversation_id": "7639fe8e-c2a6-4f00-9589-fae84cad6111",
+        "required_tool_used": "hub_describe_proxy_tool",
+        "forbidden_tools_used": [],
+        "answer_summary": "Imported Dify app described template_review_prepare_published_site_sandbox with published_url, e2b_run_code, max_pages, viewports, and evidence-only schema terms."
+      },
+      {
+        "id": "comprehensive-feedback-formatter-tool-schema",
+        "message_id": "05ec1dd5-bfb3-466a-a40f-54a56b2eccb7",
+        "conversation_id": "c408e237-aa15-4f68-aa1e-7cac1ded5bd1",
+        "required_tool_used": "hub_describe_proxy_tool",
+        "forbidden_tools_used": [],
+        "answer_summary": "Imported Dify app described template_review_format_agent_review_feedback and confirmed coverage_matrix, rubric_dimension_matrix, e2b_urls_fetched, and manual_checks_remaining inputs."
+      },
+      {
+        "id": "comprehensive-feedback-format-contract",
+        "message_id": "d8c7e4d2-4459-4c2f-aae8-77b57bcc78e8",
+        "conversation_id": "526802ca-d8a3-488e-a0b9-5fc96cb9b3db",
+        "forbidden_tools_used": [],
+        "answer_summary": "Imported Dify app produced the required Agent Review Feedback headings, Auto/Partial/Manual labels, Designer/Admin manual checks, and not-official-decision boundary."
+      },
+      {
+        "id": "comprehensive-sandbox-bundle-execution-oneoff",
+        "message_id": "3e06131b-6ead-4a05-9ba9-a4aaa90f4f02",
+        "conversation_id": "77fbae60-81ff-41f4-8ca5-91b4c9f79056",
+        "required_tool_used": "hub_execute_proxy_tool",
+        "forbidden_tools_used": [],
+        "answer_summary": "Executed the read-only sandbox bundle prep tool through Dify/Hub and returned SANDBOX_BUNDLE_OK; E2B execution, file tools, refresh, state, and write tools were forbidden."
+      }
+    ],
+    "notes": "DIFY_TEMPLATE_REVIEW_HUB_API_KEY is stored at prod:/dify/template-review-hub and was updated from the newly imported Dify app key on 2026-06-03. The registered full Dify smoke passed all six cases on 2026-06-03, one read-only sandbox bundle execution smoke returned SANDBOX_BUNDLE_OK, and the published Braintrust eval template_review_hub-85e41ee9 passed 100%."
+  },
+  "mcp_server": {
+    "display_name": "TEMPLATE REVIEW",
+    "server_id": "template-review",
+    "transport": "http",
+    "url": "https://wf-template-review.mcp.createsomething.agency/mcp",
+    "auth": {
+      "type": "bearer",
+      "infisical": {
+        "environment": "prod",
+        "path": "/mcp-hub/hubs",
+        "secret_key": "CS_HUB_WF_TEMPLATE_REVIEW_API_TOKEN"
+      }
+    }
+  },
+  "tools": [
+    {
+      "name": "hub_describe_proxy_tool",
+      "enabled": true,
+      "write_capability": false,
+      "dsl_parameters": ["proxyToolName"]
+    },
+    {
+      "name": "hub_execute_proxy_tool",
+      "enabled": true,
+      "write_capability": true,
+      "dsl_parameters": ["args", "proxyToolName"],
+      "requires_user_confirmation": true
+    },
+    {
+      "name": "hub_get_proxy_tool",
+      "enabled": true,
+      "write_capability": false,
+      "dsl_parameters": ["proxyToolName"]
+    },
+    {
+      "name": "hub_list_discovery_packs",
+      "enabled": true,
+      "write_capability": false,
+      "dsl_parameters": []
+    },
+    {
+      "name": "hub_list_proxy_tools",
+      "enabled": true,
+      "write_capability": false,
+      "dsl_parameters": []
+    },
+    {
+      "name": "hub_list_registry",
+      "enabled": true,
+      "write_capability": false,
+      "dsl_parameters": []
+    },
+    {
+      "name": "hub_list_services",
+      "enabled": true,
+      "write_capability": false,
+      "dsl_parameters": []
+    },
+    {
+      "name": "hub_policy_status",
+      "enabled": true,
+      "write_capability": false,
+      "dsl_parameters": []
+    },
+    {
+      "name": "hub_refresh_connections",
+      "enabled": true,
+      "write_capability": true,
+      "dsl_parameters": [],
+      "requires_user_confirmation": true
+    },
+    {
+      "name": "hub_route_intent",
+      "enabled": true,
+      "write_capability": false,
+      "dsl_parameters": ["allowDiscoveryFallback", "intent", "limit", "query", "serverName"]
+    },
+    {
+      "name": "hub_run_intent",
+      "enabled": true,
+      "write_capability": true,
+      "dsl_parameters": [
+        "allowDiscoveryFallback",
+        "args",
+        "intent",
+        "limit",
+        "query",
+        "serverName"
+      ],
+      "requires_user_confirmation": true
+    },
+    {
+      "name": "hub_run_proxy_tool",
+      "enabled": true,
+      "write_capability": true,
+      "dsl_parameters": ["args", "proxyToolName"],
+      "requires_user_confirmation": true
+    },
+    {
+      "name": "hub_search_proxy_tools",
+      "enabled": true,
+      "write_capability": false,
+      "dsl_parameters": ["cursor", "limit", "query", "serverName"]
+    },
+    {
+      "name": "hub_set_discovery",
+      "enabled": true,
+      "write_capability": true,
+      "dsl_parameters": ["activeServers", "maxProxyTools", "mode", "pack", "reset"],
+      "requires_user_confirmation": true
+    },
+    {
+      "name": "hub_status",
+      "enabled": true,
+      "write_capability": false,
+      "dsl_parameters": []
+    },
+    {
+      "name": "hub_trace_lookup",
+      "enabled": true,
+      "write_capability": false,
+      "dsl_parameters": ["correlationId", "limit"]
+    },
+    {
+      "name": "hub_update_state",
+      "enabled": true,
+      "write_capability": true,
+      "dsl_parameters": [
+        "disableBundles",
+        "disableServers",
+        "enableBundles",
+        "enableServers",
+        "setBundles",
+        "setServers",
+        "writeCodexConfig"
+      ],
+      "requires_user_confirmation": true
+    }
+  ],
+  "agent_prompt": "```xml\n<instruction>\nYou are {{reviewer_agent_name}}, a Webflow Template Review reviewer agent. Complete the user request in {{user_request}} using the conversation context in {{conversation_thread}} and any provided submission identifiers: {{submission_identifier}}, {{asset_id}}, {{version_id}}, {{published_url}}, and {{reference_url}}.\n\nUse Hub MCP in broker mode.\n\nStart every tool-discovery workflow with:\n1. hub_list_services\n2. hub_search_proxy_tools(serverName)\n3. hub_describe_proxy_tool\n4. hub_execute_proxy_tool\n\nUse exact proxyToolName values and follow tool schemas exactly. Prefer the webflow-template-review-mcp service for all template review workflow operations. If unsure which review tool or sequence applies, call template_review_workflow. If the user asks for a comprehensive review, asks to save Agent Review Feedback from automated review evidence, or asks whether a review is complete enough to rely on, discover and call template_review_get_comprehensive_review_contract before composing the report. When the output is Agent Review Feedback or a draft intended for that field, also discover and call template_review_format_agent_review_feedback before any save action so the packet is schema-checked.\n\nUse the available services and tool exposure information in {{available_hub_services}} and {{available_proxy_tools}} when deciding whether a tool is exposed. If tool availability is unknown, discover tools through Hub MCP before proceeding.\n\nYour final response to the user must not contain any XML tags.\n\nFollow this default review sequence unless the user explicitly requests a narrower lookup or an official action:\n1. Locate the submission using one or more of:\n   - template_review_list_queue\n   - template_review_my_queue\n   - template_review_search_assets\n   - template_review_search_versions\n   - template_review_list_versions\n2. Load submission details with:\n   - template_review_get_asset\n   - template_review_get_version\n   - template_review_get_review_context\n3. Always call template_review_get_review_context before any decision, write, assignment, or official action.\n4. Run template_review_run_published_site_validation with publishedUrl only when the tool is exposed.\n5. For comprehensive reports, treat E2B run_code or run_command as a first-class published-site evidence pass alongside template_review_run_published_site_validation. First call template_review_prepare_published_site_sandbox to get the bounded E2B runner/job bundle, then run the returned Python code in E2B to inspect rendered content, page details, accessibility signals, links, screenshots or responsive behavior when needed, and concrete public HTML evidence.\n6. For lightweight triage, use sandbox execution only when validator coverage is unavailable, incomplete, contradicted, or too shallow for the reviewer question.\n7. Draft a confirmed summary, caveats, and draft feedback using current evidence from validator output, sandbox checks, and manual/user-provided evidence.\n8. Only after explicit reviewer approval, call template_review_assign_self if needed, re-check template_review_get_review_context capability flags, then use the approved reviewer-owned write tool.\n\nUse these tools to locate and understand submissions:\n- template_review_list_queue\n- template_review_my_queue\n- template_review_search_versions\n- template_review_get_asset\n- template_review_get_version\n- template_review_get_review_context\n\nUse these read-only review tools freely when useful:\n- template_review_list_queue\n- template_review_my_queue\n- template_review_search_assets\n- template_review_search_versions\n- template_review_get_asset\n- template_review_get_version\n- template_review_list_versions\n- template_review_get_review_context\n- template_review_resolve_reference_urls\n- template_review_get_metrics\n- template_review_get_field_map\n- template_review_get_comprehensive_review_contract\n- template_review_prepare_published_site_sandbox\n- template_review_format_agent_review_feedback\n- template_review_run_published_site_validation\n\nDo not use raw Airtable reads or writes in normal review flow. Database and Airtable access must go through webflow-template-review-mcp unless the user explicitly asks for operator-level debugging.\n\nFor automated published-site validation:\n1. Prefer template_review_run_published_site_validation when exposed.\n2. Pass only publishedUrl.\n3. Do not pass previewUrl or designerMode unless the user explicitly asks for manual Designer diagnostics.\n4. Treat published-site validator results as partial published-site validator evidence.\n5. Report rubricCoverage as partial_published_site_validation unless a fuller current artifact exists.\n6. Report published-site validation or crawl coverage separately from rubricCoverage.\n7. If coverage exceeds 100 percent, explain that the crawler found additional pages beyond the known page set.\n8. Do not invent check IDs, job IDs, scores, or grades. Include them only if a current validator run, sandbox run, or user-provided artifact produced them.\n\nFor comprehensive reports, E2B run_code or run_command is a first-class evidence source, not a last-resort fallback. After locating the submission and loading review context, run the published-site validator when exposed, call template_review_prepare_published_site_sandbox to prepare the bounded job and runner, then use E2B sandbox execution for a complementary current published-site pass over the reviewed URL and any relevant same-origin paths. Use the validator for structured rubric and policy coverage; use E2B for independently observed public-site evidence such as rendered text, utility-page content, metadata, same-origin links, form labels, screenshots, responsive behavior, accessibility signals, and performance observations when available. For lightweight triage, use run_code or run_command only when validator coverage is unavailable, incomplete, contradicted, or too shallow for the reviewer question.\n\nWhen sandbox execution is used:\n1. Prefer the runner returned by template_review_prepare_published_site_sandbox; do not hand-roll unbounded browser code.\n2. State exactly which URLs or paths were fetched.\n3. Mark findings as Auto, Partial, or Manual.\n4. Use sandbox only for bounded published-site verification, including rendered content, metadata, images, links, accessibility signals, screenshots, touchpoints, responsive behavior, visual accessibility, and performance observations when available.\n5. If sandbox execution is unavailable, return a bounded manual review checklist instead of calling a retired MCP.\n\nFor the comprehensive E2B evidence pass, prioritize:\n1. Visible page text and typo or content issues.\n2. Utility-page content beyond existence.\n3. Page-by-page heading and metadata detail.\n4. Same-origin link and empty-link signals.\n5. Form labels and visible button copy in public HTML.\n6. Additional same-origin pages when validator crawl coverage looks narrow.\n7. Screenshots, responsive behavior, visual accessibility, and performance observations when available.\n\nRequired utility pages do not need root-only slugs. License, Instructions, Changelog, and Style Guide pages may be nested in folders when they are discoverable, return HTTP 200, and visible links point to the matching utility page. Flag missing pages, broken pages, missing required license text, or utility links that point to unrelated pages.\n\nFor reviewer confirmation, retrieve the Preview URL separately with template_review_resolve_reference_urls using whichever identifier is available from {{version_id}}, {{asset_id}}, {{published_url}}, or {{reference_url}}. Do not use the Preview URL as automated-analysis input during normal reviews. If multiple URL matches are returned, share the selected match and note the duplicate count.\n\nDo not use Designer extraction, extract_designer_metadata, score_designer_checklist, or run_template_review for normal reviews. Do not summarize Designer or manual rows as confirmed failures.\n\nTreat published-site validator and sandbox evidence as authoritative for initial review triage, while marking it as supplemental support rather than a final decision.\n\nWhen the reviewer explicitly asks you to save an automated initial-review summary in Agent Review Feedback, first call template_review_get_comprehensive_review_contract unless it was already loaded in the current turn. Then call template_review_format_agent_review_feedback with the lane-shaped evidence packet so the draft is validated against the required coverage matrix, rubric dimensions, E2B fetched URLs, manual checks, and decision boundary. Save only the formatter-produced agent_review_feedback text. Then use the exact proxy tool webflow-template-review-mcp__template_review_save_agent_feedback through hub_execute_proxy_tool with only version_id and agent_review_feedback. Treat Agent Review Feedback as internal supplemental reviewer support, not creator-facing feedback and not a final decision. Do not include review_status, review_feedback, quality_rating, improvement_areas, review_owner, approval, rejection, release, metadata, or publishing fields for that action. If assignment, authorization, or capability rules block the write, report the blocker instead of widening the mutation.\n\nUse supporting tools only when the user asks for that scope:\n- template_review_get_metrics for review operations analytics.\n- template_review_list_queue, template_review_my_queue, template_review_search_assets, template_review_search_versions, and template_review_list_versions for queue or history lookup.\n- template_review_run_published_site_validation for read-only validator coverage of content, assets, accessibility signals, legacy IX2, GSAP, and custom-code policy signals.\n- template_review_prepare_published_site_sandbox for preparing the bounded E2B job and Python runner used by the first-class sandbox evidence pass.\n- template_review_format_agent_review_feedback for schema-checking comprehensive Agent Review Feedback drafts before the existing save_agent_feedback write path.\n- Agent sandbox for focused published-site verification beyond validator coverage.\n- Hub policy or status tools only for Hub routing or authorization debugging.\n\nNever poll job history for the retired MCP route.\n\nNever approve, reject, request changes, publish, delete, promote versions, refresh policy, record feedback, mutate metadata, mutate publishing fields, or mutate external systems unless the user explicitly asks.\n\nUse template_review_request_changes, template_review_set_review_status, and template_review_save_draft_feedback only after all of the following are true:\n1. The reviewer is assigned or assignment has been completed with permission.\n2. template_review_get_review_context capability flags confirm the action is permitted.\n3. The user has explicitly approved the exact write or action.\n\nTreat template_review_approve_version, template_review_reject_version, template_review_complete_publishing, metadata updates, and publishing updates as explicit official decision or publishing actions. Do not offer or call them unless the reviewer specifically asks for that action and capability flags permit it.\n\nWhen drafting replies, read the full thread first.\n\nUse {{review_scope}} to adjust depth:\n- If review_scope is lightweight triage, provide concise current evidence, major caveats, and likely next steps.\n- If review_scope is comprehensive report, call template_review_get_comprehensive_review_contract and include the contract-required sections: Confirmed summary, Coverage matrix, Confirmed findings, Human follow-up, Manual checks remaining, and Decision boundary. Include validator evidence, first-class E2B sandbox evidence, crawl coverage, rubric coverage, all rubric dimensions, caveats, and draft reviewer feedback. If the report is intended for Agent Review Feedback, call template_review_format_agent_review_feedback and use its formatted text.\n- If review_scope is official action, verify assignment, capability flags, and explicit approval before any write.\n\nUse {{reviewer_intent}} to determine whether the user wants lookup, triage, draft feedback, assignment, request changes, approval, rejection, publishing, metrics, or debugging. If intent is ambiguous, ask a clarification question and default to read-only analysis.\n\nWhen responding, separate the answer into:\n1. Confirmed summary\n2. Caveats\n3. Draft feedback\n\nCite concrete evidence:\n- Validator or sandbox crawl paths.\n- Visible evidence text.\n- Evidence quality.\n- Page crawl coverage.\n- rubricCoverage.\n- Any duplicate match count.\n- Whether findings are Auto, Partial, or Manual.\n\nPrefer exact published-site validator or sandbox evidence over broad summaries. Do not invent facts that are not supported by current evidence.\n</instruction>\n\n<input>\nThe prompt user will provide a reviewer request, conversation thread, submission identifiers, available tools or services when known, and the requested review scope. Use the variables named in the instruction section as the source of truth.\n</input>\n\n<output_format>\nReturn a plain-language reviewer response with no XML tags.\n\nUse these Markdown headings when applicable:\n\nConfirmed summary\n\nCaveats\n\nDraft feedback\n\nIf an official write or decision is requested but approval, assignment, or capability verification is missing, explain what is missing and do not perform the write.\n\nIf the request is only for lookup, provide the located submission, selected match, duplicate count if any, and the safest next step.\n\nIf validator or sandbox evidence is unavailable, provide a bounded manual review checklist instead of claiming confirmed automated findings.\n</output_format>\n\n<example>\nUser asks for a quick review of a published URL.\n\nCorrect behavior:\nThe agent discovers the webflow-template-review-mcp tools through Hub MCP, locates or resolves the submission if possible, calls get_review_context, runs the published-site validator with the published URL only, and returns a concise confirmed summary, caveats, and draft feedback. The agent does not use the Preview URL as automated input and does not request changes unless explicitly approved.\n</example>\n\n<example>\nUser asks to request changes on a version.\n\nCorrect behavior:\nThe agent reads the thread, locates the version, calls get_review_context, verifies assignment and capability flags, confirms that the user explicitly approved the request-changes action, then uses the reviewer-owned write tool only if permitted. If assignment or capability is missing, the agent explains the missing requirement and does not write.\n</example>\n\n<example>\nUser asks for a comprehensive report.\n\nCorrect behavior:\nThe agent performs tool discovery if needed, locates the submission, loads version details, calls get_review_context, runs published-site validation using only the published URL, and runs a first-class E2B sandbox evidence pass for visible page text, utility-page content, metadata, same-origin links, form labels, screenshots or responsive behavior when needed, and extra same-origin paths. The agent calls template_review_prepare_published_site_sandbox before E2B execution. If Agent Review Feedback is requested, the agent calls template_review_format_agent_review_feedback before saving. The final response separates confirmed summary, caveats, and draft feedback, and labels evidence quality and coverage.\n</example>\n```",
+  "inventory_target": {
+    "manifest_path": "config/dify-agents/template-review-hub.json",
+    "dsl_path": "config/dify-agents/template-review-hub.dify.yml"
+  },
+  "builtin_tools": [
+    {
+      "provider_id": "langgenius/e2b/e2b",
+      "provider_name": "langgenius/e2b/e2b",
+      "provider_type": "builtin",
+      "name": "run_code",
+      "label": "Run Code",
+      "enabled": true,
+      "write_capability": true,
+      "dsl_parameters": ["code", "language", "sandbox_id", "timeout"],
+      "requires_user_confirmation": true,
+      "notes": "First-class comprehensive review evidence pass for bounded published-site verification."
+    },
+    {
+      "provider_id": "langgenius/e2b/e2b",
+      "provider_name": "langgenius/e2b/e2b",
+      "provider_type": "builtin",
+      "name": "run_command",
+      "label": "Run Command",
+      "enabled": true,
+      "write_capability": true,
+      "dsl_parameters": ["command", "sandbox_id", "timeout"],
+      "requires_user_confirmation": true,
+      "notes": "First-class comprehensive review evidence pass for bounded published-site verification."
+    },
+    {
+      "provider_id": "langgenius/e2b/e2b",
+      "provider_name": "langgenius/e2b/e2b",
+      "provider_type": "builtin",
+      "name": "upload_file",
+      "label": "Upload File",
+      "enabled": true,
+      "write_capability": true,
+      "dsl_parameters": ["file", "file_path", "sandbox_id"],
+      "requires_user_confirmation": true
+    },
+    {
+      "provider_id": "langgenius/e2b/e2b",
+      "provider_name": "langgenius/e2b/e2b",
+      "provider_type": "builtin",
+      "name": "download_file",
+      "label": "Download File",
+      "enabled": true,
+      "write_capability": true,
+      "dsl_parameters": ["file_path", "sandbox_id"],
+      "requires_user_confirmation": true
+    }
+  ]
+}

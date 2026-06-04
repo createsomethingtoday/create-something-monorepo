@@ -462,6 +462,9 @@ creator-facing feedback.
 - `template_review_list_versions`
 - `template_review_get_version`
 - `template_review_get_review_context`
+- `template_review_get_comprehensive_review_contract` (read-only comprehensive evidence contract for Auto/Partial/Manual coverage, rubric dimensions, manual checks, and Agent Review Feedback format)
+- `template_review_format_agent_review_feedback` (read-only comprehensive evidence validator/formatter for Agent Review Feedback drafts; does not write Airtable)
+- `template_review_prepare_published_site_sandbox` (read-only E2B sandbox job/runner bundle for first-class published-site evidence; does not execute E2B or write Airtable)
 - `template_review_run_published_site_validation` (read-only published-site validation; no Designer/Preview data or Airtable writes)
 - `template_review_list_releases`
 - `template_review_complete_publishing`
@@ -474,6 +477,7 @@ creator-facing feedback.
 - `template_review_get_field_map`
 - `template_review_update_asset_metadata`
 - `template_review_update_version_review`
+- `template_review_save_agent_feedback`
 - `template_review_approve_version`
 - `template_review_reject_version`
 
@@ -514,6 +518,7 @@ AIRTABLE_API_KEY=... pnpm audit:schema
 ```
 
 This checks:
+
 - configured Airtable table IDs
 - confirmed asset/version/release field names
 - compatibility aliases used for legacy API shape
@@ -531,6 +536,49 @@ OPENAI_API_KEY=... AIRTABLE_API_KEY=... pnpm template-review:agent-feedback --ve
 ```
 
 Behavior:
+
 - targets `🆕Ready for Review` rows by default
 - skips rows that already have agent feedback unless `--overwrite` is set
 - does lightweight same-origin page discovery from the asset `Website URL` or preview URL when available, so the draft is not limited to a single page when no sitemap exists
+
+## Template Review Hub Agent Feedback Runner
+
+Run the standalone `TEMPLATE REVIEW HUB` Dify agent over the most recently submitted Ready for Review versions with blank `📝Agent Review Feedback`:
+
+```bash
+infisical run --env=prod --path=/ --include-imports=true -- \
+  pnpm template-review:hub-agent-feedback -- --dry-run --since-days 7 --limit 20
+```
+
+The default is list-only dry run. A no-write Dify probe for one candidate is available when validating prompt/tool behavior:
+
+```bash
+infisical run --env=prod --path=/ --include-imports=true -- \
+  pnpm template-review:hub-agent-feedback -- --run-dify-dry-run --since-days 7 --limit 1
+```
+
+To authorize the agent to save feedback:
+
+```bash
+infisical run --env=prod --path=/ --include-imports=true -- \
+  pnpm template-review:hub-agent-feedback -- --write --since-days 7 --limit 5 --concurrency 1
+```
+
+Ongoing operation should use small recurring batches, for example every 30-60 minutes:
+
+```bash
+infisical run --env=prod --path=/ --include-imports=true -- \
+  pnpm template-review:hub-agent-feedback -- --write --since-days 7 --limit 5 --concurrency 1 --timeout-ms 600000
+```
+
+The repo also includes `.github/workflows/template-review-hub-agent-feedback.yml` for ongoing hourly runs. Scheduled runs use `--write --since-days 7 --limit 5 --concurrency 1`; manual dispatch defaults to dry-run unless the `write` input is enabled. GitHub must have `AIRTABLE_API_KEY` and `DIFY_TEMPLATE_REVIEW_HUB_API_KEY` configured as repository secrets before the scheduled job can run.
+
+Behavior:
+
+- lists newest submitted rows first using `📅Submission Datetime`
+- scopes to `🆕Ready for Review` and blank `📝Agent Review Feedback` by default
+- re-reads each version immediately before calling Dify and skips rows that are no longer blank or no longer in scope
+- calls the Dify Service API using `DIFY_TEMPLATE_REVIEW_HUB_API_KEY`, stored at `prod:/dify/template-review-hub`
+- lets the Dify agent use Hub MCP and first-class E2B tools for comprehensive review
+- expects comprehensive reviews to take several minutes per item; keep scheduled concurrency at `1` until live timings are stable
+- authorizes only the narrow `template_review_save_agent_feedback` write path; the runner does not write review status, creator-facing feedback, owner, or publishing fields directly

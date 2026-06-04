@@ -292,8 +292,53 @@ test('listVersionsForAgentFeedback filters for ready rows without existing agent
   assert.equal(capturedUrl.searchParams.get('view'), 'viw_ready_queue');
   assert.match(capturedUrl.searchParams.get('filterByFormula') ?? '', /LEN\(TRIM\(\{📝Agent Review Feedback\} & ""\)\) = 0/);
   assert.equal(capturedUrl.searchParams.get('sort[0][field]'), CONFIRMED_VERSION_FIELDS.submissionDatetime);
+  assert.equal(capturedUrl.searchParams.get('sort[0][direction]'), 'asc');
   assert.equal(versions.length, 1);
   assert.equal(versions[0]?.reviewStatus, '🆕Ready for Review');
+});
+
+test('listVersionsForAgentFeedback can scope to recent submitted rows newest first', async () => {
+  let capturedUrl: URL | null = null;
+  const client = new AirtableClient({
+    apiKey: 'test',
+    fetchFn: async (input) => {
+      capturedUrl = new URL(String(input));
+      return jsonResponse({ records: [] });
+    },
+  });
+
+  await client.listVersionsForAgentFeedback({
+    limit: 10,
+    submittedSince: '2026-05-27T00:00:00.000Z',
+    submittedUntil: '2026-06-03T23:59:59.000Z',
+    sortDirection: 'desc',
+  });
+
+  assert.ok(capturedUrl);
+  const formula = capturedUrl.searchParams.get('filterByFormula') ?? '';
+  assert.match(formula, /IS_AFTER\(\{📅Submission Datetime\}, DATEADD\(DATETIME_PARSE\('2026-05-27T00:00:00.000Z'\), -1, 'seconds'\)\)/);
+  assert.match(formula, /IS_BEFORE\(\{📅Submission Datetime\}, DATEADD\(DATETIME_PARSE\('2026-06-03T23:59:59.000Z'\), 1, 'seconds'\)\)/);
+  assert.equal(capturedUrl.searchParams.get('sort[0][field]'), CONFIRMED_VERSION_FIELDS.submissionDatetime);
+  assert.equal(capturedUrl.searchParams.get('sort[0][direction]'), 'desc');
+});
+
+test('listVersionsForAgentFeedback rejects invalid submitted date filters', async () => {
+  const client = new AirtableClient({
+    apiKey: 'test',
+    fetchFn: async () => {
+      throw new Error('fetch should not be called for invalid date filters');
+    },
+  });
+
+  await assert.rejects(
+    client.listVersionsForAgentFeedback({
+      submittedSince: 'not-a-date',
+    }),
+    (error: unknown) => {
+      assert.equal((error as { code?: string }).code, 'INVALID_DATE_FILTER');
+      return true;
+    },
+  );
 });
 
 test('listReleases uses the stable Airtable release table id', async () => {

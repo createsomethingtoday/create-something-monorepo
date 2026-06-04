@@ -3,6 +3,10 @@ import { z } from 'zod';
 
 import type { AirtableClient, TemplateReviewQueueItem } from './airtable.js';
 import { AirtableClientError } from './airtable.js';
+import { COMPREHENSIVE_REVIEW_LANE_IDS, EVIDENCE_LABELS, formatComprehensiveAgentReviewFeedback } from './comprehensive-review-feedback.js';
+import { COMPREHENSIVE_REVIEW_CONTRACT } from './comprehensive-review-contract.js';
+import { RUBRIC_DIMENSIONS } from './comprehensive-review-contract.js';
+import { buildPublishedSiteSandboxBundle } from './published-site-sandbox-bundle.js';
 import { TEMPLATE_REVIEW_FIELD_MAP } from './schema.js';
 import { REVIEW_WORKFLOW } from './prompts.js';
 import type { ReviewerProfile } from './reviewer-directory.js';
@@ -15,6 +19,14 @@ const REVIEWER_CONTROLLED_STATUS_OPTIONS = ['🏃🏾In Review', '👀Admin Feed
 
 const MY_QUEUE_DEFAULT_LIMIT = 25;
 const MY_QUEUE_FEEDBACK_PREVIEW_CHARS = 320;
+const comprehensiveEvidenceLabelSchema = z.enum(EVIDENCE_LABELS);
+const comprehensiveLaneIdSchema = z.enum(COMPREHENSIVE_REVIEW_LANE_IDS);
+const rubricDimensionSchema = z.enum(RUBRIC_DIMENSIONS);
+const sandboxViewportSchema = z.object({
+  name: z.string().min(1),
+  width: z.number().int().min(240).max(3840),
+  height: z.number().int().min(240).max(3840),
+});
 
 function jsonContent(value: unknown, isError = false) {
   return {
@@ -145,6 +157,115 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
       return asError(error);
     }
   });
+
+  server.tool(
+    'template_review_get_comprehensive_review_contract',
+    'Read-only: return the comprehensive template-review evidence contract, including coverage matrix, rubric dimensions, manual checks, and Agent Review Feedback format.',
+    {},
+    async () => asSuccess(COMPREHENSIVE_REVIEW_CONTRACT),
+  );
+
+  server.tool(
+    'template_review_format_agent_review_feedback',
+    'Read-only: validate lane-shaped comprehensive review evidence and format a schema-checked Agent Review Feedback draft. Does not write to Airtable.',
+    {
+      intake: z.object({
+        template_name: z.string().min(1),
+        version_id: z.string().min(1),
+        asset_id: z.string().min(1).optional(),
+        published_url: z.string().url(),
+        review_status: z.string().min(1).optional(),
+        submitted_date: z.string().min(1).optional(),
+        agent_review_feedback_was_blank_before_write: z.boolean().optional(),
+      }),
+      coverage_matrix: z
+        .array(
+          z.object({
+            lane_id: comprehensiveLaneIdSchema,
+            label: comprehensiveEvidenceLabelSchema,
+            summary: z.string().min(1),
+            evidence: z.array(z.string().min(1)).optional(),
+            gaps: z.array(z.string().min(1)).optional(),
+          }),
+        )
+        .min(COMPREHENSIVE_REVIEW_LANE_IDS.length),
+      confirmed_findings: z.array(
+        z.object({
+          title: z.string().min(1),
+          label: comprehensiveEvidenceLabelSchema,
+          source: z.enum(['review_context', 'published_site_validator', 'e2b_public_site_pass', 'manual_input', 'other']),
+          evidence: z.string().min(1),
+          url: z.string().url().optional(),
+          rubric_dimension: rubricDimensionSchema.optional(),
+          severity: z.enum(['critical', 'warning', 'info']).optional(),
+        }),
+      ),
+      rubric_dimension_matrix: z
+        .array(
+          z.object({
+            dimension: rubricDimensionSchema,
+            label: comprehensiveEvidenceLabelSchema,
+            evidence_or_reason: z.string().min(1),
+          }),
+        )
+        .min(RUBRIC_DIMENSIONS.length),
+      e2b_urls_fetched: z.array(z.string().url()).min(1),
+      human_follow_up: z.array(z.string().min(1)).min(1),
+      manual_checks_remaining: z.array(z.string().min(1)).min(1),
+      validator_summary: z
+        .object({
+          rubric_coverage: z.string().min(1).optional(),
+          crawl_coverage: z.string().min(1).optional(),
+          pages_analyzed: z.number().int().min(0).optional(),
+          critical_errors: z.number().int().min(0).optional(),
+          warnings: z.number().int().min(0).optional(),
+        })
+        .optional(),
+      caveats: z.array(z.string().min(1)).optional(),
+      generated_by: z.string().min(1).optional(),
+    },
+    async (input) => {
+      try {
+        const formatted = formatComprehensiveAgentReviewFeedback(input);
+        if (!formatted.validation.passed) {
+          throw new AirtableClientError('COMPREHENSIVE_REVIEW_PACKET_INVALID', 'Comprehensive Agent Review Feedback evidence is incomplete.', 400, formatted.validation);
+        }
+        return asSuccess(formatted);
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'template_review_prepare_published_site_sandbox',
+    'Read-only: prepare a bounded published-site sandbox job and self-contained E2B Python runner for comprehensive review evidence. Does not execute E2B or write to Airtable.',
+    {
+      published_url: z.string().url(),
+      run_id: z.string().min(1).optional(),
+      policy_snapshot_id: z.string().min(1).optional(),
+      sandbox_provider: z.enum(['dify_e2b', 'direct_e2b']).optional(),
+      max_pages: z.number().int().min(1).max(25).optional(),
+      max_network_requests: z.number().int().min(25).max(1000).optional(),
+      timeout_ms: z.number().int().min(5_000).max(120_000).optional(),
+      viewports: z.array(sandboxViewportSchema).min(1).max(6).optional(),
+      allowed_hosts: z.array(z.string().min(1)).max(10).optional(),
+    },
+    async (input) => {
+      try {
+        return asSuccess(buildPublishedSiteSandboxBundle(input));
+      } catch (error) {
+        if (error instanceof Error) {
+          return asError(
+            new AirtableClientError('PUBLISHED_SITE_SANDBOX_INPUT_INVALID', error.message, 400, {
+              published_url: input.published_url,
+            }),
+          );
+        }
+        return asError(error);
+      }
+    },
+  );
 
   server.tool(
     'template_review_list_queue',
@@ -356,6 +477,35 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
           updated_version: await getClient().updateVersionReview(version_id, {
             review_owner: { id: reviewer.airtableCollaboratorId },
             review_status,
+          }),
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'template_review_save_agent_feedback',
+    'Write only supplemental internal agent notes to 📝Agent Review Feedback for a template Asset Version.',
+    {
+      version_id: z.string().min(1),
+      agent_review_feedback: z.string().min(1),
+    },
+    async ({ version_id, agent_review_feedback }) => {
+      try {
+        const reviewer = getReviewer();
+        const actingReviewer = currentReviewerAsCollaborator(getReviewer);
+
+        return asSuccess({
+          ...(reviewer
+            ? {
+                reviewer: reviewerPayload(reviewer),
+                acting_reviewer: actingReviewer,
+              }
+            : {}),
+          updated_version: await getClient().updateVersionReview(version_id, {
+            agent_review_feedback,
           }),
         });
       } catch (error) {

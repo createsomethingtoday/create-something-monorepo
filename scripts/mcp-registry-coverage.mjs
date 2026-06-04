@@ -64,6 +64,12 @@ const PACKAGE_COVERAGE = {
     note: 'local companion to outerfields-pcn',
     registry: ['outerfields-pcn']
   },
+  'packages/abundance-jobs-mcp': {
+    registry: ['abundance-jobs-mcp']
+  },
+  'packages/abundance-jobs-mcp/worker': {
+    registry: ['abundance-jobs-mcp']
+  },
   'packages/bettermode-creator-mcp': {
     registry: ['bettermode-creator']
   },

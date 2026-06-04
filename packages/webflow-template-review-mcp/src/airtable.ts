@@ -236,6 +236,9 @@ export interface AgentFeedbackQueueQuery {
   limit?: number;
   includeStatuses?: string[];
   includeExistingFeedback?: boolean;
+  submittedSince?: string;
+  submittedUntil?: string;
+  sortDirection?: 'asc' | 'desc';
   viewId?: string;
 }
 
@@ -321,6 +324,26 @@ const MY_QUEUE_ACTIVE_STATUSES = new Set<TemplateReviewQueueStatus>([
 
 function escapeFormulaValue(value: string): string {
   return value.replace(/'/g, "''");
+}
+
+function normalizeAirtableDatetime(value: string, label: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    throw new AirtableClientError('INVALID_DATE_FILTER', `${label} must be a valid date or datetime.`, 400, {
+      [label]: value,
+    });
+  }
+  return date.toISOString();
+}
+
+function submittedSinceFormula(value: string): string {
+  const iso = escapeFormulaValue(normalizeAirtableDatetime(value, 'submittedSince'));
+  return `IS_AFTER({${CONFIRMED_VERSION_FIELDS.submissionDatetime}}, DATEADD(DATETIME_PARSE('${iso}'), -1, 'seconds'))`;
+}
+
+function submittedUntilFormula(value: string): string {
+  const iso = escapeFormulaValue(normalizeAirtableDatetime(value, 'submittedUntil'));
+  return `IS_BEFORE({${CONFIRMED_VERSION_FIELDS.submissionDatetime}}, DATEADD(DATETIME_PARSE('${iso}'), 1, 'seconds'))`;
 }
 
 function escapeFormulaStringValue(value: string): string {
@@ -1215,6 +1238,12 @@ export class AirtableClient {
     if (!query.includeExistingFeedback) {
       formulaParts.push(`LEN(TRIM({${CONFIRMED_VERSION_FIELDS.agentReviewFeedback}} & "")) = 0`);
     }
+    if (query.submittedSince) {
+      formulaParts.push(submittedSinceFormula(query.submittedSince));
+    }
+    if (query.submittedUntil) {
+      formulaParts.push(submittedUntilFormula(query.submittedUntil));
+    }
 
     const records = await this.listRecords({
       tableId: TABLE_IDS.assetVersions,
@@ -1223,7 +1252,7 @@ export class AirtableClient {
       viewId: query.viewId,
       filterByFormula: formulaParts.length === 1 ? formulaParts[0]! : `AND(${formulaParts.join(', ')})`,
       sortField: CONFIRMED_VERSION_FIELDS.submissionDatetime,
-      sortDirection: 'asc',
+      sortDirection: query.sortDirection ?? 'asc',
     });
 
     return records.map((record) => mapVersion(record));
