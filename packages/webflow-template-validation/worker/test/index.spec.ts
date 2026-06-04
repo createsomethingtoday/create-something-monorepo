@@ -1416,6 +1416,34 @@ describe('Validation Submission Endpoint', () => {
 		expect(assetFetch).toHaveBeenCalledTimes(1);
 	});
 
+	it('keeps programmatic snippet install on the manual-first route', async () => {
+		const response = await worker.fetch(
+			new Request('https://validation-worker.createsomething.workers.dev/app-validator/snippet/install', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					Origin: 'https://designer.webflow-ext.com'
+				},
+				body: JSON.stringify({
+					siteId: 'site_programmatic_disabled',
+					siteName: 'Programmatic Disabled',
+					installTarget: 'head',
+					mode: 'webflow-api'
+				})
+			}),
+			{ WEBFLOW_DATA_API_TOKEN: 'token-that-should-not-trigger-auto-install' } as any,
+			createExecutionContext()
+		);
+
+		expect(response.status).toBe(200);
+		const payload = await response.json() as any;
+		expect(payload.status).toBe('pending_manual');
+		expect(payload.installed).toBe(false);
+		expect(payload.installMethod).toBe('manual-fallback');
+		expect(payload.message).toContain('Copy the script');
+		expect(payload.snippet).toContain('__WF_REVIEW_BRIDGE');
+	});
+
 	it('verifies a manually published bridge snippet and promotes status to active', async () => {
 		const installResponse = await worker.fetch(
 			new Request('https://validation-worker.createsomething.workers.dev/app-validator/snippet/install', {

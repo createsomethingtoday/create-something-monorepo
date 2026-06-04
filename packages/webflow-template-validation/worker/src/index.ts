@@ -711,7 +711,8 @@ async function handleSnippetInstall(
 			record.message = programmatic.message;
 		}
 	} else {
-		record.message = 'Manual install requested. Publish the bridge and review surface, then re-check.';
+		record.message =
+			'Validator script ready. Paste it in Site Settings > Custom Code > Head code, publish, then re-check.';
 	}
 
 	await persistSnippetTokenState(env, record);
@@ -855,9 +856,10 @@ async function handleSnippetRotateToken(
 			record = {
 				...record,
 				installMethod: 'webflow-api',
-				status: 'active',
-				installed: true,
-				message: 'Token rotated and published review surface updated programmatically.'
+				status: 'pending_manual',
+				installed: false,
+				message:
+					'Token rotated and Validator script updated. Publish the site, then re-check the published script.'
 			};
 		} else {
 			record = {
@@ -2944,110 +2946,18 @@ async function attemptProgrammaticSnippetInstall(
 	correlationId: string,
 	idToken?: string
 ): Promise<{ ok: boolean; message: string }> {
-	const webflowApiBase = readEnvString(env, 'WEBFLOW_DATA_API_BASE') || 'https://api.webflow.com';
+	void env;
+	void siteId;
+	void bridgeToken;
+	void snippet;
+	void correlationId;
+	void idToken;
 
-	// Resolve the access token. Priority:
-	// 1. Exchange the extension's ID token for a site-scoped access token
-	// 2. Fall back to static WEBFLOW_DATA_API_TOKEN
-	let webflowApiToken = readEnvString(env, 'WEBFLOW_DATA_API_TOKEN');
-
-	if (idToken) {
-		const clientId = readEnvString(env, 'WEBFLOW_APP_CLIENT_ID');
-		const clientSecret = readEnvString(env, 'WEBFLOW_APP_CLIENT_SECRET');
-		if (clientId && clientSecret) {
-			try {
-				const tokenResponse = await fetch(`${webflowApiBase}/oauth/access_token`, {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({
-						client_id: clientId,
-						client_secret: clientSecret,
-						grant_type: 'authorization_code',
-						code: idToken
-					})
-				});
-				if (tokenResponse.ok) {
-					const tokenData = (await tokenResponse.json()) as { access_token?: string };
-					if (tokenData.access_token) {
-						webflowApiToken = tokenData.access_token;
-					}
-				}
-			} catch (e) {
-				console.warn('ID token exchange failed, using static token:', e);
-			}
-		}
-	}
-
-	if (!webflowApiToken) {
-		return {
-			ok: false,
-			message: 'Manual install required: no API token available. Ensure the app is authorized with custom_code:write scope.'
-		};
-	}
-
-	const headers = {
-		Authorization: `Bearer ${webflowApiToken}`,
-		'Content-Type': 'application/json',
-		accept: 'application/json'
+	return {
+		ok: false,
+		message:
+			'Automatic custom-code install is not enabled for this Validator. Copy the script into Site Settings > Custom Code > Head code, publish, then re-check.'
 	};
-
-	try {
-		// Single API call: add_inline_site_script registers AND applies in one step.
-		// The inline script sets the bridge config and loads the hosted review.js.
-		// Validated against Template Marketplace (5e593fb060cf87bbaf75dd20).
-		const reviewScriptUrl = `${readEnvString(env, 'WORKER_PUBLIC_URL') || 'https://validation-worker.createsomething.workers.dev'}${REVIEW_SNIPPET_ASSET_PATH}`;
-		const inlineSource = [
-			buildReviewBridgeConfigSource(bridgeToken, reviewScriptUrl, siteId),
-			`var s=document.createElement("script");s.src=${JSON.stringify(reviewScriptUrl)};document.head.appendChild(s);`
-		].join('');
-
-		const registerResponse = await fetch(
-			`${webflowApiBase}/beta/sites/${siteId}/registered_scripts/inline`,
-			{
-				method: 'POST',
-				headers,
-				body: JSON.stringify({
-					sourceCode: inlineSource,
-					version: REVIEW_SNIPPET_VERSION,
-					displayName: 'WF Review Bridge',
-					location: 'header',
-					canCopy: false
-				})
-			}
-		);
-
-		if (registerResponse.ok) {
-			return { ok: true, message: 'Bridge installed via Webflow Scripts API. Publish to activate.' };
-		}
-
-		// If inline registration fails (e.g. already registered), fall back to legacy
-		const errorText = await registerResponse.text().catch(() => '');
-		console.warn(`Inline script registration failed (${registerResponse.status}): ${errorText}`);
-
-		const legacyResponse = await fetch(
-			`${webflowApiBase}/v2/sites/${siteId}/custom-code`,
-			{
-				method: 'PUT',
-				headers,
-				body: JSON.stringify({ headCode: snippet })
-			}
-		);
-		if (!legacyResponse.ok) {
-			const legacyError = await legacyResponse.text().catch(() => '');
-			return {
-				ok: false,
-				message: `Install failed (scripts: ${registerResponse.status}, legacy: ${legacyResponse.status}): ${errorText} / ${legacyError}`
-			};
-		}
-		return { ok: true, message: 'Bridge installed via legacy API. Publish to activate.' };
-	} catch (error) {
-		return {
-			ok: false,
-			message: `Install failed: ${
-				error instanceof Error ? error.message : String(error)
-			} (correlationId=${correlationId})`
-		};
-	}
 }
 
 function buildSnippetPayload(token: string, request: Request, siteId?: string): string {
