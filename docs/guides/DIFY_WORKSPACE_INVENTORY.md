@@ -157,6 +157,8 @@ For each Dify agent:
 9. Add at least one `smoke_cases` entry before setting `status: "published"`.
 10. Run the Dify inventory check and the agent's smoke/eval command.
 
+For prompt-only updates to an already published app, keep the existing Dify app in place. Do not import a replacement app or delete the existing app just to update instructions; that would rotate app identity and Service API wiring unnecessarily. If the live Instructions field contains an XML wrapper, Dify variables, output format, or examples, patch only the intended policy paragraphs and preserve the rest of the live field. If the live field is a plain compact prompt, paste the repo-owned prompt into the current app instructions. After saving the existing app, export its DSL and reconcile the snapshot back into `config/dify-agents/{agent}.dify.yml`, then run the inventory check plus that agent's smoke/eval command.
+
 ## Rules
 
 - Do not store Dify API keys, MCP bearer tokens, Notion tokens, or other secret values in the repo.

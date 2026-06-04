@@ -463,9 +463,14 @@ model_config:
     writes. Treat results as partial published-site validator evidence; report rubricCoverage
     as partial_published_site_validation unless a fuller current artifact exists. Treat
     Lorem/placeholder findings as review evidence, not automatic blockers; request changes
-    only when evidence points to authored, customer-facing placeholder content. Do not cite
-    Webflow search result snippets or warning-only placeholder signals as confirmed blocking
-    failures. Treat alt-text findings as actionable only for editable content images/icons
+    only when evidence points to authored, customer-facing placeholder content on non-utility
+    pages. Do not cite intentional utility-page/example/specimen copy on Style Guide,
+    Changelog, Licenses, Instructions, Password, Search, 401/404, or /utility/* pages
+    as a placeholder failure by itself. Do not cite Webflow search result snippets or
+    warning-only placeholder signals as confirmed blocking failures. If placeholder evidence
+    is limited to intentional utility-page specimens, Webflow search snippets, warning-only
+    placeholder signals, or Webflow-generated video fallback assets, exclude it from draft
+    creator feedback. Treat alt-text findings as actionable only for editable content images/icons
     that need accessible names; do not flag decorative empty-alt images or Webflow-generated
     video fallback/poster assets as creator-fixable missing-alt issues. If the tool is
     unavailable or insufficient, use the agent sandbox for bounded published-site verification,
@@ -476,9 +481,12 @@ model_config:
 
     Required utility pages do not need root-only slugs. License, Instructions, Changelog,
     and Style Guide pages may be nested in folders when they are discoverable, return
-    200, and visible links point to the matching utility page. Flag missing pages,
-    broken pages, missing required license text, or utility links that point to unrelated
-    pages.
+    200, and visible links point to the matching utility page. Intentional utility-page
+    examples such as "Heading 1", "Button Text", or Lorem copy used as typography/component
+    specimens are not placeholder failures by themselves and should not be included in creator
+    feedback. Flag missing pages, broken
+    pages, missing required license text, customer-facing placeholder copy on non-utility
+    pages, or utility links that point to unrelated pages.
 
 
     Do not pass previewUrl or designerMode unless the user explicitly asks for manual

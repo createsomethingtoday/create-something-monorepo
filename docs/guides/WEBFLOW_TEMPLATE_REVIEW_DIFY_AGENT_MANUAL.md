@@ -8,6 +8,51 @@ The Dify agent is a review assistant. It helps you find template submissions, ch
 
 The human reviewer still makes the decision. The agent should not approve, reject, request changes, publish, or save feedback unless the reviewer clearly asks for that exact action.
 
+## Updating The Live Dify Agents
+
+For instruction-only changes, update the existing Natalia, Mariana, Eric, and Vicki Dify apps in place. Do not delete the current apps, and do not create replacement imports just to change prompt policy. Keeping the existing apps preserves the current app IDs, Service API keys, chat URLs, Infisical references, eval bindings, and reviewer workflows.
+
+Use the checked-in manifest prompt as the source of truth:
+
+| Agent   | Source prompt |
+| ------- | ------------- |
+| Eric    | `config/dify-agents/eric-hub.json#agent_prompt` |
+| Natalia | `config/dify-agents/natalia-hub.json#agent_prompt` |
+| Mariana | `config/dify-agents/mariana-hub.json#agent_prompt` |
+| Vicki   | `config/dify-agents/vicki-hub.json#agent_prompt` |
+
+To print a paste-ready prompt for one agent:
+
+```bash
+node -e 'const fs = require("fs"); const manifest = JSON.parse(fs.readFileSync("config/dify-agents/eric-hub.json", "utf8")); console.log(manifest.agent_prompt);'
+```
+
+Replace `eric-hub.json` with the target reviewer manifest.
+
+Manual update flow for the current XML-style Dify Instructions field:
+
+1. Open the existing Dify app.
+2. Confirm the Instructions field still includes the XML wrapper, Dify variables, `output_format`, and examples.
+3. Do not replace the whole field with the compact `agent_prompt` if that wrapper is present.
+4. Patch only the placeholder/utility-page policy paragraphs from the current `agent_prompt`.
+5. Preserve the XML wrapper, variables, output format, examples, tool list, model settings, visibility, and API keys.
+6. Save or publish the existing app.
+7. Export the app DSL from Dify Studio.
+8. Reconcile the exported DSL back into `config/dify-agents/{agent}.dify.yml` if Dify rewrites the saved app.
+9. Run `pnpm dify:inventory:check`, `pnpm dify:reviewer-hubs:smoke`, and `pnpm braintrust:eval:dify:reviewer-hubs:local`.
+
+If the live Instructions field is already a plain compact prompt with no XML wrapper:
+
+1. Open the existing Dify app.
+2. Paste the current `agent_prompt` into the app instructions/pre-prompt field.
+3. Leave tools, MCP server cards, model settings, visibility, and API keys unchanged unless the change explicitly covers them.
+4. Save or publish the existing app.
+5. Export the app DSL from Dify Studio.
+6. Reconcile the exported DSL back into `config/dify-agents/{agent}.dify.yml` if Dify rewrites the saved app.
+7. Run `pnpm dify:inventory:check`, `pnpm dify:reviewer-hubs:smoke`, and `pnpm braintrust:eval:dify:reviewer-hubs:local`.
+
+Create a new imported app only when app structure, tool wiring, or a staging clone is intentionally changing. Deletion should be a separate migration step after the replacement app has passed smoke and eval checks and all callers have moved to the new API key.
+
 ## What To Use It For
 
 | Use the agent for                  | Do not use the agent for                      |
@@ -119,7 +164,7 @@ Treat this as review evidence, not the final decision.
 
 ### Interpreting Placeholder And Alt-Text Findings
 
-Lorem or placeholder findings are review evidence, not automatic blockers. The reviewer should request changes only when the current evidence points to authored, customer-facing placeholder content. Do not cite Webflow search result snippets or warning-only placeholder signals as confirmed blocking failures.
+Lorem or placeholder findings are review evidence, not automatic blockers. The reviewer should request changes only when the current evidence points to authored, customer-facing placeholder content on non-utility pages. Do not cite intentional utility-page/example/specimen copy on Style Guide, Changelog, Licenses, Instructions, Password, Search, 401/404, or `/utility/*` pages as a placeholder failure by itself. Do not cite Webflow search result snippets or warning-only placeholder signals as confirmed blocking failures. If placeholder evidence is limited to intentional utility-page specimens, Webflow search snippets, warning-only placeholder signals, or Webflow-generated video fallback assets, exclude it from draft creator feedback.
 
 Alt-text findings are actionable only when they point to editable content images or icons that need accessible names. Do not flag intentionally decorative empty-alt images or Webflow-generated video fallback/poster assets as creator-fixable missing-alt issues.
 

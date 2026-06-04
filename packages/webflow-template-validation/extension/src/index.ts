@@ -3768,8 +3768,44 @@ function formatPageListItem(item: any): string {
 function formatHeadingIssueItem(item: any): string {
   if (!item || typeof item !== 'object') return String(item);
   const page = item.page || item.title || 'Page';
+  const pageUrl = item.pageUrl || item.url;
+  const position = item.fromPosition && item.toPosition
+    ? ` positions ${item.fromPosition} → ${item.toPosition}`
+    : '';
+  const sequence = item.headingSequence ? ` Sequence: ${item.headingSequence}` : '';
+
+  if (
+    item.issueType === 'skipped_level' &&
+    typeof item.fromLevel === 'number' &&
+    typeof item.toLevel === 'number'
+  ) {
+    const missingLevel = typeof item.missingLevel === 'number'
+      ? `, skipping H${item.missingLevel}`
+      : '';
+    const issue = `${formatHeadingReference(item.fromLevel, item.fromText)} is followed by ${formatHeadingReference(item.toLevel, item.toText)}${missingLevel}${position}.${sequence}`;
+    return escapeHtml(`${page}${pageUrl ? ` (${pageUrl})` : ''}: ${issue}`);
+  }
+
   const issue = item.issue || 'Heading issue';
-  return `${page}: ${issue}`;
+  return escapeHtml(`${page}${pageUrl ? ` (${pageUrl})` : ''}: ${issue}${sequence}`);
+}
+
+function formatHeadingReference(level: number, text: unknown): string {
+  const normalizedText = typeof text === 'string' ? decodeCommonHtmlEntities(text).replace(/\s+/g, ' ').trim() : '';
+  if (!normalizedText) return `H${level}`;
+  const preview = normalizedText.length > 80 ? `${normalizedText.slice(0, 77)}...` : normalizedText;
+  return `H${level} "${preview}"`;
+}
+
+function decodeCommonHtmlEntities(value: string): string {
+  return value
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/&#x27;/gi, "'")
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>');
 }
 
 function formatBrokenLinkItem(item: any): string {
