@@ -10,6 +10,7 @@ import {
   syncHalfDozenStatusToSource,
   syncSourceTicketsToHalfDozen,
 } from './sync.js';
+import { emitBraintrustToolInvocation } from './braintrust.js';
 import type { Env, ToolResponse } from './types.js';
 
 const optionalPageIdsSchema = z.object({
@@ -49,56 +50,64 @@ export function createBlondishSyncMcpServer(env: Env): McpServer {
     'blondish_sync_preflight',
     'Validate BLOND:ISH and Half Dozen Notion token access, data source visibility, and required sync properties. No writes.',
     {},
-    async () => jsonToolResponse(await preflight(env)),
+    async () => tracedJsonToolResponse(env, 'blondish_sync_preflight', () => preflight(env)),
   );
 
   server.tool(
     'blondish_sync_audit',
     'Audit BLOND:ISH and Half Dozen ticket rows for missing HD rows, duplicate matches, contract-field drift, body drift, and reverse-status drift. No writes.',
     {},
-    async () => jsonToolResponse(await auditSync(env)),
+    async () => tracedJsonToolResponse(env, 'blondish_sync_audit', () => auditSync(env)),
   );
 
   server.tool(
     'blondish_sync_plan_source_to_hd_repairs',
     'Plan source-to-HD repairs from a fresh audit. No writes. Prefer this before write tools so the operator sees scoped repair options.',
     {},
-    async () => jsonToolResponse(await planSourceToHalfDozenRepairs(env)),
+    async () => tracedJsonToolResponse(env, 'blondish_sync_plan_source_to_hd_repairs', () => planSourceToHalfDozenRepairs(env)),
   );
 
   server.tool(
     'blondish_sync_repair_missing_hd_rows',
     'Create only HD rows that are currently missing from the source-to-HD match. Does not update existing rows and never overwrites HD Status.',
     {},
-    async () => jsonToolResponse(await repairMissingHalfDozenRows(env)),
+    async () => tracedJsonToolResponse(env, 'blondish_sync_repair_missing_hd_rows', () => repairMissingHalfDozenRows(env)),
   );
 
   server.tool(
     'blondish_sync_repair_external_url_drift',
     'Repair only External URL drift on currently matched HD rows. Does not create rows, change page body, repair titles, or overwrite HD Status.',
     {},
-    async () => jsonToolResponse(await repairExternalUrlDrift(env)),
+    async () => tracedJsonToolResponse(env, 'blondish_sync_repair_external_url_drift', () => repairExternalUrlDrift(env)),
   );
 
   server.tool(
     'blondish_sync_source_to_hd',
     'Directly create or repair Half Dozen ticket rows from BLOND:ISH source rows. Never overwrites HD Status.',
     optionalPageIdsSchema.shape,
-    async (params) => jsonToolResponse(await syncSourceTicketsToHalfDozen(env, { sourcePageIds: normalizePageIds(params) })),
+    async (params) => tracedJsonToolResponse(
+      env,
+      'blondish_sync_source_to_hd',
+      () => syncSourceTicketsToHalfDozen(env, { sourcePageIds: normalizePageIds(params) }),
+    ),
   );
 
   server.tool(
     'blondish_sync_hd_status_to_source',
     'Directly write mapped Half Dozen Status values back to BLOND:ISH. Only mapped statuses are written.',
     optionalPageIdsSchema.shape,
-    async (params) => jsonToolResponse(await syncHalfDozenStatusToSource(env, { targetPageIds: normalizePageIds(params) })),
+    async (params) => tracedJsonToolResponse(
+      env,
+      'blondish_sync_hd_status_to_source',
+      () => syncHalfDozenStatusToSource(env, { targetPageIds: normalizePageIds(params) }),
+    ),
   );
 
   server.tool(
     'blondish_sync_full',
     'Run source-to-HD reconciliation, then HD-status-to-BLONDISH status reconciliation.',
     {},
-    async () => jsonToolResponse(await fullReconcile(env)),
+    async () => tracedJsonToolResponse(env, 'blondish_sync_full', () => fullReconcile(env)),
   );
 
   server.resource(
@@ -162,4 +171,25 @@ function jsonToolResponse(payload: unknown): ToolResponse {
   return {
     content: [{ type: 'text', text: JSON.stringify(payload, null, 2) }],
   };
+}
+
+async function tracedJsonToolResponse(env: Env, toolName: string, operation: () => Promise<unknown>): Promise<ToolResponse> {
+  const startedAt = Date.now();
+
+  try {
+    const payload = await operation();
+    await emitBraintrustToolInvocation(env, {
+      toolName,
+      result: payload,
+      durationMs: Date.now() - startedAt,
+    });
+    return jsonToolResponse(payload);
+  } catch (error) {
+    await emitBraintrustToolInvocation(env, {
+      toolName,
+      durationMs: Date.now() - startedAt,
+      error,
+    });
+    throw error;
+  }
 }

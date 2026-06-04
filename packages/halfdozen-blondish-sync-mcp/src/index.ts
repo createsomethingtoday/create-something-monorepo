@@ -1,5 +1,6 @@
 import { McpAgent } from 'agents/mcp';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { braintrustHealth } from './braintrust.js';
 import { createBlondishSyncMcpServer } from './mcp.js';
 import type { Env } from './types.js';
 
@@ -38,6 +39,7 @@ export default {
           blondish_source_data_source_configured: Boolean(env.BLONDISH_SUPPORT_TICKETS_DATA_SOURCE_ID?.trim()),
           halfdozen_target_data_source_configured: Boolean(env.HALFDOZEN_TICKETS_DATA_SOURCE_ID?.trim() || env.HALFDOZEN_TICKETS_DATABASE_ID?.trim() || env.HALFDOZEN_TICKETS_DATA_SOURCE_TITLE?.trim()),
           blondish_status_property: env.BLONDISH_OS_STATUS_PROPERTY?.trim() || 'Status',
+          braintrust: braintrustHealth(env),
         },
         secrets: {
           mcp_api_key_configured: Boolean(env.MCP_API_KEY?.trim()),
