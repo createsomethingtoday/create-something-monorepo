@@ -451,7 +451,8 @@ function routeExists(packageDir, routePath) {
     return null;
   }
 
-  const trimmed = routePath.replace(/\/+$/, '') || '/';
+  const pathOnly = routePath.split(/[?#]/, 1)[0];
+  const trimmed = pathOnly.replace(/\/+$/, '') || '/';
   const segments = trimmed === '/' ? [] : trimmed.slice(1).split('/').filter(Boolean);
   const routeDir = path.join(routesDir, ...segments);
   const routeFiles = [

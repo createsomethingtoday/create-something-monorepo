@@ -12767,6 +12767,23 @@
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 0
     },
+    "halfdozen-blondish-sync-mcp": {
+      "transport": "http",
+      "url": "https://halfdozen-blondish-sync-mcp.createsomething.workers.dev/mcp",
+      "bearer_token_env_var": "HALFDOZEN_BLONDISH_SYNC_MCP_API_KEY",
+      "description": "Operator-invoked BLOND:ISH Support Tickets to Half Dozen Tickets reconciliation MCP.",
+      "tags": [
+        "halfdozen",
+        "blondish",
+        "notion",
+        "tickets",
+        "sync"
+      ],
+      "package_path": "packages/halfdozen-blondish-sync-mcp",
+      "catalog_exposure_mode": "direct",
+      "estimated_tool_count": 8,
+      "setupNotes": "Worker-side bearer secret is MCP_API_KEY. Use this MCP for bounded operator reconciliation: source-owned ticket data to HD and mapped HD status back to source. Prefer scoped repair tools before broad reconcile; use Notion webhooks plus a persisted sync index for future high-volume incremental sync."
+    },
     "halfdozen-dm-mcp": {
       "transport": "http",
       "url": "https://dm.mcp.workway.co/mcp",
@@ -16482,6 +16499,7 @@
       "notion-halfdozen-three-six-zero",
       "halfdozen-dm-mcp",
       "halfdozen-operator-notion-mcp",
+      "halfdozen-blondish-sync-mcp",
       "half-dozen-youtube-sync"
     ],
     "halfdozen-observability": [
@@ -16491,7 +16509,8 @@
       "halfdozen-gmail-sync-danny",
       "halfdozen-gmail-sync-fillip",
       "halfdozen-gmail-sync-leah",
-      "halfdozen-zoom-sync"
+      "halfdozen-zoom-sync",
+      "halfdozen-blondish-sync-mcp"
     ],
     "local-dev": [
       "community-mcp",

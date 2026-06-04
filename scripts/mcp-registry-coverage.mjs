@@ -30,7 +30,8 @@ const REQUIRED_HALFDOZEN_SYNC_SERVERS = [
   'halfdozen-gmail-sync-fillip',
   'halfdozen-gmail-sync-leah',
   'halfdozen-zoom-sync',
-  'half-dozen-youtube-sync'
+  'half-dozen-youtube-sync',
+  'halfdozen-blondish-sync-mcp'
 ];
 
 const REQUIRED_FLEET_NOTION_DEPLOYMENTS = {
@@ -48,6 +49,14 @@ const REQUIRED_FLEET_NOTION_DEPLOYMENTS = {
 };
 
 const PACKAGE_COVERAGE = {
+  'packages/abundance-jobs-mcp': {
+    registry: ['abundance-jobs-mcp'],
+    fleetDeployments: ['abundance-jobs-mcp']
+  },
+  'packages/abundance-jobs-mcp/worker': {
+    registry: ['abundance-jobs-mcp'],
+    fleetDeployments: ['abundance-jobs-mcp']
+  },
   'packages/agency/clients/outerfields/mcp-remote': {
     registry: ['outerfields-pcn']
   },
@@ -100,6 +109,10 @@ const PACKAGE_COVERAGE = {
   },
   'packages/halfdozen-dm-mcp/worker': {
     registry: ['halfdozen-dm-mcp']
+  },
+  'packages/halfdozen-blondish-sync-mcp': {
+    registry: ['halfdozen-blondish-sync-mcp'],
+    fleetDeployments: ['halfdozen-blondish-sync-mcp']
   },
   'packages/halfdozen-notion-mcp': {
     registry: HALFDOZEN_NOTION_WORKWAY_SERVERS,

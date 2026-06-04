@@ -1,0 +1,409 @@
+<script lang="ts">
+	import type { Asset } from '$lib/server/airtable';
+	import { trackEvent } from '$lib/utils/analytics';
+	import { formatCompactCurrency } from '$lib/utils/format';
+	import { toast } from '$lib/stores/toast';
+	import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Input, Label, Textarea } from './ui';
+	import { CheckCircle2, Link, Send, Tag } from 'lucide-svelte';
+
+	interface Props {
+		asset: Asset;
+	}
+
+	type OfferStrategy =
+		| 'Limited-time sale'
+		| 'Creator-managed price test'
+		| 'Prune recovery test'
+		| 'Exit sale before delist'
+		| 'Retention save';
+
+	let { asset }: Props = $props();
+
+	const defaultEndDate = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000)
+		.toISOString()
+		.slice(0, 10);
+
+	let offerLabel = $state('');
+	let offerPrice = $state('');
+	let fulfillmentUrl = $state('');
+	let startsAt = $state('');
+	let endsAt = $state(defaultEndDate);
+	let offerStrategy = $state<OfferStrategy>('Creator-managed price test');
+	let notes = $state('');
+	let termsAccepted = $state(false);
+	let isSubmitting = $state(false);
+	let errorMessage = $state('');
+	let successMessage = $state('');
+	let didInitializeOfferLabel = $state(false);
+
+	const canRequestOffer = $derived(asset.type === 'Template' && asset.status === 'Published');
+	const hasActiveOffer = $derived(
+		Boolean(
+			asset.activeOfferLabel ||
+				asset.activeOfferCtaUrl ||
+				asset.activeOfferStrategy ||
+				asset.activeOfferEndsAt ||
+				asset.activeOfferVisibility ||
+				asset.activeOfferPrice !== undefined
+		)
+	);
+	const isSubmitDisabled = $derived(
+		isSubmitting ||
+			!canRequestOffer ||
+			!offerPrice.trim() ||
+			!fulfillmentUrl.trim() ||
+			!endsAt.trim() ||
+			!termsAccepted
+	);
+
+	$effect(() => {
+		if (didInitializeOfferLabel) return;
+		offerLabel = asset.activeOfferLabel || 'Limited offer';
+		didInitializeOfferLabel = true;
+	});
+
+	function resetMessages() {
+		errorMessage = '';
+		successMessage = '';
+	}
+
+	async function handleSubmit(event: SubmitEvent) {
+		event.preventDefault();
+		if (isSubmitDisabled) return;
+
+		isSubmitting = true;
+		resetMessages();
+
+		try {
+			const response = await fetch(`/api/assets/${asset.id}/offers`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					offerLabel,
+					offerPrice,
+					fulfillmentUrl,
+					startsAt: startsAt || undefined,
+					endsAt,
+					offerStrategy,
+					notes,
+					termsAccepted
+				})
+			});
+
+			const result = (await response.json()) as {
+				success?: boolean;
+				message?: string;
+				offerId?: string;
+			};
+
+			if (!response.ok || !result.success) {
+				throw new Error(result.message || 'Failed to submit offer request');
+			}
+
+			successMessage =
+				'Offer request submitted for review. Marketplace checkout and public badges will not change until approval.';
+			toast.success('Offer request submitted');
+			trackEvent('template_offer_request_submitted', {
+				asset_id: asset.id,
+				offer_strategy: offerStrategy,
+				has_active_offer: hasActiveOffer,
+				offer_id: result.offerId
+			});
+
+			fulfillmentUrl = '';
+			notes = '';
+			termsAccepted = false;
+		} catch (err) {
+			errorMessage = err instanceof Error ? err.message : 'Failed to submit offer request';
+			toast.error(errorMessage);
+			trackEvent('template_offer_request_failed', {
+				asset_id: asset.id,
+				offer_strategy: offerStrategy,
+				has_active_offer: hasActiveOffer
+			});
+		} finally {
+			isSubmitting = false;
+		}
+	}
+</script>
+
+<Card>
+	<CardHeader>
+		<div class="offer-request-header">
+			<div class="offer-request-title">
+				<Tag size={16} />
+				<CardTitle>Request Limited Offer</CardTitle>
+			</div>
+			{#if hasActiveOffer}
+				<Badge variant="info">Current offer mirrored</Badge>
+			{:else}
+				<Badge variant="secondary">Approval required</Badge>
+			{/if}
+		</div>
+	</CardHeader>
+	<CardContent>
+		{#if canRequestOffer}
+			<div class="offer-request-intro">
+				<p>
+					Submit a creator-managed fulfillment link and sale price for review. This creates a
+					pending offer record; public marketplace checkout changes only after approval.
+				</p>
+				{#if asset.priceString || asset.activeOfferPrice !== undefined}
+					<div class="price-context">
+						{#if asset.priceString}
+							<span>Marketplace price: <strong>{asset.priceString}</strong></span>
+						{/if}
+						{#if asset.activeOfferPrice !== undefined}
+							<span>Current offer: <strong>{formatCompactCurrency(asset.activeOfferPrice)}</strong></span>
+						{/if}
+					</div>
+				{/if}
+			</div>
+
+			<form class="offer-request-form" onsubmit={handleSubmit}>
+				<div class="form-grid">
+					<div class="form-field">
+						<Label for="offerLabel">Offer label</Label>
+						<Input
+							id="offerLabel"
+							bind:value={offerLabel}
+							maxlength={80}
+							placeholder="Limited offer"
+							oninput={resetMessages}
+						/>
+					</div>
+
+					<div class="form-field">
+						<Label for="offerPrice">Offer price</Label>
+						<Input
+							id="offerPrice"
+							bind:value={offerPrice}
+							type="number"
+							min="0"
+							max="10000"
+							step="0.01"
+							placeholder="29"
+							required
+							oninput={resetMessages}
+						/>
+					</div>
+
+					<div class="form-field form-field--wide">
+						<Label for="fulfillmentUrl">Fulfillment link</Label>
+						<div class="input-with-icon">
+							<Link size={14} />
+							<Input
+								id="fulfillmentUrl"
+								bind:value={fulfillmentUrl}
+								type="url"
+								placeholder="https://..."
+								required
+								oninput={resetMessages}
+							/>
+						</div>
+					</div>
+
+					<div class="form-field">
+						<Label for="offerStrategy">Offer purpose</Label>
+						<select
+							id="offerStrategy"
+							class="form-control native-select"
+							bind:value={offerStrategy}
+							onchange={resetMessages}
+						>
+							<option value="Creator-managed price test">Creator-managed price test</option>
+							<option value="Limited-time sale">Limited-time sale</option>
+							<option value="Prune recovery test">Recovery window before marketplace review</option>
+							<option value="Exit sale before delist">Exit sale before archive</option>
+							<option value="Retention save">Retention save</option>
+						</select>
+					</div>
+
+					<div class="form-field">
+						<Label for="endsAt">Offer ends</Label>
+						<Input id="endsAt" bind:value={endsAt} type="date" required oninput={resetMessages} />
+					</div>
+
+					<div class="form-field">
+						<Label for="startsAt">Start date</Label>
+						<Input id="startsAt" bind:value={startsAt} type="date" oninput={resetMessages} />
+					</div>
+
+					<div class="form-field form-field--wide">
+						<Label for="offerNotes">Notes</Label>
+						<Textarea
+							id="offerNotes"
+							bind:value={notes}
+							maxlength={1000}
+							placeholder="Add sale context, timing, or why this price should be tested."
+							oninput={resetMessages}
+						/>
+					</div>
+				</div>
+
+				<label class="terms-row">
+					<input type="checkbox" bind:checked={termsAccepted} onchange={resetMessages} />
+					<span>
+						I confirm this link is intended for this template offer, existing buyer access is not
+						affected, and the offer must be approved before it appears publicly.
+					</span>
+				</label>
+
+				{#if errorMessage}
+					<p class="form-message form-message--error">{errorMessage}</p>
+				{/if}
+				{#if successMessage}
+					<p class="form-message form-message--success">
+						<CheckCircle2 size={14} />
+						{successMessage}
+					</p>
+				{/if}
+
+				<div class="form-actions">
+					<Button type="submit" disabled={isSubmitDisabled}>
+						<Send size={14} />
+						{isSubmitting ? 'Submitting...' : 'Submit offer request'}
+					</Button>
+				</div>
+			</form>
+		{:else}
+			<div class="offer-unavailable">
+				<p>Limited offers can be requested after this template is published.</p>
+			</div>
+		{/if}
+	</CardContent>
+</Card>
+
+<style>
+	.offer-request-header,
+	.offer-request-title,
+	.form-message,
+	.input-with-icon,
+	.price-context,
+	.terms-row {
+		display: flex;
+		align-items: center;
+	}
+
+	.offer-request-header {
+		justify-content: space-between;
+		gap: var(--space-md);
+		flex-wrap: wrap;
+	}
+
+	.offer-request-title {
+		gap: var(--space-xs);
+	}
+
+	.offer-request-intro {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-sm);
+		margin-bottom: var(--space-md);
+	}
+
+	.offer-request-intro p,
+	.offer-unavailable p {
+		margin: 0;
+		color: var(--color-fg-secondary);
+		font-size: var(--text-body-sm);
+		line-height: 1.5;
+	}
+
+	.price-context {
+		gap: var(--space-sm);
+		flex-wrap: wrap;
+		color: var(--color-fg-muted);
+		font-size: var(--text-caption);
+	}
+
+	.price-context strong {
+		color: var(--color-fg-primary);
+		font-variant-numeric: tabular-nums;
+	}
+
+	.offer-request-form {
+		display: flex;
+		flex-direction: column;
+		gap: var(--space-md);
+	}
+
+	.form-grid {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: var(--space-sm) var(--space-md);
+	}
+
+	.form-field {
+		min-width: 0;
+	}
+
+	.form-field--wide {
+		grid-column: 1 / -1;
+	}
+
+	.input-with-icon {
+		gap: 0.45rem;
+	}
+
+	.input-with-icon :global(svg) {
+		color: var(--color-fg-muted);
+		flex: 0 0 auto;
+	}
+
+	.input-with-icon :global(.input) {
+		flex: 1 1 auto;
+		min-width: 0;
+	}
+
+	.native-select {
+		height: 2.25rem;
+		width: 100%;
+	}
+
+	.terms-row {
+		align-items: flex-start;
+		gap: var(--space-sm);
+		color: var(--color-fg-secondary);
+		font-size: var(--text-body-sm);
+		line-height: 1.45;
+	}
+
+	.terms-row input {
+		margin-top: 0.15rem;
+		accent-color: var(--color-info);
+	}
+
+	.form-message {
+		gap: 0.35rem;
+		margin: 0;
+		font-size: var(--text-body-sm);
+		line-height: 1.45;
+	}
+
+	.form-message--error {
+		color: var(--color-error);
+	}
+
+	.form-message--success {
+		color: var(--color-success);
+	}
+
+	.form-actions {
+		display: flex;
+		justify-content: flex-end;
+	}
+
+	.offer-unavailable {
+		padding: 0.72rem;
+		border: 1px solid color-mix(in srgb, var(--color-border-default) 72%, transparent);
+		border-radius: var(--radius-sm);
+		background: var(--color-bg-subtle);
+	}
+
+	@media (max-width: 780px) {
+		.form-grid {
+			grid-template-columns: 1fr;
+		}
+	}
+</style>

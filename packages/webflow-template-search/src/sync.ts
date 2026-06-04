@@ -171,6 +171,14 @@ function normalizeCreatorName(name: string): string {
   return name.trim().toLowerCase();
 }
 
+function isArchiveCreatorSlug(slug: string | null | undefined): boolean {
+  return Boolean(slug?.endsWith('-archive'));
+}
+
+function creatorProfileUrlForSlug(slug: string | null | undefined): string | null {
+  return slug ? `https://webflow.com/templates/designers/${slug}` : null;
+}
+
 function airtableCreatorFallbackMap(
   creators: Map<string, CreatorLookupValue>,
   webflowDesigners: WebflowDesignerAvatarRecord[],
@@ -226,11 +234,19 @@ function resolveCreatorMetadata(
   const webflowCreator =
     (creatorRecordId ? webflowDesignerIndex?.bySyncRecordId.get(creatorRecordId) : undefined) ??
     (creatorName ? webflowDesignerIndex?.byName.get(normalizeCreatorName(creatorName)) : undefined);
+  const webflowSlug = webflowCreator?.slug || null;
+  const airtableSlug = airtableCreator?.slug || null;
+  const shouldUseAirtableProfile =
+    isArchiveCreatorSlug(webflowSlug) && Boolean(airtableSlug) && !isArchiveCreatorSlug(airtableSlug);
+  const creatorSlug = shouldUseAirtableProfile ? airtableSlug : webflowSlug || airtableSlug || null;
+  const creatorProfileUrl = shouldUseAirtableProfile
+    ? airtableCreator?.profileUrl || creatorProfileUrlForSlug(airtableSlug)
+    : webflowCreator?.profileUrl || airtableCreator?.profileUrl || null;
 
   return {
     creatorRecordId,
-    creatorSlug: webflowCreator?.slug || airtableCreator?.slug || null,
-    creatorProfileUrl: webflowCreator?.profileUrl || airtableCreator?.profileUrl || null,
+    creatorSlug,
+    creatorProfileUrl,
     creatorAvatarUrl: webflowCreator?.avatarUrl ?? airtableCreator?.avatarUrl ?? null,
     creatorAvatarAlt: webflowCreator?.avatarAlt ?? airtableCreator?.avatarAlt ?? (airtableCreator?.name ?? null),
   };

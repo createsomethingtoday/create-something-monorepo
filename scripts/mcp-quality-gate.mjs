@@ -23,6 +23,7 @@ const FLEET_REGISTRY = {
     'packages/halfdozen-gmail-sync',
     'packages/halfdozen-zoom-sync',
     'packages/half-dozen-youtube-sync',
+    'packages/halfdozen-blondish-sync-mcp',
     'packages/halfdozen-telemetry-mcp/worker',
     'packages/schedule-mcp',
     'packages/substrate-mcp',

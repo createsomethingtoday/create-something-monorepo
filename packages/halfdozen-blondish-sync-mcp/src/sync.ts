@@ -1,0 +1,980 @@
+import {
+  appendBlockChildren,
+  createPage,
+  deleteBlock,
+  findDataSourceIdByTitle,
+  findUserIdByEmail,
+  getFirstDataSourceIdForDatabase,
+  listAllBlockChildren,
+  queryAllPages,
+  retrieveDataSourceSchema,
+  retrievePage,
+  updatePage,
+  uploadFileToNotion,
+} from './notion.js';
+import {
+  CLIENT_LABEL,
+  DEFAULT_BLONDISH_SOURCE_DATA_SOURCE_TITLE,
+  DEFAULT_BLONDISH_SUPPORT_TICKETS_DATA_SOURCE_ID,
+  DEFAULT_HALFDOZEN_TARGET_DATA_SOURCE_TITLE,
+  DEFAULT_HD_STATUS,
+  FILE_UPLOAD_TARGET_WORKSPACE,
+  HD_TO_OS_STATUS,
+  OWNER_EMAIL,
+  OWNER_LABEL,
+  SOURCE_LABEL,
+  TARGET_EXT_PAGE_ID_PROPERTIES,
+} from './constants.js';
+import type { AuditResult, DataSourceSchema, Env, NotionBlock, NotionPage, SyncConfig, SyncFile, SyncResult, Workspace } from './types.js';
+
+type WritableValue = string | Array<Record<string, unknown>>;
+type SourceToHdRepairField =
+  | 'Ticket'
+  | 'Source'
+  | 'Owner'
+  | 'Client'
+  | 'External Page ID'
+  | 'External URL'
+  | 'External Files & Media'
+  | 'page body';
+
+type SourceToHdOptions = {
+  sourcePageIds?: string[];
+  repairFields?: SourceToHdRepairField[];
+  createMissing?: boolean;
+};
+
+export async function preflight(env: Env): Promise<SyncResult> {
+  const result = emptyResult('preflight');
+  try {
+    const config = await resolveSyncConfig(env);
+    const sourceMissing = missingProperties(config.sourceSchema, [
+      'Ticket',
+      'Details',
+      'Created By',
+      'Page ID',
+      'URL',
+      'Files & Media',
+      config.sourceStatusProperty,
+    ]);
+    const targetMissing = missingProperties(config.targetSchema, [
+      'Ticket',
+      'Status',
+      'Source',
+      'Owner',
+      'External URL',
+      'External Files & Media',
+    ]);
+    if (!targetExtPageIdProperty(config.targetSchema)) targetMissing.push('External Page ID or Ext Page ID');
+
+    for (const field of sourceMissing) result.errors.push({ scope: 'source_schema', message: `Missing source property: ${field}` });
+    for (const field of targetMissing) result.errors.push({ scope: 'target_schema', message: `Missing target property: ${field}` });
+
+    result.ok = result.errors.length === 0;
+    result.source_data_source_id = config.sourceDataSourceId;
+    result.target_data_source_id = config.targetDataSourceId;
+    result.details = {
+      source_status_property: config.sourceStatusProperty,
+      target_ext_page_id_property: config.targetExtPageIdProperty,
+      target_client_property_present: Boolean(config.targetSchema.Client),
+      source_properties: Object.keys(config.sourceSchema).sort(),
+      target_properties: Object.keys(config.targetSchema).sort(),
+    };
+    return result;
+  } catch (error) {
+    result.errors.push({ scope: 'preflight', message: errorMessage(error) });
+    return result;
+  }
+}
+
+export async function auditSync(env: Env): Promise<AuditResult> {
+  const result: AuditResult = {
+    ...emptyResult('audit'),
+    action: 'audit',
+    details: {
+      source_rows_checked: 0,
+      target_rows_checked: 0,
+      matched_rows: 0,
+      missing_hd_rows: [],
+      duplicate_hd_matches: [],
+      contract_field_drifts: [],
+      body_drifts: [],
+      reverse_status_drifts: [],
+    },
+  };
+
+  try {
+    const config = await resolveSyncConfig(env);
+    result.source_data_source_id = config.sourceDataSourceId;
+    result.target_data_source_id = config.targetDataSourceId;
+    const [sourcePages, targetPages] = await Promise.all([
+      queryAllPages(env, 'blondish', config.sourceDataSourceId),
+      queryAllPages(env, 'halfdozen', config.targetDataSourceId),
+    ]);
+    result.details.source_rows_checked = sourcePages.length;
+    result.details.target_rows_checked = targetPages.length;
+
+    const targetsByExtPageId = groupTargetsByExtPageId(targetPages, config.targetExtPageIdProperty);
+    const sourceByExtPageId = new Map<string, NotionPage>();
+    for (const sourcePage of sourcePages) {
+      const extPageId = readText(sourcePage, 'Page ID');
+      if (extPageId) sourceByExtPageId.set(extPageId, sourcePage);
+    }
+
+    for (const [extPageId, pages] of targetsByExtPageId) {
+      if (pages.length > 1) {
+        result.details.duplicate_hd_matches.push({ ext_page_id: extPageId, target_page_ids: pages.map((page) => page.id) });
+      }
+    }
+
+    const ownerUserId = await findUserIdByEmail(env, 'halfdozen', OWNER_EMAIL);
+    for (const sourcePage of sourcePages) {
+      const extPageId = readText(sourcePage, 'Page ID');
+      if (!extPageId) continue;
+      const targetMatches = targetsByExtPageId.get(extPageId) ?? [];
+      if (targetMatches.length === 0) {
+        result.details.missing_hd_rows.push({
+          source_page_id: sourcePage.id,
+          ext_page_id: extPageId,
+          ticket: readText(sourcePage, 'Ticket'),
+        });
+        continue;
+      }
+      result.details.matched_rows += 1;
+      const targetPage = targetMatches[0];
+      const patch = await buildExistingTargetPatch(env, config, sourcePage, targetPage, ownerUserId, { materializeFileUploads: false });
+      if (Object.keys(patch).length > 0) {
+        result.details.contract_field_drifts.push({
+          target_page_id: targetPage.id,
+          ext_page_id: extPageId,
+          fields: Object.keys(patch),
+        });
+      }
+      if (await targetPageBodyDiffers(env, sourcePage, targetPage.id)) {
+        result.details.body_drifts.push({ target_page_id: targetPage.id, ext_page_id: extPageId });
+      }
+    }
+
+    for (const targetPage of targetPages) {
+      const extPageId = readText(targetPage, config.targetExtPageIdProperty);
+      if (!extPageId) continue;
+      const mappedStatus = mapHdStatusToOsStatus(readText(targetPage, 'Status'));
+      if (!mappedStatus) continue;
+      const sourcePage = sourceByExtPageId.get(extPageId);
+      if (!sourcePage) continue;
+      const sourceStatus = readText(sourcePage, config.sourceStatusProperty);
+      if (sourceStatus !== mappedStatus) {
+        result.details.reverse_status_drifts.push({
+          target_page_id: targetPage.id,
+          source_page_id: sourcePage.id,
+          ext_page_id: extPageId,
+          hd_status: readText(targetPage, 'Status'),
+          source_status: sourceStatus,
+          mapped_status: mappedStatus,
+        });
+      }
+    }
+
+    result.ok = true;
+    result.skipped = result.details.missing_hd_rows.length
+      + result.details.duplicate_hd_matches.length
+      + result.details.contract_field_drifts.length
+      + result.details.body_drifts.length
+      + result.details.reverse_status_drifts.length;
+    return result;
+  } catch (error) {
+    result.errors.push({ scope: 'audit', message: errorMessage(error) });
+    return result;
+  }
+}
+
+export async function planSourceToHalfDozenRepairs(env: Env): Promise<SyncResult> {
+  const audit = await auditSync(env);
+  const details = audit.details;
+  const externalUrlDrifts = details.contract_field_drifts.filter((drift) => drift.fields.includes('External URL'));
+  const externalFilesDrifts = details.contract_field_drifts.filter((drift) => drift.fields.includes('External Files & Media'));
+  const otherContractDrifts = details.contract_field_drifts.filter((drift) => (
+    drift.fields.some((field) => field !== 'External URL' && field !== 'External Files & Media')
+  ));
+
+  return {
+    ok: audit.ok,
+    action: 'source_to_hd_repair_plan',
+    source_data_source_id: audit.source_data_source_id,
+    target_data_source_id: audit.target_data_source_id,
+    created: 0,
+    updated: 0,
+    skipped: audit.skipped,
+    errors: audit.errors,
+    details: {
+      source_rows_checked: details.source_rows_checked,
+      target_rows_checked: details.target_rows_checked,
+      matched_rows: details.matched_rows,
+      missing_hd_rows: details.missing_hd_rows,
+      duplicate_hd_matches: details.duplicate_hd_matches,
+      repairable_missing_hd_rows: details.missing_hd_rows.length,
+      repairable_external_url_drifts: externalUrlDrifts.length,
+      repairable_external_files_drifts: externalFilesDrifts.length,
+      other_contract_drifts: otherContractDrifts,
+      body_drifts: details.body_drifts,
+      reverse_status_drifts: details.reverse_status_drifts,
+      recommended_write_tools: [
+        ...(details.missing_hd_rows.length > 0 ? ['blondish_sync_repair_missing_hd_rows'] : []),
+        ...(externalUrlDrifts.length > 0 ? ['blondish_sync_repair_external_url_drift'] : []),
+        ...(otherContractDrifts.length > 0 || details.body_drifts.length > 0 ? ['blondish_sync_source_to_hd'] : []),
+        ...(details.reverse_status_drifts.length > 0 ? ['blondish_sync_hd_status_to_source'] : []),
+      ],
+      future_scale_note: 'Use Notion webhooks or a persisted sync index before this becomes a frequent full-scan workflow.',
+    },
+  };
+}
+
+export async function repairMissingHalfDozenRows(env: Env): Promise<SyncResult> {
+  const audit = await auditSync(env);
+  const sourcePageIds = audit.details.missing_hd_rows.map((row) => row.source_page_id);
+  if (sourcePageIds.length === 0) {
+    return {
+      ok: audit.ok,
+      action: 'repair_missing_hd_rows',
+      source_data_source_id: audit.source_data_source_id,
+      target_data_source_id: audit.target_data_source_id,
+      created: 0,
+      updated: 0,
+      skipped: 0,
+      errors: audit.errors,
+      details: {
+        repair_scope: 'missing_hd_rows',
+        source_rows_checked: audit.details.source_rows_checked,
+        target_rows_checked: audit.details.target_rows_checked,
+        selected_source_page_ids: [],
+      },
+    };
+  }
+
+  const repaired = await syncSourceTicketsToHalfDozen(env, { sourcePageIds, createMissing: true });
+  return {
+    ...repaired,
+    action: 'repair_missing_hd_rows',
+    details: {
+      ...(repaired.details ?? {}),
+      repair_scope: 'missing_hd_rows',
+      selected_source_page_ids: sourcePageIds,
+      audit_before_repair: {
+        missing_hd_rows: audit.details.missing_hd_rows,
+        duplicate_hd_matches: audit.details.duplicate_hd_matches,
+      },
+    },
+  };
+}
+
+export async function repairExternalUrlDrift(env: Env): Promise<SyncResult> {
+  const audit = await auditSync(env);
+  const extPageIds = audit.details.contract_field_drifts
+    .filter((drift) => drift.fields.includes('External URL'))
+    .map((drift) => drift.ext_page_id);
+
+  if (extPageIds.length === 0) {
+    return {
+      ok: audit.ok,
+      action: 'repair_external_url_drift',
+      source_data_source_id: audit.source_data_source_id,
+      target_data_source_id: audit.target_data_source_id,
+      created: 0,
+      updated: 0,
+      skipped: 0,
+      errors: audit.errors,
+      details: {
+        repair_scope: 'external_url_drift',
+        source_rows_checked: audit.details.source_rows_checked,
+        target_rows_checked: audit.details.target_rows_checked,
+        selected_ext_page_ids: [],
+      },
+    };
+  }
+
+  const repaired = await syncSourceTicketsToHalfDozen(env, {
+    sourcePageIds: extPageIds,
+    repairFields: ['External URL'],
+    createMissing: false,
+  });
+  return {
+    ...repaired,
+    action: 'repair_external_url_drift',
+    details: {
+      ...(repaired.details ?? {}),
+      repair_scope: 'external_url_drift',
+      selected_ext_page_ids: extPageIds,
+      audit_before_repair: {
+        contract_field_drifts: audit.details.contract_field_drifts.filter((drift) => drift.fields.includes('External URL')),
+      },
+    },
+  };
+}
+
+export async function syncSourceTicketsToHalfDozen(
+  env: Env,
+  options: SourceToHdOptions = {},
+): Promise<SyncResult> {
+  const result = emptyResult('source_to_hd');
+  let externalReferenceUpdates = 0;
+  let titleRepairs = 0;
+  let propertyRepairs = 0;
+  let bodyRepairs = 0;
+  try {
+    const config = await resolveSyncConfig(env);
+    result.source_data_source_id = config.sourceDataSourceId;
+    result.target_data_source_id = config.targetDataSourceId;
+
+    const [sourcePages, targetPages] = await Promise.all([
+      resolveSourcePages(env, config.sourceDataSourceId, options.sourcePageIds),
+      queryAllPages(env, 'halfdozen', config.targetDataSourceId),
+    ]);
+    const targetByExtPageId = new Map<string, NotionPage>();
+    for (const page of targetPages) {
+      const extPageId = readText(page, config.targetExtPageIdProperty);
+      if (extPageId && !targetByExtPageId.has(extPageId)) targetByExtPageId.set(extPageId, page);
+    }
+
+    const ownerUserId = await findUserIdByEmail(env, 'halfdozen', OWNER_EMAIL);
+    for (const sourcePage of sourcePages) {
+      try {
+        if (!isPageInDataSource(sourcePage, config.sourceDataSourceId)) {
+          result.skipped += 1;
+          continue;
+        }
+
+        const extPageId = readText(sourcePage, 'Page ID');
+        if (!extPageId) {
+          result.errors.push({ scope: 'source_page', message: 'Source ticket is missing Page ID.', page_id: sourcePage.id });
+          continue;
+        }
+
+        const existingTargetPage = targetByExtPageId.get(extPageId);
+        if (existingTargetPage) {
+          const externalPatch = filterTargetPatch(
+            await buildExistingTargetPatch(env, config, sourcePage, existingTargetPage, ownerUserId),
+            config,
+            options.repairFields,
+          );
+          if (Object.keys(externalPatch).length > 0) {
+            await updatePage(env, 'halfdozen', existingTargetPage.id, externalPatch);
+            result.updated += 1;
+            if (externalPatch.Ticket) titleRepairs += 1;
+            propertyRepairs += Object.keys(externalPatch).filter((propertyName) => propertyName !== 'Ticket').length;
+            if (externalPatch['External URL'] || externalPatch['External Files & Media']) externalReferenceUpdates += 1;
+          }
+          const bodyUpdated = shouldRepairField(options.repairFields, 'page body')
+            ? await syncTargetPageBody(env, sourcePage, existingTargetPage.id)
+            : false;
+          if (bodyUpdated) bodyRepairs += 1;
+          if (Object.keys(externalPatch).length > 0 || bodyUpdated) {
+            result.updated += bodyUpdated && Object.keys(externalPatch).length === 0 ? 1 : 0;
+          } else {
+            result.skipped += 1;
+          }
+          continue;
+        }
+
+        if (options.createMissing === false) {
+          result.skipped += 1;
+          continue;
+        }
+
+        const latestSourcePage = await retrievePage(env, 'blondish', sourcePage.id);
+        const properties = await buildTargetCreateProperties(env, config, latestSourcePage, ownerUserId);
+        const children = await buildTicketBody(env, latestSourcePage);
+        const created = await createPage(env, config.targetDataSourceId, properties, children);
+
+        const confirmationPatch = await buildExistingTargetPatch(env, config, latestSourcePage, created, ownerUserId);
+        if (Object.keys(confirmationPatch).length > 0) {
+          await updatePage(env, 'halfdozen', created.id, confirmationPatch);
+          if (confirmationPatch.Ticket) titleRepairs += 1;
+          propertyRepairs += Object.keys(confirmationPatch).filter((propertyName) => propertyName !== 'Ticket').length;
+          if (confirmationPatch['External URL'] || confirmationPatch['External Files & Media']) externalReferenceUpdates += 1;
+        }
+
+        result.created += 1;
+        targetByExtPageId.set(extPageId, created);
+      } catch (error) {
+        result.errors.push({
+          scope: 'source_to_hd_page',
+          message: errorMessage(error),
+          page_id: sourcePage.id,
+          ext_page_id: readText(sourcePage, 'Page ID') || undefined,
+        });
+      }
+    }
+
+    result.ok = result.errors.length === 0;
+    result.details = {
+      source_rows_checked: sourcePages.length,
+      target_rows_checked: targetPages.length,
+      external_reference_updates: externalReferenceUpdates,
+      title_repairs: titleRepairs,
+      property_repairs: propertyRepairs,
+      body_repairs: bodyRepairs,
+    };
+    return result;
+  } catch (error) {
+    result.errors.push({ scope: 'source_to_hd', message: errorMessage(error) });
+    return result;
+  }
+}
+
+export async function syncHalfDozenStatusToSource(
+  env: Env,
+  options: { targetPageIds?: string[] } = {},
+): Promise<SyncResult> {
+  const result = emptyResult('hd_status_to_source');
+  try {
+    const config = await resolveSyncConfig(env);
+    result.source_data_source_id = config.sourceDataSourceId;
+    result.target_data_source_id = config.targetDataSourceId;
+
+    const [sourcePages, targetPages] = await Promise.all([
+      queryAllPages(env, 'blondish', config.sourceDataSourceId),
+      resolveTargetPages(env, config.targetDataSourceId, options.targetPageIds),
+    ]);
+    const sourceByExtPageId = new Map<string, NotionPage>();
+    for (const page of sourcePages) {
+      const pageId = readText(page, 'Page ID');
+      if (pageId) sourceByExtPageId.set(pageId, page);
+    }
+
+    for (const targetPage of targetPages) {
+      try {
+        if (!isPageInDataSource(targetPage, config.targetDataSourceId)) {
+          result.skipped += 1;
+          continue;
+        }
+
+        const extPageId = readText(targetPage, config.targetExtPageIdProperty);
+        if (!extPageId) {
+          result.skipped += 1;
+          continue;
+        }
+        const hdStatus = readText(targetPage, 'Status');
+        const mappedStatus = mapHdStatusToOsStatus(hdStatus);
+        if (!mappedStatus) {
+          result.skipped += 1;
+          continue;
+        }
+        const sourcePage = sourceByExtPageId.get(extPageId);
+        if (!sourcePage) {
+          result.skipped += 1;
+          continue;
+        }
+        const currentStatus = readText(sourcePage, config.sourceStatusProperty);
+        if (currentStatus === mappedStatus) {
+          result.skipped += 1;
+          continue;
+        }
+
+        await updatePage(env, 'blondish', sourcePage.id, {
+          [config.sourceStatusProperty]: writableValue(
+            config.sourceSchema[config.sourceStatusProperty]?.type ?? 'status',
+            mappedStatus,
+          ),
+        });
+        result.updated += 1;
+      } catch (error) {
+        result.errors.push({
+          scope: 'status_update',
+          message: errorMessage(error),
+          page_id: targetPage.id,
+          ext_page_id: readText(targetPage, config.targetExtPageIdProperty) || undefined,
+        });
+      }
+    }
+
+    result.ok = result.errors.length === 0;
+    result.details = {
+      target_rows_checked: targetPages.length,
+      source_rows_checked: sourcePages.length,
+      source_status_property: config.sourceStatusProperty,
+    };
+    return result;
+  } catch (error) {
+    result.errors.push({ scope: 'hd_status_to_source', message: errorMessage(error) });
+    return result;
+  }
+}
+
+export async function fullReconcile(env: Env): Promise<SyncResult> {
+  const forward = await syncSourceTicketsToHalfDozen(env);
+  const reverse = await syncHalfDozenStatusToSource(env);
+
+  return {
+    ok: forward.ok && reverse.ok,
+    action: 'full_reconcile',
+    source_data_source_id: reverse.source_data_source_id ?? forward.source_data_source_id,
+    target_data_source_id: reverse.target_data_source_id ?? forward.target_data_source_id,
+    created: forward.created,
+    updated: forward.updated + reverse.updated,
+    skipped: forward.skipped + reverse.skipped,
+    errors: [...forward.errors, ...reverse.errors],
+    details: { forward, reverse },
+  };
+}
+
+export function mapHdStatusToOsStatus(value: string): string | null {
+  return HD_TO_OS_STATUS[value] ?? null;
+}
+
+export function buildTicketTitle(ticket: string): string {
+  return ticket.trim() || 'BLONDISH support ticket';
+}
+
+export async function buildTicketDetailsText(env: Env, sourcePage: NotionPage): Promise<string> {
+  const details = readText(sourcePage, 'Details');
+  if (details) return details;
+  const bodyText = await readSourcePageBodyText(env, sourcePage.id);
+  return bodyText || 'No details provided.';
+}
+
+export function readText(page: NotionPage, propertyName: string): string {
+  const property = page.properties?.[propertyName];
+  if (!property) return '';
+  switch (property.type) {
+    case 'title':
+      return richTextToPlain(property.title);
+    case 'rich_text':
+      return richTextToPlain(property.rich_text);
+    case 'url':
+      return typeof property.url === 'string' ? property.url : '';
+    case 'status':
+      return optionName(property.status);
+    case 'select':
+      return optionName(property.select);
+    case 'multi_select':
+      return Array.isArray(property.multi_select) ? property.multi_select.map(optionName).filter(Boolean).join(', ') : '';
+    case 'unique_id': {
+      const unique = isRecord(property.unique_id) ? property.unique_id : {};
+      const number = typeof unique.number === 'number' ? String(unique.number) : '';
+      const prefix = typeof unique.prefix === 'string' ? unique.prefix : '';
+      if (!number) return '';
+      return prefix ? `${prefix}-${number}` : number;
+    }
+    case 'created_by':
+    case 'people': {
+      const user = property.type === 'created_by' ? property.created_by : Array.isArray(property.people) ? property.people[0] : null;
+      return userLabel(user);
+    }
+    case 'files':
+      return Array.isArray(property.files) ? property.files.map((file) => readString(file, 'name')).filter(Boolean).join(', ') : '';
+    default:
+      return '';
+  }
+}
+
+export function targetExtPageIdProperty(targetSchema: DataSourceSchema): string | null {
+  return TARGET_EXT_PAGE_ID_PROPERTIES.find((propertyName) => Boolean(targetSchema[propertyName])) ?? null;
+}
+
+export function normalizeFileUrl(value: string): string {
+  if (!value) return '';
+  try {
+    const url = new URL(value);
+    const keysToDelete: string[] = [];
+    url.searchParams.forEach((_paramValue, key) => {
+      if (/^(x-amz-|x-id$|expires$|signature$|token$)/i.test(key)) keysToDelete.push(key);
+    });
+    for (const key of keysToDelete) url.searchParams.delete(key);
+    return url.toString();
+  } catch {
+    return value;
+  }
+}
+
+async function resolveSyncConfig(env: Env): Promise<SyncConfig> {
+  const sourceDataSourceId =
+    env.BLONDISH_SUPPORT_TICKETS_DATA_SOURCE_ID?.trim() ||
+    await findDataSourceIdByTitle(env, 'blondish', env.BLONDISH_SUPPORT_TICKETS_DATA_SOURCE_TITLE?.trim() || DEFAULT_BLONDISH_SOURCE_DATA_SOURCE_TITLE) ||
+    DEFAULT_BLONDISH_SUPPORT_TICKETS_DATA_SOURCE_ID;
+
+  const targetTitle = env.HALFDOZEN_TICKETS_DATA_SOURCE_TITLE?.trim() || DEFAULT_HALFDOZEN_TARGET_DATA_SOURCE_TITLE;
+  const targetDataSourceId =
+    env.HALFDOZEN_TICKETS_DATA_SOURCE_ID?.trim() ||
+    await getFirstDataSourceIdForDatabase(env, 'halfdozen', env.HALFDOZEN_TICKETS_DATABASE_ID?.trim()) ||
+    await findDataSourceIdByTitle(env, 'halfdozen', targetTitle);
+
+  if (!targetDataSourceId) {
+    throw new Error(`Could not find Half Dozen target data source "${targetTitle}". Set HALFDOZEN_TICKETS_DATA_SOURCE_ID or share the database with the runtime token.`);
+  }
+
+  const [sourceSchema, targetSchema] = await Promise.all([
+    retrieveDataSourceSchema(env, 'blondish', sourceDataSourceId),
+    retrieveDataSourceSchema(env, 'halfdozen', targetDataSourceId),
+  ]);
+  const configuredStatus = env.BLONDISH_OS_STATUS_PROPERTY?.trim();
+  const sourceStatusProperty = configuredStatus && sourceSchema[configuredStatus]
+    ? configuredStatus
+    : sourceSchema['OS Status']
+      ? 'OS Status'
+      : 'Status';
+  const targetExtPageId = targetExtPageIdProperty(targetSchema);
+  if (!targetExtPageId) {
+    throw new Error('Target property "External Page ID" or "Ext Page ID" is missing.');
+  }
+
+  return { sourceDataSourceId, targetDataSourceId, sourceSchema, targetSchema, sourceStatusProperty, targetExtPageIdProperty: targetExtPageId };
+}
+
+async function resolveSourcePages(env: Env, dataSourceId: string, sourcePageIds?: string[]): Promise<NotionPage[]> {
+  const ids = sourcePageIds?.map((id) => id.trim()).filter(Boolean);
+  if (!ids || ids.length === 0) return queryAllPages(env, 'blondish', dataSourceId);
+
+  const allPagesByExtId = new Map<string, NotionPage>();
+  const directPages: NotionPage[] = [];
+  const extIds: string[] = [];
+  for (const id of ids) {
+    if (looksLikeNotionPageId(id)) {
+      const page = await retrievePage(env, 'blondish', id);
+      if (!isTrashed(page)) directPages.push(page);
+    } else {
+      extIds.push(id);
+    }
+  }
+  if (extIds.length > 0) {
+    for (const page of await queryAllPages(env, 'blondish', dataSourceId)) {
+      const extPageId = readText(page, 'Page ID');
+      if (extPageId) allPagesByExtId.set(extPageId, page);
+    }
+  }
+  return [...directPages, ...extIds.flatMap((id) => allPagesByExtId.get(id) ?? [])];
+}
+
+async function resolveTargetPages(env: Env, dataSourceId: string, targetPageIds?: string[]): Promise<NotionPage[]> {
+  const ids = targetPageIds?.map((id) => id.trim()).filter(Boolean);
+  if (!ids || ids.length === 0) return queryAllPages(env, 'halfdozen', dataSourceId);
+  const pages = await Promise.all(ids.map((id) => retrievePage(env, 'halfdozen', id)));
+  return pages.filter((page) => !isTrashed(page));
+}
+
+async function buildTargetCreateProperties(
+  env: Env,
+  config: SyncConfig,
+  sourcePage: NotionPage,
+  ownerUserId: string | null,
+): Promise<Record<string, unknown>> {
+  if (config.targetSchema.Owner?.type === 'people' && !ownerUserId) {
+    throw new Error(`Could not find target Owner user ${OWNER_EMAIL}.`);
+  }
+
+  const properties: Record<string, unknown> = {};
+  const sourceFiles = readFiles(sourcePage, 'Files & Media');
+  const ticket = readText(sourcePage, 'Ticket');
+  const externalUrl = readExternalUrl(sourcePage);
+
+  writeRequired(properties, config.targetSchema, 'Ticket', buildTicketTitle(ticket));
+  writeRequired(properties, config.targetSchema, 'Status', DEFAULT_HD_STATUS);
+  writeRequired(properties, config.targetSchema, 'Source', SOURCE_LABEL);
+  writeRequired(properties, config.targetSchema, 'Owner', OWNER_LABEL, ownerUserId);
+  if (config.targetSchema.Client) writeRequired(properties, config.targetSchema, 'Client', CLIENT_LABEL);
+  writeRequired(properties, config.targetSchema, config.targetExtPageIdProperty, readText(sourcePage, 'Page ID'));
+  if (externalUrl) writeRequired(properties, config.targetSchema, 'External URL', externalUrl);
+  if (sourceFiles.length > 0) {
+    writeRequired(properties, config.targetSchema, 'External Files & Media', await buildWritableFiles(env, sourceFiles));
+  }
+  return properties;
+}
+
+async function buildExistingTargetPatch(
+  env: Env,
+  config: SyncConfig,
+  sourcePage: NotionPage,
+  targetPage: NotionPage,
+  ownerUserId: string | null,
+  options: { materializeFileUploads?: boolean } = {},
+): Promise<Record<string, unknown>> {
+  if (config.targetSchema.Owner?.type === 'people' && !ownerUserId) {
+    throw new Error(`Could not find target Owner user ${OWNER_EMAIL}.`);
+  }
+
+  const properties: Record<string, unknown> = {};
+  const externalUrl = readExternalUrl(sourcePage);
+  const sourceFiles = readFiles(sourcePage, 'Files & Media');
+  const ticket = readText(sourcePage, 'Ticket');
+  const desiredTitle = buildTicketTitle(ticket);
+  const currentTitle = readText(targetPage, 'Ticket');
+  const extPageId = readText(sourcePage, 'Page ID');
+
+  if (currentTitle !== desiredTitle) writeRequired(properties, config.targetSchema, 'Ticket', desiredTitle);
+  if (readText(targetPage, 'Source') !== SOURCE_LABEL) writeRequired(properties, config.targetSchema, 'Source', SOURCE_LABEL);
+  if (config.targetSchema.Owner && readText(targetPage, 'Owner') !== OWNER_LABEL) writeRequired(properties, config.targetSchema, 'Owner', OWNER_LABEL, ownerUserId);
+  if (config.targetSchema.Client && readText(targetPage, 'Client') !== CLIENT_LABEL) writeRequired(properties, config.targetSchema, 'Client', CLIENT_LABEL);
+  if (extPageId && readText(targetPage, config.targetExtPageIdProperty) !== extPageId) writeRequired(properties, config.targetSchema, config.targetExtPageIdProperty, extPageId);
+  if (externalUrl && readText(targetPage, 'External URL') !== externalUrl) writeRequired(properties, config.targetSchema, 'External URL', externalUrl);
+  if (sourceFiles.length > 0 && !externalFilesMatch(targetPage, config.targetSchema['External Files & Media']?.type, sourceFiles)) {
+    if (options.materializeFileUploads === false) {
+      properties['External Files & Media'] = { drift: true };
+    } else {
+      writeRequired(properties, config.targetSchema, 'External Files & Media', await buildWritableFiles(env, sourceFiles));
+    }
+  }
+
+  return properties;
+}
+
+function filterTargetPatch(
+  patch: Record<string, unknown>,
+  config: SyncConfig,
+  repairFields?: SourceToHdRepairField[],
+): Record<string, unknown> {
+  if (!repairFields || repairFields.length === 0) return patch;
+  const allowed = new Set(repairFields);
+  return Object.fromEntries(Object.entries(patch).filter(([field]) => (
+    allowed.has(field as SourceToHdRepairField) ||
+    (field === config.targetExtPageIdProperty && allowed.has('External Page ID'))
+  )));
+}
+
+function shouldRepairField(repairFields: SourceToHdRepairField[] | undefined, field: SourceToHdRepairField): boolean {
+  return !repairFields || repairFields.length === 0 || repairFields.includes(field);
+}
+
+async function targetPageBodyDiffers(env: Env, sourcePage: NotionPage, targetPageId: string): Promise<boolean> {
+  const desiredChildren = await buildTicketBody(env, sourcePage);
+  const desiredTexts = desiredChildren.map(blockPlainText).filter(Boolean);
+  const existingBlocks = await listAllBlockChildren(env, 'halfdozen', targetPageId);
+  const existingTexts = existingBlocks.map(blockPlainText).filter(Boolean);
+  return !stringArraysEqual(existingTexts, desiredTexts);
+}
+
+async function syncTargetPageBody(env: Env, sourcePage: NotionPage, targetPageId: string): Promise<boolean> {
+  if (!await targetPageBodyDiffers(env, sourcePage, targetPageId)) return false;
+  const existingBlocks = await listAllBlockChildren(env, 'halfdozen', targetPageId);
+  for (const block of existingBlocks) {
+    await deleteBlock(env, 'halfdozen', block.id);
+  }
+  await appendBlockChildren(env, 'halfdozen', targetPageId, await buildTicketBody(env, sourcePage));
+  return true;
+}
+
+async function buildTicketBody(env: Env, sourcePage: NotionPage): Promise<Array<Record<string, unknown>>> {
+  const createdBy = readText(sourcePage, 'Created By') || 'Unknown';
+  const details = await buildTicketDetailsText(env, sourcePage);
+  const children: Array<Record<string, unknown>> = [
+    {
+      object: 'block',
+      type: 'paragraph',
+      paragraph: {
+        rich_text: [
+          { type: 'text', text: { content: 'Created By:' }, annotations: { bold: true } },
+          { type: 'text', text: { content: ` ${createdBy}` } },
+        ],
+      },
+    },
+  ];
+  for (const chunk of chunks(details, 1900)) {
+    children.push({
+      object: 'block',
+      type: 'paragraph',
+      paragraph: { rich_text: [{ type: 'text', text: { content: chunk } }] },
+    });
+  }
+  return children;
+}
+
+async function readSourcePageBodyText(env: Env, sourcePageId: string): Promise<string> {
+  const blocks = await listAllBlockChildren(env, 'blondish', sourcePageId);
+  return blocks.map(blockPlainText).filter(Boolean).join('\n\n').trim();
+}
+
+async function buildWritableFiles(env: Env, sourceFiles: SyncFile[]): Promise<Array<Record<string, unknown>>> {
+  const files: Array<Record<string, unknown>> = [];
+  for (const file of sourceFiles) {
+    if (file.sourceType === 'external' && file.url) {
+      files.push({ name: file.name, type: 'external', external: { url: file.url } });
+      continue;
+    }
+
+    if (file.url) {
+      const fileUploadId = await uploadFileToNotion(env, FILE_UPLOAD_TARGET_WORKSPACE as Workspace, {
+        name: file.name,
+        url: file.url,
+      });
+      files.push({ name: file.name, type: 'file_upload', file_upload: { id: fileUploadId } });
+      continue;
+    }
+
+    throw new Error(`Source attachment "${file.name}" does not have a retrievable URL.`);
+  }
+  return files;
+}
+
+function writeRequired(
+  properties: Record<string, unknown>,
+  schema: DataSourceSchema,
+  propertyName: string,
+  value: WritableValue,
+  userId?: string | null,
+): void {
+  const property = schema[propertyName];
+  if (!property?.type) throw new Error(`Target property "${propertyName}" is missing.`);
+  properties[propertyName] = writableValue(property.type, value, userId);
+}
+
+function writableValue(type: string, value: WritableValue, userId?: string | null): Record<string, unknown> {
+  if (type === 'files') return { files: Array.isArray(value) ? value : [] };
+  const text = Array.isArray(value) ? filesToText(value) : value;
+  switch (type) {
+    case 'title':
+      return { title: richText(text) };
+    case 'rich_text':
+      return { rich_text: richText(text) };
+    case 'url':
+      return { url: text || null };
+    case 'status':
+      return { status: text ? { name: text } : null };
+    case 'select':
+      return { select: text ? { name: text } : null };
+    case 'multi_select':
+      return { multi_select: text ? [{ name: text }] : [] };
+    case 'people':
+      return userId ? { people: [{ id: userId }] } : { people: [] };
+    default:
+      throw new Error(`Unsupported writable property type "${type}".`);
+  }
+}
+
+function readFiles(page: NotionPage, propertyName: string): SyncFile[] {
+  const property = page.properties?.[propertyName];
+  if (!property || property.type !== 'files' || !Array.isArray(property.files)) return [];
+  const files: SyncFile[] = [];
+  for (const file of property.files) {
+    if (!isRecord(file)) continue;
+    const name = readString(file, 'name') || 'attachment';
+    if (isRecord(file.file) && typeof file.file.url === 'string') {
+      files.push({ name, sourceType: 'file', url: file.file.url });
+      continue;
+    }
+    if (isRecord(file.file_upload) && typeof file.file_upload.id === 'string') {
+      files.push({ name, sourceType: 'file_upload', fileUploadId: file.file_upload.id });
+      continue;
+    }
+    if (isRecord(file.external) && typeof file.external.url === 'string') {
+      files.push({ name, sourceType: 'external', url: file.external.url });
+    }
+  }
+  return files;
+}
+
+function readExternalUrl(sourcePage: NotionPage): string {
+  return readText(sourcePage, 'URL') || sourcePage.url || '';
+}
+
+function externalFilesMatch(targetPage: NotionPage, targetPropertyType: string | undefined, sourceFiles: SyncFile[]): boolean {
+  if (targetPropertyType === 'files') {
+    return fileMatchFingerprints(readFiles(targetPage, 'External Files & Media')).join('\n') === fileMatchFingerprints(sourceFiles).join('\n');
+  }
+  return readText(targetPage, 'External Files & Media') === filesToText(sourceFiles);
+}
+
+function fileMatchFingerprints(files: SyncFile[]): string[] {
+  return files.map((file) => {
+    if (file.sourceType !== 'external') return `${file.name}\tnotion-file`;
+    return `${file.name}\texternal\t${normalizeFileUrl(file.url ?? '')}`;
+  }).sort();
+}
+
+function filesToText(files: SyncFile[] | Array<Record<string, unknown>>): string {
+  return files.map((file) => {
+    const name = readString(file, 'name') || 'attachment';
+    const url = readExternalFileUrl(file);
+    return url ? `${name}: ${url}` : name;
+  }).join('\n');
+}
+
+function readExternalFileUrl(file: unknown): string {
+  if (!isRecord(file)) return '';
+  if (typeof file.url === 'string') return file.url;
+  if (isRecord(file.external) && typeof file.external.url === 'string') return file.external.url;
+  if (isRecord(file.file) && typeof file.file.url === 'string') return file.file.url;
+  return '';
+}
+
+function groupTargetsByExtPageId(targetPages: NotionPage[], targetExtPageId: string): Map<string, NotionPage[]> {
+  const grouped = new Map<string, NotionPage[]>();
+  for (const page of targetPages) {
+    const extPageId = readText(page, targetExtPageId);
+    if (!extPageId) continue;
+    const pages = grouped.get(extPageId) ?? [];
+    pages.push(page);
+    grouped.set(extPageId, pages);
+  }
+  return grouped;
+}
+
+function blockPlainText(block: NotionBlock | Record<string, unknown>): string {
+  const type = typeof block.type === 'string' ? block.type : '';
+  const payload = isRecord(block[type]) ? block[type] : {};
+  const richText = Array.isArray(payload.rich_text) ? payload.rich_text : [];
+  return richText.map((entry) => readString(entry, 'plain_text') || readString(isRecord(entry) ? entry.text : null, 'content')).join('').trim();
+}
+
+function isPageInDataSource(page: NotionPage, dataSourceId: string): boolean {
+  const parentDataSourceId = page.parent?.data_source_id;
+  return !parentDataSourceId || parentDataSourceId === dataSourceId;
+}
+
+function isTrashed(value: { archived?: boolean; in_trash?: boolean }): boolean {
+  return value.archived === true || value.in_trash === true;
+}
+
+function missingProperties(schema: DataSourceSchema, names: string[]): string[] {
+  return names.filter((name) => !schema[name]);
+}
+
+function emptyResult(action: SyncResult['action']): SyncResult {
+  return { ok: false, action, created: 0, updated: 0, skipped: 0, errors: [] };
+}
+
+function richTextToPlain(value: unknown): string {
+  if (!Array.isArray(value)) return '';
+  return value.map((entry) => readString(entry, 'plain_text')).join('').trim();
+}
+
+function richText(text: string): Array<Record<string, unknown>> {
+  return chunks(text, 1900).map((content) => ({ type: 'text', text: { content } }));
+}
+
+function chunks(text: string, size: number): string[] {
+  if (!text) return [];
+  const output: string[] = [];
+  for (let index = 0; index < text.length; index += size) output.push(text.slice(index, index + size));
+  return output;
+}
+
+function stringArraysEqual(left: string[], right: string[]): boolean {
+  return left.length === right.length && left.every((value, index) => value === right[index]);
+}
+
+function optionName(value: unknown): string {
+  return isRecord(value) && typeof value.name === 'string' ? value.name : '';
+}
+
+function userLabel(value: unknown): string {
+  if (!isRecord(value)) return '';
+  const name = readString(value, 'name');
+  const person = isRecord(value.person) ? value.person : {};
+  const email = readString(person, 'email');
+  if (name && email) return `${name} (${email})`;
+  return name || email;
+}
+
+function readString(record: unknown, key: string): string {
+  return isRecord(record) && typeof record[key] === 'string' ? record[key] : '';
+}
+
+function looksLikeNotionPageId(value: string): boolean {
+  return /^[0-9a-f]{32}$/i.test(value.replace(/-/g, ''));
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value && typeof value === 'object' && !Array.isArray(value));
+}
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}

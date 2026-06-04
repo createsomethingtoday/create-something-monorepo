@@ -496,14 +496,14 @@ function buildApiUrl(base: string, filters: FilterState, page: number, pageSize:
   return url.toString();
 }
 
-function updateUrlParams(filters: FilterState): void {
+function updateUrlParams(filters: FilterState, defaultSort: TemplateSort = 'popular'): void {
   if (typeof window === 'undefined') return;
   const url = new URL(window.location.href);
   ['q', 'query', 'search', 'styles', 'tags', 'types', 'free_only', 'sort', 'page'].forEach((k) =>
     url.searchParams.delete(k),
   );
   if (filters.q) url.searchParams.set('q', filters.q);
-  if (filters.sort && filters.sort !== 'popular') url.searchParams.set('sort', filters.sort);
+  if (filters.sort && filters.sort !== defaultSort) url.searchParams.set('sort', filters.sort);
   if (filters.freeOnly && filters.scope !== 'free') url.searchParams.set('free_only', 'true');
   filters.styles.forEach((v) => url.searchParams.append('styles', v));
   filters.tags.forEach((v) => url.searchParams.append('tags', v));
@@ -1075,7 +1075,7 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
     function applyFilters(patch: Partial<FilterState>) {
       setFilters((prev) => {
         const next = { ...prev, ...patch };
-        updateUrlParams(next);
+        updateUrlParams(next, initialSort);
         return next;
       });
     }
@@ -1311,7 +1311,7 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
       freeOnly: filters.scope === 'free',
       sort: initialSort,
     };
-    updateUrlParams(next);
+    updateUrlParams(next, initialSort);
 
     if (typeof window !== 'undefined') {
       const detail = {

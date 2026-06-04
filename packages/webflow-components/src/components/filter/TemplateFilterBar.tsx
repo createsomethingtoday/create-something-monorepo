@@ -887,7 +887,7 @@ function buildScopedSubcategoryHref(slug: string | null, context: RouteContext):
   return url.toString();
 }
 
-function writeUrlFilters(state: LocalFilters): void {
+function writeUrlFilters(state: LocalFilters, defaultSort: TemplateSort = 'popular'): void {
   if (typeof window === 'undefined') return;
   const url = new URL(window.location.href);
   // Clear filter params only — preserve path-based scope/category
@@ -895,7 +895,7 @@ function writeUrlFilters(state: LocalFilters): void {
     url.searchParams.delete(k),
   );
   if (state.q) url.searchParams.set('q', state.q);
-  if (state.sort !== 'popular') url.searchParams.set('sort', state.sort);
+  if (state.sort !== defaultSort) url.searchParams.set('sort', state.sort);
   if (state.freeOnly) url.searchParams.set('free_only', 'true');
   state.styles.forEach((v) => url.searchParams.append('styles', v));
   state.tags.forEach((v) => url.searchParams.append('tags', v));
@@ -1153,10 +1153,10 @@ export const TemplateFilterBar: React.FC<TemplateFilterBarProps> = ({
   const applyFilter = useCallback((patch: Partial<LocalFilters>) => {
     setFilters((prev) => {
       const next = { ...prev, ...patch };
-      writeUrlFilters(next);
+      writeUrlFilters(next, defaultSort);
       return next;
     });
-  }, []);
+  }, [defaultSort]);
 
   useEffect(() => {
     if (!isFreeSortContext || (filters.sort !== 'price_asc' && filters.sort !== 'price_desc')) return;
@@ -1172,12 +1172,12 @@ export const TemplateFilterBar: React.FC<TemplateFilterBarProps> = ({
       debounceRef.current = setTimeout(() => {
         setFilters((prev) => {
           const next = { ...prev, q: q.trim() };
-          writeUrlFilters(next);
+          writeUrlFilters(next, defaultSort);
           return next;
         });
       }, 220);
     },
-    [],
+    [defaultSort],
   );
 
   const onStyleChange = useCallback(
@@ -1187,11 +1187,11 @@ export const TemplateFilterBar: React.FC<TemplateFilterBarProps> = ({
           ? prev.styles.filter((value) => value !== slug)
           : [...prev.styles, slug];
         const next = { ...prev, styles };
-        writeUrlFilters(next);
+        writeUrlFilters(next, defaultSort);
         return next;
       });
     },
-    [],
+    [defaultSort],
   );
 
   const onTypeChange = useCallback(

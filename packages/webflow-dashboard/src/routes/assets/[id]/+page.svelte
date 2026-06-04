@@ -25,6 +25,8 @@
     StatusBadge,
     TimelineCard,
     AnalyticsCard,
+    TemplateHealthCard,
+    TemplateOfferRequestCard,
     DataFreshnessIndicator,
     Dialog,
     BackNavigation
@@ -32,6 +34,7 @@
   import EditAssetModal from '$lib/components/EditAssetModal.svelte';
   import { toast } from '$lib/stores/toast';
   import { trackEvent } from '$lib/utils/analytics';
+  import { computeTemplateHealth } from '$lib/utils/template-health';
   import {
     formatCompactCurrency,
     formatCompactNumber,
@@ -52,6 +55,7 @@
     Archive,
     BarChart3,
     AlertTriangle,
+    Activity,
     Users,
     ShoppingCart,
     DollarSign,
@@ -62,7 +66,7 @@
 
   let { data }: { data: PageData } = $props();
   const getInitialAsset = () => data.asset;
-  const tabOrder = ['overview', 'timeline', 'analytics'] as const;
+  const tabOrder = ['overview', 'timeline', 'health', 'analytics'] as const;
   type TabValue = (typeof tabOrder)[number];
 
   // Use reactive state so updates refresh the view
@@ -92,6 +96,20 @@
 
   // Can show metrics for non-Upcoming and non-Rejected statuses
   const canShowMetrics = $derived(!['Upcoming', 'Rejected'].includes(asset.status));
+
+  // Template Health is a template-only creator guidance surface.
+  const canShowHealth = $derived(asset.type === 'Template');
+
+  const hasActiveOffer = $derived(
+    Boolean(
+      asset.activeOfferLabel ||
+        asset.activeOfferCtaUrl ||
+        asset.activeOfferStrategy ||
+        asset.activeOfferEndsAt ||
+        asset.activeOfferVisibility ||
+        asset.activeOfferPrice !== undefined
+    )
+  );
 
   // Can only edit Published templates
   const canEdit = $derived(asset.status === 'Published');
@@ -188,17 +206,34 @@
   }
 
   function setActiveTab(value: TabValue) {
+    if (value === 'health' && !canShowHealth) return;
     if (value === 'analytics' && !canShowMetrics) return;
     if (value === activeTab) return;
 
     const previousTab = activeTab;
     activeTab = value;
 
+    if (value === 'health') {
+      const health = computeTemplateHealth(asset);
+      trackEvent('template_health_viewed', {
+        asset_id: asset.id,
+        asset_status: asset.status,
+        health_status: health.status,
+        has_quality_score: Boolean(asset.qualityScore),
+        has_active_offer: hasActiveOffer,
+        active_offer_strategy: asset.activeOfferStrategy,
+        has_purchases: Boolean(asset.cumulativePurchases && asset.cumulativePurchases > 0),
+        has_viewers: Boolean(asset.uniqueViewers && asset.uniqueViewers > 0)
+      });
+    }
+
     trackEvent('asset_tab_viewed', {
       asset_id: asset.id,
       tab: value,
       previous_tab: previousTab,
-      has_metrics: canShowMetrics
+      has_metrics: canShowMetrics,
+      has_active_offer: hasActiveOffer,
+      active_offer_strategy: asset.activeOfferStrategy
     });
   }
 
@@ -207,7 +242,9 @@
 
     event.preventDefault();
 
-    const enabledTabs = tabOrder.filter((tab) => tab !== 'analytics' || canShowMetrics);
+    const enabledTabs = tabOrder.filter(
+      (tab) => (tab !== 'analytics' || canShowMetrics) && (tab !== 'health' || canShowHealth)
+    );
     const currentIndex = enabledTabs.indexOf(activeTab as TabValue);
 
     if (event.key === 'Home') {
@@ -250,7 +287,9 @@
       asset_category: asset.category,
       asset_subcategory: asset.subcategory,
       initial_tab: activeTab,
-      has_metrics: canShowMetrics
+      has_metrics: canShowMetrics,
+      has_active_offer: hasActiveOffer,
+      active_offer_strategy: asset.activeOfferStrategy
     });
   });
 </script>
@@ -273,6 +312,9 @@
             <div class="title-row">
               <h1 class="asset-title">{asset.name}</h1>
               <StatusBadge status={asset.status} size="lg" />
+              {#if hasActiveOffer}
+                <Badge variant="info">{asset.activeOfferLabel || 'Limited offer'}</Badge>
+              {/if}
             </div>
             <p class="detail-subtitle">
               {asset.type}
@@ -290,6 +332,14 @@
               {/if}
               {#if asset.priceString}
                 <span><strong>{asset.priceString}</strong> price</span>
+              {/if}
+              {#if hasActiveOffer}
+                <span>
+                  <strong>{asset.activeOfferLabel || 'Limited offer'}</strong>
+                  {#if asset.activeOfferPrice !== undefined}
+                    at {formatCompactCurrency(asset.activeOfferPrice)}
+                  {/if}
+                </span>
               {/if}
               {#if asset.qualityScore}
                 <span><strong>{asset.qualityScore}</strong> quality score</span>
@@ -379,6 +429,18 @@
             <Clock size={14} />
             Timeline
           </TabsTrigger>
+          {#if canShowHealth}
+            <TabsTrigger
+              value="health"
+              active={activeTab === 'health'}
+              id="asset-tab-health"
+              aria-controls="asset-panel-health"
+              onclick={() => setActiveTab('health')}
+            >
+              <Activity size={14} />
+              Health
+            </TabsTrigger>
+          {/if}
           <TabsTrigger
             value="analytics"
             active={activeTab === 'analytics'}
@@ -448,6 +510,44 @@
                         <span class="detail-label">Price</span>
                         <span class="detail-value">{asset.priceString}</span>
                       </div>
+                    {/if}
+                    {#if hasActiveOffer}
+                      <div class="detail-item">
+                        <span class="detail-label">Active Offer</span>
+                        <span class="detail-value">{asset.activeOfferLabel || 'Limited offer'}</span>
+                      </div>
+                      {#if asset.activeOfferPrice !== undefined}
+                        <div class="detail-item">
+                          <span class="detail-label">Offer Price</span>
+                          <span class="detail-value"
+                            >{formatCompactCurrency(asset.activeOfferPrice)}</span
+                          >
+                        </div>
+                      {/if}
+                      {#if asset.activeOfferEndsAt}
+                        <div class="detail-item">
+                          <span class="detail-label">Offer Ends</span>
+                          <span class="detail-value">{formatLongDate(asset.activeOfferEndsAt)}</span>
+                        </div>
+                      {/if}
+                      {#if asset.activeOfferStrategy}
+                        <div class="detail-item">
+                          <span class="detail-label">Offer Strategy</span>
+                          <span class="detail-value">{asset.activeOfferStrategy}</span>
+                        </div>
+                      {/if}
+                      {#if asset.offerPruneReviewAt}
+                        <div class="detail-item">
+                          <span class="detail-label">Marketplace Review</span>
+                          <span class="detail-value">{formatLongDate(asset.offerPruneReviewAt)}</span>
+                        </div>
+                      {/if}
+                      {#if asset.postOfferAction}
+                        <div class="detail-item">
+                          <span class="detail-label">Post-Offer Action</span>
+                          <span class="detail-value">{asset.postOfferAction}</span>
+                        </div>
+                      {/if}
                     {/if}
 
                     {#if showPerformance && canShowMetrics}
@@ -618,6 +718,21 @@
         >
           <TimelineCard {asset} />
         </TabsContent>
+        {#if canShowHealth}
+          <TabsContent
+            value="health"
+            active={activeTab === 'health'}
+            id="asset-panel-health"
+            aria-labelledby="asset-tab-health"
+            tabindex={0}
+            class="tab-content"
+          >
+            <div class="health-tab-stack">
+              <TemplateHealthCard {asset} />
+              <TemplateOfferRequestCard {asset} />
+            </div>
+          </TabsContent>
+        {/if}
         <TabsContent
           value="analytics"
           active={activeTab === 'analytics'}
@@ -797,6 +912,12 @@
   .overview-grid {
     display: grid;
     grid-template-columns: 1fr;
+    gap: var(--space-md);
+  }
+
+  .health-tab-stack {
+    display: flex;
+    flex-direction: column;
     gap: var(--space-md);
   }
 

@@ -526,6 +526,17 @@ function stripTags(html: string): string {
 	return html.replace(/<[^>]*>/g, ' ');
 }
 
+function collectPatternMatches(patterns: RegExp[], textContent: string): Array<{ pattern: string; sample: string }> {
+	return patterns.flatMap(pattern => {
+		const match = textContent.match(pattern);
+		if (!match?.[0]) return [];
+		return [{
+			pattern: pattern.source,
+			sample: match[0].trim().slice(0, 120)
+		}];
+	});
+}
+
 function normalizeText(value: string): string {
 	return decodeBasicHtmlEntities(value).replace(/\s+/g, ' ').trim();
 }
@@ -1191,12 +1202,13 @@ function analyzeContentQuality(
 	url: string,
 	options: { allowsUtilityPlaceholderText?: boolean } = {}
 ): ContentQualityAnalysis {
-	const textContent = parsedHTML.document.body?.textContent || '';
+	const textContent = getScannableContentText(parsedHTML);
 	const issues: Array<{
 		type: 'placeholder' | 'lorem' | 'generic' | 'webflow-default' | 'short-content' | 'duplicate-content';
 		text: string;
 		location: string;
 		severity: 'error' | 'warning' | 'info';
+		matches?: Array<{ pattern: string; sample: string }>;
 	}> = [];
 
 	// Check for different types of problematic content
@@ -1243,14 +1255,15 @@ function analyzeContentQuality(
 		}
 
 		// Webflow default content detection
-		const webflowMatches = WEBFLOW_DEFAULT_PATTERNS.filter(pattern => pattern.test(textContent));
+		const webflowMatches = collectPatternMatches(WEBFLOW_DEFAULT_PATTERNS, textContent);
 		if (webflowMatches.length > 0) {
 			hasWebflowDefaults = true;
 			issues.push({
 				type: 'webflow-default',
 				text: 'Webflow default content detected',
 				location: url,
-				severity: 'warning'
+				severity: 'warning',
+				matches: webflowMatches
 			});
 		}
 	}
@@ -1337,7 +1350,11 @@ function generateContentQualityIssues(pages: AnalyzedPage[]): ValidationIssue[] 
 					affectedPages: webflowDefaultPages.map(p => ({
 						url: p.url,
 						pageName: getPageNameFromUrl(p.url),
-						contentScore: p.contentQuality.contentScore
+						contentScore: p.contentQuality.contentScore,
+						matches: p.contentQuality.issues
+							.filter(issue => issue.type === 'webflow-default')
+							.flatMap(issue => issue.matches || [])
+							.slice(0, 5)
 					}))
 				}
 			});

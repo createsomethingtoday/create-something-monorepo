@@ -6,6 +6,8 @@ const TABLES = {
 	USERS: 'tbldQNGszIyOjt9a1',
 	CREATORS: 'tbljt0plqxdMARZXb',
 	ASSETS: 'tblRwzpWoLgE9MrUm',
+	TEMPLATE_FULFILLMENT_LINKS: 'tbl0QjLG8p4bsOsJj',
+	TEMPLATE_OFFERS: 'tblq5116AUP0kSmwe',
 	API_KEYS: 'tblU5rI3WiQerozvX',
 	TAGS: '🏷️Tags (Free Form)',
 	CATEGORY_PERFORMANCE: 'tblDU1oUiobNfMQP9',
@@ -517,6 +519,14 @@ export interface Asset {
 	rejectionFeedbackHtml?: string;
 	qualityScore?: string;
 	priceString?: string;
+	activeOfferLabel?: string;
+	activeOfferPrice?: number;
+	activeOfferEndsAt?: string;
+	activeOfferCtaUrl?: string;
+	activeOfferVisibility?: string;
+	activeOfferStrategy?: string;
+	offerPruneReviewAt?: string;
+	postOfferAction?: string;
 	appCapabilities?: string;
 	appInstallUrl?: string;
 	appScopes?: string[];
@@ -570,6 +580,30 @@ export interface AssetUpdateData {
 	appSupportUrl?: string;
 	appTermsUrl?: string;
 	appScreenshotAltTexts?: string[];
+}
+
+export type TemplateOfferStrategy =
+	| 'Limited-time sale'
+	| 'Creator-managed price test'
+	| 'Prune recovery test'
+	| 'Exit sale before delist'
+	| 'Retention save';
+
+export interface TemplateOfferRequestInput {
+	creatorEmail: string;
+	offerLabel: string;
+	offerPrice: number;
+	fulfillmentUrl: string;
+	startsAt?: string;
+	endsAt: string;
+	offerStrategy: TemplateOfferStrategy;
+	notes?: string;
+	termsAcceptedAt: string;
+}
+
+export interface TemplateOfferRequestResult {
+	offerId: string;
+	fulfillmentLinkId: string;
 }
 
 export interface Creator {
@@ -763,6 +797,23 @@ function buildFeaturesField(features: string[]): string {
 		.join('\n');
 }
 
+function parseCurrencyAmount(value?: string): number | undefined {
+	if (!value) return undefined;
+	const match = value.replace(/,/g, '').match(/\$?\s*(\d+(?:\.\d{1,2})?)/);
+	if (!match) return undefined;
+	const amount = Number(match[1]);
+	return Number.isFinite(amount) ? amount : undefined;
+}
+
+function addDaysIso(dateValue: string, days: number): string {
+	const date = new Date(dateValue);
+	if (Number.isNaN(date.getTime())) {
+		return new Date().toISOString();
+	}
+	date.setUTCDate(date.getUTCDate() + days);
+	return date.toISOString();
+}
+
 export function resolveAssetType(fields: Airtable.FieldSet): Asset['type'] {
 	const candidates = [
 		fields['⚙️🆎Type (Text)'],
@@ -808,6 +859,9 @@ function mapAssetRecord(record: Airtable.Record<Airtable.FieldSet>): Asset {
 	const carouselImages = extractAttachmentUrls(record.fields['🖼️Carousel Images']);
 	const support = parseSupportField(record.fields['🔗Support Email/URL']);
 	const type = resolveAssetType(record.fields);
+	const activeOfferPriceRaw = record.fields['🎟️Active Offer Price (🏗️ only)'];
+	const activeOfferPrice =
+		typeof activeOfferPriceRaw === 'number' ? activeOfferPriceRaw : Number(activeOfferPriceRaw);
 
 	return {
 		id: record.id,
@@ -845,6 +899,14 @@ function mapAssetRecord(record: Airtable.Record<Airtable.FieldSet>): Asset {
 			firstString(record.fields['🖌Rejection Feedback.html']),
 		qualityScore: firstString(record.fields['🖌️Initial Quality Score']),
 		priceString: firstString(record.fields['🥞💲Template Price String (🏗️ only)']),
+		activeOfferLabel: firstString(record.fields['🎟️Active Offer Label (🏗️ only)']),
+		activeOfferPrice: Number.isFinite(activeOfferPrice) ? activeOfferPrice : undefined,
+		activeOfferEndsAt: firstString(record.fields['📅Active Offer Ends At (🏗️ only)']),
+		activeOfferCtaUrl: firstString(record.fields['🔗Active Offer CTA URL (🏗️ only)']),
+		activeOfferVisibility: firstString(record.fields['👁️Active Offer Visibility (🏗️ only)']),
+		activeOfferStrategy: firstString(record.fields['⚙️Active Offer Strategy (🏗️ only)']),
+		offerPruneReviewAt: firstString(record.fields['📅Offer Prune Review At (🏗️ only)']),
+		postOfferAction: firstString(record.fields['⚙️Post-Offer Action (🏗️ only)']),
 		appCapabilities: firstString(record.fields['ℹ️Capabilities (🖥️ only)']),
 		appInstallUrl: firstString(record.fields['🔗Install URL (🖥️ only)']),
 		appScopes: parseScopesField(
@@ -1160,6 +1222,91 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 				const record = await base(TABLES.ASSETS).find(id);
 				return mapAssetRecord(record);
 			} catch {
+				return null;
+			}
+		},
+
+		/**
+		 * Create a pending limited-offer request for a template.
+		 *
+		 * This intentionally does not update the Asset-level active-offer mirror fields. Public
+		 * marketplace surfaces should only change after ops/product approves the offer record.
+		 */
+		async createTemplateOfferRequest(
+			assetId: string,
+			input: TemplateOfferRequestInput
+		): Promise<TemplateOfferRequestResult | null> {
+			const asset = await this.getAsset(assetId);
+			if (!asset || asset.type !== 'Template') {
+				return null;
+			}
+
+			const normalizedLabel = input.offerLabel.trim() || 'Limited offer';
+			const offerName = `${asset.name || assetId} · ${normalizedLabel}`;
+			const submittedAt = new Date().toISOString();
+			const startsAt = input.startsAt || submittedAt;
+			const pruneReviewAt = addDaysIso(input.endsAt, 7);
+			const marketplacePrice = parseCurrencyAmount(asset.priceString);
+			const notes = [
+				`Creator email: ${input.creatorEmail}`,
+				`Submitted from Asset Dashboard: ${submittedAt}`,
+				input.notes?.trim() ? `Creator notes: ${input.notes.trim()}` : '',
+				'Public active-offer mirror fields must be updated only after approval.'
+			]
+				.filter(Boolean)
+				.join('\n');
+
+			try {
+				const fulfillmentRecords = (await base(TABLES.TEMPLATE_FULFILLMENT_LINKS).create([
+					{
+						fields: {
+							Name: offerName,
+							'👛Asset': [assetId],
+							'🔗Fulfillment URL': input.fulfillmentUrl,
+							'⚙️Status': 'Active',
+							'⚙️Source': 'Creator submitted',
+							'📅Last Checked At': submittedAt,
+							'📝Notes': notes
+						} as Airtable.FieldSet
+					}
+				])) as Airtable.Record<Airtable.FieldSet>[];
+
+				const fulfillmentLinkId = fulfillmentRecords[0].id;
+
+				const offerFields: Record<string, AirtableWritableValue | string[]> = {
+					Name: offerName,
+					'👛Asset': [assetId],
+					'🔗Fulfillment Link': [fulfillmentLinkId],
+					'⚙️Approval Status': 'Pending',
+					'⚙️Offer Mode': 'Fulfillment link',
+					'⚙️Offer Strategy': input.offerStrategy,
+					'👁️Visibility': 'Detail only',
+					'🏷️Offer Label': normalizedLabel,
+					'💲Offer Price': input.offerPrice,
+					'🔗Public CTA URL': input.fulfillmentUrl,
+					'📅Starts At': startsAt,
+					'📅Ends At': input.endsAt,
+					'📅Prune Review At': pruneReviewAt,
+					'✅Terms Accepted At': input.termsAcceptedAt,
+					'📝Notes': notes
+				};
+
+				if (marketplacePrice !== undefined) {
+					offerFields['💲Marketplace Price'] = marketplacePrice;
+				}
+
+				const offerRecords = (await base(TABLES.TEMPLATE_OFFERS).create([
+					{
+						fields: offerFields as Airtable.FieldSet
+					}
+				])) as Airtable.Record<Airtable.FieldSet>[];
+
+				return {
+					fulfillmentLinkId,
+					offerId: offerRecords[0].id
+				};
+			} catch (err) {
+				console.error('[Airtable] Error creating template offer request:', err);
 				return null;
 			}
 		},
