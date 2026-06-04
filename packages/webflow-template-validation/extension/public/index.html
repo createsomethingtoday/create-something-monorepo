@@ -86,7 +86,7 @@
     <ol class="bridge-setup-steps" aria-label="Validator setup steps">
       <li id="bridge-step-install" class="bridge-setup-step">
         <span class="bridge-step-index">1</span>
-        <span>Add Validator script</span>
+        <span>Copy Validator script</span>
       </li>
       <li id="bridge-step-publish" class="bridge-setup-step">
         <span class="bridge-step-index">2</span>
@@ -103,20 +103,23 @@
     </ol>
     <div id="bridge-message" class="bridge-message"></div>
     <div class="review-bridge-actions">
-      <button id="bridge-install-btn" class="validate-btn" style="font-size: var(--text-xs); padding: var(--space-1) var(--space-3);">Add Validator script</button>
+      <button id="bridge-install-btn" class="validate-btn" style="font-size: var(--text-xs); padding: var(--space-1) var(--space-3);">Copy Validator script</button>
       <button id="bridge-rotate-btn" class="secondary-btn">Rotate script token</button>
       <button id="bridge-recheck-btn" class="secondary-btn">Re-check script</button>
     </div>
     <div class="bridge-note" style="font-size: var(--text-2xs, 10px); color: var(--text-muted, #6d6d6d); margin-top: var(--space-1, 4px);">
-      The submission form detects this script on the published site. Publish after adding it.
+      The submission form detects this script on the published site. Paste it in site Head code, then publish.
     </div>
     <div id="bridge-token-row" class="bridge-token-row" style="display:none;">
       <span class="token-label">Token:</span>
       <code id="bridge-token-value" class="bridge-token-value"></code>
     </div>
     <details id="bridge-snippet-wrap" class="bridge-snippet-wrap" style="display:none;">
-      <summary>Manual fallback snippet</summary>
-      <p class="bridge-snippet-help">If automatic install fails, paste this in Site Settings &gt; Custom Code &gt; Head code, publish, then re-check.</p>
+      <summary>Validator script snippet</summary>
+      <div class="bridge-snippet-toolbar">
+        <p class="bridge-snippet-help">Paste this in Site Settings &gt; Custom Code &gt; Head code, publish, then re-check.</p>
+        <button id="bridge-copy-btn" class="secondary-btn bridge-copy-btn">Copy snippet</button>
+      </div>
       <pre id="bridge-snippet-code" class="bridge-snippet-code"></pre>
     </details>
     <div id="bridge-progress" class="bridge-progress" style="display:none;">

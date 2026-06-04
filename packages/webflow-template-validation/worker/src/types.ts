@@ -86,7 +86,7 @@ export interface SnippetInstallRequest {
 	siteName?: string;
 	installTarget: 'head';
 	mode: 'programmatic' | 'webflow-api' | 'manual-fallback';
-	/** ID token from webflow.getIdToken() — exchanged for an access token. */
+	/** Designer identity token passed for future app-auth lookup; not a Data API access token. */
 	idToken?: string;
 }
 
@@ -455,6 +455,10 @@ export interface ContentQualityAnalysis {
 		text: string;
 		location: string;
 		severity: 'error' | 'warning' | 'info';
+		matches?: Array<{
+			pattern: string;
+			sample: string;
+		}>;
 	}>;
 	wordCount: number;
 	readabilityScore?: number;

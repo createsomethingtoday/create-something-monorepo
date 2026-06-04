@@ -47,7 +47,7 @@ type RgbaColor = {
 	a: number;
 };
 
-const TEXT_ELEMENT_REGEX = /<(p|h1|h2|h3|h4|h5|h6|a|button|label|li|small|strong|em|figcaption|blockquote|span|div)([^>]*)>([\s\S]*?)<\/\1>/gi;
+const TEXT_ELEMENT_REGEX = /<(p|h1|h2|h3|h4|h5|h6|a|button|label|li|small|strong|em|figcaption|blockquote|span|div)\b([^>]*)>([\s\S]*?)<\/\1>/gi;
 
 const NAMED_COLORS: Record<string, string> = {
 	black: '#000000',
@@ -149,6 +149,7 @@ async function analyzeColorContrast(parsedHTML: ParsedHTML): Promise<ContrastAud
 		return [];
 	}
 
+	const contrastHtml = stripIgnoredContrastContent(rawHtml);
 	const rules = parseCssRules(rawHtml);
 	const baseStyles = resolveBaseStyles(rawHtml, rules);
 	const audits: ContrastAudit[] = [];
@@ -156,10 +157,12 @@ async function analyzeColorContrast(parsedHTML: ParsedHTML): Promise<ContrastAud
 	let match: RegExpExecArray | null;
 	TEXT_ELEMENT_REGEX.lastIndex = 0;
 
-	while ((match = TEXT_ELEMENT_REGEX.exec(rawHtml)) !== null) {
+	while ((match = TEXT_ELEMENT_REGEX.exec(contrastHtml)) !== null) {
 		const tag = match[1].toLowerCase();
 		const attrs = parseAttributeString(match[2] || '');
 		const innerHtml = match[3] || '';
+		if (shouldSkipContrastElement(tag, attrs, innerHtml)) continue;
+
 		const text = stripTags(innerHtml).replace(/\s+/g, ' ').trim();
 
 		if (!text) continue;
@@ -207,6 +210,28 @@ async function analyzeColorContrast(parsedHTML: ParsedHTML): Promise<ContrastAud
 	}
 
 	return audits;
+}
+
+function stripIgnoredContrastContent(html: string): string {
+	return html
+		.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, ' ')
+		.replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, ' ')
+		.replace(/<noscript\b[^>]*>[\s\S]*?<\/noscript>/gi, ' ')
+		.replace(/<template\b[^>]*>[\s\S]*?<\/template>/gi, ' ')
+		.replace(/<pre\b[^>]*>[\s\S]*?<\/pre>/gi, ' ')
+		.replace(/<code\b[^>]*>[\s\S]*?<\/code>/gi, ' ');
+}
+
+function shouldSkipContrastElement(
+	tag: string,
+	attrs: Record<string, string>,
+	innerHtml: string
+): boolean {
+	if (tag === 'pre' || tag === 'code') return true;
+	if (/<(?:pre|code)\b/i.test(innerHtml)) return true;
+
+	const className = attrs.class || '';
+	return /\b(w-code-block|hljs|language-[^\s]+|token|code-block|install-code-block)\b/i.test(className);
 }
 
 function analyzeAltTextCoverage(parsedHTML: ParsedHTML): any {

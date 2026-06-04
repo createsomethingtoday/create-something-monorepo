@@ -40,9 +40,11 @@ function initializeExtension() {
     const installBtn = document.getElementById('bridge-install-btn');
     const rotateBtn = document.getElementById('bridge-rotate-btn');
     const recheckBtn = document.getElementById('bridge-recheck-btn');
+    const copyBtn = document.getElementById('bridge-copy-btn');
     installBtn?.addEventListener('click', () => installBridge());
     rotateBtn?.addEventListener('click', () => rotateBridgeToken());
     recheckBtn?.addEventListener('click', () => refreshBridgeStatus());
+    copyBtn?.addEventListener('click', () => void copyBridgeSnippetFromCurrentStatus());
     void bootstrapBridgePanel();
 }
 if (document.readyState === 'loading') {
@@ -975,19 +977,11 @@ async function installBridge() {
     if (!bridgeContext?.siteId)
         return;
     setBridgeActionsDisabled(true);
-    setBridgeMessage('Adding the Validator script to this site...');
+    setBridgeMessage('Preparing the Validator script for this site...');
     setBridgeSetupStep('install');
-    setToolbarStatus('Adding Validator script...', 'neutral');
+    setToolbarStatus('Preparing Validator script...', 'neutral');
     try {
         const correlationId = createCorrelationId();
-        const webflow = window.webflow;
-        let idToken = null;
-        try {
-            idToken = await webflow?.getIdToken?.();
-        }
-        catch (error) {
-            console.warn('getIdToken failed:', error);
-        }
         const installStatus = await fetchJsonWithRetry(`${APP_VALIDATOR_BASE}/app-validator/snippet/install`, {
             method: 'POST',
             headers: {
@@ -998,26 +992,35 @@ async function installBridge() {
                 siteId: bridgeContext.siteId,
                 siteName: bridgeContext.siteName,
                 installTarget: 'head',
-                mode: idToken ? 'webflow-api' : 'programmatic',
-                idToken: idToken || undefined,
+                mode: 'manual-fallback',
             }),
         }, { timeoutMs: NETWORK_TIMEOUT_MS, retries: MAX_NETWORK_RETRIES });
-        bridgeStatus =
-            installStatus.status === 'active'
-                ? {
-                    ...installStatus,
-                    status: 'pending_manual',
-                    message: 'Validator script added. Publish your site, then click Re-check script.',
-                }
-                : installStatus;
+        bridgeStatus = {
+            ...installStatus,
+            status: installStatus.status === 'active' ? 'pending_manual' : installStatus.status,
+            installed: false,
+            message: 'Validator script ready. Paste it in site Head code, publish, then re-check.',
+        };
         renderBridgeStatus(bridgeStatus);
+        openBridgeSnippet();
+        const copied = await copyBridgeSnippet(bridgeStatus);
+        if (copied) {
+            setBridgeMessage('Validator script copied. Paste it in site Head code, publish, then re-check.');
+            setToolbarStatus('Validator script copied; publish then re-check', 'warning');
+            void notifyDesigner(window.webflow, 'Info', 'Validator script copied. Paste it in Site Settings > Custom Code > Head code, publish, then re-check.');
+        }
+        else {
+            setBridgeMessage('Validator script ready below. Copy it, paste it in site Head code, publish, then re-check.');
+            setToolbarStatus('Validator script ready to copy', 'warning');
+            void notifyDesigner(window.webflow, 'Info', 'Validator script is ready below. Copy it into Site Settings > Custom Code > Head code, publish, then re-check.');
+        }
     }
     catch (error) {
         console.warn('Bridge install failed:', error);
         setBridgeBadge('failed');
-        setBridgeMessage('Automatic script install failed. Use the manual fallback snippet, publish, then re-check.');
+        setBridgeMessage('Could not prepare the Validator script. Try again, then publish and re-check.');
         setBridgeSetupStep('install');
-        setToolbarStatus('Validator script install failed', 'failed');
+        setToolbarStatus('Validator script setup failed', 'failed');
     }
     finally {
         setBridgeActionsDisabled(false);
@@ -1073,6 +1076,7 @@ function renderBridgeStatus(status) {
     const tokenValue = document.getElementById('bridge-token-value');
     const snippetWrap = document.getElementById('bridge-snippet-wrap');
     const snippetCode = document.getElementById('bridge-snippet-code');
+    const copyBtn = document.getElementById('bridge-copy-btn');
     if (tokenRow && tokenValue) {
         if (status.bridgeToken) {
             tokenRow.style.display = 'flex';
@@ -1088,16 +1092,22 @@ function renderBridgeStatus(status) {
         if (status.status === 'pending_manual' && typeof snippet === 'string' && snippet.trim()) {
             snippetWrap.style.display = 'block';
             snippetCode.textContent = snippet;
+            if (status.bridgeToken)
+                snippetWrap.open = true;
+            if (copyBtn)
+                copyBtn.disabled = false;
         }
         else {
             snippetWrap.style.display = 'none';
             snippetCode.textContent = '';
             snippetWrap.open = false;
+            if (copyBtn)
+                copyBtn.disabled = true;
         }
     }
 }
 function setBridgeActionsDisabled(disabled) {
-    const ids = ['bridge-install-btn', 'bridge-rotate-btn', 'bridge-recheck-btn'];
+    const ids = ['bridge-install-btn', 'bridge-rotate-btn', 'bridge-recheck-btn', 'bridge-copy-btn'];
     for (const id of ids) {
         const btn = document.getElementById(id);
         if (btn)
@@ -1131,12 +1141,59 @@ function getValidatorScriptStatusMessage(status) {
         return 'Validator script detected on the published site. Run Validator to confirm a 100% pass.';
     }
     if (status.status === 'pending_manual' && typeof snippet === 'string' && snippet.trim()) {
-        return 'Add the Validator script, publish the site, then re-check. If automatic install did not work, use the manual fallback snippet below.';
+        return 'Copy the Validator script, paste it in Site Settings > Custom Code > Head code, publish, then re-check.';
     }
     if (status.status === 'pending_manual') {
-        return 'Validator script is not detected on the published site yet. Add it, publish, then re-check.';
+        return 'Validator script is not detected on the published site yet. Copy it, publish, then re-check.';
     }
-    return 'Validator script install is unavailable. Try again or use the manual fallback snippet.';
+    return 'Validator script setup is unavailable. Try again, then publish and re-check.';
+}
+function openBridgeSnippet() {
+    const snippetWrap = document.getElementById('bridge-snippet-wrap');
+    if (snippetWrap)
+        snippetWrap.open = true;
+}
+async function copyBridgeSnippetFromCurrentStatus() {
+    const copied = await copyBridgeSnippet(bridgeStatus);
+    if (copied) {
+        setBridgeMessage('Validator script copied. Paste it in site Head code, publish, then re-check.');
+        setToolbarStatus('Validator script copied; publish then re-check', 'warning');
+        void notifyDesigner(window.webflow, 'Info', 'Validator script copied.');
+    }
+    else {
+        setBridgeMessage('Copy failed. Select the Validator script below and copy it manually.');
+        setToolbarStatus('Copy failed; manual selection needed', 'warning');
+    }
+}
+async function copyBridgeSnippet(status) {
+    const snippet = typeof status?.snippet === 'string' && status.snippet.trim() ? status.snippet.trim() : '';
+    if (!snippet)
+        return false;
+    try {
+        if (navigator.clipboard?.writeText) {
+            await navigator.clipboard.writeText(snippet);
+            return true;
+        }
+    }
+    catch (error) {
+        console.warn('Clipboard API copy failed:', error);
+    }
+    try {
+        const textarea = document.createElement('textarea');
+        textarea.value = snippet;
+        textarea.setAttribute('readonly', 'true');
+        textarea.style.position = 'fixed';
+        textarea.style.left = '-9999px';
+        document.body.appendChild(textarea);
+        textarea.select();
+        const copied = document.execCommand('copy');
+        document.body.removeChild(textarea);
+        return copied;
+    }
+    catch (error) {
+        console.warn('Fallback copy failed:', error);
+        return false;
+    }
 }
 function showBridgeDrawer() {
     const drawer = document.getElementById('review-bridge');
