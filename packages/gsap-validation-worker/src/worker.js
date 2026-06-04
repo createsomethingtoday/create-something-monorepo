@@ -160,6 +160,43 @@ function isValidatorReviewBridgeScript(script) {
   return hasReviewScriptUrl && withoutAllowedLoader.trim() === "";
 }
 __name(isValidatorReviewBridgeScript, "isValidatorReviewBridgeScript");
+function isGoogleTagFirstPartyBootstrap(script) {
+  return /^\s*\(\s*function\s*\(\s*w\s*,\s*i\s*,\s*g\s*\)\s*\{\s*w\s*\[\s*g\s*\]\s*=\s*w\s*\[\s*g\s*\]\s*\|\|\s*\[\]\s*;\s*if\s*\(\s*typeof\s+w\s*\[\s*g\s*\]\s*\.\s*push\s*==\s*["']function["']\s*\)(?:\s*w\s*\[\s*g\s*\]\s*\.\s*push\s*\(\s*i\s*\)|\s*w\s*\[\s*g\s*\]\s*\.\s*push\s*\.\s*apply\s*\(\s*w\s*\[\s*g\s*\]\s*,\s*Array\s*\.\s*isArray\s*\(\s*i\s*\)\s*\?\s*i\s*:\s*\[\s*i\s*\]\s*\))\s*;?\s*\}\s*\)\s*\(\s*window\s*,\s*\[\s*["']G-[A-Z0-9]+["'](?:\s*,\s*["']G-[A-Z0-9]+["'])*\s*\]\s*,\s*["']google_tags_first_party["']\s*\)\s*;?\s*$/i.test(script);
+}
+__name(isGoogleTagFirstPartyBootstrap, "isGoogleTagFirstPartyBootstrap");
+function isGoogleTagDataLayerBootstrap(script) {
+  let remainder = script.trim();
+  remainder = remainder.replace(/^window\s*\.\s*dataLayer\s*=\s*window\s*\.\s*dataLayer\s*\|\|\s*\[\]\s*;?\s*/i, "");
+  remainder = remainder.replace(/^function\s+gtag\s*\(\s*\)\s*\{\s*dataLayer\s*\.\s*push\s*\(\s*arguments\s*\)\s*;?\s*\}\s*/i, "");
+  if (remainder === script.trim()) {
+    return false;
+  }
+  const allowedStatements = [
+    /^gtag\s*\(\s*["']set["']\s*,\s*["']developer_id\.[^"']+["']\s*,\s*true\s*\)\s*;?\s*/i,
+    /^gtag\s*\(\s*["']js["']\s*,\s*new\s+Date\s*\(\s*\)\s*\)\s*;?\s*/i,
+    /^gtag\s*\(\s*["']config["']\s*,\s*["']G-[A-Z0-9]+["'](?:\s*,\s*\{[\s\S]*?\})?\s*\)\s*;?\s*/i
+  ];
+  let sawConfig = false;
+  while (remainder.trim()) {
+    const before = remainder;
+    for (const pattern of allowedStatements) {
+      const match = remainder.match(pattern);
+      if (!match) continue;
+      sawConfig = sawConfig || /^gtag\s*\(\s*["']config["']/i.test(match[0]);
+      remainder = remainder.slice(match[0].length).trimStart();
+      break;
+    }
+    if (remainder === before) {
+      return false;
+    }
+  }
+  return sawConfig && !containsPotentiallyHarmfulCode(script);
+}
+__name(isGoogleTagDataLayerBootstrap, "isGoogleTagDataLayerBootstrap");
+function isGoogleTagScript(script) {
+  return isGoogleTagFirstPartyBootstrap(script) || isGoogleTagDataLayerBootstrap(script);
+}
+__name(isGoogleTagScript, "isGoogleTagScript");
 function validateGsapUsage(html, pageUrl, customPatterns = []) {
   const defaultPatterns = [
     // Core GSAP object and method access
@@ -611,6 +648,14 @@ function validateGsapUsage(html, pageUrl, customPatterns = []) {
         scriptIndex: index,
         message: "Webflow Way Validator bridge script (allowed)",
         policy: "validator-review-bridge"
+      });
+      return;
+    }
+    if (isGoogleTagScript(script)) {
+      results.allowedCustomCode.push({
+        scriptIndex: index,
+        message: "Google tag script (allowed)",
+        policy: "analytics-google-tag"
       });
       return;
     }

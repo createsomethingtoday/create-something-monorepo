@@ -210,4 +210,51 @@ assert.ok(
   'expected extra code appended to bridge config to remain blocked'
 );
 
+const googleTagHtml = `
+<!doctype html>
+<html>
+  <head>
+    <script>(function(w,i,g){w[g]=w[g]||[];if(typeof w[g].push=='function')w[g].push.apply(w[g],Array.isArray(i)?i:[i]);})(window,['G-EH11T52XR4'],'google_tags_first_party');</script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('set', 'developer_id.dZGVlNj', true);
+      gtag('js', new Date());
+      gtag('config', 'G-EH11T52XR4');
+    </script>
+  </head>
+  <body></body>
+</html>`;
+
+const googleTagResult = sandbox.validateGsapUsage(
+  googleTagHtml,
+  'https://avix-studio.webflow.io/'
+);
+
+assert.equal(googleTagResult.passed, true);
+assert.equal(googleTagResult.summary.flaggedCodeCount, 0);
+assert.equal(
+  googleTagResult.details.allowedCustomCode.filter(
+    (issue) => issue.policy === 'analytics-google-tag'
+  ).length,
+  2,
+  'expected Google tag bootstrap scripts to be allowed'
+);
+
+const googleTagWithExtraCodeResult = sandbox.validateGsapUsage(
+  googleTagHtml.replace(
+    "gtag('config', 'G-EH11T52XR4');",
+    "gtag('config', 'G-EH11T52XR4');window.location = 'https://example.com';"
+  ),
+  'https://avix-studio.webflow.io/'
+);
+
+assert.equal(googleTagWithExtraCodeResult.passed, false);
+assert.ok(
+  googleTagWithExtraCodeResult.details.flaggedCode.some(
+    (issue) => issue.message === 'Custom script detected without approved GSAP patterns'
+  ),
+  'expected custom code appended to Google tag bootstrap to remain blocked'
+);
+
 console.log('GSAP validation regression passed.');
