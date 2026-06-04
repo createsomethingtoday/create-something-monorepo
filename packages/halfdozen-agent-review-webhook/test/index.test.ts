@@ -454,6 +454,37 @@ test('notionMarkdownBlocks preserves core report structure', () => {
   assert.deepEqual(types, ['heading_1', 'paragraph', 'to_do', 'bulleted_list_item', 'numbered_list_item', 'code']);
 });
 
+test('notionMarkdownBlocks nests bullets that explain numbered workflow steps', () => {
+  const blocks = notionMarkdownBlocks([
+    '1. Read thread metadata, including:',
+    '- Sender',
+    '- CCs',
+    '2. Filter participants:',
+    '- Skip self',
+    '- Skip role inboxes'
+  ].join('\n'));
+
+  assert.deepEqual(blocks.map((block) => block.type), ['numbered_list_item', 'numbered_list_item']);
+
+  const firstChildren =
+    ((blocks[0].numbered_list_item as { children?: Array<{ type?: string }> }).children ?? []).map(
+      (block) => block.type
+    );
+  const secondChildren =
+    ((blocks[1].numbered_list_item as { children?: Array<{ type?: string }> }).children ?? []).map(
+      (block) => block.type
+    );
+
+  assert.deepEqual(firstChildren, ['bulleted_list_item', 'bulleted_list_item']);
+  assert.deepEqual(secondChildren, ['bulleted_list_item', 'bulleted_list_item']);
+});
+
+test('notionMarkdownBlocks keeps separated bullets at the top level', () => {
+  const blocks = notionMarkdownBlocks(['1. Read thread metadata.', '', '- Independent note'].join('\n'));
+
+  assert.deepEqual(blocks.map((block) => block.type), ['numbered_list_item', 'bulleted_list_item']);
+});
+
 test('buildTestReportProperties links Test Reports back to source agent and client relations', () => {
   const properties = buildTestReportProperties(
     {

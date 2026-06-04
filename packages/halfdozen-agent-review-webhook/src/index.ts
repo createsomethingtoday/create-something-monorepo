@@ -4005,12 +4005,18 @@ function notionMarkdownBlocks(markdown: string): UnknownRecord[] {
   const paragraphLines: string[] = [];
   let codeLines: string[] | undefined;
   let codeLanguage = 'plain text';
+  let activeNumberedBlock: UnknownRecord | undefined;
+
+  const resetListContext = () => {
+    activeNumberedBlock = undefined;
+  };
 
   const flushParagraph = () => {
     const content = paragraphLines.join('\n').trim();
     paragraphLines.length = 0;
     if (!content) return;
     blocks.push(...notionParagraphBlocks(content));
+    resetListContext();
   };
 
   const flushCode = () => {
@@ -4018,6 +4024,7 @@ function notionMarkdownBlocks(markdown: string): UnknownRecord[] {
     blocks.push(...notionCodeBlocks(codeLines.join('\n'), codeLanguage));
     codeLines = undefined;
     codeLanguage = 'plain text';
+    resetListContext();
   };
 
   for (const rawLine of markdown.split('\n')) {
@@ -4043,12 +4050,14 @@ function notionMarkdownBlocks(markdown: string): UnknownRecord[] {
 
     if (!trimmed) {
       flushParagraph();
+      resetListContext();
       continue;
     }
 
     const heading = trimmed.match(/^(#{1,3})\s+(.+)$/);
     if (heading) {
       flushParagraph();
+      resetListContext();
       blocks.push(notionHeadingBlock(Math.min(heading[1].length, 3) as 1 | 2 | 3, heading[2]));
       continue;
     }
@@ -4056,6 +4065,7 @@ function notionMarkdownBlocks(markdown: string): UnknownRecord[] {
     const todo = trimmed.match(/^-\s+\[( |x)\]\s+(.+)$/i);
     if (todo) {
       flushParagraph();
+      resetListContext();
       blocks.push(notionTodoBlock(todo[2], todo[1].toLowerCase() === 'x'));
       continue;
     }
@@ -4063,23 +4073,41 @@ function notionMarkdownBlocks(markdown: string): UnknownRecord[] {
     const bullet = trimmed.match(/^[-*]\s+(.+)$/);
     if (bullet) {
       flushParagraph();
-      blocks.push(notionBulletedListBlock(bullet[1]));
+      const block = notionBulletedListBlock(bullet[1]);
+      if (activeNumberedBlock && appendNotionBlockChild(activeNumberedBlock, block)) {
+        continue;
+      }
+      resetListContext();
+      blocks.push(block);
       continue;
     }
 
     const numbered = trimmed.match(/^\d+[.)]\s+(.+)$/);
     if (numbered) {
       flushParagraph();
-      blocks.push(notionNumberedListBlock(numbered[1]));
+      const block = notionNumberedListBlock(numbered[1]);
+      blocks.push(block);
+      activeNumberedBlock = block;
       continue;
     }
 
+    resetListContext();
     paragraphLines.push(trimmed);
   }
 
   flushParagraph();
   flushCode();
   return blocks;
+}
+
+function appendNotionBlockChild(parent: UnknownRecord, child: UnknownRecord): boolean {
+  const parentType = stringFromUnknown(parent.type);
+  if (!parentType) return false;
+  const payload = parent[parentType];
+  if (!isRecord(payload)) return false;
+  const children = Array.isArray(payload.children) ? payload.children : [];
+  payload.children = [...children, child];
+  return true;
 }
 
 function notionRichText(content: string): UnknownRecord[] {
