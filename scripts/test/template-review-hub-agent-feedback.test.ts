@@ -5,7 +5,8 @@ import {
   buildDifyQuery,
   extractFormattedAgentFeedbackFromToolCalls,
   extractReturnedSaveAgentFeedback,
-  REQUIRED_MANUAL_CHECK_TOPICS
+  REQUIRED_MANUAL_CHECK_TOPICS,
+  retryTransientOperation
 } from '../template-review-hub-agent-feedback.ts';
 
 const candidate = {
@@ -110,4 +111,29 @@ test('extractFormattedAgentFeedbackFromToolCalls accepts formatter observations 
 
   assert.equal(extractFormattedAgentFeedbackFromToolCalls(toolCalls, 'recVersion'), feedback);
   assert.equal(extractFormattedAgentFeedbackFromToolCalls(toolCalls, 'recOther'), null);
+});
+
+test('retryTransientOperation retries failed reads with bounded backoff', async () => {
+  let attempts = 0;
+  const delays: number[] = [];
+
+  const result = await retryTransientOperation(
+    async () => {
+      attempts += 1;
+      if (attempts < 3) throw new Error(`temporary failure ${attempts}`);
+      return 'ok';
+    },
+    {
+      attempts: 3,
+      delayMs: 100,
+      label: 'test_read',
+      sleep: async (ms) => {
+        delays.push(ms);
+      }
+    }
+  );
+
+  assert.equal(result, 'ok');
+  assert.equal(attempts, 3);
+  assert.deepEqual(delays, [100, 200]);
 });
