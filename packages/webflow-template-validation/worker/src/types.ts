@@ -455,6 +455,10 @@ export interface ContentQualityAnalysis {
 		text: string;
 		location: string;
 		severity: 'error' | 'warning' | 'info';
+		matches?: Array<{
+			pattern: string;
+			sample: string;
+		}>;
 	}>;
 	wordCount: number;
 	readabilityScore?: number;

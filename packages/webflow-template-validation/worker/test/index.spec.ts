@@ -435,6 +435,30 @@ describe('Content Validator', () => {
 		expect(result.issues.some((issue) => issue.id === 'placeholder-content-detected')).toBe(false);
 	});
 
+	it('ignores Webflow CSS comments when checking default content', async () => {
+		const rawHtml = `<!doctype html><html><head><title>Styled Page</title>
+			<style>/* Get rid of top margin on first element in any rich text element */</style>
+		</head><body>
+			<main><h1>Styled Page</h1><p>Purpose-built content that should not be treated as Webflow default text.</p></main>
+		</body></html>`;
+		vi.mocked(parseHTML).mockReturnValue(createParsedHTML({
+			rawHtml,
+			document: {
+				querySelector: (selector: string) => selector === 'title' ? { textContent: 'Styled Page' } : null,
+				querySelectorAll: () => [],
+				body: {
+					textContent: 'Get rid of top margin on first element in any rich text element Styled Page Purpose-built content that should not be treated as Webflow default text.',
+					innerHTML: rawHtml
+				}
+			},
+			headings: [{ tagName: 'H1', textContent: 'Styled Page' }]
+		}));
+
+		const result = await validateContent('https://example.com/styled');
+
+		expect(result.issues.some((issue) => issue.id === 'webflow-default-content')).toBe(false);
+	});
+
 	it('still flags authored placeholder text outside search result snippets', async () => {
 		const rawHtml = `<!doctype html><html><head><title>About</title></head><body>
 			<main><h1>About</h1><p>Lorem ipsum dolor sit amet in authored page copy.</p></main>
@@ -457,6 +481,30 @@ describe('Content Validator', () => {
 		expect(result.issues.find((issue) => issue.id === 'lorem-ipsum-detected')).toEqual(expect.objectContaining({
 			severity: 'warning'
 		}));
+	});
+
+	it('surfaces matched snippets for real Webflow default content', async () => {
+		const rawHtml = `<!doctype html><html><head><title>Default Copy</title></head><body>
+			<main><h1>Default Copy</h1><div>This is some text inside of a div block.</div></main>
+		</body></html>`;
+		vi.mocked(parseHTML).mockReturnValue(createParsedHTML({
+			rawHtml,
+			document: {
+				querySelector: (selector: string) => selector === 'title' ? { textContent: 'Default Copy' } : null,
+				querySelectorAll: () => [],
+				body: {
+					textContent: 'Default Copy This is some text inside of a div block.',
+					innerHTML: rawHtml
+				}
+			},
+			headings: [{ tagName: 'H1', textContent: 'Default Copy' }]
+		}));
+
+		const result = await validateContent('https://example.com/default-copy');
+		const issue = result.issues.find((item) => item.id === 'webflow-default-content') as any;
+
+		expect(issue).toBeTruthy();
+		expect(issue.details.affectedPages[0].matches[0].sample).toBe('This is some text inside of a div block');
 	});
 
 	it('does not flag decorative images that use empty alt text', async () => {
@@ -761,6 +809,29 @@ describe('Accessibility Validator', () => {
 		}));
 
 		const result = await validateAccessibility('https://example.com');
+
+		expect(result.stats.contrastViolations).toBe(0);
+		expect(result.issues.some((issue) => issue.id === 'color-contrast-violations')).toBe(false);
+	});
+
+	it('does not flag syntax-highlighted Webflow code blocks as page contrast violations', async () => {
+		vi.mocked(parseHTML).mockReturnValue(createParsedHTML({
+			rawHtml: `<!doctype html><html><head><title>Install</title></head><body>
+				<h1>Install</h1>
+				<pre contenteditable="false" class="install-code-block w-code-block" style="display:block;overflow-x:auto;background:#2b2b2b;color:#f8f8f2;padding:0.5em"><code class="language-javascript"><span><span style="color:#dcc6e0">import</span><span> { Client } </span><span style="color:#dcc6e0">from</span><span> </span><span style="color:#abe338">&quot;@AEYE/product&quot;</span><span>;</span></span></code></pre>
+			</body></html>`,
+			document: {
+				querySelector: () => null,
+				querySelectorAll: () => [],
+				body: {
+					textContent: 'Install import { Client } from "@AEYE/product";',
+					innerHTML: '<h1>Install</h1>'
+				}
+			},
+			headings: [{ tagName: 'H1', textContent: 'Install' }]
+		}));
+
+		const result = await validateAccessibility('https://example.com/install');
 
 		expect(result.stats.contrastViolations).toBe(0);
 		expect(result.issues.some((issue) => issue.id === 'color-contrast-violations')).toBe(false);
