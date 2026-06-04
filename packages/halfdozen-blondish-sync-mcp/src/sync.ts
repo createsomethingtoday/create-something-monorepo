@@ -28,6 +28,21 @@ import {
 import type { AuditResult, DataSourceSchema, Env, NotionBlock, NotionPage, SyncConfig, SyncFile, SyncResult, Workspace } from './types.js';
 
 type WritableValue = string | Array<Record<string, unknown>>;
+type SourceToHdRepairField =
+  | 'Ticket'
+  | 'Source'
+  | 'Owner'
+  | 'Client'
+  | 'External Page ID'
+  | 'External URL'
+  | 'External Files & Media'
+  | 'page body';
+
+type SourceToHdOptions = {
+  sourcePageIds?: string[];
+  repairFields?: SourceToHdRepairField[];
+  createMissing?: boolean;
+};
 
 export async function preflight(env: Env): Promise<SyncResult> {
   const result = emptyResult('preflight');
@@ -127,7 +142,7 @@ export async function auditSync(env: Env): Promise<AuditResult> {
       }
       result.details.matched_rows += 1;
       const targetPage = targetMatches[0];
-      const patch = await buildExistingTargetPatch(env, config, sourcePage, targetPage, ownerUserId);
+      const patch = await buildExistingTargetPatch(env, config, sourcePage, targetPage, ownerUserId, { materializeFileUploads: false });
       if (Object.keys(patch).length > 0) {
         result.details.contract_field_drifts.push({
           target_page_id: targetPage.id,
@@ -173,9 +188,132 @@ export async function auditSync(env: Env): Promise<AuditResult> {
   }
 }
 
+export async function planSourceToHalfDozenRepairs(env: Env): Promise<SyncResult> {
+  const audit = await auditSync(env);
+  const details = audit.details;
+  const externalUrlDrifts = details.contract_field_drifts.filter((drift) => drift.fields.includes('External URL'));
+  const externalFilesDrifts = details.contract_field_drifts.filter((drift) => drift.fields.includes('External Files & Media'));
+  const otherContractDrifts = details.contract_field_drifts.filter((drift) => (
+    drift.fields.some((field) => field !== 'External URL' && field !== 'External Files & Media')
+  ));
+
+  return {
+    ok: audit.ok,
+    action: 'source_to_hd_repair_plan',
+    source_data_source_id: audit.source_data_source_id,
+    target_data_source_id: audit.target_data_source_id,
+    created: 0,
+    updated: 0,
+    skipped: audit.skipped,
+    errors: audit.errors,
+    details: {
+      source_rows_checked: details.source_rows_checked,
+      target_rows_checked: details.target_rows_checked,
+      matched_rows: details.matched_rows,
+      missing_hd_rows: details.missing_hd_rows,
+      duplicate_hd_matches: details.duplicate_hd_matches,
+      repairable_missing_hd_rows: details.missing_hd_rows.length,
+      repairable_external_url_drifts: externalUrlDrifts.length,
+      repairable_external_files_drifts: externalFilesDrifts.length,
+      other_contract_drifts: otherContractDrifts,
+      body_drifts: details.body_drifts,
+      reverse_status_drifts: details.reverse_status_drifts,
+      recommended_write_tools: [
+        ...(details.missing_hd_rows.length > 0 ? ['blondish_sync_repair_missing_hd_rows'] : []),
+        ...(externalUrlDrifts.length > 0 ? ['blondish_sync_repair_external_url_drift'] : []),
+        ...(otherContractDrifts.length > 0 || details.body_drifts.length > 0 ? ['blondish_sync_source_to_hd'] : []),
+        ...(details.reverse_status_drifts.length > 0 ? ['blondish_sync_hd_status_to_source'] : []),
+      ],
+      future_scale_note: 'Use Notion webhooks or a persisted sync index before this becomes a frequent full-scan workflow.',
+    },
+  };
+}
+
+export async function repairMissingHalfDozenRows(env: Env): Promise<SyncResult> {
+  const audit = await auditSync(env);
+  const sourcePageIds = audit.details.missing_hd_rows.map((row) => row.source_page_id);
+  if (sourcePageIds.length === 0) {
+    return {
+      ok: audit.ok,
+      action: 'repair_missing_hd_rows',
+      source_data_source_id: audit.source_data_source_id,
+      target_data_source_id: audit.target_data_source_id,
+      created: 0,
+      updated: 0,
+      skipped: 0,
+      errors: audit.errors,
+      details: {
+        repair_scope: 'missing_hd_rows',
+        source_rows_checked: audit.details.source_rows_checked,
+        target_rows_checked: audit.details.target_rows_checked,
+        selected_source_page_ids: [],
+      },
+    };
+  }
+
+  const repaired = await syncSourceTicketsToHalfDozen(env, { sourcePageIds, createMissing: true });
+  return {
+    ...repaired,
+    action: 'repair_missing_hd_rows',
+    details: {
+      ...(repaired.details ?? {}),
+      repair_scope: 'missing_hd_rows',
+      selected_source_page_ids: sourcePageIds,
+      audit_before_repair: {
+        missing_hd_rows: audit.details.missing_hd_rows,
+        duplicate_hd_matches: audit.details.duplicate_hd_matches,
+      },
+    },
+  };
+}
+
+export async function repairExternalUrlDrift(env: Env): Promise<SyncResult> {
+  const audit = await auditSync(env);
+  const extPageIds = audit.details.contract_field_drifts
+    .filter((drift) => drift.fields.includes('External URL'))
+    .map((drift) => drift.ext_page_id);
+
+  if (extPageIds.length === 0) {
+    return {
+      ok: audit.ok,
+      action: 'repair_external_url_drift',
+      source_data_source_id: audit.source_data_source_id,
+      target_data_source_id: audit.target_data_source_id,
+      created: 0,
+      updated: 0,
+      skipped: 0,
+      errors: audit.errors,
+      details: {
+        repair_scope: 'external_url_drift',
+        source_rows_checked: audit.details.source_rows_checked,
+        target_rows_checked: audit.details.target_rows_checked,
+        selected_ext_page_ids: [],
+      },
+    };
+  }
+
+  const repaired = await syncSourceTicketsToHalfDozen(env, {
+    sourcePageIds: extPageIds,
+    repairFields: ['External URL'],
+    createMissing: false,
+  });
+  return {
+    ...repaired,
+    action: 'repair_external_url_drift',
+    details: {
+      ...(repaired.details ?? {}),
+      repair_scope: 'external_url_drift',
+      selected_ext_page_ids: extPageIds,
+      audit_before_repair: {
+        contract_field_drifts: audit.details.contract_field_drifts.filter((drift) => drift.fields.includes('External URL')),
+      },
+    },
+  };
+}
+
 export async function syncSourceTicketsToHalfDozen(
   env: Env,
-  options: { sourcePageIds?: string[] } = {},
+  options: SourceToHdOptions = {},
 ): Promise<SyncResult> {
   const result = emptyResult('source_to_hd');
   let externalReferenceUpdates = 0;
@@ -213,7 +351,11 @@ export async function syncSourceTicketsToHalfDozen(
 
         const existingTargetPage = targetByExtPageId.get(extPageId);
         if (existingTargetPage) {
-          const externalPatch = await buildExistingTargetPatch(env, config, sourcePage, existingTargetPage, ownerUserId);
+          const externalPatch = filterTargetPatch(
+            await buildExistingTargetPatch(env, config, sourcePage, existingTargetPage, ownerUserId),
+            config,
+            options.repairFields,
+          );
           if (Object.keys(externalPatch).length > 0) {
             await updatePage(env, 'halfdozen', existingTargetPage.id, externalPatch);
             result.updated += 1;
@@ -221,13 +363,20 @@ export async function syncSourceTicketsToHalfDozen(
             propertyRepairs += Object.keys(externalPatch).filter((propertyName) => propertyName !== 'Ticket').length;
             if (externalPatch['External URL'] || externalPatch['External Files & Media']) externalReferenceUpdates += 1;
           }
-          const bodyUpdated = await syncTargetPageBody(env, sourcePage, existingTargetPage.id);
+          const bodyUpdated = shouldRepairField(options.repairFields, 'page body')
+            ? await syncTargetPageBody(env, sourcePage, existingTargetPage.id)
+            : false;
           if (bodyUpdated) bodyRepairs += 1;
           if (Object.keys(externalPatch).length > 0 || bodyUpdated) {
             result.updated += bodyUpdated && Object.keys(externalPatch).length === 0 ? 1 : 0;
           } else {
             result.skipped += 1;
           }
+          continue;
+        }
+
+        if (options.createMissing === false) {
+          result.skipped += 1;
           continue;
         }
 
@@ -536,6 +685,7 @@ async function buildExistingTargetPatch(
   sourcePage: NotionPage,
   targetPage: NotionPage,
   ownerUserId: string | null,
+  options: { materializeFileUploads?: boolean } = {},
 ): Promise<Record<string, unknown>> {
   if (config.targetSchema.Owner?.type === 'people' && !ownerUserId) {
     throw new Error(`Could not find target Owner user ${OWNER_EMAIL}.`);
@@ -556,10 +706,31 @@ async function buildExistingTargetPatch(
   if (extPageId && readText(targetPage, config.targetExtPageIdProperty) !== extPageId) writeRequired(properties, config.targetSchema, config.targetExtPageIdProperty, extPageId);
   if (externalUrl && readText(targetPage, 'External URL') !== externalUrl) writeRequired(properties, config.targetSchema, 'External URL', externalUrl);
   if (sourceFiles.length > 0 && !externalFilesMatch(targetPage, config.targetSchema['External Files & Media']?.type, sourceFiles)) {
-    writeRequired(properties, config.targetSchema, 'External Files & Media', await buildWritableFiles(env, sourceFiles));
+    if (options.materializeFileUploads === false) {
+      properties['External Files & Media'] = { drift: true };
+    } else {
+      writeRequired(properties, config.targetSchema, 'External Files & Media', await buildWritableFiles(env, sourceFiles));
+    }
   }
 
   return properties;
+}
+
+function filterTargetPatch(
+  patch: Record<string, unknown>,
+  config: SyncConfig,
+  repairFields?: SourceToHdRepairField[],
+): Record<string, unknown> {
+  if (!repairFields || repairFields.length === 0) return patch;
+  const allowed = new Set(repairFields);
+  return Object.fromEntries(Object.entries(patch).filter(([field]) => (
+    allowed.has(field as SourceToHdRepairField) ||
+    (field === config.targetExtPageIdProperty && allowed.has('External Page ID'))
+  )));
+}
+
+function shouldRepairField(repairFields: SourceToHdRepairField[] | undefined, field: SourceToHdRepairField): boolean {
+  return !repairFields || repairFields.length === 0 || repairFields.includes(field);
 }
 
 async function targetPageBodyDiffers(env: Env, sourcePage: NotionPage, targetPageId: string): Promise<boolean> {

@@ -59,7 +59,10 @@ export interface SyncError {
 export type SyncAction =
   | 'preflight'
   | 'audit'
+  | 'source_to_hd_repair_plan'
   | 'source_to_hd'
+  | 'repair_missing_hd_rows'
+  | 'repair_external_url_drift'
   | 'hd_status_to_source'
   | 'full_reconcile';
 
