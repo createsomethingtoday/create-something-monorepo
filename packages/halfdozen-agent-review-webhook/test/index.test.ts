@@ -8,8 +8,10 @@ import {
   buildTestingTaskHandoffProperties,
   buildTestReportProperties,
   canonicalPageContent,
+  enrichReviewWithNotionContent,
   evaluateWorkerRubric,
   LIVE_TESTING_HANDOFF_GUIDANCE,
+  normalizeReviewRequest,
   notionMarkdownBlocks,
   parseDifyEvalAnswer,
   richTextPlain,
@@ -139,6 +141,119 @@ test('shouldRunAutomatedEval only allows Updating status to trigger eval', () =>
   assert.equal(shouldRunAutomatedEval({ status: 'Testing' }), false);
   assert.equal(shouldRunAutomatedEval({ status: 'Validated' }), false);
   assert.equal(shouldRunAutomatedEval({ status: undefined }), false);
+});
+
+test('normalizeReviewRequest extracts a Notion trigger page reference when the automation includes it', () => {
+  const review = normalizeReviewRequest({
+    trigger: {
+      page: {
+        id: '34f01918-7ac5-8095-8ff2-dc2fa49f11fe',
+        url: 'https://www.notion.so/halfdozen/Internal-Agent-Builder-34f019187ac580958ff2dc2fa49f11fe'
+      }
+    },
+    properties: {
+      Name: { title: [{ plain_text: 'Internal Agent Builder' }] },
+      Status: { status: { name: 'Updating' } }
+    }
+  });
+
+  assert.equal(review.agentName, 'Internal Agent Builder');
+  assert.equal(review.status, 'Updating');
+  assert.equal(review.pageId, '34f01918-7ac5-8095-8ff2-dc2fa49f11fe');
+  assert.equal(
+    review.pageUrl,
+    'https://www.notion.so/halfdozen/Internal-Agent-Builder-34f019187ac580958ff2dc2fa49f11fe'
+  );
+});
+
+test('enrichReviewWithNotionContent recovers a source page by exact title when the webhook omits a page URL', async () => {
+  const originalFetch = globalThis.fetch;
+  const sourcePageId = '34f01918-7ac5-8095-8ff2-dc2fa49f11fe';
+  const sourcePageUrl = 'https://www.notion.so/halfdozen/Internal-Agent-Builder-34f019187ac580958ff2dc2fa49f11fe';
+
+  globalThis.fetch = (async (input: URL | RequestInfo) => {
+    const url = String(input);
+
+    if (url.endsWith('/search')) {
+      return Response.json({
+        results: [
+          {
+            object: 'page',
+            id: sourcePageId,
+            url: sourcePageUrl,
+            properties: {
+              Name: {
+                type: 'title',
+                title: [{ type: 'text', plain_text: 'Internal Agent Builder', text: { content: 'Internal Agent Builder' } }]
+              }
+            }
+          }
+        ]
+      });
+    }
+
+    if (url.endsWith(`/pages/${sourcePageId}`)) {
+      return Response.json({
+        properties: {
+          Name: {
+            type: 'title',
+            title: [{ type: 'text', plain_text: 'Internal Agent Builder', text: { content: 'Internal Agent Builder' } }]
+          },
+          Status: { type: 'status', status: { name: 'Updating' } }
+        }
+      });
+    }
+
+    if (url.includes(`/blocks/${sourcePageId}/children`)) {
+      return Response.json({
+        results: [
+          {
+            type: 'heading_1',
+            heading_1: {
+              rich_text: [{ type: 'text', plain_text: 'Overview', text: { content: 'Overview' } }]
+            }
+          },
+          {
+            type: 'paragraph',
+            paragraph: {
+              rich_text: [
+                {
+                  type: 'text',
+                  plain_text: 'You are Internal Agent Builder. Produce Agent Spec, Instructions, Build checklist, and Test plan.',
+                  text: {
+                    content:
+                      'You are Internal Agent Builder. Produce Agent Spec, Instructions, Build checklist, and Test plan.'
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        next_cursor: null
+      });
+    }
+
+    return Response.json({ message: `Unexpected URL ${url}` }, { status: 500 });
+  }) as typeof fetch;
+
+  try {
+    const review = normalizeReviewRequest({
+      properties: {
+        Name: { title: [{ plain_text: 'Internal Agent Builder' }] },
+        Status: { status: { name: 'Updating' } },
+        'Agent Description': 'Short description only.'
+      }
+    });
+
+    const enriched = await enrichReviewWithNotionContent({ NOTION_API_KEY: 'test-token' }, review);
+
+    assert.equal(enriched.enrichment?.notionPageId, sourcePageId);
+    assert.equal(enriched.enrichment?.notionPageUrl, sourcePageUrl);
+    assert.match(enriched.enrichment?.warning ?? '', /exact Notion title search/);
+    assert.match(enriched.enrichment?.pageContent ?? '', /Produce Agent Spec/);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 });
 
 test('submittedInstructionsForDify excerpts long source pages while preserving edge context', () => {

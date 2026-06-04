@@ -34,6 +34,7 @@ interface NormalizedReviewRequest {
   receivedAt: string;
   agentName: string;
   agentUrl?: string;
+  pageId?: string;
   status?: string;
   priority?: string;
   type?: string;
@@ -285,7 +286,7 @@ const LIVE_TESTING_HANDOFF_GUIDANCE =
   'Paste only the full text after "Prompt to paste" into the actual Notion agent. Do not paste the scenario label, expected behavior, report evidence, archived instructions, or any other eval text. Record pass/fail, the actual response, and notes on this Test Report. If any prompt fails, add the finding to the source page and move it back to Updating for a new eval run.';
 const DIFY_API_BASE_DEFAULT = 'https://api.dify.ai/v1';
 const DIFY_EVAL_TIMEOUT_MS_DEFAULT = 25_000;
-const DIFY_EVAL_TIMEOUT_MS_MAX = 25_000;
+const DIFY_EVAL_TIMEOUT_MS_MAX = 90_000;
 const DIFY_SUBMITTED_INSTRUCTIONS_MAX_LENGTH_DEFAULT = 5000;
 const DIFY_AGENT_BUILDER_EVAL_JSON_CONTRACT = [
   'Return only valid JSON. Do not wrap it in Markdown.',
@@ -607,6 +608,7 @@ function normalizeReviewRequest(payload: unknown): NormalizedReviewRequest {
   const properties = normalizeProperties(propertySource);
   const lookup = buildLookup(properties);
   const fromPayload = isRecord(payload) ? payload : {};
+  const pageReference = extractNotionPageReference(payload);
 
   const agentName =
     pick(lookup, 'Name', 'Agent Name', 'Agent') ??
@@ -618,18 +620,23 @@ function normalizeReviewRequest(payload: unknown): NormalizedReviewRequest {
     pick(lookup, 'Agent URL', 'Agent Link', 'URL') ??
     stringFromUnknown(fromPayload.url) ??
     stringFromUnknown(fromPayload.agent_url);
+  const pageUrl =
+    pick(lookup, 'Notion URL', 'Page URL', 'Page') ??
+    pageReference.url ??
+    stringFromUnknown(fromPayload.page_url);
 
   return {
     requestId,
     receivedAt,
     agentName,
     agentUrl,
+    pageId: pageReference.id ?? (pageUrl ? notionPageIdFromUrl(pageUrl) : undefined),
     status: pick(lookup, 'Status', 'Agent Status'),
     priority: pick(lookup, 'Priority'),
     type: pick(lookup, 'Type', 'Agent Type'),
     activated: pick(lookup, 'Activated', 'Active'),
     description: pick(lookup, 'Agent Description', 'Description', 'Request', 'Review Notes'),
-    pageUrl: pick(lookup, 'Notion URL', 'Page URL', 'Page') ?? stringFromUnknown(fromPayload.page_url),
+    pageUrl,
     properties
   };
 }
@@ -733,6 +740,70 @@ function pick(lookup: Record<string, string>, ...keys: string[]): string | undef
   return undefined;
 }
 
+function extractNotionPageReference(payload: unknown): { id?: string; url?: string } {
+  const candidates = pageReferenceCandidates(payload);
+
+  for (const candidate of candidates) {
+    const url =
+      stringFromUnknown(candidate.page_url) ??
+      stringFromUnknown(candidate.pageUrl) ??
+      stringFromUnknown(candidate.notion_url) ??
+      stringFromUnknown(candidate.notionUrl) ??
+      stringFromUnknown(candidate.url) ??
+      stringFromUnknown(candidate.href) ??
+      stringFromUnknown(candidate.public_url);
+    const urlPageId = url ? notionPageIdFromUrl(url) : undefined;
+    if (urlPageId) return { id: urlPageId, url };
+
+    const explicitId =
+      stringFromUnknown(candidate.page_id) ??
+      stringFromUnknown(candidate.pageId) ??
+      stringFromUnknown(candidate.notion_page_id) ??
+      stringFromUnknown(candidate.notionPageId);
+    const explicitPageId = explicitId ? notionPageIdFromUrl(explicitId) : undefined;
+    if (explicitPageId) return { id: explicitPageId };
+
+    const genericId = candidateLooksLikeNotionPage(candidate) ? stringFromUnknown(candidate.id) : undefined;
+    const genericPageId = genericId ? notionPageIdFromUrl(genericId) : undefined;
+    if (genericPageId) return { id: genericPageId };
+  }
+
+  return {};
+}
+
+function pageReferenceCandidates(payload: unknown): UnknownRecord[] {
+  if (!isRecord(payload)) return [];
+
+  const candidates: unknown[] = [
+    payload.page,
+    payload.data,
+    isRecord(payload.data) ? payload.data.page : undefined,
+    payload.trigger,
+    isRecord(payload.trigger) ? payload.trigger.page : undefined,
+    payload.trigger_page,
+    payload.triggerPage,
+    payload.source_page,
+    payload.sourcePage,
+    payload.notion_page,
+    payload.notionPage,
+    payload.entity,
+    payload.object === 'page' || payload.page_id || payload.pageId || payload.page_url || payload.pageUrl
+      ? payload
+      : undefined
+  ];
+
+  return candidates.filter((candidate): candidate is UnknownRecord => isRecord(candidate));
+}
+
+function candidateLooksLikeNotionPage(candidate: UnknownRecord): boolean {
+  return (
+    candidate.object === 'page' ||
+    candidate.type === 'page' ||
+    isRecord(candidate.properties) ||
+    Boolean(candidate.page_id || candidate.pageId || candidate.page_url || candidate.pageUrl)
+  );
+}
+
 function stringFromUnknown(value: unknown): string | undefined {
   const normalized = normalizeValue(value);
   return normalized ? truncate(normalized, MAX_FIELD_LENGTH) : undefined;
@@ -751,15 +822,24 @@ async function enrichReviewWithNotionContent(
   env: Env,
   review: NormalizedReviewRequest
 ): Promise<NormalizedReviewRequest> {
-  const notionPageUrl = findNotionPageUrl(env, review);
-  const notionPageId = notionPageUrl ? notionPageIdFromUrl(notionPageUrl) : undefined;
+  let notionPageUrl = findNotionPageUrl(env, review);
+  let notionPageId = review.pageId ?? (notionPageUrl ? notionPageIdFromUrl(notionPageUrl) : undefined);
+  let searchWarning: string | undefined;
+
+  if (!notionPageId && env.NOTION_API_KEY) {
+    const searchResult = await findNotionPageByExactTitle(env, review.agentName);
+    notionPageId = searchResult.pageId;
+    notionPageUrl = searchResult.pageUrl ?? notionPageUrl;
+    searchWarning = searchResult.warning;
+  }
 
   if (!notionPageId) {
     return {
       ...review,
       enrichment: {
         warning:
-          'No Notion page URL or page ID was available in the webhook payload, so page content could not be fetched.'
+          searchWarning ??
+          'No Notion page URL or page ID was available in the webhook payload, and no exact Notion title match was found, so page content could not be fetched.'
       }
     };
   }
@@ -803,6 +883,7 @@ async function enrichReviewWithNotionContent(
       ? await fetchNotionPageContent(env, alternateContentId)
       : undefined;
   const warnings = [
+    searchWarning,
     metadata.warning,
     content.pageContent ? undefined : content.warning,
     alternateContent?.pageContent ? undefined : alternateContent?.warning
@@ -849,6 +930,78 @@ function pageUrlFromAgentNameMapping(mappingJson: string | undefined, agentName:
   } catch {
     return undefined;
   }
+}
+
+async function findNotionPageByExactTitle(
+  env: Env,
+  agentName: string
+): Promise<{ pageId?: string; pageUrl?: string; warning?: string }> {
+  const query = agentName.trim();
+  if (!query) return {};
+
+  const response = await fetch(`${NOTION_API_BASE}/search`, {
+    method: 'POST',
+    headers: notionHeaders(env),
+    body: JSON.stringify({
+      query,
+      filter: {
+        value: 'page',
+        property: 'object'
+      },
+      sort: {
+        direction: 'descending',
+        timestamp: 'last_edited_time'
+      },
+      page_size: 10
+    })
+  });
+  const body = (await response.json()) as UnknownRecord;
+
+  if (!response.ok) {
+    return {
+      warning: `Notion exact-title fallback search failed with HTTP ${response.status}: ${notionErrorMessage(body)}`
+    };
+  }
+
+  const results = Array.isArray(body.results)
+    ? body.results.filter((result): result is UnknownRecord => isRecord(result))
+    : [];
+  const normalizedAgentName = normalizeKey(agentName);
+  const exactMatches = results.filter((page) => normalizeKey(notionSearchPageTitle(page) ?? '') === normalizedAgentName);
+
+  if (exactMatches.length !== 1) {
+    return {
+      warning:
+        exactMatches.length > 1
+          ? `Notion exact-title fallback found ${exactMatches.length} pages named "${agentName}", so the Worker left the source page unresolved.`
+          : `Notion exact-title fallback found no page named "${agentName}".`
+    };
+  }
+
+  const page = exactMatches[0];
+  const pageId = stringFromUnknown(page.id);
+  const normalizedPageId = pageId ? notionPageIdFromUrl(pageId) : undefined;
+  if (!normalizedPageId) {
+    return { warning: `Notion exact-title fallback matched "${agentName}" but did not return a valid page ID.` };
+  }
+
+  return {
+    pageId: normalizedPageId,
+    pageUrl: stringFromUnknown(page.url),
+    warning: `Source page recovered by exact Notion title search for "${agentName}" because the webhook payload did not include a page URL.`
+  };
+}
+
+function notionSearchPageTitle(page: UnknownRecord): string | undefined {
+  const properties = isRecord(page.properties) ? page.properties : undefined;
+  if (!properties) return undefined;
+
+  for (const [name, property] of Object.entries(properties)) {
+    if (!isRecord(property) || property.type !== 'title') continue;
+    return normalizeValue(property) ?? name;
+  }
+
+  return undefined;
 }
 
 function notionPageIdFromUrl(value: string): string | undefined {
@@ -3892,8 +4045,10 @@ export {
   buildTestingTaskHandoffProperties,
   buildTestReportProperties,
   canonicalPageContent,
+  enrichReviewWithNotionContent,
   evaluateWorkerRubric,
   LIVE_TESTING_HANDOFF_GUIDANCE,
+  normalizeReviewRequest,
   notionMarkdownBlocks,
   parseDifyEvalAnswer,
   richTextPlain,
