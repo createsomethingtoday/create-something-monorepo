@@ -75,10 +75,57 @@ const WEBFLOW_DEFAULT_PATTERNS = [
 	/text\s+block/i
 ];
 
+const UTILITY_PAGE_PLACEHOLDER_ALLOWED_SLUGS = new Set([
+	'/401',
+	'/404',
+	'/changelog',
+	'/info/changelog',
+	'/info/license',
+	'/info/licenses',
+	'/info/licensing',
+	'/info/style-guide',
+	'/info/utilities',
+	'/info/utility',
+	'/instructions',
+	'/license',
+	'/licenses',
+	'/licensing',
+	'/password',
+	'/search',
+	'/style-guide',
+	'/utilities',
+	'/utility'
+]);
+
+const UTILITY_PAGE_PLACEHOLDER_ALLOWED_PREFIXES = [
+	'/info/utilities/',
+	'/info/utility/',
+	'/utilities/',
+	'/utility/'
+];
+
 type ImageAltDetail = {
 	src: string;
 	context: string;
 	selector?: string;
+};
+
+type HeadingSkipTransition = NonNullable<HeadingHierarchy['skippedLevelTransitions']>[number];
+
+type HeadingIssueDetail = {
+	page: string;
+	pageUrl: string;
+	issue: string;
+	issueType: 'multiple_h1' | 'missing_h1' | 'skipped_level';
+	h1Count?: number;
+	fromLevel?: number;
+	toLevel?: number;
+	fromPosition?: number;
+	toPosition?: number;
+	fromText?: string;
+	toText?: string;
+	missingLevel?: number;
+	headingSequence?: string;
 };
 
 const SEARCH_TEXT_IGNORE_SELECTORS = [
@@ -275,9 +322,10 @@ async function analyzePage(url: string, parsedHTML: ParsedHTML): Promise<Analyze
 	// Extract page title
 	const titleElement = parsedHTML.document.querySelector('title');
 	const title = titleElement?.textContent || 'Untitled Page';
+	const allowsUtilityPlaceholderText = isUtilityPagePlaceholderAllowed(url);
 
-	// Check for Lorem Ipsum content
-	const hasLoremIpsum = checkForLoremIpsum(parsedHTML);
+	// Utility pages often include sample labels/copy by design; keep other audits active.
+	const hasLoremIpsum = allowsUtilityPlaceholderText ? false : checkForLoremIpsum(parsedHTML);
 
 	// Analyze heading hierarchy
 	const headingHierarchy = analyzeHeadingHierarchy(parsedHTML.headings);
@@ -294,7 +342,7 @@ async function analyzePage(url: string, parsedHTML: ParsedHTML): Promise<Analyze
 	const links = await analyzeLinks(parsedHTML, url);
 
 	// Analyze content quality
-	const contentQuality = analyzeContentQuality(parsedHTML, url);
+	const contentQuality = analyzeContentQuality(parsedHTML, url, { allowsUtilityPlaceholderText });
 
 	return {
 		url,
@@ -308,6 +356,14 @@ async function analyzePage(url: string, parsedHTML: ParsedHTML): Promise<Analyze
 		links,
 		contentQuality
 	};
+}
+
+function isUtilityPagePlaceholderAllowed(url: string): boolean {
+	const normalizedSlug = normalizeSlugForComparison(url);
+	if (!normalizedSlug) return false;
+
+	return UTILITY_PAGE_PLACEHOLDER_ALLOWED_SLUGS.has(normalizedSlug)
+		|| UTILITY_PAGE_PLACEHOLDER_ALLOWED_PREFIXES.some(prefix => normalizedSlug.startsWith(prefix));
 }
 
 function checkForLoremIpsum(parsedHTML: ParsedHTML): boolean {
@@ -560,22 +616,32 @@ function analyzeHeadingHierarchy(headings: HTMLHeadingElement[]): HeadingHierarc
 	}));
 
 	// Check for skipped levels
-	let hasSkippedLevels = false;
+	const skippedLevelTransitions: HeadingSkipTransition[] = [];
 	for (let i = 1; i < structure.length; i++) {
-		const currentLevel = structure[i].level;
-		const previousLevel = structure[i - 1].level;
+		const current = structure[i];
+		const previous = structure[i - 1];
+		const currentLevel = current.level;
+		const previousLevel = previous.level;
 
 		// If we jump more than one level (e.g., H2 to H4), that's a skip
 		if (currentLevel > previousLevel + 1) {
-			hasSkippedLevels = true;
-			break;
+			skippedLevelTransitions.push({
+				fromLevel: previousLevel,
+				toLevel: currentLevel,
+				fromPosition: previous.position,
+				toPosition: current.position,
+				fromText: previous.text,
+				toText: current.text,
+				missingLevel: previousLevel + 1
+			});
 		}
 	}
 
 	return {
 		h1Count,
-		hasSkippedLevels,
-		structure
+		hasSkippedLevels: skippedLevelTransitions.length > 0,
+		structure,
+		skippedLevelTransitions
 	};
 }
 
@@ -707,52 +773,79 @@ export function generateContentIssues(
 	}
 
 	// Check heading hierarchy issues
-	let totalH1Errors = 0;
-	let totalSkippedLevels = 0;
-	const headingIssues: Array<{ page: string, issue: string }> = [];
+	const headingIssues: HeadingIssueDetail[] = [];
 
 	if (resolvedChecks.headings) {
 		pages.forEach(page => {
-		// Multiple H1s
-		if (page.headingHierarchy.h1Count > 1) {
-			totalH1Errors++;
-			headingIssues.push({
-				page: page.title,
-				issue: `Has ${page.headingHierarchy.h1Count} H1 elements (should have exactly 1)`
-			});
-		}
+			// Multiple H1s
+			if (page.headingHierarchy.h1Count > 1) {
+				headingIssues.push({
+					page: page.title,
+					pageUrl: page.url,
+					issue: `Has ${page.headingHierarchy.h1Count} H1 elements (should have exactly 1)`,
+					issueType: 'multiple_h1',
+					h1Count: page.headingHierarchy.h1Count,
+					headingSequence: formatHeadingSequence(page.headingHierarchy.structure)
+				});
+			}
 
-		// No H1
-		if (page.headingHierarchy.h1Count === 0) {
-			totalH1Errors++;
-			headingIssues.push({
-				page: page.title,
-				issue: 'Missing H1 element (should have exactly 1)'
-			});
-		}
+			// No H1
+			if (page.headingHierarchy.h1Count === 0) {
+				headingIssues.push({
+					page: page.title,
+					pageUrl: page.url,
+					issue: 'Missing H1 element (should have exactly 1)',
+					issueType: 'missing_h1',
+					h1Count: page.headingHierarchy.h1Count,
+					headingSequence: formatHeadingSequence(page.headingHierarchy.structure)
+				});
+			}
 
-		// Skipped heading levels
-		if (page.headingHierarchy.hasSkippedLevels) {
-			totalSkippedLevels++;
-			headingIssues.push({
-				page: page.title,
-				issue: 'Has skipped heading levels (e.g., H2 followed by H4)'
-			});
-		}
+			// Skipped heading levels
+			if (page.headingHierarchy.hasSkippedLevels) {
+				const skippedTransitions = page.headingHierarchy.skippedLevelTransitions || [];
+				if (skippedTransitions.length > 0) {
+					skippedTransitions.forEach(transition => {
+						headingIssues.push({
+							page: page.title,
+							pageUrl: page.url,
+							issue: describeSkippedHeadingTransition(transition),
+							issueType: 'skipped_level',
+							fromLevel: transition.fromLevel,
+							toLevel: transition.toLevel,
+							fromPosition: transition.fromPosition,
+							toPosition: transition.toPosition,
+							fromText: transition.fromText,
+							toText: transition.toText,
+							missingLevel: transition.missingLevel,
+							headingSequence: formatHeadingSequence(page.headingHierarchy.structure)
+						});
+					});
+				} else {
+					headingIssues.push({
+						page: page.title,
+						pageUrl: page.url,
+						issue: 'Has skipped heading levels. Review the heading sequence for a jump such as H1 to H3 or H2 to H4.',
+						issueType: 'skipped_level',
+						headingSequence: formatHeadingSequence(page.headingHierarchy.structure)
+					});
+				}
+			}
 		});
 
 		if (headingIssues.length > 0) {
-		issues.push({
-			id: 'heading-hierarchy-errors',
-			category: 'Content & Accessibility',
-			severity: 'error',
-			message: `Heading hierarchy errors found on ${headingIssues.length} page(s)`,
-			description: 'Proper heading hierarchy is essential for accessibility and SEO. Each page should have exactly one H1, and heading levels should not be skipped.',
-			howToFix: 'Ensure each page has exactly one H1 element and use heading levels in sequential order (H1 → H2 → H3, etc.)',
-			details: {
-				headingIssues: headingIssues
-			}
-		});
+			const affectedPageCount = new Set(headingIssues.map(issue => issue.pageUrl || issue.page)).size;
+			issues.push({
+				id: 'heading-hierarchy-errors',
+				category: 'Content & Accessibility',
+				severity: 'error',
+				message: `Heading hierarchy errors found on ${affectedPageCount} page(s)`,
+				description: 'Proper heading hierarchy is essential for accessibility and SEO. Each page should have exactly one H1, and heading levels should not be skipped.',
+				howToFix: 'Ensure each page has exactly one H1 element and use heading levels in sequential order (H1 → H2 → H3, etc.)',
+				details: {
+					headingIssues: headingIssues
+				}
+			});
 		}
 	}
 
@@ -810,6 +903,37 @@ export function generateContentIssues(
 	}
 
 	return issues;
+}
+
+function describeSkippedHeadingTransition(transition: HeadingSkipTransition): string {
+	return `${formatHeadingReference(transition.fromLevel, transition.fromText)} is followed by ${formatHeadingReference(transition.toLevel, transition.toText)}, skipping H${transition.missingLevel}`;
+}
+
+function formatHeadingReference(level: number, text: string): string {
+	const normalizedText = normalizeHeadingText(text);
+	return normalizedText ? `H${level} "${normalizedText}"` : `H${level}`;
+}
+
+function formatHeadingSequence(structure: HeadingHierarchy['structure']): string {
+	const visibleStructure = structure.slice(0, 12).map(heading => formatHeadingReference(heading.level, heading.text));
+	const suffix = structure.length > visibleStructure.length ? ` → ${structure.length - visibleStructure.length} more` : '';
+	return `${visibleStructure.join(' → ')}${suffix}`;
+}
+
+function normalizeHeadingText(text: string): string {
+	const normalized = decodeCommonHtmlEntities(text).replace(/\s+/g, ' ').trim();
+	return normalized.length > 80 ? `${normalized.slice(0, 77)}...` : normalized;
+}
+
+function decodeCommonHtmlEntities(value: string): string {
+	return value
+		.replace(/&nbsp;/gi, ' ')
+		.replace(/&amp;/gi, '&')
+		.replace(/&quot;/gi, '"')
+		.replace(/&#39;/gi, "'")
+		.replace(/&#x27;/gi, "'")
+		.replace(/&lt;/gi, '<')
+		.replace(/&gt;/gi, '>');
 }
 
 function generateSEOIssues(pages: AnalyzedPage[]): ValidationIssue[] {
@@ -1073,7 +1197,11 @@ async function analyzeLinks(parsedHTML: ParsedHTML, baseUrl: string): Promise<Li
 	};
 }
 
-function analyzeContentQuality(parsedHTML: ParsedHTML, url: string): ContentQualityAnalysis {
+function analyzeContentQuality(
+	parsedHTML: ParsedHTML,
+	url: string,
+	options: { allowsUtilityPlaceholderText?: boolean } = {}
+): ContentQualityAnalysis {
 	const textContent = getScannableContentText(parsedHTML);
 	const issues: Array<{
 		type: 'placeholder' | 'lorem' | 'generic' | 'webflow-default' | 'short-content' | 'duplicate-content';
@@ -1089,53 +1217,55 @@ function analyzeContentQuality(parsedHTML: ParsedHTML, url: string): ContentQual
 	let hasWebflowDefaults = false;
 	let hasGenericContent = false;
 
-	// Lorem Ipsum detection
-	const loremMatches = LOREM_IPSUM_PATTERNS.filter(pattern => pattern.test(textContent));
-	if (loremMatches.length > 0) {
-		hasLoremIpsum = true;
-		issues.push({
-			type: 'lorem',
-			text: 'Lorem Ipsum content detected',
-			location: url,
-			severity: 'warning'
-		});
-	}
+	if (!options.allowsUtilityPlaceholderText) {
+		// Lorem Ipsum detection
+		const loremMatches = LOREM_IPSUM_PATTERNS.filter(pattern => pattern.test(textContent));
+		if (loremMatches.length > 0) {
+			hasLoremIpsum = true;
+			issues.push({
+				type: 'lorem',
+				text: 'Lorem Ipsum content detected',
+				location: url,
+				severity: 'warning'
+			});
+		}
 
-	// Placeholder content detection
-	const placeholderMatches = PLACEHOLDER_PATTERNS.filter(pattern => pattern.test(textContent));
-	if (placeholderMatches.length > 0) {
-		hasPlaceholderContent = true;
-		issues.push({
-			type: 'placeholder',
-			text: 'Placeholder content detected',
-			location: url,
-			severity: 'warning'
-		});
-	}
+		// Placeholder content detection
+		const placeholderMatches = PLACEHOLDER_PATTERNS.filter(pattern => pattern.test(textContent));
+		if (placeholderMatches.length > 0) {
+			hasPlaceholderContent = true;
+			issues.push({
+				type: 'placeholder',
+				text: 'Placeholder content detected',
+				location: url,
+				severity: 'warning'
+			});
+		}
 
-	// Generic content detection
-	const genericMatches = GENERIC_CONTENT_PATTERNS.filter(pattern => pattern.test(textContent));
-	if (genericMatches.length > 0) {
-		hasGenericContent = true;
-		issues.push({
-			type: 'generic',
-			text: 'Generic content detected',
-			location: url,
-			severity: 'warning'
-		});
-	}
+		// Generic content detection
+		const genericMatches = GENERIC_CONTENT_PATTERNS.filter(pattern => pattern.test(textContent));
+		if (genericMatches.length > 0) {
+			hasGenericContent = true;
+			issues.push({
+				type: 'generic',
+				text: 'Generic content detected',
+				location: url,
+				severity: 'warning'
+			});
+		}
 
-	// Webflow default content detection
-	const webflowMatches = collectPatternMatches(WEBFLOW_DEFAULT_PATTERNS, textContent);
-	if (webflowMatches.length > 0) {
-		hasWebflowDefaults = true;
-		issues.push({
-			type: 'webflow-default',
-			text: 'Webflow default content detected',
-			location: url,
-			severity: 'warning',
-			matches: webflowMatches
-		});
+		// Webflow default content detection
+		const webflowMatches = collectPatternMatches(WEBFLOW_DEFAULT_PATTERNS, textContent);
+		if (webflowMatches.length > 0) {
+			hasWebflowDefaults = true;
+			issues.push({
+				type: 'webflow-default',
+				text: 'Webflow default content detected',
+				location: url,
+				severity: 'warning',
+				matches: webflowMatches
+			});
+		}
 	}
 
 	// Word count and short content detection

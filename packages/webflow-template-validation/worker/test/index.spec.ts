@@ -483,6 +483,110 @@ describe('Content Validator', () => {
 		}));
 	});
 
+	it('allows placeholder/example copy on utility pages without suppressing other audits', async () => {
+		const rawHtml = `<!doctype html><html><head><title>Style Guide</title></head><body>
+			<main>
+				<h1>Style Guide</h1>
+				<h3>Typography</h3>
+				<p>Lorem ipsum dolor sit amet.</p>
+				<p>Heading 1</p>
+				<a href="/contact">Button Text</a>
+			</main>
+		</body></html>`;
+		vi.mocked(parseHTML).mockReturnValue(createParsedHTML({
+			rawHtml,
+			document: {
+				querySelector: (selector: string) => selector === 'title' ? { textContent: 'Style Guide' } : null,
+				querySelectorAll: () => [],
+				body: {
+					textContent: 'Style Guide Typography Lorem ipsum dolor sit amet. Heading 1 Button Text',
+					innerHTML: rawHtml
+				}
+			},
+			headings: [
+				{ tagName: 'H1', textContent: 'Style Guide' },
+				{ tagName: 'H3', textContent: 'Typography' }
+			]
+		}));
+
+		const result = await validateContent(
+			'https://example.com',
+			undefined,
+			{
+				pageScope: 'current',
+				currentPageSlug: '/info/style-guide',
+				contentChecks: { lorem: true, headings: true, altText: false, seo: false, links: false, contentQuality: true }
+			} as any
+		);
+
+		expect(result.issues.some((issue) => issue.id === 'lorem-ipsum-detected')).toBe(false);
+		expect(result.issues.some((issue) => issue.id === 'placeholder-content-detected')).toBe(false);
+		expect(result.issues.some((issue) => issue.id === 'webflow-default-content')).toBe(false);
+		expect(result.stats.pagesWithLoremIpsum).toBe(0);
+		expect(result.issues.find((issue) => issue.id === 'heading-hierarchy-errors')).toEqual(expect.objectContaining({
+			severity: 'error'
+		}));
+	});
+
+	it('reports exact skipped heading transitions for blocking fix guidance', async () => {
+		const rawHtml = `<!doctype html><html><head><title>Services</title></head><body>
+			<main>
+				<h1>Expert window services</h1>
+				<h3>Window installation</h3>
+			</main>
+		</body></html>`;
+		vi.mocked(parseHTML).mockReturnValue(createParsedHTML({
+			rawHtml,
+			document: {
+				querySelector: (selector: string) => selector === 'title' ? { textContent: 'Services' } : null,
+				querySelectorAll: () => [],
+				body: {
+					textContent: 'Expert window services Window installation',
+					innerHTML: rawHtml
+				}
+			},
+			headings: [
+				{ tagName: 'H1', textContent: 'Expert window services' },
+				{ tagName: 'H3', textContent: 'Window installation' }
+			]
+		}));
+
+		const result = await validateContent(
+			'https://example.com/services',
+			undefined,
+			{
+				pageScope: 'current',
+				contentChecks: {
+					lorem: false,
+					headings: true,
+					altText: false,
+					seo: false,
+					links: false,
+					contentQuality: false
+				}
+			} as any
+		);
+
+		const issue = result.issues.find((item) => item.id === 'heading-hierarchy-errors');
+		const headingIssue = issue?.details?.headingIssues?.[0];
+
+		expect(issue?.message).toBe('Heading hierarchy errors found on 1 page(s)');
+		expect(headingIssue).toEqual(expect.objectContaining({
+			page: 'Services',
+			pageUrl: 'https://example.com/services',
+			issueType: 'skipped_level',
+			fromLevel: 1,
+			toLevel: 3,
+			fromPosition: 1,
+			toPosition: 2,
+			fromText: 'Expert window services',
+			toText: 'Window installation',
+			missingLevel: 2
+		}));
+		expect(headingIssue?.issue).toBe('H1 "Expert window services" is followed by H3 "Window installation", skipping H2');
+		expect(headingIssue?.headingSequence).toBe('H1 "Expert window services" → H3 "Window installation"');
+	});
+
 	it('surfaces matched snippets for real Webflow default content', async () => {
 		const rawHtml = `<!doctype html><html><head><title>Default Copy</title></head><body>
 			<main><h1>Default Copy</h1><div>This is some text inside of a div block.</div></main>

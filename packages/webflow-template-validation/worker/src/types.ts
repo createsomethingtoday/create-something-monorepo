@@ -477,6 +477,15 @@ export interface HeadingHierarchy {
 		text: string;
 		position: number;
 	}>;
+	skippedLevelTransitions?: Array<{
+		fromLevel: number;
+		toLevel: number;
+		fromPosition: number;
+		toPosition: number;
+		fromText: string;
+		toText: string;
+		missingLevel: number;
+	}>;
 }
 
 export interface PerformanceMetrics {
