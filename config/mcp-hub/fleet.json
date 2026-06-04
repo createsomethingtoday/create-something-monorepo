@@ -407,6 +407,27 @@
         "bearer_token_env_var": "MCP_BEARER_TOKEN"
       }
     },
+    "halfdozen-blondish-sync-mcp": {
+      "type": "remote_mcp_server",
+      "product": "BLOND:ISH Ticket Sync MCP",
+      "client": "blondish",
+      "tenant": "blondish",
+      "url": "https://halfdozen-blondish-sync-mcp.createsomething.workers.dev/mcp",
+      "status": "deployed",
+      "account": "create-something",
+      "package_path": "packages/halfdozen-blondish-sync-mcp",
+      "wrangler_config": "packages/halfdozen-blondish-sync-mcp/wrangler.toml",
+      "auth": {
+        "type": "bearer",
+        "bearer_token_env_var": "HALFDOZEN_BLONDISH_SYNC_MCP_API_KEY",
+        "infisical_path": "/mcp-hub/hubs"
+      },
+      "related_deployments": [
+        "blondish-notion",
+        "halfdozen-operator-notion-mcp"
+      ],
+      "notes": "Operator-invoked reconciliation MCP for BLOND:ISH source ticket data to Half Dozen ticket rows and mapped HD status back to the source."
+    },
     "abundance-staff-mcp": {
       "type": "remote_mcp_server",
       "product": "Abundance Staff MCP",
