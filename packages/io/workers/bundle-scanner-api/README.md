@@ -21,6 +21,9 @@ Worker endpoint for pre-review Webflow App bundle scanning.
   when developers provide private source maps for review.
 - `sourceMapUrl` may point to a ZIP of `.map` files or a single `.map` file.
 - Source maps are review artifacts only. They should not be included in a public production bundle.
+- Private source-map artifact intake is gated by `SOURCE_MAP_ARTIFACT_INTAKE_ENABLED=true`.
+  The default production Worker keeps this disabled; the `reviewers` Wrangler environment enables it
+  for reviewer testing.
 
 The response includes `artifacts.bundle.sha256` and, when provided, `artifacts.sourceMap.sha256`.
 Those hashes are the handoff boundary between the form/Admin artifact and the automated review.

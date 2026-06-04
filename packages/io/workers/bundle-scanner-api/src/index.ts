@@ -12,7 +12,7 @@
  */
 
 import {
-  processZipFile,
+  processZipBuffer,
   buildInventory,
   runScan,
   generateReport,
@@ -26,6 +26,7 @@ import {
 interface Env {
   ENVIRONMENT: string;
   ALLOWED_ORIGINS: string;
+  SOURCE_MAP_ARTIFACT_INTAKE_ENABLED?: string;
   AIRTABLE_API_KEY?: string;
   SCAN_WEBHOOK_SECRET?: string;
 }
@@ -72,7 +73,16 @@ export default {
     // Route handling
     try {
       if (url.pathname === '/health' && request.method === 'GET') {
-        return json({ status: 'ok', timestamp: new Date().toISOString() }, corsHeaders);
+        return json(
+          {
+            status: 'ok',
+            timestamp: new Date().toISOString(),
+            features: {
+              sourceMapArtifactIntake: isSourceMapArtifactIntakeEnabled(env)
+            }
+          },
+          corsHeaders
+        );
       }
 
       if (url.pathname === '/scan' && request.method === 'POST') {
@@ -110,6 +120,19 @@ async function handleScan(
     return json({ success: false, error: 'Missing bundleUrl', duration_ms: 0 }, corsHeaders, 400);
   }
 
+  const sourceMapArtifactIntakeEnabled = isSourceMapArtifactIntakeEnabled(env);
+  if (body.sourceMapUrl && !sourceMapArtifactIntakeEnabled) {
+    return json(
+      {
+        success: false,
+        error: 'Source map artifact intake is disabled for this deployment.',
+        duration_ms: 0
+      },
+      corsHeaders,
+      403
+    );
+  }
+
   // Validate URLs
   let bundleUrl: URL;
   let sourceMapUrl: URL | undefined;
@@ -141,7 +164,7 @@ async function handleScan(
     const bundleArtifact = await fetchArtifact(bundleUrl, 'bundle');
 
     // Process ZIP
-    const files = await processZipFile(new Blob([bundleArtifact.buffer]), defaultConfig, (msg) =>
+    const files = await processZipBuffer(bundleArtifact.buffer, defaultConfig, (msg) =>
       console.log(`[ZIP] ${msg}`)
     );
 
@@ -213,6 +236,10 @@ function isHttpUrl(url: URL): boolean {
   return url.protocol === 'http:' || url.protocol === 'https:';
 }
 
+function isSourceMapArtifactIntakeEnabled(env: Env): boolean {
+  return env.SOURCE_MAP_ARTIFACT_INTAKE_ENABLED?.trim().toLowerCase() === 'true';
+}
+
 async function sha256Hex(buffer: ArrayBuffer): Promise<string> {
   const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
   return [...new Uint8Array(hashBuffer)].map((byte) => byte.toString(16).padStart(2, '0')).join('');
@@ -255,7 +282,7 @@ async function fetchSourceMapArtifact(url: URL): Promise<{
   const artifact = await fetchArtifact(url, 'source map artifact');
   try {
     return {
-      files: await processZipFile(new Blob([artifact.buffer]), defaultConfig, (msg) =>
+      files: await processZipBuffer(artifact.buffer, defaultConfig, (msg) =>
         console.log(`[SOURCE_MAP_ZIP] ${msg}`)
       ),
       metadata: artifact.metadata

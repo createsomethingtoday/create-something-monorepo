@@ -91,6 +91,61 @@ export async function processZipBuffer(
   config: ScanConfig,
   onProgress: ProgressCallback
 ): Promise<UnzippedFile[]> {
-  const blob = new Blob([buffer]);
-  return processZipFile(blob, config, onProgress);
+  onProgress('Reading ZIP file...');
+  const zip = new JSZip();
+
+  try {
+    const loadedZip = await zip.loadAsync(buffer);
+    const files: UnzippedFile[] = [];
+    let totalBytes = 0;
+
+    const entries = Object.keys(loadedZip.files);
+
+    if (entries.length > config.globalScanConfig.zipSafety.maxFiles) {
+      throw new Error(
+        `ZIP contains too many files (${entries.length}). ` +
+        `Limit: ${config.globalScanConfig.zipSafety.maxFiles}`
+      );
+    }
+
+    onProgress(`Unpacking ${entries.length} files...`);
+
+    for (const rawFilename of entries) {
+      const entry = loadedZip.files[rawFilename];
+      if (!entry) continue;
+
+      if (entry.dir) continue;
+
+      const normalizedPath = rawFilename.replace(/\\/g, '/').replace(/^\/+/, '');
+
+      if (
+        normalizedPath.includes('..') ||
+        normalizedPath.includes('__MACOSX') ||
+        normalizedPath.startsWith('/')
+      ) {
+        if (!normalizedPath.includes('__MACOSX')) {
+          console.warn(`Skipping unsafe or system path: ${normalizedPath}`);
+        }
+        continue;
+      }
+
+      const content = await entry.async('uint8array');
+      totalBytes += content.length;
+
+      if (totalBytes > config.globalScanConfig.zipSafety.maxTotalUnzippedBytes) {
+        const limitMB = (config.globalScanConfig.zipSafety.maxTotalUnzippedBytes / 1024 / 1024).toFixed(1);
+        throw new Error(`Total unzipped size exceeds limit of ${limitMB}MB`);
+      }
+
+      files.push({
+        path: normalizedPath,
+        data: content
+      });
+    }
+
+    return files;
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    throw new Error(`Failed to process ZIP: ${message}`);
+  }
 }

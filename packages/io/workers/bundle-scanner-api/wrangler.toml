@@ -16,7 +16,17 @@ workers_dev = true
 
 [vars]
 ENVIRONMENT = "production"
+SOURCE_MAP_ARTIFACT_INTAKE_ENABLED = "false"
 # Allowed origins for CORS
+ALLOWED_ORIGINS = "https://wf.createsomething.io,https://wf-asset-dashboard.vercel.app,https://webflow.com"
+
+[env.reviewers]
+name = "bundle-scanner-api-reviewers"
+workers_dev = true
+
+[env.reviewers.vars]
+ENVIRONMENT = "reviewers"
+SOURCE_MAP_ARTIFACT_INTAKE_ENABLED = "true"
 ALLOWED_ORIGINS = "https://wf.createsomething.io,https://wf-asset-dashboard.vercel.app,https://webflow.com"
 
 # Secrets (set via `wrangler secret put`):
