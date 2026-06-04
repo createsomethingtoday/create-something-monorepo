@@ -27,11 +27,16 @@ export type BettermodePost = {
   url?: string | null;
   publishedAt?: string | null;
   createdAt?: string | null;
+  updatedAt?: string | null;
+  lastActivityAt?: string | null;
   spaceId?: string | null;
   space?: { id: string; name?: string | null; slug?: string | null } | null;
   owner?: BettermodeMember | null;
   createdBy?: BettermodeMember | null;
   parentId?: string | null;
+  repliedTo?: { id: string; title?: string | null; url?: string | null } | null;
+  repliesCount?: number | null;
+  totalRepliesCount?: number | null;
   // Reply tree (top-level posts) or replies on a reply (rare).
   replies?: { nodes?: BettermodePost[] } | null;
 };
@@ -134,6 +139,8 @@ export async function fetchPostThread(
         url
         publishedAt
         createdAt
+        updatedAt
+        lastActivityAt
         spaceId
         space { id name slug }
         owner {
@@ -143,6 +150,9 @@ export async function fetchPostThread(
           member { ...MemberFields }
         }
         repliedToId
+        repliedTo { id title url }
+        repliesCount
+        totalRepliesCount
         replies(limit: 50) {
           nodes {
             id
@@ -170,12 +180,76 @@ export async function fetchPostThread(
   return data.post ? normalizePost(data.post) : null;
 }
 
+export async function listRecentPostsBySpace(
+  spaceId: string,
+  limit: number,
+  appToken: string,
+  auth: BettermodeAuth,
+): Promise<{ nodes: BettermodePost[]; totalCount: number | null }> {
+  const data = await graphQl<{
+    posts: { nodes?: RawBettermodePost[] | null; totalCount?: number | null };
+  }>(
+    auth.endpoint,
+    bearer(appToken),
+    `query RecentPosts($limit: Int!, $spaceIds: [ID!]!) {
+      posts(
+        limit: $limit
+        spaceIds: $spaceIds
+        orderBy: createdAt
+        reverse: true
+        excludePins: true
+      ) {
+        totalCount
+        nodes {
+          id
+          slug
+          title
+          shortContent
+          description
+          url
+          publishedAt
+          createdAt
+          updatedAt
+          lastActivityAt
+          spaceId
+          space { id name slug }
+          owner {
+            member { ...MemberFields }
+          }
+          createdBy {
+            member { ...MemberFields }
+          }
+          repliedToId
+          repliedTo { id title url }
+          repliesCount
+          totalRepliesCount
+        }
+      }
+    }
+    fragment MemberFields on Member {
+      id
+      name
+      username
+      email
+      profilePictureId
+      role { id name type }
+    }`,
+    { limit, spaceIds: [spaceId] },
+  );
+
+  return {
+    nodes: (data.posts.nodes ?? []).map(normalizePost),
+    totalCount: data.posts.totalCount ?? null,
+  };
+}
+
 export async function createReply(
   parentPostId: string,
-  spaceId: string | null | undefined,
+  _spaceId: string | null | undefined,
   htmlContent: string,
   memberToken: string,
   auth: BettermodeAuth,
+  replyPostTypeId: string,
 ): Promise<{ id: string; url?: string | null }> {
   const data = await graphQl<{
     createReply: { id: string; url?: string | null };
@@ -191,8 +265,7 @@ export async function createReply(
     {
       postId: parentPostId,
       input: {
-        publish: true,
-        ...(spaceId ? { spaceId } : {}),
+        postTypeId: replyPostTypeId,
         mappingFields: [
           {
             key: 'content',
@@ -203,7 +276,26 @@ export async function createReply(
       },
     },
   );
-  return data.createReply;
+
+  const reply = data.createReply;
+  if (!reply?.id) {
+    return reply;
+  }
+
+  const published = await graphQl<{
+    publishPost: { id: string; url?: string | null };
+  }>(
+    auth.endpoint,
+    bearer(memberToken),
+    `mutation PublishPost($postId: ID!) {
+      publishPost(postId: $postId) {
+        id
+        url
+      }
+    }`,
+    { postId: reply.id },
+  );
+  return published.publishPost;
 }
 
 async function graphQl<T>(

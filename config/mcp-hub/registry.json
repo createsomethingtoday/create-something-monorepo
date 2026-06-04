@@ -76,7 +76,7 @@
         ]
       },
       "catalog_exposure_mode": "direct",
-      "estimated_tool_count": 4
+      "estimated_tool_count": 5
     },
     "community-mcp": {
       "transport": "stdio",

@@ -5,6 +5,8 @@
 //   get_creator_context        (Airtable → Creator + linked Assets/templates)
 //   list_recent_approved_drafts (D1 → few-shot examples for Dify)
 //   get_draft_status           (D1 → audit lookup by post ID)
+//   list_pending_community_actions (D1 → community cockpit)
+//   get_community_work_item     (D1 → per-thread community state)
 //
 // Each tool returns a single text content block with JSON. The Dify agent
 // (or any MCP client) parses JSON for downstream use.
@@ -19,10 +21,13 @@ import {
   appAccessToken,
   bettermodeAuth,
   fetchPostThread,
+  listRecentPostsBySpace,
   type BettermodePost,
 } from '../lib/bettermode.js';
 import {
+  getCommunityWorkItemByPostId,
   getDraftStatusByPostId,
+  listPendingCommunityActions,
   listRecentApprovedDrafts,
 } from '../lib/store.js';
 
@@ -31,6 +36,7 @@ export type McpEnv = {
   BETTERMODE_GRAPHQL_ENDPOINT?: string;
   BETTERMODE_DEFAULT_NETWORK_ID?: string;
   BETTERMODE_MARKETPLACE_SPACE_ID?: string;
+  BETTERMODE_STAFF_AUTHOR_DOMAINS?: string;
   BETTERMODE_CLIENT_ID?: string;
   BETTERMODE_CLIENT_SECRET?: string;
   AIRTABLE_API_BASE?: string;
@@ -41,6 +47,96 @@ export type McpEnv = {
   AIRTABLE_CREATORS_EMAIL_FIELD?: string;
   AIRTABLE_CREATORS_ASSETS_LINK_FIELD?: string;
 };
+
+export type RecentMarketplacePostsArgs = {
+  since?: string;
+  limit?: number;
+  include_staff?: boolean;
+};
+
+export async function listRecentMarketplacePosts(
+  env: McpEnv,
+  args: RecentMarketplacePostsArgs,
+): Promise<Record<string, unknown>> {
+  const auth = bettermodeAuth(env);
+  const networkId = env.BETTERMODE_DEFAULT_NETWORK_ID;
+  if (!networkId) throw new Error('BETTERMODE_DEFAULT_NETWORK_ID not configured');
+  const spaceId = env.BETTERMODE_MARKETPLACE_SPACE_ID;
+  if (!spaceId) throw new Error('BETTERMODE_MARKETPLACE_SPACE_ID not configured');
+
+  const since = args.since;
+  const limit = args.limit ?? 50;
+  const includeStaff = args.include_staff ?? false;
+  if (!Number.isInteger(limit) || limit < 1 || limit > 100) {
+    throw new Error('limit must be an integer between 1 and 100');
+  }
+  const sinceMs = since ? Date.parse(since) : null;
+  if (since && Number.isNaN(sinceMs)) {
+    throw new Error('since must be an ISO-compatible timestamp');
+  }
+
+  const token = await appAccessToken(networkId, auth);
+  const { nodes, totalCount } = await listRecentPostsBySpace(spaceId, limit, token, auth);
+  const staffDomains = parseDomains(env.BETTERMODE_STAFF_AUTHOR_DOMAINS);
+  const rows = [];
+
+  for (const post of nodes) {
+    const effectiveTime = post.publishedAt ?? post.createdAt ?? null;
+    if (sinceMs !== null && effectiveTime && Date.parse(effectiveTime) <= sinceMs) continue;
+    const author = post.owner || post.createdBy;
+    const isStaffAuthor = isStaffEmail(author?.email, staffDomains);
+    if (!includeStaff && isStaffAuthor) continue;
+
+    const draftStatus = await getDraftStatusByPostId(env.DB, post.id);
+    rows.push({
+      id: post.id,
+      title: post.title ?? null,
+      url: post.url ?? null,
+      created_at: post.createdAt ?? null,
+      published_at: post.publishedAt ?? null,
+      updated_at: post.updatedAt ?? null,
+      last_activity_at: post.lastActivityAt ?? null,
+      is_top_level: !post.parentId,
+      parent_post_id: post.parentId ?? null,
+      parent_post: post.repliedTo
+        ? {
+            id: post.repliedTo.id,
+            title: post.repliedTo.title ?? null,
+            url: post.repliedTo.url ?? null,
+          }
+        : null,
+      replies_count: post.repliesCount ?? null,
+      total_replies_count: post.totalRepliesCount ?? null,
+      author: author
+        ? {
+            id: author.id,
+            name: author.name ?? null,
+            username: author.username ?? null,
+            email: author.email ?? null,
+            role: author.role?.name ?? null,
+          }
+        : null,
+      is_staff_author: isStaffAuthor,
+      draft: {
+        seen_by_agent: !!draftStatus.signal_id,
+        queued: draftStatus.exists,
+        status: draftStatus.status,
+        queue_created_at: draftStatus.created_at,
+      },
+    });
+  }
+
+  return {
+    space_id: spaceId,
+    since: since ?? null,
+    inspected_limit: limit,
+    bettermode_total_count: totalCount,
+    include_staff: includeStaff,
+    staff_domains: staffDomains,
+    returned_count: rows.length,
+    posts: rows,
+  };
+}
 
 export function registerCreatorTools(server: McpServer, env: McpEnv): void {
   server.tool(
@@ -63,6 +159,106 @@ export function registerCreatorTools(server: McpServer, env: McpEnv): void {
       const body = post ? shapePost(post, env.BETTERMODE_MARKETPLACE_SPACE_ID) : { found: false };
       return {
         content: [{ type: 'text' as const, text: JSON.stringify(body, null, 2) }],
+      };
+    },
+  );
+
+  server.tool(
+    'list_recent_marketplace_posts',
+    [
+      'Diagnostic audit tool: list recent posts and replies in the configured',
+      'Marketplace Creators Bettermode space, newest first, and join each item',
+      'against the local D1 draft queue status. Returns sanitized metadata only',
+      '(IDs, timestamps, author identity, title, URL, and draft status); it does',
+      'not return post body content or create drafts.',
+    ].join(' '),
+    {
+      since: z
+        .string()
+        .optional()
+        .describe('Optional ISO timestamp; only posts created or published after this time are returned'),
+      limit: z
+        .number()
+        .int()
+        .min(1)
+        .max(100)
+        .default(50)
+        .describe('How many recent Bettermode rows to inspect before filtering; default 50, max 100'),
+      include_staff: z
+        .boolean()
+        .default(false)
+        .describe('Include authors whose email domain matches BETTERMODE_STAFF_AUTHOR_DOMAINS'),
+    },
+    async ({ since, limit, include_staff }) => {
+      const body = await listRecentMarketplacePosts(env, { since, limit, include_staff });
+      return {
+        content: [
+          {
+            type: 'text' as const,
+            text: JSON.stringify(body, null, 2),
+          },
+        ],
+      };
+    },
+  );
+
+  server.tool(
+    'list_pending_community_actions',
+    [
+      'Operator cockpit tool: list Bettermode Marketplace Creator community',
+      'work items that still need attention, including lane, priority, urgency,',
+      'draft status, due time, and next action. Read-only; does not generate,',
+      'approve, publish, or mutate any community state.',
+    ].join(' '),
+    {
+      statuses: z
+        .array(
+          z.enum([
+            'new',
+            'draft_ready',
+            'escalated',
+            'follow_up_due',
+            'triaged',
+            'externally_resolved',
+            'skipped',
+            'sent',
+          ]),
+        )
+        .default(['new', 'draft_ready', 'escalated', 'follow_up_due'])
+        .describe('Work-item statuses to include'),
+      limit: z
+        .number()
+        .int()
+        .min(1)
+        .max(100)
+        .default(25)
+        .describe('Maximum work items to return; default 25, max 100'),
+    },
+    async ({ statuses, limit }) => {
+      const actions = await listPendingCommunityActions(env.DB, { statuses, limit });
+      return {
+        content: [
+          {
+            type: 'text' as const,
+            text: JSON.stringify({ actions }, null, 2),
+          },
+        ],
+      };
+    },
+  );
+
+  server.tool(
+    'get_community_work_item',
+    [
+      'Return the normalized community operations state for a Bettermode post',
+      'ID, including lane, status, next action, queue linkage, metadata, and the',
+      'last notification/webhook/sweep events observed for that post.',
+    ].join(' '),
+    { post_id: z.string().min(1).describe('Bettermode post ID') },
+    async ({ post_id }) => {
+      const item = await getCommunityWorkItemByPostId(env.DB, post_id);
+      return {
+        content: [{ type: 'text' as const, text: JSON.stringify({ item }, null, 2) }],
       };
     },
   );
@@ -232,6 +428,19 @@ function pickString(
     if (s) return s;
   }
   return null;
+}
+
+function parseDomains(value: string | undefined): string[] {
+  return (value ?? '')
+    .split(',')
+    .map((domain) => domain.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+function isStaffEmail(email: string | null | undefined, staffDomains: string[]): boolean {
+  if (!email || staffDomains.length === 0) return false;
+  const domain = email.split('@').pop()?.trim().toLowerCase();
+  return !!domain && staffDomains.includes(domain);
 }
 
 function coerceFieldToString(value: unknown): string | null {

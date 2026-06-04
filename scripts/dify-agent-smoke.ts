@@ -10,7 +10,8 @@ import {
   observationsContain,
   type DifyChatInput,
   type DifyChatOutput,
-  type DifyClientConfig
+  type DifyClientConfig,
+  type DifyToolCall
 } from '../evals/braintrust/dify/shared.js';
 
 type ToolRisk = 'read' | 'write' | 'external_side_effect' | 'secret_sensitive' | 'unknown';
@@ -34,6 +35,7 @@ type DifyMcpServer = {
 type DifySmokeCase = {
   id: string;
   query: string;
+  inputs?: Record<string, string>;
   required_tools?: string[];
   forbidden_tools?: string[];
   expected_answer_substrings?: string[];
@@ -90,6 +92,7 @@ type SmokeOptions = {
 type SmokeRunCase = {
   id: string;
   query: string;
+  inputs: Record<string, string>;
   requiredTools: string[];
   forbiddenTools: string[];
   expectedAnswers: string[];
@@ -430,6 +433,7 @@ function buildSmokeCases(
       {
         id: 'cli',
         query: options.query,
+        inputs: {},
         requiredTools: options.expectedTools,
         forbiddenTools: uniqueTools([...inferredForbiddenTools, ...options.forbiddenTools]),
         expectedAnswers: options.expectedAnswers,
@@ -479,6 +483,7 @@ function buildSmokeCases(
     return {
       id: smokeCase.id,
       query: smokeCase.query,
+      inputs: smokeCase.inputs ?? {},
       requiredTools: uniqueTools(smokeCase.required_tools ?? []),
       forbiddenTools: allowWriteTools
         ? uniqueTools(smokeCase.forbidden_tools ?? [])
@@ -608,6 +613,7 @@ async function runSmokeCase(
     const input: DifyChatInput = {
       name: `cli_smoke:${agentId}:${smokeCase.id}:${attempt}`,
       query: smokeCase.query,
+      inputs: smokeCase.inputs,
       shouldUseTool: smokeCase.requiredTools[0],
       forbiddenTools: smokeCase.forbiddenTools
     };

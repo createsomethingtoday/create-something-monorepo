@@ -15,6 +15,9 @@ Read-only MCP server exposing Bettermode + Airtable + community queue helpers to
 | Tool | Returns | Used to |
 |---|---|---|
 | `fetch_post_thread(post_id)` | post + reply thread + author | Ground the draft in actual content |
+| `list_recent_marketplace_posts(since, limit, include_staff)` | recent Marketplace Creator posts/replies + draft queue status | Audit missed draft coverage without returning post bodies |
+| `list_pending_community_actions(statuses, limit)` | normalized community work items | Operator cockpit for unanswered, draft-ready, escalated, and follow-up work |
+| `get_community_work_item(post_id)` | one thread's work-item state + recent events | Debug why a thread is pending, skipped, sent, or escalated |
 | `get_creator_context(email)` | Airtable Creator + linked Assets | Reference templates the creator owns |
 | `list_recent_approved_drafts(limit)` | Recent admin replies that were sent | Few-shot voice examples |
 | `get_draft_status(post_id)` | Existing draft status if any | Avoid double-drafting on retries |
@@ -31,10 +34,10 @@ bettermode-creator-mcp.workers.dev (Streamable HTTP /mcp, SSE /sse)
    │
    ├─→ Bettermode GraphQL (NETWORK-context limitedToken from app creds)
    ├─→ Airtable REST (Creators table tbljt0plqxdMARZXb)
-   └─→ D1 create-something-db (community_signals + community_queue, READ-ONLY)
+   └─→ D1 create-something-db (community_signals + community_queue + community_work_items, READ-ONLY)
 ```
 
-The MCP **never writes**. The agent worker (`apps/bettermode-marketplace-creator-agent`) owns webhook ingestion, draft persistence, dynamic-block rendering, and posting as the admin.
+The MCP **never writes**. The agent worker (`apps/bettermode-marketplace-creator-agent`) owns webhook ingestion, notification ingest, scheduled sweeps, work-item state, draft persistence, dynamic-block rendering, and publishing app-authored replies after admin approval.
 
 ## Deploy
 
@@ -84,5 +87,5 @@ curl -X POST https://bettermode-creator.mcp.createsomething.agency/mcp \
 2. Server ID: `bettermode-creator`
 3. URL: `https://bettermode-creator.mcp.createsomething.agency/mcp`
 4. Auth: Bearer, value from Infisical `WEBFLOW_BETTERMODE_CREATOR_MCP_BEARER`
-5. Refresh tools — all four should appear
+5. Refresh tools — all tools from the table above should appear
 6. Build an Agent app that uses these tools + the Marketplace policy knowledge base

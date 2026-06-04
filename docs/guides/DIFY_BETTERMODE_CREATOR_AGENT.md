@@ -1,6 +1,6 @@
 # Dify Bettermode Marketplace Creator Agent
 
-Status: MCP server deployed; Dify Studio setup pending; agent worker switches to Dify automatically when `DIFY_AGENT_API_KEY` is in Infisical.
+Status: MCP server deployed; Dify app published; agent worker requires `DIFY_AGENT_API_KEY` and fails closed instead of drafting without policy grounding.
 
 ## Purpose
 
@@ -52,13 +52,14 @@ Tools (from `tools/list`):
 
 Create one Dify dataset (recommended name: `Webflow Marketplace Policy`) and ingest:
 
-| Source | Type | Notes |
-|---|---|---|
-| `https://webflow.com/templates/submission-guidelines` | Web | Public submission guidelines page. Pull as-is. |
-| `https://webflow.com/templates/grading-rubric` | Web | Public grading rubric. |
-| `~/Downloads/Submission Guidelines Updates V2.md` | File | Internal updates that supersede published guidelines on conflict. Tag this doc `effective_2026-05` so retrieval can prefer it. |
+| Source                                                | Type | Notes                                                                                                                          |
+| ----------------------------------------------------- | ---- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `https://webflow.com/templates/submission-guidelines` | Web  | Public submission guidelines page. Pull as-is.                                                                                 |
+| `https://webflow.com/templates/grading-rubric`        | Web  | Public grading rubric.                                                                                                         |
+| `~/Downloads/Submission Guidelines Updates V2.md`     | File | Internal updates that supersede published guidelines on conflict. Tag this doc `effective_2026-05` so retrieval can prefer it. |
 
 Settings:
+
 - Indexing: high quality (text-embedding-3 or workspace default)
 - Retrieval: hybrid search, reranking enabled, top_k 5, no score threshold
 - Chunking: paragraph (sentence chunking will fragment the rubric)
@@ -75,7 +76,7 @@ Settings:
    - Name: `Bettermode Marketplace Creator Agent`
    - Mode: Agent (function calling)
    - Model: `gpt-5.4` (workspace-approved; matches the YouTube/Notion agent)
-   - API mode: blocking (the worker calls `response_mode=blocking`)
+   - API mode: streaming (the worker calls `response_mode=streaming` and accumulates SSE chunks)
    - Or simpler: import `config/dify-agents/bettermode-marketplace-creator-agent.dify.yml` from this repo to get the model, prompt, tools, and inputs preconfigured.
 4. Attach the **Webflow Marketplace Policy** knowledge base (dataset).
 5. Enable tools:
@@ -132,9 +133,9 @@ If regenerate=true was passed in inputs, change the angle (terser, warmer, or mo
 
 ## Storing the Dify app API key
 
-| Infisical name | Worker secret | Notes |
-|---|---|---|
-| `WEBFLOW_DIFY_AGENT_API_KEY` | `DIFY_AGENT_API_KEY` | Pushed by `secrets:push`. Once set, the worker uses Dify; on Dify failure it auto-falls back to direct OpenAI for that request. |
+| Infisical name                          | Worker secret             | Notes                                                                                                                                                                                         |
+| --------------------------------------- | ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `WEBFLOW_DIFY_AGENT_API_KEY`            | `DIFY_AGENT_API_KEY`      | Required by `secrets:push`. The worker uses Dify as the only drafting brain; if Dify is missing or fails, it skips draft creation.                                                            |
 | `WEBFLOW_BETTERMODE_CREATOR_MCP_BEARER` | (consumed in Dify Studio) | Already set by deploy. Rotate via `openssl rand -hex 32`, update Infisical, re-push the MCP worker secret with `wrangler secret put MCP_BEARER_TOKEN`, and update the Dify MCP server config. |
 
 ## Smoke test (after Studio setup)
@@ -160,6 +161,7 @@ cd apps/bettermode-marketplace-creator-agent
 ```
 
 The new draft should:
+
 1. Reference policy from the KB (no invented thresholds, no AI-component policy guesses).
 2. Or, if the KB does not yet cover AI components, use the abstain phrasing from the system prompt and ask one clarifying question.
 
@@ -168,4 +170,4 @@ The new draft should:
 - **Dify app API key**: rotate in Studio → API Access → Create new key → archive old. Update `WEBFLOW_DIFY_AGENT_API_KEY` in Infisical, run `pnpm secrets:push`. No worker redeploy needed.
 - **MCP bearer token**: `openssl rand -hex 32`, set new in Infisical (`WEBFLOW_BETTERMODE_CREATOR_MCP_BEARER`), `wrangler secret put MCP_BEARER_TOKEN` in `packages/bettermode-creator-mcp/worker`, then update the Dify MCP server config to the new value.
 - **Bettermode app secrets**: rotate in Bettermode app dev panel; update `WEBFLOW_BETTERMODE_CLIENT_SECRET` and `WEBFLOW_BETTERMODE_SIGNING_SECRET`; `pnpm secrets:push` for the agent worker, `wrangler secret put` for the MCP worker.
-- **OpenAI**: still used as the fallback path; rotate `WEBFLOW_OPENAI_API_KEY` periodically.
+- **Dify availability**: if Dify Service API calls fail, the worker logs the failure and does not create an ungrounded draft.

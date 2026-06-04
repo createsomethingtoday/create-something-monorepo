@@ -1,13 +1,13 @@
 {
   "version": 1,
-  "status": "draft_pending_studio_import",
+  "status": "published",
   "created_at": "2026-05-08",
   "dify_app": {
     "name": "Bettermode Marketplace Creator Agent",
     "type": "agent",
     "description": "Drafts admin replies for posts in the Webflow Community Marketplace Creators space, grounded in the Marketplace policy knowledge base and the bettermode-creator MCP. Consumed by the Cloudflare Worker at apps/bettermode-marketplace-creator-agent via the chat-messages API.",
     "recommended_model": "gpt-5.4",
-    "api_response_mode": "blocking",
+    "api_response_mode": "streaming",
     "service_api": {
       "base_url": "https://api.dify.ai/v1",
       "api_key_secret": {
@@ -106,7 +106,7 @@
       "package_path": "apps/bettermode-marketplace-creator-agent",
       "calls": "POST {api_base}/chat-messages",
       "auth": "Authorization: Bearer ${WEBFLOW_DIFY_AGENT_API_KEY}",
-      "fallback": "If Dify is unreachable or DIFY_AGENT_API_KEY is unset, the worker falls back to direct OpenAI drafting from src/openai.ts (no policy KB grounding)."
+      "failure_mode": "If Dify is unreachable or DIFY_AGENT_API_KEY is unset, the worker skips draft creation rather than generating an ungrounded reply."
     }
   ],
   "import_instructions": [

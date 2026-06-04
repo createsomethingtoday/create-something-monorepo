@@ -33,6 +33,14 @@ export type BettermodeMeta = {
   author_name?: string | null;
 };
 
+export type QueueStatus = {
+  signal_id: string | null;
+  queue_id: string | null;
+  status: DraftRecord['status'] | null;
+  created_at: string | null;
+  sent_at: string | null;
+};
+
 export type SignalUpsert = {
   postId: string;
   postUrl?: string | null;
@@ -45,12 +53,85 @@ export type DraftUpsert = {
   draftContent: string;
 };
 
+export type CommunityEventInput = {
+  eventType: string;
+  eventSource: 'content_webhook' | 'notification_webhook' | 'scheduled_sweep';
+  dedupeKey?: string | null;
+  sourceId?: string | null;
+  sourceUrl?: string | null;
+  spaceId?: string | null;
+  actorId?: string | null;
+  actorName?: string | null;
+  actorEmail?: string | null;
+  status?: string;
+  payload?: unknown;
+  metadata?: Record<string, unknown>;
+};
+
+export type WorkItemInput = {
+  postId: string;
+  sourceUrl?: string | null;
+  title?: string | null;
+  lane: string;
+  status: string;
+  priority: number;
+  urgency: string;
+  nextAction?: string | null;
+  dueAt?: string | null;
+  authorId?: string | null;
+  authorName?: string | null;
+  authorEmail?: string | null;
+  signalId?: string | null;
+  queueId?: string | null;
+  draftStatus?: string | null;
+  lastActivityAt?: string | null;
+  lastDraftedAt?: string | null;
+  lastSentAt?: string | null;
+  escalationReason?: string | null;
+  metadata?: Record<string, unknown>;
+};
+
 function nowIso(): string {
   return new Date().toISOString();
 }
 
 function newId(prefix: string): string {
   return `${prefix}_${crypto.randomUUID()}`;
+}
+
+export async function recordCommunityEvent(
+  db: D1Database,
+  input: CommunityEventInput,
+): Promise<string> {
+  const id = newId('cevt');
+  const now = nowIso();
+  await db
+    .prepare(
+      `INSERT OR IGNORE INTO community_events
+        (id, platform, event_type, event_source, dedupe_key, source_id, source_url,
+         space_id, actor_id, actor_name, actor_email, status, received_at,
+         processed_at, payload, metadata)
+       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?13, ?14, ?15)`,
+    )
+    .bind(
+      id,
+      PLATFORM,
+      input.eventType,
+      input.eventSource,
+      input.dedupeKey ?? null,
+      input.sourceId ?? null,
+      input.sourceUrl ?? null,
+      input.spaceId ?? null,
+      input.actorId ?? null,
+      input.actorName ?? null,
+      input.actorEmail ?? null,
+      input.status ?? 'observed',
+      now,
+      input.payload === undefined ? null : JSON.stringify(input.payload),
+      input.metadata ? JSON.stringify(input.metadata) : null,
+    )
+    .run();
+  return id;
 }
 
 export async function upsertSignal(db: D1Database, input: SignalUpsert): Promise<string> {
@@ -86,6 +167,156 @@ export async function upsertSignal(db: D1Database, input: SignalUpsert): Promise
        VALUES (?1, ?2, 'reply', ?3, ?4, ?5, 0.5, 'medium', 'new', ?6, ?7)`,
     )
     .bind(id, PLATFORM, input.postUrl ?? null, input.postId, input.postContent, now, metadataJson)
+    .run();
+  return id;
+}
+
+export async function getQueueStatusByPostId(
+  db: D1Database,
+  postId: string,
+): Promise<QueueStatus> {
+  const row = await db
+    .prepare(
+      `SELECT
+         s.id AS signal_id,
+         q.id AS queue_id,
+         q.status AS status,
+         q.created_at AS created_at,
+         q.sent_at AS sent_at
+       FROM community_signals s
+       LEFT JOIN community_queue q ON q.signal_id = s.id
+       WHERE s.platform = ?1 AND s.source_id = ?2
+       ORDER BY q.created_at DESC
+       LIMIT 1`,
+    )
+    .bind(PLATFORM, postId)
+    .first<{
+      signal_id: string | null;
+      queue_id: string | null;
+      status: DraftRecord['status'] | null;
+      created_at: string | null;
+      sent_at: string | null;
+    }>();
+
+  return {
+    signal_id: row?.signal_id ?? null,
+    queue_id: row?.queue_id ?? null,
+    status: row?.status ?? null,
+    created_at: row?.created_at ?? null,
+    sent_at: row?.sent_at ?? null,
+  };
+}
+
+export async function upsertCommunityWorkItem(
+  db: D1Database,
+  input: WorkItemInput,
+): Promise<string> {
+  const existing = await db
+    .prepare(
+      `SELECT id, status
+       FROM community_work_items
+       WHERE platform = ?1 AND source_id = ?2
+       LIMIT 1`,
+    )
+    .bind(PLATFORM, input.postId)
+    .first<{ id: string; status: string }>();
+
+  const now = nowIso();
+  const metadataJson = input.metadata ? JSON.stringify(input.metadata) : null;
+  const stableStatus = preserveTerminalStatus(existing?.status, input.status);
+
+  if (existing?.id) {
+    await db
+      .prepare(
+        `UPDATE community_work_items
+         SET source_url = COALESCE(?1, source_url),
+             title = COALESCE(?2, title),
+             lane = ?3,
+             status = ?4,
+             priority = ?5,
+             urgency = ?6,
+             next_action = ?7,
+             due_at = ?8,
+             author_id = COALESCE(?9, author_id),
+             author_name = COALESCE(?10, author_name),
+             author_email = COALESCE(?11, author_email),
+             signal_id = COALESCE(?12, signal_id),
+             queue_id = COALESCE(?13, queue_id),
+             draft_status = COALESCE(?14, draft_status),
+             last_seen_at = ?15,
+             last_activity_at = COALESCE(?16, last_activity_at),
+             last_drafted_at = COALESCE(?17, last_drafted_at),
+             last_sent_at = COALESCE(?18, last_sent_at),
+             escalation_reason = COALESCE(?19, escalation_reason),
+             metadata = COALESCE(?20, metadata),
+             updated_at = ?15
+         WHERE id = ?21`,
+      )
+      .bind(
+        input.sourceUrl ?? null,
+        input.title ?? null,
+        input.lane,
+        stableStatus,
+        input.priority,
+        input.urgency,
+        input.nextAction ?? null,
+        input.dueAt ?? null,
+        input.authorId ?? null,
+        input.authorName ?? null,
+        input.authorEmail ?? null,
+        input.signalId ?? null,
+        input.queueId ?? null,
+        input.draftStatus ?? null,
+        now,
+        input.lastActivityAt ?? null,
+        input.lastDraftedAt ?? null,
+        input.lastSentAt ?? null,
+        input.escalationReason ?? null,
+        metadataJson,
+        existing.id,
+      )
+      .run();
+    return existing.id;
+  }
+
+  const id = newId('cwi');
+  await db
+    .prepare(
+      `INSERT INTO community_work_items
+        (id, platform, source_id, source_url, title, lane, status, priority,
+         urgency, next_action, due_at, author_id, author_name, author_email,
+         signal_id, queue_id, draft_status, first_seen_at, last_seen_at,
+         last_activity_at, last_drafted_at, last_sent_at, escalation_reason,
+         metadata)
+       VALUES
+        (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14,
+         ?15, ?16, ?17, ?18, ?18, ?19, ?20, ?21, ?22, ?23)`,
+    )
+    .bind(
+      id,
+      PLATFORM,
+      input.postId,
+      input.sourceUrl ?? null,
+      input.title ?? null,
+      input.lane,
+      stableStatus,
+      input.priority,
+      input.urgency,
+      input.nextAction ?? null,
+      input.dueAt ?? null,
+      input.authorId ?? null,
+      input.authorName ?? null,
+      input.authorEmail ?? null,
+      input.signalId ?? null,
+      input.queueId ?? null,
+      input.draftStatus ?? null,
+      now,
+      input.lastActivityAt ?? null,
+      input.lastDraftedAt ?? null,
+      input.lastSentAt ?? null,
+      input.escalationReason ?? null,
+      metadataJson,
+    )
     .run();
   return id;
 }
@@ -245,6 +476,53 @@ export async function markRejected(db: D1Database, draftId: string): Promise<voi
     )
     .bind(draftId)
     .run();
+}
+
+export async function markCommunityWorkItemSent(
+  db: D1Database,
+  postId: string,
+  queueId: string | null,
+): Promise<void> {
+  const now = nowIso();
+  await db
+    .prepare(
+      `UPDATE community_work_items
+       SET status = 'sent',
+           draft_status = 'sent',
+           queue_id = COALESCE(?1, queue_id),
+           last_sent_at = ?2,
+           updated_at = ?2
+       WHERE platform = ?3 AND source_id = ?4`,
+    )
+    .bind(queueId, now, PLATFORM, postId)
+    .run();
+}
+
+export async function markCommunityWorkItemSkipped(
+  db: D1Database,
+  postId: string,
+  reason: string | null,
+): Promise<void> {
+  const now = nowIso();
+  await db
+    .prepare(
+      `UPDATE community_work_items
+       SET status = 'skipped',
+           draft_status = 'rejected',
+           escalation_reason = COALESCE(?1, escalation_reason),
+           updated_at = ?2
+       WHERE platform = ?3 AND source_id = ?4`,
+    )
+    .bind(reason, now, PLATFORM, postId)
+    .run();
+}
+
+function preserveTerminalStatus(current: string | undefined, next: string): string {
+  if (!current) return next;
+  if (current === 'sent' || current === 'externally_resolved' || current === 'skipped') {
+    return current;
+  }
+  return next;
 }
 
 function parseMetadata(value: string | null): BettermodeMeta {

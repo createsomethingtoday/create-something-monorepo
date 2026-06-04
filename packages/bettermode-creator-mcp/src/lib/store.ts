@@ -39,6 +39,119 @@ export type DraftStatus = {
   queue_id: string | null;
 };
 
+export type CommunityAction = {
+  id: string;
+  source_id: string;
+  source_url: string | null;
+  title: string | null;
+  lane: string;
+  status: string;
+  priority: number;
+  urgency: string;
+  next_action: string | null;
+  due_at: string | null;
+  author_name: string | null;
+  author_email: string | null;
+  draft_status: string | null;
+  queue_id: string | null;
+  last_activity_at: string | null;
+  last_seen_at: string;
+  updated_at: string;
+};
+
+export type CommunityEvent = {
+  event_type: string;
+  event_source: string;
+  source_id: string | null;
+  status: string;
+  received_at: string;
+};
+
+export async function listPendingCommunityActions(
+  db: D1Database,
+  opts: { statuses: string[]; limit: number },
+): Promise<CommunityAction[]> {
+  const statuses = opts.statuses.length > 0 ? opts.statuses : ['new', 'draft_ready', 'escalated'];
+  const placeholders = statuses.map((_, index) => `?${index + 2}`).join(', ');
+  const result = await db
+    .prepare(
+      `SELECT
+         id,
+         source_id,
+         source_url,
+         title,
+         lane,
+         status,
+         priority,
+         urgency,
+         next_action,
+         due_at,
+         author_name,
+         author_email,
+         draft_status,
+         queue_id,
+         last_activity_at,
+         last_seen_at,
+         updated_at
+       FROM community_work_items
+       WHERE platform = ?1
+         AND status IN (${placeholders})
+       ORDER BY priority DESC, COALESCE(due_at, last_activity_at, last_seen_at) ASC
+       LIMIT ?${statuses.length + 2}`,
+    )
+    .bind(PLATFORM, ...statuses, opts.limit)
+    .all<CommunityAction>();
+  return result.results || [];
+}
+
+export async function getCommunityWorkItemByPostId(
+  db: D1Database,
+  postId: string,
+): Promise<(CommunityAction & { metadata: string | null; recent_events: CommunityEvent[] }) | null> {
+  const row = await db
+    .prepare(
+      `SELECT
+         id,
+         source_id,
+         source_url,
+         title,
+         lane,
+         status,
+         priority,
+         urgency,
+         next_action,
+         due_at,
+         author_name,
+         author_email,
+         draft_status,
+         queue_id,
+         last_activity_at,
+         last_seen_at,
+         updated_at,
+         metadata
+       FROM community_work_items
+       WHERE platform = ?1 AND source_id = ?2
+       LIMIT 1`,
+    )
+    .bind(PLATFORM, postId)
+    .first<CommunityAction & { metadata: string | null }>();
+
+  if (!row) return null;
+
+  const events = await db
+    .prepare(
+      `SELECT event_type, event_source, source_id, status, received_at
+       FROM community_events
+       WHERE platform = ?1 AND source_id = ?2
+       ORDER BY received_at DESC
+       LIMIT 10`,
+    )
+    .bind(PLATFORM, postId)
+    .all<CommunityEvent>();
+
+  return { ...row, recent_events: events.results || [] };
+}
+
 export async function getDraftStatusByPostId(
   db: D1Database,
   postId: string,
