@@ -1,7 +1,10 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import WebflowLogo from '$lib/components/WebflowLogo.svelte';
-	import { SUPPORTED_COUNTRIES, isSupportedCountry } from '$lib/intake/countries';
+	import {
+		SUPPORTED_COUNTRIES,
+		requiresSpecificStripeOnboarding
+	} from '$lib/intake/countries';
 
 	let country = $state('');
 	let primaryEmail = $state('');
@@ -123,14 +126,19 @@
 					autocomplete="country-name"
 					required
 					disabled={loading}
-				/>
-				<p class="hint">We use this to check creator payout availability.</p>
-				{#if country && !isSupportedCountry(country)}
-					<p class="warning">
-						This country is not on the current supported payout list. You can still submit, but you
-						may need to satisfy Stripe’s cross-border requirements.
+					/>
+					<p class="hint">
+						We use this to check creator payout availability. Some countries require specific
+						Stripe onboarding before payouts can continue.
 					</p>
-				{/if}
+					{#if country && requiresSpecificStripeOnboarding(country)}
+						<p class="warning">
+							This country requires specific Stripe onboarding before payouts can continue. Creators
+							may need to meet Stripe requirements for another supported country, including a valid
+							tax ID or incorporation through a service such as Doola or Stripe Atlas. Webflow cannot
+							configure those services on your behalf; contact Stripe Support with setup questions.
+						</p>
+					{/if}
 			</div>
 
 			<div class="field">

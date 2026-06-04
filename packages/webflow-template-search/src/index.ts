@@ -9,7 +9,7 @@ import {
   updateCreatorAvatarsFromWebflow,
   updateTemplateImagesFromWebflow,
 } from './db.js';
-import { corsPreflight, jsonResponse, textResponse } from './http.js';
+import { corsPreflight, jsonResponse, textResponse, withCorsHeaders } from './http.js';
 import { parseSearchParams } from './query.js';
 import { searchTemplates } from './search.js';
 import {
@@ -22,7 +22,7 @@ import {
   syncTemplateRecordsByIds,
   syncTemplates,
 } from './sync.js';
-import type { Env } from './types.js';
+import type { Env, SearchParams } from './types.js';
 import { DESIGNERS_COLLECTION_ID, TEMPLATES_COLLECTION_ID, mapWebhookDesignerItem, mapWebhookTemplateItem, verifyWebflowSignature } from './webflow.js';
 import type { WebflowWebhookPayload } from './webflow.js';
 
@@ -49,6 +49,22 @@ const PUBLIC_SEARCH_CACHE_HEADERS = {
   'Cache-Control': 'public, max-age=60, s-maxage=300, stale-while-revalidate=86400',
   'CDN-Cache-Control': 'public, max-age=300, stale-while-revalidate=86400',
 };
+const PUBLIC_SEARCH_CACHE_VERSION = '2026-06-03-creator-slug-alias';
+const PUBLIC_SEARCH_CACHE_PARAM_ORDER = [
+  'view',
+  'include',
+  'scope',
+  'category_group_slug',
+  'child_category_slug',
+  'creator_slug',
+  'creator_record_id',
+  'style_slug',
+  'tag_slug',
+  'free_only',
+  'sort',
+  'page',
+  'page_size',
+] as const;
 
 function parseBearerToken(request: Request): string | null {
   const auth = request.headers.get('Authorization');
@@ -70,10 +86,124 @@ function validateAdminToken(request: Request, env: Env): Response | null {
   return jsonResponse(request, env, { error: 'Unauthorized' }, 401);
 }
 
-async function handleSearch(request: Request, env: Env): Promise<Response> {
+function publicSearchResponse(request: Request, env: Env, body: string, cacheStatus: 'HIT' | 'MISS' | 'BYPASS'): Response {
+  return new Response(body, {
+    status: 200,
+    headers: withCorsHeaders(request, env, {
+      'Content-Type': 'application/json; charset=utf-8',
+      'X-Template-Search-Cache': cacheStatus,
+      ...PUBLIC_SEARCH_CACHE_HEADERS,
+    }),
+  });
+}
+
+function appendSearchCacheParam(url: URL, key: string, value: string | null): void {
+  if (value) url.searchParams.set(key, value);
+}
+
+function appendSearchCacheList(url: URL, key: string, values: string[]): void {
+  values.slice().sort().forEach((value) => url.searchParams.append(key, value));
+}
+
+function includeCacheValue(params: SearchParams): string {
+  return [
+    params.include.items ? 'items' : '',
+    params.include.facets ? 'facets' : '',
+    params.include.pills ? 'pills' : '',
+  ]
+    .filter(Boolean)
+    .join(',');
+}
+
+function buildPublicSearchCacheRequest(requestUrl: URL, params: SearchParams): Request | null {
+  if (params.page !== 1 || params.q) return null;
+
+  const cacheUrl = new URL(requestUrl.pathname, requestUrl.origin);
+  cacheUrl.searchParams.set('cache_version', PUBLIC_SEARCH_CACHE_VERSION);
+  for (const key of PUBLIC_SEARCH_CACHE_PARAM_ORDER) {
+    switch (key) {
+      case 'view':
+        cacheUrl.searchParams.set(key, params.view);
+        break;
+      case 'include':
+        cacheUrl.searchParams.set(key, includeCacheValue(params));
+        break;
+      case 'scope':
+        cacheUrl.searchParams.set(key, params.scope);
+        break;
+      case 'category_group_slug':
+        appendSearchCacheParam(cacheUrl, key, params.categoryGroupSlug);
+        break;
+      case 'child_category_slug':
+        appendSearchCacheParam(cacheUrl, key, params.childCategorySlug);
+        break;
+      case 'creator_slug':
+        appendSearchCacheParam(cacheUrl, key, params.creatorSlug);
+        break;
+      case 'creator_record_id':
+        appendSearchCacheParam(cacheUrl, key, params.creatorRecordId);
+        break;
+      case 'style_slug':
+        appendSearchCacheParam(cacheUrl, key, params.styleSlug);
+        break;
+      case 'tag_slug':
+        appendSearchCacheParam(cacheUrl, key, params.tagSlug);
+        break;
+      case 'free_only':
+        if (params.freeOnly) cacheUrl.searchParams.set(key, 'true');
+        break;
+      case 'sort':
+        cacheUrl.searchParams.set(key, params.sort);
+        break;
+      case 'page':
+        cacheUrl.searchParams.set(key, '1');
+        break;
+      case 'page_size':
+        cacheUrl.searchParams.set(key, String(params.pageSize));
+        break;
+    }
+  }
+
+  appendSearchCacheList(cacheUrl, 'styles', params.styles);
+  appendSearchCacheList(cacheUrl, 'tags', params.tags);
+  appendSearchCacheList(cacheUrl, 'types', params.types);
+  return new Request(cacheUrl.toString(), { method: 'GET' });
+}
+
+function getDefaultCache(): Cache | null {
+  return typeof caches === 'undefined' ? null : caches.default;
+}
+
+async function handleSearch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
   const defaultPageSize = Number(env.DEFAULT_PAGE_SIZE ?? '24') || 24;
-  const params = parseSearchParams(new URL(request.url), defaultPageSize);
-  return jsonResponse(request, env, await searchTemplates(env, params), 200, PUBLIC_SEARCH_CACHE_HEADERS);
+  const url = new URL(request.url);
+  const params = parseSearchParams(url, defaultPageSize);
+  const cacheRequest = buildPublicSearchCacheRequest(url, params);
+  const cache = cacheRequest ? getDefaultCache() : null;
+
+  if (cache && cacheRequest) {
+    const cached = await cache.match(cacheRequest);
+    if (cached) return publicSearchResponse(request, env, await cached.text(), 'HIT');
+  }
+
+  const body = JSON.stringify(await searchTemplates(env, params));
+  if (cache && cacheRequest) {
+    ctx.waitUntil(
+      cache
+        .put(
+          cacheRequest,
+          new Response(body, {
+            headers: {
+              'Content-Type': 'application/json; charset=utf-8',
+              ...PUBLIC_SEARCH_CACHE_HEADERS,
+            },
+          }),
+        )
+        .catch(() => undefined),
+    );
+  }
+
+  return publicSearchResponse(request, env, body, cache ? 'MISS' : 'BYPASS');
 }
 
 async function handleManualSync(
@@ -303,7 +433,7 @@ export default {
       }
 
       if (url.pathname === '/api/templates/search' && request.method === 'GET') {
-        return await handleSearch(request, env);
+        return await handleSearch(request, env, ctx);
       }
 
       if ((url.pathname === '/api/templates/client.js' || url.pathname === '/client.js') && request.method === 'GET') {

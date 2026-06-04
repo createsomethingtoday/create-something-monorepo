@@ -613,8 +613,7 @@
   border: 1px solid rgba(20, 110, 245, 0.18);
   border-radius: 8px;
   background:
-    linear-gradient(180deg, rgba(20, 110, 245, 0.06), rgba(255, 255, 255, 0.96) 36%),
-    #fff;
+    linear-gradient(180deg, rgba(20, 110, 245, 0.06), rgba(255, 255, 255, 0.96) 36%), #fff;
   box-shadow: 0 10px 30px rgba(8, 8, 8, 0.06);
 }
 
@@ -737,9 +736,7 @@
   display: block;
   aspect-ratio: 750 / 995;
   overflow: hidden;
-  background:
-    linear-gradient(135deg, rgba(20, 110, 245, 0.08), rgba(8, 8, 8, 0.04)),
-    #f2f2f2;
+  background: linear-gradient(135deg, rgba(20, 110, 245, 0.08), rgba(8, 8, 8, 0.04)), #f2f2f2;
 }
 
 .featured-quality-image {
@@ -918,8 +915,7 @@
   border: 1px solid rgba(20, 110, 245, 0.18);
   border-radius: 8px;
   background:
-    linear-gradient(135deg, rgba(20, 110, 245, 0.08), rgba(255, 255, 255, 0.96) 58%),
-    #fff;
+    linear-gradient(135deg, rgba(20, 110, 245, 0.08), rgba(255, 255, 255, 0.96) 58%), #fff;
   box-shadow: 0 10px 30px rgba(8, 8, 8, 0.06);
 }
 
@@ -1081,6 +1077,14 @@
 .submission-quill .ql-editor {
   min-height: 14rem;
   line-height: 1.6;
+}
+
+.submission-quill .ql-editor img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 1rem 0;
+  border-radius: 8px;
 }
 
 @media (max-width: 767px) {

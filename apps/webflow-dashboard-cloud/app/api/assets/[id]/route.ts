@@ -1,6 +1,7 @@
 import { jsonNoStore } from '../../../../lib/server/responses';
 import { getUserFromRequest } from '../../../../lib/server/session';
 import { getServerAirtable } from '../../../../lib/server/airtable';
+import { sanitizeLongDescriptionHtml } from '@create-something/webflow-dashboard-core/long-description';
 
 type AssetUpdateBody = {
   name?: string;
@@ -60,7 +61,9 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     );
   }
 
-  const body = (await request.json().catch(() => ({}))) as AssetUpdateBody;
+  const body = normalizeAssetUpdateBody(
+    (await request.json().catch(() => ({}))) as AssetUpdateBody
+  );
   if (body.name) {
     const nameCheck = await airtable.checkAssetNameUniqueness(body.name, id);
     if (!nameCheck.unique) {
@@ -92,7 +95,9 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
     );
   }
 
-  const body = (await request.json().catch(() => ({}))) as AssetUpdateBody;
+  const body = normalizeAssetUpdateBody(
+    (await request.json().catch(() => ({}))) as AssetUpdateBody
+  );
   if (body.name) {
     const nameCheck = await airtable.checkAssetNameUniqueness(body.name, id);
     if (!nameCheck.unique) {
@@ -115,4 +120,12 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
   }
 
   return jsonNoStore({ asset: updatedAsset });
+}
+
+function normalizeAssetUpdateBody(body: AssetUpdateBody): AssetUpdateBody {
+  if (body.descriptionLongHtml === undefined) return body;
+  return {
+    ...body,
+    descriptionLongHtml: sanitizeLongDescriptionHtml(body.descriptionLongHtml)
+  };
 }

@@ -20,9 +20,21 @@
     "build": "vite build",
     "preview": "vite preview",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings",
-    "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings --watch"
+    "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings --watch",
+    "smoke": "pnpm check && pnpm build",
+    "acceptance": "pnpm build && node scripts/acceptance-smoke.mjs all",
+    "acceptance:candidate": "pnpm build && node scripts/acceptance-smoke.mjs candidate",
+    "acceptance:internal": "pnpm build && node scripts/acceptance-smoke.mjs internal",
+    "deploy": "pnpm build && WRANGLER_LOG_PATH=../../.wrangler/logs/concierge-chat CLOUDFLARE_ACCOUNT_ID=9645bd52e640b8a4f40a3a55ff1dd75a pnpm exec wrangler pages deploy .svelte-kit/cloudflare --project-name=abundance-concierge-chat --branch=main --commit-dirty=true",
+    "deploy:preview": "pnpm build && WRANGLER_LOG_PATH=../../.wrangler/logs/concierge-chat CLOUDFLARE_ACCOUNT_ID=9645bd52e640b8a4f40a3a55ff1dd75a pnpm exec wrangler pages deploy .svelte-kit/cloudflare --project-name=abundance-concierge-chat --branch=preview --commit-dirty=true",
+    "mint:intake-grant": "node scripts/mint-intake-grant.mjs",
+    "geo:secret:sync": "bash ../../scripts/concierge-pages-sync-geo-from-infisical.sh",
+    "cf:typegen": "WRANGLER_LOG_PATH=../../.wrangler/logs/concierge-chat CLOUDFLARE_ACCOUNT_ID=9645bd52e640b8a4f40a3a55ff1dd75a pnpm exec wrangler types",
+    "db:migrate:local": "WRANGLER_LOG_PATH=../../.wrangler/logs/concierge-chat pnpm exec wrangler d1 migrations apply abundance-concierge-chat-db --local",
+    "db:migrate": "WRANGLER_LOG_PATH=../../.wrangler/logs/concierge-chat CLOUDFLARE_ACCOUNT_ID=9645bd52e640b8a4f40a3a55ff1dd75a pnpm exec wrangler d1 migrations apply abundance-concierge-chat-db --remote"
   },
   "dependencies": {
+    "@create-something/canon": "workspace:*",
     "svelte": "^5.41.0"
   },
   "devDependencies": {

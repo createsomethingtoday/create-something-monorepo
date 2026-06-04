@@ -1,15 +1,20 @@
-import { conciergeDemoStore, conciergeSettings } from '$demo/concierge';
+import {
+	conciergeSettings,
+	getLatestSeedThread,
+	getSeedThread,
+	listSeedThreads
+} from '$demo/concierge';
 
 export function listDemoThreads() {
-	return conciergeDemoStore.list();
+	return listSeedThreads();
 }
 
 export function getDemoThread(threadId: string) {
-	return conciergeDemoStore.get(threadId);
+	return getSeedThread(threadId);
 }
 
 export function getLatestDemoThread() {
-	return conciergeDemoStore.latest();
+	return getLatestSeedThread();
 }
 
 export function getConciergeDemoSettings() {

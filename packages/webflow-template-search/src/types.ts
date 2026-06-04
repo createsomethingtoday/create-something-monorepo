@@ -1,5 +1,6 @@
 export type TemplateScope = 'all' | 'featured' | 'free' | 'landing_pages';
 export type TemplateSort = 'popular' | 'newest' | 'price_asc' | 'price_desc';
+export type TemplateSearchView = 'full' | 'grid';
 export type AliasType = 'child_category';
 
 export interface Env {
@@ -151,6 +152,7 @@ export interface SearchParams {
   types: string[];
   freeOnly: boolean;
   sort: TemplateSort;
+  view: TemplateSearchView;
   page: number;
   pageSize: number;
   include: {
@@ -184,8 +186,8 @@ export interface SearchItem {
   published_date: string | null;
   category_groups: Array<{ name: string; slug: string; url: string }>;
   child_categories: Array<{ name: string; slug: string; url: string }>;
-  styles: Array<{ name: string; slug: string }>;
-  tags: Array<{ name: string; slug: string }>;
+  styles?: Array<{ name: string; slug: string }>;
+  tags?: Array<{ name: string; slug: string }>;
 }
 
 export interface SearchResponsePayload {

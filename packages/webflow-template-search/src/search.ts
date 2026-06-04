@@ -54,9 +54,46 @@ interface SqlParts {
 }
 
 const FREE_TEMPLATE_CLAUSE = '(d.price = 0 OR (d.price IS NULL AND d.is_free = 1))';
+const GRID_ITEM_SELECT_COLUMNS = [
+  'd.id',
+  'd.template_slug',
+  'd.name',
+  'd.listing_url',
+  'd.preview_url',
+  'd.website_url',
+  'd.creator_name',
+  'd.creator_slug',
+  'd.creator_profile_url',
+  'd.creator_avatar_url',
+  'd.creator_avatar_alt',
+  'd.thumbnail_image_url',
+  'd.thumbnail_image_secondary_url',
+  'd.category_groups_json',
+  'd.category_group_slugs_json',
+  'd.child_categories_json',
+  'd.child_category_slugs_json',
+  'd.template_type',
+  'd.is_free',
+  'd.is_featured',
+  'd.popularity_score',
+  'd.unique_viewers',
+  'd.cumulative_purchases',
+  'd.price',
+  'd.published_date',
+];
 
 function creatorProfileUrlForSlug(slug: string): string {
   return `https://webflow.com/templates/designers/${slug}`;
+}
+
+function creatorSlugVariants(slug: string): string[] {
+  const variants = [slug];
+  if (slug.endsWith('-archive')) {
+    variants.push(slug.slice(0, -'-archive'.length));
+  } else {
+    variants.push(`${slug}-archive`);
+  }
+  return Array.from(new Set(variants.filter(Boolean)));
 }
 
 async function resolveAliases(env: Env, params: SearchParams): Promise<SearchParams> {
@@ -102,8 +139,12 @@ function buildSqlParts(params: SearchParams, options: FilterOptions = {}): SqlPa
   }
 
   if (params.creatorSlug) {
-    clauses.push("(d.creator_slug = ? OR lower(rtrim(d.creator_profile_url, '/')) = ?)");
-    binds.push(params.creatorSlug, creatorProfileUrlForSlug(params.creatorSlug));
+    const creatorSlugs = creatorSlugVariants(params.creatorSlug);
+    const creatorProfileUrls = creatorSlugs.map(creatorProfileUrlForSlug);
+    clauses.push(
+      `(d.creator_slug IN (${placeholderList(creatorSlugs.length)}) OR lower(rtrim(d.creator_profile_url, '/')) IN (${placeholderList(creatorProfileUrls.length)}))`,
+    );
+    binds.push(...creatorSlugs, ...creatorProfileUrls);
   }
 
   if (params.styleSlug && !options.excludeStyleSlug) {
@@ -343,6 +384,7 @@ export async function searchTemplates(env: Env, rawParams: SearchParams): Promis
   const includeItems = params.include.items;
   const includeFacets = params.include.facets;
   const includePills = params.include.pills;
+  const selectColumns = params.view === 'grid' ? GRID_ITEM_SELECT_COLUMNS.join(',\n          ') : 'd.*';
 
   let totalItems = 0;
   let rows: D1Result<DocumentRow> = { results: [] };
@@ -359,7 +401,7 @@ export async function searchTemplates(env: Env, rawParams: SearchParams): Promis
     rows = await env.DB
       .prepare(`
         SELECT
-          d.*,
+          ${selectColumns},
           ${sqlParts.queryMode ? 'bm25(template_documents_fts, 10.0, 6.0, 1.5, 2.5, 2.0, 1.2, 0.8)' : 'NULL'} AS text_rank
         ${sqlParts.fromClause}
         ${sqlParts.whereClause}
@@ -392,12 +434,12 @@ export async function searchTemplates(env: Env, rawParams: SearchParams): Promis
     const categoryGroupSlugs = parseJsonArray(row.category_group_slugs_json);
     const childCategories = parseJsonArray(row.child_categories_json);
     const childCategorySlugs = parseJsonArray(row.child_category_slugs_json);
-    const styles = parseJsonArray(row.styles_json);
-    const styleSlugs = parseJsonArray(row.style_slugs_json);
-    const tags = parseJsonArray(row.tags_json);
-    const tagSlugs = parseJsonArray(row.tag_slugs_json);
+    const styles = params.view === 'grid' ? [] : parseJsonArray(row.styles_json);
+    const styleSlugs = params.view === 'grid' ? [] : parseJsonArray(row.style_slugs_json);
+    const tags = params.view === 'grid' ? [] : parseJsonArray(row.tags_json);
+    const tagSlugs = params.view === 'grid' ? [] : parseJsonArray(row.tag_slugs_json);
 
-    return {
+    const item: SearchItem = {
       id: row.id,
       template_slug: row.template_slug,
       name: row.name,
@@ -421,9 +463,14 @@ export async function searchTemplates(env: Env, rawParams: SearchParams): Promis
       published_date: row.published_date,
       category_groups: buildCategoryGroups(categoryGroups, categoryGroupSlugs),
       child_categories: buildChildCategories(childCategories, childCategorySlugs, childSlugMap),
-      styles: buildStyles(styles, styleSlugs),
-      tags: buildTags(tags, tagSlugs),
     };
+
+    if (params.view !== 'grid') {
+      item.styles = buildStyles(styles, styleSlugs);
+      item.tags = buildTags(tags, tagSlugs);
+    }
+
+    return item;
   });
 
   const totalPages = totalItems === 0 ? 0 : Math.ceil(totalItems / params.pageSize);

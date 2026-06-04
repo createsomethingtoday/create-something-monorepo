@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { sanitizeLongDescriptionHtml } from '@create-something/webflow-dashboard-core/long-description';
 
 const QUILL_CSS = 'https://cdn.quilljs.com/1.3.6/quill.snow.css';
 const QUILL_JS = 'https://cdn.quilljs.com/1.3.6/quill.min.js';
@@ -9,30 +10,16 @@ type QuillInstance = {
   root: HTMLElement;
   on: (event: string, handler: () => void) => void;
   off: (event: string, handler: () => void) => void;
-  getContents: () => { ops: { insert?: unknown }[] };
-  deleteText: (index: number, length: number, source?: string) => void;
+  getSelection: (focus?: boolean) => { index: number; length: number } | null;
+  insertEmbed: (index: number, type: string, value: string, source?: string) => void;
+  setSelection: (index: number, length?: number, source?: string) => void;
   getLength: () => number;
-  setContents: (contents: unknown, source?: string) => void;
-  clipboard: {
-    convert: (html?: string) => unknown;
-  };
 };
 
 declare global {
   interface Window {
     Quill?: new (el: HTMLElement, opts: unknown) => QuillInstance;
   }
-}
-
-function normalizeEditorHtml(value: string | undefined): string {
-  return (value || '')
-    .replace(/<p><br><\/p>/gi, '')
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<\/(p|div|li|h[1-6]|blockquote)>/gi, '\n')
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/&nbsp;/gi, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
 }
 
 function ensureQuillAssetsLoaded(): Promise<typeof window.Quill> {
@@ -74,25 +61,20 @@ export function QuillEditor({ value, onChange, placeholder, id }: QuillEditorPro
   const containerRef = useRef<HTMLDivElement | null>(null);
   const quillRef = useRef<QuillInstance | null>(null);
   const onChangeRef = useRef(onChange);
-  const valueRef = useRef(value);
-  const syncingRef = useRef(false);
-  const syncFrameRef = useRef<number | null>(null);
-
-  function syncEditorHtml(quill: QuillInstance, html: string) {
-    syncingRef.current = true;
-    if (syncFrameRef.current !== null) {
-      window.cancelAnimationFrame(syncFrameRef.current);
-    }
-    quill.setContents(quill.clipboard.convert(html || ''), 'silent');
-    syncFrameRef.current = window.requestAnimationFrame(() => {
-      syncingRef.current = false;
-      syncFrameRef.current = null;
-    });
-  }
 
   useEffect(() => {
     onChangeRef.current = onChange;
   }, [onChange]);
+
+  useEffect(() => {
+    const quill = quillRef.current;
+    if (!quill) return;
+
+    const sanitizedValue = sanitizeLongDescriptionHtml(value);
+    if (sanitizedValue !== quill.root.innerHTML) {
+      quill.root.innerHTML = sanitizedValue;
+    }
+  }, [value]);
 
   useEffect(() => {
     let disposed = false;
@@ -103,44 +85,64 @@ export function QuillEditor({ value, onChange, placeholder, id }: QuillEditorPro
         if (disposed || !Quill || !containerRef.current) return;
         if (quillRef.current) return;
 
-        const quill = new Quill(containerRef.current, {
+        let quill: QuillInstance | null = null;
+        const emitChange = () => {
+          if (!quill) return;
+          normalizeEditorImages(quill.root);
+          const sanitizedHtml = sanitizeLongDescriptionHtml(quill.root.innerHTML);
+          onChangeRef.current(sanitizedHtml);
+        };
+
+        quill = new Quill(containerRef.current, {
           theme: 'snow',
           placeholder,
+          formats: ['header', 'bold', 'italic', 'list', 'bullet', 'link', 'image'],
           modules: {
-            toolbar: [
-              ['bold', 'italic'],
-              [{ list: 'ordered' }, { list: 'bullet' }],
-              ['clean']
-            ]
-          }
-        });
+            toolbar: {
+              container: [
+                [{ header: [3, 4, 5, 6, false] }],
+                ['bold', 'italic'],
+                [{ list: 'ordered' }, { list: 'bullet' }],
+                ['link', 'image'],
+                ['clean']
+              ],
+              handlers: {
+                image: () => {
+                  if (!quill) return;
 
-        if (valueRef.current) {
-          syncEditorHtml(quill, valueRef.current);
-        }
+                  const rawUrl = window.prompt('Image URL');
+                  const imageUrl = normalizeExternalImageUrl(rawUrl || '');
+                  if (!imageUrl) return;
 
-        handler = () => {
-          if (syncingRef.current) return;
+                  const altText = window.prompt('Alt text') || '';
+                  const range = quill.getSelection(true) || {
+                    index: Math.max(0, quill.getLength() - 1),
+                    length: 0
+                  };
+                  quill.insertEmbed(range.index, 'image', imageUrl, 'user');
+                  quill.setSelection(range.index + 1, 0, 'silent');
 
-          // Strip any image ops
-          const delta = quill.getContents();
-          let hasImages = false;
-          for (const op of delta.ops) {
-            if (op.insert && typeof op.insert === 'object' && 'image' in (op.insert as object)) {
-              hasImages = true;
-              break;
+                  window.setTimeout(() => {
+                    const inserted = Array.from(quill?.root.querySelectorAll('img') || []).find(
+                      (image) => image.getAttribute('src') === imageUrl || image.src === imageUrl
+                    );
+                    inserted?.setAttribute('alt', altText.trim());
+                    inserted?.setAttribute('loading', 'lazy');
+                    emitChange();
+                  }, 0);
+                }
+              }
             }
           }
-          if (hasImages) {
-            const len = quill.getLength();
-            const filteredHtml = quill.root.innerHTML.replace(/<img[^>]*>/g, '');
-            syncEditorHtml(quill, filteredHtml);
-            quill.deleteText(len, 0, 'silent');
-            onChangeRef.current(filteredHtml);
-            return;
-          }
-          onChangeRef.current(quill.root.innerHTML);
-        };
+        });
+        labelToolbarControls(containerRef.current);
+
+        if (value) {
+          const sanitizedValue = sanitizeLongDescriptionHtml(value);
+          quill.root.innerHTML = sanitizedValue;
+        }
+
+        handler = emitChange;
         quill.on('text-change', handler);
         quillRef.current = quill;
       })
@@ -157,29 +159,68 @@ export function QuillEditor({ value, onChange, placeholder, id }: QuillEditorPro
           // ignore
         }
       }
-      if (syncFrameRef.current !== null) {
-        window.cancelAnimationFrame(syncFrameRef.current);
-      }
-      syncingRef.current = false;
-      syncFrameRef.current = null;
       quillRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
-    valueRef.current = value;
+  return <div id={id} ref={containerRef} className="submission-quill" />;
+}
 
-    const quill = quillRef.current;
-    if (!quill) return;
+function normalizeExternalImageUrl(value: string): string {
+  const trimmed = value.trim();
+  if (!trimmed) return '';
 
-    const nextHtml = value || '';
-    if (normalizeEditorHtml(quill.root.innerHTML) === normalizeEditorHtml(nextHtml)) {
-      return;
+  try {
+    const url = new URL(trimmed);
+    if (url.protocol !== 'https:') return '';
+    if (url.username || url.password) return '';
+    return url.toString();
+  } catch {
+    return '';
+  }
+}
+
+function normalizeEditorImages(root: HTMLElement): void {
+  for (const image of Array.from(root.querySelectorAll('img'))) {
+    const imageUrl = normalizeExternalImageUrl(image.getAttribute('src') || image.src || '');
+    if (!imageUrl) {
+      image.remove();
+      continue;
     }
 
-    syncEditorHtml(quill, nextHtml);
-  }, [value]);
+    image.setAttribute('src', imageUrl);
+    image.setAttribute('loading', 'lazy');
+    if (!image.hasAttribute('alt')) {
+      image.setAttribute('alt', '');
+    }
+    image.removeAttribute('style');
+    image.removeAttribute('class');
+    for (const attr of Array.from(image.attributes)) {
+      if (attr.name.startsWith('on')) image.removeAttribute(attr.name);
+    }
+  }
+}
 
-  return <div id={id} ref={containerRef} className="submission-quill" />;
+function labelToolbarControls(container: HTMLElement): void {
+  const toolbar = container.parentElement?.querySelector('.ql-toolbar');
+  if (!toolbar) return;
+
+  const controls = [
+    ['.ql-header .ql-picker-label', 'Text style'],
+    ['button.ql-bold', 'Bold'],
+    ['button.ql-italic', 'Italic'],
+    ['button.ql-list[value="ordered"]', 'Numbered list'],
+    ['button.ql-list[value="bullet"]', 'Bulleted list'],
+    ['button.ql-link', 'Add link'],
+    ['button.ql-image', 'Add image URL'],
+    ['button.ql-clean', 'Clear formatting']
+  ] as const;
+
+  for (const [selector, label] of controls) {
+    const control = toolbar.querySelector<HTMLElement>(selector);
+    if (!control) continue;
+    control.setAttribute('aria-label', label);
+    control.setAttribute('title', label);
+  }
 }

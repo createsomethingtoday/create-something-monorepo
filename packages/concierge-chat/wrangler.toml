@@ -1,0 +1,29 @@
+name = "abundance-concierge-chat"
+compatibility_date = "2024-12-01"
+compatibility_flags = ["nodejs_compat"]
+
+pages_build_output_dir = ".svelte-kit/cloudflare"
+
+[vars]
+ENVIRONMENT = "production"
+ALLOW_AGENCY_ACCESS_PREVIEW = "false"
+ABUNDANCE_REQUIRE_SIGNED_INTAKE = "true"
+AGENCY_BASE_URL = "https://createsomething.agency"
+# Set `ABUNDANCE_INTAKE_SIGNING_SECRET` and `RESEND_API_KEY` with `wrangler pages secret put`
+# before enabling self-serve verification email in production.
+# Set `INDEED_MCP_BASE_URL` and `INDEED_MCP_API_KEY` with `wrangler pages secret put`
+# to enable terminal Indeed disposition writeback for linked imported applicants.
+# Set `ABUNDANCE_GEO_MAPBOX_ACCESS_TOKEN` with `wrangler pages secret put` to enable
+# external preferred-location recovery when the internal nurse-market catalog cannot normalize
+# a nurse's location message confidently. Results are stored in-thread, so the runtime uses
+# Mapbox permanent geocoding.
+# Optionally set `ABUNDANCE_INTAKE_EMAIL_FROM` if the sender should differ from the runtime default.
+
+[[d1_databases]]
+binding = "DB"
+database_name = "abundance-concierge-chat-db"
+database_id = "5712fa83-d823-46ba-805b-7b929d045423"
+
+[[r2_buckets]]
+binding = "UPLOADS"
+bucket_name = "abundance-concierge-chat-uploads"

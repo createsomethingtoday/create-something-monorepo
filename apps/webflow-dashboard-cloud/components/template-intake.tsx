@@ -11,7 +11,7 @@ import {
   TEMPLATE_STYLES,
   WEBFLOW_FEATURES,
   getPricingTiers,
-  isSupportedCountry,
+  requiresSpecificStripeOnboarding,
   type PageCountOption
 } from '../lib/intake/constants';
 import {
@@ -354,14 +354,16 @@ function isUsableFeaturedImageUrl(value: string) {
 
 function featuredTemplateImage(item: FeaturedTemplateItem) {
   return (
-    [item.thumbnail_image_url, item.thumbnail_image_secondary_url].find(
-      (value): value is string => Boolean(value && isUsableFeaturedImageUrl(value))
+    [item.thumbnail_image_url, item.thumbnail_image_secondary_url].find((value): value is string =>
+      Boolean(value && isUsableFeaturedImageUrl(value))
     ) || ''
   );
 }
 
 function featuredTemplateDetail(item: FeaturedTemplateItem) {
-  return item.category_groups?.[0]?.name || item.template_type || (item.is_free ? 'Free' : 'Featured');
+  return (
+    item.category_groups?.[0]?.name || item.template_type || (item.is_free ? 'Free' : 'Featured')
+  );
 }
 
 function visibleFeaturedTemplates(templates: FeaturedTemplateItem[], offset: number) {
@@ -374,9 +376,7 @@ function visibleFeaturedTemplates(templates: FeaturedTemplateItem[], offset: num
 
 function FeaturedQualityShowcase() {
   const [templates, setTemplates] = useState<FeaturedTemplateItem[]>([]);
-  const [status, setStatus] = useState<'loading' | 'ready' | 'refreshing' | 'fallback'>(
-    'loading'
-  );
+  const [status, setStatus] = useState<'loading' | 'ready' | 'refreshing' | 'fallback'>('loading');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [offset, setOffset] = useState(0);
@@ -450,7 +450,9 @@ function FeaturedQualityShowcase() {
           </div>
           <button
             aria-label="Refresh Featured template examples"
-            className={isBusy ? 'featured-quality-refresh is-refreshing' : 'featured-quality-refresh'}
+            className={
+              isBusy ? 'featured-quality-refresh is-refreshing' : 'featured-quality-refresh'
+            }
             disabled={!canCycle || isBusy}
             onClick={cycleFeaturedTemplates}
             title="Refresh Featured template examples"
@@ -590,7 +592,9 @@ function TemplateSubmissionSuccessPanel({
           <div className="submission-step-label submission-step-label-secondary">
             Creator workspace
           </div>
-          <h4 className="submission-dashboard-title">Use the Asset Dashboard while reviewers work</h4>
+          <h4 className="submission-dashboard-title">
+            Use the Asset Dashboard while reviewers work
+          </h4>
           <p className="submission-dashboard-copy">
             It gives creators one place to follow review activity, prepare the next submission, and
             use the same quality tools our team references.
@@ -841,7 +845,9 @@ export function TemplateIntake() {
     };
   }, [turnstileEnabled]);
 
-  const creatorCountrySupported = creator.country ? isSupportedCountry(creator.country) : true;
+  const creatorCountryRequiresStripeOnboarding = creator.country
+    ? requiresSpecificStripeOnboarding(creator.country)
+    : false;
   const previewUrlValid =
     template.previewUrl.trim() === '' ||
     template.previewUrl.trim().includes('https://preview.webflow.com/preview/');
@@ -1740,7 +1746,7 @@ export function TemplateIntake() {
                         placeholder="Select or search for a country…"
                         required
                       />
-                      {!creatorCountrySupported && creator.country ? (
+                      {creatorCountryRequiresStripeOnboarding ? (
                         <div className="submission-status submission-status-warning submission-country-onboarding-warning">
                           This country requires specific Stripe onboarding before payouts can
                           continue. Creators may need to meet Stripe requirements for another
@@ -2502,7 +2508,7 @@ export function TemplateIntake() {
                         <span className="submission-required"> *</span>
                       </label>
                       <p className="field-help cc-library-application-form_field-desc">
-                        Rich text is allowed for emphasis and lists. Image embeds are stripped.
+                        Rich text is allowed for headings, lists, links, and HTTPS image URL embeds.
                       </p>
                       <QuillEditor
                         id="longDescription"

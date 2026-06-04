@@ -1,24 +1,15 @@
-import { error } from '@sveltejs/kit';
-import { buildProfileAudit } from '$server/profile/extractor';
-import { determineNextStep } from '$server/orchestration/next-step';
-import { getDemoThread } from '$server/threads/demo';
-import { splitWidgetsByPlacement } from '$server/widgets/select';
 import type { PageServerLoad } from './$types';
+import { CONCIERGE_SESSION_DEPENDENCY } from '$chat/api-contract';
+import { ensureConciergeSession, getRequiredThreadView } from '$lib/server/threads/session';
 
-export const load: PageServerLoad = async ({ params }) => {
-	const thread = getDemoThread(params.threadId);
-
-	if (!thread) {
-		throw error(404, `Unknown demo thread: ${params.threadId}`);
-	}
-
-	const widgets = splitWidgetsByPlacement(thread);
+export const load: PageServerLoad = async ({ depends, cookies, params, platform, url }) => {
+	depends(CONCIERGE_SESSION_DEPENDENCY);
 
 	return {
-		thread,
-		nextStep: determineNextStep(thread),
-		profileAudit: buildProfileAudit(thread.profile),
-		inlineWidgets: widgets.inline,
-		railWidgets: widgets.rail
+		threadView: await getRequiredThreadView(
+			ensureConciergeSession(cookies, url.protocol === 'https:', { platform, url }),
+			params.threadId,
+			platform
+		)
 	};
 };

@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>%sveltekit.status% · Abundance Concierge</title>
+		<style>
+			:root {
+				--bg: #06070c;
+				--bg-depth: #0c1018;
+				--surface: linear-gradient(180deg, rgba(18, 24, 37, 0.94) 0%, rgba(10, 14, 22, 0.98) 100%);
+				--surface-strong: rgba(19, 25, 38, 0.88);
+				--surface-contrast: rgba(7, 10, 16, 0.92);
+				--surface-overlay: rgba(167, 184, 255, 0.08);
+				--ink: #f2f5ff;
+				--ink-soft: #dbe3ff;
+				--muted: #9ea8c9;
+				--muted-strong: #c0c9e8;
+				--line: rgba(167, 184, 255, 0.16);
+				--line-strong: rgba(167, 184, 255, 0.28);
+				--accent-soft: rgba(167, 184, 255, 0.14);
+				--button-bg: linear-gradient(135deg, #a7b8ff 0%, #6c84ff 100%);
+				--button-ink: #06070c;
+				--warn: #f1c56b;
+				--warn-soft: rgba(241, 197, 107, 0.16);
+				--danger: #ff9690;
+				--danger-soft: rgba(255, 150, 144, 0.16);
+				--radius: 20px;
+				--shadow: 0 28px 72px rgba(0, 0, 0, 0.42);
+				--font-sans: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+				--font-mono: 'JetBrains Mono', 'SF Mono', Monaco, 'Cascadia Code', monospace;
+			}
+
+			* {
+				box-sizing: border-box;
+			}
+
+			html,
+			body {
+				margin: 0;
+				min-height: 100%;
+			}
+
+			body {
+				font-family: var(--font-sans);
+				color: var(--ink);
+				background:
+					radial-gradient(circle at top, rgba(49, 92, 255, 0.16), transparent 28%),
+					radial-gradient(circle at 85% 12%, rgba(167, 184, 255, 0.12), transparent 20%),
+					linear-gradient(180deg, #0c0c10 0%, #06070c 52%, #000000 100%);
+				letter-spacing: -0.012em;
+				text-rendering: optimizeLegibility;
+				-webkit-font-smoothing: antialiased;
+				-moz-osx-font-smoothing: grayscale;
+			}
+
+			a {
+				color: inherit;
+			}
+
+			p {
+				margin: 0;
+				line-height: 1.6;
+			}
+
+			.error-shell {
+				min-height: 100vh;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				padding: 1.5rem;
+			}
+
+			.error-card {
+				width: min(960px, 100%);
+				display: grid;
+				gap: 1.25rem;
+				padding: 1.4rem;
+				background: var(--surface);
+				backdrop-filter: blur(20px);
+				border: 1px solid var(--line);
+				border-radius: var(--radius);
+				box-shadow: var(--shadow);
+			}
+
+			.error-top {
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				gap: 1rem;
+				flex-wrap: wrap;
+			}
+
+			.eyebrow {
+				display: inline-flex;
+				align-items: center;
+				gap: 0.4rem;
+				padding: 0.4rem 0.78rem;
+				border-radius: 999px;
+				background: var(--surface-overlay);
+				border: 1px solid var(--line);
+				color: var(--muted-strong);
+				font-family: var(--font-mono);
+				font-size: 0.74rem;
+				letter-spacing: 0.14em;
+				text-transform: uppercase;
+			}
+
+			.status-pill {
+				display: inline-flex;
+				align-items: center;
+				gap: 0.35rem;
+				border-radius: 999px;
+				padding: 0.3rem 0.7rem;
+				border: 1px solid rgba(167, 184, 255, 0.14);
+				font-family: var(--font-mono);
+				font-size: 0.72rem;
+				letter-spacing: 0.08em;
+				text-transform: uppercase;
+				background: var(--accent-soft);
+				color: var(--ink-soft);
+			}
+
+			.status-pill.warn {
+				background: var(--warn-soft);
+				border-color: rgba(241, 197, 107, 0.18);
+				color: var(--warn);
+			}
+
+			.status-pill.danger {
+				background: var(--danger-soft);
+				border-color: rgba(255, 150, 144, 0.2);
+				color: var(--danger);
+			}
+
+			.page-title {
+				font-size: clamp(2.4rem, 5vw, 4.6rem);
+				line-height: 0.95;
+				letter-spacing: -0.05em;
+				margin: 0;
+			}
+
+			.error-lead {
+				max-width: 44rem;
+				font-size: 1.02rem;
+				color: var(--muted-strong);
+			}
+
+			.error-actions {
+				display: flex;
+				gap: 0.85rem;
+				flex-wrap: wrap;
+			}
+
+			.cta-link {
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				min-height: 3.1rem;
+				padding: 0.85rem 1.2rem;
+				border-radius: 999px;
+				text-decoration: none;
+				font-weight: 600;
+				transition:
+					transform 140ms ease,
+					border-color 140ms ease,
+					background 140ms ease,
+					box-shadow 140ms ease;
+			}
+
+			.cta-link:hover {
+				transform: translateY(-1px);
+			}
+
+			.cta-link.primary {
+				background: var(--button-bg);
+				color: var(--button-ink);
+				box-shadow: 0 16px 34px rgba(49, 92, 255, 0.22);
+			}
+
+			.cta-link.secondary {
+				background: var(--surface-overlay);
+				color: var(--ink-soft);
+				border: 1px solid var(--line);
+			}
+
+			.error-grid {
+				display: grid;
+				gap: 1rem;
+				grid-template-columns: repeat(2, minmax(0, 1fr));
+			}
+
+			.error-note {
+				display: grid;
+				gap: 0.7rem;
+				padding: 1rem 1.05rem;
+				background: var(--surface-strong);
+				border: 1px solid var(--line);
+				border-radius: calc(var(--radius) - 6px);
+			}
+
+			.error-note p {
+				color: var(--muted-strong);
+			}
+
+			@media (max-width: 760px) {
+				.error-grid {
+					grid-template-columns: 1fr;
+				}
+			}
+		</style>
+	</head>
+	<body data-status="%sveltekit.status%">
+			<div class="error-shell">
+				<section class="error-card">
+					<div class="error-top">
+						<div id="eyebrow" class="eyebrow">Application Interrupted</div>
+						<div id="status-pill" class="status-pill">%sveltekit.status%</div>
+					</div>
+
+					<h1 id="title" class="page-title">Abundance Concierge is temporarily unavailable</h1>
+					<p id="lead" class="error-lead">
+						The application hit an unexpected problem before the conversation could continue.
+					</p>
+
+					<div class="error-actions">
+						<a id="primary-action" class="cta-link primary" href="/apply">Open application</a>
+						<a id="secondary-action" class="cta-link secondary" href="/">Return home</a>
+					</div>
+
+					<div class="error-grid">
+						<article class="error-note">
+							<div id="note-1-label" class="eyebrow">What to do next</div>
+							<p id="note-1-copy">
+								Return to your application and try the step again there.
+							</p>
+						</article>
+
+						<article class="error-note">
+							<div id="note-2-label" class="eyebrow">For staff</div>
+							<p id="note-2-copy">
+								Internal team members can use Staff sign-in from the home page if they need the
+								control plane.
+							</p>
+						</article>
+					</div>
+				</section>
+			</div>
+
+			<script>
+				const status = Number(document.body.dataset.status || '0');
+				const eyebrow = document.getElementById('eyebrow');
+				const title = document.getElementById('title');
+				const lead = document.getElementById('lead');
+				const statusPill = document.getElementById('status-pill');
+				const primaryAction = document.getElementById('primary-action');
+				const secondaryAction = document.getElementById('secondary-action');
+				const note1Label = document.getElementById('note-1-label');
+				const note1Copy = document.getElementById('note-1-copy');
+				const note2Label = document.getElementById('note-2-label');
+				const note2Copy = document.getElementById('note-2-copy');
+
+				const setAction = (element, label, href) => {
+					if (!element) return;
+					element.textContent = label;
+					element.setAttribute('href', href);
+				};
+
+				if (statusPill && status === 403) {
+					statusPill.classList.add('warn');
+				}
+
+				if (statusPill && status >= 500) {
+					statusPill.classList.add('danger');
+				}
+
+				if (status >= 500) {
+					if (eyebrow) eyebrow.textContent = 'Temporary Problem';
+					if (title) title.textContent = 'Abundance Concierge is temporarily unavailable';
+					if (lead) {
+						lead.textContent =
+							'The application hit an unexpected problem before the conversation could continue. Please try again shortly.';
+					}
+					if (note1Label) note1Label.textContent = 'What to do next';
+					if (note1Copy) {
+						note1Copy.textContent =
+							'Return to your application and try the step again. If it still fails, start again from the home page.';
+					}
+					if (note2Label) note2Label.textContent = 'For staff';
+					if (note2Copy) {
+						note2Copy.textContent =
+							'Internal team members can use Staff sign-in from the home page if they need the control plane.';
+					}
+					setAction(primaryAction, 'Open application', '/apply');
+					setAction(secondaryAction, 'Return home', '/');
+				} else if (status === 404) {
+					if (eyebrow) eyebrow.textContent = 'Page Unavailable';
+					if (title) title.textContent = 'That page is not available';
+					if (lead) {
+						lead.textContent =
+							'This page is not active for the current application state.';
+					}
+					if (note1Label) note1Label.textContent = 'What to do next';
+					if (note1Copy) {
+						note1Copy.textContent =
+							'Return to the application and continue from the main conversation instead of this direct route.';
+					}
+					if (note2Label) note2Label.textContent = 'For staff';
+					if (note2Copy) {
+						note2Copy.textContent =
+							'Internal team members can use Staff sign-in from the home page if they need the control plane.';
+					}
+					setAction(primaryAction, 'Open application', '/apply');
+					setAction(secondaryAction, 'Return home', '/');
+				} else if (status === 403) {
+					if (eyebrow) eyebrow.textContent = 'Verification Needed';
+					if (title) title.textContent = 'Verify to continue';
+					if (lead) {
+						lead.textContent =
+							'Return to your application and complete the one-time email verification step there before retrying this protected page.';
+					}
+					if (note1Copy) {
+						note1Copy.textContent =
+							'Open your application, finish verification there, and then retry this step.';
+					}
+					if (note2Copy) {
+						note2Copy.textContent =
+							'Internal team members can use Staff sign-in from the home page if they need the control plane.';
+					}
+					setAction(primaryAction, 'Continue application', '/apply');
+					setAction(secondaryAction, 'Return home', '/');
+				}
+			</script>
+		</body>
+</html>
