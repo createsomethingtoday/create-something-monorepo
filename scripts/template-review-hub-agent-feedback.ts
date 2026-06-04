@@ -262,6 +262,49 @@ function statusMatches(version: TemplateReviewVersion, statuses: string[]): bool
   return Boolean(version.reviewStatus && statuses.includes(version.reviewStatus));
 }
 
+type RetryOptions = {
+  attempts: number;
+  delayMs: number;
+  label: string;
+  sleep?: (ms: number) => Promise<void>;
+};
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+export async function retryTransientOperation<T>(
+  operation: () => Promise<T>,
+  options: RetryOptions
+): Promise<T> {
+  let lastError: unknown;
+  const wait = options.sleep ?? sleep;
+
+  for (let attempt = 1; attempt <= options.attempts; attempt += 1) {
+    try {
+      return await operation();
+    } catch (error) {
+      lastError = error;
+      if (attempt >= options.attempts) break;
+
+      const delayMs = options.delayMs * attempt;
+      console.warn(
+        JSON.stringify({
+          warning: 'retrying_transient_operation',
+          label: options.label,
+          attempt,
+          attempts: options.attempts,
+          next_delay_ms: delayMs,
+          error: error instanceof Error ? error.message : String(error)
+        })
+      );
+      await wait(delayMs);
+    }
+  }
+
+  throw lastError instanceof Error ? lastError : new Error(String(lastError));
+}
+
 async function loadCandidates(airtableClient: AirtableClient, args: Args): Promise<Candidate[]> {
   const versions = args.versionId
     ? await (async () => {
@@ -684,7 +727,11 @@ async function main(): Promise<void> {
     baseId: process.env.AIRTABLE_BASE_ID?.trim() || DEFAULT_AIRTABLE_BASE_ID
   });
 
-  const candidates = await loadCandidates(airtableClient, args);
+  const candidates = await retryTransientOperation(() => loadCandidates(airtableClient, args), {
+    attempts: 3,
+    delayMs: 2_000,
+    label: 'load_agent_feedback_candidates'
+  });
   console.log(
     JSON.stringify(
       {
