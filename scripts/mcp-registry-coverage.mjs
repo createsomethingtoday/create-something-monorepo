@@ -134,6 +134,10 @@ const PACKAGE_COVERAGE = {
   'packages/halfdozen-operator-notion-mcp/worker': {
     registry: ['halfdozen-operator-notion-mcp']
   },
+  'packages/halfdozen-agent-analyzer-telemetry-mcp/worker': {
+    registry: ['halfdozen-agent-analyzer-telemetry'],
+    fleetDeployments: ['halfdozen-agent-analyzer-telemetry-mcp']
+  },
   'packages/halfdozen-telemetry-mcp/worker': {
     registry: ['halfdozen-telemetry']
   },

@@ -8,7 +8,7 @@
 > `composio-toolkit-*` server list lives in
 > [`config/mcp-hub/registry.composio.generated.json`](../config/mcp-hub/registry.composio.generated.json).
 
-## Active (core, 41)
+## Active (core, 42)
 
 | Server | Transport | Endpoint | Exposure | Est. Tools | Tags |
 | --- | --- | --- | --- | --- | --- |
@@ -19,6 +19,7 @@
 | `create-something` | `http` | `https://mcp.createsomething.ltd/mcp` | `direct` | `5` | `core`, `content`, `cs`, `policy_os_only` |
 | `cs-telemetry` | `http` | `https://cs-telemetry-mcp.createsomething.workers.dev/mcp` | `direct` | `10` | `observability`, `telemetry`, `cs`, `policy_os_only` |
 | `half-dozen-youtube-sync` | `http` | `https://youtube.mcp.workway.co/mcp` | `direct` | `0` | `halfdozen`, `youtube`, `workway` |
+| `halfdozen-agent-analyzer-telemetry` | `http` | `https://halfdozen-agent-analyzer-telemetry-mcp.half-dozen.workers.dev/mcp` | `direct` | `10` | `halfdozen`, `agent-analyzer`, `notion`, `observability`, `workway` |
 | `halfdozen-blondish-sync-mcp` | `http` | `https://halfdozen-blondish-sync-mcp.createsomething.workers.dev/mcp` | `direct` | `8` | `halfdozen`, `blondish`, `notion`, `tickets`, `sync` |
 | `halfdozen-dm-mcp` | `http` | `https://dm.mcp.workway.co/mcp` | `brokered` | `100` | `halfdozen`, `dm`, `notion`, `drive`, `composio`, `workway` |
 | `halfdozen-gmail-sync-danny` | `http` | `https://gmail.mcp.workway.co/mcp` | `direct` | `0` | `halfdozen`, `gmail`, `workway` |
@@ -185,7 +186,7 @@ Hand-curated bundles are listed inline. Composio category bundles are listed in 
 | `dormant` | `gmail-notion-mcp`, `notion-sync-mcp`, `loom-mcp` |
 | `finance` | `quickbooks-notion-mcp-server` |
 | `halfdozen` | `notion-halfdozen-create-something`, `notion-halfdozen-system-studio`, `notion-halfdozen-blondish`, `notion-halfdozen-c3-management`, `notion-halfdozen-cracked`, `notion-halfdozen-fanpad`, `notion-halfdozen-juice-labs`, `notion-halfdozen-kk-management`, `notion-halfdozen-lightswitch`, `notion-halfdozen-phase-3`, `notion-halfdozen-three-six-zero`, `halfdozen-dm-mcp`, `halfdozen-operator-notion-mcp`, `halfdozen-blondish-sync-mcp`, `half-dozen-youtube-sync` |
-| `halfdozen-observability` | `halfdozen-telemetry` |
+| `halfdozen-observability` | `halfdozen-agent-analyzer-telemetry`, `halfdozen-telemetry` |
 | `halfdozen-sync` | `halfdozen-gmail-sync-danny`, `halfdozen-gmail-sync-fillip`, `halfdozen-gmail-sync-leah`, `halfdozen-zoom-sync`, `halfdozen-blondish-sync-mcp` |
 | `local-dev` | `community-mcp`, `ground-mcp`, `harness-mcp`, `social-mcp`, `ui-preview-mcp`, `webflow-local`, `lsmcp` |
 | `meetings` | `meetings` |

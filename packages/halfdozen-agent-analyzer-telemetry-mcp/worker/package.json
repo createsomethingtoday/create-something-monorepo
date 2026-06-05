@@ -1,0 +1,19 @@
+{
+  "name": "halfdozen-agent-analyzer-telemetry-mcp",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "check": "node ../../../scripts/run-wrangler.mjs deploy --dry-run --outdir ../../../.wrangler/dry-runs/halfdozen-agent-analyzer-telemetry-mcp",
+    "db:migrations:apply": "node ../../../scripts/run-wrangler.mjs d1 migrations apply halfdozen-feedback --remote",
+    "deploy": "node ../../../scripts/run-wrangler.mjs deploy"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.25.3",
+    "agents": "^0.3.10",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "wrangler": "^4.62.0"
+  }
+}

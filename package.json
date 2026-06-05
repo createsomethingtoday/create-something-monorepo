@@ -196,6 +196,7 @@
     "partner:policy:conformance": "tsx scripts/partner-policy-conformance.ts",
     "create-mcp": "tsx scripts/create-mcp.ts",
     "deploy:halfdozen-dm-mcp": "node scripts/run-wrangler.mjs --cwd packages/halfdozen-dm-mcp/worker deploy",
+    "deploy:halfdozen-agent-analyzer-telemetry-mcp": "pnpm --dir packages/halfdozen-agent-analyzer-telemetry-mcp/worker run deploy",
     "deploy:halfdozen-blondish-sync-mcp": "node scripts/run-wrangler.mjs --cwd packages/halfdozen-blondish-sync-mcp deploy",
     "deploy:airtable-primary-tags": "pnpm --dir packages/airtable-primary-tags-worker deploy",
     "deploy:webflow-local-mcp": "node scripts/run-wrangler.mjs --cwd packages/webflow-mcp/worker deploy",
