@@ -86,6 +86,7 @@
       "packages/agency/clients/*",
       "packages/half-dozen-youtube-sync",
       "packages/half-dozen-youtube-sync/worker",
+      "packages/halfdozen-agent-analyzer-telemetry-mcp/worker",
       "packages/halfdozen-dm-mcp",
       "packages/halfdozen-dm-mcp/worker",
       "packages/halfdozen-gmail-sync",

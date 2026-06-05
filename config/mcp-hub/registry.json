@@ -12767,6 +12767,23 @@
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 0
     },
+    "halfdozen-agent-analyzer-telemetry": {
+      "transport": "http",
+      "url": "https://halfdozen-agent-analyzer-telemetry-mcp.half-dozen.workers.dev/mcp",
+      "bearer_token_env_var": "HALFDOZEN_AGENT_ANALYZER_TELEMETRY_MCP_API_KEY",
+      "description": "Append-only telemetry MCP for Half Dozen native Notion AGENT ANALYZER eval runs.",
+      "tags": [
+        "halfdozen",
+        "agent-analyzer",
+        "notion",
+        "observability",
+        "workway"
+      ],
+      "package_path": "packages/halfdozen-agent-analyzer-telemetry-mcp/worker",
+      "catalog_exposure_mode": "direct",
+      "estimated_tool_count": 10,
+      "setupNotes": "Hosted on the Half Dozen Cloudflare account. Cloudflare Worker secret is MCP_API_KEY; operator/client retrieval secret is prod:/:HALFDOZEN_AGENT_ANALYZER_TELEMETRY_MCP_API_KEY. The D1 schema is additive and append-only in halfdozen-feedback.agent_analyzer_telemetry_events."
+    },
     "halfdozen-blondish-sync-mcp": {
       "transport": "http",
       "url": "https://halfdozen-blondish-sync-mcp.createsomething.workers.dev/mcp",
@@ -16503,6 +16520,7 @@
       "half-dozen-youtube-sync"
     ],
     "halfdozen-observability": [
+      "halfdozen-agent-analyzer-telemetry",
       "halfdozen-telemetry"
     ],
     "halfdozen-sync": [
