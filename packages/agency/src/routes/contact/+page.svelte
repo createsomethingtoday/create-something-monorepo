@@ -25,20 +25,20 @@
   }> = [
     {
       value: 'governance-checklist',
-      label: 'Send the governance checklist',
+      label: 'Send the trust checklist',
       description: 'Best for cold readers who want the approval, logging, and recovery questions first.',
       funnelStage: 'awareness',
-      serviceInterest: 'AI workflow governance checklist',
+      serviceInterest: 'AI workflow trust checklist',
       submitLabel: 'Request checklist',
       successMessage: "Sent. I'll send the checklist and the next-step notes."
     },
     {
       value: 'workflow-teardown',
-      label: 'Request a workflow teardown',
+      label: 'Request a workflow map',
       description: 'Best when you can name the stack, bottleneck, and risk boundary.',
       funnelStage: 'consideration',
-      serviceInterest: 'Workflow teardown',
-      submitLabel: 'Request teardown',
+      serviceInterest: 'Workflow trust map',
+      submitLabel: 'Request map',
       successMessage: "Sent. I'll review the workflow and reply with the likely operating path."
     },
     {
@@ -54,8 +54,8 @@
 
   const laneOptions: Array<{ value: ServiceLane; label: string }> = [
     { value: 'not_sure', label: 'Not sure yet' },
-    { value: 'workflow_infrastructure', label: 'Workflow System' },
-    { value: 'reliability_and_control', label: 'Policy OS' },
+    { value: 'workflow_infrastructure', label: 'Workflow Pilot' },
+    { value: 'reliability_and_control', label: 'Trust Layer' },
     { value: 'enterprise_extension', label: 'Enterprise Extension' },
     { value: 'system_development_referral', label: 'System Development Referral' }
   ];
@@ -159,7 +159,7 @@
 
 <SEO
   title="Start With the Right Workflow | CREATE SOMETHING .agency"
-  description="Choose the right next step: get the governance checklist, request a workflow teardown, or book a mapping session when the workflow is ready."
+  description="Choose the right next step: get the trust checklist, request a workflow map, or book a mapping session when the workflow is ready."
   keywords="workflow mapping, production automation, reliability controls, enterprise workflows, custom mcp, automation risk"
   ogImage="/og-image.svg"
   propertyName="agency"
@@ -187,9 +187,8 @@
     </BlurFade>
     <BlurFade delay={0.2}>
       <p class="hero-detail">
-        Cold readers can take the governance checklist. Warm buyers can request a workflow
-        teardown. High-intent teams can book the mapping session when the workflow and owner are
-        already clear.
+        Cold readers can take the trust checklist. Warm buyers can request a workflow map.
+        High-intent teams can book the mapping session when the workflow and owner are already clear.
       </p>
     </BlurFade>
   </div>

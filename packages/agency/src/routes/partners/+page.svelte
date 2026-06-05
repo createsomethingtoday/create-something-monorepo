@@ -9,12 +9,12 @@
     {
       label: 'Primary application',
       value: 'Dify Service Partner',
-      detail: 'Lead with implementation, training, support, MCP setup, and Policy OS governance.'
+      detail: 'Lead with implementation, training, support, MCP setup, and trust-layer controls.'
     },
     {
       label: 'Runtime application',
       value: 'Cloudflare PowerUP Consult',
-      detail: 'Frame Workers, Pages, D1, and remote MCP surfaces as the governed delivery substrate.'
+      detail: 'Frame Workers, Pages, D1, and remote MCP surfaces as the controlled delivery substrate.'
     },
     {
       label: 'Workspace application',
@@ -43,7 +43,7 @@
       status: 'Runtime submission',
       href: '/cloudflare',
       detail:
-        'Use the Cloudflare lane to show Workers, Pages, D1, remote MCPs, runbooks, and governed delivery evidence.'
+        'Use the Cloudflare lane to show Workers, Pages, D1, remote MCPs, runbooks, and controlled delivery evidence.'
     },
     {
       name: 'Notion',
@@ -59,7 +59,7 @@
       status: 'Do not overclaim',
       href: '/stack',
       detail:
-        'Use the stack boundary to show OpenAI-ready MCP, Agents SDK, ChatGPT compatibility, evals, and Policy OS proof.'
+        'Use the stack boundary to show OpenAI-ready MCP, Agents SDK, ChatGPT compatibility, evals, and Trust Layer proof.'
     }
   ];
 
@@ -102,7 +102,7 @@
       lead: 'Ecosystem readiness',
       support: 'Startup, portal, or research paths only when eligible',
       detail:
-        'OpenAI carries reasoning and agent-host proof while CREATE SOMETHING owns scoped tools, approvals, evals, and policy boundaries.'
+        'OpenAI carries reasoning and agent-host proof while CREATE SOMETHING owns scoped tools, approvals, evals, and trust boundaries.'
     }
   ];
 
@@ -111,7 +111,7 @@
       step: '01',
       title: 'Apply with one story',
       detail:
-        'CREATE SOMETHING builds governed AI workflow systems: agent surface, runtime substrate, operator workspace, and policy artifacts.'
+        'CREATE SOMETHING builds controlled AI workflow systems: agent surface, runtime substrate, operator workspace, and trust receipts.'
     },
     {
       step: '02',
@@ -137,13 +137,13 @@
     {
       displayName: 'partner_stack_packet.md',
       name: 'partner_stack_packet.md',
-      summary: 'One narrative tying Dify, Cloudflare, Notion, and OpenAI to the same governed workflow system.',
+      summary: 'One narrative tying Dify, Cloudflare, Notion, and OpenAI to the same controlled workflow system.',
       tag: 'Strategy'
     },
     {
       displayName: 'surface_review_2026_05_17.md',
       name: 'surface_review_2026_05_17.md',
-      summary: 'Current review of partner, affiliate, MCP, agent, policy, and public-page alignment.',
+      summary: 'Current review of partner, affiliate, MCP, agent, trust, and public-page alignment.',
       tag: 'Review'
     },
     {
@@ -217,8 +217,8 @@
 
 <SEO
   title="Partner Stack | CREATE SOMETHING .agency"
-  description="CREATE SOMETHING partner stack for governed AI workflow systems: Dify agent surfaces, Cloudflare runtime, Notion workspaces, and OpenAI readiness."
-  keywords="Dify partner, Cloudflare partner, Notion partner, OpenAI readiness, AI workflow systems, partner stack, Policy OS, MCP governance"
+  description="CREATE SOMETHING partner stack for controlled AI workflow systems: Dify agent surfaces, Cloudflare runtime, Notion workspaces, and OpenAI readiness."
+  keywords="Dify partner, Cloudflare partner, Notion partner, OpenAI readiness, AI workflow systems, partner stack, Trust Layer, MCP controls"
   ogImage="/og-image.svg"
   propertyName="agency"
 />
@@ -234,14 +234,14 @@
         </BlurFade>
 
         <BlurFade delay={0.05}>
-          <h1 class="hero-title">One partner story for governed AI workflow systems.</h1>
+          <h1 class="hero-title">One partner story for controlled AI workflow systems.</h1>
         </BlurFade>
 
         <BlurFade delay={0.1}>
           <p class="hero-detail">
             Dify is the agent surface, Cloudflare is the runtime substrate, and Notion is the
             operator workspace. OpenAI is the reasoning-host readiness lane. CREATE SOMETHING owns
-            the policy artifacts, MCP boundaries, delivery runbooks, and evidence that make the
+            the trust rules, MCP boundaries, delivery runbooks, and evidence that make the
             combined system credible.
           </p>
         </BlurFade>
@@ -254,7 +254,7 @@
         </BlurFade>
 
         <BlurFade delay={0.18}>
-          <p class="hero-note">Apply. Route. Prove. Govern.</p>
+          <p class="hero-note">Apply. Route. Prove. Control.</p>
         </BlurFade>
       </div>
 
@@ -280,7 +280,7 @@
             </div>
             <div>
               <dt>Lead offer</dt>
-              <dd>Policy OS plus governed delivery</dd>
+              <dd>Trust Layer plus controlled delivery</dd>
             </div>
             <div>
               <dt>Approval posture</dt>
@@ -403,7 +403,7 @@
   <div class="shell-inner-pad partners-shell">
     <ArtifactSystemStrip
       eyebrow="Partner Evidence"
-      title="The applications should point to durable artifacts."
+      title="The applications should point to durable proof."
       description="The public story stays simple while the repo carries the application packets, lead-routing rules, proof inventory, and brand guardrails."
       items={partnerArtifacts}
     />

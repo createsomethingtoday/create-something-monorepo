@@ -79,7 +79,7 @@ export const products: Product[] = [
 		title: 'Learn',
 		tagline: 'Learn the Subtractive Triad via Claude Code',
 		description:
-			'Interactive MCP server for learning the CREATE SOMETHING methodology — authentication, lessons, praxis exercises, and reflection.',
+			'Interactive MCP server for learning the CREATE SOMETHING approach — authentication, lessons, praxis exercises, and reflection.',
 		badge: 'Free & Open Source',
 		category: 'developer-tools',
 		href: 'https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/learn',
@@ -193,7 +193,7 @@ export const products: Product[] = [
 		title: 'Community',
 		tagline: 'Agent-managed community presence',
 		description:
-			'Monitor platforms, draft responses, and queue them for human review. Community engagement with minimal daily effort.',
+			'Monitor platforms, draft responses, and queue them for human review. Community presence with minimal daily effort.',
 		badge: 'Open Source',
 		category: 'integration',
 		href: 'https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/community-mcp',
@@ -225,7 +225,7 @@ export const products: Product[] = [
 		client: 'Half Dozen',
 		integrations: ['Gmail', 'YouTube', 'Zoom', 'Notion', 'Steel.dev'],
 		pricing: 'Custom',
-		timeline: 'Custom engagement'
+		timeline: 'Custom project'
 	},
 	{
 		id: 'outerfields',
@@ -238,7 +238,7 @@ export const products: Product[] = [
 		client: 'Outerfields',
 		integrations: ['Cloudflare Workers', 'MCP Remote'],
 		pricing: 'Custom',
-		timeline: 'Custom engagement'
+		timeline: 'Custom project'
 	}
 ];
 

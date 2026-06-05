@@ -9,7 +9,7 @@
     {
       label: 'Primary track',
       value: 'PowerUP Consult',
-      detail: 'Architecture, implementation, governance, optimization, and delivery support.'
+      detail: 'Architecture, implementation, controls, optimization, and delivery support.'
     },
     {
       label: 'Account lane',
@@ -34,11 +34,11 @@
       title: 'Remote MCP Fleet',
       label: 'Implementation proof',
       detail:
-        'Cloudflare-hosted MCP endpoints expose scoped tools with bearer-token governance and tenant boundaries.'
+        'Cloudflare-hosted MCP endpoints expose scoped tools with bearer-token controls and tenant boundaries.'
     },
     {
-      title: 'Policy OS Routes',
-      label: 'Governance proof',
+      title: 'Trust Layer Routes',
+      label: 'Trust proof',
       detail:
         'Action previews, approval checks, blocked states, and evidence records sit before risky execution.'
     },
@@ -60,7 +60,7 @@
     {
       stage: '02',
       label: 'Gate',
-      title: 'Policy check',
+      title: 'Trust check',
       detail: 'Classify the action as allowed, approval-needed, blocked, or recoverable before execution.'
     },
     {
@@ -97,10 +97,10 @@
       tag: 'MCP'
     },
     {
-      displayName: 'policy_os_routes.md',
-      name: 'policy_os_routes.md',
+      displayName: 'trust_layer_routes.md',
+      name: 'trust_layer_routes.md',
       summary: 'Action previews, approvals, blocked states, entitlement checks, and evidence logs.',
-      tag: 'Policy'
+      tag: 'Trust'
     },
     {
       displayName: 'delivery_runbook.md',
@@ -113,7 +113,7 @@
   const audienceCards = [
     {
       audience: 'Operators',
-      title: 'Run governed workflows close to the business.',
+      title: 'Run controlled workflows close to the business.',
       detail:
         'Use Cloudflare routes for previews, approvals, status checks, and evidence before actions execute.'
     },
@@ -127,7 +127,7 @@
       audience: 'Agencies',
       title: 'Standardize delivery without hiding account ownership.',
       detail:
-        'Separate CREATE SOMETHING delivery artifacts from client-owned zones, accounts, billing, and data rights.'
+        'Separate CREATE SOMETHING delivery receipts from client-owned zones, accounts, billing, and data rights.'
     }
   ];
 
@@ -136,7 +136,7 @@
       step: 'Apply',
       title: 'PowerUP consult first',
       detail:
-        'Lead with implementation, architecture, training, runbooks, and governed workflow outcomes.'
+        'Lead with implementation, architecture, training, runbooks, and controlled workflow outcomes.'
     },
     {
       step: 'Manage',
@@ -186,7 +186,7 @@
       label: 'Operator workspace',
       name: 'Notion',
       href: '/notion',
-      detail: 'Workspace systems, templates, and reviewable operating artifacts.'
+      detail: 'Workspace systems, templates, and reviewable operating receipts.'
     },
     {
       label: 'Vendor boundary',
@@ -206,8 +206,8 @@
 
 <SEO
   title="Cloudflare Partner Lane | CREATE SOMETHING .agency"
-  description="CREATE SOMETHING builds Cloudflare-native workflow systems with Workers, Pages, D1, remote MCP surfaces, and Policy OS governance."
-  keywords="Cloudflare partner, Cloudflare PowerUP, Cloudflare Workers, remote MCP, D1, Policy OS, AI workflow infrastructure"
+  description="CREATE SOMETHING builds Cloudflare-native workflow systems with Workers, Pages, D1, remote MCP surfaces, and trust-layer controls."
+  keywords="Cloudflare partner, Cloudflare PowerUP, Cloudflare Workers, remote MCP, D1, trust layer, AI workflow infrastructure"
   ogImage="/og-image.svg"
   propertyName="agency"
 />
@@ -223,12 +223,12 @@
         </BlurFade>
 
         <BlurFade delay={0.05}>
-          <h1 class="hero-title">Cloudflare runtime with governed workflows.</h1>
+          <h1 class="hero-title">Cloudflare runtime with controlled workflows.</h1>
         </BlurFade>
 
         <BlurFade delay={0.1}>
           <p class="hero-detail">
-            CREATE SOMETHING uses Workers, Pages, D1, remote MCP surfaces, and Policy OS approval
+            CREATE SOMETHING uses Workers, Pages, D1, remote MCP surfaces, and trust-layer approval
             boundaries as the runtime substrate. The partner path is consult first, agency
             management second, and Technology Alliance later.
           </p>
@@ -263,7 +263,7 @@
           <dl>
             <div>
               <dt>Primary offer</dt>
-              <dd>Cloudflare-native workflow systems with Policy OS</dd>
+              <dd>Cloudflare-native workflow systems with Trust Layer</dd>
             </div>
             <div>
               <dt>Primary proof</dt>
@@ -322,10 +322,10 @@
   <div class="shell-inner-pad cloudflare-shell">
     <div class="section-copy wide">
       <span class="product-kicker">Runtime Pattern</span>
-      <h2>The repeatable Cloudflare story is a governed execution loop.</h2>
+      <h2>The repeatable Cloudflare story is a controlled execution loop.</h2>
       <p>
         The page now names the concrete pattern behind the partner case: a Cloudflare route receives
-        the work, Policy OS decides what can happen, durable state records the handoff, MCP tools do
+        the work, the Trust Layer decides what can happen, durable state records the handoff, MCP tools do
         the narrow action, and the result comes back with evidence.
       </p>
     </div>
@@ -349,8 +349,8 @@
   <div class="shell-inner-pad cloudflare-shell">
     <ArtifactSystemStrip
       eyebrow="Partner Evidence"
-      title="The Cloudflare case is artifact-backed."
-      description="The partner packet can reference runtime architecture, hosted MCP endpoints, policy routes, and delivery runbooks without exposing private account or tenant data."
+      title="The Cloudflare case has receipts."
+      description="The partner packet can reference runtime architecture, hosted MCP endpoints, trust-layer routes, and delivery runbooks without exposing private account or tenant data."
       items={partnerArtifacts}
     />
   </div>

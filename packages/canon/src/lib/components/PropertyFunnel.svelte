@@ -57,7 +57,7 @@
       label: '.agency',
       role: 'Build',
       href: 'https://createsomething.agency',
-      summary: 'Turn the fit into a scoped workflow with controls, owners, and handoff artifacts.'
+      summary: 'Turn the fit into a scoped workflow with controls, owners, and handoff notes.'
     }
   ];
 

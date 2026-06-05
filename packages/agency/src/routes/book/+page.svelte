@@ -34,21 +34,21 @@
 		| 'not_sure';
 
 	const laneOptions: Array<{ value: ServiceLane; label: string; description: string }> = [
-		{
-			value: 'workflow_infrastructure',
-			label: 'Workflow System',
-			description: 'One workflow your team still completes or covers by hand.'
+			{
+				value: 'workflow_infrastructure',
+				label: 'Workflow Pilot',
+				description: 'One workflow your team still completes or covers by hand.'
+			},
+			{
+				value: 'reliability_and_control',
+				label: 'Trust Layer',
+				description:
+					'Approval rules, blocked states, release evidence, and operator briefs around live automation.'
 		},
 		{
-			value: 'reliability_and_control',
-			label: 'Policy OS',
-			description:
-				'Approval rules, blocked states, release evidence, and operator briefs around live automation.'
-		},
-		{
-			value: 'enterprise_extension',
-			label: 'Enterprise Extension',
-			description: 'Cross-system orchestration with stricter governance, auditability, and recovery.'
+				value: 'enterprise_extension',
+				label: 'Enterprise Extension',
+				description: 'Cross-system orchestration with stricter controls, auditability, and recovery.'
 		},
 		{
 			value: 'system_development_referral',
@@ -322,11 +322,11 @@
 
 <main class="booking-page">
 	<header class="booking-header">
-		<h1 class="booking-title">Book a CREATE SOMETHING Mapping Session</h1>
+			<h1 class="booking-title">Book a CREATE SOMETHING Trust Map</h1>
 		<p class="booking-subtitle">
 			Bring the workflow with the most drag, risk, or manual handoff. You leave with the
-			first workflow map, stack boundary, decision states, and where agent capacity can be
-			safely introduced.
+				first workflow map, stack boundary, decision states, and where agent capacity can be
+				safely introduced.
 		</p>
 	</header>
 

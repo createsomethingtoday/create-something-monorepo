@@ -15,15 +15,15 @@
 
   const services = [
     {
-      name: 'MCP Wedge',
+      name: 'Trust Map',
       description:
-        'A narrow discovery or compliance wedge when the client needs trusted connectivity before the operating layer.',
+        'A fixed first map of the workflow, object model, action boundary, approval path, and first safe delegation point.',
       type: 'Entry wedge',
       price: 'Custom',
-      priceDescription: 'Scoped host setup'
+      priceDescription: 'Scoped diagnostic'
     },
     {
-      name: 'Workflow System',
+      name: 'Workflow Pilot',
       description:
         'A single workflow rebuilt with clear rules, clean handoffs, and production-safe behavior.',
       type: 'Implementation Sprint',
@@ -31,10 +31,10 @@
       priceDescription: 'Scoped build'
     },
     {
-      name: 'Policy OS',
+      name: 'Trust Layer',
       description:
-        'Approvals, policy artifacts, release checks, blocked states, and incident loops for workflows already in motion.',
-      type: 'Governed Execution Retainer',
+        'Scoped actions, approval states, release checks, blocked states, and incident loops for workflows already in motion.',
+      type: 'Workflow Control Plan',
       price: 'Custom',
       priceDescription: 'Monthly'
     },
@@ -51,34 +51,34 @@
   const offerCards = [
     {
       tag: 'Entry wedge',
-      title: 'MCP Wedge',
-      summary: 'Use this when the connection is the job and your team will operate the workflow directly.',
+      title: 'Trust Map',
+      summary: 'Use this when the first job is deciding what would be safe to delegate.',
       points: [
-        'Connectivity validation',
-        'Scoped host setup',
-        'Read-only or constrained rollout'
+        'Business object map',
+        'Action and approval boundary',
+        'First safe delegation path'
       ]
     },
     {
       tag: 'Start here',
-      title: 'Workflow System',
+      title: 'Workflow Pilot',
       summary: 'Fix the first workflow your team still does by hand and make the handoffs reliable.',
       points: [
         'Business-rule mapping',
         'Workflow implementation',
         'Auth and access setup',
-        'Portable runbooks and handoff artifacts'
+        'Portable runbooks and handoff notes'
       ],
       featured: true
     },
     {
       tag: 'Default paid offer',
-      title: 'Policy OS',
-      summary: `The governed execution layer that makes ${deliveryVector.clientFacingLabel} safe to run faster in production.`,
+      title: 'Trust Layer',
+      summary: `The control layer that makes ${deliveryVector.clientFacingLabel} safe to run faster in production.`,
       points: [
         'Approval and block boundaries',
         'Reason-coded access decisions',
-        'Operator brief and escalation surface',
+        'Operator surface and escalation path',
         'Release checks and incident loops',
         'Evals tied to real workflow behavior'
       ]
@@ -98,7 +98,7 @@
 
   const boundaryPoints = [
     'You bring the workflow, constraints, and approval owner.',
-    'CREATE SOMETHING maps the rules, builds the control layer, and ships the operating artifacts.',
+    'CREATE SOMETHING maps the rules, builds the control layer, and ships the operating receipts.',
     'Your team gets visibility through runbooks, approvals, release evidence, operator briefs, and working software.'
   ];
 
@@ -127,7 +127,7 @@
       detail: 'The handoff your team needs done without constant human coverage.'
     },
     {
-      label: 'Govern',
+      label: 'Control',
       value: '3 states',
       detail: 'Auto-allow, approval-needed, or blocked with reason.'
     },
@@ -140,16 +140,16 @@
 
   const surfacePoints = [
     {
-      label: 'Policy OS',
+      label: 'Trust Layer',
       title: 'Decides what needs judgment',
       detail:
         'The operating layer classifies safe work, approval-needed work, and blocked actions before the operator is interrupted.'
     },
     {
-      label: 'Ink',
+      label: 'Surface',
       title: 'Makes the decision visible',
       detail:
-        'The physical surface is optional, but useful when the buyer needs to see and feel the operator promise.'
+        'Webflow, Dify, Linear, Notion, or a custom app can show the small amount of state the operator needs.'
     },
     {
       label: 'Operator',
@@ -163,37 +163,37 @@
     {
       question: 'What is your primary service?',
       answer:
-        'Workflow System fixes the first painful workflow. Policy OS becomes the core engagement once speed needs approvals, release controls, and ongoing oversight. Enterprise Extension covers the highest-stakes environments.'
+        'Workflow Pilot fixes the first painful workflow. Trust Layer becomes the ongoing plan once speed needs approvals, release controls, and oversight. Enterprise Extension covers the highest-stakes environments.'
     },
     {
       question: 'Are you joining our team or running internal ops?',
       answer:
-        'No. I operate as a solo specialist using CREATE SOMETHING as the delivery toolchain. You get scoped delivery, governed agent capacity, artifact-backed visibility, approval points, and a clean handoff instead of open-ended staffing.'
+        'No. I operate as a solo specialist using CREATE SOMETHING as the delivery toolchain. You get scoped delivery, controlled agent capacity, evidence-backed visibility, approval points, and a clean handoff instead of open-ended staffing.'
     },
     {
       question: 'Are agents part of the workforce?',
       answer:
-        'They can be, when the workflow gives them a clear job, scoped tools, approval boundaries, and evidence. MCPs are the toolkits; Policy OS decides what agents can do, what needs a person, and what must stop.'
+        'They can be, when the workflow gives them a clear job, scoped tools, approval boundaries, and evidence. MCPs are the toolkits; the trust layer decides what agents can do, what needs a person, and what must stop.'
     },
     {
       question: 'Do you build full business systems and run onboarding?',
       answer:
-        'When full system development and team onboarding are the primary need, I provide a direct referral path to Half Dozen. .agency is optimized for workflow systems and governed execution, not ongoing admin coverage.'
+        'When full system development and team onboarding are the primary need, I provide a direct referral path to Half Dozen. .agency is optimized for workflow systems and controlled delegation, not ongoing admin coverage.'
     },
     {
       question: 'What does .agency own?',
       answer:
-        '.agency owns the rules, approvals, handoffs, release controls, and operating artifacts around the workflow. Your team keeps business context, approval ownership, and long-term control.'
+        '.agency owns the rules, approvals, handoffs, release controls, and operating receipts around the workflow. Your team keeps business context, approval ownership, and long-term control.'
     },
     {
-      question: 'When should we add Policy OS?',
+      question: 'When should we add the Trust Layer?',
       answer:
         'Add it when failures become expensive or the workflow touches revenue, customer trust, compliance, or several systems that must stay in sync.'
     },
     {
       question: 'Do you still offer MCP Wedge?',
       answer:
-        'Yes. MCP Wedge still works for discovery, compliance-constrained pilots, or teams that need the connection before the operating layer.'
+        'Yes. A narrow MCP wedge still works for discovery, compliance-constrained pilots, or teams that need the connection before the operating layer.'
     },
     {
       question: 'Do we need to understand MCP or the vendor stack first?',
@@ -206,9 +206,9 @@
         'Yes. Clients retain ownership of code, workflows, and operating documentation. The delivery is meant to stay portable after launch.'
     },
     {
-      question: 'Is Ink the product?',
+      question: 'Is the dashboard the product?',
       answer:
-        'Ink is the visible operator surface. The paid service is the workflow mapping, policy layer, artifacts, and escalation behavior that make the surface trustworthy.'
+        'No. The visible surface is where the operator sees state. The paid service is the workflow map, action boundary, evidence, and escalation behavior that make the surface trustworthy.'
     },
     {
       question: 'Why the phrase Skills + MCP?',
@@ -218,9 +218,9 @@
 </script>
 
 <SEO
-  title="Calm AI Workflow Systems | CREATE SOMETHING .agency"
-  description="How CREATE SOMETHING installs calm AI workflow systems: one workflow, clear stack boundaries, decision states, and governed escalation when judgment is required."
-  keywords="calm transparent AI workflow systems, Policy OS, workflow system, MCP wedge, production automation, agent reliability"
+  title="Workflow Trust Layer | CREATE SOMETHING .agency"
+  description="How CREATE SOMETHING makes one workflow safe to delegate: clear stack boundaries, decision states, evidence, and escalation when judgment is required."
+  keywords="workflow trust layer, safe to delegate AI workflow, workflow pilot, MCP wedge, production automation, agent reliability"
   ogImage="/og-image.svg"
   propertyName="agency"
   {services}
@@ -240,9 +240,9 @@
 
       <BlurFade delay={0.1}>
         <p class="hero-detail">
-          Bring the operating path your team cannot keep covering by hand. I map the boundaries,
-          rebuild the handoff, and add governed agent capacity until the operator only hears from
-          the system when judgment is required.
+          Bring the operating path your team cannot keep covering by hand. I map the objects,
+          rebuild the handoff, and add controlled agent capacity until the operator only hears from
+          the system when judgment changes the outcome.
         </p>
       </BlurFade>
 
@@ -254,7 +254,7 @@
       </BlurFade>
 
       <BlurFade delay={0.2}>
-        <p class="hero-note">One workflow. Clear boundaries. Quiet escalation.</p>
+        <p class="hero-note">One workflow. Scoped actions. Evidence attached.</p>
       </BlurFade>
     </div>
 
@@ -264,7 +264,7 @@
           <span class="hero-brief__kicker-desktop">Calm, transparent delivery</span>
           <span class="hero-brief__kicker-mobile">Calm Delivery</span>
         </span>
-        <h2>CREATE SOMETHING turns the toolchain into one workflow outcome.</h2>
+        <h2>CREATE SOMETHING turns the workflow into an inspectable control layer.</h2>
         <div class="hero-brief__grid" role="list">
           {#each heroSignals as signal}
             <div class="hero-brief__item" role="listitem">
@@ -292,7 +292,7 @@
         <BlurFade delay={0.1}>
           <p>
             You are bringing in a solo operator with a purpose-built toolchain to diagnose,
-            rebuild, and govern one critical operating path. The work is scoped, visible, and
+            rebuild, and control one critical operating path. The work is scoped, visible, and
             designed for your team to inherit.
           </p>
         </BlurFade>
@@ -349,12 +349,12 @@
         <span class="product-kicker">Offer ladder</span>
       </BlurFade>
       <BlurFade delay={0.05}>
-        <h2>From connection wedge to governed execution.</h2>
+        <h2>From trust map to controlled delegation.</h2>
       </BlurFade>
       <BlurFade delay={0.1}>
         <p>
-          Start with the narrowest offer that proves value. Add Policy OS when the workflow starts
-          touching revenue, compliance, or customer trust.
+          Start by mapping what would be safe to delegate. Build one workflow pilot. Add the trust
+          layer when the workflow starts touching revenue, compliance, or customer trust.
         </p>
       </BlurFade>
     </div>
@@ -386,14 +386,14 @@
   <div class="shell-inner-pad services-shell flow-layout">
     <div class="section-lead">
       <BlurFade>
-        <span class="product-kicker">Governed execution</span>
+        <span class="product-kicker">Trust layer</span>
       </BlurFade>
       <BlurFade delay={0.05}>
-        <h2>Where Policy OS fits.</h2>
+        <h2>Where the trust layer fits.</h2>
       </BlurFade>
       <BlurFade delay={0.1}>
         <p>
-          Workflow System gets the first handoff working. Policy OS decides what runs
+          Workflow Pilot gets the first handoff working. The trust layer decides what runs
           automatically, what needs review, and what stops. That is the point where speed stops
           being a demo and becomes an operating path.
         </p>
@@ -402,8 +402,9 @@
 
     <BlurFade delay={0.15}>
       <GovernedExecutionFlow
-        title="Policy OS"
-        description="Hub MCP routes the request, and Policy OS decides what can run automatically, what waits for approval, and what stops with a reason."
+        eyebrow="Trust Layer"
+        title="Controlled delegation"
+        description="Hub MCP routes the request, and the trust layer decides what can run automatically, what waits for approval, and what stops with a reason."
       />
     </BlurFade>
   </div>
@@ -414,15 +415,15 @@
     <div class="product-surface product-surface--soft surface-panel">
       <div class="section-lead">
         <BlurFade>
-          <span class="product-kicker">Where Ink fits</span>
+          <span class="product-kicker">Operator surfaces</span>
         </BlurFade>
         <BlurFade delay={0.05}>
-          <h2>Ink is the visible surface. The engagement is the operating layer behind it.</h2>
+          <h2>The visible surface is downstream of the trust layer.</h2>
         </BlurFade>
         <BlurFade delay={0.1}>
           <p>
-            The device makes the promise tangible, but it only works if the workflow has mapped
-            owners, approval rules, blocked states, and evidence. That is what the service installs.
+            Dashboards, Dify apps, Notion views, Linear evidence, and optional quiet displays only
+            work when the workflow has mapped owners, approval rules, blocked states, and evidence.
           </p>
         </BlurFade>
       </div>
@@ -446,8 +447,8 @@
   <div class="shell-inner-pad services-shell">
     <BlurFade>
       <ArtifactSystemStrip
-        title="What ships with every governed engagement"
-        description="Every governed engagement ships as artifacts your team can inspect, run, inherit, and operate."
+        title="What ships with every trust-layer project"
+        description="Every project ships with maps, notes, and evidence your team can inspect, run, inherit, and operate."
       />
     </BlurFade>
   </div>
@@ -459,7 +460,7 @@
       <MappingSessionBrief
         eyebrow="First call"
         title="The mapping session is where the buyer stops guessing."
-        description="We turn the messy workflow into an inspectable plan: what connects, what runs, what pauses, what stops, and what artifact proves the first build."
+        description="We turn the messy workflow into an inspectable plan: what connects, what runs, what pauses, what stops, and what evidence proves the first build."
         ctaHref={agencyCoreMessaging.servicesMappingSessionHref}
       />
     </BlurFade>

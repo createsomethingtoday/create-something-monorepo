@@ -29,6 +29,12 @@
     title?: string;
     description?: string;
     caption?: string;
+    hubKicker?: string;
+    hubTitle?: string;
+    hubSubtitle?: string;
+    controlKicker?: string;
+    controlTitle?: string;
+    controlSubtitle?: string;
     initiators?: string[];
     destinations?: string[];
     outcomes?: Pill[];
@@ -75,10 +81,16 @@
   };
 
   let {
-    eyebrow = 'Governed Execution',
-    title = 'Policy OS',
-    description = 'Hub MCP routes work into Policy OS, the governed execution layer that decides what can run automatically, what needs approval, and what stops with a reason.',
+    eyebrow = 'Trust Layer',
+    title = 'Controlled delegation',
+    description = 'Hub MCP routes work into the trust layer, which decides what can run automatically, what needs approval, and what stops with a reason.',
     caption = 'Safe actions run fast. Risky actions route to approval. Disallowed actions stop with a reason.',
+    hubKicker = 'Routes',
+    hubTitle = 'Hub MCP',
+    hubSubtitle = 'Tenant, host, session',
+    controlKicker = 'Decides',
+    controlTitle = 'Trust Layer',
+    controlSubtitle = 'Reason-coded control',
     initiators = ['Client LLM', 'Ops Inbox', 'Background Agent'],
     destinations = ['CRM', 'ERP', 'Workflow System'],
     outcomes = DEFAULT_OUTCOMES
@@ -162,10 +174,10 @@
 
       <BlurFade delay={0.55}>
         <div class="node hub-node" style={`left:${layout.hub.x}px; top:${layout.hub.y}px;`}>
-          <span class="node-kicker">Routes</span>
+          <span class="node-kicker">{hubKicker}</span>
           <div class="lockup">
-            <span class="node-title">Hub MCP</span>
-            <span class="node-subtitle">Tenant, host, session</span>
+            <span class="node-title">{hubTitle}</span>
+            <span class="node-subtitle">{hubSubtitle}</span>
           </div>
         </div>
       </BlurFade>
@@ -173,10 +185,10 @@
       <BlurFade delay={0.9}>
         <div class="node control-node" style={`left:${layout.control.x}px; top:${layout.control.y}px;`}>
           <BorderBeam size={160} duration={8} colorFrom={primaryBeam} colorTo={secondaryBeam} />
-            <span class="node-kicker">Decides</span>
+          <span class="node-kicker">{controlKicker}</span>
           <div class="lockup">
-            <span class="node-title control-title">Policy OS</span>
-            <span class="node-subtitle">Reason-coded governance</span>
+            <span class="node-title control-title">{controlTitle}</span>
+            <span class="node-subtitle">{controlSubtitle}</span>
           </div>
           <div class="pill-row">
             {#each outcomes as outcome}

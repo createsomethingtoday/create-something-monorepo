@@ -27,9 +27,9 @@
       detail: 'Read-only or constrained MCPs prove the connection before the workflow earns more authority.'
     },
     {
-      label: 'Policy OS',
+      label: 'Trust Layer',
       title: 'The surface needs trust',
-      detail: 'The products are proof primitives. The paid work is turning them into governed operating paths.'
+      detail: 'The products are proof primitives. The paid work is turning them into controlled operating paths.'
     }
   ];
 
@@ -41,7 +41,7 @@
 <SEO
   title="Proof Surfaces | CREATE SOMETHING .agency"
   description="Proof surfaces behind CREATE SOMETHING .agency: agent tools, MCP connectors, and client builds that show how the operating layer becomes inspectable."
-  keywords="MCP servers, Policy OS, agent coordination, grounded AI code analysis, workflow governance, operator surfaces"
+  keywords="MCP servers, trust layer, agent coordination, grounded AI code analysis, workflow controls, operator surfaces"
   ogImage="/og-image.svg"
   propertyName="agency"
 />
@@ -70,7 +70,7 @@
       <p class="hero-subtitle">
         Loom, Ground, MCP connectors, and client builds are not a random product shelf. They are
         proof surfaces for the same path: connect the system, verify the claim, coordinate the
-        agents, then govern the workflow.
+        agents, then control the workflow.
       </p>
     </BlurFade>
   </div>
@@ -83,10 +83,10 @@
       <div class="proof-map">
         <div class="proof-map-copy">
           <p class="section-eyebrow">How to read this page</p>
-          <h2>Products are proof primitives. Policy OS is the operating layer.</h2>
+          <h2>Products are proof primitives. Trust Layer is the operating layer.</h2>
           <p>
             The free and open tools show the discipline underneath the service: grounded claims,
-            agent continuity, constrained MCP access, and artifact-backed decisions. The paid work
+            agent continuity, constrained MCP access, and evidence-backed decisions. The paid work
             turns those primitives into one workflow your operator can trust.
           </p>
         </div>
@@ -250,7 +250,7 @@
     </BlurFade>
     <BlurFade delay={0.2}>
       <p class="cta-subtext">
-        I’ll map the first workflow, identify the safest MCP wedge, and define when Policy OS
+        I’ll map the first workflow, identify the safest MCP wedge, and define when the Trust Layer
         should take over.
       </p>
     </BlurFade>

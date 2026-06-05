@@ -24,7 +24,7 @@
       tone: 'entitlement'
     },
     {
-      label: 'Policy OS',
+      label: 'Trust Layer',
       detail: 'Rules decide whether work runs, pauses for review, or stops.',
       tone: 'control'
     },
@@ -42,8 +42,8 @@
 
   let {
     eyebrow = 'Enforcement Chain',
-    title = 'How Policy OS becomes runtime behavior',
-    description = 'This is the sequence that makes governable automation different from a prompt plus a token.',
+    title = 'How the trust layer becomes runtime behavior',
+    description = 'This is the sequence that makes controlled delegation different from a prompt plus a token.',
     items = DEFAULT_ITEMS
   }: Props = $props();
 </script>

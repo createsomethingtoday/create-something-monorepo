@@ -27,7 +27,7 @@
       label: '03',
       title: 'Ship the control layer',
       detail:
-        'Use MCP, Skills, runbooks, release checks, and policy artifacts to make the workflow portable and governable.'
+        'Use MCP, skills, runbooks, release checks, and trust receipts to make the workflow portable and controlled.'
     },
     {
       label: '04',
@@ -40,8 +40,8 @@
 
 <SEO
   title="Micah Johnson | CREATE SOMETHING .agency"
-  description="Micah Johnson builds calm workflow systems for operator-owned outcomes: governed workflows, policy artifacts, and escalation surfaces for human judgment."
-  keywords="Micah Johnson, governed workflow systems, production automation, systems architecture, automation reliability, workflow governance"
+  description="Micah Johnson builds workflow trust layers for operator-owned outcomes: scoped actions, approval paths, evidence, and escalation surfaces for human judgment."
+  keywords="Micah Johnson, workflow trust layer, production automation, systems architecture, automation reliability, controlled workflows"
   ogImage="/og-image.svg"
   propertyName="agency"
 />
@@ -88,7 +88,7 @@
 </section>
 
 <!-- Why This Work -->
-<section class="about-section">
+  <section class="about-section">
   <div class="section-container">
     <BlurFade delay={0.1}>
       <div class="about-content">
@@ -186,7 +186,7 @@
           justifies the extra layer.
         </p>
         <p>
-          My methodology is the Subtractive Triad: remove duplication, excess, and disconnection
+          My operating model is the Subtractive Triad: remove duplication, excess, and disconnection
           before adding automation. Cleaner systems reduce handoff risk. Better constraints make
           automation more reliable.
         </p>
@@ -199,7 +199,7 @@
   </div>
 </section>
 
-<!-- Engagement Model -->
+  <!-- Workflow Model -->
 <section class="about-section">
   <div class="section-container">
     <BlurFade delay={0.1}>
@@ -208,7 +208,7 @@
         <p>
           Clients do not hire me to become another internal admin. They bring the workflow, the
           operating constraints, and the approval owner. I bring the diagnosis, the control layer,
-          and the artifacts your team needs to run and inherit the system.
+          and the files your team needs to run and inherit the system.
         </p>
         <p>
           Visibility comes through runbooks, approval states, release evidence, operator briefs,
@@ -279,7 +279,7 @@
           </li>
         </ul>
         <p>
-          Client work informs the research. Research sharpens the methodology. The methodology
+          Client work informs the research. Research sharpens the operating model. The operating model
           raises the bar on client work.
         </p>
       </div>
