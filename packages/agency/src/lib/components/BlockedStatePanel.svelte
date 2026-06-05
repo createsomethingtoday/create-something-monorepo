@@ -31,11 +31,11 @@
     {
       label: 'Policy acceptance required',
       reason: 'The user is known, but the access policy has not been accepted for the current account.',
-      recovery: 'Accept the active policy and retry the governed action.'
+      recovery: 'Accept the active trust rule and retry the controlled action.'
     },
     {
-      label: 'Governance suspension',
-      reason: 'The workflow remains installed, but governance has paused execution for risk or review.',
+      label: 'Trust pause',
+      reason: 'The workflow remains installed, but controls have paused execution for risk or review.',
       recovery: 'Resume only after operator review or updated policy conditions.'
     }
   ];

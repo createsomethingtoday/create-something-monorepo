@@ -30,7 +30,7 @@
 			<div class="footer-column">
 				<h6 class="footer-heading">Framework</h6>
 				<ul class="footer-links">
-					<li><a href="/methodology">Methodology</a></li>
+					<li><a href="/methodology">How It Works</a></li>
 					<li><a href="https://createsomething.io" target="_blank" rel="noopener">Research</a></li>
 					<li><a href="https://createsomething.space" target="_blank" rel="noopener">Tools</a></li>
 				</ul>

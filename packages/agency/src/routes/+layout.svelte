@@ -1,7 +1,8 @@
 <script lang="ts">
   import '../app.css';
-  import { Navigation, Footer, Analytics, ModeIndicator } from '@create-something/canon';
+  import { Navigation, Footer, ModeIndicator } from '@create-something/canon';
   import { UnifiedSearch } from '@create-something/canon/navigation';
+  import PrivacyAnalytics from '$lib/components/PrivacyAnalytics.svelte';
   import { getAgencyContentAssetAnalyticsMetadata } from '$lib/analytics/content-assets';
   import { getAgencyMarketingExperimentMetadata } from '$lib/analytics/marketing-experiment';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
@@ -41,11 +42,9 @@
   });
 
   const navLinks = [
-    { label: 'How I Work', href: '/services' },
-    { label: 'Stack', href: '/stack' },
-    { label: 'Partners', href: '/partners' },
-    { label: 'Proof Surfaces', href: '/products' },
-    { label: 'About', href: '/about' }
+    { label: 'How It Works', href: '/services' },
+    { label: 'Trust Layer', href: '/stack' },
+    { label: 'Proof', href: '/products' }
   ];
   const primaryCtaHref = $derived(
     $page.url.pathname === '/book'
@@ -58,8 +57,8 @@
       title: 'Commercial',
       ariaLabel: 'Commercial paths',
       links: [
-        { label: 'How I Work', href: '/services' },
-        { label: 'Stack', href: '/stack' },
+        { label: 'How It Works', href: '/services' },
+        { label: 'Trust Layer', href: '/stack' },
         { label: 'Proof Surfaces', href: '/products' },
         { label: 'About', href: '/about' }
       ]
@@ -81,7 +80,7 @@
         { label: 'Dify MCP Control Plane', href: '/dify/mcp-control-plane' },
         { label: 'Dify Content Engine', href: '/dify/content-engine' },
         { label: 'Dify vs n8n', href: '/dify/n8n-vs-dify' },
-        { label: 'Governance Checklist', href: agencyCoreMessaging.governanceChecklistHref }
+        { label: 'Trust Checklist', href: agencyCoreMessaging.governanceChecklistHref }
       ]
     },
     {
@@ -112,8 +111,8 @@
   const quickAccessItems = [
     {
       id: 'nav-services',
-      label: 'How I Work',
-      description: 'Calm, transparent workflow systems and governed execution',
+      label: 'How It Works',
+      description: 'Workflow pilots, trust maps, and controlled delegation',
       href: '/services',
       icon: '🔨',
       keywords: [
@@ -121,7 +120,7 @@
         'calm',
         'transparent',
         'reliable',
-        'governed execution',
+        'controlled delegation',
         'automation',
         'pricing',
         'services'
@@ -129,8 +128,8 @@
     },
     {
       id: 'nav-stack',
-      label: 'Stack',
-      description: 'Vendor roles, portability boundaries, and delivery ownership',
+      label: 'Trust Layer',
+      description: 'Workflow trust layer, vendor boundaries, and delivery ownership',
       href: '/stack',
       icon: '🧭',
       keywords: [
@@ -142,7 +141,7 @@
         'webflow',
         'dify',
         'openai',
-        'trmnl'
+        'trust layer'
       ]
     },
     {
@@ -194,7 +193,7 @@
         'marketplace',
         'service partner',
         'agent runtime',
-        'policy os'
+        'trust layer'
       ]
     },
     {
@@ -250,7 +249,7 @@
     {
       id: 'nav-products',
       label: 'Proof Surfaces',
-      description: 'Proof surfaces for MCPs, agent tools, and Policy OS',
+      description: 'Proof surfaces for MCPs, agent tools, and the trust layer',
       href: '/products',
       icon: '📦',
       keywords: ['portfolio', 'tools', 'integrations', 'proof surfaces']
@@ -258,10 +257,10 @@
     {
       id: 'nav-book',
       label: agencyCoreMessaging.startWithWorkflowLabel,
-      description: 'Choose the checklist, teardown, or mapping path',
+      description: 'Choose the checklist, trust map, or mapping path',
       href: agencyCoreMessaging.startWithWorkflowHref,
       icon: 'WF',
-      keywords: ['contact', 'hire', 'start', 'workflow', 'teardown', 'checklist', 'mapping']
+      keywords: ['contact', 'hire', 'start', 'workflow', 'trust map', 'checklist', 'mapping']
     },
     {
       id: 'nav-mcp-access',
@@ -386,12 +385,7 @@
   }
 </script>
 
-<svelte:head>
-  <!-- SavvyCal Booking Widget -->
-  <script src="https://embed.savvycal.com/v1/embed.js" defer></script>
-</svelte:head>
-
-<Analytics
+<PrivacyAnalytics
   property="agency"
   userId={data.user?.id}
   userOptedOut={data.user?.analytics_opt_out ?? false}
@@ -412,7 +406,6 @@
     ctaHref={primaryCtaHref}
     user={data.user}
     onLogout={handleLogout}
-    showLogin={true}
     accountHref="/account"
   />
 
@@ -423,12 +416,12 @@
   <Footer
     mode="agency"
     showNewsletter={false}
-    aboutText="Calm, transparent, reliable workflow systems for operator-owned outcomes: clear trust boundaries, artifact-backed delivery, and escalation only when judgment is required."
+    aboutText="Calm, transparent, reliable workflow systems for operator-owned outcomes: clear trust boundaries, evidence-backed delivery, and escalation only when judgment is required."
     quickLinkGroups={footerQuickLinkGroups}
     footerCta={{
       label: agencyCoreMessaging.startWithWorkflowLabel,
       href: primaryCtaHref,
-      description: 'Choose the checklist, teardown, or mapping path for one governed workflow.'
+      description: 'Choose the checklist, trust map, or booking path for one workflow.'
     }}
     showSocial={true}
     isAuthenticated={!!data.user}
@@ -440,5 +433,19 @@
 <style>
   .layout-root {
     background: var(--color-bg-pure);
+  }
+
+  .layout-root :global(.nav-logo) {
+    min-width: clamp(12rem, 18vw, 15rem);
+    gap: 0.45rem;
+    white-space: nowrap;
+  }
+
+  .layout-root :global(.nav-logo-suffix) {
+    margin-left: 0.25rem;
+  }
+
+  .layout-root :global(.nav-desktop) {
+    margin-left: clamp(1rem, 2vw, 1.75rem);
   }
 </style>

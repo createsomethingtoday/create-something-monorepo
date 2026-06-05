@@ -1,12 +1,7 @@
 <script lang="ts">
-  import { Button, HeroSignalField, PropertyFunnel, SEO } from '@create-something/canon';
+  import { Button, HeroSignalField, SEO } from '@create-something/canon';
   import { BlurFade } from '@create-something/canon/magicui';
-  import ArtifactSystemStrip from '$lib/components/ArtifactSystemStrip.svelte';
-  import BrandLogo from '$lib/components/BrandLogo.svelte';
   import ExecutionWorkbench from '$lib/components/ExecutionWorkbench.svelte';
-  import HubMcpFlow from '$lib/components/HubMcpFlow.svelte';
-  import InkOperatorSurface from '$lib/components/InkOperatorSurface.svelte';
-  import MappingSessionBrief from '$lib/components/MappingSessionBrief.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
   const services = [
@@ -19,12 +14,12 @@
       priceDescription: 'Scoped build with optional ongoing support'
     },
     {
-      name: 'Policy OS',
+      name: 'Trust Layer',
       description:
-        'The oversight layer: policy artifacts, approvals, blocked states, release checks, and incident loops once the workflow touches revenue, trust, or compliance.',
-      type: 'Governed Execution Retainer',
+        'The trust layer: scoped actions, approval states, release checks, and incident loops once the workflow touches revenue or customer trust.',
+      type: 'Workflow Control Plan',
       price: 'Custom',
-      priceDescription: 'Monthly governed execution layer'
+      priceDescription: 'Monthly trust layer'
     },
     {
       name: 'Enterprise Extension',
@@ -37,154 +32,40 @@
   ];
 
   const proofMetrics = [
-    { value: '1', label: 'workflow fixed first' },
-    { value: '3', label: 'decision states' },
-    { value: '4', label: 'delivery layers' },
-    { value: '100%', label: 'artifact-backed delivery' }
+    { value: 'Objects', label: 'Business reality named first', icon: 'objects' },
+    { value: 'Actions', label: 'Agent capacity scoped clearly', icon: 'actions' },
+    { value: 'States', label: 'Allowed / approval / blocked', icon: 'states' },
+    { value: 'Receipts', label: 'Evidence for every handoff', icon: 'receipts' }
   ];
 
-  const operatingSignals = [
-    'Model Context Protocol',
-    'Cloudflare Workers',
-    'Composio',
-    'Dify',
-    'Notion',
-    'OpenAI',
-    'Webflow',
-    'Linear',
-    'TRMNL'
-  ];
-
-  const deliveryArtifacts = [
+  const deliveryReceipts = [
     {
-      displayName: 'Workflow map',
-      name: 'workflow-map',
-      summary: 'The first path, handoffs, source systems, owners, and known failure points.',
-      tag: 'Map'
+      number: '//01',
+      label: 'Workflow map',
+      detail: 'Objects, owners, source systems, handoffs, and known failure points.'
     },
     {
-      displayName: 'Stack boundary',
-      name: 'stack-boundary',
-      summary: 'What the client owns, what CREATE SOMETHING owns, and what vendors provide.',
-      tag: 'Boundary'
+      number: '//02',
+      label: 'Trust boundary',
+      detail: 'What can run, what needs approval, and what must stop with a reason.'
     },
     {
-      displayName: 'MCP/API contract',
-      name: 'mcp-api-contract',
-      summary: 'Tools, resources, auth scope, allowed actions, and integration limits.',
-      tag: 'Contract'
+      number: '//03',
+      label: 'Delivery page',
+      detail: 'A client-safe status surface for the live workflow, decisions, and next moves.'
     },
     {
-      displayName: 'Policy rules',
-      name: 'policy-rules',
-      summary: 'Auto-allowed, approval-needed, and blocked states with reasons.',
-      tag: 'Govern'
-    },
-    {
-      displayName: 'Runbook',
-      name: 'runbook',
-      summary: 'Recovery path, release notes, rollback steps, and operator handoff.',
-      tag: 'Operate'
-    },
-    {
-      displayName: 'Operator brief',
-      name: 'operator-brief',
-      summary: 'What the buyer sees in Webflow, Linear, TRMNL, Dify, or a custom surface.',
-      tag: 'Surface'
+      number: '//04',
+      label: 'Private evidence',
+      detail: 'Commands, pass/fail output, endpoints, deploy IDs, and rollback notes.'
     }
-  ];
-
-  const capabilityCards = [
-    {
-      id: '01',
-      title: 'Governed actions',
-      body: 'Decide which actions can run automatically, which need a person in the loop, and which must stop.',
-      points: [
-        'Reason-coded approvals instead of hidden heuristics',
-        'Policy packs attached to the workflow, not buried in chat history',
-        'Blocked states your team can actually understand'
-      ]
-    },
-    {
-      id: '02',
-      title: 'Portable delivery',
-      body: 'The client keeps the code, workflow documentation, and operating artifacts after launch.',
-      points: [
-        'Runbooks, contracts, and release evidence ship with the build',
-        'No proprietary black box required to keep the workflow alive',
-        'The implementation stays legible after the kickoff call'
-      ]
-    },
-    {
-      id: '03',
-      title: 'Recovery by design',
-      body: 'A workflow is not production-ready until it can fail cleanly, escalate cleanly, and recover cleanly.',
-      points: [
-        'Rollback notes and operator handoffs are part of the package',
-        'Failures become incidents with owners, not mystery states',
-        'Edge cases get routed before they become cleanup'
-      ]
-    },
-    {
-      id: '04',
-      title: 'Commodity plumbing, custom judgment',
-      body: 'Commodity connectivity should stay commodity. The value is in workflow design, policy, and delivery.',
-      points: [
-        'Use the best available connector layer where it saves time',
-        'Wrap it in CREATE SOMETHING trust boundaries and artifacts',
-        'Customize only where the workflow actually becomes strategic'
-      ]
-    }
-  ];
-
-  const offerCards = [
-    {
-      name: 'MCP Wedge',
-      featured: false,
-      summary:
-        'A narrow connection proof when the buyer needs to see the first safe tool boundary.',
-      points: [
-        'Connector and account boundary',
-        'Read/write scope definition',
-        'First MCP/API contract',
-        'Replaceability notes'
-      ]
-    },
-    {
-      name: 'Workflow System',
-      featured: true,
-      summary: 'The first reliable operating path. Fix one workflow your team still does by hand.',
-      points: [
-        'Business-rule mapping',
-        'Workflow implementation',
-        'Auth and access setup',
-        'Runbook and handoff artifacts'
-      ]
-    },
-    {
-      name: 'Policy OS',
-      featured: false,
-      summary: 'The governed execution layer once speed touches revenue, trust, or compliance.',
-      points: [
-        'Approval and block boundaries',
-        'Release checks and eval gates',
-        'Incident and review loops',
-        'Monthly tuning against real usage'
-      ]
-    }
-  ];
-
-  const governancePoints = [
-    'Safe actions run automatically when the workflow is healthy.',
-    'Risky actions pause for review before they turn into cleanup.',
-    'Disallowed actions stop with a reason, an owner, and an artifact trail.'
   ];
 </script>
 
 <SEO
-  title="Calm AI Workflow Systems | CREATE SOMETHING .agency"
-  description="CREATE SOMETHING .agency builds calm AI workflow systems for operators: one workflow, clear vendor boundaries, portable artifacts, and governed escalation."
-  keywords="calm transparent reliable AI workflow systems, Policy OS, MCP wedge, transparent AI stack, workflow system, production automation, technical operators"
+  title="Workflow Trust Layer | CREATE SOMETHING .agency"
+  description="Connecting tools is easy. CREATE SOMETHING makes one workflow safe to delegate with scoped actions, approval paths, evidence, and recovery."
+  keywords="workflow trust layer, safe to delegate AI workflow, agent workflow controls, MCP wedge, transparent AI stack, production automation, technical operators"
   ogImage="/og-image.svg"
   propertyName="agency"
   {services}
@@ -204,14 +85,13 @@
         </BlurFade>
 
         <BlurFade delay={0.05}>
-          <h1 class="hero-title">Make the workflow safe enough to trust.</h1>
+          <h1 class="hero-title">Connecting tools is easy. Trust is the product.</h1>
         </BlurFade>
 
         <BlurFade delay={0.1}>
           <p class="hero-detail">
-            For the operator who has to answer for what happens next. CREATE SOMETHING fixes the
-            workflow creating the most drag, then adds approvals, visibility, and recovery paths as
-            the stakes rise.
+            CREATE SOMETHING makes one business workflow safe to delegate: clear objects, scoped
+            actions, approval paths, evidence, and recovery when things go wrong.
           </p>
         </BlurFade>
 
@@ -220,14 +100,15 @@
             <Button href={agencyCoreMessaging.workflowMappingSessionHref}
               >{agencyCoreMessaging.bookMappingSessionLabel}</Button
             >
-            <Button href="/services" variant="secondary">See The Operating Model</Button>
+            <Button href="#workflow-pattern" variant="secondary">See The Pattern</Button>
           </div>
         </BlurFade>
 
         <BlurFade delay={0.2}>
-          <p class="hero-note">Scoped delivery. Clear controls. Portable artifacts.</p>
+          <p class="hero-note">Objects named. Actions scoped. Evidence attached.</p>
         </BlurFade>
       </div>
+
     </div>
   </div>
 
@@ -236,8 +117,35 @@
       {#each proofMetrics as metric, index}
         <BlurFade delay={0.25 + index * 0.05}>
           <article class="product-surface product-surface--soft metric-card">
-            <span class="metric-value">{metric.value}</span>
-            <span class="metric-label">{metric.label}</span>
+            <div class="metric-icon" aria-hidden="true">
+              {#if metric.icon === 'objects'}
+                <svg class="metric-symbol metric-symbol--objects" viewBox="0 0 24 24" focusable="false">
+                  <rect width="6" height="6" x="16" y="16" rx="1" />
+                  <rect width="6" height="6" x="2" y="16" rx="1" />
+                  <rect width="6" height="6" x="9" y="2" rx="1" />
+                  <path d="M5 16v-3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3m-7-4V8" />
+                </svg>
+              {:else if metric.icon === 'actions'}
+                <svg class="metric-symbol metric-symbol--actions" viewBox="0 0 24 24" focusable="false">
+                  <circle cx="6" cy="19" r="3" />
+                  <path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15" />
+                  <circle cx="18" cy="5" r="3" />
+                </svg>
+              {:else if metric.icon === 'states'}
+                <svg class="metric-symbol metric-symbol--states" viewBox="0 0 24 24" focusable="false">
+                  <path d="M13 5h8m-8 7h8m-8 7h8M3 17l2 2l4-4M3 7l2 2l4-4" />
+                </svg>
+              {:else}
+                <svg class="metric-symbol metric-symbol--receipts" viewBox="0 0 24 24" focusable="false">
+                  <path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z" />
+                  <path d="M14 2v5a1 1 0 0 0 1 1h5M9 15l2 2l4-4" />
+                </svg>
+              {/if}
+            </div>
+            <div class="metric-copy">
+              <span class="metric-value">{metric.value}</span>
+              <span class="metric-label">{metric.label}</span>
+            </div>
           </article>
         </BlurFade>
       {/each}
@@ -245,60 +153,22 @@
   </div>
 </section>
 
-<section class="signal-section">
-  <div class="shell-inner-pad">
-    <div class="product-surface product-surface--soft signal-shell">
-      <div class="signal-header">
-        <span class="product-kicker">Calm, transparent stack</span>
-        <p>
-          Vendor names are not the product. They make the stack easier to explain, while CREATE
-          SOMETHING owns the specialized workflow: the map, policy layer, delivery artifacts, and
-          operator handoff. When agents join the workflow, MCPs define their toolkits and Policy OS
-          keeps the work governable.
-        </p>
-      </div>
-
-      <div class="signal-strip">
-        {#each operatingSignals as signal}
-          <div class="signal-pill">
-            <BrandLogo name={signal} size={16} className="signal-pill__icon" />
-            <span>{signal}</span>
-          </div>
-        {/each}
-      </div>
-
-      <div class="signal-actions">
-        <a class="stack-link" href="/stack">Review stack boundaries</a>
-        <a class="stack-link" href="/partners">Review partner stack</a>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section id="ink" class="ink-section">
-  <div class="shell-inner-pad">
-    <BlurFade>
-      <InkOperatorSurface />
-    </BlurFade>
-  </div>
-</section>
-
-<section class="control-section">
+<section class="control-section" id="workflow-pattern">
   <div class="shell-inner-pad showcase-stack">
     <div class="section-lead">
       <BlurFade>
         <span class="product-kicker control-kicker">
-          <span class="control-kicker__desktop">Inspect the full control room</span>
-          <span class="control-kicker__mobile">Full Control Room</span>
+          <span class="control-kicker__desktop">Customer recovery workflow</span>
+          <span class="control-kicker__mobile">Recovery Workflow</span>
         </span>
       </BlurFade>
       <BlurFade delay={0.05}>
-        <h2>The detailed decision surface belongs below the fold.</h2>
+        <h2>Show the business case, not an abstract agent demo.</h2>
       </BlurFade>
       <BlurFade delay={0.1}>
         <p>
-          Once the hero establishes the workflow boundaries, the full surface can show tabs, checks,
-          artifacts, and release logic without crushing the copy.
+          Here the workflow is ecommerce support recovery: inspect the case, order, shipment, and
+          payment state, then decide whether the action can run, needs approval, or stops.
         </p>
       </BlurFade>
     </div>
@@ -309,139 +179,86 @@
   </div>
 </section>
 
-<section id="how" class="capability-section">
-  <div class="shell-inner-pad">
-    <div class="section-lead">
+<section class="delivery-section">
+  <div class="shell-inner-pad delivery-grid">
+    <div class="delivery-copy">
       <BlurFade>
-        <span class="product-kicker">Why teams buy this</span>
+        <span class="product-kicker">After the call</span>
       </BlurFade>
       <BlurFade delay={0.05}>
-        <h2>Connecting tools is easy. Trust is the product.</h2>
+        <h2>Leave with the operating path, not another abstract workflow diagram.</h2>
       </BlurFade>
       <BlurFade delay={0.1}>
         <p>
-          The buyer does not need every implementation detail, but they do need to know how the
-          system works, where data moves, and who owns the handoff when the workflow matters.
+          The delivery pages set the standard for what the work becomes: a visible business model,
+          a private evidence trail, and clear rules for what agents can do.
         </p>
       </BlurFade>
     </div>
 
-    <div class="capability-grid">
-      {#each capabilityCards as card, index}
-        <BlurFade delay={0.15 + index * 0.05}>
-          <article class="product-surface capability-card">
-            <span class="capability-id">{card.id}</span>
-            <h3>{card.title}</h3>
-            <p>{card.body}</p>
-            <ul class="product-list">
-              {#each card.points as point}
-                <li>{point}</li>
-              {/each}
-            </ul>
-          </article>
-        </BlurFade>
-      {/each}
-    </div>
-  </div>
-</section>
+    <BlurFade delay={0.15}>
+      <div class="delivery-window">
+        <div class="delivery-window__top" aria-hidden="true">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+        <div class="delivery-window__body">
+          <div class="delivery-rail">
+            {#each deliveryReceipts as receipt, index}
+              <div class:delivery-rail__item--active={index === 0} class="delivery-rail__item">
+                <div class="delivery-rail__heading">
+                  <span>{receipt.number}</span>
+                  <strong>{receipt.label}</strong>
+                </div>
+                <p>{receipt.detail}</p>
+              </div>
+            {/each}
+          </div>
 
-<section class="offer-section">
-  <div class="shell-inner-pad">
-    <div class="section-lead section-lead--center">
-      <BlurFade>
-        <span class="product-kicker">Offer ladder</span>
-      </BlurFade>
-      <BlurFade delay={0.05}>
-        <h2>Start with one operating path. Add governance when risk rises.</h2>
-      </BlurFade>
-      <BlurFade delay={0.1}>
-        <p>
-          The ladder is buyer-readable: prove the wedge, turn it into one operating workflow, then
-          add Policy OS when the workflow touches money, trust, or compliance.
-        </p>
-      </BlurFade>
-    </div>
-
-    <div class="offer-grid">
-      {#each offerCards as offer, index}
-        <BlurFade delay={0.15 + index * 0.08}>
-          <article class="product-surface offer-card" class:offerFeatured={offer.featured}>
-            <span class="offer-tag">{offer.featured ? 'Primary build' : 'Entry or expansion'}</span>
-            <h3>{offer.name}</h3>
-            <p>{offer.summary}</p>
-            <ul class="product-list">
-              {#each offer.points as point}
-                <li>{point}</li>
-              {/each}
-            </ul>
-          </article>
-        </BlurFade>
-      {/each}
-    </div>
-  </div>
-</section>
-
-<section class="governance-section">
-  <div class="shell-inner-pad governance-grid">
-    <div class="governance-copy">
-      <BlurFade>
-        <span class="product-kicker">Policy before speed</span>
-      </BlurFade>
-      <BlurFade delay={0.05}>
-        <h2>The control layer is the difference between a demo and an operating path.</h2>
-      </BlurFade>
-      <BlurFade delay={0.1}>
-        <p>
-          CREATE SOMETHING can use best-of-breed plumbing under the hood, but the thing clients are
-          actually buying is the judgment layer around the workflow: approvals, blocked states,
-          auditability, and recovery.
-        </p>
-      </BlurFade>
-      <BlurFade delay={0.15}>
-        <ul class="product-list governance-points">
-          {#each governancePoints as point}
-            <li>{point}</li>
-          {/each}
-        </ul>
-      </BlurFade>
-    </div>
-
-    <BlurFade delay={0.2}>
-      <HubMcpFlow />
+          <div class="delivery-proof" aria-label="Post-call delivery example">
+            <div class="delivery-proof__intro">
+              <span>// Working model</span>
+              <h3>One workflow becomes visible enough to delegate.</h3>
+              <p>
+                The buyer sees the live path. The private notes keep the operational proof.
+              </p>
+            </div>
+            <div class="delivery-proof__flow">
+              <div class="delivery-proof__panel">
+                <span class="delivery-proof__label">Client-safe</span>
+                <strong>/delivery/abundance</strong>
+                <p>Status, walkthrough, open decisions, and the next owner.</p>
+              </div>
+              <div class="delivery-proof__arrow" aria-hidden="true">-></div>
+              <div class="delivery-proof__panel">
+                <span class="delivery-proof__label">Private receipt</span>
+                <strong>release-notes.md</strong>
+                <p>Commands, endpoints, pass/fail output, deploy ID, rollback note.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </BlurFade>
   </div>
 </section>
-
-<section class="artifact-section">
-  <div class="shell-inner-pad">
-    <BlurFade>
-      <ArtifactSystemStrip
-        eyebrow="What you get"
-        title="The deliverables make the work explainable."
-        description="The offer is not a pile of vendor accounts. It is a set of artifacts your team can inspect, inherit, and use to explain how the system works."
-        items={deliveryArtifacts}
-      />
-    </BlurFade>
-  </div>
-</section>
-
-<section class="mapping-section">
-  <div class="shell-inner-pad">
-    <BlurFade>
-      <MappingSessionBrief />
-    </BlurFade>
-  </div>
-</section>
-
-<PropertyFunnel
-  current="agency"
-  heading="Show how every property arrives at the mapping session."
-  description="Visitors can enter through canon, research, or the workbench. The agency surface turns that context into one scoped workflow, the control layer it needs, and the artifacts the team keeps."
-/>
 
 <section class="cta-section">
   <div class="shell-inner-pad">
     <div class="product-surface product-surface--accent cta-panel">
+      <div class="cta-trace" aria-hidden="true">
+        <svg viewBox="0 0 760 260" focusable="false">
+          <path class="cta-trace__line cta-trace__line--soft" d="M88 132H252C305 132 303 76 358 76H514" />
+          <path class="cta-trace__line" d="M88 132H252C305 132 303 184 358 184H672" />
+          <path class="cta-trace__line cta-trace__line--soft" d="M514 76C568 76 565 132 618 132H704" />
+          <circle class="cta-trace__node cta-trace__node--primary" cx="88" cy="132" r="7" />
+          <circle class="cta-trace__node" cx="252" cy="132" r="5" />
+          <circle class="cta-trace__node cta-trace__node--review" cx="514" cy="76" r="6" />
+          <circle class="cta-trace__node cta-trace__node--primary" cx="672" cy="184" r="7" />
+          <circle class="cta-trace__node" cx="704" cy="132" r="5" />
+        </svg>
+      </div>
       <BlurFade>
         <span class="product-kicker">Start with one workflow</span>
       </BlurFade>
@@ -456,7 +273,6 @@
           <Button href={agencyCoreMessaging.workflowMappingSessionHref}
             >{agencyCoreMessaging.bookMappingSessionLabel}</Button
           >
-          <Button href="/services" variant="secondary">See The Operating Model</Button>
         </div>
       </BlurFade>
     </div>
@@ -465,13 +281,13 @@
 
 <style>
   .hero-page {
-    padding-top: clamp(6rem, 10vw, 8rem);
-    padding-bottom: clamp(2.5rem, 6vw, 4rem);
+    padding-top: clamp(3.5rem, 6vw, 5rem);
+    padding-bottom: clamp(2rem, 4vw, 3rem);
   }
 
   .hero-stage {
     position: relative;
-    min-height: clamp(34rem, 58vw, 43rem);
+    min-height: clamp(29rem, 48vw, 35rem);
     overflow: clip;
     isolation: isolate;
   }
@@ -522,8 +338,8 @@
     z-index: 2;
     display: block;
     width: 100%;
-    padding-top: clamp(2rem, 4vw, 3rem);
-    padding-bottom: clamp(3rem, 6vw, 4.5rem);
+    padding-top: clamp(1.1rem, 2.5vw, 2rem);
+    padding-bottom: clamp(2rem, 4vw, 3.25rem);
   }
 
   .hero-copy {
@@ -609,48 +425,112 @@
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 0.9rem;
-    margin-top: 1.1rem;
+    margin-top: 0.35rem;
   }
 
   .metric-card {
     display: grid;
-    gap: 0.35rem;
-    padding: 1rem 1.05rem;
+    grid-template-columns: 3.65rem minmax(0, 1fr);
+    gap: 0.95rem;
+    align-items: center;
+    position: relative;
+    min-height: 6.55rem;
+    padding: 1rem 1.1rem;
+    overflow: hidden;
+  }
+
+  .metric-card::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 4.95rem;
+    width: 1.15rem;
+    height: 1px;
+    background: linear-gradient(90deg, rgba(225, 231, 255, 0.18), rgba(255, 255, 255, 0));
+    transform: translateY(-50%);
+    pointer-events: none;
+  }
+
+  .metric-icon {
+    display: grid;
+    place-items: center;
+    position: relative;
+    width: 3.45rem;
+    height: 3.45rem;
+    border: 1px solid rgba(225, 231, 255, 0.11);
+    border-radius: 12px;
+    background:
+      linear-gradient(rgba(225, 231, 255, 0.045) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(225, 231, 255, 0.045) 1px, transparent 1px),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.032), rgba(255, 255, 255, 0.012));
+    background-size:
+      11px 11px,
+      11px 11px,
+      auto;
+    box-shadow:
+      inset 0 0 0 1px rgba(255, 255, 255, 0.018),
+      0 10px 22px rgba(0, 0, 0, 0.14);
+  }
+
+  .metric-icon svg {
+    width: 2.25rem;
+    height: 2.25rem;
+    overflow: visible;
+  }
+
+  .metric-symbol {
+    fill: none;
+    color: rgba(232, 237, 255, 0.66);
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 1.18;
+    vector-effect: non-scaling-stroke;
+    filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.08));
+  }
+
+  .metric-symbol--actions {
+    color: rgba(238, 242, 255, 0.7);
+  }
+
+  .metric-symbol--states {
+    color: rgba(225, 231, 255, 0.68);
+  }
+
+  .metric-symbol--receipts {
+    color: rgba(226, 232, 240, 0.7);
+  }
+
+  .metric-copy {
+    display: grid;
+    gap: 0.32rem;
+    min-width: 0;
   }
 
   .metric-value {
     color: var(--color-fg-primary);
     font-family: var(--font-mono);
-    font-size: 1.45rem;
-    letter-spacing: -0.05em;
+    font-size: 1.02rem;
+    letter-spacing: 0;
+    line-height: 1.1;
   }
 
   .metric-label {
     color: var(--color-fg-muted);
-    font-family: var(--font-mono);
-    font-size: 0.72rem;
-    letter-spacing: 0.09em;
-    text-transform: uppercase;
-    line-height: 1.45;
+    font-size: 0.82rem;
+    letter-spacing: 0;
+    line-height: 1.38;
   }
 
-  .signal-section,
   .control-section,
-  .ink-section,
-  .capability-section,
-  .offer-section,
-  .governance-section,
-  .artifact-section,
-  .mapping-section,
+  .delivery-section,
   .cta-section {
     padding-top: 1.25rem;
     padding-bottom: clamp(3.5rem, 6vw, 5rem);
   }
 
-  .signal-shell {
-    display: grid;
-    gap: 1.2rem;
-    padding: 1.35rem;
+  .control-section {
+    scroll-margin-top: 6.5rem;
   }
 
   .showcase-stack {
@@ -658,74 +538,11 @@
     gap: 1rem;
   }
 
-  .signal-header {
-    display: grid;
-    gap: 0.75rem;
-    max-width: 46rem;
-  }
-
-  .signal-header p {
-    margin: 0;
-    color: var(--color-fg-secondary);
-    line-height: 1.7;
-  }
-
-  .signal-strip {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0.7rem;
-  }
-
-  .signal-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1rem;
-    align-items: center;
-  }
-
-  .stack-link {
-    width: fit-content;
-    color: var(--color-fg-primary);
-    font-family: var(--font-mono);
-    font-size: 0.78rem;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    text-decoration: none;
-  }
-
-  .signal-pill {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.55rem;
-    min-height: 2.35rem;
-    padding: 0.55rem 0.8rem;
-    border-radius: 999px;
-    border: 1px solid var(--color-shell-border-default);
-    background: rgba(255, 255, 255, 0.03);
-    color: var(--color-fg-secondary);
-    font-family: var(--font-mono);
-    font-size: 0.74rem;
-    letter-spacing: 0.04em;
-    text-align: center;
-    white-space: nowrap;
-  }
-
-  .signal-pill :global(.signal-pill__icon) {
-    color: var(--color-brand-ink);
-  }
-
   .section-lead {
     display: grid;
     gap: 0.85rem;
     max-width: 42rem;
     margin-bottom: 1.5rem;
-  }
-
-  .section-lead--center {
-    margin-left: auto;
-    margin-right: auto;
-    text-align: center;
   }
 
   .section-lead h2 {
@@ -740,103 +557,293 @@
     line-height: 1.72;
   }
 
-  .capability-grid,
-  .offer-grid {
-    display: grid;
-    gap: 1rem;
-  }
-
-  .capability-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .capability-card,
-  .offer-card {
-    display: grid;
-    gap: 0.9rem;
-    padding: 1.2rem;
-  }
-
-  .capability-id,
-  .offer-tag {
-    color: var(--color-fg-muted);
-    font-family: var(--font-mono);
-    font-size: 0.74rem;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-  }
-
-  .capability-card h3,
-  .offer-card h3 {
-    margin: 0;
-    font-size: 1.25rem;
-    line-height: 1.15;
-  }
-
-  .capability-card p,
-  .offer-card p {
-    margin: 0;
-    color: var(--color-fg-secondary);
-    line-height: 1.7;
-  }
-
-  .offer-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .offer-card.offerFeatured {
-    border-color: var(--color-brand-primary-border);
-    box-shadow:
-      0 18px 38px rgba(0, 0, 0, 0.42),
-      0 0 0 1px rgba(49, 92, 255, 0.14),
-      0 0 44px rgba(49, 92, 255, 0.12);
-  }
-
-  .governance-grid {
-    display: grid;
-    gap: clamp(1.25rem, 3vw, 2rem);
-    align-items: center;
-    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
-  }
-
-  .governance-copy {
-    display: grid;
-    gap: 0.9rem;
-    max-width: 36rem;
-  }
-
-  .governance-copy h2,
   .cta-panel h2 {
     margin: 0;
     line-height: 1.02;
     text-wrap: balance;
   }
 
-  .governance-copy p,
   .cta-panel p {
     margin: 0;
     color: var(--color-fg-secondary);
     line-height: 1.72;
   }
 
-  .governance-points {
-    margin-top: 0.25rem;
+  .delivery-grid {
+    display: grid;
+    gap: clamp(1.1rem, 3vw, 1.75rem);
+  }
+
+  .delivery-copy {
+    display: grid;
+    gap: 0.85rem;
+    max-width: 48rem;
+  }
+
+  .delivery-copy h2 {
+    margin: 0;
+    max-width: 43rem;
+    line-height: 1.02;
+    text-wrap: balance;
+  }
+
+  .delivery-copy p {
+    margin: 0;
+    max-width: 42rem;
+    color: var(--color-fg-secondary);
+    line-height: 1.72;
+  }
+
+  .delivery-window {
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 10px;
+    background:
+      linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.012)),
+      rgba(8, 8, 10, 0.86);
+    background-size:
+      72px 72px,
+      72px 72px,
+      auto,
+      auto;
+    box-shadow:
+      0 18px 46px rgba(0, 0, 0, 0.36),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+    overflow: hidden;
+  }
+
+  .delivery-window__top {
+    display: flex;
+    gap: 0.38rem;
+    align-items: center;
+    height: 2.8rem;
+    padding: 0 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+    background: rgba(255, 255, 255, 0.025);
+  }
+
+  .delivery-window__top span {
+    width: 0.52rem;
+    height: 0.52rem;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 999px;
+  }
+
+  .delivery-window__body {
+    display: grid;
+    grid-template-columns: minmax(16rem, 0.78fr) minmax(0, 1.22fr);
+    min-height: 28rem;
+  }
+
+  .delivery-rail {
+    display: grid;
+    grid-template-rows: repeat(4, 1fr);
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .delivery-rail__item {
+    display: grid;
+    align-content: center;
+    gap: 0.5rem;
+    padding: 1.05rem 1.25rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(0, 0, 0, 0.18);
+  }
+
+  .delivery-rail__item:last-child {
+    border-bottom: 0;
+  }
+
+  .delivery-rail__item--active {
+    background: rgba(255, 255, 255, 0.055);
+  }
+
+  .delivery-rail__heading {
+    display: flex;
+    gap: 0.55rem;
+    align-items: baseline;
+    min-width: 0;
+  }
+
+  .delivery-rail__heading span,
+  .delivery-proof__intro span,
+  .delivery-proof__label {
+    color: var(--color-fg-muted);
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .delivery-rail__heading span {
+    color: rgba(145, 168, 255, 0.82);
+  }
+
+  .delivery-rail__heading strong {
+    color: var(--color-fg-primary);
+    font-size: 0.98rem;
+    line-height: 1.15;
+  }
+
+  .delivery-rail__item p {
+    margin: 0;
+    color: var(--color-fg-secondary);
+    font-size: 0.9rem;
+    line-height: 1.45;
+  }
+
+  .delivery-proof {
+    display: grid;
+    align-content: center;
+    gap: clamp(1.2rem, 3vw, 1.8rem);
+    padding: clamp(1.3rem, 3vw, 2rem);
+  }
+
+  .delivery-proof__intro {
+    display: grid;
+    gap: 0.55rem;
+    max-width: 32rem;
+  }
+
+  .delivery-proof__intro h3 {
+    margin: 0;
+    font-size: clamp(1.65rem, 3vw, 2.5rem);
+    line-height: 1.02;
+    letter-spacing: 0;
+    text-wrap: balance;
+  }
+
+  .delivery-proof__intro p {
+    margin: 0;
+    color: var(--color-fg-secondary);
+    line-height: 1.65;
+  }
+
+  .delivery-proof__flow {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 2.6rem minmax(0, 1fr);
+    gap: 1rem;
+    align-items: center;
+  }
+
+  .delivery-proof__panel {
+    display: grid;
+    gap: 0.5rem;
+    min-height: 9.7rem;
+    padding: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.025);
+  }
+
+  .delivery-proof__panel strong {
+    color: var(--color-fg-primary);
+    font-family: var(--font-mono);
+    font-size: 0.95rem;
+    line-height: 1.3;
+  }
+
+  .delivery-proof__panel p {
+    margin: 0;
+    color: var(--color-fg-secondary);
+    font-size: 0.88rem;
+    line-height: 1.48;
+  }
+
+  .delivery-proof__arrow {
+    display: grid;
+    place-items: center;
+    width: 2.6rem;
+    height: 2.6rem;
+    border: 1px solid rgba(255, 255, 255, 0.11);
+    border-radius: 999px;
+    color: rgba(220, 228, 255, 0.72);
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    background: rgba(255, 255, 255, 0.028);
   }
 
   .cta-panel {
     display: grid;
     gap: 0.95rem;
+    position: relative;
     padding: clamp(1.4rem, 3vw, 2rem);
+    border-color: rgba(255, 255, 255, 0.12);
+    background:
+      radial-gradient(circle at 50% 42%, rgba(255, 255, 255, 0.07), transparent 36%),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.014)),
+      rgba(8, 8, 10, 0.86);
+    box-shadow:
+      0 18px 42px rgba(0, 0, 0, 0.42),
+      0 0 0 1px rgba(255, 255, 255, 0.03);
+    overflow: hidden;
     text-align: center;
   }
 
+  .cta-panel > :not(.cta-trace) {
+    position: relative;
+    z-index: 1;
+  }
+
+  .cta-trace {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    opacity: 0.16;
+    pointer-events: none;
+    mask-image: radial-gradient(circle at 50% 48%, #000 0%, #000 44%, transparent 78%);
+  }
+
+  .cta-trace svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  .cta-trace__line {
+    fill: none;
+    stroke: rgba(255, 255, 255, 0.2);
+    stroke-linecap: round;
+    stroke-width: 1.5;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .cta-trace__line--soft {
+    stroke: rgba(255, 255, 255, 0.1);
+  }
+
+  .cta-trace__node {
+    fill: rgba(255, 255, 255, 0.18);
+    stroke: rgba(255, 255, 255, 0.22);
+    stroke-width: 1.5;
+  }
+
+  .cta-trace__node--primary {
+    fill: rgba(255, 255, 255, 0.28);
+    filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.12));
+  }
+
+  .cta-trace__node--review {
+    fill: rgba(255, 255, 255, 0.22);
+    stroke: rgba(255, 255, 255, 0.2);
+  }
+
   @media (max-width: 1100px) {
-    .governance-grid {
+    .delivery-window__body,
+    .delivery-proof__flow {
       grid-template-columns: 1fr;
     }
 
-    .governance-copy {
-      max-width: none;
+    .delivery-rail {
+      grid-template-rows: none;
+      border-right: 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .delivery-proof__arrow {
+      width: 100%;
+      height: 1.7rem;
+      border-radius: 999px;
     }
   }
 
@@ -847,7 +854,7 @@
     }
 
     .hero-stage {
-      min-height: clamp(28rem, 104vw, 37rem);
+      min-height: auto;
     }
 
     .hero-stage::after {
@@ -890,9 +897,7 @@
       padding-bottom: 2.75rem;
     }
 
-    .metric-grid,
-    .capability-grid,
-    .offer-grid {
+    .metric-grid {
       grid-template-columns: 1fr;
     }
 
@@ -930,21 +935,9 @@
       display: inline;
     }
 
-    .signal-shell,
-    .capability-card,
-    .offer-card,
     .cta-panel {
       padding: 1rem;
     }
 
-    .signal-pill {
-      white-space: normal;
-    }
-  }
-
-  @media (max-width: 520px) {
-    .signal-strip {
-      grid-template-columns: 1fr;
-    }
   }
 </style>

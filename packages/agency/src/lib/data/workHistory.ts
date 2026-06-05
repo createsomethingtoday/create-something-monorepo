@@ -146,7 +146,7 @@ export const workHistory: WorkHistoryItem[] = [
 			},
 			{
 				label: 'Abstraction Tools',
-				text: 'UI systems, standards, and governance: make it consistent so the team can move faster without quality decay.'
+				text: 'UI systems, standards, and operating rules: make it consistent so the team can move faster without quality decay.'
 			},
 			{
 				label: 'Carry-forward (.agency)',
@@ -160,7 +160,7 @@ export const workHistory: WorkHistoryItem[] = [
 		date: 'Feb 2018 – Mar 2020',
 		role: 'Customer Support Specialist & Team Manager',
 		org: 'Webflow',
-		subtitle: '500+ user engagements · Onboarding systems · Troubleshooting',
+		subtitle: '500+ user conversations · Onboarding systems · Troubleshooting',
 		bullets: [
 			{
 				label: 'Complexity',
@@ -236,7 +236,7 @@ export const workHistory: WorkHistoryItem[] = [
 			},
 			{
 				label: 'Carry-forward (.agency)',
-				text: 'This is the core .agency muscle: build the connective tissue and the governance so AI can operate safely in real operations.'
+				text: 'This is the core .agency muscle: build the connective tissue and trust boundaries so AI can operate safely in real operations.'
 			}
 		]
 	},

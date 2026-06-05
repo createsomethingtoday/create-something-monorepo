@@ -71,7 +71,7 @@
 <section class="delivery-section">
   <div class="shell-inner-pad">
     <div class="section-lead">
-      <span class="product-kicker">Artifacts</span>
+      <span class="product-kicker">Developer Materials</span>
       <h2>What the developer needs.</h2>
       <p>
         These references are safe to share. Secret values, production member data, and Cloudflare

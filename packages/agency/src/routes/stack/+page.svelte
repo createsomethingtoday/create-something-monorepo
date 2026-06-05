@@ -39,7 +39,7 @@
       role: 'Agent and workflow packaging',
       why: 'Dify is useful when a workflow needs a visible agent surface, repeatable server cards, or lightweight operator-facing automation.',
       createSomething: 'CREATE SOMETHING keeps server IDs stable, documents tool dependencies, and tests the agent against real workflow behavior.',
-      portable: 'Agent DSL, MCP intake artifacts, server cards, smoke checks, and workflow notes.',
+      portable: 'Agent DSL, MCP intake files, server cards, smoke checks, and workflow notes.',
       href: '/dify',
       hrefLabel: 'Dify lane'
     },
@@ -63,22 +63,15 @@
       name: 'Webflow',
       role: 'Business-facing surfaces',
       why: 'Webflow is the right surface when the workflow needs a site, template, app, form, dashboard, or marketplace-facing operator experience.',
-      createSomething: 'CREATE SOMETHING turns Webflow into a governed interface backed by repo-owned code, MCP tools, forms, and review systems.',
+      createSomething: 'CREATE SOMETHING turns Webflow into a controlled interface backed by repo-owned code, MCP tools, forms, and review systems.',
       portable: 'App code, component contracts, form schemas, dashboard specs, template review notes, and handoff docs.'
-    },
-    {
-      name: 'TRMNL',
-      role: 'Quiet operator display',
-      why: 'TRMNL belongs when the buyer needs a glanceable status surface that stays out of the way instead of another busy dashboard tab.',
-      createSomething: 'CREATE SOMETHING decides what is worth surfacing, renders the operator brief, and keeps the display downstream of policy and evidence.',
-      portable: 'Display brief, plugin payload contract, status states, fallback behavior, and installation notes.'
     },
     {
       name: 'Linear',
       role: 'Work and evidence ledger',
       why: 'Delivery needs a shared record of scoped work, ownership, status, validation, and follow-up.',
       createSomething: 'CREATE SOMETHING records implementation evidence, validation commands, release notes, and unresolved decisions.',
-      portable: 'Issue IDs, evidence summaries, runbook links, task traces, and release artifacts.'
+      portable: 'Issue IDs, evidence summaries, runbook links, task traces, and release notes.'
     },
     {
       name: 'Infisical + Auth0',
@@ -93,19 +86,19 @@
   const journey = [
     {
       stage: 'Connect',
-      label: 'MCP Wedge',
+      label: 'Trust Map',
       detail:
-        'Expose the narrow tool or resource surface that lets the operator prove value without rebuilding the whole business.'
+        'Name the business objects, first tool boundary, and evidence needed before the workflow can be delegated.'
     },
     {
       stage: 'Automate',
-      label: 'Workflow System',
+      label: 'Workflow Pilot',
       detail:
-        'Turn one repeated handoff into callable actions, durable data, governed agent capacity, and a runbook the buyer can inspect.'
+        'Turn one repeated handoff into callable actions, durable data, controlled agent capacity, and a runbook the buyer can inspect.'
     },
     {
-      stage: 'Govern',
-      label: 'Policy OS',
+      stage: 'Control',
+      label: 'Trust Layer',
       detail:
         'Classify actions as auto-allowed, approval-needed, or blocked with reason before the workflow touches risk.'
     },
@@ -113,7 +106,7 @@
       stage: 'Operate',
       label: 'Operator Surface',
       detail:
-        'Put the right state in the right place: Webflow, Dify, Linear, TRMNL, or a custom app, with evidence attached.'
+        'Put the right state in the right place: Webflow, Dify, Linear, Notion, or a custom app, with evidence attached.'
     }
   ];
 
@@ -140,7 +133,7 @@
       displayName: 'Policy rules',
       name: 'policy-rules',
       summary: 'Auto-allow, approval-needed, and blocked states with reasons.',
-      tag: 'Govern'
+      tag: 'Control'
     },
     {
       displayName: 'Runbook',
@@ -151,7 +144,7 @@
     {
       displayName: 'Operator brief',
       name: 'operator-brief',
-      summary: 'The visible state for Webflow, Dify, Linear, TRMNL, or a custom app.',
+      summary: 'The visible state for Webflow, Dify, Linear, Notion, or a custom app.',
       tag: 'Surface'
     }
   ];
@@ -185,28 +178,28 @@
       label: 'Introductory wedge',
       problem: 'A buyer needs the first technical layer without pretending they are now the engineering team.',
       system: 'Replit, login, client docs, and a bounded MCP path make the entry point explainable.',
-      artifact: 'First workflow map, account boundary, login path, and handoff notes.'
+      receipt: 'First workflow map, account boundary, login path, and handoff notes.'
     },
     {
       name: 'Abundance',
       label: 'Complete system',
       problem: 'A complete operating path needs data, actions, and judgment to move together.',
       system: 'Database, callable actions, MCP/API surface, and explainable matching show the full Database / Automation / Judgment path.',
-      artifact: 'Data model, action contracts, matching rules, and review surface.'
+      receipt: 'Data model, action contracts, matching rules, and review surface.'
     },
     {
       name: 'Webflow systems',
       label: 'Surface and marketplace work',
       problem: 'The workflow needs to become visible through a business-facing surface.',
       system: 'Templates, apps, forms, dashboards, and review tools turn the stack into something operators can use.',
-      artifact: 'Component contracts, form schemas, dashboard specs, and template review notes.'
+      receipt: 'Component contracts, form schemas, dashboard specs, and template review notes.'
     },
     {
-      name: 'Policy OS',
-      label: 'Enterprise extension',
+      name: 'Trust Layer',
+      label: 'Expansion layer',
       problem: 'Speed starts touching revenue, trust, compliance, or cross-team accountability.',
       system: 'Linear evidence, identity, entitlement, approvals, blocked states, and auditability make the system serious enough to scale.',
-      artifact: 'Policy pack, approval matrix, evidence ledger, and escalation runbook.'
+      receipt: 'Trust rules, approval matrix, evidence ledger, and escalation runbook.'
     }
   ];
 
@@ -219,9 +212,9 @@
 </script>
 
 <SEO
-  title="Stack & Boundaries | CREATE SOMETHING .agency"
-  description="How CREATE SOMETHING uses Cloudflare, Dify, Notion, OpenAI, Webflow, Linear, Infisical, and Auth0 while keeping vendor boundaries clear."
-  keywords="transparent AI stack, MCP stack, vendor boundaries, Composio, Cloudflare, Dify, Notion, OpenAI, Webflow, TRMNL, Policy OS"
+  title="Trust Layer & Stack Boundaries | CREATE SOMETHING .agency"
+  description="The stack is replaceable. CREATE SOMETHING owns the trust layer: objects, scoped actions, approval paths, evidence, and recovery."
+  keywords="workflow trust layer, transparent AI stack, MCP stack, vendor boundaries, Composio, Cloudflare, Dify, Notion, OpenAI, Webflow"
   ogImage="/og-image.svg"
   propertyName="agency"
 />
@@ -230,17 +223,16 @@
   <div class="shell-inner-pad stack-shell hero-layout">
     <div class="hero-copy">
       <BlurFade>
-        <span class="product-kicker">Stack & Boundaries</span>
+        <span class="product-kicker">Trust Layer & Stack Boundaries</span>
       </BlurFade>
       <BlurFade delay={0.05}>
-        <h1 class="hero-title">The stack is visible so the operator can trust the handoff.</h1>
+        <h1 class="hero-title">The stack is not the product. The trust layer is.</h1>
       </BlurFade>
       <BlurFade delay={0.1}>
         <p class="hero-detail">
-          CREATE SOMETHING is the toolchain I use as the sole operator to complete the outcome:
-          proven services where they help, then repo-owned contracts, policy, runbooks, and
-          evidence where the business needs trust. When agents become part of the workflow, MCPs
-          are their toolkits and Policy OS keeps their work bounded.
+          Proven services help the work run. CREATE SOMETHING owns the part that makes delegation
+          trustworthy: the object model, action boundaries, approval paths, evidence, and recovery
+          notes that stay portable when vendors change.
         </p>
       </BlurFade>
       <BlurFade delay={0.15}>
@@ -256,7 +248,7 @@
       <aside class="boundary-brief" aria-label="Stack boundary summary">
         <div>
           <span>Product</span>
-          <strong>Governed workflow system</strong>
+          <strong>Workflow trust layer</strong>
         </div>
         <div>
           <span>Vendors</span>
@@ -264,7 +256,7 @@
         </div>
         <div>
           <span>Proof</span>
-          <strong>Artifacts, policy, evidence</strong>
+          <strong>Maps, rules, evidence</strong>
         </div>
       </aside>
     </BlurFade>
@@ -278,12 +270,12 @@
         <span class="product-kicker">How the offer lands</span>
       </BlurFade>
       <BlurFade delay={0.05}>
-        <h2>From MCP wedge to governed operating layer.</h2>
+        <h2>From trust map to controlled operating layer.</h2>
       </BlurFade>
       <BlurFade delay={0.1}>
         <p>
           The story stays simple for a non-technical buyer: connect the narrow surface, automate
-          one workflow, govern the risky actions, then operate through the right visible surface.
+          one workflow, control the risky actions, then operate through the right visible surface.
         </p>
       </BlurFade>
     </div>
@@ -316,8 +308,8 @@
     <BlurFade>
       <ArtifactSystemStrip
         eyebrow="What the buyer keeps"
-        title="The artifacts are the product trail."
-        description="The technical stack can change. These deliverables make the system explainable, inheritable, and easier to trust after launch."
+        title="The receipts are the product trail."
+        description="The technical stack can change. These maps, notes, and evidence make the system explainable, inheritable, and easier to trust after launch."
         items={deliveryArtifacts}
       />
     </BlurFade>
@@ -444,8 +436,8 @@
                 <dd>{proof.system}</dd>
               </div>
               <div>
-                <dt>Artifact</dt>
-                <dd>{proof.artifact}</dd>
+                <dt>Receipt</dt>
+                <dd>{proof.receipt}</dd>
               </div>
             </dl>
           </article>

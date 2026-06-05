@@ -3,14 +3,14 @@
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
   export let eyebrow = 'Conversion Path';
-  export let title = 'Move from useful reading to a governed workflow decision.';
+  export let title = 'Move from useful reading to a workflow trust decision.';
   export let description =
-    'Cold readers should not be forced straight into a calendar. The ladder starts with a reusable artifact, moves to a workflow teardown, and keeps the mapping session for high-intent buyers.';
+    'Cold readers should not be forced straight into a calendar. The ladder starts with a reusable checklist, moves to a trust map, and keeps the booking path for high-intent buyers.';
 
   const stages = [
     {
       label: 'Cold',
-      title: 'Governance checklist',
+      title: 'Trust checklist',
       detail:
         'A low-friction resource for readers who need language for allowed, ask, blocked, logging, and recovery states.',
       cta: agencyCoreMessaging.governanceChecklistLabel,
@@ -19,7 +19,7 @@
     },
     {
       label: 'Warm',
-      title: 'Workflow teardown',
+      title: 'Trust map',
       detail:
         'A short form that captures the stack, bottleneck, risk boundary, and first workflow worth mapping.',
       cta: agencyCoreMessaging.workflowTeardownLabel,

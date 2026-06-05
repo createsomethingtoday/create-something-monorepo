@@ -42,9 +42,9 @@
   ];
 
   let {
-    eyebrow = 'Operating Artifacts',
-    title = 'What makes Policy OS durable',
-    description = 'Every engagement ships explicit artifacts so access, behavior, and recovery stay legible after the kickoff call.',
+    eyebrow = 'Maps and Receipts',
+    title = 'What makes the trust layer durable',
+    description = 'Every project ships concrete files so access, behavior, and recovery stay legible after the kickoff call.',
     items = DEFAULT_ITEMS
   }: Props = $props();
 
@@ -82,7 +82,7 @@
     {#each items as item}
       {@const label = item.displayName ?? item.name}
       <article class="artifact-card" role="listitem">
-        <span class="artifact-tag">{item.tag ?? 'Artifact'}</span>
+        <span class="artifact-tag">{item.tag ?? 'Proof'}</span>
         <h3 aria-label={label}>{@html formatArtifactLabel(label)}</h3>
         <p>{item.summary}</p>
       </article>

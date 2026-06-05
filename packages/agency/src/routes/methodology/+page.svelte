@@ -17,7 +17,7 @@
 		{
 			level: 2,
 			name: 'Rams',
-			domain: 'Artifact',
+				domain: 'Evidence',
 			question: 'Does this earn its existence?',
 			action: 'Remove',
 			description:
@@ -55,7 +55,7 @@
 		{
 			weeks: 'Step 4',
 			name: 'Ship the operator path',
-			description: 'Deliver the MCP wedge, runbook, policy artifact, and operator brief surface.'
+				description: 'Deliver the MCP wedge, runbook, trust notes, and operator brief surface.'
 		}
 	];
 
@@ -77,22 +77,22 @@
 		{
 			name: 'Judgment',
 			subtitle: 'What needs the operator',
-			items: ['Policy OS', 'Approvals', 'Briefs'],
-			description:
-				'The decision layer — where Policy OS classifies safe work, approval-needed work, and blocked states before the operator is interrupted.'
+				items: ['Trust Layer', 'Approvals', 'Briefs'],
+				description:
+					'The decision layer — where the trust layer classifies safe work, approval-needed work, and blocked states before the operator is interrupted.'
 		}
 	];
 </script>
 
 <SEO
-	title="Methodology | Calm Operator Systems"
-	description="The CREATE SOMETHING methodology removes duplication, excess, and disconnection before turning a workflow into governed execution with Policy OS."
-	keywords="Calm Operator Method, Policy OS, workflow governance, MCP wedge, automation audit, Subtractive Triad"
+	title="How It Works | CREATE SOMETHING .agency"
+	description="CREATE SOMETHING removes duplication, excess, and disconnection before turning a workflow into controlled delegation with a trust layer."
+	keywords="how CREATE SOMETHING works, workflow trust layer, controlled workflow, MCP wedge, automation audit, Subtractive Triad"
 	ogImage="/og-image.svg"
 	propertyName="agency"
 	breadcrumbs={[
 		{ name: 'Home', url: '/' },
-		{ name: 'Methodology', url: '/methodology' }
+		{ name: 'How It Works', url: '/methodology' }
 	]}
 />
 
@@ -101,10 +101,10 @@
 	<div class="hero-grid"></div>
 	<div class="hero-content">
 		<BlurFade delay={0}>
-			<p class="hero-eyebrow">Methodology</p>
+			<p class="hero-eyebrow">How It Works</p>
 		</BlurFade>
 		<BlurFade delay={0.1}>
-			<h1 class="hero-title">Subtract first. Govern what remains.</h1>
+				<h1 class="hero-title">Subtract first. Control what remains.</h1>
 		</BlurFade>
 		<BlurFade delay={0.2}>
 			<p class="hero-subtitle">
@@ -125,7 +125,7 @@
 				<p class="principle-body">
 					Most automation strategies fail because they add more tools, more exceptions, and more
 					hidden handoffs than the operator can actually monitor. The Subtractive Triad inverts
-					that instinct. Remove what does not belong first, then govern the workflow that remains.
+						that instinct. Remove what does not belong first, then control the workflow that remains.
 				</p>
 				</div>
 		</BlurFade>
@@ -136,7 +136,7 @@
 <section class="disciplines-section">
 	<div class="section-container">
 		<BlurFade delay={0.1}>
-			<h2 class="section-heading">The Three Disciplines</h2>
+			<h2 class="section-heading">The Three Checks</h2>
 		</BlurFade>
 			<BlurFade delay={0.15}>
 				<p class="section-subhead">
@@ -191,7 +191,7 @@
 		</BlurFade>
 			<BlurFade delay={0.15}>
 				<p class="section-subhead">
-					How the Triad becomes a calm, governed workflow path, from workflow map to Policy OS.
+						How the Triad becomes a calm workflow path, from workflow map to trust layer.
 				</p>
 			</BlurFade>
 
@@ -299,10 +299,10 @@
 			<h2 class="cta-heading">Ready to make the workflow quieter?</h2>
 		</BlurFade>
 		<BlurFade delay={0.1}>
-			<p class="cta-subtext">
-				Every engagement starts with this methodology. We remove what does not belong, then
-				ship the smallest governed path that lets the operator stop watching everything.
-			</p>
+				<p class="cta-subtext">
+					Every project starts with this operating model. We remove what does not belong, then
+					ship the smallest controlled path that lets the operator stop watching everything.
+				</p>
 		</BlurFade>
 		<BlurFade delay={0.2}>
 			<div class="cta-buttons">

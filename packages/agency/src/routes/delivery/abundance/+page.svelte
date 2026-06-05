@@ -164,7 +164,7 @@
 
 <SEO
   title="Abundance Delivery | The NP Group"
-  description="Client delivery page for The NP Group's Abundance nurse staffing system: live concierge app, database, MCP surfaces, agent boundary, walkthroughs, and private source artifacts."
+  description="Client delivery page for The NP Group's Abundance nurse staffing system: live concierge app, database, MCP surfaces, agent boundary, walkthroughs, and private source materials."
   keywords="Abundance, The NP Group, nurse staffing, MCP, workflow delivery, CREATE SOMETHING"
   canonical="https://createsomething.agency/delivery/abundance"
   ogImage="/og-image.svg"
@@ -195,7 +195,7 @@
 <section class="delivery-section">
   <div class="shell-inner-pad">
     <div class="section-lead">
-      <span class="product-kicker">Artifacts</span>
+      <span class="product-kicker">Review Materials</span>
       <h2>What is ready to review.</h2>
       <p>
         These links are client-safe. Token-bearing MCP URLs, employee rows, and private Notion
@@ -392,7 +392,7 @@
 <section class="delivery-section">
   <div class="shell-inner-pad evidence-layout">
     <div class="product-surface product-surface--soft evidence-panel">
-      <span class="product-kicker">Private Source Artifacts</span>
+      <span class="product-kicker">Private Source Materials</span>
       <h2>Received, but not published.</h2>
       <div class="evidence-list">
         {#each abundancePrivateArtifacts as item}

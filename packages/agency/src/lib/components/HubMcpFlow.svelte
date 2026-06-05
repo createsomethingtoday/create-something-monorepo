@@ -3,8 +3,16 @@
 </script>
 
 <GovernedExecutionFlow
-  eyebrow="Governed Execution"
-  title="Policy OS"
-  description="Hub MCP routes the request, and Policy OS decides what can run automatically, what waits for approval, and what stops with a reason."
-  caption="Safe actions run fast. Risky actions route to approval. Disallowed actions stop with a reason."
+  eyebrow="Pattern Library"
+  title="Business workflows become trust patterns"
+  description="Each offer can be shown as a real pattern: the business objects, the systems involved, the actions an agent can take, and the receipts a client can inspect."
+  caption="The trust layer turns business cases into visible patterns: objects, actions, states, and receipts."
+  hubKicker="Pattern"
+  hubTitle="Customer Recovery"
+  hubSubtitle="Case, order, shipment"
+  controlKicker="Applies"
+  controlTitle="Trust Layer"
+  controlSubtitle="Allowed, review, blocked"
+  initiators={['Support Inbox', 'Customer Thread', 'Agent Draft']}
+  destinations={['Zendesk', 'Shopify', 'Stripe']}
 />
