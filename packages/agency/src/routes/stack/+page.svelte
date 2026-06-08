@@ -74,11 +74,11 @@
       portable: 'Issue IDs, evidence summaries, runbook links, task traces, and release notes.'
     },
     {
-      name: 'Infisical + Auth0',
-      logos: ['Infisical', 'Auth0'],
+      name: 'Infisical + Clerk',
+      logos: ['Infisical', 'Clerk'],
       role: 'Secrets and identity boundary',
       why: 'Secrets and identity should not be hidden inside prompts, code comments, or static client handoff docs.',
-      createSomething: 'CREATE SOMETHING separates sign-in, managed bearer tokens, entitlement checks, and runtime policy.',
+      createSomething: 'CREATE SOMETHING separates Clerk sign-in, managed bearer tokens, entitlement checks, and runtime policy.',
       portable: 'Secret paths, env contract, access policy, token rotation notes, and revocation process.'
     }
   ];
