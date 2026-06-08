@@ -2,7 +2,6 @@
   import { Button, SEO } from '@create-something/canon';
   import { BlurFade } from '@create-something/canon/magicui';
   import ArtifactSystemStrip from '$lib/components/ArtifactSystemStrip.svelte';
-  import GovernedExecutionFlow from '$lib/components/GovernedExecutionFlow.svelte';
   import MappingSessionBrief from '$lib/components/MappingSessionBrief.svelte';
   import ServiceWedgeBlueprint from '$lib/components/ServiceWedgeBlueprint.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
@@ -111,24 +110,6 @@
     }
   ];
 
-  const trustBoundaries = [
-    {
-      label: 'No hidden vendor lock-in',
-      detail:
-        'Vendor services are named because they help explain the system. The workflow map, contracts, policy, and runbooks stay portable.'
-    },
-    {
-      label: 'No secret sprawl',
-      detail:
-        'Tokens, API keys, and client credentials belong in the approved vault or runtime environment, not in prompts or handoff docs.'
-    },
-    {
-      label: 'No fake autonomy',
-      detail:
-        'Agents only act inside named permissions. The system shows what can run, what needs approval, and what stops.'
-    }
-  ];
-
   const heroSignals = [
     {
       label: 'Map',
@@ -159,27 +140,6 @@
     'The goal is fake autonomy instead of controlled delegation.'
   ];
 
-  const surfacePoints = [
-    {
-      label: 'Trust Layer',
-      title: 'Decides what needs judgment',
-      detail:
-        'The operating layer classifies safe work, approval-needed work, and blocked actions before the operator is interrupted.'
-    },
-    {
-      label: 'Surface',
-      title: 'Makes the decision visible',
-      detail:
-        'Webflow, Dify, Linear, Notion, or a custom app can show the small amount of state the operator needs.'
-    },
-    {
-      label: 'Operator',
-      title: 'Acts only when needed',
-      detail:
-        'The service is designed so the human returns to the dashboard for evidence and action, not for constant monitoring.'
-    }
-  ];
-
   const faqItems = [
     {
       question: 'What is your primary service?',
@@ -202,38 +162,14 @@
         'When full system development and team onboarding are the primary need, I provide a direct referral path to Half Dozen. .agency is optimized for workflow systems and controlled delegation, not ongoing admin coverage.'
     },
     {
-      question: 'What does .agency own?',
-      answer:
-        '.agency owns the rules, approvals, handoffs, release controls, and operating receipts around the workflow. Your team keeps business context, approval ownership, and long-term control.'
-    },
-    {
       question: 'When should we add the Trust Layer?',
       answer:
         'Add it when failures become expensive or the workflow touches revenue, customer trust, compliance, or several systems that must stay in sync.'
     },
     {
-      question: 'Do you still offer MCP Wedge?',
-      answer:
-        'Yes. A narrow MCP wedge still works for discovery, compliance-constrained pilots, or teams that need the connection before the operating layer.'
-    },
-    {
       question: 'Do we need to understand MCP or the vendor stack first?',
       answer:
         'No. Bring the workflow and the accounts involved. I translate the technical choices into a stack boundary, decision states, and implementation path your team can explain.'
-    },
-    {
-      question: 'Do clients own the implementation?',
-      answer:
-        'Yes. Clients retain ownership of code, workflows, and operating documentation. The delivery is meant to stay portable after launch.'
-    },
-    {
-      question: 'Is the dashboard the product?',
-      answer:
-        'No. The visible surface is where the operator sees state. The paid service is the workflow map, action boundary, evidence, and escalation behavior that make the surface trustworthy.'
-    },
-    {
-      question: 'Why the phrase Skills + MCP?',
-      answer: `Client-facing delivery is ${deliveryVector.clientFacingLabel}. MCP handles trust and connectivity. Skills carry behavior and workflow intent.`
     }
   ];
 </script>
@@ -351,39 +287,6 @@
   </div>
 </section>
 
-<section class="trust-section">
-  <div class="shell-inner-pad services-shell">
-    <div class="product-surface product-surface--soft trust-panel">
-      <div class="section-lead">
-        <BlurFade>
-          <span class="product-kicker">Trust boundaries</span>
-        </BlurFade>
-        <BlurFade delay={0.05}>
-          <h2>Transparency creates calm when the workflow has clear boundaries.</h2>
-        </BlurFade>
-        <BlurFade delay={0.1}>
-          <p>
-            Your team sees enough to trust and inherit the system. Sensitive credentials,
-            private data, and platform-specific complexity stay behind the right operational
-            boundary, so the experience feels calm instead of obscure.
-          </p>
-        </BlurFade>
-      </div>
-
-      <div class="trust-grid" role="list">
-        {#each trustBoundaries as boundary, index}
-          <BlurFade delay={0.14 + index * 0.05}>
-            <article class="trust-item" role="listitem">
-              <span>{boundary.label}</span>
-              <p>{boundary.detail}</p>
-            </article>
-          </BlurFade>
-        {/each}
-      </div>
-    </div>
-  </div>
-</section>
-
 <section class="offer-section" id="service-path">
   <div class="shell-inner-pad services-shell">
     <div class="section-lead section-lead--center">
@@ -420,67 +323,6 @@
           </article>
         </BlurFade>
       {/each}
-    </div>
-  </div>
-</section>
-
-<section class="flow-section">
-  <div class="shell-inner-pad services-shell flow-layout">
-    <div class="section-lead">
-      <BlurFade>
-        <span class="product-kicker">Trust layer</span>
-      </BlurFade>
-      <BlurFade delay={0.05}>
-        <h2>Where the trust layer fits.</h2>
-      </BlurFade>
-      <BlurFade delay={0.1}>
-        <p>
-          Workflow Pilot gets the first handoff working. The trust layer decides what runs
-          automatically, what needs review, and what stops. That is the point where speed stops
-          being a demo and becomes an operating path.
-        </p>
-      </BlurFade>
-    </div>
-
-    <BlurFade delay={0.15}>
-      <GovernedExecutionFlow
-        eyebrow="Trust Layer"
-        title="Controlled delegation"
-        description="Hub MCP routes the request, and the trust layer decides what can run automatically, what waits for approval, and what stops with a reason."
-      />
-    </BlurFade>
-  </div>
-</section>
-
-<section class="surface-section">
-  <div class="shell-inner-pad services-shell">
-    <div class="product-surface product-surface--soft surface-panel">
-      <div class="section-lead">
-        <BlurFade>
-          <span class="product-kicker">Operator surfaces</span>
-        </BlurFade>
-        <BlurFade delay={0.05}>
-          <h2>The visible surface is downstream of the trust layer.</h2>
-        </BlurFade>
-        <BlurFade delay={0.1}>
-          <p>
-            Dashboards, Dify apps, Notion views, Linear evidence, and optional quiet displays only
-            work when the workflow has mapped owners, approval rules, blocked states, and evidence.
-          </p>
-        </BlurFade>
-      </div>
-
-      <div class="surface-grid" role="list">
-        {#each surfacePoints as point, index}
-          <BlurFade delay={0.15 + index * 0.05}>
-            <article class="surface-card" role="listitem">
-              <span>{point.label}</span>
-              <h3>{point.title}</h3>
-              <p>{point.detail}</p>
-            </article>
-          </BlurFade>
-        {/each}
-      </div>
     </div>
   </div>
 </section>
@@ -570,10 +412,7 @@
 
   .hero-page,
   .boundary-section,
-  .trust-section,
   .offer-section,
-  .flow-section,
-  .surface-section,
   .artifact-section,
   .mapping-section,
   .faq-section,
@@ -583,10 +422,7 @@
   }
 
   .boundary-section,
-  .trust-section,
   .offer-section,
-  .flow-section,
-  .surface-section,
   .artifact-section,
   .mapping-section,
   .faq-section,
@@ -599,7 +435,7 @@
   }
 
   .hero-layout,
-  .flow-layout {
+  .hero-layout {
     display: grid;
     gap: clamp(1.5rem, 3vw, 2.5rem);
     align-items: center;
@@ -676,8 +512,7 @@
     background: color-mix(in srgb, var(--color-shell-surface-secondary) 72%, transparent);
   }
 
-  .hero-brief__item span,
-  .surface-card span {
+  .hero-brief__item span {
     color: var(--color-fg-muted);
     font-family: var(--font-mono);
     font-size: 0.7rem;
@@ -708,8 +543,6 @@
   }
 
   .boundary-panel,
-  .trust-panel,
-  .surface-panel,
   .cta-panel {
     display: grid;
     gap: 1rem;
@@ -787,38 +620,6 @@
     text-wrap: pretty;
   }
 
-  .trust-panel {
-    gap: clamp(1.1rem, 3vw, 1.7rem);
-  }
-
-  .trust-grid {
-    display: grid;
-    gap: 1rem;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .trust-item {
-    display: grid;
-    gap: 0.5rem;
-    padding-top: 0.85rem;
-    border-top: 1px solid color-mix(in srgb, var(--color-shell-border-default) 84%, transparent);
-  }
-
-  .trust-item span {
-    color: var(--color-fg-primary);
-    font-size: 1rem;
-    font-weight: var(--font-semibold);
-    line-height: 1.25;
-  }
-
-  .trust-item p {
-    margin: 0;
-    color: var(--color-fg-secondary);
-    font-size: 0.94rem;
-    line-height: 1.64;
-    text-wrap: pretty;
-  }
-
   .offer-grid,
   .faq-grid {
     display: grid;
@@ -869,46 +670,12 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .surface-panel {
-    gap: clamp(1.15rem, 3vw, 1.8rem);
-  }
-
-  .surface-grid {
-    display: grid;
-    gap: 1rem;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .surface-card {
-    display: grid;
-    gap: 0.65rem;
-    padding: 1rem;
-    border-radius: 1.1rem;
-    border: 1px solid color-mix(in srgb, var(--color-shell-border-default) 84%, transparent);
-    background: color-mix(in srgb, var(--color-shell-surface-secondary) 74%, transparent);
-  }
-
-  .surface-card h3 {
-    margin: 0;
-    color: var(--color-fg-primary);
-    font-size: 1.05rem;
-    line-height: 1.2;
-  }
-
-  .surface-card p {
-    margin: 0;
-    color: var(--color-fg-secondary);
-    font-size: 0.94rem;
-    line-height: 1.65;
-  }
-
   .cta-panel {
     text-align: center;
   }
 
   @media (max-width: 1080px) {
-    .hero-layout,
-    .flow-layout {
+    .hero-layout {
       grid-template-columns: 1fr;
     }
 
@@ -942,9 +709,7 @@
     .fit-grid,
     .handoff-grid,
     .offer-grid,
-    .faq-grid,
-    .trust-grid,
-    .surface-grid {
+    .faq-grid {
       grid-template-columns: 1fr;
     }
 
@@ -955,8 +720,6 @@
     .offer-card,
     .faq-card,
     .boundary-panel,
-    .trust-panel,
-    .surface-panel,
     .cta-panel {
       padding: 1rem;
     }

@@ -104,14 +104,15 @@
 		}
 	];
 
-	const mappingSessionPrep = [
-		'One real workflow your team wants out of manual coordination',
-		'The accounts, tools, or systems involved',
-		'The person who can approve risk, scope, or access',
-		'No secrets, tokens, passwords, or API keys in booking notes'
-	];
-
-	const sessionFitSignals = [
+	const sessionReadiness = [
+		{
+			label: 'Bring',
+			items: [
+				'One real workflow your team wants out of manual coordination.',
+				'The accounts, tools, or systems involved.',
+				'The person who can approve risk, scope, or access.'
+			]
+		},
 		{
 			label: 'Book this when',
 			items: [
@@ -127,6 +128,10 @@
 				'No workflow owner can join or make the next operating decision.',
 				'You need ongoing admin coverage rather than a scoped workflow build.'
 			]
+		},
+		{
+			label: 'Keep out of notes',
+			items: ['No secrets, tokens, passwords, or API keys in booking notes.']
 		}
 	];
 
@@ -359,8 +364,8 @@
 		{/each}
 	</section>
 
-	<section class="session-prep" aria-label="What to bring to the mapping session">
-		<div>
+	<section class="session-readiness" aria-label="Mapping session readiness">
+		<div class="session-readiness-copy">
 			<span>Bring enough context</span>
 			<p>
 				The session works best when we can see the real handoff and decide what your team
@@ -368,24 +373,18 @@
 				scope is clear.
 			</p>
 		</div>
-		<ul>
-			{#each mappingSessionPrep as item}
-				<li>{item}</li>
+		<div class="session-readiness-grid">
+			{#each sessionReadiness as signal}
+				<article>
+					<h2>{signal.label}</h2>
+					<ul>
+						{#each signal.items as item}
+							<li>{item}</li>
+						{/each}
+					</ul>
+				</article>
 			{/each}
-		</ul>
-	</section>
-
-	<section class="session-fit" aria-label="Mapping session fit">
-		{#each sessionFitSignals as signal}
-			<article>
-				<h2>{signal.label}</h2>
-				<ul>
-					{#each signal.items as item}
-						<li>{item}</li>
-					{/each}
-				</ul>
-			</article>
-		{/each}
+		</div>
 	</section>
 
 	<!-- Progress indicator -->
@@ -556,9 +555,8 @@
 		line-height: 1.55;
 	}
 
-	.session-prep {
+	.session-readiness {
 		display: grid;
-		grid-template-columns: minmax(0, 0.75fr) minmax(0, 1fr);
 		gap: var(--space-md);
 		align-items: start;
 		margin: calc(var(--space-xl) * -0.45) 0 var(--space-xl);
@@ -568,58 +566,40 @@
 		background: color-mix(in srgb, var(--color-bg-surface) 78%, transparent);
 	}
 
-	.session-prep span {
+	.session-readiness-copy span {
 		color: var(--color-fg-primary);
 		font-size: var(--text-body-sm);
 		font-weight: var(--font-medium);
 	}
 
-	.session-prep p {
+	.session-readiness-copy p {
 		margin: var(--space-2xs) 0 0;
 		color: var(--color-fg-tertiary);
 		font-size: var(--text-body-sm);
 		line-height: 1.58;
 	}
 
-	.session-prep ul {
+	.session-readiness-grid {
 		display: grid;
-		grid-template-columns: repeat(2, minmax(0, 1fr));
+		grid-template-columns: repeat(4, minmax(0, 1fr));
 		gap: var(--space-xs);
-		margin: 0;
-		padding: 0;
-		list-style: none;
 	}
 
-	.session-prep li {
-		padding-top: var(--space-2xs);
-		border-top: 1px solid var(--color-border-default);
-		color: var(--color-fg-tertiary);
-		font-size: var(--text-caption);
-		line-height: 1.45;
-	}
-
-	.session-fit {
-		display: grid;
-		grid-template-columns: repeat(2, minmax(0, 1fr));
-		gap: var(--space-sm);
-		margin-bottom: var(--space-xl);
-	}
-
-	.session-fit article {
-		padding: var(--space-md);
+	.session-readiness article {
+		padding: var(--space-sm);
 		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
 		background: var(--color-bg-surface);
 	}
 
-	.session-fit h2 {
-		margin: 0 0 var(--space-sm);
+	.session-readiness h2 {
+		margin: 0 0 var(--space-xs);
 		color: var(--color-fg-primary);
-		font-size: var(--text-body);
+		font-size: var(--text-body-sm);
 		font-weight: var(--font-medium);
 	}
 
-	.session-fit ul {
+	.session-readiness ul {
 		display: grid;
 		gap: var(--space-xs);
 		margin: 0;
@@ -627,7 +607,7 @@
 		list-style: none;
 	}
 
-	.session-fit li {
+	.session-readiness li {
 		padding-top: var(--space-2xs);
 		border-top: 1px solid var(--color-border-default);
 		color: var(--color-fg-tertiary);
@@ -697,12 +677,11 @@
 			grid-template-columns: repeat(2, minmax(0, 1fr));
 		}
 
-		.session-fit {
-			grid-template-columns: 1fr;
+		.session-readiness-grid {
+			grid-template-columns: repeat(2, minmax(0, 1fr));
 		}
 
-		.session-prep {
-			grid-template-columns: 1fr;
+		.session-readiness {
 			margin-top: calc(var(--space-xl) * -0.35);
 		}
 	}
@@ -712,7 +691,7 @@
 			grid-template-columns: 1fr;
 		}
 
-		.session-prep ul {
+		.session-readiness-grid {
 			grid-template-columns: 1fr;
 		}
 	}

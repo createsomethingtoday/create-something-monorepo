@@ -149,29 +149,6 @@
     }
   ];
 
-  const ownershipRows = [
-    {
-      owner: 'CREATE SOMETHING owns',
-      detail:
-        'Workflow map, MCP contracts, agent contracts, policy packs, source code, runbooks, eval gates, delivery evidence, and handoff docs.'
-    },
-    {
-      owner: 'The client owns',
-      detail:
-        'Business context, approval authority, source accounts, data rights, commercial constraints, and final operating decisions.'
-    },
-    {
-      owner: 'Vendors own',
-      detail:
-        'Their hosted services, APIs, uptime, product roadmap, brand assets, and platform-specific limits.'
-    },
-    {
-      owner: 'The delivery preserves',
-      detail:
-        'A replaceable stack boundary so vendor services can be swapped without losing the workflow, policy, or evidence model.'
-    }
-  ];
-
   const proofPaths = [
     {
       name: 'Outerfields',
@@ -402,37 +379,6 @@
   </div>
 </section>
 
-<section class="ownership-section">
-  <div class="shell-inner-pad stack-shell ownership-layout">
-    <div class="section-lead">
-      <BlurFade>
-        <span class="product-kicker">Ownership model</span>
-      </BlurFade>
-      <BlurFade delay={0.05}>
-        <h2>Your team should know what it is buying and what it keeps.</h2>
-      </BlurFade>
-      <BlurFade delay={0.1}>
-        <p>
-          Transparency does not mean exposing private tokens, raw client data, or every internal
-          implementation detail. It means showing the system boundary clearly enough for a serious
-          operator to explain it to someone else.
-        </p>
-      </BlurFade>
-    </div>
-
-    <div class="ownership-list">
-      {#each ownershipRows as row, index}
-        <BlurFade delay={0.12 + index * 0.05}>
-          <article class="ownership-row">
-            <h3>{row.owner}</h3>
-            <p>{row.detail}</p>
-          </article>
-        </BlurFade>
-      {/each}
-    </div>
-  </div>
-</section>
-
 <section class="proof-section">
   <div class="shell-inner-pad stack-shell">
     <div class="section-lead section-lead--center">
@@ -515,7 +461,6 @@
   .boundary-map-section,
   .artifact-section,
   .stack-section,
-  .ownership-section,
   .proof-section,
   .cta-section {
     padding-top: clamp(1.25rem, 3vw, 2rem);
@@ -526,8 +471,7 @@
     padding-top: clamp(4.5rem, 7vw, 6.25rem);
   }
 
-  .hero-layout,
-  .ownership-layout {
+  .hero-layout {
     display: grid;
     gap: clamp(1.4rem, 4vw, 3rem);
     align-items: center;
@@ -553,7 +497,6 @@
   .journey-card p,
   .vendor-card dd,
   .proof-card dd,
-  .ownership-row p,
   .cta-panel p {
     margin: 0;
     color: var(--color-fg-secondary);
@@ -637,7 +580,6 @@
   .journey-grid,
   .boundary-question-grid,
   .vendor-grid,
-  .ownership-list,
   .proof-grid {
     display: grid;
     gap: 1rem;
@@ -663,7 +605,6 @@
   .journey-card,
   .boundary-question,
   .vendor-card,
-  .ownership-row,
   .proof-card {
     display: grid;
     gap: 0.75rem;
@@ -678,7 +619,6 @@
   .journey-card h3,
   .boundary-question h3,
   .vendor-card h3,
-  .ownership-row h3,
   .proof-card h3 {
     margin: 0;
     color: var(--color-fg-primary);
@@ -760,10 +700,6 @@
     line-height: 1.6;
   }
 
-  .ownership-list {
-    margin: 0;
-  }
-
   .proof-card dl {
     display: grid;
     gap: 0.8rem;
@@ -811,7 +747,6 @@
 
   @media (max-width: 1100px) {
     .hero-layout,
-    .ownership-layout,
     .vendor-grid {
       grid-template-columns: 1fr;
     }
@@ -843,7 +778,6 @@
     .journey-card,
     .boundary-question,
     .vendor-card,
-    .ownership-row,
     .proof-card,
     .cta-panel {
       padding: 1rem;
