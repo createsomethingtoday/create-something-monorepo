@@ -88,13 +88,13 @@
       stage: 'Connect',
       label: 'Trust Map',
       detail:
-        'Name the business objects, first tool boundary, and evidence needed before the workflow can be delegated.'
+        'Name the business objects, source accounts, first action boundary, and evidence needed before the workflow can be delegated.'
     },
     {
       stage: 'Automate',
       label: 'Workflow Pilot',
       detail:
-        'Turn one repeated handoff into callable actions, durable data, controlled agent capacity, and a runbook the buyer can inspect.'
+        'Turn one repeated handoff into callable actions, durable data, controlled agent capacity, and a runbook your team can inspect.'
     },
     {
       stage: 'Control',
@@ -120,7 +120,7 @@
     {
       displayName: 'Stack boundary',
       name: 'stack-boundary',
-      summary: 'What is client-owned, CREATE SOMETHING-owned, and vendor-owned.',
+      summary: 'What your team owns, what CREATE SOMETHING owns, and what vendors provide.',
       tag: 'Boundary'
     },
     {
@@ -158,7 +158,7 @@
     {
       owner: 'The client owns',
       detail:
-        'Business context, approval authority, source accounts, data rights, commercial constraints, and the final operating decision.'
+        'Business context, approval authority, source accounts, data rights, commercial constraints, and final operating decisions.'
     },
     {
       owner: 'Vendors own',
@@ -175,8 +175,8 @@
   const proofPaths = [
     {
       name: 'Outerfields',
-      label: 'Introductory wedge',
-      problem: 'A buyer needs the first technical layer without pretending they are now the engineering team.',
+      label: 'Entry map',
+      problem: 'A team needs the first technical layer without pretending they are now the engineering team.',
       system: 'Replit, login, client docs, and a bounded MCP path make the entry point explainable.',
       receipt: 'First workflow map, account boundary, login path, and handoff notes.'
     },
@@ -209,6 +209,21 @@
     'Auto-allow, approval-needed, and blocked states',
     'Agent/tool capacity boundary'
   ];
+
+  const boundaryQuestions = [
+    {
+      question: 'What does our team own?',
+      answer: 'Accounts, data rights, approval authority, business context, and the final operating decision.'
+    },
+    {
+      question: 'What does CREATE SOMETHING own?',
+      answer: 'The workflow map, action contracts, trust rules, release evidence, runbooks, and handoff notes.'
+    },
+    {
+      question: 'What can change later?',
+      answer: 'Vendor services can change without losing the workflow, control layer, evidence model, or operator surface.'
+    }
+  ];
 </script>
 
 <SEO
@@ -226,19 +241,19 @@
         <span class="product-kicker">Trust Layer & Stack Boundaries</span>
       </BlurFade>
       <BlurFade delay={0.05}>
-        <h1 class="hero-title">The stack is not the product. The trust layer is.</h1>
+        <h1 class="hero-title">The tools are replaceable. The operating boundary is the product.</h1>
       </BlurFade>
       <BlurFade delay={0.1}>
         <p class="hero-detail">
           Proven services help the work run. CREATE SOMETHING owns the part that makes delegation
-          trustworthy: the object model, action boundaries, approval paths, evidence, and recovery
+          safe to inherit: the object model, action boundaries, approval paths, evidence, and recovery
           notes that stay portable when vendors change.
         </p>
       </BlurFade>
       <BlurFade delay={0.15}>
         <div class="hero-actions">
-          <Button href="/book">{agencyCoreMessaging.bookMappingSessionLabel}</Button>
-          <Button href="/services" variant="secondary">See The Operating Model</Button>
+          <Button href={agencyCoreMessaging.workflowMappingSessionHref}>{agencyCoreMessaging.bookMappingSessionLabel}</Button>
+          <Button href="/services" variant="secondary">See How I Work</Button>
           <Button href="/partners" variant="secondary">See Partner Stack</Button>
         </div>
       </BlurFade>
@@ -247,16 +262,16 @@
     <BlurFade delay={0.2}>
       <aside class="boundary-brief" aria-label="Stack boundary summary">
         <div>
-          <span>Product</span>
-          <strong>Workflow trust layer</strong>
+          <span>Your team keeps</span>
+          <strong>Accounts, context, decisions</strong>
         </div>
         <div>
-          <span>Vendors</span>
-          <strong>Replaceable infrastructure</strong>
-        </div>
-        <div>
-          <span>Proof</span>
+          <span>I deliver</span>
           <strong>Maps, rules, evidence</strong>
+        </div>
+        <div>
+          <span>Vendors provide</span>
+          <strong>Replaceable infrastructure</strong>
         </div>
       </aside>
     </BlurFade>
@@ -267,15 +282,15 @@
   <div class="shell-inner-pad stack-shell">
     <div class="section-lead">
       <BlurFade>
-        <span class="product-kicker">How the offer lands</span>
+        <span class="product-kicker">How the stack becomes a service</span>
       </BlurFade>
       <BlurFade delay={0.05}>
-        <h2>From trust map to controlled operating layer.</h2>
+        <h2>From tool choices to a controlled handoff.</h2>
       </BlurFade>
       <BlurFade delay={0.1}>
         <p>
-          The story stays simple for a non-technical buyer: connect the narrow surface, automate
-          one workflow, control the risky actions, then operate through the right visible surface.
+          The story stays simple for a non-technical team: map the boundary, prove one workflow,
+          control the risky actions, then operate through the right visible surface.
         </p>
       </BlurFade>
     </div>
@@ -307,9 +322,9 @@
   <div class="shell-inner-pad stack-shell">
     <BlurFade>
       <ArtifactSystemStrip
-        eyebrow="What the buyer keeps"
-        title="The receipts are the product trail."
-        description="The technical stack can change. These maps, notes, and evidence make the system explainable, inheritable, and easier to trust after launch."
+        eyebrow="What your team keeps"
+        title="You keep the receipts, not a mystery stack."
+        description="The technical stack can change. These maps, runbooks, and evidence make the system explainable, inheritable, and easier to trust after launch."
         items={deliveryArtifacts}
       />
     </BlurFade>
@@ -328,10 +343,19 @@
       <BlurFade delay={0.1}>
         <p>
           Each service earns a clear job. The connected tools are not the moat. CREATE SOMETHING
-          owns the specialized workflow: what gets connected, what runs, what pauses, what stops,
-          and what the operator receives.
+          owns the operating boundary around the workflow: what gets connected, what runs, what
+          pauses, what stops, and what the operator receives.
         </p>
       </BlurFade>
+    </div>
+
+    <div class="boundary-question-grid" role="list" aria-label="Stack boundary questions">
+      {#each boundaryQuestions as item}
+        <article class="boundary-question" role="listitem">
+          <h3>{item.question}</h3>
+          <p>{item.answer}</p>
+        </article>
+      {/each}
     </div>
 
     <div class="vendor-grid">
@@ -385,13 +409,13 @@
         <span class="product-kicker">Ownership model</span>
       </BlurFade>
       <BlurFade delay={0.05}>
-        <h2>The buyer should know what they are buying and what they keep.</h2>
+        <h2>Your team should know what it is buying and what it keeps.</h2>
       </BlurFade>
       <BlurFade delay={0.1}>
         <p>
           Transparency does not mean exposing private tokens, raw client data, or every internal
           implementation detail. It means showing the system boundary clearly enough for a serious
-          buyer to explain it to someone else.
+          operator to explain it to someone else.
         </p>
       </BlurFade>
     </div>
@@ -451,15 +475,15 @@
   <div class="shell-inner-pad stack-shell">
     <div class="cta-panel">
       <BlurFade>
-        <span class="product-kicker">Start with the buyer's workflow</span>
+        <span class="product-kicker">Start with the workflow</span>
       </BlurFade>
       <BlurFade delay={0.05}>
         <h2>Bring the workflow, the accounts, and the approval owner.</h2>
       </BlurFade>
       <BlurFade delay={0.1}>
         <p>
-          CREATE SOMETHING will map the stack boundary, define the first MCP wedge, identify what
-          can become agent capacity, and show what stays visible to the operator before
+          CREATE SOMETHING will map the stack boundary, define the first safe delegation path,
+          identify what can become agent capacity, and show what stays visible to the operator before
           implementation starts.
         </p>
       </BlurFade>
@@ -472,7 +496,7 @@
       </BlurFade>
       <BlurFade delay={0.15}>
         <div class="hero-actions hero-actions--center">
-          <Button href="/book">{agencyCoreMessaging.bookMappingSessionLabel}</Button>
+          <Button href={agencyCoreMessaging.workflowMappingSessionHref}>{agencyCoreMessaging.bookMappingSessionLabel}</Button>
           <Button href="/products" variant="secondary">See Proof Surfaces</Button>
         </div>
       </BlurFade>
@@ -611,6 +635,7 @@
   }
 
   .journey-grid,
+  .boundary-question-grid,
   .vendor-grid,
   .ownership-list,
   .proof-grid {
@@ -630,7 +655,13 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .boundary-question-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin-bottom: 1rem;
+  }
+
   .journey-card,
+  .boundary-question,
   .vendor-card,
   .ownership-row,
   .proof-card {
@@ -645,6 +676,7 @@
   }
 
   .journey-card h3,
+  .boundary-question h3,
   .vendor-card h3,
   .ownership-row h3,
   .proof-card h3 {
@@ -658,6 +690,13 @@
     color: var(--color-fg-primary);
     font-size: 0.95rem;
     line-height: 1.35;
+  }
+
+  .boundary-question p {
+    margin: 0;
+    color: var(--color-fg-secondary);
+    line-height: 1.64;
+    text-wrap: pretty;
   }
 
   .vendor-card__header {
@@ -779,6 +818,7 @@
   }
 
   @media (max-width: 900px) {
+    .boundary-question-grid,
     .journey-grid,
     .proof-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -795,11 +835,13 @@
     }
 
     .journey-grid,
+    .boundary-question-grid,
     .proof-grid {
       grid-template-columns: 1fr;
     }
 
     .journey-card,
+    .boundary-question,
     .vendor-card,
     .ownership-row,
     .proof-card,

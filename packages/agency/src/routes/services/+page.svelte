@@ -50,7 +50,7 @@
 
   const offerCards = [
     {
-      tag: 'Entry wedge',
+      tag: 'Fixed first step',
       title: 'Trust Map',
       summary: 'Use this when the first job is deciding what would be safe to delegate.',
       points: [
@@ -72,7 +72,7 @@
       featured: true
     },
     {
-      tag: 'Default paid offer',
+      tag: 'Ongoing control',
       title: 'Trust Layer',
       summary: `The control layer that makes ${deliveryVector.clientFacingLabel} safe to run faster in production.`,
       points: [
@@ -97,9 +97,18 @@
   ];
 
   const boundaryPoints = [
-    'You bring the workflow, constraints, and approval owner.',
-    'CREATE SOMETHING maps the rules, builds the control layer, and ships the operating receipts.',
-    'Your team gets visibility through runbooks, approvals, release evidence, operator briefs, and working software.'
+    {
+      label: 'You bring',
+      detail: 'The workflow, constraints, source accounts, and the person who owns approval.'
+    },
+    {
+      label: 'I map and build',
+      detail: 'The rules, control layer, safe delegation path, runbooks, and release evidence.'
+    },
+    {
+      label: 'Your team keeps',
+      detail: 'The context, approval ownership, operating receipts, code, and handoff notes.'
+    }
   ];
 
   const trustBoundaries = [
@@ -136,6 +145,18 @@
       value: 'Quiet brief',
       detail: 'The operator sees only what needs judgment.'
     }
+  ];
+
+  const fitSignals = [
+    'One workflow crosses systems, teams, or permissions.',
+    'Failures create rework, customer risk, compliance concern, or revenue drag.',
+    'Someone owns approval, but they should not watch the workflow all day.'
+  ];
+
+  const poorFitSignals = [
+    'The need is broad staff augmentation or ongoing internal admin coverage.',
+    'No one can name the approval owner or failure mode yet.',
+    'The goal is fake autonomy instead of controlled delegation.'
   ];
 
   const surfacePoints = [
@@ -240,16 +261,16 @@
 
       <BlurFade delay={0.1}>
         <p class="hero-detail">
-          Bring the operating path your team cannot keep covering by hand. I map the objects,
-          rebuild the handoff, and add controlled agent capacity until the operator only hears from
-          the system when judgment changes the outcome.
+          Bring the operating path your team cannot keep covering by hand. I map the inputs,
+          owners, approvals, and failure modes; rebuild the handoff; and add controlled agent
+          capacity until the operator only hears from the system when judgment changes the outcome.
         </p>
       </BlurFade>
 
       <BlurFade delay={0.15}>
         <div class="hero-actions">
           <Button href={agencyCoreMessaging.servicesMappingSessionHref}>{agencyCoreMessaging.bookMappingSessionLabel}</Button>
-          <Button href="#offer-ladder" variant="secondary">See Offer Ladder</Button>
+          <Button href="#service-path" variant="secondary">See Service Path</Button>
         </div>
       </BlurFade>
 
@@ -284,27 +305,48 @@
     <div class="product-surface product-surface--soft boundary-panel">
       <div class="section-lead">
         <BlurFade>
-          <span class="product-kicker">Relationship boundary</span>
+          <span class="product-kicker">Fit check</span>
         </BlurFade>
         <BlurFade delay={0.05}>
-          <h2>You are not hiring an internal admin.</h2>
+          <h2>Bring one workflow with an owner, risk, and repeatable drag.</h2>
         </BlurFade>
         <BlurFade delay={0.1}>
           <p>
-            You are bringing in a solo operator with a purpose-built toolchain to diagnose,
-            rebuild, and control one critical operating path. The work is scoped, visible, and
-            designed for your team to inherit.
+            The work is strongest when the problem is concrete enough to map but important enough
+            that a brittle handoff is already costing attention. It is not broad admin coverage or
+            a vague automation wishlist.
           </p>
         </BlurFade>
       </div>
 
-      <BlurFade delay={0.15}>
-        <ul class="product-list boundary-list">
-          {#each boundaryPoints as point}
-            <li>{point}</li>
-          {/each}
-        </ul>
-      </BlurFade>
+      <div class="fit-grid" role="list" aria-label="Workflow fit signals">
+        <div class="fit-column" role="listitem">
+          <h3>Good fit</h3>
+          <ul class="product-list">
+            {#each fitSignals as point}
+              <li>{point}</li>
+            {/each}
+          </ul>
+        </div>
+
+        <div class="fit-column" role="listitem">
+          <h3>Not the right fit</h3>
+          <ul class="product-list">
+            {#each poorFitSignals as point}
+              <li>{point}</li>
+            {/each}
+          </ul>
+        </div>
+      </div>
+
+      <div class="handoff-grid" role="list" aria-label="Workflow ownership handoff">
+        {#each boundaryPoints as point}
+          <article class="handoff-item" role="listitem">
+            <span>{point.label}</span>
+            <p>{point.detail}</p>
+          </article>
+        {/each}
+      </div>
     </div>
   </div>
 </section>
@@ -321,7 +363,7 @@
         </BlurFade>
         <BlurFade delay={0.1}>
           <p>
-            The buyer sees enough to trust and inherit the system. Sensitive credentials,
+            Your team sees enough to trust and inherit the system. Sensitive credentials,
             private data, and platform-specific complexity stay behind the right operational
             boundary, so the experience feels calm instead of obscure.
           </p>
@@ -342,19 +384,19 @@
   </div>
 </section>
 
-<section class="offer-section" id="offer-ladder">
+<section class="offer-section" id="service-path">
   <div class="shell-inner-pad services-shell">
     <div class="section-lead section-lead--center">
       <BlurFade>
-        <span class="product-kicker">Offer ladder</span>
+        <span class="product-kicker">Service path</span>
       </BlurFade>
       <BlurFade delay={0.05}>
-        <h2>From trust map to controlled delegation.</h2>
+        <h2>Start with the smallest safe delegation point.</h2>
       </BlurFade>
       <BlurFade delay={0.1}>
         <p>
-          Start by mapping what would be safe to delegate. Build one workflow pilot. Add the trust
-          layer when the workflow starts touching revenue, compliance, or customer trust.
+          Map what would be safe to delegate, prove the first workflow, then add the trust layer
+          when the work starts touching revenue, compliance, or customer trust.
         </p>
       </BlurFade>
     </div>
@@ -447,8 +489,8 @@
   <div class="shell-inner-pad services-shell">
     <BlurFade>
       <ArtifactSystemStrip
-        title="What ships with every trust-layer project"
-        description="Every project ships with maps, notes, and evidence your team can inspect, run, inherit, and operate."
+        title="What your team keeps after the build"
+        description="Every trust-layer project ships with maps, runbooks, and evidence your team can inspect, run, inherit, and operate."
       />
     </BlurFade>
   </div>
@@ -538,6 +580,18 @@
   .cta-section {
     padding-top: clamp(1.25rem, 3vw, 2rem);
     padding-bottom: clamp(3.5rem, 6vw, 5rem);
+  }
+
+  .boundary-section,
+  .trust-section,
+  .offer-section,
+  .flow-section,
+  .surface-section,
+  .artifact-section,
+  .mapping-section,
+  .faq-section,
+  .cta-section {
+    scroll-margin-top: 6.5rem;
   }
 
   .hero-page {
@@ -682,8 +736,55 @@
     text-wrap: balance;
   }
 
-  .boundary-list {
-    max-width: 46rem;
+  .fit-grid,
+  .handoff-grid {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .fit-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .fit-column {
+    display: grid;
+    gap: 0.75rem;
+    padding: 1rem;
+    border-radius: 1rem;
+    border: 1px solid color-mix(in srgb, var(--color-shell-border-default) 82%, transparent);
+    background: color-mix(in srgb, var(--color-shell-surface-secondary) 70%, transparent);
+  }
+
+  .fit-column h3 {
+    margin: 0;
+    color: var(--color-fg-primary);
+    font-size: 1rem;
+    line-height: 1.2;
+  }
+
+  .handoff-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .handoff-item {
+    display: grid;
+    gap: 0.45rem;
+    padding-top: 0.85rem;
+    border-top: 1px solid color-mix(in srgb, var(--color-shell-border-default) 84%, transparent);
+  }
+
+  .handoff-item span {
+    color: var(--color-fg-primary);
+    font-weight: var(--font-semibold);
+    line-height: 1.25;
+  }
+
+  .handoff-item p {
+    margin: 0;
+    color: var(--color-fg-secondary);
+    font-size: 0.94rem;
+    line-height: 1.62;
+    text-wrap: pretty;
   }
 
   .trust-panel {
@@ -838,6 +939,8 @@
       display: inline;
     }
 
+    .fit-grid,
+    .handoff-grid,
     .offer-grid,
     .faq-grid,
     .trust-grid,

@@ -34,31 +34,31 @@
 		| 'not_sure';
 
 	const laneOptions: Array<{ value: ServiceLane; label: string; description: string }> = [
-			{
-				value: 'workflow_infrastructure',
-				label: 'Workflow Pilot',
-				description: 'One workflow your team still completes or covers by hand.'
-			},
-			{
-				value: 'reliability_and_control',
-				label: 'Trust Layer',
-				description:
-					'Approval rules, blocked states, release evidence, and operator briefs around live automation.'
+		{
+			value: 'workflow_infrastructure',
+			label: 'Workflow Pilot',
+			description: 'One handoff your team still completes, checks, or rescues by hand.'
 		},
 		{
-				value: 'enterprise_extension',
-				label: 'Enterprise Extension',
-				description: 'Cross-system orchestration with stricter controls, auditability, and recovery.'
+			value: 'reliability_and_control',
+			label: 'Trust Layer',
+			description:
+				'Approval rules, blocked states, release evidence, and operator briefs around live automation.'
+		},
+		{
+			value: 'enterprise_extension',
+			label: 'Enterprise Extension',
+			description: 'Cross-system orchestration with stricter controls, auditability, and recovery.'
 		},
 		{
 			value: 'system_development_referral',
 			label: 'System Development Referral',
-			description: 'Full system build and onboarding needs (routed to partner team).'
+			description: 'Full system build, admin coverage, or onboarding needs routed to the partner lane.'
 		},
 		{
 			value: 'not_sure',
 			label: 'Not sure yet',
-			description: 'Need help choosing the right lane.'
+			description: 'Use the session to choose the right lane without overbuying the stack.'
 		}
 	];
 
@@ -87,28 +87,47 @@
 
 	const mappingSessionOutcomes = [
 		{
-			label: 'Workflow map',
-			description: 'The handoff, owner, source systems, and failure modes.'
+			label: 'Handoff map',
+			description: 'The workflow, owner, source systems, and places the work breaks down.'
 		},
 		{
-			label: 'Stack boundary',
-			description: 'What the client owns, what CREATE SOMETHING owns, and what vendors provide.'
+			label: 'Ownership boundary',
+			description: 'What your team owns, what CREATE SOMETHING owns, and what vendors provide.'
 		},
 		{
-			label: 'Decision states',
-			description: 'What can run, what needs approval, and what stops with a reason.'
+			label: 'Decision rules',
+			description: 'What can run, what needs approval, and what should stop with a reason.'
 		},
 		{
-			label: 'First build path',
-			description: 'The smallest wedge or workflow system that adds safe capacity.'
+			label: 'First safe path',
+			description: 'The smallest service lane that adds useful capacity without hiding risk.'
 		}
 	];
 
 	const mappingSessionPrep = [
-		'One real workflow example',
-		'The accounts or tools involved',
-		'The person who can approve risk',
-		'No API keys in the booking notes'
+		'One real workflow your team wants out of manual coordination',
+		'The accounts, tools, or systems involved',
+		'The person who can approve risk, scope, or access',
+		'No secrets, tokens, passwords, or API keys in booking notes'
+	];
+
+	const sessionFitSignals = [
+		{
+			label: 'Book this when',
+			items: [
+				'One workflow is creating visible drag, rework, or missed handoffs.',
+				'Your team needs a clear owner, approval boundary, and next build path.',
+				'You want receipts the team can inspect after the call.'
+			]
+		},
+		{
+			label: 'Use a different path when',
+			items: [
+				'You only need a vendor demo or a generic automation brainstorm.',
+				'No workflow owner can join or make the next operating decision.',
+				'You need ongoing admin coverage rather than a scoped workflow build.'
+			]
+		}
 	];
 
 	// State
@@ -316,17 +335,18 @@
 
 <SEO
 	title="Book a CREATE SOMETHING Mapping Session"
-	description="Schedule a scoped workflow diagnostic to identify the safest MCP wedge, stack boundary, decision states, and first build path."
+	description="Schedule a scoped workflow mapping session to clarify the handoff, ownership boundary, decision rules, and first safe build path."
 	propertyName="agency"
 />
 
 <main class="booking-page">
 	<header class="booking-header">
-			<h1 class="booking-title">Book a CREATE SOMETHING Trust Map</h1>
+		<p class="booking-kicker">Workflow mapping session</p>
+		<h1 class="booking-title">Map the workflow your team needs to trust.</h1>
 		<p class="booking-subtitle">
-			Bring the workflow with the most drag, risk, or manual handoff. You leave with the
-				first workflow map, stack boundary, decision states, and where agent capacity can be
-				safely introduced.
+			Bring the handoff with the most drag, risk, or manual rescue. You leave with the
+			first map, the ownership boundary, the decision rules, and the safest service path for
+			turning it into dependable capacity.
 		</p>
 	</header>
 
@@ -341,14 +361,31 @@
 
 	<section class="session-prep" aria-label="What to bring to the mapping session">
 		<div>
-			<span>Good prep</span>
-			<p>Bring enough context to map the boundary. Credentials can move through Infisical or the approved runtime path after scope is clear.</p>
+			<span>Bring enough context</span>
+			<p>
+				The session works best when we can see the real handoff and decide what your team
+				keeps. Credentials move through Infisical or the approved runtime path only after
+				scope is clear.
+			</p>
 		</div>
 		<ul>
 			{#each mappingSessionPrep as item}
 				<li>{item}</li>
 			{/each}
 		</ul>
+	</section>
+
+	<section class="session-fit" aria-label="Mapping session fit">
+		{#each sessionFitSignals as signal}
+			<article>
+				<h2>{signal.label}</h2>
+				<ul>
+					{#each signal.items as item}
+						<li>{item}</li>
+					{/each}
+				</ul>
+			</article>
+		{/each}
 	</section>
 
 	<!-- Progress indicator -->
@@ -403,8 +440,11 @@
 			<section class="step-content">
 				<h2 class="step-title">Your details and operator lane</h2>
 				<div class="lane-intake" role="radiogroup" aria-labelledby="lane-intake-title">
-					<p id="lane-intake-title" class="lane-intake-title">Which operating lane should we map first?</p>
-					<p class="lane-intake-helper">This helps me prep the session around the real decision boundary: what can run, what needs approval, and what should stop with a reason.</p>
+					<p id="lane-intake-title" class="lane-intake-title">Which service path should we test first?</p>
+					<p class="lane-intake-helper">
+						This helps me prep the session around the real operating boundary: what can run,
+						what needs approval, and what should stop with a reason.
+					</p>
 					<div class="lane-options">
 						{#each laneOptions as lane}
 							<label class="lane-option" class:selected={selectedLane === lane.value}>
@@ -463,6 +503,15 @@
 		margin-bottom: var(--space-xl);
 	}
 
+	.booking-kicker {
+		margin: 0 0 var(--space-2xs);
+		color: var(--color-fg-muted);
+		font-size: var(--text-caption);
+		font-weight: var(--font-medium);
+		text-transform: uppercase;
+		letter-spacing: 0.08em;
+	}
+
 	.booking-title {
 		font-size: var(--text-h1);
 		font-weight: var(--font-bold);
@@ -473,6 +522,9 @@
 	.booking-subtitle {
 		font-size: var(--text-body);
 		color: var(--color-fg-tertiary);
+		max-width: 760px;
+		margin: 0 auto;
+		line-height: 1.65;
 	}
 
 	.session-outcomes {
@@ -546,6 +598,43 @@
 		line-height: 1.45;
 	}
 
+	.session-fit {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: var(--space-sm);
+		margin-bottom: var(--space-xl);
+	}
+
+	.session-fit article {
+		padding: var(--space-md);
+		border: 1px solid var(--color-border-default);
+		border-radius: var(--radius-lg);
+		background: var(--color-bg-surface);
+	}
+
+	.session-fit h2 {
+		margin: 0 0 var(--space-sm);
+		color: var(--color-fg-primary);
+		font-size: var(--text-body);
+		font-weight: var(--font-medium);
+	}
+
+	.session-fit ul {
+		display: grid;
+		gap: var(--space-xs);
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.session-fit li {
+		padding-top: var(--space-2xs);
+		border-top: 1px solid var(--color-border-default);
+		color: var(--color-fg-tertiary);
+		font-size: var(--text-caption);
+		line-height: 1.55;
+	}
+
 	/* Progress indicator */
 	.progress {
 		display: flex;
@@ -606,6 +695,10 @@
 	@media (max-width: 900px) {
 		.session-outcomes {
 			grid-template-columns: repeat(2, minmax(0, 1fr));
+		}
+
+		.session-fit {
+			grid-template-columns: 1fr;
 		}
 
 		.session-prep {
