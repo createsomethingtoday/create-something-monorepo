@@ -91,6 +91,25 @@ export type WorkItemInput = {
   metadata?: Record<string, unknown>;
 };
 
+type ExistingWorkItem = {
+  id: string;
+  status: string;
+  next_action: string | null;
+  due_at: string | null;
+};
+
+type MissingQueueWorkItem = {
+  signal_id: string;
+  source_id: string;
+  source_url: string | null;
+  content: string;
+  metadata: string | null;
+  queue_id: string;
+  queue_status: DraftRecord['status'];
+  queue_created_at: string;
+  queue_sent_at: string | null;
+};
+
 function nowIso(): string {
   return new Date().toISOString();
 }
@@ -213,17 +232,19 @@ export async function upsertCommunityWorkItem(
 ): Promise<string> {
   const existing = await db
     .prepare(
-      `SELECT id, status
+      `SELECT id, status, next_action, due_at
        FROM community_work_items
        WHERE platform = ?1 AND source_id = ?2
        LIMIT 1`,
     )
     .bind(PLATFORM, input.postId)
-    .first<{ id: string; status: string }>();
+    .first<ExistingWorkItem>();
 
   const now = nowIso();
   const metadataJson = input.metadata ? JSON.stringify(input.metadata) : null;
   const stableStatus = preserveTerminalStatus(existing?.status, input.status);
+  const stableNextAction = preserveTerminalNextAction(existing, input.nextAction, stableStatus);
+  const stableDueAt = preserveDueAt(existing, input.dueAt, stableStatus);
 
   if (existing?.id) {
     await db
@@ -259,8 +280,8 @@ export async function upsertCommunityWorkItem(
         stableStatus,
         input.priority,
         input.urgency,
-        input.nextAction ?? null,
-        input.dueAt ?? null,
+        stableNextAction,
+        stableDueAt,
         input.authorId ?? null,
         input.authorName ?? null,
         input.authorEmail ?? null,
@@ -302,8 +323,8 @@ export async function upsertCommunityWorkItem(
       stableStatus,
       input.priority,
       input.urgency,
-      input.nextAction ?? null,
-      input.dueAt ?? null,
+      stableNextAction,
+      stableDueAt,
       input.authorId ?? null,
       input.authorName ?? null,
       input.authorEmail ?? null,
@@ -319,6 +340,71 @@ export async function upsertCommunityWorkItem(
     )
     .run();
   return id;
+}
+
+export async function backfillPendingQueueWorkItems(
+  db: D1Database,
+  limit = 25,
+): Promise<number> {
+  const result = await db
+    .prepare(
+      `SELECT
+         s.id AS signal_id,
+         s.source_id AS source_id,
+         s.source_url AS source_url,
+         s.content AS content,
+         s.metadata AS metadata,
+         q.id AS queue_id,
+         q.status AS queue_status,
+         q.created_at AS queue_created_at,
+         q.sent_at AS queue_sent_at
+       FROM community_queue q
+       JOIN community_signals s ON s.id = q.signal_id
+       LEFT JOIN community_work_items w
+         ON w.platform = s.platform AND w.source_id = s.source_id
+       WHERE q.platform = ?1
+         AND s.platform = ?1
+         AND q.status IN ('pending', 'approved')
+         AND w.id IS NULL
+       ORDER BY q.created_at ASC
+       LIMIT ?2`,
+    )
+    .bind(PLATFORM, limit)
+    .all<MissingQueueWorkItem>();
+
+  let backfilled = 0;
+  for (const row of result.results || []) {
+    const metadata = parseMetadata(row.metadata);
+    await upsertCommunityWorkItem(db, {
+      postId: row.source_id,
+      sourceUrl: row.source_url,
+      title: titleFromContent(row.content),
+      lane: 'support_question',
+      status: 'draft_ready',
+      priority: 6,
+      urgency: 'medium',
+      nextAction: 'Review the drafted BetterMode reply in the admin block, then send, regenerate, or dismiss.',
+      dueAt: dueAtFrom(row.queue_created_at, 'medium'),
+      authorId: metadata.author_member_id ?? null,
+      authorName: metadata.author_name ?? null,
+      authorEmail: metadata.author_email ?? null,
+      signalId: row.signal_id,
+      queueId: row.queue_id,
+      draftStatus: row.queue_status,
+      lastActivityAt: null,
+      lastDraftedAt: row.queue_created_at,
+      lastSentAt: row.queue_sent_at,
+      metadata: {
+        source: 'pending_queue_backfill',
+        parent_post_id: metadata.parent_post_id ?? null,
+        space_id: metadata.space_id ?? null,
+        is_top_level: metadata.is_top_level ?? null,
+      },
+    });
+    backfilled += 1;
+  }
+
+  return backfilled;
 }
 
 export async function upsertPendingDraft(
@@ -490,6 +576,8 @@ export async function markCommunityWorkItemSent(
        SET status = 'sent',
            draft_status = 'sent',
            queue_id = COALESCE(?1, queue_id),
+           next_action = 'No action needed unless the creator replies again.',
+           due_at = NULL,
            last_sent_at = ?2,
            updated_at = ?2
        WHERE platform = ?3 AND source_id = ?4`,
@@ -509,6 +597,8 @@ export async function markCommunityWorkItemSkipped(
       `UPDATE community_work_items
        SET status = 'skipped',
            draft_status = 'rejected',
+           next_action = 'No drafting action needed.',
+           due_at = NULL,
            escalation_reason = COALESCE(?1, escalation_reason),
            updated_at = ?2
        WHERE platform = ?3 AND source_id = ?4`,
@@ -519,10 +609,43 @@ export async function markCommunityWorkItemSkipped(
 
 function preserveTerminalStatus(current: string | undefined, next: string): string {
   if (!current) return next;
-  if (current === 'sent' || current === 'externally_resolved' || current === 'skipped') {
+  if (isTerminalWorkStatus(current)) {
     return current;
   }
   return next;
+}
+
+function preserveTerminalNextAction(
+  current: ExistingWorkItem | null | undefined,
+  next: string | null | undefined,
+  stableStatus: string,
+): string | null {
+  if (!isTerminalWorkStatus(stableStatus)) {
+    return next ?? current?.next_action ?? null;
+  }
+  if (current && isTerminalWorkStatus(current.status) && current.next_action) {
+    return current.next_action;
+  }
+  return next ?? defaultTerminalNextAction(stableStatus);
+}
+
+function preserveDueAt(
+  current: ExistingWorkItem | null | undefined,
+  next: string | null | undefined,
+  stableStatus: string,
+): string | null {
+  if (isTerminalWorkStatus(stableStatus)) return null;
+  return current?.due_at ?? next ?? null;
+}
+
+function isTerminalWorkStatus(status: string | null | undefined): boolean {
+  return status === 'sent' || status === 'externally_resolved' || status === 'skipped';
+}
+
+function defaultTerminalNextAction(status: string): string {
+  if (status === 'sent') return 'No action needed unless the creator replies again.';
+  if (status === 'externally_resolved') return 'No action needed unless the creator replies again.';
+  return 'No drafting action needed.';
 }
 
 function parseMetadata(value: string | null): BettermodeMeta {
@@ -532,4 +655,26 @@ function parseMetadata(value: string | null): BettermodeMeta {
   } catch {
     return {};
   }
+}
+
+function titleFromContent(value: string): string | null {
+  const cleaned = value
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (!cleaned) return null;
+  return cleaned.length > 160 ? `${cleaned.slice(0, 157)}...` : cleaned;
+}
+
+function dueAtFrom(value: string | null, urgency: string): string {
+  const base = parseD1Date(value);
+  const hours = urgency === 'high' ? 4 : urgency === 'medium' ? 24 : 72;
+  return new Date(base + hours * 60 * 60 * 1000).toISOString();
+}
+
+function parseD1Date(value: string | null): number {
+  if (!value) return Date.now();
+  const normalized = value.includes('T') ? value : `${value.replace(' ', 'T')}Z`;
+  const parsed = Date.parse(normalized);
+  return Number.isFinite(parsed) ? parsed : Date.now();
 }

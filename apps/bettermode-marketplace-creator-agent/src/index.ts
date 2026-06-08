@@ -22,6 +22,7 @@ import { difyAgentConfig, generateDraftViaDify } from './dify-agent';
 import { verifySignature } from './signature';
 import { adminDraftSlate, interactionResponse, nonAdminSlate, type DraftBlockState } from './slate';
 import {
+  backfillPendingQueueWorkItems,
   getQueueStatusByPostId,
   getLatestDraftByPostId,
   markCommunityWorkItemSent,
@@ -652,6 +653,7 @@ async function runCommunitySweep(env: Env): Promise<void> {
   const draftLimit = parseInteger(env.COMMUNITY_SWEEP_DRAFT_LIMIT, DEFAULT_SWEEP_DRAFT_LIMIT, 0, 20);
   const token = await appAccessToken(networkId, auth);
   const { nodes, totalCount } = await listRecentPostsBySpace(spaceId, limit, token, auth);
+  const backfilled = await backfillPendingQueueWorkItems(env.DB, 25);
   let inspected = 0;
   let drafted = 0;
   let draftAttempts = 0;
@@ -716,6 +718,7 @@ async function runCommunitySweep(env: Env): Promise<void> {
       draft_limit: draftLimit,
       deferred,
       existing,
+      backfilled,
       skipped,
       externally_resolved: externallyResolved,
       escalated,
@@ -731,6 +734,7 @@ async function runCommunitySweep(env: Env): Promise<void> {
     draftLimit,
     deferred,
     existing,
+    backfilled,
     skipped,
     externallyResolved,
     escalated,
