@@ -24,7 +24,7 @@
     <span class="boundary-map__eyebrow">System boundary</span>
     <h3 id="boundary-map-title">The vendor stack stays outside the product promise.</h3>
     <p>
-      The buyer sees which services help the workflow, but the durable value is the trust layer:
+      Your team sees which services help the workflow, but the durable value is the trust layer:
       contracts, action boundaries, evidence, and the operating handoff.
     </p>
   </div>

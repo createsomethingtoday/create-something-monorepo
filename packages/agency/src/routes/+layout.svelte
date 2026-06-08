@@ -42,7 +42,7 @@
   });
 
   const navLinks = [
-    { label: 'How It Works', href: '/services' },
+    { label: 'How I Work', href: '/services' },
     { label: 'Trust Layer', href: '/stack' },
     { label: 'Proof', href: '/products' }
   ];
@@ -57,7 +57,7 @@
       title: 'Commercial',
       ariaLabel: 'Commercial paths',
       links: [
-        { label: 'How It Works', href: '/services' },
+        { label: 'How I Work', href: '/services' },
         { label: 'Trust Layer', href: '/stack' },
         { label: 'Proof Surfaces', href: '/products' },
         { label: 'About', href: '/about' }
@@ -111,8 +111,8 @@
   const quickAccessItems = [
     {
       id: 'nav-services',
-      label: 'How It Works',
-      description: 'Workflow pilots, trust maps, and controlled delegation',
+      label: 'How I Work',
+      description: 'Workflow pilots, trust maps, and first safe delegation',
       href: '/services',
       icon: '🔨',
       keywords: [

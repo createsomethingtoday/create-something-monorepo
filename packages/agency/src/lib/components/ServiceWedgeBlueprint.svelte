@@ -43,11 +43,11 @@
 
 <div class="wedge-shell product-surface product-surface--soft" aria-labelledby="service-wedge-title">
   <div class="wedge-copy">
-    <span class="wedge-eyebrow">Service blueprint</span>
-    <h3 id="service-wedge-title">The offer ladder starts with a trust map and rises into a reusable control layer.</h3>
+    <span class="wedge-eyebrow">Service path</span>
+    <h3 id="service-wedge-title">Start with one mapped handoff, then add control only when the workflow earns it.</h3>
     <p>
-      The service is easier to understand as a progression: first map the delegation boundary,
-      then harden one workflow, then install the trust layer that protects operator attention.
+      The path is easier to understand as a progression: first map the delegation boundary, then
+      harden one workflow, then install the trust layer that protects operator attention.
     </p>
   </div>
 

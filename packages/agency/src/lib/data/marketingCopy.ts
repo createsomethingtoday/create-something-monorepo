@@ -11,7 +11,7 @@ export const agencyCoreMessaging = {
     '/book?source=agency&intent=workflow-mapping&lane=workflow_infrastructure',
   servicesMappingSessionHref:
     '/book?source=services&intent=workflow-mapping&lane=workflow_infrastructure',
-  engagementModelLabel: 'See the workflow model →',
+  engagementModelLabel: 'See the service path →',
   workflowCtaHeading: 'Bring one workflow that should not stay manual.',
   workflowCtaDetail:
     'I map what agents can do, what needs approval, what must stop, and what evidence your team keeps.'
