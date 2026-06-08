@@ -77,7 +77,7 @@ declare global {
 				// Optional: Override API URL (defaults to workway-api-gateway.half-dozen.workers.dev)
 				// Set to api.workway.co once DNS route is configured
 				WORKWAY_API_URL?: string;
-				// Auth0 identity
+				// Archived Auth0 runtime compatibility variables
 				AUTH0_DOMAIN?: string;
 				AUTH0_CLIENT_ID?: string;
 				AUTH0_CLIENT_SECRET?: string;

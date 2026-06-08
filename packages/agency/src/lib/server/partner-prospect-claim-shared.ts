@@ -109,11 +109,11 @@ export function getProspectClaimConflict(input: {
 			(input.existingSeed.tenant_id && input.existingSeed.tenant_id !== input.identityTenantId) ||
 			(input.existingSeed.auth_subject && input.existingSeed.auth_subject !== input.userId))
 	) {
-		return {
-			code: 'identity_seed_conflict',
-			message:
-				'This email is already seeded to a different account or Auth0 subject. Operator review is required before prospect claim can continue.',
-		};
+			return {
+				code: 'identity_seed_conflict',
+				message:
+					'This email is already seeded to a different account or identity subject. Operator review is required before prospect claim can continue.',
+			};
 	}
 
 	if (
@@ -121,11 +121,11 @@ export function getProspectClaimConflict(input: {
 		((input.existingEntitlement?.account_id && input.existingEntitlement.account_id !== input.identityAccountId) ||
 			(input.existingEntitlement?.tenant_id && input.existingEntitlement.tenant_id !== input.identityTenantId))
 	) {
-		return {
-			code: 'manual_override_conflict',
-			message:
-				'This Auth0 subject already has a manual entitlement override for a different account. Operator review is required before prospect claim can continue.',
-		};
+			return {
+				code: 'manual_override_conflict',
+				message:
+					'This identity subject already has a manual entitlement override for a different account. Operator review is required before prospect claim can continue.',
+			};
 	}
 
 	return null;

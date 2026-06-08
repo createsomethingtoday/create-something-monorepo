@@ -11,7 +11,7 @@ import {
 export const GET: RequestHandler = async ({ url, cookies, platform, request }) => {
 	const config = getAuth0Config(platform?.env);
 	if (!config) {
-		return json({ error: 'Auth0 is not configured' }, { status: 503 });
+		return json({ error: 'Portal sign-in is not configured' }, { status: 503 });
 	}
 
 	const state = generateAuthState();
@@ -48,7 +48,7 @@ function resolveAuth0RedirectUri(requestUrl: string, env?: App.Platform['env']) 
 
 export const POST: RequestHandler = async () => {
 	return json(
-		{ error: 'Email/password login has been replaced by Auth0. Use GET /api/auth/login.' },
+		{ error: 'Email/password login has been replaced by portal sign-in. Use GET /api/auth/login.' },
 		{ status: 405 }
 	);
 };

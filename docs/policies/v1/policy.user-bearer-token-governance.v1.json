@@ -7,7 +7,7 @@
     "one_active_token_per_user": true,
     "shared_team_tokens_allowed": false,
     "issuer": "agency",
-    "identity_provider": "auth0",
+    "identity_provider": "clerk",
     "token_format": "opaque",
     "plaintext_display": "issue_or_regenerate_only",
     "compat_mode_allowed_for_host_compatibility": true,

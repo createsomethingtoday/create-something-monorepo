@@ -75,7 +75,7 @@ Operator-only deployments can use the session-authenticated proxy instead:
 POST /api/canon/operator-approval
 ```
 
-That route requires an Auth0-backed `.agency` session whose email is listed in `AGENCY_OPERATOR_EMAILS`. It only accepts same-origin requests, configured `CANON_OPERATOR_ORIGINS`, local development origins, or HTTPS origins under `*.createsomething.agency`. For Webflow Code Components, set `Approval Request Credentials` to `include` only when the console is served from a trusted CREATE SOMETHING domain that can send the `.createsomething.agency` session cookie. Keep public `webflow.io` previews read-only or local-state only.
+That route requires an authenticated `.agency` portal session whose email is listed in `AGENCY_OPERATOR_EMAILS`. It only accepts same-origin requests, configured `CANON_OPERATOR_ORIGINS`, local development origins, or HTTPS origins under `*.createsomething.agency`. For Webflow Code Components, set `Approval Request Credentials` to `include` only when the console is served from a trusted CREATE SOMETHING domain that can send the `.createsomething.agency` session cookie. Keep public `webflow.io` previews read-only or local-state only.
 
 The production Webflow publish origin is:
 

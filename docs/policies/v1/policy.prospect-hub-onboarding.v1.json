@@ -15,7 +15,7 @@
     "identity_fields_may_be_preserved_without_unlocking_issuance": true
   },
   "self_service_controls": {
-    "auth0_session_required": true,
+    "portal_session_required": true,
     "claim_authorization_sources": [
       "owner_email",
       "allowed_claim_emails",

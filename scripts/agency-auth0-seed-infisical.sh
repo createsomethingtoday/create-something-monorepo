@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# ARCHIVED: Auth0 is no longer the current .agency portal identity provider.
+# Keep this script for historical export/rollback only; do not use it for new Clerk provisioning.
+
 INFISICAL_ENV="${INFISICAL_ENV:-prod}"
 INFISICAL_PATH="${INFISICAL_PATH:-/agency/auth}"
 INFISICAL_PROJECT_ID="${INFISICAL_PROJECT_ID:-}"

@@ -63,10 +63,10 @@
 
 <section class="shell">
 	<div class="shell-inner">
-		<header class="hero">
-			<p class="eyebrow">Operator Surface</p>
-			<h1>Security Operations</h1>
-			<p>Control plane for managed bearer access. Auth0 establishes identity; this dashboard shows whether contract, billing, partner, and operator controls currently allow that identity to use MCP.</p>
+			<header class="hero">
+				<p class="eyebrow">Operator Surface</p>
+				<h1>Security Operations</h1>
+				<p>Control plane for managed bearer access. Clerk establishes identity; this dashboard shows whether contract, billing, partner, and operator controls currently allow that identity to use MCP.</p>
 			<nav class="subnav">
 				<a href="/admin/security" aria-current="page">Overview</a>
 				<a href="/admin/security/bearer-tokens">Bearer Governance</a>
@@ -126,14 +126,14 @@
 				<h2>Commercial State</h2>
 				<p>Inspect raw Stripe-backed customer, subscription, and invoice posture feeding billing enforcement.</p>
 			</a>
-			<a href="/admin/security/partners" class="action-card">
-				<h2>Partner Mappings</h2>
-				<p>Inspect partner client status, Auth0 subject mapping, workspace account mapping, and required toolkits.</p>
-			</a>
-			<a href="/admin/security/seeds" class="action-card">
-				<h2>Seeded Users</h2>
-				<p>Seed invite mappings by email before first login, then inspect subject binding after first Auth0 sign-in.</p>
-			</a>
+				<a href="/admin/security/partners" class="action-card">
+					<h2>Partner Mappings</h2>
+					<p>Inspect partner client status, identity subject mapping, workspace account mapping, and required toolkits.</p>
+				</a>
+				<a href="/admin/security/seeds" class="action-card">
+					<h2>Seeded Users</h2>
+					<p>Seed invite mappings by email before first login, then inspect subject binding after first Clerk sign-in.</p>
+				</a>
 			<a href="/admin/security/audit" class="action-card">
 				<h2>Audit Explorer</h2>
 				<p>Inspect partner delivery artifacts, identity auth events, and policy decisions from the broker path.</p>

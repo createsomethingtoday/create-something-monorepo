@@ -135,7 +135,7 @@ packages/agency/
 | Smoke command | `pnpm check` |
 | Validation surfaces | Svelte check output, Cloudflare Pages build output, route preview, sales content review |
 | UI validation path | `/`, `/services` |
-| Escalation rule | stop if Auth0, D1, or client-delivery data is required and cannot be reproduced from local fixtures or Infisical-backed environment |
+| Escalation rule | stop if identity-provider, D1, or client-delivery data is required and cannot be reproduced from local fixtures or Infisical-backed environment |
 
 ## Sales Assets
 
@@ -172,9 +172,11 @@ pnpm --filter=agency exec tsc --noEmit
 pnpm --filter=agency build && wrangler pages deploy packages/agency/.svelte-kit/cloudflare --project-name=create-something-agency
 ```
 
-## Auth0 And Infisical
+## Archived Auth0 And Infisical
 
-`.agency` now treats Auth0 as the identity source of truth. Browser login flows redirect through Auth0 Universal Login, the Auth0 callback is handled at `/auth/callback`, and server-side session validation accepts Auth0-issued tokens through the shared Canon auth layer.
+> Archived: Auth0 was the previous `.agency` portal identity provider. Current public and operator language should refer to Clerk. Keep this section only for historical audit, export, or rollback work; do not use these commands for new provisioning unless the archived Auth0 path is explicitly revived.
+
+`.agency` previously treated Auth0 as the identity source of truth. Browser login flows redirected through Auth0 Universal Login, the Auth0 callback was handled at `/auth/callback`, and server-side session validation accepted Auth0-issued tokens through the shared Canon auth layer.
 
 Tenant export uses `a0deploy`, not `auth0`. The repo-level export wrapper is:
 

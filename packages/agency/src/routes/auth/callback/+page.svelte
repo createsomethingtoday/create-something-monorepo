@@ -5,7 +5,7 @@
 
 <SEO
 	title="Signing In"
-	description="Completing your Auth0 sign-in"
+	description="Completing your portal sign-in"
 	propertyName="agency"
 	noindex={true}
 />

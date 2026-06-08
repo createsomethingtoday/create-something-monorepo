@@ -1,5 +1,7 @@
 # Auth0 Subject Rebind Runbook
 
+> Archived: Auth0 was the previous `.agency` portal identity provider. Use this runbook only for historical Auth0 records or rollback/migration incidents; new Clerk identity incidents need the current provider-specific process.
+
 Use this runbook when an Auth0 user is deleted or recreated and later returns with the same email but a different Auth0 `sub`.
 
 This runbook implements [policy.auth0-subject-rebind-governance.v1](./policies/v1/policy.auth0-subject-rebind-governance.v1.md).

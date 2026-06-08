@@ -67,12 +67,12 @@ export HUB_API_TOKEN="replace-me"
 export CS_MCP_HUB_REMOTE_API_TOKEN="$HUB_API_TOKEN"
 export MCP_SESSION_RESOLVE_TOKEN="replace-me"
 
-export MCP_ONLY_AUTH_SUBJECT="auth0|mcp-only-user"
+export MCP_ONLY_AUTH_SUBJECT="portal|mcp-only-user"
 export MCP_ONLY_ACCOUNT_ID="acct_mcp_only_example"
 export MCP_ONLY_TENANT_ID="tenant_mcp_only_example"
 export MCP_ONLY_TOOLKIT_PROFILE_JSON='["googlesheets"]'
 
-export POLICY_OS_AUTH_SUBJECT="auth0|policy-os-user"
+export POLICY_OS_AUTH_SUBJECT="portal|policy-os-user"
 export POLICY_OS_ACCOUNT_ID="acct_policy_os_example"
 export POLICY_OS_TENANT_ID="tenant_policy_os_example"
 export POLICY_OS_TOOLKIT_PROFILE_JSON='["slack"]'
@@ -80,7 +80,7 @@ export POLICY_OS_BOUND_HOST="cs-mcp-hub-remote"
 export POLICY_OS_RESOURCE_HOST="cs-mcp-hub-remote"
 
 # Optional staged commercial-deny actor
-export POLICY_OS_DENY_AUTH_SUBJECT="auth0|policy-os-denied-user"
+export POLICY_OS_DENY_AUTH_SUBJECT="portal|policy-os-denied-user"
 export POLICY_OS_DENY_ACCOUNT_ID="acct_policy_os_denied_example"
 export POLICY_OS_DENY_TENANT_ID="tenant_policy_os_denied_example"
 export POLICY_OS_DENY_EXPECTED_REASON="billing_inactive"

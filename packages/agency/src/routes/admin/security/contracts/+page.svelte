@@ -154,11 +154,11 @@
 							<option value="expired">expired</option>
 							<option value="terminated">terminated</option>
 						</select>
-					</label>
-					<label>
-						<span>Auth Subject</span>
-						<input bind:value={form.auth_subject} placeholder="auth0|..." />
-					</label>
+						</label>
+						<label>
+							<span>Auth Subject</span>
+							<input bind:value={form.auth_subject} placeholder="identity subject" />
+						</label>
 					<label>
 						<span>Email</span>
 						<input bind:value={form.auth_email} placeholder="user@example.com" />

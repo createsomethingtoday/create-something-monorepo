@@ -67,10 +67,10 @@ export const POST: RequestHandler = async ({ request, params, platform }) => {
 		});
 		if (!client.identity_user_id) {
 			return json(
-				{
-					error: 'missing_identity_user',
-					message: 'Client is missing identity_user_id. Managed bearer tokens require a mapped Auth0 subject.',
-				},
+					{
+						error: 'missing_identity_user',
+						message: 'Client is missing identity_user_id. Managed bearer tokens require a mapped identity subject.',
+					},
 				{ status: 409 },
 			);
 		}

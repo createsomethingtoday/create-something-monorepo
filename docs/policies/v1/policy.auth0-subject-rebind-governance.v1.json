@@ -1,7 +1,8 @@
 {
   "policy_id": "policy.auth0-subject-rebind-governance.v1",
   "version": 1,
-  "status": "draft",
+  "status": "archived",
+  "archive_note": "Auth0 was the previous .agency portal identity provider. Use this policy only for historical Auth0 records, rollback, or migration evidence; new Clerk identity incidents need the current provider-specific rebind process.",
   "identity_provider": "auth0",
   "incident_type": "subject_rebind_after_delete_or_recreate",
   "rebind_requirements": {

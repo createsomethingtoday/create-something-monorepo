@@ -36,7 +36,7 @@
 		<div class="auth-header">
 			<h1>Sign in to `.agency`</h1>
 			<p class="auth-subtitle">
-				Identity is now managed through Auth0. Use your managed account to access the client portal,
+				Identity is now managed through Clerk. Use your managed account to access the client portal,
 				bearer-token controls, and MCP surfaces.
 			</p>
 		</div>
@@ -47,7 +47,7 @@
 
 		<div class="auth-actions">
 			<button class="primary-action" type="button" onclick={() => continueTo(loginHref)}>
-				Continue with Auth0
+				Continue with Clerk
 			</button>
 			<button class="secondary-action" type="button" onclick={() => continueTo(signupHref)}>
 				Create account

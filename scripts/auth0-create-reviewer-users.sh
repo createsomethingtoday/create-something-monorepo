@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# ARCHIVED: Auth0 is no longer the current .agency portal identity provider.
+# Keep this script for historical reviewer export/rollback only; do not use it for new Clerk provisioning.
+
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 MANIFEST_FILE="${MANIFEST_FILE:-$ROOT_DIR/specs/webflow-marketplace/delivery/template-review-hub/auth0-reviewer-user-manifest.json}"
 AUTH0_CONNECTION="${AUTH0_CONNECTION:-}"

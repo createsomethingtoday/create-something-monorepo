@@ -4,6 +4,8 @@
 - Owner: `CREATE SOMETHING identity + support + partner operations`
 - Effective date: `TBD`
 
+> Archived: Auth0 was the previous `.agency` portal identity provider. Keep this policy only for historical Auth0 records, rollback, or migration evidence; new Clerk identity incidents need the current provider-specific rebind process.
+
 ## Purpose
 
 Define the governance path for incidents where an Auth0 user is deleted or recreated and returns with the same email but a different Auth0 subject.

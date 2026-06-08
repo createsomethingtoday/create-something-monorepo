@@ -256,30 +256,30 @@ export function createPartnerProspectClaimPostHandler(deps: PartnerProspectClaim
 				normalizeEmail: deps.normalizeEmail,
 			});
 			if (!authorizedVia) {
-				return jsonResponse(
-					{
-						error: 'claim_not_authorized',
-						message: 'This Auth0 account is not authorized to claim the prospect workspace.',
-					},
+					return jsonResponse(
+						{
+							error: 'claim_not_authorized',
+							message: 'This identity account is not authorized to claim the prospect workspace.',
+						},
 					403,
 				);
 			}
 
 			if (client.identity_user_id && client.identity_user_id !== user.id) {
-				return jsonResponse(
-					{
-						error: 'already_claimed',
-						message: 'This prospect is already claimed by another Auth0 subject.',
-					},
+					return jsonResponse(
+						{
+							error: 'already_claimed',
+							message: 'This prospect is already claimed by another identity subject.',
+						},
 					409,
 				);
 			}
 			if (lane.identity_user_id && lane.identity_user_id !== user.id) {
-				return jsonResponse(
-					{
-						error: 'lane_already_claimed',
-						message: 'This prospect lane is already claimed by another Auth0 subject.',
-					},
+					return jsonResponse(
+						{
+							error: 'lane_already_claimed',
+							message: 'This prospect lane is already claimed by another identity subject.',
+						},
 					409,
 				);
 			}

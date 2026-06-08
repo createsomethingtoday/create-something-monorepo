@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# ARCHIVED: Auth0 is no longer the current .agency portal identity provider.
+# Keep this script for historical Pages secret sync/rollback only; do not use it for new Clerk provisioning.
+
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PROJECT_NAME="${PROJECT_NAME:-create-something-agency}"
 INFISICAL_ENV="${INFISICAL_ENV:-prod}"

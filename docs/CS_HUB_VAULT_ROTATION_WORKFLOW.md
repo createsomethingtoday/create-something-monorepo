@@ -179,7 +179,7 @@ Use this path when a user already has a working vault-backed bearer token and yo
 
 Prerequisites:
 
-- one canonical Auth0 subject for the user
+- one canonical portal identity subject for the user
 - one canonical `.agency` account and tenant mapping
 - one active `.agency` entitlement row for that subject
 

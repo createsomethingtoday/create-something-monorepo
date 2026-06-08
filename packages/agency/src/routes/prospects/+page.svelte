@@ -67,9 +67,9 @@
 		sideValue={data.user.email}
 		sideMeta={data.error ? `Status: ${data.error}` : `${prospects.length} workspace${prospects.length === 1 ? '' : 's'}`}
 	>
-		<svelte:fragment slot="summary">
-			<SummaryItem label="Claimable" value={String(claimableCount)} note="Ready to bind now" />
-			<SummaryItem label="Claimed" value={String(claimedCount)} note="Already bound to this Auth0 account" />
+			<svelte:fragment slot="summary">
+				<SummaryItem label="Claimable" value={String(claimableCount)} note="Ready to bind now" />
+				<SummaryItem label="Claimed" value={String(claimedCount)} note="Already bound to this Clerk account" />
 			<SummaryItem label="Review" value={String(reviewCount)} note="Blocked or unavailable workspaces" />
 			<SummaryItem label="Grad Ready" value={String(graduationReadyCount)} note="Ready for operator promotion" />
 			<SummaryItem label="Connected Toolkits" value={String(connectedToolkitCount)} note="Active provider connections" />
@@ -79,7 +79,7 @@
 			<p class="feedback error">{data.error}</p>
 		{/if}
 
-		<ProspectWorkspaceSection prospects={prospects} emptyMessage="No prospect workspaces are currently assigned to this Auth0 account." />
+			<ProspectWorkspaceSection prospects={prospects} emptyMessage="No prospect workspaces are currently assigned to this Clerk account." />
 	</ReportShell>
 {/if}
 

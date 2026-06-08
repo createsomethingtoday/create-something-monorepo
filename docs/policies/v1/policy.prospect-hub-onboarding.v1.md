@@ -20,7 +20,7 @@ Define how a potential client may be provisioned into a governed MCP-ready works
 1. Prospect onboarding MAY provision a workspace account, restricted lane, and delegated provider connection surfaces before commercial activation.
 2. Prospect bootstrap MUST create or reconcile records in `initialized` state unless a separate graduation workflow promotes them.
 3. Prospect bootstrap MUST stamp durable lifecycle metadata that marks the record as `prospect` and names the graduation requirements.
-4. Prospect bootstrap MUST NOT require a canonical Auth0 subject or identity account mapping at provisioning time.
+4. Prospect bootstrap MUST NOT require a canonical portal identity subject or identity account mapping at provisioning time.
 5. Prospect bootstrap MAY preserve previously known identity fields on an existing prospect record, but those fields MUST NOT by themselves make the prospect issuable.
 6. Prospect records MUST remain blocked from strict-session minting, managed bearer issuance, and legacy key issuance until graduation is explicitly recorded.
 7. Graduation requires governed entitlement state and identity readiness at minimum: `service_entitled`, `policy_accepted`, `contract_active`, `billing_active`, `identity_account_id`, and `identity_user_id`.

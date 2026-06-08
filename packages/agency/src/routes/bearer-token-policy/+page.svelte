@@ -5,7 +5,7 @@
 
   const controls = [
     'One active bearer token per authenticated user',
-    'Long-lived token issued by .agency, not raw Auth0 access tokens',
+    'Long-lived token issued by .agency, not raw portal identity tokens',
     'Retain the active token by default; rotation is explicit or compromise-driven',
     'Immediate revoke and regenerate controls',
     'Live checks for org membership, policy acceptance, contract status, billing status, and service entitlement',

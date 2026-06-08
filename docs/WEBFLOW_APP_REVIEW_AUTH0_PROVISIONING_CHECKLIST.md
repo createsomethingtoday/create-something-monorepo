@@ -1,5 +1,7 @@
 # Webflow App Review Auth0 Provisioning Checklist
 
+> Archived: Auth0 was the previous `.agency` portal identity provider. Current reviewer provisioning should use Clerk identity flows; keep this checklist only for historical audit, export, or rollback context.
+
 ## Goal
 
 Provision the two Webflow Marketplace app reviewers into `.agency`, create the corresponding Auth0 users, and verify first-login identity binding for the Phase A app-review rollout.

@@ -127,7 +127,7 @@ Keep these outside Ona in phase 1:
 
 - Client-facing bearer-token delivery
 - Any secret currently delivered directly to clients through Infisical
-- The canonical `/agency/auth` Auth0 source-of-truth path
+- The archived `/agency/auth` Auth0 source-of-truth path, retained only for historical export or rollback
 
 ### Rotation Order
 

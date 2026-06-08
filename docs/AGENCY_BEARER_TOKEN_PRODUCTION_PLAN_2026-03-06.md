@@ -1,5 +1,7 @@
 # `.agency` Bearer Token Production Plan
 
+> Provider note: this March 2026 plan originally used Auth0-specific wording. `.agency` now uses Clerk for portal identity; preserve the bearer-governance model, but do not use Auth0 as the current identity-provider assumption.
+
 ## Decision
 
 CREATE SOMETHING will support a permanent, customer-facing bearer-token product through `.agency` with the following constraints:
@@ -7,7 +9,7 @@ CREATE SOMETHING will support a permanent, customer-facing bearer-token product 
 - one active bearer token per authenticated user
 - token is long-lived by default
 - token is intended for third-party hosts, local tools, and background agents
-- token is issued by `.agency`, not Auth0
+- token is issued by `.agency`, not raw upstream identity-provider tokens
 - token remains continuously governed by live entitlement checks
 
 This is not the same as the repo's current temporary "legacy key" exception lane.
@@ -31,8 +33,8 @@ The current implementation does not yet match the desired production model becau
 
 ### Identity
 
-- Auth0 is the only identity provider
-- every bearer token is bound to one Auth0 user
+- Clerk is the current portal identity provider
+- every bearer token is bound to one canonical portal identity subject
 - bearer token issuance requires authenticated access through `.agency`
 
 ### Token
@@ -57,7 +59,7 @@ Every bearer-token request must be checked against:
 
 ### Runtime Boundaries
 
-- Auth0: identity only
+- Clerk: portal identity only
 - `.agency`: token issuance, UI, legal acceptance, entitlement broker
 - MCP hub/gateway: request-time enforcement
 - Stripe: billing source of truth
@@ -150,7 +152,7 @@ Required telemetry:
 
 - one token per user
 - no shared team token
-- no exposure of raw Auth0 JWTs as the portable host credential
+- no exposure of raw portal identity-provider tokens as the portable host credential
 - no access if user or org is no longer in good standing
 
 ## Rollout Recommendation

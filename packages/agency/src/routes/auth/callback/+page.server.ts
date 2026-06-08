@@ -11,7 +11,7 @@ import type { PageServerLoad } from './$types';
 export const load: PageServerLoad = async ({ url, cookies, platform, request }) => {
 	const config = getAuth0Config(platform?.env);
 	if (!config) {
-		throw error(503, 'Auth0 is not configured');
+		throw error(503, 'Portal sign-in is not configured');
 	}
 
 	const authError = url.searchParams.get('error');
@@ -49,7 +49,7 @@ export const load: PageServerLoad = async ({ url, cookies, platform, request }) 
 		);
 	}
 
-	// For Auth0-backed property sessions, the cookie stores the identity JWT (`id_token`).
+	// For managed property sessions, the cookie stores the identity JWT (`id_token`).
 	// This token carries the user claims our shared session manager reads for portal auth.
 	setSessionCookies(
 		cookies,

@@ -139,7 +139,7 @@ White-glove onboarding is an approved delivery path for initial client access, b
 Required behavior:
 
 - the delivered credential must still be a governed managed bearer or other explicitly approved credential type
-- canonical Auth0 subject binding must exist when that credential type requires it
+- canonical portal identity subject binding must exist when that credential type requires it
 - operator-only runtime bootstrap tokens must never be treated as customer credentials
 - ongoing lifecycle actions should remain in `.agency` unless an explicitly approved client shell is the system of record
 
