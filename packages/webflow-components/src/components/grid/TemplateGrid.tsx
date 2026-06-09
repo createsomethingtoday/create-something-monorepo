@@ -1126,8 +1126,10 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
     fetchPage(1, filters, false);
   }, [filters, fetchPage]);
 
+  const rendersComponentEmptyState = showEmptyState || showEmptyRecommendations;
+
   useEffect(() => {
-    if (!showEmptyState || !showEmptyRecommendations || loading || error || items.length > 0) {
+    if (!showEmptyRecommendations || loading || error || items.length > 0) {
       emptyRecommendationsAbortRef.current?.abort();
       emptyRecommendationsAbortRef.current = null;
       setEmptyRecommendations([]);
@@ -1183,7 +1185,6 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
     items.length,
     loading,
     showEmptyRecommendations,
-    showEmptyState,
   ]);
 
   useEffect(() => {
@@ -1369,9 +1370,9 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
   useEffect(() => {
     const emptyEl = document.querySelector<HTMLElement>('[fs-cmsfilter-element="empty"]');
     if (!emptyEl) return;
-    const shouldShow = !showEmptyState && !loading && !error && items.length === 0;
+    const shouldShow = !rendersComponentEmptyState && !loading && !error && items.length === 0;
     emptyEl.style.display = shouldShow ? '' : 'none';
-  }, [loading, error, items.length, showEmptyState]);
+  }, [loading, error, items.length, rendersComponentEmptyState]);
 
   // Re-parse from URL on browser back/forward navigation
   useEffect(() => {
@@ -1622,10 +1623,10 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
     );
   }
 
-  // When items is empty (but not loading/error), render nothing — the native
-  // [fs-cmsfilter-element="empty"] element is shown by the effect above.
+  // When no component empty state is enabled, let the native
+  // [fs-cmsfilter-element="empty"] element handle zero-result rendering.
   if (items.length === 0) {
-    if (!showEmptyState) return null;
+    if (!rendersComponentEmptyState) return null;
     const query = filters.q.trim();
     const resolvedEmptyTitle = query ? `No templates found for "${query}"` : emptyTitle;
     const resolvedEmptyDescription = query
