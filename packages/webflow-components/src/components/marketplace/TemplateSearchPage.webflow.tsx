@@ -68,6 +68,15 @@ export default declareComponent(TemplateSearchPage, {
       name: 'Items Per Page',
       defaultValue: 24,
     }),
+    showEmptyRecommendations: props.Boolean({
+      name: 'Show Empty Recommendations',
+      defaultValue: true,
+      tooltip: 'Show four recently featured templates when the current search or filter set has no results.',
+    }),
+    emptyRecommendationsTitle: props.Text({
+      name: 'Empty Recommendations Title',
+      defaultValue: 'Recently featured templates',
+    }),
     noindex: props.Boolean({
       name: 'Noindex Experiment Page',
       defaultValue: true,

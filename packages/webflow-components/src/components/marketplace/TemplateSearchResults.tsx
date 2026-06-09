@@ -29,6 +29,10 @@ export interface TemplateSearchResultsProps {
   emptyDescription?: string;
   /** No-results clear action label. */
   emptyActionLabel?: string;
+  /** Show recommended templates when the current search returns no results. */
+  showEmptyRecommendations?: boolean;
+  /** Heading for the no-results recommendation grid. */
+  emptyRecommendationsTitle?: string;
   /** Show category/subcategory metadata below card creator names. */
   showCategoryMeta?: boolean;
   /** Show template type alongside category metadata. */
@@ -56,6 +60,8 @@ export const TemplateSearchResults: React.FC<TemplateSearchResultsProps> = ({
   emptyTitle = 'No matching templates',
   emptyDescription = 'Try a broader search, remove a filter, or start again from the full template catalog.',
   emptyActionLabel = 'Clear filters',
+  showEmptyRecommendations = true,
+  emptyRecommendationsTitle = 'Recently featured templates',
   showCategoryMeta = false,
   showTemplateType = false,
   showPreviewLink = false,
@@ -78,6 +84,8 @@ export const TemplateSearchResults: React.FC<TemplateSearchResultsProps> = ({
       emptyTitle={emptyTitle}
       emptyDescription={emptyDescription}
       emptyActionLabel={emptyActionLabel}
+      showEmptyRecommendations={showEmptyRecommendations}
+      emptyRecommendationsTitle={emptyRecommendationsTitle}
       showCategoryMeta={showCategoryMeta}
       showTemplateType={showTemplateType}
       showPreviewLink={showPreviewLink}

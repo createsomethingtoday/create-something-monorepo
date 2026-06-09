@@ -299,7 +299,7 @@ export async function finishSyncJobLock(
 
 export async function clearIndex(db: D1Database): Promise<void> {
   // Delete in chunks to avoid D1's per-statement CPU time limit on large tables.
-  for (const table of ['template_styles', 'template_child_categories', 'template_documents'] as const) {
+  for (const table of ['template_styles', 'template_child_categories', 'template_category_memberships', 'template_documents'] as const) {
     let hasMore = true;
     while (hasMore) {
       const result = await db.prepare(`DELETE FROM ${table} WHERE rowid IN (SELECT rowid FROM ${table} LIMIT 1000)`).run();
@@ -328,10 +328,18 @@ export async function upsertTemplateDocuments(db: D1Database, documents: Templat
         .bind(document.templateSlug, document.id),
     );
     statements.push(
+      db
+        .prepare(
+          'DELETE FROM template_category_memberships WHERE template_document_id = (SELECT id FROM template_documents WHERE template_slug = ? AND id != ?)',
+        )
+        .bind(document.templateSlug, document.id),
+    );
+    statements.push(
       db.prepare('DELETE FROM template_documents WHERE template_slug = ? AND id != ?').bind(document.templateSlug, document.id),
     );
     statements.push(db.prepare('DELETE FROM template_styles WHERE template_document_id = ?').bind(document.id));
     statements.push(db.prepare('DELETE FROM template_child_categories WHERE template_document_id = ?').bind(document.id));
+    statements.push(db.prepare('DELETE FROM template_category_memberships WHERE template_document_id = ?').bind(document.id));
     statements.push(
       db.prepare(UPSERT_TEMPLATE_SQL).bind(
         document.id,
@@ -398,6 +406,22 @@ export async function upsertTemplateDocuments(db: D1Database, documents: Templat
           .bind(document.id, document.childCategories[index] ?? childCategorySlug, childCategorySlug),
       );
     }
+
+    for (const membership of document.categoryMemberships) {
+      statements.push(
+        db
+          .prepare(
+            'INSERT OR REPLACE INTO template_category_memberships (template_document_id, category_group_name, category_group_slug, child_category_name, child_category_slug) VALUES (?, ?, ?, ?, ?)',
+          )
+          .bind(
+            document.id,
+            membership.categoryGroupName,
+            membership.categoryGroupSlug,
+            membership.childCategoryName,
+            membership.childCategorySlug,
+          ),
+      );
+    }
   }
 
   for (const group of chunk(statements, 50)) {
@@ -411,6 +435,7 @@ export async function deleteTemplateDocuments(db: D1Database, ids: string[]): Pr
   const statements = ids.flatMap((id) => [
     db.prepare('DELETE FROM template_styles WHERE template_document_id = ?').bind(id),
     db.prepare('DELETE FROM template_child_categories WHERE template_document_id = ?').bind(id),
+    db.prepare('DELETE FROM template_category_memberships WHERE template_document_id = ?').bind(id),
     db.prepare('DELETE FROM template_documents WHERE id = ?').bind(id),
   ]);
 
@@ -488,6 +513,13 @@ export async function updateTemplateImagesFromWebflow(
         db
           .prepare(
             'DELETE FROM template_child_categories WHERE template_document_id = (SELECT id FROM template_documents WHERE template_slug = ? AND id != ?)',
+          )
+          .bind(record.templateSlug, record.id),
+      );
+      statements.push(
+        db
+          .prepare(
+            'DELETE FROM template_category_memberships WHERE template_document_id = (SELECT id FROM template_documents WHERE template_slug = ? AND id != ?)',
           )
           .bind(record.templateSlug, record.id),
       );

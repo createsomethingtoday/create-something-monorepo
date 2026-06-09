@@ -8,6 +8,7 @@ export interface Env {
   AIRTABLE_API_KEY?: string;
   AIRTABLE_BASE_ID: string;
   AIRTABLE_ASSETS_TABLE_ID?: string;
+  AIRTABLE_CHILD_CATEGORIES_TABLE_ID?: string;
   AIRTABLE_STYLES_TABLE_ID?: string;
   AIRTABLE_TAGS_TABLE_ID?: string;
   WEBFLOW_API_TOKEN?: string;
@@ -49,6 +50,7 @@ export interface AirtableAssetFields extends Record<string, unknown> {
   'ℹ️Description (Long).html'?: string;
   '🪣Category Group(s) Display Name'?: string[] | string;
   '🪣Category Group(s) CMS Slug'?: string[] | string;
+  'ℹ️🪣Categories'?: string[] | string;
   'ℹ️🪣Categories (Text)'?: string[] | string;
   '🥞CMS Slug (from ℹ️🪣Categories)'?: string[] | string;
   'ℹ️👘Styles'?: string[];
@@ -82,6 +84,11 @@ export interface LookupValue {
   slug: string;
 }
 
+export interface ChildCategoryLookupValue extends LookupValue {
+  categoryGroupName: string | null;
+  categoryGroupSlug: string | null;
+}
+
 export interface CreatorLookupValue {
   id: string;
   name: string;
@@ -92,9 +99,17 @@ export interface CreatorLookupValue {
 }
 
 export interface LookupMaps {
+  childCategories: Map<string, ChildCategoryLookupValue>;
   styles: Map<string, LookupValue>;
   tags: Map<string, LookupValue>;
   creators: Map<string, CreatorLookupValue>;
+}
+
+export interface CategoryMembershipInput {
+  childCategoryName: string;
+  childCategorySlug: string;
+  categoryGroupName: string;
+  categoryGroupSlug: string;
 }
 
 export interface TemplateDocumentInput {
@@ -120,6 +135,7 @@ export interface TemplateDocumentInput {
   categoryGroupSlugs: string[];
   childCategories: string[];
   childCategorySlugs: string[];
+  categoryMemberships: CategoryMembershipInput[];
   styles: string[];
   styleSlugs: string[];
   tags: string[];

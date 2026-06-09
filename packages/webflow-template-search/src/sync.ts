@@ -33,6 +33,7 @@ import { canonicalizeCategoryGroupSlug, normalizeChildCategorySlug } from './slu
 import type {
   AirtableAssetFields,
   AirtableRecord,
+  CategoryMembershipInput,
   Env,
   ImageRefreshSummary,
   LookupMaps,
@@ -255,22 +256,76 @@ function resolveCreatorMetadata(
 interface NormalizedChildCategory {
   displayName: string;
   slug: string;
+  categoryGroupName: string | null;
+  categoryGroupSlug: string | null;
 }
 
-function normalizeAssetChildCategories(record: AirtableRecord<AirtableAssetFields>): NormalizedChildCategory[] {
+function uniqueCategoryMemberships(categories: NormalizedChildCategory[]): CategoryMembershipInput[] {
+  const memberships = new Map<string, CategoryMembershipInput>();
+
+  for (const category of categories) {
+    if (!category.categoryGroupName || !category.categoryGroupSlug) continue;
+    const key = `${category.categoryGroupSlug}:${category.slug}`;
+    if (memberships.has(key)) continue;
+    memberships.set(key, {
+      childCategoryName: category.displayName,
+      childCategorySlug: category.slug,
+      categoryGroupName: category.categoryGroupName,
+      categoryGroupSlug: category.categoryGroupSlug,
+    });
+  }
+
+  return Array.from(memberships.values());
+}
+
+function uniqueCategoryGroupPairs(
+  memberships: CategoryMembershipInput[],
+  fallbackNames: string[],
+  fallbackSlugs: string[],
+): { names: string[]; slugs: string[] } {
+  const groups = new Map<string, string>();
+
+  for (const membership of memberships) {
+    if (!groups.has(membership.categoryGroupSlug)) {
+      groups.set(membership.categoryGroupSlug, membership.categoryGroupName);
+    }
+  }
+
+  if (groups.size === 0) {
+    fallbackSlugs.forEach((slug, index) => {
+      if (!slug || groups.has(slug)) return;
+      groups.set(slug, fallbackNames[index] ?? slug);
+    });
+  }
+
+  return {
+    names: Array.from(groups.values()),
+    slugs: Array.from(groups.keys()),
+  };
+}
+
+function normalizeAssetChildCategories(record: AirtableRecord<AirtableAssetFields>, lookups: LookupMaps): NormalizedChildCategory[] {
+  const ids = ensureStringArray(record.fields['ℹ️🪣Categories']);
   const names = ensureStringArray(record.fields['ℹ️🪣Categories (Text)']);
   const slugs = ensureStringArray(record.fields['🥞CMS Slug (from ℹ️🪣Categories)']);
   const categories = new Map<string, NormalizedChildCategory>();
 
-  names.forEach((name, index) => {
-    const displayName = name.trim();
-    if (!displayName) return;
+  const total = Math.max(ids.length, names.length, slugs.length);
+  for (let index = 0; index < total; index += 1) {
+    const lookup = ids[index] ? lookups.childCategories.get(ids[index]) : undefined;
+    const displayName = (lookup?.name ?? names[index] ?? '').trim();
+    if (!displayName) continue;
 
-    const slug = normalizeChildCategorySlug(displayName, slugs[index]);
-    if (!slug || categories.has(slug)) return;
+    const slug = normalizeChildCategorySlug(displayName, slugs[index] ?? lookup?.slug);
+    if (!slug || categories.has(slug)) continue;
 
-    categories.set(slug, { displayName, slug });
-  });
+    categories.set(slug, {
+      displayName,
+      slug,
+      categoryGroupName: lookup?.categoryGroupName ?? null,
+      categoryGroupSlug: lookup?.categoryGroupSlug ?? null,
+    });
+  }
 
   return Array.from(categories.values());
 }
@@ -293,7 +348,9 @@ function normalizeTemplateRecord(
     ensureStringArray(record.fields['🪣Category Group(s) CMS Slug']).map((entry) => canonicalizeCategoryGroupSlug(entry)),
   );
 
-  const childCategories = normalizeAssetChildCategories(record);
+  const childCategories = normalizeAssetChildCategories(record, lookups);
+  const categoryMemberships = uniqueCategoryMemberships(childCategories);
+  const normalizedCategoryGroups = uniqueCategoryGroupPairs(categoryMemberships, categoryGroups, categoryGroupSlugs);
 
   const styles = ensureStringArray(record.fields['ℹ️👘Styles'])
     .map((id) => lookups.styles.get(id))
@@ -332,10 +389,11 @@ function normalizeTemplateRecord(
     descriptionShort,
     descriptionLongHtml,
     descriptionLongText: stripHtml(descriptionLongHtml),
-    categoryGroups,
-    categoryGroupSlugs,
+    categoryGroups: normalizedCategoryGroups.names,
+    categoryGroupSlugs: normalizedCategoryGroups.slugs,
     childCategories: childCategories.map((entry) => entry.displayName),
     childCategorySlugs: childCategories.map((entry) => entry.slug),
+    categoryMemberships,
     styles: styles.map((entry) => entry.name),
     styleSlugs: styles.map((entry) => entry.slug),
     tags: tags.map((entry) => entry.name),

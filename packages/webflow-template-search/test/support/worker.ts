@@ -9,6 +9,7 @@ export function createTestEnv() {
     AIRTABLE_API_KEY: 'test-airtable-token',
     AIRTABLE_BASE_ID: 'appMoIgXMTTTNIc3p',
     AIRTABLE_ASSETS_TABLE_ID: 'tblRwzpWoLgE9MrUm',
+    AIRTABLE_CHILD_CATEGORIES_TABLE_ID: 'tblWJXy3M6R8SeoFi',
     AIRTABLE_STYLES_TABLE_ID: 'tblG7E9LbQj0sBX0o',
     AIRTABLE_TAGS_TABLE_ID: 'tblb4969G7O75gVWV',
     SYNC_ADMIN_TOKEN: 'sync-token',

@@ -2,18 +2,22 @@ import type {
   AirtableAssetFields,
   AirtableListResponse,
   AirtableRecord,
+  ChildCategoryLookupValue,
   CreatorLookupValue,
   Env,
   LookupMaps,
   LookupValue,
 } from './types.js';
 import {
+  canonicalizeCategoryGroupSlug,
+  normalizeChildCategorySlug,
   normalizeStyleSlug,
   normalizeTagSlug,
 } from './slug.js';
 import { ensureStringArray, uniqueStrings } from './utils.js';
 
 const DEFAULT_ASSETS_TABLE_ID = 'tblRwzpWoLgE9MrUm';
+const DEFAULT_CHILD_CATEGORIES_TABLE_ID = 'tblWJXy3M6R8SeoFi';
 const DEFAULT_STYLES_TABLE_ID = 'tblG7E9LbQj0sBX0o';
 const DEFAULT_TAGS_TABLE_ID = 'tblb4969G7O75gVWV';
 const DEFAULT_CREATORS_TABLE_ID = 'tbljt0plqxdMARZXb';
@@ -26,6 +30,7 @@ export const ASSET_FIELDS = [
   'ℹ️Description (Long).html',
   '🪣Category Group(s) Display Name',
   '🪣Category Group(s) CMS Slug',
+  'ℹ️🪣Categories',
   'ℹ️🪣Categories (Text)',
   '🥞CMS Slug (from ℹ️🪣Categories)',
   'ℹ️👘Styles',
@@ -142,6 +147,16 @@ const IMAGE_REFRESH_FIELDS = [
   '🖼️Carousel Images',
 ];
 
+interface AirtableCategoryFields extends Record<string, unknown> {
+  Category?: string;
+  'Display name'?: string;
+  'Parent Category'?: string[] | string;
+  'Parent Category Name'?: string;
+  '🪣Category Groups'?: string[] | string;
+  Tier?: string;
+  type?: string;
+}
+
 export async function fetchPublishedTemplateImageFields(
   env: Env,
 ): Promise<Array<AirtableRecord<AirtableAssetFields>>> {
@@ -190,7 +205,11 @@ export async function fetchAssetRecordsByIds(
 }
 
 export async function loadLookupMaps(env: Env): Promise<LookupMaps> {
-  const [styles, tags, creators] = await Promise.all([
+  const [childCategories, styles, tags, creators] = await Promise.all([
+    fetchAirtableRecords<AirtableCategoryFields>(env, {
+      tableId: env.AIRTABLE_CHILD_CATEGORIES_TABLE_ID ?? DEFAULT_CHILD_CATEGORIES_TABLE_ID,
+      fields: ['Category', 'Display name', 'Parent Category', 'Parent Category Name', '🪣Category Groups', 'Tier', 'type'],
+    }),
     fetchAirtableRecords(env, {
       tableId: env.AIRTABLE_STYLES_TABLE_ID ?? DEFAULT_STYLES_TABLE_ID,
       fields: ['Name', '🥞CMS Slug'],
@@ -204,6 +223,43 @@ export async function loadLookupMaps(env: Env): Promise<LookupMaps> {
       fields: ['Name', '🥞CMS Slug', '🖼️Avatar (Primary)', '🖼️Avatar Alt Text'],
     }),
   ]);
+
+  const childCategoryRecordsById = new Map(childCategories.map((record) => [record.id, record]));
+  const childCategoryMap = new Map<string, ChildCategoryLookupValue>();
+
+  function categoryDisplayName(record: AirtableRecord<AirtableCategoryFields> | undefined): string {
+    if (!record) return '';
+    const displayName = typeof record.fields['Display name'] === 'string' ? record.fields['Display name'].trim() : '';
+    const category = typeof record.fields.Category === 'string' ? record.fields.Category.trim() : '';
+    return displayName || category;
+  }
+
+  for (const record of childCategories) {
+    const tier = typeof record.fields.Tier === 'string' ? record.fields.Tier.toLowerCase() : '';
+    const type = typeof record.fields.type === 'string' ? record.fields.type.toLowerCase() : '';
+    if (tier !== 'child' && type !== 'category') continue;
+
+    const name = categoryDisplayName(record);
+    if (!name) continue;
+
+    const parentIds = ensureStringArray(record.fields['Parent Category']);
+    const parentRecord = parentIds[0] ? childCategoryRecordsById.get(parentIds[0]) : undefined;
+    const parentName =
+      categoryDisplayName(parentRecord) ||
+      (typeof record.fields['Parent Category Name'] === 'string' ? record.fields['Parent Category Name'].trim() : '');
+    const fallbackGroupSlugs = ensureStringArray(record.fields['🪣Category Groups']).map((entry) =>
+      canonicalizeCategoryGroupSlug(entry),
+    );
+    const categoryGroupSlug = parentName ? canonicalizeCategoryGroupSlug(parentName) : fallbackGroupSlugs[0] ?? null;
+
+    childCategoryMap.set(record.id, {
+      id: record.id,
+      name,
+      slug: normalizeChildCategorySlug(name),
+      categoryGroupName: parentName || null,
+      categoryGroupSlug,
+    });
+  }
 
   const styleMap = new Map<string, LookupValue>();
   for (const record of styles) {
@@ -247,6 +303,7 @@ export async function loadLookupMaps(env: Env): Promise<LookupMaps> {
   }
 
   return {
+    childCategories: childCategoryMap,
     styles: styleMap,
     tags: tagMap,
     creators: creatorMap,

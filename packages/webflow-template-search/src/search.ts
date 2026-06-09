@@ -54,6 +54,17 @@ interface SqlParts {
 }
 
 const FREE_TEMPLATE_CLAUSE = '(d.price = 0 OR (d.price IS NULL AND d.is_free = 1))';
+const HAS_CATEGORY_MEMBERSHIPS_CLAUSE =
+  'EXISTS (SELECT 1 FROM template_category_memberships tcm_existing WHERE tcm_existing.template_document_id = d.id)';
+const HAS_NO_CATEGORY_MEMBERSHIPS_CLAUSE = `NOT ${HAS_CATEGORY_MEMBERSHIPS_CLAUSE}`;
+const PUBLIC_CHILD_SLUGS_CTE = `
+  public_child_slugs AS (
+    SELECT canonical_slug, MIN(alias_slug) AS alias_slug
+    FROM slug_aliases
+    WHERE slug_type = 'child_category'
+    GROUP BY canonical_slug
+  )
+`;
 const GRID_ITEM_SELECT_COLUMNS = [
   'd.id',
   'd.template_slug',
@@ -145,16 +156,71 @@ function buildSqlParts(params: SearchParams, options: FilterOptions = {}): SqlPa
   if (params.scope === 'landing_pages') clauses.push('d.is_landing_page = 1');
   if (params.freeOnly) clauses.push(FREE_TEMPLATE_CLAUSE);
 
-  if (params.categoryGroupSlug && !options.excludeCategoryGroup) {
-    clauses.push('EXISTS (SELECT 1 FROM json_each(d.category_group_slugs_json) WHERE json_each.value = ?)');
-    binds.push(params.categoryGroupSlug);
-  }
+  const filterCategoryGroup = params.categoryGroupSlug && !options.excludeCategoryGroup ? params.categoryGroupSlug : null;
+  const filterChildCategory = params.childCategorySlug && !options.excludeChildCategory ? params.childCategorySlug : null;
 
-  if (params.childCategorySlug && !options.excludeChildCategory) {
+  if (filterCategoryGroup && filterChildCategory) {
+    clauses.push(`
+      (
+        EXISTS (
+          SELECT 1
+          FROM template_category_memberships tcm
+          WHERE tcm.template_document_id = d.id
+            AND tcm.category_group_slug = ?
+            AND tcm.child_category_slug = ?
+        )
+        OR (
+          ${HAS_NO_CATEGORY_MEMBERSHIPS_CLAUSE}
+          AND EXISTS (SELECT 1 FROM json_each(d.category_group_slugs_json) WHERE json_each.value = ?)
+          AND EXISTS (
+            SELECT 1
+            FROM template_child_categories tcc
+            WHERE tcc.template_document_id = d.id
+              AND tcc.child_category_slug = ?
+          )
+        )
+      )
+    `);
+    binds.push(filterCategoryGroup, filterChildCategory, filterCategoryGroup, filterChildCategory);
+  } else if (filterCategoryGroup) {
+    clauses.push(`
+      (
+        EXISTS (
+          SELECT 1
+          FROM template_category_memberships tcm
+          WHERE tcm.template_document_id = d.id
+            AND tcm.category_group_slug = ?
+        )
+        OR (
+          ${HAS_NO_CATEGORY_MEMBERSHIPS_CLAUSE}
+          AND EXISTS (SELECT 1 FROM json_each(d.category_group_slugs_json) WHERE json_each.value = ?)
+        )
+      )
+    `);
+    binds.push(filterCategoryGroup, filterCategoryGroup);
+  } else if (filterChildCategory) {
     clauses.push(
-      'EXISTS (SELECT 1 FROM template_child_categories tcc WHERE tcc.template_document_id = d.id AND tcc.child_category_slug = ?)',
+      `
+      (
+        EXISTS (
+          SELECT 1
+          FROM template_category_memberships tcm
+          WHERE tcm.template_document_id = d.id
+            AND tcm.child_category_slug = ?
+        )
+        OR (
+          ${HAS_NO_CATEGORY_MEMBERSHIPS_CLAUSE}
+          AND EXISTS (
+            SELECT 1
+            FROM template_child_categories tcc
+            WHERE tcc.template_document_id = d.id
+              AND tcc.child_category_slug = ?
+          )
+        )
+      )
+    `,
     );
-    binds.push(params.childCategorySlug);
+    binds.push(filterChildCategory, filterChildCategory);
   }
 
   if (params.creatorRecordId) {
@@ -221,6 +287,20 @@ async function getTotalCount(db: D1Database, sqlParts: SqlParts): Promise<number
 }
 
 async function resolveCategoryGroupSlugForChild(env: Env, childCategorySlug: string): Promise<string | null> {
+  const membershipRow = await env.DB
+    .prepare(`
+      SELECT category_group_slug AS slug, COUNT(*) AS total
+      FROM template_category_memberships
+      WHERE child_category_slug = ?
+      GROUP BY category_group_slug
+      ORDER BY total DESC, category_group_slug ASC
+      LIMIT 1
+    `)
+    .bind(childCategorySlug)
+    .first<{ slug: string }>();
+
+  if (membershipRow?.slug) return membershipRow.slug;
+
   const row = await env.DB
     .prepare(`
       SELECT json_each.value AS slug, COUNT(*) AS total
@@ -341,18 +421,54 @@ async function loadSubcategoryPills(env: Env, params: SearchParams): Promise<Arr
     excludeTypes: true,
   });
 
-  const result = await env.DB
+  const membershipResult = await env.DB
     .prepare(`
-      WITH filtered AS (
+      WITH ${PUBLIC_CHILD_SLUGS_CTE},
+      filtered AS (
         SELECT d.id
         ${sqlParts.fromClause}
         ${sqlParts.whereClause}
       )
-      SELECT tcc.child_category_name AS name, tcc.child_category_slug AS slug, COUNT(DISTINCT tcc.template_document_id) AS count
+      SELECT
+        MIN(tcm.child_category_name) AS name,
+        COALESCE(public_child_slugs.alias_slug, tcm.child_category_slug) AS slug,
+        COUNT(DISTINCT tcm.template_document_id) AS count
+      FROM filtered
+      JOIN template_category_memberships tcm
+        ON tcm.template_document_id = filtered.id
+       AND tcm.category_group_slug = ?
+      LEFT JOIN public_child_slugs ON public_child_slugs.canonical_slug = tcm.child_category_slug
+      GROUP BY COALESCE(public_child_slugs.alias_slug, tcm.child_category_slug)
+      ORDER BY name ASC
+    `)
+    .bind(...sqlParts.binds, groupSlug)
+    .all<PillRow>();
+
+  if ((membershipResult.results ?? []).length > 0) {
+    return (membershipResult.results ?? []).map((row) => ({
+      name: row.name,
+      slug: row.slug,
+      count: Number(row.count),
+    }));
+  }
+
+  const result = await env.DB
+    .prepare(`
+      WITH ${PUBLIC_CHILD_SLUGS_CTE},
+      filtered AS (
+        SELECT d.id
+        ${sqlParts.fromClause}
+        ${sqlParts.whereClause}
+      )
+      SELECT
+        MIN(tcc.child_category_name) AS name,
+        COALESCE(public_child_slugs.alias_slug, tcc.child_category_slug) AS slug,
+        COUNT(DISTINCT tcc.template_document_id) AS count
       FROM filtered
       JOIN template_child_categories tcc ON tcc.template_document_id = filtered.id
-      GROUP BY tcc.child_category_slug, tcc.child_category_name
-      ORDER BY tcc.child_category_name ASC
+      LEFT JOIN public_child_slugs ON public_child_slugs.canonical_slug = tcc.child_category_slug
+      GROUP BY COALESCE(public_child_slugs.alias_slug, tcc.child_category_slug)
+      ORDER BY name ASC
     `)
     .bind(...sqlParts.binds)
     .all<PillRow>();

@@ -148,6 +148,10 @@ export interface TemplateGridProps {
   emptyDescription?: string;
   /** Clear-filters button label when showEmptyState is enabled. */
   emptyActionLabel?: string;
+  /** Show a small recommendation grid when a query/filter returns no results. */
+  showEmptyRecommendations?: boolean;
+  /** Heading for the featured-template no-results recommendation grid. */
+  emptyRecommendationsTitle?: string;
   /** Show category/subcategory metadata below the creator name. */
   showCategoryMeta?: boolean;
   /** Show the template type alongside category metadata. */
@@ -178,6 +182,7 @@ const CLOUD_APP_PREVIEW_ORIGIN = 'https://webflow-template-marketplace.webflow.i
 const DEFAULT_PAGE_SIZE = 24;
 const SEARCH_CACHE_TTL_MS = 5 * 60 * 1000;
 const NEW_TEMPLATE_WINDOW_DAYS = 30;
+const EMPTY_RECOMMENDATION_COUNT = 4;
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 const gridResponseCache = new Map<string, { timestamp: number; data: ApiResponse }>();
@@ -494,6 +499,35 @@ function buildApiUrl(base: string, filters: FilterState, page: number, pageSize:
   filters.tags.forEach((v) => url.searchParams.append('tags', v));
   filters.types.forEach((v) => url.searchParams.append('types', v));
   return url.toString();
+}
+
+function emptyRecommendationFilters(scope: TemplateScope): FilterState {
+  return {
+    q: '',
+    scope,
+    categoryGroupSlug: null,
+    childCategorySlug: null,
+    creatorSlug: null,
+    creatorRecordId: null,
+    styleSlug: null,
+    tagSlug: null,
+    styles: [],
+    tags: [],
+    types: [],
+    freeOnly: false,
+    sort: 'newest',
+  };
+}
+
+async function fetchGridResponse(url: string, signal?: AbortSignal): Promise<ApiResponse> {
+  const cached = gridResponseCache.get(url);
+  if (cached && Date.now() - cached.timestamp < SEARCH_CACHE_TTL_MS) return cached.data;
+
+  const res = await fetch(url, { signal });
+  if (!res.ok) throw new Error(`API ${res.status}`);
+  const data = (await res.json()) as ApiResponse;
+  gridResponseCache.set(url, { timestamp: Date.now(), data });
+  return data;
 }
 
 function updateUrlParams(filters: FilterState, defaultSort: TemplateSort = 'popular'): void {
@@ -857,6 +891,12 @@ const S: Record<string, CSSProperties> = {
     background: '#fff',
     textAlign: 'center',
   },
+  emptyRecovery: {
+    width: '100%',
+    maxWidth: '680px',
+    padding: '28px 0 36px',
+    textAlign: 'left',
+  },
   emptyTitle: {
     margin: 0,
     color: '#080808',
@@ -866,13 +906,19 @@ const S: Record<string, CSSProperties> = {
   },
   emptyDescription: {
     maxWidth: '520px',
-    margin: '12px auto 0',
+    margin: '12px 0 0',
     color: '#5f5f5f',
     fontSize: '15px',
     lineHeight: 1.5,
   },
-  emptyButton: {
+  emptyActions: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: '12px',
     marginTop: '22px',
+  },
+  emptyButton: {
     minHeight: '40px',
     padding: '9px 16px',
     border: '1px solid #d9d9d9',
@@ -883,6 +929,41 @@ const S: Record<string, CSSProperties> = {
     font: 'inherit',
     fontSize: '14px',
     fontWeight: 600,
+  },
+  emptySecondaryButton: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: '40px',
+    padding: '9px 16px',
+    border: '1px solid transparent',
+    borderRadius: '4px',
+    color: '#146ef5',
+    cursor: 'pointer',
+    font: 'inherit',
+    fontSize: '14px',
+    fontWeight: 600,
+    textDecoration: 'none',
+  },
+  emptyRecommendations: {
+    width: '100%',
+    paddingTop: '10px',
+  },
+  emptyRecommendationsHeader: {
+    marginBottom: '18px',
+  },
+  emptyRecommendationsTitle: {
+    margin: 0,
+    color: '#080808',
+    fontSize: '18px',
+    fontWeight: 600,
+    lineHeight: 1.25,
+  },
+  emptyRecommendationsDescription: {
+    margin: '6px 0 0',
+    color: '#6f6f6f',
+    fontSize: '13px',
+    lineHeight: 1.4,
   },
 };
 
@@ -912,6 +993,8 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
   emptyTitle = 'No templates found',
   emptyDescription = 'Try a broader search or clear filters to see more templates.',
   emptyActionLabel = 'Clear filters',
+  showEmptyRecommendations = true,
+  emptyRecommendationsTitle = 'Recently featured templates',
   showCategoryMeta = false,
   showTemplateType = false,
   showPreviewLink = false,
@@ -952,11 +1035,15 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [emptyRecommendations, setEmptyRecommendations] = useState<ApiItem[]>([]);
+  const [emptyRecommendationsTitleState, setEmptyRecommendationsTitleState] = useState(emptyRecommendationsTitle);
+  const [emptyRecommendationsLoading, setEmptyRecommendationsLoading] = useState(false);
 
   const sentinelRef = useRef<HTMLDivElement>(null);
   // Stale-fetch guard: every new filter/sort change increments this
   const fetchEpochRef = useRef(0);
   const activeFetchAbortRef = useRef<AbortController | null>(null);
+  const emptyRecommendationsAbortRef = useRef<AbortController | null>(null);
   const lastHrefRef = useRef(typeof window === 'undefined' ? '' : window.location.href);
 
   // Keep Designer prop edits and production URL changes aligned after mount.
@@ -1039,8 +1126,72 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
     fetchPage(1, filters, false);
   }, [filters, fetchPage]);
 
+  const rendersComponentEmptyState = showEmptyState || showEmptyRecommendations;
+
   useEffect(() => {
-    return () => activeFetchAbortRef.current?.abort();
+    if (!showEmptyRecommendations || loading || error || items.length > 0) {
+      emptyRecommendationsAbortRef.current?.abort();
+      emptyRecommendationsAbortRef.current = null;
+      setEmptyRecommendations([]);
+      setEmptyRecommendationsLoading(false);
+      setEmptyRecommendationsTitleState(emptyRecommendationsTitle);
+      return;
+    }
+
+    const controller = new AbortController();
+    emptyRecommendationsAbortRef.current?.abort();
+    emptyRecommendationsAbortRef.current = controller;
+    setEmptyRecommendations([]);
+    setEmptyRecommendationsLoading(true);
+    setEmptyRecommendationsTitleState(emptyRecommendationsTitle);
+
+    async function loadEmptyRecommendations() {
+      const candidates: Array<{ title: string; filters: FilterState }> = [
+        { title: emptyRecommendationsTitle, filters: emptyRecommendationFilters('featured') },
+        { title: 'New templates', filters: emptyRecommendationFilters('all') },
+      ];
+
+      try {
+        for (const candidate of candidates) {
+          const url = buildApiUrl(apiBase, candidate.filters, 1, EMPTY_RECOMMENDATION_COUNT);
+          const data = await fetchGridResponse(url, controller.signal);
+          if (controller.signal.aborted) return;
+          if (data.items.length > 0) {
+            setEmptyRecommendations(data.items.slice(0, EMPTY_RECOMMENDATION_COUNT));
+            setEmptyRecommendationsTitleState(candidate.title);
+            return;
+          }
+        }
+      } catch {
+        if (!controller.signal.aborted) {
+          setEmptyRecommendations([]);
+        }
+      } finally {
+        if (emptyRecommendationsAbortRef.current === controller) {
+          emptyRecommendationsAbortRef.current = null;
+        }
+        if (!controller.signal.aborted) {
+          setEmptyRecommendationsLoading(false);
+        }
+      }
+    }
+
+    void loadEmptyRecommendations();
+    return () => controller.abort();
+  }, [
+    apiBase,
+    emptyRecommendationsTitle,
+    error,
+    items.length,
+    loading,
+    showEmptyRecommendations,
+  ]);
+
+  useEffect(() => {
+    return () => {
+      activeFetchAbortRef.current?.abort();
+      emptyRecommendationsAbortRef.current?.abort();
+    };
   }, []);
 
   // ── Infinite scroll ───────────────────────────────────────────────────────
@@ -1219,9 +1370,9 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
   useEffect(() => {
     const emptyEl = document.querySelector<HTMLElement>('[fs-cmsfilter-element="empty"]');
     if (!emptyEl) return;
-    const shouldShow = !loading && !error && items.length === 0;
+    const shouldShow = !rendersComponentEmptyState && !loading && !error && items.length === 0;
     emptyEl.style.display = shouldShow ? '' : 'none';
-  }, [loading, error, items]);
+  }, [loading, error, items.length, rendersComponentEmptyState]);
 
   // Re-parse from URL on browser back/forward navigation
   useEffect(() => {
@@ -1373,6 +1524,66 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
     [enableAnalytics, filters, resolvedPageSize],
   );
 
+  const renderTemplateGridItem = (item: ApiItem, i: number, keyPrefix = 'result') => {
+    const primaryImageUrl = primaryThumbnailUrl(item);
+    const primaryCategory = firstNamedTerm(item.category_groups);
+    const primarySubcategory = firstNamedTerm(item.child_categories);
+    const badgeProps = featuredBadge(item, showFeaturedBadge);
+    const position = i + 1;
+    const signals = marketplaceSignals(item, position);
+
+    return (
+      <div
+        key={`${keyPrefix}-${item.id}`}
+        className="tmgrid-item"
+        style={{ animationDelay: `${Math.min(i % resolvedPageSize, 11) * 40}ms` }}
+        data-template-slug={item.template_slug}
+        onClickCapture={(event) => handleTemplateCardClick(event, item, i, signals)}
+      >
+        <TemplateCard
+          templateName={item.name}
+          templateLink={{ href: item.url ?? '#' }}
+          price={formatPrice(item)}
+          priceNumeric={priceNumeric(item)}
+          isFree={isFreeTemplate(item)}
+          creatorName={item.creator_name ?? ''}
+          creatorLink={
+            item.creator_profile_url
+              ? { href: item.creator_profile_url, target: '_blank' }
+              : undefined
+          }
+          categoryName={primaryCategory?.name}
+          categoryLink={toTermLink(primaryCategory)}
+          subcategoryName={primarySubcategory?.name}
+          subcategoryLink={toTermLink(primarySubcategory)}
+          templateType={item.template_type ?? ''}
+          previewLink={previewTemplateLink(item)}
+          creatorIcon={
+            item.creator_avatar_url
+              ? { src: proxyImageUrl(item.creator_avatar_url, apiBase), alt: item.creator_avatar_alt ?? item.creator_name ?? '' }
+              : undefined
+          }
+          primaryImage={primaryImageUrl ? { src: proxyImageUrl(primaryImageUrl, apiBase), alt: item.name } : undefined}
+          secondaryImage={
+            item.thumbnail_image_secondary_url
+              ? { src: proxyImageUrl(item.thumbnail_image_secondary_url, apiBase), alt: item.name }
+              : undefined
+          }
+          priorityIndex={i}
+          deferSecondaryImage
+          approvalDate={item.published_date ?? ''}
+          popularityScore={String(item.popularity_score ?? '')}
+          showCategoryMeta={showCategoryMeta}
+          showTemplateType={showTemplateType}
+          showPreviewLink={showPreviewLink}
+          showMarketplaceSignals={showMarketplaceSignals}
+          marketplaceSignals={signals}
+          {...badgeProps}
+        />
+      </div>
+    );
+  };
+
   // ── Render ─────────────────────────────────────────────────────────────────
 
   if (loading && items.length === 0) {
@@ -1412,19 +1623,45 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
     );
   }
 
-  // When items is empty (but not loading/error), render nothing — the native
-  // [fs-cmsfilter-element="empty"] element is shown by the effect above.
+  // When no component empty state is enabled, let the native
+  // [fs-cmsfilter-element="empty"] element handle zero-result rendering.
   if (items.length === 0) {
-    if (!showEmptyState) return null;
+    if (!rendersComponentEmptyState) return null;
+    const query = filters.q.trim();
+    const resolvedEmptyTitle = query ? `No templates found for "${query}"` : emptyTitle;
+    const resolvedEmptyDescription = query
+      ? 'Try a shorter search term, remove filters, or start from these recent templates.'
+      : emptyDescription;
+
     return (
       <div style={S.root}>
-        <div style={S.emptyBox} role="status">
-          <p style={S.emptyTitle}>{emptyTitle}</p>
-          <p style={S.emptyDescription}>{emptyDescription}</p>
-          <button type="button" style={S.emptyButton} onClick={clearFilters}>
-            {emptyActionLabel}
-          </button>
+        <style dangerouslySetInnerHTML={{ __html: GRID_STYLES }} />
+        <div style={S.emptyRecovery} role="status">
+          <p style={S.emptyTitle}>{resolvedEmptyTitle}</p>
+          <p style={S.emptyDescription}>{resolvedEmptyDescription}</p>
+          <div style={S.emptyActions}>
+            <button type="button" style={S.emptyButton} onClick={clearFilters}>
+              {emptyActionLabel}
+            </button>
+            <a href="/templates/all" style={S.emptySecondaryButton}>
+              Browse all templates
+            </a>
+          </div>
         </div>
+
+        {(emptyRecommendationsLoading || emptyRecommendations.length > 0) && (
+          <div style={S.emptyRecommendations}>
+            <div style={S.emptyRecommendationsHeader}>
+              <p style={S.emptyRecommendationsTitle}>{emptyRecommendationsTitleState}</p>
+              <p style={S.emptyRecommendationsDescription}>Fresh starting points while you refine the search.</p>
+            </div>
+            <div className="tmgrid-grid">
+              {emptyRecommendationsLoading && emptyRecommendations.length === 0
+                ? Array.from({ length: EMPTY_RECOMMENDATION_COUNT }).map((_, i) => <SkeletonCard key={`empty-skeleton-${i}`} index={i} />)
+                : emptyRecommendations.map((item, i) => renderTemplateGridItem(item, i, 'empty-recommendation'))}
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -1447,64 +1684,7 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
           </div>
         )}
         <div className="tmgrid-grid">
-          {items.map((item, i) => {
-            const primaryImageUrl = primaryThumbnailUrl(item);
-            const primaryCategory = firstNamedTerm(item.category_groups);
-            const primarySubcategory = firstNamedTerm(item.child_categories);
-            const badgeProps = featuredBadge(item, showFeaturedBadge);
-            const position = i + 1;
-            const signals = marketplaceSignals(item, position);
-            return (
-              <div
-                key={item.id}
-                className="tmgrid-item"
-                style={{ animationDelay: `${Math.min(i % resolvedPageSize, 11) * 40}ms` }}
-                data-template-slug={item.template_slug}
-                onClickCapture={(event) => handleTemplateCardClick(event, item, i, signals)}
-              >
-                <TemplateCard
-                  templateName={item.name}
-                  templateLink={{ href: item.url ?? '#' }}
-                  price={formatPrice(item)}
-                  priceNumeric={priceNumeric(item)}
-                  isFree={isFreeTemplate(item)}
-                  creatorName={item.creator_name ?? ''}
-                  creatorLink={
-                    item.creator_profile_url
-                      ? { href: item.creator_profile_url, target: '_blank' }
-                      : undefined
-                  }
-                  categoryName={primaryCategory?.name}
-                  categoryLink={toTermLink(primaryCategory)}
-                  subcategoryName={primarySubcategory?.name}
-                  subcategoryLink={toTermLink(primarySubcategory)}
-                  templateType={item.template_type ?? ''}
-                  previewLink={previewTemplateLink(item)}
-                  creatorIcon={
-                    item.creator_avatar_url
-                      ? { src: proxyImageUrl(item.creator_avatar_url, apiBase), alt: item.creator_avatar_alt ?? item.creator_name ?? '' }
-                      : undefined
-                  }
-                  primaryImage={primaryImageUrl ? { src: proxyImageUrl(primaryImageUrl, apiBase), alt: item.name } : undefined}
-                  secondaryImage={
-                    item.thumbnail_image_secondary_url
-                      ? { src: proxyImageUrl(item.thumbnail_image_secondary_url, apiBase), alt: item.name }
-                      : undefined
-                  }
-                  priorityIndex={i}
-                  deferSecondaryImage
-                  approvalDate={item.published_date ?? ''}
-                  popularityScore={String(item.popularity_score ?? '')}
-                  showCategoryMeta={showCategoryMeta}
-                  showTemplateType={showTemplateType}
-                  showPreviewLink={showPreviewLink}
-                  showMarketplaceSignals={showMarketplaceSignals}
-                  marketplaceSignals={signals}
-                  {...badgeProps}
-                />
-              </div>
-            );
-          })}
+          {items.map((item, i) => renderTemplateGridItem(item, i))}
         </div>
       </div>
 
