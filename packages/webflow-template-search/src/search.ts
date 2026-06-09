@@ -57,6 +57,14 @@ const FREE_TEMPLATE_CLAUSE = '(d.price = 0 OR (d.price IS NULL AND d.is_free = 1
 const HAS_CATEGORY_MEMBERSHIPS_CLAUSE =
   'EXISTS (SELECT 1 FROM template_category_memberships tcm_existing WHERE tcm_existing.template_document_id = d.id)';
 const HAS_NO_CATEGORY_MEMBERSHIPS_CLAUSE = `NOT ${HAS_CATEGORY_MEMBERSHIPS_CLAUSE}`;
+const PUBLIC_CHILD_SLUGS_CTE = `
+  public_child_slugs AS (
+    SELECT canonical_slug, MIN(alias_slug) AS alias_slug
+    FROM slug_aliases
+    WHERE slug_type = 'child_category'
+    GROUP BY canonical_slug
+  )
+`;
 const GRID_ITEM_SELECT_COLUMNS = [
   'd.id',
   'd.template_slug',
@@ -415,21 +423,23 @@ async function loadSubcategoryPills(env: Env, params: SearchParams): Promise<Arr
 
   const membershipResult = await env.DB
     .prepare(`
-      WITH filtered AS (
+      WITH ${PUBLIC_CHILD_SLUGS_CTE},
+      filtered AS (
         SELECT d.id
         ${sqlParts.fromClause}
         ${sqlParts.whereClause}
       )
       SELECT
-        tcm.child_category_name AS name,
-        tcm.child_category_slug AS slug,
+        MIN(tcm.child_category_name) AS name,
+        COALESCE(public_child_slugs.alias_slug, tcm.child_category_slug) AS slug,
         COUNT(DISTINCT tcm.template_document_id) AS count
       FROM filtered
       JOIN template_category_memberships tcm
         ON tcm.template_document_id = filtered.id
        AND tcm.category_group_slug = ?
-      GROUP BY tcm.child_category_slug, tcm.child_category_name
-      ORDER BY tcm.child_category_name ASC
+      LEFT JOIN public_child_slugs ON public_child_slugs.canonical_slug = tcm.child_category_slug
+      GROUP BY COALESCE(public_child_slugs.alias_slug, tcm.child_category_slug)
+      ORDER BY name ASC
     `)
     .bind(...sqlParts.binds, groupSlug)
     .all<PillRow>();
@@ -444,16 +454,21 @@ async function loadSubcategoryPills(env: Env, params: SearchParams): Promise<Arr
 
   const result = await env.DB
     .prepare(`
-      WITH filtered AS (
+      WITH ${PUBLIC_CHILD_SLUGS_CTE},
+      filtered AS (
         SELECT d.id
         ${sqlParts.fromClause}
         ${sqlParts.whereClause}
       )
-      SELECT tcc.child_category_name AS name, tcc.child_category_slug AS slug, COUNT(DISTINCT tcc.template_document_id) AS count
+      SELECT
+        MIN(tcc.child_category_name) AS name,
+        COALESCE(public_child_slugs.alias_slug, tcc.child_category_slug) AS slug,
+        COUNT(DISTINCT tcc.template_document_id) AS count
       FROM filtered
       JOIN template_child_categories tcc ON tcc.template_document_id = filtered.id
-      GROUP BY tcc.child_category_slug, tcc.child_category_name
-      ORDER BY tcc.child_category_name ASC
+      LEFT JOIN public_child_slugs ON public_child_slugs.canonical_slug = tcc.child_category_slug
+      GROUP BY COALESCE(public_child_slugs.alias_slug, tcc.child_category_slug)
+      ORDER BY name ASC
     `)
     .bind(...sqlParts.binds)
     .all<PillRow>();

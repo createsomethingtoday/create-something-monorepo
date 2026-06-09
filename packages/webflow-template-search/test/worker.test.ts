@@ -1277,6 +1277,34 @@ describe('webflow-template-search worker', () => {
       };
       expect(architecturePillsPayload.subcategory_pills.map((pill) => pill.slug)).toEqual(['architecture-websites']);
 
+      await env.DB.prepare(
+        'INSERT OR REPLACE INTO slug_aliases (slug_type, alias_slug, canonical_slug) VALUES (?, ?, ?)',
+      )
+        .bind('child_category', 'architecture', 'architecture-websites')
+        .run();
+      await env.DB.prepare(
+        `INSERT OR REPLACE INTO template_category_memberships (
+          template_document_id,
+          category_group_name,
+          category_group_slug,
+          child_category_name,
+          child_category_slug
+        ) VALUES (?, ?, ?, ?, ?)`,
+      )
+        .bind('recCrossListed', 'Architecture & Design', 'architecture-and-design-websites', 'Architecture', 'architecture')
+        .run();
+
+      const aliasedPillsSearch = await callWorker(
+        new Request('https://templates.test/api/templates/search?include=pills&category_group_slug=architecture-and-design-websites'),
+        env,
+      );
+      const aliasedPillsPayload = (await aliasedPillsSearch.json()) as {
+        subcategory_pills: Array<{ slug: string; count: number }>;
+      };
+      expect(aliasedPillsPayload.subcategory_pills.map((pill) => ({ slug: pill.slug, count: pill.count }))).toEqual([
+        { slug: 'architecture', count: 1 },
+      ]);
+
       const incompatibleSearch = await callWorker(
         new Request(
           'https://templates.test/api/templates/search?include=items&category_group_slug=architecture-and-design-websites&child_category_slug=ai-websites',
