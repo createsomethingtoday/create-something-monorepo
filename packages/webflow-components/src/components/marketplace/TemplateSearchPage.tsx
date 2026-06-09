@@ -49,6 +49,10 @@ export interface TemplateSearchPageProps {
   defaultSort?: TemplateSort;
   /** Items per grid page. */
   pageSize?: number;
+  /** Show recommended templates when the current search returns no results. */
+  showEmptyRecommendations?: boolean;
+  /** Heading for the no-results recommendation grid. */
+  emptyRecommendationsTitle?: string;
   /** Add a noindex,follow robots meta tag while the standalone page is an experiment. */
   noindex?: boolean;
   /** Dispatch DOM/wf_analytics search experience events. */
@@ -591,6 +595,8 @@ export const TemplateSearchPage: React.FC<TemplateSearchPageProps> = ({
   tagSlug = '',
   defaultSort = 'popular',
   pageSize = 24,
+  showEmptyRecommendations = true,
+  emptyRecommendationsTitle = 'Recently featured templates',
   noindex = true,
   enableAnalytics = true,
   showCategoryMeta = false,
@@ -798,8 +804,10 @@ export const TemplateSearchPage: React.FC<TemplateSearchPageProps> = ({
             defaultSort={defaultSort}
             pageSize={pageSize}
             emptyTitle="No matching templates"
-            emptyDescription="Try a broader search, remove a filter, or start again from the full template catalog."
+            emptyDescription="Try a broader search, remove a filter, or start from a recent template below."
             emptyActionLabel="Clear filters"
+            showEmptyRecommendations={showEmptyRecommendations}
+            emptyRecommendationsTitle={emptyRecommendationsTitle}
             showCategoryMeta={showCategoryMeta}
             showTemplateType={showTemplateType}
             showPreviewLink={showPreviewLink}

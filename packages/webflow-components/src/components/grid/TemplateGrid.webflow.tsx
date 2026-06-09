@@ -80,6 +80,15 @@ export default declareComponent(TemplateGrid, {
       name: 'Empty Action Label',
       defaultValue: 'Clear filters',
     }),
+    showEmptyRecommendations: props.Boolean({
+      name: 'Show Empty Recommendations',
+      defaultValue: true,
+      tooltip: 'Show four recently featured templates when the current search or filter set has no results.',
+    }),
+    emptyRecommendationsTitle: props.Text({
+      name: 'Empty Recommendations Title',
+      defaultValue: 'Recently featured templates',
+    }),
     showCategoryMeta: props.Boolean({
       name: 'Show Category Metadata',
       defaultValue: false,
