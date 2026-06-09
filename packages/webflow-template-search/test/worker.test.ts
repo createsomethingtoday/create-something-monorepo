@@ -14,12 +14,33 @@ const LOOKUPS = {
   ],
   childCategories: [
     {
+      id: 'parent-technology',
+      fields: {
+        Category: 'Technology',
+        'Display name': 'Technology',
+        Tier: 'Parent',
+        type: 'category_group',
+      },
+    },
+    {
+      id: 'parent-architecture-design',
+      fields: {
+        Category: 'Architecture & Design',
+        'Display name': 'Architecture & Design',
+        Tier: 'Parent',
+        type: 'category_group',
+      },
+    },
+    {
       id: 'child-ai',
       fields: {
         Category: 'AI',
         'Display name': 'AI',
+        'Parent Category': ['parent-technology'],
         'Parent Category Name': 'Technology',
         '🪣Category Groups': 'technology-websites',
+        Tier: 'Child',
+        type: 'category',
         'Related Keywords': 'automation, agent',
       },
     },
@@ -28,9 +49,25 @@ const LOOKUPS = {
       fields: {
         Category: 'Software & SaaS',
         'Display name': 'Software & SaaS',
+        'Parent Category': ['parent-technology'],
         'Parent Category Name': 'Technology',
         '🪣Category Groups': 'technology-websites',
+        Tier: 'Child',
+        type: 'category',
         'Related Keywords': 'saas, software',
+      },
+    },
+    {
+      id: 'child-architecture',
+      fields: {
+        Category: 'Architecture',
+        'Display name': 'Architecture',
+        'Parent Category': ['parent-architecture-design'],
+        'Parent Category Name': 'Architecture & Design',
+        '🪣Category Groups': 'architecture-and-design-websites',
+        Tier: 'Child',
+        type: 'category',
+        'Related Keywords': 'architecture, design',
       },
     },
   ],
@@ -53,6 +90,7 @@ const PUBLISHED_ASSETS = [
       'ℹ️Description (Long).html': '<p>Workflow automation for AI teams and agent builders.</p>',
       '🪣Category Group(s) Display Name': ['Technology'],
       '🪣Category Group(s) CMS Slug': ['technology'],
+      'ℹ️🪣Categories': ['child-ai'],
       'ℹ️🪣Categories (Text)': ['AI'],
       '🥞CMS Slug (from ℹ️🪣Categories)': ['ai-websites'],
       'ℹ️👘Styles': ['style-modern'],
@@ -86,6 +124,7 @@ const PUBLISHED_ASSETS = [
       'ℹ️Description (Long).html': '<p>Dark technology template for AI and fintech companies.</p>',
       '🪣Category Group(s) Display Name': ['Technology'],
       '🪣Category Group(s) CMS Slug': ['technology'],
+      'ℹ️🪣Categories': ['child-ai'],
       'ℹ️🪣Categories (Text)': ['AI'],
       '🥞CMS Slug (from ℹ️🪣Categories)': ['ai-websites'],
       'ℹ️👘Styles': ['style-dark'],
@@ -120,6 +159,7 @@ const PUBLISHED_ASSETS = [
       'ℹ️Description (Long).html': '<p>Landing page for software teams with clean charts.</p>',
       '🪣Category Group(s) Display Name': ['Technology'],
       '🪣Category Group(s) CMS Slug': ['technology'],
+      'ℹ️🪣Categories': ['child-saas'],
       'ℹ️🪣Categories (Text)': ['Software & SaaS'],
       '🥞CMS Slug (from ℹ️🪣Categories)': ['software-and-saas-websites'],
       'ℹ️👘Styles': ['style-modern'],
@@ -1167,6 +1207,97 @@ describe('webflow-template-search worker', () => {
         creator_slug: 'brix-templates',
         creator_profile_url: 'https://webflow.com/templates/designers/brix-templates',
       });
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
+  it('scopes child category filters and pills to the selected parent category group', async () => {
+    const crossListedAsset = {
+      ...PUBLISHED_ASSETS[0],
+      id: 'recCrossListed',
+      fields: {
+        ...PUBLISHED_ASSETS[0].fields,
+        Name: 'Crosslisted',
+        'ℹ️Description (Short)': 'A template listed across unrelated category groups',
+        'ℹ️Description (Long).html': '<p>Used to validate parent and child category alignment.</p>',
+        '🪣Category Group(s) Display Name': ['Technology', 'Architecture & Design'],
+        '🪣Category Group(s) CMS Slug': ['technology', 'architecture-and-design'],
+        'ℹ️🪣Categories': ['child-ai', 'child-architecture'],
+        'ℹ️🪣Categories (Text)': ['AI', 'Architecture'],
+        '🥞CMS Slug (from ℹ️🪣Categories)': ['ai-websites', 'architecture-websites'],
+        '🥞CMS Slug (formula)': 'crosslisted-website-template',
+        '🔗Listing URL': 'https://webflow.com/templates/html/crosslisted-website-template',
+        '🔗Preview Site URL': 'https://crosslisted.example.com',
+        '🔗Website URL': 'https://webflow.com/templates/html/crosslisted-website-template',
+        '🚀📅Published Date': '2026-04-01',
+        '📅LMT': '2026-04-01T05:14:00.000Z',
+      },
+    };
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: [crossListedAsset],
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+      creators: LOOKUPS.creators,
+    });
+    const { env, close } = createTestEnv();
+
+    try {
+      const rebuild = await callWorker(
+        new Request('https://templates.test/api/templates/admin/rebuild', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(rebuild.status).toBe(200);
+
+      const membershipRows = await env.DB
+        .prepare(
+          `SELECT category_group_slug, child_category_slug
+           FROM template_category_memberships
+           WHERE template_document_id = ?
+           ORDER BY category_group_slug, child_category_slug`,
+        )
+        .bind('recCrossListed')
+        .all<{ category_group_slug: string; child_category_slug: string }>();
+      expect(membershipRows.results).toEqual([
+        { category_group_slug: 'architecture-and-design-websites', child_category_slug: 'architecture-websites' },
+        { category_group_slug: 'technology-websites', child_category_slug: 'ai-websites' },
+      ]);
+
+      const architecturePillsSearch = await callWorker(
+        new Request('https://templates.test/api/templates/search?include=pills&category_group_slug=architecture-and-design-websites'),
+        env,
+      );
+      const architecturePillsPayload = (await architecturePillsSearch.json()) as {
+        subcategory_pills: Array<{ slug: string }>;
+      };
+      expect(architecturePillsPayload.subcategory_pills.map((pill) => pill.slug)).toEqual(['architecture-websites']);
+
+      const incompatibleSearch = await callWorker(
+        new Request(
+          'https://templates.test/api/templates/search?include=items&category_group_slug=architecture-and-design-websites&child_category_slug=ai-websites',
+        ),
+        env,
+      );
+      const incompatiblePayload = (await incompatibleSearch.json()) as {
+        items: Array<{ name: string }>;
+        pagination: { total_items: number };
+      };
+      expect(incompatiblePayload.pagination.total_items).toBe(0);
+      expect(incompatiblePayload.items).toEqual([]);
+
+      const compatibleSearch = await callWorker(
+        new Request(
+          'https://templates.test/api/templates/search?include=items&category_group_slug=technology-websites&child_category_slug=ai-websites',
+        ),
+        env,
+      );
+      const compatiblePayload = (await compatibleSearch.json()) as { items: Array<{ name: string }> };
+      expect(compatiblePayload.items.map((item) => item.name)).toEqual(['Crosslisted']);
     } finally {
       fetchMock.mockRestore();
       close();
