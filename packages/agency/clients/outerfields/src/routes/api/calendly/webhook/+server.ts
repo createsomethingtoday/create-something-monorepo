@@ -1,6 +1,8 @@
 import { json } from '@sveltejs/kit';
 import type { RequestEvent } from '@sveltejs/kit';
 import { createDiscoveryCall, updateDiscoveryCallStatus } from '$lib/server/db/discovery-calls';
+import { verifyCalendlySignature } from '$lib/server/calendly';
+import { resolveRuntimeEnv } from '$lib/server/env';
 
 /**
  * POST /api/calendly/webhook
@@ -10,8 +12,14 @@ import { createDiscoveryCall, updateDiscoveryCallStatus } from '$lib/server/db/d
  * - invitee.created: New discovery call scheduled
  * - invitee.canceled: Discovery call cancelled
  * - invitee.rescheduled: Discovery call rescheduled (not directly supported, but handled as cancel + create)
+ *
+ * Every request is authenticated by verifying Calendly's webhook signature
+ * before any payload is trusted. Verification is mandatory (fail closed).
  */
 export async function POST({ request, platform }: RequestEvent) {
+	const runtimeEnv = resolveRuntimeEnv(
+		(platform as { env?: Record<string, string | undefined> } | undefined)?.env
+	);
 	const db = platform?.env.DB;
 
 	if (!db) {
@@ -19,8 +27,24 @@ export async function POST({ request, platform }: RequestEvent) {
 		return json({ success: false, error: 'Database unavailable' }, { status: 500 });
 	}
 
+	// Signature verification is mandatory — reject if the secret is unconfigured.
+	const signingKey = runtimeEnv.CALENDLY_WEBHOOK_SECRET;
+	if (!signingKey) {
+		console.error('CALENDLY_WEBHOOK_SECRET not configured; rejecting webhook');
+		return json({ success: false, error: 'Webhook secret is not configured' }, { status: 500 });
+	}
+
+	// Read the raw body and verify the signature over the exact bytes Calendly signed.
+	const rawBody = await request.text();
+	const signatureHeader = request.headers.get('calendly-webhook-signature');
+	const isValid = await verifyCalendlySignature(signatureHeader, rawBody, signingKey);
+	if (!isValid) {
+		console.error('Invalid Calendly webhook signature');
+		return json({ success: false, error: 'Invalid signature' }, { status: 401 });
+	}
+
 	try {
-		const payload = await request.json();
+		const payload = JSON.parse(rawBody);
 		const event = payload.event;
 		const eventType = payload.event_type;
 

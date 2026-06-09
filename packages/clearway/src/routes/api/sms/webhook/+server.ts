@@ -44,26 +44,36 @@ export const POST: RequestHandler = async ({ request, platform, url }) => {
 		return json({ success: false, error: 'Server configuration error' }, { status: 500 });
 	}
 
-	// Parse JSON body (Telnyx sends JSON, not form data)
-	const body = (await request.json()) as TelnyxWebhookPayload;
+	// Signature verification is mandatory — reject if the public key is unconfigured.
+	if (!telnyxPublicKey) {
+		console.error('TELNYX_PUBLIC_KEY not configured; rejecting webhook');
+		return json({ success: false, error: 'Server configuration error' }, { status: 500 });
+	}
+
+	// Read the raw body and verify the signature over the exact bytes Telnyx signed
+	// (re-serializing parsed JSON can diverge from the signed payload).
+	const rawBody = await request.text();
+	const signature = request.headers.get('telnyx-signature-ed25519') || '';
+	const timestamp = request.headers.get('telnyx-timestamp') || '';
+
+	const valid = await verifyTelnyxSignature(telnyxPublicKey, signature, timestamp, rawBody);
+	if (!valid) {
+		console.error('Invalid Telnyx signature');
+		return json({ success: false, error: 'Invalid signature' }, { status: 403 });
+	}
+
+	let body: TelnyxWebhookPayload;
+	try {
+		body = JSON.parse(rawBody) as TelnyxWebhookPayload;
+	} catch {
+		return json({ success: false, error: 'Invalid JSON payload' }, { status: 400 });
+	}
+
 	const sms = parseIncomingSMS(body);
 
 	if (!sms) {
 		// Not a message.received event, acknowledge and exit
 		return json({ success: true });
-	}
-
-	// Verify signature in production
-	if (telnyxPublicKey) {
-		const signature = request.headers.get('telnyx-signature-ed25519') || '';
-		const timestamp = request.headers.get('telnyx-timestamp') || '';
-		const rawBody = JSON.stringify(body);
-
-		const valid = await verifyTelnyxSignature(telnyxPublicKey, signature, timestamp, rawBody);
-		if (!valid) {
-			console.error('Invalid Telnyx signature');
-			return json({ success: false, error: 'Invalid signature' }, { status: 403 });
-		}
 	}
 
 	// Look up facility by receiving phone number
