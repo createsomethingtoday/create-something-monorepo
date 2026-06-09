@@ -49,7 +49,7 @@ const PUBLIC_SEARCH_CACHE_HEADERS = {
   'Cache-Control': 'public, max-age=60, s-maxage=300, stale-while-revalidate=86400',
   'CDN-Cache-Control': 'public, max-age=300, stale-while-revalidate=86400',
 };
-const PUBLIC_SEARCH_CACHE_VERSION = '2026-06-09-category-memberships';
+const PUBLIC_SEARCH_CACHE_VERSION = '2026-06-09-category-membership-aliases';
 const PUBLIC_SEARCH_CACHE_PARAM_ORDER = [
   'view',
   'include',
