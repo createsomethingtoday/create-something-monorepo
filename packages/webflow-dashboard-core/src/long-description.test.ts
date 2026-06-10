@@ -21,6 +21,15 @@ test('sanitizeLongDescriptionHtml demotes legacy h1/h2 headings and preserves li
   );
 });
 
+test('sanitizeLongDescriptionHtml normalizes Quill 2 bullet list markup', () => {
+  assert.equal(
+    sanitizeLongDescriptionHtml(
+      '<ol><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span>Fast validation cache</li><li data-list="bullet"><span class="ql-ui" contenteditable="false"></span>Bundled editor assets</li></ol>'
+    ),
+    '<ul><li>Fast validation cache</li><li>Bundled editor assets</li></ul>'
+  );
+});
+
 test('sanitizeLongDescriptionHtml strips style/class wrappers without losing text', () => {
   assert.equal(
     sanitizeLongDescriptionHtml(

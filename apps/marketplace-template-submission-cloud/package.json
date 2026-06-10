@@ -15,6 +15,7 @@
     "@create-something/webflow-dashboard-core": "file:../../packages/webflow-dashboard-core",
     "airtable": "^0.12.2",
     "next": "^15.5.13",
+    "quill": "^2.0.3",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
   },

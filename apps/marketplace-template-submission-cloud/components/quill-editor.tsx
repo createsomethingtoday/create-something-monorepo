@@ -1,54 +1,9 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import type Quill from 'quill';
+import 'quill/dist/quill.snow.css';
 import { sanitizeLongDescriptionHtml } from '@create-something/webflow-dashboard-core/long-description';
-
-const QUILL_CSS = 'https://cdn.quilljs.com/1.3.6/quill.snow.css';
-const QUILL_JS = 'https://cdn.quilljs.com/1.3.6/quill.min.js';
-
-type QuillInstance = {
-  root: HTMLElement;
-  on: (event: string, handler: () => void) => void;
-  off: (event: string, handler: () => void) => void;
-  getSelection: (focus?: boolean) => { index: number; length: number } | null;
-  insertEmbed: (index: number, type: string, value: string, source?: string) => void;
-  setSelection: (index: number, length?: number, source?: string) => void;
-  getLength: () => number;
-};
-
-declare global {
-  interface Window {
-    Quill?: new (el: HTMLElement, opts: unknown) => QuillInstance;
-  }
-}
-
-function ensureQuillAssetsLoaded(): Promise<typeof window.Quill> {
-  if (typeof window === 'undefined') return Promise.reject(new Error('no window'));
-  if (window.Quill) return Promise.resolve(window.Quill);
-
-  if (!document.querySelector(`link[href="${QUILL_CSS}"]`)) {
-    const link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.href = QUILL_CSS;
-    document.head.appendChild(link);
-  }
-
-  return new Promise((resolve, reject) => {
-    const existing = document.querySelector<HTMLScriptElement>(`script[src="${QUILL_JS}"]`);
-    if (existing) {
-      existing.addEventListener('load', () => resolve(window.Quill));
-      existing.addEventListener('error', () => reject(new Error('Quill failed to load')));
-      if (window.Quill) resolve(window.Quill);
-      return;
-    }
-    const script = document.createElement('script');
-    script.src = QUILL_JS;
-    script.async = true;
-    script.onload = () => resolve(window.Quill);
-    script.onerror = () => reject(new Error('Quill failed to load'));
-    document.head.appendChild(script);
-  });
-}
 
 interface QuillEditorProps {
   value: string;
@@ -57,10 +12,13 @@ interface QuillEditorProps {
   id?: string;
 }
 
+const EMIT_DEBOUNCE_MS = 200;
+
 export function QuillEditor({ value, onChange, placeholder, id }: QuillEditorProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const quillRef = useRef<QuillInstance | null>(null);
+  const quillRef = useRef<Quill | null>(null);
   const onChangeRef = useRef(onChange);
+  const emitTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
     onChangeRef.current = onChange;
@@ -79,24 +37,47 @@ export function QuillEditor({ value, onChange, placeholder, id }: QuillEditorPro
   useEffect(() => {
     let disposed = false;
     let handler: (() => void) | null = null;
+    let flushEmit: (() => void) | null = null;
 
-    ensureQuillAssetsLoaded()
-      .then((Quill) => {
-        if (disposed || !Quill || !containerRef.current) return;
+    // Quill is bundled but loaded on demand so it stays out of the page's
+    // initial JS payload.
+    import('quill')
+      .then(({ default: QuillCtor }) => {
+        if (disposed || !containerRef.current) return;
         if (quillRef.current) return;
 
-        let quill: QuillInstance | null = null;
+        let quill: Quill | null = null;
         const emitChange = () => {
+          if (emitTimeoutRef.current !== null) {
+            window.clearTimeout(emitTimeoutRef.current);
+            emitTimeoutRef.current = null;
+          }
           if (!quill) return;
           normalizeEditorImages(quill.root);
           const sanitizedHtml = sanitizeLongDescriptionHtml(quill.root.innerHTML);
           onChangeRef.current(sanitizedHtml);
         };
 
-        quill = new Quill(containerRef.current, {
+        // Serializing and sanitizing the whole document on every keystroke is
+        // expensive for long descriptions, so changes are emitted on a short
+        // trailing debounce and flushed when the editor loses focus.
+        const scheduleEmit = () => {
+          if (emitTimeoutRef.current !== null) {
+            window.clearTimeout(emitTimeoutRef.current);
+          }
+          emitTimeoutRef.current = window.setTimeout(emitChange, EMIT_DEBOUNCE_MS);
+        };
+
+        flushEmit = () => {
+          if (emitTimeoutRef.current === null) return;
+          emitChange();
+        };
+
+        quill = new QuillCtor(containerRef.current, {
           theme: 'snow',
           placeholder,
-          formats: ['header', 'bold', 'italic', 'list', 'bullet', 'link', 'image'],
+          // Quill 2 folds ordered/bullet into the single 'list' format.
+          formats: ['header', 'bold', 'italic', 'list', 'link', 'image'],
           modules: {
             toolbar: {
               container: [
@@ -142,8 +123,9 @@ export function QuillEditor({ value, onChange, placeholder, id }: QuillEditorPro
           quill.root.innerHTML = sanitizedValue;
         }
 
-        handler = emitChange;
+        handler = scheduleEmit;
         quill.on('text-change', handler);
+        quill.root.addEventListener('blur', flushEmit);
         quillRef.current = quill;
       })
       .catch(() => {
@@ -152,9 +134,13 @@ export function QuillEditor({ value, onChange, placeholder, id }: QuillEditorPro
 
     return () => {
       disposed = true;
+      flushEmit?.();
       if (quillRef.current && handler) {
         try {
           quillRef.current.off('text-change', handler);
+          if (flushEmit) {
+            quillRef.current.root.removeEventListener('blur', flushEmit);
+          }
         } catch {
           // ignore
         }
