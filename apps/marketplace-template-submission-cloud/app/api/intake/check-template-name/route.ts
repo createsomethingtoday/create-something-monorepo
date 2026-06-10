@@ -19,6 +19,14 @@ export async function POST(request: Request) {
   }
 
   const syntax = validateTemplateNameSyntax(name);
+  if (!syntax.valid) {
+    return jsonNoStore({
+      valid: false,
+      available: false,
+      errors: syntax.errors,
+      matchedForbiddenTokens: syntax.matchedForbiddenTokens
+    });
+  }
 
   try {
     const availability = await checkTemplateNameAvailability(name);
