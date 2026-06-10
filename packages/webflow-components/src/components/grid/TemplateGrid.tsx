@@ -1478,9 +1478,30 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
     type CategoryFilterAnalyticsGlobal = {
       getContext: () => { current_category?: string | null; current_subcategory?: string | null };
     };
-    const onCategoryFilterUpdated = () => {
+    const onCategoryFilterUpdated = (event: Event) => {
       const href = window.location.href;
       lastHrefRef.current = href;
+      const detail = (event as CustomEvent).detail as
+        | { parent?: unknown; category?: unknown; subcategory?: unknown }
+        | undefined;
+      const hasExplicitCategoryDetail =
+        Boolean(detail) &&
+        (Object.prototype.hasOwnProperty.call(detail, 'parent') ||
+          Object.prototype.hasOwnProperty.call(detail, 'category') ||
+          Object.prototype.hasOwnProperty.call(detail, 'subcategory'));
+      if (hasExplicitCategoryDetail && detail) {
+        const rawCategory = Object.prototype.hasOwnProperty.call(detail, 'category') ? detail.category : detail.parent;
+        const rawSubcategory = detail.subcategory;
+        setFilters((prev) => {
+          const next = {
+            ...prev,
+            categoryGroupSlug: typeof rawCategory === 'string' && rawCategory.trim() ? rawCategory.trim() : null,
+            childCategorySlug: typeof rawSubcategory === 'string' && rawSubcategory.trim() ? rawSubcategory.trim() : null,
+          };
+          return areFiltersEqual(prev, next) ? prev : next;
+        });
+        return;
+      }
       const analytics = (window as unknown as Record<string, unknown>).CategoryFilterAnalytics as
         | CategoryFilterAnalyticsGlobal
         | undefined;
