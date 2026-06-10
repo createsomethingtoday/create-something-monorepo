@@ -469,27 +469,6 @@ function mergeExternalFilterState(base: FilterState, detail: unknown): FilterSta
   };
 }
 
-// history.replaceState()/pushState() do not fire popstate. Patch them once per
-// page to dispatch a notification so URL-driven filter sync is event-driven
-// instead of relying on a fast poll. Dispatch is deferred a tick because our
-// own updateUrlParams() runs inside a React state updater.
-const URL_CHANGE_EVENT = 'tmgrid:urlchange';
-
-function ensureHistoryPatched(): void {
-  if (typeof window === 'undefined') return;
-  const w = window as unknown as Record<string, unknown>;
-  if (w.__tmgridHistoryPatched) return;
-  w.__tmgridHistoryPatched = true;
-  (['pushState', 'replaceState'] as const).forEach((method) => {
-    const original = window.history[method].bind(window.history);
-    window.history[method] = ((...args: Parameters<History['pushState']>) => {
-      const result = original(...args);
-      window.setTimeout(() => window.dispatchEvent(new Event(URL_CHANGE_EVENT)), 0);
-      return result;
-    }) as History['pushState'];
-  });
-}
-
 function readSharedFilterState(href: string): unknown {
   if (typeof window === 'undefined') return undefined;
   const detail = (window as unknown as Record<string, unknown>).__templateMarketplaceFilters;
@@ -906,10 +885,6 @@ const GRID_STYLES = `
 }
 `;
 
-// Injected once per page (mirrors TemplateCard's pattern) so render-branch
-// switches don't unmount/remount a <style> tag and multiple grids share one.
-let _gridStylesInjected = false;
-
 const S: Record<string, CSSProperties> = {
   root: {
     width: '100%',
@@ -1151,15 +1126,6 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
   enableAnalytics = true,
 }) => {
   useMarketplaceComponentErrorTracking('TemplateGrid', enableAnalytics);
-
-  // Inject grid styles synchronously before first paint, once per page.
-  useLayoutEffect(() => {
-    if (_gridStylesInjected) return;
-    _gridStylesInjected = true;
-    const styleEl = document.createElement('style');
-    styleEl.textContent = GRID_STYLES;
-    document.head.appendChild(styleEl);
-  }, []);
 
   // Webflow passes defaultValue strings (including '') as actual values, not undefined.
   // Fall back to the relative path whenever the prop is blank.
@@ -1596,14 +1562,8 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
   // re-read the URL, then merge the event payload so explicit default-sort
   // selections remain distinguishable from "no sort param" URLs.
   useEffect(() => {
-    // Dispatchers emit the same CustomEvent detail on both window and
-    // document; dedupe on detail identity so the handler (URL re-parse +
-    // merge) runs once per change instead of twice.
-    let lastHandledDetail: unknown = null;
     const onFilterBarChange = (event: Event) => {
       const detail = (event as CustomEvent).detail;
-      if (detail && detail === lastHandledDetail) return;
-      lastHandledDetail = detail ?? null;
       const href = window.location.href;
       lastHrefRef.current = href;
       setFilters((prev) => {
@@ -1630,12 +1590,10 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
     };
   }, [initialSort, categorySlugProp, creatorSlugProp, creatorRecordIdProp, scopeOverride, styleSlugProp, tagSlugProp]);
 
-  // replaceState() does not fire popstate. The patched history methods notify
-  // us directly; a slow interval remains as a fallback in case another script
-  // re-assigns the history methods after us.
+  // replaceState() does not fire popstate. Poll the URL as a low-cost fallback
+  // so the grid still refreshes if Webflow isolates or drops the custom event.
   useEffect(() => {
-    ensureHistoryPatched();
-    const syncFromUrl = () => {
+    const id = window.setInterval(() => {
       // Skip work entirely while the tab is hidden; the first visible tick
       // catches up on any URL change that happened in the background.
       if (document.visibilityState === 'hidden') return;
@@ -1657,13 +1615,8 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
         );
         return areFiltersEqual(prev, next) ? prev : next;
       });
-    };
-    window.addEventListener(URL_CHANGE_EVENT, syncFromUrl);
-    const id = window.setInterval(syncFromUrl, 1000);
-    return () => {
-      window.removeEventListener(URL_CHANGE_EVENT, syncFromUrl);
-      window.clearInterval(id);
-    };
+    }, 250);
+    return () => window.clearInterval(id);
   }, [initialSort, categorySlugProp, creatorSlugProp, creatorRecordIdProp, scopeOverride, styleSlugProp, tagSlugProp]);
 
   const clearFilters = useCallback(() => {
@@ -1759,6 +1712,7 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
   if (loading && items.length === 0) {
     return (
       <div style={S.root}>
+        <style dangerouslySetInnerHTML={{ __html: GRID_STYLES }} />
         <div className="tmgrid-grid">
           {Array.from({ length: Math.min(resolvedPageSize, 12) }).map((_, i) => (
             <SkeletonCard key={i} index={i} />
@@ -1804,6 +1758,7 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
 
     return (
       <div style={S.root}>
+        <style dangerouslySetInnerHTML={{ __html: GRID_STYLES }} />
         <div style={S.emptyRecovery} role="status">
           <p style={S.emptyTitle}>{resolvedEmptyTitle}</p>
           <p style={S.emptyDescription}>{resolvedEmptyDescription}</p>
@@ -1838,6 +1793,7 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
 
   return (
     <div style={S.root} aria-busy={isRefreshing ? true : undefined}>
+      <style dangerouslySetInnerHTML={{ __html: GRID_STYLES }} />
       {totalItems !== null && (
         <div style={S.countLabel}>
           {totalItems.toLocaleString()} template{totalItems !== 1 ? 's' : ''}
