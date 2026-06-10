@@ -861,6 +861,7 @@ function applyRouteContextToUrl(url: URL, context: RouteContext): void {
 function buildScopedCategoryHref(slug: string | null): string {
   if (typeof window === 'undefined') return slug ? `?category=${slug}` : '';
   const url = new URL(window.location.href);
+  if (!slug) clearCategoryPathContext(url);
   url.searchParams.delete('subcategory');
   url.searchParams.delete('child_category_slug');
   url.searchParams.delete('page');
@@ -871,6 +872,13 @@ function buildScopedCategoryHref(slug: string | null): string {
     url.searchParams.delete('category_group_slug');
   }
   return url.toString();
+}
+
+function clearCategoryPathContext(url: URL): void {
+  const pathname = url.pathname.replace(/\/+$/, '');
+  if (/^\/templates\/(?:category|subcategory)\/[^/?#]+/.test(pathname)) {
+    url.pathname = '/templates/all';
+  }
 }
 
 function buildScopedSubcategoryHref(slug: string | null, context: RouteContext): string {
@@ -904,7 +912,10 @@ function writeUrlFilters(state: LocalFilters, defaultSort: TemplateSort = 'popul
   notifyTemplateFiltersChanged(state);
 }
 
-function buildFilterEventDetail(state: LocalFilters): FilterEventDetail {
+function buildFilterEventDetail(
+  state: LocalFilters,
+  routePatch: Partial<Pick<FilterEventDetail, 'categoryGroupSlug' | 'childCategorySlug'>> = {},
+): FilterEventDetail {
   const url = typeof window === 'undefined' ? null : new URL(window.location.href);
   const routeContext = readRouteContext(
     undefined,
@@ -918,8 +929,14 @@ function buildFilterEventDetail(state: LocalFilters): FilterEventDetail {
   );
   return {
     ...state,
-    categoryGroupSlug: routeContext.categoryGroupSlug ?? url?.searchParams.get('category_group_slug') ?? null,
-    childCategorySlug: routeContext.childCategorySlug ?? url?.searchParams.get('child_category_slug') ?? null,
+    categoryGroupSlug:
+      routePatch.categoryGroupSlug !== undefined
+        ? routePatch.categoryGroupSlug
+        : routeContext.categoryGroupSlug ?? url?.searchParams.get('category_group_slug') ?? null,
+    childCategorySlug:
+      routePatch.childCategorySlug !== undefined
+        ? routePatch.childCategorySlug
+        : routeContext.childCategorySlug ?? url?.searchParams.get('child_category_slug') ?? null,
     creatorSlug: routeContext.creatorSlug ?? url?.searchParams.get('creator_slug') ?? null,
     creatorRecordId: routeContext.creatorRecordId ?? url?.searchParams.get('creator_record_id') ?? null,
     styles: [...state.styles],
@@ -931,9 +948,12 @@ function buildFilterEventDetail(state: LocalFilters): FilterEventDetail {
   };
 }
 
-function notifyTemplateFiltersChanged(state: LocalFilters): void {
+function notifyTemplateFiltersChanged(
+  state: LocalFilters,
+  routePatch?: Partial<Pick<FilterEventDetail, 'categoryGroupSlug' | 'childCategorySlug'>>,
+): void {
   if (typeof window === 'undefined') return;
-  const detail = buildFilterEventDetail(state);
+  const detail = buildFilterEventDetail(state, routePatch);
   // Persist the latest component-authored filter state for TemplateGrid's
   // URL-change fallback. This is especially important for explicit "popular",
   // which intentionally has no ?sort=popular URL param.
@@ -1253,6 +1273,7 @@ export const TemplateFilterBar: React.FC<TemplateFilterBarProps> = ({
       event.preventDefault();
 
       const url = new URL(window.location.href);
+      clearCategoryPathContext(url);
       url.searchParams.delete('category');
       url.searchParams.delete('category_group_slug');
       url.searchParams.delete('subcategory');
@@ -1261,7 +1282,7 @@ export const TemplateFilterBar: React.FC<TemplateFilterBarProps> = ({
 
       window.history.replaceState({}, '', url.toString());
       setRouteVersion((value) => value + 1);
-      notifyTemplateFiltersChanged(filters);
+      notifyTemplateFiltersChanged(filters, { categoryGroupSlug: null, childCategorySlug: null });
       document.dispatchEvent(
         new CustomEvent('categoryFilterUpdated', {
           detail: { parent: null, category: null, subcategory: null },
