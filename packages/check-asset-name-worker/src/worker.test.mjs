@@ -133,6 +133,17 @@ test('does not block nearby non-agent template names', async () => {
   assert.equal(calls.length, 1);
 });
 
+test('clarifies template name availability backend authorization errors', async () => {
+  globalThis.fetch = async () =>
+    jsonResponse({ error: 'You are not authorized to perform this operation' }, 403);
+
+  const { response, payload } = await checkTemplateName('Valid Template');
+
+  assert.equal(response.status, 503);
+  assert.match(payload.message, /marketplace name lookup is not authorized/);
+  assert.doesNotMatch(payload.message, /You are not authorized/);
+});
+
 test('blocks creators with an active banned instance before eligibility checks', async () => {
   const calls = installAirtableMock((url) => {
     if (url.pathname === '/v0/appTest/creators') {
