@@ -64,6 +64,25 @@ async function checkTemplateUser(email, env = BASE_ENV) {
   };
 }
 
+async function checkTemplateName(templatename, env = BASE_ENV) {
+  const response = await worker.fetch(
+    new Request('https://worker.test/api/checkTemplatename', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Origin: 'https://webflow.com'
+      },
+      body: JSON.stringify({ templatename })
+    }),
+    env
+  );
+
+  return {
+    response,
+    payload: await response.json()
+  };
+}
+
 function creatorRecord(fields) {
   return {
     id: 'recCreator',
@@ -79,6 +98,40 @@ function creatorRecord(fields) {
     }
   };
 }
+
+test('blocks agent-like template names before Airtable lookup', async () => {
+  globalThis.fetch = async () => {
+    throw new Error('Airtable should not be called for blocked names');
+  };
+
+  for (const name of [
+    'Agentra0',
+    'Agent Lite',
+    'Neilani Agents DB',
+    'Ag3n7 Studio',
+    'A-g-e-n-t Studio',
+    'NexAgent'
+  ]) {
+    const { response, payload } = await checkTemplateName(name);
+
+    assert.equal(response.status, 400, `${name} should fail validation`);
+    assert.match(payload.message, /agent/i);
+  }
+});
+
+test('does not block nearby non-agent template names', async () => {
+  const calls = installAirtableMock((url) => {
+    if (url.pathname === '/v0/appTest/assets') {
+      return { records: [] };
+    }
+  });
+
+  const { response, payload } = await checkTemplateName('Magenta Studio');
+
+  assert.equal(response.status, 200);
+  assert.deepEqual(payload, { taken: false });
+  assert.equal(calls.length, 1);
+});
 
 test('blocks creators with an active banned instance before eligibility checks', async () => {
   const calls = installAirtableMock((url) => {

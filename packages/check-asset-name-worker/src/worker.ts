@@ -350,6 +350,33 @@ export const workerTestExports = {
 // =============================================================================
 
 const NAME_EXCEPTIONS = new Set(['orizon', 'cycle', 'noda', 'sana', 'noday studio']);
+const AGENT_OBFUSCATION_PATTERN =
+  /(^|[^a-z0-9])(?:a|@|4)[^a-z0-9]*(?:g|9|6)[^a-z0-9]*(?:e|3)[^a-z0-9]*n[^a-z0-9]*(?:t|7|\+)/i;
+const CAMEL_CASE_AGENT_PATTERN = /[a-z0-9](?:Agent|Agents|Agentic)(?:\b|[A-Z0-9])/;
+const BLOCKED_AGENT_TERM = 'agent';
+
+function normalizeSearchGamingName(value: string): string {
+  return value
+    .normalize('NFKD')
+    .toLowerCase()
+    .replace(/[@4]/g, 'a')
+    .replace(/[96]/g, 'g')
+    .replace(/3/g, 'e')
+    .replace(/[7+]/g, 't');
+}
+
+function containsBlockedAgentTerm(value: string): boolean {
+  const normalized = normalizeSearchGamingName(value);
+  const tokens = normalized.split(/[^a-z0-9]+/).filter(Boolean);
+
+  if (
+    tokens.some((token) => token === BLOCKED_AGENT_TERM || token.startsWith(BLOCKED_AGENT_TERM))
+  ) {
+    return true;
+  }
+
+  return AGENT_OBFUSCATION_PATTERN.test(normalized) || CAMEL_CASE_AGENT_PATTERN.test(value);
+}
 
 // =============================================================================
 // Route Handlers
@@ -364,6 +391,17 @@ async function handleCheckTemplatename(
 
   if (!templatename || typeof templatename !== 'string') {
     return json({ message: 'templatename is required' }, 400, corsHeaders);
+  }
+
+  if (containsBlockedAgentTerm(templatename)) {
+    return json(
+      {
+        message:
+          'Template names containing "agent" or lookalike spellings are not allowed. Use a name that describes the template itself.'
+      },
+      400,
+      corsHeaders
+    );
   }
 
   // AI restriction (allow "Air" but block "AI")
