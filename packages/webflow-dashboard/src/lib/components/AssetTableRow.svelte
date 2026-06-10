@@ -123,9 +123,6 @@
 				{/if}
 				<span class="asset-name">{asset.name}</span>
 			</span>
-			{#if asset.category}
-				<span class="asset-meta">{asset.category}</span>
-			{/if}
 			{#if hasActiveOffer}
 				<span class="offer-badge-row">
 					<Badge variant="info">
@@ -146,8 +143,13 @@
 			{/if}
 		</div>
 	</TableCell>
-	<TableCell class="type-cell">
-		<span class="type">{asset.type}</span>
+	<TableCell class="category-cell">
+		<div class="category-stack" title={[asset.category, asset.subcategory].filter(Boolean).join(' / ')}>
+			<span class="category">{asset.category || 'Uncategorized'}</span>
+			{#if asset.subcategory}
+				<span class="category-sub">{asset.subcategory}</span>
+			{/if}
+		</div>
 	</TableCell>
 	{#if showPerformance}
 		{@const cr = conversionRate()}
@@ -280,13 +282,6 @@
 		}
 	}
 
-	.asset-meta {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
-		line-height: 1.15;
-		letter-spacing: 0;
-	}
-
 	.offer-badge-row {
 		display: inline-flex;
 		margin-top: 0.22rem;
@@ -301,7 +296,7 @@
 	}
 
 	.date,
-	.type {
+	.category {
 		color: var(--color-fg-tertiary);
 		font-size: 0.82rem;
 	}
@@ -314,7 +309,6 @@
 
 	.date,
 	.date-sub,
-	.type,
 	.metric,
 	.metric-sub {
 		font-variant-numeric: tabular-nums;
@@ -326,10 +320,28 @@
 		letter-spacing: 0;
 	}
 
-	.type {
+	.category-stack {
+		display: flex;
+		flex-direction: column;
+		gap: 0.04rem;
+		min-width: 0;
+	}
+
+	.category {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 		font-size: var(--text-caption);
-		text-transform: uppercase;
 		letter-spacing: 0;
+	}
+
+	.category-sub {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		font-size: var(--text-caption);
+		color: var(--color-fg-muted);
+		line-height: 1;
 	}
 
 	.metric {
