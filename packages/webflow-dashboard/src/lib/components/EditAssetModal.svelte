@@ -666,9 +666,15 @@
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ changes: structuredChanges })
-        }).catch(() => {
-          // Ignore version creation failures during save.
-        });
+        })
+          .then((response) => {
+            if (!response.ok) throw new Error(`Version snapshot failed (${response.status})`);
+          })
+          .catch((err) => {
+            // The save itself succeeded; warn so the user knows the history entry is missing.
+            console.error('Version snapshot failed:', err);
+            toast.warning('Saved, but version history could not be recorded for this change.');
+          });
       }
 
       trackEvent('asset_update_started', {

@@ -25,6 +25,8 @@
   let openingViewAssetId = $state<string | null>(null);
   let openingEditAssetId = $state<string | null>(null);
   let currentEditingAsset = $state<Asset | null>(null);
+  let archiveConfirmAssetId = $state<string | null>(null);
+  let isArchivingAsset = $state(false);
   const preloadedAssetDetailIds = new Set<string>();
 
   // Lazy-loaded modal components
@@ -70,6 +72,9 @@
   );
   const openingEditAssetName = $derived(
     (data.assets || []).find((asset) => asset.id === openingEditAssetId)?.name ?? 'asset'
+  );
+  const archiveConfirmAssetName = $derived(
+    (data.assets || []).find((asset) => asset.id === archiveConfirmAssetId)?.name ?? 'this asset'
   );
 
   async function handleLogout() {
@@ -192,11 +197,21 @@
     await handleRefreshAssets();
   }
 
-  async function handleArchiveAsset(id: string) {
+  function handleArchiveAsset(id: string) {
+    // Destructive action: ask for confirmation first (matches the asset detail flow).
+    archiveConfirmAssetId = id;
+  }
+
+  async function confirmArchiveAsset() {
+    if (!archiveConfirmAssetId || isArchivingAsset) return;
+    const id = archiveConfirmAssetId;
+
+    isArchivingAsset = true;
     try {
       const response = await fetch(`/api/assets/${id}/archive`, { method: 'POST' });
       if (response.ok) {
         toast.success('Asset archived successfully');
+        archiveConfirmAssetId = null;
         // Await invalidate to ensure data refresh completes
         await invalidate('app:assets');
       } else {
@@ -205,12 +220,16 @@
       }
     } catch {
       toast.error('Failed to archive asset');
+    } finally {
+      isArchivingAsset = false;
     }
   }
 
   async function handleRefreshAssets() {
     trackEvent('dashboard_assets_refreshed', { source: 'manual' });
-    invalidate('app:assets');
+    // Drop the server-side cache first so the reload hits Airtable for fresh data.
+    await fetch('/api/assets/cache', { method: 'DELETE' }).catch(() => {});
+    await invalidate('app:assets');
   }
 
   function handleReviewAssets() {
@@ -360,6 +379,34 @@
     {@const AssetModal = EditAssetModal}
     <AssetModal asset={currentEditingAsset} onClose={handleEditClose} onSave={handleEditSave} />
   {/if}
+
+  <Dialog
+    isOpen={archiveConfirmAssetId !== null}
+    onClose={() => {
+      if (!isArchivingAsset) archiveConfirmAssetId = null;
+    }}
+    title="Archive this asset?"
+    size="sm"
+  >
+    <div class="confirm-dialog">
+      <p>
+        <strong>{archiveConfirmAssetName}</strong> will be archived and removed from the active
+        dashboard workflow. This action cannot be undone here.
+      </p>
+      <div class="confirm-actions">
+        <Button
+          variant="secondary"
+          onclick={() => (archiveConfirmAssetId = null)}
+          disabled={isArchivingAsset}
+        >
+          Cancel
+        </Button>
+        <Button variant="destructive" onclick={confirmArchiveAsset} disabled={isArchivingAsset}>
+          {isArchivingAsset ? 'Archiving...' : 'Archive asset'}
+        </Button>
+      </div>
+    </div>
+  </Dialog>
 </div>
 
 <style>
@@ -375,6 +422,25 @@
   .content-wrapper {
     max-width: var(--layout-content-max-width);
     margin: 0 auto;
+  }
+
+  .confirm-dialog {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+  }
+
+  .confirm-dialog p {
+    margin: 0;
+    color: var(--color-fg-secondary);
+    font-size: var(--text-body-sm);
+    line-height: 1.5;
+  }
+
+  .confirm-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-sm);
   }
 
   .edit-loading-state {

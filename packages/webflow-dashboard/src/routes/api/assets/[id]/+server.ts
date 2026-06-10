@@ -1,5 +1,6 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import { invalidateAssetsCache } from '$lib/server/assets-cache';
 import { getAirtableClient, type AssetUpdateData } from '$lib/server/airtable';
 import { sanitizeLongDescriptionHtml } from '@create-something/webflow-dashboard-core/long-description';
 
@@ -97,14 +98,13 @@ export const GET: RequestHandler = async ({ params, locals, platform }) => {
 
   const airtable = getAirtableClient(platform.env);
 
-  const isOwner = await airtable.verifyAssetOwnership(params.id, locals.user.email);
-  if (!isOwner) {
-    throw error(403, 'You do not have permission to view this asset');
-  }
-
-  const asset = await airtable.getAsset(params.id);
+  // Single Airtable call: fetch the record once, derive both ownership and the asset from it.
+  const { asset, isOwner } = await airtable.getAssetForOwner(params.id, locals.user.email);
   if (!asset) {
     throw error(404, 'Asset not found');
+  }
+  if (!isOwner) {
+    throw error(403, 'You do not have permission to view this asset');
   }
 
   return json({ asset });
@@ -144,6 +144,8 @@ export const PATCH: RequestHandler = async ({ params, request, locals, platform 
     throw error(500, 'Failed to update asset');
   }
 
+  await invalidateAssetsCache(platform.env.SESSIONS, locals.user.email);
+
   return json({ asset: updatedAsset });
 };
 
@@ -180,6 +182,8 @@ export const PUT: RequestHandler = async ({ params, request, locals, platform })
   if (!updatedAsset) {
     throw error(500, 'Failed to update asset');
   }
+
+  await invalidateAssetsCache(platform.env.SESSIONS, locals.user.email);
 
   return json({ asset: updatedAsset });
 };

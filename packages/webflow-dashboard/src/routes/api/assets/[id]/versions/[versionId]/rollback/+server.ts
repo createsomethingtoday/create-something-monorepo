@@ -1,6 +1,7 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { getAirtableClient } from '$lib/server/airtable';
+import { invalidateAssetsCache } from '$lib/server/assets-cache';
 
 // POST - Rollback to a specific version
 export const POST: RequestHandler = async ({ params, locals, platform }) => {
@@ -29,6 +30,8 @@ export const POST: RequestHandler = async ({ params, locals, platform }) => {
 	if (!asset) {
 		throw error(500, 'Failed to rollback asset');
 	}
+
+	await invalidateAssetsCache(platform.env.SESSIONS, locals.user.email);
 
 	return json({ asset, success: true });
 };

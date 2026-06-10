@@ -232,7 +232,7 @@
 
 	{#if value}
 		<div class="preview-container">
-			<img src={value} alt="Uploaded preview" class="preview-image" />
+			<img src={value} alt="Uploaded preview" class="preview-image" loading="lazy" decoding="async" />
 			<div class="preview-actions">
 				<Button variant="ghost" size="sm" onclick={handleRemove} {disabled}>Remove</Button>
 			</div>

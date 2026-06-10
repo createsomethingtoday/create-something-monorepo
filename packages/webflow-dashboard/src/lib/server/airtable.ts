@@ -238,6 +238,32 @@ export function buildAssetListFormula(email: string): string {
 }
 
 /**
+ * Checks a fetched Airtable record's creator-email fields for a match.
+ * JS-side equivalent of buildCreatorEmailMatchFormula(), letting callers
+ * verify ownership from a record they already hold instead of issuing
+ * another Airtable query.
+ */
+function recordMatchesCreatorEmail(
+	record: Airtable.Record<Airtable.FieldSet>,
+	email: string
+): boolean {
+	const normalizedEmail = email.trim().toLowerCase();
+
+	for (const field of CREATOR_EMAIL_FORMULA_FIELDS) {
+		const fieldValue = record.fields[field];
+		if (!fieldValue) continue;
+
+		if (Array.isArray(fieldValue)) {
+			if (fieldValue.some((e) => String(e).toLowerCase().includes(normalizedEmail))) return true;
+		} else if (typeof fieldValue === 'string') {
+			if (fieldValue.toLowerCase().includes(normalizedEmail)) return true;
+		}
+	}
+
+	return false;
+}
+
+/**
  * Validates and sanitizes email input.
  */
 export function validateEmail(email: string): string {
@@ -1417,47 +1443,55 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 					.firstPage();
 				if (dashboardMatches.length > 0) return true;
 			} catch {
-				// continue to next checks
+				// continue to next check
 			}
 
-			// 2) Field-based check (best-effort): works when the record can be fetched and the email fields are present.
+			// 2) Field-based fallback: works when the record can be fetched and the email fields are present.
 			try {
 				const record = await base(TABLES.ASSETS).find(assetId);
-				const emailFields = [
-					'🎨📧 Creator Email',
-					'🎨📧 Creator WF Account Email',
-					'📧Emails (from 🎨Creator)'
-				];
-
-				for (const field of emailFields) {
-					const fieldValue = record.fields[field];
-					if (!fieldValue) continue;
-
-					if (Array.isArray(fieldValue)) {
-						if (fieldValue.some((e) => String(e).toLowerCase().includes(normalizedEmail))) return true;
-					} else if (typeof fieldValue === 'string') {
-						if (fieldValue.toLowerCase().includes(normalizedEmail)) return true;
-					}
-				}
-			} catch {
-				// continue to next checks
-			}
-
-			// 3) Robust formula check (best-effort): handles mixed Airtable field types.
-			try {
-				const formula = `AND(
-					RECORD_ID() = '${escapedAssetId}',
-					${buildCreatorEmailMatchFormula(normalizedEmail)}
-				)`;
-				const matches = await base(TABLES.ASSETS)
-					.select({ filterByFormula: formula, maxRecords: 1 })
-					.firstPage();
-				if (matches.length > 0) return true;
+				if (recordMatchesCreatorEmail(record, normalizedEmail)) return true;
 			} catch {
 				// fall through
 			}
 
 			return false;
+		},
+
+		/**
+		 * Fetch an asset and verify ownership in a single Airtable call.
+		 * Use instead of verifyAssetOwnership() + getAsset() when the caller
+		 * needs the asset anyway — halves (or better) the Airtable round-trips.
+		 */
+		async getAssetForOwner(
+			assetId: string,
+			email: string
+		): Promise<{ asset: Asset | null; isOwner: boolean }> {
+			let record: Airtable.Record<Airtable.FieldSet>;
+			try {
+				record = await base(TABLES.ASSETS).find(assetId);
+			} catch {
+				return { asset: null, isOwner: false };
+			}
+
+			let isOwner = recordMatchesCreatorEmail(record, email);
+
+			// Formula fallback for field shapes the JS check can't read (e.g. collaborator objects).
+			if (!isOwner) {
+				try {
+					const formula = `AND(
+						RECORD_ID() = '${escapeAirtableString(assetId)}',
+						${buildCreatorEmailMatchFormula(email.toLowerCase())}
+					)`;
+					const matches = await base(TABLES.ASSETS)
+						.select({ filterByFormula: formula, maxRecords: 1 })
+						.firstPage();
+					isOwner = matches.length > 0;
+				} catch {
+					// keep isOwner = false
+				}
+			}
+
+			return { asset: mapAssetRecord(record), isOwner };
 		},
 
 		/**
@@ -2130,10 +2164,12 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 
 			// Get the next version number by counting existing versions
 			// Matches v1 logic exactly: pages/api/asset/createVersion/[id].js lines 62-64
+			// Only the count is needed, so fetch a single field instead of full records.
 			debugLog('[Airtable] Querying existing versions...');
 			const existingVersions = await base(TABLES.ASSET_VERSIONS)
 				.select({
-					filterByFormula: `{fldknoYakli2sqznT} = '${escapeAirtableString(assetId)}'`
+					filterByFormula: `{fldknoYakli2sqznT} = '${escapeAirtableString(assetId)}'`,
+					fields: ['fldknoYakli2sqznT']
 				})
 				.all();
 			

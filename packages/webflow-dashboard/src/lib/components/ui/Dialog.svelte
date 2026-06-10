@@ -29,6 +29,35 @@
       document.body.style.paddingRight = previousBodyPaddingRight;
     }
   }
+
+  // Shared across all Dialog instances so nested modals restore focus correctly.
+  // Each open dialog pushes the element that had focus; closing restores it, or —
+  // when that element has been unmounted (e.g. a parent modal closed underneath
+  // a confirm dialog) — falls back to the deepest still-connected entry.
+  const focusReturnStack: HTMLElement[] = [];
+
+  function pushFocusReturn(el: HTMLElement | null) {
+    if (el) focusReturnStack.push(el);
+  }
+
+  function popFocusReturn(el: HTMLElement | null) {
+    if (el) {
+      const idx = focusReturnStack.lastIndexOf(el);
+      if (idx !== -1) focusReturnStack.splice(idx, 1);
+    }
+
+    if (el?.isConnected) {
+      el.focus();
+      return;
+    }
+
+    for (let i = focusReturnStack.length - 1; i >= 0; i--) {
+      if (focusReturnStack[i].isConnected) {
+        focusReturnStack[i].focus();
+        return;
+      }
+    }
+  }
 </script>
 
 <script lang="ts">
@@ -133,6 +162,7 @@
     if (!isOpen || typeof document === 'undefined') return;
 
     lastFocusedElement = document.activeElement as HTMLElement | null;
+    pushFocusReturn(lastFocusedElement);
     lockBodyScroll();
 
     void tick().then(() => {
@@ -146,7 +176,7 @@
 
     return () => {
       unlockBodyScroll();
-      lastFocusedElement?.focus();
+      popFocusReturn(lastFocusedElement);
     };
   });
 </script>

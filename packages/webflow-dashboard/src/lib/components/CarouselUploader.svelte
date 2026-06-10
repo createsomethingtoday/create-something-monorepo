@@ -266,7 +266,7 @@
 		<div class="image-grid">
 			{#each value as url, index}
 				<div class="image-card">
-					<img src={url} alt="Carousel {index + 1}" class="image-preview" />
+					<img src={url} alt="Carousel {index + 1}" class="image-preview" loading="lazy" decoding="async" />
 				<button
 					type="button"
 					class="image-remove"
