@@ -8,18 +8,25 @@ export async function POST(request: Request) {
     const body = (await request.json().catch(() => ({}))) as { email?: string };
     const email = validateEmail(body.email || '');
     const airtable = await getServerAirtable();
-    const localCreator = await airtable.getCreatorByEmail(email);
+    const [localCreator, remote] = await Promise.all([
+      airtable.getCreatorByEmail(email),
+      checkRemoteCreatorEmailAvailability(email).then(
+        (value) => ({ ok: true as const, value }),
+        (error) => ({ ok: false as const, error })
+      )
+    ]);
 
     let remoteEmailExists = false;
     let remoteMessage = 'Email is available.';
 
-    try {
-      const remote = await checkRemoteCreatorEmailAvailability(email);
-      remoteEmailExists = remote.emailExists;
-      remoteMessage = remote.message;
-    } catch (error) {
+    if (remote.ok) {
+      remoteEmailExists = remote.value.emailExists;
+      remoteMessage = remote.value.message;
+    } else {
       remoteMessage =
-        error instanceof Error ? error.message : 'Remote email verification service unavailable.';
+        remote.error instanceof Error
+          ? remote.error.message
+          : 'Remote email verification service unavailable.';
     }
 
     const emailExists = Boolean(localCreator) || remoteEmailExists;

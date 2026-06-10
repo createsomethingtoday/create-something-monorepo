@@ -1,7 +1,7 @@
 'use client';
 
 import Script from 'next/script';
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { appPath } from '../lib/runtime-paths';
 import { CountryPicker } from './country-picker';
 import { QuillEditor } from './quill-editor';
@@ -88,6 +88,57 @@ function choiceClassName(
 ) {
   return classNames('submission-choice', ...extraClassNames, isSelected && 'is-selected');
 }
+
+type ChoiceOption = { id: string; label: string };
+
+// Memoized so the taxonomy grids (each dozens of checkboxes) skip re-rendering
+// while the user types in unrelated form fields.
+const ChoiceCheckboxGrid = memo(function ChoiceCheckboxGrid({
+  options,
+  selected,
+  maxCount,
+  emptyMessage,
+  gridClassName,
+  choiceExtraClassName,
+  onToggle
+}: {
+  options: readonly ChoiceOption[];
+  selected: readonly string[];
+  maxCount?: number;
+  emptyMessage: string;
+  gridClassName: string;
+  choiceExtraClassName: string;
+  onToggle: (id: string) => void;
+}) {
+  const atMax = maxCount !== undefined && selected.length >= maxCount;
+
+  return (
+    <div className={gridClassName}>
+      {options.length === 0 ? <div className="submission-choice-empty">{emptyMessage}</div> : null}
+      {options.map((option) => {
+        const checked = selected.includes(option.id);
+        return (
+          <label
+            className={choiceClassName(
+              checked,
+              choiceExtraClassName,
+              !checked && atMax && 'is-disabled'
+            )}
+            key={option.id}
+          >
+            <input
+              type="checkbox"
+              checked={checked}
+              disabled={!checked && atMax}
+              onChange={() => onToggle(option.id)}
+            />
+            <span className="submission-choice-copy">{option.label}</span>
+          </label>
+        );
+      })}
+    </div>
+  );
+});
 
 type Tone = 'success' | 'error' | 'info';
 
@@ -1127,13 +1178,16 @@ function visibleFeaturedTemplates(templates: FeaturedTemplateItem[], offset: num
   );
 }
 
-function FeaturedQualityShowcase() {
+// Memoized: it takes no props, so it never re-renders with the parent form.
+const FeaturedQualityShowcase = memo(function FeaturedQualityShowcase() {
   const [templates, setTemplates] = useState<FeaturedTemplateItem[]>([]);
   const [status, setStatus] = useState<'loading' | 'ready' | 'refreshing' | 'fallback'>('loading');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [offset, setOffset] = useState(0);
+  const [isInView, setIsInView] = useState(false);
   const requestRef = useRef<AbortController | null>(null);
+  const sectionRef = useRef<HTMLElement | null>(null);
 
   async function loadFeaturedTemplates(nextPage: number, mode: 'initial' | 'refresh' = 'initial') {
     requestRef.current?.abort();
@@ -1170,10 +1224,34 @@ function FeaturedQualityShowcase() {
     }
   }
 
+  // Defer the showcase fetch until the section approaches the viewport; it
+  // usually sits below the fold and should not compete with form startup.
   useEffect(() => {
+    const section = sectionRef.current;
+    if (!section || typeof IntersectionObserver === 'undefined') {
+      setIsInView(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          setIsInView(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: '400px' }
+    );
+    observer.observe(section);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!isInView) return;
     void loadFeaturedTemplates(1);
     return () => requestRef.current?.abort();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isInView]);
 
   const isBusy = status === 'loading' || status === 'refreshing';
   const visibleTemplates = visibleFeaturedTemplates(templates, offset);
@@ -1195,7 +1273,11 @@ function FeaturedQualityShowcase() {
   }
 
   return (
-    <section className="featured-quality-showcase" aria-labelledby="featured-quality-title">
+    <section
+      className="featured-quality-showcase"
+      aria-labelledby="featured-quality-title"
+      ref={sectionRef}
+    >
       <div className="featured-quality-header">
         <div className="featured-quality-heading-row">
           <div className="submission-step-label submission-step-label-secondary">
@@ -1309,7 +1391,7 @@ function FeaturedQualityShowcase() {
       </div>
     </section>
   );
-}
+});
 
 function TemplateSubmissionSuccessPanel({
   submission,
@@ -1483,33 +1565,80 @@ export function TemplateIntake() {
   const creatorEligibilityResolved =
     Boolean(template.creatorEmail.trim()) &&
     verification.creatorEligibilityEmail === template.creatorEmail.trim().toLowerCase();
-  const visibleCategories = sortSelectableLabels(
-    CATEGORY_OPTIONS,
-    template.categories,
-    optionSearch.categories
+  // Derived option lists are memoized (filter + sort over the full option
+  // sets) and shaped as {id, label} so the memoized grids receive stable props
+  // while unrelated fields change.
+  const visibleCategories = useMemo(
+    () =>
+      sortSelectableLabels(CATEGORY_OPTIONS, template.categories, optionSearch.categories).map(
+        (category) => ({ id: category, label: category })
+      ),
+    [template.categories, optionSearch.categories]
   );
-  const visibleStyles = sortSelectableLabels(TEMPLATE_STYLES, template.styles, optionSearch.styles);
-  const visibleFeatures = sortSelectableObjects(
-    WEBFLOW_FEATURES.filter((feature) => !feature.hidden),
-    template.featureIds,
-    optionSearch.featureIds,
-    (feature) => feature.label,
-    (feature) => feature.id
+  const visibleStyles = useMemo(
+    () =>
+      sortSelectableLabels(TEMPLATE_STYLES, template.styles, optionSearch.styles).map((style) => ({
+        id: style,
+        label: style
+      })),
+    [template.styles, optionSearch.styles]
   );
-  const selectedCategoryChoices = template.categories.map((category) => ({
-    id: category,
-    label: category
-  }));
-  const selectedStyleChoices = template.styles.map((style) => ({
-    id: style,
-    label: style
-  }));
-  const selectedFeatureChoices = template.featureIds
-    .map((featureId) => {
-      const feature = WEBFLOW_FEATURES.find((option) => option.id === featureId);
-      return feature ? { id: feature.id, label: feature.label } : null;
-    })
-    .filter((choice): choice is { id: string; label: string } => choice !== null);
+  const visibleFeatures = useMemo(
+    () =>
+      sortSelectableObjects(
+        WEBFLOW_FEATURES.filter((feature) => !feature.hidden),
+        template.featureIds,
+        optionSearch.featureIds,
+        (feature) => feature.label,
+        (feature) => feature.id
+      ).map((feature) => ({ id: feature.id, label: feature.label })),
+    [template.featureIds, optionSearch.featureIds]
+  );
+  const selectedCategoryChoices = useMemo(
+    () =>
+      template.categories.map((category) => ({
+        id: category,
+        label: category
+      })),
+    [template.categories]
+  );
+  const selectedStyleChoices = useMemo(
+    () =>
+      template.styles.map((style) => ({
+        id: style,
+        label: style
+      })),
+    [template.styles]
+  );
+  const selectedFeatureChoices = useMemo(
+    () =>
+      template.featureIds
+        .map((featureId) => {
+          const feature = WEBFLOW_FEATURES.find((option) => option.id === featureId);
+          return feature ? { id: feature.id, label: feature.label } : null;
+        })
+        .filter((choice): choice is { id: string; label: string } => choice !== null),
+    [template.featureIds]
+  );
+  const toggleCategory = useCallback(
+    (category: string) =>
+      updateTemplate('categories', toggleCheckbox(template.categories, category)),
+    // updateTemplate/toggleCheckbox only use state setters and pure logic, so
+    // the handler stays valid as long as the selection it reads is current.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [template.categories]
+  );
+  const toggleStyle = useCallback(
+    (style: string) => updateTemplate('styles', toggleCheckbox(template.styles, style)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [template.styles]
+  );
+  const toggleFeature = useCallback(
+    (featureId: string) =>
+      updateTemplate('featureIds', toggleCheckbox(template.featureIds, featureId)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [template.featureIds]
+  );
   const creatorProfileExistsActionLabel = 'Go to Submit a template';
 
   function getCreatorProfileExistsAction(
@@ -3433,40 +3562,15 @@ export function TemplateIntake() {
                           )
                         }
                       />
-                      <div className="submission-choice-grid submission-choice-grid-taxonomy is-scroll">
-                        {visibleCategories.length === 0 ? (
-                          <div className="submission-choice-empty">
-                            No categories match your search.
-                          </div>
-                        ) : null}
-                        {visibleCategories.map((category) => {
-                          const checked = template.categories.includes(category);
-                          const atMax = template.categories.length >= 2;
-                          return (
-                            <label
-                              className={choiceClassName(
-                                checked,
-                                'submission-choice-taxonomy input-block cc-check cc-template-application-form-choice',
-                                !checked && atMax && 'is-disabled'
-                              )}
-                              key={category}
-                            >
-                              <input
-                                type="checkbox"
-                                checked={checked}
-                                disabled={!checked && atMax}
-                                onChange={() =>
-                                  updateTemplate(
-                                    'categories',
-                                    toggleCheckbox(template.categories, category)
-                                  )
-                                }
-                              />
-                              <span className="submission-choice-copy">{category}</span>
-                            </label>
-                          );
-                        })}
-                      </div>
+                      <ChoiceCheckboxGrid
+                        options={visibleCategories}
+                        selected={template.categories}
+                        maxCount={2}
+                        emptyMessage="No categories match your search."
+                        gridClassName="submission-choice-grid submission-choice-grid-taxonomy is-scroll"
+                        choiceExtraClassName="submission-choice-taxonomy input-block cc-check cc-template-application-form-choice"
+                        onToggle={toggleCategory}
+                      />
                       <div className="field-help submission-counter">
                         {template.categories.length} of 2 categories selected
                       </div>
@@ -3613,37 +3717,15 @@ export function TemplateIntake() {
                           )
                         }
                       />
-                      <div className="submission-choice-grid submission-choice-grid-taxonomy">
-                        {visibleStyles.length === 0 ? (
-                          <div className="submission-choice-empty">
-                            No styles match your search.
-                          </div>
-                        ) : null}
-                        {visibleStyles.map((style) => {
-                          const checked = template.styles.includes(style);
-                          const atMax = template.styles.length >= 2;
-                          return (
-                            <label
-                              className={choiceClassName(
-                                checked,
-                                'input-block cc-check cc-template-application-form-choice',
-                                !checked && atMax && 'is-disabled'
-                              )}
-                              key={style}
-                            >
-                              <input
-                                type="checkbox"
-                                checked={checked}
-                                disabled={!checked && atMax}
-                                onChange={() =>
-                                  updateTemplate('styles', toggleCheckbox(template.styles, style))
-                                }
-                              />
-                              <span className="submission-choice-copy">{style}</span>
-                            </label>
-                          );
-                        })}
-                      </div>
+                      <ChoiceCheckboxGrid
+                        options={visibleStyles}
+                        selected={template.styles}
+                        maxCount={2}
+                        emptyMessage="No styles match your search."
+                        gridClassName="submission-choice-grid submission-choice-grid-taxonomy"
+                        choiceExtraClassName="input-block cc-check cc-template-application-form-choice"
+                        onToggle={toggleStyle}
+                      />
                       <div className="field-help submission-counter">
                         {template.styles.length} of 2 styles selected
                       </div>
@@ -3684,34 +3766,14 @@ export function TemplateIntake() {
                           )
                         }
                       />
-                      <div className="submission-choice-grid">
-                        {visibleFeatures.length === 0 ? (
-                          <div className="submission-choice-empty">
-                            No features match your search.
-                          </div>
-                        ) : null}
-                        {visibleFeatures.map((option) => (
-                          <label
-                            className={choiceClassName(
-                              template.featureIds.includes(option.id),
-                              'submission-choice-taxonomy input-block cc-check cc-template-application-form-choice'
-                            )}
-                            key={option.id}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={template.featureIds.includes(option.id)}
-                              onChange={() =>
-                                updateTemplate(
-                                  'featureIds',
-                                  toggleCheckbox(template.featureIds, option.id)
-                                )
-                              }
-                            />
-                            <span className="submission-choice-copy">{option.label}</span>
-                          </label>
-                        ))}
-                      </div>
+                      <ChoiceCheckboxGrid
+                        options={visibleFeatures}
+                        selected={template.featureIds}
+                        emptyMessage="No features match your search."
+                        gridClassName="submission-choice-grid"
+                        choiceExtraClassName="submission-choice-taxonomy input-block cc-check cc-template-application-form-choice"
+                        onToggle={toggleFeature}
+                      />
                       {verification.gsapDetected ? (
                         <div className="field-help">
                           GSAP was detected automatically during validation.

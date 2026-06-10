@@ -7,6 +7,7 @@ import {
 } from '../../../../lib/intake/published-url';
 import { analyzePublishedTemplate } from '../../../../lib/intake/template-analyzer';
 import { runValidatorAppSubmissionPreflight } from '../../../../lib/intake/validator-app';
+import { storeCachedPublishedValidation } from '../../../../lib/server/published-validation-cache';
 
 const ANALYZER_WAIT_TIMEOUT_MS = 10_000;
 const ROUTE_RESPONSE_BUDGET_MS = 16_000;
@@ -46,10 +47,13 @@ export async function POST(request: Request) {
         })
       : Promise.resolve(null);
 
+    // The preflight only needs the normalized URL, so it runs concurrently with
+    // the crawl; its result is discarded when validation fails.
+    const validatorPreflightPromise = runValidatorAppSubmissionPreflight(normalizedUrl);
+    validatorPreflightPromise.catch(() => {});
+
     const result = await runPublishedUrlValidation(normalizedUrl);
-    const validatorPreflight = result.summary.passed
-      ? await runValidatorAppSubmissionPreflight(result.normalizedUrl)
-      : null;
+    const validatorPreflight = result.summary.passed ? await validatorPreflightPromise : null;
     let autofill: Awaited<ReturnType<typeof analyzePublishedTemplate>> | null = null;
 
     if (
@@ -80,6 +84,21 @@ export async function POST(request: Request) {
       validatorPreflight?.required && !validatorPreflight.passed ? validatorPreflight.issues : [];
     const passed =
       result.summary.passed && (!validatorPreflight?.required || validatorPreflight.passed);
+
+    if (passed) {
+      await storeCachedPublishedValidation({
+        normalizedUrl: result.normalizedUrl,
+        summary: {
+          passed: true,
+          gsapDetected: result.summary.gsapDetected,
+          legacyIx2Detected: result.summary.legacyIx2Detected,
+          unicornStudioDetected: result.summary.unicornStudioDetected,
+          siteResults: result.summary.siteResults
+        },
+        validatorPreflight,
+        cachedAt: new Date().toISOString()
+      });
+    }
 
     return jsonNoStore({
       passed,

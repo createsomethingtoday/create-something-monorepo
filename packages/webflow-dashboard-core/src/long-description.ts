@@ -21,6 +21,8 @@ const BLOCKED_WITH_CONTENT =
 const BLOCKED_SELF_CLOSING =
   /<(script|style|iframe|object|embed|audio|video|select|textarea|template)\b[^>]*\/?>/gi;
 const TAG_PATTERN = /<\/?[^>]+>/g;
+const ORDERED_LIST_PATTERN = /<ol\b[^>]*>([\s\S]*?)<\/ol>/gi;
+const LIST_ITEM_PATTERN = /<li\b([^>]*)>[\s\S]*?<\/li>/gi;
 const ATTR_PATTERN = /([^\s"'<>/=]+)(?:\s*=\s*("([^"]*)"|'([^']*)'|([^\s"'=<>`]+)))?/g;
 
 export function sanitizeLongDescriptionHtml(
@@ -35,7 +37,7 @@ export function sanitizeLongDescriptionHtml(
     return plainTextToLongDescriptionHtml(trimmed);
   }
 
-  const withoutBlocked = trimmed
+  const withoutBlocked = normalizeQuillListMarkup(trimmed)
     .replace(BLOCKED_WITH_CONTENT, '')
     .replace(BLOCKED_SELF_CLOSING, '');
 
@@ -52,6 +54,42 @@ export function sanitizeLongDescriptionHtml(
 
   output += escapeHtmlText(withoutBlocked.slice(cursor));
   return cleanupLongDescriptionHtml(output);
+}
+
+function normalizeQuillListMarkup(value: string): string {
+  return value.replace(ORDERED_LIST_PATTERN, (source, content: string) => {
+    const matches = Array.from(content.matchAll(LIST_ITEM_PATTERN));
+    if (matches.length === 0) return source;
+
+    const matchedItems = matches.map((match) => match[0]).join('');
+    if (content.replace(/\s+/g, '') !== matchedItems.replace(/\s+/g, '')) {
+      return source;
+    }
+
+    let output = '';
+    let currentTag: 'ol' | 'ul' | null = null;
+    let currentItems: string[] = [];
+
+    const flush = () => {
+      if (!currentTag || currentItems.length === 0) return;
+      output += `<${currentTag}>${currentItems.join('')}</${currentTag}>`;
+      currentTag = null;
+      currentItems = [];
+    };
+
+    for (const match of matches) {
+      const attrs = parseAttributes(match[1] || '');
+      const listTag = attrs.get('data-list') === 'bullet' ? 'ul' : 'ol';
+      if (currentTag && currentTag !== listTag) {
+        flush();
+      }
+      currentTag = listTag;
+      currentItems.push(match[0]);
+    }
+
+    flush();
+    return output || source;
+  });
 }
 
 export function plainTextToLongDescriptionHtml(value: string | null | undefined): string {

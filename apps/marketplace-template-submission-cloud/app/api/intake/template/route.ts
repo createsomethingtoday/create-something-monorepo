@@ -17,8 +17,11 @@ import { evaluateCreatorEligibility } from '../../../../lib/intake/creator-eligi
 import {
   buildPublishedUrlValidationMessage,
   getPublishedUrlValidationIssues,
-  runPublishedUrlValidation
+  normalizePublishedUrl,
+  runPublishedUrlValidation,
+  type PublishedUrlValidationSummary
 } from '../../../../lib/intake/published-url';
+import { getCachedPublishedValidation } from '../../../../lib/server/published-validation-cache';
 import { runValidatorAppSubmissionPreflight } from '../../../../lib/intake/validator-app';
 import { validateTemplateNameSyntax } from '../../../../lib/intake/template-name';
 import { checkTemplateNameAvailability } from '../../../../lib/server/template-name-availability';
@@ -241,19 +244,6 @@ export async function POST(request: Request) {
       );
     }
 
-    const eligibility = await evaluateCreatorEligibility(creatorEmail);
-    if (!eligibility.allowed) {
-      return jsonNoStore(
-        {
-          error: eligibility.message,
-          eligibility
-        },
-        { status: 409 }
-      );
-    }
-
-    const airtable = await getServerAirtable();
-
     const nameSyntax = validateTemplateNameSyntax(templateName);
     if (!nameSyntax.valid) {
       return jsonNoStore(
@@ -266,45 +256,106 @@ export async function POST(request: Request) {
       );
     }
 
-    const templateNameAvailability = await checkTemplateNameAvailability(templateName, {
-      airtable
-    });
+    const normalizedPublishedUrl = normalizePublishedUrl(body.publishedUrl || '');
+    const airtable = await getServerAirtable();
+
+    // Reuse the validation the creator just completed via "Validate template"
+    // when available; otherwise start a fresh crawl alongside the other
+    // read-only checks. All results are checked in priority order below.
+    const cachedValidation = await getCachedPublishedValidation(normalizedPublishedUrl);
+    const publishedValidationPromise = cachedValidation
+      ? null
+      : runPublishedUrlValidation(normalizedPublishedUrl).then(
+          (value) => ({ ok: true as const, value }),
+          (error) => ({ ok: false as const, error })
+        );
+
+    const [eligibility, templateNameAvailability] = await Promise.all([
+      evaluateCreatorEligibility(creatorEmail),
+      checkTemplateNameAvailability(templateName, { airtable })
+    ]);
+
+    if (!eligibility.allowed) {
+      return jsonNoStore(
+        {
+          error: eligibility.message,
+          eligibility
+        },
+        { status: 409 }
+      );
+    }
 
     if (!templateNameAvailability.available) {
       return jsonNoStore({ error: 'Template name is already in use.' }, { status: 409 });
     }
 
-    const publishedValidation = await runPublishedUrlValidation(body.publishedUrl || '');
-    if (!publishedValidation.summary.passed) {
-      const validationIssues = getPublishedUrlValidationIssues(publishedValidation.summary);
-      return jsonNoStore(
-        {
-          error: buildPublishedUrlValidationMessage(publishedValidation.summary),
-          validationIssues
-        },
-        { status: 400 }
-      );
-    }
+    let publishedUrlResult: {
+      normalizedUrl: string;
+      gsapDetected: boolean;
+      siteResults: PublishedUrlValidationSummary['siteResults'];
+    };
+    let validatorConfirmation: { passed: boolean; score?: number };
 
-    const validatorPreflight = await runValidatorAppSubmissionPreflight(
-      publishedValidation.normalizedUrl
-    );
-    if (validatorPreflight.required && !validatorPreflight.passed) {
-      return jsonNoStore(
-        {
-          error: validatorPreflight.message,
-          validationIssues: validatorPreflight.issues,
-          validatorPreflight
-        },
-        {
-          status: validatorPreflight.status === 'validator_app_unavailable' ? 503 : 400
-        }
+    if (cachedValidation) {
+      publishedUrlResult = {
+        normalizedUrl: cachedValidation.normalizedUrl,
+        gsapDetected: cachedValidation.summary.gsapDetected,
+        siteResults: cachedValidation.summary.siteResults
+      };
+      validatorConfirmation = {
+        passed: cachedValidation.validatorPreflight?.passed ?? true,
+        score: cachedValidation.validatorPreflight?.result?.score
+      };
+    } else {
+      const settled = await publishedValidationPromise!;
+      if (!settled.ok) {
+        throw settled.error instanceof Error
+          ? settled.error
+          : new Error('Published URL validation failed.');
+      }
+
+      const publishedValidation = settled.value;
+      if (!publishedValidation.summary.passed) {
+        const validationIssues = getPublishedUrlValidationIssues(publishedValidation.summary);
+        return jsonNoStore(
+          {
+            error: buildPublishedUrlValidationMessage(publishedValidation.summary),
+            validationIssues
+          },
+          { status: 400 }
+        );
+      }
+
+      const validatorPreflight = await runValidatorAppSubmissionPreflight(
+        publishedValidation.normalizedUrl
       );
+      if (validatorPreflight.required && !validatorPreflight.passed) {
+        return jsonNoStore(
+          {
+            error: validatorPreflight.message,
+            validationIssues: validatorPreflight.issues,
+            validatorPreflight
+          },
+          {
+            status: validatorPreflight.status === 'validator_app_unavailable' ? 503 : 400
+          }
+        );
+      }
+
+      publishedUrlResult = {
+        normalizedUrl: publishedValidation.normalizedUrl,
+        gsapDetected: publishedValidation.summary.gsapDetected,
+        siteResults: publishedValidation.summary.siteResults
+      };
+      validatorConfirmation = {
+        passed: validatorPreflight.passed,
+        score: validatorPreflight.result?.score
+      };
     }
 
     const previewUrl = normalizePreviewUrl(body.previewUrl || '');
     const combinedFeatures = new Set(featureFlags);
-    if (publishedValidation.summary.gsapDetected) {
+    if (publishedUrlResult.gsapDetected) {
       combinedFeatures.add('gsap');
     }
 
@@ -341,15 +392,13 @@ export async function POST(request: Request) {
       paymentType === 'Paid' && price !== undefined ? `Price: $${price}` : '',
       siteTypes.length > 0 ? `Site types: ${siteTypes.join(', ')}` : '',
       combinedFeatures.size > 0 ? `Feature flags: ${[...combinedFeatures].join(', ')}` : '',
-      `Published URL verified: ${publishedValidation.normalizedUrl}`,
-      validatorPreflight.passed
+      `Published URL verified: ${publishedUrlResult.normalizedUrl}`,
+      validatorConfirmation.passed
         ? `Webflow Way Validator confirmed: ${
-            validatorPreflight.result?.score
-              ? `${validatorPreflight.result.score}% pass`
-              : 'passed'
+            validatorConfirmation.score ? `${validatorConfirmation.score}% pass` : 'passed'
           }.`
         : '',
-      publishedValidation.summary.gsapDetected ? 'GSAP detected during published-site crawl.' : ''
+      publishedUrlResult.gsapDetected ? 'GSAP detected during published-site crawl.' : ''
     ]
       .filter(Boolean)
       .join('\n');
@@ -363,7 +412,7 @@ export async function POST(request: Request) {
         isTemplateUserEmailValidated: true,
         templateName,
         isTemplateNameValidated: true,
-        publishedUrl: publishedValidation.normalizedUrl,
+        publishedUrl: publishedUrlResult.normalizedUrl,
         isPublishedUrlValidated: true,
         previewUrl,
         paymentType,
@@ -409,9 +458,9 @@ export async function POST(request: Request) {
       },
       submissionId,
       publishedValidation: {
-        normalizedUrl: publishedValidation.normalizedUrl,
-        gsapDetected: publishedValidation.summary.gsapDetected,
-        siteResults: publishedValidation.summary.siteResults
+        normalizedUrl: publishedUrlResult.normalizedUrl,
+        gsapDetected: publishedUrlResult.gsapDetected,
+        siteResults: publishedUrlResult.siteResults
       }
     });
   } catch (error) {

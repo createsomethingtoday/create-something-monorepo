@@ -54,9 +54,27 @@ function localEligibilityMessage(remainingSubmissions: number, activeReviewCount
 
 export async function evaluateCreatorEligibility(email: string): Promise<CreatorEligibilityResult> {
   const airtable = await getServerAirtable();
-  const [creator, assets] = await Promise.all([
+
+  // All four lookups are keyed only on email, so they run concurrently. The
+  // remote eligibility result is wrapped so a rejection stays handled while
+  // the other lookups resolve; it is consumed in priority order below.
+  const remoteEligibilityPromise: Promise<
+    { ok: true; value: RemoteCreatorEligibility } | { ok: false }
+  > = checkRemoteCreatorEligibility(email).then(
+    (value) => ({ ok: true as const, value }),
+    () => ({ ok: false as const })
+  );
+
+  const [creator, assets, externalSubmission] = await Promise.all([
     airtable.getCreatorByEmail(email),
-    airtable.getAssetsByEmail(email).catch(() => [])
+    airtable.getAssetsByEmail(email).catch(() => []),
+    fetchExternalSubmissionStatus(email).catch(
+      (): ExternalSubmissionStatus => ({
+        hasError: true,
+        assetsSubmitted30: 0,
+        isWhitelisted: false
+      })
+    )
   ]);
   const publishedCount = assets.filter((asset) => asset.status === 'Published').length;
   const activeReviewCount = assets.filter(isActiveReviewAsset).length;
@@ -69,14 +87,6 @@ export async function evaluateCreatorEligibility(email: string): Promise<Creator
     }))
   );
 
-  const externalSubmission = await fetchExternalSubmissionStatus(email).catch(
-    (): ExternalSubmissionStatus => ({
-      hasError: true,
-      assetsSubmitted30: 0,
-      isWhitelisted: false
-    })
-  );
-
   const remainingSubmissions = externalSubmission.hasError
     ? localSubmission.remainingSubmissions
     : externalSubmission.isWhitelisted
@@ -86,8 +96,10 @@ export async function evaluateCreatorEligibility(email: string): Promise<Creator
     ? remainingSubmissions
     : undefined;
 
-  try {
-    const remote = await checkRemoteCreatorEligibility(email);
+  const remoteResult = await remoteEligibilityPromise;
+
+  if (remoteResult.ok) {
+    const remote = remoteResult.value;
 
     if (remote.userExists === true && remote.hasError === false) {
       return {
@@ -154,7 +166,7 @@ export async function evaluateCreatorEligibility(email: string): Promise<Creator
       activeReviewCount,
       remainingSubmissions: finiteRemainingSubmissions
     };
-  } catch {
+  } else {
     if (!creator) {
       return {
         allowed: false,
