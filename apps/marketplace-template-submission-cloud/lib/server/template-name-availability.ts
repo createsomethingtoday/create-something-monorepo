@@ -40,6 +40,53 @@ function getErrorMessage(error: unknown): string | null {
   return null;
 }
 
+export function getTemplateNameAvailabilityFailureMessage(error: unknown): string {
+  const rawMessage = getErrorMessage(error) || '';
+  const normalized = rawMessage.toLowerCase();
+
+  if (
+    /runtime env not available|not configured|missing env|missing required environment/.test(
+      normalized
+    )
+  ) {
+    return 'Template name availability could not be checked because this form is not connected to the marketplace name database. The name has not been cleared yet; please try again later.';
+  }
+
+  if (
+    /not authorized|unauthorized|forbidden|missing scopes?|access token|authentication|permission|401|403/.test(
+      normalized
+    )
+  ) {
+    return 'Template name availability could not be checked because the marketplace name lookup is not authorized. The name has not been cleared yet; please try again later or contact the Marketplace team if this continues.';
+  }
+
+  if (/rate limit|too many requests|429/.test(normalized)) {
+    return 'Template name availability is rate limited right now. Wait a minute, then run Check name again.';
+  }
+
+  if (
+    /not found|unknown field|invalid field|invalid table|table .*not|field .*not|404/.test(
+      normalized
+    )
+  ) {
+    return 'Template name availability could not be checked because the marketplace name database configuration needs attention. The name has not been cleared yet; please try again later.';
+  }
+
+  if (/timeout|timed out|abort/.test(normalized)) {
+    return 'Template name availability timed out. The name has not been cleared yet; please run Check name again in a few minutes.';
+  }
+
+  if (
+    /fetch failed|network|enotfound|econnreset|request failed with status 5\d\d|invalid response|temporarily unavailable/.test(
+      normalized
+    )
+  ) {
+    return 'Template name availability could not be checked because the marketplace name service did not respond. The name has not been cleared yet; please run Check name again in a few minutes.';
+  }
+
+  return 'Template name availability could not be checked right now. The name has not been cleared yet; please run Check name again in a few minutes.';
+}
+
 async function getLocalAvailability(
   name: string,
   airtable?: AirtableClient
@@ -53,9 +100,7 @@ async function getLocalAvailability(
   }
 }
 
-async function getRemoteAvailability(
-  name: string
-): Promise<SourceResult<{ taken: boolean }>> {
+async function getRemoteAvailability(name: string): Promise<SourceResult<{ taken: boolean }>> {
   try {
     const result = await checkRemoteTemplateNameAvailability(name);
     return { ok: true, value: result };

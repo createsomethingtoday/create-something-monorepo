@@ -1,5 +1,8 @@
 import { jsonNoStore } from '../../../../lib/server/responses';
-import { checkTemplateNameAvailability } from '../../../../lib/server/template-name-availability';
+import {
+  checkTemplateNameAvailability,
+  getTemplateNameAvailabilityFailureMessage
+} from '../../../../lib/server/template-name-availability';
 import { validateTemplateNameSyntax } from '../../../../lib/intake/template-name';
 
 export async function POST(request: Request) {
@@ -44,19 +47,11 @@ export async function POST(request: Request) {
       warning: availability.warning
     });
   } catch (error) {
-    const message =
-      error instanceof Error
-        ? error.message
-        : typeof error === 'object' &&
-            error &&
-            'message' in error &&
-            typeof (error as { message?: unknown }).message === 'string'
-          ? (error as { message: string }).message
-          : 'Template name availability is temporarily unavailable. Please try again.';
+    const message = getTemplateNameAvailabilityFailureMessage(error);
 
     return jsonNoStore(
       {
-        valid: syntax.valid,
+        valid: false,
         available: false,
         errors: [...syntax.errors, message],
         matchedForbiddenTokens: syntax.matchedForbiddenTokens

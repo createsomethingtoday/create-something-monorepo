@@ -24,7 +24,10 @@ import {
 import { getCachedPublishedValidation } from '../../../../lib/server/published-validation-cache';
 import { runValidatorAppSubmissionPreflight } from '../../../../lib/intake/validator-app';
 import { validateTemplateNameSyntax } from '../../../../lib/intake/template-name';
-import { checkTemplateNameAvailability } from '../../../../lib/server/template-name-availability';
+import {
+  checkTemplateNameAvailability,
+  getTemplateNameAvailabilityFailureMessage
+} from '../../../../lib/server/template-name-availability';
 import { verifyTurnstileToken } from '../../../../lib/server/turnstile';
 
 type TemplateSubmissionBody = {
@@ -270,10 +273,22 @@ export async function POST(request: Request) {
           (error) => ({ ok: false as const, error })
         );
 
-    const [eligibility, templateNameAvailability] = await Promise.all([
+    const [eligibility, templateNameAvailabilityResult] = await Promise.all([
       evaluateCreatorEligibility(creatorEmail),
-      checkTemplateNameAvailability(templateName, { airtable })
+      checkTemplateNameAvailability(templateName, { airtable }).then(
+        (value) => ({ ok: true as const, value }),
+        (error) => ({ ok: false as const, error })
+      )
     ]);
+
+    if (!templateNameAvailabilityResult.ok) {
+      return jsonNoStore(
+        {
+          error: getTemplateNameAvailabilityFailureMessage(templateNameAvailabilityResult.error)
+        },
+        { status: 503 }
+      );
+    }
 
     if (!eligibility.allowed) {
       return jsonNoStore(
@@ -285,7 +300,7 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!templateNameAvailability.available) {
+    if (!templateNameAvailabilityResult.value.available) {
       return jsonNoStore({ error: 'Template name is already in use.' }, { status: 409 });
     }
 
