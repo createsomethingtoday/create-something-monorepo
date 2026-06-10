@@ -22,6 +22,8 @@ test('rejects blocked agent names before availability lookup', async () => {
   assert.equal(response.status, 200);
   assert.equal(payload.valid, false);
   assert.equal(payload.available, false);
-  assert.deepEqual(payload.errors, ['Template names cannot use "agent" or lookalike spellings.']);
+  assert.deepEqual(payload.errors, [
+    'Template names cannot include "agent" or lookalike spellings. Use a name that describes the template itself.'
+  ]);
   assert.deepEqual(payload.matchedForbiddenTokens, ['agent']);
 });

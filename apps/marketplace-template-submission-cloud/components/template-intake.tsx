@@ -3286,8 +3286,8 @@ export function TemplateIntake() {
                       </label>
                       <p className="field-help cc-library-application-form_field-desc">
                         First word must be capitalized. Avoid emoji, category names, tag names, and
-                        the standalone term &quot;AI&quot;. Do not use &quot;agent&quot; or
-                        lookalike spellings.
+                        the standalone term &quot;AI&quot;. Avoid search terms like
+                        &quot;agent&quot; or lookalike spellings.
                       </p>
                       <input
                         className="field-input input w-input"

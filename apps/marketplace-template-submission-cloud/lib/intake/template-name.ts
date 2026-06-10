@@ -72,7 +72,9 @@ export function validateTemplateNameSyntax(value: string): TemplateNameSyntaxRes
 
   const blockedSearchTerms = containsBlockedAgentTerm(name) ? [BLOCKED_AGENT_TERM] : [];
   if (blockedSearchTerms.length > 0) {
-    errors.push('Template names cannot use "agent" or lookalike spellings.');
+    errors.push(
+      'Template names cannot include "agent" or lookalike spellings. Use a name that describes the template itself.'
+    );
   }
 
   const normalized = name.toLowerCase();

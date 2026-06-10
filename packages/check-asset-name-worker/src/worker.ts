@@ -397,7 +397,7 @@ async function handleCheckTemplatename(
     return json(
       {
         message:
-          'Template names containing "agent" or lookalike spellings are not allowed. Please use alternative naming.'
+          'Template names containing "agent" or lookalike spellings are not allowed. Use a name that describes the template itself.'
       },
       400,
       corsHeaders
