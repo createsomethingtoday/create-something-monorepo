@@ -424,7 +424,7 @@
                       <col class="thumb-col" />
                       <col class="name-col" />
                       <col class="submitted-col" />
-                      <col class="type-col" />
+                      <col class="category-col" />
                       {#if showPerformance}
                         <col class="metric-col" />
                         <col class="metric-col" />
@@ -457,7 +457,7 @@
                             Submitted{getSortIndicator('submittedDate')}
                           </button>
                         </TableHead>
-                        <TableHead class="type-head">Type</TableHead>
+                        <TableHead class="category-head">Category</TableHead>
                         {#if showPerformance}
                           <TableHead
                             align="right"
@@ -933,15 +933,15 @@
   }
 
   :global(.desktop-table col.name-col) {
-    width: 44%;
+    width: 42%;
   }
 
   :global(.desktop-table col.submitted-col) {
     width: 12.5%;
   }
 
-  :global(.desktop-table col.type-col) {
-    width: 10%;
+  :global(.desktop-table col.category-col) {
+    width: 12%;
   }
 
   :global(.desktop-table col.metric-col) {
