@@ -906,10 +906,6 @@ const GRID_STYLES = `
 }
 `;
 
-// Injected once per page (mirrors TemplateCard's pattern) so render-branch
-// switches don't unmount/remount a <style> tag and multiple grids share one.
-let _gridStylesInjected = false;
-
 const S: Record<string, CSSProperties> = {
   root: {
     width: '100%',
@@ -1151,15 +1147,6 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
   enableAnalytics = true,
 }) => {
   useMarketplaceComponentErrorTracking('TemplateGrid', enableAnalytics);
-
-  // Inject grid styles synchronously before first paint, once per page.
-  useLayoutEffect(() => {
-    if (_gridStylesInjected) return;
-    _gridStylesInjected = true;
-    const styleEl = document.createElement('style');
-    styleEl.textContent = GRID_STYLES;
-    document.head.appendChild(styleEl);
-  }, []);
 
   // Webflow passes defaultValue strings (including '') as actual values, not undefined.
   // Fall back to the relative path whenever the prop is blank.
@@ -1759,6 +1746,7 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
   if (loading && items.length === 0) {
     return (
       <div style={S.root}>
+        <style dangerouslySetInnerHTML={{ __html: GRID_STYLES }} />
         <div className="tmgrid-grid">
           {Array.from({ length: Math.min(resolvedPageSize, 12) }).map((_, i) => (
             <SkeletonCard key={i} index={i} />
@@ -1804,6 +1792,7 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
 
     return (
       <div style={S.root}>
+        <style dangerouslySetInnerHTML={{ __html: GRID_STYLES }} />
         <div style={S.emptyRecovery} role="status">
           <p style={S.emptyTitle}>{resolvedEmptyTitle}</p>
           <p style={S.emptyDescription}>{resolvedEmptyDescription}</p>
@@ -1838,6 +1827,7 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
 
   return (
     <div style={S.root} aria-busy={isRefreshing ? true : undefined}>
+      <style dangerouslySetInnerHTML={{ __html: GRID_STYLES }} />
       {totalItems !== null && (
         <div style={S.countLabel}>
           {totalItems.toLocaleString()} template{totalItems !== 1 ? 's' : ''}
