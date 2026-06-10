@@ -1,5 +1,6 @@
 import React, {
   CSSProperties,
+  memo,
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -186,6 +187,29 @@ const EMPTY_RECOMMENDATION_COUNT = 4;
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 const gridResponseCache = new Map<string, { timestamp: number; data: ApiResponse }>();
+// Bound the session cache: every query keystroke × page × filter combo is a
+// distinct key, so long browsing sessions would otherwise grow unbounded.
+const GRID_CACHE_MAX_ENTRIES = 50;
+
+function getCachedGridResponse(url: string): ApiResponse | null {
+  const cached = gridResponseCache.get(url);
+  if (!cached) return null;
+  if (Date.now() - cached.timestamp >= SEARCH_CACHE_TTL_MS) {
+    gridResponseCache.delete(url);
+    return null;
+  }
+  return cached.data;
+}
+
+function setCachedGridResponse(url: string, data: ApiResponse): void {
+  gridResponseCache.delete(url);
+  gridResponseCache.set(url, { timestamp: Date.now(), data });
+  while (gridResponseCache.size > GRID_CACHE_MAX_ENTRIES) {
+    const oldestKey = gridResponseCache.keys().next().value;
+    if (oldestKey === undefined) break;
+    gridResponseCache.delete(oldestKey);
+  }
+}
 
 // Hosts whose images need to be routed through the Cloud App proxy.
 // Airtable signed attachment URLs expire after ~2 hours; the proxy caches
@@ -520,13 +544,13 @@ function emptyRecommendationFilters(scope: TemplateScope): FilterState {
 }
 
 async function fetchGridResponse(url: string, signal?: AbortSignal): Promise<ApiResponse> {
-  const cached = gridResponseCache.get(url);
-  if (cached && Date.now() - cached.timestamp < SEARCH_CACHE_TTL_MS) return cached.data;
+  const cached = getCachedGridResponse(url);
+  if (cached) return cached;
 
   const res = await fetch(url, { signal });
   if (!res.ok) throw new Error(`API ${res.status}`);
   const data = (await res.json()) as ApiResponse;
-  gridResponseCache.set(url, { timestamp: Date.now(), data });
+  setCachedGridResponse(url, data);
   return data;
 }
 
@@ -763,6 +787,9 @@ const GRID_STYLES = `
 }
 .tmgrid-item {
   animation: tmgrid-fade-in 320ms ease-out both;
+  /* Skip layout/paint for offscreen cards as infinite scroll accumulates items. */
+  content-visibility: auto;
+  contain-intrinsic-size: auto 420px;
 }
 @media (prefers-reduced-motion: reduce) {
   .tmgrid-item { animation: none; opacity: 1 !important; }
@@ -977,6 +1004,102 @@ const SkeletonCard: React.FC<{ index: number }> = ({ index }) => (
   </div>
 );
 
+// ─── Grid item ────────────────────────────────────────────────────────────────
+
+interface TemplateGridItemViewProps {
+  item: ApiItem;
+  index: number;
+  apiBase: string;
+  pageSize: number;
+  showCategoryMeta: boolean;
+  showTemplateType: boolean;
+  showPreviewLink: boolean;
+  showFeaturedBadge: boolean;
+  showMarketplaceSignals: boolean;
+  onCardClick: (
+    event: React.MouseEvent<HTMLDivElement>,
+    item: ApiItem,
+    index: number,
+    signals: string[],
+  ) => void;
+}
+
+// Memoized so appended pages and loading-state toggles don't re-render the
+// whole accumulated list. Item references are stable across appends; the
+// derived object props (links, images, signals) are created inside so the
+// parent's shallow compare actually holds.
+const TemplateGridItemView = memo<TemplateGridItemViewProps>(({
+  item,
+  index,
+  apiBase,
+  pageSize,
+  showCategoryMeta,
+  showTemplateType,
+  showPreviewLink,
+  showFeaturedBadge,
+  showMarketplaceSignals,
+  onCardClick,
+}) => {
+  const primaryImageUrl = primaryThumbnailUrl(item);
+  const primaryCategory = firstNamedTerm(item.category_groups);
+  const primarySubcategory = firstNamedTerm(item.child_categories);
+  const badgeProps = featuredBadge(item, showFeaturedBadge);
+  const position = index + 1;
+  const signals = marketplaceSignals(item, position);
+
+  return (
+    <div
+      className="tmgrid-item"
+      style={{ animationDelay: `${Math.min(index % pageSize, 11) * 40}ms` }}
+      data-template-slug={item.template_slug}
+      onClickCapture={(event) => onCardClick(event, item, index, signals)}
+    >
+      <TemplateCard
+        templateName={item.name}
+        templateLink={{ href: item.url ?? '#' }}
+        price={formatPrice(item)}
+        priceNumeric={priceNumeric(item)}
+        isFree={isFreeTemplate(item)}
+        creatorName={item.creator_name ?? ''}
+        creatorLink={
+          item.creator_profile_url
+            ? { href: item.creator_profile_url, target: '_blank' }
+            : undefined
+        }
+        categoryName={primaryCategory?.name}
+        categoryLink={toTermLink(primaryCategory)}
+        subcategoryName={primarySubcategory?.name}
+        subcategoryLink={toTermLink(primarySubcategory)}
+        templateType={item.template_type ?? ''}
+        previewLink={previewTemplateLink(item)}
+        creatorIcon={
+          item.creator_avatar_url
+            ? { src: proxyImageUrl(item.creator_avatar_url, apiBase), alt: item.creator_avatar_alt ?? item.creator_name ?? '' }
+            : undefined
+        }
+        primaryImage={primaryImageUrl ? { src: proxyImageUrl(primaryImageUrl, apiBase), alt: item.name } : undefined}
+        secondaryImage={
+          item.thumbnail_image_secondary_url
+            ? { src: proxyImageUrl(item.thumbnail_image_secondary_url, apiBase), alt: item.name }
+            : undefined
+        }
+        priorityIndex={index}
+        deferSecondaryImage
+        approvalDate={item.published_date ?? ''}
+        popularityScore={String(item.popularity_score ?? '')}
+        showCategoryMeta={showCategoryMeta}
+        showTemplateType={showTemplateType}
+        showPreviewLink={showPreviewLink}
+        showMarketplaceSignals={showMarketplaceSignals}
+        marketplaceSignals={signals}
+        {...badgeProps}
+      />
+    </div>
+  );
+});
+
+TemplateGridItemView.displayName = 'TemplateGridItemView';
+
 // ─── TemplateGrid ─────────────────────────────────────────────────────────────
 
 const TemplateGridInner: React.FC<TemplateGridProps> = ({
@@ -1039,7 +1162,6 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
   const [emptyRecommendationsTitleState, setEmptyRecommendationsTitleState] = useState(emptyRecommendationsTitle);
   const [emptyRecommendationsLoading, setEmptyRecommendationsLoading] = useState(false);
 
-  const sentinelRef = useRef<HTMLDivElement>(null);
   // Stale-fetch guard: every new filter/sort change increments this
   const fetchEpochRef = useRef(0);
   const activeFetchAbortRef = useRef<AbortController | null>(null);
@@ -1071,16 +1193,16 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
       const controller = new AbortController();
       activeFetchAbortRef.current = controller;
       const url = buildApiUrl(apiBase, currentFilters, targetPage, resolvedPageSize);
-      const cached = gridResponseCache.get(url);
+      const cached = getCachedGridResponse(url);
 
-      if (cached && Date.now() - cached.timestamp < SEARCH_CACHE_TTL_MS) {
+      if (cached) {
         if (activeFetchAbortRef.current === controller) activeFetchAbortRef.current = null;
         setError(null);
-        setItems((prev) => (append ? [...prev, ...cached.data.items] : cached.data.items));
-        setPage(cached.data.pagination.page);
-        setHasNextPage(cached.data.pagination.has_next_page);
-        setTotalItems(cached.data.pagination.total_items);
-        trackGridHealthEvent(cached.data, currentFilters, append, showMarketplaceSignals, enableAnalytics);
+        setItems((prev) => (append ? [...prev, ...cached.items] : cached.items));
+        setPage(cached.pagination.page);
+        setHasNextPage(cached.pagination.has_next_page);
+        setTotalItems(cached.pagination.total_items);
+        trackGridHealthEvent(cached, currentFilters, append, showMarketplaceSignals, enableAnalytics);
         setLoading(false);
         setLoadingMore(false);
         return;
@@ -1097,7 +1219,7 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
         const res = await fetch(url, { signal: controller.signal });
         if (!res.ok) throw new Error(`API ${res.status}`);
         const data = (await res.json()) as ApiResponse;
-        gridResponseCache.set(url, { timestamp: Date.now(), data });
+        setCachedGridResponse(url, data);
 
         if (epoch !== fetchEpochRef.current) return;
 
@@ -1132,7 +1254,9 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
     if (!showEmptyRecommendations || loading || error || items.length > 0) {
       emptyRecommendationsAbortRef.current?.abort();
       emptyRecommendationsAbortRef.current = null;
-      setEmptyRecommendations([]);
+      // Functional update keeps the previous (already-empty) array reference so
+      // infinite-scroll appends don't schedule a spurious full-grid re-render.
+      setEmptyRecommendations((prev) => (prev.length > 0 ? [] : prev));
       setEmptyRecommendationsLoading(false);
       setEmptyRecommendationsTitleState(emptyRecommendationsTitle);
       return;
@@ -1195,21 +1319,60 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
   }, []);
 
   // ── Infinite scroll ───────────────────────────────────────────────────────
+  //
+  // Pagination state lives in a ref so the IntersectionObserver is created
+  // once per sentinel mount instead of being torn down and recreated on every
+  // fetch cycle. Observers only fire on intersection changes, so a
+  // post-render check continues loading while the sentinel stays in view.
+
+  const scrollStateRef = useRef({ hasNextPage, loadingMore, loading, error, page, filters });
+  const sentinelVisibleRef = useRef(false);
+  const loadMoreInFlightRef = useRef(false);
+  const sentinelObserverRef = useRef<IntersectionObserver | null>(null);
+
+  const maybeLoadMore = useCallback(() => {
+    const state = scrollStateRef.current;
+    if (
+      !sentinelVisibleRef.current ||
+      loadMoreInFlightRef.current ||
+      !state.hasNextPage ||
+      state.loadingMore ||
+      state.loading ||
+      state.error
+    ) {
+      return;
+    }
+    loadMoreInFlightRef.current = true;
+    void fetchPage(state.page + 1, state.filters, true).finally(() => {
+      loadMoreInFlightRef.current = false;
+    });
+  }, [fetchPage]);
 
   useEffect(() => {
-    const sentinel = sentinelRef.current;
-    if (!sentinel) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasNextPage && !loadingMore && !loading) {
-          fetchPage(page + 1, filters, true);
-        }
-      },
-      { rootMargin: '300px' },
-    );
-    observer.observe(sentinel);
-    return () => observer.disconnect();
-  }, [hasNextPage, loadingMore, loading, page, filters, fetchPage]);
+    scrollStateRef.current = { hasNextPage, loadingMore, loading, error, page, filters };
+    maybeLoadMore();
+  });
+
+  const sentinelRefCallback = useCallback(
+    (node: HTMLDivElement | null) => {
+      sentinelObserverRef.current?.disconnect();
+      sentinelObserverRef.current = null;
+      sentinelVisibleRef.current = false;
+      if (!node) return;
+      const observer = new IntersectionObserver(
+        (entries) => {
+          sentinelVisibleRef.current = entries[0].isIntersecting;
+          maybeLoadMore();
+        },
+        { rootMargin: '300px' },
+      );
+      observer.observe(node);
+      sentinelObserverRef.current = observer;
+    },
+    [maybeLoadMore],
+  );
+
+  useEffect(() => () => sentinelObserverRef.current?.disconnect(), []);
 
   // ── Wire Webflow filter/sort UI controls ──────────────────────────────────
   //
@@ -1430,6 +1593,9 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
   // so the grid still refreshes if Webflow isolates or drops the custom event.
   useEffect(() => {
     const id = window.setInterval(() => {
+      // Skip work entirely while the tab is hidden; the first visible tick
+      // catches up on any URL change that happened in the background.
+      if (document.visibilityState === 'hidden') return;
       const href = window.location.href;
       if (href === lastHrefRef.current) return;
       lastHrefRef.current = href;
@@ -1524,65 +1690,21 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
     [enableAnalytics, filters, resolvedPageSize],
   );
 
-  const renderTemplateGridItem = (item: ApiItem, i: number, keyPrefix = 'result') => {
-    const primaryImageUrl = primaryThumbnailUrl(item);
-    const primaryCategory = firstNamedTerm(item.category_groups);
-    const primarySubcategory = firstNamedTerm(item.child_categories);
-    const badgeProps = featuredBadge(item, showFeaturedBadge);
-    const position = i + 1;
-    const signals = marketplaceSignals(item, position);
-
-    return (
-      <div
-        key={`${keyPrefix}-${item.id}`}
-        className="tmgrid-item"
-        style={{ animationDelay: `${Math.min(i % resolvedPageSize, 11) * 40}ms` }}
-        data-template-slug={item.template_slug}
-        onClickCapture={(event) => handleTemplateCardClick(event, item, i, signals)}
-      >
-        <TemplateCard
-          templateName={item.name}
-          templateLink={{ href: item.url ?? '#' }}
-          price={formatPrice(item)}
-          priceNumeric={priceNumeric(item)}
-          isFree={isFreeTemplate(item)}
-          creatorName={item.creator_name ?? ''}
-          creatorLink={
-            item.creator_profile_url
-              ? { href: item.creator_profile_url, target: '_blank' }
-              : undefined
-          }
-          categoryName={primaryCategory?.name}
-          categoryLink={toTermLink(primaryCategory)}
-          subcategoryName={primarySubcategory?.name}
-          subcategoryLink={toTermLink(primarySubcategory)}
-          templateType={item.template_type ?? ''}
-          previewLink={previewTemplateLink(item)}
-          creatorIcon={
-            item.creator_avatar_url
-              ? { src: proxyImageUrl(item.creator_avatar_url, apiBase), alt: item.creator_avatar_alt ?? item.creator_name ?? '' }
-              : undefined
-          }
-          primaryImage={primaryImageUrl ? { src: proxyImageUrl(primaryImageUrl, apiBase), alt: item.name } : undefined}
-          secondaryImage={
-            item.thumbnail_image_secondary_url
-              ? { src: proxyImageUrl(item.thumbnail_image_secondary_url, apiBase), alt: item.name }
-              : undefined
-          }
-          priorityIndex={i}
-          deferSecondaryImage
-          approvalDate={item.published_date ?? ''}
-          popularityScore={String(item.popularity_score ?? '')}
-          showCategoryMeta={showCategoryMeta}
-          showTemplateType={showTemplateType}
-          showPreviewLink={showPreviewLink}
-          showMarketplaceSignals={showMarketplaceSignals}
-          marketplaceSignals={signals}
-          {...badgeProps}
-        />
-      </div>
-    );
-  };
+  const renderTemplateGridItem = (item: ApiItem, i: number, keyPrefix = 'result') => (
+    <TemplateGridItemView
+      key={`${keyPrefix}-${item.id}`}
+      item={item}
+      index={i}
+      apiBase={apiBase}
+      pageSize={resolvedPageSize}
+      showCategoryMeta={showCategoryMeta}
+      showTemplateType={showTemplateType}
+      showPreviewLink={showPreviewLink}
+      showFeaturedBadge={showFeaturedBadge}
+      showMarketplaceSignals={showMarketplaceSignals}
+      onCardClick={handleTemplateCardClick}
+    />
+  );
 
   // ── Render ─────────────────────────────────────────────────────────────────
 
@@ -1689,7 +1811,7 @@ const TemplateGridInner: React.FC<TemplateGridProps> = ({
       </div>
 
       {/* Infinite scroll sentinel */}
-      <div ref={sentinelRef} style={{ height: 1 }} aria-hidden="true" />
+      <div ref={sentinelRefCallback} style={{ height: 1 }} aria-hidden="true" />
 
       {loadingMore && (
         <div style={S.loadMoreWrapper}>

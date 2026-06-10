@@ -849,7 +849,7 @@ const TemplateCardInner: React.FC<TemplateCardProps> = ({
             width="150"
             height="199"
             loading={imageLoading}
-            fetchPriority={resolvedPriorityIndex === 0 ? 'high' : undefined}
+            fetchPriority={resolvedPriorityIndex < 4 ? 'high' : undefined}
             decoding="async"
             src={primaryImage?.src ?? FALLBACK_IMAGE}
             onLoad={handlePrimaryLoad}
