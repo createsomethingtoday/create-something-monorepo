@@ -633,6 +633,7 @@
                       src={asset.thumbnailUrl}
                       alt={asset.name}
                       class="thumbnail-image"
+                      decoding="async"
                       onerror={() => (imageError = true)}
                     />
                   {:else}
@@ -648,6 +649,8 @@
                         src={asset.secondaryThumbnailUrl}
                         alt="{asset.name} secondary"
                         class="secondary-image"
+                        loading="lazy"
+                        decoding="async"
                       />
                     </div>
                   {/if}

@@ -1,6 +1,7 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { getAirtableClient } from '$lib/server/airtable';
+import { invalidateAssetsCache } from '$lib/server/assets-cache';
 
 // POST - Archive asset
 export const POST: RequestHandler = async ({ params, locals, platform }) => {
@@ -24,6 +25,8 @@ export const POST: RequestHandler = async ({ params, locals, platform }) => {
 	if (!result.success) {
 		throw error(500, result.error || 'Failed to archive asset');
 	}
+
+	await invalidateAssetsCache(platform.env.SESSIONS, locals.user.email);
 
 	return json({ success: true });
 };

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { tick } from 'svelte';
 	import { Archive, Eye, LoaderCircle, MoreVertical, Pencil } from 'lucide-svelte';
 	import { trackEvent } from '$lib/utils/analytics';
 	import type { AssetActionDescriptor } from '$lib/utils/asset-actions';
@@ -14,7 +15,7 @@
 		onView?: (id: string) => void;
 		onPreloadView?: (id: string) => void;
 		onEdit?: (id: string) => void;
-		onArchive?: (id: string) => Promise<void>;
+		onArchive?: (id: string) => void | Promise<void>;
 	}
 
 	let {
@@ -96,21 +97,88 @@
 			trackOverflowAction('archive');
 			await onArchive?.(assetId);
 			isOpen = false;
+		} catch (err) {
+			// Keep the menu open so the user can retry; the parent owns user-facing feedback.
+			console.error('Archive action failed:', err);
 		} finally {
 			isArchiving = false;
 		}
 	}
 
-	$effect(() => {
-		if (isOpen) {
-			document.addEventListener('click', handleClickOutside);
-			window.addEventListener('scroll', () => (isOpen = false), true);
-			window.addEventListener('resize', () => (isOpen = false));
+	function closeDropdown() {
+		isOpen = false;
+	}
+
+	function getMenuItems(): HTMLElement[] {
+		if (!dropdownRef) return [];
+		return Array.from(
+			dropdownRef.querySelectorAll<HTMLElement>('[role="menuitem"]:not(:disabled)')
+		);
+	}
+
+	function focusMenuItem(index: number) {
+		const items = getMenuItems();
+		if (items.length === 0) return;
+		const next = ((index % items.length) + items.length) % items.length;
+		items[next].focus();
+	}
+
+	function handleTriggerKeydown(event: KeyboardEvent) {
+		if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+			event.preventDefault();
+			if (!isOpen) {
+				updateDropdownPosition();
+				isOpen = true;
+			}
+			void tick().then(() => focusMenuItem(event.key === 'ArrowDown' ? 0 : -1));
+		} else if (event.key === 'Escape' && isOpen) {
+			event.preventDefault();
+			isOpen = false;
 		}
+	}
+
+	function handleMenuKeydown(event: KeyboardEvent) {
+		const items = getMenuItems();
+		const currentIndex = items.indexOf(document.activeElement as HTMLElement);
+
+		switch (event.key) {
+			case 'ArrowDown':
+				event.preventDefault();
+				focusMenuItem(currentIndex + 1);
+				break;
+			case 'ArrowUp':
+				event.preventDefault();
+				focusMenuItem(currentIndex - 1);
+				break;
+			case 'Home':
+				event.preventDefault();
+				focusMenuItem(0);
+				break;
+			case 'End':
+				event.preventDefault();
+				focusMenuItem(items.length - 1);
+				break;
+			case 'Escape':
+				event.preventDefault();
+				isOpen = false;
+				triggerRef?.focus();
+				break;
+			case 'Tab':
+				// Menus close on Tab rather than trapping focus.
+				isOpen = false;
+				break;
+		}
+	}
+
+	$effect(() => {
+		if (!isOpen) return;
+		document.addEventListener('click', handleClickOutside);
+		window.addEventListener('scroll', closeDropdown, true);
+		window.addEventListener('resize', closeDropdown);
 		return () => {
 			document.removeEventListener('click', handleClickOutside);
-			window.removeEventListener('scroll', () => (isOpen = false), true);
-			window.removeEventListener('resize', () => (isOpen = false));
+			window.removeEventListener('scroll', closeDropdown, true);
+			window.removeEventListener('resize', closeDropdown);
 		};
 	});
 </script>
@@ -122,7 +190,8 @@
 			class="trigger-btn"
 			bind:this={triggerRef}
 			onclick={toggle}
-			aria-haspopup="true"
+			onkeydown={handleTriggerKeydown}
+			aria-haspopup="menu"
 			aria-expanded={isOpen}
 			aria-label="More asset actions"
 		>
@@ -137,8 +206,10 @@
 		bind:this={dropdownRef}
 		style="top: {dropdownPosition.top}px; right: {dropdownPosition.right}px;"
 		role="menu"
+		tabindex="-1"
+		onkeydown={handleMenuKeydown}
 	>
-		{#each actions as action}
+		{#each actions as action (action.handler + action.label)}
 			<button
 				type="button"
 				class="dropdown-item"

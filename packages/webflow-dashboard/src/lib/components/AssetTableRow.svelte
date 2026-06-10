@@ -21,7 +21,7 @@
 		onView?: (id: string) => void;
 		onPreloadView?: (id: string) => void;
 		onEdit?: (id: string) => void;
-		onArchive?: (id: string) => Promise<void>;
+		onArchive?: (id: string) => void | Promise<void>;
 	}
 
 	let {
@@ -94,6 +94,10 @@
 					src={asset.thumbnailUrl}
 					alt={asset.name}
 					class="thumbnail"
+					loading="lazy"
+					decoding="async"
+					width="30"
+					height="38"
 					onerror={() => (imageError = true)}
 				/>
 			{:else}

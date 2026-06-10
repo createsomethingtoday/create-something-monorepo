@@ -51,7 +51,7 @@
     onView?: (id: string) => void;
     onPreloadView?: (id: string) => void;
     onEdit?: (id: string) => void;
-    onArchive?: (id: string) => Promise<void>;
+    onArchive?: (id: string) => void | Promise<void>;
     onRefresh?: () => void;
   }
 
@@ -124,11 +124,16 @@
 
     return sortAssetTypes(Object.keys(groups), typeSortDirection)
       .map((type) => {
-        const statusGroups = sortAssetStatuses(Object.keys(groups[type] || {})).map((status) => ({
-          key: getGroupKey(type, status),
-          status,
-          assets: sortAssetsForDisplay(groups[type][status] || [])
-        }));
+        const statusGroups = sortAssetStatuses(Object.keys(groups[type] || {})).map((status) => {
+          const sortedAssets = sortAssetsForDisplay(groups[type][status] || []);
+          return {
+            key: getGroupKey(type, status),
+            status,
+            assets: sortedAssets,
+            // Computed here so the template doesn't re-reduce every group on each render.
+            totals: calculateTotals(sortedAssets)
+          };
+        });
 
         return {
           type,
@@ -387,7 +392,7 @@
             {@const config = statusConfig[normalizedStatus]}
             {@const showTotals =
               showPerformance && !['Upcoming', 'Rejected'].includes(normalizedStatus)}
-            {@const totals = showTotals ? calculateTotals(statusAssets) : null}
+            {@const totals = showTotals ? statusGroup.totals : null}
 
             <section class="status-section">
               <div class="status-header">

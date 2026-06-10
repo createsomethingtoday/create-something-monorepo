@@ -266,13 +266,27 @@
 
       <!-- Content -->
       {#if isLoading}
-        <div class="loading-container">
-          <div class="loading-dots">
-            <span class="dot"></span>
-            <span class="dot"></span>
-            <span class="dot"></span>
+        <!-- Skeleton mirrors the insights layout so content lands without a jolt -->
+        <div class="skeleton-layout" role="status" aria-label="Loading marketplace insights">
+          <div class="skeleton-stats">
+            {#each Array(4) as _, i (i)}
+              <div class="skeleton-card">
+                <div class="skeleton-line skeleton-line--label"></div>
+                <div class="skeleton-line skeleton-line--value"></div>
+              </div>
+            {/each}
           </div>
-          <p>Loading marketplace insights...</p>
+          <div class="skeleton-table">
+            <div class="skeleton-line skeleton-line--heading"></div>
+            {#each Array(8) as _, i (i)}
+              <div class="skeleton-row">
+                <div class="skeleton-line skeleton-line--wide"></div>
+                <div class="skeleton-line skeleton-line--narrow"></div>
+                <div class="skeleton-line skeleton-line--narrow"></div>
+              </div>
+            {/each}
+          </div>
+          <span class="visually-hidden">Loading marketplace insights...</span>
         </div>
       {:else if error}
         <div class="error-container">
@@ -375,45 +389,106 @@
     max-width: 84ch;
   }
 
-  .loading-container {
+  .skeleton-layout {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: var(--space-2xl);
-    color: var(--color-fg-secondary);
+    gap: var(--space-md);
   }
 
-  .loading-dots {
+  .skeleton-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+    gap: var(--space-sm);
+  }
+
+  .skeleton-card {
     display: flex;
-    gap: var(--space-xs);
-    margin-bottom: var(--space-md);
+    flex-direction: column;
+    gap: var(--space-sm);
+    padding: var(--space-md);
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-lg);
   }
 
-  .dot {
-    width: 8px;
-    height: 8px;
-    background: var(--color-info);
-    border-radius: 50%;
-    animation: pulse 1.5s ease-in-out infinite;
+  .skeleton-table {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    padding: var(--space-md);
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border-default);
+    border-radius: var(--radius-lg);
   }
 
-  .dot:nth-child(2) {
-    animation-delay: 0.2s;
+  .skeleton-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: var(--space-sm);
   }
 
-  .dot:nth-child(3) {
-    animation-delay: 0.4s;
+  .skeleton-line {
+    height: 0.85rem;
+    border-radius: var(--radius-sm);
+    background: linear-gradient(
+      90deg,
+      var(--color-bg-subtle, rgba(255, 255, 255, 0.06)) 25%,
+      var(--color-hover, rgba(255, 255, 255, 0.12)) 50%,
+      var(--color-bg-subtle, rgba(255, 255, 255, 0.06)) 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.4s ease-in-out infinite;
   }
 
-  @keyframes pulse {
-    0%,
-    100% {
-      opacity: 0.5;
+  .skeleton-line--label {
+    width: 45%;
+  }
+
+  .skeleton-line--value {
+    width: 65%;
+    height: 1.4rem;
+  }
+
+  .skeleton-line--heading {
+    width: 30%;
+    height: 1.1rem;
+    margin-bottom: var(--space-xs);
+  }
+
+  .skeleton-line--wide {
+    width: 100%;
+  }
+
+  .skeleton-line--narrow {
+    width: 70%;
+    justify-self: end;
+  }
+
+  @keyframes shimmer {
+    from {
+      background-position: 200% 0;
     }
-    50% {
-      opacity: 1;
+    to {
+      background-position: -200% 0;
     }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .skeleton-line {
+      animation: none;
+    }
+  }
+
+  .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
   }
 
   .error-container {

@@ -3,6 +3,7 @@
 	import WebflowLogo from '$lib/components/WebflowLogo.svelte';
 	import {
 		SUPPORTED_COUNTRIES,
+		isSupportedCountry,
 		requiresSpecificStripeOnboarding
 	} from '$lib/intake/countries';
 
@@ -19,10 +20,102 @@
 	let loading = $state(false);
 	let error = $state<string | null>(null);
 
+	// Inline (blur-time) validation so problems surface before submit.
+	type FieldName =
+		| 'country'
+		| 'primaryEmail'
+		| 'webflowEmail'
+		| 'legalName'
+		| 'websiteUrl'
+		| 'biography'
+		| 'avatar';
+	let fieldErrors = $state<Partial<Record<FieldName, string>>>({});
+
+	const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+	const AVATAR_MAX_BYTES = 100 * 1024;
+
+	function getFieldError(field: FieldName): string | undefined {
+		switch (field) {
+			case 'country':
+				if (!country.trim()) {
+					return 'Country of residence is required.';
+				}
+				if (!isSupportedCountry(country)) {
+					return 'Choose a country from the supported list.';
+				}
+				break;
+			case 'primaryEmail':
+				if (!primaryEmail.trim()) {
+					return 'Primary email is required.';
+				}
+				if (!EMAIL_REGEX.test(primaryEmail.trim())) {
+					return 'Enter a valid email address, e.g. you@example.com.';
+				}
+				break;
+			case 'webflowEmail':
+				if (!webflowEmail.trim()) {
+					return 'Webflow account email is required.';
+				}
+				if (!EMAIL_REGEX.test(webflowEmail.trim())) {
+					return 'Enter a valid email address, e.g. you@example.com.';
+				}
+				break;
+			case 'legalName':
+				if (!legalName.trim()) {
+					return 'Your legal name is required.';
+				}
+				break;
+			case 'websiteUrl':
+				if (websiteUrl.trim()) {
+					try {
+						const parsed = new URL(websiteUrl.trim());
+						if (!['http:', 'https:'].includes(parsed.protocol)) {
+							return 'Use a full URL starting with https://';
+						}
+					} catch {
+						return 'Use a full URL starting with https://';
+					}
+				}
+				break;
+			case 'biography':
+				if (!biography.trim()) {
+					return 'Short bio is required.';
+				}
+				break;
+			case 'avatar':
+				if (!avatarFile) {
+					return 'Profile image is required.';
+				}
+				if (avatarFile.type !== 'image/webp') {
+					return 'The image must be a WebP file.';
+				}
+				if (avatarFile.size > AVATAR_MAX_BYTES) {
+					return `The image must be under 100KB (yours is ${Math.ceil(avatarFile.size / 1024)}KB).`;
+				}
+				break;
+		}
+
+		return undefined;
+	}
+
+	function validateField(field: FieldName): void {
+		const message = getFieldError(field);
+		fieldErrors = { ...fieldErrors, [field]: message };
+	}
+
+	function clearFieldError(field: FieldName): void {
+		if (fieldErrors[field]) {
+			fieldErrors = { ...fieldErrors, [field]: undefined };
+		}
+	}
+
+	const hasFieldErrors = $derived(Object.values(fieldErrors).some(Boolean));
+
 	function handleAvatarChange(event: Event) {
 		const target = event.currentTarget as HTMLInputElement;
 		avatarFile = target.files?.[0] || null;
 		uploadedAvatarUrl = null;
+		validateField('avatar');
 	}
 
 	async function uploadAvatar(): Promise<string> {
@@ -56,6 +149,30 @@
 
 	async function handleSubmit(event: Event) {
 		event.preventDefault();
+
+		// Re-validate everything so submit catches fields the user never blurred.
+		const nextFieldErrors = (
+			[
+				'country',
+				'primaryEmail',
+				'webflowEmail',
+				'legalName',
+				'websiteUrl',
+				'biography',
+				'avatar'
+			] as const
+		).reduce<Partial<Record<FieldName, string>>>((errors, field) => {
+			const message = getFieldError(field);
+			if (message) errors[field] = message;
+			return errors;
+		}, {});
+		fieldErrors = nextFieldErrors;
+
+		if (Object.values(nextFieldErrors).some(Boolean)) {
+			error = 'Please fix the highlighted fields and try again.';
+			return;
+		}
+
 		loading = true;
 		error = null;
 
@@ -116,7 +233,7 @@
 
 		<form class="form-grid" onsubmit={handleSubmit}>
 			<div class="field">
-				<label for="country">Country of residence</label>
+				<label for="country">Country of residence <span class="required-mark" aria-hidden="true">*</span></label>
 				<input
 					id="country"
 					name="country"
@@ -126,7 +243,14 @@
 					autocomplete="country-name"
 					required
 					disabled={loading}
+					aria-invalid={Boolean(fieldErrors.country)}
+					aria-describedby={fieldErrors.country ? 'country-error' : undefined}
+					onblur={() => validateField('country')}
+					oninput={() => clearFieldError('country')}
 					/>
+					{#if fieldErrors.country}
+						<p class="field-error" id="country-error">{fieldErrors.country}</p>
+					{/if}
 					<p class="hint">
 						We use this to check creator payout availability. Some countries require specific
 						Stripe onboarding before payouts can continue.
@@ -151,12 +275,19 @@
 					placeholder="https://your-site.com"
 					autocomplete="url"
 					disabled={loading}
+					aria-invalid={Boolean(fieldErrors.websiteUrl)}
+					aria-describedby={fieldErrors.websiteUrl ? 'websiteUrl-error' : undefined}
+					onblur={() => validateField('websiteUrl')}
+					oninput={() => clearFieldError('websiteUrl')}
 				/>
+				{#if fieldErrors.websiteUrl}
+					<p class="field-error" id="websiteUrl-error">{fieldErrors.websiteUrl}</p>
+				{/if}
 				<p class="hint">Optional, but this will be stored on your creator profile.</p>
 			</div>
 
 			<div class="field">
-				<label for="primaryEmail">Primary email</label>
+				<label for="primaryEmail">Primary email <span class="required-mark" aria-hidden="true">*</span></label>
 				<input
 					id="primaryEmail"
 					name="primaryEmail"
@@ -166,12 +297,19 @@
 					autocomplete="email"
 					required
 					disabled={loading}
+					aria-invalid={Boolean(fieldErrors.primaryEmail)}
+					aria-describedby={fieldErrors.primaryEmail ? 'primaryEmail-error' : undefined}
+					onblur={() => validateField('primaryEmail')}
+					oninput={() => clearFieldError('primaryEmail')}
 				/>
+				{#if fieldErrors.primaryEmail}
+					<p class="field-error" id="primaryEmail-error">{fieldErrors.primaryEmail}</p>
+				{/if}
 				<p class="hint">We’ll send your verification link here.</p>
 			</div>
 
 			<div class="field">
-				<label for="webflowEmail">Webflow account email</label>
+				<label for="webflowEmail">Webflow account email <span class="required-mark" aria-hidden="true">*</span></label>
 				<input
 					id="webflowEmail"
 					name="webflowEmail"
@@ -181,7 +319,14 @@
 					autocomplete="email"
 					required
 					disabled={loading}
+					aria-invalid={Boolean(fieldErrors.webflowEmail)}
+					aria-describedby={fieldErrors.webflowEmail ? 'webflowEmail-error' : undefined}
+					onblur={() => validateField('webflowEmail')}
+					oninput={() => clearFieldError('webflowEmail')}
 				/>
+				{#if fieldErrors.webflowEmail}
+					<p class="field-error" id="webflowEmail-error">{fieldErrors.webflowEmail}</p>
+				{/if}
 				<p class="hint">This should match the email on your Webflow account.</p>
 			</div>
 
@@ -199,7 +344,7 @@
 			</div>
 
 			<div class="field">
-				<label for="legalName">Full legal name</label>
+				<label for="legalName">Full legal name <span class="required-mark" aria-hidden="true">*</span></label>
 				<input
 					id="legalName"
 					name="legalName"
@@ -209,11 +354,18 @@
 					autocomplete="name"
 					required
 					disabled={loading}
+					aria-invalid={Boolean(fieldErrors.legalName)}
+					aria-describedby={fieldErrors.legalName ? 'legalName-error' : undefined}
+					onblur={() => validateField('legalName')}
+					oninput={() => clearFieldError('legalName')}
 				/>
+				{#if fieldErrors.legalName}
+					<p class="field-error" id="legalName-error">{fieldErrors.legalName}</p>
+				{/if}
 			</div>
 
 			<div class="field full-width">
-				<label for="biography">Short bio</label>
+				<label for="biography">Short bio <span class="required-mark" aria-hidden="true">*</span></label>
 				<textarea
 					id="biography"
 					name="biography"
@@ -222,15 +374,22 @@
 					maxlength="200"
 					required
 					disabled={loading}
+					aria-invalid={Boolean(fieldErrors.biography)}
+					aria-describedby={fieldErrors.biography ? 'biography-error biography-hint' : 'biography-hint'}
+					onblur={() => validateField('biography')}
+					oninput={() => clearFieldError('biography')}
 				></textarea>
+				{#if fieldErrors.biography}
+					<p class="field-error" id="biography-error">{fieldErrors.biography}</p>
+				{/if}
 				<div class="field-row">
-					<p class="hint">Up to 200 characters.</p>
+					<p class="hint" id="biography-hint">Up to 200 characters.</p>
 					<p class="count">{biography.length}/200</p>
 				</div>
 			</div>
 
 			<div class="field full-width">
-				<label for="avatar">Profile image</label>
+				<label for="avatar">Profile image <span class="required-mark" aria-hidden="true">*</span></label>
 				<input
 					id="avatar"
 					name="avatar"
@@ -238,9 +397,14 @@
 					accept=".webp,image/webp"
 					required
 					disabled={loading}
+					aria-invalid={Boolean(fieldErrors.avatar)}
+					aria-describedby={fieldErrors.avatar ? 'avatar-error avatar-hint' : 'avatar-hint'}
 					onchange={handleAvatarChange}
 				/>
-				<p class="hint">Upload a 256x256 WebP image under 100KB.</p>
+				<p class="hint" id="avatar-hint">Upload a 256x256 WebP image under 100KB.</p>
+				{#if fieldErrors.avatar}
+					<p class="field-error" id="avatar-error">{fieldErrors.avatar}</p>
+				{/if}
 				{#if avatarFile}
 					<p class="file-name">{avatarFile.name}</p>
 				{/if}
@@ -416,6 +580,22 @@
 
 	.warning {
 		color: var(--color-warning);
+	}
+
+	.required-mark {
+		color: var(--color-error);
+	}
+
+	.field-error {
+		font-size: var(--text-caption);
+		color: var(--color-error);
+		margin: var(--space-xs) 0 0;
+		line-height: 1.4;
+	}
+
+	input[aria-invalid='true'],
+	textarea[aria-invalid='true'] {
+		border-color: var(--color-error);
 	}
 
 	.field-row {
