@@ -59,6 +59,13 @@ interface TemplateDetailCategoryCrumb {
 }
 
 const CATEGORY_ROUTE_ALIASES: Record<string, string> = {
+  'community-and-non-profit': 'community-and-nonprofit-websites',
+  'community-and-non-profit-websites': 'community-and-nonprofit-websites',
+  'community-and-non-profits': 'community-and-nonprofit-websites',
+  'community-and-non-profits-websites': 'community-and-nonprofit-websites',
+  'community-and-nonprofit': 'community-and-nonprofit-websites',
+  'community-and-nonprofits': 'community-and-nonprofit-websites',
+  'community-and-nonprofits-websites': 'community-and-nonprofit-websites',
   'real-estate-and-property-management': 'real-estate-websites',
   'retail-and-ecommerce': 'retail-and-e-commerce-websites',
   'retail-and-e-commerce': 'retail-and-e-commerce-websites',
