@@ -656,14 +656,32 @@ export const TEMPLATE_DETAIL_STYLES = `
   }
 
   .wfdt-actions {
-    flex-direction: column;
-    gap: 12px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    width: 100%;
     margin-top: 18px;
   }
 
   .wfdt-actions .wfdt-button {
     width: 100%;
-    min-height: 52px;
+    min-height: 46px;
+    padding: 0 12px;
+    font-size: 13px;
+    line-height: 1.15;
+    text-align: center;
+    white-space: normal;
+  }
+
+  .wfdt-actions .wfdt-button:not(.wfdt-button-secondary) {
+    grid-column: 1 / -1;
+    min-height: 50px;
+    font-size: 14px;
+  }
+
+  .wfdt-actions .wfdt-button-secondary {
+    color: #1f1f1f;
+    box-shadow: 0 1px 2px rgba(8, 8, 8, 0.04);
   }
 
   .wfdt-preview-section {
