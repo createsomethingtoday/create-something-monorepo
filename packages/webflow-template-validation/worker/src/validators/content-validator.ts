@@ -75,6 +75,9 @@ const WEBFLOW_DEFAULT_PATTERNS = [
 	/text\s+block/i
 ];
 
+const HOMEPAGE_TITLE_HTML_SUFFIX = ' - Webflow HTML website template';
+const HOMEPAGE_TITLE_ECOMMERCE_SUFFIX = ' - Webflow Ecommerce website template';
+
 const UTILITY_PAGE_PLACEHOLDER_ALLOWED_SLUGS = new Set([
 	'/401',
 	'/404',
@@ -242,7 +245,7 @@ export async function validateContent(
 			const parsedHTML = parseHTML(htmlResult.html);
 			const pageAnalysis = await analyzePage(pageUrl, parsedHTML);
 
-			const issues = generateContentIssues([pageAnalysis], resolvedChecks);
+			const issues = generateContentIssues([pageAnalysis], resolvedChecks, options);
 			const stats = calculateContentStats([pageAnalysis]);
 
 			return { issues, stats, pages: [pageAnalysis] };
@@ -278,7 +281,7 @@ export async function validateContent(
 			: combinedPages;
 
 		// Generate content validation issues
-		const issues = generateContentIssues(allPages, resolvedChecks);
+		const issues = generateContentIssues(allPages, resolvedChecks, options);
 
 		// Calculate content statistics
 		const stats = calculateContentStats(allPages);
@@ -740,7 +743,8 @@ async function discoverAdditionalPages(
 
 export function generateContentIssues(
 	pages: AnalyzedPage[],
-	checks?: ValidationOptions['contentChecks']
+	checks?: ValidationOptions['contentChecks'],
+	options?: ValidationOptions
 ): ValidationIssue[] {
 	const resolvedChecks = {
 		lorem: checks?.lorem !== false,
@@ -853,6 +857,7 @@ export function generateContentIssues(
 	if (resolvedChecks.seo) {
 		const seoIssues = generateSEOIssues(pages);
 		issues.push(...seoIssues);
+		issues.push(...generateHomepageTitleFormulaIssues(pages, options));
 	}
 
 	// Generate content quality issues
@@ -1069,6 +1074,83 @@ function generateSEOIssues(pages: AnalyzedPage[]): ValidationIssue[] {
 	});
 
 	return seoIssues;
+}
+
+type HomepageTitleFormulaContext = {
+	templateName: string;
+	templateType?: 'html' | 'ecommerce';
+};
+
+function generateExpectedHomepageTitles(context: HomepageTitleFormulaContext): string[] {
+	const suffixes = context.templateType === 'ecommerce'
+		? [HOMEPAGE_TITLE_ECOMMERCE_SUFFIX]
+		: context.templateType === 'html'
+			? [HOMEPAGE_TITLE_HTML_SUFFIX]
+			: [HOMEPAGE_TITLE_HTML_SUFFIX, HOMEPAGE_TITLE_ECOMMERCE_SUFFIX];
+
+	return suffixes.map(suffix => `${context.templateName}${suffix}`);
+}
+
+function normalizeTitleFormulaValue(value: string): string {
+	return decodeBasicHtmlEntities(value)
+		.replace(/[\u2010\u2011\u2012\u2013\u2014\u2015]/g, '-')
+		.replace(/\s+/g, ' ')
+		.trim()
+		.toLowerCase();
+}
+
+function isHomepageUrl(url: string): boolean {
+	try {
+		const pathname = new URL(url).pathname;
+		return pathname === '/' || pathname === '';
+	} catch {
+		const normalized = normalizeSlugForComparison(url);
+		return normalized === null;
+	}
+}
+
+function generateHomepageTitleFormulaIssues(
+	pages: AnalyzedPage[],
+	options?: ValidationOptions
+): ValidationIssue[] {
+	const templateName = options?.marketplaceTemplateName?.trim();
+	if (!templateName) return [];
+
+	const homePage = pages.find(page => isHomepageUrl(page.url));
+	if (!homePage?.seo.title) return [];
+
+	const context: HomepageTitleFormulaContext = { templateName };
+	if (options?.marketplaceTemplateType) {
+		context.templateType = options.marketplaceTemplateType;
+	}
+	const expectedTitles = generateExpectedHomepageTitles(context);
+	const observedTitle = homePage.seo.title;
+	const observedComparable = normalizeTitleFormulaValue(observedTitle);
+	const matchesExpected = expectedTitles.some(expectedTitle =>
+		normalizeTitleFormulaValue(expectedTitle) === observedComparable
+	);
+
+	if (matchesExpected) return [];
+
+	return [{
+		id: 'homepage-title-formula',
+		category: 'Content & Accessibility',
+		severity: 'warning',
+		message: 'Homepage SEO title does not match the required Webflow template format',
+		description: 'Marketplace homepage titles should follow the required template formula so the listing metadata is consistent before publish.',
+		howToFix: `Set the homepage title tag to "${expectedTitles[0]}"${expectedTitles.length > 1 ? ' or the Ecommerce variant if this is an Ecommerce template.' : '.'}`,
+		location: homePage.url,
+		details: {
+			page: 'Home',
+			url: homePage.url,
+			ruleId: 'wf.template.seo.home_title_format',
+			templateName,
+			templateType: options?.marketplaceTemplateType || 'html_or_ecommerce',
+			currentTitle: observedTitle,
+			expectedTitle: expectedTitles[0],
+			expectedTitles
+		}
+	}];
 }
 
 function getPageNameFromUrl(url: string): string {

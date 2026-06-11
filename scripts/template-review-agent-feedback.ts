@@ -508,6 +508,7 @@ async function generateFeedback(
     '- Mention uncertainty directly when evidence is incomplete.',
     '- If prior review history exists, call out recurring patterns briefly.',
     '- Prefer findings that map to submission requirements or rubric sections over generic observations.',
+    '- Always compare the homepage crawl title to the required template title formula when the template name is known: Static/CMS "{Template Name} - Webflow HTML website template"; Ecommerce "{Template Name} - Webflow Ecommerce website template". If it does not match, call out the observed and expected title.',
     '- Call out likely issues such as missing required pages, weak conversion design, typography/accessibility risks, empty or misleading links, trademark/logo misuse, library attachment risks, GSAP instruction/documentation gaps, ecommerce misconfiguration, licensing/asset concerns, Audit Panel failures, inconsistent naming/variables/components, or legacy interaction/custom-code risks when the evidence suggests them.',
     '- Do not recommend approval unless the evidence strongly suggests Good-or-better quality across all rubric areas; otherwise frame as reviewer checks and likely risk areas.',
     '',

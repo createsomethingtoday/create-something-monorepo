@@ -465,7 +465,7 @@ creator-facing feedback.
 - `template_review_get_comprehensive_review_contract` (read-only comprehensive evidence contract for Auto/Partial/Manual coverage, rubric dimensions, manual checks, and Agent Review Feedback format)
 - `template_review_format_agent_review_feedback` (read-only comprehensive evidence validator/formatter for Agent Review Feedback drafts; does not write Airtable)
 - `template_review_prepare_published_site_sandbox` (read-only E2B sandbox job/runner bundle for first-class published-site evidence; does not execute E2B or write Airtable)
-- `template_review_run_published_site_validation` (read-only published-site validation; no Designer/Preview data or Airtable writes)
+- `template_review_run_published_site_validation` (read-only published-site validation; accepts optional `template_name` context for homepage SEO title formula checks; no Designer/Preview data or Airtable writes)
 - `template_review_list_releases`
 - `template_review_complete_publishing`
 - `template_review_assign_reviewer`

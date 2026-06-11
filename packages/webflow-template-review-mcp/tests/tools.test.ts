@@ -421,6 +421,7 @@ test('published-site validation tool calls working validators without Airtable w
 
   const result = await handlers.get('template_review_run_published_site_validation')?.({
     published_url: 'https://example-template.webflow.io/',
+    template_name: 'Example Template',
     max_pages: 5,
     page_slugs: ['/about'],
   });
@@ -431,6 +432,7 @@ test('published-site validation tool calls working validators without Airtable w
 
   const validation = payload.data?.validation as {
     publishedUrl: string;
+    templateName?: string;
     rubricCoverage: string;
     caveats: string[];
     results: {
@@ -440,6 +442,7 @@ test('published-site validation tool calls working validators without Airtable w
   };
 
   assert.equal(validation.publishedUrl, 'https://example-template.webflow.io/');
+  assert.equal(validation.templateName, 'Example Template');
   assert.equal(validation.rubricCoverage, 'partial_published_site_validation');
   assert.ok(validation.caveats.some((caveat) => caveat.includes('Lorem/placeholder findings are review evidence')));
   assert.ok(validation.caveats.some((caveat) => caveat.includes('generated Webflow video fallback/poster assets')));
@@ -458,6 +461,7 @@ test('published-site validation tool calls working validators without Airtable w
   assert.equal(validation.results.gsap_custom_code.detections.flaggedCodeCount, 1);
   assert.equal(requests.length, 2);
   assert.equal(requests[0]?.body.siteUrl, 'https://example-template.webflow.io/');
+  assert.equal(requests[0]?.body.options.marketplaceTemplateName, 'Example Template');
   assert.deepEqual(requests[0]?.body.designerData, { components: [], styles: [], pages: [], assets: [] });
   assert.equal(requests[1]?.body.url, 'https://example-template.webflow.io/');
 });

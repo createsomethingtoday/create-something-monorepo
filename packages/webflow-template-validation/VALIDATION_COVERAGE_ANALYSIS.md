@@ -120,7 +120,7 @@ The **Webflow Way Validator** provides **70-75% automated coverage** of standard
 
 | **Requirement** | **Coverage** | **Implementation** | **What Validator Checks** | **Manual Review Needed** |
 |-----------------|--------------|-------------------|---------------------------|-------------------------|
-| **SEO title format on homepage** | ✅ FULL | 🔧 API `getCurrentPage().getSearchTitle()` | Validates homepage title format and character limits | None - fully automated |
+| **SEO title format on homepage** | ✅ FULL with template context | 🔧 API `getCurrentPage().getSearchTitle()` + published-site validation options | Validates homepage title format, character limits, and required `{Template Name} - Webflow HTML website template` / Ecommerce formula when the template name is supplied | Provide template name/type context for formula enforcement |
 | **License page legal disclaimer** | ❌ MANUAL | N/A | Content quality assessment required | **Manual**: Verify legal text completeness and accuracy |
 | **Template name follows guidelines** | ❌ MANUAL | N/A | Naming guideline compliance requires context | **Manual**: Review name appropriateness and market positioning |
 | **Thumbnail matches guidelines** | ❌ MANUAL | N/A | Visual assessment required | **Manual**: Verify thumbnail design and guidelines compliance |

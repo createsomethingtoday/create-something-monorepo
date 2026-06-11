@@ -358,20 +358,24 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
 
   server.tool(
     'template_review_run_published_site_validation',
-    'Read-only: run published-site validators for content, assets, accessibility signals, interactions/IX2, GSAP, and custom-code policy evidence. Uses published_url only; does not use Designer/Preview data or write to Airtable.',
+    'Read-only: run published-site validators for content, assets, accessibility signals, homepage SEO title formula, interactions/IX2, GSAP, and custom-code policy evidence. Uses published_url plus optional template_name context; does not use Designer/Preview data or write to Airtable.',
     {
       published_url: z.string().url(),
+      template_name: z.string().min(1).optional(),
+      template_type: z.enum(['html', 'ecommerce']).optional(),
       page_slugs: z.array(z.string().min(1)).max(100).optional(),
       checks: z.array(z.enum(PUBLISHED_SITE_VALIDATION_CHECKS)).min(1).optional(),
       max_pages: z.number().int().min(1).max(100).optional(),
       include_raw: z.boolean().optional(),
     },
-    async ({ published_url, page_slugs, checks, max_pages, include_raw }) => {
+    async ({ published_url, template_name, template_type, page_slugs, checks, max_pages, include_raw }) => {
       try {
         return asSuccess({
           validation: await runPublishedSiteValidation(
             {
               published_url,
+              template_name,
+              template_type,
               page_slugs,
               checks,
               max_pages,
