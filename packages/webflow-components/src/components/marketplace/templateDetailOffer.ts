@@ -70,6 +70,11 @@ export function normalizeTemplateDetailImage(image?: TemplateDetailImage | strin
   return image;
 }
 
+function isPlaceholderTemplateDetailHref(href?: string | null): boolean {
+  const normalized = compact(href).toLowerCase();
+  return !normalized || normalized === '#' || normalized === 'about:blank' || normalized === '/';
+}
+
 export function inferTemplateSlug(explicitSlug?: string): string {
   const trimmed = explicitSlug?.trim();
   if (trimmed) return trimmed;
@@ -140,8 +145,15 @@ export function resolveTemplateDetailCheckoutLink(input: {
 }): Partial<TemplateDetailLink> {
   const checkoutUrl = normalizeTemplateDetailLink(input.checkoutUrl);
   const href = compact(checkoutUrl.href);
-  if (href && href !== '#' && href !== 'about:blank') return checkoutUrl;
+  if (!isPlaceholderTemplateDetailHref(href)) return checkoutUrl;
   return marketplaceCheckoutLink(input.marketplaceTemplateId);
+}
+
+function resolveTemplateDetailFulfillmentLink(link?: TemplateDetailLink): Partial<TemplateDetailLink> {
+  const fulfillmentUrl = normalizeTemplateDetailLink(link);
+  const href = compact(fulfillmentUrl.href);
+  if (isPlaceholderTemplateDetailHref(href)) return {};
+  return fulfillmentUrl;
 }
 
 function formatDateLabel(value?: string): string {
@@ -267,7 +279,7 @@ function attributionContext(templateSlug?: string): MarketplaceAnalyticsData {
 
 export function resolveTemplateDetailOffer(input: TemplateDetailOfferInput): TemplateDetailOfferState {
   const checkoutFallbackUrl = resolveTemplateDetailCheckoutLink(input);
-  const fulfillmentUrl = normalizeTemplateDetailLink(input.fulfillmentUrl);
+  const fulfillmentUrl = resolveTemplateDetailFulfillmentLink(input.fulfillmentUrl);
   const offerPriceLabel = compact(input.offerPrice);
   const offerVisibility = compact(input.offerVisibility);
   const postOfferAction = compact(input.postOfferAction);
@@ -275,7 +287,7 @@ export function resolveTemplateDetailOffer(input: TemplateDetailOfferInput): Tem
   const priceLabel = isFreeTemplate ? 'Free' : compact(input.price) || DEFAULT_PRICE;
   const hasOffer = Boolean(input.offerEnabled && (offerPriceLabel || compact(input.offerLabel) || fulfillmentUrl.href));
   const mode = resolveMode(input, hasOffer);
-  const activePrimaryLink = hasOffer || mode === 'free' ? fulfillmentUrl : checkoutFallbackUrl;
+  const activePrimaryLink = hasOffer ? fulfillmentUrl : checkoutFallbackUrl;
   const fallbackPrimaryLink = checkoutFallbackUrl.href ? checkoutFallbackUrl : fulfillmentUrl;
   const primaryLink = activePrimaryLink.href ? activePrimaryLink : fallbackPrimaryLink;
 
