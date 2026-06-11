@@ -6,6 +6,7 @@
 	import { TimeSlotPicker } from '@create-something/canon/domains/agency';
 	import { BookingForm } from '@create-something/canon/domains/agency';
 	import { BookingConfirmation } from '@create-something/canon/domains/agency';
+	import WorkflowSignalIcon from '$lib/components/WorkflowSignalIcon.svelte';
 	import {
 		AGENCY_MARKETING_COPY_EXPERIMENT,
 		getAgencyMarketingExperimentMetadata
@@ -87,22 +88,30 @@
 
 	const mappingSessionOutcomes = [
 		{
-			label: 'Handoff map',
-			description: 'The workflow, owner, source systems, and places the work breaks down.'
+			value: 'Objects',
+			label: 'Workflow map',
+			icon: 'objects',
+			description: 'Objects, owners, source systems, handoffs, and failure points.'
 		},
 		{
-			label: 'Ownership boundary',
-			description: 'What your team owns, what CREATE SOMETHING owns, and what vendors provide.'
+			value: 'Actions',
+			label: 'Action boundary',
+			icon: 'actions',
+			description: 'What can run, who owns it, and where vendor responsibility stops.'
 		},
 		{
-			label: 'Decision rules',
-			description: 'What can run, what needs approval, and what should stop with a reason.'
+			value: 'States',
+			label: 'Decision states',
+			icon: 'states',
+			description: 'Auto-allowed, approval-needed, and blocked paths with reasons.'
 		},
 		{
-			label: 'First safe path',
-			description: 'The smallest service lane that adds useful capacity without hiding risk.'
+			value: 'Receipts',
+			label: 'Session receipts',
+			icon: 'receipts',
+			description: 'The map, boundary, decision notes, and first safe build path.'
 		}
-	];
+	] as const;
 
 	const mappingSessionPrep = [
 		'One real workflow your team wants out of manual coordination',
@@ -345,16 +354,22 @@
 		<h1 class="booking-title">Map the workflow your team needs to trust.</h1>
 		<p class="booking-subtitle">
 			Bring the handoff with the most drag, risk, or manual rescue. You leave with the
-			first map, the ownership boundary, the decision rules, and the safest service path for
-			turning it into dependable capacity.
+			objects named, actions scoped, decision states, and receipts that make the first safe
+			service path visible.
 		</p>
 	</header>
 
 	<section class="session-outcomes" aria-label="Mapping session outcomes">
 		{#each mappingSessionOutcomes as outcome}
 			<article>
-				<span>{outcome.label}</span>
-				<p>{outcome.description}</p>
+				<div class="session-outcome-icon" aria-hidden="true">
+					<WorkflowSignalIcon name={outcome.icon} />
+				</div>
+				<div class="session-outcome-copy">
+					<span>{outcome.value}</span>
+					<h2>{outcome.label}</h2>
+					<p>{outcome.description}</p>
+				</div>
 			</article>
 		{/each}
 	</section>
@@ -536,20 +551,76 @@
 
 	.session-outcomes article {
 		display: grid;
-		gap: var(--space-2xs);
-		padding: var(--space-sm);
+		grid-template-columns: 3.4rem minmax(0, 1fr);
+		gap: 0.95rem;
+		align-items: center;
+		position: relative;
+		min-height: 6.75rem;
+		padding: 1rem 1.1rem;
 		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
-		background: var(--color-bg-surface);
+		background:
+			linear-gradient(180deg, rgba(255, 255, 255, 0.042), rgba(255, 255, 255, 0.014)),
+			var(--color-bg-surface);
+		overflow: hidden;
 	}
 
-	.session-outcomes span {
+	.session-outcomes article::after {
+		content: '';
+		position: absolute;
+		top: 50%;
+		left: 4.85rem;
+		width: 1.1rem;
+		height: 1px;
+		background: linear-gradient(90deg, rgba(225, 231, 255, 0.18), rgba(255, 255, 255, 0));
+		transform: translateY(-50%);
+		pointer-events: none;
+	}
+
+	.session-outcome-icon {
+		display: grid;
+		place-items: center;
+		width: 3.35rem;
+		height: 3.35rem;
+		--workflow-signal-icon-size: 2.18rem;
+		border: 1px solid rgba(225, 231, 255, 0.11);
+		border-radius: 12px;
+		background:
+			linear-gradient(rgba(225, 231, 255, 0.045) 1px, transparent 1px),
+			linear-gradient(90deg, rgba(225, 231, 255, 0.045) 1px, transparent 1px),
+			linear-gradient(180deg, rgba(255, 255, 255, 0.032), rgba(255, 255, 255, 0.012));
+		background-size:
+			11px 11px,
+			11px 11px,
+			auto;
+		box-shadow:
+			inset 0 0 0 1px rgba(255, 255, 255, 0.018),
+			0 10px 22px rgba(0, 0, 0, 0.14);
+	}
+
+	.session-outcome-copy {
+		display: grid;
+		gap: 0.3rem;
+		min-width: 0;
+	}
+
+	.session-outcome-copy span {
+		color: var(--color-fg-muted);
+		font-family: var(--font-mono);
+		font-size: 0.72rem;
+		line-height: 1.1;
+		text-transform: uppercase;
+	}
+
+	.session-outcome-copy h2 {
+		margin: 0;
 		color: var(--color-fg-primary);
-		font-size: var(--text-body-sm);
+		font-size: 1.02rem;
 		font-weight: var(--font-medium);
+		line-height: 1.16;
 	}
 
-	.session-outcomes p {
+	.session-outcome-copy p {
 		margin: 0;
 		color: var(--color-fg-tertiary);
 		font-size: var(--text-caption);
