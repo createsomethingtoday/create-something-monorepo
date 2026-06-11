@@ -58,6 +58,12 @@ interface TemplateDetailCategoryCrumb {
   href: string;
 }
 
+const CATEGORY_ROUTE_ALIASES: Record<string, string> = {
+  'real-estate-and-property-management': 'real-estate-websites',
+  'retail-and-ecommerce': 'retail-and-e-commerce-websites',
+  'retail-and-e-commerce': 'retail-and-e-commerce-websites',
+};
+
 const PREVIEW_DEVICE_DIMENSIONS: Record<TemplateDetailPreviewDevice, { width: number; height: number }> = {
   desktop: { width: 1280, height: 800 },
   mobile: { width: 390, height: 760 },
@@ -89,17 +95,25 @@ function splitCategoryList(value?: string): string[] {
 }
 
 function categorySlug(label: string): string {
-  return label
+  const slug = label
     .toLowerCase()
-    .replace(/&/g, ' ')
+    .replace(/&/g, ' and ')
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
+  if (!slug) return '';
+  return CATEGORY_ROUTE_ALIASES[slug] ?? (slug.endsWith('-websites') ? slug : `${slug}-websites`);
 }
 
 function categoryHrefFromBase(label: string, baseUrl: string): string {
   const slug = categorySlug(label);
   const base = (baseUrl.trim() || '/templates').replace(/\/+$/, '');
   return slug ? `${base}/${slug}` : base;
+}
+
+function usableHref(value?: string): string {
+  const href = value?.trim() ?? '';
+  if (!href || href === '#' || href.toLowerCase() === 'about:blank') return '';
+  return href;
 }
 
 function buildCategoryCrumbs(input: {
@@ -111,8 +125,8 @@ function buildCategoryCrumbs(input: {
 }): TemplateDetailCategoryCrumb[] {
   const explicitLabels = splitCategoryList(input.categoryNames);
   const labels = explicitLabels.length ? explicitLabels : splitCategoryList(input.categoryName);
-  const hrefs = splitCategoryList(input.categoryLinks);
-  const primaryHref = normalizeTemplateDetailLink(input.categoryLink).href;
+  const hrefs = splitCategoryList(input.categoryLinks).map(usableHref);
+  const primaryHref = usableHref(normalizeTemplateDetailLink(input.categoryLink).href);
   const effectiveLabels = labels.length ? labels : ['Category'];
 
   return effectiveLabels.map((label, index) => ({
@@ -261,7 +275,10 @@ const TemplateDetailHeroInner: React.FC<TemplateDetailHeroProps> = ({
       has_browser_preview: Boolean(browserPreview.href),
       has_designer_preview: Boolean(designerPreview.href),
       category_count: breadcrumbCategories.length,
-      category_links_provided: Boolean(categoryLinks.trim() || normalizeTemplateDetailLink(categoryLink).href),
+      category_links_provided: Boolean(
+        splitCategoryList(categoryLinks).some(usableHref) ||
+          usableHref(normalizeTemplateDetailLink(categoryLink).href),
+      ),
       default_preview_device: previewDefaultDevice,
       preview_device: previewDevice,
       preview_device_controls_enabled: showPreviewDeviceControls,
