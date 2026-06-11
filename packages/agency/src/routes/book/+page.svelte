@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
-	import { SEO } from '@create-something/canon';
+	import { HeroSignalField, SEO } from '@create-something/canon';
 	import { getAnalytics } from '@create-something/canon/analytics';
 	import { DatePicker } from '@create-something/canon/domains/agency';
 	import { TimeSlotPicker } from '@create-something/canon/domains/agency';
@@ -114,11 +114,27 @@
 	] as const;
 
 	const mappingSessionPrep = [
-		'One real workflow your team wants out of manual coordination',
-		'The accounts, tools, or systems involved',
-		'The person who can approve risk, scope, or access',
-		'No secrets, tokens, passwords, or API keys in booking notes'
-	];
+		{
+			label: 'Workflow',
+			icon: 'objects',
+			detail: 'One real workflow your team wants out of manual coordination.'
+		},
+		{
+			label: 'Systems',
+			icon: 'actions',
+			detail: 'The accounts, tools, or systems involved in the handoff.'
+		},
+		{
+			label: 'Approver',
+			icon: 'states',
+			detail: 'The person who can approve risk, scope, or access.'
+		},
+		{
+			label: 'No secrets',
+			icon: 'receipts',
+			detail: 'No secrets, tokens, passwords, or API keys in booking notes.'
+		}
+	] as const;
 
 	const sessionFitSignals = [
 		{
@@ -349,29 +365,35 @@
 />
 
 <main class="booking-page">
-	<header class="booking-header">
-		<p class="booking-kicker">Workflow mapping session</p>
-		<h1 class="booking-title">Map the workflow your team needs to trust.</h1>
-		<p class="booking-subtitle">
-			Bring the handoff with the most drag, risk, or manual rescue. You leave with the
-			objects named, actions scoped, decision states, and receipts that make the first safe
-			service path visible.
-		</p>
-	</header>
+	<section class="booking-stage" aria-labelledby="booking-title">
+		<HeroSignalField variant="agency" focus="right" />
 
-	<section class="session-outcomes" aria-label="Mapping session outcomes">
-		{#each mappingSessionOutcomes as outcome}
-			<article>
-				<div class="session-outcome-icon" aria-hidden="true">
-					<WorkflowSignalIcon name={outcome.icon} />
-				</div>
-				<div class="session-outcome-copy">
-					<span>{outcome.value}</span>
-					<h2>{outcome.label}</h2>
-					<p>{outcome.description}</p>
-				</div>
-			</article>
-		{/each}
+		<div class="booking-stage-inner">
+			<header class="booking-header">
+				<p class="booking-kicker">Workflow mapping session</p>
+				<h1 id="booking-title" class="booking-title">Map the workflow your team needs to trust.</h1>
+				<p class="booking-subtitle">
+					Bring the handoff with the most drag, risk, or manual rescue. You leave with the
+					objects named, actions scoped, decision states, and receipts that make the first safe
+					service path visible.
+				</p>
+			</header>
+
+			<div class="session-outcomes" aria-label="Mapping session outcomes">
+				{#each mappingSessionOutcomes as outcome}
+					<article>
+						<div class="session-outcome-icon" aria-hidden="true">
+							<WorkflowSignalIcon name={outcome.icon} />
+						</div>
+						<div class="session-outcome-copy">
+							<span>{outcome.value}</span>
+							<h2>{outcome.label}</h2>
+							<p>{outcome.description}</p>
+						</div>
+					</article>
+				{/each}
+			</div>
+		</div>
 	</section>
 
 	<section class="session-prep" aria-label="What to bring to the mapping session">
@@ -385,7 +407,15 @@
 		</div>
 		<ul>
 			{#each mappingSessionPrep as item}
-				<li>{item}</li>
+				<li>
+					<div class="prep-icon" aria-hidden="true">
+						<WorkflowSignalIcon name={item.icon} />
+					</div>
+					<div class="prep-copy">
+						<span>{item.label}</span>
+						<p>{item.detail}</p>
+					</div>
+				</li>
 			{/each}
 		</ul>
 	</section>
@@ -509,13 +539,61 @@
 	.booking-page {
 		max-width: var(--content-width-xl);
 		margin: 0 auto;
-		padding: var(--space-xl) var(--space-md);
+		padding: clamp(1.1rem, 2.4vw, 2rem) var(--space-md);
 		min-height: 100vh;
+	}
+
+	.booking-stage {
+		position: relative;
+		display: grid;
+		align-items: end;
+		min-height: clamp(21.5rem, 34vw, 27rem);
+		margin-bottom: clamp(1rem, 2vw, 1.45rem);
+		overflow: clip;
+		isolation: isolate;
+	}
+
+	.booking-stage::after {
+		content: '';
+		position: absolute;
+		inset: 0;
+		z-index: 1;
+		pointer-events: none;
+		background:
+			linear-gradient(
+				180deg,
+				rgba(3, 3, 4, 0.92) 0%,
+				rgba(3, 3, 4, 0.56) 18%,
+				rgba(3, 3, 4, 0.2) 42%,
+				rgba(3, 3, 4, 0.38) 78%,
+				rgba(3, 3, 4, 0.94) 100%
+			),
+			linear-gradient(
+				90deg,
+				rgba(3, 3, 4, 0.96) 0%,
+				rgba(3, 3, 4, 0.72) 30%,
+				rgba(3, 3, 4, 0.24) 58%,
+				rgba(3, 3, 4, 0.58) 100%
+			);
+	}
+
+	.booking-stage :global(.hero-signal-field) {
+		inset: -2.5rem -4.5rem -3rem -2rem;
+		opacity: 0.56;
+	}
+
+	.booking-stage-inner {
+		position: relative;
+		z-index: 2;
+		display: grid;
+		gap: clamp(1.1rem, 2.5vw, 1.7rem);
+		width: 100%;
+		padding: clamp(0.9rem, 2.6vw, 1.9rem) 0 clamp(0.25rem, 1vw, 0.75rem);
 	}
 
 	.booking-header {
 		text-align: center;
-		margin-bottom: var(--space-xl);
+		margin: 0;
 	}
 
 	.booking-kicker {
@@ -546,7 +624,7 @@
 		display: grid;
 		grid-template-columns: repeat(4, minmax(0, 1fr));
 		gap: var(--space-sm);
-		margin-bottom: var(--space-xl);
+		margin: 0;
 	}
 
 	.session-outcomes article {
@@ -632,20 +710,22 @@
 		grid-template-columns: minmax(0, 0.75fr) minmax(0, 1fr);
 		gap: var(--space-md);
 		align-items: start;
-		margin: calc(var(--space-xl) * -0.45) 0 var(--space-xl);
+		margin: 0 0 clamp(1.25rem, 3vw, 2rem);
 		padding: var(--space-md);
 		border: 1px solid var(--color-border-default);
 		border-radius: var(--radius-lg);
-		background: color-mix(in srgb, var(--color-bg-surface) 78%, transparent);
+		background:
+			linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.012)),
+			color-mix(in srgb, var(--color-bg-surface) 78%, transparent);
 	}
 
-	.session-prep span {
+	.session-prep > div > span {
 		color: var(--color-fg-primary);
 		font-size: var(--text-body-sm);
 		font-weight: var(--font-medium);
 	}
 
-	.session-prep p {
+	.session-prep > div > p {
 		margin: var(--space-2xs) 0 0;
 		color: var(--color-fg-tertiary);
 		font-size: var(--text-body-sm);
@@ -655,25 +735,71 @@
 	.session-prep ul {
 		display: grid;
 		grid-template-columns: repeat(2, minmax(0, 1fr));
-		gap: var(--space-xs);
+		gap: 0.7rem;
 		margin: 0;
 		padding: 0;
 		list-style: none;
 	}
 
 	.session-prep li {
-		padding-top: var(--space-2xs);
+		display: grid;
+		grid-template-columns: 2.5rem minmax(0, 1fr);
+		gap: 0.7rem;
+		align-items: center;
+		min-height: 4.25rem;
+		padding: 0.72rem;
 		border-top: 1px solid var(--color-border-default);
+		border-radius: var(--radius-md);
+		background: rgba(255, 255, 255, 0.018);
 		color: var(--color-fg-tertiary);
 		font-size: var(--text-caption);
 		line-height: 1.45;
+	}
+
+	.prep-icon {
+		display: grid;
+		place-items: center;
+		width: 2.42rem;
+		height: 2.42rem;
+		--workflow-signal-icon-size: 1.58rem;
+		--workflow-signal-icon-color: rgba(226, 232, 240, 0.62);
+		border: 1px solid rgba(225, 231, 255, 0.1);
+		border-radius: 10px;
+		background:
+			linear-gradient(rgba(225, 231, 255, 0.04) 1px, transparent 1px),
+			linear-gradient(90deg, rgba(225, 231, 255, 0.04) 1px, transparent 1px),
+			rgba(255, 255, 255, 0.018);
+		background-size:
+			9px 9px,
+			9px 9px,
+			auto;
+	}
+
+	.prep-copy {
+		display: grid;
+		gap: 0.18rem;
+		min-width: 0;
+	}
+
+	.prep-copy span {
+		color: var(--color-fg-primary);
+		font-size: var(--text-caption);
+		font-weight: var(--font-medium);
+		line-height: 1.15;
+	}
+
+	.prep-copy p {
+		margin: 0;
+		color: var(--color-fg-tertiary);
+		font-size: var(--text-caption);
+		line-height: 1.42;
 	}
 
 	.session-fit {
 		display: grid;
 		grid-template-columns: repeat(2, minmax(0, 1fr));
 		gap: var(--space-sm);
-		margin-bottom: var(--space-xl);
+		margin-bottom: clamp(1.25rem, 3vw, 2rem);
 	}
 
 	.session-fit article {
@@ -712,7 +838,7 @@
 		align-items: center;
 		justify-content: center;
 		gap: var(--space-sm);
-		margin-bottom: var(--space-xl);
+		margin-bottom: clamp(1.1rem, 2.5vw, 1.75rem);
 	}
 
 	.progress-step {
@@ -774,11 +900,35 @@
 
 		.session-prep {
 			grid-template-columns: 1fr;
-			margin-top: calc(var(--space-xl) * -0.35);
 		}
 	}
 
 	@media (max-width: 520px) {
+		.booking-page {
+			padding-top: 1.1rem;
+		}
+
+		.booking-stage {
+			min-height: auto;
+			margin-bottom: 1.25rem;
+		}
+
+		.booking-stage::after {
+			background:
+				linear-gradient(180deg, rgba(3, 3, 4, 0.92), rgba(3, 3, 4, 0.58) 42%, rgba(3, 3, 4, 0.96)),
+				linear-gradient(90deg, rgba(3, 3, 4, 0.92), rgba(3, 3, 4, 0.38), rgba(3, 3, 4, 0.74));
+		}
+
+		.booking-stage :global(.hero-signal-field) {
+			inset: 0 -2.5rem -1.75rem -1rem;
+			opacity: 0.42;
+		}
+
+		.booking-stage-inner {
+			gap: 1rem;
+			padding: 1rem 0 0;
+		}
+
 		.session-outcomes {
 			grid-template-columns: 1fr;
 		}
@@ -800,7 +950,7 @@
 
 	/* Content */
 	.booking-content {
-		margin-bottom: var(--space-xl);
+		margin-bottom: clamp(1.4rem, 3vw, 2.1rem);
 	}
 
 	.step-content {
