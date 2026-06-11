@@ -20,7 +20,10 @@ export interface TemplateDetailHeroProps {
   templateName?: string;
   templateSlug?: string;
   categoryName?: string;
+  categoryNames?: string;
   categoryLink?: TemplateDetailLink;
+  categoryLinks?: string;
+  categoryBaseUrl?: string;
   creatorName?: string;
   creatorLink?: TemplateDetailLink;
   creatorAvatar?: TemplateDetailImage;
@@ -32,6 +35,7 @@ export interface TemplateDetailHeroProps {
   designerPreviewUrl?: TemplateDetailLink;
   previewIframeUrl?: TemplateDetailLink;
   checkoutUrl?: TemplateDetailLink;
+  marketplaceTemplateId?: string;
   offerEnabled?: boolean;
   offerMode?: TemplateDetailOfferMode;
   offerLabel?: string;
@@ -48,6 +52,11 @@ export interface TemplateDetailHeroProps {
 }
 
 type TemplateDetailPreviewDevice = 'desktop' | 'mobile';
+
+interface TemplateDetailCategoryCrumb {
+  label: string;
+  href: string;
+}
 
 const PREVIEW_DEVICE_DIMENSIONS: Record<TemplateDetailPreviewDevice, { width: number; height: number }> = {
   desktop: { width: 1280, height: 800 },
@@ -67,6 +76,52 @@ function targetForHref(href: string, target?: string): string | undefined {
 function formatTemplateTitle(name: string): string {
   const label = name.trim() || 'Template name';
   return /\bwebsite\s+template$/i.test(label) ? label : `${label} - Website Template`;
+}
+
+function splitCategoryList(value?: string): string[] {
+  const raw = value?.trim();
+  if (!raw) return [];
+  const separator = raw.includes('\n') ? /\n+/ : /,\s*/;
+  return raw
+    .split(separator)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function categorySlug(label: string): string {
+  return label
+    .toLowerCase()
+    .replace(/&/g, ' ')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+function categoryHrefFromBase(label: string, baseUrl: string): string {
+  const slug = categorySlug(label);
+  const base = (baseUrl.trim() || '/templates').replace(/\/+$/, '');
+  return slug ? `${base}/${slug}` : base;
+}
+
+function buildCategoryCrumbs(input: {
+  categoryName: string;
+  categoryNames?: string;
+  categoryLink?: TemplateDetailLink;
+  categoryLinks?: string;
+  categoryBaseUrl: string;
+}): TemplateDetailCategoryCrumb[] {
+  const explicitLabels = splitCategoryList(input.categoryNames);
+  const labels = explicitLabels.length ? explicitLabels : splitCategoryList(input.categoryName);
+  const hrefs = splitCategoryList(input.categoryLinks);
+  const primaryHref = normalizeTemplateDetailLink(input.categoryLink).href;
+  const effectiveLabels = labels.length ? labels : ['Category'];
+
+  return effectiveLabels.map((label, index) => ({
+    label,
+    href:
+      (index === 0 && primaryHref) ||
+      hrefs[index] ||
+      categoryHrefFromBase(label, input.categoryBaseUrl),
+  }));
 }
 
 function actionClick(
@@ -92,7 +147,10 @@ const TemplateDetailHeroInner: React.FC<TemplateDetailHeroProps> = ({
   templateName = 'Template name',
   templateSlug = '',
   categoryName = 'Templates',
+  categoryNames = '',
   categoryLink,
+  categoryLinks = '',
+  categoryBaseUrl = 'https://webflow.com/templates/category',
   creatorName = '',
   creatorLink,
   creatorAvatar,
@@ -104,6 +162,7 @@ const TemplateDetailHeroInner: React.FC<TemplateDetailHeroProps> = ({
   designerPreviewUrl,
   previewIframeUrl,
   checkoutUrl,
+  marketplaceTemplateId = '',
   offerEnabled = false,
   offerMode = 'marketplace',
   offerLabel = '',
@@ -123,9 +182,23 @@ const TemplateDetailHeroInner: React.FC<TemplateDetailHeroProps> = ({
   const [previewDevice, setPreviewDevice] = useState<TemplateDetailPreviewDevice>(previewDefaultDevice);
   const [previewStageWidth, setPreviewStageWidth] = useState(0);
   const previewStageRef = useRef<HTMLDivElement>(null);
+  const heroViewedRef = useRef(false);
+  const previewVisibleTrackedRef = useRef(false);
+  const previewLoadedHrefRef = useRef('');
+  const previewLoadStartedAtRef = useRef<number | null>(null);
 
   const resolvedSlug = useMemo(() => inferTemplateSlug(templateSlug), [templateSlug]);
-  const categoryHref = normalizeTemplateDetailLink(categoryLink).href || '/templates';
+  const breadcrumbCategories = useMemo(
+    () =>
+      buildCategoryCrumbs({
+        categoryName,
+        categoryNames,
+        categoryLink,
+        categoryLinks,
+        categoryBaseUrl,
+      }),
+    [categoryBaseUrl, categoryLink, categoryName, categoryNames, categoryLinks],
+  );
   const creatorHref = normalizeTemplateDetailLink(creatorLink).href || '#';
   const avatar = normalizeTemplateDetailImage(creatorAvatar);
   const browserPreview = normalizeTemplateDetailLink(browserPreviewUrl);
@@ -149,6 +222,7 @@ const TemplateDetailHeroInner: React.FC<TemplateDetailHeroProps> = ({
       resolveTemplateDetailOffer({
         templateSlug: resolvedSlug,
         price,
+        marketplaceTemplateId,
         isFree,
         offerEnabled,
         offerMode,
@@ -164,6 +238,7 @@ const TemplateDetailHeroInner: React.FC<TemplateDetailHeroProps> = ({
       checkoutUrl,
       fulfillmentUrl,
       isFree,
+      marketplaceTemplateId,
       offerEnabled,
       offerEndsAt,
       offerLabel,
@@ -177,22 +252,31 @@ const TemplateDetailHeroInner: React.FC<TemplateDetailHeroProps> = ({
   );
 
   useEffect(() => {
+    if (!enableAnalytics || heroViewedRef.current) return;
+    heroViewedRef.current = true;
     actionClick('TemplateDetailHero', 'detail_hero_viewed', enableAnalytics, resolvedSlug, {
       has_creator: Boolean(creatorName),
       has_creator_avatar: Boolean(avatar.src),
       has_preview_iframe: Boolean(previewIframeHref),
       has_browser_preview: Boolean(browserPreview.href),
       has_designer_preview: Boolean(designerPreview.href),
+      category_count: breadcrumbCategories.length,
+      category_links_provided: Boolean(categoryLinks.trim() || normalizeTemplateDetailLink(categoryLink).href),
+      default_preview_device: previewDefaultDevice,
       preview_device: previewDevice,
       preview_device_controls_enabled: showPreviewDeviceControls,
     }, offer);
   }, [
     avatar.src,
     browserPreview.href,
+    breadcrumbCategories.length,
+    categoryLink,
+    categoryLinks,
     creatorName,
     designerPreview.href,
     enableAnalytics,
     offer,
+    previewDefaultDevice,
     previewDevice,
     previewIframeHref,
     resolvedSlug,
@@ -201,14 +285,21 @@ const TemplateDetailHeroInner: React.FC<TemplateDetailHeroProps> = ({
 
   useEffect(() => {
     setPreviewIframeReady(false);
+    previewLoadedHrefRef.current = '';
+    previewLoadStartedAtRef.current = null;
     if (!hasPreviewIframe || typeof window === 'undefined') return undefined;
 
     const timeout = window.setTimeout(() => {
+      previewLoadStartedAtRef.current = typeof performance === 'undefined' ? Date.now() : performance.now();
       setPreviewIframeReady(true);
     }, 200);
 
     return () => window.clearTimeout(timeout);
   }, [hasPreviewIframe, previewIframeHref]);
+
+  useEffect(() => {
+    previewVisibleTrackedRef.current = false;
+  }, [previewIframeHref]);
 
   useEffect(() => {
     setPreviewDevice(previewDefaultDevice);
@@ -232,6 +323,62 @@ const TemplateDetailHeroInner: React.FC<TemplateDetailHeroProps> = ({
     window.addEventListener('resize', updateWidth);
     return () => window.removeEventListener('resize', updateWidth);
   }, [hasPreviewIframe]);
+
+  useEffect(() => {
+    if (!enableAnalytics || !hasPreviewIframe || typeof window === 'undefined') return undefined;
+    const element = previewStageRef.current;
+    if (!element) return undefined;
+
+    const trackVisible = () => {
+      if (previewVisibleTrackedRef.current) return;
+      previewVisibleTrackedRef.current = true;
+      actionClick('TemplateDetailHero', 'detail_preview_iframe_visible', enableAnalytics, resolvedSlug, {
+        default_preview_device: previewDefaultDevice,
+        preview_device: previewDevice,
+        preview_device_controls_enabled: showPreviewDeviceControls,
+      }, offer);
+    };
+
+    const BrowserIntersectionObserver = typeof IntersectionObserver === 'undefined' ? null : IntersectionObserver;
+    if (BrowserIntersectionObserver) {
+      const observer = new BrowserIntersectionObserver(
+        (entries) => {
+          if (entries.some((entry) => entry.isIntersecting)) {
+            trackVisible();
+            observer.disconnect();
+          }
+        },
+        { threshold: 0.25 },
+      );
+      observer.observe(element);
+      return () => observer.disconnect();
+    }
+
+    const frame = window.requestAnimationFrame(trackVisible);
+    return () => window.cancelAnimationFrame(frame);
+  }, [
+    enableAnalytics,
+    hasPreviewIframe,
+    offer,
+    previewDefaultDevice,
+    previewDevice,
+    resolvedSlug,
+    showPreviewDeviceControls,
+  ]);
+
+  function handlePreviewIframeLoad(): void {
+    if (!previewIframeReady || !previewIframeHref || previewLoadedHrefRef.current === previewIframeHref) return;
+    previewLoadedHrefRef.current = previewIframeHref;
+    const now = typeof performance === 'undefined' ? Date.now() : performance.now();
+    const startedAt = previewLoadStartedAtRef.current;
+    actionClick('TemplateDetailHero', 'detail_preview_iframe_loaded', enableAnalytics, resolvedSlug, {
+      default_preview_device: previewDefaultDevice,
+      preview_device: previewDevice,
+      preview_device_controls_enabled: showPreviewDeviceControls,
+      preview_load_ms: startedAt === null ? null : Math.max(0, Math.round(now - startedAt)),
+      has_preview_url: true,
+    }, offer);
+  }
 
   const badgeClass =
     offer.tone === 'sale'
@@ -314,9 +461,16 @@ const TemplateDetailHeroInner: React.FC<TemplateDetailHeroProps> = ({
                 />
               </svg>
             </span>
-            <a className="wfdt-breadcrumb-link" href={categoryHref}>
-              {categoryName || 'Category'}
-            </a>
+            <span className="wfdt-breadcrumb-categories">
+              {breadcrumbCategories.map((category, index) => (
+                <React.Fragment key={`${category.label}-${index}`}>
+                  {index > 0 ? <span className="wfdt-breadcrumb-comma">, </span> : null}
+                  <a className="wfdt-breadcrumb-link" href={category.href}>
+                    {category.label}
+                  </a>
+                </React.Fragment>
+              ))}
+            </span>
           </nav>
           <div className="wfdt-hero-main">
             <div className="wfdt-hero-identity">
@@ -423,7 +577,11 @@ const TemplateDetailHeroInner: React.FC<TemplateDetailHeroProps> = ({
                 ))}
               </div>
             ) : null}
-            <div className="wfdt-preview-stage" ref={previewStageRef} style={previewStageStyle}>
+            <div
+              className={`wfdt-preview-stage wfdt-preview-stage-${previewDevice}`}
+              ref={previewStageRef}
+              style={previewStageStyle}
+            >
               <div className={`wfdt-preview-frame wfdt-preview-frame-${previewDevice}`} style={previewFrameStyle}>
                 <iframe
                   className="wfdt-preview-iframe"
@@ -433,6 +591,7 @@ const TemplateDetailHeroInner: React.FC<TemplateDetailHeroProps> = ({
                   loading="lazy"
                   sandbox="allow-scripts"
                   allowFullScreen
+                  onLoad={handlePreviewIframeLoad}
                 />
               </div>
             </div>

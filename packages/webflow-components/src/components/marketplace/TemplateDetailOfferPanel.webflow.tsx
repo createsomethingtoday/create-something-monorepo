@@ -19,6 +19,11 @@ export default declareComponent(TemplateDetailOfferPanel, {
     price: props.Text({ name: 'Marketplace Price', defaultValue: '' }),
     isFree: props.Boolean({ name: 'Is Free', defaultValue: false }),
     checkoutUrl: props.Link({ name: 'Marketplace Checkout URL' }),
+    marketplaceTemplateId: props.Text({
+      name: 'Marketplace Template ID',
+      defaultValue: '',
+      tooltip: 'Bind to the Templates CMS Unique ID field. Used to build the Marketplace checkout redirect if Marketplace Checkout URL is blank.',
+    }),
     offerEnabled: props.Boolean({
       name: 'Offer Enabled',
       defaultValue: false,

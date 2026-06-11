@@ -100,6 +100,7 @@
 
   // Template Health is a template-only creator guidance surface.
   const canShowHealth = $derived(asset.type === 'Template');
+  const templateHealth = $derived(computeTemplateHealth(asset));
 
   const hasActiveOffer = $derived(
     Boolean(
@@ -110,6 +111,11 @@
         asset.activeOfferVisibility ||
         asset.activeOfferPrice !== undefined
     )
+  );
+  const canShowOfferRequest = $derived(
+    canShowHealth &&
+      asset.status === 'Published' &&
+      (hasActiveOffer || templateHealth.automation.code === 'run_recovery_offer')
   );
   const isSearchSuppressed = $derived(isTemplateSearchSuppressed(asset.searchVisibility));
 
@@ -776,7 +782,9 @@
           >
             <div class="health-tab-stack">
               <TemplateHealthCard {asset} onLifecycleApplied={handleLifecycleApplied} />
-              <TemplateOfferRequestCard {asset} />
+              {#if canShowOfferRequest}
+                <TemplateOfferRequestCard {asset} />
+              {/if}
             </div>
           </TabsContent>
         {/if}

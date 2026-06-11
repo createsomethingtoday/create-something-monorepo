@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { trackMarketplaceEvent } from './analytics';
 import { MarketplaceComponentErrorBoundary, useMarketplaceComponentErrorTracking } from './MarketplaceComponentErrorBoundary';
 import {
@@ -24,6 +24,7 @@ export interface TemplateDetailStickyBarProps {
   browserPreviewUrl?: TemplateDetailLink;
   designerPreviewUrl?: TemplateDetailLink;
   checkoutUrl?: TemplateDetailLink;
+  marketplaceTemplateId?: string;
   offerEnabled?: boolean;
   offerMode?: TemplateDetailOfferMode;
   offerLabel?: string;
@@ -57,6 +58,7 @@ const TemplateDetailStickyBarInner: React.FC<TemplateDetailStickyBarProps> = ({
   browserPreviewUrl,
   designerPreviewUrl,
   checkoutUrl,
+  marketplaceTemplateId = '',
   offerEnabled = false,
   offerMode = 'marketplace',
   offerLabel = '',
@@ -70,6 +72,8 @@ const TemplateDetailStickyBarInner: React.FC<TemplateDetailStickyBarProps> = ({
   enableAnalytics = true,
 }) => {
   useMarketplaceComponentErrorTracking('TemplateDetailStickyBar', enableAnalytics);
+  const stickyBarRef = useRef<HTMLDivElement>(null);
+  const stickyVisibleTrackedRef = useRef(false);
 
   const resolvedSlug = useMemo(() => inferTemplateSlug(templateSlug), [templateSlug]);
   const image = normalizeTemplateDetailImage(thumbnail);
@@ -80,6 +84,7 @@ const TemplateDetailStickyBarInner: React.FC<TemplateDetailStickyBarProps> = ({
       resolveTemplateDetailOffer({
         templateSlug: resolvedSlug,
         price,
+        marketplaceTemplateId,
         isFree,
         offerEnabled,
         offerMode,
@@ -95,6 +100,7 @@ const TemplateDetailStickyBarInner: React.FC<TemplateDetailStickyBarProps> = ({
       checkoutUrl,
       fulfillmentUrl,
       isFree,
+      marketplaceTemplateId,
       offerEnabled,
       offerEndsAt,
       offerLabel,
@@ -118,13 +124,50 @@ const TemplateDetailStickyBarInner: React.FC<TemplateDetailStickyBarProps> = ({
     );
   }, [enableAnalytics, offer, resolvedSlug]);
 
+  useEffect(() => {
+    if (!enableAnalytics || typeof window === 'undefined') return undefined;
+    const element = stickyBarRef.current;
+    if (!element) return undefined;
+
+    const trackVisible = () => {
+      if (stickyVisibleTrackedRef.current) return;
+      stickyVisibleTrackedRef.current = true;
+      trackMarketplaceEvent(
+        'Code Component Event',
+        {
+          ...templateDetailAnalyticsBase('TemplateDetailStickyBar', resolvedSlug, offer),
+          scope: 'detail_sticky_bar_visible',
+        },
+        enableAnalytics,
+      );
+    };
+
+    const BrowserIntersectionObserver = typeof IntersectionObserver === 'undefined' ? null : IntersectionObserver;
+    if (BrowserIntersectionObserver) {
+      const observer = new BrowserIntersectionObserver(
+        (entries) => {
+          if (entries.some((entry) => entry.isIntersecting)) {
+            trackVisible();
+            observer.disconnect();
+          }
+        },
+        { threshold: 0.5 },
+      );
+      observer.observe(element);
+      return () => observer.disconnect();
+    }
+
+    const frame = window.requestAnimationFrame(trackVisible);
+    return () => window.cancelAnimationFrame(frame);
+  }, [enableAnalytics, offer, resolvedSlug]);
+
   const primaryTarget = targetForHref(offer.primaryHref, offer.primaryTarget);
   const priceLine = offer.offerPriceLabel
     ? `${offer.offerPriceLabel} offer - ${offer.priceLabel} standard`
     : offer.priceLabel;
 
   return (
-    <div className="wfdt wfdt-sticky" data-template-detail-sticky-bar="">
+    <div className="wfdt wfdt-sticky" data-template-detail-sticky-bar="" ref={stickyBarRef}>
       <style>{TEMPLATE_DETAIL_STYLES}</style>
       <div className="wfdt-sticky-meta">
         {image.src ? <img className="wfdt-sticky-thumb" src={image.src} alt={image.alt || `${templateName} thumbnail`} /> : null}

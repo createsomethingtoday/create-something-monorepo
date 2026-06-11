@@ -2,6 +2,7 @@
 	import type { Asset } from '$lib/server/airtable';
 	import { trackEvent } from '$lib/utils/analytics';
 	import { formatCompactCurrency } from '$lib/utils/format';
+	import { computeTemplateHealth } from '$lib/utils/template-health';
 	import {
 		RECOVERY_REENTRY_QUALIFIED_SALES_30D,
 		isRecoveryOfferStrategy
@@ -48,6 +49,7 @@
 	let didInitializeOfferLabel = $state(false);
 
 	const canRequestOffer = $derived(asset.type === 'Template' && asset.status === 'Published');
+	const health = $derived(computeTemplateHealth(asset));
 	const hasActiveOffer = $derived(
 		Boolean(
 			asset.activeOfferLabel ||
@@ -58,6 +60,9 @@
 				asset.activeOfferPrice !== undefined
 		)
 	);
+	const canSurfaceOfferRequest = $derived(
+		canRequestOffer && (hasActiveOffer || health.automation.code === 'run_recovery_offer')
+	);
 	const requiresVisibilityAck = $derived(
 		postOfferAction === 'Move to detail-only after expiry' ||
 			postOfferAction === 'Delist / archive after expiry'
@@ -66,7 +71,7 @@
 	const isRecoveryBlocked = $derived(isRecoveryStrategy && Boolean(asset.recoveryOfferUsed));
 	const isSubmitDisabled = $derived(
 		isSubmitting ||
-			!canRequestOffer ||
+			!canSurfaceOfferRequest ||
 			!offerPrice.trim() ||
 			!fulfillmentUrl.trim() ||
 			!endsAt.trim() ||
@@ -145,6 +150,17 @@
 				post_offer_action: postOfferAction,
 				approval_status: result.approvalStatus,
 				has_active_offer: hasActiveOffer,
+				automation_code: health.automation.code,
+				automation_confidence: health.automation.confidence,
+				has_fulfillment_url: Boolean(fulfillmentUrl.trim()),
+				has_offer_price: Boolean(offerPrice.trim()),
+				requires_visibility_ack: requiresVisibilityAck,
+				visibility_terms_accepted: visibilityTermsAccepted,
+				is_recovery_strategy: isRecoveryStrategy,
+				recovery_offer_used: Boolean(asset.recoveryOfferUsed),
+				qualified_sales_30d: asset.qualifiedSales30d ?? null,
+				reentry_sales_threshold: health.reentrySalesThreshold,
+				search_visibility: asset.searchVisibility || null,
 				offer_id: result.offerId
 			});
 
@@ -159,7 +175,18 @@
 				asset_id: asset.id,
 				offer_strategy: offerStrategy,
 				post_offer_action: postOfferAction,
-				has_active_offer: hasActiveOffer
+				has_active_offer: hasActiveOffer,
+				automation_code: health.automation.code,
+				automation_confidence: health.automation.confidence,
+				has_fulfillment_url: Boolean(fulfillmentUrl.trim()),
+				has_offer_price: Boolean(offerPrice.trim()),
+				requires_visibility_ack: requiresVisibilityAck,
+				visibility_terms_accepted: visibilityTermsAccepted,
+				is_recovery_strategy: isRecoveryStrategy,
+				recovery_offer_used: Boolean(asset.recoveryOfferUsed),
+				qualified_sales_30d: asset.qualifiedSales30d ?? null,
+				reentry_sales_threshold: health.reentrySalesThreshold,
+				search_visibility: asset.searchVisibility || null
 			});
 		} finally {
 			isSubmitting = false;
@@ -182,7 +209,7 @@
 		</div>
 	</CardHeader>
 	<CardContent>
-		{#if canRequestOffer}
+		{#if canSurfaceOfferRequest}
 			<div class="offer-request-intro">
 				<p>
 					Submit a creator-managed fulfillment link and sale price. Offers that pass policy can
@@ -356,7 +383,10 @@
 			</form>
 		{:else}
 			<div class="offer-unavailable">
-				<p>Limited offers can be requested after this template is published.</p>
+				<p>
+					Limited offers are available for active offer management or recovery-eligible templates
+					flagged by marketplace health policy.
+				</p>
 			</div>
 		{/if}
 	</CardContent>

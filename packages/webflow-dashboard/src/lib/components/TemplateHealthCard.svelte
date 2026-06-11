@@ -6,6 +6,7 @@
 	} from '$lib/utils/template-health';
 	import { Card, CardContent, CardHeader, CardTitle, Badge, Button } from './ui';
 	import { formatCompactCurrency, formatLongDate, formatWholeNumber } from '$lib/utils/format';
+	import { trackEvent } from '$lib/utils/analytics';
 	import {
 		Activity,
 		AlertTriangle,
@@ -95,6 +96,23 @@
 		isApplyingLifecycle = true;
 		lifecycleMessage = '';
 		lifecycleError = '';
+		const requestedAction = lifecycleAction.action;
+
+		trackEvent('template_lifecycle_action_started', {
+			asset_id: asset.id,
+			action: requestedAction,
+			automation_code: health.automation.code,
+			automation_confidence: health.automation.confidence,
+			search_visibility: asset.searchVisibility || null,
+			search_visibility_target: health.automation.searchVisibilityTarget || null,
+			qualified_sales_30d: health.qualifiedSales30d,
+			reentry_sales_threshold: health.reentrySalesThreshold,
+			recovery_offer_used: health.recoveryOfferUsed,
+			has_active_offer: health.offer.hasOffer,
+			offer_state: health.offer.state,
+			offer_strategy: health.offer.strategy || null,
+			post_offer_action: health.offer.postOfferAction || null
+		});
 
 		try {
 			const response = await fetch(`/api/assets/${asset.id}/lifecycle`, {
@@ -120,8 +138,31 @@
 
 			lifecycleMessage = result.lifecycle?.message || 'Template lifecycle updated.';
 			onLifecycleApplied?.(result.asset);
+			trackEvent('template_lifecycle_action_applied', {
+				asset_id: asset.id,
+				action: requestedAction,
+				automation_code: health.automation.code,
+				search_visibility_before: asset.searchVisibility || null,
+				search_visibility_after: result.asset.searchVisibility || null,
+				qualified_sales_30d: health.qualifiedSales30d,
+				reentry_sales_threshold: health.reentrySalesThreshold,
+				recovery_offer_used: health.recoveryOfferUsed,
+				has_active_offer: health.offer.hasOffer,
+				offer_state: health.offer.state
+			});
 		} catch (err) {
 			lifecycleError = err instanceof Error ? err.message : 'Failed to update template lifecycle';
+			trackEvent('template_lifecycle_action_failed', {
+				asset_id: asset.id,
+				action: requestedAction,
+				automation_code: health.automation.code,
+				search_visibility: asset.searchVisibility || null,
+				qualified_sales_30d: health.qualifiedSales30d,
+				reentry_sales_threshold: health.reentrySalesThreshold,
+				recovery_offer_used: health.recoveryOfferUsed,
+				has_active_offer: health.offer.hasOffer,
+				offer_state: health.offer.state
+			});
 		} finally {
 			isApplyingLifecycle = false;
 		}
