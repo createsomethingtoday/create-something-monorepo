@@ -619,6 +619,22 @@ export const TEMPLATE_DETAIL_STYLES = `
 }
 
 @media (max-width: 767px) {
+  .template-hero:has(.wfdt[data-template-detail-hero]) {
+    position: static !important;
+    top: auto !important;
+    z-index: auto !important;
+  }
+
+  .wfdt-breadcrumb {
+    gap: 6px;
+    margin-bottom: 16px;
+    font-size: 13px;
+  }
+
+  .wfdt-hero-main {
+    gap: 18px;
+  }
+
   .wfdt-actions,
   .wfdt-sticky-actions {
     align-items: stretch;
@@ -626,10 +642,22 @@ export const TEMPLATE_DETAIL_STYLES = `
 
   .wfdt-actions {
     flex-direction: column;
+    gap: 12px;
+    margin-top: 18px;
   }
 
   .wfdt-actions .wfdt-button {
     width: 100%;
+    min-height: 52px;
+  }
+
+  .wfdt-preview-section {
+    margin-top: 28px;
+  }
+
+  .wfdt-preview-controls {
+    margin-bottom: 18px;
+    box-shadow: 0 4px 14px rgba(8, 8, 8, 0.08);
   }
 
   .wfdt-sticky {

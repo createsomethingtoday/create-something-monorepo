@@ -195,6 +195,7 @@ const TemplateDetailHeroInner: React.FC<TemplateDetailHeroProps> = ({
   const [previewIframeReady, setPreviewIframeReady] = useState(false);
   const [previewDevice, setPreviewDevice] = useState<TemplateDetailPreviewDevice>(previewDefaultDevice);
   const [previewStageWidth, setPreviewStageWidth] = useState(0);
+  const heroRootRef = useRef<HTMLDivElement>(null);
   const previewStageRef = useRef<HTMLDivElement>(null);
   const heroViewedRef = useRef(false);
   const previewVisibleTrackedRef = useRef(false);
@@ -323,6 +324,41 @@ const TemplateDetailHeroInner: React.FC<TemplateDetailHeroProps> = ({
   }, [previewDefaultDevice]);
 
   useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    const shell = heroRootRef.current?.closest<HTMLElement>('.template-hero');
+    if (!shell) return undefined;
+
+    const originalPosition = shell.style.position;
+    const originalTop = shell.style.top;
+    const originalZIndex = shell.style.zIndex;
+    const mobileQuery = window.matchMedia('(max-width: 767px)');
+    const applyMobilePosition = () => {
+      if (mobileQuery.matches) {
+        shell.style.position = 'static';
+        shell.style.top = 'auto';
+        shell.style.zIndex = 'auto';
+        return;
+      }
+
+      shell.style.position = originalPosition;
+      shell.style.top = originalTop;
+      shell.style.zIndex = originalZIndex;
+    };
+
+    applyMobilePosition();
+    mobileQuery.addEventListener?.('change', applyMobilePosition);
+    mobileQuery.addListener?.(applyMobilePosition);
+
+    return () => {
+      mobileQuery.removeEventListener?.('change', applyMobilePosition);
+      mobileQuery.removeListener?.(applyMobilePosition);
+      shell.style.position = originalPosition;
+      shell.style.top = originalTop;
+      shell.style.zIndex = originalZIndex;
+    };
+  }, []);
+
+  useEffect(() => {
     if (!hasPreviewIframe || typeof window === 'undefined') return undefined;
     const element = previewStageRef.current;
     if (!element) return undefined;
@@ -406,7 +442,7 @@ const TemplateDetailHeroInner: React.FC<TemplateDetailHeroProps> = ({
   const primaryTarget = targetForHref(offer.primaryHref, offer.primaryTarget);
 
   return (
-    <div className="wfdt" data-template-detail-hero="">
+    <div className="wfdt" data-template-detail-hero="" ref={heroRootRef}>
       <style>{TEMPLATE_DETAIL_STYLES}</style>
       <section className="wfdt-hero">
         <div className="wfdt-hero-copy">
