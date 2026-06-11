@@ -488,6 +488,55 @@ describe('webflow-template-search worker', () => {
     }
   });
 
+  it('removes published templates from search when Airtable marks them detail only', async () => {
+    const detailOnlyAsset = {
+      ...PUBLISHED_ASSETS[0],
+      fields: {
+        ...PUBLISHED_ASSETS[0].fields,
+        '👁️Search Visibility (🏗️ only)': 'Detail only',
+      },
+    };
+    const fetchMock = installAirtableFetchMock({
+      ...LOOKUPS,
+      publishedAssets: [detailOnlyAsset],
+    });
+    const { env, close } = createTestEnv();
+
+    try {
+      const response = await callWorker(
+        new Request('https://templates.test/api/templates/admin/sync-records', {
+          method: 'POST',
+          headers: {
+            Authorization: 'Bearer sync-token',
+            'content-type': 'application/json',
+          },
+          body: JSON.stringify({ ids: ['recAgentflow'] }),
+        }),
+        env,
+      );
+      const payload = (await response.json()) as {
+        mode: string;
+        fetched_records: number;
+        indexed_records: number;
+        removed_records: number;
+      };
+      expect(response.status).toBe(200);
+      expect(payload).toMatchObject({
+        mode: 'records',
+        fetched_records: 1,
+        indexed_records: 0,
+        removed_records: 1,
+      });
+
+      const search = await callWorker(new Request('https://templates.test/api/templates/search?q=agentflow'), env);
+      const searchPayload = (await search.json()) as { pagination: { total_items: number } };
+      expect(searchPayload.pagination.total_items).toBe(0);
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
   it('keeps canonical Airtable creator profile slugs when Webflow CMS has an archive designer slug', async () => {
     const focusedAsset = {
       ...PUBLISHED_ASSETS[0],

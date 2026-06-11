@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { Asset } from '$lib/server/airtable';
-import { computeTemplateHealth } from './template-health';
+import { computeTemplateHealth, isTemplateSearchSuppressed } from './template-health';
 
 const NOW = new Date('2026-06-03T12:00:00.000Z');
 
@@ -112,7 +112,34 @@ describe('computeTemplateHealth', () => {
 
 		expect(health.status).toBe('needs_attention');
 		expect(health.offer.hasOffer).toBe(false);
+		expect(health.automation).toMatchObject({
+			code: 'run_recovery_offer',
+			recommendedOfferStrategy: 'Prune recovery test',
+			recommendedPostOfferAction: 'Review search visibility after expiry'
+		});
 		expect(health.actions.map((action) => action.title)).toContain('Try a limited recovery offer');
+	});
+
+	it('moves underperforming templates detail-only after the one-time recovery was used', () => {
+		const health = computeTemplateHealth(
+			templateAsset({
+				publishedDate: '2024-01-01',
+				uniqueViewers: 600,
+				cumulativePurchases: 0,
+				qualityScore: 'Good',
+				recoveryOfferUsed: true,
+				qualifiedSales30d: 0
+			}),
+			NOW
+		);
+
+		expect(health.automation).toMatchObject({
+			code: 'move_detail_only',
+			searchVisibilityTarget: 'Detail only'
+		});
+		expect(health.actions.map((action) => action.title)).toContain(
+			'Move underperforming template detail-only'
+		);
 	});
 
 	it('surfaces live recovery offers as a lifecycle signal', () => {
@@ -160,11 +187,95 @@ describe('computeTemplateHealth', () => {
 
 		expect(health.offer.state).toBe('expired');
 		expect(health.offer.tone).toBe('critical');
+		expect(health.automation.code).toBe('review_offer_outcome');
 		expect(health.actions).toContainEqual(
 			expect.objectContaining({
 				title: 'Complete the offer lifecycle review',
 				priority: 'high'
 			})
 		);
+	});
+
+	it('surfaces detail-only search visibility as a reversible discovery state', () => {
+		const health = computeTemplateHealth(
+			templateAsset({
+				searchVisibility: 'Detail only',
+				recoveryOfferUsed: true,
+				qualifiedSales30d: 3
+			}),
+			NOW
+		);
+
+		expect(health.searchVisibilitySuppressed).toBe(true);
+		expect(health.automation).toMatchObject({
+			code: 'detail_only_recovery',
+			searchVisibilityTarget: '3/4 qualified sales'
+		});
+		expect(health.signals).toContainEqual(
+			expect.objectContaining({
+				label: 'Discovery',
+				value: 'Detail only',
+				tone: 'warning'
+			})
+		);
+		expect(health.actions.map((action) => action.title)).toContain(
+			'Maintain direct-access readiness'
+		);
+	});
+
+	it('marks detail-only templates eligible for re-entry after 4 qualified sales in 30 days', () => {
+		const health = computeTemplateHealth(
+			templateAsset({
+				searchVisibility: 'Detail only',
+				recoveryOfferUsed: true,
+				qualifiedSales30d: 4
+			}),
+			NOW
+		);
+
+		expect(health.automation).toMatchObject({
+			code: 'eligible_for_reentry',
+			searchVisibilityTarget: 'Searchable after review'
+		});
+		expect(health.signals).toContainEqual(
+			expect.objectContaining({
+				label: 'Re-entry signal',
+				value: '4/4 sales',
+				tone: 'positive'
+			})
+		);
+		expect(health.actions.map((action) => action.title)).toContain('Review for search re-entry');
+	});
+
+	it('keeps requested re-entry reviews pending and detail-only', () => {
+		const health = computeTemplateHealth(
+			templateAsset({
+				searchVisibility: 'Detail only - re-entry review requested',
+				recoveryOfferUsed: true,
+				qualifiedSales30d: 4
+			}),
+			NOW
+		);
+
+		expect(health.searchVisibilitySuppressed).toBe(true);
+		expect(health.automation).toMatchObject({
+			code: 'reentry_review_requested',
+			searchVisibilityTarget: 'Review requested'
+		});
+		expect(health.automation.signals).toContain('reentry_review_requested');
+		expect(health.actions.map((action) => action.title)).toContain(
+			'Await marketplace re-entry review'
+		);
+	});
+});
+
+describe('isTemplateSearchSuppressed', () => {
+	it('keeps explicitly searchable values visible', () => {
+		expect(isTemplateSearchSuppressed('Marketplace search')).toBe(false);
+	});
+
+	it('suppresses detail-only and unlisted values', () => {
+		expect(isTemplateSearchSuppressed('Detail only')).toBe(true);
+		expect(isTemplateSearchSuppressed('Unlisted')).toBe(true);
 	});
 });

@@ -8,6 +8,7 @@ export interface Env {
   AIRTABLE_API_KEY?: string;
   AIRTABLE_BASE_ID: string;
   AIRTABLE_ASSETS_TABLE_ID?: string;
+  AIRTABLE_SEARCH_VISIBILITY_FIELDS?: string;
   AIRTABLE_CHILD_CATEGORIES_TABLE_ID?: string;
   AIRTABLE_STYLES_TABLE_ID?: string;
   AIRTABLE_TAGS_TABLE_ID?: string;
@@ -63,6 +64,9 @@ export interface AirtableAssetFields extends Record<string, unknown> {
   '📋 Unique Viewers'?: number;
   '📋 Cumulative Purchases'?: number;
   '🥞💲Template Price Filter (🏗️ only)'?: number;
+  '👁️Search Visibility (🏗️ only)'?: string;
+  'Search Visibility'?: string;
+  search_visibility?: string;
   '👀📅Decision Date (Override)'?: string;
   '🚀📅Published Date'?: string;
   '🥞CMS Slug'?: string;

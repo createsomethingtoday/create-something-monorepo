@@ -1,5 +1,10 @@
 import { error } from '@sveltejs/kit';
-import type { TemplateOfferRequestInput, TemplateOfferStrategy } from './airtable';
+import type {
+	TemplateOfferPostOfferAction,
+	TemplateOfferRequestInput,
+	TemplateOfferStrategy
+} from './airtable';
+import { isRecoveryOfferStrategy } from '../utils/template-lifecycle-policy';
 
 export interface TemplateOfferRequestBody {
 	offerLabel?: unknown;
@@ -8,8 +13,15 @@ export interface TemplateOfferRequestBody {
 	startsAt?: unknown;
 	endsAt?: unknown;
 	offerStrategy?: unknown;
+	postOfferAction?: unknown;
 	notes?: unknown;
 	termsAccepted?: unknown;
+	visibilityTermsAccepted?: unknown;
+}
+
+export interface TemplateOfferPolicyContext {
+	marketplacePrice?: number | null;
+	recoveryOfferUsed?: boolean | null;
 }
 
 const OFFER_STRATEGIES = new Set<TemplateOfferStrategy>([
@@ -19,6 +31,18 @@ const OFFER_STRATEGIES = new Set<TemplateOfferStrategy>([
 	'Exit sale before delist',
 	'Retention save'
 ]);
+
+const POST_OFFER_ACTIONS = new Set<TemplateOfferPostOfferAction>([
+	'Return to standard checkout',
+	'Review search visibility after expiry',
+	'Move to detail-only after expiry',
+	'Delist / archive after expiry'
+]);
+
+const MIN_PAID_OFFER_PRICE = 19;
+const MIN_MARKETPLACE_PRICE_RATIO = 0.35;
+const MIN_OFFER_DURATION_HOURS = 24;
+const MAX_OFFER_DURATION_DAYS = 30;
 
 export function requireString(value: unknown, field: string): string {
 	if (typeof value !== 'string' || !value.trim()) {
@@ -53,7 +77,7 @@ function parseHttpsUrl(value: unknown): string {
 	return parsed.toString();
 }
 
-function parseOfferPrice(value: unknown): number {
+function parseOfferPrice(value: unknown, policy: TemplateOfferPolicyContext): number {
 	const price =
 		typeof value === 'number'
 			? value
@@ -65,7 +89,38 @@ function parseOfferPrice(value: unknown): number {
 		throw error(400, 'Offer price must be a number between 0 and 10000');
 	}
 
-	return Number(price.toFixed(2));
+	const normalizedPrice = Number(price.toFixed(2));
+	const marketplacePrice =
+		typeof policy.marketplacePrice === 'number' && Number.isFinite(policy.marketplacePrice)
+			? Number(policy.marketplacePrice.toFixed(2))
+			: null;
+
+	if (marketplacePrice !== null) {
+		if (marketplacePrice <= 0) {
+			if (normalizedPrice !== 0) {
+				throw error(400, 'Free templates can only submit a free offer price');
+			}
+			return normalizedPrice;
+		}
+
+		if (normalizedPrice > marketplacePrice) {
+			throw error(400, 'Offer price cannot exceed the marketplace price');
+		}
+
+		const ratioFloor = Number((marketplacePrice * MIN_MARKETPLACE_PRICE_RATIO).toFixed(2));
+		const minimumPrice = Math.min(marketplacePrice, Math.max(MIN_PAID_OFFER_PRICE, ratioFloor));
+		if (normalizedPrice < minimumPrice) {
+			throw error(400, `Offer price must be at least $${minimumPrice.toFixed(2)}`);
+		}
+
+		return normalizedPrice;
+	}
+
+	if (normalizedPrice < MIN_PAID_OFFER_PRICE) {
+		throw error(400, `Offer price must be at least $${MIN_PAID_OFFER_PRICE}`);
+	}
+
+	return normalizedPrice;
 }
 
 function parseFutureDate(value: unknown, field: string, now: Date): string {
@@ -102,10 +157,53 @@ function parseOfferStrategy(value: unknown): TemplateOfferStrategy {
 	return strategy;
 }
 
+function parsePostOfferAction(value: unknown): TemplateOfferPostOfferAction {
+	const action =
+		optionalString(value, 'Post-offer action') || 'Review search visibility after expiry';
+	if (!POST_OFFER_ACTIONS.has(action as TemplateOfferPostOfferAction)) {
+		throw error(400, 'Post-offer action is not supported');
+	}
+	return action as TemplateOfferPostOfferAction;
+}
+
+function requiresVisibilityTerms(action: TemplateOfferPostOfferAction): boolean {
+	return action === 'Move to detail-only after expiry' || action === 'Delist / archive after expiry';
+}
+
+function validateOfferWindow(startsAt: string | undefined, endsAt: string, now: Date): void {
+	const endDate = new Date(endsAt);
+	const startDate = startsAt ? new Date(startsAt) : now;
+	const effectiveStart = startDate.getTime() > now.getTime() ? startDate : now;
+	const durationHours = (endDate.getTime() - effectiveStart.getTime()) / (60 * 60 * 1000);
+
+	if (durationHours < MIN_OFFER_DURATION_HOURS) {
+		throw error(400, `Offer duration must be at least ${MIN_OFFER_DURATION_HOURS} hours`);
+	}
+
+	if (durationHours > MAX_OFFER_DURATION_DAYS * 24) {
+		throw error(400, `Offer duration must be ${MAX_OFFER_DURATION_DAYS} days or fewer`);
+	}
+}
+
+function validateRecoveryPolicy(
+	offerStrategy: TemplateOfferStrategy,
+	policy: TemplateOfferPolicyContext
+): void {
+	if (!isRecoveryOfferStrategy(offerStrategy)) return;
+
+	if (policy.recoveryOfferUsed) {
+		throw error(
+			400,
+			'Recovery offers are one-time. This template must meet the marketplace re-entry threshold before another recovery path is available.'
+		);
+	}
+}
+
 export function normalizeTemplateOfferRequestBody(
 	body: TemplateOfferRequestBody,
 	creatorEmail: string,
-	now = new Date()
+	now = new Date(),
+	policy: TemplateOfferPolicyContext = {}
 ): TemplateOfferRequestInput {
 	if (body.termsAccepted !== true) {
 		throw error(400, 'Offer terms must be accepted before submitting');
@@ -121,15 +219,28 @@ export function normalizeTemplateOfferRequestBody(
 		throw error(400, 'Notes must be 1000 characters or fewer');
 	}
 
+	const startsAt = parseOptionalDate(body.startsAt, 'Start date');
+	const endsAt = parseFutureDate(body.endsAt, 'End date', now);
+	validateOfferWindow(startsAt, endsAt, now);
+
+	const postOfferAction = parsePostOfferAction(body.postOfferAction);
+	if (requiresVisibilityTerms(postOfferAction) && body.visibilityTermsAccepted !== true) {
+		throw error(400, 'Search visibility terms must be accepted for this post-offer action');
+	}
+	const offerStrategy = parseOfferStrategy(body.offerStrategy);
+	validateRecoveryPolicy(offerStrategy, policy);
+
 	return {
 		creatorEmail,
 		offerLabel,
-		offerPrice: parseOfferPrice(body.offerPrice),
+		offerPrice: parseOfferPrice(body.offerPrice, policy),
 		fulfillmentUrl: parseHttpsUrl(body.fulfillmentUrl),
-		startsAt: parseOptionalDate(body.startsAt, 'Start date'),
-		endsAt: parseFutureDate(body.endsAt, 'End date', now),
-		offerStrategy: parseOfferStrategy(body.offerStrategy),
+		startsAt,
+		endsAt,
+		offerStrategy,
+		postOfferAction,
 		notes,
-		termsAcceptedAt: now.toISOString()
+		termsAcceptedAt: now.toISOString(),
+		visibilityTermsAcceptedAt: body.visibilityTermsAccepted === true ? now.toISOString() : undefined
 	};
 }

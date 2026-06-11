@@ -1,6 +1,7 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { getAirtableClient } from '$lib/server/airtable';
+import { invalidateAssetsCache } from '$lib/server/assets-cache';
 import {
 	normalizeTemplateOfferRequestBody,
 	type TemplateOfferRequestBody
@@ -36,12 +37,17 @@ export const POST: RequestHandler = async ({ params, request, locals, platform }
 	}
 
 	const body = (await request.json()) as TemplateOfferRequestBody;
-	const input = normalizeTemplateOfferRequestBody(body, locals.user.email);
+	const input = normalizeTemplateOfferRequestBody(body, locals.user.email, new Date(), {
+		marketplacePrice: asset.priceAmount,
+		recoveryOfferUsed: asset.recoveryOfferUsed
+	});
 	const result = await airtable.createTemplateOfferRequest(params.id, input);
 
 	if (!result) {
 		throw error(500, 'Failed to submit offer request');
 	}
+
+	await invalidateAssetsCache(platform.env.SESSIONS, locals.user.email);
 
 	return json({ success: true, ...result });
 };

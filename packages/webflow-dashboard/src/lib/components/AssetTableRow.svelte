@@ -3,6 +3,7 @@
 	import ActionsDropdown from './ActionsDropdown.svelte';
 	import type { Asset } from '$lib/server/airtable';
 	import { getAssetActionConfig, normalizeAssetStatus } from '$lib/utils/asset-actions';
+	import { isTemplateSearchSuppressed } from '$lib/utils/template-health';
 	import { LoaderCircle } from 'lucide-svelte';
 	import {
 		formatCompactCurrency,
@@ -42,6 +43,7 @@
 	const actionConfig = $derived(getAssetActionConfig(asset.status));
 	const cleanedStatus = $derived(normalizeAssetStatus(asset.status));
 	const showMetrics = $derived(!['Upcoming', 'Rejected'].includes(cleanedStatus));
+	const isSearchSuppressed = $derived(isTemplateSearchSuppressed(asset.searchVisibility));
 	const hasActiveOffer = $derived(
 		Boolean(
 			asset.activeOfferLabel ||
@@ -131,6 +133,16 @@
 							· {formatCompactCurrency(asset.activeOfferPrice)}
 						{/if}
 					</Badge>
+				</span>
+			{/if}
+			{#if isSearchSuppressed}
+				<span class="offer-badge-row">
+					<Badge variant="warning">Detail only</Badge>
+				</span>
+			{/if}
+			{#if asset.recoveryOfferUsed}
+				<span class="offer-badge-row">
+					<Badge variant="secondary">Recovery used</Badge>
 				</span>
 			{/if}
 		</button>

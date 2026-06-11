@@ -34,7 +34,8 @@
   import EditAssetModal from '$lib/components/EditAssetModal.svelte';
   import { toast } from '$lib/stores/toast';
   import { trackEvent } from '$lib/utils/analytics';
-  import { computeTemplateHealth } from '$lib/utils/template-health';
+  import { computeTemplateHealth, isTemplateSearchSuppressed } from '$lib/utils/template-health';
+  import { RECOVERY_REENTRY_QUALIFIED_SALES_30D } from '$lib/utils/template-lifecycle-policy';
   import {
     formatCompactCurrency,
     formatCompactNumber,
@@ -110,6 +111,7 @@
         asset.activeOfferPrice !== undefined
     )
   );
+  const isSearchSuppressed = $derived(isTemplateSearchSuppressed(asset.searchVisibility));
 
   // Can only edit Published templates
   const canEdit = $derived(asset.status === 'Published');
@@ -203,6 +205,17 @@
       isArchiving = false;
       showArchiveConfirm = false;
     }
+  }
+
+  function handleLifecycleApplied(updatedAsset: Asset): void {
+    const previousVisibility = asset.searchVisibility;
+    asset = updatedAsset;
+    toast.success('Template lifecycle updated');
+    trackEvent('template_lifecycle_applied', {
+      asset_id: updatedAsset.id,
+      previous_search_visibility: previousVisibility,
+      search_visibility: updatedAsset.searchVisibility
+    });
   }
 
   function setActiveTab(value: TabValue) {
@@ -332,6 +345,17 @@
               {/if}
               {#if asset.priceString}
                 <span><strong>{asset.priceString}</strong> price</span>
+              {/if}
+              {#if isSearchSuppressed}
+                <span><strong>Detail only</strong> search visibility</span>
+              {:else if asset.searchVisibility}
+                <span><strong>{asset.searchVisibility}</strong> search visibility</span>
+              {/if}
+              {#if asset.qualifiedSales30d !== undefined || asset.recoveryOfferUsed}
+                <span
+                  ><strong>{asset.qualifiedSales30d ?? 0}/{RECOVERY_REENTRY_QUALIFIED_SALES_30D}</strong>
+                  re-entry sales</span
+                >
               {/if}
               {#if hasActiveOffer}
                 <span>
@@ -509,6 +533,26 @@
                       <div class="detail-item">
                         <span class="detail-label">Price</span>
                         <span class="detail-value">{asset.priceString}</span>
+                      </div>
+                    {/if}
+                    {#if asset.searchVisibility}
+                      <div class="detail-item">
+                        <span class="detail-label">Search Visibility</span>
+                        <span class="detail-value">{asset.searchVisibility}</span>
+                      </div>
+                    {/if}
+                    {#if asset.qualifiedSales30d !== undefined}
+                      <div class="detail-item">
+                        <span class="detail-label">Qualified Sales (30d)</span>
+                        <span class="detail-value"
+                          >{asset.qualifiedSales30d}/{RECOVERY_REENTRY_QUALIFIED_SALES_30D}</span
+                        >
+                      </div>
+                    {/if}
+                    {#if asset.recoveryOfferUsed !== undefined}
+                      <div class="detail-item">
+                        <span class="detail-label">Recovery Offer</span>
+                        <span class="detail-value">{asset.recoveryOfferUsed ? 'Used' : 'Available'}</span>
                       </div>
                     {/if}
                     {#if hasActiveOffer}
@@ -731,7 +775,7 @@
             class="tab-content"
           >
             <div class="health-tab-stack">
-              <TemplateHealthCard {asset} />
+              <TemplateHealthCard {asset} onLifecycleApplied={handleLifecycleApplied} />
               <TemplateOfferRequestCard {asset} />
             </div>
           </TabsContent>

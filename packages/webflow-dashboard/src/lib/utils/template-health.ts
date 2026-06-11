@@ -1,4 +1,14 @@
 import type { Asset } from '$lib/server/airtable';
+import {
+	RECOVERY_REENTRY_QUALIFIED_SALES_30D,
+	hasReachedRecoveryReentryThreshold,
+	isReentryReviewRequested,
+	isRecoveryOfferStrategy,
+	isTemplateSearchSuppressed,
+	recoverySalesRemaining
+} from './template-lifecycle-policy';
+
+export { isTemplateSearchSuppressed } from './template-lifecycle-policy';
 
 export type TemplateHealthStatus = 'strong' | 'watch' | 'needs_attention' | 'limited_data';
 export type TemplateHealthTone = 'positive' | 'neutral' | 'warning' | 'critical';
@@ -14,6 +24,27 @@ export interface TemplateHealthAction {
 	title: string;
 	description: string;
 	priority: 'high' | 'medium' | 'low';
+}
+
+export type TemplateLifecycleAutomationCode =
+	| 'collect_more_signal'
+	| 'keep_searchable'
+	| 'run_recovery_offer'
+	| 'review_offer_outcome'
+	| 'move_detail_only'
+	| 'eligible_for_reentry'
+	| 'reentry_review_requested'
+	| 'detail_only_recovery';
+
+export interface TemplateLifecycleAutomationSignal {
+	code: TemplateLifecycleAutomationCode;
+	label: string;
+	summary: string;
+	confidence: 'low' | 'medium' | 'high';
+	recommendedOfferStrategy?: string;
+	recommendedPostOfferAction?: string;
+	searchVisibilityTarget?: string;
+	signals: string[];
 }
 
 export type TemplateOfferState = 'none' | 'live' | 'expired' | 'internal';
@@ -42,6 +73,12 @@ export interface TemplateHealthModel {
 	summary: string;
 	conversionRate: number | null;
 	daysLive: number | null;
+	searchVisibility?: string;
+	searchVisibilitySuppressed: boolean;
+	qualifiedSales30d: number | null;
+	reentrySalesThreshold: number;
+	recoveryOfferUsed: boolean;
+	automation: TemplateLifecycleAutomationSignal;
 	offer: TemplateOfferLifecycle;
 	signals: TemplateHealthSignal[];
 	actions: TemplateHealthAction[];
@@ -120,9 +157,168 @@ function addActionOnce(actions: TemplateHealthAction[], action: TemplateHealthAc
 	actions.push(action);
 }
 
-function isRecoveryOfferStrategy(strategy?: string): boolean {
-	const normalized = normalizeText(strategy);
-	return normalized.includes('recovery') || normalized.includes('exit sale') || normalized.includes('delist');
+function lifecycleAutomationSignal(input: {
+	status: TemplateHealthStatus;
+	isPublished: boolean;
+	hasEnoughViewers: boolean;
+	purchases: number;
+	qualifiedSales30d: number | null;
+	conversionRate: number | null;
+	daysLive: number | null;
+	qualityIssue: boolean;
+	hasReviewFeedback: boolean;
+	searchVisibility?: string | null;
+	searchVisibilitySuppressed: boolean;
+	recoveryOfferUsed: boolean;
+	offer: TemplateOfferLifecycle;
+}): TemplateLifecycleAutomationSignal {
+	const qualifiedSales30d = input.qualifiedSales30d ?? 0;
+	const remainingSales = recoverySalesRemaining(qualifiedSales30d);
+	const reentryReviewRequested = isReentryReviewRequested(input.searchVisibility);
+	const signals = [
+		input.hasEnoughViewers ? 'enough_viewers' : 'limited_viewers',
+		input.conversionRate === null ? 'conversion_unknown' : `conversion_${input.conversionRate.toFixed(1)}pct`,
+		`purchases_${input.purchases}`,
+		input.qualifiedSales30d === null ? 'qualified_sales_30d_unknown' : `qualified_sales_30d_${qualifiedSales30d}`,
+		input.daysLive === null ? 'not_live' : `days_live_${input.daysLive}`,
+		input.qualityIssue || input.hasReviewFeedback ? 'review_issue' : 'quality_clear',
+		input.searchVisibilitySuppressed
+			? reentryReviewRequested
+				? 'reentry_review_requested'
+				: 'detail_only'
+			: 'searchable',
+		input.recoveryOfferUsed ? 'recovery_used' : 'recovery_available',
+		input.offer.hasOffer ? `offer_${input.offer.state}` : 'no_offer'
+	];
+
+	if (input.searchVisibilitySuppressed) {
+		if (hasReachedRecoveryReentryThreshold(input.qualifiedSales30d) && !input.qualityIssue && !input.hasReviewFeedback) {
+			if (reentryReviewRequested) {
+				return {
+					code: 'reentry_review_requested',
+					label: 'Re-entry review pending',
+					summary:
+						'This detail-only template has reached the re-entry threshold and is queued for marketplace review. Keep it out of search until approval.',
+					confidence: 'high',
+					searchVisibilityTarget: 'Review requested',
+					signals
+				};
+			}
+
+			return {
+				code: 'eligible_for_reentry',
+				label: 'Eligible for search re-entry',
+				summary:
+					'This detail-only template has reached the 4 qualified sales in 30 days threshold. Review quality, then restore marketplace search if the listing is current.',
+				confidence: 'high',
+				searchVisibilityTarget: 'Searchable after review',
+				signals
+			};
+		}
+
+		return {
+			code: 'detail_only_recovery',
+			label: 'Detail-only recovery',
+			summary:
+				`Keep direct access intact. This template needs ${remainingSales} more qualified ${remainingSales === 1 ? 'sale' : 'sales'} in the rolling 30-day window before marketplace search re-entry.`,
+			confidence: 'high',
+			recommendedPostOfferAction: 'Review search visibility after expiry',
+			searchVisibilityTarget: `${qualifiedSales30d}/${RECOVERY_REENTRY_QUALIFIED_SALES_30D} qualified sales`,
+			signals
+		};
+	}
+
+	if (input.offer.state === 'expired') {
+		if (
+			isRecoveryOfferStrategy(input.offer.strategy) &&
+			hasReachedRecoveryReentryThreshold(input.qualifiedSales30d) &&
+			!input.qualityIssue &&
+			!input.hasReviewFeedback
+		) {
+			return {
+				code: 'keep_searchable',
+				label: 'Keep searchable',
+				summary:
+					'The one-time recovery window reached the 4 qualified sales in 30 days threshold. Keep the template searchable if the listing is current.',
+				confidence: 'high',
+				searchVisibilityTarget: 'Searchable',
+				signals
+			};
+		}
+
+		return {
+			code: 'review_offer_outcome',
+			label: 'Review offer outcome',
+			summary:
+				'The offer window ended. Compare conversion against the baseline before returning to search, moving detail-only, or archiving.',
+			confidence: isRecoveryOfferStrategy(input.offer.strategy) ? 'high' : 'medium',
+			recommendedPostOfferAction: input.offer.postOfferAction || 'Review search visibility after expiry',
+			searchVisibilityTarget: 'Decide from offer-period performance',
+			signals
+		};
+	}
+
+	if (
+		input.isPublished &&
+		input.hasEnoughViewers &&
+		!input.offer.hasOffer &&
+		input.recoveryOfferUsed &&
+		(input.status === 'needs_attention' ||
+			input.purchases === 0 ||
+			(input.conversionRate !== null && input.conversionRate < WATCH_CONVERSION_RATE))
+	) {
+		return {
+			code: 'move_detail_only',
+			label: 'Move detail-only',
+			summary:
+				'The one-time recovery path has already been used and the template is still underperforming. Preserve direct access and remove it from marketplace search.',
+			confidence: 'high',
+			searchVisibilityTarget: 'Detail only',
+			signals
+		};
+	}
+
+	if (
+		input.isPublished &&
+		input.hasEnoughViewers &&
+		!input.offer.hasOffer &&
+		!input.recoveryOfferUsed &&
+		(input.status === 'needs_attention' ||
+			input.purchases === 0 ||
+			(input.conversionRate !== null && input.conversionRate < WATCH_CONVERSION_RATE))
+	) {
+		return {
+			code: 'run_recovery_offer',
+			label: 'Run recovery offer',
+			summary:
+				'Use a time-boxed creator offer to test price sensitivity before reducing search visibility.',
+			confidence: input.daysLive !== null && input.daysLive > WATCH_DAYS_WITHOUT_PURCHASE ? 'high' : 'medium',
+			recommendedOfferStrategy: 'Prune recovery test',
+			recommendedPostOfferAction: 'Review search visibility after expiry',
+			searchVisibilityTarget: 'Keep searchable during test',
+			signals
+		};
+	}
+
+	if (input.isPublished && (input.status === 'strong' || input.status === 'watch')) {
+		return {
+			code: 'keep_searchable',
+			label: 'Keep searchable',
+			summary: 'This template has enough quality or buyer signal to stay in marketplace search.',
+			confidence: input.status === 'strong' ? 'high' : 'medium',
+			searchVisibilityTarget: 'Searchable',
+			signals
+		};
+	}
+
+	return {
+		code: 'collect_more_signal',
+		label: 'Collect more signal',
+		summary: 'Keep the listing accurate until there is enough viewer, quality, or offer data to automate a lifecycle decision.',
+		confidence: 'low',
+		searchVisibilityTarget: input.isPublished ? 'Searchable' : 'Not applicable until published',
+		signals
+	};
 }
 
 function computeTemplateOfferLifecycle(asset: Asset, now = new Date()): TemplateOfferLifecycle {
@@ -224,6 +420,13 @@ export function computeTemplateHealth(asset: Asset, now = new Date()): TemplateH
 	const qualityIssue = hasNegativeQualitySignal(asset);
 	const hasReviewFeedback = Boolean(asset.latestReviewFeedback || asset.rejectionFeedback);
 	const offer = computeTemplateOfferLifecycle(asset, now);
+	const searchVisibility = asset.searchVisibility;
+	const searchVisibilitySuppressed = isTemplateSearchSuppressed(searchVisibility);
+	const qualifiedSales30d =
+		typeof asset.qualifiedSales30d === 'number' && Number.isFinite(asset.qualifiedSales30d)
+			? Math.max(0, Math.floor(asset.qualifiedSales30d))
+			: null;
+	const recoveryOfferUsed = Boolean(asset.recoveryOfferUsed);
 	const actions: TemplateHealthAction[] = [];
 
 	if (qualityIssue || hasReviewFeedback) {
@@ -336,6 +539,42 @@ export function computeTemplateHealth(asset: Asset, now = new Date()): TemplateH
 		});
 	}
 
+	if (recoveryOfferUsed && !offer.hasOffer && isPublished && status === 'needs_attention' && !searchVisibilitySuppressed) {
+		addActionOnce(actions, {
+			title: 'Move underperforming template detail-only',
+			description:
+				'The one-time recovery path is already used. Keep direct access, but remove this template from search unless it reaches the re-entry threshold.',
+			priority: 'high'
+		});
+	}
+
+	if (searchVisibilitySuppressed) {
+		if (hasReachedRecoveryReentryThreshold(qualifiedSales30d) && !qualityIssue && !hasReviewFeedback) {
+			if (isReentryReviewRequested(searchVisibility)) {
+				addActionOnce(actions, {
+					title: 'Await marketplace re-entry review',
+					description:
+						'This template has requested search re-entry. Keep it detail-only until marketplace review approves restoration.',
+					priority: 'high'
+				});
+			} else {
+				addActionOnce(actions, {
+					title: 'Review for search re-entry',
+					description:
+						'This detail-only template has reached 4 qualified sales in 30 days. Confirm quality before restoring search visibility.',
+					priority: 'high'
+				});
+			}
+		} else {
+			addActionOnce(actions, {
+				title: 'Maintain direct-access readiness',
+				description:
+					'This template is out of marketplace search. Keep its detail page, fulfillment link, and buyer access accurate while it is detail-only.',
+				priority: 'medium'
+			});
+		}
+	}
+
 	if (actions.length === 0) {
 		addActionOnce(actions, {
 			title: 'Keep the listing current',
@@ -374,6 +613,22 @@ export function computeTemplateHealth(asset: Asset, now = new Date()): TemplateH
 				'There is not enough buyer-performance data yet. Use the checklist below to keep the listing ready.'
 		}
 	};
+
+	const automation = lifecycleAutomationSignal({
+		status,
+		isPublished,
+		hasEnoughViewers,
+		purchases,
+		conversionRate,
+		daysLive,
+		qualityIssue,
+		hasReviewFeedback,
+		searchVisibility,
+		searchVisibilitySuppressed,
+		qualifiedSales30d,
+		recoveryOfferUsed,
+		offer
+	});
 
 	const signals: TemplateHealthSignal[] = [
 		{
@@ -418,6 +673,20 @@ export function computeTemplateHealth(asset: Asset, now = new Date()): TemplateH
 						? 'warning'
 						: 'neutral',
 			description: 'Older listings should be refreshed periodically so they stay accurate.'
+		},
+		{
+			label: 'Discovery',
+			value: searchVisibilitySuppressed ? 'Detail only' : searchVisibility || 'Searchable',
+			tone: searchVisibilitySuppressed ? 'warning' : 'positive',
+			description: searchVisibilitySuppressed
+				? 'This template is preserved for direct access but removed from marketplace search.'
+				: 'This template is eligible for marketplace search discovery.'
+		},
+		{
+			label: 'Re-entry signal',
+			value: `${qualifiedSales30d ?? 0}/${RECOVERY_REENTRY_QUALIFIED_SALES_30D} sales`,
+			tone: hasReachedRecoveryReentryThreshold(qualifiedSales30d) ? 'positive' : searchVisibilitySuppressed ? 'warning' : 'neutral',
+			description: 'Detail-only templates need 4 qualified sales in 30 days before marketplace search re-entry.'
 		}
 	];
 
@@ -426,6 +695,12 @@ export function computeTemplateHealth(asset: Asset, now = new Date()): TemplateH
 		...statusMeta[status],
 		conversionRate,
 		daysLive,
+		searchVisibility,
+		searchVisibilitySuppressed,
+		qualifiedSales30d,
+		reentrySalesThreshold: RECOVERY_REENTRY_QUALIFIED_SALES_30D,
+		recoveryOfferUsed,
+		automation,
 		offer,
 		signals,
 		actions,

@@ -4,6 +4,7 @@ import {
   fetchPublishedTemplateAssets,
   fetchPublishedTemplateImageFields,
   loadLookupMaps,
+  DEFAULT_SEARCH_VISIBILITY_FIELDS,
 } from './airtable.js';
 import {
   backfillCreatorAvatars,
@@ -87,8 +88,53 @@ async function runWithSyncJobLock<T>(env: Env, mode: string, task: () => Promise
   }
 }
 
+function normalizePolicyText(value: unknown): string {
+  if (typeof value === 'string') return value.trim().toLowerCase();
+  if (Array.isArray(value)) return value.map(normalizePolicyText).find(Boolean) ?? '';
+  if (value && typeof value === 'object') {
+    const record = value as Record<string, unknown>;
+    for (const candidate of [record.name, record.label, record.value, record.title, record.text]) {
+      const normalized = normalizePolicyText(candidate);
+      if (normalized) return normalized;
+    }
+  }
+  return '';
+}
+
+function searchVisibility(record: AirtableRecord<AirtableAssetFields>): string {
+  for (const field of DEFAULT_SEARCH_VISIBILITY_FIELDS) {
+    const value = normalizePolicyText(record.fields[field]);
+    if (value) return value;
+  }
+  return '';
+}
+
+function isSearchSuppressed(record: AirtableRecord<AirtableAssetFields>): boolean {
+  const visibility = searchVisibility(record);
+  if (!visibility) return false;
+
+  if (/\b(searchable|search\s*enabled|listed|marketplace\s*search)\b/.test(visibility) && !visibility.includes('unlisted')) {
+    return false;
+  }
+
+  return (
+    visibility.includes('detail only') ||
+    visibility.includes('detail-only') ||
+    visibility.includes('unlisted') ||
+    visibility.includes('hidden') ||
+    visibility.includes('suppress') ||
+    visibility.includes('not searchable') ||
+    visibility.includes('no search') ||
+    visibility.includes('remove from search')
+  );
+}
+
 function isPublishedTemplate(record: AirtableRecord<AirtableAssetFields>): boolean {
-  return record.fields['⚙️🆎Type (Text)'] === 'Template🏗️' && record.fields['🚀Marketplace Status'] === '3️⃣Published🚀';
+  return (
+    record.fields['⚙️🆎Type (Text)'] === 'Template🏗️' &&
+    record.fields['🚀Marketplace Status'] === '3️⃣Published🚀' &&
+    !isSearchSuppressed(record)
+  );
 }
 
 function attachmentUrl(value: unknown): string | null {

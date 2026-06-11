@@ -2,7 +2,7 @@ import { declareComponent } from '@webflow/react';
 import { props } from '@webflow/data-types';
 import { TemplateDetailStickyBar } from './TemplateDetailStickyBar';
 
-const offerModeOptions = ['marketplace', 'creator_offer', 'external_checkout', 'fulfillment_link', 'free'];
+const offerModeOptions = ['marketplace', 'fulfillment_link', 'free'];
 
 export default declareComponent(TemplateDetailStickyBar, {
   name: 'Template Detail Sticky Bar',
@@ -36,7 +36,8 @@ export default declareComponent(TemplateDetailStickyBar, {
     offerLabel: props.Text({ name: 'Offer Badge Label', defaultValue: '' }),
     offerPrice: props.Text({ name: 'Offer Price', defaultValue: '' }),
     offerEndsAt: props.Text({ name: 'Offer Ends At', defaultValue: '' }),
-    offerUrl: props.Link({ name: 'Creator Offer URL' }),
+    offerVisibility: props.Text({ name: 'Offer Visibility', defaultValue: '' }),
+    postOfferAction: props.Text({ name: 'Post-Offer Action', defaultValue: '' }),
     fulfillmentUrl: props.Link({ name: 'Fulfillment Link' }),
     showBrowserPreview: props.Boolean({ name: 'Show Browser Preview', defaultValue: true }),
     showDesignerPreview: props.Boolean({ name: 'Show Designer Preview', defaultValue: false }),

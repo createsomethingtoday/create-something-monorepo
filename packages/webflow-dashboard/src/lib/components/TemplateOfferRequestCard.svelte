@@ -2,6 +2,10 @@
 	import type { Asset } from '$lib/server/airtable';
 	import { trackEvent } from '$lib/utils/analytics';
 	import { formatCompactCurrency } from '$lib/utils/format';
+	import {
+		RECOVERY_REENTRY_QUALIFIED_SALES_30D,
+		isRecoveryOfferStrategy
+	} from '$lib/utils/template-lifecycle-policy';
 	import { toast } from '$lib/stores/toast';
 	import { Badge, Button, Card, CardContent, CardHeader, CardTitle, Input, Label, Textarea } from './ui';
 	import { CheckCircle2, Link, Send, Tag } from 'lucide-svelte';
@@ -16,6 +20,11 @@
 		| 'Prune recovery test'
 		| 'Exit sale before delist'
 		| 'Retention save';
+	type PostOfferAction =
+		| 'Return to standard checkout'
+		| 'Review search visibility after expiry'
+		| 'Move to detail-only after expiry'
+		| 'Delist / archive after expiry';
 
 	let { asset }: Props = $props();
 
@@ -29,8 +38,10 @@
 	let startsAt = $state('');
 	let endsAt = $state(defaultEndDate);
 	let offerStrategy = $state<OfferStrategy>('Creator-managed price test');
+	let postOfferAction = $state<PostOfferAction>('Review search visibility after expiry');
 	let notes = $state('');
 	let termsAccepted = $state(false);
+	let visibilityTermsAccepted = $state(false);
 	let isSubmitting = $state(false);
 	let errorMessage = $state('');
 	let successMessage = $state('');
@@ -47,19 +58,39 @@
 				asset.activeOfferPrice !== undefined
 		)
 	);
+	const requiresVisibilityAck = $derived(
+		postOfferAction === 'Move to detail-only after expiry' ||
+			postOfferAction === 'Delist / archive after expiry'
+	);
+	const isRecoveryStrategy = $derived(isRecoveryOfferStrategy(offerStrategy));
+	const isRecoveryBlocked = $derived(isRecoveryStrategy && Boolean(asset.recoveryOfferUsed));
 	const isSubmitDisabled = $derived(
 		isSubmitting ||
 			!canRequestOffer ||
 			!offerPrice.trim() ||
 			!fulfillmentUrl.trim() ||
 			!endsAt.trim() ||
-			!termsAccepted
+			!termsAccepted ||
+			(requiresVisibilityAck && !visibilityTermsAccepted) ||
+			isRecoveryBlocked
 	);
 
 	$effect(() => {
 		if (didInitializeOfferLabel) return;
 		offerLabel = asset.activeOfferLabel || 'Limited offer';
 		didInitializeOfferLabel = true;
+	});
+
+	$effect(() => {
+		if (!requiresVisibilityAck) {
+			visibilityTermsAccepted = false;
+		}
+	});
+
+	$effect(() => {
+		if (asset.recoveryOfferUsed && isRecoveryStrategy) {
+			offerStrategy = 'Creator-managed price test';
+		}
 	});
 
 	function resetMessages() {
@@ -85,8 +116,10 @@
 					startsAt: startsAt || undefined,
 					endsAt,
 					offerStrategy,
+					postOfferAction,
 					notes,
-					termsAccepted
+					termsAccepted,
+					visibilityTermsAccepted
 				})
 			});
 
@@ -94,6 +127,7 @@
 				success?: boolean;
 				message?: string;
 				offerId?: string;
+				approvalStatus?: 'Approved' | 'Pending';
 			};
 
 			if (!response.ok || !result.success) {
@@ -101,11 +135,15 @@
 			}
 
 			successMessage =
-				'Offer request submitted for review. Marketplace checkout and public badges will not change until approval.';
-			toast.success('Offer request submitted');
+				result.approvalStatus === 'Approved'
+					? 'Offer accepted. Search visibility and public offer fields will follow the lifecycle policy.'
+					: 'Offer request submitted for marketplace review before any archive or delist action.';
+			toast.success(result.approvalStatus === 'Approved' ? 'Offer accepted' : 'Offer request submitted');
 			trackEvent('template_offer_request_submitted', {
 				asset_id: asset.id,
 				offer_strategy: offerStrategy,
+				post_offer_action: postOfferAction,
+				approval_status: result.approvalStatus,
 				has_active_offer: hasActiveOffer,
 				offer_id: result.offerId
 			});
@@ -113,12 +151,14 @@
 			fulfillmentUrl = '';
 			notes = '';
 			termsAccepted = false;
+			visibilityTermsAccepted = false;
 		} catch (err) {
 			errorMessage = err instanceof Error ? err.message : 'Failed to submit offer request';
 			toast.error(errorMessage);
 			trackEvent('template_offer_request_failed', {
 				asset_id: asset.id,
 				offer_strategy: offerStrategy,
+				post_offer_action: postOfferAction,
 				has_active_offer: hasActiveOffer
 			});
 		} finally {
@@ -145,13 +185,25 @@
 		{#if canRequestOffer}
 			<div class="offer-request-intro">
 				<p>
-					Submit a creator-managed fulfillment link and sale price for review. This creates a
-					pending offer record; public marketplace checkout changes only after approval.
+					Submit a creator-managed fulfillment link and sale price. Offers that pass policy can
+					move quickly; archive or delist outcomes still go through marketplace review.
 				</p>
 				{#if asset.priceString || asset.activeOfferPrice !== undefined}
 					<div class="price-context">
 						{#if asset.priceString}
 							<span>Marketplace price: <strong>{asset.priceString}</strong></span>
+						{/if}
+						{#if asset.searchVisibility}
+							<span>Search visibility: <strong>{asset.searchVisibility}</strong></span>
+						{/if}
+						{#if asset.qualifiedSales30d !== undefined || asset.recoveryOfferUsed}
+							<span>
+								Re-entry sales:
+								<strong>{asset.qualifiedSales30d ?? 0}/{RECOVERY_REENTRY_QUALIFIED_SALES_30D}</strong>
+							</span>
+						{/if}
+						{#if asset.recoveryOfferUsed}
+							<span>Recovery offer: <strong>Used</strong></span>
 						{/if}
 						{#if asset.activeOfferPrice !== undefined}
 							<span>Current offer: <strong>{formatCompactCurrency(asset.activeOfferPrice)}</strong></span>
@@ -213,9 +265,28 @@
 						>
 							<option value="Creator-managed price test">Creator-managed price test</option>
 							<option value="Limited-time sale">Limited-time sale</option>
-							<option value="Prune recovery test">Recovery window before marketplace review</option>
-							<option value="Exit sale before delist">Exit sale before archive</option>
+							<option value="Prune recovery test" disabled={asset.recoveryOfferUsed}
+								>Recovery window before marketplace review</option
+							>
+							<option value="Exit sale before delist" disabled={asset.recoveryOfferUsed}
+								>Exit sale before archive</option
+							>
 							<option value="Retention save">Retention save</option>
+						</select>
+					</div>
+
+					<div class="form-field">
+						<Label for="postOfferAction">After offer ends</Label>
+						<select
+							id="postOfferAction"
+							class="form-control native-select"
+							bind:value={postOfferAction}
+							onchange={resetMessages}
+						>
+							<option value="Review search visibility after expiry">Review search visibility</option>
+							<option value="Return to standard checkout">Return to standard checkout</option>
+							<option value="Move to detail-only after expiry">Move to detail-only</option>
+							<option value="Delist / archive after expiry">Delist / archive after review</option>
 						</select>
 					</div>
 
@@ -245,9 +316,26 @@
 					<input type="checkbox" bind:checked={termsAccepted} onchange={resetMessages} />
 					<span>
 						I confirm this link is intended for this template offer, existing buyer access is not
-						affected, and the offer must be approved before it appears publicly.
+						affected, and the offer must pass policy before it appears publicly.
 					</span>
 				</label>
+
+				{#if requiresVisibilityAck}
+					<label class="terms-row terms-row--visibility">
+						<input type="checkbox" bind:checked={visibilityTermsAccepted} onchange={resetMessages} />
+						<span>
+							I understand this lifecycle choice can remove the template from marketplace search
+							after the offer window while keeping buyer access and direct links intact.
+						</span>
+					</label>
+				{/if}
+
+				{#if isRecoveryBlocked}
+					<p class="form-message form-message--error">
+						Recovery offers are one-time. This template needs
+						{RECOVERY_REENTRY_QUALIFIED_SALES_30D} qualified sales in 30 days before search re-entry.
+					</p>
+				{/if}
 
 				{#if errorMessage}
 					<p class="form-message form-message--error">{errorMessage}</p>
