@@ -69,6 +69,27 @@ const PREVIEW_DEVICE_DIMENSIONS: Record<TemplateDetailPreviewDevice, { width: nu
   mobile: { width: 390, height: 760 },
 };
 
+const TEMPLATE_DETAIL_HERO_SHELL_OVERRIDE_ID = 'wfdt-template-detail-hero-shell-override';
+const TEMPLATE_DETAIL_HERO_DOCUMENT_STATE = 'active';
+let activeTemplateDetailHeroCount = 0;
+
+function ensureTemplateDetailHeroShellOverride(documentRef: Document): void {
+  if (documentRef.getElementById(TEMPLATE_DETAIL_HERO_SHELL_OVERRIDE_ID)) return;
+
+  const style = documentRef.createElement('style');
+  style.id = TEMPLATE_DETAIL_HERO_SHELL_OVERRIDE_ID;
+  style.textContent = `
+@media (max-width: 767px) {
+  html[data-wfdt-template-detail-hero="${TEMPLATE_DETAIL_HERO_DOCUMENT_STATE}"] .template-hero {
+    position: static !important;
+    top: auto !important;
+    z-index: auto !important;
+  }
+}
+`;
+  documentRef.head.appendChild(style);
+}
+
 function relForHref(href: string, target?: string): string | undefined {
   if (target === '_blank' || isExternalUrl(href)) return 'noopener noreferrer';
   return undefined;
@@ -324,37 +345,16 @@ const TemplateDetailHeroInner: React.FC<TemplateDetailHeroProps> = ({
   }, [previewDefaultDevice]);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return undefined;
-    const shell = heroRootRef.current?.closest<HTMLElement>('.template-hero');
-    if (!shell) return undefined;
+    if (typeof document === 'undefined') return undefined;
 
-    const originalPosition = shell.style.position;
-    const originalTop = shell.style.top;
-    const originalZIndex = shell.style.zIndex;
-    const mobileQuery = window.matchMedia('(max-width: 767px)');
-    const applyMobilePosition = () => {
-      if (mobileQuery.matches) {
-        shell.style.position = 'static';
-        shell.style.top = 'auto';
-        shell.style.zIndex = 'auto';
-        return;
-      }
-
-      shell.style.position = originalPosition;
-      shell.style.top = originalTop;
-      shell.style.zIndex = originalZIndex;
-    };
-
-    applyMobilePosition();
-    mobileQuery.addEventListener?.('change', applyMobilePosition);
-    mobileQuery.addListener?.(applyMobilePosition);
-
+    activeTemplateDetailHeroCount += 1;
+    ensureTemplateDetailHeroShellOverride(document);
+    document.documentElement.setAttribute('data-wfdt-template-detail-hero', TEMPLATE_DETAIL_HERO_DOCUMENT_STATE);
     return () => {
-      mobileQuery.removeEventListener?.('change', applyMobilePosition);
-      mobileQuery.removeListener?.(applyMobilePosition);
-      shell.style.position = originalPosition;
-      shell.style.top = originalTop;
-      shell.style.zIndex = originalZIndex;
+      activeTemplateDetailHeroCount = Math.max(0, activeTemplateDetailHeroCount - 1);
+      if (activeTemplateDetailHeroCount === 0) {
+        document.documentElement.removeAttribute('data-wfdt-template-detail-hero');
+      }
     };
   }, []);
 
@@ -544,7 +544,7 @@ const TemplateDetailHeroInner: React.FC<TemplateDetailHeroProps> = ({
                 ) : null}
                 {publishedDate ? <span className="wfdt-chip">Updated {publishedDate}</span> : null}
                 {showOfferBadge && offer.badgeLabel ? <span className={badgeClass}>{offer.badgeLabel}</span> : null}
-                {offer.savingsLabel ? <span className="wfdt-chip">{offer.savingsLabel}</span> : null}
+                {offer.savingsLabel ? <span className="wfdt-chip wfdt-chip-savings">{offer.savingsLabel}</span> : null}
               </div>
             </div>
             <div className="wfdt-actions">

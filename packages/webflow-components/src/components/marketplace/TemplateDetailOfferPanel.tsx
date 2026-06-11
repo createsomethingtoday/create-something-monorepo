@@ -123,7 +123,7 @@ const TemplateDetailOfferPanelInner: React.FC<TemplateDetailOfferPanelProps> = (
       <div className="wfdt-price-row">
         <span className="wfdt-price-primary">{offer.offerPriceLabel || offer.priceLabel}</span>
         {offer.offerPriceLabel && offer.priceLabel ? <span className="wfdt-price-original">{offer.priceLabel}</span> : null}
-        {offer.savingsLabel ? <span className="wfdt-chip">{offer.savingsLabel}</span> : null}
+        {offer.savingsLabel ? <span className="wfdt-chip wfdt-chip-savings">{offer.savingsLabel}</span> : null}
       </div>
 
       <p className="wfdt-panel-copy">{offer.secondaryCopy}</p>

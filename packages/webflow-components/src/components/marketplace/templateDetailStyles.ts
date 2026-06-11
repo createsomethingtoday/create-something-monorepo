@@ -103,15 +103,24 @@ export const TEMPLATE_DETAIL_STYLES = `
   margin-top: 8px;
 }
 
-.wfdt-creator-link,
-.wfdt-chip,
-.wfdt-badge {
+.wfdt-creator-link {
   display: inline-flex;
   align-items: center;
   min-height: 32px;
   border-radius: 4px;
   font-size: 13px;
   line-height: 1.2;
+}
+
+.wfdt-chip,
+.wfdt-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 16px;
 }
 
 .wfdt-creator-link {
@@ -136,30 +145,36 @@ export const TEMPLATE_DETAIL_STYLES = `
 }
 
 .wfdt-chip {
-  padding: 0 10px;
+  padding: 2px 8px;
+  border: 1px solid #e6e6e6;
   color: #4a4a4a;
-  background: #f2f2f2;
+  background: #f7f7f7;
+}
+
+.wfdt-chip-savings {
+  border-color: rgba(22, 163, 74, 0.22);
+  color: #12813e;
+  background: rgba(22, 163, 74, 0.08);
 }
 
 .wfdt-badge {
-  gap: 6px;
-  padding: 0 10px;
-  border: 1px solid #c7defe;
-  color: #0f55d9;
-  background: #eef5ff;
-  font-weight: 600;
+  gap: 5px;
+  padding: 2px 8px;
+  border: 1px solid rgba(20, 110, 245, 0.18);
+  color: #146ef5;
+  background: rgba(20, 110, 245, 0.08);
 }
 
 .wfdt-badge-sale {
-  border-color: #ffd8a8;
-  color: #915c00;
-  background: #fff5e6;
+  border-color: rgba(245, 158, 11, 0.3);
+  color: #a26000;
+  background: rgba(245, 158, 11, 0.12);
 }
 
 .wfdt-badge-verified {
-  border-color: #b9e5d0;
-  color: #106b43;
-  background: #eefaf4;
+  border-color: rgba(34, 197, 94, 0.22);
+  color: #12813e;
+  background: rgba(22, 163, 74, 0.08);
 }
 
 .wfdt-actions {
