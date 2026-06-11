@@ -139,7 +139,9 @@ export function resolveTemplateDetailCheckoutLink(input: {
   marketplaceTemplateId?: string;
 }): Partial<TemplateDetailLink> {
   const checkoutUrl = normalizeTemplateDetailLink(input.checkoutUrl);
-  return checkoutUrl.href ? checkoutUrl : marketplaceCheckoutLink(input.marketplaceTemplateId);
+  const href = compact(checkoutUrl.href);
+  if (href && href !== '#' && href !== 'about:blank') return checkoutUrl;
+  return marketplaceCheckoutLink(input.marketplaceTemplateId);
 }
 
 function formatDateLabel(value?: string): string {
