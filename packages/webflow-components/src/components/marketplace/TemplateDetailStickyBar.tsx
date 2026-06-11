@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { trackMarketplaceEvent } from './analytics';
 import { MarketplaceComponentErrorBoundary, useMarketplaceComponentErrorTracking } from './MarketplaceComponentErrorBoundary';
 import {
@@ -35,6 +35,7 @@ export interface TemplateDetailStickyBarProps {
   fulfillmentUrl?: TemplateDetailLink;
   showBrowserPreview?: boolean;
   showDesignerPreview?: boolean;
+  revealWhenPrimaryCtaHidden?: boolean;
   enableAnalytics?: boolean;
 }
 
@@ -69,11 +70,14 @@ const TemplateDetailStickyBarInner: React.FC<TemplateDetailStickyBarProps> = ({
   fulfillmentUrl,
   showBrowserPreview = true,
   showDesignerPreview = false,
+  revealWhenPrimaryCtaHidden = true,
   enableAnalytics = true,
 }) => {
   useMarketplaceComponentErrorTracking('TemplateDetailStickyBar', enableAnalytics);
+  const [isRevealed, setIsRevealed] = useState(!revealWhenPrimaryCtaHidden);
   const stickyBarRef = useRef<HTMLDivElement>(null);
   const stickyVisibleTrackedRef = useRef(false);
+  const stickyRevealedTrackedRef = useRef(false);
 
   const resolvedSlug = useMemo(() => inferTemplateSlug(templateSlug), [templateSlug]);
   const image = normalizeTemplateDetailImage(thumbnail);
@@ -125,7 +129,87 @@ const TemplateDetailStickyBarInner: React.FC<TemplateDetailStickyBarProps> = ({
   }, [enableAnalytics, offer, resolvedSlug]);
 
   useEffect(() => {
-    if (!enableAnalytics || typeof window === 'undefined') return undefined;
+    if (!revealWhenPrimaryCtaHidden || typeof document === 'undefined') {
+      setIsRevealed(true);
+      return undefined;
+    }
+
+    const stickyElement = stickyBarRef.current;
+    if (!stickyElement) return undefined;
+
+    const primaryCtas = Array.from(document.querySelectorAll<HTMLElement>('[data-template-detail-primary-cta]'))
+      .filter((element) => !stickyElement.contains(element) && element.getClientRects().length > 0);
+
+    if (!primaryCtas.length) {
+      setIsRevealed(true);
+      return undefined;
+    }
+
+    const visiblePrimaryCtas = new Set<Element>();
+    const syncRevealState = () => setIsRevealed(visiblePrimaryCtas.size === 0);
+
+    const BrowserIntersectionObserver = typeof IntersectionObserver === 'undefined' ? null : IntersectionObserver;
+    if (BrowserIntersectionObserver) {
+      const observer = new BrowserIntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting && entry.intersectionRatio > 0.15) {
+              visiblePrimaryCtas.add(entry.target);
+            } else {
+              visiblePrimaryCtas.delete(entry.target);
+            }
+          });
+          syncRevealState();
+        },
+        {
+          rootMargin: '0px 0px -12px 0px',
+          threshold: [0, 0.15, 0.5, 1],
+        },
+      );
+      primaryCtas.forEach((element) => observer.observe(element));
+      return () => observer.disconnect();
+    }
+
+    let frame = 0;
+    const updateFallback = () => {
+      frame = 0;
+      const hasVisiblePrimaryCta = primaryCtas.some((element) => {
+        const rect = element.getBoundingClientRect();
+        return rect.width > 0 && rect.height > 0 && rect.bottom > 0 && rect.top < window.innerHeight - 12;
+      });
+      setIsRevealed(!hasVisiblePrimaryCta);
+    };
+    const scheduleUpdate = () => {
+      if (frame) return;
+      frame = window.requestAnimationFrame(updateFallback);
+    };
+
+    scheduleUpdate();
+    window.addEventListener('scroll', scheduleUpdate, { passive: true });
+    window.addEventListener('resize', scheduleUpdate);
+    return () => {
+      if (frame) window.cancelAnimationFrame(frame);
+      window.removeEventListener('scroll', scheduleUpdate);
+      window.removeEventListener('resize', scheduleUpdate);
+    };
+  }, [revealWhenPrimaryCtaHidden]);
+
+  useEffect(() => {
+    if (!isRevealed || stickyRevealedTrackedRef.current) return;
+    stickyRevealedTrackedRef.current = true;
+    trackMarketplaceEvent(
+      'Code Component Event',
+      {
+        ...templateDetailAnalyticsBase('TemplateDetailStickyBar', resolvedSlug, offer),
+        scope: 'detail_sticky_bar_revealed',
+        reveal_trigger: revealWhenPrimaryCtaHidden ? 'primary_cta_hidden' : 'always_visible',
+      },
+      enableAnalytics,
+    );
+  }, [enableAnalytics, isRevealed, offer, resolvedSlug, revealWhenPrimaryCtaHidden]);
+
+  useEffect(() => {
+    if (!enableAnalytics || !isRevealed || typeof window === 'undefined') return undefined;
     const element = stickyBarRef.current;
     if (!element) return undefined;
 
@@ -159,7 +243,7 @@ const TemplateDetailStickyBarInner: React.FC<TemplateDetailStickyBarProps> = ({
 
     const frame = window.requestAnimationFrame(trackVisible);
     return () => window.cancelAnimationFrame(frame);
-  }, [enableAnalytics, offer, resolvedSlug]);
+  }, [enableAnalytics, isRevealed, offer, resolvedSlug]);
 
   const primaryTarget = targetForHref(offer.primaryHref, offer.primaryTarget);
   const priceLine = offer.offerPriceLabel
@@ -167,7 +251,12 @@ const TemplateDetailStickyBarInner: React.FC<TemplateDetailStickyBarProps> = ({
     : offer.priceLabel;
 
   return (
-    <div className="wfdt wfdt-sticky" data-template-detail-sticky-bar="" ref={stickyBarRef}>
+    <div
+      className={`wfdt wfdt-sticky${isRevealed ? '' : ' wfdt-sticky-hidden'}`}
+      data-template-detail-sticky-bar=""
+      aria-hidden={!isRevealed}
+      ref={stickyBarRef}
+    >
       <style>{TEMPLATE_DETAIL_STYLES}</style>
       <div className="wfdt-sticky-meta">
         {image.src ? <img className="wfdt-sticky-thumb" src={image.src} alt={image.alt || `${templateName} thumbnail`} /> : null}

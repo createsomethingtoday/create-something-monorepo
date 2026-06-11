@@ -604,6 +604,16 @@ export const TEMPLATE_DETAIL_STYLES = `
   background: rgba(255, 255, 255, 0.96);
   backdrop-filter: blur(12px);
   box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.08);
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+  transition: transform 0.18s ease, opacity 0.18s ease;
+}
+
+.wfdt-sticky-hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(calc(100% + 16px));
 }
 
 .wfdt-sticky-meta {

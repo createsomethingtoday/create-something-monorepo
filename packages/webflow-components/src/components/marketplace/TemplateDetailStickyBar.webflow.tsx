@@ -46,6 +46,11 @@ export default declareComponent(TemplateDetailStickyBar, {
     fulfillmentUrl: props.Link({ name: 'Fulfillment Link' }),
     showBrowserPreview: props.Boolean({ name: 'Show Browser Preview', defaultValue: true }),
     showDesignerPreview: props.Boolean({ name: 'Show Designer Preview', defaultValue: false }),
+    revealWhenPrimaryCtaHidden: props.Boolean({
+      name: 'Reveal When Primary CTA Hidden',
+      defaultValue: true,
+      tooltip: 'When enabled, the sticky bar stays hidden while another primary purchase CTA is visible on the page.',
+    }),
     enableAnalytics: props.Boolean({ name: 'Enable Analytics', defaultValue: true }),
   },
 });
