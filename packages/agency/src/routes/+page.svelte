@@ -2,6 +2,7 @@
   import { Button, HeroSignalField, SEO } from '@create-something/canon';
   import { BlurFade } from '@create-something/canon/magicui';
   import ExecutionWorkbench from '$lib/components/ExecutionWorkbench.svelte';
+  import WorkflowSignalIcon from '$lib/components/WorkflowSignalIcon.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
   const services = [
@@ -36,7 +37,7 @@
     { value: 'Actions', label: 'Agent capacity scoped clearly', icon: 'actions' },
     { value: 'States', label: 'Allowed / approval / blocked', icon: 'states' },
     { value: 'Receipts', label: 'Evidence for every handoff', icon: 'receipts' }
-  ];
+  ] as const;
 
   const deliveryReceipts = [
     {
@@ -118,29 +119,7 @@
         <BlurFade delay={0.25 + index * 0.05}>
           <article class="product-surface product-surface--soft metric-card">
             <div class="metric-icon" aria-hidden="true">
-              {#if metric.icon === 'objects'}
-                <svg class="metric-symbol metric-symbol--objects" viewBox="0 0 24 24" focusable="false">
-                  <rect width="6" height="6" x="16" y="16" rx="1" />
-                  <rect width="6" height="6" x="2" y="16" rx="1" />
-                  <rect width="6" height="6" x="9" y="2" rx="1" />
-                  <path d="M5 16v-3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3m-7-4V8" />
-                </svg>
-              {:else if metric.icon === 'actions'}
-                <svg class="metric-symbol metric-symbol--actions" viewBox="0 0 24 24" focusable="false">
-                  <circle cx="6" cy="19" r="3" />
-                  <path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15" />
-                  <circle cx="18" cy="5" r="3" />
-                </svg>
-              {:else if metric.icon === 'states'}
-                <svg class="metric-symbol metric-symbol--states" viewBox="0 0 24 24" focusable="false">
-                  <path d="M13 5h8m-8 7h8m-8 7h8M3 17l2 2l4-4M3 7l2 2l4-4" />
-                </svg>
-              {:else}
-                <svg class="metric-symbol metric-symbol--receipts" viewBox="0 0 24 24" focusable="false">
-                  <path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z" />
-                  <path d="M14 2v5a1 1 0 0 0 1 1h5M9 15l2 2l4-4" />
-                </svg>
-              {/if}
+              <WorkflowSignalIcon name={metric.icon} />
             </div>
             <div class="metric-copy">
               <span class="metric-value">{metric.value}</span>
@@ -457,6 +436,7 @@
     position: relative;
     width: 3.45rem;
     height: 3.45rem;
+    --workflow-signal-icon-size: 2.25rem;
     border: 1px solid rgba(225, 231, 255, 0.11);
     border-radius: 12px;
     background:
@@ -470,35 +450,6 @@
     box-shadow:
       inset 0 0 0 1px rgba(255, 255, 255, 0.018),
       0 10px 22px rgba(0, 0, 0, 0.14);
-  }
-
-  .metric-icon svg {
-    width: 2.25rem;
-    height: 2.25rem;
-    overflow: visible;
-  }
-
-  .metric-symbol {
-    fill: none;
-    color: rgba(232, 237, 255, 0.66);
-    stroke: currentColor;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-    stroke-width: 1.18;
-    vector-effect: non-scaling-stroke;
-    filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.08));
-  }
-
-  .metric-symbol--actions {
-    color: rgba(238, 242, 255, 0.7);
-  }
-
-  .metric-symbol--states {
-    color: rgba(225, 231, 255, 0.68);
-  }
-
-  .metric-symbol--receipts {
-    color: rgba(226, 232, 240, 0.7);
   }
 
   .metric-copy {
