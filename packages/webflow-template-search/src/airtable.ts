@@ -22,6 +22,12 @@ const DEFAULT_STYLES_TABLE_ID = 'tblG7E9LbQj0sBX0o';
 const DEFAULT_TAGS_TABLE_ID = 'tblb4969G7O75gVWV';
 const DEFAULT_CREATORS_TABLE_ID = 'tbljt0plqxdMARZXb';
 
+export const DEFAULT_SEARCH_VISIBILITY_FIELDS = [
+  '👁️Search Visibility (🏗️ only)',
+  'Search Visibility',
+  'search_visibility',
+] as const;
+
 export const ASSET_FIELDS = [
   'Name',
   '⚙️🆎Type (Text)',
@@ -94,8 +100,23 @@ function attachmentUrl(value: unknown): string | null {
 interface FetchOptions {
   tableId: string;
   fields: string[];
+  optionalFields?: string[];
   formula?: string;
   sortField?: string;
+}
+
+function parseConfiguredSearchVisibilityFields(env: Env): string[] {
+  const configured = (env.AIRTABLE_SEARCH_VISIBILITY_FIELDS ?? '')
+    .split(',')
+    .map((field) => field.trim())
+    .filter(Boolean);
+
+  return uniqueStrings([...configured, ...DEFAULT_SEARCH_VISIBILITY_FIELDS]);
+}
+
+function isMissingOptionalFieldError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  return /unknown field|UNKNOWN_FIELD|INVALID_REQUEST_UNKNOWN_FIELD_NAME/i.test(message);
 }
 
 async function fetchAirtableRecords<TFields extends Record<string, unknown>>(
@@ -104,38 +125,50 @@ async function fetchAirtableRecords<TFields extends Record<string, unknown>>(
 ): Promise<Array<AirtableRecord<TFields>>> {
   assertAirtableConfigured(env);
 
-  const records: Array<AirtableRecord<TFields>> = [];
-  let offset: string | undefined;
+  async function requestRecords(fields: string[]): Promise<Array<AirtableRecord<TFields>>> {
+    const records: Array<AirtableRecord<TFields>> = [];
+    let offset: string | undefined;
 
-  do {
-    const params = new URLSearchParams();
-    params.set('pageSize', '100');
-    options.fields.forEach((field) => params.append('fields[]', field));
-    if (options.formula) params.set('filterByFormula', options.formula);
-    if (options.sortField) {
-      params.set('sort[0][field]', options.sortField);
-      params.set('sort[0][direction]', 'asc');
-    }
-    if (offset) params.set('offset', offset);
+    do {
+      const params = new URLSearchParams();
+      params.set('pageSize', '100');
+      fields.forEach((field) => params.append('fields[]', field));
+      if (options.formula) params.set('filterByFormula', options.formula);
+      if (options.sortField) {
+        params.set('sort[0][field]', options.sortField);
+        params.set('sort[0][direction]', 'asc');
+      }
+      if (offset) params.set('offset', offset);
 
-    const url = `https://api.airtable.com/v0/${env.AIRTABLE_BASE_ID}/${encodeURIComponent(options.tableId)}?${params.toString()}`;
-    const response = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${env.AIRTABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-    });
+      const url = `https://api.airtable.com/v0/${env.AIRTABLE_BASE_ID}/${encodeURIComponent(options.tableId)}?${params.toString()}`;
+      const response = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${env.AIRTABLE_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+      });
 
-    if (!response.ok) {
-      throw new Error(`Airtable request failed (${response.status}): ${await response.text()}`);
-    }
+      if (!response.ok) {
+        throw new Error(`Airtable request failed (${response.status}): ${await response.text()}`);
+      }
 
-    const payload = (await response.json()) as AirtableListResponse<TFields>;
-    records.push(...payload.records);
-    offset = payload.offset;
-  } while (offset);
+      const payload = (await response.json()) as AirtableListResponse<TFields>;
+      records.push(...payload.records);
+      offset = payload.offset;
+    } while (offset);
 
-  return records;
+    return records;
+  }
+
+  const optionalFields = options.optionalFields ?? [];
+  if (optionalFields.length === 0) return requestRecords(options.fields);
+
+  try {
+    return await requestRecords(uniqueStrings([...options.fields, ...optionalFields]));
+  } catch (error) {
+    if (!isMissingOptionalFieldError(error)) throw error;
+    return requestRecords(options.fields);
+  }
 }
 
 // Minimal field list for periodic image URL refresh — much cheaper than full ASSET_FIELDS.
@@ -171,6 +204,7 @@ export async function fetchPublishedTemplateAssets(env: Env): Promise<Array<Airt
   return fetchAirtableRecords<AirtableAssetFields>(env, {
     tableId: env.AIRTABLE_ASSETS_TABLE_ID ?? DEFAULT_ASSETS_TABLE_ID,
     fields: ASSET_FIELDS,
+    optionalFields: parseConfiguredSearchVisibilityFields(env),
     formula: buildPublishedTemplateFormula(),
     sortField: '📅LMT',
   });
@@ -184,6 +218,7 @@ export async function fetchModifiedAssetsSince(
   return fetchAirtableRecords<AirtableAssetFields>(env, {
     tableId: env.AIRTABLE_ASSETS_TABLE_ID ?? DEFAULT_ASSETS_TABLE_ID,
     fields: ASSET_FIELDS,
+    optionalFields: parseConfiguredSearchVisibilityFields(env),
     formula: buildModifiedAfterFormula(cursor, until),
     sortField: '📅LMT',
   });
@@ -199,6 +234,7 @@ export async function fetchAssetRecordsByIds(
   return fetchAirtableRecords<AirtableAssetFields>(env, {
     tableId: env.AIRTABLE_ASSETS_TABLE_ID ?? DEFAULT_ASSETS_TABLE_ID,
     fields: ASSET_FIELDS,
+    optionalFields: parseConfiguredSearchVisibilityFields(env),
     formula: buildRecordIdFormula(uniqueIds),
     sortField: '📅LMT',
   });

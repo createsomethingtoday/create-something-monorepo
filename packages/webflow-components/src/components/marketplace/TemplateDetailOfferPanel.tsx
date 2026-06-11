@@ -23,7 +23,8 @@ export interface TemplateDetailOfferPanelProps {
   offerLabel?: string;
   offerPrice?: string;
   offerEndsAt?: string;
-  offerUrl?: TemplateDetailLink;
+  offerVisibility?: string;
+  postOfferAction?: string;
   fulfillmentUrl?: TemplateDetailLink;
   secondaryCheckoutLabel?: string;
   showSecondaryCheckout?: boolean;
@@ -52,7 +53,8 @@ const TemplateDetailOfferPanelInner: React.FC<TemplateDetailOfferPanelProps> = (
   offerLabel = '',
   offerPrice = '',
   offerEndsAt = '',
-  offerUrl,
+  offerVisibility = '',
+  postOfferAction = '',
   fulfillmentUrl,
   secondaryCheckoutLabel = 'Use standard checkout',
   showSecondaryCheckout = true,
@@ -72,7 +74,8 @@ const TemplateDetailOfferPanelInner: React.FC<TemplateDetailOfferPanelProps> = (
     offerLabel,
     offerPrice,
     offerEndsAt,
-    offerUrl,
+    offerVisibility,
+    postOfferAction,
     checkoutUrl,
     fulfillmentUrl,
   });
@@ -138,6 +141,9 @@ const TemplateDetailOfferPanelInner: React.FC<TemplateDetailOfferPanelProps> = (
                 ...templateDetailAnalyticsBase('TemplateDetailOfferPanel', resolvedSlug, offer),
                 scope: 'detail_offer_primary_clicked',
                 cta_location: 'offer_panel',
+                cta_label: offer.primaryLabel,
+                purchase_type: offer.purchaseType,
+                primary_href_present: Boolean(offer.primaryHref && offer.primaryHref !== '#'),
               },
               enableAnalytics,
             )
@@ -160,6 +166,9 @@ const TemplateDetailOfferPanelInner: React.FC<TemplateDetailOfferPanelProps> = (
                   ...templateDetailAnalyticsBase('TemplateDetailOfferPanel', resolvedSlug, offer),
                   scope: 'detail_offer_secondary_checkout_clicked',
                   cta_location: 'offer_panel',
+                  cta_label: secondaryCheckoutLabel,
+                  purchase_type: 'marketplace_checkout',
+                  primary_href_present: Boolean(checkout.href),
                 },
                 enableAnalytics,
               )

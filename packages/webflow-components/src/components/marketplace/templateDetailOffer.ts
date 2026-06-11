@@ -1,7 +1,8 @@
+import type { MarketplaceAnalyticsData } from './analytics';
+import { getSafeAnalyticsOverrides, readTemplateAttribution } from './templateAttribution';
+
 export type TemplateDetailOfferMode =
   | 'marketplace'
-  | 'creator_offer'
-  | 'external_checkout'
   | 'fulfillment_link'
   | 'free';
 
@@ -25,7 +26,8 @@ export interface TemplateDetailOfferInput {
   offerLabel?: string;
   offerPrice?: string;
   offerEndsAt?: string;
-  offerUrl?: TemplateDetailLink;
+  offerVisibility?: string;
+  postOfferAction?: string;
   checkoutUrl?: TemplateDetailLink;
   fulfillmentUrl?: TemplateDetailLink;
   isFree?: boolean;
@@ -43,6 +45,8 @@ export interface TemplateDetailOfferState {
   secondaryCopy: string;
   savingsLabel: string;
   expiresLabel: string;
+  offerVisibility: string;
+  postOfferAction: string;
   purchaseType: string;
   tone: TemplateDetailTone;
 }
@@ -84,9 +88,21 @@ function compact(value?: string | null): string {
   return value?.trim() ?? '';
 }
 
+function isFreePrice(value?: string): boolean {
+  return /\bfree\b/i.test(compact(value));
+}
+
+function priceBucket(value?: string): string {
+  const normalized = compact(value).toLowerCase();
+  if (!normalized || normalized === DEFAULT_PRICE.toLowerCase()) return 'unknown';
+  if (isFreePrice(normalized) || normalized === '$0' || normalized === '0' || normalized === '0 usd') return 'free';
+  return 'paid';
+}
+
 function parsePrice(value?: string): number | null {
   const normalized = compact(value).replace(/,/g, '');
-  if (!normalized || /free/i.test(normalized)) return 0;
+  if (!normalized) return null;
+  if (isFreePrice(normalized)) return 0;
   const match = normalized.match(/(\d+(?:\.\d+)?)/);
   if (!match) return null;
   const parsed = Number(match[1]);
@@ -112,9 +128,10 @@ function formatDateLabel(value?: string): string {
 }
 
 function resolveMode(input: TemplateDetailOfferInput, hasOffer: boolean): TemplateDetailOfferMode {
-  if (input.isFree) return 'free';
-  if (hasOffer && input.offerMode && input.offerMode !== 'marketplace') return input.offerMode;
-  if (hasOffer) return 'creator_offer';
+  if (input.isFree || isFreePrice(input.price)) return 'free';
+  if (hasOffer && input.offerMode === 'fulfillment_link') return 'fulfillment_link';
+  if (hasOffer && input.offerMode === 'free') return 'free';
+  if (hasOffer) return 'fulfillment_link';
   return input.offerMode === 'free' ? 'free' : 'marketplace';
 }
 
@@ -123,61 +140,114 @@ function offerBadge(mode: TemplateDetailOfferMode, label: string, hasOffer: bool
   if (!hasOffer && mode !== 'free') return '';
   if (mode === 'free') return 'Free template';
   if (mode === 'fulfillment_link') return 'Creator fulfillment';
-  if (mode === 'external_checkout') return 'Creator checkout';
-  return 'Creator sale';
+  return '';
 }
 
-function primaryLabel(mode: TemplateDetailOfferMode, hasOffer: boolean): string {
+function marketplacePrimaryLabel(priceLabel: string): string {
+  const label = compact(priceLabel);
+  if (!label || label === DEFAULT_PRICE) return 'Buy template';
+  if (/^buy\b/i.test(label)) return label;
+  if (/free/i.test(label)) return 'Use for free';
+  return `Buy ${label}`;
+}
+
+function primaryLabel(mode: TemplateDetailOfferMode, hasOffer: boolean, priceLabel: string): string {
   if (mode === 'free') return 'Use for free';
   if (mode === 'fulfillment_link') return 'Get creator offer';
-  if (mode === 'external_checkout') return 'Continue to creator offer';
   if (hasOffer) return 'Get creator offer';
-  return 'Buy template';
+  return marketplacePrimaryLabel(priceLabel);
 }
 
-function secondaryCopy(mode: TemplateDetailOfferMode, hasOffer: boolean): string {
+function hasDetailOnlyLifecycle(visibility: string, action: string): boolean {
+  const combined = `${visibility} ${action}`.toLowerCase();
+  return (
+    combined.includes('detail only') ||
+    combined.includes('detail-only') ||
+    combined.includes('unlisted') ||
+    combined.includes('hidden') ||
+    combined.includes('delist') ||
+    combined.includes('archive') ||
+    combined.includes('remove from search')
+  );
+}
+
+function secondaryCopy(mode: TemplateDetailOfferMode, hasOffer: boolean, visibility: string, action: string): string {
   if (mode === 'free') return 'Use this template in Webflow at no cost.';
   if (mode === 'fulfillment_link') {
-    return 'After an approved creator purchase, install the published template in Webflow with the fulfillment link.';
+    return 'Complete the creator offer through the Webflow-generated fulfillment link.';
   }
-  if (mode === 'external_checkout') {
-    return 'Complete the creator offer outside Webflow, then return to install the template in Webflow.';
+  if (hasOffer && hasDetailOnlyLifecycle(visibility, action)) {
+    return 'Limited creator offer. After this window, the listing may move to detail-only access or a marketplace lifecycle review.';
   }
-  if (hasOffer) return 'Limited creator offer. Standard Marketplace checkout remains available if the offer expires.';
+  if (hasOffer) {
+    return 'Limited creator offer. Availability returns to the standard Marketplace path unless the listing enters a lifecycle review.';
+  }
   return 'Purchase through Webflow Marketplace checkout.';
 }
 
 function purchaseType(mode: TemplateDetailOfferMode, hasOffer: boolean): string {
   if (mode === 'free') return 'free';
   if (mode === 'fulfillment_link') return 'fulfillment_link';
-  if (mode === 'external_checkout') return 'external_checkout';
-  if (hasOffer) return 'creator_offer';
+  if (hasOffer) return 'fulfillment_link';
   return 'marketplace_checkout';
 }
 
 function tone(mode: TemplateDetailOfferMode, hasOffer: boolean): TemplateDetailTone {
-  if (mode === 'fulfillment_link' || mode === 'external_checkout') return 'verified';
+  if (mode === 'fulfillment_link') return 'verified';
   if (mode === 'free') return 'default';
   return hasOffer ? 'sale' : 'default';
 }
 
+function attributionContext(templateSlug?: string): MarketplaceAnalyticsData {
+  const attribution = readTemplateAttribution();
+  if (!attribution) {
+    return {
+      attribution_present: false,
+      attribution_match: false,
+    };
+  }
+
+  const expectedTemplateSlug = inferTemplateSlug(templateSlug) || null;
+  return {
+    attribution_present: true,
+    attribution_match: expectedTemplateSlug ? attribution.template_slug === expectedTemplateSlug : null,
+    attribution_source_component: attribution.source_component,
+    attribution_source_pathname: attribution.source_pathname,
+    attribution_source_scope: attribution.source_scope,
+    attribution_source_sort: attribution.source_sort,
+    attribution_source_category_group_slug: attribution.source_category_group_slug,
+    attribution_source_child_category_slug: attribution.source_child_category_slug,
+    attribution_source_style_slug: attribution.source_style_slug,
+    attribution_source_tag_slug: attribution.source_tag_slug,
+    attribution_source_free_only: attribution.source_free_only,
+    attribution_source_q_present: attribution.source_q_present,
+    attribution_source_styles_count: attribution.source_styles_count,
+    attribution_source_tags_count: attribution.source_tags_count,
+    attribution_source_types_count: attribution.source_types_count,
+    attribution_source_page: attribution.source_page,
+    attribution_source_position: attribution.source_position,
+    attribution_template_slug: attribution.template_slug,
+  };
+}
+
 export function resolveTemplateDetailOffer(input: TemplateDetailOfferInput): TemplateDetailOfferState {
-  const offerUrl = normalizeTemplateDetailLink(input.offerUrl);
   const checkoutUrl = normalizeTemplateDetailLink(input.checkoutUrl);
   const fulfillmentUrl = normalizeTemplateDetailLink(input.fulfillmentUrl);
   const offerPriceLabel = compact(input.offerPrice);
-  const priceLabel = compact(input.price) || (input.isFree ? 'Free' : DEFAULT_PRICE);
-  const hasOffer = Boolean(input.offerEnabled && (offerPriceLabel || compact(input.offerLabel) || offerUrl.href || fulfillmentUrl.href));
+  const offerVisibility = compact(input.offerVisibility);
+  const postOfferAction = compact(input.postOfferAction);
+  const isFreeTemplate = Boolean(input.isFree || isFreePrice(input.price));
+  const priceLabel = isFreeTemplate ? 'Free' : compact(input.price) || DEFAULT_PRICE;
+  const hasOffer = Boolean(input.offerEnabled && (offerPriceLabel || compact(input.offerLabel) || fulfillmentUrl.href));
   const mode = resolveMode(input, hasOffer);
-  const preferredOfferUrl = mode === 'fulfillment_link' && fulfillmentUrl.href ? fulfillmentUrl : offerUrl;
-  const activePrimaryLink = hasOffer || mode === 'free' ? preferredOfferUrl : checkoutUrl;
-  const fallbackPrimaryLink = checkoutUrl.href ? checkoutUrl : preferredOfferUrl;
+  const activePrimaryLink = hasOffer || mode === 'free' ? fulfillmentUrl : checkoutUrl;
+  const fallbackPrimaryLink = checkoutUrl.href ? checkoutUrl : fulfillmentUrl;
   const primaryLink = activePrimaryLink.href ? activePrimaryLink : fallbackPrimaryLink;
 
   const originalPrice = parsePrice(priceLabel);
   const offerPrice = parsePrice(offerPriceLabel);
   const savings =
-    originalPrice && offerPrice !== null && offerPrice < originalPrice
+    hasOffer && offerPriceLabel && originalPrice && offerPrice !== null && offerPrice < originalPrice
       ? Math.round((1 - offerPrice / originalPrice) * 100)
       : 0;
   const expiresLabel = formatDateLabel(input.offerEndsAt);
@@ -190,10 +260,12 @@ export function resolveTemplateDetailOffer(input: TemplateDetailOfferInput): Tem
     badgeLabel: offerBadge(mode, compact(input.offerLabel), hasOffer),
     primaryHref: primaryLink.href || '#',
     primaryTarget: primaryLink.target,
-    primaryLabel: primaryLabel(mode, hasOffer),
-    secondaryCopy: secondaryCopy(mode, hasOffer),
+    primaryLabel: primaryLabel(mode, hasOffer, priceLabel),
+    secondaryCopy: secondaryCopy(mode, hasOffer, offerVisibility, postOfferAction),
     savingsLabel: savings > 0 ? `${savings}% off` : '',
     expiresLabel,
+    offerVisibility,
+    postOfferAction,
     purchaseType: purchaseType(mode, hasOffer),
     tone: tone(mode, hasOffer),
   };
@@ -203,12 +275,23 @@ export function templateDetailAnalyticsBase(
   component: string,
   templateSlug?: string,
   offer?: TemplateDetailOfferState,
-): Record<string, string | boolean | null> {
+): MarketplaceAnalyticsData {
   return {
+    ...getSafeAnalyticsOverrides(),
+    ...attributionContext(templateSlug),
     component,
     detail_template_slug: inferTemplateSlug(templateSlug) || null,
+    detail_price_bucket: offer ? priceBucket(offer.priceLabel) : null,
     offer_enabled: Boolean(offer?.hasOffer),
     offer_mode: offer?.mode ?? null,
     offer_purchase_type: offer?.purchaseType ?? null,
+    offer_price_bucket: offer?.offerPriceLabel ? priceBucket(offer.offerPriceLabel) : null,
+    offer_has_price: Boolean(offer?.offerPriceLabel),
+    offer_has_expiration: Boolean(offer?.expiresLabel),
+    offer_has_discount: Boolean(offer?.savingsLabel),
+    offer_visibility: offer?.offerVisibility ?? null,
+    post_offer_action: offer?.postOfferAction ?? null,
+    primary_cta_label: offer?.primaryLabel ?? null,
+    primary_cta_href_present: Boolean(offer?.primaryHref && offer.primaryHref !== '#'),
   };
 }

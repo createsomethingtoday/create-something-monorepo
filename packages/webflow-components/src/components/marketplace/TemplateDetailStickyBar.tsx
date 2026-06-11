@@ -29,7 +29,8 @@ export interface TemplateDetailStickyBarProps {
   offerLabel?: string;
   offerPrice?: string;
   offerEndsAt?: string;
-  offerUrl?: TemplateDetailLink;
+  offerVisibility?: string;
+  postOfferAction?: string;
   fulfillmentUrl?: TemplateDetailLink;
   showBrowserPreview?: boolean;
   showDesignerPreview?: boolean;
@@ -61,7 +62,8 @@ const TemplateDetailStickyBarInner: React.FC<TemplateDetailStickyBarProps> = ({
   offerLabel = '',
   offerPrice = '',
   offerEndsAt = '',
-  offerUrl,
+  offerVisibility = '',
+  postOfferAction = '',
   fulfillmentUrl,
   showBrowserPreview = true,
   showDesignerPreview = false,
@@ -84,7 +86,8 @@ const TemplateDetailStickyBarInner: React.FC<TemplateDetailStickyBarProps> = ({
         offerLabel,
         offerPrice,
         offerEndsAt,
-        offerUrl,
+        offerVisibility,
+        postOfferAction,
         checkoutUrl,
         fulfillmentUrl,
       }),
@@ -97,7 +100,8 @@ const TemplateDetailStickyBarInner: React.FC<TemplateDetailStickyBarProps> = ({
       offerLabel,
       offerMode,
       offerPrice,
-      offerUrl,
+      offerVisibility,
+      postOfferAction,
       price,
       resolvedSlug,
     ],
@@ -147,6 +151,7 @@ const TemplateDetailStickyBarInner: React.FC<TemplateDetailStickyBarProps> = ({
                   scope: 'detail_preview_cta_clicked',
                   cta_location: 'sticky_bar',
                   preview_type: 'browser',
+                  cta_label: 'Preview',
                 },
                 enableAnalytics,
               )
@@ -169,6 +174,7 @@ const TemplateDetailStickyBarInner: React.FC<TemplateDetailStickyBarProps> = ({
                   scope: 'detail_preview_cta_clicked',
                   cta_location: 'sticky_bar',
                   preview_type: 'designer',
+                  cta_label: 'Designer',
                 },
                 enableAnalytics,
               )
@@ -192,6 +198,8 @@ const TemplateDetailStickyBarInner: React.FC<TemplateDetailStickyBarProps> = ({
                 scope: 'detail_primary_cta_clicked',
                 cta_location: 'sticky_bar',
                 purchase_type: offer.purchaseType,
+                cta_label: offer.primaryLabel,
+                primary_href_present: Boolean(offer.primaryHref && offer.primaryHref !== '#'),
               },
               enableAnalytics,
             )

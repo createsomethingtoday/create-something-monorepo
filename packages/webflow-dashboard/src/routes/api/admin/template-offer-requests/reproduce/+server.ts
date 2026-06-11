@@ -82,7 +82,12 @@ export const POST: RequestHandler = async ({ request, locals, platform }) => {
 		throw error(400, 'Limited offers can only be requested for published templates');
 	}
 
-	const input = normalizeTemplateOfferRequestBody(body, creatorEmail);
+	const input = normalizeTemplateOfferRequestBody(body, creatorEmail, new Date(), {
+		marketplacePrice: asset.priceAmount,
+		recoveryOfferUsed: asset.recoveryOfferUsed
+	});
+	const approvalStatus =
+		input.postOfferAction === 'Delist / archive after expiry' ? 'Pending' : 'Approved';
 
 	if (dryRun) {
 		return json({
@@ -93,17 +98,20 @@ export const POST: RequestHandler = async ({ request, locals, platform }) => {
 				name: asset.name,
 				type: asset.type,
 				status: asset.status,
-				priceString: asset.priceString
+				priceString: asset.priceString,
+				qualifiedSales30d: asset.qualifiedSales30d,
+				recoveryOfferUsed: asset.recoveryOfferUsed
 			},
 			wouldCreate: {
 				templateFulfillmentLink: true,
 				templateOffer: true,
-				approvalStatus: 'Pending',
+				approvalStatus,
 				offerMode: 'Fulfillment link',
 				visibility: 'Detail only',
 				offerLabel: input.offerLabel,
 				offerPrice: input.offerPrice,
 				offerStrategy: input.offerStrategy,
+				postOfferAction: input.postOfferAction,
 				startsAt: input.startsAt,
 				endsAt: input.endsAt,
 				notesLength: input.notes?.length ?? 0
