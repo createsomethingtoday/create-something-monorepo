@@ -1,21 +1,34 @@
 export interface Env {
   MCP_OBJECT: DurableObjectNamespace;
   MCP_API_KEY?: string;
+  CLIENT_NOTION_API_KEY?: string;
   BLONDISH_NOTION_API_KEY?: string;
+  CLIENT_SUPPORT_TICKETS_DATA_SOURCE_ID?: string;
   HALFDOZEN_NOTION_API_KEY?: string;
   BLONDISH_SUPPORT_TICKETS_DATA_SOURCE_ID?: string;
+  CLIENT_SUPPORT_TICKETS_DATA_SOURCE_TITLE?: string;
   BLONDISH_SUPPORT_TICKETS_DATA_SOURCE_TITLE?: string;
   HALFDOZEN_TICKETS_DATABASE_ID?: string;
   HALFDOZEN_TICKETS_DATA_SOURCE_ID?: string;
   HALFDOZEN_TICKETS_DATA_SOURCE_TITLE?: string;
+  CLIENT_OS_STATUS_PROPERTY?: string;
   BLONDISH_OS_STATUS_PROPERTY?: string;
+  SYNC_SERVER_NAME?: string;
+  SYNC_CLIENT_SLUG?: string;
+  SYNC_TENANT_SLUG?: string;
+  SYNC_CLIENT_DISPLAY_NAME?: string;
+  SYNC_TOOL_PREFIX?: string;
+  SYNC_OWNER_EMAIL?: string;
+  SYNC_OWNER_LABEL?: string;
+  SYNC_CLIENT_LABEL?: string;
+  SYNC_SOURCE_LABEL?: string;
   BRAINTRUST_API_KEY?: string;
   BRAINTRUST_PROJECT_ID?: string;
   BRAINTRUST_PROJECT_NAME?: string;
   BRAINTRUST_ENABLED?: string;
 }
 
-export type Workspace = 'blondish' | 'halfdozen';
+export type Workspace = 'client' | 'blondish' | 'halfdozen';
 
 export interface NotionPage {
   id: string;
@@ -51,6 +64,13 @@ export interface SyncConfig {
   targetSchema: DataSourceSchema;
   sourceStatusProperty: string;
   targetExtPageIdProperty: string;
+  clientDisplayName: string;
+  sourceDataSourceTitle: string;
+  targetDataSourceTitle: string;
+  ownerEmail: string;
+  ownerLabel: string;
+  clientLabel: string;
+  sourceLabel: string;
 }
 
 export interface SyncError {

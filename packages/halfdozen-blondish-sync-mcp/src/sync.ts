@@ -13,18 +13,12 @@ import {
   uploadFileToNotion,
 } from './notion.js';
 import {
-  CLIENT_LABEL,
-  DEFAULT_BLONDISH_SOURCE_DATA_SOURCE_TITLE,
-  DEFAULT_BLONDISH_SUPPORT_TICKETS_DATA_SOURCE_ID,
-  DEFAULT_HALFDOZEN_TARGET_DATA_SOURCE_TITLE,
   DEFAULT_HD_STATUS,
   FILE_UPLOAD_TARGET_WORKSPACE,
   HD_TO_OS_STATUS,
-  OWNER_EMAIL,
-  OWNER_LABEL,
-  SOURCE_LABEL,
   TARGET_EXT_PAGE_ID_PROPERTIES,
 } from './constants.js';
+import { resolveRuntimeConfig, toolName } from './config.js';
 import type { AuditResult, DataSourceSchema, Env, NotionBlock, NotionPage, SyncConfig, SyncFile, SyncResult, Workspace } from './types.js';
 
 type WritableValue = string | Array<Record<string, unknown>>;
@@ -108,7 +102,7 @@ export async function auditSync(env: Env): Promise<AuditResult> {
     result.source_data_source_id = config.sourceDataSourceId;
     result.target_data_source_id = config.targetDataSourceId;
     const [sourcePages, targetPages] = await Promise.all([
-      queryAllPages(env, 'blondish', config.sourceDataSourceId),
+      queryAllPages(env, 'client', config.sourceDataSourceId),
       queryAllPages(env, 'halfdozen', config.targetDataSourceId),
     ]);
     result.details.source_rows_checked = sourcePages.length;
@@ -127,7 +121,7 @@ export async function auditSync(env: Env): Promise<AuditResult> {
       }
     }
 
-    const ownerUserId = await findUserIdByEmail(env, 'halfdozen', OWNER_EMAIL);
+    const ownerUserId = await findUserIdByEmail(env, 'halfdozen', config.ownerEmail);
     for (const sourcePage of sourcePages) {
       const extPageId = readText(sourcePage, 'Page ID');
       if (!extPageId) continue;
@@ -219,10 +213,10 @@ export async function planSourceToHalfDozenRepairs(env: Env): Promise<SyncResult
       body_drifts: details.body_drifts,
       reverse_status_drifts: details.reverse_status_drifts,
       recommended_write_tools: [
-        ...(details.missing_hd_rows.length > 0 ? ['blondish_sync_repair_missing_hd_rows'] : []),
-        ...(externalUrlDrifts.length > 0 ? ['blondish_sync_repair_external_url_drift'] : []),
-        ...(otherContractDrifts.length > 0 || details.body_drifts.length > 0 ? ['blondish_sync_source_to_hd'] : []),
-        ...(details.reverse_status_drifts.length > 0 ? ['blondish_sync_hd_status_to_source'] : []),
+        ...(details.missing_hd_rows.length > 0 ? [toolName(env, 'repair_missing_hd_rows')] : []),
+        ...(externalUrlDrifts.length > 0 ? [toolName(env, 'repair_external_url_drift')] : []),
+        ...(otherContractDrifts.length > 0 || details.body_drifts.length > 0 ? [toolName(env, 'source_to_hd')] : []),
+        ...(details.reverse_status_drifts.length > 0 ? [toolName(env, 'hd_status_to_source')] : []),
       ],
       future_scale_note: 'Use Notion webhooks or a persisted sync index before this becomes a frequent full-scan workflow.',
     },
@@ -335,7 +329,7 @@ export async function syncSourceTicketsToHalfDozen(
       if (extPageId && !targetByExtPageId.has(extPageId)) targetByExtPageId.set(extPageId, page);
     }
 
-    const ownerUserId = await findUserIdByEmail(env, 'halfdozen', OWNER_EMAIL);
+    const ownerUserId = await findUserIdByEmail(env, 'halfdozen', config.ownerEmail);
     for (const sourcePage of sourcePages) {
       try {
         if (!isPageInDataSource(sourcePage, config.sourceDataSourceId)) {
@@ -380,7 +374,7 @@ export async function syncSourceTicketsToHalfDozen(
           continue;
         }
 
-        const latestSourcePage = await retrievePage(env, 'blondish', sourcePage.id);
+        const latestSourcePage = await retrievePage(env, 'client', sourcePage.id);
         const properties = await buildTargetCreateProperties(env, config, latestSourcePage, ownerUserId);
         const children = await buildTicketBody(env, latestSourcePage);
         const created = await createPage(env, config.targetDataSourceId, properties, children);
@@ -432,7 +426,7 @@ export async function syncHalfDozenStatusToSource(
     result.target_data_source_id = config.targetDataSourceId;
 
     const [sourcePages, targetPages] = await Promise.all([
-      queryAllPages(env, 'blondish', config.sourceDataSourceId),
+      queryAllPages(env, 'client', config.sourceDataSourceId),
       resolveTargetPages(env, config.targetDataSourceId, options.targetPageIds),
     ]);
     const sourceByExtPageId = new Map<string, NotionPage>();
@@ -470,7 +464,7 @@ export async function syncHalfDozenStatusToSource(
           continue;
         }
 
-        await updatePage(env, 'blondish', sourcePage.id, {
+        await updatePage(env, 'client', sourcePage.id, {
           [config.sourceStatusProperty]: writableValue(
             config.sourceSchema[config.sourceStatusProperty]?.type ?? 'status',
             mappedStatus,
@@ -521,8 +515,8 @@ export function mapHdStatusToOsStatus(value: string): string | null {
   return HD_TO_OS_STATUS[value] ?? null;
 }
 
-export function buildTicketTitle(ticket: string): string {
-  return ticket.trim() || 'BLONDISH support ticket';
+export function buildTicketTitle(ticket: string, clientDisplayName = 'BLONDISH'): string {
+  return ticket.trim() || `${clientDisplayName} support ticket`;
 }
 
 export async function buildTicketDetailsText(env: Env, sourcePage: NotionPage): Promise<string> {
@@ -587,26 +581,29 @@ export function normalizeFileUrl(value: string): string {
 }
 
 async function resolveSyncConfig(env: Env): Promise<SyncConfig> {
+  const runtime = resolveRuntimeConfig(env);
   const sourceDataSourceId =
-    env.BLONDISH_SUPPORT_TICKETS_DATA_SOURCE_ID?.trim() ||
-    await findDataSourceIdByTitle(env, 'blondish', env.BLONDISH_SUPPORT_TICKETS_DATA_SOURCE_TITLE?.trim() || DEFAULT_BLONDISH_SOURCE_DATA_SOURCE_TITLE) ||
-    DEFAULT_BLONDISH_SUPPORT_TICKETS_DATA_SOURCE_ID;
+    runtime.sourceDataSourceId ||
+    await findDataSourceIdByTitle(env, 'client', runtime.sourceDataSourceTitle);
 
-  const targetTitle = env.HALFDOZEN_TICKETS_DATA_SOURCE_TITLE?.trim() || DEFAULT_HALFDOZEN_TARGET_DATA_SOURCE_TITLE;
+  if (!sourceDataSourceId) {
+    throw new Error(`Could not find ${runtime.clientDisplayName} source data source "${runtime.sourceDataSourceTitle}". Set CLIENT_SUPPORT_TICKETS_DATA_SOURCE_ID or share the data source with the runtime token.`);
+  }
+
   const targetDataSourceId =
-    env.HALFDOZEN_TICKETS_DATA_SOURCE_ID?.trim() ||
-    await getFirstDataSourceIdForDatabase(env, 'halfdozen', env.HALFDOZEN_TICKETS_DATABASE_ID?.trim()) ||
-    await findDataSourceIdByTitle(env, 'halfdozen', targetTitle);
+    runtime.targetDataSourceId ||
+    await getFirstDataSourceIdForDatabase(env, 'halfdozen', runtime.targetDatabaseId) ||
+    await findDataSourceIdByTitle(env, 'halfdozen', runtime.targetDataSourceTitle);
 
   if (!targetDataSourceId) {
-    throw new Error(`Could not find Half Dozen target data source "${targetTitle}". Set HALFDOZEN_TICKETS_DATA_SOURCE_ID or share the database with the runtime token.`);
+    throw new Error(`Could not find Half Dozen target data source "${runtime.targetDataSourceTitle}". Set HALFDOZEN_TICKETS_DATA_SOURCE_ID or share the database with the runtime token.`);
   }
 
   const [sourceSchema, targetSchema] = await Promise.all([
-    retrieveDataSourceSchema(env, 'blondish', sourceDataSourceId),
+    retrieveDataSourceSchema(env, 'client', sourceDataSourceId),
     retrieveDataSourceSchema(env, 'halfdozen', targetDataSourceId),
   ]);
-  const configuredStatus = env.BLONDISH_OS_STATUS_PROPERTY?.trim();
+  const configuredStatus = runtime.sourceStatusProperty;
   const sourceStatusProperty = configuredStatus && sourceSchema[configuredStatus]
     ? configuredStatus
     : sourceSchema['OS Status']
@@ -617,26 +614,40 @@ async function resolveSyncConfig(env: Env): Promise<SyncConfig> {
     throw new Error('Target property "External Page ID" or "Ext Page ID" is missing.');
   }
 
-  return { sourceDataSourceId, targetDataSourceId, sourceSchema, targetSchema, sourceStatusProperty, targetExtPageIdProperty: targetExtPageId };
+  return {
+    sourceDataSourceId,
+    targetDataSourceId,
+    sourceSchema,
+    targetSchema,
+    sourceStatusProperty,
+    targetExtPageIdProperty: targetExtPageId,
+    clientDisplayName: runtime.clientDisplayName,
+    sourceDataSourceTitle: runtime.sourceDataSourceTitle,
+    targetDataSourceTitle: runtime.targetDataSourceTitle,
+    ownerEmail: runtime.ownerEmail,
+    ownerLabel: runtime.ownerLabel,
+    clientLabel: runtime.clientLabel,
+    sourceLabel: runtime.sourceLabel,
+  };
 }
 
 async function resolveSourcePages(env: Env, dataSourceId: string, sourcePageIds?: string[]): Promise<NotionPage[]> {
   const ids = sourcePageIds?.map((id) => id.trim()).filter(Boolean);
-  if (!ids || ids.length === 0) return queryAllPages(env, 'blondish', dataSourceId);
+  if (!ids || ids.length === 0) return queryAllPages(env, 'client', dataSourceId);
 
   const allPagesByExtId = new Map<string, NotionPage>();
   const directPages: NotionPage[] = [];
   const extIds: string[] = [];
   for (const id of ids) {
     if (looksLikeNotionPageId(id)) {
-      const page = await retrievePage(env, 'blondish', id);
+      const page = await retrievePage(env, 'client', id);
       if (!isTrashed(page)) directPages.push(page);
     } else {
       extIds.push(id);
     }
   }
   if (extIds.length > 0) {
-    for (const page of await queryAllPages(env, 'blondish', dataSourceId)) {
+    for (const page of await queryAllPages(env, 'client', dataSourceId)) {
       const extPageId = readText(page, 'Page ID');
       if (extPageId) allPagesByExtId.set(extPageId, page);
     }
@@ -658,7 +669,7 @@ async function buildTargetCreateProperties(
   ownerUserId: string | null,
 ): Promise<Record<string, unknown>> {
   if (config.targetSchema.Owner?.type === 'people' && !ownerUserId) {
-    throw new Error(`Could not find target Owner user ${OWNER_EMAIL}.`);
+    throw new Error(`Could not find target Owner user ${config.ownerEmail}.`);
   }
 
   const properties: Record<string, unknown> = {};
@@ -666,11 +677,11 @@ async function buildTargetCreateProperties(
   const ticket = readText(sourcePage, 'Ticket');
   const externalUrl = readExternalUrl(sourcePage);
 
-  writeRequired(properties, config.targetSchema, 'Ticket', buildTicketTitle(ticket));
+  writeRequired(properties, config.targetSchema, 'Ticket', buildTicketTitle(ticket, config.clientDisplayName));
   writeRequired(properties, config.targetSchema, 'Status', DEFAULT_HD_STATUS);
-  writeRequired(properties, config.targetSchema, 'Source', SOURCE_LABEL);
-  writeRequired(properties, config.targetSchema, 'Owner', OWNER_LABEL, ownerUserId);
-  if (config.targetSchema.Client) writeRequired(properties, config.targetSchema, 'Client', CLIENT_LABEL);
+  writeRequired(properties, config.targetSchema, 'Source', config.sourceLabel);
+  writeRequired(properties, config.targetSchema, 'Owner', config.ownerLabel, ownerUserId);
+  if (config.targetSchema.Client) writeRequired(properties, config.targetSchema, 'Client', config.clientLabel);
   writeRequired(properties, config.targetSchema, config.targetExtPageIdProperty, readText(sourcePage, 'Page ID'));
   if (externalUrl) writeRequired(properties, config.targetSchema, 'External URL', externalUrl);
   if (sourceFiles.length > 0) {
@@ -688,21 +699,21 @@ async function buildExistingTargetPatch(
   options: { materializeFileUploads?: boolean } = {},
 ): Promise<Record<string, unknown>> {
   if (config.targetSchema.Owner?.type === 'people' && !ownerUserId) {
-    throw new Error(`Could not find target Owner user ${OWNER_EMAIL}.`);
+    throw new Error(`Could not find target Owner user ${config.ownerEmail}.`);
   }
 
   const properties: Record<string, unknown> = {};
   const externalUrl = readExternalUrl(sourcePage);
   const sourceFiles = readFiles(sourcePage, 'Files & Media');
   const ticket = readText(sourcePage, 'Ticket');
-  const desiredTitle = buildTicketTitle(ticket);
+  const desiredTitle = buildTicketTitle(ticket, config.clientDisplayName);
   const currentTitle = readText(targetPage, 'Ticket');
   const extPageId = readText(sourcePage, 'Page ID');
 
   if (currentTitle !== desiredTitle) writeRequired(properties, config.targetSchema, 'Ticket', desiredTitle);
-  if (readText(targetPage, 'Source') !== SOURCE_LABEL) writeRequired(properties, config.targetSchema, 'Source', SOURCE_LABEL);
-  if (config.targetSchema.Owner && readText(targetPage, 'Owner') !== OWNER_LABEL) writeRequired(properties, config.targetSchema, 'Owner', OWNER_LABEL, ownerUserId);
-  if (config.targetSchema.Client && readText(targetPage, 'Client') !== CLIENT_LABEL) writeRequired(properties, config.targetSchema, 'Client', CLIENT_LABEL);
+  if (readText(targetPage, 'Source') !== config.sourceLabel) writeRequired(properties, config.targetSchema, 'Source', config.sourceLabel);
+  if (config.targetSchema.Owner && readText(targetPage, 'Owner') !== config.ownerLabel) writeRequired(properties, config.targetSchema, 'Owner', config.ownerLabel, ownerUserId);
+  if (config.targetSchema.Client && readText(targetPage, 'Client') !== config.clientLabel) writeRequired(properties, config.targetSchema, 'Client', config.clientLabel);
   if (extPageId && readText(targetPage, config.targetExtPageIdProperty) !== extPageId) writeRequired(properties, config.targetSchema, config.targetExtPageIdProperty, extPageId);
   if (externalUrl && readText(targetPage, 'External URL') !== externalUrl) writeRequired(properties, config.targetSchema, 'External URL', externalUrl);
   if (sourceFiles.length > 0 && !externalFilesMatch(targetPage, config.targetSchema['External Files & Media']?.type, sourceFiles)) {
@@ -777,7 +788,7 @@ async function buildTicketBody(env: Env, sourcePage: NotionPage): Promise<Array<
 }
 
 async function readSourcePageBodyText(env: Env, sourcePageId: string): Promise<string> {
-  const blocks = await listAllBlockChildren(env, 'blondish', sourcePageId);
+  const blocks = await listAllBlockChildren(env, 'client', sourcePageId);
   return blocks.map(blockPlainText).filter(Boolean).join('\n\n').trim();
 }
 
