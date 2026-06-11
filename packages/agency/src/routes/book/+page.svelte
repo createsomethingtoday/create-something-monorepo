@@ -6,7 +6,7 @@
 	import { TimeSlotPicker } from '@create-something/canon/domains/agency';
 	import { BookingForm } from '@create-something/canon/domains/agency';
 	import { BookingConfirmation } from '@create-something/canon/domains/agency';
-	import WorkflowSignalIcon from '$lib/components/WorkflowSignalIcon.svelte';
+	import BookingSignalIcon from '$lib/components/BookingSignalIcon.svelte';
 	import {
 		AGENCY_MARKETING_COPY_EXPERIMENT,
 		getAgencyMarketingExperimentMetadata
@@ -88,50 +88,50 @@
 
 	const mappingSessionOutcomes = [
 		{
-			value: 'Objects',
-			label: 'Workflow map',
-			icon: 'objects',
+			value: 'Handoff',
+			label: 'Handoff map',
+			icon: 'handoff-map',
 			description: 'Objects, owners, source systems, handoffs, and failure points.'
 		},
 		{
-			value: 'Actions',
-			label: 'Action boundary',
-			icon: 'actions',
+			value: 'Boundary',
+			label: 'Ownership boundary',
+			icon: 'ownership-boundary',
 			description: 'What can run, who owns it, and where vendor responsibility stops.'
 		},
 		{
-			value: 'States',
-			label: 'Decision states',
-			icon: 'states',
+			value: 'Rules',
+			label: 'Decision rules',
+			icon: 'decision-rules',
 			description: 'Auto-allowed, approval-needed, and blocked paths with reasons.'
 		},
 		{
-			value: 'Receipts',
-			label: 'Session receipts',
-			icon: 'receipts',
-			description: 'The map, boundary, decision notes, and first safe build path.'
+			value: 'Path',
+			label: 'First safe path',
+			icon: 'first-safe-path',
+			description: 'The smallest service lane that adds capacity without hiding risk.'
 		}
 	] as const;
 
 	const mappingSessionPrep = [
 		{
 			label: 'Workflow',
-			icon: 'objects',
+			icon: 'workflow-brief',
 			detail: 'One real workflow your team wants out of manual coordination.'
 		},
 		{
 			label: 'Systems',
-			icon: 'actions',
+			icon: 'systems-stack',
 			detail: 'The accounts, tools, or systems involved in the handoff.'
 		},
 		{
 			label: 'Approver',
-			icon: 'states',
+			icon: 'approver-seat',
 			detail: 'The person who can approve risk, scope, or access.'
 		},
 		{
 			label: 'No secrets',
-			icon: 'receipts',
+			icon: 'no-secrets',
 			detail: 'No secrets, tokens, passwords, or API keys in booking notes.'
 		}
 	] as const;
@@ -383,7 +383,7 @@
 				{#each mappingSessionOutcomes as outcome}
 					<article>
 						<div class="session-outcome-icon" aria-hidden="true">
-							<WorkflowSignalIcon name={outcome.icon} />
+							<BookingSignalIcon name={outcome.icon} />
 						</div>
 						<div class="session-outcome-copy">
 							<span>{outcome.value}</span>
@@ -409,7 +409,7 @@
 			{#each mappingSessionPrep as item}
 				<li>
 					<div class="prep-icon" aria-hidden="true">
-						<WorkflowSignalIcon name={item.icon} />
+						<BookingSignalIcon name={item.icon} />
 					</div>
 					<div class="prep-copy">
 						<span>{item.label}</span>
@@ -660,7 +660,7 @@
 		place-items: center;
 		width: 3.35rem;
 		height: 3.35rem;
-		--workflow-signal-icon-size: 2.18rem;
+		--booking-signal-icon-size: 2.18rem;
 		border: 1px solid rgba(225, 231, 255, 0.11);
 		border-radius: 12px;
 		background:
@@ -761,8 +761,8 @@
 		place-items: center;
 		width: 2.42rem;
 		height: 2.42rem;
-		--workflow-signal-icon-size: 1.58rem;
-		--workflow-signal-icon-color: rgba(226, 232, 240, 0.62);
+		--booking-signal-icon-size: 1.58rem;
+		--booking-signal-icon-color: rgba(226, 232, 240, 0.62);
 		border: 1px solid rgba(225, 231, 255, 0.1);
 		border-radius: 10px;
 		background:
