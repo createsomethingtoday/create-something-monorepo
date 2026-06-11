@@ -620,29 +620,55 @@ export const TEMPLATE_DETAIL_STYLES = `
 
 @media (max-width: 767px) {
   .wfdt-actions,
-  .wfdt-sticky,
   .wfdt-sticky-actions {
     align-items: stretch;
   }
 
-  .wfdt-actions,
-  .wfdt-sticky {
+  .wfdt-actions {
     flex-direction: column;
   }
 
-  .wfdt-actions .wfdt-button,
-  .wfdt-sticky-actions,
-  .wfdt-sticky-actions .wfdt-button {
+  .wfdt-actions .wfdt-button {
     width: 100%;
   }
 
   .wfdt-sticky {
     gap: 10px;
-    padding: 10px 14px;
+    min-height: 68px;
+    padding: 8px 12px;
   }
 
   .wfdt-sticky-meta {
-    width: 100%;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .wfdt-sticky-thumb {
+    width: 52px;
+    height: 34px;
+  }
+
+  .wfdt-sticky-title {
+    font-size: 14px;
+  }
+
+  .wfdt-sticky-subtitle {
+    font-size: 12px;
+  }
+
+  .wfdt-sticky-actions {
+    flex: 0 0 auto;
+  }
+
+  .wfdt-sticky-actions .wfdt-button-secondary {
+    display: none;
+  }
+
+  .wfdt-sticky-actions .wfdt-button {
+    width: auto;
+    min-height: 52px;
+    padding: 0 16px;
+    white-space: nowrap;
   }
 
   .wfdt-highlight-grid {
