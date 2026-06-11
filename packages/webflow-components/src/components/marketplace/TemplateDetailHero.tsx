@@ -71,6 +71,7 @@ const PREVIEW_DEVICE_DIMENSIONS: Record<TemplateDetailPreviewDevice, { width: nu
 
 const TEMPLATE_DETAIL_HERO_SHELL_OVERRIDE_ID = 'wfdt-template-detail-hero-shell-override';
 const TEMPLATE_DETAIL_HERO_DOCUMENT_STATE = 'active';
+const TEMPLATE_DETAIL_PREVIEW_DEVICE_STORAGE_KEY = 'wfdt-template-detail-preview-device';
 let activeTemplateDetailHeroCount = 0;
 
 function ensureTemplateDetailHeroShellOverride(documentRef: Document): void {
@@ -135,6 +136,29 @@ function usableHref(value?: string): string {
   const href = value?.trim() ?? '';
   if (!href || href === '#' || href.toLowerCase() === 'about:blank') return '';
   return href;
+}
+
+function nowMs(): number {
+  return typeof performance === 'undefined' ? Date.now() : performance.now();
+}
+
+function readStoredPreviewDevice(): TemplateDetailPreviewDevice | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const value = window.sessionStorage.getItem(TEMPLATE_DETAIL_PREVIEW_DEVICE_STORAGE_KEY);
+    return value === 'desktop' || value === 'mobile' ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeStoredPreviewDevice(device: TemplateDetailPreviewDevice): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.sessionStorage.setItem(TEMPLATE_DETAIL_PREVIEW_DEVICE_STORAGE_KEY, device);
+  } catch {
+    // Storage can be blocked in private or embedded contexts; the selector still works without persistence.
+  }
 }
 
 function buildCategoryCrumbs(input: {
@@ -213,13 +237,18 @@ const TemplateDetailHeroInner: React.FC<TemplateDetailHeroProps> = ({
   enableAnalytics = true,
 }) => {
   useMarketplaceComponentErrorTracking('TemplateDetailHero', enableAnalytics);
-  const [previewIframeReady, setPreviewIframeReady] = useState(false);
-  const [previewDevice, setPreviewDevice] = useState<TemplateDetailPreviewDevice>(previewDefaultDevice);
+  const [previewIframeRequested, setPreviewIframeRequested] = useState(false);
+  const [previewIframeLoaded, setPreviewIframeLoaded] = useState(false);
+  const [previewDevice, setPreviewDevice] = useState<TemplateDetailPreviewDevice>(
+    () => readStoredPreviewDevice() ?? previewDefaultDevice,
+  );
   const [previewStageWidth, setPreviewStageWidth] = useState(0);
   const heroRootRef = useRef<HTMLDivElement>(null);
   const previewStageRef = useRef<HTMLDivElement>(null);
   const heroViewedRef = useRef(false);
   const previewVisibleTrackedRef = useRef(false);
+  const previewIframeRequestedRef = useRef(false);
+  const previewInteractionTrackedRef = useRef(false);
   const previewLoadedHrefRef = useRef('');
   const previewLoadStartedAtRef = useRef<number | null>(null);
 
@@ -287,6 +316,25 @@ const TemplateDetailHeroInner: React.FC<TemplateDetailHeroProps> = ({
     ],
   );
 
+  function requestPreviewIframeLoad(): void {
+    if (!hasPreviewIframe || previewIframeRequestedRef.current) return;
+    previewIframeRequestedRef.current = true;
+    previewLoadStartedAtRef.current = nowMs();
+    setPreviewIframeRequested(true);
+  }
+
+  function trackPreviewInteractionStart(interactionType: string): void {
+    requestPreviewIframeLoad();
+    if (previewInteractionTrackedRef.current) return;
+    previewInteractionTrackedRef.current = true;
+    actionClick('TemplateDetailHero', 'detail_preview_interaction_started', enableAnalytics, resolvedSlug, {
+      default_preview_device: previewDefaultDevice,
+      preview_device: previewDevice,
+      preview_device_controls_enabled: showPreviewDeviceControls,
+      preview_interaction_type: interactionType,
+    }, offer);
+  }
+
   useEffect(() => {
     if (!enableAnalytics || heroViewedRef.current) return;
     heroViewedRef.current = true;
@@ -323,17 +371,12 @@ const TemplateDetailHeroInner: React.FC<TemplateDetailHeroProps> = ({
   ]);
 
   useEffect(() => {
-    setPreviewIframeReady(false);
+    setPreviewIframeRequested(false);
+    setPreviewIframeLoaded(false);
+    previewIframeRequestedRef.current = false;
+    previewInteractionTrackedRef.current = false;
     previewLoadedHrefRef.current = '';
     previewLoadStartedAtRef.current = null;
-    if (!hasPreviewIframe || typeof window === 'undefined') return undefined;
-
-    const timeout = window.setTimeout(() => {
-      previewLoadStartedAtRef.current = typeof performance === 'undefined' ? Date.now() : performance.now();
-      setPreviewIframeReady(true);
-    }, 200);
-
-    return () => window.clearTimeout(timeout);
   }, [hasPreviewIframe, previewIframeHref]);
 
   useEffect(() => {
@@ -341,8 +384,33 @@ const TemplateDetailHeroInner: React.FC<TemplateDetailHeroProps> = ({
   }, [previewIframeHref]);
 
   useEffect(() => {
-    setPreviewDevice(previewDefaultDevice);
+    setPreviewDevice(readStoredPreviewDevice() ?? previewDefaultDevice);
   }, [previewDefaultDevice]);
+
+  useEffect(() => {
+    if (!hasPreviewIframe || previewIframeRequested || typeof window === 'undefined') return undefined;
+    const element = previewStageRef.current;
+    if (!element) return undefined;
+
+    const requestLoad = () => requestPreviewIframeLoad();
+    const BrowserIntersectionObserver = typeof IntersectionObserver === 'undefined' ? null : IntersectionObserver;
+    if (BrowserIntersectionObserver) {
+      const observer = new BrowserIntersectionObserver(
+        (entries) => {
+          if (entries.some((entry) => entry.isIntersecting || entry.intersectionRatio > 0)) {
+            requestLoad();
+            observer.disconnect();
+          }
+        },
+        { rootMargin: '480px 0px', threshold: 0.01 },
+      );
+      observer.observe(element);
+      return () => observer.disconnect();
+    }
+
+    const timeout = window.setTimeout(requestLoad, 800);
+    return () => window.clearTimeout(timeout);
+  }, [hasPreviewIframe, previewIframeHref, previewIframeRequested]);
 
   useEffect(() => {
     if (typeof document === 'undefined') return undefined;
@@ -420,9 +488,16 @@ const TemplateDetailHeroInner: React.FC<TemplateDetailHeroProps> = ({
   ]);
 
   function handlePreviewIframeLoad(): void {
-    if (!previewIframeReady || !previewIframeHref || previewLoadedHrefRef.current === previewIframeHref) return;
+    if (
+      !previewIframeRequestedRef.current ||
+      !previewIframeHref ||
+      previewLoadedHrefRef.current === previewIframeHref
+    ) {
+      return;
+    }
+    setPreviewIframeLoaded(true);
     previewLoadedHrefRef.current = previewIframeHref;
-    const now = typeof performance === 'undefined' ? Date.now() : performance.now();
+    const now = nowMs();
     const startedAt = previewLoadStartedAtRef.current;
     actionClick('TemplateDetailHero', 'detail_preview_iframe_loaded', enableAnalytics, resolvedSlug, {
       default_preview_device: previewDefaultDevice,
@@ -618,6 +693,8 @@ const TemplateDetailHeroInner: React.FC<TemplateDetailHeroProps> = ({
                     className={`wfdt-preview-control${previewDevice === device ? ' wfdt-preview-control-active' : ''}`}
                     aria-pressed={previewDevice === device}
                     onClick={() => {
+                      trackPreviewInteractionStart('device_control');
+                      writeStoredPreviewDevice(device);
                       setPreviewDevice(device);
                       actionClick('TemplateDetailHero', 'detail_preview_viewport_changed', enableAnalytics, resolvedSlug, {
                         preview_device: device,
@@ -634,11 +711,20 @@ const TemplateDetailHeroInner: React.FC<TemplateDetailHeroProps> = ({
               className={`wfdt-preview-stage wfdt-preview-stage-${previewDevice}`}
               ref={previewStageRef}
               style={previewStageStyle}
+              aria-busy={!previewIframeLoaded}
+              onFocusCapture={() => trackPreviewInteractionStart('focus')}
+              onPointerDown={() => trackPreviewInteractionStart('pointer_down')}
+              onPointerEnter={() => trackPreviewInteractionStart('pointer_enter')}
             >
               <div className={`wfdt-preview-frame wfdt-preview-frame-${previewDevice}`} style={previewFrameStyle}>
+                {!previewIframeLoaded ? (
+                  <div className="wfdt-preview-loading" aria-hidden="true">
+                    <span className="wfdt-preview-loading-sheen" />
+                  </div>
+                ) : null}
                 <iframe
                   className="wfdt-preview-iframe"
-                  src={previewIframeReady ? previewIframeHref : 'about:blank'}
+                  src={previewIframeRequested ? previewIframeHref : 'about:blank'}
                   data-src={previewIframeHref}
                   title={`${titleLabel} preview`}
                   loading="lazy"
