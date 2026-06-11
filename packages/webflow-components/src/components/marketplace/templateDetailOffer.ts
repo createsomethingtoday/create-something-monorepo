@@ -21,6 +21,7 @@ export interface TemplateDetailImage {
 export interface TemplateDetailOfferInput {
   templateSlug?: string;
   price?: string;
+  marketplaceTemplateId?: string;
   offerEnabled?: boolean;
   offerMode?: TemplateDetailOfferMode;
   offerLabel?: string;
@@ -48,10 +49,14 @@ export interface TemplateDetailOfferState {
   offerVisibility: string;
   postOfferAction: string;
   purchaseType: string;
+  destinationType: string;
+  discountBucket: string;
   tone: TemplateDetailTone;
 }
 
 const DEFAULT_PRICE = 'Paid template';
+const TEMPLATE_DETAIL_COMPONENT_VERSION = 'template_detail_code_components_v1';
+const MARKETPLACE_CHECKOUT_BASE_URL = 'https://webflow.com/dashboard/marketplace-checkout/redirect';
 
 export function normalizeTemplateDetailLink(link?: TemplateDetailLink | string | null): Partial<TemplateDetailLink> {
   if (!link) return {};
@@ -99,6 +104,14 @@ function priceBucket(value?: string): string {
   return 'paid';
 }
 
+function discountBucket(savingsPercent: number): string {
+  if (!savingsPercent) return 'none';
+  if (savingsPercent < 25) return 'under_25';
+  if (savingsPercent < 50) return '25_to_49';
+  if (savingsPercent < 75) return '50_to_74';
+  return '75_plus';
+}
+
 function parsePrice(value?: string): number | null {
   const normalized = compact(value).replace(/,/g, '');
   if (!normalized) return null;
@@ -107,6 +120,26 @@ function parsePrice(value?: string): number | null {
   if (!match) return null;
   const parsed = Number(match[1]);
   return Number.isFinite(parsed) ? parsed : null;
+}
+
+function normalizeMarketplaceTemplateId(value?: string): string {
+  return compact(value).replace(/[^a-zA-Z0-9_-]/g, '');
+}
+
+function marketplaceCheckoutLink(templateId?: string): Partial<TemplateDetailLink> {
+  const normalized = normalizeMarketplaceTemplateId(templateId);
+  if (!normalized) return {};
+  return {
+    href: `${MARKETPLACE_CHECKOUT_BASE_URL}?rtype=Template&rid=${encodeURIComponent(normalized)}&unauthSignup=true`,
+  };
+}
+
+export function resolveTemplateDetailCheckoutLink(input: {
+  checkoutUrl?: TemplateDetailLink;
+  marketplaceTemplateId?: string;
+}): Partial<TemplateDetailLink> {
+  const checkoutUrl = normalizeTemplateDetailLink(input.checkoutUrl);
+  return checkoutUrl.href ? checkoutUrl : marketplaceCheckoutLink(input.marketplaceTemplateId);
 }
 
 function formatDateLabel(value?: string): string {
@@ -231,7 +264,7 @@ function attributionContext(templateSlug?: string): MarketplaceAnalyticsData {
 }
 
 export function resolveTemplateDetailOffer(input: TemplateDetailOfferInput): TemplateDetailOfferState {
-  const checkoutUrl = normalizeTemplateDetailLink(input.checkoutUrl);
+  const checkoutFallbackUrl = resolveTemplateDetailCheckoutLink(input);
   const fulfillmentUrl = normalizeTemplateDetailLink(input.fulfillmentUrl);
   const offerPriceLabel = compact(input.offerPrice);
   const offerVisibility = compact(input.offerVisibility);
@@ -240,8 +273,8 @@ export function resolveTemplateDetailOffer(input: TemplateDetailOfferInput): Tem
   const priceLabel = isFreeTemplate ? 'Free' : compact(input.price) || DEFAULT_PRICE;
   const hasOffer = Boolean(input.offerEnabled && (offerPriceLabel || compact(input.offerLabel) || fulfillmentUrl.href));
   const mode = resolveMode(input, hasOffer);
-  const activePrimaryLink = hasOffer || mode === 'free' ? fulfillmentUrl : checkoutUrl;
-  const fallbackPrimaryLink = checkoutUrl.href ? checkoutUrl : fulfillmentUrl;
+  const activePrimaryLink = hasOffer || mode === 'free' ? fulfillmentUrl : checkoutFallbackUrl;
+  const fallbackPrimaryLink = checkoutFallbackUrl.href ? checkoutFallbackUrl : fulfillmentUrl;
   const primaryLink = activePrimaryLink.href ? activePrimaryLink : fallbackPrimaryLink;
 
   const originalPrice = parsePrice(priceLabel);
@@ -267,6 +300,8 @@ export function resolveTemplateDetailOffer(input: TemplateDetailOfferInput): Tem
     offerVisibility,
     postOfferAction,
     purchaseType: purchaseType(mode, hasOffer),
+    destinationType: purchaseType(mode, hasOffer),
+    discountBucket: discountBucket(savings),
     tone: tone(mode, hasOffer),
   };
 }
@@ -280,15 +315,19 @@ export function templateDetailAnalyticsBase(
     ...getSafeAnalyticsOverrides(),
     ...attributionContext(templateSlug),
     component,
+    detail_page_component_version: TEMPLATE_DETAIL_COMPONENT_VERSION,
+    template_detail_surface: 'code_component',
     detail_template_slug: inferTemplateSlug(templateSlug) || null,
     detail_price_bucket: offer ? priceBucket(offer.priceLabel) : null,
     offer_enabled: Boolean(offer?.hasOffer),
     offer_mode: offer?.mode ?? null,
     offer_purchase_type: offer?.purchaseType ?? null,
+    cta_destination_type: offer?.destinationType ?? null,
     offer_price_bucket: offer?.offerPriceLabel ? priceBucket(offer.offerPriceLabel) : null,
     offer_has_price: Boolean(offer?.offerPriceLabel),
     offer_has_expiration: Boolean(offer?.expiresLabel),
     offer_has_discount: Boolean(offer?.savingsLabel),
+    offer_discount_bucket: offer?.discountBucket ?? null,
     offer_visibility: offer?.offerVisibility ?? null,
     post_offer_action: offer?.postOfferAction ?? null,
     primary_cta_label: offer?.primaryLabel ?? null,

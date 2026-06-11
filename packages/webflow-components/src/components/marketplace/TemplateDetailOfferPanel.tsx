@@ -6,7 +6,7 @@ import {
   TemplateDetailOfferMode,
   inferTemplateSlug,
   isExternalUrl,
-  normalizeTemplateDetailLink,
+  resolveTemplateDetailCheckoutLink,
   resolveTemplateDetailOffer,
   templateDetailAnalyticsBase,
 } from './templateDetailOffer';
@@ -18,6 +18,7 @@ export interface TemplateDetailOfferPanelProps {
   price?: string;
   isFree?: boolean;
   checkoutUrl?: TemplateDetailLink;
+  marketplaceTemplateId?: string;
   offerEnabled?: boolean;
   offerMode?: TemplateDetailOfferMode;
   offerLabel?: string;
@@ -48,6 +49,7 @@ const TemplateDetailOfferPanelInner: React.FC<TemplateDetailOfferPanelProps> = (
   price = '',
   isFree = false,
   checkoutUrl,
+  marketplaceTemplateId = '',
   offerEnabled = false,
   offerMode = 'marketplace',
   offerLabel = '',
@@ -64,10 +66,11 @@ const TemplateDetailOfferPanelInner: React.FC<TemplateDetailOfferPanelProps> = (
   useMarketplaceComponentErrorTracking('TemplateDetailOfferPanel', enableAnalytics);
 
   const resolvedSlug = useMemo(() => inferTemplateSlug(templateSlug), [templateSlug]);
-  const checkout = normalizeTemplateDetailLink(checkoutUrl);
+  const checkout = resolveTemplateDetailCheckoutLink({ checkoutUrl, marketplaceTemplateId });
   const offer = resolveTemplateDetailOffer({
     templateSlug: resolvedSlug,
     price,
+    marketplaceTemplateId,
     isFree,
     offerEnabled,
     offerMode,

@@ -64,6 +64,15 @@ export const TEMPLATE_DETAIL_STYLES = `
   color: #757575;
 }
 
+.wfdt-breadcrumb-categories {
+  display: inline;
+  min-width: 0;
+}
+
+.wfdt-breadcrumb-comma {
+  color: #757575;
+}
+
 .wfdt-title {
   margin: 0;
   max-width: none;
@@ -251,7 +260,7 @@ export const TEMPLATE_DETAIL_STYLES = `
 }
 
 .wfdt-preview-control-active {
-  background: #146ef5;
+  background: #080808;
   color: #fff;
 }
 
@@ -263,6 +272,13 @@ export const TEMPLATE_DETAIL_STYLES = `
   border-radius: 8px;
   background: #fff;
   box-shadow: 0 23px 18px rgba(0, 0, 0, 0.04), 0 11px 10px rgba(0, 0, 0, 0.04), 0 6px 4px rgba(0, 0, 0, 0.03), 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+.wfdt-preview-stage-mobile {
+  overflow: visible;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .wfdt-preview-frame {

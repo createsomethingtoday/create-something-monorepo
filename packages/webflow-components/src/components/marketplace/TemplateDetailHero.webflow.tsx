@@ -18,7 +18,22 @@ export default declareComponent(TemplateDetailHero, {
       tooltip: 'Optional. Leave blank to infer from /templates/html/{slug}.',
     }),
     categoryName: props.Text({ name: 'Category Name', defaultValue: 'Templates' }),
+    categoryNames: props.Text({
+      name: 'Category Names',
+      defaultValue: '',
+      tooltip: 'Optional comma- or newline-separated category labels. Use for multi-category breadcrumbs.',
+    }),
     categoryLink: props.Link({ name: 'Category URL' }),
+    categoryLinks: props.Text({
+      name: 'Category URLs',
+      defaultValue: '',
+      tooltip: 'Optional comma- or newline-separated URLs matching Category Names.',
+    }),
+    categoryBaseUrl: props.Text({
+      name: 'Category Base URL',
+      defaultValue: 'https://webflow.com/templates/category',
+      tooltip: 'Used to build category links when explicit Category URLs are not supplied.',
+    }),
     creatorName: props.Text({ name: 'Creator Name', defaultValue: '' }),
     creatorLink: props.Link({ name: 'Creator URL' }),
     creatorAvatar: props.Image({ name: 'Creator Avatar' }),
@@ -37,6 +52,11 @@ export default declareComponent(TemplateDetailHero, {
       tooltip: 'Bind to the Templates CMS Direct Link field. The iframe loads after the hero paints.',
     }),
     checkoutUrl: props.Link({ name: 'Marketplace Checkout URL' }),
+    marketplaceTemplateId: props.Text({
+      name: 'Marketplace Template ID',
+      defaultValue: '',
+      tooltip: 'Bind to the Templates CMS Unique ID field. Used to build the Marketplace checkout redirect if Marketplace Checkout URL is blank.',
+    }),
     offerEnabled: props.Boolean({
       name: 'Offer Enabled',
       defaultValue: false,
