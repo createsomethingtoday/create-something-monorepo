@@ -322,6 +322,44 @@ export const TEMPLATE_DETAIL_STYLES = `
   background: #fff;
 }
 
+.wfdt-preview-loading {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  overflow: hidden;
+  background: linear-gradient(135deg, #f8f8f8 0%, #fff 44%, #f2f2f2 100%);
+  pointer-events: none;
+}
+
+.wfdt-preview-loading::before {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 20%, rgba(255, 255, 255, 0.72) 45%, transparent 70%);
+  content: "";
+  transform: translateX(-100%);
+  animation: wfdt-preview-loading-sheen 1.4s ease-in-out infinite;
+}
+
+.wfdt-preview-loading-sheen {
+  position: absolute;
+  inset: clamp(18px, 4vw, 46px);
+  border: 1px solid #ededed;
+  border-radius: 8px;
+  background: linear-gradient(90deg, rgba(8, 8, 8, 0.04), rgba(8, 8, 8, 0.015));
+  opacity: 0.7;
+}
+
+.wfdt-preview-frame-mobile .wfdt-preview-loading,
+.wfdt-preview-frame-mobile .wfdt-preview-loading-sheen {
+  border-radius: 18px;
+}
+
+@keyframes wfdt-preview-loading-sheen {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
 .wfdt-panel {
   width: 100%;
   padding: 18px;
@@ -561,6 +599,7 @@ export const TEMPLATE_DETAIL_STYLES = `
   justify-content: space-between;
   min-height: 76px;
   padding: 12px clamp(16px, 4vw, 40px);
+  padding-bottom: calc(12px + env(safe-area-inset-bottom));
   border-top: 1px solid #dedede;
   background: rgba(255, 255, 255, 0.96);
   backdrop-filter: blur(12px);
@@ -658,9 +697,9 @@ export const TEMPLATE_DETAIL_STYLES = `
   .wfdt-actions {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
+    gap: 8px;
     width: 100%;
-    margin-top: 18px;
+    margin-top: 14px;
   }
 
   .wfdt-actions .wfdt-button {
@@ -685,18 +724,18 @@ export const TEMPLATE_DETAIL_STYLES = `
   }
 
   .wfdt-preview-section {
-    margin-top: 28px;
+    margin-top: 22px;
   }
 
   .wfdt-preview-controls {
-    margin-bottom: 18px;
-    box-shadow: 0 4px 14px rgba(8, 8, 8, 0.08);
+    margin-bottom: 14px;
+    box-shadow: 0 3px 12px rgba(8, 8, 8, 0.07);
   }
 
   .wfdt-sticky {
     gap: 10px;
     min-height: 68px;
-    padding: 8px 12px;
+    padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
   }
 
   .wfdt-sticky-meta {
