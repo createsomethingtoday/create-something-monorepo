@@ -220,11 +220,12 @@ export async function getLatestSyncJob(db: D1Database): Promise<SyncJobRecord | 
 export async function acquireSyncJobLock(
   db: D1Database,
   mode: string,
-  options: { ttlMs?: number; now?: string } = {},
+  options: { ttlMs?: number; now?: string; staleHeartbeatMs?: number } = {},
 ): Promise<SyncJobAcquireResult> {
   const startedAt = options.now ?? nowIso();
   const ttlMs = options.ttlMs ?? 20 * 60 * 1000;
   const expiresAt = addMilliseconds(startedAt, ttlMs);
+  const staleHeartbeatCutoff = options.staleHeartbeatMs ? addMilliseconds(startedAt, -options.staleHeartbeatMs) : null;
   const jobId = `${mode}-${crypto.randomUUID()}`;
 
   await db
@@ -252,9 +253,10 @@ export async function acquireSyncJobLock(
          summary_json = NULL,
          error = NULL
        WHERE sync_jobs.status != 'running'
-          OR sync_jobs.expires_at <= ?`,
+          OR sync_jobs.expires_at <= ?
+          OR (? IS NOT NULL AND sync_jobs.heartbeat_at <= ?)`,
     )
-    .bind(SYNC_JOB_LOCK_KEY, jobId, mode, startedAt, startedAt, expiresAt, startedAt)
+    .bind(SYNC_JOB_LOCK_KEY, jobId, mode, startedAt, startedAt, expiresAt, startedAt, staleHeartbeatCutoff, staleHeartbeatCutoff)
     .run();
 
   const activeJob = await db.prepare('SELECT * FROM sync_jobs WHERE lock_key = ?').bind(SYNC_JOB_LOCK_KEY).first<SyncJobRecord>();

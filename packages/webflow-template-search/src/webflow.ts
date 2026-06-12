@@ -121,7 +121,7 @@ function mapTemplateFieldData(fieldData: Record<string, unknown>): WebflowTempla
     templateSlug,
     name,
     listingUrl: webflowTemplateListingUrl(templateSlug),
-    thumbnailImageUrl: imageUrl(fieldData, ['thumbnail', 'thumbnail-image']),
+    thumbnailImageUrl: imageUrl(fieldData, ['main-thumbnail', 'main-thumbnail-image', 'thumbnail', 'thumbnail-image']),
     thumbnailImageSecondaryUrl: imageUrl(fieldData, ['thumbnail-secondary', 'thumbnail-image-secondary']),
     carouselImageUrls: imageUrls(fieldData, ['slider-images', 'carousel-images']),
   };
