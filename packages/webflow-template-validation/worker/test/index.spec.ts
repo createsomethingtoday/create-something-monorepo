@@ -38,7 +38,14 @@ vi.mock('../src/utils/fetch-utils', () => {
 		stylesheets: []
 	}));
 
-	return { fetchHTML, parseHTML, fetchAsset, fetchAssetMetadata };
+	const isPlatformManagedHeading = (heading: any) => {
+		const className = typeof heading.getAttribute === 'function'
+			? heading.getAttribute('class') || ''
+			: heading.className || '';
+		return /(?:^|\s)w-commerce-/.test(className);
+	};
+
+	return { fetchHTML, parseHTML, fetchAsset, fetchAssetMetadata, isPlatformManagedHeading };
 });
 
 import { validateDesignerData } from '../src/validators/designer-validator';
@@ -1021,6 +1028,35 @@ describe('Accessibility Validator', () => {
 
 		expect(result.stats.missingAltText).toBe(0);
 		expect(result.issues.some((issue) => issue.id === 'missing-alt-text-critical')).toBe(false);
+	});
+
+	it('excludes Webflow Ecommerce fixed-tag headings from content heading hierarchy analysis', async () => {
+		const cartHeading = {
+			tagName: 'H4',
+			textContent: 'Your Cart',
+			getAttribute: (name: string) => name === 'class' ? 'w-commerce-commercecartheading cart_title' : null,
+			hasAttribute: (name: string) => name === 'class'
+		};
+		vi.mocked(parseHTML).mockReturnValue(createParsedHTML({
+			rawHtml: '<!doctype html><html><head><title>Cart Page</title></head><body><h1>Hero Title</h1><h2>Section Title</h2><p>Purpose-built content for this page.</p></body></html>',
+			document: {
+				querySelector: (selector: string) => selector === 'title' ? { textContent: 'Cart Page' } : null,
+				querySelectorAll: () => [],
+				body: {
+					textContent: 'Hero Title Section Title Purpose-built content for this page.',
+					innerHTML: '<h1>Hero Title</h1><h2>Section Title</h2>'
+				}
+			},
+			headings: [
+				{ tagName: 'H1', textContent: 'Hero Title' },
+				cartHeading,
+				{ tagName: 'H2', textContent: 'Section Title' }
+			]
+		}));
+
+		const result = await validateContent('https://example.com');
+
+		expect(result.issues.some((issue) => issue.id === 'heading-hierarchy-errors')).toBe(false);
 	});
 
 	it('excludes Webflow Ecommerce fixed-tag headings from heading hierarchy analysis', async () => {

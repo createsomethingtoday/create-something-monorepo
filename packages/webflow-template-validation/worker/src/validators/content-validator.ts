@@ -19,7 +19,7 @@ import {
 	ContentQualityAnalysis,
 	ValidationOptions
 } from '../types';
-import { fetchHTML, parseHTML } from '../utils/fetch-utils';
+import { fetchHTML, isPlatformManagedHeading, parseHTML } from '../utils/fetch-utils';
 
 const LOREM_IPSUM_PATTERNS = [
 	/lorem\s+ipsum/i,
@@ -327,8 +327,10 @@ async function analyzePage(url: string, parsedHTML: ParsedHTML): Promise<Analyze
 	// Utility pages often include sample labels/copy by design; keep other audits active.
 	const hasLoremIpsum = allowsUtilityPlaceholderText ? false : checkForLoremIpsum(parsedHTML);
 
-	// Analyze heading hierarchy
-	const headingHierarchy = analyzeHeadingHierarchy(parsedHTML.headings);
+	// Analyze heading hierarchy (excluding fixed-tag Webflow Ecommerce headings)
+	const headingHierarchy = analyzeHeadingHierarchy(
+		parsedHTML.headings.filter(h => !isPlatformManagedHeading(h))
+	);
 
 	// Count images and alt text coverage
 	const imageAltAudit = analyzeContentImages(parsedHTML);
