@@ -271,8 +271,20 @@ function analyzeAltTextCoverage(parsedHTML: ParsedHTML): any {
 	};
 }
 
+// Webflow Ecommerce components (cart modal, default checkout blocks) render
+// headings with fixed tags (e.g. <h4 class="w-commerce-commercecartheading">
+// inside the display:none cart dialog). Creators cannot retag them, and
+// Webflow's own Audit Panel excludes them, so they must not participate in
+// heading-hierarchy analysis. Matching on the auto-generated w-commerce-
+// class prefix identifies them in both DOM and regex parsing paths.
+function isWebflowCommerceHeading(heading: HTMLHeadingElement): boolean {
+	const className =
+		typeof heading.getAttribute === 'function' ? heading.getAttribute('class') || '' : '';
+	return /(?:^|\s)w-commerce-/.test(className);
+}
+
 function analyzeHeadingStructure(parsedHTML: ParsedHTML): any {
-	const headings = parsedHTML.headings;
+	const headings = parsedHTML.headings.filter(h => !isWebflowCommerceHeading(h));
 	const errors: Array<{ type: string; description: string; element: string }> = [];
 
 	// Check for multiple H1s
