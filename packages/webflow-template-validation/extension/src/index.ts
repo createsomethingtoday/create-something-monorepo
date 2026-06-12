@@ -193,6 +193,7 @@ interface ProjectData {
       hasCustomOpenGraphDescription?: boolean;
     };
   };
+  canvasChecks?: CanvasAccessibilityResult;
   siteInfo?: {
     name?: string;
     id?: string;
@@ -231,6 +232,8 @@ interface ProjectData {
       hasLicensePage: boolean;
       hasTitleCaseNaming: boolean;
       hasMatchingSlugs: boolean;
+      pagesNotTitleCase: string[];
+      pagesWithMismatchedSlugs: string[];
     };
     seoCompliance: {
       currentPageHasValidTitle: boolean;
@@ -351,7 +354,7 @@ async function validateProject(): Promise<void> {
 
   try {
     // Get Webflow Designer API
-    const webflow = (window as any).webflow;
+    const webflow = (window as unknown as { webflow?: WebflowApi }).webflow;
     if (!webflow) {
       throw new Error('Webflow Designer API not available. Please ensure this extension is running in Webflow Designer.');
     }
@@ -360,6 +363,7 @@ async function validateProject(): Promise<void> {
     const projectData = await collectProjectData(webflow);
     const designerContext = await collectDesignerContext(webflow);
     projectData.designerContext = designerContext;
+    projectData.canvasChecks = await collectCanvasAccessibility(webflow, designerContext.canAccessCanvas);
     if (designerContext.message) {
       setToolbarStatus(designerContext.message, designerContext.canAccessCanvas === false ? 'warning' : 'neutral');
     }
@@ -501,7 +505,7 @@ async function validateProject(): Promise<void> {
     const message = error instanceof Error ? error.message : 'Unexpected error';
     setValidationProgress({ status: 'failed', progress: 100, message });
     showError(message);
-    void notifyDesigner((window as any).webflow, 'Error', message);
+    void notifyDesigner((window as unknown as { webflow?: WebflowApi }).webflow, 'Error', message);
   } finally {
     isValidating = false;
     hideLoading();
@@ -525,6 +529,7 @@ function getPageSlugScope(projectData: ProjectData): {
   const slugs: string[] = [];
   const seen = new Set<string>();
   const skippedCmsTemplateSlugs: string[] = [];
+  const skippedDraftSlugs: string[] = [];
 
   if (projectData.pages && projectData.pages.length > 0) {
     projectData.pages.forEach((page: any) => {
@@ -537,11 +542,24 @@ function getPageSlugScope(projectData: ProjectData): {
         return;
       }
 
+      // Draft pages are not published — fetching them would validate 404s
+      if (page.isDraft) {
+        skippedDraftSlugs.push(pathname);
+        return;
+      }
+
       if (!seen.has(pathname)) {
         seen.add(pathname);
         slugs.push(pathname);
       }
     });
+  }
+
+  if (skippedDraftSlugs.length > 0) {
+    console.log(
+      `Skipped ${skippedDraftSlugs.length} draft pages for published-site validation:`,
+      skippedDraftSlugs
+    );
   }
 
   if (skippedCmsTemplateSlugs.length > 0) {
@@ -557,7 +575,7 @@ function getPageSlugScope(projectData: ProjectData): {
   };
 }
 
-async function collectDesignerContext(webflow: any): Promise<DesignerContext> {
+async function collectDesignerContext(webflow: WebflowApi): Promise<DesignerContext> {
   const context: DesignerContext = {
     mode: null,
     capabilities: {},
@@ -573,7 +591,7 @@ async function collectDesignerContext(webflow: any): Promise<DesignerContext> {
 
   try {
     const appModes = webflow.appModes || {};
-    const capabilityKeys = [
+    const capabilityKeys: Array<keyof typeof appModes> = [
       'canAccessCanvas',
       'canDesign',
       'canEdit',
@@ -731,7 +749,7 @@ function ensureHttps(url: string): string {
 }
 
 // Get site URL for Worker validation
-async function getSiteUrl(webflow: any): Promise<string | null> {
+async function getSiteUrl(webflow: WebflowApi): Promise<string | null> {
   try {
     console.log('Getting site URL for enhanced validation...');
 
@@ -1410,7 +1428,7 @@ function setValidationProgress({
 async function bootstrapBridgePanel(): Promise<void> {
   initializeOptionDefaults();
 
-  const webflow = (window as any).webflow;
+  const webflow = (window as unknown as { webflow?: WebflowApi }).webflow;
   if (!webflow) {
     setBridgeBadge('neutral');
     setBridgeMessage('Webflow Designer API unavailable. Validator script setup is disabled.');
@@ -1420,8 +1438,8 @@ async function bootstrapBridgePanel(): Promise<void> {
 
   try {
     const siteInfo = await webflow.getSiteInfo?.();
-    const siteId = siteInfo?.siteId || siteInfo?.id || null;
-    const siteName = siteInfo?.siteName || siteInfo?.name || 'Webflow Site';
+    const siteId = siteInfo?.siteId || null;
+    const siteName = siteInfo?.siteName || 'Webflow Site';
     const siteUrl = await getSiteUrl(webflow);
     if (!siteId) {
       setBridgeBadge('failed');
@@ -1511,7 +1529,7 @@ async function installBridge(): Promise<void> {
       setBridgeMessage('Validator script copied. Paste it in site Head code, publish, then re-check.');
       setToolbarStatus('Validator script copied; publish then re-check', 'warning');
       void notifyDesigner(
-        (window as any).webflow,
+        (window as unknown as { webflow?: WebflowApi }).webflow,
         'Info',
         'Validator script copied. Paste it in Site Settings > Custom Code > Head code, publish, then re-check.'
       );
@@ -1519,7 +1537,7 @@ async function installBridge(): Promise<void> {
       setBridgeMessage('Validator script ready below. Copy it, paste it in site Head code, publish, then re-check.');
       setToolbarStatus('Validator script ready to copy', 'warning');
       void notifyDesigner(
-        (window as any).webflow,
+        (window as unknown as { webflow?: WebflowApi }).webflow,
         'Info',
         'Validator script is ready below. Copy it into Site Settings > Custom Code > Head code, publish, then re-check.'
       );
@@ -1672,7 +1690,7 @@ async function copyBridgeSnippetFromCurrentStatus(): Promise<void> {
   if (copied) {
     setBridgeMessage('Validator script copied. Paste it in site Head code, publish, then re-check.');
     setToolbarStatus('Validator script copied; publish then re-check', 'warning');
-    void notifyDesigner((window as any).webflow, 'Info', 'Validator script copied.');
+    void notifyDesigner((window as unknown as { webflow?: WebflowApi }).webflow, 'Info', 'Validator script copied.');
   } else {
     setBridgeMessage('Copy failed. Select the Validator script below and copy it manually.');
     setToolbarStatus('Copy failed; manual selection needed', 'warning');
@@ -1747,7 +1765,7 @@ function setToolbarStatus(
 }
 
 async function notifyDesigner(
-  webflow: any,
+  webflow: WebflowApi | undefined,
   type: 'Error' | 'Info' | 'Success',
   message: string
 ): Promise<void> {
@@ -1760,7 +1778,7 @@ async function notifyDesigner(
   }
 }
 
-async function notifyValidationOutcome(webflow: any, data: ValidationResponse): Promise<void> {
+async function notifyValidationOutcome(webflow: WebflowApi | undefined, data: ValidationResponse): Promise<void> {
   const outcome = getMarketplaceOutcome(data);
   if (outcome.className === 'is-ready') {
     await notifyDesigner(webflow, 'Success', 'Validator passed. The latest result is ready for template submission.');
@@ -1891,7 +1909,148 @@ function getSurfacedAccessibilityIssues(
 }
 
 // Collect comprehensive project data from Webflow Designer APIs
-async function collectProjectData(webflow: any): Promise<ProjectData> {
+interface CanvasAccessibilityResult {
+  available: boolean;
+  reason?: string;
+  pageName?: string;
+  headingsChecked: number;
+  headingIssues: Array<{ issue: string; position: number; level: number }>;
+  imagesChecked: number;
+  imagesMissingAlt: number;
+}
+
+// Canvas-accurate checks for the current page via the Designer element API.
+// Unlike the published-site checks, these reflect unpublished edits — closing
+// the gap where a creator fixes an issue but the published HTML still shows it.
+async function collectCanvasAccessibility(
+  webflow: WebflowApi,
+  canAccessCanvas: boolean | undefined
+): Promise<CanvasAccessibilityResult> {
+  const unavailable = (reason: string): CanvasAccessibilityResult => ({
+    available: false,
+    reason,
+    headingsChecked: 0,
+    headingIssues: [],
+    imagesChecked: 0,
+    imagesMissingAlt: 0,
+  });
+
+  if (canAccessCanvas === false) {
+    return unavailable('Canvas access is unavailable in the current Designer mode');
+  }
+  if (typeof webflow.getAllElements !== 'function') {
+    return unavailable('Element API unavailable in this Designer version');
+  }
+
+  try {
+    const [elements, currentPage] = await Promise.all([
+      webflow.getAllElements(),
+      webflow.getCurrentPage(),
+    ]);
+    const pageName = (await currentPage?.getName?.()) || 'Current Page';
+
+    const headingIssues: CanvasAccessibilityResult['headingIssues'] = [];
+    let headingsChecked = 0;
+    let lastLevel = 0;
+
+    for (const element of elements) {
+      if (element.type !== 'Heading') continue;
+      let level: number | null = null;
+      try {
+        level = await element.getHeadingLevel();
+        if (level === null) {
+          const tag = await element.getTag();
+          if (tag) level = parseInt(tag.substring(1), 10);
+        }
+      } catch {
+        level = null;
+      }
+      if (!level) continue;
+
+      headingsChecked++;
+      if (headingsChecked === 1 && level !== 1) {
+        headingIssues.push({
+          issue: `First heading on the canvas is H${level} — it should be H1`,
+          position: headingsChecked,
+          level,
+        });
+      } else if (headingsChecked > 1 && level > lastLevel + 1) {
+        headingIssues.push({
+          issue: `H${level} follows H${lastLevel}, skipping H${lastLevel + 1}`,
+          position: headingsChecked,
+          level,
+        });
+      }
+      lastLevel = level;
+    }
+
+    let imagesChecked = 0;
+    let imagesMissingAlt = 0;
+    for (const element of elements) {
+      if (element.type !== 'Image') continue;
+      imagesChecked++;
+      try {
+        const altText = await element.getAltText();
+        if (!altText || !altText.trim()) imagesMissingAlt++;
+      } catch {
+        // Ignore unreadable images rather than miscounting them
+        imagesChecked--;
+      }
+    }
+
+    return {
+      available: true,
+      pageName,
+      headingsChecked,
+      headingIssues,
+      imagesChecked,
+      imagesMissingAlt,
+    };
+  } catch (error) {
+    console.warn('Canvas accessibility collection failed:', error);
+    return unavailable(error instanceof Error ? error.message : 'Canvas analysis failed');
+  }
+}
+
+const HTML_TAG_STYLE_NAMES = new Set([
+  'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'a', 'ul', 'ol', 'li',
+  'blockquote', 'figure', 'figcaption', 'body', 'html'
+]);
+
+// Webflow displays tag selectors as e.g. "All H1 Headings", "All Paragraphs",
+// "All Links", "Body (All Pages)"
+const HTML_TAG_STYLE_DISPLAY_PATTERN = /^(all\s+(h[1-6]\s+headings?|paragraphs?|links?|lists?|list items?|images?|buttons?)|body\s*\(all pages\))$/i;
+
+function isHtmlTagStyleName(name: string): boolean {
+  const normalized = name.trim().toLowerCase();
+  return HTML_TAG_STYLE_NAMES.has(normalized) || HTML_TAG_STYLE_DISPLAY_PATTERN.test(normalized);
+}
+
+// Breadth-first walk of a component's element tree looking for a nested
+// component instance. Depth-capped: nesting evidence is always near the root,
+// and unbounded canvas traversal is expensive in the Designer.
+async function componentContainsComponentInstance(
+  component: Component,
+  maxDepth = 4
+): Promise<boolean> {
+  const root = await component.getRootElement();
+  if (!root) return false;
+
+  let frontier: AnyElement[] = [root];
+  for (let depth = 0; depth < maxDepth && frontier.length > 0; depth++) {
+    const next: AnyElement[] = [];
+    for (const element of frontier) {
+      if (element.type === 'ComponentInstance') return true;
+      if ('children' in element && element.children) {
+        next.push(...(await element.getChildren()));
+      }
+    }
+    frontier = next;
+  }
+  return false;
+}
+
+async function collectProjectData(webflow: WebflowApi): Promise<ProjectData> {
   const data: ProjectData = {
     variables: undefined,
     components: [],
@@ -1932,7 +2091,9 @@ async function collectProjectData(webflow: any): Promise<ProjectData> {
         hasInstructionsPage: false,
         hasLicensePage: false,
         hasTitleCaseNaming: false,
-        hasMatchingSlugs: false
+        hasMatchingSlugs: false,
+        pagesNotTitleCase: [],
+        pagesWithMismatchedSlugs: []
       },
       seoCompliance: {
         currentPageHasValidTitle: false,
@@ -1957,15 +2118,15 @@ async function collectProjectData(webflow: any): Promise<ProjectData> {
 
       for (const collection of collections) {
         try {
-          const collectionName = collection.getName ? await collection.getName() : collection.name || 'Unnamed Collection';
-          const variables = collection.getAllVariables ? await collection.getAllVariables() : [];
+          const collectionName = (await collection.getName()) || 'Unnamed Collection';
+          const variables = await collection.getAllVariables();
           const variableList: any[] = [];
           const modeList: Array<{ id: string; name: string }> = [];
           let modeDataAvailable = false;
 
           for (const variable of variables) {
             try {
-              const variableName = variable.getName ? await variable.getName() : variable.name || null;
+              const variableName = (await variable.getName()) || null;
               const variableType = variable.type || null;
               
               // Enhanced variable analysis
@@ -1982,46 +2143,48 @@ async function collectProjectData(webflow: any): Promise<ProjectData> {
                 }
               }
               
+              // Variables expose values via get(), not a .value property
+              let variableValue: unknown = null;
+              try {
+                variableValue = await variable.get();
+              } catch {
+                variableValue = null;
+              }
+
               variableList.push({
                 id: variable.id,
                 name: variableName,
                 type: variableType,
-                value: variable.value || null
+                value: variableValue ?? null
               });
             } catch (variableError) {
               console.warn('Error processing variable:', variableError);
-              if (variable.name || variable.id) {
+              if (variable.id) {
                 variableList.push({
                   id: variable.id,
-                  name: variable.name || null,
+                  name: null,
                   type: variable.type || null,
-                  value: variable.value || null
+                  value: null
                 });
               }
             }
           }
 
           try {
+            // getAllVariableModes may be absent on older Designer runtimes
             const modes = typeof collection.getAllVariableModes === 'function'
               ? await collection.getAllVariableModes()
-              : Array.isArray(collection.modes)
-                ? collection.modes
-                : undefined;
+              : undefined;
 
             if (Array.isArray(modes)) {
               modeDataAvailable = true;
 
               for (const mode of modes) {
                 try {
-                  const modeName = typeof mode.getName === 'function'
-                    ? await mode.getName()
-                    : mode.name || mode.id || 'Unnamed Mode';
-                  const modeId = typeof mode.getId === 'function'
-                    ? await mode.getId()
-                    : mode.id || modeName;
+                  const modeName = (await mode.getName()) || mode.id || 'Unnamed Mode';
 
                   modeList.push({
-                    id: String(modeId),
+                    id: String(mode.id),
                     name: String(modeName)
                   });
                 } catch (modeError) {
@@ -2085,15 +2248,15 @@ async function collectProjectData(webflow: any): Promise<ProjectData> {
 
       for (const component of components) {
         try {
-          const name = component.getName ? await component.getName() : component.name || null;
-          const id = component.getId ? await component.getId() : component.id;
+          const name = (await component.getName()) || null;
+          const id = component.id;
 
           if (name) {
             // Enhanced component analysis
             const lowerName = name.toLowerCase();
             let instances = 0;
             let isNested = false;
-            
+
             // Detect component types for Webflow Way requirements
             if (lowerName.includes('nav') || lowerName.includes('header') || lowerName.includes('menu')) {
               data.enhancedValidation!.componentArchitecture.hasNavbarComponent = true;
@@ -2104,47 +2267,32 @@ async function collectProjectData(webflow: any): Promise<ProjectData> {
             if (lowerName.includes('cta') || lowerName.includes('button') || lowerName.includes('call')) {
               data.enhancedValidation!.componentArchitecture.hasCTAComponents = true;
             }
-            
-            // Try to get component usage/instances count
+
             try {
-              if (component.getInstances) {
-                const componentInstances = await component.getInstances();
-                instances = Array.isArray(componentInstances) ? componentInstances.length : 0;
+              // getInstanceCount may be absent on older Designer runtimes
+              if (typeof component.getInstanceCount === 'function') {
+                instances = await component.getInstanceCount();
               }
-              
-              // Check if component contains other components (nested)
-              if (component.getChildren) {
-                const children = await component.getChildren();
-                if (Array.isArray(children) && children.some((child: any) => child.type === 'Component')) {
-                  isNested = true;
-                  data.enhancedValidation!.componentArchitecture.hasNestedComponents = true;
-                }
+
+              // A component is "nested" when its tree contains another component instance
+              isNested = await componentContainsComponentInstance(component);
+              if (isNested) {
+                data.enhancedValidation!.componentArchitecture.hasNestedComponents = true;
               }
             } catch (nestedError) {
               console.warn('Error analyzing component nesting:', nestedError);
             }
-            
+
             componentData.push({
               id: id,
               name: name,
-              type: component.type || 'component',
+              type: 'component',
               instances: instances,
               isNested: isNested
             });
           }
         } catch (compError) {
           console.warn('Error processing component:', compError);
-          try {
-            if (component.name) {
-              componentData.push({
-                id: component.id,
-                name: component.name,
-                type: component.type || 'component'
-              });
-            }
-          } catch (fallbackError) {
-            console.warn('Fallback component processing also failed:', fallbackError);
-          }
         }
       }
 
@@ -2169,18 +2317,19 @@ async function collectProjectData(webflow: any): Promise<ProjectData> {
 
       for (const style of styles) {
         try {
-          const name = style.getName ? await style.getName() : style.name || null;
-          const id = style.getId ? await style.getId() : style.id;
-          const styleType = style.type || 'class';
+          const name = (await style.getName()) || null;
+          const id = style.id;
+          const styleType = 'class';
 
           if (name && !name.startsWith('_')) {
             let properties: Record<string, any> = {};
             let isHtmlTag = false;
             let hasVariables = false;
-            
-            // Check if this is an HTML tag style (required by Webflow Way)
-            const htmlTags = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'a', 'ul', 'ol', 'blockquote', 'figure', 'figcaption', 'body'];
-            if (htmlTags.some(tag => name.toLowerCase() === tag || name.toLowerCase().includes(tag))) {
+
+            // Check if this is an HTML tag style (required by Webflow Way).
+            // Exact tag names or Webflow's tag-selector display names only —
+            // substring matching ("a", "p") would match nearly every class.
+            if (isHtmlTagStyleName(name)) {
               isHtmlTag = true;
               data.enhancedValidation!.styleSystem.hasHtmlTagStyles = true;
             }
@@ -2221,17 +2370,6 @@ async function collectProjectData(webflow: any): Promise<ProjectData> {
           }
         } catch (styleError) {
           console.warn('Error processing style:', styleError);
-          try {
-            if (style.name && !style.name.startsWith('_')) {
-              styleData.push({
-                id: style.id,
-                name: style.name,
-                type: style.type || 'class'
-              });
-            }
-          } catch (fallbackError) {
-            console.warn('Fallback style processing also failed:', fallbackError);
-          }
         }
       }
 
@@ -2258,52 +2396,66 @@ async function collectProjectData(webflow: any): Promise<ProjectData> {
       for (const item of items) {
         try {
           // Filter out folders, only include pages
-          if (item.type === 'Page' || item.type === 'page') {
-            const name = item.getName ? await item.getName() : 
-                        item.name || item.title || item.displayName || 'Unnamed';
-            const slug = item.getSlug ? await item.getSlug() : 
-                        item.slug || item.path || '';
-            const publishPath = item.getPublishPath ? await item.getPublishPath() :
-                        item.publishPath || null;
+          if (item.type === 'Page') {
+            const name = (await item.getName()) || 'Unnamed';
+            const slug = (await item.getSlug()) || '';
+            const publishPath = await item.getPublishPath();
             let collectionId: string | null = null;
             let collectionName: string | null = null;
+            let pageKind: string | null = null;
+            let isDraftPage = false;
 
             try {
-              if (item.getCollectionId) {
-                collectionId = await item.getCollectionId();
-              } else if (item.getCollectionID) {
-                collectionId = await item.getCollectionID();
-              } else if (item.collectionId || item.collectionID) {
-                collectionId = item.collectionId || item.collectionID;
-              }
+              collectionId = await item.getCollectionId();
             } catch {
               collectionId = null;
             }
 
             try {
-              if (item.getCollectionName) {
-                collectionName = await item.getCollectionName();
-              } else if (item.collectionName) {
-                collectionName = item.collectionName;
-              }
+              collectionName = await item.getCollectionName();
             } catch {
               collectionName = null;
             }
+
+            // getKind/isDraft may be absent on older Designer runtimes
+            try {
+              if (typeof item.getKind === 'function') {
+                pageKind = await item.getKind();
+              }
+            } catch {
+              pageKind = null;
+            }
+
+            try {
+              if (typeof item.isDraft === 'function') {
+                isDraftPage = await item.isDraft();
+              }
+            } catch {
+              isDraftPage = false;
+            }
+
+            // CMS-bound template pages (collection pages, ecommerce product/SKU/
+            // category templates) can't be fetched as static published URLs.
+            // Prefer the API's collection binding and page kind; fall back to
+            // slug heuristics only when kind is unavailable.
             const isCmsTemplate = Boolean(
               collectionId ||
               collectionName ||
-              isInternalCmsTemplateSlug(slug) ||
-              (publishPath && isInternalCmsTemplateSlug(publishPath))
+              pageKind === 'cms' ||
+              (pageKind === null && (
+                isInternalCmsTemplateSlug(slug) ||
+                (publishPath && isInternalCmsTemplateSlug(publishPath))
+              ))
             );
-            
+
             // Enhanced page analysis for Webflow Way requirements
             let isHomePage = false;
             let hasValidNaming = false;
-            
+
             // Check for required pages
             const lowerName = name.toLowerCase();
             const lowerSlug = slug.toLowerCase();
-            
+
             if (lowerName.includes('style guide') || lowerSlug.includes('style-guide') || lowerSlug.includes('styleguide')) {
               data.enhancedValidation!.pageStructure.hasStyleGuidePage = true;
             }
@@ -2313,25 +2465,34 @@ async function collectProjectData(webflow: any): Promise<ProjectData> {
             if (lowerName.includes('license') || lowerSlug.includes('license') || slug === '/licenses') {
               data.enhancedValidation!.pageStructure.hasLicensePage = true;
             }
-            
-            // Check for home page
-            if (slug === '/' || lowerName === 'home' || lowerName === 'homepage' || lowerSlug === 'home') {
+
+            // Prefer the API's homepage flag; fall back to name/slug heuristics
+            try {
+              if (typeof item.isHomepage === 'function') {
+                isHomePage = await item.isHomepage();
+              }
+            } catch {
+              isHomePage = false;
+            }
+            if (!isHomePage && (slug === '/' || lowerName === 'home' || lowerName === 'homepage' || lowerSlug === 'home')) {
               isHomePage = true;
             }
-            
-            // Validate Title Case naming (Webflow Way requirement)
-            const isTitleCase = /^[A-Z][a-z]*(?:\s[A-Z][a-z]*)*$/.test(name) || 
+
+            // Validate Title Case naming (Webflow Way requirement) per page
+            const isTitleCase = /^[A-Z][a-z]*(?:\s[A-Z][a-z]*)*$/.test(name) ||
                                name.split(' ').every((word: string) => word.charAt(0) === word.charAt(0).toUpperCase());
             if (isTitleCase) {
               hasValidNaming = true;
-              data.enhancedValidation!.pageStructure.hasTitleCaseNaming = true;
+            } else {
+              data.enhancedValidation!.pageStructure.pagesNotTitleCase.push(name);
             }
-            
-            // Check if page name matches slug (Webflow Way requirement)
+
+            // Check if page name matches slug (Webflow Way requirement) per page.
+            // CMS template pages have fixed collection slugs; skip them.
             const expectedSlug = name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
             const actualSlug = slug.replace(/^\//, '').toLowerCase();
-            if (expectedSlug === actualSlug || (isHomePage && actualSlug === '')) {
-              data.enhancedValidation!.pageStructure.hasMatchingSlugs = true;
+            if (!isCmsTemplate && expectedSlug !== actualSlug && !(isHomePage && actualSlug === '')) {
+              data.enhancedValidation!.pageStructure.pagesWithMismatchedSlugs.push(`${name} (/${actualSlug})`);
             }
 
             // Collect SEO data for each page
@@ -2378,11 +2539,13 @@ async function collectProjectData(webflow: any): Promise<ProjectData> {
               id: item.id,
               name: name,
               slug: slug,
-              path: item.path || slug,
+              path: slug,
               publishPath: publishPath,
               collectionId: collectionId,
               collectionName: collectionName,
               isCmsTemplate: isCmsTemplate,
+              kind: pageKind,
+              isDraft: isDraftPage,
               type: item.type,
               isHomePage: isHomePage,
               hasValidNaming: hasValidNaming,
@@ -2394,20 +2557,16 @@ async function collectProjectData(webflow: any): Promise<ProjectData> {
         }
       }
 
+      // "All collected pages pass" semantics: one well-named page must not
+      // mask badly-named ones.
+      data.enhancedValidation!.pageStructure.hasTitleCaseNaming =
+        pageData.length > 0 && data.enhancedValidation!.pageStructure.pagesNotTitleCase.length === 0;
+      data.enhancedValidation!.pageStructure.hasMatchingSlugs =
+        pageData.length > 0 && data.enhancedValidation!.pageStructure.pagesWithMismatchedSlugs.length === 0;
+
       data.pages = pageData;
       data.collectionMetadata!.totalPages = pageData.length;
       console.log(`Pages collected: ${pageData.length}`);
-    } else {
-      // Try alternative methods
-      if (webflow.getAllPages) {
-        const pages = await webflow.getAllPages() || [];
-        data.pages = pages;
-        data.collectionMetadata!.totalPages = pages.length;
-      } else if (webflow.getPages) {
-        const pages = await webflow.getPages() || [];
-        data.pages = pages;
-        data.collectionMetadata!.totalPages = pages.length;
-      }
     }
   } catch (error) {
     console.warn('Could not fetch pages:', error);
@@ -2872,6 +3031,52 @@ function normalizeVariableModesCategory(results: ValidationResponse): void {
 }
 
 // Enhance validation results with client-side analysis
+// Canvas checks reflect the current Designer state (including unpublished
+// edits), complementing the published-site checks which lag behind edits.
+function addCanvasChecksCategory(results: ValidationResponse, projectData: ProjectData): void {
+  const canvas = projectData.canvasChecks;
+  if (!canvas || !canvas.available) return;
+
+  const issues: ValidationIssue[] = [];
+
+  for (const headingIssue of canvas.headingIssues) {
+    issues.push({
+      id: `canvas-heading-${headingIssue.position}`,
+      category: 'Canvas Checks (Current Page)',
+      severity: 'warning',
+      message: headingIssue.issue,
+      details: {
+        howToFix: 'Adjust the heading level in the element settings so levels increase one step at a time.',
+        location: `${canvas.pageName} — heading ${headingIssue.position} of ${canvas.headingsChecked}`
+      }
+    });
+  }
+
+  if (canvas.imagesMissingAlt > 0) {
+    issues.push({
+      id: 'canvas-images-missing-alt',
+      category: 'Canvas Checks (Current Page)',
+      severity: 'info',
+      message: `${canvas.imagesMissingAlt} of ${canvas.imagesChecked} image(s) on this page have no alt text in the Designer.`,
+      details: {
+        howToFix: 'Add descriptive alt text in each image\'s settings, or mark purely decorative images as decorative.'
+      }
+    });
+  }
+
+  results.categories.push({
+    category: 'Canvas Checks (Current Page)',
+    passed: issues.filter(issue => issue.severity === 'error' || issue.severity === 'warning').length === 0,
+    issues,
+    stats: {
+      page: canvas.pageName,
+      headingsChecked: canvas.headingsChecked,
+      imagesChecked: canvas.imagesChecked,
+      note: 'Reflects current Designer state, including unpublished changes'
+    }
+  });
+}
+
 function enhanceValidationResults(results: ValidationResponse, projectData: ProjectData): void {
   console.log('Enhancing validation results with client-side analysis...');
 
@@ -2880,6 +3085,7 @@ function enhanceValidationResults(results: ValidationResponse, projectData: Proj
   // addComponentValidation(results, projectData); // Creates duplicate "Component Architecture" category
   addStyleSystemValidation(results, projectData);
   normalizeVariableModesCategory(results);
+  addCanvasChecksCategory(results, projectData);
   
   // Find Page Structure category
   const pageStructureCategory = results.categories.find(cat => cat.category === 'Page Structure');
@@ -2913,15 +3119,32 @@ function enhanceValidationResults(results: ValidationResponse, projectData: Proj
       // Note: Style Guide, Instructions, and License page checks are handled by the
       // server in the "Required Pages" category to avoid duplication
 
-      // Check for Title Case naming
-      if (!pageStructure.hasTitleCaseNaming) {
+      // Check for Title Case naming — report the specific offending pages
+      const pagesNotTitleCase = pageStructure.pagesNotTitleCase || [];
+      if (pagesNotTitleCase.length > 0) {
         issues.push({
           id: 'page-naming',
           category: 'Page Structure',
           severity: 'warning',
-          message: 'Some pages don\'t use Title Case naming convention.',
+          message: `${pagesNotTitleCase.length} page(s) don't use Title Case naming convention.`,
           details: {
-            howToFix: 'Use Title Case for page names (e.g., "Style Guide", "Contact Us")'
+            howToFix: 'Use Title Case for page names (e.g., "Style Guide", "Contact Us")',
+            samples: pagesNotTitleCase.slice(0, 10)
+          }
+        });
+      }
+
+      // Check page-name/slug agreement — report the specific offending pages
+      const pagesWithMismatchedSlugs = pageStructure.pagesWithMismatchedSlugs || [];
+      if (pagesWithMismatchedSlugs.length > 0) {
+        issues.push({
+          id: 'page-slug-mismatch',
+          category: 'Page Structure',
+          severity: 'warning',
+          message: `${pagesWithMismatchedSlugs.length} page(s) have slugs that don't match their names.`,
+          details: {
+            howToFix: 'Keep page slugs aligned with page names (e.g., "Style Guide" → /style-guide)',
+            samples: pagesWithMismatchedSlugs.slice(0, 10)
           }
         });
       }
@@ -2991,7 +3214,7 @@ function enhanceValidationResults(results: ValidationResponse, projectData: Proj
 }
 
 // Collect current page SEO data using getCurrentPage API
-async function collectCurrentPageSEOData(webflow: any): Promise<any> {
+async function collectCurrentPageSEOData(webflow: WebflowApi): Promise<any> {
   try {
     // Get current page
     const currentPage = await webflow.getCurrentPage();
@@ -3000,10 +3223,10 @@ async function collectCurrentPageSEOData(webflow: any): Promise<any> {
       return null;
     }
     
-    const pageName = currentPage.getName ? await currentPage.getName() : 'Current Page';
-    const pageSlug = currentPage.getSlug ? await currentPage.getSlug() : '';
-    const pagePublishPath = currentPage.getPublishPath ? await currentPage.getPublishPath() : null;
-    const pageId = currentPage.getId ? await currentPage.getId() : currentPage.id;
+    const pageName = (await currentPage.getName()) || 'Current Page';
+    const pageSlug = (await currentPage.getSlug()) || '';
+    const pagePublishPath = await currentPage.getPublishPath();
+    const pageId = currentPage.id;
     
     console.log(`Analyzing SEO for current page: ${pageName}`);
     
@@ -3248,11 +3471,29 @@ function updateMetaDisplay(projectLabel: string, projectData: ProjectData): void
   if (!metaDisplay || !projectData) return;
 
   const stats = projectData.collectionMetadata || {};
+
+  // Published-site checks run against the last publish, not the canvas —
+  // surface which publish is being validated so creators republish after fixes.
+  const scope = projectData.validationScope;
+  const lastPublished = scope?.domainLastPublished;
+  const publishNote = lastPublished
+    ? `<div class="meta-stat">
+        <span class="meta-label">Validating publish from:</span>
+        <span class="meta-value">${formatDateTime(lastPublished)} — republish to validate newer changes</span>
+      </div>`
+    : scope?.siteUrl
+      ? `<div class="meta-stat">
+          <span class="meta-label">Published checks:</span>
+          <span class="meta-value">Run against the last published site — republish to validate newer changes</span>
+        </div>`
+      : '';
+
   const metaHTML = `
     <div class="meta-header">
       <h3 class="meta-title">Project: ${projectLabel}</h3>
     </div>
     <div class="meta-stats">
+      ${publishNote}
       <div class="meta-stat">
         <span class="meta-label">Variables:</span>
         <span class="meta-value">${stats.totalVariables || 0} (${stats.variableCollections || 0} collections)</span>

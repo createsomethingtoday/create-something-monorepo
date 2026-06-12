@@ -81,6 +81,7 @@ async function validateProject() {
         const projectData = await collectProjectData(webflow);
         const designerContext = await collectDesignerContext(webflow);
         projectData.designerContext = designerContext;
+        projectData.canvasChecks = await collectCanvasAccessibility(webflow, designerContext.canAccessCanvas);
         if (designerContext.message) {
             setToolbarStatus(designerContext.message, designerContext.canAccessCanvas === false ? 'warning' : 'neutral');
         }
@@ -224,6 +225,7 @@ function getPageSlugScope(projectData) {
     const slugs = [];
     const seen = new Set();
     const skippedCmsTemplateSlugs = [];
+    const skippedDraftSlugs = [];
     if (projectData.pages && projectData.pages.length > 0) {
         projectData.pages.forEach((page) => {
             const primaryPath = getFirstUsablePagePath(page);
@@ -234,11 +236,18 @@ function getPageSlugScope(projectData) {
                 skippedCmsTemplateSlugs.push(pathname);
                 return;
             }
+            if (page.isDraft) {
+                skippedDraftSlugs.push(pathname);
+                return;
+            }
             if (!seen.has(pathname)) {
                 seen.add(pathname);
                 slugs.push(pathname);
             }
         });
+    }
+    if (skippedDraftSlugs.length > 0) {
+        console.log(`Skipped ${skippedDraftSlugs.length} draft pages for published-site validation:`, skippedDraftSlugs);
     }
     if (skippedCmsTemplateSlugs.length > 0) {
         console.log(`Skipped ${skippedCmsTemplateSlugs.length} internal CMS template slugs for published-site validation:`, skippedCmsTemplateSlugs);
@@ -926,8 +935,8 @@ async function bootstrapBridgePanel() {
     }
     try {
         const siteInfo = await webflow.getSiteInfo?.();
-        const siteId = siteInfo?.siteId || siteInfo?.id || null;
-        const siteName = siteInfo?.siteName || siteInfo?.name || 'Webflow Site';
+        const siteId = siteInfo?.siteId || null;
+        const siteName = siteInfo?.siteName || 'Webflow Site';
         const siteUrl = await getSiteUrl(webflow);
         if (!siteId) {
             setBridgeBadge('failed');
@@ -1342,6 +1351,120 @@ function getSurfacedAccessibilityIssues(accessibilityAnalysis, contentAnalysisIn
     const duplicateIssueIds = new Set(['missing-alt-text-critical', 'heading-structure-errors']);
     return issues.filter((issue) => !duplicateIssueIds.has(issue.id));
 }
+async function collectCanvasAccessibility(webflow, canAccessCanvas) {
+    const unavailable = (reason) => ({
+        available: false,
+        reason,
+        headingsChecked: 0,
+        headingIssues: [],
+        imagesChecked: 0,
+        imagesMissingAlt: 0,
+    });
+    if (canAccessCanvas === false) {
+        return unavailable('Canvas access is unavailable in the current Designer mode');
+    }
+    if (typeof webflow.getAllElements !== 'function') {
+        return unavailable('Element API unavailable in this Designer version');
+    }
+    try {
+        const [elements, currentPage] = await Promise.all([
+            webflow.getAllElements(),
+            webflow.getCurrentPage(),
+        ]);
+        const pageName = (await currentPage?.getName?.()) || 'Current Page';
+        const headingIssues = [];
+        let headingsChecked = 0;
+        let lastLevel = 0;
+        for (const element of elements) {
+            if (element.type !== 'Heading')
+                continue;
+            let level = null;
+            try {
+                level = await element.getHeadingLevel();
+                if (level === null) {
+                    const tag = await element.getTag();
+                    if (tag)
+                        level = parseInt(tag.substring(1), 10);
+                }
+            }
+            catch {
+                level = null;
+            }
+            if (!level)
+                continue;
+            headingsChecked++;
+            if (headingsChecked === 1 && level !== 1) {
+                headingIssues.push({
+                    issue: `First heading on the canvas is H${level} — it should be H1`,
+                    position: headingsChecked,
+                    level,
+                });
+            }
+            else if (headingsChecked > 1 && level > lastLevel + 1) {
+                headingIssues.push({
+                    issue: `H${level} follows H${lastLevel}, skipping H${lastLevel + 1}`,
+                    position: headingsChecked,
+                    level,
+                });
+            }
+            lastLevel = level;
+        }
+        let imagesChecked = 0;
+        let imagesMissingAlt = 0;
+        for (const element of elements) {
+            if (element.type !== 'Image')
+                continue;
+            imagesChecked++;
+            try {
+                const altText = await element.getAltText();
+                if (!altText || !altText.trim())
+                    imagesMissingAlt++;
+            }
+            catch {
+                imagesChecked--;
+            }
+        }
+        return {
+            available: true,
+            pageName,
+            headingsChecked,
+            headingIssues,
+            imagesChecked,
+            imagesMissingAlt,
+        };
+    }
+    catch (error) {
+        console.warn('Canvas accessibility collection failed:', error);
+        return unavailable(error instanceof Error ? error.message : 'Canvas analysis failed');
+    }
+}
+const HTML_TAG_STYLE_NAMES = new Set([
+    'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'a', 'ul', 'ol', 'li',
+    'blockquote', 'figure', 'figcaption', 'body', 'html'
+]);
+const HTML_TAG_STYLE_DISPLAY_PATTERN = /^(all\s+(h[1-6]\s+headings?|paragraphs?|links?|lists?|list items?|images?|buttons?)|body\s*\(all pages\))$/i;
+function isHtmlTagStyleName(name) {
+    const normalized = name.trim().toLowerCase();
+    return HTML_TAG_STYLE_NAMES.has(normalized) || HTML_TAG_STYLE_DISPLAY_PATTERN.test(normalized);
+}
+async function componentContainsComponentInstance(component, maxDepth = 4) {
+    const root = await component.getRootElement();
+    if (!root)
+        return false;
+    let frontier = [root];
+    for (let depth = 0; depth < maxDepth && frontier.length > 0; depth++) {
+        const next = [];
+        for (const element of frontier) {
+            if (element.type === 'ComponentInstance')
+                return true;
+            if ('children' in element && element.children) {
+                next.push(...(await element.getChildren()));
+            }
+        }
+        frontier = next;
+    }
+    return false;
+}
 async function collectProjectData(webflow) {
     const data = {
         variables: undefined,
@@ -1383,7 +1506,9 @@ async function collectProjectData(webflow) {
                 hasInstructionsPage: false,
                 hasLicensePage: false,
                 hasTitleCaseNaming: false,
-                hasMatchingSlugs: false
+                hasMatchingSlugs: false,
+                pagesNotTitleCase: [],
+                pagesWithMismatchedSlugs: []
             },
             seoCompliance: {
                 currentPageHasValidTitle: false,
@@ -1404,14 +1529,14 @@ async function collectProjectData(webflow) {
             let totalVariableModes = 0;
             for (const collection of collections) {
                 try {
-                    const collectionName = collection.getName ? await collection.getName() : collection.name || 'Unnamed Collection';
-                    const variables = collection.getAllVariables ? await collection.getAllVariables() : [];
+                    const collectionName = (await collection.getName()) || 'Unnamed Collection';
+                    const variables = await collection.getAllVariables();
                     const variableList = [];
                     const modeList = [];
                     let modeDataAvailable = false;
                     for (const variable of variables) {
                         try {
-                            const variableName = variable.getName ? await variable.getName() : variable.name || null;
+                            const variableName = (await variable.getName()) || null;
                             const variableType = variable.type || null;
                             if (variableName) {
                                 const lowerName = variableName.toLowerCase();
@@ -1425,21 +1550,28 @@ async function collectProjectData(webflow) {
                                     data.enhancedValidation.variableOrganization.hasSpacingVariables = true;
                                 }
                             }
+                            let variableValue = null;
+                            try {
+                                variableValue = await variable.get();
+                            }
+                            catch {
+                                variableValue = null;
+                            }
                             variableList.push({
                                 id: variable.id,
                                 name: variableName,
                                 type: variableType,
-                                value: variable.value || null
+                                value: variableValue ?? null
                             });
                         }
                         catch (variableError) {
                             console.warn('Error processing variable:', variableError);
-                            if (variable.name || variable.id) {
+                            if (variable.id) {
                                 variableList.push({
                                     id: variable.id,
-                                    name: variable.name || null,
+                                    name: null,
                                     type: variable.type || null,
-                                    value: variable.value || null
+                                    value: null
                                 });
                             }
                         }
@@ -1447,21 +1579,14 @@ async function collectProjectData(webflow) {
                     try {
                         const modes = typeof collection.getAllVariableModes === 'function'
                             ? await collection.getAllVariableModes()
-                            : Array.isArray(collection.modes)
-                                ? collection.modes
-                                : undefined;
+                            : undefined;
                         if (Array.isArray(modes)) {
                             modeDataAvailable = true;
                             for (const mode of modes) {
                                 try {
-                                    const modeName = typeof mode.getName === 'function'
-                                        ? await mode.getName()
-                                        : mode.name || mode.id || 'Unnamed Mode';
-                                    const modeId = typeof mode.getId === 'function'
-                                        ? await mode.getId()
-                                        : mode.id || modeName;
+                                    const modeName = (await mode.getName()) || mode.id || 'Unnamed Mode';
                                     modeList.push({
-                                        id: String(modeId),
+                                        id: String(mode.id),
                                         name: String(modeName)
                                     });
                                 }
@@ -1520,8 +1645,8 @@ async function collectProjectData(webflow) {
             const componentData = [];
             for (const component of components) {
                 try {
-                    const name = component.getName ? await component.getName() : component.name || null;
-                    const id = component.getId ? await component.getId() : component.id;
+                    const name = (await component.getName()) || null;
+                    const id = component.id;
                     if (name) {
                         const lowerName = name.toLowerCase();
                         let instances = 0;
@@ -1536,16 +1661,12 @@ async function collectProjectData(webflow) {
                             data.enhancedValidation.componentArchitecture.hasCTAComponents = true;
                         }
                         try {
-                            if (component.getInstances) {
-                                const componentInstances = await component.getInstances();
-                                instances = Array.isArray(componentInstances) ? componentInstances.length : 0;
+                            if (typeof component.getInstanceCount === 'function') {
+                                instances = await component.getInstanceCount();
                             }
-                            if (component.getChildren) {
-                                const children = await component.getChildren();
-                                if (Array.isArray(children) && children.some((child) => child.type === 'Component')) {
-                                    isNested = true;
-                                    data.enhancedValidation.componentArchitecture.hasNestedComponents = true;
-                                }
+                            isNested = await componentContainsComponentInstance(component);
+                            if (isNested) {
+                                data.enhancedValidation.componentArchitecture.hasNestedComponents = true;
                             }
                         }
                         catch (nestedError) {
@@ -1554,7 +1675,7 @@ async function collectProjectData(webflow) {
                         componentData.push({
                             id: id,
                             name: name,
-                            type: component.type || 'component',
+                            type: 'component',
                             instances: instances,
                             isNested: isNested
                         });
@@ -1562,18 +1683,6 @@ async function collectProjectData(webflow) {
                 }
                 catch (compError) {
                     console.warn('Error processing component:', compError);
-                    try {
-                        if (component.name) {
-                            componentData.push({
-                                id: component.id,
-                                name: component.name,
-                                type: component.type || 'component'
-                            });
-                        }
-                    }
-                    catch (fallbackError) {
-                        console.warn('Fallback component processing also failed:', fallbackError);
-                    }
                 }
             }
             data.components = componentData;
@@ -1595,15 +1704,14 @@ async function collectProjectData(webflow) {
             const styleData = [];
             for (const style of styles) {
                 try {
-                    const name = style.getName ? await style.getName() : style.name || null;
-                    const id = style.getId ? await style.getId() : style.id;
-                    const styleType = style.type || 'class';
+                    const name = (await style.getName()) || null;
+                    const id = style.id;
+                    const styleType = 'class';
                     if (name && !name.startsWith('_')) {
                         let properties = {};
                         let isHtmlTag = false;
                         let hasVariables = false;
-                        const htmlTags = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'a', 'ul', 'ol', 'blockquote', 'figure', 'figcaption', 'body'];
-                        if (htmlTags.some(tag => name.toLowerCase() === tag || name.toLowerCase().includes(tag))) {
+                        if (isHtmlTagStyleName(name)) {
                             isHtmlTag = true;
                             data.enhancedValidation.styleSystem.hasHtmlTagStyles = true;
                         }
@@ -1639,18 +1747,6 @@ async function collectProjectData(webflow) {
                 }
                 catch (styleError) {
                     console.warn('Error processing style:', styleError);
-                    try {
-                        if (style.name && !style.name.startsWith('_')) {
-                            styleData.push({
-                                id: style.id,
-                                name: style.name,
-                                type: style.type || 'class'
-                            });
-                        }
-                    }
-                    catch (fallbackError) {
-                        console.warn('Fallback style processing also failed:', fallbackError);
-                    }
                 }
             }
             data.styles = styleData;
@@ -1673,44 +1769,47 @@ async function collectProjectData(webflow) {
             const items = Array.isArray(pagesAndFolders) ? pagesAndFolders : [];
             for (const item of items) {
                 try {
-                    if (item.type === 'Page' || item.type === 'page') {
-                        const name = item.getName ? await item.getName() :
-                            item.name || item.title || item.displayName || 'Unnamed';
-                        const slug = item.getSlug ? await item.getSlug() :
-                            item.slug || item.path || '';
-                        const publishPath = item.getPublishPath ? await item.getPublishPath() :
-                            item.publishPath || null;
+                    if (item.type === 'Page') {
+                        const name = (await item.getName()) || 'Unnamed';
+                        const slug = (await item.getSlug()) || '';
+                        const publishPath = await item.getPublishPath();
                         let collectionId = null;
                         let collectionName = null;
+                        let pageKind = null;
+                        let isDraftPage = false;
                         try {
-                            if (item.getCollectionId) {
-                                collectionId = await item.getCollectionId();
-                            }
-                            else if (item.getCollectionID) {
-                                collectionId = await item.getCollectionID();
-                            }
-                            else if (item.collectionId || item.collectionID) {
-                                collectionId = item.collectionId || item.collectionID;
-                            }
+                            collectionId = await item.getCollectionId();
                         }
                         catch {
                             collectionId = null;
                         }
                         try {
-                            if (item.getCollectionName) {
-                                collectionName = await item.getCollectionName();
-                            }
-                            else if (item.collectionName) {
-                                collectionName = item.collectionName;
-                            }
+                            collectionName = await item.getCollectionName();
                         }
                         catch {
                             collectionName = null;
                         }
+                        try {
+                            if (typeof item.getKind === 'function') {
+                                pageKind = await item.getKind();
+                            }
+                        }
+                        catch {
+                            pageKind = null;
+                        }
+                        try {
+                            if (typeof item.isDraft === 'function') {
+                                isDraftPage = await item.isDraft();
+                            }
+                        }
+                        catch {
+                            isDraftPage = false;
+                        }
                         const isCmsTemplate = Boolean(collectionId ||
                             collectionName ||
-                            isInternalCmsTemplateSlug(slug) ||
-                            (publishPath && isInternalCmsTemplateSlug(publishPath)));
+                            pageKind === 'cms' ||
+                            (pageKind === null && (isInternalCmsTemplateSlug(slug) ||
+                                (publishPath && isInternalCmsTemplateSlug(publishPath)))));
                         let isHomePage = false;
                         let hasValidNaming = false;
                         const lowerName = name.toLowerCase();
@@ -1724,19 +1823,29 @@ async function collectProjectData(webflow) {
                         if (lowerName.includes('license') || lowerSlug.includes('license') || slug === '/licenses') {
                             data.enhancedValidation.pageStructure.hasLicensePage = true;
                         }
-                        if (slug === '/' || lowerName === 'home' || lowerName === 'homepage' || lowerSlug === 'home') {
+                        try {
+                            if (typeof item.isHomepage === 'function') {
+                                isHomePage = await item.isHomepage();
+                            }
+                        }
+                        catch {
+                            isHomePage = false;
+                        }
+                        if (!isHomePage && (slug === '/' || lowerName === 'home' || lowerName === 'homepage' || lowerSlug === 'home')) {
                             isHomePage = true;
                         }
                         const isTitleCase = /^[A-Z][a-z]*(?:\s[A-Z][a-z]*)*$/.test(name) ||
                             name.split(' ').every((word) => word.charAt(0) === word.charAt(0).toUpperCase());
                         if (isTitleCase) {
                             hasValidNaming = true;
-                            data.enhancedValidation.pageStructure.hasTitleCaseNaming = true;
+                        }
+                        else {
+                            data.enhancedValidation.pageStructure.pagesNotTitleCase.push(name);
                         }
                         const expectedSlug = name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
                         const actualSlug = slug.replace(/^\//, '').toLowerCase();
-                        if (expectedSlug === actualSlug || (isHomePage && actualSlug === '')) {
-                            data.enhancedValidation.pageStructure.hasMatchingSlugs = true;
+                        if (!isCmsTemplate && expectedSlug !== actualSlug && !(isHomePage && actualSlug === '')) {
+                            data.enhancedValidation.pageStructure.pagesWithMismatchedSlugs.push(`${name} (/${actualSlug})`);
                         }
                         let seoData = null;
                         try {
@@ -1777,11 +1886,13 @@ async function collectProjectData(webflow) {
                             id: item.id,
                             name: name,
                             slug: slug,
-                            path: item.path || slug,
+                            path: slug,
                             publishPath: publishPath,
                             collectionId: collectionId,
                             collectionName: collectionName,
                             isCmsTemplate: isCmsTemplate,
+                            kind: pageKind,
+                            isDraft: isDraftPage,
                             type: item.type,
                             isHomePage: isHomePage,
                             hasValidNaming: hasValidNaming,
@@ -1793,21 +1904,13 @@ async function collectProjectData(webflow) {
                     console.warn('Error processing page:', pageError);
                 }
             }
+            data.enhancedValidation.pageStructure.hasTitleCaseNaming =
+                pageData.length > 0 && data.enhancedValidation.pageStructure.pagesNotTitleCase.length === 0;
+            data.enhancedValidation.pageStructure.hasMatchingSlugs =
+                pageData.length > 0 && data.enhancedValidation.pageStructure.pagesWithMismatchedSlugs.length === 0;
             data.pages = pageData;
             data.collectionMetadata.totalPages = pageData.length;
             console.log(`Pages collected: ${pageData.length}`);
-        }
-        else {
-            if (webflow.getAllPages) {
-                const pages = await webflow.getAllPages() || [];
-                data.pages = pages;
-                data.collectionMetadata.totalPages = pages.length;
-            }
-            else if (webflow.getPages) {
-                const pages = await webflow.getPages() || [];
-                data.pages = pages;
-                data.collectionMetadata.totalPages = pages.length;
-            }
         }
     }
     catch (error) {
@@ -2195,10 +2298,51 @@ function normalizeVariableModesCategory(results) {
         variableModesCategory.stats.modeDataAvailable = true;
     }
 }
+function addCanvasChecksCategory(results, projectData) {
+    const canvas = projectData.canvasChecks;
+    if (!canvas || !canvas.available)
+        return;
+    const issues = [];
+    for (const headingIssue of canvas.headingIssues) {
+        issues.push({
+            id: `canvas-heading-${headingIssue.position}`,
+            category: 'Canvas Checks (Current Page)',
+            severity: 'warning',
+            message: headingIssue.issue,
+            details: {
+                howToFix: 'Adjust the heading level in the element settings so levels increase one step at a time.',
+                location: `${canvas.pageName} — heading ${headingIssue.position} of ${canvas.headingsChecked}`
+            }
+        });
+    }
+    if (canvas.imagesMissingAlt > 0) {
+        issues.push({
+            id: 'canvas-images-missing-alt',
+            category: 'Canvas Checks (Current Page)',
+            severity: 'info',
+            message: `${canvas.imagesMissingAlt} of ${canvas.imagesChecked} image(s) on this page have no alt text in the Designer.`,
+            details: {
+                howToFix: 'Add descriptive alt text in each image\'s settings, or mark purely decorative images as decorative.'
+            }
+        });
+    }
+    results.categories.push({
+        category: 'Canvas Checks (Current Page)',
+        passed: issues.filter(issue => issue.severity === 'error' || issue.severity === 'warning').length === 0,
+        issues,
+        stats: {
+            page: canvas.pageName,
+            headingsChecked: canvas.headingsChecked,
+            imagesChecked: canvas.imagesChecked,
+            note: 'Reflects current Designer state, including unpublished changes'
+        }
+    });
+}
 function enhanceValidationResults(results, projectData) {
     console.log('Enhancing validation results with client-side analysis...');
     addStyleSystemValidation(results, projectData);
     normalizeVariableModesCategory(results);
+    addCanvasChecksCategory(results, projectData);
     const pageStructureCategory = results.categories.find(cat => cat.category === 'Page Structure');
     if (pageStructureCategory && projectData.pages && projectData.pages.length > 0) {
         console.log(`Found ${projectData.pages.length} pages, updating Page Structure validation...`);
@@ -2219,14 +2363,29 @@ function enhanceValidationResults(results, projectData) {
         const issues = [];
         if (projectData.enhancedValidation) {
             const pageStructure = projectData.enhancedValidation.pageStructure;
-            if (!pageStructure.hasTitleCaseNaming) {
+            const pagesNotTitleCase = pageStructure.pagesNotTitleCase || [];
+            if (pagesNotTitleCase.length > 0) {
                 issues.push({
                     id: 'page-naming',
                     category: 'Page Structure',
                     severity: 'warning',
-                    message: 'Some pages don\'t use Title Case naming convention.',
+                    message: `${pagesNotTitleCase.length} page(s) don't use Title Case naming convention.`,
                     details: {
-                        howToFix: 'Use Title Case for page names (e.g., "Style Guide", "Contact Us")'
+                        howToFix: 'Use Title Case for page names (e.g., "Style Guide", "Contact Us")',
+                        samples: pagesNotTitleCase.slice(0, 10)
+                    }
+                });
+            }
+            const pagesWithMismatchedSlugs = pageStructure.pagesWithMismatchedSlugs || [];
+            if (pagesWithMismatchedSlugs.length > 0) {
+                issues.push({
+                    id: 'page-slug-mismatch',
+                    category: 'Page Structure',
+                    severity: 'warning',
+                    message: `${pagesWithMismatchedSlugs.length} page(s) have slugs that don't match their names.`,
+                    details: {
+                        howToFix: 'Keep page slugs aligned with page names (e.g., "Style Guide" → /style-guide)',
+                        samples: pagesWithMismatchedSlugs.slice(0, 10)
                     }
                 });
             }
@@ -2281,10 +2440,10 @@ async function collectCurrentPageSEOData(webflow) {
             console.warn('getCurrentPage returned null');
             return null;
         }
-        const pageName = currentPage.getName ? await currentPage.getName() : 'Current Page';
-        const pageSlug = currentPage.getSlug ? await currentPage.getSlug() : '';
-        const pagePublishPath = currentPage.getPublishPath ? await currentPage.getPublishPath() : null;
-        const pageId = currentPage.getId ? await currentPage.getId() : currentPage.id;
+        const pageName = (await currentPage.getName()) || 'Current Page';
+        const pageSlug = (await currentPage.getSlug()) || '';
+        const pagePublishPath = await currentPage.getPublishPath();
+        const pageId = currentPage.id;
         console.log(`Analyzing SEO for current page: ${pageName}`);
         const seoData = {
             title: null,
@@ -2484,11 +2643,25 @@ function updateMetaDisplay(projectLabel, projectData) {
     if (!metaDisplay || !projectData)
         return;
     const stats = projectData.collectionMetadata || {};
+    const scope = projectData.validationScope;
+    const lastPublished = scope?.domainLastPublished;
+    const publishNote = lastPublished
+        ? `<div class="meta-stat">
+        <span class="meta-label">Validating publish from:</span>
+        <span class="meta-value">${formatDateTime(lastPublished)} — republish to validate newer changes</span>
+      </div>`
+        : scope?.siteUrl
+            ? `<div class="meta-stat">
+          <span class="meta-label">Published checks:</span>
+          <span class="meta-value">Run against the last published site — republish to validate newer changes</span>
+        </div>`
+            : '';
     const metaHTML = `
     <div class="meta-header">
       <h3 class="meta-title">Project: ${projectLabel}</h3>
     </div>
     <div class="meta-stats">
+      ${publishNote}
       <div class="meta-stat">
         <span class="meta-label">Variables:</span>
         <span class="meta-value">${stats.totalVariables || 0} (${stats.variableCollections || 0} collections)</span>

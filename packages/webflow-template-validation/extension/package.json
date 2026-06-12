@@ -12,8 +12,9 @@
     "serve": "webflow extension serve"
   },
   "devDependencies": {
-    "@webflow/webflow-cli": "^1.8.38",
     "@types/node": "^25.3.3",
+    "@webflow/designer-extension-typings": "2.1.1",
+    "@webflow/webflow-cli": "^1.8.38",
     "typescript": "^5.0.0"
   },
   "keywords": [
