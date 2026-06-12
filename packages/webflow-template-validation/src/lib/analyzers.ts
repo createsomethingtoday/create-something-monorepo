@@ -244,8 +244,19 @@ export function analyzeAccessibility(html: string): AccessibilityAnalysisResult 
   const h1Count = h1Elements.length
   const hasMultipleH1s = h1Count > 1
 
-  // Heading hierarchy validation
-  const headings = $('h1, h2, h3, h4, h5, h6').toArray()
+  // Heading hierarchy validation.
+  // Webflow Ecommerce components render headings with fixed tags the creator
+  // cannot change (e.g. <h4 class="w-commerce-commercecartheading"> inside the
+  // display:none cart dialog on every page). Webflow's Audit Panel excludes
+  // them, so they must not participate in hierarchy analysis.
+  const headings = $('h1, h2, h3, h4, h5, h6')
+    .toArray()
+    .filter((heading) => {
+      const $heading = $(heading)
+      const className = $heading.attr('class') || ''
+      if (/(?:^|\s)w-commerce-/.test(className)) return false
+      return $heading.closest('[data-node-type="commerce-cart-container-wrapper"]').length === 0
+    })
   const headingHierarchyIssues: AccessibilityAnalysisResult['headingHierarchyIssues'] = []
   let hasSkippedHeadings = false
 

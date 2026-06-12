@@ -1022,6 +1022,27 @@ describe('Accessibility Validator', () => {
 		expect(result.stats.missingAltText).toBe(0);
 		expect(result.issues.some((issue) => issue.id === 'missing-alt-text-critical')).toBe(false);
 	});
+
+	it('excludes Webflow Ecommerce fixed-tag headings from heading hierarchy analysis', async () => {
+		const cartHeading = {
+			tagName: 'H4',
+			textContent: 'Your Cart',
+			getAttribute: (name: string) => name === 'class' ? 'w-commerce-commercecartheading cart_title' : null,
+			hasAttribute: (name: string) => name === 'class'
+		};
+		vi.mocked(parseHTML).mockReturnValue(createParsedHTML({
+			headings: [
+				{ tagName: 'H1', textContent: 'Hero Title' },
+				cartHeading,
+				{ tagName: 'H2', textContent: 'Section Title' }
+			]
+		}));
+
+		const result = await validateAccessibility('https://example.com');
+
+		expect(result.audit.headingStructure.errors.some((error: any) => error.type === 'skipped_level')).toBe(false);
+		expect(result.issues.some((issue) => issue.id === 'heading-structure-errors')).toBe(false);
+	});
 });
 
 describe('Asset Validator', () => {
