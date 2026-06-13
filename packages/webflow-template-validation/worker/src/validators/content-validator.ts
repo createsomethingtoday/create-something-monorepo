@@ -20,6 +20,7 @@ import {
 	ValidationOptions
 } from '../types';
 import { fetchHTML, isPlatformManagedHeading, parseHTML } from '../utils/fetch-utils';
+import { analyzeHeadingSequence, extractDocumentOutline, visibleOutlineHeadings } from '../utils/document-outline';
 
 const LOREM_IPSUM_PATTERNS = [
 	/lorem\s+ipsum/i,
@@ -327,10 +328,24 @@ async function analyzePage(url: string, parsedHTML: ParsedHTML): Promise<Analyze
 	// Utility pages often include sample labels/copy by design; keep other audits active.
 	const hasLoremIpsum = allowsUtilityPlaceholderText ? false : checkForLoremIpsum(parsedHTML);
 
-	// Analyze heading hierarchy (excluding fixed-tag Webflow Ecommerce headings)
-	const headingHierarchy = analyzeHeadingHierarchy(
-		parsedHTML.headings.filter(h => !isPlatformManagedHeading(h))
-	);
+	// Analyze heading hierarchy against the visible outline. HTMLRewriter
+	// tracks hidden ancestors (display:none modals, w-condition-invisible);
+	// fall back to the flat regex-extracted list when it is unavailable.
+	const outline = await extractDocumentOutline(parsedHTML.rawHtml);
+	const headingStructure = outline && outline.length > 0
+		? visibleOutlineHeadings(outline).map((heading, index) => ({
+			level: heading.level,
+			text: heading.text,
+			position: index + 1
+		}))
+		: parsedHTML.headings
+			.filter(h => !isPlatformManagedHeading(h))
+			.map((heading, index) => ({
+				level: parseInt(heading.tagName.substring(1), 10),
+				text: heading.textContent?.trim() || '',
+				position: index + 1
+			}));
+	const headingHierarchy = analyzeHeadingHierarchy(headingStructure);
 
 	// Count images and alt text coverage
 	const imageAltAudit = analyzeContentImages(parsedHTML);
@@ -606,44 +621,16 @@ function extractSEOData(parsedHTML: ParsedHTML): PageSEOData {
 	};
 }
 
-function analyzeHeadingHierarchy(headings: HTMLHeadingElement[]): HeadingHierarchy {
-	// Count H1 elements
-	const h1Count = headings.filter(h => h.tagName.toLowerCase() === 'h1').length;
-
-	// Build heading structure
-	const structure = headings.map((heading, index) => ({
-		level: parseInt(heading.tagName.substring(1)),
-		text: heading.textContent?.trim() || '',
-		position: index + 1
-	}));
-
-	// Check for skipped levels
-	const skippedLevelTransitions: HeadingSkipTransition[] = [];
-	for (let i = 1; i < structure.length; i++) {
-		const current = structure[i];
-		const previous = structure[i - 1];
-		const currentLevel = current.level;
-		const previousLevel = previous.level;
-
-		// If we jump more than one level (e.g., H2 to H4), that's a skip
-		if (currentLevel > previousLevel + 1) {
-			skippedLevelTransitions.push({
-				fromLevel: previousLevel,
-				toLevel: currentLevel,
-				fromPosition: previous.position,
-				toPosition: current.position,
-				fromText: previous.text,
-				toText: current.text,
-				missingLevel: previousLevel + 1
-			});
-		}
-	}
+function analyzeHeadingHierarchy(structure: HeadingHierarchy['structure']): HeadingHierarchy {
+	// The sequence rules live in the shared walker (document-outline.ts) so
+	// every validator reports the same skips.
+	const sequence = analyzeHeadingSequence(structure);
 
 	return {
-		h1Count,
-		hasSkippedLevels: skippedLevelTransitions.length > 0,
+		h1Count: sequence.h1Count,
+		hasSkippedLevels: sequence.hasSkippedLevels,
 		structure,
-		skippedLevelTransitions
+		skippedLevelTransitions: sequence.skips
 	};
 }
 
@@ -725,17 +712,37 @@ async function discoverAdditionalPages(
 			.filter(url => !discoveredUrls.has(url));
 	}
 
-	for (const pageUrl of urlsToAnalyze) {
-		try {
-			discoveredUrls.add(pageUrl);
-			const htmlResult = await fetchHTML(pageUrl);
-			const parsedPageHTML = parseHTML(htmlResult.html);
-			const pageAnalysis = await analyzePage(pageUrl, parsedPageHTML);
-			additionalPages.push(pageAnalysis);
-		} catch (error) {
-			console.warn(`Failed to analyze page ${pageUrl}:`, error);
+	// Analyze pages concurrently (capped) — sequential fetches made 30-page
+	// template runs take most of the validation wall-clock.
+	const CONCURRENCY = 5;
+	const queue = urlsToAnalyze.filter(pageUrl => {
+		if (discoveredUrls.has(pageUrl)) return false;
+		discoveredUrls.add(pageUrl);
+		return true;
+	});
+	const results: Array<AnalyzedPage | null> = new Array(queue.length).fill(null);
+	let nextIndex = 0;
+
+	async function analyzeNext(): Promise<void> {
+		while (nextIndex < queue.length) {
+			const index = nextIndex++;
+			const pageUrl = queue[index];
+			try {
+				const htmlResult = await fetchHTML(pageUrl);
+				const parsedPageHTML = parseHTML(htmlResult.html);
+				results[index] = await analyzePage(pageUrl, parsedPageHTML);
+			} catch (error) {
+				console.warn(`Failed to analyze page ${pageUrl}:`, error);
+			}
 		}
 	}
+
+	await Promise.all(
+		Array.from({ length: Math.min(CONCURRENCY, queue.length) }, () => analyzeNext())
+	);
+
+	// Preserve the original page order regardless of completion order
+	additionalPages.push(...results.filter((page): page is AnalyzedPage => page !== null));
 
 	return additionalPages;
 }

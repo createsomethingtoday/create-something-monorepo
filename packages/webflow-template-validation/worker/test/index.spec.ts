@@ -2297,3 +2297,87 @@ describe('Validation Submission Endpoint', () => {
 		expect(payload.limit.remaining).toBe(0);
 	});
 });
+
+describe('Document Outline', () => {
+	it('excludes headings inside display:none containers from the visible outline', async () => {
+		const { extractDocumentOutline, visibleOutlineHeadings } = await vi.importActual<typeof import('../src/utils/document-outline')>('../src/utils/document-outline');
+
+		const html = `<!doctype html><html><body>
+			<h1 class="heading-h1">Hero Title</h1>
+			<div style="display:none" class="w-commerce-commercecartcontainerwrapper">
+				<h4 class="w-commerce-commercecartheading">Your Cart</h4>
+			</div>
+			<h2>Section Title</h2>
+		</body></html>`;
+
+		const outline = await extractDocumentOutline(html);
+		expect(outline).not.toBeNull();
+		const visible = visibleOutlineHeadings(outline!);
+
+		expect(visible.map(h => h.level)).toEqual([1, 2]);
+		expect(outline!.find(h => h.text === 'Your Cart')).toMatchObject({ hidden: true, platformManaged: true });
+	});
+
+	it('excludes w-condition-invisible conditional-visibility headings', async () => {
+		const { extractDocumentOutline, visibleOutlineHeadings } = await vi.importActual<typeof import('../src/utils/document-outline')>('../src/utils/document-outline');
+
+		const html = `<!doctype html><html><body>
+			<h1>Hero</h1>
+			<div class="card w-condition-invisible"><h4>Hidden CMS card</h4></div>
+			<h2>Visible Section</h2>
+			<h3 class="w-condition-invisible">Hidden heading itself</h3>
+		</body></html>`;
+
+		const visible = visibleOutlineHeadings((await extractDocumentOutline(html))!);
+		expect(visible.map(h => [h.level, h.text])).toEqual([[1, 'Hero'], [2, 'Visible Section']]);
+	});
+
+	it('still reports genuine skips through the shared sequence walker', async () => {
+		const { extractDocumentOutline, visibleOutlineHeadings, analyzeHeadingSequence } = await vi.importActual<typeof import('../src/utils/document-outline')>('../src/utils/document-outline');
+
+		const html = '<body><h1>Title</h1><h4 class="card_title">Jumped</h4></body>';
+		const visible = visibleOutlineHeadings((await extractDocumentOutline(html))!);
+		const sequence = analyzeHeadingSequence(visible);
+
+		expect(sequence.hasSkippedLevels).toBe(true);
+		expect(sequence.skips[0]).toMatchObject({ fromLevel: 1, toLevel: 4, missingLevel: 2 });
+	});
+});
+
+describe('Issue Feedback Endpoint', () => {
+	it('accepts a false-positive report', async () => {
+		const response = await worker.fetch(
+			new Request('https://validation-worker.createsomething.workers.dev/app-validator/feedback', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					issueId: 'heading-hierarchy-errors',
+					category: 'Content & Accessibility',
+					pageUrl: 'https://example.webflow.io/',
+					note: 'Cart modal heading flagged again'
+				})
+			}),
+			{} as any,
+			createExecutionContext()
+		);
+
+		expect(response.status).toBe(200);
+		const payload = await response.json() as any;
+		expect(payload.received).toBe(true);
+		expect(payload.correlationId).toBeTruthy();
+	});
+
+	it('rejects feedback without an issueId', async () => {
+		const response = await worker.fetch(
+			new Request('https://validation-worker.createsomething.workers.dev/app-validator/feedback', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ note: 'no id' })
+			}),
+			{} as any,
+			createExecutionContext()
+		);
+
+		expect(response.status).toBe(400);
+	});
+});

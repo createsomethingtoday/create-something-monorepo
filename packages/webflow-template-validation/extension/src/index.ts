@@ -1,6 +1,21 @@
 // Webflow Way Validator Extension - TypeScript Implementation
 // Enhanced validation with detailed, collapsible reporting
 
+import {
+  EXTENSION_VERSION,
+  escapeHtml,
+  decodeCommonHtmlEntities,
+  ensureHttps,
+  getSlugPathname,
+  isInternalCmsTemplateSlug,
+  isHtmlTagStyleName,
+  normalizeSiteInfo,
+  selectValidationDomain,
+  type SiteDomainInfo,
+  type NormalizedSiteInfo,
+} from './utils';
+import { buildReportMarkdown as buildReportMarkdownPure, type ReportInput } from './report';
+
 // API Configuration
 const API_BASE = 'https://webflow-way-validator.vercel.app';
 const WORKER_API_BASE = 'https://validation-worker.createsomething.workers.dev';
@@ -208,16 +223,7 @@ interface ProjectData {
     };
   };
   canvasChecks?: CanvasAccessibilityResult;
-  siteInfo?: {
-    name?: string;
-    id?: string;
-    shortName?: string;
-    isPasswordProtected?: boolean;
-    isPrivateStaging?: boolean;
-    workspaceId?: string;
-    workspaceSlug?: string;
-    domains?: SiteDomainInfo[];
-  };
+  siteInfo?: NormalizedSiteInfo;
   designerContext?: DesignerContext;
   validationScope?: ValidationScope;
   collectionMetadata?: Record<string, any>;
@@ -262,13 +268,6 @@ interface ProjectData {
     message: string;
     error: string;
   }>;
-}
-
-interface SiteDomainInfo {
-  url: string;
-  lastPublished?: string | null;
-  default?: boolean;
-  stage?: 'staging' | 'production' | string;
 }
 
 interface DesignerContext {
@@ -333,6 +332,7 @@ function initializeExtension(): void {
   copyBtn?.addEventListener('click', () => void copyBridgeSnippetFromCurrentStatus());
 
   void bootstrapBridgePanel();
+  void fetchWorkerVersion();
   restoreLastValidationReport();
 }
 
@@ -733,37 +733,10 @@ function isCollectionTemplatePage(page: {
   );
 }
 
-const WEBFLOW_ECOMMERCE_TEMPLATE_ROOTS = new Set(['/product', '/sku', '/category']);
 
-function isInternalCmsTemplateSlug(value: string): boolean {
-  const pathname = getSlugPathname(value);
-  const normalizedPathname = pathname.length > 1 ? pathname.replace(/\/+$/, '') : pathname;
-  return /^\/detail_[^/]+\/?$/i.test(pathname) || WEBFLOW_ECOMMERCE_TEMPLATE_ROOTS.has(normalizedPathname.toLowerCase());
-}
 
-function getSlugPathname(value: string): string {
-  const trimmed = value.trim();
-  if (trimmed === '') return '';
-
-  try {
-    const path = trimmed.startsWith('/') || /^[a-z][a-z0-9+.-]*:/i.test(trimmed) ? trimmed : `/${trimmed}`;
-    return new URL(path, 'https://example.com').pathname;
-  } catch {
-    const withoutQuery = trimmed.split(/[?#]/, 1)[0] || '';
-    return withoutQuery.startsWith('/') ? withoutQuery : `/${withoutQuery}`;
-  }
-}
 
 // Ensure URL has HTTPS protocol
-function ensureHttps(url: string): string {
-  if (url.startsWith('http://')) {
-    return url.replace('http://', 'https://');
-  }
-  if (!url.startsWith('https://') && !url.startsWith('http://')) {
-    return `https://${url}`;
-  }
-  return url;
-}
 
 // Get site URL for Worker validation
 async function getSiteUrl(webflow: WebflowApi): Promise<string | null> {
@@ -795,71 +768,7 @@ async function getSiteUrl(webflow: WebflowApi): Promise<string | null> {
   }
 }
 
-function normalizeSiteInfo(site: any): ProjectData['siteInfo'] {
-  return {
-    name: site?.siteName || site?.name || null,
-    id: site?.siteId || site?.id || null,
-    shortName: site?.shortName || undefined,
-    isPasswordProtected: site?.isPasswordProtected,
-    isPrivateStaging: site?.isPrivateStaging,
-    workspaceId: site?.workspaceId,
-    workspaceSlug: site?.workspaceSlug,
-    domains: Array.isArray(site?.domains)
-      ? site.domains.map((domain: any) => ({
-          url: domain.url,
-          lastPublished: domain.lastPublished ?? null,
-          default: domain.default,
-          stage: domain.stage,
-        }))
-      : [],
-  };
-}
 
-function selectValidationDomain(siteInfo?: ProjectData['siteInfo']): {
-  url: string | null;
-  source: string;
-  domain?: SiteDomainInfo;
-} {
-  const domains = Array.isArray(siteInfo?.domains) ? siteInfo.domains.filter(domain => domain.url) : [];
-  const productionPublished = domains.find(domain => domain.stage === 'production' && domain.lastPublished);
-  if (productionPublished) {
-    return { url: productionPublished.url, source: 'published production domain', domain: productionPublished };
-  }
-
-  const defaultProduction = domains.find(domain => domain.stage === 'production' && domain.default);
-  if (defaultProduction) {
-    return { url: defaultProduction.url, source: 'default production domain', domain: defaultProduction };
-  }
-
-  const anyProduction = domains.find(domain => domain.stage === 'production');
-  if (anyProduction) {
-    return { url: anyProduction.url, source: 'production domain', domain: anyProduction };
-  }
-
-  const publishedStaging = domains.find(domain => domain.stage === 'staging' && domain.lastPublished);
-  if (publishedStaging) {
-    return { url: publishedStaging.url, source: 'published staging domain', domain: publishedStaging };
-  }
-
-  const anyStaging = domains.find(domain => domain.stage === 'staging');
-  if (anyStaging) {
-    return { url: anyStaging.url, source: 'staging domain', domain: anyStaging };
-  }
-
-  const firstDomain = domains[0];
-  if (firstDomain) {
-    return { url: firstDomain.url, source: 'available domain', domain: firstDomain };
-  }
-
-  if (siteInfo?.shortName) {
-    return {
-      url: `https://${siteInfo.shortName}.webflow.io`,
-      source: 'Webflow staging short name',
-    };
-  }
-
-  return { url: null, source: 'no published domain found' };
-}
 
 function createCorrelationId(): string {
   return `wfv_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
@@ -2048,19 +1957,10 @@ async function collectCanvasAccessibility(
   }
 }
 
-const HTML_TAG_STYLE_NAMES = new Set([
-  'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'a', 'ul', 'ol', 'li',
-  'blockquote', 'figure', 'figcaption', 'body', 'html'
-]);
 
 // Webflow displays tag selectors as e.g. "All H1 Headings", "All Paragraphs",
 // "All Links", "Body (All Pages)"
-const HTML_TAG_STYLE_DISPLAY_PATTERN = /^(all\s+(h[1-6]\s+headings?|paragraphs?|links?|lists?|list items?|images?|buttons?)|body\s*\(all pages\))$/i;
 
-function isHtmlTagStyleName(name: string): boolean {
-  const normalized = name.trim().toLowerCase();
-  return HTML_TAG_STYLE_NAMES.has(normalized) || HTML_TAG_STYLE_DISPLAY_PATTERN.test(normalized);
-}
 
 // Breadth-first walk of a component's element tree looking for a nested
 // component instance. Depth-capped: nesting evidence is always near the root,
@@ -3556,7 +3456,8 @@ function updateMetaDisplay(projectLabel: string, projectData: ProjectData): void
 
   const metaHTML = `
     <div class="meta-header">
-      <h3 class="meta-title">Project: ${projectLabel}</h3>
+      <h3 class="meta-title">Project: ${escapeHtml(projectLabel)}</h3>
+      <span class="meta-version">Validator v${EXTENSION_VERSION}${knownWorkerVersion ? ` · Worker v${knownWorkerVersion}` : ''}</span>
     </div>
     <div class="meta-stats">
       ${publishNote}
@@ -3645,32 +3546,60 @@ function buildReportMarkdown(): string {
   const scope = projectData?.validationScope;
   const outcome = getMarketplaceOutcome(data);
 
-  const lines: string[] = [
-    '# Webflow Way Validator Report',
-    '',
-    `- Site: ${data.url || scope?.siteUrl || 'Unknown'}`,
-    `- Generated: ${report.generatedAt}`,
-    scope?.domainLastPublished ? `- Validated publish from: ${scope.domainLastPublished}` : null,
-    report.correlationId ? `- Correlation ID: ${report.correlationId}` : null,
-    `- Outcome: ${outcome.badge} — ${outcome.title}`,
-    `- Errors: ${data.summary.totalErrors || data.summary.errors || 0} · Warnings: ${data.summary.totalWarnings || data.summary.warnings || 0} · Info: ${data.summary.totalInfo || data.summary.infos || 0}`,
-    '',
-  ].filter((line): line is string => line !== null);
+  const input: ReportInput = {
+    url: data.url || scope?.siteUrl || null,
+    generatedAt: report.generatedAt,
+    correlationId: report.correlationId,
+    outcomeBadge: outcome.badge,
+    outcomeTitle: outcome.title,
+    errors: data.summary.totalErrors || data.summary.errors || 0,
+    warnings: data.summary.totalWarnings || data.summary.warnings || 0,
+    infos: data.summary.totalInfo || data.summary.infos || 0,
+    categories: data.categories,
+    domainLastPublished: scope?.domainLastPublished || null,
+    extensionVersion: EXTENSION_VERSION,
+    workerVersion: knownWorkerVersion,
+  };
 
-  for (const category of data.categories) {
-    const issues = category.issues || [];
-    lines.push(`## ${category.category} — ${issues.length === 0 ? 'passed' : `${issues.length} issue(s)`}`);
-    for (const issue of issues) {
-      lines.push(`- [${issue.severity.toUpperCase()}] ${issue.message}`);
-      const location = getIssueLocation(issue);
-      if (location) lines.push(`  - Location: ${location}`);
-      const howToFix = getIssueHowToFix(issue);
-      if (howToFix) lines.push(`  - Fix: ${howToFix}`);
-    }
-    lines.push('');
+  return buildReportMarkdownPure(input);
+}
+
+// Reported by the worker's /health endpoint during bootstrap, used to
+// diagnose extension/worker version skew from a copied report.
+let knownWorkerVersion: string | null = null;
+
+async function fetchWorkerVersion(): Promise<void> {
+  try {
+    const response = await fetch(`${WORKER_API_BASE}/health`);
+    if (!response.ok) return;
+    const payload = (await response.json()) as { version?: string };
+    if (payload?.version) knownWorkerVersion = payload.version;
+  } catch {
+    // Version display is best-effort
   }
+}
 
-  return lines.join('\n');
+async function submitIssueFeedback(issueId: string, category: string): Promise<void> {
+  const webflow = (window as unknown as { webflow?: WebflowApi }).webflow;
+  try {
+    const response = await fetch(`${APP_VALIDATOR_BASE}/app-validator/feedback`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        issueId,
+        category,
+        siteId: bridgeContext?.siteId,
+        siteUrl: bridgeContext?.siteUrl || lastValidationReport?.data?.url,
+        runCorrelationId: lastValidationReport?.correlationId,
+        note: `extension v${EXTENSION_VERSION}${knownWorkerVersion ? ` / worker v${knownWorkerVersion}` : ''}`
+      })
+    });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    void notifyDesigner(webflow, 'Success', 'Thanks — this issue was flagged for review by the validator team.');
+  } catch (error) {
+    console.warn('Issue feedback failed:', error);
+    void notifyDesigner(webflow, 'Error', 'Could not send feedback. Please try again later.');
+  }
 }
 
 async function copyValidationReport(): Promise<void> {
@@ -3811,6 +3740,19 @@ function showResults(data: ValidationResponse): void {
     });
   });
 
+  // "Flag as incorrect" false-positive reports
+  resultsDisplay.querySelectorAll<HTMLButtonElement>('[data-flag-issue]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const issueId = button.getAttribute('data-flag-issue');
+      const category = button.getAttribute('data-flag-category') || '';
+      if (issueId) {
+        button.disabled = true;
+        button.textContent = 'Flagged';
+        void submitIssueFeedback(issueId, category);
+      }
+    });
+  });
+
   document.getElementById('copy-report-btn')?.addEventListener('click', () => void copyValidationReport());
 
   // A blocked run lands the creator on the work list, not the summary
@@ -3913,6 +3855,9 @@ function createIssueHTML(issue: ValidationIssue): string {
             </div>
           ` : ''}
           ${createDetailsHTML(issue.details)}
+          <button type="button" class="issue-flag-btn" data-flag-issue="${escapeHtml(issue.id)}" data-flag-category="${escapeHtml(issue.category)}" title="Report this as a validator false positive">
+            Flag as incorrect
+          </button>
         </div>
       </div>
     </div>
@@ -4336,16 +4281,6 @@ function formatHeadingReference(level: number, text: unknown): string {
   return `H${level} "${preview}"`;
 }
 
-function decodeCommonHtmlEntities(value: string): string {
-  return value
-    .replace(/&nbsp;/gi, ' ')
-    .replace(/&amp;/gi, '&')
-    .replace(/&quot;/gi, '"')
-    .replace(/&#39;/gi, "'")
-    .replace(/&#x27;/gi, "'")
-    .replace(/&lt;/gi, '<')
-    .replace(/&gt;/gi, '>');
-}
 
 function formatBrokenLinkItem(item: any): string {
   if (!item || typeof item !== 'object') return String(item);
@@ -5182,21 +5117,3 @@ function cmsTemplateCoverageTone(value: unknown): MetadataTone | undefined {
   return 'warning';
 }
 
-function escapeHtml(value: string): string {
-  return value.replace(/[&<>"']/g, (char) => {
-    switch (char) {
-      case '&':
-        return '&amp;';
-      case '<':
-        return '&lt;';
-      case '>':
-        return '&gt;';
-      case '"':
-        return '&quot;';
-      case "'":
-        return '&#39;';
-      default:
-        return char;
-    }
-  });
-}
