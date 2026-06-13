@@ -264,7 +264,6 @@ const S: Record<string, CSSProperties> = {
     color: 'rgb(0, 0, 0)',
     fontSize: '14px',
     fontWeight: 600,
-    boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
     transform: 'scale(0.96)',
     transition: 'transform 220ms cubic-bezier(0.25, 0.46, 0.45, 0.94)',
   },
@@ -541,7 +540,7 @@ export const TEMPLATE_CARD_STYLES = `
 }
 .tmcard-wrapper {
   animation: tmcard-enter 500ms ease-out var(--tmcard-stagger, 0ms) both;
-  transition: transform 200ms ease, box-shadow 220ms ease, outline-color 150ms ease;
+  transition: outline-color 150ms ease;
 }
 @media (prefers-reduced-motion: reduce) {
   .tmcard-wrapper {
@@ -550,11 +549,6 @@ export const TEMPLATE_CARD_STYLES = `
   }
 }
 
-/* Card hover: lift + shadow */
-.tmcard-wrapper:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.10);
-}
 .tmcard-wrapper:focus-within {
   outline: 2px solid rgba(59,130,246,0.8);
   outline-offset: 3px;
