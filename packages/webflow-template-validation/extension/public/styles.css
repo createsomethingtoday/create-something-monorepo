@@ -2081,3 +2081,110 @@ body {
 }
 
 /* Category shown in group header - no per-issue label (Tufte: eliminate redundancy) */
+
+/* ===== UI/UX improvements: canvas select, copy report, restored banner,
+   submission state, collapsed categories, republish hints ===== */
+
+.canvas-select-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.canvas-select-btn {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-2xs);
+  padding: 3px 8px;
+  cursor: pointer;
+}
+
+.canvas-select-btn:hover {
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.copy-report-btn {
+  margin-left: auto;
+  font-size: var(--text-2xs);
+  padding: 3px 8px;
+}
+
+.restored-banner {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--info);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  padding: 8px 10px;
+  margin-bottom: 10px;
+}
+
+.issue-republish-hint {
+  border-left: 3px solid var(--success);
+  background: color-mix(in srgb, var(--success-bg) 18%, transparent);
+  color: var(--text-primary);
+  font-size: var(--text-xs);
+  padding: 6px 8px;
+  margin: 6px 0;
+  border-radius: var(--radius-xs);
+}
+
+.submission-state {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  margin: 12px 0;
+  text-align: center;
+}
+
+.submission-state.is-ready {
+  border-color: color-mix(in srgb, var(--success) 45%, transparent);
+}
+
+.submission-state.is-blocked {
+  border-color: color-mix(in srgb, var(--error) 45%, transparent);
+}
+
+.submission-state-headline {
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.submission-state.is-ready .submission-state-headline {
+  color: var(--success);
+}
+
+.submission-state.is-blocked .submission-state-headline {
+  color: var(--error);
+}
+
+.submission-state-sub {
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  margin-top: 4px;
+}
+
+details.category-collapsed > summary.category-summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+details.category-collapsed > summary.category-summary::-webkit-details-marker {
+  display: none;
+}
+
+details.category-collapsed > summary.category-summary::after {
+  content: '▸';
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  margin-left: auto;
+}
+
+details.category-collapsed[open] > summary.category-summary::after {
+  content: '▾';
+}

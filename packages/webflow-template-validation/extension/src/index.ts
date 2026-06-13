@@ -18,6 +18,20 @@ let extensionInitialized = false;
 let bridgeContext: { siteId: string; siteName?: string; siteUrl?: string } | null = null;
 let bridgeStatus: SnippetStatusResponse | null = null;
 
+// Last completed run, kept for the copy-report action and restored-run display
+let lastValidationReport: {
+  data: ValidationResponse;
+  correlationId: string | null;
+  generatedAt: string;
+  restored: boolean;
+} | null = null;
+
+// Canvas elements referenced by rendered issues, so "Select on canvas"
+// buttons can call webflow.setSelectedElement with the original object
+const canvasElementRegistry = new Map<string, AnyElement>();
+
+const LAST_RUN_STORAGE_KEY = 'webflow_validator_last_run';
+
 // Types for validation data
 interface ValidationIssue {
   id: string;
@@ -319,6 +333,7 @@ function initializeExtension(): void {
   copyBtn?.addEventListener('click', () => void copyBridgeSnippetFromCurrentStatus());
 
   void bootstrapBridgePanel();
+  restoreLastValidationReport();
 }
 
 if (document.readyState === 'loading') {
@@ -462,6 +477,7 @@ async function validateProject(): Promise<void> {
         progress: 100,
         message: 'Designer validation complete. Add and publish the Validator script for full coverage.',
       });
+      registerValidationReport(designerResults, correlationId);
       showResults(designerResults);
       void notifyDesigner(webflow, 'Info', 'Designer checks complete. Add and publish the Validator script for full submission validation.');
       void submitValidationResults({
@@ -490,6 +506,7 @@ async function validateProject(): Promise<void> {
     // Enhance results with client-side validation
     enhanceValidationResults(validationResults, projectData);
 
+    registerValidationReport(validationResults, correlationId);
     showResults(validationResults);
     void notifyValidationOutcome(webflow, validationResults);
     void submitValidationResults({
@@ -1914,9 +1931,10 @@ interface CanvasAccessibilityResult {
   reason?: string;
   pageName?: string;
   headingsChecked: number;
-  headingIssues: Array<{ issue: string; position: number; level: number }>;
+  headingIssues: Array<{ issue: string; position: number; level: number; elementKey?: string }>;
   imagesChecked: number;
   imagesMissingAlt: number;
+  missingAltElementKeys: string[];
 }
 
 // Canvas-accurate checks for the current page via the Designer element API.
@@ -1933,7 +1951,10 @@ async function collectCanvasAccessibility(
     headingIssues: [],
     imagesChecked: 0,
     imagesMissingAlt: 0,
+    missingAltElementKeys: [],
   });
+
+  canvasElementRegistry.clear();
 
   if (canAccessCanvas === false) {
     return unavailable('Canvas access is unavailable in the current Designer mode');
@@ -1969,16 +1990,22 @@ async function collectCanvasAccessibility(
 
       headingsChecked++;
       if (headingsChecked === 1 && level !== 1) {
+        const elementKey = `canvas-heading-${headingsChecked}`;
+        canvasElementRegistry.set(elementKey, element);
         headingIssues.push({
           issue: `First heading on the canvas is H${level} — it should be H1`,
           position: headingsChecked,
           level,
+          elementKey,
         });
       } else if (headingsChecked > 1 && level > lastLevel + 1) {
+        const elementKey = `canvas-heading-${headingsChecked}`;
+        canvasElementRegistry.set(elementKey, element);
         headingIssues.push({
           issue: `H${level} follows H${lastLevel}, skipping H${lastLevel + 1}`,
           position: headingsChecked,
           level,
+          elementKey,
         });
       }
       lastLevel = level;
@@ -1986,12 +2013,20 @@ async function collectCanvasAccessibility(
 
     let imagesChecked = 0;
     let imagesMissingAlt = 0;
+    const missingAltElementKeys: string[] = [];
     for (const element of elements) {
       if (element.type !== 'Image') continue;
       imagesChecked++;
       try {
         const altText = await element.getAltText();
-        if (!altText || !altText.trim()) imagesMissingAlt++;
+        if (!altText || !altText.trim()) {
+          imagesMissingAlt++;
+          if (missingAltElementKeys.length < 10) {
+            const elementKey = `canvas-image-${imagesMissingAlt}`;
+            canvasElementRegistry.set(elementKey, element);
+            missingAltElementKeys.push(elementKey);
+          }
+        }
       } catch {
         // Ignore unreadable images rather than miscounting them
         imagesChecked--;
@@ -2005,6 +2040,7 @@ async function collectCanvasAccessibility(
       headingIssues,
       imagesChecked,
       imagesMissingAlt,
+      missingAltElementKeys,
     };
   } catch (error) {
     console.warn('Canvas accessibility collection failed:', error);
@@ -3047,7 +3083,8 @@ function addCanvasChecksCategory(results: ValidationResponse, projectData: Proje
       message: headingIssue.issue,
       details: {
         howToFix: 'Adjust the heading level in the element settings so levels increase one step at a time.',
-        location: `${canvas.pageName} — heading ${headingIssue.position} of ${canvas.headingsChecked}`
+        location: `${canvas.pageName} — heading ${headingIssue.position} of ${canvas.headingsChecked}`,
+        canvasElementKeys: headingIssue.elementKey ? [headingIssue.elementKey] : undefined
       }
     });
   }
@@ -3059,7 +3096,8 @@ function addCanvasChecksCategory(results: ValidationResponse, projectData: Proje
       severity: 'info',
       message: `${canvas.imagesMissingAlt} of ${canvas.imagesChecked} image(s) on this page have no alt text in the Designer.`,
       details: {
-        howToFix: 'Add descriptive alt text in each image\'s settings, or mark purely decorative images as decorative.'
+        howToFix: 'Add descriptive alt text in each image\'s settings, or mark purely decorative images as decorative.',
+        canvasElementKeys: canvas.missingAltElementKeys.length > 0 ? canvas.missingAltElementKeys : undefined
       }
     });
   }
@@ -3077,6 +3115,33 @@ function addCanvasChecksCategory(results: ValidationResponse, projectData: Proje
   });
 }
 
+// Published-site checks lag behind Designer edits. When the canvas passes a
+// dimension the published site fails, the creator has almost certainly fixed
+// it without republishing — say so on the published issue instead of letting
+// them re-fix or reinstall the app.
+function addRepublishHints(results: ValidationResponse, projectData: ProjectData): void {
+  const canvas = projectData.canvasChecks;
+  if (!canvas || !canvas.available) return;
+
+  const hint = (dimension: string) =>
+    `The current page's canvas passes the ${dimension} check — if you've already fixed this in the Designer, republish the site and re-run validation to update this result.`;
+
+  const headingIssueIds = new Set(['heading-hierarchy-errors', 'heading-structure-errors']);
+  const altIssueIds = new Set(['missing-alt-text-critical', 'missing-alt-text', 'images-missing-alt']);
+
+  for (const category of results.categories) {
+    for (const issue of category.issues || []) {
+      if (issue.id.startsWith('canvas-')) continue;
+      if (canvas.headingsChecked > 0 && canvas.headingIssues.length === 0 && headingIssueIds.has(issue.id)) {
+        issue.details = { ...issue.details, republishHint: hint('heading hierarchy') };
+      }
+      if (canvas.imagesChecked > 0 && canvas.imagesMissingAlt === 0 && altIssueIds.has(issue.id)) {
+        issue.details = { ...issue.details, republishHint: hint('image alt text') };
+      }
+    }
+  }
+}
+
 function enhanceValidationResults(results: ValidationResponse, projectData: ProjectData): void {
   console.log('Enhancing validation results with client-side analysis...');
 
@@ -3086,6 +3151,7 @@ function enhanceValidationResults(results: ValidationResponse, projectData: Proj
   addStyleSystemValidation(results, projectData);
   normalizeVariableModesCategory(results);
   addCanvasChecksCategory(results, projectData);
+  addRepublishHints(results, projectData);
   
   // Find Page Structure category
   const pageStructureCategory = results.categories.find(cat => cat.category === 'Page Structure');
@@ -3517,25 +3583,142 @@ function updateMetaDisplay(projectLabel: string, projectData: ProjectData): void
   metaDisplay.style.display = 'block';
 }
 
+// Register the completed run for copy-report and persist it so reopening the
+// panel restores the last report instead of forcing a 30-60s re-run.
+function registerValidationReport(data: ValidationResponse, correlationId: string | null): void {
+  lastValidationReport = {
+    data,
+    correlationId,
+    generatedAt: new Date().toISOString(),
+    restored: false,
+  };
+
+  try {
+    localStorage.setItem(LAST_RUN_STORAGE_KEY, JSON.stringify(lastValidationReport));
+  } catch {
+    // Quota exceeded on large sites — retry without the bulky collected data
+    try {
+      localStorage.setItem(LAST_RUN_STORAGE_KEY, JSON.stringify({
+        ...lastValidationReport,
+        data: { ...data, collectedData: undefined },
+      }));
+    } catch (storageError) {
+      console.warn('Could not persist validation results:', storageError);
+    }
+  }
+}
+
+function restoreLastValidationReport(): boolean {
+  try {
+    const saved = localStorage.getItem(LAST_RUN_STORAGE_KEY);
+    if (!saved) return false;
+    const parsed = JSON.parse(saved);
+    if (!parsed?.data?.categories) return false;
+
+    lastValidationReport = { ...parsed, restored: true };
+    showResults(parsed.data);
+    return true;
+  } catch (error) {
+    console.warn('Could not restore last validation results:', error);
+    return false;
+  }
+}
+
+function selectCanvasElement(elementKey: string): void {
+  const element = canvasElementRegistry.get(elementKey);
+  const webflow = (window as unknown as { webflow?: WebflowApi }).webflow;
+  if (!element || !webflow) {
+    void notifyDesigner(webflow, 'Info', 'Element reference expired — re-run the validator to refresh canvas checks.');
+    return;
+  }
+  void webflow.setSelectedElement(element).catch((error: unknown) => {
+    console.warn('Could not select element:', error);
+    void notifyDesigner(webflow, 'Error', 'Could not select the element. It may have been deleted or be on another page.');
+  });
+}
+
+function buildReportMarkdown(): string {
+  const report = lastValidationReport;
+  if (!report) return '';
+  const { data } = report;
+  const projectData = Array.isArray(data.collectedData) ? data.collectedData[0] as ProjectData | undefined : undefined;
+  const scope = projectData?.validationScope;
+  const outcome = getMarketplaceOutcome(data);
+
+  const lines: string[] = [
+    '# Webflow Way Validator Report',
+    '',
+    `- Site: ${data.url || scope?.siteUrl || 'Unknown'}`,
+    `- Generated: ${report.generatedAt}`,
+    scope?.domainLastPublished ? `- Validated publish from: ${scope.domainLastPublished}` : null,
+    report.correlationId ? `- Correlation ID: ${report.correlationId}` : null,
+    `- Outcome: ${outcome.badge} — ${outcome.title}`,
+    `- Errors: ${data.summary.totalErrors || data.summary.errors || 0} · Warnings: ${data.summary.totalWarnings || data.summary.warnings || 0} · Info: ${data.summary.totalInfo || data.summary.infos || 0}`,
+    '',
+  ].filter((line): line is string => line !== null);
+
+  for (const category of data.categories) {
+    const issues = category.issues || [];
+    lines.push(`## ${category.category} — ${issues.length === 0 ? 'passed' : `${issues.length} issue(s)`}`);
+    for (const issue of issues) {
+      lines.push(`- [${issue.severity.toUpperCase()}] ${issue.message}`);
+      const location = getIssueLocation(issue);
+      if (location) lines.push(`  - Location: ${location}`);
+      const howToFix = getIssueHowToFix(issue);
+      if (howToFix) lines.push(`  - Fix: ${howToFix}`);
+    }
+    lines.push('');
+  }
+
+  return lines.join('\n');
+}
+
+async function copyValidationReport(): Promise<void> {
+  const markdown = buildReportMarkdown();
+  const webflow = (window as unknown as { webflow?: WebflowApi }).webflow;
+  if (!markdown) {
+    void notifyDesigner(webflow, 'Info', 'Run the validator first to generate a report.');
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(markdown);
+    void notifyDesigner(webflow, 'Success', 'Validation report copied — paste it into a support ticket or document.');
+  } catch (error) {
+    console.warn('Copy report failed:', error);
+    void notifyDesigner(webflow, 'Error', 'Could not copy the report to the clipboard.');
+  }
+}
+
 function showResults(data: ValidationResponse): void {
   const resultsDisplay = document.getElementById('results-display');
   if (!resultsDisplay) return;
+
+  const blockingCount = getSubmissionBlockingIssues(data).length;
+  const outcome = getMarketplaceOutcome(data);
+  const generatedAt = lastValidationReport?.generatedAt ? new Date(lastValidationReport.generatedAt) : new Date();
+  const isRestored = lastValidationReport?.restored === true;
 
   // Create comprehensive results HTML with enhanced reporting
   const resultsHTML = `
     <!-- Tabs Navigation -->
     <div class="validation-tabs" role="tablist" aria-label="Validation report sections">
       <button id="overview-tab-button" class="tab-button active" data-tab="overview" type="button" role="tab" aria-selected="true" aria-controls="overview-tab" tabindex="0">Overview</button>
-      <button id="checklist-tab-button" class="tab-button" data-tab="checklist" type="button" role="tab" aria-selected="false" aria-controls="checklist-tab" tabindex="-1">Fix List</button>
+      <button id="checklist-tab-button" class="tab-button" data-tab="checklist" type="button" role="tab" aria-selected="false" aria-controls="checklist-tab" tabindex="-1">Fix List${blockingCount > 0 ? ` (${blockingCount})` : ''}</button>
     </div>
 
     <!-- Overview Tab Content -->
     <div id="overview-tab" class="tab-content active" role="tabpanel" aria-labelledby="overview-tab-button" tabindex="0">
+      ${isRestored ? `
+        <div class="restored-banner" role="status">
+          Restored from last run (${generatedAt.toLocaleString()}) — results may be stale. Run Validator to refresh.
+        </div>
+      ` : ''}
       <!-- Project Overview -->
       <div class="project-overview">
       <div class="project-header">
-        <h2 class="project-title">Validation Report: ${data.url}</h2>
-        <div class="validation-timestamp">${new Date().toLocaleString()}</div>
+        <h2 class="project-title">Validation Report: ${escapeHtml(data.url || '')}</h2>
+        <div class="validation-timestamp">${generatedAt.toLocaleString()}</div>
+        <button type="button" id="copy-report-btn" class="secondary-btn copy-report-btn">Copy report</button>
       </div>
     </div>
 
@@ -3562,13 +3745,15 @@ function showResults(data: ValidationResponse): void {
       </div>
     </div>
 
-    <!-- Overall Score -->
-    <div class="overall-score">
-      <div class="score-container">
-        <div class="score-circle ${getScoreLevel(data.summary)}">
-          <div class="score-percentage">${calculateOverallScore(data.summary)}%</div>
-        </div>
-        <div class="score-label">Webflow Way Compliance</div>
+    <!-- Submission State -->
+    <div class="submission-state ${blockingCount > 0 ? 'is-blocked' : 'is-ready'}">
+      <div class="submission-state-headline">
+        ${blockingCount > 0
+          ? `${blockingCount} blocker${blockingCount === 1 ? '' : 's'} remaining before submission`
+          : 'Submission gate clear'}
+      </div>
+      <div class="submission-state-sub">
+        Categories passed: ${data.summary.passedCategories}/${data.categories.length} · Score ${calculateOverallScore(data.summary)}%
       </div>
     </div>
 
@@ -3618,6 +3803,21 @@ function showResults(data: ValidationResponse): void {
   // Initialize tab functionality
   initializeTabs();
 
+  // "Select on canvas" buttons for canvas-check issues
+  resultsDisplay.querySelectorAll<HTMLButtonElement>('[data-canvas-element]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const key = button.getAttribute('data-canvas-element');
+      if (key) selectCanvasElement(key);
+    });
+  });
+
+  document.getElementById('copy-report-btn')?.addEventListener('click', () => void copyValidationReport());
+
+  // A blocked run lands the creator on the work list, not the summary
+  if (!isRestored && outcome.showFixListAction) {
+    activateValidationTab('checklist');
+  }
+
   // Reset the explicit refresh flag AFTER rendering
   console.log('Resetting isExplicitRefresh to false after rendering');
   isExplicitRefresh = false;
@@ -3626,6 +3826,25 @@ function showResults(data: ValidationResponse): void {
 function createCategoryHTML(cat: CategoryResult, idx: number, collectedData?: any[]): string {
   const status = getCategoryStatus(cat);
   const categoryAnchorId = getCategoryAnchorId(cat.category);
+
+  // Clean categories collapse to one line so report length tracks the work
+  // remaining, not the number of checks that ran.
+  if (cat.passed && cat.issues.length === 0) {
+    return `
+      <details id="${categoryAnchorId}" class="category-section category-collapsed ${idx === 0 ? 'first' : ''}">
+        <summary class="category-header category-summary">
+          <h3 class="category-title">${cat.category}</h3>
+          <div class="category-status ${status.className}">
+            ${status.label}
+          </div>
+          ${cat.stats ? `<span class="category-stats">${formatCategoryStats(cat.stats)}</span>` : ''}
+        </summary>
+        ${createSuccessHTML()}
+        ${cat.stats ? createMetadataHTML(cat.category, cat.stats) : ''}
+        ${createDataCollectedSection(cat.category, collectedData)}
+      </details>
+    `;
+  }
 
   return `
     <div id="${categoryAnchorId}" class="category-section ${idx === 0 ? 'first' : ''}">
@@ -3658,6 +3877,10 @@ function createIssueHTML(issue: ValidationIssue): string {
   const howToFix = getIssueHowToFix(issue);
   const location = getIssueLocation(issue);
   const policy = getIssuePolicy(issue);
+  const republishHint = issue.details?.republishHint;
+  const canvasElementKeys: string[] = Array.isArray(issue.details?.canvasElementKeys)
+    ? issue.details.canvasElementKeys
+    : [];
   return `
     <div class="issue-item ${issue.severity}">
       <div class="issue-content">
@@ -3665,16 +3888,28 @@ function createIssueHTML(issue: ValidationIssue): string {
           ${getIssueSeverityLabel(issue)}
         </span>
         <div class="issue-details">
-          <div class="issue-message">${issue.message}</div>
+          <div class="issue-message">${escapeHtml(issue.message)}</div>
           ${policy ? createIssuePolicyHTML(issue) : ''}
+          ${republishHint ? `
+            <div class="issue-republish-hint">${escapeHtml(republishHint)}</div>
+          ` : ''}
           ${howToFix ? `
             <div class="issue-fix">
-              <strong>${policy ? 'Required fix:' : issue.severity === 'warning' ? 'Suggestion:' : issue.severity === 'info' ? 'Recommendation:' : 'How to fix:'}</strong> ${howToFix}
+              <strong>${policy ? 'Required fix:' : issue.severity === 'warning' ? 'Suggestion:' : issue.severity === 'info' ? 'Recommendation:' : 'How to fix:'}</strong> ${escapeHtml(howToFix)}
             </div>
           ` : ''}
           ${location ? `
             <div class="issue-location">
-              <strong>Location:</strong> ${location}
+              <strong>Location:</strong> ${escapeHtml(location)}
+            </div>
+          ` : ''}
+          ${canvasElementKeys.length > 0 ? `
+            <div class="canvas-select-actions">
+              ${canvasElementKeys.map((key, index) => `
+                <button type="button" class="canvas-select-btn" data-canvas-element="${escapeHtml(key)}">
+                  ${canvasElementKeys.length > 1 ? `Select element ${index + 1}` : 'Select on canvas'}
+                </button>
+              `).join('')}
             </div>
           ` : ''}
           ${createDetailsHTML(issue.details)}
@@ -3696,7 +3931,7 @@ function createMarketplaceOutcomeHTML(data: ValidationResponse): string {
       </div>
       <div class="marketplace-outcome-meta">
         <span class="marketplace-outcome-badge">${outcome.badge}</span>
-        <span class="marketplace-outcome-time">Validated ${new Date().toLocaleTimeString()}</span>
+        <span class="marketplace-outcome-time">Validated ${(lastValidationReport?.generatedAt ? new Date(lastValidationReport.generatedAt) : new Date()).toLocaleTimeString()}</span>
         ${outcome.showFixListAction ? '<button type="button" class="marketplace-outcome-action" onclick="openFixList()">Open Fix List</button>' : ''}
       </div>
     </div>
@@ -3934,7 +4169,7 @@ function createDetailsHTML(details?: ValidationIssue['details']): string {
           <strong>View ${samples.length} example${samples.length > 1 ? 's' : ''}</strong>
         </summary>
         <div class="issue-sample-list">
-          ${samples.map(item => `<div class="sample-item">• ${item}</div>`).join('')}
+          ${samples.map(item => `<div class="sample-item">• ${escapeHtml(String(item))}</div>`).join('')}
         </div>
       </details>
     `;
@@ -3948,7 +4183,7 @@ function createDetailsHTML(details?: ValidationIssue['details']): string {
           <strong>View ${violations.length} violation${violations.length > 1 ? 's' : ''}</strong>
         </summary>
         <div class="issue-violations-list">
-          ${violations.map(v => `<div class="violation-item">• ${v}</div>`).join('')}
+          ${violations.map(v => `<div class="violation-item">• ${escapeHtml(v)}</div>`).join('')}
         </div>
       </details>
     `;
@@ -3961,7 +4196,7 @@ function createDetailsHTML(details?: ValidationIssue['details']): string {
           <strong>View ${details.locations.length} location${details.locations.length > 1 ? 's' : ''}</strong>
         </summary>
         <div class="issue-locations-list">
-          ${details.locations.map(loc => `<div class="location-item">• ${loc}</div>`).join('')}
+          ${details.locations.map(loc => `<div class="location-item">• ${escapeHtml(String(loc))}</div>`).join('')}
         </div>
       </details>
     `;
@@ -4000,7 +4235,7 @@ function createDetailsHTML(details?: ValidationIssue['details']): string {
           <strong>View samples</strong>
         </summary>
         <div class="issue-samples-list">
-          ${details.samples.map(s => `<div class="sample-item">• ${s}</div>`).join('')}
+          ${details.samples.map(s => `<div class="sample-item">• ${escapeHtml(String(s))}</div>`).join('')}
         </div>
       </details>
     `;
@@ -4047,7 +4282,7 @@ function createStructuredArrayDetails(
         <strong>${singularLabel}${items.length > 1 ? 's' : ''} (${items.length})</strong>
       </summary>
       <div class="issue-subitems-list">
-        ${items.map(item => `<div class="subitem">• ${formatter(item)}</div>`).join('')}
+        ${items.map(item => `<div class="subitem">• ${escapeHtml(formatter(item))}</div>`).join('')}
       </div>
     </details>
   `;
@@ -4087,11 +4322,11 @@ function formatHeadingIssueItem(item: any): string {
       ? `, skipping H${item.missingLevel}`
       : '';
     const issue = `${formatHeadingReference(item.fromLevel, item.fromText)} is followed by ${formatHeadingReference(item.toLevel, item.toText)}${missingLevel}${position}.${sequence}`;
-    return escapeHtml(`${page}${pageUrl ? ` (${pageUrl})` : ''}: ${issue}`);
+    return `${page}${pageUrl ? ` (${pageUrl})` : ''}: ${issue}`;
   }
 
   const issue = item.issue || 'Heading issue';
-  return escapeHtml(`${page}${pageUrl ? ` (${pageUrl})` : ''}: ${issue}${sequence}`);
+  return `${page}${pageUrl ? ` (${pageUrl})` : ''}: ${issue}${sequence}`;
 }
 
 function formatHeadingReference(level: number, text: unknown): string {
@@ -4441,6 +4676,9 @@ function openOverviewCategory(categoryAnchorId: string): void {
 
   const categorySection = document.getElementById(categoryAnchorId);
   if (categorySection) {
+    if (categorySection instanceof HTMLDetailsElement) {
+      categorySection.open = true;
+    }
     categorySection.scrollIntoView({ block: 'start', behavior: 'smooth' });
     categorySection.classList.add('is-targeted');
     window.setTimeout(() => categorySection.classList.remove('is-targeted'), 1400);
@@ -4741,22 +4979,6 @@ let isExplicitRefresh = false;
     validateBtn.click();
   }
 };
-
-function getScoreLevel(summary: ValidationResponse['summary']): string {
-  const score = calculateOverallScore(summary);
-  if (score >= 90) return 'excellent';
-  if (score >= 75) return 'good';
-  if (score >= 60) return 'needs-improvement';
-  return 'poor';
-}
-
-function getScoreDescription(summary: ValidationResponse['summary']): string {
-  const score = calculateOverallScore(summary);
-  if (score >= 90) return 'Excellent Webflow Way compliance!';
-  if (score >= 75) return 'Good compliance, minor improvements needed';
-  if (score >= 60) return 'Improvements needed to meet standards';
-  return 'Significant improvements required for compliance';
-}
 
 function formatCategoryStats(stats: Record<string, any>): string {
   const preferredStats: Array<[string, string]> = [
