@@ -8,10 +8,11 @@
   "scripts": {
     "bundle": "npx webflow library bundle --public-path / --no-input",
     "share": "npx webflow library share",
-    "check": "pnpm run typecheck",
+    "check": "pnpm run typecheck && pnpm run test",
     "lint": "pnpm run typecheck",
+    "test": "node --import tsx --test test/*.test.tsx",
     "typecheck": "tsc --noEmit",
-    "verify": "pnpm run typecheck && pnpm run bundle"
+    "verify": "pnpm run check && pnpm run bundle"
   },
   "dependencies": {
     "@webflow/react": "^1.0.0",

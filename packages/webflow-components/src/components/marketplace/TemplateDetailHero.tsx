@@ -66,9 +66,21 @@ const CATEGORY_ROUTE_ALIASES: Record<string, string> = {
   'community-and-nonprofit': 'community-and-nonprofit-websites',
   'community-and-nonprofits': 'community-and-nonprofit-websites',
   'community-and-nonprofits-websites': 'community-and-nonprofit-websites',
+  'culture-performance-and-entertainment': 'arts-and-entertainment-websites',
+  'culture-performance-and-entertainment-websites': 'arts-and-entertainment-websites',
+  'entertainment': 'arts-and-entertainment-websites',
+  'entertainment-websites': 'arts-and-entertainment-websites',
+  'performance-and-entertainment': 'arts-and-entertainment-websites',
+  'performance-and-entertainment-websites': 'arts-and-entertainment-websites',
   'real-estate-and-property-management': 'real-estate-websites',
   'retail-and-ecommerce': 'retail-and-e-commerce-websites',
   'retail-and-e-commerce': 'retail-and-e-commerce-websites',
+};
+
+const CATEGORY_LABEL_ALIASES: Record<string, string> = {
+  'culture, performance & entertainment': 'Arts & Entertainment',
+  entertainment: 'Arts & Entertainment',
+  'performance & entertainment': 'Arts & Entertainment',
 };
 
 const PREVIEW_DEVICE_DIMENSIONS: Record<TemplateDetailPreviewDevice, { width: number; height: number }> = {
@@ -116,11 +128,24 @@ function formatTemplateTitle(name: string): string {
 function splitCategoryList(value?: string): string[] {
   const raw = value?.trim();
   if (!raw) return [];
+  const unquoted = stripCategoryQuotes(raw);
+  if (unquoted.includes(',') && CATEGORY_LABEL_ALIASES[unquoted.toLowerCase()]) return [unquoted];
   const separator = raw.includes('\n') ? /\n+/ : /,\s*/;
   return raw
     .split(separator)
-    .map((item) => item.trim())
+    .map((item) => stripCategoryQuotes(item.trim()))
     .filter(Boolean);
+}
+
+function stripCategoryQuotes(value: string): string {
+  return value
+    .replace(/&quot;/g, '"')
+    .replace(/^["']+|["']+$/g, '')
+    .trim();
+}
+
+function displayCategoryLabel(label: string): string {
+  return CATEGORY_LABEL_ALIASES[label.trim().toLowerCase()] ?? label;
 }
 
 function categorySlug(label: string): string {
@@ -182,7 +207,7 @@ function buildCategoryCrumbs(input: {
   const effectiveLabels = labels.length ? labels : ['Category'];
 
   return effectiveLabels.map((label, index) => ({
-    label,
+    label: displayCategoryLabel(label),
     href:
       (index === 0 && primaryHref) ||
       hrefs[index] ||
