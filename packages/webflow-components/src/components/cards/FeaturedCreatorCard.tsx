@@ -1,4 +1,4 @@
-import React, { CSSProperties, memo, useLayoutEffect } from 'react';
+import React, { CSSProperties, memo } from 'react';
 
 export type FeaturedCreatorAccent = 'neutral' | 'momentum' | 'demand' | 'editorial';
 
@@ -61,9 +61,10 @@ const ACCENTS: Record<FeaturedCreatorAccent, { chipBg: string; chipText: string;
   },
 };
 
-let stylesInjected = false;
-
-const INJECTED_STYLES = `
+// Rendered as an inline <style> inside the component tree: Webflow Code
+// Components mount in an isolated root, so document.head injection never
+// reaches the card markup.
+const CARD_STYLES = `
   .wf-featured-creator-card,
   .wf-featured-creator-card * {
     box-sizing: border-box;
@@ -103,15 +104,6 @@ const INJECTED_STYLES = `
     }
   }
 `;
-
-function injectStyles() {
-  if (stylesInjected || typeof document === 'undefined') return;
-  const style = document.createElement('style');
-  style.setAttribute('data-wf-featured-creator-card', 'true');
-  style.textContent = INJECTED_STYLES;
-  document.head.appendChild(style);
-  stylesInjected = true;
-}
 
 function safeText(value: string | undefined, fallback: string): string {
   const trimmed = value?.trim();
@@ -338,8 +330,6 @@ export const FeaturedCreatorCard = memo(function FeaturedCreatorCard({
   categoryBreadth = '0',
   ctaLabel = 'View creator',
 }: FeaturedCreatorCardProps) {
-  useLayoutEffect(injectStyles, []);
-
   const creator = safeText(creatorName, 'Featured Creator');
   const palette = ACCENTS[accent] ?? ACCENTS.neutral;
   const resolvedHeadline = safeText(headline, `${safeText(featuredTemplateCount, '0')} featured templates`);
@@ -355,6 +345,7 @@ export const FeaturedCreatorCard = memo(function FeaturedCreatorCard({
 
   return (
     <article className="wf-featured-creator-card" style={{ ...S.card, background: `linear-gradient(180deg, ${palette.wash} 0%, #ffffff 42%)` }}>
+      <style dangerouslySetInnerHTML={{ __html: CARD_STYLES }} />
       <a href={primaryHref} target={linkTarget(primaryLink)} rel={linkRel(primaryLink)} style={S.imageLink} aria-label={`View ${topTemplateName || creator}`}>
         <img className="wf-featured-creator-template-image" src={templateImage} alt={templateAlt} style={S.templateImage} loading="lazy" decoding="async" />
         <span aria-hidden="true" style={S.imageOverlay} />

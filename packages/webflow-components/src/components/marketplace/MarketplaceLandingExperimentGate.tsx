@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useLayoutEffect } from 'react';
 import {
   MarketplaceExperimentState,
   MarketplaceExperimentVariant,
@@ -58,6 +58,9 @@ export interface MarketplaceLandingExperimentGateProps {
 const DEFAULT_EXPERIMENT_KEY = 'templates_landing_code_components';
 const DEFAULT_STORAGE_KEY = 'wf_template_marketplace_landing_variant';
 const VARIANT_EVENT_NAME = 'templateMarketplaceLandingExperimentVariant';
+const DEFAULT_CONTROL_SELECTOR = '[data-marketplace-landing-experiment="control"]';
+const DEFAULT_TREATMENT_SELECTOR = '[data-marketplace-landing-experiment="treatment"]';
+const PRIOR_DISPLAY_ATTR = 'data-tm-gate-prior-display';
 
 function clampPercent(value: number | undefined): number {
   const numeric = Number(value);
@@ -106,7 +109,18 @@ function setElementVisibility(selector: string, visible: boolean): void {
   if (typeof document === 'undefined' || !selector.trim()) return;
   try {
     document.querySelectorAll<HTMLElement>(selector).forEach((element) => {
-      element.style.display = visible ? '' : 'none';
+      if (visible) {
+        // Restore whatever inline display the element carried before the gate
+        // hid it, so authored inline styles survive a variant flip.
+        const prior = element.getAttribute(PRIOR_DISPLAY_ATTR);
+        element.style.display = prior ?? '';
+        element.removeAttribute(PRIOR_DISPLAY_ATTR);
+      } else {
+        if (element.style.display && element.style.display !== 'none' && !element.hasAttribute(PRIOR_DISPLAY_ATTR)) {
+          element.setAttribute(PRIOR_DISPLAY_ATTR, element.style.display);
+        }
+        element.style.display = 'none';
+      }
       element.setAttribute('aria-hidden', visible ? 'false' : 'true');
     });
   } catch {
@@ -133,14 +147,36 @@ html[data-template-marketplace-landing-variant="treatment"] ${controlSelector} {
 `;
 }
 
+const injectedGateStyles = new Set<string>();
+
+// Unlike component styles, the gate CSS targets *page-level* DOM (the control
+// and treatment sections live outside this component's isolated root), so
+// document.head is the one place it can take effect. A <style> rendered inside
+// the component tree never reaches those sections, which would leave both
+// variants visible until the post-hydration effect runs.
+function injectGateStylesIntoHead(controlSelector: string, treatmentSelector: string): void {
+  if (typeof document === 'undefined') return;
+  const css = gateStyles(controlSelector, treatmentSelector);
+  if (injectedGateStyles.has(css)) return;
+  injectedGateStyles.add(css);
+  const style = document.createElement('style');
+  style.setAttribute('data-marketplace-landing-experiment-gate', 'true');
+  style.textContent = css;
+  document.head.appendChild(style);
+}
+
+// Inject the default-selector rules at module evaluation — before React mounts —
+// so treatment sections are hidden from the earliest possible moment.
+injectGateStylesIntoHead(DEFAULT_CONTROL_SELECTOR, DEFAULT_TREATMENT_SELECTOR);
+
 export const MarketplaceLandingExperimentGate: React.FC<MarketplaceLandingExperimentGateProps> = ({
   experimentKey = DEFAULT_EXPERIMENT_KEY,
   mode = 'optimizely',
   trafficPercent = 50,
   queryParam = 'tm_landing_variant',
   storageKey = DEFAULT_STORAGE_KEY,
-  controlSelector = '[data-marketplace-landing-experiment="control"]',
-  treatmentSelector = '[data-marketplace-landing-experiment="treatment"]',
+  controlSelector = DEFAULT_CONTROL_SELECTOR,
+  treatmentSelector = DEFAULT_TREATMENT_SELECTOR,
   optimizelyWaitMs = 500,
   optimizelyExposureEvent = 'template_marketplace_landing_code_components_exposed',
   enableOptimizelyTracking = true,
@@ -148,6 +184,12 @@ export const MarketplaceLandingExperimentGate: React.FC<MarketplaceLandingExperi
   enableAnalytics = true,
   debug = false,
 }) => {
+  // Covers non-default selectors; the module-level call already handled the
+  // defaults before mount. Layout effect so it lands before the next paint.
+  useLayoutEffect(() => {
+    injectGateStylesIntoHead(controlSelector, treatmentSelector);
+  }, [controlSelector, treatmentSelector]);
+
   useEffect(() => {
     const treatmentPercent = clampPercent(trafficPercent);
     let currentState: MarketplaceExperimentState | null = null;
