@@ -1,15 +1,12 @@
 <script lang="ts">
   import { SEO } from '@create-something/canon';
-  import {
-    shivworksAccessLanes,
-    shivworksArtifactLinks,
-    shivworksDeliveryPackage,
-    shivworksDeliverySummary,
-    shivworksNextReview,
-    shivworksOperatingLayers,
-    shivworksPrivateArtifacts,
-    shivworksRunbookCommands
-  } from '$lib/delivery/shivworks';
+  import type { PageData } from './$types';
+
+  export let data: PageData;
+
+  const context = data.context;
+  const engagement = context.engagement;
+  const privateEvidence = context.evidence.filter((item) => item.visibility !== 'public');
 </script>
 
 <SEO
@@ -26,16 +23,16 @@
   <div class="shell-inner-pad delivery-hero__inner">
     <div class="delivery-copy">
       <span class="product-kicker">Client Delivery</span>
-      <h1>{shivworksDeliverySummary.headline}</h1>
-      <p>{shivworksDeliverySummary.description}</p>
+      <h1>{context.title}.</h1>
+      <p>{context.summary}</p>
     </div>
 
     <aside class="delivery-status product-surface product-surface--soft">
       <span class="status-dot"></span>
-      <p><strong>Client</strong><span>{shivworksDeliverySummary.client}</span></p>
-      <p><strong>Owner</strong><span>{shivworksDeliverySummary.owner}</span></p>
-      <p><strong>Phase</strong><span>{shivworksDeliverySummary.phase}</span></p>
-      <p><strong>Recipient</strong><span>PM forwards to developer</span></p>
+      <p><strong>Client</strong><span>{engagement?.client}</span></p>
+      <p><strong>Owner</strong><span>{engagement?.owner}</span></p>
+      <p><strong>Phase</strong><span>{engagement?.phase}</span></p>
+      <p><strong>Recipient</strong><span>{engagement?.recipient}</span></p>
       <p><strong>Secrets</strong><span>Infisical, not chat or GitHub</span></p>
     </aside>
   </div>
@@ -54,7 +51,7 @@
     </div>
 
     <div class="package-grid">
-      {#each shivworksDeliveryPackage as item}
+      {#each context.handoffPackage ?? [] as item}
         <article class="product-surface package-card">
           <div>
             <span>{item.label}</span>
@@ -80,16 +77,16 @@
     </div>
 
     <div class="artifact-grid">
-      {#each shivworksArtifactLinks as artifact}
+      {#each context.artifacts as artifact}
         {#if artifact.href}
           <a class="artifact-link product-surface" href={artifact.href} target="_blank" rel="noreferrer">
-            <span>{artifact.meta}</span>
-            <strong>{artifact.label}</strong>
+            <span>{artifact.type}</span>
+            <strong>{artifact.title}</strong>
           </a>
         {:else}
           <article class="artifact-link artifact-link--static product-surface">
-            <span>{artifact.meta}</span>
-            <strong>{artifact.label}</strong>
+            <span>{artifact.type}</span>
+            <strong>{artifact.title}</strong>
           </article>
         {/if}
       {/each}
@@ -105,12 +102,12 @@
     </div>
 
     <div class="layer-grid">
-      {#each shivworksOperatingLayers as layer}
+      {#each context.layers as layer}
         <article class="product-surface layer-card">
           <span class="layer-tier">{layer.tier}</span>
           <h3>{layer.title}</h3>
           <p class="layer-status">{layer.status}</p>
-          <p>{layer.body}</p>
+          <p>{layer.description}</p>
         </article>
       {/each}
     </div>
@@ -129,7 +126,7 @@
     </div>
 
     <div class="runbook-grid">
-      {#each shivworksRunbookCommands as command}
+      {#each context.runbookCommands ?? [] as command}
         <article class="product-surface runbook-card">
           <span>{command.label}</span>
           <p>{command.description}</p>
@@ -152,7 +149,7 @@
     </div>
 
     <div class="access-table product-surface">
-      {#each shivworksAccessLanes as lane}
+      {#each context.accessLanes ?? [] as lane}
         <article>
           <span>{lane.label}</span>
           <p><strong>Owner</strong>{lane.owner}</p>
@@ -170,8 +167,8 @@
       <span class="product-kicker">Private Boundary</span>
       <h2>Known, but not published.</h2>
       <div class="evidence-list">
-        {#each shivworksPrivateArtifacts as item}
-          <p>{item}</p>
+        {#each privateEvidence as item}
+          <p>{item.detail}</p>
         {/each}
       </div>
     </div>
@@ -180,8 +177,8 @@
       <span class="product-kicker">Next Review</span>
       <h2>What needs a human decision.</h2>
       <div class="evidence-list">
-        {#each shivworksNextReview as item}
-          <p>{item}</p>
+        {#each context.decisions as decision}
+          <p>{decision.title}</p>
         {/each}
       </div>
     </div>

@@ -1,34 +1,29 @@
 <script lang="ts">
   import { SEO } from '@create-something/canon';
-  import {
-    abundanceArtifactLinks,
-    abundanceDeliverySummary,
-    abundanceJobAgentPrompts,
-    abundanceNextReview,
-    abundanceOperatingLayers,
-    abundancePrivateArtifacts,
-    abundanceSuggestedPrompts
-  } from '$lib/delivery/abundance';
+  import type { PageData } from './$types';
+  import { abundanceJobAgentPrompts } from '$lib/delivery/abundance';
+
+  export let data: PageData;
+
+  const context = data.context;
+  const engagement = context.engagement;
+  const publicArtifacts = context.artifacts.filter(
+    (artifact) => artifact.visibility !== 'private' && artifact.visibility !== 'internal'
+  );
+  const privateEvidence = context.evidence.filter((item) => item.visibility !== 'public');
 
   type DeliveryAgentMessage = {
     role: 'agent' | 'client';
     body: string;
-    reasoningNote?: string;
     grounding?: string[];
     followUpQuestions?: string[];
-    insightDraft?: {
-      type: string;
-      label: string;
-      value: string;
-    } | null;
   };
 
   type DeliveryAgentResponse = {
     answer: string;
-    reasoningNote?: string;
     grounding?: string[];
-    followUpQuestions?: string[];
-    insightDraft?: DeliveryAgentMessage['insightDraft'];
+    followUps?: string[];
+    restricted?: boolean;
     error?: string;
   };
 
@@ -58,13 +53,11 @@
   let isAskingJobAgent = false;
   let jobAgentError = '';
 
-  let deliveryMessages: DeliveryAgentMessage[] = [
-    {
-      role: 'agent',
-      body:
-        'Ask about what changed, what is private, what needs a decision, or how the database, MCP, and agent pieces fit together.'
-    }
-  ];
+  let deliveryMessages: DeliveryAgentMessage[] = context.agent.initialMessages.map((message) => ({
+    role: 'agent' as const,
+    body: message.body,
+    grounding: message.grounding
+  }));
 
   let deliveryQuestion = '';
   let isAskingDeliveryAgent = false;
@@ -128,12 +121,12 @@
     isAskingDeliveryAgent = true;
 
     try {
-      const response = await fetch('/api/delivery/abundance/ask', {
+      const response = await fetch('/api/canon/agent', {
         method: 'POST',
         headers: {
           'content-type': 'application/json'
         },
-        body: JSON.stringify({ message, history })
+        body: JSON.stringify({ message, history, contextId: context.contextId })
       });
 
       const payload = (await response.json()) as DeliveryAgentResponse;
@@ -147,10 +140,8 @@
         {
           role: 'agent',
           body: payload.answer,
-          reasoningNote: payload.reasoningNote,
           grounding: payload.grounding,
-          followUpQuestions: payload.followUpQuestions,
-          insightDraft: payload.insightDraft
+          followUpQuestions: payload.followUps
         }
       ];
     } catch (error) {
@@ -176,17 +167,17 @@
   <div class="shell-inner-pad delivery-hero__inner">
     <div class="delivery-copy">
       <span class="product-kicker">Client Delivery</span>
-      <h1>{abundanceDeliverySummary.headline}</h1>
+      <h1>{context.title}.</h1>
       <p>
-        {abundanceDeliverySummary.description}
+        {context.summary}
       </p>
     </div>
 
     <aside class="delivery-status product-surface product-surface--soft">
       <span class="status-dot"></span>
-      <p><strong>Client</strong><span>{abundanceDeliverySummary.client}</span></p>
-      <p><strong>Owner</strong><span>{abundanceDeliverySummary.owner}</span></p>
-      <p><strong>Phase</strong><span>{abundanceDeliverySummary.phase}</span></p>
+      <p><strong>Client</strong><span>{engagement?.client}</span></p>
+      <p><strong>Owner</strong><span>{engagement?.owner}</span></p>
+      <p><strong>Phase</strong><span>{engagement?.phase}</span></p>
       <p><strong>Private data</strong><span>Paylocity export received</span></p>
     </aside>
   </div>
@@ -204,10 +195,10 @@
     </div>
 
     <div class="artifact-grid">
-      {#each abundanceArtifactLinks as artifact}
+      {#each publicArtifacts as artifact}
         <a class="artifact-link product-surface" href={artifact.href} target="_blank" rel="noreferrer">
-          <span>{artifact.meta}</span>
-          <strong>{artifact.label}</strong>
+          <span>{artifact.type}</span>
+          <strong>{artifact.title}</strong>
         </a>
       {/each}
     </div>
@@ -296,9 +287,13 @@
       </div>
 
       <div class="suggested-prompts" aria-label="Suggested delivery questions">
-        {#each abundanceSuggestedPrompts as prompt}
-          <button type="button" on:click={() => askDeliveryAgent(prompt)} disabled={isAskingDeliveryAgent}>
-            {prompt}
+        {#each context.agent.suggestedPrompts as suggestion}
+          <button
+            type="button"
+            on:click={() => askDeliveryAgent(suggestion.prompt)}
+            disabled={isAskingDeliveryAgent}
+          >
+            {suggestion.prompt}
           </button>
         {/each}
       </div>
@@ -310,13 +305,6 @@
             {#each message.body.split('\n\n') as paragraph}
               <p>{paragraph}</p>
             {/each}
-
-            {#if message.reasoningNote}
-              <div class="agent-meta">
-                <strong>How I read this</strong>
-                <span>{message.reasoningNote}</span>
-              </div>
-            {/if}
 
             {#if message.grounding?.length}
               <div class="agent-meta">
@@ -336,12 +324,6 @@
               </div>
             {/if}
 
-            {#if message.insightDraft}
-              <div class="agent-meta">
-                <strong>Insight draft</strong>
-                <span>{message.insightDraft.label}</span>
-              </div>
-            {/if}
           </article>
         {/each}
       </div>
@@ -377,12 +359,12 @@
     </div>
 
     <div class="layer-grid">
-      {#each abundanceOperatingLayers as layer}
+      {#each context.layers as layer}
         <article class="product-surface layer-card">
           <span class="layer-tier">{layer.tier}</span>
           <h3>{layer.title}</h3>
           <p class="layer-status">{layer.status}</p>
-          <p>{layer.body}</p>
+          <p>{layer.description}</p>
         </article>
       {/each}
     </div>
@@ -395,8 +377,8 @@
       <span class="product-kicker">Private Source Materials</span>
       <h2>Received, but not published.</h2>
       <div class="evidence-list">
-        {#each abundancePrivateArtifacts as item}
-          <p>{item}</p>
+        {#each privateEvidence as item}
+          <p>{item.detail}</p>
         {/each}
       </div>
     </div>
@@ -405,8 +387,8 @@
       <span class="product-kicker">Next Review</span>
       <h2>What needs a human decision.</h2>
       <div class="evidence-list">
-        {#each abundanceNextReview as item}
-          <p>{item}</p>
+        {#each context.decisions as decision}
+          <p>{decision.title}</p>
         {/each}
       </div>
     </div>
