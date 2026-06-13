@@ -96,7 +96,7 @@ This inverts the common assumption that you build an AI agent first, then add in
 2. **Skills provide capabilities** (reusable, portable across platforms)
 3. **Agents produce outcomes** (the monetizable layer)
 
-**Packaging rule**: `MCP-only` is the discovery/compliance wedge; `Policy OS` (agents + MCPs + governed execution) is the default paid delivery. Codex is the primary vector, with MCP/policy artifacts kept portable across clients.
+**Packaging rule**: `Trust Map` is the entry wedge; `Workflow Pilot` is the default paid build; `Trust Layer` (the governed control plane—internally, Policy OS) is the recurring delivery. MCP/policy artifacts stay portable across clients and agent platforms.
 
 ### WORKWAY
 
@@ -132,22 +132,30 @@ This is where CREATE SOMETHING operates.
 | **.ltd** | Philosophy of creation | Philosophy of *automation infrastructure*—MCP as chassis |
 | **.io** | Research, tools, docs | MCP patterns, reference implementations, SDK research |
 | **.space** | Practice, experiments | **The Workbench**—live tools for code execution, motion analysis, data dashboards |
-| **.agency** | Client services | **Custom MCP development**—the creation moat applied to client work |
+| **.agency** | Client services | **The Workflow Trust Layer**—the creation moat applied to making client workflows safe to delegate |
 
 The hermeneutic circle: Philosophy informs research. Research validates practice. Practice serves clients. Client outcomes test and evolve the philosophy.
 
 **CREATE SOMETHING stays horizontal** (the MCP-first thesis applies to any vertical). **WORKWAY goes vertical** (construction via Procore).
 
-### .agency Service Offerings (Post-Pivot)
+### .agency Service Offerings: The Workflow Trust Layer
 
-| Service | Description | Value |
-|---------|-------------|-------|
-| **MCP Audit** | What MCPs would unlock value for your business? | Strategic clarity |
-| **MCP-only (Discovery/Compliance)** | Limited-scope or read-only connectivity for teams operating agents internally | Fast trust setup with lower autonomy risk |
-| **Policy OS (Default)** | Custom MCP server(s) + Codex setup + policy + runbook + managed judgment loop | Differentiated outcomes + premium margin |
-| **Ongoing Support** | Auth updates, policy tuning, golden-task regressions, new capabilities | Recurring relationship |
+Category: **Workflow Trust Layer**. Headline: *"Connecting tools is easy. Trust is the product."* The offer is making one business workflow safe to delegate—named objects, scoped actions, approval paths, evidence (receipts), and recovery. Canonical copy lives in `packages/agency/src/lib/data/marketingCopy.ts` (`agencyCoreMessaging`).
 
-**Positioning shift**: From "We build websites/apps with modern stacks" to "We build the connectivity and outcome layers between your tools and AI."
+| Lane | Shape | Value |
+|------|-------|-------|
+| **Trust Map** | Fixed entry wedge: scoped diagnostic of the workflow, object model, action/approval boundary, first safe delegation point | Strategic clarity before any build |
+| **Workflow Pilot** | Implementation sprint: one workflow rebuilt with clear rules, clean handoffs, runbooks (the featured "start here" offer) | Production-safe delegation |
+| **Trust Layer** | Monthly control plane: approval/block boundaries, reason-coded access, release checks, incident loops, evals | Recurring relationship + governed speed |
+| **Enterprise Extension** | Audit-ready cross-system orchestration with deterministic retries and recovery | Regulated/multi-team scale |
+
+Delivery vector vocabulary: **"Skills on MCP"** (canonical) / "Skills + MCP" (client-facing).
+
+**Open-source products as lead gen** (`/products/*` on .agency): **Ground MCP** (code analysis that checks before it claims—anti-hallucination verification) and **Loom MCP** (external memory + multi-agent coordination across Claude, Cursor, Codex, Gemini). The `/dify` section is content marketing (Dify + MCP + Policy OS as a three-layer governance story), not a sold product.
+
+**Trust boundaries stated on-site**: no vendor lock-in; the client keeps the workflow map, contracts, policy, runbooks, code, and approval ownership.
+
+**Positioning shift**: From "We build the connectivity and outcome layers between your tools and AI" to "We make one workflow safe to delegate." Policy OS remains the internal architecture term; Workflow Trust Layer is the market-facing category.
 
 ### Shared Vocabulary: AI Interaction Atlas
 
@@ -224,7 +232,7 @@ Zero external dependencies. Pure framework knowledge served through protocol. Se
 
 ### Integration connectivity (Composio)
 
-For **commodity app connectivity** (Gmail, Notion, Slack, etc.), prefer [Composio](https://composio.dev) via `@create-something/composio-bridge`: managed auth, tool discovery, and execution with the client seeing our MCP. Use **custom** OAuth and APIs when the integration is deep or client-specific (e.g. Half Dozen Gmail Sync). Packaging is unchanged: Composio remains internal plumbing, while client delivery defaults to Policy OS and reserves MCP-only for discovery/compliance cases. See `docs/COMPOSIO_PATTERNS.md` for when-to-use, wrap pattern, and SDK pointers; `docs/internal/COMPOSIO_EVALUATION.md` for the evaluation.
+For **commodity app connectivity** (Gmail, Notion, Slack, etc.), prefer [Composio](https://composio.dev) via `@create-something/composio-bridge`: managed auth, tool discovery, and execution with the client seeing our MCP. Use **custom** OAuth and APIs when the integration is deep or client-specific (e.g. Half Dozen Gmail Sync). Packaging is unchanged: Composio remains internal plumbing, while client delivery follows the Workflow Trust Layer lanes (Trust Map → Workflow Pilot → Trust Layer). See `docs/COMPOSIO_PATTERNS.md` for when-to-use, wrap pattern, and SDK pointers; `docs/internal/COMPOSIO_EVALUATION.md` for the evaluation.
 
 ## Languages
 
@@ -287,7 +295,7 @@ pnpm linear:done -- --issue CRE-123 --evidence "Validation: ..."
 
 **Why Linear**: shared issue state, MCP access, source-of-truth registry review, and durable delivery evidence across local and remote agents.
 
-Loom is historical in this repository. Do not create new Loom tasks; update legacy references to Linear or file a Linear cleanup issue.
+Loom *the task tracker* is historical in this repository. Do not create new Loom tasks; update legacy references to Linear or file a Linear cleanup issue. (Unrelated: **Loom MCP**, the multi-agent coordination product on .agency at `/products/loom`, is current and actively offered.)
 
 ## Agent Orchestration
 
