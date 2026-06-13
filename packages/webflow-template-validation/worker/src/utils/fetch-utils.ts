@@ -19,8 +19,11 @@ export async function fetchHTML(url: string): Promise<FetchResult> {
 			signal: controller.signal,
 			headers: {
 				'User-Agent': 'WebflowWayValidator/1.0'
-			}
-		});
+			},
+			// Short edge cache so re-runs after small fixes don't re-fetch every
+			// page/asset; 60s is below any realistic fix-publish-revalidate cycle.
+			cf: { cacheTtl: 60, cacheEverything: true }
+		} as RequestInit);
 
 		clearTimeout(timeoutId);
 
@@ -89,8 +92,11 @@ export async function fetchAsset(url: string): Promise<AssetFetchResult> {
 			signal: controller.signal,
 			headers: {
 				'User-Agent': 'WebflowWayValidator/1.0'
-			}
-		});
+			},
+			// Short edge cache so re-runs after small fixes don't re-fetch every
+			// page/asset; 60s is below any realistic fix-publish-revalidate cycle.
+			cf: { cacheTtl: 60, cacheEverything: true }
+		} as RequestInit);
 
 		clearTimeout(timeoutId);
 

@@ -36,6 +36,7 @@ export interface AssetBatchResponse {
 
 export interface ValidationResponse {
 	siteUrl: string;
+	workerVersion?: string;
 	timestamp: string;
 	analysis: {
 		assets: AssetAnalysisResult;

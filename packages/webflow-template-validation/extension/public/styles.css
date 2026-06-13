@@ -2188,3 +2188,29 @@ details.category-collapsed > summary.category-summary::after {
 details.category-collapsed[open] > summary.category-summary::after {
   content: '▾';
 }
+
+.issue-flag-btn {
+  background: transparent;
+  color: var(--text-muted);
+  border: none;
+  font-size: var(--text-2xs);
+  padding: 2px 0;
+  margin-top: 4px;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.issue-flag-btn:hover:not(:disabled) {
+  color: var(--text-secondary);
+}
+
+.issue-flag-btn:disabled {
+  cursor: default;
+  text-decoration: none;
+}
+
+.meta-version {
+  color: var(--text-muted);
+  font-size: var(--text-2xs);
+}

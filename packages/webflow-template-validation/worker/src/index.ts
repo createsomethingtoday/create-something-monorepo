@@ -37,6 +37,7 @@ import {
 } from './types';
 
 const REVIEW_SNIPPET_VERSION = '0.3.0';
+const WORKER_VERSION = '2.3.0';
 const REVIEW_SNIPPET_MARKER = '__wf_review_snippet_v1';
 const REVIEW_SNIPPET_ASSET_PATH = '/app-validator/snippet/review.js';
 const REVIEW_JOB_RETENTION_MS = 30 * 60 * 1000;
@@ -416,6 +417,11 @@ export default {
 				return await handleValidationSubmissionLatest(request, env, correlationId);
 			}
 
+			if (url.pathname === '/app-validator/feedback') {
+				if (request.method !== 'POST') return methodNotAllowed(request);
+				return await handleIssueFeedback(request, env, correlationId);
+			}
+
 			if (url.pathname === '/app-validator/bridge/usage') {
 				if (request.method !== 'GET') return methodNotAllowed(request);
 				return await handleBridgeUsageList(request, env, correlationId);
@@ -440,7 +446,7 @@ export default {
 						{
 							status: 'healthy',
 							timestamp: new Date().toISOString(),
-							version: '2.2.0',
+							version: WORKER_VERSION,
 							endpoints: [
 								'/api/validate',
 								'/validate',
@@ -1123,6 +1129,79 @@ async function handleValidationSubmit(
 	return jsonResponse(response, 200, request);
 }
 
+const FEEDBACK_MAX_BODY_BYTES = 8 * 1024;
+
+/**
+ * Creator-reported false positives. Each report is logged as a structured
+ * event (queryable in Workers observability) and archived to R2 when the
+ * artifact bucket is bound, so validator bugs surface as data instead of
+ * support tickets.
+ */
+async function handleIssueFeedback(
+	request: Request,
+	env: unknown,
+	correlationId: string
+): Promise<Response> {
+	const rawBody = await request.text();
+	if (rawBody.length > FEEDBACK_MAX_BODY_BYTES) {
+		return jsonResponse({ error: 'Feedback payload too large' }, 413, request);
+	}
+
+	let body: {
+		issueId?: string;
+		category?: string;
+		message?: string;
+		pageUrl?: string;
+		siteId?: string;
+		siteUrl?: string;
+		runCorrelationId?: string;
+		note?: string;
+	};
+	try {
+		body = JSON.parse(rawBody);
+	} catch {
+		return jsonResponse({ error: 'Invalid JSON body' }, 400, request);
+	}
+
+	if (!body.issueId || typeof body.issueId !== 'string') {
+		return jsonResponse({ error: 'Missing required field: issueId' }, 400, request);
+	}
+
+	const clean = (value: unknown, max: number): string | undefined =>
+		typeof value === 'string' && value.trim() !== '' ? value.trim().slice(0, max) : undefined;
+
+	const feedback = {
+		event: 'issue.feedback',
+		level: 'info',
+		correlationId,
+		timestamp: new Date().toISOString(),
+		issueId: clean(body.issueId, 120),
+		category: clean(body.category, 120),
+		message: clean(body.message, 500),
+		pageUrl: clean(body.pageUrl, 500),
+		siteId: clean(body.siteId, 120),
+		siteUrl: clean(body.siteUrl, 500),
+		runCorrelationId: clean(body.runCorrelationId, 120),
+		note: clean(body.note, 1000)
+	};
+
+	console.log(JSON.stringify(feedback));
+
+	const bucket = getValidationResultArtifactBucket(env);
+	if (bucket) {
+		try {
+			const key = `feedback/${new Date().toISOString().slice(0, 10)}/${correlationId}.json`;
+			await bucket.put(key, JSON.stringify(feedback, null, 2), {
+				httpMetadata: { contentType: 'application/json' }
+			});
+		} catch (error) {
+			console.warn('Feedback artifact write failed:', error);
+		}
+	}
+
+	return jsonResponse({ received: true, correlationId }, 200, request);
+}
+
 async function handleValidationSubmissionLatest(
 	request: Request,
 	env: unknown,
@@ -1489,6 +1568,7 @@ async function performEnhancedValidation(body: ValidationRequest): Promise<Valid
 
 	return {
 		siteUrl: body.siteUrl,
+		workerVersion: WORKER_VERSION,
 		timestamp: new Date().toISOString(),
 		analysis: {
 			assets: assetAnalysis,
