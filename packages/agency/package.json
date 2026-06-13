@@ -57,6 +57,7 @@
 	"dependencies": {
 		"@composio/core": "^0.6.4",
 		"@create-something/canon": "workspace:*",
+		"@create-something/delivery-schema": "workspace:*",
 		"@create-something/mcp-authz": "workspace:*",
 		"@create-something/tufte": "workspace:^",
 		"lucide-svelte": "^0.562.0",
