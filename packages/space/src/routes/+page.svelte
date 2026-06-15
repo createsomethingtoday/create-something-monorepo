@@ -1,7 +1,14 @@
 <script lang="ts">
-  import { Button, PropertyFunnel, SEO } from '@create-something/canon';
+  import {
+    Button,
+    ClearCardGrid,
+    ClearPageSection,
+    ClearProofStrip,
+    PropertyFunnel,
+    SEO,
+    type ClearCardItem
+  } from '@create-something/canon';
   import { BlurFade } from '@create-something/canon/magicui';
-  import RuntimeWorkbench from '$lib/components/RuntimeWorkbench.svelte';
 
   type ToolCard = {
     name: string;
@@ -29,6 +36,27 @@
     { value: '3', label: 'runtime loops previewed in the shell' },
     { value: '100%', label: 'Cloudflare Workers-first execution' },
     { value: 'Direct', label: 'inspectable routes, outputs, and state' }
+  ];
+
+  const heroSignals: ClearCardItem[] = [
+    {
+      eyebrow: 'Execute',
+      icon: 'settings',
+      title: 'Run against the edge',
+      detail: 'Use real routes and Workers-first constraints instead of static demos.'
+    },
+    {
+      eyebrow: 'Inspect',
+      icon: 'search',
+      title: 'Expose the behavior',
+      detail: 'Timing, state, outputs, and failure modes should stay visible.'
+    },
+    {
+      eyebrow: 'Promote',
+      icon: 'arrow-right',
+      title: 'Move what survives',
+      detail: 'Validated routes can graduate into .io research or .agency delivery.'
+    }
   ];
 
   const tools: ToolCard[] = [
@@ -137,55 +165,34 @@
   propertyName="space"
 />
 
-<section class="hero-page">
-  <div class="shell-inner-pad hero-layout">
-    <div class="hero-copy">
-      <BlurFade delay={0}>
-        <span class="product-kicker">CREATE SOMETHING .space</span>
-      </BlurFade>
+<ClearPageSection
+  variant="hero"
+  layout="split"
+  titleLevel="h1"
+  eyebrow="CREATE SOMETHING .space"
+  title="A public workbench for testing runtime ideas."
+  description="CREATE SOMETHING .space is where tools, routes, and interaction patterns get tested against real execution surfaces before they become research, policy, or production workflows."
+>
+  {#snippet actions()}
+    <Button href="/playground">Open The Playground</Button>
+    <Button href="/praxis" variant="secondary">Start Praxis</Button>
+  {/snippet}
 
-      <BlurFade delay={0.05}>
-        <h1 class="hero-title">A public workbench for trying the runtime in the open.</h1>
-      </BlurFade>
+  <p class="clear-note">Live routes. Workers-first execution. Inspectable outputs.</p>
 
-      <BlurFade delay={0.1}>
-        <p class="hero-detail">
-          CREATE SOMETHING .space is where tools, routes, and interaction patterns get tested
-          against real execution surfaces. The point is not a polished demo. It is a live place to
-          run code, inspect motion, and stress ideas before they become patterns or products.
-        </p>
-      </BlurFade>
+  {#snippet aside()}
+    <ClearCardGrid
+      items={heroSignals}
+      columns={1}
+      density="compact"
+      ariaLabel="Workbench operating signals"
+    />
+  {/snippet}
 
-      <BlurFade delay={0.15}>
-        <div class="hero-actions">
-          <Button href="/playground">Open The Playground</Button>
-          <Button href="/praxis" variant="secondary">Start Praxis</Button>
-        </div>
-      </BlurFade>
-
-      <BlurFade delay={0.2}>
-        <p class="hero-note">Live routes. Workers-first execution. Inspectable outputs.</p>
-      </BlurFade>
-    </div>
-
-    <BlurFade delay={0.2}>
-      <RuntimeWorkbench />
-    </BlurFade>
-  </div>
-
-  <div class="shell-inner-pad">
-    <div class="metric-grid">
-      {#each proofMetrics as metric, index}
-        <BlurFade delay={0.25 + index * 0.05}>
-          <article class="product-surface product-surface--soft metric-card">
-            <span class="metric-value">{metric.value}</span>
-            <span class="metric-label">{metric.label}</span>
-          </article>
-        </BlurFade>
-      {/each}
-    </div>
-  </div>
-</section>
+  {#snippet after()}
+    <ClearProofStrip items={proofMetrics} ariaLabel="Workbench proof artifacts" />
+  {/snippet}
+</ClearPageSection>
 
 <section class="tool-section">
   <div class="shell-inner-pad">
@@ -334,7 +341,6 @@
 </section>
 
 <style>
-  .hero-page,
   .tool-section,
   .loop-section,
   .ecosystem-section,
@@ -342,18 +348,14 @@
     padding-block: clamp(3.5rem, 8vw, 6rem);
   }
 
-  .hero-page {
-    padding-top: clamp(5.5rem, 10vw, 7rem);
+  .clear-note {
+    margin: 0;
+    max-width: 36rem;
+    color: var(--color-clear-grey, #636363);
+    font-size: 0.94rem;
+    line-height: 1.55;
   }
 
-  .hero-layout {
-    display: grid;
-    grid-template-columns: minmax(0, 1.02fr) minmax(0, 0.98fr);
-    gap: clamp(2rem, 4vw, 3.5rem);
-    align-items: start;
-  }
-
-  .hero-copy,
   .section-lead,
   .cta-panel,
   .tool-body {
@@ -361,7 +363,6 @@
     gap: 1rem;
   }
 
-  .hero-title,
   .section-lead h2,
   .cta-panel h2 {
     margin: 0;
@@ -371,7 +372,6 @@
     color: var(--color-fg-primary);
   }
 
-  .hero-detail,
   .section-lead p,
   .cta-panel p,
   .tool-card p,
@@ -394,45 +394,11 @@
     justify-content: center;
   }
 
-  .hero-note {
-    margin: 0;
-    color: var(--color-fg-muted);
-    font-size: 0.92rem;
-    letter-spacing: 0.03em;
-    text-transform: uppercase;
-  }
-
-  .metric-grid,
   .tool-grid,
   .loop-grid,
   .ecosystem-grid {
     display: grid;
     gap: 1rem;
-  }
-
-  .metric-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    margin-top: clamp(1.8rem, 4vw, 2.5rem);
-  }
-
-  .metric-card {
-    display: grid;
-    gap: 0.5rem;
-    min-height: 10rem;
-    align-content: end;
-  }
-
-  .metric-value {
-    font-size: clamp(2rem, 4vw, 3rem);
-    line-height: 1;
-    letter-spacing: -0.05em;
-    color: var(--color-fg-primary);
-  }
-
-  .metric-label {
-    color: var(--color-fg-muted);
-    font-size: 0.92rem;
-    line-height: 1.6;
   }
 
   .section-lead {
@@ -546,8 +512,6 @@
   }
 
   @media (max-width: 1200px) {
-    .hero-layout,
-    .metric-grid,
     .loop-grid,
     .ecosystem-grid {
       grid-template-columns: 1fr;
@@ -563,7 +527,6 @@
       grid-template-columns: 1fr;
     }
 
-    .hero-title,
     .section-lead h2,
     .cta-panel h2 {
       line-height: 1.02;

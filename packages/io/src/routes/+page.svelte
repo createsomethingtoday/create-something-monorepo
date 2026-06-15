@@ -1,6 +1,15 @@
 <script lang="ts">
   import type { PageData } from './$types';
-  import { Button, PapersGrid, PropertyFunnel, SEO } from '@create-something/canon';
+  import {
+    Button,
+    ClearCardGrid,
+    ClearPageSection,
+    ClearProofStrip,
+    PapersGrid,
+    PropertyFunnel,
+    SEO,
+    type ClearCardItem
+  } from '@create-something/canon';
   import { BlurFade } from '@create-something/canon/magicui';
   import type { Paper } from '@create-something/canon/types';
 
@@ -44,20 +53,33 @@
         .slice(0, 6) as Paper[]
   );
 
-  const latestPapers = $derived.by(
-    () =>
-      papers
-        .filter((paper) => !isFileBasedPaper(paper))
-        .sort((left, right) => getPaperTimestamp(right) - getPaperTimestamp(left))
-        .slice(0, 3) as Paper[]
-  );
-
   const proofMetrics = $derived.by(() => [
     { value: `${papers.length}`, label: 'published experiments + papers' },
     { value: `${categories.length || 1}`, label: 'research categories' },
     { value: `${featuredExperiments.length}`, label: 'featured artifacts to inspect first' },
     { value: '3', label: 'database / automation / judgment layers' }
   ]);
+
+  const heroSignals: ClearCardItem[] = [
+    {
+      eyebrow: 'Signal',
+      icon: 'search',
+      title: 'Start from evidence',
+      detail: 'Operator friction, runtime behavior, and implementation receipts come before the claim.'
+    },
+    {
+      eyebrow: 'Artifact',
+      icon: 'document',
+      title: 'Publish what transfers',
+      detail: 'Papers and field notes stay tied to the workflow, experiment, or policy they support.'
+    },
+    {
+      eyebrow: 'Handoff',
+      icon: 'arrow-right',
+      title: 'Move into practice',
+      detail: 'Strong patterns can graduate into .space validation or .agency delivery.'
+    }
+  ];
 
   const researchTracks: ResearchTrack[] = [
     {
@@ -137,101 +159,34 @@
   propertyName="io"
 />
 
-<section class="hero-page">
-  <div class="shell-inner-pad hero-layout">
-    <div class="hero-copy">
-      <BlurFade delay={0}>
-        <span class="product-kicker">CREATE SOMETHING .io</span>
-      </BlurFade>
+<ClearPageSection
+  variant="hero"
+  layout="split"
+  titleLevel="h1"
+  eyebrow="CREATE SOMETHING .io"
+  title="Research for automation you can defend."
+  description="CREATE SOMETHING .io turns experiments, papers, and field notes into a usable research layer for operators. The goal is evidence you can carry into the next build, review, or production decision."
+>
+  {#snippet actions()}
+    <Button href="/papers">Read The Papers</Button>
+    <Button href="/experiments" variant="secondary">Browse Experiments</Button>
+  {/snippet}
 
-      <BlurFade delay={0.05}>
-        <h1 class="hero-title">Research for teams building automation they can defend.</h1>
-      </BlurFade>
+  <p class="clear-note">Patterns, benchmarks, and operator notes tied back to real builds.</p>
 
-      <BlurFade delay={0.1}>
-        <p class="hero-detail">
-          CREATE SOMETHING .io turns experiments, papers, and field notes into a usable research
-          layer for operators. The goal is not content volume. It is evidence you can carry into the
-          next build, review, or production decision.
-        </p>
-      </BlurFade>
+  {#snippet aside()}
+    <ClearCardGrid
+      items={heroSignals}
+      columns={1}
+      density="compact"
+      ariaLabel="Research operating signals"
+    />
+  {/snippet}
 
-      <BlurFade delay={0.15}>
-        <div class="hero-actions">
-          <Button href="/papers">Read The Papers</Button>
-          <Button href="/experiments" variant="secondary">Browse Experiments</Button>
-        </div>
-      </BlurFade>
-
-      <BlurFade delay={0.2}>
-        <p class="hero-note">Patterns, benchmarks, and operator notes tied back to real builds.</p>
-      </BlurFade>
-    </div>
-
-    <BlurFade delay={0.2}>
-      <aside class="product-surface product-surface--soft research-panel">
-        <div class="panel-stack">
-          <section class="panel-block">
-            <span class="product-kicker">Research operating loop</span>
-            <h2>From signal to published pattern.</h2>
-            <p>
-              Good research does not stop at observation. It moves through experiment design,
-              runtime evidence, and artifacts that can inform the next implementation cycle.
-            </p>
-          </section>
-
-          <section class="panel-block">
-            <span class="panel-label">Current loop</span>
-            <p class="panel-command">
-              Observe workflow friction -> run experiment -> capture evidence -> publish pattern
-            </p>
-          </section>
-
-          <div class="panel-grid">
-            <section class="panel-block">
-              <span class="panel-label">Coverage</span>
-              <div class="product-pills">
-                {#each categories.slice(0, 6) as category}
-                  <span class="product-pill">{category.name}</span>
-                {/each}
-              </div>
-            </section>
-
-            <section class="panel-block">
-              <span class="panel-label">Recent papers</span>
-              <ul class="latest-list">
-                {#if latestPapers.length > 0}
-                  {#each latestPapers as paper}
-                    <li>
-                      <a class="latest-link" href={`/papers/${paper.slug}`}>
-                        <span>{paper.title}</span>
-                      </a>
-                    </li>
-                  {/each}
-                {:else}
-                  <li class="latest-empty">No published papers yet.</li>
-                {/if}
-              </ul>
-            </section>
-          </div>
-        </div>
-      </aside>
-    </BlurFade>
-  </div>
-
-  <div class="shell-inner-pad">
-    <div class="metric-grid">
-      {#each proofMetrics as metric, index}
-        <BlurFade delay={0.25 + index * 0.05}>
-          <article class="product-surface product-surface--soft metric-card">
-            <span class="metric-value">{metric.value}</span>
-            <span class="metric-label">{metric.label}</span>
-          </article>
-        </BlurFade>
-      {/each}
-    </div>
-  </div>
-</section>
+  {#snippet after()}
+    <ClearProofStrip items={proofMetrics} ariaLabel="Research proof artifacts" />
+  {/snippet}
+</ClearPageSection>
 
 <section class="track-section">
   <div class="shell-inner-pad">
@@ -347,36 +302,28 @@
 </section>
 
 <style>
-  .hero-page,
   .track-section,
   .bridge-section,
   .cta-section {
     padding-block: clamp(3.5rem, 8vw, 6rem);
   }
 
-  .hero-page {
-    padding-top: clamp(5.5rem, 10vw, 7rem);
+  .clear-note {
+    margin: 0;
+    max-width: 36rem;
+    color: var(--color-clear-grey, #636363);
+    font-size: 0.94rem;
+    line-height: 1.55;
   }
 
-  .hero-layout {
-    display: grid;
-    grid-template-columns: minmax(0, 1.02fr) minmax(0, 0.98fr);
-    gap: clamp(2rem, 4vw, 3.5rem);
-    align-items: center;
-  }
-
-  .hero-copy,
-  .panel-stack,
   .section-lead,
   .cta-panel {
     display: grid;
     gap: 1rem;
   }
 
-  .hero-title,
   .section-lead h2,
-  .cta-panel h2,
-  .research-panel h2 {
+  .cta-panel h2 {
     margin: 0;
     font-size: clamp(2.6rem, 5vw, 4.75rem);
     line-height: 0.96;
@@ -384,15 +331,8 @@
     color: var(--color-fg-primary);
   }
 
-  .research-panel h2 {
-    font-size: clamp(1.9rem, 2.8vw, 2.7rem);
-    line-height: 1.02;
-  }
-
-  .hero-detail,
   .section-lead p,
   .cta-panel p,
-  .research-panel p,
   .track-card p,
   .bridge-card p {
     margin: 0;
@@ -412,30 +352,6 @@
     justify-content: center;
   }
 
-  .hero-note {
-    margin: 0;
-    color: var(--color-fg-muted);
-    font-size: 0.92rem;
-    letter-spacing: 0.03em;
-    text-transform: uppercase;
-  }
-
-  .research-panel {
-    height: 100%;
-  }
-
-  .panel-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 1rem;
-  }
-
-  .panel-block {
-    display: grid;
-    gap: 0.75rem;
-  }
-
-  .panel-label,
   .track-tag,
   .bridge-eyebrow,
   .bridge-link {
@@ -447,86 +363,10 @@
     color: var(--color-fg-muted);
   }
 
-  .panel-command {
-    margin: 0;
-    padding: 1rem 1.05rem;
-    border-radius: 18px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    background: rgba(255, 255, 255, 0.03);
-    color: var(--color-fg-primary);
-    font-family: var(--font-mono);
-    font-size: 0.9rem;
-    line-height: 1.7;
-  }
-
-  .latest-list {
-    display: grid;
-    gap: 0.7rem;
-    list-style: none;
-    margin: 0;
-    padding: 0;
-  }
-
-  .latest-link {
-    display: block;
-    padding: 0.95rem 1rem;
-    border-radius: 18px;
-    border: 1px solid rgba(255, 255, 255, 0.07);
-    background: rgba(255, 255, 255, 0.025);
-    color: var(--color-fg-primary);
-    font-size: 0.95rem;
-    line-height: 1.45;
-    text-decoration: none;
-    opacity: 1;
-    transition:
-      transform var(--duration-micro) var(--ease-standard),
-      border-color var(--duration-micro) var(--ease-standard),
-      background var(--duration-micro) var(--ease-standard);
-  }
-
-  .latest-link:hover {
-    opacity: 1;
-    transform: translateY(-1px);
-    border-color: rgba(255, 255, 255, 0.16);
-    background: rgba(255, 255, 255, 0.05);
-  }
-
-  .latest-empty {
-    color: var(--color-fg-muted);
-    font-size: 0.9rem;
-    line-height: 1.6;
-  }
-
-  .metric-grid,
   .track-grid,
   .bridge-grid {
     display: grid;
     gap: 1rem;
-  }
-
-  .metric-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    margin-top: clamp(1.8rem, 4vw, 2.5rem);
-  }
-
-  .metric-card {
-    display: grid;
-    gap: 0.5rem;
-    min-height: 10rem;
-    align-content: end;
-  }
-
-  .metric-value {
-    font-size: clamp(2rem, 4vw, 3rem);
-    line-height: 1;
-    letter-spacing: -0.05em;
-    color: var(--color-fg-primary);
-  }
-
-  .metric-label {
-    color: var(--color-fg-muted);
-    font-size: 0.92rem;
-    line-height: 1.6;
   }
 
   .section-lead {
@@ -598,8 +438,6 @@
   }
 
   @media (max-width: 1100px) {
-    .hero-layout,
-    .metric-grid,
     .track-grid,
     .bridge-grid {
       grid-template-columns: 1fr;
@@ -607,11 +445,6 @@
   }
 
   @media (max-width: 720px) {
-    .panel-grid {
-      grid-template-columns: 1fr;
-    }
-
-    .hero-title,
     .section-lead h2,
     .cta-panel h2 {
       line-height: 1.02;

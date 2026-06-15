@@ -1,6 +1,43 @@
 <script lang="ts">
-  import { SEO, NewsletterSignup, PropertyFunnel } from '@create-something/canon';
-  import { AnimatedGridPattern, BlurFade, ShimmerButton } from '@create-something/canon/magicui';
+  import {
+    Button,
+    ClearCardGrid,
+    ClearPageSection,
+    ClearProofStrip,
+    SEO,
+    NewsletterSignup,
+    PropertyFunnel,
+    type ClearCardItem
+  } from '@create-something/canon';
+  import { BlurFade } from '@create-something/canon/magicui';
+
+  const proofMetrics = [
+    { value: 'Canon', label: 'principles that guide judgment' },
+    { value: 'Masters', label: 'reference points for quality' },
+    { value: 'Standards', label: 'operating rules for the work' },
+    { value: 'Voice', label: 'language that keeps decisions clear' }
+  ];
+
+  const heroSignals: ClearCardItem[] = [
+    {
+      eyebrow: 'Principle',
+      icon: 'check',
+      title: 'Less, but better',
+      detail: 'The canon turns taste into constraints a team can reuse.'
+    },
+    {
+      eyebrow: 'Standard',
+      icon: 'document',
+      title: 'Rules before ornament',
+      detail: 'Decisions should leave behind language, standards, and examples.'
+    },
+    {
+      eyebrow: 'Handoff',
+      icon: 'arrow-right',
+      title: 'Philosophy into work',
+      detail: 'Principles connect back into research, runtime practice, and delivery.'
+    }
+  ];
 </script>
 
 <SEO
@@ -11,43 +48,34 @@
   propertyName="ltd"
 />
 
-<!-- Hero -->
-<section class="hero relative overflow-hidden pt-24 pb-32 px-6">
-  <div class="absolute inset-0 z-0 pointer-events-none overflow-hidden">
-    <AnimatedGridPattern
-      numSquares={25}
-      maxOpacity={0.08}
-      duration={4}
-      repeatDelay={2}
-      width={60}
-      height={60}
-      class="hero-animated-grid"
+<ClearPageSection
+  variant="hero"
+  layout="split"
+  titleLevel="h1"
+  eyebrow="CREATE SOMETHING .ltd"
+  title="A canon for decisions that earn their place."
+  description="CREATE SOMETHING .ltd turns philosophy, standards, voice, and patterns into practical judgment for building less, but better."
+>
+  {#snippet actions()}
+    <Button href="/masters">Meet The Masters</Button>
+    <Button href="/ethos" variant="secondary">Read The Ethos</Button>
+  {/snippet}
+
+  <p class="clear-note">Principles, standards, and language for work that has to hold up.</p>
+
+  {#snippet aside()}
+    <ClearCardGrid
+      items={heroSignals}
+      columns={1}
+      density="compact"
+      ariaLabel="Canon operating signals"
     />
-  </div>
-  <div class="max-w-4xl mx-auto text-center relative z-10">
-    <BlurFade delay={0}>
-      <p class="eyebrow mb-6">Design Philosophy</p>
-    </BlurFade>
+  {/snippet}
 
-    <BlurFade delay={0.1}>
-      <h1 class="mb-8">Less, But Better</h1>
-    </BlurFade>
-
-    <BlurFade delay={0.2}>
-      <p class="hero-text mb-12 max-w-2xl mx-auto leading-relaxed">
-        Design principles that help you make better decisions. Learn from Dieter Rams, Mies van der
-        Rohe, and other masters who shaped how we think about quality.
-      </p>
-    </BlurFade>
-
-    <BlurFade delay={0.3}>
-      <div class="flex flex-col sm:flex-row gap-4 justify-center items-center relative z-20">
-        <ShimmerButton href="/masters">Meet the Masters</ShimmerButton>
-        <a href="/ethos" class="button-secondary"> Our Approach </a>
-      </div>
-    </BlurFade>
-  </div>
-</section>
+  {#snippet after()}
+    <ClearProofStrip items={proofMetrics} ariaLabel="Canon proof artifacts" />
+  {/snippet}
+</ClearPageSection>
 
 <!-- Manifesto: Breathing Negative Space
      Typography should demonstrate the principle it articulates.
@@ -188,33 +216,23 @@
 />
 
 <style>
-  :global(.hero-animated-grid) {
-    mask-image: radial-gradient(600px circle at 50% 35%, white, transparent);
-    -webkit-mask-image: radial-gradient(600px circle at 50% 35%, white, transparent);
+  .clear-note {
+    margin: 0;
+    max-width: 36rem;
+    color: var(--color-clear-grey, #636363);
+    font-size: 0.94rem;
+    line-height: 1.55;
   }
 
   /* ==========================================================================
 	   TYPOGRAPHY: Commanding presence for the philosophical foundation
 	   ========================================================================== */
 
-  h1 {
-    font-size: var(--text-display);
-    font-weight: var(--font-bold);
-    letter-spacing: -0.02em;
-    line-height: 1.1;
-    color: var(--color-fg-primary);
-  }
-
   .eyebrow {
     font-size: var(--text-body-sm);
     text-transform: uppercase;
     letter-spacing: 0.1em;
     color: var(--color-fg-tertiary);
-  }
-
-  .hero-text {
-    font-size: var(--text-h2);
-    color: var(--color-fg-secondary);
   }
 
   /* Removed .btn-secondary styles as we use .button-secondary from canon */
