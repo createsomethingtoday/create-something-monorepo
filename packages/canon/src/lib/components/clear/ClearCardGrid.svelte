@@ -15,15 +15,28 @@
 		items: ClearCardItem[];
 		ariaLabel?: string;
 		columns?: 1 | 2 | 3 | 4;
+		density?: 'standard' | 'compact';
 	}
 
-	let { items, ariaLabel = 'Clear communication cards', columns = 3 }: Props = $props();
+	let {
+		items,
+		ariaLabel = 'Clear communication cards',
+		columns = 3,
+		density = 'standard'
+	}: Props = $props();
 </script>
 
-<div class={`clear-card-grid clear-card-grid--${columns}`} aria-label={ariaLabel}>
+<div
+	class={`clear-card-grid clear-card-grid--${columns} clear-card-grid--${density}`}
+	aria-label={ariaLabel}
+>
 	{#each items as item}
 		{#if item.href}
-			<a class="clear-card-grid__card" href={item.href}>
+			<a
+				class="clear-card-grid__card"
+				class:clear-card-grid__card--has-icon={item.icon}
+				href={item.href}
+			>
 				{#if item.icon || item.eyebrow}
 					<div class="clear-card-grid__meta">
 						{#if item.icon}
@@ -47,7 +60,7 @@
 				{/if}
 			</a>
 		{:else}
-			<article class="clear-card-grid__card">
+			<article class="clear-card-grid__card" class:clear-card-grid__card--has-icon={item.icon}>
 				{#if item.icon || item.eyebrow}
 					<div class="clear-card-grid__meta">
 						{#if item.icon}
@@ -182,6 +195,70 @@
 	.clear-card-grid__card li {
 		padding-top: 0.42rem;
 		border-top: 1px solid var(--color-clear-border, #e1e1e1);
+	}
+
+	.clear-card-grid--compact {
+		gap: 0.65rem;
+	}
+
+	.clear-card-grid--compact .clear-card-grid__card {
+		gap: 0.48rem;
+		min-height: auto;
+		padding: 0.92rem;
+	}
+
+	.clear-card-grid--compact .clear-card-grid__card--has-icon {
+		grid-template-columns: 1.9rem minmax(0, 1fr);
+		column-gap: 0.72rem;
+		row-gap: 0.24rem;
+	}
+
+	.clear-card-grid--compact .clear-card-grid__meta {
+		gap: 0.5rem;
+		min-height: 1.9rem;
+	}
+
+	.clear-card-grid--compact .clear-card-grid__card--has-icon .clear-card-grid__meta {
+		display: contents;
+		min-height: 0;
+	}
+
+	.clear-card-grid--compact .clear-card-grid__icon {
+		width: 1.9rem;
+		height: 1.9rem;
+	}
+
+	.clear-card-grid--compact .clear-card-grid__card--has-icon .clear-card-grid__icon {
+		grid-column: 1;
+		grid-row: 1 / span 3;
+	}
+
+	.clear-card-grid--compact .clear-card-grid__eyebrow {
+		font-size: 0.68rem;
+	}
+
+	.clear-card-grid--compact .clear-card-grid__card--has-icon .clear-card-grid__eyebrow {
+		grid-column: 2;
+		grid-row: 1;
+		align-self: end;
+		padding-top: 0.05rem;
+	}
+
+	.clear-card-grid--compact .clear-card-grid__card--has-icon strong,
+	.clear-card-grid--compact .clear-card-grid__card--has-icon p,
+	.clear-card-grid--compact .clear-card-grid__card--has-icon ul {
+		grid-column: 2;
+	}
+
+	.clear-card-grid--compact .clear-card-grid__card strong {
+		font-size: 1.05rem;
+		line-height: 1.2;
+	}
+
+	.clear-card-grid--compact .clear-card-grid__card p,
+	.clear-card-grid--compact .clear-card-grid__card li {
+		font-size: 0.9rem;
+		line-height: 1.43;
 	}
 
 	@media (max-width: 1100px) {

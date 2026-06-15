@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { SEO, PrivacyPolicyContent } from '@create-something/canon';
+  import { ClearPageSection, PrivacyPolicyContent, SEO } from '@create-something/canon';
 </script>
 
 <SEO
@@ -9,59 +9,18 @@
   noindex={true}
 />
 
-<section class="relative pt-32 pb-16 px-6">
-  <div class="shell-inner">
-    <div class="space-y-6 animate-reveal">
-      <h1 class="page-title">
-        Privacy Policy
-      </h1>
-      <p class="date-text">
-        Last updated: January 29, 2026
-      </p>
-    </div>
-  </div>
-</section>
-
-<section class="pb-20 px-6">
-  <div class="shell-inner">
+<ClearPageSection
+  variant="hero"
+  titleLevel="h1"
+  eyebrow="Privacy"
+  title="First-party analytics, no ad pixels."
+  description="CREATE SOMETHING uses privacy-conscious measurement to understand site performance and lead quality without selling behavior or installing ad-network trackers."
+>
+  {#snippet after()}
     <PrivacyPolicyContent
       property="agency"
       domain="createsomething.agency"
       lastUpdated="January 29, 2026"
     />
-  </div>
-</section>
-
-<style>
-  .page-title {
-    font-size: var(--text-h1);
-    font-weight: 700;
-    color: var(--color-fg-primary);
-  }
-
-  .date-text {
-    font-size: var(--text-body-lg);
-    color: var(--color-fg-secondary);
-  }
-
-  .animate-reveal {
-    opacity: 0;
-    transform: translateY(20px);
-    animation: reveal var(--duration-standard) var(--ease-standard) forwards;
-  }
-
-  @keyframes reveal {
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .animate-reveal {
-      animation: none;
-      opacity: 1;
-      transform: none;
-    }
-  }
-</style>
+  {/snippet}
+</ClearPageSection>

@@ -263,7 +263,12 @@
   {/snippet}
 
   {#snippet aside()}
-    <ClearCardGrid items={heroSignals} columns={1} ariaLabel="Workflow service signals" />
+    <ClearCardGrid
+      items={heroSignals}
+      columns={1}
+      density="compact"
+      ariaLabel="Workflow service signals"
+    />
   {/snippet}
 </ClearPageSection>
 

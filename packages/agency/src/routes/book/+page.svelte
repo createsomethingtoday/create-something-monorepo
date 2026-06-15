@@ -399,6 +399,7 @@
 			<ClearCardGrid
 				items={mappingSessionOutcomes}
 				columns={1}
+				density="compact"
 				ariaLabel="Mapping session outcomes"
 			/>
 		{/snippet}
