@@ -243,8 +243,11 @@
 
 <!-- Newsletter CTA -->
 <NewsletterSignup
-  headline="Canon updates and new masters"
-  description="The design philosophy newsletter."
+  eyebrow="Canon letter"
+  headline="Keep the canon close to the work."
+  description="A quiet note when a new master, standard, or operating pattern is worth carrying into the next decision."
+  actionLabel="Get the next canon note."
+  note="No noise. Just the principles, language, and artifacts that make the work easier to defend."
   source="ltd-homepage"
 />
 
