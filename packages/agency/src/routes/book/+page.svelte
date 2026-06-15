@@ -1,12 +1,17 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
-	import { HeroSignalField, SEO } from '@create-something/canon';
+	import {
+		Button,
+		ClearCardGrid,
+		ClearPageSection,
+		SEO,
+		type ClearCardItem
+	} from '@create-something/canon';
 	import { getAnalytics } from '@create-something/canon/analytics';
 	import { DatePicker } from '@create-something/canon/domains/agency';
 	import { TimeSlotPicker } from '@create-something/canon/domains/agency';
 	import { BookingForm } from '@create-something/canon/domains/agency';
 	import { BookingConfirmation } from '@create-something/canon/domains/agency';
-	import BookingSignalIcon from '$lib/components/BookingSignalIcon.svelte';
 	import {
 		AGENCY_MARKETING_COPY_EXPERIMENT,
 		getAgencyMarketingExperimentMetadata
@@ -86,68 +91,80 @@
 	const bookingPath = browser ? `${window.location.pathname}${window.location.search}` : '/book';
 	const initialLane = normalizeLane(bookingUrlParams.get('lane')) ?? 'not_sure';
 
-	const mappingSessionOutcomes = [
+	const mappingSessionOutcomes: ClearCardItem[] = [
 		{
-			value: 'Handoff',
-			label: 'Handoff map',
-			icon: 'handoff-map',
-			description: 'Objects, owners, source systems, handoffs, and failure points.'
+			eyebrow: 'Handoff',
+			icon: 'folder',
+			title: 'Handoff map',
+			detail: 'Objects, owners, source systems, handoffs, and failure points.'
 		},
 		{
-			value: 'Boundary',
-			label: 'Ownership boundary',
-			icon: 'ownership-boundary',
-			description: 'What can run, who owns it, and where vendor responsibility stops.'
+			eyebrow: 'Boundary',
+			icon: 'user',
+			title: 'Ownership boundary',
+			detail: 'What can run, who owns it, and where vendor responsibility stops.'
 		},
 		{
-			value: 'Rules',
-			label: 'Decision rules',
-			icon: 'decision-rules',
-			description: 'Auto-allowed, approval-needed, and blocked paths with reasons.'
+			eyebrow: 'Rules',
+			icon: 'check',
+			title: 'Decision rules',
+			detail: 'Auto-allowed, approval-needed, and blocked paths with reasons.'
 		},
 		{
-			value: 'Path',
-			label: 'First safe path',
-			icon: 'first-safe-path',
-			description: 'The smallest service lane that adds capacity without hiding risk.'
+			eyebrow: 'Path',
+			icon: 'arrow-right',
+			title: 'First safe path',
+			detail: 'The smallest service lane that adds capacity without hiding risk.'
 		}
-	] as const;
+	];
 
-	const mappingSessionPrep = [
+	const mappingSessionPrep: ClearCardItem[] = [
 		{
-			label: 'Workflow',
-			icon: 'workflow-brief',
+			eyebrow: 'Workflow',
+			icon: 'folder',
+			title: 'One real workflow',
 			detail: 'One real workflow your team wants out of manual coordination.'
 		},
 		{
-			label: 'Systems',
-			icon: 'systems-stack',
+			eyebrow: 'Systems',
+			icon: 'settings',
+			title: 'Accounts and tools',
 			detail: 'The accounts, tools, or systems involved in the handoff.'
 		},
 		{
-			label: 'Approver',
-			icon: 'approver-seat',
+			eyebrow: 'Approver',
+			icon: 'user',
+			title: 'Decision owner',
 			detail: 'The person who can approve risk, scope, or access.'
 		},
 		{
-			label: 'No secrets',
-			icon: 'no-secrets',
+			eyebrow: 'No secrets',
+			icon: 'warning',
+			title: 'No credentials in notes',
 			detail: 'No secrets, tokens, passwords, or API keys in booking notes.'
 		}
-	] as const;
+	];
 
-	const sessionFitSignals = [
+	const sessionFitSignals: ClearCardItem[] = [
 		{
-			label: 'Book this when',
-			items: [
+			eyebrow: 'Book this when',
+			icon: 'success',
+			title: 'The workflow has visible drag',
+			detail:
+				'Use the session when one workflow is concrete enough to map and important enough to control.',
+			points: [
 				'One workflow is creating visible drag, rework, or missed handoffs.',
 				'Your team needs a clear owner, approval boundary, and next build path.',
 				'You want receipts the team can inspect after the call.'
 			]
 		},
 		{
-			label: 'Use a different path when',
-			items: [
+			eyebrow: 'Use a different path when',
+			icon: 'warning',
+			title: 'The need is not a controlled workflow',
+			detail:
+				'Generic automation brainstorming, vendor demos, or open-ended admin coverage are different lanes.',
+			points: [
 				'You only need a vendor demo or a generic automation brainstorm.',
 				'No workflow owner can join or make the next operating decision.',
 				'You need ongoing admin coverage rather than a scoped workflow build.'
@@ -365,471 +382,216 @@
 />
 
 <main class="booking-page">
-	<section class="booking-stage" aria-labelledby="booking-title">
-		<HeroSignalField variant="agency" focus="right" />
+	<ClearPageSection
+		variant="hero"
+		layout="split"
+		titleLevel="h1"
+		eyebrow="Workflow mapping session"
+		title="Map the workflow your team needs to trust."
+		description="Bring the handoff with the most drag, risk, or manual rescue. You leave with the objects named, actions scoped, decision states, and receipts that make the first safe service path visible."
+	>
+		{#snippet actions()}
+			<Button href="#booking-flow">Choose a time</Button>
+			<Button href="/services" variant="secondary">See How I Work</Button>
+		{/snippet}
 
-		<div class="booking-stage-inner">
-			<header class="booking-header">
-				<p class="booking-kicker">Workflow mapping session</p>
-				<h1 id="booking-title" class="booking-title">Map the workflow your team needs to trust.</h1>
-				<p class="booking-subtitle">
-					Bring the handoff with the most drag, risk, or manual rescue. You leave with the
-					objects named, actions scoped, decision states, and receipts that make the first safe
-					service path visible.
-				</p>
-			</header>
+		{#snippet aside()}
+			<ClearCardGrid
+				items={mappingSessionOutcomes}
+				columns={1}
+				ariaLabel="Mapping session outcomes"
+			/>
+		{/snippet}
+	</ClearPageSection>
 
-			<div class="session-outcomes" aria-label="Mapping session outcomes">
-				{#each mappingSessionOutcomes as outcome}
-					<article>
-						<div class="session-outcome-icon" aria-hidden="true">
-							<BookingSignalIcon name={outcome.icon} />
-						</div>
-						<div class="session-outcome-copy">
-							<span>{outcome.value}</span>
-							<h2>{outcome.label}</h2>
-							<p>{outcome.description}</p>
-						</div>
-					</article>
+	<ClearPageSection
+		variant="white"
+		eyebrow="Bring enough context"
+		title="Bring context, not secrets."
+		description="The session works best when we can see the real handoff and decide what your team keeps. Credentials move through Infisical or the approved runtime path only after scope is clear."
+	>
+		{#snippet after()}
+			<ClearCardGrid
+				items={mappingSessionPrep}
+				columns={4}
+				ariaLabel="What to bring to the mapping session"
+			/>
+		{/snippet}
+	</ClearPageSection>
+
+	<ClearPageSection
+		variant="soft"
+		eyebrow="Fit check"
+		title="Book when the workflow is ready to become an operating path."
+		description="The mapping session is for a real handoff with an owner, risk, and next decision. It is not a generic automation brainstorm."
+	>
+		{#snippet after()}
+			<ClearCardGrid items={sessionFitSignals} columns={2} ariaLabel="Mapping session fit" />
+		{/snippet}
+	</ClearPageSection>
+
+	<section id="booking-flow" class="booking-flow" aria-label="Booking flow">
+		<header class="booking-flow__header">
+			<span>Choose a time</span>
+			<h2>Start with the first available mapping session.</h2>
+		</header>
+
+		{#if step !== 'confirm'}
+			<nav class="progress" aria-label="Booking progress">
+				{#each steps.slice(0, 3) as s, i}
+					<div
+						class="progress-step"
+						class:active={i === currentStepIndex}
+						class:complete={i < currentStepIndex}
+						aria-current={i === currentStepIndex ? 'step' : undefined}
+					>
+						<span class="step-number">{i + 1}</span>
+						<span class="step-label">{s.label}</span>
+					</div>
+					{#if i < 2}
+						<div class="progress-line" class:complete={i < currentStepIndex}></div>
+					{/if}
 				{/each}
-			</div>
-		</div>
-	</section>
-
-	<section class="session-prep" aria-label="What to bring to the mapping session">
-		<div>
-			<span>Bring enough context</span>
-			<p>
-				The session works best when we can see the real handoff and decide what your team
-				keeps. Credentials move through Infisical or the approved runtime path only after
-				scope is clear.
-			</p>
-		</div>
-		<ul>
-			{#each mappingSessionPrep as item}
-				<li>
-					<div class="prep-icon" aria-hidden="true">
-						<BookingSignalIcon name={item.icon} />
-					</div>
-					<div class="prep-copy">
-						<span>{item.label}</span>
-						<p>{item.detail}</p>
-					</div>
-				</li>
-			{/each}
-		</ul>
-	</section>
-
-	<section class="session-fit" aria-label="Mapping session fit">
-		{#each sessionFitSignals as signal}
-			<article>
-				<h2>{signal.label}</h2>
-				<ul>
-					{#each signal.items as item}
-						<li>{item}</li>
-					{/each}
-				</ul>
-			</article>
-		{/each}
-	</section>
-
-	<!-- Progress indicator -->
-	{#if step !== 'confirm'}
-		<nav class="progress" aria-label="Booking progress">
-			{#each steps.slice(0, 3) as s, i}
-				<div
-					class="progress-step"
-					class:active={i === currentStepIndex}
-					class:complete={i < currentStepIndex}
-					aria-current={i === currentStepIndex ? 'step' : undefined}
-				>
-					<span class="step-number">{i + 1}</span>
-					<span class="step-label">{s.label}</span>
-				</div>
-				{#if i < 2}
-					<div class="progress-line" class:complete={i < currentStepIndex}></div>
-				{/if}
-			{/each}
-		</nav>
-	{/if}
-
-	<div class="booking-content">
-		{#if step === 'date'}
-			<section class="step-content">
-				<h2 class="step-title">Select a date</h2>
-				<DatePicker
-					{selectedDate}
-					onDateSelect={handleDateSelect}
-					{availableDates}
-					loading={loadingSlots}
-				/>
-				{#if error}
-					<p class="error-message">{error}</p>
-				{/if}
-			</section>
-		{:else if step === 'time'}
-			<section class="step-content">
-				<h2 class="step-title">Select a time</h2>
-				<TimeSlotPicker
-					slots={slotsForSelectedDate}
-					{selectedSlot}
-					onSlotSelect={handleSlotSelect}
-					loading={loadingSlots}
-					{timezone}
-				/>
-				<button type="button" class="back-link" onclick={handleBack}>
-					← Choose a different date
-				</button>
-			</section>
-		{:else if step === 'details'}
-			<section class="step-content">
-				<h2 class="step-title">Your details and operator lane</h2>
-				<div class="lane-intake" role="radiogroup" aria-labelledby="lane-intake-title">
-					<p id="lane-intake-title" class="lane-intake-title">Which service path should we test first?</p>
-					<p class="lane-intake-helper">
-						This helps me prep the session around the real operating boundary: what can run,
-						what needs approval, and what should stop with a reason.
-					</p>
-					<div class="lane-options">
-						{#each laneOptions as lane}
-							<label class="lane-option" class:selected={selectedLane === lane.value}>
-								<input
-									type="radio"
-									name="service-lane"
-									value={lane.value}
-									bind:group={selectedLane}
-								/>
-								<span class="lane-option-text">
-									<span class="lane-option-label">{lane.label}</span>
-									<span class="lane-option-description">{lane.description}</span>
-								</span>
-							</label>
-						{/each}
-					</div>
-				</div>
-				{#if selectedSlot}
-					<BookingForm
-						{selectedSlot}
-						{timezone}
-						onSubmit={handleFormSubmit}
-						onBack={handleBack}
-						loading={submitting}
-						{error}
-					/>
-				{/if}
-			</section>
-		{:else if step === 'confirm' && confirmedEvent}
-			<section class="step-content">
-				<BookingConfirmation event={confirmedEvent} {timezone} />
-			</section>
+			</nav>
 		{/if}
-	</div>
 
-	<!-- Fallback link -->
-	{#if step !== 'confirm'}
-		<footer class="booking-footer">
-			<p class="fallback-text">
-				Having trouble? <a href="https://savvycal.com/createsomething/together" target="_blank" rel="noopener noreferrer" class="fallback-link">Book directly on SavvyCal →</a>
-			</p>
-		</footer>
-	{/if}
+		<div class="booking-content">
+			{#if step === 'date'}
+				<section class="step-content">
+					<h2 class="step-title">Select a date</h2>
+					<DatePicker
+						{selectedDate}
+						onDateSelect={handleDateSelect}
+						{availableDates}
+						loading={loadingSlots}
+					/>
+					{#if error}
+						<p class="error-message">{error}</p>
+					{/if}
+				</section>
+			{:else if step === 'time'}
+				<section class="step-content">
+					<h2 class="step-title">Select a time</h2>
+					<TimeSlotPicker
+						slots={slotsForSelectedDate}
+						{selectedSlot}
+						onSlotSelect={handleSlotSelect}
+						loading={loadingSlots}
+						{timezone}
+					/>
+					<button type="button" class="back-link" onclick={handleBack}>
+						Choose a different date
+					</button>
+				</section>
+			{:else if step === 'details'}
+				<section class="step-content">
+					<h2 class="step-title">Your details and operator lane</h2>
+					<div class="lane-intake" role="radiogroup" aria-labelledby="lane-intake-title">
+						<p id="lane-intake-title" class="lane-intake-title">Which service path should we test first?</p>
+						<p class="lane-intake-helper">
+							This helps me prep the session around the real operating boundary: what can run,
+							what needs approval, and what should stop with a reason.
+						</p>
+						<div class="lane-options">
+							{#each laneOptions as lane}
+								<label class="lane-option" class:selected={selectedLane === lane.value}>
+									<input
+										type="radio"
+										name="service-lane"
+										value={lane.value}
+										bind:group={selectedLane}
+									/>
+									<span class="lane-option-text">
+										<span class="lane-option-label">{lane.label}</span>
+										<span class="lane-option-description">{lane.description}</span>
+									</span>
+								</label>
+							{/each}
+						</div>
+					</div>
+					{#if selectedSlot}
+						<BookingForm
+							{selectedSlot}
+							{timezone}
+							onSubmit={handleFormSubmit}
+							onBack={handleBack}
+							loading={submitting}
+							{error}
+						/>
+					{/if}
+				</section>
+			{:else if step === 'confirm' && confirmedEvent}
+				<section class="step-content">
+					<BookingConfirmation event={confirmedEvent} {timezone} />
+				</section>
+			{/if}
+		</div>
+
+		{#if step !== 'confirm'}
+			<footer class="booking-footer">
+				<p class="fallback-text">
+					Having trouble? <a href="https://savvycal.com/createsomething/together" target="_blank" rel="noopener noreferrer" class="fallback-link">Book directly on SavvyCal</a>
+				</p>
+			</footer>
+		{/if}
+	</section>
 </main>
 
 <style>
 	.booking-page {
-		max-width: var(--content-width-xl);
-		margin: 0 auto;
-		padding: clamp(1.1rem, 2.4vw, 2rem) var(--space-md);
-		min-height: 100vh;
+		background: var(--color-clear-panel, #ffffff);
+		color: var(--color-clear-onyx, #0a0e19);
 	}
 
-	.booking-stage {
-		position: relative;
+	.booking-flow {
+		--color-bg-surface: var(--color-clear-panel, #ffffff);
+		--color-bg-muted: var(--color-clear-porcelain, #f9f9f9);
+		--color-fg-primary: var(--color-clear-onyx, #0a0e19);
+		--color-fg-secondary: #2f3542;
+		--color-fg-tertiary: var(--color-clear-grey, #636363);
+		--color-fg-muted: var(--color-clear-grey-quiet, #818181);
+		--color-border-default: var(--color-clear-border, #e1e1e1);
+		--color-border-emphasis: var(--color-clear-border-strong, #cecece);
+		--color-hover: rgba(10, 14, 25, 0.045);
+		--color-success: var(--color-clear-moss, #1e3c2c);
+		width: min(var(--content-width-clear, 85rem), calc(100% - 2.5rem));
+		margin-inline: auto;
+		padding-block: 4rem;
+		scroll-margin-top: 5.25rem;
+	}
+
+	.booking-flow__header {
 		display: grid;
-		align-items: end;
-		min-height: clamp(21.5rem, 34vw, 27rem);
-		margin-bottom: clamp(1rem, 2vw, 1.45rem);
-		overflow: clip;
-		isolation: isolate;
-	}
-
-	.booking-stage::after {
-		content: '';
-		position: absolute;
-		inset: 0;
-		z-index: 1;
-		pointer-events: none;
-		background:
-			linear-gradient(
-				180deg,
-				rgba(3, 3, 4, 0.92) 0%,
-				rgba(3, 3, 4, 0.56) 18%,
-				rgba(3, 3, 4, 0.2) 42%,
-				rgba(3, 3, 4, 0.38) 78%,
-				rgba(3, 3, 4, 0.94) 100%
-			),
-			linear-gradient(
-				90deg,
-				rgba(3, 3, 4, 0.96) 0%,
-				rgba(3, 3, 4, 0.72) 30%,
-				rgba(3, 3, 4, 0.24) 58%,
-				rgba(3, 3, 4, 0.58) 100%
-			);
-	}
-
-	.booking-stage :global(.hero-signal-field) {
-		inset: -2.5rem -4.5rem -3rem -2rem;
-		opacity: 0.56;
-	}
-
-	.booking-stage-inner {
-		position: relative;
-		z-index: 2;
-		display: grid;
-		gap: clamp(1.1rem, 2.5vw, 1.7rem);
-		width: 100%;
-		padding: clamp(0.9rem, 2.6vw, 1.9rem) 0 clamp(0.25rem, 1vw, 0.75rem);
-	}
-
-	.booking-header {
+		justify-items: center;
+		gap: 0.6rem;
+		margin-bottom: 1.5rem;
 		text-align: center;
-		margin: 0;
 	}
 
-	.booking-kicker {
-		margin: 0 0 var(--space-2xs);
-		color: var(--color-fg-muted);
-		font-size: var(--text-caption);
-		font-weight: var(--font-medium);
-		text-transform: uppercase;
-		letter-spacing: 0.08em;
-	}
-
-	.booking-title {
-		font-size: var(--text-h1);
-		font-weight: var(--font-bold);
-		color: var(--color-fg-primary);
-		margin-bottom: var(--space-xs);
-	}
-
-	.booking-subtitle {
-		font-size: var(--text-body);
-		color: var(--color-fg-tertiary);
-		max-width: 760px;
-		margin: 0 auto;
-		line-height: 1.65;
-	}
-
-	.session-outcomes {
-		display: grid;
-		grid-template-columns: repeat(4, minmax(0, 1fr));
-		gap: var(--space-sm);
-		margin: 0;
-	}
-
-	.session-outcomes article {
-		display: grid;
-		grid-template-columns: 3.4rem minmax(0, 1fr);
-		gap: 0.95rem;
+	.booking-flow__header span {
+		display: inline-flex;
+		width: fit-content;
+		min-height: 1.9rem;
 		align-items: center;
-		position: relative;
-		min-height: 6.75rem;
-		padding: 1rem 1.1rem;
-		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-lg);
-		background:
-			linear-gradient(180deg, rgba(255, 255, 255, 0.042), rgba(255, 255, 255, 0.014)),
-			var(--color-bg-surface);
-		overflow: hidden;
-	}
-
-	.session-outcomes article::after {
-		content: '';
-		position: absolute;
-		top: 50%;
-		left: 4.85rem;
-		width: 1.1rem;
-		height: 1px;
-		background: linear-gradient(90deg, rgba(225, 231, 255, 0.18), rgba(255, 255, 255, 0));
-		transform: translateY(-50%);
-		pointer-events: none;
-	}
-
-	.session-outcome-icon {
-		display: grid;
-		place-items: center;
-		width: 3.35rem;
-		height: 3.35rem;
-		--booking-signal-icon-size: 2.18rem;
-		border: 1px solid rgba(225, 231, 255, 0.11);
-		border-radius: 12px;
-		background:
-			linear-gradient(rgba(225, 231, 255, 0.045) 1px, transparent 1px),
-			linear-gradient(90deg, rgba(225, 231, 255, 0.045) 1px, transparent 1px),
-			linear-gradient(180deg, rgba(255, 255, 255, 0.032), rgba(255, 255, 255, 0.012));
-		background-size:
-			11px 11px,
-			11px 11px,
-			auto;
-		box-shadow:
-			inset 0 0 0 1px rgba(255, 255, 255, 0.018),
-			0 10px 22px rgba(0, 0, 0, 0.14);
-	}
-
-	.session-outcome-copy {
-		display: grid;
-		gap: 0.3rem;
-		min-width: 0;
-	}
-
-	.session-outcome-copy span {
-		color: var(--color-fg-muted);
+		padding: 0.36rem 0.62rem;
+		border: 1px solid var(--color-clear-border, #e1e1e1);
+		border-radius: var(--radius-clear-sm, 4px);
+		background: var(--color-clear-panel, #ffffff);
+		color: var(--color-clear-grey, #636363);
 		font-family: var(--font-mono);
-		font-size: 0.72rem;
-		line-height: 1.1;
+		font-size: 0.76rem;
+		font-weight: var(--font-semibold);
 		text-transform: uppercase;
 	}
 
-	.session-outcome-copy h2 {
+	.booking-flow__header h2 {
 		margin: 0;
-		color: var(--color-fg-primary);
-		font-size: 1.02rem;
+		max-width: 16ch;
+		color: var(--color-clear-onyx, #0a0e19);
+		font-size: 2.65rem;
 		font-weight: var(--font-medium);
-		line-height: 1.16;
-	}
-
-	.session-outcome-copy p {
-		margin: 0;
-		color: var(--color-fg-tertiary);
-		font-size: var(--text-caption);
-		line-height: 1.55;
-	}
-
-	.session-prep {
-		display: grid;
-		grid-template-columns: minmax(0, 0.75fr) minmax(0, 1fr);
-		gap: var(--space-md);
-		align-items: start;
-		margin: 0 0 clamp(1.25rem, 3vw, 2rem);
-		padding: var(--space-md);
-		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-lg);
-		background:
-			linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.012)),
-			color-mix(in srgb, var(--color-bg-surface) 78%, transparent);
-	}
-
-	.session-prep > div > span {
-		color: var(--color-fg-primary);
-		font-size: var(--text-body-sm);
-		font-weight: var(--font-medium);
-	}
-
-	.session-prep > div > p {
-		margin: var(--space-2xs) 0 0;
-		color: var(--color-fg-tertiary);
-		font-size: var(--text-body-sm);
-		line-height: 1.58;
-	}
-
-	.session-prep ul {
-		display: grid;
-		grid-template-columns: repeat(2, minmax(0, 1fr));
-		gap: 0.7rem;
-		margin: 0;
-		padding: 0;
-		list-style: none;
-	}
-
-	.session-prep li {
-		display: grid;
-		grid-template-columns: 2.5rem minmax(0, 1fr);
-		gap: 0.7rem;
-		align-items: center;
-		min-height: 4.25rem;
-		padding: 0.72rem;
-		border-top: 1px solid var(--color-border-default);
-		border-radius: var(--radius-md);
-		background: rgba(255, 255, 255, 0.018);
-		color: var(--color-fg-tertiary);
-		font-size: var(--text-caption);
-		line-height: 1.45;
-	}
-
-	.prep-icon {
-		display: grid;
-		place-items: center;
-		width: 2.42rem;
-		height: 2.42rem;
-		--booking-signal-icon-size: 1.58rem;
-		--booking-signal-icon-color: rgba(226, 232, 240, 0.62);
-		border: 1px solid rgba(225, 231, 255, 0.1);
-		border-radius: 10px;
-		background:
-			linear-gradient(rgba(225, 231, 255, 0.04) 1px, transparent 1px),
-			linear-gradient(90deg, rgba(225, 231, 255, 0.04) 1px, transparent 1px),
-			rgba(255, 255, 255, 0.018);
-		background-size:
-			9px 9px,
-			9px 9px,
-			auto;
-	}
-
-	.prep-copy {
-		display: grid;
-		gap: 0.18rem;
-		min-width: 0;
-	}
-
-	.prep-copy span {
-		color: var(--color-fg-primary);
-		font-size: var(--text-caption);
-		font-weight: var(--font-medium);
-		line-height: 1.15;
-	}
-
-	.prep-copy p {
-		margin: 0;
-		color: var(--color-fg-tertiary);
-		font-size: var(--text-caption);
-		line-height: 1.42;
-	}
-
-	.session-fit {
-		display: grid;
-		grid-template-columns: repeat(2, minmax(0, 1fr));
-		gap: var(--space-sm);
-		margin-bottom: clamp(1.25rem, 3vw, 2rem);
-	}
-
-	.session-fit article {
-		padding: var(--space-md);
-		border: 1px solid var(--color-border-default);
-		border-radius: var(--radius-lg);
-		background: var(--color-bg-surface);
-	}
-
-	.session-fit h2 {
-		margin: 0 0 var(--space-sm);
-		color: var(--color-fg-primary);
-		font-size: var(--text-body);
-		font-weight: var(--font-medium);
-	}
-
-	.session-fit ul {
-		display: grid;
-		gap: var(--space-xs);
-		margin: 0;
-		padding: 0;
-		list-style: none;
-	}
-
-	.session-fit li {
-		padding-top: var(--space-2xs);
-		border-top: 1px solid var(--color-border-default);
-		color: var(--color-fg-tertiary);
-		font-size: var(--text-caption);
-		line-height: 1.55;
+		line-height: 1.04;
+		text-wrap: balance;
 	}
 
 	/* Progress indicator */
@@ -889,52 +651,14 @@
 		}
 	}
 
-	@media (max-width: 900px) {
-		.session-outcomes {
-			grid-template-columns: repeat(2, minmax(0, 1fr));
-		}
-
-		.session-fit {
-			grid-template-columns: 1fr;
-		}
-
-		.session-prep {
-			grid-template-columns: 1fr;
-		}
-	}
-
 	@media (max-width: 520px) {
-		.booking-page {
-			padding-top: 1.1rem;
+		.booking-flow {
+			width: min(100% - 1.5rem, var(--content-width-clear, 85rem));
+			padding-block: 2.75rem;
 		}
 
-		.booking-stage {
-			min-height: auto;
-			margin-bottom: 1.25rem;
-		}
-
-		.booking-stage::after {
-			background:
-				linear-gradient(180deg, rgba(3, 3, 4, 0.92), rgba(3, 3, 4, 0.58) 42%, rgba(3, 3, 4, 0.96)),
-				linear-gradient(90deg, rgba(3, 3, 4, 0.92), rgba(3, 3, 4, 0.38), rgba(3, 3, 4, 0.74));
-		}
-
-		.booking-stage :global(.hero-signal-field) {
-			inset: 0 -2.5rem -1.75rem -1rem;
-			opacity: 0.42;
-		}
-
-		.booking-stage-inner {
-			gap: 1rem;
-			padding: 1rem 0 0;
-		}
-
-		.session-outcomes {
-			grid-template-columns: 1fr;
-		}
-
-		.session-prep ul {
-			grid-template-columns: 1fr;
+		.booking-flow__header h2 {
+			font-size: 2.1rem;
 		}
 	}
 
@@ -957,6 +681,10 @@
 		display: flex;
 		flex-direction: column;
 		gap: var(--space-lg);
+		padding: 1.25rem;
+		border: 1px solid var(--color-clear-border, #e1e1e1);
+		border-radius: var(--radius-clear-sm, 4px);
+		background: var(--color-clear-panel, #ffffff);
 	}
 
 	.step-title {

@@ -7,6 +7,7 @@
     ClearReceiptGrid,
     ClearStateRows,
     SEO,
+    type ClearCtaItem,
     type ClearProofItem,
     type ClearReceipt,
     type ClearWorkflowState
@@ -96,6 +97,27 @@
     }
   ];
 
+  const workflowCtaItems: ClearCtaItem[] = [
+    {
+      label: 'Bring',
+      icon: 'folder',
+      title: 'One manual workflow',
+      detail: 'The handoff your team keeps rescuing, checking, or waiting on.'
+    },
+    {
+      label: 'Map',
+      icon: 'settings',
+      title: 'Rules and receipts',
+      detail: 'Objects, actions, approval rules, stop states, and evidence.'
+    },
+    {
+      label: 'Leave',
+      icon: 'check',
+      title: 'A first safe path',
+      detail: 'A scoped plan for where agent capacity can run without hiding risk.'
+    }
+  ];
+
   function workflowIconName(icon: string | undefined): WorkflowSignalIconName {
     if (icon === 'actions' || icon === 'states' || icon === 'receipts') return icon;
     return 'objects';
@@ -178,6 +200,7 @@
     eyebrow="Start with one workflow"
     title={agencyCoreMessaging.workflowCtaHeading}
     description={agencyCoreMessaging.workflowCtaDetail}
+    items={workflowCtaItems}
   >
     {#snippet actions()}
       <Button href={agencyCoreMessaging.workflowMappingSessionHref}>

@@ -31,11 +31,14 @@ export {
   ClearProofStrip,
   ClearStateRows,
   ClearArtifactCard,
+  ClearCardGrid,
   ClearReceiptGrid,
   ClearCtaBand,
   type ClearProofItem,
   type ClearWorkflowState,
-  type ClearReceipt
+  type ClearCardItem,
+  type ClearReceipt,
+  type ClearCtaItem
 } from './clear/index.js';
 
 // Form components
