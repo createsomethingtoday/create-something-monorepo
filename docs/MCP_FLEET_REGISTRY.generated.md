@@ -19,7 +19,7 @@
 | `create-something` | `http` | `https://mcp.createsomething.ltd/mcp` | `direct` | `5` | `core`, `content`, `cs`, `policy_os_only` |
 | `cs-telemetry` | `http` | `https://cs-telemetry-mcp.createsomething.workers.dev/mcp` | `direct` | `10` | `observability`, `telemetry`, `cs`, `policy_os_only` |
 | `half-dozen-youtube-sync` | `http` | `https://youtube.mcp.workway.co/mcp` | `direct` | `0` | `halfdozen`, `youtube`, `workway` |
-| `halfdozen-agent-analyzer-telemetry` | `http` | `https://halfdozen-agent-analyzer-telemetry-mcp.half-dozen.workers.dev/mcp` | `direct` | `10` | `halfdozen`, `agent-analyzer`, `notion`, `observability`, `workway` |
+| `halfdozen-agent-analyzer-telemetry` | `http` | `https://halfdozen-agent-analyzer-telemetry-mcp.half-dozen.workers.dev/mcp` | `direct` | `11` | `halfdozen`, `agent-analyzer`, `notion`, `observability`, `workway` |
 | `halfdozen-blondish-sync-mcp` | `http` | `https://halfdozen-blondish-sync-mcp.createsomething.workers.dev/mcp` | `direct` | `8` | `halfdozen`, `blondish`, `notion`, `tickets`, `sync` |
 | `halfdozen-dm-mcp` | `http` | `https://dm.mcp.workway.co/mcp` | `brokered` | `100` | `halfdozen`, `dm`, `notion`, `drive`, `composio`, `workway` |
 | `halfdozen-gmail-sync-danny` | `http` | `https://gmail.mcp.workway.co/mcp` | `direct` | `0` | `halfdozen`, `gmail`, `workway` |

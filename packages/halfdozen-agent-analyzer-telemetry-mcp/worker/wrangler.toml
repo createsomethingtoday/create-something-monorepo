@@ -11,6 +11,11 @@ enabled = true
 # - MCP_API_KEY: bearer token configured on the Notion Custom Agent MCP connection.
 # Optional operator fallback:
 # - OPERATOR_API_TOKEN
+# Optional Braintrust dual-write:
+# - BRAINTRUST_API_KEY
+# Optional Braintrust vars:
+# - BRAINTRUST_PROJECT_NAME
+# - BRAINTRUST_PROJECT_ID
 
 [[durable_objects.bindings]]
 name = "MCP_OBJECT"
