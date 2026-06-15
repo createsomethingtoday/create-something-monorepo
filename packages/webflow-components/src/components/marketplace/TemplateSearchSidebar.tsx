@@ -428,6 +428,12 @@ function readCurrentScope(): TemplateScope {
   return 'all';
 }
 
+function isSearchRoute(): boolean {
+  if (typeof window === 'undefined') return false;
+  const pathname = window.location.pathname.replace(/\/+$/, '');
+  return pathname === '/templates/search' || pathname === '/templates/search-v2';
+}
+
 function readCurrentCategory(categorySlugOverride?: string): string | null {
   if (categorySlugOverride) return categorySlugOverride;
   if (typeof window === 'undefined') return null;
@@ -641,7 +647,7 @@ const TemplateSearchSidebarInner: React.FC<TemplateSearchSidebarProps> = ({
   }, []);
 
   const onSpecialClick = (scope: TemplateScope, event: React.MouseEvent<HTMLAnchorElement>) => {
-    if (!shouldUseFilterMode || typeof window === 'undefined') return;
+    if (!shouldUseFilterMode || typeof window === 'undefined' || isSearchRoute()) return;
     event.preventDefault();
     const url = new URL(window.location.href);
     url.searchParams.delete('category');
@@ -659,7 +665,7 @@ const TemplateSearchSidebarInner: React.FC<TemplateSearchSidebarProps> = ({
   };
 
   const onCategoryClick = (category: SidebarCategory, event: React.MouseEvent<HTMLAnchorElement>) => {
-    if (!shouldUseFilterMode || typeof window === 'undefined') return;
+    if (!shouldUseFilterMode || typeof window === 'undefined' || isSearchRoute()) return;
     event.preventDefault();
     const url = new URL(window.location.href);
     const isActive = activeCategory === category.slug;
