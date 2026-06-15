@@ -12,9 +12,10 @@
 export const typography = {
 	// Font families
 	family: {
-		sans: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-		mono: '"JetBrains Mono", "Fira Code", "SF Mono", Consolas, monospace',
-		serif: 'Georgia, "Times New Roman", serif'
+		sans:
+			'"ABC Diatype", "Stack Sans Notch", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+		mono: '"ABC Diatype Mono", "JetBrains Mono", "Fira Code", "SF Mono", Consolas, monospace',
+		serif: '"Martina Plantijn", Georgia, "Times New Roman", serif'
 	},
 
 	// Font weights

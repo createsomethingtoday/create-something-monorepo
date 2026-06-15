@@ -18,6 +18,54 @@
  * @see .claude/rules/css-canon.md for token reference
  */
 
+@font-face {
+  font-family: 'ABC Diatype';
+  src:
+    url('https://ona.com/fonts/ABCDiatype-Regular.woff2') format('woff2'),
+    url('https://ona.com/fonts/ABCDiatype-Regular.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'ABC Diatype';
+  src:
+    url('https://ona.com/fonts/ABCDiatype-Bold.woff2') format('woff2'),
+    url('https://ona.com/fonts/ABCDiatype-Bold.woff') format('woff');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'ABC Diatype Mono';
+  src:
+    url('https://ona.com/fonts/ABCDiatypeSemi-Mono-Regular.woff2') format('woff2'),
+    url('https://ona.com/fonts/ABCDiatypeSemi-Mono-Regular.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'ABC Diatype Mono';
+  src:
+    url('https://ona.com/fonts/ABCDiatypeSemi-Mono-Medium.woff2') format('woff2'),
+    url('https://ona.com/fonts/ABCDiatypeSemi-Mono-Medium.woff') format('woff');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Martina Plantijn';
+  src: url('https://ona.com/fonts/Martina-Plantijn-Light.woff2') format('woff2');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   /* ==========================================================================
      Colors - Functional Minimalism
@@ -86,6 +134,23 @@
   --color-info: #5082b9;                  /* 5.23:1 */
   --color-info-muted: rgba(80, 130, 185, 0.2);
   --color-info-border: rgba(80, 130, 185, 0.3);
+
+  /* Clear communication pilot - light, operational, proof-first surfaces */
+  --color-clear-porcelain: #f9f9f9;
+  --color-clear-porcelain-soft: #f2f2f2;
+  --color-clear-panel: #ffffff;
+  --color-clear-onyx: #0a0e19;
+  --color-clear-grey: #636363;
+  --color-clear-grey-quiet: #818181;
+  --color-clear-border: #e1e1e1;
+  --color-clear-border-strong: #cecece;
+  --color-clear-moss: #1e3c2c;
+  --color-clear-ocean: #0048ff;
+  --color-clear-stop: #c41e3a;
+  --content-width-clear: 85rem;
+  --radius-clear-sm: 4px;
+  --radius-clear-md: 8px;
+  --shadow-clear-restraint: 0 4px 20px rgba(0, 0, 0, 0.06);
 
   /* Interactive states */
   --color-hover: rgba(255, 255, 255, 0.05);
@@ -330,10 +395,10 @@
      ========================================================================== */
 
   /* Font families */
-  --font-sans: 'Stack Sans Notch', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-sans: 'ABC Diatype', 'Stack Sans Notch', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-heading: var(--font-sans);
-  --font-mono: "JetBrains Mono", "Fira Code", "SF Mono", Consolas, monospace;
-  --font-serif: Georgia, "Times New Roman", serif;
+  --font-mono: 'ABC Diatype Mono', "JetBrains Mono", "Fira Code", "SF Mono", Consolas, monospace;
+  --font-serif: 'Martina Plantijn', Georgia, "Times New Roman", serif;
 
   /* Font weights */
   --font-light: 300;

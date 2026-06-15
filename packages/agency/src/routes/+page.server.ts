@@ -1,6 +1,14 @@
 import type { PageServerLoad } from './$types';
 import type { Paper } from '$lib/types/paper';
 
+function isMissingD1TableError(error: unknown, tableName: string): boolean {
+	return (
+		error instanceof Error &&
+		error.message.includes('D1_ERROR') &&
+		error.message.includes(`no such table: ${tableName}`)
+	);
+}
+
 export const load: PageServerLoad = async ({ platform }) => {
 	if (!platform?.env?.DB) {
 		return { papers: [], categories: [] };
@@ -40,7 +48,10 @@ export const load: PageServerLoad = async ({ platform }) => {
 
 		return { papers, categories };
 	} catch (error) {
-		console.error('Error fetching papers from D1:', error);
+		if (!isMissingD1TableError(error, 'papers')) {
+			console.error('Error fetching papers from D1:', error);
+		}
+
 		return { papers: [], categories: [] };
 	}
 };

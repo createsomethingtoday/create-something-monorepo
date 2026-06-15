@@ -52,6 +52,21 @@ export const colors = {
 		infoMuted: 'rgba(68, 119, 170, 0.2)'
 	},
 
+	// Clear communication pilot - light, operational, proof-first surfaces
+	clear: {
+		porcelain: '#f9f9f9',
+		porcelainSoft: '#f2f2f2',
+		panel: '#ffffff',
+		onyx: '#0a0e19',
+		grey: '#636363',
+		greyQuiet: '#818181',
+		border: '#e1e1e1',
+		borderStrong: '#cecece',
+		moss: '#1e3c2c',
+		ocean: '#0048ff',
+		stop: '#c41e3a'
+	},
+
 	// Interactive states
 	interactive: {
 		hover: 'rgba(255, 255, 255, 0.05)',
@@ -93,6 +108,19 @@ export const colorVars = {
 	'--color-warning-muted': colors.accent.warningMuted,
 	'--color-info': colors.accent.info,
 	'--color-info-muted': colors.accent.infoMuted,
+
+	// Clear communication
+	'--color-clear-porcelain': colors.clear.porcelain,
+	'--color-clear-porcelain-soft': colors.clear.porcelainSoft,
+	'--color-clear-panel': colors.clear.panel,
+	'--color-clear-onyx': colors.clear.onyx,
+	'--color-clear-grey': colors.clear.grey,
+	'--color-clear-grey-quiet': colors.clear.greyQuiet,
+	'--color-clear-border': colors.clear.border,
+	'--color-clear-border-strong': colors.clear.borderStrong,
+	'--color-clear-moss': colors.clear.moss,
+	'--color-clear-ocean': colors.clear.ocean,
+	'--color-clear-stop': colors.clear.stop,
 
 	// Interactive
 	'--color-hover': colors.interactive.hover,
