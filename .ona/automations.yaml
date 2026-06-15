@@ -6,6 +6,20 @@ tasks:
       - postEnvironmentStart
     command: ./.ona/scripts/bootstrap.sh
 
+  linear-ready:
+    name: Linear ready
+    description: Confirm the environment can reach Linear through the repo wrapper.
+    triggeredBy:
+      - manual
+    command: pnpm linear:ready
+
+  ona-rollout-check:
+    name: Ona rollout check
+    description: Verify the repo-tracked Ona rollout configuration is internally consistent.
+    triggeredBy:
+      - manual
+    command: pnpm ona:rollout:check
+
   agency-check:
     name: Agency check
     description: Run the agency package validation flow.
