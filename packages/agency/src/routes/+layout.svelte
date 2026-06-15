@@ -407,6 +407,7 @@
     user={data.user}
     onLogout={handleLogout}
     accountHref="/account"
+    visualStyle="clear"
   />
 
   <main id="main-content" class="pt-[72px]">
@@ -425,6 +426,7 @@
     }}
     showSocial={true}
     isAuthenticated={!!data.user}
+    visualStyle="clear"
   />
 
   <ModeIndicator current="agency" />
@@ -432,20 +434,6 @@
 
 <style>
   .layout-root {
-    background: var(--color-bg-pure);
-  }
-
-  .layout-root :global(.nav-logo) {
-    min-width: clamp(12rem, 18vw, 15rem);
-    gap: 0.45rem;
-    white-space: nowrap;
-  }
-
-  .layout-root :global(.nav-logo-suffix) {
-    margin-left: 0.25rem;
-  }
-
-  .layout-root :global(.nav-desktop) {
-    margin-left: clamp(1rem, 2vw, 1.75rem);
+    background: var(--color-clear-porcelain, #f9f9f9);
   }
 </style>

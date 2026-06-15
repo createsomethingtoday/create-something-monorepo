@@ -67,6 +67,78 @@
 	</div>
 </section>
 
+<!-- Clear Communication UI Standards -->
+<section class="py-16 px-6 border-t border-canon">
+	<div class="max-w-3xl mx-auto">
+		<h2 class="mb-8">Clear Communication UI</h2>
+		<p class="opacity-70-canon leading-relaxed mb-8">
+			Use Ona's design/UI/UX as the communication reference: light operational surfaces,
+			compact navigation, crisp borders, readable hierarchy, visible proof, and direct action.
+			CREATE SOMETHING keeps its own claims, artifacts, and governance language.
+		</p>
+
+		<div class="space-y-8">
+			<div class="border-l-2 border-emphasis pl-6">
+				<h3 class="text-xl-canon font-semibold mb-3">1. First-Screen Clarity</h3>
+				<p class="opacity-70-canon leading-relaxed">
+					The first viewport must answer what this is, who it is for, why it can be trusted, and what to do next. Do not require the reader to understand framework language before seeing the outcome.
+				</p>
+			</div>
+
+			<div class="border-l-2 border-emphasis pl-6">
+				<h3 class="text-xl-canon font-semibold mb-3">2. Proof Artifacts</h3>
+				<p class="opacity-70-canon leading-relaxed">
+					Every major claim needs a nearby artifact: workflow state, approval note, command output, delivery page, screenshot, run log, rollback note, or named system boundary.
+				</p>
+			</div>
+
+			<div class="border-l-2 border-emphasis pl-6">
+				<h3 class="text-xl-canon font-semibold mb-3">3. Readable Hierarchy</h3>
+				<p class="opacity-70-canon leading-relaxed">
+					Use one primary claim, one supporting paragraph, visible CTAs, and compact proof. Small panels need smaller type. Headline scale belongs to true page leads.
+				</p>
+			</div>
+
+			<div class="border-l-2 border-emphasis pl-6">
+				<h3 class="text-xl-canon font-semibold mb-3">4. Restrained Visual System</h3>
+				<p class="opacity-70-canon leading-relaxed">
+					Prefer light, legible surfaces, clear contrast, stable spacing, and visible boundaries. Effects must support comprehension, not mood.
+				</p>
+			</div>
+
+			<div class="border-l-2 border-emphasis pl-6">
+				<h3 class="text-xl-canon font-semibold mb-3">5. No Decorative Complexity</h3>
+				<p class="opacity-70-canon leading-relaxed">
+					Remove abstract panels, empty visual weight, and hidden animation states when they delay comprehension. If an element does not name work, show proof, or move the user to a decision, cut it.
+				</p>
+			</div>
+		</div>
+
+		<div class="mt-8 border border-canon p-6 space-y-3">
+			<label class="flex items-start gap-3 cursor-pointer">
+				<input type="checkbox" class="mt-1" disabled />
+				<span>The first viewport contains the offer, audience, trust signal, and next action.</span>
+			</label>
+			<label class="flex items-start gap-3 cursor-pointer">
+				<input type="checkbox" class="mt-1" disabled />
+				<span>The concrete workflow appears before abstract framework language.</span>
+			</label>
+			<label class="flex items-start gap-3 cursor-pointer">
+				<input type="checkbox" class="mt-1" disabled />
+				<span>Every major claim has proof or an operational example nearby.</span>
+			</label>
+			<label class="flex items-start gap-3 cursor-pointer">
+				<input type="checkbox" class="mt-1" disabled />
+				<span>Text, buttons, and proof panels do not overlap on mobile or desktop.</span>
+			</label>
+			<label class="flex items-start gap-3 cursor-pointer">
+				<input type="checkbox" class="mt-1" disabled />
+				<span>Visual effects are restrained enough that the reader sees the work first.</span>
+			</label>
+		</div>
+	</div>
+</section>
+
 <!-- Domain-Specific Standards -->
 <section class="py-16 px-6 border-t border-canon">
 	<div class="max-w-5xl mx-auto">

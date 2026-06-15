@@ -11,6 +11,7 @@ published: true
 <p>"Weniger, aber besser"</p>
 <cite>— Dieter Rams (Less, but better)</cite>
 </blockquote>
+</section>
 
 
 <section class="quick-access">
@@ -65,6 +66,7 @@ published: true
 <p>Why we made these choices. The principles that guide every design decision.</p>
 </a>
 </div>
+</section>
 
 
 <section class="principles">
@@ -92,6 +94,7 @@ published: true
 <p class="triad-action">→ Reconnect</p>
 </div>
 </div>
+</section>
 
 
 <section class="token-preview">
@@ -121,3 +124,4 @@ published: true
 </div>
 </div>
 </div>
+</section>

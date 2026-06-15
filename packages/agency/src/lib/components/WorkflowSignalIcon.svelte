@@ -36,24 +36,28 @@
     height: var(--workflow-signal-icon-size, 2.25rem);
     overflow: visible;
     fill: none;
-    color: var(--workflow-signal-icon-color, rgba(232, 237, 255, 0.66));
+    color: var(--workflow-signal-icon-color, #0a0e19);
     stroke: currentColor;
     stroke-linecap: round;
     stroke-linejoin: round;
-    stroke-width: 1.18;
+    stroke-width: 1.35;
     vector-effect: non-scaling-stroke;
-    filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.08));
+  }
+
+  .workflow-signal-icon :global(rect),
+  .workflow-signal-icon :global(circle) {
+    fill: color-mix(in srgb, currentColor 8%, transparent);
   }
 
   .workflow-signal-icon--actions {
-    color: var(--workflow-signal-icon-color, rgba(238, 242, 255, 0.7));
+    color: var(--workflow-signal-icon-color, #0a0e19);
   }
 
   .workflow-signal-icon--states {
-    color: var(--workflow-signal-icon-color, rgba(225, 231, 255, 0.68));
+    color: var(--workflow-signal-icon-color, #0a0e19);
   }
 
   .workflow-signal-icon--receipts {
-    color: var(--workflow-signal-icon-color, rgba(226, 232, 240, 0.7));
+    color: var(--workflow-signal-icon-color, #0a0e19);
   }
 </style>

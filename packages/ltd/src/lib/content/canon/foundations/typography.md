@@ -56,9 +56,14 @@ Built on the golden ratio (φ = 1.618). Each step multiplies by φ for natural v
 ## Font Stack
 
 ```css
---font-sans: 'Stack Sans Notch', system-ui, sans-serif;
---font-mono: 'JetBrains Mono', monospace;
+--font-sans: 'ABC Diatype', 'Stack Sans Notch', system-ui, sans-serif;
+--font-mono: 'ABC Diatype Mono', 'JetBrains Mono', monospace;
+--font-serif: 'Martina Plantijn', Georgia, serif;
 ```
+
+The Ona-derived clear communication layer uses ABC Diatype for interface and body text, ABC Diatype
+Mono for compact system labels, and Martina Plantijn only when an editorial serif voice is useful.
+CREATE SOMETHING keeps local fallbacks so surfaces remain stable if external font loading fails.
 
 ## Fluid Typography
 

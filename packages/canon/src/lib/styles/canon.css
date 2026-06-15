@@ -3,7 +3,7 @@
   Shared across all properties: .io, .space, .agency, .ltd
 
   Philosophy: "Weniger, aber besser" - Dieter Rams
-  Font Stack: Stack Sans Notch (variable weight 200-700) + JetBrains Mono (code)
+  Font Stack: ABC Diatype + ABC Diatype Mono, with CREATE SOMETHING fallbacks
 
   This file combines Canon tokens with base styles, utilities, and components.
   Property-specific customizations live in each app.css.
