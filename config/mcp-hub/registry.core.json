@@ -225,8 +225,8 @@
       "tags": ["halfdozen", "agent-analyzer", "notion", "observability", "workway"],
       "package_path": "packages/halfdozen-agent-analyzer-telemetry-mcp/worker",
       "catalog_exposure_mode": "direct",
-      "estimated_tool_count": 10,
-      "setupNotes": "Hosted on the Half Dozen Cloudflare account. Cloudflare Worker secret is MCP_API_KEY; operator/client retrieval secret is prod:/:HALFDOZEN_AGENT_ANALYZER_TELEMETRY_MCP_API_KEY. The D1 schema is additive and append-only in halfdozen-feedback.agent_analyzer_telemetry_events."
+      "estimated_tool_count": 11,
+      "setupNotes": "Hosted on the Half Dozen Cloudflare account. Cloudflare Worker secret is MCP_API_KEY; operator/client retrieval secret is prod:/:HALFDOZEN_AGENT_ANALYZER_TELEMETRY_MCP_API_KEY. Optional Braintrust tracing uses BRAINTRUST_API_KEY plus BRAINTRUST_PROJECT_ID and mirrors append-only events as native-notion-agent tool spans. The D1 schema is additive and append-only in halfdozen-feedback.agent_analyzer_telemetry_events."
     },
     "halfdozen-telemetry": {
       "transport": "http",
