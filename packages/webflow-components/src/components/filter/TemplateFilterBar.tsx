@@ -58,7 +58,7 @@ interface FilterEventDetail extends LocalFilters {
   creatorSlug: string | null;
   creatorRecordId: string | null;
   href: string;
-  source: 'TemplateFilterBar';
+  source: string;
   updatedAt: number;
 }
 
@@ -762,6 +762,30 @@ function readUrlFilters(defaultSort: TemplateSort = 'popular'): LocalFilters {
   };
 }
 
+function mergeExternalFilters(base: LocalFilters, detail: unknown, defaultSort: TemplateSort = 'popular'): LocalFilters {
+  if (!detail || typeof detail !== 'object') return base;
+  const patch = detail as Partial<Record<keyof LocalFilters, unknown>>;
+  return {
+    ...base,
+    q: typeof patch.q === 'string' ? patch.q.trim() : base.q,
+    styles: Array.isArray(patch.styles)
+      ? patch.styles.filter((value): value is string => typeof value === 'string').map(toStyleSlug)
+      : base.styles,
+    tags: Array.isArray(patch.tags)
+      ? patch.tags.filter((value): value is string => typeof value === 'string').map(toFilterSlug)
+      : base.tags,
+    types: Array.isArray(patch.types)
+      ? patch.types.filter((value): value is string => typeof value === 'string')
+      : base.types,
+    freeOnly: typeof patch.freeOnly === 'boolean' ? patch.freeOnly : base.freeOnly,
+    sort: typeof patch.sort === 'string' ? normalizeSort(patch.sort, defaultSort) : base.sort,
+  };
+}
+
+function readExternalFilters(defaultSort: TemplateSort, detail: unknown): LocalFilters {
+  return mergeExternalFilters(readUrlFilters(defaultSort), detail, defaultSort);
+}
+
 interface RouteContext {
   scope: 'featured' | 'free' | 'landing_pages' | null;
   categoryGroupSlug: string | null;
@@ -1132,6 +1156,21 @@ export const TemplateFilterBar: React.FC<TemplateFilterBarProps> = ({
     };
     window.addEventListener('popstate', onPop);
     return () => window.removeEventListener('popstate', onPop);
+  }, [defaultSort]);
+
+  useEffect(() => {
+    const onExternalFiltersChanged = (event: Event) => {
+      const detail = (event as CustomEvent).detail;
+      if (detail?.source === 'TemplateFilterBar') return;
+      setFilters(readExternalFilters(defaultSort, detail));
+      setRouteVersion((value) => value + 1);
+    };
+    window.addEventListener('templateFiltersChanged', onExternalFiltersChanged);
+    document.addEventListener('templateFiltersChanged', onExternalFiltersChanged);
+    return () => {
+      window.removeEventListener('templateFiltersChanged', onExternalFiltersChanged);
+      document.removeEventListener('templateFiltersChanged', onExternalFiltersChanged);
+    };
   }, [defaultSort]);
 
   useEffect(() => {
