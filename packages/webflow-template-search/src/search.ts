@@ -36,6 +36,19 @@ function sortClause(sort: TemplateSort): string {
   }
 }
 
+function querySortClause(sort: TemplateSort): string {
+  switch (sort) {
+    case 'newest':
+      return "COALESCE(d.published_date, '') DESC, text_rank ASC, COALESCE(d.popularity_score, 0) DESC, d.id ASC";
+    case 'price_asc':
+      return "CASE WHEN d.price IS NULL THEN 1 ELSE 0 END ASC, COALESCE(d.price, 0) ASC, text_rank ASC, COALESCE(d.popularity_score, 0) DESC, d.id ASC";
+    case 'price_desc':
+      return "CASE WHEN d.price IS NULL THEN 1 ELSE 0 END ASC, COALESCE(d.price, 0) DESC, text_rank ASC, COALESCE(d.popularity_score, 0) DESC, d.id ASC";
+    default:
+      return `text_rank ASC, ${sortClause(sort)}`;
+  }
+}
+
 interface FilterOptions {
   excludeCategoryGroup?: boolean;
   excludeStyles?: boolean;
@@ -275,7 +288,8 @@ function buildSqlParts(params: SearchParams, options: FilterOptions = {}): SqlPa
 }
 
 function queryOrderClause(params: SearchParams, queryMode: boolean): string {
-  return queryMode ? `text_rank ASC, ${sortClause(params.sort)}` : sortClause(params.sort);
+  if (!queryMode) return sortClause(params.sort);
+  return querySortClause(params.sort);
 }
 
 async function getTotalCount(db: D1Database, sqlParts: SqlParts): Promise<number> {

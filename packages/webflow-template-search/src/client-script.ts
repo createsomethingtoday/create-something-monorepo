@@ -211,7 +211,7 @@ export function getClientScript(defaultMode = 'shadow'): string {
   }
 
   function wireControls() {
-    const state = parseRouteState();
+    const initialState = parseRouteState();
     const searchInput = document.querySelector(selectors.searchInput);
     const sortSelect = document.querySelector(selectors.sortSelect);
     const styleSelect = document.querySelector(selectors.styleSelect);
@@ -219,12 +219,20 @@ export function getClientScript(defaultMode = 'shadow'): string {
     const freeToggle = document.querySelector(selectors.freeToggle);
     let debounceId = null;
 
+    function syncControlsFromRoute() {
+      const state = parseRouteState();
+      if (searchInput && document.activeElement !== searchInput) searchInput.value = state.q || '';
+      if (sortSelect) sortSelect.value = state.sort;
+      if (freeToggle) freeToggle.checked = state.free_only;
+    }
+
     if (searchInput) {
-      searchInput.value = state.q || '';
+      searchInput.value = initialState.q || '';
       searchInput.addEventListener('input', (event) => {
         const value = event.target.value;
         window.clearTimeout(debounceId);
         debounceId = window.setTimeout(() => {
+          const state = parseRouteState();
           state.q = value.trim();
           state.page = 1;
           updateUrl(state);
@@ -234,8 +242,9 @@ export function getClientScript(defaultMode = 'shadow'): string {
     }
 
     if (sortSelect) {
-      sortSelect.value = state.sort;
+      sortSelect.value = initialState.sort;
       sortSelect.addEventListener('change', (event) => {
+        const state = parseRouteState();
         state.sort = normalizeSort(event.target.value || 'popular');
         state.page = 1;
         updateUrl(state);
@@ -245,6 +254,7 @@ export function getClientScript(defaultMode = 'shadow'): string {
 
     if (styleSelect) {
       styleSelect.addEventListener('change', (event) => {
+        const state = parseRouteState();
         state.styles = event.target.value ? [event.target.value] : [];
         state.page = 1;
         updateUrl(state);
@@ -254,6 +264,7 @@ export function getClientScript(defaultMode = 'shadow'): string {
 
     if (typeSelect) {
       typeSelect.addEventListener('change', (event) => {
+        const state = parseRouteState();
         state.types = event.target.value ? [event.target.value] : [];
         state.page = 1;
         updateUrl(state);
@@ -262,14 +273,19 @@ export function getClientScript(defaultMode = 'shadow'): string {
     }
 
     if (freeToggle) {
-      freeToggle.checked = state.free_only;
+      freeToggle.checked = initialState.free_only;
       freeToggle.addEventListener('change', (event) => {
+        const state = parseRouteState();
         state.free_only = Boolean(event.target.checked);
         state.page = 1;
         updateUrl(state);
         load();
       });
     }
+
+    window.addEventListener('popstate', syncControlsFromRoute);
+    window.addEventListener('templateFiltersChanged', syncControlsFromRoute);
+    document.addEventListener('templateFiltersChanged', syncControlsFromRoute);
   }
 
   if (document.readyState === 'loading') {

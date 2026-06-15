@@ -1176,6 +1176,52 @@ describe('webflow-template-search worker', () => {
         { name: 'Agentflow', published_date: '2026-03-01' },
       ]);
 
+      const queryPopularSearch = await callWorker(
+        new Request('https://templates.test/api/templates/search?q=technology&sort=popular&page_size=10'),
+        env,
+      );
+      const queryPopularPayload = (await queryPopularSearch.json()) as { items: Array<{ name: string }> };
+      expect(queryPopularPayload.items.map((item) => item.name)).toEqual(['Setrex', 'Agentflow', 'Catalis']);
+
+      const queryNewestSearch = await callWorker(
+        new Request('https://templates.test/api/templates/search?q=technology&sort=newest&page_size=10'),
+        env,
+      );
+      const queryNewestPayload = (await queryNewestSearch.json()) as {
+        items: Array<{ name: string; published_date: string | null }>;
+      };
+      expect(queryNewestPayload.items.map((item) => ({ name: item.name, published_date: item.published_date }))).toEqual([
+        { name: 'Setrex', published_date: '2026-04-05' },
+        { name: 'Catalis', published_date: '2026-03-10' },
+        { name: 'Agentflow', published_date: '2026-03-01' },
+      ]);
+
+      const queryPriceAscSearch = await callWorker(
+        new Request('https://templates.test/api/templates/search?q=technology&sort=price_asc&page_size=10'),
+        env,
+      );
+      const queryPriceAscPayload = (await queryPriceAscSearch.json()) as {
+        items: Array<{ name: string; price: number | null }>;
+      };
+      expect(queryPriceAscPayload.items.map((item) => ({ name: item.name, price: item.price }))).toEqual([
+        { name: 'Catalis', price: 0 },
+        { name: 'Setrex', price: 79 },
+        { name: 'Agentflow', price: 169 },
+      ]);
+
+      const queryPriceDescSearch = await callWorker(
+        new Request('https://templates.test/api/templates/search?q=technology&sort=price_desc&page_size=10'),
+        env,
+      );
+      const queryPriceDescPayload = (await queryPriceDescSearch.json()) as {
+        items: Array<{ name: string; price: number | null }>;
+      };
+      expect(queryPriceDescPayload.items.map((item) => ({ name: item.name, price: item.price }))).toEqual([
+        { name: 'Agentflow', price: 169 },
+        { name: 'Setrex', price: 79 },
+        { name: 'Catalis', price: 0 },
+      ]);
+
       const stylePageSearch = await callWorker(
         new Request('https://templates.test/api/templates/search?style_slug=modern&page_size=10'),
         env,
