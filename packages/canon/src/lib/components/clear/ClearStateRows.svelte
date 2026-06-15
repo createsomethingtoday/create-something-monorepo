@@ -64,6 +64,7 @@
 
 <style>
 	.clear-state-rows {
+		position: relative;
 		display: grid;
 		gap: 0;
 		border: 1px solid var(--color-clear-border-strong, #cecece);
@@ -71,6 +72,19 @@
 		background: var(--color-clear-panel, #ffffff);
 		box-shadow: 0 18px 60px rgba(10, 14, 25, 0.08);
 		overflow: hidden;
+	}
+
+	.clear-state-rows::before {
+		content: '';
+		position: absolute;
+		inset: 0 0 auto;
+		height: 0.24rem;
+		background: linear-gradient(
+			90deg,
+			var(--color-clear-pistachio, #dbefdb),
+			var(--color-clear-pastel-blue, #afc1fd),
+			var(--color-clear-candy-purple, #efd4ff)
+		);
 	}
 
 	.clear-state-rows__header,
@@ -144,6 +158,18 @@
 		border: 1px solid var(--color-clear-border, #e1e1e1);
 		border-radius: 6px;
 		background: rgba(255, 255, 255, 0.88);
+	}
+
+	.clear-state-row--run {
+		background: color-mix(in srgb, var(--color-clear-pistachio, #dbefdb) 28%, white);
+	}
+
+	.clear-state-row--wait {
+		background: color-mix(in srgb, var(--color-clear-pastel-blue, #afc1fd) 22%, white);
+	}
+
+	.clear-state-row--stop {
+		background: color-mix(in srgb, var(--color-clear-candy-purple, #efd4ff) 20%, white);
 	}
 
 	.clear-state-row__marker {

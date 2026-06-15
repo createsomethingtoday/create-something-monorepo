@@ -16,7 +16,7 @@
   ] as const;
 </script>
 
-<div class="governed-visual" aria-hidden="true">
+<div class="governed-visual governed-visual--{decision}" aria-hidden="true">
   <div class="governed-visual__timeline">
     <span></span>
     <span></span>
@@ -80,6 +80,8 @@
 
 <style>
   .governed-visual {
+    --governed-accent: var(--color-clear-pastel-blue, #afc1fd);
+    --governed-surface: #eef2ff;
     position: relative;
     display: grid;
     grid-template-columns: 1rem minmax(0, 28rem);
@@ -90,8 +92,23 @@
     padding: clamp(1rem, 2.5vw, 1.65rem);
     overflow: hidden;
     background:
-      radial-gradient(circle at 62% 22%, rgba(255, 255, 255, 0.78), transparent 34%),
-      linear-gradient(135deg, #eef2ff 0%, #dbe3ff 52%, #eef0ff 100%);
+      linear-gradient(90deg, rgba(10, 14, 25, 0.045) 1px, transparent 1px) 0 0 / 2.6rem 2.6rem,
+      linear-gradient(180deg, var(--governed-surface) 0%, #ffffff 100%);
+  }
+
+  .governed-visual--allow {
+    --governed-accent: var(--color-clear-pistachio, #dbefdb);
+    --governed-surface: var(--color-clear-frosted-mint, #d9fff7);
+  }
+
+  .governed-visual--review {
+    --governed-accent: var(--color-clear-pastel-blue, #afc1fd);
+    --governed-surface: #eef2ff;
+  }
+
+  .governed-visual--block {
+    --governed-accent: var(--color-clear-candy-purple, #efd4ff);
+    --governed-surface: #f7e8ff;
   }
 
   .governed-visual__timeline {
@@ -134,9 +151,9 @@
     width: 100%;
     min-width: 0;
     overflow: hidden;
-    border: 1px solid rgba(159, 170, 205, 0.34);
+    border: 1px solid color-mix(in srgb, var(--governed-accent) 68%, rgba(10, 14, 25, 0.18));
     border-radius: 8px;
-    background: rgba(255, 255, 255, 0.72);
+    background: rgba(255, 255, 255, 0.78);
     box-shadow: 0 22px 60px rgba(10, 14, 25, 0.12);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
@@ -179,7 +196,7 @@
     background:
       radial-gradient(circle, rgba(10, 14, 25, 0.2) 0 1.2px, transparent 1.4px) 0.42rem 0.42rem /
         0.65rem 0.65rem,
-      rgba(255, 255, 255, 0.78);
+      color-mix(in srgb, var(--governed-accent) 35%, white);
   }
 
   .node-icon::after {
@@ -258,7 +275,7 @@
     gap: 0.5rem;
     padding: 0.72rem 0.9rem;
     border-bottom: 1px solid rgba(10, 14, 25, 0.08);
-    background: rgba(255, 255, 255, 0.7);
+    background: color-mix(in srgb, var(--governed-accent) 18%, white);
   }
 
   .decision-pill {
@@ -339,10 +356,10 @@
     height: 1.9rem;
     border: 1px solid rgba(10, 14, 25, 0.1);
     border-radius: 5px;
-    color: var(--color-clear-ocean, #0048ff);
+    color: var(--color-clear-onyx, #0a0e19);
     font-family: var(--font-mono);
     font-size: 0.58rem;
-    background: rgba(255, 255, 255, 0.7);
+    background: color-mix(in srgb, var(--governed-accent) 34%, white);
   }
 
   @media (max-width: 640px) {

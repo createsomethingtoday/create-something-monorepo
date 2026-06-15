@@ -51,7 +51,10 @@
         <span>{stage.label}</span>
         <h3>{stage.title}</h3>
         <p>{stage.detail}</p>
-        <Button href={stage.href} variant={stage.intent === 'workflow-mapping' ? 'secondary' : 'primary'}>
+        <Button
+          href={stage.href}
+          variant={stage.intent === 'workflow-mapping' ? 'secondary' : 'primary'}
+        >
           {stage.cta}
         </Button>
       </article>
@@ -61,43 +64,60 @@
 
 <style>
   .funnel-ladder {
-    width: min(1120px, calc(100% - 2rem));
-    margin: clamp(1.25rem, 3vw, 2rem) auto clamp(3.5rem, 6vw, 5rem);
-    padding: clamp(1.35rem, 3vw, 2rem);
-    border: 1px solid var(--color-shell-border-default);
-    border-radius: var(--radius-xl);
+    width: 100%;
+    margin: 0;
+    padding: 1rem;
+    border: 1px solid var(--color-clear-border-strong, #cecece);
+    border-radius: var(--radius-clear-md, 8px);
     background:
-      linear-gradient(135deg, rgba(49, 92, 255, 0.12), rgba(45, 212, 191, 0.04)),
-      rgba(0, 0, 0, 0.52);
-    box-shadow:
-      inset 1px 1px 0 rgba(255, 255, 255, 0.08),
-      0 22px 70px rgba(0, 0, 0, 0.32);
+      linear-gradient(90deg, rgba(10, 14, 25, 0.035) 1px, transparent 1px) 0 0 / 3rem 3rem,
+      var(--color-clear-porcelain, #f9f9f9);
   }
 
   .funnel-ladder__copy {
     display: grid;
     gap: 0.85rem;
     max-width: 58rem;
-    margin-bottom: clamp(1.25rem, 3vw, 1.8rem);
+    margin-bottom: 1.5rem;
+  }
+
+  .product-kicker {
+    display: inline-flex;
+    width: fit-content;
+    max-width: 100%;
+    min-height: 1.9rem;
+    align-items: center;
+    padding: 0.36rem 0.62rem;
+    border: 1px solid var(--color-clear-border, #e1e1e1);
+    border-radius: var(--radius-clear-sm, 4px);
+    background: var(--color-clear-panel, #ffffff);
+    color: var(--color-clear-grey, #636363);
+    font-family: var(--font-mono);
+    font-size: 0.76rem;
+    font-weight: var(--font-semibold);
+    letter-spacing: 0;
+    line-height: 1.15;
+    text-transform: uppercase;
   }
 
   .funnel-ladder h2,
   .funnel-card h3 {
     margin: 0;
-    color: var(--color-fg-primary);
+    color: var(--color-clear-onyx, #0a0e19);
     letter-spacing: 0;
     text-wrap: balance;
   }
 
   .funnel-ladder h2 {
-    font-size: clamp(1.7rem, 3vw, 2.75rem);
+    font-size: 2.45rem;
+    font-weight: var(--font-medium);
     line-height: 1.04;
   }
 
   .funnel-ladder p {
     margin: 0;
-    color: var(--color-fg-secondary);
-    line-height: 1.68;
+    color: var(--color-clear-grey, #636363);
+    line-height: 1.58;
     text-wrap: pretty;
   }
 
@@ -113,23 +133,22 @@
     gap: 0.75rem;
     min-height: 18rem;
     padding: 1rem;
-    border: 1px solid var(--color-shell-border-default);
-    border-radius: var(--radius-lg);
-    background:
-      linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.018)),
-      color-mix(in srgb, var(--color-shell-surface-secondary) 82%, transparent);
+    border: 1px solid var(--color-clear-border, #e1e1e1);
+    border-radius: var(--radius-clear-sm, 4px);
+    background: var(--color-clear-panel, #ffffff);
   }
 
   .funnel-card span {
-    color: var(--color-fg-muted);
+    color: var(--color-clear-grey, #636363);
     font-family: var(--font-mono);
     font-size: 0.72rem;
-    letter-spacing: 0.1em;
+    letter-spacing: 0;
     text-transform: uppercase;
   }
 
   .funnel-card h3 {
-    font-size: clamp(1.08rem, 1.5vw, 1.35rem);
+    font-size: 1.22rem;
+    font-weight: var(--font-medium);
     line-height: 1.14;
   }
 
@@ -141,6 +160,20 @@
     align-self: end;
     justify-self: start;
     margin-top: 0.25rem;
+    border-radius: var(--radius-clear-sm, 4px);
+    box-shadow: none;
+  }
+
+  .funnel-card :global(.btn-primary) {
+    background: var(--color-clear-onyx, #0a0e19);
+    border-color: var(--color-clear-onyx, #0a0e19);
+    color: #ffffff;
+  }
+
+  .funnel-card :global(.btn-secondary) {
+    background: var(--color-clear-panel, #ffffff);
+    border-color: var(--color-clear-border, #e1e1e1);
+    color: var(--color-clear-onyx, #0a0e19);
   }
 
   @media (max-width: 900px) {
@@ -155,13 +188,17 @@
 
   @media (max-width: 560px) {
     .funnel-ladder {
-      width: min(100% - 1rem, 1120px);
+      width: 100%;
       padding: 1rem;
     }
 
     .funnel-card :global(.btn) {
       box-sizing: border-box;
       width: 100%;
+    }
+
+    .funnel-ladder h2 {
+      font-size: 2rem;
     }
   }
 </style>
