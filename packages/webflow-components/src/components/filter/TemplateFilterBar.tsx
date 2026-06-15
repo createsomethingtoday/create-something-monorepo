@@ -886,6 +886,7 @@ function buildScopedCategoryHref(slug: string | null): string {
   if (typeof window === 'undefined') return slug ? `?category=${slug}` : '';
   const url = new URL(window.location.href);
   if (!slug) clearCategoryPathContext(url);
+  clearPathOwnedCategoryParams(url);
   url.searchParams.delete('subcategory');
   url.searchParams.delete('child_category_slug');
   url.searchParams.delete('page');
@@ -905,9 +906,33 @@ function clearCategoryPathContext(url: URL): void {
   }
 }
 
+function isSubcategoryPathContext(url: URL): boolean {
+  return /^\/templates\/subcategory\/[^/?#]+/.test(url.pathname.replace(/\/+$/, ''));
+}
+
+function clearPathOwnedCategoryParams(url: URL): void {
+  const pathname = url.pathname.replace(/\/+$/, '');
+  if (/^\/templates\/category\/[^/?#]+/.test(pathname)) {
+    url.searchParams.delete('category');
+    url.searchParams.delete('category_group_slug');
+  }
+  if (isSubcategoryPathContext(url)) {
+    url.searchParams.delete('category');
+    url.searchParams.delete('category_group_slug');
+    url.searchParams.delete('subcategory');
+    url.searchParams.delete('child_category_slug');
+  }
+}
+
 function buildScopedSubcategoryHref(slug: string | null, context: RouteContext): string {
   if (typeof window === 'undefined') return slug ? `?subcategory=${slug}` : '';
   const url = new URL(window.location.href);
+  if (isSubcategoryPathContext(url)) {
+    clearPathOwnedCategoryParams(url);
+    url.pathname = slug ? `/templates/subcategory/${slug}` : '/templates/all';
+    url.searchParams.delete('page');
+    return url.toString();
+  }
   url.searchParams.delete('page');
   if (context.categoryGroupSlug) url.searchParams.set('category', context.categoryGroupSlug);
   if (slug) {
@@ -926,6 +951,7 @@ function writeUrlFilters(state: LocalFilters, defaultSort: TemplateSort = 'popul
   ['q', 'query', 'search', 'styles', 'tags', 'types', 'free_only', 'sort', 'page'].forEach((k) =>
     url.searchParams.delete(k),
   );
+  clearPathOwnedCategoryParams(url);
   if (state.q) url.searchParams.set('q', state.q);
   if (state.sort !== defaultSort) url.searchParams.set('sort', state.sort);
   if (state.freeOnly) url.searchParams.set('free_only', 'true');
@@ -1362,6 +1388,7 @@ export const TemplateFilterBar: React.FC<TemplateFilterBarProps> = ({
   const onSubcategoryPillClick = useCallback(
     (slug: string, active: boolean, event: React.MouseEvent<HTMLAnchorElement>) => {
       if (typeof window === 'undefined') return;
+      if (isSubcategoryPathContext(new URL(window.location.href))) return;
       if (!routeContext.categoryGroupSlug && !routeContext.scope) return;
       event.preventDefault();
 

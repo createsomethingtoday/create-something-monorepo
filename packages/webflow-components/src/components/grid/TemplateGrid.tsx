@@ -560,6 +560,17 @@ function updateUrlParams(filters: FilterState, defaultSort: TemplateSort = 'popu
   ['q', 'query', 'search', 'styles', 'tags', 'types', 'free_only', 'sort', 'page'].forEach((k) =>
     url.searchParams.delete(k),
   );
+  const pathname = url.pathname.replace(/\/+$/, '');
+  if (/^\/templates\/category\/[^/?#]+/.test(pathname)) {
+    url.searchParams.delete('category');
+    url.searchParams.delete('category_group_slug');
+  }
+  if (/^\/templates\/subcategory\/[^/?#]+/.test(pathname)) {
+    url.searchParams.delete('category');
+    url.searchParams.delete('category_group_slug');
+    url.searchParams.delete('subcategory');
+    url.searchParams.delete('child_category_slug');
+  }
   if (filters.q) url.searchParams.set('q', filters.q);
   if (filters.sort && filters.sort !== defaultSort) url.searchParams.set('sort', filters.sort);
   if (filters.freeOnly && filters.scope !== 'free') url.searchParams.set('free_only', 'true');
