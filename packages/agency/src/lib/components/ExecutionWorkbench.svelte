@@ -247,19 +247,23 @@
   }: Props = $props();
 
   let activeIndex = $state(0);
+  let userSelectedScenario = $state(false);
   const activeScenario = $derived(scenarios[activeIndex] ?? scenarios[0] ?? DEFAULT_SCENARIOS[0]);
   const activeDetails = $derived(
     SCENARIO_DETAILS[activeScenario.id] ?? SCENARIO_DETAILS['address-correction']
   );
 
   function selectScenario(index: number) {
+    userSelectedScenario = true;
     activeIndex = index;
   }
 
   onMount(() => {
     if (scenarios.length <= 1) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
     const interval = window.setInterval(() => {
+      if (userSelectedScenario) return;
       activeIndex = (activeIndex + 1) % scenarios.length;
     }, 4200);
 
@@ -273,7 +277,7 @@
       <span class="workbench__overline">Workflow control</span>
       <strong>Support recovery run</strong>
     </div>
-    <span class={`status-chip ${activeScenario.decision}`}>
+    <span class={`status-chip ${activeScenario.decision}`} aria-live="polite">
       {activeScenario.decision === 'allow'
         ? 'Auto-allow'
         : activeScenario.decision === 'review'
@@ -292,9 +296,10 @@
         {#each scenarios as scenario, index}
           <button
             type="button"
+            role="tab"
             class="scenario-tab"
             class:selected={index === activeIndex}
-            aria-pressed={index === activeIndex}
+            aria-selected={index === activeIndex}
             onclick={() => selectScenario(index)}
           >
             <span class="scenario-tab__label">{scenario.label}</span>
@@ -304,7 +309,10 @@
       </div>
     </aside>
 
-    <section class="workflow-image" aria-label="Governed workflow product view">
+    <section
+      class={`workflow-image workflow-image--${activeScenario.decision}`}
+      aria-label="Governed workflow product view"
+    >
       <div class="workflow-image__copy">
         <span class="console-label">Current request</span>
         <h4>{activeScenario.label}</h4>
@@ -463,7 +471,9 @@
     grid-template-columns: minmax(16rem, 0.82fr) minmax(32rem, 1.72fr) minmax(16rem, 0.82fr);
     gap: 1rem;
     padding: 1rem;
-    background: var(--color-clear-porcelain, #f9f9f9);
+    background:
+      linear-gradient(90deg, rgba(10, 14, 25, 0.035) 1px, transparent 1px) 0 0 / 3.5rem 3.5rem,
+      var(--color-clear-porcelain, #f9f9f9);
   }
 
   .scenario-panel,
@@ -493,7 +503,7 @@
   }
 
   .scenario-panel h3 {
-    font-size: clamp(1.18rem, 1.35vw, 1.45rem);
+    font-size: 1.35rem;
   }
 
   .scenario-panel p,
@@ -511,6 +521,8 @@
   }
 
   .scenario-tab {
+    position: relative;
+    overflow: hidden;
     display: grid;
     gap: 0.24rem;
     min-height: 4.25rem;
@@ -531,7 +543,15 @@
 
   .scenario-tab.selected {
     border-color: var(--color-clear-ocean, #0048ff);
-    background: #f4f7ff;
+    background: color-mix(in srgb, var(--color-clear-pill-active, #cad7fa) 42%, white);
+  }
+
+  .scenario-tab.selected::before {
+    content: '';
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 0.2rem;
+    background: var(--color-clear-ocean, #0048ff);
   }
 
   .scenario-tab__label {
@@ -550,6 +570,8 @@
   }
 
   .workflow-image {
+    --workflow-accent: var(--color-clear-pastel-blue, #afc1fd);
+    --workflow-surface: #dfe6ff;
     grid-area: visual;
     display: grid;
     grid-template-columns: minmax(13rem, 0.58fr) minmax(25rem, 1fr);
@@ -559,9 +581,26 @@
     min-height: 28.75rem;
     padding: clamp(1.25rem, 2.1vw, 1.7rem);
     overflow: hidden;
-    border: 1px solid #c6d2ff;
+    border: 1px solid color-mix(in srgb, var(--workflow-accent) 74%, var(--color-clear-onyx, #0a0e19));
     border-radius: 8px;
-    background: #dfe6ff;
+    background:
+      linear-gradient(90deg, rgba(10, 14, 25, 0.05) 1px, transparent 1px) 0 0 / 2.4rem 2.4rem,
+      var(--workflow-surface);
+  }
+
+  .workflow-image--allow {
+    --workflow-accent: var(--color-clear-pistachio, #dbefdb);
+    --workflow-surface: var(--color-clear-frosted-mint, #d9fff7);
+  }
+
+  .workflow-image--review {
+    --workflow-accent: var(--color-clear-pastel-blue, #afc1fd);
+    --workflow-surface: #dfe6ff;
+  }
+
+  .workflow-image--block {
+    --workflow-accent: var(--color-clear-candy-purple, #efd4ff);
+    --workflow-surface: #f7e8ff;
   }
 
   .workflow-image__copy {
@@ -573,7 +612,7 @@
   }
 
   .workflow-image__copy h4 {
-    font-size: clamp(1.8rem, 3vw, 2.45rem);
+    font-size: 2.25rem;
     letter-spacing: 0;
   }
 
@@ -587,9 +626,9 @@
     min-width: 0;
     min-height: 24.75rem;
     overflow: hidden;
-    border: 1px solid rgba(198, 210, 255, 0.72);
+    border: 1px solid color-mix(in srgb, var(--workflow-accent) 70%, white);
     border-radius: 8px;
-    background: #e8edff;
+    background: color-mix(in srgb, var(--workflow-surface) 72%, white);
     box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35);
   }
 
@@ -674,7 +713,7 @@
 
   .connection-dot.allow,
   .run-dot.pass {
-    background: #397554;
+    background: var(--color-clear-link-green, #397554);
   }
 
   .connection-dot.review,

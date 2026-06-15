@@ -90,6 +90,9 @@
 
 <style>
 	.clear-page-section {
+		position: relative;
+		isolation: isolate;
+		overflow: clip;
 		color: var(--color-clear-onyx, #0a0e19);
 		background: var(--color-clear-porcelain, #f9f9f9);
 		border-bottom: 1px solid var(--color-clear-border, #e1e1e1);
@@ -99,7 +102,10 @@
 
 	.clear-page-section--hero {
 		padding-block: 5.35rem 4rem;
-		background: var(--color-clear-panel, #ffffff);
+		background:
+			linear-gradient(90deg, rgba(10, 14, 25, 0.035) 1px, transparent 1px) 0 0 / 4.25rem
+				4.25rem,
+			linear-gradient(180deg, var(--color-clear-panel, #ffffff) 0%, #fbfbfb 100%);
 	}
 
 	.clear-page-section--white {
@@ -158,7 +164,7 @@
 	.clear-page-section__title {
 		margin: 0;
 		color: var(--color-clear-onyx, #0a0e19);
-		font-size: 3.25rem;
+		font-size: 3.1rem;
 		font-weight: var(--font-medium);
 		line-height: 1.02;
 		letter-spacing: 0;
@@ -166,8 +172,8 @@
 	}
 
 	.clear-page-section--hero .clear-page-section__title {
-		max-width: 12ch;
-		font-size: clamp(3.75rem, 7vw, 5.75rem);
+		max-width: 13ch;
+		font-size: 5.45rem;
 		font-weight: var(--font-medium);
 		line-height: 0.98;
 	}
@@ -246,6 +252,10 @@
 		.clear-page-section--hero .clear-page-section__title {
 			font-size: 4rem;
 		}
+
+		.clear-page-section__title {
+			font-size: 2.75rem;
+		}
 	}
 
 	@media (max-width: 640px) {
@@ -268,8 +278,8 @@
 		}
 
 		.clear-page-section--hero .clear-page-section__title {
-			max-width: 11ch;
-			font-size: 2.95rem;
+			max-width: 12ch;
+			font-size: 2.9rem;
 			line-height: 1;
 		}
 

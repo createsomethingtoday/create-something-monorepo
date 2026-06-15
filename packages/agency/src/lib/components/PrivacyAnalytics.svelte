@@ -64,7 +64,11 @@
           <a href="/privacy">Privacy policy</a>
         </div>
         <div class="privacy-panel__actions">
-          <button type="button" class="privacy-button privacy-button--ghost" onclick={() => setAnalyticsConsent(false)}>
+          <button
+            type="button"
+            class="privacy-button privacy-button--ghost"
+            onclick={() => setAnalyticsConsent(false)}
+          >
             Necessary only
           </button>
           <button type="button" class="privacy-button" onclick={() => setAnalyticsConsent(true)}>
@@ -96,8 +100,8 @@
     right: max(1rem, env(safe-area-inset-right));
     bottom: max(1rem, env(safe-area-inset-bottom));
     z-index: 80;
-    max-width: min(23rem, calc(100vw - 2rem));
-    color: var(--color-fg-primary);
+    max-width: min(24rem, calc(100vw - 2rem));
+    color: var(--color-clear-onyx, #0a0e19);
     font-family: var(--font-sans);
   }
 
@@ -105,15 +109,12 @@
     display: grid;
     gap: 1rem;
     padding: 1rem;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 14px;
+    border: 1px solid var(--color-clear-border-strong, #cecece);
+    border-radius: var(--radius-clear-md, 8px);
     background:
-      linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.018)),
-      rgba(8, 8, 10, 0.92);
-    box-shadow:
-      0 18px 50px rgba(0, 0, 0, 0.48),
-      inset 0 0 0 1px rgba(255, 255, 255, 0.025);
-    backdrop-filter: blur(18px);
+      linear-gradient(90deg, rgba(10, 14, 25, 0.035) 1px, transparent 1px) 0 0 / 2.75rem 2.75rem,
+      var(--color-clear-panel, #ffffff);
+    box-shadow: 0 18px 44px rgba(10, 14, 25, 0.16);
   }
 
   .privacy-panel__copy {
@@ -122,11 +123,18 @@
   }
 
   .privacy-panel__eyebrow {
+    width: fit-content;
     margin: 0;
-    color: var(--color-fg-muted);
+    padding: 0.28rem 0.48rem;
+    border: 1px solid var(--color-clear-border, #e1e1e1);
+    border-radius: var(--radius-clear-sm, 4px);
+    background: var(--color-clear-panel, #ffffff);
+    color: var(--color-clear-grey, #636363);
     font-family: var(--font-mono);
     font-size: 0.68rem;
-    letter-spacing: 0.12em;
+    font-weight: var(--font-semibold);
+    letter-spacing: 0;
+    line-height: 1.12;
     text-transform: uppercase;
   }
 
@@ -139,15 +147,16 @@
 
   .privacy-panel p {
     margin: 0;
-    color: var(--color-fg-secondary);
+    color: var(--color-clear-grey, #636363);
     font-size: 0.88rem;
     line-height: 1.52;
   }
 
   .privacy-panel a {
     width: fit-content;
-    color: var(--color-fg-muted);
+    color: var(--color-clear-onyx, #0a0e19);
     font-size: 0.8rem;
+    font-weight: var(--font-medium);
     text-decoration: underline;
     text-underline-offset: 0.18em;
   }
@@ -160,8 +169,8 @@
 
   .privacy-button,
   .privacy-pill {
-    border: 1px solid rgba(255, 255, 255, 0.13);
-    border-radius: 999px;
+    border: 1px solid var(--color-clear-border, #e1e1e1);
+    border-radius: var(--radius-clear-sm, 4px);
     cursor: pointer;
     font: inherit;
     transition:
@@ -174,15 +183,15 @@
   .privacy-button {
     min-height: 2.25rem;
     padding: 0.55rem 0.85rem;
-    background: rgba(255, 255, 255, 0.92);
-    color: rgb(4, 4, 5);
+    background: var(--color-clear-onyx, #0a0e19);
+    color: #ffffff;
     font-size: 0.83rem;
     font-weight: 700;
   }
 
   .privacy-button--ghost {
-    background: rgba(255, 255, 255, 0.035);
-    color: var(--color-fg-secondary);
+    background: var(--color-clear-panel, #ffffff);
+    color: var(--color-clear-onyx, #0a0e19);
   }
 
   .privacy-pill {
@@ -191,36 +200,63 @@
     gap: 0.45rem;
     min-height: 2rem;
     padding: 0.35rem 0.65rem;
-    background: rgba(8, 8, 10, 0.68);
-    color: var(--color-fg-secondary);
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.24);
-    backdrop-filter: blur(14px);
+    background: var(--color-clear-panel, #ffffff);
+    color: var(--color-clear-grey, #636363);
+    box-shadow: 0 10px 26px rgba(10, 14, 25, 0.12);
     font-size: 0.72rem;
   }
 
   .privacy-pill__sub {
-    color: var(--color-fg-muted);
+    color: var(--color-clear-onyx, #0a0e19);
     font-family: var(--font-mono);
     font-size: 0.62rem;
-    letter-spacing: 0.08em;
+    letter-spacing: 0;
     text-transform: uppercase;
   }
 
   .privacy-button:hover,
   .privacy-pill:hover {
-    border-color: rgba(255, 255, 255, 0.24);
+    border-color: var(--color-clear-onyx, #0a0e19);
     transform: translateY(-1px);
+  }
+
+  .privacy-button--ghost:hover {
+    background: var(--color-clear-porcelain, #f9f9f9);
   }
 
   @media (max-width: 640px) {
     .privacy-choice {
-      right: 0.8rem;
-      bottom: 0.8rem;
-      max-width: calc(100vw - 1.6rem);
+      right: 0.75rem;
+      bottom: 0.75rem;
+      max-width: calc(100vw - 1.5rem);
     }
 
     .privacy-panel {
       padding: 0.9rem;
+    }
+
+    .privacy-panel__actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .privacy-pill {
+      min-height: 1.9rem;
+      padding: 0.36rem 0.5rem;
+      font-size: 0.68rem;
+    }
+
+    .privacy-pill > span:first-child {
+      display: none;
+    }
+
+    .privacy-pill__sub {
+      font-size: 0;
+    }
+
+    .privacy-pill__sub::before {
+      content: 'Privacy';
+      font-size: 0.62rem;
     }
   }
 </style>
