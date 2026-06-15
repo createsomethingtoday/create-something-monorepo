@@ -208,11 +208,13 @@ function operatorPriorityDetail(input: {
   summary: string;
   risk: string;
   sourceLinks: NonNullable<OperatorPriorityInput['source_links']>;
+  signal: string;
 }): string {
   const sourceText = input.sourceLinks.length
     ? `Sources: ${input.sourceLinks.map((link) => link.kind ? `${link.kind}:${link.label}` : link.label).join(', ')}`
     : '';
-  return [input.summary, `Risk: ${input.risk}`, sourceText].filter(Boolean).join('\n');
+  const signalText = input.signal ? `Signal: ${input.signal}` : '';
+  return [input.summary, `Risk: ${input.risk}`, signalText, sourceText].filter(Boolean).join('\n');
 }
 
 function healthReviewFirmwareCopy(
@@ -505,6 +507,7 @@ export class InkState extends DurableObject<Env> {
     const risk = stringValue(input.risk) || 'No major risk recorded.';
     const nextAction = stringValue(input.next_action) || 'Review priority source';
     const summary = stringValue(input.summary);
+    const signal = stringValue(input.signal || input.payload?.signal || input.source_links?.[0]?.kind) || 'operator';
     const sourceLinks = normalizedPrioritySourceLinks(input.source_links);
     const payload = input.payload ?? {};
     const result = this.addAlert({
@@ -514,7 +517,7 @@ export class InkState extends DurableObject<Env> {
       severity: boundedSeverity(input.severity, 92),
       subject: focus,
       reason: risk,
-      detail: operatorPriorityDetail({ summary, risk, sourceLinks }),
+      detail: operatorPriorityDetail({ summary, risk, signal, sourceLinks }),
       action: nextAction,
       source: 'operator-priority-producer',
       external_id: 'current',
@@ -524,6 +527,7 @@ export class InkState extends DurableObject<Env> {
       payload: {
         ...payload,
         kind: 'operator_priority',
+        signal,
         focus,
         risk,
         next_action: nextAction,

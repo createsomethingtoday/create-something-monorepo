@@ -32,6 +32,14 @@ struct Brief {
   String detail = "Run config:write";
   String action = "Then upload firmware";
   String generatedAt;
+  String detailLabel;
+  String signal = "operator";
+  String sourceKind;
+  String sourceLabel;
+  String sourceUrl;
+  int sourceCount = 0;
+  int activeAlertCount = 0;
+  int poorHealthCount = 0;
   bool urgent = false;
 };
 
@@ -56,6 +64,7 @@ constexpr int MENU_COUNT = sizeof(MENU) / sizeof(MENU[0]);
 
 enum class Screen {
   Brief,
+  BriefDetail,
   Menu,
   Clock,
   Rhythm,
@@ -136,6 +145,17 @@ void saveSettings() {
   prefs.putBool("quiet", quietMode);
 }
 
+void clearBriefSourceFields() {
+  activeBrief.detailLabel = "";
+  activeBrief.signal = "operator";
+  activeBrief.sourceKind = "";
+  activeBrief.sourceLabel = "";
+  activeBrief.sourceUrl = "";
+  activeBrief.sourceCount = 0;
+  activeBrief.activeAlertCount = 0;
+  activeBrief.poorHealthCount = 0;
+}
+
 void saveCachedBrief() {
   prefs.putString("br_h", activeBrief.headline);
   prefs.putString("br_l1", activeBrief.line1);
@@ -144,6 +164,14 @@ void saveCachedBrief() {
   prefs.putString("br_a", activeBrief.action);
   prefs.putString("br_st", activeBrief.state);
   prefs.putString("br_g", activeBrief.generatedAt);
+  prefs.putString("br_dl", activeBrief.detailLabel);
+  prefs.putString("br_sig", activeBrief.signal);
+  prefs.putString("br_sk", activeBrief.sourceKind);
+  prefs.putString("br_sl", activeBrief.sourceLabel);
+  prefs.putString("br_su", activeBrief.sourceUrl);
+  prefs.putInt("br_sc", activeBrief.sourceCount);
+  prefs.putInt("br_ac", activeBrief.activeAlertCount);
+  prefs.putInt("br_ph", activeBrief.poorHealthCount);
   prefs.putBool("br_u", activeBrief.urgent);
 }
 
@@ -158,6 +186,14 @@ bool loadCachedBrief() {
   activeBrief.action = prefs.getString("br_a", activeBrief.action);
   activeBrief.state = prefs.getString("br_st", activeBrief.state);
   activeBrief.generatedAt = prefs.getString("br_g", "");
+  activeBrief.detailLabel = prefs.getString("br_dl", "");
+  activeBrief.signal = prefs.getString("br_sig", "operator");
+  activeBrief.sourceKind = prefs.getString("br_sk", "");
+  activeBrief.sourceLabel = prefs.getString("br_sl", "");
+  activeBrief.sourceUrl = prefs.getString("br_su", "");
+  activeBrief.sourceCount = prefs.getInt("br_sc", 0);
+  activeBrief.activeAlertCount = prefs.getInt("br_ac", 0);
+  activeBrief.poorHealthCount = prefs.getInt("br_ph", 0);
   activeBrief.urgent = prefs.getBool("br_u", false);
   briefIsCached = true;
   lastSyncStatus = "cached";
@@ -250,6 +286,72 @@ String footerMeta() {
   return meta;
 }
 
+String normalizedBriefSignal() {
+  String signal = activeBrief.signal;
+  signal.trim();
+  signal.toLowerCase();
+  if (signal.length() > 0) return signal;
+
+  signal = activeBrief.sourceKind;
+  signal.trim();
+  signal.toLowerCase();
+  if (signal.length() > 0) return signal;
+
+  signal = activeBrief.state;
+  signal.trim();
+  signal.toLowerCase();
+  return signal.length() > 0 ? signal : "operator";
+}
+
+String signalBadge() {
+  const String signal = normalizedBriefSignal();
+  if (signal == "braintrust") return "BT";
+  if (signal == "linear") return "Linear";
+  if (signal == "health") return "Health";
+  if (signal == "codex") return "Codex";
+  if (signal == "notion") return "Notion";
+  if (signal == "clear") return "CS";
+  return "Op";
+}
+
+String sourceKindLabel() {
+  const String signal = normalizedBriefSignal();
+  if (signal == "braintrust") return "Braintrust";
+  if (signal == "linear") return "Linear";
+  if (signal == "health") return "Health";
+  if (signal == "codex") return "Codex";
+  if (signal == "notion") return "Notion";
+  return "Source";
+}
+
+String generatedAgeLabel() {
+  if (lastSyncAt > 0) {
+    const uint32_t ageMinutes = (millis() - lastSyncAt) / 60000UL;
+    if (ageMinutes == 0) return "Generated now";
+    if (ageMinutes < 60) return "Generated " + String(ageMinutes) + "m ago";
+    const uint32_t ageHours = ageMinutes / 60UL;
+    if (ageHours < 24) return "Generated " + String(ageHours) + "h ago";
+  }
+
+  if (activeBrief.generatedAt.length() >= 16) {
+    return "Generated " + activeBrief.generatedAt.substring(11, 16) + "Z";
+  }
+  return "Generated n/a";
+}
+
+String briefSourceLine() {
+  const String label = activeBrief.sourceLabel.length() > 0 ? activeBrief.sourceLabel : activeBrief.detailLabel;
+  if (label.length() > 0) return sourceKindLabel() + ": " + label;
+  return sourceKindLabel() + ": current brief";
+}
+
+String briefCountLine() {
+  String line = "Sources " + String(activeBrief.sourceCount);
+  line += "  Alerts " + String(activeBrief.activeAlertCount);
+  line += "  Health " + String(activeBrief.poorHealthCount);
+  return line;
+}
+
 void startFrame(const String& title, bool inverted = true) {
   canvas.fillScreen(TFT_WHITE);
   canvas.setTextSize(1);
@@ -280,28 +382,39 @@ void drawFooter(const String& left = "") {
 }
 
 String briefFooterLabel() {
-  if (activeBrief.urgent) return "ATTENTION";
-  if (briefIsCached) return "Cached";
+  const String badge = signalBadge();
+  if (activeBrief.urgent) return "ATTENTION " + badge;
+  if (briefIsCached) return "Cached " + badge;
   if (lastSyncAt == 0) return "CS";
 
   const uint32_t ageMinutes = (millis() - lastSyncAt) / 60000UL;
-  if (ageMinutes == 0) return "Synced now";
-  if (ageMinutes < 60) return "Synced " + String(ageMinutes) + "m";
+  if (ageMinutes == 0) return "Synced now " + badge;
+  if (ageMinutes < 60) return "Synced " + String(ageMinutes) + "m " + badge;
 
   const uint32_t ageHours = ageMinutes / 60UL;
-  if (ageHours < 24) return "Synced " + String(ageHours) + "h";
-  return "Stale";
+  if (ageHours < 24) return "Synced " + String(ageHours) + "h " + badge;
+  return "Stale " + badge;
 }
 
 void renderBrief() {
   screen = Screen::Brief;
   const String footer = briefFooterLabel();
   startFrame(activeBrief.headline, true);
+
   canvas.setTextSize(1);
-  drawWrapped(activeBrief.line1, 12, 42, 176, 16, 2);
-  drawWrapped(activeBrief.line2, 12, 78, 176, 15, 2);
-  canvas.drawLine(26, 118, 174, 118, TFT_BLACK);
-  drawWrapped(activeBrief.action, 12, 132, 176, 14, 2);
+  const int focusWidth = 176;
+  canvas.setTextSize(2);
+  if (canvas.textWidth(activeBrief.line1.c_str()) <= focusWidth) {
+    drawWrapped(activeBrief.line1, 12, 42, focusWidth, 21, 1);
+  } else {
+    canvas.setTextSize(1);
+    drawWrapped(activeBrief.line1, 12, 38, focusWidth, 16, 2);
+  }
+
+  canvas.setTextSize(1);
+  drawWrapped(activeBrief.line2, 12, 82, 176, 15, 2);
+  canvas.drawRect(10, 118, 180, 46, TFT_BLACK);
+  drawWrapped(activeBrief.action, 16, 130, 168, 14, 2);
   drawFooter(footer);
   flushFrame(
     screenKey("brief", activeBrief.headline, activeBrief.line1, activeBrief.line2, activeBrief.action, footer));
@@ -310,6 +423,31 @@ void renderBrief() {
     beepUrgent();
   }
   if (!briefIsCached) lastUrgentRendered = activeBrief.urgent;
+}
+
+void renderBriefDetail() {
+  screen = Screen::BriefDetail;
+  startFrame("SOURCE DETAIL", false);
+  canvas.setTextSize(1);
+
+  drawWrapped(sourceKindLabel() + " signal", 12, 40, 176, 14, 1);
+  drawWrapped(generatedAgeLabel(), 12, 58, 176, 14, 1);
+  drawWrapped(briefCountLine(), 12, 76, 176, 14, 1);
+  canvas.drawLine(12, 100, 188, 100, TFT_BLACK);
+  drawWrapped(briefSourceLine(), 12, 112, 176, 15, 2);
+  if (activeBrief.sourceUrl.length() > 0) {
+    drawWrapped("Link " + activeBrief.sourceUrl, 12, 144, 176, 13, 2);
+  } else {
+    drawWrapped(activeBrief.detail.length() > 0 ? activeBrief.detail : activeBrief.action, 12, 144, 176, 13, 2);
+  }
+  drawFooter("B menu PWR sync");
+  flushFrame(screenKey(
+    "brief-detail",
+    activeBrief.signal,
+    activeBrief.sourceKind,
+    activeBrief.sourceLabel,
+    activeBrief.sourceUrl,
+    generatedAgeLabel()));
 }
 
 void renderStatus(const String& title, const String& a, const String& b = "", const String& c = "") {
@@ -487,6 +625,7 @@ bool applyBriefPayload(const String& payload) {
   JsonDocument doc;
   const DeserializationError error = deserializeJson(doc, payload);
   if (error) {
+    clearBriefSourceFields();
     activeBrief.headline = "SYNC FAILED";
     activeBrief.line1 = "Bad bridge JSON";
     activeBrief.line2 = error.c_str();
@@ -504,6 +643,43 @@ bool applyBriefPayload(const String& payload) {
   activeBrief.action = String((const char*)(doc["action"] | "You can step away."));
   activeBrief.generatedAt = String((const char*)(doc["generated_at"] | ""));
   activeBrief.urgent = doc["urgent"] | false;
+  activeBrief.detailLabel = String((const char*)(doc["detail_label"] | ""));
+  activeBrief.signal = String((const char*)(doc["signal"] | "operator"));
+  activeBrief.sourceKind = "";
+  activeBrief.sourceLabel = "";
+  activeBrief.sourceUrl = "";
+  activeBrief.sourceCount = 0;
+  activeBrief.activeAlertCount = 0;
+  activeBrief.poorHealthCount = 0;
+
+  JsonVariantConst counts = doc["counts"];
+  if (!counts.isNull()) {
+    activeBrief.activeAlertCount = counts["active_alerts"] | 0;
+    activeBrief.poorHealthCount = counts["poor_health"] | 0;
+  }
+
+  JsonArrayConst sourceLinks = doc["source_links"].as<JsonArrayConst>();
+  if (!sourceLinks.isNull()) {
+    for (JsonVariantConst link : sourceLinks) {
+      const String label = String((const char*)(link["label"] | ""));
+      const String kind = String((const char*)(link["kind"] | ""));
+      const String url = String((const char*)(link["url"] | ""));
+      if (label.length() == 0 && kind.length() == 0 && url.length() == 0) continue;
+      activeBrief.sourceCount++;
+      if (activeBrief.sourceLabel.length() == 0) {
+        activeBrief.sourceLabel = label;
+        activeBrief.sourceKind = kind;
+        activeBrief.sourceUrl = url;
+      }
+    }
+  }
+
+  if (activeBrief.signal.length() == 0 && activeBrief.sourceKind.length() > 0) {
+    activeBrief.signal = activeBrief.sourceKind;
+  }
+  if (activeBrief.detailLabel.length() == 0 && activeBrief.sourceLabel.length() > 0) {
+    activeBrief.detailLabel = activeBrief.sourceLabel;
+  }
 
   JsonVariantConst clock = doc["clock"];
   if (!clock.isNull()) {
@@ -524,6 +700,7 @@ bool fetchBrief(bool announce = true) {
   const String path = String("/ink/brief?surface=") + CALM_OPERATOR_SURFACE;
   const int status = requestBridge("GET", path, "", payload);
   if (status < 200 || status >= 300) {
+    clearBriefSourceFields();
     activeBrief.headline = "SYNC FAILED";
     activeBrief.line1 = lastHttpError.length() > 0 ? lastHttpError : "Network failed";
     activeBrief.line2 = "Bridge unavailable";
@@ -566,6 +743,7 @@ void requestMcpReview() {
     return;
   }
 
+  clearBriefSourceFields();
   activeBrief.headline = "REVIEW FAILED";
   activeBrief.line1 = lastHttpError.length() > 0 ? lastHttpError : "Remote request failed";
   activeBrief.line2 = "MCP review not updated";
@@ -702,7 +880,12 @@ void selectMenuAction() {
 }
 
 void handleSelect() {
-  if (screen == Screen::Brief || screen == Screen::Clock || screen == Screen::Rhythm ||
+  if (screen == Screen::Brief) {
+    renderBriefDetail();
+    return;
+  }
+
+  if (screen == Screen::BriefDetail || screen == Screen::Clock || screen == Screen::Rhythm ||
       screen == Screen::CalmReset || screen == Screen::Status) {
     renderMenu();
     return;
@@ -768,6 +951,7 @@ void setup() {
   canvas.setTextSize(1);
   canvas.setTextColor(TFT_BLACK, TFT_WHITE);
   if (!hasRuntimeConfig()) {
+    clearBriefSourceFields();
     activeBrief.headline = "SETUP NEEDED";
     activeBrief.line1 = "Missing Ink token";
     activeBrief.line2 = "Wi-Fi can be saved";

@@ -102,6 +102,7 @@
     "braintrust:playbook-smoke": "tsx scripts/braintrust-playbook-mcp-smoke.ts",
     "ink:bridge:smoke": "pnpm --dir packages/calm-operator-ink-bridge smoke:production",
     "ink:priority": "pnpm --dir packages/calm-operator-ink-bridge post:priority",
+    "ink:braintrust-quality": "pnpm --dir packages/calm-operator-ink-bridge post:braintrust-quality",
     "graph:build": "tsx scripts/build-knowledge-graph/index.ts",
     "graph:build:incremental": "tsx scripts/build-knowledge-graph/index.ts --incremental",
     "graph:build:dry-run": "tsx scripts/build-knowledge-graph/index.ts --dry-run",

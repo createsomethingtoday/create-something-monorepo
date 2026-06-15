@@ -178,6 +178,119 @@ test('prioritizes synthesized operator priority over poor health', () => {
 
   const firmwareBrief = toFirmwareBrief(brief);
   assert.deepEqual(firmwareBrief.source_links, sourceLinks);
+  assert.equal(firmwareBrief.signal, 'linear');
+  assert.equal(firmwareBrief.detail_label, 'CRE-611');
+});
+
+test('maps Braintrust operator priority to quality drift firmware detail', () => {
+  const sourceLinks = [
+    {
+      kind: 'braintrust',
+      label: 'template-review-hub',
+      url: 'https://www.braintrust.dev/app/exp/abc'
+    }
+  ];
+  const brief = buildOperatorBrief({
+    alerts: [
+      alert({
+        id: 'operator-priority:current',
+        state: 'operator_priority',
+        category: 'operator_priority',
+        severity: 96,
+        subject: 'template-review-hub',
+        reason: 'Intent routing score dropped 12%',
+        action: 'Review failing eval examples',
+        payload: {
+          kind: 'operator_priority',
+          signal: 'braintrust',
+          source_links: sourceLinks
+        }
+      })
+    ],
+    health: [],
+    now: 1000
+  });
+
+  assert.equal(brief.headline, 'QUALITY DRIFT');
+  const firmwareBrief = toFirmwareBrief(brief);
+  assert.equal(firmwareBrief.signal, 'braintrust');
+  assert.equal(firmwareBrief.detail_label, 'template-review-hub');
+  assert.deepEqual(firmwareBrief.source_links, sourceLinks);
+});
+
+test('keeps blocked alerts ahead of critical Braintrust priority alerts', () => {
+  const brief = buildOperatorBrief({
+    alerts: [
+      alert({
+        id: 'operator-priority:current',
+        state: 'operator_priority',
+        category: 'operator_priority',
+        severity: 99,
+        urgent: true,
+        subject: 'operator-quality',
+        reason: 'Critical Braintrust regression',
+        action: 'Review eval traces',
+        payload: {
+          kind: 'operator_priority',
+          signal: 'braintrust',
+          source_links: [{ kind: 'braintrust', label: 'operator-quality' }]
+        }
+      }),
+      alert({
+        id: 'blocked-client',
+        state: 'blocked',
+        category: 'workflow',
+        severity: 85,
+        subject: 'Client launch blocked',
+        reason: 'Waiting on approval',
+        action: 'Resolve approval blocker'
+      })
+    ],
+    health: [],
+    now: 1000
+  });
+
+  assert.equal(brief.state, 'blocked');
+  assert.equal(brief.headline, 'BLOCKED');
+  assert.equal(brief.line1, 'Client launch blocked');
+});
+
+test('lets critical Braintrust priority outrank health attention alerts', () => {
+  const brief = buildOperatorBrief({
+    alerts: [
+      alert({
+        id: 'health-review:current',
+        state: 'health_attention',
+        category: 'health',
+        severity: 92,
+        urgent: true,
+        subject: 'Ink health attention',
+        reason: 'Health review has urgent drift',
+        action: 'Review health source'
+      }),
+      alert({
+        id: 'operator-priority:current',
+        state: 'operator_priority',
+        category: 'operator_priority',
+        severity: 96,
+        urgent: true,
+        subject: 'operator-quality',
+        reason: 'Critical Braintrust regression',
+        action: 'Review eval traces',
+        payload: {
+          kind: 'operator_priority',
+          signal: 'braintrust',
+          source_links: [{ kind: 'braintrust', label: 'operator-quality' }]
+        }
+      })
+    ],
+    health: [],
+    now: 1000
+  });
+
+  assert.equal(brief.state, 'operator_priority');
+  assert.equal(brief.headline, 'QUALITY DRIFT');
+  assert.equal(brief.line1, 'operator-quality');
 });
 
 test('ignores expired or cleared alerts', () => {

@@ -10,6 +10,8 @@ The device should call this Worker directly over HTTPS. A Cloudflare Tunnel is o
 - Accept MCP/agent health snapshots and attention events.
 - Accept a single synthesized operator priority brief for the M5 "what now?"
   surface.
+- Accept Braintrust quality/eval summaries as evidence for that synthesized
+  priority without making Ink a Braintrust client or source of truth.
 - Collect configured remote health checks on the same schedule.
 - Run a scheduled health review four times daily.
 - Fire daily local alarms for the operator at configured Central Time moments.
@@ -119,6 +121,15 @@ Central Time clock contract:
 ```json
 {
   "generated_at": "2026-04-30T14:05:00.000Z",
+  "signal": "linear",
+  "detail_label": "CRE-611",
+  "source_links": [
+    {
+      "kind": "linear",
+      "label": "CRE-611",
+      "url": "https://linear.app/createsomething/issue/CRE-611"
+    }
+  ],
   "clock": {
     "timezone": "America/Chicago",
     "generated_at": "2026-04-30T14:05:00.000Z",
@@ -142,6 +153,7 @@ pnpm post:priority -- \
   --next-action "Review Airtable fields" \
   --linear "CRE-611=https://linear.app/createsomething/issue/CRE-611" \
   --health "Ink health=https://ink.createsomething.agency/ink/health-review"
+pnpm post:braintrust-quality -- --input ./braintrust-quality-summary.json
 pnpm post:mcp -- --mcp "HubSpot MCP" --reason "Review failed"
 pnpm post:health -- --component "Claude Code Slack watcher" --status degraded --summary "No heartbeat in 20 minutes"
 ```
@@ -155,13 +167,46 @@ state. It writes one replaceable `operator-priority:current` alert with:
 - `focus`: what the operator should focus on now
 - `risk`: why it matters
 - `next_action`: the concrete next step
+- `signal`: the top source family for the device footer, such as `linear`,
+  `health`, `codex`, or `braintrust`
 - `source_links`: compact evidence links for the full bridge or operator surface
 
 The Core Ink display renders the compact brief as `OPERATOR PRIORITY`, with focus,
-risk, and next action. Source links stay in the JSON payload for richer surfaces.
+`HEALTH ATTENTION`, or `QUALITY DRIFT`, with focus, risk, and next action.
+Source links stay in the JSON payload for richer surfaces and the firmware detail
+screen.
 When a producer has structured state but no hand-written copy yet, `post:priority`
 can also read `--sources ./operator-state.json` and synthesize the compact brief
-from `linear`, `notion`, `codex`, and `health` keys.
+from `linear`, `notion`, `codex`, `health`, and `braintrust` keys.
+
+Braintrust input is a quality signal only. It should summarize local eval or
+smoke output into a normalized object with status, eval or experiment name,
+failure/regression summary, optional permalink, severity, and recommended
+action. Critical quality regressions can become the active priority, but blocked
+or urgent workflow/client issues stay ahead of quality evidence. Noncritical
+Braintrust drift raises severity or adds evidence without replacing explicit
+Linear, Notion, Codex, or health work.
+
+Example local summary:
+
+```json
+{
+  "status": "regression",
+  "eval_name": "template-review-hub",
+  "regression_summary": "Intent routing score dropped 12%",
+  "permalink": "https://www.braintrust.dev/app/exp/abc",
+  "severity": 90,
+  "recommended_action": "Review failing eval examples"
+}
+```
+
+Dry-run normalization without posting:
+
+```bash
+pnpm --dir packages/calm-operator-ink-bridge post:braintrust-quality -- \
+  --input ./braintrust-quality-summary.json \
+  --dry-run
+```
 
 ## Scheduled health review
 

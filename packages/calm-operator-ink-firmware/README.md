@@ -71,8 +71,24 @@ pnpm --dir packages/calm-operator-ink-firmware monitor
 - `A`: previous menu item
 - `C`: next menu item
 - `B` or `EXT/main`: select
-- From the brief screen, select opens the menu.
+- From the brief screen, select opens the source/detail screen.
+- From the source/detail screen, select opens the menu.
 - `PWR`: manual sync.
+
+The home brief is intentionally one-glance:
+
+- stable state label such as `OPERATOR PRIORITY`, `QUALITY DRIFT`, or
+  `HEALTH ATTENTION`
+- one strong focus line
+- one smaller risk line
+- boxed next-action area
+- footer freshness plus signal, for example `Synced 2m BT` or
+  `ATTENTION Linear`
+
+The source/detail screen shows the signal family, generated age, source/alert
+counts, and the strongest source label or link label that fits on the e-ink
+surface. Braintrust appears here as quality/eval evidence, not as the policy or
+work source of truth.
 
 The menu shows the current bucket and position, for example `Operator 1/10`.
 Each selected item includes a one-line purpose. The footer keeps action hints on

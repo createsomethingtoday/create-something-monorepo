@@ -36,7 +36,7 @@ export interface InkAlertInput {
 export interface OperatorPrioritySourceLink {
   label: string;
   url?: string;
-  kind?: 'linear' | 'notion' | 'codex' | 'health' | string;
+  kind?: 'linear' | 'notion' | 'codex' | 'health' | 'braintrust' | string;
   id?: string;
 }
 
@@ -45,6 +45,7 @@ export interface OperatorPriorityInput {
   focus?: string;
   risk?: string;
   next_action?: string;
+  signal?: string;
   summary?: string;
   source_links?: OperatorPrioritySourceLink[];
   severity?: number;
