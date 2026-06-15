@@ -11,10 +11,16 @@
    */
 
   interface Props {
+    /** Optional CTA eyebrow */
+    eyebrow?: string;
     /** Property-specific headline */
     headline?: string;
     /** Property-specific description */
     description?: string;
+    /** Short form panel label */
+    actionLabel?: string;
+    /** Supporting note below the form */
+    note?: string;
     /** API endpoint for submission */
     endpoint?: string;
     /** Optional source tracking (defaults to property) */
@@ -22,8 +28,11 @@
   }
 
   let {
+    eyebrow = 'Canon brief',
     headline = 'Stay in the loop',
     description = 'Get updates on new experiments and research.',
+    actionLabel = 'Join the list',
+    note = 'Occasional notes. Unsubscribe whenever it stops being useful.',
     endpoint = '/api/newsletter',
     source
   }: Props = $props();
@@ -103,94 +112,136 @@
 
 <section class="newsletter-section">
   <div class="newsletter-content">
-    <h2 class="newsletter-headline">{headline}</h2>
-    <p class="newsletter-description">{description}</p>
+    <div class="newsletter-copy">
+      <span class="newsletter-eyebrow">{eyebrow}</span>
+      <h2 class="newsletter-headline">{headline}</h2>
+      <p class="newsletter-description">{description}</p>
+    </div>
 
-    {#if status === 'success'}
-      <div class="success-message" role="status">
-        <svg
-          class="success-icon"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          aria-hidden="true"
-        >
-          <path d="M20 6L9 17l-5-5" stroke-linecap="round" stroke-linejoin="round" />
-        </svg>
-        <span>{message}</span>
-      </div>
-    {:else}
-      <form class="newsletter-form" onsubmit={handleSubmit}>
-        <!-- Honeypot field - hidden from humans, visible to bots -->
-        <div class="honeypot" aria-hidden="true">
-          <label for="website">Website</label>
-          <input
-            type="text"
-            id="website"
-            name="website"
-            bind:value={honeypot}
-            tabindex="-1"
-            autocomplete="off"
-          />
+    <div class="newsletter-panel">
+      {#if status === 'success'}
+        <div class="success-message" role="status">
+          <svg
+            class="success-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            aria-hidden="true"
+          >
+            <path d="M20 6L9 17l-5-5" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          <span>{message}</span>
         </div>
-
-        <div class="form-row">
-          <div class="input-wrapper">
-            <label for="newsletter-email" class="visually-hidden">Email address</label>
+      {:else}
+        <form class="newsletter-form" onsubmit={handleSubmit}>
+          <!-- Honeypot field - hidden from humans, visible to bots -->
+          <div class="honeypot" aria-hidden="true">
+            <label for="website">Website</label>
             <input
-              type="email"
-              id="newsletter-email"
-              name="email"
-              placeholder="your@email.com"
-              bind:value={email}
-              oninput={handleInput}
-              disabled={status === 'loading'}
-              class:has-error={status === 'error'}
-              required
-              autocomplete="email"
+              type="text"
+              id="website"
+              name="website"
+              bind:value={honeypot}
+              tabindex="-1"
+              autocomplete="off"
             />
           </div>
-          <button type="submit" class="submit-button" disabled={status === 'loading'}>
-            {#if status === 'loading'}
-              <span class="loading-spinner" aria-hidden="true"></span>
-              <span class="visually-hidden">Subscribing...</span>
-            {:else}
-              Subscribe
-            {/if}
-          </button>
-        </div>
 
-        {#if status === 'error' && message}
-          <p class="error-message" role="alert">{message}</p>
-        {/if}
-      </form>
-    {/if}
+          <div class="form-intro">
+            <span>By email</span>
+            <strong>{actionLabel}</strong>
+          </div>
+
+          <div class="form-row">
+            <div class="input-wrapper">
+              <label for="newsletter-email" class="visually-hidden">Email address</label>
+              <input
+                type="email"
+                id="newsletter-email"
+                name="email"
+                placeholder="your@email.com"
+                bind:value={email}
+                oninput={handleInput}
+                disabled={status === 'loading'}
+                class:has-error={status === 'error'}
+                required
+                autocomplete="email"
+              />
+            </div>
+            <button type="submit" class="submit-button" disabled={status === 'loading'}>
+              {#if status === 'loading'}
+                <span class="loading-spinner" aria-hidden="true"></span>
+                <span class="visually-hidden">Subscribing...</span>
+              {:else}
+                Subscribe
+              {/if}
+            </button>
+          </div>
+
+          <p class="newsletter-note">{note}</p>
+
+          {#if status === 'error' && message}
+            <p class="error-message" role="alert">{message}</p>
+          {/if}
+        </form>
+      {/if}
+    </div>
   </div>
 </section>
 
 <style>
   .newsletter-section {
-    padding-block: 4.5rem;
-    background: var(--color-clear-porcelain, #f9f9f9);
-    border-bottom: 1px solid var(--color-clear-border, #e1e1e1);
-    color: var(--color-clear-onyx, #0a0e19);
+    padding-block: clamp(4rem, 8vw, 6.5rem);
+    background:
+      linear-gradient(90deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px) 0 0 / 4rem 4rem,
+      var(--color-clear-onyx, #0a0e19);
+    border-block: 1px solid var(--color-clear-onyx, #0a0e19);
+    color: #ffffff;
   }
 
   .newsletter-content {
     display: grid;
-    grid-template-columns: minmax(0, 0.82fr) minmax(18rem, 0.72fr);
+    grid-template-columns: minmax(0, 0.92fr) minmax(22rem, 0.68fr);
     gap: clamp(1.5rem, 4vw, 3rem);
-    align-items: end;
+    align-items: stretch;
     width: min(var(--content-width-clear, 85rem), calc(100% - 2.5rem));
     margin-inline: auto;
   }
 
+  .newsletter-copy {
+    display: grid;
+    align-content: center;
+    justify-items: start;
+    gap: 1rem;
+    min-width: 0;
+    max-width: 45rem;
+  }
+
+  .newsletter-eyebrow {
+    display: inline-flex;
+    width: fit-content;
+    max-width: 100%;
+    min-height: 1.9rem;
+    align-items: center;
+    padding: 0.36rem 0.62rem;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: var(--radius-clear-sm, 4px);
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.74);
+    font-family: var(--font-mono);
+    font-size: 0.76rem;
+    font-weight: var(--font-semibold);
+    letter-spacing: 0;
+    line-height: 1.15;
+    text-transform: uppercase;
+  }
+
   .newsletter-headline {
-    max-width: 13ch;
     margin: 0;
-    color: var(--color-clear-onyx, #0a0e19);
-    font-size: 3.1rem;
+    max-width: 13ch;
+    color: #ffffff;
+    font-size: 3.25rem;
     font-weight: var(--font-medium);
     letter-spacing: 0;
     line-height: 1.02;
@@ -198,19 +249,50 @@
   }
 
   .newsletter-description {
-    max-width: 36rem;
-    margin: 0.9rem 0 0;
-    color: var(--color-clear-grey, #636363);
+    max-width: 38rem;
+    margin: 0;
+    color: rgba(255, 255, 255, 0.72);
     font-size: 1.08rem;
     line-height: 1.55;
     text-wrap: pretty;
   }
 
-  .newsletter-form {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
+  .newsletter-panel {
+    display: grid;
+    align-content: center;
     min-width: 0;
+    padding: clamp(1rem, 3vw, 1.35rem);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: var(--radius-clear-sm, 4px);
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .newsletter-form {
+    display: grid;
+    gap: 0.85rem;
+    min-width: 0;
+  }
+
+  .form-intro {
+    display: grid;
+    gap: 0.24rem;
+    min-width: 0;
+  }
+
+  .form-intro span {
+    color: rgba(255, 255, 255, 0.64);
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    font-weight: var(--font-medium);
+    letter-spacing: 0;
+    text-transform: uppercase;
+  }
+
+  .form-intro strong {
+    color: #ffffff;
+    font-size: 1.05rem;
+    font-weight: var(--font-medium);
+    line-height: 1.22;
   }
 
   .form-row {
@@ -234,9 +316,9 @@
     width: 100%;
     min-height: 44px;
     padding: 0.74rem 1rem;
-    border: 1px solid var(--color-clear-border, #e1e1e1);
+    border: 1px solid rgba(255, 255, 255, 0.22);
     border-radius: var(--radius-clear-sm, 4px);
-    background: var(--color-clear-panel, #ffffff);
+    background: rgba(255, 255, 255, 0.96);
     color: var(--color-clear-onyx, #0a0e19);
     font-family: inherit;
     font-size: 1rem;
@@ -250,7 +332,7 @@
   }
 
   input[type='email']:hover:not(:disabled):not(:focus) {
-    border-color: var(--color-clear-border-strong, #cecece);
+    border-color: rgba(255, 255, 255, 0.46);
   }
 
   input[type='email']:focus {
@@ -273,17 +355,17 @@
   }
 
   .submit-button {
-    min-width: 120px;
+    min-width: 128px;
     min-height: 44px;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
     padding: 0.74rem 1rem;
-    border: 1px solid var(--color-clear-onyx, #0a0e19);
+    border: 1px solid #ffffff;
     border-radius: var(--radius-clear-sm, 4px);
-    background: var(--color-clear-onyx, #0a0e19);
-    color: #ffffff;
+    background: #ffffff;
+    color: var(--color-clear-onyx, #0a0e19);
     font-family: inherit;
     font-size: 1rem;
     font-weight: var(--font-semibold);
@@ -294,8 +376,8 @@
   }
 
   .submit-button:hover:not(:disabled) {
-    border-color: #1a2030;
-    background: #1a2030;
+    border-color: var(--color-clear-pastel-blue, #afc1fd);
+    background: var(--color-clear-pastel-blue, #afc1fd);
   }
 
   .submit-button:focus-visible {
@@ -311,7 +393,7 @@
   .loading-spinner {
     width: 16px;
     height: 16px;
-    border: 2px solid #ffffff;
+    border: 2px solid var(--color-clear-onyx, #0a0e19);
     border-top-color: transparent;
     border-radius: 50%;
     animation: spin var(--duration-slow) linear infinite;
@@ -323,9 +405,17 @@
     }
   }
 
+  .newsletter-note {
+    margin: 0;
+    color: rgba(255, 255, 255, 0.64);
+    font-size: 0.92rem;
+    line-height: 1.45;
+    text-wrap: pretty;
+  }
+
   .error-message {
     margin: 0;
-    color: var(--color-error, #d92d20);
+    color: var(--color-clear-pastel-blue, #afc1fd);
     font-size: 0.9rem;
     line-height: 1.4;
   }
@@ -336,11 +426,11 @@
     gap: 0.75rem;
     min-width: 0;
     padding: 1rem;
-    border: 1px solid var(--color-clear-border, #e1e1e1);
+    border: 1px solid rgba(255, 255, 255, 0.16);
     border-left: 0.2rem solid var(--color-clear-ocean, #315cff);
     border-radius: var(--radius-clear-sm, 4px);
-    background: var(--color-clear-panel, #ffffff);
-    color: var(--color-clear-onyx, #0a0e19);
+    background: rgba(255, 255, 255, 0.08);
+    color: #ffffff;
     font-size: 1rem;
     line-height: 1.45;
   }
