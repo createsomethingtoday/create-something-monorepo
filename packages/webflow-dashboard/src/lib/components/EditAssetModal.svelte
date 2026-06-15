@@ -7,6 +7,7 @@
   import type { Asset, AssetUpdateData } from '$lib/server/airtable';
   import { toast } from '$lib/stores/toast';
   import { trackEvent } from '$lib/utils/analytics';
+  import { shouldCreateAssetVersionForChanges } from '$lib/utils/asset-version-changes';
   import { sanitizeLongDescriptionHtml } from '@create-something/webflow-dashboard-core/long-description';
 
   const APP_CAPABILITY_OPTIONS = ['Data Client v2', 'Designer Extension', 'Hybrid'] as const;
@@ -661,7 +662,7 @@
         };
       }
 
-      if (changedFields.length > 0) {
+      if (shouldCreateAssetVersionForChanges(structuredChanges)) {
         fetch(`/api/assets/${asset.id}/versions`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

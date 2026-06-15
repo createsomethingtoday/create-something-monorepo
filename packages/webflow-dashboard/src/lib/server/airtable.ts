@@ -1,5 +1,6 @@
 import Airtable from 'airtable';
 import { randomBytes, createHash } from 'node:crypto';
+import { isLongDescriptionOnlyAssetVersionChange } from '../utils/asset-version-changes';
 import { isRecoveryOfferStrategy } from '../utils/template-lifecycle-policy';
 
 // Airtable table IDs
@@ -2535,6 +2536,10 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 				if (typeof changes === 'object') {
 					if (Object.keys(changes).length === 0) {
 						debugLog('[Airtable] No significant changes detected, skipping version creation');
+						return null;
+					}
+					if (isLongDescriptionOnlyAssetVersionChange(changes)) {
+						debugLog('[Airtable] Long-description-only change detected, skipping version creation');
 						return null;
 					}
 				}

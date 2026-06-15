@@ -1,6 +1,10 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { getAirtableClient } from '$lib/server/airtable';
+import {
+	isLongDescriptionOnlyAssetVersionChange,
+	shouldCreateAssetVersionForChanges
+} from '$lib/utils/asset-version-changes';
 
 // GET - List all versions for an asset
 export const GET: RequestHandler = async ({ params, locals, platform }) => {
@@ -47,6 +51,14 @@ export const POST: RequestHandler = async ({ params, request, locals, platform }
 	};
 
 	if (!body.changes) {
+		throw error(400, 'Changes are required');
+	}
+
+	if (isLongDescriptionOnlyAssetVersionChange(body.changes)) {
+		return json({ version: null, skipped: true, reason: 'long_description_only' });
+	}
+
+	if (!shouldCreateAssetVersionForChanges(body.changes)) {
 		throw error(400, 'Changes are required');
 	}
 
