@@ -11,17 +11,15 @@
 		getFurnitureTypes,
 		getAvailableOperations
 	} from './svg-operations';
-	import {
-		Sofa,
-		Users,
-		Tag,
-		Trash2,
-		Circle,
-		BedDouble,
-		Armchair,
-		Square,
-		Flower2
-	} from 'lucide-svelte';
+	import Sofa from 'lucide-svelte/icons/sofa';
+	import Users from 'lucide-svelte/icons/users';
+	import Tag from 'lucide-svelte/icons/tag';
+	import Trash2 from 'lucide-svelte/icons/trash-2';
+	import Circle from 'lucide-svelte/icons/circle';
+	import BedDouble from 'lucide-svelte/icons/bed-double';
+	import Armchair from 'lucide-svelte/icons/armchair';
+	import Square from 'lucide-svelte/icons/square';
+	import Flower2 from 'lucide-svelte/icons/flower-2';
 
 	// Icon component mapping
 	const iconMap: Record<string, typeof Sofa> = {

@@ -184,20 +184,37 @@
 <style>
   .runtime-workbench {
     width: 100%;
+    border-color: var(--color-clear-border, #e1e1e1);
+    border-radius: var(--radius-clear-md, 8px);
+    background: var(--color-clear-panel, #ffffff);
+    box-shadow: var(--shadow-clear-restraint, 0 4px 20px rgba(0, 0, 0, 0.06));
+    color: var(--color-clear-onyx, #0a0e19);
+  }
+
+  :global(.runtime-workbench.terminal-surface)::before {
+    display: none;
+  }
+
+  .runtime-workbench :global(.terminal-surface__bar) {
+    border-bottom-color: var(--color-clear-border, #e1e1e1);
+    background: var(--color-clear-porcelain, #f9f9f9);
+  }
+
+  .runtime-workbench :global(.terminal-surface__title) {
+    color: var(--color-fg-muted);
   }
 
   .runtime-workbench__body {
     display: grid;
     grid-template-columns: minmax(0, 16rem) minmax(0, 1fr);
-    min-height: 100%;
   }
 
   .runtime-workbench__sidebar {
     display: grid;
     gap: 1.25rem;
     padding: 1.2rem;
-    border-right: 1px solid rgba(255, 255, 255, 0.06);
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.025), rgba(255, 255, 255, 0.01));
+    border-right: 1px solid var(--color-clear-border, #e1e1e1);
+    background: var(--color-clear-porcelain, #f9f9f9);
   }
 
   .runtime-workbench__intro {
@@ -228,9 +245,9 @@
     display: grid;
     gap: 0.3rem;
     padding: 0.9rem 0.95rem;
-    border-radius: 18px;
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    background: rgba(255, 255, 255, 0.025);
+    border-radius: var(--radius-clear-md, 8px);
+    border: 1px solid rgba(10, 14, 25, 0.08);
+    background: var(--color-clear-panel, #ffffff);
     text-align: left;
     transition:
       border-color var(--duration-micro) var(--ease-standard),
@@ -239,14 +256,15 @@
   }
 
   .preview-tab:hover {
-    border-color: rgba(255, 255, 255, 0.14);
+    border-color: rgba(10, 14, 25, 0.16);
+    background: var(--color-clear-porcelain-soft, #f2f2f2);
     transform: translateY(-1px);
   }
 
   .preview-tab.selected {
-    border-color: var(--color-brand-primary-border);
-    background: linear-gradient(180deg, rgba(49, 92, 255, 0.18), rgba(49, 92, 255, 0.08));
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    border-color: rgba(49, 92, 255, 0.35);
+    background: rgba(49, 92, 255, 0.08);
+    box-shadow: none;
   }
 
   .preview-tab__label {
@@ -286,9 +304,9 @@
   .panel-command {
     margin: 0;
     padding: 1rem 1.05rem;
-    border-radius: 18px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    background: rgba(255, 255, 255, 0.03);
+    border-radius: var(--radius-clear-md, 8px);
+    border: 1px solid rgba(10, 14, 25, 0.08);
+    background: var(--color-clear-porcelain, #f9f9f9);
     color: var(--color-fg-primary);
     font-family: var(--font-mono);
     font-size: 0.9rem;
@@ -337,13 +355,14 @@
 
   .runtime-decision {
     padding: 1rem 1.05rem;
-    border-radius: 22px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    background: linear-gradient(180deg, rgba(34, 147, 255, 0.18), rgba(34, 147, 255, 0.08));
+    border-radius: var(--radius-clear-md, 8px);
+    border: 1px solid rgba(49, 92, 255, 0.18);
+    background: linear-gradient(180deg, rgba(49, 92, 255, 0.08), rgba(49, 92, 255, 0.03));
   }
 
   .runtime-decision.streaming {
-    background: linear-gradient(180deg, rgba(22, 184, 122, 0.18), rgba(22, 184, 122, 0.08));
+    border-color: rgba(22, 184, 122, 0.22);
+    background: linear-gradient(180deg, rgba(22, 184, 122, 0.08), rgba(22, 184, 122, 0.03));
   }
 
   .runtime-decision h4 {
@@ -367,7 +386,7 @@
     min-height: 1.9rem;
     padding: 0 0.85rem;
     border-radius: 999px;
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(10, 14, 25, 0.12);
     font-family: var(--font-mono);
     font-size: 0.72rem;
     letter-spacing: 0.08em;
@@ -375,18 +394,18 @@
   }
 
   .status-chip.ready {
-    background: rgba(82, 205, 154, 0.14);
-    color: rgba(176, 255, 221, 0.95);
+    background: rgba(22, 184, 122, 0.12);
+    color: rgb(4, 120, 87);
   }
 
   .status-chip.inspect {
-    background: rgba(102, 173, 255, 0.14);
-    color: rgba(202, 225, 255, 0.95);
+    background: rgba(49, 92, 255, 0.1);
+    color: rgb(49, 92, 255);
   }
 
   .status-chip.stream {
-    background: rgba(22, 184, 122, 0.14);
-    color: rgba(187, 255, 225, 0.95);
+    background: rgba(22, 184, 122, 0.12);
+    color: rgb(4, 120, 87);
   }
 
   @media (max-width: 980px) {
@@ -397,7 +416,7 @@
 
     .runtime-workbench__sidebar {
       border-right: 0;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      border-bottom: 1px solid var(--color-clear-border, #e1e1e1);
     }
   }
 </style>

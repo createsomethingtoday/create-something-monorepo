@@ -133,6 +133,7 @@
 		showLogin={true}
 		loginHref="/login"
 		accountHref="/account"
+		visualStyle="clear"
 	/>
 
 	<!-- Add top padding to account for fixed navigation -->
@@ -156,6 +157,7 @@
 		]}
 		showSocial={true}
 		isAuthenticated={!!data.user}
+		visualStyle="clear"
 	/>
 
 	<!-- Mode of Being Indicator - Hermeneutic Circle Position -->
@@ -165,7 +167,7 @@
 <style>
 	.layout-root {
 		min-height: 100vh;
-		background: var(--color-bg-pure);
+		background: var(--color-clear-porcelain, #f9f9f9);
 	}
 
 	.main-content {

@@ -350,7 +350,7 @@
     display: grid;
     grid-template-columns: minmax(0, 1.02fr) minmax(0, 0.98fr);
     gap: clamp(2rem, 4vw, 3.5rem);
-    align-items: center;
+    align-items: start;
   }
 
   .hero-copy,
