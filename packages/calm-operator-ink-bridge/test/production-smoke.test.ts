@@ -37,6 +37,12 @@ test('parses production smoke options from env and args', () => {
   assert.equal(args.skipHeartbeat, true);
 });
 
+test('does not use source token for device smoke by default', () => {
+  const args = parseArgs(['node', 'production-smoke.mjs'], { INK_SOURCE_TOKEN: 'source-token' });
+
+  assert.equal(args.token, undefined);
+});
+
 test('checks production health, clock, brief, and heartbeat contracts', async () => {
   const calls: Array<{ url: string; init?: RequestInit }> = [];
   const fetch = async (url: string | URL | Request, init?: RequestInit) => {

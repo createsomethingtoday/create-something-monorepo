@@ -11,12 +11,14 @@ import {
 } from './health-review-runs.js';
 import { collectRemoteHealthChecks, configuredRemoteHealthChecks } from './remote-health-checks.js';
 import { dueDailyAlarms, shouldRunHealthReviewAtUtcHour } from './scheduled-alarms.js';
+import { authRoleForInkRoute } from './route-auth.js';
 import type {
   DeviceHeartbeatInput,
   HealthReviewReport,
   HealthReviewRunTrigger,
   HealthSnapshotInput,
   InkAlertInput,
+  OperatorPriorityInput,
   OperatorEventInput,
   StoredAlert,
   StoredDeviceHeartbeat,
@@ -167,6 +169,50 @@ function numberValue(record: Record<string, unknown> | undefined, key: string): 
   if (typeof value === 'number' && Number.isFinite(value)) return value;
   if (typeof value === 'string' && value.trim() && Number.isFinite(Number(value))) return Number(value);
   return null;
+}
+
+function stringValue(value: unknown): string {
+  return typeof value === 'string' ? value.replace(/\s+/g, ' ').trim() : '';
+}
+
+function normalizedPrioritySourceLinks(
+  input: OperatorPriorityInput['source_links']
+): NonNullable<OperatorPriorityInput['source_links']> {
+  if (!Array.isArray(input)) return [];
+
+  return input
+    .map((link) => {
+      const label = stringValue(link?.label);
+      if (!label) return null;
+      const url = stringValue(link?.url);
+      const kind = stringValue(link?.kind);
+      const id = stringValue(link?.id);
+      return {
+        label,
+        ...(url ? { url } : {}),
+        ...(kind ? { kind } : {}),
+        ...(id ? { id } : {})
+      };
+    })
+    .filter((link): link is NonNullable<OperatorPriorityInput['source_links']>[number] => Boolean(link))
+    .slice(0, 8);
+}
+
+function boundedSeverity(value: unknown, fallback: number): number {
+  return typeof value === 'number' && Number.isFinite(value)
+    ? Math.max(0, Math.min(100, Math.round(value)))
+    : fallback;
+}
+
+function operatorPriorityDetail(input: {
+  summary: string;
+  risk: string;
+  sourceLinks: NonNullable<OperatorPriorityInput['source_links']>;
+}): string {
+  const sourceText = input.sourceLinks.length
+    ? `Sources: ${input.sourceLinks.map((link) => link.kind ? `${link.kind}:${link.label}` : link.label).join(', ')}`
+    : '';
+  return [input.summary, `Risk: ${input.risk}`, sourceText].filter(Boolean).join('\n');
 }
 
 function healthReviewFirmwareCopy(
@@ -448,6 +494,44 @@ export class InkState extends DurableObject<Env> {
     );
 
     return { ok: true, alert, brief: this.brief('core-ink') };
+  }
+
+  setOperatorPriority(input: OperatorPriorityInput): {
+    ok: true;
+    priority: StoredAlert;
+    brief: ReturnType<typeof buildOperatorBrief>;
+  } {
+    const focus = stringValue(input.focus || input.summary) || 'Operator priority';
+    const risk = stringValue(input.risk) || 'No major risk recorded.';
+    const nextAction = stringValue(input.next_action) || 'Review priority source';
+    const summary = stringValue(input.summary);
+    const sourceLinks = normalizedPrioritySourceLinks(input.source_links);
+    const payload = input.payload ?? {};
+    const result = this.addAlert({
+      id: stringValue(input.id) || 'operator-priority:current',
+      state: 'operator_priority',
+      category: 'operator_priority',
+      severity: boundedSeverity(input.severity, 92),
+      subject: focus,
+      reason: risk,
+      detail: operatorPriorityDetail({ summary, risk, sourceLinks }),
+      action: nextAction,
+      source: 'operator-priority-producer',
+      external_id: 'current',
+      urgent: Boolean(input.urgent),
+      expires_at: input.expires_at,
+      ttl_ms: input.ttl_ms,
+      payload: {
+        ...payload,
+        kind: 'operator_priority',
+        focus,
+        risk,
+        next_action: nextAction,
+        source_links: sourceLinks
+      }
+    });
+
+    return { ok: true, priority: result.alert, brief: result.brief };
   }
 
   setHealthSnapshot(input: HealthSnapshotInput): {
@@ -871,6 +955,7 @@ async function route(request: Request, env: Env): Promise<Response> {
         'GET /ink/surface-brief',
         'GET /ink/clock',
         'POST /ink/alert',
+        'POST /ink/operator-priority',
         'POST /ink/operator-event',
         'POST /ink/health-snapshot',
         'GET /ink/health-checks',
@@ -886,19 +971,15 @@ async function route(request: Request, env: Env): Promise<Response> {
     });
   }
 
-  if ((method === 'GET' && (path === '/ink/brief' || path === '/ink/surface-brief' || path === '/ink/clock' || path === '/ink/device')) ||
-      (method === 'POST' &&
-        (path === '/ink/device-heartbeat' ||
-          path === '/ink/clear' ||
-          path === '/ink/health-review/request' ||
-          path === '/ink/operator-event'))) {
-    if (!(await isAuthorized(request, env, 'device'))) {
-      return json({ ok: false, error: 'Unauthorized device request.' }, { status: 401 });
-    }
-  } else if (path.startsWith('/ink/')) {
-    if (!(await isAuthorized(request, env, 'source'))) {
-      return json({ ok: false, error: 'Unauthorized source request.' }, { status: 401 });
-    }
+  const authRole = authRoleForInkRoute(method, path);
+  if (authRole && !(await isAuthorized(request, env, authRole))) {
+    return json(
+      {
+        ok: false,
+        error: authRole === 'device' ? 'Unauthorized device request.' : 'Unauthorized source request.'
+      },
+      { status: 401 }
+    );
   }
 
   const stub = stateStub(env);
@@ -929,6 +1010,11 @@ async function route(request: Request, env: Env): Promise<Response> {
   if (method === 'POST' && path === '/ink/alert') {
     const body = await parseJsonBody<InkAlertInput>(request);
     return json(await stub.addAlert(body));
+  }
+
+  if (method === 'POST' && path === '/ink/operator-priority') {
+    const body = await parseJsonBody<OperatorPriorityInput>(request);
+    return json(await stub.setOperatorPriority(body));
   }
 
   if (method === 'POST' && path === '/ink/health-snapshot') {

@@ -2,6 +2,7 @@ export type InkSurface = 'core-ink' | 'm5paper' | 'papers3' | string;
 
 export type OperatorState =
   | 'clear'
+  | 'operator_priority'
   | 'mcp_attention'
   | 'agent_attention'
   | 'health_attention'
@@ -26,6 +27,27 @@ export interface InkAlertInput {
   action?: string;
   source?: string;
   external_id?: string;
+  urgent?: boolean;
+  expires_at?: number | string;
+  ttl_ms?: number;
+  payload?: Record<string, unknown>;
+}
+
+export interface OperatorPrioritySourceLink {
+  label: string;
+  url?: string;
+  kind?: 'linear' | 'notion' | 'codex' | 'health' | string;
+  id?: string;
+}
+
+export interface OperatorPriorityInput {
+  id?: string;
+  focus?: string;
+  risk?: string;
+  next_action?: string;
+  summary?: string;
+  source_links?: OperatorPrioritySourceLink[];
+  severity?: number;
   urgent?: boolean;
   expires_at?: number | string;
   ttl_ms?: number;

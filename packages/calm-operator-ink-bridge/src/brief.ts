@@ -32,17 +32,19 @@ function alertScore(alert: StoredAlert): number {
   const stateWeight =
     alert.state === 'blocked'
       ? 40
-      : alert.state === 'mcp_attention'
-        ? 35
-        : alert.state === 'agent_attention'
-          ? 30
-          : alert.state === 'daily_alarm'
+      : alert.state === 'operator_priority'
+        ? 45
+        : alert.state === 'mcp_attention'
+          ? 35
+          : alert.state === 'agent_attention'
             ? 30
-            : alert.state === 'sms_love'
-              ? 28
-              : alert.state === 'approval_needed'
-                ? 25
-                : 0;
+            : alert.state === 'daily_alarm'
+              ? 30
+              : alert.state === 'sms_love'
+                ? 28
+                : alert.state === 'approval_needed'
+                  ? 25
+                  : 0;
 
   return alert.severity + stateWeight + (alert.urgent ? 50 : 0);
 }
@@ -67,6 +69,8 @@ function selectHealth(snapshots: StoredHealthSnapshot[]): StoredHealthSnapshot |
 
 function headlineForAlert(alert: StoredAlert): string {
   switch (alert.state) {
+    case 'operator_priority':
+      return 'OPERATOR PRIORITY';
     case 'mcp_attention':
       return 'MCP ATTENTION';
     case 'agent_attention':
@@ -179,6 +183,10 @@ export function buildOperatorBrief(input: {
 }
 
 export function toFirmwareBrief(brief: OperatorBrief): Record<string, unknown> {
+  const sourceLinks = brief.selected_alert?.state === 'operator_priority'
+    ? brief.selected_alert.payload.source_links
+    : undefined;
+
   return {
     state: brief.state,
     headline: brief.headline,
@@ -190,6 +198,7 @@ export function toFirmwareBrief(brief: OperatorBrief): Record<string, unknown> {
     generated_at: brief.generated_at,
     clock: brief.clock,
     surface: brief.surface,
-    counts: brief.counts
+    counts: brief.counts,
+    ...(Array.isArray(sourceLinks) ? { source_links: sourceLinks } : {})
   };
 }

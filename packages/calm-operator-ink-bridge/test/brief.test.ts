@@ -133,6 +133,53 @@ test('surfaces daily alarm alerts as alarms', () => {
   assert.equal(brief.urgent, true);
 });
 
+test('prioritizes synthesized operator priority over poor health', () => {
+  const sourceLinks = [
+    {
+      kind: 'linear',
+      label: 'CRE-611',
+      url: 'https://linear.app/createsomething/issue/CRE-611'
+    }
+  ];
+  const brief = buildOperatorBrief({
+    alerts: [
+      alert({
+        id: 'operator-priority:current',
+        state: 'operator_priority',
+        category: 'operator_priority',
+        severity: 92,
+        subject: 'Webflow MCP launch',
+        reason: 'Marketplace copy incomplete',
+        action: 'Review Airtable fields',
+        payload: {
+          kind: 'operator_priority',
+          source_links: sourceLinks
+        }
+      })
+    ],
+    health: [
+      health({
+        id: 'mcp-composio',
+        status: 'failed',
+        component: 'Composio Toolkit MCP',
+        summary: 'Health endpoint returned 404',
+        severity: 80
+      })
+    ],
+    now: 1000
+  });
+
+  assert.equal(brief.state, 'operator_priority');
+  assert.equal(brief.headline, 'OPERATOR PRIORITY');
+  assert.equal(brief.line1, 'Webflow MCP launch');
+  assert.equal(brief.line2, 'Marketplace copy incomplete');
+  assert.equal(brief.action, 'Review Airtable fields');
+  assert.equal(brief.counts.poor_health, 1);
+
+  const firmwareBrief = toFirmwareBrief(brief);
+  assert.deepEqual(firmwareBrief.source_links, sourceLinks);
+});
+
 test('ignores expired or cleared alerts', () => {
   const brief = buildOperatorBrief({
     alerts: [

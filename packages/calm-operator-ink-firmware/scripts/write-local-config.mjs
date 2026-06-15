@@ -21,13 +21,13 @@ const config = {
   ssid: pick('CALM_OPERATOR_WIFI_SSID', 'WIFI_SSID', 'SSID'),
   password: pick('CALM_OPERATOR_WIFI_PASSWORD', 'WIFI_PASSWORD', 'WI_FI_PASSWORD'),
   origin: pick('CALM_OPERATOR_BRIDGE_ORIGIN') || 'https://ink.createsomething.agency',
-  token: pick('INK_DEVICE_TOKEN', 'INK_SOURCE_TOKEN', 'CALM_OPERATOR_BRIDGE_TOKEN'),
+  token: pick('INK_DEVICE_TOKEN', 'CALM_OPERATOR_DEVICE_TOKEN'),
   deviceId: pick('CALM_OPERATOR_DEVICE_ID', 'INK_DEVICE_ID') || 'core-ink',
   surface: pick('CALM_OPERATOR_SURFACE', 'INK_SURFACE') || 'core-ink'
 };
 
 const missing = [];
-if (!config.token) missing.push('INK_DEVICE_TOKEN or INK_SOURCE_TOKEN');
+if (!config.token) missing.push('INK_DEVICE_TOKEN');
 const warnings = [];
 if (!config.ssid) warnings.push('CALM_OPERATOR_WIFI_SSID not set; firmware will try saved ESP32 Wi-Fi credentials');
 if (config.ssid && !config.password) warnings.push('CALM_OPERATOR_WIFI_PASSWORD not set');

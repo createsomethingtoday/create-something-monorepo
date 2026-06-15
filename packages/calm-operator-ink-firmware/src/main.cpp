@@ -5,6 +5,7 @@
 #include <Preferences.h>
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
+#include <time.h>
 
 #if __has_include("operator_config.local.h")
 #include "operator_config.local.h"
@@ -12,11 +13,15 @@
 #include "operator_config.example.h"
 #endif
 
+#include "trust_roots.h"
+
 namespace {
 
 constexpr const char* FIRMWARE_VERSION = "0.1.5";
 constexpr uint32_t AUTO_SYNC_INTERVAL_MS = 5UL * 60UL * 1000UL;
 constexpr uint32_t WIFI_TIMEOUT_MS = 15000;
+constexpr uint32_t TLS_TIME_TIMEOUT_MS = 10000;
+constexpr time_t MIN_TLS_TIME = 1704067200; // 2024-01-01T00:00:00Z
 constexpr const char* SETTINGS_NAMESPACE = "calm-ink";
 
 struct Brief {
@@ -66,12 +71,14 @@ bool alertsEnabled = true;
 bool quietMode = false;
 bool lastUrgentRendered = false;
 uint32_t lastSyncAt = 0;
+uint32_t lastSyncAttemptAt = 0;
 String lastSyncStatus = "boot";
 String lastHttpError = "";
 String lastFrameKey = "";
 String clockLine1 = "";
 String clockLine2 = "";
 bool briefIsCached = false;
+bool tlsClockReady = false;
 int stoneCursor = 0;
 int stoneCount = 0;
 const int STONE_SLOTS = 9;
@@ -364,7 +371,7 @@ bool connectWifi() {
   if (WiFi.status() == WL_CONNECTED) return true;
   if (!hasRuntimeConfig()) {
     lastSyncStatus = "missing token";
-    Serial.println("[ink] missing device/source token");
+    Serial.println("[ink] missing device token");
     return false;
   }
 
@@ -394,6 +401,27 @@ bool connectWifi() {
   return ok;
 }
 
+bool ensureTlsClock() {
+  if (tlsClockReady && time(nullptr) >= MIN_TLS_TIME) return true;
+
+  Serial.println("[ink] syncing TLS clock");
+  configTime(0, 0, "time.google.com", "time.cloudflare.com", "pool.ntp.org");
+  const uint32_t startedAt = millis();
+
+  while (millis() - startedAt < TLS_TIME_TIMEOUT_MS) {
+    if (time(nullptr) >= MIN_TLS_TIME) {
+      tlsClockReady = true;
+      return true;
+    }
+    delay(250);
+  }
+
+  lastSyncStatus = "time failed";
+  lastHttpError = "TLS clock failed";
+  Serial.println("[ink] TLS clock sync failed");
+  return false;
+}
+
 String jsonEscape(const String& value) {
   String output = "";
   for (int i = 0; i < value.length(); i++) {
@@ -406,10 +434,12 @@ String jsonEscape(const String& value) {
 
 int requestBridge(const String& method, const String& path, const String& body, String& response) {
   if (!connectWifi()) return -100;
+  if (!ensureTlsClock()) return -102;
 
   Serial.printf("[ink] %s %s\n", method.c_str(), path.c_str());
   WiFiClientSecure client;
-  client.setInsecure();
+  client.setCACert(CALM_OPERATOR_GTS_ROOT_R4_CA);
+  client.setHandshakeTimeout(12);
 
   HTTPClient http;
   const String url = origin() + path;
@@ -485,6 +515,7 @@ bool applyBriefPayload(const String& payload) {
 
 bool fetchBrief(bool announce = true) {
   Serial.println("[ink] syncing brief");
+  lastSyncAttemptAt = millis();
   briefIsCached = false;
   if (announce) {
     beepSoft();
@@ -769,7 +800,7 @@ void loop() {
     fetchBrief(true);
   }
 
-  if (hasRuntimeConfig() && millis() - lastSyncAt > AUTO_SYNC_INTERVAL_MS && screen == Screen::Brief) {
+  if (hasRuntimeConfig() && screen == Screen::Brief && millis() - lastSyncAttemptAt > AUTO_SYNC_INTERVAL_MS) {
     fetchBrief(false);
   }
 

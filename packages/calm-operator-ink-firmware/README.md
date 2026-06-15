@@ -24,7 +24,7 @@ infisical run --env=prod --path=/ --command "pnpm --dir packages/calm-operator-i
 
 Required values:
 
-- `INK_DEVICE_TOKEN` or `INK_SOURCE_TOKEN`
+- `INK_DEVICE_TOKEN`
 
 Recommended values:
 
@@ -34,8 +34,11 @@ Recommended values:
 If Wi-Fi values are not present, the firmware tries saved ESP32 Wi-Fi
 credentials from a previous firmware before showing a setup screen.
 
-`INK_SOURCE_TOKEN` currently works as a compatibility token for device reads, but
-a dedicated `INK_DEVICE_TOKEN` should be used for a shipped device.
+HTTPS requests validate the Ink bridge certificate against the Google Trust
+Services `GTS Root R4` trust anchor in `include/trust_roots.h`. The firmware
+syncs device time over SNTP before the first HTTPS request so certificate
+validity dates can be checked. If the production route moves to a certificate
+chain outside that root, update `include/trust_roots.h` before flashing.
 
 ## Build
 

@@ -17,7 +17,7 @@ function usage() {
     '',
     'Options:',
     '  --origin <url>        Defaults to https://ink.createsomething.agency',
-    '  --token <token>       Defaults to INK_DEVICE_TOKEN, INK_SOURCE_TOKEN, or CALM_OPERATOR_BRIDGE_TOKEN',
+    '  --token <token>       Defaults to INK_DEVICE_TOKEN or CALM_OPERATOR_BRIDGE_TOKEN',
     '  --device-id <id>      Defaults to production-smoke',
     '  --surface <surface>   Defaults to core-ink',
     '  --public-only         Only check GET /healthz; does not require a token',
@@ -29,7 +29,7 @@ function usage() {
 export function parseArgs(argv, env = process.env) {
   const args = {
     origin: DEFAULT_ORIGIN,
-    token: env.INK_DEVICE_TOKEN ?? env.INK_SOURCE_TOKEN ?? env.CALM_OPERATOR_BRIDGE_TOKEN,
+    token: env.INK_DEVICE_TOKEN ?? env.CALM_OPERATOR_BRIDGE_TOKEN,
     deviceId: DEFAULT_DEVICE_ID,
     surface: DEFAULT_SURFACE,
     publicOnly: false,
@@ -193,7 +193,7 @@ export async function runProductionSmoke(argsInput, options = {}) {
 
   const token = args.token?.trim();
   if (!token) {
-    throw new Error('INK_DEVICE_TOKEN, INK_SOURCE_TOKEN, or CALM_OPERATOR_BRIDGE_TOKEN is required');
+    throw new Error('INK_DEVICE_TOKEN or CALM_OPERATOR_BRIDGE_TOKEN is required');
   }
 
   const clock = await getJson(fetchImpl, origin, '/ink/clock', 'GET /ink/clock', token);

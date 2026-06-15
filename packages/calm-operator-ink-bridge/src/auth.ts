@@ -43,7 +43,7 @@ function roleTokens(env: AuthEnv, role: AuthRole): string[] {
   const sourceToken = env.INK_SOURCE_TOKEN?.trim();
 
   const candidates =
-    role === 'device' ? [deviceToken, bridgeToken, sourceToken] : [sourceToken, bridgeToken];
+    role === 'device' ? [deviceToken, bridgeToken] : [sourceToken, bridgeToken];
 
   return candidates.filter((value): value is string => Boolean(value));
 }
