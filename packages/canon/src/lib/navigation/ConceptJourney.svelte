@@ -16,7 +16,11 @@
 	 */
 
 	import { onMount } from 'svelte';
-	import { FlaskConical, BookOpen, Hammer, Scroll, GraduationCap } from 'lucide-svelte';
+	import FlaskConical from 'lucide-svelte/icons/flask-conical';
+	import BookOpen from 'lucide-svelte/icons/book-open';
+	import Hammer from 'lucide-svelte/icons/hammer';
+	import Scroll from 'lucide-svelte/icons/scroll';
+	import GraduationCap from 'lucide-svelte/icons/graduation-cap';
 
 	// =============================================================================
 	// TYPES

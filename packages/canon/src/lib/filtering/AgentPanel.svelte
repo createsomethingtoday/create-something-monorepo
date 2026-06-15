@@ -5,7 +5,11 @@
 	 * Natural language input and agent reasoning display.
 	 * Handles UI state; actual agent execution is done via callback.
 	 */
-	import { Brain, Wrench, BarChart3, Check, CheckCircle } from 'lucide-svelte';
+	import Brain from 'lucide-svelte/icons/brain';
+	import Wrench from 'lucide-svelte/icons/wrench';
+	import BarChart3 from 'lucide-svelte/icons/bar-chart-3';
+	import Check from 'lucide-svelte/icons/check';
+	import CheckCircle from 'lucide-svelte/icons/check-circle';
 	import type { AgentStep, FilterState } from './types.js';
 
 	// Props
