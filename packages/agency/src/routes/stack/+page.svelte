@@ -232,7 +232,12 @@
   {/snippet}
 
   {#snippet aside()}
-    <ClearCardGrid items={boundarySummary} columns={1} ariaLabel="Stack boundary summary" />
+    <ClearCardGrid
+      items={boundarySummary}
+      columns={1}
+      density="compact"
+      ariaLabel="Stack boundary summary"
+    />
   {/snippet}
 </ClearPageSection>
 
