@@ -1,199 +1,100 @@
 <script lang="ts">
-  import { SEO } from '@create-something/canon';
+  import {
+    ClearCardGrid,
+    ClearPageSection,
+    SEO,
+    type ClearCardItem
+  } from '@create-something/canon';
 
   const effectiveDate = 'March 6, 2026';
 
-  const controls = [
-    'One active bearer token per authenticated user',
-    'Long-lived token issued by .agency, not raw Auth0 access tokens',
-    'Retain the active token by default; rotation is explicit or compromise-driven',
-    'Immediate revoke and regenerate controls',
-    'Live checks for org membership, policy acceptance, contract status, billing status, and service entitlement',
-    'Opaque token format with protected server-side storage',
-    'Audit logs for issuance, regeneration, revocation, and request-time authorization'
+  const controls: ClearCardItem[] = [
+    {
+      eyebrow: 'Token',
+      icon: 'user',
+      title: 'One active token per authenticated user',
+      detail: 'The token is personal to one user and governed by .agency.'
+    },
+    {
+      eyebrow: 'Boundary',
+      icon: 'warning',
+      title: 'Not a raw identity token',
+      detail: 'The managed bearer token is not a replacement for portal identity or organization checks.'
+    },
+    {
+      eyebrow: 'Check',
+      icon: 'check',
+      title: 'Live entitlement at request time',
+      detail: 'Membership, policy acceptance, contract status, billing status, and service entitlement are checked before access.'
+    },
+    {
+      eyebrow: 'Audit',
+      icon: 'document',
+      title: 'Issuance and revocation logs',
+      detail: 'Issuance, regeneration, revocation, and request-time authorization are recorded.'
+    }
   ];
 
-  const responsibilities = [
-    'Do not share the token with another person or team.',
-    'Store the token in a secure secret manager or equivalent controlled environment.',
-    'Regenerate or revoke the token immediately if compromise is suspected.',
-    'Expect access to stop if the user or organization is no longer in good standing.',
-    'Understand that regeneration invalidates the prior token immediately.'
+  const responsibilities: ClearCardItem[] = [
+    {
+      eyebrow: 'Do not share',
+      icon: 'users',
+      title: 'No shared team tokens',
+      detail: 'Do not share a personal token with another person, team, repository, or uncontrolled environment.'
+    },
+    {
+      eyebrow: 'Store',
+      icon: 'folder',
+      title: 'Use a secret manager',
+      detail: 'Store tokens in a secure secret manager or equivalent controlled runtime environment.'
+    },
+    {
+      eyebrow: 'Rotate',
+      icon: 'refresh',
+      title: 'Regenerate on suspected compromise',
+      detail: 'Regeneration invalidates the prior token immediately unless a managed transition is explicitly provided.'
+    },
+    {
+      eyebrow: 'Expect stops',
+      icon: 'error',
+      title: 'Access can end immediately',
+      detail: 'Access may stop when a user, organization, contract, billing state, or policy state is no longer in good standing.'
+    }
   ];
 </script>
 
 <SEO
   title="Bearer Token Policy"
-  description="The bearer token policy for CREATE SOMETHING .agency. One long-lived token per user, live entitlement checks, revocation, audit controls, and legal/commercial enforcement."
+  description="CREATE SOMETHING .agency bearer token policy: one long-lived token per user, live entitlement checks, revocation, audit controls, and enforcement."
   propertyName="agency"
 />
 
-<section class="hero pt-32 pb-16 px-6">
-  <div class="shell-inner">
-    <div class="eyebrow animate-reveal">Trust Surface</div>
-    <div class="copy animate-reveal">
-      <h1 class="page-title">Bearer Token Policy</h1>
-      <p class="lede">
-        `.agency` issues one long-lived bearer token per authenticated user for use in approved hosts,
-        local tools, and background agents. The token is portable. The authorization is conditional.
-      </p>
-      <p class="date-text">Effective date: {effectiveDate}</p>
-    </div>
-  </div>
-</section>
+<ClearPageSection
+  variant="hero"
+  titleLevel="h1"
+  eyebrow="Bearer Token Policy"
+  title="The token is portable. Authorization is conditional."
+  description="CREATE SOMETHING .agency issues one managed bearer token per authenticated user for approved hosts, local tools, and background agents. A valid token does not guarantee access unless current policy and entitlement checks pass."
+>
+  {#snippet after()}
+    <ClearCardGrid items={controls} columns={4} ariaLabel="Bearer token controls" />
+  {/snippet}
+</ClearPageSection>
 
-<section class="pb-24 px-6">
-  <div class="shell-inner policy-grid">
-    <article class="policy-card">
-      <h2>Core Rule</h2>
-      <p>
-        Each bearer token is personal to one authenticated user, governed by `.agency`, and continuously
-        checked against current organization, legal, policy, and billing state. A valid token does not
-        guarantee access unless the user and organization remain in good standing at the time of each request.
-        Existing active bearer tokens are retained by default; replacement is an explicit regenerate action or
-        a response to suspected compromise or misuse.
-      </p>
-    </article>
+<ClearPageSection
+  variant="white"
+  eyebrow={`Effective ${effectiveDate}`}
+  title="User responsibilities are part of the control model."
+  description="Bearer tokens are useful because they are managed, revocable, and auditable. They become risky when treated as shared credentials or bypass paths."
+>
+  {#snippet after()}
+    <ClearCardGrid items={responsibilities} columns={4} ariaLabel="Bearer token responsibilities" />
+  {/snippet}
+</ClearPageSection>
 
-    <article class="policy-card">
-      <h2>Control Model</h2>
-      <ul>
-        {#each controls as control}
-          <li>{control}</li>
-        {/each}
-      </ul>
-    </article>
-
-    <article class="policy-card">
-      <h2>Prohibited Use</h2>
-      <ul>
-        <li>Shared team tokens</li>
-        <li>Public repositories or uncontrolled environments</li>
-        <li>Bypassing contract, payment, or policy requirements</li>
-        <li>Continued use after suspected exposure</li>
-      </ul>
-    </article>
-
-    <article class="policy-card">
-      <h2>User Responsibilities</h2>
-      <ul>
-        {#each responsibilities as responsibility}
-          <li>{responsibility}</li>
-        {/each}
-      </ul>
-    </article>
-
-    <article class="policy-card full-span">
-      <h2>Termination and Enforcement</h2>
-      <p>
-        `.agency` may revoke or suspend bearer-token access immediately where compromise, misuse, billing
-        delinquency, contract failure, policy violation, or other legal, operational, or security risk is
-        detected. Revocation terminates token usability at once. Regeneration replaces the prior token with
-        no overlap unless CREATE SOMETHING explicitly provides a managed transition mechanism.
-      </p>
-    </article>
-  </div>
-</section>
-
-<style>
-  .hero {
-    position: relative;
-  }
-
-  .eyebrow {
-    color: var(--color-fg-tertiary);
-    text-transform: uppercase;
-    letter-spacing: 0.14em;
-    font-size: 0.75rem;
-    margin-bottom: 1.25rem;
-  }
-
-  .copy {
-    max-width: 56rem;
-  }
-
-  .page-title {
-    font-size: var(--text-h1);
-    font-weight: 700;
-    color: var(--color-fg-primary);
-    margin-bottom: 1rem;
-  }
-
-  .lede {
-    font-size: var(--text-body-lg);
-    color: var(--color-fg-secondary);
-    max-width: 52rem;
-    line-height: 1.7;
-  }
-
-  .date-text {
-    margin-top: 1rem;
-    color: var(--color-fg-tertiary);
-    font-size: var(--text-body-sm);
-  }
-
-  .policy-grid {
-    display: grid;
-    gap: 1.5rem;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .policy-card {
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    background:
-      linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.015)),
-      rgba(0, 0, 0, 0.5);
-    padding: 1.5rem;
-    backdrop-filter: blur(8px);
-  }
-
-  .policy-card h2 {
-    font-size: var(--text-h4);
-    color: var(--color-fg-primary);
-    margin-bottom: 1rem;
-  }
-
-  .policy-card p,
-  .policy-card li {
-    color: var(--color-fg-secondary);
-    line-height: 1.7;
-  }
-
-  .policy-card ul {
-    margin: 0;
-    padding-left: 1.1rem;
-    display: grid;
-    gap: 0.75rem;
-  }
-
-  .full-span {
-    grid-column: 1 / -1;
-  }
-
-  .animate-reveal {
-    opacity: 0;
-    transform: translateY(20px);
-    animation: reveal 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-  }
-
-  @keyframes reveal {
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .animate-reveal {
-      animation: none;
-      opacity: 1;
-      transform: none;
-    }
-  }
-
-  @media (max-width: 760px) {
-    .policy-grid {
-      grid-template-columns: 1fr;
-    }
-  }
-</style>
+<ClearPageSection
+  variant="soft"
+  eyebrow="Enforcement"
+  title="Revocation terminates token usability at once."
+  description="CREATE SOMETHING may revoke or suspend bearer-token access immediately where compromise, misuse, billing delinquency, contract failure, policy violation, or other legal, operational, or security risk is detected."
+/>

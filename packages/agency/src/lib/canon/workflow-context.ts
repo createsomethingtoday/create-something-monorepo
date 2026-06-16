@@ -1,143 +1,47 @@
 import { canonActionDefinitions, canonControlContext, type CanonActionDefinition } from './control';
+import type {
+	AccessLaneItem,
+	ActionExecutionItem,
+	ActivityEventItem,
+	ApprovalQueueItem,
+	ArtifactItem,
+	BusinessContextItem,
+	CheckStatus,
+	DecisionItem,
+	EngagementAccess,
+	EngagementMeta,
+	EvidenceItem,
+	HandoffPackageItem,
+	OperatingLayer,
+	ReviewItem,
+	RunbookCommand,
+	RuntimeCheck,
+	SourceStatusItem,
+	WorkflowAgent,
+	WorkflowApproval,
+	WorkflowMetricItem,
+	WorkflowRuntime
+} from '@create-something/delivery-schema';
 
-export type CanonRuntimeStatus = 'ok' | 'warning' | 'blocked' | 'idle';
+// Canonical shapes live in @create-something/delivery-schema (shared with the
+// Webflow control components). The Canon* aliases preserve this module's
+// existing import surface. See docs/DELIVERY_SURFACE_SPEC.md.
+export type CanonRuntimeStatus = CheckStatus;
 export type CanonWorkflowSource = 'd1' | 'fallback';
-
-export interface CanonRuntimeCheck {
-	label: string;
-	status?: CanonRuntimeStatus;
-	detail?: string;
-}
-
-export interface CanonWorkflowRuntime {
-	label: string;
-	status: CanonRuntimeStatus;
-	environment: string;
-	lastChecked: string;
-	checks: CanonRuntimeCheck[];
-}
-
-export interface CanonWorkflowLayer {
-	tier: 'Database' | 'Automation' | 'Judgment';
-	title: string;
-	status: string;
-	description: string;
-	evidence?: string[];
-	tone?: 'neutral' | 'info' | 'success' | 'warning' | 'danger';
-}
-
-export interface CanonWorkflowEvidenceItem {
-	id?: string;
-	label: string;
-	detail?: string;
-	source?: string;
-	href?: string;
-	tone?: 'neutral' | 'info' | 'success' | 'warning' | 'danger';
-	timestamp?: string;
-	visibility?: 'public' | 'private' | 'internal';
-	status?: 'draft' | 'approved' | 'review' | 'blocked';
-	owner?: string;
-}
-
-export interface CanonWorkflowDecisionItem {
-	id?: string;
-	title: string;
-	description?: string;
-	owner?: string;
-	due?: string;
-	state?: 'review' | 'approved' | 'blocked' | 'open' | 'ready';
-	tier?: 'Database' | 'Automation' | 'Judgment';
-}
-
-export interface CanonWorkflowArtifactItem {
-	title: string;
-	type?: string;
-	description?: string;
-	href?: string;
-	visibility?: 'public' | 'private' | 'internal';
-	tone?: 'neutral' | 'info' | 'success' | 'warning' | 'danger';
-}
-
-export interface CanonWorkflowApproval {
-	title: string;
-	description: string;
-	approvalState: 'review' | 'approved' | 'blocked';
-	requiredApprover: string;
-	primaryActionLabel: string;
-	secondaryActionLabel: string;
-}
-
-export interface CanonWorkflowAgent {
-	title: string;
-	placeholder: string;
-	suggestedPrompts: Array<{ label: string; prompt: string }>;
-	initialMessages: Array<{ role: 'agent' | 'operator'; body: string; grounding?: string[] }>;
-}
-
-export interface CanonWorkflowBusinessContext {
-	id: string;
-	client: string;
-	project: string;
-	workflow: string;
-	environment: string;
-	status: 'active' | 'review' | 'blocked' | 'idle';
-	owner: string;
-	detail?: string;
-}
-
-export interface CanonWorkflowMetric {
-	label: string;
-	value: string;
-	detail?: string;
-	tone?: 'neutral' | 'info' | 'success' | 'warning' | 'danger';
-	trend?: string;
-}
-
-export interface CanonWorkflowSourceStatus {
-	system: string;
-	status: 'ok' | 'warning' | 'blocked' | 'idle';
-	detail: string;
-	lastSynced?: string;
-	owner?: string;
-	tier?: 'Database' | 'Automation' | 'Judgment';
-}
-
-export interface CanonWorkflowApprovalQueueItem {
-	id: string;
-	actionId?: string;
-	title: string;
-	requester?: string;
-	requiredApprover: string;
-	status: 'review' | 'approved' | 'blocked';
-	risk?: 'low' | 'medium' | 'high';
-	due?: string;
-	evidence?: string[];
-	policyChecks?: string[];
-	updatedBy?: string;
-	updatedAt?: string;
-}
-
-export interface CanonWorkflowExecutionQueueItem {
-	id: string;
-	actionId?: string;
-	title: string;
-	status: 'preview' | 'queued' | 'approved' | 'blocked' | 'executed';
-	owner?: string;
-	system?: string;
-	risk?: 'low' | 'medium' | 'high';
-	rollback?: string;
-	lastUpdated?: string;
-}
-
-export interface CanonWorkflowActivityEvent {
-	id: string;
-	eventType: 'context' | 'approval' | 'preview' | 'agent' | 'deploy' | 'evidence' | 'decision';
-	label: string;
-	detail?: string;
-	actor?: string;
-	timestamp?: string;
-	tone?: 'neutral' | 'info' | 'success' | 'warning' | 'danger';
-}
+export type CanonRuntimeCheck = RuntimeCheck;
+export type CanonWorkflowRuntime = WorkflowRuntime;
+export type CanonWorkflowLayer = OperatingLayer;
+export type CanonWorkflowEvidenceItem = EvidenceItem;
+export type CanonWorkflowDecisionItem = DecisionItem;
+export type CanonWorkflowArtifactItem = ArtifactItem;
+export type CanonWorkflowApproval = WorkflowApproval;
+export type CanonWorkflowAgent = WorkflowAgent;
+export type CanonWorkflowBusinessContext = BusinessContextItem;
+export type CanonWorkflowMetric = WorkflowMetricItem;
+export type CanonWorkflowSourceStatus = SourceStatusItem;
+export type CanonWorkflowApprovalQueueItem = ApprovalQueueItem;
+export type CanonWorkflowExecutionQueueItem = ActionExecutionItem;
+export type CanonWorkflowActivityEvent = ActivityEventItem;
 
 export interface CanonWorkflowContext {
 	contextId: string;
@@ -161,6 +65,14 @@ export interface CanonWorkflowContext {
 	executionQueue: CanonWorkflowExecutionQueueItem[];
 	activityEvents: CanonWorkflowActivityEvent[];
 	guardrails: string[];
+	// Engagement extensions (docs/DELIVERY_SURFACE_SPEC.md, step 3). Optional so
+	// the governed-console context and older D1 rows remain valid.
+	engagement?: EngagementMeta;
+	handoffPackage?: HandoffPackageItem[];
+	runbookCommands?: RunbookCommand[];
+	accessLanes?: AccessLaneItem[];
+	reviews?: ReviewItem[];
+	access?: EngagementAccess;
 }
 
 interface CanonWorkflowContextRow {
@@ -211,10 +123,11 @@ export function sanitizeCanonContextId(value: unknown): string {
 
 export async function loadCanonWorkflowContext(
 	db: D1Database | null | undefined,
-	rawContextId: unknown
+	rawContextId: unknown,
+	customFallback?: CanonWorkflowContext
 ): Promise<CanonWorkflowContext> {
 	const contextId = sanitizeCanonContextId(rawContextId);
-	const fallback = buildFallbackCanonWorkflowContext(contextId);
+	const fallback = customFallback ?? buildFallbackCanonWorkflowContext(contextId);
 
 	if (!db) return fallback;
 
@@ -282,8 +195,28 @@ function mergeCanonWorkflowContext(
 			overlays.activityEvents && overlays.activityEvents.length > 0
 				? overlays.activityEvents
 				: normalizeArray<CanonWorkflowActivityEvent>(parsed.activityEvents, fallback.activityEvents),
-		guardrails: normalizeStringArray(parsed.guardrails, fallback.guardrails)
+		guardrails: normalizeStringArray(parsed.guardrails, fallback.guardrails),
+		engagement: normalizeOptionalRecord<EngagementMeta>(parsed.engagement, fallback.engagement),
+		handoffPackage: normalizeOptionalArray<HandoffPackageItem>(parsed.handoffPackage, fallback.handoffPackage),
+		runbookCommands: normalizeOptionalArray<RunbookCommand>(parsed.runbookCommands, fallback.runbookCommands),
+		accessLanes: normalizeOptionalArray<AccessLaneItem>(parsed.accessLanes, fallback.accessLanes),
+		reviews: normalizeOptionalArray<ReviewItem>(parsed.reviews, fallback.reviews),
+		access: normalizeOptionalRecord<EngagementAccess>(parsed.access, fallback.access)
 	};
+}
+
+function normalizeOptionalRecord<T>(value: unknown, fallback: T | undefined): T | undefined {
+	if (value && typeof value === 'object' && !Array.isArray(value)) {
+		return value as T;
+	}
+	return fallback;
+}
+
+function normalizeOptionalArray<T>(value: unknown, fallback: T[] | undefined): T[] | undefined {
+	if (Array.isArray(value)) {
+		return value as T[];
+	}
+	return fallback;
 }
 
 function buildFallbackCanonWorkflowContext(contextId: string): CanonWorkflowContext {
