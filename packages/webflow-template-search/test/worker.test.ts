@@ -1165,8 +1165,37 @@ describe('webflow-template-search worker', () => {
       ]);
 
       const search = await callWorker(new Request('https://templates.test/api/templates/search?q=workflow'), env);
-      const searchPayload = (await search.json()) as { items: Array<{ name: string }> };
+      const searchPayload = (await search.json()) as {
+        items: Array<{ name: string }>;
+        applied_filters: { relaxed: boolean };
+      };
       expect(searchPayload.items.map((item) => item.name)).toEqual(['Agentflow']);
+      expect(searchPayload.applied_filters.relaxed).toBe(false);
+
+      // Strict AND-matching returns nothing when one token has no match; the
+      // worker retries once with OR'ed tokens instead of a dead-end empty grid.
+      const relaxedSearch = await callWorker(
+        new Request('https://templates.test/api/templates/search?q=workflow%20zzznomatch'),
+        env,
+      );
+      const relaxedPayload = (await relaxedSearch.json()) as {
+        items: Array<{ name: string }>;
+        applied_filters: { relaxed: boolean };
+      };
+      expect(relaxedPayload.items.map((item) => item.name)).toEqual(['Agentflow']);
+      expect(relaxedPayload.applied_filters.relaxed).toBe(true);
+
+      // A single unmatched token cannot be relaxed; the empty result stands.
+      const unmatchedSearch = await callWorker(
+        new Request('https://templates.test/api/templates/search?q=zzznomatch'),
+        env,
+      );
+      const unmatchedPayload = (await unmatchedSearch.json()) as {
+        items: unknown[];
+        applied_filters: { relaxed: boolean };
+      };
+      expect(unmatchedPayload.items).toEqual([]);
+      expect(unmatchedPayload.applied_filters.relaxed).toBe(false);
 
       const newestSearch = await callWorker(new Request('https://templates.test/api/templates/search?sort=newest&page_size=10'), env);
       const newestPayload = (await newestSearch.json()) as { items: Array<{ name: string; published_date: string | null }> };

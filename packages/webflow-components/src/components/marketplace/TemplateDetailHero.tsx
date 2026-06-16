@@ -74,6 +74,10 @@ const CATEGORY_ROUTE_ALIASES: Record<string, string> = {
   'transportation-and-automotive-websites': 'transportation-websites',
   'retail-and-ecommerce': 'retail-and-e-commerce-websites',
   'retail-and-e-commerce': 'retail-and-e-commerce-websites',
+  'culture-performance-and-entertainment': 'arts-and-entertainment-websites',
+  'culture-performance-and-entertainment-websites': 'arts-and-entertainment-websites',
+  'construction-and-home-services': 'home-services-websites',
+  'construction-and-home-services-websites': 'home-services-websites',
 };
 
 const PREVIEW_DEVICE_DIMENSIONS: Record<TemplateDetailPreviewDevice, { width: number; height: number }> = {
@@ -118,13 +122,54 @@ function formatTemplateTitle(name: string): string {
   return /\bwebsite\s+template$/i.test(label) ? label : `${label} - Website Template`;
 }
 
+function cleanCategoryListItem(value: string): string {
+  const trimmed = value.trim();
+  if (trimmed.length >= 2 && trimmed.startsWith('"') && trimmed.endsWith('"')) {
+    return trimmed.slice(1, -1).replace(/""/g, '"').trim();
+  }
+  return trimmed;
+}
+
+function splitCommaSeparatedCategoryList(value: string): string[] {
+  const items: string[] = [];
+  let current = '';
+  let inQuotes = false;
+
+  for (let index = 0; index < value.length; index += 1) {
+    const char = value[index];
+    const next = value[index + 1];
+
+    if (char === '"' && inQuotes && next === '"') {
+      current += '"';
+      index += 1;
+      continue;
+    }
+
+    if (char === '"') {
+      inQuotes = !inQuotes;
+      current += char;
+      continue;
+    }
+
+    if (char === ',' && !inQuotes) {
+      items.push(current);
+      current = '';
+      continue;
+    }
+
+    current += char;
+  }
+
+  items.push(current);
+  return items;
+}
+
 function splitCategoryList(value?: string): string[] {
   const raw = value?.trim();
   if (!raw) return [];
-  const separator = raw.includes('\n') ? /\n+/ : /,\s*/;
-  return raw
-    .split(separator)
-    .map((item) => item.trim())
+  const items = raw.includes('\n') ? raw.split(/\n+/) : splitCommaSeparatedCategoryList(raw);
+  return items
+    .map(cleanCategoryListItem)
     .filter(Boolean);
 }
 

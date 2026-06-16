@@ -1,5 +1,5 @@
 import React, { CSSProperties, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { TemplateCard } from '../cards/TemplateCard';
+import { TemplateCard, TEMPLATE_CARD_STYLES } from '../cards/TemplateCard';
 import { MarketplaceExperimentRole, trackMarketplaceEvent } from './analytics';
 
 type TemplateScope = 'all' | 'featured' | 'free' | 'landing_pages';
@@ -355,7 +355,7 @@ const CAROUSEL_STYLES = `
     animation: none;
   }
 }
-`;
+` + TEMPLATE_CARD_STYLES;
 
 const S: Record<string, CSSProperties> = {
   fallbackButton: {
@@ -751,6 +751,7 @@ export const TemplateCarouselSection: React.FC<TemplateCarouselSectionProps> = (
                       }
                       priorityIndex={index}
                       deferSecondaryImage
+                      stylesProvided
                       approvalDate={item.published_date ?? ''}
                       popularityScore={String(item.popularity_score ?? '')}
                       badgeVariant={preset === 'recently_added' ? 'new' : preset === 'curated_by_webflow' ? 'featured' : 'none'}
