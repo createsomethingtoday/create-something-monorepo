@@ -4,6 +4,7 @@ React component library for Webflow positioned around Canon parity.
 
 The package currently contains a mix of:
 - Canon-parity exports already present in Webflow
+- Ona-styled business logic exports for workflow qualification, routing, and ROI surfaces
 - Canon control-plane exports for operator surfaces backed by Cloudflare preview routes
 - compatibility components carried forward from earlier Maverick-derived work
 - section-level components that are useful in Webflow but are not Canon parity targets
@@ -56,6 +57,10 @@ Current Canon parity by exported component name:
 | `AgentDock` | `ported` | Bounded agent dock with optional Cloudflare endpoint |
 | `DecisionQueue` | `ported` | Operator decision list with owner and tier metadata |
 | `RuntimeStatus` | `ported` | Cloudflare and governance runtime check panel |
+| `LeadQualifier` | `business logic` | Ona-styled workflow qualification with local scoring and optional managed endpoint |
+| `RoiCalculator` | `business logic` | Buyer-facing workflow ROI estimator |
+| `PricingRecommender` | `business logic` | Offer-tier recommender for Foundation, Workflow System, and Policy OS paths |
+| `BookingRouter` | `business logic` | Next-step router for diagnostic, mapping, and Policy OS scope calls |
 
 Phase 1 delivered:
 - package metadata and docs reframed around Canon
@@ -93,6 +98,10 @@ Canon exports now available in the Webflow package:
 - `AgentDock`
 - `DecisionQueue`
 - `RuntimeStatus`
+- `LeadQualifier`
+- `RoiCalculator`
+- `PricingRecommender`
+- `BookingRouter`
 
 ## Current Components
 
@@ -123,6 +132,17 @@ The current package contains both Canon exports and compatibility exports. The l
 | Component | Description | Key Props |
 |-----------|-------------|-----------|
 | **Stats Display** | Animated counters | `stats` (JSON), `columns`, `animated` |
+
+### Business Logic (Group: Business Logic)
+
+| Component | Description | Key Props |
+|-----------|-------------|-----------|
+| **Lead Qualifier** | Ona-styled workflow qualification with local scoring and optional managed endpoint | `questions` (JSON), `outcomes` (JSON), `endpointUrl` |
+| **ROI Calculator** | Buyer-facing calculator for the value of fixing one workflow | `defaultMonthlyLeads`, `conversionLiftPercent`, `endpointUrl` |
+| **Pricing Recommender** | Offer-tier recommender for Foundation, Workflow System, and Policy OS paths | `plans` (JSON), `defaultWorkflowRisk`, `endpointUrl` |
+| **Booking Router** | Routes visitors to the right next step from urgency, systems, revenue impact, and approval complexity | `routes` (JSON), `defaultUrgency`, `endpointUrl` |
+
+Business logic components are designed to work with static Webflow props first. Where an endpoint prop exists, it should point at a managed Cloudflare/Dify/MCP boundary that returns sanitized recommendations. Do not place secrets, bearer tokens, or privileged workflow instructions in component props.
 
 ### Control Plane (Group: Control Plane)
 
@@ -249,6 +269,70 @@ Icon options: `circle`, `square`, `triangle`, `hexagon`
 [
   {"label": "Products", "href": "/products"},
   {"label": "Solutions", "href": "/solutions"}
+]
+```
+
+### Lead Qualifier Questions
+
+```json
+[
+  {
+    "id": "workflow",
+    "label": "What workflow is creating the most drag?",
+    "detail": "Start with the operating path that already has an owner.",
+    "options": [
+      {"label": "Lead routing or sales handoff", "value": "sales", "score": 18},
+      {"label": "Customer support or review queue", "value": "support", "score": 14}
+    ]
+  }
+]
+```
+
+### Lead Qualifier Outcomes
+
+```json
+[
+  {
+    "minScore": 58,
+    "label": "Policy OS fit",
+    "detail": "The workflow touches enough risk and system complexity to justify a governed workflow layer.",
+    "ctaLabel": "Map the workflow",
+    "ctaHref": "/book",
+    "tone": "success"
+  }
+]
+```
+
+### Pricing Recommender Plans
+
+```json
+[
+  {
+    "id": "workflow",
+    "name": "Workflow System",
+    "price": "$3k+",
+    "description": "Connect one workflow to a managed endpoint with routing, evidence, and fallback states.",
+    "minScore": 38,
+    "ctaLabel": "Map one workflow",
+    "ctaHref": "/book",
+    "features": ["Cloudflare route", "D1-backed state", "Operator handoff"]
+  }
+]
+```
+
+### Booking Router Routes
+
+```json
+[
+  {
+    "id": "mapping",
+    "label": "Workflow mapping session",
+    "detail": "Best when one owner can bring the workflow, systems, and approval boundary to the first call.",
+    "ctaLabel": "Map workflow",
+    "ctaHref": "/book",
+    "minScore": 34,
+    "tone": "success"
+  }
 ]
 ```
 

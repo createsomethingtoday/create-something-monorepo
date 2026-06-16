@@ -36,6 +36,14 @@ export type { IconCardProps, IconCardVariant } from './components/cards/IconCard
 export { TemplateCard } from './components/cards/TemplateCard';
 export type { TemplateCardProps, TemplateCardBadge, TemplateCardImage, TemplateCardLink } from './components/cards/TemplateCard';
 
+export { FeaturedCreatorCard } from './components/cards/FeaturedCreatorCard';
+export type {
+  FeaturedCreatorAccent,
+  FeaturedCreatorCardImage,
+  FeaturedCreatorCardLink,
+  FeaturedCreatorCardProps,
+} from './components/cards/FeaturedCreatorCard';
+
 export { TemplateGrid } from './components/grid/TemplateGrid';
 export type { TemplateGridProps } from './components/grid/TemplateGrid';
 
@@ -164,6 +172,9 @@ export type { FooterProps, FooterColumn, SocialLink } from './components/layout/
 export { TemplateSearch } from './components/search/TemplateSearch';
 export type { TemplateSearchProps, SuggestItem } from './components/search/TemplateSearch';
 
+export { TemplateSearchPage } from './components/marketplace/TemplateSearchPage';
+export type { TemplateSearchPageProps } from './components/marketplace/TemplateSearchPage';
+
 export { TemplateSearchBox } from './components/marketplace/TemplateSearchBox';
 export type {
   TemplateSearchBoxMode,
@@ -172,8 +183,145 @@ export type {
   TemplateSearchBoxVariant,
 } from './components/marketplace/TemplateSearchBox';
 
+export { TemplateSearchResults } from './components/marketplace/TemplateSearchResults';
+export type { TemplateSearchResultsProps } from './components/marketplace/TemplateSearchResults';
+
 export { TemplateMarketplaceHeading } from './components/marketplace/TemplateMarketplaceHeading';
 export type { TemplateMarketplaceHeadingProps } from './components/marketplace/TemplateMarketplaceHeading';
 
 export { TemplateSearchSidebar } from './components/marketplace/TemplateSearchSidebar';
 export type { TemplateSearchSidebarProps } from './components/marketplace/TemplateSearchSidebar';
+
+export { TemplateCarouselSection } from './components/marketplace/TemplateCarouselSection';
+export type {
+  TemplateCarouselPreset,
+  TemplateCarouselSectionProps,
+} from './components/marketplace/TemplateCarouselSection';
+
+export { TemplateDetailConversionTracker } from './components/marketplace/TemplateDetailConversionTracker';
+export type { TemplateDetailConversionTrackerProps } from './components/marketplace/TemplateDetailConversionTracker';
+
+export { TemplateDetailHero } from './components/marketplace/TemplateDetailHero';
+export type { TemplateDetailHeroProps } from './components/marketplace/TemplateDetailHero';
+
+export { TemplateDetailOfferPanel } from './components/marketplace/TemplateDetailOfferPanel';
+export type { TemplateDetailOfferPanelProps } from './components/marketplace/TemplateDetailOfferPanel';
+
+export { TemplateDetailHighlights } from './components/marketplace/TemplateDetailHighlights';
+export type {
+  TemplateDetailHighlightItem,
+  TemplateDetailHighlightsProps,
+} from './components/marketplace/TemplateDetailHighlights';
+
+export { TemplateDetailStickyBar } from './components/marketplace/TemplateDetailStickyBar';
+export type { TemplateDetailStickyBarProps } from './components/marketplace/TemplateDetailStickyBar';
+
+export { TemplateDetailAppExtensions } from './components/marketplace/TemplateDetailAppExtensions';
+export type {
+  TemplateDetailAppExtensionsProps,
+  TemplateDetailAppRecommendation,
+} from './components/marketplace/TemplateDetailAppExtensions';
+
+export { MarketplaceLandingHero } from './components/marketplace/MarketplaceLandingHero';
+export type {
+  MarketplaceLandingHeroProps,
+  MarketplaceLandingHeroSearchExperience,
+  MarketplaceLandingHeroSuggestion,
+} from './components/marketplace/MarketplaceLandingHero';
+
+export { PopularCategoryGrid } from './components/marketplace/PopularCategoryGrid';
+export type {
+  PopularCategoryGridCategory,
+  PopularCategoryGridProps,
+} from './components/marketplace/PopularCategoryGrid';
+
+export { MarketplaceFaq } from './components/marketplace/MarketplaceFaq';
+export type {
+  MarketplaceFaqItem,
+  MarketplaceFaqProps,
+} from './components/marketplace/MarketplaceFaq';
+
+export { MarketplaceLandingExperimentGate } from './components/marketplace/MarketplaceLandingExperimentGate';
+export type {
+  MarketplaceLandingExperimentGateProps,
+} from './components/marketplace/MarketplaceLandingExperimentGate';
+
+export type {
+  MarketplaceAnalyticsData,
+  MarketplaceExperimentRole,
+  MarketplaceExperimentState,
+  MarketplaceExperimentVariant,
+} from './components/marketplace/analytics';
+
+// Cato Supply delivery components
+export {
+  CatoInsightCmsCard,
+  CatoInsightDetail,
+  CatoInsightsArchive,
+  CatoInsightsArchiveShell,
+  CatoInsightsHub,
+  CatoInsightsMegaMenu,
+  catoInsightsDefaults,
+} from './components/cato/CatoInsights';
+export type {
+  CatoInsightBodySection,
+  CatoInsightCategory,
+  CatoInsightCmsCardProps,
+  CatoInsightDetailProps,
+  CatoInsightLinkProp,
+  CatoInsightItem,
+  CatoInsightsArchiveProps,
+  CatoInsightsArchiveShellProps,
+  CatoInsightsDataProps,
+  CatoInsightsHubProps,
+  CatoInsightsMegaMenuProps,
+} from './components/cato/CatoInsights';
+
+export {
+  CatoProductSearchForm,
+  CatoRiskRadarCatalog,
+  CatoSupplySearchHero,
+} from './components/cato/CatoProductSearch';
+export type {
+  CatoProductSearchFormProps,
+  CatoRiskRadarCatalogProps,
+  CatoRiskRadarRow,
+  CatoSupplySearchHeroProps,
+} from './components/cato/CatoProductSearch';
+
+export {
+  CatoAboutPage,
+  CatoCaseStudiesLanding,
+  CatoCaseStudyDetail,
+} from './components/cato/CatoCompanyPages';
+export type {
+  CatoAboutPageProps,
+  CatoCaseStudiesLandingProps,
+  CatoCaseStudyDetailProps,
+  CatoCaseStudyItem,
+  CatoCaseStudyResult,
+  CatoCompanyLinkMode,
+  CatoImpactMetric,
+  CatoTeamMember,
+  CatoValueItem,
+} from './components/cato/CatoCompanyPages';
+
+// Ona-styled Business Logic Components
+export {
+  BookingRouter,
+  LeadQualifier,
+  PricingRecommender,
+  RoiCalculator,
+} from './components/business/BusinessComponents';
+export type {
+  BookingRoute,
+  BookingRouterProps,
+  BusinessTone,
+  LeadQualifierOption,
+  LeadQualifierOutcome,
+  LeadQualifierProps,
+  LeadQualifierQuestion,
+  PricingPlan,
+  PricingRecommenderProps,
+  RoiCalculatorProps,
+} from './components/business/BusinessComponents';

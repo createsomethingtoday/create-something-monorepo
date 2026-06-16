@@ -11,6 +11,7 @@
     "check": "pnpm run typecheck",
     "lint": "pnpm run typecheck",
     "smoke:routes": "node scripts/smoke-template-routes.mjs",
+    "test:detail": "node --import tsx --test test/TemplateDetailHero.test.tsx",
     "typecheck": "tsc --noEmit",
     "verify": "pnpm run typecheck && pnpm run bundle"
   },
