@@ -72,7 +72,7 @@
 		align-items: center;
 		justify-content: center;
 		padding: 0.8rem 1.2rem;
-		border-radius: 999px;
+		border-radius: var(--radius-tight);
 		background: var(--ink);
 		color: white;
 		text-decoration: none;
@@ -92,7 +92,7 @@
 	.meter {
 		margin: 1rem 0;
 		height: 0.65rem;
-		border-radius: 999px;
+		border-radius: var(--radius-tight);
 		background: rgba(31, 27, 22, 0.08);
 		overflow: hidden;
 	}
@@ -111,7 +111,7 @@
 
 	.chip {
 		padding: 0.35rem 0.65rem;
-		border-radius: 999px;
+		border-radius: var(--radius-tight);
 		background: rgba(31, 27, 22, 0.08);
 		font-size: 0.88rem;
 	}

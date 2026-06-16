@@ -3,25 +3,50 @@
 	import type { PageData } from './$types';
 
 	export let data: PageData;
-
-	const statusClass = {
-		active: 'good',
-		awaiting_user: 'warn',
-		handoff_ready: 'danger'
-	} as const;
 </script>
 
 <section class="split-layout">
+	<aside class="context-column">
+		<section class="glass panel">
+			<div class="eyebrow">Operator Context</div>
+			<h2 class="rail-title">{data.operatorMode.label}</h2>
+			<p>{data.operatorMode.promise}</p>
+			<div class="context-list">
+				<div>
+					<span>Runtime</span>
+					<strong>{data.operatorMode.runtime}</strong>
+				</div>
+				<div>
+					<span>Current state</span>
+					<strong>{data.operatorState.label}</strong>
+				</div>
+				<div>
+					<span>Policy</span>
+					<strong>{data.nextStep.policyRef}</strong>
+				</div>
+			</div>
+		</section>
+
+		<section class="glass panel">
+			<div class="eyebrow">Clear Language</div>
+			<ul class="rule-list">
+				{#each data.clearCommunicationRules as rule}
+					<li>{rule}</li>
+				{/each}
+			</ul>
+		</section>
+	</aside>
+
 	<div class="main-column">
 		<section class="glass panel">
 			<div class="thread-top">
 				<div>
-					<div class="eyebrow">Primary Conversation Surface</div>
+					<div class="eyebrow">Chat Rail</div>
 					<h1 class="section-title">{data.thread.title}</h1>
 					<p class="muted">{data.thread.subtitle}</p>
 				</div>
-				<span class={`status-pill ${statusClass[data.thread.status]}`}>
-					{data.thread.status.replace('_', ' ')}
+				<span class={`status-pill ${data.operatorState.tone}`}>
+					{data.operatorState.label}
 				</span>
 			</div>
 
@@ -29,6 +54,7 @@
 				<div>
 					<strong>{data.nextStep.label}</strong>
 					<p>{data.nextStep.description}</p>
+					<p class="operator-copy">{data.operatorState.operatorCopy}</p>
 				</div>
 				<div class="policy-ref">{data.nextStep.policyRef}</div>
 			</div>
@@ -74,7 +100,7 @@
 
 	<aside class="side-column">
 		<section class="glass panel">
-			<div class="eyebrow">Profile State</div>
+			<div class="eyebrow">Proof Rail</div>
 			<h2 class="section-title">Current turn</h2>
 			<p>{data.thread.turn.summary}</p>
 			<ul class="blockers">
@@ -126,16 +152,26 @@
 
 			<a class="inline-link" href={`/chat/${data.thread.id}/handoff`}>Open handoff packet</a>
 		</section>
+
+		<section class="glass panel">
+			<div class="eyebrow">Dify Boundary</div>
+			<ul class="rule-list">
+				{#each data.difyRuntimeBoundary.operator as rule}
+					<li>{rule}</li>
+				{/each}
+			</ul>
+		</section>
 	</aside>
 </section>
 
 <style>
 	.split-layout {
 		display: grid;
-		grid-template-columns: minmax(0, 1.7fr) minmax(320px, 0.95fr);
+		grid-template-columns: minmax(220px, 0.74fr) minmax(0, 1.5fr) minmax(300px, 0.86fr);
 		gap: 1rem;
 	}
 
+	.context-column,
 	.main-column,
 	.side-column {
 		display: grid;
@@ -146,6 +182,11 @@
 	.panel,
 	.composer {
 		padding: 1.2rem;
+	}
+
+	.rail-title {
+		margin: 0.7rem 0 0;
+		font-size: 1.1rem;
 	}
 
 	.thread-top,
@@ -162,13 +203,20 @@
 	.summary-banner {
 		margin-top: 1rem;
 		padding: 1rem;
-		border-radius: 18px;
-		background: rgba(255, 255, 255, 0.62);
+		border-radius: var(--radius);
+		background: var(--surface-strong);
+		border: 1px solid var(--line);
 	}
 
 	.policy-ref {
+		font-family: var(--font-mono);
 		font-size: 0.82rem;
 		color: var(--muted);
+	}
+
+	.operator-copy {
+		color: var(--ink);
+		font-weight: 600;
 	}
 
 	.message-list {
@@ -181,7 +229,7 @@
 	}
 
 	.message.user {
-		background: rgba(31, 27, 22, 0.92);
+		background: var(--ink);
 		color: white;
 	}
 
@@ -202,10 +250,43 @@
 	.chip {
 		display: inline-flex;
 		padding: 0.35rem 0.6rem;
-		border-radius: 999px;
+		border-radius: var(--radius-tight);
 		background: rgba(255, 255, 255, 0.22);
 		font-size: 0.86rem;
 		margin-right: 0.45rem;
+	}
+
+	.context-list {
+		display: grid;
+		gap: 0.75rem;
+		margin-top: 1rem;
+	}
+
+	.context-list div {
+		display: grid;
+		gap: 0.25rem;
+		border-top: 1px solid var(--line);
+		padding-top: 0.75rem;
+	}
+
+	.context-list span {
+		color: var(--muted);
+		font-size: 0.82rem;
+	}
+
+	.context-list strong {
+		font-size: 0.94rem;
+		line-height: 1.35;
+	}
+
+	.rule-list {
+		margin: 0.9rem 0 0;
+		padding-left: 1.1rem;
+		color: var(--muted);
+	}
+
+	.rule-list li + li {
+		margin-top: 0.65rem;
 	}
 
 	.blockers {
@@ -223,15 +304,27 @@
 	textarea {
 		width: 100%;
 		margin: 0.85rem 0;
-		border-radius: 18px;
+		border-radius: var(--radius);
 		padding: 0.95rem 1rem;
 		border: 1px solid var(--line);
 		resize: vertical;
-		background: rgba(255, 255, 255, 0.72);
+		background: var(--surface-strong);
 	}
 
-	@media (max-width: 1024px) {
+	@media (max-width: 1180px) {
 		.split-layout {
+			grid-template-columns: minmax(0, 1fr) minmax(300px, 0.85fr);
+		}
+
+		.context-column {
+			grid-column: 1 / -1;
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+		}
+	}
+
+	@media (max-width: 820px) {
+		.split-layout,
+		.context-column {
 			grid-template-columns: 1fr;
 		}
 	}

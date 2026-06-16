@@ -87,7 +87,7 @@
 		align-items: center;
 		justify-content: center;
 		padding: 0.8rem 1.2rem;
-		border-radius: 999px;
+		border-radius: var(--radius-tight);
 		background: var(--ink);
 		color: white;
 		text-decoration: none;
@@ -111,7 +111,7 @@
 
 	.chip {
 		padding: 0.35rem 0.65rem;
-		border-radius: 999px;
+		border-radius: var(--radius-tight);
 		background: rgba(162, 61, 53, 0.12);
 		color: var(--danger);
 		font-size: 0.88rem;

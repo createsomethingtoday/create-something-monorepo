@@ -1,7 +1,9 @@
 <script lang="ts">
+	import '../app.css';
+
 	const navItems = [
-		{ href: '/', label: 'Overview' },
-		{ href: '/chat', label: 'Chat' },
+		{ href: '/', label: 'Operator shell' },
+		{ href: '/chat', label: 'Threads' },
 		{ href: '/settings', label: 'Settings' }
 	];
 </script>
@@ -9,8 +11,8 @@
 <div class="app-shell">
 	<header class="app-nav glass">
 		<div>
-			<div class="eyebrow">CREATE SOMETHING</div>
-			<div class="brand">Concierge Chat</div>
+			<div class="eyebrow">CREATE SOMETHING / ONA</div>
+			<div class="brand">Operator Chat</div>
 		</div>
 
 		<nav>
@@ -39,8 +41,8 @@
 	}
 
 	.brand {
-		font-family: var(--font-sans);
 		font-size: 1.35rem;
+		font-weight: 700;
 	}
 
 	nav {
@@ -50,10 +52,11 @@
 	}
 
 	nav a {
-		padding: 0.55rem 0.9rem;
-		border-radius: 999px;
+		padding: 0.55rem 0.8rem;
+		border-radius: var(--radius-tight);
 		text-decoration: none;
-		background: rgba(255, 255, 255, 0.55);
+		background: var(--surface-strong);
+		border: 1px solid var(--line);
 	}
 
 	main {

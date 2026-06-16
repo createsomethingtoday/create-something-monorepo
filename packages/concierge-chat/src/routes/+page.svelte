@@ -4,12 +4,12 @@
 	export let data: PageData;
 </script>
 
-<section class="hero glass panel">
-	<div class="eyebrow">Hosted Product Plane</div>
-	<h1 class="page-title">AI-native concierge chat for progressive profiling.</h1>
+<section class="hero panel">
+	<div class="eyebrow">Hosted Operator Plane</div>
+	<h1 class="page-title">Ona-style operator chat for governed Dify agents.</h1>
 	<p class="lede">
-		Instead of forcing a busy nurse through a rigid intake form, the conversation builds the
-		profile invisibly and only renders structured tools when policy or confidence requires them.
+		{data.operatorMode.promise} Dify supplies the agent runtime; this shell owns the state,
+		actions, evidence, and language operators need to move work safely.
 	</p>
 
 	<div class="hero-actions">
@@ -18,32 +18,69 @@
 	</div>
 </section>
 
-<section class="grid-3 section-gap">
-	<div class="glass panel">
-		<div class="eyebrow">Control Plane</div>
-		<h2 class="section-title">.agency owns access</h2>
-		<p class="muted">
-			Credentials, entitlements, security posture, and partner admin remain outside the chat
-			product.
-		</p>
+<section class="state-strip section-gap" aria-label="Operator states">
+	{#each data.operatorStateDefinitions as state}
+		<div class={`state-cell ${state.tone}`}>
+			<strong>{state.label}</strong>
+			<span>{state.summary}</span>
+		</div>
+	{/each}
+</section>
+
+<section class="glass panel section-gap">
+	<div class="section-header">
+		<div>
+			<div class="eyebrow">Shell Shape</div>
+			<h2 class="section-title">Three rails for operator work</h2>
+		</div>
+		<span class="status-pill good">Dify hidden behind server proxy</span>
 	</div>
 
-	<div class="glass panel">
-		<div class="eyebrow">Product Plane</div>
-		<h2 class="section-title">Concierge owns the session</h2>
-		<p class="muted">
-			Threads, profile progress, dynamic widgets, and handoff all live here as the end-user
-			experience.
-		</p>
+	<div class="plane-grid">
+		{#each data.operatorShellPlanes as plane}
+			<article class="plane-card">
+				<div class="plane-top">
+					<div>
+						<div class="eyebrow">{plane.owner}</div>
+						<h3>{plane.label}</h3>
+					</div>
+					<span class="plane-id">{plane.id}</span>
+				</div>
+				<p>{plane.purpose}</p>
+				<div class="signal-list">
+					{#each plane.requiredSignals as signal}
+						<span>{signal}</span>
+					{/each}
+				</div>
+			</article>
+		{/each}
 	</div>
+</section>
 
+<section class="runtime-grid section-gap">
 	<div class="glass panel">
-		<div class="eyebrow">Execution Plane</div>
-		<h2 class="section-title">Hub owns governed tool use</h2>
-		<p class="muted">
-			MCP discovery, route authorization, auth recovery, and tenant-safe execution stay behind
-			the hosted app.
-		</p>
+		<div class="eyebrow">Browser Contract</div>
+		<ul>
+			{#each data.difyRuntimeBoundary.browser as rule}
+				<li>{rule}</li>
+			{/each}
+		</ul>
+	</div>
+	<div class="glass panel">
+		<div class="eyebrow">Server Contract</div>
+		<ul>
+			{#each data.difyRuntimeBoundary.server as rule}
+				<li>{rule}</li>
+			{/each}
+		</ul>
+	</div>
+	<div class="glass panel">
+		<div class="eyebrow">Operator Language</div>
+		<ul>
+			{#each data.clearCommunicationRules.slice(0, 3) as rule}
+				<li>{rule}</li>
+			{/each}
+		</ul>
 	</div>
 </section>
 
@@ -82,6 +119,8 @@
 
 	.hero {
 		padding: 1.8rem;
+		border: 1px solid var(--line-strong);
+		background: var(--surface-strong);
 	}
 
 	.lede {
@@ -103,8 +142,9 @@
 		align-items: center;
 		justify-content: center;
 		padding: 0.8rem 1.2rem;
-		border-radius: 999px;
+		border-radius: var(--radius-tight);
 		text-decoration: none;
+		border: 1px solid var(--line-strong);
 	}
 
 	.link-button {
@@ -113,7 +153,7 @@
 	}
 
 	.link-secondary {
-		background: rgba(255, 255, 255, 0.6);
+		background: var(--surface-strong);
 	}
 
 	.section-gap {
@@ -121,6 +161,7 @@
 	}
 
 	.section-header,
+	.plane-top,
 	.thread-top,
 	.thread-meta {
 		display: flex;
@@ -128,6 +169,95 @@
 		justify-content: space-between;
 		gap: 1rem;
 		flex-wrap: wrap;
+	}
+
+	.state-strip,
+	.plane-grid,
+	.runtime-grid {
+		display: grid;
+		gap: 0.85rem;
+	}
+
+	.state-strip {
+		grid-template-columns: repeat(6, minmax(0, 1fr));
+	}
+
+	.state-cell,
+	.plane-card {
+		border: 1px solid var(--line);
+		background: var(--surface);
+		border-radius: var(--radius);
+	}
+
+	.state-cell {
+		display: grid;
+		gap: 0.35rem;
+		padding: 0.85rem;
+		min-height: 7.25rem;
+	}
+
+	.state-cell span {
+		color: var(--muted);
+		font-size: 0.9rem;
+		line-height: 1.35;
+	}
+
+	.state-cell.good {
+		border-color: rgba(38, 114, 88, 0.35);
+	}
+
+	.state-cell.warn {
+		border-color: rgba(152, 111, 22, 0.38);
+	}
+
+	.state-cell.danger {
+		border-color: rgba(179, 63, 52, 0.38);
+	}
+
+	.plane-grid,
+	.runtime-grid {
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		margin-top: 1rem;
+	}
+
+	.plane-card {
+		padding: 1rem;
+	}
+
+	.plane-card h3 {
+		margin: 0.45rem 0 0;
+		font-size: 1.05rem;
+	}
+
+	.plane-card p {
+		color: var(--muted);
+	}
+
+	.plane-id {
+		font-family: var(--font-mono);
+		font-size: 0.8rem;
+		color: var(--muted);
+	}
+
+	.signal-list {
+		display: flex;
+		gap: 0.45rem;
+		flex-wrap: wrap;
+		margin-top: 0.8rem;
+	}
+
+	.signal-list span {
+		border: 1px solid var(--line);
+		border-radius: var(--radius-tight);
+		padding: 0.32rem 0.45rem;
+		font-size: 0.82rem;
+		background: var(--surface-strong);
+	}
+
+	ul {
+		margin: 0.9rem 0 0;
+		padding-left: 1.1rem;
+		color: var(--muted);
 	}
 
 	.thread-list {
@@ -138,13 +268,29 @@
 
 	.thread-card {
 		padding: 1rem 1.1rem;
-		border-radius: 18px;
+		border-radius: var(--radius);
 		text-decoration: none;
-		background: rgba(255, 255, 255, 0.58);
-		border: 1px solid rgba(31, 27, 22, 0.08);
+		background: var(--surface-strong);
+		border: 1px solid var(--line);
 	}
 
 	p {
 		line-height: 1.6;
+	}
+
+	@media (max-width: 1080px) {
+		.state-strip,
+		.plane-grid,
+		.runtime-grid {
+			grid-template-columns: 1fr 1fr;
+		}
+	}
+
+	@media (max-width: 720px) {
+		.state-strip,
+		.plane-grid,
+		.runtime-grid {
+			grid-template-columns: 1fr;
+		}
 	}
 </style>

@@ -50,7 +50,7 @@
 
 	.meter {
 		height: 0.7rem;
-		border-radius: 999px;
+		border-radius: var(--radius-tight);
 		background: rgba(31, 27, 22, 0.08);
 		overflow: hidden;
 	}

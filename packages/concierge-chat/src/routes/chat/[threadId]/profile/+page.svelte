@@ -95,7 +95,7 @@
 		align-items: center;
 		justify-content: center;
 		padding: 0.8rem 1.2rem;
-		border-radius: 999px;
+		border-radius: var(--radius-tight);
 		background: var(--ink);
 		color: white;
 		text-decoration: none;

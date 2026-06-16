@@ -1,28 +1,29 @@
 :root {
-  --bg: #f5f0e8;
-  --surface: rgba(255, 252, 246, 0.88);
-  --surface-strong: #fffaf2;
-  --ink: #1f1b16;
-  --muted: #62574a;
-  --line: rgba(63, 46, 29, 0.14);
-  --accent: #b8572f;
-  --accent-soft: rgba(184, 87, 47, 0.12);
-  --good: #2b6b56;
-  --warn: #8a5d14;
-  --danger: #a23d35;
-  --radius: 18px;
-  --shadow: 0 20px 50px rgba(63, 46, 29, 0.12);
-  --font-sans: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
+  --bg: #f4f6f2;
+  --surface: rgba(255, 255, 255, 0.86);
+  --surface-strong: #ffffff;
+  --ink: #171919;
+  --muted: #59615d;
+  --line: rgba(40, 52, 45, 0.14);
+  --line-strong: rgba(40, 52, 45, 0.24);
+  --accent: #3f6f5a;
+  --accent-strong: #b85c37;
+  --accent-soft: rgba(63, 111, 90, 0.12);
+  --good: #267258;
+  --warn: #986f16;
+  --danger: #b33f34;
+  --radius: 8px;
+  --radius-tight: 6px;
+  --shadow: 0 12px 28px rgba(30, 42, 36, 0.08);
+  --font-sans: Inter, "Helvetica Neue", Arial, sans-serif;
   --font-ui: "Inter", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
 }
 
 html {
   font-family: var(--font-ui);
   color: var(--ink);
-  background:
-    radial-gradient(circle at top left, rgba(184, 87, 47, 0.12), transparent 28%),
-    radial-gradient(circle at top right, rgba(43, 107, 86, 0.1), transparent 24%),
-    linear-gradient(180deg, #f8f3eb 0%, var(--bg) 100%);
+  background: linear-gradient(180deg, #fbfcfa 0%, var(--bg) 100%);
 }
 
 body {
@@ -47,7 +48,7 @@ select {
 
 button {
   border: 0;
-  border-radius: 999px;
+  border-radius: var(--radius-tight);
   background: var(--ink);
   color: #fff;
   cursor: pointer;
@@ -77,7 +78,6 @@ button:disabled {
 
 .glass {
   background: var(--surface);
-  backdrop-filter: blur(18px);
   border: 1px solid var(--line);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
@@ -87,12 +87,13 @@ button:disabled {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  padding: 0.35rem 0.75rem;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.65);
+  padding: 0.3rem 0.55rem;
+  border-radius: var(--radius-tight);
+  background: var(--surface-strong);
+  border: 1px solid var(--line);
   color: var(--muted);
   font-size: 0.76rem;
-  letter-spacing: 0.08em;
+  letter-spacing: 0;
   text-transform: uppercase;
 }
 
@@ -100,7 +101,7 @@ button:disabled {
   font-family: var(--font-sans);
   font-size: clamp(2.4rem, 5vw, 4.6rem);
   line-height: 0.95;
-  letter-spacing: -0.04em;
+  letter-spacing: 0;
   margin: 0;
 }
 
@@ -122,7 +123,7 @@ button:disabled {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  border-radius: 999px;
+  border-radius: var(--radius-tight);
   padding: 0.3rem 0.7rem;
   font-size: 0.82rem;
   background: var(--accent-soft);
