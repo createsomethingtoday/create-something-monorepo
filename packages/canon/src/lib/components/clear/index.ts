@@ -1,4 +1,5 @@
 export { default as ClearPageSection } from './ClearPageSection.svelte';
+export { default as ClearErrorPage } from './ClearErrorPage.svelte';
 export { default as ClearProofStrip, type ClearProofItem } from './ClearProofStrip.svelte';
 export { default as ClearStateRows, type ClearWorkflowState } from './ClearStateRows.svelte';
 export { default as ClearArtifactCard } from './ClearArtifactCard.svelte';
