@@ -313,6 +313,7 @@
 	$: operatorPlaneSummary = data.operatorShellPlanes
 		.map((plane) => plane.label)
 		.join(' / ');
+	$: commandCenter = data.operatorCommandCenter;
 	$: snapshotEyebrow = showInternalOperatorUi ? 'Application Snapshot' : 'What I know so far';
 	$: snapshotTitle = showInternalOperatorUi ? 'What I have so far' : 'A calm running summary';
 	$: snapshotSummary = showInternalOperatorUi ? liveThreadView.thread.turn.summary : nurseGuidance.body;
@@ -353,6 +354,28 @@
 						<span>Rails</span>
 						<strong>{operatorPlaneSummary}</strong>
 					</div>
+				</div>
+				<div class="command-summary">
+					<div>
+						<span>State reason</span>
+						<strong>{commandCenter.stateReason}</strong>
+					</div>
+					<div>
+						<span>Next owner</span>
+						<strong>{commandCenter.nextActionOwner}</strong>
+					</div>
+				</div>
+				<div class="metric-list" aria-label="Operator command metrics">
+					{#each commandCenter.metrics as metric}
+						<div class="metric-row">
+							<div>
+								<span>{metric.label}</span>
+								<strong>{metric.value}</strong>
+								<p>{metric.detail}</p>
+							</div>
+							<span class={`status-dot ${metric.tone}`} aria-label={metric.tone}></span>
+						</div>
+					{/each}
 				</div>
 			</section>
 
@@ -395,11 +418,16 @@
 			{#if showInternalOperatorUi}
 				<div class="summary-banner">
 					<div>
-						<strong>{liveThreadView.nextStep.label}</strong>
-						<p>{liveThreadView.nextStep.description}</p>
+						<strong>{commandCenter.nextActionLabel}</strong>
+						<p>{commandCenter.nextActionDetail}</p>
 						<p class="operator-copy">{data.operatorState.operatorCopy}</p>
 					</div>
-					<div class="policy-ref">{liveThreadView.nextStep.policyRef}</div>
+					<div class="summary-meta">
+						<span>Owner</span>
+						<strong>{commandCenter.nextActionOwner}</strong>
+						<span>Policy</span>
+						<strong class="policy-ref">{commandCenter.policyRef}</strong>
+					</div>
 				</div>
 			{/if}
 		</section>
@@ -564,6 +592,25 @@
 			{:else}
 				<p class="muted compact">Nothing is blocking the next guided step right now.</p>
 			{/if}
+			{#if showInternalOperatorUi}
+				<div class="proof-inventory">
+					<p class="muted compact section-kicker">Proof inventory</p>
+					<div class="proof-list">
+						{#each commandCenter.proofInventory as proof}
+							<div class="proof-row">
+								<div>
+									<span>{proof.label}</span>
+									<strong>{proof.value}</strong>
+									{#if proof.detail}
+										<p class="muted">{proof.detail}</p>
+									{/if}
+								</div>
+								<span class={`status-pill ${proof.tone}`}>{proof.tone}</span>
+							</div>
+						{/each}
+					</div>
+				</div>
+			{/if}
 			<a class="inline-link" href={`/chat/${liveThreadView.thread.id}/profile`}>Review the details I captured</a>
 		</section>
 
@@ -600,6 +647,21 @@
 									{tool.status.replace('_', ' ')}
 								</span>
 							{/if}
+						</div>
+					{/each}
+				</div>
+			</section>
+
+			<section class="glass panel">
+				<div class="eyebrow">Operator Checks</div>
+				<div class="check-list">
+					{#each commandCenter.checks as check}
+						<div class="check-row">
+							<div>
+								<strong>{check.label}</strong>
+								<p class="muted">{check.detail}</p>
+							</div>
+							<span class={`status-pill ${check.tone}`}>{check.status}</span>
 						</div>
 					{/each}
 				</div>
@@ -764,6 +826,21 @@
 		border: 1px solid var(--line);
 	}
 
+	.summary-meta {
+		display: grid;
+		gap: 0.28rem;
+		min-width: min(12rem, 100%);
+		align-content: start;
+	}
+
+	.summary-meta span {
+		color: var(--muted);
+		font-size: 0.74rem;
+		font-family: var(--font-mono);
+		text-transform: uppercase;
+		letter-spacing: 0.08em;
+	}
+
 	.policy-ref {
 		font-family: var(--font-mono);
 		font-size: 0.82rem;
@@ -898,21 +975,101 @@
 		margin-top: 1rem;
 	}
 
-	.context-list div {
+	.context-list div,
+	.command-summary div {
 		display: grid;
 		gap: 0.25rem;
 		border-top: 1px solid var(--line);
 		padding-top: 0.75rem;
 	}
 
-	.context-list span {
+	.context-list span,
+	.command-summary span,
+	.metric-row span,
+	.proof-row span {
 		color: var(--muted);
 		font-size: 0.82rem;
 	}
 
-	.context-list strong {
+	.context-list strong,
+	.command-summary strong {
 		font-size: 0.94rem;
 		line-height: 1.35;
+	}
+
+	.command-summary,
+	.metric-list,
+	.proof-list,
+	.check-list {
+		display: grid;
+		gap: 0.75rem;
+		margin-top: 1rem;
+	}
+
+	.metric-row,
+	.proof-row,
+	.check-row {
+		display: flex;
+		align-items: flex-start;
+		justify-content: space-between;
+		gap: 0.85rem;
+		border-top: 1px solid var(--line);
+		padding-top: 0.75rem;
+	}
+
+	.metric-row > div,
+	.proof-row > div,
+	.check-row > div {
+		min-width: 0;
+		display: grid;
+		gap: 0.25rem;
+	}
+
+	.metric-row strong,
+	.proof-row strong {
+		font-size: 1rem;
+		line-height: 1.3;
+	}
+
+	.metric-row p,
+	.proof-row p,
+	.check-row p {
+		margin: 0;
+		line-height: 1.45;
+	}
+
+	.status-dot {
+		width: 0.65rem;
+		height: 0.65rem;
+		flex: 0 0 auto;
+		margin-top: 0.25rem;
+		border-radius: 999px;
+		background: var(--muted);
+		box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.04);
+	}
+
+	.status-dot.good {
+		background: var(--good);
+	}
+
+	.status-dot.warn {
+		background: var(--warn);
+	}
+
+	.status-dot.danger {
+		background: var(--danger);
+	}
+
+	.proof-inventory {
+		margin-top: 1rem;
+	}
+
+	.proof-row .status-pill,
+	.check-row .status-pill {
+		flex: 0 0 auto;
+		max-width: 12rem;
+		white-space: normal;
+		text-align: center;
 	}
 
 	.rule-list {
