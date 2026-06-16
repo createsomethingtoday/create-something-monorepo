@@ -34,6 +34,7 @@ export {
   ClearCardGrid,
   ClearReceiptGrid,
   ClearCtaBand,
+  ClearErrorPage,
   type ClearProofItem,
   type ClearWorkflowState,
   type ClearCardItem,
