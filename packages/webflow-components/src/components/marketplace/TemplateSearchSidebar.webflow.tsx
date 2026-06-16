@@ -5,7 +5,7 @@ import { TemplateSearchSidebar } from './TemplateSearchSidebar';
 export default declareComponent(TemplateSearchSidebar, {
   name: 'Template Search Sidebar',
   description:
-    'Marketplace category and search sidebar for template pages. Use Template Filter Bar as the single style, type, and sort filter surface.',
+    'Standalone marketplace category sidebar for template pages. Renders search, special links, category rows, and counts; pair with Template Filter Bar for style, type, free, and sort controls.',
   group: 'Marketplace',
   props: {
     apiBase: props.Text({
@@ -26,12 +26,8 @@ export default declareComponent(TemplateSearchSidebar, {
       name: 'Category Slug (preview)',
       defaultValue: '',
     }),
-    styleSlug: props.Text({
-      name: 'Style Slug (preview)',
-      defaultValue: '',
-    }),
-    tagSlug: props.Text({
-      name: 'Tag Slug (preview)',
+    subcategorySlug: props.Text({
+      name: 'Subcategory Slug (preview)',
       defaultValue: '',
     }),
     interactionMode: props.Variant({
@@ -82,6 +78,12 @@ export default declareComponent(TemplateSearchSidebar, {
     showCounts: props.Boolean({
       name: 'Show Counts',
       defaultValue: true,
+    }),
+    collapseOnMobile: props.Boolean({
+      name: 'Collapse on Mobile',
+      defaultValue: true,
+      tooltip:
+        'Collapse the standalone sidebar into a mobile accordion below the tablet breakpoint. Disable when the sidebar is already inside another mobile drawer.',
     }),
   },
 });

@@ -1,20 +1,32 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 
-import type { AirtableClient } from './airtable.js';
+import type { AirtableClient, TemplateReviewQueueItem } from './airtable.js';
 import { AirtableClientError } from './airtable.js';
+import { COMPREHENSIVE_REVIEW_LANE_IDS, EVIDENCE_LABELS, formatComprehensiveAgentReviewFeedback } from './comprehensive-review-feedback.js';
+import { COMPREHENSIVE_REVIEW_CONTRACT } from './comprehensive-review-contract.js';
+import { RUBRIC_DIMENSIONS } from './comprehensive-review-contract.js';
+import { buildPublishedSiteSandboxBundle } from './published-site-sandbox-bundle.js';
 import { TEMPLATE_REVIEW_FIELD_MAP } from './schema.js';
 import { REVIEW_WORKFLOW } from './prompts.js';
 import type { ReviewerProfile } from './reviewer-directory.js';
+import { PUBLISHED_SITE_VALIDATION_CHECKS, runPublishedSiteValidation, type ValidationToolConfig } from './validation.js';
 
 type ClientFactory = () => AirtableClient;
 type ReviewerFactory = () => ReviewerProfile | null;
 
-const REVIEWER_CONTROLLED_STATUS_OPTIONS = [
-  '🏃🏾In Review',
-  '👀Admin Feedback Review',
-  '🔁Response to Review',
-] as const;
+const REVIEWER_CONTROLLED_STATUS_OPTIONS = ['🏃🏾In Review', '👀Admin Feedback Review', '🔁Response to Review'] as const;
+
+const MY_QUEUE_DEFAULT_LIMIT = 25;
+const MY_QUEUE_FEEDBACK_PREVIEW_CHARS = 320;
+const comprehensiveEvidenceLabelSchema = z.enum(EVIDENCE_LABELS);
+const comprehensiveLaneIdSchema = z.enum(COMPREHENSIVE_REVIEW_LANE_IDS);
+const rubricDimensionSchema = z.enum(RUBRIC_DIMENSIONS);
+const sandboxViewportSchema = z.object({
+  name: z.string().min(1),
+  width: z.number().int().min(240).max(3840),
+  height: z.number().int().min(240).max(3840),
+});
 
 function jsonContent(value: unknown, isError = false) {
   return {
@@ -81,11 +93,7 @@ function currentReviewerAsCollaborator(getReviewer: ReviewerFactory) {
 function requireResolvedReviewer(getReviewer: ReviewerFactory) {
   const reviewer = getReviewer();
   if (!reviewer) {
-    throw new AirtableClientError(
-      'REVIEWER_IDENTITY_UNAVAILABLE',
-      'Current reviewer identity is not configured for this MCP runtime.',
-      503,
-    );
+    throw new AirtableClientError('REVIEWER_IDENTITY_UNAVAILABLE', 'Current reviewer identity is not configured for this MCP runtime.', 503);
   }
   return reviewer;
 }
@@ -97,6 +105,22 @@ function reviewerPayload(reviewer: ReviewerProfile) {
     email: reviewer.email,
     name: reviewer.name,
     lane: reviewer.lane,
+  };
+}
+
+function truncateText(value: string, maxLength: number): string {
+  if (value.length <= maxLength) return value;
+  return `${value.slice(0, maxLength - 3).trimEnd()}...`;
+}
+
+function compactQueueItem(item: TemplateReviewQueueItem, includeFeedback: boolean): Omit<TemplateReviewQueueItem, 'latestReviewFeedback'> & {
+  latestReviewFeedback?: string;
+} {
+  const { latestReviewFeedback, ...compactItem } = item;
+  if (!includeFeedback || !latestReviewFeedback) return compactItem;
+  return {
+    ...compactItem,
+    latestReviewFeedback: truncateText(latestReviewFeedback, MY_QUEUE_FEEDBACK_PREVIEW_CHARS),
   };
 }
 
@@ -114,36 +138,130 @@ function assertReviewerScopedReviewOwner(value: unknown, reviewer: ReviewerProfi
   const ownerId = reviewOwnerInputId(value);
   if (ownerId === undefined) return;
   if (ownerId === reviewer.airtableCollaboratorId) return;
-  throw new AirtableClientError(
-    'REVIEWER_WRITE_SCOPE_VIOLATION',
-    'Reviewer-scoped writes may not assign or clear another reviewer. Use assign_self or unassign_self.',
-    403,
-    {
-      requested_review_owner: ownerId,
-      current_reviewer_id: reviewer.airtableCollaboratorId,
-    },
-  );
+  throw new AirtableClientError('REVIEWER_WRITE_SCOPE_VIOLATION', 'Reviewer-scoped writes may not assign or clear another reviewer. Use assign_self or unassign_self.', 403, {
+    requested_review_owner: ownerId,
+    current_reviewer_id: reviewer.airtableCollaboratorId,
+  });
 }
 
-export function registerTools(server: McpServer, getClient: ClientFactory, getReviewer: ReviewerFactory = () => null): void {
+export function registerTools(server: McpServer, getClient: ClientFactory, getReviewer: ReviewerFactory = () => null, validationConfig: ValidationToolConfig = {}): void {
+  server.tool('template_review_workflow', 'Reviewer onboarding guide — call this FIRST to learn the complete review workflow, tool sequence, analyzer interpretation, and decision criteria. No parameters needed.', {}, async () => ({
+    content: [{ type: 'text' as const, text: REVIEW_WORKFLOW }],
+  }));
+
+  server.tool('template_review_health', 'Runtime health check for Webflow Template Review MCP and Airtable connectivity.', {}, async () => {
+    try {
+      const health = await getClient().healthCheck();
+      return asSuccess({ ...health, auth: 'Bearer token required at worker boundary.' });
+    } catch (error) {
+      return asError(error);
+    }
+  });
+
   server.tool(
-    'template_review_workflow',
-    'Reviewer onboarding guide — call this FIRST to learn the complete review workflow, tool sequence, analyzer interpretation, and decision criteria. No parameters needed.',
+    'template_review_get_comprehensive_review_contract',
+    'Read-only: return the comprehensive template-review evidence contract, including coverage matrix, rubric dimensions, manual checks, and Agent Review Feedback format.',
     {},
-    async () => ({
-      content: [{ type: 'text' as const, text: REVIEW_WORKFLOW }],
-    }),
+    async () => asSuccess(COMPREHENSIVE_REVIEW_CONTRACT),
   );
 
   server.tool(
-    'template_review_health',
-    'Runtime health check for Webflow Template Review MCP and Airtable connectivity.',
-    {},
-    async () => {
+    'template_review_format_agent_review_feedback',
+    'Read-only: validate lane-shaped comprehensive review evidence and format a schema-checked Agent Review Feedback draft. Does not write to Airtable.',
+    {
+      intake: z.object({
+        template_name: z.string().min(1),
+        version_id: z.string().min(1),
+        asset_id: z.string().min(1).optional(),
+        published_url: z.string().url(),
+        review_status: z.string().min(1).optional(),
+        submitted_date: z.string().min(1).optional(),
+        agent_review_feedback_was_blank_before_write: z.boolean().optional(),
+      }),
+      coverage_matrix: z
+        .array(
+          z.object({
+            lane_id: comprehensiveLaneIdSchema,
+            label: comprehensiveEvidenceLabelSchema,
+            summary: z.string().min(1),
+            evidence: z.array(z.string().min(1)).optional(),
+            gaps: z.array(z.string().min(1)).optional(),
+          }),
+        )
+        .min(COMPREHENSIVE_REVIEW_LANE_IDS.length),
+      confirmed_findings: z.array(
+        z.object({
+          title: z.string().min(1),
+          label: comprehensiveEvidenceLabelSchema,
+          source: z.enum(['review_context', 'published_site_validator', 'e2b_public_site_pass', 'manual_input', 'other']),
+          evidence: z.string().min(1),
+          url: z.string().url().optional(),
+          rubric_dimension: rubricDimensionSchema.optional(),
+          severity: z.enum(['critical', 'warning', 'info']).optional(),
+        }),
+      ),
+      rubric_dimension_matrix: z
+        .array(
+          z.object({
+            dimension: rubricDimensionSchema,
+            label: comprehensiveEvidenceLabelSchema,
+            evidence_or_reason: z.string().min(1),
+          }),
+        )
+        .min(RUBRIC_DIMENSIONS.length),
+      e2b_urls_fetched: z.array(z.string().url()).min(1),
+      human_follow_up: z.array(z.string().min(1)).min(1),
+      manual_checks_remaining: z.array(z.string().min(1)).min(1),
+      validator_summary: z
+        .object({
+          rubric_coverage: z.string().min(1).optional(),
+          crawl_coverage: z.string().min(1).optional(),
+          pages_analyzed: z.number().int().min(0).optional(),
+          critical_errors: z.number().int().min(0).optional(),
+          warnings: z.number().int().min(0).optional(),
+        })
+        .optional(),
+      caveats: z.array(z.string().min(1)).optional(),
+      generated_by: z.string().min(1).optional(),
+    },
+    async (input) => {
       try {
-        const health = await getClient().healthCheck();
-        return asSuccess({ ...health, auth: 'Bearer token required at worker boundary.' });
+        const formatted = formatComprehensiveAgentReviewFeedback(input);
+        if (!formatted.validation.passed) {
+          throw new AirtableClientError('COMPREHENSIVE_REVIEW_PACKET_INVALID', 'Comprehensive Agent Review Feedback evidence is incomplete.', 400, formatted.validation);
+        }
+        return asSuccess(formatted);
       } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'template_review_prepare_published_site_sandbox',
+    'Read-only: prepare a bounded published-site sandbox job and self-contained E2B Python runner for comprehensive review evidence. Does not execute E2B or write to Airtable.',
+    {
+      published_url: z.string().url(),
+      run_id: z.string().min(1).optional(),
+      policy_snapshot_id: z.string().min(1).optional(),
+      sandbox_provider: z.enum(['dify_e2b', 'direct_e2b']).optional(),
+      max_pages: z.number().int().min(1).max(25).optional(),
+      max_network_requests: z.number().int().min(25).max(1000).optional(),
+      timeout_ms: z.number().int().min(5_000).max(120_000).optional(),
+      viewports: z.array(sandboxViewportSchema).min(1).max(6).optional(),
+      allowed_hosts: z.array(z.string().min(1)).max(10).optional(),
+    },
+    async (input) => {
+      try {
+        return asSuccess(buildPublishedSiteSandboxBundle(input));
+      } catch (error) {
+        if (error instanceof Error) {
+          return asError(
+            new AirtableClientError('PUBLISHED_SITE_SANDBOX_INPUT_INVALID', error.message, 400, {
+              published_url: input.published_url,
+            }),
+          );
+        }
         return asError(error);
       }
     },
@@ -182,34 +300,38 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
 
   server.tool(
     'template_review_my_queue',
-    'List compact template review queue summaries currently assigned to the authenticated reviewer.',
+    'List compact active template review queue summaries currently assigned to the authenticated reviewer.',
     {
       status: z.enum(['ready_to_review', 'in_review', 'changes_requested', 'approved', 'published']).optional(),
       sort: z.enum(['submittedDate_desc', 'submittedDate_asc', 'decisionDate_desc', 'decisionDate_asc']).optional(),
-      limit: z.number().int().min(1).max(500).optional(),
+      limit: z.number().int().min(1).max(100).optional(),
+      include_completed: z.boolean().optional(),
+      include_feedback: z.boolean().optional(),
     },
-    async ({ limit, status, sort }) => {
+    async ({ limit, status, sort, include_completed, include_feedback }) => {
       try {
         const currentReviewer = currentReviewerAsCollaborator(getReviewer);
         if (!currentReviewer?.id) {
-          throw new AirtableClientError(
-            'REVIEWER_IDENTITY_UNAVAILABLE',
-            'Current reviewer identity is not configured for this MCP runtime.',
-            503,
-          );
+          throw new AirtableClientError('REVIEWER_IDENTITY_UNAVAILABLE', 'Current reviewer identity is not configured for this MCP runtime.', 503);
         }
+        const effectiveLimit = limit ?? MY_QUEUE_DEFAULT_LIMIT;
+        const includeCompleted = include_completed ?? false;
+        const includeFeedback = include_feedback ?? false;
         const queue = await getClient().listMyQueueDetailed({
           status,
           sort: sort ?? 'submittedDate_desc',
-          limit: limit ?? 100,
+          limit: effectiveLimit,
           currentReviewer,
+          includeCompleted,
         });
         return asSuccess({
           count: queue.items.length,
           sortApplied: queue.sortApplied,
-          statusApplied: status ?? null,
+          statusApplied: status ?? (includeCompleted ? 'all_assigned' : 'active'),
           assignedApplied: 'assigned_to_current_reviewer',
-          items: queue.items,
+          limitApplied: effectiveLimit,
+          feedbackApplied: includeFeedback ? 'preview_truncated' : 'omitted',
+          items: queue.items.map((item) => compactQueueItem(item, includeFeedback)),
         });
       } catch (error) {
         return asError(error);
@@ -227,6 +349,36 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
       try {
         return asSuccess({
           context: await getClient().getReviewContext(version_id, currentReviewerAsCollaborator(getReviewer)),
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'template_review_run_published_site_validation',
+    'Read-only: run published-site validators for content, assets, accessibility signals, interactions/IX2, GSAP, and custom-code policy evidence. Uses published_url only; does not use Designer/Preview data or write to Airtable.',
+    {
+      published_url: z.string().url(),
+      page_slugs: z.array(z.string().min(1)).max(100).optional(),
+      checks: z.array(z.enum(PUBLISHED_SITE_VALIDATION_CHECKS)).min(1).optional(),
+      max_pages: z.number().int().min(1).max(100).optional(),
+      include_raw: z.boolean().optional(),
+    },
+    async ({ published_url, page_slugs, checks, max_pages, include_raw }) => {
+      try {
+        return asSuccess({
+          validation: await runPublishedSiteValidation(
+            {
+              published_url,
+              page_slugs,
+              checks,
+              max_pages,
+              include_raw,
+            },
+            validationConfig,
+          ),
         });
       } catch (error) {
         return asError(error);
@@ -334,6 +486,35 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
   );
 
   server.tool(
+    'template_review_save_agent_feedback',
+    'Write only supplemental internal agent notes to 📝Agent Review Feedback for a template Asset Version.',
+    {
+      version_id: z.string().min(1),
+      agent_review_feedback: z.string().min(1),
+    },
+    async ({ version_id, agent_review_feedback }) => {
+      try {
+        const reviewer = getReviewer();
+        const actingReviewer = currentReviewerAsCollaborator(getReviewer);
+
+        return asSuccess({
+          ...(reviewer
+            ? {
+                reviewer: reviewerPayload(reviewer),
+                acting_reviewer: actingReviewer,
+              }
+            : {}),
+          updated_version: await getClient().updateVersionReview(version_id, {
+            agent_review_feedback,
+          }),
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
     'template_review_save_draft_feedback',
     'Reviewer-safe write: save draft reviewer feedback for a template version without changing the official decision state.',
     {
@@ -344,11 +525,7 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
     async ({ version_id, review_feedback, improvement_areas }) => {
       try {
         if (review_feedback === undefined && improvement_areas === undefined) {
-          throw new AirtableClientError(
-            'NO_MUTATION_FIELDS',
-            'Provide review_feedback, improvement_areas, or both.',
-            400,
-          );
+          throw new AirtableClientError('NO_MUTATION_FIELDS', 'Provide review_feedback, improvement_areas, or both.', 400);
         }
         const reviewer = requireResolvedReviewer(getReviewer);
         const actingReviewer = currentReviewerAsCollaborator(getReviewer);
@@ -478,7 +655,9 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
       try {
         const version = await getClient().getVersionById(version_id);
         if (!version) {
-          throw new AirtableClientError('VERSION_NOT_FOUND', 'Template version not found.', 404, { version_id });
+          throw new AirtableClientError('VERSION_NOT_FOUND', 'Template version not found.', 404, {
+            version_id,
+          });
         }
         return asSuccess({ version });
       } catch (error) {
@@ -506,19 +685,17 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
     },
   );
 
-  server.tool(
-    'template_review_get_field_map',
-    'Return the template review Airtable field map with confirmed and pending mappings.',
-    {},
-    async () => asSuccess(TEMPLATE_REVIEW_FIELD_MAP),
-  );
+  server.tool('template_review_get_field_map', 'Return the template review Airtable field map with confirmed and pending mappings.', {}, async () => asSuccess(TEMPLATE_REVIEW_FIELD_MAP));
 
   server.tool(
     'template_review_get_metrics',
     'Return compact marketplace template review metrics for a recent date window.',
     {
       days: z.number().int().min(1).max(90).optional(),
-      end_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+      end_date: z
+        .string()
+        .regex(/^\d{4}-\d{2}-\d{2}$/)
+        .optional(),
     },
     async ({ days, end_date }) => {
       try {
@@ -539,11 +716,7 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
     'Admin/operator write: assign or clear the 📝Reviewer collaborator on a template Asset Version without changing any other review fields.',
     {
       version_id: z.string().min(1),
-      review_owner: z.union([
-        z.string().min(1).describe('Airtable collaborator id for the reviewer.'),
-        z.object({ id: z.string().min(1) }),
-        z.null(),
-      ]),
+      review_owner: z.union([z.string().min(1).describe('Airtable collaborator id for the reviewer.'), z.object({ id: z.string().min(1) }), z.null()]),
     },
     async ({ version_id, review_owner }) => {
       try {
@@ -551,10 +724,7 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
         if (reviewer) {
           assertReviewerScopedReviewOwner(review_owner, reviewer);
           const actingReviewer = currentReviewerAsCollaborator(getReviewer);
-          const updated =
-            review_owner === null
-              ? await getClient().unassignVersionReviewer(version_id, actingReviewer)
-              : await getClient().assignSelfToVersion(version_id, actingReviewer);
+          const updated = review_owner === null ? await getClient().unassignVersionReviewer(version_id, actingReviewer) : await getClient().assignSelfToVersion(version_id, actingReviewer);
           return asSuccess({
             reviewer: reviewerPayload(reviewer),
             acting_reviewer: actingReviewer,
@@ -579,7 +749,10 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
     {
       version_id: z.string().min(1),
       release_record_id: z.string().optional(),
-      release_date_local: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+      release_date_local: z
+        .string()
+        .regex(/^\d{4}-\d{2}-\d{2}$/)
+        .optional(),
       time_zone: z.string().optional(),
       approve_version: z.boolean().optional(),
       mrp_id_overwrite: z.string().optional(),
@@ -587,11 +760,7 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
     async ({ version_id, release_record_id, release_date_local, time_zone, approve_version, mrp_id_overwrite }) => {
       try {
         if (!release_record_id && !release_date_local && !time_zone) {
-          throw new AirtableClientError(
-            'MISSING_RELEASE_SELECTOR',
-            'Provide release_record_id, release_date_local, or time_zone so the publishing workflow can resolve a release.',
-            400,
-          );
+          throw new AirtableClientError('MISSING_RELEASE_SELECTOR', 'Provide release_record_id, release_date_local, or time_zone so the publishing workflow can resolve a release.', 400);
         }
 
         const reviewer = requireResolvedReviewer(getReviewer);
@@ -605,6 +774,7 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
           time_zone,
           approve_version,
           mrp_id_overwrite,
+          review_owner: { id: reviewer.airtableCollaboratorId },
         });
 
         return asSuccess({
@@ -640,7 +810,10 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
     async ({ asset_id, ...input }) => {
       try {
         const updated = await getClient().updateAssetMetadata(asset_id, input);
-        return asSuccess({ updated_asset: updated, support: TEMPLATE_REVIEW_FIELD_MAP.writeSupport.assetMetadata });
+        return asSuccess({
+          updated_asset: updated,
+          support: TEMPLATE_REVIEW_FIELD_MAP.writeSupport.assetMetadata,
+        });
       } catch (error) {
         return asError(error);
       }
@@ -659,7 +832,10 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
         const updated = await getClient().updateAssetPublishing(asset_id, {
           mrp_id_overwrite,
         });
-        return asSuccess({ updated_asset: updated, support: TEMPLATE_REVIEW_FIELD_MAP.writeSupport.assetPublishing });
+        return asSuccess({
+          updated_asset: updated,
+          support: TEMPLATE_REVIEW_FIELD_MAP.writeSupport.assetPublishing,
+        });
       } catch (error) {
         return asError(error);
       }
@@ -683,20 +859,7 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
       rejection_feedback: z.string().optional(),
       agent_review_feedback: z.string().optional(),
     },
-    async ({
-      version_id,
-      review_owner,
-      review_status,
-      quality_rating,
-      improvement_areas,
-      review_feedback,
-      review_checklist,
-      publishing_checklist,
-      release_record_id,
-      reject_reason,
-      rejection_feedback,
-      agent_review_feedback,
-    }) => {
+    async ({ version_id, review_owner, review_status, quality_rating, improvement_areas, review_feedback, review_checklist, publishing_checklist, release_record_id, reject_reason, rejection_feedback, agent_review_feedback }) => {
       try {
         const reviewer = getReviewer();
         const actingReviewer = currentReviewerAsCollaborator(getReviewer);
@@ -704,6 +867,9 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
           assertReviewerScopedReviewOwner(review_owner, reviewer);
           await getClient().requireAssignedVersion(version_id, actingReviewer);
         }
+        const hasReviewerScopedMutation = [review_status, quality_rating, improvement_areas, review_feedback, review_checklist, publishing_checklist, release_record_id, reject_reason, rejection_feedback, agent_review_feedback].some(
+          (value) => value !== undefined,
+        );
 
         return asSuccess({
           ...(reviewer
@@ -713,7 +879,7 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
               }
             : {}),
           updated_version: await getClient().updateVersionReview(version_id, {
-            review_owner,
+            review_owner: reviewer && hasReviewerScopedMutation ? { id: reviewer.airtableCollaboratorId } : review_owner,
             review_status,
             quality_rating,
             improvement_areas,

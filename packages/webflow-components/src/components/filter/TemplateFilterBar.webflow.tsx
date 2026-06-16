@@ -5,7 +5,7 @@ import { TemplateFilterBar } from './TemplateFilterBar';
 export default declareComponent(TemplateFilterBar, {
   name: 'Template Filter Bar',
   description:
-    'Renders Style, Type, Sort, Search, and Free-Only filter controls for the template marketplace. Use Template Search Sidebar for category navigation.',
+    'Renders styled category/subcategory pills plus Style, Type, Sort, Search, and Free-Only filter controls for the template marketplace. Communicates with Template Grid via URL params — place both on the same page.',
   group: 'Marketplace',
   props: {
     apiBase: props.Text({
@@ -27,11 +27,35 @@ export default declareComponent(TemplateFilterBar, {
       tooltip:
         'Category group slug for Designer preview, e.g. "architecture-and-design-websites". Production auto-detects from /templates/category/{slug}.',
     }),
+    creatorSlug: props.Text({
+      name: 'Creator Slug (preview)',
+      defaultValue: '',
+      tooltip:
+        'Creator/designer slug for Designer preview, e.g. "brix-templates". Production auto-detects from /templates/designers/{slug}.',
+    }),
+    creatorRecordId: props.Text({
+      name: 'Creator Record ID',
+      defaultValue: '',
+      tooltip:
+        'Optional exact creator Airtable/Webflow sync record ID. Bind this on designer profile pages when available; otherwise creator slug is used.',
+    }),
     subcategorySlug: props.Text({
       name: 'Subcategory Slug (preview)',
       defaultValue: '',
       tooltip:
         'Subcategory slug for Designer preview, e.g. "ai-websites". Production auto-detects from /templates/subcategory/{slug}.',
+    }),
+    styleSlug: props.Text({
+      name: 'Style Slug (preview)',
+      defaultValue: '',
+      tooltip:
+        'Style slug for Designer preview, e.g. "modern". Production auto-detects from /templates/style/{slug}.',
+    }),
+    tagSlug: props.Text({
+      name: 'Tag Slug (preview)',
+      defaultValue: '',
+      tooltip:
+        'Tag slug for Designer preview, e.g. "automation". Production auto-detects from /templates/tag/{slug}.',
     }),
     showSearch: props.Boolean({
       name: 'Show Search',
@@ -66,10 +90,9 @@ export default declareComponent(TemplateFilterBar, {
       tooltip: 'Show the Free Only checkbox. Not needed on pages that are already scoped to free.',
     }),
     showSubcategoryPills: props.Boolean({
-      name: 'Show Category Pills',
-      defaultValue: false,
-      tooltip:
-        'Optional. Leave off when Template Search Sidebar is present so categories stay in one surface. Turn on only for page-specific horizontal category/subcategory navigation.',
+      name: 'Show Subcategory Pills',
+      defaultValue: true,
+      tooltip: 'Show the category/subcategory pill row above the Style/Type/Sort controls when the page has a scoped template listing.',
     }),
     defaultSort: props.Variant({
       name: 'Default Sort',

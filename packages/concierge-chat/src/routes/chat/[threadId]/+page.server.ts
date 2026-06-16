@@ -1,8 +1,5 @@
-import { error } from '@sveltejs/kit';
-import { buildProfileAudit } from '$server/profile/extractor';
-import { determineNextStep } from '$server/orchestration/next-step';
-import { getDemoThread } from '$server/threads/demo';
-import { splitWidgetsByPlacement } from '$server/widgets/select';
+import type { PageServerLoad } from './$types';
+import { CONCIERGE_SESSION_DEPENDENCY } from '$chat/api-contract';
 import {
 	clearCommunicationRules,
 	difyRuntimeBoundary,
@@ -10,28 +7,27 @@ import {
 	operatorShellPlanes,
 	selectOperatorState
 } from '$lib/operator/clear-shell';
-import type { PageServerLoad } from './$types';
+import { ensureConciergeSession, getRequiredThreadView } from '$lib/server/threads/session';
 
-export const load: PageServerLoad = async ({ params }) => {
-	const thread = getDemoThread(params.threadId);
+export const load: PageServerLoad = async ({ depends, cookies, params, platform, url }) => {
+	depends(CONCIERGE_SESSION_DEPENDENCY);
 
-	if (!thread) {
-		throw error(404, `Unknown demo thread: ${params.threadId}`);
-	}
-
-	const widgets = splitWidgetsByPlacement(thread);
+	const threadView = await getRequiredThreadView(
+		ensureConciergeSession(cookies, url.protocol === 'https:', { platform, url }),
+		params.threadId,
+		platform
+	);
 	const operatorState = selectOperatorState({
-		threadStatus: thread.status,
-		hasActionRequiredTool: thread.connectedTools.some((tool) => tool.status === 'action_required'),
-		hasBlockedArtifact: thread.artifacts.some((artifact) => artifact.status === 'blocked')
+		threadStatus: threadView.thread.status,
+		hasActionRequiredTool: threadView.thread.connectedTools.some(
+			(tool) => tool.status === 'action_required'
+		),
+		hasBlockedArtifact: threadView.thread.artifacts.some((artifact) => artifact.status === 'blocked'),
+		hasHandoff: threadView.hasHandoff
 	});
 
 	return {
-		thread,
-		nextStep: determineNextStep(thread),
-		profileAudit: buildProfileAudit(thread.profile),
-		inlineWidgets: widgets.inline,
-		railWidgets: widgets.rail,
+		threadView,
 		operatorMode,
 		operatorShellPlanes,
 		operatorState,

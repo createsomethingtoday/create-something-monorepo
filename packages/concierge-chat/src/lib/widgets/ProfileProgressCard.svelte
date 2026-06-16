@@ -2,12 +2,13 @@
 	import type { WidgetOf } from './types';
 
 	export let widget: WidgetOf<'profile_progress'>;
+	export let threadId = '';
 </script>
 
-<div class="stack">
+<div class="stack" data-thread-id={threadId}>
 	<div class="row">
 		<strong>{widget.data.completion}% complete</strong>
-		<span class="status-pill good">{widget.data.confirmedCount} confirmed</span>
+		<span class="status-pill good">{widget.data.confirmedCount} captured</span>
 	</div>
 
 	<div class="meter" aria-hidden="true">
@@ -15,8 +16,8 @@
 	</div>
 
 	<div class="meta">
-		<span>{widget.data.inferredCount} inferred</span>
-		<span>{widget.data.missingFields.length} remaining blockers</span>
+		<span>{widget.data.inferredCount} inferred detail{widget.data.inferredCount === 1 ? '' : 's'}</span>
+		<span>{widget.data.missingFields.length} next step{widget.data.missingFields.length === 1 ? '' : 's'}</span>
 	</div>
 
 	<p>{widget.data.nextPrompt}</p>
@@ -31,7 +32,7 @@
 <style>
 	.stack {
 		display: grid;
-		gap: 0.85rem;
+		gap: 1rem;
 	}
 
 	.row,
@@ -43,31 +44,41 @@
 		flex-wrap: wrap;
 	}
 
+	.row strong {
+		font-size: 1.02rem;
+		letter-spacing: -0.02em;
+	}
+
 	.meta {
 		color: var(--muted);
-		font-size: 0.92rem;
+		font-size: 0.88rem;
 	}
 
 	.meter {
 		height: 0.7rem;
-		border-radius: var(--radius-tight);
-		background: rgba(31, 27, 22, 0.08);
+		border-radius: 999px;
+		background: var(--surface-overlay);
+		border: 1px solid rgba(167, 184, 255, 0.08);
 		overflow: hidden;
 	}
 
 	.fill {
 		height: 100%;
 		border-radius: inherit;
-		background: linear-gradient(90deg, var(--accent), #d69157);
+		background: var(--accent-gradient);
 	}
 
 	ul {
 		margin: 0;
 		padding-left: 1.1rem;
 		color: var(--muted);
+		display: grid;
+		gap: 0.35rem;
 	}
 
 	p {
 		margin: 0;
+		color: var(--muted-strong);
+		line-height: 1.55;
 	}
 </style>

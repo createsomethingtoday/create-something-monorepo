@@ -75,12 +75,17 @@ const WEBFLOW_TEMPLATE_REVIEW_PHASE_A_ALLOWED_TOOL_PREFIXES = [
 	'webflow-template-review-mcp__template_review_list_versions',
 	'webflow-template-review-mcp__template_review_get_version',
 	'webflow-template-review-mcp__template_review_get_review_context',
+	'webflow-template-review-mcp__template_review_get_comprehensive_review_contract',
+	'webflow-template-review-mcp__template_review_format_agent_review_feedback',
+	'webflow-template-review-mcp__template_review_prepare_published_site_sandbox',
 	'webflow-template-review-mcp__template_review_list_releases',
 	'webflow-template-review-mcp__template_review_get_field_map',
+	'webflow-template-review-mcp__template_review_run_published_site_validation',
 	'webflow-template-review-mcp__template_review_assign_self',
 	'webflow-template-review-mcp__template_review_unassign_self',
 	'webflow-template-review-mcp__template_review_request_changes',
 	'webflow-template-review-mcp__template_review_set_review_status',
+	'webflow-template-review-mcp__template_review_save_agent_feedback',
 	'webflow-template-review-mcp__template_review_save_draft_feedback',
 ];
 

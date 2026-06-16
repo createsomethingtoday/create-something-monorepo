@@ -5,9 +5,27 @@
   let email = $state('');
   let loading = $state(false);
   let error = $state<string | null>(null);
+  let emailError = $state<string | null>(null);
+
+	const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+	function validateEmail() {
+		if (!email.trim()) {
+			emailError = 'Email is required.';
+			return;
+		}
+
+		emailError = !EMAIL_REGEX.test(email.trim())
+			? 'Enter a valid email address, e.g. you@webflow.com.'
+			: null;
+	}
 
   async function handleSubmit(e: Event) {
     e.preventDefault();
+
+    validateEmail();
+    if (emailError) return;
+
     loading = true;
     error = null;
 
@@ -57,7 +75,14 @@
           placeholder="you@webflow.com"
           required
           disabled={loading}
+          aria-invalid={Boolean(emailError)}
+          aria-describedby={emailError ? 'email-error' : undefined}
+          onblur={validateEmail}
+          oninput={() => (emailError = null)}
         />
+        {#if emailError}
+          <p class="field-error" id="email-error">{emailError}</p>
+        {/if}
       </div>
 
       {#if error}
@@ -170,6 +195,17 @@
 
   input::placeholder {
     color: var(--color-fg-muted);
+  }
+
+  .field-error {
+    font-size: var(--text-caption);
+    color: var(--color-error);
+    margin: var(--space-xs) 0 0;
+    line-height: 1.4;
+  }
+
+  input[aria-invalid='true'] {
+    border-color: var(--color-error);
   }
 
   .error-message {

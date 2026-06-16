@@ -5,6 +5,7 @@ import {
 	type CanonActionPreviewBody
 } from '$lib/canon/control';
 import { loadCanonWorkflowContext, selectCanonWorkflowAction } from '$lib/canon/workflow-context';
+import { resolveDeliveryFallback } from '$lib/delivery/contexts';
 
 export const OPTIONS: RequestHandler = async () => {
 	return new Response(null, { status: 204, headers: canonCorsHeaders });
@@ -19,7 +20,11 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		return json({ error: 'Request body must be JSON.' }, { status: 400, headers: canonCorsHeaders });
 	}
 
-	const context = await loadCanonWorkflowContext(platform?.env?.DB, body.contextId);
+	const context = await loadCanonWorkflowContext(
+		platform?.env?.DB,
+		body.contextId,
+		resolveDeliveryFallback(body.contextId)
+	);
 	const actionId = typeof body.actionId === 'string' && body.actionId.trim() ? body.actionId.trim() : 'draft-operator-brief';
 	const action = selectCanonWorkflowAction(context, actionId);
 	const persistedApproval = context.approvalQueue.find((item) => item.actionId === action.id);

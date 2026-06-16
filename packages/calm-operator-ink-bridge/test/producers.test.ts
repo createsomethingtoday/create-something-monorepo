@@ -1,7 +1,13 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { bridgeUrl, healthAttentionSnapshot, mcpAttentionAlert } from '../src/producers.js';
+import {
+  bridgeUrl,
+  healthAttentionSnapshot,
+  mcpAttentionAlert,
+  operatorPriorityBrief,
+  synthesizeOperatorPriority
+} from '../src/producers.js';
 
 test('builds production bridge URLs predictably', () => {
   assert.equal(bridgeUrl('https://ink.createsomething.agency/', '/ink/alert'), 'https://ink.createsomething.agency/ink/alert');
@@ -33,4 +39,151 @@ test('builds health snapshot payloads for agent and MCP monitors', () => {
   assert.equal(snapshot.component, 'Claude Code Slack watcher');
   assert.equal(snapshot.status, 'degraded');
   assert.equal(snapshot.severity, 70);
+});
+
+test('builds operator priority brief payloads for synthesized surface state', () => {
+  const priority = operatorPriorityBrief({
+    focus: 'Webflow MCP launch',
+    risk: 'Marketplace copy incomplete',
+    nextAction: 'Review Airtable fields',
+    sourceLinks: [
+      {
+        kind: 'linear',
+        label: 'CRE-611',
+        url: 'https://linear.app/createsomething/issue/CRE-611'
+      }
+    ],
+    sources: {
+      codex: { branch: 'emdash/m5-core-ink-mbz75' },
+      health: { state: 'health_attention' }
+    }
+  });
+
+  assert.equal(priority.focus, 'Webflow MCP launch');
+  assert.equal(priority.risk, 'Marketplace copy incomplete');
+  assert.equal(priority.next_action, 'Review Airtable fields');
+  assert.equal(priority.signal, 'linear');
+  assert.equal(priority.severity, 92);
+  assert.equal(priority.urgent, false);
+  assert.deepEqual(priority.source_links, [
+    {
+      kind: 'linear',
+      label: 'CRE-611',
+      url: 'https://linear.app/createsomething/issue/CRE-611'
+    }
+  ]);
+  assert.deepEqual(priority.payload, {
+    kind: 'operator_priority',
+    signal: 'linear',
+    sources: {
+      codex: { branch: 'emdash/m5-core-ink-mbz75' },
+      health: { state: 'health_attention' }
+    }
+  });
+});
+
+test('synthesizes operator priority from health and work-source state', () => {
+  const priority = synthesizeOperatorPriority({
+    linear: {
+      issues: [
+        {
+          identifier: 'CRE-611',
+          title: 'Add Core Ink operator priority brief producer',
+          url: 'https://linear.app/createsomething/issue/CRE-611'
+        }
+      ]
+    },
+    codex: {
+      branch: 'emdash/m5-core-ink-mbz75',
+      dirty: true
+    },
+    health: {
+      state: 'health_attention',
+      summary: '2 poor, 5 stale health checks',
+      action: 'Review agent/MCP health source',
+      items: [
+        {
+          component: 'Composio Toolkit MCP',
+          status: 'failed',
+          summary: 'Health endpoint returned 404',
+          severity: 80,
+          poor: true
+        }
+      ]
+    }
+  });
+
+  assert.equal(priority.focus, 'Composio Toolkit MCP');
+  assert.equal(priority.risk, '2 poor, 5 stale health checks');
+  assert.equal(priority.next_action, 'Review agent/MCP health source');
+  assert.equal(priority.signal, 'health');
+  assert.equal(priority.severity, 88);
+  assert.deepEqual(priority.source_links, [
+    {
+      kind: 'linear',
+      label: 'CRE-611',
+      url: 'https://linear.app/createsomething/issue/CRE-611'
+    },
+    {
+      kind: 'codex',
+      label: 'emdash/m5-core-ink-mbz75'
+    },
+    {
+      kind: 'health',
+      label: 'health_attention'
+    }
+  ]);
+});
+
+test('preserves Braintrust source links in synthesized operator priority', () => {
+  const priority = synthesizeOperatorPriority({
+    braintrust: {
+      status: 'regression',
+      eval_name: 'template-review-hub',
+      regression_summary: 'Intent routing score dropped 12%',
+      permalink: 'https://www.braintrust.dev/app/exp/abc',
+      recommended_action: 'Review failing eval examples'
+    }
+  });
+
+  assert.equal(priority.focus, 'template-review-hub');
+  assert.equal(priority.risk, 'Intent routing score dropped 12%');
+  assert.equal(priority.next_action, 'Review failing eval examples');
+  assert.equal(priority.signal, 'braintrust');
+  assert.equal(priority.severity, 90);
+  assert.equal(priority.urgent, true);
+  assert.deepEqual(priority.source_links, [
+    {
+      kind: 'braintrust',
+      label: 'template-review-hub',
+      url: 'https://www.braintrust.dev/app/exp/abc'
+    }
+  ]);
+});
+
+test('keeps blocked Linear work ahead of critical Braintrust regressions', () => {
+  const priority = synthesizeOperatorPriority({
+    linear: {
+      issues: [
+        {
+          identifier: 'CRE-643',
+          title: 'Blocked client launch path',
+          state: 'blocked',
+          priority: 1,
+          url: 'https://linear.app/createsomething/issue/CRE-643'
+        }
+      ]
+    },
+    braintrust: {
+      status: 'critical regression',
+      eval_name: 'operator-quality',
+      regression_summary: 'Quality gate is failing',
+      severity: 99
+    }
+  });
+
+  assert.equal(priority.focus, 'Blocked client launch path');
+  assert.equal(priority.signal, 'linear');
+  assert.equal(priority.severity, 94);
+  assert.equal(priority.urgent, true);
 });

@@ -88,6 +88,63 @@ assert.ok(
   'expected non-exempt IX2 to be rejected'
 );
 
+const lottieHtml = `
+<!doctype html>
+<html>
+  <body>
+    <div data-w-id="lottie-1" data-is-ix2-target="0" data-animation-type="lottie" data-src="/animation.json" data-renderer="svg" data-default-duration="0"></div>
+  </body>
+</html>`;
+
+const lottieResult = sandbox.validateGsapUsage(lottieHtml, 'https://lottie-template.webflow.io/');
+
+assert.equal(lottieResult.passed, true);
+assert.equal(lottieResult.summary.legacyIx2Detected, false);
+assert.equal(lottieResult.summary.legacyIx2Count, 0);
+assert.equal(
+  lottieResult.details.flaggedCode.some((issue) => issue.policy === 'ix2-rejected'),
+  false,
+  'expected Webflow Lottie element markers to be allowed'
+);
+
+const lottieRuntimeDetection = sandbox.detectIx2Interactions(`
+<!doctype html>
+<html>
+  <body>
+    <div data-w-id="lottie-1" data-is-ix2-target="0" data-animation-type="lottie" data-src="/animation.json" data-renderer="svg" data-default-duration="0"></div>
+    <script>Webflow.require("ix2").init({ events: { "e-1": { action: { actionTypeId: "PLUGIN_LOTTIE_EFFECT" } } }, actionLists: { pluginLottie: { actionItemGroups: [{ actionItems: [{ actionTypeId: "PLUGIN_LOTTIE" }] }] } } })</script>
+  </body>
+</html>`);
+
+assert.equal(lottieRuntimeDetection.detected, false);
+assert.equal(lottieRuntimeDetection.count, 0);
+
+const markerOnlyResult = sandbox.validateGsapUsage(
+  '<!doctype html><html><body><div data-w-id="decorative-motion"></div></body></html>',
+  'https://marker-only-template.webflow.io/'
+);
+
+assert.equal(markerOnlyResult.passed, true);
+assert.equal(markerOnlyResult.summary.legacyIx2Detected, false);
+assert.equal(markerOnlyResult.summary.legacyIx2Count, 0);
+assert.equal(
+  markerOnlyResult.details.flaggedCode.some((issue) => issue.policy === 'ix2-rejected'),
+  false,
+  'expected bare Webflow DOM markers to require runtime/action evidence before rejection'
+);
+
+const mixedLottieIx2Result = sandbox.validateGsapUsage(
+  `${lottieHtml}<div data-w-id="legacy-card"></div><script>Webflow.require("ix2").init({})</script>`,
+  'https://mixed-template.webflow.io/'
+);
+
+assert.equal(mixedLottieIx2Result.passed, false);
+assert.equal(mixedLottieIx2Result.summary.legacyIx2Detected, true);
+assert.ok(
+  mixedLottieIx2Result.details.flaggedCode.some((issue) => issue.policy === 'ix2-rejected'),
+  'expected non-Lottie IX2 markers to remain rejected'
+);
+
 const exemptIx2Result = sandbox.validateGsapUsage(ix2Html, 'https://az-bergamo.webflow.io/');
 
 assert.equal(exemptIx2Result.passed, true);
@@ -104,38 +161,100 @@ assert.equal(
   false
 );
 
-const reviewBridgeHtml = `
+const validatorBridgeHtml = `
 <!doctype html>
 <html>
-	<head>
-		<script>
-			window.__WF_REVIEW_BRIDGE = {
-				version: "2026-05-01",
-				marker: "__wf_review_snippet_v1",
-				bridgeToken: "wfbt_0123456789abcdef0123456789abcdef",
-				reviewSurface: "published-review",
-				reviewScriptUrl: "https://validation-worker.createsomething.workers.dev/app-validator/snippet/review.js"
-			};
-		</script>
-		<script src="https://validation-worker.createsomething.workers.dev/app-validator/snippet/review.js"></script>
-	</head>
-	<body>
-		<main>Template content</main>
-	</body>
+  <head>
+    <script>
+      window.__WF_REVIEW_BRIDGE = {
+        siteId: "69d649b3043481cc6f479fad",
+        version: "0.3.0",
+        marker: "__wf_review_snippet_v1",
+        bridgeToken: "wfbt_0123456789abcdef0123456789abcdef",
+        reviewSurface: "published-review",
+        reviewScriptUrl: "https://validation-worker.createsomething.workers.dev/app-validator/snippet/review.js"
+      };
+    </script>
+    <script src="https://validation-worker.createsomething.workers.dev/app-validator/snippet/review.js"></script>
+  </head>
+  <body></body>
 </html>`;
 
-const reviewBridgeResult = sandbox.validateGsapUsage(
-  reviewBridgeHtml,
-  'https://review-bridge-template.webflow.io/'
+const validatorBridgeResult = sandbox.validateGsapUsage(
+  validatorBridgeHtml,
+  'https://validator-bridge-template.webflow.io/'
 );
 
-assert.equal(reviewBridgeResult.passed, true);
-assert.equal(reviewBridgeResult.summary.flaggedCodeCount, 0);
+assert.equal(validatorBridgeResult.passed, true);
+assert.equal(validatorBridgeResult.summary.flaggedCodeCount, 0);
 assert.ok(
-  reviewBridgeResult.details.allowedCustomCode.some(
-    (issue) => issue.policy === 'webflow-way-validator-bridge'
+  validatorBridgeResult.details.allowedCustomCode.some(
+    (issue) => issue.policy === 'validator-review-bridge'
   ),
   'expected Webflow Way Validator bridge config to be allowed'
+);
+
+const bridgeWithExtraCodeResult = sandbox.validateGsapUsage(
+  validatorBridgeHtml.replace(
+    '</script>',
+    'window.location = "https://example.com";</script>'
+  ),
+  'https://validator-bridge-template.webflow.io/'
+);
+
+assert.equal(bridgeWithExtraCodeResult.passed, false);
+assert.ok(
+  bridgeWithExtraCodeResult.details.flaggedCode.some(
+    (issue) => issue.message === 'Custom script detected without approved GSAP patterns'
+  ),
+  'expected extra code appended to bridge config to remain blocked'
+);
+
+const googleTagHtml = `
+<!doctype html>
+<html>
+  <head>
+    <script>(function(w,i,g){w[g]=w[g]||[];if(typeof w[g].push=='function')w[g].push.apply(w[g],Array.isArray(i)?i:[i]);})(window,['G-EH11T52XR4'],'google_tags_first_party');</script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('set', 'developer_id.dZGVlNj', true);
+      gtag('js', new Date());
+      gtag('config', 'G-EH11T52XR4');
+    </script>
+  </head>
+  <body></body>
+</html>`;
+
+const googleTagResult = sandbox.validateGsapUsage(
+  googleTagHtml,
+  'https://avix-studio.webflow.io/'
+);
+
+assert.equal(googleTagResult.passed, true);
+assert.equal(googleTagResult.summary.flaggedCodeCount, 0);
+assert.equal(
+  googleTagResult.details.allowedCustomCode.filter(
+    (issue) => issue.policy === 'analytics-google-tag'
+  ).length,
+  2,
+  'expected Google tag bootstrap scripts to be allowed'
+);
+
+const googleTagWithExtraCodeResult = sandbox.validateGsapUsage(
+  googleTagHtml.replace(
+    "gtag('config', 'G-EH11T52XR4');",
+    "gtag('config', 'G-EH11T52XR4');window.location = 'https://example.com';"
+  ),
+  'https://avix-studio.webflow.io/'
+);
+
+assert.equal(googleTagWithExtraCodeResult.passed, false);
+assert.ok(
+  googleTagWithExtraCodeResult.details.flaggedCode.some(
+    (issue) => issue.message === 'Custom script detected without approved GSAP patterns'
+  ),
+  'expected custom code appended to Google tag bootstrap to remain blocked'
 );
 
 console.log('GSAP validation regression passed.');

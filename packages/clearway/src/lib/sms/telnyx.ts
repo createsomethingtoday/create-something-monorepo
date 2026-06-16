@@ -69,10 +69,19 @@ export interface TelnyxWebhookPayload {
 }
 
 /**
- * Verify Telnyx webhook signature
+ * Verify a Telnyx webhook signature.
  *
- * Telnyx uses Ed25519 signature in the 'telnyx-signature-ed25519' header
- * For simplicity, we verify using the timestamp and public key
+ * Telnyx signs `${timestamp}|${rawBody}` with Ed25519 and sends:
+ *  - `telnyx-signature-ed25519`: base64-encoded signature
+ *  - `telnyx-timestamp`: unix timestamp in seconds
+ * The webhook public key (base64, from the Telnyx portal) verifies it.
+ *
+ * Verification uses Web Crypto (`crypto.subtle`), which is available in
+ * Cloudflare Workers and Node 20+ and accepts the raw 32-byte Ed25519 key
+ * directly. Returns false on any missing input, a stale timestamp, or a
+ * signature mismatch.
+ *
+ * @see https://developers.telnyx.com/docs/messaging/messages/signature-verification
  */
 export async function verifyTelnyxSignature(
 	publicKey: string,
@@ -80,24 +89,50 @@ export async function verifyTelnyxSignature(
 	timestamp: string,
 	body: string
 ): Promise<boolean> {
-	// Telnyx timestamp tolerance: 5 minutes
-	const timestampMs = parseInt(timestamp, 10);
-	const now = Date.now();
-	const fiveMinutes = 5 * 60 * 1000;
-
-	if (isNaN(timestampMs) || Math.abs(now - timestampMs) > fiveMinutes) {
+	if (!publicKey || !signature || !timestamp) {
 		return false;
 	}
 
-	// For production, implement proper Ed25519 verification
-	// For now, we do basic timestamp validation
-	// Full implementation would use @noble/ed25519 or similar
+	// Telnyx sends the timestamp in seconds; tolerate milliseconds defensively.
+	let timestampMs = parseInt(timestamp, 10);
+	if (isNaN(timestampMs)) {
+		return false;
+	}
+	if (timestampMs < 1e12) {
+		timestampMs *= 1000;
+	}
 
-	// In Cloudflare Workers, you'd use:
-	// const key = await crypto.subtle.importKey('raw', ...)
-	// const valid = await crypto.subtle.verify('Ed25519', key, sig, data)
+	const fiveMinutes = 5 * 60 * 1000;
+	if (Math.abs(Date.now() - timestampMs) > fiveMinutes) {
+		return false;
+	}
 
-	return signature.length > 0 && publicKey.length > 0;
+	try {
+		const publicKeyBytes = base64ToBytes(publicKey);
+		const signatureBytes = base64ToBytes(signature);
+		const signedPayload = new TextEncoder().encode(`${timestamp}|${body}`);
+
+		const key = await crypto.subtle.importKey(
+			'raw',
+			publicKeyBytes,
+			{ name: 'Ed25519' },
+			false,
+			['verify']
+		);
+
+		return await crypto.subtle.verify({ name: 'Ed25519' }, key, signatureBytes, signedPayload);
+	} catch {
+		return false;
+	}
+}
+
+function base64ToBytes(base64: string): Uint8Array<ArrayBuffer> {
+	const binary = atob(base64);
+	const bytes = new Uint8Array(new ArrayBuffer(binary.length));
+	for (let i = 0; i < binary.length; i += 1) {
+		bytes[i] = binary.charCodeAt(i);
+	}
+	return bytes;
 }
 
 /**

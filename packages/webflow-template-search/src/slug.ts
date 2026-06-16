@@ -22,6 +22,12 @@ export function deriveChildCategorySlug(displayName: string): string {
   return withWebsitesSuffix(slugifySegment(displayName));
 }
 
+export function normalizeChildCategorySlug(displayName: string, providedSlug?: string | null): string {
+  const rawSlug = providedSlug?.trim();
+  if (!rawSlug) return deriveChildCategorySlug(displayName);
+  return withWebsitesSuffix(slugifySegment(rawSlug.replace(/-websites$/i, '')));
+}
+
 export function normalizeStyleSlug(name: string, providedSlug?: string | null): string {
   return (providedSlug && providedSlug.trim().length > 0 ? providedSlug : slugifySegment(name)).trim();
 }

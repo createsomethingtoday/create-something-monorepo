@@ -12,17 +12,7 @@ export function ensureStringArray(value: unknown): string[] {
   }
 
   if (typeof value === 'string' && value.trim().length > 0) {
-    const trimmed = value.trim();
-    if (trimmed.startsWith('[')) {
-      try {
-        const parsed = JSON.parse(trimmed);
-        if (Array.isArray(parsed)) return ensureStringArray(parsed);
-      } catch {
-        // Fall through and preserve the original string when it is not valid JSON.
-      }
-    }
-
-    return [trimmed];
+    return [value.trim()];
   }
 
   return [];

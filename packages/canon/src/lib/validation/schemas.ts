@@ -106,14 +106,14 @@ export const contactSchema = z.object({
 	subject: z.string().max(200).optional(),
 	service: z.string().max(100).optional(),
 	assessment_id: z.string().max(50).optional(),
-	source: z.string().max(50).optional(),
+	source: z.string().max(100).optional(),
 	intent: z.string().max(100).optional(),
 	lane: z.string().max(100).optional(),
 	campaign: z.string().max(100).optional(),
-	source_property: z.string().max(50).optional(),
+	source_property: z.string().max(20).optional(),
 	session_id: z.string().max(100).optional(),
-	landing_url: z.string().max(2000).optional(),
-	referrer: z.string().max(2000).optional()
+	landing_url: z.string().url().max(500).optional(),
+	referrer: z.string().url().max(500).optional().or(z.literal(''))
 });
 
 export type ContactInput = z.infer<typeof contactSchema>;

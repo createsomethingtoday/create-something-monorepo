@@ -36,6 +36,7 @@ export interface AssetBatchResponse {
 
 export interface ValidationResponse {
 	siteUrl: string;
+	workerVersion?: string;
 	timestamp: string;
 	analysis: {
 		assets: AssetAnalysisResult;
@@ -86,7 +87,7 @@ export interface SnippetInstallRequest {
 	siteName?: string;
 	installTarget: 'head';
 	mode: 'programmatic' | 'webflow-api' | 'manual-fallback';
-	/** ID token from webflow.getIdToken() — exchanged for an access token. */
+	/** Designer identity token passed for future app-auth lookup; not a Data API access token. */
 	idToken?: string;
 }
 
@@ -148,6 +149,13 @@ export interface ValidationSubmitResponse {
 	anomaly: {
 		flagged: boolean;
 		reasons: string[];
+	};
+	artifact?: {
+		persisted: boolean;
+		key?: string;
+		sha256?: string;
+		byteSize?: number;
+		reason?: 'r2_not_configured' | 'r2_write_failed';
 	};
 }
 
@@ -242,6 +250,11 @@ export interface PageData {
 	name: string;
 	slug: string;
 	type: string;
+	path?: string;
+	publishPath?: string | null;
+	collectionId?: string | null;
+	collectionName?: string | null;
+	isCmsTemplate?: boolean;
 	isHomePage?: boolean;
 	seo?: {
 		title?: string;
@@ -327,21 +340,41 @@ export interface InteractionsAnalysisResult {
 		pagesRequested: number;
 		pagesAnalyzed: number;
 		pagesFailed: number;
+		pagesSkipped?: number;
 		pagesWithLegacyIx2: number;
 		analysisComplete: boolean;
-		analysisStatus: 'completed' | 'partial' | 'failed';
-		errorMessage?: string;
-	};
-	pages: Array<{
-		url: string;
-		legacyIx2Detected: boolean;
-		legacyIx2Count: number;
-		matches: Array<{
-			label: string;
-			count: number;
+			analysisStatus: 'completed' | 'partial' | 'failed';
+			errorMessage?: string;
+			skippedCmsTemplateSlugs?: string[];
+			cmsItemUrlsDiscovered?: number;
+			cmsItemUrlsValidated?: number;
+			cmsTemplateCoverageStatus?: 'none' | 'covered' | 'partial' | 'uncovered';
+			cmsTemplateCoverage?: CmsTemplateCoverage[];
+		};
+		pages: Array<{
+			url: string;
+			legacyIx2Detected: boolean;
+			legacyIx2Count: number;
+			source?: 'page' | 'cms-item';
+			cmsTemplateSlug?: string;
+			discoverySource?: 'sitemap' | 'link';
+			matches: Array<{
+				label: string;
+				count: number;
+			}>;
 		}>;
-	}>;
-}
+	}
+
+export interface CmsTemplateCoverage {
+	templateSlug: string;
+	collectionId?: string;
+	collectionName?: string;
+	candidateSlugs: string[];
+	discoveredUrls: string[];
+	validatedUrls: string[];
+	status: 'covered' | 'uncovered';
+		source?: 'sitemap' | 'link';
+	}
 
 // Detailed Analysis Types
 export interface AnalyzedAsset {
@@ -362,6 +395,11 @@ export interface AnalyzedPage {
 	headingHierarchy: HeadingHierarchy;
 	imageCount: number;
 	imagesWithoutAlt: number;
+	imagesWithoutAltDetails?: Array<{
+		src: string;
+		context: string;
+		selector?: string;
+	}>;
 	seo: PageSEOData;
 	links: LinkAnalysis;
 	contentQuality: ContentQualityAnalysis;
@@ -418,6 +456,10 @@ export interface ContentQualityAnalysis {
 		text: string;
 		location: string;
 		severity: 'error' | 'warning' | 'info';
+		matches?: Array<{
+			pattern: string;
+			sample: string;
+		}>;
 	}>;
 	wordCount: number;
 	readabilityScore?: number;
@@ -435,6 +477,15 @@ export interface HeadingHierarchy {
 		level: number;
 		text: string;
 		position: number;
+	}>;
+	skippedLevelTransitions?: Array<{
+		fromLevel: number;
+		toLevel: number;
+		fromPosition: number;
+		toPosition: number;
+		fromText: string;
+		toText: string;
+		missingLevel: number;
 	}>;
 }
 
@@ -476,6 +527,7 @@ export interface AltTextAudit {
 		src: string;
 		context: string;
 		isDecorative: boolean;
+		selector?: string;
 	}>;
 	coveragePercentage: number;
 }

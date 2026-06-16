@@ -13,7 +13,7 @@ Purpose: Validate Webflow projects/templates against the "Webflow Way" guideline
     - `analyzeNaming(html)`: Detect dominant class naming scheme, outliers, combo class depth violations
     - `analyzeTypography(html, css)`: Placeholder text detection, percentage line-height usage, body font presence
     - `analyzeStyles(css)`: Baseline tag style presence (H1–H6, p, ul/ol, blockquote, figure, figcaption, a), :hover/:focus/:active presence, CSS variable usage
-    - `analyzeVariablesDesigner(designerPayload)`: Validates variable naming (Title Case with spaces) and counts using Designer data
+    - Designer-sourced checks live in `src/app/api/validate/route.ts`; keep `src/lib/analyzers.ts` focused on crawl/published-site helpers
   - `types.ts`: Shared types (`ValidationIssue`, `CategoryResult`, `ValidationResponse`)
 - `extension` (Designer Extension)
   - `webflow.json`: Manifest (apiVersion 2, size large, publicDir public)
@@ -58,7 +58,7 @@ Purpose: Validate Webflow projects/templates against the "Webflow Way" guideline
   - Prefer percentage-based line-height; detect potential text overlap risks
   - Primary font on body, secondary fonts on headings where applicable
 - Variables (Designer API now):
-  - Ensure variables exist for colors/typography/spacing; variable names Title Case with spaces; detect one-off variables for future rule
+  - Ensure variables exist for colors/typography/spacing; variable names Title Case with spaces; inspect collection variable modes when available; detect one-off variables for future rule
 - Styles (crawl now):
   - Baseline tag styles for H1–H6, p, ul/ol, blockquote, figure, figcaption, a
   - State styles presence (:hover/:focus/:active); usage of CSS variables in baseline
@@ -69,8 +69,8 @@ Purpose: Validate Webflow projects/templates against the "Webflow Way" guideline
 ### Extension → API payload enrichment
 - The extension tries:
   - `webflow.getAllVariableCollections()`
-  - For each collection: `collection.getAllVariables()` and variable `getName()` when available
-- Normalized into `{ collections: [{ id, name?, variables: [{ id, name? }] }] }` under `designerVariables`.
+  - For each collection: `collection.getAllVariables()`, `collection.getAllVariableModes()`, variable `getName()`, and mode `getName()` when available
+- Normalized into `{ collections: [{ id, name?, variables: [{ id, name? }], modes?: [{ id, name }] }] }` under `designerVariables`.
 
 ### Configuration and size
 - Manifest (`extension/webflow.json`):
@@ -83,7 +83,7 @@ Purpose: Validate Webflow projects/templates against the "Webflow Way" guideline
   - Validate naming conventions for Components and variants
   - Verify composition patterns (Header includes Logo/Nav/Button)
 - Variables deeper checks:
-  - Variable modes for responsive values (tablet/mobile) via API
+  - Variable modes for responsive values (tablet/mobile) via `collection.getAllVariableModes()`
   - Grouping and ramp ordering (light→dark, small→large)
   - Detect one-off variables (usage frequency) when element styles are queryable
 - Styles enhancements:
@@ -104,4 +104,5 @@ Purpose: Validate Webflow projects/templates against the "Webflow Way" guideline
 - Designer Variables API:
   - `webflow.getAllVariableCollections()`
   - `collection.getAllVariables()`/`variable.getName()`
+  - `collection.getAllVariableModes()`/`mode.getName()`
 - OpenAI Agents doc: see `https://github.com/openai/agents.md` for background on AI agent orchestration; this repo exposes a clear API surface and deterministic analyzers to enable tool-driven agents to extend validation rules and automate fixes.

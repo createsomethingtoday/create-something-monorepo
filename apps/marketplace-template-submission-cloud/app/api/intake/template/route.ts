@@ -5,6 +5,11 @@ import {
   type PageCount,
   type PaymentType
 } from '../../../../vendor/core/marketplace-webhook';
+import {
+  extractLongDescriptionImages,
+  getLongDescriptionText,
+  sanitizeLongDescriptionHtml
+} from '@create-something/webflow-dashboard-core/long-description';
 import { jsonNoStore } from '../../../../lib/server/responses';
 import { getServerAirtable } from '../../../../lib/server/airtable';
 import { getPricingTiers, WEBFLOW_FEATURES } from '../../../../lib/intake/constants';
@@ -12,10 +17,17 @@ import { evaluateCreatorEligibility } from '../../../../lib/intake/creator-eligi
 import {
   buildPublishedUrlValidationMessage,
   getPublishedUrlValidationIssues,
-  runPublishedUrlValidation
+  normalizePublishedUrl,
+  runPublishedUrlValidation,
+  type PublishedUrlValidationSummary
 } from '../../../../lib/intake/published-url';
+import { getCachedPublishedValidation } from '../../../../lib/server/published-validation-cache';
+import { runValidatorAppSubmissionPreflight } from '../../../../lib/intake/validator-app';
 import { validateTemplateNameSyntax } from '../../../../lib/intake/template-name';
-import { checkTemplateNameAvailability } from '../../../../lib/server/template-name-availability';
+import {
+  checkTemplateNameAvailability,
+  getTemplateNameAvailabilityFailureMessage
+} from '../../../../lib/server/template-name-availability';
 import { verifyTurnstileToken } from '../../../../lib/server/turnstile';
 
 type TemplateSubmissionBody = {
@@ -41,6 +53,7 @@ type TemplateSubmissionBody = {
   thumbnailUrl?: string;
   secondaryThumbnailUrl?: string;
   galleryUrls?: string[];
+  qualityBenchmarkConfirmed?: boolean;
   checklistConfirmed?: boolean;
   agreementConfirmed?: boolean;
   turnstileToken?: string;
@@ -86,24 +99,6 @@ const STYLE_TAG_TO_WEBFLOW_STYLE: Record<string, string> = {
   playful: 'Playful',
   retro: 'Retro'
 };
-
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
-
-function toParagraphs(value: string): string {
-  return value
-    .split(/\n{2,}/)
-    .map((paragraph) => paragraph.trim())
-    .filter(Boolean)
-    .map((paragraph) => `<p>${escapeHtml(paragraph).replace(/\n/g, '<br />')}</p>`)
-    .join('');
-}
 
 function normalizePreviewUrl(value: string): string {
   const trimmed = value.trim();
@@ -186,7 +181,10 @@ export async function POST(request: Request) {
     const creatorName = String(body.creatorName || '').trim();
     const templateName = String(body.templateName || '').trim();
     const shortDescription = String(body.shortDescription || '').trim();
-    const longDescription = String(body.longDescription || '').trim();
+    const rawLongDescription = String(body.longDescription || '').trim();
+    const longDescriptionHtml = sanitizeLongDescriptionHtml(rawLongDescription);
+    const longDescriptionText = getLongDescriptionText(longDescriptionHtml);
+    const longDescriptionImages = extractLongDescriptionImages(longDescriptionHtml);
     const notes = String(body.notes || '').trim();
     const thumbnailUrl = String(body.thumbnailUrl || '').trim();
     const secondaryThumbnailUrl = String(body.secondaryThumbnailUrl || '').trim();
@@ -223,7 +221,7 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!longDescription) {
+    if (!longDescriptionText && longDescriptionImages.length === 0) {
       return jsonNoStore({ error: 'Long description is required.' }, { status: 400 });
     }
 
@@ -235,25 +233,19 @@ export async function POST(request: Request) {
       return jsonNoStore({ error: 'At least one gallery image is required.' }, { status: 400 });
     }
 
+    if (!body.qualityBenchmarkConfirmed) {
+      return jsonNoStore(
+        { error: 'Featured quality benchmark acknowledgement is required.' },
+        { status: 400 }
+      );
+    }
+
     if (!body.checklistConfirmed || !body.agreementConfirmed) {
       return jsonNoStore(
         { error: 'Submission checklist and agreement are required.' },
         { status: 400 }
       );
     }
-
-    const eligibility = await evaluateCreatorEligibility(creatorEmail);
-    if (!eligibility.allowed) {
-      return jsonNoStore(
-        {
-          error: eligibility.message,
-          eligibility
-        },
-        { status: 409 }
-      );
-    }
-
-    const airtable = await getServerAirtable();
 
     const nameSyntax = validateTemplateNameSyntax(templateName);
     if (!nameSyntax.valid) {
@@ -267,29 +259,118 @@ export async function POST(request: Request) {
       );
     }
 
-    const templateNameAvailability = await checkTemplateNameAvailability(templateName, {
-      airtable
-    });
+    const normalizedPublishedUrl = normalizePublishedUrl(body.publishedUrl || '');
+    const airtable = await getServerAirtable();
 
-    if (!templateNameAvailability.available) {
+    // Reuse the validation the creator just completed via "Validate template"
+    // when available; otherwise start a fresh crawl alongside the other
+    // read-only checks. All results are checked in priority order below.
+    const cachedValidation = await getCachedPublishedValidation(normalizedPublishedUrl);
+    const publishedValidationPromise = cachedValidation
+      ? null
+      : runPublishedUrlValidation(normalizedPublishedUrl).then(
+          (value) => ({ ok: true as const, value }),
+          (error) => ({ ok: false as const, error })
+        );
+
+    const [eligibility, templateNameAvailabilityResult] = await Promise.all([
+      evaluateCreatorEligibility(creatorEmail),
+      checkTemplateNameAvailability(templateName, { airtable }).then(
+        (value) => ({ ok: true as const, value }),
+        (error) => ({ ok: false as const, error })
+      )
+    ]);
+
+    if (!templateNameAvailabilityResult.ok) {
+      return jsonNoStore(
+        {
+          error: getTemplateNameAvailabilityFailureMessage(templateNameAvailabilityResult.error)
+        },
+        { status: 503 }
+      );
+    }
+
+    if (!eligibility.allowed) {
+      return jsonNoStore(
+        {
+          error: eligibility.message,
+          eligibility
+        },
+        { status: 409 }
+      );
+    }
+
+    if (!templateNameAvailabilityResult.value.available) {
       return jsonNoStore({ error: 'Template name is already in use.' }, { status: 409 });
     }
 
-    const publishedValidation = await runPublishedUrlValidation(body.publishedUrl || '');
-    if (!publishedValidation.summary.passed) {
-      const validationIssues = getPublishedUrlValidationIssues(publishedValidation.summary);
-      return jsonNoStore(
-        {
-          error: buildPublishedUrlValidationMessage(publishedValidation.summary),
-          validationIssues
-        },
-        { status: 400 }
+    let publishedUrlResult: {
+      normalizedUrl: string;
+      gsapDetected: boolean;
+      siteResults: PublishedUrlValidationSummary['siteResults'];
+    };
+    let validatorConfirmation: { passed: boolean; score?: number };
+
+    if (cachedValidation) {
+      publishedUrlResult = {
+        normalizedUrl: cachedValidation.normalizedUrl,
+        gsapDetected: cachedValidation.summary.gsapDetected,
+        siteResults: cachedValidation.summary.siteResults
+      };
+      validatorConfirmation = {
+        passed: cachedValidation.validatorPreflight?.passed ?? true,
+        score: cachedValidation.validatorPreflight?.result?.score
+      };
+    } else {
+      const settled = await publishedValidationPromise!;
+      if (!settled.ok) {
+        throw settled.error instanceof Error
+          ? settled.error
+          : new Error('Published URL validation failed.');
+      }
+
+      const publishedValidation = settled.value;
+      if (!publishedValidation.summary.passed) {
+        const validationIssues = getPublishedUrlValidationIssues(publishedValidation.summary);
+        return jsonNoStore(
+          {
+            error: buildPublishedUrlValidationMessage(publishedValidation.summary),
+            validationIssues
+          },
+          { status: 400 }
+        );
+      }
+
+      const validatorPreflight = await runValidatorAppSubmissionPreflight(
+        publishedValidation.normalizedUrl
       );
+      if (validatorPreflight.required && !validatorPreflight.passed) {
+        return jsonNoStore(
+          {
+            error: validatorPreflight.message,
+            validationIssues: validatorPreflight.issues,
+            validatorPreflight
+          },
+          {
+            status: validatorPreflight.status === 'validator_app_unavailable' ? 503 : 400
+          }
+        );
+      }
+
+      publishedUrlResult = {
+        normalizedUrl: publishedValidation.normalizedUrl,
+        gsapDetected: publishedValidation.summary.gsapDetected,
+        siteResults: publishedValidation.summary.siteResults
+      };
+      validatorConfirmation = {
+        passed: validatorPreflight.passed,
+        score: validatorPreflight.result?.score
+      };
     }
 
     const previewUrl = normalizePreviewUrl(body.previewUrl || '');
     const combinedFeatures = new Set(featureFlags);
-    if (publishedValidation.summary.gsapDetected) {
+    if (publishedUrlResult.gsapDetected) {
       combinedFeatures.add('gsap');
     }
 
@@ -315,33 +396,28 @@ export async function POST(request: Request) {
     const mappedFeatures = mapFeatureFlags([...combinedFeatures]);
     const categories =
       requestedCategories.length > 0 ? requestedCategories : category ? [category] : [];
-
-    const detailsHtml = [
-      `<h2>Submission notes</h2>${toParagraphs(longDescription)}`,
-      notes ? `<h3>Internal notes</h3>${toParagraphs(notes)}` : '',
-      '<h3>Metadata</h3>',
-      '<ul>',
-      categories.length > 0 ? `<li>Category: ${escapeHtml(categories.join(', '))}</li>` : '',
-      tags.length > 0 ? `<li>Tags: ${escapeHtml(tags.join(', '))}</li>` : '',
-      styleTags.length > 0 ? `<li>Style tags: ${escapeHtml(styleTags.join(', '))}</li>` : '',
-      pageCount ? `<li>Page count: ${escapeHtml(pageCount)}</li>` : '',
-      templateTypeCms ? '<li>Uses CMS.</li>' : '',
-      templateTypeEcommerce ? '<li>Uses Ecommerce.</li>' : '',
-      paymentType === 'Paid' && price !== undefined
-        ? `<li>Price: $${escapeHtml(String(price))}</li>`
+    const submissionMetadata = [
+      'Submission metadata',
+      categories.length > 0 ? `Category: ${categories.join(', ')}` : '',
+      tags.length > 0 ? `Tags: ${tags.join(', ')}` : '',
+      styleTags.length > 0 ? `Style tags: ${styleTags.join(', ')}` : '',
+      pageCount ? `Page count: ${pageCount}` : '',
+      templateTypeCms ? 'Uses CMS.' : '',
+      templateTypeEcommerce ? 'Uses Ecommerce.' : '',
+      paymentType === 'Paid' && price !== undefined ? `Price: $${price}` : '',
+      siteTypes.length > 0 ? `Site types: ${siteTypes.join(', ')}` : '',
+      combinedFeatures.size > 0 ? `Feature flags: ${[...combinedFeatures].join(', ')}` : '',
+      `Published URL verified: ${publishedUrlResult.normalizedUrl}`,
+      validatorConfirmation.passed
+        ? `Webflow Way Validator confirmed: ${
+            validatorConfirmation.score ? `${validatorConfirmation.score}% pass` : 'passed'
+          }.`
         : '',
-      siteTypes.length > 0 ? `<li>Site types: ${escapeHtml(siteTypes.join(', '))}</li>` : '',
-      combinedFeatures.size > 0
-        ? `<li>Feature flags: ${escapeHtml([...combinedFeatures].join(', '))}</li>`
-        : '',
-      `<li>Published URL verified: ${escapeHtml(publishedValidation.normalizedUrl)}</li>`,
-      publishedValidation.summary.gsapDetected
-        ? '<li>GSAP detected during published-site crawl.</li>'
-        : '',
-      '</ul>'
+      publishedUrlResult.gsapDetected ? 'GSAP detected during published-site crawl.' : ''
     ]
       .filter(Boolean)
-      .join('');
+      .join('\n');
+    const reviewNotes = [notes, submissionMetadata].filter(Boolean).join('\n\n');
 
     const submissionId = crypto.randomUUID();
     const envelope = buildTemplateEnvelope(
@@ -351,7 +427,7 @@ export async function POST(request: Request) {
         isTemplateUserEmailValidated: true,
         templateName,
         isTemplateNameValidated: true,
-        publishedUrl: publishedValidation.normalizedUrl,
+        publishedUrl: publishedUrlResult.normalizedUrl,
         isPublishedUrlValidated: true,
         previewUrl,
         paymentType,
@@ -364,8 +440,8 @@ export async function POST(request: Request) {
         styles: mappedStyles,
         features: mappedFeatures,
         shortDescription,
-        longDescription: detailsHtml,
-        notes,
+        longDescription: longDescriptionHtml,
+        notes: reviewNotes,
         thumbnailImageUrl: thumbnailUrl,
         thumbnailImageSecondaryUrl: secondaryThumbnailUrl,
         galleryImageUrls: galleryUrls,
@@ -397,9 +473,9 @@ export async function POST(request: Request) {
       },
       submissionId,
       publishedValidation: {
-        normalizedUrl: publishedValidation.normalizedUrl,
-        gsapDetected: publishedValidation.summary.gsapDetected,
-        siteResults: publishedValidation.summary.siteResults
+        normalizedUrl: publishedUrlResult.normalizedUrl,
+        gsapDetected: publishedUrlResult.gsapDetected,
+        siteResults: publishedUrlResult.siteResults
       }
     });
   } catch (error) {

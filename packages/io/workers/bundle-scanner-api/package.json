@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "node ../../../../scripts/run-wrangler.mjs dev",
     "deploy": "node ../../../../scripts/run-wrangler.mjs deploy",
-    "test": "vitest --run --passWithNoTests"
+    "test": "vitest --run --config vitest.config.ts --passWithNoTests"
   },
   "dependencies": {
     "@create-something/bundle-scanner-core": "workspace:*"

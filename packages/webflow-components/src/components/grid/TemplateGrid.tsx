@@ -1,33 +1,42 @@
 import React, {
   CSSProperties,
+  memo,
   useCallback,
   useEffect,
   useLayoutEffect,
   useRef,
   useState,
 } from 'react';
-import { TemplateCard } from '../cards/TemplateCard';
+import { TemplateCard, TEMPLATE_CARD_STYLES, type TemplateCardBadge, type TemplateCardLink } from '../cards/TemplateCard';
+import { trackMarketplaceEvent } from '../marketplace/analytics';
 import {
-  areTemplateStringArraysEqual,
-  normalizeTemplateSort,
-  parseTemplateRoute,
-  TemplateScope,
-  TemplateSort,
-  toTemplateStyleSlug,
-} from '../marketplace/templateRoute';
+  MarketplaceComponentErrorBoundary,
+  useMarketplaceComponentErrorTracking,
+} from '../marketplace/MarketplaceComponentErrorBoundary';
 import {
-  emitTemplateComponentEvent,
-  TEMPLATE_MARKETPLACE_COMPONENT_VERSION,
-} from '../marketplace/templateTelemetry';
+  getSafeAnalyticsOverrides,
+  MARKETPLACE_SIGNAL_WINDOW,
+  writeTemplateAttribution,
+  type TemplateMarketplaceAttribution,
+} from '../marketplace/templateAttribution';
 
 // ─── API types ────────────────────────────────────────────────────────────────
+
+interface ApiTerm {
+  name: string;
+  slug: string;
+  url?: string;
+}
 
 interface ApiItem {
   id: string;
   template_slug: string;
   name: string;
   url: string | null;
+  preview_url: string | null;
+  website_url: string | null;
   creator_name: string | null;
+  creator_slug: string | null;
   creator_profile_url: string | null;
   creator_avatar_url: string | null;
   creator_avatar_alt: string | null;
@@ -35,8 +44,14 @@ interface ApiItem {
   thumbnail_image_secondary_url: string | null;
   price: number | null;
   is_free: boolean;
+  is_featured: boolean;
+  template_type: string | null;
   popularity_score: number | null;
+  unique_viewers: number | null;
+  cumulative_purchases: number | null;
   published_date: string | null;
+  category_groups?: ApiTerm[];
+  child_categories?: ApiTerm[];
 }
 
 interface ApiResponse {
@@ -49,16 +64,29 @@ interface ApiResponse {
     has_next_page: boolean;
     has_previous_page: boolean;
   };
+  client_filter?: {
+    strict_free: boolean;
+    dropped_paid_items: number;
+    source_total_items: number;
+  };
 }
 
 // ─── Filter / route state ─────────────────────────────────────────────────────
+
+type TemplateSort = 'popular' | 'newest' | 'price_asc' | 'price_desc';
+type TemplateScope = 'all' | 'featured' | 'free' | 'landing_pages';
 
 interface FilterState {
   q: string;
   scope: TemplateScope;
   categoryGroupSlug: string | null;
   childCategorySlug: string | null;
+  creatorSlug: string | null;
+  creatorRecordId: string | null;
+  styleSlug: string | null;
+  tagSlug: string | null;
   styles: string[];
+  tags: string[];
   types: string[];
   freeOnly: boolean;
   sort: TemplateSort;
@@ -81,6 +109,26 @@ export interface TemplateGridProps {
    */
   categorySlug?: string;
   /**
+   * Creator/designer slug for Designer preview. In production the slug is
+   * auto-detected from /templates/designers/{slug}.
+   */
+  creatorSlug?: string;
+  /**
+   * Optional creator record ID for exact Designer-page binding when available.
+   * Production can infer by slug from the URL; record ID narrows duplicate-name cases.
+   */
+  creatorRecordId?: string;
+  /**
+   * Style slug for Designer preview. In production the slug is auto-detected
+   * from /templates/style/{slug}.
+   */
+  styleSlug?: string;
+  /**
+   * Tag slug for Designer preview. In production the slug is auto-detected
+   * from /templates/tag/{slug}.
+   */
+  tagSlug?: string;
+  /**
    * Override scope for Designer preview of special pages
    * (featured, free, landing_pages).
    * In production the scope is auto-detected from the URL path.
@@ -90,6 +138,37 @@ export interface TemplateGridProps {
   initialSort?: TemplateSort;
   /** Items per page per infinite-scroll fetch */
   pageSize?: number;
+  /**
+   * Render an inline no-results state instead of relying on a native Webflow
+   * [fs-cmsfilter-element="empty"] element.
+   */
+  showEmptyState?: boolean;
+  /** No-results heading when showEmptyState is enabled. */
+  emptyTitle?: string;
+  /** No-results body copy when showEmptyState is enabled. */
+  emptyDescription?: string;
+  /** Clear-filters button label when showEmptyState is enabled. */
+  emptyActionLabel?: string;
+  /** Show a small recommendation grid when a query/filter returns no results. */
+  showEmptyRecommendations?: boolean;
+  /** Heading for the featured-template no-results recommendation grid. */
+  emptyRecommendationsTitle?: string;
+  /** Show category/subcategory metadata below the creator name. */
+  showCategoryMeta?: boolean;
+  /** Show the template type alongside category metadata. */
+  showTemplateType?: boolean;
+  /** Show a secondary Preview link when the API has a preview URL. */
+  showPreviewLink?: boolean;
+  /** Show Featured badge on API-featured templates. */
+  showFeaturedBadge?: boolean;
+  /** Show compact social-proof signals from the search API on each card. */
+  showMarketplaceSignals?: boolean;
+  /**
+   * Emit aggregate marketplace health telemetry for successful result batches
+   * and component errors. Does not send raw query text, template names, or
+   * creator names.
+   */
+  enableAnalytics?: boolean;
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -103,10 +182,34 @@ const WORKER_ORIGIN = 'https://webflow-template-search.createsomething.workers.d
 const CLOUD_APP_PREVIEW_ORIGIN = 'https://webflow-template-marketplace.webflow.io';
 const DEFAULT_PAGE_SIZE = 24;
 const SEARCH_CACHE_TTL_MS = 5 * 60 * 1000;
-const GRID_STORAGE_PREFIX = 'wf-template-grid:';
+const NEW_TEMPLATE_WINDOW_DAYS = 30;
+const EMPTY_RECOMMENDATION_COUNT = 4;
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 const gridResponseCache = new Map<string, { timestamp: number; data: ApiResponse }>();
-let gridStylesInjected = false;
+// Bound the session cache: every query keystroke × page × filter combo is a
+// distinct key, so long browsing sessions would otherwise grow unbounded.
+const GRID_CACHE_MAX_ENTRIES = 50;
+
+function getCachedGridResponse(url: string): ApiResponse | null {
+  const cached = gridResponseCache.get(url);
+  if (!cached) return null;
+  if (Date.now() - cached.timestamp >= SEARCH_CACHE_TTL_MS) {
+    gridResponseCache.delete(url);
+    return null;
+  }
+  return cached.data;
+}
+
+function setCachedGridResponse(url: string, data: ApiResponse): void {
+  gridResponseCache.delete(url);
+  gridResponseCache.set(url, { timestamp: Date.now(), data });
+  while (gridResponseCache.size > GRID_CACHE_MAX_ENTRIES) {
+    const oldestKey = gridResponseCache.keys().next().value;
+    if (oldestKey === undefined) break;
+    gridResponseCache.delete(oldestKey);
+  }
+}
 
 // Hosts whose images need to be routed through the Cloud App proxy.
 // Airtable signed attachment URLs expire after ~2 hours; the proxy caches
@@ -128,61 +231,6 @@ function proxyImageUrl(imageUrl: string, apiBase: string): string {
   return imageUrl;
 }
 
-function readGridResponseCache(url: string): ApiResponse | null {
-  const cached = gridResponseCache.get(url);
-  if (cached && Date.now() - cached.timestamp < SEARCH_CACHE_TTL_MS) {
-    return cached.data;
-  }
-  if (typeof window === 'undefined') return null;
-
-  try {
-    const raw = window.localStorage.getItem(`${GRID_STORAGE_PREFIX}${url}`);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as { timestamp?: unknown; data?: unknown };
-    if (typeof parsed.timestamp !== 'number' || Date.now() - parsed.timestamp >= SEARCH_CACHE_TTL_MS) {
-      return null;
-    }
-    const data = parsed.data as ApiResponse;
-    gridResponseCache.set(url, { timestamp: parsed.timestamp, data });
-    return data;
-  } catch {
-    return null;
-  }
-}
-
-function writeGridResponseCache(url: string, data: ApiResponse): void {
-  const entry = { timestamp: Date.now(), data };
-  gridResponseCache.set(url, entry);
-  if (typeof window === 'undefined') return;
-
-  try {
-    window.localStorage.setItem(`${GRID_STORAGE_PREFIX}${url}`, JSON.stringify(entry));
-  } catch {
-    // Private browsing and quota limits can block storage; in-memory cache still helps.
-  }
-}
-
-function prefetchGridPage(url: string): void {
-  if (readGridResponseCache(url)) return;
-  const run = () => {
-    fetch(url)
-      .then((res) => (res.ok ? (res.json() as Promise<ApiResponse>) : null))
-      .then((data) => {
-        if (data) writeGridResponseCache(url, data);
-      })
-      .catch(() => {});
-  };
-
-  const idleWindow = window as typeof window & {
-    requestIdleCallback?: (callback: () => void, options?: { timeout?: number }) => number;
-  };
-  if (typeof idleWindow.requestIdleCallback === 'function') {
-    idleWindow.requestIdleCallback(run, { timeout: 1500 });
-  } else {
-    window.setTimeout(run, 300);
-  }
-}
-
 // Selectors matching the existing Webflow filter/sort UI (same as client-script.ts)
 const SEL_SORT = '[data-template-search-sort], select[name="sort"]';
 const SEL_STYLE = '[data-template-search-style], select[name="styles"]';
@@ -192,25 +240,182 @@ const SEL_SEARCH = '[data-template-search-input], input[type="search"]';
 
 // ─── URL helpers ──────────────────────────────────────────────────────────────
 
+// Slugs in the DB are lowercase-hyphenated (mirrors the search-worker's
+// slugifySegment). Convert display names from the filter UI to the same format.
+function toFilterSlug(name: string): string {
+  return name
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+function toStyleSlug(name: string): string {
+  return toFilterSlug(name);
+}
+
+function normalizeSort(value: string | null | undefined, fallback: TemplateSort = 'popular'): TemplateSort {
+  switch ((value ?? '').trim()) {
+    case 'newest':
+    case 'approval-date':
+    case 'approval-date-desc':
+      return 'newest';
+    case 'price_asc':
+    case 'price-asc':
+      return 'price_asc';
+    case 'price_desc':
+    case 'price-desc':
+      return 'price_desc';
+    case 'popular':
+    case 'popularity-score':
+    case 'popularity-score-desc':
+      return 'popular';
+    default:
+      return fallback;
+  }
+}
+
+function resolveScopeOverride(scopeOverrideParam?: TemplateScope): TemplateScope | undefined {
+  return scopeOverrideParam && scopeOverrideParam !== 'all' ? scopeOverrideParam : undefined;
+}
+
+function normalizeScope(value: string | null): TemplateScope | null {
+  switch (value) {
+    case 'all':
+    case 'featured':
+    case 'free':
+    case 'landing_pages':
+      return value;
+    default:
+      return null;
+  }
+}
+
+/**
+ * Derives the full filter state from the current page URL.
+ * Mirrors client-script.ts parseRouteState() so all Webflow template URL
+ * patterns map correctly to API parameters.
+ *
+ * Supported paths:
+ *   /templates/all                     → scope=all
+ *   /templates/featured                → scope=featured
+ *   /templates/free                    → scope=free
+ *   /templates/free-website-templates  → scope=free
+ *   /templates/landing-page            → scope=landing_pages
+ *   /templates/landing-pages           → scope=landing_pages
+ *   /templates/category/{slug}         → category_group_slug={slug}
+ *   /templates/subcategory/{slug}      → child_category_slug={slug}
+ *   /templates/designers/{slug}        → creator_slug={slug}
+ *   /templates/style/{slug}            → style_slug={slug}
+ *   /templates/tag/{slug}              → tag_slug={slug}
+ *   ?category={slug}                   → category_group_slug={slug}
+ *   ?subcategory={slug}                → child_category_slug={slug}
+ */
 function parseRouteState(
   defaultSort: TemplateSort = 'popular',
-  slugOverride?: string,
+  categorySlugOverride?: string,
   scopeOverrideParam?: TemplateScope,
+  styleSlugOverride?: string,
+  tagSlugOverride?: string,
+  creatorSlugOverride?: string,
+  creatorRecordIdOverride?: string,
 ): FilterState {
-  const route = parseTemplateRoute({
-    defaultSort,
-    categorySlugOverride: slugOverride,
-    scopeOverride: scopeOverrideParam,
-  });
+  const resolvedScopeOverride = resolveScopeOverride(scopeOverrideParam);
+
+  if (typeof window === 'undefined') {
+    return {
+      q: '',
+      scope: resolvedScopeOverride ?? 'all',
+      categoryGroupSlug: categorySlugOverride || null,
+      childCategorySlug: null,
+      creatorSlug: creatorSlugOverride || null,
+      creatorRecordId: creatorRecordIdOverride || null,
+      styleSlug: styleSlugOverride || null,
+      tagSlug: tagSlugOverride || null,
+      styles: [],
+      tags: [],
+      types: [],
+      freeOnly: false,
+      sort: defaultSort,
+    };
+  }
+
+  const url = new URL(window.location.href);
+  const params = url.searchParams;
+  const pathname = url.pathname.replace(/\/+$/, '');
+  const scopeParam = normalizeScope(params.get('scope'));
+
+  let scope: TemplateScope = 'all';
+  let freeOnly = false;
+
+  // Path-based scope detection
+  if (pathname === '/templates/featured') scope = 'featured';
+  if (
+    pathname === '/templates/free' ||
+    pathname === '/templates/free-website-templates' ||
+    params.get('pricing') === 'free'
+  ) {
+    scope = 'free';
+    freeOnly = true;
+  }
+  if (/\/templates\/landing-page(s)?($|\/)/.test(pathname)) {
+    scope = 'landing_pages';
+  }
+  if (scopeParam) {
+    scope = scopeParam;
+    if (scopeParam === 'free') freeOnly = true;
+  }
+
+  // Slug detection from path or query param
+  // Path: /templates/category/{slug}
+  // Query: ?category={slug} (used on e.g. /templates/free-website-templates?category=architecture-design)
+  const categoryMatch = pathname.match(/\/templates\/category\/([^/?#]+)/);
+  const subcategoryMatch = pathname.match(/\/templates\/subcategory\/([^/?#]+)/);
+  const designerMatch = pathname.match(/\/templates\/designers\/([^/?#]+)/);
+  const styleMatch = pathname.match(/\/templates\/style\/([^/?#]+)/);
+  const tagMatch = pathname.match(/\/templates\/tag\/([^/?#]+)/);
+  const categoryParam = params.get('category') ?? params.get('category_group_slug');
+  const subcategoryParam = params.get('subcategory') ?? params.get('child_category_slug');
+  const creatorParam = params.get('creator_slug') ?? params.get('designer_slug') ?? params.get('creator') ?? params.get('designer');
+  const creatorRecordIdParam = params.get('creator_record_id') ?? params.get('designer_record_id');
+  const styleParam = params.get('style_slug') ?? params.get('style');
+  const tagParam = params.get('tag_slug') ?? params.get('tag');
+
+  // Query-param filters (user-applied via filter UI)
+  const qRaw = params.get('q') ?? params.get('query') ?? params.get('search') ?? '';
+  const freeParam = ['1', 'true', 'yes', 'on'].includes((params.get('free_only') ?? '').toLowerCase());
+  // Style slugs in the DB are lowercase-hyphenated (slugifySegment), so normalize incoming URL values.
+  const styles = params.getAll('styles').flatMap((v) => v.split(',')).filter(Boolean).map(toStyleSlug);
+  const tags = params.getAll('tags').flatMap((v) => v.split(',')).filter(Boolean).map(toFilterSlug);
+  const types = params.getAll('types').flatMap((v) => v.split(',')).filter(Boolean);
+
   return {
-    q: route.q,
-    scope: route.scope,
-    categoryGroupSlug: route.categoryGroupSlug,
-    childCategorySlug: route.childCategorySlug,
-    styles: route.styles,
-    types: route.types,
-    freeOnly: route.freeOnly,
-    sort: route.sort,
+    q: qRaw.trim(),
+    scope: resolvedScopeOverride ?? scope,
+    // Designer preview slug prop takes precedence over URL detection
+    categoryGroupSlug: categorySlugOverride || (categoryMatch ? categoryMatch[1] : categoryParam || null),
+    childCategorySlug: subcategoryMatch ? subcategoryMatch[1] : subcategoryParam || null,
+    creatorSlug: creatorSlugOverride || (designerMatch ? toFilterSlug(designerMatch[1]) : creatorParam ? toFilterSlug(creatorParam) : null),
+    creatorRecordId: creatorRecordIdOverride || creatorRecordIdParam || null,
+    styleSlug: styleSlugOverride
+      ? toFilterSlug(styleSlugOverride)
+      : styleMatch
+        ? toFilterSlug(styleMatch[1])
+        : styleParam
+          ? toFilterSlug(styleParam)
+          : null,
+    tagSlug: tagSlugOverride
+      ? toFilterSlug(tagSlugOverride)
+      : tagMatch
+        ? toFilterSlug(tagMatch[1])
+        : tagParam
+          ? toFilterSlug(tagParam)
+          : null,
+    styles,
+    tags,
+    types,
+    freeOnly: freeOnly || freeParam,
+    sort: normalizeSort(params.get('sort'), defaultSort),
   };
 }
 
@@ -218,29 +423,49 @@ function mergeExternalFilterState(base: FilterState, detail: unknown): FilterSta
   if (!detail || typeof detail !== 'object') return base;
   const patch = detail as Partial<{
     q: unknown;
-    query: unknown;
-    search: unknown;
+    categoryGroupSlug: unknown;
+    childCategorySlug: unknown;
+    creatorSlug: unknown;
+    creatorRecordId: unknown;
     styles: unknown;
+    tags: unknown;
     types: unknown;
     freeOnly: unknown;
     sort: unknown;
   }>;
-  const q =
-    typeof patch.q === 'string'
-      ? patch.q
-      : typeof patch.query === 'string'
-        ? patch.query
-        : typeof patch.search === 'string'
-          ? patch.search
-          : undefined;
 
   return {
     ...base,
-    q: typeof q === 'string' ? q.trim() : base.q,
+    q: typeof patch.q === 'string' ? patch.q.trim() : base.q,
+    categoryGroupSlug:
+      typeof patch.categoryGroupSlug === 'string'
+        ? patch.categoryGroupSlug.trim() || null
+        : patch.categoryGroupSlug === null
+          ? null
+          : base.categoryGroupSlug,
+    childCategorySlug:
+      typeof patch.childCategorySlug === 'string'
+        ? patch.childCategorySlug.trim() || null
+        : patch.childCategorySlug === null
+          ? null
+          : base.childCategorySlug,
+    creatorSlug:
+      typeof patch.creatorSlug === 'string'
+        ? toFilterSlug(patch.creatorSlug) || null
+        : patch.creatorSlug === null
+          ? null
+          : base.creatorSlug,
+    creatorRecordId:
+      typeof patch.creatorRecordId === 'string'
+        ? patch.creatorRecordId.trim() || null
+        : patch.creatorRecordId === null
+          ? null
+          : base.creatorRecordId,
     styles: Array.isArray(patch.styles) ? patch.styles.filter((value): value is string => typeof value === 'string') : base.styles,
+    tags: Array.isArray(patch.tags) ? patch.tags.filter((value): value is string => typeof value === 'string') : base.tags,
     types: Array.isArray(patch.types) ? patch.types.filter((value): value is string => typeof value === 'string') : base.types,
     freeOnly: typeof patch.freeOnly === 'boolean' ? patch.freeOnly : base.freeOnly,
-    sort: typeof patch.sort === 'string' ? normalizeTemplateSort(patch.sort, base.sort) : base.sort,
+    sort: typeof patch.sort === 'string' ? normalizeSort(patch.sort, base.sort) : base.sort,
   };
 }
 
@@ -252,16 +477,25 @@ function readSharedFilterState(href: string): unknown {
   return shared.href === href ? detail : undefined;
 }
 
+function areStringArraysEqual(a: string[], b: string[]): boolean {
+  return a.length === b.length && a.every((value, index) => value === b[index]);
+}
+
 function areFiltersEqual(a: FilterState, b: FilterState): boolean {
   return (
     a.q === b.q &&
     a.scope === b.scope &&
     a.categoryGroupSlug === b.categoryGroupSlug &&
     a.childCategorySlug === b.childCategorySlug &&
+    a.creatorSlug === b.creatorSlug &&
+    a.creatorRecordId === b.creatorRecordId &&
+    a.styleSlug === b.styleSlug &&
+    a.tagSlug === b.tagSlug &&
     a.freeOnly === b.freeOnly &&
     a.sort === b.sort &&
-    areTemplateStringArraysEqual(a.styles, b.styles) &&
-    areTemplateStringArraysEqual(a.types, b.types)
+    areStringArraysEqual(a.styles, b.styles) &&
+    areStringArraysEqual(a.tags, b.tags) &&
+    areStringArraysEqual(a.types, b.types)
   );
 }
 
@@ -275,26 +509,62 @@ function buildApiUrl(base: string, filters: FilterState, page: number, pageSize:
   if (filters.scope !== 'all') url.searchParams.set('scope', filters.scope);
   if (filters.categoryGroupSlug) url.searchParams.set('category_group_slug', filters.categoryGroupSlug);
   if (filters.childCategorySlug) url.searchParams.set('child_category_slug', filters.childCategorySlug);
+  if (filters.creatorSlug) url.searchParams.set('creator_slug', filters.creatorSlug);
+  if (filters.creatorRecordId) url.searchParams.set('creator_record_id', filters.creatorRecordId);
+  if (filters.styleSlug) url.searchParams.set('style_slug', toFilterSlug(filters.styleSlug));
+  if (filters.tagSlug) url.searchParams.set('tag_slug', toFilterSlug(filters.tagSlug));
   if (filters.freeOnly) url.searchParams.set('free_only', 'true');
   url.searchParams.set('include', 'items');
+  url.searchParams.set('view', 'grid');
   url.searchParams.set('sort', filters.sort);
   url.searchParams.set('page', String(page));
   url.searchParams.set('page_size', String(pageSize));
   filters.styles.forEach((v) => url.searchParams.append('styles', v));
+  filters.tags.forEach((v) => url.searchParams.append('tags', v));
   filters.types.forEach((v) => url.searchParams.append('types', v));
   return url.toString();
 }
 
-function updateUrlParams(filters: FilterState): void {
+function emptyRecommendationFilters(scope: TemplateScope): FilterState {
+  return {
+    q: '',
+    scope,
+    categoryGroupSlug: null,
+    childCategorySlug: null,
+    creatorSlug: null,
+    creatorRecordId: null,
+    styleSlug: null,
+    tagSlug: null,
+    styles: [],
+    tags: [],
+    types: [],
+    freeOnly: false,
+    sort: 'newest',
+  };
+}
+
+async function fetchGridResponse(url: string, signal?: AbortSignal): Promise<ApiResponse> {
+  const cached = getCachedGridResponse(url);
+  if (cached) return cached;
+
+  const res = await fetch(url, { signal });
+  if (!res.ok) throw new Error(`API ${res.status}`);
+  const data = (await res.json()) as ApiResponse;
+  setCachedGridResponse(url, data);
+  return data;
+}
+
+function updateUrlParams(filters: FilterState, defaultSort: TemplateSort = 'popular'): void {
   if (typeof window === 'undefined') return;
   const url = new URL(window.location.href);
-  ['q', 'query', 'search', 'styles', 'types', 'free_only', 'sort', 'page'].forEach((k) =>
+  ['q', 'query', 'search', 'styles', 'tags', 'types', 'free_only', 'sort', 'page'].forEach((k) =>
     url.searchParams.delete(k),
   );
   if (filters.q) url.searchParams.set('q', filters.q);
-  if (filters.sort && filters.sort !== 'popular') url.searchParams.set('sort', filters.sort);
+  if (filters.sort && filters.sort !== defaultSort) url.searchParams.set('sort', filters.sort);
   if (filters.freeOnly && filters.scope !== 'free') url.searchParams.set('free_only', 'true');
   filters.styles.forEach((v) => url.searchParams.append('styles', v));
+  filters.tags.forEach((v) => url.searchParams.append('tags', v));
   filters.types.forEach((v) => url.searchParams.append('types', v));
   window.history.replaceState({}, '', url.toString());
 }
@@ -302,13 +572,210 @@ function updateUrlParams(filters: FilterState): void {
 // ─── Price helper ─────────────────────────────────────────────────────────────
 
 function formatPrice(item: ApiItem): string {
-  if (item.is_free || item.price === 0) return 'Free';
-  if (typeof item.price !== 'number') return '';
-  return `${item.price} USD`;
+  if (typeof item.price === 'number' && item.price > 0) return `${item.price} USD`;
+  if (item.price === 0 || item.is_free) return 'Free';
+  return '';
+}
+
+function isFreeTemplate(item: ApiItem): boolean {
+  if (typeof item.price === 'number') return item.price === 0;
+  return item.is_free;
+}
+
+function priceNumeric(item: ApiItem): string {
+  return typeof item.price === 'number' ? String(item.price) : '';
 }
 
 function primaryThumbnailUrl(item: ApiItem): string | null {
   return item.thumbnail_image_url ?? item.thumbnail_image_secondary_url;
+}
+
+function firstNamedTerm(terms?: ApiTerm[]): ApiTerm | null {
+  return terms?.find((term) => term.name.trim()) ?? null;
+}
+
+function toTermLink(term: ApiTerm | null): TemplateCardLink | undefined {
+  return term?.url ? { href: term.url } : undefined;
+}
+
+function previewTemplateLink(item: ApiItem): TemplateCardLink | undefined {
+  if (item.preview_url) return { href: item.preview_url, target: '_blank' };
+  if (item.website_url && item.website_url !== item.url) return { href: item.website_url, target: '_blank' };
+  return undefined;
+}
+
+function featuredBadge(item: ApiItem, enabled: boolean): { badgeText?: string; badgeVariant?: TemplateCardBadge } {
+  if (!enabled || !item.is_featured) return {};
+  return { badgeText: 'Featured', badgeVariant: 'featured' };
+}
+
+function formatCompactNumber(value: number): string {
+  if (value >= 1_000_000) return `${Number((value / 1_000_000).toFixed(value >= 10_000_000 ? 0 : 1))}M`;
+  if (value >= 1_000) return `${Number((value / 1_000).toFixed(value >= 10_000 ? 0 : 1))}k`;
+  return String(value);
+}
+
+function pluralize(value: number, singular: string, plural = `${singular}s`): string {
+  return `${formatCompactNumber(value)} ${value === 1 ? singular : plural}`;
+}
+
+type MarketplaceSignalDensity = 'full' | 'selective' | 'strict';
+
+function signalDensityForPosition(position: number): MarketplaceSignalDensity {
+  if (position <= 12) return 'full';
+  if (position <= 24) return 'selective';
+  return 'strict';
+}
+
+function marketplaceSignals(item: ApiItem, position: number): string[] {
+  // The backend field name is historical; the value is a rolling 30-day
+  // purchase count, so keep the card labels bucketed instead of implying
+  // lifetime proof from exact low counts.
+  const purchases = typeof item.cumulative_purchases === 'number' ? item.cumulative_purchases : 0;
+  const viewers = typeof item.unique_viewers === 'number' ? item.unique_viewers : 0;
+  const popularity = typeof item.popularity_score === 'number' ? item.popularity_score : 0;
+  const density = signalDensityForPosition(position);
+  const isPopular = popularity >= 5;
+  const hasSales = purchases > 0;
+  const hasHighViews = viewers >= 5_000;
+
+  if (purchases >= 250) return ['Marketplace favorite', '250+ purchases'];
+  if (purchases >= 100) return ['Top seller', '100+ purchases'];
+  if (purchases >= 50) return ['Strong seller', '50+ purchases'];
+  if (purchases >= 20 && density !== 'strict') return ['Sales momentum', '20+ purchases'];
+  if (purchases >= 10 && density === 'full') return ['Recently purchased', '10+ purchases'];
+  if (hasSales && isPopular && density === 'full') return ['Recently purchased'];
+  if (hasSales && hasHighViews && density === 'full') return ['Buyer interest'];
+  if (isPopular && hasHighViews && density !== 'strict') return ['High interest', pluralize(viewers, 'view')];
+  if (isPopular && density === 'full') return ['Popular'];
+  if (hasHighViews && density === 'full') return [pluralize(viewers, 'view')];
+  return [];
+}
+
+function isRecentlyPublished(publishedDate: string | null): boolean {
+  if (!publishedDate) return false;
+  const publishedAt = Date.parse(publishedDate);
+  if (Number.isNaN(publishedAt)) return false;
+  const age = Date.now() - publishedAt;
+  return age >= 0 && age <= NEW_TEMPLATE_WINDOW_DAYS * MS_PER_DAY;
+}
+
+function uniqueCreatorCount(items: ApiItem[]): number {
+  const creatorKeys = new Set<string>();
+  items.forEach((item) => {
+    const key = item.creator_profile_url || item.creator_name || item.creator_avatar_url;
+    if (key) creatorKeys.add(key);
+  });
+  return creatorKeys.size;
+}
+
+function trackGridHealthEvent(
+  data: ApiResponse,
+  filters: FilterState,
+  append: boolean,
+  showMarketplaceSignals: boolean,
+  enabled: boolean,
+): void {
+  const topResult = data.items[0];
+  trackMarketplaceEvent(
+    'Code Component Event',
+    {
+      ...getSafeAnalyticsOverrides(),
+      component: 'TemplateGrid',
+      scope: 'results_rendered',
+      append,
+      result_count: data.items.length,
+      total_items: data.pagination.total_items,
+      page: data.pagination.page,
+      page_size: data.pagination.page_size,
+      has_next_page: data.pagination.has_next_page,
+      has_results: data.items.length > 0,
+      sort: filters.sort,
+      q_present: Boolean(filters.q),
+      signal_window: MARKETPLACE_SIGNAL_WINDOW,
+      signal_density: 'mixed',
+      marketplace_signal_window: MARKETPLACE_SIGNAL_WINDOW,
+      styles_count: filters.styles.length,
+      tags_count: filters.tags.length,
+      types_count: filters.types.length,
+      free_only: filters.freeOnly,
+      scope_filter: filters.scope,
+      category_group_slug: filters.categoryGroupSlug,
+      child_category_slug: filters.childCategorySlug,
+      creator_slug: filters.creatorSlug,
+      creator_record_id_present: Boolean(filters.creatorRecordId),
+      style_slug: filters.styleSlug,
+      tag_slug: filters.tagSlug,
+      marketplace_signals_enabled: showMarketplaceSignals,
+      visible_featured_count: data.items.filter((item) => item.is_featured).length,
+      visible_free_count: data.items.filter(isFreeTemplate).length,
+      visible_new_count: data.items.filter((item) => isRecentlyPublished(item.published_date)).length,
+      visible_with_purchases_count: data.items.filter((item) => (item.cumulative_purchases ?? 0) > 0).length,
+      visible_with_viewers_count: data.items.filter((item) => (item.unique_viewers ?? 0) > 0).length,
+      visible_unique_creators_count: uniqueCreatorCount(data.items),
+      top_result_popularity_score: topResult?.popularity_score ?? null,
+      client_filter_strict_free: data.client_filter?.strict_free ?? false,
+      client_filter_dropped_paid_count: data.client_filter?.dropped_paid_items ?? 0,
+      client_filter_source_total_items: data.client_filter?.source_total_items ?? data.pagination.total_items,
+    },
+    enabled,
+  );
+}
+
+function normalizeTemplateHref(href: string | null | undefined): string | null {
+  if (!href) return null;
+  try {
+    const url = new URL(href, typeof window !== 'undefined' ? window.location.origin : 'https://webflow.com');
+    return `${url.pathname.replace(/\/+$/, '')}${url.search}`;
+  } catch {
+    return href.replace(/\/+$/, '');
+  }
+}
+
+function isTemplateDetailAnchorClick(event: React.MouseEvent<HTMLDivElement>, itemUrl: string | null): boolean {
+  const target = event.target;
+  if (!(target instanceof Element)) return false;
+  const anchor = target.closest<HTMLAnchorElement>('a[href]');
+  if (!anchor) return false;
+  return normalizeTemplateHref(anchor.getAttribute('href')) === normalizeTemplateHref(itemUrl);
+}
+
+function sourcePathname(): string | null {
+  if (typeof window === 'undefined') return null;
+  return window.location.pathname || null;
+}
+
+function buildTemplateAttribution(
+  item: ApiItem,
+  filters: FilterState,
+  sourcePage: number,
+  sourcePosition: number,
+  signals: string[],
+): TemplateMarketplaceAttribution {
+  return {
+    version: 1,
+    source_component: 'TemplateGrid',
+    source_pathname: sourcePathname(),
+    source_scope: filters.scope,
+    source_sort: filters.sort,
+    source_category_group_slug: filters.categoryGroupSlug,
+    source_child_category_slug: filters.childCategorySlug,
+    source_style_slug: filters.styleSlug,
+    source_tag_slug: filters.tagSlug,
+    source_free_only: filters.freeOnly,
+    source_q_present: Boolean(filters.q),
+    source_styles_count: filters.styles.length,
+    source_tags_count: filters.tags.length,
+    source_types_count: filters.types.length,
+    source_page: sourcePage,
+    source_position: sourcePosition,
+    template_slug: item.template_slug,
+    signal_bucket: signals[0] ?? null,
+    signal_metric: signals[1] ?? null,
+    signal_window: MARKETPLACE_SIGNAL_WINDOW,
+    signal_density: signalDensityForPosition(sourcePosition),
+    created_at: new Date().toISOString(),
+  };
 }
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
@@ -320,6 +787,9 @@ const GRID_STYLES = `
 }
 .tmgrid-item {
   animation: tmgrid-fade-in 320ms ease-out both;
+  /* Skip layout/paint for offscreen cards as infinite scroll accumulates items. */
+  content-visibility: auto;
+  contain-intrinsic-size: auto 420px;
 }
 @media (prefers-reduced-motion: reduce) {
   .tmgrid-item { animation: none; opacity: 1 !important; }
@@ -376,150 +846,48 @@ const GRID_STYLES = `
   border-radius: 8px;
 }
 
-/* CSS-first responsive Flex layout. Container queries use the actual component
-   slot instead of the browser viewport, which matters inside Webflow columns. */
-.tmgrid-shell {
-  container: tmgrid / inline-size;
-  width: 100% !important;
-  max-width: 100% !important;
-  min-width: 0 !important;
-  overflow-x: clip !important;
-  box-sizing: border-box !important;
-}
+/* Flex-based template list; mirrors the native Webflow collection list behavior. */
 .tmgrid-grid {
   display: flex !important;
   flex-wrap: wrap !important;
-  align-items: flex-start !important;
   gap: 24px !important;
   width: 100% !important;
-  max-width: 100% !important;
+  align-items: flex-start !important;
+}
+.tmgrid-grid > .tmgrid-item {
+  /* Avoid calc division syntax here; Designer/Safari can ignore it and stretch items full-width. */
+  flex: 0 0 calc(25% - 18px) !important;
+  width: calc(25% - 18px) !important;
+  max-width: calc(25% - 18px) !important;
   min-width: 0 !important;
-  overflow: visible !important;
   box-sizing: border-box !important;
 }
-.tmgrid-item {
-  flex: 0 1 calc((100% - 72px) / 4) !important;
-  width: calc((100% - 72px) / 4) !important;
-  min-width: 0 !important;
-  max-width: 100% !important;
-  box-sizing: border-box !important;
-  content-visibility: auto;
-  contain-intrinsic-size: 360px 560px;
-}
-@container tmgrid (max-width: 1039px) {
-  .tmgrid-grid {
-    column-gap: 20px !important;
-    row-gap: 24px !important;
-  }
-  .tmgrid-item {
-    flex-basis: calc((100% - 40px) / 3) !important;
-    width: calc((100% - 40px) / 3) !important;
+@media (max-width: 991px) {
+  .tmgrid-grid > .tmgrid-item {
+    flex-basis: calc(33.333333% - 16px) !important;
+    width: calc(33.333333% - 16px) !important;
+    max-width: calc(33.333333% - 16px) !important;
   }
 }
-@container tmgrid (max-width: 767px) {
-  .tmgrid-grid {
-    column-gap: 16px !important;
-    row-gap: 24px !important;
-  }
-  .tmgrid-item {
-    flex-basis: calc((100% - 16px) / 2) !important;
-    width: calc((100% - 16px) / 2) !important;
-  }
-  .tmcard-link {
-    margin-bottom: 10px !important;
-  }
-  .tmcard-meta {
-    gap: 6px !important;
-  }
-  .tmcard-creator-icon,
-  .tmcard-creator-initials {
-    width: 24px !important;
-    height: 24px !important;
-  }
-  .tmcard-details-row {
-    flex-direction: column !important;
-    gap: 2px !important;
-  }
-  .tmcard-price-wrap {
-    margin-left: 0 !important;
-  }
-  .tmcard-name,
-  .tmcard-price {
-    font-size: 13px !important;
-    line-height: 17px !important;
-  }
-  .tmcard-creator {
-    font-size: 12px !important;
-    line-height: 16px !important;
+@media (max-width: 767px) {
+  .tmgrid-grid > .tmgrid-item {
+    flex-basis: calc(50% - 12px) !important;
+    width: calc(50% - 12px) !important;
+    max-width: calc(50% - 12px) !important;
   }
 }
-@container tmgrid (max-width: 479px) {
-  .tmgrid-grid {
-    column-gap: 14px !important;
-    row-gap: 26px !important;
-  }
-  .tmgrid-item {
-    flex-basis: calc((100% - 14px) / 2) !important;
-    width: calc((100% - 14px) / 2) !important;
-  }
-}
-@container tmgrid (max-width: 359px) {
-  .tmgrid-grid {
-    gap: 28px !important;
-  }
-  .tmgrid-item {
+@media (max-width: 479px) {
+  .tmgrid-grid > .tmgrid-item {
     flex-basis: 100% !important;
     width: 100% !important;
+    max-width: 100% !important;
   }
 }
-@supports not (container-type: inline-size) {
-  @media (max-width: 1039px) {
-    .tmgrid-grid {
-      column-gap: 20px !important;
-      row-gap: 24px !important;
-    }
-    .tmgrid-item {
-      flex-basis: calc((100% - 40px) / 3) !important;
-      width: calc((100% - 40px) / 3) !important;
-    }
-  }
-  @media (max-width: 767px) {
-    .tmgrid-grid {
-      column-gap: 16px !important;
-      row-gap: 24px !important;
-    }
-    .tmgrid-item {
-      flex-basis: calc((100% - 16px) / 2) !important;
-      width: calc((100% - 16px) / 2) !important;
-    }
-  }
-  @media (max-width: 479px) {
-    .tmgrid-grid {
-      column-gap: 14px !important;
-      row-gap: 26px !important;
-    }
-    .tmgrid-item {
-      flex-basis: calc((100% - 14px) / 2) !important;
-      width: calc((100% - 14px) / 2) !important;
-    }
-  }
-  @media (max-width: 359px) {
-    .tmgrid-grid {
-      gap: 28px !important;
-    }
-    .tmgrid-item {
-      flex-basis: 100% !important;
-      width: 100% !important;
-    }
-  }
-}
-`;
+` + TEMPLATE_CARD_STYLES;
 
 const S: Record<string, CSSProperties> = {
   root: {
     width: '100%',
-    maxWidth: '100%',
-    minWidth: 0,
     fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
     boxSizing: 'border-box',
   },
@@ -542,6 +910,88 @@ const S: Record<string, CSSProperties> = {
     fontSize: '13px',
     color: 'rgba(0,0,0,0.45)',
   },
+  emptyBox: {
+    width: '100%',
+    padding: '56px 24px',
+    border: '1px solid #e0e0e0',
+    borderRadius: '8px',
+    background: '#fff',
+    textAlign: 'center',
+  },
+  emptyRecovery: {
+    width: '100%',
+    maxWidth: '680px',
+    padding: '28px 0 36px',
+    textAlign: 'left',
+  },
+  emptyTitle: {
+    margin: 0,
+    color: '#080808',
+    fontSize: '22px',
+    fontWeight: 600,
+    lineHeight: 1.2,
+  },
+  emptyDescription: {
+    maxWidth: '520px',
+    margin: '12px 0 0',
+    color: '#5f5f5f',
+    fontSize: '15px',
+    lineHeight: 1.5,
+  },
+  emptyActions: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: '12px',
+    marginTop: '22px',
+  },
+  emptyButton: {
+    minHeight: '40px',
+    padding: '9px 16px',
+    border: '1px solid #d9d9d9',
+    borderRadius: '4px',
+    background: '#fff',
+    color: '#080808',
+    cursor: 'pointer',
+    font: 'inherit',
+    fontSize: '14px',
+    fontWeight: 600,
+  },
+  emptySecondaryButton: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: '40px',
+    padding: '9px 16px',
+    border: '1px solid transparent',
+    borderRadius: '4px',
+    color: '#146ef5',
+    cursor: 'pointer',
+    font: 'inherit',
+    fontSize: '14px',
+    fontWeight: 600,
+    textDecoration: 'none',
+  },
+  emptyRecommendations: {
+    width: '100%',
+    paddingTop: '10px',
+  },
+  emptyRecommendationsHeader: {
+    marginBottom: '18px',
+  },
+  emptyRecommendationsTitle: {
+    margin: 0,
+    color: '#080808',
+    fontSize: '18px',
+    fontWeight: 600,
+    lineHeight: 1.25,
+  },
+  emptyRecommendationsDescription: {
+    margin: '6px 0 0',
+    color: '#6f6f6f',
+    fontSize: '13px',
+    lineHeight: 1.4,
+  },
 };
 
 // ─── Skeleton ─────────────────────────────────────────────────────────────────
@@ -554,15 +1004,130 @@ const SkeletonCard: React.FC<{ index: number }> = ({ index }) => (
   </div>
 );
 
+// ─── Grid item ────────────────────────────────────────────────────────────────
+
+interface TemplateGridItemViewProps {
+  item: ApiItem;
+  index: number;
+  apiBase: string;
+  pageSize: number;
+  showCategoryMeta: boolean;
+  showTemplateType: boolean;
+  showPreviewLink: boolean;
+  showFeaturedBadge: boolean;
+  showMarketplaceSignals: boolean;
+  onCardClick: (
+    event: React.MouseEvent<HTMLDivElement>,
+    item: ApiItem,
+    index: number,
+    signals: string[],
+  ) => void;
+}
+
+// Memoized so appended pages and loading-state toggles don't re-render the
+// whole accumulated list. Item references are stable across appends; the
+// derived object props (links, images, signals) are created inside so the
+// parent's shallow compare actually holds.
+const TemplateGridItemView = memo<TemplateGridItemViewProps>(({
+  item,
+  index,
+  apiBase,
+  pageSize,
+  showCategoryMeta,
+  showTemplateType,
+  showPreviewLink,
+  showFeaturedBadge,
+  showMarketplaceSignals,
+  onCardClick,
+}) => {
+  const primaryImageUrl = primaryThumbnailUrl(item);
+  const primaryCategory = firstNamedTerm(item.category_groups);
+  const primarySubcategory = firstNamedTerm(item.child_categories);
+  const badgeProps = featuredBadge(item, showFeaturedBadge);
+  const position = index + 1;
+  const signals = marketplaceSignals(item, position);
+
+  return (
+    <div
+      className="tmgrid-item"
+      style={{ animationDelay: `${Math.min(index % pageSize, 11) * 40}ms` }}
+      data-template-slug={item.template_slug}
+      onClickCapture={(event) => onCardClick(event, item, index, signals)}
+    >
+      <TemplateCard
+        templateName={item.name}
+        templateLink={{ href: item.url ?? '#' }}
+        price={formatPrice(item)}
+        priceNumeric={priceNumeric(item)}
+        isFree={isFreeTemplate(item)}
+        creatorName={item.creator_name ?? ''}
+        creatorLink={
+          item.creator_profile_url
+            ? { href: item.creator_profile_url, target: '_blank' }
+            : undefined
+        }
+        categoryName={primaryCategory?.name}
+        categoryLink={toTermLink(primaryCategory)}
+        subcategoryName={primarySubcategory?.name}
+        subcategoryLink={toTermLink(primarySubcategory)}
+        templateType={item.template_type ?? ''}
+        previewLink={previewTemplateLink(item)}
+        creatorIcon={
+          item.creator_avatar_url
+            ? { src: proxyImageUrl(item.creator_avatar_url, apiBase), alt: item.creator_avatar_alt ?? item.creator_name ?? '' }
+            : undefined
+        }
+        primaryImage={primaryImageUrl ? { src: proxyImageUrl(primaryImageUrl, apiBase), alt: item.name } : undefined}
+        secondaryImage={
+          item.thumbnail_image_secondary_url
+            ? { src: proxyImageUrl(item.thumbnail_image_secondary_url, apiBase), alt: item.name }
+            : undefined
+        }
+        priorityIndex={index}
+        deferSecondaryImage
+        stylesProvided
+        approvalDate={item.published_date ?? ''}
+        popularityScore={String(item.popularity_score ?? '')}
+        showCategoryMeta={showCategoryMeta}
+        showTemplateType={showTemplateType}
+        showPreviewLink={showPreviewLink}
+        showMarketplaceSignals={showMarketplaceSignals}
+        marketplaceSignals={signals}
+        {...badgeProps}
+      />
+    </div>
+  );
+});
+
+TemplateGridItemView.displayName = 'TemplateGridItemView';
+
 // ─── TemplateGrid ─────────────────────────────────────────────────────────────
 
-export const TemplateGrid: React.FC<TemplateGridProps> = ({
+const TemplateGridInner: React.FC<TemplateGridProps> = ({
   apiBase: apiBaseProp = '',
   categorySlug: categorySlugProp = '',
+  creatorSlug: creatorSlugProp = '',
+  creatorRecordId: creatorRecordIdProp = '',
+  styleSlug: styleSlugProp = '',
+  tagSlug: tagSlugProp = '',
   scopeOverride,
   initialSort = 'popular',
   pageSize = DEFAULT_PAGE_SIZE,
+  showEmptyState = false,
+  emptyTitle = 'No templates found',
+  emptyDescription = 'Try a broader search or clear filters to see more templates.',
+  emptyActionLabel = 'Clear filters',
+  showEmptyRecommendations = true,
+  emptyRecommendationsTitle = 'Recently featured templates',
+  showCategoryMeta = false,
+  showTemplateType = false,
+  showPreviewLink = false,
+  showFeaturedBadge = false,
+  showMarketplaceSignals = false,
+  enableAnalytics = true,
 }) => {
+  useMarketplaceComponentErrorTracking('TemplateGrid', enableAnalytics);
+
   // Webflow passes defaultValue strings (including '') as actual values, not undefined.
   // Fall back to the relative path whenever the prop is blank.
   // Rewrite any absolute origin that webflow.com's CSP blocks to the relative default:
@@ -574,93 +1139,75 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
       ? DEFAULT_API_BASE
       : rawBase;
   const resolvedPageSize = pageSize || DEFAULT_PAGE_SIZE;
-  const initialFilters = parseRouteState(initialSort, categorySlugProp || undefined, scopeOverride);
-  const initialGridData =
-    typeof window !== 'undefined'
-      ? readGridResponseCache(buildApiUrl(apiBase, initialFilters, 1, resolvedPageSize))
-      : null;
   // Parse initial filter state from URL on first render
-  const [filters, setFilters] = useState<FilterState>(() => initialFilters);
+  const [filters, setFilters] = useState<FilterState>(() =>
+    parseRouteState(
+      initialSort,
+      categorySlugProp || undefined,
+      scopeOverride,
+      styleSlugProp || undefined,
+      tagSlugProp || undefined,
+      creatorSlugProp || undefined,
+      creatorRecordIdProp || undefined,
+    ),
+  );
 
-  const [items, setItems] = useState<ApiItem[]>(() => initialGridData?.items ?? []);
-  const [page, setPage] = useState(() => initialGridData?.pagination.page ?? 1);
-  const [hasNextPage, setHasNextPage] = useState(() => initialGridData?.pagination.has_next_page ?? false);
-  const [totalItems, setTotalItems] = useState<number | null>(() => initialGridData?.pagination.total_items ?? null);
-  const [loading, setLoading] = useState(() => !initialGridData);
+  const [items, setItems] = useState<ApiItem[]>([]);
+  const [page, setPage] = useState(1);
+  const [hasNextPage, setHasNextPage] = useState(false);
+  const [totalItems, setTotalItems] = useState<number | null>(null);
+  const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [emptyRecommendations, setEmptyRecommendations] = useState<ApiItem[]>([]);
+  const [emptyRecommendationsTitleState, setEmptyRecommendationsTitleState] = useState(emptyRecommendationsTitle);
+  const [emptyRecommendationsLoading, setEmptyRecommendationsLoading] = useState(false);
 
-  const rootRef = useRef<HTMLDivElement>(null);
-  const sentinelRef = useRef<HTMLDivElement>(null);
   // Stale-fetch guard: every new filter/sort change increments this
   const fetchEpochRef = useRef(0);
-  const fetchAbortRef = useRef<AbortController | null>(null);
+  const activeFetchAbortRef = useRef<AbortController | null>(null);
+  const emptyRecommendationsAbortRef = useRef<AbortController | null>(null);
   const lastHrefRef = useRef(typeof window === 'undefined' ? '' : window.location.href);
-
-  useEffect(() => {
-    emitTemplateComponentEvent('TemplateGrid', 'mounted', {
-      scope: initialFilters.scope,
-      category_group_slug: initialFilters.categoryGroupSlug,
-      child_category_slug: initialFilters.childCategorySlug,
-      styles: initialFilters.styles,
-      page_size: resolvedPageSize,
-    });
-    // Initial route state is intentionally captured once for component health telemetry.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useLayoutEffect(() => {
-    if (gridStylesInjected) return;
-    gridStylesInjected = true;
-    const styleEl = document.createElement('style');
-    styleEl.textContent = GRID_STYLES;
-    document.head.appendChild(styleEl);
-  }, []);
 
   // Keep Designer prop edits and production URL changes aligned after mount.
   useEffect(() => {
     setFilters((prev) => {
-      const next = parseRouteState(initialSort, categorySlugProp || undefined, scopeOverride);
+      const next = parseRouteState(
+        initialSort,
+        categorySlugProp || undefined,
+        scopeOverride,
+        styleSlugProp || undefined,
+        tagSlugProp || undefined,
+        creatorSlugProp || undefined,
+        creatorRecordIdProp || undefined,
+      );
       return areFiltersEqual(prev, next) ? prev : next;
     });
-  }, [initialSort, categorySlugProp, scopeOverride]);
+  }, [initialSort, categorySlugProp, creatorSlugProp, creatorRecordIdProp, scopeOverride, styleSlugProp, tagSlugProp]);
 
   // ── Fetch ─────────────────────────────────────────────────────────────────
 
   const fetchPage = useCallback(
     async (targetPage: number, currentFilters: FilterState, append: boolean) => {
       const epoch = ++fetchEpochRef.current;
+      activeFetchAbortRef.current?.abort();
+      const controller = new AbortController();
+      activeFetchAbortRef.current = controller;
       const url = buildApiUrl(apiBase, currentFilters, targetPage, resolvedPageSize);
-      const cached = readGridResponseCache(url);
+      const cached = getCachedGridResponse(url);
 
       if (cached) {
+        if (activeFetchAbortRef.current === controller) activeFetchAbortRef.current = null;
         setError(null);
         setItems((prev) => (append ? [...prev, ...cached.items] : cached.items));
         setPage(cached.pagination.page);
         setHasNextPage(cached.pagination.has_next_page);
         setTotalItems(cached.pagination.total_items);
+        trackGridHealthEvent(cached, currentFilters, append, showMarketplaceSignals, enableAnalytics);
         setLoading(false);
         setLoadingMore(false);
-        if (targetPage === 1) {
-          emitTemplateComponentEvent('TemplateGrid', 'results_loaded', {
-            source: 'cache',
-            total_items: cached.pagination.total_items,
-            item_count: cached.items.length,
-            scope: currentFilters.scope,
-            category_group_slug: currentFilters.categoryGroupSlug,
-            child_category_slug: currentFilters.childCategorySlug,
-            styles: currentFilters.styles,
-          });
-        }
-        if (!append && cached.pagination.has_next_page) {
-          prefetchGridPage(buildApiUrl(apiBase, currentFilters, targetPage + 1, resolvedPageSize));
-        }
         return;
       }
-
-      fetchAbortRef.current?.abort();
-      const controller = new AbortController();
-      fetchAbortRef.current = controller;
 
       if (!append) {
         setLoading(true);
@@ -672,8 +1219,8 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
       try {
         const res = await fetch(url, { signal: controller.signal });
         if (!res.ok) throw new Error(`API ${res.status}`);
-        const data: ApiResponse = await res.json();
-        writeGridResponseCache(url, data);
+        const data = (await res.json()) as ApiResponse;
+        setCachedGridResponse(url, data);
 
         if (epoch !== fetchEpochRef.current) return;
 
@@ -681,44 +1228,20 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
         setPage(data.pagination.page);
         setHasNextPage(data.pagination.has_next_page);
         setTotalItems(data.pagination.total_items);
-        if (targetPage === 1) {
-          emitTemplateComponentEvent('TemplateGrid', 'results_loaded', {
-            source: 'network',
-            total_items: data.pagination.total_items,
-            item_count: data.items.length,
-            scope: currentFilters.scope,
-            category_group_slug: currentFilters.categoryGroupSlug,
-            child_category_slug: currentFilters.childCategorySlug,
-            styles: currentFilters.styles,
-          });
-        }
-        if (!append && data.pagination.has_next_page) {
-          prefetchGridPage(buildApiUrl(apiBase, currentFilters, targetPage + 1, resolvedPageSize));
-        }
+        trackGridHealthEvent(data, currentFilters, append, showMarketplaceSignals, enableAnalytics);
       } catch (e) {
+        if (controller.signal.aborted) return;
         if (epoch !== fetchEpochRef.current) return;
-        if (e instanceof DOMException && e.name === 'AbortError') return;
         setError(e instanceof Error ? e.message : 'Failed to load templates');
-        if (targetPage === 1) {
-          emitTemplateComponentEvent('TemplateGrid', 'results_error', {
-            message: e instanceof Error ? e.message : 'Failed to load templates',
-            scope: currentFilters.scope,
-            category_group_slug: currentFilters.categoryGroupSlug,
-            child_category_slug: currentFilters.childCategorySlug,
-            styles: currentFilters.styles,
-          });
-        }
       } finally {
-        if (epoch === fetchEpochRef.current) {
+        if (activeFetchAbortRef.current === controller) activeFetchAbortRef.current = null;
+        if (epoch === fetchEpochRef.current && !controller.signal.aborted) {
           setLoading(false);
           setLoadingMore(false);
-          if (fetchAbortRef.current === controller) {
-            fetchAbortRef.current = null;
-          }
         }
       }
     },
-    [apiBase, resolvedPageSize],
+    [apiBase, resolvedPageSize, showMarketplaceSignals, enableAnalytics],
   );
 
   // Re-fetch from page 1 whenever filters change
@@ -726,22 +1249,131 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
     fetchPage(1, filters, false);
   }, [filters, fetchPage]);
 
-  // ── Infinite scroll ───────────────────────────────────────────────────────
+  const rendersComponentEmptyState = showEmptyState || showEmptyRecommendations;
 
   useEffect(() => {
-    const sentinel = sentinelRef.current;
-    if (!sentinel) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasNextPage && !loadingMore && !loading) {
-          fetchPage(page + 1, filters, true);
+    if (!showEmptyRecommendations || loading || error || items.length > 0) {
+      emptyRecommendationsAbortRef.current?.abort();
+      emptyRecommendationsAbortRef.current = null;
+      // Functional update keeps the previous (already-empty) array reference so
+      // infinite-scroll appends don't schedule a spurious full-grid re-render.
+      setEmptyRecommendations((prev) => (prev.length > 0 ? [] : prev));
+      setEmptyRecommendationsLoading(false);
+      setEmptyRecommendationsTitleState(emptyRecommendationsTitle);
+      return;
+    }
+
+    const controller = new AbortController();
+    emptyRecommendationsAbortRef.current?.abort();
+    emptyRecommendationsAbortRef.current = controller;
+    setEmptyRecommendations([]);
+    setEmptyRecommendationsLoading(true);
+    setEmptyRecommendationsTitleState(emptyRecommendationsTitle);
+
+    async function loadEmptyRecommendations() {
+      const candidates: Array<{ title: string; filters: FilterState }> = [
+        { title: emptyRecommendationsTitle, filters: emptyRecommendationFilters('featured') },
+        { title: 'New templates', filters: emptyRecommendationFilters('all') },
+      ];
+
+      try {
+        for (const candidate of candidates) {
+          const url = buildApiUrl(apiBase, candidate.filters, 1, EMPTY_RECOMMENDATION_COUNT);
+          const data = await fetchGridResponse(url, controller.signal);
+          if (controller.signal.aborted) return;
+          if (data.items.length > 0) {
+            setEmptyRecommendations(data.items.slice(0, EMPTY_RECOMMENDATION_COUNT));
+            setEmptyRecommendationsTitleState(candidate.title);
+            return;
+          }
         }
-      },
-      { rootMargin: '300px' },
-    );
-    observer.observe(sentinel);
-    return () => observer.disconnect();
-  }, [hasNextPage, loadingMore, loading, page, filters, fetchPage]);
+      } catch {
+        if (!controller.signal.aborted) {
+          setEmptyRecommendations([]);
+        }
+      } finally {
+        if (emptyRecommendationsAbortRef.current === controller) {
+          emptyRecommendationsAbortRef.current = null;
+        }
+        if (!controller.signal.aborted) {
+          setEmptyRecommendationsLoading(false);
+        }
+      }
+    }
+
+    void loadEmptyRecommendations();
+    return () => controller.abort();
+  }, [
+    apiBase,
+    emptyRecommendationsTitle,
+    error,
+    items.length,
+    loading,
+    showEmptyRecommendations,
+  ]);
+
+  useEffect(() => {
+    return () => {
+      activeFetchAbortRef.current?.abort();
+      emptyRecommendationsAbortRef.current?.abort();
+    };
+  }, []);
+
+  // ── Infinite scroll ───────────────────────────────────────────────────────
+  //
+  // Pagination state lives in a ref so the IntersectionObserver is created
+  // once per sentinel mount instead of being torn down and recreated on every
+  // fetch cycle. Observers only fire on intersection changes, so a
+  // post-render check continues loading while the sentinel stays in view.
+
+  const scrollStateRef = useRef({ hasNextPage, loadingMore, loading, error, page, filters });
+  const sentinelVisibleRef = useRef(false);
+  const loadMoreInFlightRef = useRef(false);
+  const sentinelObserverRef = useRef<IntersectionObserver | null>(null);
+
+  const maybeLoadMore = useCallback(() => {
+    const state = scrollStateRef.current;
+    if (
+      !sentinelVisibleRef.current ||
+      loadMoreInFlightRef.current ||
+      !state.hasNextPage ||
+      state.loadingMore ||
+      state.loading ||
+      state.error
+    ) {
+      return;
+    }
+    loadMoreInFlightRef.current = true;
+    void fetchPage(state.page + 1, state.filters, true).finally(() => {
+      loadMoreInFlightRef.current = false;
+    });
+  }, [fetchPage]);
+
+  useEffect(() => {
+    scrollStateRef.current = { hasNextPage, loadingMore, loading, error, page, filters };
+    maybeLoadMore();
+  });
+
+  const sentinelRefCallback = useCallback(
+    (node: HTMLDivElement | null) => {
+      sentinelObserverRef.current?.disconnect();
+      sentinelObserverRef.current = null;
+      sentinelVisibleRef.current = false;
+      if (!node) return;
+      const observer = new IntersectionObserver(
+        (entries) => {
+          sentinelVisibleRef.current = entries[0].isIntersecting;
+          maybeLoadMore();
+        },
+        { rootMargin: '300px' },
+      );
+      observer.observe(node);
+      sentinelObserverRef.current = observer;
+    },
+    [maybeLoadMore],
+  );
+
+  useEffect(() => () => sentinelObserverRef.current?.disconnect(), []);
 
   // ── Wire Webflow filter/sort UI controls ──────────────────────────────────
   //
@@ -758,7 +1390,7 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
     function applyFilters(patch: Partial<FilterState>) {
       setFilters((prev) => {
         const next = { ...prev, ...patch };
-        updateUrlParams(next);
+        updateUrlParams(next, initialSort);
         return next;
       });
     }
@@ -775,7 +1407,7 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
     if (searchEl) searchEl.value = filters.q;
 
     const onSort = (e: Event) => {
-      applyFilters({ sort: normalizeTemplateSort((e.target as HTMLSelectElement).value, 'popular') });
+      applyFilters({ sort: normalizeSort((e.target as HTMLSelectElement).value, 'popular') });
     };
     const onStyle = (e: Event) => {
       const v = (e.target as HTMLSelectElement).value;
@@ -808,7 +1440,7 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
     const onFsSortClick = (e: MouseEvent) => {
       e.preventDefault(); // prevent href="#" page-jump; dropdown close still fires
       const field = (e.currentTarget as HTMLElement).getAttribute('fs-cmssort-field') ?? '';
-      applyFilters({ sort: normalizeTemplateSort(field, 'popular') });
+      applyFilters({ sort: normalizeSort(field, 'popular') });
     };
     const fsSortLinks = Array.from(document.querySelectorAll<HTMLAnchorElement>('a[fs-cmssort-field]'));
     fsSortLinks.forEach((link) => link.addEventListener('click', onFsSortClick));
@@ -824,7 +1456,7 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
           return (label?.querySelector<HTMLInputElement>('input[type="checkbox"]'))?.checked ?? false;
         })
         // Convert display names to slugs so they match style_slug in the DB.
-        .map((span) => toTemplateStyleSlug(span.textContent ?? ''))
+        .map((span) => toStyleSlug(span.textContent ?? ''))
         .filter(Boolean);
     }
 
@@ -847,9 +1479,30 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
     type CategoryFilterAnalyticsGlobal = {
       getContext: () => { current_category?: string | null; current_subcategory?: string | null };
     };
-    const onCategoryFilterUpdated = () => {
+    const onCategoryFilterUpdated = (event: Event) => {
       const href = window.location.href;
       lastHrefRef.current = href;
+      const detail = (event as CustomEvent).detail as
+        | { parent?: unknown; category?: unknown; subcategory?: unknown }
+        | undefined;
+      const hasExplicitCategoryDetail =
+        Boolean(detail) &&
+        (Object.prototype.hasOwnProperty.call(detail, 'parent') ||
+          Object.prototype.hasOwnProperty.call(detail, 'category') ||
+          Object.prototype.hasOwnProperty.call(detail, 'subcategory'));
+      if (hasExplicitCategoryDetail && detail) {
+        const rawCategory = Object.prototype.hasOwnProperty.call(detail, 'category') ? detail.category : detail.parent;
+        const rawSubcategory = detail.subcategory;
+        setFilters((prev) => {
+          const next = {
+            ...prev,
+            categoryGroupSlug: typeof rawCategory === 'string' && rawCategory.trim() ? rawCategory.trim() : null,
+            childCategorySlug: typeof rawSubcategory === 'string' && rawSubcategory.trim() ? rawSubcategory.trim() : null,
+          };
+          return areFiltersEqual(prev, next) ? prev : next;
+        });
+        return;
+      }
       const analytics = (window as unknown as Record<string, unknown>).CategoryFilterAnalytics as
         | CategoryFilterAnalyticsGlobal
         | undefined;
@@ -864,7 +1517,15 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
         // Fallback: re-parse URL (assumes the filter script called pushState first)
         setFilters((prev) => {
           const next = mergeExternalFilterState(
-            parseRouteState(initialSort, categorySlugProp || undefined, scopeOverride),
+            parseRouteState(
+              initialSort,
+              categorySlugProp || undefined,
+              scopeOverride,
+              styleSlugProp || undefined,
+              tagSlugProp || undefined,
+              creatorSlugProp || undefined,
+              creatorRecordIdProp || undefined,
+            ),
             readSharedFilterState(href),
           );
           return areFiltersEqual(prev, next) ? prev : next;
@@ -894,47 +1555,29 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
   useEffect(() => {
     const emptyEl = document.querySelector<HTMLElement>('[fs-cmsfilter-element="empty"]');
     if (!emptyEl) return;
-    const shouldShow = !loading && !error && items.length === 0;
+    const shouldShow = !rendersComponentEmptyState && !loading && !error && items.length === 0;
     emptyEl.style.display = shouldShow ? '' : 'none';
-  }, [loading, error, items]);
+  }, [loading, error, items.length, rendersComponentEmptyState]);
 
   // Re-parse from URL on browser back/forward navigation
   useEffect(() => {
     const onPop = () => {
-      const href = window.location.href;
-      lastHrefRef.current = href;
-      setFilters((prev) => {
-        const next = mergeExternalFilterState(
-          parseRouteState(initialSort, categorySlugProp || undefined, scopeOverride),
-          readSharedFilterState(href),
-        );
-        return areFiltersEqual(prev, next) ? prev : next;
-      });
+      lastHrefRef.current = window.location.href;
+      setFilters(
+        parseRouteState(
+          initialSort,
+          categorySlugProp || undefined,
+          scopeOverride,
+          styleSlugProp || undefined,
+          tagSlugProp || undefined,
+          creatorSlugProp || undefined,
+          creatorRecordIdProp || undefined,
+        ),
+      );
     };
     window.addEventListener('popstate', onPop);
     return () => window.removeEventListener('popstate', onPop);
-  }, [initialSort, categorySlugProp, scopeOverride]);
-
-  // TemplateSearch writes ?query= and dispatches this event so the grid can
-  // refresh immediately without waiting for URL polling or a full page reload.
-  useEffect(() => {
-    const onTemplateSearchQuery = (event: Event) => {
-      const href = window.location.href;
-      lastHrefRef.current = href;
-      setFilters((prev) => {
-        const parsed = parseRouteState(initialSort, categorySlugProp || undefined, scopeOverride);
-        const withShared = mergeExternalFilterState(parsed, readSharedFilterState(href));
-        const next = mergeExternalFilterState(withShared, (event as CustomEvent).detail);
-        return areFiltersEqual(prev, next) ? prev : next;
-      });
-    };
-    window.addEventListener('template-search-query', onTemplateSearchQuery);
-    document.addEventListener('template-search-query', onTemplateSearchQuery);
-    return () => {
-      window.removeEventListener('template-search-query', onTemplateSearchQuery);
-      document.removeEventListener('template-search-query', onTemplateSearchQuery);
-    };
-  }, [initialSort, categorySlugProp, scopeOverride]);
+  }, [initialSort, categorySlugProp, creatorSlugProp, creatorRecordIdProp, scopeOverride, styleSlugProp, tagSlugProp]);
 
   // Re-parse from URL when TemplateFilterBar (code component) updates filter state.
   // TemplateFilterBar writes to URL params then dispatches this event — we just
@@ -942,12 +1585,21 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
   // selections remain distinguishable from "no sort param" URLs.
   useEffect(() => {
     const onFilterBarChange = (event: Event) => {
+      const detail = (event as CustomEvent).detail;
       const href = window.location.href;
       lastHrefRef.current = href;
       setFilters((prev) => {
         const next = mergeExternalFilterState(
-          parseRouteState(initialSort, categorySlugProp || undefined, scopeOverride),
-          (event as CustomEvent).detail ?? readSharedFilterState(href),
+          parseRouteState(
+            initialSort,
+            categorySlugProp || undefined,
+            scopeOverride,
+            styleSlugProp || undefined,
+            tagSlugProp || undefined,
+            creatorSlugProp || undefined,
+            creatorRecordIdProp || undefined,
+          ),
+          detail ?? readSharedFilterState(href),
         );
         return areFiltersEqual(prev, next) ? prev : next;
       });
@@ -958,37 +1610,131 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
       window.removeEventListener('templateFiltersChanged', onFilterBarChange);
       document.removeEventListener('templateFiltersChanged', onFilterBarChange);
     };
-  }, [initialSort, categorySlugProp, scopeOverride]);
+  }, [initialSort, categorySlugProp, creatorSlugProp, creatorRecordIdProp, scopeOverride, styleSlugProp, tagSlugProp]);
 
   // replaceState() does not fire popstate. Poll the URL as a low-cost fallback
   // so the grid still refreshes if Webflow isolates or drops the custom event.
   useEffect(() => {
     const id = window.setInterval(() => {
+      // Skip work entirely while the tab is hidden; the first visible tick
+      // catches up on any URL change that happened in the background.
+      if (document.visibilityState === 'hidden') return;
       const href = window.location.href;
       if (href === lastHrefRef.current) return;
       lastHrefRef.current = href;
       setFilters((prev) => {
         const next = mergeExternalFilterState(
-          parseRouteState(initialSort, categorySlugProp || undefined, scopeOverride),
+          parseRouteState(
+            initialSort,
+            categorySlugProp || undefined,
+            scopeOverride,
+            styleSlugProp || undefined,
+            tagSlugProp || undefined,
+            creatorSlugProp || undefined,
+            creatorRecordIdProp || undefined,
+          ),
           readSharedFilterState(href),
         );
         return areFiltersEqual(prev, next) ? prev : next;
       });
     }, 250);
     return () => window.clearInterval(id);
-  }, [initialSort, categorySlugProp, scopeOverride]);
+  }, [initialSort, categorySlugProp, creatorSlugProp, creatorRecordIdProp, scopeOverride, styleSlugProp, tagSlugProp]);
+
+  const clearFilters = useCallback(() => {
+    const next: FilterState = {
+      ...filters,
+      q: '',
+      styles: [],
+      tags: [],
+      types: [],
+      freeOnly: filters.scope === 'free',
+      sort: initialSort,
+    };
+    updateUrlParams(next, initialSort);
+
+    if (typeof window !== 'undefined') {
+      const detail = {
+        q: next.q,
+        styles: [...next.styles],
+        tags: [...next.tags],
+        types: [...next.types],
+        freeOnly: next.freeOnly,
+        sort: next.sort,
+        href: window.location.href,
+        source: 'TemplateGrid',
+        updatedAt: Date.now(),
+      };
+      (window as unknown as Record<string, unknown>).__templateMarketplaceFilters = detail;
+      window.dispatchEvent(new CustomEvent('templateFiltersChanged', { detail }));
+      document.dispatchEvent(new CustomEvent('templateFiltersChanged', { detail }));
+    }
+
+    setFilters(next);
+  }, [filters, initialSort]);
+
+  const handleTemplateCardClick = useCallback(
+    (event: React.MouseEvent<HTMLDivElement>, item: ApiItem, index: number, signals: string[]) => {
+      if (!isTemplateDetailAnchorClick(event, item.url)) return;
+
+      const sourcePosition = index + 1;
+      const sourcePage = Math.floor(index / resolvedPageSize) + 1;
+      const attribution = buildTemplateAttribution(item, filters, sourcePage, sourcePosition, signals);
+      writeTemplateAttribution(attribution);
+
+      trackMarketplaceEvent(
+        'Code Component Event',
+        {
+          ...getSafeAnalyticsOverrides(),
+          component: 'TemplateGrid',
+          scope: 'template_card_clicked',
+          source_scope: filters.scope,
+          source_sort: filters.sort,
+          source_category_group_slug: filters.categoryGroupSlug,
+          source_child_category_slug: filters.childCategorySlug,
+          source_style_slug: filters.styleSlug,
+          source_tag_slug: filters.tagSlug,
+          source_free_only: filters.freeOnly,
+          source_q_present: Boolean(filters.q),
+          source_styles_count: filters.styles.length,
+          source_tags_count: filters.tags.length,
+          source_types_count: filters.types.length,
+          source_page: sourcePage,
+          source_position: sourcePosition,
+          template_slug: item.template_slug,
+          signal_bucket: signals[0] ?? null,
+          signal_metric: signals[1] ?? null,
+          signal_window: MARKETPLACE_SIGNAL_WINDOW,
+          signal_density: signalDensityForPosition(sourcePosition),
+        },
+        enableAnalytics,
+      );
+    },
+    [enableAnalytics, filters, resolvedPageSize],
+  );
+
+  const renderTemplateGridItem = (item: ApiItem, i: number, keyPrefix = 'result') => (
+    <TemplateGridItemView
+      key={`${keyPrefix}-${item.id}`}
+      item={item}
+      index={i}
+      apiBase={apiBase}
+      pageSize={resolvedPageSize}
+      showCategoryMeta={showCategoryMeta}
+      showTemplateType={showTemplateType}
+      showPreviewLink={showPreviewLink}
+      showFeaturedBadge={showFeaturedBadge}
+      showMarketplaceSignals={showMarketplaceSignals}
+      onCardClick={handleTemplateCardClick}
+    />
+  );
 
   // ── Render ─────────────────────────────────────────────────────────────────
 
   if (loading && items.length === 0) {
     return (
-      <div
-        ref={rootRef}
-        className="tmgrid-shell"
-        style={S.root}
-        data-template-component="TemplateGrid"
-        data-template-component-version={TEMPLATE_MARKETPLACE_COMPONENT_VERSION}
-      >
+      <div style={S.root}>
+        <style dangerouslySetInnerHTML={{ __html: GRID_STYLES }} />
         <div className="tmgrid-grid">
           {Array.from({ length: Math.min(resolvedPageSize, 12) }).map((_, i) => (
             <SkeletonCard key={i} index={i} />
@@ -1000,11 +1746,7 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
 
   if (error && items.length === 0) {
     return (
-      <div
-        style={S.root}
-        data-template-component="TemplateGrid"
-        data-template-component-version={TEMPLATE_MARKETPLACE_COMPONENT_VERSION}
-      >
+      <div style={S.root}>
         <div style={S.errorBox}>
           <p>Unable to load templates. Please try refreshing the page.</p>
           <button
@@ -1026,21 +1768,54 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
     );
   }
 
-  // When items is empty (but not loading/error), render nothing — the native
-  // [fs-cmsfilter-element="empty"] element is shown by the effect above.
-  if (items.length === 0) return null;
+  // When no component empty state is enabled, let the native
+  // [fs-cmsfilter-element="empty"] element handle zero-result rendering.
+  if (items.length === 0) {
+    if (!rendersComponentEmptyState) return null;
+    const query = filters.q.trim();
+    const resolvedEmptyTitle = query ? `No templates found for "${query}"` : emptyTitle;
+    const resolvedEmptyDescription = query
+      ? 'Try a shorter search term, remove filters, or start from these recent templates.'
+      : emptyDescription;
+
+    return (
+      <div style={S.root}>
+        <style dangerouslySetInnerHTML={{ __html: GRID_STYLES }} />
+        <div style={S.emptyRecovery} role="status">
+          <p style={S.emptyTitle}>{resolvedEmptyTitle}</p>
+          <p style={S.emptyDescription}>{resolvedEmptyDescription}</p>
+          <div style={S.emptyActions}>
+            <button type="button" style={S.emptyButton} onClick={clearFilters}>
+              {emptyActionLabel}
+            </button>
+            <a href="/templates/all" style={S.emptySecondaryButton}>
+              Browse all templates
+            </a>
+          </div>
+        </div>
+
+        {(emptyRecommendationsLoading || emptyRecommendations.length > 0) && (
+          <div style={S.emptyRecommendations}>
+            <div style={S.emptyRecommendationsHeader}>
+              <p style={S.emptyRecommendationsTitle}>{emptyRecommendationsTitleState}</p>
+              <p style={S.emptyRecommendationsDescription}>Fresh starting points while you refine the search.</p>
+            </div>
+            <div className="tmgrid-grid">
+              {emptyRecommendationsLoading && emptyRecommendations.length === 0
+                ? Array.from({ length: EMPTY_RECOMMENDATION_COUNT }).map((_, i) => <SkeletonCard key={`empty-skeleton-${i}`} index={i} />)
+                : emptyRecommendations.map((item, i) => renderTemplateGridItem(item, i, 'empty-recommendation'))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   const isRefreshing = loading && items.length > 0;
 
   return (
-    <div
-      ref={rootRef}
-      className="tmgrid-shell"
-      style={S.root}
-      aria-busy={isRefreshing ? true : undefined}
-      data-template-component="TemplateGrid"
-      data-template-component-version={TEMPLATE_MARKETPLACE_COMPONENT_VERSION}
-    >
+    <div style={S.root} aria-busy={isRefreshing ? true : undefined}>
+      <style dangerouslySetInnerHTML={{ __html: GRID_STYLES }} />
       {totalItems !== null && (
         <div style={S.countLabel}>
           {totalItems.toLocaleString()} template{totalItems !== 1 ? 's' : ''}
@@ -1054,53 +1829,12 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
           </div>
         )}
         <div className="tmgrid-grid">
-          {items.map((item, i) => {
-            const primaryImageUrl = primaryThumbnailUrl(item);
-            return (
-              <div
-                key={item.id}
-                className="tmgrid-item"
-                style={{
-                  animationDelay: `${Math.min(i % resolvedPageSize, 11) * 40}ms`,
-                }}
-                data-template-slug={item.template_slug}
-              >
-                <TemplateCard
-                  templateName={item.name}
-                  templateLink={{ href: item.url ?? '#' }}
-                  price={formatPrice(item)}
-                  priceNumeric={String(item.price ?? '0')}
-                  isFree={item.is_free}
-                  creatorName={item.creator_name ?? ''}
-                  creatorLink={
-                    item.creator_profile_url
-                      ? { href: item.creator_profile_url, target: '_blank' }
-                      : undefined
-                  }
-                  creatorIcon={
-                    item.creator_avatar_url
-                      ? { src: proxyImageUrl(item.creator_avatar_url, apiBase), alt: item.creator_avatar_alt ?? item.creator_name ?? '' }
-                      : undefined
-                  }
-                  primaryImage={primaryImageUrl ? { src: proxyImageUrl(primaryImageUrl, apiBase), alt: item.name } : undefined}
-                  secondaryImage={
-                    item.thumbnail_image_secondary_url
-                      ? { src: proxyImageUrl(item.thumbnail_image_secondary_url, apiBase), alt: item.name }
-                      : undefined
-                  }
-                  priorityIndex={i}
-                  deferSecondaryImage
-                  approvalDate={item.published_date ?? ''}
-                  popularityScore={String(item.popularity_score ?? '')}
-                />
-              </div>
-            );
-          })}
+          {items.map((item, i) => renderTemplateGridItem(item, i))}
         </div>
       </div>
 
       {/* Infinite scroll sentinel */}
-      <div ref={sentinelRef} style={{ height: 1 }} aria-hidden="true" />
+      <div ref={sentinelRefCallback} style={{ height: 1 }} aria-hidden="true" />
 
       {loadingMore && (
         <div style={S.loadMoreWrapper}>
@@ -1122,5 +1856,11 @@ export const TemplateGrid: React.FC<TemplateGridProps> = ({
     </div>
   );
 };
+
+export const TemplateGrid: React.FC<TemplateGridProps> = (props) => (
+  <MarketplaceComponentErrorBoundary component="TemplateGrid" enabled={props.enableAnalytics}>
+    <TemplateGridInner {...props} />
+  </MarketplaceComponentErrorBoundary>
+);
 
 export default TemplateGrid;

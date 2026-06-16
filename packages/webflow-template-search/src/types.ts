@@ -1,6 +1,6 @@
 export type TemplateScope = 'all' | 'featured' | 'free' | 'landing_pages';
 export type TemplateSort = 'popular' | 'newest' | 'price_asc' | 'price_desc';
-export type SearchInclude = 'items' | 'facets' | 'pills' | 'count';
+export type TemplateSearchView = 'full' | 'grid';
 export type AliasType = 'child_category';
 
 export interface Env {
@@ -8,19 +8,22 @@ export interface Env {
   AIRTABLE_API_KEY?: string;
   AIRTABLE_BASE_ID: string;
   AIRTABLE_ASSETS_TABLE_ID?: string;
-  AIRTABLE_CATEGORY_GROUPS_TABLE_ID?: string;
-  AIRTABLE_STYLES_TABLE_ID?: string;
+  AIRTABLE_SEARCH_VISIBILITY_FIELDS?: string;
   AIRTABLE_CHILD_CATEGORIES_TABLE_ID?: string;
+  AIRTABLE_STYLES_TABLE_ID?: string;
   AIRTABLE_TAGS_TABLE_ID?: string;
+  WEBFLOW_API_TOKEN?: string;
+  CMS_READ_ONLY?: string;
+  WEBFLOW_TEMPLATE_ASSET_SITE_ID?: string;
+  WEBFLOW_TEMPLATE_ASSET_FOLDER_ID?: string;
+  WEBFLOW_TEMPLATE_COLLECTION_ID?: string;
+  WEBFLOW_TEMPLATE_ENABLE_CMS_INDEX?: string;
   ALLOWED_ORIGINS?: string;
   DEFAULT_PAGE_SIZE?: string;
   DEFAULT_CLIENT_MODE?: string;
   ENVIRONMENT?: string;
   SYNC_ADMIN_TOKEN?: string;
-  CMS_READ_ONLY?: string;
-  WEBFLOW_API_TOKEN?: string;
-  WEBFLOW_DATA_API_TOKEN?: string;
-  WEBFLOW_TEMPLATE_COLLECTION_ID?: string;
+  WEBFLOW_WEBHOOK_SECRET?: string;
 }
 
 export interface AirtableAttachment {
@@ -48,7 +51,7 @@ export interface AirtableAssetFields extends Record<string, unknown> {
   'ℹ️Description (Long).html'?: string;
   '🪣Category Group(s) Display Name'?: string[] | string;
   '🪣Category Group(s) CMS Slug'?: string[] | string;
-  '🔍Algolia Child Category (🏗️ only)'?: string[];
+  'ℹ️🪣Categories'?: string[] | string;
   'ℹ️🪣Categories (Text)'?: string[] | string;
   '🥞CMS Slug (from ℹ️🪣Categories)'?: string[] | string;
   'ℹ️👘Styles'?: string[];
@@ -61,11 +64,14 @@ export interface AirtableAssetFields extends Record<string, unknown> {
   '📋 Unique Viewers'?: number;
   '📋 Cumulative Purchases'?: number;
   '🥞💲Template Price Filter (🏗️ only)'?: number;
+  '👁️Search Visibility (🏗️ only)'?: string;
+  'Search Visibility'?: string;
+  search_visibility?: string;
+  '👀📅Decision Date (Override)'?: string;
   '🚀📅Published Date'?: string;
   '🥞CMS Slug'?: string;
-  'Slug (from 🥞CMS Sync Records)'?: string[] | string;
   '🥞CMS Slug (formula)'?: string;
-  '🥞CMS Record ID'?: string[] | string;
+  '🎨Creator'?: string[];
   '🎨Creator Name'?: string;
   '🖼️Thumbnail Image'?: AirtableAttachment[];
   '🖼️Thumbnail Image (Secondary)'?: AirtableAttachment[];
@@ -83,31 +89,31 @@ export interface LookupValue {
 }
 
 export interface ChildCategoryLookupValue extends LookupValue {
-  category: string;
-  displayName: string;
-  parentCategoryName: string;
-  descriptionShort: string;
-  categoryGroups: string[];
-  relatedKeywords: string[];
-  tier: string | null;
-  type: string | null;
-  isCategoryGroup: boolean;
+  categoryGroupName: string | null;
+  categoryGroupSlug: string | null;
 }
 
-export interface CategoryGroupLookupValue extends LookupValue {
-  displayName: string;
-  descriptionShort: string;
-  descriptionLandingPage: string;
-  relatedKeywords: string[];
-  cmsSlug: string | null;
-  status: string | null;
+export interface CreatorLookupValue {
+  id: string;
+  name: string;
+  slug: string;
+  profileUrl: string;
+  avatarUrl: string | null;
+  avatarAlt: string | null;
 }
 
 export interface LookupMaps {
-  categoryGroups: Map<string, CategoryGroupLookupValue>;
-  styles: Map<string, LookupValue>;
   childCategories: Map<string, ChildCategoryLookupValue>;
+  styles: Map<string, LookupValue>;
   tags: Map<string, LookupValue>;
+  creators: Map<string, CreatorLookupValue>;
+}
+
+export interface CategoryMembershipInput {
+  childCategoryName: string;
+  childCategorySlug: string;
+  categoryGroupName: string;
+  categoryGroupSlug: string;
 }
 
 export interface TemplateDocumentInput {
@@ -118,6 +124,11 @@ export interface TemplateDocumentInput {
   previewUrl: string | null;
   websiteUrl: string | null;
   creatorName: string | null;
+  creatorRecordId: string | null;
+  creatorSlug: string | null;
+  creatorProfileUrl: string | null;
+  creatorAvatarUrl: string | null;
+  creatorAvatarAlt: string | null;
   thumbnailImageUrl: string | null;
   thumbnailImageSecondaryUrl: string | null;
   carouselImageUrls: string[];
@@ -128,6 +139,7 @@ export interface TemplateDocumentInput {
   categoryGroupSlugs: string[];
   childCategories: string[];
   childCategorySlugs: string[];
+  categoryMemberships: CategoryMembershipInput[];
   styles: string[];
   styleSlugs: string[];
   tags: string[];
@@ -151,13 +163,23 @@ export interface SearchParams {
   scope: TemplateScope;
   categoryGroupSlug: string | null;
   childCategorySlug: string | null;
+  creatorSlug: string | null;
+  creatorRecordId: string | null;
+  styleSlug: string | null;
+  tagSlug: string | null;
   styles: string[];
+  tags: string[];
   types: string[];
   freeOnly: boolean;
   sort: TemplateSort;
+  view: TemplateSearchView;
   page: number;
   pageSize: number;
-  include: SearchInclude[];
+  include: {
+    items: boolean;
+    facets: boolean;
+    pills: boolean;
+  };
 }
 
 export interface SearchItem {
@@ -168,6 +190,7 @@ export interface SearchItem {
   preview_url: string | null;
   website_url: string | null;
   creator_name: string | null;
+  creator_slug: string | null;
   creator_profile_url: string | null;
   creator_avatar_url: string | null;
   creator_avatar_alt: string | null;
@@ -183,8 +206,8 @@ export interface SearchItem {
   published_date: string | null;
   category_groups: Array<{ name: string; slug: string; url: string }>;
   child_categories: Array<{ name: string; slug: string; url: string }>;
-  styles: Array<{ name: string; slug: string }>;
-  tags: Array<{ name: string; slug: string }>;
+  styles?: Array<{ name: string; slug: string }>;
+  tags?: Array<{ name: string; slug: string }>;
 }
 
 export interface SearchResponsePayload {
@@ -203,9 +226,16 @@ export interface SearchResponsePayload {
     scope: TemplateScope;
     category_group_slug: string | null;
     child_category_slug: string | null;
+    creator_slug: string | null;
+    creator_record_id: string | null;
+    style_slug: string | null;
+    tag_slug: string | null;
     styles: string[];
+    tags: string[];
     types: string[];
     free_only: boolean;
+    /** True when the strict all-tokens query matched nothing and results come from an OR-relaxed retry. */
+    relaxed: boolean;
   };
   available_facets: {
     styles: Array<{ name: string; slug: string; count: number }>;
@@ -215,14 +245,64 @@ export interface SearchResponsePayload {
   subcategory_pills: Array<{ name: string; slug: string; url: string; count: number; active: boolean }>;
 }
 
+export interface ImageRefreshSummary {
+  mode: 'image_refresh' | 'creator_refresh';
+  started_at: string;
+  finished_at: string;
+  fetched_records: number;
+  refreshed_records: number;
+  backfilled_records: number;
+}
+
 export interface SyncSummary {
-  mode: 'full' | 'incremental';
+  mode: 'full' | 'incremental' | 'records';
   started_at: string;
   finished_at: string;
   fetched_records: number;
   indexed_records: number;
   removed_records: number;
+  backfilled_records: number;
+  image_refreshed_records: number;
   cursor: string;
+  skipped_empty_windows?: number;
+}
+
+export interface TemplateImageSourceStats {
+  total_rows: number;
+  rows_with_image: number;
+  rows_with_webflow_image: number;
+  rows_with_temp_airtable_image: number;
+  rows_missing_image: number;
+}
+
+export interface TemplateImageBackfillSummary {
+  mode: 'image_backfill';
+  started_at: string;
+  finished_at: string;
+  requested_limit: number;
+  requested_template_slugs?: string[];
+  scanned_records: number;
+  updated_records: number;
+  remaining_temp_airtable_rows: number;
+  image_source_stats: TemplateImageSourceStats;
+}
+
+export interface TemplateImagePruneSummary {
+  mode: 'image_prune';
+  started_at: string;
+  finished_at: string;
+  requested_limit: number;
+  requested_template_slugs?: string[];
+  scanned_records: number;
+  pruned_records: number;
+  skipped_records: Array<{
+    id: string;
+    name: string;
+    template_slug: string;
+    status: number | null;
+    reason: 'webflow_image_found' | 'listing_not_404';
+  }>;
+  image_source_stats: TemplateImageSourceStats;
 }
 
 export interface DocumentRow {
@@ -233,6 +313,7 @@ export interface DocumentRow {
   preview_url: string | null;
   website_url: string | null;
   creator_name: string | null;
+  creator_slug: string | null;
   creator_profile_url: string | null;
   creator_avatar_url: string | null;
   creator_avatar_alt: string | null;
@@ -265,38 +346,6 @@ export interface DocumentRow {
 
 export interface DocumentCountRow {
   total: number;
-}
-
-export interface ChildCategoryTaxonomyInput {
-  childCategorySlug: string;
-  childCategoryName: string;
-  categoryGroupSlug: string;
-  categoryGroupName: string;
-}
-
-export type TaxonomyMetadataType = 'category_group' | 'child_category';
-
-export interface TaxonomyMetadataInput {
-  taxonomyType: TaxonomyMetadataType;
-  slug: string;
-  name: string;
-  descriptionShort: string;
-  descriptionLandingPage: string;
-  relatedKeywords: string[];
-  parentCategoryGroupSlug: string | null;
-  parentCategoryGroupName: string | null;
-  syncedAt: string;
-}
-
-export interface TaxonomyMetadataItem {
-  type: TaxonomyMetadataType;
-  slug: string;
-  name: string;
-  description_short: string;
-  description_landing_page: string;
-  related_keywords: string[];
-  parent_category_group_slug: string | null;
-  parent_category_group_name: string | null;
 }
 
 export interface FacetStyleRow {

@@ -1,0 +1,12 @@
+{
+  "generated_at": "2026-05-27T00:00:00.000Z",
+  "total_expected_outputs": 30,
+  "scored_output_count": 30,
+  "false_approval_risk_rate": 0.067,
+  "false_rejection_risk_rate": 0.033,
+  "escalation_rate": 0.5,
+  "promotion_gate": {
+    "status": "blocked",
+    "reasons": ["false_approval_rate 0.067 exceeded 0"]
+  }
+}

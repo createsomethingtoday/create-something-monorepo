@@ -1,4 +1,5 @@
-import { getLatestDemoThread, listDemoThreads } from '$server/threads/demo';
+import type { PageServerLoad } from './$types';
+import { CONCIERGE_SESSION_DEPENDENCY } from '$chat/api-contract';
 import {
 	clearCommunicationRules,
 	difyRuntimeBoundary,
@@ -6,12 +7,18 @@ import {
 	operatorShellPlanes,
 	operatorStateDefinitions
 } from '$lib/operator/clear-shell';
-import type { PageServerLoad } from './$types';
+import {
+	getExistingConciergeSessionId,
+	getWorkspacePageData
+} from '$lib/server/threads/session';
 
-export const load: PageServerLoad = async () => {
+export const load: PageServerLoad = async ({ depends, cookies, platform }) => {
+	depends(CONCIERGE_SESSION_DEPENDENCY);
+
+	const sessionId = getExistingConciergeSessionId(cookies);
+
 	return {
-		threads: listDemoThreads(),
-		latestThreadId: getLatestDemoThread()?.id ?? null,
+		workspace: sessionId ? await getWorkspacePageData(sessionId, platform) : null,
 		operatorMode,
 		operatorShellPlanes,
 		operatorStateDefinitions,

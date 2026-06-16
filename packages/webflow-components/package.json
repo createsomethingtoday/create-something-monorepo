@@ -8,14 +8,14 @@
   "scripts": {
     "bundle": "npx webflow library bundle --public-path / --no-input",
     "share": "npx webflow library share",
-    "check": "pnpm run typecheck",
+    "check": "pnpm run typecheck && pnpm run test",
     "lint": "pnpm run typecheck",
-    "smoke:routes": "node scripts/smoke-template-routes.mjs",
-    "test:detail": "node --import tsx --test test/TemplateDetailHero.test.tsx",
+    "test": "node --import tsx --test test/*.test.tsx",
     "typecheck": "tsc --noEmit",
-    "verify": "pnpm run typecheck && pnpm run bundle"
+    "verify": "pnpm run check && pnpm run bundle"
   },
   "dependencies": {
+    "@create-something/delivery-schema": "workspace:*",
     "@webflow/react": "^1.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"

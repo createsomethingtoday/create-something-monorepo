@@ -17,10 +17,31 @@ test('legacy Webflow reviewer lanes carry the current Phase A exact tool surface
 	const assignment = assignments[0]!;
 	assert.equal(assignment.laneKey, 'wf_eric');
 	assert.deepEqual(assignment.toolkitProfile, []);
-	assert.equal(assignment.allowedToolPrefixes.length, 17);
+	assert.equal(assignment.allowedToolPrefixes.length, 22);
 	assert.ok(assignment.allowedToolPrefixes.includes('webflow-template-review-mcp__template_review_get_metrics'));
+	assert.ok(
+		assignment.allowedToolPrefixes.includes(
+			'webflow-template-review-mcp__template_review_run_published_site_validation',
+		),
+	);
 	assert.ok(assignment.allowedToolPrefixes.includes('webflow-template-review-mcp__template_review_request_changes'));
 	assert.ok(assignment.allowedToolPrefixes.includes('webflow-template-review-mcp__template_review_set_review_status'));
+	assert.ok(
+		assignment.allowedToolPrefixes.includes(
+			'webflow-template-review-mcp__template_review_get_comprehensive_review_contract',
+		),
+	);
+	assert.ok(
+		assignment.allowedToolPrefixes.includes(
+			'webflow-template-review-mcp__template_review_format_agent_review_feedback',
+		),
+	);
+	assert.ok(
+		assignment.allowedToolPrefixes.includes(
+			'webflow-template-review-mcp__template_review_prepare_published_site_sandbox',
+		),
+	);
+	assert.ok(assignment.allowedToolPrefixes.includes('webflow-template-review-mcp__template_review_save_agent_feedback'));
 	assert.ok(assignment.allowedToolPrefixes.includes('webflow-template-review-mcp__template_review_save_draft_feedback'));
 	assert.equal(
 		assignment.allowedToolPrefixes.includes('webflow-template-review-mcp__template_review_assign_reviewer'),

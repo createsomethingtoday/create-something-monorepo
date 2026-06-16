@@ -341,6 +341,8 @@ export const SUPPORTED_COUNTRIES = [
   'Vietnam'
 ] as const;
 
+export const COUNTRIES_REQUIRING_STRIPE_ONBOARDING = ['India'] as const;
+
 export const PRIMARY_TAGS = [
   'Accessories',
   'Accounting',
@@ -667,16 +669,30 @@ const SUPPORTED_COUNTRY_TOKENS = new Set(
   SUPPORTED_COUNTRIES.map((value) => normalizeCountryToken(value))
 );
 
-export function isSupportedCountry(country: string): boolean {
+const STRIPE_ONBOARDING_COUNTRY_TOKENS = new Set(
+  COUNTRIES_REQUIRING_STRIPE_ONBOARDING.map((value) => normalizeCountryToken(value))
+);
+
+function normalizeCountryAlias(country: string): string {
   const normalized = normalizeCountryToken(country);
+  const alias = COUNTRY_ALIASES.get(normalized);
+  return alias ? normalizeCountryToken(alias) : normalized;
+}
+
+export function isSupportedCountry(country: string): boolean {
+  const normalized = normalizeCountryAlias(country);
   if (!normalized) return false;
 
-  const alias = COUNTRY_ALIASES.get(normalized);
-  if (alias) {
-    return SUPPORTED_COUNTRY_TOKENS.has(normalizeCountryToken(alias));
-  }
-
   return SUPPORTED_COUNTRY_TOKENS.has(normalized);
+}
+
+export function requiresSpecificStripeOnboarding(country: string): boolean {
+  const normalized = normalizeCountryAlias(country);
+  if (!normalized) return false;
+
+  return (
+    STRIPE_ONBOARDING_COUNTRY_TOKENS.has(normalized) || !SUPPORTED_COUNTRY_TOKENS.has(normalized)
+  );
 }
 
 // -----------------------------------------------------------------------------
@@ -686,35 +702,116 @@ export function isSupportedCountry(country: string): boolean {
 // -----------------------------------------------------------------------------
 
 export const CATEGORY_OPTIONS = [
-  'Advocacy & Campaigns', 'Agriculture', 'Architecture', 'AI', 'Art & Design Blog',
-  'Arts & Crafts Store', 'Bakery', 'Banking & Investment', 'Bar & Nightclub',
-  'Beauty & Wellness Store', 'Blockchain', 'Book', 'Books & Publishers Store',
-  'Business & Finance Blog', 'Cafe & Coffee Shop', 'Cars', 'Catering & Delivery',
-  'Charity & Fundraising', 'Chiropractor & Physiotherapist', 'Classes & Courses',
-  'Cleaning', 'Clinic & Pharmacy', 'College / University', 'Coming Soon',
-  'Consulting & Coaching', 'Creative Agency', 'Creators & Influencers',
-  'Cryptocurrency & NFTs', 'Dance', 'Dentist', 'Design Portfolio',
-  'Digital Products Store', 'Doctor', 'Documentation', 'Early Education',
-  'Electronics Store', 'Event Production', 'Events', 'Fashion & Clothing Store',
-  'Film & TV', 'Finance & Accounting', 'Fitness & Gym', 'Florist & Plants Store',
-  'Food & Drinks Store', 'Food & Recipe Blog', 'Foundations & NGO',
-  'Freelancers & Consultants', 'Gallery & Museum', 'Gaming', 'Health & Nutrition',
-  'Home Construction', 'Home Decor Store', 'Home Services & Maintenance', 'Hospital',
-  'Hotels & Lodging', 'Insurance', 'Interior Design', 'IT company',
-  'Jewelry & Accessories Store', 'Job Portal', 'Kids & Babies Store',
-  'Landscaping & Gardening', 'Law Firm & Attorney', 'Lifestyle Blog', 'Magazine',
-  'Makeup & Cosmetics', 'Marketing & Advertising', 'Mobile App',
-  'Music Events & Festivals', 'Music Industry & Promotion', 'Musicians & Bands',
-  'Nature & Conservation', 'News', 'Newsletter', 'Online Education',
-  'Outdoor & Adventure', 'Personal Blog', 'Pets & Animals Store',
-  'Photography & Video Portfolio', 'Podcast & Radio', 'Political',
-  'Property Management & HOA', 'Public services', 'Real Estate', 'Recruiting',
-  'Religious & Spiritual', 'Renewable energy', 'Restaurant', 'Resume & CV',
-  'Residential Design', 'Salon & Barbershop', 'Schools', 'Software & SaaS', 'Spa',
-  'Sports', 'Sports & Outdoors Store', 'Startup', 'Support/Help center',
-  'Sustainability', 'Tattoo', 'Therapy & Psychology',
-  'Transportation & Logistics', 'Travel & Tourism', 'Travel Blog', 'UI Kit',
-  'Veterinary', 'Volunteer & Community', 'Waitlist', 'Weddings', 'Winery',
+  'Advocacy & Campaigns',
+  'Agriculture',
+  'Architecture',
+  'AI',
+  'Art & Design Blog',
+  'Arts & Crafts Store',
+  'Bakery',
+  'Banking & Investment',
+  'Bar & Nightclub',
+  'Beauty & Wellness Store',
+  'Blockchain',
+  'Book',
+  'Books & Publishers Store',
+  'Business & Finance Blog',
+  'Cafe & Coffee Shop',
+  'Cars',
+  'Catering & Delivery',
+  'Charity & Fundraising',
+  'Chiropractor & Physiotherapist',
+  'Classes & Courses',
+  'Cleaning',
+  'Clinic & Pharmacy',
+  'College / University',
+  'Coming Soon',
+  'Consulting & Coaching',
+  'Creative Agency',
+  'Creators & Influencers',
+  'Cryptocurrency & NFTs',
+  'Dance',
+  'Dentist',
+  'Design Portfolio',
+  'Digital Products Store',
+  'Doctor',
+  'Documentation',
+  'Early Education',
+  'Electronics Store',
+  'Event Production',
+  'Events',
+  'Fashion & Clothing Store',
+  'Film & TV',
+  'Finance & Accounting',
+  'Fitness & Gym',
+  'Florist & Plants Store',
+  'Food & Drinks Store',
+  'Food & Recipe Blog',
+  'Foundations & NGO',
+  'Freelancers & Consultants',
+  'Gallery & Museum',
+  'Gaming',
+  'Health & Nutrition',
+  'Home Construction',
+  'Home Decor Store',
+  'Home Services & Maintenance',
+  'Hospital',
+  'Hotels & Lodging',
+  'Insurance',
+  'Interior Design',
+  'IT company',
+  'Jewelry & Accessories Store',
+  'Job Portal',
+  'Kids & Babies Store',
+  'Landscaping & Gardening',
+  'Law Firm & Attorney',
+  'Lifestyle Blog',
+  'Magazine',
+  'Makeup & Cosmetics',
+  'Marketing & Advertising',
+  'Mobile App',
+  'Music Events & Festivals',
+  'Music Industry & Promotion',
+  'Musicians & Bands',
+  'Nature & Conservation',
+  'News',
+  'Newsletter',
+  'Online Education',
+  'Outdoor & Adventure',
+  'Personal Blog',
+  'Pets & Animals Store',
+  'Photography & Video Portfolio',
+  'Podcast & Radio',
+  'Political',
+  'Property Management & HOA',
+  'Public services',
+  'Real Estate',
+  'Recruiting',
+  'Religious & Spiritual',
+  'Renewable energy',
+  'Restaurant',
+  'Resume & CV',
+  'Residential Design',
+  'Salon & Barbershop',
+  'Schools',
+  'Software & SaaS',
+  'Spa',
+  'Sports',
+  'Sports & Outdoors Store',
+  'Startup',
+  'Support/Help center',
+  'Sustainability',
+  'Tattoo',
+  'Therapy & Psychology',
+  'Transportation & Logistics',
+  'Travel & Tourism',
+  'Travel Blog',
+  'UI Kit',
+  'Veterinary',
+  'Volunteer & Community',
+  'Waitlist',
+  'Weddings',
+  'Winery'
 ] as const;
 export type CategoryOption = (typeof CATEGORY_OPTIONS)[number];
 
@@ -723,8 +820,15 @@ export type CategoryOption = (typeof CATEGORY_OPTIONS)[number];
 // -----------------------------------------------------------------------------
 
 export const TEMPLATE_STYLES = [
-  'Bold', 'Corporate', 'Dark', 'Illustration', 'Light',
-  'Minimal', 'Modern', 'Playful', 'Retro',
+  'Bold',
+  'Corporate',
+  'Dark',
+  'Illustration',
+  'Light',
+  'Minimal',
+  'Modern',
+  'Playful',
+  'Retro'
 ] as const;
 export type TemplateStyleOption = (typeof TEMPLATE_STYLES)[number];
 
@@ -754,7 +858,7 @@ export const WEBFLOW_FEATURES: readonly WebflowFeatureDescriptor[] = [
   { id: 'css-grid', label: 'CSS Grid', defaultOn: false },
   { id: 'custom-404', label: 'Custom 404 page', defaultOn: false },
   { id: 'web-fonts', label: 'Web fonts', defaultOn: true },
-  { id: 'retina-ready', label: 'Retina ready', defaultOn: true },
+  { id: 'retina-ready', label: 'Retina ready', defaultOn: true }
 ];
 export type WebflowFeatureOption = (typeof WEBFLOW_FEATURES)[number]['id'];
 
@@ -768,12 +872,12 @@ export type PageCountOption = 'One' | 'Multi' | 'Multi-layout';
 const PRICING_TIERS: Record<PageCountOption, { default: number[]; cms: number[] }> = {
   One: { default: [29, 39], cms: [39, 49, 59] },
   Multi: { default: [39, 49], cms: [59, 79, 99] },
-  'Multi-layout': { default: [69, 89], cms: [99, 129, 169] },
+  'Multi-layout': { default: [69, 89], cms: [99, 129, 169] }
 };
 
 export function getPricingTiers(
   pageCount: PageCountOption | null,
-  hasCms: boolean,
+  hasCms: boolean
 ): { prices: number[]; recommended: number | null } {
   if (!pageCount) return { prices: [], recommended: null };
   const prices = PRICING_TIERS[pageCount][hasCms ? 'cms' : 'default'];

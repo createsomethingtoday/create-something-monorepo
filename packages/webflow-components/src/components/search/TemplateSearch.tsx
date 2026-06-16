@@ -51,6 +51,11 @@ function getCategoryLabel(item: SuggestItem): string | null {
   return item.category_group_name ?? item.category_groups?.[0]?.name ?? null;
 }
 
+function isFreeSuggestion(item: SuggestItem): boolean {
+  if (typeof item.price === 'number') return item.price === 0;
+  return item.is_free;
+}
+
 export const TemplateSearch: React.FC<TemplateSearchProps> = ({
   apiBaseUrl = 'https://templates.webflow.com/templates-api',
   searchResultsUrl = '',
@@ -71,7 +76,7 @@ export const TemplateSearch: React.FC<TemplateSearchProps> = ({
     return params.get(queryParamKey) ?? params.get('q') ?? params.get('search') ?? '';
   };
 
-  const [inputValue, setInputValue] = useState(getUrlQuery);
+  const [inputValue, setInputValue] = useState('');
   const [items, setItems] = useState<SuggestItem[]>([]);
   const [activeIndex, setActiveIndex] = useState(-1);
   const [isOpen, setIsOpen] = useState(false);
@@ -84,6 +89,7 @@ export const TemplateSearch: React.FC<TemplateSearchProps> = ({
   // Keep input in sync when URL query param changes externally (e.g. back/forward)
   useEffect(() => {
     const onPop = () => setInputValue(getUrlQuery());
+    setInputValue(getUrlQuery());
     window.addEventListener('popstate', onPop);
     return () => window.removeEventListener('popstate', onPop);
   }, [queryParamKey]);
@@ -344,7 +350,7 @@ export const TemplateSearch: React.FC<TemplateSearchProps> = ({
             </span>
             <span style={{ fontSize: '12px', color: '#9b9b9b', whiteSpace: 'nowrap', flexShrink: 0 }}>
               {getCategoryLabel(item) && `${getCategoryLabel(item)} · `}
-              {item.is_free ? 'Free' : item.price ? `$${item.price}` : ''}
+              {isFreeSuggestion(item) ? 'Free' : item.price ? `$${item.price}` : ''}
             </span>
           </div>
         ))}

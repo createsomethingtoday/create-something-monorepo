@@ -14,7 +14,7 @@
     "removeComments": true,
     "noEmitOnError": true,
     "lib": ["ES2020", "DOM"],
-    "types": ["node"]
+    "types": ["node", "@webflow/designer-extension-typings"]
   },
   "include": [
     "src/**/*"

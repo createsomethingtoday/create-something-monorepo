@@ -1,6 +1,7 @@
 import type {
   InkSurface,
   OperatorBrief,
+  OperatorPrioritySourceLink,
   StoredAlert,
   StoredDeviceHeartbeat,
   StoredHealthSnapshot
@@ -31,20 +32,24 @@ function compact(value: string, max: number): string {
 function alertScore(alert: StoredAlert): number {
   const stateWeight =
     alert.state === 'blocked'
-      ? 40
-      : alert.state === 'mcp_attention'
-        ? 35
-        : alert.state === 'agent_attention'
-          ? 30
-          : alert.state === 'daily_alarm'
+      ? 150
+      : alert.state === 'operator_priority'
+        ? 45
+        : alert.state === 'mcp_attention'
+          ? 35
+          : alert.state === 'agent_attention'
             ? 30
-            : alert.state === 'sms_love'
-              ? 28
-              : alert.state === 'approval_needed'
-                ? 25
-                : 0;
+            : alert.state === 'daily_alarm'
+              ? 30
+              : alert.state === 'sms_love'
+                ? 28
+                : alert.state === 'approval_needed'
+                  ? 25
+                  : 0;
 
-  return alert.severity + stateWeight + (alert.urgent ? 50 : 0);
+  const urgentWorkflowWeight =
+    alert.urgent && alert.state !== 'operator_priority' && alert.state !== 'health_attention' ? 75 : 0;
+  return alert.severity + stateWeight + (alert.urgent ? 50 : 0) + urgentWorkflowWeight;
 }
 
 function selectAlert(alerts: StoredAlert[]): StoredAlert | undefined {
@@ -67,6 +72,10 @@ function selectHealth(snapshots: StoredHealthSnapshot[]): StoredHealthSnapshot |
 
 function headlineForAlert(alert: StoredAlert): string {
   switch (alert.state) {
+    case 'operator_priority':
+      if (payloadString(alert, 'signal') === 'braintrust') return 'QUALITY DRIFT';
+      if (payloadString(alert, 'signal') === 'health') return 'HEALTH ATTENTION';
+      return 'OPERATOR PRIORITY';
     case 'mcp_attention':
       return 'MCP ATTENTION';
     case 'agent_attention':
@@ -88,6 +97,54 @@ function headlineForAlert(alert: StoredAlert): string {
     default:
       return alert.urgent ? 'JUDGMENT NEEDED' : 'OPERATOR NOTE';
   }
+}
+
+function payloadString(alert: StoredAlert, key: string): string {
+  const value = alert.payload[key];
+  return typeof value === 'string' ? value.trim().toLowerCase() : '';
+}
+
+function normalizedSourceLinks(value: unknown): OperatorPrioritySourceLink[] {
+  if (!Array.isArray(value)) return [];
+
+  return value
+    .map((link) => {
+      if (typeof link !== 'object' || link === null) return null;
+      const record = link as Record<string, unknown>;
+      const label = typeof record.label === 'string' ? record.label.replace(/\s+/g, ' ').trim() : '';
+      if (!label) return null;
+      const url = typeof record.url === 'string' ? record.url.trim() : '';
+      const kind = typeof record.kind === 'string' ? record.kind.trim() : '';
+      const id = typeof record.id === 'string' ? record.id.trim() : '';
+      return {
+        label,
+        ...(url ? { url } : {}),
+        ...(kind ? { kind } : {}),
+        ...(id ? { id } : {})
+      };
+    })
+    .filter((link): link is OperatorPrioritySourceLink => Boolean(link))
+    .slice(0, 8);
+}
+
+function signalForBrief(brief: OperatorBrief, sourceLinks: OperatorPrioritySourceLink[]): string {
+  const payloadSignal =
+    brief.selected_alert?.state === 'operator_priority' && typeof brief.selected_alert.payload.signal === 'string'
+      ? brief.selected_alert.payload.signal.trim()
+      : '';
+  if (payloadSignal) return payloadSignal;
+  if (sourceLinks[0]?.kind) return sourceLinks[0].kind;
+  if (brief.selected_health) return 'health';
+  if (brief.selected_alert?.state === 'mcp_attention' || brief.selected_alert?.state === 'agent_attention') return 'health';
+  return brief.state === 'clear' ? 'clear' : 'operator';
+}
+
+function detailLabelForBrief(brief: OperatorBrief, sourceLinks: OperatorPrioritySourceLink[]): string {
+  if (sourceLinks[0]?.label) return compact(sourceLinks[0].label, 42);
+  if (brief.selected_alert?.external_id) return compact(brief.selected_alert.external_id, 42);
+  if (brief.selected_alert?.source) return compact(brief.selected_alert.source, 42);
+  if (brief.selected_health?.source) return compact(brief.selected_health.source, 42);
+  return '';
 }
 
 function line2ForAlert(alert: StoredAlert): string {
@@ -179,6 +236,12 @@ export function buildOperatorBrief(input: {
 }
 
 export function toFirmwareBrief(brief: OperatorBrief): Record<string, unknown> {
+  const sourceLinks = brief.selected_alert?.state === 'operator_priority'
+    ? normalizedSourceLinks(brief.selected_alert.payload.source_links)
+    : [];
+  const signal = signalForBrief(brief, sourceLinks);
+  const detailLabel = detailLabelForBrief(brief, sourceLinks);
+
   return {
     state: brief.state,
     headline: brief.headline,
@@ -190,6 +253,9 @@ export function toFirmwareBrief(brief: OperatorBrief): Record<string, unknown> {
     generated_at: brief.generated_at,
     clock: brief.clock,
     surface: brief.surface,
-    counts: brief.counts
+    counts: brief.counts,
+    signal,
+    ...(detailLabel ? { detail_label: detailLabel } : {}),
+    ...(sourceLinks.length > 0 ? { source_links: sourceLinks } : {})
   };
 }

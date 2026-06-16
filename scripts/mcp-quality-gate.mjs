@@ -11,7 +11,7 @@ const PREFLIGHT_BUILD_PACKAGES = [
   '@create-something/mcp-core',
   '@create-something/composio-bridge',
   '@create-something/observability',
-  '@create-something/playbook-mcp',
+  '@create-something/playbook-mcp'
 ];
 const PREFLIGHT_STAGES = new Set(['typecheck', 'test']);
 
@@ -23,6 +23,8 @@ const FLEET_REGISTRY = {
     'packages/halfdozen-gmail-sync',
     'packages/halfdozen-zoom-sync',
     'packages/half-dozen-youtube-sync',
+    'packages/halfdozen-blondish-sync-mcp',
+    'packages/halfdozen-agent-analyzer-telemetry-mcp/worker',
     'packages/halfdozen-telemetry-mcp/worker',
     'packages/schedule-mcp',
     'packages/substrate-mcp',
@@ -30,16 +32,10 @@ const FLEET_REGISTRY = {
     'packages/three-tier-framework-mcp',
     'packages/playbook-mcp',
     'packages/agency/clients/outerfields/mcp-remote',
-    'packages/cs-telemetry-mcp/worker',
+    'packages/cs-telemetry-mcp/worker'
   ],
-  dormant: [
-    'packages/gmail-notion-mcp',
-    'packages/notion-sync-mcp',
-  ],
-  local: [
-    'packages/quickbooks-notion-mcp',
-    'packages/agency/clients/outerfields/mcp-server',
-  ],
+  dormant: ['packages/gmail-notion-mcp', 'packages/notion-sync-mcp'],
+  local: ['packages/quickbooks-notion-mcp', 'packages/agency/clients/outerfields/mcp-server']
 };
 
 function normalizePath(relPath) {
@@ -59,7 +55,9 @@ function parseArgs(argv) {
     }
 
     if (arg === '--help' || arg === '-h') {
-      console.log('Usage: node scripts/mcp-quality-gate.mjs [all|typecheck|lint|test] [--scope=active|fleet|all]');
+      console.log(
+        'Usage: node scripts/mcp-quality-gate.mjs [all|typecheck|lint|test] [--scope=active|fleet|all]'
+      );
       process.exit(0);
     }
 
@@ -135,7 +133,7 @@ function run(command, args, cwd, label) {
   const result = spawnSync(command, args, {
     cwd,
     stdio: 'inherit',
-    env: process.env,
+    env: process.env
   });
   return result.status ?? 1;
 }
@@ -147,12 +145,7 @@ function runPreflightBuilds(stagesToRun) {
   console.log(`Building shared workspace dependencies: ${PREFLIGHT_BUILD_PACKAGES.join(', ')}`);
 
   for (const pkg of PREFLIGHT_BUILD_PACKAGES) {
-    const status = run(
-      'pnpm',
-      ['--filter', pkg, 'run', 'build'],
-      REPO_ROOT,
-      `preflight | ${pkg}`,
-    );
+    const status = run('pnpm', ['--filter', pkg, 'run', 'build'], REPO_ROOT, `preflight | ${pkg}`);
 
     if (status !== 0) {
       console.error(`Preflight build failed for ${pkg}.`);
@@ -181,11 +174,13 @@ function getWorkspacePackageDirs() {
   const result = spawnSync('pnpm', ['-r', 'list', '--depth', '-1', '--json'], {
     cwd: REPO_ROOT,
     env: process.env,
-    encoding: 'utf8',
+    encoding: 'utf8'
   });
 
   if (result.status !== 0) {
-    console.error('Warning: failed to query pnpm workspace membership; falling back to lockfile-based manager detection.');
+    console.error(
+      'Warning: failed to query pnpm workspace membership; falling back to lockfile-based manager detection.'
+    );
     return new Set();
   }
 
@@ -193,7 +188,9 @@ function getWorkspacePackageDirs() {
   try {
     list = JSON.parse(result.stdout || '[]');
   } catch {
-    console.error('Warning: failed to parse pnpm workspace membership; falling back to lockfile-based manager detection.');
+    console.error(
+      'Warning: failed to parse pnpm workspace membership; falling back to lockfile-based manager detection.'
+    );
     return new Set();
   }
 
@@ -250,7 +247,7 @@ function parsePackage(pkgFile, workspaceDirs) {
   const deps = {
     ...(json.dependencies ?? {}),
     ...(json.devDependencies ?? {}),
-    ...(json.peerDependencies ?? {}),
+    ...(json.peerDependencies ?? {})
   };
   const manager = getPackageManager(pkgDir, workspaceDirs, deps);
 
@@ -261,7 +258,7 @@ function parsePackage(pkgFile, workspaceDirs) {
     scripts: json.scripts ?? {},
     manager,
     isWorker: relDir.endsWith('/worker'),
-    deps,
+    deps
   };
 }
 
@@ -336,7 +333,7 @@ function discoverHeuristicPackageFiles() {
     const deps = {
       ...(json.dependencies ?? {}),
       ...(json.devDependencies ?? {}),
-      ...(json.peerDependencies ?? {}),
+      ...(json.peerDependencies ?? {})
     };
 
     const pkgName = json.name ?? '';
@@ -353,10 +350,7 @@ function discoverHeuristicPackageFiles() {
       pkgName.includes('half-dozen-youtube-sync');
 
     const include =
-      isMcpByName ||
-      isMcpByPath ||
-      isMcpSync ||
-      (isWorker && (hasSdk || hasMcpCore || hasAgents));
+      isMcpByName || isMcpByPath || isMcpSync || (isWorker && (hasSdk || hasMcpCore || hasAgents));
 
     if (!include) continue;
     discovered.push(pkgFile);
@@ -430,8 +424,16 @@ function lintSmoke(pkg) {
   const hasTypecheckScript = typeof pkg.scripts.typecheck === 'string';
   const hasBuildScript = typeof pkg.scripts.build === 'string';
 
-  if (hasTypeScriptSource(pkg.dir) && !hasTsconfig && !hasWrangler && !hasTypecheckScript && !hasBuildScript) {
-    issues.push('typescript source found without tsconfig, wrangler config, or typecheck/build script');
+  if (
+    hasTypeScriptSource(pkg.dir) &&
+    !hasTsconfig &&
+    !hasWrangler &&
+    !hasTypecheckScript &&
+    !hasBuildScript
+  ) {
+    issues.push(
+      'typescript source found without tsconfig, wrangler config, or typecheck/build script'
+    );
   }
 
   if (!pkg.isWorker && !existsSync(path.join(pkg.dir, 'README.md'))) {

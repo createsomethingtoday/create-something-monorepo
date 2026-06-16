@@ -11,6 +11,7 @@ published: true
 ## Available Surfaces
 
 - `Navigation`: primary site header with desktop and mobile states
+- `Footer`: property directory, grouped links, newsletter, legal, and cross-property links
 - `Breadcrumbs`: hierarchical wayfinding with optional home icon
 - `Tabs`: WAI-ARIA tab panels with keyboard navigation and bindable active state
 
@@ -35,6 +36,51 @@ published: true
   ctaHref="/contact"
 />
 ```
+
+## Clear Communication Navigation
+
+`Navigation` and `Footer` both accept `visualStyle?: 'classic' | 'clear'`. The default is
+`classic` to preserve existing callers while the Ona-derived clear system rolls out.
+
+Use `clear` when the page must serve a buyer or operator who needs immediate orientation before
+brand atmosphere. The clear style follows the Ona-derived communication layer: frosted light shell,
+compact readable links, crisp dividers, restrained active states, direct dark CTA, and no decorative
+navigation complexity.
+
+```svelte
+<Navigation
+  logo="CREATE SOMETHING"
+  logoSuffix=".agency"
+  links={links}
+  currentPath="/"
+  fixed={true}
+  ctaLabel="Map one workflow"
+  ctaHref="/book"
+  visualStyle="clear"
+/>
+
+<Footer
+  mode="agency"
+  aboutText="Governed workflows with clear trust boundaries and receipt-backed delivery."
+  quickLinkGroups={footerGroups}
+  footerCta={{
+    label: 'Map one workflow',
+    href: '/book',
+    description: 'Leave with the workflow, boundary, and proof path.'
+  }}
+  visualStyle="clear"
+/>
+```
+
+## Clear Communication Primitives
+
+The clear navigation and footer are designed to pair with:
+
+- `ClearPageSection`: claim, proof, action, and split hero sections
+- `ClearProofStrip`: compact objects/actions/states/receipts proof
+- `ClearStateRows`: governed run/wait/stop rows
+- `ClearReceiptGrid` and `ClearArtifactCard`: evidence and delivery receipts
+- `ClearCtaBand`: restrained final action band
 
 ## Breadcrumbs and Tabs
 
@@ -69,6 +115,8 @@ published: true
 1. Keep the primary header focused on top-level choices.
 2. Use breadcrumbs when the user needs a clear sense of depth.
 3. Use tabs for peer content, not for hiding unrelated workflows.
+4. Use `visualStyle="clear"` for the new CREATE SOMETHING communication layer: plain-language
+   orientation, visible proof, and a direct next action.
 
 ## Related
 

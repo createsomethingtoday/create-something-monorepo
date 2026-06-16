@@ -24,6 +24,7 @@ Cloudflare Pages-ready surface under `.cloudflare/delivery-site`.
 
 - `abundance/2026-05-06-project-update.md` - The NP Group / NPG Abundance nurse staffing DB/MCP/agent update.
 - `progress/2026-05-06-agent-progress-report.md` - Operator report for the delivery-update agent.
+- `webflow-marketplace/README.md` - Webflow Template Marketplace PM impact report collection.
 
 ## Source of Truth
 

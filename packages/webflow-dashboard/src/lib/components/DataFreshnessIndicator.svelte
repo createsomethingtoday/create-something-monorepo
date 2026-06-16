@@ -22,15 +22,39 @@
   // Tooltip state for fixed-position tooltip
   let showTooltip = $state(false);
   let tooltipPosition = $state({ top: 0, left: 0 });
+  let tooltipElement = $state<HTMLDivElement | null>(null);
+  let triggerRect: DOMRect | null = null;
 
   function handleClick(e: MouseEvent) {
-    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    triggerRect = (e.currentTarget as HTMLElement).getBoundingClientRect();
     tooltipPosition = {
-      top: rect.bottom + 8,
-      left: rect.left + rect.width / 2
+      top: triggerRect.bottom + 8,
+      left: triggerRect.left + triggerRect.width / 2
     };
     showTooltip = !showTooltip;
   }
+
+  // After the tooltip renders, clamp it to the viewport: flip above the
+  // trigger when there's no room below, and keep it from running off either edge.
+  $effect(() => {
+    if (!showTooltip || !tooltipElement || !triggerRect) return;
+
+    const margin = 12;
+    const rect = tooltipElement.getBoundingClientRect();
+
+    let top = triggerRect.bottom + 8;
+    if (top + rect.height > window.innerHeight - margin) {
+      top = Math.max(margin, triggerRect.top - 8 - rect.height);
+    }
+
+    const preferredLeft = triggerRect.left + triggerRect.width / 2 - rect.width / 2;
+    const clampedLeft = Math.min(
+      Math.max(preferredLeft, margin),
+      Math.max(margin, window.innerWidth - margin - rect.width)
+    );
+
+    tooltipPosition = { top, left: clampedLeft + rect.width / 2 };
+  });
 
   function closeTooltip() {
     showTooltip = false;
@@ -128,6 +152,7 @@
     ></button>
     <div
       class="tooltip-fixed"
+      bind:this={tooltipElement}
       style="top: {tooltipPosition.top}px; left: {tooltipPosition.left}px;"
     >
       <button class="tooltip-close" onclick={closeTooltip}>

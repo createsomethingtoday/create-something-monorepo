@@ -43,6 +43,7 @@
 	// - AIRTABLE_API_KEY
 	// - AIRTABLE_BASE_ID
 	// - CRON_SECRET (required in production for /api/cron/* auth)
+	// - TEMPLATE_OFFER_DIAGNOSTIC_TOKEN (required for /api/admin/template-offer-requests/reproduce bearer auth)
 	// Optional vars/secrets:
 	// - ADMIN_EMAILS (comma-separated allowlist for admin-only API reads)
 	// - CSRF_TRUSTED_ORIGINS (comma-separated extra trusted origins for cookie-authenticated API mutations)

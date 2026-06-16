@@ -1,6 +1,7 @@
 # Agency Codex Vector Strategy
 
 > Date: February 16, 2026
+> Updated: May 11, 2026 (Pi delivery vector)
 > Scope: CREATE SOMETHING `.agency` packaging and delivery model
 > Priority: Max differentiation
 
@@ -10,7 +11,8 @@ The commercial default is now **Policy OS** (**Skills + MCP**), with **MCP-only*
 
 - MCP remains the chassis: trust boundaries, connectivity, policy artifacts.
 - Outcomes are the product: execution quality, escalation policy, and continuous tuning.
-- Codex is the primary setup and demo vector, while MCP contracts stay portable.
+- Codex is the primary setup and demo vector, with Pi and Claude Code as co-equal delivery targets.
+- MCP contracts and policy artifacts stay portable across all agent harnesses.
 - Canonical phrasing for delivery vector is now **Skills on MCP**.
 
 ## Delivery Vector Language System
@@ -38,6 +40,34 @@ Context-bloat objection handling (approved line):
 Competitive moat emphasis:
 
 - Hard-to-copy elements lead all positioning: custom MCP creation, auth/security boundary design, policy artifacts, approval/escalation runbooks, and monthly tuning.
+
+## Delivery Targets
+
+Policy OS ships to all major agent harnesses. Artifacts are portable by design:
+
+| Target | Delivery Format | Distribution |
+|--------|----------------|-------------|
+| **Codex** | MCP servers + Codex tasks + policy artifacts | Primary demo vector |
+| **Pi** | Pi packages (extensions + skills + prompts + themes) | `pi install npm:@create-something/pi-policy-os` |
+| **Claude Code** | `.claude/` directory (rules + skills + commands + hooks) | Repository config |
+| **Cursor** | MCP servers + `.cursorrules` | Repository config |
+
+### Pi as Delivery Vector
+
+Pi packages (`npm:@create-something/pi-*`) provide the richest extensibility:
+- **Extensions**: Custom tools, quality gates, interactive commands, event handlers
+- **Skills**: Domain knowledge loaded on demand
+- **Prompts**: Workflow templates as slash commands
+- **Themes**: Visual identity (Glass Design System)
+
+Public packages serve as discovery wedges:
+- `@create-something/pi-three-tier-framework` — Framework as installable agent knowledge
+- `@create-something/pi-policy-os` — Governance starter with quality gates
+
+Client-specific packages (`private: true`) deliver domain configuration:
+- `@create-something/pi-halfdozen` — Half Dozen fleet knowledge and client management
+
+See `packages/pi-three-tier-framework/`, `packages/pi-policy-os/`, `packages/pi-halfdozen/`.
 
 ## Strategic decision
 

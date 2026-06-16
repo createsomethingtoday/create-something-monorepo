@@ -2,13 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { AirtableClient } from '../src/airtable.js';
-import {
-  CONFIRMED_ASSET_FIELDS,
-  CONFIRMED_VERSION_FIELDS,
-  CONFIRMED_WRITE_FIELD_IDS,
-  METRICS_ASSET_FIELD_IDS,
-  TABLE_IDS,
-} from '../src/schema.js';
+import { CONFIRMED_ASSET_FIELDS, CONFIRMED_VERSION_FIELDS, CONFIRMED_WRITE_FIELD_IDS, METRICS_ASSET_FIELD_IDS, TABLE_IDS } from '../src/schema.js';
 
 const ericReviewer = {
   id: 'usr_eric',
@@ -289,17 +283,62 @@ test('listVersionsForAgentFeedback filters for ready rows without existing agent
     },
   });
 
-  const versions = await client.listVersionsForAgentFeedback({ limit: 5, viewId: 'viw_ready_queue' });
+  const versions = await client.listVersionsForAgentFeedback({
+    limit: 5,
+    viewId: 'viw_ready_queue',
+  });
 
   assert.ok(capturedUrl);
   assert.equal(capturedUrl.searchParams.get('view'), 'viw_ready_queue');
-  assert.match(
-    capturedUrl.searchParams.get('filterByFormula') ?? '',
-    /LEN\(TRIM\(\{📝Agent Review Feedback\} & ""\)\) = 0/,
-  );
+  assert.match(capturedUrl.searchParams.get('filterByFormula') ?? '', /LEN\(TRIM\(\{📝Agent Review Feedback\} & ""\)\) = 0/);
   assert.equal(capturedUrl.searchParams.get('sort[0][field]'), CONFIRMED_VERSION_FIELDS.submissionDatetime);
+  assert.equal(capturedUrl.searchParams.get('sort[0][direction]'), 'asc');
   assert.equal(versions.length, 1);
   assert.equal(versions[0]?.reviewStatus, '🆕Ready for Review');
+});
+
+test('listVersionsForAgentFeedback can scope to recent submitted rows newest first', async () => {
+  let capturedUrl: URL | null = null;
+  const client = new AirtableClient({
+    apiKey: 'test',
+    fetchFn: async (input) => {
+      capturedUrl = new URL(String(input));
+      return jsonResponse({ records: [] });
+    },
+  });
+
+  await client.listVersionsForAgentFeedback({
+    limit: 10,
+    submittedSince: '2026-05-27T00:00:00.000Z',
+    submittedUntil: '2026-06-03T23:59:59.000Z',
+    sortDirection: 'desc',
+  });
+
+  assert.ok(capturedUrl);
+  const formula = capturedUrl.searchParams.get('filterByFormula') ?? '';
+  assert.match(formula, /IS_AFTER\(\{📅Submission Datetime\}, DATEADD\(DATETIME_PARSE\('2026-05-27T00:00:00.000Z'\), -1, 'seconds'\)\)/);
+  assert.match(formula, /IS_BEFORE\(\{📅Submission Datetime\}, DATEADD\(DATETIME_PARSE\('2026-06-03T23:59:59.000Z'\), 1, 'seconds'\)\)/);
+  assert.equal(capturedUrl.searchParams.get('sort[0][field]'), CONFIRMED_VERSION_FIELDS.submissionDatetime);
+  assert.equal(capturedUrl.searchParams.get('sort[0][direction]'), 'desc');
+});
+
+test('listVersionsForAgentFeedback rejects invalid submitted date filters', async () => {
+  const client = new AirtableClient({
+    apiKey: 'test',
+    fetchFn: async () => {
+      throw new Error('fetch should not be called for invalid date filters');
+    },
+  });
+
+  await assert.rejects(
+    client.listVersionsForAgentFeedback({
+      submittedSince: 'not-a-date',
+    }),
+    (error: unknown) => {
+      assert.equal((error as { code?: string }).code, 'INVALID_DATE_FILTER');
+      return true;
+    },
+  );
 });
 
 test('listReleases uses the stable Airtable release table id', async () => {
@@ -544,6 +583,87 @@ test('listMyQueueDetailed reads reviewer-owned versions directly and hydrates on
   assert.equal(queue.items[0]?.reviewOwner?.id, ericReviewer.id);
 });
 
+test('listMyQueueDetailed defaults to active assigned statuses', async () => {
+  let capturedVersionUrl: URL | null = null;
+  const client = new AirtableClient({
+    apiKey: 'test',
+    fetchFn: async (input) => {
+      const url = new URL(String(input));
+
+      if (url.pathname.includes(`/${TABLE_IDS.assetVersions}`)) {
+        capturedVersionUrl = url;
+        return jsonResponse({
+          records: [
+            {
+              id: 'rec_active_v1',
+              createdTime: '2026-03-12T00:00:00.000Z',
+              fields: {
+                [CONFIRMED_VERSION_FIELDS.assetRecordId]: 'rec_asset_active',
+                [CONFIRMED_VERSION_FIELDS.versionNumber]: 1,
+                [CONFIRMED_VERSION_FIELDS.reviewStatus]: '🏃🏾In Review',
+                [CONFIRMED_VERSION_FIELDS.reviewOwner]: ericReviewer,
+                [CONFIRMED_VERSION_FIELDS.submissionDatetime]: '2026-03-12T12:00:00.000Z',
+              },
+            },
+            {
+              id: 'rec_done_v1',
+              createdTime: '2026-03-11T00:00:00.000Z',
+              fields: {
+                [CONFIRMED_VERSION_FIELDS.assetRecordId]: 'rec_asset_done',
+                [CONFIRMED_VERSION_FIELDS.versionNumber]: 1,
+                [CONFIRMED_VERSION_FIELDS.reviewStatus]: '✅Approved',
+                [CONFIRMED_VERSION_FIELDS.reviewOwner]: ericReviewer,
+                [CONFIRMED_VERSION_FIELDS.submissionDatetime]: '2026-03-11T12:00:00.000Z',
+              },
+            },
+          ],
+        });
+      }
+
+      if (url.pathname.includes(`/${TABLE_IDS.assets}`)) {
+        return jsonResponse({
+          records: [
+            {
+              id: 'rec_asset_active',
+              createdTime: '2026-03-12T00:00:00.000Z',
+              fields: {
+                [CONFIRMED_ASSET_FIELDS.type]: 'Template🏗️',
+                [CONFIRMED_ASSET_FIELDS.name]: 'Active Template',
+                [CONFIRMED_ASSET_FIELDS.latestReviewStatus]: '🏃🏾In Review',
+              },
+            },
+            {
+              id: 'rec_asset_done',
+              createdTime: '2026-03-11T00:00:00.000Z',
+              fields: {
+                [CONFIRMED_ASSET_FIELDS.type]: 'Template🏗️',
+                [CONFIRMED_ASSET_FIELDS.name]: 'Done Template',
+                [CONFIRMED_ASSET_FIELDS.latestReviewStatus]: '✅Approved',
+              },
+            },
+          ],
+        });
+      }
+
+      throw new Error(`Unexpected fetch: ${url.toString()}`);
+    },
+  });
+
+  const queue = await client.listMyQueueDetailed({
+    currentReviewer: ericReviewer,
+  });
+
+  assert.ok(capturedVersionUrl);
+  const formula = capturedVersionUrl.searchParams.get('filterByFormula') ?? '';
+  assert.match(formula, /Ready for Review/);
+  assert.match(formula, /In Review/);
+  assert.match(formula, /Changes Requested/);
+  assert.doesNotMatch(formula, /Approved/);
+  assert.equal(queue.items.length, 1);
+  assert.equal(queue.items[0]?.templateName, 'Active Template');
+  assert.equal(queue.items[0]?.normalizedStatus, 'in_review');
+});
+
 test('listMyQueueDetailed bounds reviewer scans to a buffered limit', async () => {
   let capturedVersionUrl: URL | null = null;
   const client = new AirtableClient({
@@ -604,13 +724,10 @@ test('assignSelfToVersion rejects versions already owned by another reviewer', a
     },
   });
 
-  await assert.rejects(
-    client.assignSelfToVersion('rec_version_conflict', ericReviewer),
-    (error: unknown) => {
-      assert.equal((error as { code?: string }).code, 'REVIEWER_ASSIGNMENT_CONFLICT');
-      return true;
-    },
-  );
+  await assert.rejects(client.assignSelfToVersion('rec_version_conflict', ericReviewer), (error: unknown) => {
+    assert.equal((error as { code?: string }).code, 'REVIEWER_ASSIGNMENT_CONFLICT');
+    return true;
+  });
 });
 
 test('requireAssignedVersion fails closed when the version is unassigned', async () => {
@@ -646,13 +763,10 @@ test('requireAssignedVersion fails closed when the version is unassigned', async
     },
   });
 
-  await assert.rejects(
-    client.requireAssignedVersion('rec_version_unassigned', ericReviewer),
-    (error: unknown) => {
-      assert.equal((error as { code?: string }).code, 'REVIEWER_ASSIGNMENT_REQUIRED');
-      return true;
-    },
-  );
+  await assert.rejects(client.requireAssignedVersion('rec_version_unassigned', ericReviewer), (error: unknown) => {
+    assert.equal((error as { code?: string }).code, 'REVIEWER_ASSIGNMENT_REQUIRED');
+    return true;
+  });
 });
 
 test('updateVersionReview rejects unsupported improvement areas before calling Airtable', async () => {
@@ -739,6 +853,105 @@ test('updateVersionReview includes Airtable error details on failed updates', as
             message: 'Testing write access is not a valid option.',
           },
         },
+      });
+      return true;
+    },
+  );
+});
+
+test('updateVersionReview reasserts review owner after review field mutations', async () => {
+  const bodies: unknown[] = [];
+  const client = new AirtableClient({
+    apiKey: 'test',
+    reviewOwnerReassertionDelayMs: 0,
+    fetchFn: async (input, init) => {
+      const url = new URL(String(input));
+
+      assert.match(url.pathname, new RegExp(`/${TABLE_IDS.assetVersions}/rec_version_reassert_owner$`));
+      assert.equal(init?.method, 'PATCH');
+      bodies.push(JSON.parse(String(init?.body)));
+
+      if (bodies.length === 1) {
+        return jsonResponse({
+          id: 'rec_version_reassert_owner',
+          createdTime: '2026-03-18T00:00:00.000Z',
+          fields: {
+            [CONFIRMED_VERSION_FIELDS.assetRecordId]: 'rec_asset_current',
+            [CONFIRMED_VERSION_FIELDS.reviewOwner]: ericReviewer,
+            [CONFIRMED_VERSION_FIELDS.reviewStatus]: '🏃🏾In Review',
+          },
+        });
+      }
+
+      if (bodies.length === 2) {
+        return jsonResponse({
+          id: 'rec_version_reassert_owner',
+          createdTime: '2026-03-18T00:00:00.000Z',
+          fields: {
+            [CONFIRMED_VERSION_FIELDS.assetRecordId]: 'rec_asset_current',
+            [CONFIRMED_VERSION_FIELDS.reviewOwner]: ericReviewer,
+            [CONFIRMED_VERSION_FIELDS.reviewStatus]: '🏃🏾In Review',
+          },
+        });
+      }
+
+      throw new Error('Unexpected extra Airtable write');
+    },
+  });
+
+  const version = await client.updateVersionReview('rec_version_reassert_owner', {
+    review_owner: { id: ericReviewer.id },
+    review_status: '🏃🏾In Review',
+  });
+
+  assert.deepEqual(bodies, [
+    {
+      fields: {
+        [CONFIRMED_VERSION_FIELDS.reviewOwner]: { id: ericReviewer.id },
+        [CONFIRMED_VERSION_FIELDS.reviewStatus]: '🏃🏾In Review',
+      },
+    },
+    {
+      fields: {
+        [CONFIRMED_VERSION_FIELDS.reviewOwner]: { id: ericReviewer.id },
+      },
+    },
+  ]);
+  assert.equal(version.reviewOwner?.id, ericReviewer.id);
+  assert.equal(version.reviewStatus, '🏃🏾In Review');
+});
+
+test('updateVersionReview fails when review owner reassertion returns a different owner', async () => {
+  let calls = 0;
+  const client = new AirtableClient({
+    apiKey: 'test',
+    reviewOwnerReassertionDelayMs: 0,
+    fetchFn: async () => {
+      calls += 1;
+      return jsonResponse({
+        id: 'rec_version_reassert_mismatch',
+        createdTime: '2026-03-18T00:00:00.000Z',
+        fields: {
+          [CONFIRMED_VERSION_FIELDS.assetRecordId]: 'rec_asset_current',
+          [CONFIRMED_VERSION_FIELDS.reviewOwner]: calls === 1 ? ericReviewer : { id: 'usr_micah', email: 'micah@webflow.com' },
+          [CONFIRMED_VERSION_FIELDS.reviewStatus]: '🏃🏾In Review',
+        },
+      });
+    },
+  });
+
+  await assert.rejects(
+    client.updateVersionReview('rec_version_reassert_mismatch', {
+      review_owner: { id: ericReviewer.id },
+      review_status: '🏃🏾In Review',
+    }),
+    (error: unknown) => {
+      assert.equal((error as { code?: string }).code, 'REVIEW_OWNER_REASSERTION_FAILED');
+      assert.deepEqual((error as { details?: unknown }).details, {
+        version_id: 'rec_version_reassert_mismatch',
+        expected_reviewer_id: ericReviewer.id,
+        actual_reviewer_id: 'usr_micah',
+        reassertion_delay_ms: 0,
       });
       return true;
     },

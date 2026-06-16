@@ -251,7 +251,7 @@
 		"@sveltejs/kit": "^2.0.0",
 		"better-sqlite3": "^11.0.0",
 		"html2canvas": "^1.4.0",
-		"lucide-svelte": "^0.400.0",
+		"lucide-svelte": ">=0.554.0 <1.0.0",
 		"svelte": "^5.0.0"
 	},
 	"peerDependenciesMeta": {
@@ -273,7 +273,7 @@
 		"@types/better-sqlite3": "^7.6.12",
 		"@types/three": "^0.170.0",
 		"@webgpu/types": "^0.1.69",
-		"lucide-svelte": "^0.469.0",
+		"lucide-svelte": "^0.562.0",
 		"publint": "^0.3.14",
 		"svelte": "^5.41.0",
 		"svelte-check": "^4.3.3",

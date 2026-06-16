@@ -19,8 +19,11 @@ export async function fetchHTML(url: string): Promise<FetchResult> {
 			signal: controller.signal,
 			headers: {
 				'User-Agent': 'WebflowWayValidator/1.0'
-			}
-		});
+			},
+			// Short edge cache so re-runs after small fixes don't re-fetch every
+			// page/asset; 60s is below any realistic fix-publish-revalidate cycle.
+			cf: { cacheTtl: 60, cacheEverything: true }
+		} as RequestInit);
 
 		clearTimeout(timeoutId);
 
@@ -89,8 +92,11 @@ export async function fetchAsset(url: string): Promise<AssetFetchResult> {
 			signal: controller.signal,
 			headers: {
 				'User-Agent': 'WebflowWayValidator/1.0'
-			}
-		});
+			},
+			// Short edge cache so re-runs after small fixes don't re-fetch every
+			// page/asset; 60s is below any realistic fix-publish-revalidate cycle.
+			cf: { cacheTtl: 60, cacheEverything: true }
+		} as RequestInit);
 
 		clearTimeout(timeoutId);
 
@@ -397,13 +403,27 @@ function extractElements(html: string, regex: RegExp): string[] {
 	return matches || [];
 }
 
+// Webflow Ecommerce components (cart modal, default checkout blocks) render
+// headings with fixed tags (e.g. <h4 class="w-commerce-commercecartheading">
+// inside the display:none cart dialog on every page with a cart element).
+// Creators cannot retag them, and Webflow's own Audit Panel excludes them, so
+// they must not participate in heading-hierarchy analysis. The auto-generated
+// w-commerce- class prefix identifies them in both DOM and regex parsing paths.
+export function isPlatformManagedHeading(heading: HTMLHeadingElement): boolean {
+	const className =
+		typeof heading.getAttribute === 'function'
+			? heading.getAttribute('class') || ''
+			: (heading as { className?: string }).className || '';
+	return /(?:^|\s)w-commerce-/.test(className);
+}
+
 function createMockElement(htmlString: string): any {
 	// Create a basic mock element with getAttribute method
 	const attributes = extractAttributes(htmlString);
 	const tagName = htmlString.match(/<(\w+)/)?.[1]?.toUpperCase() || 'UNKNOWN';
 
 	const mockElement: any = {
-		getAttribute: (name: string) => attributes[name] || null,
+		getAttribute: (name: string) => name in attributes ? attributes[name] : null,
 		hasAttribute: (name: string) => name in attributes,
 		textContent: htmlString.replace(/<[^>]*>/g, '').trim(),
 		tagName: tagName,

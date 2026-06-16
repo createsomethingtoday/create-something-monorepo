@@ -7,6 +7,8 @@
 - Multi-category validation engine
 
 ## Changes/Fixes
+- Fixed Variable Modes false warning by collecting `collection.getAllVariableModes()`
+- Treats missing mode data as unavailable instead of reporting zero modes
 - Fixed checkbox alignment with 400px width constraint
 - Corrected tab behavior (Overview on new, preserve on refresh)
 - Aligned styling with Figma to Webflow patterns

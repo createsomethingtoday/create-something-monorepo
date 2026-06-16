@@ -1,8 +1,10 @@
 <script lang="ts">
-	import { TableCell, TableRow } from './ui';
+	import { Badge, TableCell, TableRow } from './ui';
 	import ActionsDropdown from './ActionsDropdown.svelte';
 	import type { Asset } from '$lib/server/airtable';
 	import { getAssetActionConfig, normalizeAssetStatus } from '$lib/utils/asset-actions';
+	import { isTemplateSearchSuppressed } from '$lib/utils/template-health';
+	import { LoaderCircle } from 'lucide-svelte';
 	import {
 		formatCompactCurrency,
 		formatCompactNumber,
@@ -13,18 +15,54 @@
 	interface Props {
 		asset: Asset;
 		showPerformance?: boolean;
+		isViewDisabled?: boolean;
+		isViewLoading?: boolean;
+		isEditDisabled?: boolean;
+		isEditLoading?: boolean;
 		onView?: (id: string) => void;
+		onPreloadView?: (id: string) => void;
 		onEdit?: (id: string) => void;
-		onArchive?: (id: string) => Promise<void>;
+		onArchive?: (id: string) => void | Promise<void>;
 	}
 
-	let { asset, showPerformance = false, onView, onEdit, onArchive }: Props = $props();
+	let {
+		asset,
+		showPerformance = false,
+		isViewDisabled = false,
+		isViewLoading = false,
+		isEditDisabled = false,
+		isEditLoading = false,
+		onView,
+		onPreloadView,
+		onEdit,
+		onArchive
+	}: Props = $props();
 
 	let imageError = $state(false);
 
 	const actionConfig = $derived(getAssetActionConfig(asset.status));
 	const cleanedStatus = $derived(normalizeAssetStatus(asset.status));
 	const showMetrics = $derived(!['Upcoming', 'Rejected'].includes(cleanedStatus));
+	const isSearchSuppressed = $derived(isTemplateSearchSuppressed(asset.searchVisibility));
+	const hasActiveOffer = $derived(
+		Boolean(
+			asset.activeOfferLabel ||
+				asset.activeOfferCtaUrl ||
+				asset.activeOfferStrategy ||
+				asset.activeOfferEndsAt ||
+				asset.activeOfferVisibility ||
+				asset.activeOfferPrice !== undefined
+		)
+	);
+
+	function handleView() {
+		if (isViewDisabled) return;
+		onView?.(asset.id);
+	}
+
+	function preloadView() {
+		onPreloadView?.(asset.id);
+	}
 
 	// Tufte: Show relationships, not just numbers
 	// Conversion rate = purchases / viewers (key performance indicator)
@@ -46,7 +84,11 @@
 		<button
 			type="button"
 			class="asset-thumbnail-link"
-			onclick={() => onView?.(asset.id)}
+			class:loading={isViewLoading}
+			disabled={isViewDisabled}
+			onmouseenter={preloadView}
+			onfocus={preloadView}
+			onclick={handleView}
 			aria-label={`Open ${asset.name}`}
 		>
 			{#if asset.thumbnailUrl && !imageError}
@@ -54,6 +96,10 @@
 					src={asset.thumbnailUrl}
 					alt={asset.name}
 					class="thumbnail"
+					loading="lazy"
+					decoding="async"
+					width="30"
+					height="38"
 					onerror={() => (imageError = true)}
 				/>
 			{:else}
@@ -64,10 +110,40 @@
 		</button>
 	</TableCell>
 	<TableCell class="asset-title-cell">
-		<button type="button" class="asset-name-link" onclick={() => onView?.(asset.id)}>
-			<span class="asset-name">{asset.name}</span>
-			{#if asset.category}
-				<span class="asset-meta">{asset.category}</span>
+		<button
+			type="button"
+			class="asset-name-link"
+			class:loading={isViewLoading}
+			disabled={isViewDisabled}
+			onmouseenter={preloadView}
+			onfocus={preloadView}
+			onclick={handleView}
+		>
+			<span class="asset-name-row">
+				{#if isViewLoading}
+					<LoaderCircle size={14} class="row-spinner" />
+				{/if}
+				<span class="asset-name">{asset.name}</span>
+			</span>
+			{#if hasActiveOffer}
+				<span class="offer-badge-row">
+					<Badge variant="info">
+						{asset.activeOfferLabel || 'Limited offer'}
+						{#if asset.activeOfferPrice !== undefined}
+							· {formatCompactCurrency(asset.activeOfferPrice)}
+						{/if}
+					</Badge>
+				</span>
+			{/if}
+			{#if isSearchSuppressed}
+				<span class="offer-badge-row">
+					<Badge variant="warning">Detail only</Badge>
+				</span>
+			{/if}
+			{#if asset.recoveryOfferUsed}
+				<span class="offer-badge-row">
+					<Badge variant="secondary">Recovery used</Badge>
+				</span>
 			{/if}
 		</button>
 	</TableCell>
@@ -79,8 +155,13 @@
 			{/if}
 		</div>
 	</TableCell>
-	<TableCell class="type-cell">
-		<span class="type">{asset.type}</span>
+	<TableCell class="category-cell">
+		<div class="category-stack" title={[asset.category, asset.subcategory].filter(Boolean).join(' / ')}>
+			<span class="category">{asset.category || 'Uncategorized'}</span>
+			{#if asset.subcategory}
+				<span class="category-sub">{asset.subcategory}</span>
+			{/if}
+		</div>
 	</TableCell>
 	{#if showPerformance}
 		{@const cr = conversionRate()}
@@ -110,7 +191,12 @@
 			assetId={asset.id}
 			status={asset.status}
 			actions={[actionConfig.primary, ...actionConfig.secondary]}
+			{isViewDisabled}
+			{isViewLoading}
+			{isEditDisabled}
+			{isEditLoading}
 			{onView}
+			{onPreloadView}
 			{onEdit}
 			{onArchive}
 		/>
@@ -149,6 +235,17 @@
 		outline-offset: 2px;
 	}
 
+	.asset-thumbnail-link:disabled,
+	.asset-name-link:disabled {
+		cursor: wait;
+		opacity: 0.65;
+	}
+
+	.asset-thumbnail-link.loading,
+	.asset-name-link.loading {
+		opacity: 1;
+	}
+
 	.thumbnail {
 		width: 30px;
 		height: 38px;
@@ -178,11 +275,29 @@
 		line-height: 1.16;
 	}
 
-	.asset-meta {
-		font-size: var(--text-caption);
-		color: var(--color-fg-muted);
-		line-height: 1.15;
-		letter-spacing: 0;
+	.asset-name-row {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.35rem;
+		min-width: 0;
+	}
+
+	:global(.row-spinner) {
+		flex-shrink: 0;
+		color: var(--color-info);
+		animation: spin 0.8s linear infinite;
+	}
+
+	@keyframes spin {
+		to {
+			transform: rotate(360deg);
+		}
+	}
+
+	.offer-badge-row {
+		display: inline-flex;
+		margin-top: 0.22rem;
+		max-width: 100%;
 	}
 
 	.asset-name-link:hover .asset-name {
@@ -193,7 +308,7 @@
 	}
 
 	.date,
-	.type {
+	.category {
 		color: var(--color-fg-tertiary);
 		font-size: 0.82rem;
 	}
@@ -206,7 +321,6 @@
 
 	.date,
 	.date-sub,
-	.type,
 	.metric,
 	.metric-sub {
 		font-variant-numeric: tabular-nums;
@@ -218,10 +332,28 @@
 		letter-spacing: 0;
 	}
 
-	.type {
+	.category-stack {
+		display: flex;
+		flex-direction: column;
+		gap: 0.04rem;
+		min-width: 0;
+	}
+
+	.category {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 		font-size: var(--text-caption);
-		text-transform: uppercase;
 		letter-spacing: 0;
+	}
+
+	.category-sub {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		font-size: var(--text-caption);
+		color: var(--color-fg-muted);
+		line-height: 1;
 	}
 
 	.metric {

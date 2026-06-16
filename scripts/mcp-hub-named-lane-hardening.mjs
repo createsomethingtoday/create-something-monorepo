@@ -291,7 +291,6 @@ function renderDoc(lanes) {
   lines.push('- `pnpm mcp:hub:hardening:matrix:check` validates local fleet metadata, discovery packs, runbooks, and this generated matrix.');
   lines.push('- `pnpm mcp:hub:hardening:check` also performs unauthenticated `GET /health` checks against each target URL.');
   lines.push('- The live check must not mint credentials, rotate secrets, call `hub_set_discovery`, or mutate Cloudflare/Infisical state.');
-  lines.push('');
   return `${lines.join('\n')}\n`;
 }
 

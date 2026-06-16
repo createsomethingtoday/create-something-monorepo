@@ -1,208 +1,210 @@
 import type { Env } from './types.js';
 
-const DEFAULT_TEMPLATE_COLLECTION_ID = '641b464e78789f611a5d4496';
-const WEBFLOW_IMAGE_HOST_RE =
-  /(?:cdn\.prod\.website-files\.com|uploads-ssl\.webflow\.com|assets\.website-files\.com)/i;
+export const TEMPLATES_COLLECTION_ID = '641b464e78789f611a5d4496';
+export const DESIGNERS_COLLECTION_ID = '641b464e78789fc19d5d4461';
 
-export interface WebflowTemplateMetadata {
+interface WebflowImage {
+  fileId: string;
+  url: string;
+  alt: string | null;
+}
+
+interface WebflowCmsItem {
+  id: string;
+  isArchived: boolean;
+  isDraft: boolean;
+  fieldData: Record<string, unknown>;
+}
+
+interface WebflowListResponse {
+  items: WebflowCmsItem[];
+  pagination: { limit: number; offset: number; total: number };
+}
+
+export interface WebflowTemplateImageRecord {
+  id: string | null; // sync-record-id = Airtable record ID = D1 id when present
   templateSlug: string | null;
+  name: string | null;
+  listingUrl: string | null;
   thumbnailImageUrl: string | null;
   thumbnailImageSecondaryUrl: string | null;
+  carouselImageUrls: string[];
 }
 
-export interface WebflowTemplateImageItem extends WebflowTemplateMetadata {
-  templateSlug: string;
+export interface WebflowDesignerAvatarRecord {
+  syncRecordId: string | null;
+  name: string;
+  slug: string | null;
+  profileUrl: string | null;
+  avatarUrl: string | null;
+  avatarAlt: string | null;
 }
 
-export interface WebflowTemplateImagesPage {
-  items: WebflowTemplateImageItem[];
-  offset: number;
-  nextOffset: number | null;
-  total: number;
-  hasNextPage: boolean;
-}
+async function paginateWebflow<T>(
+  apiToken: string,
+  collectionId: string,
+  mapper: (item: WebflowCmsItem) => T | null,
+): Promise<T[]> {
+  const results: T[] = [];
+  let offset = 0;
+  const limit = 100;
 
-function firstString(value: unknown): string | null {
-  if (typeof value === 'string') return value.trim() || null;
-  if (Array.isArray(value)) {
-    for (const entry of value) {
-      if (typeof entry === 'string' && entry.trim()) return entry.trim();
+  while (true) {
+    const url = `https://api.webflow.com/v2/collections/${collectionId}/items?limit=${limit}&offset=${offset}`;
+    const response = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${apiToken}`,
+        'accept-version': '2.0.0',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Webflow API error (${response.status}): ${await response.text()}`);
     }
+
+    const data = (await response.json()) as WebflowListResponse;
+
+    for (const item of data.items) {
+      if (!item.isArchived && !item.isDraft) {
+        const mapped = mapper(item);
+        if (mapped !== null) results.push(mapped);
+      }
+    }
+
+    offset += limit;
+    if (offset >= data.pagination.total) break;
+  }
+
+  return results;
+}
+
+function trimString(value: unknown): string | null {
+  return typeof value === 'string' && value.trim() ? value.trim() : null;
+}
+
+function webflowApiToken(env: Env): string | null {
+  return env.CMS_READ_ONLY?.trim() || env.WEBFLOW_API_TOKEN?.trim() || null;
+}
+
+function webflowTemplateListingUrl(templateSlug: string | null): string | null {
+  return templateSlug ? `https://webflow.com/templates/html/${templateSlug}` : null;
+}
+
+function webflowDesignerProfileUrl(slug: string | null): string | null {
+  return slug ? `https://webflow.com/templates/designers/${slug}` : null;
+}
+
+function imageUrl(fields: Record<string, unknown>, keys: string[]): string | null {
+  for (const key of keys) {
+    const image = fields[key] as WebflowImage | null | undefined;
+    if (image?.url) return image.url;
   }
   return null;
 }
 
-export function resolveWebflowCmsItemId(value: unknown): string | null {
-  return firstString(value);
+function imageUrls(fields: Record<string, unknown>, keys: string[]): string[] {
+  for (const key of keys) {
+    const images = fields[key] as WebflowImage[] | null | undefined;
+    if (Array.isArray(images)) return images.map((img) => img.url).filter(Boolean);
+  }
+  return [];
 }
 
-function getWebflowToken(env: Env): string | null {
-  return env.CMS_READ_ONLY?.trim() || env.WEBFLOW_API_TOKEN?.trim() || env.WEBFLOW_DATA_API_TOKEN?.trim() || null;
+function mapTemplateFieldData(fieldData: Record<string, unknown>): WebflowTemplateImageRecord | null {
+  const syncRecordId = trimString(fieldData['sync-record-id']);
+  const templateSlug = trimString(fieldData.slug);
+  const name = trimString(fieldData.name ?? fieldData.Name);
+  if (!syncRecordId && !templateSlug && !name) return null;
+
+  return {
+    id: syncRecordId,
+    templateSlug,
+    name,
+    listingUrl: webflowTemplateListingUrl(templateSlug),
+    thumbnailImageUrl: imageUrl(fieldData, ['main-thumbnail', 'main-thumbnail-image', 'thumbnail', 'thumbnail-image']),
+    thumbnailImageSecondaryUrl: imageUrl(fieldData, ['thumbnail-secondary', 'thumbnail-image-secondary']),
+    carouselImageUrls: imageUrls(fieldData, ['slider-images', 'carousel-images']),
+  };
 }
 
-function normalizeFieldKey(key: string): string {
-  return key.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+function mapDesignerFieldData(fieldData: Record<string, unknown>): WebflowDesignerAvatarRecord | null {
+  const syncRecordId = trimString(fieldData['sync-record-id']);
+  const name = trimString(fieldData.name);
+  if (!name) return null;
+
+  const slug = trimString(fieldData.slug);
+  const avatar = fieldData.avatar as WebflowImage | null | undefined;
+  const avatarUrl = avatar?.url ?? null;
+  const profileUrl = webflowDesignerProfileUrl(slug);
+
+  if (!profileUrl && !avatarUrl) return null;
+
+  return {
+    syncRecordId,
+    name,
+    slug,
+    profileUrl,
+    avatarUrl,
+    avatarAlt: avatarUrl ? avatar?.alt ?? name : null,
+  };
 }
 
-function isUrl(value: string): boolean {
+export async function fetchWebflowTemplateImages(env: Env): Promise<WebflowTemplateImageRecord[]> {
+  const token = webflowApiToken(env);
+  if (!token) throw new Error('A Webflow CMS read token is not configured.');
+
+  return paginateWebflow(token, TEMPLATES_COLLECTION_ID, (item) => mapTemplateFieldData(item.fieldData));
+}
+
+// Webhook payload shape sent by Webflow for collection_item_* events.
+export interface WebflowWebhookPayload {
+  triggerType: string;
+  payload: {
+    id: string;
+    isArchived: boolean;
+    isDraft: boolean;
+    /** Collection ID — used to route between Templates and Designers. */
+    cid: string;
+    fieldData: Record<string, unknown>;
+  };
+}
+
+// Maps a single webhook payload to a template image record. Returns null if the
+// item is archived/draft or lacks a sync-record-id.
+export function mapWebhookTemplateItem(webhook: WebflowWebhookPayload): WebflowTemplateImageRecord | null {
+  const item = webhook.payload;
+  if (item.isArchived || item.isDraft) return null;
+
+  return mapTemplateFieldData(item.fieldData);
+}
+
+// Maps a single webhook payload to a designer profile record. Returns null if the
+// item is archived/draft or lacks both a published slug and avatar URL.
+export function mapWebhookDesignerItem(webhook: WebflowWebhookPayload): WebflowDesignerAvatarRecord | null {
+  const item = webhook.payload;
+  if (item.isArchived || item.isDraft) return null;
+
+  return mapDesignerFieldData(item.fieldData);
+}
+
+// Verifies a Webflow webhook signature (HMAC-SHA256, hex-encoded).
+// Webflow sends the signature in the x-webflow-signature header.
+export async function verifyWebflowSignature(secret: string, rawBody: string, signature: string): Promise<boolean> {
   try {
-    const url = new URL(value);
-    return url.protocol === 'https:' || url.protocol === 'http:';
+    const encoder = new TextEncoder();
+    const key = await crypto.subtle.importKey('raw', encoder.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, [
+      'verify',
+    ]);
+    const sigBytes = new Uint8Array((signature.match(/../g) ?? []).map((h) => parseInt(h, 16)));
+    return crypto.subtle.verify('HMAC', key, sigBytes, encoder.encode(rawBody));
   } catch {
     return false;
   }
 }
 
-function extractImageUrls(value: unknown): string[] {
-  if (!value) return [];
-  if (typeof value === 'string') return isUrl(value) ? [value] : [];
-  if (Array.isArray(value)) return value.flatMap((entry) => extractImageUrls(entry));
-  if (typeof value !== 'object') return [];
+export async function fetchWebflowDesignerAvatars(env: Env): Promise<WebflowDesignerAvatarRecord[]> {
+  const token = webflowApiToken(env);
+  if (!token) throw new Error('A Webflow CMS read token is not configured.');
 
-  const record = value as Record<string, unknown>;
-  return [
-    ...extractImageUrls(record.url),
-    ...extractImageUrls(record.src),
-    ...extractImageUrls(record.file),
-    ...extractImageUrls(record.image),
-  ];
-}
-
-function preferWebflowImageUrl(urls: string[]): string | null {
-  return urls.find((url) => WEBFLOW_IMAGE_HOST_RE.test(url)) ?? urls[0] ?? null;
-}
-
-function extractDirectFieldUrl(fieldData: Record<string, unknown>, keys: string[]): string | null {
-  const normalizedEntries = new Map(Object.entries(fieldData).map(([key, value]) => [normalizeFieldKey(key), value]));
-
-  for (const key of keys) {
-    const value = fieldData[key] ?? normalizedEntries.get(normalizeFieldKey(key));
-    const url = preferWebflowImageUrl(extractImageUrls(value));
-    if (url) return url;
-  }
-
-  return null;
-}
-
-function extractFallbackFieldUrl(fieldData: Record<string, unknown>, kind: 'primary' | 'secondary'): string | null {
-  const entries = Object.entries(fieldData);
-  const candidates = entries.filter(([key, value]) => {
-    const normalizedKey = normalizeFieldKey(key);
-    const urls = extractImageUrls(value);
-    if (urls.length === 0) return false;
-
-    const isThumbnail = normalizedKey.includes('thumbnail') || normalizedKey.includes('thumb');
-    const isImage = normalizedKey.includes('image');
-    const isSecondary =
-      normalizedKey.includes('secondary') || normalizedKey.includes('hover') || normalizedKey.includes('alternate');
-
-    if (kind === 'secondary') return (isThumbnail || isImage) && isSecondary;
-    return (isThumbnail || isImage) && !isSecondary;
-  });
-
-  return preferWebflowImageUrl(candidates.flatMap(([, value]) => extractImageUrls(value)));
-}
-
-function extractTemplateMetadata(fieldData: Record<string, unknown>): WebflowTemplateMetadata {
-  return {
-    templateSlug: firstString(fieldData.slug),
-    thumbnailImageUrl:
-      extractDirectFieldUrl(fieldData, ['thumbnail']) ?? extractFallbackFieldUrl(fieldData, 'primary'),
-    thumbnailImageSecondaryUrl:
-      extractDirectFieldUrl(fieldData, ['thumbnail-secondary', 'thumbnail secondary']) ??
-      extractFallbackFieldUrl(fieldData, 'secondary'),
-  };
-}
-
-export async function fetchWebflowTemplateMetadata(
-  env: Env,
-  cmsItemId: string | null,
-): Promise<WebflowTemplateMetadata> {
-  const empty = { templateSlug: null, thumbnailImageUrl: null, thumbnailImageSecondaryUrl: null };
-  const token = getWebflowToken(env);
-  if (!token || !cmsItemId) return empty;
-
-  try {
-    const collectionId = env.WEBFLOW_TEMPLATE_COLLECTION_ID?.trim() || DEFAULT_TEMPLATE_COLLECTION_ID;
-    const response = await fetch(`https://api.webflow.com/v2/collections/${collectionId}/items/${cmsItemId}/live`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        accept: 'application/json',
-      },
-    });
-
-    if (!response.ok) return empty;
-
-    const payload = (await response.json()) as { fieldData?: Record<string, unknown> };
-    return extractTemplateMetadata(payload.fieldData ?? {});
-  } catch {
-    return empty;
-  }
-}
-
-export async function fetchWebflowTemplateImagesPage(
-  env: Env,
-  offset: number,
-  limit = 100,
-): Promise<WebflowTemplateImagesPage> {
-  const token = getWebflowToken(env);
-  const safeLimit = Math.min(Math.max(limit, 1), 100);
-  const safeOffset = Math.max(offset, 0);
-  const empty = {
-    items: [],
-    offset: safeOffset,
-    nextOffset: null,
-    total: 0,
-    hasNextPage: false,
-  };
-  if (!token) return empty;
-
-  try {
-    const collectionId = env.WEBFLOW_TEMPLATE_COLLECTION_ID?.trim() || DEFAULT_TEMPLATE_COLLECTION_ID;
-    const url = new URL(`https://api.webflow.com/v2/collections/${collectionId}/items/live`);
-    url.searchParams.set('limit', String(safeLimit));
-    url.searchParams.set('offset', String(safeOffset));
-    const response = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        accept: 'application/json',
-      },
-    });
-
-    if (!response.ok) return empty;
-
-    const payload = (await response.json()) as {
-      items?: Array<{ fieldData?: Record<string, unknown> }>;
-      pagination?: { limit?: number; offset?: number; total?: number };
-    };
-    const items = (payload.items ?? [])
-      .map((item): WebflowTemplateImageItem | null => {
-        const fieldData = item.fieldData ?? {};
-        const metadata = extractTemplateMetadata(fieldData);
-        const templateSlug = metadata.templateSlug;
-        if (!templateSlug) return null;
-
-        return {
-          templateSlug,
-          thumbnailImageUrl: metadata.thumbnailImageUrl,
-          thumbnailImageSecondaryUrl: metadata.thumbnailImageSecondaryUrl,
-        };
-      })
-      .filter((item): item is WebflowTemplateImageItem => Boolean(item));
-
-    const pageOffset = payload.pagination?.offset ?? safeOffset;
-    const pageLimit = payload.pagination?.limit ?? safeLimit;
-    const total = payload.pagination?.total ?? items.length;
-    const nextOffset = pageOffset + pageLimit < total ? pageOffset + pageLimit : null;
-
-    return {
-      items,
-      offset: pageOffset,
-      nextOffset,
-      total,
-      hasNextPage: nextOffset !== null,
-    };
-  } catch {
-    return empty;
-  }
+  return paginateWebflow(token, DESIGNERS_COLLECTION_ID, (item) => mapDesignerFieldData(item.fieldData));
 }

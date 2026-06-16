@@ -65,7 +65,7 @@ export const operatorStateDefinitions = [
 		label: 'Eval stale',
 		tone: 'warn',
 		summary: 'The live agent or prompt changed after the last evaluation.',
-		operatorCopy: 'Run the current smoke/eval before calling the agent production-ready.'
+		operatorCopy: 'Run the current smoke or eval before calling the agent production-ready.'
 	},
 	{
 		kind: 'production_verified',
@@ -130,12 +130,13 @@ export function selectOperatorState(input: {
 	threadStatus: ThreadStatus;
 	hasActionRequiredTool?: boolean;
 	hasBlockedArtifact?: boolean;
+	hasHandoff?: boolean;
 }): OperatorStateDefinition {
 	if (input.hasActionRequiredTool) {
 		return operatorStateDefinitions.find((state) => state.kind === 'needs_auth')!;
 	}
 
-	if (input.threadStatus === 'handoff_ready') {
+	if (input.threadStatus === 'handoff_ready' || input.hasHandoff) {
 		return operatorStateDefinitions.find((state) => state.kind === 'waiting_on_approval')!;
 	}
 

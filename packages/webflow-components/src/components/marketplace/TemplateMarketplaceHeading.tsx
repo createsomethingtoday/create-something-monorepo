@@ -232,10 +232,12 @@ function readHeadingState(
   categorySlugOverride?: string,
   subcategorySlugOverride?: string,
   staticRoutePath?: string,
+  useWindow = true,
 ): HeadingState {
-  const staticHref = typeof window === 'undefined' ? normalizeStaticRoutePath(staticRoutePath ?? '') : undefined;
+  const staticHref = useWindow ? undefined : normalizeStaticRoutePath(staticRoutePath ?? '');
   const route = parseTemplateRoute({
     href: staticHref,
+    useWindow,
     pageKind,
     queryParam,
     categorySlugOverride,
@@ -301,6 +303,10 @@ function resolveApiBase(apiBase?: string): string {
   return rawBase.startsWith(WORKER_ORIGIN) || rawBase.startsWith(CLOUD_APP_PREVIEW_ORIGIN)
     ? DEFAULT_API_BASE
     : rawBase.replace(/\/+$/, '');
+}
+
+function shouldUseTaxonomyApi(apiBaseProp: string): boolean {
+  return Boolean(apiBaseProp.trim());
 }
 
 function taxonomyDescriptionKey(state: HeadingState): string {
@@ -444,12 +450,15 @@ export const TemplateMarketplaceHeading: React.FC<TemplateMarketplaceHeadingProp
   updateDocumentTitle = false,
 }) => {
   const [version, setVersion] = useState(0);
+  const [hasHydrated, setHasHydrated] = useState(false);
   const [taxonomyDescription, setTaxonomyDescription] = useState<TaxonomyDescriptionState | null>(null);
-  const lastHrefRef = useRef(typeof window === 'undefined' ? '' : window.location.href);
+  const lastHrefRef = useRef('');
 
   useEffect(() => {
+    setHasHydrated(true);
+    lastHrefRef.current = window.location.href;
     const bump = () => {
-      if (typeof window !== 'undefined') lastHrefRef.current = window.location.href;
+      lastHrefRef.current = window.location.href;
       setVersion((value) => value + 1);
     };
     window.addEventListener('popstate', bump);
@@ -477,12 +486,25 @@ export const TemplateMarketplaceHeading: React.FC<TemplateMarketplaceHeadingProp
 
   const apiBase = useMemo(() => resolveApiBase(apiBaseProp), [apiBaseProp]);
   const headingState = useMemo(
-    () => readHeadingState(pageKind, queryParam, categorySlug || undefined, subcategorySlug || undefined, staticRoutePath),
-    [categorySlug, pageKind, queryParam, staticRoutePath, subcategorySlug, version],
+    () =>
+      readHeadingState(
+        pageKind,
+        queryParam,
+        categorySlug || undefined,
+        subcategorySlug || undefined,
+        staticRoutePath,
+        hasHydrated,
+      ),
+    [categorySlug, hasHydrated, pageKind, queryParam, staticRoutePath, subcategorySlug, version],
   );
   const currentTaxonomyKey = taxonomyDescriptionKey(headingState);
 
   useEffect(() => {
+    if (!hasHydrated || !shouldUseTaxonomyApi(apiBaseProp)) {
+      setTaxonomyDescription(null);
+      return;
+    }
+
     if (!shouldFetchTaxonomyDescription(headingState, fallbackDescription, descriptionMode)) {
       setTaxonomyDescription(null);
       return;
@@ -518,6 +540,7 @@ export const TemplateMarketplaceHeading: React.FC<TemplateMarketplaceHeadingProp
     return () => controller.abort();
   }, [
     apiBase,
+    apiBaseProp,
     descriptionMode,
     fallbackDescription,
     headingState.categorySlug,
@@ -525,6 +548,7 @@ export const TemplateMarketplaceHeading: React.FC<TemplateMarketplaceHeadingProp
     headingState.categoryIsRoute,
     headingState.subcategoryIsRoute,
     headingState.pathKind,
+    hasHydrated,
     currentTaxonomyKey,
   ]);
 
@@ -569,7 +593,7 @@ export const TemplateMarketplaceHeading: React.FC<TemplateMarketplaceHeadingProp
       data-template-component="TemplateMarketplaceHeading"
       data-template-component-version={TEMPLATE_MARKETPLACE_COMPONENT_VERSION}
     >
-      <style>{HEADING_STYLES}</style>
+      <style dangerouslySetInnerHTML={{ __html: HEADING_STYLES }} />
       {showBreadcrumbs && (
         <nav className="tmheading-breadcrumbs" aria-label="Breadcrumb">
           {content.breadcrumbs.map((item, index) => (

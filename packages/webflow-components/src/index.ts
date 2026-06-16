@@ -160,6 +160,59 @@ export type { ProcessStepsProps, ProcessStep } from './components/sections/Proce
 export { IconCardGrid } from './components/sections/IconCardGrid';
 export type { IconCardGridProps, IconCardGridItem } from './components/sections/IconCardGrid';
 
+// Cato Supply delivery components
+export {
+  CatoInsightCmsCard,
+  CatoInsightDetail,
+  CatoInsightsArchive,
+  CatoInsightsArchiveShell,
+  CatoInsightsHub,
+  CatoInsightsMegaMenu,
+  catoInsightsDefaults,
+} from './components/cato/CatoInsights';
+export type {
+  CatoInsightBodySection,
+  CatoInsightCategory,
+  CatoInsightCmsCardProps,
+  CatoInsightDetailProps,
+  CatoInsightLinkProp,
+  CatoInsightItem,
+  CatoInsightsArchiveProps,
+  CatoInsightsArchiveShellProps,
+  CatoInsightsDataProps,
+  CatoInsightsHubProps,
+  CatoInsightsMegaMenuProps,
+} from './components/cato/CatoInsights';
+
+export {
+  CatoProductSearchForm,
+  CatoRiskRadarCatalog,
+  CatoSupplySearchHero,
+} from './components/cato/CatoProductSearch';
+export type {
+  CatoProductSearchFormProps,
+  CatoRiskRadarCatalogProps,
+  CatoRiskRadarRow,
+  CatoSupplySearchHeroProps,
+} from './components/cato/CatoProductSearch';
+
+export {
+  CatoAboutPage,
+  CatoCaseStudiesLanding,
+  CatoCaseStudyDetail,
+} from './components/cato/CatoCompanyPages';
+export type {
+  CatoAboutPageProps,
+  CatoCaseStudiesLandingProps,
+  CatoCaseStudyDetailProps,
+  CatoCaseStudyItem,
+  CatoCaseStudyResult,
+  CatoCompanyLinkMode,
+  CatoImpactMetric,
+  CatoTeamMember,
+  CatoValueItem,
+} from './components/cato/CatoCompanyPages';
+
 // Legacy compatibility layout components
 export { Header } from './components/layout/Header';
 export type { HeaderProps, NavItem } from './components/layout/Header';
@@ -254,58 +307,6 @@ export type {
 } from './components/marketplace/analytics';
 
 // Cato Supply delivery components
-export {
-  CatoInsightCmsCard,
-  CatoInsightDetail,
-  CatoInsightsArchive,
-  CatoInsightsArchiveShell,
-  CatoInsightsHub,
-  CatoInsightsMegaMenu,
-  catoInsightsDefaults,
-} from './components/cato/CatoInsights';
-export type {
-  CatoInsightBodySection,
-  CatoInsightCategory,
-  CatoInsightCmsCardProps,
-  CatoInsightDetailProps,
-  CatoInsightLinkProp,
-  CatoInsightItem,
-  CatoInsightsArchiveProps,
-  CatoInsightsArchiveShellProps,
-  CatoInsightsDataProps,
-  CatoInsightsHubProps,
-  CatoInsightsMegaMenuProps,
-} from './components/cato/CatoInsights';
-
-export {
-  CatoProductSearchForm,
-  CatoRiskRadarCatalog,
-  CatoSupplySearchHero,
-} from './components/cato/CatoProductSearch';
-export type {
-  CatoProductSearchFormProps,
-  CatoRiskRadarCatalogProps,
-  CatoRiskRadarRow,
-  CatoSupplySearchHeroProps,
-} from './components/cato/CatoProductSearch';
-
-export {
-  CatoAboutPage,
-  CatoCaseStudiesLanding,
-  CatoCaseStudyDetail,
-} from './components/cato/CatoCompanyPages';
-export type {
-  CatoAboutPageProps,
-  CatoCaseStudiesLandingProps,
-  CatoCaseStudyDetailProps,
-  CatoCaseStudyItem,
-  CatoCaseStudyResult,
-  CatoCompanyLinkMode,
-  CatoImpactMetric,
-  CatoTeamMember,
-  CatoValueItem,
-} from './components/cato/CatoCompanyPages';
-
 // Ona-styled Business Logic Components
 export {
   BookingRouter,

@@ -51,70 +51,91 @@
     <div class="content-wrapper">
       <BackNavigation />
 
-      <!-- Header -->
       <div class="page-header page-intro">
         <div class="header-content">
-          <h1 class="page-title page-intro__title">Validation Tools</h1>
+          <h1 class="page-title page-intro__title">Install the Webflow Way Validator</h1>
           <p class="page-subtitle page-intro__subtitle">
-            Test and validate your templates before submission to ensure marketplace compliance
+            Install the Validator app first. It produces the required pass that the submission flow
+            checks before marketplace review.
           </p>
           <div class="validation-evidence" aria-label="Validation outcomes">
-            <span><strong>Quick Validate</strong> for fast submission checks</span>
-            <span><strong>Full Playground</strong> for page-level inspection</span>
-            <span><strong>Earlier checks</strong> reduce review delays</span>
+            <span><strong>Required app install</strong></span>
+            <span><strong>Runs inside Designer</strong></span>
+            <span><strong>Submission form checks the pass</strong></span>
           </div>
         </div>
       </div>
 
-      <Card class="primary-tool-card">
-        <div class="tool-header">
-          <div>
-            <h2 class="section-title">Start with the fastest check</h2>
-            <p class="tool-description">Quick read first, full inspection second.</p>
+      <div class="validator-focus-grid">
+        <section class="validator-primary" aria-labelledby="required-validator-title">
+          <div class="required-tool-heading">
+            <span class="tool-kicker">Required before submission</span>
+            <h2 class="section-title" id="required-validator-title">Required install access</h2>
+            <p class="tool-description">
+              Use this install link to add the app to Webflow, open it in Designer, and generate the
+              confirmed 100% Validator pass.
+            </p>
           </div>
-          <span class="tool-kicker">Primary workflow</span>
-        </div>
-        <div class="primary-tool-actions">
-          <Button variant="default" onclick={handleOpenGsapValidator} class="tool-button"
-            >Quick Validate</Button
-          >
-          <Button variant="outline" onclick={handleOpenPlayground} class="tool-button"
-            >Open Full Playground</Button
-          >
-        </div>
-      </Card>
+          <WebflowWayCard userEmail={data.user?.email} featured />
+        </section>
 
-      <div class="tools-section">
-        <h2 class="section-title section-title--secondary">Other Validation Tools</h2>
-        <div class="tools-grid">
-          <WebflowWayCard userEmail={data.user?.email} />
-        </div>
-      </div>
+        <div class="support-stack">
+          <Card class="workflow-checklist-card validator-steps-card">
+            <div>
+              <h2 class="section-title section-title--secondary">Required path</h2>
+              <p class="tool-description">
+                The install action is the important step. Quick checks are optional helpers after
+                this.
+              </p>
+            </div>
+            <ol class="workflow-steps" aria-label="Recommended validation workflow">
+              <li>
+                <span>Install Validator</span>
+                <p>Add the app to the workspace from Webflow.</p>
+              </li>
+              <li>
+                <span>Open in Designer</span>
+                <p>Add the script, publish, and run the Validator.</p>
+              </li>
+              <li>
+                <span>Submit with pass</span>
+                <p>Return to the submission flow after it reaches 100%.</p>
+              </li>
+            </ol>
+          </Card>
 
-      <Card class="info-card">
-        <h3 class="info-title">Validation Heuristics</h3>
-        <div class="info-content">
-          <p>Use validation to catch high-cost issues before review.</p>
-          <ul>
-            <li>Catch potential issues early in development</li>
-            <li>Reduce submission review time</li>
-            <li>Ensure compliance with marketplace guidelines</li>
-            <li>Improve template quality and user experience</li>
-          </ul>
-          <div class="tip-box">
-            <p class="tip-title">Best Practice</p>
-            <p class="tip-text">
-              Run all available validation tools before submitting your template to the marketplace.
-              This keeps review cycles shorter and reduces avoidable rejections.
+          <Card class="secondary-tools-card">
+            <div>
+              <h2 class="section-title section-title--secondary">Optional preflight checks</h2>
+              <p class="tool-description">
+                Use these only when you want a fast technical read before or after running the
+                Validator.
+              </p>
+            </div>
+            <div class="secondary-tool-actions">
+              <Button variant="outline" onclick={handleOpenGsapValidator} class="tool-button"
+                >Quick Validate</Button
+              >
+              <Button variant="secondary" onclick={handleOpenPlayground} class="tool-button"
+                >Open Full Playground</Button
+              >
+            </div>
+          </Card>
+
+          <div class="validator-note">
+            <span class="tool-kicker">Review note</span>
+            <p class="tool-description">
+              The submission form validates the published site for the confirmed Validator pass.
+              Publish after adding the script before re-checking.
             </p>
           </div>
         </div>
-      </Card>
+      </div>
     </div>
   </main>
 </div>
 
-<!-- GSAP Validation Modal -->
+<!-- GSAP Check Modal -->
 {#if isGsapModalOpen && GsapValidationModal}
   <GsapValidationModal
     isOpen={isGsapModalOpen}
@@ -138,13 +159,20 @@
     margin: 0 auto;
   }
 
-  :global(.primary-tool-card) {
+  .validator-focus-grid {
     display: grid;
-    gap: 0.8rem;
-    padding: 0.9rem;
+    grid-template-columns: minmax(0, 1fr) minmax(300px, 0.46fr);
+    gap: var(--space-lg);
+    align-items: start;
     margin-bottom: var(--space-md);
-    border-radius: var(--radius-sm);
-    border-color: color-mix(in srgb, var(--color-shell-border-default) 74%, transparent);
+  }
+
+  .validator-primary,
+  .support-stack {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    min-width: 0;
   }
 
   .validation-evidence {
@@ -155,6 +183,22 @@
     margin-top: 0.7rem;
     font-size: var(--text-body-sm);
     color: var(--color-fg-secondary);
+  }
+
+  .validation-evidence span {
+    position: relative;
+    padding-left: 0.8rem;
+  }
+
+  .validation-evidence span::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.58em;
+    width: 0.32rem;
+    height: 0.32rem;
+    border-radius: 999px;
+    background: var(--color-info);
   }
 
   .validation-evidence strong {
@@ -176,16 +220,6 @@
     font-size: var(--text-body-lg);
   }
 
-  .tools-section {
-    margin-bottom: var(--space-md);
-  }
-
-  .tools-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: var(--space-md);
-  }
-
   :global(.tool-card) {
     display: flex;
     flex-direction: column;
@@ -194,13 +228,6 @@
     border-radius: var(--radius-sm);
     border-color: color-mix(in srgb, var(--color-shell-border-default) 74%, transparent);
     box-shadow: none;
-  }
-
-  .tool-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--space-xs);
   }
 
   .tool-kicker {
@@ -217,10 +244,92 @@
     line-height: 1.4;
   }
 
-  .primary-tool-actions {
-    display: flex;
-    flex-wrap: wrap;
+  :global(.workflow-checklist-card),
+  :global(.secondary-tools-card) {
+    display: grid;
     gap: var(--space-sm);
+    padding: 0.9rem;
+    border-radius: var(--radius-sm);
+    border-color: color-mix(in srgb, var(--color-shell-border-default) 74%, transparent);
+    box-shadow: none;
+  }
+
+  .workflow-steps {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-sm);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: workflow-step;
+  }
+
+  .workflow-steps li {
+    counter-increment: workflow-step;
+    position: relative;
+    min-width: 0;
+    padding: var(--space-sm);
+    padding-top: 2.25rem;
+    border: 1px solid color-mix(in srgb, var(--color-shell-border-default) 72%, transparent);
+    border-radius: var(--radius-sm);
+    background: color-mix(in srgb, var(--color-bg-surface) 94%, var(--color-info-muted));
+  }
+
+  .workflow-steps li::before {
+    content: counter(workflow-step);
+    position: absolute;
+    top: var(--space-sm);
+    left: var(--space-sm);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.25rem;
+    height: 1.25rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--color-info-muted) 48%, transparent);
+    color: var(--color-info);
+    font-size: var(--text-caption);
+    font-weight: var(--font-semibold);
+  }
+
+  .workflow-steps span {
+    display: block;
+    color: var(--color-fg-primary);
+    font-size: var(--text-body-sm);
+    font-weight: var(--font-semibold);
+    line-height: 1.25;
+  }
+
+  .workflow-steps p {
+    margin: var(--space-xs) 0 0;
+    color: var(--color-fg-secondary);
+    font-size: var(--text-caption);
+    line-height: 1.45;
+  }
+
+  .secondary-tool-actions {
+    display: grid;
+    gap: var(--space-sm);
+  }
+
+  .validator-note {
+    display: grid;
+    gap: var(--space-xs);
+    padding: 0 var(--space-xs);
+  }
+
+  .required-tool-heading {
+    display: grid;
+    gap: var(--space-xs);
+  }
+
+  .required-tool-heading .section-title {
+    margin-bottom: 0;
+  }
+
+  :global(.validator-primary .webflow-way-card) {
+    height: auto;
+    border-color: color-mix(in srgb, var(--color-info-border) 78%, var(--color-shell-border-default));
   }
 
   :global(.tool-button) {
@@ -228,69 +337,9 @@
     gap: var(--space-xs);
   }
 
-  :global(.info-card) {
-    padding: 0.9rem;
-    border-radius: var(--radius-sm);
-    border-color: color-mix(in srgb, var(--color-shell-border-default) 74%, transparent);
-    box-shadow: none;
-  }
-
-  .info-title {
-    font-family: var(--font-heading);
-    font-size: var(--text-body-lg);
-    font-weight: var(--font-semibold);
-    letter-spacing: 0;
-    color: var(--color-fg-primary);
-    margin: 0 0 var(--space-sm);
-  }
-
-  .info-content {
-    font-size: var(--text-body-sm);
-    color: var(--color-fg-secondary);
-  }
-
-  .info-content p {
-    margin: 0 0 0.75rem;
-  }
-
-  .info-content ul {
-    margin: 0 0 0.9rem;
-    padding-left: 1rem;
-  }
-
-  .info-content li {
-    margin-bottom: 0.35rem;
-  }
-
-  .tip-box {
-    display: grid;
-    gap: var(--space-xs);
-    padding: var(--space-sm) var(--space-md);
-    border-top: 1px solid color-mix(in srgb, var(--color-info-border) 72%, transparent);
-    border-bottom: 1px solid color-mix(in srgb, var(--color-info-border) 72%, transparent);
-    background: transparent;
-  }
-
-  .tip-title {
-    font-weight: var(--font-medium);
-    color: var(--color-fg-primary);
-    margin: 0;
-    font-size: var(--text-body-sm);
-  }
-
-  .tip-text {
-    font-size: var(--text-caption);
-    color: var(--color-fg-secondary);
-    margin: 0;
-  }
-
-  @media (max-width: 640px) {
-    .tools-grid {
+  @media (max-width: 900px) {
+    .validator-focus-grid {
       grid-template-columns: 1fr;
-    }
-
-    .primary-tool-actions {
-      flex-direction: column;
     }
   }
 </style>

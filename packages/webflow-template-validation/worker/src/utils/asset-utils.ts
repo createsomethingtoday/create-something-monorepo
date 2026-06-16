@@ -123,6 +123,21 @@ export function analyzeImageOptimization(
 	let isOptimized = false;
 	let recommendation: string | undefined;
 
+	// SVG is a vector format. It should never receive raster conversion guidance.
+	if (format.includes('svg')) {
+		return {
+			isOptimized: true,
+			recommendation: undefined,
+			analysis: {
+				format: format,
+				size: size,
+				sizeCategory: getSizeCategory(size),
+				formatCategory: 'optimal',
+				compressionEstimate: { potential: 'none', estimated_savings: 'Vector format - no raster compression needed' }
+			}
+		};
+	}
+
 	// Basic format analysis
 	if (OPTIMAL_FORMATS.some(fmt => format.includes(fmt))) {
 		isOptimized = true;

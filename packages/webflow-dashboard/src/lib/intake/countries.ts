@@ -47,6 +47,7 @@ export const SUPPORTED_COUNTRIES = [
 	'Hong Kong',
 	'Hungary',
 	'Iceland',
+	'India',
 	'Indonesia',
 	'Ireland',
 	'Israel',
@@ -118,6 +119,8 @@ export const SUPPORTED_COUNTRIES = [
 	'Uzbekistan'
 ] as const;
 
+export const COUNTRIES_REQUIRING_STRIPE_ONBOARDING = ['India'] as const;
+
 function normalizeCountryToken(value: string): string {
 	return value
 		.normalize('NFD')
@@ -143,14 +146,29 @@ const SUPPORTED_COUNTRY_TOKENS = new Set(
 	SUPPORTED_COUNTRIES.map((value) => normalizeCountryToken(value))
 );
 
-export function isSupportedCountry(country: string): boolean {
+const STRIPE_ONBOARDING_COUNTRY_TOKENS = new Set(
+	COUNTRIES_REQUIRING_STRIPE_ONBOARDING.map((value) => normalizeCountryToken(value))
+);
+
+function normalizeCountryAlias(country: string): string {
 	const normalized = normalizeCountryToken(country);
+	const alias = COUNTRY_ALIASES.get(normalized);
+	return alias ? normalizeCountryToken(alias) : normalized;
+}
+
+export function isSupportedCountry(country: string): boolean {
+	const normalized = normalizeCountryAlias(country);
 	if (!normalized) return false;
 
-	const alias = COUNTRY_ALIASES.get(normalized);
-	if (alias) {
-		return SUPPORTED_COUNTRY_TOKENS.has(normalizeCountryToken(alias));
-	}
-
 	return SUPPORTED_COUNTRY_TOKENS.has(normalized);
+}
+
+export function requiresSpecificStripeOnboarding(country: string): boolean {
+	const normalized = normalizeCountryAlias(country);
+	if (!normalized) return false;
+
+	return (
+		STRIPE_ONBOARDING_COUNTRY_TOKENS.has(normalized) ||
+		!SUPPORTED_COUNTRY_TOKENS.has(normalized)
+	);
 }

@@ -2,6 +2,7 @@ import { Worker } from '@notionhq/workers';
 import * as Builder from '@notionhq/workers/builder';
 import * as Schema from '@notionhq/workers/schema';
 import { j } from '@notionhq/workers/schema-builder';
+import { registerBlondishDeliveryTickets } from './blondish-delivery-tickets.js';
 
 const worker = new Worker();
 
@@ -14,6 +15,8 @@ const linearApiPacer = worker.pacer('linearApi', {
   allowedRequests: 1,
   intervalMs: 1000
 });
+
+registerBlondishDeliveryTickets(worker);
 
 const linearIssuesDatabase = worker.database('linearIssues', {
   type: 'managed',

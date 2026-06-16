@@ -1,0 +1,116 @@
+{
+  "version": 1,
+  "slug": "webflow-marketplace",
+  "title": "Webflow Template Marketplace Impact Reports",
+  "client": "Webflow",
+  "clientShortName": "Webflow",
+  "audience": "business_review",
+  "targetKind": "report_collection",
+  "deliveryDate": "2026-06-05",
+  "headline": "A PM-ready report packet now connects Marketplace Code Components, richer search, Validator app enforcement, Asset Dashboard routing, and agent-review guardrails to the current business trajectory.",
+  "recentChangePaths": [
+    "docs/deliveries/webflow-marketplace",
+    "packages/webflow-components/src/components/grid/TemplateGrid.tsx",
+    "packages/webflow-components/src/components/marketplace/TemplateDetailConversionTracker.tsx",
+    "packages/webflow-template-search",
+    "apps/marketplace-template-submission-cloud",
+    "packages/webflow-template-validation",
+    "packages/webflow-template-review-mcp",
+    "apps/webflow-dashboard-cloud"
+  ],
+  "artifactUrls": [
+    {
+      "id": "webflow-marketplace-report-packet",
+      "label": "Report packet in repo",
+      "kind": "github_repo_artifact",
+      "visibility": "business_review",
+      "url": "https://github.com/createsomethingtoday/create-something-monorepo/tree/main/docs/deliveries/webflow-marketplace",
+      "summary": "Public-reviewable Markdown packet for PMs and business stakeholders."
+    },
+    {
+      "id": "webflow-marketplace-pr-297",
+      "label": "Merged report PR",
+      "kind": "github_pull_request",
+      "visibility": "business_review",
+      "url": "https://github.com/createsomethingtoday/create-something-monorepo/pull/297",
+      "summary": "Merged PR that added the report collection and delivery index entry."
+    }
+  ],
+  "coordination": {
+    "linearIssueIds": [
+      "CRE-545"
+    ],
+    "linearUrls": [
+      "https://linear.app/createsomething/issue/CRE-545/create-webflow-marketplace-pm-impact-report-collection"
+    ]
+  },
+  "summary": [
+    "The report collection frames the current Marketplace work as a coordinated quality and conversion program: richer discovery through Code Components and webflow-search, stronger creator preflight through the Validator app, clearer creator recovery through the Asset Dashboard, and tighter reviewer/agent guardrails.",
+    "The business read is intentionally balanced. Early data shows stabilization and stronger downstream CTA/order behavior, but not yet a recovery in the browse-to-template selection step that drove the multi-month decline.",
+    "The packet separates repo-backed implementation evidence from live analytics notes. PMs can use the repo links for public review while treating Amplitude, Clarity, and Datadog numbers as refresh-required operational evidence.",
+    "Two blockers remain important for interpretation: unresolved desktop Safari/WebKit script errors and missing normalized analytics properties for signal-level attribution.",
+    "The next strategic bet is an agentic Webflow MCP experiment that measures an agent-native discovery path as its own cohort rather than hiding it inside bot-diluted web traffic."
+  ],
+  "components": [
+    {
+      "id": "marketplace-discovery",
+      "tier": "Database",
+      "label": "Discovery data and search",
+      "title": "Code Components, webflow-search, category pages, signals, and conversion tracking",
+      "status": "implemented",
+      "summary": "The reports connect the TemplateGrid, webflow-search worker, category Cloud app, signal labels, detail tracker, and attribution payload to the business question: whether discovery is lifting browse-to-template selection.",
+      "evidence": [
+        "docs/deliveries/webflow-marketplace/2026-06-05-experience-and-search-report.md",
+        "docs/deliveries/webflow-marketplace/2026-06-05-measurement-trajectory-report.md",
+        "packages/webflow-components/src/components/grid/TemplateGrid.tsx",
+        "packages/webflow-components/src/components/marketplace/TemplateDetailConversionTracker.tsx",
+        "packages/webflow-template-search/README.md"
+      ]
+    },
+    {
+      "id": "submission-quality-loop",
+      "tier": "Automation",
+      "label": "Validator and submission loop",
+      "title": "Validator app enforcement, template form gating, and Asset Dashboard recovery",
+      "status": "implemented",
+      "summary": "The reports document how the Template form requires Validator preflight, how creators are routed toward recovery steps, and how the Asset Dashboard becomes the follow-up surface for template health and review quality.",
+      "evidence": [
+        "docs/deliveries/webflow-marketplace/2026-06-05-submission-quality-loop-report.md",
+        "apps/marketplace-template-submission-cloud/lib/intake/validator-app.ts",
+        "apps/marketplace-template-submission-cloud/app/api/intake/validate-published-url/route.ts",
+        "apps/marketplace-template-submission-cloud/components/template-intake.tsx",
+        "apps/webflow-dashboard-cloud/README.md"
+      ]
+    },
+    {
+      "id": "review-judgment",
+      "tier": "Judgment",
+      "label": "Reviewer and agent judgment",
+      "title": "Agent-review guardrails, eval improvements, and MCP experiment framing",
+      "status": "ready-for-review",
+      "summary": "The reports explain the human-review boundary and the improved guardrails around lorem ipsum, CMS/Collections behavior, image sizes, utility pages, alt text, and video fallback/poster checks.",
+      "evidence": [
+        "docs/deliveries/webflow-marketplace/2026-06-05-agent-review-validation-report.md",
+        "docs/deliveries/webflow-marketplace/2026-06-05-agentic-mcp-experiment-brief.md",
+        "packages/webflow-template-validation/worker/src/validators/content-validator.ts",
+        "packages/webflow-template-validation/worker/src/validators/asset-validator.ts",
+        "packages/webflow-template-review-mcp/README.md",
+        "packages/webflow-template-review-mcp/src/prompts.ts"
+      ]
+    }
+  ],
+  "clientUpdate": [
+    "The Webflow Template Marketplace report packet is ready for PM/business review. It gives a public-reviewable repo trail for the implementation work and a balanced impact read for what has changed.",
+    "The strongest read is that the work is directionally correct and appears to have stabilized downstream conversion, but it has not yet proven a recovery in browse-to-template selection. That remains the main metric to watch.",
+    "Validator app enforcement and Asset Dashboard routing should improve creator preparedness and reduce reviewer ambiguity. Review-agent output remains supplemental evidence rather than a replacement for human reviewer decisions.",
+    "Measurement still needs engineering follow-up before signal-level conclusions are reliable: Safari/WebKit errors remain a risk, and normalized attribution properties are not yet landing in Amplitude.",
+    "The agentic Webflow MCP experiment should be framed as a new agent-native discovery cohort, not as a replacement for human Marketplace browsing."
+  ],
+  "nextReview": [
+    "Refresh Amplitude, Clarity, and Datadog before presenting final impact claims.",
+    "Resolve or explicitly rule out the desktop Safari/WebKit script-error issue.",
+    "Fix normalized analytics property delivery for signal_window, signal_density, attribution_present, and attribution_match.",
+    "Use browse-to-template selection as the Marketplace top-of-funnel success metric.",
+    "Scope the Webflow MCP experiment with separate agent attribution and guardrails."
+  ]
+}

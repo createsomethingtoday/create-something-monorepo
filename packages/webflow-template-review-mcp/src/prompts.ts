@@ -1,6 +1,8 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 
+import { COMPREHENSIVE_REVIEW_WORKFLOW_GUIDANCE } from './comprehensive-review-contract.js';
+
 const REVIEW_CONTEXT = `You are assisting Webflow's Template Review Team. Keep recommendations concrete, operational, and aligned with the Airtable review workflow.
 
 Prioritize:
@@ -34,7 +36,7 @@ Every review follows these phases:
 | Tool | What it does | When |
 |------|-------------|------|
 | \`template_review_list_queue\` | Templates ready for review, sorted by date | Find new work |
-| \`template_review_my_queue\` | Your assigned reviews, all statuses | Resume work |
+| \`template_review_my_queue\` | Your assigned active reviews, compact by default | Resume work |
 | \`template_review_search_versions\` | Find specific version cycles by name | Track re-submissions |
 
 ## Phase 3 — Inspect the Submission
@@ -51,50 +53,33 @@ Every review follows these phases:
 
 | Tool | What it does | When |
 |------|-------------|------|
-| \`template_review_enqueue_analyzer_review\` | Queue browser-backed analysis | Start analysis |
-| \`template_review_get_analyzer_review\` | Get results for a specific job | Poll after ~90s |
-| \`template_review_list_analyzer_reviews\` | List all jobs for a version | Check prior runs |
+| \`template_review_get_comprehensive_review_contract\` | Returns the canonical comprehensive evidence shape, coverage matrix, rubric dimensions, manual checks, and Agent Review Feedback format | Before comprehensive reports or Agent Review Feedback summaries |
+| \`template_review_run_published_site_validation\` | Runs the working published-site validators: content/assets/accessibility signals, legacy IX2 interactions, GSAP/custom-code policy signals | After \`get_review_context\`, using \`publishedUrl\` only |
 
-The analyzer crawls **every page** and runs 39 automated checks:
-- **Structure**: H1 hierarchy, heading levels, required pages (license, instructions, changelog, style guide)
-- **Images**: alt text, dimensions, loading strategy, modern formats
-- **Links**: broken internal links, empty hrefs, external target="_blank"
-- **SEO**: title formula, meta tags (description, og:image), canonical URL
-- **Accessibility**: WCAG contrast, form labels, accessible link names
-- **Content**: Lorem ipsum detection, placeholder text
-- **Site Settings**: custom favicon, custom fonts with licensing, connected apps
-- **Policy**: Powered by Webflow badge, affiliate links, GSAP documentation, custom code
+This validation path is **read-only** and does not use Designer API data, Preview URLs, or Airtable writes. Treat it as supplemental published-site evidence for review triage, not as a final decision.
+
+The published-site validators cover:
+- **Content**: lorem/placeholder signals, headings, SEO metadata, links, content quality. Treat lorem/placeholder findings as review evidence, not automatic blockers. Utility-page example/specimen copy is allowed when it intentionally appears on Style Guide, Changelog, Licenses, Instructions, Password, Search, 401/404, or \`/utility/*\` pages. If placeholder evidence is limited to intentional utility-page specimens, Webflow search snippets, warning-only placeholder signals, or Webflow-generated video fallback assets, exclude it from draft creator feedback.
+- **Images/assets**: asset/image issues available from the published-site worker and supplied asset data
+- **Accessibility**: validator-detectable alt text, heading, and accessibility signals. Treat alt-text findings as actionable only when they point to editable content images/icons; do not cite decorative empty-alt images or Webflow-generated video fallback/poster assets as creator-fixable missing-alt issues.
+- **Interactions**: legacy IX2 markers detected from published HTML
+- **Custom code / GSAP**: GSAP usage, flagged custom code, security-risk patterns, legacy IX2, and Unicorn Studio embeds
+
+Required utility pages do **not** need root-only slugs. License, Instructions, Changelog, and Style Guide pages may be nested in folders when they are discoverable, return 200, and visible links point to the matching utility page. Intentional utility-page examples such as "Heading 1", "Button Text", or Lorem copy used as typography/component specimens are not placeholder failures by themselves and should not be included in creator feedback. Flag missing pages, broken pages, missing required license text, customer-facing placeholder copy on non-utility pages, or utility links that point to unrelated pages.
+
+${COMPREHENSIVE_REVIEW_WORKFLOW_GUIDANCE}
 
 ### Interpreting Results
 
-**Severity levels:**
-| Severity | Meaning | Action |
-|----------|---------|--------|
-| \`critical\` | Blocks publishing | Must fix before approval |
-| \`major\` | Significant quality issue | Should fix, request changes |
-| \`minor\` | Nice to have | Note in feedback, don't block |
-| \`info\` | Informational | No action needed |
+Report \`rubricCoverage\` as \`partial_published_site_validation\` unless a separate current artifact produces fuller rubric coverage. Do not invent analyzer job IDs, check IDs, score, or grade.
 
-**Check statuses:**
-| Status | Meaning |
-|--------|---------|
-| \`pass\` | Check passed |
-| \`fail\` | Failed — see \`evidence\` and \`fixHint\` |
-| \`partial\` | Partially met — see evidence |
-| \`manual\` | Requires human verification |
-
-**Overall score & grade:**
-- **A (90+)**: Strong candidate for approval
-- **B (75-89)**: Likely approvable with minor feedback
-- **C (60-74)**: Needs changes
-- **D/F (<60)**: Significant issues
-
-**Common failure patterns that mean Changes Requested:**
-- Pervasive missing alt text across all pages
+**Common failure patterns that may support Changes Requested after reviewer confirmation:**
+- Pervasive actionable missing alt text across editable content images/icons, after excluding decorative images and Webflow-generated video fallback/poster assets
 - Skipped heading levels on most pages
-- Missing Instructions page when interactions exist
+- Legacy IX2 interactions detected
+- Flagged unsupported custom code or third-party embeds
 - Missing image dimensions on all pages
-- Lorem ipsum or placeholder text detected
+- Confirmed authored/customer-facing placeholder content on non-utility pages, not intentional utility-page specimens, not Webflow search snippets, and not warning-only placeholder signals
 - Connected third-party apps (GA, FB Pixel, etc.)
 
 ## Phase 5 — Take Ownership & Decide
@@ -114,7 +99,7 @@ The analyzer crawls **every page** and runs 39 automated checks:
 
 **APPROVE** if: No critical failures, few major failures, grade B+, design quality is "Good", responsive works.
 
-**REQUEST CHANGES** if: Any critical failures, 3+ major failures, missing required pages, placeholder content, connected apps, design below "Good".
+**REQUEST CHANGES** if, after reviewer confirmation: Any critical failures, 3+ major failures, missing required pages, confirmed authored/customer-facing placeholder content on non-utility pages, connected apps, design below "Good".
 
 **REJECT** if: Fundamentally below bar, non-functional, guidelines violated.
 
@@ -142,8 +127,8 @@ The analyzer crawls **every page** and runs 39 automated checks:
 1. \`template_review_health\` — confirm connected
 2. \`template_review_list_queue\` — find work
 3. \`template_review_get_review_context\` — check capabilities
-4. \`template_review_enqueue_analyzer_review\` — start analysis
-5. \`template_review_get_analyzer_review\` — read results (~90s)
+4. \`template_review_run_published_site_validation\` — run published-site validators on \`publishedUrl\`
+5. Review supplemental evidence and manual Designer checks separately
 6. \`template_review_assign_self\` — claim the version
 7. \`template_review_request_changes\` / \`approve_version\` / \`reject_version\` — decide
 

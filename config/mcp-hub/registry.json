@@ -13,9 +13,10 @@
         "jobs",
         "healthcare"
       ],
+      "package_path": "packages/abundance-jobs-mcp",
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 4,
-      "setupNotes": "Production smoke passed on 2026-05-13 via list_public_jobs using the shared Abundance MCP bearer from prod:/mcp-hub/hubs."
+      "setupNotes": "Source-controlled Worker reads from the normalized abundance_public_jobs table and refreshes RapidAPI Active Jobs through an authenticated admin endpoint. Uses the shared Abundance MCP bearer from prod:/mcp-hub/hubs."
     },
     "abundance-staff-mcp": {
       "transport": "http",
@@ -12766,6 +12767,57 @@
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 0
     },
+    "halfdozen-agent-analyzer-telemetry": {
+      "transport": "http",
+      "url": "https://halfdozen-agent-analyzer-telemetry-mcp.half-dozen.workers.dev/mcp",
+      "bearer_token_env_var": "HALFDOZEN_AGENT_ANALYZER_TELEMETRY_MCP_API_KEY",
+      "description": "Append-only telemetry MCP for Half Dozen native Notion AGENT ANALYZER eval runs.",
+      "tags": [
+        "halfdozen",
+        "agent-analyzer",
+        "notion",
+        "observability",
+        "workway"
+      ],
+      "package_path": "packages/halfdozen-agent-analyzer-telemetry-mcp/worker",
+      "catalog_exposure_mode": "direct",
+      "estimated_tool_count": 11,
+      "setupNotes": "Hosted on the Half Dozen Cloudflare account. Cloudflare Worker secret is MCP_API_KEY; operator/client retrieval secret is prod:/:HALFDOZEN_AGENT_ANALYZER_TELEMETRY_MCP_API_KEY. Optional Braintrust tracing uses BRAINTRUST_API_KEY plus BRAINTRUST_PROJECT_ID and mirrors append-only events as native-notion-agent tool spans. The D1 schema is additive and append-only in halfdozen-feedback.agent_analyzer_telemetry_events."
+    },
+    "halfdozen-blondish-sync-mcp": {
+      "transport": "http",
+      "url": "https://halfdozen-blondish-sync-mcp.createsomething.workers.dev/mcp",
+      "bearer_token_env_var": "HALFDOZEN_BLONDISH_SYNC_MCP_API_KEY",
+      "description": "Operator-invoked BLOND:ISH Support Tickets to Half Dozen Tickets reconciliation MCP.",
+      "tags": [
+        "halfdozen",
+        "blondish",
+        "notion",
+        "tickets",
+        "sync"
+      ],
+      "package_path": "packages/halfdozen-blondish-sync-mcp",
+      "catalog_exposure_mode": "direct",
+      "estimated_tool_count": 8,
+      "setupNotes": "Worker-side bearer secret is MCP_API_KEY. Optional Braintrust tracing uses BRAINTRUST_API_KEY with sanitized tool counts and drift summaries; validate with pnpm braintrust:eval:mcp:halfdozen-blondish-sync:local. Use this MCP for bounded operator reconciliation: source-owned ticket data to HD and mapped HD status back to source. Prefer scoped repair tools before broad reconcile; use Notion webhooks plus a persisted sync index for future high-volume incremental sync."
+    },
+    "halfdozen-c3-management-sync-mcp": {
+      "transport": "http",
+      "url": "https://halfdozen-c3-management-sync-mcp.createsomething.workers.dev/mcp",
+      "bearer_token_env_var": "HALFDOZEN_C3_MANAGEMENT_SYNC_MCP_API_KEY",
+      "description": "Operator-invoked C3 Management Support Tickets to Half Dozen Tickets reconciliation MCP.",
+      "tags": [
+        "halfdozen",
+        "c3-management",
+        "notion",
+        "tickets",
+        "sync"
+      ],
+      "package_path": "packages/halfdozen-blondish-sync-mcp",
+      "catalog_exposure_mode": "direct",
+      "estimated_tool_count": 8,
+      "setupNotes": "Worker-side bearer secret is MCP_API_KEY. Optional Braintrust tracing uses BRAINTRUST_API_KEY with sanitized tool counts and drift summaries; validate with pnpm braintrust:eval:mcp:halfdozen-blondish-sync:local. Use this MCP for bounded operator reconciliation: source-owned ticket data to HD and mapped HD status back to source. Prefer scoped repair tools before broad reconcile; use Notion webhooks plus a persisted sync index for future high-volume incremental sync."
+    },
     "halfdozen-dm-mcp": {
       "transport": "http",
       "url": "https://dm.mcp.workway.co/mcp",
@@ -12828,6 +12880,23 @@
       ],
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 0
+    },
+    "halfdozen-lightswitch-sync-mcp": {
+      "transport": "http",
+      "url": "https://halfdozen-lightswitch-sync-mcp.createsomething.workers.dev/mcp",
+      "bearer_token_env_var": "HALFDOZEN_LIGHTSWITCH_SYNC_MCP_API_KEY",
+      "description": "Operator-invoked Lightswitch Support Tickets to Half Dozen Tickets reconciliation MCP.",
+      "tags": [
+        "halfdozen",
+        "lightswitch",
+        "notion",
+        "tickets",
+        "sync"
+      ],
+      "package_path": "packages/halfdozen-blondish-sync-mcp",
+      "catalog_exposure_mode": "direct",
+      "estimated_tool_count": 8,
+      "setupNotes": "Worker-side bearer secret is MCP_API_KEY. Optional Braintrust tracing uses BRAINTRUST_API_KEY with sanitized tool counts and drift summaries; validate with pnpm braintrust:eval:mcp:halfdozen-blondish-sync:local. Use this MCP for bounded operator reconciliation: source-owned ticket data to HD and mapped HD status back to source. Prefer scoped repair tools before broad reconcile; use Notion webhooks plus a persisted sync index for future high-volume incremental sync."
     },
     "halfdozen-operator-notion-mcp": {
       "transport": "http",
@@ -16481,16 +16550,23 @@
       "notion-halfdozen-three-six-zero",
       "halfdozen-dm-mcp",
       "halfdozen-operator-notion-mcp",
+      "halfdozen-blondish-sync-mcp",
+      "halfdozen-c3-management-sync-mcp",
+      "halfdozen-lightswitch-sync-mcp",
       "half-dozen-youtube-sync"
     ],
     "halfdozen-observability": [
+      "halfdozen-agent-analyzer-telemetry",
       "halfdozen-telemetry"
     ],
     "halfdozen-sync": [
       "halfdozen-gmail-sync-danny",
       "halfdozen-gmail-sync-fillip",
       "halfdozen-gmail-sync-leah",
-      "halfdozen-zoom-sync"
+      "halfdozen-zoom-sync",
+      "halfdozen-blondish-sync-mcp",
+      "halfdozen-c3-management-sync-mcp",
+      "halfdozen-lightswitch-sync-mcp"
     ],
     "local-dev": [
       "community-mcp",

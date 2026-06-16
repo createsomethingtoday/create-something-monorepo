@@ -1,5 +1,5 @@
-/* Try to import tokens, but provide fallbacks */
-@import '@create-something/components/styles/tokens.css';
+/* Canon design tokens (the deprecated @create-something/components package was removed) */
+@import '@create-something/canon/styles/tokens.css';
 
 @tailwind base;
 @tailwind components;

@@ -13,7 +13,7 @@ import { validateAssets, validateAssetBatch } from './validators/asset-validator
 import { validateContent } from './validators/content-validator';
 import { validateAccessibility } from './validators/accessibility-validator';
 import { validateDesignerData } from './validators/designer-validator';
-import { validateInteractions } from './validators/interactions-validator';
+import { validateInteractions, type CmsTemplateHint } from './validators/interactions-validator';
 import { fetchHTML } from './utils/fetch-utils';
 import {
 	ValidationRequest,
@@ -37,6 +37,7 @@ import {
 } from './types';
 
 const REVIEW_SNIPPET_VERSION = '0.3.0';
+const WORKER_VERSION = '2.3.0';
 const REVIEW_SNIPPET_MARKER = '__wf_review_snippet_v1';
 const REVIEW_SNIPPET_ASSET_PATH = '/app-validator/snippet/review.js';
 const REVIEW_JOB_RETENTION_MS = 30 * 60 * 1000;
@@ -48,6 +49,11 @@ const DEFAULT_SUBMISSION_MAX = 6;
 const SUBMISSION_BURST_WINDOW_MS = 90 * 1000;
 const SUBMISSION_BURST_THRESHOLD = 3;
 const SUBMISSION_CLIENT_CHURN_THRESHOLD = 3;
+const BRIDGE_USAGE_INDEX_STATE_KEY = 'bridge-usage-index';
+const BRIDGE_USAGE_SCHEMA_VERSION = 'validator_bridge_usage_index.v0.1';
+const BRIDGE_USAGE_MAX_RECORDS = 1000;
+const BRIDGE_USAGE_DEFAULT_LIMIT = 50;
+const BRIDGE_USAGE_MAX_LIMIT = 250;
 const encoder = new TextEncoder();
 
 const TERMINAL_STATUSES = new Set<ReviewStatusResponse['status']>([
@@ -124,9 +130,149 @@ interface SubmissionRateLimitState {
 	attempts: SubmissionAttemptRecord[];
 }
 
+interface ValidationResultArtifactPersistResult {
+	persisted: boolean;
+	key?: string;
+	sha256?: string;
+	byteSize?: number;
+	reason?: 'r2_not_configured' | 'r2_write_failed';
+}
+
+interface ValidationSubmissionSummary {
+	totalErrors: number;
+	totalWarnings: number;
+	totalInfo: number;
+	passedCategories: number;
+	failedCategories: number;
+	totalCategories: number;
+	score: number;
+	passed: boolean;
+}
+
+interface ValidationCategoryIssueDetail {
+	severity: 'error' | 'warning' | 'info';
+	message: string;
+}
+
+interface ValidationCategoryDetail {
+	category: string;
+	passed: boolean;
+	issues: ValidationCategoryIssueDetail[];
+}
+
+interface ValidationResultRecord {
+	schemaVersion: 'validator_app_submission_latest.v0.1';
+	siteId: string;
+	siteName: string | null;
+	siteUrl?: string;
+	submittedAt: string;
+	correlationId: string;
+	payloadHash: string;
+	rawBridgeTokenStored: false;
+	summary: ValidationSubmissionSummary;
+	failedCategoryDetails?: ValidationCategoryDetail[];
+	warningCategoryDetails?: ValidationCategoryDetail[];
+	artifact: ValidationResultArtifactPersistResult;
+}
+
+type BridgeUsageEvent =
+	| 'snippet_install'
+	| 'snippet_status'
+	| 'snippet_rotate'
+	| 'validation_submit'
+	| 'latest_lookup';
+
+interface BridgeUsageEventCounters {
+	install: number;
+	status: number;
+	rotate: number;
+	submit: number;
+	latestLookup: number;
+}
+
+interface BridgeUsageLatestResultSnapshot {
+	submittedAt: string;
+	correlationId: string;
+	payloadHash: string;
+	passed: boolean;
+	summary: ValidationSubmissionSummary;
+	artifact: ValidationResultArtifactPersistResult;
+}
+
+interface BridgeUsageIndexRecord {
+	schemaVersion: typeof BRIDGE_USAGE_SCHEMA_VERSION;
+	siteId: string;
+	siteName: string | null;
+	siteUrl?: string;
+	snippetVersion?: string;
+	installMethod?: SnippetTokenRecord['installMethod'];
+	status: SnippetTokenRecord['status'];
+	installed: boolean;
+	firstSeenAt: string;
+	lastSeenAt: string;
+	lastEvent: BridgeUsageEvent;
+	lastInstallAt?: string;
+	lastStatusCheckAt?: string;
+	lastTokenRotatedAt?: string;
+	lastSubmissionAt?: string;
+	lastLatestLookupAt?: string;
+	lastKnownMessage?: string;
+	latestResult?: BridgeUsageLatestResultSnapshot;
+	eventCounts: BridgeUsageEventCounters;
+	rawBridgeTokenStored: false;
+}
+
+interface BridgeUsageIndexState {
+	schemaVersion: typeof BRIDGE_USAGE_SCHEMA_VERSION;
+	updatedAt: string;
+	rawBridgeTokenStored: false;
+	records: BridgeUsageIndexRecord[];
+}
+
+interface BridgeUsageIndexUpdate {
+	event: BridgeUsageEvent;
+	siteId: string;
+	siteName?: string | null;
+	siteUrl?: string;
+	snippetVersion?: string;
+	installMethod?: SnippetTokenRecord['installMethod'];
+	status?: SnippetTokenRecord['status'];
+	installed?: boolean;
+	eventAt?: string;
+	lastInstallAt?: string;
+	lastStatusCheckAt?: string;
+	lastTokenRotatedAt?: string;
+	lastSubmissionAt?: string;
+	lastLatestLookupAt?: string;
+	lastKnownMessage?: string;
+	latestResult?: BridgeUsageLatestResultSnapshot;
+	correlationId?: string;
+}
+
+interface SnippetTokenLookupRecord {
+	bridgeTokenSha256: string;
+	siteId: string;
+	updatedAt: string;
+	rawBridgeTokenStored: false;
+}
+
+interface R2BucketLike {
+	put(
+		key: string,
+		value: string,
+		options?: {
+			httpMetadata?: { contentType?: string };
+			customMetadata?: Record<string, string>;
+		}
+	): Promise<unknown>;
+}
+
 const reviewJobs = new Map<string, ReviewJobState>();
 const snippetTokens = new Map<string, SnippetTokenRecord>();
+const snippetTokenLookups = new Map<string, SnippetTokenLookupRecord>();
 const submissionStates = new Map<string, SubmissionRateLimitState>();
+const validationResultRecords = new Map<string, ValidationResultRecord>();
+const bridgeUsageRecords = new Map<string, BridgeUsageIndexRecord>();
 
 export class ReviewJobsDurableObject {
 	private readonly state: DurableObjectState;
@@ -266,6 +412,21 @@ export default {
 				return await handleValidationSubmit(request, env, ctx, correlationId);
 			}
 
+			if (url.pathname === '/app-validator/submission/latest') {
+				if (request.method !== 'GET') return methodNotAllowed(request);
+				return await handleValidationSubmissionLatest(request, env, correlationId);
+			}
+
+			if (url.pathname === '/app-validator/feedback') {
+				if (request.method !== 'POST') return methodNotAllowed(request);
+				return await handleIssueFeedback(request, env, correlationId);
+			}
+
+			if (url.pathname === '/app-validator/bridge/usage') {
+				if (request.method !== 'GET') return methodNotAllowed(request);
+				return await handleBridgeUsageList(request, env, correlationId);
+			}
+
 			switch (url.pathname) {
 				case '/api/validate':
 					if (request.method !== 'POST') return methodNotAllowed(request);
@@ -285,7 +446,7 @@ export default {
 						{
 							status: 'healthy',
 							timestamp: new Date().toISOString(),
-							version: '2.2.0',
+							version: WORKER_VERSION,
 							endpoints: [
 								'/api/validate',
 								'/validate',
@@ -297,7 +458,9 @@ export default {
 								'/app-validator/snippet/status',
 								'/app-validator/snippet/rotate-token',
 								REVIEW_SNIPPET_ASSET_PATH,
-								'/app-validator/submit'
+								'/app-validator/submit',
+								'/app-validator/submission/latest',
+								'/app-validator/bridge/usage'
 							]
 						},
 						200,
@@ -510,7 +673,7 @@ async function handleSnippetInstall(
 
 	const existing = await getSnippetTokenState(env, body.siteId);
 	const bridgeToken = existing?.bridgeToken || generateBridgeToken();
-	const snippet = buildSnippetPayload(bridgeToken, request);
+	const snippet = buildSnippetPayload(bridgeToken, request, body.siteId);
 
 	const now = new Date().toISOString();
 	const record: SnippetTokenRecord = {
@@ -537,7 +700,14 @@ async function handleSnippetInstall(
 	);
 
 	if (body.mode === 'programmatic' || body.mode === 'webflow-api') {
-		const programmatic = await attemptProgrammaticSnippetInstall(env, body.siteId, snippet, correlationId, body.idToken);
+		const programmatic = await attemptProgrammaticSnippetInstall(
+			env,
+			body.siteId,
+			bridgeToken,
+			snippet,
+			correlationId,
+			body.idToken
+		);
 		if (programmatic.ok) {
 			record.installMethod = 'webflow-api';
 			record.status = 'active';
@@ -547,10 +717,24 @@ async function handleSnippetInstall(
 			record.message = programmatic.message;
 		}
 	} else {
-		record.message = 'Manual install requested. Publish the bridge and review surface, then re-check.';
+		record.message =
+			'Validator script ready. Paste it in Site Settings > Custom Code > Head code, publish, then re-check.';
 	}
 
 	await persistSnippetTokenState(env, record);
+	await recordBridgeUsage(env, {
+		event: 'snippet_install',
+		siteId: record.siteId,
+		siteName: record.siteName,
+		snippetVersion: record.snippetVersion,
+		installMethod: record.installMethod,
+		status: record.status,
+		installed: record.installed,
+		eventAt: now,
+		lastInstallAt: now,
+		lastKnownMessage: record.message,
+		correlationId
+	});
 
 	const response: SnippetInstallResponse & { snippet: string; siteId: string; updatedAt: string } = {
 		installed: record.installed,
@@ -598,8 +782,20 @@ async function handleSnippetStatus(request: Request, env: unknown): Promise<Resp
 			status: 'pending_manual',
 			message: 'Published review surface not installed yet.',
 			updatedAt: new Date().toISOString(),
-			snippet: buildSnippetPayload('__REPLACE_WITH_TOKEN__', request)
+			snippet: buildSnippetPayload('__REPLACE_WITH_TOKEN__', request, siteId)
 		};
+		await recordBridgeUsage(env, {
+			event: 'snippet_status',
+			siteId,
+			siteName: null,
+			status: response.status,
+			installed: response.installed,
+			snippetVersion: response.snippetVersion,
+			installMethod: response.installMethod,
+			eventAt: response.updatedAt,
+			lastStatusCheckAt: response.updatedAt,
+			lastKnownMessage: response.message
+		});
 		return jsonResponse(response, 200, request);
 	}
 
@@ -609,8 +805,21 @@ async function handleSnippetStatus(request: Request, env: unknown): Promise<Resp
 
 	const response: SnippetStatusResponse & { snippet: string } = {
 		...existing,
-		snippet: buildSnippetPayload(existing.bridgeToken, request)
+		snippet: buildSnippetPayload(existing.bridgeToken, request, existing.siteId)
 	};
+	await recordBridgeUsage(env, {
+		event: 'snippet_status',
+		siteId: existing.siteId,
+		siteName: existing.siteName,
+		siteUrl: siteUrl || undefined,
+		snippetVersion: existing.snippetVersion,
+		installMethod: existing.installMethod,
+		status: existing.status,
+		installed: existing.installed,
+		eventAt: existing.updatedAt,
+		lastStatusCheckAt: existing.updatedAt,
+		lastKnownMessage: existing.message
+	});
 	return jsonResponse(response, 200, request);
 }
 
@@ -628,7 +837,7 @@ async function handleSnippetRotateToken(
 	const existing = await getSnippetTokenState(env, body.siteId);
 	const bridgeToken = generateBridgeToken();
 	const now = new Date().toISOString();
-	const snippet = buildSnippetPayload(bridgeToken, request);
+	const snippet = buildSnippetPayload(bridgeToken, request, body.siteId);
 	let record: SnippetTokenRecord = {
 		siteId: body.siteId,
 		siteName: body.siteName || existing?.siteName || null,
@@ -645,6 +854,7 @@ async function handleSnippetRotateToken(
 		const programmatic = await attemptProgrammaticSnippetInstall(
 			env,
 			body.siteId,
+			bridgeToken,
 			snippet,
 			correlationId
 		);
@@ -652,9 +862,10 @@ async function handleSnippetRotateToken(
 			record = {
 				...record,
 				installMethod: 'webflow-api',
-				status: 'active',
-				installed: true,
-				message: 'Token rotated and published review surface updated programmatically.'
+				status: 'pending_manual',
+				installed: false,
+				message:
+					'Token rotated and Validator script updated. Publish the site, then re-check the published script.'
 			};
 		} else {
 			record = {
@@ -664,6 +875,19 @@ async function handleSnippetRotateToken(
 		}
 	}
 	await persistSnippetTokenState(env, record);
+	await recordBridgeUsage(env, {
+		event: 'snippet_rotate',
+		siteId: record.siteId,
+		siteName: record.siteName,
+		snippetVersion: record.snippetVersion,
+		installMethod: record.installMethod,
+		status: record.status,
+		installed: record.installed,
+		eventAt: now,
+		lastTokenRotatedAt: now,
+		lastKnownMessage: record.message,
+		correlationId
+	});
 
 	ctx.waitUntil(
 		emitTelemetry(env, {
@@ -816,6 +1040,45 @@ async function handleValidationSubmit(
 		siteUrl,
 		validationResults: sanitizedResults
 	});
+	const artifactResult = await persistValidationResultArtifact(env, {
+		siteId,
+		siteName,
+		siteUrl,
+		submittedAt,
+		correlationId,
+		payloadHash,
+		validationResults: sanitizedResults
+	});
+	const latestResult: ValidationResultRecord = {
+		schemaVersion: 'validator_app_submission_latest.v0.1',
+		siteId,
+		siteName,
+		siteUrl,
+		submittedAt,
+		correlationId,
+		payloadHash,
+		rawBridgeTokenStored: false,
+		summary: summarizeValidationSubmission(sanitizedResults),
+		failedCategoryDetails: getFailedCategoryDetails(sanitizedResults),
+		warningCategoryDetails: getWarningCategoryDetails(sanitizedResults),
+		artifact: artifactResult
+	};
+	await persistValidationResultState(env, latestResult);
+	const knownSnippetState = await getSnippetTokenState(env, siteId);
+	await recordBridgeUsage(env, {
+		event: 'validation_submit',
+		siteId,
+		siteName,
+		siteUrl,
+		status: knownSnippetState?.status,
+		installed: knownSnippetState?.installed,
+		snippetVersion: knownSnippetState?.snippetVersion,
+		installMethod: knownSnippetState?.installMethod,
+		eventAt: submittedAt,
+		lastSubmissionAt: submittedAt,
+		latestResult: snapshotLatestResultForBridgeUsage(latestResult),
+		correlationId
+	});
 
 	const remaining = Math.max(limitConfig.maxSubmissions - nextState.attempts.length, 0);
 	const response: ValidationSubmitResponse = {
@@ -839,7 +1102,8 @@ async function handleValidationSubmit(
 		anomaly: {
 			flagged: anomalyReasons.length > 0,
 			reasons: anomalyReasons
-		}
+		},
+		artifact: artifactResult
 	};
 
 	ctx.waitUntil(
@@ -853,6 +1117,9 @@ async function handleValidationSubmit(
 				recordId: persistResult.recordId,
 				persisted: persistResult.persisted,
 				reason: persistResult.reason,
+				artifactPersisted: artifactResult.persisted,
+				artifactKey: artifactResult.key,
+				artifactReason: artifactResult.reason,
 				remaining,
 				anomalyReasons
 			}
@@ -860,6 +1127,245 @@ async function handleValidationSubmit(
 	);
 
 	return jsonResponse(response, 200, request);
+}
+
+const FEEDBACK_MAX_BODY_BYTES = 8 * 1024;
+
+/**
+ * Creator-reported false positives. Each report is logged as a structured
+ * event (queryable in Workers observability) and archived to R2 when the
+ * artifact bucket is bound, so validator bugs surface as data instead of
+ * support tickets.
+ */
+async function handleIssueFeedback(
+	request: Request,
+	env: unknown,
+	correlationId: string
+): Promise<Response> {
+	const rawBody = await request.text();
+	if (rawBody.length > FEEDBACK_MAX_BODY_BYTES) {
+		return jsonResponse({ error: 'Feedback payload too large' }, 413, request);
+	}
+
+	let body: {
+		issueId?: string;
+		category?: string;
+		message?: string;
+		pageUrl?: string;
+		siteId?: string;
+		siteUrl?: string;
+		runCorrelationId?: string;
+		note?: string;
+	};
+	try {
+		body = JSON.parse(rawBody);
+	} catch {
+		return jsonResponse({ error: 'Invalid JSON body' }, 400, request);
+	}
+
+	if (!body.issueId || typeof body.issueId !== 'string') {
+		return jsonResponse({ error: 'Missing required field: issueId' }, 400, request);
+	}
+
+	const clean = (value: unknown, max: number): string | undefined =>
+		typeof value === 'string' && value.trim() !== '' ? value.trim().slice(0, max) : undefined;
+
+	const feedback = {
+		event: 'issue.feedback',
+		level: 'info',
+		correlationId,
+		timestamp: new Date().toISOString(),
+		issueId: clean(body.issueId, 120),
+		category: clean(body.category, 120),
+		message: clean(body.message, 500),
+		pageUrl: clean(body.pageUrl, 500),
+		siteId: clean(body.siteId, 120),
+		siteUrl: clean(body.siteUrl, 500),
+		runCorrelationId: clean(body.runCorrelationId, 120),
+		note: clean(body.note, 1000)
+	};
+
+	console.log(JSON.stringify(feedback));
+
+	const bucket = getValidationResultArtifactBucket(env);
+	if (bucket) {
+		try {
+			const key = `feedback/${new Date().toISOString().slice(0, 10)}/${correlationId}.json`;
+			await bucket.put(key, JSON.stringify(feedback, null, 2), {
+				httpMetadata: { contentType: 'application/json' }
+			});
+		} catch (error) {
+			console.warn('Feedback artifact write failed:', error);
+		}
+	}
+
+	return jsonResponse({ received: true, correlationId }, 200, request);
+}
+
+async function handleValidationSubmissionLatest(
+	request: Request,
+	env: unknown,
+	correlationId: string
+): Promise<Response> {
+	const url = new URL(request.url);
+	const siteIdParam = normalizeSiteId(url.searchParams.get('siteId'));
+	const bridgeTokenSha256 = normalizeSha256(url.searchParams.get('bridgeTokenSha256'));
+	let siteId = siteIdParam;
+
+	if (!siteId && bridgeTokenSha256) {
+		const lookup = await getSnippetTokenLookupState(env, bridgeTokenSha256);
+		siteId = lookup?.siteId || null;
+	}
+
+	if (!siteId && !bridgeTokenSha256) {
+		return jsonResponse(
+			{ error: 'Missing required query param: siteId or bridgeTokenSha256', correlationId },
+			400,
+			request
+		);
+	}
+
+	if (!siteId) {
+		return jsonResponse(
+			{
+				status: 'missing',
+				accepted: false,
+				passed: false,
+				message: 'No Validator app site mapping was found for this bridge token.',
+				correlationId,
+				rawBridgeTokenStored: false
+			},
+			404,
+			request
+		);
+	}
+
+	const record = await getValidationResultState(env, siteId);
+	if (!record) {
+		return jsonResponse(
+			{
+				status: 'missing',
+				accepted: false,
+				passed: false,
+				siteId,
+				message: 'No Validator app result has been submitted for this site yet.',
+				correlationId,
+				rawBridgeTokenStored: false
+			},
+			404,
+			request
+		);
+	}
+
+	const lookupAt = new Date().toISOString();
+	await recordBridgeUsage(env, {
+		event: 'latest_lookup',
+		siteId: record.siteId,
+		siteName: record.siteName,
+		siteUrl: record.siteUrl,
+		eventAt: lookupAt,
+		lastLatestLookupAt: lookupAt,
+		latestResult: snapshotLatestResultForBridgeUsage(record),
+		correlationId
+	});
+
+	return jsonResponse(
+		{
+			status: 'available',
+			accepted: true,
+			passed: record.summary.passed,
+			siteId: record.siteId,
+			siteName: record.siteName,
+			siteUrl: record.siteUrl,
+			submittedAt: record.submittedAt,
+			correlationId: record.correlationId,
+			payloadHash: record.payloadHash,
+			rawBridgeTokenStored: false,
+			summary: record.summary,
+			failedCategoryDetails: record.failedCategoryDetails || [],
+			warningCategoryDetails: record.warningCategoryDetails || [],
+			artifact: record.artifact
+		},
+		200,
+		request
+	);
+}
+
+async function handleBridgeUsageList(
+	request: Request,
+	env: unknown,
+	correlationId: string
+): Promise<Response> {
+	const auth = authorizeBridgeUsageRequest(request, env);
+	if (!auth.authorized) {
+		return jsonResponse(
+			{
+				status: auth.status === 503 ? 'unconfigured' : 'unauthorized',
+				accepted: false,
+				message: auth.message,
+				correlationId,
+				rawBridgeTokenStored: false
+			},
+			auth.status,
+			request
+		);
+	}
+
+	const url = new URL(request.url);
+	const filters = parseBridgeUsageFilters(url);
+	if ('error' in filters) {
+		return jsonResponse({ error: filters.error, correlationId }, 400, request);
+	}
+
+	const state = await getBridgeUsageIndexState(env);
+	const filtered = state.records
+		.filter((record) => {
+			if (filters.siteId && record.siteId !== filters.siteId) return false;
+			if (filters.status && record.status !== filters.status) return false;
+			if (typeof filters.installed === 'boolean' && record.installed !== filters.installed) return false;
+			if (typeof filters.hasLatestResult === 'boolean' && Boolean(record.latestResult) !== filters.hasLatestResult) return false;
+			if (filters.sinceMs) {
+				const lastSeen = Date.parse(record.lastSeenAt);
+				if (!Number.isFinite(lastSeen) || lastSeen < filters.sinceMs) return false;
+			}
+			if (filters.query) {
+				const haystack = [
+					record.siteId,
+					record.siteName || '',
+					record.siteUrl || '',
+					record.lastKnownMessage || ''
+				].join(' ').toLowerCase();
+				if (!haystack.includes(filters.query)) return false;
+			}
+			return true;
+		})
+		.sort((a, b) => Date.parse(b.lastSeenAt) - Date.parse(a.lastSeenAt));
+
+	const items = filtered.slice(0, filters.limit).map(sanitizeBridgeUsageRecordForResponse);
+
+	return jsonResponse(
+		{
+			schemaVersion: BRIDGE_USAGE_SCHEMA_VERSION,
+			status: 'available',
+			accepted: true,
+			count: items.length,
+			totalMatched: filtered.length,
+			limit: filters.limit,
+			filters: {
+				siteId: filters.siteId,
+				status: filters.status,
+				installed: filters.installed,
+				hasLatestResult: filters.hasLatestResult,
+				since: filters.since,
+				query: filters.query
+			},
+			updatedAt: state.updatedAt,
+			rawBridgeTokenStored: false,
+			items
+		},
+		200,
+		request
+	);
 }
 
 async function runReviewJob(jobId: string, env: unknown): Promise<void> {
@@ -1034,6 +1540,7 @@ async function performDesignerValidation(
 
 async function performEnhancedValidation(body: ValidationRequest): Promise<ValidationResponse> {
 	const options = body.options || {};
+	const cmsTemplateHints = extractCmsTemplateHints(body.designerData);
 
 	const assetPromise = options.skipAssets
 		? Promise.resolve(createEmptyAssetAnalysis())
@@ -1048,7 +1555,8 @@ async function performEnhancedValidation(body: ValidationRequest): Promise<Valid
 		: validateAccessibility(body.siteUrl);
 
 	const interactionsPromise = validateInteractions(body.siteUrl, body.pageSlugs, {
-		maxPages: options.maxPages
+		maxPages: options.maxPages,
+		cmsTemplateHints
 	});
 
 	const [assetAnalysis, contentAnalysis, accessibilityAnalysis, interactionsAnalysis] = await Promise.all([
@@ -1060,6 +1568,7 @@ async function performEnhancedValidation(body: ValidationRequest): Promise<Valid
 
 	return {
 		siteUrl: body.siteUrl,
+		workerVersion: WORKER_VERSION,
 		timestamp: new Date().toISOString(),
 		analysis: {
 			assets: assetAnalysis,
@@ -1436,6 +1945,33 @@ async function persistSnippetTokenState(
 ): Promise<void> {
 	snippetTokens.set(record.siteId, record);
 	await writeDurableState(env, `snippet:${record.siteId}`, record);
+
+	if (record.bridgeToken) {
+		const bridgeTokenSha256 = await sha256Hex(record.bridgeToken);
+		const lookup: SnippetTokenLookupRecord = {
+			bridgeTokenSha256,
+			siteId: record.siteId,
+			updatedAt: record.updatedAt,
+			rawBridgeTokenStored: false
+		};
+		snippetTokenLookups.set(bridgeTokenSha256, lookup);
+		await writeDurableState(env, `snippet-token:${bridgeTokenSha256}`, lookup);
+	}
+}
+
+async function getSnippetTokenLookupState(
+	env: unknown,
+	bridgeTokenSha256: string
+): Promise<SnippetTokenLookupRecord | null> {
+	const inMemory = snippetTokenLookups.get(bridgeTokenSha256);
+	if (inMemory) return inMemory;
+
+	const persisted = await readDurableState(env, `snippet-token:${bridgeTokenSha256}`);
+	if (!persisted) return null;
+
+	const record = persisted as SnippetTokenLookupRecord;
+	snippetTokenLookups.set(bridgeTokenSha256, record);
+	return record;
 }
 
 async function getSubmissionState(
@@ -1460,6 +1996,351 @@ async function persistSubmissionState(
 	const normalized = reviveSubmissionState(record);
 	submissionStates.set(record.siteId, normalized);
 	await writeDurableState(env, `submission:${record.siteId}`, normalized);
+}
+
+async function getValidationResultState(
+	env: unknown,
+	siteId: string
+): Promise<ValidationResultRecord | null> {
+	const inMemory = validationResultRecords.get(siteId);
+	if (inMemory) return inMemory;
+
+	const persisted = await readDurableState(env, `validation-result:${siteId}`);
+	if (!persisted) return null;
+
+	const record = persisted as ValidationResultRecord;
+	validationResultRecords.set(siteId, record);
+	return record;
+}
+
+async function persistValidationResultState(
+	env: unknown,
+	record: ValidationResultRecord
+): Promise<void> {
+	validationResultRecords.set(record.siteId, record);
+	await writeDurableState(env, `validation-result:${record.siteId}`, record);
+}
+
+async function getBridgeUsageIndexState(env: unknown): Promise<BridgeUsageIndexState> {
+	const persisted = await readDurableState(env, BRIDGE_USAGE_INDEX_STATE_KEY);
+	if (persisted) {
+		const restored = reviveBridgeUsageIndexState(persisted);
+		bridgeUsageRecords.clear();
+		for (const record of restored.records) {
+			bridgeUsageRecords.set(record.siteId, record);
+		}
+		return restored;
+	}
+
+	const records = Array.from(bridgeUsageRecords.values()).sort(sortBridgeUsageRecords);
+	return {
+		schemaVersion: BRIDGE_USAGE_SCHEMA_VERSION,
+		updatedAt: records[0]?.lastSeenAt || new Date(0).toISOString(),
+		rawBridgeTokenStored: false,
+		records
+	};
+}
+
+async function persistBridgeUsageIndexState(
+	env: unknown,
+	state: BridgeUsageIndexState
+): Promise<void> {
+	bridgeUsageRecords.clear();
+	for (const record of state.records) {
+		bridgeUsageRecords.set(record.siteId, record);
+	}
+	await writeDurableState(env, BRIDGE_USAGE_INDEX_STATE_KEY, state);
+}
+
+async function recordBridgeUsage(env: unknown, update: BridgeUsageIndexUpdate): Promise<void> {
+	try {
+		const siteId = normalizeSiteId(update.siteId);
+		if (!siteId) return;
+
+		const eventAt = normalizeIsoTimestamp(update.eventAt) || new Date().toISOString();
+		const state = await getBridgeUsageIndexState(env);
+		const bySite = new Map(state.records.map((record) => [record.siteId, record]));
+		const existing = bySite.get(siteId);
+		const eventCounts = incrementBridgeUsageEventCount(existing?.eventCounts, update.event);
+		const siteUrl = normalizeSiteUrl(update.siteUrl || null) || existing?.siteUrl;
+		const next: BridgeUsageIndexRecord = {
+			schemaVersion: BRIDGE_USAGE_SCHEMA_VERSION,
+			siteId,
+			siteName: update.siteName !== undefined ? update.siteName : existing?.siteName || null,
+			siteUrl,
+			snippetVersion: update.snippetVersion || existing?.snippetVersion,
+			installMethod: update.installMethod || existing?.installMethod,
+			status: update.status || existing?.status || 'pending_manual',
+			installed: typeof update.installed === 'boolean' ? update.installed : existing?.installed || false,
+			firstSeenAt: existing?.firstSeenAt || eventAt,
+			lastSeenAt: eventAt,
+			lastEvent: update.event,
+			lastInstallAt: update.lastInstallAt || existing?.lastInstallAt,
+			lastStatusCheckAt: update.lastStatusCheckAt || existing?.lastStatusCheckAt,
+			lastTokenRotatedAt: update.lastTokenRotatedAt || existing?.lastTokenRotatedAt,
+			lastSubmissionAt: update.lastSubmissionAt || existing?.lastSubmissionAt,
+			lastLatestLookupAt: update.lastLatestLookupAt || existing?.lastLatestLookupAt,
+			lastKnownMessage: sanitizeBridgeUsageMessage(update.lastKnownMessage) || existing?.lastKnownMessage,
+			latestResult: update.latestResult || existing?.latestResult,
+			eventCounts,
+			rawBridgeTokenStored: false
+		};
+
+		bySite.set(siteId, next);
+		const records = Array.from(bySite.values())
+			.sort(sortBridgeUsageRecords)
+			.slice(0, BRIDGE_USAGE_MAX_RECORDS);
+		await persistBridgeUsageIndexState(env, {
+			schemaVersion: BRIDGE_USAGE_SCHEMA_VERSION,
+			updatedAt: eventAt,
+			rawBridgeTokenStored: false,
+			records
+		});
+	} catch (error) {
+		await emitTelemetry(env, {
+			event: 'bridge_usage.persist_failed',
+			correlationId: normalizeCorrelationId(update.correlationId || `bridge_usage_${update.siteId}`),
+			level: 'error',
+			payload: {
+				siteId: update.siteId,
+				usageEvent: update.event,
+				message: error instanceof Error ? error.message : String(error)
+			}
+		});
+	}
+}
+
+function snapshotLatestResultForBridgeUsage(record: ValidationResultRecord): BridgeUsageLatestResultSnapshot {
+	return {
+		submittedAt: record.submittedAt,
+		correlationId: record.correlationId,
+		payloadHash: record.payloadHash,
+		passed: record.summary.passed,
+		summary: record.summary,
+		artifact: record.artifact
+	};
+}
+
+function reviveBridgeUsageIndexState(raw: unknown): BridgeUsageIndexState {
+	const maybeState = raw as Partial<BridgeUsageIndexState> | null;
+	const records = Array.isArray(maybeState?.records)
+		? maybeState.records
+			.map(reviveBridgeUsageRecord)
+			.filter((record): record is BridgeUsageIndexRecord => Boolean(record))
+			.sort(sortBridgeUsageRecords)
+			.slice(0, BRIDGE_USAGE_MAX_RECORDS)
+		: [];
+	return {
+		schemaVersion: BRIDGE_USAGE_SCHEMA_VERSION,
+		updatedAt: normalizeIsoTimestamp(maybeState?.updatedAt) || records[0]?.lastSeenAt || new Date(0).toISOString(),
+		rawBridgeTokenStored: false,
+		records
+	};
+}
+
+function reviveBridgeUsageRecord(raw: unknown): BridgeUsageIndexRecord | null {
+	const value = raw as Partial<BridgeUsageIndexRecord> | null;
+	const siteId = normalizeSiteId(value?.siteId);
+	if (!siteId) return null;
+	const lastSeenAt = normalizeIsoTimestamp(value?.lastSeenAt) || new Date(0).toISOString();
+	const firstSeenAt = normalizeIsoTimestamp(value?.firstSeenAt) || lastSeenAt;
+	const status = value?.status === 'active' || value?.status === 'failed' || value?.status === 'pending_manual'
+		? value.status
+		: 'pending_manual';
+	const lastEvent = isBridgeUsageEvent(value?.lastEvent) ? value.lastEvent : 'snippet_status';
+
+	return {
+		schemaVersion: BRIDGE_USAGE_SCHEMA_VERSION,
+		siteId,
+		siteName: typeof value?.siteName === 'string' ? value.siteName : null,
+		siteUrl: typeof value?.siteUrl === 'string' ? value.siteUrl : undefined,
+		snippetVersion: typeof value?.snippetVersion === 'string' ? value.snippetVersion : undefined,
+		installMethod: value?.installMethod === 'webflow-api' || value?.installMethod === 'manual-fallback'
+			? value.installMethod
+			: undefined,
+		status,
+		installed: Boolean(value?.installed),
+		firstSeenAt,
+		lastSeenAt,
+		lastEvent,
+		lastInstallAt: normalizeIsoTimestamp(value?.lastInstallAt) || undefined,
+		lastStatusCheckAt: normalizeIsoTimestamp(value?.lastStatusCheckAt) || undefined,
+		lastTokenRotatedAt: normalizeIsoTimestamp(value?.lastTokenRotatedAt) || undefined,
+		lastSubmissionAt: normalizeIsoTimestamp(value?.lastSubmissionAt) || undefined,
+		lastLatestLookupAt: normalizeIsoTimestamp(value?.lastLatestLookupAt) || undefined,
+		lastKnownMessage: sanitizeBridgeUsageMessage(value?.lastKnownMessage),
+		latestResult: reviveBridgeUsageLatestResult(value?.latestResult),
+		eventCounts: reviveBridgeUsageEventCounts(value?.eventCounts),
+		rawBridgeTokenStored: false
+	};
+}
+
+function reviveBridgeUsageLatestResult(raw: unknown): BridgeUsageLatestResultSnapshot | undefined {
+	const value = raw as Partial<BridgeUsageLatestResultSnapshot> | null;
+	const submittedAt = normalizeIsoTimestamp(value?.submittedAt);
+	if (!submittedAt || !value?.summary) return undefined;
+	return {
+		submittedAt,
+		correlationId: typeof value.correlationId === 'string' ? value.correlationId : '',
+		payloadHash: typeof value.payloadHash === 'string' ? value.payloadHash : '',
+		passed: Boolean(value.passed),
+		summary: value.summary as ValidationSubmissionSummary,
+		artifact: value.artifact || { persisted: false, reason: 'r2_not_configured' }
+	};
+}
+
+function reviveBridgeUsageEventCounts(raw: unknown): BridgeUsageEventCounters {
+	const value = raw as Partial<BridgeUsageEventCounters> | null;
+	return {
+		install: toNonNegativeInteger(value?.install),
+		status: toNonNegativeInteger(value?.status),
+		rotate: toNonNegativeInteger(value?.rotate),
+		submit: toNonNegativeInteger(value?.submit),
+		latestLookup: toNonNegativeInteger(value?.latestLookup)
+	};
+}
+
+function incrementBridgeUsageEventCount(
+	raw: BridgeUsageEventCounters | undefined,
+	event: BridgeUsageEvent
+): BridgeUsageEventCounters {
+	const counts = reviveBridgeUsageEventCounts(raw);
+	switch (event) {
+		case 'snippet_install':
+			counts.install++;
+			break;
+		case 'snippet_status':
+			counts.status++;
+			break;
+		case 'snippet_rotate':
+			counts.rotate++;
+			break;
+		case 'validation_submit':
+			counts.submit++;
+			break;
+		case 'latest_lookup':
+			counts.latestLookup++;
+			break;
+	}
+	return counts;
+}
+
+function parseBridgeUsageFilters(url: URL): {
+	limit: number;
+	siteId?: string;
+	status?: SnippetTokenRecord['status'];
+	installed?: boolean;
+	hasLatestResult?: boolean;
+	since?: string;
+	sinceMs?: number;
+	query?: string;
+} | { error: string } {
+	const limitRaw = url.searchParams.get('limit');
+	const limit = limitRaw
+		? Math.min(Math.max(Number.parseInt(limitRaw, 10) || BRIDGE_USAGE_DEFAULT_LIMIT, 1), BRIDGE_USAGE_MAX_LIMIT)
+		: BRIDGE_USAGE_DEFAULT_LIMIT;
+	const siteId = normalizeSiteId(url.searchParams.get('siteId')) || undefined;
+	const statusRaw = url.searchParams.get('status');
+	const status = statusRaw && statusRaw !== 'any'
+		? statusRaw === 'active' || statusRaw === 'pending_manual' || statusRaw === 'failed'
+			? statusRaw
+			: null
+		: undefined;
+	if (statusRaw && statusRaw !== 'any' && !status) return { error: 'Invalid status filter.' };
+
+	const installed = parseBooleanFilter(url.searchParams.get('installed'));
+	if (installed === 'invalid') return { error: 'Invalid installed filter. Use true or false.' };
+	const hasLatestResult = parseBooleanFilter(url.searchParams.get('hasLatestResult'));
+	if (hasLatestResult === 'invalid') return { error: 'Invalid hasLatestResult filter. Use true or false.' };
+
+	const since = url.searchParams.get('since') || undefined;
+	const sinceMs = since ? Date.parse(since) : undefined;
+	if (since && !Number.isFinite(sinceMs)) return { error: 'Invalid since filter. Use an ISO timestamp.' };
+
+	const query = url.searchParams.get('q')?.trim().toLowerCase() || undefined;
+	return {
+		limit,
+		siteId,
+		status: status || undefined,
+		installed: installed === undefined ? undefined : installed,
+		hasLatestResult: hasLatestResult === undefined ? undefined : hasLatestResult,
+		since,
+		sinceMs,
+		query
+	};
+}
+
+function parseBooleanFilter(value: string | null): boolean | undefined | 'invalid' {
+	if (value === null || value === '') return undefined;
+	if (/^(true|1|yes)$/i.test(value)) return true;
+	if (/^(false|0|no)$/i.test(value)) return false;
+	return 'invalid';
+}
+
+function authorizeBridgeUsageRequest(
+	request: Request,
+	env: unknown
+): { authorized: true } | { authorized: false; status: number; message: string } {
+	const configuredToken =
+		readEnvString(env, 'VALIDATOR_BRIDGE_USAGE_ADMIN_TOKEN') ||
+		readEnvString(env, 'VALIDATOR_ADMIN_TOKEN');
+	if (!configuredToken) {
+		return {
+			authorized: false,
+			status: 503,
+			message: 'Bridge usage listing is not configured. Set VALIDATOR_BRIDGE_USAGE_ADMIN_TOKEN or VALIDATOR_ADMIN_TOKEN.'
+		};
+	}
+
+	const authHeader = request.headers.get('Authorization') || '';
+	const bearerMatch = authHeader.match(/^Bearer\s+(.+)$/i);
+	const providedToken = bearerMatch?.[1] || request.headers.get('X-Validator-Admin-Token') || '';
+	if (!providedToken) {
+		return { authorized: false, status: 401, message: 'Missing bridge usage admin token.' };
+	}
+	if (providedToken !== configuredToken) {
+		return { authorized: false, status: 403, message: 'Invalid bridge usage admin token.' };
+	}
+	return { authorized: true };
+}
+
+function sanitizeBridgeUsageRecordForResponse(record: BridgeUsageIndexRecord) {
+	return {
+		...record,
+		rawBridgeTokenStored: false
+	};
+}
+
+function isBridgeUsageEvent(value: unknown): value is BridgeUsageEvent {
+	return value === 'snippet_install' ||
+		value === 'snippet_status' ||
+		value === 'snippet_rotate' ||
+		value === 'validation_submit' ||
+		value === 'latest_lookup';
+}
+
+function sortBridgeUsageRecords(a: BridgeUsageIndexRecord, b: BridgeUsageIndexRecord): number {
+	return Date.parse(b.lastSeenAt) - Date.parse(a.lastSeenAt);
+}
+
+function normalizeIsoTimestamp(value: unknown): string | undefined {
+	if (typeof value !== 'string') return undefined;
+	const parsed = Date.parse(value);
+	if (!Number.isFinite(parsed)) return undefined;
+	return new Date(parsed).toISOString();
+}
+
+function sanitizeBridgeUsageMessage(value: unknown): string | undefined {
+	if (typeof value !== 'string') return undefined;
+	const trimmed = value.replace(/\s+/g, ' ').trim();
+	if (!trimmed) return undefined;
+	return trimmed.length > 300 ? `${trimmed.slice(0, 297)}...` : trimmed;
+}
+
+function toNonNegativeInteger(value: unknown): number {
+	return typeof value === 'number' && Number.isFinite(value) && value > 0
+		? Math.floor(value)
+		: 0;
 }
 
 function pruneReviewJobState(job: ReviewJobState): ReviewJobState {
@@ -1669,6 +2550,12 @@ function normalizeSiteId(value: unknown): string | null {
 	return trimmed;
 }
 
+function normalizeSha256(value: unknown): string | null {
+	if (typeof value !== 'string') return null;
+	const normalized = value.trim().toLowerCase();
+	return /^[a-f0-9]{64}$/.test(normalized) ? normalized : null;
+}
+
 function sanitizeValidationResults(
 	validationResults: ValidationSubmitRequest['validationResults']
 ): ValidationSubmitRequest['validationResults'] {
@@ -1714,6 +2601,114 @@ function sanitizeValidationResults(
 				: undefined,
 		summary,
 		categories
+	};
+}
+
+function getCategoryDetails(
+	validationResults: ValidationSubmitRequest['validationResults'],
+	predicate: (category: NonNullable<ValidationSubmitRequest['validationResults']['categories']>[number]) => boolean
+): ValidationCategoryDetail[] {
+	const categories = Array.isArray(validationResults.categories)
+		? validationResults.categories
+		: [];
+
+	return categories
+		.filter(predicate)
+		.map((category) => ({
+			category:
+				typeof category.category === 'string' && category.category.trim() !== ''
+					? category.category.trim()
+					: 'Uncategorized',
+			passed: category.passed === true,
+			issues: Array.isArray(category.issues)
+				? category.issues
+						.filter(
+							(issue): issue is ValidationCategoryIssueDetail =>
+								Boolean(issue) &&
+								(issue.severity === 'error' ||
+									issue.severity === 'warning' ||
+									issue.severity === 'info') &&
+								typeof issue.message === 'string' &&
+								issue.message.trim() !== ''
+						)
+						.map((issue) => ({
+							severity: issue.severity,
+							message: issue.message.trim()
+						}))
+				: []
+		}))
+		.slice(0, 10);
+}
+
+function getFailedCategoryDetails(
+	validationResults: ValidationSubmitRequest['validationResults']
+): ValidationCategoryDetail[] {
+	return getCategoryDetails(
+		validationResults,
+		(category) =>
+			category.passed !== true ||
+			(Array.isArray(category.issues) &&
+				category.issues.some((issue) => issue.severity === 'error'))
+	);
+}
+
+function getWarningCategoryDetails(
+	validationResults: ValidationSubmitRequest['validationResults']
+): ValidationCategoryDetail[] {
+	return getCategoryDetails(
+		validationResults,
+		(category) =>
+			category.passed === true &&
+			Array.isArray(category.issues) &&
+			category.issues.some((issue) => issue.severity === 'warning')
+	);
+}
+
+function summarizeValidationSubmission(
+	validationResults: ValidationSubmitRequest['validationResults']
+): ValidationSubmissionSummary {
+	const summary =
+		validationResults.summary && typeof validationResults.summary === 'object'
+			? validationResults.summary
+			: {};
+	const categories = Array.isArray(validationResults.categories)
+		? validationResults.categories
+		: [];
+	const categoryErrors = categories.reduce((total, category) => {
+		const issues = Array.isArray(category.issues) ? category.issues : [];
+		return total + issues.filter((issue) => issue.severity === 'error').length;
+	}, 0);
+	const categoryPassed = categories.filter((category) => category.passed === true).length;
+	const categoryFailed = categories.filter((category) => category.passed !== true).length;
+	const summaryErrors = readSummaryCount(summary, ['totalErrors', 'errors']);
+	const totalErrors = Math.max(summaryErrors, categoryErrors);
+	const totalWarnings = readSummaryCount(summary, ['totalWarnings', 'warnings']);
+	const totalInfo = readSummaryCount(summary, ['totalInfo', 'infos']);
+	const summaryPassedCategories = readSummaryCount(summary, ['passedCategories']);
+	const summaryFailedCategories = readSummaryCount(summary, ['failedCategories']);
+	const passedCategories =
+		summaryPassedCategories > 0 || summaryFailedCategories > 0
+			? summaryPassedCategories
+			: categoryPassed;
+	const failedCategories =
+		summaryPassedCategories > 0 || summaryFailedCategories > 0
+			? summaryFailedCategories
+			: categoryFailed;
+	const totalCategories =
+		passedCategories + failedCategories > 0
+			? passedCategories + failedCategories
+			: categories.length;
+	const score = totalCategories > 0 ? Math.round((passedCategories / totalCategories) * 100) : 0;
+
+	return {
+		totalErrors,
+		totalWarnings,
+		totalInfo,
+		passedCategories,
+		failedCategories,
+		totalCategories,
+		score,
+		passed: totalCategories > 0 && score === 100 && failedCategories === 0 && totalErrors === 0
 	};
 }
 
@@ -1939,128 +2934,129 @@ async function persistValidationSubmission(
 	};
 }
 
+function getValidationResultArtifactBucket(env: unknown): R2BucketLike | null {
+	const candidate = (env as { VALIDATOR_RESULT_ARTIFACTS?: R2BucketLike; VALIDATION_RESULT_ARTIFACTS?: R2BucketLike } | undefined);
+	if (candidate?.VALIDATOR_RESULT_ARTIFACTS?.put) return candidate.VALIDATOR_RESULT_ARTIFACTS;
+	if (candidate?.VALIDATION_RESULT_ARTIFACTS?.put) return candidate.VALIDATION_RESULT_ARTIFACTS;
+	return null;
+}
+
+async function sha256Hex(value: string): Promise<string> {
+	const digest = await crypto.subtle.digest('SHA-256', encoder.encode(value));
+	return Array.from(new Uint8Array(digest))
+		.map((byte) => byte.toString(16).padStart(2, '0'))
+		.join('');
+}
+
+function artifactSafeTimestamp(value: string): string {
+	return value.replace(/[^0-9A-Za-z-]+/g, '-').replace(/-+$/g, '');
+}
+
+async function persistValidationResultArtifact(
+	env: unknown,
+	input: {
+		siteId: string;
+		siteName: string | null;
+		siteUrl?: string;
+		submittedAt: string;
+		correlationId: string;
+		payloadHash: string;
+		validationResults: ValidationSubmitRequest['validationResults'];
+	}
+): Promise<ValidationResultArtifactPersistResult> {
+	const bucket = getValidationResultArtifactBucket(env);
+	if (!bucket) return { persisted: false, reason: 'r2_not_configured' };
+
+	const artifact = {
+		schema_version: 'validator_app_results_submission.v0.1',
+		source_lane: 'validator_app_supplemental_results',
+		site_id: input.siteId,
+		site_name: input.siteName,
+		site_url: input.siteUrl,
+		submitted_at: input.submittedAt,
+		correlation_id: input.correlationId,
+		payload_hash: input.payloadHash,
+		raw_bridge_token_stored: false,
+		validation_results: input.validationResults
+	};
+	const body = JSON.stringify(artifact, null, 2);
+	const sha256 = await sha256Hex(body);
+	const key = [
+		'validator-app-results',
+		`site=${encodeURIComponent(input.siteId)}`,
+		`${artifactSafeTimestamp(input.submittedAt)}_${input.payloadHash}.json`
+	].join('/');
+
+	try {
+		await bucket.put(key, body, {
+			httpMetadata: { contentType: 'application/json' },
+			customMetadata: {
+				siteId: input.siteId,
+				sha256,
+				submittedAt: input.submittedAt,
+				correlationId: input.correlationId
+			}
+		});
+		return {
+			persisted: true,
+			key,
+			sha256,
+			byteSize: encoder.encode(body).byteLength
+		};
+	} catch (error) {
+		await emitTelemetry(env, {
+			event: 'submission.artifact_persist_failed',
+			correlationId: input.correlationId,
+			level: 'error',
+			payload: {
+				siteId: input.siteId,
+				siteUrl: input.siteUrl,
+				message: error instanceof Error ? error.message : String(error)
+			}
+		});
+		return { persisted: false, reason: 'r2_write_failed' };
+	}
+}
+
 async function attemptProgrammaticSnippetInstall(
 	env: unknown,
 	siteId: string,
+	bridgeToken: string,
 	snippet: string,
 	correlationId: string,
 	idToken?: string
 ): Promise<{ ok: boolean; message: string }> {
-	const webflowApiBase = readEnvString(env, 'WEBFLOW_DATA_API_BASE') || 'https://api.webflow.com';
+	void env;
+	void siteId;
+	void bridgeToken;
+	void snippet;
+	void correlationId;
+	void idToken;
 
-	// Resolve the access token. Priority:
-	// 1. Exchange the extension's ID token for a site-scoped access token
-	// 2. Fall back to static WEBFLOW_DATA_API_TOKEN
-	let webflowApiToken = readEnvString(env, 'WEBFLOW_DATA_API_TOKEN');
-
-	if (idToken) {
-		const clientId = readEnvString(env, 'WEBFLOW_APP_CLIENT_ID');
-		const clientSecret = readEnvString(env, 'WEBFLOW_APP_CLIENT_SECRET');
-		if (clientId && clientSecret) {
-			try {
-				const tokenResponse = await fetch(`${webflowApiBase}/oauth/access_token`, {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({
-						client_id: clientId,
-						client_secret: clientSecret,
-						grant_type: 'authorization_code',
-						code: idToken
-					})
-				});
-				if (tokenResponse.ok) {
-					const tokenData = (await tokenResponse.json()) as { access_token?: string };
-					if (tokenData.access_token) {
-						webflowApiToken = tokenData.access_token;
-					}
-				}
-			} catch (e) {
-				console.warn('ID token exchange failed, using static token:', e);
-			}
-		}
-	}
-
-	if (!webflowApiToken) {
-		return {
-			ok: false,
-			message: 'Manual install required: no API token available. Ensure the app is authorized with custom_code:write scope.'
-		};
-	}
-
-	const headers = {
-		Authorization: `Bearer ${webflowApiToken}`,
-		'Content-Type': 'application/json',
-		accept: 'application/json'
+	return {
+		ok: false,
+		message:
+			'Automatic custom-code install is not enabled for this Validator. Copy the script into Site Settings > Custom Code > Head code, publish, then re-check.'
 	};
-
-	try {
-		// Single API call: add_inline_site_script registers AND applies in one step.
-		// The inline script sets the bridge config and loads the hosted review.js.
-		// Validated against Template Marketplace (5e593fb060cf87bbaf75dd20).
-		const reviewScriptUrl = `${readEnvString(env, 'WORKER_PUBLIC_URL') || 'https://validation-worker.createsomething.workers.dev'}${REVIEW_SNIPPET_ASSET_PATH}`;
-		const inlineSource = `window.__WF_REVIEW_BRIDGE={version:"${REVIEW_SNIPPET_VERSION}",marker:"${REVIEW_SNIPPET_MARKER}",bridgeToken:"${siteId.slice(0, 8)}",reviewSurface:"published-review",reviewScriptUrl:"${reviewScriptUrl}"};var s=document.createElement("script");s.src="${reviewScriptUrl}";document.head.appendChild(s);`;
-
-		const registerResponse = await fetch(
-			`${webflowApiBase}/beta/sites/${siteId}/registered_scripts/inline`,
-			{
-				method: 'POST',
-				headers,
-				body: JSON.stringify({
-					sourceCode: inlineSource,
-					version: REVIEW_SNIPPET_VERSION,
-					displayName: 'WF Review Bridge',
-					location: 'header',
-					canCopy: false
-				})
-			}
-		);
-
-		if (registerResponse.ok) {
-			return { ok: true, message: 'Bridge installed via Webflow Scripts API. Publish to activate.' };
-		}
-
-		// If inline registration fails (e.g. already registered), fall back to legacy
-		const errorText = await registerResponse.text().catch(() => '');
-		console.warn(`Inline script registration failed (${registerResponse.status}): ${errorText}`);
-
-		const legacyResponse = await fetch(
-			`${webflowApiBase}/v2/sites/${siteId}/custom-code`,
-			{
-				method: 'PUT',
-				headers,
-				body: JSON.stringify({ headCode: snippet })
-			}
-		);
-		if (!legacyResponse.ok) {
-			const legacyError = await legacyResponse.text().catch(() => '');
-			return {
-				ok: false,
-				message: `Install failed (scripts: ${registerResponse.status}, legacy: ${legacyResponse.status}): ${errorText} / ${legacyError}`
-			};
-		}
-		return { ok: true, message: 'Bridge installed via legacy API. Publish to activate.' };
-	} catch (error) {
-		return {
-			ok: false,
-			message: `Install failed: ${
-				error instanceof Error ? error.message : String(error)
-			} (correlationId=${correlationId})`
-		};
-	}
 }
 
-function buildSnippetPayload(token: string, request: Request): string {
+function buildSnippetPayload(token: string, request: Request, siteId?: string): string {
 	const reviewScriptUrl = getReviewSnippetUrl(request);
 	return `<script>
-window.__WF_REVIEW_BRIDGE = {
-  version: "${REVIEW_SNIPPET_VERSION}",
-  marker: "${REVIEW_SNIPPET_MARKER}",
-  bridgeToken: "${token}",
-  reviewSurface: "published-review",
-  reviewScriptUrl: "${reviewScriptUrl}"
-};
+${buildReviewBridgeConfigSource(token, reviewScriptUrl, siteId)}
 </script>
 <script src="${reviewScriptUrl}"></script>`;
+}
+
+function buildReviewBridgeConfigSource(token: string, reviewScriptUrl: string, siteId?: string): string {
+	const siteIdLine = siteId ? `  siteId: ${JSON.stringify(siteId)},\n` : '';
+	return `window.__WF_REVIEW_BRIDGE = {
+${siteIdLine}  version: ${JSON.stringify(REVIEW_SNIPPET_VERSION)},
+  marker: ${JSON.stringify(REVIEW_SNIPPET_MARKER)},
+  bridgeToken: ${JSON.stringify(token)},
+  reviewSurface: "published-review",
+  reviewScriptUrl: ${JSON.stringify(reviewScriptUrl)}
+};`;
 }
 
 function generateBridgeToken(): string {
@@ -2164,11 +3160,60 @@ function getCORSHeaders(
 		'Access-Control-Allow-Headers':
 			requestedHeaders && requestedHeaders.trim() !== ''
 				? requestedHeaders
-				: 'Content-Type, Authorization, X-Correlation-Id',
+				: 'Content-Type, Authorization, X-Correlation-Id, X-Validator-Admin-Token',
 		'Access-Control-Max-Age': '86400',
 		Vary: 'Origin',
 		...extraHeaders
 	};
+}
+
+function extractCmsTemplateHints(designerData: DesignerData): CmsTemplateHint[] {
+	const pages = Array.isArray(designerData?.pages) ? designerData.pages : [];
+	const hints = new Map<string, CmsTemplateHint>();
+
+	for (const page of pages) {
+		const candidates = [page.slug, page.path, page.publishPath]
+			.filter((value): value is string => typeof value === 'string' && value.trim() !== '');
+		const hasTemplateMetadata = Boolean(page.isCmsTemplate || page.collectionId || page.collectionName);
+		const templateSlug = candidates.find(isInternalCmsTemplateSlug) || (hasTemplateMetadata ? candidates[0] : undefined);
+		if (!templateSlug) continue;
+
+		const normalizedTemplateSlug = normalizeCmsTemplateSlug(templateSlug);
+		hints.set(normalizedTemplateSlug, {
+			templateSlug: normalizedTemplateSlug,
+			publishPath: page.publishPath || null,
+			collectionId: page.collectionId || null,
+			collectionName: page.collectionName || null
+		});
+	}
+
+	return Array.from(hints.values());
+}
+
+const WEBFLOW_ECOMMERCE_TEMPLATE_ROOTS = new Set(['/product', '/sku', '/category']);
+
+function isInternalCmsTemplateSlug(value: string): boolean {
+	const pathname = getPathname(value);
+	const normalizedPathname = pathname.length > 1 ? pathname.replace(/\/+$/, '') : pathname;
+	return /^\/detail_[^/]+\/?$/i.test(pathname) || WEBFLOW_ECOMMERCE_TEMPLATE_ROOTS.has(normalizedPathname.toLowerCase());
+}
+
+function normalizeCmsTemplateSlug(value: string): string {
+	const pathname = getPathname(value);
+	return pathname || value.trim();
+}
+
+function getPathname(value: string): string {
+	const trimmed = value.trim();
+	if (trimmed === '') return '';
+
+	try {
+		const path = trimmed.startsWith('/') || /^[a-z][a-z0-9+.-]*:/i.test(trimmed) ? trimmed : `/${trimmed}`;
+		return new URL(path, 'https://example.com').pathname;
+	} catch {
+		const withoutQuery = trimmed.split(/[?#]/, 1)[0] || '';
+		return withoutQuery.startsWith('/') ? withoutQuery : `/${withoutQuery}`;
+	}
 }
 
 function createEmptyAssetAnalysis(): AssetAnalysisResult {

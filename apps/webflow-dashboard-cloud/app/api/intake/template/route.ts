@@ -3,8 +3,14 @@ import {
   buildTemplateEnvelope,
   postMarketplaceWebhook,
   type PageCount,
-  type PaymentType,
+  type PaymentType
 } from '@create-something/webflow-dashboard-core/marketplace-webhook';
+import {
+  extractLongDescriptionImages,
+  getLongDescriptionText,
+  plainTextToLongDescriptionHtml,
+  sanitizeLongDescriptionHtml
+} from '@create-something/webflow-dashboard-core/long-description';
 import { jsonNoStore } from '../../../../lib/server/responses';
 import { getServerAirtable } from '../../../../lib/server/airtable';
 import { evaluateCreatorEligibility } from '../../../../lib/intake/creator-eligibility';
@@ -36,6 +42,7 @@ type TemplateSubmissionBody = {
   thumbnailUrl?: string;
   secondaryThumbnailUrl?: string;
   galleryUrls?: string[];
+  qualityBenchmarkConfirmed?: boolean;
   checklistConfirmed?: boolean;
   agreementConfirmed?: boolean;
   turnstileToken?: string;
@@ -67,7 +74,7 @@ const FEATURE_FLAG_TO_WEBFLOW_FEATURE = Object.freeze({
   'web-fonts': 'Web Fonts',
   'web fonts': 'Web Fonts',
   'retina-ready': 'Retina Ready',
-  'retina ready': 'Retina Ready',
+  'retina ready': 'Retina Ready'
 } satisfies Record<string, string>);
 
 const STYLE_TAG_TO_WEBFLOW_STYLE: Record<string, string> = {
@@ -79,7 +86,7 @@ const STYLE_TAG_TO_WEBFLOW_STYLE: Record<string, string> = {
   minimal: 'Minimal',
   modern: 'Modern',
   playful: 'Playful',
-  retro: 'Retro',
+  retro: 'Retro'
 };
 
 function escapeHtml(value: string): string {
@@ -89,15 +96,6 @@ function escapeHtml(value: string): string {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
-}
-
-function toParagraphs(value: string): string {
-  return value
-    .split(/\n{2,}/)
-    .map((paragraph) => paragraph.trim())
-    .filter(Boolean)
-    .map((paragraph) => `<p>${escapeHtml(paragraph).replace(/\n/g, '<br />')}</p>`)
-    .join('');
 }
 
 function normalizePreviewUrl(value: string): string {
@@ -114,9 +112,7 @@ function normalizePreviewUrl(value: string): string {
 }
 
 function ensureArray(value: unknown): string[] {
-  return Array.isArray(value)
-    ? value.map((item) => String(item).trim()).filter(Boolean)
-    : [];
+  return Array.isArray(value) ? value.map((item) => String(item).trim()).filter(Boolean) : [];
 }
 
 function coercePageCount(value: string | undefined): PageCount | null {
@@ -153,17 +149,16 @@ function mapFeatureFlags(featureFlags: string[]): string[] {
 
   for (const flag of featureFlags) {
     const normalized = flag.trim().toLowerCase();
-    const mappedValue = FEATURE_FLAG_TO_WEBFLOW_FEATURE[
-      normalized as keyof typeof FEATURE_FLAG_TO_WEBFLOW_FEATURE
-    ];
+    const mappedValue =
+      FEATURE_FLAG_TO_WEBFLOW_FEATURE[normalized as keyof typeof FEATURE_FLAG_TO_WEBFLOW_FEATURE];
     if (mappedValue) {
       mapped.add(mappedValue);
     }
   }
 
-  return WEBFLOW_FEATURES
-    .map((feature) => (feature.label === 'Components' ? 'Symbols' : feature.label))
-    .filter((feature) => mapped.has(feature));
+  return WEBFLOW_FEATURES.map((feature) =>
+    feature.label === 'Components' ? 'Symbols' : feature.label
+  ).filter((feature) => mapped.has(feature));
 }
 
 export async function POST(request: Request) {
@@ -184,7 +179,10 @@ export async function POST(request: Request) {
     const creatorName = String(body.creatorName || '').trim();
     const templateName = String(body.templateName || '').trim();
     const shortDescription = String(body.shortDescription || '').trim();
-    const longDescription = String(body.longDescription || '').trim();
+    const rawLongDescription = String(body.longDescription || '').trim();
+    const longDescriptionHtml = sanitizeLongDescriptionHtml(rawLongDescription);
+    const longDescriptionText = getLongDescriptionText(longDescriptionHtml);
+    const longDescriptionImages = extractLongDescriptionImages(longDescriptionHtml);
     const notes = String(body.notes || '').trim();
     const thumbnailUrl = String(body.thumbnailUrl || '').trim();
     const secondaryThumbnailUrl = String(body.secondaryThumbnailUrl || '').trim();
@@ -197,7 +195,7 @@ export async function POST(request: Request) {
     const priceModelRaw = String(body.priceModel || '').trim();
     const paymentType: PaymentType = priceModelRaw === 'Paid' ? 'Paid' : 'Free';
     const requestedPageCount = coercePageCount(
-      typeof body.pageCount === 'string' ? body.pageCount.trim() : undefined,
+      typeof body.pageCount === 'string' ? body.pageCount.trim() : undefined
     );
     const price = coerceOptionalPrice(body.price);
 
@@ -220,7 +218,7 @@ export async function POST(request: Request) {
       );
     }
 
-    if (!longDescription) {
+    if (!longDescriptionText && longDescriptionImages.length === 0) {
       return jsonNoStore({ error: 'Long description is required.' }, { status: 400 });
     }
 
@@ -230,6 +228,13 @@ export async function POST(request: Request) {
 
     if (galleryUrls.length === 0) {
       return jsonNoStore({ error: 'At least one gallery image is required.' }, { status: 400 });
+    }
+
+    if (!body.qualityBenchmarkConfirmed) {
+      return jsonNoStore(
+        { error: 'Featured quality benchmark acknowledgement is required.' },
+        { status: 400 }
+      );
     }
 
     if (!body.checklistConfirmed || !body.agreementConfirmed) {
@@ -275,10 +280,7 @@ export async function POST(request: Request) {
 
     const publishedValidation = await runPublishedUrlValidation(body.publishedUrl || '');
     if (!publishedValidation.summary.passed) {
-      return jsonNoStore(
-        { error: 'Published URL validation failed.' },
-        { status: 400 }
-      );
+      return jsonNoStore({ error: 'Published URL validation failed.' }, { status: 400 });
     }
 
     const previewUrl = normalizePreviewUrl(body.previewUrl || '');
@@ -297,16 +299,12 @@ export async function POST(request: Request) {
     const mappedStyles = mapStyleTags(styleTags);
     const mappedFeatures = mapFeatureFlags([...combinedFeatures]);
     const categories =
-      requestedCategories.length > 0
-        ? requestedCategories
-        : category
-          ? [category]
-          : [];
+      requestedCategories.length > 0 ? requestedCategories : category ? [category] : [];
     const primaryCategory = categories[0] || '';
 
     const detailsHtml = [
-      `<h2>Submission notes</h2>${toParagraphs(longDescription)}`,
-      notes ? `<h3>Internal notes</h3>${toParagraphs(notes)}` : '',
+      `<h3>Submission notes</h3>${longDescriptionHtml}`,
+      notes ? `<h3>Internal notes</h3>${plainTextToLongDescriptionHtml(notes)}` : '',
       '<h3>Metadata</h3>',
       '<ul>',
       categories.length > 0 ? `<li>Category: ${escapeHtml(categories.join(', '))}</li>` : '',
@@ -314,7 +312,9 @@ export async function POST(request: Request) {
       pageCount ? `<li>Page count: ${escapeHtml(pageCount)}</li>` : '',
       templateTypeCms ? '<li>Uses CMS.</li>' : '',
       templateTypeEcommerce ? '<li>Uses Ecommerce.</li>' : '',
-      paymentType === 'Paid' && price !== undefined ? `<li>Price: $${escapeHtml(String(price))}</li>` : '',
+      paymentType === 'Paid' && price !== undefined
+        ? `<li>Price: $${escapeHtml(String(price))}</li>`
+        : '',
       combinedFeatures.size > 0
         ? `<li>Feature flags: ${escapeHtml([...combinedFeatures].join(', '))}</li>`
         : '',
@@ -359,24 +359,24 @@ export async function POST(request: Request) {
           medium: body.utm?.utm_medium,
           campaign: body.utm?.utm_campaign,
           content: body.utm?.utm_content,
-          term: body.utm?.utm_term,
-        },
+          term: body.utm?.utm_term
+        }
       },
-      { submissionId },
+      { submissionId }
     );
 
     const webhookResponse = await postMarketplaceWebhook(envelope);
     if (!webhookResponse.ok) {
       return jsonNoStore(
         { error: `Template submission webhook failed: ${webhookResponse.status}` },
-        { status: 502 },
+        { status: 502 }
       );
     }
 
     return jsonNoStore({
       asset: {
         id: submissionId,
-        name: templateName,
+        name: templateName
       },
       submissionId,
       publishedValidation: {

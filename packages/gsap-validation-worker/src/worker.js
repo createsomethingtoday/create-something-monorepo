@@ -10,21 +10,17 @@ var __require = /* @__PURE__ */ ((x) => typeof require !== "undefined" ? require
 // cloudflare-worker/lib/shared-validator.js
 var IX2_REJECTION_MESSAGE = "Legacy Webflow IX2 interactions detected. As of May 1, 2026, Marketplace templates submitted with IX2 interactions are rejected. Rebuild interactions with Webflow Interactions powered by GSAP (IX3), publish again, and rerun validation.";
 var UNICORN_STUDIO_REJECTION_MESSAGE = "Unicorn Studio embed detected. Marketplace templates may only use custom code for approved exceptions such as GSAP, font smoothing, no-index tags on licensing/changelog pages, or documented SVG snippets. Replace the Unicorn Studio effect with Webflow-native or approved GSAP implementation, publish again, and rerun validation.";
+var REVIEW_BRIDGE_MARKER = "__wf_review_snippet_v1";
+var REVIEW_BRIDGE_SCRIPT_PATH = "/app-validator/snippet/review.js";
+var LOTTIE_IX2_ACTION_TYPES = /* @__PURE__ */ new Set([
+  "GENERAL_START_ACTION",
+  "PLUGIN_LOTTIE",
+  "PLUGIN_LOTTIE_EFFECT"
+]);
 var LEGACY_IX2_EXEMPT_HOSTNAMES = /* @__PURE__ */ new Set([
   // Zendesk 1124554: approved exception for pre-cutoff Bergamo submission.
   "az-bergamo.webflow.io"
 ]);
-function isWebflowReviewBridgeConfigScript(script) {
-  const trimmed = script.trim();
-  if (!/^window\.__WF_REVIEW_BRIDGE\s*=/.test(trimmed)) {
-    return false;
-  }
-  if (!/^\s*window\.__WF_REVIEW_BRIDGE\s*=\s*\{[\s\S]*\}\s*;?\s*$/.test(trimmed)) {
-    return false;
-  }
-  return /marker\s*:\s*["']__wf_review_snippet_v1["']/.test(trimmed) && /bridgeToken\s*:\s*["'][^"']+["']/.test(trimmed) && /reviewSurface\s*:\s*["']published-review["']/.test(trimmed) && /reviewScriptUrl\s*:\s*["'][^"']*\/app-validator\/snippet\/review\.js["']/.test(trimmed);
-}
-__name(isWebflowReviewBridgeConfigScript, "isWebflowReviewBridgeConfigScript");
 function countPatternMatches(value, pattern) {
   const matches = value.match(pattern);
   return matches ? matches.length : 0;
@@ -39,32 +35,86 @@ function isLegacyIx2ExemptUrl(pageUrl) {
 }
 __name(isLegacyIx2ExemptUrl, "isLegacyIx2ExemptUrl");
 function detectIx2Interactions(html) {
+  const htmlWithoutLottieElements = stripLottieElementTags(html);
+  const dataWIdCount = countPatternMatches(htmlWithoutLottieElements, /\sdata-w-id\s*=/gi);
+  const dataIsIx2TargetCount = countPatternMatches(htmlWithoutLottieElements, /\sdata-is-ix2-target\s*=/gi);
+  const nonLottieElementMarkerCount = dataWIdCount + dataIsIx2TargetCount;
+  const ix2RuntimeCallCount = countLegacyIx2RuntimeCalls(html, nonLottieElementMarkerCount > 0);
+  const nonLottieActionTypeCount = countNonLottieIx2ActionTypes(html);
   const matches = [
     {
       label: "data-w-id attributes",
-      count: countPatternMatches(html, /\sdata-w-id\s*=/gi)
+      count: dataWIdCount,
+      strong: false
     },
     {
       label: "data-is-ix2-target attributes",
-      count: countPatternMatches(html, /\sdata-is-ix2-target\s*=/gi)
+      count: dataIsIx2TargetCount,
+      strong: false
     },
     {
       label: "Webflow IX2 runtime calls",
-      count: countPatternMatches(html, /Webflow\.require\s*\(\s*["']ix2["']\s*\)/gi)
+      count: ix2RuntimeCallCount,
+      strong: true
+    },
+    {
+      label: "non-Lottie IX2 action types",
+      count: nonLottieActionTypeCount,
+      strong: true
     },
     {
       label: "w-mod-ix CSS/runtime markers",
-      count: countPatternMatches(html, /w-mod-ix/gi)
+      count: countPatternMatches(html, /w-mod-ix/gi),
+      strong: false
     }
   ].filter((item) => item.count > 0);
-  const strongMatches = matches.filter((item) => item.label !== "w-mod-ix CSS/runtime markers");
+  const strongMatches = matches.filter((item) => item.strong);
+  const detected = strongMatches.length > 0;
   return {
-    detected: strongMatches.length > 0,
-    count: strongMatches.reduce((total, item) => total + item.count, 0),
+    detected,
+    count: detected ? strongMatches.reduce((total, item) => total + item.count, nonLottieElementMarkerCount) : 0,
     matches
   };
 }
 __name(detectIx2Interactions, "detectIx2Interactions");
+function stripLottieElementTags(html) {
+  return html.replace(
+    /<[^>]*\sdata-animation-type\s*=\s*(?:"lottie"|'lottie'|lottie(?=[\s>]))[^>]*>/gi,
+    ""
+  );
+}
+__name(stripLottieElementTags, "stripLottieElementTags");
+function countLegacyIx2RuntimeCalls(html, hasNonLottieElementMarkers) {
+  const runtimeCallCount = countPatternMatches(
+    html,
+    /Webflow\.require\s*\(\s*["']ix2["']\s*\)/gi
+  );
+  if (runtimeCallCount === 0) {
+    return 0;
+  }
+  if (hasNonLottieElementMarkers) {
+    return runtimeCallCount;
+  }
+  if (hasLottieIx2Usage(html) && !hasNonLottieIx2ActionTypes(html)) {
+    return 0;
+  }
+  return runtimeCallCount;
+}
+__name(countLegacyIx2RuntimeCalls, "countLegacyIx2RuntimeCalls");
+function hasLottieIx2Usage(html) {
+  return /PLUGIN_LOTTIE/i.test(html) || /<[^>]*\sdata-animation-type\s*=\s*(?:"lottie"|'lottie'|lottie(?=[\s>]))[^>]*>/i.test(html);
+}
+__name(hasLottieIx2Usage, "hasLottieIx2Usage");
+function hasNonLottieIx2ActionTypes(html) {
+  return countNonLottieIx2ActionTypes(html) > 0;
+}
+__name(hasNonLottieIx2ActionTypes, "hasNonLottieIx2ActionTypes");
+function countNonLottieIx2ActionTypes(html) {
+  return Array.from(html.matchAll(/["']?actionTypeId["']?\s*:\s*["']([^"']+)["']/gi)).filter(
+    ([, actionTypeId]) => !LOTTIE_IX2_ACTION_TYPES.has(actionTypeId)
+  ).length;
+}
+__name(countNonLottieIx2ActionTypes, "countNonLottieIx2ActionTypes");
 function detectUnicornStudioUsage(html) {
   const matches = [
     {
@@ -92,6 +142,61 @@ function detectUnicornStudioUsage(html) {
   };
 }
 __name(detectUnicornStudioUsage, "detectUnicornStudioUsage");
+function isValidatorReviewBridgeScript(script) {
+  if (!/window\.__WF_REVIEW_BRIDGE\s*=/.test(script)) {
+    return false;
+  }
+  if (!script.includes(REVIEW_BRIDGE_MARKER) || !/bridgeToken\s*:\s*["']wfbt_[a-f0-9]+["']/i.test(script)) {
+    return false;
+  }
+  const withoutBridgeConfig = script.replace(/window\.__WF_REVIEW_BRIDGE\s*=\s*\{[\s\S]*?\}\s*;?/, "");
+  const withoutAllowedLoader = withoutBridgeConfig.replace(
+    /var\s+s\s*=\s*document\.createElement\(["']script["']\)\s*;\s*s\.src\s*=\s*["'][^"']*\/app-validator\/snippet\/review\.js["']\s*;\s*document\.head\.appendChild\(s\)\s*;?/,
+    ""
+  );
+  const hasReviewScriptUrl =
+    script.includes(REVIEW_BRIDGE_SCRIPT_PATH) ||
+    /reviewScriptUrl\s*:\s*["'][^"']+\/app-validator\/snippet\/review\.js["']/i.test(script);
+  return hasReviewScriptUrl && withoutAllowedLoader.trim() === "";
+}
+__name(isValidatorReviewBridgeScript, "isValidatorReviewBridgeScript");
+function isGoogleTagFirstPartyBootstrap(script) {
+  return /^\s*\(\s*function\s*\(\s*w\s*,\s*i\s*,\s*g\s*\)\s*\{\s*w\s*\[\s*g\s*\]\s*=\s*w\s*\[\s*g\s*\]\s*\|\|\s*\[\]\s*;\s*if\s*\(\s*typeof\s+w\s*\[\s*g\s*\]\s*\.\s*push\s*==\s*["']function["']\s*\)(?:\s*w\s*\[\s*g\s*\]\s*\.\s*push\s*\(\s*i\s*\)|\s*w\s*\[\s*g\s*\]\s*\.\s*push\s*\.\s*apply\s*\(\s*w\s*\[\s*g\s*\]\s*,\s*Array\s*\.\s*isArray\s*\(\s*i\s*\)\s*\?\s*i\s*:\s*\[\s*i\s*\]\s*\))\s*;?\s*\}\s*\)\s*\(\s*window\s*,\s*\[\s*["']G-[A-Z0-9]+["'](?:\s*,\s*["']G-[A-Z0-9]+["'])*\s*\]\s*,\s*["']google_tags_first_party["']\s*\)\s*;?\s*$/i.test(script);
+}
+__name(isGoogleTagFirstPartyBootstrap, "isGoogleTagFirstPartyBootstrap");
+function isGoogleTagDataLayerBootstrap(script) {
+  let remainder = script.trim();
+  remainder = remainder.replace(/^window\s*\.\s*dataLayer\s*=\s*window\s*\.\s*dataLayer\s*\|\|\s*\[\]\s*;?\s*/i, "");
+  remainder = remainder.replace(/^function\s+gtag\s*\(\s*\)\s*\{\s*dataLayer\s*\.\s*push\s*\(\s*arguments\s*\)\s*;?\s*\}\s*/i, "");
+  if (remainder === script.trim()) {
+    return false;
+  }
+  const allowedStatements = [
+    /^gtag\s*\(\s*["']set["']\s*,\s*["']developer_id\.[^"']+["']\s*,\s*true\s*\)\s*;?\s*/i,
+    /^gtag\s*\(\s*["']js["']\s*,\s*new\s+Date\s*\(\s*\)\s*\)\s*;?\s*/i,
+    /^gtag\s*\(\s*["']config["']\s*,\s*["']G-[A-Z0-9]+["'](?:\s*,\s*\{[\s\S]*?\})?\s*\)\s*;?\s*/i
+  ];
+  let sawConfig = false;
+  while (remainder.trim()) {
+    const before = remainder;
+    for (const pattern of allowedStatements) {
+      const match = remainder.match(pattern);
+      if (!match) continue;
+      sawConfig = sawConfig || /^gtag\s*\(\s*["']config["']/i.test(match[0]);
+      remainder = remainder.slice(match[0].length).trimStart();
+      break;
+    }
+    if (remainder === before) {
+      return false;
+    }
+  }
+  return sawConfig && !containsPotentiallyHarmfulCode(script);
+}
+__name(isGoogleTagDataLayerBootstrap, "isGoogleTagDataLayerBootstrap");
+function isGoogleTagScript(script) {
+  return isGoogleTagFirstPartyBootstrap(script) || isGoogleTagDataLayerBootstrap(script);
+}
+__name(isGoogleTagScript, "isGoogleTagScript");
 function validateGsapUsage(html, pageUrl, customPatterns = []) {
   const defaultPatterns = [
     // Core GSAP object and method access
@@ -538,11 +643,19 @@ function validateGsapUsage(html, pageUrl, customPatterns = []) {
       });
       return;
     }
-    if (isWebflowReviewBridgeConfigScript(script)) {
+    if (isValidatorReviewBridgeScript(script)) {
       results.allowedCustomCode.push({
         scriptIndex: index,
-        message: "Webflow Way Validator bridge config (allowed)",
-        policy: "webflow-way-validator-bridge"
+        message: "Webflow Way Validator bridge script (allowed)",
+        policy: "validator-review-bridge"
+      });
+      return;
+    }
+    if (isGoogleTagScript(script)) {
+      results.allowedCustomCode.push({
+        scriptIndex: index,
+        message: "Google tag script (allowed)",
+        policy: "analytics-google-tag"
       });
       return;
     }

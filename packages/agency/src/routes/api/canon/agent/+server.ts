@@ -9,6 +9,7 @@ import {
 	type CanonAgentBody
 } from '$lib/canon/control';
 import { loadCanonWorkflowContext, type CanonWorkflowContext } from '$lib/canon/workflow-context';
+import { resolveDeliveryFallback } from '$lib/delivery/contexts';
 
 export const OPTIONS: RequestHandler = async () => {
 	return new Response(null, { status: 204, headers: canonCorsHeaders });
@@ -38,7 +39,11 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 
 	const history = sanitizeHistory(body.history);
 	const intent = classifyCanonQuestion(message);
-	const context = await loadCanonWorkflowContext(platform?.env?.DB, body.contextId);
+	const context = await loadCanonWorkflowContext(
+		platform?.env?.DB,
+		body.contextId,
+		resolveDeliveryFallback(body.contextId)
+	);
 	const response = buildAgentResponse(message, intent, history.length, context);
 
 	return json(response, { headers: canonCorsHeaders });

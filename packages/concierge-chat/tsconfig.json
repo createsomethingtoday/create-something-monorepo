@@ -11,5 +11,16 @@
     "strict": true,
     "module": "esnext",
     "moduleResolution": "bundler"
-  }
+  },
+  "exclude": [
+    "node_modules/**",
+    "src/service-worker.js",
+    "src/service-worker/**/*.js",
+    "src/service-worker.ts",
+    "src/service-worker/**/*.ts",
+    "src/service-worker.d.ts",
+    "src/service-worker/**/*.d.ts",
+    "vite.config.js",
+    "vite.config.ts"
+  ]
 }

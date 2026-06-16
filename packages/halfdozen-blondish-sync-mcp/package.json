@@ -1,0 +1,37 @@
+{
+  "name": "@create-something/halfdozen-blondish-sync-mcp",
+  "version": "0.1.0",
+  "description": "Operator-invoked MCP for BLOND:ISH Support Tickets <-> Half Dozen Tickets reconciliation.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node ../../scripts/run-wrangler.mjs dev",
+    "deploy": "node ../../scripts/run-wrangler.mjs deploy",
+    "tail": "node ../../scripts/run-wrangler.mjs tail",
+    "check": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test test/*.test.ts"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.25.3",
+    "agents": "0.3.10",
+    "braintrust": "^2.2.2",
+    "zod": "3.25.76"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "4.20260205.0",
+    "@types/node": "24.10.9",
+    "tsx": "4.21.0",
+    "typescript": "5.9.3",
+    "wrangler": "4.64.0"
+  },
+  "keywords": [
+    "mcp",
+    "notion",
+    "halfdozen",
+    "blondish",
+    "sync"
+  ],
+  "author": "CREATE SOMETHING <hello@createsomething.agency>",
+  "license": "MIT"
+}

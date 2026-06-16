@@ -36,6 +36,7 @@ pnpm dify:agent:smoke -- --agent-id <agent-slug> --dry-run
 pnpm dify:agent:smoke -- --agent-id <agent-slug> --query <prompt> --require-tool <tool>
 pnpm dify:reviewer-hubs:smoke
 pnpm dify:reviewer-hubs:e2b-smoke
+pnpm dify:reviewer-hubs:identity-smoke -- --version-id <asset-version-id>
 pnpm dify:coverage:generate
 pnpm dify:coverage:check
 pnpm dify:inventory:validate
@@ -97,6 +98,15 @@ calls and file transfer tools. Use `pnpm dify:reviewer-hubs:e2b-smoke` when the
 change only needs the E2B lane, or `pnpm dify:reviewer-hubs:smoke` when both the
 Hub and E2B cases should run for every reviewer lane.
 
+Use `pnpm dify:reviewer-hubs:identity-smoke` before allowing Dify reviewer
+agents to perform review-write workflows. It asks each reviewer agent to route a
+read-only `template_review_get_review_context` call through its Hub card and
+asserts that `data.context.currentReviewer.email` matches the expected reviewer
+lane. Pass `--version-id` or `DIFY_REVIEWER_IDENTITY_VERSION_ID` for the Asset
+Version used as a stable read target; if omitted, the agent first reads one
+queue item. The smoke fails if the agent attempts downstream reviewer writes,
+Hub state refresh, or Hub state mutation.
+
 For Hub MCP server cards, do not treat Dify Studio's `Authorized` badge as a
 complete readiness signal. That badge can be satisfied by MCP initialization and
 tool discovery. A real readiness smoke must call at least one harmless read tool,
@@ -146,6 +156,8 @@ For each Dify agent:
 8. Set `policy_pack`, `eval_suite`, `evals`, and `smoke_command`.
 9. Add at least one `smoke_cases` entry before setting `status: "published"`.
 10. Run the Dify inventory check and the agent's smoke/eval command.
+
+For prompt-only updates to an already published app, keep the existing Dify app in place. Do not import a replacement app or delete the existing app just to update instructions; that would rotate app identity and Service API wiring unnecessarily. If the live Instructions field contains an XML wrapper, Dify variables, output format, or examples, patch only the intended policy paragraphs and preserve the rest of the live field. If the live field is a plain compact prompt, paste the repo-owned prompt into the current app instructions. After saving the existing app, export its DSL and reconcile the snapshot back into `config/dify-agents/{agent}.dify.yml`, then run the inventory check plus that agent's smoke/eval command.
 
 ## Rules
 

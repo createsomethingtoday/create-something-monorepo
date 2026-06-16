@@ -30,7 +30,8 @@ const REQUIRED_HALFDOZEN_SYNC_SERVERS = [
   'halfdozen-gmail-sync-fillip',
   'halfdozen-gmail-sync-leah',
   'halfdozen-zoom-sync',
-  'half-dozen-youtube-sync'
+  'half-dozen-youtube-sync',
+  'halfdozen-blondish-sync-mcp'
 ];
 
 const REQUIRED_FLEET_NOTION_DEPLOYMENTS = {
@@ -48,12 +49,26 @@ const REQUIRED_FLEET_NOTION_DEPLOYMENTS = {
 };
 
 const PACKAGE_COVERAGE = {
+  'packages/abundance-jobs-mcp': {
+    registry: ['abundance-jobs-mcp'],
+    fleetDeployments: ['abundance-jobs-mcp']
+  },
+  'packages/abundance-jobs-mcp/worker': {
+    registry: ['abundance-jobs-mcp'],
+    fleetDeployments: ['abundance-jobs-mcp']
+  },
   'packages/agency/clients/outerfields/mcp-remote': {
     registry: ['outerfields-pcn']
   },
   'packages/agency/clients/outerfields/mcp-server': {
     note: 'local companion to outerfields-pcn',
     registry: ['outerfields-pcn']
+  },
+  'packages/abundance-jobs-mcp': {
+    registry: ['abundance-jobs-mcp']
+  },
+  'packages/abundance-jobs-mcp/worker': {
+    registry: ['abundance-jobs-mcp']
   },
   'packages/bettermode-creator-mcp': {
     registry: ['bettermode-creator']
@@ -101,6 +116,10 @@ const PACKAGE_COVERAGE = {
   'packages/halfdozen-dm-mcp/worker': {
     registry: ['halfdozen-dm-mcp']
   },
+  'packages/halfdozen-blondish-sync-mcp': {
+    registry: ['halfdozen-blondish-sync-mcp'],
+    fleetDeployments: ['halfdozen-blondish-sync-mcp']
+  },
   'packages/halfdozen-notion-mcp': {
     registry: HALFDOZEN_NOTION_WORKWAY_SERVERS,
     fleetDeployments: Object.values(REQUIRED_FLEET_NOTION_DEPLOYMENTS)
@@ -114,6 +133,10 @@ const PACKAGE_COVERAGE = {
   },
   'packages/halfdozen-operator-notion-mcp/worker': {
     registry: ['halfdozen-operator-notion-mcp']
+  },
+  'packages/halfdozen-agent-analyzer-telemetry-mcp/worker': {
+    registry: ['halfdozen-agent-analyzer-telemetry'],
+    fleetDeployments: ['halfdozen-agent-analyzer-telemetry-mcp']
   },
   'packages/halfdozen-telemetry-mcp/worker': {
     registry: ['halfdozen-telemetry']

@@ -10,7 +10,7 @@
     },
     {
       label: 'CREATE SOMETHING owns',
-      detail: 'Workflow contracts, policy rules, runbooks, evidence, and handoff artifacts.'
+      detail: 'Workflow contracts, action boundaries, runbooks, evidence, and handoff notes.'
     },
     {
       label: 'Vendors provide',
@@ -24,8 +24,8 @@
     <span class="boundary-map__eyebrow">System boundary</span>
     <h3 id="boundary-map-title">The vendor stack stays outside the product promise.</h3>
     <p>
-      The buyer sees which services help the workflow, but the durable value is the control layer:
-      contracts, policy, artifacts, and the operating handoff.
+      Your team sees which services help the workflow, but the durable value is the trust layer:
+      contracts, action boundaries, evidence, and the operating handoff.
     </p>
   </div>
 
@@ -40,8 +40,8 @@
 
     <div class="boundary-node boundary-node--core">
       <span>CREATE SOMETHING control layer</span>
-      <strong>MCP contracts + Policy OS</strong>
-      <small>Rules, runbooks, evidence, operator handoff</small>
+      <strong>MCP contracts + trust layer</strong>
+      <small>Rules, runbooks, receipts, operator handoff</small>
     </div>
 
     <div class="boundary-connector" aria-hidden="true"></div>

@@ -1,4 +1,4 @@
-import React, { CSSProperties, useState, useCallback, useLayoutEffect, memo } from 'react';
+import React, { CSSProperties, useState, useCallback, memo } from 'react';
 
 export type TemplateCardBadge = 'none' | 'new' | 'featured' | 'reviewed' | 'top-rated';
 
@@ -28,6 +28,12 @@ export interface TemplateCardProps {
   priceNumeric?: string;
   creatorName?: string;
   creatorLink?: TemplateCardLink;
+  categoryName?: string;
+  categoryLink?: TemplateCardLink;
+  subcategoryName?: string;
+  subcategoryLink?: TemplateCardLink;
+  templateType?: string;
+  previewLink?: TemplateCardLink;
 
   // Images
   primaryImage?: TemplateCardImage;
@@ -37,6 +43,8 @@ export interface TemplateCardProps {
   // Finsweet sort metadata
   approvalDate?: string;
   popularityScore?: string;
+  cumulativePurchases?: string | number;
+  uniqueViewers?: string | number;
   isFree?: boolean;
 
   // Agent-extended capabilities
@@ -45,18 +53,27 @@ export interface TemplateCardProps {
   aiScore?: number;
   showAiBadge?: boolean;
   agentNote?: string;
+  showCategoryMeta?: boolean;
+  showTemplateType?: boolean;
+  showPreviewLink?: boolean;
+  previewLabel?: string;
+  showMarketplaceSignals?: boolean;
+  marketplaceSignals?: string[];
+  marketplaceSignalsText?: string;
 
   // Grid-managed rendering hints. Passing these avoids each card scanning the
   // DOM to infer its position when infinite scroll appends large result sets.
   priorityIndex?: number;
   deferSecondaryImage?: boolean;
+
+  // Containers that already inline TEMPLATE_CARD_STYLES in their own <style>
+  // tag (TemplateGrid, TemplateCarouselSection) set this to suppress the
+  // per-card copy.
+  stylesProvided?: boolean;
 }
 
 const ARROW_ICON_URL =
   'https://cdn.prod.website-files.com/5e593fb060cf87bbaf75dd20/670878b0296e4ae4034fe652_view-details-arrow.svg';
-
-// Global style injection — one <style> per page, not one per card instance
-let _stylesInjected = false;
 
 // 1×1 grey SVG used when the primary image fails to load
 const FALLBACK_IMAGE =
@@ -70,10 +87,100 @@ const BADGE_COLORS: Record<TemplateCardBadge, { bg: string; text: string; border
   'top-rated': { bg: 'rgba(80, 130, 185, 0.15)', text: '#8ab4d8', border: 'rgba(80, 130, 185, 0.35)' },
 };
 
+const MARKETPLACE_SIGNAL_BADGE_LABELS = new Set(['Marketplace favorite', 'Top seller', 'Strong seller']);
+
 function aiScorePalette(score: number) {
   if (score >= 80) return { bg: 'rgba(34,197,94,0.18)', text: '#4ade80', border: 'rgba(34,197,94,0.3)' };
   if (score >= 55) return { bg: 'rgba(245,158,11,0.18)', text: '#fbbf24', border: 'rgba(245,158,11,0.3)' };
   return { bg: 'rgba(239,68,68,0.18)', text: '#f87171', border: 'rgba(239,68,68,0.3)' };
+}
+
+function isMarketplaceSignalBadge(signal: string): boolean {
+  return MARKETPLACE_SIGNAL_BADGE_LABELS.has(signal);
+}
+
+function marketplaceSignalHelp(signal: string): string {
+  switch (signal) {
+    case 'Marketplace favorite':
+      return 'Marketplace favorite: 250+ purchases in the last 30 days.';
+    case 'Top seller':
+      return 'Top seller: 100+ purchases in the last 30 days.';
+    case 'Strong seller':
+      return 'Strong seller: 50+ purchases in the last 30 days.';
+    case 'Sales momentum':
+      return 'Sales momentum: 20+ purchases in the last 30 days.';
+    case 'Recently purchased':
+      return 'Recently purchased: bought by customers in the last 30 days.';
+    case 'High interest':
+      return 'High interest: viewed by many template shoppers recently.';
+    case 'Buyer interest':
+      return 'Buyer interest: this template has recent views and purchases.';
+    case 'Popular':
+      return 'Popular: this template ranks well in marketplace popularity signals.';
+    default:
+      if (/purchases?$/i.test(signal)) return `${signal} in the last 30 days.`;
+      if (/views?$/i.test(signal)) return `${signal} from recent marketplace shoppers.`;
+      return signal;
+  }
+}
+
+function formatCompactNumber(value: number): string {
+  if (value >= 1_000_000) return `${Number((value / 1_000_000).toFixed(value >= 10_000_000 ? 0 : 1))}M`;
+  if (value >= 1_000) return `${Number((value / 1_000).toFixed(value >= 10_000 ? 0 : 1))}k`;
+  return String(value);
+}
+
+function pluralize(value: number, singular: string, plural = `${singular}s`): string {
+  return `${formatCompactNumber(value)} ${value === 1 ? singular : plural}`;
+}
+
+function parseSignalNumber(value: string | number | null | undefined): number {
+  if (typeof value === 'number') return Number.isFinite(value) ? Math.max(0, Math.floor(value)) : 0;
+  if (!value) return 0;
+
+  const normalized = String(value).trim().toLowerCase().replace(/,/g, '');
+  const compactMatch = normalized.match(/^(\d+(?:\.\d+)?)\s*([km])?\+?/);
+  if (!compactMatch) return 0;
+
+  const numeric = Number(compactMatch[1]);
+  if (!Number.isFinite(numeric)) return 0;
+
+  const multiplier = compactMatch[2] === 'm' ? 1_000_000 : compactMatch[2] === 'k' ? 1_000 : 1;
+  return Math.max(0, Math.floor(numeric * multiplier));
+}
+
+function explicitMarketplaceSignals(signals: string[], signalsText: string): string[] {
+  return (signals.length > 0 ? signals : signalsText.split(/[,\n]+/))
+    .map((signal) => signal.trim())
+    .filter(Boolean)
+    .slice(0, 3);
+}
+
+function derivedMarketplaceSignals(options: {
+  cumulativePurchases?: string | number;
+  uniqueViewers?: string | number;
+  popularityScore?: string;
+}): string[] {
+  // Match TemplateGrid's public bucketing so standalone CMS cards do not expose
+  // exact low-volume sales while still showing meaningful social proof.
+  const purchases = parseSignalNumber(options.cumulativePurchases);
+  const viewers = parseSignalNumber(options.uniqueViewers);
+  const popularity = parseSignalNumber(options.popularityScore);
+  const isPopular = popularity >= 5;
+  const hasSales = purchases > 0;
+  const hasHighViews = viewers >= 5_000;
+
+  if (purchases >= 250) return ['Marketplace favorite', '250+ purchases'];
+  if (purchases >= 100) return ['Top seller', '100+ purchases'];
+  if (purchases >= 50) return ['Strong seller', '50+ purchases'];
+  if (purchases >= 20) return ['Sales momentum', '20+ purchases'];
+  if (purchases >= 10) return ['Recently purchased', '10+ purchases'];
+  if (hasSales && isPopular) return ['Recently purchased'];
+  if (hasSales && hasHighViews) return ['Buyer interest'];
+  if (isPopular && hasHighViews) return ['High interest', pluralize(viewers, 'view')];
+  if (isPopular) return ['Popular'];
+  if (hasHighViews) return [pluralize(viewers, 'view')];
+  return [];
 }
 
 // Inline styles are structural only. Hover effects, transitions, and entrance
@@ -157,7 +264,6 @@ const S: Record<string, CSSProperties> = {
     color: 'rgb(0, 0, 0)',
     fontSize: '14px',
     fontWeight: 600,
-    boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
     transform: 'scale(0.96)',
     transition: 'transform 220ms cubic-bezier(0.25, 0.46, 0.45, 0.94)',
   },
@@ -256,11 +362,9 @@ const S: Record<string, CSSProperties> = {
   },
   creatorWrap: {
     display: 'block',
-    minWidth: '0',
   },
   creatorLink: {
-    display: 'block',
-    maxWidth: '100%',
+    display: 'inline-block',
     color: 'rgba(0, 0, 0, 0.6)',
     textDecoration: 'none',
   },
@@ -271,9 +375,6 @@ const S: Record<string, CSSProperties> = {
     fontWeight: 400,
     lineHeight: '24px',
     color: 'inherit',
-    whiteSpace: 'nowrap',
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
   },
   agentNote: {
     margin: '2px 0 0 0',
@@ -281,6 +382,112 @@ const S: Record<string, CSSProperties> = {
     fontSize: '11px',
     lineHeight: '1.4',
     color: 'rgba(0, 0, 0, 0.45)',
+  },
+  signalsWrap: {
+    display: 'flex',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: '5px',
+    marginTop: '3px',
+    color: 'rgba(0, 0, 0, 0.42)',
+    fontSize: '11px',
+    fontWeight: 450,
+    lineHeight: '16px',
+  },
+  signalGroup: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    minWidth: 0,
+    maxWidth: '100%',
+    gap: '5px',
+    flexWrap: 'nowrap',
+  },
+  signalText: {
+    display: 'inline-block',
+    minWidth: 0,
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+  },
+  signalBadge: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    minHeight: '18px',
+    flexShrink: 0,
+    maxWidth: '100%',
+    padding: '1px 6px',
+    border: '1px solid rgba(20, 110, 245, 0.18)',
+    borderRadius: '4px',
+    backgroundColor: 'rgba(20, 110, 245, 0.08)',
+    color: '#146ef5',
+    fontSize: '11px',
+    fontWeight: 600,
+    lineHeight: '16px',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+  },
+  signalInfo: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '14px',
+    height: '14px',
+    flexShrink: 0,
+    border: '1px solid rgba(20, 110, 245, 0.18)',
+    borderRadius: '999px',
+    color: 'rgba(20, 110, 245, 0.7)',
+    backgroundColor: 'rgba(20, 110, 245, 0.04)',
+    fontSize: '9px',
+    fontWeight: 700,
+    lineHeight: '12px',
+    cursor: 'help',
+    userSelect: 'none',
+  } as CSSProperties,
+  signalSeparator: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    flexShrink: 0,
+    color: 'rgba(0, 0, 0, 0.28)',
+  },
+  metaWrap: {
+    display: 'flex',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: '6px',
+    marginTop: '4px',
+    color: 'rgba(0, 0, 0, 0.48)',
+    fontSize: '11px',
+    lineHeight: '16px',
+  },
+  metaLink: {
+    color: 'inherit',
+    textDecoration: 'none',
+    maxWidth: '100%',
+  },
+  metaText: {
+    display: 'inline-block',
+    maxWidth: '100%',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+  },
+  metaSeparator: {
+    color: 'rgba(0, 0, 0, 0.26)',
+    fontSize: '10px',
+    lineHeight: '16px',
+  },
+  previewLink: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    width: 'fit-content',
+    maxWidth: '100%',
+    marginTop: '6px',
+    color: '#146ef5',
+    fontSize: '12px',
+    fontWeight: 600,
+    lineHeight: '16px',
+    textDecoration: 'none',
   },
   badgeBase: {
     position: 'absolute',
@@ -320,7 +527,12 @@ const S: Record<string, CSSProperties> = {
 // All interactive behavior is CSS-driven so it works on CMS Load cloned items.
 // When Finsweet CMS Load clones a card, React never re-mounts — but CSS :hover
 // and @keyframes work on cloned HTML without any JavaScript.
-const INJECTED_STYLES = `
+//
+// Rendered as an inline <style> inside the component tree: Webflow Code
+// Components mount in an isolated root, so document.head injection never
+// reaches the card markup. Cloned cards carry the tag with them, so clones
+// stay styled too.
+export const TEMPLATE_CARD_STYLES = `
 /* Entrance animation — plays immediately on DOM insertion, no JS scroll observer needed */
 @keyframes tmcard-enter {
   from { opacity: 0; }
@@ -328,7 +540,7 @@ const INJECTED_STYLES = `
 }
 .tmcard-wrapper {
   animation: tmcard-enter 500ms ease-out var(--tmcard-stagger, 0ms) both;
-  transition: transform 200ms ease, box-shadow 220ms ease, outline-color 150ms ease;
+  transition: outline-color 150ms ease;
 }
 @media (prefers-reduced-motion: reduce) {
   .tmcard-wrapper {
@@ -337,11 +549,6 @@ const INJECTED_STYLES = `
   }
 }
 
-/* Card hover: lift + shadow */
-.tmcard-wrapper:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.10);
-}
 .tmcard-wrapper:focus-within {
   outline: 2px solid rgba(59,130,246,0.8);
   outline-offset: 3px;
@@ -381,22 +588,6 @@ const INJECTED_STYLES = `
   transform: scale(1.04);
 }
 
-@media (hover: none) {
-  .tmcard-wrapper:hover {
-    transform: none;
-    box-shadow: none;
-  }
-  .tmcard-link:hover .tmcard-primary-img,
-  .tmcard-link:hover .tmcard-secondary-img,
-  .tmcard-link:hover .tmcard-hover-content {
-    transform: none;
-  }
-  .tmcard-link:hover .tmcard-hover-overlay,
-  .tmcard-link:hover .tmcard-secondary-img {
-    opacity: 0;
-  }
-}
-
 /* Creator link hover */
 .tmcard-creator-link {
   transition: color 150ms ease;
@@ -425,6 +616,19 @@ const INJECTED_STYLES = `
 .tmcard-name-link:focus {
   text-decoration: none !important;
   border-bottom: none !important;
+}
+.tmcard-meta-link,
+.tmcard-meta-link:hover,
+.tmcard-meta-link:focus,
+.tmcard-preview-link,
+.tmcard-preview-link:hover,
+.tmcard-preview-link:focus {
+  text-decoration: none !important;
+  border-bottom: none !important;
+}
+.tmcard-meta-link:hover,
+.tmcard-preview-link:hover {
+  color: #146ef5 !important;
 }
 
 /* Shimmer loading skeleton */
@@ -484,19 +688,35 @@ const TemplateCardInner: React.FC<TemplateCardProps> = ({
   priceNumeric = '0',
   creatorName = 'Creator',
   creatorLink,
+  categoryName = '',
+  categoryLink,
+  subcategoryName = '',
+  subcategoryLink,
+  templateType = '',
+  previewLink,
   primaryImage,
   secondaryImage,
   creatorIcon,
   approvalDate = '',
   popularityScore = '',
+  cumulativePurchases,
+  uniqueViewers,
   isFree = false,
   badgeText = '',
   badgeVariant = 'none',
   aiScore,
   showAiBadge = false,
   agentNote = '',
+  showCategoryMeta = false,
+  showTemplateType = false,
+  showPreviewLink = false,
+  previewLabel = 'Preview',
+  showMarketplaceSignals = false,
+  marketplaceSignals = [],
+  marketplaceSignalsText = '',
   priorityIndex = 0,
   deferSecondaryImage = false,
+  stylesProvided = false,
 }) => {
   const [primaryLoaded, setPrimaryLoaded] = useState(false);
   const [primaryError, setPrimaryError] = useState(false);
@@ -521,16 +741,6 @@ const TemplateCardInner: React.FC<TemplateCardProps> = ({
   }, []);
   const hideHoverAssets = useCallback(() => setIsLinkHovered(false), []);
 
-  // Inject global styles once, synchronously before first paint (useLayoutEffect
-  // fires before the browser paints, so the overlay is never visible without CSS)
-  useLayoutEffect(() => {
-    if (_stylesInjected) return;
-    _stylesInjected = true;
-    const styleEl = document.createElement('style');
-    styleEl.textContent = INJECTED_STYLES;
-    document.head.appendChild(styleEl);
-  }, []);
-
   const resolvedPriorityIndex = Math.max(0, priorityIndex);
   const imageLoading: 'eager' | 'lazy' = resolvedPriorityIndex < 6 ? 'eager' : 'lazy';
   const cardStyle = {
@@ -550,6 +760,25 @@ const TemplateCardInner: React.FC<TemplateCardProps> = ({
   const hasBadge = effectiveBadgeText && effectiveBadgeVariant !== 'none';
   const hasAiScore = showAiBadge && aiScore !== undefined;
   const isFreePrice = isFree || price.trim().toLowerCase() === 'free';
+  const categoryLabel = categoryName.trim();
+  const subcategoryLabel = subcategoryName.trim();
+  const typeLabel = templateType.trim();
+  const hasSubcategoryMeta =
+    subcategoryLabel &&
+    subcategoryLabel.toLowerCase() !== categoryLabel.toLowerCase();
+  const metaItems: Array<{ key: string; label: string; link?: TemplateCardLink }> = [];
+  if (showCategoryMeta && categoryLabel) metaItems.push({ key: 'category', label: categoryLabel, link: categoryLink });
+  if (showCategoryMeta && hasSubcategoryMeta) metaItems.push({ key: 'subcategory', label: subcategoryLabel, link: subcategoryLink });
+  if (showTemplateType && typeLabel) metaItems.push({ key: 'type', label: typeLabel });
+  const hasPreviewLink = showPreviewLink && Boolean(previewLink?.href);
+  const explicitSignalItems = explicitMarketplaceSignals(marketplaceSignals, marketplaceSignalsText);
+  const marketplaceSignalItems = showMarketplaceSignals
+    ? explicitSignalItems.length > 0
+      ? explicitSignalItems
+      : derivedMarketplaceSignals({ cumulativePurchases, uniqueViewers, popularityScore }).slice(0, 3)
+    : [];
+  const primaryMarketplaceSignal = marketplaceSignalItems[0] ?? '';
+  const hasMarketplaceSignalBadge = isMarketplaceSignalBadge(primaryMarketplaceSignal);
 
   const badgeStyle: CSSProperties = {
     ...S.badgeBase,
@@ -575,6 +804,7 @@ const TemplateCardInner: React.FC<TemplateCardProps> = ({
       className="tmcard-wrapper"
       style={cardStyle}
     >
+      {!stylesProvided && <style dangerouslySetInnerHTML={{ __html: TEMPLATE_CARD_STYLES }} />}
       {/* Primary card link with images */}
       <a
         href={templateLink?.href ?? '#'}
@@ -612,7 +842,9 @@ const TemplateCardInner: React.FC<TemplateCardProps> = ({
             width="150"
             height="199"
             loading={imageLoading}
-            fetchPriority={resolvedPriorityIndex === 0 ? 'high' : undefined}
+            // Lowercase: React 18 drops the camelCase fetchPriority prop; only
+            // the literal DOM attribute reaches the browser (React 19 fixed this).
+            {...(resolvedPriorityIndex < 4 ? { fetchpriority: 'high' } : {})}
             decoding="async"
             src={primaryImage?.src ?? FALLBACK_IMAGE}
             onLoad={handlePrimaryLoad}
@@ -666,10 +898,9 @@ const TemplateCardInner: React.FC<TemplateCardProps> = ({
       </a>
 
       {/* Template metadata */}
-      <div className="tmcard-meta" style={S.content}>
+      <div style={S.content}>
         {showIcon ? (
           <img
-            className="tmcard-creator-icon"
             width="28"
             height="28"
             src={creatorIcon!.src}
@@ -680,12 +911,12 @@ const TemplateCardInner: React.FC<TemplateCardProps> = ({
             onError={handleIconError}
           />
         ) : (
-          <div className="tmcard-creator-initials" style={S.creatorInitials} title={creatorName}>
+          <div style={S.creatorInitials} title={creatorName}>
             {getInitials(creatorName)}
           </div>
         )}
-        <div className="tmcard-details" style={S.details}>
-          <div className="tmcard-details-row" style={S.detailsWrap}>
+        <div style={S.details}>
+          <div style={S.detailsWrap}>
             <div style={S.nameWrap}>
               <a
                 href={templateLink?.href ?? '#'}
@@ -695,11 +926,11 @@ const TemplateCardInner: React.FC<TemplateCardProps> = ({
                 style={S.nameLink}
                 title={templateName}
               >
-                <h4 className="tmcard-name" style={S.name}>{templateName}</h4>
+                <h4 style={S.name}>{templateName}</h4>
               </a>
             </div>
-            <div className="tmcard-price-wrap" style={S.priceWrap}>
-              <h4 className="tmcard-price" style={isFreePrice ? S.priceFree : S.price}>{price}</h4>
+            <div style={S.priceWrap}>
+              <h4 style={isFreePrice ? S.priceFree : S.price}>{price}</h4>
             </div>
           </div>
           <div style={S.creatorWrap}>
@@ -711,9 +942,77 @@ const TemplateCardInner: React.FC<TemplateCardProps> = ({
               aria-label={`Browse templates by ${creatorName}`}
               style={S.creatorLink}
             >
-              <h4 className="tmcard-creator" style={S.creator}>{creatorName}</h4>
+              <h4 style={S.creator}>{creatorName}</h4>
             </a>
           </div>
+
+          {metaItems.length > 0 && (
+            <div style={S.metaWrap} aria-label={`${templateName} category metadata`}>
+              {metaItems.map((item, index) => (
+                <React.Fragment key={item.key}>
+                  {index > 0 && <span style={S.metaSeparator}>/</span>}
+                  {item.link?.href ? (
+                    <a
+                      href={item.link.href}
+                      target={item.link.target}
+                      rel={relForTarget(item.link.target)}
+                      className="tmcard-meta-link"
+                      style={S.metaLink}
+                    >
+                      <span style={S.metaText}>{item.label}</span>
+                    </a>
+                  ) : (
+                    <span style={S.metaText}>{item.label}</span>
+                  )}
+                </React.Fragment>
+              ))}
+            </div>
+          )}
+
+          {marketplaceSignalItems.length > 0 && (
+            <div style={S.signalsWrap} aria-label={`${templateName} marketplace signals`}>
+              {hasMarketplaceSignalBadge ? (
+                <span style={S.signalGroup}>
+                  <span style={S.signalBadge} title={marketplaceSignalHelp(primaryMarketplaceSignal)}>
+                    {primaryMarketplaceSignal}
+                  </span>
+                  <span
+                    aria-label={marketplaceSignalHelp(primaryMarketplaceSignal)}
+                    role="img"
+                    style={S.signalInfo}
+                    title={marketplaceSignalHelp(primaryMarketplaceSignal)}
+                  >
+                    i
+                  </span>
+                  {marketplaceSignalItems.slice(1).map((signal) => (
+                    <React.Fragment key={signal}>
+                      <span style={S.signalSeparator}>·</span>
+                      <span style={S.signalText} title={marketplaceSignalHelp(signal)}>{signal}</span>
+                    </React.Fragment>
+                  ))}
+                </span>
+              ) : (
+                marketplaceSignalItems.map((signal, index) => (
+                  <React.Fragment key={signal}>
+                    {index > 0 && <span style={S.signalSeparator}>·</span>}
+                    <span style={S.signalText} title={marketplaceSignalHelp(signal)}>{signal}</span>
+                  </React.Fragment>
+                ))
+              )}
+            </div>
+          )}
+
+          {hasPreviewLink && (
+            <a
+              href={previewLink!.href}
+              target={previewLink!.target}
+              rel={relForTarget(previewLink!.target)}
+              className="tmcard-preview-link"
+              style={S.previewLink}
+            >
+              {previewLabel}
+            </a>
+          )}
 
           {agentNote && <p style={S.agentNote}>{agentNote}</p>}
         </div>
@@ -739,6 +1038,15 @@ const TemplateCardInner: React.FC<TemplateCardProps> = ({
       </div>
       <div {...({ 'fs-cmsfilter-field': 'free' } as Record<string, string>)} className="tmcard-fs-hidden" style={S.hidden}>
         {isFree ? 'Free' : ''}
+      </div>
+      <div {...({ 'fs-cmsfilter-field': 'category' } as Record<string, string>)} className="tmcard-fs-hidden" style={S.hidden}>
+        {categoryLabel}
+      </div>
+      <div {...({ 'fs-cmsfilter-field': 'subcategory' } as Record<string, string>)} className="tmcard-fs-hidden" style={S.hidden}>
+        {subcategoryLabel}
+      </div>
+      <div {...({ 'fs-cmsfilter-field': 'type' } as Record<string, string>)} className="tmcard-fs-hidden" style={S.hidden}>
+        {typeLabel}
       </div>
     </div>
   );

@@ -1,7 +1,28 @@
 <script lang="ts">
+	import { runThreadAction } from '$chat/client-actions';
 	import type { WidgetOf } from './types';
 
 	export let widget: WidgetOf<'field_confirmation'>;
+	export let threadId = '';
+
+	$: fieldKeys = widget.data.fields.map((field) => field.key);
+
+	let activeAction: 'confirm' | 'reject' | null = null;
+	let actionError = '';
+
+	async function submitAction(type: 'confirm_fields' | 'reject_fields', action: 'confirm' | 'reject') {
+		activeAction = action;
+		actionError = '';
+
+		try {
+			await runThreadAction(threadId, { type, fieldKeys });
+		} catch (error) {
+			actionError =
+				error instanceof Error ? error.message : 'Unable to update the profile fields.';
+		} finally {
+			activeAction = null;
+		}
+	}
 </script>
 
 <div class="stack">
@@ -26,9 +47,26 @@
 	</div>
 
 	<div class="actions">
-		<button disabled>{widget.data.confirmLabel}</button>
-		<button class="ghost" disabled>{widget.data.rejectLabel}</button>
+		<button
+			type="button"
+			on:click={() => submitAction('confirm_fields', 'confirm')}
+			disabled={activeAction !== null}
+		>
+			{activeAction === 'confirm' ? 'Confirming...' : widget.data.confirmLabel}
+		</button>
+		<button
+			class="ghost"
+			type="button"
+			on:click={() => submitAction('reject_fields', 'reject')}
+			disabled={activeAction !== null}
+		>
+			{activeAction === 'reject' ? 'Updating...' : widget.data.rejectLabel}
+		</button>
 	</div>
+
+	{#if actionError}
+		<p class="error-text">{actionError}</p>
+	{/if}
 </div>
 
 <style>
@@ -48,8 +86,8 @@
 		gap: 1rem;
 		padding: 0.95rem 1rem;
 		border-radius: 16px;
-		background: rgba(255, 255, 255, 0.6);
-		border: 1px solid rgba(31, 27, 22, 0.08);
+		background: var(--surface-soft);
+		border: 1px solid var(--line);
 	}
 
 	.value {
@@ -78,11 +116,18 @@
 	}
 
 	.ghost {
-		background: rgba(31, 27, 22, 0.08);
+		background: var(--surface-overlay);
 		color: var(--ink);
+		border: 1px solid var(--line);
 	}
 
 	p {
 		margin: 0;
+	}
+
+	.error-text {
+		margin: 0;
+		color: var(--danger);
+		font-size: 0.92rem;
 	}
 </style>

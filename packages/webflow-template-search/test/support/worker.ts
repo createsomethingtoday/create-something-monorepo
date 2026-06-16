@@ -9,8 +9,8 @@ export function createTestEnv() {
     AIRTABLE_API_KEY: 'test-airtable-token',
     AIRTABLE_BASE_ID: 'appMoIgXMTTTNIc3p',
     AIRTABLE_ASSETS_TABLE_ID: 'tblRwzpWoLgE9MrUm',
-    AIRTABLE_STYLES_TABLE_ID: 'tblG7E9LbQj0sBX0o',
     AIRTABLE_CHILD_CATEGORIES_TABLE_ID: 'tblWJXy3M6R8SeoFi',
+    AIRTABLE_STYLES_TABLE_ID: 'tblG7E9LbQj0sBX0o',
     AIRTABLE_TAGS_TABLE_ID: 'tblb4969G7O75gVWV',
     SYNC_ADMIN_TOKEN: 'sync-token',
     DEFAULT_PAGE_SIZE: '24',
@@ -24,5 +24,30 @@ export function createTestEnv() {
 }
 
 export async function callWorker(request: Request, env: Env): Promise<Response> {
-  return worker.fetch(request, env);
+  const waitUntilPromises: Promise<unknown>[] = [];
+  const ctx = {
+    waitUntil(promise: Promise<unknown>) {
+      waitUntilPromises.push(promise);
+    },
+    passThroughOnException() {},
+    props: {},
+  } satisfies ExecutionContext;
+
+  const response = await worker.fetch(request, env, ctx);
+  await Promise.all(waitUntilPromises);
+  return response;
+}
+
+export async function callScheduled(cron: string, env: Env): Promise<void> {
+  const waitUntilPromises: Promise<unknown>[] = [];
+  const ctx = {
+    waitUntil(promise: Promise<unknown>) {
+      waitUntilPromises.push(promise);
+    },
+    passThroughOnException() {},
+    props: {},
+  } satisfies ExecutionContext;
+
+  await worker.scheduled({ cron, scheduledTime: Date.now() }, env, ctx);
+  await Promise.all(waitUntilPromises);
 }

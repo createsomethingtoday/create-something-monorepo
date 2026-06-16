@@ -1,76 +1,142 @@
 import {
+  fetchAssetRecordsByIds,
   fetchModifiedAssetsSince,
   fetchPublishedTemplateAssets,
-  fetchPublishedTemplateAssetsPage,
-  fetchTemplateAssetBySlug,
+  fetchPublishedTemplateImageFields,
   loadLookupMaps,
+  DEFAULT_SEARCH_VISIBILITY_FIELDS,
 } from './airtable.js';
 import {
+  backfillCreatorAvatars,
+  backfillCreatorFieldsByName,
+  acquireSyncJobLock,
   clearIndex,
   deleteTemplateDocuments,
+  finishSyncJobLock,
   getSyncCursor,
+  listTemplateImageBackfillRows,
+  listTemplateImageRefreshRows,
+  publicSyncJobRecord,
   recordSyncSummary,
+  refreshTemplateImageUrls,
   setSyncCursor,
-  upsertChildCategoryTaxonomy,
-  upsertTaxonomyMetadata,
+  templateImageSourceStats,
+  type TemplateImageUpdateInput,
+  type TemplateImageRefreshRow,
+  updateCreatorAvatarsFromWebflow,
+  updateTemplateDocumentImages,
+  updateTemplateImagesFromWebflow,
   upsertTemplateDocuments,
-  updateTemplateImagesBySlug,
 } from './db.js';
+import { fetchWebflowDesignerAvatars, fetchWebflowTemplateImages, type WebflowDesignerAvatarRecord } from './webflow.js';
 import { stripHtml } from './html.js';
-import { canonicalizeCategoryGroupSlug, deriveChildCategorySlug } from './slug.js';
+import { canonicalizeCategoryGroupSlug, normalizeChildCategorySlug } from './slug.js';
 import type {
   AirtableAssetFields,
   AirtableRecord,
-  ChildCategoryLookupValue,
-  ChildCategoryTaxonomyInput,
+  CategoryMembershipInput,
   Env,
+  ImageRefreshSummary,
   LookupMaps,
   SyncSummary,
-  TaxonomyMetadataInput,
   TemplateDocumentInput,
+  TemplateImageBackfillSummary,
+  TemplateImagePruneSummary,
+  CreatorLookupValue,
 } from './types.js';
-import { chunk, ensureBoolean, ensureNumber, ensureStringArray, nowIso, parseJsonArray, uniqueStrings } from './utils.js';
-import { fetchWebflowTemplateImagesPage, fetchWebflowTemplateMetadata, resolveWebflowCmsItemId } from './webflow.js';
+import { chunk, clamp, ensureBoolean, ensureNumber, ensureStringArray, nowIso, uniqueStrings } from './utils.js';
+import {
+  loadWebflowTemplateImageIndex,
+  fetchPublishedTemplateStatus,
+  resolvePublishedTemplateImages,
+  resolveWebflowTemplateImages,
+  stableAttachmentUrl,
+  type WebflowTemplateImageIndex,
+} from './webflow-assets.js';
 
-function isPublishedTemplate(record: AirtableRecord<AirtableAssetFields>): boolean {
-  return record.fields['⚙️🆎Type (Text)'] === 'Template🏗️' && record.fields['🚀Marketplace Status'] === '3️⃣Published🚀';
+const IMAGE_BACKFILL_DEFAULT_LIMIT = 48;
+const IMAGE_BACKFILL_MAX_LIMIT = 480;
+const IMAGE_BACKFILL_FETCH_BATCH_SIZE = 24;
+const DEFAULT_SYNC_LOCK_TTL_MS = 20 * 60 * 1000;
+const FULL_SYNC_LOCK_TTL_MS = 3 * 60 * 60 * 1000;
+const RECORD_SYNC_STALE_HEARTBEAT_MS = 5 * 60 * 1000;
+
+export class SyncAlreadyRunningError extends Error {
+  readonly activeJob: ReturnType<typeof publicSyncJobRecord>;
+
+  constructor(activeJob: Parameters<typeof publicSyncJobRecord>[0]) {
+    super('A template sync job is already running.');
+    this.name = 'SyncAlreadyRunningError';
+    this.activeJob = publicSyncJobRecord(activeJob);
+  }
 }
 
-function firstString(value: unknown): string | null {
-  if (typeof value === 'string') return value.trim() || null;
-  if (Array.isArray(value)) {
-    for (const entry of value) {
-      if (typeof entry === 'string' && entry.trim()) return entry.trim();
+async function runWithSyncJobLock<T>(env: Env, mode: string, task: () => Promise<T>): Promise<T> {
+  const lockResult = await acquireSyncJobLock(env.DB, mode, {
+    ttlMs: mode === 'full' ? FULL_SYNC_LOCK_TTL_MS : DEFAULT_SYNC_LOCK_TTL_MS,
+    staleHeartbeatMs: mode === 'records' ? RECORD_SYNC_STALE_HEARTBEAT_MS : undefined,
+  });
+  if (!lockResult.acquired) {
+    throw new SyncAlreadyRunningError(lockResult.activeJob);
+  }
+
+  try {
+    const result = await task();
+    await finishSyncJobLock(env.DB, lockResult.lock, { status: 'succeeded', summary: result });
+    return result;
+  } catch (error) {
+    await finishSyncJobLock(env.DB, lockResult.lock, { status: 'failed', error });
+    throw error;
+  }
+}
+
+function normalizePolicyText(value: unknown): string {
+  if (typeof value === 'string') return value.trim().toLowerCase();
+  if (Array.isArray(value)) return value.map(normalizePolicyText).find(Boolean) ?? '';
+  if (value && typeof value === 'object') {
+    const record = value as Record<string, unknown>;
+    for (const candidate of [record.name, record.label, record.value, record.title, record.text]) {
+      const normalized = normalizePolicyText(candidate);
+      if (normalized) return normalized;
     }
   }
-  return null;
+  return '';
 }
 
-function resolveTemplateSlug(fields: AirtableAssetFields): string {
+function searchVisibility(record: AirtableRecord<AirtableAssetFields>): string {
+  for (const field of DEFAULT_SEARCH_VISIBILITY_FIELDS) {
+    const value = normalizePolicyText(record.fields[field]);
+    if (value) return value;
+  }
+  return '';
+}
+
+function isSearchSuppressed(record: AirtableRecord<AirtableAssetFields>): boolean {
+  const visibility = searchVisibility(record);
+  if (!visibility) return false;
+
+  if (/\b(searchable|search\s*enabled|listed|marketplace\s*search)\b/.test(visibility) && !visibility.includes('unlisted')) {
+    return false;
+  }
+
   return (
-    firstString(fields['🥞CMS Slug']) ??
-    firstString(fields['Slug (from 🥞CMS Sync Records)']) ??
-    firstString(fields['🥞CMS Slug (formula)']) ??
-    ''
+    visibility.includes('detail only') ||
+    visibility.includes('detail-only') ||
+    visibility.includes('unlisted') ||
+    visibility.includes('hidden') ||
+    visibility.includes('suppress') ||
+    visibility.includes('not searchable') ||
+    visibility.includes('no search') ||
+    visibility.includes('remove from search')
   );
 }
 
-function normalizeListingUrl(value: unknown, templateSlug: string): string | null {
-  if (!templateSlug) return null;
-
-  const canonical = `https://webflow.com/templates/html/${templateSlug}`;
-  const raw = firstString(value);
-  if (!raw) return canonical;
-
-  try {
-    const url = new URL(raw);
-    const pathMatch = url.pathname.match(/\/templates\/html\/([^/]+)/);
-    if (pathMatch?.[1] === templateSlug) return canonical;
-  } catch {
-    // Fall back to the slug-derived canonical URL below.
-  }
-
-  return canonical;
+function isPublishedTemplate(record: AirtableRecord<AirtableAssetFields>): boolean {
+  return (
+    record.fields['⚙️🆎Type (Text)'] === 'Template🏗️' &&
+    record.fields['🚀Marketplace Status'] === '3️⃣Published🚀' &&
+    !isSearchSuppressed(record)
+  );
 }
 
 function attachmentUrl(value: unknown): string | null {
@@ -86,162 +152,264 @@ function attachmentUrls(value: unknown): string[] {
     .filter(Boolean);
 }
 
-function stripAirtableAttachmentUrl(value: string | null): string | null {
-  if (!value) return null;
-  return /airtableusercontent\.com/i.test(value) ? null : value;
+function dateFieldValue(value: unknown): string | null {
+  return typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
 }
 
-function uniqueChildCategoryLookups(entries: ChildCategoryLookupValue[]): ChildCategoryLookupValue[] {
-  const seen = new Set<string>();
-  const result: ChildCategoryLookupValue[] = [];
-  for (const entry of entries) {
-    if (seen.has(entry.slug)) continue;
-    seen.add(entry.slug);
-    result.push(entry);
+async function resolveAndUpdateTemplateImages(
+  db: D1Database,
+  rows: TemplateImageRefreshRow[],
+  webflowImageIndex: WebflowTemplateImageIndex | null,
+  syncedAt: string,
+  fetchBatchSize = 6,
+  options: { preferPublishedTemplatePage?: boolean } = {},
+): Promise<number> {
+  const updates: TemplateImageUpdateInput[] = [];
+
+  for (const rowBatch of chunk(rows, fetchBatchSize)) {
+    const resolvedRows = await Promise.all(
+      rowBatch.map(async (row) => {
+        const publishedImages = options.preferPublishedTemplatePage
+          ? await resolvePublishedTemplateImages({
+              templateSlug: row.templateSlug,
+              listingUrl: row.listingUrl,
+            })
+          : null;
+        const webflowImages =
+          publishedImages ??
+          resolveWebflowTemplateImages(webflowImageIndex, {
+            templateSlug: row.templateSlug,
+            name: row.name,
+          }) ??
+          (await resolvePublishedTemplateImages({
+            templateSlug: row.templateSlug,
+            listingUrl: row.listingUrl,
+          }));
+        return { row, webflowImages };
+      }),
+    );
+
+    for (const { row, webflowImages } of resolvedRows) {
+      const currentThumbnailUrl = stableAttachmentUrl(row.thumbnailImageUrl);
+      const currentSecondaryThumbnailUrl = stableAttachmentUrl(row.thumbnailImageSecondaryUrl);
+      const nextThumbnailUrl = webflowImages?.thumbnailImageUrl ?? currentThumbnailUrl;
+      const nextSecondaryThumbnailUrl =
+        webflowImages?.thumbnailImageSecondaryUrl ??
+        (currentSecondaryThumbnailUrl === nextThumbnailUrl ? null : currentSecondaryThumbnailUrl);
+
+      if (row.thumbnailImageUrl === nextThumbnailUrl && row.thumbnailImageSecondaryUrl === nextSecondaryThumbnailUrl) {
+        continue;
+      }
+
+      updates.push({
+        id: row.id,
+        thumbnailImageUrl: nextThumbnailUrl,
+        thumbnailImageSecondaryUrl: nextSecondaryThumbnailUrl,
+      });
+    }
   }
-  return result;
+
+  return updateTemplateDocumentImages(db, updates, syncedAt);
 }
 
-function titleFromSlug(slug: string): string {
-  return slug
-    .replace(/-websites?$/, '')
-    .split('-')
-    .filter(Boolean)
-    .map((part) => (part.length <= 3 ? part.toUpperCase() : `${part.slice(0, 1).toUpperCase()}${part.slice(1)}`))
-    .join(' ');
+async function refreshIndexedWebflowImages(
+  db: D1Database,
+  webflowImageIndex: WebflowTemplateImageIndex | null,
+  syncedAt: string,
+  changedTemplateIds: string[] = [],
+  options: { preferPublishedTemplatePage?: boolean } = {},
+): Promise<number> {
+  const rows = await listTemplateImageRefreshRows(db, changedTemplateIds);
+  return resolveAndUpdateTemplateImages(db, rows, webflowImageIndex, syncedAt, 6, options);
 }
 
-function buildCmsChildCategoryLookup(
+function hasWebflowCmsToken(env: Env): boolean {
+  return Boolean(env.CMS_READ_ONLY?.trim() || env.WEBFLOW_API_TOKEN?.trim());
+}
+
+function normalizeCreatorName(name: string): string {
+  return name.trim().toLowerCase();
+}
+
+function isArchiveCreatorSlug(slug: string | null | undefined): boolean {
+  return Boolean(slug?.endsWith('-archive'));
+}
+
+function creatorProfileUrlForSlug(slug: string | null | undefined): string | null {
+  return slug ? `https://webflow.com/templates/designers/${slug}` : null;
+}
+
+function airtableCreatorFallbackMap(
+  creators: Map<string, CreatorLookupValue>,
+  webflowDesigners: WebflowDesignerAvatarRecord[],
+): Map<string, CreatorLookupValue> {
+  if (creators.size === 0 || webflowDesigners.length === 0) return creators;
+
+  const webflowIds = new Set<string>();
+  const webflowNames = new Set<string>();
+
+  for (const designer of webflowDesigners) {
+    if (designer.syncRecordId) webflowIds.add(designer.syncRecordId);
+    webflowNames.add(normalizeCreatorName(designer.name));
+  }
+
+  const fallbackCreators = new Map<string, CreatorLookupValue>();
+  for (const [creatorId, creator] of creators) {
+    if (webflowIds.has(creatorId)) continue;
+    if (webflowNames.has(normalizeCreatorName(creator.name))) continue;
+    fallbackCreators.set(creatorId, creator);
+  }
+
+  return fallbackCreators;
+}
+
+interface WebflowDesignerAvatarIndex {
+  bySyncRecordId: Map<string, WebflowDesignerAvatarRecord>;
+  byName: Map<string, WebflowDesignerAvatarRecord>;
+}
+
+function buildWebflowDesignerAvatarIndex(records: WebflowDesignerAvatarRecord[]): WebflowDesignerAvatarIndex | null {
+  if (records.length === 0) return null;
+
+  const bySyncRecordId = new Map<string, WebflowDesignerAvatarRecord>();
+  const byName = new Map<string, WebflowDesignerAvatarRecord>();
+
+  for (const record of records) {
+    if (record.syncRecordId) bySyncRecordId.set(record.syncRecordId, record);
+    byName.set(normalizeCreatorName(record.name), record);
+  }
+
+  return { bySyncRecordId, byName };
+}
+
+function resolveCreatorMetadata(
   record: AirtableRecord<AirtableAssetFields>,
   lookups: LookupMaps,
-  name: string,
-  slug: string,
-): ChildCategoryLookupValue | null {
-  const existing = slug ? lookups.childCategories.get(slug) : lookups.childCategories.get(name);
-  if (existing && !existing.isCategoryGroup && (!slug || existing.slug === slug)) return existing;
-
-  const displayName = name || titleFromSlug(slug);
-  const childSlug = slug || deriveChildCategorySlug(displayName);
-  if (!displayName || !childSlug) return null;
-
-  const categoryGroupNames = ensureStringArray(record.fields['🪣Category Group(s) Display Name']);
-  const categoryGroupSlugs = ensureStringArray(record.fields['🪣Category Group(s) CMS Slug']).map((entry) =>
-    canonicalizeCategoryGroupSlug(entry),
-  );
-  const parentCategoryName = categoryGroupNames[0] ?? '';
+  webflowDesignerIndex: WebflowDesignerAvatarIndex | null,
+) {
+  const ids = ensureStringArray(record.fields['🎨Creator']);
+  const creatorRecordId = ids[0] ?? null;
+  const creatorName = typeof record.fields['🎨Creator Name'] === 'string' ? record.fields['🎨Creator Name'].trim() : '';
+  const airtableCreator = creatorRecordId ? lookups.creators.get(creatorRecordId) : undefined;
+  const webflowCreator =
+    (creatorRecordId ? webflowDesignerIndex?.bySyncRecordId.get(creatorRecordId) : undefined) ??
+    (creatorName ? webflowDesignerIndex?.byName.get(normalizeCreatorName(creatorName)) : undefined);
+  const webflowSlug = webflowCreator?.slug || null;
+  const airtableSlug = airtableCreator?.slug || null;
+  const shouldUseAirtableProfile =
+    isArchiveCreatorSlug(webflowSlug) && Boolean(airtableSlug) && !isArchiveCreatorSlug(airtableSlug);
+  const creatorSlug = shouldUseAirtableProfile ? airtableSlug : webflowSlug || airtableSlug || null;
+  const creatorProfileUrl = shouldUseAirtableProfile
+    ? airtableCreator?.profileUrl || creatorProfileUrlForSlug(airtableSlug)
+    : webflowCreator?.profileUrl || airtableCreator?.profileUrl || null;
 
   return {
-    id: `cms:${childSlug}`,
-    name: displayName,
-    slug: childSlug,
-    category: displayName,
-    displayName,
-    parentCategoryName,
-    descriptionShort: '',
-    categoryGroups: categoryGroupSlugs,
-    relatedKeywords: [],
-    tier: null,
-    type: null,
-    isCategoryGroup: false,
+    creatorRecordId,
+    creatorSlug,
+    creatorProfileUrl,
+    creatorAvatarUrl: webflowCreator?.avatarUrl ?? airtableCreator?.avatarUrl ?? null,
+    creatorAvatarAlt: webflowCreator?.avatarAlt ?? airtableCreator?.avatarAlt ?? (airtableCreator?.name ?? null),
   };
 }
 
-function resolveChildCategoryLookups(
-  record: AirtableRecord<AirtableAssetFields>,
-  lookups: LookupMaps,
-): ChildCategoryLookupValue[] {
-  const algoliaLookups = ensureStringArray(record.fields['🔍Algolia Child Category (🏗️ only)'])
-    .map((value) => lookups.childCategories.get(value))
-    .filter((value): value is ChildCategoryLookupValue => Boolean(value));
-
-  const cmsCategoryNames = ensureStringArray(record.fields['ℹ️🪣Categories (Text)']);
-  const cmsCategorySlugs = ensureStringArray(record.fields['🥞CMS Slug (from ℹ️🪣Categories)']);
-  const cmsLookups = Array.from({ length: Math.max(cmsCategoryNames.length, cmsCategorySlugs.length) })
-    .map((_, index) =>
-      buildCmsChildCategoryLookup(record, lookups, cmsCategoryNames[index] ?? '', cmsCategorySlugs[index] ?? ''),
-    )
-    .filter((value): value is ChildCategoryLookupValue => Boolean(value));
-
-  if (cmsLookups.length > 0) {
-    return uniqueChildCategoryLookups(cmsLookups);
-  }
-
-  return uniqueChildCategoryLookups(algoliaLookups);
+interface NormalizedChildCategory {
+  displayName: string;
+  slug: string;
+  categoryGroupName: string | null;
+  categoryGroupSlug: string | null;
 }
 
-async function filterConflictingTemplateSlugs(
-  db: D1Database,
-  documents: TemplateDocumentInput[],
-): Promise<{ documents: TemplateDocumentInput[]; skippedSlugConflicts: number }> {
-  const safeDocuments: TemplateDocumentInput[] = [];
-  let skippedSlugConflicts = 0;
-  const seenSlugs = new Set<string>();
+function uniqueCategoryMemberships(categories: NormalizedChildCategory[]): CategoryMembershipInput[] {
+  const memberships = new Map<string, CategoryMembershipInput>();
 
-  for (const document of documents) {
-    if (seenSlugs.has(document.templateSlug)) {
-      skippedSlugConflicts += 1;
-      continue;
-    }
-    seenSlugs.add(document.templateSlug);
-
-    const conflict = await db
-      .prepare('SELECT id FROM template_documents WHERE template_slug = ? AND id != ?')
-      .bind(document.templateSlug, document.id)
-      .first<{ id: string }>();
-
-    if (conflict) {
-      skippedSlugConflicts += 1;
-      continue;
-    }
-
-    safeDocuments.push(document);
+  for (const category of categories) {
+    if (!category.categoryGroupName || !category.categoryGroupSlug) continue;
+    const key = `${category.categoryGroupSlug}:${category.slug}`;
+    if (memberships.has(key)) continue;
+    memberships.set(key, {
+      childCategoryName: category.displayName,
+      childCategorySlug: category.slug,
+      categoryGroupName: category.categoryGroupName,
+      categoryGroupSlug: category.categoryGroupSlug,
+    });
   }
 
-  return { documents: safeDocuments, skippedSlugConflicts };
+  return Array.from(memberships.values());
 }
 
-function filterDuplicateTemplateSlugs(
-  documents: TemplateDocumentInput[],
-): { documents: TemplateDocumentInput[]; skippedSlugConflicts: number } {
-  const safeDocuments: TemplateDocumentInput[] = [];
-  let skippedSlugConflicts = 0;
-  const seenSlugs = new Set<string>();
+function uniqueCategoryGroupPairs(
+  memberships: CategoryMembershipInput[],
+  fallbackNames: string[],
+  fallbackSlugs: string[],
+): { names: string[]; slugs: string[] } {
+  const groups = new Map<string, string>();
 
-  for (const document of documents) {
-    if (seenSlugs.has(document.templateSlug)) {
-      skippedSlugConflicts += 1;
-      continue;
+  for (const membership of memberships) {
+    if (!groups.has(membership.categoryGroupSlug)) {
+      groups.set(membership.categoryGroupSlug, membership.categoryGroupName);
     }
-    seenSlugs.add(document.templateSlug);
-    safeDocuments.push(document);
   }
 
-  return { documents: safeDocuments, skippedSlugConflicts };
+  if (groups.size === 0) {
+    fallbackSlugs.forEach((slug, index) => {
+      if (!slug || groups.has(slug)) return;
+      groups.set(slug, fallbackNames[index] ?? slug);
+    });
+  }
+
+  return {
+    names: Array.from(groups.values()),
+    slugs: Array.from(groups.keys()),
+  };
 }
 
-function normalizeTemplateRecordBase(
+function normalizeAssetChildCategories(record: AirtableRecord<AirtableAssetFields>, lookups: LookupMaps): NormalizedChildCategory[] {
+  const ids = ensureStringArray(record.fields['ℹ️🪣Categories']);
+  const names = ensureStringArray(record.fields['ℹ️🪣Categories (Text)']);
+  const slugs = ensureStringArray(record.fields['🥞CMS Slug (from ℹ️🪣Categories)']);
+  const categories = new Map<string, NormalizedChildCategory>();
+
+  const total = Math.max(ids.length, names.length, slugs.length);
+  for (let index = 0; index < total; index += 1) {
+    const lookup = ids[index] ? lookups.childCategories.get(ids[index]) : undefined;
+    const displayName = (lookup?.name ?? names[index] ?? '').trim();
+    if (!displayName) continue;
+
+    const slug = normalizeChildCategorySlug(displayName, slugs[index] ?? lookup?.slug);
+    if (!slug || categories.has(slug)) continue;
+
+    categories.set(slug, {
+      displayName,
+      slug,
+      categoryGroupName: lookup?.categoryGroupName ?? null,
+      categoryGroupSlug: lookup?.categoryGroupSlug ?? null,
+    });
+  }
+
+  return Array.from(categories.values());
+}
+
+function normalizeTemplateRecord(
   record: AirtableRecord<AirtableAssetFields>,
   lookups: LookupMaps,
   syncedAt: string,
+  webflowImageIndex: WebflowTemplateImageIndex | null,
+  webflowDesignerIndex: WebflowDesignerAvatarIndex | null = null,
 ): TemplateDocumentInput | null {
   if (!isPublishedTemplate(record)) return null;
 
   const name = String(record.fields.Name ?? '').trim();
-  const templateSlug = resolveTemplateSlug(record.fields);
+  const templateSlug = String(record.fields['🥞CMS Slug'] ?? record.fields['🥞CMS Slug (formula)'] ?? '').trim();
   if (!name || !templateSlug) return null;
 
-  const childCategoryLookups = resolveChildCategoryLookups(record, lookups);
-  const parentCategoryLookups = childCategoryLookups.filter((entry) => entry.isCategoryGroup);
-  const childCategories = childCategoryLookups.filter((entry) => !entry.isCategoryGroup);
+  const categoryGroups = ensureStringArray(record.fields['🪣Category Group(s) Display Name']);
+  const categoryGroupSlugs = uniqueStrings(
+    ensureStringArray(record.fields['🪣Category Group(s) CMS Slug']).map((entry) => canonicalizeCategoryGroupSlug(entry)),
+  );
 
-  const categoryGroups = uniqueStrings([
-    ...ensureStringArray(record.fields['🪣Category Group(s) Display Name']),
-    ...parentCategoryLookups.map((entry) => entry.displayName),
-  ]);
-  const categoryGroupSlugs = uniqueStrings([
-    ...ensureStringArray(record.fields['🪣Category Group(s) CMS Slug']).map((entry) => canonicalizeCategoryGroupSlug(entry)),
-    ...parentCategoryLookups.map((entry) => canonicalizeCategoryGroupSlug(entry.displayName)),
-  ]);
+  const childCategories = normalizeAssetChildCategories(record, lookups);
+  const categoryMemberships = uniqueCategoryMemberships(childCategories);
+  const normalizedCategoryGroups = uniqueCategoryGroupPairs(categoryMemberships, categoryGroups, categoryGroupSlugs);
 
   const styles = ensureStringArray(record.fields['ℹ️👘Styles'])
     .map((id) => lookups.styles.get(id))
@@ -255,33 +423,42 @@ function normalizeTemplateRecordBase(
   const descriptionLongHtml = String(record.fields['ℹ️Description (Long).html'] ?? '').trim();
   const templateType =
     typeof record.fields['🥞Template Type (🏗️ only)'] === 'string' ? record.fields['🥞Template Type (🏗️ only)'] : null;
+  const webflowImages = resolveWebflowTemplateImages(webflowImageIndex, { templateSlug, name });
+  const airtableThumbnailUrl = stableAttachmentUrl(attachmentUrl(record.fields['🖼️Thumbnail Image']));
+  const airtableSecondaryThumbnailUrl = stableAttachmentUrl(attachmentUrl(record.fields['🖼️Thumbnail Image (Secondary)']));
+  const price = ensureNumber(record.fields['🥞💲Template Price Filter (🏗️ only)']);
+  const creator = resolveCreatorMetadata(record, lookups, webflowDesignerIndex);
 
   return {
     id: record.id,
     templateSlug,
     name,
-    listingUrl: normalizeListingUrl(record.fields['🔗Listing URL'], templateSlug),
+    listingUrl: typeof record.fields['🔗Listing URL'] === 'string' ? record.fields['🔗Listing URL'] : null,
     previewUrl: typeof record.fields['🔗Preview Site URL'] === 'string' ? record.fields['🔗Preview Site URL'] : null,
     websiteUrl: typeof record.fields['🔗Website URL'] === 'string' ? record.fields['🔗Website URL'] : null,
     creatorName: typeof record.fields['🎨Creator Name'] === 'string' ? record.fields['🎨Creator Name'] : null,
-    thumbnailImageUrl: stripAirtableAttachmentUrl(attachmentUrl(record.fields['🖼️Thumbnail Image'])),
-    thumbnailImageSecondaryUrl: stripAirtableAttachmentUrl(
-      attachmentUrl(record.fields['🖼️Thumbnail Image (Secondary)']),
-    ),
+    creatorRecordId: creator.creatorRecordId,
+    creatorSlug: creator.creatorSlug,
+    creatorProfileUrl: creator.creatorProfileUrl,
+    creatorAvatarUrl: creator.creatorAvatarUrl,
+    creatorAvatarAlt: creator.creatorAvatarAlt,
+    thumbnailImageUrl: webflowImages?.thumbnailImageUrl ?? airtableThumbnailUrl,
+    thumbnailImageSecondaryUrl: webflowImages?.thumbnailImageSecondaryUrl ?? airtableSecondaryThumbnailUrl,
     carouselImageUrls: attachmentUrls(record.fields['🖼️Carousel Images']),
     descriptionShort,
     descriptionLongHtml,
     descriptionLongText: stripHtml(descriptionLongHtml),
-    categoryGroups,
-    categoryGroupSlugs,
+    categoryGroups: normalizedCategoryGroups.names,
+    categoryGroupSlugs: normalizedCategoryGroups.slugs,
     childCategories: childCategories.map((entry) => entry.displayName),
     childCategorySlugs: childCategories.map((entry) => entry.slug),
+    categoryMemberships,
     styles: styles.map((entry) => entry.name),
     styleSlugs: styles.map((entry) => entry.slug),
     tags: tags.map((entry) => entry.name),
     tagSlugs: tags.map((entry) => entry.slug),
     templateType,
-    isFree: ensureBoolean(record.fields['Is free?']) || ensureNumber(record.fields['🥞💲Template Price Filter (🏗️ only)']) === 0,
+    isFree: price === null ? ensureBoolean(record.fields['Is free?']) : price === 0,
     isFeatured:
       ensureBoolean(record.fields['🥞Is Currently Featured? (🏗️ only)']) ||
       ensureBoolean(record.fields['ℹ️Is Featured? (🖥️, 🏗️only)']),
@@ -289,8 +466,8 @@ function normalizeTemplateRecordBase(
     popularityScore: ensureNumber(record.fields['🖌️Popularity Score']),
     uniqueViewers: ensureNumber(record.fields['📋 Unique Viewers']),
     cumulativePurchases: ensureNumber(record.fields['📋 Cumulative Purchases']),
-    price: ensureNumber(record.fields['🥞💲Template Price Filter (🏗️ only)']),
-    publishedDate: typeof record.fields['🚀📅Published Date'] === 'string' ? record.fields['🚀📅Published Date'] : null,
+    price,
+    publishedDate: dateFieldValue(record.fields['👀📅Decision Date (Override)']) ?? dateFieldValue(record.fields['🚀📅Published Date']),
     marketplaceStatus:
       typeof record.fields['🚀Marketplace Status'] === 'string' ? record.fields['🚀Marketplace Status'] : null,
     sourceLastModifiedTime: typeof record.fields['📅LMT'] === 'string' ? record.fields['📅LMT'] : null,
@@ -298,195 +475,36 @@ function normalizeTemplateRecordBase(
   };
 }
 
-async function normalizeTemplateRecord(
-  env: Env,
-  record: AirtableRecord<AirtableAssetFields>,
-  lookups: LookupMaps,
-  syncedAt: string,
-): Promise<TemplateDocumentInput | null> {
-  const document = normalizeTemplateRecordBase(record, lookups, syncedAt);
-  if (!document) return null;
-
-  const cmsItemId = resolveWebflowCmsItemId(record.fields['🥞CMS Record ID']);
-  const webflowMetadata = await fetchWebflowTemplateMetadata(env, cmsItemId);
-  const templateSlug = webflowMetadata.templateSlug ?? document.templateSlug;
-
-  return {
-    ...document,
-    templateSlug,
-    listingUrl: normalizeListingUrl(record.fields['🔗Listing URL'], templateSlug),
-    thumbnailImageUrl: webflowMetadata.thumbnailImageUrl ?? document.thumbnailImageUrl,
-    thumbnailImageSecondaryUrl: webflowMetadata.thumbnailImageSecondaryUrl ?? document.thumbnailImageSecondaryUrl,
-  };
-}
-
-async function normalizeTemplateRecords(
-  env: Env,
-  records: Array<AirtableRecord<AirtableAssetFields>>,
-  lookups: LookupMaps,
-  syncedAt: string,
-): Promise<TemplateDocumentInput[]> {
-  const normalized: TemplateDocumentInput[] = [];
-
-  for (const recordGroup of chunk(records, 6)) {
-    const documents = await Promise.all(
-      recordGroup.map((record) => normalizeTemplateRecord(env, record, lookups, syncedAt)),
-    );
-    normalized.push(...documents.filter((value): value is TemplateDocumentInput => Boolean(value)));
-  }
-
-  return normalized;
-}
-
-function normalizeChildCategoryTaxonomy(lookups: LookupMaps): ChildCategoryTaxonomyInput[] {
-  const rows: ChildCategoryTaxonomyInput[] = [];
-  const seen = new Set<string>();
-  const parentGroups = new Map<string, { name: string; slug: string }>();
-
-  for (const entry of lookups.childCategories.values()) {
-    if (!entry.isCategoryGroup) continue;
-
-    const slug = canonicalizeCategoryGroupSlug(entry.displayName);
-    const group = { name: entry.displayName, slug };
-    for (const alias of [entry.category, entry.displayName, entry.name, entry.parentCategoryName]) {
-      if (alias) parentGroups.set(alias, group);
-    }
-  }
-
-  for (const entry of lookups.childCategories.values()) {
-    if (entry.isCategoryGroup) continue;
-
-    const groupNames = entry.categoryGroups.length > 0 ? entry.categoryGroups : [entry.parentCategoryName].filter(Boolean);
-
-    for (const groupName of groupNames) {
-      const parentGroup = parentGroups.get(groupName);
-      const normalizedGroupSlug = parentGroup?.slug ?? canonicalizeCategoryGroupSlug(groupName);
-      if (!normalizedGroupSlug) continue;
-
-      const key = `${entry.slug}:${normalizedGroupSlug}`;
-      if (seen.has(key)) continue;
-      seen.add(key);
-
-      rows.push({
-        childCategorySlug: entry.slug,
-        childCategoryName: entry.displayName,
-        categoryGroupSlug: normalizedGroupSlug,
-        categoryGroupName: parentGroup?.name ?? groupName,
-      });
-    }
-  }
-
-  return rows;
-}
-
-function buildParentGroupLookup(
-  lookups: LookupMaps,
-): Map<string, { name: string; slug: string; descriptionShort: string; descriptionLandingPage: string; relatedKeywords: string[] }> {
-  const parentGroups = new Map<
-    string,
-    { name: string; slug: string; descriptionShort: string; descriptionLandingPage: string; relatedKeywords: string[] }
-  >();
-
-  for (const entry of lookups.categoryGroups.values()) {
-    const group = {
-      name: entry.displayName,
-      slug: entry.slug,
-      descriptionShort: entry.descriptionShort,
-      descriptionLandingPage: entry.descriptionLandingPage,
-      relatedKeywords: entry.relatedKeywords,
-    };
-    for (const alias of [entry.id, entry.name, entry.displayName, entry.slug, entry.cmsSlug ?? '']) {
-      if (alias) parentGroups.set(alias, group);
-    }
-  }
-
-  for (const entry of lookups.childCategories.values()) {
-    if (!entry.isCategoryGroup) continue;
-
-    const existing = parentGroups.get(entry.displayName) ?? parentGroups.get(canonicalizeCategoryGroupSlug(entry.displayName));
-    const group = existing ?? {
-      name: entry.displayName,
-      slug: canonicalizeCategoryGroupSlug(entry.displayName),
-      descriptionShort: entry.descriptionShort,
-      descriptionLandingPage: '',
-      relatedKeywords: entry.relatedKeywords,
-    };
-
-    for (const alias of [entry.id, entry.category, entry.displayName, entry.name, entry.parentCategoryName, group.slug]) {
-      if (alias) parentGroups.set(alias, group);
-    }
-  }
-
-  return parentGroups;
-}
-
-function normalizeTaxonomyMetadata(lookups: LookupMaps, syncedAt: string): TaxonomyMetadataInput[] {
-  const rows: TaxonomyMetadataInput[] = [];
-  const seen = new Set<string>();
-  const parentGroups = buildParentGroupLookup(lookups);
-
-  for (const group of new Set(parentGroups.values())) {
-    if (!group.slug) continue;
-    const key = `category_group:${group.slug}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
-    rows.push({
-      taxonomyType: 'category_group',
-      slug: group.slug,
-      name: group.name,
-      descriptionShort: group.descriptionShort,
-      descriptionLandingPage: group.descriptionLandingPage,
-      relatedKeywords: group.relatedKeywords,
-      parentCategoryGroupSlug: null,
-      parentCategoryGroupName: null,
-      syncedAt,
-    });
-  }
-
-  for (const entry of lookups.childCategories.values()) {
-    if (entry.isCategoryGroup) continue;
-
-    const parentGroup = parentGroups.get(entry.parentCategoryName);
-    const parentCategoryGroupSlug = parentGroup?.slug ?? (entry.parentCategoryName ? canonicalizeCategoryGroupSlug(entry.parentCategoryName) : null);
-    const parentCategoryGroupName = parentGroup?.name ?? entry.parentCategoryName ?? null;
-    const key = `child_category:${entry.slug}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
-
-    rows.push({
-      taxonomyType: 'child_category',
-      slug: entry.slug,
-      name: entry.displayName,
-      descriptionShort: entry.descriptionShort,
-      descriptionLandingPage: '',
-      relatedKeywords: entry.relatedKeywords,
-      parentCategoryGroupSlug,
-      parentCategoryGroupName,
-      syncedAt,
-    });
-  }
-
-  return rows;
-}
-
 async function runFullSync(env: Env): Promise<SyncSummary> {
   const startedAt = nowIso();
-  const [lookups, assets] = await Promise.all([loadLookupMaps(env), fetchPublishedTemplateAssets(env)]);
-  const documents = await normalizeTemplateRecords(env, assets, lookups, startedAt);
-  const filtered = filterDuplicateTemplateSlugs(documents);
+  const [lookups, assets, webflowImageIndex, webflowDesigners] = await Promise.all([
+    loadLookupMaps(env),
+    fetchPublishedTemplateAssets(env),
+    loadWebflowTemplateImageIndex(env),
+    hasWebflowCmsToken(env) ? fetchWebflowDesignerAvatars(env) : Promise.resolve([]),
+  ]);
+  const webflowDesignerIndex = buildWebflowDesignerAvatarIndex(webflowDesigners);
+  const documents = assets
+    .map((record) => normalizeTemplateRecord(record, lookups, startedAt, webflowImageIndex, webflowDesignerIndex))
+    .filter((value): value is NonNullable<typeof value> => Boolean(value));
 
   await clearIndex(env.DB);
-  await upsertChildCategoryTaxonomy(env.DB, normalizeChildCategoryTaxonomy(lookups));
-  await upsertTaxonomyMetadata(env.DB, normalizeTaxonomyMetadata(lookups, startedAt));
-  await upsertTemplateDocuments(env.DB, filtered.documents);
+  await upsertTemplateDocuments(env.DB, documents);
+  const webflowCreatorRecords = await updateCreatorAvatarsFromWebflow(env.DB, webflowDesigners, startedAt);
+  const [backfilledRecords, imageRefreshedRecords] = await Promise.all([
+    backfillCreatorFieldsByName(env.DB, startedAt),
+    refreshIndexedWebflowImages(env.DB, webflowImageIndex, startedAt),
+  ]);
 
   const summary: SyncSummary = {
     mode: 'full',
     started_at: startedAt,
     finished_at: nowIso(),
     fetched_records: assets.length,
-    indexed_records: filtered.documents.length,
+    indexed_records: documents.length,
     removed_records: 0,
+    backfilled_records: backfilledRecords + webflowCreatorRecords,
+    image_refreshed_records: imageRefreshedRecords,
     cursor: startedAt,
   };
 
@@ -495,303 +513,409 @@ async function runFullSync(env: Env): Promise<SyncSummary> {
   return summary;
 }
 
+// Cloudflare Workers cap at 1,000 subrequests per invocation. Each record needs
+// ~10 D1 statements (slug-eviction DELETEs + UPSERT + style/category INSERTs) and
+// lookup tables consume ~65 Airtable subrequests. To stay comfortably under the
+// limit we target ≤ 600 records per run. Bulk Airtable updates can modify thousands
+// of records in a short window, so we cap each invocation to 15 minutes of LMT
+// range — even at peak density (~4,918 records over 117 min) that yields ~630 records
+// per window, for ~800 total subrequests with safe headroom.
+const MAX_SYNC_WINDOW_MS = 15 * 60 * 1000;
+const MAX_EMPTY_SYNC_WINDOWS_PER_RUN = 96;
+const MAX_INCREMENTAL_RECORDS_PER_RUN = 600;
+
+function resolveSyncWindow(cursor: string, now: Date): { end: Date; until: string | undefined; isCaughtUp: boolean } {
+  const end = new Date(Math.min(new Date(cursor).getTime() + MAX_SYNC_WINDOW_MS, now.getTime()));
+  const isCaughtUp = end.getTime() >= now.getTime();
+  return {
+    end,
+    until: isCaughtUp ? undefined : end.toISOString(),
+    isCaughtUp,
+  };
+}
+
 async function runIncrementalSync(env: Env): Promise<SyncSummary> {
   const currentCursor = await getSyncCursor(env.DB);
   if (!currentCursor) return runFullSync(env);
 
   const startedAt = nowIso();
-  const [lookups, assets] = await Promise.all([loadLookupMaps(env), fetchModifiedAssetsSince(env, currentCursor)]);
+  const now = new Date();
+  let scanCursor = currentCursor;
+  let windowEnd = new Date(currentCursor);
+  let isCaughtUp = false;
+  const assets: Array<AirtableRecord<AirtableAssetFields>> = [];
+  let skippedEmptyWindows = 0;
+  let scannedWindows = 0;
+
+  while (scannedWindows < MAX_EMPTY_SYNC_WINDOWS_PER_RUN) {
+    const syncWindow = resolveSyncWindow(scanCursor, now);
+    const windowAssets = await fetchModifiedAssetsSince(env, scanCursor, syncWindow.until);
+    scannedWindows += 1;
+    windowEnd = syncWindow.end;
+    isCaughtUp = syncWindow.isCaughtUp;
+
+    if (windowAssets.length === 0 && !syncWindow.isCaughtUp) {
+      skippedEmptyWindows += 1;
+    } else {
+      assets.push(...windowAssets);
+    }
+
+    if (isCaughtUp || assets.length >= MAX_INCREMENTAL_RECORDS_PER_RUN) {
+      break;
+    }
+
+    scanCursor = syncWindow.end.toISOString();
+  }
+
   const toUpsert: TemplateDocumentInput[] = [];
   const toDelete: string[] = [];
+  let webflowImageIndex: Awaited<ReturnType<typeof loadWebflowTemplateImageIndex>> = null;
 
-  for (const record of assets) {
-    const normalized = await normalizeTemplateRecord(env, record, lookups, startedAt);
-    if (normalized) {
-      toUpsert.push(normalized);
-    } else {
-      toDelete.push(record.id);
+  if (assets.length > 0) {
+    const [lookups, loadedWebflowImageIndex, webflowDesigners] = await Promise.all([
+      loadLookupMaps(env),
+      loadWebflowTemplateImageIndex(env),
+      hasWebflowCmsToken(env) ? fetchWebflowDesignerAvatars(env) : Promise.resolve([]),
+    ]);
+    webflowImageIndex = loadedWebflowImageIndex;
+    const webflowDesignerIndex = buildWebflowDesignerAvatarIndex(webflowDesigners);
+
+    for (const record of assets) {
+      const normalized = normalizeTemplateRecord(record, lookups, startedAt, webflowImageIndex, webflowDesignerIndex);
+      if (normalized) {
+        toUpsert.push(normalized);
+      } else {
+        toDelete.push(record.id);
+      }
     }
   }
 
-  const filtered = await filterConflictingTemplateSlugs(env.DB, toUpsert);
-
   if (toDelete.length > 0) await deleteTemplateDocuments(env.DB, toDelete);
-  await upsertChildCategoryTaxonomy(env.DB, normalizeChildCategoryTaxonomy(lookups));
-  await upsertTaxonomyMetadata(env.DB, normalizeTaxonomyMetadata(lookups, startedAt));
-  if (filtered.documents.length > 0) await upsertTemplateDocuments(env.DB, filtered.documents);
+  if (toUpsert.length > 0) await upsertTemplateDocuments(env.DB, toUpsert);
+  if (!webflowImageIndex) {
+    webflowImageIndex = await loadWebflowTemplateImageIndex(env);
+  }
+  const imageRefreshedRecords = await refreshIndexedWebflowImages(
+    env.DB,
+    webflowImageIndex,
+    startedAt,
+    toUpsert.map((document) => document.id),
+  );
 
+  // Keep the frequent 5-minute incremental path limited to changed template rows.
+  // Creator metadata is repaired by Webflow designer webhooks and image refresh,
+  // while normalized changed templates already receive lookup creator fields.
+  const backfilledRecords = 0;
+
+  // When catching up, advance cursor to end of the processed window so the next
+  // invocation picks up the next 24-hour slice. When caught up, record startedAt.
+  const newCursor = isCaughtUp ? startedAt : windowEnd.toISOString();
   const summary: SyncSummary = {
     mode: 'incremental',
     started_at: startedAt,
     finished_at: nowIso(),
     fetched_records: assets.length,
-    indexed_records: filtered.documents.length,
+    indexed_records: toUpsert.length,
     removed_records: toDelete.length,
-    cursor: startedAt,
+    backfilled_records: backfilledRecords,
+    image_refreshed_records: imageRefreshedRecords,
+    cursor: newCursor,
+    skipped_empty_windows: skippedEmptyWindows,
   };
 
-  await setSyncCursor(env.DB, startedAt);
+  await setSyncCursor(env.DB, newCursor);
   await recordSyncSummary(env.DB, summary, 'last_incremental_sync');
   return summary;
 }
 
 export async function syncTemplates(env: Env, mode: 'full' | 'incremental'): Promise<SyncSummary> {
-  return mode === 'full' ? runFullSync(env) : runIncrementalSync(env);
+  return runWithSyncJobLock(env, mode, () => (mode === 'full' ? runFullSync(env) : runIncrementalSync(env)));
 }
 
-export interface TemplateSlugSyncSummary {
-  mode: 'template-slug-sync';
-  template_slug: string;
-  started_at: string;
-  finished_at: string;
-  fetched_records: number;
-  indexed_records: number;
-  removed_records: number;
-  skipped_slug_conflicts: number;
-  status: 'indexed' | 'removed' | 'not_found' | 'skipped_conflict';
+export async function syncTemplateRecordsByIds(env: Env, recordIds: string[]): Promise<SyncSummary> {
+  return runWithSyncJobLock(env, 'records', async () => {
+    const startedAt = nowIso();
+    const uniqueRecordIds = uniqueStrings(recordIds.map((id) => id.trim()).filter(Boolean));
+    const [lookups, assets, webflowImageIndex, webflowDesigners] = await Promise.all([
+      loadLookupMaps(env),
+      fetchAssetRecordsByIds(env, uniqueRecordIds),
+      loadWebflowTemplateImageIndex(env),
+      hasWebflowCmsToken(env) ? fetchWebflowDesignerAvatars(env) : Promise.resolve([]),
+    ]);
+    const webflowDesignerIndex = buildWebflowDesignerAvatarIndex(webflowDesigners);
+    const documents: TemplateDocumentInput[] = [];
+    const toDelete: string[] = [];
+
+    for (const record of assets) {
+      const normalized = normalizeTemplateRecord(record, lookups, startedAt, webflowImageIndex, webflowDesignerIndex);
+      if (normalized) {
+        documents.push(normalized);
+      } else {
+        toDelete.push(record.id);
+      }
+    }
+
+    if (toDelete.length > 0) await deleteTemplateDocuments(env.DB, toDelete);
+    if (documents.length > 0) await upsertTemplateDocuments(env.DB, documents);
+    const imageRefreshedRecords = documents.length
+      ? await refreshIndexedWebflowImages(
+          env.DB,
+          webflowImageIndex,
+          startedAt,
+          documents.map((document) => document.id),
+          { preferPublishedTemplatePage: true },
+        )
+      : 0;
+
+    const summary: SyncSummary = {
+      mode: 'records',
+      started_at: startedAt,
+      finished_at: nowIso(),
+      fetched_records: assets.length,
+      indexed_records: documents.length,
+      removed_records: toDelete.length,
+      backfilled_records: 0,
+      image_refreshed_records: imageRefreshedRecords,
+      cursor: startedAt,
+    };
+
+    await recordSyncSummary(env.DB, summary, 'last_record_sync');
+    return summary;
+  });
 }
 
-export async function syncTemplateBySlug(env: Env, templateSlug: string): Promise<TemplateSlugSyncSummary> {
-  const normalizedSlug = templateSlug.trim();
-  if (!normalizedSlug) {
-    throw new Error('template slug is required.');
-  }
-
+// Image URL refresh: prefers stable Webflow CMS/CDN URLs (never expire) when a
+// Webflow API token is configured. Falls back to Airtable signed URLs otherwise.
+// Airtable remains the fallback for designers missing from Webflow CMS.
+async function runImageUrlRefresh(env: Env): Promise<ImageRefreshSummary> {
   const startedAt = nowIso();
-  const [lookups, assets] = await Promise.all([loadLookupMaps(env), fetchTemplateAssetBySlug(env, normalizedSlug)]);
-  const normalized = await normalizeTemplateRecords(env, assets, lookups, startedAt);
 
-  let status: TemplateSlugSyncSummary['status'] = 'not_found';
-  let skippedSlugConflicts = 0;
-  if (normalized.length > 0) {
-    const filtered = await filterConflictingTemplateSlugs(env.DB, normalized);
-    skippedSlugConflicts = filtered.skippedSlugConflicts;
-    await upsertChildCategoryTaxonomy(env.DB, normalizeChildCategoryTaxonomy(lookups));
-    await upsertTaxonomyMetadata(env.DB, normalizeTaxonomyMetadata(lookups, startedAt));
-    if (filtered.documents.length > 0) await upsertTemplateDocuments(env.DB, filtered.documents);
-    status = filtered.documents.length > 0 ? 'indexed' : 'skipped_conflict';
-  } else if (assets.length > 0) {
-    await deleteTemplateDocuments(env.DB, assets.map((record) => record.id));
-    status = 'removed';
+  if (hasWebflowCmsToken(env)) {
+    // Webflow path: fetch stable CDN URLs for templates and designer avatars.
+    const [templateImages, designerAvatars, lookups] = await Promise.all([
+      fetchWebflowTemplateImages(env),
+      fetchWebflowDesignerAvatars(env),
+      loadLookupMaps(env),
+    ]);
+    const airtableFallbackCreators = airtableCreatorFallbackMap(lookups.creators, designerAvatars);
+
+    const [refreshedImages, refreshedAvatars, backfilledAvatars] = await Promise.all([
+      updateTemplateImagesFromWebflow(env.DB, templateImages, startedAt),
+      updateCreatorAvatarsFromWebflow(env.DB, designerAvatars, startedAt),
+      backfillCreatorAvatars(env.DB, airtableFallbackCreators, startedAt, { overwriteExisting: true }),
+    ]);
+    const nameBackfilledAvatars = await backfillCreatorFieldsByName(env.DB, startedAt);
+
+    const summary: ImageRefreshSummary = {
+      mode: 'image_refresh',
+      started_at: startedAt,
+      finished_at: nowIso(),
+      fetched_records: templateImages.length + designerAvatars.length,
+      refreshed_records: refreshedImages + refreshedAvatars,
+      backfilled_records: backfilledAvatars + nameBackfilledAvatars,
+    };
+
+    await recordSyncSummary(env.DB, summary, 'last_image_refresh');
+    return summary;
   }
 
-  const summary: TemplateSlugSyncSummary = {
-    mode: 'template-slug-sync',
-    template_slug: normalizedSlug,
+  // Airtable fallback: re-fetches only image attachment fields (~110 subrequests).
+  const [lookups, assets] = await Promise.all([
+    loadLookupMaps(env),
+    fetchPublishedTemplateImageFields(env),
+  ]);
+
+  const records = assets.map((record) => ({
+    id: record.id,
+    thumbnailImageUrl: attachmentUrl(record.fields['🖼️Thumbnail Image']),
+    thumbnailImageSecondaryUrl: attachmentUrl(record.fields['🖼️Thumbnail Image (Secondary)']),
+    carouselImageUrls: attachmentUrls(record.fields['🖼️Carousel Images']),
+  }));
+
+  const [refreshedImages, backfilledAvatars] = await Promise.all([
+    refreshTemplateImageUrls(env.DB, records, startedAt),
+    backfillCreatorAvatars(env.DB, lookups.creators, startedAt, { overwriteExisting: true }),
+  ]);
+  const nameBackfilledAvatars = await backfillCreatorFieldsByName(env.DB, startedAt);
+
+  const summary: ImageRefreshSummary = {
+    mode: 'image_refresh',
     started_at: startedAt,
     finished_at: nowIso(),
     fetched_records: assets.length,
-    indexed_records: normalized.length - skippedSlugConflicts,
-    removed_records: status === 'removed' ? assets.length : 0,
-    skipped_slug_conflicts: skippedSlugConflicts,
-    status,
+    refreshed_records: refreshedImages,
+    backfilled_records: backfilledAvatars + nameBackfilledAvatars,
   };
 
-  await recordSyncSummary(env.DB, summary, `template_slug_sync:${normalizedSlug}`);
+  await recordSyncSummary(env.DB, summary, 'last_image_refresh');
   return summary;
 }
 
-export interface CmsCategoryBackfillSummary {
-  mode: 'cms-category-backfill';
-  started_at: string;
-  finished_at: string;
-  fetched_records: number;
-  indexed_records: number;
-  skipped_slug_conflicts: number;
-  offset: string | null;
-  next_offset: string | null;
-  has_next_page: boolean;
+export async function refreshImages(env: Env): Promise<ImageRefreshSummary> {
+  return runWithSyncJobLock(env, 'image_refresh', () => runImageUrlRefresh(env));
 }
 
-export async function backfillCmsCategoryPage(
-  env: Env,
-  offset: string | null,
-): Promise<CmsCategoryBackfillSummary> {
+async function runCreatorProfileRefresh(env: Env): Promise<ImageRefreshSummary> {
   const startedAt = nowIso();
-  const [lookups, page] = await Promise.all([loadLookupMaps(env), fetchPublishedTemplateAssetsPage(env, offset ?? undefined)]);
-  const documents = await normalizeTemplateRecords(env, page.records, lookups, startedAt);
-  const filtered = await filterConflictingTemplateSlugs(env.DB, documents);
-
-  await upsertChildCategoryTaxonomy(env.DB, normalizeChildCategoryTaxonomy(lookups));
-  await upsertTaxonomyMetadata(env.DB, normalizeTaxonomyMetadata(lookups, startedAt));
-  if (filtered.documents.length > 0) await upsertTemplateDocuments(env.DB, filtered.documents);
-
-  const summary: CmsCategoryBackfillSummary = {
-    mode: 'cms-category-backfill',
-    started_at: startedAt,
-    finished_at: nowIso(),
-    fetched_records: page.records.length,
-    indexed_records: filtered.documents.length,
-    skipped_slug_conflicts: filtered.skippedSlugConflicts,
-    offset,
-    next_offset: page.offset ?? null,
-    has_next_page: Boolean(page.offset),
-  };
-
-  await recordSyncSummary(env.DB, summary, 'cms_category_backfill_latest');
-  return summary;
-}
-
-export interface WebflowImageRepairSummary {
-  mode: 'webflow-image-repair';
-  started_at: string;
-  finished_at: string;
-  fetched_records: number;
-  updated_records: number;
-  offset: number;
-  next_offset: number | null;
-  total_records: number;
-  has_next_page: boolean;
-}
-
-export async function repairWebflowImagesPage(
-  env: Env,
-  offset: number,
-  limit = 100,
-): Promise<WebflowImageRepairSummary> {
-  const startedAt = nowIso();
-  const page = await fetchWebflowTemplateImagesPage(env, offset, limit);
-  const updatedRecords = await updateTemplateImagesBySlug(env.DB, page.items, startedAt);
-
-  const summary: WebflowImageRepairSummary = {
-    mode: 'webflow-image-repair',
-    started_at: startedAt,
-    finished_at: nowIso(),
-    fetched_records: page.items.length,
-    updated_records: updatedRecords,
-    offset: page.offset,
-    next_offset: page.nextOffset,
-    total_records: page.total,
-    has_next_page: page.hasNextPage,
-  };
-
-  await recordSyncSummary(env.DB, summary, 'webflow_image_repair_latest');
-  return summary;
-}
-
-interface ParentTaxonomyRepairRow {
-  id: string;
-  category_groups_json: string;
-  category_group_slugs_json: string;
-  child_categories_json: string;
-  child_category_slugs_json: string;
-}
-
-interface ParentTaxonomyGroup {
-  name: string;
-  slug: string;
-}
-
-export interface ParentTaxonomyRepairSummary {
-  mode: 'parent-taxonomy-repair';
-  started_at: string;
-  finished_at: string;
-  parent_groups: number;
-  updated_documents: number;
-  removed_child_links: number;
-}
-
-export async function repairParentTaxonomy(env: Env): Promise<ParentTaxonomyRepairSummary> {
-  const startedAt = nowIso();
-  const lookups = await loadLookupMaps(env);
-  const groupMap = new Map<string, ParentTaxonomyGroup>();
-
-  for (const entry of lookups.childCategories.values()) {
-    if (!entry.isCategoryGroup) continue;
-    const slug = canonicalizeCategoryGroupSlug(entry.displayName);
-    if (!slug) continue;
-    groupMap.set(slug, { name: entry.displayName, slug });
+  if (!hasWebflowCmsToken(env)) {
+    throw new Error('A Webflow CMS read token is not configured.');
   }
 
-  let updatedDocuments = 0;
-  let removedChildLinks = 0;
-  const statements: D1PreparedStatement[] = [];
+  const designerAvatars = await fetchWebflowDesignerAvatars(env);
+  const refreshedAvatars = await updateCreatorAvatarsFromWebflow(env.DB, designerAvatars, startedAt, {
+    matchByName: false,
+  });
 
-  for (const group of groupMap.values()) {
-    const result = await env.DB
-      .prepare(
-        `
-        SELECT
-          id,
-          category_groups_json,
-          category_group_slugs_json,
-          child_categories_json,
-          child_category_slugs_json
-        FROM template_documents d
-        WHERE EXISTS (
-          SELECT 1
-          FROM template_child_categories tcc
-          WHERE tcc.template_document_id = d.id
-            AND tcc.child_category_slug = ?
-        )
-      `,
-      )
-      .bind(group.slug)
-      .all<ParentTaxonomyRepairRow>();
+  const summary: ImageRefreshSummary = {
+    mode: 'creator_refresh',
+    started_at: startedAt,
+    finished_at: nowIso(),
+    fetched_records: designerAvatars.length,
+    refreshed_records: refreshedAvatars,
+    backfilled_records: 0,
+  };
 
-    for (const row of result.results ?? []) {
-      const categoryGroups = parseJsonArray(row.category_groups_json);
-      const categoryGroupSlugs = parseJsonArray(row.category_group_slugs_json);
-      const childCategories = parseJsonArray(row.child_categories_json);
-      const childCategorySlugs = parseJsonArray(row.child_category_slugs_json);
-      const nextCategoryGroups = uniqueStrings([...categoryGroups, group.name]);
-      const nextCategoryGroupSlugs = uniqueStrings([...categoryGroupSlugs, group.slug]);
-      const nextChildCategories: string[] = [];
-      const nextChildCategorySlugs: string[] = [];
+  await recordSyncSummary(env.DB, summary, 'last_creator_refresh');
+  return summary;
+}
 
-      childCategorySlugs.forEach((slug, index) => {
-        if (slug === group.slug) return;
-        nextChildCategorySlugs.push(slug);
-        nextChildCategories.push(childCategories[index] ?? slug);
-      });
+async function runForcedCreatorProfileRefresh(env: Env, creatorNames: string[] = []): Promise<ImageRefreshSummary> {
+  const startedAt = nowIso();
+  if (!hasWebflowCmsToken(env)) {
+    throw new Error('A Webflow CMS read token is not configured.');
+  }
 
-      statements.push(
-        env.DB
-          .prepare(
-            `
-            UPDATE template_documents
-            SET
-              category_groups_json = ?,
-              category_group_slugs_json = ?,
-              child_categories_json = ?,
-              child_category_slugs_json = ?,
-              category_groups_text = ?,
-              child_categories_text = ?
-            WHERE id = ?
-          `,
-          )
-          .bind(
-            JSON.stringify(nextCategoryGroups),
-            JSON.stringify(nextCategoryGroupSlugs),
-            JSON.stringify(nextChildCategories),
-            JSON.stringify(nextChildCategorySlugs),
-            nextCategoryGroups.join(' '),
-            nextChildCategories.join(' '),
-            row.id,
-          ),
-        env.DB
-          .prepare('DELETE FROM template_child_categories WHERE template_document_id = ? AND child_category_slug = ?')
-          .bind(row.id, group.slug),
+  const requestedNames = new Set(creatorNames.map((name) => normalizeCreatorName(name)).filter(Boolean));
+  const designerAvatars = (await fetchWebflowDesignerAvatars(env)).filter(
+    (record) => requestedNames.size === 0 || requestedNames.has(normalizeCreatorName(record.name)),
+  );
+  const refreshedAvatars = await updateCreatorAvatarsFromWebflow(env.DB, designerAvatars, startedAt, {
+    forceMatchByName: true,
+  });
+
+  const summary: ImageRefreshSummary = {
+    mode: 'creator_refresh',
+    started_at: startedAt,
+    finished_at: nowIso(),
+    fetched_records: designerAvatars.length,
+    refreshed_records: refreshedAvatars,
+    backfilled_records: 0,
+  };
+
+  await recordSyncSummary(env.DB, summary, 'last_creator_refresh');
+  return summary;
+}
+
+export async function refreshCreatorProfiles(env: Env): Promise<ImageRefreshSummary> {
+  return runWithSyncJobLock(env, 'creator_refresh', () => runCreatorProfileRefresh(env));
+}
+
+export async function forceRefreshCreatorProfiles(env: Env, creatorNames: string[] = []): Promise<ImageRefreshSummary> {
+  return runForcedCreatorProfileRefresh(env, creatorNames);
+}
+
+export async function backfillTemplateImages(
+  env: Env,
+  options: { limit?: number; templateSlugs?: string[] } = {},
+): Promise<TemplateImageBackfillSummary> {
+  return runWithSyncJobLock(env, 'image_backfill', async () => {
+    const startedAt = nowIso();
+    const requestedLimit = clamp(Math.floor(options.limit ?? IMAGE_BACKFILL_DEFAULT_LIMIT), 1, IMAGE_BACKFILL_MAX_LIMIT);
+    const requestedTemplateSlugs = uniqueStrings((options.templateSlugs ?? []).map((slug) => slug.trim()).filter(Boolean));
+    const rows = await listTemplateImageBackfillRows(env.DB, requestedLimit, requestedTemplateSlugs);
+    const webflowImageIndex = rows.length > 0 ? await loadWebflowTemplateImageIndex(env) : null;
+    const updatedRecords = await resolveAndUpdateTemplateImages(
+      env.DB,
+      rows,
+      webflowImageIndex,
+      startedAt,
+      IMAGE_BACKFILL_FETCH_BATCH_SIZE,
+    );
+    const imageSourceStats = await templateImageSourceStats(env.DB);
+
+    const summary: TemplateImageBackfillSummary = {
+      mode: 'image_backfill',
+      started_at: startedAt,
+      finished_at: nowIso(),
+      requested_limit: requestedLimit,
+      requested_template_slugs: requestedTemplateSlugs.length > 0 ? requestedTemplateSlugs : undefined,
+      scanned_records: rows.length,
+      updated_records: updatedRecords,
+      remaining_temp_airtable_rows: imageSourceStats.rows_with_temp_airtable_image,
+      image_source_stats: imageSourceStats,
+    };
+
+    await recordSyncSummary(env.DB, summary, 'last_image_backfill');
+    return summary;
+  });
+}
+
+export async function pruneMissingTemplateImages(
+  env: Env,
+  options: { limit?: number; templateSlugs?: string[] } = {},
+): Promise<TemplateImagePruneSummary> {
+  return runWithSyncJobLock(env, 'image_prune', async () => {
+    const startedAt = nowIso();
+    const requestedLimit = clamp(Math.floor(options.limit ?? IMAGE_BACKFILL_DEFAULT_LIMIT), 1, IMAGE_BACKFILL_MAX_LIMIT);
+    const requestedTemplateSlugs = uniqueStrings((options.templateSlugs ?? []).map((slug) => slug.trim()).filter(Boolean));
+    const rows = await listTemplateImageBackfillRows(env.DB, requestedLimit, requestedTemplateSlugs);
+    const webflowImageIndex = rows.length > 0 ? await loadWebflowTemplateImageIndex(env) : null;
+    const idsToDelete: string[] = [];
+    const skippedRecords: TemplateImagePruneSummary['skipped_records'] = [];
+
+    for (const rowBatch of chunk(rows, IMAGE_BACKFILL_FETCH_BATCH_SIZE)) {
+      const checkedRows = await Promise.all(
+        rowBatch.map(async (row) => {
+          const webflowImages = resolveWebflowTemplateImages(webflowImageIndex, {
+            templateSlug: row.templateSlug,
+            name: row.name,
+          });
+          if (webflowImages?.thumbnailImageUrl) {
+            return { row, status: null, reason: 'webflow_image_found' as const };
+          }
+
+          const pageStatus = await fetchPublishedTemplateStatus({
+            templateSlug: row.templateSlug,
+            listingUrl: row.listingUrl,
+          });
+          return {
+            row,
+            status: pageStatus.status,
+            reason: pageStatus.status === 404 ? null : ('listing_not_404' as const),
+          };
+        }),
       );
 
-      updatedDocuments += 1;
-      removedChildLinks += 1;
+      for (const checked of checkedRows) {
+        if (checked.reason === null) {
+          idsToDelete.push(checked.row.id);
+        } else {
+          skippedRecords.push({
+            id: checked.row.id,
+            name: checked.row.name,
+            template_slug: checked.row.templateSlug,
+            status: checked.status,
+            reason: checked.reason,
+          });
+        }
+      }
     }
-  }
 
-  for (const group of chunk(statements, 50)) {
-    await env.DB.batch(group);
-  }
+    await deleteTemplateDocuments(env.DB, idsToDelete);
+    const imageSourceStats = await templateImageSourceStats(env.DB);
+    const summary: TemplateImagePruneSummary = {
+      mode: 'image_prune',
+      started_at: startedAt,
+      finished_at: nowIso(),
+      requested_limit: requestedLimit,
+      requested_template_slugs: requestedTemplateSlugs.length > 0 ? requestedTemplateSlugs : undefined,
+      scanned_records: rows.length,
+      pruned_records: idsToDelete.length,
+      skipped_records: skippedRecords,
+      image_source_stats: imageSourceStats,
+    };
 
-  const summary: ParentTaxonomyRepairSummary = {
-    mode: 'parent-taxonomy-repair',
-    started_at: startedAt,
-    finished_at: nowIso(),
-    parent_groups: groupMap.size,
-    updated_documents: updatedDocuments,
-    removed_child_links: removedChildLinks,
-  };
-
-  await recordSyncSummary(env.DB, summary, 'parent_taxonomy_repair_summary');
-  return summary;
+    await recordSyncSummary(env.DB, summary, 'last_image_prune');
+    return summary;
+  });
 }

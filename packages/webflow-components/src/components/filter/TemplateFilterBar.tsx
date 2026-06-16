@@ -2,23 +2,15 @@ import React, {
   CSSProperties,
   useCallback,
   useEffect,
-  useLayoutEffect,
   useMemo,
   useRef,
   useState,
 } from 'react';
-import {
-  normalizeTemplateSort,
-  parseTemplateRoute,
-  SUPPORTED_TEMPLATE_CATEGORY_ROUTE_SLUGS,
-  TemplateScope,
-  TemplateSort,
-  toTemplateStyleSlug,
-} from '../marketplace/templateRoute';
-import { TEMPLATE_MARKETPLACE_COMPONENT_VERSION } from '../marketplace/templateTelemetry';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
+type TemplateSort = 'popular' | 'newest' | 'price_asc' | 'price_desc';
+type TemplateScope = 'all' | 'featured' | 'free' | 'landing_pages';
 type SortDisplay = 'auto' | 'dropdown' | 'segmented';
 
 interface StyleFacet {
@@ -54,12 +46,17 @@ interface FacetsPayload {
 interface LocalFilters {
   q: string;
   styles: string[];
+  tags: string[];
   types: string[];
   freeOnly: boolean;
   sort: TemplateSort;
 }
 
 interface FilterEventDetail extends LocalFilters {
+  categoryGroupSlug: string | null;
+  childCategorySlug: string | null;
+  creatorSlug: string | null;
+  creatorRecordId: string | null;
   href: string;
   source: 'TemplateFilterBar';
   updatedAt: number;
@@ -85,10 +82,29 @@ export interface TemplateFilterBarProps {
    */
   categorySlug?: string;
   /**
+   * Creator/designer slug for Designer preview.
+   * In production the slug is auto-detected from /templates/designers/{slug}.
+   */
+  creatorSlug?: string;
+  /**
+   * Optional exact creator Airtable/Webflow sync record ID for Designer pages.
+   */
+  creatorRecordId?: string;
+  /**
    * Subcategory slug for Designer preview.
    * In production the slug is auto-detected from /templates/subcategory/{slug}.
    */
   subcategorySlug?: string;
+  /**
+   * Style slug for Designer preview.
+   * In production the slug is auto-detected from /templates/style/{slug}.
+   */
+  styleSlug?: string;
+  /**
+   * Tag slug for Designer preview.
+   * In production the slug is auto-detected from /templates/tag/{slug}.
+   */
+  tagSlug?: string;
   /** Show the search input */
   showSearch?: boolean;
   /** Show the Styles dropdown */
@@ -101,7 +117,7 @@ export interface TemplateFilterBarProps {
   sortDisplay?: SortDisplay;
   /** Show the Free Only checkbox */
   showFreeOnly?: boolean;
-  /** Opt into category/subcategory pills above the filters. Sidebar owns category navigation by default. */
+  /** Show category-scoped subcategory pills above the filters */
   showSubcategoryPills?: boolean;
   /** Default sort when none is set in the URL */
   defaultSort?: TemplateSort;
@@ -143,7 +159,7 @@ const ARROW_ICON_URL =
 const FILTER_STYLES = `
 .tmfilter-shell {
   width: 100%;
-  max-width: var(--tmfilter-max-width, 100%);
+  max-width: 100%;
   min-width: 0;
   box-sizing: border-box;
   color: #080808;
@@ -153,7 +169,6 @@ const FILTER_STYLES = `
   position: relative;
   z-index: 20;
   overflow: visible;
-  contain: inline-size;
 }
 
 .tmfilter-shell,
@@ -181,7 +196,7 @@ const FILTER_STYLES = `
   justify-content: space-between;
   gap: 8px;
   width: 100%;
-  max-width: var(--tmfilter-max-width, 100%);
+  max-width: 100%;
   min-width: 0;
   position: relative;
   inset: auto;
@@ -200,12 +215,10 @@ const FILTER_STYLES = `
 }
 
 .tmfilter-subcategory {
-  display: block;
   width: 100%;
-  max-width: var(--tmfilter-max-width, 100%);
+  max-width: 100%;
   min-width: 0;
   overflow: hidden;
-  contain: inline-size;
 }
 
 .mp-subcategory.margin-bottom-1 {
@@ -216,7 +229,7 @@ const FILTER_STYLES = `
   display: block;
   position: relative;
   width: 100%;
-  max-width: var(--tmfilter-max-width, 100%);
+  max-width: 100%;
   min-width: 0;
   overflow: hidden;
   box-sizing: border-box;
@@ -227,7 +240,7 @@ const FILTER_STYLES = `
   align-items: center;
   flex-wrap: nowrap;
   width: 100%;
-  max-width: 100%;
+  max-width: 90vw;
   min-width: 0;
   overflow-x: auto;
   overflow-y: hidden;
@@ -300,25 +313,25 @@ const FILTER_STYLES = `
 @media (max-width: 991px) {
   .tmfilter-subcategory,
   .tmfilter-subcategory-scroll {
-    max-width: 100%;
+    max-width: none;
   }
 }
 
 @media screen and (min-width: 1280px) {
   .tmfilter-subcategory-scroll {
-    max-width: 100%;
+    max-width: 55vw;
   }
 }
 
 @media screen and (min-width: 1440px) {
   .tmfilter-subcategory-scroll {
-    max-width: 100%;
+    max-width: 50vw;
   }
 }
 
 @media screen and (min-width: 1920px) {
   .tmfilter-subcategory-scroll {
-    max-width: 100%;
+    max-width: 46vw;
   }
 }
 
@@ -679,32 +692,73 @@ const FILTER_STYLES = `
 
 // ─── URL helpers ──────────────────────────────────────────────────────────────
 
-function readUrlFilters(defaultSort: TemplateSort = 'popular'): LocalFilters {
-  const route = parseTemplateRoute({ defaultSort });
-  return {
-    q: route.q,
-    styles: route.styles,
-    types: route.types,
-    freeOnly: route.freeOnly,
-    sort: route.sort,
-  };
+function toFilterSlug(name: string): string {
+  return name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 }
 
-function readFiltersFromEvent(event: Event, defaultSort: TemplateSort): LocalFilters {
-  const fallback = readUrlFilters(defaultSort);
-  const detail = (event as CustomEvent<Partial<LocalFilters>>).detail;
-  if (!detail || typeof detail !== 'object') return fallback;
+function toStyleSlug(name: string): string {
+  return toFilterSlug(name);
+}
 
+function titleCaseSlug(value: string): string {
+  return value
+    .replace(/-websites?$/i, '')
+    .replace(/-templates?$/i, '')
+    .split('-')
+    .filter(Boolean)
+    .map((part) => {
+      const lower = part.toLowerCase();
+      if (lower === 'and') return '&';
+      if (lower === 'ui') return 'UI';
+      if (lower === 'hr') return 'HR';
+      if (lower === 'it') return 'IT';
+      if (lower === 'ai') return 'AI';
+      if (lower === 'nft') return 'NFT';
+      if (lower === 'nfts') return 'NFTs';
+      if (lower === 'saas') return 'SaaS';
+      return lower.charAt(0).toUpperCase() + lower.slice(1);
+    })
+    .join(' ')
+    .replace(/\s+&\s+/g, ' & ');
+}
+
+function normalizeSort(value: string | null, fallback: TemplateSort = 'popular'): TemplateSort {
+  switch ((value ?? '').trim()) {
+    case 'newest':
+    case 'approval-date':
+    case 'approval-date-desc':
+      return 'newest';
+    case 'price_asc':
+    case 'price-asc':
+      return 'price_asc';
+    case 'price_desc':
+    case 'price-desc':
+      return 'price_desc';
+    case 'popular':
+    case 'popularity-score':
+    case 'popularity-score-desc':
+      return 'popular';
+    default:
+      return fallback;
+  }
+}
+
+function defaultUrlFilters(defaultSort: TemplateSort = 'popular'): LocalFilters {
+  return { q: '', styles: [], tags: [], types: [], freeOnly: false, sort: defaultSort };
+}
+
+function readUrlFilters(defaultSort: TemplateSort = 'popular'): LocalFilters {
+  if (typeof window === 'undefined') {
+    return defaultUrlFilters(defaultSort);
+  }
+  const params = new URL(window.location.href).searchParams;
   return {
-    q: typeof detail.q === 'string' ? detail.q.trim() : fallback.q,
-    styles: Array.isArray(detail.styles)
-      ? detail.styles.filter((value): value is string => typeof value === 'string').map(toTemplateStyleSlug)
-      : fallback.styles,
-    types: Array.isArray(detail.types)
-      ? detail.types.filter((value): value is string => typeof value === 'string')
-      : fallback.types,
-    freeOnly: typeof detail.freeOnly === 'boolean' ? detail.freeOnly : fallback.freeOnly,
-    sort: normalizeTemplateSort(typeof detail.sort === 'string' ? detail.sort : null, fallback.sort),
+    q: (params.get('q') ?? params.get('query') ?? params.get('search') ?? '').trim(),
+    styles: params.getAll('styles').flatMap((v) => v.split(',')).filter(Boolean).map(toStyleSlug),
+    tags: params.getAll('tags').flatMap((v) => v.split(',')).filter(Boolean).map(toFilterSlug),
+    types: params.getAll('types').flatMap((v) => v.split(',')).filter(Boolean),
+    freeOnly: ['1', 'true', 'yes', 'on'].includes((params.get('free_only') ?? '').toLowerCase()),
+    sort: normalizeSort(params.get('sort'), defaultSort),
   };
 }
 
@@ -712,23 +766,85 @@ interface RouteContext {
   scope: 'featured' | 'free' | 'landing_pages' | null;
   categoryGroupSlug: string | null;
   childCategorySlug: string | null;
+  creatorSlug: string | null;
+  creatorRecordId: string | null;
+  styleSlug: string | null;
+  tagSlug: string | null;
 }
 
 function readRouteContext(
   scopeOverride?: TemplateScope,
   categorySlugOverride?: string,
+  creatorSlugOverride?: string,
+  creatorRecordIdOverride?: string,
   subcategorySlugOverride?: string,
+  styleSlugOverride?: string,
+  tagSlugOverride?: string,
+  useWindow = true,
 ): RouteContext {
-  const route = parseTemplateRoute({
-    scopeOverride,
-    categorySlugOverride,
-    childCategorySlugOverride: subcategorySlugOverride,
-  });
+  if (!useWindow || typeof window === 'undefined') {
+    return {
+      scope: scopeOverride && scopeOverride !== 'all' ? scopeOverride : null,
+      categoryGroupSlug: categorySlugOverride || null,
+      childCategorySlug: subcategorySlugOverride || null,
+      creatorSlug: creatorSlugOverride || null,
+      creatorRecordId: creatorRecordIdOverride || null,
+      styleSlug: styleSlugOverride || null,
+      tagSlug: tagSlugOverride || null,
+    };
+  }
+
+  const url = new URL(window.location.href);
+  const pathname = url.pathname.replace(/\/+$/, '');
+  const categoryMatch = pathname.match(/\/templates\/category\/([^/?#]+)/);
+  const subcategoryMatch = pathname.match(/\/templates\/subcategory\/([^/?#]+)/);
+  const designerMatch = pathname.match(/\/templates\/designers\/([^/?#]+)/);
+  const styleMatch = pathname.match(/\/templates\/style\/([^/?#]+)/);
+  const tagMatch = pathname.match(/\/templates\/tag\/([^/?#]+)/);
+
+  let scope: RouteContext['scope'] = null;
+  if (pathname === '/templates/featured') {
+    scope = 'featured';
+  } else if (
+    pathname === '/templates/free' ||
+    pathname === '/templates/free-website-templates' ||
+    url.searchParams.get('pricing') === 'free'
+  ) {
+    scope = 'free';
+  } else if (/\/templates\/landing-page(s)?($|\/)/.test(pathname)) {
+    scope = 'landing_pages';
+  }
 
   return {
-    scope: route.scope === 'all' ? null : route.scope,
-    categoryGroupSlug: route.categoryGroupSlug,
-    childCategorySlug: route.childCategorySlug,
+    scope: scopeOverride && scopeOverride !== 'all' ? scopeOverride : scope,
+    categoryGroupSlug:
+      categorySlugOverride ||
+      (categoryMatch
+        ? categoryMatch[1]
+        : (url.searchParams.get('category') ?? url.searchParams.get('category_group_slug')) || null),
+    childCategorySlug:
+      subcategorySlugOverride ||
+      (subcategoryMatch
+        ? subcategoryMatch[1]
+        : (url.searchParams.get('subcategory') ?? url.searchParams.get('child_category_slug')) || null),
+    creatorSlug:
+      creatorSlugOverride ||
+      (designerMatch
+        ? toFilterSlug(designerMatch[1])
+        : toFilterSlug(
+            url.searchParams.get('creator_slug') ??
+              url.searchParams.get('designer_slug') ??
+              url.searchParams.get('creator') ??
+              url.searchParams.get('designer') ??
+              '',
+          ) || null),
+    creatorRecordId: creatorRecordIdOverride || url.searchParams.get('creator_record_id') || url.searchParams.get('designer_record_id') || null,
+    styleSlug:
+      styleSlugOverride ||
+      (styleMatch ? styleMatch[1] : (url.searchParams.get('style_slug') ?? url.searchParams.get('style')) || null),
+    tagSlug:
+      tagSlugOverride ||
+      (tagMatch ? tagMatch[1] : (url.searchParams.get('tag_slug') ?? url.searchParams.get('tag')) || null),
   };
 }
 
@@ -736,34 +852,33 @@ function applyRouteContextToUrl(url: URL, context: RouteContext): void {
   if (context.scope) url.searchParams.set('scope', context.scope);
   if (context.categoryGroupSlug) url.searchParams.set('category_group_slug', context.categoryGroupSlug);
   if (context.childCategorySlug) url.searchParams.set('child_category_slug', context.childCategorySlug);
+  if (context.creatorSlug) url.searchParams.set('creator_slug', context.creatorSlug);
+  if (context.creatorRecordId) url.searchParams.set('creator_record_id', context.creatorRecordId);
+  if (context.styleSlug) url.searchParams.set('style_slug', toFilterSlug(context.styleSlug));
+  if (context.tagSlug) url.searchParams.set('tag_slug', toFilterSlug(context.tagSlug));
 }
 
 function buildScopedCategoryHref(slug: string | null): string {
   if (typeof window === 'undefined') return slug ? `?category=${slug}` : '';
   const url = new URL(window.location.href);
+  if (!slug) clearCategoryPathContext(url);
   url.searchParams.delete('subcategory');
+  url.searchParams.delete('child_category_slug');
   url.searchParams.delete('page');
   if (slug) {
     url.searchParams.set('category', slug);
   } else {
     url.searchParams.delete('category');
+    url.searchParams.delete('category_group_slug');
   }
   return url.toString();
 }
 
-function toSameOriginPath(href: string): string {
-  if (!href) return '#';
-  try {
-    const url = new URL(href, typeof window === 'undefined' ? 'https://webflow.com' : window.location.origin);
-    return `${url.pathname}${url.search}${url.hash}`;
-  } catch {
-    return href;
+function clearCategoryPathContext(url: URL): void {
+  const pathname = url.pathname.replace(/\/+$/, '');
+  if (/^\/templates\/(?:category|subcategory)\/[^/?#]+/.test(pathname)) {
+    url.pathname = '/templates/all';
   }
-}
-
-function buildCategoryPageHref(slug: string | null): string {
-  if (!slug) return '/templates/all';
-  return `/templates/category/${slug}`;
 }
 
 function buildScopedSubcategoryHref(slug: string | null, context: RouteContext): string {
@@ -775,44 +890,70 @@ function buildScopedSubcategoryHref(slug: string | null, context: RouteContext):
     url.searchParams.set('subcategory', slug);
   } else {
     url.searchParams.delete('subcategory');
+    url.searchParams.delete('child_category_slug');
   }
   return url.toString();
 }
 
-function buildSubcategoryPageHref(pill: SubcategoryPill): string {
-  return toSameOriginPath(pill.url || `/templates/subcategory/${pill.slug}`);
-}
-
-function writeUrlFilters(state: LocalFilters): void {
+function writeUrlFilters(state: LocalFilters, defaultSort: TemplateSort = 'popular'): void {
   if (typeof window === 'undefined') return;
   const url = new URL(window.location.href);
   // Clear filter params only — preserve path-based scope/category
-  ['q', 'query', 'search', 'styles', 'types', 'free_only', 'sort', 'page'].forEach((k) =>
+  ['q', 'query', 'search', 'styles', 'tags', 'types', 'free_only', 'sort', 'page'].forEach((k) =>
     url.searchParams.delete(k),
   );
   if (state.q) url.searchParams.set('q', state.q);
-  if (state.sort !== 'popular') url.searchParams.set('sort', state.sort);
+  if (state.sort !== defaultSort) url.searchParams.set('sort', state.sort);
   if (state.freeOnly) url.searchParams.set('free_only', 'true');
   state.styles.forEach((v) => url.searchParams.append('styles', v));
+  state.tags.forEach((v) => url.searchParams.append('tags', v));
   state.types.forEach((v) => url.searchParams.append('types', v));
   window.history.replaceState({}, '', url.toString());
   notifyTemplateFiltersChanged(state);
 }
 
-function buildFilterEventDetail(state: LocalFilters): FilterEventDetail {
+function buildFilterEventDetail(
+  state: LocalFilters,
+  routePatch: Partial<Pick<FilterEventDetail, 'categoryGroupSlug' | 'childCategorySlug'>> = {},
+): FilterEventDetail {
+  const url = typeof window === 'undefined' ? null : new URL(window.location.href);
+  const routeContext = readRouteContext(
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    typeof window !== 'undefined',
+  );
   return {
     ...state,
+    categoryGroupSlug:
+      routePatch.categoryGroupSlug !== undefined
+        ? routePatch.categoryGroupSlug
+        : routeContext.categoryGroupSlug ?? url?.searchParams.get('category_group_slug') ?? null,
+    childCategorySlug:
+      routePatch.childCategorySlug !== undefined
+        ? routePatch.childCategorySlug
+        : routeContext.childCategorySlug ?? url?.searchParams.get('child_category_slug') ?? null,
+    creatorSlug: routeContext.creatorSlug ?? url?.searchParams.get('creator_slug') ?? null,
+    creatorRecordId: routeContext.creatorRecordId ?? url?.searchParams.get('creator_record_id') ?? null,
     styles: [...state.styles],
+    tags: [...state.tags],
     types: [...state.types],
-    href: typeof window === 'undefined' ? '' : window.location.href,
+    href: url?.toString() ?? '',
     source: 'TemplateFilterBar',
     updatedAt: Date.now(),
   };
 }
 
-function notifyTemplateFiltersChanged(state: LocalFilters): void {
+function notifyTemplateFiltersChanged(
+  state: LocalFilters,
+  routePatch?: Partial<Pick<FilterEventDetail, 'categoryGroupSlug' | 'childCategorySlug'>>,
+): void {
   if (typeof window === 'undefined') return;
-  const detail = buildFilterEventDetail(state);
+  const detail = buildFilterEventDetail(state, routePatch);
   // Persist the latest component-authored filter state for TemplateGrid's
   // URL-change fallback. This is especially important for explicit "popular",
   // which intentionally has no ?sort=popular URL param.
@@ -834,14 +975,18 @@ export const TemplateFilterBar: React.FC<TemplateFilterBarProps> = ({
   apiBase: apiBaseProp = '',
   scopeOverride = 'all',
   categorySlug: categorySlugProp = '',
+  creatorSlug: creatorSlugProp = '',
+  creatorRecordId: creatorRecordIdProp = '',
   subcategorySlug: subcategorySlugProp = '',
+  styleSlug: styleSlugProp = '',
+  tagSlug: tagSlugProp = '',
   showSearch = false,
   showStyles = true,
   showTypes = true,
   showSort = true,
   sortDisplay = 'auto',
   showFreeOnly = false,
-  showSubcategoryPills = false,
+  showSubcategoryPills = true,
   defaultSort = 'popular',
   searchPlaceholder = 'Search templates…',
   stylesAllLabel = 'All Styles',
@@ -857,7 +1002,7 @@ export const TemplateFilterBar: React.FC<TemplateFilterBarProps> = ({
       ? DEFAULT_API_BASE
       : rawBase;
 
-  const [filters, setFilters] = useState<LocalFilters>(() => readUrlFilters(defaultSort));
+  const [filters, setFilters] = useState<LocalFilters>(() => defaultUrlFilters(defaultSort));
   const [styleFacets, setStyleFacets] = useState<StyleFacet[]>([]);
   const [typeFacets, setTypeFacets] = useState<TypeFacet[]>([]);
   const [categoryPills, setCategoryPills] = useState<SubcategoryPill[]>([]);
@@ -865,14 +1010,33 @@ export const TemplateFilterBar: React.FC<TemplateFilterBarProps> = ({
   const [pillsLoading, setPillsLoading] = useState(false);
   const [routeVersion, setRouteVersion] = useState(0);
   const [openPanel, setOpenPanel] = useState<OpenPanel>(null);
-  const [containerWidth, setContainerWidth] = useState<number | null>(null);
+  const [hasHydrated, setHasHydrated] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const lastFilterSyncKeyRef = useRef('');
 
   const routeContext = useMemo(
-    () => readRouteContext(scopeOverride, categorySlugProp || undefined, subcategorySlugProp || undefined),
-    [categorySlugProp, routeVersion, scopeOverride, subcategorySlugProp],
+    () =>
+      readRouteContext(
+        scopeOverride,
+        categorySlugProp || undefined,
+        creatorSlugProp || undefined,
+        creatorRecordIdProp || undefined,
+        subcategorySlugProp || undefined,
+        styleSlugProp || undefined,
+        tagSlugProp || undefined,
+        hasHydrated,
+      ),
+    [
+      categorySlugProp,
+      creatorRecordIdProp,
+      creatorSlugProp,
+      hasHydrated,
+      routeVersion,
+      scopeOverride,
+      styleSlugProp,
+      subcategorySlugProp,
+      tagSlugProp,
+    ],
   );
   const hasSubcategoryPillContext = Boolean(routeContext.categoryGroupSlug || routeContext.childCategorySlug);
   const isFreeSortContext = routeContext.scope === 'free' || filters.freeOnly;
@@ -892,6 +1056,7 @@ export const TemplateFilterBar: React.FC<TemplateFilterBarProps> = ({
   // Uses page context (scope/category from URL path) so facets reflect the
   // current page's template set.
   useEffect(() => {
+    if (!hasHydrated) return undefined;
     if (!showStyles && !showTypes && !showSubcategoryPills) return;
     const ac = new AbortController();
     const context = routeContext;
@@ -908,7 +1073,17 @@ export const TemplateFilterBar: React.FC<TemplateFilterBarProps> = ({
     applyRouteContextToUrl(url, context);
 
     if (showSubcategoryPills) {
-      setPillsLoading(Boolean(context.categoryGroupSlug || context.childCategorySlug || context.scope));
+      setPillsLoading(
+        Boolean(
+          context.categoryGroupSlug ||
+            context.childCategorySlug ||
+            context.creatorSlug ||
+            context.creatorRecordId ||
+            context.scope ||
+            context.styleSlug ||
+            context.tagSlug,
+        ),
+      );
     }
 
     const cacheKey = url.toString();
@@ -943,53 +1118,20 @@ export const TemplateFilterBar: React.FC<TemplateFilterBarProps> = ({
       });
 
     return () => ac.abort();
-  }, [apiBase, routeContext, showStyles, showSubcategoryPills, showTypes]);
+  }, [apiBase, hasHydrated, routeContext, showStyles, showSubcategoryPills, showTypes]);
 
   // Re-sync filter state from URL on browser back/forward
   useEffect(() => {
+    setHasHydrated(true);
+    setFilters(readUrlFilters(defaultSort));
+    setRouteVersion((value) => value + 1);
+
     const onPop = () => {
       setFilters(readUrlFilters(defaultSort));
       setRouteVersion((value) => value + 1);
     };
     window.addEventListener('popstate', onPop);
     return () => window.removeEventListener('popstate', onPop);
-  }, [defaultSort]);
-
-  // Re-sync when another filter-capable component updates the URL.
-  // replaceState() does not emit popstate, so this custom event keeps
-  // duplicate/legacy filter surfaces visually consistent.
-  useEffect(() => {
-    const onFiltersChanged = (event: Event) => {
-      const detail = (event as CustomEvent<Partial<FilterEventDetail>>).detail;
-      const syncKey =
-        detail && typeof detail === 'object'
-          ? [
-              detail.updatedAt ?? '',
-              detail.href ?? '',
-              detail.q ?? '',
-              Array.isArray(detail.styles) ? detail.styles.join(',') : '',
-              Array.isArray(detail.types) ? detail.types.join(',') : '',
-              detail.freeOnly ?? '',
-              detail.sort ?? '',
-            ].join('|')
-          : `event:${event.timeStamp}`;
-
-      if (syncKey === lastFilterSyncKeyRef.current) return;
-      lastFilterSyncKeyRef.current = syncKey;
-
-      const next = readFiltersFromEvent(event, defaultSort);
-      queueMicrotask(() => {
-        setFilters(next);
-        setRouteVersion((value) => value + 1);
-      });
-    };
-
-    window.addEventListener('templateFiltersChanged', onFiltersChanged);
-    document.addEventListener('templateFiltersChanged', onFiltersChanged);
-    return () => {
-      window.removeEventListener('templateFiltersChanged', onFiltersChanged);
-      document.removeEventListener('templateFiltersChanged', onFiltersChanged);
-    };
   }, [defaultSort]);
 
   useEffect(() => {
@@ -1013,8 +1155,9 @@ export const TemplateFilterBar: React.FC<TemplateFilterBarProps> = ({
   }, [openPanel]);
 
   useEffect(() => {
+    if (!hasHydrated) return;
     syncPageDescriptionVisibility(routeContext);
-  }, [routeContext]);
+  }, [hasHydrated, routeContext]);
 
   // Re-sync when another page script or this component updates category params.
   // pushState/replaceState do not emit popstate, so the custom event is the bridge.
@@ -1030,10 +1173,10 @@ export const TemplateFilterBar: React.FC<TemplateFilterBarProps> = ({
   const applyFilter = useCallback((patch: Partial<LocalFilters>) => {
     setFilters((prev) => {
       const next = { ...prev, ...patch };
-      writeUrlFilters(next);
+      writeUrlFilters(next, defaultSort);
       return next;
     });
-  }, []);
+  }, [defaultSort]);
 
   useEffect(() => {
     if (!isFreeSortContext || (filters.sort !== 'price_asc' && filters.sort !== 'price_desc')) return;
@@ -1049,12 +1192,12 @@ export const TemplateFilterBar: React.FC<TemplateFilterBarProps> = ({
       debounceRef.current = setTimeout(() => {
         setFilters((prev) => {
           const next = { ...prev, q: q.trim() };
-          writeUrlFilters(next);
+          writeUrlFilters(next, defaultSort);
           return next;
         });
       }, 220);
     },
-    [],
+    [defaultSort],
   );
 
   const onStyleChange = useCallback(
@@ -1064,11 +1207,11 @@ export const TemplateFilterBar: React.FC<TemplateFilterBarProps> = ({
           ? prev.styles.filter((value) => value !== slug)
           : [...prev.styles, slug];
         const next = { ...prev, styles };
-        writeUrlFilters(next);
+        writeUrlFilters(next, defaultSort);
         return next;
       });
     },
-    [],
+    [defaultSort],
   );
 
   const onTypeChange = useCallback(
@@ -1081,7 +1224,7 @@ export const TemplateFilterBar: React.FC<TemplateFilterBarProps> = ({
 
   const onSortChange = useCallback(
     (value: string) => {
-      applyFilter({ sort: normalizeTemplateSort(value, defaultSort) });
+      applyFilter({ sort: normalizeSort(value, defaultSort) });
       setOpenPanel(null);
     },
     [applyFilter, defaultSort],
@@ -1102,11 +1245,14 @@ export const TemplateFilterBar: React.FC<TemplateFilterBarProps> = ({
       const url = new URL(window.location.href);
       const nextSlug = active ? null : slug;
       url.searchParams.delete('subcategory');
+      url.searchParams.delete('child_category_slug');
       url.searchParams.delete('page');
       if (nextSlug) {
         url.searchParams.set('category', nextSlug);
+        url.searchParams.delete('category_group_slug');
       } else {
         url.searchParams.delete('category');
+        url.searchParams.delete('category_group_slug');
       }
 
       window.history.replaceState({}, '', url.toString());
@@ -1127,13 +1273,16 @@ export const TemplateFilterBar: React.FC<TemplateFilterBarProps> = ({
       event.preventDefault();
 
       const url = new URL(window.location.href);
+      clearCategoryPathContext(url);
       url.searchParams.delete('category');
+      url.searchParams.delete('category_group_slug');
       url.searchParams.delete('subcategory');
+      url.searchParams.delete('child_category_slug');
       url.searchParams.delete('page');
 
       window.history.replaceState({}, '', url.toString());
       setRouteVersion((value) => value + 1);
-      notifyTemplateFiltersChanged(filters);
+      notifyTemplateFiltersChanged(filters, { categoryGroupSlug: null, childCategorySlug: null });
       document.dispatchEvent(
         new CustomEvent('categoryFilterUpdated', {
           detail: { parent: null, category: null, subcategory: null },
@@ -1150,7 +1299,9 @@ export const TemplateFilterBar: React.FC<TemplateFilterBarProps> = ({
 
       const url = new URL(window.location.href);
       url.searchParams.set('category', routeContext.categoryGroupSlug);
+      url.searchParams.delete('category_group_slug');
       url.searchParams.delete('subcategory');
+      url.searchParams.delete('child_category_slug');
       url.searchParams.delete('page');
 
       window.history.replaceState({}, '', url.toString());
@@ -1181,8 +1332,10 @@ export const TemplateFilterBar: React.FC<TemplateFilterBarProps> = ({
       if (routeContext.categoryGroupSlug) url.searchParams.set('category', routeContext.categoryGroupSlug);
       if (nextSubcategory) {
         url.searchParams.set('subcategory', nextSubcategory);
+        url.searchParams.delete('child_category_slug');
       } else {
         url.searchParams.delete('subcategory');
+        url.searchParams.delete('child_category_slug');
       }
 
       window.history.replaceState({}, '', url.toString());
@@ -1217,88 +1370,18 @@ export const TemplateFilterBar: React.FC<TemplateFilterBarProps> = ({
   const activeSortLabel = sortOptions.find((option) => option.value === filters.sort)?.label ?? 'Popular';
   const useSegmentedSort = sortDisplay === 'segmented';
 
-  useLayoutEffect(() => {
-    if (typeof window === 'undefined') return undefined;
-    const root = rootRef.current;
-    if (!root) return undefined;
-
-    const container =
-      root.closest<HTMLElement>('.mp-main') ??
-      root.closest<HTMLElement>('.mp-title-sort') ??
-      root.parentElement;
-    if (!container) return undefined;
-
-    const updateContainerWidth = () => {
-      const nextWidth = Math.floor(container.getBoundingClientRect().width);
-      if (nextWidth > 0) {
-        setContainerWidth((current) => (current === nextWidth ? current : nextWidth));
-      }
-    };
-
-    updateContainerWidth();
-
-    if (typeof ResizeObserver === 'undefined') {
-      window.addEventListener('resize', updateContainerWidth);
-      return () => window.removeEventListener('resize', updateContainerWidth);
-    }
-
-    const observer = new ResizeObserver(updateContainerWidth);
-    observer.observe(container);
-    return () => observer.disconnect();
-  }, []);
-
-  const rootStyle: CSSProperties & { '--tmfilter-max-width'?: string } = containerWidth
-    ? { '--tmfilter-max-width': `${containerWidth}px` }
-    : {};
-  const containedWidth = containerWidth ? `${containerWidth}px` : '100%';
-  const subcategoryRailStyle: CSSProperties = {
-    display: 'block',
-    width: '100%',
-    maxWidth: containedWidth,
-    minWidth: 0,
-    overflow: 'hidden',
-    boxSizing: 'border-box',
-    contain: 'inline-size',
-  };
-  const subcategoryScrollStyle: CSSProperties = {
-    display: 'block',
-    position: 'relative',
-    width: '100%',
-    maxWidth: containedWidth,
-    minWidth: 0,
-    overflow: 'hidden',
-    boxSizing: 'border-box',
-  };
-  const subcategoryTrackStyle: CSSProperties = {
-    display: 'flex',
-    justifyContent: 'flex-start',
-    alignItems: 'center',
-    flexWrap: 'nowrap',
-    width: '100%',
-    maxWidth: '100%',
-    minWidth: 0,
-    overflowX: 'auto',
-    overflowY: 'hidden',
-    WebkitOverflowScrolling: 'touch',
-    overscrollBehaviorX: 'contain',
-    scrollSnapType: 'x proximity',
-    scrollbarWidth: 'none',
-  };
+  const rootStyle: CSSProperties = {};
   const showCategoryPillRow = showSubcategoryPills && !hasSubcategoryPillContext;
   const parentCategoryPill = routeContext.categoryGroupSlug
     ? categoryPills.find((pill) => pill.slug === routeContext.categoryGroupSlug)
     : null;
-  const parentCategoryLabel = parentCategoryPill?.name ?? routeContext.categoryGroupSlug ?? '';
-  const routeSupportedCategoryPills = categoryPills.filter((pill) =>
-    SUPPORTED_TEMPLATE_CATEGORY_ROUTE_SLUGS.has(pill.slug),
-  );
+  const parentCategoryLabel = parentCategoryPill?.name ?? (routeContext.categoryGroupSlug ? titleCaseSlug(routeContext.categoryGroupSlug) : '');
   const visiblePills = hasSubcategoryPillContext
     ? subcategoryPills.filter((pill) => pill.slug !== routeContext.categoryGroupSlug)
-    : routeSupportedCategoryPills;
+    : categoryPills;
   const allCategoriesActive = showCategoryPillRow && !routeContext.categoryGroupSlug && !routeContext.childCategorySlug;
   const parentCategoryActive = hasSubcategoryPillContext && !routeContext.childCategorySlug;
   const showAllCategoriesPill = showCategoryPillRow || hasSubcategoryPillContext;
-  const useCanonicalCategoryLinks = false;
   const shouldShowSubcategoryPills =
     showSubcategoryPills &&
     (hasSubcategoryPillContext || showCategoryPillRow) &&
@@ -1411,24 +1494,13 @@ export const TemplateFilterBar: React.FC<TemplateFilterBarProps> = ({
   }
 
   return (
-    <div
-      ref={rootRef}
-      className="tmfilter-shell"
-      style={rootStyle}
-      data-template-filter-bar=""
-      data-template-component="TemplateFilterBar"
-      data-template-component-version={TEMPLATE_MARKETPLACE_COMPONENT_VERSION}
-    >
+    <div ref={rootRef} className="tmfilter-shell" style={rootStyle} data-template-filter-bar="">
       <style dangerouslySetInnerHTML={{ __html: FILTER_STYLES }} />
 
       {shouldShowSubcategoryPills && (
-        <div
-          className="mp-subcategory margin-bottom-1 tmfilter-subcategory"
-          data-template-subcategory-pills=""
-          style={subcategoryRailStyle}
-        >
-          <div className="tmfilter-subcategory-scroll" style={subcategoryScrollStyle}>
-            <div className="tmfilter-subcategory-track" role="list" style={subcategoryTrackStyle}>
+        <div className="mp-subcategory margin-bottom-1 tmfilter-subcategory" data-template-subcategory-pills="">
+          <div className="tmfilter-subcategory-scroll">
+            <div className="tmfilter-subcategory-track" role="list">
               {pillsLoading && visiblePills.length === 0 ? (
                 <div className="tmfilter-subcategory-slide" role="listitem">
                   <span className="cc-subcategory tmfilter-pill is-loading">Loading categories</span>
@@ -1440,11 +1512,11 @@ export const TemplateFilterBar: React.FC<TemplateFilterBarProps> = ({
                       <div className="tmfilter-subcategory-slide" role="listitem">
                         <a
                           className={`cc-subcategory tmfilter-pill${allCategoriesActive ? ' w--current active' : ''}`}
-                          href={hasSubcategoryPillContext ? '/templates/all' : buildScopedCategoryHref(null)}
+                          href={buildScopedCategoryHref(null)}
                           aria-current={allCategoriesActive ? 'page' : undefined}
                           onClick={
                             hasSubcategoryPillContext
-                              ? undefined
+                              ? onClearCategoryContext
                               : (event) => onCategoryPillClick(null, allCategoriesActive, event)
                           }
                         >
@@ -1457,8 +1529,9 @@ export const TemplateFilterBar: React.FC<TemplateFilterBarProps> = ({
                     <div className="tmfilter-subcategory-slide" role="listitem">
                       <a
                         className={`cc-subcategory tmfilter-pill${parentCategoryActive ? ' w--current active' : ''}`}
-                        href={buildCategoryPageHref(routeContext.categoryGroupSlug)}
+                        href={buildScopedSubcategoryHref(null, routeContext)}
                         aria-current={parentCategoryActive ? 'page' : undefined}
+                        onClick={onParentCategoryPillClick}
                       >
                         {parentCategoryLabel}
                       </a>
@@ -1468,10 +1541,8 @@ export const TemplateFilterBar: React.FC<TemplateFilterBarProps> = ({
                     const active = hasSubcategoryPillContext
                       ? pill.active || routeContext.childCategorySlug === pill.slug
                       : pill.active || routeContext.categoryGroupSlug === pill.slug;
-                    const href = useCanonicalCategoryLinks
-                      ? buildSubcategoryPageHref(pill)
-                      : hasSubcategoryPillContext
-                        ? buildScopedSubcategoryHref(active ? null : pill.slug, routeContext)
+                    const href = hasSubcategoryPillContext
+                      ? buildScopedSubcategoryHref(active ? null : pill.slug, routeContext)
                       : buildScopedCategoryHref(active ? null : pill.slug);
                     return (
                       <div className="tmfilter-subcategory-slide" key={pill.slug} role="listitem">
@@ -1480,9 +1551,7 @@ export const TemplateFilterBar: React.FC<TemplateFilterBarProps> = ({
                           href={href}
                           aria-current={active ? 'page' : undefined}
                           onClick={
-                            useCanonicalCategoryLinks
-                              ? undefined
-                              : hasSubcategoryPillContext
+                            hasSubcategoryPillContext
                               ? (event) => onSubcategoryPillClick(pill.slug, active, event)
                               : (event) => onCategoryPillClick(pill.slug, active, event)
                           }

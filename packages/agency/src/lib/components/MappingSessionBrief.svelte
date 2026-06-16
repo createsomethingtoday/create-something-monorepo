@@ -5,9 +5,9 @@
   export let eyebrow = 'Mapping session';
   export let title = 'The first call turns the pitch into a scoped operating path.';
   export let description =
-    'The buyer does not need a technical scavenger hunt. They need to see what agents and tools can do, what stays human, where MCPs fit, and how the stack stays governable before implementation starts.';
-  export let ctaHref = '/book';
-  export let ctaLabel = agencyCoreMessaging.bookMappingSessionLabel;
+    'The buyer does not need a technical scavenger hunt. They need to see what agents and tools can do, what stays human, where MCPs fit, and what evidence makes the workflow safe to delegate.';
+  export let ctaHref: string = agencyCoreMessaging.workflowMappingSessionHref;
+  export let ctaLabel: string = agencyCoreMessaging.bookMappingSessionLabel;
 
   const sessionSteps = [
     {
@@ -22,13 +22,15 @@
     },
     {
       label: 'Decide',
-      title: 'The first wedge',
-      detail: 'Whether the right first move is MCP Wedge, Workflow System, Policy OS, referral, or governed agent capacity.'
+      title: 'The first path',
+      detail:
+        'Whether the right first move is Trust Map, Workflow Pilot, Trust Layer, referral, or controlled agent capacity.'
     },
     {
       label: 'Keep',
-      title: 'The artifact trail',
-      detail: 'Workflow map, stack boundary, agent/MCP contract, policy notes, and implementation path.'
+      title: 'The receipt trail',
+      detail:
+        'Workflow map, stack boundary, agent/MCP contract, trust notes, and implementation path.'
     }
   ];
 </script>

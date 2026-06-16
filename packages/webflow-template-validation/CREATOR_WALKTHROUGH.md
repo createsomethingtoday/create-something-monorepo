@@ -140,7 +140,7 @@ Categories are automatically sorted:
 ### 📄 Page Structure Quick Wins
 **Required pages for template submission:**
 - **Style Guide** page (showcases all typography)
-- **License** page with slug `/licenses`
+- **License** page with licensing info for all custom assets. It may be nested in a folder if its published URL is accessible.
 - **Instructions** page (if you have complex interactions)
 
 ### 🔍 SEO Bulk Operations

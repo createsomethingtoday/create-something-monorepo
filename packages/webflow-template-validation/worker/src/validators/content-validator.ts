@@ -19,7 +19,8 @@ import {
 	ContentQualityAnalysis,
 	ValidationOptions
 } from '../types';
-import { fetchHTML, parseHTML } from '../utils/fetch-utils';
+import { fetchHTML, isPlatformManagedHeading, parseHTML } from '../utils/fetch-utils';
+import { analyzeHeadingSequence, extractDocumentOutline, visibleOutlineHeadings } from '../utils/document-outline';
 
 const LOREM_IPSUM_PATTERNS = [
 	/lorem\s+ipsum/i,
@@ -74,6 +75,92 @@ const WEBFLOW_DEFAULT_PATTERNS = [
 	/rich\s+text\s+element/i,
 	/text\s+block/i
 ];
+
+const UTILITY_PAGE_PLACEHOLDER_ALLOWED_SLUGS = new Set([
+	'/401',
+	'/404',
+	'/changelog',
+	'/info/changelog',
+	'/info/license',
+	'/info/licenses',
+	'/info/licensing',
+	'/info/style-guide',
+	'/info/utilities',
+	'/info/utility',
+	'/instructions',
+	'/license',
+	'/licenses',
+	'/licensing',
+	'/password',
+	'/search',
+	'/style-guide',
+	'/utilities',
+	'/utility'
+]);
+
+const UTILITY_PAGE_PLACEHOLDER_ALLOWED_PREFIXES = [
+	'/info/utilities/',
+	'/info/utility/',
+	'/utilities/',
+	'/utility/'
+];
+
+type ImageAltDetail = {
+	src: string;
+	context: string;
+	selector?: string;
+};
+
+type HeadingSkipTransition = NonNullable<HeadingHierarchy['skippedLevelTransitions']>[number];
+
+type HeadingIssueDetail = {
+	page: string;
+	pageUrl: string;
+	issue: string;
+	issueType: 'multiple_h1' | 'missing_h1' | 'skipped_level';
+	h1Count?: number;
+	fromLevel?: number;
+	toLevel?: number;
+	fromPosition?: number;
+	toPosition?: number;
+	fromText?: string;
+	toText?: string;
+	missingLevel?: number;
+	headingSequence?: string;
+};
+
+const SEARCH_TEXT_IGNORE_SELECTORS = [
+	'script',
+	'style',
+	'noscript',
+	'template',
+	'input',
+	'textarea',
+	'select',
+	'[role="search"]',
+	'[data-wf-search]',
+	'[data-wf-search-results]',
+	'[data-search-result]',
+	'.w-search',
+	'.w-search-results',
+	'.w-search-result',
+	'.search-results',
+	'.search-result',
+	'.search-snippet',
+	'.search-summary',
+	'.search-description'
+];
+
+const SEARCH_TEXT_CONTAINER_ATTRIBUTE_PATTERN =
+	/\s(?:class|id|role|aria-label|data-[A-Za-z0-9_-]+)=["'][^"']*(?:w-search|search-results?|search-snippet|search-summary|search-description|wf-search)[^"']*["']/i;
+
+const VIDEO_FALLBACK_ANCESTOR_SELECTOR = [
+	'.w-background-video',
+	'.w-video',
+	'[data-video-urls]',
+	'[data-video-url]',
+	'[data-poster-url]'
+].join(', ');
 
 function normalizeSlugForComparison(slugOrUrl: string): string | null {
 	if (!slugOrUrl) return null;
@@ -236,19 +323,34 @@ async function analyzePage(url: string, parsedHTML: ParsedHTML): Promise<Analyze
 	// Extract page title
 	const titleElement = parsedHTML.document.querySelector('title');
 	const title = titleElement?.textContent || 'Untitled Page';
+	const allowsUtilityPlaceholderText = isUtilityPagePlaceholderAllowed(url);
 
-	// Check for Lorem Ipsum content
-	const hasLoremIpsum = checkForLoremIpsum(parsedHTML);
+	// Utility pages often include sample labels/copy by design; keep other audits active.
+	const hasLoremIpsum = allowsUtilityPlaceholderText ? false : checkForLoremIpsum(parsedHTML);
 
-	// Analyze heading hierarchy
-	const headingHierarchy = analyzeHeadingHierarchy(parsedHTML.headings);
+	// Analyze heading hierarchy against the visible outline. HTMLRewriter
+	// tracks hidden ancestors (display:none modals, w-condition-invisible);
+	// fall back to the flat regex-extracted list when it is unavailable.
+	const outline = await extractDocumentOutline(parsedHTML.rawHtml);
+	const headingStructure = outline && outline.length > 0
+		? visibleOutlineHeadings(outline).map((heading, index) => ({
+			level: heading.level,
+			text: heading.text,
+			position: index + 1
+		}))
+		: parsedHTML.headings
+			.filter(h => !isPlatformManagedHeading(h))
+			.map((heading, index) => ({
+				level: parseInt(heading.tagName.substring(1), 10),
+				text: heading.textContent?.trim() || '',
+				position: index + 1
+			}));
+	const headingHierarchy = analyzeHeadingHierarchy(headingStructure);
 
 	// Count images and alt text coverage
-	const imageCount = parsedHTML.images.length;
-	const imagesWithoutAlt = parsedHTML.images.filter(img => {
-		const alt = img.getAttribute('alt');
-		return alt === null;
-	}).length;
+	const imageAltAudit = analyzeContentImages(parsedHTML);
+	const imageCount = imageAltAudit.totalImages;
+	const imagesWithoutAlt = imageAltAudit.imagesWithoutAlt.length;
 
 	// Extract comprehensive SEO data
 	const seo = extractSEOData(parsedHTML);
@@ -257,7 +359,7 @@ async function analyzePage(url: string, parsedHTML: ParsedHTML): Promise<Analyze
 	const links = await analyzeLinks(parsedHTML, url);
 
 	// Analyze content quality
-	const contentQuality = analyzeContentQuality(parsedHTML, url);
+	const contentQuality = analyzeContentQuality(parsedHTML, url, { allowsUtilityPlaceholderText });
 
 	return {
 		url,
@@ -266,15 +368,23 @@ async function analyzePage(url: string, parsedHTML: ParsedHTML): Promise<Analyze
 		headingHierarchy,
 		imageCount,
 		imagesWithoutAlt,
+		imagesWithoutAltDetails: imageAltAudit.imagesWithoutAlt,
 		seo,
 		links,
 		contentQuality
 	};
 }
 
+function isUtilityPagePlaceholderAllowed(url: string): boolean {
+	const normalizedSlug = normalizeSlugForComparison(url);
+	if (!normalizedSlug) return false;
+
+	return UTILITY_PAGE_PLACEHOLDER_ALLOWED_SLUGS.has(normalizedSlug)
+		|| UTILITY_PAGE_PLACEHOLDER_ALLOWED_PREFIXES.some(prefix => normalizedSlug.startsWith(prefix));
+}
+
 function checkForLoremIpsum(parsedHTML: ParsedHTML): boolean {
-	// Get all text content from the page
-	const textContent = parsedHTML.document.body?.textContent || '';
+	const textContent = getScannableContentText(parsedHTML);
 
 	// Check for Lorem Ipsum patterns
 	const hasLorem = LOREM_IPSUM_PATTERNS.some(pattern => pattern.test(textContent));
@@ -289,6 +399,173 @@ function checkForLoremIpsum(parsedHTML: ParsedHTML): boolean {
 	const hasWebflowDefaults = WEBFLOW_DEFAULT_PATTERNS.some(pattern => pattern.test(textContent));
 
 	return hasLorem || hasPlaceholders || hasGenericContent || hasWebflowDefaults;
+}
+
+function analyzeContentImages(parsedHTML: ParsedHTML): { totalImages: number; imagesWithoutAlt: ImageAltDetail[] } {
+	const imagesWithoutAlt: ImageAltDetail[] = [];
+	let totalImages = 0;
+
+	parsedHTML.images.forEach((img, index) => {
+		if (shouldIgnoreImageForAltAudit(img)) return;
+
+		totalImages++;
+		const alt = img.getAttribute('alt');
+		if (alt === null) {
+			imagesWithoutAlt.push({
+				src: getImageSource(img),
+				context: determineImageContext(img, index),
+				selector: buildImageSelector(img, index)
+			});
+		}
+	});
+
+	return { totalImages, imagesWithoutAlt };
+}
+
+function shouldIgnoreImageForAltAudit(img: HTMLImageElement | any): boolean {
+	const alt = img.getAttribute?.('alt');
+	if (typeof alt === 'string' && alt.trim() === '') return true;
+
+	const role = (img.getAttribute?.('role') || '').toLowerCase();
+	if (role === 'presentation' || role === 'none') return true;
+
+	if ((img.getAttribute?.('aria-hidden') || '').toLowerCase() === 'true') return true;
+
+	return isLikelyPlatformVideoFallbackImage(img);
+}
+
+function isLikelyPlatformVideoFallbackImage(img: HTMLImageElement | any): boolean {
+	if (typeof img.closest === 'function' && img.closest(VIDEO_FALLBACK_ANCESTOR_SELECTOR)) {
+		return true;
+	}
+
+	const className = String(img.getAttribute?.('class') || img.className || '').toLowerCase();
+	const src = getImageSource(img).toLowerCase();
+	const attrs = [
+		img.getAttribute?.('data-wf-bgvideo-fallback-img'),
+		img.getAttribute?.('data-poster-url'),
+		img.getAttribute?.('data-video-urls'),
+		img.getAttribute?.('data-video-url')
+	].filter(Boolean).join(' ').toLowerCase();
+
+	return (
+		/\b(w-background-video|w-video|video-fallback|fallback-image|poster-image)\b/.test(className) ||
+		/\b(video-fallback|fallback-image|poster-image)\b/.test(src) ||
+		isWebflowGeneratedVideoPosterSource(src) ||
+		attrs.length > 0
+	);
+}
+
+function isWebflowGeneratedVideoPosterSource(src: string): boolean {
+	return /(?:^|[/_-])[^/?#]*(?:[_-]poster|poster)\.\d+\.(?:jpe?g|png|webp|avif)(?:$|[?#])/.test(src);
+}
+
+function getImageSource(img: HTMLImageElement | any): string {
+	return img.getAttribute?.('src') || img.getAttribute?.('data-src') || img.src || 'unknown';
+}
+
+function determineImageContext(img: HTMLImageElement | any, index: number): string {
+	const src = getImageSource(img).toLowerCase();
+	const className = String(img.getAttribute?.('class') || img.className || '').toLowerCase();
+
+	if (src.includes('hero') || className.includes('hero') || index === 0) return 'hero-image';
+	if (src.includes('logo') || className.includes('logo')) return 'logo';
+	if (src.includes('thumb') || src.includes('preview') || className.includes('thumb')) return 'thumbnail';
+
+	return 'content-image';
+}
+
+function buildImageSelector(img: HTMLImageElement | any, index: number): string {
+	const id = img.getAttribute?.('id');
+	if (id) return `#${id}`;
+
+	const className = String(img.getAttribute?.('class') || '').trim();
+	if (className) {
+		const firstClass = className.split(/\s+/).find(Boolean);
+		if (firstClass) return `img.${firstClass}`;
+	}
+
+	const src = getImageSource(img);
+	if (src && src !== 'unknown') return `img[src*="${getAssetNameFromUrl(src)}"]`;
+
+	return `img:nth-of-type(${index + 1})`;
+}
+
+function getAssetNameFromUrl(value: string): string {
+	try {
+		const pathname = new URL(value, 'https://example.com').pathname;
+		return pathname.split('/').pop() || value;
+	} catch {
+		return value.split('/').pop() || value;
+	}
+}
+
+function getScannableContentText(parsedHTML: ParsedHTML): string {
+	const body = parsedHTML.document.body as any;
+
+	if (body && typeof body.cloneNode === 'function') {
+		const clonedBody = body.cloneNode(true) as Element;
+		for (const selector of SEARCH_TEXT_IGNORE_SELECTORS) {
+			clonedBody.querySelectorAll(selector).forEach((node) => node.remove());
+		}
+		return normalizeText(clonedBody.textContent || '');
+	}
+
+	const rawHtml = parsedHTML.rawHtml || body?.innerHTML || body?.textContent || '';
+	if (rawHtml && rawHtml.includes('<')) {
+		return normalizeText(stripTags(stripIgnoredSearchContent(rawHtml)));
+	}
+
+	return normalizeText(String(rawHtml || ''));
+}
+
+function stripIgnoredSearchContent(html: string): string {
+	let output = html
+		.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, ' ')
+		.replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, ' ')
+		.replace(/<noscript\b[^>]*>[\s\S]*?<\/noscript>/gi, ' ')
+		.replace(/<template\b[^>]*>[\s\S]*?<\/template>/gi, ' ')
+		.replace(/<(input|textarea|select)\b[^>]*>[\s\S]*?(?:<\/\1>)?/gi, ' ');
+
+	let previous: string;
+	do {
+		previous = output;
+		output = output.replace(
+			new RegExp(`<([a-z][\\w:-]*)\\b(?=[^>]*${SEARCH_TEXT_CONTAINER_ATTRIBUTE_PATTERN.source})[^>]*>[\\s\\S]*?<\\/\\1>`, 'gi'),
+			' '
+		);
+	} while (output !== previous);
+
+	return output;
+}
+
+function stripTags(html: string): string {
+	return html.replace(/<[^>]*>/g, ' ');
+}
+
+function collectPatternMatches(patterns: RegExp[], textContent: string): Array<{ pattern: string; sample: string }> {
+	return patterns.flatMap(pattern => {
+		const match = textContent.match(pattern);
+		if (!match?.[0]) return [];
+		return [{
+			pattern: pattern.source,
+			sample: match[0].trim().slice(0, 120)
+		}];
+	});
+}
+
+function normalizeText(value: string): string {
+	return decodeBasicHtmlEntities(value).replace(/\s+/g, ' ').trim();
+}
+
+function decodeBasicHtmlEntities(value: string): string {
+	return value
+		.replace(/&nbsp;/g, ' ')
+		.replace(/&amp;/g, '&')
+		.replace(/&lt;/g, '<')
+		.replace(/&gt;/g, '>')
+		.replace(/&quot;/g, '"')
+		.replace(/&#39;/g, "'");
 }
 
 function extractSEOData(parsedHTML: ParsedHTML): PageSEOData {
@@ -344,34 +621,16 @@ function extractSEOData(parsedHTML: ParsedHTML): PageSEOData {
 	};
 }
 
-function analyzeHeadingHierarchy(headings: HTMLHeadingElement[]): HeadingHierarchy {
-	// Count H1 elements
-	const h1Count = headings.filter(h => h.tagName.toLowerCase() === 'h1').length;
-
-	// Build heading structure
-	const structure = headings.map((heading, index) => ({
-		level: parseInt(heading.tagName.substring(1)),
-		text: heading.textContent?.trim() || '',
-		position: index + 1
-	}));
-
-	// Check for skipped levels
-	let hasSkippedLevels = false;
-	for (let i = 1; i < structure.length; i++) {
-		const currentLevel = structure[i].level;
-		const previousLevel = structure[i - 1].level;
-
-		// If we jump more than one level (e.g., H2 to H4), that's a skip
-		if (currentLevel > previousLevel + 1) {
-			hasSkippedLevels = true;
-			break;
-		}
-	}
+function analyzeHeadingHierarchy(structure: HeadingHierarchy['structure']): HeadingHierarchy {
+	// The sequence rules live in the shared walker (document-outline.ts) so
+	// every validator reports the same skips.
+	const sequence = analyzeHeadingSequence(structure);
 
 	return {
-		h1Count,
-		hasSkippedLevels,
-		structure
+		h1Count: sequence.h1Count,
+		hasSkippedLevels: sequence.hasSkippedLevels,
+		structure,
+		skippedLevelTransitions: sequence.skips
 	};
 }
 
@@ -453,17 +712,37 @@ async function discoverAdditionalPages(
 			.filter(url => !discoveredUrls.has(url));
 	}
 
-	for (const pageUrl of urlsToAnalyze) {
-		try {
-			discoveredUrls.add(pageUrl);
-			const htmlResult = await fetchHTML(pageUrl);
-			const parsedPageHTML = parseHTML(htmlResult.html);
-			const pageAnalysis = await analyzePage(pageUrl, parsedPageHTML);
-			additionalPages.push(pageAnalysis);
-		} catch (error) {
-			console.warn(`Failed to analyze page ${pageUrl}:`, error);
+	// Analyze pages concurrently (capped) — sequential fetches made 30-page
+	// template runs take most of the validation wall-clock.
+	const CONCURRENCY = 5;
+	const queue = urlsToAnalyze.filter(pageUrl => {
+		if (discoveredUrls.has(pageUrl)) return false;
+		discoveredUrls.add(pageUrl);
+		return true;
+	});
+	const results: Array<AnalyzedPage | null> = new Array(queue.length).fill(null);
+	let nextIndex = 0;
+
+	async function analyzeNext(): Promise<void> {
+		while (nextIndex < queue.length) {
+			const index = nextIndex++;
+			const pageUrl = queue[index];
+			try {
+				const htmlResult = await fetchHTML(pageUrl);
+				const parsedPageHTML = parseHTML(htmlResult.html);
+				results[index] = await analyzePage(pageUrl, parsedPageHTML);
+			} catch (error) {
+				console.warn(`Failed to analyze page ${pageUrl}:`, error);
+			}
 		}
 	}
+
+	await Promise.all(
+		Array.from({ length: Math.min(CONCURRENCY, queue.length) }, () => analyzeNext())
+	);
+
+	// Preserve the original page order regardless of completion order
+	additionalPages.push(...results.filter((page): page is AnalyzedPage => page !== null));
 
 	return additionalPages;
 }
@@ -489,7 +768,7 @@ export function generateContentIssues(
 		issues.push({
 			id: 'lorem-ipsum-detected',
 			category: 'Content & Accessibility',
-			severity: 'error',
+			severity: 'warning',
 			message: `Lorem Ipsum or placeholder text detected on ${pagesWithLorem.length} page(s)`,
 			description: 'Webflow Way guidelines require all placeholder text to be replaced with real, relevant content.',
 			howToFix: 'Replace all Lorem Ipsum and placeholder text with actual content relevant to the template purpose',
@@ -503,52 +782,79 @@ export function generateContentIssues(
 	}
 
 	// Check heading hierarchy issues
-	let totalH1Errors = 0;
-	let totalSkippedLevels = 0;
-	const headingIssues: Array<{ page: string, issue: string }> = [];
+	const headingIssues: HeadingIssueDetail[] = [];
 
 	if (resolvedChecks.headings) {
 		pages.forEach(page => {
-		// Multiple H1s
-		if (page.headingHierarchy.h1Count > 1) {
-			totalH1Errors++;
-			headingIssues.push({
-				page: page.title,
-				issue: `Has ${page.headingHierarchy.h1Count} H1 elements (should have exactly 1)`
-			});
-		}
+			// Multiple H1s
+			if (page.headingHierarchy.h1Count > 1) {
+				headingIssues.push({
+					page: page.title,
+					pageUrl: page.url,
+					issue: `Has ${page.headingHierarchy.h1Count} H1 elements (should have exactly 1)`,
+					issueType: 'multiple_h1',
+					h1Count: page.headingHierarchy.h1Count,
+					headingSequence: formatHeadingSequence(page.headingHierarchy.structure)
+				});
+			}
 
-		// No H1
-		if (page.headingHierarchy.h1Count === 0) {
-			totalH1Errors++;
-			headingIssues.push({
-				page: page.title,
-				issue: 'Missing H1 element (should have exactly 1)'
-			});
-		}
+			// No H1
+			if (page.headingHierarchy.h1Count === 0) {
+				headingIssues.push({
+					page: page.title,
+					pageUrl: page.url,
+					issue: 'Missing H1 element (should have exactly 1)',
+					issueType: 'missing_h1',
+					h1Count: page.headingHierarchy.h1Count,
+					headingSequence: formatHeadingSequence(page.headingHierarchy.structure)
+				});
+			}
 
-		// Skipped heading levels
-		if (page.headingHierarchy.hasSkippedLevels) {
-			totalSkippedLevels++;
-			headingIssues.push({
-				page: page.title,
-				issue: 'Has skipped heading levels (e.g., H2 followed by H4)'
-			});
-		}
+			// Skipped heading levels
+			if (page.headingHierarchy.hasSkippedLevels) {
+				const skippedTransitions = page.headingHierarchy.skippedLevelTransitions || [];
+				if (skippedTransitions.length > 0) {
+					skippedTransitions.forEach(transition => {
+						headingIssues.push({
+							page: page.title,
+							pageUrl: page.url,
+							issue: describeSkippedHeadingTransition(transition),
+							issueType: 'skipped_level',
+							fromLevel: transition.fromLevel,
+							toLevel: transition.toLevel,
+							fromPosition: transition.fromPosition,
+							toPosition: transition.toPosition,
+							fromText: transition.fromText,
+							toText: transition.toText,
+							missingLevel: transition.missingLevel,
+							headingSequence: formatHeadingSequence(page.headingHierarchy.structure)
+						});
+					});
+				} else {
+					headingIssues.push({
+						page: page.title,
+						pageUrl: page.url,
+						issue: 'Has skipped heading levels. Review the heading sequence for a jump such as H1 to H3 or H2 to H4.',
+						issueType: 'skipped_level',
+						headingSequence: formatHeadingSequence(page.headingHierarchy.structure)
+					});
+				}
+			}
 		});
 
 		if (headingIssues.length > 0) {
-		issues.push({
-			id: 'heading-hierarchy-errors',
-			category: 'Content & Accessibility',
-			severity: 'error',
-			message: `Heading hierarchy errors found on ${headingIssues.length} page(s)`,
-			description: 'Proper heading hierarchy is essential for accessibility and SEO. Each page should have exactly one H1, and heading levels should not be skipped.',
-			howToFix: 'Ensure each page has exactly one H1 element and use heading levels in sequential order (H1 → H2 → H3, etc.)',
-			details: {
-				headingIssues: headingIssues
-			}
-		});
+			const affectedPageCount = new Set(headingIssues.map(issue => issue.pageUrl || issue.page)).size;
+			issues.push({
+				id: 'heading-hierarchy-errors',
+				category: 'Content & Accessibility',
+				severity: 'error',
+				message: `Heading hierarchy errors found on ${affectedPageCount} page(s)`,
+				description: 'Proper heading hierarchy is essential for accessibility and SEO. Each page should have exactly one H1, and heading levels should not be skipped.',
+				howToFix: 'Ensure each page has exactly one H1 element and use heading levels in sequential order (H1 → H2 → H3, etc.)',
+				details: {
+					headingIssues: headingIssues
+				}
+			});
 		}
 	}
 
@@ -573,6 +879,13 @@ export function generateContentIssues(
 	// Check alt text coverage
 	const totalImages = pages.reduce((sum, page) => sum + page.imageCount, 0);
 	const totalImagesWithoutAlt = pages.reduce((sum, page) => sum + page.imagesWithoutAlt, 0);
+	const missingAltImageDetails = pages.flatMap(page =>
+		(page.imagesWithoutAltDetails || []).map(image => ({
+			...image,
+			page: page.title,
+			pageUrl: page.url
+		}))
+	);
 
 	if (resolvedChecks.altText && totalImagesWithoutAlt > 0 && totalImages > 0) {
 		const coveragePercentage = Math.round(((totalImages - totalImagesWithoutAlt) / totalImages) * 100);
@@ -588,6 +901,7 @@ export function generateContentIssues(
 				totalImages,
 				imagesWithoutAlt: totalImagesWithoutAlt,
 				coveragePercentage,
+				missingImages: missingAltImageDetails.slice(0, 20),
 				pagesWithIssues: pages.filter(p => p.imagesWithoutAlt > 0).map(p => ({
 					title: p.title,
 					url: p.url,
@@ -598,6 +912,37 @@ export function generateContentIssues(
 	}
 
 	return issues;
+}
+
+function describeSkippedHeadingTransition(transition: HeadingSkipTransition): string {
+	return `${formatHeadingReference(transition.fromLevel, transition.fromText)} is followed by ${formatHeadingReference(transition.toLevel, transition.toText)}, skipping H${transition.missingLevel}`;
+}
+
+function formatHeadingReference(level: number, text: string): string {
+	const normalizedText = normalizeHeadingText(text);
+	return normalizedText ? `H${level} "${normalizedText}"` : `H${level}`;
+}
+
+function formatHeadingSequence(structure: HeadingHierarchy['structure']): string {
+	const visibleStructure = structure.slice(0, 12).map(heading => formatHeadingReference(heading.level, heading.text));
+	const suffix = structure.length > visibleStructure.length ? ` → ${structure.length - visibleStructure.length} more` : '';
+	return `${visibleStructure.join(' → ')}${suffix}`;
+}
+
+function normalizeHeadingText(text: string): string {
+	const normalized = decodeCommonHtmlEntities(text).replace(/\s+/g, ' ').trim();
+	return normalized.length > 80 ? `${normalized.slice(0, 77)}...` : normalized;
+}
+
+function decodeCommonHtmlEntities(value: string): string {
+	return value
+		.replace(/&nbsp;/gi, ' ')
+		.replace(/&amp;/gi, '&')
+		.replace(/&quot;/gi, '"')
+		.replace(/&#39;/gi, "'")
+		.replace(/&#x27;/gi, "'")
+		.replace(/&lt;/gi, '<')
+		.replace(/&gt;/gi, '>');
 }
 
 function generateSEOIssues(pages: AnalyzedPage[]): ValidationIssue[] {
@@ -861,13 +1206,18 @@ async function analyzeLinks(parsedHTML: ParsedHTML, baseUrl: string): Promise<Li
 	};
 }
 
-function analyzeContentQuality(parsedHTML: ParsedHTML, url: string): ContentQualityAnalysis {
-	const textContent = parsedHTML.document.body?.textContent || '';
+function analyzeContentQuality(
+	parsedHTML: ParsedHTML,
+	url: string,
+	options: { allowsUtilityPlaceholderText?: boolean } = {}
+): ContentQualityAnalysis {
+	const textContent = getScannableContentText(parsedHTML);
 	const issues: Array<{
 		type: 'placeholder' | 'lorem' | 'generic' | 'webflow-default' | 'short-content' | 'duplicate-content';
 		text: string;
 		location: string;
 		severity: 'error' | 'warning' | 'info';
+		matches?: Array<{ pattern: string; sample: string }>;
 	}> = [];
 
 	// Check for different types of problematic content
@@ -876,52 +1226,55 @@ function analyzeContentQuality(parsedHTML: ParsedHTML, url: string): ContentQual
 	let hasWebflowDefaults = false;
 	let hasGenericContent = false;
 
-	// Lorem Ipsum detection
-	const loremMatches = LOREM_IPSUM_PATTERNS.filter(pattern => pattern.test(textContent));
-	if (loremMatches.length > 0) {
-		hasLoremIpsum = true;
-		issues.push({
-			type: 'lorem',
-			text: 'Lorem Ipsum content detected',
-			location: url,
-			severity: 'error'
-		});
-	}
+	if (!options.allowsUtilityPlaceholderText) {
+		// Lorem Ipsum detection
+		const loremMatches = LOREM_IPSUM_PATTERNS.filter(pattern => pattern.test(textContent));
+		if (loremMatches.length > 0) {
+			hasLoremIpsum = true;
+			issues.push({
+				type: 'lorem',
+				text: 'Lorem Ipsum content detected',
+				location: url,
+				severity: 'warning'
+			});
+		}
 
-	// Placeholder content detection
-	const placeholderMatches = PLACEHOLDER_PATTERNS.filter(pattern => pattern.test(textContent));
-	if (placeholderMatches.length > 0) {
-		hasPlaceholderContent = true;
-		issues.push({
-			type: 'placeholder',
-			text: 'Placeholder content detected',
-			location: url,
-			severity: 'error'
-		});
-	}
+		// Placeholder content detection
+		const placeholderMatches = PLACEHOLDER_PATTERNS.filter(pattern => pattern.test(textContent));
+		if (placeholderMatches.length > 0) {
+			hasPlaceholderContent = true;
+			issues.push({
+				type: 'placeholder',
+				text: 'Placeholder content detected',
+				location: url,
+				severity: 'warning'
+			});
+		}
 
-	// Generic content detection
-	const genericMatches = GENERIC_CONTENT_PATTERNS.filter(pattern => pattern.test(textContent));
-	if (genericMatches.length > 0) {
-		hasGenericContent = true;
-		issues.push({
-			type: 'generic',
-			text: 'Generic content detected',
-			location: url,
-			severity: 'warning'
-		});
-	}
+		// Generic content detection
+		const genericMatches = GENERIC_CONTENT_PATTERNS.filter(pattern => pattern.test(textContent));
+		if (genericMatches.length > 0) {
+			hasGenericContent = true;
+			issues.push({
+				type: 'generic',
+				text: 'Generic content detected',
+				location: url,
+				severity: 'warning'
+			});
+		}
 
-	// Webflow default content detection
-	const webflowMatches = WEBFLOW_DEFAULT_PATTERNS.filter(pattern => pattern.test(textContent));
-	if (webflowMatches.length > 0) {
-		hasWebflowDefaults = true;
-		issues.push({
-			type: 'webflow-default',
-			text: 'Webflow default content detected',
-			location: url,
-			severity: 'warning'
-		});
+		// Webflow default content detection
+		const webflowMatches = collectPatternMatches(WEBFLOW_DEFAULT_PATTERNS, textContent);
+		if (webflowMatches.length > 0) {
+			hasWebflowDefaults = true;
+			issues.push({
+				type: 'webflow-default',
+				text: 'Webflow default content detected',
+				location: url,
+				severity: 'warning',
+				matches: webflowMatches
+			});
+		}
 	}
 
 	// Word count and short content detection
@@ -980,7 +1333,7 @@ function generateContentQualityIssues(pages: AnalyzedPage[]): ValidationIssue[] 
 			issues.push({
 				id: 'placeholder-content-detected',
 				category: 'Content & Accessibility',
-				severity: 'error',
+				severity: 'warning',
 				message: `Placeholder content detected on ${placeholderPages.length} page(s)`,
 				description: 'Placeholder text should be replaced with real, relevant content before publishing.',
 				howToFix: 'Replace all placeholder text with actual content that serves your users',
@@ -1006,7 +1359,11 @@ function generateContentQualityIssues(pages: AnalyzedPage[]): ValidationIssue[] 
 					affectedPages: webflowDefaultPages.map(p => ({
 						url: p.url,
 						pageName: getPageNameFromUrl(p.url),
-						contentScore: p.contentQuality.contentScore
+						contentScore: p.contentQuality.contentScore,
+						matches: p.contentQuality.issues
+							.filter(issue => issue.type === 'webflow-default')
+							.flatMap(issue => issue.matches || [])
+							.slice(0, 5)
 					}))
 				}
 			});

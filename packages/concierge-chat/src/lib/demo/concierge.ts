@@ -1,6 +1,6 @@
 import { createThreadStore, type ConciergeThread } from '$chat/thread-store';
 
-const seedThreads: ConciergeThread[] = [
+export const seedThreads: ConciergeThread[] = [
 	{
 		id: 'demo-intake',
 		title: 'Travel Nurse Intake',
@@ -48,7 +48,7 @@ const seedThreads: ConciergeThread[] = [
 				role: 'assistant',
 				author: 'Concierge',
 				body:
-					"I've got enough to shortlist roles, but I still need resume upload, background-check consent, and a quick confirmation on location radius before I trigger matching.",
+					"I've got enough to shortlist roles, but I still need resume upload, background-check consent, and a quick confirmation on preferred location before I trigger matching.",
 				createdAt: '2026-03-09T16:42:00.000Z',
 				evidence: ['profile_snapshot_1', 'tool_action_1']
 			}
@@ -64,7 +64,7 @@ const seedThreads: ConciergeThread[] = [
 					completion: 72,
 					confirmedCount: 3,
 					inferredCount: 2,
-					missingFields: ['Preferred location radius', 'Background-check consent', 'Resume upload'],
+					missingFields: ['Preferred location', 'Background-check consent', 'Resume upload'],
 					nextPrompt: 'Confirm the last two profile assumptions and attach credentials to unlock matching.'
 				}
 			},
@@ -89,7 +89,7 @@ const seedThreads: ConciergeThread[] = [
 						},
 						{
 							key: 'preferred_region',
-							label: 'Preferred region',
+							label: 'Preferred location',
 							value: 'Texas and nearby states',
 							status: 'inferred',
 							confidence: 0.81,
@@ -110,8 +110,22 @@ const seedThreads: ConciergeThread[] = [
 				data: {
 					description:
 						'Matching is blocked until the resume and compact license image are attached to the thread.',
-					requestedDocuments: ['Resume PDF', 'Compact license image'],
-					acceptedTypes: ['PDF', 'PNG', 'JPG'],
+					documents: [
+						{
+							key: 'resume_pdf',
+							title: 'Resume PDF',
+							acceptedTypes: ['PDF'],
+							accept: '.pdf,application/pdf',
+							status: 'needed'
+						},
+						{
+							key: 'compact_license_image',
+							title: 'Compact license image',
+							acceptedTypes: ['PNG', 'JPG'],
+							accept: '.png,.jpg,.jpeg,image/png,image/jpeg',
+							status: 'needed'
+						}
+					],
 					status: 'needed',
 					uploadLabel: 'Upload documents'
 				}
@@ -150,7 +164,7 @@ const seedThreads: ConciergeThread[] = [
 			confirmedCount: 3,
 			inferredCount: 2,
 			candidateCount: 2,
-			missingRequired: ['Preferred location radius', 'Background-check consent', 'Resume upload'],
+			missingRequired: ['Preferred location', 'Background-check consent', 'Resume upload'],
 			blockers: [
 				'Resume upload required before role matching.',
 				'Credentialing Hub needs reconnect for live license verification.'
@@ -216,12 +230,12 @@ const seedThreads: ConciergeThread[] = [
 					updatedAt: '2026-03-09T16:31:00.000Z',
 					note: 'Month captured, exact date still open.'
 				},
-				{
-					key: 'preferred_region',
-					label: 'Preferred region',
-					value: 'Texas and nearby states',
-					status: 'candidate',
-					confidence: 0.68,
+					{
+						key: 'preferred_region',
+						label: 'Preferred location',
+						value: 'Texas and nearby states',
+						status: 'candidate',
+						confidence: 0.68,
 					fieldClass: 'preference',
 					sourceMessageIds: ['m4'],
 					sourceArtifactIds: [],
@@ -279,7 +293,10 @@ const seedThreads: ConciergeThread[] = [
 				name: 'Credentialing Hub',
 				status: 'action_required',
 				note: 'Reconnect required before the next verification call.',
-				actionHref: '/settings'
+				actionHref: buildControlPlaneBridgeHref('mcp-access', {
+					threadId: 'demo-intake',
+					tool: 'credentialing-hub'
+				})
 			},
 			{
 				name: 'Staffing CRM',
@@ -336,6 +353,9 @@ const seedThreads: ConciergeThread[] = [
 				placement: 'inline',
 				priority: 10,
 				data: {
+					kind: 'escalation',
+					tone: 'danger',
+					statusLabel: 'Review queued',
 					queueName: 'Nurse credentialing review',
 					eta: '12 minutes',
 					reasonCodes: ['conflicting_evidence', 'regulated_field', 'external_write_blocked'],
@@ -378,21 +398,57 @@ const seedThreads: ConciergeThread[] = [
 					updatedAt: '2026-03-09T13:55:00.000Z',
 					confirmedBy: 'user'
 				},
-				{
-					key: 'license_state',
-					label: 'License state',
-					value: 'California',
+					{
+						key: 'license_state',
+						label: 'License state',
+						value: 'California',
 					status: 'confirmed',
 					confidence: 0.97,
 					fieldClass: 'regulated',
 					sourceMessageIds: ['hm1'],
 					sourceArtifactIds: ['upload_1'],
-					updatedAt: '2026-03-09T13:55:00.000Z',
-					confirmedBy: 'user'
-				},
-				{
-					key: 'license_renewal_date',
-					label: 'License renewal date',
+						updatedAt: '2026-03-09T13:55:00.000Z',
+						confirmedBy: 'user'
+					},
+					{
+						key: 'specialty',
+						label: 'Specialty',
+						value: 'ER / ICU float pool',
+						status: 'confirmed',
+						confidence: 0.95,
+						fieldClass: 'regulated',
+						sourceMessageIds: ['hm1'],
+						sourceArtifactIds: ['upload_1'],
+						updatedAt: '2026-03-09T13:55:00.000Z',
+						confirmedBy: 'user'
+					},
+					{
+						key: 'license_number',
+						label: 'License number',
+						value: 'CA-RN ending 4821',
+						status: 'confirmed',
+						confidence: 0.96,
+						fieldClass: 'external_write_key',
+						sourceMessageIds: ['hm1'],
+						sourceArtifactIds: ['upload_1'],
+						updatedAt: '2026-03-09T13:55:00.000Z',
+						confirmedBy: 'user'
+					},
+					{
+						key: 'primary_phone',
+						label: 'Primary phone',
+						value: '(555) 014-4821',
+						status: 'confirmed',
+						confidence: 0.91,
+						fieldClass: 'contact',
+						sourceMessageIds: ['hm1'],
+						sourceArtifactIds: [],
+						updatedAt: '2026-03-09T13:55:00.000Z',
+						confirmedBy: 'user'
+					},
+					{
+						key: 'license_renewal_date',
+						label: 'License renewal date',
 					value: 'Conflict detected',
 					status: 'candidate',
 					confidence: 0.52,
@@ -444,6 +500,7 @@ const seedThreads: ConciergeThread[] = [
 			}
 		],
 		handoff: {
+			kind: 'escalation',
 			queueName: 'Nurse credentialing review',
 			eta: '12 minutes',
 			reasonCodes: ['conflicting_evidence', 'regulated_field', 'external_write_blocked'],
@@ -474,7 +531,21 @@ export const conciergeSettings = {
 		'Credential reconnects are routed through CREATE SOMETHING control-plane UX, not raw provider screens.'
 	],
 	controlPlaneLinks: [
-		{ label: 'Open MCP Access in .agency', href: '/settings' },
-		{ label: 'Review security posture in .agency', href: '/settings' }
+		{ label: 'Open .agency dashboard', href: buildControlPlaneBridgeHref('dashboard') },
+		{ label: 'Open .agency MCP access', href: buildControlPlaneBridgeHref('mcp-access') },
+		{ label: 'Open .agency security posture', href: buildControlPlaneBridgeHref('security') }
 	]
 };
+
+export function listSeedThreads() {
+	return conciergeDemoStore.list();
+}
+
+export function getSeedThread(threadId: string) {
+	return conciergeDemoStore.get(threadId);
+}
+
+export function getLatestSeedThread() {
+	return conciergeDemoStore.latest();
+}
+import { buildControlPlaneBridgeHref } from '$lib/control-plane';

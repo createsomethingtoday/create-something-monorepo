@@ -91,7 +91,7 @@
   /**
    * Sort insights by priority and type
    */
-  const sortedInsights = $derived(() => {
+  const sortedInsights = $derived.by(() => {
     return [...insights].sort((a, b) => {
       // Priority order: warning > opportunity > trend
       const typeOrder = { warning: 0, opportunity: 1, trend: 2 };
@@ -110,7 +110,7 @@
   let categoryFilter = $state('all');
   let competitionFilter = $state('all');
   let userCategoryFilter = $state<'all' | 'user'>('all');
-  const userCategories = $derived(() => new Set(userTemplates.map((t) => t.category)));
+  const userCategories = $derived.by(() => new Set(userTemplates.map((t) => t.category)));
 
   const gridSortOptions: Array<{ key: CategorySortKey; label: string }> = [
     { key: 'revenueRank', label: 'Rank' },
@@ -129,13 +129,13 @@
   ];
   let preferencesLoaded = $state(false);
 
-  const availableCategoryFilters = $derived(() => {
+  const availableCategoryFilters = $derived.by(() => {
     return Array.from(new Set(categories.map((entry) => entry.category))).sort((a, b) =>
       a.localeCompare(b)
     );
   });
 
-  const filteredCategories = $derived(() => {
+  const filteredCategories = $derived.by(() => {
     const query = searchQuery.trim().toLowerCase();
 
     return categories.filter((category) => {
@@ -153,14 +153,14 @@
         if (competitionLevel !== competitionFilter) return false;
       }
 
-      if (userCategoryFilter === 'user' && !userCategories().has(category.category)) return false;
+      if (userCategoryFilter === 'user' && !userCategories.has(category.category)) return false;
 
       return true;
     });
   });
 
-  const sortedCategories = $derived(() => {
-    return [...filteredCategories()].sort((a, b) => {
+  const sortedCategories = $derived.by(() => {
+    return [...filteredCategories].sort((a, b) => {
       const multiplier = sortDirection === 'asc' ? 1 : -1;
 
       if (sortKey === 'competition') {
@@ -189,8 +189,7 @@
   });
 
   const hasActiveFilters = $derived(
-    () =>
-      searchQuery.trim().length > 0 ||
+    searchQuery.trim().length > 0 ||
       categoryFilter !== 'all' ||
       competitionFilter !== 'all' ||
       userCategoryFilter !== 'all'
@@ -278,7 +277,7 @@
 
   $effect(() => {
     if (categoryFilter === 'all') return;
-    if (availableCategoryFilters().includes(categoryFilter)) return;
+    if (availableCategoryFilters.includes(categoryFilter)) return;
     categoryFilter = 'all';
   });
 
@@ -418,7 +417,7 @@
             aria-label="Filter by category"
           >
             <option value="all">All Categories</option>
-            {#each availableCategoryFilters() as categoryOption}
+            {#each availableCategoryFilters as categoryOption (categoryOption)}
               <option value={categoryOption}>{categoryOption}</option>
             {/each}
           </select>
@@ -441,7 +440,7 @@
             <option value="all">All Portfolios</option>
             <option value="user">Your Portfolio Categories</option>
           </select>
-          {#if hasActiveFilters()}
+          {#if hasActiveFilters}
             <button class="control-btn" type="button" onclick={clearFilters}> Clear </button>
           {/if}
         </div>
@@ -465,17 +464,17 @@
       </div>
 
       <p class="categories-meta">
-        Showing {sortedCategories().length} of {categories.length} subcategories
+        Showing {sortedCategories.length} of {categories.length} subcategories
       </p>
 
-      {#if sortedCategories().length === 0}
+      {#if sortedCategories.length === 0}
         <div class="categories-empty">No categories match your current filters.</div>
       {:else if viewMode === 'table'}
         <!-- Mobile Card Layout for Table View -->
         <div class="table-mobile-cards">
-          {#each sortedCategories() as category}
+          {#each sortedCategories as category (`${category.category}::${category.subcategory}`)}
             {@const competition = getCompetitionIndicator(category.templatesInSubcategory)}
-            {@const hasUserTemplate = userCategories().has(category.category)}
+            {@const hasUserTemplate = userCategories.has(category.category)}
             <div class="table-mobile-card" class:user-category={hasUserTemplate}>
               <div class="mobile-card-header">
                 <div class="mobile-card-title">
@@ -574,9 +573,9 @@
               </tr>
             </thead>
             <tbody>
-              {#each sortedCategories() as category}
+              {#each sortedCategories as category (`${category.category}::${category.subcategory}`)}
                 {@const competition = getCompetitionIndicator(category.templatesInSubcategory)}
-                {@const hasUserTemplate = userCategories().has(category.category)}
+                {@const hasUserTemplate = userCategories.has(category.category)}
                 <tr class:user-row={hasUserTemplate}>
                   <td>
                     <span class="category-stack">
@@ -614,9 +613,9 @@
         </div>
       {:else}
         <div class="categories-grid">
-          {#each sortedCategories() as category}
+          {#each sortedCategories as category (`${category.category}::${category.subcategory}`)}
             {@const competition = getCompetitionIndicator(category.templatesInSubcategory)}
-            {@const hasUserTemplate = userCategories().has(category.category)}
+            {@const hasUserTemplate = userCategories.has(category.category)}
             <div class="category-card" class:user-category={hasUserTemplate}>
               <div class="category-card-header">
                 <div class="category-info">
@@ -694,7 +693,7 @@
         <span class="insight-count">{insights.length}</span>
       </h3>
       <div class="insights-list">
-        {#each sortedInsights() as insight}
+        {#each sortedInsights as insight (insight.message)}
           <div class="insight-item insight-{insight.type}">
             <div class="insight-content">
               <span class="insight-label">{insight.type}</span>
@@ -714,7 +713,7 @@
         <span class="section-subtitle">Rolling 30-day window</span>
       </h3>
       <div class="leaderboard-grid">
-        {#each leaderboard.slice(0, 5) as template, index}
+        {#each leaderboard.slice(0, 5) as template, index (template.templateName)}
           {@const hasTemplateTrend =
             Array.isArray(template.trendData) && template.trendData.length >= 2}
           <div

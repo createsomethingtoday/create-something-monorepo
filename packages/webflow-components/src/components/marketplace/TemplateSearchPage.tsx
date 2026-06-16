@@ -739,6 +739,7 @@ export const TemplateSearchPage: React.FC<TemplateSearchPageProps> = ({
             interactionMode="filter"
             countMode="contextual"
             showSearch={false}
+            collapseOnMobile={false}
             enableAnalytics={enableAnalytics}
           />
         </aside>

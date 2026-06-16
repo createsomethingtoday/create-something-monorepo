@@ -362,7 +362,7 @@ export const ResiliencyAlertSignup: React.FC<ResiliencyAlertSignupProps> = ({
       onSubmit={handleSubmit}
       aria-describedby={message ? statusId : undefined}
     >
-      <style>{componentCss}</style>
+      <style dangerouslySetInnerHTML={{ __html: componentCss }} />
       <div className="cato-alert-signup__card">
         {eyebrow ? <div className="cato-alert-signup__pill">{eyebrow}</div> : null}
         {heading ? <h2 className="cato-alert-signup__heading">{heading}</h2> : null}

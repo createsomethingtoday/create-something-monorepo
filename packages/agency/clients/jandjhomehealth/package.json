@@ -1,0 +1,32 @@
+{
+  "name": "@create-something/jandjhomehealth",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite dev",
+    "build": "vite build",
+    "preview": "vite preview",
+    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+    "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+    "deploy": "pnpm build && node ../../../../scripts/run-wrangler.mjs pages deploy .svelte-kit/cloudflare --project-name=jandjhomehealth --branch=main",
+    "deploy:contact-capture": "pnpm build && node ../../../../scripts/run-wrangler.mjs pages deploy .svelte-kit/cloudflare --project-name=contact-capture --branch=main",
+    "migrate": "node ../../../../scripts/run-wrangler.mjs d1 migrations apply DB --remote --config wrangler.toml",
+    "migrate:list": "node ../../../../scripts/run-wrangler.mjs d1 migrations list DB --remote --config wrangler.toml",
+    "types": "node ../../../../scripts/run-wrangler.mjs types"
+  },
+  "dependencies": {
+    "lucide-svelte": "^0.562.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20241127.0",
+    "@sveltejs/adapter-cloudflare": "^6.0.0",
+    "@sveltejs/kit": "^2.15.1",
+    "@sveltejs/vite-plugin-svelte": "^5.0.3",
+    "svelte": "^5.16.0",
+    "svelte-check": "^4.1.1",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.6",
+    "wrangler": "^4.64.0"
+  }
+}

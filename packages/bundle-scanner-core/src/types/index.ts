@@ -1,6 +1,6 @@
 /**
  * Bundle Scanner Type Definitions
- * 
+ *
  * These types define the schema for rulesets, scan configuration,
  * findings, and reports used throughout the scanning process.
  */
@@ -25,7 +25,14 @@ export type Disposition = 'REJECTED' | 'ACTION_REQUIRED' | 'INFO';
 export type Confidence = 'HIGH' | 'MEDIUM' | 'LOW';
 
 /** Location type where a finding was detected */
-export type LocationType = 'CODE' | 'STRING' | 'COMMENT' | 'DOC' | 'TEST' | 'SOURCE_MAP' | 'UNKNOWN';
+export type LocationType =
+  | 'CODE'
+  | 'STRING'
+  | 'COMMENT'
+  | 'DOC'
+  | 'TEST'
+  | 'SOURCE_MAP'
+  | 'UNKNOWN';
 
 // ============================================================================
 // SCANNER CONFIGURATION
@@ -169,7 +176,7 @@ export interface Finding {
   confidence: Confidence;
   confidenceReason?: string;
   tags?: string[];
-  
+
   // Dynamic overrides based on specific finding context
   severity?: Severity;
   reviewBucket?: ReviewBucket;
@@ -190,6 +197,38 @@ export interface BundleSummary {
   skippedFileCount: number;
 }
 
+export type SourceMapArtifactStatus =
+  | 'not_provided'
+  | 'not_required'
+  | 'matched'
+  | 'partial'
+  | 'missing'
+  | 'mismatch'
+  | 'invalid';
+
+export interface SourceMapReference {
+  filePath: string;
+  target: string;
+  resolvedTarget?: string;
+  inline: boolean;
+}
+
+export interface SourceMapSummary {
+  status: SourceMapArtifactStatus;
+  artifactProvided: boolean;
+  publicExposure: boolean;
+  reviewCandidateCount: number;
+  sourceMapFileCount: number;
+  validSourceMapCount: number;
+  invalidSourceMaps: Array<{ path: string; error: string }>;
+  exposedSourceMapFiles: string[];
+  sourceMappingUrlReferences: SourceMapReference[];
+  matchedGeneratedFiles: string[];
+  missingGeneratedFiles: string[];
+  orphanSourceMaps: string[];
+  notes: string[];
+}
+
 /**
  * Grouped findings by rule
  */
@@ -206,7 +245,7 @@ export interface ScanReport {
   scanReportVersion: string;
   runId: string;
   createdAt: string;
-  
+
   policyMetadata: {
     rulesetVersion: string;
     configVersion: string;
@@ -214,9 +253,11 @@ export interface ScanReport {
 
   verdict: Verdict;
   verdictReasons: string[];
-  
+
   bundleSummary: BundleSummary;
-  
+
+  sourceMapSummary?: SourceMapSummary;
+
   findings: Record<string, FindingGroup>;
 }
 

@@ -7,7 +7,7 @@
     formatTimeUntil,
     type SubmissionState
   } from '$lib/stores/submission';
-  import { onMount, onDestroy } from 'svelte';
+  import { untrack } from 'svelte';
   import { toast } from '$lib/stores/toast';
   import {
     CheckCircle2,
@@ -28,10 +28,10 @@
 
   let isTooltipOpen = $state(false);
   let storeData = $state<SubmissionState | null>(null);
-  let countdownInterval: ReturnType<typeof setInterval> | null = null;
   let countdownStartedAt = $state<number | null>(null);
   let initialTimeUntilNextSlot = $state<number | null>(null);
   let displayedTimeUntilSlot = $state<string>('');
+  let hasRefreshedAfterCountdown = false;
 
   function syncDisplayedTimeUntilSlot(): void {
     if (
@@ -46,46 +46,53 @@
     const elapsedMs = Date.now() - countdownStartedAt;
     const remainingMs = Math.max(0, initialTimeUntilNextSlot - elapsedMs);
     displayedTimeUntilSlot = formatTimeUntil(remainingMs);
+
+    // The countdown lapsed: re-fetch once so the freed slot appears without a reload.
+    if (remainingMs === 0 && !hasRefreshedAfterCountdown) {
+      hasRefreshedAfterCountdown = true;
+      if (userEmail) {
+        submissionStore.refresh(userEmail);
+      }
+    }
   }
 
-  // Initialize store with assets and optionally fetch external data
-  onMount(() => {
+  // Keep the store in sync with the assets prop (covers mount and updates)
+  $effect(() => {
     submissionStore.setAssets(assets);
+  });
+
+  // Store subscription + 1s countdown tick, torn down together on unmount
+  $effect(() => {
     if (userEmail) {
       submissionStore.refresh(userEmail);
     }
 
-    // Subscribe to store updates
-    const unsubscribe = submissionStore.subscribe((data) => {
-      storeData = data;
+    // untrack: the store invokes the subscriber synchronously, and its state
+    // reads must not become dependencies of this effect (would re-subscribe
+    // and re-fetch on every countdown update).
+    const unsubscribe = untrack(() =>
+      submissionStore.subscribe((data) => {
+        storeData = data;
 
-      if (data.timeUntilNextSlot !== null && data.timeUntilNextSlot > 0) {
-        initialTimeUntilNextSlot = data.timeUntilNextSlot;
-        countdownStartedAt = Date.now();
-        syncDisplayedTimeUntilSlot();
-      } else {
-        initialTimeUntilNextSlot = null;
-        countdownStartedAt = null;
-        displayedTimeUntilSlot = '';
-      }
-    });
+        if (data.timeUntilNextSlot !== null && data.timeUntilNextSlot > 0) {
+          initialTimeUntilNextSlot = data.timeUntilNextSlot;
+          countdownStartedAt = Date.now();
+          hasRefreshedAfterCountdown = false;
+          syncDisplayedTimeUntilSlot();
+        } else {
+          initialTimeUntilNextSlot = null;
+          countdownStartedAt = null;
+          displayedTimeUntilSlot = '';
+        }
+      })
+    );
 
-    countdownInterval = setInterval(() => {
-      syncDisplayedTimeUntilSlot();
-    }, 1000);
+    const interval = setInterval(syncDisplayedTimeUntilSlot, 1000);
 
-    return unsubscribe;
-  });
-
-  onDestroy(() => {
-    if (countdownInterval) {
-      clearInterval(countdownInterval);
-    }
-  });
-
-  // Update store when assets change
-  $effect(() => {
-    submissionStore.setAssets(assets);
+    return () => {
+      unsubscribe();
+      clearInterval(interval);
+    };
   });
 
   // Get submission data from store with fallback

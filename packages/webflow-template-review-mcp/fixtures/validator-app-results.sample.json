@@ -1,0 +1,54 @@
+{
+  "url": "https://automatia-template.webflow.io",
+  "success": true,
+  "timestamp": "2026-05-27T19:55:00.000Z",
+  "summary": {
+    "errors": 2,
+    "warnings": 5,
+    "infos": 2,
+    "passedCategories": 7,
+    "failedCategories": 2
+  },
+  "categories": [
+    {
+      "category": "Assets & Images",
+      "passed": false,
+      "issues": [
+        {
+          "id": "oversized-assets",
+          "severity": "error",
+          "message": "5 assets exceed the 150KB Webflow Way limit",
+          "details": {
+            "assetCount": 57,
+            "limitKb": 150,
+            "bridgeToken": "fixture-bridge-token"
+          }
+        }
+      ],
+      "stats": {
+        "assetCount": 57
+      }
+    },
+    {
+      "category": "Content & Accessibility",
+      "passed": false,
+      "issues": [
+        {
+          "id": "copy-quality-typos",
+          "severity": "warning",
+          "message": "Visible typos and repeated copy should be reviewed before resubmission"
+        },
+        {
+          "id": "missing-secondary-h1",
+          "severity": "error",
+          "message": "Secondary pages are missing H1 headings"
+        }
+      ]
+    },
+    {
+      "category": "Interactions and GSAP",
+      "passed": true,
+      "issues": []
+    }
+  ]
+}

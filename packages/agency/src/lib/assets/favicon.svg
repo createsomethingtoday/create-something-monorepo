@@ -1,4 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
-  <rect width="32" height="32" fill="#000"/>
-  <text x="16" y="22" font-family="Stack Sans Notch, system-ui, sans-serif" font-size="20" font-weight="600" text-anchor="middle" fill="#fff">CS</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <rect width="32" height="32" fill="#000000"/>
+  <path d="M 16 4 L 26.39 10 L 16 16 L 5.61 10 Z" fill="#FFFFFF" fill-opacity="1"/>
+  <path d="M 5.61 10 L 16 16 L 16 28 L 5.61 22 Z" fill="#FFFFFF" fill-opacity="0.6"/>
+  <path d="M 16 16 L 26.39 10 L 26.39 22 L 16 28 Z" fill="#FFFFFF" fill-opacity="0.3"/>
 </svg>

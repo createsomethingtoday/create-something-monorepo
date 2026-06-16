@@ -31,6 +31,7 @@ export interface TemplateRouteState {
 
 interface ParseTemplateRouteOptions {
   href?: string;
+  useWindow?: boolean;
   defaultSort?: TemplateSort;
   pageKind?: TemplatePathKind;
   queryParam?: string;
@@ -170,6 +171,7 @@ export function readTemplateRouteHref(): string {
 export function parseTemplateRoute(options: ParseTemplateRouteOptions = {}): TemplateRouteState {
   const {
     href,
+    useWindow = true,
     defaultSort = 'popular',
     pageKind = 'auto',
     queryParam,
@@ -181,7 +183,7 @@ export function parseTemplateRoute(options: ParseTemplateRouteOptions = {}): Tem
     includeFilterParams = true,
   } = options;
 
-  if (typeof window === 'undefined' && !href) {
+  if ((!useWindow || typeof window === 'undefined') && !href) {
     const resolvedScope = scopeOverride && scopeOverride !== 'all' ? scopeOverride : 'all';
     const styleSlug = styleSlugOverride ? toTemplateStyleSlug(styleSlugOverride) : null;
     const tagSlug = tagSlugOverride ? normalizeTemplateSlug(tagSlugOverride) : null;

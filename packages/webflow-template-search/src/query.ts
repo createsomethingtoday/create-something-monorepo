@@ -1,59 +1,32 @@
-import type { SearchInclude, SearchParams, TemplateScope } from './types.js';
+import type { SearchParams, TemplateScope } from './types.js';
 import { clamp, ensureStringArray, normalizeSort } from './utils.js';
 
 const VALID_TYPES = new Set(['One Page', 'Multi Page', 'Multi Layout']);
 const VALID_SCOPES = new Set<TemplateScope>(['all', 'featured', 'free', 'landing_pages']);
-const VALID_INCLUDES = new Set<SearchInclude>(['items', 'facets', 'pills', 'count']);
-const DEFAULT_INCLUDE: SearchInclude[] = ['items', 'facets', 'pills'];
-const STYLE_SLUG_ALIASES: Record<string, string> = {
-  bold: 'bold-websites',
-  casual: 'casual-websites',
-  clean: 'clean-websites',
-  corporate: 'corporate-websites',
-  dark: 'dark-websites',
-  elegant: 'elegant-websites',
-  illustration: 'illustration-websites',
-  light: 'light-websites',
-  luxurious: 'luxury-websites',
-  luxury: 'luxury-websites',
-  minimal: 'minimal-websites',
-  organic: 'organic-websites',
-  retro: 'retro-websites',
-  sidebar: 'sidebar-websites',
-};
+const VALID_INCLUDES = new Set(['items', 'facets', 'pills']);
+const VALID_VIEWS = new Set(['full', 'grid']);
 
 function parseList(params: URLSearchParams, key: string): string[] {
   const values = params.getAll(key).flatMap((value) => value.split(','));
   return ensureStringArray(values);
 }
 
-function normalizeSlug(value: string): string {
-  return value
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-}
-
-function parseStyleList(params: URLSearchParams): string[] {
-  const values = ['styles', 'style_slug', 'style'].flatMap((key) => parseList(params, key));
-  return Array.from(new Set(values.map((value) => {
-    const slug = normalizeSlug(value);
-    return STYLE_SLUG_ALIASES[slug] ?? slug;
-  }).filter(Boolean)));
-}
-
-function parseInclude(params: URLSearchParams): SearchInclude[] {
-  const requested = parseList(params, 'include').filter((value): value is SearchInclude =>
-    VALID_INCLUDES.has(value as SearchInclude),
-  );
-  if (requested.length === 0) return DEFAULT_INCLUDE;
-  return Array.from(new Set(requested));
+function firstParam(params: URLSearchParams, keys: string[]): string | null {
+  for (const key of keys) {
+    const value = params.get(key)?.trim();
+    if (value) return value;
+  }
+  return null;
 }
 
 function toBoolean(value: string | null): boolean {
   if (!value) return false;
   return ['1', 'true', 'yes', 'on'].includes(value.toLowerCase());
+}
+
+function normalizeSlug(value: string | null): string | null {
+  const slug = value?.trim().toLowerCase().replace(/^\/+|\/+$/g, '');
+  return slug || null;
 }
 
 function parseScope(params: URLSearchParams): TemplateScope {
@@ -68,6 +41,29 @@ function parseScope(params: URLSearchParams): TemplateScope {
   return 'all';
 }
 
+function parseIncludes(params: URLSearchParams): SearchParams['include'] {
+  const rawIncludes = params
+    .getAll('include')
+    .flatMap((value) => value.split(','))
+    .map((value) => value.trim().toLowerCase())
+    .filter(Boolean);
+
+  if (rawIncludes.length === 0 || rawIncludes.includes('all')) {
+    return { items: true, facets: true, pills: true };
+  }
+
+  const includes = rawIncludes.filter((value) => VALID_INCLUDES.has(value));
+  if (includes.length === 0) {
+    return { items: true, facets: true, pills: true };
+  }
+
+  return {
+    items: includes.includes('items'),
+    facets: includes.includes('facets'),
+    pills: includes.includes('pills'),
+  };
+}
+
 export function parseSearchParams(url: URL, defaultPageSize = 24): SearchParams {
   const params = url.searchParams;
   const q = params.get('q') ?? params.get('query') ?? params.get('search');
@@ -77,12 +73,18 @@ export function parseSearchParams(url: URL, defaultPageSize = 24): SearchParams 
     scope: parseScope(params),
     categoryGroupSlug: params.get('category_group_slug')?.trim() || null,
     childCategorySlug: params.get('child_category_slug')?.trim() || null,
-    styles: parseStyleList(params),
+    creatorSlug: normalizeSlug(firstParam(params, ['creator_slug', 'designer_slug', 'creator', 'designer'])),
+    creatorRecordId: firstParam(params, ['creator_record_id', 'designer_record_id']),
+    styleSlug: firstParam(params, ['style_slug', 'style']),
+    tagSlug: firstParam(params, ['tag_slug', 'tag']),
+    styles: parseList(params, 'styles'),
+    tags: parseList(params, 'tags'),
     types: parseList(params, 'types').filter((value) => VALID_TYPES.has(value)),
     freeOnly: toBoolean(params.get('free_only')) || toBoolean(params.get('free')) || (params.get('pricing') ?? '') === 'free',
     sort: normalizeSort(params.get('sort')),
+    view: VALID_VIEWS.has(params.get('view') ?? '') ? (params.get('view') as SearchParams['view']) : 'full',
     page: clamp(Number(params.get('page') ?? 1) || 1, 1, 500),
     pageSize: clamp(Number(params.get('page_size') ?? defaultPageSize) || defaultPageSize, 1, 100),
-    include: parseInclude(params),
+    include: parseIncludes(params),
   };
 }

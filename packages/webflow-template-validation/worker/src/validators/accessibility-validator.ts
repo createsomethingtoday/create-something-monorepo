@@ -16,7 +16,8 @@ import {
 	ContrastAudit,
 	ParsedHTML
 } from '../types';
-import { fetchHTML, parseHTML } from '../utils/fetch-utils';
+import { fetchHTML, isPlatformManagedHeading, parseHTML } from '../utils/fetch-utils';
+import { analyzeHeadingSequence, extractDocumentOutline, visibleOutlineHeadings } from '../utils/document-outline';
 
 const WCAG_CONTRAST_RATIOS = {
 	AA_NORMAL: 4.5,
@@ -47,7 +48,7 @@ type RgbaColor = {
 	a: number;
 };
 
-const TEXT_ELEMENT_REGEX = /<(p|h1|h2|h3|h4|h5|h6|a|button|label|li|small|strong|em|figcaption|blockquote|span|div)([^>]*)>([\s\S]*?)<\/\1>/gi;
+const TEXT_ELEMENT_REGEX = /<(p|h1|h2|h3|h4|h5|h6|a|button|label|li|small|strong|em|figcaption|blockquote|span|div)\b([^>]*)>([\s\S]*?)<\/\1>/gi;
 
 const NAMED_COLORS: Record<string, string> = {
 	black: '#000000',
@@ -126,7 +127,7 @@ async function performAccessibilityAudit(parsedHTML: ParsedHTML): Promise<Access
 	const altTextCoverage = analyzeAltTextCoverage(parsedHTML);
 
 	// Analyze heading structure
-	const headingStructure = analyzeHeadingStructure(parsedHTML);
+	const headingStructure = await analyzeHeadingStructure(parsedHTML);
 
 	// Analyze form labels
 	const formLabels = analyzeFormLabels(parsedHTML);
@@ -149,6 +150,7 @@ async function analyzeColorContrast(parsedHTML: ParsedHTML): Promise<ContrastAud
 		return [];
 	}
 
+	const contrastHtml = stripIgnoredContrastContent(rawHtml);
 	const rules = parseCssRules(rawHtml);
 	const baseStyles = resolveBaseStyles(rawHtml, rules);
 	const audits: ContrastAudit[] = [];
@@ -156,10 +158,12 @@ async function analyzeColorContrast(parsedHTML: ParsedHTML): Promise<ContrastAud
 	let match: RegExpExecArray | null;
 	TEXT_ELEMENT_REGEX.lastIndex = 0;
 
-	while ((match = TEXT_ELEMENT_REGEX.exec(rawHtml)) !== null) {
+	while ((match = TEXT_ELEMENT_REGEX.exec(contrastHtml)) !== null) {
 		const tag = match[1].toLowerCase();
 		const attrs = parseAttributeString(match[2] || '');
 		const innerHtml = match[3] || '';
+		if (shouldSkipContrastElement(tag, attrs, innerHtml)) continue;
+
 		const text = stripTags(innerHtml).replace(/\s+/g, ' ').trim();
 
 		if (!text) continue;
@@ -209,14 +213,39 @@ async function analyzeColorContrast(parsedHTML: ParsedHTML): Promise<ContrastAud
 	return audits;
 }
 
+function stripIgnoredContrastContent(html: string): string {
+	return html
+		.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, ' ')
+		.replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, ' ')
+		.replace(/<noscript\b[^>]*>[\s\S]*?<\/noscript>/gi, ' ')
+		.replace(/<template\b[^>]*>[\s\S]*?<\/template>/gi, ' ')
+		.replace(/<pre\b[^>]*>[\s\S]*?<\/pre>/gi, ' ')
+		.replace(/<code\b[^>]*>[\s\S]*?<\/code>/gi, ' ');
+}
+
+function shouldSkipContrastElement(
+	tag: string,
+	attrs: Record<string, string>,
+	innerHtml: string
+): boolean {
+	if (tag === 'pre' || tag === 'code') return true;
+	if (/<(?:pre|code)\b/i.test(innerHtml)) return true;
+
+	const className = attrs.class || '';
+	return /\b(w-code-block|hljs|language-[^\s]+|token|code-block|install-code-block)\b/i.test(className);
+}
+
 function analyzeAltTextCoverage(parsedHTML: ParsedHTML): any {
-	const totalImages = parsedHTML.images.length;
+	let totalImages = 0;
 	let imagesWithAlt = 0;
-	const imagesWithoutAlt: Array<{ src: string; context: string; isDecorative: boolean }> = [];
+	const imagesWithoutAlt: Array<{ src: string; context: string; isDecorative: boolean; selector?: string }> = [];
 
 	parsedHTML.images.forEach((img, index) => {
+		if (shouldIgnoreImageForAltAudit(img)) return;
+
+		totalImages++;
 		const alt = img.getAttribute('alt');
-		const src = img.getAttribute('src') || 'unknown';
+		const src = getImageSource(img);
 
 		if (alt !== null) {
 			imagesWithAlt++;
@@ -227,7 +256,8 @@ function analyzeAltTextCoverage(parsedHTML: ParsedHTML): any {
 			imagesWithoutAlt.push({
 				src: src.substring(0, 100), // Truncate long URLs
 				context: determineImageContext(img, index),
-				isDecorative
+				isDecorative,
+				selector: buildImageSelector(img, index)
 			});
 		}
 	});
@@ -242,19 +272,30 @@ function analyzeAltTextCoverage(parsedHTML: ParsedHTML): any {
 	};
 }
 
-function analyzeHeadingStructure(parsedHTML: ParsedHTML): any {
-	const headings = parsedHTML.headings;
+async function analyzeHeadingStructure(parsedHTML: ParsedHTML): Promise<any> {
+	// Prefer the visible document outline (hidden-ancestor aware); fall back
+	// to the flat regex-extracted list when HTMLRewriter is unavailable.
+	const outline = await extractDocumentOutline(parsedHTML.rawHtml);
+	const headings = outline && outline.length > 0
+		? visibleOutlineHeadings(outline).map(heading => ({ level: heading.level, text: heading.text }))
+		: parsedHTML.headings
+			.filter(h => !isPlatformManagedHeading(h))
+			.map(h => ({
+				level: parseInt(h.tagName.substring(1), 10),
+				text: h.textContent?.trim() || ''
+			}));
+
 	const errors: Array<{ type: string; description: string; element: string }> = [];
+	const sequence = analyzeHeadingSequence(headings);
 
 	// Check for multiple H1s
-	const h1Count = headings.filter(h => h.tagName.toLowerCase() === 'h1').length;
-	if (h1Count > 1) {
+	if (sequence.h1Count > 1) {
 		errors.push({
 			type: 'multiple_h1',
-			description: `Found ${h1Count} H1 elements (should have exactly 1)`,
+			description: `Found ${sequence.h1Count} H1 elements (should have exactly 1)`,
 			element: 'h1'
 		});
-	} else if (h1Count === 0) {
+	} else if (sequence.h1Count === 0) {
 		errors.push({
 			type: 'multiple_h1',
 			description: 'No H1 element found (should have exactly 1)',
@@ -263,28 +304,21 @@ function analyzeHeadingStructure(parsedHTML: ParsedHTML): any {
 	}
 
 	// Check for skipped heading levels
-	const headingLevels = headings.map(h => parseInt(h.tagName.substring(1)));
-	for (let i = 1; i < headingLevels.length; i++) {
-		const current = headingLevels[i];
-		const previous = headingLevels[i - 1];
-
-		if (current > previous + 1) {
-			errors.push({
-				type: 'skipped_level',
-				description: `Heading level ${current} follows level ${previous} (skipped level ${previous + 1})`,
-				element: `h${current}`
-			});
-		}
+	for (const skip of sequence.skips) {
+		errors.push({
+			type: 'skipped_level',
+			description: `Heading level ${skip.toLevel} follows level ${skip.fromLevel} (skipped level ${skip.missingLevel})`,
+			element: `h${skip.toLevel}`
+		});
 	}
 
 	// Check for empty headings
 	headings.forEach(heading => {
-		const text = heading.textContent?.trim();
-		if (!text || text.length === 0) {
+		if (!heading.text || heading.text.length === 0) {
 			errors.push({
 				type: 'empty_heading',
 				description: 'Heading element has no text content',
-				element: heading.tagName.toLowerCase()
+				element: `h${heading.level}`
 			});
 		}
 	});
@@ -305,11 +339,14 @@ function analyzeFormLabels(parsedHTML: ParsedHTML): any {
 		const inputs = Array.from(form.querySelectorAll<HTMLElement>('input, textarea, select'));
 
 		inputs.forEach(input => {
-			totalInputs++;
-
 			const id = input.getAttribute('id');
-			const type = input.getAttribute('type') || 'text';
+			const type = (input.getAttribute('type') || 'text').toLowerCase();
 			const placeholder = input.getAttribute('placeholder');
+			if (input.tagName.toLowerCase() === 'input' && isNonLabelableInputType(type)) {
+				return;
+			}
+
+			totalInputs++;
 
 			// Check for associated label
 			const hasLabel = id && form.querySelector(`label[for="${id}"]`) !== null;
@@ -334,6 +371,10 @@ function analyzeFormLabels(parsedHTML: ParsedHTML): any {
 		inputsWithLabels,
 		unlabeledInputs
 	};
+}
+
+function isNonLabelableInputType(type: string): boolean {
+	return ['button', 'hidden', 'image', 'reset', 'submit'].includes(type);
 }
 
 function analyzeFocusManagement(parsedHTML: ParsedHTML): any {
@@ -846,14 +887,21 @@ function clamp(value: number, min: number, max: number): number {
 	return Math.min(Math.max(value, min), max);
 }
 
+const VIDEO_FALLBACK_ANCESTOR_SELECTOR = [
+	'.w-background-video',
+	'.w-video',
+	'[data-video-urls]',
+	'[data-video-url]',
+	'[data-poster-url]'
+].join(', ');
+
 function isLikelyDecorativeImage(img: any): boolean {
 	// Heuristics to determine if image is likely decorative
-	const src = img.getAttribute('src') || '';
+	const src = getImageSource(img);
 	const className = img.getAttribute('class') || '';
 
 	// Check for common decorative patterns
 	const decorativePatterns = [
-		/icon/i,
 		/decoration/i,
 		/ornament/i,
 		/divider/i,
@@ -867,15 +915,82 @@ function isLikelyDecorativeImage(img: any): boolean {
 	);
 }
 
-function determineImageContext(img: any, index: number): string {
-	const src = img.getAttribute('src') || '';
+function shouldIgnoreImageForAltAudit(img: any): boolean {
+	const alt = img.getAttribute?.('alt');
+	if (typeof alt === 'string' && alt.trim() === '') return true;
 
-	if (src.includes('hero') || index === 0) return 'hero-image';
-	if (src.includes('logo')) return 'logo';
-	if (src.includes('icon')) return 'icon';
-	if (src.includes('thumb') || src.includes('preview')) return 'thumbnail';
+	const role = (img.getAttribute?.('role') || '').toLowerCase();
+	if (role === 'presentation' || role === 'none') return true;
+
+	if ((img.getAttribute?.('aria-hidden') || '').toLowerCase() === 'true') return true;
+
+	return isLikelyPlatformVideoFallbackImage(img);
+}
+
+function isLikelyPlatformVideoFallbackImage(img: any): boolean {
+	if (typeof img.closest === 'function' && img.closest(VIDEO_FALLBACK_ANCESTOR_SELECTOR)) {
+		return true;
+	}
+
+	const className = String(img.getAttribute?.('class') || img.className || '').toLowerCase();
+	const src = getImageSource(img).toLowerCase();
+	const attrs = [
+		img.getAttribute?.('data-wf-bgvideo-fallback-img'),
+		img.getAttribute?.('data-poster-url'),
+		img.getAttribute?.('data-video-urls'),
+		img.getAttribute?.('data-video-url')
+	].filter(Boolean).join(' ').toLowerCase();
+
+	return (
+		/\b(w-background-video|w-video|video-fallback|fallback-image|poster-image)\b/.test(className) ||
+		/\b(video-fallback|fallback-image|poster-image)\b/.test(src) ||
+		isWebflowGeneratedVideoPosterSource(src) ||
+		attrs.length > 0
+	);
+}
+
+function isWebflowGeneratedVideoPosterSource(src: string): boolean {
+	return /(?:^|[/_-])[^/?#]*(?:[_-]poster|poster)\.\d+\.(?:jpe?g|png|webp|avif)(?:$|[?#])/.test(src);
+}
+
+function determineImageContext(img: any, index: number): string {
+	const src = getImageSource(img);
+	const className = String(img.getAttribute?.('class') || img.className || '').toLowerCase();
+
+	if (src.includes('hero') || className.includes('hero') || index === 0) return 'hero-image';
+	if (src.includes('logo') || className.includes('logo')) return 'logo';
+	if (src.includes('thumb') || src.includes('preview') || className.includes('thumb')) return 'thumbnail';
 
 	return 'content-image';
+}
+
+function getImageSource(img: any): string {
+	return img.getAttribute?.('src') || img.getAttribute?.('data-src') || img.src || 'unknown';
+}
+
+function buildImageSelector(img: any, index: number): string {
+	const id = img.getAttribute?.('id');
+	if (id) return `#${id}`;
+
+	const className = String(img.getAttribute?.('class') || '').trim();
+	if (className) {
+		const firstClass = className.split(/\s+/).find(Boolean);
+		if (firstClass) return `img.${firstClass}`;
+	}
+
+	const src = getImageSource(img);
+	if (src && src !== 'unknown') return `img[src*="${getAssetNameFromUrl(src)}"]`;
+
+	return `img:nth-of-type(${index + 1})`;
+}
+
+function getAssetNameFromUrl(value: string): string {
+	try {
+		const pathname = new URL(value, 'https://example.com').pathname;
+		return pathname.split('/').pop() || value;
+	} catch {
+		return value.split('/').pop() || value;
+	}
 }
 
 function createEmptyAudit(): AccessibilityAudit {

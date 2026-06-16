@@ -31,7 +31,18 @@ pnpm add @create-something/canon@workspace:*
 
 ```typescript
 // Core components
-import { Button, Card, SEO, Navigation, Footer } from '@create-something/canon';
+import {
+  Button,
+  Card,
+  SEO,
+  Navigation,
+  Footer,
+  ClearPageSection,
+  ClearProofStrip,
+  ClearStateRows,
+  ClearReceiptGrid,
+  ClearCtaBand
+} from '@create-something/canon';
 
 // Form components
 import { TextField, Select, Switch } from '@create-something/canon/components/form';
@@ -122,6 +133,29 @@ Canon uses CSS custom properties for all design decisions:
 | **Typography** | `--text-*`, `--font-*`, `--leading-*` |
 | **Spacing** | `--space-xs` through `--space-3xl` (Golden Ratio) |
 | **Glass** | `--glass-blur-*`, `--glass-bg-*`, `--liquid-glass-*` |
+| **Clear Communication** | `--color-clear-*`, `--radius-clear-*`, `--shadow-clear-*` |
+
+## Ona-Derived Clear Communication
+
+Canon uses Ona's public design/UI/UX direction as the communication reference for CREATE
+SOMETHING: plain first-screen claims, readable type, porcelain surfaces, visible proof artifacts,
+compact navigation, and restrained action states. `.agency` is the first verified rollout surface;
+the shared primitives are the path for the rest of CREATE SOMETHING as surfaces are migrated.
+
+```svelte
+<Navigation visualStyle="clear" {...navProps} />
+
+<ClearPageSection
+  variant="hero"
+  layout="split"
+  titleLevel="h1"
+  eyebrow="Governed workflows"
+  title="Put agents to work inside workflows you can govern."
+  description="Name the object, action, approval rule, stop condition, and receipt before an agent acts."
+/>
+
+<Footer visualStyle="clear" {...footerProps} />
+```
 
 ## Glass Design System
 

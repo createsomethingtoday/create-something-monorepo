@@ -50,17 +50,48 @@ export interface TemplateSearchResultsProps {
 export const TemplateSearchResults: React.FC<TemplateSearchResultsProps> = ({
   apiBase = '',
   categorySlug = '',
+  creatorSlug = '',
+  creatorRecordId = '',
+  styleSlug = '',
+  tagSlug = '',
   scopeOverride = 'all',
   defaultSort = 'popular',
   pageSize = 24,
+  emptyTitle = 'No matching templates',
+  emptyDescription = 'Try a broader search, remove a filter, or start again from the full template catalog.',
+  emptyActionLabel = 'Clear filters',
+  showEmptyRecommendations = true,
+  emptyRecommendationsTitle = 'Recently featured templates',
+  showCategoryMeta = false,
+  showTemplateType = false,
+  showPreviewLink = false,
+  showFeaturedBadge = false,
+  showMarketplaceSignals = false,
+  enableAnalytics = true,
 }) => {
   return (
     <TemplateGrid
       apiBase={apiBase}
       categorySlug={categorySlug}
+      creatorSlug={creatorSlug}
+      creatorRecordId={creatorRecordId}
+      styleSlug={styleSlug}
+      tagSlug={tagSlug}
       scopeOverride={scopeOverride}
       initialSort={defaultSort}
       pageSize={pageSize}
+      showEmptyState
+      emptyTitle={emptyTitle}
+      emptyDescription={emptyDescription}
+      emptyActionLabel={emptyActionLabel}
+      showEmptyRecommendations={showEmptyRecommendations}
+      emptyRecommendationsTitle={emptyRecommendationsTitle}
+      showCategoryMeta={showCategoryMeta}
+      showTemplateType={showTemplateType}
+      showPreviewLink={showPreviewLink}
+      showFeaturedBadge={showFeaturedBadge}
+      showMarketplaceSignals={showMarketplaceSignals}
+      enableAnalytics={enableAnalytics}
     />
   );
 };

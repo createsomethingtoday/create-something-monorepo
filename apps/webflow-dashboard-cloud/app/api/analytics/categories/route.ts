@@ -1,4 +1,6 @@
+import { enrichCategoriesWithHistory } from '@create-something/webflow-dashboard-core/marketplace-history';
 import { getSyncMetadata } from '@create-something/webflow-dashboard-core/sync-schedule';
+import { getOptionalEnv } from '../../../../lib/server/env';
 import { jsonNoStore } from '../../../../lib/server/responses';
 import { getUserFromRequest } from '../../../../lib/server/session';
 import { getServerAirtable } from '../../../../lib/server/airtable';
@@ -19,16 +21,24 @@ export async function GET(request: Request) {
   try {
     const airtable = await getServerAirtable();
     const categoryResult = await airtable.getCategoryPerformance();
-    const categories = categoryResult.records;
+    const env = await getOptionalEnv();
+    const categories = await enrichCategoriesWithHistory(
+      env?.DB,
+      categoryResult.records,
+      categoryResult.freshness
+    );
     const topCategories = categories.slice(0, 5);
     const totalSales = categories.reduce((sum, category) => sum + category.totalSales30d, 0);
     const avgRevenue =
       categories.length > 0
-        ? categories.reduce((sum, category) => sum + category.avgRevenuePerTemplate, 0) / categories.length
+        ? categories.reduce((sum, category) => sum + category.avgRevenuePerTemplate, 0) /
+          categories.length
         : 0;
 
     const lowestCompetition = categories
-      .filter((category) => category.templatesInSubcategory < 10 && category.avgRevenuePerTemplate > 0)
+      .filter(
+        (category) => category.templatesInSubcategory < 10 && category.avgRevenuePerTemplate > 0
+      )
       .sort((a, b) => a.templatesInSubcategory - b.templatesInSubcategory)
       .slice(0, 3)
       .map((category) => ({
@@ -61,7 +71,10 @@ export async function GET(request: Request) {
       actualSource: categoryResult.freshness.source
     });
 
-    const totalRevenue = categories.reduce((sum, category) => sum + (category.totalRevenue30d || 0), 0);
+    const totalRevenue = categories.reduce(
+      (sum, category) => sum + (category.totalRevenue30d || 0),
+      0
+    );
     const totalTemplates = categories.reduce(
       (sum, category) => sum + category.templatesInSubcategory,
       0

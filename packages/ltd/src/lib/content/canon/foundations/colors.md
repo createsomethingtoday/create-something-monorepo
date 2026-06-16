@@ -49,6 +49,25 @@ Three border levels for separation and emphasis.
 | `--color-border-emphasis` | `rgba(255,255,255,0.2)` | Hover states |
 | `--color-border-strong` | `rgba(255,255,255,0.3)` | Active states |
 
+## Clear Communication Palette
+
+The Ona-derived CREATE SOMETHING communication layer uses a light operational palette. Use these
+tokens for buyer-facing and operator-facing surfaces that need immediate comprehension.
+
+| Token | Value | Use |
+|-------|-------|-----|
+| `--color-clear-porcelain` | `#f9f9f9` | Page canvas |
+| `--color-clear-porcelain-soft` | `#f2f2f2` | Secondary bands and inactive states |
+| `--color-clear-panel` | `#ffffff` | Cards, panels, receipts |
+| `--color-clear-onyx` | `#0a0e19` | Primary text and dark CTAs |
+| `--color-clear-grey` | `#636363` | Secondary copy |
+| `--color-clear-grey-quiet` | `#818181` | Low-emphasis labels |
+| `--color-clear-border` | `#e1e1e1` | Hairline panel borders |
+| `--color-clear-border-strong` | `#cecece` | Focused panel borders |
+| `--color-clear-ocean` | `#0048ff` | System/action accent |
+| `--color-clear-moss` | `#1e3c2c` | Governed run/wait states |
+| `--color-clear-stop` | `#c41e3a` | Stop/block states |
+
 ## Semantic Colors
 
 Four colors that mean something: success, error, warning, info. Each comes with `-muted` and `-border` variants.

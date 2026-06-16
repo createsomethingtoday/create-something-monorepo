@@ -2,32 +2,31 @@ import type {
   AirtableAssetFields,
   AirtableListResponse,
   AirtableRecord,
-  CategoryGroupLookupValue,
   ChildCategoryLookupValue,
+  CreatorLookupValue,
   Env,
   LookupMaps,
   LookupValue,
 } from './types.js';
 import {
   canonicalizeCategoryGroupSlug,
-  deriveChildCategorySlug,
+  normalizeChildCategorySlug,
   normalizeStyleSlug,
   normalizeTagSlug,
 } from './slug.js';
 import { ensureStringArray, uniqueStrings } from './utils.js';
 
 const DEFAULT_ASSETS_TABLE_ID = 'tblRwzpWoLgE9MrUm';
-const DEFAULT_CATEGORY_GROUPS_TABLE_ID = 'tblZyofRhtLchXSH9';
-const DEFAULT_STYLES_TABLE_ID = 'tblG7E9LbQj0sBX0o';
 const DEFAULT_CHILD_CATEGORIES_TABLE_ID = 'tblWJXy3M6R8SeoFi';
+const DEFAULT_STYLES_TABLE_ID = 'tblG7E9LbQj0sBX0o';
 const DEFAULT_TAGS_TABLE_ID = 'tblb4969G7O75gVWV';
-const LOOKUP_MAPS_CACHE_TTL_MS = 60 * 60 * 1000;
+const DEFAULT_CREATORS_TABLE_ID = 'tbljt0plqxdMARZXb';
 
-let lookupMapsCache: { expiresAt: number; promise: Promise<LookupMaps> } | null = null;
-
-export function clearLookupMapsCache(): void {
-  lookupMapsCache = null;
-}
+export const DEFAULT_SEARCH_VISIBILITY_FIELDS = [
+  '👁️Search Visibility (🏗️ only)',
+  'Search Visibility',
+  'search_visibility',
+] as const;
 
 export const ASSET_FIELDS = [
   'Name',
@@ -37,7 +36,7 @@ export const ASSET_FIELDS = [
   'ℹ️Description (Long).html',
   '🪣Category Group(s) Display Name',
   '🪣Category Group(s) CMS Slug',
-  '🔍Algolia Child Category (🏗️ only)',
+  'ℹ️🪣Categories',
   'ℹ️🪣Categories (Text)',
   '🥞CMS Slug (from ℹ️🪣Categories)',
   'ℹ️👘Styles',
@@ -50,11 +49,11 @@ export const ASSET_FIELDS = [
   '📋 Unique Viewers',
   '📋 Cumulative Purchases',
   '🥞💲Template Price Filter (🏗️ only)',
+  '👀📅Decision Date (Override)',
   '🚀📅Published Date',
   '🥞CMS Slug',
-  'Slug (from 🥞CMS Sync Records)',
   '🥞CMS Slug (formula)',
-  '🥞CMS Record ID',
+  '🎨Creator',
   '🎨Creator Name',
   '🖼️Thumbnail Image',
   '🖼️Thumbnail Image (Secondary)',
@@ -75,217 +74,227 @@ function buildPublishedTemplateFormula(): string {
   return 'AND({⚙️🆎Type (Text)}="Template🏗️",{🚀Marketplace Status}="3️⃣Published🚀")';
 }
 
-function buildModifiedAfterFormula(cursor: string): string {
+function buildModifiedAfterFormula(cursor: string, until?: string): string {
+  if (until) {
+    return `AND(IS_AFTER({📅LMT}, DATETIME_PARSE("${cursor}")), NOT(IS_AFTER({📅LMT}, DATETIME_PARSE("${until}"))))`;
+  }
   return `IS_AFTER({📅LMT}, DATETIME_PARSE("${cursor}"))`;
 }
 
-function escapeFormulaString(value: string): string {
-  return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+function buildRecordIdFormula(recordIds: string[]): string {
+  for (const id of recordIds) {
+    if (!/^rec[A-Za-z0-9]+$/.test(id)) {
+      throw new Error(`Invalid Airtable record ID: ${id}`);
+    }
+  }
+  const clauses = recordIds.map((id) => `RECORD_ID()="${id}"`);
+  return clauses.length === 1 ? clauses[0] : `OR(${clauses.join(',')})`;
 }
 
-function buildTemplateSlugFormula(templateSlug: string): string {
-  const escaped = escapeFormulaString(templateSlug);
-  return `OR({🥞CMS Slug}="${escaped}",{🥞CMS Slug (formula)}="${escaped}")`;
-}
-
-function splitLookupText(value: unknown): string[] {
-  if (typeof value !== 'string') return ensureStringArray(value);
-  return value
-    .split(',')
-    .map((entry) => entry.trim())
-    .filter(Boolean);
-}
-
-function normalizeTaxonomyDisplayName(value: string): string {
-  return value
-    .replace(/\bIt\b/g, 'IT')
-    .replace(/\bUi\b/g, 'UI')
-    .replace(/\bHr\b/g, 'HR')
-    .replace(/\bSaas\b/g, 'SaaS')
-    .replace(/\bNfts\b/g, 'NFTs')
-    .replace(/\bNft\b/g, 'NFT')
-    .replace(/\bAi\b/g, 'AI');
+function attachmentUrl(value: unknown): string | null {
+  if (!Array.isArray(value) || value.length === 0) return null;
+  const first = value[0] as { url?: string } | undefined;
+  return first?.url ?? null;
 }
 
 interface FetchOptions {
   tableId: string;
   fields: string[];
+  optionalFields?: string[];
   formula?: string;
   sortField?: string;
-  pageSize?: number;
 }
 
-export interface AirtableRecordsPage<TFields extends Record<string, unknown>> {
-  records: Array<AirtableRecord<TFields>>;
-  offset?: string;
+function parseConfiguredSearchVisibilityFields(env: Env): string[] {
+  const configured = (env.AIRTABLE_SEARCH_VISIBILITY_FIELDS ?? '')
+    .split(',')
+    .map((field) => field.trim())
+    .filter(Boolean);
+
+  return uniqueStrings([...configured, ...DEFAULT_SEARCH_VISIBILITY_FIELDS]);
 }
 
-async function fetchAirtableRecordsPage<TFields extends Record<string, unknown>>(
-  env: Env,
-  options: FetchOptions & { offset?: string },
-): Promise<AirtableRecordsPage<TFields>> {
-  assertAirtableConfigured(env);
-
-  const params = new URLSearchParams();
-  params.set('pageSize', String(Math.min(Math.max(options.pageSize ?? 100, 1), 100)));
-  options.fields.forEach((field) => params.append('fields[]', field));
-  if (options.formula) params.set('filterByFormula', options.formula);
-  if (options.sortField) {
-    params.set('sort[0][field]', options.sortField);
-    params.set('sort[0][direction]', 'asc');
-  }
-  if (options.offset) params.set('offset', options.offset);
-
-  const url = `https://api.airtable.com/v0/${env.AIRTABLE_BASE_ID}/${encodeURIComponent(options.tableId)}?${params.toString()}`;
-  const response = await fetch(url, {
-    headers: {
-      Authorization: `Bearer ${env.AIRTABLE_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`Airtable request failed (${response.status}): ${await response.text()}`);
-  }
-
-  const payload = (await response.json()) as AirtableListResponse<TFields>;
-  return { records: payload.records, offset: payload.offset };
+function isMissingOptionalFieldError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  return /unknown field|UNKNOWN_FIELD|INVALID_REQUEST_UNKNOWN_FIELD_NAME/i.test(message);
 }
 
 async function fetchAirtableRecords<TFields extends Record<string, unknown>>(
   env: Env,
   options: FetchOptions,
 ): Promise<Array<AirtableRecord<TFields>>> {
-  const records: Array<AirtableRecord<TFields>> = [];
-  let offset: string | undefined;
+  assertAirtableConfigured(env);
 
-  do {
-    const payload = await fetchAirtableRecordsPage<TFields>(env, { ...options, offset });
-    records.push(...payload.records);
-    offset = payload.offset;
-  } while (offset);
+  async function requestRecords(fields: string[]): Promise<Array<AirtableRecord<TFields>>> {
+    const records: Array<AirtableRecord<TFields>> = [];
+    let offset: string | undefined;
 
-  return records;
+    do {
+      const params = new URLSearchParams();
+      params.set('pageSize', '100');
+      fields.forEach((field) => params.append('fields[]', field));
+      if (options.formula) params.set('filterByFormula', options.formula);
+      if (options.sortField) {
+        params.set('sort[0][field]', options.sortField);
+        params.set('sort[0][direction]', 'asc');
+      }
+      if (offset) params.set('offset', offset);
+
+      const url = `https://api.airtable.com/v0/${env.AIRTABLE_BASE_ID}/${encodeURIComponent(options.tableId)}?${params.toString()}`;
+      const response = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${env.AIRTABLE_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Airtable request failed (${response.status}): ${await response.text()}`);
+      }
+
+      const payload = (await response.json()) as AirtableListResponse<TFields>;
+      records.push(...payload.records);
+      offset = payload.offset;
+    } while (offset);
+
+    return records;
+  }
+
+  const optionalFields = options.optionalFields ?? [];
+  if (optionalFields.length === 0) return requestRecords(options.fields);
+
+  try {
+    return await requestRecords(uniqueStrings([...options.fields, ...optionalFields]));
+  } catch (error) {
+    if (!isMissingOptionalFieldError(error)) throw error;
+    return requestRecords(options.fields);
+  }
+}
+
+// Minimal field list for periodic image URL refresh — much cheaper than full ASSET_FIELDS.
+const IMAGE_REFRESH_FIELDS = [
+  '⚙️🆎Type (Text)',
+  '🚀Marketplace Status',
+  '🖼️Thumbnail Image',
+  '🖼️Thumbnail Image (Secondary)',
+  '🖼️Carousel Images',
+];
+
+interface AirtableCategoryFields extends Record<string, unknown> {
+  Category?: string;
+  'Display name'?: string;
+  'Parent Category'?: string[] | string;
+  'Parent Category Name'?: string;
+  '🪣Category Groups'?: string[] | string;
+  Tier?: string;
+  type?: string;
+}
+
+export async function fetchPublishedTemplateImageFields(
+  env: Env,
+): Promise<Array<AirtableRecord<AirtableAssetFields>>> {
+  return fetchAirtableRecords<AirtableAssetFields>(env, {
+    tableId: env.AIRTABLE_ASSETS_TABLE_ID ?? DEFAULT_ASSETS_TABLE_ID,
+    fields: IMAGE_REFRESH_FIELDS,
+    formula: buildPublishedTemplateFormula(),
+  });
 }
 
 export async function fetchPublishedTemplateAssets(env: Env): Promise<Array<AirtableRecord<AirtableAssetFields>>> {
   return fetchAirtableRecords<AirtableAssetFields>(env, {
     tableId: env.AIRTABLE_ASSETS_TABLE_ID ?? DEFAULT_ASSETS_TABLE_ID,
     fields: ASSET_FIELDS,
+    optionalFields: parseConfiguredSearchVisibilityFields(env),
     formula: buildPublishedTemplateFormula(),
     sortField: '📅LMT',
-  });
-}
-
-export async function fetchPublishedTemplateAssetsPage(
-  env: Env,
-  offset?: string,
-): Promise<AirtableRecordsPage<AirtableAssetFields>> {
-  return fetchAirtableRecordsPage<AirtableAssetFields>(env, {
-    tableId: env.AIRTABLE_ASSETS_TABLE_ID ?? DEFAULT_ASSETS_TABLE_ID,
-    fields: ASSET_FIELDS,
-    formula: buildPublishedTemplateFormula(),
-    sortField: '📅LMT',
-    pageSize: 100,
-    offset,
   });
 }
 
 export async function fetchModifiedAssetsSince(
   env: Env,
   cursor: string,
+  until?: string,
 ): Promise<Array<AirtableRecord<AirtableAssetFields>>> {
   return fetchAirtableRecords<AirtableAssetFields>(env, {
     tableId: env.AIRTABLE_ASSETS_TABLE_ID ?? DEFAULT_ASSETS_TABLE_ID,
     fields: ASSET_FIELDS,
-    formula: buildModifiedAfterFormula(cursor),
+    optionalFields: parseConfiguredSearchVisibilityFields(env),
+    formula: buildModifiedAfterFormula(cursor, until),
     sortField: '📅LMT',
   });
 }
 
-export async function fetchTemplateAssetBySlug(
+export async function fetchAssetRecordsByIds(
   env: Env,
-  templateSlug: string,
+  recordIds: string[],
 ): Promise<Array<AirtableRecord<AirtableAssetFields>>> {
+  const uniqueIds = uniqueStrings(recordIds.map((id) => id.trim()).filter(Boolean));
+  if (uniqueIds.length === 0) return [];
+
   return fetchAirtableRecords<AirtableAssetFields>(env, {
     tableId: env.AIRTABLE_ASSETS_TABLE_ID ?? DEFAULT_ASSETS_TABLE_ID,
     fields: ASSET_FIELDS,
-    formula: buildTemplateSlugFormula(templateSlug),
+    optionalFields: parseConfiguredSearchVisibilityFields(env),
+    formula: buildRecordIdFormula(uniqueIds),
+    sortField: '📅LMT',
   });
 }
 
 export async function loadLookupMaps(env: Env): Promise<LookupMaps> {
-  const now = Date.now();
-  if (lookupMapsCache && lookupMapsCache.expiresAt > now) {
-    return lookupMapsCache.promise;
-  }
-
-  const promise = loadLookupMapsUncached(env);
-  lookupMapsCache = { expiresAt: now + LOOKUP_MAPS_CACHE_TTL_MS, promise };
-
-  try {
-    return await promise;
-  } catch (error) {
-    if (lookupMapsCache?.promise === promise) {
-      lookupMapsCache = null;
-    }
-    throw error;
-  }
-}
-
-async function loadLookupMapsUncached(env: Env): Promise<LookupMaps> {
-  const [categoryGroups, styles, childCategories, tags] = await Promise.all([
-    fetchAirtableRecords(env, {
-      tableId: env.AIRTABLE_CATEGORY_GROUPS_TABLE_ID ?? DEFAULT_CATEGORY_GROUPS_TABLE_ID,
-      fields: [
-        'Name',
-        'Display Name',
-        '🥞CMS Slug',
-        'ℹ️Description (Short)',
-        'ℹ️Description (Landing page)',
-        '❓Related Keywords for Algolia',
-        '🥞CMS Status',
-      ],
+  const [childCategories, styles, tags, creators] = await Promise.all([
+    fetchAirtableRecords<AirtableCategoryFields>(env, {
+      tableId: env.AIRTABLE_CHILD_CATEGORIES_TABLE_ID ?? DEFAULT_CHILD_CATEGORIES_TABLE_ID,
+      fields: ['Category', 'Display name', 'Parent Category', 'Parent Category Name', '🪣Category Groups', 'Tier', 'type'],
     }),
     fetchAirtableRecords(env, {
       tableId: env.AIRTABLE_STYLES_TABLE_ID ?? DEFAULT_STYLES_TABLE_ID,
       fields: ['Name', '🥞CMS Slug'],
     }),
     fetchAirtableRecords(env, {
-      tableId: env.AIRTABLE_CHILD_CATEGORIES_TABLE_ID ?? DEFAULT_CHILD_CATEGORIES_TABLE_ID,
-      fields: ['Category', 'Display name', 'Parent Category Name', '🪣Category Groups', 'Related Keywords', 'Tier', 'type'],
-    }),
-    fetchAirtableRecords(env, {
       tableId: env.AIRTABLE_TAGS_TABLE_ID ?? DEFAULT_TAGS_TABLE_ID,
       fields: ['Name', '🥞CMS Slug'],
     }),
+    fetchAirtableRecords(env, {
+      tableId: DEFAULT_CREATORS_TABLE_ID,
+      fields: ['Name', '🥞CMS Slug', '🖼️Avatar (Primary)', '🖼️Avatar Alt Text'],
+    }),
   ]);
 
-  const categoryGroupMap = new Map<string, CategoryGroupLookupValue>();
-  for (const record of categoryGroups) {
-    const name = String(record.fields.Name ?? '').trim();
-    const displayName = normalizeTaxonomyDisplayName(String(record.fields['Display Name'] ?? name).trim());
-    if (!displayName) continue;
-    const status = typeof record.fields['🥞CMS Status'] === 'string' ? record.fields['🥞CMS Status'].trim() : null;
-    const normalizedStatus = status?.toLowerCase() ?? '';
-    if (name.toLowerCase().startsWith('legacy ') || (normalizedStatus && normalizedStatus !== 'active')) continue;
-    const providedSlug = typeof record.fields['🥞CMS Slug'] === 'string' ? record.fields['🥞CMS Slug'] : null;
-    const slug = canonicalizeCategoryGroupSlug(displayName);
-    const value: CategoryGroupLookupValue = {
-      id: record.id,
-      name: displayName,
-      displayName,
-      slug,
-      cmsSlug: providedSlug,
-      descriptionShort: String(record.fields['ℹ️Description (Short)'] ?? '').trim(),
-      descriptionLandingPage: String(record.fields['ℹ️Description (Landing page)'] ?? '').trim(),
-      relatedKeywords: splitLookupText(record.fields['❓Related Keywords for Algolia']),
-      status,
-    };
+  const childCategoryRecordsById = new Map(childCategories.map((record) => [record.id, record]));
+  const childCategoryMap = new Map<string, ChildCategoryLookupValue>();
 
-    for (const alias of [record.id, name, displayName, slug, providedSlug ?? '']) {
-      if (alias) categoryGroupMap.set(alias, value);
-    }
+  function categoryDisplayName(record: AirtableRecord<AirtableCategoryFields> | undefined): string {
+    if (!record) return '';
+    const displayName = typeof record.fields['Display name'] === 'string' ? record.fields['Display name'].trim() : '';
+    const category = typeof record.fields.Category === 'string' ? record.fields.Category.trim() : '';
+    return displayName || category;
+  }
+
+  for (const record of childCategories) {
+    const tier = typeof record.fields.Tier === 'string' ? record.fields.Tier.toLowerCase() : '';
+    const type = typeof record.fields.type === 'string' ? record.fields.type.toLowerCase() : '';
+    if (tier !== 'child' && type !== 'category') continue;
+
+    const name = categoryDisplayName(record);
+    if (!name) continue;
+
+    const parentIds = ensureStringArray(record.fields['Parent Category']);
+    const parentRecord = parentIds[0] ? childCategoryRecordsById.get(parentIds[0]) : undefined;
+    const parentName =
+      categoryDisplayName(parentRecord) ||
+      (typeof record.fields['Parent Category Name'] === 'string' ? record.fields['Parent Category Name'].trim() : '');
+    const fallbackGroupSlugs = ensureStringArray(record.fields['🪣Category Groups']).map((entry) =>
+      canonicalizeCategoryGroupSlug(entry),
+    );
+    const categoryGroupSlug = parentName ? canonicalizeCategoryGroupSlug(parentName) : fallbackGroupSlugs[0] ?? null;
+
+    childCategoryMap.set(record.id, {
+      id: record.id,
+      name,
+      slug: normalizeChildCategorySlug(name),
+      categoryGroupName: parentName || null,
+      categoryGroupSlug,
+    });
   }
 
   const styleMap = new Map<string, LookupValue>();
@@ -300,37 +309,6 @@ async function loadLookupMapsUncached(env: Env): Promise<LookupMaps> {
     });
   }
 
-  const childCategoryMap = new Map<string, ChildCategoryLookupValue>();
-  for (const record of childCategories) {
-    const category = String(record.fields.Category ?? '').trim();
-    const displayName = normalizeTaxonomyDisplayName(String(record.fields['Display name'] ?? category).trim());
-    const parentCategoryName = String(record.fields['Parent Category Name'] ?? '').trim();
-    const tier = typeof record.fields.Tier === 'string' ? record.fields.Tier.trim() : null;
-    const type = typeof record.fields.type === 'string' ? record.fields.type.trim() : null;
-    const name = displayName || category;
-    if (!name) continue;
-    const isCategoryGroup = tier?.toLowerCase() === 'parent' || type?.toLowerCase() === 'group';
-
-    const value: ChildCategoryLookupValue = {
-      id: record.id,
-      name,
-      slug: deriveChildCategorySlug(name),
-      category,
-      displayName: name,
-      parentCategoryName,
-      descriptionShort: '',
-      categoryGroups: uniqueStrings(splitLookupText(record.fields['🪣Category Groups']).map((entry) => canonicalizeCategoryGroupSlug(entry))),
-      relatedKeywords: splitLookupText(record.fields['Related Keywords']),
-      tier,
-      type,
-      isCategoryGroup,
-    };
-
-    for (const alias of [record.id, category, displayName, name, value.slug]) {
-      if (alias) childCategoryMap.set(alias, value);
-    }
-  }
-
   const tagMap = new Map<string, LookupValue>();
   for (const record of tags) {
     const name = String(record.fields.Name ?? '').trim();
@@ -343,10 +321,27 @@ async function loadLookupMapsUncached(env: Env): Promise<LookupMaps> {
     });
   }
 
+  const creatorMap = new Map<string, CreatorLookupValue>();
+  for (const record of creators) {
+    const name = String(record.fields.Name ?? '').trim();
+    if (!name) continue;
+    const slug = typeof record.fields['🥞CMS Slug'] === 'string' ? record.fields['🥞CMS Slug'].trim() : '';
+    const avatarValue = record.fields['🖼️Avatar (Primary)'];
+    const avatarAltValue = record.fields['🖼️Avatar Alt Text'];
+    creatorMap.set(record.id, {
+      id: record.id,
+      name,
+      slug,
+      profileUrl: slug ? `https://webflow.com/templates/designers/${slug}` : '',
+      avatarUrl: attachmentUrl(avatarValue),
+      avatarAlt: typeof avatarAltValue === 'string' ? avatarAltValue.trim() || null : null,
+    });
+  }
+
   return {
-    categoryGroups: categoryGroupMap,
-    styles: styleMap,
     childCategories: childCategoryMap,
+    styles: styleMap,
     tags: tagMap,
+    creators: creatorMap,
   };
 }

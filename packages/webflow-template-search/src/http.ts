@@ -9,8 +9,20 @@ function getAllowedOrigin(request: Request, env: Env): string {
     .map((entry) => entry.trim())
     .filter(Boolean);
 
-  if (allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
-    return origin;
+  if (allowedOrigins.length === 0) return origin;
+
+  for (const pattern of allowedOrigins) {
+    if (pattern === origin) return origin;
+    // Wildcard subdomain: *.webflow.com matches template-marketplace.design.webflow.com etc.
+    if (pattern.startsWith('*.')) {
+      const suffix = pattern.slice(1); // e.g. ".webflow.com"
+      try {
+        const url = new URL(origin);
+        if (url.hostname === suffix.slice(1) || url.hostname.endsWith(suffix)) return origin;
+      } catch {
+        // not a valid URL, skip
+      }
+    }
   }
 
   return '*';
@@ -22,6 +34,9 @@ export function withCorsHeaders(request: Request, env: Env, headers: HeadersInit
   base.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   base.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-API-Key, Accept');
   base.set('Access-Control-Max-Age', '86400');
+  // ACAO echoes the request Origin while responses are publicly cacheable;
+  // without Vary a shared cache can serve one origin's CORS headers to another.
+  base.append('Vary', 'Origin');
   return base;
 }
 

@@ -16,6 +16,78 @@ import {
 	type Lead
 } from '$lib/funnel';
 
+interface FunnelDatabase {
+	prepare(query: string): {
+		bind(...args: unknown[]): {
+			all<T = unknown>(): Promise<{ results?: T[] }>;
+			run(): Promise<unknown>;
+		};
+	};
+}
+
+async function syncDerivedFunnelMetrics(
+	db: FunnelDatabase,
+	startDate: string,
+	endDate: string
+): Promise<void> {
+	const result = await db
+		.prepare(
+			`SELECT
+				date(created_at) AS date,
+				SUM(CASE WHEN category = 'navigation' AND action = 'page_view' THEN 1 ELSE 0 END) AS website_visits,
+				COUNT(DISTINCT CASE WHEN category = 'navigation' AND action = 'page_view' THEN session_id END) AS website_unique_visitors,
+				SUM(CASE WHEN category = 'conversion' AND action IN ('content_download', 'lead_magnet_download') THEN 1 ELSE 0 END) AS content_downloads,
+				SUM(CASE WHEN category = 'conversion' AND action = 'booking_completed' THEN 1 ELSE 0 END) AS discovery_calls_scheduled
+			FROM unified_events
+			WHERE property = 'agency'
+			  AND date(created_at) >= ?
+			  AND date(created_at) <= ?
+			GROUP BY date(created_at)`
+		)
+		.bind(startDate, endDate)
+		.all<{
+			date: string;
+			website_visits: number;
+			website_unique_visitors: number;
+			content_downloads: number;
+			discovery_calls_scheduled: number;
+		}>();
+
+	const now = new Date().toISOString();
+	for (const row of result.results ?? []) {
+		await db
+			.prepare(
+				`INSERT INTO funnel_metrics (
+					id, date,
+					website_visits, website_unique_visitors, content_downloads, discovery_calls_scheduled,
+					notes, created_at, updated_at
+				) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+				ON CONFLICT(date) DO UPDATE SET
+					website_visits = excluded.website_visits,
+					website_unique_visitors = excluded.website_unique_visitors,
+					content_downloads = excluded.content_downloads,
+					discovery_calls_scheduled = excluded.discovery_calls_scheduled,
+					notes = CASE
+						WHEN funnel_metrics.notes IS NULL OR funnel_metrics.notes = '' THEN excluded.notes
+						ELSE funnel_metrics.notes
+					END,
+					updated_at = excluded.updated_at`
+			)
+			.bind(
+				generateId('fm'),
+				row.date,
+				row.website_visits ?? 0,
+				row.website_unique_visitors ?? 0,
+				row.content_downloads ?? 0,
+				row.discovery_calls_scheduled ?? 0,
+				'Derived from unified analytics events.',
+				now,
+				now
+			)
+			.run();
+	}
+}
+
 export const GET: RequestHandler = async ({ url, platform }) => {
 	const db = platform?.env?.DB;
 	if (!db) {
@@ -41,6 +113,8 @@ export const GET: RequestHandler = async ({ url, platform }) => {
 		.split('T')[0];
 
 	try {
+		await syncDerivedFunnelMetrics(db, startDate, endDate);
+
 		// Get current period metrics
 		const currentMetrics = await db
 			.prepare(

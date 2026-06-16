@@ -136,3 +136,18 @@ Common library IDs used here:
 - **Priority ranking**: Linear project views and `pnpm linear:ready`
 
 Linear replaces Loom in this repository. Use Linear for shared and repo-local task state.
+
+## Pi packages
+
+The monorepo contains publishable Pi coding agent packages:
+
+| Package | Scope | Purpose |
+|---------|-------|--------|
+| `packages/pi-three-tier-framework` | Public | Three-Tier Framework as installable agent knowledge |
+| `packages/pi-policy-os` | Public | Policy OS governance starter with quality gates |
+| `packages/pi-halfdozen` | Private | Half Dozen fleet knowledge and client management |
+| `packages/pi-webflow` | Private | Webflow fleet knowledge and template review |
+
+Public packages are discovery wedges — developers install them, learn the framework, and become `.agency` leads. See `docs/AGENCY_CODEX_VECTOR_STRATEGY.md` for the delivery vector model.
+
+The project-local `.pi/` directory loads skills and prompts from all three packages via `settings.json`.

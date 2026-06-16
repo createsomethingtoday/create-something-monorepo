@@ -1,0 +1,32 @@
+name = "abundance-jobs-mcp"
+main = "index.ts"
+compatibility_date = "2026-06-03"
+compatibility_flags = ["nodejs_compat"]
+account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
+workers_dev = true
+
+[observability]
+enabled = true
+
+[vars]
+BRAINTRUST_PROJECT_NAME = "CREATE SOMETHING"
+MCP_ACCOUNT_ID = "abundance-jobs-agent"
+ACTIVE_JOBS_RAPIDAPI_HOST = "active-jobs-db.p.rapidapi.com"
+
+[[durable_objects.bindings]]
+name = "MCP_OBJECT"
+class_name = "AbundanceJobsMCP"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["AbundanceJobsMCP"]
+
+[[d1_databases]]
+binding = "JOBS_DB"
+database_name = "create-something-db"
+database_id = "a74e70ae-6a94-43da-905e-b90719c8dfd2"
+
+[[d1_databases]]
+binding = "TELEMETRY_DB"
+database_name = "cs-telemetry"
+database_id = "f710641a-0c85-4a7b-bb73-2c16f8d024c3"

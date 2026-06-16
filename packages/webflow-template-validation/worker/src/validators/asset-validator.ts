@@ -2,7 +2,7 @@
  * Asset Validator - Comprehensive asset analysis for Webflow templates
  *
  * Validates:
- * - File sizes (150KB Webflow Way limit)
+ * - File sizes (150KB optimization target, 4MB maximum)
  * - Image optimization and formats
  * - Unused asset detection
  * - Premium/trademarked content detection
@@ -20,7 +20,7 @@ import {
 import { fetchHTML, parseHTML, fetchAsset, fetchAssetMetadata } from '../utils/fetch-utils';
 import { analyzeImageOptimization, analyzeImageOptimizationFromMetadata } from '../utils/asset-utils';
 
-const WEBFLOW_WAY_SIZE_LIMIT = 150 * 1024; // 150KB in bytes
+const WEBFLOW_WAY_COMPRESSION_TARGET = 150 * 1024; // 150KB in bytes, where possible
 const EXTREME_SIZE_LIMIT = 4 * 1024 * 1024; // 4MB in bytes
 
 // Cloudflare Workers limit: ~50 subrequests per request
@@ -58,8 +58,8 @@ export async function validateAssetBatch(
 	});
 
 	// Separate SVGs (no fetch needed) from raster images
-	const svgAssets = webflowAssets.filter(a => a.mimeType?.includes('svg'));
-	const rasterAssets = webflowAssets.filter(a => !a.mimeType?.includes('svg'));
+	const svgAssets = webflowAssets.filter(isSvgAssetLike);
+	const rasterAssets = webflowAssets.filter(a => !isSvgAssetLike(a));
 
 	// Add SVGs without fetching (vectors are always optimized)
 	svgAssets.forEach(svgAsset => {
@@ -268,7 +268,7 @@ async function validateEntireMediaLibrary(designerAssets: any[], baseUrl: string
 
 	// Sort: larger files first (more likely to have issues), skip SVGs (vectors are fine)
 	const sortedAssets = webflowAssets
-		.filter(a => !a.mimeType?.includes('svg'))
+		.filter(a => !isSvgAssetLike(a))
 		.sort((a, b) => {
 			// Prioritize by mimeType - PNG/BMP likely larger than WebP
 			const priorityA = a.mimeType?.includes('png') ? 2 : a.mimeType?.includes('bmp') ? 3 : 1;
@@ -277,7 +277,7 @@ async function validateEntireMediaLibrary(designerAssets: any[], baseUrl: string
 		});
 
 	// Also include SVGs but mark them as already optimized (no fetch needed)
-	const svgAssets = webflowAssets.filter(a => a.mimeType?.includes('svg'));
+	const svgAssets = webflowAssets.filter(isSvgAssetLike);
 	svgAssets.forEach(svgAsset => {
 		analyzedAssets.push({
 			url: svgAsset.url,
@@ -350,7 +350,7 @@ async function analyzeDesignerAssetLightweight(designerAsset: any): Promise<Anal
 		const metadata = await fetchAssetMetadata(assetUrl);
 
 		// Use Designer data when available, fallback to metadata
-		const format = designerAsset.mimeType || metadata.mimeType || getFormatFromUrl(assetUrl);
+		const format = getAssetFormat(assetUrl, designerAsset.mimeType, metadata.mimeType);
 		const name = designerAsset.name || getAssetName(assetUrl);
 
 		// Analyze optimization from metadata (no buffer needed)
@@ -396,7 +396,7 @@ async function analyzeDesignerAsset(designerAsset: any, baseUrl: string): Promis
 		const assetResult = await fetchAsset(assetUrl);
 
 		// Use Designer data when available, fallback to URL analysis
-		const format = designerAsset.mimeType || assetResult.mimeType || getFormatFromUrl(assetUrl);
+		const format = getAssetFormat(assetUrl, designerAsset.mimeType, assetResult.mimeType);
 		const name = designerAsset.name || getAssetName(assetUrl);
 
 		// Analyze optimization
@@ -510,7 +510,7 @@ async function analyzeAsset(assetUrl: string, baseUrl: string): Promise<Analyzed
 		const assetResult = await fetchAsset(assetUrl);
 
 		// Determine format from MIME type or URL extension
-		const format = assetResult.mimeType || getFormatFromUrl(assetUrl);
+		const format = getAssetFormat(assetUrl, assetResult.mimeType);
 		const name = getAssetName(assetUrl);
 
 		// Analyze optimization
@@ -557,21 +557,26 @@ async function analyzeAssets(usedAssets: AnalyzedAsset[], designerAssets: any[])
 	return Array.from(uniqueAssets.values());
 }
 
-function generateAssetIssues(assets: AnalyzedAsset[]): ValidationIssue[] {
+export function generateAssetIssues(assets: AnalyzedAsset[]): ValidationIssue[] {
 	const issues: ValidationIssue[] = [];
 
-	// Check for oversized assets (150KB Webflow Way limit)
-	const oversizedAssets = assets.filter(asset => asset.size > WEBFLOW_WAY_SIZE_LIMIT);
-	if (oversizedAssets.length > 0) {
+	// Check for assets above the 150KB compression target. This is a review target, not the hard maximum.
+	const assetsAboveCompressionTarget = assets.filter(asset =>
+		!isVectorAsset(asset) &&
+		asset.size > WEBFLOW_WAY_COMPRESSION_TARGET && asset.size <= EXTREME_SIZE_LIMIT
+	);
+	if (assetsAboveCompressionTarget.length > 0) {
 		issues.push({
-			id: 'assets-exceed-webflow-way-limit',
+			id: 'assets-above-compression-target',
 			category: 'Performance & Assets',
-			severity: 'error',
-			message: `${oversizedAssets.length} assets exceed the 150KB Webflow Way limit`,
-			description: 'Webflow Way guidelines require all assets to be under 150KB for optimal performance and template compliance.',
-			howToFix: 'Compress oversized images using tools like TinyPNG, ImageOptim, or convert to modern formats like WebP/AVIF',
+			severity: 'warning',
+			message: `${assetsAboveCompressionTarget.length} assets are above the 150KB compression target`,
+			description: 'Submission guidelines recommend compressing images to 150KB where possible. Larger visual assets may be acceptable when quality would be harmed, but they should be reviewed.',
+			howToFix: 'For raster imagery, resize images to their rendered dimensions, use Webflow compression, and convert to WebP/AVIF where quality allows. Keep every asset under the 4MB maximum.',
 			details: {
-				oversizedAssets: oversizedAssets.map(asset => ({
+				target: '150KB where possible',
+				maxFileSize: '4MB',
+				oversizedAssets: assetsAboveCompressionTarget.map(asset => ({
 					name: asset.name,
 					size: `${Math.round(asset.size / 1024)}KB`,
 					url: asset.url
@@ -587,10 +592,11 @@ function generateAssetIssues(assets: AnalyzedAsset[]): ValidationIssue[] {
 			id: 'assets-extremely-large',
 			category: 'Performance & Assets',
 			severity: 'error',
-			message: `${extremelyLargeAssets.length} assets are extremely large (>4MB)`,
-			description: 'These assets will severely impact page loading performance and user experience.',
-			howToFix: 'Significantly compress or replace these assets. Consider using multiple smaller images or vector graphics instead.',
+			message: `${extremelyLargeAssets.length} assets exceed the 4MB maximum file size`,
+			description: 'Submission guidelines set a 4MB maximum file size for media assets. These files can severely impact loading performance and template review.',
+			howToFix: 'Compress or replace these assets so each file is under 4MB. For SVGs, remove unused paths and metadata with an SVG optimizer. For raster imagery, resize to the displayed dimensions and export WebP/AVIF when practical.',
 			details: {
+				maxFileSize: '4MB',
 				extremeAssets: extremelyLargeAssets.map(asset => ({
 					name: asset.name,
 					size: `${Math.round(asset.size / (1024 * 1024))}MB`,
@@ -601,7 +607,7 @@ function generateAssetIssues(assets: AnalyzedAsset[]): ValidationIssue[] {
 	}
 
 	// Check for unoptimized formats
-	const unoptimizedAssets = assets.filter(asset => !asset.isOptimized);
+	const unoptimizedAssets = assets.filter(asset => !isVectorAsset(asset) && !asset.isOptimized);
 	if (unoptimizedAssets.length > 0) {
 		issues.push({
 			id: 'assets-not-optimized',
@@ -647,7 +653,7 @@ function generateAssetIssues(assets: AnalyzedAsset[]): ValidationIssue[] {
 function calculateAssetStats(assets: AnalyzedAsset[]) {
 	return {
 		totalAssets: assets.length,
-		oversizedAssets: assets.filter(a => a.size > WEBFLOW_WAY_SIZE_LIMIT).length,
+		oversizedAssets: assets.filter(a => a.size > WEBFLOW_WAY_COMPRESSION_TARGET).length,
 		unoptimizedAssets: assets.filter(a => !a.isOptimized).length,
 		unusedAssets: assets.filter(a => a.usageCount === 0).length,
 		licensingIssues: 0, // Removed: all Webflow assets are properly hosted
@@ -676,6 +682,35 @@ function getFormatFromUrl(url: string): string {
 	}
 }
 
+function getAssetFormat(url: string, ...candidates: Array<string | undefined>): string {
+	const urlFormat = getFormatFromUrl(url);
+	if (urlFormat === 'image/svg+xml' || candidates.some(candidate => candidate?.toLowerCase().includes('svg'))) {
+		return 'image/svg+xml';
+	}
+	return candidates.find(candidate => candidate && candidate.trim() !== '') || urlFormat;
+}
+
+function isSvgAssetLike(asset: { mimeType?: string; url?: string; name?: string }): boolean {
+	return isSvgFormat(asset.mimeType) || isSvgPath(asset.url) || isSvgPath(asset.name);
+}
+
+function isVectorAsset(asset: AnalyzedAsset): boolean {
+	return isSvgFormat(asset.format) || isSvgPath(asset.url) || isSvgPath(asset.name);
+}
+
+function isSvgFormat(format: string | undefined): boolean {
+	return format?.toLowerCase().includes('svg') === true;
+}
+
+function isSvgPath(value: string | undefined): boolean {
+	if (!value) return false;
+	try {
+		return new URL(value).pathname.toLowerCase().endsWith('.svg');
+	} catch {
+		return value.toLowerCase().split('?')[0].endsWith('.svg');
+	}
+}
+
 function getAssetName(url: string): string {
 	try {
 		const pathname = new URL(url).pathname;
@@ -686,12 +721,16 @@ function getAssetName(url: string): string {
 }
 
 function generateRecommendedAction(size: number, format: string, optimization: { isOptimized: boolean, recommendation?: string }): string | undefined {
-	if (size > WEBFLOW_WAY_SIZE_LIMIT) {
+	if (size > EXTREME_SIZE_LIMIT) {
+		return 'Compress or replace this file so it is under the 4MB maximum';
+	}
+
+	if (size > WEBFLOW_WAY_COMPRESSION_TARGET) {
 		if (format.includes('png')) {
-			return 'Convert to WebP format and compress to under 150KB';
+			return 'Convert to WebP/AVIF and aim for 150KB where quality allows';
 		}
 		if (format.includes('jpeg')) {
-			return 'Reduce quality/size and consider WebP format';
+			return 'Resize to displayed dimensions and aim for 150KB where quality allows';
 		}
 	}
 

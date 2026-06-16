@@ -10,22 +10,22 @@
   const stages: WedgeStage[] = [
     {
       index: '01',
-      label: 'MCP Wedge',
-      title: 'Connection proof',
-      detail: 'A constrained host proves the tool boundary before a workflow depends on it.',
+      label: 'Trust Map',
+      title: 'Delegation boundary',
+      detail: 'The first map names the objects, actions, approval points, and evidence.',
       width: '48%'
     },
     {
       index: '02',
-      label: 'Workflow System',
+      label: 'Workflow Pilot',
       title: 'Operating path',
       detail: 'The first handoff gets mapped, rebuilt, tested, and documented for inheritance.',
       width: '64%'
     },
     {
       index: '03',
-      label: 'Policy OS',
-      title: 'Governed execution',
+      label: 'Trust Layer',
+      title: 'Controlled delegation',
       detail: 'Rules classify work into auto-allow, approval-needed, or blocked with reason.',
       width: '80%'
     },
@@ -43,15 +43,15 @@
 
 <div class="wedge-shell product-surface product-surface--soft" aria-labelledby="service-wedge-title">
   <div class="wedge-copy">
-    <span class="wedge-eyebrow">Service blueprint</span>
-    <h3 id="service-wedge-title">The offer ladder starts with one wedge and rises into Policy OS.</h3>
+    <span class="wedge-eyebrow">Service path</span>
+    <h3 id="service-wedge-title">Start with one mapped handoff, then add control only when the workflow earns it.</h3>
     <p>
-      The service is easier to understand as a progression: first prove the connection, then
-      harden one workflow, then install the policy layer that protects operator attention.
+      The path is easier to understand as a progression: first map the delegation boundary, then
+      harden one workflow, then install the trust layer that protects operator attention.
     </p>
   </div>
 
-  <div class="wedge-diagram" aria-label="Blueprint wedge from MCP Wedge to Policy OS and Operator Surface">
+  <div class="wedge-diagram" aria-label="Blueprint wedge from Trust Map to Trust Layer and Operator Surface">
     <div class="wedge-axis" aria-hidden="true">
       <span>Connectivity</span>
       <span>Workflow</span>
@@ -72,8 +72,8 @@
       {/each}
     </div>
 
-    <div class="policy-card" aria-label="Policy OS decision states">
-      <span>Policy OS output</span>
+    <div class="policy-card" aria-label="Trust layer decision states">
+      <span>Trust layer output</span>
       <div>
         {#each outcomes as outcome}
           <strong>{outcome}</strong>

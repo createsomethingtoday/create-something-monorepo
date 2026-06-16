@@ -1,6 +1,21 @@
 // Webflow Way Validator Extension - TypeScript Implementation
 // Enhanced validation with detailed, collapsible reporting
 
+import {
+  EXTENSION_VERSION,
+  escapeHtml,
+  decodeCommonHtmlEntities,
+  ensureHttps,
+  getSlugPathname,
+  isInternalCmsTemplateSlug,
+  isHtmlTagStyleName,
+  normalizeSiteInfo,
+  selectValidationDomain,
+  type SiteDomainInfo,
+  type NormalizedSiteInfo,
+} from './utils';
+import { buildReportMarkdown as buildReportMarkdownPure, type ReportInput } from './report';
+
 // API Configuration
 const API_BASE = 'https://webflow-way-validator.vercel.app';
 const WORKER_API_BASE = 'https://validation-worker.createsomething.workers.dev';
@@ -17,6 +32,20 @@ let isValidating = false;
 let extensionInitialized = false;
 let bridgeContext: { siteId: string; siteName?: string; siteUrl?: string } | null = null;
 let bridgeStatus: SnippetStatusResponse | null = null;
+
+// Last completed run, kept for the copy-report action and restored-run display
+let lastValidationReport: {
+  data: ValidationResponse;
+  correlationId: string | null;
+  generatedAt: string;
+  restored: boolean;
+} | null = null;
+
+// Canvas elements referenced by rendered issues, so "Select on canvas"
+// buttons can call webflow.setSelectedElement with the original object
+const canvasElementRegistry = new Map<string, AnyElement>();
+
+const LAST_RUN_STORAGE_KEY = 'webflow_validator_last_run';
 
 // Types for validation data
 interface ValidationIssue {
@@ -131,6 +160,10 @@ interface ProjectData {
         type?: string;
         value?: any;
       }>;
+      modes?: Array<{
+        id: string;
+        name: string;
+      }>;
     }>;
   };
   components?: Array<{
@@ -152,6 +185,11 @@ interface ProjectData {
     id: string;
     name: string;
     slug: string;
+    path?: string;
+    publishPath?: string | null;
+    collectionId?: string | null;
+    collectionName?: string | null;
+    isCmsTemplate?: boolean;
     type: string;
     isHomePage?: boolean;
     hasValidNaming?: boolean;
@@ -167,6 +205,7 @@ interface ProjectData {
     id: string;
     name: string;
     slug: string;
+    publishPath?: string | null;
     seo: {
       title?: string;
       description?: string;
@@ -183,10 +222,10 @@ interface ProjectData {
       hasCustomOpenGraphDescription?: boolean;
     };
   };
-  siteInfo?: {
-    name?: string;
-    id?: string;
-  };
+  canvasChecks?: CanvasAccessibilityResult;
+  siteInfo?: NormalizedSiteInfo;
+  designerContext?: DesignerContext;
+  validationScope?: ValidationScope;
   collectionMetadata?: Record<string, any>;
   enhancedValidation?: {
     variableOrganization: {
@@ -213,6 +252,8 @@ interface ProjectData {
       hasLicensePage: boolean;
       hasTitleCaseNaming: boolean;
       hasMatchingSlugs: boolean;
+      pagesNotTitleCase: string[];
+      pagesWithMismatchedSlugs: string[];
     };
     seoCompliance: {
       currentPageHasValidTitle: boolean;
@@ -227,6 +268,30 @@ interface ProjectData {
     message: string;
     error: string;
   }>;
+}
+
+interface DesignerContext {
+  mode: string | null;
+  capabilities: Record<string, boolean>;
+  canAccessCanvas?: boolean;
+  canDesign?: boolean;
+  canEdit?: boolean;
+  message?: string;
+}
+
+interface ValidationScope {
+  siteUrl: string | null;
+  domainSource: string;
+  domainStage?: string;
+  domainLastPublished?: string | null;
+  domainDefault?: boolean;
+  isPasswordProtected?: boolean;
+  isPrivateStaging?: boolean;
+  pageScope: 'all' | 'current';
+  pageSlugsCount: number;
+  skippedCmsTemplateSlugs: string[];
+  selectedChecks: string[];
+  publishedChecks: 'full' | 'designer-only';
 }
 
 // Initialize once whether the extension is loaded with the document or injected after DOMContentLoaded.
@@ -260,11 +325,15 @@ function initializeExtension(): void {
   const installBtn = document.getElementById('bridge-install-btn');
   const rotateBtn = document.getElementById('bridge-rotate-btn');
   const recheckBtn = document.getElementById('bridge-recheck-btn');
+  const copyBtn = document.getElementById('bridge-copy-btn');
   installBtn?.addEventListener('click', () => installBridge());
   rotateBtn?.addEventListener('click', () => rotateBridgeToken());
   recheckBtn?.addEventListener('click', () => refreshBridgeStatus());
+  copyBtn?.addEventListener('click', () => void copyBridgeSnippetFromCurrentStatus());
 
   void bootstrapBridgePanel();
+  void fetchWorkerVersion();
+  restoreLastValidationReport();
 }
 
 if (document.readyState === 'loading') {
@@ -291,7 +360,7 @@ async function validateProject(): Promise<void> {
     btn.disabled = true;
     btn.setAttribute('aria-busy', 'true');
   }
-  if (btnLabel) btnLabel.textContent = 'Validating...';
+  if (btnLabel) btnLabel.textContent = 'Running...';
   
   showLoading();
   hideError();
@@ -300,13 +369,19 @@ async function validateProject(): Promise<void> {
 
   try {
     // Get Webflow Designer API
-    const webflow = (window as any).webflow;
+    const webflow = (window as unknown as { webflow?: WebflowApi }).webflow;
     if (!webflow) {
       throw new Error('Webflow Designer API not available. Please ensure this extension is running in Webflow Designer.');
     }
 
     // Collect project data via Designer API
     const projectData = await collectProjectData(webflow);
+    const designerContext = await collectDesignerContext(webflow);
+    projectData.designerContext = designerContext;
+    projectData.canvasChecks = await collectCanvasAccessibility(webflow, designerContext.canAccessCanvas);
+    if (designerContext.message) {
+      setToolbarStatus(designerContext.message, designerContext.canAccessCanvas === false ? 'warning' : 'neutral');
+    }
     if (!bridgeContext?.siteId) {
       const fallbackSiteId = projectData.siteInfo?.id || null;
       if (fallbackSiteId) {
@@ -318,36 +393,110 @@ async function validateProject(): Promise<void> {
       }
     }
 
-    // Update meta display
-    const projectLabel = projectData?.siteInfo?.name || 'Designer Project';
-    updateMetaDisplay(projectLabel, projectData);
-
     // Get site URL for Worker validation
     const siteUrl = await getSiteUrl(webflow);
+    const pageSlugScope = getPageSlugScope(projectData);
+    const selectedChecks = getSelectedChecks();
     if (bridgeContext) {
       bridgeContext = {
         ...bridgeContext,
         siteUrl: siteUrl || bridgeContext.siteUrl,
       };
     }
-    console.log('🌐 Final site URL for Worker:', siteUrl);
+    projectData.validationScope = buildValidationScope({
+      projectData,
+      siteUrl,
+      pageSlugScope,
+      selectedChecks,
+      publishedChecks: bridgeStatus && bridgeStatus.status === 'active' ? 'full' : 'designer-only',
+    });
+
+    // Update meta display
+    const projectLabel = projectData?.siteInfo?.name || 'Designer Project';
+    updateMetaDisplay(projectLabel, projectData);
+
+    console.log('Final site URL for Worker:', siteUrl);
 
     if (siteUrl) {
-      console.log('🚀 Will call Worker with URL:', siteUrl);
-      console.log('📄 Page slugs to analyze:', extractPageSlugs(projectData));
+      console.log('Will call Worker with URL:', siteUrl);
+      console.log('Page slugs to analyze:', pageSlugScope.pageSlugs);
     } else {
-      console.warn('⚠️ No site URL available - Worker validation will be skipped');
-    }
-
-    if (!bridgeStatus || bridgeStatus.status !== 'active') {
-      setBridgeMessage('Bridge is not active yet. Validation will still run using fallback methods.');
+      console.warn('No site URL available - Worker validation will be skipped');
     }
 
     const correlationId = createCorrelationId();
+    const bridgeActive = bridgeStatus && bridgeStatus.status === 'active';
+
+    if (!bridgeActive) {
+      setValidationProgress({
+        status: 'running',
+        progress: 20,
+        message: 'Running Designer checks. Add the Validator script for full published-site checks...',
+      });
+      showBridgeDrawer();
+      setBridgeMessage(
+        'Add the Validator script, publish the site, then re-check. Full submission validation needs this script on the published site.'
+      );
+      setBridgeSetupStep('install');
+      setToolbarStatus('Validator script required for submission checks', 'warning');
+
+      const designerResults = await runDesignerValidation(projectData, siteUrl, correlationId);
+      designerResults.collectedData = [projectData];
+      enhanceValidationResults(designerResults, projectData);
+
+      if (!designerResults.categories) designerResults.categories = [];
+      designerResults.categories.push({
+        category: 'Published Site Checks (Requires Validator Script)',
+        passed: false,
+        issues: [{
+          id: 'validator-script-required',
+          category: 'Published Site Checks',
+          severity: 'warning',
+          message: 'Additional published-site checks require the Validator script to be added and published.',
+          details: {
+            howToFix:
+              'Click "Add Validator script", publish your site, then click "Re-check script". The script enables submitted-result evidence for the marketplace form plus published-site checks such as image loading, contrast, broken links, custom 404, SEO formula, license text, favicon, connected apps, and placeholder content.',
+          }
+        }],
+        stats: { checked: 0, available: 22, status: 'validator_script_required' }
+      });
+      if (!designerResults.summary) {
+        designerResults.summary = {
+          errors: 0,
+          warnings: 0,
+          infos: 0,
+          passedCategories: 0,
+          failedCategories: 0,
+        };
+      }
+      designerResults.summary.warnings = (designerResults.summary.warnings || 0) + 1;
+      designerResults.summary.failedCategories = (designerResults.summary.failedCategories || 0) + 1;
+
+      setValidationProgress({
+        status: 'completed',
+        progress: 100,
+        message: 'Designer validation complete. Add and publish the Validator script for full coverage.',
+      });
+      registerValidationReport(designerResults, correlationId);
+      showResults(designerResults);
+      void notifyDesigner(webflow, 'Info', 'Designer checks complete. Add and publish the Validator script for full submission validation.');
+      void submitValidationResults({
+        siteId: bridgeContext?.siteId || projectData.siteInfo?.id || null,
+        siteName: bridgeContext?.siteName || projectData.siteInfo?.name || undefined,
+        siteUrl,
+        validationResults: designerResults,
+        correlationId,
+      });
+      return;
+    }
+
+    hideBridgeDrawer();
+    setBridgeSetupStep('run');
+    setToolbarStatus('Running full Validator checks...', 'active');
     const validationResults = await runUnifiedValidation({
       siteUrl,
       projectData,
-      pageSlugs: extractPageSlugs(projectData),
+      pageSlugs: pageSlugScope.pageSlugs,
       correlationId,
     });
 
@@ -357,7 +506,9 @@ async function validateProject(): Promise<void> {
     // Enhance results with client-side validation
     enhanceValidationResults(validationResults, projectData);
 
+    registerValidationReport(validationResults, correlationId);
     showResults(validationResults);
+    void notifyValidationOutcome(webflow, validationResults);
     void submitValidationResults({
       siteId: bridgeContext?.siteId || projectData.siteInfo?.id || null,
       siteName: bridgeContext?.siteName || projectData.siteInfo?.name || undefined,
@@ -371,6 +522,7 @@ async function validateProject(): Promise<void> {
     const message = error instanceof Error ? error.message : 'Unexpected error';
     setValidationProgress({ status: 'failed', progress: 100, message });
     showError(message);
+    void notifyDesigner((window as unknown as { webflow?: WebflowApi }).webflow, 'Error', message);
   } finally {
     isValidating = false;
     hideLoading();
@@ -378,108 +530,245 @@ async function validateProject(): Promise<void> {
       btn.disabled = false;
       btn.setAttribute('aria-busy', 'false');
     }
-    if (btnLabel) btnLabel.textContent = 'Validate This Project';
+    if (btnLabel) btnLabel.textContent = 'Run Validator';
   }
 }
 
 // Extract page slugs from project data for comprehensive validation
 function extractPageSlugs(projectData: ProjectData): string[] {
+  return getPageSlugScope(projectData).pageSlugs;
+}
+
+function getPageSlugScope(projectData: ProjectData): {
+  pageSlugs: string[];
+  skippedCmsTemplateSlugs: string[];
+} {
   const slugs: string[] = [];
+  const seen = new Set<string>();
+  const skippedCmsTemplateSlugs: string[] = [];
+  const skippedDraftSlugs: string[] = [];
 
   if (projectData.pages && projectData.pages.length > 0) {
     projectData.pages.forEach((page: any) => {
-      if (page.slug && page.slug.trim() !== '') {
-        slugs.push(page.slug);
+      const primaryPath = getFirstUsablePagePath(page);
+      if (!primaryPath) return;
+
+      const pathname = getSlugPathname(primaryPath);
+      if (isCollectionTemplatePage(page, pathname)) {
+        skippedCmsTemplateSlugs.push(pathname);
+        return;
       }
-      // Also check for nested properties that might contain slugs
-      if (page.path && page.path.trim() !== '') {
-        slugs.push(page.path);
+
+      // Draft pages are not published — fetching them would validate 404s
+      if (page.isDraft) {
+        skippedDraftSlugs.push(pathname);
+        return;
+      }
+
+      if (!seen.has(pathname)) {
+        seen.add(pathname);
+        slugs.push(pathname);
       }
     });
   }
 
+  if (skippedDraftSlugs.length > 0) {
+    console.log(
+      `Skipped ${skippedDraftSlugs.length} draft pages for published-site validation:`,
+      skippedDraftSlugs
+    );
+  }
+
+  if (skippedCmsTemplateSlugs.length > 0) {
+    console.log(
+      `Skipped ${skippedCmsTemplateSlugs.length} internal CMS template slugs for published-site validation:`,
+      skippedCmsTemplateSlugs
+    );
+  }
   console.log(`Extracted ${slugs.length} page slugs for enhanced validation:`, slugs);
-  return slugs;
+  return {
+    pageSlugs: slugs,
+    skippedCmsTemplateSlugs,
+  };
 }
+
+async function collectDesignerContext(webflow: WebflowApi): Promise<DesignerContext> {
+  const context: DesignerContext = {
+    mode: null,
+    capabilities: {},
+  };
+
+  try {
+    if (typeof webflow.getCurrentMode === 'function') {
+      context.mode = await webflow.getCurrentMode();
+    }
+  } catch (error) {
+    console.warn('Could not get Designer mode:', error);
+  }
+
+  try {
+    const appModes = webflow.appModes || {};
+    const capabilityKeys: Array<keyof typeof appModes> = [
+      'canAccessCanvas',
+      'canDesign',
+      'canEdit',
+      'canAccessAssets',
+      'canManageAssets',
+    ];
+    const requestedCapabilities = capabilityKeys
+      .map((key) => appModes[key])
+      .filter(Boolean);
+
+    if (typeof webflow.canForAppMode === 'function' && requestedCapabilities.length > 0) {
+      context.capabilities = await webflow.canForAppMode(requestedCapabilities);
+      context.canAccessCanvas = readCapability(context.capabilities, 'canAccessCanvas');
+      context.canDesign = readCapability(context.capabilities, 'canDesign');
+      context.canEdit = readCapability(context.capabilities, 'canEdit');
+    }
+  } catch (error) {
+    console.warn('Could not get Designer capabilities:', error);
+  }
+
+  if (context.canAccessCanvas === false) {
+    context.message = 'Limited Designer access in this mode';
+  } else if (context.mode) {
+    context.message = `Designer mode: ${formatModeName(context.mode)}`;
+  }
+
+  return context;
+}
+
+function readCapability(capabilities: Record<string, boolean>, key: string): boolean | undefined {
+  if (typeof capabilities[key] === 'boolean') return capabilities[key];
+  const matchingEntry = Object.entries(capabilities).find(([capabilityKey]) => capabilityKey.endsWith(key));
+  return typeof matchingEntry?.[1] === 'boolean' ? matchingEntry[1] : undefined;
+}
+
+function formatModeName(value: string): string {
+  return value
+    .replace(/^can/, '')
+    .replace(/[-_]+/g, ' ')
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .trim()
+    .split(/\s+/)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    .join(' ');
+}
+
+function formatDateTime(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString();
+}
+
+function buildValidationScope({
+  projectData,
+  siteUrl,
+  pageSlugScope,
+  selectedChecks,
+  publishedChecks,
+}: {
+  projectData: ProjectData;
+  siteUrl: string | null;
+  pageSlugScope: { pageSlugs: string[]; skippedCmsTemplateSlugs: string[] };
+  selectedChecks: string[];
+  publishedChecks: 'full' | 'designer-only';
+}): ValidationScope {
+  const domainSelection = selectValidationDomain(projectData.siteInfo);
+
+  return {
+    siteUrl,
+    domainSource: domainSelection.source,
+    domainStage: domainSelection.domain?.stage,
+    domainLastPublished: domainSelection.domain?.lastPublished || null,
+    domainDefault: domainSelection.domain?.default,
+    isPasswordProtected: projectData.siteInfo?.isPasswordProtected,
+    isPrivateStaging: projectData.siteInfo?.isPrivateStaging,
+    pageScope: isOptionEnabled('opt-page-scope-current', false) ? 'current' : 'all',
+    pageSlugsCount: pageSlugScope.pageSlugs.length,
+    skippedCmsTemplateSlugs: pageSlugScope.skippedCmsTemplateSlugs,
+    selectedChecks,
+    publishedChecks,
+  };
+}
+
+function getFirstUsablePagePath(page: {
+  publishPath?: string | null;
+  path?: string | null;
+  slug?: string | null;
+  isHomePage?: boolean;
+}): string | null {
+  const candidates = [
+    page.publishPath,
+    page.isHomePage ? '/' : null,
+    page.path,
+    page.slug,
+  ];
+
+  for (const candidate of candidates) {
+    if (typeof candidate === 'string' && candidate.trim() !== '') {
+      return candidate;
+    }
+  }
+
+  return null;
+}
+
+function isCollectionTemplatePage(page: {
+  publishPath?: string | null;
+  path?: string | null;
+  slug?: string | null;
+  isCmsTemplate?: boolean;
+  collectionId?: string | null;
+  collectionName?: string | null;
+}, pathname: string): boolean {
+  return Boolean(
+    page.isCmsTemplate ||
+    page.collectionId ||
+    page.collectionName ||
+    isInternalCmsTemplateSlug(pathname) ||
+    (page.publishPath && isInternalCmsTemplateSlug(page.publishPath)) ||
+    (page.path && isInternalCmsTemplateSlug(page.path)) ||
+    (page.slug && isInternalCmsTemplateSlug(page.slug))
+  );
+}
+
+
+
 
 // Ensure URL has HTTPS protocol
-function ensureHttps(url: string): string {
-  if (url.startsWith('http://')) {
-    return url.replace('http://', 'https://');
-  }
-  if (!url.startsWith('https://') && !url.startsWith('http://')) {
-    return `https://${url}`;
-  }
-  return url;
-}
 
 // Get site URL for Worker validation
-async function getSiteUrl(webflow: any): Promise<string | null> {
+async function getSiteUrl(webflow: WebflowApi): Promise<string | null> {
   try {
-    console.log('🔍 Getting site URL for enhanced validation...');
+    console.log('Getting site URL for enhanced validation...');
 
     // Use the correct getSiteInfo API
     if (webflow.getSiteInfo) {
       const siteInfo = await webflow.getSiteInfo();
-      console.log('📋 Site info received:', {
+      console.log('Site info received:', {
         siteId: siteInfo.siteId,
         siteName: siteInfo.siteName,
         shortName: siteInfo.shortName,
         domainsCount: siteInfo.domains?.length || 0
       });
 
-      if (siteInfo.domains && siteInfo.domains.length > 0) {
-        // Priority 1: Find production domain that was published
-        const productionDomain = siteInfo.domains.find((domain: any) =>
-          domain.stage === 'production' && domain.lastPublished !== null
-        );
-
-        if (productionDomain) {
-          console.log('✅ Using production domain:', productionDomain.url);
-          return ensureHttps(productionDomain.url);
-        }
-
-        // Priority 2: Find any production domain (even if not recently published)
-        const anyProductionDomain = siteInfo.domains.find((domain: any) =>
-          domain.stage === 'production'
-        );
-
-        if (anyProductionDomain) {
-          console.log('⚠️ Using production domain (may not be recently published):', anyProductionDomain.url);
-          return ensureHttps(anyProductionDomain.url);
-        }
-
-        // Priority 3: Use staging domain
-        const stagingDomain = siteInfo.domains.find((domain: any) =>
-          domain.stage === 'staging'
-        );
-
-        if (stagingDomain) {
-          console.log('🔧 Using staging domain:', stagingDomain.url);
-          return ensureHttps(stagingDomain.url);
-        }
-
-        // Priority 4: Use any available domain
-        const firstDomain = siteInfo.domains[0];
-        console.log('📌 Using first available domain:', firstDomain.url);
-        return ensureHttps(firstDomain.url);
-      }
-
-      // Fallback: construct URL from shortName
-      if (siteInfo.shortName) {
-        const constructedUrl = `https://${siteInfo.shortName}.webflow.io`;
-        console.log('🔗 Constructed URL from shortName:', constructedUrl);
-        return constructedUrl;
+      const selection = selectValidationDomain(normalizeSiteInfo(siteInfo));
+      if (selection.url) {
+        console.log(`Using ${selection.source}:`, selection.url);
+        return ensureHttps(selection.url);
       }
     }
 
-    console.warn('❌ Could not determine site URL for enhanced validation');
+    console.warn('Could not determine site URL for enhanced validation');
     return null;
   } catch (error) {
-    console.error('💥 Error getting site URL:', error);
+    console.error('Error getting site URL:', error);
     return null;
   }
 }
+
+
 
 function createCorrelationId(): string {
   return `wfv_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
@@ -727,7 +1016,7 @@ function getWorkerOptions(projectData: ProjectData): Record<string, any> {
   const includeStyleGuide = !isOptionEnabled('opt-exclude-style-guide', true);
   const pageScopeCurrent = isOptionEnabled('opt-page-scope-current', false);
 
-  const excludePageSlugs = includeStyleGuide ? [] : ['style-guide', '/style-guide', 'styleguide', '/styleguide'];
+  const excludePageSlugs = includeStyleGuide ? [] : getStyleGuideExclusionSlugs(projectData);
 
   return {
     skipAssets: !runAssets,
@@ -735,7 +1024,7 @@ function getWorkerOptions(projectData: ProjectData): Record<string, any> {
     skipAccessibility: !runContent,
     excludePageSlugs,
     pageScope: pageScopeCurrent ? 'current' : 'all',
-    currentPageSlug: projectData.currentPage?.slug || '/',
+    currentPageSlug: projectData.currentPage?.publishPath || projectData.currentPage?.slug || '/',
     contentChecks: {
       lorem: isOptionEnabled('opt-content-lorem', true),
       headings: isOptionEnabled('opt-content-headings', true),
@@ -745,6 +1034,27 @@ function getWorkerOptions(projectData: ProjectData): Record<string, any> {
       contentQuality: isOptionEnabled('opt-content-contentQuality', true),
     },
   };
+}
+
+function getStyleGuideExclusionSlugs(projectData: ProjectData): string[] {
+  const excluded = new Set<string>(['/style-guide', '/styleguide']);
+
+  for (const page of projectData.pages || []) {
+    const name = (page.name || '').toLowerCase();
+    const path = getFirstUsablePagePath(page);
+    const pathname = path ? getSlugPathname(path).toLowerCase() : '';
+    const isStyleGuide =
+      name.includes('style guide') ||
+      name.includes('styleguide') ||
+      pathname.endsWith('/style-guide') ||
+      pathname.endsWith('/styleguide');
+
+    if (isStyleGuide && pathname) {
+      excluded.add(pathname);
+    }
+  }
+
+  return Array.from(excluded);
 }
 
 async function runUnifiedValidation({
@@ -1044,22 +1354,22 @@ function setValidationProgress({
 async function bootstrapBridgePanel(): Promise<void> {
   initializeOptionDefaults();
 
-  const webflow = (window as any).webflow;
+  const webflow = (window as unknown as { webflow?: WebflowApi }).webflow;
   if (!webflow) {
     setBridgeBadge('neutral');
-    setBridgeMessage('Webflow Designer API unavailable. Bridge controls are disabled.');
+    setBridgeMessage('Webflow Designer API unavailable. Validator script setup is disabled.');
     setBridgeActionsDisabled(true);
     return;
   }
 
   try {
     const siteInfo = await webflow.getSiteInfo?.();
-    const siteId = siteInfo?.siteId || siteInfo?.id || null;
-    const siteName = siteInfo?.siteName || siteInfo?.name || 'Webflow Site';
+    const siteId = siteInfo?.siteId || null;
+    const siteName = siteInfo?.siteName || 'Webflow Site';
     const siteUrl = await getSiteUrl(webflow);
     if (!siteId) {
       setBridgeBadge('failed');
-      setBridgeMessage('Could not determine site ID. Bridge install unavailable.');
+      setBridgeMessage('Could not determine site ID. Validator script setup unavailable.');
       setBridgeActionsDisabled(true);
       return;
     }
@@ -1070,13 +1380,16 @@ async function bootstrapBridgePanel(): Promise<void> {
   } catch (error) {
     console.warn('Bridge bootstrap failed:', error);
     setBridgeBadge('failed');
-    setBridgeMessage('Failed to initialize bridge panel.');
+    setBridgeMessage('Failed to initialize Validator script setup.');
     setBridgeActionsDisabled(true);
   }
 }
 
 async function refreshBridgeStatus(): Promise<void> {
   if (!bridgeContext?.siteId) return;
+  setBridgeSetupStep('recheck');
+  setBridgeMessage('Checking the published site for the Validator script...');
+  setToolbarStatus('Checking script...', 'neutral');
   try {
     const correlationId = createCorrelationId();
     const statusUrl = new URL(`${APP_VALIDATOR_BASE}/app-validator/snippet/status`);
@@ -1096,17 +1409,22 @@ async function refreshBridgeStatus(): Promise<void> {
   } catch (error) {
     console.warn('Failed to refresh bridge status:', error);
     setBridgeBadge('failed');
-    setBridgeMessage('Bridge status check failed.');
+    setBridgeMessage('Validator script status check failed. Publish the site, then try again.');
+    setBridgeSetupStep('recheck');
+    setToolbarStatus('Validator script check failed', 'failed');
   }
 }
 
 async function installBridge(): Promise<void> {
   if (!bridgeContext?.siteId) return;
   setBridgeActionsDisabled(true);
-  setBridgeMessage('Installing bridge...');
+  setBridgeMessage('Preparing the Validator script for this site...');
+  setBridgeSetupStep('install');
+  setToolbarStatus('Preparing Validator script...', 'neutral');
   try {
     const correlationId = createCorrelationId();
-    bridgeStatus = await fetchJsonWithRetry<SnippetStatusResponse>(
+
+    const installStatus = await fetchJsonWithRetry<SnippetStatusResponse>(
       `${APP_VALIDATOR_BASE}/app-validator/snippet/install`,
       {
         method: 'POST',
@@ -1118,16 +1436,46 @@ async function installBridge(): Promise<void> {
           siteId: bridgeContext.siteId,
           siteName: bridgeContext.siteName,
           installTarget: 'head',
-          mode: 'programmatic',
+          mode: 'manual-fallback',
         }),
       },
       { timeoutMs: NETWORK_TIMEOUT_MS, retries: MAX_NETWORK_RETRIES }
     );
+
+    bridgeStatus = {
+      ...installStatus,
+      status: installStatus.status === 'active' ? 'pending_manual' : installStatus.status,
+      installed: false,
+      message: 'Validator script ready. Paste it in site Head code, publish, then re-check.',
+    };
     renderBridgeStatus(bridgeStatus);
+    openBridgeSnippet();
+    const copied = await copyBridgeSnippet(bridgeStatus);
+    if (copied) {
+      setBridgeMessage('Validator script copied. Paste it in site Head code, publish, then re-check.');
+      setToolbarStatus('Validator script copied; publish then re-check', 'warning');
+      void notifyDesigner(
+        (window as unknown as { webflow?: WebflowApi }).webflow,
+        'Info',
+        'Validator script copied. Paste it in Site Settings > Custom Code > Head code, publish, then re-check.'
+      );
+    } else {
+      setBridgeMessage('Validator script ready below. Copy it, paste it in site Head code, publish, then re-check.');
+      setToolbarStatus('Validator script ready to copy', 'warning');
+      void notifyDesigner(
+        (window as unknown as { webflow?: WebflowApi }).webflow,
+        'Info',
+        'Validator script is ready below. Copy it into Site Settings > Custom Code > Head code, publish, then re-check.'
+      );
+    }
   } catch (error) {
     console.warn('Bridge install failed:', error);
     setBridgeBadge('failed');
-    setBridgeMessage('Bridge install failed. Use Re-check or manual install.');
+    setBridgeMessage(
+      'Could not prepare the Validator script. Try again, then publish and re-check.'
+    );
+    setBridgeSetupStep('install');
+    setToolbarStatus('Validator script setup failed', 'failed');
   } finally {
     setBridgeActionsDisabled(false);
   }
@@ -1136,7 +1484,8 @@ async function installBridge(): Promise<void> {
 async function rotateBridgeToken(): Promise<void> {
   if (!bridgeContext?.siteId) return;
   setBridgeActionsDisabled(true);
-  setBridgeMessage('Rotating bridge token...');
+  setBridgeMessage('Rotating the Validator script token...');
+  setBridgeSetupStep('publish');
   try {
     const correlationId = createCorrelationId();
     bridgeStatus = await fetchJsonWithRetry<SnippetStatusResponse>(
@@ -1158,7 +1507,8 @@ async function rotateBridgeToken(): Promise<void> {
   } catch (error) {
     console.warn('Token rotation failed:', error);
     setBridgeBadge('failed');
-    setBridgeMessage('Token rotation failed.');
+    setBridgeMessage('Token rotation failed. Keep the existing script or try again.');
+    setBridgeSetupStep('publish');
   } finally {
     setBridgeActionsDisabled(false);
   }
@@ -1166,19 +1516,26 @@ async function rotateBridgeToken(): Promise<void> {
 
 function renderBridgeStatus(status: SnippetStatusResponse): void {
   setBridgeBadge(status.status);
-  const defaultMessage =
-    status.status === 'active'
-      ? 'Bridge active. Async validation + streaming enabled.'
-      : status.status === 'pending_manual'
-      ? 'Bridge not fully active. Manual snippet update may be required.'
-      : 'Bridge install failed or unavailable.';
 
-  setBridgeMessage(status.message || defaultMessage);
+  setBridgeMessage(getValidatorScriptStatusMessage(status));
+
+  if (status.status === 'active') {
+    setBridgeSetupStep('run');
+    setToolbarStatus('Validator script detected. Run Validator.', 'active');
+    hideBridgeDrawer();
+  } else {
+    const snippet = (status as any).snippet;
+    const hasGeneratedToken = Boolean(status.bridgeToken);
+    setBridgeSetupStep(status.status === 'pending_manual' && snippet && hasGeneratedToken ? 'publish' : 'install');
+    setToolbarStatus('Validator script required for submission checks', 'warning');
+    showBridgeDrawer();
+  }
 
   const tokenRow = document.getElementById('bridge-token-row');
   const tokenValue = document.getElementById('bridge-token-value');
   const snippetWrap = document.getElementById('bridge-snippet-wrap') as HTMLDetailsElement | null;
   const snippetCode = document.getElementById('bridge-snippet-code');
+  const copyBtn = document.getElementById('bridge-copy-btn') as HTMLButtonElement | null;
   if (tokenRow && tokenValue) {
     if (status.bridgeToken) {
       tokenRow.style.display = 'flex';
@@ -1194,16 +1551,19 @@ function renderBridgeStatus(status: SnippetStatusResponse): void {
     if (status.status === 'pending_manual' && typeof snippet === 'string' && snippet.trim()) {
       snippetWrap.style.display = 'block';
       snippetCode.textContent = snippet;
+      if (status.bridgeToken) snippetWrap.open = true;
+      if (copyBtn) copyBtn.disabled = false;
     } else {
       snippetWrap.style.display = 'none';
       snippetCode.textContent = '';
       snippetWrap.open = false;
+      if (copyBtn) copyBtn.disabled = true;
     }
   }
 }
 
 function setBridgeActionsDisabled(disabled: boolean): void {
-  const ids = ['bridge-install-btn', 'bridge-rotate-btn', 'bridge-recheck-btn'];
+  const ids = ['bridge-install-btn', 'bridge-rotate-btn', 'bridge-recheck-btn', 'bridge-copy-btn'];
   for (const id of ids) {
     const btn = document.getElementById(id) as HTMLButtonElement | null;
     if (btn) btn.disabled = disabled;
@@ -1217,12 +1577,14 @@ function setBridgeBadge(status: 'active' | 'pending_manual' | 'failed' | 'neutra
   badge.classList.add(status);
 
   const labels: Record<string, string> = {
-    active: 'Active',
-    pending_manual: 'Pending Manual',
+    active: 'Ready',
+    pending_manual: 'Script Needed',
     failed: 'Error',
     neutral: 'Unknown',
   };
-  badge.textContent = labels[status] || status;
+  badge.textContent = '●';
+  badge.setAttribute('aria-label', labels[status] || status);
+  badge.setAttribute('title', labels[status] || status);
 }
 
 function setBridgeMessage(message: string): void {
@@ -1230,18 +1592,165 @@ function setBridgeMessage(message: string): void {
   if (messageEl) messageEl.textContent = message;
 }
 
+function getValidatorScriptStatusMessage(status: SnippetStatusResponse): string {
+  const snippet = (status as any).snippet;
+  if (status.status === 'active') {
+    return 'Validator script detected on the published site. Run Validator to confirm a 100% pass.';
+  }
+  if (status.status === 'pending_manual' && typeof snippet === 'string' && snippet.trim()) {
+    return 'Copy the Validator script, paste it in Site Settings > Custom Code > Head code, publish, then re-check.';
+  }
+  if (status.status === 'pending_manual') {
+    return 'Validator script is not detected on the published site yet. Copy it, publish, then re-check.';
+  }
+  return 'Validator script setup is unavailable. Try again, then publish and re-check.';
+}
+
+function openBridgeSnippet(): void {
+  const snippetWrap = document.getElementById('bridge-snippet-wrap') as HTMLDetailsElement | null;
+  if (snippetWrap) snippetWrap.open = true;
+}
+
+async function copyBridgeSnippetFromCurrentStatus(): Promise<void> {
+  const copied = await copyBridgeSnippet(bridgeStatus);
+  if (copied) {
+    setBridgeMessage('Validator script copied. Paste it in site Head code, publish, then re-check.');
+    setToolbarStatus('Validator script copied; publish then re-check', 'warning');
+    void notifyDesigner((window as unknown as { webflow?: WebflowApi }).webflow, 'Info', 'Validator script copied.');
+  } else {
+    setBridgeMessage('Copy failed. Select the Validator script below and copy it manually.');
+    setToolbarStatus('Copy failed; manual selection needed', 'warning');
+  }
+}
+
+async function copyBridgeSnippet(status: SnippetStatusResponse | null): Promise<boolean> {
+  const snippet =
+    typeof status?.snippet === 'string' && status.snippet.trim() ? status.snippet.trim() : '';
+  if (!snippet) return false;
+
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(snippet);
+      return true;
+    }
+  } catch (error) {
+    console.warn('Clipboard API copy failed:', error);
+  }
+
+  try {
+    const textarea = document.createElement('textarea');
+    textarea.value = snippet;
+    textarea.setAttribute('readonly', 'true');
+    textarea.style.position = 'fixed';
+    textarea.style.left = '-9999px';
+    document.body.appendChild(textarea);
+    textarea.select();
+    const copied = document.execCommand('copy');
+    document.body.removeChild(textarea);
+    return copied;
+  } catch (error) {
+    console.warn('Fallback copy failed:', error);
+    return false;
+  }
+}
+
+function showBridgeDrawer(): void {
+  const drawer = document.getElementById('review-bridge');
+  if (drawer) drawer.style.display = 'flex';
+}
+
+function hideBridgeDrawer(): void {
+  const drawer = document.getElementById('review-bridge');
+  if (drawer) drawer.style.display = 'none';
+}
+
+function setToolbarStatus(
+  text: string,
+  type: 'active' | 'warning' | 'failed' | 'neutral'
+): void {
+  const statusText = document.getElementById('toolbar-status-text');
+  const badge = document.getElementById('bridge-status-badge');
+  if (statusText) {
+    statusText.textContent = text;
+    statusText.classList.add('updated');
+    setTimeout(() => statusText.classList.remove('updated'), 300);
+  }
+  if (badge) {
+    badge.classList.remove('active', 'pending_manual', 'failed', 'neutral');
+    badge.classList.add(
+      type === 'active'
+        ? 'active'
+        : type === 'warning'
+          ? 'pending_manual'
+          : type === 'failed'
+            ? 'failed'
+            : 'neutral'
+    );
+    badge.textContent = '●';
+  }
+}
+
+async function notifyDesigner(
+  webflow: WebflowApi | undefined,
+  type: 'Error' | 'Info' | 'Success',
+  message: string
+): Promise<void> {
+  try {
+    if (typeof webflow?.notify === 'function') {
+      await webflow.notify({ type, message });
+    }
+  } catch (error) {
+    console.warn('Designer notification failed:', error);
+  }
+}
+
+async function notifyValidationOutcome(webflow: WebflowApi | undefined, data: ValidationResponse): Promise<void> {
+  const outcome = getMarketplaceOutcome(data);
+  if (outcome.className === 'is-ready') {
+    await notifyDesigner(webflow, 'Success', 'Validator passed. The latest result is ready for template submission.');
+    return;
+  }
+
+  if (outcome.className === 'is-review') {
+    await notifyDesigner(webflow, 'Info', 'Validator is ready with non-blocking warnings. Review the Overview before handoff.');
+    return;
+  }
+
+  await notifyDesigner(webflow, 'Error', 'Validator is not submission-ready. Open the Fix List to resolve blocking items.');
+}
+
+function setBridgeSetupStep(activeStep: 'install' | 'publish' | 'recheck' | 'run'): void {
+  const steps: Array<'install' | 'publish' | 'recheck' | 'run'> = [
+    'install',
+    'publish',
+    'recheck',
+    'run',
+  ];
+  const activeIndex = steps.indexOf(activeStep);
+  steps.forEach((step, index) => {
+    const element = document.getElementById(`bridge-step-${step}`);
+    if (!element) return;
+    element.classList.remove('is-active', 'is-complete');
+    if (index < activeIndex) {
+      element.classList.add('is-complete');
+    } else if (index === activeIndex) {
+      element.classList.add('is-active');
+    }
+  });
+}
+
 // Merge enhanced validation results from Worker
 function mergeEnhancedValidation(designerResults: ValidationResponse, enhancedResults: any): void {
   try {
-    console.log('🔄 Merging enhanced validation results...');
-    console.log('📊 Enhanced results structure:', Object.keys(enhancedResults.analysis || enhancedResults || {}));
-    console.log('📈 Categories before merge:', designerResults.categories.length);
+    console.log('Merging enhanced validation results...');
+    console.log('Enhanced results structure:', Object.keys(enhancedResults.analysis || enhancedResults || {}));
+    console.log('Categories before merge:', designerResults.categories.length);
 
     const analysis = enhancedResults.analysis || enhancedResults;
 
     // Add new categories from enhanced validation
     if (analysis.assets) {
-      console.log('➕ Adding Assets & Images category');
+      console.log('Adding Assets & Images category');
       const hasErrors = analysis.assets.issues.filter((i: any) => i.severity === 'error').length > 0;
       designerResults.categories.push({
         category: 'Assets & Images',
@@ -1252,7 +1761,7 @@ function mergeEnhancedValidation(designerResults: ValidationResponse, enhancedRe
     }
 
     if (analysis.content) {
-      console.log('➕ Adding Content & Accessibility category');
+      console.log('Adding Content & Accessibility category');
       const hasErrors = analysis.content.issues.filter((i: any) => i.severity === 'error').length > 0;
       designerResults.categories.push({
         category: 'Content & Accessibility',
@@ -1263,7 +1772,7 @@ function mergeEnhancedValidation(designerResults: ValidationResponse, enhancedRe
     }
 
     if (analysis.accessibility) {
-      console.log('➕ Adding Accessibility & WCAG category');
+      console.log('Adding Accessibility & WCAG category');
       const surfacedAccessibilityIssues = getSurfacedAccessibilityIssues(
         analysis.accessibility,
         Boolean(analysis.content)
@@ -1280,7 +1789,7 @@ function mergeEnhancedValidation(designerResults: ValidationResponse, enhancedRe
     }
 
     if (analysis.interactions) {
-      console.log('➕ Adding Interactions and GSAP category');
+      console.log('Adding Interactions and GSAP category');
       const hasErrors = analysis.interactions.issues.filter((i: any) => i.severity === 'error').length > 0;
       designerResults.categories.push({
         category: 'Interactions and GSAP',
@@ -1304,9 +1813,9 @@ function mergeEnhancedValidation(designerResults: ValidationResponse, enhancedRe
     designerResults.summary.passedCategories = designerResults.categories.filter(c => c.passed).length;
     designerResults.summary.failedCategories = designerResults.categories.filter(c => !c.passed).length;
 
-    console.log('✅ Enhanced validation results merged successfully!');
-    console.log('📊 Total categories after merge:', designerResults.categories.length);
-    console.log('🏷️ Final category list:', designerResults.categories.map(c => c.category));
+    console.log('Enhanced validation results merged successfully!');
+    console.log('Total categories after merge:', designerResults.categories.length);
+    console.log('Final category list:', designerResults.categories.map(c => c.category));
   } catch (error) {
     console.warn('Error merging enhanced validation results:', error);
   }
@@ -1326,7 +1835,158 @@ function getSurfacedAccessibilityIssues(
 }
 
 // Collect comprehensive project data from Webflow Designer APIs
-async function collectProjectData(webflow: any): Promise<ProjectData> {
+interface CanvasAccessibilityResult {
+  available: boolean;
+  reason?: string;
+  pageName?: string;
+  headingsChecked: number;
+  headingIssues: Array<{ issue: string; position: number; level: number; elementKey?: string }>;
+  imagesChecked: number;
+  imagesMissingAlt: number;
+  missingAltElementKeys: string[];
+}
+
+// Canvas-accurate checks for the current page via the Designer element API.
+// Unlike the published-site checks, these reflect unpublished edits — closing
+// the gap where a creator fixes an issue but the published HTML still shows it.
+async function collectCanvasAccessibility(
+  webflow: WebflowApi,
+  canAccessCanvas: boolean | undefined
+): Promise<CanvasAccessibilityResult> {
+  const unavailable = (reason: string): CanvasAccessibilityResult => ({
+    available: false,
+    reason,
+    headingsChecked: 0,
+    headingIssues: [],
+    imagesChecked: 0,
+    imagesMissingAlt: 0,
+    missingAltElementKeys: [],
+  });
+
+  canvasElementRegistry.clear();
+
+  if (canAccessCanvas === false) {
+    return unavailable('Canvas access is unavailable in the current Designer mode');
+  }
+  if (typeof webflow.getAllElements !== 'function') {
+    return unavailable('Element API unavailable in this Designer version');
+  }
+
+  try {
+    const [elements, currentPage] = await Promise.all([
+      webflow.getAllElements(),
+      webflow.getCurrentPage(),
+    ]);
+    const pageName = (await currentPage?.getName?.()) || 'Current Page';
+
+    const headingIssues: CanvasAccessibilityResult['headingIssues'] = [];
+    let headingsChecked = 0;
+    let lastLevel = 0;
+
+    for (const element of elements) {
+      if (element.type !== 'Heading') continue;
+      let level: number | null = null;
+      try {
+        level = await element.getHeadingLevel();
+        if (level === null) {
+          const tag = await element.getTag();
+          if (tag) level = parseInt(tag.substring(1), 10);
+        }
+      } catch {
+        level = null;
+      }
+      if (!level) continue;
+
+      headingsChecked++;
+      if (headingsChecked === 1 && level !== 1) {
+        const elementKey = `canvas-heading-${headingsChecked}`;
+        canvasElementRegistry.set(elementKey, element);
+        headingIssues.push({
+          issue: `First heading on the canvas is H${level} — it should be H1`,
+          position: headingsChecked,
+          level,
+          elementKey,
+        });
+      } else if (headingsChecked > 1 && level > lastLevel + 1) {
+        const elementKey = `canvas-heading-${headingsChecked}`;
+        canvasElementRegistry.set(elementKey, element);
+        headingIssues.push({
+          issue: `H${level} follows H${lastLevel}, skipping H${lastLevel + 1}`,
+          position: headingsChecked,
+          level,
+          elementKey,
+        });
+      }
+      lastLevel = level;
+    }
+
+    let imagesChecked = 0;
+    let imagesMissingAlt = 0;
+    const missingAltElementKeys: string[] = [];
+    for (const element of elements) {
+      if (element.type !== 'Image') continue;
+      imagesChecked++;
+      try {
+        const altText = await element.getAltText();
+        if (!altText || !altText.trim()) {
+          imagesMissingAlt++;
+          if (missingAltElementKeys.length < 10) {
+            const elementKey = `canvas-image-${imagesMissingAlt}`;
+            canvasElementRegistry.set(elementKey, element);
+            missingAltElementKeys.push(elementKey);
+          }
+        }
+      } catch {
+        // Ignore unreadable images rather than miscounting them
+        imagesChecked--;
+      }
+    }
+
+    return {
+      available: true,
+      pageName,
+      headingsChecked,
+      headingIssues,
+      imagesChecked,
+      imagesMissingAlt,
+      missingAltElementKeys,
+    };
+  } catch (error) {
+    console.warn('Canvas accessibility collection failed:', error);
+    return unavailable(error instanceof Error ? error.message : 'Canvas analysis failed');
+  }
+}
+
+
+// Webflow displays tag selectors as e.g. "All H1 Headings", "All Paragraphs",
+// "All Links", "Body (All Pages)"
+
+
+// Breadth-first walk of a component's element tree looking for a nested
+// component instance. Depth-capped: nesting evidence is always near the root,
+// and unbounded canvas traversal is expensive in the Designer.
+async function componentContainsComponentInstance(
+  component: Component,
+  maxDepth = 4
+): Promise<boolean> {
+  const root = await component.getRootElement();
+  if (!root) return false;
+
+  let frontier: AnyElement[] = [root];
+  for (let depth = 0; depth < maxDepth && frontier.length > 0; depth++) {
+    const next: AnyElement[] = [];
+    for (const element of frontier) {
+      if (element.type === 'ComponentInstance') return true;
+      if ('children' in element && element.children) {
+        next.push(...(await element.getChildren()));
+      }
+    }
+    frontier = next;
+  }
+  return false;
+}
+
+async function collectProjectData(webflow: WebflowApi): Promise<ProjectData> {
   const data: ProjectData = {
     variables: undefined,
     components: [],
@@ -1367,7 +2027,9 @@ async function collectProjectData(webflow: any): Promise<ProjectData> {
         hasInstructionsPage: false,
         hasLicensePage: false,
         hasTitleCaseNaming: false,
-        hasMatchingSlugs: false
+        hasMatchingSlugs: false,
+        pagesNotTitleCase: [],
+        pagesWithMismatchedSlugs: []
       },
       seoCompliance: {
         currentPageHasValidTitle: false,
@@ -1388,16 +2050,19 @@ async function collectProjectData(webflow: any): Promise<ProjectData> {
       const collections = await webflow.getAllVariableCollections() || [];
       const variableData: any[] = [];
       let totalVariables = 0;
+      let totalVariableModes = 0;
 
       for (const collection of collections) {
         try {
-          const collectionName = collection.getName ? await collection.getName() : collection.name || 'Unnamed Collection';
-          const variables = collection.getAllVariables ? await collection.getAllVariables() : [];
+          const collectionName = (await collection.getName()) || 'Unnamed Collection';
+          const variables = await collection.getAllVariables();
           const variableList: any[] = [];
+          const modeList: Array<{ id: string; name: string }> = [];
+          let modeDataAvailable = false;
 
           for (const variable of variables) {
             try {
-              const variableName = variable.getName ? await variable.getName() : variable.name || null;
+              const variableName = (await variable.getName()) || null;
               const variableType = variable.type || null;
               
               // Enhanced variable analysis
@@ -1414,34 +2079,80 @@ async function collectProjectData(webflow: any): Promise<ProjectData> {
                 }
               }
               
+              // Variables expose values via get(), not a .value property
+              let variableValue: unknown = null;
+              try {
+                variableValue = await variable.get();
+              } catch {
+                variableValue = null;
+              }
+
               variableList.push({
                 id: variable.id,
                 name: variableName,
                 type: variableType,
-                value: variable.value || null
+                value: variableValue ?? null
               });
             } catch (variableError) {
               console.warn('Error processing variable:', variableError);
-              if (variable.name || variable.id) {
+              if (variable.id) {
                 variableList.push({
                   id: variable.id,
-                  name: variable.name || null,
+                  name: null,
                   type: variable.type || null,
-                  value: variable.value || null
+                  value: null
                 });
               }
             }
           }
 
-          variableData.push({
+          try {
+            // getAllVariableModes may be absent on older Designer runtimes
+            const modes = typeof collection.getAllVariableModes === 'function'
+              ? await collection.getAllVariableModes()
+              : undefined;
+
+            if (Array.isArray(modes)) {
+              modeDataAvailable = true;
+
+              for (const mode of modes) {
+                try {
+                  const modeName = (await mode.getName()) || mode.id || 'Unnamed Mode';
+
+                  modeList.push({
+                    id: String(mode.id),
+                    name: String(modeName)
+                  });
+                } catch (modeError) {
+                  console.warn('Error processing variable mode:', modeError);
+                }
+              }
+            }
+          } catch (modeCollectionError) {
+            console.warn(`Error processing variable modes for collection "${collectionName}":`, modeCollectionError);
+            data.collectionWarnings!.push({
+              source: 'Variable Modes',
+              message: `Failed to collect variable modes for ${collectionName}`,
+              error: modeCollectionError instanceof Error ? modeCollectionError.message : String(modeCollectionError)
+            });
+          }
+
+          const collectionPayload: any = {
             id: collection.id,
             name: collectionName,
             variables: variableList,
             variableCount: variableList.length
-          });
+          };
+
+          if (modeDataAvailable) {
+            collectionPayload.modes = modeList;
+            totalVariableModes += modeList.length;
+          }
+
+          variableData.push(collectionPayload);
 
           totalVariables += variableList.length;
-          console.log(`Variables in collection "${collectionName}": ${variableList.length}`);
+          console.log(`Variables in collection "${collectionName}": ${variableList.length}, Modes: ${modeDataAvailable ? modeList.length : 'unavailable'}`);
 
         } catch (collectionError) {
           console.warn('Error processing variable collection:', collectionError);
@@ -1452,7 +2163,8 @@ async function collectProjectData(webflow: any): Promise<ProjectData> {
         data.variables = { collections: variableData };
         data.collectionMetadata!.variableCollections = variableData.length;
         data.collectionMetadata!.totalVariables = totalVariables;
-        console.log(`Variable collections collected: ${variableData.length}, Total variables: ${totalVariables}`);
+        data.collectionMetadata!.totalVariableModes = totalVariableModes;
+        console.log(`Variable collections collected: ${variableData.length}, Total variables: ${totalVariables}, Total modes: ${totalVariableModes}`);
       }
     }
   } catch (error) {
@@ -1472,15 +2184,15 @@ async function collectProjectData(webflow: any): Promise<ProjectData> {
 
       for (const component of components) {
         try {
-          const name = component.getName ? await component.getName() : component.name || null;
-          const id = component.getId ? await component.getId() : component.id;
+          const name = (await component.getName()) || null;
+          const id = component.id;
 
           if (name) {
             // Enhanced component analysis
             const lowerName = name.toLowerCase();
             let instances = 0;
             let isNested = false;
-            
+
             // Detect component types for Webflow Way requirements
             if (lowerName.includes('nav') || lowerName.includes('header') || lowerName.includes('menu')) {
               data.enhancedValidation!.componentArchitecture.hasNavbarComponent = true;
@@ -1491,47 +2203,32 @@ async function collectProjectData(webflow: any): Promise<ProjectData> {
             if (lowerName.includes('cta') || lowerName.includes('button') || lowerName.includes('call')) {
               data.enhancedValidation!.componentArchitecture.hasCTAComponents = true;
             }
-            
-            // Try to get component usage/instances count
+
             try {
-              if (component.getInstances) {
-                const componentInstances = await component.getInstances();
-                instances = Array.isArray(componentInstances) ? componentInstances.length : 0;
+              // getInstanceCount may be absent on older Designer runtimes
+              if (typeof component.getInstanceCount === 'function') {
+                instances = await component.getInstanceCount();
               }
-              
-              // Check if component contains other components (nested)
-              if (component.getChildren) {
-                const children = await component.getChildren();
-                if (Array.isArray(children) && children.some((child: any) => child.type === 'Component')) {
-                  isNested = true;
-                  data.enhancedValidation!.componentArchitecture.hasNestedComponents = true;
-                }
+
+              // A component is "nested" when its tree contains another component instance
+              isNested = await componentContainsComponentInstance(component);
+              if (isNested) {
+                data.enhancedValidation!.componentArchitecture.hasNestedComponents = true;
               }
             } catch (nestedError) {
               console.warn('Error analyzing component nesting:', nestedError);
             }
-            
+
             componentData.push({
               id: id,
               name: name,
-              type: component.type || 'component',
+              type: 'component',
               instances: instances,
               isNested: isNested
             });
           }
         } catch (compError) {
           console.warn('Error processing component:', compError);
-          try {
-            if (component.name) {
-              componentData.push({
-                id: component.id,
-                name: component.name,
-                type: component.type || 'component'
-              });
-            }
-          } catch (fallbackError) {
-            console.warn('Fallback component processing also failed:', fallbackError);
-          }
         }
       }
 
@@ -1556,18 +2253,19 @@ async function collectProjectData(webflow: any): Promise<ProjectData> {
 
       for (const style of styles) {
         try {
-          const name = style.getName ? await style.getName() : style.name || null;
-          const id = style.getId ? await style.getId() : style.id;
-          const styleType = style.type || 'class';
+          const name = (await style.getName()) || null;
+          const id = style.id;
+          const styleType = 'class';
 
           if (name && !name.startsWith('_')) {
             let properties: Record<string, any> = {};
             let isHtmlTag = false;
             let hasVariables = false;
-            
-            // Check if this is an HTML tag style (required by Webflow Way)
-            const htmlTags = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'a', 'ul', 'ol', 'blockquote', 'figure', 'figcaption', 'body'];
-            if (htmlTags.some(tag => name.toLowerCase() === tag || name.toLowerCase().includes(tag))) {
+
+            // Check if this is an HTML tag style (required by Webflow Way).
+            // Exact tag names or Webflow's tag-selector display names only —
+            // substring matching ("a", "p") would match nearly every class.
+            if (isHtmlTagStyleName(name)) {
               isHtmlTag = true;
               data.enhancedValidation!.styleSystem.hasHtmlTagStyles = true;
             }
@@ -1608,17 +2306,6 @@ async function collectProjectData(webflow: any): Promise<ProjectData> {
           }
         } catch (styleError) {
           console.warn('Error processing style:', styleError);
-          try {
-            if (style.name && !style.name.startsWith('_')) {
-              styleData.push({
-                id: style.id,
-                name: style.name,
-                type: style.type || 'class'
-              });
-            }
-          } catch (fallbackError) {
-            console.warn('Fallback style processing also failed:', fallbackError);
-          }
         }
       }
 
@@ -1645,20 +2332,66 @@ async function collectProjectData(webflow: any): Promise<ProjectData> {
       for (const item of items) {
         try {
           // Filter out folders, only include pages
-          if (item.type === 'Page' || item.type === 'page') {
-            const name = item.getName ? await item.getName() : 
-                        item.name || item.title || item.displayName || 'Unnamed';
-            const slug = item.getSlug ? await item.getSlug() : 
-                        item.slug || item.path || '';
-            
+          if (item.type === 'Page') {
+            const name = (await item.getName()) || 'Unnamed';
+            const slug = (await item.getSlug()) || '';
+            const publishPath = await item.getPublishPath();
+            let collectionId: string | null = null;
+            let collectionName: string | null = null;
+            let pageKind: string | null = null;
+            let isDraftPage = false;
+
+            try {
+              collectionId = await item.getCollectionId();
+            } catch {
+              collectionId = null;
+            }
+
+            try {
+              collectionName = await item.getCollectionName();
+            } catch {
+              collectionName = null;
+            }
+
+            // getKind/isDraft may be absent on older Designer runtimes
+            try {
+              if (typeof item.getKind === 'function') {
+                pageKind = await item.getKind();
+              }
+            } catch {
+              pageKind = null;
+            }
+
+            try {
+              if (typeof item.isDraft === 'function') {
+                isDraftPage = await item.isDraft();
+              }
+            } catch {
+              isDraftPage = false;
+            }
+
+            // CMS-bound template pages (collection pages, ecommerce product/SKU/
+            // category templates) can't be fetched as static published URLs.
+            // Prefer the API's collection binding and page kind; fall back to
+            // slug heuristics only when kind is unavailable.
+            const isCmsTemplate = Boolean(
+              collectionId ||
+              collectionName ||
+              pageKind === 'cms' ||
+              (pageKind === null && (
+                isInternalCmsTemplateSlug(slug) ||
+                (publishPath && isInternalCmsTemplateSlug(publishPath))
+              ))
+            );
+
             // Enhanced page analysis for Webflow Way requirements
             let isHomePage = false;
             let hasValidNaming = false;
-            
+
             // Check for required pages
             const lowerName = name.toLowerCase();
             const lowerSlug = slug.toLowerCase();
-            
+
             if (lowerName.includes('style guide') || lowerSlug.includes('style-guide') || lowerSlug.includes('styleguide')) {
               data.enhancedValidation!.pageStructure.hasStyleGuidePage = true;
             }
@@ -1668,25 +2401,34 @@ async function collectProjectData(webflow: any): Promise<ProjectData> {
             if (lowerName.includes('license') || lowerSlug.includes('license') || slug === '/licenses') {
               data.enhancedValidation!.pageStructure.hasLicensePage = true;
             }
-            
-            // Check for home page
-            if (slug === '/' || lowerName === 'home' || lowerName === 'homepage' || lowerSlug === 'home') {
+
+            // Prefer the API's homepage flag; fall back to name/slug heuristics
+            try {
+              if (typeof item.isHomepage === 'function') {
+                isHomePage = await item.isHomepage();
+              }
+            } catch {
+              isHomePage = false;
+            }
+            if (!isHomePage && (slug === '/' || lowerName === 'home' || lowerName === 'homepage' || lowerSlug === 'home')) {
               isHomePage = true;
             }
-            
-            // Validate Title Case naming (Webflow Way requirement)
-            const isTitleCase = /^[A-Z][a-z]*(?:\s[A-Z][a-z]*)*$/.test(name) || 
+
+            // Validate Title Case naming (Webflow Way requirement) per page
+            const isTitleCase = /^[A-Z][a-z]*(?:\s[A-Z][a-z]*)*$/.test(name) ||
                                name.split(' ').every((word: string) => word.charAt(0) === word.charAt(0).toUpperCase());
             if (isTitleCase) {
               hasValidNaming = true;
-              data.enhancedValidation!.pageStructure.hasTitleCaseNaming = true;
+            } else {
+              data.enhancedValidation!.pageStructure.pagesNotTitleCase.push(name);
             }
-            
-            // Check if page name matches slug (Webflow Way requirement)
+
+            // Check if page name matches slug (Webflow Way requirement) per page.
+            // CMS template pages have fixed collection slugs; skip them.
             const expectedSlug = name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
             const actualSlug = slug.replace(/^\//, '').toLowerCase();
-            if (expectedSlug === actualSlug || (isHomePage && actualSlug === '')) {
-              data.enhancedValidation!.pageStructure.hasMatchingSlugs = true;
+            if (!isCmsTemplate && expectedSlug !== actualSlug && !(isHomePage && actualSlug === '')) {
+              data.enhancedValidation!.pageStructure.pagesWithMismatchedSlugs.push(`${name} (/${actualSlug})`);
             }
 
             // Collect SEO data for each page
@@ -1733,6 +2475,13 @@ async function collectProjectData(webflow: any): Promise<ProjectData> {
               id: item.id,
               name: name,
               slug: slug,
+              path: slug,
+              publishPath: publishPath,
+              collectionId: collectionId,
+              collectionName: collectionName,
+              isCmsTemplate: isCmsTemplate,
+              kind: pageKind,
+              isDraft: isDraftPage,
               type: item.type,
               isHomePage: isHomePage,
               hasValidNaming: hasValidNaming,
@@ -1744,20 +2493,16 @@ async function collectProjectData(webflow: any): Promise<ProjectData> {
         }
       }
 
+      // "All collected pages pass" semantics: one well-named page must not
+      // mask badly-named ones.
+      data.enhancedValidation!.pageStructure.hasTitleCaseNaming =
+        pageData.length > 0 && data.enhancedValidation!.pageStructure.pagesNotTitleCase.length === 0;
+      data.enhancedValidation!.pageStructure.hasMatchingSlugs =
+        pageData.length > 0 && data.enhancedValidation!.pageStructure.pagesWithMismatchedSlugs.length === 0;
+
       data.pages = pageData;
       data.collectionMetadata!.totalPages = pageData.length;
       console.log(`Pages collected: ${pageData.length}`);
-    } else {
-      // Try alternative methods
-      if (webflow.getAllPages) {
-        const pages = await webflow.getAllPages() || [];
-        data.pages = pages;
-        data.collectionMetadata!.totalPages = pages.length;
-      } else if (webflow.getPages) {
-        const pages = await webflow.getPages() || [];
-        data.pages = pages;
-        data.collectionMetadata!.totalPages = pages.length;
-      }
     }
   } catch (error) {
     console.warn('Could not fetch pages:', error);
@@ -1811,10 +2556,7 @@ async function collectProjectData(webflow: any): Promise<ProjectData> {
   // Site Info
   try {
     const site = await webflow.getSiteInfo?.() || {};
-    data.siteInfo = {
-      name: site.name || null,
-      id: site.siteId || site.id || null
-    };
+    data.siteInfo = normalizeSiteInfo(site);
   } catch (error) {
     console.warn('Could not fetch site info:', error);
     data.collectionWarnings!.push({
@@ -2191,7 +2933,115 @@ function addStyleSystemValidation(results: ValidationResponse, projectData: Proj
   }
 }
 
+function normalizeVariableModesCategory(results: ValidationResponse): void {
+  const variableModesCategory = results.categories.find(cat => cat.category === 'Variable Modes');
+  if (!variableModesCategory?.stats) return;
+
+  const totalModes = typeof variableModesCategory.stats.totalModes === 'number'
+    ? variableModesCategory.stats.totalModes
+    : 0;
+  if (totalModes <= 0) return;
+
+  let convertedWarning = false;
+  variableModesCategory.issues = (variableModesCategory.issues || []).map((issue) => {
+    const isNameOnlyModeWarning =
+      issue.id === 'modes.no-responsive' ||
+      /modes found, but none appear to be for responsive breakpoints/i.test(issue.message || '');
+
+    if (!isNameOnlyModeWarning) return issue;
+    convertedWarning = true;
+
+    return {
+      ...issue,
+      id: 'modes.good',
+      severity: 'info',
+      message: `${totalModes} modes configured across ${variableModesCategory.stats?.collectionsWithModes || 1} collections.`,
+      howToFix: undefined
+    };
+  });
+
+  if (convertedWarning) {
+    variableModesCategory.passed = true;
+    variableModesCategory.stats.modeDataAvailable = true;
+  }
+}
+
 // Enhance validation results with client-side analysis
+// Canvas checks reflect the current Designer state (including unpublished
+// edits), complementing the published-site checks which lag behind edits.
+function addCanvasChecksCategory(results: ValidationResponse, projectData: ProjectData): void {
+  const canvas = projectData.canvasChecks;
+  if (!canvas || !canvas.available) return;
+
+  const issues: ValidationIssue[] = [];
+
+  for (const headingIssue of canvas.headingIssues) {
+    issues.push({
+      id: `canvas-heading-${headingIssue.position}`,
+      category: 'Canvas Checks (Current Page)',
+      severity: 'warning',
+      message: headingIssue.issue,
+      details: {
+        howToFix: 'Adjust the heading level in the element settings so levels increase one step at a time.',
+        location: `${canvas.pageName} — heading ${headingIssue.position} of ${canvas.headingsChecked}`,
+        canvasElementKeys: headingIssue.elementKey ? [headingIssue.elementKey] : undefined
+      }
+    });
+  }
+
+  if (canvas.imagesMissingAlt > 0) {
+    issues.push({
+      id: 'canvas-images-missing-alt',
+      category: 'Canvas Checks (Current Page)',
+      severity: 'info',
+      message: `${canvas.imagesMissingAlt} of ${canvas.imagesChecked} image(s) on this page have no alt text in the Designer.`,
+      details: {
+        howToFix: 'Add descriptive alt text in each image\'s settings, or mark purely decorative images as decorative.',
+        canvasElementKeys: canvas.missingAltElementKeys.length > 0 ? canvas.missingAltElementKeys : undefined
+      }
+    });
+  }
+
+  results.categories.push({
+    category: 'Canvas Checks (Current Page)',
+    passed: issues.filter(issue => issue.severity === 'error' || issue.severity === 'warning').length === 0,
+    issues,
+    stats: {
+      page: canvas.pageName,
+      headingsChecked: canvas.headingsChecked,
+      imagesChecked: canvas.imagesChecked,
+      note: 'Reflects current Designer state, including unpublished changes'
+    }
+  });
+}
+
+// Published-site checks lag behind Designer edits. When the canvas passes a
+// dimension the published site fails, the creator has almost certainly fixed
+// it without republishing — say so on the published issue instead of letting
+// them re-fix or reinstall the app.
+function addRepublishHints(results: ValidationResponse, projectData: ProjectData): void {
+  const canvas = projectData.canvasChecks;
+  if (!canvas || !canvas.available) return;
+
+  const hint = (dimension: string) =>
+    `The current page's canvas passes the ${dimension} check — if you've already fixed this in the Designer, republish the site and re-run validation to update this result.`;
+
+  const headingIssueIds = new Set(['heading-hierarchy-errors', 'heading-structure-errors']);
+  const altIssueIds = new Set(['missing-alt-text-critical', 'missing-alt-text', 'images-missing-alt']);
+
+  for (const category of results.categories) {
+    for (const issue of category.issues || []) {
+      if (issue.id.startsWith('canvas-')) continue;
+      if (canvas.headingsChecked > 0 && canvas.headingIssues.length === 0 && headingIssueIds.has(issue.id)) {
+        issue.details = { ...issue.details, republishHint: hint('heading hierarchy') };
+      }
+      if (canvas.imagesChecked > 0 && canvas.imagesMissingAlt === 0 && altIssueIds.has(issue.id)) {
+        issue.details = { ...issue.details, republishHint: hint('image alt text') };
+      }
+    }
+  }
+}
+
 function enhanceValidationResults(results: ValidationResponse, projectData: ProjectData): void {
   console.log('Enhancing validation results with client-side analysis...');
 
@@ -2199,6 +3049,9 @@ function enhanceValidationResults(results: ValidationResponse, projectData: Proj
   // addVariableValidation(results, projectData); // Creates duplicate "Design System" category
   // addComponentValidation(results, projectData); // Creates duplicate "Component Architecture" category
   addStyleSystemValidation(results, projectData);
+  normalizeVariableModesCategory(results);
+  addCanvasChecksCategory(results, projectData);
+  addRepublishHints(results, projectData);
   
   // Find Page Structure category
   const pageStructureCategory = results.categories.find(cat => cat.category === 'Page Structure');
@@ -2232,15 +3085,32 @@ function enhanceValidationResults(results: ValidationResponse, projectData: Proj
       // Note: Style Guide, Instructions, and License page checks are handled by the
       // server in the "Required Pages" category to avoid duplication
 
-      // Check for Title Case naming
-      if (!pageStructure.hasTitleCaseNaming) {
+      // Check for Title Case naming — report the specific offending pages
+      const pagesNotTitleCase = pageStructure.pagesNotTitleCase || [];
+      if (pagesNotTitleCase.length > 0) {
         issues.push({
           id: 'page-naming',
           category: 'Page Structure',
           severity: 'warning',
-          message: 'Some pages don\'t use Title Case naming convention.',
+          message: `${pagesNotTitleCase.length} page(s) don't use Title Case naming convention.`,
           details: {
-            howToFix: 'Use Title Case for page names (e.g., "Style Guide", "Contact Us")'
+            howToFix: 'Use Title Case for page names (e.g., "Style Guide", "Contact Us")',
+            samples: pagesNotTitleCase.slice(0, 10)
+          }
+        });
+      }
+
+      // Check page-name/slug agreement — report the specific offending pages
+      const pagesWithMismatchedSlugs = pageStructure.pagesWithMismatchedSlugs || [];
+      if (pagesWithMismatchedSlugs.length > 0) {
+        issues.push({
+          id: 'page-slug-mismatch',
+          category: 'Page Structure',
+          severity: 'warning',
+          message: `${pagesWithMismatchedSlugs.length} page(s) have slugs that don't match their names.`,
+          details: {
+            howToFix: 'Keep page slugs aligned with page names (e.g., "Style Guide" → /style-guide)',
+            samples: pagesWithMismatchedSlugs.slice(0, 10)
           }
         });
       }
@@ -2310,7 +3180,7 @@ function enhanceValidationResults(results: ValidationResponse, projectData: Proj
 }
 
 // Collect current page SEO data using getCurrentPage API
-async function collectCurrentPageSEOData(webflow: any): Promise<any> {
+async function collectCurrentPageSEOData(webflow: WebflowApi): Promise<any> {
   try {
     // Get current page
     const currentPage = await webflow.getCurrentPage();
@@ -2319,9 +3189,10 @@ async function collectCurrentPageSEOData(webflow: any): Promise<any> {
       return null;
     }
     
-    const pageName = currentPage.getName ? await currentPage.getName() : 'Current Page';
-    const pageSlug = currentPage.getSlug ? await currentPage.getSlug() : '';
-    const pageId = currentPage.getId ? await currentPage.getId() : currentPage.id;
+    const pageName = (await currentPage.getName()) || 'Current Page';
+    const pageSlug = (await currentPage.getSlug()) || '';
+    const pagePublishPath = await currentPage.getPublishPath();
+    const pageId = currentPage.id;
     
     console.log(`Analyzing SEO for current page: ${pageName}`);
     
@@ -2433,6 +3304,7 @@ async function collectCurrentPageSEOData(webflow: any): Promise<any> {
       id: pageId,
       name: pageName,
       slug: pageSlug,
+      publishPath: pagePublishPath,
       seo: seoData
     };
     
@@ -2565,11 +3437,30 @@ function updateMetaDisplay(projectLabel: string, projectData: ProjectData): void
   if (!metaDisplay || !projectData) return;
 
   const stats = projectData.collectionMetadata || {};
+
+  // Published-site checks run against the last publish, not the canvas —
+  // surface which publish is being validated so creators republish after fixes.
+  const scope = projectData.validationScope;
+  const lastPublished = scope?.domainLastPublished;
+  const publishNote = lastPublished
+    ? `<div class="meta-stat">
+        <span class="meta-label">Validating publish from:</span>
+        <span class="meta-value">${formatDateTime(lastPublished)} — republish to validate newer changes</span>
+      </div>`
+    : scope?.siteUrl
+      ? `<div class="meta-stat">
+          <span class="meta-label">Published checks:</span>
+          <span class="meta-value">Run against the last published site — republish to validate newer changes</span>
+        </div>`
+      : '';
+
   const metaHTML = `
     <div class="meta-header">
-      <h3 class="meta-title">📊 Project: ${projectLabel}</h3>
+      <h3 class="meta-title">Project: ${escapeHtml(projectLabel)}</h3>
+      <span class="meta-version">Validator v${EXTENSION_VERSION}${knownWorkerVersion ? ` · Worker v${knownWorkerVersion}` : ''}</span>
     </div>
     <div class="meta-stats">
+      ${publishNote}
       <div class="meta-stat">
         <span class="meta-label">Variables:</span>
         <span class="meta-value">${stats.totalVariables || 0} (${stats.variableCollections || 0} collections)</span>
@@ -2593,29 +3484,175 @@ function updateMetaDisplay(projectLabel: string, projectData: ProjectData): void
   metaDisplay.style.display = 'block';
 }
 
+// Register the completed run for copy-report and persist it so reopening the
+// panel restores the last report instead of forcing a 30-60s re-run.
+function registerValidationReport(data: ValidationResponse, correlationId: string | null): void {
+  lastValidationReport = {
+    data,
+    correlationId,
+    generatedAt: new Date().toISOString(),
+    restored: false,
+  };
+
+  try {
+    localStorage.setItem(LAST_RUN_STORAGE_KEY, JSON.stringify(lastValidationReport));
+  } catch {
+    // Quota exceeded on large sites — retry without the bulky collected data
+    try {
+      localStorage.setItem(LAST_RUN_STORAGE_KEY, JSON.stringify({
+        ...lastValidationReport,
+        data: { ...data, collectedData: undefined },
+      }));
+    } catch (storageError) {
+      console.warn('Could not persist validation results:', storageError);
+    }
+  }
+}
+
+function restoreLastValidationReport(): boolean {
+  try {
+    const saved = localStorage.getItem(LAST_RUN_STORAGE_KEY);
+    if (!saved) return false;
+    const parsed = JSON.parse(saved);
+    if (!parsed?.data?.categories) return false;
+
+    lastValidationReport = { ...parsed, restored: true };
+    showResults(parsed.data);
+    return true;
+  } catch (error) {
+    console.warn('Could not restore last validation results:', error);
+    return false;
+  }
+}
+
+function selectCanvasElement(elementKey: string): void {
+  const element = canvasElementRegistry.get(elementKey);
+  const webflow = (window as unknown as { webflow?: WebflowApi }).webflow;
+  if (!element || !webflow) {
+    void notifyDesigner(webflow, 'Info', 'Element reference expired — re-run the validator to refresh canvas checks.');
+    return;
+  }
+  void webflow.setSelectedElement(element).catch((error: unknown) => {
+    console.warn('Could not select element:', error);
+    void notifyDesigner(webflow, 'Error', 'Could not select the element. It may have been deleted or be on another page.');
+  });
+}
+
+function buildReportMarkdown(): string {
+  const report = lastValidationReport;
+  if (!report) return '';
+  const { data } = report;
+  const projectData = Array.isArray(data.collectedData) ? data.collectedData[0] as ProjectData | undefined : undefined;
+  const scope = projectData?.validationScope;
+  const outcome = getMarketplaceOutcome(data);
+
+  const input: ReportInput = {
+    url: data.url || scope?.siteUrl || null,
+    generatedAt: report.generatedAt,
+    correlationId: report.correlationId,
+    outcomeBadge: outcome.badge,
+    outcomeTitle: outcome.title,
+    errors: data.summary.totalErrors || data.summary.errors || 0,
+    warnings: data.summary.totalWarnings || data.summary.warnings || 0,
+    infos: data.summary.totalInfo || data.summary.infos || 0,
+    categories: data.categories,
+    domainLastPublished: scope?.domainLastPublished || null,
+    extensionVersion: EXTENSION_VERSION,
+    workerVersion: knownWorkerVersion,
+  };
+
+  return buildReportMarkdownPure(input);
+}
+
+// Reported by the worker's /health endpoint during bootstrap, used to
+// diagnose extension/worker version skew from a copied report.
+let knownWorkerVersion: string | null = null;
+
+async function fetchWorkerVersion(): Promise<void> {
+  try {
+    const response = await fetch(`${WORKER_API_BASE}/health`);
+    if (!response.ok) return;
+    const payload = (await response.json()) as { version?: string };
+    if (payload?.version) knownWorkerVersion = payload.version;
+  } catch {
+    // Version display is best-effort
+  }
+}
+
+async function submitIssueFeedback(issueId: string, category: string): Promise<void> {
+  const webflow = (window as unknown as { webflow?: WebflowApi }).webflow;
+  try {
+    const response = await fetch(`${APP_VALIDATOR_BASE}/app-validator/feedback`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        issueId,
+        category,
+        siteId: bridgeContext?.siteId,
+        siteUrl: bridgeContext?.siteUrl || lastValidationReport?.data?.url,
+        runCorrelationId: lastValidationReport?.correlationId,
+        note: `extension v${EXTENSION_VERSION}${knownWorkerVersion ? ` / worker v${knownWorkerVersion}` : ''}`
+      })
+    });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    void notifyDesigner(webflow, 'Success', 'Thanks — this issue was flagged for review by the validator team.');
+  } catch (error) {
+    console.warn('Issue feedback failed:', error);
+    void notifyDesigner(webflow, 'Error', 'Could not send feedback. Please try again later.');
+  }
+}
+
+async function copyValidationReport(): Promise<void> {
+  const markdown = buildReportMarkdown();
+  const webflow = (window as unknown as { webflow?: WebflowApi }).webflow;
+  if (!markdown) {
+    void notifyDesigner(webflow, 'Info', 'Run the validator first to generate a report.');
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(markdown);
+    void notifyDesigner(webflow, 'Success', 'Validation report copied — paste it into a support ticket or document.');
+  } catch (error) {
+    console.warn('Copy report failed:', error);
+    void notifyDesigner(webflow, 'Error', 'Could not copy the report to the clipboard.');
+  }
+}
+
 function showResults(data: ValidationResponse): void {
   const resultsDisplay = document.getElementById('results-display');
   if (!resultsDisplay) return;
 
+  const blockingCount = getSubmissionBlockingIssues(data).length;
+  const outcome = getMarketplaceOutcome(data);
+  const generatedAt = lastValidationReport?.generatedAt ? new Date(lastValidationReport.generatedAt) : new Date();
+  const isRestored = lastValidationReport?.restored === true;
+
   // Create comprehensive results HTML with enhanced reporting
   const resultsHTML = `
     <!-- Tabs Navigation -->
-    <div class="validation-tabs">
-      <button class="tab-button active" data-tab="overview">Overview</button>
-      <button class="tab-button" data-tab="checklist">Error Checklist</button>
+    <div class="validation-tabs" role="tablist" aria-label="Validation report sections">
+      <button id="overview-tab-button" class="tab-button active" data-tab="overview" type="button" role="tab" aria-selected="true" aria-controls="overview-tab" tabindex="0">Overview</button>
+      <button id="checklist-tab-button" class="tab-button" data-tab="checklist" type="button" role="tab" aria-selected="false" aria-controls="checklist-tab" tabindex="-1">Fix List${blockingCount > 0 ? ` (${blockingCount})` : ''}</button>
     </div>
 
     <!-- Overview Tab Content -->
-    <div id="overview-tab" class="tab-content active">
+    <div id="overview-tab" class="tab-content active" role="tabpanel" aria-labelledby="overview-tab-button" tabindex="0">
+      ${isRestored ? `
+        <div class="restored-banner" role="status">
+          Restored from last run (${generatedAt.toLocaleString()}) — results may be stale. Run Validator to refresh.
+        </div>
+      ` : ''}
       <!-- Project Overview -->
       <div class="project-overview">
       <div class="project-header">
-        <h2 class="project-title">Validation Report: ${data.url}</h2>
-        <div class="validation-timestamp">${new Date().toLocaleString()}</div>
+        <h2 class="project-title">Validation Report: ${escapeHtml(data.url || '')}</h2>
+        <div class="validation-timestamp">${generatedAt.toLocaleString()}</div>
+        <button type="button" id="copy-report-btn" class="secondary-btn copy-report-btn">Copy report</button>
       </div>
     </div>
 
     ${createMarketplaceOutcomeHTML(data)}
+    ${createValidationScopeHTML(data)}
 
     <!-- Summary Stats -->
     <div class="results-summary">
@@ -2637,27 +3674,29 @@ function showResults(data: ValidationResponse): void {
       </div>
     </div>
 
-    <!-- Overall Score -->
-    <div class="overall-score">
-      <div class="score-container">
-        <div class="score-circle ${getScoreLevel(data.summary)}">
-          <div class="score-percentage">${calculateOverallScore(data.summary)}%</div>
-        </div>
-        <div class="score-label">Webflow Way Compliance</div>
+    <!-- Submission State -->
+    <div class="submission-state ${blockingCount > 0 ? 'is-blocked' : 'is-ready'}">
+      <div class="submission-state-headline">
+        ${blockingCount > 0
+          ? `${blockingCount} blocker${blockingCount === 1 ? '' : 's'} remaining before submission`
+          : 'Submission gate clear'}
+      </div>
+      <div class="submission-state-sub">
+        Categories passed: ${data.summary.passedCategories}/${data.categories.length} · Score ${calculateOverallScore(data.summary)}%
       </div>
     </div>
 
     <!-- Category Results with Enhanced Details -->
     ${(() => {
-      console.log('🎨 Rendering categories in UI. Total categories:', data.categories.length);
-      console.log('📋 Category names:', data.categories.map(cat => cat.category));
+      console.log('Rendering categories in UI. Total categories:', data.categories.length);
+      console.log('Category names:', data.categories.map(cat => cat.category));
       return data.categories.map((cat, idx) => createCategoryHTML(cat, idx, data.collectedData)).join('');
     })()}
 
     <!-- Webflow Way Guidelines Reference -->
     <div class="guidelines-reference">
       <div class="reference-header">
-        <h3>📚 Webflow Way Guidelines</h3>
+        <h3>Webflow Way Guidelines</h3>
         <p>This validation follows official Webflow Way best practices for template submission and design system consistency.</p>
       </div>
       <div class="reference-links">
@@ -2668,7 +3707,7 @@ function showResults(data: ValidationResponse): void {
           <strong>Design System:</strong> Consistent typography, organized classes, proper hierarchy
         </div>
         <div class="reference-link">
-          <strong>Performance:</strong> Optimized assets (≤150KB), modern formats, clean code
+          <strong>Performance:</strong> Optimized assets (150KB target where possible, 4MB maximum), modern formats, clean code
         </div>
         <div class="reference-link">
           <strong>SEO & Accessibility:</strong> Semantic HTML, alt text, proper meta tags
@@ -2677,12 +3716,12 @@ function showResults(data: ValidationResponse): void {
     </div>
 
       <!-- Action Items Summary -->
-      ${createActionItemsHTML(data.summary)}
+      ${createActionItemsHTML(data)}
     </div>
 
-    <!-- Error Checklist Tab Content -->
-    <div id="checklist-tab" class="tab-content">
-      ${createErrorChecklistHTML(data)}
+    <!-- Submission Fix List Tab Content -->
+    <div id="checklist-tab" class="tab-content" role="tabpanel" aria-labelledby="checklist-tab-button" tabindex="0" hidden>
+      ${createSubmissionFixListHTML(data)}
     </div>
   `;
 
@@ -2693,6 +3732,34 @@ function showResults(data: ValidationResponse): void {
   // Initialize tab functionality
   initializeTabs();
 
+  // "Select on canvas" buttons for canvas-check issues
+  resultsDisplay.querySelectorAll<HTMLButtonElement>('[data-canvas-element]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const key = button.getAttribute('data-canvas-element');
+      if (key) selectCanvasElement(key);
+    });
+  });
+
+  // "Flag as incorrect" false-positive reports
+  resultsDisplay.querySelectorAll<HTMLButtonElement>('[data-flag-issue]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const issueId = button.getAttribute('data-flag-issue');
+      const category = button.getAttribute('data-flag-category') || '';
+      if (issueId) {
+        button.disabled = true;
+        button.textContent = 'Flagged';
+        void submitIssueFeedback(issueId, category);
+      }
+    });
+  });
+
+  document.getElementById('copy-report-btn')?.addEventListener('click', () => void copyValidationReport());
+
+  // A blocked run lands the creator on the work list, not the summary
+  if (!isRestored && outcome.showFixListAction) {
+    activateValidationTab('checklist');
+  }
+
   // Reset the explicit refresh flag AFTER rendering
   console.log('Resetting isExplicitRefresh to false after rendering');
   isExplicitRefresh = false;
@@ -2700,8 +3767,29 @@ function showResults(data: ValidationResponse): void {
 
 function createCategoryHTML(cat: CategoryResult, idx: number, collectedData?: any[]): string {
   const status = getCategoryStatus(cat);
+  const categoryAnchorId = getCategoryAnchorId(cat.category);
+
+  // Clean categories collapse to one line so report length tracks the work
+  // remaining, not the number of checks that ran.
+  if (cat.passed && cat.issues.length === 0) {
+    return `
+      <details id="${categoryAnchorId}" class="category-section category-collapsed ${idx === 0 ? 'first' : ''}">
+        <summary class="category-header category-summary">
+          <h3 class="category-title">${cat.category}</h3>
+          <div class="category-status ${status.className}">
+            ${status.label}
+          </div>
+          ${cat.stats ? `<span class="category-stats">${formatCategoryStats(cat.stats)}</span>` : ''}
+        </summary>
+        ${createSuccessHTML()}
+        ${cat.stats ? createMetadataHTML(cat.category, cat.stats) : ''}
+        ${createDataCollectedSection(cat.category, collectedData)}
+      </details>
+    `;
+  }
+
   return `
-    <div class="category-section ${idx === 0 ? 'first' : ''}">
+    <div id="${categoryAnchorId}" class="category-section ${idx === 0 ? 'first' : ''}">
       <div class="category-header">
         <h3 class="category-title">${cat.category}</h3>
         <div class="category-status ${status.className}">
@@ -2731,6 +3819,10 @@ function createIssueHTML(issue: ValidationIssue): string {
   const howToFix = getIssueHowToFix(issue);
   const location = getIssueLocation(issue);
   const policy = getIssuePolicy(issue);
+  const republishHint = issue.details?.republishHint;
+  const canvasElementKeys: string[] = Array.isArray(issue.details?.canvasElementKeys)
+    ? issue.details.canvasElementKeys
+    : [];
   return `
     <div class="issue-item ${issue.severity}">
       <div class="issue-content">
@@ -2738,19 +3830,34 @@ function createIssueHTML(issue: ValidationIssue): string {
           ${getIssueSeverityLabel(issue)}
         </span>
         <div class="issue-details">
-          <div class="issue-message">${issue.message}</div>
+          <div class="issue-message">${escapeHtml(issue.message)}</div>
           ${policy ? createIssuePolicyHTML(issue) : ''}
+          ${republishHint ? `
+            <div class="issue-republish-hint">${escapeHtml(republishHint)}</div>
+          ` : ''}
           ${howToFix ? `
             <div class="issue-fix">
-              <strong>${policy ? 'Required fix:' : issue.severity === 'warning' ? 'Suggestion:' : issue.severity === 'info' ? 'Tip:' : 'How to fix:'}</strong> ${howToFix}
+              <strong>${policy ? 'Required fix:' : issue.severity === 'warning' ? 'Suggestion:' : issue.severity === 'info' ? 'Recommendation:' : 'How to fix:'}</strong> ${escapeHtml(howToFix)}
             </div>
           ` : ''}
           ${location ? `
             <div class="issue-location">
-              <strong>Location:</strong> ${location}
+              <strong>Location:</strong> ${escapeHtml(location)}
+            </div>
+          ` : ''}
+          ${canvasElementKeys.length > 0 ? `
+            <div class="canvas-select-actions">
+              ${canvasElementKeys.map((key, index) => `
+                <button type="button" class="canvas-select-btn" data-canvas-element="${escapeHtml(key)}">
+                  ${canvasElementKeys.length > 1 ? `Select element ${index + 1}` : 'Select on canvas'}
+                </button>
+              `).join('')}
             </div>
           ` : ''}
           ${createDetailsHTML(issue.details)}
+          <button type="button" class="issue-flag-btn" data-flag-issue="${escapeHtml(issue.id)}" data-flag-category="${escapeHtml(issue.category)}" title="Report this as a validator false positive">
+            Flag as incorrect
+          </button>
         </div>
       </div>
     </div>
@@ -2769,7 +3876,8 @@ function createMarketplaceOutcomeHTML(data: ValidationResponse): string {
       </div>
       <div class="marketplace-outcome-meta">
         <span class="marketplace-outcome-badge">${outcome.badge}</span>
-        <span class="marketplace-outcome-time">Validated ${new Date().toLocaleTimeString()}</span>
+        <span class="marketplace-outcome-time">Validated ${(lastValidationReport?.generatedAt ? new Date(lastValidationReport.generatedAt) : new Date()).toLocaleTimeString()}</span>
+        ${outcome.showFixListAction ? '<button type="button" class="marketplace-outcome-action" onclick="openFixList()">Open Fix List</button>' : ''}
       </div>
     </div>
   `;
@@ -2780,9 +3888,13 @@ function getMarketplaceOutcome(data: ValidationResponse): {
   title: string;
   copy: string;
   badge: string;
+  showFixListAction: boolean;
 } {
   const errors = data.summary.totalErrors || data.summary.errors || 0;
   const warnings = data.summary.totalWarnings || data.summary.warnings || 0;
+  const failedCategories = data.summary.failedCategories || 0;
+  const score = calculateOverallScore(data.summary);
+  const blockingIssues = getSubmissionBlockingIssues(data);
   const hasRejectedPolicy = data.categories.some((category) =>
     category.issues?.some((issue) => getIssuePolicy(issue) === 'ix2-rejected')
   );
@@ -2792,25 +3904,41 @@ function getMarketplaceOutcome(data: ValidationResponse): {
       className: 'is-rejected',
       title: 'Rejected policy detected',
       copy: 'Legacy IX2 interactions were found. Templates submitted on or after May 1, 2026 should be rejected until interactions are rebuilt with Webflow Interactions powered by GSAP.',
-      badge: 'Rejected'
+      badge: 'Rejected',
+      showFixListAction: true
     };
   }
 
-  if (errors > 0) {
+  if (blockingIssues.length > 0) {
+    const hasSetupBlocker = blockingIssues.some(({ issue }) => issue.id === 'validator-script-required');
     return {
       className: 'is-blocked',
-      title: 'Blocked by validation errors',
-      copy: 'Resolve every error-level issue, publish the site again, and re-run validation before submitting the template.',
-      badge: 'Blocked'
+      title: hasSetupBlocker && errors === 0 ? 'Published-site checks required' : 'Blocked by validation errors',
+      copy: hasSetupBlocker && errors === 0
+        ? 'Add and publish the Validator script so the marketplace form has a complete validation result.'
+        : 'Resolve every error-level issue, publish the site again, and re-run validation before submitting the template.',
+      badge: 'Blocked',
+      showFixListAction: true
+    };
+  }
+
+  if (failedCategories > 0 || score < 100) {
+    return {
+      className: 'is-review',
+      title: 'Review items remain',
+      copy: 'No error-level blockers were returned, but the score is below 100%. Review the categories below and re-run validation after publishing.',
+      badge: 'Review',
+      showFixListAction: false
     };
   }
 
   if (warnings > 0) {
     return {
       className: 'is-review',
-      title: 'Needs reviewer attention',
-      copy: 'No blocking errors were found, but the warnings below should be reviewed before handoff.',
-      badge: 'Needs review'
+      title: 'Ready with non-blocking warnings',
+      copy: 'The submission gate is clear, but the warnings below should be reviewed before handoff.',
+      badge: 'Ready',
+      showFixListAction: false
     };
   }
 
@@ -2818,12 +3946,96 @@ function getMarketplaceOutcome(data: ValidationResponse): {
     className: 'is-ready',
     title: 'Ready for marketplace review',
     copy: 'No blocking errors or warnings were found. Re-run validation after any Designer changes and after publishing.',
-    badge: 'Ready'
+    badge: 'Ready',
+    showFixListAction: false
   };
+}
+
+function createValidationScopeHTML(data: ValidationResponse): string {
+  const projectData = Array.isArray(data.collectedData) ? data.collectedData[0] as ProjectData | undefined : undefined;
+  const scope = projectData?.validationScope;
+  const designerContext = projectData?.designerContext;
+
+  if (!scope && !designerContext) return '';
+
+  const scopeRows: Array<{ label: string; value: string; title?: string }> = [];
+  if (scope) {
+    scopeRows.push({
+      label: 'Published URL',
+      value: scope.siteUrl || 'Not available',
+      title: scope.siteUrl || undefined,
+    });
+    scopeRows.push({
+      label: 'Domain source',
+      value: [
+        scope.domainSource,
+        scope.domainStage ? formatModeName(scope.domainStage) : '',
+        scope.domainDefault ? 'default' : '',
+      ].filter(Boolean).join(' - '),
+    });
+    scopeRows.push({
+      label: 'Last published',
+      value: scope.domainLastPublished ? formatDateTime(scope.domainLastPublished) : 'Not reported',
+    });
+    scopeRows.push({
+      label: 'Page scope',
+      value: `${scope.pageScope === 'current' ? 'Current page' : 'All published pages'} (${scope.pageSlugsCount} URL${scope.pageSlugsCount === 1 ? '' : 's'})`,
+    });
+    scopeRows.push({
+      label: 'Checks',
+      value: `${scope.selectedChecks.map(formatModeName).join(', ')} - ${scope.publishedChecks === 'full' ? 'published-site checks enabled' : 'Designer-only until script is published'}`,
+    });
+    if (scope.skippedCmsTemplateSlugs.length > 0) {
+      scopeRows.push({
+        label: 'Skipped',
+        value: `${scope.skippedCmsTemplateSlugs.length} internal CMS template URL${scope.skippedCmsTemplateSlugs.length === 1 ? '' : 's'}`,
+        title: scope.skippedCmsTemplateSlugs.join(', '),
+      });
+    }
+    if (scope.isPasswordProtected || scope.isPrivateStaging) {
+      scopeRows.push({
+        label: 'Site access',
+        value: [
+          scope.isPasswordProtected ? 'Password protected' : '',
+          scope.isPrivateStaging ? 'Private staging' : '',
+        ].filter(Boolean).join(' - '),
+      });
+    }
+  }
+
+  if (designerContext) {
+    scopeRows.push({
+      label: 'Designer mode',
+      value: [
+        designerContext.mode ? formatModeName(designerContext.mode) : 'Unknown',
+        designerContext.canAccessCanvas === false ? 'limited canvas access' : '',
+      ].filter(Boolean).join(' - '),
+    });
+  }
+
+  return `
+    <div class="validation-scope">
+      <div class="validation-scope-header">
+        <h3>Validation Scope</h3>
+        <span>${scope?.publishedChecks === 'full' ? 'Full coverage' : 'Partial coverage'}</span>
+      </div>
+      <div class="validation-scope-grid">
+        ${scopeRows.map(row => `
+          <div class="validation-scope-row">
+            <span class="validation-scope-label">${row.label}</span>
+            <span class="validation-scope-value" ${row.title ? `title="${row.title}"` : ''}>${row.value}</span>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
 }
 
 function getCategoryStatus(cat: CategoryResult): { className: string; label: string } {
   const issues = Array.isArray(cat.issues) ? cat.issues : [];
+  if (issues.some((issue) => issue.id === 'validator-script-required')) {
+    return { className: 'blocked', label: 'Setup required' };
+  }
   if (issues.some((issue) => getIssuePolicy(issue))) {
     return { className: 'rejected', label: 'Rejected policy' };
   }
@@ -2837,15 +4049,32 @@ function getCategoryStatus(cat: CategoryResult): { className: string; label: str
 }
 
 function getIssueSeverityLabel(issue: ValidationIssue): string {
+  if (issue.id === 'validator-script-required') return 'Setup required';
   if (getIssuePolicy(issue)) return 'Rejected policy';
   if (issue.severity === 'warning') return 'Review';
-  if (issue.severity === 'info') return 'Tip';
+  if (issue.severity === 'info') return 'Advisory';
   return 'Blocked';
 }
 
 function getIssuePolicy(issue: ValidationIssue): string | undefined {
   const policy = issue.details?.policy;
   return typeof policy === 'string' ? policy : undefined;
+}
+
+function isSubmissionBlockingIssue(issue: ValidationIssue): boolean {
+  return Boolean(getIssuePolicy(issue)) || issue.severity === 'error' || issue.id === 'validator-script-required';
+}
+
+function getSubmissionBlockingIssues(data: ValidationResponse): Array<{ category: string; issue: ValidationIssue }> {
+  return data.categories.flatMap((category) =>
+    (Array.isArray(category.issues) ? category.issues : [])
+      .filter(isSubmissionBlockingIssue)
+      .map((issue) => ({ category: category.category, issue }))
+  );
+}
+
+function getSubmissionBlockingCategoryCount(data: ValidationResponse): number {
+  return new Set(getSubmissionBlockingIssues(data).map(({ category }) => category)).size;
 }
 
 function createIssuePolicyHTML(issue: ValidationIssue): string {
@@ -2885,7 +4114,7 @@ function createDetailsHTML(details?: ValidationIssue['details']): string {
           <strong>View ${samples.length} example${samples.length > 1 ? 's' : ''}</strong>
         </summary>
         <div class="issue-sample-list">
-          ${samples.map(item => `<div class="sample-item">• ${item}</div>`).join('')}
+          ${samples.map(item => `<div class="sample-item">• ${escapeHtml(String(item))}</div>`).join('')}
         </div>
       </details>
     `;
@@ -2899,7 +4128,7 @@ function createDetailsHTML(details?: ValidationIssue['details']): string {
           <strong>View ${violations.length} violation${violations.length > 1 ? 's' : ''}</strong>
         </summary>
         <div class="issue-violations-list">
-          ${violations.map(v => `<div class="violation-item">• ${v}</div>`).join('')}
+          ${violations.map(v => `<div class="violation-item">• ${escapeHtml(v)}</div>`).join('')}
         </div>
       </details>
     `;
@@ -2912,7 +4141,7 @@ function createDetailsHTML(details?: ValidationIssue['details']): string {
           <strong>View ${details.locations.length} location${details.locations.length > 1 ? 's' : ''}</strong>
         </summary>
         <div class="issue-locations-list">
-          ${details.locations.map(loc => `<div class="location-item">• ${loc}</div>`).join('')}
+          ${details.locations.map(loc => `<div class="location-item">• ${escapeHtml(String(loc))}</div>`).join('')}
         </div>
       </details>
     `;
@@ -2951,7 +4180,7 @@ function createDetailsHTML(details?: ValidationIssue['details']): string {
           <strong>View samples</strong>
         </summary>
         <div class="issue-samples-list">
-          ${details.samples.map(s => `<div class="sample-item">• ${s}</div>`).join('')}
+          ${details.samples.map(s => `<div class="sample-item">• ${escapeHtml(String(s))}</div>`).join('')}
         </div>
       </details>
     `;
@@ -2963,6 +4192,14 @@ function createDetailsHTML(details?: ValidationIssue['details']): string {
   html += createStructuredArrayDetails(details, 'brokenLinks', 'View broken link', formatBrokenLinkItem);
   html += createStructuredArrayDetails(details, 'unlabeledInputs', 'View unlabeled input', formatUnlabeledInputItem);
   html += createStructuredArrayDetails(details, 'imagesWithoutAlt', 'View image missing alt text', formatImageWithoutAltItem);
+  html += createStructuredArrayDetails(details, 'missingImages', 'View image missing alt text', formatImageWithoutAltItem);
+  html += createStructuredArrayDetails(details, 'pagesWithIssues', 'View affected page', formatPageListItem);
+  html += createStructuredArrayDetails(details, 'oversizedAssets', 'View oversized asset', formatAssetItem);
+  html += createStructuredArrayDetails(details, 'extremeAssets', 'View large asset', formatAssetItem);
+  html += createStructuredArrayDetails(details, 'unoptimizedAssets', 'View asset to optimize', formatAssetItem);
+  html += createStructuredArrayDetails(details, 'unusedAssets', 'View unused asset', formatAssetItem);
+  html += createStructuredArrayDetails(details, 'missingTags', 'View missing tag', formatStructuredItem);
+  html += createSeoDetailHTML(details);
 
   return html;
 }
@@ -2990,7 +4227,7 @@ function createStructuredArrayDetails(
         <strong>${singularLabel}${items.length > 1 ? 's' : ''} (${items.length})</strong>
       </summary>
       <div class="issue-subitems-list">
-        ${items.map(item => `<div class="subitem">• ${formatter(item)}</div>`).join('')}
+        ${items.map(item => `<div class="subitem">• ${escapeHtml(formatter(item))}</div>`).join('')}
       </div>
     </details>
   `;
@@ -3015,9 +4252,35 @@ function formatPageListItem(item: any): string {
 function formatHeadingIssueItem(item: any): string {
   if (!item || typeof item !== 'object') return String(item);
   const page = item.page || item.title || 'Page';
+  const pageUrl = item.pageUrl || item.url;
+  const position = item.fromPosition && item.toPosition
+    ? ` positions ${item.fromPosition} → ${item.toPosition}`
+    : '';
+  const sequence = item.headingSequence ? ` Sequence: ${item.headingSequence}` : '';
+
+  if (
+    item.issueType === 'skipped_level' &&
+    typeof item.fromLevel === 'number' &&
+    typeof item.toLevel === 'number'
+  ) {
+    const missingLevel = typeof item.missingLevel === 'number'
+      ? `, skipping H${item.missingLevel}`
+      : '';
+    const issue = `${formatHeadingReference(item.fromLevel, item.fromText)} is followed by ${formatHeadingReference(item.toLevel, item.toText)}${missingLevel}${position}.${sequence}`;
+    return `${page}${pageUrl ? ` (${pageUrl})` : ''}: ${issue}`;
+  }
+
   const issue = item.issue || 'Heading issue';
-  return `${page}: ${issue}`;
+  return `${page}${pageUrl ? ` (${pageUrl})` : ''}: ${issue}${sequence}`;
 }
+
+function formatHeadingReference(level: number, text: unknown): string {
+  const normalizedText = typeof text === 'string' ? decodeCommonHtmlEntities(text).replace(/\s+/g, ' ').trim() : '';
+  if (!normalizedText) return `H${level}`;
+  const preview = normalizedText.length > 80 ? `${normalizedText.slice(0, 77)}...` : normalizedText;
+  return `H${level} "${preview}"`;
+}
+
 
 function formatBrokenLinkItem(item: any): string {
   if (!item || typeof item !== 'object') return String(item);
@@ -3036,7 +4299,46 @@ function formatUnlabeledInputItem(item: any): string {
 
 function formatImageWithoutAltItem(item: any): string {
   if (!item || typeof item !== 'object') return String(item);
-  return item.src || item.selector || item.alt || 'Image missing alt text';
+  const target = item.selector || item.src || item.alt || 'Image missing alt text';
+  const context = item.context ? ` (${item.context})` : '';
+  const page = item.page || item.pageName || item.title;
+  const pageUrl = item.pageUrl || item.url;
+  const location = pageUrl ? `${page || 'Page'}: ${pageUrl}` : page;
+  return location ? `${target}${context} on ${location}` : `${target}${context}`;
+}
+
+function formatAssetItem(item: any): string {
+  if (!item || typeof item !== 'object') return String(item);
+  const name = item.name || item.url || 'Asset';
+  const details = [
+    item.size,
+    item.currentFormat,
+    item.recommendedAction
+  ].filter(Boolean).join(' - ');
+  return details ? `${name}: ${details}` : name;
+}
+
+function createSeoDetailHTML(details?: ValidationIssue['details']): string {
+  if (!details) return '';
+
+  const rows: string[] = [];
+  if (details.currentTitle) rows.push(`Current title: ${details.currentTitle}`);
+  if (details.currentDescription) rows.push(`Current description: ${details.currentDescription}`);
+  if (typeof details.currentLength === 'number') rows.push(`Current length: ${details.currentLength}`);
+  if (details.recommendedLength) rows.push(`Recommended length: ${details.recommendedLength}`);
+
+  if (rows.length === 0) return '';
+
+  return `
+    <details class="issue-subitems-details">
+      <summary class="issue-subitems-summary">
+        <strong>View current metadata</strong>
+      </summary>
+      <div class="issue-subitems-list">
+        ${rows.map(row => `<div class="subitem">• ${row}</div>`).join('')}
+      </div>
+    </details>
+  `;
 }
 
 function formatStructuredItem(item: any): string {
@@ -3066,31 +4368,60 @@ function formatStructuredItem(item: any): string {
 function createSuccessHTML(): string {
   return `
     <div class="success-message">
-      ✓ All checks passed for this category
+      All checks passed for this category
     </div>
   `;
 }
 
 function createMetadataHTML(category: string, stats: Record<string, any>): string {
+  const statItems = getDetailedStatItems(category, stats);
+  if (statItems.length === 0) return '';
+
   return `
     <div class="category-metadata">
-      <div class="metadata-title">Category Details:</div>
-      <div class="metadata-content">${formatDetailedStats(category, stats)}</div>
+      <div class="metadata-title">Category Details</div>
+      <div class="metadata-grid">
+        ${statItems.map(item => `
+          <div class="metadata-stat ${item.tone ? `is-${item.tone}` : ''}">
+            <span class="metadata-label">${escapeHtml(item.label)}</span>
+            <span class="metadata-value">${escapeHtml(item.value)}</span>
+          </div>
+        `).join('')}
+      </div>
     </div>
   `;
 }
 
-function createActionItemsHTML(summary: ValidationResponse['summary']): string {
+function createActionItemsHTML(data: ValidationResponse): string {
+  const summary = data.summary;
   const errors = summary.totalErrors || summary.errors || 0;
   const warnings = summary.totalWarnings || summary.warnings || 0;
+  const failedCategories = summary.failedCategories || 0;
+  const score = calculateOverallScore(summary);
+  const blockingIssues = getSubmissionBlockingIssues(data);
+  const blockingCategoryCount = getSubmissionBlockingCategoryCount(data);
+  const hasScoreReview = blockingIssues.length === 0 && (failedCategories > 0 || score < 100);
+  const warningStepNumber = blockingIssues.length > 0 || hasScoreReview ? '2' : '1';
   
-  if (errors === 0 && warnings === 0) return '';
+  if (blockingIssues.length === 0 && errors === 0 && warnings === 0 && failedCategories === 0) return '';
 
   return `
     <div class="action-items">
-      <h3>🎯 Next Steps</h3>
+      <h3>Next Steps</h3>
       <div class="action-priorities">
-        ${errors > 0 ? `
+        ${blockingIssues.length > 0 ? `
+          <div class="action-priority error">
+            <strong>1. Fix ${blockingIssues.length} Blocking Item${blockingIssues.length === 1 ? '' : 's'}</strong>
+            <p>Open the Fix List for the ${blockingCategoryCount} categor${blockingCategoryCount === 1 ? 'y' : 'ies'} preventing template submission.</p>
+          </div>
+        ` : ''}
+        ${hasScoreReview ? `
+          <div class="action-priority warning">
+            <strong>1. Review Score Details</strong>
+            <p>No error-level blockers were returned, but the run is below 100%. Review warning categories and re-run validation after publishing.</p>
+          </div>
+        ` : ''}
+        ${errors > 0 && blockingIssues.length === 0 ? `
           <div class="action-priority error">
             <strong>1. Fix ${errors} Critical Error${errors > 1 ? 's' : ''}</strong>
             <p>Address all error-level issues before template submission</p>
@@ -3098,8 +4429,8 @@ function createActionItemsHTML(summary: ValidationResponse['summary']): string {
         ` : ''}
         ${warnings > 0 ? `
           <div class="action-priority warning">
-            <strong>${errors > 0 ? '2' : '1'}. Review ${warnings} Warning${warnings > 1 ? 's' : ''}</strong>
-            <p>Improve these areas for better Webflow Way compliance</p>
+            <strong>${warningStepNumber}. Review ${warnings} Warning${warnings > 1 ? 's' : ''}</strong>
+            <p>Warnings are review targets. They should be cleaned up, but they are not added to the blocking Fix List unless paired with an error-level issue.</p>
           </div>
         ` : ''}
         <div class="action-priority info">
@@ -3185,10 +4516,18 @@ function calculateOverallScore(summary: ValidationResponse['summary']): number {
   return Math.round((summary.passedCategories / totalCategories) * 100);
 }
 
+function getCategoryAnchorId(categoryName: string): string {
+  const slug = categoryName
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+
+  return `overview-category-${slug || 'unknown'}`;
+}
+
 // Tab Management Functions
 function initializeTabs(): void {
   const tabButtons = document.querySelectorAll('.tab-button');
-  const tabContents = document.querySelectorAll('.tab-content');
   
   // Restore the previously active tab
   const activeTabId = getActiveTab();
@@ -3196,110 +4535,157 @@ function initializeTabs(): void {
   tabButtons.forEach(button => {
     button.addEventListener('click', () => {
       const tabId = button.getAttribute('data-tab');
-      
-      // Save the active tab
       if (tabId) {
-        saveActiveTab(tabId);
+        activateValidationTab(tabId);
       }
-      
-      // Remove active class from all tabs and contents
-      tabButtons.forEach(btn => btn.classList.remove('active'));
-      tabContents.forEach(content => content.classList.remove('active'));
-      
-      // Add active class to clicked tab and corresponding content
-      button.classList.add('active');
-      const targetContent = document.getElementById(`${tabId}-tab`);
-      if (targetContent) {
-        targetContent.classList.add('active');
+    });
+
+    button.addEventListener('keydown', (event) => {
+      const keyboardEvent = event as KeyboardEvent;
+      const orderedTabs = Array.from(document.querySelectorAll('.tab-button')) as HTMLButtonElement[];
+      const currentIndex = orderedTabs.indexOf(button as HTMLButtonElement);
+      let nextIndex = currentIndex;
+
+      if (keyboardEvent.key === 'ArrowRight' || keyboardEvent.key === 'ArrowDown') {
+        nextIndex = (currentIndex + 1) % orderedTabs.length;
+      } else if (keyboardEvent.key === 'ArrowLeft' || keyboardEvent.key === 'ArrowUp') {
+        nextIndex = (currentIndex - 1 + orderedTabs.length) % orderedTabs.length;
+      } else if (keyboardEvent.key === 'Home') {
+        nextIndex = 0;
+      } else if (keyboardEvent.key === 'End') {
+        nextIndex = orderedTabs.length - 1;
+      } else {
+        return;
+      }
+
+      keyboardEvent.preventDefault();
+      const nextTabId = orderedTabs[nextIndex]?.getAttribute('data-tab');
+      if (nextTabId && activateValidationTab(nextTabId)) {
+        orderedTabs[nextIndex]?.focus();
       }
     });
   });
   
-  // Set the initial active tab
-  tabButtons.forEach(btn => btn.classList.remove('active'));
-  tabContents.forEach(content => content.classList.remove('active'));
-  
-  const activeButton = document.querySelector(`[data-tab="${activeTabId}"]`);
-  const activeContent = document.getElementById(`${activeTabId}-tab`);
-  
-  if (activeButton && activeContent) {
-    activeButton.classList.add('active');
-    activeContent.classList.add('active');
-  } else {
-    // Fallback to overview tab
-    const overviewButton = document.querySelector('[data-tab="overview"]');
-    const overviewContent = document.getElementById('overview-tab');
-    if (overviewButton && overviewContent) {
-      overviewButton.classList.add('active');
-      overviewContent.classList.add('active');
-    }
+  if (!activateValidationTab(activeTabId)) {
+    activateValidationTab('overview');
   }
 }
 
-// Error Checklist Functions
-interface ErrorChecklistItem {
+function activateValidationTab(tabId: string): boolean {
+  const tabButtons = document.querySelectorAll('.tab-button') as NodeListOf<HTMLButtonElement>;
+  const tabContents = document.querySelectorAll('.tab-content') as NodeListOf<HTMLElement>;
+  const activeButton = document.querySelector(`[data-tab="${tabId}"]`) as HTMLButtonElement | null;
+  const activeContent = document.getElementById(`${tabId}-tab`);
+
+  if (!activeButton || !activeContent) {
+    return false;
+  }
+
+  saveActiveTab(tabId);
+  tabButtons.forEach(btn => {
+    btn.classList.remove('active');
+    btn.setAttribute('aria-selected', 'false');
+    btn.tabIndex = -1;
+  });
+  tabContents.forEach(content => {
+    content.classList.remove('active');
+    content.hidden = true;
+  });
+
+  activeButton.classList.add('active');
+  activeButton.setAttribute('aria-selected', 'true');
+  activeButton.tabIndex = 0;
+  activeContent.classList.add('active');
+  activeContent.hidden = false;
+  return true;
+}
+
+function openFixList(): void {
+  if (activateValidationTab('checklist')) {
+    document.getElementById('checklist-tab')?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+  }
+}
+
+function openOverviewCategory(categoryAnchorId: string): void {
+  if (!activateValidationTab('overview')) return;
+
+  const categorySection = document.getElementById(categoryAnchorId);
+  if (categorySection) {
+    if (categorySection instanceof HTMLDetailsElement) {
+      categorySection.open = true;
+    }
+    categorySection.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    categorySection.classList.add('is-targeted');
+    window.setTimeout(() => categorySection.classList.remove('is-targeted'), 1400);
+  }
+}
+
+// Submission Fix List Functions
+interface SubmissionFixListItem {
   id: string;
   category: string;
   message: string;
-  severity: 'error';
+  severity: 'error' | 'warning' | 'info';
   howToFix: string;
   location?: string;
   detailsHtml?: string;
+  blockingReason: string;
+  categoryAnchorId: string;
   completed: boolean;
 }
 
-function getErrorChecklistKey(): string {
-  return 'webflow_validator_errors';
+function getFixListStorageKey(): string {
+  return 'webflow_validator_submission_fix_list';
 }
 
-function saveErrorChecklist(errors: ErrorChecklistItem[]): void {
+function saveFixList(fixItems: SubmissionFixListItem[]): void {
   const data = {
-    errors,
+    fixItems,
     timestamp: Date.now()
   };
-  localStorage.setItem(getErrorChecklistKey(), JSON.stringify(data));
+  localStorage.setItem(getFixListStorageKey(), JSON.stringify(data));
 }
 
-function loadErrorChecklist(): ErrorChecklistItem[] {
+function loadFixList(): SubmissionFixListItem[] {
   try {
-    const saved = localStorage.getItem(getErrorChecklistKey());
+    const saved = localStorage.getItem(getFixListStorageKey());
     if (saved) {
       const data = JSON.parse(saved);
-      return data.errors || [];
+      return data.fixItems || data.errors || [];
     }
   } catch (error) {
-    console.warn('Error loading checklist:', error);
+    console.warn('Error loading fix list:', error);
   }
   return [];
 }
 
-function toggleErrorCompleted(errorId: string): void {
-  const savedErrors = loadErrorChecklist();
-  const updated = savedErrors.map(error => 
-    error.id === errorId ? { ...error, completed: !error.completed } : error
+function toggleFixItemCompleted(fixItemId: string): void {
+  const savedFixItems = loadFixList();
+  const updated = savedFixItems.map(fixItem =>
+    fixItem.id === fixItemId ? { ...fixItem, completed: !fixItem.completed } : fixItem
   );
-  saveErrorChecklist(updated);
+  saveFixList(updated);
   
   // Immediately update the DOM for visual feedback
-  const checklistItem = document.querySelector(`[data-error-id="${errorId}"]`);
-  if (checklistItem) {
-    const checkbox = checklistItem.querySelector('.wf-checkbox');
-    const errorMessage = checklistItem.querySelector('.error-message');
-    const updatedError = updated.find(e => e.id === errorId);
+  const fixListItem = document.querySelector(`[data-fix-item-id="${fixItemId}"]`);
+  if (fixListItem) {
+    const checkbox = fixListItem.querySelector('.fix-item-checkbox');
+    const fixItemMessage = fixListItem.querySelector('.fix-item-message');
+    const updatedFixItem = updated.find(item => item.id === fixItemId);
     
-    if (checkbox && errorMessage && updatedError) {
-      if (updatedError.completed) {
+    if (checkbox && fixItemMessage && updatedFixItem) {
+      if (updatedFixItem.completed) {
         checkbox.classList.remove('unchecked');
         checkbox.classList.add('checked');
-        checkbox.innerHTML = '<span class="check-icon">✓</span>';
-        errorMessage.classList.add('completed');
-        checklistItem.classList.add('completed');
+        checkbox.innerHTML = '';
+        fixItemMessage.classList.add('completed');
+        fixListItem.classList.add('completed');
       } else {
         checkbox.classList.remove('checked');
         checkbox.classList.add('unchecked');
         checkbox.innerHTML = '';
-        errorMessage.classList.remove('completed');
-        checklistItem.classList.remove('completed');
+        fixItemMessage.classList.remove('completed');
+        fixListItem.classList.remove('completed');
       }
     }
   }
@@ -3308,89 +4694,105 @@ function toggleErrorCompleted(errorId: string): void {
   updateProgressDisplay();
 }
 
-function createErrorChecklistHTML(data: ValidationResponse): string {
-  // Get all error-level issues from categories
-  const allErrors: ErrorChecklistItem[] = [];
+function getCategorySubmissionBlockers(category: CategoryResult): ValidationIssue[] {
+  const issues = Array.isArray(category.issues) ? category.issues : [];
+  return issues.filter(isSubmissionBlockingIssue);
+}
+
+function createSubmissionFixListHTML(data: ValidationResponse): string {
+  const allFixItems: SubmissionFixListItem[] = [];
   
   data.categories.forEach(category => {
-    if (category.issues) {
-      category.issues.forEach(issue => {
-        if (issue.severity === 'error') {
-          allErrors.push({
-            id: `${category.category}_${issue.id}`,
-            category: category.category,
-            message: issue.message,
-            severity: 'error',
-            howToFix: getIssueHowToFix(issue) || 'No fix instructions available',
-            location: getIssueLocation(issue),
-            detailsHtml: createDetailsHTML(issue.details),
-            completed: false
-          });
-        }
+    getCategorySubmissionBlockers(category).forEach(issue => {
+      const isFailedCategory = category.passed !== true;
+      allFixItems.push({
+        id: `${category.category}_${issue.id}`,
+        category: category.category,
+        message: issue.message,
+        severity: issue.severity,
+        howToFix: getIssueHowToFix(issue) || (
+          isFailedCategory
+            ? 'Resolve this failed category, publish the site, and re-run validation until the category passes.'
+            : 'Resolve this issue, publish the site, and re-run validation.'
+        ),
+        location: getIssueLocation(issue),
+        detailsHtml: createDetailsHTML(issue.details),
+        blockingReason: getFixItemBadgeLabel(issue),
+        categoryAnchorId: getCategoryAnchorId(category.category),
+        completed: false
       });
-    }
+    });
   });
 
   // Smart merge logic:
-  // 1. Preserve checked status for errors user is working on
-  // 2. But if user explicitly clicked "Refresh Validation" and error still exists, uncheck it
-  // 3. Remove errors that were actually resolved (no longer appear)
-  const savedErrors = loadErrorChecklist();
+  // 1. Preserve checked status for fix items the user is working on
+  // 2. But if the user explicitly clicked "Refresh Validation" and an item still exists, uncheck it
+  // 3. Remove items that were actually resolved (no longer appear)
+  const savedFixItems = loadFixList();
   
-  console.log('Creating error checklist, isExplicitRefresh:', isExplicitRefresh);
-  console.log('Saved errors:', savedErrors);
-  console.log('Current errors:', allErrors.length);
+  console.log('Creating submission fix list, isExplicitRefresh:', isExplicitRefresh);
+  console.log('Saved fix items:', savedFixItems);
+  console.log('Current fix items:', allFixItems.length);
 
-  const mergedErrors = allErrors.map(error => {
-    const saved = savedErrors.find(s => s.id === error.id);
+  const mergedFixItems = allFixItems.map(fixItem => {
+    const saved = savedFixItems.find(savedItem => savedItem.id === fixItem.id);
     if (saved) {
-      // If user explicitly refreshed and error still exists, uncheck it (wasn't actually fixed)
+      // If the user explicitly refreshed and the item still exists, uncheck it (wasn't actually fixed)
       const shouldUncheck = isExplicitRefresh;
-      console.log(`Error ${error.id}: saved.completed=${saved.completed}, isExplicitRefresh=${isExplicitRefresh}, setting to: ${shouldUncheck ? false : saved.completed}`);
+      console.log(`Fix item ${fixItem.id}: saved.completed=${saved.completed}, isExplicitRefresh=${isExplicitRefresh}, setting to: ${shouldUncheck ? false : saved.completed}`);
       return {
-        ...error,
+        ...fixItem,
         completed: isExplicitRefresh ? false : saved.completed
       };
     }
-    return error;
+    return fixItem;
   });
 
-  // Clean up: remove errors that no longer exist (actually resolved)
-  const currentErrorIds = new Set(allErrors.map(e => e.id));
-  
-  // Save updated checklist
-  saveErrorChecklist(mergedErrors);
+  // Save updated fix list
+  saveFixList(mergedFixItems);
 
-  const completedCount = mergedErrors.filter(e => e.completed).length;
-  const totalCount = mergedErrors.length;
+  const completedCount = mergedFixItems.filter(item => item.completed).length;
+  const totalCount = mergedFixItems.length;
   const progressPercent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+  const failedCategories = data.summary.failedCategories || 0;
+  const errors = data.summary.totalErrors || data.summary.errors || 0;
+  const score = calculateOverallScore(data.summary);
 
   if (totalCount === 0) {
+    const warnings = data.summary.totalWarnings || data.summary.warnings || 0;
+    const hasReviewItems = failedCategories > 0 || score < 100 || warnings > 0;
+    const isFullyReady = score === 100 && failedCategories === 0 && errors === 0 && warnings === 0;
     return `
       <div class="checklist-empty">
         <div class="empty-state">
-          <div class="empty-icon">✅</div>
-          <h3>No Errors Found!</h3>
-          <p>Your project has no critical errors that need to be fixed.</p>
+          <h3>${isFullyReady ? 'Ready for Submission' : 'No Blocking Fixes'}</h3>
+          <p>${isFullyReady
+            ? 'The latest run reached 100%. Publish after any changes and submit with this result.'
+            : hasReviewItems
+              ? 'Only review-level items were returned. Use the Overview tab to review recommendations, then re-run validation after publishing.'
+              : 'No issue details were returned. Re-run validation and review the Overview tab if the score is still below 100%.'}</p>
         </div>
       </div>
     `;
   }
 
-  // Group errors by category
-  const errorsByCategory: { [key: string]: ErrorChecklistItem[] } = {};
-  mergedErrors.forEach(error => {
-    if (!errorsByCategory[error.category]) {
-      errorsByCategory[error.category] = [];
+  const fixItemsByCategory: { [key: string]: SubmissionFixListItem[] } = {};
+  mergedFixItems.forEach(fixItem => {
+    if (!fixItemsByCategory[fixItem.category]) {
+      fixItemsByCategory[fixItem.category] = [];
     }
-    errorsByCategory[error.category].push(error);
+    fixItemsByCategory[fixItem.category].push(fixItem);
   });
 
   return `
-    <div class="error-checklist">
+    <div class="submission-fix-list">
       <div class="checklist-header">
         <div class="checklist-title">
-          <h3>🎯 Error Resolution Checklist</h3>
+          <h3>Submission Fix List</h3>
+          <p class="checklist-description">
+            Fix these items to reach the confirmed 100% Validator pass required by the submission form.
+            Checkboxes are local planning only; Refresh Validation confirms real fixes.
+          </p>
           <div class="checklist-progress">
             <span class="progress-text">${completedCount} of ${totalCount} completed (${progressPercent}%)</span>
             <div class="progress-bar">
@@ -3398,27 +4800,30 @@ function createErrorChecklistHTML(data: ValidationResponse): string {
             </div>
           </div>
         </div>
-        <button class="resync-button" onclick="resyncValidation()">
-          <span>🔄</span> Refresh Validation
-        </button>
+        <button class="resync-button" onclick="resyncValidation()">Refresh Validation</button>
       </div>
       
-      ${Object.entries(errorsByCategory).map(([categoryName, errors]) => `
+      ${Object.entries(fixItemsByCategory).map(([categoryName, fixItems]) => `
         <div class="checklist-category">
-          <h4 class="category-name">${categoryName}</h4>
+          <h4 class="category-name">
+            <span>${categoryName}</span>
+            <span class="category-name-meta">${fixItems.length} item${fixItems.length === 1 ? '' : 's'}</span>
+          </h4>
           <div class="checklist-items">
-            ${errors.map(error => `
-              <div class="checklist-item ${error.completed ? 'completed' : ''}" data-error-id="${error.id}">
-                <div class="error-content">
-                  <div class="error-message ${error.completed ? 'completed' : ''}">${error.message}</div>
-                  <div class="error-fix">💡 ${error.howToFix}</div>
-                  ${error.location ? `<div class="error-fix">📍 ${error.location}</div>` : ''}
-                  ${error.detailsHtml || ''}
-                </div>
-                <div class="checkbox-wrapper" onclick="toggleErrorCompleted('${error.id}')">
-                  <div class="wf-checkbox ${error.completed ? 'checked' : 'unchecked'}">
-                    ${error.completed ? '<span class="check-icon">✓</span>' : ''}
+            ${fixItems.map(fixItem => `
+              <div class="checklist-item ${fixItem.severity} ${fixItem.completed ? 'completed' : ''}" data-fix-item-id="${fixItem.id}">
+                <div class="fix-item-content">
+                  <div class="fix-item-meta">
+                    <span class="fix-item-badge ${fixItem.severity}">${fixItem.blockingReason}</span>
                   </div>
+                  <div class="fix-item-message ${fixItem.completed ? 'completed' : ''}">${fixItem.message}</div>
+                  <div class="fix-item-guidance">Fix: ${fixItem.howToFix}</div>
+                  ${fixItem.location ? `<div class="fix-item-guidance">Location: ${fixItem.location}</div>` : ''}
+                  <button type="button" class="fix-item-detail-button" onclick="openOverviewCategory('${fixItem.categoryAnchorId}')">View details</button>
+                  ${fixItem.detailsHtml || ''}
+                </div>
+                <div class="checkbox-wrapper" onclick="toggleFixItemCompleted('${fixItem.id}')">
+                  <div class="fix-item-checkbox ${fixItem.completed ? 'checked' : 'unchecked'}"></div>
                 </div>
               </div>
             `).join('')}
@@ -3429,10 +4834,30 @@ function createErrorChecklistHTML(data: ValidationResponse): string {
   `;
 }
 
+function getFixItemBadgeLabel(issue: ValidationIssue): string {
+  if (issue.id === 'validator-script-required') {
+    return 'Setup';
+  }
+
+  if (getIssuePolicy(issue)) {
+    return 'Policy';
+  }
+
+  if (issue.severity === 'error') {
+    return 'Error';
+  }
+
+  if (issue.severity === 'warning') {
+    return 'Review';
+  }
+
+  return 'Advisory';
+}
+
 function updateProgressDisplay(): void {
-  const savedErrors = loadErrorChecklist();
-  const completedCount = savedErrors.filter(e => e.completed).length;
-  const totalCount = savedErrors.length;
+  const savedFixItems = loadFixList();
+  const completedCount = savedFixItems.filter(item => item.completed).length;
+  const totalCount = savedFixItems.length;
   const progressPercent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
   
   // Update progress text
@@ -3477,7 +4902,9 @@ function getActiveTab(): string {
 let isExplicitRefresh = false;
 
 // Make functions globally available
-(window as any).toggleErrorCompleted = toggleErrorCompleted;
+(window as any).toggleFixItemCompleted = toggleFixItemCompleted;
+(window as any).openFixList = openFixList;
+(window as any).openOverviewCategory = openOverviewCategory;
 (window as any).resyncValidation = () => {
   console.log('resyncValidation called, setting isExplicitRefresh = true');
   isExplicitRefresh = true;
@@ -3488,73 +4915,107 @@ let isExplicitRefresh = false;
   }
 };
 
-function getScoreLevel(summary: ValidationResponse['summary']): string {
-  const score = calculateOverallScore(summary);
-  if (score >= 90) return 'excellent';
-  if (score >= 75) return 'good';
-  if (score >= 60) return 'needs-improvement';
-  return 'poor';
-}
-
-function getScoreDescription(summary: ValidationResponse['summary']): string {
-  const score = calculateOverallScore(summary);
-  if (score >= 90) return 'Excellent Webflow Way compliance!';
-  if (score >= 75) return 'Good compliance, minor improvements needed';
-  if (score >= 60) return 'Improvements needed to meet standards';
-  return 'Significant improvements required for compliance';
-}
-
 function formatCategoryStats(stats: Record<string, any>): string {
-  const statPairs = Object.entries(stats)
-    .filter(([key, value]) => typeof value === 'number' && key.startsWith('total'))
-    .map(([key, value]) => `${value} ${key.replace('total', '').toLowerCase()}`);
+  const preferredStats: Array<[string, string]> = [
+    ['totalPages', 'pages'],
+    ['totalAssets', 'assets'],
+    ['totalImages', 'images'],
+    ['totalComponents', 'components'],
+    ['totalStyles', 'styles'],
+    ['totalClasses', 'classes'],
+    ['totalVariables', 'variables'],
+    ['totalLinks', 'links'],
+    ['totalBrokenLinks', 'broken links'],
+  ];
+
+  const statPairs = preferredStats
+    .filter(([key]) => typeof stats[key] === 'number')
+    .slice(0, 2)
+    .map(([key, label]) => `${stats[key]} ${label}`);
 
   return statPairs.length > 0 ? `(${statPairs.join(', ')})` : '';
 }
 
-function formatDetailedStats(category: string, stats: Record<string, any>): string {
-  const details: string[] = [];
+type MetadataTone = 'good' | 'warning' | 'muted';
+
+type MetadataStatItem = {
+  label: string;
+  value: string;
+  tone?: MetadataTone;
+};
+
+function getDetailedStatItems(category: string, stats: Record<string, any>): MetadataStatItem[] {
+  const details: MetadataStatItem[] = [];
 
   switch (category) {
     case 'Variables':
-      if (stats.totalCollections !== undefined) details.push(`${stats.totalCollections} collections`);
-      if (stats.totalVariables !== undefined) details.push(`${stats.totalVariables} variables`);
-      if (stats.hasOrganizedCollections !== undefined) details.push(`Organized: ${stats.hasOrganizedCollections ? 'Yes' : 'No'}`);
-      if (stats.hasOrderedRamps !== undefined) details.push(`Color ramps: ${stats.hasOrderedRamps ? 'Yes' : 'No'}`);
+      addMetadataStat(details, 'Collections', stats.totalCollections);
+      addMetadataStat(details, 'Variables', stats.totalVariables);
+      addMetadataStat(details, 'Organized', formatBooleanStat(stats.hasOrganizedCollections), { tone: booleanTone(stats.hasOrganizedCollections) });
+      addMetadataStat(details, 'Color ramps', formatBooleanStat(stats.hasOrderedRamps), { tone: booleanTone(stats.hasOrderedRamps) });
+      break;
+
+    case 'Variable Modes':
+      addMetadataStat(details, 'Modes', stats.totalModes);
+      addMetadataStat(details, 'Collections with modes', stats.collectionsWithModes);
+      if (stats.responsiveModeNamesDetected !== undefined) {
+        addMetadataStat(details, 'Responsive names', formatBooleanStat(stats.responsiveModeNamesDetected), { tone: booleanTone(stats.responsiveModeNamesDetected) });
+      } else if (stats.hasResponsiveModes !== undefined) {
+        addMetadataStat(details, 'Responsive names', formatBooleanStat(stats.hasResponsiveModes), { tone: booleanTone(stats.hasResponsiveModes) });
+      }
+      addMetadataStat(details, 'Mode data', stats.modeDataAvailable === undefined ? undefined : stats.modeDataAvailable ? 'Available' : 'Unavailable', { tone: booleanTone(stats.modeDataAvailable) });
+      addMetadataStat(details, 'Collections checked', stats.collectionsCheckedForModes);
+      if (Array.isArray(stats.modeNames) && stats.modeNames.length > 0) {
+        addMetadataStat(details, 'Mode names', stats.modeNames.slice(0, 5).join(', '));
+      }
       break;
 
     case 'Components':
-      if (stats.totalComponents !== undefined) details.push(`${stats.totalComponents} components`);
-      if (stats.navComponents !== undefined) details.push(`${stats.navComponents} navigation`);
-      if (stats.footerComponents !== undefined) details.push(`${stats.footerComponents} footer`);
-      if (stats.ctaComponents !== undefined) details.push(`${stats.ctaComponents} CTA`);
+      addMetadataStat(details, 'Components', stats.totalComponents);
+      addMetadataStat(details, 'Navigation', stats.navComponents);
+      addMetadataStat(details, 'Footer', stats.footerComponents);
+      addMetadataStat(details, 'CTA', stats.ctaComponents);
       break;
 
     case 'Styles':
-      if (stats.totalClasses !== undefined) details.push(`${stats.totalClasses} classes`);
-      if (stats.hasTypographyClasses !== undefined) details.push(`Typography: ${stats.hasTypographyClasses ? 'Yes' : 'No'}`);
-      if (stats.hasHtmlTagStyles !== undefined) details.push(`HTML baseline: ${stats.hasHtmlTagStyles ? 'Yes' : 'No'}`);
+      addMetadataStat(details, 'Classes', stats.totalClasses);
+      addMetadataStat(details, 'Typography', formatBooleanStat(stats.hasTypographyClasses), { tone: booleanTone(stats.hasTypographyClasses) });
+      addMetadataStat(details, 'HTML baseline', formatBooleanStat(stats.hasHtmlTagStyles), { tone: booleanTone(stats.hasHtmlTagStyles) });
       break;
 
     case 'Design System':
-      if (stats.totalVariables !== undefined) details.push(`${stats.totalVariables} variables`);
-      if (stats.withTitleCase !== undefined) details.push(`${stats.withTitleCase} with Title Case`);
-      if (stats.hasColorVars !== undefined) details.push(`Color vars: ${stats.hasColorVars ? 'Yes' : 'No'}`);
-      if (stats.hasTypographyVars !== undefined) details.push(`Typography vars: ${stats.hasTypographyVars ? 'Yes' : 'No'}`);
-      if (stats.hasSpacingVars !== undefined) details.push(`Spacing vars: ${stats.hasSpacingVars ? 'Yes' : 'No'}`);
+      addMetadataStat(details, 'Variables', stats.totalVariables);
+      addMetadataStat(details, 'Title Case', stats.withTitleCase);
+      addMetadataStat(details, 'Color vars', formatBooleanStat(stats.hasColorVars), { tone: booleanTone(stats.hasColorVars) });
+      addMetadataStat(details, 'Typography vars', formatBooleanStat(stats.hasTypographyVars), { tone: booleanTone(stats.hasTypographyVars) });
+      addMetadataStat(details, 'Spacing vars', formatBooleanStat(stats.hasSpacingVars), { tone: booleanTone(stats.hasSpacingVars) });
       break;
 
     case 'Component Architecture':
-      if (stats.totalComponents !== undefined) details.push(`${stats.totalComponents} components`);
-      if (stats.requiredComponents !== undefined) details.push(`${stats.requiredComponents.found}/${stats.requiredComponents.total} required found`);
-      if (stats.componentsWithTitleCase !== undefined) details.push(`${stats.componentsWithTitleCase} with Title Case`);
+      addMetadataStat(details, 'Components', stats.totalComponents);
+      if (stats.requiredComponents !== undefined) addMetadataStat(details, 'Required found', `${stats.requiredComponents.found}/${stats.requiredComponents.total}`);
+      addMetadataStat(details, 'Title Case', stats.componentsWithTitleCase);
       break;
 
     case 'Style System':
-      if (stats.totalStyles !== undefined) details.push(`${stats.totalStyles} styles`);
-      if (stats.htmlTagStyles !== undefined) details.push(`${stats.htmlTagStyles.found}/${stats.htmlTagStyles.required} HTML tag styles`);
-      if (stats.stylesWithVariables !== undefined) details.push(`${stats.stylesWithVariables} using variables`);
-      if (stats.variableUsagePercent !== undefined) details.push(`${stats.variableUsagePercent}% variable usage`);
+      addMetadataStat(details, 'Styles', stats.totalStyles);
+      if (stats.htmlTagStyles !== undefined) addMetadataStat(details, 'HTML tag styles', `${stats.htmlTagStyles.found}/${stats.htmlTagStyles.required}`);
+      addMetadataStat(details, 'Using variables', stats.stylesWithVariables);
+      addMetadataStat(details, 'Variable usage', formatPercentStat(stats.variableUsagePercent), { tone: percentageTone(stats.variableUsagePercent, 90) });
+      break;
+
+    case 'Content & Accessibility':
+      addMetadataStat(details, 'Pages', stats.totalPages);
+      addMetadataStat(details, 'Lorem pages', stats.pagesWithLoremIpsum, { tone: zeroIsGoodTone(stats.pagesWithLoremIpsum) });
+      addMetadataStat(details, 'Heading issues', stats.headingHierarchyErrors, { tone: zeroIsGoodTone(stats.headingHierarchyErrors) });
+      addMetadataStat(details, 'Alt coverage', formatPercentStat(stats.altTextCoverage), { tone: percentageTone(stats.altTextCoverage, 100) });
+      addMetadataStat(details, 'SEO score', formatPercentStat(stats.seoComplianceScore), { tone: percentageTone(stats.seoComplianceScore, 90) });
+      addMetadataStat(details, 'SEO issue pages', stats.pagesWithSEOIssues, { tone: zeroIsGoodTone(stats.pagesWithSEOIssues) });
+      addMetadataStat(details, 'Content score', formatPercentStat(stats.averageContentScore), { tone: percentageTone(stats.averageContentScore, 90) });
+      addMetadataStat(details, 'Content issue pages', stats.pagesWithContentIssues, { tone: zeroIsGoodTone(stats.pagesWithContentIssues) });
+      addMetadataStat(details, 'Links', stats.totalLinks);
+      addMetadataStat(details, 'Broken links', stats.totalBrokenLinks, { tone: zeroIsGoodTone(stats.totalBrokenLinks) });
+      addMetadataStat(details, 'Links per page', stats.averageLinksPerPage);
       break;
 
     case 'Interactions and GSAP': {
@@ -3566,27 +5027,92 @@ function formatDetailedStats(category: string, stats: Record<string, any>): stri
           ? 'Not detected'
           : 'Not verified';
 
-      details.push(`Analysis: ${analysisComplete ? (stats.analysisStatus === 'partial' ? 'Partially verified' : 'Verified') : 'Not verified'}`);
-      details.push(`Legacy IX2: ${legacyIx2State}`);
-      if (typeof stats.legacyIx2Count === 'number') details.push(`${stats.legacyIx2Count} legacy IX2 marker${stats.legacyIx2Count === 1 ? '' : 's'}`);
-      if (typeof stats.pagesRequested === 'number') details.push(`${stats.pagesRequested} page${stats.pagesRequested === 1 ? '' : 's'} requested`);
-      if (typeof stats.pagesAnalyzed === 'number') details.push(`${stats.pagesAnalyzed} page${stats.pagesAnalyzed === 1 ? '' : 's'} analyzed`);
-      if (typeof stats.pagesFailed === 'number' && stats.pagesFailed > 0) details.push(`${stats.pagesFailed} page${stats.pagesFailed === 1 ? '' : 's'} not checked`);
-      if (typeof stats.pagesWithLegacyIx2 === 'number') details.push(`${stats.pagesWithLegacyIx2} page${stats.pagesWithLegacyIx2 === 1 ? '' : 's'} with IX2`);
-      if (typeof stats.errorMessage === 'string') details.push(stats.errorMessage);
+      addMetadataStat(details, 'Analysis', analysisComplete ? (stats.analysisStatus === 'partial' ? 'Partially verified' : 'Verified') : 'Not verified', { tone: analysisComplete ? 'good' : 'warning' });
+      addMetadataStat(details, 'Legacy IX2', legacyIx2State, { tone: stats.legacyIx2Detected === true ? 'warning' : stats.legacyIx2Detected === false ? 'good' : 'muted' });
+      addMetadataStat(details, 'IX2 markers', stats.legacyIx2Count, { tone: zeroIsGoodTone(stats.legacyIx2Count) });
+      addMetadataStat(details, 'Pages requested', stats.pagesRequested);
+      addMetadataStat(details, 'Pages analyzed', stats.pagesAnalyzed);
+      addMetadataStat(details, 'Pages not checked', stats.pagesFailed, { tone: zeroIsGoodTone(stats.pagesFailed) });
+      addMetadataStat(details, 'Template routes skipped', stats.pagesSkipped);
+      addMetadataStat(details, 'Pages with IX2', stats.pagesWithLegacyIx2, { tone: zeroIsGoodTone(stats.pagesWithLegacyIx2) });
+      addMetadataStat(details, 'CMS item URLs', stats.cmsItemUrlsValidated);
+      addMetadataStat(details, 'Coverage', stats.cmsTemplateCoverageStatus, { tone: cmsTemplateCoverageTone(stats.cmsTemplateCoverageStatus) });
+      if (typeof stats.errorMessage === 'string') addMetadataStat(details, 'Note', stats.errorMessage, { tone: 'warning' });
       break;
     }
 
     default:
-      // Generic formatting
-      Object.entries(stats).forEach(([key, value]) => {
-        if (typeof value === 'number') {
-          details.push(`${key}: ${value}`);
-        } else if (typeof value === 'boolean') {
-          details.push(`${key}: ${value ? 'Yes' : 'No'}`);
-        }
-      });
+      details.push(...formatGenericMetadataStats(stats));
   }
 
-  return details.length > 0 ? details.join(', ') : 'No detailed stats available';
+  return details;
+}
+
+function addMetadataStat(
+  items: MetadataStatItem[],
+  label: string,
+  value: unknown,
+  options: { tone?: MetadataTone } = {}
+): void {
+  if (value === undefined || value === null || value === '') return;
+  items.push({
+    label,
+    value: String(value),
+    tone: options.tone
+  });
+}
+
+function formatGenericMetadataStats(stats: Record<string, any>): MetadataStatItem[] {
+  const items: MetadataStatItem[] = [];
+
+  Object.entries(stats).forEach(([key, value]) => {
+    if (Array.isArray(value) || (value && typeof value === 'object')) return;
+    if (typeof value === 'number') {
+      addMetadataStat(items, humanizeStatKey(key), value);
+    } else if (typeof value === 'boolean') {
+      addMetadataStat(items, humanizeStatKey(key), formatBooleanStat(value), { tone: booleanTone(value) });
+    } else if (typeof value === 'string' && value.trim() !== '') {
+      addMetadataStat(items, humanizeStatKey(key), value);
+    }
+  });
+
+  return items;
+}
+
+function humanizeStatKey(key: string): string {
+  return key
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .replace(/^total\s+/i, '')
+    .replace(/\b\w/g, char => char.toUpperCase());
+}
+
+function formatBooleanStat(value: unknown): string | undefined {
+  if (typeof value !== 'boolean') return undefined;
+  return value ? 'Yes' : 'No';
+}
+
+function formatPercentStat(value: unknown): string | undefined {
+  if (typeof value !== 'number') return undefined;
+  return `${value}%`;
+}
+
+function booleanTone(value: unknown): MetadataTone | undefined {
+  if (typeof value !== 'boolean') return undefined;
+  return value ? 'good' : 'warning';
+}
+
+function zeroIsGoodTone(value: unknown): MetadataTone | undefined {
+  if (typeof value !== 'number') return undefined;
+  return value === 0 ? 'good' : 'warning';
+}
+
+function percentageTone(value: unknown, target: number): MetadataTone | undefined {
+  if (typeof value !== 'number') return undefined;
+  return value >= target ? 'good' : 'warning';
+}
+
+function cmsTemplateCoverageTone(value: unknown): MetadataTone | undefined {
+  if (typeof value !== 'string') return undefined;
+  if (value === 'complete' || value === 'not-applicable') return 'good';
+  return 'warning';
 }
