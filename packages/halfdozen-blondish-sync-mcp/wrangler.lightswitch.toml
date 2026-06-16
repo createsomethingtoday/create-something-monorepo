@@ -1,4 +1,4 @@
-name = "halfdozen-blondish-sync-mcp"
+name = "halfdozen-lightswitch-sync-mcp"
 main = "src/index.ts"
 compatibility_date = "2026-05-28"
 compatibility_flags = ["nodejs_compat"]
@@ -17,21 +17,22 @@ tag = "v1"
 new_sqlite_classes = ["BlondishSyncMcp"]
 
 [vars]
-SYNC_SERVER_NAME = "halfdozen-blondish-sync-mcp"
-SYNC_CLIENT_SLUG = "blondish"
-SYNC_TENANT_SLUG = "blondish"
-SYNC_CLIENT_DISPLAY_NAME = "BLOND:ISH"
-SYNC_TOOL_PREFIX = "blondish_sync"
-SYNC_CLIENT_LABEL = "BLOND:ISH / Abracadabra"
-BLONDISH_SUPPORT_TICKETS_DATA_SOURCE_ID = "fda87fb8-b156-820b-9542-8774717a42f6"
+SYNC_SERVER_NAME = "halfdozen-lightswitch-sync-mcp"
+SYNC_CLIENT_SLUG = "lightswitch"
+SYNC_TENANT_SLUG = "lightswitch"
+SYNC_CLIENT_DISPLAY_NAME = "Lightswitch"
+SYNC_TOOL_PREFIX = "lightswitch_sync"
+SYNC_CLIENT_LABEL = "Lightswitch Studio Black"
+CLIENT_SUPPORT_TICKETS_DATA_SOURCE_ID = "65f01384-61f7-824d-a699-076d37f9c91c"
+CLIENT_SUPPORT_TICKETS_DATA_SOURCE_TITLE = "Support Tickets [OS]"
+HALFDOZEN_TICKETS_DATA_SOURCE_ID = "2a101918-7ac5-8074-bf06-000b97592481"
 HALFDOZEN_TICKETS_DATA_SOURCE_TITLE = "Tickets [HD]"
-BLONDISH_OS_STATUS_PROPERTY = "Status"
-BRAINTRUST_PROJECT_NAME = "Half Dozen BLONDISH Sync MCP"
+CLIENT_OS_STATUS_PROPERTY = "Status"
+BRAINTRUST_PROJECT_NAME = "Half Dozen Lightswitch Sync MCP"
 
 # Required secrets before live writes:
 # MCP_API_KEY
 # CLIENT_NOTION_API_KEY
-# BLONDISH_NOTION_API_KEY
 # HALFDOZEN_NOTION_API_KEY
 #
 # Optional:

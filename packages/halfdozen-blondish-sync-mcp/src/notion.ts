@@ -22,9 +22,10 @@ export async function notionFetch<T>(
   path: string,
   init: { method?: string; body?: unknown } = {},
 ): Promise<T> {
-  const token = workspace === 'blondish' ? env.BLONDISH_NOTION_API_KEY : env.HALFDOZEN_NOTION_API_KEY;
+  const isClientWorkspace = workspace === 'client' || workspace === 'blondish';
+  const token = isClientWorkspace ? env.CLIENT_NOTION_API_KEY ?? env.BLONDISH_NOTION_API_KEY : env.HALFDOZEN_NOTION_API_KEY;
   if (!token?.trim()) {
-    throw new Error(`${workspace === 'blondish' ? 'BLONDISH_NOTION_API_KEY' : 'HALFDOZEN_NOTION_API_KEY'} is not configured.`);
+    throw new Error(`${isClientWorkspace ? 'CLIENT_NOTION_API_KEY' : 'HALFDOZEN_NOTION_API_KEY'} is not configured.`);
   }
 
   const response = await fetch(`${NOTION_API}${path}`, {
@@ -155,9 +156,10 @@ export async function uploadFileToNotion(
     type: fileResponse.headers.get('content-type') || 'application/octet-stream',
   }), source.name);
 
-  const token = workspace === 'blondish' ? env.BLONDISH_NOTION_API_KEY : env.HALFDOZEN_NOTION_API_KEY;
+  const isClientWorkspace = workspace === 'client' || workspace === 'blondish';
+  const token = isClientWorkspace ? env.CLIENT_NOTION_API_KEY ?? env.BLONDISH_NOTION_API_KEY : env.HALFDOZEN_NOTION_API_KEY;
   if (!token?.trim()) {
-    throw new Error(`${workspace === 'blondish' ? 'BLONDISH_NOTION_API_KEY' : 'HALFDOZEN_NOTION_API_KEY'} is not configured.`);
+    throw new Error(`${isClientWorkspace ? 'CLIENT_NOTION_API_KEY' : 'HALFDOZEN_NOTION_API_KEY'} is not configured.`);
   }
 
   const uploadedResponse = await fetch(created.upload_url, {

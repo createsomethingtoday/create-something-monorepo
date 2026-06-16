@@ -1,8 +1,6 @@
 import { initLogger, type Logger, type Span } from 'braintrust';
+import { resolveRuntimeConfig } from './config.js';
 import type { Env, SyncError, SyncResult } from './types.js';
-
-const SERVER_NAME = 'halfdozen-blondish-sync-mcp';
-const DEFAULT_BRAINTRUST_PROJECT_NAME = 'Half Dozen BLONDISH Sync MCP';
 
 type JsonPrimitive = string | number | boolean | null;
 type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue };
@@ -32,6 +30,7 @@ export async function emitBraintrustToolInvocation(env: Env, invocation: Braintr
   const logger = getBraintrustLogger(env);
   if (!logger) return;
 
+  const runtime = resolveRuntimeConfig(env);
   const output = summarizeBraintrustPayload(invocation.result);
   const action = typeof output.action === 'string' ? output.action : null;
   const error = invocation.error ? sanitizeError(invocation.error) : null;
@@ -48,16 +47,16 @@ export async function emitBraintrustToolInvocation(env: Env, invocation: Braintr
           error,
           tags: [
             'mcp',
-            SERVER_NAME,
+            runtime.serverName,
             'halfdozen',
-            'blondish',
+            runtime.clientSlug,
             invocation.toolName,
             ...(action ? [action] : []),
           ],
           metadata: {
-            server: SERVER_NAME,
-            client: 'blondish',
-            tenant: 'blondish',
+            server: runtime.serverName,
+            client: runtime.clientSlug,
+            tenant: runtime.tenantSlug,
             tool: invocation.toolName,
             action,
             duration_ms: invocation.durationMs,
@@ -76,7 +75,7 @@ export async function emitBraintrustToolInvocation(env: Env, invocation: Braintr
         });
       },
       {
-        name: `mcp:${SERVER_NAME}:${invocation.toolName}`,
+        name: `mcp:${runtime.serverName}:${invocation.toolName}`,
         type: 'tool',
       },
     );
@@ -201,8 +200,9 @@ function getBraintrustLogger(env: Env): Logger<any> | null {
   return braintrustLogger;
 }
 
-function resolveBraintrustProjectName(env: Pick<Env, 'BRAINTRUST_PROJECT_NAME'>): string {
-  return env.BRAINTRUST_PROJECT_NAME?.trim() || DEFAULT_BRAINTRUST_PROJECT_NAME;
+function resolveBraintrustProjectName(env: Env): string {
+  const runtime = resolveRuntimeConfig(env);
+  return env.BRAINTRUST_PROJECT_NAME?.trim() || `Half Dozen ${runtime.clientDisplayName} Sync MCP`;
 }
 
 function isSyncResult(value: unknown): value is SyncResult {
