@@ -6,6 +6,21 @@ This package is the end-user conversation product. It is distinct from:
 
 - `.agency` control-plane UX
 - MCP App `ui://...` resources inside server packages
+- raw Dify web-app clients or browser-side Dify API calls
+
+## Operator Chat Direction
+
+Use this package for the comprehensive operator chat shell around Dify-backed agents.
+
+The internal operator UI should copy Ona's clear-communication design discipline: light operational surfaces, compact navigation, crisp borders, readable hierarchy, direct action language, and proof beside each claim. CREATE SOMETHING still owns the product identity, governance copy, evidence model, and approval surface.
+
+The app should render three stable rails for staff/operator views:
+
+1. **Context rail**: client, lane, agent, credential state, blockers, and current operator state.
+2. **Chat rail**: Dify-backed conversation, inline widgets, and composer state.
+3. **Proof and actions rail**: artifacts, tool calls, approvals, handoff packets, eval evidence, and Linear references.
+
+Dify remains runtime plumbing. The browser must never receive a Dify API key or call the Dify Service API directly. Server orchestration resolves Dify app configuration, calls `chat-messages`, stores conversation IDs, maps stream/tool events into chat artifacts, and returns bounded widget/state payloads to the Svelte client.
 
 ## Current Scope
 
@@ -21,6 +36,7 @@ This package is the end-user conversation product. It is distinct from:
 - shortlist generation, recruiter review booking, recruiter review completion, staffing coordinator outreach, governed facility-submission handoff progression, facility-response capture, onboarding handoff progression, and terminal start-ready or closed-request outcomes once intake blockers clear
 - route loads and `/api/threads/*` mutations for thread creation, messaging, confirmation, consent, attachment uploads, recruiter review transitions, staffing queue transitions, facility-response transitions, onboarding transitions, reconnect recovery, and reset
 - local `/control-plane/*` bridge routes that redirect Abundance control-plane actions into real `.agency` dashboard, MCP access, and security surfaces
+- Ona-style operator shell contract in `src/lib/operator/clear-shell.ts`, surfaced on the public orientation page and staff/operator chat routes
 - root layout now reads the optional shared `.agency` browser session and live `.agency` entitlement snapshot so the Abundance shell can show whether governed staffing access is active, blocked, or unavailable
 - governed recruiter, staffing, facility-response, and onboarding actions remain read-only until `.agency` reports an active entitlement decision for the current browser session
 - anonymous `/chat` and `/settings` access now routes back into `/apply` so the candidate path stays conversation-first
