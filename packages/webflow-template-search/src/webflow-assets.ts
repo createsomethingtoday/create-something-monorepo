@@ -135,6 +135,16 @@ function normalizeLookupKey(value: string | null | undefined): string {
     .toLowerCase();
 }
 
+function normalizeExactLookupKey(value: string | null | undefined): string {
+  if (!value) return '';
+  return stripExtension(decodeURIComponent(value))
+    .replace(/^[a-f0-9]{24}[_-]+/i, '')
+    .replace(/\b(thumbnail|thumb|hover|secondary|primary|webflow|marketplace|preview|image|img|1x|2x)\b/gi, ' ')
+    .replace(/[^a-z0-9]+/gi, ' ')
+    .trim()
+    .toLowerCase();
+}
+
 function normalizeScoreName(value: string | null | undefined): string {
   if (!value) return '';
   return stripExtension(decodeURIComponent(value))
@@ -148,12 +158,25 @@ function compactKey(value: string) {
   return value.replace(/\s+/g, '');
 }
 
+function exactKey(value: string) {
+  return `exact:${value}`;
+}
+
 function templateKeys(templateSlug: string, name: string): string[] {
   const slugBase = templateSlug
     .replace(/-website-template$/i, '')
     .replace(/-template$/i, '')
     .replace(/-/g, ' ');
   return uniqueKeys([normalizeLookupKey(templateSlug), normalizeLookupKey(slugBase), normalizeLookupKey(name)]);
+}
+
+function exactTemplateKeys(templateSlug: string): { primary: string[]; fallback: string[] } {
+  const slug = templateSlug.trim();
+  const slugBase = slug.replace(/-website-template$/i, '');
+  return {
+    primary: uniqueKeys([normalizeExactLookupKey(slug)]).map(exactKey),
+    fallback: uniqueKeys([normalizeExactLookupKey(slugBase)]).map(exactKey),
+  };
 }
 
 function uniqueKeys(values: string[]) {
@@ -184,6 +207,12 @@ function appendTemplateCandidate(
   name: string,
   candidate: WebflowTemplateImageCandidate,
 ) {
+  if (templateSlug) {
+    const keys = exactTemplateKeys(templateSlug);
+    for (const key of [...keys.primary, ...keys.fallback]) {
+      appendCandidate(byTemplateKey, key, candidate);
+    }
+  }
   for (const key of templateKeys(templateSlug, name)) {
     appendCandidate(byTemplateKey, key, candidate);
   }
@@ -201,6 +230,20 @@ function assetLookupKeys(asset: WebflowAsset) {
     ]),
   ];
   return uniqueKeys(rawNames.map((value) => normalizeLookupKey(value)));
+}
+
+function exactAssetLookupKeys(asset: WebflowAsset) {
+  const rawNames = [
+    asset.displayName,
+    asset.originalFileName,
+    asset.hostedUrl ? basenameFromUrl(asset.hostedUrl) : '',
+    ...(asset.variants ?? []).flatMap((variant) => [
+      variant.displayName,
+      variant.originalFileName,
+      variant.hostedUrl ? basenameFromUrl(variant.hostedUrl) : '',
+    ]),
+  ];
+  return uniqueKeys(rawNames.map((value) => normalizeExactLookupKey(value))).map(exactKey);
 }
 
 function bestHostedUrl(asset: WebflowAsset): string | null {
@@ -472,6 +515,9 @@ async function appendWebflowAssetImages(
           hostedUrl,
           scoreName: normalizeScoreName(rawNames.join(' ')),
         };
+        for (const key of exactAssetLookupKeys(asset)) {
+          appendCandidate(byTemplateKey, key, candidate, { preserveExisting: true });
+        }
         for (const key of assetLookupKeys(asset)) {
           appendCandidate(byTemplateKey, key, candidate, { preserveExisting: true });
         }
@@ -517,12 +563,21 @@ export function resolveWebflowTemplateImages(
 
   const candidates: WebflowTemplateImageCandidate[] = [];
   const seen = new Set<string>();
-  for (const key of templateKeys(template.templateSlug, template.name)) {
-    for (const candidate of index.byTemplateKey.get(key) ?? []) {
-      if (seen.has(candidate.hostedUrl)) continue;
-      candidates.push(candidate);
-      seen.add(candidate.hostedUrl);
+  const collectCandidates = (keys: string[]) => {
+    for (const key of keys) {
+      for (const candidate of index.byTemplateKey.get(key) ?? []) {
+        if (seen.has(candidate.hostedUrl)) continue;
+        candidates.push(candidate);
+        seen.add(candidate.hostedUrl);
+      }
     }
+  };
+
+  const exactKeys = exactTemplateKeys(template.templateSlug);
+  collectCandidates(exactKeys.primary);
+  if (candidates.length === 0) collectCandidates(exactKeys.fallback);
+  if (candidates.length === 0) {
+    collectCandidates(templateKeys(template.templateSlug, template.name));
   }
 
   if (candidates.length === 0) return null;
