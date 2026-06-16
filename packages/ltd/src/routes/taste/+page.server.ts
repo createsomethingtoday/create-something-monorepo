@@ -69,6 +69,19 @@ const CHANNELS: Channel[] = [
 
 const MASTER_ID = 'arena-taste';
 
+function getErrorMessage(error: unknown): string {
+	if (error instanceof Error) {
+		const cause = error.cause instanceof Error ? ` ${error.cause.message}` : '';
+		return `${error.message}${cause}`;
+	}
+
+	return String(error);
+}
+
+function isMissingTasteSchemaError(error: unknown): boolean {
+	return /no such table:\s*(examples|resources)/i.test(getErrorMessage(error));
+}
+
 export const load: PageServerLoad = async ({ platform, parent }) => {
 	const { user } = await parent();
 	const db = platform?.env?.DB;
@@ -118,7 +131,10 @@ export const load: PageServerLoad = async ({ platform, parent }) => {
 			user
 		};
 	} catch (error) {
-		console.error('Error loading taste references:', error);
+		if (!isMissingTasteSchemaError(error)) {
+			console.error('Error loading taste references:', error);
+		}
+
 		return {
 			examples: [],
 			resources: [],
