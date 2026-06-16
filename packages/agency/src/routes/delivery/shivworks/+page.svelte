@@ -213,6 +213,7 @@
   .delivery-copy h1 {
     margin: 14px 0 20px;
     max-width: 820px;
+    color: var(--color-clear-onyx, #0a0e19);
     font-family: var(--font-display);
     font-size: clamp(44px, 7vw, 82px);
     line-height: 0.96;
@@ -298,6 +299,7 @@
 
   .delivery-section {
     padding: clamp(36px, 6vw, 76px) 0;
+    color: var(--color-clear-onyx, #0a0e19);
   }
 
   .section-lead {
@@ -308,6 +310,7 @@
   .section-lead h2 {
     margin: 10px 0 12px;
     max-width: 720px;
+    color: var(--color-clear-onyx, #0a0e19);
     font-family: var(--font-display);
     font-size: clamp(32px, 5vw, 64px);
     line-height: 1;
@@ -372,6 +375,7 @@
   }
 
   .artifact-link strong {
+    color: var(--color-clear-onyx, #0a0e19);
     font-size: 1.2rem;
     line-height: 1.15;
   }
@@ -387,6 +391,7 @@
   .package-card h3,
   .evidence-panel h2 {
     margin: 14px 0 10px;
+    color: var(--color-clear-onyx, #0a0e19);
     font-size: clamp(24px, 3vw, 36px);
     line-height: 1.05;
     letter-spacing: 0;
