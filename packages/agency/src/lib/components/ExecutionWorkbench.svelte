@@ -53,7 +53,7 @@
       checks: [
         { label: 'Order is paid and still unfulfilled', tone: 'pass' },
         { label: 'Address format and service zone validated', tone: 'pass' },
-        { label: 'Write scope limited to fulfillment note and customer reply', tone: 'pass' }
+        { label: 'Write limited to note + customer reply', tone: 'pass' }
       ],
       receipts: ['order-change-log.json', 'warehouse-note.md', 'customer-confirmation.md']
     },
@@ -117,7 +117,11 @@
           detail: 'Customer-safe confirmation'
         }
       ],
-      plan: ['Read order and fulfillment state', 'Validate corrected address', 'Write note and notify owner'],
+      plan: [
+        'Read order and fulfillment state',
+        'Validate corrected address',
+        'Write note and notify owner'
+      ],
       warnings: ['No payment write requested', 'No shipped package mutation'],
       connections: [
         { name: 'Shopify', scope: 'read order / write note', tone: 'allow' },
@@ -581,7 +585,8 @@
     min-height: 28.75rem;
     padding: clamp(1.25rem, 2.1vw, 1.7rem);
     overflow: hidden;
-    border: 1px solid color-mix(in srgb, var(--workflow-accent) 74%, var(--color-clear-onyx, #0a0e19));
+    border: 1px solid
+      color-mix(in srgb, var(--workflow-accent) 74%, var(--color-clear-onyx, #0a0e19));
     border-radius: 8px;
     background:
       linear-gradient(90deg, rgba(10, 14, 25, 0.05) 1px, transparent 1px) 0 0 / 2.4rem 2.4rem,
@@ -752,7 +757,7 @@
     grid-template-columns: auto minmax(0, auto) minmax(0, 1fr);
     gap: 0.42rem;
     align-items: center;
-    min-height: 3.1rem;
+    min-height: 3.2rem;
     min-width: 0;
     padding: 0.62rem;
     border: 1px solid var(--color-clear-border, #e1e1e1);
@@ -768,6 +773,15 @@
     font-family: var(--font-mono);
     font-size: 0.68rem;
     font-weight: var(--font-medium);
+  }
+
+  .sandbox-cell span:last-child {
+    display: -webkit-box;
+    min-height: 2.5em;
+    overflow: hidden;
+    line-clamp: 2;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
   }
 
   @media (max-width: 1160px) {

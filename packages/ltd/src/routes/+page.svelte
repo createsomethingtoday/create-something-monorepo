@@ -82,8 +82,7 @@
       eyebrow: 'Featured pattern',
       icon: 'settings',
       title: 'Crystallization',
-      detail:
-        'Encode human expertise into configurable constraints that AI agents execute within.',
+      detail: 'Encode human expertise into configurable constraints that AI agents execute within.',
       points: [
         'Model routing, quality gates, and review pipelines become policy',
         'Human judgment shapes every decision without requiring constant presence',
@@ -231,7 +230,11 @@
   description="The canon names the standard, the research documents the evidence, the workbench tests the runtime, and the agency turns the fit into governed workflow delivery."
 >
   {#snippet after()}
-    <ClearCardGrid items={ecosystemCards} columns={3} ariaLabel="CREATE SOMETHING property system" />
+    <ClearCardGrid
+      items={ecosystemCards}
+      columns={3}
+      ariaLabel="CREATE SOMETHING property system"
+    />
   {/snippet}
 </ClearPageSection>
 
@@ -247,6 +250,7 @@
   headline="Keep the canon close to the work."
   description="A quiet note when a new master, standard, or operating pattern is worth carrying into the next decision."
   actionLabel="Get the next canon note."
+  submitLabel="Get the note"
   note="No noise. Just the principles, language, and artifacts that make the work easier to defend."
   source="ltd-homepage"
 />
