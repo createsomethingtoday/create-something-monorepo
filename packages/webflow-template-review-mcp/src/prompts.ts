@@ -54,12 +54,12 @@ Every review follows these phases:
 | Tool | What it does | When |
 |------|-------------|------|
 | \`template_review_get_comprehensive_review_contract\` | Returns the canonical comprehensive evidence shape, coverage matrix, rubric dimensions, manual checks, and Agent Review Feedback format | Before comprehensive reports or Agent Review Feedback summaries |
-| \`template_review_run_published_site_validation\` | Runs the working published-site validators: content/assets/accessibility signals, legacy IX2 interactions, GSAP/custom-code policy signals | After \`get_review_context\`, using \`publishedUrl\` only |
+| \`template_review_run_published_site_validation\` | Runs the working published-site validators: content/assets/accessibility signals, homepage SEO title formula, legacy IX2 interactions, GSAP/custom-code policy signals | After \`get_review_context\`, using \`publishedUrl\` plus asset template name when available |
 
-This validation path is **read-only** and does not use Designer API data, Preview URLs, or Airtable writes. Treat it as supplemental published-site evidence for review triage, not as a final decision.
+This validation path is **read-only** and does not use Designer API data, Preview URLs, or Airtable writes. Treat it as supplemental published-site evidence for review triage, not as a final decision. When the asset template name is available from Airtable/review context, pass it as \`template_name\` so the validator can enforce the required homepage SEO title formula: Static/CMS \`{Template Name} - Webflow HTML website template\`; Ecommerce \`{Template Name} - Webflow Ecommerce website template\`. Use E2B sandbox execution as needed to independently fetch the current published homepage HTML and confirm the observed \`<title>\` when validator evidence is missing, incomplete, or contradicted.
 
 The published-site validators cover:
-- **Content**: lorem/placeholder signals, headings, SEO metadata, links, content quality. Treat lorem/placeholder findings as review evidence, not automatic blockers. Utility-page example/specimen copy is allowed when it intentionally appears on Style Guide, Changelog, Licenses, Instructions, Password, Search, 401/404, or \`/utility/*\` pages. If placeholder evidence is limited to intentional utility-page specimens, Webflow search snippets, warning-only placeholder signals, or Webflow-generated video fallback assets, exclude it from draft creator feedback.
+- **Content**: lorem/placeholder signals, headings, SEO metadata, homepage SEO title formula when \`template_name\` is supplied, links, content quality. Treat lorem/placeholder findings as review evidence, not automatic blockers. Utility-page example/specimen copy is allowed when it intentionally appears on Style Guide, Changelog, Licenses, Instructions, Password, Search, 401/404, or \`/utility/*\` pages. If placeholder evidence is limited to intentional utility-page specimens, Webflow search snippets, warning-only placeholder signals, or Webflow-generated video fallback assets, exclude it from draft creator feedback.
 - **Images/assets**: asset/image issues available from the published-site worker and supplied asset data
 - **Accessibility**: validator-detectable alt text, heading, and accessibility signals. Treat alt-text findings as actionable only when they point to editable content images/icons; do not cite decorative empty-alt images or Webflow-generated video fallback/poster assets as creator-fixable missing-alt issues.
 - **Interactions**: legacy IX2 markers detected from published HTML
@@ -80,6 +80,7 @@ Report \`rubricCoverage\` as \`partial_published_site_validation\` unless a sepa
 - Flagged unsupported custom code or third-party embeds
 - Missing image dimensions on all pages
 - Confirmed authored/customer-facing placeholder content on non-utility pages, not intentional utility-page specimens, not Webflow search snippets, and not warning-only placeholder signals
+- Homepage SEO title that does not match the required Webflow template formula
 - Connected third-party apps (GA, FB Pixel, etc.)
 
 ## Phase 5 — Take Ownership & Decide
@@ -127,7 +128,7 @@ Report \`rubricCoverage\` as \`partial_published_site_validation\` unless a sepa
 1. \`template_review_health\` — confirm connected
 2. \`template_review_list_queue\` — find work
 3. \`template_review_get_review_context\` — check capabilities
-4. \`template_review_run_published_site_validation\` — run published-site validators on \`publishedUrl\`
+4. \`template_review_run_published_site_validation\` — run published-site validators on \`publishedUrl\`, passing \`template_name\` from asset/review context when available
 5. Review supplemental evidence and manual Designer checks separately
 6. \`template_review_assign_self\` — claim the version
 7. \`template_review_request_changes\` / \`approve_version\` / \`reject_version\` — decide

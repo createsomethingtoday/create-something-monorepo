@@ -33,7 +33,8 @@ import {
 	SnippetStatusResponse,
 	SnippetRotateTokenRequest,
 	ValidationSubmitRequest,
-	ValidationSubmitResponse
+	ValidationSubmitResponse,
+	ValidationOptions
 } from './types';
 
 const REVIEW_SNIPPET_VERSION = '0.3.0';
@@ -1539,7 +1540,7 @@ async function performDesignerValidation(
 }
 
 async function performEnhancedValidation(body: ValidationRequest): Promise<ValidationResponse> {
-	const options = body.options || {};
+	const options = buildValidationOptions(body);
 	const cmsTemplateHints = extractCmsTemplateHints(body.designerData);
 
 	const assetPromise = options.skipAssets
@@ -1591,6 +1592,30 @@ async function performEnhancedValidation(body: ValidationRequest): Promise<Valid
 			coverageImprovement: '+27 percentage points'
 		}
 	};
+}
+
+function buildValidationOptions(body: ValidationRequest): ValidationOptions {
+	const requestedOptions = body.options || {};
+	const marketplaceTemplateName =
+		typeof requestedOptions.marketplaceTemplateName === 'string' && requestedOptions.marketplaceTemplateName.trim()
+			? requestedOptions.marketplaceTemplateName.trim()
+			: extractMarketplaceTemplateName(body.designerData);
+
+	return {
+		...requestedOptions,
+		...(marketplaceTemplateName ? { marketplaceTemplateName } : {})
+	};
+}
+
+function extractMarketplaceTemplateName(designerData: DesignerData): string | undefined {
+	const rawName = designerData?.siteInfo?.name;
+	if (typeof rawName !== 'string') return undefined;
+
+	const normalized = rawName
+		.replace(/^webflow\s*[-\u2013\u2014]\s*/i, '')
+		.trim();
+
+	return normalized || undefined;
 }
 
 function mergeReviewResults(

@@ -867,6 +867,70 @@ describe('Content Validator', () => {
 		expect((fetchHTML as any).mock.calls[0][0]).toBe('https://example.com/about');
 	});
 
+	it('flags homepage SEO title that misses the required Marketplace formula', async () => {
+		vi.mocked(fetchHTML).mockResolvedValue({
+			html: '<!doctype html><html><head><title>Bite Buddy - Fast & Smart Food Delivery App Website</title><meta name="description" content="Order food faster with Bite Buddy. Enjoy quick ordering, real-time tracking, exclusive deals, and seamless food delivery across mobile and web."></head><body><h1>Bite Buddy</h1></body></html>',
+			status: 200,
+			headers: {},
+			size: 0,
+			loadTime: 0
+		});
+		vi.mocked(parseHTML).mockReturnValue(createParsedHTML({
+			document: {
+				querySelector: (selector: string) => {
+					if (selector === 'title') return { textContent: 'Bite Buddy - Fast & Smart Food Delivery App Website' };
+					if (selector === 'meta[name="description"]') return { getAttribute: () => 'Order food faster with Bite Buddy. Enjoy quick ordering, real-time tracking, exclusive deals, and seamless food delivery across mobile and web.' };
+					return null;
+				},
+				querySelectorAll: () => [],
+				body: { textContent: 'Bite Buddy', innerHTML: '<h1>Bite Buddy</h1>' }
+			},
+			headings: [{ tagName: 'H1', textContent: 'Bite Buddy' }]
+		}));
+
+		const result = await validateContent('https://bite-buddy.webflow.io', undefined, {
+			marketplaceTemplateName: 'Bite Buddy',
+			contentChecks: { lorem: false, headings: false, altText: false, seo: true, links: false, contentQuality: false }
+		});
+
+		const issue = result.issues.find((item) => item.id === 'homepage-title-formula');
+		expect(issue).toBeTruthy();
+		expect(issue?.details).toEqual(expect.objectContaining({
+			templateName: 'Bite Buddy',
+			currentTitle: 'Bite Buddy - Fast & Smart Food Delivery App Website',
+			expectedTitle: 'Bite Buddy - Webflow HTML website template'
+		}));
+	});
+
+	it('accepts homepage SEO title that matches the required Marketplace formula', async () => {
+		vi.mocked(fetchHTML).mockResolvedValue({
+			html: '<!doctype html><html><head><title>Bite Buddy - Webflow HTML website template</title><meta name="description" content="Order food faster with Bite Buddy. Enjoy quick ordering, real-time tracking, exclusive deals, and seamless food delivery across mobile and web."></head><body><h1>Bite Buddy</h1></body></html>',
+			status: 200,
+			headers: {},
+			size: 0,
+			loadTime: 0
+		});
+		vi.mocked(parseHTML).mockReturnValue(createParsedHTML({
+			document: {
+				querySelector: (selector: string) => {
+					if (selector === 'title') return { textContent: 'Bite Buddy - Webflow HTML website template' };
+					if (selector === 'meta[name="description"]') return { getAttribute: () => 'Order food faster with Bite Buddy. Enjoy quick ordering, real-time tracking, exclusive deals, and seamless food delivery across mobile and web.' };
+					return null;
+				},
+				querySelectorAll: () => [],
+				body: { textContent: 'Bite Buddy', innerHTML: '<h1>Bite Buddy</h1>' }
+			},
+			headings: [{ tagName: 'H1', textContent: 'Bite Buddy' }]
+		}));
+
+		const result = await validateContent('https://bite-buddy.webflow.io', undefined, {
+			marketplaceTemplateName: 'Bite Buddy',
+			contentChecks: { lorem: false, headings: false, altText: false, seo: true, links: false, contentQuality: false }
+		});
+
+		expect(result.issues.find((item) => item.id === 'homepage-title-formula')).toBeUndefined();
+	});
+
 	it('excludePageSlugs filters out provided slugs when pageScope=all', async () => {
 		(fetchHTML as any).mockClear();
 

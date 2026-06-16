@@ -166,6 +166,12 @@ export interface ValidationOptions {
 	skipAccessibility?: boolean;
 	maxPages?: number;
 	/**
+	 * Marketplace template name used to validate the homepage SEO title formula.
+	 * Without this context, the published-site worker only checks generic SEO metadata.
+	 */
+	marketplaceTemplateName?: string;
+	marketplaceTemplateType?: 'html' | 'ecommerce';
+	/**
 	 * Page slugs/paths to exclude from content analysis (leading "/" optional).
 	 * This is primarily used to skip intentional demo pages like Style Guide.
 	 */

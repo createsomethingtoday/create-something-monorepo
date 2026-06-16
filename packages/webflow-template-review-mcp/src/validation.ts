@@ -16,6 +16,8 @@ export interface ValidationToolConfig {
 
 export interface PublishedSiteValidationInput {
   published_url: string;
+  template_name?: string;
+  template_type?: 'html' | 'ecommerce';
   page_slugs?: string[];
   checks?: PublishedSiteValidationCheck[];
   max_pages?: number;
@@ -291,6 +293,8 @@ function summarizeGsapValidation(data: JsonRecord, includeRaw: boolean) {
 
 async function runWebflowWayValidation(
   publishedUrl: string,
+  templateName: string | undefined,
+  templateType: PublishedSiteValidationInput['template_type'] | undefined,
   pageSlugs: string[] | undefined,
   maxPages: number,
   includeRaw: boolean,
@@ -309,6 +313,8 @@ async function runWebflowWayValidation(
       ...(pageSlugs && pageSlugs.length > 0 ? { pageSlugs } : {}),
       options: {
         maxPages,
+        ...(templateName ? { marketplaceTemplateName: templateName } : {}),
+        ...(templateType ? { marketplaceTemplateType: templateType } : {}),
       },
     },
     config.timeoutMs,
@@ -355,11 +361,19 @@ export async function runPublishedSiteValidation(input: PublishedSiteValidationI
     checks.map(async (check) => {
       try {
         if (check === 'webflow_way') {
-          results[check] = await runWebflowWayValidation(publishedUrl, input.page_slugs, maxPages, includeRaw, {
-            webflowValidationWorkerUrl,
-            timeoutMs,
-            fetcher,
-          });
+          results[check] = await runWebflowWayValidation(
+            publishedUrl,
+            stringValue(input.template_name),
+            input.template_type,
+            input.page_slugs,
+            maxPages,
+            includeRaw,
+            {
+              webflowValidationWorkerUrl,
+              timeoutMs,
+              fetcher,
+            },
+          );
           return;
         }
         results[check] = await runGsapValidation(publishedUrl, maxPages, includeRaw, {
@@ -379,6 +393,8 @@ export async function runPublishedSiteValidation(input: PublishedSiteValidationI
 
   return {
     publishedUrl,
+    ...(stringValue(input.template_name) ? { templateName: stringValue(input.template_name) } : {}),
+    ...(input.template_type ? { templateType: input.template_type } : {}),
     maxPages,
     checksRequested: checks,
     evidenceQuality: 'Partial published-site validator evidence. Useful for review triage and concrete feedback, not a final Designer/manual decision.',
