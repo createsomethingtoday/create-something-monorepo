@@ -260,6 +260,48 @@ describe('webflow-template-search worker', () => {
     }
   });
 
+  it('allows targeted record sync to replace a stale running sync lock', async () => {
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: [PUBLISHED_ASSETS[0]],
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+    });
+    const { env, close } = createTestEnv();
+
+    try {
+      await acquireSyncJobLock(env.DB, 'incremental');
+      await env.DB.prepare(
+        `UPDATE sync_jobs
+         SET heartbeat_at = ?, expires_at = ?
+         WHERE lock_key = ?`,
+      )
+        .bind('2026-01-01T00:00:00.000Z', '2099-01-01T00:00:00.000Z', 'template_sync')
+        .run();
+
+      const response = await callWorker(
+        new Request('https://templates.test/api/templates/admin/sync-records', {
+          method: 'POST',
+          headers: {
+            Authorization: 'Bearer sync-token',
+            'content-type': 'application/json',
+          },
+          body: JSON.stringify({ ids: ['recAgentflow'] }),
+        }),
+        env,
+      );
+      expect(response.status).toBe(200);
+
+      const row = await env.DB.prepare('SELECT mode, status FROM sync_jobs WHERE lock_key = ?')
+        .bind('template_sync')
+        .first<{ mode: string; status: string }>();
+      expect(row).toMatchObject({ mode: 'records', status: 'succeeded' });
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
   it('uses an extended sync lock for manual full rebuilds', async () => {
     const fetchMock = installAirtableFetchMock({
       publishedAssets: PUBLISHED_ASSETS,
@@ -1591,6 +1633,236 @@ describe('webflow-template-search worker', () => {
       expect(payload.items.find((item) => item.name === 'Setrex')?.thumbnail_image_url).toBe(
         'https://cdn.prod.website-files.com/site/setrex-asset.webp',
       );
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
+  it('matches Webflow CMS thumbnails by exact slug before fuzzy template name', async () => {
+    const flowFluxen = {
+      ...PUBLISHED_ASSETS[0],
+      id: 'recFlowFluxen',
+      fields: {
+        ...PUBLISHED_ASSETS[0].fields,
+        Name: 'Fluxen',
+        '🥞CMS Slug': 'fluxen-website-template',
+        '🥞CMS Slug (formula)': 'fluxen-studio-website-template',
+        '🎨Creator Name': 'Flow Nija',
+        '🖼️Thumbnail Image': [{ url: 'https://v5.airtableusercontent.com/v3/u/53/temporary-flow-fluxen' }],
+        '🔗Listing URL': 'https://webflow.com/templates/html/fluxen-website-template',
+        '🔗Preview Site URL': 'https://fluxen-studio.webflow.io',
+        '🔗Website URL': 'https://fluxen-studio.webflow.io',
+      },
+    };
+    const metaFluxen = {
+      ...PUBLISHED_ASSETS[1],
+      id: 'recMetaFluxen',
+      fields: {
+        ...PUBLISHED_ASSETS[1].fields,
+        Name: 'Fluxen.',
+        '🥞CMS Slug': 'fluxen-saas-website-template',
+        '🥞CMS Slug (formula)': 'fluxen-saas-website-template',
+        '🎨Creator Name': 'Meta Flow',
+        '🖼️Thumbnail Image': [{ url: 'https://v5.airtableusercontent.com/v3/u/53/temporary-meta-fluxen' }],
+        '🔗Listing URL': 'https://webflow.com/templates/html/fluxen-saas-website-template',
+        '🔗Preview Site URL': 'https://fluxen-template.webflow.io',
+        '🔗Website URL': 'https://fluxen-template.webflow.io',
+      },
+    };
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: [flowFluxen, metaFluxen],
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+      webflowCollections: [{ id: TEMPLATES_COLLECTION_ID, slug: 'templates', displayName: 'Templates' }],
+      webflowCollectionItems: {
+        [TEMPLATES_COLLECTION_ID]: [
+          {
+            id: 'item-meta-fluxen',
+            fieldData: {
+              slug: 'fluxen-saas-website-template',
+              name: 'Fluxen.',
+              'thumbnail-image': { url: 'https://cdn.prod.website-files.com/site/meta-fluxen.webp' },
+            },
+          },
+          {
+            id: 'item-flow-fluxen',
+            fieldData: {
+              slug: 'fluxen-website-template',
+              name: 'Fluxen',
+              'thumbnail-image': { url: 'https://cdn.prod.website-files.com/site/flow-fluxen.webp' },
+            },
+          },
+        ],
+      },
+    });
+    const { env, close } = createTestEnv();
+    env.WEBFLOW_API_TOKEN = 'test-webflow-cms-token';
+    env.WEBFLOW_TEMPLATE_ASSET_SITE_ID = '5e593fb060cf877cf875dd1f';
+
+    try {
+      const rebuild = await callWorker(
+        new Request('https://templates.test/api/templates/admin/rebuild', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(rebuild.status).toBe(200);
+
+      const response = await callWorker(new Request('https://templates.test/api/templates/search?q=fluxen&page_size=10'), env);
+      const payload = (await response.json()) as {
+        items: Array<{ name: string; template_slug: string; thumbnail_image_url: string | null }>;
+      };
+
+      expect(payload.items.find((item) => item.name === 'Fluxen')).toMatchObject({
+        template_slug: 'fluxen-website-template',
+        thumbnail_image_url: 'https://cdn.prod.website-files.com/site/flow-fluxen.webp',
+      });
+      expect(payload.items.find((item) => item.name === 'Fluxen.')).toMatchObject({
+        template_slug: 'fluxen-saas-website-template',
+        thumbnail_image_url: 'https://cdn.prod.website-files.com/site/meta-fluxen.webp',
+      });
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
+  it('prefers a main CMS thumbnail over a generic thumbnail field', async () => {
+    const ecovoltAsset = {
+      ...PUBLISHED_ASSETS[0],
+      id: 'recEcovolt',
+      fields: {
+        ...PUBLISHED_ASSETS[0].fields,
+        Name: 'Ecovolt',
+        '🥞CMS Slug': 'ecovolt-website-template',
+        '🥞CMS Slug (formula)': 'ecovolt-farming-website-template',
+        '🎨Creator Name': 'Zorion Studio',
+        '🖼️Thumbnail Image': [{ url: 'https://v5.airtableusercontent.com/v3/u/53/temporary-ecovolt' }],
+        '🔗Listing URL': 'https://webflow.com/templates/html/ecovolt-website-template',
+        '🔗Preview Site URL': 'https://ecovolt-farming.webflow.io',
+        '🔗Website URL': 'https://ecovolt-farming.webflow.io',
+      },
+    };
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: [ecovoltAsset],
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+      webflowCollections: [{ id: TEMPLATES_COLLECTION_ID, slug: 'templates', displayName: 'Templates' }],
+      webflowCollectionItems: {
+        [TEMPLATES_COLLECTION_ID]: [
+          {
+            id: 'item-ecovolt',
+            fieldData: {
+              slug: 'ecovolt-website-template',
+              name: 'Ecovolt',
+              thumbnail: { url: 'https://cdn.prod.website-files.com/site/ecovolt-generic.webp' },
+              'main-thumbnail': { url: 'https://cdn.prod.website-files.com/site/ecovolt-main.webp' },
+              'thumbnail-image-secondary': { url: 'https://cdn.prod.website-files.com/site/ecovolt-secondary.webp' },
+            },
+          },
+        ],
+      },
+    });
+    const { env, close } = createTestEnv();
+    env.WEBFLOW_API_TOKEN = 'test-webflow-cms-token';
+    env.WEBFLOW_TEMPLATE_ASSET_SITE_ID = '5e593fb060cf877cf875dd1f';
+
+    try {
+      const rebuild = await callWorker(
+        new Request('https://templates.test/api/templates/admin/rebuild', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(rebuild.status).toBe(200);
+
+      const response = await callWorker(new Request('https://templates.test/api/templates/search?q=ecovolt'), env);
+      const payload = (await response.json()) as {
+        items: Array<{ thumbnail_image_url: string | null; thumbnail_image_secondary_url: string | null }>;
+      };
+
+      expect(payload.items[0]?.thumbnail_image_url).toBe('https://cdn.prod.website-files.com/site/ecovolt-main.webp');
+      expect(payload.items[0]?.thumbnail_image_secondary_url).toBe(
+        'https://cdn.prod.website-files.com/site/ecovolt-secondary.webp',
+      );
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
+  it('uses the published detail page image during targeted record thumbnail repairs', async () => {
+    const ecovoltAsset = {
+      ...PUBLISHED_ASSETS[0],
+      id: 'recEcovolt',
+      fields: {
+        ...PUBLISHED_ASSETS[0].fields,
+        Name: 'Ecovolt',
+        '🥞CMS Slug': 'ecovolt-website-template',
+        '🥞CMS Slug (formula)': 'ecovolt-farming-website-template',
+        '🎨Creator Name': 'Zorion Studio',
+        '🖼️Thumbnail Image': [{ url: 'https://v5.airtableusercontent.com/v3/u/53/temporary-ecovolt' }],
+        '🔗Listing URL': 'https://webflow.com/templates/html/ecovolt-website-template',
+        '🔗Preview Site URL': 'https://ecovolt-farming.webflow.io',
+        '🔗Website URL': 'https://ecovolt-farming.webflow.io',
+      },
+    };
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: [ecovoltAsset],
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+      webflowCollections: [{ id: TEMPLATES_COLLECTION_ID, slug: 'templates', displayName: 'Templates' }],
+      webflowCollectionItems: {
+        [TEMPLATES_COLLECTION_ID]: [
+          {
+            id: 'item-ecovolt',
+            fieldData: {
+              slug: 'ecovolt-website-template',
+              name: 'Ecovolt',
+              thumbnail: { url: 'https://cdn.prod.website-files.com/site/ecovolt-stale-cms.webp' },
+            },
+          },
+        ],
+      },
+      publishedTemplatePages: {
+        '/templates/html/ecovolt-website-template':
+          '<html><head><meta property="og:image" content="https://cdn.prod.website-files.com/site/ecovolt-public.webp"></head></html>',
+      },
+    });
+    const { env, close } = createTestEnv();
+    env.WEBFLOW_API_TOKEN = 'test-webflow-cms-token';
+    env.WEBFLOW_TEMPLATE_ASSET_SITE_ID = '5e593fb060cf877cf875dd1f';
+
+    try {
+      const response = await callWorker(
+        new Request('https://templates.test/api/templates/admin/sync-records', {
+          method: 'POST',
+          headers: {
+            Authorization: 'Bearer sync-token',
+            'content-type': 'application/json',
+          },
+          body: JSON.stringify({ ids: ['recEcovolt'] }),
+        }),
+        env,
+      );
+      expect(response.status).toBe(200);
+
+      const payload = (await response.json()) as { image_refreshed_records: number };
+      expect(payload.image_refreshed_records).toBe(1);
+
+      const search = await callWorker(new Request('https://templates.test/api/templates/search?q=ecovolt'), env);
+      const searchPayload = (await search.json()) as {
+        items: Array<{ thumbnail_image_url: string | null; thumbnail_image_secondary_url: string | null }>;
+      };
+
+      expect(searchPayload.items[0]?.thumbnail_image_url).toBe('https://cdn.prod.website-files.com/site/ecovolt-public.webp');
+      expect(searchPayload.items[0]?.thumbnail_image_secondary_url).toBeNull();
     } finally {
       fetchMock.mockRestore();
       close();

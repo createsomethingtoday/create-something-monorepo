@@ -59,6 +59,11 @@ interface WebflowTemplateImageCandidate {
 }
 
 const PUBLISHED_TEMPLATE_FETCH_TIMEOUT_MS = 3000;
+const KEY_PREFIXES = {
+  exactSlug: 'slug',
+  exactName: 'name',
+  fuzzy: 'fuzzy',
+} as const;
 
 export interface WebflowTemplateImageIndex {
   byTemplateKey: Map<string, WebflowTemplateImageCandidate[]>;
@@ -135,6 +140,14 @@ function normalizeLookupKey(value: string | null | undefined): string {
     .toLowerCase();
 }
 
+function normalizeExactKey(value: string | null | undefined): string {
+  if (!value) return '';
+  return stripExtension(decodeURIComponent(value))
+    .replace(/[^a-z0-9]+/gi, ' ')
+    .trim()
+    .toLowerCase();
+}
+
 function normalizeScoreName(value: string | null | undefined): string {
   if (!value) return '';
   return stripExtension(decodeURIComponent(value))
@@ -148,12 +161,24 @@ function compactKey(value: string) {
   return value.replace(/\s+/g, '');
 }
 
-function templateKeys(templateSlug: string, name: string): string[] {
+function prefixedKeys(prefix: string, values: string[]) {
+  return uniqueKeys(values).map((value) => `${prefix}:${value}`);
+}
+
+function templateKeyGroups(templateSlug: string, name: string): Record<keyof typeof KEY_PREFIXES, string[]> {
   const slugBase = templateSlug
     .replace(/-website-template$/i, '')
     .replace(/-template$/i, '')
     .replace(/-/g, ' ');
-  return uniqueKeys([normalizeLookupKey(templateSlug), normalizeLookupKey(slugBase), normalizeLookupKey(name)]);
+  return {
+    exactSlug: prefixedKeys(KEY_PREFIXES.exactSlug, [normalizeExactKey(templateSlug)]),
+    exactName: prefixedKeys(KEY_PREFIXES.exactName, [normalizeExactKey(name)]),
+    fuzzy: prefixedKeys(KEY_PREFIXES.fuzzy, [
+      normalizeLookupKey(templateSlug),
+      normalizeLookupKey(slugBase),
+      normalizeLookupKey(name),
+    ]),
+  };
 }
 
 function uniqueKeys(values: string[]) {
@@ -184,7 +209,8 @@ function appendTemplateCandidate(
   name: string,
   candidate: WebflowTemplateImageCandidate,
 ) {
-  for (const key of templateKeys(templateSlug, name)) {
+  const groups = templateKeyGroups(templateSlug, name);
+  for (const key of [...groups.exactSlug, ...groups.exactName, ...groups.fuzzy]) {
     appendCandidate(byTemplateKey, key, candidate);
   }
 }
@@ -200,7 +226,7 @@ function assetLookupKeys(asset: WebflowAsset) {
       variant.hostedUrl ? basenameFromUrl(variant.hostedUrl) : '',
     ]),
   ];
-  return uniqueKeys(rawNames.map((value) => normalizeLookupKey(value)));
+  return prefixedKeys(KEY_PREFIXES.fuzzy, rawNames.map((value) => normalizeLookupKey(value)));
 }
 
 function bestHostedUrl(asset: WebflowAsset): string | null {
@@ -214,7 +240,8 @@ function candidateScore(candidate: WebflowTemplateImageCandidate, purpose: 'prim
   let score = 0;
   if (purpose === 'primary') {
     if (/\b(hover|secondary|alternate|alt|rollover|2)\b/i.test(name)) score -= 20;
-    if (/\b(primary|main|default|thumbnail|thumb)\b/i.test(name)) score += 5;
+    if (/\b(thumbnail|thumb)\b/i.test(name)) score += 10;
+    if (/\b(primary|main|default)\b/i.test(name)) score += 5;
   } else {
     if (/\b(hover|secondary|alternate|alt|rollover|2)\b/i.test(name)) score += 20;
     if (/\b(primary|main|default)\b/i.test(name)) score -= 5;
@@ -515,16 +542,13 @@ export function resolveWebflowTemplateImages(
 ): ResolvedWebflowTemplateImages | null {
   if (!index) return null;
 
-  const candidates: WebflowTemplateImageCandidate[] = [];
-  const seen = new Set<string>();
-  for (const key of templateKeys(template.templateSlug, template.name)) {
-    for (const candidate of index.byTemplateKey.get(key) ?? []) {
-      if (seen.has(candidate.hostedUrl)) continue;
-      candidates.push(candidate);
-      seen.add(candidate.hostedUrl);
-    }
-  }
-
+  const groups = templateKeyGroups(template.templateSlug, template.name);
+  const groupCandidates = [
+    collectTemplateImageCandidates(index, groups.exactSlug),
+    collectTemplateImageCandidates(index, groups.exactName),
+    collectTemplateImageCandidates(index, groups.fuzzy),
+  ];
+  const candidates = groupCandidates.find((entries) => entries.length > 0) ?? [];
   if (candidates.length === 0) return null;
 
   const primary = chooseCandidate(candidates, 'primary');
@@ -533,4 +557,21 @@ export function resolveWebflowTemplateImages(
     thumbnailImageUrl: primary,
     thumbnailImageSecondaryUrl: secondary && secondary !== primary ? secondary : null,
   };
+}
+
+function collectTemplateImageCandidates(
+  index: WebflowTemplateImageIndex,
+  keys: string[],
+): WebflowTemplateImageCandidate[] {
+  const candidates: WebflowTemplateImageCandidate[] = [];
+  const seen = new Set<string>();
+  for (const key of keys) {
+    for (const candidate of index.byTemplateKey.get(key) ?? []) {
+      if (seen.has(candidate.hostedUrl)) continue;
+      candidates.push(candidate);
+      seen.add(candidate.hostedUrl);
+    }
+  }
+
+  return candidates;
 }

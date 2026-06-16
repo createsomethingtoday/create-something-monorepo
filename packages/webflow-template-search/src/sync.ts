@@ -59,6 +59,7 @@ const IMAGE_BACKFILL_MAX_LIMIT = 480;
 const IMAGE_BACKFILL_FETCH_BATCH_SIZE = 24;
 const DEFAULT_SYNC_LOCK_TTL_MS = 20 * 60 * 1000;
 const FULL_SYNC_LOCK_TTL_MS = 3 * 60 * 60 * 1000;
+const RECORD_SYNC_STALE_HEARTBEAT_MS = 5 * 60 * 1000;
 
 export class SyncAlreadyRunningError extends Error {
   readonly activeJob: ReturnType<typeof publicSyncJobRecord>;
@@ -73,6 +74,7 @@ export class SyncAlreadyRunningError extends Error {
 async function runWithSyncJobLock<T>(env: Env, mode: string, task: () => Promise<T>): Promise<T> {
   const lockResult = await acquireSyncJobLock(env.DB, mode, {
     ttlMs: mode === 'full' ? FULL_SYNC_LOCK_TTL_MS : DEFAULT_SYNC_LOCK_TTL_MS,
+    staleHeartbeatMs: mode === 'records' ? RECORD_SYNC_STALE_HEARTBEAT_MS : undefined,
   });
   if (!lockResult.acquired) {
     throw new SyncAlreadyRunningError(lockResult.activeJob);
@@ -160,13 +162,21 @@ async function resolveAndUpdateTemplateImages(
   webflowImageIndex: WebflowTemplateImageIndex | null,
   syncedAt: string,
   fetchBatchSize = 6,
+  options: { preferPublishedTemplatePage?: boolean } = {},
 ): Promise<number> {
   const updates: TemplateImageUpdateInput[] = [];
 
   for (const rowBatch of chunk(rows, fetchBatchSize)) {
     const resolvedRows = await Promise.all(
       rowBatch.map(async (row) => {
+        const publishedImages = options.preferPublishedTemplatePage
+          ? await resolvePublishedTemplateImages({
+              templateSlug: row.templateSlug,
+              listingUrl: row.listingUrl,
+            })
+          : null;
         const webflowImages =
+          publishedImages ??
           resolveWebflowTemplateImages(webflowImageIndex, {
             templateSlug: row.templateSlug,
             name: row.name,
@@ -183,7 +193,9 @@ async function resolveAndUpdateTemplateImages(
       const currentThumbnailUrl = stableAttachmentUrl(row.thumbnailImageUrl);
       const currentSecondaryThumbnailUrl = stableAttachmentUrl(row.thumbnailImageSecondaryUrl);
       const nextThumbnailUrl = webflowImages?.thumbnailImageUrl ?? currentThumbnailUrl;
-      const nextSecondaryThumbnailUrl = webflowImages?.thumbnailImageSecondaryUrl ?? currentSecondaryThumbnailUrl;
+      const nextSecondaryThumbnailUrl =
+        webflowImages?.thumbnailImageSecondaryUrl ??
+        (currentSecondaryThumbnailUrl === nextThumbnailUrl ? null : currentSecondaryThumbnailUrl);
 
       if (row.thumbnailImageUrl === nextThumbnailUrl && row.thumbnailImageSecondaryUrl === nextSecondaryThumbnailUrl) {
         continue;
@@ -205,9 +217,10 @@ async function refreshIndexedWebflowImages(
   webflowImageIndex: WebflowTemplateImageIndex | null,
   syncedAt: string,
   changedTemplateIds: string[] = [],
+  options: { preferPublishedTemplatePage?: boolean } = {},
 ): Promise<number> {
   const rows = await listTemplateImageRefreshRows(db, changedTemplateIds);
-  return resolveAndUpdateTemplateImages(db, rows, webflowImageIndex, syncedAt);
+  return resolveAndUpdateTemplateImages(db, rows, webflowImageIndex, syncedAt, 6, options);
 }
 
 function hasWebflowCmsToken(env: Env): boolean {
@@ -650,6 +663,7 @@ export async function syncTemplateRecordsByIds(env: Env, recordIds: string[]): P
           webflowImageIndex,
           startedAt,
           documents.map((document) => document.id),
+          { preferPublishedTemplatePage: true },
         )
       : 0;
 
