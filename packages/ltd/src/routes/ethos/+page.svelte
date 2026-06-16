@@ -4,8 +4,8 @@
 </script>
 
 <SEO
-	title="Ethos"
-	description="How Create Something applies the canon of 'less, but better' across research, practice, and services."
+	title="Operating Ethos"
+	description="The CREATE SOMETHING discipline for deciding what earns its place, what should be removed, and what must reconnect to the whole."
 	propertyName="ltd"
 	breadcrumbs={[
 		{ name: 'Home', url: 'https://createsomething.ltd' },
@@ -17,9 +17,9 @@
 <section class="header-section px-6">
 	<div class="max-w-4xl mx-auto text-center">
 		<p class="eyebrow mb-4">Our Philosophy</p>
-		<h1 class="mb-6">Ethos</h1>
+		<h1 class="mb-6">Remove the noise.</h1>
 		<p class="intro-text leading-relaxed">
-			Remove what doesn't earn its place. Keep what serves the work.
+			Keep what helps someone decide, act, or verify. Remove what only explains itself.
 		</p>
 	</div>
 </section>

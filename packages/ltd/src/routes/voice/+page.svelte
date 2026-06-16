@@ -3,8 +3,8 @@
 </script>
 
 <SEO
-  title="Voice"
-  description="The CREATE SOMETHING voice guidelines. How we write, what we avoid, and the principles that govern all content across the ecosystem."
+  title="Voice Standards"
+  description="Plain language rules for CREATE SOMETHING claims, proof, decisions, and next actions across the ecosystem."
   propertyName="ltd"
   breadcrumbs={[
     { name: 'Home', url: 'https://createsomething.ltd' },
@@ -16,9 +16,10 @@
 <section class="header-section pt-24 pb-16 px-6">
   <div class="max-w-4xl mx-auto text-center">
     <p class="eyebrow mb-4">Writing Standards</p>
-    <h1 class="mb-6">Voice</h1>
+    <h1 class="mb-6">Write so people can act.</h1>
     <p class="header-description leading-relaxed">
-      Write for your reader, not yourself. Say what you mean. Cut what you can.
+      Say what the reader can inspect, decide, approve, or stop. Cut the language that hides the
+      work.
     </p>
   </div>
 </section>
@@ -65,6 +66,101 @@
         These aren't style preferences. George Orwell argued that <strong>clarity is ethical</strong
         >—obscure writing enables obscure thinking. When you catch yourself reaching for jargon,
         pause. Ask what you actually mean. Say that instead.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- Clear Communication -->
+<section class="section-divider py-16 px-6">
+  <div class="max-w-3xl mx-auto">
+    <h2 class="mb-8">Clear Communication</h2>
+
+    <div class="space-y-6 recognition-description leading-relaxed">
+      <p class="recognition-intro">
+        Commercial pages must help buyers decide. Lead with the work they can recognize, then name
+        the framework after the outcome is clear.
+      </p>
+      <p class="recognition-intro">
+        The Ona-derived UI direction supports the same voice rule: use fewer claims, clearer
+        states, visible proof, and direct next actions. Do not copy Ona's brand; copy the discipline
+        of making the work obvious.
+      </p>
+
+      <div class="recognition-box p-6 my-8">
+        <p class="box-title mb-4">Buyer-Facing Rules</p>
+        <div class="space-y-4">
+          <div class="flex items-start gap-3">
+            <span class="checkmark mt-1">1.</span>
+            <div>
+              <p class="box-title">Lead with work.</p>
+              <p class="box-description">
+                Name the workflow, user, decision, and result before naming the system.
+              </p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3">
+            <span class="checkmark mt-1">2.</span>
+            <div>
+              <p class="box-title">Use plain words before framework words.</p>
+              <p class="box-description">
+                Say run, wait, stop, approve, hand off, and receipt before Policy OS, MCP, or
+                Judgment.
+              </p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3">
+            <span class="checkmark mt-1">3.</span>
+            <div>
+              <p class="box-title">Name the user decision.</p>
+              <p class="box-description">
+                The reader should know whether to book a call, map a workflow, review proof, or
+                stop.
+              </p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3">
+            <span class="checkmark mt-1">4.</span>
+            <div>
+              <p class="box-title">Make proof visible.</p>
+              <p class="box-description">
+                Claims need nearby artifacts: screenshots, run states, approval notes, commands,
+                logs, delivery pages, or rollback notes.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="transformation-table my-8">
+        <table>
+          <thead>
+            <tr>
+              <th>You might write</th>
+              <th>What serves buyers better</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="line-through">"We build Policy OS infrastructure for agentic systems"</td>
+              <td>"We put agents to work inside workflows you can govern"</td>
+            </tr>
+            <tr>
+              <td class="line-through">"MCP-enabled trust layer for enterprise automation"</td>
+              <td>"The agent can run, wait for approval, or stop with a reason"</td>
+            </tr>
+            <tr>
+              <td class="line-through">"Transparent AI workflow architecture"</td>
+              <td>"Every handoff leaves a receipt your team can inspect"</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>
+        Framework language still matters. It belongs after the reader understands the work. Plain
+        claim first, concrete workflow second, visible proof third, safety boundary fourth, next
+        action last.
       </p>
     </div>
   </div>

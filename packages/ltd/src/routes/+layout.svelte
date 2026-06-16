@@ -98,6 +98,7 @@
 			showLogin={true}
 			loginHref="/login"
 			accountHref="/account"
+			visualStyle="clear"
 		/>
 	{/if}
 
@@ -113,6 +114,7 @@
 			quickLinks={quickLinks}
 			showSocial={true}
 			isAuthenticated={!!data.user}
+			visualStyle="clear"
 		/>
 
 		<ModeIndicator current="ltd" />

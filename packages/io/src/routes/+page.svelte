@@ -1,23 +1,18 @@
 <script lang="ts">
   import type { PageData } from './$types';
-  import { Button, PapersGrid, SEO } from '@create-something/canon';
-  import { BlurFade } from '@create-something/canon/magicui';
+  import {
+    Button,
+    ClearCardGrid,
+    ClearCtaBand,
+    ClearPageSection,
+    ClearProofStrip,
+    PapersGrid,
+    PropertyFunnel,
+    SEO,
+    type ClearCardItem,
+    type ClearCtaItem
+  } from '@create-something/canon';
   import type { Paper } from '@create-something/canon/types';
-
-  type ResearchTrack = {
-    title: string;
-    summary: string;
-    points: string[];
-    tag: string;
-    featured?: boolean;
-  };
-
-  type HandoffCard = {
-    eyebrow: string;
-    title: string;
-    body: string;
-    href: string;
-  };
 
   let { data }: { data: PageData } = $props();
 
@@ -44,14 +39,6 @@
         .slice(0, 6) as Paper[]
   );
 
-  const latestPapers = $derived.by(
-    () =>
-      papers
-        .filter((paper) => !isFileBasedPaper(paper))
-        .sort((left, right) => getPaperTimestamp(right) - getPaperTimestamp(left))
-        .slice(0, 3) as Paper[]
-  );
-
   const proofMetrics = $derived.by(() => [
     { value: `${papers.length}`, label: 'published experiments + papers' },
     { value: `${categories.length || 1}`, label: 'research categories' },
@@ -59,23 +46,45 @@
     { value: '3', label: 'database / automation / judgment layers' }
   ]);
 
-  const researchTracks: ResearchTrack[] = [
+  const heroSignals: ClearCardItem[] = [
     {
-      tag: 'Field evidence',
+      eyebrow: 'Signal',
+      icon: 'search',
+      title: 'Start from evidence',
+      detail: 'Operator friction, runtime behavior, and implementation receipts come before the claim.'
+    },
+    {
+      eyebrow: 'Artifact',
+      icon: 'document',
+      title: 'Publish what transfers',
+      detail: 'Papers and field notes stay tied to the workflow, experiment, or policy they support.'
+    },
+    {
+      eyebrow: 'Handoff',
+      icon: 'arrow-right',
+      title: 'Move into practice',
+      detail: 'Strong patterns can graduate into .space validation or .agency delivery.'
+    }
+  ];
+
+  const researchTracks: ClearCardItem[] = [
+    {
+      eyebrow: 'Field evidence',
+      icon: 'search',
       title: 'Workflow evidence before opinion',
-      summary:
+      detail:
         'Patterns start with operator pain, implementation evidence, and runtime behavior before they become a positioning claim.',
       points: [
         'Experiments stay tied to the workflow that produced them',
         'Claims are easier to defend when the artifact trail exists',
         'Reusable patterns get published only after they survive contact'
-      ],
-      featured: true
+      ]
     },
     {
-      tag: 'Benchmarks',
+      eyebrow: 'Benchmarks',
+      icon: 'settings',
       title: 'Tooling and runtime comparisons',
-      summary:
+      detail:
         'Measure cost, speed, and maintenance drag across AI-native stacks instead of repeating the same intuition every quarter.',
       points: [
         'Cloudflare-native execution and orchestration notes',
@@ -84,9 +93,10 @@
       ]
     },
     {
-      tag: 'Policy artifacts',
+      eyebrow: 'Policy artifacts',
+      icon: 'document',
       title: 'Judgment encoded as operating documents',
-      summary:
+      detail:
         'The research output is not just prose. It is policy packs, release checks, contracts, and runbooks that can move into delivery.',
       points: [
         'Database / Automation / Judgment is treated as an operating frame',
@@ -95,9 +105,10 @@
       ]
     },
     {
-      tag: 'Operator notes',
+      eyebrow: 'Operator notes',
+      icon: 'users',
       title: 'Field notes for people who answer for the outcome',
-      summary:
+      detail:
         'This property is tuned for the person who has to explain why a workflow exists, where it breaks, and what should happen next.',
       points: [
         'Research is written for implementation and review, not content farming',
@@ -107,24 +118,51 @@
     }
   ];
 
-  const handoffCards: HandoffCard[] = [
+  const handoffCards: ClearCardItem[] = [
     {
       eyebrow: '.space',
+      icon: 'settings',
       title: 'Validate the pattern',
-      body: 'Use the workbench to try the idea, inspect the runtime, and see whether the pattern survives execution.',
+      detail:
+        'Use the workbench to try the idea, inspect the runtime, and see whether the pattern survives execution.',
       href: 'https://createsomething.space'
     },
     {
       eyebrow: '.agency',
+      icon: 'arrow-right',
       title: 'Operationalize the pattern',
-      body: 'Move from research into governed workflow delivery when the operating path becomes commercially or reputationally important.',
-      href: 'https://createsomething.agency'
+      detail:
+        'Move from research into governed workflow delivery when the operating path becomes commercially or reputationally important.',
+      href: 'https://createsomething.agency/book?source=io&intent=research-to-implementation&lane=workflow_infrastructure'
     },
     {
       eyebrow: '.ltd',
+      icon: 'document',
       title: 'Contextualize the thesis',
-      body: 'See the editorial and philosophical layer that frames why creation matters more than commodity consumption.',
+      detail:
+        'See the editorial and philosophical layer that frames why creation matters more than commodity consumption.',
       href: 'https://createsomething.ltd'
+    }
+  ];
+
+  const ctaItems: ClearCtaItem[] = [
+    {
+      label: 'Method',
+      icon: 'document',
+      title: 'Read the frame',
+      detail: 'Start with the methodology behind the papers before treating an insight as reusable.'
+    },
+    {
+      label: 'Graph',
+      icon: 'search',
+      title: 'Inspect the links',
+      detail: 'Use the research graph to see how artifacts, claims, and implementation notes connect.'
+    },
+    {
+      label: 'Next',
+      icon: 'arrow-right',
+      title: 'Promote carefully',
+      detail: 'Move strong patterns into runtime practice or scoped delivery only when the evidence holds.'
     }
   ];
 </script>
@@ -137,138 +175,45 @@
   propertyName="io"
 />
 
-<section class="hero-page">
-  <div class="shell-inner-pad hero-layout">
-    <div class="hero-copy">
-      <BlurFade delay={0}>
-        <span class="product-kicker">CREATE SOMETHING .io</span>
-      </BlurFade>
+<ClearPageSection
+  variant="hero"
+  layout="split"
+  titleLevel="h1"
+  eyebrow="CREATE SOMETHING .io"
+  title="Research for automation you can defend."
+  description="CREATE SOMETHING .io turns experiments, papers, and field notes into a usable research layer for operators. The goal is evidence you can carry into the next build, review, or production decision."
+>
+  {#snippet actions()}
+    <Button href="/papers">Read The Papers</Button>
+    <Button href="/experiments" variant="secondary">Browse Experiments</Button>
+  {/snippet}
 
-      <BlurFade delay={0.05}>
-        <h1 class="hero-title">Research for teams building automation they can defend.</h1>
-      </BlurFade>
+  <p class="clear-note">Patterns, benchmarks, and operator notes tied back to real builds.</p>
 
-      <BlurFade delay={0.1}>
-        <p class="hero-detail">
-          CREATE SOMETHING .io turns experiments, papers, and field notes into a usable research
-          layer for operators. The goal is not content volume. It is evidence you can carry into
-          the next build, review, or production decision.
-        </p>
-      </BlurFade>
+  {#snippet aside()}
+    <ClearCardGrid
+      items={heroSignals}
+      columns={1}
+      density="compact"
+      ariaLabel="Research operating signals"
+    />
+  {/snippet}
 
-      <BlurFade delay={0.15}>
-        <div class="hero-actions">
-          <Button href="/papers">Read The Papers</Button>
-          <Button href="/experiments" variant="secondary">Browse Experiments</Button>
-        </div>
-      </BlurFade>
+  {#snippet after()}
+    <ClearProofStrip items={proofMetrics} ariaLabel="Research proof artifacts" />
+  {/snippet}
+</ClearPageSection>
 
-      <BlurFade delay={0.2}>
-        <p class="hero-note">Patterns, benchmarks, and operator notes tied back to real builds.</p>
-      </BlurFade>
-    </div>
-
-    <BlurFade delay={0.2}>
-      <aside class="product-surface product-surface--soft research-panel">
-        <div class="panel-stack">
-          <section class="panel-block">
-            <span class="product-kicker">Research operating loop</span>
-            <h2>From signal to published pattern.</h2>
-            <p>
-              Good research does not stop at observation. It moves through experiment design,
-              runtime evidence, and artifacts that can inform the next implementation cycle.
-            </p>
-          </section>
-
-          <section class="panel-block">
-            <span class="panel-label">Current loop</span>
-            <p class="panel-command">
-              Observe workflow friction -> run experiment -> capture evidence -> publish pattern
-            </p>
-          </section>
-
-          <div class="panel-grid">
-            <section class="panel-block">
-              <span class="panel-label">Coverage</span>
-              <div class="product-pills">
-                {#each categories.slice(0, 6) as category}
-                  <span class="product-pill">{category.name}</span>
-                {/each}
-              </div>
-            </section>
-
-            <section class="panel-block">
-              <span class="panel-label">Recent papers</span>
-              <ul class="latest-list">
-                {#if latestPapers.length > 0}
-                  {#each latestPapers as paper}
-                    <li>
-                      <a class="latest-link" href={`/papers/${paper.slug}`}>
-                        <span>{paper.title}</span>
-                      </a>
-                    </li>
-                  {/each}
-                {:else}
-                  <li class="latest-empty">No published papers yet.</li>
-                {/if}
-              </ul>
-            </section>
-          </div>
-        </div>
-      </aside>
-    </BlurFade>
-  </div>
-
-  <div class="shell-inner-pad">
-    <div class="metric-grid">
-      {#each proofMetrics as metric, index}
-        <BlurFade delay={0.25 + index * 0.05}>
-          <article class="product-surface product-surface--soft metric-card">
-            <span class="metric-value">{metric.value}</span>
-            <span class="metric-label">{metric.label}</span>
-          </article>
-        </BlurFade>
-      {/each}
-    </div>
-  </div>
-</section>
-
-<section class="track-section">
-  <div class="shell-inner-pad">
-    <div class="section-lead">
-      <BlurFade>
-        <span class="product-kicker">What the research is for</span>
-      </BlurFade>
-      <BlurFade delay={0.05}>
-        <h2>The research layer should make the next operating decision easier.</h2>
-      </BlurFade>
-      <BlurFade delay={0.1}>
-        <p>
-          This is where CREATE SOMETHING documents what held up in practice, what failed under
-          pressure, and what deserves to be carried forward into the product, policy, or delivery
-          layer.
-        </p>
-      </BlurFade>
-    </div>
-
-    <div class="track-grid">
-      {#each researchTracks as track, index}
-        <BlurFade delay={0.15 + index * 0.05}>
-          <article class="product-surface track-card" class:trackFeatured={track.featured}>
-            <span class="track-tag">{track.tag}</span>
-            <h3>{track.title}</h3>
-            <p>{track.summary}</p>
-            <ul class="product-list">
-              {#each track.points as point}
-                <li>{point}</li>
-              {/each}
-            </ul>
-          </article>
-        </BlurFade>
-      {/each}
-    </div>
-  </div>
-</section>
+<ClearPageSection
+  variant="white"
+  eyebrow="What the research is for"
+  title="The research layer should make the next operating decision easier."
+  description="This is where CREATE SOMETHING documents what held up in practice, what failed under pressure, and what deserves to be carried forward into the product, policy, or delivery layer."
+>
+  {#snippet after()}
+    <ClearCardGrid items={researchTracks} columns={2} ariaLabel="Research uses" />
+  {/snippet}
+</ClearPageSection>
 
 {#if featuredExperiments.length > 0}
   <PapersGrid
@@ -278,341 +223,41 @@
   />
 {/if}
 
-<section class="bridge-section">
-  <div class="shell-inner-pad">
-    <div class="section-lead section-lead--center">
-      <BlurFade>
-        <span class="product-kicker">Cross-property handoff</span>
-      </BlurFade>
-      <BlurFade delay={0.05}>
-        <h2>.io does the reading so the rest of CREATE SOMETHING can move faster.</h2>
-      </BlurFade>
-      <BlurFade delay={0.1}>
-        <p>
-          Research only matters if it transfers cleanly into practice, delivery, or philosophy.
-          That handoff is the point of the network.
-        </p>
-      </BlurFade>
-    </div>
+<ClearPageSection
+  variant="soft"
+  eyebrow="Cross-property handoff"
+  title=".io does the reading so the rest of CREATE SOMETHING can move faster."
+  description="Research only matters if it transfers cleanly into practice, delivery, or philosophy. That handoff is the point of the network."
+>
+  {#snippet after()}
+    <ClearCardGrid items={handoffCards} columns={3} ariaLabel="Research handoff destinations" />
+  {/snippet}
+</ClearPageSection>
 
-    <div class="bridge-grid">
-      {#each handoffCards as card, index}
-        <BlurFade delay={0.15 + index * 0.06}>
-          <a
-            href={card.href}
-            class="product-surface product-surface--soft bridge-card"
-            target="_blank"
-            rel="noopener"
-          >
-            <span class="bridge-eyebrow">{card.eyebrow}</span>
-            <h3>{card.title}</h3>
-            <p>{card.body}</p>
-            <span class="bridge-link">Open property</span>
-          </a>
-        </BlurFade>
-      {/each}
-    </div>
-  </div>
-</section>
+<PropertyFunnel
+  current="io"
+  heading="Let the research tell the visitor where to go next."
+  description="Use .io to understand the evidence, move to .space when the pattern needs runtime validation, and move to .agency when the workflow is ready to be scoped."
+/>
 
-<section class="cta-section">
-  <div class="shell-inner-pad">
-    <div class="product-surface product-surface--accent cta-panel">
-      <BlurFade>
-        <span class="product-kicker">Research stack</span>
-      </BlurFade>
-      <BlurFade delay={0.05}>
-        <h2>Start with the methodology, then inspect the work.</h2>
-      </BlurFade>
-      <BlurFade delay={0.1}>
-        <p>
-          If you want the operating frame behind the papers, start with the methodology and then
-          move into the experiment and paper archive.
-        </p>
-      </BlurFade>
-      <BlurFade delay={0.15}>
-        <div class="hero-actions hero-actions--center">
-          <Button href="/methodology">See The Methodology</Button>
-          <Button href="/graph" variant="secondary">Open The Research Graph</Button>
-        </div>
-      </BlurFade>
-    </div>
-  </div>
-</section>
+<ClearCtaBand
+  eyebrow="Research stack"
+  title="Start with the methodology, then inspect the work."
+  description="If you want the operating frame behind the papers, start with the methodology and then move into the experiment and paper archive."
+  items={ctaItems}
+>
+  {#snippet actions()}
+    <Button href="/methodology">See The Methodology</Button>
+    <Button href="/graph" variant="secondary">Open The Research Graph</Button>
+  {/snippet}
+</ClearCtaBand>
 
 <style>
-  .hero-page,
-  .track-section,
-  .bridge-section,
-  .cta-section {
-    padding-block: clamp(3.5rem, 8vw, 6rem);
-  }
-
-  .hero-page {
-    padding-top: clamp(5.5rem, 10vw, 7rem);
-  }
-
-  .hero-layout {
-    display: grid;
-    grid-template-columns: minmax(0, 1.02fr) minmax(0, 0.98fr);
-    gap: clamp(2rem, 4vw, 3.5rem);
-    align-items: center;
-  }
-
-  .hero-copy,
-  .panel-stack,
-  .section-lead,
-  .cta-panel {
-    display: grid;
-    gap: 1rem;
-  }
-
-  .hero-title,
-  .section-lead h2,
-  .cta-panel h2,
-  .research-panel h2 {
+  .clear-note {
     margin: 0;
-    font-size: clamp(2.6rem, 5vw, 4.75rem);
-    line-height: 0.96;
-    letter-spacing: -0.04em;
-    color: var(--color-fg-primary);
-  }
-
-  .research-panel h2 {
-    font-size: clamp(1.9rem, 2.8vw, 2.7rem);
-    line-height: 1.02;
-  }
-
-  .hero-detail,
-  .section-lead p,
-  .cta-panel p,
-  .research-panel p,
-  .track-card p,
-  .bridge-card p {
-    margin: 0;
-    color: var(--color-fg-secondary);
-    font-size: 1rem;
-    line-height: 1.75;
-  }
-
-  .hero-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.85rem;
-    margin-top: 0.35rem;
-  }
-
-  .hero-actions--center {
-    justify-content: center;
-  }
-
-  .hero-note {
-    margin: 0;
-    color: var(--color-fg-muted);
-    font-size: 0.92rem;
-    letter-spacing: 0.03em;
-    text-transform: uppercase;
-  }
-
-  .research-panel {
-    height: 100%;
-  }
-
-  .panel-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 1rem;
-  }
-
-  .panel-block {
-    display: grid;
-    gap: 0.75rem;
-  }
-
-  .panel-label,
-  .track-tag,
-  .bridge-eyebrow,
-  .bridge-link {
-    font-family: var(--font-mono);
-    font-size: 0.72rem;
-    font-weight: 500;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--color-fg-muted);
-  }
-
-  .panel-command {
-    margin: 0;
-    padding: 1rem 1.05rem;
-    border-radius: 18px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    background: rgba(255, 255, 255, 0.03);
-    color: var(--color-fg-primary);
-    font-family: var(--font-mono);
-    font-size: 0.9rem;
-    line-height: 1.7;
-  }
-
-  .latest-list {
-    display: grid;
-    gap: 0.7rem;
-    list-style: none;
-    margin: 0;
-    padding: 0;
-  }
-
-  .latest-link {
-    display: block;
-    padding: 0.95rem 1rem;
-    border-radius: 18px;
-    border: 1px solid rgba(255, 255, 255, 0.07);
-    background: rgba(255, 255, 255, 0.025);
-    color: var(--color-fg-primary);
-    font-size: 0.95rem;
-    line-height: 1.45;
-    text-decoration: none;
-    opacity: 1;
-    transition:
-      transform var(--duration-micro) var(--ease-standard),
-      border-color var(--duration-micro) var(--ease-standard),
-      background var(--duration-micro) var(--ease-standard);
-  }
-
-  .latest-link:hover {
-    opacity: 1;
-    transform: translateY(-1px);
-    border-color: rgba(255, 255, 255, 0.16);
-    background: rgba(255, 255, 255, 0.05);
-  }
-
-  .latest-empty {
-    color: var(--color-fg-muted);
-    font-size: 0.9rem;
-    line-height: 1.6;
-  }
-
-  .metric-grid,
-  .track-grid,
-  .bridge-grid {
-    display: grid;
-    gap: 1rem;
-  }
-
-  .metric-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    margin-top: clamp(1.8rem, 4vw, 2.5rem);
-  }
-
-  .metric-card {
-    display: grid;
-    gap: 0.5rem;
-    min-height: 10rem;
-    align-content: end;
-  }
-
-  .metric-value {
-    font-size: clamp(2rem, 4vw, 3rem);
-    line-height: 1;
-    letter-spacing: -0.05em;
-    color: var(--color-fg-primary);
-  }
-
-  .metric-label {
-    color: var(--color-fg-muted);
-    font-size: 0.92rem;
-    line-height: 1.6;
-  }
-
-  .section-lead {
-    max-width: 46rem;
-    margin-bottom: 1.5rem;
-  }
-
-  .section-lead--center {
-    margin-inline: auto;
-    text-align: center;
-  }
-
-  .section-lead h2,
-  .cta-panel h2 {
-    font-size: clamp(2.2rem, 4vw, 3.45rem);
-    line-height: 1;
-  }
-
-  .track-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .track-card {
-    display: grid;
-    gap: 1rem;
-  }
-
-  .track-card h3,
-  .bridge-card h3 {
-    margin: 0;
-    font-size: clamp(1.35rem, 2vw, 1.7rem);
-    line-height: 1.08;
-    color: var(--color-fg-primary);
-  }
-
-  .trackFeatured {
-    border-color: var(--color-brand-primary-border);
-    background:
-      linear-gradient(180deg, rgba(49, 92, 255, 0.16), rgba(49, 92, 255, 0.06)),
-      var(--color-shell-surface-secondary);
-  }
-
-  .bridge-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .bridge-card {
-    display: grid;
-    gap: 0.95rem;
-    text-decoration: none;
-    opacity: 1;
-    transition:
-      transform var(--duration-micro) var(--ease-standard),
-      border-color var(--duration-micro) var(--ease-standard),
-      background var(--duration-micro) var(--ease-standard);
-  }
-
-  .bridge-card:hover {
-    opacity: 1;
-    transform: translateY(-2px);
-    border-color: rgba(255, 255, 255, 0.16);
-    background: rgba(255, 255, 255, 0.05);
-  }
-
-  .cta-panel {
-    justify-items: center;
-    text-align: center;
-    padding: clamp(1.7rem, 4vw, 2.4rem);
-  }
-
-  @media (max-width: 1100px) {
-    .hero-layout,
-    .metric-grid,
-    .track-grid,
-    .bridge-grid {
-      grid-template-columns: 1fr;
-    }
-  }
-
-  @media (max-width: 720px) {
-    .panel-grid {
-      grid-template-columns: 1fr;
-    }
-
-    .hero-title,
-    .section-lead h2,
-    .cta-panel h2 {
-      line-height: 1.02;
-    }
-
-    .hero-actions {
-      flex-direction: column;
-    }
+    max-width: 36rem;
+    color: var(--color-clear-grey, #636363);
+    font-size: 0.94rem;
+    line-height: 1.55;
   }
 </style>
