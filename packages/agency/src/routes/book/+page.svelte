@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
+	import { tick } from 'svelte';
 	import {
 		Button,
 		ClearCardGrid,
@@ -184,6 +185,8 @@
 	let loadingSlots = $state(false);
 	let submitting = $state(false);
 	let error = $state<string | null>(null);
+	let activeStepElement = $state<HTMLElement | null>(null);
+	let activeStepTitleElement = $state<HTMLHeadingElement | null>(null);
 
 	// User's timezone
 	const timezone = browser ? Intl.DateTimeFormat().resolvedOptions().timeZone : 'America/Los_Angeles';
@@ -248,17 +251,34 @@
 		return slots.filter((slot) => slot.start_at.startsWith(dateKey));
 	});
 
+	async function moveActiveStepIntoView() {
+		if (!browser) return;
+
+		await tick();
+
+		activeStepElement?.scrollIntoView({
+			block: 'start',
+			behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'
+		});
+
+		if (activeStepTitleElement) {
+			activeStepTitleElement.focus({ preventScroll: true });
+		}
+	}
+
 	// Handle date selection
 	function handleDateSelect(date: Date) {
 		selectedDate = date;
 		selectedSlot = null;
 		step = 'time';
+		void moveActiveStepIntoView();
 	}
 
 	// Handle slot selection
 	function handleSlotSelect(slot: TimeSlot) {
 		selectedSlot = slot;
 		step = 'details';
+		void moveActiveStepIntoView();
 	}
 
 	function mergeLaneIntoNotes(notes: string): string {
@@ -350,6 +370,7 @@
 				landingUrl: browser ? window.location.href : bookingPath
 			});
 			step = 'confirm';
+			void moveActiveStepIntoView();
 		} catch (err) {
 			console.error('Booking error:', err);
 			error = err instanceof Error ? err.message : 'Failed to create booking. Please try again.';
@@ -365,6 +386,7 @@
 		} else if (step === 'details') {
 			step = 'time';
 		}
+		void moveActiveStepIntoView();
 	}
 
 	// Initialize: fetch slots for current month
@@ -458,8 +480,8 @@
 
 		<div class="booking-content">
 			{#if step === 'date'}
-				<section class="step-content">
-					<h2 class="step-title">Select a date</h2>
+				<section class="step-content" bind:this={activeStepElement}>
+					<h2 class="step-title" bind:this={activeStepTitleElement} tabindex="-1">Select a date</h2>
 					<DatePicker
 						{selectedDate}
 						onDateSelect={handleDateSelect}
@@ -471,8 +493,8 @@
 					{/if}
 				</section>
 			{:else if step === 'time'}
-				<section class="step-content">
-					<h2 class="step-title">Select a time</h2>
+				<section class="step-content" bind:this={activeStepElement}>
+					<h2 class="step-title" bind:this={activeStepTitleElement} tabindex="-1">Select a time</h2>
 					<TimeSlotPicker
 						slots={slotsForSelectedDate}
 						{selectedSlot}
@@ -485,8 +507,10 @@
 					</button>
 				</section>
 			{:else if step === 'details'}
-				<section class="step-content">
-					<h2 class="step-title">Your details and operator lane</h2>
+				<section class="step-content" bind:this={activeStepElement}>
+					<h2 class="step-title" bind:this={activeStepTitleElement} tabindex="-1">
+						Your details and operator lane
+					</h2>
 					<div class="lane-intake" role="radiogroup" aria-labelledby="lane-intake-title">
 						<p id="lane-intake-title" class="lane-intake-title">Which service path should we test first?</p>
 						<p class="lane-intake-helper">
@@ -522,7 +546,7 @@
 					{/if}
 				</section>
 			{:else if step === 'confirm' && confirmedEvent}
-				<section class="step-content">
+				<section class="step-content" bind:this={activeStepElement}>
 					<BookingConfirmation event={confirmedEvent} {timezone} />
 				</section>
 			{/if}
@@ -686,12 +710,17 @@
 		border: 1px solid var(--color-clear-border, #e1e1e1);
 		border-radius: var(--radius-clear-sm, 4px);
 		background: var(--color-clear-panel, #ffffff);
+		scroll-margin-top: 5.75rem;
 	}
 
 	.step-title {
 		font-size: var(--text-h3);
 		font-weight: var(--font-semibold);
 		color: var(--color-fg-primary);
+	}
+
+	.step-title:focus {
+		outline: none;
 	}
 
 	.back-link {

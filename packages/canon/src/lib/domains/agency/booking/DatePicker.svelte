@@ -143,6 +143,9 @@
 <style>
 	.date-picker {
 		position: relative;
+		width: 100%;
+		max-width: 42rem;
+		margin-inline: auto;
 		background: var(--color-bg-surface);
 		border-radius: var(--radius-lg);
 		padding: var(--space-md);
@@ -220,7 +223,7 @@
 	}
 
 	.day {
-		aspect-ratio: 1;
+		height: clamp(2.75rem, 8vw, 4.75rem);
 		display: flex;
 		align-items: center;
 		justify-content: center;
