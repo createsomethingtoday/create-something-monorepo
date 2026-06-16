@@ -1,6 +1,7 @@
 import type { PageServerLoad } from './$types';
 import { CONCIERGE_SESSION_DEPENDENCY } from '$chat/api-contract';
 import {
+	buildOperatorCommandCenter,
 	clearCommunicationRules,
 	difyRuntimeBoundary,
 	operatorMode,
@@ -25,12 +26,21 @@ export const load: PageServerLoad = async ({ depends, cookies, params, platform,
 		hasBlockedArtifact: threadView.thread.artifacts.some((artifact) => artifact.status === 'blocked'),
 		hasHandoff: threadView.hasHandoff
 	});
+	const operatorCommandCenter = buildOperatorCommandCenter({
+		thread: threadView.thread,
+		nextStep: threadView.nextStep,
+		operatorState,
+		inlineWidgetCount: threadView.inlineWidgets.length,
+		railWidgetCount: threadView.railWidgets.length,
+		hasHandoff: threadView.hasHandoff
+	});
 
 	return {
 		threadView,
 		operatorMode,
 		operatorShellPlanes,
 		operatorState,
+		operatorCommandCenter,
 		clearCommunicationRules,
 		difyRuntimeBoundary
 	};
