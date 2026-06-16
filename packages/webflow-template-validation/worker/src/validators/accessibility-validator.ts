@@ -16,7 +16,8 @@ import {
 	ContrastAudit,
 	ParsedHTML
 } from '../types';
-import { fetchHTML, parseHTML } from '../utils/fetch-utils';
+import { fetchHTML, isPlatformManagedHeading, parseHTML } from '../utils/fetch-utils';
+import { analyzeHeadingSequence, extractDocumentOutline, visibleOutlineHeadings } from '../utils/document-outline';
 
 const WCAG_CONTRAST_RATIOS = {
 	AA_NORMAL: 4.5,
@@ -126,7 +127,7 @@ async function performAccessibilityAudit(parsedHTML: ParsedHTML): Promise<Access
 	const altTextCoverage = analyzeAltTextCoverage(parsedHTML);
 
 	// Analyze heading structure
-	const headingStructure = analyzeHeadingStructure(parsedHTML);
+	const headingStructure = await analyzeHeadingStructure(parsedHTML);
 
 	// Analyze form labels
 	const formLabels = analyzeFormLabels(parsedHTML);
@@ -271,19 +272,30 @@ function analyzeAltTextCoverage(parsedHTML: ParsedHTML): any {
 	};
 }
 
-function analyzeHeadingStructure(parsedHTML: ParsedHTML): any {
-	const headings = parsedHTML.headings;
+async function analyzeHeadingStructure(parsedHTML: ParsedHTML): Promise<any> {
+	// Prefer the visible document outline (hidden-ancestor aware); fall back
+	// to the flat regex-extracted list when HTMLRewriter is unavailable.
+	const outline = await extractDocumentOutline(parsedHTML.rawHtml);
+	const headings = outline && outline.length > 0
+		? visibleOutlineHeadings(outline).map(heading => ({ level: heading.level, text: heading.text }))
+		: parsedHTML.headings
+			.filter(h => !isPlatformManagedHeading(h))
+			.map(h => ({
+				level: parseInt(h.tagName.substring(1), 10),
+				text: h.textContent?.trim() || ''
+			}));
+
 	const errors: Array<{ type: string; description: string; element: string }> = [];
+	const sequence = analyzeHeadingSequence(headings);
 
 	// Check for multiple H1s
-	const h1Count = headings.filter(h => h.tagName.toLowerCase() === 'h1').length;
-	if (h1Count > 1) {
+	if (sequence.h1Count > 1) {
 		errors.push({
 			type: 'multiple_h1',
-			description: `Found ${h1Count} H1 elements (should have exactly 1)`,
+			description: `Found ${sequence.h1Count} H1 elements (should have exactly 1)`,
 			element: 'h1'
 		});
-	} else if (h1Count === 0) {
+	} else if (sequence.h1Count === 0) {
 		errors.push({
 			type: 'multiple_h1',
 			description: 'No H1 element found (should have exactly 1)',
@@ -292,28 +304,21 @@ function analyzeHeadingStructure(parsedHTML: ParsedHTML): any {
 	}
 
 	// Check for skipped heading levels
-	const headingLevels = headings.map(h => parseInt(h.tagName.substring(1)));
-	for (let i = 1; i < headingLevels.length; i++) {
-		const current = headingLevels[i];
-		const previous = headingLevels[i - 1];
-
-		if (current > previous + 1) {
-			errors.push({
-				type: 'skipped_level',
-				description: `Heading level ${current} follows level ${previous} (skipped level ${previous + 1})`,
-				element: `h${current}`
-			});
-		}
+	for (const skip of sequence.skips) {
+		errors.push({
+			type: 'skipped_level',
+			description: `Heading level ${skip.toLevel} follows level ${skip.fromLevel} (skipped level ${skip.missingLevel})`,
+			element: `h${skip.toLevel}`
+		});
 	}
 
 	// Check for empty headings
 	headings.forEach(heading => {
-		const text = heading.textContent?.trim();
-		if (!text || text.length === 0) {
+		if (!heading.text || heading.text.length === 0) {
 			errors.push({
 				type: 'empty_heading',
 				description: 'Heading element has no text content',
-				element: heading.tagName.toLowerCase()
+				element: `h${heading.level}`
 			});
 		}
 	});

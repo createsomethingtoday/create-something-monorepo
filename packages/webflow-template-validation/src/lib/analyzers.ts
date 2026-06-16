@@ -244,8 +244,20 @@ export function analyzeAccessibility(html: string): AccessibilityAnalysisResult 
   const h1Count = h1Elements.length
   const hasMultipleH1s = h1Count > 1
 
-  // Heading hierarchy validation
-  const headings = $('h1, h2, h3, h4, h5, h6').toArray()
+  // Heading hierarchy validation against the visible outline.
+  // Excluded (matching Webflow's Audit Panel):
+  // - headings inside any inline display:none container (modals, cart dialog)
+  // - w-condition-invisible (CMS conditional visibility) on self or ancestor
+  // - w-commerce-* headings (fixed-tag platform components creators can't retag)
+  const headings = $('h1, h2, h3, h4, h5, h6')
+    .toArray()
+    .filter((heading) => {
+      const $heading = $(heading)
+      const className = $heading.attr('class') || ''
+      if (/(?:^|\s)w-commerce-/.test(className)) return false
+      const $hiddenAncestor = $heading.closest('[style*="display:none"], [style*="display: none"], .w-condition-invisible')
+      return $hiddenAncestor.length === 0
+    })
   const headingHierarchyIssues: AccessibilityAnalysisResult['headingHierarchyIssues'] = []
   let hasSkippedHeadings = false
 

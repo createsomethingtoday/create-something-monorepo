@@ -3,8 +3,8 @@
 </script>
 
 <SEO
-	title="Standards"
-	description="Canonical standards for evaluating work across the Create Something ecosystem. Codified criteria from 'less, but better.'"
+	title="Operational Standards"
+	description="Canonical criteria for evaluating CREATE SOMETHING pages, workflows, and deliverables before they ship."
 	propertyName="ltd"
 	breadcrumbs={[
 		{ name: 'Home', url: 'https://createsomething.ltd' },
@@ -16,9 +16,10 @@
 <section class="pt-24 pb-16 px-6 border-b border-canon">
 	<div class="max-w-4xl mx-auto text-center">
 		<p class="text-sm-canon tracking-widest uppercase opacity-60-canon mb-4">The Canon</p>
-		<h1 class="mb-6">Standards</h1>
+		<h1 class="mb-6">Make standards visible.</h1>
 		<p class="text-xl-canon opacity-70-canon leading-relaxed">
-			Codified criteria for evaluating work. Every project, experiment, and deliverable must meet these standards.
+			Codified criteria for evaluating pages, workflows, experiments, and deliverables. The
+			reader should see the rule, the proof, and the next action.
 		</p>
 	</div>
 </section>
@@ -63,6 +64,78 @@
 					Tools serve users, not egos. The best interface is invisible. The best code requires no comments.
 				</p>
 			</div>
+		</div>
+	</div>
+</section>
+
+<!-- Clear Communication UI Standards -->
+<section class="py-16 px-6 border-t border-canon">
+	<div class="max-w-3xl mx-auto">
+		<h2 class="mb-8">Clear Communication UI</h2>
+		<p class="opacity-70-canon leading-relaxed mb-8">
+			Use Ona's design/UI/UX as the communication reference: light operational surfaces,
+			compact navigation, crisp borders, readable hierarchy, visible proof, and direct action.
+			CREATE SOMETHING keeps its own claims, artifacts, and governance language.
+		</p>
+
+		<div class="space-y-8">
+			<div class="border-l-2 border-emphasis pl-6">
+				<h3 class="text-xl-canon font-semibold mb-3">1. First-Screen Clarity</h3>
+				<p class="opacity-70-canon leading-relaxed">
+					The first viewport must answer what this is, who it is for, why it can be trusted, and what to do next. Do not require the reader to understand framework language before seeing the outcome.
+				</p>
+			</div>
+
+			<div class="border-l-2 border-emphasis pl-6">
+				<h3 class="text-xl-canon font-semibold mb-3">2. Proof Artifacts</h3>
+				<p class="opacity-70-canon leading-relaxed">
+					Every major claim needs a nearby artifact: workflow state, approval note, command output, delivery page, screenshot, run log, rollback note, or named system boundary.
+				</p>
+			</div>
+
+			<div class="border-l-2 border-emphasis pl-6">
+				<h3 class="text-xl-canon font-semibold mb-3">3. Readable Hierarchy</h3>
+				<p class="opacity-70-canon leading-relaxed">
+					Use one primary claim, one supporting paragraph, visible CTAs, and compact proof. Small panels need smaller type. Headline scale belongs to true page leads.
+				</p>
+			</div>
+
+			<div class="border-l-2 border-emphasis pl-6">
+				<h3 class="text-xl-canon font-semibold mb-3">4. Restrained Visual System</h3>
+				<p class="opacity-70-canon leading-relaxed">
+					Prefer light, legible surfaces, clear contrast, stable spacing, and visible boundaries. Effects must support comprehension, not mood.
+				</p>
+			</div>
+
+			<div class="border-l-2 border-emphasis pl-6">
+				<h3 class="text-xl-canon font-semibold mb-3">5. No Decorative Complexity</h3>
+				<p class="opacity-70-canon leading-relaxed">
+					Remove abstract panels, empty visual weight, and hidden animation states when they delay comprehension. If an element does not name work, show proof, or move the user to a decision, cut it.
+				</p>
+			</div>
+		</div>
+
+		<div class="mt-8 border border-canon p-6 space-y-3">
+			<label class="flex items-start gap-3 cursor-pointer">
+				<input type="checkbox" class="mt-1" disabled />
+				<span>The first viewport contains the offer, audience, trust signal, and next action.</span>
+			</label>
+			<label class="flex items-start gap-3 cursor-pointer">
+				<input type="checkbox" class="mt-1" disabled />
+				<span>The concrete workflow appears before abstract framework language.</span>
+			</label>
+			<label class="flex items-start gap-3 cursor-pointer">
+				<input type="checkbox" class="mt-1" disabled />
+				<span>Every major claim has proof or an operational example nearby.</span>
+			</label>
+			<label class="flex items-start gap-3 cursor-pointer">
+				<input type="checkbox" class="mt-1" disabled />
+				<span>Text, buttons, and proof panels do not overlap on mobile or desktop.</span>
+			</label>
+			<label class="flex items-start gap-3 cursor-pointer">
+				<input type="checkbox" class="mt-1" disabled />
+				<span>Visual effects are restrained enough that the reader sees the work first.</span>
+			</label>
 		</div>
 	</div>
 </section>

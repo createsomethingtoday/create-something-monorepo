@@ -15,14 +15,14 @@ type BlondishSyncOutput = {
 };
 
 const EXPECTED_TOOLS = [
-  'blondish_sync_preflight',
-  'blondish_sync_audit',
-  'blondish_sync_plan_source_to_hd_repairs',
-  'blondish_sync_repair_missing_hd_rows',
-  'blondish_sync_repair_external_url_drift',
-  'blondish_sync_source_to_hd',
-  'blondish_sync_hd_status_to_source',
-  'blondish_sync_full',
+  'preflight',
+  'audit',
+  'plan_source_to_hd_repairs',
+  'repair_missing_hd_rows',
+  'repair_external_url_drift',
+  'source_to_hd',
+  'hd_status_to_source',
+  'full',
 ];
 
 const CASES: Array<{ input: BlondishSyncInput; metadata: Record<string, string> }> = [
@@ -44,33 +44,33 @@ function booleanScore(name: string, value: boolean, metadata?: Record<string, un
   };
 }
 
-function sourceContainsToolWrapper(source: string, tool: string): boolean {
-  return new RegExp(`tracedJsonToolResponse\\(\\s*env,\\s*'${tool}'`).test(source);
-}
-
 function evaluateRuntimeTelemetry(): BlondishSyncOutput {
   const packageJson = repoFile('packages/halfdozen-blondish-sync-mcp/package.json');
   const braintrustSource = repoFile('packages/halfdozen-blondish-sync-mcp/src/braintrust.ts');
+  const configSource = repoFile('packages/halfdozen-blondish-sync-mcp/src/config.ts');
   const mcpSource = repoFile('packages/halfdozen-blondish-sync-mcp/src/mcp.ts');
   const indexSource = repoFile('packages/halfdozen-blondish-sync-mcp/src/index.ts');
   const wrangler = repoFile('packages/halfdozen-blondish-sync-mcp/wrangler.toml');
+  const c3Wrangler = repoFile('packages/halfdozen-blondish-sync-mcp/wrangler.c3-management.toml');
+  const lightswitchWrangler = repoFile('packages/halfdozen-blondish-sync-mcp/wrangler.lightswitch.toml');
 
-  const tracedTools = EXPECTED_TOOLS.filter((tool) => (
-    mcpSource.includes(`'${tool}'`) && sourceContainsToolWrapper(mcpSource, tool)
-  ));
+  const tracedToolCalls = [...mcpSource.matchAll(/=>\s*tracedJsonToolResponse\(/g)].length;
 
   return {
     caseName: 'runtime_telemetry',
     checks: {
       package_has_braintrust_dependency: packageJson.includes('"braintrust"'),
       helper_uses_braintrust_logger: braintrustSource.includes('initLogger') && braintrustSource.includes('logger.traced'),
-      all_tools_wrapped: tracedTools.length === EXPECTED_TOOLS.length,
+      all_tools_wrapped: tracedToolCalls === EXPECTED_TOOLS.length,
       health_exposes_braintrust_state: indexSource.includes('braintrustHealth(env)'),
+      runtime_config_drives_tool_prefix: configSource.includes('SYNC_TOOL_PREFIX') && mcpSource.includes('toolNames(runtime.toolPrefix)'),
       wrangler_sets_project_name: wrangler.includes('BRAINTRUST_PROJECT_NAME'),
+      c3_worker_configured: c3Wrangler.includes('halfdozen-c3-management-sync-mcp') && c3Wrangler.includes('c3_management_sync'),
+      lightswitch_worker_configured: lightswitchWrangler.includes('halfdozen-lightswitch-sync-mcp') && lightswitchWrangler.includes('lightswitch_sync'),
     },
     notes: {
       expected_tools: EXPECTED_TOOLS.length,
-      traced_tools: tracedTools.length,
+      traced_tools: tracedToolCalls,
     },
   };
 }
@@ -82,12 +82,12 @@ function evaluateOperatorGuardrails(): BlondishSyncOutput {
   return {
     caseName: 'operator_guardrails',
     checks: {
-      exposes_all_expected_tools: EXPECTED_TOOLS.every((tool) => mcpSource.includes(`'${tool}'`)),
-      audit_first_prompt_present: mcpSource.includes('Use blondish_sync_preflight before first use')
-        && mcpSource.includes('For diagnosis, call blondish_sync_audit'),
+      exposes_all_expected_tools: EXPECTED_TOOLS.every((suffix) => mcpSource.includes(`${suffix}`)),
+      audit_first_prompt_present: mcpSource.includes('Use ${tools.preflight} before first use')
+        && mcpSource.includes('For diagnosis, call ${tools.audit}'),
       scoped_repair_prompt_present: mcpSource.includes('prefer scoped repair tools')
-        && mcpSource.includes('Use blondish_sync_repair_missing_hd_rows only')
-        && mcpSource.includes('Use blondish_sync_repair_external_url_drift only'),
+        && mcpSource.includes('Use ${tools.repairMissingHdRows} only')
+        && mcpSource.includes('Use ${tools.repairExternalUrlDrift} only'),
       generic_replication_denial_present: mcpSource.includes('Do not claim this is generic bidirectional replication'),
       registry_tool_count_current: registry.includes('"estimated_tool_count": 8'),
     },

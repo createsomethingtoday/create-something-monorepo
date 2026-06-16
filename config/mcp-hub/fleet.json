@@ -403,6 +403,42 @@
       "related_deployments": ["blondish-notion", "halfdozen-operator-notion-mcp"],
       "notes": "Operator-invoked reconciliation MCP for BLOND:ISH source ticket data to Half Dozen ticket rows and mapped HD status back to the source. Current surface is agent/operator control; future scale should move normal incremental sync to Notion webhooks plus a persisted sync index."
     },
+    "halfdozen-c3-management-sync-mcp": {
+      "type": "remote_mcp_server",
+      "product": "C3 Management Ticket Sync MCP",
+      "client": "c3-denver",
+      "tenant": "c3-management",
+      "url": "https://halfdozen-c3-management-sync-mcp.createsomething.workers.dev/mcp",
+      "status": "deployed",
+      "account": "create-something",
+      "package_path": "packages/halfdozen-blondish-sync-mcp",
+      "wrangler_config": "packages/halfdozen-blondish-sync-mcp/wrangler.c3-management.toml",
+      "auth": {
+        "type": "bearer",
+        "bearer_token_env_var": "HALFDOZEN_C3_MANAGEMENT_SYNC_MCP_API_KEY",
+        "infisical_path": "/mcp-hub/hubs"
+      },
+      "related_deployments": ["c3-management-notion", "halfdozen-operator-notion-mcp"],
+      "notes": "Operator-invoked reconciliation MCP for C3 Management source ticket data to Half Dozen ticket rows and mapped HD status back to the source. Current surface is agent/operator control; future scale should move normal incremental sync to Notion webhooks plus a persisted sync index."
+    },
+    "halfdozen-lightswitch-sync-mcp": {
+      "type": "remote_mcp_server",
+      "product": "Lightswitch Ticket Sync MCP",
+      "client": "lightswitch",
+      "tenant": "lightswitch",
+      "url": "https://halfdozen-lightswitch-sync-mcp.createsomething.workers.dev/mcp",
+      "status": "deployed",
+      "account": "create-something",
+      "package_path": "packages/halfdozen-blondish-sync-mcp",
+      "wrangler_config": "packages/halfdozen-blondish-sync-mcp/wrangler.lightswitch.toml",
+      "auth": {
+        "type": "bearer",
+        "bearer_token_env_var": "HALFDOZEN_LIGHTSWITCH_SYNC_MCP_API_KEY",
+        "infisical_path": "/mcp-hub/hubs"
+      },
+      "related_deployments": ["lightswitch-notion", "halfdozen-operator-notion-mcp"],
+      "notes": "Operator-invoked reconciliation MCP for Lightswitch source ticket data to Half Dozen ticket rows and mapped HD status back to the source. Current surface is agent/operator control; future scale should move normal incremental sync to Notion webhooks plus a persisted sync index."
+    },
     "halfdozen-agent-analyzer-telemetry-mcp": {
       "type": "internal_infra",
       "product": "Half Dozen Agent Analyzer Telemetry MCP",

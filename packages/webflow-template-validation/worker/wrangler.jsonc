@@ -23,6 +23,12 @@
 			}
 		]
 	},
+	"r2_buckets": [
+		{
+			"binding": "VALIDATOR_RESULT_ARTIFACTS",
+			"bucket_name": "validator-result-artifacts"
+		}
+	],
 	"migrations": [
 		{
 			"tag": "v1_review_jobs",

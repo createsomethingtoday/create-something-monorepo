@@ -17,10 +17,19 @@ function placeholderList(count: number): string {
   return Array.from({ length: count }, () => '?').join(', ');
 }
 
-function buildFtsQuery(input: string): string {
-  const tokens = input.toLowerCase().match(/[a-z0-9]+/g) ?? [];
+function queryTokens(input: string): string[] {
+  return input.toLowerCase().match(/[a-z0-9]+/g) ?? [];
+}
+
+function buildFtsQuery(input: string, mode: 'strict' | 'relaxed' = 'strict'): string {
+  const tokens = queryTokens(input);
   if (tokens.length === 0) return '""';
-  return tokens.map((token) => `${token}*`).join(' AND ');
+  return tokens.map((token) => `${token}*`).join(mode === 'relaxed' ? ' OR ' : ' AND ');
+}
+
+function canRelaxQuery(q: string | null): boolean {
+  // OR-relaxation only changes results when the strict query AND'ed 2+ tokens.
+  return q !== null && queryTokens(q).length > 1;
 }
 
 function sortClause(sort: TemplateSort): string {
@@ -44,6 +53,7 @@ interface FilterOptions {
   excludeTagSlug?: boolean;
   excludeTypes?: boolean;
   excludeChildCategory?: boolean;
+  relaxedQuery?: boolean;
 }
 
 interface SqlParts {
@@ -147,7 +157,7 @@ function buildSqlParts(params: SearchParams, options: FilterOptions = {}): SqlPa
   if (params.q) {
     fromClause += ' JOIN template_documents_fts ON template_documents_fts.template_document_id = d.id';
     clauses.push('template_documents_fts MATCH ?');
-    binds.push(buildFtsQuery(params.q));
+    binds.push(buildFtsQuery(params.q, options.relaxedQuery ? 'relaxed' : 'strict'));
     queryMode = true;
   }
 
@@ -321,7 +331,11 @@ async function resolveCategoryGroupSlugForChild(env: Env, childCategorySlug: str
   return row?.slug ?? null;
 }
 
-async function loadCategoryPills(env: Env, params: SearchParams): Promise<Array<{ name: string; slug: string; count: number }>> {
+async function loadCategoryPills(
+  env: Env,
+  params: SearchParams,
+  relaxedQuery = false,
+): Promise<Array<{ name: string; slug: string; count: number }>> {
   const scopedParams: SearchParams = {
     ...params,
     categoryGroupSlug: null,
@@ -336,6 +350,7 @@ async function loadCategoryPills(env: Env, params: SearchParams): Promise<Array<
     excludeStyles: true,
     excludeTags: true,
     excludeTypes: true,
+    relaxedQuery,
   });
 
   const result = await env.DB
@@ -365,8 +380,8 @@ async function loadCategoryPills(env: Env, params: SearchParams): Promise<Array<
   }));
 }
 
-async function loadFacetStyles(env: Env, params: SearchParams): Promise<FacetStyleRow[]> {
-  const sqlParts = buildSqlParts(params, { excludeStyles: true, excludeTypes: true });
+async function loadFacetStyles(env: Env, params: SearchParams, relaxedQuery = false): Promise<FacetStyleRow[]> {
+  const sqlParts = buildSqlParts(params, { excludeStyles: true, excludeTypes: true, relaxedQuery });
   const result = await env.DB
     .prepare(`
       WITH filtered AS (
@@ -385,8 +400,8 @@ async function loadFacetStyles(env: Env, params: SearchParams): Promise<FacetSty
   return result.results ?? [];
 }
 
-async function loadFacetTypes(env: Env, params: SearchParams): Promise<FacetTypeRow[]> {
-  const sqlParts = buildSqlParts(params, { excludeStyles: true, excludeTypes: true });
+async function loadFacetTypes(env: Env, params: SearchParams, relaxedQuery = false): Promise<FacetTypeRow[]> {
+  const sqlParts = buildSqlParts(params, { excludeStyles: true, excludeTypes: true, relaxedQuery });
   const result = await env.DB
     .prepare(`
       SELECT d.template_type AS value, COUNT(*) AS count
@@ -401,7 +416,11 @@ async function loadFacetTypes(env: Env, params: SearchParams): Promise<FacetType
   return result.results ?? [];
 }
 
-async function loadSubcategoryPills(env: Env, params: SearchParams): Promise<Array<{ name: string; slug: string; count: number }>> {
+async function loadSubcategoryPills(
+  env: Env,
+  params: SearchParams,
+  relaxedQuery = false,
+): Promise<Array<{ name: string; slug: string; count: number }>> {
   const groupSlug =
     params.categoryGroupSlug ?? (params.childCategorySlug ? await resolveCategoryGroupSlugForChild(env, params.childCategorySlug) : null);
   if (!groupSlug) return [];
@@ -419,6 +438,7 @@ async function loadSubcategoryPills(env: Env, params: SearchParams): Promise<Arr
     excludeStyles: true,
     excludeTags: true,
     excludeTypes: true,
+    relaxedQuery,
   });
 
   const membershipResult = await env.DB
@@ -516,9 +536,14 @@ function buildChildCategories(
   });
 }
 
+// The first bm25 weight covers the UNINDEXED template_document_id column; FTS5
+// assigns weights positionally across every declared column, indexed or not.
+const BM25_RANK_EXPRESSION = 'bm25(template_documents_fts, 0, 10.0, 6.0, 1.5, 2.5, 2.0, 1.2, 0.8)';
+
 export async function searchTemplates(env: Env, rawParams: SearchParams): Promise<SearchResponsePayload> {
   const params = await resolveAliases(env, rawParams);
-  const sqlParts = buildSqlParts(params);
+  let sqlParts = buildSqlParts(params);
+  let relaxedQuery = false;
   const offset = (params.page - 1) * params.pageSize;
   const orderClause = queryOrderClause(params, sqlParts.queryMode);
   const includeItems = params.include.items;
@@ -538,11 +563,25 @@ export async function searchTemplates(env: Env, rawParams: SearchParams): Promis
   // D1 queue overload during syncs.
   if (includeItems) {
     totalItems = await getTotalCount(env.DB, sqlParts);
+
+    // A strict query AND-matches every token, so one typo'd or unmatched token
+    // yields a dead-end empty grid. Retry once with tokens OR'ed; consumers see
+    // applied_filters.relaxed and can message "showing related results".
+    if (totalItems === 0 && sqlParts.queryMode && canRelaxQuery(params.q)) {
+      const relaxedParts = buildSqlParts(params, { relaxedQuery: true });
+      const relaxedTotal = await getTotalCount(env.DB, relaxedParts);
+      if (relaxedTotal > 0) {
+        sqlParts = relaxedParts;
+        totalItems = relaxedTotal;
+        relaxedQuery = true;
+      }
+    }
+
     rows = await env.DB
       .prepare(`
         SELECT
           ${selectColumns},
-          ${sqlParts.queryMode ? 'bm25(template_documents_fts, 10.0, 6.0, 1.5, 2.5, 2.0, 1.2, 0.8)' : 'NULL'} AS text_rank
+          ${sqlParts.queryMode ? BM25_RANK_EXPRESSION : 'NULL'} AS text_rank
         ${sqlParts.fromClause}
         ${sqlParts.whereClause}
         ORDER BY ${orderClause}
@@ -553,13 +592,13 @@ export async function searchTemplates(env: Env, rawParams: SearchParams): Promis
   }
 
   if (includeFacets) {
-    styleFacets = await loadFacetStyles(env, params);
-    typeFacets = await loadFacetTypes(env, params);
+    styleFacets = await loadFacetStyles(env, params, relaxedQuery);
+    typeFacets = await loadFacetTypes(env, params, relaxedQuery);
   }
 
   if (includePills) {
-    categoryPills = await loadCategoryPills(env, params);
-    pills = await loadSubcategoryPills(env, params);
+    categoryPills = await loadCategoryPills(env, params, relaxedQuery);
+    pills = await loadSubcategoryPills(env, params, relaxedQuery);
   }
 
   const rowResults = rows.results ?? [];
@@ -639,6 +678,7 @@ export async function searchTemplates(env: Env, rawParams: SearchParams): Promis
       tags: params.tags,
       types: params.types,
       free_only: params.freeOnly,
+      relaxed: relaxedQuery,
     },
     available_facets: {
       styles: styleFacets.map((row) => ({ name: row.name, slug: row.slug, count: Number(row.count) })),

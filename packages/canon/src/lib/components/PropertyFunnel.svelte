@@ -175,19 +175,24 @@
 
 <style>
   .property-funnel {
-    padding-block: var(--space-xl);
+    padding-block: 4.5rem;
+    background: var(--color-clear-panel, #ffffff);
+    border-bottom: 1px solid var(--color-clear-border, #e1e1e1);
+    color: var(--color-clear-onyx, #0a0e19);
   }
 
   .property-funnel__inner {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
-    gap: var(--space-xl);
+    gap: 2rem;
     align-items: end;
+    width: min(var(--content-width-clear, 85rem), calc(100% - 2.5rem));
+    margin-inline: auto;
   }
 
   .property-funnel__copy {
     display: grid;
-    gap: var(--space-sm);
+    gap: 1rem;
     max-width: 48rem;
   }
 
@@ -195,9 +200,10 @@
   .property-funnel__status span,
   .property-funnel__step-index,
   .property-funnel__step-label {
-    color: var(--color-fg-muted);
+    color: var(--color-clear-grey, #636363);
     font-family: var(--font-mono);
-    font-size: var(--text-caption);
+    font-size: 0.76rem;
+    font-weight: var(--font-medium);
     letter-spacing: 0;
     line-height: 1.2;
     text-transform: uppercase;
@@ -205,35 +211,36 @@
 
   .property-funnel__copy h2 {
     margin: 0;
-    color: var(--color-fg-primary);
-    font-size: var(--text-h2);
+    color: var(--color-clear-onyx, #0a0e19);
+    font-size: 3.1rem;
+    font-weight: var(--font-medium);
     letter-spacing: 0;
-    line-height: 1.05;
+    line-height: 1.02;
     text-wrap: balance;
   }
 
   .property-funnel__copy p {
     margin: 0;
-    color: var(--color-fg-secondary);
-    font-size: var(--text-body);
-    line-height: var(--leading-relaxed);
+    color: var(--color-clear-grey, #636363);
+    font-size: 1.08rem;
+    line-height: 1.55;
     text-wrap: pretty;
   }
 
   .property-funnel__status {
     display: grid;
-    gap: var(--space-xs);
+    gap: 0.55rem;
     min-width: 12rem;
-    padding: var(--space-md);
-    border: 1px solid var(--color-shell-border-default);
-    border-radius: var(--radius-lg);
-    background: rgba(255, 255, 255, 0.035);
+    padding: 1rem;
+    border: 1px solid var(--color-clear-border, #e1e1e1);
+    border-radius: var(--radius-clear-sm, 4px);
+    background: var(--color-clear-porcelain, #f9f9f9);
   }
 
   .property-funnel__status strong {
-    color: var(--color-fg-primary);
-    font-size: var(--text-body);
-    font-weight: var(--font-semibold);
+    color: var(--color-clear-onyx, #0a0e19);
+    font-size: 1rem;
+    font-weight: var(--font-medium);
     line-height: 1.25;
   }
 
@@ -241,7 +248,7 @@
     grid-column: 1 / -1;
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: var(--space-sm);
+    gap: 0.85rem;
     margin: 0;
     padding: 0;
     list-style: none;
@@ -253,62 +260,62 @@
 
   .property-funnel__step {
     display: grid;
-    gap: var(--space-sm);
-    min-height: 14rem;
-    padding: var(--space-lg);
-    border: 1px solid var(--color-shell-border-default);
-    border-radius: var(--radius-lg);
-    background:
-      linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.012)),
-      color-mix(in srgb, var(--color-shell-surface-secondary) 88%, transparent);
+    align-content: start;
+    gap: 0.62rem;
+    min-height: 12.5rem;
+    padding: 1rem;
+    border: 1px solid var(--color-clear-border, #e1e1e1);
+    border-radius: var(--radius-clear-sm, 4px);
+    background: var(--color-clear-panel, #ffffff);
     color: inherit;
     text-decoration: none;
     opacity: 1;
     transition:
-      transform var(--duration-micro) var(--ease-standard),
       border-color var(--duration-micro) var(--ease-standard),
       background var(--duration-micro) var(--ease-standard);
   }
 
   .property-funnel__step:hover {
-    transform: translateY(-2px);
-    border-color: var(--color-shell-border-strong);
-    background: rgba(255, 255, 255, 0.055);
+    border-color: var(--color-clear-border-strong, #cecece);
+    background: var(--color-clear-porcelain, #f9f9f9);
   }
 
   .property-funnel__step:focus-visible,
   .property-funnel__button:focus-visible {
-    outline: 2px solid var(--color-focus);
+    outline: 2px solid var(--color-clear-ocean, #315cff);
     outline-offset: 3px;
   }
 
   .property-funnel__step--active .property-funnel__step {
-    border-color: var(--color-brand-primary-border);
-    box-shadow: inset 0 0 0 1px rgba(49, 92, 255, 0.14);
+    border-color: var(--color-clear-ocean, #315cff);
+    background: color-mix(in srgb, var(--color-clear-pastel-blue, #afc1fd) 22%, white);
   }
 
   .property-funnel__step-label {
-    color: var(--color-fg-secondary);
+    color: var(--color-clear-grey, #636363);
   }
 
   .property-funnel__step strong {
-    color: var(--color-fg-primary);
-    font-size: var(--text-body-lg);
-    line-height: 1.15;
+    color: var(--color-clear-onyx, #0a0e19);
+    font-size: 1.18rem;
+    font-weight: var(--font-medium);
+    line-height: 1.18;
+    text-wrap: balance;
   }
 
   .property-funnel__step-summary {
-    color: var(--color-fg-secondary);
-    font-size: var(--text-body-sm);
-    line-height: 1.6;
+    color: var(--color-clear-grey, #636363);
+    font-size: 0.94rem;
+    line-height: 1.48;
     overflow-wrap: anywhere;
+    text-wrap: pretty;
   }
 
   .property-funnel__actions {
     grid-column: 1 / -1;
     display: flex;
     flex-wrap: wrap;
-    gap: var(--space-sm);
+    gap: 0.75rem;
     align-items: center;
   }
 
@@ -317,38 +324,43 @@
     align-items: center;
     justify-content: center;
     min-height: 44px;
-    padding: 0.8rem 1.25rem;
+    padding: 0.74rem 1rem;
     border: 1px solid transparent;
-    border-radius: var(--radius-full);
-    font-size: var(--text-body-sm);
+    border-radius: var(--radius-clear-sm, 4px);
+    font-size: 0.94rem;
     font-weight: var(--font-semibold);
     letter-spacing: 0;
     line-height: 1.2;
     text-align: center;
     text-decoration: none;
     transition:
-      transform var(--duration-micro) var(--ease-standard),
       border-color var(--duration-micro) var(--ease-standard),
-      background var(--duration-micro) var(--ease-standard),
-      box-shadow var(--duration-micro) var(--ease-standard);
-  }
-
-  .property-funnel__button:hover {
-    transform: translateY(-1px);
-    opacity: 1;
+      background var(--duration-micro) var(--ease-standard);
   }
 
   .property-funnel__button--primary {
-    border-color: rgba(255, 255, 255, 0.28);
-    background: linear-gradient(180deg, #ffffff, #eceef7);
-    box-shadow: 0 10px 22px rgba(0, 0, 0, 0.16);
-    color: #090909;
+    border-color: var(--color-clear-onyx, #0a0e19);
+    background: var(--color-clear-onyx, #0a0e19);
+    color: #ffffff;
+  }
+
+  .property-funnel__button--primary:hover {
+    background: #1a2030;
+    border-color: #1a2030;
+    opacity: 1;
   }
 
   .property-funnel__button--secondary {
-    border-color: var(--color-shell-border-default);
-    background: color-mix(in srgb, var(--color-shell-surface-secondary) 88%, transparent);
-    color: var(--color-fg-primary);
+    border-color: var(--color-clear-border, #e1e1e1);
+    background: var(--color-clear-panel, #ffffff);
+    color: var(--color-clear-onyx, #0a0e19);
+  }
+
+  .property-funnel__button--secondary:hover {
+    border-color: var(--color-clear-onyx, #0a0e19);
+    background: var(--color-clear-onyx, #0a0e19);
+    color: #ffffff;
+    opacity: 1;
   }
 
   @media (max-width: 1100px) {
@@ -366,12 +378,30 @@
   }
 
   @media (max-width: 700px) {
+    .property-funnel {
+      padding-block: 2.75rem;
+    }
+
+    .property-funnel__inner {
+      width: min(100% - 1.5rem, var(--content-width-clear, 85rem));
+    }
+
+    .property-funnel__copy h2 {
+      font-size: 2.35rem;
+      line-height: 1.04;
+    }
+
+    .property-funnel__copy p {
+      font-size: 1rem;
+      line-height: 1.56;
+    }
+
     .property-funnel__steps {
       grid-template-columns: 1fr;
     }
 
     .property-funnel__step {
-      min-height: 11.5rem;
+      min-height: auto;
     }
 
     .property-funnel__actions {

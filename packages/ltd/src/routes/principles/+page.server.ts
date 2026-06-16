@@ -6,6 +6,19 @@ interface PrincipleWithMaster extends Principle {
 	master_slug: string;
 }
 
+function getErrorMessage(error: unknown): string {
+	if (error instanceof Error) {
+		const cause = error.cause instanceof Error ? ` ${error.cause.message}` : '';
+		return `${error.message}${cause}`;
+	}
+
+	return String(error);
+}
+
+function isMissingPrinciplesSchemaError(error: unknown): boolean {
+	return /no such table:\s*(principles|masters)/i.test(getErrorMessage(error));
+}
+
 export const load: PageServerLoad = async ({ platform }) => {
 	const db = platform?.env?.DB;
 
@@ -33,7 +46,10 @@ export const load: PageServerLoad = async ({ platform }) => {
 			principles: result.results || []
 		};
 	} catch (error) {
-		console.error('Error loading principles:', error);
+		if (!isMissingPrinciplesSchemaError(error)) {
+			console.error('Error loading principles:', error);
+		}
+
 		return { principles: [] };
 	}
 };

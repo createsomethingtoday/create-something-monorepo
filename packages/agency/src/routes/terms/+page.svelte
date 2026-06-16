@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { SEO, TermsOfServiceContent } from '@create-something/canon';
+  import { ClearPageSection, SEO, TermsOfServiceContent } from '@create-something/canon';
 </script>
 
 <SEO
@@ -9,56 +9,19 @@
   noindex={true}
 />
 
-<section class="pt-32 pb-16 px-6">
-  <div class="shell-inner">
-    <div class="space-y-6 animate-reveal">
-      <h1 class="page-title">Terms of Service</h1>
-      <p class="date-text">Last updated: January 29, 2026</p>
-    </div>
-  </div>
-</section>
-
-<section class="pb-24 px-6">
-  <div class="shell-inner">
+<ClearPageSection
+  variant="hero"
+  titleLevel="h1"
+  eyebrow="Terms"
+  title="Terms for using CREATE SOMETHING .agency."
+  description="These terms govern use of the agency site and services. The policy language stays direct so commercial and trust boundaries remain inspectable."
+>
+  {#snippet after()}
     <TermsOfServiceContent
       property="agency"
       domain="createsomething.agency"
       lastUpdated="January 29, 2026"
       contactEmail="legal@createsomething.io"
     />
-  </div>
-</section>
-
-<style>
-  .page-title {
-    font-size: var(--text-h1);
-    font-weight: 700;
-    color: var(--color-fg-primary);
-  }
-
-  .date-text {
-    font-size: var(--text-body-lg);
-    color: var(--color-fg-tertiary);
-  }
-
-  .animate-reveal {
-    opacity: 0;
-    transform: translateY(20px);
-    animation: reveal 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-  }
-
-  @keyframes reveal {
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .animate-reveal {
-      animation: none;
-      opacity: 1;
-      transform: none;
-    }
-  }
-</style>
+  {/snippet}
+</ClearPageSection>

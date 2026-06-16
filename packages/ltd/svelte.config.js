@@ -10,6 +10,9 @@ const config = {
 
 	kit: {
 		adapter: adapter({
+			platformProxy: {
+				remoteBindings: false
+			},
 			routes: {
 				include: ['/*'],
 				exclude: ['<all>']

@@ -10,6 +10,9 @@ export default defineConfig({
 		}
 	},
 	plugins: [sveltekit() as unknown as PluginOption],
+	ssr: {
+		noExternal: ['lucide-svelte']
+	},
 	build: {
 		chunkSizeWarningLimit: 1200
 	}

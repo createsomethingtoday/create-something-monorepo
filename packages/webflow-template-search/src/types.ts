@@ -234,6 +234,8 @@ export interface SearchResponsePayload {
     tags: string[];
     types: string[];
     free_only: boolean;
+    /** True when the strict all-tokens query matched nothing and results come from an OR-relaxed retry. */
+    relaxed: boolean;
   };
   available_facets: {
     styles: Array<{ name: string; slug: string; count: number }>;

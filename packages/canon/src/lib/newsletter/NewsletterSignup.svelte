@@ -11,10 +11,18 @@
    */
 
   interface Props {
+    /** Optional CTA eyebrow */
+    eyebrow?: string;
     /** Property-specific headline */
     headline?: string;
     /** Property-specific description */
     description?: string;
+    /** Short form panel label */
+    actionLabel?: string;
+    /** Submit button label */
+    submitLabel?: string;
+    /** Supporting note below the form */
+    note?: string;
     /** API endpoint for submission */
     endpoint?: string;
     /** Optional source tracking (defaults to property) */
@@ -22,8 +30,12 @@
   }
 
   let {
+    eyebrow = 'Canon brief',
     headline = 'Stay in the loop',
     description = 'Get updates on new experiments and research.',
+    actionLabel = 'Join the list',
+    submitLabel = 'Join the list',
+    note = 'Occasional notes. Unsubscribe whenever it stops being useful.',
     endpoint = '/api/newsletter',
     source
   }: Props = $props();
@@ -103,118 +115,195 @@
 
 <section class="newsletter-section">
   <div class="newsletter-content">
-    <h2 class="newsletter-headline">{headline}</h2>
-    <p class="newsletter-description">{description}</p>
+    <div class="newsletter-copy">
+      <span class="newsletter-eyebrow">{eyebrow}</span>
+      <h2 class="newsletter-headline">{headline}</h2>
+      <p class="newsletter-description">{description}</p>
+    </div>
 
-    {#if status === 'success'}
-      <div class="success-message" role="status">
-        <svg
-          class="success-icon"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          aria-hidden="true"
-        >
-          <path d="M20 6L9 17l-5-5" stroke-linecap="round" stroke-linejoin="round" />
-        </svg>
-        <span>{message}</span>
-      </div>
-    {:else}
-      <form class="newsletter-form" onsubmit={handleSubmit}>
-        <!-- Honeypot field - hidden from humans, visible to bots -->
-        <div class="honeypot" aria-hidden="true">
-          <label for="website">Website</label>
-          <input
-            type="text"
-            id="website"
-            name="website"
-            bind:value={honeypot}
-            tabindex="-1"
-            autocomplete="off"
-          />
+    <div class="newsletter-panel">
+      {#if status === 'success'}
+        <div class="success-message" role="status">
+          <svg
+            class="success-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            aria-hidden="true"
+          >
+            <path d="M20 6L9 17l-5-5" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          <span>{message}</span>
         </div>
-
-        <div class="form-row">
-          <div class="input-wrapper">
-            <label for="newsletter-email" class="visually-hidden">Email address</label>
+      {:else}
+        <form class="newsletter-form" onsubmit={handleSubmit}>
+          <!-- Honeypot field - hidden from humans, visible to bots -->
+          <div class="honeypot" aria-hidden="true">
+            <label for="website">Website</label>
             <input
-              type="email"
-              id="newsletter-email"
-              name="email"
-              placeholder="your@email.com"
-              bind:value={email}
-              oninput={handleInput}
-              disabled={status === 'loading'}
-              class:has-error={status === 'error'}
-              required
-              autocomplete="email"
+              type="text"
+              id="website"
+              name="website"
+              bind:value={honeypot}
+              tabindex="-1"
+              autocomplete="off"
             />
           </div>
-          <button type="submit" class="submit-button" disabled={status === 'loading'}>
-            {#if status === 'loading'}
-              <span class="loading-spinner" aria-hidden="true"></span>
-              <span class="visually-hidden">Subscribing...</span>
-            {:else}
-              Subscribe
-            {/if}
-          </button>
-        </div>
 
-        {#if status === 'error' && message}
-          <p class="error-message" role="alert">{message}</p>
-        {/if}
-      </form>
-    {/if}
+          <div class="form-intro">
+            <span>By email</span>
+            <strong>{actionLabel}</strong>
+          </div>
+
+          <div class="form-row">
+            <div class="input-wrapper">
+              <label for="newsletter-email" class="visually-hidden">Email address</label>
+              <input
+                type="email"
+                id="newsletter-email"
+                name="email"
+                placeholder="your@email.com"
+                bind:value={email}
+                oninput={handleInput}
+                disabled={status === 'loading'}
+                class:has-error={status === 'error'}
+                required
+                autocomplete="email"
+              />
+            </div>
+            <button type="submit" class="submit-button" disabled={status === 'loading'}>
+              {#if status === 'loading'}
+                <span class="loading-spinner" aria-hidden="true"></span>
+                <span class="visually-hidden">Sending request...</span>
+              {:else}
+                {submitLabel}
+              {/if}
+            </button>
+          </div>
+
+          <p class="newsletter-note">{note}</p>
+
+          {#if status === 'error' && message}
+            <p class="error-message" role="alert">{message}</p>
+          {/if}
+        </form>
+      {/if}
+    </div>
   </div>
 </section>
 
 <style>
   .newsletter-section {
-    padding: var(--space-xl) var(--space-md);
+    padding-block: clamp(4rem, 8vw, 6.5rem);
+    background:
+      linear-gradient(90deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px) 0 0 / 4rem 4rem,
+      var(--color-clear-onyx, #0a0e19);
+    border-block: 1px solid var(--color-clear-onyx, #0a0e19);
+    color: #ffffff;
   }
 
   .newsletter-content {
-    max-width: var(--width-prose);
-    margin: 0 auto;
-    text-align: center;
+    display: grid;
+    grid-template-columns: minmax(0, 0.92fr) minmax(22rem, 0.68fr);
+    gap: clamp(1.5rem, 4vw, 3rem);
+    align-items: stretch;
+    width: min(var(--content-width-clear, 85rem), calc(100% - 2.5rem));
+    margin-inline: auto;
+  }
+
+  .newsletter-copy {
+    display: grid;
+    align-content: center;
+    justify-items: start;
+    gap: 1rem;
+    min-width: 0;
+    max-width: 45rem;
+  }
+
+  .newsletter-eyebrow {
+    display: inline-flex;
+    width: fit-content;
+    max-width: 100%;
+    min-height: 1.9rem;
+    align-items: center;
+    padding: 0.36rem 0.62rem;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: var(--radius-clear-sm, 4px);
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.74);
+    font-family: var(--font-mono);
+    font-size: 0.76rem;
+    font-weight: var(--font-semibold);
+    letter-spacing: 0;
+    line-height: 1.15;
+    text-transform: uppercase;
   }
 
   .newsletter-headline {
-    font-size: var(--text-h3);
-    font-weight: var(--font-semibold);
-    color: var(--color-fg-primary);
-    margin: 0 0 var(--space-xs);
+    margin: 0;
+    max-width: 13ch;
+    color: #ffffff;
+    font-size: 3.25rem;
+    font-weight: var(--font-medium);
+    letter-spacing: 0;
+    line-height: 1.02;
+    text-wrap: balance;
   }
 
   .newsletter-description {
-    font-size: var(--text-body);
-    color: var(--color-fg-tertiary);
-    margin: 0 0 var(--space-md);
-    line-height: var(--leading-relaxed);
+    max-width: 38rem;
+    margin: 0;
+    color: rgba(255, 255, 255, 0.72);
+    font-size: 1.08rem;
+    line-height: 1.55;
+    text-wrap: pretty;
   }
 
-  /* Form Layout */
+  .newsletter-panel {
+    display: grid;
+    align-content: center;
+    min-width: 0;
+    padding: clamp(1rem, 3vw, 1.35rem);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: var(--radius-clear-sm, 4px);
+    background: rgba(255, 255, 255, 0.08);
+  }
+
   .newsletter-form {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-sm);
+    display: grid;
+    gap: 0.85rem;
+    min-width: 0;
+  }
+
+  .form-intro {
+    display: grid;
+    gap: 0.24rem;
+    min-width: 0;
+  }
+
+  .form-intro span {
+    color: rgba(255, 255, 255, 0.64);
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    font-weight: var(--font-medium);
+    letter-spacing: 0;
+    text-transform: uppercase;
+  }
+
+  .form-intro strong {
+    color: #ffffff;
+    font-size: 1.05rem;
+    font-weight: var(--font-medium);
+    line-height: 1.22;
   }
 
   .form-row {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-sm);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.75rem;
   }
 
-  @media (min-width: 640px) {
-    .form-row {
-      flex-direction: row;
-      justify-content: center;
-    }
-  }
-
-  /* Honeypot - hidden from humans */
   .honeypot {
     position: absolute;
     left: -9999px;
@@ -222,39 +311,37 @@
     pointer-events: none;
   }
 
-  /* Input Styling */
   .input-wrapper {
-    flex: 1;
-    max-width: 320px;
+    min-width: 0;
   }
 
   input[type='email'] {
     width: 100%;
-    padding: var(--space-sm) var(--space-md);
-    border-radius: var(--radius-md);
-    background: transparent;
-    border: 1px solid var(--color-border-default);
-    color: var(--color-fg-primary);
-    font-size: var(--text-body);
-    font-family: inherit;
     min-height: 44px;
+    padding: 0.74rem 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    border-radius: var(--radius-clear-sm, 4px);
+    background: rgba(255, 255, 255, 0.96);
+    color: var(--color-clear-onyx, #0a0e19);
+    font-family: inherit;
+    font-size: 1rem;
     transition:
       border-color var(--duration-micro) var(--ease-standard),
       box-shadow var(--duration-micro) var(--ease-standard);
   }
 
   input[type='email']::placeholder {
-    color: var(--color-fg-muted);
+    color: var(--color-clear-grey, #636363);
   }
 
   input[type='email']:hover:not(:disabled):not(:focus) {
-    border-color: var(--color-border-emphasis);
+    border-color: rgba(255, 255, 255, 0.46);
   }
 
   input[type='email']:focus {
     outline: none;
-    border-color: var(--color-border-emphasis);
-    box-shadow: 0 0 0 3px var(--color-focus);
+    border-color: var(--color-clear-ocean, #315cff);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-clear-ocean, #315cff) 16%, transparent);
   }
 
   input[type='email']:disabled {
@@ -263,42 +350,42 @@
   }
 
   input[type='email'].has-error {
-    border-color: var(--color-error);
+    border-color: var(--color-error, #d92d20);
   }
 
   input[type='email'].has-error:focus {
-    box-shadow: 0 0 0 3px var(--color-error-muted);
+    box-shadow: 0 0 0 3px var(--color-error-muted, rgba(217, 45, 32, 0.16));
   }
 
-  /* Button Styling */
   .submit-button {
-    padding: var(--space-sm) var(--space-lg);
-    background: var(--color-fg-primary);
-    color: var(--color-bg-pure);
-    border: none;
-    border-radius: var(--radius-md);
-    font-size: var(--text-body);
-    font-weight: var(--font-semibold);
-    font-family: inherit;
-    cursor: pointer;
+    min-width: 128px;
     min-height: 44px;
-    min-width: 120px;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: var(--space-xs);
+    gap: 0.5rem;
+    padding: 0.74rem 1rem;
+    border: 1px solid #ffffff;
+    border-radius: var(--radius-clear-sm, 4px);
+    background: #ffffff;
+    color: var(--color-clear-onyx, #0a0e19);
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: var(--font-semibold);
+    cursor: pointer;
     transition:
-      opacity var(--duration-micro) var(--ease-standard),
+      border-color var(--duration-micro) var(--ease-standard),
       background var(--duration-micro) var(--ease-standard);
   }
 
   .submit-button:hover:not(:disabled) {
-    opacity: 0.9;
+    border-color: var(--color-clear-pastel-blue, #afc1fd);
+    background: var(--color-clear-pastel-blue, #afc1fd);
   }
 
   .submit-button:focus-visible {
-    outline: 2px solid var(--color-focus);
-    outline-offset: 2px;
+    outline: 2px solid var(--color-clear-ocean, #315cff);
+    outline-offset: 3px;
   }
 
   .submit-button:disabled {
@@ -306,11 +393,10 @@
     cursor: not-allowed;
   }
 
-  /* Loading Spinner */
   .loading-spinner {
     width: 16px;
     height: 16px;
-    border: 2px solid var(--color-bg-pure);
+    border: 2px solid var(--color-clear-onyx, #0a0e19);
     border-top-color: transparent;
     border-radius: 50%;
     animation: spin var(--duration-slow) linear infinite;
@@ -322,26 +408,34 @@
     }
   }
 
-  /* Error Message */
-  .error-message {
-    font-size: var(--text-body-sm);
-    color: var(--color-error);
+  .newsletter-note {
     margin: 0;
-    text-align: center;
+    color: rgba(255, 255, 255, 0.64);
+    font-size: 0.92rem;
+    line-height: 1.45;
+    text-wrap: pretty;
   }
 
-  /* Success Message */
+  .error-message {
+    margin: 0;
+    color: var(--color-clear-pastel-blue, #afc1fd);
+    font-size: 0.9rem;
+    line-height: 1.4;
+  }
+
   .success-message {
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: var(--space-sm);
-    padding: var(--space-md);
-    background: var(--color-success-muted);
-    border: 1px solid var(--color-success-border);
-    border-radius: var(--radius-md);
-    color: var(--color-success);
-    font-size: var(--text-body);
+    gap: 0.75rem;
+    min-width: 0;
+    padding: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-left: 0.2rem solid var(--color-clear-ocean, #315cff);
+    border-radius: var(--radius-clear-sm, 4px);
+    background: rgba(255, 255, 255, 0.08);
+    color: #ffffff;
+    font-size: 1rem;
+    line-height: 1.45;
   }
 
   .success-icon {
@@ -350,7 +444,6 @@
     flex-shrink: 0;
   }
 
-  /* Accessibility */
   .visually-hidden {
     position: absolute;
     width: 1px;
@@ -363,7 +456,36 @@
     border: 0;
   }
 
-  /* Reduced Motion */
+  @media (max-width: 760px) {
+    .newsletter-section {
+      padding-block: 2.75rem;
+    }
+
+    .newsletter-content {
+      grid-template-columns: 1fr;
+      width: min(100% - 1.5rem, var(--content-width-clear, 85rem));
+    }
+
+    .newsletter-headline {
+      max-width: none;
+      font-size: 2.35rem;
+      line-height: 1.04;
+    }
+
+    .newsletter-description {
+      font-size: 1rem;
+      line-height: 1.56;
+    }
+
+    .form-row {
+      grid-template-columns: 1fr;
+    }
+
+    .submit-button {
+      width: 100%;
+    }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .loading-spinner {
       animation: none;

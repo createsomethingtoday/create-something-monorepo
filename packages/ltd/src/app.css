@@ -3,7 +3,8 @@
   Property: .ltd (Philosophy / Canon)
 
   Imports shared Canon tokens and enhancement modules.
-  This is the canonical reference - contemplative, minimal.
+  Aligned with the Ona clear-communication reference used by .agency
+  while retaining .ltd canon content and navigation.
 */
 
 /* Import shared Canon Design System (must precede @tailwind) */
@@ -27,15 +28,52 @@
    .ltd Property Customizations
    View Transitions: Contemplative (500ms) - Philosophical dwelling
    
-   Philosophy: "Gelassenheit" - letting things be.
-   Minimal customization. The Canon defaults speak for themselves.
+   Only property-specific overrides remain here.
+   Shared clear-shell patterns live in Canon modules.
    ========================================================================== */
 
 :root {
   --view-transition-duration: 500ms;
 
-  /* Display font matches Canon default - explicit for typography.css compatibility */
-  --font-display: 'Stack Sans Notch', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  /* Shared clear-shell typography */
+  --font-heading: var(--font-sans);
+  --font-display: var(--font-sans);
+  --font-serif: 'Martina Plantijn', Georgia, serif;
+  --color-focus: rgba(167, 184, 255, 0.72);
+
+  /* Ona clear-communication surface mapping for existing property routes */
+  --color-bg-pure: var(--color-clear-panel, #ffffff);
+  --color-bg-elevated: var(--color-clear-porcelain, #f9f9f9);
+  --color-bg-surface: var(--color-clear-porcelain-soft, #f2f2f2);
+  --color-bg-subtle: #eeeeee;
+  --color-fg-primary: var(--color-clear-onyx, #0a0e19);
+  --color-fg-secondary: rgba(10, 14, 25, 0.8);
+  --color-fg-tertiary: rgba(10, 14, 25, 0.62);
+  --color-fg-muted: var(--color-clear-grey, #636363);
+  --color-fg-subtle: rgba(10, 14, 25, 0.22);
+  --color-border-default: var(--color-clear-border, #e1e1e1);
+  --color-border-emphasis: var(--color-clear-border-strong, #cecece);
+  --color-border-strong: rgba(10, 14, 25, 0.24);
+  --color-shell-surface: var(--color-clear-panel, #ffffff);
+  --color-shell-surface-secondary: var(--color-clear-porcelain, #f9f9f9);
+  --color-shell-surface-tertiary: var(--color-clear-porcelain-soft, #f2f2f2);
+  --color-shell-surface-elevated: #eeeeee;
+  --color-shell-surface-hover: var(--color-clear-porcelain-soft, #f2f2f2);
+  --color-shell-border-subtle: rgba(10, 14, 25, 0.06);
+  --color-shell-border-default: var(--color-clear-border, #e1e1e1);
+  --color-shell-border-strong: var(--color-clear-border-strong, #cecece);
+  --color-shell-shadow: var(--shadow-clear-restraint, 0 4px 20px rgba(0, 0, 0, 0.06));
+  --color-shell-shadow-strong: 0 16px 44px rgba(0, 0, 0, 0.12);
+  --color-hover: rgba(10, 14, 25, 0.04);
+  --color-active: rgba(10, 14, 25, 0.08);
+  --glass-bg-subtle: rgba(255, 255, 255, 0.65);
+  --glass-bg-light: rgba(255, 255, 255, 0.72);
+  --glass-bg-medium: rgba(255, 255, 255, 0.82);
+  --glass-bg-strong: rgba(255, 255, 255, 0.92);
+  --glass-border-subtle: rgba(10, 14, 25, 0.06);
+  --glass-border-light: rgba(10, 14, 25, 0.1);
+  --glass-border-medium: rgba(10, 14, 25, 0.15);
+  --glass-border-strong: rgba(10, 14, 25, 0.22);
 }
 
 /* ==========================================================================
@@ -44,6 +82,37 @@
 
 .nav-logo {
   font-family: var(--font-display);
+}
+
+/* ==========================================================================
+   Clear Product Surfaces
+   ========================================================================== */
+
+.product-surface {
+  border-color: var(--color-clear-border, #e1e1e1);
+  border-radius: var(--radius-clear-md, 8px);
+  background: var(--color-clear-panel, #ffffff);
+  box-shadow: var(--shadow-clear-restraint, 0 4px 20px rgba(0, 0, 0, 0.06));
+  color: var(--color-clear-onyx, #0a0e19);
+}
+
+.product-surface::after {
+  opacity: 0;
+}
+
+.product-surface--soft {
+  background: var(--color-clear-porcelain-soft, #f2f2f2);
+}
+
+.product-surface--accent {
+  border-color: var(--color-clear-onyx, #0a0e19);
+  background: var(--color-clear-onyx, #0a0e19);
+  box-shadow: none;
+  color: var(--color-clear-panel, #ffffff);
+}
+
+.product-kicker::before {
+  box-shadow: none;
 }
 
 /* ==========================================================================
@@ -74,7 +143,8 @@ html {
 
 /* Body Typography Polish */
 body {
-  letter-spacing: var(--tracking-tight, -0.015em);
+  background: var(--color-clear-porcelain, #f9f9f9);
+  letter-spacing: 0;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

@@ -6,6 +6,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const config = defineConfig({
 	extensions: ['.md'],
+	highlight: false,
 	layout: {
 		_: join(__dirname, 'src/lib/layouts/MarkdownLayout.svelte')
 	}

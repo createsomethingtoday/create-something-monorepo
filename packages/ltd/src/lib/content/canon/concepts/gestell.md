@@ -203,4 +203,4 @@ published: true
 <a href="/canon/foundations/philosophy">Canon Foundations: Philosophy</a>
 </li>
 </ul>
-
+</section>

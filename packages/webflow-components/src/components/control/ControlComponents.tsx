@@ -1,81 +1,55 @@
 import React, { CSSProperties, FormEvent, useEffect, useMemo, useState } from 'react';
 import { tokens } from '../../styles/tokens';
+import type {
+  ActionExecutionItem,
+  ActionPreviewItem,
+  ActionStatus,
+  ActivityEventItem,
+  AgentMessage,
+  ApprovalQueueItem,
+  ApprovalState,
+  ArtifactItem,
+  BusinessContextItem,
+  CheckStatus,
+  DecisionItem,
+  EvidenceItem,
+  OperatingLayer,
+  RiskLevel,
+  RuntimeCheck,
+  SourceStatusItem,
+  StatusTone,
+  SuggestedPrompt,
+  TriadTier,
+  WorkflowMetricItem,
+} from '@create-something/delivery-schema';
 
-export type TriadTier = 'Database' | 'Automation' | 'Judgment';
-export type StatusTone = 'neutral' | 'info' | 'success' | 'warning' | 'danger';
-export type CheckStatus = 'ok' | 'warning' | 'blocked' | 'idle';
-export type ApprovalState = 'review' | 'approved' | 'blocked';
+// Canonical shapes live in @create-something/delivery-schema (shared with the
+// agency Canon Control API). Re-exported so the .webflow.tsx wrappers keep
+// importing from this module. See docs/DELIVERY_SURFACE_SPEC.md.
+export type {
+  ActionExecutionItem,
+  ActionPreviewItem,
+  ActionStatus,
+  ActivityEventItem,
+  AgentMessage,
+  ApprovalQueueItem,
+  ApprovalState,
+  ArtifactItem,
+  BusinessContextItem,
+  CheckStatus,
+  DecisionItem,
+  EvidenceItem,
+  OperatingLayer,
+  RiskLevel,
+  RuntimeCheck,
+  SourceStatusItem,
+  StatusTone,
+  SuggestedPrompt,
+  TriadTier,
+  WorkflowMetricItem,
+};
+
 export type ApprovalRequestCredentials = Extract<RequestCredentials, 'omit' | 'same-origin' | 'include'>;
-export type ActionStatus = 'draft' | 'requires_approval' | 'allowed' | 'blocked';
-export type RiskLevel = 'low' | 'medium' | 'high';
-
-export interface EvidenceItem {
-  id?: string;
-  label: string;
-  detail?: string;
-  source?: string;
-  href?: string;
-  tone?: StatusTone;
-  timestamp?: string;
-  visibility?: 'public' | 'private' | 'internal';
-  status?: 'draft' | 'approved' | 'review' | 'blocked';
-  owner?: string;
-}
-
-export interface OperatingLayer {
-  tier: TriadTier;
-  title: string;
-  status: string;
-  description: string;
-  evidence?: string[];
-  tone?: StatusTone;
-}
-
-export interface ArtifactItem {
-  title: string;
-  type?: string;
-  description?: string;
-  href?: string;
-  visibility?: 'public' | 'private' | 'internal';
-  tone?: StatusTone;
-}
-
-export interface DecisionItem {
-  id?: string;
-  title: string;
-  description?: string;
-  owner?: string;
-  due?: string;
-  state?: ApprovalState | 'open' | 'ready';
-  tier?: TriadTier;
-}
-
-export interface ActionPreviewItem {
-  id: string;
-  label: string;
-  description: string;
-  status?: ActionStatus;
-  risk?: RiskLevel;
-  policyChecks?: string[];
-  evidence?: string[];
-}
-
-export interface AgentMessage {
-  role: 'agent' | 'operator';
-  body: string;
-  grounding?: string[];
-}
-
-export interface SuggestedPrompt {
-  label: string;
-  prompt: string;
-}
-
-export interface RuntimeCheck {
-  label: string;
-  status?: CheckStatus;
-  detail?: string;
-}
 
 type JsonList<T> = string | T[];
 
@@ -141,71 +115,6 @@ type WorkflowRuntime = {
   lastChecked?: string;
   checks?: RuntimeCheck[];
 };
-
-export interface BusinessContextItem {
-  id: string;
-  client: string;
-  project: string;
-  workflow: string;
-  environment: string;
-  status?: CheckStatus | 'active' | 'review' | 'blocked';
-  owner?: string;
-  detail?: string;
-}
-
-export interface WorkflowMetricItem {
-  label: string;
-  value: string;
-  detail?: string;
-  tone?: StatusTone;
-  trend?: string;
-}
-
-export interface SourceStatusItem {
-  system: string;
-  status?: CheckStatus;
-  detail: string;
-  lastSynced?: string;
-  owner?: string;
-  tier?: TriadTier;
-}
-
-export interface ApprovalQueueItem {
-  id: string;
-  actionId?: string;
-  title: string;
-  requester?: string;
-  requiredApprover: string;
-  status?: ApprovalState;
-  risk?: RiskLevel;
-  due?: string;
-  evidence?: string[];
-  policyChecks?: string[];
-  updatedBy?: string;
-  updatedAt?: string;
-}
-
-export interface ActionExecutionItem {
-  id: string;
-  actionId?: string;
-  title: string;
-  status?: 'preview' | 'queued' | 'approved' | 'blocked' | 'executed';
-  owner?: string;
-  system?: string;
-  risk?: RiskLevel;
-  rollback?: string;
-  lastUpdated?: string;
-}
-
-export interface ActivityEventItem {
-  id: string;
-  eventType?: 'context' | 'approval' | 'preview' | 'agent' | 'deploy' | 'evidence' | 'decision';
-  label: string;
-  detail?: string;
-  actor?: string;
-  timestamp?: string;
-  tone?: StatusTone;
-}
 
 type WorkflowContextPayload = {
   contextId?: string;

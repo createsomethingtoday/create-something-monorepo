@@ -11,6 +11,7 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.25.3",
     "agents": "^0.3.10",
+    "braintrust": "^2.2.2",
     "zod": "^3.23.0"
   },
   "devDependencies": {

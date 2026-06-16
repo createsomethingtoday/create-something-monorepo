@@ -1,0 +1,20 @@
+{
+	"name": "@create-something/delivery-schema",
+	"version": "0.1.0",
+	"description": "Canonical types for the CREATE SOMETHING delivery surface — engagements, approvals, evidence, artifacts, and activity shared by the agency Canon Control API and the Webflow control components.",
+	"private": true,
+	"type": "module",
+	"main": "src/index.ts",
+	"types": "src/index.ts",
+	"exports": {
+		".": "./src/index.ts"
+	},
+	"scripts": {
+		"check": "tsc --noEmit",
+		"typecheck": "tsc --noEmit",
+		"lint": "tsc --noEmit"
+	},
+	"devDependencies": {
+		"typescript": "^5.3.0"
+	}
+}

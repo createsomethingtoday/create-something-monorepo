@@ -1,6 +1,7 @@
 import { McpAgent } from 'agents/mcp';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { braintrustHealth } from './braintrust.js';
+import { resolveRuntimeConfig } from './config.js';
 import { createBlondishSyncMcpServer } from './mcp.js';
 import type { Env } from './types.js';
 
@@ -27,23 +28,28 @@ export default {
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS_HEADERS });
 
     if (url.pathname === '/' || url.pathname === '/health') {
+      const runtime = resolveRuntimeConfig(env);
       return jsonResponse({
         ok: true,
-        worker: 'halfdozen-blondish-sync-mcp',
+        worker: runtime.serverName,
         mode: 'operator_mcp',
         endpoints: {
           mcp: '/mcp',
           health: '/health',
         },
         config: {
-          blondish_source_data_source_configured: Boolean(env.BLONDISH_SUPPORT_TICKETS_DATA_SOURCE_ID?.trim()),
+          client: runtime.clientSlug,
+          tenant: runtime.tenantSlug,
+          client_display_name: runtime.clientDisplayName,
+          tool_prefix: runtime.toolPrefix,
+          client_source_data_source_configured: Boolean(runtime.sourceDataSourceId || runtime.sourceDataSourceTitle),
           halfdozen_target_data_source_configured: Boolean(env.HALFDOZEN_TICKETS_DATA_SOURCE_ID?.trim() || env.HALFDOZEN_TICKETS_DATABASE_ID?.trim() || env.HALFDOZEN_TICKETS_DATA_SOURCE_TITLE?.trim()),
-          blondish_status_property: env.BLONDISH_OS_STATUS_PROPERTY?.trim() || 'Status',
+          client_status_property: runtime.sourceStatusProperty || 'Status',
           braintrust: braintrustHealth(env),
         },
         secrets: {
           mcp_api_key_configured: Boolean(env.MCP_API_KEY?.trim()),
-          blondish_token_configured: Boolean(env.BLONDISH_NOTION_API_KEY?.trim()),
+          client_token_configured: Boolean((env.CLIENT_NOTION_API_KEY ?? env.BLONDISH_NOTION_API_KEY)?.trim()),
           halfdozen_token_configured: Boolean(env.HALFDOZEN_NOTION_API_KEY?.trim()),
         },
       });

@@ -122,12 +122,17 @@ The current package contains both Canon exports and compatibility exports. The l
 | **Template Search Page** | Standalone marketplace search experiment surface with search, filter sidebar, active chips, result grid, and no-results recovery | `apiBase`, `title`, `quickSearches`, `scopeOverride`, `defaultSort`, `noindex` |
 | **Template Search Sidebar** | Standalone marketplace sidebar with search, All/Featured/Landing/Free rows, dynamic category counts, and vertical filters | `apiBase`, `title`, `interactionMode`, `countMode`, `showSearch`, `showCategories`, `showCounts` |
 | **Template Search Results** | Standalone search results grid with inline no-results recovery | `apiBase`, `creatorSlug`, `creatorRecordId`, `scopeOverride`, `defaultSort`, `pageSize`, `emptyTitle` |
+| **Template Detail Hero** | CMS-bindable template detail hero with creator context, offer-aware CTAs, sticky CTA tracking, and desktop/mobile preview iframe | `templateName`, `categoryNames`, `categoryLinks`, `creatorName`, `price`, `marketplaceTemplateId`, `fulfillmentUrl`, `offerEnabled` |
 | **Marketplace Landing Hero** | Search-backed landing hero with template search form, popular category suggestions, and native-vs-template-search experiment routing | `apiBase`, `title`, `searchExperience`, `searchAction`, `templateSearchAction`, `queryParam`, `useSearchSuggestions`, `enableAnalytics` |
 | **Template Carousel Section** | Worker-backed editorial carousel for marketplace landing sections | `preset`, `title`, `ctaLink`, `scopeOverride`, `sortOverride`, `itemLimit`, `enableAnalytics` |
 | **Popular Category Grid** | Search-backed marketplace use-case grid with live counts and optional thumbnails | `apiBase`, `layout`, `categories`, `useSearchCategories`, `maxCategories`, `enableAnalytics` |
 | **Marketplace FAQ** | Accessible marketplace FAQ accordion with optional FAQPage JSON-LD | `items`, `openFirst`, `allowMultipleOpen`, `includeStructuredData`, `enableAnalytics` |
 | **Marketplace Landing Experiment Gate** | Optimizely-compatible test gate for control/treatment reveal and exposure tracking | `mode`, `trafficPercent`, `controlSelector`, `treatmentSelector`, `optimizelyExposureEvent` |
 | **Featured Creator Card** | CMS-bindable monthly featured creator card | `creatorName`, `creatorLink`, `creatorAvatar`, `headline`, `featuredTemplateCount`, `newTemplates90d`, `buyerDemand`, `categoryBreadth`, `topTemplateName`, `topTemplateImage` |
+
+#### Template detail category links
+
+For **Template Detail Hero**, prefer binding `Category URLs` from Airtable/Webflow sync instead of relying on label-to-slug inference. `Category Names` and `Category URLs` should use the same newline-delimited order, sourced from the linked Category Group records. Example: `Transportation & Automotive` can display as the breadcrumb label while its paired URL is `https://webflow.com/templates/category/transportation-websites`.
 
 #### Designer profile listings
 

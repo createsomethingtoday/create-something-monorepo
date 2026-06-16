@@ -16,6 +16,7 @@ test('buildTicketTitle mirrors source title exactly', () => {
   );
   assert.equal(buildTicketTitle('Create Database for all Merch + data & sales'), 'Create Database for all Merch + data & sales');
   assert.equal(buildTicketTitle('  '), 'BLONDISH support ticket');
+  assert.equal(buildTicketTitle('  ', 'Lightswitch'), 'Lightswitch support ticket');
 });
 
 test('mapHdStatusToOsStatus maps only approved reverse statuses', () => {

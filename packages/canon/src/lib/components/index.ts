@@ -25,6 +25,23 @@ export { default as PrivacyPolicyContent } from './PrivacyPolicyContent.svelte';
 export { default as TermsOfServiceContent } from './TermsOfServiceContent.svelte';
 export { default as CookieConsent } from './CookieConsent.svelte';
 
+// Clear communication primitives
+export {
+  ClearPageSection,
+  ClearProofStrip,
+  ClearStateRows,
+  ClearArtifactCard,
+  ClearCardGrid,
+  ClearReceiptGrid,
+  ClearCtaBand,
+  ClearErrorPage,
+  type ClearProofItem,
+  type ClearWorkflowState,
+  type ClearCardItem,
+  type ClearReceipt,
+  type ClearCtaItem
+} from './clear/index.js';
+
 // Form components
 export {
   TextField,

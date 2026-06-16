@@ -38,7 +38,14 @@ vi.mock('../src/utils/fetch-utils', () => {
 		stylesheets: []
 	}));
 
-	return { fetchHTML, parseHTML, fetchAsset, fetchAssetMetadata };
+	const isPlatformManagedHeading = (heading: any) => {
+		const className = typeof heading.getAttribute === 'function'
+			? heading.getAttribute('class') || ''
+			: heading.className || '';
+		return /(?:^|\s)w-commerce-/.test(className);
+	};
+
+	return { fetchHTML, parseHTML, fetchAsset, fetchAssetMetadata, isPlatformManagedHeading };
 });
 
 import { validateDesignerData } from '../src/validators/designer-validator';
@@ -1021,6 +1028,56 @@ describe('Accessibility Validator', () => {
 
 		expect(result.stats.missingAltText).toBe(0);
 		expect(result.issues.some((issue) => issue.id === 'missing-alt-text-critical')).toBe(false);
+	});
+
+	it('excludes Webflow Ecommerce fixed-tag headings from content heading hierarchy analysis', async () => {
+		const cartHeading = {
+			tagName: 'H4',
+			textContent: 'Your Cart',
+			getAttribute: (name: string) => name === 'class' ? 'w-commerce-commercecartheading cart_title' : null,
+			hasAttribute: (name: string) => name === 'class'
+		};
+		vi.mocked(parseHTML).mockReturnValue(createParsedHTML({
+			rawHtml: '<!doctype html><html><head><title>Cart Page</title></head><body><h1>Hero Title</h1><h2>Section Title</h2><p>Purpose-built content for this page.</p></body></html>',
+			document: {
+				querySelector: (selector: string) => selector === 'title' ? { textContent: 'Cart Page' } : null,
+				querySelectorAll: () => [],
+				body: {
+					textContent: 'Hero Title Section Title Purpose-built content for this page.',
+					innerHTML: '<h1>Hero Title</h1><h2>Section Title</h2>'
+				}
+			},
+			headings: [
+				{ tagName: 'H1', textContent: 'Hero Title' },
+				cartHeading,
+				{ tagName: 'H2', textContent: 'Section Title' }
+			]
+		}));
+
+		const result = await validateContent('https://example.com');
+
+		expect(result.issues.some((issue) => issue.id === 'heading-hierarchy-errors')).toBe(false);
+	});
+
+	it('excludes Webflow Ecommerce fixed-tag headings from heading hierarchy analysis', async () => {
+		const cartHeading = {
+			tagName: 'H4',
+			textContent: 'Your Cart',
+			getAttribute: (name: string) => name === 'class' ? 'w-commerce-commercecartheading cart_title' : null,
+			hasAttribute: (name: string) => name === 'class'
+		};
+		vi.mocked(parseHTML).mockReturnValue(createParsedHTML({
+			headings: [
+				{ tagName: 'H1', textContent: 'Hero Title' },
+				cartHeading,
+				{ tagName: 'H2', textContent: 'Section Title' }
+			]
+		}));
+
+		const result = await validateAccessibility('https://example.com');
+
+		expect(result.audit.headingStructure.errors.some((error: any) => error.type === 'skipped_level')).toBe(false);
+		expect(result.issues.some((issue) => issue.id === 'heading-structure-errors')).toBe(false);
 	});
 });
 
@@ -2238,5 +2295,89 @@ describe('Validation Submission Endpoint', () => {
 		const payload = await responseThree.json() as any;
 		expect(payload.reason).toBe('rate_limited');
 		expect(payload.limit.remaining).toBe(0);
+	});
+});
+
+describe('Document Outline', () => {
+	it('excludes headings inside display:none containers from the visible outline', async () => {
+		const { extractDocumentOutline, visibleOutlineHeadings } = await vi.importActual<typeof import('../src/utils/document-outline')>('../src/utils/document-outline');
+
+		const html = `<!doctype html><html><body>
+			<h1 class="heading-h1">Hero Title</h1>
+			<div style="display:none" class="w-commerce-commercecartcontainerwrapper">
+				<h4 class="w-commerce-commercecartheading">Your Cart</h4>
+			</div>
+			<h2>Section Title</h2>
+		</body></html>`;
+
+		const outline = await extractDocumentOutline(html);
+		expect(outline).not.toBeNull();
+		const visible = visibleOutlineHeadings(outline!);
+
+		expect(visible.map(h => h.level)).toEqual([1, 2]);
+		expect(outline!.find(h => h.text === 'Your Cart')).toMatchObject({ hidden: true, platformManaged: true });
+	});
+
+	it('excludes w-condition-invisible conditional-visibility headings', async () => {
+		const { extractDocumentOutline, visibleOutlineHeadings } = await vi.importActual<typeof import('../src/utils/document-outline')>('../src/utils/document-outline');
+
+		const html = `<!doctype html><html><body>
+			<h1>Hero</h1>
+			<div class="card w-condition-invisible"><h4>Hidden CMS card</h4></div>
+			<h2>Visible Section</h2>
+			<h3 class="w-condition-invisible">Hidden heading itself</h3>
+		</body></html>`;
+
+		const visible = visibleOutlineHeadings((await extractDocumentOutline(html))!);
+		expect(visible.map(h => [h.level, h.text])).toEqual([[1, 'Hero'], [2, 'Visible Section']]);
+	});
+
+	it('still reports genuine skips through the shared sequence walker', async () => {
+		const { extractDocumentOutline, visibleOutlineHeadings, analyzeHeadingSequence } = await vi.importActual<typeof import('../src/utils/document-outline')>('../src/utils/document-outline');
+
+		const html = '<body><h1>Title</h1><h4 class="card_title">Jumped</h4></body>';
+		const visible = visibleOutlineHeadings((await extractDocumentOutline(html))!);
+		const sequence = analyzeHeadingSequence(visible);
+
+		expect(sequence.hasSkippedLevels).toBe(true);
+		expect(sequence.skips[0]).toMatchObject({ fromLevel: 1, toLevel: 4, missingLevel: 2 });
+	});
+});
+
+describe('Issue Feedback Endpoint', () => {
+	it('accepts a false-positive report', async () => {
+		const response = await worker.fetch(
+			new Request('https://validation-worker.createsomething.workers.dev/app-validator/feedback', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					issueId: 'heading-hierarchy-errors',
+					category: 'Content & Accessibility',
+					pageUrl: 'https://example.webflow.io/',
+					note: 'Cart modal heading flagged again'
+				})
+			}),
+			{} as any,
+			createExecutionContext()
+		);
+
+		expect(response.status).toBe(200);
+		const payload = await response.json() as any;
+		expect(payload.received).toBe(true);
+		expect(payload.correlationId).toBeTruthy();
+	});
+
+	it('rejects feedback without an issueId', async () => {
+		const response = await worker.fetch(
+			new Request('https://validation-worker.createsomething.workers.dev/app-validator/feedback', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ note: 'no id' })
+			}),
+			{} as any,
+			createExecutionContext()
+		);
+
+		expect(response.status).toBe(400);
 	});
 });

@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { CubeMark } from '../brand/marks/index.js';
   import { getAnalytics } from '../analytics/client.js';
 
   interface QuickLink {
@@ -19,12 +20,16 @@
     description?: string;
   }
 
+  type FooterVisualStyle = 'classic' | 'clear';
+
   interface Props {
     mode?: 'ltd' | 'io' | 'space' | 'agency' | 'learn';
     aboutText?: string;
     showNewsletter?: boolean;
     newsletterTitle?: string;
     newsletterDescription?: string;
+    newsletterSubmitLabel?: string;
+    newsletterPendingLabel?: string;
     quickLinks?: QuickLink[];
     quickLinkGroups?: QuickLinkGroup[];
     footerCta?: FooterCta;
@@ -33,6 +38,8 @@
     showSocial?: boolean;
     turnstileSiteKey?: string;
     isAuthenticated?: boolean;
+    /** Visual treatment. Defaults preserve existing property footers. */
+    visualStyle?: FooterVisualStyle;
   }
 
   interface NewsletterApiResponse {
@@ -46,6 +53,8 @@
     showNewsletter = false,
     newsletterTitle = 'Stay updated with new experiments',
     newsletterDescription = 'Get notified when new research is published. Real metrics, tracked experiments, honest learnings.',
+    newsletterSubmitLabel = 'Get the note',
+    newsletterPendingLabel = 'Sending request...',
     quickLinks = [],
     quickLinkGroups = [],
     footerCta,
@@ -53,7 +62,8 @@
     copyrightText,
     showSocial = false,
     turnstileSiteKey = '',
-    isAuthenticated = false
+    isAuthenticated = false,
+    visualStyle = 'classic'
   }: Props = $props();
 
   // Map mode to target for cross-domain SSO
@@ -198,6 +208,9 @@
         ? [{ title: 'Quick Links', ariaLabel: 'Quick links', links: quickLinks }]
         : []
   );
+  const propertyDirectoryTitle = $derived(
+    visualStyle === 'clear' ? 'CREATE SOMETHING' : 'Modes of Being'
+  );
 
   // Cross-property transition handler
   function handleCrossPropertyClick(
@@ -237,7 +250,7 @@
   }
 </script>
 
-<footer class="footer">
+<footer class="footer" class:footer-clear={visualStyle === 'clear'}>
   <!-- Newsletter Section (Optional) -->
   {#if showNewsletter}
     <section id="newsletter" class="py-20 px-6">
@@ -280,7 +293,7 @@
                 disabled={isSubmitting}
                 class="newsletter-button group px-8 py-4 flex items-center justify-center gap-2"
               >
-                <span>{isSubmitting ? 'Subscribing...' : 'Subscribe'}</span>
+                <span>{isSubmitting ? newsletterPendingLabel : newsletterSubmitLabel}</span>
                 {#if !isSubmitting}
                   <svg
                     class="w-4 h-4 transition-transform group-hover:translate-x-1"
@@ -325,7 +338,13 @@
     <div class="footer-inner shell-inner">
       <div class="footer-links-grid">
         <!-- About / Brand Column -->
-        <div>
+        <div class="footer-brand-column">
+          {#if visualStyle === 'clear'}
+            <a href="/" class="footer-mark" aria-label="CREATE SOMETHING home">
+              <CubeMark size={44} variant="mono" />
+            </a>
+          {/if}
+
           {#if aboutText}
             <div class="brand-title mb-4">CREATE SOMETHING</div>
             <p class="brand-description max-w-md mb-6">
@@ -407,7 +426,7 @@
 
         <!-- Modes of Being (REQUIRED) - With Hermeneutic Transitions -->
         <nav aria-label="CREATE SOMETHING properties">
-          <h3 class="section-title mb-4">Modes of Being</h3>
+          <h3 class="section-title mb-4">{propertyDirectoryTitle}</h3>
           <ul class="space-y-3">
             <li>
               <a
@@ -804,6 +823,192 @@
   @media (min-width: 1024px) {
     .footer-links-grid {
       grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.55fr) minmax(0, 1.1fr);
+    }
+  }
+
+  .footer-clear {
+    background: var(--color-clear-porcelain, #f9f9f9);
+    color: var(--color-clear-onyx, #0a0e19);
+    border-top: 1px solid var(--color-clear-border, #e1e1e1);
+  }
+
+  .footer-clear .footer-links {
+    padding-top: 5rem;
+    padding-bottom: 1.25rem;
+    padding-inline: 0;
+    background: var(--color-clear-porcelain, #f9f9f9);
+  }
+
+  .footer-clear .footer-inner {
+    width: min(var(--content-width-clear, 85rem), calc(100% - 2.5rem));
+    max-width: none;
+  }
+
+  .footer-clear .footer-links-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2rem 2.5rem;
+    align-items: start;
+    padding: clamp(1.5rem, 3vw, 2rem);
+    border: 1px solid var(--color-clear-border, #e1e1e1);
+    border-radius: 8px;
+    background: var(--color-clear-panel, #ffffff);
+    box-shadow: 0 12px 48px rgba(10, 14, 25, 0.08);
+  }
+
+  .footer-clear .footer-brand-column {
+    display: grid;
+    gap: 1rem;
+    align-content: space-between;
+    min-height: 100%;
+  }
+
+  .footer-clear .footer-mark {
+    --color-fg-primary: var(--color-clear-onyx, #0a0e19);
+    display: inline-grid;
+    place-items: center;
+    width: 3rem;
+    height: 3rem;
+    margin-bottom: 1.75rem;
+    color: var(--color-clear-onyx, #0a0e19);
+    text-decoration: none;
+  }
+
+  .footer-clear .brand-title {
+    color: var(--color-clear-onyx, #0a0e19);
+    font-family: var(--font-mono);
+    font-size: 0.86rem;
+    font-weight: var(--font-medium);
+    letter-spacing: 0;
+    text-transform: uppercase;
+  }
+
+  .footer-clear .brand-description {
+    color: var(--color-clear-grey, #636363);
+    font-size: 0.95rem;
+    line-height: 1.55;
+  }
+
+  .footer-clear .footer-cta {
+    width: min(100%, 17.5rem);
+    border-color: var(--color-clear-onyx, #0a0e19);
+    border-radius: var(--radius-clear-sm, 4px);
+    background: var(--color-clear-onyx, #0a0e19);
+    color: #ffffff;
+    box-shadow: none;
+  }
+
+  .footer-clear .footer-cta:hover {
+    border-color: #1a2030;
+    background: #1a2030;
+    opacity: 1;
+    transform: none;
+  }
+
+  .footer-clear .footer-cta-description {
+    color: rgba(255, 255, 255, 0.72);
+  }
+
+  .footer-clear .section-title {
+    color: var(--color-clear-grey, #636363);
+    font-family: var(--font-mono);
+    font-size: 0.74rem;
+    font-weight: var(--font-medium);
+    letter-spacing: 0;
+    text-transform: uppercase;
+  }
+
+  .footer-clear .section-description {
+    color: var(--color-clear-grey, #636363);
+  }
+
+  .footer-clear .footer-link {
+    display: block;
+    width: fit-content;
+    max-width: 100%;
+    color: var(--color-clear-onyx, #0a0e19);
+    border-radius: var(--radius-clear-sm, 4px);
+    padding: 0.1rem 0;
+    font-size: 0.96rem;
+    line-height: 1.35;
+  }
+
+  .footer-clear .footer-link:hover,
+  .footer-clear .footer-link.active {
+    color: var(--color-clear-onyx, #0a0e19);
+    opacity: 1;
+  }
+
+  .footer-clear .link-label,
+  .footer-clear .link-description,
+  .footer-clear .copyright-text,
+  .footer-clear .legal-link,
+  .footer-clear .legal-separator,
+  .footer-clear .quote-text {
+    color: var(--color-clear-grey, #636363);
+  }
+
+  .footer-clear .link-description {
+    max-width: 18rem;
+    line-height: 1.45;
+  }
+
+  .footer-clear .social-link {
+    border-color: var(--color-clear-border, #e1e1e1);
+    border-radius: var(--radius-clear-sm, 4px);
+    background: var(--color-clear-panel, #ffffff);
+    color: var(--color-clear-onyx, #0a0e19);
+  }
+
+  .footer-clear .social-link:hover {
+    border-color: var(--color-clear-border-strong, #cecece);
+    background: var(--color-clear-porcelain-soft, #f2f2f2);
+    color: var(--color-clear-onyx, #0a0e19);
+  }
+
+  .footer-clear .footer-copyright,
+  .footer-clear .footer-quote {
+    padding-inline: 0;
+    border-top: 0;
+    background: var(--color-clear-porcelain, #f9f9f9);
+  }
+
+  .footer-clear .footer-copyright .footer-inner {
+    padding: 0.35rem 0 1.4rem;
+  }
+
+  @media (min-width: 1024px) {
+    .footer-clear .footer-links-grid {
+      grid-template-columns: minmax(14rem, 0.82fr) minmax(24rem, 1.12fr) minmax(17rem, 0.9fr);
+    }
+
+    .footer-clear .footer-link-groups {
+      grid-template-columns: repeat(2, minmax(10rem, 1fr));
+      gap: 2rem 2.4rem;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .footer-clear .footer-links {
+      padding-top: 3rem;
+      padding-bottom: 1rem;
+    }
+
+    .footer-clear .footer-inner {
+      width: min(100% - 1.5rem, var(--content-width-clear, 85rem));
+    }
+
+    .footer-clear .footer-links-grid {
+      gap: 1.8rem;
+      padding: 1.2rem;
+    }
+
+    .footer-clear .footer-brand-column {
+      padding-bottom: 1.35rem;
+      border-bottom: 1px solid var(--color-clear-border, #e1e1e1);
+    }
+
+    .footer-clear .footer-mark {
+      margin-bottom: 0.35rem;
     }
   }
 </style>
