@@ -25,8 +25,8 @@
 </script>
 
 <SEO
-	title="Principles"
-	description="All principles from the masters who define 'less, but better.' Design standards that have stood the test of time."
+	title="Decision Principles"
+	description="Reusable principles that help CREATE SOMETHING teams decide what to keep, remove, prove, and ship."
 	propertyName="ltd"
 	breadcrumbs={[
 		{ name: 'Home', url: 'https://createsomething.ltd' },
@@ -38,10 +38,10 @@
 <section class="pt-24 pb-16 px-6 border-b border-canon">
 	<div class="max-w-7xl mx-auto">
 		<p class="type-sm tracking-widest uppercase opacity-60-canon mb-4">The Canon</p>
-		<h1 class="mb-6">Principles</h1>
+		<h1 class="mb-6">Make judgment reusable.</h1>
 		<p class="type-xl opacity-70-canon max-w-3xl leading-relaxed">
-			Aggregated wisdom from the masters. These principles guide everything we build at Create
-			Something.
+			Principles should help a team decide what to keep, remove, prove, or ship. Each one is a
+			reusable rule for making better work easier to recognize.
 		</p>
 	</div>
 </section>

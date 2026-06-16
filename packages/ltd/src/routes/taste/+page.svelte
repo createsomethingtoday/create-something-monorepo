@@ -38,8 +38,8 @@
 </script>
 
 <SEO
-  title="Taste"
-  description="Human-curated visual references from Are.na that inform Canon design decisions. Minimalist design inspiration following Dieter Rams' principle: less, but better."
+  title="Taste Pattern"
+  description="Visual references, source channels, and derived principles that make CREATE SOMETHING taste inspectable before it becomes a standard."
   keywords="minimalist design, visual references, design inspiration, Dieter Rams, Swiss design, Canon, Are.na curation"
   propertyName="ltd"
   breadcrumbs={[
@@ -52,10 +52,10 @@
 <section class="header-section">
   <div class="max-w-7xl mx-auto px-6">
     <p class="eyebrow">Visual Reference</p>
-    <h1 class="mb-6">Taste</h1>
+    <h1 class="mb-6">Make taste inspectable.</h1>
     <p class="tagline">
-      Human-curated visual references from Are.na that inform Canon design decisions. The aesthetic
-      emerges through disciplined selection.
+      Human-curated visual references from Are.na, source channels, and derived principles that
+      show why a design decision earns its place.
     </p>
 
     <!-- Stats -->
