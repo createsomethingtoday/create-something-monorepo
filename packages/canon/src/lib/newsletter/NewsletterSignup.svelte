@@ -19,6 +19,8 @@
     description?: string;
     /** Short form panel label */
     actionLabel?: string;
+    /** Submit button label */
+    submitLabel?: string;
     /** Supporting note below the form */
     note?: string;
     /** API endpoint for submission */
@@ -32,6 +34,7 @@
     headline = 'Stay in the loop',
     description = 'Get updates on new experiments and research.',
     actionLabel = 'Join the list',
+    submitLabel = 'Join the list',
     note = 'Occasional notes. Unsubscribe whenever it stops being useful.',
     endpoint = '/api/newsletter',
     source
@@ -172,9 +175,9 @@
             <button type="submit" class="submit-button" disabled={status === 'loading'}>
               {#if status === 'loading'}
                 <span class="loading-spinner" aria-hidden="true"></span>
-                <span class="visually-hidden">Subscribing...</span>
+                <span class="visually-hidden">Sending request...</span>
               {:else}
-                Subscribe
+                {submitLabel}
               {/if}
             </button>
           </div>

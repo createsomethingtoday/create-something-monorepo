@@ -25,6 +25,7 @@
     "build:clients": "node scripts/workspace-lane-run.mjs clients build",
     "build:labs": "node scripts/workspace-lane-run.mjs labs build",
     "bootstrap:worktree": "bash ./scripts/bootstrap-worktree.sh",
+    "ona:rollout:check": "node scripts/ona-rollout-check.mjs",
     "build:lib": "pnpm --filter @create-something/canon package",
     "build:ltd": "pnpm --filter @create-something/ltd build",
     "build:io": "pnpm --filter @create-something/io build",
