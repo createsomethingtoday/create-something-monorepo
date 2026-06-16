@@ -33,6 +33,27 @@ HEALTH_STALE_AFTER_MS = "43200000"
 HEALTH_REVIEW_UTC_HOURS = "4,13,18,23"
 DAILY_ALARMS_CT = "06:00,09:00"
 ALARM_TTL_MS = "2700000"
+OPERATOR_REMINDER_EMAIL_TO = "micah@createsomething.io"
+OPERATOR_REMINDER_GMAIL_ENTITY_ID = "default"
+OPERATOR_REMINDER_GMAIL_TOOL = "GMAIL_SEND_EMAIL"
+OPERATOR_REMINDERS_JSON = """
+[
+  {
+    "id": "grant-foust-follow-up-2026-05-11",
+    "client": "Grant Foust",
+    "due_at": "2026-05-11T14:00:00.000Z",
+    "subject": "Follow up with Grant Foust",
+    "email_subject": "Reminder: follow up with Grant Foust",
+    "reason": "Grant reached out for a meeting. A meeting URL was shared, but he has not confirmed a time yet. The relationship is still warm.",
+    "detail": "Dental practitioner in the DFW/Burleson area; interested in CREATE SOMETHING / agent-native automation. Prior context points to auditing current dental-system automations and mapping remaining manual gaps.",
+    "action": "Follow up with Grant. Resend the meeting URL or propose a specific time for a quick workflow audit conversation.",
+    "channels": ["gmail", "ink"],
+    "notion_url": "https://www.notion.so/30afa8740b15814ba487eb770c2911e8",
+    "linear_issue": "CRE-189",
+    "ttl_ms": 86400000
+  }
+]
+"""
 HEALTH_SELF_ORIGIN = "https://ink.createsomething.agency"
 HEALTH_SELF_CHECK_ENABLED = "false"
 HEALTH_CHECKS_JSON = """
@@ -99,5 +120,6 @@ HEALTH_CHECKS_JSON = """
 # Secrets required before production deploy:
 # - INK_DEVICE_TOKEN: Core Ink read/heartbeat/clear token
 # - INK_SOURCE_TOKEN: agent/MCP/source write token
+# - COMPOSIO_API_KEY: Composio API key for Gmail reminder delivery
 # Optional compatibility token:
 # - INK_BRIDGE_TOKEN: accepted for both device and source roles

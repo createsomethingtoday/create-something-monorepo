@@ -1,4 +1,5 @@
 import { DurableObject } from 'cloudflare:workers';
+import { ComposioClient } from '@create-something/composio-bridge';
 import { buildOperatorBrief, toFirmwareBrief } from './brief.js';
 import { buildInkClock } from './clock.js';
 import { isAuthorized } from './auth.js';
@@ -11,6 +12,13 @@ import {
 } from './health-review-runs.js';
 import { collectRemoteHealthChecks, configuredRemoteHealthChecks } from './remote-health-checks.js';
 import { dueDailyAlarms, shouldRunHealthReviewAtUtcHour } from './scheduled-alarms.js';
+import {
+  DEFAULT_GMAIL_ENTITY_ID,
+  DEFAULT_GMAIL_TOOL,
+  buildReminderAlert,
+  buildReminderEmail,
+  dueOperatorReminders
+} from './operator-reminders.js';
 import type {
   DeviceHeartbeatInput,
   HealthReviewReport,
@@ -36,6 +44,11 @@ interface Env {
   HEALTH_REVIEW_UTC_HOURS?: string;
   DAILY_ALARMS_CT?: string;
   ALARM_TTL_MS?: string;
+  OPERATOR_REMINDERS_JSON?: string;
+  OPERATOR_REMINDER_EMAIL_TO?: string;
+  OPERATOR_REMINDER_GMAIL_ENTITY_ID?: string;
+  OPERATOR_REMINDER_GMAIL_TOOL?: string;
+  COMPOSIO_API_KEY?: string;
   INK_BRIDGE_TOKEN?: string;
   INK_DEVICE_TOKEN?: string;
   INK_SOURCE_TOKEN?: string;
@@ -65,6 +78,14 @@ interface HealthReviewRunResult {
   alert?: StoredAlert;
   cleared?: number;
   brief: ReturnType<typeof buildOperatorBrief>;
+}
+
+interface ReminderDeliveryResult {
+  ok: true;
+  reminder_id: string;
+  channel: string;
+  status: string;
+  detail: Record<string, unknown>;
 }
 
 function json(data: unknown, init: ResponseInit = {}): Response {
@@ -400,6 +421,21 @@ export class InkState extends DurableObject<Env> {
           payload_json TEXT NOT NULL
         );
       `);
+      this.ctx.storage.sql.exec(`
+        CREATE TABLE IF NOT EXISTS reminder_deliveries (
+          id TEXT PRIMARY KEY,
+          reminder_id TEXT NOT NULL,
+          channel TEXT NOT NULL,
+          status TEXT NOT NULL,
+          delivered_at INTEGER NOT NULL,
+          updated_at INTEGER NOT NULL,
+          detail_json TEXT NOT NULL
+        );
+      `);
+      this.ctx.storage.sql.exec(`
+        CREATE INDEX IF NOT EXISTS idx_reminder_deliveries_lookup
+        ON reminder_deliveries(reminder_id, channel, status);
+      `);
     });
   }
 
@@ -448,6 +484,58 @@ export class InkState extends DurableObject<Env> {
     );
 
     return { ok: true, alert, brief: this.brief('core-ink') };
+  }
+
+  hasReminderDelivery(reminderId: string, channel: string): { ok: true; delivered: boolean } {
+    const normalizedReminderId = reminderId.trim();
+    const normalizedChannel = channel.trim();
+    if (!normalizedReminderId || !normalizedChannel) return { ok: true, delivered: false };
+
+    const row = this.ctx.storage.sql
+      .exec<{ id: string }>(
+        `SELECT id FROM reminder_deliveries
+         WHERE reminder_id = ? AND channel = ? AND status = 'sent'
+         LIMIT 1`,
+        normalizedReminderId,
+        normalizedChannel
+      )
+      .toArray()[0];
+
+    return { ok: true, delivered: Boolean(row) };
+  }
+
+  recordReminderDelivery(input: {
+    reminder_id: string;
+    channel: string;
+    status: string;
+    detail?: Record<string, unknown>;
+  }): ReminderDeliveryResult {
+    const now = Date.now();
+    const reminderId = input.reminder_id.trim();
+    const channel = input.channel.trim();
+    const status = input.status.trim() || 'unknown';
+    const id = `reminder:${reminderId}:${channel}`;
+
+    this.ctx.storage.sql.exec(
+      `INSERT OR REPLACE INTO reminder_deliveries
+        (id, reminder_id, channel, status, delivered_at, updated_at, detail_json)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      id,
+      reminderId,
+      channel,
+      status,
+      now,
+      now,
+      JSON.stringify(input.detail ?? {})
+    );
+
+    return {
+      ok: true,
+      reminder_id: reminderId,
+      channel,
+      status,
+      detail: input.detail ?? {}
+    };
   }
 
   setHealthSnapshot(input: HealthSnapshotInput): {
@@ -845,6 +933,118 @@ async function runScheduledDailyAlarms(env: Env, nowMs = Date.now()): Promise<{
   return { ok: true, checked_at: new Date(nowMs).toISOString(), fired };
 }
 
+function gmailTool(env: Env): string {
+  return env.OPERATOR_REMINDER_GMAIL_TOOL?.trim() || DEFAULT_GMAIL_TOOL;
+}
+
+function gmailEntityId(env: Env): string {
+  return env.OPERATOR_REMINDER_GMAIL_ENTITY_ID?.trim() || DEFAULT_GMAIL_ENTITY_ID;
+}
+
+async function sendReminderGmail(env: Env, reminder: ReturnType<typeof dueOperatorReminders>[number]['reminder']): Promise<Record<string, unknown>> {
+  if (!env.COMPOSIO_API_KEY?.trim()) {
+    throw new Error('COMPOSIO_API_KEY is not configured.');
+  }
+
+  const email = buildReminderEmail(reminder);
+  if (!email.recipientEmail) {
+    throw new Error('No reminder email recipient configured.');
+  }
+
+  const client = new ComposioClient({ apiKey: env.COMPOSIO_API_KEY });
+  const result = await client.executeTool(
+    gmailTool(env),
+    {
+      user_id: 'me',
+      recipient_email: email.recipientEmail,
+      subject: email.subject,
+      body: email.body,
+      is_html: false
+    },
+    gmailEntityId(env)
+  );
+
+  return {
+    tool: gmailTool(env),
+    entity_id: gmailEntityId(env),
+    recipient: email.recipientEmail,
+    response_keys: Object.keys(result).sort()
+  };
+}
+
+async function runScheduledOperatorReminders(
+  env: Env,
+  nowMs = Date.now(),
+  options: { dryRun?: boolean } = {}
+): Promise<{
+  ok: true;
+  checked_at: string;
+  dry_run: boolean;
+  fired: Array<{ reminder_id: string; channel: string; status: string }>;
+}> {
+  const due = dueOperatorReminders(env, nowMs);
+  const dryRun = Boolean(options.dryRun);
+  if (!due.length) {
+    return { ok: true, checked_at: new Date(nowMs).toISOString(), dry_run: dryRun, fired: [] };
+  }
+
+  const stub = stateStub(env);
+  const fired: Array<{ reminder_id: string; channel: string; status: string }> = [];
+
+  for (const { reminder } of due) {
+    if (reminder.channels.includes('ink')) {
+      if (dryRun) {
+        fired.push({ reminder_id: reminder.id, channel: 'ink', status: 'dry_run' });
+      } else {
+        const delivery = await stub.hasReminderDelivery(reminder.id, 'ink');
+        if (!delivery.delivered) {
+          const alert = buildReminderAlert(reminder);
+          await stub.addAlert(alert);
+          await stub.recordReminderDelivery({
+            reminder_id: reminder.id,
+            channel: 'ink',
+            status: 'sent',
+            detail: { alert_id: alert.id ?? `operator-reminder:${reminder.id}` }
+          });
+          fired.push({ reminder_id: reminder.id, channel: 'ink', status: 'sent' });
+        }
+      }
+    }
+
+    if (reminder.channels.includes('gmail')) {
+      if (dryRun) {
+        fired.push({ reminder_id: reminder.id, channel: 'gmail', status: 'dry_run' });
+        continue;
+      }
+
+      const delivery = await stub.hasReminderDelivery(reminder.id, 'gmail');
+      if (!delivery.delivered) {
+        try {
+          const detail = await sendReminderGmail(env, reminder);
+          await stub.recordReminderDelivery({
+            reminder_id: reminder.id,
+            channel: 'gmail',
+            status: 'sent',
+            detail
+          });
+          fired.push({ reminder_id: reminder.id, channel: 'gmail', status: 'sent' });
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error);
+          await stub.recordReminderDelivery({
+            reminder_id: reminder.id,
+            channel: 'gmail',
+            status: 'failed',
+            detail: { error: message }
+          });
+          fired.push({ reminder_id: reminder.id, channel: 'gmail', status: 'failed' });
+        }
+      }
+    }
+  }
+
+  return { ok: true, checked_at: new Date(nowMs).toISOString(), dry_run: dryRun, fired };
+}
+
 async function route(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
   const path = url.pathname.replace(/\/+$/, '') || '/';
@@ -880,6 +1080,7 @@ async function route(request: Request, env: Env): Promise<Response> {
         'POST /ink/health-review/request',
         'POST /ink/health-review/run',
         'POST /ink/alarms/run',
+        'POST /ink/reminders/run',
         'POST /ink/device-heartbeat',
         'POST /ink/clear'
       ]
@@ -1019,6 +1220,15 @@ async function route(request: Request, env: Env): Promise<Response> {
     return json(await runScheduledDailyAlarms(env, nowMs));
   }
 
+  if (method === 'POST' && path === '/ink/reminders/run') {
+    const body: { now?: number | string; dry_run?: boolean } = await parseJsonBody<{
+      now?: number | string;
+      dry_run?: boolean;
+    }>(request).catch(() => ({}));
+    const nowMs = parseEpoch(body.now, Date.now()) ?? Date.now();
+    return json(await runScheduledOperatorReminders(env, nowMs, { dryRun: Boolean(body.dry_run) }));
+  }
+
   if (method === 'POST' && (path === '/ink/source-event' || path === '/ink/operator-event')) {
     const body = await parseJsonBody<OperatorEventInput>(request);
     return json(await stub.recordEvent(body));
@@ -1054,6 +1264,7 @@ export default {
         try {
           const nowMs = controller.scheduledTime ?? Date.now();
           await runScheduledDailyAlarms(env, nowMs);
+          await runScheduledOperatorReminders(env, nowMs);
           if (shouldRunHealthReviewAtUtcHour(env.HEALTH_REVIEW_UTC_HOURS, nowMs)) {
             await collectAndRunHealthReview(env, 'scheduled');
           }

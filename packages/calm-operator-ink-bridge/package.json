@@ -19,5 +19,8 @@
     "tsx": "^4.21.0",
     "typescript": "^5.7.2",
     "wrangler": "^4.75.0"
+  },
+  "dependencies": {
+    "@create-something/composio-bridge": "workspace:*"
   }
 }
