@@ -7,46 +7,63 @@
  * @packageDocumentation
  */
 
-import type { NewsletterRequest, NewsletterResult, TurnstileResponse, PropertyDomain } from './types.js';
+import type {
+  NewsletterRequest,
+  NewsletterResult,
+  TurnstileResponse,
+  PropertyDomain
+} from './types.js';
+import { recordServerConversion } from '../analytics/conversions.js';
+import type { Property } from '../analytics/types.js';
 
 /**
  * Environment bindings required for newsletter operations
  */
 interface NewsletterEnv {
-	DB: D1Database;
-	CACHE?: KVNamespace;
-	RESEND_API_KEY: string;
-	TURNSTILE_SECRET_KEY?: string;
+  DB: D1Database;
+  CACHE?: KVNamespace;
+  RESEND_API_KEY: string;
+  TURNSTILE_SECRET_KEY?: string;
 }
 
 interface D1Database {
-	prepare(query: string): D1PreparedStatement;
+  prepare(query: string): D1PreparedStatement;
+  batch<T = unknown>(statements: D1PreparedStatement[]): Promise<Array<D1Result<T>>>;
 }
 
 interface D1PreparedStatement {
-	bind(...args: unknown[]): D1PreparedStatement;
-	run(): Promise<D1Result>;
-	first<T = unknown>(): Promise<T | null>;
+  bind(...args: unknown[]): D1PreparedStatement;
+  run(): Promise<D1Result>;
+  first<T = unknown>(): Promise<T | null>;
+  all<T = unknown>(): Promise<D1Result<T>>;
 }
 
-interface D1Result {
-	success: boolean;
+interface D1Result<T = unknown> {
+  success: boolean;
+  results?: T[];
 }
 
 interface ExistingSubscriber {
-	email: string;
-	confirmed_at: string | null;
-	unsubscribed_at: string | null;
-	status: string | null;
+  email: string;
+  confirmed_at: string | null;
+  unsubscribed_at: string | null;
+  status: string | null;
 }
 
 interface KVNamespace {
-	get(key: string): Promise<string | null>;
-	put(key: string, value: string, options?: { expirationTtl?: number }): Promise<void>;
+  get(key: string): Promise<string | null>;
+  put(key: string, value: string, options?: { expirationTtl?: number }): Promise<void>;
 }
 
 const RATE_LIMIT_WINDOW = 60 * 60; // 1 hour in seconds
 const RATE_LIMIT_MAX = 3; // Max signups per IP per hour
+const VALID_PROPERTIES: Property[] = ['space', 'io', 'agency', 'ltd', 'lms'];
+
+function normalizeProperty(value: unknown): Property | null {
+  return typeof value === 'string' && VALID_PROPERTIES.includes(value as Property)
+    ? (value as Property)
+    : null;
+}
 
 // =============================================================================
 // SHARED REQUEST HANDLER
@@ -54,7 +71,7 @@ const RATE_LIMIT_MAX = 3; // Max signups per IP per hour
 
 /**
  * Create newsletter subscription handler for SvelteKit routes.
- * 
+ *
  * Usage in +server.ts:
  * ```ts
  * import { createNewsletterHandler } from '@create-something/canon/newsletter';
@@ -62,32 +79,39 @@ const RATE_LIMIT_MAX = 3; // Max signups per IP per hour
  * ```
  */
 export function createNewsletterHandler(options: { property: PropertyDomain }) {
-	return async ({ request, platform, getClientAddress }: {
-		request: Request;
-		platform?: { env?: NewsletterEnv };
-		getClientAddress: () => string;
-	}) => {
-		const { json } = await import('@sveltejs/kit');
-		
-		const body = (await request.json()) as NewsletterRequest;
-		
-		console.log(`[NewsletterAPI:${options.property}] Signup`, { email: body.email });
-		
-		const { result, status } = await processSubscription(
-			body,
-			platform?.env,
-			getClientAddress(),
-			options.property
-		);
-		
-		if (result.success) {
-			console.log(`[NewsletterAPI:${options.property}] Signup successful`, { email: body.email });
-		} else {
-			console.warn(`[NewsletterAPI:${options.property}] Signup failed`, { email: body.email, message: result.message });
-		}
-		
-		return json(result, { status });
-	};
+  return async ({
+    request,
+    platform,
+    getClientAddress
+  }: {
+    request: Request;
+    platform?: { env?: NewsletterEnv };
+    getClientAddress: () => string;
+  }) => {
+    const { json } = await import('@sveltejs/kit');
+
+    const body = (await request.json()) as NewsletterRequest;
+
+    console.log(`[NewsletterAPI:${options.property}] Signup`, { email: body.email });
+
+    const { result, status } = await processSubscription(
+      body,
+      platform?.env,
+      getClientAddress(),
+      options.property
+    );
+
+    if (result.success) {
+      console.log(`[NewsletterAPI:${options.property}] Signup successful`, { email: body.email });
+    } else {
+      console.warn(`[NewsletterAPI:${options.property}] Signup failed`, {
+        email: body.email,
+        message: result.message
+      });
+    }
+
+    return json(result, { status });
+  };
 }
 
 // =============================================================================
@@ -99,7 +123,7 @@ export function createNewsletterHandler(options: { property: PropertyDomain }) {
  * Uses inline styles for email client compatibility (Gmail strips <style> tags)
  */
 export function generateConfirmationEmailHtml(confirmUrl: string): string {
-	return `<!DOCTYPE html>
+  return `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8">
@@ -114,8 +138,8 @@ export function generateConfirmationEmailHtml(confirmUrl: string): string {
     <div style="line-height: 1.8;">
       <p style="font-style: italic; color: #ffffff; font-size: 20px; margin: 30px 0;">"Weniger, aber besser."</p>
       <p style="color: #b3b3b3; margin-bottom: 20px;">Less, but better. This guides everything we build.</p>
-      <p style="color: #b3b3b3; margin-bottom: 20px;">Please confirm your subscription to receive occasional updates on experiments in AI-native development—what works, what doesn't, why it matters.</p>
-      <a href="${confirmUrl}" style="display: inline-block; margin-top: 20px; padding: 12px 24px; background: #ffffff; color: #000000; text-decoration: none; font-weight: 500;">Confirm Subscription</a>
+      <p style="color: #b3b3b3; margin-bottom: 20px;">Please confirm that you want occasional notes on research, runtime evidence, and operating patterns worth carrying into the next decision.</p>
+      <a href="${confirmUrl}" style="display: inline-block; margin-top: 20px; padding: 12px 24px; background: #ffffff; color: #000000; text-decoration: none; font-weight: 500;">Confirm the note</a>
       <p style="margin-top: 30px; font-size: 14px; color: #808080;">If you didn't request this subscription, you can safely ignore this email.</p>
     </div>
 
@@ -131,10 +155,13 @@ export function generateConfirmationEmailHtml(confirmUrl: string): string {
  * Generate the welcome email HTML template
  * Uses inline styles for email client compatibility (Gmail strips <style> tags)
  */
-export function generateWelcomeEmailHtml(unsubscribeToken: string, property: PropertyDomain): string {
-	const unsubscribeDomain = `createsomething.${property}`;
+export function generateWelcomeEmailHtml(
+  unsubscribeToken: string,
+  property: PropertyDomain
+): string {
+  const unsubscribeDomain = `createsomething.${property}`;
 
-	return `<!DOCTYPE html>
+  return `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8">
@@ -149,8 +176,8 @@ export function generateWelcomeEmailHtml(unsubscribeToken: string, property: Pro
     <div style="line-height: 1.8;">
       <p style="font-style: italic; color: #ffffff; font-size: 20px; margin: 30px 0;">"Weniger, aber besser."</p>
       <p style="color: #b3b3b3; margin-bottom: 20px;">Less, but better. This guides everything we build.</p>
-      <p style="color: #b3b3b3; margin-bottom: 20px;">You'll receive occasional updates on experiments in AI-native development—what works, what doesn't, why it matters.</p>
-      <a href="https://createsomething.ltd/ethos" style="display: inline-block; margin-top: 20px; padding: 12px 24px; background: #ffffff; color: #000000; text-decoration: none; font-weight: 500;">Read the Ethos</a>
+      <p style="color: #b3b3b3; margin-bottom: 20px;">You'll receive quiet notes on research, runtime evidence, and operating patterns that make the work easier to defend.</p>
+      <a href="https://createsomething.ltd/ethos" style="display: inline-block; margin-top: 20px; padding: 12px 24px; background: #ffffff; color: #000000; text-decoration: none; font-weight: 500;">Read the operating ethos</a>
     </div>
 
     <div style="margin-top: 60px; padding-top: 30px; border-top: 1px solid #1a1a1a; color: #4d4d4d; font-size: 13px;">
@@ -177,141 +204,141 @@ export function generateWelcomeEmailHtml(unsubscribeToken: string, property: Pro
  * ```
  */
 export async function processSubscription(
-	body: NewsletterRequest,
-	env: NewsletterEnv | undefined,
-	clientIP: string,
-	property: PropertyDomain
+  body: NewsletterRequest,
+  env: NewsletterEnv | undefined,
+  clientIP: string,
+  property: PropertyDomain
 ): Promise<{ result: NewsletterResult; status: number }> {
-	const { email, website, turnstileToken, source } = body;
-	// Default source to property, allow override
-	const subscriberSource = source || property;
+  const { email, website, turnstileToken, source } = body;
+  // Default source to property, allow override
+  const subscriberSource = source || property;
 
-	// Honeypot check - if filled, silently reject (bots fill hidden fields)
-	if (website) {
-		return {
-			result: { success: true, message: 'Successfully subscribed!' },
-			status: 200,
-		};
-	}
+  // Honeypot check - if filled, silently reject (bots fill hidden fields)
+  if (website) {
+    return {
+      result: { success: true, message: 'Successfully subscribed!' },
+      status: 200
+    };
+  }
 
-	// Validate email
-	if (!email || !email.trim()) {
-		return {
-			result: { success: false, message: 'Email is required' },
-			status: 400,
-		};
-	}
+  // Validate email
+  if (!email || !email.trim()) {
+    return {
+      result: { success: false, message: 'Email is required' },
+      status: 400
+    };
+  }
 
-	const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-	if (!emailRegex.test(email)) {
-		return {
-			result: { success: false, message: 'Invalid email format' },
-			status: 400,
-		};
-	}
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return {
+      result: { success: false, message: 'Invalid email format' },
+      status: 400
+    };
+  }
 
-	if (!env) {
-		return {
-			result: { success: false, message: 'Platform environment not available' },
-			status: 500,
-		};
-	}
+  if (!env) {
+    return {
+      result: { success: false, message: 'Platform environment not available' },
+      status: 500
+    };
+  }
 
-	// Verify Turnstile token if secret key is configured
-	if (env.TURNSTILE_SECRET_KEY) {
-		if (!turnstileToken) {
-			return {
-				result: { success: false, message: 'Please complete the verification' },
-				status: 400,
-			};
-		}
+  // Verify Turnstile token if secret key is configured
+  if (env.TURNSTILE_SECRET_KEY) {
+    if (!turnstileToken) {
+      return {
+        result: { success: false, message: 'Please complete the verification' },
+        status: 400
+      };
+    }
 
-		const turnstileResponse = await fetch(
-			'https://challenges.cloudflare.com/turnstile/v0/siteverify',
-			{
-				method: 'POST',
-				headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-				body: new URLSearchParams({
-					secret: env.TURNSTILE_SECRET_KEY,
-					response: turnstileToken,
-					remoteip: clientIP,
-				}),
-			}
-		);
+    const turnstileResponse = await fetch(
+      'https://challenges.cloudflare.com/turnstile/v0/siteverify',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          secret: env.TURNSTILE_SECRET_KEY,
+          response: turnstileToken,
+          remoteip: clientIP
+        })
+      }
+    );
 
-		const turnstileResult = (await turnstileResponse.json()) as TurnstileResponse;
+    const turnstileResult = (await turnstileResponse.json()) as TurnstileResponse;
 
-		if (!turnstileResult.success) {
-			console.warn('Turnstile verification failed:', turnstileResult['error-codes']);
-			return {
-				result: { success: false, message: 'Verification failed. Please try again.' },
-				status: 400,
-			};
-		}
-	}
+    if (!turnstileResult.success) {
+      console.warn('Turnstile verification failed:', turnstileResult['error-codes']);
+      return {
+        result: { success: false, message: 'Verification failed. Please try again.' },
+        status: 400
+      };
+    }
+  }
 
-	// Rate limiting via KV
-	if (env.CACHE) {
-		const rateLimitKey = `newsletter_rate:${clientIP}`;
+  // Rate limiting via KV
+  if (env.CACHE) {
+    const rateLimitKey = `newsletter_rate:${clientIP}`;
 
-		try {
-			const currentCount = await env.CACHE.get(rateLimitKey);
-			const count = currentCount ? parseInt(currentCount, 10) : 0;
+    try {
+      const currentCount = await env.CACHE.get(rateLimitKey);
+      const count = currentCount ? parseInt(currentCount, 10) : 0;
 
-			if (count >= RATE_LIMIT_MAX) {
-				return {
-					result: { success: false, message: 'Too many signup attempts. Please try again later.' },
-					status: 429,
-				};
-			}
+      if (count >= RATE_LIMIT_MAX) {
+        return {
+          result: { success: false, message: 'Too many signup attempts. Please try again later.' },
+          status: 429
+        };
+      }
 
-			await env.CACHE.put(rateLimitKey, String(count + 1), {
-				expirationTtl: RATE_LIMIT_WINDOW,
-			});
-		} catch (kvError) {
-			console.warn('Rate limiting unavailable:', kvError);
-		}
-	}
+      await env.CACHE.put(rateLimitKey, String(count + 1), {
+        expirationTtl: RATE_LIMIT_WINDOW
+      });
+    } catch (kvError) {
+      console.warn('Rate limiting unavailable:', kvError);
+    }
+  }
 
-	// Generate tokens for unsubscribe and confirmation
-	const timestamp = Date.now();
-	const unsubscribeToken = btoa(`${email}:${timestamp}`);
-	const confirmationToken = btoa(`confirm:${email}:${timestamp}:${crypto.randomUUID()}`);
+  // Generate tokens for unsubscribe and confirmation
+  const timestamp = Date.now();
+  const unsubscribeToken = btoa(`${email}:${timestamp}`);
+  const confirmationToken = btoa(`confirm:${email}:${timestamp}:${crypto.randomUUID()}`);
 
-	// Check if subscriber already exists
-	let existingSubscriber: ExistingSubscriber | null = null;
-	try {
-		existingSubscriber = await env.DB.prepare(
-			`SELECT email, confirmed_at, unsubscribed_at, status FROM newsletter_subscribers WHERE email = ?`
-		)
-			.bind(email)
-			.first<ExistingSubscriber>();
-	} catch (dbError) {
-		console.warn('Could not check existing subscriber:', dbError);
-	}
+  // Check if subscriber already exists
+  let existingSubscriber: ExistingSubscriber | null = null;
+  try {
+    existingSubscriber = await env.DB.prepare(
+      `SELECT email, confirmed_at, unsubscribed_at, status FROM newsletter_subscribers WHERE email = ?`
+    )
+      .bind(email)
+      .first<ExistingSubscriber>();
+  } catch (dbError) {
+    console.warn('Could not check existing subscriber:', dbError);
+  }
 
-	// If email was previously bounced or complained, reject re-subscription
-	if (existingSubscriber?.status === 'bounced' || existingSubscriber?.status === 'complained') {
-		return {
-			result: { success: false, message: 'This email address cannot receive our newsletters.' },
-			status: 400,
-		};
-	}
+  // If email was previously bounced or complained, reject re-subscription
+  if (existingSubscriber?.status === 'bounced' || existingSubscriber?.status === 'complained') {
+    return {
+      result: { success: false, message: 'This email address cannot receive our newsletters.' },
+      status: 400
+    };
+  }
 
-	// If already confirmed, no need to re-subscribe
-	if (existingSubscriber?.confirmed_at && !existingSubscriber?.unsubscribed_at) {
-		return {
-			result: { success: true, message: 'You are already subscribed!' },
-			status: 200,
-		};
-	}
+  // If already confirmed, no need to re-subscribe
+  if (existingSubscriber?.confirmed_at && !existingSubscriber?.unsubscribed_at) {
+    return {
+      result: { success: true, message: 'You are already subscribed!' },
+      status: 200
+    };
+  }
 
-	// Store subscriber in D1 database with confirmed_at = NULL (requires confirmation)
-	try {
-		if (existingSubscriber) {
-			// Update existing subscriber (may have unsubscribed before)
-			await env.DB.prepare(
-				`UPDATE newsletter_subscribers
+  // Store subscriber in D1 database with confirmed_at = NULL (requires confirmation)
+  try {
+    if (existingSubscriber) {
+      // Update existing subscriber (may have unsubscribed before)
+      await env.DB.prepare(
+        `UPDATE newsletter_subscribers
 				 SET confirmation_token = ?,
 				     unsubscribe_token = ?,
 				     unsubscribed_at = NULL,
@@ -319,58 +346,81 @@ export async function processSubscription(
 				     subscribed_at = datetime('now'),
 				     source = ?
 				 WHERE email = ?`
-			)
-				.bind(confirmationToken, unsubscribeToken, subscriberSource, email)
-				.run();
-		} else {
-			// Insert new subscriber
-			await env.DB.prepare(
-				`INSERT INTO newsletter_subscribers (email, subscribed_at, unsubscribe_token, confirmation_token, confirmed_at, source)
+      )
+        .bind(confirmationToken, unsubscribeToken, subscriberSource, email)
+        .run();
+    } else {
+      // Insert new subscriber
+      await env.DB.prepare(
+        `INSERT INTO newsletter_subscribers (email, subscribed_at, unsubscribe_token, confirmation_token, confirmed_at, source)
 				 VALUES (?, datetime('now'), ?, ?, NULL, ?)`
-			)
-				.bind(email, unsubscribeToken, confirmationToken, subscriberSource)
-				.run();
-		}
-	} catch (dbError) {
-		console.error('Newsletter subscribers database error:', dbError);
-		return {
-			result: { success: false, message: 'Failed to process subscription' },
-			status: 500,
-		};
-	}
+      )
+        .bind(email, unsubscribeToken, confirmationToken, subscriberSource)
+        .run();
+    }
+  } catch (dbError) {
+    console.error('Newsletter subscribers database error:', dbError);
+    return {
+      result: { success: false, message: 'Failed to process subscription' },
+      status: 500
+    };
+  }
 
-	// Send confirmation email via Resend (double opt-in)
-	const confirmUrl = `https://createsomething.io/confirm?token=${encodeURIComponent(confirmationToken)}`;
-	const resendResponse = await fetch('https://api.resend.com/emails', {
-		method: 'POST',
-		headers: {
-			Authorization: `Bearer ${env.RESEND_API_KEY}`,
-			'Content-Type': 'application/json',
-		},
-		body: JSON.stringify({
-			from: 'CREATE SOMETHING <hello@createsomething.io>',
-			to: email,
-			subject: 'Confirm your subscription to CREATE SOMETHING',
-			html: generateConfirmationEmailHtml(confirmUrl),
-		}),
-	});
+  // Send confirmation email via Resend (double opt-in)
+  const confirmUrl = `https://createsomething.io/confirm?token=${encodeURIComponent(confirmationToken)}`;
+  const resendResponse = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${env.RESEND_API_KEY}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      from: 'CREATE SOMETHING <hello@createsomething.io>',
+      to: email,
+      subject: 'Confirm your subscription to CREATE SOMETHING',
+      html: generateConfirmationEmailHtml(confirmUrl)
+    })
+  });
 
-	const resendData = (await resendResponse.json()) as { id?: string; message?: string };
+  const resendData = (await resendResponse.json()) as { id?: string; message?: string };
 
-	if (!resendResponse.ok) {
-		console.error('Resend API error:', resendData);
-		return {
-			result: { success: false, message: 'Failed to send confirmation email' },
-			status: 500,
-		};
-	}
+  if (!resendResponse.ok) {
+    console.error('Resend API error:', resendData);
+    return {
+      result: { success: false, message: 'Failed to send confirmation email' },
+      status: 500
+    };
+  }
 
-	return {
-		result: {
-			success: true,
-			message: 'Please check your email to confirm your subscription.',
-			emailId: resendData.id,
-		},
-		status: 200,
-	};
+  try {
+    await recordServerConversion(
+      env.DB,
+      {
+        property,
+        action: 'newsletter_requested',
+        sessionId: body.sessionId,
+        sourceProperty: normalizeProperty(body.sourceProperty),
+        url: body.landingUrl || `https://createsomething.${property}/`,
+        referrer: body.referrer,
+        metadata: {
+          source: subscriberSource,
+          intent: body.intent,
+          lane: body.lane,
+          emailId: resendData.id
+        }
+      },
+      {}
+    );
+  } catch (conversionError) {
+    console.warn('Newsletter conversion tracking failed:', conversionError);
+  }
+
+  return {
+    result: {
+      success: true,
+      message: 'Please check your email to confirm your subscription.',
+      emailId: resendData.id
+    },
+    status: 200
+  };
 }

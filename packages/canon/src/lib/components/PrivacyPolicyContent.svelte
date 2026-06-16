@@ -203,8 +203,8 @@
 
     <h3 class="subsection-title">5.5 Opt-Out</h3>
     <p class="body-text">
-      Opt out of analytics collection from your account settings. Your choice is stored in your
-      profile and respected across all CREATE SOMETHING properties.
+      Opt out of analytics collection from the on-site privacy controls or your account settings.
+      Your choice is stored and respected across CREATE SOMETHING properties.
     </p>
   </section>
 

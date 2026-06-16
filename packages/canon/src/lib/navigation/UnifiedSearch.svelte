@@ -15,7 +15,17 @@
 	 */
 
 	import { onMount, type Component } from 'svelte';
-	import { FlaskConical, BookOpen, Hammer, Scroll, GraduationCap, FileText, Lightbulb, Grid3x3, User, Briefcase, FolderOpen } from 'lucide-svelte';
+	import FlaskConical from 'lucide-svelte/icons/flask-conical';
+	import BookOpen from 'lucide-svelte/icons/book-open';
+	import Hammer from 'lucide-svelte/icons/hammer';
+	import Scroll from 'lucide-svelte/icons/scroll';
+	import GraduationCap from 'lucide-svelte/icons/graduation-cap';
+	import FileText from 'lucide-svelte/icons/file-text';
+	import Lightbulb from 'lucide-svelte/icons/lightbulb';
+	import Grid3x3 from 'lucide-svelte/icons/grid-3x3';
+	import User from 'lucide-svelte/icons/user';
+	import Briefcase from 'lucide-svelte/icons/briefcase';
+	import FolderOpen from 'lucide-svelte/icons/folder-open';
 
 	// =============================================================================
 	// TYPES

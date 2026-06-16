@@ -5,24 +5,22 @@
 	 * Canon advantage over Fenestra: Presets are *visible and named*—
 	 * user understands what "threshold-dwelling" means, can learn the vocabulary.
 	 */
-	import {
-		Home,
-		Square,
-		TreeDeciduous,
-		Factory,
-		Leaf,
-		Sunrise,
-		Sunset,
-		CloudSun,
-		Sun,
-		Cloud,
-		Moon,
-		Maximize,
-		Search,
-		CornerUpRight,
-		DoorOpen,
-		PanelTop
-	} from 'lucide-svelte';
+	import Home from 'lucide-svelte/icons/home';
+	import Square from 'lucide-svelte/icons/square';
+	import TreeDeciduous from 'lucide-svelte/icons/tree-deciduous';
+	import Factory from 'lucide-svelte/icons/factory';
+	import Leaf from 'lucide-svelte/icons/leaf';
+	import Sunrise from 'lucide-svelte/icons/sunrise';
+	import Sunset from 'lucide-svelte/icons/sunset';
+	import CloudSun from 'lucide-svelte/icons/cloud-sun';
+	import Sun from 'lucide-svelte/icons/sun';
+	import Cloud from 'lucide-svelte/icons/cloud';
+	import Moon from 'lucide-svelte/icons/moon';
+	import Maximize from 'lucide-svelte/icons/maximize';
+	import Search from 'lucide-svelte/icons/search';
+	import CornerUpRight from 'lucide-svelte/icons/corner-up-right';
+	import DoorOpen from 'lucide-svelte/icons/door-open';
+	import PanelTop from 'lucide-svelte/icons/panel-top';
 
 	interface Props {
 		onPresetChange?: (presets: {

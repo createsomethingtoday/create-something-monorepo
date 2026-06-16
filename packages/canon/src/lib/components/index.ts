@@ -19,21 +19,39 @@ export { default as TriadHealth } from './TriadHealth.svelte';
 export { default as HermeneuticCircle } from './HermeneuticCircle.svelte';
 export { default as ModeIndicator } from './ModeIndicator.svelte';
 export { default as CrossPropertyLink } from './CrossPropertyLink.svelte';
+export { default as PropertyFunnel } from './PropertyFunnel.svelte';
 export { default as SkipToContent } from './SkipToContent.svelte';
 export { default as PrivacyPolicyContent } from './PrivacyPolicyContent.svelte';
 export { default as TermsOfServiceContent } from './TermsOfServiceContent.svelte';
 export { default as CookieConsent } from './CookieConsent.svelte';
 
+// Clear communication primitives
+export {
+  ClearPageSection,
+  ClearProofStrip,
+  ClearStateRows,
+  ClearArtifactCard,
+  ClearCardGrid,
+  ClearReceiptGrid,
+  ClearCtaBand,
+  ClearErrorPage,
+  type ClearProofItem,
+  type ClearWorkflowState,
+  type ClearCardItem,
+  type ClearReceipt,
+  type ClearCtaItem
+} from './clear/index.js';
+
 // Form components
 export {
-	TextField,
-	TextArea,
-	Checkbox,
-	CheckboxGroup,
-	Radio,
-	RadioGroup,
-	Select,
-	Switch
+  TextField,
+  TextArea,
+  Checkbox,
+  CheckboxGroup,
+  Radio,
+  RadioGroup,
+  Select,
+  Switch
 } from './form/index.js';
 
 // Feedback components
@@ -41,13 +59,13 @@ export { Alert, Toast, Dialog, Progress, Spinner, Skeleton } from './feedback/in
 
 // Navigation components
 export {
-	Breadcrumbs,
-	Tabs,
-	Pagination,
-	Tooltip,
-	Popover,
-	DropdownMenu,
-	Drawer
+  Breadcrumbs,
+  Tabs,
+  Pagination,
+  Tooltip,
+  Popover,
+  DropdownMenu,
+  Drawer
 } from './navigation/index.js';
 
 // Documentation components (live docs - components ARE the documentation)
