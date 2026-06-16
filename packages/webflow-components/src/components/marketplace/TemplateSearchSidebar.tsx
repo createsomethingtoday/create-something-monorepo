@@ -428,10 +428,14 @@ function readCurrentScope(): TemplateScope {
   return 'all';
 }
 
+export function isTemplateSearchPath(pathname: string): boolean {
+  const normalizedPathname = pathname.replace(/\/+$/, '');
+  return normalizedPathname === '/templates/search' || normalizedPathname === '/templates/search-v2';
+}
+
 function isSearchRoute(): boolean {
   if (typeof window === 'undefined') return false;
-  const pathname = window.location.pathname.replace(/\/+$/, '');
-  return pathname === '/templates/search' || pathname === '/templates/search-v2';
+  return isTemplateSearchPath(window.location.pathname);
 }
 
 function readCurrentCategory(categorySlugOverride?: string): string | null {

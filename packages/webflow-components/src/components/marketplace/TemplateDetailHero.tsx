@@ -74,6 +74,20 @@ const CATEGORY_ROUTE_ALIASES: Record<string, string> = {
   'transportation-and-automotive-websites': 'transportation-websites',
   'retail-and-ecommerce': 'retail-and-e-commerce-websites',
   'retail-and-e-commerce': 'retail-and-e-commerce-websites',
+  'culture-performance-and-entertainment': 'arts-and-entertainment-websites',
+  'culture-performance-and-entertainment-websites': 'arts-and-entertainment-websites',
+  'entertainment': 'arts-and-entertainment-websites',
+  'entertainment-websites': 'arts-and-entertainment-websites',
+  'performance-and-entertainment': 'arts-and-entertainment-websites',
+  'performance-and-entertainment-websites': 'arts-and-entertainment-websites',
+  'construction-and-home-services': 'home-services-websites',
+  'construction-and-home-services-websites': 'home-services-websites',
+};
+
+const CATEGORY_LABEL_ALIASES: Record<string, string> = {
+  'culture, performance & entertainment': 'Arts & Entertainment',
+  entertainment: 'Arts & Entertainment',
+  'performance & entertainment': 'Arts & Entertainment',
 };
 
 const PREVIEW_DEVICE_DIMENSIONS: Record<TemplateDetailPreviewDevice, { width: number; height: number }> = {
@@ -113,19 +127,77 @@ function targetForHref(href: string, target?: string): string | undefined {
   return isExternalUrl(href) ? '_blank' : undefined;
 }
 
-function formatTemplateTitle(name: string): string {
+function formatCategoryTitleFragment(categoryName: string): string {
+  const label = categoryName
+    .trim()
+    .replace(/\s+websites?$/i, '')
+    .trim();
+  return label ? `${label} Website Template` : 'Website Template';
+}
+
+function isPlaceholderCategoryTitle(label: string): boolean {
+  return /^(templates?|category|all templates)$/i.test(label.trim());
+}
+
+function formatTemplateTitle(name: string, primaryCategoryName = ''): string {
   const label = name.trim() || 'Template name';
-  return /\bwebsite\s+template$/i.test(label) ? label : `${label} - Website Template`;
+  if (/\bwebsite\s+template$/i.test(label)) return label;
+  return `${label} - ${formatCategoryTitleFragment(primaryCategoryName)}`;
+}
+
+function cleanCategoryListItem(value: string): string {
+  const trimmed = value.replace(/&quot;/g, '"').trim();
+  if (trimmed.length >= 2 && trimmed.startsWith('"') && trimmed.endsWith('"')) {
+    return trimmed.slice(1, -1).replace(/""/g, '"').trim();
+  }
+  return trimmed;
+}
+
+function splitCommaSeparatedCategoryList(value: string): string[] {
+  const items: string[] = [];
+  let current = '';
+  let inQuotes = false;
+
+  for (let index = 0; index < value.length; index += 1) {
+    const char = value[index];
+    const next = value[index + 1];
+
+    if (char === '"' && inQuotes && next === '"') {
+      current += '"';
+      index += 1;
+      continue;
+    }
+
+    if (char === '"') {
+      inQuotes = !inQuotes;
+      current += char;
+      continue;
+    }
+
+    if (char === ',' && !inQuotes) {
+      items.push(current);
+      current = '';
+      continue;
+    }
+
+    current += char;
+  }
+
+  items.push(current);
+  return items;
 }
 
 function splitCategoryList(value?: string): string[] {
   const raw = value?.trim();
   if (!raw) return [];
-  const separator = raw.includes('\n') ? /\n+/ : /,\s*/;
-  return raw
-    .split(separator)
-    .map((item) => item.trim())
+  const items = raw.includes('\n') ? raw.split(/\n+/) : splitCommaSeparatedCategoryList(raw);
+  return items
+    .map(cleanCategoryListItem)
     .filter(Boolean);
+}
+
+function displayCategoryLabel(label: string): string {
+  return CATEGORY_LABEL_ALIASES[label.trim().toLowerCase()] ?? label;
 }
 
 function categorySlug(label: string): string {
@@ -187,7 +259,7 @@ function buildCategoryCrumbs(input: {
   const effectiveLabels = labels.length ? labels : ['Category'];
 
   return effectiveLabels.map((label, index) => ({
-    label,
+    label: displayCategoryLabel(label),
     href:
       (index === 0 && primaryHref) ||
       hrefs[index] ||
@@ -293,7 +365,11 @@ const TemplateDetailHeroInner: React.FC<TemplateDetailHeroProps> = ({
     height: `${previewDimensions.height}px`,
     transform: `translateX(-50%) scale(${previewScale})`,
   };
-  const titleLabel = useMemo(() => formatTemplateTitle(templateName), [templateName]);
+  const primaryCategoryName = breadcrumbCategories.find((category) => !isPlaceholderCategoryTitle(category.label))?.label ?? '';
+  const titleLabel = useMemo(
+    () => formatTemplateTitle(templateName, primaryCategoryName),
+    [primaryCategoryName, templateName],
+  );
   const offer = useMemo(
     () =>
       resolveTemplateDetailOffer({
