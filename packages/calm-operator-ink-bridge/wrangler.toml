@@ -97,7 +97,7 @@ HEALTH_CHECKS_JSON = """
 """
 
 # Secrets required before production deploy:
-# - INK_DEVICE_TOKEN: Core Ink read/heartbeat/clear token
+# - INK_DEVICE_TOKEN: Core Ink read/heartbeat/review token
 # - INK_SOURCE_TOKEN: agent/MCP/source write token
 # Optional compatibility token:
 # - INK_BRIDGE_TOKEN: accepted for both device and source roles
