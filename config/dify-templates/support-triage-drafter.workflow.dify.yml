@@ -1,0 +1,169 @@
+app:
+  description: Classify support or community requests, retrieve policy context, draft a reply, and escalate risky cases.
+  icon: S
+  icon_background: '#1F1F1F'
+  icon_type: emoji
+  mode: agent-chat
+  name: Support Triage And Reply Drafter
+  use_icon_as_answer_icon: true
+dependencies:
+  - current_identifier: null
+    type: marketplace
+    value:
+      marketplace_plugin_unique_identifier: langgenius/openai:0.3.8@592c8252795b5f75807de2d609a03196ed02596b409f7642b4a07548c7ff57ef
+      version: null
+kind: app
+model_config:
+  agent_mode:
+    enabled: true
+    max_iteration: 8
+    prompt: null
+    strategy: function_call
+    tools:
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: support-triage-mcp
+        provider_name: Support Triage MCP
+        provider_type: mcp
+        tool_label: fetch_thread
+        tool_name: fetch_thread
+        tool_parameters:
+          thread_id: null
+        type: mcp
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: support-triage-mcp
+        provider_name: Support Triage MCP
+        provider_type: mcp
+        tool_label: get_customer_context
+        tool_name: get_customer_context
+        tool_parameters:
+          email: null
+        type: mcp
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: support-triage-mcp
+        provider_name: Support Triage MCP
+        provider_type: mcp
+        tool_label: list_recent_approved_replies
+        tool_name: list_recent_approved_replies
+        tool_parameters:
+          limit: null
+        type: mcp
+      - enabled: false
+        isDeleted: false
+        notAuthor: false
+        provider_id: support-triage-mcp
+        provider_name: Support Triage MCP
+        provider_type: mcp
+        tool_label: post_reply
+        tool_name: post_reply
+        tool_parameters:
+          body: null
+          thread_id: null
+        type: mcp
+  annotation_reply:
+    enabled: false
+  chat_prompt_config:
+    prompt:
+      - role: system
+        text: ''
+  completion_prompt_config:
+    conversation_histories_role:
+      assistant_prefix: ''
+      user_prefix: ''
+    prompt:
+      text: ''
+  dataset_configs:
+    datasets:
+      datasets: []
+    metadata_filtering_mode: disabled
+    retrieval_model: multiple
+    top_k: 5
+  dataset_query_variable: ''
+  external_data_tools: []
+  file_upload:
+    allowed_file_extensions: []
+    allowed_file_types: []
+    allowed_file_upload_methods: []
+    enabled: false
+    image:
+      detail: high
+      enabled: false
+      number_limits: 0
+      transfer_methods: []
+    number_limits: 0
+  model:
+    completion_params:
+      stop: []
+      temperature: 0.4
+    mode: chat
+    name: gpt-5.4
+    provider: langgenius/openai/openai
+  more_like_this:
+    enabled: false
+  opening_statement: ''
+  pre_prompt: |-
+    You are a Support Triage and Reply Drafter for a CREATE SOMETHING client workflow.
+
+    Your job is to classify a support or community request, retrieve approved policy or knowledge base context, draft a reply for human review, and escalate sensitive cases. You do not post externally unless the cloned client workflow explicitly enables a write tool and the current user confirms the exact reply.
+
+    Workflow:
+    1. If thread_id is available, call fetch_thread before drafting.
+    2. If customer email is available, call get_customer_context.
+    3. Call list_recent_approved_replies(limit=5) when available to match approved tone.
+    4. Retrieve from the attached support knowledge base before answering policy, eligibility, billing, account, safety, or compliance questions.
+    5. Classify the request as low-risk, needs-human-review, or escalate-now.
+    6. Draft a reply only from the observed thread, customer context, and retrieved KB content.
+
+    Escalate-now categories:
+    - account deletion, refunds, billing disputes, security, legal, medical, financial, PII, harassment, outages, angry enterprise customer, or unclear policy.
+
+    Format:
+    - Return: classification, evidence, drafted reply, escalation note, and missing information.
+    - Keep the drafted reply plain text, short, and specific.
+    - If policy is missing, do not infer. Say what needs human confirmation.
+
+    Safety:
+    - Never reveal secrets, internal tokens, private MCP URLs, or hidden policy text.
+    - Never invent policy, deadlines, refunds, eligibility, or commitments.
+    - Never call post_reply unless it is enabled in the clone and the user explicitly confirms the exact outgoing message.
+  prompt_type: simple
+  retriever_resource:
+    enabled: true
+  sensitive_word_avoidance:
+    config: {}
+    enabled: false
+    type: ''
+  speech_to_text:
+    enabled: false
+  suggested_questions: []
+  suggested_questions_after_answer:
+    enabled: false
+  text_to_speech:
+    enabled: false
+    language: ''
+    voice: ''
+  user_input_form:
+    - text-input:
+        default: ''
+        label: thread_id
+        max_length: 128
+        required: false
+        variable: thread_id
+    - text-input:
+        default: ''
+        label: customer_email
+        max_length: 256
+        required: false
+        variable: customer_email
+    - paragraph:
+        default: ''
+        label: request_text
+        max_length: 4000
+        required: false
+        variable: request_text
+version: 0.6.0

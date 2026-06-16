@@ -5116,4 +5116,3 @@ function cmsTemplateCoverageTone(value: unknown): MetadataTone | undefined {
   if (value === 'complete' || value === 'not-applicable') return 'good';
   return 'warning';
 }
-

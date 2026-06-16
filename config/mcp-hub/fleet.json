@@ -19,23 +19,9 @@
       },
       "related_deployments": ["blondish-hub", "blondish-notion"],
       "toolkits": [
-        "google-meet",
-        "google-sheets",
-        "notion",
-        "perplexityai",
         "exa",
-        "zoom",
-        "googledrive",
-        "dropbox",
         "gmail",
-        "whatsapp",
-        "firecrawl",
-        "telegram",
-        "box",
-        "instagram",
-        "tiktok",
-        "youtube",
-        "spotify"
+        "notion"
       ]
     },
     "morgan-young-c3-management": {
@@ -54,22 +40,9 @@
       },
       "related_deployments": ["c3denver-hub", "c3-management-notion"],
       "toolkits": [
-        "google-meet",
-        "google-sheets",
-        "notion",
-        "perplexityai",
         "exa",
-        "zoom",
-        "googledrive",
-        "dropbox",
         "gmail",
-        "box",
-        "firecrawl",
-        "linkedin",
-        "slack",
-        "youtube",
-        "instagram",
-        "spotify"
+        "notion"
       ]
     },
     "blondish-hub": {
@@ -86,7 +59,26 @@
         "bearer_token_env_var": "CS_HUB_BLONDISH_API_TOKEN",
         "infisical_path": "/mcp-hub/hubs"
       },
-      "related_deployments": ["viv-blondish", "blondish-notion"]
+      "related_deployments": [
+        "viv-blondish",
+        "blondish-notion"
+      ],
+      "toolkits": [
+        "box",
+        "dropbox",
+        "exa",
+        "firecrawl",
+        "gmail",
+        "google-meet",
+        "google-sheets",
+        "googledrive",
+        "notion",
+        "perplexityai",
+        "whatsapp",
+        "youtube",
+        "zoom",
+        "halfdozen-operator-notion"
+      ]
     },
     "august": {
       "type": "policy_os_hub",
@@ -176,6 +168,7 @@
       "type": "policy_os_hub",
       "product": "Cracked Live \u2014 Client Hub",
       "client": "cracked-live",
+      "tenant": "cracked-live",
       "url": "https://cracked.mcp.createsomething.agency/mcp",
       "status": "deployed",
       "account": "create-something",
@@ -185,7 +178,24 @@
         "bearer_token_env_var": "CS_HUB_CRACKED_API_TOKEN",
         "infisical_path": "/mcp-hub/hubs"
       },
-      "related_deployments": ["cracked-notion"]
+      "related_deployments": [
+        "cracked-notion"
+      ],
+      "toolkits": [
+        "canva",
+        "dropbox",
+        "exa",
+        "firecrawl",
+        "gmail",
+        "google-meet",
+        "google-sheets",
+        "googledrive",
+        "notion",
+        "perplexityai",
+        "whatsapp",
+        "zoom",
+        "halfdozen-operator-notion"
+      ]
     },
     "c3denver-hub": {
       "type": "policy_os_hub",

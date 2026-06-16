@@ -1,0 +1,216 @@
+{
+  "version": 1,
+  "pack_id": "policy-os-template-pack",
+  "tracker": "CRE-565",
+  "status": "starter_dsl_ready",
+  "purpose": "Reusable Dify workflow and chatflow starter templates for CREATE SOMETHING Policy OS client delivery.",
+  "source_context": [
+    "docs/DIFY_PARTNER_AFFILIATE_LEAD_PACKET.md",
+    "docs/guides/DIFY_FIRST_AGENT_CONTROL_PLANE.md",
+    "docs/DIFY_WORKSPACE_INVENTORY.generated.md",
+    "docs/DIFY_MCP_COVERAGE.generated.md",
+    "docs/guides/DIFY_YOUTUBE_TRANSCRIPT_NOTION_AGENT.md",
+    "docs/guides/DIFY_BETTERMODE_CREATOR_AGENT.md",
+    "packages/playbook-mcp/src/outcome-playbooks.ts"
+  ],
+  "repo_boundary": {
+    "dify_studio_is_live_ui": true,
+    "repo_owns": [
+      "template DSL snapshots",
+      "setup checklist",
+      "MCP server IDs and tool exposure policy",
+      "smoke and eval gate definitions",
+      "secret reference names"
+    ],
+    "not_live_inventory": "Templates in this pack are not live Dify apps until imported into Dify Studio and codified in config/dify/inventory.json."
+  },
+  "template_rules": [
+    "Do not hardcode Dify API keys, MCP bearer tokens, provider tokens, customer data, or private examples.",
+    "Every write-capable tool must ask for explicit confirmation before use.",
+    "Every published clone must be added to config/dify/inventory.json with at least one smoke case.",
+    "Every published clone must have Braintrust eval gates for api_health, secret_refusal, latency_budget, and any enabled tool or write path.",
+    "Use client-specific MCP server IDs in Dify Studio, then update the cloned DSL and manifest after import."
+  ],
+  "templates": [
+    {
+      "id": "policy-os-client-intake-audit",
+      "title": "Policy OS Client Intake And MCP Audit",
+      "dify_app_type": "chatflow",
+      "recommended_dify_base_template": "Patient Intake Chatbot plus Question Classifier",
+      "dsl_path": "config/dify-templates/policy-os-client-intake-audit.chatflow.dify.yml",
+      "primary_audience": "operators and implementation buyers",
+      "client_value": "Collects business context, systems, desired workflows, risk boundaries, and produces a scoped MCP audit brief.",
+      "existing_evidence": [
+        "CREATE SOMETHING Guide Agent",
+        "Playbook MCP outcome playbooks",
+        "Three-Tier Framework MCP"
+      ],
+      "required_mcp_servers": [
+        "create-something",
+        "three-tier-framework",
+        "playbook"
+      ],
+      "write_policy": "none",
+      "eval_checks": [
+        "api_health",
+        "expected_tool_use",
+        "forbidden_tool_use",
+        "grounded_answer",
+        "secret_refusal",
+        "latency_budget",
+        "policy_boundary"
+      ]
+    },
+    {
+      "id": "policy-os-runbook-assistant",
+      "title": "Client Knowledge And Runbook Assistant",
+      "dify_app_type": "chatflow",
+      "recommended_dify_base_template": "Knowledge Retrieval + Chatbot",
+      "dsl_path": "config/dify-templates/policy-os-runbook-assistant.chatflow.dify.yml",
+      "primary_audience": "client teams using a delivered hub or workflow",
+      "client_value": "Answers what the agent can do, which tools are allowed, what requires approval, and how to troubleshoot common operations.",
+      "existing_evidence": [
+        "CREATE SOMETHING Guide Agent",
+        "client hub runbooks",
+        "Dify workspace inventory"
+      ],
+      "required_mcp_servers": [
+        "create-something",
+        "three-tier-framework",
+        "playbook"
+      ],
+      "optional_knowledge_bases": [
+        "client runbook",
+        "tool boundary policy",
+        "support escalation guide"
+      ],
+      "write_policy": "none",
+      "eval_checks": [
+        "api_health",
+        "expected_tool_use",
+        "forbidden_tool_use",
+        "grounded_answer",
+        "secret_refusal",
+        "latency_budget",
+        "policy_boundary"
+      ]
+    },
+    {
+      "id": "transcript-to-notion-workflow",
+      "title": "Transcript To Notion Workflow",
+      "dify_app_type": "workflow",
+      "recommended_dify_base_template": "Meeting Minutes and Summary",
+      "dsl_path": "config/dify-templates/transcript-to-notion.workflow.dify.yml",
+      "primary_audience": "operators who convert videos, calls, or meetings into durable notes",
+      "client_value": "Extracts transcript content, summarizes it, and optionally writes to Notion after confirmation.",
+      "existing_evidence": [
+        "YouTube Transcript Notion Agent"
+      ],
+      "required_mcp_servers": [
+        "yt-transcript-notion"
+      ],
+      "write_policy": "requires_explicit_confirmation",
+      "eval_checks": [
+        "api_health",
+        "expected_tool_use",
+        "forbidden_tool_use",
+        "grounded_answer",
+        "write_confirmation",
+        "secret_refusal",
+        "latency_budget"
+      ]
+    },
+    {
+      "id": "support-triage-drafter",
+      "title": "Support Triage And Reply Drafter",
+      "dify_app_type": "workflow",
+      "recommended_dify_base_template": "Question Classifier: Front Desk plus Customer Review Analysis",
+      "dsl_path": "config/dify-templates/support-triage-drafter.workflow.dify.yml",
+      "primary_audience": "support, community, and marketplace operations teams",
+      "client_value": "Classifies support intent, retrieves policy or KB context, drafts a reply, and escalates sensitive or ambiguous cases.",
+      "existing_evidence": [
+        "Bettermode Marketplace Creator Agent",
+        "support ticket outcome playbook"
+      ],
+      "required_mcp_servers": [
+        "support-triage-mcp"
+      ],
+      "optional_knowledge_bases": [
+        "support macros",
+        "product policy",
+        "escalation runbook"
+      ],
+      "write_policy": "requires_explicit_confirmation",
+      "eval_checks": [
+        "api_health",
+        "expected_tool_use",
+        "forbidden_tool_use",
+        "grounded_answer",
+        "write_confirmation",
+        "secret_refusal",
+        "latency_budget",
+        "policy_boundary"
+      ],
+      "placeholder_notes": "Replace support-triage-mcp with the client MCP server card. For Webflow Marketplace use, bettermode-creator is the concrete source pattern."
+    },
+    {
+      "id": "governed-client-hub-router",
+      "title": "Governed Client Hub Router",
+      "dify_app_type": "chatflow",
+      "recommended_dify_base_template": "Question Classifier + Knowledge Retrieval",
+      "dsl_path": "config/dify-templates/governed-client-hub-router.chatflow.dify.yml",
+      "primary_audience": "client users with a scoped MCP Hub lane",
+      "client_value": "Routes user intent to allowed client Hub services, describes available tools, and gates side effects behind explicit confirmation.",
+      "existing_evidence": [
+        "blondish-hub",
+        "morgan-hub",
+        "viv-hub",
+        "c3-hub",
+        "aaron-hub"
+      ],
+      "required_mcp_servers": [
+        "client_hub"
+      ],
+      "write_policy": "requires_explicit_confirmation",
+      "eval_checks": [
+        "api_health",
+        "expected_tool_use",
+        "forbidden_tool_use",
+        "write_confirmation",
+        "secret_refusal",
+        "latency_budget",
+        "policy_boundary",
+        "tenant_isolation"
+      ],
+      "placeholder_notes": "Replace client_hub with the exact Dify MCP server ID for the client lane, such as morgan_hub or a new named-lane card."
+    },
+    {
+      "id": "mcp-health-guard",
+      "title": "MCP Health Guard",
+      "dify_app_type": "workflow",
+      "recommended_dify_base_template": "Trigger: Website Health Guard",
+      "dsl_path": "config/dify-templates/mcp-health-guard.workflow.dify.yml",
+      "primary_audience": "operators responsible for client MCP and Dify runtime readiness",
+      "client_value": "Checks MCP health, visible services, policy status, recent traces, and produces a client-safe readiness brief.",
+      "existing_evidence": [
+        "client hub smoke cases",
+        "Dify MCP coverage report",
+        "MCP hub hardening checks"
+      ],
+      "required_mcp_servers": [
+        "client_hub"
+      ],
+      "write_policy": "none",
+      "eval_checks": [
+        "api_health",
+        "expected_tool_use",
+        "forbidden_tool_use",
+        "grounded_answer",
+        "secret_refusal",
+        "latency_budget",
+        "policy_boundary"
+      ],
+      "placeholder_notes": "Use only read Hub tools. Do not enable hub_refresh_connections, hub_update_state, hub_set_discovery, or brokered write calls in the base template."
+    }
+  ]
+}

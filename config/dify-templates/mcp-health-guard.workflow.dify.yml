@@ -1,0 +1,150 @@
+app:
+  description: Read-only health guard for MCP Hub readiness, service visibility, policy status, and trace lookup.
+  icon: M
+  icon_background: '#1F1F1F'
+  icon_type: emoji
+  mode: agent-chat
+  name: MCP Health Guard
+  use_icon_as_answer_icon: true
+dependencies:
+  - current_identifier: null
+    type: marketplace
+    value:
+      marketplace_plugin_unique_identifier: langgenius/openai:0.3.8@592c8252795b5f75807de2d609a03196ed02596b409f7642b4a07548c7ff57ef
+      version: null
+kind: app
+model_config:
+  agent_mode:
+    enabled: true
+    max_iteration: 8
+    prompt: null
+    strategy: function_call
+    tools:
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: client_hub
+        provider_name: Client Hub MCP
+        provider_type: mcp
+        tool_label: hub_status
+        tool_name: hub_status
+        tool_parameters: {}
+        type: mcp
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: client_hub
+        provider_name: Client Hub MCP
+        provider_type: mcp
+        tool_label: hub_list_services
+        tool_name: hub_list_services
+        tool_parameters: {}
+        type: mcp
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: client_hub
+        provider_name: Client Hub MCP
+        provider_type: mcp
+        tool_label: hub_policy_status
+        tool_name: hub_policy_status
+        tool_parameters: {}
+        type: mcp
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: client_hub
+        provider_name: Client Hub MCP
+        provider_type: mcp
+        tool_label: hub_trace_lookup
+        tool_name: hub_trace_lookup
+        tool_parameters:
+          correlationId: null
+          limit: null
+        type: mcp
+  annotation_reply:
+    enabled: false
+  chat_prompt_config:
+    prompt:
+      - role: system
+        text: ''
+  completion_prompt_config:
+    conversation_histories_role:
+      assistant_prefix: ''
+      user_prefix: ''
+    prompt:
+      text: ''
+  dataset_configs:
+    datasets:
+      datasets: []
+    metadata_filtering_mode: disabled
+    retrieval_model: multiple
+    top_k: 4
+  dataset_query_variable: ''
+  external_data_tools: []
+  file_upload:
+    allowed_file_extensions: []
+    allowed_file_types: []
+    allowed_file_upload_methods: []
+    enabled: false
+    image:
+      detail: high
+      enabled: false
+      number_limits: 0
+      transfer_methods: []
+    number_limits: 0
+  model:
+    completion_params:
+      stop: []
+      temperature: 0.1
+    mode: chat
+    name: gpt-5.4
+    provider: langgenius/openai/openai
+  more_like_this:
+    enabled: false
+  opening_statement: ''
+  pre_prompt: |-
+    You are the MCP Health Guard for a CREATE SOMETHING client Hub.
+
+    Your job is to run a read-only readiness check and produce a client-safe summary. Use only read tools. Do not mutate Hub discovery, runtime state, downstream systems, or provider accounts.
+
+    Health check flow:
+    1. Call hub_status.
+    2. Call hub_list_services.
+    3. Call hub_policy_status.
+    4. If the user supplied a correlation_id, call hub_trace_lookup with that exact ID.
+    5. Produce a report with: readiness status, visible services, failed services, policy/quota notes, auth/session warnings, trace notes if requested, and recommended next action.
+
+    Output statuses:
+    - healthy: required services visible, no failed services, no auth failure language.
+    - degraded: some services missing, quota/policy warning, trace gaps, or downstream recoverable errors.
+    - blocked: unauthorized token, token_not_found, missing auth, no visible services, or required service unavailable.
+
+    Boundaries:
+    - Never call hub_refresh_connections, hub_set_discovery, hub_update_state, hub_execute_proxy_tool, hub_run_intent, or hub_run_proxy_tool.
+    - Never reveal bearer tokens, Dify API keys, Infisical paths, provider account IDs, or private trace payloads.
+    - Separate observed tool output from recommended operator action.
+  prompt_type: simple
+  retriever_resource:
+    enabled: true
+  sensitive_word_avoidance:
+    config: {}
+    enabled: false
+    type: ''
+  speech_to_text:
+    enabled: false
+  suggested_questions: []
+  suggested_questions_after_answer:
+    enabled: false
+  text_to_speech:
+    enabled: false
+    language: ''
+    voice: ''
+  user_input_form:
+    - text-input:
+        default: ''
+        label: correlation_id
+        max_length: 256
+        required: false
+        variable: correlation_id
+version: 0.6.0
