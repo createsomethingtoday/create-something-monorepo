@@ -171,6 +171,9 @@ importers:
       '@create-something/canon':
         specifier: workspace:*
         version: link:../canon
+      '@create-something/delivery-schema':
+        specifier: workspace:*
+        version: link:../delivery-schema
       '@create-something/mcp-authz':
         specifier: workspace:*
         version: link:../mcp-authz
@@ -997,6 +1000,12 @@ importers:
       wrangler:
         specifier: ^4.62.0
         version: 4.64.0(@cloudflare/workers-types@4.20260317.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+
+  packages/delivery-schema:
+    devDependencies:
+      typescript:
+        specifier: ^5.3.0
+        version: 5.9.3
 
   packages/dotfiles: {}
 
