@@ -3,7 +3,7 @@ import test from 'node:test';
 
 import { resolve_service_config } from '../src/config.js';
 
-test('resolve_service_config defaults turn sandbox policy for omitted workflows', () => {
+test('resolve_service_config defaults Codex policy to allowed workspace-write settings', () => {
   const config = resolve_service_config({
     path: '/tmp/workflow.md',
     config: {
@@ -17,5 +17,7 @@ test('resolve_service_config defaults turn sandbox policy for omitted workflows'
     prompt_template: 'test prompt',
   });
 
-  assert.deepEqual(config.codex.turn_sandbox_policy, { type: 'dangerFullAccess' });
+  assert.equal(config.codex.approval_policy, 'on-request');
+  assert.equal(config.codex.thread_sandbox, 'workspace-write');
+  assert.deepEqual(config.codex.turn_sandbox_policy, { type: 'workspaceWrite' });
 });

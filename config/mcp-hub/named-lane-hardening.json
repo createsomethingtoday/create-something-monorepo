@@ -1,0 +1,156 @@
+{
+  "version": 1,
+  "description": "Read-only runtime contract matrix for customer-facing Hub named lanes and client hubs.",
+  "lanes": {
+    "viv-blondish": {
+      "classification": "named_lane",
+      "fleetId": "viv-blondish",
+      "targetUrl": "https://viv-blondish.mcp.createsomething.agency/mcp",
+      "runtime": "hub",
+      "publicToolContract": "composio_meta",
+      "identityMode": "compat",
+      "discoveryMode": "compact",
+      "discoveryPack": "viv-blondish-named-lane",
+      "bearerIssueScope": "partner_managed_named_lane_bearer",
+      "hostBinding": "canonical_named_lane_slug",
+      "hostKey": "viv-blondish",
+      "expectedTenant": "blondish",
+      "enabledServers": [
+        "composio-toolkit-exa",
+        "composio-toolkit-gmail",
+        "notion-halfdozen-blondish"
+      ],
+      "fleetToolkits": [
+        "exa",
+        "gmail",
+        "notion"
+      ],
+      "runbook": "docs/VIV_BLONDISH_HUB_RUNBOOK.md",
+      "knownBlockers": []
+    },
+    "morgan-young-c3-management": {
+      "classification": "named_lane",
+      "fleetId": "morgan-young-c3-management",
+      "targetUrl": "https://morgan-young-c3-management.mcp.createsomething.agency/mcp",
+      "runtime": "hub",
+      "publicToolContract": "composio_meta",
+      "identityMode": "compat",
+      "discoveryMode": "compact",
+      "discoveryPack": "morgan-young-c3-management-named-lane",
+      "bearerIssueScope": "partner_managed_named_lane_bearer",
+      "hostBinding": "canonical_named_lane_slug",
+      "hostKey": "morgan-young-c3-management",
+      "expectedTenant": "c3-management",
+      "enabledServers": [
+        "composio-toolkit-exa",
+        "composio-toolkit-gmail",
+        "notion-halfdozen-c3-management"
+      ],
+      "fleetToolkits": [
+        "exa",
+        "gmail",
+        "notion"
+      ],
+      "runbook": "docs/MORGAN_YOUNG_C3_MANAGEMENT_HUB_RUNBOOK.md",
+      "knownBlockers": []
+    },
+    "blondish-hub": {
+      "classification": "client_hub",
+      "fleetId": "blondish-hub",
+      "targetUrl": "https://blondish.mcp.createsomething.agency/mcp",
+      "runtime": "hub",
+      "publicToolContract": "composio_meta",
+      "identityMode": "compat",
+      "discoveryMode": "compact",
+      "discoveryPack": "blondish-client-hub",
+      "bearerIssueScope": "operator_runtime_bearer",
+      "hostBinding": "dedicated_client_hostname",
+      "hostKey": "blondish",
+      "expectedTenant": "blondish",
+      "enabledServers": [
+        "composio-toolkit-box",
+        "composio-toolkit-dropbox",
+        "composio-toolkit-exa",
+        "composio-toolkit-firecrawl",
+        "composio-toolkit-gmail",
+        "composio-toolkit-googledrive",
+        "composio-toolkit-googlemeet",
+        "composio-toolkit-googlesheets",
+        "composio-toolkit-notion",
+        "composio-toolkit-perplexityai",
+        "composio-toolkit-whatsapp",
+        "composio-toolkit-youtube",
+        "composio-toolkit-zoom",
+        "halfdozen-operator-notion-mcp"
+      ],
+      "fleetToolkits": [
+        "box",
+        "dropbox",
+        "exa",
+        "firecrawl",
+        "gmail",
+        "google-meet",
+        "google-sheets",
+        "googledrive",
+        "notion",
+        "perplexityai",
+        "whatsapp",
+        "youtube",
+        "zoom",
+        "halfdozen-operator-notion"
+      ],
+      "runbook": "docs/BLONDISH_CLIENT_HUB_RUNBOOK.md",
+      "knownBlockers": [
+        "Client hub uses a dedicated client hostname, not the partner named-lane issuance URL pattern."
+      ]
+    },
+    "cracked-hub": {
+      "classification": "client_hub",
+      "fleetId": "cracked-hub",
+      "targetUrl": "https://cracked.mcp.createsomething.agency/mcp",
+      "runtime": "hub",
+      "publicToolContract": "composio_meta",
+      "identityMode": "compat",
+      "discoveryMode": "compact",
+      "discoveryPack": "cracked-client-hub",
+      "bearerIssueScope": "operator_runtime_bearer",
+      "hostBinding": "dedicated_client_hostname",
+      "hostKey": "cracked",
+      "expectedTenant": "cracked-live",
+      "enabledServers": [
+        "composio-toolkit-canva",
+        "composio-toolkit-dropbox",
+        "composio-toolkit-exa",
+        "composio-toolkit-firecrawl",
+        "composio-toolkit-gmail",
+        "composio-toolkit-googledrive",
+        "composio-toolkit-googlemeet",
+        "composio-toolkit-googlesheets",
+        "composio-toolkit-notion",
+        "composio-toolkit-perplexityai",
+        "composio-toolkit-whatsapp",
+        "composio-toolkit-zoom",
+        "halfdozen-operator-notion-mcp"
+      ],
+      "fleetToolkits": [
+        "canva",
+        "dropbox",
+        "exa",
+        "firecrawl",
+        "gmail",
+        "google-meet",
+        "google-sheets",
+        "googledrive",
+        "notion",
+        "perplexityai",
+        "whatsapp",
+        "zoom",
+        "halfdozen-operator-notion"
+      ],
+      "runbook": "docs/CRACKED_CLIENT_HUB_RUNBOOK.md",
+      "knownBlockers": [
+        "Client hub uses a dedicated client hostname, not the partner named-lane issuance URL pattern."
+      ]
+    }
+  }
+}

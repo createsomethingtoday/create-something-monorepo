@@ -32,10 +32,10 @@ agent:
   max_retry_backoff_ms: 300000
 codex:
   command: codex app-server
-  approval_policy: never
-  thread_sandbox: danger-full-access
+  approval_policy: on-request
+  thread_sandbox: workspace-write
   turn_sandbox_policy:
-    type: dangerFullAccess
+    type: workspaceWrite
   turn_timeout_ms: 3600000
   read_timeout_ms: 10000
   stall_timeout_ms: 300000

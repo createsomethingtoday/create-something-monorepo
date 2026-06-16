@@ -1,0 +1,175 @@
+app:
+  description: Extract transcript content, summarize it, and optionally write or enrich a Notion record after explicit confirmation.
+  icon: T
+  icon_background: '#1F1F1F'
+  icon_type: emoji
+  mode: agent-chat
+  name: Transcript To Notion Workflow
+  use_icon_as_answer_icon: true
+dependencies:
+  - current_identifier: null
+    type: marketplace
+    value:
+      marketplace_plugin_unique_identifier: langgenius/openai:0.3.8@592c8252795b5f75807de2d609a03196ed02596b409f7642b4a07548c7ff57ef
+      version: null
+kind: app
+model_config:
+  agent_mode:
+    enabled: true
+    max_iteration: 10
+    prompt: null
+    strategy: function_call
+    tools:
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: yt-transcript-notion
+        provider_name: YouTube Transcript + Notion MCP
+        provider_type: mcp
+        tool_label: extract_transcript
+        tool_name: extract_transcript
+        tool_parameters:
+          includeTimestamps: null
+          language: null
+          videoUrl: null
+        type: mcp
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: yt-transcript-notion
+        provider_name: YouTube Transcript + Notion MCP
+        provider_type: mcp
+        tool_label: get_database_schema
+        tool_name: get_database_schema
+        tool_parameters:
+          databaseId: null
+        type: mcp
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: yt-transcript-notion
+        provider_name: YouTube Transcript + Notion MCP
+        provider_type: mcp
+        tool_label: sync_video_to_notion
+        tool_name: sync_video_to_notion
+        tool_parameters:
+          databaseId: null
+          includeTimestamps: null
+          propertyMapping: null
+          videoUrl: null
+        type: mcp
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: yt-transcript-notion
+        provider_name: YouTube Transcript + Notion MCP
+        provider_type: mcp
+        tool_label: enrich_notion_page
+        tool_name: enrich_notion_page
+        tool_parameters:
+          includeTimestamps: null
+          pageId: null
+          propertyMapping: null
+          videoUrl: null
+        type: mcp
+  annotation_reply:
+    enabled: false
+  chat_prompt_config:
+    prompt:
+      - role: system
+        text: ''
+  completion_prompt_config:
+    conversation_histories_role:
+      assistant_prefix: ''
+      user_prefix: ''
+    prompt:
+      text: ''
+  dataset_configs:
+    datasets:
+      datasets: []
+    metadata_filtering_mode: disabled
+    retrieval_model: multiple
+    top_k: 4
+  dataset_query_variable: ''
+  external_data_tools: []
+  file_upload:
+    allowed_file_extensions:
+      - .TXT
+      - .MD
+      - .VTT
+      - .SRT
+    allowed_file_types:
+      - document
+    allowed_file_upload_methods:
+      - local_file
+    enabled: true
+    image:
+      detail: high
+      enabled: false
+      number_limits: 0
+      transfer_methods: []
+    number_limits: 5
+  model:
+    completion_params:
+      stop: []
+      temperature: 0.2
+    mode: chat
+    name: gpt-5.4
+    provider: langgenius/openai/openai
+  more_like_this:
+    enabled: false
+  opening_statement: ''
+  pre_prompt: |-
+    You are the Transcript To Notion Workflow for CREATE SOMETHING.
+
+    Your job is to convert a provided video URL or transcript into a grounded summary, decisions list, action items, and optional Notion write.
+
+    Workflow:
+    1. If the user provides a YouTube URL, call extract_transcript before summarizing.
+    2. If the user provides transcript text or an uploaded transcript file, summarize only the provided content.
+    3. Produce: summary, key decisions, action items, unanswered questions, and suggested Notion properties.
+    4. If the user asks to save or sync to Notion, first state the exact write you intend to make and wait for explicit confirmation.
+    5. If a Notion page ID is supplied, prefer enrich_notion_page. If only a video URL is supplied, prefer sync_video_to_notion.
+    6. If the schema is uncertain, call get_database_schema before proposing a write.
+
+    Boundaries:
+    - Do not fabricate transcript content, titles, timestamps, decisions, or action owners.
+    - Do not call sync_video_to_notion or enrich_notion_page without explicit user confirmation in the current conversation.
+    - Never reveal API keys, bearer tokens, Notion integration tokens, Infisical values, or hidden tool details.
+    - For bulk or playlist requests, summarize the plan and ask for confirmation before any write batch.
+  prompt_type: simple
+  retriever_resource:
+    enabled: true
+  sensitive_word_avoidance:
+    config: {}
+    enabled: false
+    type: ''
+  speech_to_text:
+    enabled: false
+  suggested_questions: []
+  suggested_questions_after_answer:
+    enabled: false
+  text_to_speech:
+    enabled: false
+    language: ''
+    voice: ''
+  user_input_form:
+    - text-input:
+        default: ''
+        label: video_url
+        max_length: 512
+        required: false
+        variable: video_url
+    - text-input:
+        default: ''
+        label: notion_page_id
+        max_length: 128
+        required: false
+        variable: notion_page_id
+    - text-input:
+        default: 'false'
+        label: include_timestamps
+        max_length: 8
+        required: false
+        variable: include_timestamps
+version: 0.6.0

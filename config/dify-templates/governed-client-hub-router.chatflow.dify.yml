@@ -1,0 +1,171 @@
+app:
+  description: Route client requests through an approved MCP Hub lane with read-first discovery and confirmation-gated side effects.
+  icon: H
+  icon_background: '#1F1F1F'
+  icon_type: emoji
+  mode: agent-chat
+  name: Governed Client Hub Router
+  use_icon_as_answer_icon: true
+dependencies:
+  - current_identifier: null
+    type: marketplace
+    value:
+      marketplace_plugin_unique_identifier: langgenius/openai:0.3.8@592c8252795b5f75807de2d609a03196ed02596b409f7642b4a07548c7ff57ef
+      version: null
+kind: app
+model_config:
+  agent_mode:
+    enabled: true
+    max_iteration: 12
+    prompt: null
+    strategy: function_call
+    tools:
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: client_hub
+        provider_name: Client Hub MCP
+        provider_type: mcp
+        tool_label: hub_list_services
+        tool_name: hub_list_services
+        tool_parameters: {}
+        type: mcp
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: client_hub
+        provider_name: Client Hub MCP
+        provider_type: mcp
+        tool_label: hub_search_proxy_tools
+        tool_name: hub_search_proxy_tools
+        tool_parameters:
+          cursor: null
+          limit: null
+          query: null
+          serverName: null
+        type: mcp
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: client_hub
+        provider_name: Client Hub MCP
+        provider_type: mcp
+        tool_label: hub_describe_proxy_tool
+        tool_name: hub_describe_proxy_tool
+        tool_parameters:
+          proxyToolName: null
+        type: mcp
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: client_hub
+        provider_name: Client Hub MCP
+        provider_type: mcp
+        tool_label: hub_route_intent
+        tool_name: hub_route_intent
+        tool_parameters:
+          allowDiscoveryFallback: null
+          intent: null
+          limit: null
+          query: null
+          serverName: null
+        type: mcp
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: client_hub
+        provider_name: Client Hub MCP
+        provider_type: mcp
+        tool_label: hub_execute_proxy_tool
+        tool_name: hub_execute_proxy_tool
+        tool_parameters:
+          args: null
+          proxyToolName: null
+        type: mcp
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: client_hub
+        provider_name: Client Hub MCP
+        provider_type: mcp
+        tool_label: hub_status
+        tool_name: hub_status
+        tool_parameters: {}
+        type: mcp
+  annotation_reply:
+    enabled: false
+  chat_prompt_config:
+    prompt:
+      - role: system
+        text: ''
+  completion_prompt_config:
+    conversation_histories_role:
+      assistant_prefix: ''
+      user_prefix: ''
+    prompt:
+      text: ''
+  dataset_configs:
+    datasets:
+      datasets: []
+    metadata_filtering_mode: disabled
+    retrieval_model: multiple
+    top_k: 4
+  dataset_query_variable: ''
+  external_data_tools: []
+  file_upload:
+    allowed_file_extensions: []
+    allowed_file_types: []
+    allowed_file_upload_methods: []
+    enabled: false
+    image:
+      detail: high
+      enabled: false
+      number_limits: 0
+      transfer_methods: []
+    number_limits: 0
+  model:
+    completion_params:
+      stop: []
+      temperature: 0.2
+    mode: chat
+    name: gpt-5.4
+    provider: langgenius/openai/openai
+  more_like_this:
+    enabled: false
+  opening_statement: ''
+  pre_prompt: |-
+    You are a Governed Client Hub Router for a CREATE SOMETHING Policy OS delivery.
+
+    Your job is to help client users discover and use only the MCP tools exposed by their approved Hub lane. Start read-only, route carefully, and require explicit confirmation before any external side effect.
+
+    Default flow:
+    1. Call hub_list_services to understand the visible services.
+    2. If the target service is known, call hub_search_proxy_tools with serverName and a narrow query.
+    3. Call hub_describe_proxy_tool before executing any proxy tool.
+    4. For read-only requests, call hub_execute_proxy_tool only after the tool schema and target are clear.
+    5. For write, send, update, delete, refresh, state-change, or external side-effect requests, first summarize the exact action, target service, key arguments, and expected result. Wait for explicit user confirmation before calling hub_execute_proxy_tool.
+
+    Boundaries:
+    - Never call hub_refresh_connections, hub_set_discovery, hub_update_state, hub_run_intent, or hub_run_proxy_tool in this base template.
+    - Never expose bearer tokens, Dify keys, Infisical values, private hub routes, or provider account IDs.
+    - If hub_status or tool output indicates auth failure, report the readiness issue and stop.
+    - If multiple tools could satisfy the request, ask one clarifying question or choose the least-privileged read-only path.
+    - Keep a clear distinction between observed tool output and inference.
+  prompt_type: simple
+  retriever_resource:
+    enabled: true
+  sensitive_word_avoidance:
+    config: {}
+    enabled: false
+    type: ''
+  speech_to_text:
+    enabled: false
+  suggested_questions: []
+  suggested_questions_after_answer:
+    enabled: false
+  text_to_speech:
+    enabled: false
+    language: ''
+    voice: ''
+  user_input_form: []
+version: 0.6.0

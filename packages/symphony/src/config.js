@@ -131,9 +131,9 @@ export function resolve_service_config(workflow, cwd = process.cwd(), env = proc
         },
         codex: {
             command: asString(codex.command) ?? 'codex app-server',
-            approval_policy: asString(codex.approval_policy) ?? 'never',
-            thread_sandbox: asString(codex.thread_sandbox) ?? 'danger-full-access',
-            turn_sandbox_policy: turn_sandbox_policy ?? { type: 'dangerFullAccess' },
+            approval_policy: asString(codex.approval_policy) ?? 'on-request',
+            thread_sandbox: asString(codex.thread_sandbox) ?? 'workspace-write',
+            turn_sandbox_policy: turn_sandbox_policy ?? { type: 'workspaceWrite' },
             turn_timeout_ms: asInteger(codex.turn_timeout_ms) ?? 3_600_000,
             read_timeout_ms: asInteger(codex.read_timeout_ms) ?? 5_000,
             stall_timeout_ms: asInteger(codex.stall_timeout_ms) ?? 300_000,

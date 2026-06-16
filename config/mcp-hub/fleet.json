@@ -22,23 +22,9 @@
         "blondish-notion"
       ],
       "toolkits": [
-        "google-meet",
-        "google-sheets",
-        "notion",
-        "perplexityai",
         "exa",
-        "zoom",
-        "googledrive",
-        "dropbox",
         "gmail",
-        "whatsapp",
-        "firecrawl",
-        "telegram",
-        "box",
-        "instagram",
-        "tiktok",
-        "youtube",
-        "spotify"
+        "notion"
       ]
     },
     "morgan-young-c3-management": {
@@ -60,22 +46,9 @@
         "c3-management-notion"
       ],
       "toolkits": [
-        "google-meet",
-        "google-sheets",
-        "notion",
-        "perplexityai",
         "exa",
-        "zoom",
-        "googledrive",
-        "dropbox",
         "gmail",
-        "box",
-        "firecrawl",
-        "linkedin",
-        "slack",
-        "youtube",
-        "instagram",
-        "spotify"
+        "notion"
       ]
     },
     "blondish-hub": {
@@ -95,6 +68,22 @@
       "related_deployments": [
         "viv-blondish",
         "blondish-notion"
+      ],
+      "toolkits": [
+        "box",
+        "dropbox",
+        "exa",
+        "firecrawl",
+        "gmail",
+        "google-meet",
+        "google-sheets",
+        "googledrive",
+        "notion",
+        "perplexityai",
+        "whatsapp",
+        "youtube",
+        "zoom",
+        "halfdozen-operator-notion"
       ]
     },
     "august": {
@@ -185,6 +174,7 @@
       "type": "policy_os_hub",
       "product": "Cracked Live \u2014 Client Hub",
       "client": "cracked-live",
+      "tenant": "cracked-live",
       "url": "https://cracked.mcp.createsomething.agency/mcp",
       "status": "deployed",
       "account": "create-something",
@@ -196,6 +186,21 @@
       },
       "related_deployments": [
         "cracked-notion"
+      ],
+      "toolkits": [
+        "canva",
+        "dropbox",
+        "exa",
+        "firecrawl",
+        "gmail",
+        "google-meet",
+        "google-sheets",
+        "googledrive",
+        "notion",
+        "perplexityai",
+        "whatsapp",
+        "zoom",
+        "halfdozen-operator-notion"
       ]
     },
     "c3denver-hub": {

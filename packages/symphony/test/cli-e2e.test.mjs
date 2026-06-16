@@ -195,10 +195,10 @@ agent:
   max_retry_backoff_ms: 100
 codex:
   command: ${JSON.stringify(codexCommand)}
-  approval_policy: never
-  thread_sandbox: danger-full-access
+  approval_policy: on-request
+  thread_sandbox: workspace-write
   turn_sandbox_policy:
-    type: dangerFullAccess
+    type: workspaceWrite
   turn_timeout_ms: 5000
   read_timeout_ms: 5000
   stall_timeout_ms: 5000

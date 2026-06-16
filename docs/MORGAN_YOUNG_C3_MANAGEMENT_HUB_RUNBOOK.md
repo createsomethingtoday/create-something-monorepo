@@ -34,6 +34,7 @@ pnpm exec wrangler deploy \
   --var 'HUB_REQUIRED_GLOBAL_SERVERS:' \
   --var 'HUB_REQUIRED_DISCOVERY_SERVERS:' \
   --var HUB_DISCOVERY_MODE:compact \
+  --var HUB_DISCOVERY_SHARED_PACK:morgan-young-c3-management-named-lane \
   --var HUB_DISCOVERY_DEFAULT_SERVERS:notion-halfdozen-c3-management,composio-toolkit-gmail,composio-toolkit-exa \
   --var HUB_IDENTITY_MODE:compat \
   --var HUB_SESSION_RESOLVE_URL:https://id.createsomething.space/v1/mcp/sessions/resolve \
@@ -47,6 +48,7 @@ Notes:
 - Keep `HUB_SESSION_RESOLVE_URL` and `HUB_SESSION_RESOLVE_TOKEN` configured in compat mode so managed bearers still resolve through `identity-worker` with bound-host and allowed-prefix enforcement.
 - `HUB_ENABLED_BUNDLES=[]` is required so the registry default `core` and `observability` bundles do not leak extra servers onto the lane.
 - `HUB_DISABLED_SERVERS`, `HUB_REQUIRED_GLOBAL_SERVERS`, and `HUB_REQUIRED_DISCOVERY_SERVERS` explicitly remove the default `composio-toolkit-notion` requirement; the lane should expose only the custom C3 Notion bridge plus Gmail and Exa.
+- `HUB_DISCOVERY_SHARED_PACK=morgan-young-c3-management-named-lane` is the managed reset baseline; do not inherit `shared-auth-core` for this lane.
 - Do not add this worker to the shared team-hub fleet deploy script.
 - If PerplexityAI is enabled for this lane, add `composio-toolkit-perplexityai` to both `HUB_ENABLED_SERVERS` and `HUB_DISCOVERY_DEFAULT_SERVERS`.
 - If Composio Search is enabled for this lane, add `composio-toolkit-composio_search` to both `HUB_ENABLED_SERVERS` and `HUB_DISCOVERY_DEFAULT_SERVERS`.
