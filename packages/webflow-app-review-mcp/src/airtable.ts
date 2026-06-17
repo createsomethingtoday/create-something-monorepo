@@ -296,6 +296,7 @@ export interface AssetMetadataUpdateInput {
 export interface AirtableClientOptions {
   apiKey: string;
   baseId?: string;
+  governanceApiKey?: string;
   governanceBaseId?: string;
   governanceFindingsTableId?: string;
   fetchFn?: FetchFn;
@@ -692,6 +693,7 @@ function buildGovernanceFindingFilter(query: GovernanceFindingQuery): string | u
 
 export class AirtableClient {
   private readonly apiKey: string;
+  private readonly governanceApiKey: string;
   private readonly baseId: string;
   private readonly governanceBaseId: string;
   private readonly governanceFindingsTableId: string;
@@ -701,6 +703,7 @@ export class AirtableClient {
 
   constructor(options: AirtableClientOptions) {
     this.apiKey = options.apiKey;
+    this.governanceApiKey = options.governanceApiKey ?? options.apiKey;
     this.baseId = options.baseId ?? DEFAULT_AIRTABLE_BASE_ID;
     this.governanceBaseId = options.governanceBaseId ?? this.baseId;
     this.governanceFindingsTableId = options.governanceFindingsTableId ?? DEFAULT_GOVERNANCE_FINDINGS_TABLE_ID;
@@ -718,6 +721,7 @@ export class AirtableClient {
     init: RequestInit,
     query: URLSearchParams,
     baseId = this.baseId,
+    apiKey = this.apiKey,
   ): Promise<T> {
     const url = `${this.tableBaseUrlFor(baseId)}${path}?${query.toString()}`;
     for (let attempt = 0; attempt <= this.maxRetries; attempt += 1) {
@@ -725,7 +729,7 @@ export class AirtableClient {
         const response = await this.fetchFn(url, {
           ...init,
           headers: {
-            Authorization: `Bearer ${this.apiKey}`,
+            Authorization: `Bearer ${apiKey}`,
             'Content-Type': 'application/json',
             ...(init.headers ?? {}),
           },
@@ -876,6 +880,7 @@ export class AirtableClient {
         { method: 'GET' },
         params,
         this.governanceBaseId,
+        this.governanceApiKey,
       );
 
       all.push(...data.records);
@@ -900,6 +905,7 @@ export class AirtableClient {
         { method: 'GET' },
         params,
         this.governanceBaseId,
+        this.governanceApiKey,
       );
     } catch (error) {
       if (error instanceof AirtableClientError && error.status === 404) return null;
@@ -916,6 +922,7 @@ export class AirtableClient {
       { method: 'POST', body: payload },
       params,
       this.governanceBaseId,
+      this.governanceApiKey,
     );
 
     if (!data.records[0]) {
@@ -933,6 +940,7 @@ export class AirtableClient {
       { method: 'PATCH', body: payload },
       params,
       this.governanceBaseId,
+      this.governanceApiKey,
     );
 
     if (!data.records[0]) {

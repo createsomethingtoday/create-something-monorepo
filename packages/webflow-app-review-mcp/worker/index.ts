@@ -16,6 +16,7 @@ interface Env {
   MCP_ACCOUNT_ID?: string;
   MCP_API_KEY?: string;
   AIRTABLE_API_KEY?: string;
+  AIRTABLE_GOVERNANCE_API_KEY?: string;
   AIRTABLE_BASE_ID?: string;
   AIRTABLE_GOVERNANCE_BASE_ID?: string;
   AIRTABLE_GOVERNANCE_FINDINGS_TABLE_ID?: string;
@@ -55,6 +56,7 @@ export class WebflowAppReviewMCP extends McpAgent<Env, unknown, RequestProps> {
       }
       return new AirtableClient({
         apiKey: this.env.AIRTABLE_API_KEY,
+        governanceApiKey: this.env.AIRTABLE_GOVERNANCE_API_KEY,
         baseId: this.env.AIRTABLE_BASE_ID ?? DEFAULT_AIRTABLE_BASE_ID,
         governanceBaseId: this.env.AIRTABLE_GOVERNANCE_BASE_ID,
         governanceFindingsTableId: this.env.AIRTABLE_GOVERNANCE_FINDINGS_TABLE_ID,

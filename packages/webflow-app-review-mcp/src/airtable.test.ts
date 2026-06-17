@@ -134,6 +134,7 @@ describe('AirtableClient governance findings', () => {
 
     const client = new AirtableClient({
       apiKey: 'token',
+      governanceApiKey: 'governance-token',
       fetchFn,
       governanceBaseId: 'appGovernance',
       governanceFindingsTableId: 'tblGovernance',
@@ -160,6 +161,9 @@ describe('AirtableClient governance findings', () => {
 
     expect(callUrl.pathname).toContain('/appGovernance/tblGovernance');
     expect(callUrl.searchParams.get('typecast')).toBe('true');
+    expect(fetchFn.mock.calls[0]?.[1]?.headers).toMatchObject({
+      Authorization: 'Bearer governance-token',
+    });
     expect(payload.records[0]?.fields).toMatchObject({
       [fields.title]: 'Custom Code loader bypass',
       [fields.status]: 'New',

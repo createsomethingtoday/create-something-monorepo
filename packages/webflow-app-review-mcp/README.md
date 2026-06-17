@@ -35,6 +35,7 @@ Required:
 Optional:
 
 - `AIRTABLE_BASE_ID` (defaults to `appMoIgXMTTTNIc3p`)
+- `AIRTABLE_GOVERNANCE_API_KEY` (optional PAT for a separate tracker base; falls back to `AIRTABLE_API_KEY`)
 - `AIRTABLE_GOVERNANCE_BASE_ID` (optional separate tracker base; discovered tracker base: `app1Q0o9xw2Zny7gw`)
 - `AIRTABLE_GOVERNANCE_FINDINGS_TABLE_ID` (defaults to table name `App Review Governance Findings`)
 - `REVIEWER_DIRECTORY_JSON` (JSON map from hub `account_id` to reviewer identity, used by reviewer resources and write attribution payloads)
