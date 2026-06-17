@@ -49,6 +49,37 @@
     }
   ];
 
+  const proofReadingCards: ClearCardItem[] = [
+    {
+      eyebrow: 'Receipts',
+      icon: 'document',
+      title: 'Proof shows the operating result',
+      detail:
+        'Read the artifacts as receipts: what changed, what was verified, what stayed private, and what still needs an owner.'
+    },
+    {
+      eyebrow: 'Primitives',
+      icon: 'settings',
+      title: 'Tools show the discipline',
+      detail:
+        'Ground, Loom, and connector work expose the control principles before they become a client-specific workflow.'
+    },
+    {
+      eyebrow: 'Boundary',
+      icon: 'check',
+      title: 'The service adds judgment states',
+      detail:
+        'The paid work turns proof primitives into run, wait, and stop paths your operator can inspect.'
+    },
+    {
+      eyebrow: 'Funnel',
+      icon: 'plus',
+      title: 'Start by mapping the first workflow',
+      detail:
+        'Use proof as evidence for the method, then map the first safe delegation point for your own system.'
+    }
+  ];
+
   const ctaItems: ClearCtaItem[] = [
     {
       label: 'Connect',
@@ -104,6 +135,7 @@
 
 <ClearPageSection
   variant="hero"
+  layout="split"
   titleLevel="h1"
   eyebrow="Proof"
   title="The service is backed by inspectable parts."
@@ -117,6 +149,10 @@
       {agencyCoreMessaging.bookMappingSessionLabel}
     </Button>
   {/snippet}
+
+  {#snippet aside()}
+    <ClearCardGrid items={proofRoles} columns={1} density="compact" ariaLabel="Proof primitives" />
+  {/snippet}
 </ClearPageSection>
 
 <ClearPageSection
@@ -126,7 +162,7 @@
   description="The free and open tools show the discipline underneath the service: grounded claims, agent continuity, constrained MCP access, and evidence-backed decisions. The paid work turns those primitives into one workflow your operator can trust."
 >
   {#snippet after()}
-    <ClearCardGrid items={proofRoles} columns={4} ariaLabel="Proof role map" />
+    <ClearCardGrid items={proofReadingCards} columns={4} ariaLabel="How to read proof" />
   {/snippet}
 </ClearPageSection>
 
