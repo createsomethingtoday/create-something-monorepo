@@ -351,6 +351,11 @@ input::placeholder {
   padding: 0.72rem 0.78rem 0.74rem;
 }
 
+.atlas-node.agent-active {
+  border-color: rgba(0, 72, 255, 0.24);
+  animation: agent-node-pulse 1.55s ease-out 0s 2;
+}
+
 .atlas-node.selected {
   border-color: rgba(10, 14, 25, 0.86);
   box-shadow:
@@ -380,6 +385,36 @@ input::placeholder {
 
 .atlas-node.kind-touchpoint {
   border-left-color: rgba(207, 178, 220, 0.54);
+}
+
+.atlas-node.detail-compact {
+  gap: 0.42rem;
+  min-height: 4.75rem;
+  padding: 0.62rem 0.68rem;
+}
+
+.atlas-node.detail-compact .node-title {
+  font-size: 0.84rem;
+  line-height: 1.1;
+}
+
+.atlas-node.detail-compact .node-status {
+  min-height: 1.24rem;
+  padding: 0 0.34rem;
+}
+
+.atlas-node.detail-detail {
+  gap: 0.58rem;
+  min-height: 8.25rem;
+  padding: 0.82rem 0.88rem 0.86rem;
+}
+
+.atlas-node.detail-detail .node-title {
+  font-size: 0.98rem;
+}
+
+.atlas-node.detail-detail .node-meta p {
+  -webkit-line-clamp: 6;
 }
 
 .node-topline {
@@ -459,6 +494,24 @@ input::placeholder {
 .react-flow__node:hover .atlas-handle,
 .react-flow__node.selected .atlas-handle {
   opacity: 1;
+}
+
+@keyframes agent-node-pulse {
+  0% {
+    box-shadow:
+      0 0 0 0 rgba(0, 72, 255, 0.18),
+      var(--shadow-soft);
+  }
+  70% {
+    box-shadow:
+      0 0 0 14px rgba(0, 72, 255, 0),
+      var(--shadow-soft);
+  }
+  100% {
+    box-shadow:
+      0 0 0 0 rgba(0, 72, 255, 0),
+      var(--shadow-soft);
+  }
 }
 
 .drawer {
