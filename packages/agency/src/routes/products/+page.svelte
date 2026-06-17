@@ -80,6 +80,48 @@
     }
   ];
 
+  const proofLedger: ClearCardItem[] = [
+    {
+      eyebrow: 'Business signal',
+      icon: 'folder',
+      title: 'Delivery records use the same service path',
+      detail:
+        'Abundance and ShivWorks show the repeatable pattern: business model, access boundary, visible status, private evidence, and next owner decision.',
+      points: [
+        'Visible: status, decisions, handoff, next action',
+        'Private: credentials, logs, raw client data, sensitive proof'
+      ]
+    },
+    {
+      eyebrow: 'Control signal',
+      icon: 'check',
+      title: 'Proof names what can run, wait, or stop',
+      detail:
+        'The service does not sell generic autonomy. Each workflow gets action boundaries, approval-needed states, and blocked-state receipts.',
+      points: [
+        'Run: bounded work can proceed',
+        'Wait: owner approval is required',
+        'Stop: reason-coded handoff is preserved'
+      ]
+    },
+    {
+      eyebrow: 'Ownership signal',
+      icon: 'user',
+      title: 'Clients keep account and approval authority',
+      detail:
+        'Proof is useful only when ownership stays clear: source accounts, business context, final decisions, and sensitive evidence remain under the right owner.',
+      points: ['Account access stays scoped', 'Approval authority stays named']
+    },
+    {
+      eyebrow: 'Transfer signal',
+      icon: 'document',
+      title: 'Handoff notes survive the build',
+      detail:
+        'Runbooks, validation output, release notes, and rollback paths make the workflow understandable after launch.',
+      points: ['Evidence travels with the work', 'The next operator can inspect the path']
+    }
+  ];
+
   const ctaItems: ClearCtaItem[] = [
     {
       label: 'Connect',
@@ -168,6 +210,17 @@
 
 <ClearPageSection
   variant="soft"
+  eyebrow="Proof ledger"
+  title="The evidence is business-readable before it is technical."
+  description="Elite workflow buyers need to see the path from problem to control. The proof ledger shows how each build preserves business context, owner authority, and inspectable receipts."
+>
+  {#snippet after()}
+    <ClearCardGrid items={proofLedger} columns={4} ariaLabel="Business proof ledger" />
+  {/snippet}
+</ClearPageSection>
+
+<ClearPageSection
+  variant="white"
   eyebrow="Flagship proof"
   title="Verify before claiming, then coordinate the work."
   description="The two core open tools behind the operating-layer thesis: Ground checks claims, and Loom gives agent work memory, ownership, and evidence."
@@ -182,7 +235,7 @@
 </ClearPageSection>
 
 <ClearPageSection
-  variant="white"
+  variant="soft"
   eyebrow="Method and control primitives"
   title="Framework tools make the delivery philosophy inspectable."
   description="These tools show the rules underneath the service before they become client workflow systems."
@@ -197,7 +250,7 @@
 </ClearPageSection>
 
 <ClearPageSection
-  variant="soft"
+  variant="white"
   eyebrow="Connection tools"
   title="Connections prove the path first."
   description="When the workflow becomes strategic, the same connection can graduate into approvals, blocked states, and operator briefs."
@@ -212,7 +265,7 @@
 </ClearPageSection>
 
 <ClearPageSection
-  variant="white"
+  variant="soft"
   eyebrow="Client workflow evidence"
   title="Real systems move from integration work into operating visibility."
   description="Selected builds show how code, runbooks, policy, handoffs, and evidence turn into work an operator can understand."

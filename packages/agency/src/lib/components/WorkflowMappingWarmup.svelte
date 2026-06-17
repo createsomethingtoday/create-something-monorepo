@@ -19,6 +19,16 @@
     options: WarmupOption[];
   };
 
+  type ReadinessResult = {
+    level: 'Needs shape' | 'Ready to map' | 'Pilot candidate' | 'Trust layer candidate';
+    slug: string;
+    score: number;
+    intent: 'governance-checklist' | 'workflow-teardown' | 'workflow-mapping';
+    lane: 'workflow_infrastructure' | 'reliability_and_control' | 'not_sure';
+    reason: string;
+    nextStep: string;
+  };
+
   export let bookingHref = agencyCoreMessaging.workflowMappingSessionHref;
 
   const storageKey = 'create-something:workflow-mapping-warmup';
@@ -31,6 +41,15 @@
   let saveState = 'Not saved yet';
   let draftRestored = false;
   let summary = '';
+  let readiness: ReadinessResult = {
+    level: 'Needs shape',
+    slug: 'needs-shape',
+    score: 0,
+    intent: 'governance-checklist',
+    lane: 'not_sure',
+    reason: 'Name the workflow, owner, and first decision before implementation pressure.',
+    nextStep: 'Use the trust checklist to shape the first map.'
+  };
   let selections = {
     human: [] as string[],
     ai: [] as string[],
@@ -138,11 +157,91 @@
     return `${label}: ${values.length ? values.join(', ') : fallback}`;
   }
 
+  function countMatches(values: string[], targets: string[]) {
+    return values.filter((value) => targets.includes(value)).length;
+  }
+
+  function getReadinessResult(): ReadinessResult {
+    const namedFields = [workflowName.trim(), owner.trim(), nextDecision.trim()].filter(Boolean);
+    const selectedValues = Object.values(selections).flat();
+    const selectedDimensionCount = dimensions.filter(
+      (dimension) => selections[dimension.key].length > 0
+    ).length;
+    const selectedOptionCount = selectedValues.length;
+    const fieldScore = namedFields.length * 14;
+    const dimensionScore = selectedDimensionCount * 6;
+    const optionScore = Math.min(28, selectedOptionCount * 3);
+    const ownerBonus = owner.trim() ? 8 : 0;
+    const decisionBonus = nextDecision.trim() ? 8 : 0;
+    const score = Math.min(
+      100,
+      fieldScore + dimensionScore + optionScore + ownerBonus + decisionBonus
+    );
+    const riskSignals =
+      selections.constraints.length +
+      countMatches(selections.human, ['review', 'stop']) +
+      countMatches(selections.data, ['approval', 'private-evidence']) +
+      countMatches(selections.system, ['log', 'store']);
+
+    if (score < 35) {
+      return {
+        level: 'Needs shape',
+        slug: 'needs-shape',
+        score,
+        intent: 'governance-checklist',
+        lane: 'not_sure',
+        reason:
+          'The workflow is still missing enough owner, state, or risk context to scope safely.',
+        nextStep: 'Use the trust checklist before asking for implementation.'
+      };
+    }
+
+    if (riskSignals >= 5 && selectedDimensionCount >= 4) {
+      return {
+        level: 'Trust layer candidate',
+        slug: 'trust-layer-candidate',
+        score,
+        intent: 'workflow-mapping',
+        lane: 'reliability_and_control',
+        reason:
+          'The map already includes approvals, private evidence, constraints, or recovery needs.',
+        nextStep: 'Map the control layer around the first live workflow.'
+      };
+    }
+
+    if (score >= 72 && owner.trim() && nextDecision.trim() && selectedDimensionCount >= 5) {
+      return {
+        level: 'Pilot candidate',
+        slug: 'pilot-candidate',
+        score,
+        intent: 'workflow-mapping',
+        lane: 'workflow_infrastructure',
+        reason:
+          'The workflow has a named owner, decision point, and enough signals for a first safe run.',
+        nextStep: 'Use the map as booking context for a workflow pilot.'
+      };
+    }
+
+    return {
+      level: 'Ready to map',
+      slug: 'ready-to-map',
+      score,
+      intent: 'workflow-teardown',
+      lane: 'not_sure',
+      reason:
+        'There is enough shape to discuss the workflow, but the implementation lane should be chosen after mapping.',
+      nextStep: 'Request a trust map before choosing the build path.'
+    };
+  }
+
   function buildSummary() {
+    const readinessResult = getReadinessResult();
     const lines = [
       'Atlas warmup summary',
       `Workflow: ${workflowName.trim() || 'Not named yet'}`,
       `Owner / approver: ${owner.trim() || 'Not named yet'}`,
+      `Readiness: ${readinessResult.level} (${readinessResult.score}/100)`,
+      `Recommended next step: ${readinessResult.nextStep}`,
       lineFor('Human task', labelsFor('human'), 'Not selected yet'),
       lineFor('AI task', labelsFor('ai'), 'Not selected yet'),
       lineFor('System operation', labelsFor('system'), 'Not selected yet'),
@@ -247,9 +346,15 @@
     nextDecision;
     selections;
     summary = buildSummary();
+    readiness = getReadinessResult();
   }
-  $: selectedDimensionCount = dimensions.filter((dimension) => selections[dimension.key].length > 0).length;
-  $: selectedOptionCount = Object.values(selections).reduce((count, values) => count + values.length, 0);
+  $: selectedDimensionCount = dimensions.filter(
+    (dimension) => selections[dimension.key].length > 0
+  ).length;
+  $: selectedOptionCount = Object.values(selections).reduce(
+    (count, values) => count + values.length,
+    0
+  );
   $: hasWarmupInput = Boolean(
     workflowName.trim() || owner.trim() || nextDecision.trim() || selectedOptionCount
   );
@@ -261,7 +366,7 @@
     saveWarmup();
   }
   $: bookingPath = bookingHref.split('?')[0] || '/book';
-  $: warmupBookingHref = `${bookingPath}?source=atlas-warmup&intent=workflow-mapping&lane=not_sure&warmup=atlas`;
+  $: warmupBookingHref = `${bookingPath}?source=atlas-warmup&intent=${readiness.intent}&lane=${readiness.lane}&warmup=atlas&readiness=${readiness.slug}&score=${readiness.score}`;
 </script>
 
 <div class="workflow-warmup" aria-label="Atlas-inspired workflow mapping warmup">
@@ -276,7 +381,11 @@
     </label>
     <label>
       <span>Owner or approver</span>
-      <input bind:value={owner} type="text" placeholder="Account owner, recruiter, PM, operator..." />
+      <input
+        bind:value={owner}
+        type="text"
+        placeholder="Account owner, recruiter, PM, operator..."
+      />
     </label>
     <label>
       <span>Next decision</span>
@@ -316,12 +425,18 @@
       <span>Onboarding artifact</span>
       <h3>Your first map becomes booking context.</h3>
       <p>
-        Your progress autosaves in this browser and attaches to the booking notes when you
-        continue into the mapping session.
+        Your progress autosaves in this browser and attaches to the booking notes when you continue
+        into the mapping session.
       </p>
       <div class="warmup-progress" aria-label="Workflow warmup progress">
         <strong>{selectedDimensionCount}/6 dimensions mapped</strong>
         <small>{selectedOptionCount} selected signals · {saveState}</small>
+      </div>
+      <div class="warmup-result" aria-live="polite">
+        <span>Readiness result</span>
+        <strong>{readiness.level}</strong>
+        <p>{readiness.reason}</p>
+        <small>Recommended: {readiness.nextStep}</small>
       </div>
     </div>
     <pre>{summary}</pre>
@@ -425,6 +540,28 @@
     background: var(--color-clear-porcelain, #f9f9f9);
   }
 
+  .warmup-result {
+    display: grid;
+    gap: 0.35rem;
+    margin-top: 0.75rem;
+    padding: 0.75rem;
+    border: 1px solid color-mix(in srgb, var(--color-clear-pastel-green, #d8ead7) 68%, #cecece);
+    border-radius: 6px;
+    background: color-mix(in srgb, var(--color-clear-pastel-green, #d8ead7) 22%, #ffffff);
+  }
+
+  .warmup-result strong {
+    color: var(--color-clear-onyx, #0a0e19);
+    font-size: 1rem;
+    line-height: 1.25;
+  }
+
+  .warmup-result small {
+    color: var(--color-clear-grey, #636363);
+    font-size: 0.78rem;
+    line-height: 1.4;
+  }
+
   .warmup-progress strong {
     color: var(--color-clear-onyx, #0a0e19);
     font-size: 0.9rem;
@@ -496,7 +633,13 @@
     border-radius: 6px;
     background: var(--color-clear-porcelain, #f9f9f9);
     color: var(--color-clear-onyx, #0a0e19);
-    font: 0.78rem/1.55 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font:
+      0.78rem/1.55 ui-monospace,
+      SFMono-Regular,
+      Menlo,
+      Monaco,
+      Consolas,
+      monospace;
     padding: 0.85rem;
     white-space: pre-wrap;
     word-break: break-word;

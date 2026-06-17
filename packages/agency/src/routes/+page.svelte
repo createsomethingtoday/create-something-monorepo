@@ -2,6 +2,7 @@
   import {
     Button,
     ClearActionFooter,
+    ClearCardGrid,
     ClearContentHighlights,
     ClearLogoStrip,
     ClearMetadataRail,
@@ -14,6 +15,7 @@
     ClearUseCaseBand,
     SEO,
     type ClearActionFooterItem,
+    type ClearCardItem,
     type ClearContentHighlight,
     type ClearLogoStripItem,
     type ClearMetadataGroup,
@@ -125,7 +127,8 @@
       title: 'Add the trust layer',
       detail:
         'Wrap live automation with decision rules, receipts, recovery notes, and accountable ownership.',
-      proof: 'Output: monthly control plan for work that touches revenue, customers, or production.',
+      proof:
+        'Output: monthly control plan for work that touches revenue, customers, or production.',
       links: [{ label: 'See stack boundary', href: '/stack' }]
     },
     {
@@ -170,6 +173,45 @@
     {
       title: 'Migrate deprecated APIs',
       detail: 'Map every call site, make the smallest safe edit, and prove the behavior.'
+    }
+  ];
+
+  const buyerLanes: ClearCardItem[] = [
+    {
+      eyebrow: 'Revenue ops',
+      icon: 'refresh',
+      title: 'Leads or handoffs stall after intake',
+      detail:
+        'Map the first lane where context disappears, ownership gets fuzzy, or follow-up slows down revenue.',
+      href: '/contact?source=lane&intent=workflow-teardown&lane=workflow_infrastructure',
+      points: [
+        'First run: classify, summarize, route, or draft',
+        'Proof: source record, owner handoff, and next action receipt'
+      ]
+    },
+    {
+      eyebrow: 'Customer trust',
+      icon: 'check',
+      title: 'Support work needs safe recovery',
+      detail:
+        'Use when order, payment, case, or account context must be inspected before anything touches the customer.',
+      href: '/contact?source=lane&intent=workflow-mapping&lane=reliability_and_control',
+      points: [
+        'First run: run, wait, or stop with a reason',
+        'Proof: approval note, blocked-state record, and customer-safe draft'
+      ]
+    },
+    {
+      eyebrow: 'Delivery ops',
+      icon: 'document',
+      title: 'Client or production work needs receipts',
+      detail:
+        'Use when builds, launches, or handoffs need visible status without exposing credentials, raw logs, or private client data.',
+      href: '/contact?source=lane&intent=workflow-teardown&lane=workflow_infrastructure',
+      points: [
+        'First run: release evidence, handoff surface, or owner queue',
+        'Proof: delivery page, validation output, and rollback note'
+      ]
     }
   ];
 
@@ -360,6 +402,17 @@
     items={useCases}
     ariaLabel="Controlled workflow use cases"
   />
+
+  <ClearPageSection
+    variant="soft"
+    eyebrow="Buyer lanes"
+    title="Pick the business lane before picking the tool."
+    description="The fastest path is not a platform demo. It is a known workflow, a named business risk, and the first controlled run that proves the service should expand."
+  >
+    {#snippet after()}
+      <ClearCardGrid items={buyerLanes} columns={3} ariaLabel="Workflow buyer lanes" />
+    {/snippet}
+  </ClearPageSection>
 
   <ClearPageSection
     id="workflow-pattern"
