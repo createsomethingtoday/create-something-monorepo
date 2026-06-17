@@ -1,0 +1,44 @@
+{
+  "name": "@create-something/ona-agents",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Standalone Ona-styled operator chat frontend for CREATE SOMETHING Dify agents.",
+  "createSomething": {
+    "agentLegibilityContract": true,
+    "tier": "judgment",
+    "surface": "app",
+    "entrypoints": [
+      "src/routes/agents/+page.svelte",
+      "src/routes/agents/[agentId]/+page.svelte",
+      "src/lib/server/auth/clerk-access.ts",
+      "src/lib/server/dify/client.ts"
+    ],
+    "boot": "pnpm dev",
+    "smoke": "pnpm check && pnpm test"
+  },
+  "type": "module",
+  "scripts": {
+    "dev": "vite dev",
+    "build": "vite build",
+    "preview": "vite preview",
+    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings",
+    "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings --watch",
+    "test": "pnpm exec tsx --test test/*.test.ts",
+    "smoke": "pnpm check && pnpm test && pnpm build",
+    "deploy": "pnpm build && WRANGLER_LOG_PATH=../../.wrangler/logs/ona-agents CLOUDFLARE_ACCOUNT_ID=9645bd52e640b8a4f40a3a55ff1dd75a pnpm exec wrangler pages deploy .svelte-kit/cloudflare --project-name=ona-agent-chat --branch=main --commit-dirty=true",
+    "deploy:preview": "pnpm build && WRANGLER_LOG_PATH=../../.wrangler/logs/ona-agents CLOUDFLARE_ACCOUNT_ID=9645bd52e640b8a4f40a3a55ff1dd75a pnpm exec wrangler pages deploy .svelte-kit/cloudflare --project-name=ona-agent-chat --branch=preview --commit-dirty=true",
+    "cf:typegen": "WRANGLER_LOG_PATH=../../.wrangler/logs/ona-agents CLOUDFLARE_ACCOUNT_ID=9645bd52e640b8a4f40a3a55ff1dd75a pnpm exec wrangler types"
+  },
+  "dependencies": {
+    "svelte": "^5.41.0"
+  },
+  "devDependencies": {
+    "@sveltejs/adapter-cloudflare": "^7.2.4",
+    "@sveltejs/kit": "^2.47.1",
+    "@sveltejs/vite-plugin-svelte": "^6.2.1",
+    "svelte-check": "^4.3.3",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
+    "vite": "^7.1.10"
+  }
+}
