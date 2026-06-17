@@ -164,6 +164,13 @@ export function renderStudioHtml(): string {
         min-width: 0;
       }
 
+      .brand-copy {
+        display: flex;
+        align-items: baseline;
+        gap: 0.5rem;
+        min-width: 0;
+      }
+
       .mark {
         display: inline-flex;
         align-items: center;
@@ -187,11 +194,24 @@ export function renderStudioHtml(): string {
         line-height: 1.15;
       }
 
+      .brand-copy strong {
+        display: inline;
+        flex: none;
+        white-space: nowrap;
+      }
+
       .brand span,
       .panel-title span,
       .meta {
         color: var(--muted);
         font-size: 0.76rem;
+      }
+
+      .brand-copy span {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
 
       .session-chips {
@@ -879,13 +899,12 @@ export function renderStudioHtml(): string {
         <div class="brand">
           <div class="mark" aria-hidden="true">
             <svg viewBox="0 0 32 32" focusable="false">
-              <rect width="32" height="32" fill="#0A0E19"></rect>
-              <path d="M16 4 26.39 10 16 16 5.61 10Z" fill="#FFFFFF"></path>
-              <path d="M5.61 10 16 16 16 28 5.61 22Z" fill="#FFFFFF" fill-opacity="0.6"></path>
-              <path d="M16 16 26.39 10 26.39 22 16 28Z" fill="#FFFFFF" fill-opacity="0.3"></path>
+              <path d="M16 4 26.39 10 16 16 5.61 10Z" fill="#000000"></path>
+              <path d="M5.61 10 16 16 16 28 5.61 22Z" fill="#000000" fill-opacity="0.6"></path>
+              <path d="M16 16 26.39 10 26.39 22 16 28Z" fill="#000000" fill-opacity="0.3"></path>
             </svg>
           </div>
-          <div>
+          <div class="brand-copy">
             <strong>Atlas Studio</strong>
             <span id="session-title">Loading session...</span>
           </div>
@@ -927,10 +946,9 @@ export function renderStudioHtml(): string {
           <div id="node-layer" class="node-layer" aria-label="Atlas workflow nodes"></div>
           <div class="canvas-brand" aria-hidden="true">
             <svg class="canvas-brand-mark" viewBox="0 0 32 32" focusable="false">
-              <rect width="32" height="32" fill="#0A0E19"></rect>
-              <path d="M16 4 26.39 10 16 16 5.61 10Z" fill="#FFFFFF"></path>
-              <path d="M5.61 10 16 16 16 28 5.61 22Z" fill="#FFFFFF" fill-opacity="0.6"></path>
-              <path d="M16 16 26.39 10 26.39 22 16 28Z" fill="#FFFFFF" fill-opacity="0.3"></path>
+              <path d="M16 4 26.39 10 16 16 5.61 10Z" fill="#000000"></path>
+              <path d="M5.61 10 16 16 16 28 5.61 22Z" fill="#000000" fill-opacity="0.6"></path>
+              <path d="M16 16 26.39 10 26.39 22 16 28Z" fill="#000000" fill-opacity="0.3"></path>
             </svg>
           </div>
         </section>
