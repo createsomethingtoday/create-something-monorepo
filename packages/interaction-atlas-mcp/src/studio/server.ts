@@ -56,6 +56,11 @@ function badRequest(response: http.ServerResponse, error: unknown): void {
   sendJson(response, 400, { error: error instanceof Error ? error.message : String(error) });
 }
 
+function sendEvent(response: http.ServerResponse, event: string, payload: unknown): void {
+  response.write(`event: ${event}\n`);
+  response.write(`data: ${JSON.stringify(payload)}\n\n`);
+}
+
 export async function startStudioServer(options: StudioServerOptions): Promise<http.Server> {
   const cwd = options.cwd ?? process.cwd();
   let defaultSessionId = options.sessionId;
@@ -131,6 +136,43 @@ export async function startStudioServer(options: StudioServerOptions): Promise<h
       const sessionMatch = url.pathname.match(/^\/api\/sessions\/([^/]+)$/);
       if (method === 'GET' && sessionMatch) {
         sendJson(response, 200, await readSession(decodeURIComponent(sessionMatch[1] ?? ''), cwd));
+        return;
+      }
+
+      const eventsMatch = url.pathname.match(/^\/api\/sessions\/([^/]+)\/events$/);
+      if (method === 'GET' && eventsMatch) {
+        const sessionId = decodeURIComponent(eventsMatch[1] ?? '');
+        response.writeHead(200, {
+          'content-type': 'text/event-stream; charset=utf-8',
+          'cache-control': 'no-cache, no-transform',
+          connection: 'keep-alive',
+          'x-accel-buffering': 'no'
+        });
+        response.write(': connected\n\n');
+
+        let lastUpdatedAt = '';
+        let closed = false;
+        const publishIfChanged = async () => {
+          if (closed) return;
+          try {
+            const session = await readSession(sessionId, cwd);
+            if (session.updatedAt === lastUpdatedAt) return;
+            lastUpdatedAt = session.updatedAt;
+            sendEvent(response, 'session', session);
+          } catch (error) {
+            sendEvent(response, 'error', {
+              error: error instanceof Error ? error.message : String(error)
+            });
+          }
+        };
+        const timer = setInterval(() => {
+          void publishIfChanged();
+        }, 650);
+        request.on('close', () => {
+          closed = true;
+          clearInterval(timer);
+        });
+        void publishIfChanged();
         return;
       }
 

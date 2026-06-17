@@ -129,7 +129,7 @@ export function renderStudioHtml(): string {
 
       .shell {
         display: grid;
-        grid-template-rows: 64px minmax(0, 1fr) 60px;
+        grid-template-rows: 64px minmax(0, 1fr) 56px;
         height: 100vh;
       }
 
@@ -197,21 +197,57 @@ export function renderStudioHtml(): string {
       }
 
       .workspace {
-        display: grid;
-        grid-template-columns: 344px minmax(0, 1fr) 376px;
+        position: relative;
+        display: block;
         min-height: 0;
+        overflow: hidden;
       }
 
       aside {
         min-height: 0;
         overflow: auto;
-        border-right: 1px solid var(--line);
         background: var(--panel);
       }
 
+      .drawer {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        z-index: 4;
+        width: min(392px, calc(100% - 1.5rem));
+        background: #ffffff;
+        box-shadow: 0 20px 50px #00000012;
+        transition: transform 180ms ease;
+        will-change: transform;
+      }
+
+      .call-drawer {
+        left: 0;
+        border-right: 1px solid var(--line);
+        transform: translateX(calc(-100% - 1px));
+      }
+
       .inspector {
-        border-right: 0;
+        right: 0;
         border-left: 1px solid var(--line);
+        transform: translateX(calc(100% + 1px));
+      }
+
+      body.rail-open .call-drawer,
+      body.inspector-open .inspector {
+        transform: translateX(0);
+      }
+
+      body.rail-open .canvas-wrap {
+        padding-left: 0;
+      }
+
+      .view-toggle[aria-pressed="true"] {
+        border-color: #0a0e1924;
+        background:
+          linear-gradient(#cecece40 0% 100%),
+          #ffffffd9;
+        color: var(--ink);
       }
 
       .panel {
@@ -263,6 +299,8 @@ export function renderStudioHtml(): string {
 
       .canvas-wrap {
         position: relative;
+        width: 100%;
+        height: 100%;
         min-width: 0;
         min-height: 0;
         overflow: hidden;
@@ -741,12 +779,8 @@ export function renderStudioHtml(): string {
       }
 
       @media (max-width: 1180px) {
-        .workspace {
-          grid-template-columns: 300px minmax(0, 1fr);
-        }
-
-        .inspector {
-          display: none;
+        .drawer {
+          width: min(360px, calc(100% - 1rem));
         }
       }
 
@@ -762,19 +796,14 @@ export function renderStudioHtml(): string {
           padding: 0.8rem;
         }
 
-        .workspace {
-          grid-template-columns: 1fr;
-        }
-
-        aside {
-          max-height: 38vh;
-          border-right: 0;
-          border-bottom: 1px solid var(--line);
-        }
-
         .canvas-legend,
         .session-chips {
           display: none;
+        }
+
+        .drawer {
+          width: 100%;
+          max-height: none;
         }
 
         :root {
@@ -798,13 +827,39 @@ export function renderStudioHtml(): string {
           <span class="count-chip"><span id="suggestion-count">0 queued</span></span>
         </div>
         <div class="actions">
+          <button id="rail-toggle" class="view-toggle" data-icon="messages-square" aria-pressed="false" type="button">Rail</button>
+          <button id="inspector-toggle" class="view-toggle" data-icon="scan-line" aria-pressed="false" type="button">Inspector</button>
           <button id="refresh-button" data-icon="refresh-cw" type="button">Refresh</button>
           <button id="copy-command-button" data-icon="clipboard" type="button">Copy command</button>
         </div>
       </header>
 
       <main class="workspace">
-        <aside>
+        <section class="canvas-wrap" aria-label="Atlas workflow canvas">
+          <div class="canvas-toolbar">
+            <div class="canvas-kicker">
+              <span data-lucide="workflow"></span>
+              <strong>Workflow map</strong>
+              <span id="canvas-summary">0 nodes / 0 edges</span>
+            </div>
+            <div class="canvas-legend" aria-label="Run wait stop legend">
+              <span class="status run">Run</span>
+              <span class="status wait">Wait</span>
+              <span class="status stop">Stop</span>
+            </div>
+          </div>
+          <svg id="canvas" viewBox="0 0 1180 780" role="img" aria-label="Live Atlas session map">
+            <defs>
+              <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+                <path d="M0,0 L0,6 L9,3 z" fill="#afafa7"></path>
+              </marker>
+            </defs>
+            <g id="edge-layer"></g>
+          </svg>
+          <div id="node-layer" class="node-layer" aria-label="Atlas workflow nodes"></div>
+        </section>
+
+        <aside id="call-drawer" class="drawer call-drawer" aria-label="Call rail">
           <section class="panel">
             <div class="panel-title">
               <div class="title-lockup">
@@ -852,31 +907,7 @@ export function renderStudioHtml(): string {
           </section>
         </aside>
 
-        <section class="canvas-wrap" aria-label="Atlas workflow canvas">
-          <div class="canvas-toolbar">
-            <div class="canvas-kicker">
-              <span data-lucide="workflow"></span>
-              <strong>Workflow map</strong>
-              <span id="canvas-summary">0 nodes / 0 edges</span>
-            </div>
-            <div class="canvas-legend" aria-label="Run wait stop legend">
-              <span class="status run">Run</span>
-              <span class="status wait">Wait</span>
-              <span class="status stop">Stop</span>
-            </div>
-          </div>
-          <svg id="canvas" viewBox="0 0 1180 780" role="img" aria-label="Live Atlas session map">
-            <defs>
-              <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
-                <path d="M0,0 L0,6 L9,3 z" fill="#afafa7"></path>
-              </marker>
-            </defs>
-            <g id="edge-layer"></g>
-          </svg>
-          <div id="node-layer" class="node-layer" aria-label="Atlas workflow nodes"></div>
-        </section>
-
-        <aside class="inspector">
+        <aside id="inspector-drawer" class="drawer inspector" aria-label="Inspector and palette">
           <section class="panel">
             <div class="panel-title">
               <div class="title-lockup">
@@ -968,6 +999,8 @@ export function renderStudioHtml(): string {
       let selectedNodeId = null;
       let dragging = null;
       let saveTimer = null;
+      let sessionEvents = null;
+      let fallbackTimer = null;
 
       function esc(value) {
         return String(value ?? '')
@@ -998,6 +1031,24 @@ export function renderStudioHtml(): string {
         });
       }
 
+      function setDrawer(name, open) {
+        const className = name === 'rail' ? 'rail-open' : 'inspector-open';
+        document.body.classList.toggle(className, open);
+        const button = document.getElementById(name + '-toggle');
+        if (button) button.setAttribute('aria-pressed', open ? 'true' : 'false');
+        if (session) {
+          requestAnimationFrame(() => {
+            renderNodes();
+            renderEdges();
+          });
+        }
+      }
+
+      function toggleDrawer(name) {
+        const className = name === 'rail' ? 'rail-open' : 'inspector-open';
+        setDrawer(name, !document.body.classList.contains(className));
+      }
+
       async function requestJson(url, options = {}) {
         const res = await fetch(url, {
           ...options,
@@ -1020,6 +1071,34 @@ export function renderStudioHtml(): string {
       async function loadPalette() {
         palette = await requestJson('/api/palette');
         renderPalette();
+      }
+
+      function startFallbackPoll() {
+        if (fallbackTimer) return;
+        fallbackTimer = setInterval(() => {
+          if (!dragging) loadSession().catch(console.error);
+        }, 650);
+      }
+
+      function connectSessionEvents() {
+        if (!('EventSource' in window)) {
+          startFallbackPoll();
+          return;
+        }
+        if (sessionEvents) sessionEvents.close();
+        sessionEvents = new EventSource('/api/sessions/' + encodeURIComponent(sessionId) + '/events');
+        sessionEvents.addEventListener('session', (event) => {
+          if (dragging) return;
+          const next = JSON.parse(event.data);
+          if (session && next.updatedAt === session.updatedAt) return;
+          session = next;
+          render();
+        });
+        sessionEvents.addEventListener('error', () => {
+          sessionEvents?.close();
+          sessionEvents = null;
+          startFallbackPoll();
+        });
       }
 
       const world = { width: 1180, height: 780 };
@@ -1171,6 +1250,7 @@ export function renderStudioHtml(): string {
             event.preventDefault();
             selectedNodeId = node.id;
             dragging = { node, startX: event.clientX, startY: event.clientY, originalX: node.x, originalY: node.y, frame: canvasFrame() };
+            setDrawer('inspector', true);
             render();
           });
         });
@@ -1274,6 +1354,13 @@ export function renderStudioHtml(): string {
 
       hydrateIcons();
 
+      document.getElementById('rail-toggle').addEventListener('click', () => {
+        toggleDrawer('rail');
+      });
+      document.getElementById('inspector-toggle').addEventListener('click', () => {
+        toggleDrawer('inspector');
+      });
+
       window.addEventListener('pointermove', (event) => {
         if (!dragging) return;
         const scale = dragging.frame.scale || 1;
@@ -1323,13 +1410,18 @@ export function renderStudioHtml(): string {
         await navigator.clipboard.writeText(document.getElementById('agent-command').textContent);
       });
 
-      setInterval(() => {
-        if (!dragging) loadSession().catch(console.error);
-      }, 1500);
-
-      Promise.all([loadSession(), loadPalette()]).catch((error) => {
-        document.body.innerHTML = '<pre>' + esc(error.stack || error.message) + '</pre>';
-      });
+      Promise.all([loadSession(), loadPalette()])
+        .then(() => {
+          window.addEventListener('load', () => {
+            setTimeout(connectSessionEvents, 800);
+          });
+          if (document.readyState === 'complete') {
+            setTimeout(connectSessionEvents, 800);
+          }
+        })
+        .catch((error) => {
+          document.body.innerHTML = '<pre>' + esc(error.stack || error.message) + '</pre>';
+        });
     </script>
   </body>
 </html>`;
