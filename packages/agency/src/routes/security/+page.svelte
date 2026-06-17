@@ -91,7 +91,7 @@
 
 <SEO
   title="Security"
-  description="How CREATE SOMETHING .agency turns identity, entitlement, blocked states, and audit trails into governed execution for production automation."
+  description="How CREATE SOMETHING .agency turns identity, entitlement, blocked states, and audit trails into controlled execution for production automation."
   propertyName="agency"
 />
 
@@ -101,7 +101,7 @@
   titleLevel="h1"
   eyebrow="Security"
   title="A token can exist and access can still stop."
-  description="Policy OS turns credentials into governable runtime behavior. Identity, entitlement, commercial state, and policy all participate in the final decision."
+  description="Policy OS turns credentials into controlled runtime behavior. Identity, entitlement, commercial state, and policy all participate in the final decision."
 >
   {#snippet actions()}
     <Button href={agencyCoreMessaging.workflowMappingSessionHref}>
@@ -123,7 +123,7 @@
 <ClearPageSection
   variant="white"
   eyebrow={`Last updated ${updatedDate}`}
-  title="Governed automation needs an explicit access chain."
+  title="Controlled automation needs an explicit access chain."
   description="Each request passes through a clear path so approval requirements, blocked states, and recovery paths stay legible instead of hiding inside prompt behavior."
 >
   {#snippet after()}
@@ -132,7 +132,7 @@
 </ClearPageSection>
 
 <ClearCtaBand
-  eyebrow="Trust boundary"
+  eyebrow="Access boundary"
   title="Map the workflow before you hand it credentials."
   description="Security is strongest when the workflow names its objects, permissions, stop conditions, and receipts before any agent acts."
   items={ctaItems}

@@ -55,7 +55,7 @@
 		{
 			weeks: 'Step 4',
 			name: 'Ship the operator path',
-				description: 'Deliver the MCP wedge, runbook, trust notes, and operator brief surface.'
+				description: 'Deliver the first safe connection, runbook, trust notes, and operator brief surface.'
 		}
 	];
 
@@ -87,7 +87,7 @@
 <SEO
 	title="How It Works | CREATE SOMETHING .agency"
 	description="CREATE SOMETHING removes duplication, excess, and disconnection before turning a workflow into controlled delegation with a trust layer."
-	keywords="how CREATE SOMETHING works, workflow trust layer, controlled workflow, MCP wedge, automation audit, Subtractive Triad"
+	keywords="how CREATE SOMETHING works, workflow trust layer, controlled workflow, first safe connection, automation audit, Subtractive Triad"
 	ogImage="/og-image.svg"
 	propertyName="agency"
 	breadcrumbs={[

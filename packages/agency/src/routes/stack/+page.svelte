@@ -21,7 +21,8 @@
       eyebrow: 'I deliver',
       icon: 'settings',
       title: 'Maps, rules, evidence',
-      detail: 'Workflow maps, action contracts, trust rules, release evidence, runbooks, and handoff notes.'
+      detail:
+        'Workflow maps, action contracts, control rules, release evidence, runbooks, and handoff notes.'
     },
     {
       eyebrow: 'Vendors provide',
@@ -47,7 +48,7 @@
     {
       eyebrow: '03 Control',
       icon: 'check',
-      title: 'Trust Layer',
+      title: 'Control layer',
       detail: 'Classify actions as auto-allowed, approval-needed, or blocked with reason before the workflow touches risk.'
     },
     {
@@ -74,7 +75,7 @@
     {
       eyebrow: 'Contract',
       icon: 'document',
-      title: 'MCP/API contract',
+      title: 'Tool/API contract',
       detail: 'Tools, resources, auth scopes, allowed actions, and transport limits.'
     },
     {
@@ -170,7 +171,8 @@
       eyebrow: 'Complete system',
       icon: 'settings',
       title: 'Abundance',
-      detail: 'Database, callable actions, MCP/API surface, and explainable matching show the full operating path.'
+      detail:
+        'Database, callable actions, tool/API surface, and explainable matching show the full operating path.'
     },
     {
       eyebrow: 'Surface work',
@@ -181,7 +183,7 @@
     {
       eyebrow: 'Expansion layer',
       icon: 'check',
-      title: 'Trust Layer',
+      title: 'Control layer',
       detail: 'Linear evidence, identity, entitlement, approvals, blocked states, and auditability make the system serious enough to scale.'
     }
   ];
@@ -209,8 +211,8 @@
 </script>
 
 <SEO
-  title="Trust Layer & Stack Boundaries | CREATE SOMETHING .agency"
-  description="The stack is replaceable. CREATE SOMETHING owns the trust layer: objects, scoped actions, approval paths, evidence, and recovery."
+  title="Stack Boundary | CREATE SOMETHING .agency"
+  description="CREATE SOMETHING separates what your team owns, what vendors provide, and what the workflow needs before agent work becomes production work."
   keywords="workflow trust layer, transparent AI stack, MCP stack, vendor boundaries, Composio, Cloudflare, Dify, Notion, OpenAI, Webflow"
   ogImage="/og-image.svg"
   propertyName="agency"
@@ -220,9 +222,9 @@
   variant="hero"
   layout="split"
   titleLevel="h1"
-  eyebrow="Trust Layer & Stack Boundaries"
-  title="The tools are replaceable. The operating boundary is the product."
-  description="Proven services help the work run. CREATE SOMETHING owns the part that makes delegation safe to inherit: the object model, action boundaries, approval paths, evidence, and recovery notes that stay portable when vendors change."
+  eyebrow="Stack Boundary"
+  title="The tools are replaceable. The workflow boundary is the product."
+  description="Proven services help the work run. CREATE SOMETHING owns the durable part: who owns the accounts, which actions can run, which decisions need approval, what stops, and what evidence travels with the handoff."
 >
   {#snippet actions()}
     <Button href={agencyCoreMessaging.workflowMappingSessionHref}>
@@ -295,6 +297,6 @@
     <Button href={agencyCoreMessaging.workflowMappingSessionHref}>
       {agencyCoreMessaging.bookMappingSessionLabel}
     </Button>
-    <Button href="/products" variant="secondary">See Proof Surfaces</Button>
+    <Button href="/products" variant="secondary">See Proof</Button>
   {/snippet}
 </ClearCtaBand>

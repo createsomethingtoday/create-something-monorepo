@@ -1,12 +1,45 @@
 <script lang="ts">
   import { SEO } from '@create-something/canon';
   import type { PageData } from './$types';
+  import DeliveryOutcomeStrip, {
+    type DeliveryOutcomeItem
+  } from '$lib/components/DeliveryOutcomeStrip.svelte';
 
   export let data: PageData;
 
   const context = data.context;
   const engagement = context.engagement;
   const privateEvidence = context.evidence.filter((item) => item.visibility !== 'public');
+  const outcomeItems: DeliveryOutcomeItem[] = [
+    {
+      label: 'Before',
+      title: 'Backend ownership could scatter across chat, accounts, secrets, and data.',
+      detail:
+        'The handoff needed to be safe for a PM to forward and precise enough for a developer to inherit.',
+      tone: 'neutral'
+    },
+    {
+      label: 'Now',
+      title: 'Repo, secrets, database, app admin, and acceptance checks have named lanes.',
+      detail:
+        'The runbook separates GitHub, Infisical, Cloudflare, and app admin access so each grant can be approved and verified.',
+      tone: 'success'
+    },
+    {
+      label: 'Risk reduced',
+      title: 'No broad credential or CREATE SOMETHING internal access is required.',
+      detail:
+        'Secret values stay in Infisical and Cloudflare, production data stays out of the public page, and grants remain attributable.',
+      tone: 'info'
+    },
+    {
+      label: 'Next decision',
+      title: 'Name the recipient and choose scoped access or full account transfer.',
+      detail:
+        'The remaining work is explicit: identities, access grants, production ownership, and app admin role setup.',
+      tone: 'warning'
+    }
+  ];
 </script>
 
 <SEO
@@ -37,6 +70,13 @@
     </aside>
   </div>
 </section>
+
+<DeliveryOutcomeStrip
+  eyebrow="Business outcome"
+  title="The handoff is now an ownership system."
+  description="The page lets a non-technical owner forward the right artifact while keeping production access and private data behind named approval lanes."
+  items={outcomeItems}
+/>
 
 <section class="delivery-section">
   <div class="shell-inner-pad">

@@ -17,6 +17,7 @@
 		AGENCY_MARKETING_COPY_EXPERIMENT,
 		getAgencyMarketingExperimentMetadata
 	} from '$lib/analytics/marketing-experiment';
+	import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
 	interface TimeSlot {
 		start_at: string;
@@ -91,6 +92,9 @@
 	const bookingIntent = normalizeQueryToken(bookingUrlParams.get('intent'), 'workflow-mapping');
 	const bookingPath = browser ? `${window.location.pathname}${window.location.search}` : '/book';
 	const initialLane = normalizeLane(bookingUrlParams.get('lane')) ?? 'not_sure';
+	const directBookingHref = 'https://savvycal.com/createsomething/together';
+	const warmupStorageKey = 'create-something:workflow-mapping-warmup';
+	const warmupDraftStorageKey = 'create-something:workflow-mapping-warmup-draft';
 
 	const mappingSessionOutcomes: ClearCardItem[] = [
 		{
@@ -187,6 +191,8 @@
 	let error = $state<string | null>(null);
 	let activeStepElement = $state<HTMLElement | null>(null);
 	let activeStepTitleElement = $state<HTMLHeadingElement | null>(null);
+	let warmupSummary = $state('');
+	let warmupLoaded = $state(false);
 
 	// User's timezone
 	const timezone = browser ? Intl.DateTimeFormat().resolvedOptions().timeZone : 'America/Los_Angeles';
@@ -203,6 +209,9 @@
 	] as const;
 
 	const currentStepIndex = $derived(steps.findIndex((s) => s.key === step));
+	const directBookingIsPrimary = $derived(
+		step === 'date' && !loadingSlots && (availableDates.size === 0 || Boolean(error))
+	);
 
 	// Fetch slots for a date range
 	async function fetchSlotsForMonth(date: Date) {
@@ -285,8 +294,20 @@
 		const lane = laneOptions.find((option) => option.value === selectedLane);
 		const laneLine = `Intake lane: ${lane?.label ?? 'Not sure yet'}`;
 		const sourceLine = `Booking source: ${bookingSource} / ${bookingIntent}`;
+		const warmupLine = warmupSummary.trim()
+			? `Workflow warmup:\n${warmupSummary.trim()}`
+			: '';
 		const trimmedNotes = notes.trim();
-		return trimmedNotes ? `${laneLine}\n${sourceLine}\n${trimmedNotes}` : `${laneLine}\n${sourceLine}`;
+		const baseNotes = [laneLine, sourceLine, warmupLine].filter(Boolean).join('\n');
+		return trimmedNotes ? `${baseNotes}\n${trimmedNotes}` : baseNotes;
+	}
+
+	function clearWarmup() {
+		warmupSummary = '';
+		if (browser) {
+			window.localStorage.removeItem(warmupStorageKey);
+			window.localStorage.removeItem(warmupDraftStorageKey);
+		}
 	}
 
 	// Handle form submission
@@ -395,6 +416,12 @@
 			fetchSlotsForMonth(new Date());
 		}
 	});
+
+	$effect(() => {
+		if (!browser || warmupLoaded) return;
+		warmupLoaded = true;
+		warmupSummary = window.localStorage.getItem(warmupStorageKey) ?? '';
+	});
 </script>
 
 <SEO
@@ -414,7 +441,9 @@
 	>
 		{#snippet actions()}
 			<Button href="#booking-flow">Choose a time</Button>
-			<Button href="/services" variant="secondary">See How I Work</Button>
+			<Button href={agencyCoreMessaging.selfMapHref} variant="secondary">
+				{agencyCoreMessaging.selfMapLabel}
+			</Button>
 		{/snippet}
 
 		{#snippet aside()}
@@ -476,6 +505,37 @@
 					{/if}
 				{/each}
 			</nav>
+		{/if}
+
+		<div class={`booking-backup ${directBookingIsPrimary ? 'booking-backup--primary' : ''}`}>
+			<div>
+				<span>{directBookingIsPrimary ? 'Direct path' : 'Backup path'}</span>
+				<strong>
+					{directBookingIsPrimary
+						? 'If the embedded calendar has no visible times, use the direct booking page.'
+						: 'Prefer SavvyCal or need more times? Open the direct booking page.'}
+				</strong>
+				<p>
+					The direct page uses the same mapping session. Bring one workflow, the owner, and the
+					decision your team needs to make next.
+				</p>
+			</div>
+			<a href={directBookingHref} target="_blank" rel="noopener noreferrer">Open SavvyCal</a>
+		</div>
+
+		{#if warmupSummary}
+			<section class="warmup-carryover" aria-label="Workflow warmup carried into booking">
+				<div>
+					<span>Warmup attached</span>
+					<h3>Your first map will travel with the booking notes.</h3>
+					<p>
+						Review it here before choosing a time. Remove it if you want to start the session from a
+						blank page.
+					</p>
+				</div>
+				<pre>{warmupSummary}</pre>
+				<button type="button" onclick={clearWarmup}>Remove warmup</button>
+			</section>
 		{/if}
 
 		<div class="booking-content">
@@ -555,7 +615,7 @@
 		{#if step !== 'confirm'}
 			<footer class="booking-footer">
 				<p class="fallback-text">
-					Having trouble? <a href="https://savvycal.com/createsomething/together" target="_blank" rel="noopener noreferrer" class="fallback-link">Book directly on SavvyCal</a>
+					Having trouble? <a href={directBookingHref} target="_blank" rel="noopener noreferrer" class="fallback-link">Book directly on SavvyCal</a>
 				</p>
 			</footer>
 		{/if}
@@ -685,6 +745,15 @@
 		.booking-flow__header h2 {
 			font-size: 2.1rem;
 		}
+
+		.booking-backup {
+			align-items: stretch;
+			flex-direction: column;
+		}
+
+		.warmup-carryover {
+			grid-template-columns: 1fr;
+		}
 	}
 
 	.progress-line {
@@ -698,6 +767,139 @@
 	}
 
 	/* Content */
+	.booking-backup {
+		display: flex;
+		gap: 1rem;
+		align-items: center;
+		justify-content: space-between;
+		margin-bottom: clamp(1rem, 2vw, 1.4rem);
+		padding: 1rem;
+		border: 1px solid var(--color-clear-border, #e1e1e1);
+		border-radius: var(--radius-clear-sm, 4px);
+		background: var(--color-clear-porcelain, #f9f9f9);
+	}
+
+	.booking-backup--primary {
+		border-color: var(--color-clear-border-strong, #cecece);
+		background: color-mix(in srgb, var(--color-clear-pill-active, #cad7fa) 34%, white);
+	}
+
+	.booking-backup div {
+		display: grid;
+		gap: 0.35rem;
+		min-width: 0;
+	}
+
+	.booking-backup span {
+		color: var(--color-clear-grey, #636363);
+		font-family: var(--font-mono);
+		font-size: 0.74rem;
+		font-weight: var(--font-semibold);
+		text-transform: uppercase;
+	}
+
+	.booking-backup strong {
+		color: var(--color-clear-onyx, #0a0e19);
+		font-size: 1rem;
+		font-weight: var(--font-medium);
+		line-height: 1.22;
+	}
+
+	.booking-backup p {
+		margin: 0;
+		max-width: 48rem;
+		color: var(--color-clear-grey, #636363);
+		font-size: 0.9rem;
+		line-height: 1.4;
+	}
+
+	.booking-backup a {
+		flex: 0 0 auto;
+		display: inline-flex;
+		min-height: 2.75rem;
+		align-items: center;
+		justify-content: center;
+		padding-inline: 1rem;
+		border: 1px solid var(--color-clear-onyx, #0a0e19);
+		border-radius: var(--radius-clear-sm, 4px);
+		background: var(--color-clear-onyx, #0a0e19);
+		color: #ffffff;
+		font-size: 0.94rem;
+		font-weight: var(--font-medium);
+		text-decoration: none;
+	}
+
+	.booking-backup a:hover {
+		background: var(--color-clear-panel, #ffffff);
+		color: var(--color-clear-onyx, #0a0e19);
+	}
+
+	.warmup-carryover {
+		display: grid;
+		grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.25fr);
+		gap: 1rem;
+		align-items: start;
+		margin-bottom: clamp(1rem, 2vw, 1.4rem);
+		padding: 1rem;
+		border: 1px solid color-mix(in srgb, var(--color-clear-pastel-blue, #afc1fd) 56%, var(--color-clear-border, #e1e1e1));
+		border-radius: 8px;
+		background: color-mix(in srgb, var(--color-clear-pastel-blue, #afc1fd) 10%, #ffffff);
+		box-shadow: 0 16px 44px rgba(10, 14, 25, 0.05);
+	}
+
+	.warmup-carryover span {
+		display: inline-flex;
+		margin-bottom: 0.4rem;
+		color: var(--color-clear-grey, #636363);
+		font-size: 0.72rem;
+		font-weight: 800;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+	}
+
+	.warmup-carryover h3 {
+		margin: 0;
+		color: var(--color-clear-onyx, #0a0e19);
+		font-size: 1.05rem;
+		letter-spacing: 0;
+		line-height: 1.25;
+	}
+
+	.warmup-carryover p {
+		margin: 0.45rem 0 0;
+		color: var(--color-clear-grey, #636363);
+		font-size: 0.92rem;
+		line-height: 1.5;
+	}
+
+	.warmup-carryover pre {
+		max-height: 13rem;
+		overflow: auto;
+		margin: 0;
+		border: 1px solid var(--color-clear-border, #e1e1e1);
+		border-radius: 6px;
+		background: var(--color-clear-porcelain, #f9f9f9);
+		color: var(--color-clear-onyx, #0a0e19);
+		font: 0.78rem/1.55 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+		padding: 0.85rem;
+		white-space: pre-wrap;
+		word-break: break-word;
+	}
+
+	.warmup-carryover button {
+		grid-column: 1 / -1;
+		justify-self: start;
+		min-height: 2.45rem;
+		border: 1px solid var(--color-clear-border-strong, #cecece);
+		border-radius: 6px;
+		background: #ffffff;
+		color: var(--color-clear-onyx, #0a0e19);
+		cursor: pointer;
+		font: inherit;
+		font-weight: 700;
+		padding: 0.55rem 0.8rem;
+	}
+
 	.booking-content {
 		margin-bottom: clamp(1.4rem, 3vw, 2.1rem);
 	}

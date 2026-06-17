@@ -21,8 +21,8 @@
 					<ul class="footer-links">
 						<li><a href="/services">How I Work</a></li>
 						<li><a href="/stack">Stack & Boundaries</a></li>
-						<li><a href="/products">Proof Surfaces</a></li>
-						<li><a href={agencyCoreMessaging.startWithWorkflowHref}>Start With a Workflow</a></li>
+						<li><a href="/products">Proof</a></li>
+						<li><a href={agencyCoreMessaging.startWithWorkflowHref}>Start Self-Map</a></li>
 					</ul>
 				</div>
 

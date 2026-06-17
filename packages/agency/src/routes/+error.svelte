@@ -1,6 +1,7 @@
 <script lang="ts">
   import { page } from '$app/stores';
   import { ClearErrorPage } from '@create-something/canon';
+  import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 </script>
 
 <svelte:head>
@@ -11,8 +12,8 @@
   status={$page.status}
   propertyLabel=".agency"
   errorMessage={$page.error?.message}
-  primaryLabel="Map Your Workflow"
-  primaryHref="/book"
+  primaryLabel={agencyCoreMessaging.selfMapLabel}
+  primaryHref={agencyCoreMessaging.selfMapHref}
   secondaryLabel="Return home"
   secondaryHref="/"
 />

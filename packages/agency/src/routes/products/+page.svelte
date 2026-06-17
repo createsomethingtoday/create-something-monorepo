@@ -34,16 +34,16 @@
         'Agent work needs memory, ownership, checkpoints, and evidence so progress survives handoffs.'
     },
     {
-      eyebrow: 'MCPs',
+      eyebrow: 'Connections',
       icon: 'plus',
-      title: 'Connectivity is the wedge',
+      title: 'Connections prove the path',
       detail:
-        'Read-only or constrained MCPs prove the connection before the workflow earns more authority.'
+        'Read-only or constrained connections prove the path before the workflow earns more authority.'
     },
     {
-      eyebrow: 'Trust Layer',
+      eyebrow: 'Control',
       icon: 'settings',
-      title: 'The surface needs trust',
+      title: 'The service adds the boundary',
       detail:
         'The products are proof primitives. The paid work turns them into controlled operating paths.'
     }
@@ -53,7 +53,7 @@
     {
       label: 'Connect',
       icon: 'plus',
-      title: 'Identify the MCP wedge',
+      title: 'Identify the first connection',
       detail: 'Name the safest connection point before expanding authority.'
     },
     {
@@ -65,7 +65,7 @@
     {
       label: 'Control',
       icon: 'settings',
-      title: 'Add the trust layer',
+      title: 'Add the control layer',
       detail: 'Turn the primitive into approval states, blocked states, and operator briefs.'
     }
   ];
@@ -95,8 +95,8 @@
 </script>
 
 <SEO
-  title="Proof Surfaces | CREATE SOMETHING .agency"
-  description="Proof surfaces behind CREATE SOMETHING .agency: agent tools, MCP connectors, and client builds that show how the operating layer becomes inspectable."
+  title="Proof | CREATE SOMETHING .agency"
+  description="Proof behind CREATE SOMETHING .agency: delivery records, tools, connectors, and client builds that show how workflow control becomes inspectable."
   keywords="MCP servers, trust layer, agent coordination, grounded AI code analysis, workflow controls, operator surfaces"
   ogImage="/og-image.svg"
   propertyName="agency"
@@ -105,9 +105,9 @@
 <ClearPageSection
   variant="hero"
   titleLevel="h1"
-  eyebrow="Proof Surfaces"
-  title="The operating layer is built from inspectable parts."
-  description="Loom, Ground, MCP connectors, and client builds are not a random product shelf. They are proof surfaces for the same path: connect the system, verify the claim, coordinate the agents, then control the workflow."
+  eyebrow="Proof"
+  title="The service is backed by inspectable parts."
+  description="Loom, Ground, connectors, and client builds are not a random product shelf. They show the same path the service follows: connect the system, verify the claim, coordinate the work, then control the workflow."
 >
   {#snippet actions()}
     <Button href={agencyCoreMessaging.workflowMappingSessionHref}>
@@ -120,7 +120,7 @@
 <ClearPageSection
   variant="white"
   eyebrow="How to read this page"
-  title="Products are proof primitives. Trust Layer is the operating layer."
+  title="Tools are evidence. The service is the operating path."
   description="The free and open tools show the discipline underneath the service: grounded claims, agent continuity, constrained MCP access, and evidence-backed decisions. The paid work turns those primitives into one workflow your operator can trust."
 >
   {#snippet after()}
@@ -130,7 +130,7 @@
 
 <ClearPageSection
   variant="soft"
-  eyebrow="Flagship proof surfaces"
+  eyebrow="Flagship proof"
   title="Verify before claiming, then coordinate the work."
   description="The two core open tools behind the operating-layer thesis: Ground checks claims, and Loom gives agent work memory, ownership, and evidence."
 >
@@ -160,9 +160,9 @@
 
 <ClearPageSection
   variant="soft"
-  eyebrow="Connection wedge MCPs"
-  title="MCPs prove the connection first."
-  description="When the workflow becomes strategic, the same wedge can graduate into approvals, blocked states, and operator briefs."
+  eyebrow="Connection tools"
+  title="Connections prove the path first."
+  description="When the workflow becomes strategic, the same connection can graduate into approvals, blocked states, and operator briefs."
 >
   {#snippet after()}
     <ClearCardGrid
@@ -191,13 +191,13 @@
 <ClearCtaBand
   eyebrow="Apply the proof"
   title="Need the proof applied to your workflow?"
-  description="I’ll map the first workflow, identify the safest MCP wedge, and define when the Trust Layer should take over."
+  description="I’ll map the first workflow, identify the safest connection point, and define when the control layer should take over."
   items={ctaItems}
 >
   {#snippet actions()}
     <Button href={agencyCoreMessaging.workflowMappingSessionHref}>
       {agencyCoreMessaging.bookMappingSessionLabel}
     </Button>
-    <Button href="/stack" variant="secondary">See Stack Boundaries</Button>
+    <Button href="/stack" variant="secondary">See Stack Boundary</Button>
   {/snippet}
 </ClearCtaBand>

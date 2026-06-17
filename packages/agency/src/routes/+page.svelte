@@ -8,7 +8,6 @@
     ClearPageSection,
     ClearPillarGrid,
     ClearPlatformHero,
-    ClearQuoteMetricPanel,
     ClearReceiptGrid,
     ClearSecurityPanel,
     ClearStateRows,
@@ -19,7 +18,6 @@
     type ClearLogoStripItem,
     type ClearMetadataGroup,
     type ClearPillarItem,
-    type ClearQuoteMetric,
     type ClearReceipt,
     type ClearSecurityItem,
     type ClearSecurityLog,
@@ -31,7 +29,15 @@
 
   const services = [
     {
-      name: 'Workflow System',
+      name: 'Trust Map',
+      description:
+        'A fixed first map of the workflow, object model, action boundary, approval path, and first safe delegation point.',
+      type: 'Entry wedge',
+      price: 'Custom',
+      priceDescription: 'Scoped diagnostic'
+    },
+    {
+      name: 'Workflow Pilot',
       description:
         'One painful workflow turned into a reliable operating path with clear rules, clean handoffs, and ownership.',
       type: 'Implementation Sprint',
@@ -97,38 +103,38 @@
     }
   ];
 
-  const platformPillars: ClearPillarItem[] = [
+  const serviceFlowPillars: ClearPillarItem[] = [
     {
-      eyebrow: 'Agents',
-      title: 'Background workflow runs',
+      eyebrow: '01 Map',
+      title: 'Bring one workflow',
       detail:
-        'Delegate bounded work after the object, action, owner, and stop condition are known.',
-      proof: 'Reads, drafts, writes, and notifications stay scoped to the lane.',
-      links: [{ label: 'See states', href: '#workflow-pattern' }]
+        'Start with the manual handoff, repeated rescue, or risky workflow your team already recognizes.',
+      proof: 'Output: object map, owner map, action boundary, and first receipt plan.',
+      links: [{ label: agencyCoreMessaging.selfMapLabel, href: agencyCoreMessaging.selfMapHref }]
     },
     {
-      eyebrow: 'Automations',
-      title: 'Repeatable triggers',
+      eyebrow: '02 Pilot',
+      title: 'Build the first safe path',
       detail:
-        'Turn manual recovery, verification, and review loops into clear starts, waits, and exits.',
-      proof: 'Every trigger is paired with approval rules and evidence output.',
-      links: [{ label: 'See tasks', href: '#use-cases' }]
+        'Turn the workflow into scoped actions, approval-needed states, blocked states, and an operator surface.',
+      proof: 'Output: working path, runbook, release evidence, and client-safe delivery page.',
+      links: [{ label: 'See service path', href: '/services#service-path' }]
     },
     {
-      eyebrow: 'Environments',
-      title: 'Connected operating context',
+      eyebrow: '03 Control',
+      title: 'Add the trust layer',
       detail:
-        'Run with the systems the work already depends on: CRM, ticketing, payments, delivery, code, and logs.',
-      proof: 'The agent sees enough to act without receiving unchecked access.',
-      links: [{ label: 'See console', href: '#workflow-pattern' }]
+        'Wrap live automation with decision rules, receipts, recovery notes, and accountable ownership.',
+      proof: 'Output: monthly control plan for work that touches revenue, customers, or production.',
+      links: [{ label: 'See stack boundary', href: '/stack' }]
     },
     {
-      eyebrow: 'Guardrails',
-      title: 'Runtime trust controls',
+      eyebrow: '04 Operate',
+      title: 'Keep the evidence visible',
       detail:
-        'Name what can run, what waits for a human, and what stops before risk is hidden.',
-      proof: 'Receipts turn each handoff into a reviewable artifact.',
-      links: [{ label: 'See trust layer', href: '#trust-layer' }]
+        'Use delivery records to show what changed, what stayed private, what remains blocked, and who decides next.',
+      proof: 'Output: proof surface your team can inspect without exposing secrets.',
+      links: [{ label: 'See proof', href: '/products' }]
     }
   ];
 
@@ -201,7 +207,7 @@
     },
     {
       number: '02',
-      label: 'Trust boundary',
+      label: 'Control boundary',
       detail: 'What can run, what needs approval, and what must stop with a reason.'
     },
     {
@@ -251,65 +257,44 @@
     { label: 'Receipt', value: 'blocked-state.json' }
   ];
 
-  const quoteMetrics: ClearQuoteMetric[] = [
-    {
-      value: '3',
-      label: 'Action states',
-      detail: 'Every run resolves to run, wait, or stop.'
-    },
-    {
-      value: '4',
-      label: 'Operating primitives',
-      detail: 'Objects, actions, states, and receipts define the surface.'
-    },
-    {
-      value: '2',
-      label: 'Proof surfaces',
-      detail: 'Client-safe delivery and private command evidence stay separate.'
-    },
-    {
-      value: '1',
-      label: 'Workflow first',
-      detail: 'The agent demo follows the business path, not the other way around.'
-    }
-  ];
-
   const contentHighlights: ClearContentHighlight[] = [
     {
       eyebrow: 'Delivery',
-      meta: 'Client-safe',
-      title: 'Delivery pages carry the operating story.',
+      meta: 'Abundance',
+      title: 'Recruiter-gated workflow pilot.',
       detail:
-        'The delivery surface shows the business model, active decisions, visible proof, and next moves without exposing private secrets.',
+        'The pilot shows the business model, agent boundary, remaining owner decisions, and visible proof without exposing private secrets.',
       href: '/delivery/abundance'
     },
     {
-      eyebrow: 'Evidence',
-      meta: 'Private',
-      title: 'Receipts keep local and production truth separate.',
+      eyebrow: 'Delivery',
+      meta: 'ShivWorks',
+      title: 'Backend handoff with named access lanes.',
       detail:
-        'Command output, deploy IDs, endpoint checks, and rollback notes stay with the operator evidence trail.'
+        'The handoff record separates account ownership, credentials, app admin, database state, and acceptance checks.',
+      href: '/delivery/shivworks'
     },
     {
-      eyebrow: 'Ona alignment',
-      meta: 'Reusable',
-      title: 'Canon now owns the platform grammar.',
+      eyebrow: 'Service',
+      meta: 'Funnel',
+      title: 'The flow stays narrow before it expands.',
       detail:
-        'The clear primitives can be reused across `.agency`, delivery, and research surfaces without copying generated CSS.'
+        'Map one workflow, pilot the safe path, then add the trust layer only when live risk justifies it.',
+      href: agencyCoreMessaging.selfMapHref
     }
   ];
 
   const actionFooterItems: ClearActionFooterItem[] = [
     { label: 'Bring', value: 'One manual workflow that keeps needing rescue' },
     { label: 'Map', value: 'Objects, actions, approvals, stops, and receipts' },
-    { label: 'Leave', value: 'A first governed run path your team can inspect' }
+    { label: 'Leave', value: 'A first controlled run path your team can inspect' }
   ];
 </script>
 
 <SEO
-  title="Governed Agent Workflows | CREATE SOMETHING .agency"
-  description="CREATE SOMETHING puts agents to work inside workflows you can govern: clear objects, scoped actions, approval paths, stop states, and receipts."
-  keywords="governed agent workflows, workflow trust layer, safe AI workflow delegation, agent workflow controls, MCP wedge, production automation, technical operators"
+  title="Workflow Control Service | CREATE SOMETHING .agency"
+  description="CREATE SOMETHING maps one manual workflow, builds the first safe agent path, and leaves your team with approvals, stop states, and delivery receipts."
+  keywords="workflow control service, workflow trust layer, safe AI workflow delegation, agent workflow controls, workflow pilot, production automation, technical operators"
   ogImage="/og-image.svg"
   propertyName="agency"
   {services}
@@ -318,15 +303,17 @@
 <div class="home-pilot">
   <ClearPlatformHero
     eyebrow={agencyCoreMessaging.categoryLabel}
-    title="The platform for governed agent workflows."
-    description="Run operational work through agents with scoped actions, approval paths, stop conditions, and receipts before anything touches the customer, revenue, or production."
+    title="Map one workflow. Build the first safe agent path."
+    description="CREATE SOMETHING turns one repeated handoff into scoped actions, approval paths, stop conditions, and receipts before anything touches the customer, revenue, or production."
     hideAsideOnMobile={true}
   >
     {#snippet actions()}
-      <Button href={agencyCoreMessaging.workflowMappingSessionHref}>
+      <Button href={agencyCoreMessaging.selfMapHref}>
+        {agencyCoreMessaging.selfMapLabel}
+      </Button>
+      <Button href={agencyCoreMessaging.workflowMappingSessionHref} variant="secondary">
         {agencyCoreMessaging.bookMappingSessionLabel}
       </Button>
-      <Button href="#workflow-pattern" variant="secondary">See the workflow</Button>
     {/snippet}
 
     {#snippet aside()}
@@ -335,25 +322,33 @@
         title="What can happen now?"
         states={workflowStates}
         receipts={['blocked-state.json', 'credit-approval-note.md', 'warehouse-note.md']}
-        ariaLabel="Governed workflow state example"
+        ariaLabel="Controlled workflow state example"
       />
     {/snippet}
   </ClearPlatformHero>
 
   <ClearLogoStrip
-    eyebrow="Proof surfaces"
+    eyebrow="Operating proof"
     items={platformSignals}
     ariaLabel="CREATE SOMETHING operating proof surfaces"
   />
 
   <ClearPageSection
-    variant="soft"
-    eyebrow="The AI operating layer"
-    title="Put agents to work across the workflow. With every execution governed."
-    description="The system is built from the same primitives Ona foregrounds: agents, automations, connected environments, and runtime guardrails. CREATE SOMETHING translates those into objects, actions, states, and receipts."
+    id="service-flow"
+    variant="white"
+    eyebrow="Service flow"
+    title="Map one workflow, then build only the trust layer it needs."
+    description="The funnel is intentionally narrow: bring one real workflow, leave with a visible operating path, and expand only when the risk justifies more control."
   >
+    {#snippet actions()}
+      <Button href={agencyCoreMessaging.selfMapHref}>
+        {agencyCoreMessaging.selfMapLabel}
+      </Button>
+      <Button href="/services" variant="secondary">See How I Work</Button>
+    {/snippet}
+
     {#snippet after()}
-      <ClearPillarGrid items={platformPillars} ariaLabel="Governed workflow platform pillars" />
+      <ClearPillarGrid items={serviceFlowPillars} ariaLabel="CREATE SOMETHING service flow" />
     {/snippet}
   </ClearPageSection>
 
@@ -363,7 +358,7 @@
     title="Start with tasks an operator already recognizes."
     description="The page leads with operational situations before abstract platform language, so the agent capability stays tied to business work."
     items={useCases}
-    ariaLabel="Governed workflow use cases"
+    ariaLabel="Controlled workflow use cases"
   />
 
   <ClearPageSection
@@ -381,7 +376,7 @@
         description="The agent only receives the objects, tools, policies, and receipts that match the lane."
         groups={workflowMetadataGroups}
         tags={['objects', 'actions', 'states', 'receipts']}
-        ariaLabel="Governed workflow metadata"
+        ariaLabel="Controlled workflow metadata"
       />
     {/snippet}
 
@@ -403,26 +398,18 @@
 
   <ClearSecurityPanel
     id="trust-layer"
-    eyebrow="Runtime trust layer"
-    title="Governance is part of the run, not a paragraph after it."
+    eyebrow="Runtime control layer"
+    title="Control is part of the run, not a paragraph after it."
     description="The workflow names the network boundary, credential boundary, policy boundary, and audit boundary before an agent acts."
     items={securityItems}
     logs={securityLogs}
-    ariaLabel="Governed workflow trust controls"
-  />
-
-  <ClearQuoteMetricPanel
-    eyebrow="Proof model"
-    quote="Agents are ready when the workflow can show what ran, what waited, and what stopped."
-    source="CREATE SOMETHING workflow trust layer"
-    metrics={quoteMetrics}
-    ariaLabel="Governed workflow proof metrics"
+    ariaLabel="Controlled workflow trust controls"
   />
 
   <ClearContentHighlights
     eyebrow="Recent proof"
-    title="The delivery surface and the evidence surface stay distinct."
-    description="Ona-style clarity needs both: a simple public story for the buyer and a precise private record for operators."
+    title="Proof stays tied to real delivery records."
+    description="Delivery records show how the service flow becomes client-safe proof, private evidence, and a clear next decision."
     items={contentHighlights}
     ariaLabel="CREATE SOMETHING proof highlights"
   />
@@ -434,10 +421,12 @@
     items={actionFooterItems}
   >
     {#snippet actions()}
-      <Button href={agencyCoreMessaging.workflowMappingSessionHref}>
+      <Button href={agencyCoreMessaging.selfMapHref}>
+        {agencyCoreMessaging.selfMapLabel}
+      </Button>
+      <Button href={agencyCoreMessaging.workflowMappingSessionHref} variant="secondary">
         {agencyCoreMessaging.bookMappingSessionLabel}
       </Button>
-      <Button href="#use-cases" variant="secondary">Review use cases</Button>
     {/snippet}
   </ClearActionFooter>
 </div>
