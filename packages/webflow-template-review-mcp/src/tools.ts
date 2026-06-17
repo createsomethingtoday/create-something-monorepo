@@ -3,6 +3,7 @@ import { z } from 'zod';
 
 import type { AirtableClient, TemplateReviewQueueItem } from './airtable.js';
 import { AirtableClientError } from './airtable.js';
+import { prepareAdminTemplateFill, prepareAdminTemplateFillBatch } from './admin-template-fill.js';
 import { COMPREHENSIVE_REVIEW_LANE_IDS, EVIDENCE_LABELS, formatComprehensiveAgentReviewFeedback } from './comprehensive-review-feedback.js';
 import { COMPREHENSIVE_REVIEW_CONTRACT } from './comprehensive-review-contract.js';
 import { RUBRIC_DIMENSIONS } from './comprehensive-review-contract.js';
@@ -350,6 +351,53 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
         return asSuccess({
           context: await getClient().getReviewContext(version_id, currentReviewerAsCollaborator(getReviewer)),
         });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'template_review_prepare_admin_template_fill',
+    'Read-only: generate Webflow Admin template form data plus a fill-only console script/bookmarklet for https://webflow.com/admin/templates. Does not submit the form, create an MRP, or write Airtable.',
+    {
+      version_id: z.string().min(1),
+      include_script: z.boolean().optional(),
+      include_bookmarklet: z.boolean().optional(),
+    },
+    async ({ version_id, include_script, include_bookmarklet }) => {
+      try {
+        const context = await getClient().getReviewContext(version_id, currentReviewerAsCollaborator(getReviewer));
+        return asSuccess(
+          prepareAdminTemplateFill(context, {
+            includeScript: include_script ?? true,
+            includeBookmarklet: include_bookmarklet ?? true,
+          }),
+        );
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'template_review_prepare_admin_template_fill_batch',
+    'Read-only: generate compact Webflow Admin template form data for multiple template versions. Omits console scripts by default so bulk MRP handoffs stay readable.',
+    {
+      version_ids: z.array(z.string().min(1)).min(1).max(25),
+      include_scripts: z.boolean().optional(),
+      include_bookmarklets: z.boolean().optional(),
+    },
+    async ({ version_ids, include_scripts, include_bookmarklets }) => {
+      try {
+        const uniqueVersionIds = Array.from(new Set(version_ids));
+        const contexts = await Promise.all(uniqueVersionIds.map((versionId) => getClient().getReviewContext(versionId, currentReviewerAsCollaborator(getReviewer))));
+        return asSuccess(
+          prepareAdminTemplateFillBatch(contexts, {
+            includeScript: include_scripts ?? false,
+            includeBookmarklet: include_bookmarklets ?? false,
+          }),
+        );
       } catch (error) {
         return asError(error);
       }

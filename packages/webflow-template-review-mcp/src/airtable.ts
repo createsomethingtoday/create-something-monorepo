@@ -73,12 +73,17 @@ export interface TemplateReviewFeature {
 }
 
 export interface TemplateReviewAsset extends TemplateReviewQueueItem {
+  uid?: string;
   description?: string;
   descriptionShort?: string;
   descriptionLongHtml?: string;
   featureIds: string[];
   features?: TemplateReviewFeature[];
   featuresHighlighted?: string;
+  adminDetailPagePath?: string;
+  adminRecommendedType?: string;
+  categoryGroupDisplayNames?: string[];
+  categoryGroupCmsSlugs?: string[];
   mrpId?: string;
   mrpIdOverride?: string;
   thumbnailImageUrl?: string;
@@ -90,6 +95,7 @@ export interface TemplateReviewAsset extends TemplateReviewQueueItem {
   rejectionFeedbackHtml?: string;
   publishedDate?: string;
   decisionDate?: string;
+  templatePriceFilter?: number;
   priceString?: string;
 }
 
@@ -454,12 +460,17 @@ function mapAsset(record: AirtableRecord): TemplateReviewAsset {
   return {
     assetId: record.id,
     templateName: firstString(fields[CONFIRMED_ASSET_FIELDS.name]) ?? '',
+    uid: firstString(fields[CONFIRMED_ASSET_FIELDS.uid]),
     // Keep legacy API shape stable even though Airtable no longer has a separate plain description field.
     description: firstString(fields[ASSET_COMPATIBILITY_ALIASES.description]),
     descriptionShort: firstString(fields[CONFIRMED_ASSET_FIELDS.descriptionShort]),
     descriptionLongHtml: firstString(fields[CONFIRMED_ASSET_FIELDS.descriptionLongHtml]),
     featureIds: linkedRecordIds(fields[CONFIRMED_ASSET_FIELDS.features]),
     featuresHighlighted: firstString(fields[CONFIRMED_ASSET_FIELDS.featuresHighlighted]),
+    adminDetailPagePath: firstString(fields[CONFIRMED_ASSET_FIELDS.adminDetailPagePath]),
+    adminRecommendedType: firstString(fields[CONFIRMED_ASSET_FIELDS.adminRecommendedType]),
+    categoryGroupDisplayNames: stringArray(fields[CONFIRMED_ASSET_FIELDS.categoryGroupDisplayName]),
+    categoryGroupCmsSlugs: stringArray(fields[CONFIRMED_ASSET_FIELDS.categoryGroupCmsSlug]),
     mrpId: firstString(fields[CONFIRMED_ASSET_FIELDS.mrpId]),
     mrpIdOverride: firstString(fields[CONFIRMED_ASSET_FIELDS.mrpIdOverride]),
     websiteUrl: firstString(fields[CONFIRMED_ASSET_FIELDS.websiteUrl]),
@@ -478,6 +489,7 @@ function mapAsset(record: AirtableRecord): TemplateReviewAsset {
     submittedDate: firstString(fields[CONFIRMED_ASSET_FIELDS.submittedDate]),
     publishedDate: firstString(fields[CONFIRMED_ASSET_FIELDS.publishedDate]),
     decisionDate: firstString(fields[CONFIRMED_ASSET_FIELDS.decisionDate]),
+    templatePriceFilter: numberValue(fields[CONFIRMED_ASSET_FIELDS.templatePriceFilter]),
     priceString: firstString(fields[CONFIRMED_ASSET_FIELDS.priceString]),
   };
 }

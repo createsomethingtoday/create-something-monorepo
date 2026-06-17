@@ -58,9 +58,13 @@ test('registerTools places reviewer-safe write tools before admin and broad muta
   assert.notEqual(names.indexOf('template_review_get_comprehensive_review_contract'), -1);
   assert.notEqual(names.indexOf('template_review_format_agent_review_feedback'), -1);
   assert.notEqual(names.indexOf('template_review_prepare_published_site_sandbox'), -1);
+  assert.notEqual(names.indexOf('template_review_prepare_admin_template_fill'), -1);
+  assert.notEqual(names.indexOf('template_review_prepare_admin_template_fill_batch'), -1);
   assert.notEqual(names.indexOf('template_review_save_agent_feedback'), -1);
   assert.notEqual(names.indexOf('template_review_save_draft_feedback'), -1);
   assert.notEqual(names.indexOf('template_review_run_published_site_validation'), -1);
+  assert.ok(names.indexOf('template_review_prepare_admin_template_fill') < names.indexOf('template_review_run_published_site_validation'));
+  assert.ok(names.indexOf('template_review_prepare_admin_template_fill_batch') < names.indexOf('template_review_run_published_site_validation'));
   assert.ok(names.indexOf('template_review_run_published_site_validation') < names.indexOf('template_review_assign_self'));
   assert.ok(names.indexOf('template_review_get_comprehensive_review_contract') < names.indexOf('template_review_run_published_site_validation'));
   assert.ok(names.indexOf('template_review_prepare_published_site_sandbox') < names.indexOf('template_review_run_published_site_validation'));
@@ -179,6 +183,141 @@ test('prepare_published_site_sandbox returns bounded E2B runner evidence contrac
   assert.match(bundle.e2b_run_code, /horizontal_overflow/);
   assert.match(bundle.e2b_run_code, /No review decision, rating, reviewer feedback, or external write is performed/);
   assert.ok(bundle.safety_boundary.some((item) => item.includes('Evidence-only')));
+});
+
+function adminFillContext(versionId = 'rec_version_komanica') {
+  return {
+    versionId,
+    assetId: 'rec_asset_komanica',
+    templateName: 'Komanica',
+    reviewStatus: '🔁Response to Review',
+    canAssign: false,
+    canReview: true,
+    canPublish: false,
+    isAssignedToCurrentReviewer: true,
+    version: { versionId, assetId: 'rec_asset_komanica', rawFields: {} },
+    asset: {
+      assetId: 'rec_asset_komanica',
+      templateName: 'Komanica',
+      uid: 'komanica',
+      descriptionShort: 'A bold editorial agency template.',
+      descriptionLongHtml: '<p>Long description</p>',
+      featureIds: ['rec_feature_gsap', 'rec_feature_css_grid'],
+      features: [
+        { featureId: 'rec_feature_gsap', name: 'GSAP', cmsSlug: 'gsap-websites', cmsStatus: 'Active' },
+        { featureId: 'rec_feature_css_grid', name: 'CSS Grid', cmsSlug: 'css-grid-websites', cmsStatus: 'Active' },
+      ],
+      featuresHighlighted: 'Includes GSAP',
+      adminDetailPagePath: '/templates/html/komanica-website-template',
+      adminRecommendedType: 'CMS',
+      categoryGroupDisplayNames: ['Portfolio & Agency'],
+      categoryGroupCmsSlugs: ['portfolio-and-agency-websites'],
+      templatePriceFilter: 99,
+      priceString: '$99 USD',
+      websiteUrl: 'https://komanica.webflow.io/',
+      previewSiteUrl: 'https://webflow.com/preview/komanica',
+      thumbnailImageUrl: 'https://example.com/thumb.png',
+      secondaryThumbnailUrls: ['https://example.com/secondary.png'],
+      carouselImageUrls: ['https://example.com/carousel-1.png'],
+    },
+  };
+}
+
+test('prepare_admin_template_fill generates read-only admin form data and fill-only script', async () => {
+  const { server, handlers } = createServerHarness();
+  const calls: string[] = [];
+  const client = {
+    getReviewContext: async (versionId: string) => {
+      calls.push(versionId);
+      return adminFillContext(versionId);
+    },
+  } as unknown as AirtableClient;
+
+  registerTools(
+    server,
+    () => client,
+    () => reviewer,
+  );
+
+  const result = await handlers.get('template_review_prepare_admin_template_fill')?.({
+    version_id: 'rec_version_komanica',
+  });
+
+  assert.ok(result);
+  assert.deepEqual(calls, ['rec_version_komanica']);
+
+  const payload = parsePayload(result);
+  assert.equal(payload.ok, true);
+
+  const bundle = payload.data as {
+    schema_version: string;
+    readiness: { can_publish: boolean; warning?: string };
+    form_data: Record<string, unknown>;
+    missing_fields: string[];
+    manual_uploads: Record<string, unknown>;
+    safety_boundary: string[];
+    console_script: string;
+    bookmarklet: string;
+  };
+
+  assert.equal(bundle.schema_version, 'webflow_admin_template_fill.v0.1');
+  assert.equal(bundle.readiness.can_publish, false);
+  assert.match(bundle.readiness.warning ?? '', /Admin form preparation only/);
+  assert.equal(bundle.form_data.template_name, 'Komanica');
+  assert.equal(bundle.form_data.uid, 'komanica');
+  assert.equal(bundle.form_data.detail_page_path, '/templates/html/komanica-website-template');
+  assert.equal(bundle.form_data.recommended_type, 'CMS');
+  assert.equal(bundle.form_data.price_usd, 99);
+  assert.equal(bundle.form_data.price_cents, 9900);
+  assert.equal(bundle.form_data.category_display_name, 'Portfolio & Agency');
+  assert.deepEqual(bundle.form_data.feature_names, ['GSAP', 'CSS Grid']);
+  assert.deepEqual(bundle.missing_fields, []);
+  assert.deepEqual(bundle.manual_uploads.secondary_thumbnail_urls, ['https://example.com/secondary.png']);
+  assert.match(bundle.console_script, /fill-only script/i);
+  assert.match(bundle.console_script, /does not submit/i);
+  assert.match(bundle.bookmarklet, /^javascript:/);
+  assert.ok(bundle.safety_boundary.some((item) => item.includes('does not write Airtable')));
+});
+
+test('prepare_admin_template_fill_batch omits scripts by default for compact handoffs', async () => {
+  const { server, handlers } = createServerHarness();
+  const calls: string[] = [];
+  const client = {
+    getReviewContext: async (versionId: string) => {
+      calls.push(versionId);
+      return adminFillContext(versionId);
+    },
+  } as unknown as AirtableClient;
+
+  registerTools(
+    server,
+    () => client,
+    () => reviewer,
+  );
+
+  const result = await handlers.get('template_review_prepare_admin_template_fill_batch')?.({
+    version_ids: ['rec_version_komanica', 'rec_version_komanica', 'rec_version_other'],
+  });
+
+  assert.ok(result);
+  assert.deepEqual(calls, ['rec_version_komanica', 'rec_version_other']);
+
+  const payload = parsePayload(result);
+  assert.equal(payload.ok, true);
+
+  const batch = payload.data as {
+    schema_version: string;
+    count: number;
+    include_scripts: boolean;
+    items: Array<{ console_script?: string; bookmarklet?: string; form_data: Record<string, unknown> }>;
+  };
+
+  assert.equal(batch.schema_version, 'webflow_admin_template_fill_batch.v0.1');
+  assert.equal(batch.count, 2);
+  assert.equal(batch.include_scripts, false);
+  assert.equal(batch.items[0]?.form_data.template_name, 'Komanica');
+  assert.equal(batch.items[0]?.console_script, undefined);
+  assert.equal(batch.items[0]?.bookmarklet, undefined);
 });
 
 test('prepare_published_site_sandbox rejects non-public URLs before runner generation', async () => {
