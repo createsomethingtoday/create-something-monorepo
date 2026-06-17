@@ -29,7 +29,7 @@ This package is the end-user conversation surface, not the control plane and not
 
 ```text
 src/
-├── routes/                   → public landing, apply entry, claim continuation, candidate chat/details, internal handoff/settings, control-plane bridge shells, and optional shared session/entitlement-aware layout
+├── routes/                   → public landing, apply entry, claim continuation, candidate chat/details, internal Dify agent shell, internal handoff/settings, control-plane bridge shells, and optional shared session/entitlement-aware layout
 ├── routes/api/intake-verification/ → self-serve verification request/verify endpoints
 ├── routes/api/intake-claims/ → trusted inbound claim creation for sourced applicants
 ├── routes/api/threads/       → server mutation and attachment surface for the hosted prototype
@@ -79,7 +79,7 @@ src/
 | Smoke command | `pnpm --filter @create-something/concierge-chat smoke` |
 | Acceptance command | `pnpm --filter @create-something/concierge-chat acceptance` |
 | Validation surfaces | Svelte typecheck output, production build, route rendering, widget registry compilation, control-plane redirect behavior, public-apply routing, anonymous redirects from `/chat` and `/settings`, candidate acceptance flow, internal staffing acceptance flow, inbound claim creation, `/apply/claim` continuation routing, self-serve verification request/verify flows, secure-intake gating, terminal Indeed disposition writeback, route-level UI inspection |
-| UI validation path | `/`, `/apply`, `/apply/claim?token=...`, `/chat` (redirect), `/chat/[threadId]`, `/chat/[threadId]/profile`, `/chat/[threadId]/handoff` (staff only when available) |
+| UI validation path | `/`, `/apply`, `/apply/claim?token=...`, `/agents`, `/agents/[agentId]`, `/chat` (redirect), `/chat/[threadId]`, `/chat/[threadId]/profile`, `/chat/[threadId]/handoff` (staff only when available) |
 | Escalation rule | Stop if a new widget requires arbitrary executable UI, or if a workflow requires real persistence/auth without an agreed data contract and governance rule. |
 
 ## Key Concepts
