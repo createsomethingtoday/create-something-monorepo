@@ -15,7 +15,8 @@
       eyebrow: 'Your team keeps',
       icon: 'user',
       title: 'Accounts, context, decisions',
-      detail: 'Business ownership, approval authority, source accounts, data rights, and final operating decisions.'
+      detail:
+        'Business ownership, approval authority, source accounts, data rights, and final operating decisions.'
     },
     {
       eyebrow: 'I deliver',
@@ -37,25 +38,29 @@
       eyebrow: '01 Connect',
       icon: 'plus',
       title: 'Trust Map',
-      detail: 'Name the business objects, source accounts, first action boundary, and evidence needed before delegation.'
+      detail:
+        'Name the business objects, source accounts, first action boundary, and evidence needed before delegation.'
     },
     {
       eyebrow: '02 Automate',
       icon: 'settings',
       title: 'Workflow Pilot',
-      detail: 'Turn one repeated handoff into callable actions, durable data, controlled agent capacity, and a runbook.'
+      detail:
+        'Turn one repeated handoff into callable actions, durable data, controlled agent capacity, and a runbook.'
     },
     {
       eyebrow: '03 Control',
       icon: 'check',
       title: 'Control layer',
-      detail: 'Classify actions as auto-allowed, approval-needed, or blocked with reason before the workflow touches risk.'
+      detail:
+        'Classify actions as auto-allowed, approval-needed, or blocked with reason before the workflow touches risk.'
     },
     {
       eyebrow: '04 Operate',
       icon: 'document',
       title: 'Operator Surface',
-      detail: 'Put the right state in Webflow, Dify, Linear, Notion, or a custom app, with evidence attached.'
+      detail:
+        'Put the right state in Webflow, Dify, Linear, Notion, or a custom app, with evidence attached.'
     }
   ];
 
@@ -95,6 +100,57 @@
       icon: 'document',
       title: 'Operator brief',
       detail: 'The visible state for Webflow, Dify, Linear, Notion, or a custom app.'
+    }
+  ];
+
+  const procurementTrust: ClearCardItem[] = [
+    {
+      eyebrow: 'Accounts',
+      icon: 'user',
+      title: 'Client-owned systems stay client-owned',
+      detail:
+        'Source accounts, business context, approval authority, and data rights stay with the team that operates the workflow.',
+      points: ['No hidden platform dependency', 'No forced account transfer to start']
+    },
+    {
+      eyebrow: 'Access',
+      icon: 'check',
+      title: 'Least privilege before automation',
+      detail:
+        'The build names which systems are read, which writes are allowed, and where execution must stop for approval.',
+      points: ['Scoped app permissions', 'Revocation path documented']
+    },
+    {
+      eyebrow: 'Secrets',
+      icon: 'warning',
+      title: 'Credentials stay out of prompts and docs',
+      detail:
+        'Secrets, tokens, and private evidence are handled as operational boundaries, not pasted into handoff notes or model context.',
+      points: ['Secret manager boundary', 'Client-safe public proof split']
+    },
+    {
+      eyebrow: 'Audit',
+      icon: 'document',
+      title: 'Receipts travel with the workflow',
+      detail:
+        'Validation output, deploy IDs, release notes, blocked-state records, and rollback notes stay close to the work.',
+      points: ['Readable evidence for operators', 'Private evidence for reviewers']
+    },
+    {
+      eyebrow: 'Vendors',
+      icon: 'refresh',
+      title: 'Tools can change without losing the map',
+      detail:
+        'The durable asset is the workflow boundary: objects, actions, states, owners, approvals, and evidence.',
+      points: ['Replaceable services', 'Portable operating model']
+    },
+    {
+      eyebrow: 'Authority',
+      icon: 'settings',
+      title: 'Humans keep the final risk decisions',
+      detail:
+        'Revenue, customer trust, compliance, and production-impacting work waits for named approval when the lane requires it.',
+      points: ['Named owner', 'Run, wait, and stop states']
     }
   ];
 
@@ -178,13 +234,15 @@
       eyebrow: 'Surface work',
       icon: 'document',
       title: 'Webflow systems',
-      detail: 'Templates, apps, forms, dashboards, and review tools turn the stack into something operators can use.'
+      detail:
+        'Templates, apps, forms, dashboards, and review tools turn the stack into something operators can use.'
     },
     {
       eyebrow: 'Expansion layer',
       icon: 'check',
       title: 'Control layer',
-      detail: 'Linear evidence, identity, entitlement, approvals, blocked states, and auditability make the system serious enough to scale.'
+      detail:
+        'Linear evidence, identity, entitlement, approvals, blocked states, and auditability make the system serious enough to scale.'
     }
   ];
 
@@ -269,17 +327,32 @@
 
 <ClearPageSection
   variant="white"
-  eyebrow="Vendor roles"
-  title="Vendor names are receipts, not the product."
-  description="Each service earns a clear job. The connected tools are not the moat. CREATE SOMETHING owns the operating boundary around the workflow: what connects, what runs, what pauses, what stops, and what the operator receives."
+  eyebrow="Procurement trust"
+  title="The stack is buyable because the boundary is explicit."
+  description="A serious workflow buyer needs to know who owns accounts, where secrets live, what access is granted, how revocation works, and what evidence survives after launch."
 >
   {#snippet after()}
-    <ClearCardGrid items={stackRoles} columns={4} ariaLabel="Vendor roles in the trust layer stack" />
+    <ClearCardGrid items={procurementTrust} columns={3} ariaLabel="Procurement trust controls" />
   {/snippet}
 </ClearPageSection>
 
 <ClearPageSection
   variant="soft"
+  eyebrow="Vendor roles"
+  title="Vendor names are receipts, not the product."
+  description="Each service earns a clear job. The connected tools are not the moat. CREATE SOMETHING owns the operating boundary around the workflow: what connects, what runs, what pauses, what stops, and what the operator receives."
+>
+  {#snippet after()}
+    <ClearCardGrid
+      items={stackRoles}
+      columns={4}
+      ariaLabel="Vendor roles in the trust layer stack"
+    />
+  {/snippet}
+</ClearPageSection>
+
+<ClearPageSection
+  variant="white"
   eyebrow="Proof path"
   title="The examples tell the whole story without tool sprawl."
   description="Each proof surface shows a different part of the same path: connect, verify, coordinate, control, and leave evidence behind."

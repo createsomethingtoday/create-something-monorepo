@@ -99,9 +99,9 @@
       eyebrow: 'Trust Map',
       icon: 'search',
       title: 'Diagnostic before build',
-      detail:
-        'Use this when the workflow is real but the safe delegation point is still unclear.',
+      detail: 'Use this when the workflow is real but the safe delegation point is still unclear.',
       points: [
+        'Timing: before implementation or platform selection',
         'Output: workflow map, owner map, action boundary, first receipt plan',
         'Exit: pilot recommendation, trust-layer scope, or no-build handoff'
       ]
@@ -113,6 +113,7 @@
       detail:
         'Use this when the first handoff is clear enough to rebuild and verify with real operating evidence.',
       points: [
+        'Timing: one scoped workflow before broader automation',
         'Output: implemented path, operator surface, runbook, release evidence',
         'Exit: accepted handoff, blocked decisions, or trust-layer retainer'
       ]
@@ -124,6 +125,7 @@
       detail:
         'Use this when a live workflow needs approval states, blocked states, release checks, and recovery loops.',
       points: [
+        'Cadence: monthly control around work already in motion',
         'Output: monitored decisions, receipts, incident notes, iteration queue',
         'Exit: maintained control layer or transfer-ready operating package'
       ]
@@ -135,9 +137,43 @@
       detail:
         'Use this when the workflow crosses teams, systems, compliance needs, or account boundaries.',
       points: [
+        'Shape: phased rollout with explicit procurement and access gates',
         'Output: rollout plan, access model, audit posture, ownership design',
         'Exit: managed implementation, platform handoff, or account transfer'
       ]
+    }
+  ];
+
+  const calibrationCards: ClearCardItem[] = [
+    {
+      eyebrow: 'Cold buyer',
+      icon: 'document',
+      title: 'Start with the checklist',
+      detail:
+        'Use this when you know AI should help but the approval rule, owner, or first workflow is not clear yet.',
+      href: agencyCoreMessaging.governanceChecklistHref,
+      points: ['Buyer gives: a rough workflow', 'Buyer gets: the questions needed before scope']
+    },
+    {
+      eyebrow: 'Qualified buyer',
+      icon: 'search',
+      title: 'Request a trust map',
+      detail:
+        'Use this when the workflow, stack, bottleneck, and risk boundary can be named without a long discovery cycle.',
+      href: agencyCoreMessaging.workflowTeardownHref,
+      points: [
+        'Buyer gives: systems, owner, drag, risk',
+        'Buyer gets: the first safe delegation path'
+      ]
+    },
+    {
+      eyebrow: 'Ready buyer',
+      icon: 'check',
+      title: 'Book the mapping session',
+      detail:
+        'Use this when there is urgency, an approval owner, and a real decision to make about workflow capacity.',
+      href: agencyCoreMessaging.servicesMappingSessionHref,
+      points: ['Buyer gives: decision timeline', 'Buyer gets: map, lane, and build recommendation']
     }
   ];
 
@@ -167,13 +203,15 @@
       eyebrow: 'You bring',
       icon: 'user',
       title: 'Workflow and approval owner',
-      detail: 'The business path, source accounts, constraints, and the person who can approve risk.'
+      detail:
+        'The business path, source accounts, constraints, and the person who can approve risk.'
     },
     {
       eyebrow: 'I deliver',
       icon: 'settings',
       title: 'Rules, handoff, and evidence',
-      detail: 'The workflow map, action boundary, safe delegation path, runbook, and release evidence.'
+      detail:
+        'The workflow map, action boundary, safe delegation path, runbook, and release evidence.'
     },
     {
       eyebrow: 'Your team keeps',
@@ -227,7 +265,8 @@
       label: 'After session',
       icon: 'check',
       title: 'Leave with the first safe path',
-      detail: 'You get the service lane, trust boundary, and implementation path before build work starts.'
+      detail:
+        'You get the service lane, trust boundary, and implementation path before build work starts.'
     }
   ];
 
@@ -323,12 +362,27 @@
   description="Start with the smallest safe delegation point, prove the first workflow, then add the trust layer only when live work needs more control. Each step has a concrete output, a decision point, and a next-state the buyer can understand."
 >
   {#snippet after()}
-    <ClearCardGrid items={commercialShape} columns={4} ariaLabel="Service path from map to trust layer" />
+    <ClearCardGrid
+      items={commercialShape}
+      columns={4}
+      ariaLabel="Service path from map to trust layer"
+    />
   {/snippet}
 </ClearPageSection>
 
 <ClearPageSection
   variant="soft"
+  eyebrow="Offer calibration"
+  title="The funnel routes by readiness, not curiosity."
+  description="Cold readers get the trust questions. Qualified buyers get a workflow map. Ready buyers bring the owner, systems, and timeline into a mapping session."
+>
+  {#snippet after()}
+    <ClearCardGrid items={calibrationCards} columns={3} ariaLabel="Buyer readiness paths" />
+  {/snippet}
+</ClearPageSection>
+
+<ClearPageSection
+  variant="white"
   eyebrow="Delivery proof"
   title="Delivery records show what happens after the call."
   description="The proof surface is not a portfolio screenshot. It shows the operating result, what stayed private, which decisions remain, and how ownership moves."
