@@ -51,6 +51,9 @@ coverage
 apps/*
 !apps/meeting-capture/
 !apps/meeting-capture/**
+!apps/atlas-studio-desktop/
+!apps/atlas-studio-desktop/**
+apps/atlas-studio-desktop/node_modules/
 !apps/webflow-dashboard-cloud/
 !apps/webflow-dashboard-cloud/**
 apps/webflow-dashboard-cloud/node_modules/
@@ -81,6 +84,8 @@ apps/meeting-capture/MeetingCapture/.build/
 apps/meeting-capture/MeetingCapture/.swiftpm/
 apps/meeting-capture/MeetingCapture/.codex-build-verify/
 apps/meeting-capture/MeetingCapture/dist/
+apps/atlas-studio-desktop/src-tauri/gen/
+apps/atlas-studio-desktop/src-tauri/target/
 
 # Gastown nested repositories
 csm/.repo.git
@@ -103,6 +108,7 @@ __pycache__/
 # Local tool caches
 .cache/toolchains/
 .cache/corepack/
+**/.atlas-studio/
 
 # Judgment Layer (policy packs + local Andon logs)
 .judgment/

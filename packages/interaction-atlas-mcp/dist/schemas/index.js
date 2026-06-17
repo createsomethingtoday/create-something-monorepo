@@ -37,6 +37,80 @@ export const WorkflowMapFromToolSequenceSchema = z.object({
     versionId: z.string().min(1).optional().describe('Optional explicit version id override'),
     commitSha: z.string().min(1).optional().describe('Optional commit SHA override'),
 });
+export const AtlasStudioPortalStartSchema = z.object({
+    session_id: z.string().min(1).optional().describe('Existing Atlas Studio session id to open.'),
+    client: z.string().min(1).optional().describe('Client name for a new session.'),
+    workflow: z.string().min(1).optional().describe('Workflow name for a new session.'),
+    owner: z.string().min(1).optional().describe('Operator or owner name for a new session.'),
+    restart: z.boolean().optional().describe('Restart the local browser portal server.')
+});
+export const AtlasStudioSessionCreateSchema = z.object({
+    client: z.string().min(1),
+    workflow: z.string().min(1),
+    owner: z.string().min(1).optional()
+});
+export const AtlasStudioSessionIdSchema = z.object({
+    session_id: z.string().min(1)
+});
+export const AtlasStudioObserveSchema = z.object({
+    session_id: z.string().min(1),
+    text: z.string().min(1),
+    suggest: z.boolean().optional().describe('Queue mapping suggestions from the observation.'),
+    operator: z.boolean().optional().describe('Mark the observation as operator-authored.')
+});
+export const AtlasStudioNodeAddSchema = z.object({
+    session_id: z.string().min(1),
+    kind: z.enum(['actor', 'human', 'ai', 'system', 'data', 'constraint', 'touchpoint']),
+    label: z.string().min(1).optional(),
+    atlas_id: z.string().min(1).optional(),
+    x: z.number().optional(),
+    y: z.number().optional(),
+    owner: z.string().min(1).optional(),
+    status: z.enum(['run', 'wait', 'stop', 'unknown']).optional(),
+    notes: z.string().optional(),
+    evidence: z.string().optional(),
+    operator: z.boolean().optional().describe('Mark the node as operator-authored.')
+});
+export const AtlasStudioEdgeAddSchema = z.object({
+    session_id: z.string().min(1),
+    source: z.string().min(1),
+    target: z.string().min(1),
+    label: z.string().min(1).optional(),
+    evidence: z.string().optional(),
+    operator: z.boolean().optional().describe('Mark the edge as operator-authored.')
+});
+export const AtlasStudioSuggestionAcceptSchema = z.object({
+    session_id: z.string().min(1),
+    suggestion_id: z.string().min(1)
+});
+export const AtlasStudioHealSchema = z.object({
+    session_id: z.string().min(1),
+    profile: z
+        .enum(['template-system'])
+        .optional()
+        .describe('Production primitive binding profile to reconcile.')
+});
+export const AtlasStudioProposalSchema = z.object({
+    session_id: z.string().min(1),
+    profile: z
+        .enum(['template-system'])
+        .optional()
+        .describe('Production primitive binding profile to use for the proposal.')
+});
+export const AtlasStudioProposalActionReviewSchema = z.object({
+    session_id: z.string().min(1),
+    proposal_id: z.string().min(1),
+    action_id: z.string().min(1),
+    status: z
+        .enum(['approved', 'rejected', 'proposed'])
+        .describe('Review decision for a proposal action. This never applies production changes.'),
+    note: z.string().min(1).optional(),
+    operator: z.boolean().optional().describe('Mark the review as operator-authored.')
+});
+export const AtlasStudioProposalHandoffSchema = z.object({
+    session_id: z.string().min(1),
+    proposal_id: z.string().min(1).optional().describe('Proposal id. Defaults to the latest proposal.')
+});
 export const McpCatalogListSchema = z.object({
     category: z.enum(['create-something', 'workway', 'third-party', 'all']).optional().describe('Catalog category filter'),
 });

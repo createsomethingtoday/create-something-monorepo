@@ -5,13 +5,15 @@
   "type": "module",
   "main": "dist/index.js",
   "bin": {
-    "interaction-atlas-mcp": "dist/index.js"
+    "interaction-atlas-mcp": "dist/index.js",
+    "cs-atlas-studio": "dist/studio/cli.js"
   },
   "scripts": {
     "prebuild": "pnpm --filter @create-something/playbook-mcp build && pnpm --filter @create-something/observability build",
-    "build": "tsc",
+    "build": "tsc && node dist/studio/build-client.js",
     "dev": "tsc --watch",
     "start": "node dist/index.js",
+    "studio": "pnpm build && node dist/studio/cli.js",
     "auth": "node dist/orchestration/oauth-setup.js",
     "lint": "pnpm run typecheck",
     "typecheck": "tsc --noEmit",
@@ -25,10 +27,17 @@
     "@create-something/playbook-mcp": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.25.3",
     "@quietloudlab/ai-interaction-atlas": "^1.0.7",
+    "@xyflow/react": "^12.11.0",
+    "lucide-react": "^0.563.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
     "zod": "^3.23.0"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "esbuild": "^0.24.2",
     "typescript": "^5.7.0"
   },
   "keywords": [

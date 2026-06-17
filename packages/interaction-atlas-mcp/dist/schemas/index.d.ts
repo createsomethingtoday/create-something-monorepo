@@ -103,6 +103,182 @@ export declare const WorkflowMapFromToolSequenceSchema: z.ZodObject<{
     add_human_review?: boolean | undefined;
 }>;
 export type WorkflowMapFromToolSequenceInput = z.infer<typeof WorkflowMapFromToolSequenceSchema>;
+export declare const AtlasStudioPortalStartSchema: z.ZodObject<{
+    session_id: z.ZodOptional<z.ZodString>;
+    client: z.ZodOptional<z.ZodString>;
+    workflow: z.ZodOptional<z.ZodString>;
+    owner: z.ZodOptional<z.ZodString>;
+    restart: z.ZodOptional<z.ZodBoolean>;
+}, "strip", z.ZodTypeAny, {
+    session_id?: string | undefined;
+    client?: string | undefined;
+    workflow?: string | undefined;
+    owner?: string | undefined;
+    restart?: boolean | undefined;
+}, {
+    session_id?: string | undefined;
+    client?: string | undefined;
+    workflow?: string | undefined;
+    owner?: string | undefined;
+    restart?: boolean | undefined;
+}>;
+export declare const AtlasStudioSessionCreateSchema: z.ZodObject<{
+    client: z.ZodString;
+    workflow: z.ZodString;
+    owner: z.ZodOptional<z.ZodString>;
+}, "strip", z.ZodTypeAny, {
+    client: string;
+    workflow: string;
+    owner?: string | undefined;
+}, {
+    client: string;
+    workflow: string;
+    owner?: string | undefined;
+}>;
+export declare const AtlasStudioSessionIdSchema: z.ZodObject<{
+    session_id: z.ZodString;
+}, "strip", z.ZodTypeAny, {
+    session_id: string;
+}, {
+    session_id: string;
+}>;
+export declare const AtlasStudioObserveSchema: z.ZodObject<{
+    session_id: z.ZodString;
+    text: z.ZodString;
+    suggest: z.ZodOptional<z.ZodBoolean>;
+    operator: z.ZodOptional<z.ZodBoolean>;
+}, "strip", z.ZodTypeAny, {
+    session_id: string;
+    text: string;
+    operator?: boolean | undefined;
+    suggest?: boolean | undefined;
+}, {
+    session_id: string;
+    text: string;
+    operator?: boolean | undefined;
+    suggest?: boolean | undefined;
+}>;
+export declare const AtlasStudioNodeAddSchema: z.ZodObject<{
+    session_id: z.ZodString;
+    kind: z.ZodEnum<["actor", "human", "ai", "system", "data", "constraint", "touchpoint"]>;
+    label: z.ZodOptional<z.ZodString>;
+    atlas_id: z.ZodOptional<z.ZodString>;
+    x: z.ZodOptional<z.ZodNumber>;
+    y: z.ZodOptional<z.ZodNumber>;
+    owner: z.ZodOptional<z.ZodString>;
+    status: z.ZodOptional<z.ZodEnum<["run", "wait", "stop", "unknown"]>>;
+    notes: z.ZodOptional<z.ZodString>;
+    evidence: z.ZodOptional<z.ZodString>;
+    operator: z.ZodOptional<z.ZodBoolean>;
+}, "strip", z.ZodTypeAny, {
+    session_id: string;
+    kind: "system" | "data" | "constraint" | "touchpoint" | "actor" | "ai" | "human";
+    operator?: boolean | undefined;
+    notes?: string | undefined;
+    label?: string | undefined;
+    status?: "unknown" | "run" | "wait" | "stop" | undefined;
+    owner?: string | undefined;
+    atlas_id?: string | undefined;
+    x?: number | undefined;
+    y?: number | undefined;
+    evidence?: string | undefined;
+}, {
+    session_id: string;
+    kind: "system" | "data" | "constraint" | "touchpoint" | "actor" | "ai" | "human";
+    operator?: boolean | undefined;
+    notes?: string | undefined;
+    label?: string | undefined;
+    status?: "unknown" | "run" | "wait" | "stop" | undefined;
+    owner?: string | undefined;
+    atlas_id?: string | undefined;
+    x?: number | undefined;
+    y?: number | undefined;
+    evidence?: string | undefined;
+}>;
+export declare const AtlasStudioEdgeAddSchema: z.ZodObject<{
+    session_id: z.ZodString;
+    source: z.ZodString;
+    target: z.ZodString;
+    label: z.ZodOptional<z.ZodString>;
+    evidence: z.ZodOptional<z.ZodString>;
+    operator: z.ZodOptional<z.ZodBoolean>;
+}, "strip", z.ZodTypeAny, {
+    session_id: string;
+    source: string;
+    target: string;
+    operator?: boolean | undefined;
+    label?: string | undefined;
+    evidence?: string | undefined;
+}, {
+    session_id: string;
+    source: string;
+    target: string;
+    operator?: boolean | undefined;
+    label?: string | undefined;
+    evidence?: string | undefined;
+}>;
+export declare const AtlasStudioSuggestionAcceptSchema: z.ZodObject<{
+    session_id: z.ZodString;
+    suggestion_id: z.ZodString;
+}, "strip", z.ZodTypeAny, {
+    session_id: string;
+    suggestion_id: string;
+}, {
+    session_id: string;
+    suggestion_id: string;
+}>;
+export declare const AtlasStudioHealSchema: z.ZodObject<{
+    session_id: z.ZodString;
+    profile: z.ZodOptional<z.ZodEnum<["template-system"]>>;
+}, "strip", z.ZodTypeAny, {
+    session_id: string;
+    profile?: "template-system" | undefined;
+}, {
+    session_id: string;
+    profile?: "template-system" | undefined;
+}>;
+export declare const AtlasStudioProposalSchema: z.ZodObject<{
+    session_id: z.ZodString;
+    profile: z.ZodOptional<z.ZodEnum<["template-system"]>>;
+}, "strip", z.ZodTypeAny, {
+    session_id: string;
+    profile?: "template-system" | undefined;
+}, {
+    session_id: string;
+    profile?: "template-system" | undefined;
+}>;
+export declare const AtlasStudioProposalActionReviewSchema: z.ZodObject<{
+    session_id: z.ZodString;
+    proposal_id: z.ZodString;
+    action_id: z.ZodString;
+    status: z.ZodEnum<["approved", "rejected", "proposed"]>;
+    note: z.ZodOptional<z.ZodString>;
+    operator: z.ZodOptional<z.ZodBoolean>;
+}, "strip", z.ZodTypeAny, {
+    status: "approved" | "rejected" | "proposed";
+    session_id: string;
+    proposal_id: string;
+    action_id: string;
+    operator?: boolean | undefined;
+    note?: string | undefined;
+}, {
+    status: "approved" | "rejected" | "proposed";
+    session_id: string;
+    proposal_id: string;
+    action_id: string;
+    operator?: boolean | undefined;
+    note?: string | undefined;
+}>;
+export declare const AtlasStudioProposalHandoffSchema: z.ZodObject<{
+    session_id: z.ZodString;
+    proposal_id: z.ZodOptional<z.ZodString>;
+}, "strip", z.ZodTypeAny, {
+    session_id: string;
+    proposal_id?: string | undefined;
+}, {
+    session_id: string;
+    proposal_id?: string | undefined;
+}>;
 export declare const McpCatalogListSchema: z.ZodObject<{
     category: z.ZodOptional<z.ZodEnum<["create-something", "workway", "third-party", "all"]>>;
 }, "strip", z.ZodTypeAny, {

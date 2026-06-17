@@ -1,0 +1,19 @@
+{
+  "name": "@create-something/atlas-studio-desktop",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Tauri desktop shell for CREATE SOMETHING Atlas Studio",
+  "scripts": {
+    "session": "node scripts/session.mjs",
+    "studio-data": "node scripts/studio-data.mjs",
+    "install-launchers": "node scripts/install-launchers.mjs",
+    "dev": "tauri dev",
+    "build": "tauri build",
+    "check": "tauri build --debug --no-bundle",
+    "tauri": "tauri"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "2.11.2"
+  }
+}
