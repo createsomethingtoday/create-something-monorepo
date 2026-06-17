@@ -4,6 +4,7 @@ export const TABLE_IDS = {
   assets: 'tblRwzpWoLgE9MrUm',
   assetVersions: 'tblHxZ2hgSFLZxsZu',
   assetReleases: 'tblhLAXcJiXrkZxUL',
+  features: 'tblvzTXMhOhiFkapL',
 } as const;
 
 export const CONFIRMED_RELEASE_FIELDS = {
@@ -17,6 +18,8 @@ export const CONFIRMED_ASSET_FIELDS = {
   name: 'Name',
   descriptionShort: 'ℹ️Description (Short)',
   descriptionLongHtml: 'ℹ️Description (Long).html',
+  features: 'ℹ️✨Features',
+  featuresHighlighted: 'ℹ️✨Features Highlighted',
   websiteUrl: '🔗Website URL',
   previewSiteUrl: '🔗Preview Site URL',
   marketplaceStatus: '🚀Marketplace Status',
@@ -39,6 +42,12 @@ export const CONFIRMED_ASSET_FIELDS = {
 export const ASSET_COMPATIBILITY_ALIASES = {
   description: 'ℹ️Description (Long).html',
   rejectionFeedbackHtml: '🚩Rejection Feedback',
+} as const;
+
+export const CONFIRMED_FEATURE_FIELDS = {
+  name: 'Name',
+  cmsSlug: '🥞CMS Slug',
+  cmsStatus: '🥞CMS Status',
 } as const;
 
 export const METRICS_ASSET_FIELD_IDS = {
@@ -192,6 +201,7 @@ export const TEMPLATE_REVIEW_FIELD_MAP = {
     assets: CONFIRMED_ASSET_FIELDS,
     versions: CONFIRMED_VERSION_FIELDS,
     releases: CONFIRMED_RELEASE_FIELDS,
+    features: CONFIRMED_FEATURE_FIELDS,
   },
   confirmedWriteFieldIds: CONFIRMED_WRITE_FIELD_IDS,
   pending: {

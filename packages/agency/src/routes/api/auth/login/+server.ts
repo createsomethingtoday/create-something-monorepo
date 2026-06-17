@@ -1,54 +1,20 @@
-import { redirect, json } from '@sveltejs/kit';
+import { json, redirect } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import {
-	buildAuth0AuthorizeUrl,
-	generateAuthState,
-	getAuth0Config,
-	getDomainConfig,
-	setAuth0StateCookies,
-} from '@create-something/canon/auth';
 
-export const GET: RequestHandler = async ({ url, cookies, platform, request }) => {
-	const config = getAuth0Config(platform?.env);
-	if (!config) {
-		return json({ error: 'Auth0 is not configured' }, { status: 503 });
+export const GET: RequestHandler = ({ url }) => {
+	const signInUrl = new URL('/sign-in', url);
+	const redirectTo = url.searchParams.get('redirect_url') ?? url.searchParams.get('redirect');
+
+	if (redirectTo) {
+		signInUrl.searchParams.set('redirect_url', redirectTo);
 	}
 
-	const state = generateAuthState();
-	const redirectTo = url.searchParams.get('redirect') || '/';
-	const screenHint = url.searchParams.get('screen_hint') === 'signup' ? 'signup' : 'login';
-	const domainConfig = getDomainConfig(platform?.env?.ENVIRONMENT);
-	const callbackUrl = resolveAuth0RedirectUri(request.url, platform?.env);
-
-	setAuth0StateCookies(cookies, {
-		state,
-		redirectTo,
-		isProduction: domainConfig.isProduction,
-		domain: domainConfig.domain,
-	});
-
-	redirect(
-		302,
-		buildAuth0AuthorizeUrl({
-			config,
-			redirectUri: callbackUrl,
-			state,
-			screenHint,
-		})
-	);
+	redirect(302, signInUrl.toString());
 };
-
-function resolveAuth0RedirectUri(requestUrl: string, env?: App.Platform['env']) {
-	const explicit = env?.AUTH0_REDIRECT_URI?.trim();
-	if (explicit) {
-		return explicit.replace(/\/+$/, '');
-	}
-	return new URL('/auth/callback', requestUrl).toString();
-}
 
 export const POST: RequestHandler = async () => {
 	return json(
-		{ error: 'Email/password login has been replaced by Auth0. Use GET /api/auth/login.' },
+		{ error: 'Email/password login has been replaced by Clerk. Use GET /sign-in.' },
 		{ status: 405 }
 	);
 };

@@ -1,11 +1,11 @@
 <script lang="ts">
 	import { SEO } from '@create-something/canon';
-	// This page handles the redirect from magic link verification.
+	// Legacy identity callbacks are redirected to Clerk by the server load.
 </script>
 
 <SEO
 	title="Signing In"
-	description="Completing your Auth0 sign-in"
+	description="Completing your Clerk sign-in"
 	propertyName="agency"
 	noindex={true}
 />

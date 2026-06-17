@@ -44,6 +44,7 @@ interface ClerkClaims {
   expiresAt: number | null;
   notBefore: number | null;
   issuer: string | null;
+  authorizedParty: string | null;
 }
 
 interface JsonWebKeySet {
@@ -203,8 +204,58 @@ function extractClaims(payload: Record<string, unknown>): ClerkClaims {
     organizationRole: getStringClaim(payload, ['org_role', 'organization_role']),
     expiresAt: getNumberClaim(payload, 'exp'),
     notBefore: getNumberClaim(payload, 'nbf'),
-    issuer: getStringClaim(payload, ['iss'])
+    issuer: getStringClaim(payload, ['iss']),
+    authorizedParty: getStringClaim(payload, ['azp'])
   };
+}
+
+function normalizeOrigin(value: string): URL | null {
+  try {
+    return new URL(value).origin === 'null' ? null : new URL(value);
+  } catch {
+    return null;
+  }
+}
+
+function hostnameMatchesAuthorizedParty(hostname: string, authorizedHostname: string) {
+  if (hostname === authorizedHostname) {
+    return true;
+  }
+
+  if (authorizedHostname.startsWith('*.')) {
+    const suffix = authorizedHostname.slice(2);
+    return hostname === suffix || hostname.endsWith(`.${suffix}`);
+  }
+
+  if (authorizedHostname === 'ona-agent-chat.pages.dev') {
+    return hostname.endsWith('.ona-agent-chat.pages.dev');
+  }
+
+  return false;
+}
+
+function isAllowedAuthorizedParty(value: string | null, configuredParties: string[]) {
+  if (configuredParties.length === 0) {
+    return true;
+  }
+
+  if (!value) {
+    return false;
+  }
+
+  const authorizedParty = normalizeOrigin(value);
+  if (!authorizedParty) {
+    return false;
+  }
+
+  return configuredParties.some((configuredParty) => {
+    const allowed = normalizeOrigin(configuredParty);
+    if (!allowed || allowed.protocol !== authorizedParty.protocol) {
+      return false;
+    }
+
+    return hostnameMatchesAuthorizedParty(authorizedParty.hostname, allowed.hostname);
+  });
 }
 
 function validateClaims(claims: ClerkClaims, platform?: App.Platform) {
@@ -220,6 +271,11 @@ function validateClaims(claims: ClerkClaims, platform?: App.Platform) {
   const expectedIssuer = readRuntimeEnv(platform, 'CLERK_ISSUER')?.trim()?.replace(/\/+$/, '');
   if (expectedIssuer && claims.issuer?.replace(/\/+$/, '') !== expectedIssuer) {
     throw new Error('Clerk session token issuer does not match CLERK_ISSUER.');
+  }
+
+  const authorizedParties = readRuntimeList(platform, 'CLERK_AUTHORIZED_PARTIES');
+  if (!isAllowedAuthorizedParty(claims.authorizedParty, authorizedParties)) {
+    throw new Error('Clerk session token authorized party is not allowed.');
   }
 }
 

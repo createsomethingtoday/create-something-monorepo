@@ -92,6 +92,8 @@
 	const bookingIntent = normalizeQueryToken(bookingUrlParams.get('intent'), 'workflow-mapping');
 	const bookingPath = browser ? `${window.location.pathname}${window.location.search}` : '/book';
 	const initialLane = normalizeLane(bookingUrlParams.get('lane')) ?? 'not_sure';
+	const shouldHydrateWarmup =
+		bookingSource === 'atlas-warmup' || bookingUrlParams.get('warmup') === 'atlas';
 	const directBookingHref = 'https://savvycal.com/createsomething/together';
 	const warmupStorageKey = 'create-something:workflow-mapping-warmup';
 	const warmupDraftStorageKey = 'create-something:workflow-mapping-warmup-draft';
@@ -379,6 +381,7 @@
 
 			const result = (await response.json()) as { event: BookingEvent };
 			confirmedEvent = result.event;
+			clearWarmup();
 			getAnalytics()?.conversion('booking_completed', {
 				...bookingExperimentMetadata,
 				serviceLane: selectedLane,
@@ -418,7 +421,7 @@
 	});
 
 	$effect(() => {
-		if (!browser || warmupLoaded) return;
+		if (!browser || warmupLoaded || !shouldHydrateWarmup) return;
 		warmupLoaded = true;
 		warmupSummary = window.localStorage.getItem(warmupStorageKey) ?? '';
 	});

@@ -77,7 +77,18 @@ declare global {
 				// Optional: Override API URL (defaults to workway-api-gateway.half-dozen.workers.dev)
 				// Set to api.workway.co once DNS route is configured
 				WORKWAY_API_URL?: string;
-				// Auth0 identity
+				// Clerk identity
+				CLERK_FRONTEND_API_URL?: string;
+				CLERK_PUBLISHABLE_KEY?: string;
+				CLERK_SIGN_IN_FALLBACK_REDIRECT_URL?: string;
+				CLERK_SIGN_IN_URL?: string;
+				CLERK_SIGN_UP_URL?: string;
+				NEXT_PUBLIC_CLERK_FRONTEND_API_URL?: string;
+				NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY?: string;
+				PUBLIC_CLERK_PUBLISHABLE_KEY?: string;
+				PUBLIC_CLERK_SIGN_UP_URL?: string;
+				VITE_CLERK_PUBLISHABLE_KEY?: string;
+				// Legacy Auth0 identity
 				AUTH0_DOMAIN?: string;
 				AUTH0_CLIENT_ID?: string;
 				AUTH0_CLIENT_SECRET?: string;

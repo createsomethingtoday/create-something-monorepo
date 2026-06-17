@@ -94,6 +94,23 @@ function getObservationBytes(observation: unknown): number {
   return typeof observation === 'string' ? new TextEncoder().encode(observation).byteLength : 0;
 }
 
+function extractPlainErrorMessage(text: string): string | undefined {
+  const trimmed = text.trim();
+  if (!trimmed) {
+    return undefined;
+  }
+
+  try {
+    const parsed = JSON.parse(trimmed) as Record<string, unknown>;
+    const message = [parsed.code, parsed.message, parsed.detail]
+      .filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
+      .join(': ');
+    return message || trimmed;
+  } catch {
+    return trimmed;
+  }
+}
+
 function extractToolCalls(events: DifyStreamEvent[]): DifyToolCallSummary[] {
   const toolCalls: DifyToolCallSummary[] = [];
 
@@ -121,6 +138,7 @@ export function collectDifyStreamOutput(input: {
   responseOk: boolean;
   status: number | null;
   durationMs: number;
+  fallbackError?: string;
 }): DifyChatOutput {
   let answer = '';
   let messageId: string | undefined;
@@ -155,7 +173,7 @@ export function collectDifyStreamOutput(input: {
     messageId,
     conversationId,
     toolCalls: extractToolCalls(input.events),
-    error: streamError
+    error: streamError ?? input.fallbackError
   };
 }
 
@@ -201,11 +219,13 @@ export async function callDifyChat(input: DifyChatInput): Promise<DifyChatOutput
     );
 
     const text = await response.text();
+    const events = parseDifySseEvents(text);
     return collectDifyStreamOutput({
-      events: parseDifySseEvents(text),
+      events,
       responseOk: response.ok,
       status: response.status,
-      durationMs: Date.now() - startedAt
+      durationMs: Date.now() - startedAt,
+      fallbackError: !response.ok ? extractPlainErrorMessage(text) : undefined
     });
   } catch (error) {
     return {

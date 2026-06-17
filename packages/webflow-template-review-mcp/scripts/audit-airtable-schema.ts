@@ -3,6 +3,7 @@ import process from 'node:process';
 import {
   ASSET_COMPATIBILITY_ALIASES,
   CONFIRMED_ASSET_FIELDS,
+  CONFIRMED_FEATURE_FIELDS,
   CONFIRMED_RELEASE_FIELDS,
   CONFIRMED_VERSION_FIELDS,
   CONFIRMED_WRITE_FIELD_IDS,
@@ -72,10 +73,11 @@ async function main() {
   const assetTable = tables.get('👛Assets');
   const versionTable = tables.get('🖌️Asset Versions');
   const releaseTable = tables.get('🚀Asset Releases');
+  const featureTable = tables.get('✨Features');
 
-  if (!assetTable || !versionTable || !releaseTable) {
+  if (!assetTable || !versionTable || !releaseTable || !featureTable) {
     throw new Error(
-      `Missing expected tables. Found assets=${Boolean(assetTable)} versions=${Boolean(versionTable)} releases=${Boolean(releaseTable)}`,
+      `Missing expected tables. Found assets=${Boolean(assetTable)} versions=${Boolean(versionTable)} releases=${Boolean(releaseTable)} features=${Boolean(featureTable)}`,
     );
   }
 
@@ -84,6 +86,7 @@ async function main() {
     diffFieldNames('assets.compatibilityAliases', ASSET_COMPATIBILITY_ALIASES, assetTable.fields),
     diffFieldNames('versions.confirmed', CONFIRMED_VERSION_FIELDS, versionTable.fields),
     diffFieldNames('releases.confirmed', CONFIRMED_RELEASE_FIELDS, releaseTable.fields),
+    diffFieldNames('features.confirmed', CONFIRMED_FEATURE_FIELDS, featureTable.fields),
     diffFieldIds('assets.metricsFieldIds', METRICS_ASSET_FIELD_IDS, assetTable.fields),
     {
       label: 'writeFieldIds',
@@ -102,6 +105,7 @@ async function main() {
     assets: assetTable.id,
     assetVersions: versionTable.id,
     assetReleases: releaseTable.id,
+    features: featureTable.id,
   }).filter(([key, id]) => TABLE_IDS[key as keyof typeof TABLE_IDS] !== id);
 
   const result = {
@@ -113,6 +117,7 @@ async function main() {
         assets: assetTable.id,
         assetVersions: versionTable.id,
         assetReleases: releaseTable.id,
+        features: featureTable.id,
       },
     },
     checks,

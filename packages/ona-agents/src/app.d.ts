@@ -11,6 +11,7 @@ declare global {
         CLERK_ALLOWED_EMAILS?: string;
         CLERK_ALLOWED_ORGANIZATION_IDS?: string;
         CLERK_ALLOWED_ORGANIZATION_ROLES?: string;
+        CLERK_AUTHORIZED_PARTIES?: string;
         CLERK_ISSUER?: string;
         CLERK_JWKS_URL?: string;
         CLERK_SESSION_COOKIE_NAME?: string;

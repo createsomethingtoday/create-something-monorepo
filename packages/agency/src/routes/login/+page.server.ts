@@ -1,26 +1,13 @@
 import { redirect } from '@sveltejs/kit';
-import { createSessionManager, getAuth0Config, PROPERTY_DOMAINS } from '@create-something/canon/auth';
 import type { PageServerLoad } from './$types';
 
-const DEFAULT_REDIRECT = '/dashboard';
+export const load: PageServerLoad = ({ url }) => {
+	const redirectTo = url.searchParams.get('redirect_url') ?? url.searchParams.get('redirect');
+	const signInUrl = new URL('/sign-in', url);
 
-export const load: PageServerLoad = async ({ url, cookies, platform }) => {
-	const authProvider = getAuth0Config(platform?.env);
-	const session = createSessionManager(cookies, {
-		isProduction: platform?.env?.ENVIRONMENT === 'production',
-		domain: PROPERTY_DOMAINS.agency,
-		authProvider: authProvider ?? undefined,
-	});
-
-	const user = await session.getUser();
-	const redirectTo = url.searchParams.get('redirect') || DEFAULT_REDIRECT;
-
-	if (user) {
-		throw redirect(302, redirectTo);
+	if (redirectTo) {
+		signInUrl.searchParams.set('redirect_url', redirectTo);
 	}
 
-	return {
-		redirectTo,
-		error: url.searchParams.get('error') || null,
-	};
+	throw redirect(302, signInUrl.toString());
 };

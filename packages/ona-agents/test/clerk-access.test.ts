@@ -75,6 +75,55 @@ test('Clerk verifier accepts a valid RS256 session token', async () => {
   assert.equal(claims.organizationRole, 'org:admin');
 });
 
+test('Clerk verifier rejects a mismatched authorized party', async () => {
+  const now = Math.floor(Date.now() / 1000);
+  const { token, jwks } = await createSignedJwt({
+    sub: 'user_123',
+    iss: 'https://azp-blocked.clerk.example.test',
+    azp: 'https://untrusted.example.test',
+    exp: now + 300
+  });
+
+  await assert.rejects(
+    verifyClerkSessionToken({
+      token,
+      fetch: createJwksFetch(jwks),
+      platform: {
+        env: {
+          ENVIRONMENT: 'production',
+          CLERK_ISSUER: 'https://azp-blocked.clerk.example.test',
+          CLERK_AUTHORIZED_PARTIES: 'https://ona.example.test'
+        }
+      }
+    }),
+    /authorized party/
+  );
+});
+
+test('Clerk verifier allows Ona Pages preview subdomains from the production host rule', async () => {
+  const now = Math.floor(Date.now() / 1000);
+  const { token, jwks } = await createSignedJwt({
+    sub: 'user_123',
+    iss: 'https://azp-pages.clerk.example.test',
+    azp: 'https://781f83fc.ona-agent-chat.pages.dev',
+    exp: now + 300
+  });
+
+  const claims = await verifyClerkSessionToken({
+    token,
+    fetch: createJwksFetch(jwks),
+    platform: {
+      env: {
+        ENVIRONMENT: 'production',
+        CLERK_ISSUER: 'https://azp-pages.clerk.example.test',
+        CLERK_AUTHORIZED_PARTIES: 'https://ona-agent-chat.pages.dev'
+      }
+    }
+  });
+
+  assert.equal(claims.subject, 'user_123');
+});
+
 test('Clerk access allows matching organization and role', async () => {
   const now = Math.floor(Date.now() / 1000);
   const { token, jwks } = await createSignedJwt({

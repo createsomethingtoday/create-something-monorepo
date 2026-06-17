@@ -37,6 +37,9 @@ pnpm-debug.log*
 # Testing
 coverage
 .vitest
+.playwright-cli/
+/output/playwright/
+/tmp/verification/
 
 # Temporary files
 *.tmp

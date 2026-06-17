@@ -1,6 +1,7 @@
 import {
   ASSET_COMPATIBILITY_ALIASES,
   CONFIRMED_ASSET_FIELDS,
+  CONFIRMED_FEATURE_FIELDS,
   CONFIRMED_RELEASE_FIELDS,
   CONFIRMED_WRITE_FIELD_IDS,
   CONFIRMED_VERSION_FIELDS,
@@ -64,10 +65,20 @@ export interface TemplateReviewQueueItem {
 
 export type TemplateReviewAssetSearchMode = 'contains' | 'exact';
 
+export interface TemplateReviewFeature {
+  featureId: string;
+  name: string;
+  cmsSlug?: string;
+  cmsStatus?: string;
+}
+
 export interface TemplateReviewAsset extends TemplateReviewQueueItem {
   description?: string;
   descriptionShort?: string;
   descriptionLongHtml?: string;
+  featureIds: string[];
+  features?: TemplateReviewFeature[];
+  featuresHighlighted?: string;
   mrpId?: string;
   mrpIdOverride?: string;
   thumbnailImageUrl?: string;
@@ -370,6 +381,19 @@ function stringArray(value: unknown): string[] {
     .filter((item): item is string => Boolean(item));
 }
 
+function linkedRecordIds(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item) => {
+      if (typeof item === 'string') return item;
+      if (item && typeof item === 'object' && typeof (item as { id?: unknown }).id === 'string') {
+        return (item as { id: string }).id;
+      }
+      return undefined;
+    })
+    .filter((item): item is string => Boolean(item));
+}
+
 function attachmentUrls(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
   return value
@@ -434,6 +458,8 @@ function mapAsset(record: AirtableRecord): TemplateReviewAsset {
     description: firstString(fields[ASSET_COMPATIBILITY_ALIASES.description]),
     descriptionShort: firstString(fields[CONFIRMED_ASSET_FIELDS.descriptionShort]),
     descriptionLongHtml: firstString(fields[CONFIRMED_ASSET_FIELDS.descriptionLongHtml]),
+    featureIds: linkedRecordIds(fields[CONFIRMED_ASSET_FIELDS.features]),
+    featuresHighlighted: firstString(fields[CONFIRMED_ASSET_FIELDS.featuresHighlighted]),
     mrpId: firstString(fields[CONFIRMED_ASSET_FIELDS.mrpId]),
     mrpIdOverride: firstString(fields[CONFIRMED_ASSET_FIELDS.mrpIdOverride]),
     websiteUrl: firstString(fields[CONFIRMED_ASSET_FIELDS.websiteUrl]),
@@ -453,6 +479,15 @@ function mapAsset(record: AirtableRecord): TemplateReviewAsset {
     publishedDate: firstString(fields[CONFIRMED_ASSET_FIELDS.publishedDate]),
     decisionDate: firstString(fields[CONFIRMED_ASSET_FIELDS.decisionDate]),
     priceString: firstString(fields[CONFIRMED_ASSET_FIELDS.priceString]),
+  };
+}
+
+function mapFeature(record: AirtableRecord): TemplateReviewFeature {
+  return {
+    featureId: record.id,
+    name: firstString(record.fields[CONFIRMED_FEATURE_FIELDS.name]) ?? record.id,
+    cmsSlug: firstString(record.fields[CONFIRMED_FEATURE_FIELDS.cmsSlug]),
+    cmsStatus: firstString(record.fields[CONFIRMED_FEATURE_FIELDS.cmsStatus]),
   };
 }
 
@@ -1214,7 +1249,42 @@ export class AirtableClient {
   async getAssetById(assetId: string): Promise<TemplateReviewAsset | null> {
     const record = await this.getRecord(TABLE_IDS.assets, assetId);
     if (!record || !isTemplateLikeAsset(record.fields)) return null;
-    return mapAsset(record);
+    return this.hydrateAssetFeatures(mapAsset(record));
+  }
+
+  private async listFeatureRecordsByIds(featureIds: string[]): Promise<Map<string, TemplateReviewFeature>> {
+    const uniqueFeatureIds = [...new Set(featureIds.filter(Boolean))];
+    if (uniqueFeatureIds.length === 0) return new Map();
+
+    const recordGroups = await Promise.all(
+      chunkArray(uniqueFeatureIds, 25).map((chunk) =>
+        this.listRecords({
+          tableId: TABLE_IDS.features,
+          limit: chunk.length,
+          fieldNames: Object.values(CONFIRMED_FEATURE_FIELDS),
+          filterByFormula: recordIdsFormula(chunk),
+        }),
+      ),
+    );
+
+    return new Map(recordGroups.flat().map((record) => [record.id, mapFeature(record)]));
+  }
+
+  private async hydrateAssetFeatures(asset: TemplateReviewAsset): Promise<TemplateReviewAsset> {
+    if (asset.featureIds.length === 0) {
+      return {
+        ...asset,
+        features: [],
+      };
+    }
+
+    const featuresById = await this.listFeatureRecordsByIds(asset.featureIds);
+    return {
+      ...asset,
+      features: asset.featureIds
+        .map((featureId) => featuresById.get(featureId))
+        .filter((feature): feature is TemplateReviewFeature => Boolean(feature)),
+    };
   }
 
   async listVersionsForAsset(assetId: string, limit = 100): Promise<TemplateReviewVersion[]> {

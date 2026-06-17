@@ -48,6 +48,7 @@
   ];
   const primaryCtaHref = agencyCoreMessaging.startWithWorkflowHref;
   const globalAnalyticsMetadata = $derived(getAgencyGlobalAnalyticsMetadata($page.url.pathname));
+  const isOnaAuthSurface = $derived($page.url.pathname === '/sign-in');
   const footerQuickLinkGroups = [
     {
       title: 'Commercial',
@@ -384,57 +385,69 @@
   }
 </script>
 
-<PrivacyAnalytics
-  property="agency"
-  userId={data.user?.id}
-  userOptedOut={data.user?.analytics_opt_out ?? false}
-  globalMetadata={globalAnalyticsMetadata}
-/>
-
-<!-- Unified Search - Cmd/Ctrl+K to open -->
-<UnifiedSearch currentProperty="agency" localItems={quickAccessItems} showMobileButton={false} />
-
-<div class="layout-root min-h-screen">
-  <Navigation
-    logo="CREATE SOMETHING"
-    logoSuffix=".agency"
-    links={navLinks}
-    currentPath={$page.url.pathname}
-    fixed={true}
-    ctaLabel={agencyCoreMessaging.startWithWorkflowLabel}
-    ctaHref={primaryCtaHref}
-    user={data.user}
-    onLogout={handleLogout}
-    accountHref="/account"
-    visualStyle="clear"
+{#if !isOnaAuthSurface}
+  <PrivacyAnalytics
+    property="agency"
+    userId={data.user?.id}
+    userOptedOut={data.user?.analytics_opt_out ?? false}
+    globalMetadata={globalAnalyticsMetadata}
   />
 
-  <main id="main-content" class="pt-[72px]">
-    {@render children()}
-  </main>
+  <!-- Unified Search - Cmd/Ctrl+K to open -->
+  <UnifiedSearch currentProperty="agency" localItems={quickAccessItems} showMobileButton={false} />
+{/if}
 
-  <Footer
-    mode="agency"
-    showNewsletter={false}
-    aboutText="Calm, transparent, reliable workflow systems for operator-owned outcomes: clear trust boundaries, evidence-backed delivery, and escalation only when judgment is required."
-    quickLinkGroups={footerQuickLinkGroups}
-    footerCta={{
-      label: agencyCoreMessaging.startWithWorkflowLabel,
-      href: primaryCtaHref,
-      description: 'Start a lightweight workflow map before booking.'
-    }}
-    showSocial={true}
-    isAuthenticated={!!data.user}
-    visualStyle="clear"
-  />
+<div class:layout-root--standalone={isOnaAuthSurface} class="layout-root min-h-screen">
+  {#if isOnaAuthSurface}
+    <main id="main-content">
+      {@render children()}
+    </main>
+  {:else}
+    <Navigation
+      logo="CREATE SOMETHING"
+      logoSuffix=".agency"
+      links={navLinks}
+      currentPath={$page.url.pathname}
+      fixed={true}
+      ctaLabel={agencyCoreMessaging.startWithWorkflowLabel}
+      ctaHref={primaryCtaHref}
+      user={data.user}
+      onLogout={handleLogout}
+      accountHref="/account"
+      visualStyle="clear"
+    />
 
-  {#if $page.url.pathname !== '/'}
-    <ModeIndicator current="agency" />
+    <main id="main-content" class="pt-[72px]">
+      {@render children()}
+    </main>
+
+    <Footer
+      mode="agency"
+      showNewsletter={false}
+      aboutText="Calm, transparent, reliable workflow systems for operator-owned outcomes: clear trust boundaries, evidence-backed delivery, and escalation only when judgment is required."
+      quickLinkGroups={footerQuickLinkGroups}
+      footerCta={{
+        label: agencyCoreMessaging.startWithWorkflowLabel,
+        href: primaryCtaHref,
+        description: 'Start a lightweight workflow map before booking.'
+      }}
+      showSocial={true}
+      isAuthenticated={!!data.user}
+      visualStyle="clear"
+    />
+
+    {#if $page.url.pathname !== '/'}
+      <ModeIndicator current="agency" />
+    {/if}
   {/if}
 </div>
 
 <style>
   .layout-root {
     background: var(--color-clear-porcelain, #f9f9f9);
+  }
+
+  .layout-root--standalone {
+    min-height: 100svh;
   }
 </style>

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { AirtableClient } from '../src/airtable.js';
-import { CONFIRMED_ASSET_FIELDS, CONFIRMED_VERSION_FIELDS, CONFIRMED_WRITE_FIELD_IDS, METRICS_ASSET_FIELD_IDS, TABLE_IDS } from '../src/schema.js';
+import { CONFIRMED_ASSET_FIELDS, CONFIRMED_FEATURE_FIELDS, CONFIRMED_VERSION_FIELDS, CONFIRMED_WRITE_FIELD_IDS, METRICS_ASSET_FIELD_IDS, TABLE_IDS } from '../src/schema.js';
 
 const ericReviewer = {
   id: 'usr_eric',
@@ -231,6 +231,92 @@ test('getAssetById maps current asset fields and compatibility aliases', async (
   assert.equal(asset.latestReviewDate, '2026-03-16T18:00:00.000Z');
   assert.equal(asset.rejectionFeedbackHtml, 'Plain rejection feedback');
   assert.equal(asset.publishedDate, '2026-03-17');
+});
+
+test('getReviewContext hydrates linked asset features from the confirmed Features field', async () => {
+  const client = new AirtableClient({
+    apiKey: 'test',
+    fetchFn: async (input) => {
+      const url = new URL(String(input));
+
+      if (url.pathname.includes(`/${TABLE_IDS.assetVersions}/rec_version_features`)) {
+        return jsonResponse({
+          id: 'rec_version_features',
+          createdTime: '2026-03-17T00:00:00.000Z',
+          fields: {
+            [CONFIRMED_VERSION_FIELDS.assetRecordId]: 'rec_asset_features',
+            [CONFIRMED_VERSION_FIELDS.reviewStatus]: '🔁Response to Review',
+            [CONFIRMED_VERSION_FIELDS.reviewOwner]: ericReviewer,
+          },
+        });
+      }
+
+      if (url.pathname.includes(`/${TABLE_IDS.assets}/rec_asset_features`)) {
+        return jsonResponse({
+          id: 'rec_asset_features',
+          createdTime: '2026-03-17T00:00:00.000Z',
+          fields: {
+            [CONFIRMED_ASSET_FIELDS.type]: 'Template🏗️',
+            [CONFIRMED_ASSET_FIELDS.name]: 'Komanica',
+            [CONFIRMED_ASSET_FIELDS.descriptionLongHtml]: '<p>Long description copy</p>',
+            [CONFIRMED_ASSET_FIELDS.features]: ['rec_feature_gsap', 'rec_feature_css_grid'],
+            [CONFIRMED_ASSET_FIELDS.featuresHighlighted]: 'Includes GSAP',
+          },
+        });
+      }
+
+      if (url.pathname.includes(`/${TABLE_IDS.features}`)) {
+        assert.deepEqual(url.searchParams.getAll('fields[]'), Object.values(CONFIRMED_FEATURE_FIELDS));
+        const formula = url.searchParams.get('filterByFormula') ?? '';
+        assert.match(formula, /rec_feature_gsap/);
+        assert.match(formula, /rec_feature_css_grid/);
+
+        return jsonResponse({
+          records: [
+            {
+              id: 'rec_feature_css_grid',
+              fields: {
+                [CONFIRMED_FEATURE_FIELDS.name]: 'CSS Grid',
+                [CONFIRMED_FEATURE_FIELDS.cmsSlug]: 'css-grid-websites',
+                [CONFIRMED_FEATURE_FIELDS.cmsStatus]: 'Active',
+              },
+            },
+            {
+              id: 'rec_feature_gsap',
+              fields: {
+                [CONFIRMED_FEATURE_FIELDS.name]: 'GSAP',
+                [CONFIRMED_FEATURE_FIELDS.cmsSlug]: 'gsap-websites',
+                [CONFIRMED_FEATURE_FIELDS.cmsStatus]: 'Active',
+              },
+            },
+          ],
+        });
+      }
+
+      throw new Error(`Unexpected fetch: ${url.toString()}`);
+    },
+  });
+
+  const context = await client.getReviewContext('rec_version_features', ericReviewer);
+
+  assert.equal(context.asset?.description, '<p>Long description copy</p>');
+  assert.equal(context.asset?.descriptionLongHtml, '<p>Long description copy</p>');
+  assert.deepEqual(context.asset?.featureIds, ['rec_feature_gsap', 'rec_feature_css_grid']);
+  assert.equal(context.asset?.featuresHighlighted, 'Includes GSAP');
+  assert.deepEqual(context.asset?.features, [
+    {
+      featureId: 'rec_feature_gsap',
+      name: 'GSAP',
+      cmsSlug: 'gsap-websites',
+      cmsStatus: 'Active',
+    },
+    {
+      featureId: 'rec_feature_css_grid',
+      name: 'CSS Grid',
+      cmsSlug: 'css-grid-websites',
+      cmsStatus: 'Active',
+    },
+  ]);
 });
 
 test('getVersionById maps the current version-side MRP and agent feedback fields', async () => {

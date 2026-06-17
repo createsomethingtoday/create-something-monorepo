@@ -172,51 +172,38 @@ pnpm --filter=agency exec tsc --noEmit
 pnpm --filter=agency build && wrangler pages deploy packages/agency/.svelte-kit/cloudflare --project-name=create-something-agency
 ```
 
-## Auth0 And Infisical
+## Clerk Sign-In And Infisical
 
-`.agency` now treats Auth0 as the identity source of truth. Browser login flows redirect through Auth0 Universal Login, the Auth0 callback is handled at `/auth/callback`, and server-side session validation accepts Auth0-issued tokens through the shared Canon auth layer.
+`.agency` uses Clerk for active browser sign-in. The Clerk entrypoint is `/sign-in`;
+legacy `/login` requests redirect there and preserve either `redirect_url` or `redirect`
+as Clerk's `redirect_url` parameter.
 
-Tenant export uses `a0deploy`, not `auth0`. The repo-level export wrapper is:
+`/sign-in` renders ClerkJS from the configured Clerk frontend API and accepts redirects only
+to CREATE SOMETHING domains or Ona agent Pages domains. This keeps the Ona operator flow
+working for URLs such as:
 
-```bash
-cp auth0/config.example.json auth0/config.json
-pnpm auth0:export
+```text
+https://createsomething.agency/sign-in?redirect_url=https%3A%2F%2F781f83fc.ona-agent-chat.pages.dev%2Fagents
 ```
 
-The export wrapper expects `AUTH0_DOMAIN`, `AUTH0_CLIENT_ID`, and `AUTH0_CLIENT_SECRET` in your environment, then runs:
+Required Pages secrets or vars for the `.agency` sign-in page:
 
 ```bash
-a0deploy export -c auth0/config.json -f yaml -o auth0/export
+CLERK_PUBLISHABLE_KEY
+CLERK_FRONTEND_API_URL
 ```
 
-Required Pages secrets:
+Optional Pages secrets or vars:
 
 ```bash
-AUTH0_DOMAIN
-AUTH0_CLIENT_ID
-AUTH0_CLIENT_SECRET
-AUTH0_ISSUER_BASE_URL
-AUTH0_JWKS_URL
+CLERK_SIGN_UP_URL
+CLERK_SIGN_IN_FALLBACK_REDIRECT_URL
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
 ```
 
-Optional Pages secrets:
-
-```bash
-AUTH0_AUDIENCE
-AUTH0_SCOPE
-AUTH0_CLAIMS_NAMESPACE
-AUTH0_REDIRECT_URI
-```
-
-Do not point `AUTH0_AUDIENCE` at the Auth0 Management API (`https://<tenant>/api/v2/`) for browser sign-in. `.agency` only needs the ID token for the property session; the Management API audience is a machine-to-machine setting and can break Universal Login flows.
-
-If Auth0 login is fronted by a custom domain, preview hostname, or proxy that differs from the incoming Worker request host, set:
-
-```bash
-AUTH0_REDIRECT_URI=https://createsomething.agency/auth/callback
-```
-
-and add that exact URL to the Auth0 application's Allowed Callback URLs.
+Ona operator access is enforced by `packages/ona-agents`, not this marketing site. The Ona
+Pages project must still have `CLERK_ISSUER` or `CLERK_JWKS_URL` plus explicit allow rules
+such as `CLERK_ALLOWED_EMAILS`, `CLERK_ALLOWED_EMAIL_DOMAINS`, or Clerk organization rules.
 
 Recommended Infisical path:
 
@@ -224,38 +211,7 @@ Recommended Infisical path:
 /agency/auth
 ```
 
-Auth0 secrets must live only under `/agency/auth`. Do not store duplicate `AUTH0_*` keys at the Infisical root path `/`; the seed/sync scripts now fail closed when root-path drift is present.
-
-Seed Auth0 tenant values into Infisical:
-
-```bash
-AUTH0_DOMAIN=...
-AUTH0_CLIENT_ID=...
-AUTH0_CLIENT_SECRET=...
-AUTH0_ISSUER_BASE_URL=...
-AUTH0_JWKS_URL=...
-AUTH0_REDIRECT_URI=https://createsomething.agency/auth/callback
-pnpm agency:auth0:seed
-```
-
-Sync Auth0 secrets from Infisical into the Cloudflare Pages project:
-
-```bash
-pnpm agency:auth0:sync
-```
-
-Useful overrides:
-
-```bash
-PROJECT_NAME=create-something-agency
-INFISICAL_ENV=prod
-INFISICAL_PATH=/agency/auth
-INFISICAL_PROJECT_ID=<optional>
-DRY_RUN=true
-CLOUDFLARE_ACCOUNT_ID=<required when Wrangler has multiple accounts>
-```
-
-After syncing secrets, deploy normally:
+After syncing Clerk secrets, deploy normally:
 
 ```bash
 pnpm --filter @create-something/canon package

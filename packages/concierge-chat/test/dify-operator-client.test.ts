@@ -107,11 +107,35 @@ test('Dify operator client calls chat-messages with server-side API key', async 
     conversation_id: 'conv-1',
     user: 'ona-operator-test'
   });
-  assert.equal(output.ok, true);
-  assert.equal(output.answer, 'Ready');
-  assert.equal(output.conversationId, 'conv-2');
+	assert.equal(output.ok, true);
+	assert.equal(output.answer, 'Ready');
+	assert.equal(output.conversationId, 'conv-2');
+});
+
+test('Dify operator client preserves plain JSON provider errors', async () => {
+	const agent = difyOperatorAgents.find((candidate) => candidate.id === 'template-review-hub');
+	assert.ok(agent);
+
+	const output = await callDifyChat({
+		agent,
+		query: 'What is next?',
+		user: 'ona-operator-test',
+		platform: {
+			env: {
+				DIFY_TEMPLATE_REVIEW_HUB_API_KEY: 'test-key'
+			}
+		},
+		fetch: async () =>
+			new Response(JSON.stringify({ code: 'unauthorized', message: 'invalid api key' }), {
+				status: 401
+			})
+	});
+
+	assert.equal(output.ok, false);
+	assert.equal(output.status, 401);
+	assert.equal(output.error, 'unauthorized: invalid api key');
 });
 
 test('splitDifyToolNames removes blank tool entries', () => {
-  assert.deepEqual(splitDifyToolNames(' search ; ; execute '), ['search', 'execute']);
+	assert.deepEqual(splitDifyToolNames(' search ; ; execute '), ['search', 'execute']);
 });
