@@ -20,6 +20,8 @@ import {
 export type FetchFn = typeof fetch;
 export type SleepFn = (ms: number) => Promise<void>;
 
+const defaultFetch: FetchFn = (input, init) => fetch(input, init);
+
 export interface AirtableRecord {
   id: string;
   createdTime?: string;
@@ -707,7 +709,7 @@ export class AirtableClient {
     this.baseId = options.baseId ?? DEFAULT_AIRTABLE_BASE_ID;
     this.governanceBaseId = options.governanceBaseId ?? this.baseId;
     this.governanceFindingsTableId = options.governanceFindingsTableId ?? DEFAULT_GOVERNANCE_FINDINGS_TABLE_ID;
-    this.fetchFn = options.fetchFn ?? fetch;
+    this.fetchFn = options.fetchFn ?? defaultFetch;
     this.sleepFn = options.sleepFn ?? defaultSleep;
     this.maxRetries = options.maxRetries ?? 3;
   }
