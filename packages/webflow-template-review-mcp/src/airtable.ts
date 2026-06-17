@@ -105,9 +105,6 @@ export interface TemplateReviewVersion {
   agentReviewFeedback?: string;
   reviewChecklist?: string;
   publishingChecklist?: string;
-  listingFeaturesHtml?: string;
-  listingFeaturesCopyHtml?: string;
-  cmsDescriptionHtml?: string;
   releaseDate?: string;
   decisionDate?: string;
   rejectReason?: string;
@@ -729,9 +726,6 @@ function mapVersion(record: AirtableRecord): TemplateReviewVersion {
     agentReviewFeedback: firstString(record.fields[CONFIRMED_VERSION_FIELDS.agentReviewFeedback]),
     reviewChecklist: firstString(record.fields[CONFIRMED_VERSION_FIELDS.reviewChecklist]),
     publishingChecklist: firstString(record.fields[CONFIRMED_VERSION_FIELDS.publishingChecklist]),
-    listingFeaturesHtml: firstString(record.fields[CONFIRMED_VERSION_FIELDS.listingFeaturesHtml]),
-    listingFeaturesCopyHtml: firstString(record.fields[CONFIRMED_VERSION_FIELDS.listingFeaturesCopyHtml]),
-    cmsDescriptionHtml: firstString(record.fields[CONFIRMED_VERSION_FIELDS.cmsDescriptionHtml]),
     releaseDate: firstString(record.fields[CONFIRMED_VERSION_FIELDS.releaseDate]),
     decisionDate: firstString(record.fields[CONFIRMED_VERSION_FIELDS.decisionDate]),
     rejectReason: firstString(record.fields[CONFIRMED_VERSION_FIELDS.rejectReason]),

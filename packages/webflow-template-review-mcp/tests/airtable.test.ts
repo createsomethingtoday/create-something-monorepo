@@ -247,9 +247,6 @@ test('getReviewContext hydrates linked asset features from the confirmed Feature
             [CONFIRMED_VERSION_FIELDS.assetRecordId]: 'rec_asset_features',
             [CONFIRMED_VERSION_FIELDS.reviewStatus]: '🔁Response to Review',
             [CONFIRMED_VERSION_FIELDS.reviewOwner]: ericReviewer,
-            [CONFIRMED_VERSION_FIELDS.listingFeaturesHtml]: '<ul><li> layouts</li><li>Fully responsive design</li><li>Great for </li><li></li></ul>',
-            [CONFIRMED_VERSION_FIELDS.listingFeaturesCopyHtml]: '<ul><li> layouts\nFully responsive design\nGreat for \n</ul>',
-            [CONFIRMED_VERSION_FIELDS.cmsDescriptionHtml]: '<h2></h2><p></p>',
           },
         });
       }
@@ -304,9 +301,6 @@ test('getReviewContext hydrates linked asset features from the confirmed Feature
 
   assert.equal(context.asset?.description, '<p>Long description copy</p>');
   assert.equal(context.asset?.descriptionLongHtml, '<p>Long description copy</p>');
-  assert.equal(context.version.listingFeaturesHtml, '<ul><li> layouts</li><li>Fully responsive design</li><li>Great for </li><li></li></ul>');
-  assert.equal(context.version.listingFeaturesCopyHtml, '<ul><li> layouts\nFully responsive design\nGreat for \n</ul>');
-  assert.equal(context.version.cmsDescriptionHtml, '<h2></h2><p></p>');
   assert.deepEqual(context.asset?.featureIds, ['rec_feature_gsap', 'rec_feature_css_grid']);
   assert.equal(context.asset?.featuresHighlighted, 'Includes GSAP');
   assert.deepEqual(context.asset?.features, [
