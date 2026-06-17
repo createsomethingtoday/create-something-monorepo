@@ -9,58 +9,73 @@ AI Interaction Atlas mapping server for MCPs and agents with:
 
 ## Core Flows
 
-### 0) Local Atlas Studio for client onboarding
+### 0) Atlas Studio browser portal
 
-Atlas Studio is the local canvas mode for live CREATE SOMETHING onboarding calls.
-It stores sessions as repo-local JSON in `.atlas-studio/`, serves a localhost
-canvas, and lets Codex or another terminal agent mutate the same session while
-the browser is open.
+For Codex-led client mapping, use MCP as the agent-native control plane and the browser portal as the presentation layer.
 
-Create a session:
+Primary launcher tool:
+
+- `atlas_studio_portal_start` -> starts or reuses the local browser portal and returns `openUrl`.
+
+Session and canvas tools:
+
+- `atlas_studio_portal_status`
+- `atlas_studio_portal_stop`
+- `atlas_studio_session_create`
+- `atlas_studio_session_list`
+- `atlas_studio_session_show`
+- `atlas_studio_observe`
+- `atlas_studio_node_add`
+- `atlas_studio_edge_add`
+- `atlas_studio_suggestion_accept`
+- `atlas_studio_tidy`
+- `atlas_studio_heal`
+- `atlas_studio_propose_writeback`
+- `atlas_studio_proposal_action_review`
+- `atlas_studio_proposal_handoff`
+- `atlas_studio_export`
+
+The local fallback command is:
 
 ```bash
-pnpm atlas:studio create \
-  --client "Client Name" \
-  --workflow "Support recovery" \
-  --owner "Workflow owner"
+pnpm atlas:portal --client "Client" --workflow "Workflow" --owner "Operator"
 ```
 
-Start the localhost canvas:
+For the CREATE SOMETHING Template System map, bind and reconcile the canvas against
+repo-owned production primitive definitions:
 
 ```bash
-pnpm atlas:studio serve --session SESSION_ID --port 5198
+pnpm atlas:desktop:studio heal --session <session-id> --profile template-system
+pnpm atlas:desktop:studio propose --session <session-id> --profile template-system
+pnpm atlas:desktop:studio proposal-action --session <session-id> --proposal <proposal-id> --action <action-id> --status approved
+pnpm atlas:desktop:studio proposal-handoff --session <session-id> --proposal <proposal-id>
 ```
 
-Add live observations from a Codex terminal during the call:
+This is a read-only production sync. It attaches structured bindings to known canvas
+nodes and checks repo-owned production contracts such as Wrangler files, MCP registry
+entries, Dify inventory/DSL files, Webflow Cloud configs, delivery manifests, and policy
+docs. It updates the local Atlas session with `synced`, `partial`, `missing`, or
+`unbound` state, but it does not deploy, rotate secrets, mutate Airtable, or change
+production review status.
 
-```bash
-pnpm atlas:studio observe \
-  --session SESSION_ID \
-  --suggest \
-  --text "The account owner must approve refunds before the agent drafts a note."
-```
+The proposal command runs the same binding check and writes an approval-gated
+change plan back into the local Atlas session. Proposal actions are grouped as
+`safe`, `review`, or `approval` based on the underlying primitive. They are review
+artifacts only; applying a proposal still requires the owning repo, platform, or
+deployment workflow.
 
-Add or connect canvas nodes directly:
+Use proposal-action review to mark a proposal item `approved`, `rejected`, or
+back to `proposed`. This updates only the local Atlas session and adds a review
+observation; it is not an apply step.
 
-```bash
-pnpm atlas:studio node \
-  --session SESSION_ID \
-  --kind system \
-  --label "Log receipt" \
-  --status run
+Use proposal-handoff to export a Codex-ready markdown packet from the reviewed
+proposal. The handoff separates approved implementation candidates from pending
+and rejected actions and repeats the production safety boundary.
 
-pnpm atlas:studio edge \
-  --session SESSION_ID \
-  --source data_workflow \
-  --target NODE_ID \
-  --label "records evidence"
-```
+Both MCP tools and CLI commands use the same app-data store:
 
-The canvas keeps agent suggestions queued until an operator accepts them. Use the
-Markdown export for a client-safe call artifact:
-
-```bash
-pnpm atlas:studio export --session SESSION_ID
+```text
+~/Library/Application Support/CREATE SOMETHING/Atlas Studio
 ```
 
 ### 1) Mapping + visualization URLs

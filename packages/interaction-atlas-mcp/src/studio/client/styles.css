@@ -249,7 +249,10 @@ input::placeholder {
 
 .count-chip,
 .status-chip,
-.node-status {
+.node-status,
+.node-sync,
+.risk-chip,
+.review-chip {
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
@@ -265,6 +268,39 @@ input::placeholder {
   padding: 0 0.45rem;
   text-transform: uppercase;
   white-space: nowrap;
+}
+
+.risk-chip.safe {
+  border-color: rgba(30, 60, 44, 0.14);
+  background: rgba(219, 239, 219, 0.64);
+  color: var(--green);
+}
+
+.risk-chip.review {
+  border-color: rgba(123, 123, 117, 0.16);
+  background: rgba(249, 249, 246, 0.88);
+  color: var(--muted-strong);
+}
+
+.risk-chip.approval {
+  border-color: rgba(196, 30, 58, 0.18);
+  background: rgba(254, 242, 242, 0.82);
+  color: var(--red);
+}
+
+.review-chip.approved {
+  border-color: rgba(30, 60, 44, 0.14);
+  color: var(--green);
+}
+
+.review-chip.rejected {
+  border-color: rgba(196, 30, 58, 0.18);
+  color: var(--red);
+}
+
+.review-chip.proposed {
+  border-color: rgba(123, 123, 117, 0.16);
+  color: var(--muted-strong);
 }
 
 .status-chip.run,
@@ -285,6 +321,34 @@ input::placeholder {
 .node-status.stop {
   border-color: rgba(196, 30, 58, 0.18);
   background: rgba(254, 242, 242, 0.88);
+  color: var(--red);
+}
+
+.node-sync {
+  border-color: rgba(206, 206, 198, 0.45);
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--muted);
+}
+
+.node-sync.synced,
+.status-chip.sync-synced {
+  border-color: rgba(30, 60, 44, 0.14);
+  color: var(--green);
+}
+
+.node-sync.partial,
+.status-chip.sync-partial,
+.node-sync.unknown,
+.status-chip.sync-unknown,
+.node-sync.unbound,
+.status-chip.sync-unbound {
+  border-color: rgba(123, 123, 117, 0.16);
+  color: var(--muted-strong);
+}
+
+.node-sync.missing,
+.status-chip.sync-missing {
+  border-color: rgba(196, 30, 58, 0.18);
   color: var(--red);
 }
 
@@ -425,6 +489,13 @@ input::placeholder {
   min-width: 0;
 }
 
+.node-badges {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
 .node-kind {
   display: inline-flex;
   align-items: center;
@@ -557,6 +628,10 @@ input::placeholder {
   gap: 1rem;
 }
 
+.section-title.compact {
+  gap: 0.65rem;
+}
+
 .title-lockup {
   display: inline-flex;
   align-items: flex-start;
@@ -637,6 +712,11 @@ input::placeholder {
   font-size: 0.84rem;
 }
 
+.subtle-button.danger {
+  border-color: rgba(196, 30, 58, 0.18);
+  color: var(--red);
+}
+
 .rail-item {
   display: grid;
   gap: 0.55rem;
@@ -687,6 +767,91 @@ input::placeholder {
   font-size: 0.82rem;
   line-height: 1.33;
   overflow-wrap: anywhere;
+}
+
+.proposal-summary {
+  gap: 0.62rem;
+}
+
+.proposal-counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.proposal-badges,
+.proposal-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.proposal-actions {
+  justify-content: flex-start;
+}
+
+.review-note {
+  border-left: 2px solid rgba(206, 206, 198, 0.72);
+  padding-left: 0.58rem;
+}
+
+.sync-panel {
+  display: grid;
+  gap: 0.65rem;
+  border-top: 1px solid var(--line);
+  margin-top: 0.2rem;
+  padding-top: 0.82rem;
+}
+
+.binding-list {
+  display: grid;
+  gap: 0.52rem;
+}
+
+.binding-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.52rem;
+  align-items: flex-start;
+}
+
+.binding-dot {
+  width: 0.46rem;
+  height: 0.46rem;
+  border: 1px solid rgba(123, 123, 117, 0.28);
+  border-radius: 999px;
+  margin-top: 0.24rem;
+  background: #fff;
+}
+
+.binding-dot.synced {
+  border-color: rgba(30, 60, 44, 0.24);
+  background: rgba(219, 239, 219, 0.92);
+}
+
+.binding-dot.missing {
+  border-color: rgba(196, 30, 58, 0.28);
+  background: rgba(254, 242, 242, 0.92);
+}
+
+.binding-row strong,
+.binding-row em {
+  display: block;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.binding-row strong {
+  color: var(--text);
+  font-size: 0.8rem;
+  line-height: 1.16;
+}
+
+.binding-row em {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-style: normal;
+  line-height: 1.25;
 }
 
 .palette {

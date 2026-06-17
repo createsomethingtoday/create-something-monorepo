@@ -14,7 +14,7 @@ import { buildWorkflowTemplate } from '../workflows/build.js';
 import { workflowTemplateToMermaid } from '../workflows/mermaid.js';
 import { mapToolSequenceToWorkflowDefinition } from '../workflows/map.js';
 import { evaluateConstraintPolicyHybrid, evaluateConstraintPolicyWithRollout, compileConstraintPolicy, } from '@create-something/policy-os-engine';
-import { AtlasGetSchema, AtlasSearchSchema, WorkflowIdSchema, WorkflowMapFromToolSequenceSchema, McpCatalogListSchema, McpIntrospectSchema, McpMapSchema, VersionSelectionGetSchema, VersionSelectionSetSchema, JudgmentPolicyActivateSchema, JudgmentPolicyCompareReportGetSchema, JudgmentDashboardSummaryParamsSchema, JudgmentDashboardSummarySchema, JudgmentPolicyEstimateSchema, JudgmentEngineRolloutGetSchema, JudgmentEngineRolloutSetSchema, JudgmentSecurityStatusGetSchema, JudgmentSecurityAccessSetSchema, JudgmentSecurityIncidentResolveSchema, JudgmentSecurityIncidentReviewNextSchema, JudgmentPolicyGetSchema, JudgmentPolicySaveSchema, AutomationContractGetSchema, AutomationContractUpsertSchema, AutomationRunStartSchema, ApprovalInboxDecideSchema, } from '../schemas/index.js';
+import { AtlasGetSchema, AtlasSearchSchema, AtlasStudioEdgeAddSchema, AtlasStudioNodeAddSchema, AtlasStudioObserveSchema, AtlasStudioHealSchema, AtlasStudioProposalActionReviewSchema, AtlasStudioProposalHandoffSchema, AtlasStudioProposalSchema, AtlasStudioPortalStartSchema, AtlasStudioSessionCreateSchema, AtlasStudioSessionIdSchema, AtlasStudioSuggestionAcceptSchema, WorkflowIdSchema, WorkflowMapFromToolSequenceSchema, McpCatalogListSchema, McpIntrospectSchema, McpMapSchema, VersionSelectionGetSchema, VersionSelectionSetSchema, JudgmentPolicyActivateSchema, JudgmentPolicyCompareReportGetSchema, JudgmentDashboardSummaryParamsSchema, JudgmentDashboardSummarySchema, JudgmentPolicyEstimateSchema, JudgmentEngineRolloutGetSchema, JudgmentEngineRolloutSetSchema, JudgmentSecurityStatusGetSchema, JudgmentSecurityAccessSetSchema, JudgmentSecurityIncidentResolveSchema, JudgmentSecurityIncidentReviewNextSchema, JudgmentPolicyGetSchema, JudgmentPolicySaveSchema, AutomationContractGetSchema, AutomationContractUpsertSchema, AutomationRunStartSchema, ApprovalInboxDecideSchema, } from '../schemas/index.js';
 import { findMcpCatalogEntry, listMcpCatalog, resolveMcpHttpEndpointUrl, resolveMcpHttpEndpointUrlFromUrl, } from '../mcps/catalog.js';
 import { introspectMcpServer } from '../mcps/introspect.js';
 import { mapMcpToWorkflowDefinition } from '../mcps/map.js';
@@ -26,6 +26,11 @@ import { getEngineMetricsSummary, recordEngineEvent } from '../storage/engine-ev
 import { claimNextSecurityIncidentForReview, evaluateAbusePatternAndMitigate, getSecurityIncidentById, getAccountAccess, listRecentSecurityIncidents, resolveSecurityIncident, setAccountAccess, } from '../storage/security.js';
 import { createAutomationRun, decideApproval, getActiveAutomationContract, listActiveAutomationContracts, listPendingApprovals, upsertAutomationContract, } from '../storage/control-plane.js';
 import { getJudgmentDashboardSummary } from '../storage/dashboard.js';
+import { acceptSuggestion, addEdge, addNode, addObservation, createSession, exportSessionMarkdown, listSessions, readSession, writeSession, } from '../studio/store.js';
+import { getAtlasStudioAppHome, getAtlasBrowserPortalStatus, startAtlasBrowserPortal, stopAtlasBrowserPortal, } from '../studio/portal.js';
+import { healSessionProductionBindings } from '../studio/production-bindings.js';
+import { createWritebackProposal, exportWritebackProposalHandoffForSession, reviewWritebackProposalAction, } from '../studio/writeback-proposals.js';
+import { tidyNodeUpdates } from '../studio/client/layout.js';
 function slugFromUrl(url) {
     try {
         const u = new URL(url);
@@ -108,6 +113,10 @@ function jsonError(data) {
         content: [{ type: 'text', text: JSON.stringify(data, null, 2) }],
         isError: true,
     };
+}
+function atlasStudioCwd() {
+    process.env.CREATE_SOMETHING_ATLAS_HOME ??= getAtlasStudioAppHome();
+    return process.cwd();
 }
 function parseJsonRecord(value) {
     try {
@@ -545,6 +554,227 @@ export function registerTools(server) {
             return errorContent(`Pattern not found: ${input.id}`);
         }
         return jsonContent({ accountId: ctx.accountId, pattern });
+    }, { readOnly: true });
+    server.tool('atlas_studio_portal_start', 'Start or reuse the local Atlas Studio browser portal and return the URL for the Codex browser pane.', AtlasStudioPortalStartSchema.shape, async (params, ctx) => {
+        const input = AtlasStudioPortalStartSchema.parse(params);
+        const runtime = await startAtlasBrowserPortal({
+            client: input.client,
+            workflow: input.workflow,
+            owner: input.owner,
+            sessionId: input.session_id,
+            restart: input.restart,
+            cwd: atlasStudioCwd(),
+        });
+        return jsonContent({
+            accountId: ctx.accountId,
+            runtime,
+            openUrl: runtime.sessionUrl,
+            agentWriteExample: `atlas_studio_observe({ session_id: "${runtime.sessionId}", text: "client says...", suggest: true })`,
+        });
+    }, { readOnly: false });
+    server.tool('atlas_studio_portal_status', 'Return the current local Atlas Studio browser portal runtime and whether its server process is active.', {}, async (_params, ctx) => {
+        return jsonContent({
+            accountId: ctx.accountId,
+            ...getAtlasBrowserPortalStatus(),
+        });
+    }, { readOnly: true });
+    server.tool('atlas_studio_portal_stop', 'Stop the local Atlas Studio browser portal server if one is active.', {}, async (_params, ctx) => {
+        return jsonContent({
+            accountId: ctx.accountId,
+            ...stopAtlasBrowserPortal(),
+        });
+    }, { readOnly: false });
+    server.tool('atlas_studio_session_create', 'Create an Atlas Studio mapping session in the local app-data store.', AtlasStudioSessionCreateSchema.shape, async (params, ctx) => {
+        const input = AtlasStudioSessionCreateSchema.parse(params);
+        const session = await createSession({
+            client: input.client,
+            workflow: input.workflow,
+            owner: input.owner,
+        }, atlasStudioCwd());
+        return jsonContent({
+            accountId: ctx.accountId,
+            session,
+            openWith: `atlas_studio_portal_start({ session_id: "${session.id}" })`,
+        });
+    }, { readOnly: false });
+    server.tool('atlas_studio_session_list', 'List local Atlas Studio sessions from the app-data store.', {}, async (_params, ctx) => {
+        const sessions = await listSessions(atlasStudioCwd());
+        return jsonContent({
+            accountId: ctx.accountId,
+            sessions: sessions.map((session) => ({
+                id: session.id,
+                client: session.client,
+                workflow: session.workflow,
+                owner: session.owner,
+                updatedAt: session.updatedAt,
+                nodes: session.canvas.nodes.length,
+                edges: session.canvas.edges.length,
+                observations: session.observations.length,
+                queuedSuggestions: session.suggestions.filter((suggestion) => suggestion.status === 'queued').length,
+            })),
+        });
+    }, { readOnly: true });
+    server.tool('atlas_studio_session_show', 'Read a local Atlas Studio mapping session.', AtlasStudioSessionIdSchema.shape, async (params, ctx) => {
+        const input = AtlasStudioSessionIdSchema.parse(params);
+        return jsonContent({
+            accountId: ctx.accountId,
+            session: await readSession(input.session_id, atlasStudioCwd()),
+        });
+    }, { readOnly: true });
+    server.tool('atlas_studio_observe', 'Add a live-call observation to an Atlas Studio session and optionally queue mapping suggestions.', AtlasStudioObserveSchema.shape, async (params, ctx) => {
+        const input = AtlasStudioObserveSchema.parse(params);
+        const session = await addObservation(input.session_id, {
+            text: input.text,
+            source: input.operator ? 'operator' : 'agent',
+            suggest: input.suggest,
+        }, atlasStudioCwd());
+        return jsonContent({
+            accountId: ctx.accountId,
+            sessionId: session.id,
+            observations: session.observations.length,
+            queuedSuggestions: session.suggestions.filter((suggestion) => suggestion.status === 'queued').length,
+            session,
+        });
+    }, { readOnly: false });
+    server.tool('atlas_studio_node_add', 'Add a node to an Atlas Studio canvas session.', AtlasStudioNodeAddSchema.shape, async (params, ctx) => {
+        const input = AtlasStudioNodeAddSchema.parse(params);
+        const session = await addNode(input.session_id, {
+            kind: input.kind,
+            label: input.label,
+            atlasId: input.atlas_id,
+            x: input.x,
+            y: input.y,
+            owner: input.owner,
+            status: input.status,
+            notes: input.notes,
+            evidence: input.evidence,
+            createdBy: input.operator ? 'operator' : 'agent',
+        }, atlasStudioCwd());
+        return jsonContent({
+            accountId: ctx.accountId,
+            sessionId: session.id,
+            node: session.canvas.nodes.at(-1),
+            session,
+        });
+    }, { readOnly: false });
+    server.tool('atlas_studio_edge_add', 'Add an edge between two Atlas Studio canvas nodes.', AtlasStudioEdgeAddSchema.shape, async (params, ctx) => {
+        const input = AtlasStudioEdgeAddSchema.parse(params);
+        const session = await addEdge(input.session_id, {
+            source: input.source,
+            target: input.target,
+            label: input.label,
+            evidence: input.evidence,
+            createdBy: input.operator ? 'operator' : 'agent',
+        }, atlasStudioCwd());
+        return jsonContent({
+            accountId: ctx.accountId,
+            sessionId: session.id,
+            edge: session.canvas.edges.at(-1),
+            session,
+        });
+    }, { readOnly: false });
+    server.tool('atlas_studio_suggestion_accept', 'Accept a queued Atlas Studio mapping suggestion and materialize it on the canvas.', AtlasStudioSuggestionAcceptSchema.shape, async (params, ctx) => {
+        const input = AtlasStudioSuggestionAcceptSchema.parse(params);
+        const session = await acceptSuggestion(input.session_id, input.suggestion_id, atlasStudioCwd());
+        return jsonContent({
+            accountId: ctx.accountId,
+            sessionId: session.id,
+            nodes: session.canvas.nodes.length,
+            queuedSuggestions: session.suggestions.filter((suggestion) => suggestion.status === 'queued').length,
+            session,
+        });
+    }, { readOnly: false });
+    server.tool('atlas_studio_tidy', 'Apply the deterministic Atlas Studio lane layout to a local canvas session.', AtlasStudioSessionIdSchema.shape, async (params, ctx) => {
+        const input = AtlasStudioSessionIdSchema.parse(params);
+        const session = await readSession(input.session_id, atlasStudioCwd());
+        const updates = tidyNodeUpdates(session);
+        const updateById = new Map(updates.map((update) => [update.id, update]));
+        const next = {
+            ...session,
+            canvas: {
+                ...session.canvas,
+                nodes: session.canvas.nodes.map((node) => {
+                    const update = updateById.get(node.id);
+                    return update ? { ...node, ...update } : node;
+                }),
+            },
+        };
+        const written = updates.length ? await writeSession(next, atlasStudioCwd()) : session;
+        return jsonContent({
+            accountId: ctx.accountId,
+            sessionId: written.id,
+            updates,
+            session: written,
+        });
+    }, { readOnly: false });
+    server.tool('atlas_studio_heal', 'Attach and check production primitive bindings for a local Atlas Studio canvas session.', AtlasStudioHealSchema.shape, async (params, ctx) => {
+        const input = AtlasStudioHealSchema.parse(params);
+        const result = await healSessionProductionBindings(input.session_id, {
+            cwd: atlasStudioCwd(),
+            profile: input.profile ?? 'template-system',
+        });
+        return jsonContent({
+            accountId: ctx.accountId,
+            sessionId: result.session.id,
+            profile: result.profile,
+            summary: result.summary,
+            session: result.session,
+        });
+    }, { readOnly: false });
+    server.tool('atlas_studio_propose_writeback', 'Generate an approval-gated write-back proposal from a local Atlas Studio canvas session. This does not mutate production primitives.', AtlasStudioProposalSchema.shape, async (params, ctx) => {
+        const input = AtlasStudioProposalSchema.parse(params);
+        const result = await createWritebackProposal(input.session_id, {
+            cwd: atlasStudioCwd(),
+            profile: input.profile ?? 'template-system',
+        });
+        return jsonContent({
+            accountId: ctx.accountId,
+            sessionId: result.session.id,
+            profile: result.profile,
+            summary: result.summary,
+            proposal: result.proposal,
+            session: result.session,
+        });
+    }, { readOnly: false });
+    server.tool('atlas_studio_proposal_action_review', 'Approve, reject, or return a write-back proposal action to proposed state. This only updates the local Atlas Studio review artifact.', AtlasStudioProposalActionReviewSchema.shape, async (params, ctx) => {
+        const input = AtlasStudioProposalActionReviewSchema.parse(params);
+        const result = await reviewWritebackProposalAction(input.session_id, {
+            actionId: input.action_id,
+            actor: input.operator === false ? 'agent' : 'operator',
+            note: input.note,
+            proposalId: input.proposal_id,
+            status: input.status,
+        }, atlasStudioCwd());
+        return jsonContent({
+            accountId: ctx.accountId,
+            sessionId: result.session.id,
+            summary: result.summary,
+            proposal: result.proposal,
+            action: result.action,
+            session: result.session,
+        });
+    }, { readOnly: false });
+    server.tool('atlas_studio_proposal_handoff', 'Export a Codex-ready markdown handoff for an Atlas Studio write-back proposal. Approved actions are separated from pending and rejected actions.', AtlasStudioProposalHandoffSchema.shape, async (params, ctx) => {
+        const input = AtlasStudioProposalHandoffSchema.parse(params);
+        const markdown = await exportWritebackProposalHandoffForSession(input.session_id, {
+            cwd: atlasStudioCwd(),
+            proposalId: input.proposal_id,
+        });
+        return jsonContent({
+            accountId: ctx.accountId,
+            sessionId: input.session_id,
+            proposalId: input.proposal_id ?? 'latest',
+            markdown,
+        });
+    }, { readOnly: true });
+    server.tool('atlas_studio_export', 'Export a local Atlas Studio mapping session as markdown.', AtlasStudioSessionIdSchema.shape, async (params, ctx) => {
+        const input = AtlasStudioSessionIdSchema.parse(params);
+        const session = await readSession(input.session_id, atlasStudioCwd());
+        return jsonContent({
+            accountId: ctx.accountId,
+            sessionId: session.id,
+            markdown: exportSessionMarkdown(session),
+        });
     }, { readOnly: true });
     server.tool('workflow_list', 'List available workflow mappings (read-only).', {}, async (_params, ctx) => {
         return jsonContent({ accountId: ctx.accountId, workflows: listWorkflowSummaries() });

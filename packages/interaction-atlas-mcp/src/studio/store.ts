@@ -436,6 +436,7 @@ export async function acceptSuggestion(
 }
 
 export function exportSessionMarkdown(session: AtlasSession): string {
+  const proposals = session.proposals ?? [];
   const lines = [
     `# ${session.client} - Atlas Workflow Map`,
     '',
@@ -464,6 +465,19 @@ export function exportSessionMarkdown(session: AtlasSession): string {
         (suggestion) =>
           `- ${suggestion.payload.label} [${suggestion.payload.kind}] - ${suggestion.reason}`
       ),
+    '',
+    '## Write-back Proposals',
+    ...(
+      proposals.length
+        ? proposals.flatMap((proposal) => [
+            `- ${proposal.id} [${proposal.status}] - ${proposal.summary.total} actions (${proposal.summary.safe} safe, ${proposal.summary.review} review, ${proposal.summary.approval} approval, ${proposal.summary.drift} drift)`,
+            ...proposal.actions.map(
+              (action) =>
+                `  - ${action.title} [${action.risk}, ${action.status}] - ${action.summary}${action.reviewNote ? ` Note: ${action.reviewNote}` : ''}`
+            )
+          ])
+        : ['- No write-back proposals generated yet.']
+    ),
     ''
   ].filter((line): line is string => line !== null);
 

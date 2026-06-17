@@ -137,6 +137,35 @@ Common library IDs used here:
 
 Linear replaces Loom in this repository. Use Linear for shared and repo-local task state.
 
+## Atlas Studio client mapping
+
+For Codex-led CREATE SOMETHING Atlas sessions, use the browser portal so chat stays on the left and the canvas opens in the Codex browser pane:
+
+```bash
+pnpm atlas:portal --client "Client" --workflow "Workflow" --owner "Operator"
+```
+
+The launcher starts or reuses a detached local server, stores sessions in `~/Library/Application Support/CREATE SOMETHING/Atlas Studio`, and prints the session URL. It also writes the active runtime to `~/Library/Application Support/CREATE SOMETHING/Atlas Studio/runtime.json`; read that file when you need the current port or session URL.
+
+Use `pnpm atlas:desktop:studio ...` for terminal or agent mutations against the same app-data session store. Use the macOS app launcher only when the operator asks for a standalone desktop window.
+
+For the CREATE SOMETHING Template System canvas, run the read-only production primitive self-heal before assuming the map is current:
+
+```bash
+pnpm atlas:desktop:studio heal --session <session-id> --profile template-system
+pnpm atlas:desktop:studio propose --session <session-id> --profile template-system
+pnpm atlas:desktop:studio proposal-action --session <session-id> --proposal <proposal-id> --action <action-id> --status approved
+pnpm atlas:desktop:studio proposal-handoff --session <session-id> --proposal <proposal-id>
+```
+
+The heal path attaches/checks bindings against repo-owned production definitions such as Wrangler configs, MCP registry entries, Dify inventory/DSL files, Webflow Cloud configs, delivery manifests, and policy docs. It updates local Atlas node sync state only; it does not deploy, rotate secrets, mutate Airtable, or change production review status.
+
+The proposal path generates an approval-gated write-back plan from the healed canvas. Treat it as a local review artifact: `safe` actions can become repo/docs updates after normal validation, `review` actions need operator review plus package-local or agent-smoke evidence, and `approval` actions require an explicit production promotion path and rollback note.
+
+Proposal action review is local session state only. Mark actions `approved`, `rejected`, or back to `proposed` to prepare the next implementation pass; do not treat an approved Atlas action as permission to deploy or mutate third-party systems without the owning promotion workflow.
+
+Proposal handoff exports the reviewed plan as markdown. Use it as the starting context for a follow-up implementation pass; implement approved actions only, and keep pending/rejected actions as context.
+
 ## Pi packages
 
 The monorepo contains publishable Pi coding agent packages:

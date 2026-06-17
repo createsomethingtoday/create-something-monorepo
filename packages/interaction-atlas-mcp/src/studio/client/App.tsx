@@ -68,7 +68,9 @@ import type {
   AtlasCanvasNodeKind,
   AtlasCanvasNodeStatus,
   AtlasPaletteItem,
-  AtlasSession
+  AtlasSession,
+  AtlasWritebackActionStatus,
+  AtlasWritebackProposal
 } from '../types.js';
 import {
   detailModeForZoom,
@@ -152,10 +154,12 @@ function nodeActivitySignature(node: AtlasCanvasNode): string {
     node.updatedAt,
     node.kind,
     node.label,
-    node.owner ?? '',
-    node.status,
-    node.notes ?? '',
-    node.evidence ?? ''
+  node.owner ?? '',
+  node.status,
+  node.notes ?? '',
+  node.evidence ?? '',
+  node.sync?.checkedAt ?? '',
+  node.sync?.status ?? ''
   ].join('|');
 }
 
@@ -272,6 +276,7 @@ const AtlasFlowNode = memo(function AtlasFlowNode({
   const Icon = KIND_ICONS[node.kind];
   const note = node.notes || node.evidence || 'Boundary and evidence can be added here.';
   const owner = node.owner || node.createdBy || 'agent';
+  const sync = node.sync;
 
   return (
     <article
@@ -286,7 +291,14 @@ const AtlasFlowNode = memo(function AtlasFlowNode({
           <Icon aria-hidden="true" />
           <span>{formatKind(node.kind)}</span>
         </span>
-        <span className={`node-status ${node.status}`}>{node.status}</span>
+        <span className="node-badges">
+          {sync ? (
+            <span className={`node-sync ${sync.status}`} title={sync.summary}>
+              {sync.status}
+            </span>
+          ) : null}
+          <span className={`node-status ${node.status}`}>{node.status}</span>
+        </span>
       </div>
       <strong className="node-title">{node.label}</strong>
       {data.detailMode === 'compact' ? null : (
@@ -306,12 +318,20 @@ const NODE_TYPES = {
 function Rail({
   onAcceptSuggestion,
   onAddObservation,
+  onCreateProposal,
+  onReviewProposalAction,
   onClose,
   open,
   session
 }: {
   onAcceptSuggestion: (suggestionId: string) => void;
   onAddObservation: (text: string) => void;
+  onCreateProposal: () => void;
+  onReviewProposalAction: (
+    proposalId: string,
+    actionId: string,
+    status: Exclude<AtlasWritebackActionStatus, 'applied'>
+  ) => void;
   onClose: () => void;
   open: boolean;
   session: AtlasSession | null;
@@ -321,6 +341,7 @@ function Rail({
     () => session?.suggestions.filter((item) => item.status === 'queued') ?? [],
     [session]
   );
+  const latestProposal: AtlasWritebackProposal | undefined = session?.proposals?.[0];
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -361,6 +382,100 @@ function Rail({
             <span>Add observation</span>
           </button>
         </form>
+      </section>
+
+      <section className="drawer-section">
+        <div className="section-title">
+          <span className="title-lockup">
+            <span className="title-icon">
+              <FileText aria-hidden="true" />
+            </span>
+            <span>
+              <strong>Write-back Proposal</strong>
+              <em>Review before any production edit</em>
+            </span>
+          </span>
+          {latestProposal ? (
+            <span className="count-chip">{latestProposal.summary.total}</span>
+          ) : null}
+        </div>
+        <div className="rail-list">
+          {latestProposal ? (
+            <>
+              <article className="rail-item proposal-summary">
+                <div className="proposal-counts">
+                  <span className="risk-chip safe">{latestProposal.summary.safe} safe</span>
+                  <span className="risk-chip review">{latestProposal.summary.review} review</span>
+                  <span className="risk-chip approval">
+                    {latestProposal.summary.approval} approval
+                  </span>
+                  <span className="review-chip approved">
+                    {latestProposal.summary.approved ?? 0} approved
+                  </span>
+                  <span className="review-chip rejected">
+                    {latestProposal.summary.rejected ?? 0} rejected
+                  </span>
+                </div>
+                <p>
+                  {latestProposal.summary.drift} mapped node
+                  {latestProposal.summary.drift === 1 ? '' : 's'} need sync attention before
+                  edits ripple through.
+                </p>
+              </article>
+              {latestProposal.actions.slice(0, 8).map((action) => (
+                <article className="rail-item" key={action.id}>
+                  <div className="rail-item-title">
+                    <span>
+                      <FileText aria-hidden="true" />
+                      <strong>{action.title}</strong>
+                    </span>
+                    <span className="proposal-badges">
+                      <span className={`risk-chip ${action.risk}`}>{action.risk}</span>
+                      <span className={`review-chip ${action.status}`}>{action.status}</span>
+                    </span>
+                  </div>
+                  <p>{action.summary}</p>
+                  {action.reviewNote ? <p className="review-note">{action.reviewNote}</p> : null}
+                  {action.status === 'proposed' ? (
+                    <div className="proposal-actions">
+                      <button
+                        className="subtle-button"
+                        onClick={() =>
+                          onReviewProposalAction(latestProposal.id, action.id, 'approved')
+                        }
+                        type="button"
+                      >
+                        <Check aria-hidden="true" />
+                        <span>Approve</span>
+                      </button>
+                      <button
+                        className="subtle-button danger"
+                        onClick={() =>
+                          onReviewProposalAction(latestProposal.id, action.id, 'rejected')
+                        }
+                        type="button"
+                      >
+                        <X aria-hidden="true" />
+                        <span>Reject</span>
+                      </button>
+                    </div>
+                  ) : null}
+                </article>
+              ))}
+            </>
+          ) : (
+            <article className="rail-item proposal-summary">
+              <p>
+                Generate a proposal after Heal to turn this canvas into a reviewable production
+                change plan.
+              </p>
+              <button className="subtle-button" onClick={onCreateProposal} type="button">
+                <FileText aria-hidden="true" />
+                <span>Create proposal</span>
+              </button>
+            </article>
+          )}
+        </div>
       </section>
 
       <section className="drawer-section">
@@ -542,6 +657,44 @@ function Inspector({
               <Check aria-hidden="true" />
               <span>Save node</span>
             </button>
+            <div className="sync-panel">
+              <div className="section-title compact">
+                <span className="title-lockup">
+                  <span className="title-icon">
+                    <ScanLine aria-hidden="true" />
+                  </span>
+                  <span>
+                    <strong>Production bindings</strong>
+                    <em>{selectedNode.sync?.summary ?? 'Run Heal to bind this node.'}</em>
+                  </span>
+                </span>
+                {selectedNode.sync ? (
+                  <span className={`status-chip sync-${selectedNode.sync.status}`}>
+                    {selectedNode.sync.status}
+                  </span>
+                ) : null}
+              </div>
+              {selectedNode.bindings?.length ? (
+                <div className="binding-list">
+                  {selectedNode.bindings.map((binding) => {
+                    const check = selectedNode.sync?.checks.find((item) => item.id === binding.id);
+                    return (
+                      <div className="binding-row" key={binding.id}>
+                        <span className={`binding-dot ${check?.status ?? 'unknown'}`} />
+                        <span>
+                          <strong>{binding.label}</strong>
+                          <em>{binding.source}</em>
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="empty">
+                  No production binding has been attached to this node yet.
+                </p>
+              )}
+            </div>
           </div>
         ) : (
           <p className="empty">
@@ -614,6 +767,8 @@ function AtlasStudio(): React.ReactElement {
   const [inspectorOpen, setInspectorOpen] = useState(false);
   const [draft, setDraft] = useState<NodeDraft | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [healSummary, setHealSummary] = useState<string | null>(null);
+  const [proposalSummary, setProposalSummary] = useState<string | null>(null);
   const flowRef = useRef<ReactFlowInstance<FlowNode, Edge> | null>(null);
   const lastRevision = useRef<string | null>(null);
   const sessionRef = useRef<AtlasSession | null>(null);
@@ -912,6 +1067,83 @@ function AtlasStudio(): React.ReactElement {
     window.setTimeout(() => fitCanvas(), 40);
   }, [applySession, fitCanvas, session, sessionId]);
 
+  const healCanvas = useCallback(async () => {
+    const result = await requestJson<{
+      session: AtlasSession;
+      summary: {
+        bindingsChecked: number;
+        missing: number;
+        partial: number;
+        synced: number;
+        unbound: number;
+      };
+    }>(`/api/sessions/${encodeURIComponent(sessionId)}/heal`, {
+      body: JSON.stringify({ profile: 'template-system' }),
+      method: 'POST'
+    });
+    applySession(result.session, 'local');
+    setHealSummary(
+      `${result.summary.bindingsChecked} bindings checked, ${result.summary.synced} synced, ${result.summary.partial} partial, ${result.summary.missing} missing.`
+    );
+    setError(null);
+  }, [applySession, sessionId]);
+
+  const createProposal = useCallback(async () => {
+    const result = await requestJson<{
+      proposal: AtlasWritebackProposal;
+      session: AtlasSession;
+      summary: {
+        approval: number;
+        approved: number;
+        rejected: number;
+        review: number;
+        safe: number;
+        total: number;
+      };
+    }>(`/api/sessions/${encodeURIComponent(sessionId)}/proposals`, {
+      body: JSON.stringify({ profile: 'template-system' }),
+      method: 'POST'
+    });
+    applySession(result.session, 'local');
+    setProposalSummary(
+      `${result.summary.total} proposed actions: ${result.summary.safe} safe, ${result.summary.review} review, ${result.summary.approval} approval.`
+    );
+    setRailOpen(true);
+    setError(null);
+  }, [applySession, sessionId]);
+
+  const reviewProposalAction = useCallback(
+    async (
+      proposalId: string,
+      actionId: string,
+      status: Exclude<AtlasWritebackActionStatus, 'applied'>
+    ) => {
+      const result = await requestJson<{
+        proposal: AtlasWritebackProposal;
+        session: AtlasSession;
+        summary: {
+          approved: number;
+          rejected: number;
+          total: number;
+        };
+      }>(
+        `/api/sessions/${encodeURIComponent(sessionId)}/proposals/${encodeURIComponent(
+          proposalId
+        )}/actions/${encodeURIComponent(actionId)}`,
+        {
+          body: JSON.stringify({ operator: true, status }),
+          method: 'PATCH'
+        }
+      );
+      applySession(result.session, 'local');
+      setProposalSummary(
+        `${result.summary.approved} approved, ${result.summary.rejected} rejected across ${result.summary.total} proposed actions.`
+      );
+      setError(null);
+    },
+    [applySession, sessionId]
+  );
+
   const onInit = useCallback((instance: ReactFlowInstance<FlowNode, Edge>) => {
     flowRef.current = instance;
     updateDetailModeForViewport(instance.getViewport());
@@ -963,6 +1195,16 @@ function AtlasStudio(): React.ReactElement {
           </IconButton>
           <IconButton icon={Rows3} onClick={() => void tidyCanvas()} title="Tidy map">
             Tidy
+          </IconButton>
+          <IconButton icon={ScanLine} onClick={() => void healCanvas()} title="Self-heal bindings">
+            Heal
+          </IconButton>
+          <IconButton
+            icon={FileText}
+            onClick={() => void createProposal()}
+            title="Create write-back proposal"
+          >
+            Propose
           </IconButton>
           <IconButton icon={RefreshCw} onClick={() => void loadSession()} title="Refresh session">
             Refresh
@@ -1054,6 +1296,10 @@ function AtlasStudio(): React.ReactElement {
         <Rail
           onAcceptSuggestion={acceptSuggestion}
           onAddObservation={addObservation}
+          onCreateProposal={() => void createProposal()}
+          onReviewProposalAction={(proposalId, actionId, status) =>
+            void reviewProposalAction(proposalId, actionId, status)
+          }
           onClose={() => setRailOpen(false)}
           open={railOpen}
           session={session}
@@ -1075,9 +1321,18 @@ function AtlasStudio(): React.ReactElement {
         <div className="output-summary">
           <strong>{counts}</strong>
           <span>{session ? `Updated ${new Date(session.updatedAt).toLocaleTimeString()}` : ''}</span>
+          {healSummary ? <span>{healSummary}</span> : null}
+          {proposalSummary ? <span>{proposalSummary}</span> : null}
           {error ? <span className="error">{error}</span> : null}
         </div>
         <div className="toolbar">
+          <a
+            className="toolbar-link"
+            href={`/api/sessions/${encodeURIComponent(sessionId)}/proposals/latest/handoff.md`}
+          >
+            <NotebookTabs aria-hidden="true" />
+            <span>Handoff</span>
+          </a>
           <a className="toolbar-link" href={`/api/sessions/${encodeURIComponent(sessionId)}/export.md`}>
             <FileText aria-hidden="true" />
             <span>Client summary</span>
