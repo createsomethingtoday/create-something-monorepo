@@ -31,7 +31,7 @@ import {
   Database,
   FileText,
   LockKeyhole,
-  Map,
+  Map as MapIcon,
   MessagesSquare,
   NotebookTabs,
   PanelLeftClose,
@@ -41,6 +41,7 @@ import {
   Plus,
   Radio,
   RefreshCw,
+  Rows3,
   ScanLine,
   ShieldAlert,
   Sparkles,
@@ -69,8 +70,16 @@ import type {
   AtlasPaletteItem,
   AtlasSession
 } from '../types.js';
+import {
+  detailModeForZoom,
+  nodeWidthForMode,
+  tidyNodeUpdates,
+  type CanvasDetailMode
+} from './layout.js';
 
 type AtlasNodeData = {
+  detailMode: CanvasDetailMode;
+  isAgentActive: boolean;
   node: AtlasCanvasNode;
 };
 
@@ -138,22 +147,31 @@ function formatClient(client: string): string {
   return label || client;
 }
 
-function nodeWidth(node: AtlasCanvasNode): number {
-  const labelLength = node.label.length;
-  const noteLength = (node.notes ?? node.evidence ?? '').length;
-  if (labelLength > 42 || noteLength > 150) return 332;
-  if (labelLength > 28 || noteLength > 92) return 302;
-  return Math.max(264, Math.min(310, node.width || 280));
+function nodeActivitySignature(node: AtlasCanvasNode): string {
+  return [
+    node.updatedAt,
+    node.kind,
+    node.label,
+    node.owner ?? '',
+    node.status,
+    node.notes ?? '',
+    node.evidence ?? ''
+  ].join('|');
 }
 
-function toFlowNodes(session: AtlasSession, selectedNodeId: string | null): FlowNode[] {
+function toFlowNodes(
+  session: AtlasSession,
+  selectedNodeId: string | null,
+  activeNodeIds: Set<string>,
+  detailMode: CanvasDetailMode
+): FlowNode[] {
   return session.canvas.nodes.map((node) => ({
     id: node.id,
     type: 'atlas',
     position: { x: node.x, y: node.y },
-    data: { node },
+    data: { detailMode, isAgentActive: activeNodeIds.has(node.id), node },
     selected: node.id === selectedNodeId,
-    style: { width: nodeWidth(node) }
+    style: { width: nodeWidthForMode(node, detailMode) }
   }));
 }
 
@@ -256,7 +274,11 @@ const AtlasFlowNode = memo(function AtlasFlowNode({
   const owner = node.owner || node.createdBy || 'agent';
 
   return (
-    <article className={`atlas-node kind-${node.kind} ${selected ? 'selected' : ''}`}>
+    <article
+      className={`atlas-node kind-${node.kind} detail-${data.detailMode} ${
+        data.isAgentActive ? 'agent-active' : ''
+      } ${selected ? 'selected' : ''}`}
+    >
       <Handle className="atlas-handle target" position={Position.Left} type="target" />
       <Handle className="atlas-handle source" position={Position.Right} type="source" />
       <div className="node-topline">
@@ -267,10 +289,12 @@ const AtlasFlowNode = memo(function AtlasFlowNode({
         <span className={`node-status ${node.status}`}>{node.status}</span>
       </div>
       <strong className="node-title">{node.label}</strong>
-      <div className="node-meta">
-        <span>{owner}</span>
-        <p>{note}</p>
-      </div>
+      {data.detailMode === 'compact' ? null : (
+        <div className="node-meta">
+          <span>{owner}</span>
+          <p>{note}</p>
+        </div>
+      )}
     </article>
   );
 });
@@ -577,16 +601,24 @@ function Inspector({
 
 function AtlasStudio(): React.ReactElement {
   const sessionId = useMemo(getSessionId, []);
+  const initialViewport = useMemo(() => readStoredViewport(sessionId), [sessionId]);
   const [session, setSession] = useState<AtlasSession | null>(null);
   const [palette, setPalette] = useState<Palette | null>(null);
   const [nodes, setNodes] = useState<FlowNode[]>([]);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [activeNodeIds, setActiveNodeIds] = useState<Set<string>>(() => new Set());
+  const [detailMode, setDetailMode] = useState<CanvasDetailMode>(() =>
+    detailModeForZoom(initialViewport?.zoom ?? 1)
+  );
   const [railOpen, setRailOpen] = useState(false);
   const [inspectorOpen, setInspectorOpen] = useState(false);
   const [draft, setDraft] = useState<NodeDraft | null>(null);
   const [error, setError] = useState<string | null>(null);
   const flowRef = useRef<ReactFlowInstance<FlowNode, Edge> | null>(null);
   const lastRevision = useRef<string | null>(null);
+  const sessionRef = useRef<AtlasSession | null>(null);
+  const nodeSignatures = useRef<Map<string, string>>(new Map());
+  const activityTimer = useRef<number | null>(null);
 
   const edges = useMemo(() => (session ? toFlowEdges(session) : []), [session]);
   const selectedNode = useMemo(
@@ -599,11 +631,45 @@ function AtlasStudio(): React.ReactElement {
     ? `${formatClient(session.client)} / ${session.workflow}`
     : 'Loading session...';
 
+  const applySession = useCallback((next: AtlasSession, source: 'local' | 'remote') => {
+    const previous = sessionRef.current;
+    if (previous?.updatedAt === next.updatedAt) return;
+
+    const previousNodeSignatures = nodeSignatures.current;
+    const now = Date.now();
+    const changedNodeIds =
+      source === 'remote'
+        ? next.canvas.nodes
+            .filter((node) => {
+              if (node.createdBy === 'operator') return false;
+              const wasSeen = previousNodeSignatures.has(node.id);
+              const changed = previousNodeSignatures.get(node.id) !== nodeActivitySignature(node);
+              const isRecent = now - Date.parse(node.updatedAt) < 6_000;
+              return wasSeen ? changed : isRecent;
+            })
+            .map((node) => node.id)
+        : [];
+
+    nodeSignatures.current = new Map(
+      next.canvas.nodes.map((node) => [node.id, nodeActivitySignature(node)])
+    );
+    sessionRef.current = next;
+    if (changedNodeIds.length) {
+      setActiveNodeIds(new Set(changedNodeIds));
+      if (activityTimer.current) window.clearTimeout(activityTimer.current);
+      activityTimer.current = window.setTimeout(() => {
+        setActiveNodeIds(new Set());
+        activityTimer.current = null;
+      }, 3600);
+    }
+    setSession(next);
+  }, []);
+
   const loadSession = useCallback(async () => {
     const next = await requestJson<AtlasSession>(`/api/sessions/${encodeURIComponent(sessionId)}`);
-    setSession((previous) => (previous?.updatedAt === next.updatedAt ? previous : next));
+    applySession(next, 'remote');
     setError(null);
-  }, [sessionId]);
+  }, [applySession, sessionId]);
 
   const patchNode = useCallback(
     async (nodeId: string, payload: Partial<AtlasCanvasNode>) => {
@@ -614,10 +680,10 @@ function AtlasStudio(): React.ReactElement {
           method: 'PATCH'
         }
       );
-      setSession(next);
+      applySession(next, 'local');
       setError(null);
     },
-    [sessionId]
+    [applySession, sessionId]
   );
 
   useEffect(() => {
@@ -631,8 +697,23 @@ function AtlasStudio(): React.ReactElement {
     if (!session) return;
     const isNewRevision = lastRevision.current !== session.updatedAt;
     lastRevision.current = session.updatedAt;
-    if (isNewRevision) setNodes(toFlowNodes(session, selectedNodeId));
-  }, [selectedNodeId, session]);
+    const nextNodes = toFlowNodes(session, selectedNodeId, activeNodeIds, detailMode);
+
+    setNodes((current) => {
+      if (isNewRevision) return nextNodes;
+      const currentById = new Map(current.map((node) => [node.id, node]));
+      return nextNodes.map((node) => {
+        const existing = currentById.get(node.id);
+        return existing ? { ...node, position: existing.position } : node;
+      });
+    });
+  }, [activeNodeIds, detailMode, selectedNodeId, session]);
+
+  useEffect(() => {
+    return () => {
+      if (activityTimer.current) window.clearTimeout(activityTimer.current);
+    };
+  }, []);
 
   useEffect(() => {
     if (!selectedNode) {
@@ -657,7 +738,7 @@ function AtlasStudio(): React.ReactElement {
     const events = new EventSource(`/api/sessions/${encodeURIComponent(sessionId)}/events`);
     events.addEventListener('session', (event) => {
       const next = JSON.parse((event as MessageEvent).data) as AtlasSession;
-      setSession((previous) => (previous?.updatedAt === next.updatedAt ? previous : next));
+      applySession(next, 'remote');
     });
     events.addEventListener('error', () => {
       events.close();
@@ -666,7 +747,7 @@ function AtlasStudio(): React.ReactElement {
     });
 
     return () => events.close();
-  }, [loadSession, sessionId]);
+  }, [applySession, loadSession, sessionId]);
 
   const onNodesChange = useCallback((changes: NodeChange<FlowNode>[]) => {
     setNodes((current) => applyNodeChanges(changes, current));
@@ -708,16 +789,22 @@ function AtlasStudio(): React.ReactElement {
           method: 'POST'
         }
       );
-      setSession(next);
+      applySession(next, 'local');
     },
-    [sessionId]
+    [applySession, sessionId]
   );
+
+  const updateDetailModeForViewport = useCallback((viewport: Viewport) => {
+    const next = detailModeForZoom(viewport.zoom);
+    setDetailMode((current) => (current === next ? current : next));
+  }, []);
 
   const onMoveEnd = useCallback(
     (_: MouseEvent | TouchEvent | null, viewport: Viewport) => {
+      updateDetailModeForViewport(viewport);
       localStorage.setItem(`atlas-studio:${sessionId}:viewport`, JSON.stringify(viewport));
     },
-    [sessionId]
+    [sessionId, updateDetailModeForViewport]
   );
 
   const addObservation = useCallback(
@@ -729,10 +816,10 @@ function AtlasStudio(): React.ReactElement {
           method: 'POST'
         }
       );
-      setSession(next);
+      applySession(next, 'local');
       setRailOpen(true);
     },
-    [sessionId]
+    [applySession, sessionId]
   );
 
   const acceptSuggestion = useCallback(
@@ -748,10 +835,10 @@ function AtlasStudio(): React.ReactElement {
       );
       const newest = next.canvas.nodes.at(-1);
       setSelectedNodeId(newest?.id ?? null);
-      setSession(next);
+      applySession(next, 'local');
       setInspectorOpen(true);
     },
-    [sessionId]
+    [applySession, sessionId]
   );
 
   const addNode = useCallback(
@@ -776,10 +863,10 @@ function AtlasStudio(): React.ReactElement {
       void viewport;
       const newest = next.canvas.nodes.at(-1);
       setSelectedNodeId(newest?.id ?? null);
-      setSession(next);
+      applySession(next, 'local');
       setInspectorOpen(true);
     },
-    [sessionId]
+    [applySession, sessionId]
   );
 
   const saveDraft = useCallback(() => {
@@ -796,6 +883,39 @@ function AtlasStudio(): React.ReactElement {
   const fitCanvas = useCallback(() => {
     void flowRef.current?.fitView(FIT_VIEW_OPTIONS);
   }, []);
+
+  const tidyCanvas = useCallback(async () => {
+    if (!session) return;
+    const updates = tidyNodeUpdates(session);
+    if (!updates.length) {
+      fitCanvas();
+      return;
+    }
+
+    let next = session;
+    for (const update of updates) {
+      next = await requestJson<AtlasSession>(
+        `/api/sessions/${encodeURIComponent(sessionId)}/nodes/${encodeURIComponent(update.id)}`,
+        {
+          body: JSON.stringify({
+            width: update.width,
+            x: update.x,
+            y: update.y
+          }),
+          method: 'PATCH'
+        }
+      );
+    }
+
+    applySession(next, 'local');
+    setError(null);
+    window.setTimeout(() => fitCanvas(), 40);
+  }, [applySession, fitCanvas, session, sessionId]);
+
+  const onInit = useCallback((instance: ReactFlowInstance<FlowNode, Edge>) => {
+    flowRef.current = instance;
+    updateDetailModeForViewport(instance.getViewport());
+  }, [updateDetailModeForViewport]);
 
   const copyCommand = useCallback(async () => {
     const command = `pnpm atlas:studio observe --session ${sessionId} --suggest --text "client says..."`;
@@ -838,8 +958,11 @@ function AtlasStudio(): React.ReactElement {
           >
             Inspector
           </IconButton>
-          <IconButton icon={Map} onClick={fitCanvas} title="Fit map">
+          <IconButton icon={MapIcon} onClick={fitCanvas} title="Fit map">
             Fit
+          </IconButton>
+          <IconButton icon={Rows3} onClick={() => void tidyCanvas()} title="Tidy map">
+            Tidy
           </IconButton>
           <IconButton icon={RefreshCw} onClick={() => void loadSession()} title="Refresh session">
             Refresh
@@ -857,11 +980,11 @@ function AtlasStudio(): React.ReactElement {
               attributionPosition="bottom-left"
               colorMode="light"
               defaultEdgeOptions={DEFAULT_EDGE_OPTIONS}
-              defaultViewport={readStoredViewport(sessionId)}
+              defaultViewport={initialViewport}
               deleteKeyCode={null}
               edges={edges}
               elevateEdgesOnSelect={false}
-              fitView={!readStoredViewport(sessionId)}
+              fitView={!initialViewport}
               fitViewOptions={FIT_VIEW_OPTIONS}
               maxZoom={1.8}
               minZoom={0.18}
@@ -872,9 +995,7 @@ function AtlasStudio(): React.ReactElement {
               nodesConnectable
               nodesDraggable
               onConnect={onConnect}
-              onInit={(instance) => {
-                flowRef.current = instance;
-              }}
+              onInit={onInit}
               onMoveEnd={onMoveEnd}
               onNodeClick={onNodeClick}
               onNodeDragStop={onNodeDragStop}
