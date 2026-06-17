@@ -6,6 +6,15 @@ import { URL, fileURLToPath } from 'node:url';
 import { getAtlasStudioPalette } from './atlas.js';
 import { renderStudioHtml } from './html.js';
 import {
+  healSessionProductionBindings,
+  type AtlasProductionBindingProfile
+} from './production-bindings.js';
+import {
+  createWritebackProposal,
+  exportWritebackProposalHandoffForSession,
+  reviewWritebackProposalAction
+} from './writeback-proposals.js';
+import {
   acceptSuggestion,
   addEdge,
   addNode,
@@ -16,6 +25,7 @@ import {
   readSession,
   updateNode
 } from './store.js';
+import type { AtlasWritebackActionStatus } from './types.js';
 
 type StudioServerOptions = {
   host: string;
@@ -163,6 +173,88 @@ export async function startStudioServer(options: StudioServerOptions): Promise<h
       const sessionMatch = url.pathname.match(/^\/api\/sessions\/([^/]+)$/);
       if (method === 'GET' && sessionMatch) {
         sendJson(response, 200, await readSession(decodeURIComponent(sessionMatch[1] ?? ''), cwd));
+        return;
+      }
+
+      const healMatch = url.pathname.match(/^\/api\/sessions\/([^/]+)\/heal$/);
+      if (method === 'POST' && healMatch) {
+        const body = await readJson<{ profile?: AtlasProductionBindingProfile }>(request);
+        sendJson(
+          response,
+          200,
+          await healSessionProductionBindings(decodeURIComponent(healMatch[1] ?? ''), {
+            cwd,
+            profile: body.profile ?? 'template-system'
+          })
+        );
+        return;
+      }
+
+      const proposalMatch = url.pathname.match(/^\/api\/sessions\/([^/]+)\/proposals$/);
+      if (method === 'POST' && proposalMatch) {
+        const body = await readJson<{ profile?: AtlasProductionBindingProfile }>(request);
+        sendJson(
+          response,
+          200,
+          await createWritebackProposal(decodeURIComponent(proposalMatch[1] ?? ''), {
+            cwd,
+            profile: body.profile ?? 'template-system'
+          })
+        );
+        return;
+      }
+
+      const proposalHandoffMatch = url.pathname.match(
+        /^\/api\/sessions\/([^/]+)\/proposals\/([^/]+)\/handoff\.md$/
+      );
+      if (method === 'GET' && proposalHandoffMatch) {
+        const proposalId = decodeURIComponent(proposalHandoffMatch[2] ?? '');
+        sendText(
+          response,
+          200,
+          await exportWritebackProposalHandoffForSession(
+            decodeURIComponent(proposalHandoffMatch[1] ?? ''),
+            {
+              cwd,
+              proposalId: proposalId === 'latest' ? undefined : proposalId
+            }
+          ),
+          'text/markdown'
+        );
+        return;
+      }
+
+      const proposalActionMatch = url.pathname.match(
+        /^\/api\/sessions\/([^/]+)\/proposals\/([^/]+)\/actions\/([^/]+)$/
+      );
+      if (method === 'PATCH' && proposalActionMatch) {
+        const body = await readJson<{
+          note?: string;
+          operator?: boolean;
+          status?: AtlasWritebackActionStatus;
+        }>(request);
+        if (
+          !body.status ||
+          body.status === 'applied' ||
+          !['approved', 'rejected', 'proposed'].includes(body.status)
+        ) {
+          throw new Error('Expected status approved, rejected, or proposed');
+        }
+        sendJson(
+          response,
+          200,
+          await reviewWritebackProposalAction(
+            decodeURIComponent(proposalActionMatch[1] ?? ''),
+            {
+              actionId: decodeURIComponent(proposalActionMatch[3] ?? ''),
+              actor: body.operator === false ? 'agent' : 'operator',
+              note: body.note,
+              proposalId: decodeURIComponent(proposalActionMatch[2] ?? ''),
+              status: body.status
+            },
+            cwd
+          )
+        );
         return;
       }
 

@@ -11,8 +11,18 @@ import {
   listSessions,
   readSession
 } from './store.js';
+import { healSessionProductionBindings } from './production-bindings.js';
 import { startStudioServer } from './server.js';
-import type { AtlasCanvasNodeKind, AtlasCanvasNodeStatus } from './types.js';
+import type {
+  AtlasCanvasNodeKind,
+  AtlasCanvasNodeStatus,
+  AtlasWritebackActionStatus
+} from './types.js';
+import {
+  createWritebackProposal,
+  exportWritebackProposalHandoffForSession,
+  reviewWritebackProposalAction
+} from './writeback-proposals.js';
 
 type ParsedArgs = {
   command: string;
@@ -62,6 +72,10 @@ Usage:
   pnpm atlas:studio node --session SESSION_ID --kind ai --label "Draft response" [--status wait]
   pnpm atlas:studio edge --session SESSION_ID --source NODE_ID --target NODE_ID [--label "passes"]
   pnpm atlas:studio accept --session SESSION_ID --suggestion SUGGESTION_ID
+  pnpm atlas:studio heal --session SESSION_ID [--profile template-system]
+  pnpm atlas:studio propose --session SESSION_ID [--profile template-system]
+  pnpm atlas:studio proposal-action --session SESSION_ID --proposal PROPOSAL_ID --action ACTION_ID --status approved|rejected|proposed [--note "..."]
+  pnpm atlas:studio proposal-handoff --session SESSION_ID [--proposal PROPOSAL_ID]
   pnpm atlas:studio export --session SESSION_ID
   pnpm atlas:studio list
 `);
@@ -195,6 +209,51 @@ async function main(): Promise<void> {
           null,
           2
         )
+      );
+      return;
+    }
+
+    case 'heal':
+    case 'sync': {
+      const result = await healSessionProductionBindings(required(parsed.flags, 'session'), {
+        profile: (str(parsed.flags, 'profile') ?? 'template-system') as 'template-system'
+      });
+      console.log(JSON.stringify(result, null, 2));
+      return;
+    }
+
+    case 'propose':
+    case 'writeback': {
+      const result = await createWritebackProposal(required(parsed.flags, 'session'), {
+        profile: (str(parsed.flags, 'profile') ?? 'template-system') as 'template-system'
+      });
+      console.log(JSON.stringify(result, null, 2));
+      return;
+    }
+
+    case 'proposal-action':
+    case 'review-action': {
+      const status = required(parsed.flags, 'status') as AtlasWritebackActionStatus;
+      if (status === 'applied' || !['approved', 'rejected', 'proposed'].includes(status)) {
+        throw new Error('Expected --status approved, rejected, or proposed');
+      }
+      const result = await reviewWritebackProposalAction(required(parsed.flags, 'session'), {
+        actionId: required(parsed.flags, 'action'),
+        actor: bool(parsed.flags, 'agent') ? 'agent' : 'operator',
+        note: str(parsed.flags, 'note'),
+        proposalId: required(parsed.flags, 'proposal'),
+        status
+      });
+      console.log(JSON.stringify(result, null, 2));
+      return;
+    }
+
+    case 'proposal-handoff':
+    case 'handoff': {
+      process.stdout.write(
+        await exportWritebackProposalHandoffForSession(required(parsed.flags, 'session'), {
+          proposalId: str(parsed.flags, 'proposal')
+        })
       );
       return;
     }
