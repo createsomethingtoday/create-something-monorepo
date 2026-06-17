@@ -19,7 +19,7 @@ function parseBooleanFlag(value: string | undefined): boolean | undefined {
 	}
 }
 
-function readRuntimeEnv(platform: App.Platform | undefined, key: string) {
+export function readRuntimeEnv(platform: App.Platform | undefined, key: string) {
 	if (typeof process !== 'undefined') {
 		const processValue = process.env?.[key];
 		if (typeof processValue === 'string' && processValue.length > 0) {

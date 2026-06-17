@@ -29,6 +29,7 @@
 		: [
 				{ href: '/', label: 'Home' },
 				{ href: '/apply', label: 'Apply' },
+				{ href: '/agents', label: 'Agents' },
 				{ href: '/chat', label: 'Workspace' },
 				{ href: '/settings', label: 'Settings' }
 			];
