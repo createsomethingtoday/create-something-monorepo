@@ -28,18 +28,40 @@ export { default as CookieConsent } from './CookieConsent.svelte';
 // Clear communication primitives
 export {
   ClearPageSection,
+  ClearPlatformHero,
+  ClearLogoStrip,
   ClearProofStrip,
   ClearStateRows,
   ClearArtifactCard,
   ClearCardGrid,
+  ClearUseCaseBand,
+  ClearQuoteMetricPanel,
+  ClearPillarGrid,
+  ClearMetadataRail,
+  ClearSecurityPanel,
+  ClearContentHighlights,
   ClearReceiptGrid,
   ClearCtaBand,
+  ClearActionFooter,
   ClearErrorPage,
+  type ClearPlatformHeroMeta,
+  type ClearPlatformHeroProof,
+  type ClearLogoStripItem,
   type ClearProofItem,
   type ClearWorkflowState,
   type ClearCardItem,
+  type ClearUseCaseItem,
+  type ClearQuoteMetric,
+  type ClearPillarItem,
+  type ClearPillarLink,
+  type ClearMetadataGroup,
+  type ClearMetadataItem,
+  type ClearSecurityItem,
+  type ClearSecurityLog,
+  type ClearContentHighlight,
   type ClearReceipt,
-  type ClearCtaItem
+  type ClearCtaItem,
+  type ClearActionFooterItem
 } from './clear/index.js';
 
 // Form components

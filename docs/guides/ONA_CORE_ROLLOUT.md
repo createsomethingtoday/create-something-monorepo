@@ -20,6 +20,43 @@ This guide wires the CREATE SOMETHING monorepo into Ona Core without splitting t
 - Keep Infisical as the source of truth for secrets.
 - Keep client-facing bearer-token delivery in Infisical. Ona does not replace that flow in this phase.
 
+## Public Ona Pattern Inventory
+
+Use public Ona surfaces as product-pattern references, not as source code to copy.
+
+Primary sources:
+
+- `https://ona.com/`
+- `https://github.com/gitpod-io`
+- `https://github.com/gitpod-io/gitpod/tree/main/components/dashboard/src/components`
+
+Full duplication means matching Ona's communication model, page rhythm, and product primitives in owned CREATE SOMETHING code. Do not copy Ona's generated Next CSS chunks or font files into this repo. Generated CSS is not a stable design API, and public font URLs are not a license grant. Translate the visible system into owned Canon tokens, Svelte components, and CREATE SOMETHING language.
+
+Patterns to reuse in CREATE SOMETHING language:
+
+- Platform hero: one literal offer, one outcome sentence, direct actions, and a nearby operational proof object.
+- Logo or signal strip: customer/logo-style compression for proof surfaces, properties, delivery pages, or operational artifacts.
+- Pillar grid: four plain pillars that explain what runs, what triggers it, where it runs, and which controls govern it.
+- Use-case band: concrete tasks before abstract platform language.
+- Execution console: an interactive or concrete workflow panel that proves the offer instead of describing it.
+- Proof metrics: measurable outcomes, audit evidence, and customer-safe receipts.
+- Operational metadata rail: owners, primitives, tools, policies, and delivery artifacts shown as scannable metadata.
+- Security panel: network, credential, audit, and policy boundaries named before trust claims.
+- Content highlights: recent proof, field notes, delivery pages, and guides shown as operational evidence rather than blog decoration.
+- Final action footer: one direct invitation tied to the workflow artifact the buyer should bring.
+
+Current Canon mappings:
+
+- Public page clarity: `ClearPageSection`, `ClearCardGrid`, `ClearCtaBand`.
+- Platform hero: `ClearPlatformHero`.
+- Signal strip: `ClearLogoStrip`.
+- Workflow execution state: `ClearStateRows`.
+- Receipts and delivery proof: `ClearReceiptGrid`, `ClearArtifactCard`, `ClearProofStrip`.
+- Ona-derived product primitives: `ClearPillarGrid`, `ClearMetadataRail`, `ClearUseCaseBand`.
+- Proof, trust, and content primitives: `ClearQuoteMetricPanel`, `ClearSecurityPanel`, `ClearContentHighlights`, `ClearActionFooter`.
+
+When adding more Ona-inspired UI, duplicate the full semantic pattern first and implement it as the smallest Canon primitive set that can serve multiple properties. Prefer `.agency` delivery/proof pages and `.io` research surfaces before broad property-wide rewrites.
+
 ## Create The Ona Projects
 
 Create four Ona projects that all point to this repository and use the repo defaults:

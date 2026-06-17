@@ -429,7 +429,9 @@
     visualStyle="clear"
   />
 
-  <ModeIndicator current="agency" />
+  {#if $page.url.pathname !== '/'}
+    <ModeIndicator current="agency" />
+  {/if}
 </div>
 
 <style>
