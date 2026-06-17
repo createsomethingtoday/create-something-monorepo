@@ -93,3 +93,40 @@ test('Atlas Studio streams session changes to open canvas clients', async () => 
     await closeServer(server);
   }
 });
+
+test('Atlas Studio serves the React Flow canvas shell and bundled assets', async () => {
+  const cwd = await mkdtemp(path.join(tmpdir(), 'atlas-studio-assets-test-'));
+  const session = await createSession(
+    { client: 'CREATE SOMETHING Test', workflow: 'Agent-assisted Atlas onboarding' },
+    cwd
+  );
+  const server = await startStudioServer({
+    host: '127.0.0.1',
+    port: 0,
+    sessionId: session.id,
+    cwd
+  });
+  const address = server.address();
+  assert.equal(typeof address, 'object');
+
+  try {
+    const html = await fetch(`http://127.0.0.1:${address.port}/sessions/${session.id}`);
+    assert.equal(html.status, 200);
+    const body = await html.text();
+    assert.match(body, /id="root"/);
+    assert.match(body, /\/studio\/assets\/app\.js/);
+    assert.match(body, /\/studio\/assets\/app\.css/);
+
+    const script = await fetch(`http://127.0.0.1:${address.port}/studio/assets/app.js`);
+    assert.equal(script.status, 200);
+    assert.match(script.headers.get('content-type') ?? '', /text\/javascript/);
+    assert.match(await script.text(), /ReactFlow|react-flow/);
+
+    const css = await fetch(`http://127.0.0.1:${address.port}/studio/assets/app.css`);
+    assert.equal(css.status, 200);
+    assert.match(css.headers.get('content-type') ?? '', /text\/css/);
+    assert.match(await css.text(), /atlas-node/);
+  } finally {
+    await closeServer(server);
+  }
+});
