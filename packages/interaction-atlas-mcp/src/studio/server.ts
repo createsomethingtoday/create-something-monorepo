@@ -1,5 +1,7 @@
 import http from 'node:http';
-import { URL } from 'node:url';
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
+import { URL, fileURLToPath } from 'node:url';
 
 import { getAtlasStudioPalette } from './atlas.js';
 import { renderStudioHtml } from './html.js';
@@ -52,6 +54,21 @@ function sendText(
   response.end(text);
 }
 
+async function sendAsset(
+  response: http.ServerResponse,
+  filename: string,
+  contentType: string
+): Promise<void> {
+  const studioDistDir = path.dirname(fileURLToPath(import.meta.url));
+  const assetPath = path.join(studioDistDir, 'client', filename);
+  const asset = await readFile(assetPath);
+  response.writeHead(200, {
+    'content-type': contentType,
+    'cache-control': 'no-store'
+  });
+  response.end(asset);
+}
+
 function badRequest(response: http.ServerResponse, error: unknown): void {
   sendJson(response, 400, { error: error instanceof Error ? error.message : String(error) });
 }
@@ -94,6 +111,16 @@ export async function startStudioServer(options: StudioServerOptions): Promise<h
 
       if (method === 'GET' && /^\/sessions\/[^/]+$/.test(url.pathname)) {
         sendText(response, 200, renderStudioHtml(), 'text/html');
+        return;
+      }
+
+      if (method === 'GET' && url.pathname === '/studio/assets/app.js') {
+        await sendAsset(response, 'app.js', 'text/javascript; charset=utf-8');
+        return;
+      }
+
+      if (method === 'GET' && url.pathname === '/studio/assets/app.css') {
+        await sendAsset(response, 'app.css', 'text/css; charset=utf-8');
         return;
       }
 
