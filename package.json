@@ -125,6 +125,7 @@
     "harness:start": "pnpm --filter @create-something/harness harness start",
     "harness:status": "pnpm --filter @create-something/harness harness status",
     "harness:resume": "pnpm --filter @create-something/harness harness resume",
+    "atlas:studio": "pnpm --filter @create-something/interaction-atlas-mcp studio",
     "agent:halfdozen:smoke": "tsx scripts/openai-agent-sdk-halfdozen-smoke.ts",
     "agent:halfdozen:dedup": "tsx scripts/openai-agent-sdk-halfdozen-smoke.ts --scenario dedup",
     "agent:halfdozen:dedup:connect": "tsx scripts/openai-agent-sdk-halfdozen-smoke.ts --scenario dedup --connect-only",

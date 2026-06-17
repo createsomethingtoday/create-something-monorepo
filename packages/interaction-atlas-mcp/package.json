@@ -5,13 +5,15 @@
   "type": "module",
   "main": "dist/index.js",
   "bin": {
-    "interaction-atlas-mcp": "dist/index.js"
+    "interaction-atlas-mcp": "dist/index.js",
+    "cs-atlas-studio": "dist/studio/cli.js"
   },
   "scripts": {
     "prebuild": "pnpm --filter @create-something/playbook-mcp build && pnpm --filter @create-something/observability build",
     "build": "tsc",
     "dev": "tsc --watch",
     "start": "node dist/index.js",
+    "studio": "pnpm build && node dist/studio/cli.js",
     "auth": "node dist/orchestration/oauth-setup.js",
     "lint": "pnpm run typecheck",
     "typecheck": "tsc --noEmit",

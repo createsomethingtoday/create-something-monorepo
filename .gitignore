@@ -100,6 +100,7 @@ __pycache__/
 # Local tool caches
 .cache/toolchains/
 .cache/corepack/
+**/.atlas-studio/
 
 # Judgment Layer (policy packs + local Andon logs)
 .judgment/

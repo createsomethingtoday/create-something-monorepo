@@ -9,6 +9,60 @@ AI Interaction Atlas mapping server for MCPs and agents with:
 
 ## Core Flows
 
+### 0) Local Atlas Studio for client onboarding
+
+Atlas Studio is the local canvas mode for live CREATE SOMETHING onboarding calls.
+It stores sessions as repo-local JSON in `.atlas-studio/`, serves a localhost
+canvas, and lets Codex or another terminal agent mutate the same session while
+the browser is open.
+
+Create a session:
+
+```bash
+pnpm atlas:studio create \
+  --client "Client Name" \
+  --workflow "Support recovery" \
+  --owner "Workflow owner"
+```
+
+Start the localhost canvas:
+
+```bash
+pnpm atlas:studio serve --session SESSION_ID --port 5198
+```
+
+Add live observations from a Codex terminal during the call:
+
+```bash
+pnpm atlas:studio observe \
+  --session SESSION_ID \
+  --suggest \
+  --text "The account owner must approve refunds before the agent drafts a note."
+```
+
+Add or connect canvas nodes directly:
+
+```bash
+pnpm atlas:studio node \
+  --session SESSION_ID \
+  --kind system \
+  --label "Log receipt" \
+  --status run
+
+pnpm atlas:studio edge \
+  --session SESSION_ID \
+  --source data_workflow \
+  --target NODE_ID \
+  --label "records evidence"
+```
+
+The canvas keeps agent suggestions queued until an operator accepts them. Use the
+Markdown export for a client-safe call artifact:
+
+```bash
+pnpm atlas:studio export --session SESSION_ID
+```
+
 ### 1) Mapping + visualization URLs
 
 The following tools now return visualization URLs and decision metadata:
