@@ -227,10 +227,12 @@
   description="Proven services help the work run. CREATE SOMETHING owns the durable part: who owns the accounts, which actions can run, which decisions need approval, what stops, and what evidence travels with the handoff."
 >
   {#snippet actions()}
-    <Button href={agencyCoreMessaging.workflowMappingSessionHref}>
+    <Button href={agencyCoreMessaging.selfMapHref}>
+      {agencyCoreMessaging.selfMapLabel}
+    </Button>
+    <Button href={agencyCoreMessaging.workflowMappingSessionHref} variant="secondary">
       {agencyCoreMessaging.bookMappingSessionLabel}
     </Button>
-    <Button href="/services" variant="secondary">See How I Work</Button>
   {/snippet}
 
   {#snippet aside()}
@@ -294,9 +296,11 @@
   items={ctaItems}
 >
   {#snippet actions()}
-    <Button href={agencyCoreMessaging.workflowMappingSessionHref}>
+    <Button href={agencyCoreMessaging.selfMapHref}>
+      {agencyCoreMessaging.selfMapLabel}
+    </Button>
+    <Button href={agencyCoreMessaging.workflowMappingSessionHref} variant="secondary">
       {agencyCoreMessaging.bookMappingSessionLabel}
     </Button>
-    <Button href="/products" variant="secondary">See Proof</Button>
   {/snippet}
 </ClearCtaBand>

@@ -110,10 +110,12 @@
   description="Loom, Ground, connectors, and client builds are not a random product shelf. They show the same path the service follows: connect the system, verify the claim, coordinate the work, then control the workflow."
 >
   {#snippet actions()}
-    <Button href={agencyCoreMessaging.workflowMappingSessionHref}>
+    <Button href={agencyCoreMessaging.selfMapHref}>
+      {agencyCoreMessaging.selfMapLabel}
+    </Button>
+    <Button href={agencyCoreMessaging.workflowMappingSessionHref} variant="secondary">
       {agencyCoreMessaging.bookMappingSessionLabel}
     </Button>
-    <Button href="/services" variant="secondary">See How I Work</Button>
   {/snippet}
 </ClearPageSection>
 
@@ -195,9 +197,11 @@
   items={ctaItems}
 >
   {#snippet actions()}
-    <Button href={agencyCoreMessaging.workflowMappingSessionHref}>
+    <Button href={agencyCoreMessaging.selfMapHref}>
+      {agencyCoreMessaging.selfMapLabel}
+    </Button>
+    <Button href={agencyCoreMessaging.workflowMappingSessionHref} variant="secondary">
       {agencyCoreMessaging.bookMappingSessionLabel}
     </Button>
-    <Button href="/stack" variant="secondary">See Stack Boundary</Button>
   {/snippet}
 </ClearCtaBand>
