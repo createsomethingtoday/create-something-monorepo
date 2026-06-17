@@ -106,8 +106,8 @@ function defaultNode(input: {
     label: input.label,
     x: input.x,
     y: input.y,
-    width: 230,
-    height: 94,
+    width: 280,
+    height: 142,
     owner: input.owner,
     status: input.status ?? 'unknown',
     notes: input.notes,
@@ -130,7 +130,7 @@ function seedCanvas(input: CreateSessionInput): AtlasSession['canvas'] {
     id: 'data_workflow',
     kind: 'data',
     label: input.workflow,
-    x: 310,
+    x: 350,
     y: 210,
     owner: input.owner,
     notes: 'Workflow object being mapped during onboarding.'
@@ -139,7 +139,7 @@ function seedCanvas(input: CreateSessionInput): AtlasSession['canvas'] {
     id: 'actor_agent',
     kind: 'actor',
     label: 'Agent support',
-    x: 550,
+    x: 630,
     y: 210,
     status: 'wait',
     notes: 'Agent can help once the run/wait/stop boundary is clear.'
@@ -148,7 +148,7 @@ function seedCanvas(input: CreateSessionInput): AtlasSession['canvas'] {
     id: 'human_approval',
     kind: 'human',
     label: 'Approval boundary',
-    x: 790,
+    x: 900,
     y: 210,
     owner: input.owner,
     status: 'wait',
@@ -251,8 +251,8 @@ function nextNodePosition(
   };
   const sameKind = session.canvas.nodes.filter((node) => node.kind === kind).length;
   return {
-    x: 80 + (sameKind % 3) * 250,
-    y: lanes[kind] + Math.floor(sameKind / 3) * 120
+    x: 80 + (sameKind % 3) * 290,
+    y: lanes[kind] + Math.floor(sameKind / 3) * 150
   };
 }
 
@@ -270,8 +270,8 @@ export async function addNode(
     atlasId: input.atlasId,
     x: input.x ?? fallbackPosition.x,
     y: input.y ?? fallbackPosition.y,
-    width: 230,
-    height: 94,
+    width: 280,
+    height: 142,
     owner: input.owner,
     status: input.status ?? 'unknown',
     notes: input.notes,
@@ -345,8 +345,8 @@ function suggestionsFromText(text: string, session: AtlasSession): AtlasSuggesti
         label,
         x: position.x,
         y: position.y,
-        width: 230,
-        height: 94,
+        width: 280,
+        height: 142,
         status,
         notes: `Suggested from observation: ${text.slice(0, 220)}`
       }
