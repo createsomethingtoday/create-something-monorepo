@@ -7,10 +7,10 @@
     "id": "webflow-app-review-mcp",
     "transport": "http",
     "url": "https://webflow-app-review-mcp.createsomething.workers.dev/mcp",
-    "description": "Webflow App Review MCP for app asset and version workflows",
+    "description": "Webflow App Review MCP for app asset, version, and governance tracking workflows",
     "tags": ["webflow", "review", "airtable", "apps", "cs"],
     "catalog_exposure_mode": "direct",
-    "estimated_tool_count": 0
+    "estimated_tool_count": 21
   },
   "dify_mcp_server": {
     "server_id": "webflow-app-review",

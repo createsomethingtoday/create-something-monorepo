@@ -3,7 +3,10 @@ export const DEFAULT_AIRTABLE_BASE_ID = 'appMoIgXMTTTNIc3p';
 export const TABLE_IDS = {
   assets: 'tblRwzpWoLgE9MrUm',
   assetVersions: 'tblHxZ2hgSFLZxsZu',
+  governanceFindings: 'App Review Governance Findings',
 } as const;
+
+export const DEFAULT_GOVERNANCE_FINDINGS_TABLE_ID = TABLE_IDS.governanceFindings;
 
 export const FIELD_IDS = {
   assets: {
@@ -127,12 +130,80 @@ export const REJECTION_REASON_OPTIONS = [
   'Other',
 ] as const;
 
+export const GOVERNANCE_FINDING_CATEGORY_OPTIONS = [
+  'Runtime Integrity & Custom Code Governance',
+  'Private App & Beta-Testing Governance',
+  'Review Transparency & Inspectability',
+  'Forms API & Credential-Field Exposure',
+  'Documentation Overhaul & Tracking Hub',
+  'Tooling: App Review MCP & Security Scanning',
+  'Ecosystem & Competitive Watch',
+  'Parking Lot',
+] as const;
+
+export const GOVERNANCE_FINDING_STATUS_OPTIONS = [
+  'New',
+  'Triage',
+  'In Progress',
+  'Needs Decision',
+  'Waiting on Owner',
+  'Done',
+  'Parking Lot',
+] as const;
+
+export const GOVERNANCE_FINDING_PRIORITY_OPTIONS = ['P0', 'P1', 'P2', 'P3'] as const;
+
+export const GOVERNANCE_FINDING_FIELD_NAMES = {
+  title: 'Title',
+  status: 'Status',
+  priority: 'Priority',
+  category: 'Category',
+  summary: 'Summary',
+  evidence: 'Evidence',
+  recommendation: 'Recommendation',
+  decisionNeeded: 'Decision Needed',
+  nextAction: 'Next Action',
+  owner: 'Owner',
+  appName: 'App Name',
+  appId: 'App ID',
+  asset: 'Asset ID',
+  assetVersion: 'Asset Version ID',
+  sourceUrl: 'Source URL',
+  linkedUrls: 'Linked URLs',
+  reporter: 'Reporter',
+  createdByAgent: 'Created By Agent',
+} as const;
+
+export const GOVERNANCE_FINDING_WRITABLE_FIELDS = {
+  title: GOVERNANCE_FINDING_FIELD_NAMES.title,
+  status: GOVERNANCE_FINDING_FIELD_NAMES.status,
+  priority: GOVERNANCE_FINDING_FIELD_NAMES.priority,
+  category: GOVERNANCE_FINDING_FIELD_NAMES.category,
+  summary: GOVERNANCE_FINDING_FIELD_NAMES.summary,
+  evidence: GOVERNANCE_FINDING_FIELD_NAMES.evidence,
+  recommendation: GOVERNANCE_FINDING_FIELD_NAMES.recommendation,
+  decision_needed: GOVERNANCE_FINDING_FIELD_NAMES.decisionNeeded,
+  next_action: GOVERNANCE_FINDING_FIELD_NAMES.nextAction,
+  owner: GOVERNANCE_FINDING_FIELD_NAMES.owner,
+  app_name: GOVERNANCE_FINDING_FIELD_NAMES.appName,
+  app_id: GOVERNANCE_FINDING_FIELD_NAMES.appId,
+  asset_id: GOVERNANCE_FINDING_FIELD_NAMES.asset,
+  version_id: GOVERNANCE_FINDING_FIELD_NAMES.assetVersion,
+  source_url: GOVERNANCE_FINDING_FIELD_NAMES.sourceUrl,
+  linked_urls: GOVERNANCE_FINDING_FIELD_NAMES.linkedUrls,
+  reporter: GOVERNANCE_FINDING_FIELD_NAMES.reporter,
+  created_by_agent: GOVERNANCE_FINDING_FIELD_NAMES.createdByAgent,
+} as const;
+
 export type MarketplaceStatus = (typeof MARKETPLACE_STATUS_OPTIONS)[number];
 export type VisibilityStatus = (typeof VISIBILITY_OPTIONS)[number];
 export type Capability = (typeof CAPABILITIES_OPTIONS)[number];
 export type ReviewStatus = (typeof REVIEW_STATUS_OPTIONS)[number];
 export type ReviewType = (typeof REVIEW_TYPE_OPTIONS)[number];
 export type RejectionReason = (typeof REJECTION_REASON_OPTIONS)[number];
+export type GovernanceFindingCategory = (typeof GOVERNANCE_FINDING_CATEGORY_OPTIONS)[number];
+export type GovernanceFindingStatus = (typeof GOVERNANCE_FINDING_STATUS_OPTIONS)[number];
+export type GovernanceFindingPriority = (typeof GOVERNANCE_FINDING_PRIORITY_OPTIONS)[number];
 
 export type AssetWritableKey =
   | 'app_name'
@@ -254,6 +325,18 @@ export function isRejectionReason(value: string): value is RejectionReason {
   return (REJECTION_REASON_OPTIONS as readonly string[]).includes(value);
 }
 
+export function isGovernanceFindingCategory(value: string): value is GovernanceFindingCategory {
+  return (GOVERNANCE_FINDING_CATEGORY_OPTIONS as readonly string[]).includes(value);
+}
+
+export function isGovernanceFindingStatus(value: string): value is GovernanceFindingStatus {
+  return (GOVERNANCE_FINDING_STATUS_OPTIONS as readonly string[]).includes(value);
+}
+
+export function isGovernanceFindingPriority(value: string): value is GovernanceFindingPriority {
+  return (GOVERNANCE_FINDING_PRIORITY_OPTIONS as readonly string[]).includes(value);
+}
+
 function hasValue(value: unknown): boolean {
   if (value === null || value === undefined) return false;
   if (Array.isArray(value)) return value.length > 0;
@@ -342,6 +425,10 @@ export const APP_REVIEW_FIELD_MAP = {
       version_number: FIELD_IDS.versions.versionNumber,
     },
   },
+  governanceFindings: {
+    writable: GOVERNANCE_FINDING_WRITABLE_FIELDS,
+    fieldNames: GOVERNANCE_FINDING_FIELD_NAMES,
+  },
   canonicalMappings: CANONICAL_FIELD_MAPPINGS,
   statusOptions: {
     marketplace: MARKETPLACE_STATUS_OPTIONS,
@@ -350,6 +437,8 @@ export const APP_REVIEW_FIELD_MAP = {
     reviewStatus: REVIEW_STATUS_OPTIONS,
     reviewType: REVIEW_TYPE_OPTIONS,
     rejectionReason: REJECTION_REASON_OPTIONS,
+    governanceFindingCategory: GOVERNANCE_FINDING_CATEGORY_OPTIONS,
+    governanceFindingStatus: GOVERNANCE_FINDING_STATUS_OPTIONS,
+    governanceFindingPriority: GOVERNANCE_FINDING_PRIORITY_OPTIONS,
   },
 } as const;
-
