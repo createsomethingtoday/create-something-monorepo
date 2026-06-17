@@ -2,6 +2,7 @@
 	import { SEO } from '@create-something/canon';
 	import { IntegrationFlow } from '@create-something/canon/interactive';
 	import { BlurFade, ShimmerButton } from '@create-something/canon/magicui';
+	import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
 	const deliveryVector = {
 		canonicalPhrase: 'Skills on MCP',
@@ -148,7 +149,7 @@
 <SEO
 	title="Policy OS for Enterprise Judgment | CREATE SOMETHING .agency"
 	description="Policy OS for teams already running automation. Add policy operations, orchestration, and ongoing safeguards once the first workflow wedge is live."
-	keywords="enterprise automation reliability, workflow controls, policy operations, ai governance, mcp wedge"
+	keywords="enterprise automation reliability, workflow controls, policy operations, ai control layer, workflow reliability"
 	ogImage="/og-image.svg"
 	propertyName="agency"
 />
@@ -167,17 +168,17 @@
 			<BlurFade delay={0.2}>
 				<p class="hero-detail">
 					For teams already running MCPs or cross-system workflows, this is Policy OS: the
-					governed execution layer that keeps outcomes reliable after launch. We add prompt
+					controlled execution layer that keeps outcomes reliable after launch. We add prompt
 					optimization, policy controls, approval and escalation logic, and ongoing operational
 					oversight.
 				</p>
 			</BlurFade>
 			<BlurFade delay={0.3}>
 					<div class="hero-cta">
-						<ShimmerButton href="https://createsomething.agency/book">
-							Book Mapping Session
+						<ShimmerButton href={agencyCoreMessaging.selfMapHref}>
+							{agencyCoreMessaging.selfMapLabel}
 						</ShimmerButton>
-						<a href="/services" class="hero-link">View all services →</a>
+						<a href={agencyCoreMessaging.workflowMappingSessionHref} class="hero-link">Book Mapping Session →</a>
 					</div>
 			</BlurFade>
 		</div>
@@ -315,7 +316,7 @@
 								{/each}
 								</ul>
 									<div class="pricing-cta">
-										<ShimmerButton href="https://createsomething.agency/book">
+										<ShimmerButton href={agencyCoreMessaging.workflowMappingSessionHref}>
 											Book Mapping Session
 										</ShimmerButton>
 									</div>
@@ -327,7 +328,7 @@
 
 			<BlurFade delay={0.6}>
 				<p class="pricing-footer">
-					Need help picking the right path? <a href="https://createsomething.agency/book" class="pricing-link">Let's talk.</a>
+					Need help picking the right path? <a href={agencyCoreMessaging.workflowMappingSessionHref} class="pricing-link">Let's talk.</a>
 				</p>
 			</BlurFade>
 		</div>
@@ -360,15 +361,15 @@
 		</BlurFade>
 		<BlurFade delay={0.1}>
 			<p class="cta-subtext">
-				Run governed automation with clear policies, direct operational ownership, and reliability controls that hold up in production.
+				Run controlled automation with clear policies, direct operational ownership, and reliability controls that hold up in production.
 			</p>
 		</BlurFade>
 		<BlurFade delay={0.2}>
 			<div class="cta-buttons">
-				<ShimmerButton href="https://createsomething.agency/book">
-					Book Mapping Session
+				<ShimmerButton href={agencyCoreMessaging.selfMapHref}>
+					{agencyCoreMessaging.selfMapLabel}
 				</ShimmerButton>
-				<a href="/services" class="cta-secondary">Need a constrained start? Use an MCP Wedge →</a>
+				<a href={agencyCoreMessaging.workflowMappingSessionHref} class="cta-secondary">Ready to talk? Book a mapping session →</a>
 			</div>
 		</BlurFade>
 	</div>

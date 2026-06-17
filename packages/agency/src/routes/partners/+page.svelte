@@ -194,10 +194,12 @@
   description="The partner surface should not read like unrelated badges. Dify carries the visible agent runtime, Cloudflare carries the deployable substrate, Notion carries the operator workspace, and OpenAI readiness stays bounded by real authorization."
 >
   {#snippet actions()}
-    <Button href={agencyCoreMessaging.workflowMappingSessionHref}>
+    <Button href={agencyCoreMessaging.selfMapHref}>
+      {agencyCoreMessaging.selfMapLabel}
+    </Button>
+    <Button href={agencyCoreMessaging.workflowMappingSessionHref} variant="secondary">
       {agencyCoreMessaging.bookMappingSessionLabel}
     </Button>
-    <Button href="/stack" variant="secondary">See Stack Boundary</Button>
   {/snippet}
 
   {#snippet aside()}
@@ -261,9 +263,11 @@
   items={ctaItems}
 >
   {#snippet actions()}
-    <Button href={agencyCoreMessaging.workflowMappingSessionHref}>
+    <Button href={agencyCoreMessaging.selfMapHref}>
+      {agencyCoreMessaging.selfMapLabel}
+    </Button>
+    <Button href={agencyCoreMessaging.workflowMappingSessionHref} variant="secondary">
       {agencyCoreMessaging.bookMappingSessionLabel}
     </Button>
-    <Button href="/services" variant="secondary">See Service Path</Button>
   {/snippet}
 </ClearCtaBand>
