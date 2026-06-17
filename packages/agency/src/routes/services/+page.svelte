@@ -9,6 +9,7 @@
     type ClearCtaItem
   } from '@create-something/canon';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
+  import WorkflowMappingWarmup from '$lib/components/WorkflowMappingWarmup.svelte';
 
   const services = [
     {
@@ -93,30 +94,71 @@
     }
   ];
 
-  const servicePath: ClearCardItem[] = [
+  const commercialShape: ClearCardItem[] = [
     {
-      eyebrow: 'First step',
+      eyebrow: 'Trust Map',
       icon: 'search',
-      title: 'Trust Map',
-      detail: 'Map the workflow, objects, owners, source systems, approvals, and first safe delegation point.'
+      title: 'Diagnostic before build',
+      detail:
+        'Use this when the workflow is real but the safe delegation point is still unclear.',
+      points: [
+        'Output: workflow map, owner map, action boundary, first receipt plan',
+        'Exit: pilot recommendation, trust-layer scope, or no-build handoff'
+      ]
     },
     {
-      eyebrow: 'Start here',
+      eyebrow: 'Workflow Pilot',
       icon: 'settings',
-      title: 'Workflow Pilot',
-      detail: 'Rebuild the first handoff with rules, implementation, access setup, and portable runbooks.'
+      title: 'One workflow to production proof',
+      detail:
+        'Use this when the first handoff is clear enough to rebuild and verify with real operating evidence.',
+      points: [
+        'Output: implemented path, operator surface, runbook, release evidence',
+        'Exit: accepted handoff, blocked decisions, or trust-layer retainer'
+      ]
     },
     {
-      eyebrow: 'Ongoing control',
+      eyebrow: 'Trust Layer',
       icon: 'check',
-      title: 'Trust Layer',
-      detail: 'Add approval states, blocked states, release checks, operator surfaces, and incident loops.'
+      title: 'Monthly control around live work',
+      detail:
+        'Use this when a live workflow needs approval states, blocked states, release checks, and recovery loops.',
+      points: [
+        'Output: monitored decisions, receipts, incident notes, iteration queue',
+        'Exit: maintained control layer or transfer-ready operating package'
+      ]
     },
     {
-      eyebrow: 'High stakes',
+      eyebrow: 'Enterprise Extension',
       icon: 'users',
-      title: 'Enterprise Extension',
-      detail: 'Extend the pattern across regulated, high-volume, or multi-team environments.'
+      title: 'Multi-team control path',
+      detail:
+        'Use this when the workflow crosses teams, systems, compliance needs, or account boundaries.',
+      points: [
+        'Output: rollout plan, access model, audit posture, ownership design',
+        'Exit: managed implementation, platform handoff, or account transfer'
+      ]
+    }
+  ];
+
+  const proofRecords: ClearCardItem[] = [
+    {
+      eyebrow: 'Abundance',
+      icon: 'settings',
+      title: 'Workflow pilot with recruiter-gated agent work',
+      detail:
+        'Recruiter-gated agent work, shared operating data, job discovery, eval evidence, and explicit account-owner decisions.',
+      href: '/delivery/abundance',
+      points: ['Shows: pilot proof, agent boundary, public/private evidence split']
+    },
+    {
+      eyebrow: 'ShivWorks',
+      icon: 'folder',
+      title: 'Backend handoff with named access lanes',
+      detail:
+        'Developer runbook, named access lanes, production data boundaries, and a named-recipient approval gate.',
+      href: '/delivery/shivworks',
+      points: ['Shows: handoff proof, access control, ownership transfer options']
     }
   ];
 
@@ -138,30 +180,6 @@
       icon: 'folder',
       title: 'Context and control',
       detail: 'Business context, approval ownership, operating receipts, code, and handoff notes.'
-    }
-  ];
-
-  const trustCards: ClearCardItem[] = [
-    {
-      eyebrow: 'No vendor lock-in',
-      icon: 'refresh',
-      title: 'The map survives tool changes',
-      detail:
-        'Vendor services are named because they help the workflow run. The workflow map, contracts, policy, and runbooks stay portable.'
-    },
-    {
-      eyebrow: 'No secret sprawl',
-      icon: 'warning',
-      title: 'Credentials stay in approved paths',
-      detail:
-        'Tokens, API keys, and client credentials belong in the approved vault or runtime environment, not prompts or handoff docs.'
-    },
-    {
-      eyebrow: 'No fake autonomy',
-      icon: 'check',
-      title: 'Agents act inside named permissions',
-      detail:
-        'The system shows what can run, what needs approval, and what stops before the agent touches the business.'
     }
   ];
 
@@ -238,9 +256,9 @@
 </script>
 
 <SEO
-  title="Workflow Trust Layer | CREATE SOMETHING .agency"
+  title="Workflow Control Service | How I Work"
   description="How CREATE SOMETHING makes one workflow safe to delegate: clear stack boundaries, decision states, evidence, and escalation when judgment is required."
-  keywords="workflow trust layer, safe to delegate AI workflow, workflow pilot, MCP wedge, production automation, agent reliability"
+  keywords="workflow mapping, AI interaction design, workflow trust layer, safe to delegate AI workflow, workflow pilot, production automation, agent reliability"
   ogImage="/og-image.svg"
   propertyName="agency"
   {services}
@@ -256,10 +274,12 @@
   description="Bring the operating path your team cannot keep covering by hand. I map the inputs, owners, approvals, and failure modes; rebuild the handoff; and add controlled agent capacity only where the boundary is clear."
 >
   {#snippet actions()}
-    <Button href={agencyCoreMessaging.servicesMappingSessionHref}>
+    <Button href="#atlas-warmup">
+      {agencyCoreMessaging.selfMapLabel}
+    </Button>
+    <Button href={agencyCoreMessaging.servicesMappingSessionHref} variant="secondary">
       {agencyCoreMessaging.bookMappingSessionLabel}
     </Button>
-    <Button href="#service-path" variant="secondary">See Service Path</Button>
   {/snippet}
 
   {#snippet aside()}
@@ -284,14 +304,37 @@
 </ClearPageSection>
 
 <ClearPageSection
-  id="service-path"
+  id="atlas-warmup"
   variant="soft"
-  eyebrow="Service path"
-  title="Start with the smallest safe delegation point."
-  description="Map what would be safe to delegate, prove the first workflow, then add the trust layer when the work starts touching revenue, compliance, or customer trust."
+  eyebrow="Atlas warmup"
+  title="Map the workflow yourself before booking."
+  description="Inspired by quietloudlab's AI Interaction Atlas, this warmup turns human tasks, AI tasks, system operations, data, constraints, and touchpoints into the first onboarding artifact."
 >
   {#snippet after()}
-    <ClearCardGrid items={servicePath} columns={4} ariaLabel="Service path from map to trust layer" />
+    <WorkflowMappingWarmup />
+  {/snippet}
+</ClearPageSection>
+
+<ClearPageSection
+  id="service-path"
+  variant="white"
+  eyebrow="Service path"
+  title="Every engagement has a clean exit."
+  description="Start with the smallest safe delegation point, prove the first workflow, then add the trust layer only when live work needs more control. Each step has a concrete output, a decision point, and a next-state the buyer can understand."
+>
+  {#snippet after()}
+    <ClearCardGrid items={commercialShape} columns={4} ariaLabel="Service path from map to trust layer" />
+  {/snippet}
+</ClearPageSection>
+
+<ClearPageSection
+  variant="soft"
+  eyebrow="Delivery proof"
+  title="Delivery records show what happens after the call."
+  description="The proof surface is not a portfolio screenshot. It shows the operating result, what stayed private, which decisions remain, and how ownership moves."
+>
+  {#snippet after()}
+    <ClearCardGrid items={proofRecords} columns={2} ariaLabel="Delivery proof records" />
   {/snippet}
 </ClearPageSection>
 
@@ -308,17 +351,6 @@
 
 <ClearPageSection
   variant="soft"
-  eyebrow="Trust boundaries"
-  title="No vendor mystery, no secret sprawl, no fake autonomy."
-  description="The service gives agents constrained capacity inside named permissions and gives operators the evidence to understand each handoff."
->
-  {#snippet after()}
-    <ClearCardGrid items={trustCards} columns={3} ariaLabel="Trust boundaries" />
-  {/snippet}
-</ClearPageSection>
-
-<ClearPageSection
-  variant="white"
   eyebrow="What your team keeps"
   title="Leave with maps, runbooks, and receipts your team can operate."
   description="Every trust-layer project ships with artifacts your team can inspect, run, inherit, and improve after launch."
@@ -335,9 +367,11 @@
   items={ctaItems}
 >
   {#snippet actions()}
-    <Button href={agencyCoreMessaging.servicesMappingSessionHref}>
+    <Button href="#atlas-warmup">
+      {agencyCoreMessaging.selfMapLabel}
+    </Button>
+    <Button href={agencyCoreMessaging.servicesMappingSessionHref} variant="secondary">
       {agencyCoreMessaging.bookMappingSessionLabel}
     </Button>
-    <Button href="/products" variant="secondary">See Proof Surfaces</Button>
   {/snippet}
 </ClearCtaBand>

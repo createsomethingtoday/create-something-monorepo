@@ -117,14 +117,14 @@
       eyebrow: 'Runtime substrate',
       icon: 'folder',
       title: 'Cloudflare',
-      detail: 'Workers, Pages, D1, and hosted MCP surfaces for workflows Notion makes reviewable.',
+      detail: 'Workers, Pages, D1, and hosted tool surfaces for workflows Notion makes reviewable.',
       href: '/cloudflare'
     },
     {
       eyebrow: 'Vendor boundary',
       icon: 'check',
       title: 'Stack',
-      detail: 'Ownership boundaries across Notion, Dify, Cloudflare, MCPs, and client systems.',
+      detail: 'Ownership boundaries across Notion, Dify, Cloudflare, tools, and client systems.',
       href: '/stack'
     }
   ];
@@ -174,7 +174,7 @@
 
 <SEO
   title="Notion Partner Lane | CREATE SOMETHING .agency"
-  description="CREATE SOMETHING builds Notion operating systems for AI-enabled teams, with PM views, MCP and Worker automation, and Policy OS governance."
+  description="CREATE SOMETHING builds Notion operating systems for AI-enabled teams, with PM views, Worker automation, tool boundaries, and Policy OS control."
   keywords="Notion partner, Notion Solutions Partner, Notion operating systems, Notion Workers, Notion MCP, Policy OS"
   ogImage="/og-image.svg"
   propertyName="agency"
@@ -185,7 +185,7 @@
   layout="split"
   titleLevel="h1"
   eyebrow="Notion Partner Lane"
-  title="Notion operating systems with governed automation."
+  title="Notion operating systems with controlled automation."
   description="CREATE SOMETHING designs Notion as the PM and operator layer for AI-enabled teams. The partner path is Solutions Partner first, template and builder proof second, and Technology Partner later."
 >
   {#snippet actions()}

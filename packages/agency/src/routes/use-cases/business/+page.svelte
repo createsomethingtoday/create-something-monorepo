@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { SEO } from '@create-something/canon';
 	import { AnimatedGridPattern, BlurFade, BorderBeam, OrbitingCircles, ShimmerButton } from '@create-something/canon/magicui';
+	import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
 	const deliveryVector = {
 		canonicalPhrase: 'Skills on MCP',
@@ -163,8 +164,8 @@
 			</BlurFade>
 			<BlurFade delay={0.3}>
 				<div class="hero-cta">
-					<ShimmerButton href="/services">
-						Map Your Workflow
+					<ShimmerButton href={agencyCoreMessaging.selfMapHref}>
+						{agencyCoreMessaging.selfMapLabel}
 					</ShimmerButton>
 					<a href="/" class="hero-link">&larr; Back to home</a>
 				</div>
@@ -359,11 +360,11 @@
 		</BlurFade>
 		<BlurFade delay={0.2}>
 			<div class="cta-actions">
-				<ShimmerButton href="/services">
-					Map Your Workflow
+				<ShimmerButton href={agencyCoreMessaging.selfMapHref}>
+					{agencyCoreMessaging.selfMapLabel}
 				</ShimmerButton>
 				<a href="/services" class="cta-link">See all services &rarr;</a>
-				<a href="/book" class="cta-link cta-link-secondary">Have questions? Book a mapping session</a>
+				<a href={agencyCoreMessaging.workflowMappingSessionHref} class="cta-link cta-link-secondary">Have questions? Book a mapping session</a>
 			</div>
 		</BlurFade>
 	</div>

@@ -2,6 +2,9 @@
   import { SEO } from '@create-something/canon';
   import type { PageData } from './$types';
   import { abundanceJobAgentPrompts } from '$lib/delivery/abundance';
+  import DeliveryOutcomeStrip, {
+    type DeliveryOutcomeItem
+  } from '$lib/components/DeliveryOutcomeStrip.svelte';
 
   export let data: PageData;
 
@@ -11,6 +14,36 @@
     (artifact) => artifact.visibility !== 'private' && artifact.visibility !== 'internal'
   );
   const privateEvidence = context.evidence.filter((item) => item.visibility !== 'public');
+  const outcomeItems: DeliveryOutcomeItem[] = [
+    {
+      label: 'Before',
+      title: 'Recruiting work was split across intake, jobs, staff data, and review.',
+      detail:
+        'The workflow needed a visible path from candidate intake through job discovery and recruiter judgment.',
+      tone: 'neutral'
+    },
+    {
+      label: 'Now',
+      title: 'Intake, job discovery, recruiter review, and delivery evidence share one record.',
+      detail:
+        'The delivery page compresses the working surfaces, safe artifacts, and operator boundary into a client-readable status surface.',
+      tone: 'success'
+    },
+    {
+      label: 'Risk reduced',
+      title: 'Agent work is recruiter-gated before it reaches candidates or clients.',
+      detail:
+        'Public job discovery is read-only here, funnel writes require confirmation, and write-capable automation stays blocked until owners reauthorize accounts.',
+      tone: 'info'
+    },
+    {
+      label: 'Next decision',
+      title: 'Authorize the remaining account, webhook, mapping, and roster choices.',
+      detail:
+        'The open decisions are explicit, attributable, and separated from private token-bearing evidence.',
+      tone: 'warning'
+    }
+  ];
 
   type DeliveryAgentMessage = {
     role: 'agent' | 'client';
@@ -160,8 +193,8 @@
 
 <SEO
   title="Abundance Delivery | The NP Group"
-  description="Client delivery page for The NP Group's Abundance nurse staffing system: live concierge app, database, MCP surfaces, agent boundary, walkthroughs, and private source materials."
-  keywords="Abundance, The NP Group, nurse staffing, MCP, workflow delivery, CREATE SOMETHING"
+  description="Client delivery page for The NP Group's Abundance nurse staffing workflow: intake, public job discovery, recruiter-gated agent work, walkthroughs, and private source materials."
+  keywords="Abundance, The NP Group, nurse staffing, workflow delivery, recruiter agent workflow, CREATE SOMETHING"
   canonical="https://createsomething.agency/delivery/abundance"
   ogImage="/og-image.svg"
   propertyName="agency"
@@ -188,13 +221,20 @@
   </div>
 </section>
 
+<DeliveryOutcomeStrip
+  eyebrow="Business outcome"
+  title="The pilot is now legible as an operating path."
+  description="A buyer can see what changed, what is safer, and which decisions still gate the next phase without reading private evidence."
+  items={outcomeItems}
+/>
+
 <section class="delivery-section">
   <div class="shell-inner-pad">
     <div class="section-lead">
       <span class="product-kicker">Review packet</span>
       <h2>What can be shared.</h2>
       <p>
-        These links are client-safe. Token-bearing MCP URLs, employee rows, and private Notion
+        These links are client-safe. Token-bearing tool URLs, employee rows, and private Notion
         details are intentionally excluded.
       </p>
     </div>
@@ -230,7 +270,7 @@
 
       <div class="job-agent__guardrails" aria-label="Job agent guardrails">
         <span>Read-only job discovery</span>
-        <span>Dify + Jobs MCP path</span>
+        <span>Server-side job search path</span>
         <span>No exposed keys</span>
       </div>
 

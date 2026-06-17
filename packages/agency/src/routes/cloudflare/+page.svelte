@@ -47,9 +47,9 @@
         'Cloudflare-hosted MCP endpoints expose scoped tools with bearer-token controls and tenant boundaries.'
     },
     {
-      eyebrow: 'Trust proof',
+      eyebrow: 'Control proof',
       icon: 'check',
-      title: 'Trust Layer Routes',
+      title: 'Control routes',
       detail:
         'Action previews, approval checks, blocked states, and evidence records sit before risky execution.'
     },
@@ -72,7 +72,7 @@
     {
       eyebrow: '02 Gate',
       icon: 'check',
-      title: 'Trust check',
+      title: 'Control check',
       detail: 'Classify the action as allowed, approval-needed, blocked, or recoverable before execution.'
     },
     {
@@ -84,8 +84,8 @@
     {
       eyebrow: '04 Act',
       icon: 'settings',
-      title: 'MCP or tool call',
-      detail: 'Execute against scoped MCP tools or APIs with tenant, account, and bearer boundaries intact.'
+      title: 'Tool or API call',
+      detail: 'Execute against scoped tools or APIs with tenant, account, and bearer boundaries intact.'
     },
     {
       eyebrow: '05 Prove',
@@ -106,7 +106,7 @@
     {
       eyebrow: 'Builders',
       icon: 'settings',
-      title: 'Deploy MCP and agent surfaces without platform weight.',
+      title: 'Deploy tool and agent surfaces without platform weight.',
       detail:
         'Package Workers, Pages, D1, and durable runtime primitives into portable workflow infrastructure.'
     },
@@ -138,7 +138,7 @@
       eyebrow: 'Vendor boundary',
       icon: 'check',
       title: 'Stack',
-      detail: 'Ownership boundaries across Cloudflare, Dify, Notion, MCPs, and delivery surfaces.',
+      detail: 'Ownership boundaries across Cloudflare, Dify, Notion, tools, and delivery surfaces.',
       href: '/stack'
     }
   ];
@@ -188,8 +188,8 @@
 
 <SEO
   title="Cloudflare Partner Lane | CREATE SOMETHING .agency"
-  description="CREATE SOMETHING builds Cloudflare-native workflow systems with Workers, Pages, D1, remote MCP surfaces, and trust-layer controls."
-  keywords="Cloudflare partner, Cloudflare PowerUP, Cloudflare Workers, remote MCP, D1, trust layer, AI workflow infrastructure"
+  description="CREATE SOMETHING builds Cloudflare-native workflow systems with Workers, Pages, D1, scoped tool surfaces, and runtime control paths."
+  keywords="Cloudflare partner, Cloudflare PowerUP, Cloudflare Workers, scoped tools, D1, workflow control, AI workflow infrastructure"
   ogImage="/og-image.svg"
   propertyName="agency"
 />
@@ -200,7 +200,7 @@
   titleLevel="h1"
   eyebrow="Cloudflare Partner Lane"
   title="Cloudflare runtime with controlled workflows."
-  description="Cloudflare is the deployable substrate for governed workflow surfaces: routes, state, queues, approvals, remote MCP endpoints, and rollback-ready handoffs."
+  description="Cloudflare is the deployable substrate for controlled workflow surfaces: routes, state, queues, approvals, scoped tool endpoints, and rollback-ready handoffs."
 >
   {#snippet actions()}
     <Button href={agencyCoreMessaging.workflowMappingSessionHref}>
@@ -221,12 +221,12 @@
 
 <ClearPageSection
   variant="white"
-  eyebrow="Proof surfaces"
+  eyebrow="Runtime proof"
   title="The runtime carries routes, tools, and evidence."
   description="Cloudflare is strongest when workflow infrastructure needs ownership, durability, and a reviewable delivery path."
 >
   {#snippet after()}
-    <ClearCardGrid items={proofCards} columns={4} ariaLabel="Cloudflare proof surfaces" />
+    <ClearCardGrid items={proofCards} columns={4} ariaLabel="Cloudflare runtime proof" />
   {/snippet}
 </ClearPageSection>
 
@@ -277,7 +277,7 @@
 <ClearCtaBand
   eyebrow="Map the runtime"
   title="Bring the workflow that needs a controlled route."
-  description="I’ll map the route, state, permissions, MCP boundary, and evidence your team needs before a Cloudflare build becomes production work."
+  description="I’ll map the route, state, permissions, tool boundary, and evidence your team needs before a Cloudflare build becomes production work."
   items={ctaItems}
 >
   {#snippet actions()}
