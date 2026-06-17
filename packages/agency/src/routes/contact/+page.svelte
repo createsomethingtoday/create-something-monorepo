@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { browser } from '$app/environment';
   import {
     ClearCardGrid,
     ClearPageSection,
@@ -9,6 +8,9 @@
   import { getAnalytics } from '@create-something/canon/analytics';
   import { SavvyCalButton } from '@create-something/canon/domains/agency';
   import FunnelLadder from '$lib/components/FunnelLadder.svelte';
+  import type { PageData } from './$types';
+
+  let { data }: { data: PageData } = $props();
 
   type ContactIntent = 'governance-checklist' | 'workflow-teardown' | 'workflow-mapping';
   type ServiceLane =
@@ -66,6 +68,74 @@
     { value: 'system_development_referral', label: 'System Development Referral' }
   ];
 
+  const contactIntentContent: Record<
+    ContactIntent,
+    {
+      seoTitle: string;
+      seoDescription: string;
+      eyebrow: string;
+      title: string;
+      description: string;
+      formTitle: string;
+      formDescription: string;
+      messageLabel: string;
+      messageHelper: string;
+      messagePlaceholder: string;
+    }
+  > = {
+    'governance-checklist': {
+      seoTitle: 'Get the Workflow Trust Checklist | CREATE SOMETHING .agency',
+      seoDescription:
+        'Request the workflow trust checklist for approval rules, blocked states, receipts, and recovery questions before AI acts.',
+      eyebrow: 'Trust checklist',
+      title: 'Get the questions before you map the workflow.',
+      description:
+        'Use the checklist to name what an agent can do, what needs approval, what must stop, and what evidence your team should keep.',
+      formTitle: 'Request the trust checklist',
+      formDescription:
+        'Send where to reply and one workflow you are considering. A short note is enough for a cold start.',
+      messageLabel: 'Which workflow should the checklist help you evaluate?',
+      messageHelper:
+        'Name the tools, handoff, or decision boundary if you know it. Do not include credentials or client secrets.',
+      messagePlaceholder:
+        'e.g., We want AI to help with support follow-up, but need approval rules, blocked states, and receipts before anything can act.'
+    },
+    'workflow-teardown': {
+      seoTitle: 'Request a Workflow Trust Map | CREATE SOMETHING .agency',
+      seoDescription:
+        'Request a workflow map for the stack, bottleneck, risk boundary, owners, and first safe automation wedge.',
+      eyebrow: 'Workflow map',
+      title: 'Bring the workflow that needs a control path.',
+      description:
+        'Use this path when you can name the stack, bottleneck, owner, and the place where approval or evidence matters.',
+      formTitle: 'Request a workflow map',
+      formDescription:
+        'Share the current workflow shape so I can identify the likely operating path and first safe wedge.',
+      messageLabel: 'Which workflow needs attention first?',
+      messageHelper:
+        'Name the stack, bottleneck, owner, and what should require approval before AI takes action. Do not include credentials or client secrets.',
+      messagePlaceholder:
+        'e.g., HubSpot + Notion + Slack. Leads move cleanly until handoff, then the team rebuilds context by hand. We need the first safe wedge before adding more automation.'
+    },
+    'workflow-mapping': {
+      seoTitle: 'Start a Workflow Mapping Session | CREATE SOMETHING .agency',
+      seoDescription:
+        'Send workflow mapping details when the workflow, owner, approval authority, and decision timeline are already clear.',
+      eyebrow: 'Mapping session',
+      title: 'Start when the workflow and owner are clear.',
+      description:
+        'Use this path when there is a real workflow, a decision owner, and enough urgency to map the allowed, approval-needed, blocked, and receipt states.',
+      formTitle: 'Send mapping details',
+      formDescription:
+        'Share the workflow, owner, systems, timeline, and first decision you need to make before booking.',
+      messageLabel: 'What should we map in the session?',
+      messageHelper:
+        'Name the workflow, owner, source systems, approval authority, and decision timeline. Do not include credentials or client secrets.',
+      messagePlaceholder:
+        'e.g., Finance needs an approval path before AI drafts vendor follow-up. The owner is ops, the source systems are QuickBooks and Notion, and we need a decision this month.'
+    }
+  };
+
   const contactPathCards: ClearCardItem[] = contactPathOptions.map((option) => ({
     eyebrow: option.funnelStage,
     icon:
@@ -78,45 +148,26 @@
     detail: option.description
   }));
 
-  const contactUrlParams = browser
-    ? new URLSearchParams(window.location.search)
-    : new URLSearchParams();
+  const contactSource = $derived(data.contactSource);
+  const contactCampaign = $derived(data.contactCampaign);
+  const initialIntent = $derived(data.contactIntent as ContactIntent);
+  const initialLane = $derived(data.contactLane as ServiceLane);
 
-  function normalizeQueryToken(value: string | null, fallback: string) {
-    const normalized = (value ?? fallback)
-      .toLowerCase()
-      .replace(/[^a-z0-9_-]+/g, '-')
-      .replace(/^-+|-+$/g, '')
-      .slice(0, 64);
-
-    return normalized || fallback;
-  }
-
-  function normalizeIntent(value: string | null): ContactIntent {
-    return contactPathOptions.some((option) => option.value === value)
-      ? (value as ContactIntent)
-      : 'workflow-teardown';
-  }
-
-  function normalizeLane(value: string | null): ServiceLane {
-    return laneOptions.some((option) => option.value === value)
-      ? (value as ServiceLane)
-      : 'not_sure';
-  }
-
-  const contactSource = normalizeQueryToken(contactUrlParams.get('source'), 'contact');
-  const contactCampaign = normalizeQueryToken(contactUrlParams.get('campaign'), '');
-  const initialIntent = normalizeIntent(contactUrlParams.get('intent'));
-  const initialLane = normalizeLane(contactUrlParams.get('lane'));
-
-  let selectedIntent = $state<ContactIntent>(initialIntent);
-  let selectedLane = $state<ServiceLane>(initialLane);
+  let selectedIntent = $state<ContactIntent>(data.contactIntent as ContactIntent);
+  let selectedLane = $state<ServiceLane>(data.contactLane as ServiceLane);
   let submitting = $state(false);
   let submitMessage = $state('');
   let submitSuccess = $state(false);
   const selectedPath = $derived(
     contactPathOptions.find((option) => option.value === selectedIntent) ?? contactPathOptions[1]
   );
+  const selectedContent = $derived(contactIntentContent[selectedIntent]);
+
+  $effect(() => {
+    selectedIntent = initialIntent;
+    selectedLane = initialLane;
+    submitMessage = '';
+  });
 
   async function handleSubmit(event: Event) {
     event.preventDefault();
@@ -180,8 +231,8 @@
 </script>
 
 <SEO
-  title="Start With the Right Workflow | CREATE SOMETHING .agency"
-  description="Choose the right next step: get the trust checklist, request a workflow map, or book a mapping session when the workflow is ready."
+  title={selectedContent.seoTitle}
+  description={selectedContent.seoDescription}
   keywords="workflow mapping, production automation, reliability controls, enterprise workflows, custom mcp, automation risk"
   ogImage="/og-image.svg"
   propertyName="agency"
@@ -191,33 +242,20 @@
   variant="hero"
   layout="split"
   titleLevel="h1"
-  eyebrow="Contact"
-  title="Start with the right amount of commitment."
-  description="Cold readers can take the trust checklist. Warm buyers can request a workflow map. High-intent teams can book the mapping session when the workflow and owner are already clear."
+  eyebrow={selectedContent.eyebrow}
+  title={selectedContent.title}
+  description={selectedContent.description}
 >
   {#snippet aside()}
     <ClearCardGrid items={contactPathCards} columns={1} ariaLabel="Contact path options" />
   {/snippet}
 </ClearPageSection>
 
-<ClearPageSection
-  variant="white"
-  eyebrow="Funnel routing"
-  title="One intake path, three levels of commitment."
->
-  {#snippet after()}
-    <FunnelLadder />
-  {/snippet}
-</ClearPageSection>
-
 <section class="contact-section">
   <div class="contact-container">
     <div class="contact-option">
-      <h2>Choose the next step</h2>
-      <p>
-        The form routes cold, warm, and decision-stage requests into the same analytics and lead
-        pipeline without forcing everyone into a calendar.
-      </p>
+      <h2>{selectedContent.formTitle}</h2>
+      <p>{selectedContent.formDescription}</p>
 
       <form class="contact-form" onsubmit={handleSubmit}>
         <fieldset class="form-field path-field">
@@ -285,18 +323,15 @@
         </div>
 
         <div class="form-field">
-          <label for="message" class="form-label">Which workflow needs attention first?</label>
-          <p class="form-helper">
-            Name the stack, bottleneck, owner, and what should require approval before AI takes
-            action. Do not include credentials or client secrets.
-          </p>
+          <label for="message" class="form-label">{selectedContent.messageLabel}</label>
+          <p class="form-helper">{selectedContent.messageHelper}</p>
           <textarea
             id="message"
             name="message"
             required
             rows="4"
             class="form-input form-textarea"
-            placeholder="e.g., HubSpot + Notion + Slack. Leads move cleanly until handoff, then the team rebuilds context by hand. We need the first safe wedge before adding more automation."
+            placeholder={selectedContent.messagePlaceholder}
           ></textarea>
         </div>
 
@@ -329,6 +364,16 @@
     </div>
   </div>
 </section>
+
+<ClearPageSection
+  variant="white"
+  eyebrow="Funnel routing"
+  title="One intake path, three levels of commitment."
+>
+  {#snippet after()}
+    <FunnelLadder />
+  {/snippet}
+</ClearPageSection>
 
 <section class="email-section">
   <div class="section-container">
