@@ -165,13 +165,18 @@ export function renderStudioHtml(): string {
       }
 
       .mark {
-        width: 18px;
-        height: 18px;
-        border-radius: 4px;
-        background:
-          linear-gradient(135deg, #101521 0%, #101521 56%, transparent 57%),
-          #b7c5ff;
-        box-shadow: inset 0 0 0 1px rgba(10, 14, 25, 0.08);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 20px;
+        height: 20px;
+        flex: none;
+      }
+
+      .mark svg {
+        display: block;
+        width: 20px;
+        height: 20px;
       }
 
       .brand strong,
@@ -250,6 +255,23 @@ export function renderStudioHtml(): string {
         color: var(--ink);
       }
 
+      .icon-button {
+        width: 1.75rem;
+        height: 1.75rem;
+        flex: none;
+        gap: 0;
+        padding: 0;
+      }
+
+      .icon-button .icon {
+        width: 0.82rem;
+        height: 0.82rem;
+      }
+
+      .drawer-close {
+        margin-top: -0.22rem;
+      }
+
       .panel {
         padding: 1rem;
         border-bottom: 1px solid var(--line);
@@ -311,6 +333,19 @@ export function renderStudioHtml(): string {
         background-size: 72px 72px;
       }
 
+      .canvas-wrap::after {
+        position: absolute;
+        right: 1.1rem;
+        bottom: 1rem;
+        z-index: 0;
+        width: 18rem;
+        height: 18rem;
+        border-radius: 999px;
+        background: radial-gradient(circle, #0a0e1908 0%, transparent 66%);
+        content: "";
+        pointer-events: none;
+      }
+
       .canvas-toolbar {
         position: absolute;
         top: 1rem;
@@ -357,6 +392,27 @@ export function renderStudioHtml(): string {
         justify-content: flex-end;
       }
 
+      .canvas-brand {
+        position: absolute;
+        right: 1rem;
+        bottom: 1rem;
+        z-index: 2;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 1.35rem;
+        height: 1.35rem;
+        opacity: 0.55;
+        pointer-events: none;
+      }
+
+      .canvas-brand-mark {
+        display: block;
+        width: 1.35rem;
+        height: 1.35rem;
+        filter: drop-shadow(0 1px 1px rgba(10, 14, 25, 0.08));
+      }
+
       svg#canvas {
         position: absolute;
         inset: 0;
@@ -373,8 +429,8 @@ export function renderStudioHtml(): string {
       }
 
       .edge {
-        stroke: #81818199;
-        stroke-width: 1.15;
+        stroke: #8181817d;
+        stroke-width: 1.05;
         fill: none;
       }
 
@@ -398,7 +454,12 @@ export function renderStudioHtml(): string {
         z-index: 2;
       }
 
-      .node:active {
+      .node.dragging {
+        z-index: 3;
+      }
+
+      .node.dragging,
+      .node.dragging:active {
         cursor: grabbing;
       }
 
@@ -409,7 +470,7 @@ export function renderStudioHtml(): string {
         gap: 0.5rem;
         min-height: 7.75rem;
         overflow: visible;
-        border: 1px solid #d8d8d2;
+        border: 1px solid #d8d8d2cc;
         border-left-width: 2px;
         border-radius: 8px;
         background: #ffffff;
@@ -816,9 +877,16 @@ export function renderStudioHtml(): string {
     <div class="shell">
       <header>
         <div class="brand">
-          <div class="mark" aria-hidden="true"></div>
+          <div class="mark" aria-hidden="true">
+            <svg viewBox="0 0 32 32" focusable="false">
+              <rect width="32" height="32" fill="#0A0E19"></rect>
+              <path d="M16 4 26.39 10 16 16 5.61 10Z" fill="#FFFFFF"></path>
+              <path d="M5.61 10 16 16 16 28 5.61 22Z" fill="#FFFFFF" fill-opacity="0.6"></path>
+              <path d="M16 16 26.39 10 26.39 22 16 28Z" fill="#FFFFFF" fill-opacity="0.3"></path>
+            </svg>
+          </div>
           <div>
-            <strong>CREATE SOMETHING Atlas Studio</strong>
+            <strong>Atlas Studio</strong>
             <span id="session-title">Loading session...</span>
           </div>
         </div>
@@ -857,6 +925,14 @@ export function renderStudioHtml(): string {
             <g id="edge-layer"></g>
           </svg>
           <div id="node-layer" class="node-layer" aria-label="Atlas workflow nodes"></div>
+          <div class="canvas-brand" aria-hidden="true">
+            <svg class="canvas-brand-mark" viewBox="0 0 32 32" focusable="false">
+              <rect width="32" height="32" fill="#0A0E19"></rect>
+              <path d="M16 4 26.39 10 16 16 5.61 10Z" fill="#FFFFFF"></path>
+              <path d="M5.61 10 16 16 16 28 5.61 22Z" fill="#FFFFFF" fill-opacity="0.6"></path>
+              <path d="M16 16 26.39 10 26.39 22 16 28Z" fill="#FFFFFF" fill-opacity="0.3"></path>
+            </svg>
+          </div>
         </section>
 
         <aside id="call-drawer" class="drawer call-drawer" aria-label="Call rail">
@@ -869,6 +945,9 @@ export function renderStudioHtml(): string {
                   <span>Live notes and agent suggestions</span>
                 </div>
               </div>
+              <button class="icon-button drawer-close" data-close-drawer="rail" type="button" aria-label="Close call rail" title="Close rail">
+                <span data-lucide="x"></span>
+              </button>
             </div>
             <form id="observation-form" class="stack">
               <label>
@@ -917,6 +996,9 @@ export function renderStudioHtml(): string {
                   <span id="inspector-subtitle">Select a node</span>
                 </div>
               </div>
+              <button class="icon-button drawer-close" data-close-drawer="inspector" type="button" aria-label="Close inspector" title="Close inspector">
+                <span data-lucide="x"></span>
+              </button>
             </div>
             <div id="inspector" class="field-grid"></div>
           </section>
@@ -983,7 +1065,8 @@ export function renderStudioHtml(): string {
         'terminal': '<path d="m4 17 6-6-6-6"></path><path d="M12 19h8"></path>',
         'user-round': '<circle cx="12" cy="8" r="5"></circle><path d="M20 21a8 8 0 0 0-16 0"></path>',
         'waypoints': '<circle cx="12" cy="4.5" r="2.5"></circle><path d="m10.2 6.3-3.9 3.9"></path><circle cx="4.5" cy="12" r="2.5"></circle><path d="M7 12h10"></path><circle cx="19.5" cy="12" r="2.5"></circle><path d="m13.8 6.3 3.9 3.9"></path><path d="m17.7 13.8-3.9 3.9"></path><circle cx="12" cy="19.5" r="2.5"></circle><path d="m6.3 13.8 3.9 3.9"></path>',
-        'workflow': '<rect width="8" height="8" x="3" y="3" rx="2"></rect><path d="M7 11v4a2 2 0 0 0 2 2h4"></path><rect width="8" height="8" x="13" y="13" rx="2"></rect>'
+        'workflow': '<rect width="8" height="8" x="3" y="3" rx="2"></rect><path d="M7 11v4a2 2 0 0 0 2 2h4"></path><rect width="8" height="8" x="13" y="13" rx="2"></rect>',
+        'x': '<path d="M18 6 6 18"></path><path d="m6 6 12 12"></path>'
       };
       const kindIcon = {
         actor: 'user-round',
@@ -998,6 +1081,7 @@ export function renderStudioHtml(): string {
       let palette = null;
       let selectedNodeId = null;
       let dragging = null;
+      let dragFrame = null;
       let saveTimer = null;
       let sessionEvents = null;
       let fallbackTimer = null;
@@ -1019,6 +1103,11 @@ export function renderStudioHtml(): string {
         return kind === 'ai' ? 'AI' : String(kind ?? '');
       }
 
+      function formatSessionClient(client) {
+        const label = String(client ?? '').replace(/^CREATE SOMETHING\s*/i, '').trim();
+        return label || String(client ?? '');
+      }
+
       function hydrateIcons() {
         document.querySelectorAll('[data-lucide]').forEach((target) => {
           if (target.querySelector('svg')) return;
@@ -1033,15 +1122,11 @@ export function renderStudioHtml(): string {
 
       function setDrawer(name, open) {
         const className = name === 'rail' ? 'rail-open' : 'inspector-open';
+        const wasOpen = document.body.classList.contains(className);
         document.body.classList.toggle(className, open);
         const button = document.getElementById(name + '-toggle');
         if (button) button.setAttribute('aria-pressed', open ? 'true' : 'false');
-        if (session) {
-          requestAnimationFrame(() => {
-            renderNodes();
-            renderEdges();
-          });
-        }
+        return wasOpen !== open;
       }
 
       function toggleDrawer(name) {
@@ -1064,7 +1149,9 @@ export function renderStudioHtml(): string {
       }
 
       async function loadSession() {
-        session = await requestJson('/api/sessions/' + encodeURIComponent(sessionId));
+        const next = await requestJson('/api/sessions/' + encodeURIComponent(sessionId));
+        if (session && next.updatedAt === session.updatedAt) return;
+        session = next;
         render();
       }
 
@@ -1192,6 +1279,33 @@ export function renderStudioHtml(): string {
         });
       }
 
+      function findNodeElement(nodeId) {
+        return [...document.querySelectorAll('.node')].find((element) => element.dataset.nodeId === nodeId) ?? null;
+      }
+
+      function paintDraggingNode() {
+        if (!dragging?.moved) return;
+        const element = findNodeElement(dragging.node.id);
+        if (!element) {
+          renderNodes();
+          renderEdges();
+          return;
+        }
+        const layout = nodeLayout(dragging.node);
+        element.style.left = layout.x + 'px';
+        element.style.top = layout.y + 'px';
+        element.classList.add('dragging', 'selected');
+        renderEdges();
+      }
+
+      function scheduleDragPaint() {
+        if (dragFrame) return;
+        dragFrame = requestAnimationFrame(() => {
+          dragFrame = null;
+          paintDraggingNode();
+        });
+      }
+
       function renderEdges() {
         const svg = document.getElementById('canvas');
         const canvasRect = svg.getBoundingClientRect();
@@ -1227,10 +1341,11 @@ export function renderStudioHtml(): string {
         layer.innerHTML = session.canvas.nodes
           .map((node) => {
             const selected = node.id === selectedNodeId ? ' selected' : '';
+            const dragClass = dragging?.node.id === node.id && dragging.moved ? ' dragging' : '';
             const layout = nodeLayout(node, frame);
             const owner = node.owner || node.createdBy || 'agent';
             const note = node.notes || node.evidence || 'Boundary and evidence can be added here.';
-            return '<div class="node kind-' + esc(node.kind) + ' status-' + esc(node.status) + selected + '" data-node-id="' + esc(node.id) + '" style="left: ' + layout.x + 'px; top: ' + layout.y + 'px; --node-width: ' + layout.width + 'px;">' +
+            return '<div class="node kind-' + esc(node.kind) + ' status-' + esc(node.status) + selected + dragClass + '" data-node-id="' + esc(node.id) + '" style="left: ' + layout.x + 'px; top: ' + layout.y + 'px; --node-width: ' + layout.width + 'px;">' +
               '<div class="node-card">' +
               '<div class="node-topline"><span class="node-kind-chip">' + icon(kindIcon[node.kind]) + '<span>' + esc(formatKind(node.kind)) + '</span></span><span class="node-status ' + esc(node.status) + '">' + esc(node.status) + '</span></div>' +
               '<div class="node-title">' + esc(node.label) + '</div>' +
@@ -1248,10 +1363,21 @@ export function renderStudioHtml(): string {
             const node = session.canvas.nodes.find((item) => item.id === element.dataset.nodeId);
             if (!node) return;
             event.preventDefault();
+            element.setPointerCapture?.(event.pointerId);
             selectedNodeId = node.id;
-            dragging = { node, startX: event.clientX, startY: event.clientY, originalX: node.x, originalY: node.y, frame: canvasFrame() };
-            setDrawer('inspector', true);
-            render();
+            dragging = {
+              node,
+              pointerId: event.pointerId,
+              startX: event.clientX,
+              startY: event.clientY,
+              originalX: node.x,
+              originalY: node.y,
+              frame: canvasFrame(),
+              moved: false
+            };
+            layer.querySelectorAll('.node.selected').forEach((item) => item.classList.remove('selected'));
+            element.classList.add('selected');
+            renderInspector();
           });
         });
       }
@@ -1331,7 +1457,7 @@ export function renderStudioHtml(): string {
       function renderMeta() {
         const queuedCount = session.suggestions.filter((item) => item.status === 'queued').length;
         const counts = session.canvas.nodes.length + ' nodes / ' + session.canvas.edges.length + ' edges';
-        document.getElementById('session-title').textContent = session.client + ' / ' + session.workflow;
+        document.getElementById('session-title').textContent = formatSessionClient(session.client) + ' / ' + session.workflow;
         document.getElementById('canvas-counts').textContent = counts;
         document.getElementById('canvas-summary').textContent = counts;
         document.getElementById('suggestion-count').textContent = queuedCount + ' queued';
@@ -1360,22 +1486,38 @@ export function renderStudioHtml(): string {
       document.getElementById('inspector-toggle').addEventListener('click', () => {
         toggleDrawer('inspector');
       });
+      document.querySelectorAll('[data-close-drawer]').forEach((button) => {
+        button.addEventListener('click', () => {
+          setDrawer(button.dataset.closeDrawer, false);
+        });
+      });
 
       window.addEventListener('pointermove', (event) => {
         if (!dragging) return;
         const scale = dragging.frame.scale || 1;
         const dx = (event.clientX - dragging.startX) / scale;
         const dy = (event.clientY - dragging.startY) / scale;
+        if (!dragging.moved && Math.hypot(event.clientX - dragging.startX, event.clientY - dragging.startY) < 6) return;
+        dragging.moved = true;
         dragging.node.x = Math.round(dragging.originalX + dx);
         dragging.node.y = Math.round(dragging.originalY + dy);
-        renderNodes();
-        renderEdges();
+        scheduleDragPaint();
       });
 
       function finishDrag() {
         if (!dragging) return;
+        if (dragFrame) {
+          cancelAnimationFrame(dragFrame);
+          dragFrame = null;
+          paintDraggingNode();
+        }
         const node = dragging.node;
+        const moved = dragging.moved;
         dragging = null;
+        if (!moved) {
+          setDrawer('inspector', true);
+          return;
+        }
         clearTimeout(saveTimer);
         saveTimer = setTimeout(async () => {
           session = await requestJson('/api/sessions/' + encodeURIComponent(sessionId) + '/nodes/' + encodeURIComponent(node.id), {
