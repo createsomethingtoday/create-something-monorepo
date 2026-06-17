@@ -1,7 +1,12 @@
 import {
   CAPABILITIES_OPTIONS,
   DEFAULT_AIRTABLE_BASE_ID,
+  DEFAULT_GOVERNANCE_FINDINGS_TABLE_ID,
   FIELD_IDS,
+  GOVERNANCE_FINDING_FIELD_NAMES,
+  type GovernanceFindingCategory,
+  type GovernanceFindingPriority,
+  type GovernanceFindingStatus,
   MARKETPLACE_STATUS_OPTIONS,
   REJECTION_REASON_OPTIONS,
   REVIEW_STATUS_OPTIONS,
@@ -216,6 +221,65 @@ export interface AppReviewContext {
   version: AppReviewVersion;
 }
 
+export interface AppReviewGovernanceFinding {
+  findingId: string;
+  title: string;
+  status?: GovernanceFindingStatus | string;
+  priority?: GovernanceFindingPriority | string;
+  category?: GovernanceFindingCategory | string;
+  summary?: string;
+  evidence?: string;
+  recommendation?: string;
+  decisionNeeded?: boolean;
+  nextAction?: string;
+  owner?: string;
+  appName?: string;
+  appId?: string;
+  assetIds?: string[];
+  versionIds?: string[];
+  sourceUrl?: string;
+  linkedUrls?: string[];
+  reporter?: string;
+  createdByAgent?: string;
+  createdTime?: string;
+}
+
+export interface GovernanceFindingWriteInput {
+  title?: string;
+  status?: GovernanceFindingStatus;
+  priority?: GovernanceFindingPriority;
+  category?: GovernanceFindingCategory;
+  summary?: string;
+  evidence?: string;
+  recommendation?: string;
+  decision_needed?: boolean;
+  next_action?: string;
+  owner?: string;
+  app_name?: string;
+  app_id?: string;
+  asset_id?: string;
+  version_id?: string;
+  source_url?: string;
+  linked_urls?: string[];
+  reporter?: string;
+  created_by_agent?: string;
+}
+
+export interface GovernanceFindingCreateInput extends GovernanceFindingWriteInput {
+  title: string;
+  category: GovernanceFindingCategory;
+  summary: string;
+}
+
+export interface GovernanceFindingQuery {
+  limit?: number;
+  status?: GovernanceFindingStatus;
+  category?: GovernanceFindingCategory;
+  priority?: GovernanceFindingPriority;
+  decisionNeeded?: boolean;
+  search?: string;
+}
+
 export interface VersionReviewUpdateInput {
   review_status?: string;
   review_type?: string;
@@ -232,6 +296,8 @@ export interface AssetMetadataUpdateInput {
 export interface AirtableClientOptions {
   apiKey: string;
   baseId?: string;
+  governanceBaseId?: string;
+  governanceFindingsTableId?: string;
   fetchFn?: FetchFn;
   sleepFn?: SleepFn;
   maxRetries?: number;
@@ -286,6 +352,16 @@ function toStringArray(value: unknown): string[] {
   return [];
 }
 
+function toLinkedUrlArray(value: unknown): string[] {
+  if (typeof value === 'string') {
+    return value
+      .split(/\r?\n/)
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+  return toStringArray(value);
+}
+
 function firstString(value: unknown): string | undefined {
   if (Array.isArray(value) && value.length > 0) {
     return firstString(value[0]);
@@ -328,6 +404,16 @@ function toDateTimeOrThrow(value: string): string {
     throw new AirtableClientError('INVALID_DATETIME', `Invalid datetime: ${value}`);
   }
   return new Date(parsed).toISOString();
+}
+
+function toBooleanValue(value: unknown): boolean | undefined {
+  if (typeof value === 'boolean') return value;
+  if (typeof value === 'number') return value !== 0;
+  if (typeof value === 'string') {
+    if (/^(true|yes|1)$/i.test(value)) return true;
+    if (/^(false|no|0)$/i.test(value)) return false;
+  }
+  return undefined;
 }
 
 function mapQueueRecord(record: AirtableRecord): AppReviewQueueItem {
@@ -396,6 +482,84 @@ function mapVersionRecord(record: AirtableRecord): AppReviewVersion {
     daysInCurrentStage: toNumberValue(fields[FIELD_IDS.versions.daysInCurrentStage]),
     createdTime: record.createdTime,
   };
+}
+
+function mapGovernanceFindingRecord(record: AirtableRecord): AppReviewGovernanceFinding {
+  const fields = record.fields;
+  return {
+    findingId: record.id,
+    title: firstString(fields[GOVERNANCE_FINDING_FIELD_NAMES.title]) ?? '',
+    status: firstString(fields[GOVERNANCE_FINDING_FIELD_NAMES.status]),
+    priority: firstString(fields[GOVERNANCE_FINDING_FIELD_NAMES.priority]),
+    category: firstString(fields[GOVERNANCE_FINDING_FIELD_NAMES.category]),
+    summary: firstString(fields[GOVERNANCE_FINDING_FIELD_NAMES.summary]),
+    evidence: firstString(fields[GOVERNANCE_FINDING_FIELD_NAMES.evidence]),
+    recommendation: firstString(fields[GOVERNANCE_FINDING_FIELD_NAMES.recommendation]),
+    decisionNeeded: toBooleanValue(fields[GOVERNANCE_FINDING_FIELD_NAMES.decisionNeeded]),
+    nextAction: firstString(fields[GOVERNANCE_FINDING_FIELD_NAMES.nextAction]),
+    owner: firstString(fields[GOVERNANCE_FINDING_FIELD_NAMES.owner]),
+    appName: firstString(fields[GOVERNANCE_FINDING_FIELD_NAMES.appName]),
+    appId: firstString(fields[GOVERNANCE_FINDING_FIELD_NAMES.appId]),
+    assetIds: toStringArray(fields[GOVERNANCE_FINDING_FIELD_NAMES.asset]),
+    versionIds: toStringArray(fields[GOVERNANCE_FINDING_FIELD_NAMES.assetVersion]),
+    sourceUrl: firstString(fields[GOVERNANCE_FINDING_FIELD_NAMES.sourceUrl]),
+    linkedUrls: toLinkedUrlArray(fields[GOVERNANCE_FINDING_FIELD_NAMES.linkedUrls]),
+    reporter: firstString(fields[GOVERNANCE_FINDING_FIELD_NAMES.reporter]),
+    createdByAgent: firstString(fields[GOVERNANCE_FINDING_FIELD_NAMES.createdByAgent]),
+    createdTime: record.createdTime,
+  };
+}
+
+function normalizeString(value: string | undefined): string | undefined {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : undefined;
+}
+
+function normalizeLinkedUrls(values: string[] | undefined): string | undefined {
+  if (!values) return undefined;
+  const urls = [...new Set(values.map((value) => value.trim()).filter(Boolean))];
+  return urls.length > 0 ? urls.join('\n') : undefined;
+}
+
+function buildGovernanceFindingFields(input: GovernanceFindingWriteInput): Record<string, unknown> {
+  const fields: Record<string, unknown> = {};
+
+  function setString(key: keyof typeof GOVERNANCE_FINDING_FIELD_NAMES, value: string | undefined) {
+    const normalized = normalizeString(value);
+    if (normalized !== undefined) fields[GOVERNANCE_FINDING_FIELD_NAMES[key]] = normalized;
+  }
+
+  setString('title', input.title);
+  setString('status', input.status);
+  setString('priority', input.priority);
+  setString('category', input.category);
+  setString('summary', input.summary);
+  setString('evidence', input.evidence);
+  setString('recommendation', input.recommendation);
+  setString('nextAction', input.next_action);
+  setString('owner', input.owner);
+  setString('appName', input.app_name);
+  setString('appId', input.app_id);
+  setString('sourceUrl', input.source_url);
+  setString('reporter', input.reporter);
+  setString('createdByAgent', input.created_by_agent);
+
+  if (input.decision_needed !== undefined) {
+    fields[GOVERNANCE_FINDING_FIELD_NAMES.decisionNeeded] = input.decision_needed;
+  }
+  if (input.asset_id) {
+    fields[GOVERNANCE_FINDING_FIELD_NAMES.asset] = input.asset_id;
+  }
+  if (input.version_id) {
+    fields[GOVERNANCE_FINDING_FIELD_NAMES.assetVersion] = input.version_id;
+  }
+
+  const linkedUrls = normalizeLinkedUrls(input.linked_urls);
+  if (linkedUrls !== undefined) {
+    fields[GOVERNANCE_FINDING_FIELD_NAMES.linkedUrls] = linkedUrls;
+  }
+
+  return fields;
 }
 
 function normalizeQueueStatus(asset: AppReviewAsset, version?: AppReviewVersion | null): AppReviewQueueStatus | null {
@@ -500,9 +664,37 @@ export function assertScopedTable(tableId: string): asserts tableId is ScopedTab
   }
 }
 
+function buildAndFormula(clauses: string[]): string | undefined {
+  if (clauses.length === 0) return undefined;
+  if (clauses.length === 1) return clauses[0];
+  return `AND(${clauses.join(',')})`;
+}
+
+function buildGovernanceFindingFilter(query: GovernanceFindingQuery): string | undefined {
+  const clauses: string[] = [];
+  const fields = GOVERNANCE_FINDING_FIELD_NAMES;
+
+  if (query.status) clauses.push(`{${fields.status}} = '${escapeFormulaValue(query.status)}'`);
+  if (query.category) clauses.push(`{${fields.category}} = '${escapeFormulaValue(query.category)}'`);
+  if (query.priority) clauses.push(`{${fields.priority}} = '${escapeFormulaValue(query.priority)}'`);
+  if (query.decisionNeeded !== undefined) {
+    clauses.push(query.decisionNeeded ? `{${fields.decisionNeeded}} = TRUE()` : `NOT({${fields.decisionNeeded}})`);
+  }
+
+  const search = normalizeString(query.search);
+  if (search) {
+    const haystack = `{${fields.title}} & ' ' & {${fields.summary}} & ' ' & {${fields.evidence}} & ' ' & {${fields.recommendation}}`;
+    clauses.push(`SEARCH('${escapeFormulaValue(search)}', ${haystack})`);
+  }
+
+  return buildAndFormula(clauses);
+}
+
 export class AirtableClient {
   private readonly apiKey: string;
   private readonly baseId: string;
+  private readonly governanceBaseId: string;
+  private readonly governanceFindingsTableId: string;
   private readonly fetchFn: FetchFn;
   private readonly sleepFn: SleepFn;
   private readonly maxRetries: number;
@@ -510,21 +702,24 @@ export class AirtableClient {
   constructor(options: AirtableClientOptions) {
     this.apiKey = options.apiKey;
     this.baseId = options.baseId ?? DEFAULT_AIRTABLE_BASE_ID;
+    this.governanceBaseId = options.governanceBaseId ?? this.baseId;
+    this.governanceFindingsTableId = options.governanceFindingsTableId ?? DEFAULT_GOVERNANCE_FINDINGS_TABLE_ID;
     this.fetchFn = options.fetchFn ?? fetch;
     this.sleepFn = options.sleepFn ?? defaultSleep;
     this.maxRetries = options.maxRetries ?? 3;
   }
 
-  private get tableBaseUrl(): string {
-    return `https://api.airtable.com/v0/${this.baseId}`;
+  private tableBaseUrlFor(baseId: string): string {
+    return `https://api.airtable.com/v0/${baseId}`;
   }
 
   private async requestJson<T>(
     path: string,
     init: RequestInit,
     query: URLSearchParams,
+    baseId = this.baseId,
   ): Promise<T> {
-    const url = `${this.tableBaseUrl}${path}?${query.toString()}`;
+    const url = `${this.tableBaseUrlFor(baseId)}${path}?${query.toString()}`;
     for (let attempt = 0; attempt <= this.maxRetries; attempt += 1) {
       try {
         const response = await this.fetchFn(url, {
@@ -658,10 +853,100 @@ export class AirtableClient {
     return data.records[0];
   }
 
+  private async listGovernanceFindingRecords(query: GovernanceFindingQuery): Promise<AirtableRecord[]> {
+    const all: AirtableRecord[] = [];
+    let offset: string | undefined;
+
+    while (true) {
+      const params = new URLSearchParams();
+      params.set('pageSize', '100');
+      params.set('sort[0][field]', GOVERNANCE_FINDING_FIELD_NAMES.priority);
+      params.set('sort[0][direction]', 'asc');
+      params.set('sort[1][field]', GOVERNANCE_FINDING_FIELD_NAMES.title);
+      params.set('sort[1][direction]', 'asc');
+      for (const fieldName of Object.values(GOVERNANCE_FINDING_FIELD_NAMES)) {
+        params.append('fields[]', fieldName);
+      }
+      const filterByFormula = buildGovernanceFindingFilter(query);
+      if (filterByFormula) params.set('filterByFormula', filterByFormula);
+      if (offset) params.set('offset', offset);
+
+      const data = await this.requestJson<AirtableListResponse>(
+        `/${encodeURIComponent(this.governanceFindingsTableId)}`,
+        { method: 'GET' },
+        params,
+        this.governanceBaseId,
+      );
+
+      all.push(...data.records);
+      if (query.limit && all.length >= query.limit) {
+        return all.slice(0, query.limit);
+      }
+
+      if (!data.offset) return all;
+      offset = data.offset;
+    }
+  }
+
+  private async getGovernanceFindingRecord(recordId: string): Promise<AirtableRecord | null> {
+    const params = new URLSearchParams();
+    for (const fieldName of Object.values(GOVERNANCE_FINDING_FIELD_NAMES)) {
+      params.append('fields[]', fieldName);
+    }
+
+    try {
+      return await this.requestJson<AirtableSingleResponse>(
+        `/${encodeURIComponent(this.governanceFindingsTableId)}/${encodeURIComponent(recordId)}`,
+        { method: 'GET' },
+        params,
+        this.governanceBaseId,
+      );
+    } catch (error) {
+      if (error instanceof AirtableClientError && error.status === 404) return null;
+      throw error;
+    }
+  }
+
+  private async createGovernanceFindingRecord(fields: Record<string, unknown>): Promise<AirtableRecord> {
+    const params = new URLSearchParams();
+    params.set('typecast', 'true');
+    const payload = JSON.stringify({ records: [{ fields }] });
+    const data = await this.requestJson<AirtableListResponse>(
+      `/${encodeURIComponent(this.governanceFindingsTableId)}`,
+      { method: 'POST', body: payload },
+      params,
+      this.governanceBaseId,
+    );
+
+    if (!data.records[0]) {
+      throw new AirtableClientError('AIRTABLE_EMPTY_CREATE', 'Airtable create returned no governance finding.');
+    }
+    return data.records[0];
+  }
+
+  private async updateGovernanceFindingRecord(recordId: string, fields: Record<string, unknown>): Promise<AirtableRecord> {
+    const params = new URLSearchParams();
+    params.set('typecast', 'true');
+    const payload = JSON.stringify({ records: [{ id: recordId, fields }] });
+    const data = await this.requestJson<AirtableListResponse>(
+      `/${encodeURIComponent(this.governanceFindingsTableId)}`,
+      { method: 'PATCH', body: payload },
+      params,
+      this.governanceBaseId,
+    );
+
+    if (!data.records[0]) {
+      throw new AirtableClientError('AIRTABLE_EMPTY_UPDATE', 'Airtable update returned no governance finding.');
+    }
+    return data.records[0];
+  }
+
   async healthCheck(): Promise<{
     ok: boolean;
     baseId: string;
     scopedTables: typeof TABLE_IDS;
+    governanceBaseId: string;
+    governanceFindingsTable: string;
     sampleAssetsRead: number;
   }> {
     const records = await this.listRecords({
@@ -673,8 +958,62 @@ export class AirtableClient {
       ok: true,
       baseId: this.baseId,
       scopedTables: TABLE_IDS,
+      governanceBaseId: this.governanceBaseId,
+      governanceFindingsTable: this.governanceFindingsTableId,
       sampleAssetsRead: records.length,
     };
+  }
+
+  async createGovernanceFinding(input: GovernanceFindingCreateInput): Promise<AppReviewGovernanceFinding> {
+    const fields = buildGovernanceFindingFields(input);
+    if (!fields[GOVERNANCE_FINDING_FIELD_NAMES.status]) {
+      fields[GOVERNANCE_FINDING_FIELD_NAMES.status] = 'New';
+    }
+    if (!fields[GOVERNANCE_FINDING_FIELD_NAMES.priority]) {
+      fields[GOVERNANCE_FINDING_FIELD_NAMES.priority] = 'P2';
+    }
+    if (fields[GOVERNANCE_FINDING_FIELD_NAMES.decisionNeeded] === undefined) {
+      fields[GOVERNANCE_FINDING_FIELD_NAMES.decisionNeeded] = false;
+    }
+
+    if (!fields[GOVERNANCE_FINDING_FIELD_NAMES.title]) {
+      throw new AirtableClientError('INVALID_GOVERNANCE_FINDING', 'Governance finding title is required.', 400);
+    }
+    if (!fields[GOVERNANCE_FINDING_FIELD_NAMES.summary]) {
+      throw new AirtableClientError('INVALID_GOVERNANCE_FINDING', 'Governance finding summary is required.', 400);
+    }
+    if (!fields[GOVERNANCE_FINDING_FIELD_NAMES.category]) {
+      throw new AirtableClientError('INVALID_GOVERNANCE_FINDING', 'Governance finding category is required.', 400);
+    }
+
+    return mapGovernanceFindingRecord(await this.createGovernanceFindingRecord(fields));
+  }
+
+  async listGovernanceFindings(query: GovernanceFindingQuery = {}): Promise<AppReviewGovernanceFinding[]> {
+    const limit = query.limit ?? 100;
+    const records = await this.listGovernanceFindingRecords({ ...query, limit });
+    return records.map((record) => mapGovernanceFindingRecord(record));
+  }
+
+  async getGovernanceFinding(findingId: string): Promise<AppReviewGovernanceFinding | null> {
+    const record = await this.getGovernanceFindingRecord(findingId);
+    return record ? mapGovernanceFindingRecord(record) : null;
+  }
+
+  async updateGovernanceFinding(
+    findingId: string,
+    input: GovernanceFindingWriteInput,
+  ): Promise<AppReviewGovernanceFinding> {
+    const fields = buildGovernanceFindingFields(input);
+    if (Object.keys(fields).length === 0) {
+      throw new AirtableClientError(
+        'NO_MUTATION_FIELDS',
+        'No governance finding fields were provided for update.',
+        400,
+      );
+    }
+
+    return mapGovernanceFindingRecord(await this.updateGovernanceFindingRecord(findingId, fields));
   }
 
   async listAssetQueue(limit?: number): Promise<AppReviewQueueItem[]> {

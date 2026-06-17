@@ -4,7 +4,7 @@ import { enableTelemetry } from '@create-something/mcp-core';
 
 import { misconfiguredResponse, validateBearerToken } from '../src/auth.js';
 import { AirtableClient } from '../src/airtable.js';
-import { DEFAULT_AIRTABLE_BASE_ID } from '../src/schema.js';
+import { DEFAULT_AIRTABLE_BASE_ID, DEFAULT_GOVERNANCE_FINDINGS_TABLE_ID } from '../src/schema.js';
 import { registerPrompts } from '../src/prompts.js';
 import { parseReviewerDirectory, getReviewerProfileForAccount } from '../src/reviewer-directory.js';
 import { registerResources } from '../src/resources.js';
@@ -17,6 +17,8 @@ interface Env {
   MCP_API_KEY?: string;
   AIRTABLE_API_KEY?: string;
   AIRTABLE_BASE_ID?: string;
+  AIRTABLE_GOVERNANCE_BASE_ID?: string;
+  AIRTABLE_GOVERNANCE_FINDINGS_TABLE_ID?: string;
   REVIEWER_DIRECTORY_JSON?: string;
 }
 
@@ -54,6 +56,8 @@ export class WebflowAppReviewMCP extends McpAgent<Env, unknown, RequestProps> {
       return new AirtableClient({
         apiKey: this.env.AIRTABLE_API_KEY,
         baseId: this.env.AIRTABLE_BASE_ID ?? DEFAULT_AIRTABLE_BASE_ID,
+        governanceBaseId: this.env.AIRTABLE_GOVERNANCE_BASE_ID,
+        governanceFindingsTableId: this.env.AIRTABLE_GOVERNANCE_FINDINGS_TABLE_ID,
       });
     };
 
@@ -111,7 +115,7 @@ export default {
           {
             name: 'webflow-app-review-mcp',
             version: '1.0.0',
-            description: 'Webflow App Review MCP — Airtable-scoped review workflows for Assets + Asset Versions',
+            description: 'Webflow App Review MCP — Airtable-scoped review and governance tracking workflows',
             auth: {
               mode: 'Bearer required',
               configured: Boolean(env.MCP_API_KEY),
@@ -124,6 +128,8 @@ export default {
             tables: {
               assets: 'tblRwzpWoLgE9MrUm',
               assetVersions: 'tblHxZ2hgSFLZxsZu',
+              governanceBase: env.AIRTABLE_GOVERNANCE_BASE_ID ?? env.AIRTABLE_BASE_ID ?? DEFAULT_AIRTABLE_BASE_ID,
+              governanceFindings: env.AIRTABLE_GOVERNANCE_FINDINGS_TABLE_ID ?? DEFAULT_GOVERNANCE_FINDINGS_TABLE_ID,
             },
           },
           null,

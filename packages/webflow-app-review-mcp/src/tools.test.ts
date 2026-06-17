@@ -48,9 +48,70 @@ describe('registerTools', () => {
       'app_review_get_version',
       'app_review_get_field_map',
     ]);
+    expect(names).toContain('app_review_list_governance_findings');
+    expect(names).toContain('app_review_create_governance_finding');
     expect(names.indexOf('app_review_my_queue')).toBeGreaterThan(5);
     expect(names.indexOf('app_review_get_review_context')).toBeGreaterThan(5);
     expect(names.indexOf('app_review_update_version_review')).toBeGreaterThan(names.indexOf('app_review_reject_version'));
+  });
+
+  it('lists governance findings through policy-relevant filters', async () => {
+    const { server, handlers } = createServerHarness();
+    const client = {
+      listGovernanceFindings: vi.fn().mockResolvedValue([
+        { findingId: 'recFinding', title: 'Runtime loader bypass' },
+      ]),
+    } as unknown as AirtableClient;
+
+    registerTools(server, () => client, () => reviewer);
+
+    const result = await handlers.get('app_review_list_governance_findings')?.({
+      limit: 10,
+      status: 'Needs Decision',
+      category: 'Runtime Integrity & Custom Code Governance',
+      decision_needed: true,
+    });
+
+    expect(client.listGovernanceFindings).toHaveBeenCalledWith({
+      limit: 10,
+      status: 'Needs Decision',
+      category: 'Runtime Integrity & Custom Code Governance',
+      priority: undefined,
+      decisionNeeded: true,
+      search: undefined,
+    });
+    expect(parsePayload(result!).data?.count).toBe(1);
+  });
+
+  it('creates governance findings with reviewer attribution', async () => {
+    const { server, handlers } = createServerHarness();
+    const client = {
+      createGovernanceFinding: vi.fn().mockResolvedValue({
+        findingId: 'recFinding',
+        title: 'Private beta loophole',
+      }),
+    } as unknown as AirtableClient;
+
+    registerTools(server, () => client, () => reviewer);
+
+    const result = await handlers.get('app_review_create_governance_finding')?.({
+      title: 'Private beta loophole',
+      category: 'Private App & Beta-Testing Governance',
+      summary: 'Private app docs conflict with production-readiness review posture.',
+      decision_needed: true,
+    });
+
+    expect(client.createGovernanceFinding).toHaveBeenCalledWith({
+      title: 'Private beta loophole',
+      category: 'Private App & Beta-Testing Governance',
+      summary: 'Private app docs conflict with production-readiness review posture.',
+      decision_needed: true,
+      reporter: 'Pablo Miranda',
+      created_by_agent: 'webflow-app-review-mcp',
+    });
+    expect(parsePayload(result!).data?.finding).toMatchObject({
+      findingId: 'recFinding',
+    });
   });
 
   it('routes my_queue through reviewer-scoped queue filters', async () => {

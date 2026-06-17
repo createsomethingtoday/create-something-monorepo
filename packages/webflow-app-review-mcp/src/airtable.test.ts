@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { AirtableClient, AirtableClientError, assertScopedTable, type CollaboratorRef } from './airtable.js';
-import { FIELD_IDS, TABLE_IDS } from './schema.js';
+import { FIELD_IDS, GOVERNANCE_FINDING_FIELD_NAMES, TABLE_IDS } from './schema.js';
 
 function jsonResponse(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -108,6 +108,117 @@ describe('AirtableClient retry behavior', () => {
     expect(callCount).toBe(3);
     expect(sleeps.length).toBe(2);
     expect(sleeps[0]).toBeGreaterThan(0);
+  });
+});
+
+describe('AirtableClient governance findings', () => {
+  const fields = GOVERNANCE_FINDING_FIELD_NAMES;
+
+  it('creates governance findings with defaults and linked evidence fields', async () => {
+    const fetchFn = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+      const payload = JSON.parse(String(init?.body)) as {
+        records: Array<{ fields: Record<string, unknown> }>;
+      };
+      const createdFields = payload.records[0]?.fields ?? {};
+
+      return jsonResponse({
+        records: [
+          {
+            id: 'recFinding',
+            createdTime: '2026-06-17T19:00:00.000Z',
+            fields: createdFields,
+          },
+        ],
+      });
+    });
+
+    const client = new AirtableClient({
+      apiKey: 'token',
+      fetchFn,
+      governanceBaseId: 'appGovernance',
+      governanceFindingsTableId: 'tblGovernance',
+    });
+
+    const finding = await client.createGovernanceFinding({
+      title: 'Custom Code loader bypass',
+      category: 'Runtime Integrity & Custom Code Governance',
+      summary: 'Loader pattern can change runtime after review.',
+      source_url: 'https://webflow.enterprise.slack.com/archives/C0B9J3E629K/p1781200843327519',
+      linked_urls: [
+        'https://webflow2579.zendesk.com/agent/tickets/1140194',
+        'https://webflow2579.zendesk.com/agent/tickets/1140194',
+      ],
+      asset_id: 'recAsset',
+      version_id: 'recVersion',
+      decision_needed: true,
+    });
+
+    const callUrl = new URL(String(fetchFn.mock.calls[0]?.[0]));
+    const payload = JSON.parse(String(fetchFn.mock.calls[0]?.[1]?.body)) as {
+      records: Array<{ fields: Record<string, unknown> }>;
+    };
+
+    expect(callUrl.pathname).toContain('/appGovernance/tblGovernance');
+    expect(callUrl.searchParams.get('typecast')).toBe('true');
+    expect(payload.records[0]?.fields).toMatchObject({
+      [fields.title]: 'Custom Code loader bypass',
+      [fields.status]: 'New',
+      [fields.priority]: 'P2',
+      [fields.category]: 'Runtime Integrity & Custom Code Governance',
+      [fields.summary]: 'Loader pattern can change runtime after review.',
+      [fields.sourceUrl]: 'https://webflow.enterprise.slack.com/archives/C0B9J3E629K/p1781200843327519',
+      [fields.linkedUrls]: 'https://webflow2579.zendesk.com/agent/tickets/1140194',
+      [fields.asset]: 'recAsset',
+      [fields.assetVersion]: 'recVersion',
+      [fields.decisionNeeded]: true,
+    });
+    expect(finding.findingId).toBe('recFinding');
+    expect(finding.linkedUrls).toEqual(['https://webflow2579.zendesk.com/agent/tickets/1140194']);
+  });
+
+  it('lists governance findings with status/category/decision filters', async () => {
+    const fetchFn = vi.fn(async (input: RequestInfo | URL) => {
+      const url = new URL(String(input));
+      return jsonResponse({
+        records: [
+          {
+            id: 'recFinding',
+            fields: {
+              [fields.title]: 'Private app beta contradiction',
+              [fields.status]: 'Needs Decision',
+              [fields.priority]: 'P1',
+              [fields.category]: 'Private App & Beta-Testing Governance',
+              [fields.summary]: 'Docs imply same rigorous review and beta testing.',
+              [fields.decisionNeeded]: true,
+            },
+          },
+        ],
+      });
+    });
+
+    const client = new AirtableClient({
+      apiKey: 'token',
+      fetchFn,
+      governanceBaseId: 'appGovernance',
+      governanceFindingsTableId: 'tblGovernance',
+    });
+
+    const findings = await client.listGovernanceFindings({
+      status: 'Needs Decision',
+      category: 'Private App & Beta-Testing Governance',
+      decisionNeeded: true,
+      limit: 10,
+    });
+
+    const url = new URL(String(fetchFn.mock.calls[0]?.[0]));
+    expect(url.searchParams.get('filterByFormula')).toContain('Needs Decision');
+    expect(url.searchParams.get('filterByFormula')).toContain('Private App & Beta-Testing Governance');
+    expect(url.searchParams.get('filterByFormula')).toContain('TRUE()');
+    expect(findings[0]).toMatchObject({
+      findingId: 'recFinding',
+      title: 'Private app beta contradiction',
+      decisionNeeded: true,
+    });
   });
 });
 

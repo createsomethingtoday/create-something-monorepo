@@ -28,6 +28,8 @@ async function main() {
   const client = new AirtableClient({
     apiKey,
     baseId,
+    governanceBaseId: process.env.AIRTABLE_GOVERNANCE_BASE_ID,
+    governanceFindingsTableId: process.env.AIRTABLE_GOVERNANCE_FINDINGS_TABLE_ID,
   });
 
   const server = new McpServer({

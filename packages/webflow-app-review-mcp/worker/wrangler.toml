@@ -10,6 +10,8 @@ enabled = true
 # Optional default; can also be set as Worker secret/var.
 [vars]
 AIRTABLE_BASE_ID = "appMoIgXMTTTNIc3p"
+AIRTABLE_GOVERNANCE_BASE_ID = "app1Q0o9xw2Zny7gw"
+AIRTABLE_GOVERNANCE_FINDINGS_TABLE_ID = "tblIH1LQ8H3b2piNi"
 
 [[d1_databases]]
 binding = "TELEMETRY_DB"
@@ -23,4 +25,3 @@ class_name = "WebflowAppReviewMCP"
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["WebflowAppReviewMCP"]
-

@@ -121,7 +121,7 @@ export const REGISTRY_CATALOG_ENTRIES = [
     "name": "Webflow App Review",
     "slug": "webflow-app-review",
     "url": "https://webflow-app-review-mcp.createsomething.workers.dev",
-    "description": "Webflow App Review MCP for app asset and version workflows",
+    "description": "Webflow App Review MCP for app asset, version, and governance tracking workflows",
     "category": "create-something",
     "transports": [
       "http",

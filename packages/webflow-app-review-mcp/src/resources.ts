@@ -41,6 +41,43 @@ export function registerResources(server: McpServer, getClient: ClientFactory, g
   );
 
   server.resource(
+    'app-review-governance-finding-schema',
+    'app-review://governance-finding-schema',
+    {
+      description: 'Airtable schema contract for app-review governance/transparency findings.',
+      mimeType: 'application/json',
+    },
+    async (uri: URL) =>
+      asJsonResource(uri, {
+        table: APP_REVIEW_FIELD_MAP.tables.governanceFindings,
+        fields: APP_REVIEW_FIELD_MAP.governanceFindings.fieldNames,
+        writable: APP_REVIEW_FIELD_MAP.governanceFindings.writable,
+        statusOptions: {
+          category: APP_REVIEW_FIELD_MAP.statusOptions.governanceFindingCategory,
+          status: APP_REVIEW_FIELD_MAP.statusOptions.governanceFindingStatus,
+          priority: APP_REVIEW_FIELD_MAP.statusOptions.governanceFindingPriority,
+        },
+      }),
+  );
+
+  server.resource(
+    'app-review-governance-findings-snapshot',
+    'app-review://governance-findings-snapshot',
+    {
+      description: 'Current app-review governance/transparency findings snapshot.',
+      mimeType: 'application/json',
+    },
+    async (uri: URL) => {
+      const findings = await getClient().listGovernanceFindings({ limit: 100 });
+      return asJsonResource(uri, {
+        count: findings.length,
+        generatedAt: new Date().toISOString(),
+        findings,
+      });
+    },
+  );
+
+  server.resource(
     'app-review-queue-snapshot',
     'app-review://queue-snapshot',
     {
@@ -86,6 +123,8 @@ export function registerResources(server: McpServer, getClient: ClientFactory, g
           'Call app_review_get_version when a specific version record needs confirmation.',
           'Call app_review_get_review_context before any write to confirm assignment state and reviewer ownership.',
           'Use app_review_decision_support and app_review_feedback_refiner for recommendation drafting only.',
+          'Use app_review_list_governance_findings and app_review_get_governance_finding to inspect cross-app policy, docs, platform, and transparency findings.',
+          'Use app_review_governance_finding_capture, then app_review_create_governance_finding or app_review_update_governance_finding, to capture Slack/Zendesk/docs findings into the tracking hub.',
           'In write posture, assign yourself first, save draft feedback or set review status as needed, then use the narrow decision verbs for final reviewer-owned actions.',
           'Until reviewer write rollout is enabled in the Hub, complete official state changes manually in Airtable.',
         ],
@@ -100,6 +139,8 @@ export function registerResources(server: McpServer, getClient: ClientFactory, g
             'app_review_request_changes',
             'app_review_approve_version',
             'app_review_reject_version',
+            'app_review_create_governance_finding',
+            'app_review_update_governance_finding',
           ],
           blockedWriteSurface: [
             'app_review_update_version_review',
