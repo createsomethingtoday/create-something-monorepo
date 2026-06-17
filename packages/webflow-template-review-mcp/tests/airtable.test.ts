@@ -217,6 +217,8 @@ test('getAssetById maps current asset fields and compatibility aliases', async (
           [CONFIRMED_ASSET_FIELDS.descriptionLongHtml]: '<p>Long description</p>',
           [CONFIRMED_ASSET_FIELDS.adminDetailPagePath]: '/templates/html/conicorn-website-template',
           [CONFIRMED_ASSET_FIELDS.adminRecommendedType]: 'CMS',
+          [CONFIRMED_ASSET_FIELDS.categoryNames]: ['Design Portfolio', 'Creative Agency'],
+          [CONFIRMED_ASSET_FIELDS.categoryCmsSlugs]: ['design-portfolio-websites', 'creative-agency-websites'],
           [CONFIRMED_ASSET_FIELDS.categoryGroupDisplayName]: ['Portfolio & Agency'],
           [CONFIRMED_ASSET_FIELDS.categoryGroupCmsSlug]: ['portfolio-and-agency-websites'],
           [CONFIRMED_ASSET_FIELDS.latestReviewStatus]: '✅Approved',
@@ -237,6 +239,8 @@ test('getAssetById maps current asset fields and compatibility aliases', async (
   assert.equal(asset.descriptionLongHtml, '<p>Long description</p>');
   assert.equal(asset.adminDetailPagePath, '/templates/html/conicorn-website-template');
   assert.equal(asset.adminRecommendedType, 'CMS');
+  assert.deepEqual(asset.categoryNames, ['Design Portfolio', 'Creative Agency']);
+  assert.deepEqual(asset.categoryCmsSlugs, ['design-portfolio-websites', 'creative-agency-websites']);
   assert.deepEqual(asset.categoryGroupDisplayNames, ['Portfolio & Agency']);
   assert.deepEqual(asset.categoryGroupCmsSlugs, ['portfolio-and-agency-websites']);
   assert.equal(asset.latestReviewDate, '2026-03-16T18:00:00.000Z');

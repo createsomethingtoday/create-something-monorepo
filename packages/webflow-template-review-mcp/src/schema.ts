@@ -23,6 +23,8 @@ export const CONFIRMED_ASSET_FIELDS = {
   featuresHighlighted: 'ℹ️✨Features Highlighted',
   adminDetailPagePath: '🏸Admin Detail Page Path (🏗️ only)',
   adminRecommendedType: '🏸Admin Recommended Type (🏗️ only)',
+  categoryNames: 'ℹ️🪣Categories (Text)',
+  categoryCmsSlugs: '🥞CMS Slug (from ℹ️🪣Categories)',
   categoryGroupDisplayName: '🪣Category Group(s) Display Name',
   categoryGroupCmsSlug: '🪣Category Group(s) CMS Slug',
   websiteUrl: '🔗Website URL',

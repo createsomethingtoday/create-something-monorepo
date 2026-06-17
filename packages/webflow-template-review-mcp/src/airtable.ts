@@ -82,6 +82,8 @@ export interface TemplateReviewAsset extends TemplateReviewQueueItem {
   featuresHighlighted?: string;
   adminDetailPagePath?: string;
   adminRecommendedType?: string;
+  categoryNames?: string[];
+  categoryCmsSlugs?: string[];
   categoryGroupDisplayNames?: string[];
   categoryGroupCmsSlugs?: string[];
   mrpId?: string;
@@ -469,6 +471,8 @@ function mapAsset(record: AirtableRecord): TemplateReviewAsset {
     featuresHighlighted: firstString(fields[CONFIRMED_ASSET_FIELDS.featuresHighlighted]),
     adminDetailPagePath: firstString(fields[CONFIRMED_ASSET_FIELDS.adminDetailPagePath]),
     adminRecommendedType: firstString(fields[CONFIRMED_ASSET_FIELDS.adminRecommendedType]),
+    categoryNames: stringArray(fields[CONFIRMED_ASSET_FIELDS.categoryNames]),
+    categoryCmsSlugs: stringArray(fields[CONFIRMED_ASSET_FIELDS.categoryCmsSlugs]),
     categoryGroupDisplayNames: stringArray(fields[CONFIRMED_ASSET_FIELDS.categoryGroupDisplayName]),
     categoryGroupCmsSlugs: stringArray(fields[CONFIRMED_ASSET_FIELDS.categoryGroupCmsSlug]),
     mrpId: firstString(fields[CONFIRMED_ASSET_FIELDS.mrpId]),

@@ -5,6 +5,17 @@ export interface AdminTemplateFillOptions {
   includeBookmarklet?: boolean;
 }
 
+export interface AdminTemplateCreateFormFields {
+  name?: string;
+  shortName?: string;
+  description?: string;
+  extDetailPageUrl?: string;
+  extCategory?: string;
+  extMainTag?: string;
+  type?: string;
+  cost?: string;
+}
+
 export interface AdminTemplateFillFormData {
   template_name?: string;
   uid?: string;
@@ -12,10 +23,11 @@ export interface AdminTemplateFillFormData {
   recommended_type?: string;
   price_usd?: number;
   price_cents?: number;
+  category_names?: string[];
+  category_cms_slugs?: string[];
   category_display_name?: string;
   category_cms_slug?: string;
   short_description?: string;
-  long_description_html?: string;
   published_site_url?: string;
   preview_site_url?: string;
   thumbnail_image_url?: string;
@@ -23,6 +35,8 @@ export interface AdminTemplateFillFormData {
   carousel_image_urls?: string[];
   feature_names?: string[];
   features_highlighted?: string;
+  admin_form: AdminTemplateCreateFormFields;
+  admin_form_warnings?: string[];
 }
 
 export interface AdminTemplateFillBundle {
@@ -50,15 +64,34 @@ export interface AdminTemplateFillBundle {
   bookmarklet?: string;
 }
 
-const REQUIRED_FORM_FIELDS: Array<keyof AdminTemplateFillFormData> = [
-  'template_name',
-  'uid',
-  'detail_page_path',
-  'recommended_type',
-  'price_usd',
-  'category_display_name',
-  'short_description',
-  'long_description_html',
+const WEBFLOW_ADMIN_TEMPLATE_CATEGORIES = [
+  'Design',
+  'Business',
+  'Technology',
+  'Blog',
+  'Marketing',
+  'Photography & Video',
+  'Entertainment',
+  'Food & Drink',
+  'Travel',
+  'Education',
+  'Sport',
+  'Medical',
+  'Nonprofit',
+  'Beauty & Wellness',
+  'Fashion',
+  'Other',
+] as const;
+
+const REQUIRED_ADMIN_FORM_FIELDS: Array<keyof AdminTemplateCreateFormFields> = [
+  'name',
+  'shortName',
+  'description',
+  'extDetailPageUrl',
+  'extCategory',
+  'extMainTag',
+  'type',
+  'cost',
 ];
 
 function firstValue(values: string[] | undefined): string | undefined {
@@ -75,9 +108,112 @@ function priceUsd(context: TemplateReviewContext): number | undefined {
   return Number.isFinite(parsed) ? parsed : undefined;
 }
 
+function normalize(value: string | undefined): string {
+  return String(value ?? '')
+    .toLowerCase()
+    .replace(/&/g, ' and ')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+
+function titleCase(value: string): string {
+  return value
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((word) => `${word.slice(0, 1).toUpperCase()}${word.slice(1).toLowerCase()}`)
+    .join(' ');
+}
+
+function uniqueStrings(values: Array<string | undefined>): string[] {
+  return Array.from(new Set(values.map((value) => value?.trim()).filter((value): value is string => Boolean(value))));
+}
+
+function deriveAdminCategory(categoryNames: string[], categoryGroupNames: string[], categorySlugs: string[]): string | undefined {
+  const candidates = [...categoryNames, ...categoryGroupNames, ...categorySlugs];
+  for (const candidate of candidates) {
+    const normalizedCandidate = normalize(candidate);
+    const exact = WEBFLOW_ADMIN_TEMPLATE_CATEGORIES.find((category) => normalize(category) === normalizedCandidate);
+    if (exact) return exact;
+  }
+
+  for (const candidate of candidates) {
+    const normalizedCandidate = normalize(candidate);
+    const prefix = WEBFLOW_ADMIN_TEMPLATE_CATEGORIES.find((category) => normalizedCandidate.startsWith(`${normalize(category)} `));
+    if (prefix) return prefix;
+  }
+
+  const combined = normalize(candidates.join(' '));
+  if (/\b(portfolio|agency|creative|design)\b/.test(combined)) return 'Design';
+  if (/\b(ecommerce|startup|business|finance|accounting|consulting|retail|real estate|saas)\b/.test(combined)) return 'Business';
+  if (/\b(technology|software|app|ai|it)\b/.test(combined)) return 'Technology';
+  if (/\b(blog|magazine|news)\b/.test(combined)) return 'Blog';
+  if (/\b(marketing|landing page)\b/.test(combined)) return 'Marketing';
+  if (/\b(photo|photography|video)\b/.test(combined)) return 'Photography & Video';
+  if (/\b(food|drink|restaurant)\b/.test(combined)) return 'Food & Drink';
+  if (/\b(beauty|wellness)\b/.test(combined)) return 'Beauty & Wellness';
+  return 'Other';
+}
+
+function tagFromCategoryName(value: string): string | undefined {
+  const normalizedValue = normalize(value);
+  if (!normalizedValue) return undefined;
+  if (/\bagency\b/.test(normalizedValue)) return 'Agency';
+  if (/\bportfolio\b/.test(normalizedValue)) return 'Portfolio';
+
+  for (const category of WEBFLOW_ADMIN_TEMPLATE_CATEGORIES) {
+    const normalizedCategory = normalize(category);
+    if (normalizedValue.startsWith(`${normalizedCategory} `)) {
+      const suffix = normalizedValue.slice(normalizedCategory.length).trim();
+      return suffix ? titleCase(suffix) : undefined;
+    }
+  }
+
+  return titleCase(normalizedValue.replace(/\b(websites?|templates?)\b/g, '').trim());
+}
+
+function tagFromCategorySlug(value: string): string | undefined {
+  const withoutSuffix = value.replace(/-?websites?$/i, '').replace(/-?templates?$/i, '').replace(/-/g, ' ');
+  return tagFromCategoryName(withoutSuffix);
+}
+
+function derivePrimaryTag(categoryNames: string[], categorySlugs: string[], categoryGroupNames: string[]): string | undefined {
+  const candidates = uniqueStrings([
+    ...categoryNames.map(tagFromCategoryName),
+    ...categorySlugs.map(tagFromCategorySlug),
+    ...categoryGroupNames.map(tagFromCategoryName),
+  ]);
+  return candidates.find((candidate) => normalize(candidate) === 'agency') ?? candidates[0];
+}
+
+function normalizeAdminTemplateType(value: string | undefined): string | undefined {
+  const normalizedValue = normalize(value);
+  if (!normalizedValue) return undefined;
+  if (normalizedValue.includes('ecommerce')) return 'Ecommerce';
+  if (normalizedValue.includes('cms')) return 'CMS';
+  if (normalizedValue.includes('membership')) return 'Memberships';
+  return 'basic';
+}
+
+function adminDescription(value: string | undefined): { value?: string; warning?: string } {
+  if (!value) return {};
+  if (value.length <= 250) return { value };
+  return {
+    value: `${value.slice(0, 247).trimEnd()}...`,
+    warning: 'Short description exceeded the Webflow Admin 250 character limit and was truncated in admin_form.description.',
+  };
+}
+
 function buildFormData(context: TemplateReviewContext): AdminTemplateFillFormData {
   const asset = context.asset;
   const price = priceUsd(context);
+  const categoryNames = asset?.categoryNames ?? [];
+  const categoryCmsSlugs = asset?.categoryCmsSlugs ?? [];
+  const categoryGroupDisplayNames = asset?.categoryGroupDisplayNames ?? [];
+  const adminCategory = deriveAdminCategory(categoryNames, categoryGroupDisplayNames, categoryCmsSlugs);
+  const primaryTag = derivePrimaryTag(categoryNames, categoryCmsSlugs, categoryGroupDisplayNames);
+  const normalizedType = normalizeAdminTemplateType(asset?.adminRecommendedType);
+  const description = adminDescription(asset?.descriptionShort);
+  const priceCents = price === undefined ? undefined : Math.round(price * 100);
   return {
     template_name: asset?.templateName || context.templateName,
     uid: asset?.uid,
@@ -87,12 +223,13 @@ function buildFormData(context: TemplateReviewContext): AdminTemplateFillFormDat
       ? {}
       : {
           price_usd: price,
-          price_cents: Math.round(price * 100),
+          price_cents: priceCents,
         }),
+    category_names: categoryNames,
+    category_cms_slugs: categoryCmsSlugs,
     category_display_name: firstValue(asset?.categoryGroupDisplayNames),
     category_cms_slug: firstValue(asset?.categoryGroupCmsSlugs),
     short_description: asset?.descriptionShort,
-    long_description_html: asset?.descriptionLongHtml,
     published_site_url: asset?.websiteUrl,
     preview_site_url: asset?.previewSiteUrl,
     thumbnail_image_url: asset?.thumbnailImageUrl,
@@ -100,29 +237,40 @@ function buildFormData(context: TemplateReviewContext): AdminTemplateFillFormDat
     carousel_image_urls: asset?.carouselImageUrls ?? [],
     feature_names: asset?.features?.map((feature) => feature.name).filter(Boolean),
     features_highlighted: asset?.featuresHighlighted,
+    admin_form: {
+      name: asset?.templateName || context.templateName,
+      shortName: asset?.uid,
+      description: description.value,
+      extDetailPageUrl: asset?.adminDetailPagePath,
+      extCategory: adminCategory,
+      extMainTag: primaryTag,
+      type: normalizedType,
+      cost: priceCents === undefined ? undefined : String(priceCents),
+    },
+    ...(description.warning ? { admin_form_warnings: [description.warning] } : {}),
   };
 }
 
 function missingFields(formData: AdminTemplateFillFormData): string[] {
-  return REQUIRED_FORM_FIELDS.filter((field) => {
-    const value = formData[field];
+  return REQUIRED_ADMIN_FORM_FIELDS.filter((field) => {
+    const value = formData.admin_form[field];
     if (value === undefined || value === null) return true;
     if (typeof value === 'string') return value.trim().length === 0;
     return false;
-  });
+  }).map((field) => `admin_form.${field}`);
 }
 
 function compactForConsole(formData: AdminTemplateFillFormData): Record<string, string> {
+  const adminForm = formData.admin_form;
   return {
-    template_name: formData.template_name ?? '',
-    uid: formData.uid ?? '',
-    detail_page_path: formData.detail_page_path ?? '',
-    recommended_type: formData.recommended_type ?? '',
-    price_usd: formData.price_usd === undefined ? '' : String(formData.price_usd),
-    category_display_name: formData.category_display_name ?? '',
-    category_cms_slug: formData.category_cms_slug ?? '',
-    short_description: formData.short_description ?? '',
-    long_description_html: formData.long_description_html ?? '',
+    name: adminForm.name ?? '',
+    shortName: adminForm.shortName ?? '',
+    description: adminForm.description ?? '',
+    extDetailPageUrl: adminForm.extDetailPageUrl ?? '',
+    extCategory: adminForm.extCategory ?? '',
+    extMainTag: adminForm.extMainTag ?? '',
+    type: adminForm.type ?? '',
+    cost: adminForm.cost ?? '',
   };
 }
 
@@ -131,61 +279,34 @@ export function buildAdminTemplateFillConsoleScript(formData: AdminTemplateFillF
   return `(() => {
   const data = ${data};
   const mappings = [
-    { key: 'template_name', labels: ['Template name', 'Template Name', 'Name'] },
-    { key: 'uid', labels: ['UID', 'Slug'] },
-    { key: 'detail_page_path', labels: ['Detail Page Path', 'Template URL', 'Path'] },
-    { key: 'recommended_type', labels: ['Recommended Type', 'Type'] },
-    { key: 'price_usd', labels: ['Price', 'Template Price'] },
-    { key: 'category_display_name', labels: ['Category', 'Category Group'] },
-    { key: 'category_cms_slug', labels: ['Category Slug', 'CMS Slug'] },
-    { key: 'short_description', labels: ['Short Description', 'Description Short'] },
-    { key: 'long_description_html', labels: ['Long Description', 'Description Long', 'HTML'] },
+    ['name', data.name],
+    ['shortName', data.shortName],
+    ['description', data.description],
+    ['extDetailPageUrl', data.extDetailPageUrl],
+    ['extCategory', data.extCategory],
+    ['extMainTag', data.extMainTag],
+    ['type', data.type],
+    ['cost', data.cost],
   ];
   const normalize = (value) => String(value || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
-  const controls = () => Array.from(document.querySelectorAll('input, textarea, select, [contenteditable="true"]'));
+  const createTemplateForm = () =>
+    document.querySelector('form[action="/admin/templates"]') ||
+    Array.from(document.querySelectorAll('form')).find((form) => form.querySelector('[name="name"]') && form.querySelector('[name="shortName"]') && form.querySelector('[name="extDetailPageUrl"]'));
   const setNativeValue = (element, value) => {
     const descriptor = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(element), 'value');
     if (descriptor && typeof descriptor.set === 'function') descriptor.set.call(element, value);
     else element.value = value;
   };
-  const findForLabels = (labels) => {
-    const needles = labels.map(normalize).filter(Boolean);
-    for (const label of Array.from(document.querySelectorAll('label'))) {
-      const text = normalize(label.textContent);
-      if (!needles.some((needle) => text.includes(needle))) continue;
-      if (label.htmlFor) {
-        const byId = document.getElementById(label.htmlFor);
-        if (byId) return byId;
-      }
-      const nested = label.querySelector('input, textarea, select, [contenteditable="true"]');
-      if (nested) return nested;
-      const row = label.closest('div, li, section, fieldset');
-      const inRow = row?.querySelector('input, textarea, select, [contenteditable="true"]');
-      if (inRow) return inRow;
-    }
-    return controls().find((control) => {
-      const haystack = normalize([
-        control.getAttribute('name'),
-        control.getAttribute('aria-label'),
-        control.getAttribute('placeholder'),
-        control.id,
-      ].filter(Boolean).join(' '));
-      return needles.some((needle) => haystack.includes(needle));
-    });
-  };
-  const setControl = (element, value, key) => {
+  const setControl = (element, value) => {
     if (!element || !value) return false;
     if (element instanceof HTMLSelectElement) {
       const normalizedValue = normalize(value);
       const option = Array.from(element.options).find((candidate) => {
         const optionText = normalize(candidate.textContent || candidate.value);
-        return optionText === normalizedValue || optionText.includes(normalizedValue) || normalizedValue.includes(optionText);
+        return normalize(candidate.value) === normalizedValue || optionText === normalizedValue;
       });
       if (option) element.value = option.value;
       else return false;
-    } else if (element.isContentEditable) {
-      if (/html/i.test(key)) element.innerHTML = value;
-      else element.textContent = value;
     } else {
       setNativeValue(element, value);
     }
@@ -193,12 +314,21 @@ export function buildAdminTemplateFillConsoleScript(formData: AdminTemplateFillF
     element.dispatchEvent(new Event('change', { bubbles: true }));
     return true;
   };
-  const report = mappings.map((mapping) => {
-    const value = data[mapping.key];
-    const element = findForLabels(mapping.labels);
-    return { field: mapping.key, found: Boolean(element), filled: setControl(element, value, mapping.key) };
+  const form = createTemplateForm();
+  const report = mappings.map(([name, value]) => {
+    const element = form?.querySelector(\`[name="\${name}"]\`) || document.querySelector(\`form[action="/admin/templates"] [name="\${name}"]\`);
+    const filled = setControl(element, value);
+    return {
+      field: name,
+      selector: \`form[action="/admin/templates"] [name="\${name}"]\`,
+      expected: value,
+      found: Boolean(element),
+      filled,
+      actual: element && 'value' in element ? element.value : undefined,
+    };
   });
   console.table(report);
+  if (!form) console.error('Template Review Admin fill helper: could not find the create-template form at /admin/templates.');
   console.warn('Template Review Admin fill helper: fill-only script. It does not submit the form, create an MRP, or write Airtable. Review all fields manually before taking any Admin action.');
 })();`;
 }

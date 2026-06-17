@@ -3,6 +3,7 @@ import test from 'node:test';
 
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 
+import { buildAdminTemplateFillConsoleScript } from '../src/admin-template-fill.js';
 import type { AirtableClient } from '../src/airtable.js';
 import { RUBRIC_DIMENSIONS } from '../src/comprehensive-review-contract.js';
 import type { ReviewerProfile } from '../src/reviewer-directory.js';
@@ -210,6 +211,8 @@ function adminFillContext(versionId = 'rec_version_komanica') {
       featuresHighlighted: 'Includes GSAP',
       adminDetailPagePath: '/templates/html/komanica-website-template',
       adminRecommendedType: 'CMS',
+      categoryNames: ['Design Portfolio', 'Creative Agency'],
+      categoryCmsSlugs: ['design-portfolio-websites', 'creative-agency-websites'],
       categoryGroupDisplayNames: ['Portfolio & Agency'],
       categoryGroupCmsSlugs: ['portfolio-and-agency-websites'],
       templatePriceFilter: 99,
@@ -221,6 +224,88 @@ function adminFillContext(versionId = 'rec_version_komanica') {
       carouselImageUrls: ['https://example.com/carousel-1.png'],
     },
   };
+}
+
+function runAdminFillScriptAgainstFakeForm(script: string) {
+  class FakeInput {
+    value = '';
+
+    constructor(readonly name: string) {}
+
+    dispatchEvent() {}
+  }
+
+  class FakeSelect extends FakeInput {
+    constructor(
+      name: string,
+      readonly options: Array<{ value: string; textContent: string }>,
+    ) {
+      super(name);
+    }
+  }
+
+  const fields: Record<string, FakeInput> = {
+    name: new FakeInput('name'),
+    shortName: new FakeInput('shortName'),
+    description: new FakeInput('description'),
+    extDetailPageUrl: new FakeInput('extDetailPageUrl'),
+    extCategory: new FakeSelect('extCategory', [
+      { value: '', textContent: '' },
+      { value: 'Design', textContent: 'Design' },
+      { value: 'Business', textContent: 'Business' },
+    ]),
+    extMainTag: new FakeInput('extMainTag'),
+    type: new FakeSelect('type', [
+      { value: 'basic', textContent: 'basic' },
+      { value: 'Ecommerce', textContent: 'Ecommerce' },
+      { value: 'CMS', textContent: 'CMS' },
+      { value: 'Memberships', textContent: 'Memberships' },
+    ]),
+    cost: new FakeInput('cost'),
+  };
+  const form = {
+    querySelector: (selector: string) => {
+      const name = selector.match(/\[name="([^"]+)"\]/)?.[1];
+      return name ? fields[name] : null;
+    },
+  };
+  const fakeDocument = {
+    querySelector: (selector: string) => {
+      if (selector === 'form[action="/admin/templates"]') return form;
+      if (selector.startsWith('form[action="/admin/templates"]')) return form.querySelector(selector);
+      return null;
+    },
+    querySelectorAll: (selector: string) => (selector === 'form' ? [form] : []),
+  };
+  const globalWithDom = globalThis as typeof globalThis & {
+    document?: unknown;
+    HTMLSelectElement?: unknown;
+    Event?: unknown;
+  };
+  const previousDocument = globalWithDom.document;
+  const previousSelect = globalWithDom.HTMLSelectElement;
+  const previousEvent = globalWithDom.Event;
+  const previousTable = console.table;
+  const previousWarn = console.warn;
+
+  try {
+    globalWithDom.document = fakeDocument;
+    globalWithDom.HTMLSelectElement = FakeSelect;
+    globalWithDom.Event = class {
+      constructor(readonly type: string) {}
+    };
+    console.table = () => undefined;
+    console.warn = () => undefined;
+    new Function(script)();
+  } finally {
+    globalWithDom.document = previousDocument;
+    globalWithDom.HTMLSelectElement = previousSelect;
+    globalWithDom.Event = previousEvent;
+    console.table = previousTable;
+    console.warn = previousWarn;
+  }
+
+  return Object.fromEntries(Object.entries(fields).map(([key, field]) => [key, field.value]));
 }
 
 test('prepare_admin_template_fill generates read-only admin form data and fill-only script', async () => {
@@ -269,14 +354,65 @@ test('prepare_admin_template_fill generates read-only admin form data and fill-o
   assert.equal(bundle.form_data.recommended_type, 'CMS');
   assert.equal(bundle.form_data.price_usd, 99);
   assert.equal(bundle.form_data.price_cents, 9900);
+  assert.deepEqual(bundle.form_data.category_names, ['Design Portfolio', 'Creative Agency']);
+  assert.deepEqual(bundle.form_data.category_cms_slugs, ['design-portfolio-websites', 'creative-agency-websites']);
   assert.equal(bundle.form_data.category_display_name, 'Portfolio & Agency');
+  assert.deepEqual(bundle.form_data.admin_form, {
+    name: 'Komanica',
+    shortName: 'komanica',
+    description: 'A bold editorial agency template.',
+    extDetailPageUrl: '/templates/html/komanica-website-template',
+    extCategory: 'Design',
+    extMainTag: 'Agency',
+    type: 'CMS',
+    cost: '9900',
+  });
   assert.deepEqual(bundle.form_data.feature_names, ['GSAP', 'CSS Grid']);
   assert.deepEqual(bundle.missing_fields, []);
   assert.deepEqual(bundle.manual_uploads.secondary_thumbnail_urls, ['https://example.com/secondary.png']);
+  assert.ok(bundle.console_script.includes('form[action="/admin/templates"]'));
+  assert.match(bundle.console_script, /\['cost', data\.cost\]/);
+  assert.doesNotMatch(bundle.console_script, /long_description_html/);
   assert.match(bundle.console_script, /fill-only script/i);
   assert.match(bundle.console_script, /does not submit/i);
   assert.match(bundle.bookmarklet, /^javascript:/);
   assert.ok(bundle.safety_boundary.some((item) => item.includes('does not write Airtable')));
+});
+
+test('generated admin fill script targets the real Webflow Admin field names', () => {
+  const script = buildAdminTemplateFillConsoleScript({
+    template_name: 'Komanica',
+    uid: 'komanica',
+    detail_page_path: '/templates/html/komanica-website-template',
+    recommended_type: 'CMS',
+    price_usd: 99,
+    price_cents: 9900,
+    category_names: ['Design Portfolio', 'Creative Agency'],
+    category_cms_slugs: ['design-portfolio-websites', 'creative-agency-websites'],
+    category_display_name: 'Portfolio & Agency',
+    short_description: 'A bold editorial agency template.',
+    admin_form: {
+      name: 'Komanica',
+      shortName: 'komanica',
+      description: 'A bold editorial agency template.',
+      extDetailPageUrl: '/templates/html/komanica-website-template',
+      extCategory: 'Design',
+      extMainTag: 'Agency',
+      type: 'CMS',
+      cost: '9900',
+    },
+  });
+
+  assert.deepEqual(runAdminFillScriptAgainstFakeForm(script), {
+    name: 'Komanica',
+    shortName: 'komanica',
+    description: 'A bold editorial agency template.',
+    extDetailPageUrl: '/templates/html/komanica-website-template',
+    extCategory: 'Design',
+    extMainTag: 'Agency',
+    type: 'CMS',
+    cost: '9900',
+  });
 });
 
 test('prepare_admin_template_fill_batch omits scripts by default for compact handoffs', async () => {
