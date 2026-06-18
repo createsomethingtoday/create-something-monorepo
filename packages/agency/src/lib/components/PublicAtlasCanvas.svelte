@@ -6,9 +6,7 @@
 		createPublicAtlasCanvas,
 		createPublicAtlasEdge,
 		createPublicAtlasNode,
-		layoutPublicAtlasNodes,
 		normalizePublicAtlasCanvas,
-		PUBLIC_ATLAS_FLOW_SIZE,
 		PUBLIC_ATLAS_LANES,
 		PUBLIC_ATLAS_LIMITS,
 		PUBLIC_ATLAS_STORAGE_KEYS,
@@ -19,6 +17,10 @@
 		type PublicAtlasNodeStatus,
 		type PublicAtlasReadiness
 	} from '$lib/atlas/public';
+	import type {
+		PublicAtlasFlowController,
+		PublicAtlasFlowProps
+	} from '$lib/components/PublicAtlasFlow';
 
 	type AgentMessage = {
 		role: 'assistant' | 'visitor';
@@ -56,7 +58,8 @@
 	let copyState = '';
 	let saveState = 'Draft not saved';
 	let hydrated = false;
-	let canvasZoom = 0.78;
+	let flowHost: HTMLDivElement;
+	let flowController: PublicAtlasFlowController | undefined;
 	let usage: AgentResponse['usage'] = {
 		tier: 'anonymous',
 		messagesUsed: 0,
@@ -77,48 +80,10 @@
 	$: selectedNode = canvas.nodes.find((node) => node.id === selectedNodeId) ?? canvas.nodes[0];
 	$: readiness = computePublicAtlasReadiness(canvas);
 	$: summary = summarizePublicAtlasCanvas(canvas, readiness);
-	$: laidOutNodes = layoutPublicAtlasNodes(canvas.nodes);
-	$: laidOutNodeMap = new Map(laidOutNodes.map((node) => [node.id, node]));
-	$: flowHeight = Math.max(
-		PUBLIC_ATLAS_FLOW_SIZE.height,
-		...laidOutNodes.map((node) => (node.y ?? 0) + 170)
-	);
 	$: selectedDimensionCount = PUBLIC_ATLAS_LANES.filter((lane) =>
 		canvas.nodes.some((node) => node.kind === lane.kind)
 	).length;
 	$: bookingUrl = buildBookingUrl();
-
-	function nodeById(nodeId: string) {
-		return laidOutNodeMap.get(nodeId) ?? canvas.nodes.find((node) => node.id === nodeId);
-	}
-
-	function edgePath(edge: PublicAtlasCanvas['edges'][number]) {
-		const source = nodeById(edge.source);
-		const target = nodeById(edge.target);
-		if (!source || !target) return '';
-		const sourceWidth = source.width ?? 280;
-		const startX = (source.x ?? 0) + sourceWidth;
-		const startY = (source.y ?? 0) + 70;
-		const endX = target.x ?? 0;
-		const endY = (target.y ?? 0) + 70;
-		const bend = Math.max(80, Math.abs(endX - startX) * 0.42);
-		return `M ${startX} ${startY} C ${startX + bend} ${startY}, ${endX - bend} ${endY}, ${endX} ${endY}`;
-	}
-
-	function edgeLabelPosition(edge: PublicAtlasCanvas['edges'][number]) {
-		const source = nodeById(edge.source);
-		const target = nodeById(edge.target);
-		if (!source || !target) return { x: 0, y: 0 };
-		const sourceWidth = source.width ?? 280;
-		return {
-			x: ((source.x ?? 0) + sourceWidth + (target.x ?? 0)) / 2,
-			y: ((source.y ?? 0) + (target.y ?? 0)) / 2 + 62
-		};
-	}
-
-	function setZoom(next: number) {
-		canvasZoom = Math.max(0.54, Math.min(1.1, next));
-	}
 
 	function buildBookingUrl() {
 		const base = bookingHref.split('?')[0] || '/book';
@@ -167,6 +132,16 @@
 		saveState = 'Saved for booking';
 	}
 
+	function buildFlowProps(): PublicAtlasFlowProps {
+		return {
+			canvas,
+			selectedNodeId,
+			onConnectNodes: connectNodes,
+			onMoveNode: moveNode,
+			onSelectNode: selectNode
+		};
+	}
+
 	function updateCanvas(next: PublicAtlasCanvas) {
 		canvas = normalizePublicAtlasCanvas({ ...next, updatedAt: new Date().toISOString() });
 		if (!canvas.nodes.some((node) => node.id === selectedNodeId)) {
@@ -178,6 +153,11 @@
 		persistCanvas();
 	}
 
+	function selectNode(nodeId: string) {
+		selectedNodeId = nodeId;
+		selectedSourceId = nodeId;
+	}
+
 	function addNode(kind: PublicAtlasNodeKind) {
 		const node = createPublicAtlasNode(kind, { createdBy: 'visitor' });
 		updateCanvas({
@@ -186,6 +166,7 @@
 			mutationCount: canvas.mutationCount + 1
 		});
 		selectedNodeId = node.id;
+		selectedSourceId = node.id;
 	}
 
 	function removeNode(nodeId: string) {
@@ -208,23 +189,30 @@
 		});
 	}
 
-	function connectSelectedTo(targetId: string) {
-		if (!selectedSourceId || selectedSourceId === targetId) return;
-		const exists = canvas.edges.some(
-			(edge) => edge.source === selectedSourceId && edge.target === targetId
-		);
+	function connectNodes(sourceId: string, targetId: string) {
+		if (!sourceId || !targetId || sourceId === targetId) return;
+		const exists = canvas.edges.some((edge) => edge.source === sourceId && edge.target === targetId);
 		if (exists) return;
 		updateCanvas({
 			...canvas,
 			edges: [
 				...canvas.edges,
-				createPublicAtlasEdge(selectedSourceId, targetId, {
+				createPublicAtlasEdge(sourceId, targetId, {
 					label: 'hands off to',
 					createdBy: 'visitor'
 				})
 			],
 			mutationCount: canvas.mutationCount + 1
 		});
+	}
+
+	function connectSelectedTo(targetId: string) {
+		connectNodes(selectedSourceId, targetId);
+	}
+
+	function moveNode(nodeId: string, position: { x: number; y: number }) {
+		selectNode(nodeId);
+		updateNode(nodeId, position);
 	}
 
 	async function askAgent() {
@@ -318,11 +306,30 @@
 			}
 		}
 		hydrated = true;
+
+		let destroyed = false;
+		void (async () => {
+			const module = await import('$lib/components/PublicAtlasFlow');
+			if (destroyed || !flowHost) return;
+			flowController = module.mountPublicAtlasFlow(flowHost, buildFlowProps());
+		})();
+
+		return () => {
+			destroyed = true;
+			flowController?.destroy();
+			flowController = undefined;
+		};
 	});
 
 	$: if (browser && hydrated) {
 		canvas;
 		persistCanvas();
+	}
+
+	$: if (flowController && hydrated) {
+		canvas;
+		selectedNodeId;
+		flowController.update(buildFlowProps());
 	}
 </script>
 
@@ -356,72 +363,11 @@
 					<small>{readiness.score}/100</small>
 				</div>
 
-				<div class="atlas-flow-viewport" aria-label="Atlas flow canvas">
-					<div class="flow-controls" aria-label="Canvas zoom controls">
-						<button type="button" onclick={() => setZoom(canvasZoom - 0.1)} aria-label="Zoom out">
-							-
-						</button>
-						<button type="button" onclick={() => setZoom(0.78)}>Fit</button>
-						<button type="button" onclick={() => setZoom(canvasZoom + 0.1)} aria-label="Zoom in">
-							+
-						</button>
-					</div>
-					<div
-						class="atlas-flow-scale"
-						style={`width: ${PUBLIC_ATLAS_FLOW_SIZE.width * canvasZoom}px; height: ${flowHeight * canvasZoom}px;`}
-					>
-						<div
-							class="atlas-board"
-							style={`width: ${PUBLIC_ATLAS_FLOW_SIZE.width}px; height: ${flowHeight}px; transform: scale(${canvasZoom});`}
-						>
-							<svg class="atlas-edges" viewBox={`0 0 ${PUBLIC_ATLAS_FLOW_SIZE.width} ${flowHeight}`}>
-								<defs>
-									<marker
-										id="public-atlas-arrow"
-										viewBox="0 0 10 10"
-										refX="8"
-										refY="5"
-										markerWidth="6"
-										markerHeight="6"
-										orient="auto-start-reverse"
-									>
-										<path d="M 0 0 L 10 5 L 0 10 z"></path>
-									</marker>
-								</defs>
-								{#each canvas.edges as edge}
-									{@const labelPosition = edgeLabelPosition(edge)}
-									<path d={edgePath(edge)}></path>
-									{#if edge.label}
-										<text x={labelPosition.x} y={labelPosition.y}>{edge.label}</text>
-									{/if}
-								{/each}
-							</svg>
-							{#each PUBLIC_ATLAS_LANES as lane}
-								<div class={`lane-guide lane-${lane.kind}`}>
-									<span>{lane.label}</span>
-								</div>
-							{/each}
-							{#each laidOutNodes as node}
-								<button
-									type="button"
-									class:selected={node.id === selectedNodeId}
-									class={`atlas-node status-${node.status}`}
-									style={`left: ${node.x ?? 0}px; top: ${node.y ?? 0}px; width: ${node.width ?? 280}px;`}
-									onclick={() => {
-										selectedNodeId = node.id;
-										selectedSourceId = node.id;
-									}}
-								>
-									<strong>{node.label}</strong>
-									<span>{node.status}</span>
-									{#if node.notes}
-										<small>{node.notes}</small>
-									{/if}
-								</button>
-							{/each}
-						</div>
-					</div>
-				</div>
+				<div
+					class="atlas-flow-viewport"
+					bind:this={flowHost}
+					aria-label="Atlas flow canvas"
+				></div>
 
 				<div class="handoffs">
 					<span>Handoffs</span>
@@ -636,7 +582,6 @@
 	}
 
 	.atlas-toolbar button,
-	.atlas-node,
 	.agent-form button,
 	.summary-actions button,
 	.summary-actions a,
@@ -657,7 +602,6 @@
 	}
 
 	.atlas-toolbar small,
-	.atlas-node small,
 	.handoffs small {
 		color: var(--color-clear-grey, #636363);
 		font-size: 0.72rem;
@@ -705,176 +649,10 @@
 
 	.atlas-flow-viewport {
 		position: relative;
+		height: clamp(31rem, 58vh, 46rem);
 		min-height: 31rem;
-		overflow: auto;
-		background:
-			linear-gradient(#f4f4ef 1px, transparent 1px),
-			linear-gradient(90deg, #f4f4ef 1px, transparent 1px);
+		overflow: hidden;
 		background-color: #fbfbf8;
-		background-size: 32px 32px;
-	}
-
-	.atlas-flow-scale {
-		position: relative;
-		min-width: 100%;
-		min-height: 31rem;
-	}
-
-	.atlas-board {
-		position: absolute;
-		inset: 0 auto auto 0;
-		transform-origin: 0 0;
-	}
-
-	.flow-controls {
-		position: sticky;
-		top: 0.75rem;
-		left: 0.75rem;
-		z-index: 5;
-		display: inline-flex;
-		gap: 0.35rem;
-		border: 1px solid rgba(10, 14, 25, 0.1);
-		border-radius: 999px;
-		background: rgba(255, 255, 255, 0.9);
-		padding: 0.25rem;
-		backdrop-filter: blur(10px);
-	}
-
-	.flow-controls button {
-		min-width: 2rem;
-		border: 0;
-		border-radius: 999px;
-		background: transparent;
-		color: var(--color-clear-onyx, #0a0e19);
-		cursor: pointer;
-		font: inherit;
-		font-size: 0.78rem;
-		font-weight: 700;
-		padding: 0.35rem 0.55rem;
-	}
-
-	.flow-controls button:hover {
-		background: #f4f4ef;
-	}
-
-	.atlas-edges {
-		position: absolute;
-		inset: 0;
-		width: 100%;
-		height: 100%;
-		overflow: visible;
-		pointer-events: none;
-	}
-
-	.atlas-edges path {
-		fill: none;
-		stroke: #aaa69b;
-		stroke-width: 1.35;
-		marker-end: url('#public-atlas-arrow');
-	}
-
-	.atlas-edges marker path {
-		fill: #aaa69b;
-	}
-
-	.atlas-edges text {
-		fill: #6f6f67;
-		font-size: 0.7rem;
-		font-weight: 600;
-		paint-order: stroke;
-		stroke: #fbfbf8;
-		stroke-width: 5px;
-	}
-
-	.lane-guide {
-		position: absolute;
-		top: 0.85rem;
-		width: 12rem;
-		border-radius: 999px;
-		background: rgba(255, 255, 255, 0.86);
-		color: var(--color-clear-grey, #636363);
-		font-size: 0.72rem;
-		font-weight: 700;
-		padding: 0.3rem 0.55rem;
-		text-transform: uppercase;
-	}
-
-	.lane-actor {
-		left: 72px;
-	}
-
-	.lane-data,
-	.lane-touchpoint {
-		left: 398px;
-	}
-
-	.lane-system,
-	.lane-ai {
-		left: 728px;
-	}
-
-	.lane-human,
-	.lane-constraint {
-		left: 1060px;
-	}
-
-	.lane-touchpoint,
-	.lane-ai,
-	.lane-constraint {
-		top: 3.2rem;
-	}
-
-	.lane-guide span {
-		margin: 0;
-		letter-spacing: 0;
-	}
-
-	.atlas-node {
-		position: absolute;
-		display: grid;
-		gap: 0.35rem;
-		min-height: 7.5rem;
-		padding: 0.7rem;
-		text-align: left;
-		transition:
-			border-color 140ms ease,
-			box-shadow 140ms ease,
-			transform 140ms ease;
-	}
-
-	.atlas-node:hover {
-		transform: translateY(-1px);
-	}
-
-	.atlas-node.selected {
-		border-color: #0a0e19;
-		box-shadow: 0 0 0 2px rgba(10, 14, 25, 0.08);
-	}
-
-	.atlas-node strong {
-		font-size: 0.9rem;
-		line-height: 1.2;
-	}
-
-	.atlas-node span {
-		justify-self: start;
-		border-radius: 999px;
-		background: #f4f4ef;
-		color: #636363;
-		font-size: 0.7rem;
-		padding: 0.2rem 0.45rem;
-	}
-
-	.status-run {
-		background: #f3fbf2;
-	}
-
-	.status-wait {
-		background: #f7f4ff;
-	}
-
-	.status-stop {
-		background: #fff4f4;
 	}
 
 	.handoffs {
