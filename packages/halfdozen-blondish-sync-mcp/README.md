@@ -15,6 +15,7 @@ Current Worker configs:
 | --- | --- | --- |
 | `wrangler.toml` | BLOND:ISH | `blondish_sync` |
 | `wrangler.c3-management.toml` | C3 Management | `c3_management_sync` |
+| `wrangler.cracked.toml` | Cracked Live | `cracked_sync` |
 | `wrangler.lightswitch.toml` | Lightswitch | `lightswitch_sync` |
 
 ## Tools
@@ -89,6 +90,7 @@ pnpm --filter @create-something/halfdozen-blondish-sync-mcp test
 pnpm braintrust:eval:mcp:halfdozen-blondish-sync:local
 pnpm deploy:halfdozen-blondish-sync-mcp
 pnpm deploy:halfdozen-c3-management-sync-mcp
+pnpm deploy:halfdozen-cracked-sync-mcp
 pnpm deploy:halfdozen-lightswitch-sync-mcp
 ```
 

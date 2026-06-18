@@ -218,6 +218,7 @@
     "deploy:halfdozen-agent-analyzer-telemetry-mcp": "pnpm --dir packages/halfdozen-agent-analyzer-telemetry-mcp/worker run deploy",
     "deploy:halfdozen-blondish-sync-mcp": "node scripts/run-wrangler.mjs --cwd packages/halfdozen-blondish-sync-mcp deploy",
     "deploy:halfdozen-c3-management-sync-mcp": "node scripts/run-wrangler.mjs --cwd packages/halfdozen-blondish-sync-mcp deploy --config wrangler.c3-management.toml",
+    "deploy:halfdozen-cracked-sync-mcp": "node scripts/run-wrangler.mjs --cwd packages/halfdozen-blondish-sync-mcp deploy --config wrangler.cracked.toml",
     "deploy:halfdozen-lightswitch-sync-mcp": "node scripts/run-wrangler.mjs --cwd packages/halfdozen-blondish-sync-mcp deploy --config wrangler.lightswitch.toml",
     "deploy:airtable-primary-tags": "pnpm --dir packages/airtable-primary-tags-worker deploy",
     "deploy:webflow-local-mcp": "node scripts/run-wrangler.mjs --cwd packages/webflow-mcp/worker deploy",
