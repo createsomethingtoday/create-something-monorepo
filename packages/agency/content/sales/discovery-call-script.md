@@ -14,6 +14,7 @@
 Prepare:
 
 - company context (team size, motion, operating systems)
+- any public Atlas canvas summary from `/atlas` or `/services#atlas-warmup`
 - likely workflow pain candidates (handoffs, approvals, cross-system drift)
 - existing automation footprint (if known)
 - probable risk profile (low/medium/high)
@@ -109,6 +110,10 @@ Live mapping line:
 
 > "Based on your current risk and coupling, you likely start at [tier] with an assurance posture of [approval mode]."
 
+Atlas handoff line:
+
+> "If it would help your team warm up before the paid mapping session, use the public Atlas canvas to sketch the workflow. It will carry a summary, readiness signal, and session ID into the booking notes without touching production systems."
+
 Policy boundary check:
 
 > "Before we talk implementation, let’s sort actions into what can auto-run, what needs approval, and what should be blocked."
@@ -177,6 +182,7 @@ Commit:
 - owner
 - date
 - required stakeholders
+- public Atlas canvas link or summary if the buyer wants to prepare asynchronously
 
 ### Medium fit
 

@@ -10,11 +10,12 @@
 
 During this session we will:
 
-1. Select the workflow to scope
-2. Map the systems, actions, and approvals involved
-3. Define the policy boundary for automation
-4. Confirm what should be automated, reviewed, or blocked
-5. Align on the implementation path for the next 30 days
+1. Review any public Atlas canvas the client created before booking
+2. Select the workflow to scope
+3. Map the systems, actions, and approvals involved in internal Atlas Studio
+4. Define the policy boundary for automation
+5. Confirm what should be automated, reviewed, or blocked
+6. Align on the implementation path for the next 30 days
 
 ---
 
@@ -26,6 +27,9 @@ Please bring:
 - one operational stakeholder closest to the work
 - one technical stakeholder if systems or auth complexity is expected
 - examples of current failure cases or manual workarounds
+- the public Atlas canvas summary if you used it before booking
+
+Do not put credentials, tokens, passwords, API keys, or private record exports in the public Atlas canvas or booking notes. The public mapping agent can only edit the prospect canvas; it cannot run production tools, read private systems, or approve implementation work.
 
 ---
 
@@ -44,6 +48,8 @@ Please bring:
 - Sequence of actions
 - Handoffs and failure points
 - Existing human review steps
+
+If a public Atlas canvas exists, use it as the first draft. The live session can then move into internal Atlas Studio for deeper mapping, operator judgment, and approval-gated handoff planning.
 
 ### 3. Trust and policy boundary
 
@@ -77,6 +83,7 @@ We will also define:
 ## What you receive after the session
 
 - Pilot workflow scope
+- Reviewed Atlas map or handoff summary
 - Policy boundary recommendation
 - 30-day implementation plan
 - Proposal-ready summary for implementation artifacts
