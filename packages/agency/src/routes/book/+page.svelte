@@ -17,6 +17,7 @@
 		AGENCY_MARKETING_COPY_EXPERIMENT,
 		getAgencyMarketingExperimentMetadata
 	} from '$lib/analytics/marketing-experiment';
+	import { PUBLIC_ATLAS_STORAGE_KEYS } from '$lib/atlas/public';
 	import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
 	interface TimeSlot {
@@ -83,6 +84,22 @@
 		return normalized || fallback;
 	}
 
+	function normalizeOptionalQueryToken(value: string | null) {
+		const normalized = (value ?? '')
+			.toLowerCase()
+			.replace(/[^a-z0-9_-]+/g, '-')
+			.replace(/^-+|-+$/g, '')
+			.slice(0, 90);
+
+		return normalized || undefined;
+	}
+
+	function normalizeOptionalNumber(value: string | null, max: number) {
+		const parsed = Number(value);
+		if (!Number.isFinite(parsed)) return undefined;
+		return Math.max(0, Math.min(max, Math.round(parsed)));
+	}
+
 	function normalizeLane(value: string | null): ServiceLane | null {
 		if (!value) return null;
 		return laneOptions.some((option) => option.value === value) ? (value as ServiceLane) : null;
@@ -92,9 +109,14 @@
 	const bookingIntent = normalizeQueryToken(bookingUrlParams.get('intent'), 'workflow-mapping');
 	const bookingPath = browser ? `${window.location.pathname}${window.location.search}` : '/book';
 	const initialLane = normalizeLane(bookingUrlParams.get('lane')) ?? 'not_sure';
+	const atlasWarmup = normalizeOptionalQueryToken(bookingUrlParams.get('warmup'));
+	const atlasSessionId = normalizeOptionalQueryToken(bookingUrlParams.get('atlas_session_id'));
+	const atlasReadiness = normalizeOptionalQueryToken(bookingUrlParams.get('readiness'));
+	const atlasScore = normalizeOptionalNumber(bookingUrlParams.get('score'), 100);
+	const atlasAgentMessages = normalizeOptionalNumber(bookingUrlParams.get('agent_messages'), 200);
 	const directBookingHref = 'https://savvycal.com/createsomething/together';
-	const warmupStorageKey = 'create-something:workflow-mapping-warmup';
-	const warmupDraftStorageKey = 'create-something:workflow-mapping-warmup-draft';
+	const warmupStorageKey = PUBLIC_ATLAS_STORAGE_KEYS.warmupSummary;
+	const warmupDraftStorageKey = PUBLIC_ATLAS_STORAGE_KEYS.warmupDraft;
 
 	const mappingSessionOutcomes: ClearCardItem[] = [
 		{
@@ -294,11 +316,19 @@
 		const lane = laneOptions.find((option) => option.value === selectedLane);
 		const laneLine = `Intake lane: ${lane?.label ?? 'Not sure yet'}`;
 		const sourceLine = `Booking source: ${bookingSource} / ${bookingIntent}`;
+		const atlasLines = [
+			atlasSessionId ? `Atlas session: ${atlasSessionId}` : '',
+			atlasReadiness
+				? `Atlas readiness: ${atlasReadiness}${atlasScore !== undefined ? ` (${atlasScore}/100)` : ''}`
+				: '',
+			atlasAgentMessages !== undefined ? `Atlas agent messages: ${atlasAgentMessages}` : ''
+		].filter(Boolean);
+		const atlasLine = atlasLines.length ? `Atlas canvas:\n${atlasLines.join('\n')}` : '';
 		const warmupLine = warmupSummary.trim()
 			? `Workflow warmup:\n${warmupSummary.trim()}`
 			: '';
 		const trimmedNotes = notes.trim();
-		const baseNotes = [laneLine, sourceLine, warmupLine].filter(Boolean).join('\n');
+		const baseNotes = [laneLine, sourceLine, atlasLine, warmupLine].filter(Boolean).join('\n');
 		return trimmedNotes ? `${baseNotes}\n${trimmedNotes}` : baseNotes;
 	}
 
@@ -307,6 +337,8 @@
 		if (browser) {
 			window.localStorage.removeItem(warmupStorageKey);
 			window.localStorage.removeItem(warmupDraftStorageKey);
+			window.localStorage.removeItem(PUBLIC_ATLAS_STORAGE_KEYS.canvas);
+			window.localStorage.removeItem(PUBLIC_ATLAS_STORAGE_KEYS.meta);
 		}
 	}
 
@@ -367,6 +399,11 @@
 					source: bookingSource,
 					intent: bookingIntent,
 					lane: selectedLane,
+					atlas_warmup: atlasWarmup,
+					atlas_session_id: atlasSessionId,
+					atlas_readiness: atlasReadiness,
+					atlas_score: atlasScore,
+					atlas_agent_messages: atlasAgentMessages,
 					landing_url: browser ? window.location.href : undefined,
 					referrer: browser ? document.referrer : undefined
 				})

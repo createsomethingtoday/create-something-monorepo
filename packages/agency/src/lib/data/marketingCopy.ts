@@ -1,8 +1,8 @@
 export const agencyCoreMessaging = {
   categoryLabel: 'Workflow control service',
-  startWithWorkflowLabel: 'Start Self-Map',
+  startWithWorkflowLabel: 'Start Atlas Map',
   startWithWorkflowHref: '/services#atlas-warmup',
-  selfMapLabel: 'Start Self-Map',
+  selfMapLabel: 'Start Atlas Map',
   selfMapHref: '/services#atlas-warmup',
   governanceChecklistLabel: 'Get Workflow Checklist',
   governanceChecklistHref: '/contact?source=resource&intent=governance-checklist&lane=not_sure',

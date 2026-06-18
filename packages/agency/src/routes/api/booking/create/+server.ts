@@ -27,6 +27,11 @@ interface CreateEventRequest {
 	source?: string;
 	intent?: string;
 	lane?: string;
+	atlas_warmup?: string;
+	atlas_session_id?: string;
+	atlas_readiness?: string;
+	atlas_score?: number;
+	atlas_agent_messages?: number;
 	landing_url?: string;
 	referrer?: string;
 }
@@ -44,6 +49,21 @@ function normalizeSourceProperty(value: string | undefined): ServerConversionInp
 	return value && validSourceProperties.has(value)
 		? (value as ServerConversionInput['sourceProperty'])
 		: undefined;
+}
+
+function normalizeOptionalToken(value: string | undefined, max = 120): string | undefined {
+	const normalized = (value ?? '')
+		.toLowerCase()
+		.replace(/[^a-z0-9_-]+/g, '-')
+		.replace(/^-+|-+$/g, '')
+		.slice(0, max);
+
+	return normalized || undefined;
+}
+
+function normalizeOptionalNumber(value: number | undefined, max: number): number | undefined {
+	if (!Number.isFinite(value)) return undefined;
+	return Math.max(0, Math.min(max, Math.round(Number(value))));
 }
 
 export const POST: RequestHandler = async ({ request, platform }) => {
@@ -77,6 +97,11 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		source = 'book',
 		intent = 'workflow-mapping',
 		lane = 'not_sure',
+		atlas_warmup,
+		atlas_session_id,
+		atlas_readiness,
+		atlas_score,
+		atlas_agent_messages,
 		landing_url,
 		referrer
 	} = body;
@@ -89,6 +114,15 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 	if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
 		throw error(400, 'Invalid email address');
 	}
+
+	const atlasMetadata = {
+		warmup: normalizeOptionalToken(atlas_warmup),
+		sessionId: normalizeOptionalToken(atlas_session_id),
+		readiness: normalizeOptionalToken(atlas_readiness),
+		score: normalizeOptionalNumber(atlas_score, 100),
+		agentMessages: normalizeOptionalNumber(atlas_agent_messages, 200)
+	};
+	const hasAtlasMetadata = Object.values(atlasMetadata).some((value) => value !== undefined);
 
 	try {
 		// Build questions object for additional fields
@@ -175,6 +209,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 							source,
 							intent,
 							lane,
+							...(hasAtlasMetadata && { atlas: atlasMetadata }),
 							experimentId: experiment_id,
 							tagId: tag_id,
 							companyProvided: Boolean(company)
@@ -191,7 +226,9 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 					email,
 					company,
 					source: 'website',
-					sourceDetail: `booking:${source}:${intent}:${lane}`,
+					sourceDetail: `booking:${source}:${intent}:${lane}${
+						atlasMetadata.readiness ? `:${atlasMetadata.readiness}` : ''
+					}`,
 					campaign: tag_id,
 					stage: 'decision',
 					serviceInterest: lane,
@@ -212,7 +249,13 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 						tag_id || null,
 						JSON.stringify({
 							event_id: event.id,
-							email: email.replace(/(.{2})(.*)(@.*)/, '$1***$3') // Partial redaction
+							email: email.replace(/(.{2})(.*)(@.*)/, '$1***$3'), // Partial redaction
+							...(hasAtlasMetadata && {
+								atlas_session_id: atlasMetadata.sessionId,
+								atlas_readiness: atlasMetadata.readiness,
+								atlas_score: atlasMetadata.score,
+								atlas_agent_messages: atlasMetadata.agentMessages
+							})
 						})
 					)
 					.run();

@@ -9,7 +9,7 @@
     type ClearCtaItem
   } from '@create-something/canon';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
-  import WorkflowMappingWarmup from '$lib/components/WorkflowMappingWarmup.svelte';
+  import PublicAtlasCanvas from '$lib/components/PublicAtlasCanvas.svelte';
 
   const services = [
     {
@@ -345,12 +345,12 @@
 <ClearPageSection
   id="atlas-warmup"
   variant="soft"
-  eyebrow="Atlas warmup"
-  title="Map the workflow yourself before booking."
-  description="Inspired by quietloudlab's AI Interaction Atlas, this warmup turns human tasks, AI tasks, system operations, data, constraints, and touchpoints into the first onboarding artifact."
+  eyebrow="Public Atlas canvas"
+  title="Map the workflow before booking."
+  description="The public Atlas surface turns human tasks, AI tasks, system operations, data, constraints, and touchpoints into a first onboarding artifact. A constrained mapping agent can help shape the canvas without touching production systems."
 >
   {#snippet after()}
-    <WorkflowMappingWarmup />
+    <PublicAtlasCanvas />
   {/snippet}
 </ClearPageSection>
 
