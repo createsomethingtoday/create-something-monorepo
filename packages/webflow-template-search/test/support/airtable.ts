@@ -6,6 +6,7 @@ interface MockDataset {
   webflowAssets?: Array<Record<string, unknown>>;
   webflowCollections?: Array<Record<string, unknown>>;
   webflowCollectionItems?: Record<string, Array<Record<string, unknown>>>;
+  webflowCollectionItemErrors?: Record<string, { status: number; body: unknown }>;
   publishedTemplatePages?: Record<string, string>;
   styles?: Array<{ id: string; fields: Record<string, unknown> }>;
   childCategories?: Array<{ id: string; fields: Record<string, unknown> }>;
@@ -37,6 +38,11 @@ export function installAirtableFetchMock(dataset: MockDataset) {
       const collectionItemsMatch = url.pathname.match(/\/v2\/collections\/([^/]+)\/items$/);
       if (collectionItemsMatch) {
         const collectionId = collectionItemsMatch[1] ?? '';
+        const error = dataset.webflowCollectionItemErrors?.[collectionId];
+        if (error) {
+          return Response.json(error.body, { status: error.status });
+        }
+
         const offset = Number(url.searchParams.get('offset') ?? '0') || 0;
         const limit = Number(url.searchParams.get('limit') ?? '100') || 100;
         const items = dataset.webflowCollectionItems?.[collectionId] ?? [];

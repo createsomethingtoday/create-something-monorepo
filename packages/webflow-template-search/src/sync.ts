@@ -61,6 +61,12 @@ const IMAGE_BACKFILL_FETCH_BATCH_SIZE = 24;
 const DEFAULT_SYNC_LOCK_TTL_MS = 20 * 60 * 1000;
 const FULL_SYNC_LOCK_TTL_MS = 3 * 60 * 60 * 1000;
 const RECORD_SYNC_STALE_HEARTBEAT_MS = 5 * 60 * 1000;
+const INCREMENTAL_SYNC_STALE_HEARTBEAT_MS = 10 * 60 * 1000;
+
+interface SyncWarning {
+  source: string;
+  message: string;
+}
 
 export class SyncAlreadyRunningError extends Error {
   readonly activeJob: ReturnType<typeof publicSyncJobRecord>;
@@ -75,7 +81,12 @@ export class SyncAlreadyRunningError extends Error {
 async function runWithSyncJobLock<T>(env: Env, mode: string, task: () => Promise<T>): Promise<T> {
   const lockResult = await acquireSyncJobLock(env.DB, mode, {
     ttlMs: mode === 'full' ? FULL_SYNC_LOCK_TTL_MS : DEFAULT_SYNC_LOCK_TTL_MS,
-    staleHeartbeatMs: mode === 'records' ? RECORD_SYNC_STALE_HEARTBEAT_MS : undefined,
+    staleHeartbeatMs:
+      mode === 'records'
+        ? RECORD_SYNC_STALE_HEARTBEAT_MS
+        : mode === 'incremental'
+          ? INCREMENTAL_SYNC_STALE_HEARTBEAT_MS
+          : undefined,
   });
   if (!lockResult.acquired) {
     throw new SyncAlreadyRunningError(lockResult.activeJob);
@@ -88,6 +99,91 @@ async function runWithSyncJobLock<T>(env: Env, mode: string, task: () => Promise
   } catch (error) {
     await finishSyncJobLock(env.DB, lockResult.lock, { status: 'failed', error });
     throw error;
+  }
+}
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
+function pushWarning(warnings: SyncWarning[], source: string, error: unknown): void {
+  const warning = { source, message: errorMessage(error) };
+  warnings.push(warning);
+  console.warn(`Continuing template sync without ${source}: ${warning.message}`);
+}
+
+async function bestEffortWebflowTemplateImageIndex(
+  env: Env,
+  warnings: SyncWarning[],
+): Promise<WebflowTemplateImageIndex | null> {
+  try {
+    return await loadWebflowTemplateImageIndex(env);
+  } catch (error) {
+    pushWarning(warnings, 'webflow_template_image_index', error);
+    return null;
+  }
+}
+
+async function bestEffortWebflowDesignerAvatars(env: Env, warnings: SyncWarning[]): Promise<WebflowDesignerAvatarRecord[]> {
+  if (!hasWebflowCmsToken(env)) return [];
+
+  try {
+    return await fetchWebflowDesignerAvatars(env);
+  } catch (error) {
+    pushWarning(warnings, 'webflow_designer_avatars', error);
+    return [];
+  }
+}
+
+async function recordSyncWarnings(env: Env, mode: SyncSummary['mode'], startedAt: string, warnings: SyncWarning[]): Promise<void> {
+  if (warnings.length === 0) return;
+
+  const occurredAt = nowIso();
+  await env.DB.prepare(
+    'INSERT INTO sync_state (key, value_json, updated_at) VALUES (?, ?, ?) ON CONFLICT(key) DO UPDATE SET value_json = excluded.value_json, updated_at = excluded.updated_at',
+  )
+    .bind(
+      'last_sync_warning',
+      JSON.stringify({
+        mode,
+        started_at: startedAt,
+        occurred_at: occurredAt,
+        warnings,
+      }),
+      occurredAt,
+    )
+    .run();
+}
+
+async function clearSyncWarningsForMode(env: Env, mode: SyncSummary['mode']): Promise<void> {
+  const row = await env.DB.prepare('SELECT value_json FROM sync_state WHERE key = ?')
+    .bind('last_sync_warning')
+    .first<{ value_json: string }>();
+  if (!row?.value_json) return;
+
+  let warningMode: unknown = null;
+  try {
+    warningMode = (JSON.parse(row.value_json) as { mode?: unknown }).mode;
+  } catch {
+    warningMode = null;
+  }
+  if (typeof warningMode === 'string' && warningMode !== mode) return;
+
+  await env.DB.prepare('DELETE FROM sync_state WHERE key = ?').bind('last_sync_warning').run();
+}
+
+async function recordSyncSummaryAndWarnings(
+  env: Env,
+  summary: SyncSummary,
+  key: 'last_full_sync' | 'last_incremental_sync' | 'last_record_sync',
+  warnings: SyncWarning[],
+): Promise<void> {
+  if (warnings.length > 0) summary.warnings = warnings;
+  await recordSyncSummary(env.DB, summary, key);
+  if (warnings.length > 0) {
+    await recordSyncWarnings(env, summary.mode, summary.started_at, warnings);
+  } else {
+    await clearSyncWarningsForMode(env, summary.mode);
   }
 }
 
@@ -481,11 +577,12 @@ function normalizeTemplateRecord(
 
 async function runFullSync(env: Env): Promise<SyncSummary> {
   const startedAt = nowIso();
+  const warnings: SyncWarning[] = [];
   const [lookups, assets, webflowImageIndex, webflowDesigners] = await Promise.all([
     loadLookupMaps(env),
     fetchPublishedTemplateAssets(env),
-    loadWebflowTemplateImageIndex(env),
-    hasWebflowCmsToken(env) ? fetchWebflowDesignerAvatars(env) : Promise.resolve([]),
+    bestEffortWebflowTemplateImageIndex(env, warnings),
+    bestEffortWebflowDesignerAvatars(env, warnings),
   ]);
   const webflowDesignerIndex = buildWebflowDesignerAvatarIndex(webflowDesigners);
   const documents = assets
@@ -513,7 +610,7 @@ async function runFullSync(env: Env): Promise<SyncSummary> {
   };
 
   await setSyncCursor(env.DB, startedAt);
-  await recordSyncSummary(env.DB, summary, 'last_full_sync');
+  await recordSyncSummaryAndWarnings(env, summary, 'last_full_sync', warnings);
   return summary;
 }
 
@@ -543,6 +640,7 @@ async function runIncrementalSync(env: Env): Promise<SyncSummary> {
   if (!currentCursor) return runFullSync(env);
 
   const startedAt = nowIso();
+  const warnings: SyncWarning[] = [];
   const now = new Date();
   let scanCursor = currentCursor;
   let windowEnd = new Date(currentCursor);
@@ -578,8 +676,8 @@ async function runIncrementalSync(env: Env): Promise<SyncSummary> {
   if (assets.length > 0) {
     const [lookups, loadedWebflowImageIndex, webflowDesigners] = await Promise.all([
       loadLookupMaps(env),
-      loadWebflowTemplateImageIndex(env),
-      hasWebflowCmsToken(env) ? fetchWebflowDesignerAvatars(env) : Promise.resolve([]),
+      bestEffortWebflowTemplateImageIndex(env, warnings),
+      bestEffortWebflowDesignerAvatars(env, warnings),
     ]);
     webflowImageIndex = loadedWebflowImageIndex;
     const webflowDesignerIndex = buildWebflowDesignerAvatarIndex(webflowDesigners);
@@ -596,8 +694,8 @@ async function runIncrementalSync(env: Env): Promise<SyncSummary> {
 
   if (toDelete.length > 0) await deleteTemplateDocuments(env.DB, toDelete);
   if (toUpsert.length > 0) await upsertTemplateDocuments(env.DB, toUpsert);
-  if (!webflowImageIndex) {
-    webflowImageIndex = await loadWebflowTemplateImageIndex(env);
+  if (!webflowImageIndex && !warnings.some((warning) => warning.source === 'webflow_template_image_index')) {
+    webflowImageIndex = await bestEffortWebflowTemplateImageIndex(env, warnings);
   }
   const imageRefreshedRecords = await refreshIndexedWebflowImages(
     env.DB,
@@ -628,7 +726,7 @@ async function runIncrementalSync(env: Env): Promise<SyncSummary> {
   };
 
   await setSyncCursor(env.DB, newCursor);
-  await recordSyncSummary(env.DB, summary, 'last_incremental_sync');
+  await recordSyncSummaryAndWarnings(env, summary, 'last_incremental_sync', warnings);
   return summary;
 }
 
@@ -639,12 +737,13 @@ export async function syncTemplates(env: Env, mode: 'full' | 'incremental'): Pro
 export async function syncTemplateRecordsByIds(env: Env, recordIds: string[]): Promise<SyncSummary> {
   return runWithSyncJobLock(env, 'records', async () => {
     const startedAt = nowIso();
+    const warnings: SyncWarning[] = [];
     const uniqueRecordIds = uniqueStrings(recordIds.map((id) => id.trim()).filter(Boolean));
     const [lookups, assets, webflowImageIndex, webflowDesigners] = await Promise.all([
       loadLookupMaps(env),
       fetchAssetRecordsByIds(env, uniqueRecordIds),
-      loadWebflowTemplateImageIndex(env),
-      hasWebflowCmsToken(env) ? fetchWebflowDesignerAvatars(env) : Promise.resolve([]),
+      bestEffortWebflowTemplateImageIndex(env, warnings),
+      bestEffortWebflowDesignerAvatars(env, warnings),
     ]);
     const webflowDesignerIndex = buildWebflowDesignerAvatarIndex(webflowDesigners);
     const documents: TemplateDocumentInput[] = [];
@@ -683,7 +782,7 @@ export async function syncTemplateRecordsByIds(env: Env, recordIds: string[]): P
       cursor: startedAt,
     };
 
-    await recordSyncSummary(env.DB, summary, 'last_record_sync');
+    await recordSyncSummaryAndWarnings(env, summary, 'last_record_sync', warnings);
     return summary;
   });
 }

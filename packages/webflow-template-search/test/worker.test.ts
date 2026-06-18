@@ -530,6 +530,118 @@ describe('webflow-template-search worker', () => {
     }
   });
 
+  it('continues record sync when Webflow designer enrichment returns a 500', async () => {
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: [
+        {
+          ...PUBLISHED_ASSETS[0],
+          fields: {
+            ...PUBLISHED_ASSETS[0].fields,
+            '🎨Creator': ['creator-brix'],
+            '🎨Creator Name': 'BRIX Templates',
+          },
+        },
+      ],
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+      creators: LOOKUPS.creators,
+      webflowCollectionItemErrors: {
+        [DESIGNERS_COLLECTION_ID]: {
+          status: 500,
+          body: { message: 'An Internal Error Occurred', code: 'internal_error', details: [] },
+        },
+      },
+    });
+    const { env, close } = createTestEnv();
+    env.WEBFLOW_API_TOKEN = 'test-webflow-cms-token';
+
+    try {
+      const response = await callWorker(
+        new Request('https://templates.test/api/templates/admin/sync-records', {
+          method: 'POST',
+          headers: {
+            Authorization: 'Bearer sync-token',
+            'content-type': 'application/json',
+          },
+          body: JSON.stringify({ ids: ['recAgentflow'] }),
+        }),
+        env,
+      );
+      const payload = (await response.json()) as {
+        mode: string;
+        indexed_records: number;
+        warnings?: Array<{ source: string; message: string }>;
+      };
+      expect(response.status).toBe(200);
+      expect(payload).toMatchObject({
+        mode: 'records',
+        indexed_records: 1,
+        warnings: [
+          {
+            source: 'webflow_designer_avatars',
+          },
+        ],
+      });
+      expect(payload.warnings?.[0]?.message).toContain('Webflow API error (500)');
+
+      const search = await callWorker(new Request('https://templates.test/api/templates/search?q=agentflow'), env);
+      const searchPayload = (await search.json()) as {
+        items: Array<{ name: string; creator_slug: string | null; creator_profile_url: string | null }>;
+      };
+      expect(searchPayload.items).toHaveLength(1);
+      expect(searchPayload.items[0]).toMatchObject({
+        name: 'Agentflow',
+        creator_slug: 'brix-templates',
+        creator_profile_url: 'https://webflow.com/templates/designers/brix-templates',
+      });
+
+      const status = await callWorker(
+        new Request('https://templates.test/api/templates/admin/sync-status', {
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      const statusPayload = (await status.json()) as {
+        sync_state: Record<string, { value: { mode?: string; warnings?: Array<{ source: string }> } }>;
+      };
+      expect(statusPayload.sync_state.last_sync_warning.value).toMatchObject({
+        mode: 'records',
+        warnings: [{ source: 'webflow_designer_avatars' }],
+      });
+
+      env.WEBFLOW_API_TOKEN = undefined;
+      const recovered = await callWorker(
+        new Request('https://templates.test/api/templates/admin/sync-records', {
+          method: 'POST',
+          headers: {
+            Authorization: 'Bearer sync-token',
+            'content-type': 'application/json',
+          },
+          body: JSON.stringify({ ids: ['recAgentflow'] }),
+        }),
+        env,
+      );
+      const recoveredPayload = (await recovered.json()) as { warnings?: Array<{ source: string }> };
+      expect(recovered.status).toBe(200);
+      expect(recoveredPayload.warnings).toBeUndefined();
+
+      const recoveredStatus = await callWorker(
+        new Request('https://templates.test/api/templates/admin/sync-status', {
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      const recoveredStatusPayload = (await recoveredStatus.json()) as {
+        sync_state: Record<string, { value: { mode?: string; warnings?: Array<{ source: string }> } } | undefined>;
+      };
+      expect(recoveredStatusPayload.sync_state.last_sync_warning).toBeUndefined();
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
   it('removes published templates from search when Airtable marks them detail only', async () => {
     const detailOnlyAsset = {
       ...PUBLISHED_ASSETS[0],
@@ -2504,6 +2616,57 @@ describe('webflow-template-search worker', () => {
       const search = await callWorker(new Request('https://templates.test/api/templates/search?q=agentflow'), env);
       const searchPayload = (await search.json()) as { items: Array<{ name: string }> };
       expect(searchPayload.items.map((item) => item.name)).toEqual(['Agentflow']);
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
+  it('takes over stale incremental sync locks before the 20-minute TTL expires', async () => {
+    const changedAsset = {
+      ...PUBLISHED_ASSETS[0],
+      fields: {
+        ...PUBLISHED_ASSETS[0].fields,
+        '📅LMT': '2026-03-17T05:13:07.000Z',
+      },
+    };
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: [],
+      incrementalAssets: [changedAsset],
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+    });
+    const { env, close } = createTestEnv();
+
+    try {
+      await setSyncCursor(env.DB, '2026-03-17T05:00:00.000Z');
+      const staleStartedAt = new Date(Date.now() - 11 * 60 * 1000).toISOString();
+      const staleLock = await acquireSyncJobLock(env.DB, 'incremental', { now: staleStartedAt });
+      expect(staleLock.acquired).toBe(true);
+
+      const sync = await callWorker(
+        new Request('https://templates.test/api/templates/admin/sync', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(sync.status).toBe(200);
+      expect((await sync.json()) as { mode: string; indexed_records: number }).toMatchObject({
+        mode: 'incremental',
+        indexed_records: 1,
+      });
+
+      const status = await callWorker(
+        new Request('https://templates.test/api/templates/admin/sync-status', {
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      const statusPayload = (await status.json()) as { active_job: null | { mode: string }; latest_job: { mode: string; status: string } };
+      expect(statusPayload.active_job).toBeNull();
+      expect(statusPayload.latest_job).toMatchObject({ mode: 'incremental', status: 'succeeded' });
     } finally {
       fetchMock.mockRestore();
       close();
