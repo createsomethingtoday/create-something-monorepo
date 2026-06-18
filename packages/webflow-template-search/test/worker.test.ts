@@ -275,6 +275,8 @@ describe('webflow-template-search worker', () => {
       tags: LOOKUPS.tags,
     });
     const { env, close } = createTestEnv();
+    env.WEBFLOW_API_TOKEN = 'test-webflow-token';
+    env.WEBFLOW_TEMPLATE_ASSET_SITE_ID = '5e593fb060cf877cf875dd1f';
 
     try {
       await acquireSyncJobLock(env.DB, 'incremental');
@@ -2549,6 +2551,9 @@ describe('webflow-template-search worker', () => {
   });
 
   it('refreshes changed Airtable rows from Webflow when the stored thumbnail is already stable', async () => {
+    const now = Date.now();
+    const syncCursor = new Date(now - 5 * 60 * 1000).toISOString();
+    const modifiedAt = new Date(now - 60 * 1000).toISOString();
     const staleStableAsset = {
       ...PUBLISHED_ASSETS[0],
       fields: {
@@ -2563,7 +2568,7 @@ describe('webflow-template-search worker', () => {
           ...staleStableAsset,
           fields: {
             ...staleStableAsset.fields,
-            '📅LMT': '2026-03-17T05:13:07.000Z',
+            '📅LMT': modifiedAt,
           },
         },
       ],
@@ -2591,7 +2596,7 @@ describe('webflow-template-search worker', () => {
       const beforeRefresh = await callWorker(new Request('https://templates.test/api/templates/search?q=agentflow'), env);
       const beforePayload = (await beforeRefresh.json()) as { items: Array<{ thumbnail_image_url: string | null }> };
       expect(beforePayload.items[0]?.thumbnail_image_url).toBe('https://cdn.prod.website-files.com/site/agentflow-old.webp');
-      await setSyncCursor(env.DB, '2026-03-17T05:00:00.000Z');
+      await setSyncCursor(env.DB, syncCursor);
 
       const sync = await callWorker(
         new Request('https://templates.test/api/templates/admin/sync', {
@@ -2652,6 +2657,9 @@ describe('webflow-template-search worker', () => {
       const search = await callWorker(new Request('https://templates.test/api/templates/search?q=agentflow'), env);
       const searchPayload = (await search.json()) as { items: Array<{ name: string }> };
       expect(searchPayload.items.map((item) => item.name)).toEqual(['Agentflow']);
+      expect(fetchMock.mock.calls.some(([input]) => new URL(typeof input === 'string' ? input : input.url).hostname === 'api.webflow.com')).toBe(
+        false,
+      );
     } finally {
       fetchMock.mockRestore();
       close();
@@ -2667,6 +2675,8 @@ describe('webflow-template-search worker', () => {
       tags: LOOKUPS.tags,
     });
     const { env, close } = createTestEnv();
+    env.WEBFLOW_API_TOKEN = 'test-webflow-token';
+    env.WEBFLOW_TEMPLATE_ASSET_SITE_ID = '5e593fb060cf877cf875dd1f';
 
     try {
       await setSyncCursor(env.DB, '2026-03-17T00:00:00.000Z');
