@@ -279,9 +279,18 @@ importers:
       '@create-something/tufte':
         specifier: workspace:^
         version: link:../tufte
+      '@xyflow/react':
+        specifier: ^12.11.0
+        version: 12.11.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       lucide-svelte:
         specifier: ^0.562.0
         version: 0.562.0(svelte@5.41.0)
+      react:
+        specifier: ^19.2.4
+        version: 19.2.4
+      react-dom:
+        specifier: ^19.2.4
+        version: 19.2.4(react@19.2.4)
       stripe:
         specifier: ^18.5.0
         version: 18.5.0(@types/node@24.10.9)
@@ -307,6 +316,12 @@ importers:
       '@types/node':
         specifier: 24.10.9
         version: 24.10.9
+      '@types/react':
+        specifier: ^19.2.14
+        version: 19.2.14
+      '@types/react-dom':
+        specifier: ^19.2.3
+        version: 19.2.3(@types/react@19.2.14)
       autoprefixer:
         specifier: 10.4.22
         version: 10.4.22(postcss@8.5.6)
