@@ -39,6 +39,7 @@ Patterns to reuse in CREATE SOMETHING language:
 - Pillar grid: four plain pillars that explain what runs, what triggers it, where it runs, and which controls govern it.
 - Use-case band: concrete tasks before abstract platform language.
 - Execution console: an interactive or concrete workflow panel that proves the offer instead of describing it.
+- Decision path: a small stateful interaction that shows whether the next move is allowed, needs review, or should stop.
 - Proof metrics: measurable outcomes, audit evidence, and customer-safe receipts.
 - Operational metadata rail: owners, primitives, tools, policies, and delivery artifacts shown as scannable metadata.
 - Security panel: network, credential, audit, and policy boundaries named before trust claims.
@@ -51,6 +52,7 @@ Current Canon mappings:
 - Platform hero: `ClearPlatformHero`.
 - Signal strip: `ClearLogoStrip`.
 - Workflow execution state: `ClearStateRows`.
+- Decision micro-interactions: `ClearDecisionPanel`.
 - Receipts and delivery proof: `ClearReceiptGrid`, `ClearArtifactCard`, `ClearProofStrip`.
 - Ona-derived product primitives: `ClearPillarGrid`, `ClearMetadataRail`, `ClearUseCaseBand`.
 - Proof, trust, and content primitives: `ClearQuoteMetricPanel`, `ClearSecurityPanel`, `ClearContentHighlights`, `ClearActionFooter`.

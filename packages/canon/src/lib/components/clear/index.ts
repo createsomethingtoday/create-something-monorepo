@@ -37,3 +37,9 @@ export {
 export { default as ClearReceiptGrid, type ClearReceipt } from './ClearReceiptGrid.svelte';
 export { default as ClearCtaBand, type ClearCtaItem } from './ClearCtaBand.svelte';
 export { default as ClearActionFooter, type ClearActionFooterItem } from './ClearActionFooter.svelte';
+export {
+	default as ClearDecisionPanel,
+	type ClearDecisionAction,
+	type ClearDecisionItem,
+	type ClearDecisionTone
+} from './ClearDecisionPanel.svelte';

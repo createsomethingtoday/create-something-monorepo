@@ -43,6 +43,7 @@ export {
   ClearReceiptGrid,
   ClearCtaBand,
   ClearActionFooter,
+  ClearDecisionPanel,
   ClearErrorPage,
   type ClearPlatformHeroMeta,
   type ClearPlatformHeroProof,
@@ -61,7 +62,10 @@ export {
   type ClearContentHighlight,
   type ClearReceipt,
   type ClearCtaItem,
-  type ClearActionFooterItem
+  type ClearActionFooterItem,
+  type ClearDecisionAction,
+  type ClearDecisionItem,
+  type ClearDecisionTone
 } from './clear/index.js';
 
 // Form components
