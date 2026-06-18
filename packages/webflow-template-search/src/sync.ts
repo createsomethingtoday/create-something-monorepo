@@ -686,8 +686,8 @@ async function runIncrementalSync(env: Env, heartbeat: SyncHeartbeat): Promise<S
   if (assets.length > 0) {
     const [lookups, loadedWebflowImageIndex, webflowDesigners] = await Promise.all([
       loadLookupMaps(env),
-      bestEffortWebflowTemplateImageIndex(env, warnings),
-      bestEffortWebflowDesignerAvatars(env, warnings),
+      isCaughtUp ? bestEffortWebflowTemplateImageIndex(env, warnings) : Promise.resolve(null),
+      isCaughtUp ? bestEffortWebflowDesignerAvatars(env, warnings) : Promise.resolve([]),
     ]);
     await heartbeat();
     webflowImageIndex = loadedWebflowImageIndex;
@@ -706,7 +706,7 @@ async function runIncrementalSync(env: Env, heartbeat: SyncHeartbeat): Promise<S
   if (toDelete.length > 0) await deleteTemplateDocuments(env.DB, toDelete);
   if (toUpsert.length > 0) await upsertTemplateDocuments(env.DB, toUpsert);
   await heartbeat();
-  const shouldRefreshIndexedImages = toUpsert.length > 0 || isCaughtUp;
+  const shouldRefreshIndexedImages = isCaughtUp;
   if (shouldRefreshIndexedImages && !webflowImageIndex && !warnings.some((warning) => warning.source === 'webflow_template_image_index')) {
     webflowImageIndex = await bestEffortWebflowTemplateImageIndex(env, warnings);
     await heartbeat();
