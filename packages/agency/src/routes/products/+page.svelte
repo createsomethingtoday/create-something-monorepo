@@ -4,9 +4,13 @@
     ClearCardGrid,
     ClearCtaBand,
     ClearPageSection,
+    ClearProofStrip,
+    ClearQuoteMetricPanel,
     SEO,
     type ClearCardItem,
-    type ClearCtaItem
+    type ClearCtaItem,
+    type ClearProofItem,
+    type ClearQuoteMetric
   } from '@create-something/canon';
   import { products, type Product } from '$lib/data/services';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
@@ -31,7 +35,7 @@
       icon: 'users',
       title: 'Operators need continuity',
       detail:
-        'Agent work needs memory, ownership, checkpoints, and evidence so progress survives handoffs.'
+        'Agent work needs ownership, checkpoints, and evidence so progress survives handoffs. Linear now owns tracked coordination in this repo.'
     },
     {
       eyebrow: 'Connections',
@@ -62,7 +66,7 @@
       icon: 'settings',
       title: 'Tools show the discipline',
       detail:
-        'Ground, Loom, and connector work expose the control principles before they become a client-specific workflow.'
+        'Ground, archived Loom work, and connector work expose the control principles before they become a client-specific workflow.'
     },
     {
       eyebrow: 'Boundary',
@@ -122,6 +126,48 @@
     }
   ];
 
+  const proofStripItems: ClearProofItem[] = [
+    {
+      value: 'Run',
+      label: 'Bounded work can proceed with named objects, actions, and receipts.'
+    },
+    {
+      value: 'Wait',
+      label: 'Revenue, customer-trust, or production impact pauses for owner approval.'
+    },
+    {
+      value: 'Stop',
+      label: 'Out-of-lane work creates a reason-coded handoff instead of pretending to finish.'
+    },
+    {
+      value: 'Receipt',
+      label: 'Commands, decisions, links, deploy IDs, and rollback notes stay with the work.'
+    }
+  ];
+
+  const proofMetrics: ClearQuoteMetric[] = [
+    {
+      value: '2',
+      label: 'client delivery records',
+      detail: 'Abundance and ShivWorks show business-readable handoff and evidence surfaces.'
+    },
+    {
+      value: '4',
+      label: 'control states',
+      detail: 'Run, wait, stop, and receipt are visible before broader automation is allowed.'
+    },
+    {
+      value: '0',
+      label: 'secret-bearing proof exposed',
+      detail: 'Public pages show status and artifacts while private evidence stays behind owner lanes.'
+    },
+    {
+      value: '1',
+      label: 'workflow first',
+      detail: 'The service starts with one business workflow rather than a generic agent demo.'
+    }
+  ];
+
   const ctaItems: ClearCtaItem[] = [
     {
       label: 'Connect',
@@ -170,7 +216,7 @@
 <SEO
   title="Proof | CREATE SOMETHING .agency"
   description="Proof behind CREATE SOMETHING .agency: delivery records, tools, connectors, and client builds that show how workflow control becomes inspectable."
-  keywords="MCP servers, trust layer, agent coordination, grounded AI code analysis, workflow controls, operator surfaces"
+  keywords="MCP servers, trust layer, Linear coordination, grounded AI code analysis, workflow controls, operator surfaces"
   ogImage="/og-image.svg"
   propertyName="agency"
 />
@@ -181,7 +227,7 @@
   titleLevel="h1"
   eyebrow="Proof"
   title="The service is backed by inspectable parts."
-  description="Loom, Ground, connectors, and client builds are not a random product shelf. They show the same path the service follows: connect the system, verify the claim, coordinate the work, then control the workflow."
+  description="Ground, archived Loom coordination work, connectors, and client builds are not a random product shelf. They show the same path the service follows: connect the system, verify the claim, coordinate the work, then control the workflow."
 >
   {#snippet actions()}
     <Button href={agencyCoreMessaging.selfMapHref}>
@@ -199,6 +245,17 @@
 
 <ClearPageSection
   variant="white"
+  eyebrow="Run state proof"
+  title="The proof model is visible before the workflow expands."
+  description="Every artifact on this page should help a buyer understand what can run, what waits, what stops, and which receipt proves the decision."
+>
+  {#snippet after()}
+    <ClearProofStrip items={proofStripItems} ariaLabel="Workflow proof states" />
+  {/snippet}
+</ClearPageSection>
+
+<ClearPageSection
+  variant="white"
   eyebrow="How to read this page"
   title="Tools are evidence. The service is the operating path."
   description="The free and open tools show the discipline underneath the service: grounded claims, agent continuity, constrained MCP access, and evidence-backed decisions. The paid work turns those primitives into one workflow your operator can trust."
@@ -207,6 +264,14 @@
     <ClearCardGrid items={proofReadingCards} columns={4} ariaLabel="How to read proof" />
   {/snippet}
 </ClearPageSection>
+
+<ClearQuoteMetricPanel
+  eyebrow="Proof metrics"
+  quote="Proof stays useful when it names what ran, what waited, and what stopped."
+  source="CREATE SOMETHING .agency workflow control model"
+  metrics={proofMetrics}
+  ariaLabel="Workflow proof metrics"
+/>
 
 <ClearPageSection
   variant="soft"
@@ -223,7 +288,7 @@
   variant="white"
   eyebrow="Flagship proof"
   title="Verify before claiming, then coordinate the work."
-  description="The two core open tools behind the operating-layer thesis: Ground checks claims, and Loom gives agent work memory, ownership, and evidence."
+  description="The two core proof threads behind the operating-layer thesis: Ground checks claims, and the archived Loom work shows why agent coordination needs owned task state, now handled here through Linear."
 >
   {#snippet after()}
     <ClearCardGrid

@@ -96,6 +96,7 @@
 	]}
 />
 
+<main class="methodology-page">
 <!-- Hero -->
 <section class="hero">
 	<div class="hero-grid"></div>
@@ -316,9 +317,23 @@
 		</BlurFade>
 	</div>
 </section>
+</main>
 
 <style>
 	/* ─── Layout ─── */
+	.methodology-page {
+		background: var(--color-clear-panel, #ffffff);
+		color: var(--color-clear-onyx, #0a0e19);
+		--color-fg-primary: var(--color-clear-onyx, #0a0e19);
+		--color-fg-secondary: #252a34;
+		--color-fg-muted: var(--color-clear-grey, #636363);
+		--color-fg-tertiary: var(--color-clear-grey, #636363);
+		--color-bg-pure: var(--color-clear-panel, #ffffff);
+		--color-bg-surface: var(--color-clear-panel, #ffffff);
+		--color-bg-subtle: var(--color-clear-porcelain, #f9f9f9);
+		--color-border-emphasis: var(--color-clear-border, #e1e1e1);
+	}
+
 	.section-container {
 		max-width: var(--content-width-xl);
 		margin: 0 auto;
