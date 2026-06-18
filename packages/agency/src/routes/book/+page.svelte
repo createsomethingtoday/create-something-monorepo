@@ -416,6 +416,7 @@
 
 			const result = (await response.json()) as { event: BookingEvent };
 			confirmedEvent = result.event;
+			clearWarmup();
 			getAnalytics()?.conversion('booking_completed', {
 				...bookingExperimentMetadata,
 				serviceLane: selectedLane,
