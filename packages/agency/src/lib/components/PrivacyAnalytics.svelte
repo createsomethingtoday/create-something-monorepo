@@ -226,18 +226,49 @@
 
   @media (max-width: 640px) {
     .privacy-choice {
-      right: 0.75rem;
-      bottom: 0.75rem;
-      max-width: calc(100vw - 1.5rem);
+      right: max(0.5rem, env(safe-area-inset-right));
+      bottom: max(0.5rem, env(safe-area-inset-bottom));
+      max-width: min(22rem, calc(100vw - 1rem));
     }
 
     .privacy-panel {
-      padding: 0.9rem;
+      gap: 0.65rem;
+      padding: 0.72rem;
+      border-radius: var(--radius-clear-sm, 4px);
+    }
+
+    .privacy-panel__copy {
+      gap: 0.25rem;
+    }
+
+    .privacy-panel__eyebrow {
+      padding: 0.24rem 0.42rem;
+      font-size: 0.62rem;
+    }
+
+    .privacy-panel h2 {
+      font-size: 0.92rem;
+      line-height: 1.15;
+    }
+
+    .privacy-panel p {
+      display: none;
+    }
+
+    .privacy-panel a {
+      font-size: 0.74rem;
     }
 
     .privacy-panel__actions {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.45rem;
+    }
+
+    .privacy-button {
+      min-height: 2.1rem;
+      padding: 0.45rem 0.52rem;
+      font-size: 0.76rem;
     }
 
     .privacy-pill {
