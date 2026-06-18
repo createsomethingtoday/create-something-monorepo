@@ -8,6 +8,7 @@ import {
 	summarizePublicAtlasCanvas,
 	type PublicAtlasCanvas
 } from '$lib/atlas/public';
+import { runOpenAiPublicAtlasMappingAgent } from '$lib/atlas/model-agent';
 import { createLogger } from '@create-something/canon/utils';
 
 const logger = createLogger('PublicAtlasAgentAPI');
@@ -19,6 +20,8 @@ type AgentRequestBody = {
 	message?: unknown;
 	canvas?: unknown;
 	visitorEmail?: unknown;
+	selectedNodeId?: unknown;
+	selectedSourceId?: unknown;
 };
 
 type UsageSnapshot = {
@@ -143,6 +146,18 @@ function limitResponse(message: string, usage: UsageSnapshot) {
 	return json({ error: message, usage }, { status: 429 });
 }
 
+function normalizeOptionalToken(value: unknown): string | undefined {
+	if (typeof value !== 'string') return undefined;
+	const normalized = value.trim().slice(0, 90);
+	return normalized || undefined;
+}
+
+function parsePositiveInteger(value: string | undefined, fallback: number, max: number): number {
+	const parsed = Number.parseInt(value ?? '', 10);
+	if (!Number.isFinite(parsed) || parsed <= 0) return fallback;
+	return Math.min(max, parsed);
+}
+
 async function persistAtlasEvent(
 	db: D1Database | undefined,
 	canvas: PublicAtlasCanvas,
@@ -258,7 +273,21 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		return limitResponse('This visitor has reached the daily public Atlas message limit.', usage);
 	}
 
-	const result = runPublicAtlasMappingAgent(message, canvas);
+	const remainingMutations = limits.mutationsPerMap - canvas.mutationCount;
+	const selectedNodeId = normalizeOptionalToken(body.selectedNodeId);
+	const selectedSourceId = normalizeOptionalToken(body.selectedSourceId);
+	const modelResult = await runOpenAiPublicAtlasMappingAgent({
+		apiKey: platform?.env?.OPENAI_API_KEY,
+		canvas,
+		maxMutations: Math.min(6, remainingMutations),
+		maxOutputTokens: parsePositiveInteger(platform?.env?.PUBLIC_ATLAS_AGENT_MAX_OUTPUT_TOKENS, 900, 1800),
+		message,
+		model: platform?.env?.PUBLIC_ATLAS_AGENT_MODEL,
+		selectedNodeId,
+		selectedSourceId,
+		timeoutMs: parsePositiveInteger(platform?.env?.PUBLIC_ATLAS_AGENT_TIMEOUT_MS, 12_000, 25_000)
+	});
+	const result = modelResult ?? runPublicAtlasMappingAgent(message, canvas);
 	const nextUsage = buildUsage(tier, result.canvas, dailyMessagesUsed + 1);
 
 	if (

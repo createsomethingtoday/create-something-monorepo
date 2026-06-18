@@ -6,7 +6,9 @@
 		createPublicAtlasCanvas,
 		createPublicAtlasEdge,
 		createPublicAtlasNode,
+		layoutPublicAtlasNodes,
 		normalizePublicAtlasCanvas,
+		PUBLIC_ATLAS_FLOW_SIZE,
 		PUBLIC_ATLAS_LANES,
 		PUBLIC_ATLAS_LIMITS,
 		PUBLIC_ATLAS_STORAGE_KEYS,
@@ -38,6 +40,7 @@
 			dailyMessagesUsed: number;
 			dailyMessagesLimit: number;
 		};
+		agentMode?: 'model' | 'fallback';
 	};
 
 	export let compact = false;
@@ -53,6 +56,7 @@
 	let copyState = '';
 	let saveState = 'Draft not saved';
 	let hydrated = false;
+	let canvasZoom = 0.78;
 	let usage: AgentResponse['usage'] = {
 		tier: 'anonymous',
 		messagesUsed: 0,
@@ -73,10 +77,48 @@
 	$: selectedNode = canvas.nodes.find((node) => node.id === selectedNodeId) ?? canvas.nodes[0];
 	$: readiness = computePublicAtlasReadiness(canvas);
 	$: summary = summarizePublicAtlasCanvas(canvas, readiness);
+	$: laidOutNodes = layoutPublicAtlasNodes(canvas.nodes);
+	$: laidOutNodeMap = new Map(laidOutNodes.map((node) => [node.id, node]));
+	$: flowHeight = Math.max(
+		PUBLIC_ATLAS_FLOW_SIZE.height,
+		...laidOutNodes.map((node) => (node.y ?? 0) + 170)
+	);
 	$: selectedDimensionCount = PUBLIC_ATLAS_LANES.filter((lane) =>
 		canvas.nodes.some((node) => node.kind === lane.kind)
 	).length;
 	$: bookingUrl = buildBookingUrl();
+
+	function nodeById(nodeId: string) {
+		return laidOutNodeMap.get(nodeId) ?? canvas.nodes.find((node) => node.id === nodeId);
+	}
+
+	function edgePath(edge: PublicAtlasCanvas['edges'][number]) {
+		const source = nodeById(edge.source);
+		const target = nodeById(edge.target);
+		if (!source || !target) return '';
+		const sourceWidth = source.width ?? 280;
+		const startX = (source.x ?? 0) + sourceWidth;
+		const startY = (source.y ?? 0) + 70;
+		const endX = target.x ?? 0;
+		const endY = (target.y ?? 0) + 70;
+		const bend = Math.max(80, Math.abs(endX - startX) * 0.42);
+		return `M ${startX} ${startY} C ${startX + bend} ${startY}, ${endX - bend} ${endY}, ${endX} ${endY}`;
+	}
+
+	function edgeLabelPosition(edge: PublicAtlasCanvas['edges'][number]) {
+		const source = nodeById(edge.source);
+		const target = nodeById(edge.target);
+		if (!source || !target) return { x: 0, y: 0 };
+		const sourceWidth = source.width ?? 280;
+		return {
+			x: ((source.x ?? 0) + sourceWidth + (target.x ?? 0)) / 2,
+			y: ((source.y ?? 0) + (target.y ?? 0)) / 2 + 62
+		};
+	}
+
+	function setZoom(next: number) {
+		canvasZoom = Math.max(0.54, Math.min(1.1, next));
+	}
 
 	function buildBookingUrl() {
 		const base = bookingHref.split('?')[0] || '/book';
@@ -200,6 +242,8 @@
 				body: JSON.stringify({
 					canvas,
 					message: text,
+					selectedNodeId,
+					selectedSourceId,
 					visitorEmail: visitorEmail.trim() || undefined
 				})
 			});
@@ -312,15 +356,57 @@
 					<small>{readiness.score}/100</small>
 				</div>
 
-				<div class="atlas-board">
-					{#each PUBLIC_ATLAS_LANES as lane}
-						<section class="atlas-lane" aria-labelledby={`public-atlas-${lane.kind}`}>
-							<h4 id={`public-atlas-${lane.kind}`}>{lane.label}</h4>
-							{#each canvas.nodes.filter((node) => node.kind === lane.kind) as node}
+				<div class="atlas-flow-viewport" aria-label="Atlas flow canvas">
+					<div class="flow-controls" aria-label="Canvas zoom controls">
+						<button type="button" onclick={() => setZoom(canvasZoom - 0.1)} aria-label="Zoom out">
+							-
+						</button>
+						<button type="button" onclick={() => setZoom(0.78)}>Fit</button>
+						<button type="button" onclick={() => setZoom(canvasZoom + 0.1)} aria-label="Zoom in">
+							+
+						</button>
+					</div>
+					<div
+						class="atlas-flow-scale"
+						style={`width: ${PUBLIC_ATLAS_FLOW_SIZE.width * canvasZoom}px; height: ${flowHeight * canvasZoom}px;`}
+					>
+						<div
+							class="atlas-board"
+							style={`width: ${PUBLIC_ATLAS_FLOW_SIZE.width}px; height: ${flowHeight}px; transform: scale(${canvasZoom});`}
+						>
+							<svg class="atlas-edges" viewBox={`0 0 ${PUBLIC_ATLAS_FLOW_SIZE.width} ${flowHeight}`}>
+								<defs>
+									<marker
+										id="public-atlas-arrow"
+										viewBox="0 0 10 10"
+										refX="8"
+										refY="5"
+										markerWidth="6"
+										markerHeight="6"
+										orient="auto-start-reverse"
+									>
+										<path d="M 0 0 L 10 5 L 0 10 z"></path>
+									</marker>
+								</defs>
+								{#each canvas.edges as edge}
+									{@const labelPosition = edgeLabelPosition(edge)}
+									<path d={edgePath(edge)}></path>
+									{#if edge.label}
+										<text x={labelPosition.x} y={labelPosition.y}>{edge.label}</text>
+									{/if}
+								{/each}
+							</svg>
+							{#each PUBLIC_ATLAS_LANES as lane}
+								<div class={`lane-guide lane-${lane.kind}`}>
+									<span>{lane.label}</span>
+								</div>
+							{/each}
+							{#each laidOutNodes as node}
 								<button
 									type="button"
 									class:selected={node.id === selectedNodeId}
 									class={`atlas-node status-${node.status}`}
+									style={`left: ${node.x ?? 0}px; top: ${node.y ?? 0}px; width: ${node.width ?? 280}px;`}
 									onclick={() => {
 										selectedNodeId = node.id;
 										selectedSourceId = node.id;
@@ -333,8 +419,8 @@
 									{/if}
 								</button>
 							{/each}
-						</section>
-					{/each}
+						</div>
+					</div>
 				</div>
 
 				<div class="handoffs">
@@ -617,46 +703,147 @@
 		padding: 0.35rem 0.55rem;
 	}
 
-	.atlas-board {
-		display: grid;
-		grid-template-columns: repeat(7, minmax(9rem, 1fr));
-		min-height: 27rem;
-		overflow-x: auto;
+	.atlas-flow-viewport {
+		position: relative;
+		min-height: 31rem;
+		overflow: auto;
 		background:
 			linear-gradient(#f4f4ef 1px, transparent 1px),
 			linear-gradient(90deg, #f4f4ef 1px, transparent 1px);
 		background-color: #fbfbf8;
 		background-size: 32px 32px;
-		padding: 0.75rem;
 	}
 
-	.atlas-lane {
-		display: grid;
-		align-content: start;
-		gap: 0.55rem;
-		min-width: 9rem;
-		padding: 0 0.35rem;
+	.atlas-flow-scale {
+		position: relative;
+		min-width: 100%;
+		min-height: 31rem;
 	}
 
-	.atlas-lane h4 {
+	.atlas-board {
+		position: absolute;
+		inset: 0 auto auto 0;
+		transform-origin: 0 0;
+	}
+
+	.flow-controls {
 		position: sticky;
-		top: 0;
-		z-index: 1;
-		margin: 0;
-		border-radius: 5px;
+		top: 0.75rem;
+		left: 0.75rem;
+		z-index: 5;
+		display: inline-flex;
+		gap: 0.35rem;
+		border: 1px solid rgba(10, 14, 25, 0.1);
+		border-radius: 999px;
+		background: rgba(255, 255, 255, 0.9);
+		padding: 0.25rem;
+		backdrop-filter: blur(10px);
+	}
+
+	.flow-controls button {
+		min-width: 2rem;
+		border: 0;
+		border-radius: 999px;
+		background: transparent;
+		color: var(--color-clear-onyx, #0a0e19);
+		cursor: pointer;
+		font: inherit;
+		font-size: 0.78rem;
+		font-weight: 700;
+		padding: 0.35rem 0.55rem;
+	}
+
+	.flow-controls button:hover {
+		background: #f4f4ef;
+	}
+
+	.atlas-edges {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		overflow: visible;
+		pointer-events: none;
+	}
+
+	.atlas-edges path {
+		fill: none;
+		stroke: #aaa69b;
+		stroke-width: 1.35;
+		marker-end: url('#public-atlas-arrow');
+	}
+
+	.atlas-edges marker path {
+		fill: #aaa69b;
+	}
+
+	.atlas-edges text {
+		fill: #6f6f67;
+		font-size: 0.7rem;
+		font-weight: 600;
+		paint-order: stroke;
+		stroke: #fbfbf8;
+		stroke-width: 5px;
+	}
+
+	.lane-guide {
+		position: absolute;
+		top: 0.85rem;
+		width: 12rem;
+		border-radius: 999px;
 		background: rgba(255, 255, 255, 0.86);
 		color: var(--color-clear-grey, #636363);
-		font-size: 0.75rem;
+		font-size: 0.72rem;
+		font-weight: 700;
+		padding: 0.3rem 0.55rem;
+		text-transform: uppercase;
+	}
+
+	.lane-actor {
+		left: 72px;
+	}
+
+	.lane-data,
+	.lane-touchpoint {
+		left: 398px;
+	}
+
+	.lane-system,
+	.lane-ai {
+		left: 728px;
+	}
+
+	.lane-human,
+	.lane-constraint {
+		left: 1060px;
+	}
+
+	.lane-touchpoint,
+	.lane-ai,
+	.lane-constraint {
+		top: 3.2rem;
+	}
+
+	.lane-guide span {
+		margin: 0;
 		letter-spacing: 0;
-		padding: 0.3rem;
 	}
 
 	.atlas-node {
+		position: absolute;
 		display: grid;
 		gap: 0.35rem;
 		min-height: 7.5rem;
 		padding: 0.7rem;
 		text-align: left;
+		transition:
+			border-color 140ms ease,
+			box-shadow 140ms ease,
+			transform 140ms ease;
+	}
+
+	.atlas-node:hover {
+		transform: translateY(-1px);
 	}
 
 	.atlas-node.selected {
@@ -876,14 +1063,8 @@
 			grid-template-columns: 1fr;
 		}
 
-		.atlas-board {
-			grid-template-columns: 1fr;
-			min-height: 0;
-			overflow-x: visible;
-		}
-
-		.atlas-lane {
-			min-width: 0;
+		.atlas-flow-viewport {
+			min-height: 28rem;
 		}
 	}
 </style>

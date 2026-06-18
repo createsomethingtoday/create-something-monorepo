@@ -16,6 +16,9 @@ export type PublicAtlasNode = {
 	owner?: string;
 	status: PublicAtlasNodeStatus;
 	notes?: string;
+	x?: number;
+	y?: number;
+	width?: number;
 	createdBy: 'visitor' | 'agent' | 'system';
 	updatedAt: string;
 };
@@ -56,6 +59,7 @@ export type PublicAtlasAgentResult = {
 	mutationCount: number;
 	suggestions: string[];
 	readiness: PublicAtlasReadiness;
+	agentMode: 'model' | 'fallback';
 };
 
 export const PUBLIC_ATLAS_STORAGE_KEYS = {
@@ -98,6 +102,31 @@ export const PUBLIC_ATLAS_LANES: Array<{
 	{ kind: 'touchpoint', label: 'Touchpoint', description: 'Where a person inspects or acts.' }
 ];
 
+export const PUBLIC_ATLAS_FLOW_SIZE = {
+	width: 1450,
+	height: 650
+} as const;
+
+const PUBLIC_ATLAS_FLOW_LANES: Record<PublicAtlasNodeKind, { x: number; y: number }> = {
+	actor: { x: 72, y: 190 },
+	data: { x: 398, y: 132 },
+	system: { x: 728, y: 104 },
+	ai: { x: 728, y: 326 },
+	human: { x: 1060, y: 132 },
+	constraint: { x: 1060, y: 354 },
+	touchpoint: { x: 398, y: 474 }
+};
+
+const PUBLIC_ATLAS_FLOW_ORDER: PublicAtlasNodeKind[] = [
+	'actor',
+	'data',
+	'system',
+	'ai',
+	'human',
+	'constraint',
+	'touchpoint'
+];
+
 const KIND_DEFAULTS: Record<PublicAtlasNodeKind, string> = {
 	actor: 'Workflow owner',
 	human: 'Human decision',
@@ -127,6 +156,18 @@ function clampText(value: unknown, max = 180): string | undefined {
 	return trimmed.slice(0, max);
 }
 
+function clampPhrase(value: string, max = 90): string {
+	const normalized = value.trim().replace(/\s+/g, ' ');
+	if (normalized.length <= max) return normalized;
+	const clipped = normalized.slice(0, max).replace(/\s+\S*$/, '').replace(/[,.:-]+$/, '');
+	return clipped || normalized.slice(0, max);
+}
+
+function clampNumber(value: unknown, min: number, max: number): number | undefined {
+	if (!Number.isFinite(value)) return undefined;
+	return Math.min(max, Math.max(min, Number(value)));
+}
+
 export function createPublicAtlasNode(
 	kind: PublicAtlasNodeKind,
 	input: Partial<PublicAtlasNode> = {}
@@ -138,6 +179,9 @@ export function createPublicAtlasNode(
 		owner: clampText(input.owner, 90),
 		status: input.status ?? 'unknown',
 		notes: clampText(input.notes, 360),
+		x: clampNumber(input.x, 0, PUBLIC_ATLAS_FLOW_SIZE.width),
+		y: clampNumber(input.y, 0, 2000),
+		width: clampNumber(input.width, 220, 380),
 		createdBy: input.createdBy ?? 'visitor',
 		updatedAt: now()
 	};
@@ -344,6 +388,38 @@ export function computePublicAtlasReadiness(canvas: PublicAtlasCanvas): PublicAt
 	};
 }
 
+export function publicAtlasNodeWidth(node: PublicAtlasNode): number {
+	const labelLength = node.label.length;
+	const noteLength = (node.notes ?? '').length;
+	const base = labelLength > 42 || noteLength > 150 ? 328 : labelLength > 28 || noteLength > 92 ? 300 : 274;
+	return Math.max(252, Math.min(348, Math.max(node.width ?? 0, base)));
+}
+
+export function layoutPublicAtlasNodes(nodes: PublicAtlasNode[]): PublicAtlasNode[] {
+	const offsets = new Map<PublicAtlasNodeKind, number>();
+	const ordered = [...nodes].sort((a, b) => {
+		const laneDelta = PUBLIC_ATLAS_FLOW_ORDER.indexOf(a.kind) - PUBLIC_ATLAS_FLOW_ORDER.indexOf(b.kind);
+		if (laneDelta !== 0) return laneDelta;
+		if ((a.y ?? 0) !== (b.y ?? 0)) return (a.y ?? 0) - (b.y ?? 0);
+		return (a.x ?? 0) - (b.x ?? 0);
+	});
+	const positioned = new Map<string, PublicAtlasNode>();
+
+	for (const node of ordered) {
+		const lane = PUBLIC_ATLAS_FLOW_LANES[node.kind];
+		const offset = offsets.get(node.kind) ?? 0;
+		offsets.set(node.kind, offset + 1);
+		positioned.set(node.id, {
+			...node,
+			x: node.x ?? lane.x,
+			y: node.y ?? lane.y + offset * 174,
+			width: publicAtlasNodeWidth(node)
+		});
+	}
+
+	return nodes.map((node) => positioned.get(node.id) ?? node);
+}
+
 export function summarizePublicAtlasCanvas(
 	canvas: PublicAtlasCanvas,
 	readiness = computePublicAtlasReadiness(canvas)
@@ -418,15 +494,13 @@ export function runPublicAtlasMappingAgent(
 	const canvas = normalizePublicAtlasCanvas(inputCanvas);
 	const text = message.toLowerCase().slice(0, PUBLIC_ATLAS_LIMITS.warmLead.maxMessageChars);
 	const added: PublicAtlasNode[] = [];
+	let edgeMutations = 0;
 	const suggestions: string[] = [];
 
 	if (message.trim()) {
 		const workflow = canvas.nodes.find((node) => node.id === 'data_workflow');
 		if (workflow && workflow.label === 'Workflow to map') {
-			workflow.label = message
-				.trim()
-				.replace(/\s+/g, ' ')
-				.slice(0, 70);
+			workflow.label = clampPhrase(message, 90);
 			workflow.notes = 'The visitor described this as the workflow to map.';
 			workflow.updatedAt = now();
 			added.push(workflow);
@@ -513,23 +587,69 @@ export function runPublicAtlasMappingAgent(
 		suggestions.push('Keep the operator-facing touchpoint narrow and readable.');
 	}
 
-	if (!added.length) {
+	if (includesAny(text, ['connect', 'handoff', 'link', 'expected'])) {
+		const workflow = canvas.nodes.find((node) => node.id === 'data_workflow') ?? canvas.nodes[0];
+		if (workflow) {
+			const labelForKind: Record<PublicAtlasNodeKind, string> = {
+				actor: 'owned by',
+				human: 'needs approval',
+				ai: 'delegates assist',
+				system: 'triggers',
+				data: 'produces record',
+				constraint: 'bounded by',
+				touchpoint: 'inspected at'
+			};
+			for (const edge of canvas.edges) {
+				if (edgeMutations >= 4) break;
+				if (edge.source !== workflow.id) continue;
+				if (edge.label && !['relates to', 'hands off to', 'maps to'].includes(edge.label)) continue;
+				const target = canvas.nodes.find((node) => node.id === edge.target);
+				if (!target) continue;
+				edge.label = labelForKind[target.kind];
+				edge.updatedAt = now();
+				edgeMutations += 1;
+			}
+			for (const node of canvas.nodes) {
+				if (edgeMutations >= 4) break;
+				if (node.id === workflow.id) continue;
+				const exists = canvas.edges.some(
+					(edge) => edge.source === workflow.id && edge.target === node.id
+				);
+				if (exists) continue;
+				canvas.edges.push(
+					createPublicAtlasEdge(workflow.id, node.id, {
+						label: node.kind === 'constraint' ? 'bounded by' : 'hands off to',
+						createdBy: 'agent'
+					})
+				);
+				edgeMutations += 1;
+			}
+			if (edgeMutations) {
+				suggestions.push('Review the handoff labels and rename any edge that needs a stronger verb.');
+			}
+		}
+	}
+
+	const mutationCount = added.length + edgeMutations;
+
+	if (!mutationCount) {
 		suggestions.push('Add the workflow owner, the first decision, or the record that moves through the workflow.');
 	}
 
 	canvas.agentMessages += 1;
-	canvas.mutationCount += added.length;
+	canvas.mutationCount += mutationCount;
 	canvas.updatedAt = now();
 	const readiness = computePublicAtlasReadiness(canvas);
-	const reply = added.length
-		? `I updated the map with ${added.length} item${added.length === 1 ? '' : 's'}. ${readiness.reason}`
+	const reply = mutationCount
+		? `I updated the map with ${mutationCount} item${mutationCount === 1 ? '' : 's'}. ${readiness.reason}`
 		: `I did not change the map yet. ${readiness.nextStep}`;
 
 	return {
 		reply,
 		canvas,
-		mutationCount: added.length,
+		mutationCount,
 		suggestions,
-		readiness
+		readiness,
+		agentMode: 'fallback'
 	};
 }
