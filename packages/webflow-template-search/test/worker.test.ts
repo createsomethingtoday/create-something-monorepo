@@ -2658,6 +2658,45 @@ describe('webflow-template-search worker', () => {
     }
   });
 
+  it('bounds empty incremental catch-up windows so stale cursors advance in slices', async () => {
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: [],
+      incrementalAssets: [],
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+    });
+    const { env, close } = createTestEnv();
+
+    try {
+      await setSyncCursor(env.DB, '2026-03-17T00:00:00.000Z');
+
+      const sync = await callWorker(
+        new Request('https://templates.test/api/templates/admin/sync', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(sync.status).toBe(200);
+      const syncPayload = (await sync.json()) as {
+        cursor: string;
+        fetched_records: number;
+        indexed_records: number;
+        skipped_empty_windows?: number;
+      };
+      expect(syncPayload).toMatchObject({
+        cursor: '2026-03-17T02:00:00.000Z',
+        fetched_records: 0,
+        indexed_records: 0,
+        skipped_empty_windows: 8,
+      });
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
   it('takes over stale incremental sync locks before the 20-minute TTL expires', async () => {
     const changedAsset = {
       ...PUBLISHED_ASSETS[0],

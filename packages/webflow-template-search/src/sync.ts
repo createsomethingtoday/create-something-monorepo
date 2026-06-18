@@ -625,15 +625,13 @@ async function runFullSync(env: Env, heartbeat: SyncHeartbeat): Promise<SyncSumm
   return summary;
 }
 
-// Cloudflare Workers cap at 1,000 subrequests per invocation. Each record needs
-// ~10 D1 statements (slug-eviction DELETEs + UPSERT + style/category INSERTs) and
-// lookup tables consume ~65 Airtable subrequests. To stay comfortably under the
-// limit we target ≤ 600 records per run. Bulk Airtable updates can modify thousands
-// of records in a short window, so we cap each invocation to 15 minutes of LMT
-// range — even at peak density (~4,918 records over 117 min) that yields ~630 records
-// per window, for ~800 total subrequests with safe headroom.
+// Cloudflare Workers cap per-invocation work, and frequent cron runs are more
+// reliable when they advance stale cursors in bounded slices. Each incremental
+// invocation scans at most two hours of empty 15-minute windows before returning.
+// Bulk Airtable updates can modify thousands of records in a short window, so
+// each scanned window remains capped to 15 minutes of LMT range.
 const MAX_SYNC_WINDOW_MS = 15 * 60 * 1000;
-const MAX_EMPTY_SYNC_WINDOWS_PER_RUN = 96;
+const MAX_EMPTY_SYNC_WINDOWS_PER_RUN = 8;
 const MAX_INCREMENTAL_RECORDS_PER_RUN = 600;
 
 function resolveSyncWindow(cursor: string, now: Date): { end: Date; until: string | undefined; isCaughtUp: boolean } {
