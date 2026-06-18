@@ -58,6 +58,7 @@
 	let copyState = '';
 	let saveState = 'Draft not saved';
 	let hydrated = false;
+	let addMenuOpen = false;
 	let flowHost: HTMLDivElement;
 	let flowController: PublicAtlasFlowController | undefined;
 	let usage: AgentResponse['usage'] = {
@@ -83,6 +84,14 @@
 	$: selectedDimensionCount = PUBLIC_ATLAS_LANES.filter((lane) =>
 		canvas.nodes.some((node) => node.kind === lane.kind)
 	).length;
+	$: dimensionCoverage = PUBLIC_ATLAS_LANES.map((lane) => {
+		const count = canvas.nodes.filter((node) => node.kind === lane.kind).length;
+		return {
+			...lane,
+			count,
+			mapped: count > 0
+		};
+	});
 	$: bookingUrl = buildBookingUrl();
 
 	function buildBookingUrl() {
@@ -167,6 +176,11 @@
 		});
 		selectedNodeId = node.id;
 		selectedSourceId = node.id;
+	}
+
+	function addNodeFromMenu(kind: PublicAtlasNodeKind) {
+		addNode(kind);
+		addMenuOpen = false;
 	}
 
 	function removeNode(nodeId: string) {
@@ -291,6 +305,7 @@
 			window.localStorage.removeItem(PUBLIC_ATLAS_STORAGE_KEYS.warmupDraft);
 		}
 		saveState = 'Draft cleared';
+		addMenuOpen = false;
 	}
 
 	onMount(() => {
@@ -345,22 +360,46 @@
 
 	<div class="atlas-layout">
 		<div class="atlas-main">
-			<div class="atlas-toolbar" aria-label="Add map nodes">
-				{#each PUBLIC_ATLAS_LANES as lane}
-					<button type="button" onclick={() => addNode(lane.kind)}>
-						<strong>{lane.label}</strong>
-						<small>{lane.description}</small>
-					</button>
-				{/each}
-			</div>
-
 			<div class="canvas-shell">
 				<div class="canvas-header">
-					<div>
-						<span>{selectedDimensionCount}/7 dimensions mapped</span>
-						<strong>{readiness.level}</strong>
+					<div class="canvas-status">
+						<div>
+							<span>{selectedDimensionCount}/7 dimensions mapped</span>
+							<strong>{readiness.level}</strong>
+						</div>
+						<div class="dimension-strip" aria-label="Atlas dimension coverage">
+							{#each dimensionCoverage as lane}
+								<span class:mapped={lane.mapped} title={lane.description}>
+									{lane.label}
+									<small>{lane.count || '—'}</small>
+								</span>
+							{/each}
+						</div>
 					</div>
-					<small>{readiness.score}/100</small>
+					<div class="canvas-header-actions">
+						<small>{readiness.score}/100</small>
+						<div class="add-node-menu">
+							<button
+								type="button"
+								class="add-node-trigger"
+								aria-expanded={addMenuOpen}
+								aria-controls="public-atlas-add-menu"
+								onclick={() => (addMenuOpen = !addMenuOpen)}
+							>
+								+ Add
+							</button>
+							{#if addMenuOpen}
+								<div id="public-atlas-add-menu" class="add-node-options">
+									{#each PUBLIC_ATLAS_LANES as lane}
+										<button type="button" onclick={() => addNodeFromMenu(lane.kind)}>
+											<strong>{lane.label}</strong>
+											<small>{lane.description}</small>
+										</button>
+									{/each}
+								</div>
+							{/if}
+						</div>
+					</div>
 				</div>
 
 				<div
@@ -574,14 +613,8 @@
 		min-width: 0;
 	}
 
-	.atlas-toolbar {
-		display: grid;
-		grid-template-columns: repeat(7, minmax(0, 1fr));
-		gap: 0.45rem;
-		margin-bottom: 0.75rem;
-	}
-
-	.atlas-toolbar button,
+	.add-node-trigger,
+	.add-node-options button,
 	.agent-form button,
 	.summary-actions button,
 	.summary-actions a,
@@ -593,15 +626,7 @@
 		font: inherit;
 	}
 
-	.atlas-toolbar button {
-		display: grid;
-		gap: 0.2rem;
-		min-height: 4.2rem;
-		padding: 0.65rem;
-		text-align: left;
-	}
-
-	.atlas-toolbar small,
+	.add-node-options small,
 	.handoffs small {
 		color: var(--color-clear-grey, #636363);
 		font-size: 0.72rem;
@@ -621,7 +646,7 @@
 	.canvas-header,
 	.panel-title {
 		display: flex;
-		align-items: center;
+		align-items: flex-start;
 		justify-content: space-between;
 		gap: 0.75rem;
 		padding: 0.85rem;
@@ -633,6 +658,11 @@
 		min-width: 0;
 	}
 
+	.canvas-status {
+		display: grid;
+		gap: 0.65rem;
+	}
+
 	.canvas-header strong,
 	.panel-title strong {
 		display: block;
@@ -641,10 +671,88 @@
 		line-height: 1.25;
 	}
 
-	.canvas-header small {
+	.canvas-header-actions {
+		position: relative;
+		display: flex;
+		flex: 0 0 auto;
+		align-items: flex-start;
+		gap: 0.45rem;
+	}
+
+	.canvas-header-actions > small {
 		border: 1px solid var(--color-clear-border, #e1e1e1);
 		border-radius: 999px;
 		padding: 0.35rem 0.55rem;
+	}
+
+	.dimension-strip {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.35rem;
+		max-width: 46rem;
+	}
+
+	.dimension-strip span {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.3rem;
+		border: 1px solid var(--color-clear-border, #e1e1e1);
+		border-radius: 999px;
+		background: #ffffff;
+		color: var(--color-clear-grey, #636363);
+		font-size: 0.72rem;
+		font-weight: 700;
+		line-height: 1;
+		padding: 0.35rem 0.5rem;
+	}
+
+	.dimension-strip span.mapped {
+		border-color: #d7e6dc;
+		background: #f5fbf6;
+		color: #1e3c2c;
+	}
+
+	.dimension-strip small {
+		color: inherit;
+		font-size: 0.68rem;
+		font-weight: 800;
+	}
+
+	.add-node-menu {
+		position: relative;
+	}
+
+	.add-node-trigger {
+		min-height: 2rem;
+		padding: 0.35rem 0.6rem;
+		white-space: nowrap;
+	}
+
+	.add-node-options {
+		position: absolute;
+		top: calc(100% + 0.45rem);
+		right: 0;
+		z-index: 20;
+		display: grid;
+		gap: 0.35rem;
+		width: min(19rem, calc(100vw - 2rem));
+		border: 1px solid var(--color-clear-border, #e1e1e1);
+		border-radius: 8px;
+		background: #ffffff;
+		box-shadow: 0 18px 38px rgba(10, 14, 25, 0.14);
+		padding: 0.45rem;
+	}
+
+	.add-node-options button {
+		display: grid;
+		gap: 0.15rem;
+		padding: 0.55rem;
+		text-align: left;
+	}
+
+	.add-node-options button:hover,
+	.add-node-trigger:hover {
+		background: #f4f4ef;
 	}
 
 	.atlas-flow-viewport {
@@ -830,15 +938,26 @@
 		.atlas-layout {
 			grid-template-columns: 1fr;
 		}
-
-		.atlas-toolbar {
-			grid-template-columns: repeat(2, minmax(0, 1fr));
-		}
 	}
 
 	@media (max-width: 720px) {
-		.atlas-toolbar {
-			grid-template-columns: 1fr;
+		.canvas-header {
+			display: grid;
+		}
+
+		.canvas-header-actions {
+			width: 100%;
+			justify-content: space-between;
+		}
+
+		.add-node-menu {
+			position: static;
+		}
+
+		.add-node-options {
+			right: 0;
+			left: auto;
+			width: min(19rem, calc(100vw - 2rem));
 		}
 
 		.atlas-flow-viewport {
