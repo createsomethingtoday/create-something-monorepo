@@ -431,6 +431,24 @@
       "related_deployments": ["c3-management-notion", "halfdozen-operator-notion-mcp"],
       "notes": "Operator-invoked reconciliation MCP for C3 Management source ticket data to Half Dozen ticket rows and mapped HD status back to the source. Current surface is agent/operator control; future scale should move normal incremental sync to Notion webhooks plus a persisted sync index."
     },
+    "halfdozen-cracked-sync-mcp": {
+      "type": "remote_mcp_server",
+      "product": "Cracked Live Ticket Sync MCP",
+      "client": "cracked-live",
+      "tenant": "cracked-live",
+      "url": "https://halfdozen-cracked-sync-mcp.createsomething.workers.dev/mcp",
+      "status": "deployed",
+      "account": "create-something",
+      "package_path": "packages/halfdozen-blondish-sync-mcp",
+      "wrangler_config": "packages/halfdozen-blondish-sync-mcp/wrangler.cracked.toml",
+      "auth": {
+        "type": "bearer",
+        "bearer_token_env_var": "HALFDOZEN_CRACKED_SYNC_MCP_API_KEY",
+        "infisical_path": "/mcp-hub/hubs"
+      },
+      "related_deployments": ["cracked-notion", "halfdozen-operator-notion-mcp"],
+      "notes": "Operator-invoked reconciliation MCP for Cracked Live source ticket data to Half Dozen ticket rows and mapped HD status back to the source. Current surface is agent/operator control; future scale should move normal incremental sync to Notion webhooks plus a persisted sync index."
+    },
     "halfdozen-lightswitch-sync-mcp": {
       "type": "remote_mcp_server",
       "product": "Lightswitch Ticket Sync MCP",
