@@ -29,6 +29,8 @@ export interface WebflowTemplateImageRecord {
   thumbnailImageUrl: string | null;
   thumbnailImageSecondaryUrl: string | null;
   carouselImageUrls: string[];
+  price: number | null;
+  isFree: boolean | null;
 }
 
 export interface WebflowDesignerAvatarRecord {
@@ -110,11 +112,87 @@ function imageUrls(fields: Record<string, unknown>, keys: string[]): string[] {
   return [];
 }
 
+function fieldKeyMatchesPrice(value: string): boolean {
+  const normalized = value.toLowerCase().replace(/[^a-z0-9]+/g, ' ');
+  return /\b(price|pricing|cost|amount)\b/.test(normalized);
+}
+
+function fieldKeyMatchesFree(value: string): boolean {
+  const normalized = value.toLowerCase().replace(/[^a-z0-9]+/g, ' ');
+  return /\b(free|purchase type|template price|price|pricing)\b/.test(normalized);
+}
+
+function primitiveValues(value: unknown): unknown[] {
+  if (value == null) return [];
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') return [value];
+  if (Array.isArray(value)) return value.flatMap((entry) => primitiveValues(entry));
+  if (typeof value === 'object') {
+    const record = value as Record<string, unknown>;
+    return ['value', 'name', 'label', 'text', 'title'].flatMap((key) => primitiveValues(record[key]));
+  }
+  return [];
+}
+
+function parsePriceValue(value: unknown): number | null {
+  for (const entry of primitiveValues(value)) {
+    if (typeof entry === 'number' && Number.isFinite(entry) && entry >= 0) return entry;
+    if (typeof entry !== 'string') continue;
+    const normalized = entry.trim().toLowerCase();
+    if (!normalized) continue;
+    if (/\bfree\b/.test(normalized) || normalized === '$0' || normalized === '0' || normalized === '0 usd') return 0;
+    const match = normalized.replace(/,/g, '').match(/\$?\s*(\d+(?:\.\d+)?)/);
+    if (!match?.[1]) continue;
+    const parsed = Number(match[1]);
+    if (Number.isFinite(parsed) && parsed >= 0) return parsed;
+  }
+  return null;
+}
+
+function parseFreeValue(value: unknown): boolean | null {
+  for (const entry of primitiveValues(value)) {
+    if (typeof entry === 'boolean') return entry;
+    if (typeof entry === 'number' && (entry === 0 || entry === 1)) return entry === 1;
+    if (typeof entry !== 'string') continue;
+    const normalized = entry.trim().toLowerCase();
+    if (!normalized) continue;
+    if (['true', 'yes', 'free', '$0', '0', '0 usd'].includes(normalized) || /\bfree\b/.test(normalized)) return true;
+    if (['false', 'no', 'paid'].includes(normalized) || /\bpaid\b/.test(normalized)) return false;
+  }
+  return null;
+}
+
+export function extractTemplateOffer(fieldData: Record<string, unknown>): { price: number | null; isFree: boolean | null } | null {
+  let price: number | null = null;
+  let isFree: boolean | null = null;
+
+  for (const [fieldName, value] of Object.entries(fieldData)) {
+    if (fieldKeyMatchesPrice(fieldName)) {
+      const parsedPrice = parsePriceValue(value);
+      if (parsedPrice !== null) price = parsedPrice;
+    }
+
+    if (fieldKeyMatchesFree(fieldName)) {
+      const parsedFree = parseFreeValue(value);
+      if (parsedFree !== null) isFree = parsedFree;
+    }
+  }
+
+  if (price !== null) {
+    isFree = price === 0;
+  } else if (isFree === true) {
+    price = 0;
+  }
+
+  if (price === null && isFree === null) return null;
+  return { price, isFree };
+}
+
 function mapTemplateFieldData(fieldData: Record<string, unknown>): WebflowTemplateImageRecord | null {
   const syncRecordId = trimString(fieldData['sync-record-id']);
   const templateSlug = trimString(fieldData.slug);
   const name = trimString(fieldData.name ?? fieldData.Name);
   if (!syncRecordId && !templateSlug && !name) return null;
+  const offer = extractTemplateOffer(fieldData);
 
   return {
     id: syncRecordId,
@@ -124,6 +202,8 @@ function mapTemplateFieldData(fieldData: Record<string, unknown>): WebflowTempla
     thumbnailImageUrl: imageUrl(fieldData, ['main-thumbnail', 'main-thumbnail-image', 'thumbnail', 'thumbnail-image']),
     thumbnailImageSecondaryUrl: imageUrl(fieldData, ['thumbnail-secondary', 'thumbnail-image-secondary']),
     carouselImageUrls: imageUrls(fieldData, ['slider-images', 'carousel-images']),
+    price: offer?.price ?? null,
+    isFree: offer?.isFree ?? null,
   };
 }
 

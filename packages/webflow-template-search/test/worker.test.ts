@@ -880,6 +880,7 @@ describe('webflow-template-search worker', () => {
               'sync-record-id': 'recAgentflow',
               name: 'Agentflow',
               slug: 'agentflow-updated-website-template',
+              'template-price': 'Free',
               thumbnail: { url: 'https://cdn.prod.website-files.com/site/agentflow-webhook.webp' },
               'thumbnail-secondary': { url: 'https://cdn.prod.website-files.com/site/agentflow-hover-webhook.webp' },
               'slider-images': [
@@ -900,7 +901,7 @@ describe('webflow-template-search worker', () => {
       });
 
       const row = await env.DB.prepare(
-        `SELECT template_slug, listing_url, thumbnail_image_url, thumbnail_image_secondary_url, carousel_image_urls_json
+        `SELECT template_slug, listing_url, thumbnail_image_url, thumbnail_image_secondary_url, carousel_image_urls_json, price, is_free
          FROM template_documents
          WHERE id = ?`,
       )
@@ -911,6 +912,8 @@ describe('webflow-template-search worker', () => {
           thumbnail_image_url: string | null;
           thumbnail_image_secondary_url: string | null;
           carousel_image_urls_json: string;
+          price: number | null;
+          is_free: number;
         }>();
 
       expect(row).toMatchObject({
@@ -918,6 +921,8 @@ describe('webflow-template-search worker', () => {
         listing_url: 'https://webflow.com/templates/html/agentflow-updated-website-template',
         thumbnail_image_url: 'https://cdn.prod.website-files.com/site/agentflow-webhook.webp',
         thumbnail_image_secondary_url: 'https://cdn.prod.website-files.com/site/agentflow-hover-webhook.webp',
+        price: 0,
+        is_free: 1,
       });
       expect(JSON.parse(row?.carousel_image_urls_json ?? '[]')).toEqual([
         'https://cdn.prod.website-files.com/site/agentflow-slide-1.webp',
@@ -1521,6 +1526,7 @@ describe('webflow-template-search worker', () => {
             fieldData: {
               slug: 'agentflow-website-template',
               name: 'Agentflow',
+              'template-price': 'Free',
               'thumbnail-image': { url: 'https://cdn.prod.website-files.com/site/agentflow.webp' },
               'thumbnail-image-secondary': {
                 url: 'https://cdn.prod.website-files.com/site/agentflow-hover.webp',
@@ -1546,13 +1552,19 @@ describe('webflow-template-search worker', () => {
 
       const response = await callWorker(new Request('https://templates.test/api/templates/search?q=agentflow'), env);
       const payload = (await response.json()) as {
-        items: Array<{ thumbnail_image_url: string | null; thumbnail_image_secondary_url: string | null }>;
+        items: Array<{
+          thumbnail_image_url: string | null;
+          thumbnail_image_secondary_url: string | null;
+          price: number | null;
+          is_free: boolean;
+        }>;
       };
 
       expect(payload.items[0]?.thumbnail_image_url).toBe('https://cdn.prod.website-files.com/site/agentflow.webp');
       expect(payload.items[0]?.thumbnail_image_secondary_url).toBe(
         'https://cdn.prod.website-files.com/site/agentflow-hover.webp',
       );
+      expect(payload.items[0]).toMatchObject({ price: 0, is_free: true });
     } finally {
       fetchMock.mockRestore();
       close();
@@ -2173,6 +2185,76 @@ describe('webflow-template-search worker', () => {
       expect(afterPayload.items[0]?.thumbnail_image_url).toBe(
         'https://cdn.prod.website-files.com/site/agentflow-updated.webp',
       );
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
+  it('refreshes indexed price metadata from Webflow CMS items', async () => {
+    const dataset = {
+      publishedAssets: [PUBLISHED_ASSETS[0]],
+      incrementalAssets: [],
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+      webflowCollectionItems: {
+        [TEMPLATES_COLLECTION_ID]: [] as Array<Record<string, unknown>>,
+      },
+    };
+    const fetchMock = installAirtableFetchMock(dataset);
+    const { env, close } = createTestEnv();
+    env.WEBFLOW_API_TOKEN = 'test-webflow-cms-token';
+
+    try {
+      const rebuild = await callWorker(
+        new Request('https://templates.test/api/templates/admin/rebuild', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(rebuild.status).toBe(200);
+
+      const beforeRefresh = await callWorker(new Request('https://templates.test/api/templates/search?q=agentflow'), env);
+      const beforePayload = (await beforeRefresh.json()) as { items: Array<{ price: number | null; is_free: boolean }> };
+      expect(beforePayload.items[0]).toMatchObject({ price: 169, is_free: false });
+
+      dataset.webflowCollectionItems[TEMPLATES_COLLECTION_ID] = [
+        {
+          id: 'item-agentflow',
+          isArchived: false,
+          isDraft: false,
+          fieldData: {
+            'sync-record-id': 'recAgentflow',
+            name: 'Agentflow',
+            slug: 'agentflow-website-template',
+            thumbnail: { url: 'https://example.com/agentflow.png' },
+            'template-price': 'Free',
+          },
+        },
+      ];
+
+      const refresh = await callWorker(
+        new Request('https://templates.test/api/templates/admin/refresh-images', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(refresh.status).toBe(200);
+      await refresh.json();
+
+      const afterRefresh = await callWorker(new Request('https://templates.test/api/templates/search?q=agentflow'), env);
+      const afterPayload = (await afterRefresh.json()) as { items: Array<{ price: number | null; is_free: boolean }> };
+      expect(afterPayload.items[0]).toMatchObject({ price: 0, is_free: true });
+
+      const freeSearch = await callWorker(
+        new Request('https://templates.test/api/templates/search?q=agentflow&free_only=true'),
+        env,
+      );
+      const freePayload = (await freeSearch.json()) as { items: Array<{ name: string }> };
+      expect(freePayload.items.map((item) => item.name)).toEqual(['Agentflow']);
     } finally {
       fetchMock.mockRestore();
       close();
