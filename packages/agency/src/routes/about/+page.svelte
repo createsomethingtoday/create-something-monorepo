@@ -44,6 +44,63 @@
     }
   ];
 
+  const originSignals = [
+    {
+      label: 'Power',
+      title: 'Control before speed',
+      detail: 'A Porsche 930 Turbo is useful only when the driver can trust the system around it.'
+    },
+    {
+      label: 'Pressure',
+      title: 'Protocols before improvisation',
+      detail: 'Emergency medicine made the cost of unclear handoffs easy to understand.'
+    },
+    {
+      label: 'Continuity',
+      title: 'Care leaves a record',
+      detail: 'Veterinary work made logging, ownership, and recovery paths feel concrete.'
+    }
+  ];
+
+  const dossierRows = [
+    {
+      label: 'Current role',
+      value: 'Senior Systems Architect',
+      detail: 'Marketplace Team at Webflow'
+    },
+    {
+      label: 'Primary work',
+      value: 'Workflow trust layers',
+      detail: 'Scoped actions, approvals, evidence, and escalation surfaces'
+    },
+    {
+      label: 'Location',
+      value: 'Texas',
+      detail: 'Working with businesses across the US'
+    }
+  ];
+
+  const workingContracts = [
+    {
+      label: 'Approach',
+      title: 'Start with the cleanup loop',
+      detail:
+        'Most teams need one workflow that stops creating manual recovery work before they need a larger AI initiative.'
+    },
+    {
+      label: 'Method',
+      title: 'Subtract before automating',
+      detail:
+        'The Subtractive Triad removes duplication, excess, and disconnection so automation has fewer failure paths.'
+    },
+    {
+      label: 'Client contract',
+      title: 'Bring the workflow and owner',
+      detail:
+        'Clients bring the operating constraints and approval owner. I bring diagnosis, controls, runbooks, evidence, and working software.'
+    }
+  ];
+
   const operatorStateCards: ClearCardItem[] = operatorStates.map((state) => ({
     eyebrow: state.label,
     icon: state.label === 'Clear' ? 'check' : state.label === 'Review' ? 'search' : 'warning',
@@ -110,6 +167,7 @@
 
 <ClearPageSection
   variant="white"
+  layout="split"
   eyebrow="Why this work"
   title="Power needs control. Pressure needs protocols."
 >
@@ -129,6 +187,19 @@
       clear, visible where judgment is required, and recoverable when something goes wrong.
     </p>
   </div>
+
+  {#snippet aside()}
+    <aside class="signal-rail" aria-label="Operating references">
+      <span class="rail-label">Reference points</span>
+      {#each originSignals as signal}
+        <article class="signal-card">
+          <span>{signal.label}</span>
+          <strong>{signal.title}</strong>
+          <p>{signal.detail}</p>
+        </article>
+      {/each}
+    </aside>
+  {/snippet}
 </ClearPageSection>
 
 <ClearPageSection
@@ -142,7 +213,7 @@
   {/snippet}
 </ClearPageSection>
 
-<ClearPageSection variant="white" eyebrow="Background" title="What I do now">
+<ClearPageSection variant="white" layout="split" eyebrow="Background" title="What I do now">
   <div class="about-prose">
     <p>
       Micah Johnson. I am a Senior Systems Architect on the Marketplace Team at Webflow, where I
@@ -156,54 +227,54 @@
       where approvals, policies, operator briefs, and recovery paths are the difference between a
       launch and a system people actually trust.
     </p>
-    <p>Based in Texas. Working with businesses across the US.</p>
-    <p>
-      <a
-        href="https://www.linkedin.com/in/micahryanjohnson/"
-        target="_blank"
-        rel="noopener noreferrer">LinkedIn</a
-      >
-      · <a href="mailto:micah@createsomething.agency">Email</a>
-    </p>
   </div>
-</ClearPageSection>
 
-<ClearPageSection variant="soft" eyebrow="Approach" title="How I approach the work">
-  <div class="about-prose">
-    <p>
-      Most teams do not need a giant AI initiative first. They need one workflow that stops creating
-      manual cleanup. I start there, then add controls only when the cost of failure justifies the
-      extra layer.
-    </p>
-    <p>
-      My operating model is the Subtractive Triad: remove duplication, excess, and disconnection
-      before adding automation. Cleaner systems reduce handoff risk. Better constraints make
-      automation more reliable.
-    </p>
-    <p>
-      The goal is not more automation. The goal is one operating path that lets the operator stop
-      watching the dashboard until judgment is actually required.
-    </p>
-  </div>
+  {#snippet aside()}
+    <aside class="operator-dossier" aria-label="Operator dossier">
+      <div class="operator-dossier__header">
+        <span>Operator</span>
+        <strong>Micah Johnson</strong>
+      </div>
+
+      <div class="dossier-rows">
+        {#each dossierRows as row}
+          <div class="dossier-row">
+            <span>{row.label}</span>
+            <strong>{row.value}</strong>
+            <p>{row.detail}</p>
+          </div>
+        {/each}
+      </div>
+
+      <div class="dossier-actions" aria-label="Contact links">
+        <a
+          href="https://www.linkedin.com/in/micahryanjohnson/"
+          target="_blank"
+          rel="noopener noreferrer">LinkedIn</a
+        >
+        <a href="mailto:micah@createsomething.agency">Email</a>
+      </div>
+    </aside>
+  {/snippet}
 </ClearPageSection>
 
 <ClearPageSection
-  variant="white"
-  eyebrow="Client experience"
-  title="How clients experience the work"
+  variant="soft"
+  eyebrow="Working contract"
+  title="The work stays narrow enough to trust."
+  description="The goal is not more automation. The goal is one operating path that lets the operator stop watching the dashboard until judgment is actually required."
 >
-  <div class="about-prose">
-    <p>
-      Clients do not hire me to become another internal admin. They bring the workflow, the
-      operating constraints, and the approval owner. I bring the diagnosis, the control layer, and
-      the files your team needs to run and inherit the system.
-    </p>
-    <p>
-      Visibility comes through runbooks, approval states, release evidence, operator briefs, and
-      working software, not meeting theater. If what a client needs is a full internal delivery
-      team, I route that work to a better-fit partner.
-    </p>
-  </div>
+  {#snippet after()}
+    <div class="contract-grid">
+      {#each workingContracts as contract}
+        <article class="contract-card">
+          <span>{contract.label}</span>
+          <strong>{contract.title}</strong>
+          <p>{contract.detail}</p>
+        </article>
+      {/each}
+    </div>
+  {/snippet}
 </ClearPageSection>
 
 <ClearPageSection
@@ -322,5 +393,153 @@
   .about-prose a {
     color: var(--color-clear-onyx, #0a0e19);
     font-weight: var(--font-medium);
+  }
+
+  .signal-rail,
+  .operator-dossier,
+  .contract-card {
+    border: 1px solid var(--color-clear-border, #e1e1e1);
+    border-radius: var(--radius-clear-sm, 4px);
+    background: var(--color-clear-panel, #ffffff);
+    color: var(--color-clear-onyx, #0a0e19);
+  }
+
+  .signal-rail {
+    display: grid;
+    gap: 0.75rem;
+    padding: 0.75rem;
+  }
+
+  .rail-label,
+  .signal-card span,
+  .operator-dossier__header span,
+  .dossier-row span,
+  .contract-card span {
+    color: var(--color-clear-grey-quiet, #818181);
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    font-weight: var(--font-semibold);
+    letter-spacing: 0;
+    line-height: 1.2;
+    text-transform: uppercase;
+  }
+
+  .signal-card {
+    display: grid;
+    gap: 0.36rem;
+    padding: 1rem;
+    border: 1px solid var(--color-clear-border, #e1e1e1);
+    border-radius: var(--radius-clear-sm, 4px);
+    background: var(--color-clear-porcelain, #f9f9f9);
+  }
+
+  .signal-card strong,
+  .dossier-row strong,
+  .contract-card strong {
+    font-size: 1rem;
+    font-weight: var(--font-medium);
+    line-height: 1.25;
+  }
+
+  .signal-card p,
+  .dossier-row p,
+  .contract-card p {
+    margin: 0;
+    color: var(--color-clear-grey, #636363);
+    font-size: 0.94rem;
+    line-height: 1.5;
+  }
+
+  .operator-dossier {
+    overflow: hidden;
+  }
+
+  .operator-dossier__header {
+    display: grid;
+    gap: 0.35rem;
+    padding: 1.15rem;
+    border-bottom: 1px solid var(--color-clear-border, #e1e1e1);
+    background:
+      linear-gradient(90deg, rgba(10, 14, 25, 0.035) 1px, transparent 1px) 0 0 / 3.5rem
+        3.5rem,
+      var(--color-clear-panel, #ffffff);
+  }
+
+  .operator-dossier__header strong {
+    font-size: 1.34rem;
+    font-weight: var(--font-medium);
+    line-height: 1.1;
+  }
+
+  .dossier-rows {
+    display: grid;
+  }
+
+  .dossier-row {
+    display: grid;
+    gap: 0.32rem;
+    padding: 1rem 1.15rem;
+    border-bottom: 1px solid var(--color-clear-border, #e1e1e1);
+  }
+
+  .dossier-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dossier-actions a {
+    display: inline-flex;
+    min-height: 3rem;
+    align-items: center;
+    justify-content: center;
+    border-right: 1px solid var(--color-clear-border, #e1e1e1);
+    color: var(--color-clear-onyx, #0a0e19);
+    font-size: 0.94rem;
+    font-weight: var(--font-medium);
+    text-decoration: none;
+  }
+
+  .dossier-actions a:last-child {
+    border-right: 0;
+  }
+
+  .dossier-actions a:hover {
+    background: var(--color-clear-onyx, #0a0e19);
+    color: #ffffff;
+    opacity: 1;
+  }
+
+  .contract-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+  }
+
+  .contract-card {
+    display: grid;
+    gap: 0.55rem;
+    min-height: 13rem;
+    padding: 1.15rem;
+  }
+
+  @media (max-width: 760px) {
+    .signal-rail {
+      gap: 0.55rem;
+      padding: 0.55rem;
+    }
+
+    .signal-card,
+    .dossier-row,
+    .contract-card {
+      padding: 0.88rem;
+    }
+
+    .contract-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .contract-card {
+      min-height: 0;
+    }
   }
 </style>
