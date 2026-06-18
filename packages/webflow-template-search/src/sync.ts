@@ -14,6 +14,7 @@ import {
   deleteTemplateDocuments,
   finishSyncJobLock,
   getSyncCursor,
+  heartbeatSyncJobLock,
   listTemplateImageBackfillRows,
   listTemplateImageRefreshRows,
   publicSyncJobRecord,
@@ -68,6 +69,8 @@ interface SyncWarning {
   message: string;
 }
 
+type SyncHeartbeat = () => Promise<void>;
+
 export class SyncAlreadyRunningError extends Error {
   readonly activeJob: ReturnType<typeof publicSyncJobRecord>;
 
@@ -78,7 +81,7 @@ export class SyncAlreadyRunningError extends Error {
   }
 }
 
-async function runWithSyncJobLock<T>(env: Env, mode: string, task: () => Promise<T>): Promise<T> {
+async function runWithSyncJobLock<T>(env: Env, mode: string, task: (heartbeat: SyncHeartbeat) => Promise<T>): Promise<T> {
   const lockResult = await acquireSyncJobLock(env.DB, mode, {
     ttlMs: mode === 'full' ? FULL_SYNC_LOCK_TTL_MS : DEFAULT_SYNC_LOCK_TTL_MS,
     staleHeartbeatMs:
@@ -92,8 +95,11 @@ async function runWithSyncJobLock<T>(env: Env, mode: string, task: () => Promise
     throw new SyncAlreadyRunningError(lockResult.activeJob);
   }
 
+  const heartbeat = () => heartbeatSyncJobLock(env.DB, lockResult.lock);
+
   try {
-    const result = await task();
+    await heartbeat();
+    const result = await task(heartbeat);
     await finishSyncJobLock(env.DB, lockResult.lock, { status: 'succeeded', summary: result });
     return result;
   } catch (error) {
@@ -575,7 +581,7 @@ function normalizeTemplateRecord(
   };
 }
 
-async function runFullSync(env: Env): Promise<SyncSummary> {
+async function runFullSync(env: Env, heartbeat: SyncHeartbeat): Promise<SyncSummary> {
   const startedAt = nowIso();
   const warnings: SyncWarning[] = [];
   const [lookups, assets, webflowImageIndex, webflowDesigners] = await Promise.all([
@@ -584,18 +590,23 @@ async function runFullSync(env: Env): Promise<SyncSummary> {
     bestEffortWebflowTemplateImageIndex(env, warnings),
     bestEffortWebflowDesignerAvatars(env, warnings),
   ]);
+  await heartbeat();
   const webflowDesignerIndex = buildWebflowDesignerAvatarIndex(webflowDesigners);
   const documents = assets
     .map((record) => normalizeTemplateRecord(record, lookups, startedAt, webflowImageIndex, webflowDesignerIndex))
     .filter((value): value is NonNullable<typeof value> => Boolean(value));
 
   await clearIndex(env.DB);
+  await heartbeat();
   await upsertTemplateDocuments(env.DB, documents);
+  await heartbeat();
   const webflowCreatorRecords = await updateCreatorAvatarsFromWebflow(env.DB, webflowDesigners, startedAt);
+  await heartbeat();
   const [backfilledRecords, imageRefreshedRecords] = await Promise.all([
     backfillCreatorFieldsByName(env.DB, startedAt),
     refreshIndexedWebflowImages(env.DB, webflowImageIndex, startedAt),
   ]);
+  await heartbeat();
 
   const summary: SyncSummary = {
     mode: 'full',
@@ -635,9 +646,9 @@ function resolveSyncWindow(cursor: string, now: Date): { end: Date; until: strin
   };
 }
 
-async function runIncrementalSync(env: Env): Promise<SyncSummary> {
+async function runIncrementalSync(env: Env, heartbeat: SyncHeartbeat): Promise<SyncSummary> {
   const currentCursor = await getSyncCursor(env.DB);
-  if (!currentCursor) return runFullSync(env);
+  if (!currentCursor) return runFullSync(env, heartbeat);
 
   const startedAt = nowIso();
   const warnings: SyncWarning[] = [];
@@ -652,6 +663,7 @@ async function runIncrementalSync(env: Env): Promise<SyncSummary> {
   while (scannedWindows < MAX_EMPTY_SYNC_WINDOWS_PER_RUN) {
     const syncWindow = resolveSyncWindow(scanCursor, now);
     const windowAssets = await fetchModifiedAssetsSince(env, scanCursor, syncWindow.until);
+    await heartbeat();
     scannedWindows += 1;
     windowEnd = syncWindow.end;
     isCaughtUp = syncWindow.isCaughtUp;
@@ -679,6 +691,7 @@ async function runIncrementalSync(env: Env): Promise<SyncSummary> {
       bestEffortWebflowTemplateImageIndex(env, warnings),
       bestEffortWebflowDesignerAvatars(env, warnings),
     ]);
+    await heartbeat();
     webflowImageIndex = loadedWebflowImageIndex;
     const webflowDesignerIndex = buildWebflowDesignerAvatarIndex(webflowDesigners);
 
@@ -694,8 +707,10 @@ async function runIncrementalSync(env: Env): Promise<SyncSummary> {
 
   if (toDelete.length > 0) await deleteTemplateDocuments(env.DB, toDelete);
   if (toUpsert.length > 0) await upsertTemplateDocuments(env.DB, toUpsert);
+  await heartbeat();
   if (!webflowImageIndex && !warnings.some((warning) => warning.source === 'webflow_template_image_index')) {
     webflowImageIndex = await bestEffortWebflowTemplateImageIndex(env, warnings);
+    await heartbeat();
   }
   const imageRefreshedRecords = await refreshIndexedWebflowImages(
     env.DB,
@@ -703,6 +718,7 @@ async function runIncrementalSync(env: Env): Promise<SyncSummary> {
     startedAt,
     toUpsert.map((document) => document.id),
   );
+  await heartbeat();
 
   // Keep the frequent 5-minute incremental path limited to changed template rows.
   // Creator metadata is repaired by Webflow designer webhooks and image refresh,
@@ -731,11 +747,13 @@ async function runIncrementalSync(env: Env): Promise<SyncSummary> {
 }
 
 export async function syncTemplates(env: Env, mode: 'full' | 'incremental'): Promise<SyncSummary> {
-  return runWithSyncJobLock(env, mode, () => (mode === 'full' ? runFullSync(env) : runIncrementalSync(env)));
+  return runWithSyncJobLock(env, mode, (heartbeat) =>
+    mode === 'full' ? runFullSync(env, heartbeat) : runIncrementalSync(env, heartbeat),
+  );
 }
 
 export async function syncTemplateRecordsByIds(env: Env, recordIds: string[]): Promise<SyncSummary> {
-  return runWithSyncJobLock(env, 'records', async () => {
+  return runWithSyncJobLock(env, 'records', async (heartbeat) => {
     const startedAt = nowIso();
     const warnings: SyncWarning[] = [];
     const uniqueRecordIds = uniqueStrings(recordIds.map((id) => id.trim()).filter(Boolean));
@@ -745,6 +763,7 @@ export async function syncTemplateRecordsByIds(env: Env, recordIds: string[]): P
       bestEffortWebflowTemplateImageIndex(env, warnings),
       bestEffortWebflowDesignerAvatars(env, warnings),
     ]);
+    await heartbeat();
     const webflowDesignerIndex = buildWebflowDesignerAvatarIndex(webflowDesigners);
     const documents: TemplateDocumentInput[] = [];
     const toDelete: string[] = [];
@@ -760,6 +779,7 @@ export async function syncTemplateRecordsByIds(env: Env, recordIds: string[]): P
 
     if (toDelete.length > 0) await deleteTemplateDocuments(env.DB, toDelete);
     if (documents.length > 0) await upsertTemplateDocuments(env.DB, documents);
+    await heartbeat();
     const imageRefreshedRecords = documents.length
       ? await refreshIndexedWebflowImages(
           env.DB,
@@ -769,6 +789,7 @@ export async function syncTemplateRecordsByIds(env: Env, recordIds: string[]): P
           { preferPublishedTemplatePage: true },
         )
       : 0;
+    await heartbeat();
 
     const summary: SyncSummary = {
       mode: 'records',
@@ -790,7 +811,7 @@ export async function syncTemplateRecordsByIds(env: Env, recordIds: string[]): P
 // Image URL refresh: prefers stable Webflow CMS/CDN URLs (never expire) when a
 // Webflow API token is configured. Falls back to Airtable signed URLs otherwise.
 // Airtable remains the fallback for designers missing from Webflow CMS.
-async function runImageUrlRefresh(env: Env): Promise<ImageRefreshSummary> {
+async function runImageUrlRefresh(env: Env, heartbeat: SyncHeartbeat): Promise<ImageRefreshSummary> {
   const startedAt = nowIso();
 
   if (hasWebflowCmsToken(env)) {
@@ -800,6 +821,7 @@ async function runImageUrlRefresh(env: Env): Promise<ImageRefreshSummary> {
       fetchWebflowDesignerAvatars(env),
       loadLookupMaps(env),
     ]);
+    await heartbeat();
     const airtableFallbackCreators = airtableCreatorFallbackMap(lookups.creators, designerAvatars);
 
     const [refreshedImages, refreshedAvatars, backfilledAvatars] = await Promise.all([
@@ -807,7 +829,9 @@ async function runImageUrlRefresh(env: Env): Promise<ImageRefreshSummary> {
       updateCreatorAvatarsFromWebflow(env.DB, designerAvatars, startedAt),
       backfillCreatorAvatars(env.DB, airtableFallbackCreators, startedAt, { overwriteExisting: true }),
     ]);
+    await heartbeat();
     const nameBackfilledAvatars = await backfillCreatorFieldsByName(env.DB, startedAt);
+    await heartbeat();
 
     const summary: ImageRefreshSummary = {
       mode: 'image_refresh',
@@ -827,6 +851,7 @@ async function runImageUrlRefresh(env: Env): Promise<ImageRefreshSummary> {
     loadLookupMaps(env),
     fetchPublishedTemplateImageFields(env),
   ]);
+  await heartbeat();
 
   const records = assets.map((record) => ({
     id: record.id,
@@ -839,7 +864,9 @@ async function runImageUrlRefresh(env: Env): Promise<ImageRefreshSummary> {
     refreshTemplateImageUrls(env.DB, records, startedAt),
     backfillCreatorAvatars(env.DB, lookups.creators, startedAt, { overwriteExisting: true }),
   ]);
+  await heartbeat();
   const nameBackfilledAvatars = await backfillCreatorFieldsByName(env.DB, startedAt);
+  await heartbeat();
 
   const summary: ImageRefreshSummary = {
     mode: 'image_refresh',
@@ -855,19 +882,21 @@ async function runImageUrlRefresh(env: Env): Promise<ImageRefreshSummary> {
 }
 
 export async function refreshImages(env: Env): Promise<ImageRefreshSummary> {
-  return runWithSyncJobLock(env, 'image_refresh', () => runImageUrlRefresh(env));
+  return runWithSyncJobLock(env, 'image_refresh', (heartbeat) => runImageUrlRefresh(env, heartbeat));
 }
 
-async function runCreatorProfileRefresh(env: Env): Promise<ImageRefreshSummary> {
+async function runCreatorProfileRefresh(env: Env, heartbeat: SyncHeartbeat): Promise<ImageRefreshSummary> {
   const startedAt = nowIso();
   if (!hasWebflowCmsToken(env)) {
     throw new Error('A Webflow CMS read token is not configured.');
   }
 
   const designerAvatars = await fetchWebflowDesignerAvatars(env);
+  await heartbeat();
   const refreshedAvatars = await updateCreatorAvatarsFromWebflow(env.DB, designerAvatars, startedAt, {
     matchByName: false,
   });
+  await heartbeat();
 
   const summary: ImageRefreshSummary = {
     mode: 'creator_refresh',
@@ -910,7 +939,7 @@ async function runForcedCreatorProfileRefresh(env: Env, creatorNames: string[] =
 }
 
 export async function refreshCreatorProfiles(env: Env): Promise<ImageRefreshSummary> {
-  return runWithSyncJobLock(env, 'creator_refresh', () => runCreatorProfileRefresh(env));
+  return runWithSyncJobLock(env, 'creator_refresh', (heartbeat) => runCreatorProfileRefresh(env, heartbeat));
 }
 
 export async function forceRefreshCreatorProfiles(env: Env, creatorNames: string[] = []): Promise<ImageRefreshSummary> {
@@ -921,12 +950,13 @@ export async function backfillTemplateImages(
   env: Env,
   options: { limit?: number; templateSlugs?: string[] } = {},
 ): Promise<TemplateImageBackfillSummary> {
-  return runWithSyncJobLock(env, 'image_backfill', async () => {
+  return runWithSyncJobLock(env, 'image_backfill', async (heartbeat) => {
     const startedAt = nowIso();
     const requestedLimit = clamp(Math.floor(options.limit ?? IMAGE_BACKFILL_DEFAULT_LIMIT), 1, IMAGE_BACKFILL_MAX_LIMIT);
     const requestedTemplateSlugs = uniqueStrings((options.templateSlugs ?? []).map((slug) => slug.trim()).filter(Boolean));
     const rows = await listTemplateImageBackfillRows(env.DB, requestedLimit, requestedTemplateSlugs);
     const webflowImageIndex = rows.length > 0 ? await loadWebflowTemplateImageIndex(env) : null;
+    await heartbeat();
     const updatedRecords = await resolveAndUpdateTemplateImages(
       env.DB,
       rows,
@@ -934,7 +964,9 @@ export async function backfillTemplateImages(
       startedAt,
       IMAGE_BACKFILL_FETCH_BATCH_SIZE,
     );
+    await heartbeat();
     const imageSourceStats = await templateImageSourceStats(env.DB);
+    await heartbeat();
 
     const summary: TemplateImageBackfillSummary = {
       mode: 'image_backfill',
@@ -957,12 +989,13 @@ export async function pruneMissingTemplateImages(
   env: Env,
   options: { limit?: number; templateSlugs?: string[] } = {},
 ): Promise<TemplateImagePruneSummary> {
-  return runWithSyncJobLock(env, 'image_prune', async () => {
+  return runWithSyncJobLock(env, 'image_prune', async (heartbeat) => {
     const startedAt = nowIso();
     const requestedLimit = clamp(Math.floor(options.limit ?? IMAGE_BACKFILL_DEFAULT_LIMIT), 1, IMAGE_BACKFILL_MAX_LIMIT);
     const requestedTemplateSlugs = uniqueStrings((options.templateSlugs ?? []).map((slug) => slug.trim()).filter(Boolean));
     const rows = await listTemplateImageBackfillRows(env.DB, requestedLimit, requestedTemplateSlugs);
     const webflowImageIndex = rows.length > 0 ? await loadWebflowTemplateImageIndex(env) : null;
+    await heartbeat();
     const idsToDelete: string[] = [];
     const skippedRecords: TemplateImagePruneSummary['skipped_records'] = [];
 
@@ -988,6 +1021,7 @@ export async function pruneMissingTemplateImages(
           };
         }),
       );
+      await heartbeat();
 
       for (const checked of checkedRows) {
         if (checked.reason === null) {
@@ -1005,7 +1039,9 @@ export async function pruneMissingTemplateImages(
     }
 
     await deleteTemplateDocuments(env.DB, idsToDelete);
+    await heartbeat();
     const imageSourceStats = await templateImageSourceStats(env.DB);
+    await heartbeat();
     const summary: TemplateImagePruneSummary = {
       mode: 'image_prune',
       started_at: startedAt,
