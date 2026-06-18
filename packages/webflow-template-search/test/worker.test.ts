@@ -2261,6 +2261,85 @@ describe('webflow-template-search worker', () => {
     }
   });
 
+  it('does not refresh price metadata by ambiguous template name', async () => {
+    const duplicateAgentflow = {
+      ...PUBLISHED_ASSETS[1],
+      id: 'recAgentflowDuplicate',
+      fields: {
+        ...PUBLISHED_ASSETS[1].fields,
+        Name: 'Agentflow',
+        '🥞CMS Slug (formula)': 'agentflow-alt-website-template',
+        '🥞💲Template Price Filter (🏗️ only)': 79,
+        '🔗Listing URL': 'https://webflow.com/templates/html/agentflow-alt-website-template',
+        '🔗Preview Site URL': 'https://agentflow-alt.example.com',
+        '🔗Website URL': 'https://webflow.com/templates/html/agentflow-alt-website-template',
+      },
+    };
+    const dataset = {
+      publishedAssets: [PUBLISHED_ASSETS[0], duplicateAgentflow],
+      incrementalAssets: [],
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+      webflowCollectionItems: {
+        [TEMPLATES_COLLECTION_ID]: [] as Array<Record<string, unknown>>,
+      },
+    };
+    const fetchMock = installAirtableFetchMock(dataset);
+    const { env, close } = createTestEnv();
+    env.WEBFLOW_API_TOKEN = 'test-webflow-cms-token';
+
+    try {
+      const rebuild = await callWorker(
+        new Request('https://templates.test/api/templates/admin/rebuild', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(rebuild.status).toBe(200);
+
+      dataset.webflowCollectionItems[TEMPLATES_COLLECTION_ID] = [
+        {
+          id: 'item-agentflow-name-only',
+          isArchived: false,
+          isDraft: false,
+          fieldData: {
+            name: 'Agentflow',
+            'template-price': 'Free',
+          },
+        },
+      ];
+
+      const refresh = await callWorker(
+        new Request('https://templates.test/api/templates/admin/refresh-images', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(refresh.status).toBe(200);
+      await refresh.json();
+
+      const rows = await env.DB.prepare(
+        `SELECT id, price, is_free
+         FROM template_documents
+         WHERE name = ?
+         ORDER BY id`,
+      )
+        .bind('Agentflow')
+        .all<{ id: string; price: number | null; is_free: number }>();
+
+      expect(rows.results).toEqual([
+        { id: 'recAgentflow', price: 169, is_free: 0 },
+        { id: 'recAgentflowDuplicate', price: 79, is_free: 0 },
+      ]);
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
   it('refreshes stale rows from the published Webflow template page', async () => {
     const dataset = {
       publishedAssets: [
