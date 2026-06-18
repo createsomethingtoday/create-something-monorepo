@@ -228,27 +228,35 @@
     .privacy-choice {
       right: max(0.5rem, env(safe-area-inset-right));
       bottom: max(0.5rem, env(safe-area-inset-bottom));
-      max-width: min(22rem, calc(100vw - 1rem));
+      left: max(0.5rem, env(safe-area-inset-left));
+      max-width: none;
     }
 
     .privacy-panel {
-      gap: 0.65rem;
-      padding: 0.72rem;
+      gap: 0.42rem;
+      padding: 0.52rem;
       border-radius: var(--radius-clear-sm, 4px);
     }
 
     .privacy-panel__copy {
-      gap: 0.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.65rem;
+      min-width: 0;
     }
 
     .privacy-panel__eyebrow {
-      padding: 0.24rem 0.42rem;
-      font-size: 0.62rem;
+      display: none;
     }
 
     .privacy-panel h2 {
-      font-size: 0.92rem;
-      line-height: 1.15;
+      overflow: hidden;
+      min-width: 0;
+      font-size: 0.78rem;
+      line-height: 1.12;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     .privacy-panel p {
@@ -256,7 +264,8 @@
     }
 
     .privacy-panel a {
-      font-size: 0.74rem;
+      flex: 0 0 auto;
+      font-size: 0.68rem;
     }
 
     .privacy-panel__actions {
@@ -266,9 +275,9 @@
     }
 
     .privacy-button {
-      min-height: 2.1rem;
-      padding: 0.45rem 0.52rem;
-      font-size: 0.76rem;
+      min-height: 1.86rem;
+      padding: 0.36rem 0.46rem;
+      font-size: 0.72rem;
     }
 
     .privacy-pill {
