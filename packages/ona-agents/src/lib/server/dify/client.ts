@@ -76,6 +76,17 @@ export function parseDifySseEvents(text: string): DifyStreamEvent[] {
     }
   }
 
+  if (events.length === 0) {
+    try {
+      const parsed = JSON.parse(text) as unknown;
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        events.push(parsed as DifyStreamEvent);
+      }
+    } catch {
+      // Non-SSE error bodies can still be plain text; leave them unparsed.
+    }
+  }
+
   return events;
 }
 
@@ -141,7 +152,11 @@ export function collectDifyStreamOutput(input: {
       }
     }
 
-    if (event.event === 'error') {
+    if (
+      event.event === 'error' ||
+      (!input.responseOk &&
+        (typeof event.message === 'string' || typeof event.code === 'string'))
+    ) {
       streamError = [event.code, event.message].filter(Boolean).join(': ');
     }
   }
