@@ -36,6 +36,7 @@ const SYNC_STATUS_STATE_KEYS = [
   'last_image_prune',
   'last_sync_error',
   'last_sync_skipped',
+  'last_sync_warning',
 ];
 
 const INCREMENTAL_SYNC_CRON = '*/5 * * * *';
