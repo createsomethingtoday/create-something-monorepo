@@ -2,12 +2,14 @@
   import {
     Button,
     ClearCardGrid,
+    ClearDecisionPanel,
     ClearPageSection,
     ClearProofStrip,
     SEO,
     NewsletterSignup,
     PropertyFunnel,
-    type ClearCardItem
+    type ClearCardItem,
+    type ClearDecisionItem
   } from '@create-something/canon';
 
   const proofMetrics = [
@@ -147,6 +149,63 @@
       href: 'https://createsomething.agency'
     }
   ];
+
+  const decisionStates: ClearDecisionItem[] = [
+    {
+      label: 'Keep',
+      summary: 'Earned place',
+      title: 'Name what belongs.',
+      detail:
+        'The canon should help a visitor see which principle, reference, or standard is relevant before adding another surface or claim.',
+      tone: 'allow',
+      evidence: [
+        'The principle clarifies a real decision',
+        'The example raises the quality bar',
+        'The wording can travel into the work'
+      ],
+      receipts: ['canon note', 'master reference', 'voice cue'],
+      actions: [
+        { label: 'Read Canon', href: '/canon' },
+        { label: 'Meet Masters', href: '/masters' }
+      ]
+    },
+    {
+      label: 'Constrain',
+      summary: 'Standard needed',
+      title: 'Turn taste into a usable rule.',
+      detail:
+        'If a choice is still subjective, the next move is not more language. It is a standard, pattern, or example that makes judgment reviewable.',
+      tone: 'review',
+      evidence: [
+        'The decision repeats across surfaces',
+        'The team needs a reusable constraint',
+        'The rule can be checked after implementation'
+      ],
+      receipts: ['standard', 'pattern', 'review question'],
+      actions: [
+        { label: 'Open Standards', href: '/standards' },
+        { label: 'Browse Patterns', href: '/patterns' }
+      ]
+    },
+    {
+      label: 'Apply',
+      summary: 'Operating decision',
+      title: 'Move the judgment into work.',
+      detail:
+        'A good canon interaction should not end in philosophy. It should point to research, runtime practice, or governed delivery when the decision is ready.',
+      tone: 'neutral',
+      evidence: [
+        'The principle has a concrete receiving surface',
+        'The next property matches the decision type',
+        'The handoff keeps the original judgment visible'
+      ],
+      receipts: ['research path', 'runtime test', 'delivery lane'],
+      actions: [
+        { label: 'Read Research', href: 'https://createsomething.io' },
+        { label: 'Open Workbench', href: 'https://createsomething.space' }
+      ]
+    }
+  ];
 </script>
 
 <SEO
@@ -185,6 +244,15 @@
     <ClearProofStrip items={proofMetrics} ariaLabel="Canon proof artifacts" />
   {/snippet}
 </ClearPageSection>
+
+<ClearDecisionPanel
+  id="canon-decision"
+  eyebrow="Canon decision path"
+  title="Make judgment visible before it becomes work."
+  description="The Ona-inspired interaction pattern fits the canon when it shows whether to keep a principle, turn it into a standard, or apply it elsewhere."
+  items={decisionStates}
+  ariaLabel="Canon decision path"
+/>
 
 <ClearPageSection
   variant="white"

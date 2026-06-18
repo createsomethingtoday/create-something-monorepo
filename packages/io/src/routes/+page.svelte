@@ -4,13 +4,15 @@
     Button,
     ClearCardGrid,
     ClearCtaBand,
+    ClearDecisionPanel,
     ClearPageSection,
     ClearProofStrip,
     PapersGrid,
     PropertyFunnel,
     SEO,
     type ClearCardItem,
-    type ClearCtaItem
+    type ClearCtaItem,
+    type ClearDecisionItem
   } from '@create-something/canon';
   import type { Paper } from '@create-something/canon/types';
 
@@ -165,6 +167,62 @@
       detail: 'Move strong patterns into runtime practice or scoped delivery only when the evidence holds.'
     }
   ];
+
+  const decisionStates: ClearDecisionItem[] = [
+    {
+      label: 'Read',
+      summary: 'Evidence selected',
+      title: 'Start from the artifact trail.',
+      detail:
+        'The first interaction should make the research inspectable: what claim is being made, which artifact supports it, and where the visitor can go next.',
+      tone: 'allow',
+      evidence: [
+        'Paper or experiment names the source workflow',
+        'Claim is tied to methodology or implementation notes',
+        'Next surface is explicit before the handoff'
+      ],
+      receipts: ['paper archive', 'methodology', 'research graph'],
+      actions: [
+        { label: 'Read Papers', href: '/papers' },
+        { label: 'Open Graph', href: '/graph' }
+      ]
+    },
+    {
+      label: 'Validate',
+      summary: 'Runtime proof needed',
+      title: 'Move the claim into a live surface.',
+      detail:
+        'When a research claim still depends on timing, state, or failure behavior, the next useful action is a workbench route instead of another paragraph.',
+      tone: 'review',
+      evidence: [
+        'Pattern has an execution question',
+        'Failure mode should be visible',
+        'Workbench route can expose the behavior'
+      ],
+      receipts: ['runtime note', 'motion output', 'data trace'],
+      actions: [{ label: 'Open .space', href: 'https://createsomething.space' }]
+    },
+    {
+      label: 'Scope',
+      summary: 'Delivery decision',
+      title: 'Carry proven evidence into delivery.',
+      detail:
+        'If the research has enough proof and the risk is commercial, operational, or reputational, the page should point to a scoped workflow conversation.',
+      tone: 'neutral',
+      evidence: [
+        'Workflow owner can name the decision',
+        'Evidence points to controls or policy',
+        'Delivery handoff has a clear first lane'
+      ],
+      receipts: ['handoff note', 'policy cue', 'mapping session'],
+      actions: [
+        {
+          label: 'Map The Workflow',
+          href: 'https://createsomething.agency/book?source=io&intent=research-to-implementation&lane=workflow_infrastructure'
+        }
+      ]
+    }
+  ];
 </script>
 
 <SEO
@@ -203,6 +261,15 @@
     <ClearProofStrip items={proofMetrics} ariaLabel="Research proof artifacts" />
   {/snippet}
 </ClearPageSection>
+
+<ClearDecisionPanel
+  id="research-decision"
+  eyebrow="Research decision path"
+  title="Let the interaction show whether to read, test, or scope."
+  description="The Ona pattern works here when a small state change explains the next operating move better than another block of copy."
+  items={decisionStates}
+  ariaLabel="Research decision path"
+/>
 
 <ClearPageSection
   variant="white"

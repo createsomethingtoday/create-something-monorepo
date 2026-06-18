@@ -3,12 +3,14 @@
     Button,
     ClearCardGrid,
     ClearCtaBand,
+    ClearDecisionPanel,
     ClearPageSection,
     ClearProofStrip,
     PropertyFunnel,
     SEO,
     type ClearCardItem,
-    type ClearCtaItem
+    type ClearCtaItem,
+    type ClearDecisionItem
   } from '@create-something/canon';
 
   const proofMetrics = [
@@ -168,6 +170,63 @@
       detail: 'Promote useful runtime patterns into research or governed workflow delivery.'
     }
   ];
+
+  const decisionStates: ClearDecisionItem[] = [
+    {
+      label: 'Run',
+      summary: 'Live surface',
+      title: 'Execute against the runtime.',
+      detail:
+        'The workbench earns its place when the visitor can run, inspect, or compare something real instead of reading a static promise.',
+      tone: 'allow',
+      evidence: [
+        'Route performs real work',
+        'Request and response shape stay visible',
+        'Output can be repeated or compared'
+      ],
+      receipts: ['console output', 'route state', 'timing result'],
+      actions: [{ label: 'Open Playground', href: '/playground' }]
+    },
+    {
+      label: 'Inspect',
+      summary: 'Behavior visible',
+      title: 'Show the state behind the result.',
+      detail:
+        'When timing, easing, cache state, or data refresh affects the outcome, the interaction should surface that behavior directly.',
+      tone: 'review',
+      evidence: [
+        'The user can see what changed',
+        'Failure modes are part of the surface',
+        'The next route is chosen by behavior, not hype'
+      ],
+      receipts: ['motion report', 'data snapshot', 'state trace'],
+      actions: [
+        { label: 'Inspect Motion', href: '/motion' },
+        { label: 'Open Data', href: '/data/nba' }
+      ]
+    },
+    {
+      label: 'Promote',
+      summary: 'Pattern survived',
+      title: 'Move useful behavior into the right property.',
+      detail:
+        'A successful workbench result should become research when it teaches, or delivery when the workflow needs controls and owners.',
+      tone: 'neutral',
+      evidence: [
+        'The runtime behavior is repeatable',
+        'The artifact has a clear receiving property',
+        'Promotion path names the owner and next decision'
+      ],
+      receipts: ['research note', 'handoff link', 'workflow cue'],
+      actions: [
+        { label: 'Read Pattern', href: 'https://createsomething.io' },
+        {
+          label: 'Ship Workflow',
+          href: 'https://createsomething.agency/book?source=space&intent=runtime-validation&lane=workflow_infrastructure'
+        }
+      ]
+    }
+  ];
 </script>
 
 <SEO
@@ -206,6 +265,15 @@
     <ClearProofStrip items={proofMetrics} ariaLabel="Workbench proof artifacts" />
   {/snippet}
 </ClearPageSection>
+
+<ClearDecisionPanel
+  id="runtime-decision"
+  eyebrow="Runtime decision path"
+  title="Use interaction to show what can run, what needs inspection, and what should move."
+  description="The workbench should communicate through visible state changes: execute, inspect, then promote only what survives runtime contact."
+  items={decisionStates}
+  ariaLabel="Runtime decision path"
+/>
 
 <ClearPageSection
   variant="white"
