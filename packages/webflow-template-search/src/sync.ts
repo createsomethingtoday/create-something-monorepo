@@ -706,16 +706,20 @@ async function runIncrementalSync(env: Env, heartbeat: SyncHeartbeat): Promise<S
   if (toDelete.length > 0) await deleteTemplateDocuments(env.DB, toDelete);
   if (toUpsert.length > 0) await upsertTemplateDocuments(env.DB, toUpsert);
   await heartbeat();
-  if (!webflowImageIndex && !warnings.some((warning) => warning.source === 'webflow_template_image_index')) {
+  const shouldRefreshIndexedImages = toUpsert.length > 0 || isCaughtUp;
+  if (shouldRefreshIndexedImages && !webflowImageIndex && !warnings.some((warning) => warning.source === 'webflow_template_image_index')) {
     webflowImageIndex = await bestEffortWebflowTemplateImageIndex(env, warnings);
     await heartbeat();
   }
-  const imageRefreshedRecords = await refreshIndexedWebflowImages(
-    env.DB,
-    webflowImageIndex,
-    startedAt,
-    toUpsert.map((document) => document.id),
-  );
+  const imageRefreshedRecords =
+    shouldRefreshIndexedImages
+      ? await refreshIndexedWebflowImages(
+          env.DB,
+          webflowImageIndex,
+          startedAt,
+          toUpsert.map((document) => document.id),
+        )
+      : 0;
   await heartbeat();
 
   // Keep the frequent 5-minute incremental path limited to changed template rows.
