@@ -94,6 +94,7 @@ declare global {
 				OPENAI_API_KEY?: string;
 				PUBLIC_ATLAS_AGENT_MODEL?: string;
 				PUBLIC_ATLAS_AGENT_MAX_OUTPUT_TOKENS?: string;
+				PUBLIC_ATLAS_AGENT_REASONING_EFFORT?: string;
 				PUBLIC_ATLAS_AGENT_TIMEOUT_MS?: string;
 			};
 			context: {

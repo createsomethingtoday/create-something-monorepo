@@ -11,8 +11,10 @@ import {
 	type PublicAtlasNodeKind,
 	type PublicAtlasNodeStatus
 } from './public';
+import { createLogger } from '@create-something/canon/utils';
 
 type ModelOperationType = 'add_node' | 'update_node' | 'add_edge';
+type ReasoningEffort = 'low' | 'medium' | 'high' | 'xhigh';
 
 type ModelOperation = {
 	type?: ModelOperationType;
@@ -41,6 +43,7 @@ type RunModelAgentInput = {
 	maxOutputTokens?: number;
 	message: string;
 	model?: string;
+	reasoningEffort?: ReasoningEffort;
 	selectedNodeId?: string;
 	selectedSourceId?: string;
 	timeoutMs?: number;
@@ -48,11 +51,56 @@ type RunModelAgentInput = {
 
 const DEFAULT_MODEL = 'gpt-5.4';
 const DEFAULT_MAX_OUTPUT_TOKENS = 900;
+const DEFAULT_REASONING_EFFORT: ReasoningEffort = 'high';
 const DEFAULT_TIMEOUT_MS = 12_000;
 const MAX_MODEL_OPERATIONS = 6;
 
+const logger = createLogger('PublicAtlasModelAgent');
 const nodeKinds = new Set(PUBLIC_ATLAS_LANES.map((lane) => lane.kind));
 const nodeStatuses = new Set<PublicAtlasNodeStatus>(['unknown', 'run', 'wait', 'stop']);
+const responseFormat = {
+	type: 'json_schema',
+	name: 'public_atlas_mapping_agent',
+	strict: false,
+	schema: {
+		type: 'object',
+		additionalProperties: false,
+		required: ['reply', 'suggestions', 'operations'],
+		properties: {
+			reply: { type: 'string', maxLength: 360 },
+			suggestions: {
+				type: 'array',
+				maxItems: 3,
+				items: { type: 'string', maxLength: 140 }
+			},
+			operations: {
+				type: 'array',
+				maxItems: MAX_MODEL_OPERATIONS,
+				items: {
+					type: 'object',
+					additionalProperties: false,
+					required: ['type'],
+					properties: {
+						type: { type: 'string', enum: ['add_node', 'update_node', 'add_edge'] },
+						id: { type: 'string' },
+						kind: {
+							type: 'string',
+							enum: ['actor', 'human', 'ai', 'system', 'data', 'constraint', 'touchpoint']
+						},
+						label: { type: 'string', maxLength: 90 },
+						owner: { type: 'string', maxLength: 90 },
+						status: { type: 'string', enum: ['run', 'wait', 'stop', 'unknown'] },
+						notes: { type: 'string', maxLength: 360 },
+						source: { type: 'string' },
+						target: { type: 'string' },
+						connectFromId: { type: 'string' },
+						edgeLabel: { type: 'string', maxLength: 90 }
+					}
+				}
+			}
+		}
+	}
+} as const;
 
 function clampText(value: unknown, max: number): string | undefined {
 	if (typeof value !== 'string') return undefined;
@@ -64,6 +112,13 @@ function clampText(value: unknown, max: number): string | undefined {
 function normalizeModelName(value: string | undefined): string {
 	const trimmed = value?.trim();
 	return trimmed || DEFAULT_MODEL;
+}
+
+function logModelFallback(reason: string, details: Record<string, unknown> = {}): void {
+	logger.warn('Public Atlas model agent fell back to deterministic mapping', {
+		reason,
+		...details
+	});
 }
 
 function hasNode(canvas: PublicAtlasCanvas, nodeId: string | undefined): nodeId is string {
@@ -154,7 +209,7 @@ function buildPrompt(input: RunModelAgentInput): string {
 		'Use concise, concrete labels. Do not create secrets, credentials, private records, or production-tool actions.',
 		'Prefer mapping the workflow owner, durable record, system/tool operation, AI assist task, approval owner, privacy/access constraint, and inspection touchpoint.',
 		'When the visitor asks to connect, link the selected source or workflow data node to the most likely next nodes with useful handoff labels.',
-		'Never exceed the requested mutation budget. A node add or edge add is one mutation; updating one existing node is one mutation.',
+		'Never exceed the requested mutation budget. A node add, edge add, or node update is one mutation. Adding a node and connecting it costs two mutations.',
 		'If the user asks for unavailable/private execution, map it as a constraint or approval boundary instead of claiming it can run.',
 		'Current selected node:',
 		selectedNode ? JSON.stringify(selectedNode) : 'none',
@@ -269,6 +324,7 @@ function applyModelOperations(
 				canvas.nodes.find((item) => item.id !== node.id);
 			const edgeLabel = clampText(op.edgeLabel, 90) ?? (kind === 'constraint' ? 'bounded by' : 'maps to');
 			if (
+				canMutate() &&
 				connectFrom &&
 				connectFrom.id !== node.id &&
 				canvas.edges.length < 72 &&
@@ -280,6 +336,7 @@ function applyModelOperations(
 						createdBy: 'agent'
 					})
 				);
+				mutationCount += 1;
 			}
 			continue;
 		}
@@ -328,19 +385,36 @@ export async function runOpenAiPublicAtlasMappingAgent(
 					{ role: 'user', content: buildModelInput(input) }
 				],
 				max_output_tokens: input.maxOutputTokens ?? DEFAULT_MAX_OUTPUT_TOKENS,
-				reasoning: { effort: 'medium' },
+				reasoning: { effort: input.reasoningEffort ?? DEFAULT_REASONING_EFFORT },
 				store: false,
-				text: { format: { type: 'json_object' } }
+				text: { format: responseFormat }
 			}),
 			signal: controller.signal
 		});
 
-		if (!response.ok) return null;
+		if (!response.ok) {
+			const errorPayload = await response.json().catch(() => null);
+			const code =
+				errorPayload && typeof errorPayload === 'object'
+					? ((errorPayload as { error?: { code?: unknown } }).error?.code ?? undefined)
+					: undefined;
+			logModelFallback('http_error', {
+				status: response.status,
+				code: typeof code === 'string' ? code : undefined,
+				model: normalizeModelName(input.model)
+			});
+			return null;
+		}
 
 		const payload = await response.json();
 		const parsed = parseModelPayload(extractResponseText(payload));
 		const operations = normalizeOperations(parsed?.operations);
-		if (!parsed || !operations.length) return null;
+		if (!parsed || !operations.length) {
+			logModelFallback(!parsed ? 'invalid_model_json' : 'empty_model_operations', {
+				model: normalizeModelName(input.model)
+			});
+			return null;
+		}
 
 		const { canvas, mutationCount } = applyModelOperations(input.canvas, operations, input.maxMutations);
 		const readiness = computePublicAtlasReadiness(canvas);
@@ -358,7 +432,11 @@ export async function runOpenAiPublicAtlasMappingAgent(
 			readiness,
 			agentMode: 'model'
 		};
-	} catch {
+	} catch (err) {
+		logModelFallback('request_error', {
+			errorName: err instanceof Error ? err.name : typeof err,
+			model: normalizeModelName(input.model)
+		});
 		return null;
 	} finally {
 		clearTimeout(timeout);

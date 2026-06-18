@@ -158,6 +158,21 @@ function parsePositiveInteger(value: string | undefined, fallback: number, max: 
 	return Math.min(max, parsed);
 }
 
+function normalizeReasoningEffort(
+	value: string | undefined
+): 'low' | 'medium' | 'high' | 'xhigh' {
+	const normalized = value?.trim().toLowerCase();
+	if (
+		normalized === 'low' ||
+		normalized === 'medium' ||
+		normalized === 'high' ||
+		normalized === 'xhigh'
+	) {
+		return normalized;
+	}
+	return 'high';
+}
+
 async function persistAtlasEvent(
 	db: D1Database | undefined,
 	canvas: PublicAtlasCanvas,
@@ -283,6 +298,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		maxOutputTokens: parsePositiveInteger(platform?.env?.PUBLIC_ATLAS_AGENT_MAX_OUTPUT_TOKENS, 900, 1800),
 		message,
 		model: platform?.env?.PUBLIC_ATLAS_AGENT_MODEL,
+		reasoningEffort: normalizeReasoningEffort(platform?.env?.PUBLIC_ATLAS_AGENT_REASONING_EFFORT),
 		selectedNodeId,
 		selectedSourceId,
 		timeoutMs: parsePositiveInteger(platform?.env?.PUBLIC_ATLAS_AGENT_TIMEOUT_MS, 12_000, 25_000)
