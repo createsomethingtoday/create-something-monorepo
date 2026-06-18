@@ -9,6 +9,8 @@
     ClearPageSection,
     ClearPillarGrid,
     ClearPlatformHero,
+    ClearProofStrip,
+    ClearQuoteMetricPanel,
     ClearReceiptGrid,
     ClearSecurityPanel,
     ClearStateRows,
@@ -20,6 +22,8 @@
     type ClearLogoStripItem,
     type ClearMetadataGroup,
     type ClearPillarItem,
+    type ClearProofItem,
+    type ClearQuoteMetric,
     type ClearReceipt,
     type ClearSecurityItem,
     type ClearSecurityLog,
@@ -264,6 +268,48 @@
     }
   ];
 
+  const proofStripItems: ClearProofItem[] = [
+    {
+      value: 'Run / wait / stop',
+      label: 'Execution states are visible before an agent acts.'
+    },
+    {
+      value: '4 receipts',
+      label: 'The map, boundary, delivery page, and private evidence stay separate.'
+    },
+    {
+      value: 'No secret spill',
+      label: 'Public proof surfaces avoid credentials, raw logs, and private client data.'
+    },
+    {
+      value: 'Owner handoff',
+      label: 'Blocked work names the decision owner and the reason it stopped.'
+    }
+  ];
+
+  const quoteMetrics: ClearQuoteMetric[] = [
+    {
+      value: '1',
+      label: 'Workflow at a time',
+      detail: 'The service starts with a named manual handoff instead of a broad platform pitch.'
+    },
+    {
+      value: '3',
+      label: 'Action states',
+      detail: 'Run, wait, and stop turn policy into inspectable product behavior.'
+    },
+    {
+      value: '4',
+      label: 'Evidence artifacts',
+      detail: 'Map, boundary, delivery page, and private receipt define the proof package.'
+    },
+    {
+      value: '0',
+      label: 'Unbounded writes',
+      detail: 'The trust layer names which systems can be touched before execution.'
+    }
+  ];
+
   const securityItems: ClearSecurityItem[] = [
     {
       label: 'Network',
@@ -445,9 +491,20 @@
     description="The delivery pages set the standard for what the work becomes: a visible business model, a private evidence trail, and clear rules for what agents can do."
   >
     {#snippet after()}
-      <ClearReceiptGrid receipts={deliveryReceipts} ariaLabel="Delivery receipts" />
+      <div class="home-proof-stack">
+        <ClearReceiptGrid receipts={deliveryReceipts} ariaLabel="Delivery receipts" />
+        <ClearProofStrip items={proofStripItems} ariaLabel="Workflow proof artifacts" />
+      </div>
     {/snippet}
   </ClearPageSection>
+
+  <ClearQuoteMetricPanel
+    eyebrow="Proof contract"
+    quote="Policy is an artifact."
+    source="CREATE SOMETHING operating rule"
+    metrics={quoteMetrics}
+    ariaLabel="Workflow control proof metrics"
+  />
 
   <ClearSecurityPanel
     id="trust-layer"
@@ -488,5 +545,10 @@
   .home-pilot {
     background: var(--color-clear-panel, #ffffff);
     color: var(--color-clear-onyx, #0a0e19);
+  }
+
+  .home-proof-stack {
+    display: grid;
+    gap: 0.85rem;
   }
 </style>
