@@ -2691,6 +2691,9 @@ describe('webflow-template-search worker', () => {
         indexed_records: 0,
         skipped_empty_windows: 8,
       });
+      expect(fetchMock.mock.calls.some(([input]) => new URL(typeof input === 'string' ? input : input.url).hostname === 'api.webflow.com')).toBe(
+        false,
+      );
     } finally {
       fetchMock.mockRestore();
       close();
