@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import path from 'node:path';
 import test from 'node:test';
+import { fileURLToPath } from 'node:url';
 import {
   callDifyChat,
   collectDifyStreamOutput,
@@ -8,6 +10,9 @@ import {
   splitDifyToolNames
 } from '../src/lib/server/dify/client.ts';
 import { difyOperatorAgents } from '../src/lib/server/dify/agent-registry.ts';
+
+const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
+const difyInventoryPath = path.join(repositoryRoot, 'config/dify/inventory.json');
 
 test('Dify operator client parses streamed answer and bounded tool proof', () => {
   const stream = [
@@ -42,7 +47,7 @@ test('Dify operator client parses streamed answer and bounded tool proof', () =>
 });
 
 test('Dify operator registry follows checked-in inventory service API names', () => {
-  const inventory = JSON.parse(fs.readFileSync('../../config/dify/inventory.json', 'utf8')) as {
+  const inventory = JSON.parse(fs.readFileSync(difyInventoryPath, 'utf8')) as {
     agents: Record<string, { service_api?: { api_key_secret?: { secret_key?: string } } }>;
   };
   const inventorySecretKeys = new Map(
@@ -110,6 +115,30 @@ test('Dify operator client calls chat-messages with server-side API key', async 
   assert.equal(output.ok, true);
   assert.equal(output.answer, 'Ready');
   assert.equal(output.conversationId, 'conv-2');
+});
+
+test('Dify operator client preserves plain JSON provider errors', async () => {
+  const agent = difyOperatorAgents.find((candidate) => candidate.id === 'template-review-hub');
+  assert.ok(agent);
+
+  const output = await callDifyChat({
+    agent,
+    query: 'What is next?',
+    user: 'ona-operator-test',
+    platform: {
+      env: {
+        DIFY_TEMPLATE_REVIEW_HUB_API_KEY: 'test-key'
+      }
+    },
+    fetch: async () =>
+      new Response(JSON.stringify({ code: 'unauthorized', message: 'invalid api key' }), {
+        status: 401
+      })
+  });
+
+  assert.equal(output.ok, false);
+  assert.equal(output.status, 401);
+  assert.equal(output.error, 'unauthorized: invalid api key');
 });
 
 test('splitDifyToolNames removes blank tool entries', () => {
