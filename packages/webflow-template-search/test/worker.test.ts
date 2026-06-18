@@ -2666,6 +2666,76 @@ describe('webflow-template-search worker', () => {
     }
   });
 
+  it('bounds stale changed-record catch-up without dropping same-timestamp records', async () => {
+    const changedAssets = Array.from({ length: 29 }, (_, index) => {
+      const timestamp =
+        index < 23
+          ? `2026-03-17T05:01:${String(index % 60).padStart(2, '0')}.000Z`
+          : index < 25
+            ? '2026-03-17T05:10:00.000Z'
+            : '2026-03-17T05:11:00.000Z';
+      return {
+        ...PUBLISHED_ASSETS[0],
+        id: `recBulk${String(index).padStart(3, '0')}`,
+        fields: {
+          ...PUBLISHED_ASSETS[0].fields,
+          Name: `Bulk Template ${index}`,
+          '📅LMT': timestamp,
+          '🥞CMS Slug (formula)': `bulk-template-${index}`,
+          '🔗Listing URL': `https://webflow.com/templates/html/bulk-template-${index}`,
+          '🔗Preview Site URL': `https://bulk-template-${index}.example.com`,
+          '🔗Website URL': `https://webflow.com/templates/html/bulk-template-${index}`,
+        },
+      };
+    });
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: [],
+      incrementalAssets: changedAssets,
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+    });
+    const { env, close } = createTestEnv();
+    env.WEBFLOW_API_TOKEN = 'test-webflow-token';
+    env.WEBFLOW_TEMPLATE_ASSET_SITE_ID = '5e593fb060cf877cf875dd1f';
+
+    try {
+      await setSyncCursor(env.DB, '2026-03-17T05:00:00.000Z');
+
+      const sync = await callWorker(
+        new Request('https://templates.test/api/templates/admin/sync', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(sync.status).toBe(200);
+      const syncPayload = (await sync.json()) as {
+        cursor: string;
+        fetched_records: number;
+        indexed_records: number;
+      };
+      expect(syncPayload).toMatchObject({
+        cursor: '2026-03-17T05:10:00.000Z',
+        fetched_records: 25,
+        indexed_records: 25,
+      });
+
+      const included = await callWorker(new Request('https://templates.test/api/templates/search?q=bulk-template-24'), env);
+      const includedPayload = (await included.json()) as { items: Array<{ name: string }> };
+      expect(includedPayload.items.map((item) => item.name)).toEqual(['Bulk Template 24']);
+
+      const deferred = await env.DB.prepare('SELECT id FROM template_documents WHERE id = ?').bind('recBulk28').first();
+      expect(deferred).toBeNull();
+      expect(fetchMock.mock.calls.some(([input]) => new URL(typeof input === 'string' ? input : input.url).hostname === 'api.webflow.com')).toBe(
+        false,
+      );
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
   it('bounds empty incremental catch-up windows so stale cursors advance in slices', async () => {
     const fetchMock = installAirtableFetchMock({
       publishedAssets: [],

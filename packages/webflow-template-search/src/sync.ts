@@ -633,6 +633,8 @@ async function runFullSync(env: Env, heartbeat: SyncHeartbeat): Promise<SyncSumm
 const MAX_SYNC_WINDOW_MS = 15 * 60 * 1000;
 const MAX_EMPTY_SYNC_WINDOWS_PER_RUN = 8;
 const MAX_INCREMENTAL_RECORDS_PER_RUN = 600;
+const MAX_STALE_INCREMENTAL_RECORDS_PER_RUN = 24;
+const INCREMENTAL_WRITE_BATCH_SIZE = 12;
 
 function resolveSyncWindow(cursor: string, now: Date): { end: Date; until: string | undefined; isCaughtUp: boolean } {
   const end = new Date(Math.min(new Date(cursor).getTime() + MAX_SYNC_WINDOW_MS, now.getTime()));
@@ -642,6 +644,45 @@ function resolveSyncWindow(cursor: string, now: Date): { end: Date; until: strin
     until: isCaughtUp ? undefined : end.toISOString(),
     isCaughtUp,
   };
+}
+
+function sourceLastModifiedTime(record: AirtableRecord<AirtableAssetFields>): string | null {
+  const value = record.fields['📅LMT'];
+  return typeof value === 'string' && value.trim().length > 0 ? value : null;
+}
+
+function boundStaleChangedAssets(
+  assets: Array<AirtableRecord<AirtableAssetFields>>,
+): { assets: Array<AirtableRecord<AirtableAssetFields>>; cursor: string | null } {
+  if (assets.length <= MAX_STALE_INCREMENTAL_RECORDS_PER_RUN) return { assets, cursor: null };
+
+  const boundary = sourceLastModifiedTime(assets[MAX_STALE_INCREMENTAL_RECORDS_PER_RUN - 1]);
+  if (!boundary) return { assets: assets.slice(0, MAX_STALE_INCREMENTAL_RECORDS_PER_RUN), cursor: null };
+
+  const bounded = assets.filter((record) => {
+    const modifiedAt = sourceLastModifiedTime(record);
+    return modifiedAt !== null && modifiedAt <= boundary;
+  });
+
+  return { assets: bounded, cursor: boundary };
+}
+
+async function deleteTemplateDocumentsInChunks(db: D1Database, ids: string[], heartbeat: SyncHeartbeat): Promise<void> {
+  for (const idBatch of chunk(ids, 100)) {
+    await deleteTemplateDocuments(db, idBatch);
+    await heartbeat();
+  }
+}
+
+async function upsertTemplateDocumentsInChunks(
+  db: D1Database,
+  documents: TemplateDocumentInput[],
+  heartbeat: SyncHeartbeat,
+): Promise<void> {
+  for (const documentBatch of chunk(documents, INCREMENTAL_WRITE_BATCH_SIZE)) {
+    await upsertTemplateDocuments(db, documentBatch);
+    await heartbeat();
+  }
 }
 
 async function runIncrementalSync(env: Env, heartbeat: SyncHeartbeat): Promise<SyncSummary> {
@@ -654,9 +695,10 @@ async function runIncrementalSync(env: Env, heartbeat: SyncHeartbeat): Promise<S
   let scanCursor = currentCursor;
   let windowEnd = new Date(currentCursor);
   let isCaughtUp = false;
-  const assets: Array<AirtableRecord<AirtableAssetFields>> = [];
+  let assets: Array<AirtableRecord<AirtableAssetFields>> = [];
   let skippedEmptyWindows = 0;
   let scannedWindows = 0;
+  let boundedCursor: string | null = null;
 
   while (scannedWindows < MAX_EMPTY_SYNC_WINDOWS_PER_RUN) {
     const syncWindow = resolveSyncWindow(scanCursor, now);
@@ -677,6 +719,13 @@ async function runIncrementalSync(env: Env, heartbeat: SyncHeartbeat): Promise<S
     }
 
     scanCursor = syncWindow.end.toISOString();
+  }
+
+  if (!isCaughtUp && assets.length > MAX_STALE_INCREMENTAL_RECORDS_PER_RUN) {
+    const bounded = boundStaleChangedAssets(assets);
+    assets = bounded.assets;
+    boundedCursor = bounded.cursor;
+    if (boundedCursor) windowEnd = new Date(boundedCursor);
   }
 
   const toUpsert: TemplateDocumentInput[] = [];
@@ -703,8 +752,8 @@ async function runIncrementalSync(env: Env, heartbeat: SyncHeartbeat): Promise<S
     }
   }
 
-  if (toDelete.length > 0) await deleteTemplateDocuments(env.DB, toDelete);
-  if (toUpsert.length > 0) await upsertTemplateDocuments(env.DB, toUpsert);
+  if (toDelete.length > 0) await deleteTemplateDocumentsInChunks(env.DB, toDelete, heartbeat);
+  if (toUpsert.length > 0) await upsertTemplateDocumentsInChunks(env.DB, toUpsert, heartbeat);
   await heartbeat();
   const shouldRefreshIndexedImages = isCaughtUp;
   if (shouldRefreshIndexedImages && !webflowImageIndex && !warnings.some((warning) => warning.source === 'webflow_template_image_index')) {
@@ -727,8 +776,8 @@ async function runIncrementalSync(env: Env, heartbeat: SyncHeartbeat): Promise<S
   // while normalized changed templates already receive lookup creator fields.
   const backfilledRecords = 0;
 
-  // When catching up, advance cursor to end of the processed window so the next
-  // invocation picks up the next 24-hour slice. When caught up, record startedAt.
+  // When catching up, advance cursor to the processed window or bounded record
+  // high-water mark. When caught up, record startedAt.
   const newCursor = isCaughtUp ? startedAt : windowEnd.toISOString();
   const summary: SyncSummary = {
     mode: 'incremental',
