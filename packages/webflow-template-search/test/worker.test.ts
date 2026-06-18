@@ -2,7 +2,14 @@ import { createHmac } from 'node:crypto';
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { acquireSyncJobLock, backfillCreatorFieldsByName, listTemplateImageRefreshRows, recordSyncSummary, setSyncCursor } from '../src/db.js';
+import {
+  acquireSyncJobLock,
+  backfillCreatorFieldsByName,
+  heartbeatSyncJobLock,
+  listTemplateImageRefreshRows,
+  recordSyncSummary,
+  setSyncCursor,
+} from '../src/db.js';
 import { DESIGNERS_COLLECTION_ID, TEMPLATES_COLLECTION_ID } from '../src/webflow.js';
 import { installAirtableFetchMock } from './support/airtable.js';
 import { callScheduled, callWorker, createTestEnv } from './support/worker.js';
@@ -298,6 +305,35 @@ describe('webflow-template-search worker', () => {
       expect(row).toMatchObject({ mode: 'records', status: 'succeeded' });
     } finally {
       fetchMock.mockRestore();
+      close();
+    }
+  });
+
+  it('uses sync job heartbeats to distinguish fresh and stale running locks', async () => {
+    const { env, close } = createTestEnv();
+
+    try {
+      const lock = await acquireSyncJobLock(env.DB, 'incremental', { now: '2026-06-18T22:00:00.000Z' });
+      expect(lock.acquired).toBe(true);
+
+      await heartbeatSyncJobLock(env.DB, lock.lock, '2026-06-18T22:06:00.000Z');
+      const freshTakeover = await acquireSyncJobLock(env.DB, 'incremental', {
+        now: '2026-06-18T22:15:00.000Z',
+        staleHeartbeatMs: 10 * 60 * 1000,
+      });
+      expect(freshTakeover.acquired).toBe(false);
+      expect(freshTakeover.activeJob).toMatchObject({
+        job_id: lock.lock.jobId,
+        heartbeat_at: '2026-06-18T22:06:00.000Z',
+      });
+
+      const staleTakeover = await acquireSyncJobLock(env.DB, 'incremental', {
+        now: '2026-06-18T22:17:00.000Z',
+        staleHeartbeatMs: 10 * 60 * 1000,
+      });
+      expect(staleTakeover.acquired).toBe(true);
+      expect(staleTakeover.lock.jobId).not.toBe(lock.lock.jobId);
+    } finally {
       close();
     }
   });
