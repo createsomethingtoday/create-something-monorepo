@@ -184,6 +184,93 @@ function getSummaryMode(summary: unknown): string | null {
   return typeof mode === 'string' && mode.length > 0 ? mode : null;
 }
 
+function hasTemplateOfferSignal(record: WebflowTemplateImageRecord): boolean {
+  return record.price !== null || record.isFree !== null;
+}
+
+function templateOfferBinds(record: WebflowTemplateImageRecord) {
+  const hasPrice = record.price !== null ? 1 : 0;
+  const hasFree = record.isFree !== null ? 1 : 0;
+  const freeValue = record.isFree === null ? null : record.isFree ? 1 : 0;
+  return { hasPrice, price: record.price, hasFree, freeValue };
+}
+
+function pushTemplateOfferUpdateById(
+  db: D1Database,
+  statements: D1PreparedStatement[],
+  record: WebflowTemplateImageRecord,
+  syncedAt: string,
+): void {
+  if (!record.id || !hasTemplateOfferSignal(record)) return;
+  const offer = templateOfferBinds(record);
+
+  statements.push(
+    db
+      .prepare(
+        `UPDATE template_documents
+         SET price = CASE WHEN ? = 1 THEN ? ELSE price END,
+             is_free = CASE WHEN ? = 1 THEN ? ELSE is_free END,
+             synced_at = ?
+         WHERE id = ?
+           AND (
+             (? = 1 AND NOT (price IS ?))
+             OR (? = 1 AND NOT (is_free IS ?))
+           )`,
+      )
+      .bind(
+        offer.hasPrice,
+        offer.price,
+        offer.hasFree,
+        offer.freeValue,
+        syncedAt,
+        record.id,
+        offer.hasPrice,
+        offer.price,
+        offer.hasFree,
+        offer.freeValue,
+      ),
+  );
+}
+
+function pushTemplateOfferUpdateByName(
+  db: D1Database,
+  statements: D1PreparedStatement[],
+  record: WebflowTemplateImageRecord,
+  syncedAt: string,
+): void {
+  if (!record.name || !hasTemplateOfferSignal(record)) return;
+  const offer = templateOfferBinds(record);
+
+  statements.push(
+    db
+      .prepare(
+        `UPDATE template_documents
+         SET price = CASE WHEN ? = 1 THEN ? ELSE price END,
+             is_free = CASE WHEN ? = 1 THEN ? ELSE is_free END,
+             synced_at = ?
+         WHERE name = ?
+           AND (SELECT COUNT(*) FROM template_documents WHERE name = ?) = 1
+           AND (
+             (? = 1 AND NOT (price IS ?))
+             OR (? = 1 AND NOT (is_free IS ?))
+           )`,
+      )
+      .bind(
+        offer.hasPrice,
+        offer.price,
+        offer.hasFree,
+        offer.freeValue,
+        syncedAt,
+        record.name,
+        record.name,
+        offer.hasPrice,
+        offer.price,
+        offer.hasFree,
+        offer.freeValue,
+      ),
+  );
+}
+
 export function publicSyncJobRecord(record: SyncJobRecord | null) {
   if (!record) return null;
   return {
@@ -565,6 +652,7 @@ export async function updateTemplateImagesFromWebflow(
             carouselImageUrlsJson,
           ),
       );
+      pushTemplateOfferUpdateById(db, statements, record, syncedAt);
       continue;
     }
 
@@ -619,6 +707,7 @@ export async function updateTemplateImagesFromWebflow(
             carouselImageUrlsJson,
           ),
       );
+      pushTemplateOfferUpdateByName(db, statements, record, syncedAt);
     }
   }
 

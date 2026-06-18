@@ -49,6 +49,7 @@ import {
   loadWebflowTemplateImageIndex,
   fetchPublishedTemplateStatus,
   resolvePublishedTemplateImages,
+  resolveWebflowTemplateOffer,
   resolveWebflowTemplateImages,
   stableAttachmentUrl,
   type WebflowTemplateImageIndex,
@@ -426,7 +427,10 @@ function normalizeTemplateRecord(
   const webflowImages = resolveWebflowTemplateImages(webflowImageIndex, { templateSlug, name });
   const airtableThumbnailUrl = stableAttachmentUrl(attachmentUrl(record.fields['🖼️Thumbnail Image']));
   const airtableSecondaryThumbnailUrl = stableAttachmentUrl(attachmentUrl(record.fields['🖼️Thumbnail Image (Secondary)']));
-  const price = ensureNumber(record.fields['🥞💲Template Price Filter (🏗️ only)']);
+  const airtablePrice = ensureNumber(record.fields['🥞💲Template Price Filter (🏗️ only)']);
+  const webflowOffer = resolveWebflowTemplateOffer(webflowImageIndex, { templateSlug, name });
+  const price = webflowOffer?.price ?? airtablePrice;
+  const isFree = webflowOffer?.isFree ?? (price === null ? ensureBoolean(record.fields['Is free?']) : price === 0);
   const creator = resolveCreatorMetadata(record, lookups, webflowDesignerIndex);
 
   return {
@@ -458,7 +462,7 @@ function normalizeTemplateRecord(
     tags: tags.map((entry) => entry.name),
     tagSlugs: tags.map((entry) => entry.slug),
     templateType,
-    isFree: price === null ? ensureBoolean(record.fields['Is free?']) : price === 0,
+    isFree,
     isFeatured:
       ensureBoolean(record.fields['🥞Is Currently Featured? (🏗️ only)']) ||
       ensureBoolean(record.fields['ℹ️Is Featured? (🖥️, 🏗️only)']),
