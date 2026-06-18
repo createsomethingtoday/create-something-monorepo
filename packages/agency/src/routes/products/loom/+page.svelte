@@ -18,9 +18,9 @@
 </script>
 
 <SEO
-	title="Loom MCP | Multi-Agent Coordination"
-	description="External memory for AI agents: route tasks, checkpoint progress, recover from crashes, and coordinate Claude, Cursor, Codex, and Gemini."
-	keywords="MCP, Model Context Protocol, multi-agent, agent coordination, task management, Claude, Cursor, VS Code, Copilot, crash recovery"
+	title="Loom MCP Archive | Agent Coordination Lessons"
+	description="Historical CREATE SOMETHING proof for agent continuity, checkpoints, routing, and recovery. Current tracked work in this repo now lives in Linear."
+	keywords="MCP, Model Context Protocol, multi-agent coordination archive, Linear coordination, task management, Claude, Cursor, Codex, crash recovery"
 	ogImage="/og-image.svg"
 	propertyName="agency"
 />
@@ -28,19 +28,20 @@
 <main class="loom-page">
 	<!-- Hero Section -->
 	<section class="hero">
-		<div class="hero-badge">Free & Open Source</div>
-		<h1 class="hero-title">Loom</h1>
-		<p class="hero-tagline">Memory and coordination for AI agents</p>
+		<div class="hero-badge">Historical proof</div>
+		<h1 class="hero-title">Loom coordination archive</h1>
+		<p class="hero-tagline">The continuity problem that led to Linear-first coordination</p>
 		<p class="hero-description">
-			Agents lose their context when a session ends. When you have multiple agents, they can't see what the others are doing.
-			Loom gives them <strong>shared memory, smart task routing, and the ability to pick up where they left off</strong>.
+			Loom proved that agents need task ownership, checkpoints, routing, and recovery.
+			Current CREATE SOMETHING repo work now uses <strong>Linear as the source of truth</strong>
+			for tracked ownership, status, and evidence.
 		</p>
 	</section>
 
 	<!-- Install Section -->
 	<section class="install-section">
-		<h2 class="section-title">Install in 2 minutes</h2>
-		<p class="section-subtitle">One-click for your agent platform of choice</p>
+		<h2 class="section-title">Legacy install references</h2>
+		<p class="section-subtitle">Kept for historical MCP users. New CREATE SOMETHING coordination should start in Linear.</p>
 
 		<!-- Featured: One-click install (Tufte: primary action gets visual prominence) -->
 		<div class="install-featured">
@@ -168,28 +169,29 @@
 
 	<!-- How It Works -->
 	<section class="how-section">
-		<h2 class="section-title">How it works</h2>
+		<h2 class="section-title">What Loom proved</h2>
 
 		<div class="how-grid">
 			<div class="how-step">
 				<span class="step-number">1</span>
-				<h3 class="step-title">Start a task</h3>
-				<p class="step-description">Tell Loom what you're working on. It tracks the context.</p>
+				<h3 class="step-title">Continuity matters</h3>
+				<p class="step-description">Agent work needs persistent context when sessions end or hands change.</p>
 			</div>
 			<div class="how-step">
 				<span class="step-number">2</span>
-				<h3 class="step-title">Pick the right agent</h3>
-				<p class="step-description">Loom suggests which agent fits best—by capability, cost, or speed</p>
+				<h3 class="step-title">Routing needs evidence</h3>
+				<p class="step-description">Agent choice only matters when the task, cost, and proof surface are visible.</p>
 			</div>
 			<div class="how-step">
 				<span class="step-number">3</span>
-				<h3 class="step-title">Save your progress</h3>
-				<p class="step-description">Checkpoint anytime. If something crashes, pick up where you left off.</p>
+				<h3 class="step-title">Progress needs receipts</h3>
+				<p class="step-description">A task is not done until evidence survives outside the chat window.</p>
 			</div>
 		</div>
 
 		<div class="code-example">
-			<pre><code><span class="comment"># Start working (create + claim in one call)</span>
+			<pre><code><span class="comment"># Legacy MCP reference. Current repo coordination uses Linear.</span>
+<span class="comment"># Start working (create + claim in one call)</span>
 <span class="command">loom work</span> <span class="string">"Fix authentication bug"</span> --agent claude-code
 
 <span class="comment"># Save progress (crash recovery point)</span>
@@ -269,8 +271,8 @@
 
 	<!-- Tools Section -->
 	<section class="tools-section">
-		<h2 class="section-title">What you can do</h2>
-		<p class="section-subtitle">30+ tools for coordinating AI work</p>
+		<h2 class="section-title">Legacy tool surface</h2>
+		<p class="section-subtitle">These tools remain useful as design evidence. They are not the current repo task source of truth.</p>
 
 		<div class="tools-grid">
 			<div class="tool-category">
@@ -319,10 +321,11 @@
 	<section class="case-study-section">
 		<div class="case-study-card">
 			<span class="case-study-label">Key Feature</span>
-			<h3 class="case-study-title">Use the right agent for the job</h3>
+			<h3 class="case-study-title">Use the right coordination surface for the job</h3>
 			<p class="case-study-description">
-				Not every task needs your most expensive model. Use Claude for architecture decisions, Gemini Flash for mechanical refactoring.
-				Loom tracks what each agent is good at and helps you pick the right one.
+				Loom showed why agent work needs routing, recovery, and receipts. In this repository,
+				Linear now owns tracked work while product pages keep Loom as historical proof of the
+				coordination problem.
 			</p>
 			<div class="case-study-stats">
 				<div class="stat">
@@ -382,12 +385,28 @@
 		max-width: var(--content-width-xl);
 		margin: 0 auto;
 		padding: var(--space-xl) var(--space-lg);
+		background: var(--color-clear-panel, #ffffff);
+		color: var(--color-clear-onyx, #0a0e19);
+		--color-fg-primary: var(--color-clear-onyx, #0a0e19);
+		--color-fg-secondary: #252a34;
+		--color-fg-muted: var(--color-clear-grey, #636363);
+		--color-fg-tertiary: var(--color-clear-grey, #636363);
+		--color-bg-pure: var(--color-clear-panel, #ffffff);
+		--color-bg-surface: var(--color-clear-panel, #ffffff);
+		--color-bg-subtle: var(--color-clear-porcelain, #f9f9f9);
+		--color-border-emphasis: var(--color-clear-border, #e1e1e1);
+		--color-border-strong: #c9c9c9;
 	}
 
 	/* Hero */
 	.hero {
 		text-align: center;
 		padding: 6rem 0 var(--space-xl);
+		border-bottom: 1px solid var(--color-clear-border, #e1e1e1);
+		background:
+			linear-gradient(90deg, rgba(10, 14, 25, 0.035) 1px, transparent 1px) 0 0 / 4.25rem
+				4.25rem,
+			linear-gradient(180deg, var(--color-clear-panel, #ffffff) 0%, #fbfbfb 100%);
 	}
 
 	.hero-badge {
