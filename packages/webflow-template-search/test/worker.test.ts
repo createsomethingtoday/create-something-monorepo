@@ -2667,10 +2667,10 @@ describe('webflow-template-search worker', () => {
   });
 
   it('bounds stale changed-record catch-up without dropping same-timestamp records', async () => {
-    const changedAssets = Array.from({ length: 29 }, (_, index) => {
+    const changedAssets = Array.from({ length: 130 }, (_, index) => {
       const timestamp =
         index < 23
-          ? `2026-03-17T05:01:${String(index % 60).padStart(2, '0')}.000Z`
+          ? `2026-03-17T05:01:${String(index % 23).padStart(2, '0')}.000Z`
           : index < 25
             ? '2026-03-17T05:10:00.000Z'
             : '2026-03-17T05:11:00.000Z';
@@ -2721,12 +2721,17 @@ describe('webflow-template-search worker', () => {
         indexed_records: 25,
       });
 
-      const included = await callWorker(new Request('https://templates.test/api/templates/search?q=bulk-template-24'), env);
-      const includedPayload = (await included.json()) as { items: Array<{ name: string }> };
-      expect(includedPayload.items.map((item) => item.name)).toEqual(['Bulk Template 24']);
+      const included = await env.DB.prepare('SELECT id FROM template_documents WHERE id = ?').bind('recBulk024').first();
+      expect(included).toEqual({ id: 'recBulk024' });
 
-      const deferred = await env.DB.prepare('SELECT id FROM template_documents WHERE id = ?').bind('recBulk28').first();
+      const deferred = await env.DB.prepare('SELECT id FROM template_documents WHERE id = ?').bind('recBulk129').first();
       expect(deferred).toBeNull();
+      expect(
+        fetchMock.mock.calls.some(([input]) => {
+          const url = new URL(typeof input === 'string' ? input : input.url);
+          return url.hostname.includes('airtable.com') && url.searchParams.get('maxRecords') === '100';
+        }),
+      ).toBe(true);
       expect(fetchMock.mock.calls.some(([input]) => new URL(typeof input === 'string' ? input : input.url).hostname === 'api.webflow.com')).toBe(
         false,
       );

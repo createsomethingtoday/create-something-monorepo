@@ -79,6 +79,8 @@ export function installAirtableFetchMock(dataset: MockDataset) {
     }
 
     if (tableId === 'tblRwzpWoLgE9MrUm') {
+      const maxRecords = Number(url.searchParams.get('maxRecords') ?? '0') || null;
+
       if (formula.includes('RECORD_ID()')) {
         return Response.json({
           records: dataset.publishedAssets.filter((record) => formula.includes(`"${record.id}"`)),
@@ -87,10 +89,11 @@ export function installAirtableFetchMock(dataset: MockDataset) {
 
       if (formula.includes('IS_AFTER(')) {
         const records = dataset.incrementalAssets ?? [];
+        const matchingRecords = records.some((record) => typeof record.fields['📅LMT'] === 'string')
+          ? records.filter((record) => dateMatchesModifiedWindow(record, formula))
+          : records;
         return Response.json({
-          records: records.some((record) => typeof record.fields['📅LMT'] === 'string')
-            ? records.filter((record) => dateMatchesModifiedWindow(record, formula))
-            : records,
+          records: maxRecords ? matchingRecords.slice(0, maxRecords) : matchingRecords,
         });
       }
 
