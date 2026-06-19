@@ -1,0 +1,21 @@
+{
+  "name": "app-reviewer-airtable-mcp-worker",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node ../../../scripts/run-wrangler.mjs dev",
+    "deploy": "pnpm --filter @create-something/mcp-core build && pnpm --filter @create-something/app-reviewer-airtable-mcp build && node ../../../scripts/run-wrangler.mjs deploy",
+    "tail": "node ../../../scripts/run-wrangler.mjs tail"
+  },
+  "dependencies": {
+    "@create-something/mcp-core": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.25.3",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.0.0",
+    "typescript": "^5.7.0",
+    "wrangler": "^4.0.0"
+  }
+}

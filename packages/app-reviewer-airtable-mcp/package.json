@@ -1,0 +1,37 @@
+{
+  "name": "@create-something/app-reviewer-airtable-mcp",
+  "version": "0.2.0",
+  "description": "App Reviewer Airtable MCP for performant Assets and Asset Versions access with bounded writes",
+  "type": "module",
+  "createSomething": {
+    "agentLegibilityContract": true
+  },
+  "main": "dist/index.js",
+  "bin": {
+    "app-reviewer-airtable-mcp": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit",
+    "worker:typecheck": "tsc --noEmit --target ES2022 --module NodeNext --moduleResolution NodeNext --lib ES2022,DOM --types node worker/index.ts",
+    "test": "node --import tsx --test src/**/*.test.ts"
+  },
+  "dependencies": {
+    "@create-something/mcp-core": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.25.3",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.7.0"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "app-reviewer-airtable-mcp"
+  ],
+  "author": "CREATE SOMETHING <hello@createsomething.agency>",
+  "license": "MIT"
+}

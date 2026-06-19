@@ -12,6 +12,8 @@ Domain knowledge for the CREATE SOMETHING Webflow MCP cluster and related packag
 | Server | Package | URL | Status |
 |--------|---------|-----|--------|
 | App Review | `webflow-app-review-mcp` | `webflow-app-review-mcp.createsomething.workers.dev` | Active |
+| App Reviewer Airtable | `app-reviewer-airtable-mcp` | `app-reviewer-airtable-mcp.createsomething.workers.dev` | Active |
+| Webflow Zendesk | `zendesk-mcp` | `zendesk-mcp.createsomething.workers.dev` | Active |
 | Template Review | `webflow-template-review-mcp` | `webflow-template-review-mcp.createsomething.workers.dev` | Active |
 | Site Analyzer | `webflow-site-analyzer-mcp` | `analyzer.mcp.createsomething.agency` | Planned |
 | Webflow MCP | `webflow-mcp` | `webflow-mcp.createsomething.workers.dev` | Planned |

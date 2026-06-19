@@ -6,6 +6,19 @@
 
 export const REGISTRY_CATALOG_ENTRIES = [
   {
+    "name": "App Reviewer Airtable",
+    "slug": "app-reviewer-airtable",
+    "url": "https://app-reviewer-airtable-mcp.createsomething.workers.dev",
+    "description": "Standalone App Reviewer Airtable MCP for performant bounded access to Assets and Asset Versions, including allowlisted reviewer writes.",
+    "category": "create-something",
+    "transports": [
+      "http",
+      "sse"
+    ],
+    "requiresAuth": true,
+    "authType": "bearer"
+  },
+  {
     "name": "Bettermode Creator",
     "slug": "bettermode-creator",
     "url": "https://bettermode-creator.mcp.createsomething.agency",
