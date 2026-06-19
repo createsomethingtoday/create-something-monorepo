@@ -1012,7 +1012,8 @@ export async function backfillTemplateImages(
     const requestedLimit = clamp(Math.floor(options.limit ?? IMAGE_BACKFILL_DEFAULT_LIMIT), 1, IMAGE_BACKFILL_MAX_LIMIT);
     const requestedTemplateSlugs = uniqueStrings((options.templateSlugs ?? []).map((slug) => slug.trim()).filter(Boolean));
     const rows = await listTemplateImageBackfillRows(env.DB, requestedLimit, requestedTemplateSlugs);
-    const webflowImageIndex = rows.length > 0 ? await loadWebflowTemplateImageIndex(env) : null;
+    const isTargetedBackfill = requestedTemplateSlugs.length > 0;
+    const webflowImageIndex = rows.length > 0 && !isTargetedBackfill ? await loadWebflowTemplateImageIndex(env) : null;
     await heartbeat();
     const updatedRecords = await resolveAndUpdateTemplateImages(
       env.DB,
@@ -1020,6 +1021,7 @@ export async function backfillTemplateImages(
       webflowImageIndex,
       startedAt,
       IMAGE_BACKFILL_FETCH_BATCH_SIZE,
+      { preferPublishedTemplatePage: isTargetedBackfill },
     );
     await heartbeat();
     const imageSourceStats = await templateImageSourceStats(env.DB);
@@ -1051,7 +1053,8 @@ export async function pruneMissingTemplateImages(
     const requestedLimit = clamp(Math.floor(options.limit ?? IMAGE_BACKFILL_DEFAULT_LIMIT), 1, IMAGE_BACKFILL_MAX_LIMIT);
     const requestedTemplateSlugs = uniqueStrings((options.templateSlugs ?? []).map((slug) => slug.trim()).filter(Boolean));
     const rows = await listTemplateImageBackfillRows(env.DB, requestedLimit, requestedTemplateSlugs);
-    const webflowImageIndex = rows.length > 0 ? await loadWebflowTemplateImageIndex(env) : null;
+    const isTargetedPrune = requestedTemplateSlugs.length > 0;
+    const webflowImageIndex = rows.length > 0 && !isTargetedPrune ? await loadWebflowTemplateImageIndex(env) : null;
     await heartbeat();
     const idsToDelete: string[] = [];
     const skippedRecords: TemplateImagePruneSummary['skipped_records'] = [];
@@ -1059,10 +1062,15 @@ export async function pruneMissingTemplateImages(
     for (const rowBatch of chunk(rows, IMAGE_BACKFILL_FETCH_BATCH_SIZE)) {
       const checkedRows = await Promise.all(
         rowBatch.map(async (row) => {
-          const webflowImages = resolveWebflowTemplateImages(webflowImageIndex, {
-            templateSlug: row.templateSlug,
-            name: row.name,
-          });
+          const webflowImages = isTargetedPrune
+            ? await resolvePublishedTemplateImages({
+                templateSlug: row.templateSlug,
+                listingUrl: row.listingUrl,
+              })
+            : resolveWebflowTemplateImages(webflowImageIndex, {
+                templateSlug: row.templateSlug,
+                name: row.name,
+              });
           if (webflowImages?.thumbnailImageUrl) {
             return { row, status: null, reason: 'webflow_image_found' as const };
           }

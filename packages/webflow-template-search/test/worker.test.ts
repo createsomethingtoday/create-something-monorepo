@@ -3037,6 +3037,11 @@ describe('webflow-template-search worker', () => {
         .bind('recAgentflow', 'recSetrex')
         .run();
 
+      env.WEBFLOW_API_TOKEN = 'webflow-token';
+      env.CMS_READ_ONLY = 'cms-token';
+      env.WEBFLOW_TEMPLATE_ASSET_SITE_ID = 'site-id';
+      fetchMock.mockClear();
+
       const backfill = await callWorker(
         new Request('https://templates.test/api/templates/admin/backfill-images?slug=agentflow-website-template', {
           method: 'POST',
@@ -3058,6 +3063,13 @@ describe('webflow-template-search worker', () => {
         scanned_records: 1,
         updated_records: 1,
       });
+      expect(
+        fetchMock.mock.calls.some((call) => {
+          const input = call[0] as RequestInfo | URL;
+          const url = new URL(typeof input === 'string' || input instanceof URL ? input.toString() : input.url);
+          return url.hostname === 'api.webflow.com';
+        }),
+      ).toBe(false);
 
       const agentflowResponse = await callWorker(new Request('https://templates.test/api/templates/search?q=agentflow'), env);
       const agentflowPayload = (await agentflowResponse.json()) as { items: Array<{ thumbnail_image_url: string | null }> };
