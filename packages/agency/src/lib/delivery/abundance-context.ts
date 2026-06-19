@@ -14,9 +14,9 @@ export const ABUNDANCE_CONTEXT_ID = 'abundance-npg-delivery';
  */
 export const abundanceWorkflowContext: CanonWorkflowContext = {
 	contextId: ABUNDANCE_CONTEXT_ID,
-	title: 'Abundance nurse staffing system',
+	title: 'Abundance nurse staffing delivery record',
 	summary:
-		'The NP Group now has a live concierge app, a repo-backed database, hardened Abundance API routes, production-smoked Staff and Jobs MCPs, an NPG scoped hub, Braintrust/Langfuse eval evidence for the Dify agent path, walkthrough artifacts, and a clear agent boundary for recruiter-led review.',
+		'The NP Group has a live nurse-facing Concierge app, a client-safe delivery record, read-only public job discovery, recruiter-gated protected steps, repo-backed data contracts, production-smoked Staff and Jobs MCPs, an NPG scoped hub, and private eval/evidence trails kept outside the public page.',
 	source: 'fallback',
 	updatedAt: null,
 	engagement: {
@@ -34,7 +34,7 @@ export const abundanceWorkflowContext: CanonWorkflowContext = {
 			{
 				label: 'Concierge live app',
 				status: 'ok',
-				detail: 'The nurse-facing intake surface is live on Cloudflare Pages.'
+				detail: 'The polished nurse-facing intake surface is live on Cloudflare Pages.'
 			},
 			{
 				label: 'Staff and Jobs MCPs',
@@ -59,7 +59,7 @@ export const abundanceWorkflowContext: CanonWorkflowContext = {
 			title: 'Created DB',
 			status: 'Created',
 			description:
-				'The Abundance data layer captures profile context, intake history, matching state, and private source artifacts for the next staff/operator integration pass.',
+				'The Abundance data layer separates nurse intake context, matching state, public job records, and private source artifacts for the next staff/operator integration pass.',
 			evidence: ['Repo-backed database', 'Public jobs D1 contract', 'Paylocity source artifact (private)'],
 			tone: 'info'
 		},
@@ -68,7 +68,7 @@ export const abundanceWorkflowContext: CanonWorkflowContext = {
 			title: 'Staff, Jobs, and NPG Hub',
 			status: 'Production-smoked',
 			description:
-				'Staff MCP, Jobs MCP, the NPG scoped hub, and Dify Abundance Hub have passed production smoke checks. The Abundance Dify agent also has a published Braintrust eval suite with Langfuse trace join keys. Credentials stay in secret storage and are not published in the delivery surface.',
+				'Staff MCP, Jobs MCP, the NPG scoped hub, and Dify Abundance Hub have passed production smoke checks. The public delivery page keeps job discovery read-only while credentials, funnel writes, and private traces stay outside the browser.',
 			evidence: ['Staff MCP', 'Jobs MCP', 'NPG scoped hub', 'Braintrust eval suite'],
 			tone: 'success'
 		},
@@ -77,7 +77,7 @@ export const abundanceWorkflowContext: CanonWorkflowContext = {
 			title: 'Agent Boundary',
 			status: 'Ready for review',
 			description:
-				'The agent supports intake, shortlist, missing-information flags, and recruiter review. It does not autonomously make staffing decisions.',
+				'The agent supports intake, missing-information flags, shortlist drafting, and recruiter review. It does not autonomously make staffing decisions or move candidates through protected steps.',
 			evidence: ['Recruiter review gate', 'No speculative funnel writes', 'Secret-refusal eval'],
 			tone: 'warning'
 		}
@@ -251,7 +251,7 @@ export const abundanceWorkflowContext: CanonWorkflowContext = {
 	artifacts: [
 		{
 			title: 'Abundance Concierge live app',
-			type: 'Live nurse-facing intake surface',
+			type: 'Live nurse-facing Concierge intake',
 			href: 'https://abundance-concierge-chat.pages.dev/',
 			visibility: 'public',
 			tone: 'success'
@@ -287,7 +287,7 @@ export const abundanceWorkflowContext: CanonWorkflowContext = {
 	],
 	agent: {
 		title: 'Ask This Delivery',
-		placeholder: 'Example: What is safe to send to our team?',
+		placeholder: 'Try: What is safe to send to our team?',
 		suggestedPrompts: [
 			{ label: 'What changed', prompt: 'Explain what changed in plain English.' },
 			{ label: 'Decisions needed', prompt: 'What decisions do you need from us?' },
@@ -297,7 +297,7 @@ export const abundanceWorkflowContext: CanonWorkflowContext = {
 		initialMessages: [
 			{
 				role: 'agent',
-				body: 'Ask about what changed, what is private, what needs a decision, or how the database, MCP, and agent pieces fit together.',
+				body: 'Ask what changed in the nurse intake experience, what is safe to share, what remains private, which decisions still need owners, or how Concierge, public jobs, MCPs, and recruiter review fit together.',
 				grounding: ['Sanitized delivery context']
 			}
 		]
@@ -325,7 +325,7 @@ export const abundanceWorkflowContext: CanonWorkflowContext = {
 		{
 			system: 'Abundance Concierge app',
 			status: 'ok',
-			detail: 'Live nurse-facing intake surface on Cloudflare Pages.',
+			detail: 'Live nurse-facing Concierge intake surface on Cloudflare Pages.',
 			tier: 'Automation'
 		},
 		{
