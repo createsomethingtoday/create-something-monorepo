@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { Button, Badge, Dialog } from './ui';
 	import { env } from '$env/dynamic/public';
-	import { ShieldCheck, Check, Info, ExternalLink, Copy } from 'lucide-svelte';
+	import { Check, Info, ExternalLink, Copy } from 'lucide-svelte';
 
 	interface Props {
 		userEmail?: string;
@@ -16,8 +16,19 @@
 	const installUrl =
 		env.PUBLIC_WEBFLOW_WAY_INSTALL_URL ||
 		'https://webflow.com/oauth/authorize?response_type=code&client_id=28685cff5fef23c426a670bb57bf383b25cd16125bc5bba2103d899b3f4a7092&workspace=createsomethingagency';
+	const installUrlDisplay = formatInstallUrl(installUrl);
 
 	const externalUrl = env.PUBLIC_WEBFLOW_WAY_VALIDATOR_URL || 'https://webflow-way-validator.vercel.app';
+
+	function formatInstallUrl(url: string): string {
+		try {
+			const parsed = new URL(url);
+			const workspace = parsed.searchParams.get('workspace');
+			return workspace ? `${parsed.host}${parsed.pathname} / ${workspace}` : `${parsed.host}${parsed.pathname}`;
+		} catch {
+			return url.length > 72 ? `${url.slice(0, 50)}...${url.slice(-18)}` : url;
+		}
+	}
 
 	function handleLearnMore() {
 		showInstallModal = true;
@@ -42,9 +53,6 @@
 
 <div class="webflow-way-card {featured ? 'webflow-way-card--featured' : ''}">
 	<div class="tool-header">
-		<div class="tool-icon webflow-way">
-			<ShieldCheck size={24} />
-		</div>
 		<div class="tool-title-group">
 			<h3 class="tool-title">Webflow Way Validator</h3>
 			<div class="badge-row">
@@ -55,9 +63,8 @@
 	</div>
 
 	<p class="tool-description">
-		Designer App that validates templates against Webflow Way best practices before submission.
-		Use it to add the Validator script, publish, re-check, and fix required items until the
-		project reaches a confirmed 100% pass.
+		Designer app for the required Webflow Way pass before marketplace submission. Install it,
+		open it from Designer, and run validation against the published site.
 	</p>
 
 	{#if featured}
@@ -67,7 +74,7 @@
 				<p class="install-access-copy">Open the Webflow install link or copy it for a teammate.</p>
 			</div>
 			<div class="install-access-actions">
-				<code title={installUrl}>{installUrl}</code>
+				<code title={installUrl}>{installUrlDisplay}</code>
 				<Button
 					variant="outline"
 					size="sm"
@@ -87,21 +94,23 @@
 		</div>
 	{/if}
 
-	<div class="how-it-works">
-		<div class="how-it-works-icon">
-			<Info size={16} />
+	{#if !featured}
+		<div class="how-it-works">
+			<div class="how-it-works-icon">
+				<Info size={16} />
+			</div>
+			<div class="how-it-works-content">
+				<p class="how-it-works-title">How it works:</p>
+				<ul class="how-it-works-list">
+					<li>Install the app from Webflow</li>
+					<li>Open the app from the Designer Apps panel</li>
+					<li>Add the Validator script, publish, and re-check</li>
+					<li>Run Validator &mdash; completes in 30&ndash;60 seconds</li>
+					<li>Get step-by-step fix instructions for each issue</li>
+				</ul>
+			</div>
 		</div>
-		<div class="how-it-works-content">
-			<p class="how-it-works-title">How it works:</p>
-			<ul class="how-it-works-list">
-				<li>Install the app from Webflow</li>
-				<li>Open the app from the Designer Apps panel</li>
-				<li>Add the Validator script, publish, and re-check</li>
-				<li>Run Validator &mdash; completes in 30&ndash;60 seconds</li>
-				<li>Get step-by-step fix instructions for each issue</li>
-			</ul>
-		</div>
-	</div>
+	{/if}
 
 	<ul class="tool-features">
 		<li>
@@ -302,31 +311,16 @@
 
 	.webflow-way-card--featured {
 		gap: var(--space-md);
-		padding: var(--space-lg);
+		padding: var(--space-md);
 		border-radius: var(--radius-sm);
-		box-shadow: var(--shadow-md);
+		border-color: var(--color-shell-border-default);
+		box-shadow: none;
 	}
 
 	.tool-header {
 		display: flex;
 		align-items: flex-start;
 		gap: var(--space-sm);
-	}
-
-	.tool-icon {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		width: 40px;
-		height: 40px;
-		border-radius: var(--radius-md);
-		flex-shrink: 0;
-	}
-
-	.tool-icon.webflow-way {
-		background: color-mix(in srgb, var(--color-info-muted) 28%, transparent);
-		color: var(--color-info);
-		border: 1px solid var(--color-info-border);
 	}
 
 	.tool-title-group {
@@ -337,11 +331,12 @@
 
 	.tool-title {
 		font-family: var(--font-heading);
-		font-size: var(--text-h2);
+		font-size: 1.6rem;
 		font-weight: var(--font-semibold);
-		letter-spacing: 0.01em;
+		letter-spacing: 0;
 		color: var(--color-fg-primary);
 		margin: 0;
+		line-height: 1.08;
 	}
 
 	.badge-row {
@@ -360,8 +355,8 @@
 		display: grid;
 		gap: var(--space-sm);
 		padding: var(--space-sm);
-		background: color-mix(in srgb, var(--color-info-muted) 18%, var(--color-bg-surface));
-		border: 1px solid var(--color-info-border);
+		background: var(--color-bg-subtle);
+		border: 1px solid var(--color-shell-border-default);
 		border-radius: var(--radius-sm);
 	}
 
@@ -392,7 +387,7 @@
 		text-overflow: ellipsis;
 		white-space: nowrap;
 		padding: 0.55rem 0.7rem;
-		border: 1px solid color-mix(in srgb, var(--color-info-border) 76%, transparent);
+		border: 1px solid var(--color-shell-border-default);
 		border-radius: var(--radius-sm);
 		background: color-mix(in srgb, var(--color-bg-pure) 72%, transparent);
 		color: var(--color-fg-primary);
@@ -404,13 +399,13 @@
 		align-items: flex-start;
 		gap: var(--space-sm);
 		padding: var(--space-sm);
-		background: color-mix(in srgb, var(--color-info-muted) 18%, var(--color-bg-surface));
-		border: 1px solid var(--color-info-border);
+		background: var(--color-bg-subtle);
+		border: 1px solid var(--color-shell-border-default);
 		border-radius: var(--radius-md);
 	}
 
 	.how-it-works-icon {
-		color: var(--color-info);
+		color: var(--color-fg-muted);
 		flex-shrink: 0;
 		margin-top: 2px;
 	}
@@ -422,7 +417,7 @@
 
 	.how-it-works-title {
 		font-weight: var(--font-medium);
-		color: var(--color-info);
+		color: var(--color-fg-primary);
 		margin: 0 0 var(--space-xs);
 		font-size: var(--text-body-sm);
 	}
@@ -443,18 +438,23 @@
 	.tool-features {
 		list-style: none;
 		padding: 0;
-		margin: var(--space-xs) 0;
-		display: flex;
-		flex-direction: column;
+		margin: 0;
+		display: grid;
+		grid-template-columns: repeat(3, minmax(0, 1fr));
 		gap: var(--space-xs);
 	}
 
 	.tool-features li {
 		display: flex;
-		align-items: center;
+		align-items: flex-start;
 		gap: var(--space-xs);
+		min-width: 0;
+		padding: var(--space-xs);
+		border: 1px solid var(--color-shell-border-default);
+		border-radius: var(--radius-sm);
 		font-size: var(--text-body-sm);
 		color: var(--color-fg-secondary);
+		line-height: 1.35;
 	}
 
 	.tool-features :global(svg) {
@@ -548,9 +548,9 @@
 	}
 
 	.guide-callout.info {
-		background: color-mix(in srgb, var(--color-info-muted) 18%, var(--color-bg-surface));
-		border: 1px solid var(--color-info-border);
-		color: var(--color-info);
+		background: var(--color-bg-subtle);
+		border: 1px solid var(--color-shell-border-default);
+		color: var(--color-fg-secondary);
 	}
 
 	.guide-callout.warning {
@@ -601,9 +601,16 @@
 		}
 
 		.install-access-actions,
-		.tool-actions {
+		.tool-actions,
+		.tool-features {
 			grid-template-columns: 1fr;
 			display: grid;
+		}
+
+		.install-access code {
+			white-space: normal;
+			overflow-wrap: anywhere;
+			line-height: 1.35;
 		}
 	}
 </style>
