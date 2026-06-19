@@ -58,6 +58,24 @@
     }
   ];
 
+  const faqItems = [
+    {
+      question: 'What is the Dify implementation lane?',
+      answer:
+        'It is the CREATE SOMETHING path for Dify-first agent systems with MCP connectivity, Policy OS governance, eval gates, and client-safe evidence.'
+    },
+    {
+      question: 'Where does MCP fit with Dify?',
+      answer:
+        'Dify becomes the visible agent surface while MCP server cards carry tool access and Policy OS carries approval, blocked-state, and evidence behavior.'
+    },
+    {
+      question: 'What proof matters for Dify work?',
+      answer:
+        'Useful proof includes Dify DSL snapshots, API health checks, expected tool use, forbidden tool use, secret refusal, latency, and write-confirmation checks.'
+    }
+  ];
+
   const audienceCards: ClearCardItem[] = [
     {
       eyebrow: 'Builders',
@@ -190,8 +208,9 @@
   title="Dify Implementation Lane | CREATE SOMETHING .agency"
   description="CREATE SOMETHING builds Dify-first agent systems with MCP connectivity, Policy OS governance, eval gates, and client-safe evidence."
   keywords="Dify implementation, Dify MCP, Dify partner application, Dify affiliate, Policy OS, AI agent governance"
-  ogImage="/og-image.svg"
+  ogImage="/og/dify-lane.svg"
   propertyName="agency"
+  {faqItems}
 />
 
 <ClearPageSection

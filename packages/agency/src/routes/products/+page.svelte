@@ -88,6 +88,24 @@
     }
   ];
 
+  const faqItems = [
+    {
+      question: 'What counts as proof?',
+      answer:
+        'Proof means delivery records, tools, connectors, and client builds that show what changed, what was verified, what stayed private, and what still needs an owner.'
+    },
+    {
+      question: 'Why are Ground and Loom MCP included?',
+      answer:
+        'Ground shows the verify-before-claiming discipline, while Loom MCP shows why long-running agent work needs ownership, checkpoints, and handoff evidence.'
+    },
+    {
+      question: 'How does proof become a client workflow?',
+      answer:
+        'The paid work turns proof primitives into scoped actions, approval states, blocked-state receipts, and an operating path the client can inspect.'
+    }
+  ];
+
   const proofLedger: ClearCardItem[] = [
     {
       eyebrow: 'Business signal',
@@ -254,6 +272,7 @@
   keywords="workflow trust layer proof, workflow receipts, MCP servers, grounded AI code analysis, workflow controls, operator surfaces"
   ogImage="/og-image.svg"
   propertyName="agency"
+  {faqItems}
 />
 
 <ClearPageSection

@@ -168,7 +168,9 @@
   keywords="Dify affiliate content, Dify Substack, Dify blog strategy, Dify partner funnel, Dify MCP content"
   canonical="https://createsomething.agency/dify/content-engine"
   ogType="article"
-  ogImage="/og-image.svg"
+  ogImage="/og/dify-content-engine.svg"
+  publishedTime="2026-05-18"
+  modifiedTime="2026-06-19"
   articleSection="Dify Affiliate Content"
   articleTags={['Dify', 'affiliate', 'Substack', 'content strategy', 'MCP']}
   propertyName="agency"

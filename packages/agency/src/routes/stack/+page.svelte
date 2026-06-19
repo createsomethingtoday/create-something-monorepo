@@ -103,6 +103,24 @@
     }
   ];
 
+  const faqItems = [
+    {
+      question: 'What is the stack boundary?',
+      answer:
+        'The stack boundary separates what the client owns, what CREATE SOMETHING delivers, and what vendors provide before agent work becomes production work.'
+    },
+    {
+      question: 'Why does vendor ownership matter?',
+      answer:
+        'Vendor services are replaceable infrastructure. The durable value is the workflow map, action contract, control rules, runbook, and evidence that travel with the handoff.'
+    },
+    {
+      question: 'What does the control layer decide?',
+      answer:
+        'The control layer classifies actions as auto-allowed, approval-needed, or blocked with a reason before execution touches customer, revenue, or production risk.'
+    }
+  ];
+
   const procurementTrust: ClearCardItem[] = [
     {
       eyebrow: 'Accounts',
@@ -274,6 +292,7 @@
   keywords="workflow trust layer, transparent AI stack, MCP stack, vendor boundaries, Composio, Cloudflare, Dify, Notion, OpenAI, Webflow"
   ogImage="/og-image.svg"
   propertyName="agency"
+  {faqItems}
 />
 
 <ClearPageSection

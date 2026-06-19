@@ -24,6 +24,7 @@
 		"preview": "node ./scripts/run-pinned-bin.mjs vite vite preview",
 		"prepare": "pnpm prepare:build-dir && pnpm prepare:local-deps && node ./scripts/run-pinned-bin.mjs @sveltejs/kit svelte-kit sync || echo ''",
 		"check": "pnpm prepare:build-dir && pnpm prepare:local-deps && node ./scripts/run-pinned-bin.mjs @sveltejs/kit svelte-kit sync && node ./scripts/run-pinned-bin.mjs svelte-check svelte-check --tsconfig ./tsconfig.json --fail-on-warnings",
+		"seo:check": "node ./scripts/check-seo-aeo.mjs",
 		"check:watch": "pnpm prepare:build-dir && pnpm prepare:local-deps && node ./scripts/run-pinned-bin.mjs @sveltejs/kit svelte-kit sync && node ./scripts/run-pinned-bin.mjs svelte-check svelte-check --tsconfig ./tsconfig.json --fail-on-warnings --watch",
 		"test:abundance": "node --import tsx --test test/abundance-*.test.ts",
 		"smoke:mobile": "pnpm --filter @create-something/canon package && pnpm --filter @create-something/tufte package && pnpm build && playwright test --config playwright.mobile-smoke.config.ts",

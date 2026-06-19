@@ -14,4 +14,12 @@ Disallow: /dashboard
 Disallow: /mcp-access
 Disallow: /prospects
 
+# Block legacy job-application artifacts that still exist in static assets.
+Disallow: /job-applications
+Disallow: /Micah_Johnson_
+Disallow: /cover-letter-
+Disallow: /resume-
+Disallow: /akkio-interview-prep.md
+Disallow: /*-combined.html
+
 Sitemap: https://createsomething.agency/sitemap.xml
