@@ -46,13 +46,15 @@
     insights: Insight[];
     userTemplates: LeaderboardEntry[];
     summary: {
-      totalMarketplaceSales: number;
+      totalMarketplaceSales: number | null;
       userBestRank: number | null;
       lastUpdated: string;
       nextUpdateDate?: string;
       syncSchedule?: string;
       dataWindow?: string;
       timeUntilNextSync?: string;
+      salesSource?: 'category-performance' | 'leaderboard-top-50' | 'unavailable';
+      dataWarning?: string | null;
     };
   }
 
@@ -293,7 +295,10 @@
   }
 
   const hasMarketplaceSalesSummaryData = $derived(
-    () => summary.totalMarketplaceSales !== 0 || Boolean(summary.lastUpdated)
+    () =>
+      summary.totalMarketplaceSales !== null ||
+      Boolean(summary.dataWarning) ||
+      Boolean(summary.lastUpdated)
   );
   const hasUserSummaryData = $derived(() => userTemplates.length > 0);
   const visibleSummaryItemCount = $derived(() => {
@@ -310,6 +315,20 @@
       filter_state: userCategoryFilter
     });
   }
+
+  function getMarketplaceSalesSupport(): string {
+    if (summary.totalMarketplaceSales === null) return 'source unavailable';
+    if (summary.salesSource === 'leaderboard-top-50') return 'across top 50 templates';
+    return 'across active categories';
+  }
+
+  function getMarketplaceSalesMeta(): string {
+    const windowLabel = summary.dataWindow || '30-day snapshot';
+    if (summary.timeUntilNextSync) {
+      return `${windowLabel} · next update ${summary.timeUntilNextSync}`;
+    }
+    return windowLabel;
+  }
 </script>
 
 <div class="marketplace-insights">
@@ -322,17 +341,21 @@
       {#if hasMarketplaceSalesSummaryData()}
         <div class="summary-item">
           <dt class="summary-term">Total Sales (30d)</dt>
-          <dd class="summary-value"><KineticNumber value={summary.totalMarketplaceSales} /></dd>
-          <dd class="summary-support">across all categories</dd>
+          {#if summary.totalMarketplaceSales === null}
+            <dd class="summary-value summary-value-unavailable">-</dd>
+          {:else}
+            <dd class="summary-value"><KineticNumber value={summary.totalMarketplaceSales} /></dd>
+          {/if}
+          <dd class="summary-support">{getMarketplaceSalesSupport()}</dd>
           <dd
             class="summary-meta"
-            title={summary.syncSchedule || 'Data refreshes weekly on Mondays at 4 PM UTC'}
+            title={summary.syncSchedule || summary.dataWindow || 'Rolling 30-day window'}
           >
-            weekly snapshot
-            {#if summary.timeUntilNextSync}
-              · next update {summary.timeUntilNextSync}
-            {/if}
+            {getMarketplaceSalesMeta()}
           </dd>
+          {#if summary.dataWarning}
+            <dd class="summary-warning">{summary.dataWarning}</dd>
+          {/if}
         </div>
       {/if}
 
@@ -536,16 +559,24 @@
             </colgroup>
             <thead>
               <tr>
-                <th>Category • Subcategory</th>
-                <th class="sortable right-head" onclick={() => handleSort('revenueRank')}>
+                <th scope="col">Category • Subcategory</th>
+                <th
+                  scope="col"
+                  class="sortable right-head"
+                  onclick={() => handleSort('revenueRank')}
+                >
                   Rank
                   {#if sortKey === 'revenueRank'}
                     <span class="sort-icon">{sortDirection === 'asc' ? '↑' : '↓'}</span>
                   {/if}
                 </th>
-                <th class="sortable right-head" onclick={() => handleSort('templatesInSubcategory')}>
+                <th
+                  scope="col"
+                  class="sortable right-head"
+                  onclick={() => handleSort('templatesInSubcategory')}
+                >
                   <span class="th-with-tooltip">
-                    Active Templates
+                    Active
                     <span
                       class="tooltip-trigger"
                       title="Templates with sales in 30-day window (not total marketplace inventory)"
@@ -557,19 +588,27 @@
                     <span class="sort-icon">{sortDirection === 'asc' ? '↑' : '↓'}</span>
                   {/if}
                 </th>
-                <th class="sortable right-head" onclick={() => handleSort('totalSales30d')}>
+                <th
+                  scope="col"
+                  class="sortable right-head"
+                  onclick={() => handleSort('totalSales30d')}
+                >
                   Sales (30d)
                   {#if sortKey === 'totalSales30d'}
                     <span class="sort-icon">{sortDirection === 'asc' ? '↑' : '↓'}</span>
                   {/if}
                 </th>
-                <th class="sortable right-head" onclick={() => handleSort('avgRevenuePerTemplate')}>
-                  Avg Revenue
+                <th
+                  scope="col"
+                  class="sortable right-head"
+                  onclick={() => handleSort('avgRevenuePerTemplate')}
+                >
+                  Avg / Template
                   {#if sortKey === 'avgRevenuePerTemplate'}
                     <span class="sort-icon">{sortDirection === 'asc' ? '↑' : '↓'}</span>
                   {/if}
                 </th>
-                <th class="competition-head">Competition</th>
+                <th scope="col" class="competition-head">Competition</th>
               </tr>
             </thead>
             <tbody>
@@ -709,7 +748,7 @@
   {#if leaderboard.length > 0}
     <section class="leaderboard-section">
       <h3 class="section-title">
-        Top Performers This Month
+        Top Performers (30d)
         <span class="section-subtitle">Rolling 30-day window</span>
       </h3>
       <div class="leaderboard-grid">
@@ -843,6 +882,10 @@
     font-variant-numeric: tabular-nums;
   }
 
+  .summary-value-unavailable {
+    color: var(--color-fg-muted);
+  }
+
   .summary-support {
     font-size: var(--text-body-sm);
     color: var(--color-fg-secondary);
@@ -854,6 +897,13 @@
     font-size: var(--text-caption);
     color: var(--color-fg-muted);
     font-variant-numeric: tabular-nums;
+  }
+
+  .summary-warning {
+    margin: 0.2rem 0 0;
+    color: var(--color-warning);
+    font-size: var(--text-caption);
+    line-height: 1.3;
   }
 
   @media (max-width: 1024px) {
@@ -1392,52 +1442,81 @@
   }
 
   .table-container {
-    overflow-x: auto;
+    max-height: min(68vh, 46rem);
+    overflow: auto;
+    scrollbar-gutter: stable;
     border: 1px solid color-mix(in srgb, var(--color-border-default) 72%, transparent);
     border-radius: var(--radius-sm);
     background: var(--color-bg-surface);
+    box-shadow:
+      inset 0 1px 0 color-mix(in srgb, var(--color-border-default) 44%, transparent),
+      inset 0 -1px 0 color-mix(in srgb, var(--color-border-default) 30%, transparent);
   }
 
   .data-table {
     width: 100%;
-    border-collapse: collapse;
+    min-width: 62rem;
+    border-collapse: separate;
+    border-spacing: 0;
     table-layout: fixed;
   }
 
   .data-table col.category-col {
-    width: 42%;
+    width: 36%;
   }
 
   .data-table col.rank-col {
-    width: 8%;
+    width: 9%;
   }
 
   .data-table col.active-col,
-  .data-table col.sales-col,
+  .data-table col.sales-col {
+    width: 12%;
+  }
+
   .data-table col.revenue-col {
-    width: 11%;
+    width: 14%;
   }
 
   .data-table col.competition-col {
-    width: 14%;
+    width: 17%;
   }
 
   .data-table th,
   .data-table td {
-    padding: 0.42rem 0.78rem;
+    padding: 0.66rem 0.9rem;
     text-align: left;
     border-bottom: 1px solid color-mix(in srgb, var(--color-shell-border-default) 64%, transparent);
     vertical-align: middle;
   }
 
   .data-table th {
+    position: sticky;
+    top: 0;
+    z-index: 3;
     font-size: var(--text-caption);
     font-weight: var(--font-medium);
     color: var(--color-fg-muted);
-    background: transparent;
+    background: color-mix(in srgb, var(--color-bg-surface) 94%, var(--color-bg-pure));
+    border-bottom: 1px solid color-mix(in srgb, var(--color-border-default) 84%, transparent);
+    box-shadow: 0 1px 0 color-mix(in srgb, var(--color-border-default) 50%, transparent);
     text-transform: uppercase;
     letter-spacing: 0;
     white-space: nowrap;
+  }
+
+  .data-table th:first-child,
+  .data-table td:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    background: var(--color-bg-surface);
+    box-shadow: 1px 0 0 color-mix(in srgb, var(--color-border-default) 54%, transparent);
+  }
+
+  .data-table th:first-child {
+    z-index: 4;
+    background: color-mix(in srgb, var(--color-bg-surface) 94%, var(--color-bg-pure));
   }
 
   .data-table th.sortable {
@@ -1453,7 +1532,7 @@
   }
 
   .data-table th.sortable:hover {
-    background: transparent;
+    background: color-mix(in srgb, var(--color-bg-subtle) 46%, var(--color-bg-surface));
     color: var(--color-fg-secondary);
   }
 
@@ -1464,11 +1543,23 @@
   .data-table td {
     font-size: var(--text-body-sm);
     color: var(--color-fg-primary);
-    line-height: 1.22;
+    line-height: 1.35;
+  }
+
+  .data-table tbody tr:nth-child(even) td {
+    background: color-mix(in srgb, var(--color-bg-subtle) 18%, transparent);
+  }
+
+  .data-table tbody tr:nth-child(even) td:first-child {
+    background: color-mix(in srgb, var(--color-bg-subtle) 18%, var(--color-bg-surface));
   }
 
   .data-table tbody tr:hover {
-    background: color-mix(in srgb, var(--color-bg-subtle) 32%, transparent);
+    background: transparent;
+  }
+
+  .data-table tbody tr:hover td {
+    background: color-mix(in srgb, var(--color-bg-subtle) 42%, var(--color-bg-surface));
   }
 
   .data-table tr:last-child td {
@@ -1477,6 +1568,11 @@
 
   .data-table tr.user-row {
     background: color-mix(in srgb, var(--color-info-soft-wash) 48%, transparent);
+  }
+
+  .data-table tr.user-row td,
+  .data-table tr.user-row td:first-child {
+    background: color-mix(in srgb, var(--color-info-soft-wash) 48%, var(--color-bg-surface));
   }
 
   .data-table .center {
@@ -1498,18 +1594,21 @@
   .category-stack {
     display: flex;
     flex-direction: column;
-    gap: 0.04rem;
+    gap: 0.1rem;
+    min-width: 0;
   }
 
   .data-table .category-parent {
     color: var(--color-fg-muted);
     font-size: var(--text-caption);
-    line-height: 1.1;
+    line-height: 1.15;
   }
 
   .data-table .category-name {
     color: var(--color-fg-primary);
-    font-size: 0.86rem;
+    font-size: var(--text-body-sm);
+    line-height: 1.22;
+    overflow-wrap: anywhere;
   }
 
   .user-indicator {
@@ -1533,7 +1632,7 @@
 
   .rank-value {
     color: var(--color-fg-primary);
-    font-weight: var(--font-medium);
+    font-weight: var(--font-semibold);
     font-variant-numeric: tabular-nums;
   }
 
@@ -1545,8 +1644,13 @@
     display: inline-flex;
     align-items: center;
     gap: 0.38rem;
+    min-width: 5.6rem;
+    padding: 0.18rem 0.42rem;
+    border: 1px solid color-mix(in srgb, var(--color-border-default) 58%, transparent);
+    border-radius: var(--radius-sm);
+    background: color-mix(in srgb, var(--color-bg-pure) 28%, transparent);
     color: var(--color-fg-secondary);
-    font-size: var(--text-caption);
+    font-size: var(--text-body-sm);
     font-weight: var(--font-medium);
     line-height: 1;
   }
@@ -1576,6 +1680,7 @@
 
   .revenue {
     font-weight: var(--font-semibold);
+    font-variant-numeric: tabular-nums;
   }
 
   /* Grid View */
