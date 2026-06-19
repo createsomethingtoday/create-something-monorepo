@@ -144,9 +144,40 @@
     }
   ];
 
+  const directToolComparison: ClearCardItem[] = [
+    {
+      eyebrow: 'Agent tools',
+      icon: 'user',
+      title: 'The operator stays the safety system',
+      detail:
+        'Chat, coding agents, and copilots can move fast, but someone still has to know the workflow, watch the boundary, and decide what is allowed.'
+    },
+    {
+      eyebrow: 'Connector setup',
+      icon: 'settings',
+      title: 'Connection does not create trust',
+      detail:
+        'MCP servers and app integrations expose capability. The workflow still needs owners, action rules, approval paths, and recovery notes.'
+    },
+    {
+      eyebrow: 'Generic automation',
+      icon: 'refresh',
+      title: 'Speed without receipts creates cleanup debt',
+      detail:
+        'A workflow can run and still be unsafe if nobody can see what changed, why it ran, what stopped, or who approves the next move.'
+    },
+    {
+      eyebrow: 'Workflow Trust Layer',
+      icon: 'check',
+      title: 'The layer underneath the agent work',
+      detail:
+        'CREATE SOMETHING defines the operating path first, then wires agents, tools, approvals, and evidence into one controlled workflow.'
+    }
+  ];
+
   const calibrationCards: ClearCardItem[] = [
     {
-      eyebrow: 'Cold buyer',
+      eyebrow: 'Explore',
       icon: 'document',
       title: 'Start with the checklist',
       detail:
@@ -155,7 +186,7 @@
       points: ['Buyer gives: a rough workflow', 'Buyer gets: the questions needed before scope']
     },
     {
-      eyebrow: 'Qualified buyer',
+      eyebrow: 'Map',
       icon: 'search',
       title: 'Request a trust map',
       detail:
@@ -167,7 +198,7 @@
       ]
     },
     {
-      eyebrow: 'Ready buyer',
+      eyebrow: 'Book',
       icon: 'check',
       title: 'Book the mapping session',
       detail:
@@ -248,6 +279,30 @@
     }
   ];
 
+  const objectionCards: ClearCardItem[] = [
+    {
+      eyebrow: 'Objection',
+      icon: 'refresh',
+      title: 'We already have automations',
+      detail:
+        'Keep the automations that work. The service adds the missing boundary: which actions can run, which wait for approval, and which stop with a reason.'
+    },
+    {
+      eyebrow: 'Objection',
+      icon: 'settings',
+      title: 'We can use agents directly',
+      detail:
+        'Use agents directly for low-risk work. Bring in a trust layer when the workflow touches customers, revenue, production, credentials, or account ownership.'
+    },
+    {
+      eyebrow: 'Objection',
+      icon: 'folder',
+      title: 'This sounds like a platform build',
+      detail:
+        'The first step is intentionally smaller: one workflow, one owner, one safe delegation path, and a clear no-build exit if the map is not convincing.'
+    }
+  ];
+
   const ctaItems: ClearCtaItem[] = [
     {
       label: 'Before build',
@@ -295,9 +350,9 @@
 </script>
 
 <SEO
-  title="Workflow Control Service | How I Work"
+  title="Workflow Trust Layer | How I Work"
   description="How CREATE SOMETHING makes one workflow safe to delegate: clear stack boundaries, decision states, evidence, and escalation when judgment is required."
-  keywords="workflow mapping, AI interaction design, workflow trust layer, safe to delegate AI workflow, workflow pilot, production automation, agent reliability"
+  keywords="workflow trust layer, workflow mapping, AI interaction design, safe to delegate AI workflow, workflow pilot, production automation, agent reliability"
   ogImage="/og-image.svg"
   propertyName="agency"
   {services}
@@ -309,7 +364,7 @@
   layout="split"
   titleLevel="h1"
   eyebrow="How I Work"
-  title="Start with one workflow."
+  title="Make one workflow safe to delegate."
   description="Bring the operating path your team cannot keep covering by hand. I map the inputs, owners, approvals, and failure modes; rebuild the handoff; and add controlled agent capacity only where the boundary is clear."
 >
   {#snippet actions()}
@@ -339,6 +394,21 @@
 >
   {#snippet after()}
     <ClearCardGrid items={fitCards} columns={2} ariaLabel="Workflow fit check" />
+  {/snippet}
+</ClearPageSection>
+
+<ClearPageSection
+  variant="soft"
+  eyebrow="Why this layer exists"
+  title="Tools can connect the work. They do not decide what should be trusted."
+  description="The durable value is the layer underneath the agent: the workflow boundary, approval model, recovery path, and evidence trail."
+>
+  {#snippet after()}
+    <ClearCardGrid
+      items={directToolComparison}
+      columns={4}
+      ariaLabel="Direct tool setup versus Workflow Trust Layer"
+    />
   {/snippet}
 </ClearPageSection>
 
@@ -374,7 +444,7 @@
   variant="soft"
   eyebrow="Offer calibration"
   title="The funnel routes by readiness, not curiosity."
-  description="Cold readers get the trust questions. Qualified buyers get a workflow map. Ready buyers bring the owner, systems, and timeline into a mapping session."
+  description="Explorers get the trust questions. Qualified buyers get a workflow map. Ready buyers bring the owner, systems, and timeline into a mapping session."
 >
   {#snippet after()}
     <ClearCardGrid items={calibrationCards} columns={3} ariaLabel="Buyer readiness paths" />
@@ -414,9 +484,20 @@
   {/snippet}
 </ClearPageSection>
 
+<ClearPageSection
+  variant="white"
+  eyebrow="Common objections"
+  title="The point is not more automation. The point is safer delegation."
+  description="The first engagement should make the next step clearer before it asks for a build."
+>
+  {#snippet after()}
+    <ClearCardGrid items={objectionCards} columns={3} ariaLabel="Workflow Trust Layer objections" />
+  {/snippet}
+</ClearPageSection>
+
 <ClearCtaBand
   eyebrow="Map the workflow"
-  title="Map the workflow that's creating the most drag."
+  title="Map the workflow your team still protects by hand."
   description="We will define the handoffs, approvals, failure modes, and escalation path before any implementation work starts."
   items={ctaItems}
 >

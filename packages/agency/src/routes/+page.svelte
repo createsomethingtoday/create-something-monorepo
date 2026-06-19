@@ -91,16 +91,16 @@
 
   const platformSignals: ClearLogoStripItem[] = [
     {
-      label: 'Objects',
-      detail: 'Customer, order, payment, case'
+      label: 'Trust Map',
+      detail: 'Objects, owners, approvals'
     },
     {
-      label: 'Actions',
-      detail: 'Read, draft, write, notify'
+      label: 'Workflow Pilot',
+      detail: 'First safe run path'
     },
     {
-      label: 'States',
-      detail: 'Run, wait, stop'
+      label: 'Trust Layer',
+      detail: 'Run, wait, stop controls'
     },
     {
       label: 'Receipts',
@@ -147,36 +147,36 @@
 
   const useCases: ClearUseCaseItem[] = [
     {
+      title: 'Route inbound leads',
+      detail: 'Classify the request, enrich the record, assign the owner, and leave the next action.'
+    },
+    {
       title: 'Recover support cases',
       detail: 'Inspect the case, order, shipment, and payment before any customer-facing action.'
     },
     {
-      title: 'Verify merged changes',
-      detail: 'Run checks, gather proof, and keep deploy evidence with the issue.'
+      title: 'Approve credits or refunds',
+      detail: 'Let safe drafts move quickly while revenue-touching decisions wait for the owner.'
     },
     {
-      title: 'Summarize CI failures',
-      detail: 'Turn failing logs into a precise owner handoff or a bounded fix path.'
+      title: 'Verify launches',
+      detail: 'Run checks, gather proof, and keep release evidence with the delivery record.'
     },
     {
-      title: 'Triage production errors',
+      title: 'Triage production issues',
       detail: 'Read monitoring context, classify severity, and route the next action.'
     },
     {
-      title: 'Patch vulnerable dependencies',
-      detail: 'Limit package changes, run the narrow gate, and leave rollback notes.'
+      title: 'Reconcile system records',
+      detail: 'Compare source systems, identify drift, and stop before writing uncertain data.'
     },
     {
-      title: 'Draft release notes',
-      detail: 'Translate merged work into customer-safe changes without inventing status.'
+      title: 'Prepare owner updates',
+      detail: 'Turn workflow state into a concise brief with decisions, blockers, and evidence.'
     },
     {
-      title: 'Pick up backlog work',
-      detail: 'Claim scoped issues only when the policy and verification path are visible.'
-    },
-    {
-      title: 'Migrate deprecated APIs',
-      detail: 'Map every call site, make the smallest safe edit, and prove the behavior.'
+      title: 'Move backlog work',
+      detail: 'Claim scoped tasks only when the owner, policy, and verification path are visible.'
     }
   ];
 
@@ -380,9 +380,9 @@
 </script>
 
 <SEO
-  title="Workflow Control Service | CREATE SOMETHING .agency"
-  description="CREATE SOMETHING maps one manual workflow, builds the first safe agent path, and leaves your team with approvals, stop states, and delivery receipts."
-  keywords="workflow control service, workflow trust layer, safe AI workflow delegation, agent workflow controls, workflow pilot, production automation, technical operators"
+  title="Workflow Trust Layer | CREATE SOMETHING .agency"
+  description="CREATE SOMETHING fixes the workflow your team still protects by hand: one map, one safe delegation path, clear approvals, stop states, and receipts."
+  keywords="workflow trust layer, governed workflow infrastructure, safe AI workflow delegation, agent workflow controls, workflow pilot, production automation, technical operators"
   ogImage="/og-image.svg"
   propertyName="agency"
   {services}
@@ -391,8 +391,8 @@
 <div class="home-pilot">
   <ClearPlatformHero
     eyebrow={agencyCoreMessaging.categoryLabel}
-    title="Map one workflow. Build the first safe agent path."
-    description="CREATE SOMETHING turns one repeated handoff into scoped actions, approval paths, stop conditions, and receipts before anything touches the customer, revenue, or production."
+    title="Fix the workflow your team still protects by hand."
+    description="CREATE SOMETHING maps one business workflow, builds the first safe delegation path, and leaves approvals, stop states, and receipts before anything touches the customer, revenue, or production."
     hideAsideOnMobile={true}
   >
     {#snippet actions()}
@@ -416,7 +416,7 @@
   </ClearPlatformHero>
 
   <ClearLogoStrip
-    eyebrow="Operating proof"
+    eyebrow="How the work becomes real"
     items={platformSignals}
     ariaLabel="CREATE SOMETHING operating proof surfaces"
   />
@@ -424,9 +424,9 @@
   <ClearPageSection
     id="service-flow"
     variant="white"
-    eyebrow="Service flow"
-    title="Map one workflow, then build only the trust layer it needs."
-    description="The funnel is intentionally narrow: bring one real workflow, leave with a visible operating path, and expand only when the risk justifies more control."
+    eyebrow="Service path"
+    title="Start narrow. Expand only when the workflow earns it."
+    description="Bring one real workflow, leave with a visible operating path, and add the trust layer only when live work needs more control."
   >
     {#snippet actions()}
       <Button href={agencyCoreMessaging.selfMapHref}>
@@ -444,7 +444,7 @@
     id="use-cases"
     eyebrow="Concrete work first"
     title="Start with tasks an operator already recognizes."
-    description="The page leads with operational situations before abstract platform language, so the agent capability stays tied to business work."
+    description="The agent capability stays tied to business work: the handoffs, approvals, launches, and recovery loops your team already manages."
     items={useCases}
     ariaLabel="Controlled workflow use cases"
   />
