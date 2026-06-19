@@ -3,15 +3,33 @@ import type { TokenProvider } from '@create-something/mcp-core';
 import {
   ASSET_FIELD_LABELS,
   ASSET_FIELD_PRESETS,
+  CAPABILITIES_OPTIONS,
   DEFAULT_AIRTABLE_BASE_ID,
   FIELD_IDS,
+  MARKETPLACE_STATUS_OPTIONS,
+  READ_ONLY_ASSET_WRITE_KEYS,
+  READ_ONLY_VERSION_WRITE_KEYS,
+  REJECTION_REASON_OPTIONS,
+  REVIEW_STATUS_OPTIONS,
+  REVIEW_TYPE_OPTIONS,
   TABLE_IDS,
   VERSION_FIELD_LABELS,
   VERSION_FIELD_PRESETS,
+  VISIBILITY_OPTIONS,
+  WRITABLE_ASSET_FIELDS,
+  WRITABLE_VERSION_FIELDS,
   allAssetFieldIds,
   allVersionFieldIds,
+  getReadOnlyAssetWriteHint,
+  getReadOnlyVersionWriteHint,
+  isReadOnlyAssetWriteKey,
+  isReadOnlyVersionWriteKey,
   type AssetFieldPreset,
+  type AssetReadOnlyWriteKey,
+  type AssetWritableKey,
   type VersionFieldPreset,
+  type VersionReadOnlyWriteKey,
+  type VersionWritableKey,
 } from '../schemas/index.js';
 
 export type FetchFn = typeof fetch;
@@ -109,6 +127,64 @@ export interface ListVersionsQuery {
   reviewStatus?: string;
   reviewType?: string;
   sort?: 'version_number_desc' | 'version_number_asc' | 'submission_datetime_desc' | 'submission_datetime_asc';
+}
+
+export interface CollaboratorRef {
+  id: string;
+}
+
+export interface AssetFieldsUpdateInput {
+  app_name?: string | null;
+  app_capabilities?: string | null;
+  client_id?: string | null;
+  visibility_status?: string | null;
+  relationships_status?: CollaboratorRef | null;
+  features_text?: string | null;
+  notes?: string | null;
+  credentials?: string | null;
+  description_short?: string | null;
+  description_long_html?: string | null;
+  install_url?: string | null;
+  categories_record_ids?: string[] | null;
+  icon_image_url?: string | null;
+  icon_image_alt_text?: string | null;
+  carousel_image_urls?: string[] | null;
+  carousel_image_alt_text?: string | null;
+  payment_times?: string[] | null;
+  demo_video_url?: string | null;
+  privacy_policy_url?: string | null;
+  terms_and_conditions_url?: string | null;
+  website_url?: string | null;
+  support_email_or_url?: string | null;
+  preview_site_url?: string | null;
+  promo_video_url?: string | null;
+  marketplace_status?: string | null;
+  latest_review_status?: string;
+  days_in_current_review_stage?: number;
+  workspace_dashboard_url?: string;
+  app_id?: string;
+  install_url_formula?: string;
+}
+
+export interface VersionFieldsUpdateInput {
+  review_type?: string | null;
+  reviewer?: CollaboratorRef | null;
+  review_status?: string | null;
+  rejection_reason?: string | null;
+  review_feedback?: string | null;
+  submission_datetime_override?: string | null;
+  version_number?: string | number;
+  submission_datetime?: string;
+  days_in_current_stage?: number;
+  asset_id?: string;
+  asset_link?: string;
+}
+
+export interface PreparedUpdate {
+  fieldIds: string[];
+  fieldLabels: string[];
+  fieldCount: number;
+  fieldsByFieldId: Record<string, unknown>;
 }
 
 function defaultSleep(ms: number): Promise<void> {
@@ -231,6 +307,132 @@ function sortForVersions(sort: ListVersionsQuery['sort']) {
     default:
       return { field: FIELD_IDS.versions.versionNumber, direction: 'desc' as const };
   }
+}
+
+function assertOption(value: string | null | undefined, allowed: readonly string[], code: string, message: string): void {
+  if (value === null || value === undefined) return;
+  if (allowed.includes(value)) return;
+  throw new AirtableClientError(code, message, 400, { value, allowed });
+}
+
+function definedKeys(input: Record<string, unknown>): string[] {
+  return Object.entries(input)
+    .filter(([, value]) => value !== undefined)
+    .map(([key]) => key);
+}
+
+function readOnlyAssetDetails(keys: AssetReadOnlyWriteKey[]) {
+  return Object.fromEntries(keys.map((key) => [key, getReadOnlyAssetWriteHint(key)]));
+}
+
+function readOnlyVersionDetails(keys: VersionReadOnlyWriteKey[]) {
+  return Object.fromEntries(keys.map((key) => [key, getReadOnlyVersionWriteHint(key)]));
+}
+
+function validateAssetWriteKeys(keys: string[]): { writableKeys: AssetWritableKey[]; readOnlyKeys: AssetReadOnlyWriteKey[] } {
+  const writableKeys: AssetWritableKey[] = [];
+  const readOnlyKeys: AssetReadOnlyWriteKey[] = [];
+  const invalidKeys: string[] = [];
+
+  for (const key of keys) {
+    if (Object.prototype.hasOwnProperty.call(WRITABLE_ASSET_FIELDS, key)) {
+      writableKeys.push(key as AssetWritableKey);
+    } else if (isReadOnlyAssetWriteKey(key)) {
+      readOnlyKeys.push(key);
+    } else {
+      invalidKeys.push(key);
+    }
+  }
+
+  if (invalidKeys.length > 0) {
+    throw new AirtableClientError('INVALID_ASSET_FIELDS', 'Unsupported asset write fields.', 400, { invalidKeys });
+  }
+
+  if (readOnlyKeys.length > 0) {
+    throw new AirtableClientError('READ_ONLY_ASSET_FIELDS', 'One or more requested asset fields are read-only.', 400, {
+      readOnlyKeys,
+      hints: readOnlyAssetDetails(readOnlyKeys),
+      allowedWritableKeys: Object.keys(WRITABLE_ASSET_FIELDS),
+      knownReadOnlyKeys: READ_ONLY_ASSET_WRITE_KEYS,
+    });
+  }
+
+  return { writableKeys, readOnlyKeys };
+}
+
+function validateVersionWriteKeys(keys: string[]): { writableKeys: VersionWritableKey[]; readOnlyKeys: VersionReadOnlyWriteKey[] } {
+  const writableKeys: VersionWritableKey[] = [];
+  const readOnlyKeys: VersionReadOnlyWriteKey[] = [];
+  const invalidKeys: string[] = [];
+
+  for (const key of keys) {
+    if (Object.prototype.hasOwnProperty.call(WRITABLE_VERSION_FIELDS, key)) {
+      writableKeys.push(key as VersionWritableKey);
+    } else if (isReadOnlyVersionWriteKey(key)) {
+      readOnlyKeys.push(key);
+    } else {
+      invalidKeys.push(key);
+    }
+  }
+
+  if (invalidKeys.length > 0) {
+    throw new AirtableClientError('INVALID_VERSION_FIELDS', 'Unsupported asset-version write fields.', 400, {
+      invalidKeys,
+    });
+  }
+
+  if (readOnlyKeys.length > 0) {
+    throw new AirtableClientError(
+      'READ_ONLY_VERSION_FIELDS',
+      'One or more requested asset-version fields are read-only.',
+      400,
+      {
+        readOnlyKeys,
+        hints: readOnlyVersionDetails(readOnlyKeys),
+        allowedWritableKeys: Object.keys(WRITABLE_VERSION_FIELDS),
+        knownReadOnlyKeys: READ_ONLY_VERSION_WRITE_KEYS,
+      },
+    );
+  }
+
+  return { writableKeys, readOnlyKeys };
+}
+
+function normalizeDateTime(value: string): string {
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    throw new AirtableClientError(
+      'INVALID_DATETIME',
+      'submission_datetime_override must be an ISO 8601 datetime string or null.',
+      400,
+      { value },
+    );
+  }
+  return parsed.toISOString();
+}
+
+function fieldLabel(fieldId: string, labels: Record<string, string>): string {
+  return labels[fieldId] ?? fieldId;
+}
+
+function preparedUpdate(fieldsByFieldId: Record<string, unknown>, labels: Record<string, string>): PreparedUpdate {
+  const fieldIds = Object.keys(fieldsByFieldId);
+  return {
+    fieldIds,
+    fieldLabels: fieldIds.map((fieldId) => fieldLabel(fieldId, labels)),
+    fieldCount: fieldIds.length,
+    fieldsByFieldId,
+  };
+}
+
+function isAppLikeAsset(fields: Record<string, unknown>): boolean {
+  return Boolean(
+    fields[FIELD_IDS.assets.capabilities] ||
+      fields[FIELD_IDS.assets.clientId] ||
+      fields[FIELD_IDS.assets.appId] ||
+      fields[FIELD_IDS.assets.visibility] ||
+      fields[FIELD_IDS.assets.marketplaceStatus],
+  );
 }
 
 function mapAsset(record: AirtableRecord, options: { includeRawFields?: boolean; includeSensitive?: boolean }): AppReviewerAsset {
@@ -418,6 +620,238 @@ export class AirtableClient {
     };
   }
 
+  prepareAssetFieldsUpdate(input: AssetFieldsUpdateInput): PreparedUpdate {
+    const keys = definedKeys(input as Record<string, unknown>);
+    const { writableKeys } = validateAssetWriteKeys(keys);
+    const fields: Record<string, unknown> = {};
+
+    for (const key of writableKeys) {
+      const value = input[key];
+      switch (key) {
+        case 'app_name':
+          fields[FIELD_IDS.assets.name] = value ?? null;
+          break;
+        case 'client_id':
+          fields[FIELD_IDS.assets.clientId] = value ?? null;
+          break;
+        case 'features_text':
+          fields[FIELD_IDS.assets.featuresText] = value ?? null;
+          break;
+        case 'notes':
+          fields[FIELD_IDS.assets.notes] = value ?? null;
+          break;
+        case 'credentials':
+          fields[FIELD_IDS.assets.credentials] = value ?? null;
+          break;
+        case 'description_short':
+          fields[FIELD_IDS.assets.descriptionShort] = value ?? null;
+          break;
+        case 'description_long_html':
+          fields[FIELD_IDS.assets.descriptionLongHtml] = value ?? null;
+          break;
+        case 'install_url':
+          fields[FIELD_IDS.assets.installUrlDirect] = value ?? null;
+          break;
+        case 'icon_image_alt_text':
+          fields[FIELD_IDS.assets.iconImageAltText] = value ?? null;
+          break;
+        case 'carousel_image_alt_text':
+          fields[FIELD_IDS.assets.carouselImagesAltText] = value ?? null;
+          break;
+        case 'demo_video_url':
+          fields[FIELD_IDS.assets.demoVideoUrl] = value ?? null;
+          break;
+        case 'privacy_policy_url':
+          fields[FIELD_IDS.assets.privacyPolicyUrl] = value ?? null;
+          break;
+        case 'terms_and_conditions_url':
+          fields[FIELD_IDS.assets.termsAndConditionsUrl] = value ?? null;
+          break;
+        case 'website_url':
+          fields[FIELD_IDS.assets.websiteUrl] = value ?? null;
+          break;
+        case 'support_email_or_url':
+          fields[FIELD_IDS.assets.supportEmailOrUrl] = value ?? null;
+          break;
+        case 'preview_site_url':
+          fields[FIELD_IDS.assets.previewSiteUrl] = value ?? null;
+          break;
+        case 'promo_video_url':
+          fields[FIELD_IDS.assets.promoVideoUrl] = value ?? null;
+          break;
+        case 'app_capabilities':
+          assertOption(value as string | null | undefined, CAPABILITIES_OPTIONS, 'INVALID_CAPABILITY', 'Unsupported app capability.');
+          fields[FIELD_IDS.assets.capabilities] = value ?? null;
+          break;
+        case 'visibility_status':
+          assertOption(
+            value as string | null | undefined,
+            VISIBILITY_OPTIONS,
+            'INVALID_VISIBILITY_STATUS',
+            'Unsupported visibility status.',
+          );
+          fields[FIELD_IDS.assets.visibility] = value ?? null;
+          break;
+        case 'marketplace_status':
+          assertOption(
+            value as string | null | undefined,
+            MARKETPLACE_STATUS_OPTIONS,
+            'INVALID_MARKETPLACE_STATUS',
+            'Unsupported marketplace status.',
+          );
+          fields[FIELD_IDS.assets.marketplaceStatus] = value ?? null;
+          break;
+        case 'relationships_status':
+          if (value === null) {
+            fields[FIELD_IDS.assets.relationshipOwner] = null;
+            break;
+          }
+          if (!value || typeof value !== 'object' || typeof (value as CollaboratorRef).id !== 'string') {
+            throw new AirtableClientError(
+              'INVALID_RELATIONSHIPS_STATUS',
+              'relationships_status must be null or { id: string }.',
+              400,
+            );
+          }
+          fields[FIELD_IDS.assets.relationshipOwner] = { id: (value as CollaboratorRef).id };
+          break;
+        case 'categories_record_ids':
+          if (value !== null && (!Array.isArray(value) || !value.every((item) => typeof item === 'string'))) {
+            throw new AirtableClientError(
+              'INVALID_CATEGORIES',
+              'categories_record_ids must be null or an array of Airtable record IDs.',
+              400,
+            );
+          }
+          fields[FIELD_IDS.assets.categories] = value ?? [];
+          break;
+        case 'icon_image_url':
+          fields[FIELD_IDS.assets.iconImage] = value ? [{ url: value }] : [];
+          break;
+        case 'carousel_image_urls':
+          if (value !== null && (!Array.isArray(value) || !value.every((item) => typeof item === 'string'))) {
+            throw new AirtableClientError(
+              'INVALID_CAROUSEL_IMAGES',
+              'carousel_image_urls must be null or an array of URL strings.',
+              400,
+            );
+          }
+          fields[FIELD_IDS.assets.carouselImages] = (value === null ? [] : (value as string[])).map((url) => ({ url }));
+          break;
+        case 'payment_times':
+          if (value !== null && (!Array.isArray(value) || !value.every((item) => typeof item === 'string'))) {
+            throw new AirtableClientError('INVALID_PAYMENT_TYPES', 'payment_times must be null or an array of strings.', 400);
+          }
+          fields[FIELD_IDS.assets.paymentTypes] = value ?? [];
+          break;
+        default:
+          break;
+      }
+    }
+
+    if (Object.keys(fields).length === 0) {
+      throw new AirtableClientError('NO_MUTATION_FIELDS', 'No writable asset fields were provided.', 400, {
+        allowedWritableKeys: Object.keys(WRITABLE_ASSET_FIELDS),
+      });
+    }
+
+    return preparedUpdate(fields, ASSET_FIELD_LABELS);
+  }
+
+  prepareVersionFieldsUpdate(input: VersionFieldsUpdateInput): PreparedUpdate {
+    const keys = definedKeys(input as Record<string, unknown>);
+    const { writableKeys } = validateVersionWriteKeys(keys);
+    const fields: Record<string, unknown> = {};
+
+    for (const key of writableKeys) {
+      const value = input[key];
+      switch (key) {
+        case 'review_status':
+          assertOption(value as string | null | undefined, REVIEW_STATUS_OPTIONS, 'INVALID_REVIEW_STATUS', 'Unsupported review status.');
+          fields[FIELD_IDS.versions.reviewStatus] = value ?? null;
+          break;
+        case 'review_type':
+          assertOption(value as string | null | undefined, REVIEW_TYPE_OPTIONS, 'INVALID_REVIEW_TYPE', 'Unsupported review type.');
+          fields[FIELD_IDS.versions.reviewType] = value ?? null;
+          break;
+        case 'rejection_reason':
+          assertOption(
+            value as string | null | undefined,
+            REJECTION_REASON_OPTIONS,
+            'INVALID_REJECTION_REASON',
+            'Unsupported rejection reason.',
+          );
+          fields[FIELD_IDS.versions.rejectionReason] = value ?? null;
+          break;
+        case 'reviewer':
+          if (value === null) {
+            fields[FIELD_IDS.versions.reviewer] = null;
+            break;
+          }
+          if (!value || typeof value !== 'object' || typeof (value as CollaboratorRef).id !== 'string') {
+            throw new AirtableClientError('INVALID_REVIEWER', 'reviewer must be null or { id: string }.', 400);
+          }
+          fields[FIELD_IDS.versions.reviewer] = { id: (value as CollaboratorRef).id };
+          break;
+        case 'review_feedback':
+          fields[FIELD_IDS.versions.reviewFeedback] = value ?? null;
+          break;
+        case 'submission_datetime_override':
+          fields[FIELD_IDS.versions.submissionDatetimeOverride] =
+            typeof value === 'string' ? normalizeDateTime(value) : null;
+          break;
+        default:
+          break;
+      }
+    }
+
+    if (Object.keys(fields).length === 0) {
+      throw new AirtableClientError('NO_MUTATION_FIELDS', 'No writable asset-version fields were provided.', 400, {
+        allowedWritableKeys: Object.keys(WRITABLE_VERSION_FIELDS),
+      });
+    }
+
+    return preparedUpdate(fields, VERSION_FIELD_LABELS);
+  }
+
+  async updateAssetFields(
+    assetId: string,
+    input: AssetFieldsUpdateInput,
+    options: { includeSensitive?: boolean; includeRawFields?: boolean } = {},
+  ): Promise<{ asset: AppReviewerAsset; updatedFields: PreparedUpdate }> {
+    const prepared = this.prepareAssetFieldsUpdate(input);
+    const updated = await this.updateRecord(TABLE_IDS.assets, assetId, prepared.fieldsByFieldId);
+    if (!isAppLikeAsset(updated.fields)) {
+      throw new AirtableClientError('OUT_OF_SCOPE_ASSET', 'Updated asset is outside app-review scope.', 403);
+    }
+    return {
+      asset: mapAsset(updated, {
+        includeRawFields: options.includeRawFields,
+        includeSensitive: options.includeSensitive,
+      }),
+      updatedFields: {
+        ...prepared,
+        fieldsByFieldId: options.includeRawFields ? prepared.fieldsByFieldId : {},
+      },
+    };
+  }
+
+  async updateVersionFields(
+    versionId: string,
+    input: VersionFieldsUpdateInput,
+    options: { includeRawFields?: boolean } = {},
+  ): Promise<{ version: AppReviewerAssetVersion; updatedFields: PreparedUpdate }> {
+    const prepared = this.prepareVersionFieldsUpdate(input);
+    const updated = await this.updateRecord(TABLE_IDS.assetVersions, versionId, prepared.fieldsByFieldId);
+    return {
+      version: mapVersion(updated, { includeRawFields: options.includeRawFields }),
+      updatedFields: {
+        ...prepared,
+        fieldsByFieldId: options.includeRawFields ? prepared.fieldsByFieldId : {},
+      },
+    };
+  }
+
   private async findOneRecord(
     tableId: string,
     fieldIds: string[],
@@ -473,7 +907,35 @@ export class AirtableClient {
     };
   }
 
-  private async requestJson<T>(path: string, query: URLSearchParams): Promise<T> {
+  private async updateRecord(tableId: string, recordId: string, fields: Record<string, unknown>): Promise<AirtableRecord> {
+    const query = new URLSearchParams();
+    query.set('returnFieldsByFieldId', 'true');
+    query.set('typecast', 'true');
+
+    const data = await this.requestJson<AirtableListResponse>(`/${encodeURIComponent(tableId)}`, query, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        records: [
+          {
+            id: recordId,
+            fields,
+          },
+        ],
+      }),
+    });
+
+    const updated = data.records[0];
+    if (!updated) {
+      throw new AirtableClientError('AIRTABLE_EMPTY_UPDATE', 'Airtable update returned no records.', 502);
+    }
+    return updated;
+  }
+
+  private async requestJson<T>(
+    path: string,
+    query: URLSearchParams,
+    init: { method?: 'GET' | 'PATCH'; body?: string } = {},
+  ): Promise<T> {
     const token = await this.tokenProvider.getAccessToken();
     const url = new URL(`https://api.airtable.com/v0/${encodeURIComponent(this.baseId)}${path}`);
     for (const [key, value] of query.entries()) {
@@ -483,11 +945,13 @@ export class AirtableClient {
     for (let attempt = 0; attempt <= this.maxRetries; attempt += 1) {
       try {
         const response = await this.fetchFn(url, {
-          method: 'GET',
+          method: init.method ?? 'GET',
           headers: {
             Authorization: `Bearer ${token}`,
             Accept: 'application/json',
+            ...(init.body ? { 'Content-Type': 'application/json' } : {}),
           },
+          ...(init.body ? { body: init.body } : {}),
         });
 
         if (response.ok) {

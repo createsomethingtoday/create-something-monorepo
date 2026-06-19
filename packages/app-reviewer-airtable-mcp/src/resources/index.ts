@@ -65,6 +65,7 @@ export function registerResources(server: ScopedMcpServer): void {
           'Use include_versions on app_reviewer_get_asset only for one focused asset.',
           'Set include_sensitive=true only when credentials or internal notes are required for the review task.',
           'Set include_raw_fields=true only for schema/debugging work; normal reviewer answers should use friendly field names.',
+          'Use dry_run=true on write tools to validate mutation shape without touching Airtable.',
         ],
       }),
   );
@@ -84,9 +85,12 @@ export function registerResources(server: ScopedMcpServer): void {
           'Call app_reviewer_get_asset for the one app record that matters; keep include_sensitive=false unless needed.',
           'Call app_reviewer_list_asset_versions with asset_id to inspect the version history.',
           'Call app_reviewer_get_asset_version when a specific version record needs full review context.',
+          'Use app_reviewer_update_asset_fields only for direct Assets metadata edits.',
+          'Use app_reviewer_update_asset_version_fields for review status, reviewer, rejection reason, feedback, type, and submission datetime override.',
         ],
         tables: ['Assets', 'Asset Versions'],
-        mutationPolicy: 'This MCP is read-only. Official review-state changes remain outside this package.',
+        mutationPolicy:
+          'This MCP has bounded write tools for Pablo’s reviewed Assets and Asset Versions fields. Formula, rollup, linked-reference, and derived summary fields are rejected with route hints. Prefer dry_run=true before production writes.',
       }),
   );
 }

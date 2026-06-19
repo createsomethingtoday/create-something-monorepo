@@ -35,6 +35,8 @@ Operational rules:
 - Use app_reviewer_list_asset_versions after an asset_id is known.
 - Do not request raw fields unless the field-id contract is part of the task.
 - Do not request sensitive fields unless the task explicitly requires credentials or internal notes.
+- Use dry_run=true before a write when validating field shape or planning a mutation.
+- Write latest review state on the relevant Asset Version with app_reviewer_update_asset_version_fields.review_status; do not write derived asset summary fields directly.
 - Current sensitive-field posture: ${needsCredentials ? 'credentials are allowed for this task if needed' : 'credentials should stay excluded'}.
 
 Return concise findings with Airtable record ids and the exact fields that support the conclusion.`,

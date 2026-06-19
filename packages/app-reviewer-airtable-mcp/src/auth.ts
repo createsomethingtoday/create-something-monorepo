@@ -51,12 +51,13 @@ export class AppReviewerAirtableAuthProvider implements AuthProvider<AppReviewer
         includeSensitiveDefault,
       },
       policy: defaultPolicy({
-        readOnly: true,
-        scopes: ['airtable:read', 'app-reviewer:assets', 'app-reviewer:asset-versions'],
+        readOnly: false,
+        scopes: ['airtable:read', 'airtable:write', 'app-reviewer:assets', 'app-reviewer:asset-versions'],
         constraints: {
-          mcpToolAccessMode: 'read_only',
+          mcpToolAccessMode: 'bounded_write',
           defaultBaseId: baseId,
           includeSensitiveDefault,
+          writableTables: ['Assets', 'Asset Versions'],
         },
       }),
     };

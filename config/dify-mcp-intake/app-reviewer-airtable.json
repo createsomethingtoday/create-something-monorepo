@@ -7,10 +7,10 @@
     "id": "app-reviewer-airtable-mcp",
     "transport": "http",
     "url": "https://app-reviewer-airtable-mcp.createsomething.workers.dev/mcp",
-    "description": "Standalone App Reviewer Airtable MCP for performant read-only access to Assets and Asset Versions",
+    "description": "Standalone App Reviewer Airtable MCP for performant bounded access to Assets and Asset Versions, including allowlisted reviewer writes",
     "tags": ["webflow", "review", "airtable", "apps", "assets", "cs"],
     "catalog_exposure_mode": "direct",
-    "estimated_tool_count": 5
+    "estimated_tool_count": 7
   },
   "dify_mcp_server": {
     "server_id": "app-reviewer-airtable",
@@ -32,7 +32,7 @@
     "Set the MCP URL to https://app-reviewer-airtable-mcp.createsomething.workers.dev/mcp.",
     "Configure bearer auth from Infisical prod:/webflow/app-reviewer-airtable-mcp:MCP_BEARER_TOKEN.",
     "Refresh/discover tools in Dify Studio.",
-    "Transcribe every discovered tool into config/dify/inventory.json with risk classification.",
+    "Transcribe every discovered tool into config/dify/inventory.json with risk classification; classify the two update tools as bounded write tools.",
     "Run pnpm dify:inventory:generate and pnpm dify:coverage:generate."
   ],
   "inventory_fragment_after_tool_discovery": {
@@ -55,7 +55,9 @@
   "notes": [
     "This intake artifact is not a Dify inventory entry.",
     "Do not paste the inventory fragment until Dify Studio has discovered tools and each tool is classified.",
+    "Expected tool count is 7: five read tools plus app_reviewer_update_asset_fields and app_reviewer_update_asset_version_fields.",
+    "The update tools are allowlisted Airtable writes and support dry_run=true for validation without mutation.",
     "Keep MCP_BEARER_TOKEN and AIRTABLE_API_KEY in Infisical only; this artifact stores references, not values.",
-    "The Worker must also receive AIRTABLE_API_KEY from Infisical or a Worker secret before Dify discovery can read live Airtable data."
+    "The Worker must also receive AIRTABLE_API_KEY from Infisical or a Worker secret before Dify discovery can read or write live Airtable data."
   ]
 }

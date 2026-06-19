@@ -53,7 +53,7 @@
     "app-reviewer-airtable-mcp": {
       "transport": "http",
       "url": "https://app-reviewer-airtable-mcp.createsomething.workers.dev/mcp",
-      "description": "Standalone App Reviewer Airtable MCP for performant read-only access to Assets and Asset Versions.",
+      "description": "Standalone App Reviewer Airtable MCP for performant bounded access to Assets and Asset Versions, including allowlisted reviewer writes.",
       "bearer_token_env_var": "APP_REVIEWER_AIRTABLE_MCP_API_KEY",
       "tags": [
         "webflow",
@@ -77,8 +77,8 @@
         ]
       },
       "catalog_exposure_mode": "direct",
-      "estimated_tool_count": 5,
-      "setupNotes": "Worker requires MCP_BEARER_TOKEN for /mcp and AIRTABLE_API_KEY for upstream Airtable reads; keep both in Infisical prod:/webflow/app-reviewer-airtable-mcp."
+      "estimated_tool_count": 7,
+      "setupNotes": "Worker requires MCP_BEARER_TOKEN for /mcp and AIRTABLE_API_KEY for upstream Airtable reads and allowlisted writes; keep both in Infisical prod:/webflow/app-reviewer-airtable-mcp. Write tools support dry_run=true and reject formula, rollup, linked-reference, and derived summary fields."
     },
     "bettermode-creator": {
       "transport": "http",

@@ -9,7 +9,7 @@ export const REGISTRY_CATALOG_ENTRIES = [
     "name": "App Reviewer Airtable",
     "slug": "app-reviewer-airtable",
     "url": "https://app-reviewer-airtable-mcp.createsomething.workers.dev",
-    "description": "Standalone App Reviewer Airtable MCP for performant read-only access to Assets and Asset Versions.",
+    "description": "Standalone App Reviewer Airtable MCP for performant bounded access to Assets and Asset Versions, including allowlisted reviewer writes.",
     "category": "create-something",
     "transports": [
       "http",

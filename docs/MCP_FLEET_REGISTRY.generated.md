@@ -15,7 +15,7 @@
 | `abundance-jobs-mcp` | `http` | `https://abundance-jobs-mcp.createsomething.workers.dev/mcp` | `direct` | `4` | `client`, `abundance`, `npg`, `jobs`, `healthcare` |
 | `abundance-staff-mcp` | `http` | `https://abundance-staff-mcp.createsomething.workers.dev/mcp` | `direct` | `1` | `client`, `abundance`, `npg`, `staffing`, `healthcare` |
 | `abundance-thenpgroup-hub` | `http` | `https://abundance-thenpgroup.mcp.createsomething.agency/mcp` | `brokered` | `319` | `client`, `abundance`, `npg`, `policy-os`, `hub` |
-| `app-reviewer-airtable-mcp` | `http` | `https://app-reviewer-airtable-mcp.createsomething.workers.dev/mcp` | `direct` | `5` | `webflow`, `review`, `airtable`, `apps`, `assets`, `cs` |
+| `app-reviewer-airtable-mcp` | `http` | `https://app-reviewer-airtable-mcp.createsomething.workers.dev/mcp` | `direct` | `7` | `webflow`, `review`, `airtable`, `apps`, `assets`, `cs` |
 | `bettermode-creator` | `http` | `https://bettermode-creator.mcp.createsomething.agency/mcp` | `direct` | `4` | `agency`, `webflow`, `bettermode`, `marketplace`, `cs` |
 | `create-something` | `http` | `https://mcp.createsomething.ltd/mcp` | `direct` | `5` | `core`, `content`, `cs`, `policy_os_only` |
 | `cs-telemetry` | `http` | `https://cs-telemetry-mcp.createsomething.workers.dev/mcp` | `direct` | `10` | `observability`, `telemetry`, `cs`, `policy_os_only` |

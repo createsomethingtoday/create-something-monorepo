@@ -1,7 +1,7 @@
 {
   "name": "@create-something/app-reviewer-airtable-mcp",
-  "version": "0.1.0",
-  "description": "App Reviewer Airtable MCP for performant Assets and Asset Versions access",
+  "version": "0.2.0",
+  "description": "App Reviewer Airtable MCP for performant Assets and Asset Versions access with bounded writes",
   "type": "module",
   "createSomething": {
     "agentLegibilityContract": true
