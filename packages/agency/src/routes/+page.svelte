@@ -68,6 +68,24 @@
     }
   ];
 
+  const faqItems = [
+    {
+      question: 'What is a Workflow Trust Layer?',
+      answer:
+        'A Workflow Trust Layer is the operating boundary around one workflow: source systems, owners, scoped actions, approval states, stop conditions, and receipts.'
+    },
+    {
+      question: 'Where does CREATE SOMETHING start?',
+      answer:
+        'The work starts with one manual workflow your team still protects by hand, then maps the first safe delegation path before expanding automation.'
+    },
+    {
+      question: 'What do clients leave with?',
+      answer:
+        'Clients leave with a visible workflow map, action boundary, approval path, run/wait/stop states, and evidence that a team can inspect.'
+    }
+  ];
+
   const workflowStates: ClearWorkflowState[] = [
     {
       tone: 'run',
@@ -386,6 +404,7 @@
   ogImage="/og-image.svg"
   propertyName="agency"
   {services}
+  {faqItems}
 />
 
 <div class="home-pilot">

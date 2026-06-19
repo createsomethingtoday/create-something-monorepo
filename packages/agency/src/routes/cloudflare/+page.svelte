@@ -62,6 +62,24 @@
     }
   ];
 
+  const faqItems = [
+    {
+      question: 'Why use Cloudflare for workflow systems?',
+      answer:
+        'Cloudflare Workers, Pages, D1, queues, routes, and durable primitives provide a deployable runtime substrate for controlled workflow paths.'
+    },
+    {
+      question: 'What does CREATE SOMETHING add around Cloudflare?',
+      answer:
+        'CREATE SOMETHING adds scoped tool surfaces, bearer-token boundaries, control checks, durable records, and rollback-ready handoff evidence.'
+    },
+    {
+      question: 'When should a workflow run on Cloudflare?',
+      answer:
+        'Use Cloudflare when the workflow needs owned runtime behavior, clear account boundaries, fast review surfaces, and evidence attached to execution.'
+    }
+  ];
+
   const runtimeFlow: ClearCardItem[] = [
     {
       eyebrow: '01 Route',
@@ -190,8 +208,9 @@
   title="Cloudflare Partner Lane | CREATE SOMETHING .agency"
   description="CREATE SOMETHING builds Cloudflare-native workflow systems with Workers, Pages, D1, scoped tool surfaces, and runtime control paths."
   keywords="Cloudflare partner, Cloudflare PowerUP, Cloudflare Workers, scoped tools, D1, workflow control, AI workflow infrastructure"
-  ogImage="/og-image.svg"
+  ogImage="/og/cloudflare-lane.svg"
   propertyName="agency"
+  {faqItems}
 />
 
 <ClearPageSection

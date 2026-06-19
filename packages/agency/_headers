@@ -1,0 +1,17 @@
+/job-applications/*
+  X-Robots-Tag: noindex, nofollow
+
+/Micah_Johnson_*
+  X-Robots-Tag: noindex, nofollow
+
+/cover-letter-*
+  X-Robots-Tag: noindex, nofollow
+
+/resume-*
+  X-Robots-Tag: noindex, nofollow
+
+/akkio-interview-prep.md
+  X-Robots-Tag: noindex, nofollow
+
+/*-combined.html
+  X-Robots-Tag: noindex, nofollow
