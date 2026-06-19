@@ -47,7 +47,7 @@ Category performance table:
 
 The dashboard must not display an all-marketplace sales total from the leaderboard table unless it is explicitly labeled as a top-50 fallback. The all-category total is owned by the category performance table.
 
-Every activation query should emit a source timestamp (`SNAPSHOT_AT` or `SYNCED_AT`). The dashboard parser treats these as source freshness fields and will prefer them over schedule estimates.
+Every activation query should emit a source timestamp (`SNAPSHOT_AT` or `SYNCED_AT`). The dashboard parser treats these as source freshness fields and will prefer them over schedule estimates. Emit timestamps as UTC ISO-8601 text, not raw Snowflake `current_timestamp()` values, because Airtable/Fivetran rejects Snowflake's default timestamp display format.
 
 ## Cumulative Stats Per Template
 
@@ -155,7 +155,10 @@ select
     coalesce(v.unique_viewers, 0) as unique_viewers,
     coalesce(p.cumulative_revenue, 0) as cumulative_revenue,
     coalesce(p.cumulative_purchases, 0) as cumulative_purchases,
-    current_timestamp() as synced_at
+    to_varchar(
+        convert_timezone('UTC', current_timestamp())::timestamp_ntz,
+        'YYYY-MM-DD"T"HH24:MI:SS"Z"'
+    ) as synced_at
 from template_ids t
 left join cumulative_viewers v
     on t.template_id = v.template_id
@@ -182,7 +185,10 @@ with recent_sales as (
             when o.created_on < '2025-11-01' then o.price_value * 0.8
             else o.price_value * 0.95
         end as creator_revenue,
-        current_timestamp() as snapshot_at
+        to_varchar(
+            convert_timezone('UTC', current_timestamp())::timestamp_ntz,
+            'YYYY-MM-DD"T"HH24:MI:SS"Z"'
+        ) as snapshot_at
     from analytics.webflow.marketplace_orders o
     join analytics.webflow.marketplace_products p
         on p.document_id = o.marketplace_product_id
@@ -203,7 +209,10 @@ with recent_sales as (
             when s.date_day < '2025-11-01' then s.revenue * 0.8
             else s.revenue * 0.95
         end as creator_revenue,
-        current_timestamp() as snapshot_at
+        to_varchar(
+            convert_timezone('UTC', current_timestamp())::timestamp_ntz,
+            'YYYY-MM-DD"T"HH24:MI:SS"Z"'
+        ) as snapshot_at
     from analytics.webflow.report__template_sales s
     join analytics.webflow.templates t
         on s.template_id = t.template_id
@@ -253,7 +262,10 @@ with recent_category_sales as (
             when o.created_on < '2025-11-01' then o.price_value * 0.8
             else o.price_value * 0.95
         end as creator_revenue,
-        current_timestamp() as snapshot_at
+        to_varchar(
+            convert_timezone('UTC', current_timestamp())::timestamp_ntz,
+            'YYYY-MM-DD"T"HH24:MI:SS"Z"'
+        ) as snapshot_at
     from analytics.webflow.marketplace_orders o
     join analytics.webflow.marketplace_products p
         on p.document_id = o.marketplace_product_id
@@ -274,7 +286,10 @@ with recent_category_sales as (
             when s.date_day < '2025-11-01' then s.revenue * 0.8
             else s.revenue * 0.95
         end as creator_revenue,
-        current_timestamp() as snapshot_at
+        to_varchar(
+            convert_timezone('UTC', current_timestamp())::timestamp_ntz,
+            'YYYY-MM-DD"T"HH24:MI:SS"Z"'
+        ) as snapshot_at
     from analytics.webflow.report__template_sales s
     join analytics.webflow.templates t
         on s.template_id = t.template_id
