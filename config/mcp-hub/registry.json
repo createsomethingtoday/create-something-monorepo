@@ -50,6 +50,36 @@
       "estimated_tool_count": 319,
       "setupNotes": "Production smoke passed on 2026-05-13 for /health, hub_list_services, and brokered Jotform/Mailchimp/WhatsApp connection_status. The service set is reachable, but Jotform, Mailchimp, and WhatsApp report connected=false with active=0/pending=0, so NPG account-owner authorization is required before write-capable automation. Cold management calls remain slow at roughly 79-86s and should be optimized before high-frequency operator use."
     },
+    "app-reviewer-airtable-mcp": {
+      "transport": "http",
+      "url": "https://app-reviewer-airtable-mcp.createsomething.workers.dev/mcp",
+      "description": "Standalone App Reviewer Airtable MCP for performant read-only access to Assets and Asset Versions.",
+      "bearer_token_env_var": "APP_REVIEWER_AIRTABLE_MCP_API_KEY",
+      "tags": [
+        "webflow",
+        "review",
+        "airtable",
+        "apps",
+        "assets",
+        "cs"
+      ],
+      "package_path": "packages/app-reviewer-airtable-mcp",
+      "catalog": {
+        "include": true,
+        "name": "App Reviewer Airtable",
+        "slug": "app-reviewer-airtable",
+        "category": "create-something",
+        "requiresAuth": true,
+        "authType": "bearer",
+        "transports": [
+          "http",
+          "sse"
+        ]
+      },
+      "catalog_exposure_mode": "direct",
+      "estimated_tool_count": 5,
+      "setupNotes": "Worker requires MCP_BEARER_TOKEN for /mcp and AIRTABLE_API_KEY for upstream Airtable reads; keep both in Infisical prod:/webflow/app-reviewer-airtable-mcp."
+    },
     "bettermode-creator": {
       "transport": "http",
       "url": "https://bettermode-creator.mcp.createsomething.agency/mcp",

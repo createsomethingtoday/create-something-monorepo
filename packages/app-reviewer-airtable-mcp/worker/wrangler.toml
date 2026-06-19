@@ -1,0 +1,12 @@
+name = "app-reviewer-airtable-mcp"
+main = "index.ts"
+compatibility_date = "2024-12-01"
+
+# Runtime secrets:
+# - AIRTABLE_API_KEY: set from Infisical or `wrangler secret put AIRTABLE_API_KEY`.
+# - MCP_BEARER_TOKEN: bearer token required by remote MCP clients.
+# Optional vars:
+# - AIRTABLE_BASE_ID or APP_REVIEWER_AIRTABLE_BASE_ID override the default App Reviewer base.
+
+[vars]
+APP_REVIEWER_MCP_ACCOUNT_ID = "app-reviewer-airtable"
