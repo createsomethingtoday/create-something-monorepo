@@ -633,6 +633,10 @@ async function runFullSync(env: Env, heartbeat: SyncHeartbeat): Promise<SyncSumm
 const MAX_SYNC_WINDOW_MS = 15 * 60 * 1000;
 const MAX_EMPTY_SYNC_WINDOWS_PER_RUN = 8;
 const MAX_INCREMENTAL_RECORDS_PER_RUN = 600;
+// Stale catch-up reads a small oldest-first Airtable page before applying the
+// tighter write cap. Without the fetch cap, a bulk-edited 15-minute window can
+// page thousands of records and die before the cursor advances.
+const MAX_STALE_INCREMENTAL_FETCH_RECORDS_PER_RUN = 100;
 const MAX_STALE_INCREMENTAL_RECORDS_PER_RUN = 24;
 const INCREMENTAL_WRITE_BATCH_SIZE = 12;
 
@@ -702,11 +706,13 @@ async function runIncrementalSync(env: Env, heartbeat: SyncHeartbeat): Promise<S
 
   while (scannedWindows < MAX_EMPTY_SYNC_WINDOWS_PER_RUN) {
     const syncWindow = resolveSyncWindow(scanCursor, now);
-    const windowAssets = await fetchModifiedAssetsSince(env, scanCursor, syncWindow.until);
+    const staleFetchLimit = syncWindow.isCaughtUp ? undefined : MAX_STALE_INCREMENTAL_FETCH_RECORDS_PER_RUN;
+    const windowAssets = await fetchModifiedAssetsSince(env, scanCursor, syncWindow.until, staleFetchLimit);
     await heartbeat();
     scannedWindows += 1;
     windowEnd = syncWindow.end;
     isCaughtUp = syncWindow.isCaughtUp;
+    const hasStaleChanges = windowAssets.length > 0 && !syncWindow.isCaughtUp;
 
     if (windowAssets.length === 0 && !syncWindow.isCaughtUp) {
       skippedEmptyWindows += 1;
@@ -714,7 +720,7 @@ async function runIncrementalSync(env: Env, heartbeat: SyncHeartbeat): Promise<S
       assets.push(...windowAssets);
     }
 
-    if (isCaughtUp || assets.length >= MAX_INCREMENTAL_RECORDS_PER_RUN) {
+    if (isCaughtUp || hasStaleChanges || assets.length >= MAX_INCREMENTAL_RECORDS_PER_RUN) {
       break;
     }
 
