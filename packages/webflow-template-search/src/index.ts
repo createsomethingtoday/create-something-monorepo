@@ -36,6 +36,7 @@ const SYNC_STATUS_STATE_KEYS = [
   'last_image_prune',
   'last_sync_error',
   'last_sync_skipped',
+  'last_sync_warning',
 ];
 
 const INCREMENTAL_SYNC_CRON = '*/5 * * * *';
@@ -49,7 +50,7 @@ const PUBLIC_SEARCH_CACHE_HEADERS = {
   'Cache-Control': 'public, max-age=60, s-maxage=300, stale-while-revalidate=86400',
   'CDN-Cache-Control': 'public, max-age=300, stale-while-revalidate=86400',
 };
-const PUBLIC_SEARCH_CACHE_VERSION = '2026-06-09-category-membership-aliases';
+const PUBLIC_SEARCH_CACHE_VERSION = '2026-06-18-webflow-price-sync';
 const PUBLIC_SEARCH_CACHE_PARAM_ORDER = [
   'view',
   'include',

@@ -43,14 +43,10 @@
 
   const navLinks = [
     { label: 'How I Work', href: '/services' },
-    { label: 'Trust Layer', href: '/stack' },
+    { label: 'Stack Boundary', href: '/stack' },
     { label: 'Proof', href: '/products' }
   ];
-  const primaryCtaHref = $derived(
-    $page.url.pathname === '/book'
-      ? agencyCoreMessaging.servicesMappingSessionHref
-      : agencyCoreMessaging.startWithWorkflowHref
-  );
+  const primaryCtaHref = agencyCoreMessaging.startWithWorkflowHref;
   const globalAnalyticsMetadata = $derived(getAgencyGlobalAnalyticsMetadata($page.url.pathname));
   const footerQuickLinkGroups = [
     {
@@ -58,8 +54,8 @@
       ariaLabel: 'Commercial paths',
       links: [
         { label: 'How I Work', href: '/services' },
-        { label: 'Trust Layer', href: '/stack' },
-        { label: 'Proof Surfaces', href: '/products' },
+        { label: 'Stack Boundary', href: '/stack' },
+        { label: 'Proof', href: '/products' },
         { label: 'About', href: '/about' }
       ]
     },
@@ -80,7 +76,10 @@
         { label: 'Dify MCP Control Plane', href: '/dify/mcp-control-plane' },
         { label: 'Dify Content Engine', href: '/dify/content-engine' },
         { label: 'Dify vs n8n', href: '/dify/n8n-vs-dify' },
-        { label: 'Trust Checklist', href: agencyCoreMessaging.governanceChecklistHref }
+        {
+          label: agencyCoreMessaging.governanceChecklistLabel,
+          href: agencyCoreMessaging.governanceChecklistHref
+        }
       ]
     },
     {
@@ -128,8 +127,8 @@
     },
     {
       id: 'nav-stack',
-      label: 'Trust Layer',
-      description: 'Workflow trust layer, vendor boundaries, and delivery ownership',
+      label: 'Stack Boundary',
+      description: 'Vendor boundaries, ownership, and the control layer around the workflow',
       href: '/stack',
       icon: '🧭',
       keywords: [
@@ -248,19 +247,19 @@
     },
     {
       id: 'nav-products',
-      label: 'Proof Surfaces',
-      description: 'Proof surfaces for MCPs, agent tools, and the trust layer',
+      label: 'Proof',
+      description: 'Delivery records, tools, and examples that show how the service works',
       href: '/products',
       icon: '📦',
       keywords: ['portfolio', 'tools', 'integrations', 'proof surfaces']
     },
     {
-      id: 'nav-book',
+      id: 'nav-self-map',
       label: agencyCoreMessaging.startWithWorkflowLabel,
-      description: 'Choose the checklist, trust map, or mapping path',
+      description: 'Start a lightweight workflow map before booking',
       href: agencyCoreMessaging.startWithWorkflowHref,
       icon: 'WF',
-      keywords: ['contact', 'hire', 'start', 'workflow', 'trust map', 'checklist', 'mapping']
+      keywords: ['contact', 'hire', 'start', 'workflow', 'self map', 'trust map', 'mapping']
     },
     {
       id: 'nav-mcp-access',
@@ -422,14 +421,16 @@
     footerCta={{
       label: agencyCoreMessaging.startWithWorkflowLabel,
       href: primaryCtaHref,
-      description: 'Choose the checklist, trust map, or booking path for one workflow.'
+      description: 'Start a lightweight workflow map before booking.'
     }}
     showSocial={true}
     isAuthenticated={!!data.user}
     visualStyle="clear"
   />
 
-  <ModeIndicator current="agency" />
+  {#if $page.url.pathname !== '/'}
+    <ModeIndicator current="agency" />
+  {/if}
 </div>
 
 <style>

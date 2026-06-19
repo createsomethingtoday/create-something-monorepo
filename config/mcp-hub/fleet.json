@@ -19,23 +19,9 @@
       },
       "related_deployments": ["blondish-hub", "blondish-notion"],
       "toolkits": [
-        "google-meet",
-        "google-sheets",
-        "notion",
-        "perplexityai",
         "exa",
-        "zoom",
-        "googledrive",
-        "dropbox",
         "gmail",
-        "whatsapp",
-        "firecrawl",
-        "telegram",
-        "box",
-        "instagram",
-        "tiktok",
-        "youtube",
-        "spotify"
+        "notion"
       ]
     },
     "morgan-young-c3-management": {
@@ -54,22 +40,9 @@
       },
       "related_deployments": ["c3denver-hub", "c3-management-notion"],
       "toolkits": [
-        "google-meet",
-        "google-sheets",
-        "notion",
-        "perplexityai",
         "exa",
-        "zoom",
-        "googledrive",
-        "dropbox",
         "gmail",
-        "box",
-        "firecrawl",
-        "linkedin",
-        "slack",
-        "youtube",
-        "instagram",
-        "spotify"
+        "notion"
       ]
     },
     "blondish-hub": {
@@ -86,7 +59,26 @@
         "bearer_token_env_var": "CS_HUB_BLONDISH_API_TOKEN",
         "infisical_path": "/mcp-hub/hubs"
       },
-      "related_deployments": ["viv-blondish", "blondish-notion"]
+      "related_deployments": [
+        "viv-blondish",
+        "blondish-notion"
+      ],
+      "toolkits": [
+        "box",
+        "dropbox",
+        "exa",
+        "firecrawl",
+        "gmail",
+        "google-meet",
+        "google-sheets",
+        "googledrive",
+        "notion",
+        "perplexityai",
+        "whatsapp",
+        "youtube",
+        "zoom",
+        "halfdozen-operator-notion"
+      ]
     },
     "august": {
       "type": "policy_os_hub",
@@ -176,6 +168,7 @@
       "type": "policy_os_hub",
       "product": "Cracked Live \u2014 Client Hub",
       "client": "cracked-live",
+      "tenant": "cracked-live",
       "url": "https://cracked.mcp.createsomething.agency/mcp",
       "status": "deployed",
       "account": "create-something",
@@ -185,7 +178,24 @@
         "bearer_token_env_var": "CS_HUB_CRACKED_API_TOKEN",
         "infisical_path": "/mcp-hub/hubs"
       },
-      "related_deployments": ["cracked-notion"]
+      "related_deployments": [
+        "cracked-notion"
+      ],
+      "toolkits": [
+        "canva",
+        "dropbox",
+        "exa",
+        "firecrawl",
+        "gmail",
+        "google-meet",
+        "google-sheets",
+        "googledrive",
+        "notion",
+        "perplexityai",
+        "whatsapp",
+        "zoom",
+        "halfdozen-operator-notion"
+      ]
     },
     "c3denver-hub": {
       "type": "policy_os_hub",
@@ -402,6 +412,60 @@
       },
       "related_deployments": ["blondish-notion", "halfdozen-operator-notion-mcp"],
       "notes": "Operator-invoked reconciliation MCP for BLOND:ISH source ticket data to Half Dozen ticket rows and mapped HD status back to the source. Current surface is agent/operator control; future scale should move normal incremental sync to Notion webhooks plus a persisted sync index."
+    },
+    "halfdozen-c3-management-sync-mcp": {
+      "type": "remote_mcp_server",
+      "product": "C3 Management Ticket Sync MCP",
+      "client": "c3-denver",
+      "tenant": "c3-management",
+      "url": "https://halfdozen-c3-management-sync-mcp.createsomething.workers.dev/mcp",
+      "status": "deployed",
+      "account": "create-something",
+      "package_path": "packages/halfdozen-blondish-sync-mcp",
+      "wrangler_config": "packages/halfdozen-blondish-sync-mcp/wrangler.c3-management.toml",
+      "auth": {
+        "type": "bearer",
+        "bearer_token_env_var": "HALFDOZEN_C3_MANAGEMENT_SYNC_MCP_API_KEY",
+        "infisical_path": "/mcp-hub/hubs"
+      },
+      "related_deployments": ["c3-management-notion", "halfdozen-operator-notion-mcp"],
+      "notes": "Operator-invoked reconciliation MCP for C3 Management source ticket data to Half Dozen ticket rows and mapped HD status back to the source. Current surface is agent/operator control; future scale should move normal incremental sync to Notion webhooks plus a persisted sync index."
+    },
+    "halfdozen-cracked-sync-mcp": {
+      "type": "remote_mcp_server",
+      "product": "Cracked Live Ticket Sync MCP",
+      "client": "cracked-live",
+      "tenant": "cracked-live",
+      "url": "https://halfdozen-cracked-sync-mcp.createsomething.workers.dev/mcp",
+      "status": "deployed",
+      "account": "create-something",
+      "package_path": "packages/halfdozen-blondish-sync-mcp",
+      "wrangler_config": "packages/halfdozen-blondish-sync-mcp/wrangler.cracked.toml",
+      "auth": {
+        "type": "bearer",
+        "bearer_token_env_var": "HALFDOZEN_CRACKED_SYNC_MCP_API_KEY",
+        "infisical_path": "/mcp-hub/hubs"
+      },
+      "related_deployments": ["cracked-notion", "halfdozen-operator-notion-mcp"],
+      "notes": "Operator-invoked reconciliation MCP for Cracked Live source ticket data to Half Dozen ticket rows and mapped HD status back to the source. Current surface is agent/operator control; future scale should move normal incremental sync to Notion webhooks plus a persisted sync index."
+    },
+    "halfdozen-lightswitch-sync-mcp": {
+      "type": "remote_mcp_server",
+      "product": "Lightswitch Ticket Sync MCP",
+      "client": "lightswitch",
+      "tenant": "lightswitch",
+      "url": "https://halfdozen-lightswitch-sync-mcp.createsomething.workers.dev/mcp",
+      "status": "deployed",
+      "account": "create-something",
+      "package_path": "packages/halfdozen-blondish-sync-mcp",
+      "wrangler_config": "packages/halfdozen-blondish-sync-mcp/wrangler.lightswitch.toml",
+      "auth": {
+        "type": "bearer",
+        "bearer_token_env_var": "HALFDOZEN_LIGHTSWITCH_SYNC_MCP_API_KEY",
+        "infisical_path": "/mcp-hub/hubs"
+      },
+      "related_deployments": ["lightswitch-notion", "halfdozen-operator-notion-mcp"],
+      "notes": "Operator-invoked reconciliation MCP for Lightswitch source ticket data to Half Dozen ticket rows and mapped HD status back to the source. Current surface is agent/operator control; future scale should move normal incremental sync to Notion webhooks plus a persisted sync index."
     },
     "halfdozen-agent-analyzer-telemetry-mcp": {
       "type": "internal_infra",

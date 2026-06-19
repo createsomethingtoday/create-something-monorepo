@@ -1,12 +1,14 @@
 export const agencyCoreMessaging = {
-  categoryLabel: 'Workflow Trust Layer',
-  startWithWorkflowLabel: 'Map Your Workflow',
-  startWithWorkflowHref: '/book?source=nav&intent=workflow-mapping&lane=workflow_infrastructure',
-  governanceChecklistLabel: 'Get Trust Checklist',
+  categoryLabel: 'Workflow control service',
+  startWithWorkflowLabel: 'Start Atlas Map',
+  startWithWorkflowHref: '/services#atlas-warmup',
+  selfMapLabel: 'Start Atlas Map',
+  selfMapHref: '/services#atlas-warmup',
+  governanceChecklistLabel: 'Get Workflow Checklist',
   governanceChecklistHref: '/contact?source=resource&intent=governance-checklist&lane=not_sure',
   workflowTeardownLabel: 'Request Trust Map',
   workflowTeardownHref: '/contact?source=resource&intent=workflow-teardown&lane=not_sure',
-  bookMappingSessionLabel: 'Map Your Workflow',
+  bookMappingSessionLabel: 'Book Mapping Session',
   workflowMappingSessionHref:
     '/book?source=agency&intent=workflow-mapping&lane=workflow_infrastructure',
   servicesMappingSessionHref:

@@ -62,6 +62,47 @@
 	</div>
 </section>
 
+<section class="glass panel operator-shell section-gap">
+	<div class="section-header">
+		<div>
+			<div class="eyebrow">Operator Shell</div>
+			<h2 class="section-title">Ona-style clarity for governed agent work</h2>
+		</div>
+		<span class="status-pill good">Dify hidden behind server proxy</span>
+	</div>
+
+	<p class="muted shell-copy">
+		{data.operatorMode.promise} Dify can supply the agent runtime; this shell keeps state,
+		actions, evidence, and approvals in CREATE SOMETHING language.
+	</p>
+
+	<div class="state-strip" aria-label="Operator states">
+		{#each data.operatorStateDefinitions as state}
+			<div class={`state-cell ${state.tone}`}>
+				<strong>{state.label}</strong>
+				<span>{state.summary}</span>
+			</div>
+		{/each}
+	</div>
+
+	<div class="plane-grid">
+		{#each data.operatorShellPlanes as plane}
+			<article class="plane-card">
+				<div>
+					<div class="eyebrow">{plane.owner}</div>
+					<h3>{plane.label}</h3>
+				</div>
+				<p>{plane.purpose}</p>
+				<div class="signal-list">
+					{#each plane.requiredSignals as signal}
+						<span>{signal}</span>
+					{/each}
+				</div>
+			</article>
+		{/each}
+	</div>
+</section>
+
 <section class="grid-3 section-gap">
 	<div class="glass panel">
 		<div class="eyebrow">1. Start Publicly</div>
@@ -91,6 +132,13 @@
 <style>
 	.panel {
 		padding: 1.35rem;
+	}
+
+	.section-header {
+		display: flex;
+		justify-content: space-between;
+		gap: 1rem;
+		flex-wrap: wrap;
 	}
 
 	.hero {
@@ -260,6 +308,86 @@
 		max-width: 56rem;
 	}
 
+	.operator-shell {
+		display: grid;
+		gap: 1rem;
+	}
+
+	.shell-copy {
+		max-width: 62rem;
+	}
+
+	.state-strip,
+	.plane-grid {
+		display: grid;
+		gap: 0.85rem;
+	}
+
+	.state-strip {
+		grid-template-columns: repeat(6, minmax(0, 1fr));
+	}
+
+	.state-cell,
+	.plane-card {
+		border: 1px solid var(--line);
+		border-radius: var(--radius-tight);
+		background: var(--surface-strong);
+	}
+
+	.state-cell {
+		display: grid;
+		gap: 0.35rem;
+		min-height: 7rem;
+		padding: 0.8rem;
+	}
+
+	.state-cell span,
+	.plane-card p {
+		color: var(--muted);
+		line-height: 1.4;
+	}
+
+	.state-cell.good {
+		border-color: rgba(38, 114, 88, 0.35);
+	}
+
+	.state-cell.warn {
+		border-color: rgba(152, 111, 22, 0.38);
+	}
+
+	.state-cell.danger {
+		border-color: rgba(179, 63, 52, 0.38);
+	}
+
+	.plane-grid {
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+	}
+
+	.plane-card {
+		display: grid;
+		gap: 0.8rem;
+		padding: 1rem;
+	}
+
+	.plane-card h3 {
+		margin: 0.45rem 0 0;
+		font-size: 1.05rem;
+	}
+
+	.signal-list {
+		display: flex;
+		gap: 0.45rem;
+		flex-wrap: wrap;
+	}
+
+	.signal-list span {
+		border: 1px solid var(--line);
+		border-radius: var(--radius-tight);
+		padding: 0.32rem 0.45rem;
+		background: var(--surface-overlay);
+		font-size: 0.82rem;
+	}
+
 	.section-gap {
 		margin-top: 1rem;
 	}
@@ -272,6 +400,8 @@
 
 	@media (max-width: 900px) {
 		.hero-layout,
+		.state-strip,
+		.plane-grid,
 		.grid-3 {
 			grid-template-columns: 1fr;
 		}

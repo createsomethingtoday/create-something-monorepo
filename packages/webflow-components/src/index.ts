@@ -50,87 +50,6 @@ export type { TemplateGridProps } from './components/grid/TemplateGrid';
 export { TemplateFilterBar } from './components/filter/TemplateFilterBar';
 export type { TemplateFilterBarProps } from './components/filter/TemplateFilterBar';
 
-export { TemplateSearch } from './components/search/TemplateSearch';
-export type { SuggestItem, TemplateSearchProps } from './components/search/TemplateSearch';
-
-export { TemplateSearchPage } from './components/marketplace/TemplateSearchPage';
-export type { TemplateSearchPageProps } from './components/marketplace/TemplateSearchPage';
-
-export { TemplateSearchBox } from './components/marketplace/TemplateSearchBox';
-export type { TemplateSearchBoxMode, TemplateSearchBoxProps, TemplateSearchBoxVariant } from './components/marketplace/TemplateSearchBox';
-
-export { TemplateSearchResults } from './components/marketplace/TemplateSearchResults';
-export type { TemplateSearchResultsProps } from './components/marketplace/TemplateSearchResults';
-
-export { TemplateSearchSidebar } from './components/marketplace/TemplateSearchSidebar';
-export type { TemplateSearchSidebarProps } from './components/marketplace/TemplateSearchSidebar';
-
-export { TemplateMarketplaceHeading } from './components/marketplace/TemplateMarketplaceHeading';
-export type { TemplateMarketplaceHeadingProps } from './components/marketplace/TemplateMarketplaceHeading';
-
-export { TemplateCarouselSection } from './components/marketplace/TemplateCarouselSection';
-export type {
-  TemplateCarouselPreset,
-  TemplateCarouselSectionProps,
-} from './components/marketplace/TemplateCarouselSection';
-
-export { TemplateDetailConversionTracker } from './components/marketplace/TemplateDetailConversionTracker';
-export type {
-  TemplateDetailConversionTrackerProps,
-} from './components/marketplace/TemplateDetailConversionTracker';
-
-export { TemplateDetailHero } from './components/marketplace/TemplateDetailHero';
-export type { TemplateDetailHeroProps } from './components/marketplace/TemplateDetailHero';
-
-export { TemplateDetailOfferPanel } from './components/marketplace/TemplateDetailOfferPanel';
-export type { TemplateDetailOfferPanelProps } from './components/marketplace/TemplateDetailOfferPanel';
-
-export { TemplateDetailHighlights } from './components/marketplace/TemplateDetailHighlights';
-export type {
-  TemplateDetailHighlightItem,
-  TemplateDetailHighlightsProps,
-} from './components/marketplace/TemplateDetailHighlights';
-
-export { TemplateDetailStickyBar } from './components/marketplace/TemplateDetailStickyBar';
-export type { TemplateDetailStickyBarProps } from './components/marketplace/TemplateDetailStickyBar';
-
-export { TemplateDetailAppExtensions } from './components/marketplace/TemplateDetailAppExtensions';
-export type {
-  TemplateDetailAppExtensionsProps,
-  TemplateDetailAppRecommendation,
-} from './components/marketplace/TemplateDetailAppExtensions';
-
-export { MarketplaceLandingHero } from './components/marketplace/MarketplaceLandingHero';
-export type {
-  MarketplaceLandingHeroProps,
-  MarketplaceLandingHeroSearchExperience,
-  MarketplaceLandingHeroSuggestion,
-} from './components/marketplace/MarketplaceLandingHero';
-
-export { PopularCategoryGrid } from './components/marketplace/PopularCategoryGrid';
-export type {
-  PopularCategoryGridCategory,
-  PopularCategoryGridProps,
-} from './components/marketplace/PopularCategoryGrid';
-
-export { MarketplaceFaq } from './components/marketplace/MarketplaceFaq';
-export type {
-  MarketplaceFaqItem,
-  MarketplaceFaqProps,
-} from './components/marketplace/MarketplaceFaq';
-
-export { MarketplaceLandingExperimentGate } from './components/marketplace/MarketplaceLandingExperimentGate';
-export type {
-  MarketplaceLandingExperimentGateProps,
-} from './components/marketplace/MarketplaceLandingExperimentGate';
-
-export type {
-  MarketplaceAnalyticsData,
-  MarketplaceExperimentRole,
-  MarketplaceExperimentState,
-  MarketplaceExperimentVariant,
-} from './components/marketplace/analytics';
-
 // Canon Form Components
 export { TextField } from './components/form/TextField';
 export type { TextFieldProps, TextFieldSize, TextFieldType } from './components/form/TextField';
@@ -142,11 +61,11 @@ export type { TextAreaProps } from './components/form/TextArea';
 export { Field } from './components/forms/Field';
 export type { FieldProps } from './components/forms/Field';
 
-export { Select } from './components/forms/Select';
-export type { SelectProps, SelectItem } from './components/forms/Select';
-
 export { ResiliencyAlertSignup } from './components/forms/ResiliencyAlertSignup';
 export type { ResiliencyAlertSignupProps } from './components/forms/ResiliencyAlertSignup';
+
+export { Select } from './components/forms/Select';
+export type { SelectProps, SelectItem } from './components/forms/Select';
 
 // Canon Navigation + Feedback Components
 export { Tabs } from './components/navigation/Tabs';
@@ -301,3 +220,109 @@ export type { HeaderProps, NavItem } from './components/layout/Header';
 // Canon parity component with implementation cleanup still pending
 export { Footer } from './components/layout/Footer';
 export type { FooterProps, FooterColumn, SocialLink } from './components/layout/Footer';
+
+// Template Marketplace
+export { TemplateSearch } from './components/search/TemplateSearch';
+export type { TemplateSearchProps, SuggestItem } from './components/search/TemplateSearch';
+
+export { TemplateSearchPage } from './components/marketplace/TemplateSearchPage';
+export type { TemplateSearchPageProps } from './components/marketplace/TemplateSearchPage';
+
+export { TemplateSearchBox } from './components/marketplace/TemplateSearchBox';
+export type {
+  TemplateSearchBoxMode,
+  TemplateSearchBoxProps,
+  TemplateSearchBoxSubmitContext,
+  TemplateSearchBoxVariant,
+} from './components/marketplace/TemplateSearchBox';
+
+export { TemplateSearchResults } from './components/marketplace/TemplateSearchResults';
+export type { TemplateSearchResultsProps } from './components/marketplace/TemplateSearchResults';
+
+export { TemplateMarketplaceHeading } from './components/marketplace/TemplateMarketplaceHeading';
+export type { TemplateMarketplaceHeadingProps } from './components/marketplace/TemplateMarketplaceHeading';
+
+export { TemplateSearchSidebar } from './components/marketplace/TemplateSearchSidebar';
+export type { TemplateSearchSidebarProps } from './components/marketplace/TemplateSearchSidebar';
+
+export { TemplateCarouselSection } from './components/marketplace/TemplateCarouselSection';
+export type {
+  TemplateCarouselPreset,
+  TemplateCarouselSectionProps,
+} from './components/marketplace/TemplateCarouselSection';
+
+export { TemplateDetailConversionTracker } from './components/marketplace/TemplateDetailConversionTracker';
+export type { TemplateDetailConversionTrackerProps } from './components/marketplace/TemplateDetailConversionTracker';
+
+export { TemplateDetailHero } from './components/marketplace/TemplateDetailHero';
+export type { TemplateDetailHeroProps } from './components/marketplace/TemplateDetailHero';
+
+export { TemplateDetailOfferPanel } from './components/marketplace/TemplateDetailOfferPanel';
+export type { TemplateDetailOfferPanelProps } from './components/marketplace/TemplateDetailOfferPanel';
+
+export { TemplateDetailHighlights } from './components/marketplace/TemplateDetailHighlights';
+export type {
+  TemplateDetailHighlightItem,
+  TemplateDetailHighlightsProps,
+} from './components/marketplace/TemplateDetailHighlights';
+
+export { TemplateDetailStickyBar } from './components/marketplace/TemplateDetailStickyBar';
+export type { TemplateDetailStickyBarProps } from './components/marketplace/TemplateDetailStickyBar';
+
+export { TemplateDetailAppExtensions } from './components/marketplace/TemplateDetailAppExtensions';
+export type {
+  TemplateDetailAppExtensionsProps,
+  TemplateDetailAppRecommendation,
+} from './components/marketplace/TemplateDetailAppExtensions';
+
+export { MarketplaceLandingHero } from './components/marketplace/MarketplaceLandingHero';
+export type {
+  MarketplaceLandingHeroProps,
+  MarketplaceLandingHeroSearchExperience,
+  MarketplaceLandingHeroSuggestion,
+} from './components/marketplace/MarketplaceLandingHero';
+
+export { PopularCategoryGrid } from './components/marketplace/PopularCategoryGrid';
+export type {
+  PopularCategoryGridCategory,
+  PopularCategoryGridProps,
+} from './components/marketplace/PopularCategoryGrid';
+
+export { MarketplaceFaq } from './components/marketplace/MarketplaceFaq';
+export type {
+  MarketplaceFaqItem,
+  MarketplaceFaqProps,
+} from './components/marketplace/MarketplaceFaq';
+
+export { MarketplaceLandingExperimentGate } from './components/marketplace/MarketplaceLandingExperimentGate';
+export type {
+  MarketplaceLandingExperimentGateProps,
+} from './components/marketplace/MarketplaceLandingExperimentGate';
+
+export type {
+  MarketplaceAnalyticsData,
+  MarketplaceExperimentRole,
+  MarketplaceExperimentState,
+  MarketplaceExperimentVariant,
+} from './components/marketplace/analytics';
+
+// Cato Supply delivery components
+// Ona-styled Business Logic Components
+export {
+  BookingRouter,
+  LeadQualifier,
+  PricingRecommender,
+  RoiCalculator,
+} from './components/business/BusinessComponents';
+export type {
+  BookingRoute,
+  BookingRouterProps,
+  BusinessTone,
+  LeadQualifierOption,
+  LeadQualifierOutcome,
+  LeadQualifierProps,
+  LeadQualifierQuestion,
+  PricingPlan,
+  PricingRecommenderProps,
+  RoiCalculatorProps,
+} from './components/business/BusinessComponents';

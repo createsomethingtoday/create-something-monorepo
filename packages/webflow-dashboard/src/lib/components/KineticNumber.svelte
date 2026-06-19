@@ -18,8 +18,12 @@
 		suffix = ''
 	}: Props = $props();
 
-	// Spring animation for smooth kinetic effect
-	const displayed = spring(0, {
+	function getInitialValue(): number {
+		return value;
+	}
+
+	// Initialize from the loaded value so first paint does not show a false zero.
+	const displayed = spring(getInitialValue(), {
 		stiffness: 0.1,
 		damping: 0.25
 	});

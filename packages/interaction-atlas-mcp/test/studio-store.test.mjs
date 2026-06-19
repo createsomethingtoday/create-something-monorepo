@@ -1,0 +1,250 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+
+import { healSessionProductionBindings } from '../dist/studio/production-bindings.js';
+import {
+  createWritebackProposal,
+  exportWritebackProposalHandoff,
+  reviewWritebackProposalAction
+} from '../dist/studio/writeback-proposals.js';
+import {
+  acceptSuggestion,
+  addEdge,
+  addNode,
+  addObservation,
+  createSession,
+  exportSessionMarkdown,
+  readSession,
+  writeSession
+} from '../dist/studio/store.js';
+
+test('local Atlas Studio sessions can be mutated by agent commands', async () => {
+  const cwd = await mkdtemp(path.join(tmpdir(), 'atlas-studio-test-'));
+  const session = await createSession(
+    { client: 'Acme', workflow: 'Support recovery', owner: 'Ops' },
+    cwd
+  );
+
+  assert.equal(session.client, 'Acme');
+  assert.equal(session.canvas.nodes.length, 4);
+
+  const withObservation = await addObservation(
+    session.id,
+    {
+      text: 'The account owner must approve refunds before the agent drafts a note and logs a receipt in Linear.',
+      source: 'agent',
+      suggest: true
+    },
+    cwd
+  );
+
+  assert.equal(withObservation.observations.length, 1);
+  assert.ok(withObservation.suggestions.length >= 3);
+
+  const accepted = await acceptSuggestion(session.id, withObservation.suggestions[0].id, cwd);
+  assert.equal(accepted.canvas.nodes.length, 5);
+
+  const withNode = await addNode(
+    session.id,
+    { kind: 'touchpoint', label: 'Linear issue', status: 'run', createdBy: 'agent' },
+    cwd
+  );
+  const node = withNode.canvas.nodes.at(-1);
+  assert.equal(node?.label, 'Linear issue');
+  assert.equal(node?.y, 475);
+
+  const withEdge = await addEdge(
+    session.id,
+    { source: 'data_workflow', target: node.id, label: 'records evidence', createdBy: 'agent' },
+    cwd
+  );
+  assert.equal(withEdge.canvas.edges.at(-1)?.target, node.id);
+
+  const reloaded = await readSession(session.id, cwd);
+  const markdown = exportSessionMarkdown(reloaded);
+  assert.match(markdown, /Acme - Atlas Workflow Map/);
+  assert.match(markdown, /Linear issue/);
+});
+
+test('Atlas Studio can self-heal Template System production primitive bindings', async () => {
+  const cwd = await mkdtemp(path.join(tmpdir(), 'atlas-studio-heal-test-'));
+  await mkdir(path.join(cwd, 'packages/webflow-template-search'), { recursive: true });
+  await mkdir(path.join(cwd, 'docs/deliveries/webflow-marketplace'), { recursive: true });
+  await writeFile(
+    path.join(cwd, 'packages/webflow-template-search/wrangler.toml'),
+    'name = "webflow-template-search"\\ndatabase_name = "webflow-template-search"\\n'
+  );
+  await writeFile(
+    path.join(cwd, 'packages/webflow-template-search/README.md'),
+    '# Search\\nGET /api/templates/search\\n'
+  );
+  await writeFile(
+    path.join(cwd, 'docs/deliveries/webflow-marketplace/README.md'),
+    'Agent instructions, validator logic, and review MCP guardrails\\n'
+  );
+
+  const session = await createSession(
+    { client: 'CREATE SOMETHING', workflow: 'Template System', owner: 'Ops' },
+    cwd
+  );
+  const custom = await writeSession(
+    {
+      ...session,
+      canvas: {
+        edges: [],
+        nodes: [
+          {
+            createdBy: 'agent',
+            height: 142,
+            id: 'system_search_worker',
+            kind: 'system',
+            label: 'webflow-template-search Worker',
+            status: 'run',
+            updatedAt: session.updatedAt,
+            width: 280,
+            x: 0,
+            y: 0
+          },
+          {
+            createdBy: 'agent',
+            height: 142,
+            id: 'system_review_mcp',
+            kind: 'system',
+            label: 'Template Review MCP',
+            status: 'run',
+            updatedAt: session.updatedAt,
+            width: 280,
+            x: 320,
+            y: 0
+          }
+        ]
+      }
+    },
+    cwd
+  );
+
+  const result = await healSessionProductionBindings(custom.id, { cwd });
+  const searchNode = result.session.canvas.nodes.find((node) => node.id === 'system_search_worker');
+  const reviewNode = result.session.canvas.nodes.find((node) => node.id === 'system_review_mcp');
+
+  assert.equal(searchNode?.sync?.status, 'synced');
+  assert.equal(searchNode?.bindings?.length, 2);
+  assert.equal(reviewNode?.sync?.status, 'missing');
+  assert.equal(result.summary.bindingsChecked, 4);
+  assert.equal(result.summary.synced, 1);
+  assert.equal(result.summary.missing, 1);
+});
+
+test('Atlas Studio can generate approval-gated write-back proposals', async () => {
+  const cwd = await mkdtemp(path.join(tmpdir(), 'atlas-studio-proposal-test-'));
+  await mkdir(path.join(cwd, 'docs/deliveries/webflow-marketplace'), { recursive: true });
+  await mkdir(path.join(cwd, 'config/dify'), { recursive: true });
+  await mkdir(path.join(cwd, 'config/dify-agents'), { recursive: true });
+  await mkdir(path.join(cwd, 'packages/webflow-template-search'), { recursive: true });
+  await writeFile(
+    path.join(cwd, 'docs/deliveries/webflow-marketplace/README.md'),
+    'Agent instructions, validator logic, and review MCP guardrails\\n'
+  );
+  await writeFile(
+    path.join(cwd, 'config/dify/inventory.json'),
+    '{ "id": "template-review-hub" }\\n'
+  );
+  await writeFile(
+    path.join(cwd, 'config/dify-agents/template-review-hub.dify.yml'),
+    'template_review_format_agent_review_feedback: true\\n'
+  );
+  await writeFile(
+    path.join(cwd, 'packages/webflow-template-search/wrangler.toml'),
+    'name = "webflow-template-search"\\n'
+  );
+
+  const session = await createSession(
+    { client: 'CREATE SOMETHING', workflow: 'Template System', owner: 'Ops' },
+    cwd
+  );
+  await writeSession(
+    {
+      ...session,
+      canvas: {
+        edges: [],
+        nodes: [
+          {
+            createdBy: 'agent',
+            height: 142,
+            id: 'actor_cs_operator',
+            kind: 'actor',
+            label: 'CREATE SOMETHING operator',
+            notes: 'Operator-owned delivery packet and workflow instructions.',
+            status: 'run',
+            updatedAt: session.updatedAt,
+            width: 280,
+            x: 0,
+            y: 0
+          },
+          {
+            createdBy: 'agent',
+            height: 142,
+            id: 'ai_template_review_hub',
+            kind: 'ai',
+            label: 'Template Review Hub',
+            notes: 'Dify agent reviews template feedback before human approval.',
+            status: 'wait',
+            updatedAt: session.updatedAt,
+            width: 280,
+            x: 320,
+            y: 0
+          },
+          {
+            createdBy: 'agent',
+            height: 142,
+            id: 'system_search_worker',
+            kind: 'system',
+            label: 'webflow-template-search Worker',
+            notes: 'Cloudflare Worker serves template discovery.',
+            status: 'run',
+            updatedAt: session.updatedAt,
+            width: 280,
+            x: 640,
+            y: 0
+          }
+        ]
+      }
+    },
+    cwd
+  );
+
+  const result = await createWritebackProposal(session.id, { cwd });
+  const reloaded = await readSession(session.id, cwd);
+  const proposal = result.proposal;
+  const reviewAction = proposal.actions.find((action) => action.risk === 'review');
+  assert.ok(reviewAction);
+  const reviewed = await reviewWritebackProposalAction(
+    session.id,
+    {
+      actionId: reviewAction.id,
+      note: 'Ready for a Dify smoke before import.',
+      proposalId: proposal.id,
+      status: 'approved'
+    },
+    cwd
+  );
+
+  assert.equal(result.summary.total, 3);
+  assert.equal(result.summary.safe, 1);
+  assert.equal(result.summary.review, 1);
+  assert.equal(result.summary.approval, 1);
+  assert.equal(reloaded.proposals?.[0]?.id, proposal.id);
+  assert.equal(reviewed.action.status, 'approved');
+  assert.equal(reviewed.summary.approved, 1);
+  const handoff = exportWritebackProposalHandoff(reviewed.session, { proposalId: proposal.id });
+  assert.match(exportSessionMarkdown(reviewed.session), /Write-back Proposals/);
+  assert.match(exportSessionMarkdown(reviewed.session), /Review Template Review Hub \[review, approved\]/);
+  assert.match(exportSessionMarkdown(reviewed.session), /Ready for a Dify smoke before import/);
+  assert.match(handoff, /Safety Boundary/);
+  assert.match(handoff, /Approved Implementation Candidates/);
+  assert.match(handoff, /Review Template Review Hub/);
+  assert.match(handoff, /Pending Review/);
+});

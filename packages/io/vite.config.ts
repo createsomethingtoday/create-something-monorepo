@@ -5,5 +5,8 @@ export default defineConfig({
 	plugins: [sveltekit()],
 	optimizeDeps: {
 		include: ['html2canvas']
+	},
+	ssr: {
+		noExternal: ['lucide-svelte']
 	}
 });

@@ -184,6 +184,93 @@ function getSummaryMode(summary: unknown): string | null {
   return typeof mode === 'string' && mode.length > 0 ? mode : null;
 }
 
+function hasTemplateOfferSignal(record: WebflowTemplateImageRecord): boolean {
+  return record.price !== null || record.isFree !== null;
+}
+
+function templateOfferBinds(record: WebflowTemplateImageRecord) {
+  const hasPrice = record.price !== null ? 1 : 0;
+  const hasFree = record.isFree !== null ? 1 : 0;
+  const freeValue = record.isFree === null ? null : record.isFree ? 1 : 0;
+  return { hasPrice, price: record.price, hasFree, freeValue };
+}
+
+function pushTemplateOfferUpdateById(
+  db: D1Database,
+  statements: D1PreparedStatement[],
+  record: WebflowTemplateImageRecord,
+  syncedAt: string,
+): void {
+  if (!record.id || !hasTemplateOfferSignal(record)) return;
+  const offer = templateOfferBinds(record);
+
+  statements.push(
+    db
+      .prepare(
+        `UPDATE template_documents
+         SET price = CASE WHEN ? = 1 THEN ? ELSE price END,
+             is_free = CASE WHEN ? = 1 THEN ? ELSE is_free END,
+             synced_at = ?
+         WHERE id = ?
+           AND (
+             (? = 1 AND NOT (price IS ?))
+             OR (? = 1 AND NOT (is_free IS ?))
+           )`,
+      )
+      .bind(
+        offer.hasPrice,
+        offer.price,
+        offer.hasFree,
+        offer.freeValue,
+        syncedAt,
+        record.id,
+        offer.hasPrice,
+        offer.price,
+        offer.hasFree,
+        offer.freeValue,
+      ),
+  );
+}
+
+function pushTemplateOfferUpdateByName(
+  db: D1Database,
+  statements: D1PreparedStatement[],
+  record: WebflowTemplateImageRecord,
+  syncedAt: string,
+): void {
+  if (!record.name || !hasTemplateOfferSignal(record)) return;
+  const offer = templateOfferBinds(record);
+
+  statements.push(
+    db
+      .prepare(
+        `UPDATE template_documents
+         SET price = CASE WHEN ? = 1 THEN ? ELSE price END,
+             is_free = CASE WHEN ? = 1 THEN ? ELSE is_free END,
+             synced_at = ?
+         WHERE name = ?
+           AND (SELECT COUNT(*) FROM template_documents WHERE name = ?) = 1
+           AND (
+             (? = 1 AND NOT (price IS ?))
+             OR (? = 1 AND NOT (is_free IS ?))
+           )`,
+      )
+      .bind(
+        offer.hasPrice,
+        offer.price,
+        offer.hasFree,
+        offer.freeValue,
+        syncedAt,
+        record.name,
+        record.name,
+        offer.hasPrice,
+        offer.price,
+        offer.hasFree,
+        offer.freeValue,
+      ),
+  );
+}
+
 export function publicSyncJobRecord(record: SyncJobRecord | null) {
   if (!record) return null;
   return {
@@ -220,11 +307,12 @@ export async function getLatestSyncJob(db: D1Database): Promise<SyncJobRecord | 
 export async function acquireSyncJobLock(
   db: D1Database,
   mode: string,
-  options: { ttlMs?: number; now?: string } = {},
+  options: { ttlMs?: number; now?: string; staleHeartbeatMs?: number } = {},
 ): Promise<SyncJobAcquireResult> {
   const startedAt = options.now ?? nowIso();
   const ttlMs = options.ttlMs ?? 20 * 60 * 1000;
   const expiresAt = addMilliseconds(startedAt, ttlMs);
+  const staleHeartbeatCutoff = options.staleHeartbeatMs ? addMilliseconds(startedAt, -options.staleHeartbeatMs) : null;
   const jobId = `${mode}-${crypto.randomUUID()}`;
 
   await db
@@ -252,9 +340,10 @@ export async function acquireSyncJobLock(
          summary_json = NULL,
          error = NULL
        WHERE sync_jobs.status != 'running'
-          OR sync_jobs.expires_at <= ?`,
+          OR sync_jobs.expires_at <= ?
+          OR (? IS NOT NULL AND sync_jobs.heartbeat_at <= ?)`,
     )
-    .bind(SYNC_JOB_LOCK_KEY, jobId, mode, startedAt, startedAt, expiresAt, startedAt)
+    .bind(SYNC_JOB_LOCK_KEY, jobId, mode, startedAt, startedAt, expiresAt, startedAt, staleHeartbeatCutoff, staleHeartbeatCutoff)
     .run();
 
   const activeJob = await db.prepare('SELECT * FROM sync_jobs WHERE lock_key = ?').bind(SYNC_JOB_LOCK_KEY).first<SyncJobRecord>();
@@ -294,6 +383,19 @@ export async function finishSyncJobLock(
          AND job_id = ?`,
     )
     .bind(result.status, finishedAt, finishedAt, summaryJson, error, lock.lockKey, lock.jobId)
+    .run();
+}
+
+export async function heartbeatSyncJobLock(db: D1Database, lock: SyncJobLock, heartbeatAt = nowIso()): Promise<void> {
+  await db
+    .prepare(
+      `UPDATE sync_jobs
+       SET heartbeat_at = ?
+       WHERE lock_key = ?
+         AND job_id = ?
+         AND status = 'running'`,
+    )
+    .bind(heartbeatAt, lock.lockKey, lock.jobId)
     .run();
 }
 
@@ -563,6 +665,7 @@ export async function updateTemplateImagesFromWebflow(
             carouselImageUrlsJson,
           ),
       );
+      pushTemplateOfferUpdateById(db, statements, record, syncedAt);
       continue;
     }
 
@@ -617,6 +720,7 @@ export async function updateTemplateImagesFromWebflow(
             carouselImageUrlsJson,
           ),
       );
+      pushTemplateOfferUpdateByName(db, statements, record, syncedAt);
     }
   }
 

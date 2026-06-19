@@ -18,6 +18,14 @@ AGENCY_BASE_URL = "https://createsomething.agency"
 # a nurse's location message confidently. Results are stored in-thread, so the runtime uses
 # Mapbox permanent geocoding.
 # Optionally set `ABUNDANCE_INTAKE_EMAIL_FROM` if the sender should differ from the runtime default.
+# Set Dify Service API keys with `wrangler pages secret put` before enabling
+# `/agents` production calls. Secret names must match the Dify inventory:
+# DIFY_CREATE_SOMETHING_GUIDE_AGENT_API_KEY, DIFY_YOUTUBE_TRANSCRIPT_NOTION_AGENT_API_KEY,
+# DIFY_BLONDISH_HUB_API_KEY, DIFY_MORGAN_HUB_API_KEY, DIFY_VIV_HUB_API_KEY,
+# DIFY_C3_HUB_API_KEY, DIFY_AARON_HUB_API_KEY, DIFY_ABUNDANCE_HUB_API_KEY,
+# DIFY_SHEA_HUB_API_KEY, DIFY_PABLO_HUB_API_KEY, DIFY_ERIC_HUB_API_KEY,
+# DIFY_NATALIA_HUB_API_KEY, DIFY_MARIANA_HUB_API_KEY, DIFY_VICKI_HUB_API_KEY,
+# and DIFY_TEMPLATE_REVIEW_HUB_API_KEY.
 
 [[d1_databases]]
 binding = "DB"

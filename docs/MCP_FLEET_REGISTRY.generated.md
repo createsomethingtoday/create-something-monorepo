@@ -8,7 +8,7 @@
 > `composio-toolkit-*` server list lives in
 > [`config/mcp-hub/registry.composio.generated.json`](../config/mcp-hub/registry.composio.generated.json).
 
-## Active (core, 42)
+## Active (core, 45)
 
 | Server | Transport | Endpoint | Exposure | Est. Tools | Tags |
 | --- | --- | --- | --- | --- | --- |
@@ -21,10 +21,13 @@
 | `half-dozen-youtube-sync` | `http` | `https://youtube.mcp.workway.co/mcp` | `direct` | `0` | `halfdozen`, `youtube`, `workway` |
 | `halfdozen-agent-analyzer-telemetry` | `http` | `https://halfdozen-agent-analyzer-telemetry-mcp.half-dozen.workers.dev/mcp` | `direct` | `11` | `halfdozen`, `agent-analyzer`, `notion`, `observability`, `workway` |
 | `halfdozen-blondish-sync-mcp` | `http` | `https://halfdozen-blondish-sync-mcp.createsomething.workers.dev/mcp` | `direct` | `8` | `halfdozen`, `blondish`, `notion`, `tickets`, `sync` |
+| `halfdozen-c3-management-sync-mcp` | `http` | `https://halfdozen-c3-management-sync-mcp.createsomething.workers.dev/mcp` | `direct` | `8` | `halfdozen`, `c3-management`, `notion`, `tickets`, `sync` |
+| `halfdozen-cracked-sync-mcp` | `http` | `https://halfdozen-cracked-sync-mcp.createsomething.workers.dev/mcp` | `direct` | `8` | `halfdozen`, `cracked`, `notion`, `tickets`, `sync` |
 | `halfdozen-dm-mcp` | `http` | `https://dm.mcp.workway.co/mcp` | `brokered` | `100` | `halfdozen`, `dm`, `notion`, `drive`, `composio`, `workway` |
 | `halfdozen-gmail-sync-danny` | `http` | `https://gmail.mcp.workway.co/mcp` | `direct` | `0` | `halfdozen`, `gmail`, `workway` |
 | `halfdozen-gmail-sync-fillip` | `http` | `https://fillip-gmail.mcp.workway.co/mcp` | `direct` | `0` | `halfdozen`, `gmail`, `workway` |
 | `halfdozen-gmail-sync-leah` | `http` | `https://leah-gmail.mcp.workway.co/mcp` | `direct` | `0` | `halfdozen`, `gmail`, `workway` |
+| `halfdozen-lightswitch-sync-mcp` | `http` | `https://halfdozen-lightswitch-sync-mcp.createsomething.workers.dev/mcp` | `direct` | `8` | `halfdozen`, `lightswitch`, `notion`, `tickets`, `sync` |
 | `halfdozen-operator-notion-mcp` | `http` | `https://halfdozen-operator-notion-mcp.createsomething.workers.dev/mcp` | `brokered` | `100` | `halfdozen`, `notion`, `composio`, `operator`, `workway` |
 | `halfdozen-telemetry` | `http` | `https://halfdozen-telemetry-mcp.half-dozen.workers.dev/mcp` | `direct` | `0` | `observability`, `telemetry`, `workway` |
 | `halfdozen-zoom-sync` | `http` | `https://zoom.mcp.workway.co/mcp` | `direct` | `0` | `halfdozen`, `zoom`, `workway` |
@@ -50,7 +53,7 @@
 | `spotify-mcp` | `http` | `https://spotify-mcp.createsomething.workers.dev/mcp` | `direct` | `29` | `spotify`, `rapidapi`, `music`, `dify`, `observability`, `cs`, `policy_os_only` |
 | `substrate-mcp` | `http` | `https://substrate.mcp.createsomething.agency/mcp` | `direct` | `0` | `ops`, `automation`, `cs`, `policy_os_only` |
 | `three-tier-framework` | `http` | `https://framework.mcp.createsomething.agency/mcp` | `direct` | `6` | `core`, `framework`, `cs`, `policy_os_only` |
-| `webflow-app-review-mcp` | `http` | `https://webflow-app-review-mcp.createsomething.workers.dev/mcp` | `direct` | `0` | `webflow`, `review`, `airtable`, `apps`, `cs` |
+| `webflow-app-review-mcp` | `http` | `https://webflow-app-review-mcp.createsomething.workers.dev/mcp` | `direct` | `21` | `webflow`, `review`, `airtable`, `apps`, `cs` |
 | `webflow-local` | `http` | `https://webflow-mcp.createsomething.workers.dev/mcp` | `direct` | `10` | `webflow`, `review`, `plagiarism`, `frameworks`, `cs` |
 | `webflow-template-review-mcp` | `http` | `https://webflow-template-review-mcp.createsomething.workers.dev/mcp` | `direct` | `0` | `webflow`, `review`, `airtable`, `templates`, `cs` |
 | `youtube-transcript-notion-mcp` | `http` | `https://youtube-transcript-notion-mcp.createsomething.workers.dev/mcp` | `direct` | `6` | `youtube`, `transcript`, `notion`, `dify`, `cs` |
@@ -185,9 +188,9 @@ Hand-curated bundles are listed inline. Composio category bundles are listed in 
 | `core` | `create-something`, `three-tier-framework`, `playbook` |
 | `dormant` | `gmail-notion-mcp`, `notion-sync-mcp`, `loom-mcp` |
 | `finance` | `quickbooks-notion-mcp-server` |
-| `halfdozen` | `notion-halfdozen-create-something`, `notion-halfdozen-system-studio`, `notion-halfdozen-blondish`, `notion-halfdozen-c3-management`, `notion-halfdozen-cracked`, `notion-halfdozen-fanpad`, `notion-halfdozen-juice-labs`, `notion-halfdozen-kk-management`, `notion-halfdozen-lightswitch`, `notion-halfdozen-phase-3`, `notion-halfdozen-three-six-zero`, `halfdozen-dm-mcp`, `halfdozen-operator-notion-mcp`, `halfdozen-blondish-sync-mcp`, `half-dozen-youtube-sync` |
+| `halfdozen` | `notion-halfdozen-create-something`, `notion-halfdozen-system-studio`, `notion-halfdozen-blondish`, `notion-halfdozen-c3-management`, `notion-halfdozen-cracked`, `notion-halfdozen-fanpad`, `notion-halfdozen-juice-labs`, `notion-halfdozen-kk-management`, `notion-halfdozen-lightswitch`, `notion-halfdozen-phase-3`, `notion-halfdozen-three-six-zero`, `halfdozen-dm-mcp`, `halfdozen-operator-notion-mcp`, `halfdozen-blondish-sync-mcp`, `halfdozen-c3-management-sync-mcp`, `halfdozen-cracked-sync-mcp`, `halfdozen-lightswitch-sync-mcp`, `half-dozen-youtube-sync` |
 | `halfdozen-observability` | `halfdozen-agent-analyzer-telemetry`, `halfdozen-telemetry` |
-| `halfdozen-sync` | `halfdozen-gmail-sync-danny`, `halfdozen-gmail-sync-fillip`, `halfdozen-gmail-sync-leah`, `halfdozen-zoom-sync`, `halfdozen-blondish-sync-mcp` |
+| `halfdozen-sync` | `halfdozen-gmail-sync-danny`, `halfdozen-gmail-sync-fillip`, `halfdozen-gmail-sync-leah`, `halfdozen-zoom-sync`, `halfdozen-blondish-sync-mcp`, `halfdozen-c3-management-sync-mcp`, `halfdozen-cracked-sync-mcp`, `halfdozen-lightswitch-sync-mcp` |
 | `local-dev` | `community-mcp`, `ground-mcp`, `harness-mcp`, `social-mcp`, `ui-preview-mcp`, `webflow-local`, `lsmcp` |
 | `meetings` | `meetings` |
 | `observability` | `cs-telemetry` |

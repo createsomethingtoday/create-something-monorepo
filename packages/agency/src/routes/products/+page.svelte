@@ -1,659 +1,502 @@
 <script lang="ts">
-  import { SEO } from '@create-something/canon';
-  import { AnimatedGridPattern, BlurFade } from '@create-something/canon/magicui';
-  import { products } from '$lib/data/services';
-  // Group products by category
-  const featured = products.filter((p) => p.category === 'featured');
-  const devTools = products.filter((p) => p.category === 'developer-tools');
-  const framework = products.filter((p) => p.category === 'framework');
-  const integrations = products.filter((p) => p.category === 'integration');
-  const clientWork = products.filter((p) => p.category === 'client');
-  const methodAndFramework = [...framework, ...devTools];
+  import {
+    Button,
+    ClearCardGrid,
+    ClearCtaBand,
+    ClearPageSection,
+    ClearProofStrip,
+    ClearQuoteMetricPanel,
+    SEO,
+    type ClearCardItem,
+    type ClearCtaItem,
+    type ClearProofItem,
+    type ClearQuoteMetric
+  } from '@create-something/canon';
+  import WorkflowSignalIcon from '$lib/components/WorkflowSignalIcon.svelte';
+  import { products, type Product } from '$lib/data/services';
+  import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
-  const proofRoles = [
+  type ProofStateIconName = 'objects' | 'actions' | 'states' | 'receipts';
+  type ProofStateItem = ClearProofItem & { icon: ProofStateIconName };
+
+  const featured = products.filter((product) => product.category === 'featured');
+  const methodAndFramework = products.filter(
+    (product) => product.category === 'framework' || product.category === 'developer-tools'
+  );
+  const integrations = products.filter((product) => product.category === 'integration');
+  const clientWork = products.filter((product) => product.category === 'client');
+
+  const proofRoles: ClearCardItem[] = [
     {
-      label: 'Ground',
+      eyebrow: 'Ground',
+      icon: 'check',
       title: 'Judgment needs evidence',
-      detail: 'Agents must check before they claim. That principle becomes release evidence and blocked-state logic.'
+      detail:
+        'Agents must check before they claim. That principle becomes release evidence and blocked-state logic.'
     },
     {
-      label: 'Loom',
+      eyebrow: 'Loom',
+      icon: 'users',
       title: 'Operators need continuity',
-      detail: 'Agent work needs memory, ownership, checkpoints, and evidence so progress survives handoffs.'
+      detail:
+        'Agent work needs ownership, checkpoints, and evidence so progress survives handoffs. Linear now owns tracked coordination in this repo.'
     },
     {
-      label: 'MCPs',
-      title: 'Connectivity is the wedge',
-      detail: 'Read-only or constrained MCPs prove the connection before the workflow earns more authority.'
+      eyebrow: 'Connections',
+      icon: 'plus',
+      title: 'Connections prove the path',
+      detail:
+        'Read-only or constrained connections prove the path before the workflow earns more authority.'
     },
     {
-      label: 'Trust Layer',
-      title: 'The surface needs trust',
-      detail: 'The products are proof primitives. The paid work is turning them into controlled operating paths.'
+      eyebrow: 'Control',
+      icon: 'settings',
+      title: 'The service adds the boundary',
+      detail:
+        'The products are proof primitives. The paid work turns them into controlled operating paths.'
     }
   ];
 
-  function isExternal(href: string | undefined): boolean {
-    return !!href && href.startsWith('http');
+  const proofReadingCards: ClearCardItem[] = [
+    {
+      eyebrow: 'Receipts',
+      icon: 'document',
+      title: 'Proof shows the operating result',
+      detail:
+        'Read the artifacts as receipts: what changed, what was verified, what stayed private, and what still needs an owner.'
+    },
+    {
+      eyebrow: 'Primitives',
+      icon: 'settings',
+      title: 'Tools show the discipline',
+      detail:
+        'Ground, archived Loom work, and connector work expose the control principles before they become a client-specific workflow.'
+    },
+    {
+      eyebrow: 'Boundary',
+      icon: 'check',
+      title: 'The service adds judgment states',
+      detail:
+        'The paid work turns proof primitives into run, wait, and stop paths your operator can inspect.'
+    },
+    {
+      eyebrow: 'Funnel',
+      icon: 'plus',
+      title: 'Start by mapping the first workflow',
+      detail:
+        'Use proof as evidence for the method, then map the first safe delegation point for your own system.'
+    }
+  ];
+
+  const proofLedger: ClearCardItem[] = [
+    {
+      eyebrow: 'Business signal',
+      icon: 'folder',
+      title: 'Delivery records use the same service path',
+      detail:
+        'Abundance and ShivWorks show the repeatable pattern: business model, access boundary, visible status, private evidence, and next owner decision.',
+      points: [
+        'Visible: status, decisions, handoff, next action',
+        'Private: credentials, logs, raw client data, sensitive proof'
+      ]
+    },
+    {
+      eyebrow: 'Control signal',
+      icon: 'check',
+      title: 'Proof names what can run, wait, or stop',
+      detail:
+        'The service does not sell generic autonomy. Each workflow gets action boundaries, approval-needed states, and blocked-state receipts.',
+      points: [
+        'Run: bounded work can proceed',
+        'Wait: owner approval is required',
+        'Stop: reason-coded handoff is preserved'
+      ]
+    },
+    {
+      eyebrow: 'Ownership signal',
+      icon: 'user',
+      title: 'Clients keep account and approval authority',
+      detail:
+        'Proof is useful only when ownership stays clear: source accounts, business context, final decisions, and sensitive evidence remain under the right owner.',
+      points: ['Account access stays scoped', 'Approval authority stays named']
+    },
+    {
+      eyebrow: 'Transfer signal',
+      icon: 'document',
+      title: 'Handoff notes survive the build',
+      detail:
+        'Runbooks, validation output, release notes, and rollback paths make the workflow understandable after launch.',
+      points: ['Evidence travels with the work', 'The next operator can inspect the path']
+    }
+  ];
+
+  const proofStripItems: ProofStateItem[] = [
+    {
+      icon: 'actions',
+      value: 'Run',
+      label: 'Bounded work can proceed with named objects, actions, and receipts.'
+    },
+    {
+      icon: 'states',
+      value: 'Wait',
+      label: 'Revenue, customer-trust, or production impact pauses for owner approval.'
+    },
+    {
+      icon: 'objects',
+      value: 'Stop',
+      label: 'Out-of-lane work creates a reason-coded handoff instead of pretending to finish.'
+    },
+    {
+      icon: 'receipts',
+      value: 'Receipt',
+      label: 'Commands, decisions, links, deploy IDs, and rollback notes stay with the work.'
+    }
+  ];
+
+  const proofPathItems = [
+    {
+      label: 'Connect',
+      detail: 'Name the system, account owner, and authority boundary.'
+    },
+    {
+      label: 'Verify',
+      detail: 'Check the claim with commands, traces, screenshots, or live status.'
+    },
+    {
+      label: 'Coordinate',
+      detail: 'Keep ownership, status, and evidence in Linear before the next handoff.'
+    },
+    {
+      label: 'Control',
+      detail: 'Ship the run, wait, stop, and rollback paths the operator can inspect.'
+    }
+  ];
+
+  const proofMetrics: ClearQuoteMetric[] = [
+    {
+      value: '2',
+      label: 'client delivery records',
+      detail: 'Abundance and ShivWorks show business-readable handoff and evidence surfaces.'
+    },
+    {
+      value: '4',
+      label: 'control states',
+      detail: 'Run, wait, stop, and receipt are visible before broader automation is allowed.'
+    },
+    {
+      value: '0',
+      label: 'secret-bearing proof exposed',
+      detail: 'Public pages show status and artifacts while private evidence stays behind owner lanes.'
+    },
+    {
+      value: '1',
+      label: 'workflow first',
+      detail: 'The service starts with one business workflow rather than a generic agent demo.'
+    }
+  ];
+
+  const ctaItems: ClearCtaItem[] = [
+    {
+      label: 'Connect',
+      icon: 'plus',
+      title: 'Identify the first connection',
+      detail: 'Name the safest connection point before expanding authority.'
+    },
+    {
+      label: 'Verify',
+      icon: 'check',
+      title: 'Define the proof surface',
+      detail: 'Decide what evidence proves the workflow worked or stopped correctly.'
+    },
+    {
+      label: 'Control',
+      icon: 'settings',
+      title: 'Add the control layer',
+      detail: 'Turn the primitive into approval states, blocked states, and operator briefs.'
+    }
+  ];
+
+  function productCard(product: Product): ClearCardItem {
+    const points = [product.tagline, product.npmPackage, product.client, product.timeline].filter(
+      Boolean
+    ) as string[];
+    const icon =
+      product.category === 'integration'
+        ? 'plus'
+        : product.category === 'client'
+          ? 'folder'
+          : product.category === 'featured'
+            ? 'check'
+            : 'settings';
+
+    return {
+      eyebrow: product.badge ?? product.category,
+      icon,
+      title: product.title,
+      detail: product.description,
+      href: product.href,
+      points: points.length ? points : undefined
+    };
+  }
+
+  function proofStateIcon(icon: string | undefined): ProofStateIconName {
+    if (icon === 'objects' || icon === 'actions' || icon === 'states' || icon === 'receipts') {
+      return icon;
+    }
+
+    return 'receipts';
   }
 </script>
 
 <SEO
-  title="Proof Surfaces | CREATE SOMETHING .agency"
-  description="Proof surfaces behind CREATE SOMETHING .agency: agent tools, MCP connectors, and client builds that show how the operating layer becomes inspectable."
-  keywords="MCP servers, trust layer, agent coordination, grounded AI code analysis, workflow controls, operator surfaces"
+  title="Proof | CREATE SOMETHING .agency"
+  description="Proof behind CREATE SOMETHING .agency: delivery records, tools, connectors, and client builds that show how workflow control becomes inspectable."
+  keywords="MCP servers, trust layer, Linear coordination, grounded AI code analysis, workflow controls, operator surfaces"
   ogImage="/og-image.svg"
   propertyName="agency"
 />
 
-<!-- Hero -->
-<section class="hero">
-  <div class="hero-grid-container">
-    <AnimatedGridPattern
-      numSquares={25}
-      maxOpacity={0.08}
-      duration={4}
-      repeatDelay={2}
-      width={60}
-      height={60}
-      class="hero-animated-grid"
-    />
-  </div>
-  <div class="hero-content">
-    <BlurFade delay={0}>
-      <p class="hero-eyebrow">Proof Surfaces</p>
-    </BlurFade>
-    <BlurFade delay={0.1}>
-      <h1 class="hero-title">The operating layer is built from inspectable parts.</h1>
-    </BlurFade>
-    <BlurFade delay={0.2}>
-      <p class="hero-subtitle">
-        Loom, Ground, MCP connectors, and client builds are not a random product shelf. They are
-        proof surfaces for the same path: connect the system, verify the claim, coordinate the
-        agents, then control the workflow.
-      </p>
-    </BlurFade>
-  </div>
-</section>
+<ClearPageSection
+  variant="hero"
+  layout="split"
+  titleLevel="h1"
+  eyebrow="Proof"
+  title="The service is backed by inspectable parts."
+  description="Ground, archived Loom coordination work, connectors, and client builds are not a random product shelf. They show the same path the service follows: connect the system, verify the claim, coordinate the work, then control the workflow."
+>
+  {#snippet actions()}
+    <Button href={agencyCoreMessaging.selfMapHref}>
+      {agencyCoreMessaging.selfMapLabel}
+    </Button>
+    <Button href={agencyCoreMessaging.workflowMappingSessionHref} variant="secondary">
+      {agencyCoreMessaging.bookMappingSessionLabel}
+    </Button>
+  {/snippet}
 
-<!-- Proof Map -->
-<section class="proof-map-section">
-  <div class="section-inner">
-    <BlurFade delay={0.1}>
-      <div class="proof-map">
-        <div class="proof-map-copy">
-          <p class="section-eyebrow">How to read this page</p>
-          <h2>Products are proof primitives. Trust Layer is the operating layer.</h2>
-          <p>
-            The free and open tools show the discipline underneath the service: grounded claims,
-            agent continuity, constrained MCP access, and evidence-backed decisions. The paid work
-            turns those primitives into one workflow your operator can trust.
-          </p>
-        </div>
-        <div class="proof-role-grid">
-          {#each proofRoles as role}
-            <article class="proof-role-card">
-              <span>{role.label}</span>
-              <h3>{role.title}</h3>
-              <p>{role.detail}</p>
-            </article>
-          {/each}
-        </div>
-      </div>
-    </BlurFade>
-  </div>
-</section>
+  {#snippet aside()}
+    <ClearCardGrid items={proofRoles} columns={1} density="compact" ariaLabel="Proof primitives" />
+  {/snippet}
+</ClearPageSection>
 
-<!-- Featured Products -->
-<section class="products-section">
-  <div class="section-inner">
-    <BlurFade delay={0.1}>
-      <div class="section-header">
-        <h2 class="section-eyebrow">Flagship proof surfaces</h2>
-        <p class="section-desc">
-          The two core open tools behind the Calm Operator thesis: verify before claiming, then
-          coordinate agent work with memory and evidence.
-        </p>
-      </div>
-    </BlurFade>
-    <div class="featured-grid">
-      {#each featured as product, index}
-        <BlurFade delay={0.2 + index * 0.1}>
-          <a href={product.href} class="product-card featured-card">
-            <div class="product-badge badge-oss">{product.badge}</div>
-            <h3 class="product-name">{product.title}</h3>
-            <p class="product-tagline">{product.tagline}</p>
-            <p class="product-description">{product.description}</p>
-            <div class="product-footer">
-              {#if product.npmPackage}
-                <code class="product-npm">{product.npmPackage}</code>
-              {/if}
-              <span class="product-cta">Install →</span>
-            </div>
-          </a>
-        </BlurFade>
-      {/each}
-    </div>
-  </div>
-</section>
+<ClearPageSection
+  variant="white"
+  eyebrow="Run state proof"
+  title="The proof model is visible before the workflow expands."
+  description="Every artifact on this page should help a buyer understand what can run, what waits, what stops, and which receipt proves the decision."
+>
+  {#snippet after()}
+    <ClearProofStrip items={proofStripItems} ariaLabel="Workflow proof states">
+      {#snippet icon(item)}
+        <WorkflowSignalIcon name={proofStateIcon(item.icon)} />
+      {/snippet}
+    </ClearProofStrip>
 
-<!-- Method + Framework -->
-<section class="products-section">
-  <div class="section-inner">
-    <BlurFade delay={0.1}>
-      <div class="section-header">
-        <h2 class="section-eyebrow">Method and control primitives</h2>
-        <p class="section-desc">
-          Framework tools that make the delivery philosophy inspectable before it becomes client
-          workflow systems.
-        </p>
-      </div>
-    </BlurFade>
-    <div class="category-grid">
-      {#each methodAndFramework as product, index}
-        <BlurFade delay={0.2 + index * 0.07}>
-          <a
-            href={product.href}
-            class="product-card category-card"
-            target={isExternal(product.href) ? '_blank' : undefined}
-            rel={isExternal(product.href) ? 'noopener noreferrer' : undefined}
-          >
-            <div class="product-badge badge-neutral">{product.badge}</div>
-            <h3 class="product-name">{product.title}</h3>
-            <p class="product-tagline">{product.tagline}</p>
-            <p class="product-description">{product.description}</p>
-            <span class="product-cta">View source →</span>
-          </a>
-        </BlurFade>
-      {/each}
-    </div>
-  </div>
-</section>
-
-<!-- Integration MCPs -->
-<section class="products-section">
-  <div class="section-inner">
-    <BlurFade delay={0.1}>
-      <div class="section-header">
-        <h2 class="section-eyebrow">Connection wedge MCPs</h2>
-        <p class="section-desc">
-          MCPs prove the connection first. When the workflow becomes strategic, the same wedge can
-          graduate into approvals, blocked states, and operator briefs.
-        </p>
-      </div>
-    </BlurFade>
-    <div class="category-grid">
-      {#each integrations as product, index}
-        <BlurFade delay={0.2 + index * 0.1}>
-          <a
-            href={product.href}
-            class="product-card category-card"
-            target={isExternal(product.href) ? '_blank' : undefined}
-            rel={isExternal(product.href) ? 'noopener noreferrer' : undefined}
-          >
-            <div class="product-badge badge-neutral">{product.badge}</div>
-            <h3 class="product-name">{product.title}</h3>
-            <p class="product-tagline">{product.tagline}</p>
-            <p class="product-description">{product.description}</p>
-            <span class="product-cta">View on GitHub →</span>
-          </a>
-        </BlurFade>
-      {/each}
-    </div>
-  </div>
-</section>
-
-<!-- Client Portfolio -->
-<section class="products-section">
-  <div class="section-inner">
-    <BlurFade delay={0.1}>
-      <div class="section-header">
-        <h2 class="section-eyebrow">Client workflow evidence</h2>
-        <p class="section-desc">
-          Selected builds showing how real systems move from integration work into runbooks,
-          policy, handoffs, and operating visibility.
-        </p>
-      </div>
-    </BlurFade>
-    <div class="client-grid">
-      {#each clientWork as product, index}
-        <BlurFade delay={0.2 + index * 0.1}>
-          <div class="client-card">
-            <div class="client-card-header">
-              <div class="product-badge badge-accent">{product.badge}</div>
-              {#if product.client}
-                <span class="client-name">for {product.client}</span>
-              {/if}
-            </div>
-            <h3 class="product-name">{product.title}</h3>
-            <p class="product-tagline">{product.tagline}</p>
-            <p class="product-description">{product.description}</p>
-            {#if product.integrations && product.integrations.length > 0}
-              <div class="integration-tags">
-                {#each product.integrations as integration}
-                  <span class="integration-tag">{integration}</span>
-                {/each}
-              </div>
-            {/if}
+    <div class="proof-path" aria-label="Inspectable workflow path">
+      {#each proofPathItems as step, index}
+        <article class="proof-path__item">
+          <span class="proof-path__index">{String(index + 1).padStart(2, '0')}</span>
+          <div>
+            <strong>{step.label}</strong>
+            <p>{step.detail}</p>
           </div>
-        </BlurFade>
+        </article>
       {/each}
     </div>
-  </div>
-</section>
+  {/snippet}
+</ClearPageSection>
 
-<!-- CTA -->
-<section class="cta-section">
-  <div class="section-container">
-    <BlurFade delay={0.1}>
-      <p class="cta-heading">Need the proof applied to your workflow?</p>
-    </BlurFade>
-    <BlurFade delay={0.2}>
-      <p class="cta-subtext">
-        I’ll map the first workflow, identify the safest MCP wedge, and define when the Trust Layer
-        should take over.
-      </p>
-    </BlurFade>
-    <BlurFade delay={0.3}>
-      <a href="/book" class="cta-link">Book a mapping session →</a>
-    </BlurFade>
-  </div>
-</section>
+<ClearPageSection
+  variant="white"
+  eyebrow="How to read this page"
+  title="Tools are evidence. The service is the operating path."
+  description="The free and open tools show the discipline underneath the service: grounded claims, agent continuity, constrained MCP access, and evidence-backed decisions. The paid work turns those primitives into one workflow your operator can trust."
+>
+  {#snippet after()}
+    <ClearCardGrid items={proofReadingCards} columns={4} ariaLabel="How to read proof" />
+  {/snippet}
+</ClearPageSection>
+
+<ClearQuoteMetricPanel
+  eyebrow="Proof metrics"
+  quote="Proof stays useful when it names what ran, what waited, and what stopped."
+  source="CREATE SOMETHING .agency workflow control model"
+  metrics={proofMetrics}
+  ariaLabel="Workflow proof metrics"
+/>
+
+<ClearPageSection
+  variant="soft"
+  eyebrow="Proof ledger"
+  title="The evidence is business-readable before it is technical."
+  description="Elite workflow buyers need to see the path from problem to control. The proof ledger shows how each build preserves business context, owner authority, and inspectable receipts."
+>
+  {#snippet after()}
+    <ClearCardGrid items={proofLedger} columns={4} ariaLabel="Business proof ledger" />
+  {/snippet}
+</ClearPageSection>
+
+<ClearPageSection
+  variant="white"
+  eyebrow="Flagship proof"
+  title="Verify before claiming, then coordinate the work."
+  description="The two core proof threads behind the operating-layer thesis: Ground checks claims, and the archived Loom work shows why agent coordination needs owned task state, now handled here through Linear."
+>
+  {#snippet after()}
+    <ClearCardGrid
+      items={featured.map(productCard)}
+      columns={2}
+      ariaLabel="Flagship proof surfaces"
+    />
+  {/snippet}
+</ClearPageSection>
+
+<ClearPageSection
+  variant="soft"
+  eyebrow="Method and control primitives"
+  title="Framework tools make the delivery philosophy inspectable."
+  description="These tools show the rules underneath the service before they become client workflow systems."
+>
+  {#snippet after()}
+    <ClearCardGrid
+      items={methodAndFramework.map(productCard)}
+      columns={3}
+      ariaLabel="Method and framework proof surfaces"
+    />
+  {/snippet}
+</ClearPageSection>
+
+<ClearPageSection
+  variant="white"
+  eyebrow="Connection tools"
+  title="Connections prove the path first."
+  description="When the workflow becomes strategic, the same connection can graduate into approvals, blocked states, and operator briefs."
+>
+  {#snippet after()}
+    <ClearCardGrid
+      items={integrations.map(productCard)}
+      columns={3}
+      ariaLabel="Connection wedge MCPs"
+    />
+  {/snippet}
+</ClearPageSection>
+
+<ClearPageSection
+  variant="soft"
+  eyebrow="Client workflow evidence"
+  title="Real systems move from integration work into operating visibility."
+  description="Selected builds show how code, runbooks, policy, handoffs, and evidence turn into work an operator can understand."
+>
+  {#snippet after()}
+    <ClearCardGrid
+      items={clientWork.map(productCard)}
+      columns={2}
+      ariaLabel="Client workflow evidence"
+    />
+  {/snippet}
+</ClearPageSection>
+
+<ClearCtaBand
+  eyebrow="Apply the proof"
+  title="Need the proof applied to your workflow?"
+  description="I’ll map the first workflow, identify the safest connection point, and define when the control layer should take over."
+  items={ctaItems}
+>
+  {#snippet actions()}
+    <Button href={agencyCoreMessaging.selfMapHref}>
+      {agencyCoreMessaging.selfMapLabel}
+    </Button>
+    <Button href={agencyCoreMessaging.workflowMappingSessionHref} variant="secondary">
+      {agencyCoreMessaging.bookMappingSessionLabel}
+    </Button>
+  {/snippet}
+</ClearCtaBand>
 
 <style>
-  /* Section containers */
-  .section-container {
-    max-width: var(--content-width-xl);
-    margin: 0 auto;
-    padding: 0 var(--container-padding, 1.5rem);
-  }
-
-  .section-inner {
-    max-width: var(--content-width-xl);
-    margin: 0 auto;
-  }
-
-  /* Hero with grid background */
-  .hero {
-    position: relative;
-    padding: 5rem var(--container-padding, 1.5rem) 3rem;
+  .proof-path {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0;
+    margin-top: 0.85rem;
+    border: 1px solid var(--color-clear-border, #e1e1e1);
+    border-radius: var(--radius-clear-sm, 4px);
+    background: var(--color-clear-panel, #ffffff);
     overflow: hidden;
   }
 
-  .hero-grid-container {
-    position: absolute;
-    inset: 0;
-    overflow: hidden;
-    pointer-events: none;
-  }
-
-  :global(.hero-animated-grid) {
-    mask-image: radial-gradient(600px circle at 50% 35%, white, transparent);
-    -webkit-mask-image: radial-gradient(600px circle at 50% 35%, white, transparent);
-  }
-
-  .hero-content {
-    position: relative;
-    text-align: center;
-    max-width: var(--content-width-xl);
-    margin: 0 auto;
-  }
-
-  .hero-eyebrow {
-    font-size: var(--text-caption);
-    text-transform: uppercase;
-    letter-spacing: 0.15em;
-    color: var(--color-fg-muted);
-    margin-bottom: var(--space-3, 0.75rem);
-  }
-
-  .hero-title {
-    font-size: var(--text-h1);
-    font-weight: var(--font-semibold);
-    color: var(--color-fg-primary);
-    margin-bottom: var(--space-3, 0.75rem);
-    line-height: 1.1;
-    letter-spacing: var(--tracking-tighter, -0.025em);
-  }
-
-  .hero-subtitle {
-    font-size: var(--text-body-lg);
-    color: var(--color-fg-secondary);
-    max-width: var(--content-width-xl);
-    margin: 0 auto;
-    line-height: var(--leading-relaxed);
-  }
-
-  /* Section Headers — compact: eyebrow + one-line description */
-  .section-header {
-    display: flex;
-    flex-direction: column;
-    margin-bottom: var(--space-5, 1.5rem);
-  }
-
-  .section-eyebrow {
-    font-size: var(--text-caption);
-    text-transform: uppercase;
-    letter-spacing: 0.15em;
-    color: var(--color-fg-muted);
-    font-weight: var(--font-semibold);
-    margin-bottom: var(--space-2, 0.5rem);
-  }
-
-  .section-desc {
-    font-size: var(--text-body-sm);
-    color: var(--color-fg-tertiary);
-    line-height: var(--leading-relaxed);
-    text-wrap: balance;
-  }
-
-  .proof-map-section {
-    padding: 1rem var(--container-padding, 1.5rem) 3rem;
-  }
-
-  .proof-map {
+  .proof-path__item {
     display: grid;
-    grid-template-columns: minmax(0, 0.78fr) minmax(0, 1.22fr);
-    gap: clamp(1rem, 3vw, 1.75rem);
-    padding: clamp(1rem, 2.5vw, 1.5rem);
-    border: 1px solid rgba(255, 255, 255, 0.075);
-    border-radius: 1.25rem;
-    background:
-      linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.016)),
-      rgba(0, 0, 0, 0.35);
+    grid-template-columns: 2.35rem minmax(0, 1fr);
+    gap: 0.8rem;
+    min-height: 7.25rem;
+    align-items: start;
+    padding: 0.95rem;
+    border-right: 1px solid var(--color-clear-border, #e1e1e1);
   }
 
-  .proof-map-copy h2 {
-    margin: 0 0 var(--space-3, 0.75rem);
-    max-width: 16ch;
-    color: var(--color-fg-primary);
-    font-size: var(--text-h2);
-    line-height: 1.05;
-    letter-spacing: var(--tracking-tighter, -0.025em);
+  .proof-path__item:last-child {
+    border-right: 0;
   }
 
-  .proof-map-copy p {
-    color: var(--color-fg-secondary);
-    line-height: var(--leading-relaxed);
+  .proof-path__index {
+    display: inline-grid;
+    place-items: center;
+    width: 2.35rem;
+    height: 2.35rem;
+    border: 1px solid var(--color-clear-border, #e1e1e1);
+    border-radius: var(--radius-clear-sm, 4px);
+    background: var(--color-clear-porcelain, #f9f9f9);
+    color: var(--color-clear-grey, #636363);
+    font-family: var(--font-mono);
+    font-size: 0.74rem;
+    font-weight: var(--font-semibold);
+    letter-spacing: 0;
+    line-height: 1;
   }
 
-  .proof-role-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.75rem;
-  }
-
-  .proof-role-card {
-    padding: 1rem;
-    border: 1px solid rgba(255, 255, 255, 0.07);
-    border-radius: 1rem;
-    background: rgba(255, 255, 255, 0.025);
-  }
-
-  .proof-role-card span {
+  .proof-path strong {
     display: block;
-    margin-bottom: 0.75rem;
-    font-family: var(--font-mono, monospace);
-    font-size: var(--text-caption);
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    color: rgba(167, 184, 255, 0.78);
+    color: var(--color-clear-onyx, #0a0e19);
+    font-size: 1rem;
+    font-weight: var(--font-medium);
+    line-height: 1.18;
   }
 
-  .proof-role-card h3 {
-    margin: 0 0 0.45rem;
-    color: var(--color-fg-primary);
-    font-size: var(--text-body);
+  .proof-path p {
+    margin: 0.38rem 0 0;
+    color: var(--color-clear-grey, #636363);
+    font-size: 0.88rem;
+    line-height: 1.4;
   }
 
-  .proof-role-card p {
-    margin: 0;
-    color: var(--color-fg-secondary);
-    font-size: var(--text-body-sm);
-    line-height: var(--leading-relaxed);
-  }
-
-  /* Products Section */
-  .products-section {
-    padding: 3rem var(--container-padding, 1.5rem);
-  }
-
-  /* Shared Grid for all product sections */
-  .featured-grid,
-  .category-grid,
-  .client-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-    gap: var(--space-4, 1rem);
-  }
-
-  /* Product Card — base */
-  .product-card,
-  .client-card {
-    padding: 1.5rem;
-    border-radius: var(--radius-lg, 12px);
-    display: flex;
-    flex-direction: column;
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid var(--color-border-subtle, rgba(255, 255, 255, 0.05));
-    box-shadow: var(--glass-shine-soft);
-    text-decoration: none;
-    transition:
-      border-color var(--duration-standard) var(--ease-standard),
-      transform var(--duration-standard) var(--ease-standard),
-      background var(--duration-standard) var(--ease-standard);
-  }
-
-  .product-card:hover,
-  .client-card:hover {
-    border-color: rgba(96, 165, 250, 0.4);
-    background: rgba(255, 255, 255, 0.04);
-    transform: translateY(-2px);
-  }
-
-  .featured-card {
-    background: linear-gradient(135deg, transparent 0%, rgba(96, 165, 250, 0.04) 100%);
-    border-color: rgba(96, 165, 250, 0.15);
-  }
-
-  .client-card {
-    background: linear-gradient(135deg, transparent 0%, rgba(167, 139, 250, 0.04) 100%);
-  }
-
-  /* Typography consistency */
-  .product-name {
-    font-size: var(--text-h3, 1.25rem);
-    font-weight: var(--font-semibold);
-    color: var(--color-fg-primary);
-    margin-bottom: var(--space-1, 0.25rem);
-  }
-
-  .client-card-header {
-    display: flex;
-    align-items: center;
-    gap: var(--space-3, 0.75rem);
-    margin-bottom: var(--space-4, 1rem);
-  }
-
-  .client-name {
-    font-size: var(--text-body-sm);
-    color: var(--color-fg-muted);
-    font-style: italic;
-  }
-
-  /* Badges */
-  .product-badge {
-    font-size: var(--text-caption);
-    padding: 0.2rem 0.6rem;
-    border-radius: var(--radius-full, 9999px);
-    width: fit-content;
-    margin-bottom: var(--space-3, 0.75rem);
-  }
-
-  .client-card-header .product-badge {
-    margin-bottom: 0;
-  }
-
-  .badge-oss {
-    color: var(--color-success);
-    background: var(--color-success-muted);
-  }
-
-  .badge-neutral {
-    color: var(--color-fg-secondary);
-    background: rgba(255, 255, 255, 0.06);
-  }
-
-  .badge-accent {
-    color: var(--color-accent, #a78bfa);
-    background: rgba(167, 139, 250, 0.1);
-  }
-
-  .product-tagline {
-    font-size: var(--text-body-sm);
-    color: var(--color-fg-secondary);
-    margin-bottom: var(--space-2, 0.5rem);
-  }
-
-  .product-description {
-    font-size: var(--text-caption);
-    color: var(--color-fg-tertiary);
-    line-height: var(--leading-relaxed);
-    flex: 1;
-    margin-bottom: var(--space-3, 0.75rem);
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-
-  .product-footer {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--space-3, 0.75rem);
-    margin-top: auto;
-    min-width: 0;
-  }
-
-  .product-npm {
-    font-size: var(--text-caption);
-    color: var(--color-fg-muted);
-    background: rgba(255, 255, 255, 0.04);
-    padding: 0.2rem 0.5rem;
-    border-radius: var(--radius-sm, 4px);
-    font-family: var(--font-mono, monospace);
-    flex: 1 1 auto;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .product-cta {
-    font-size: var(--text-body-sm);
-    font-weight: var(--font-semibold);
-    color: var(--color-fg-secondary);
-    transition: color var(--duration-micro, 200ms) var(--ease-standard);
-    margin-left: auto;
-    flex-shrink: 0;
-    white-space: nowrap;
-  }
-
-  .product-card:hover .product-cta {
-    color: var(--color-fg-primary);
-  }
-
-  /* Integration tags */
-  .integration-tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-2, 0.5rem);
-    margin-top: auto;
-  }
-
-  .integration-tag {
-    font-size: var(--text-caption);
-    color: var(--color-fg-muted);
-    background: rgba(255, 255, 255, 0.04);
-    padding: 0.2rem 0.6rem;
-    border-radius: var(--radius-sm, 4px);
-  }
-
-  /* CTA */
-  .cta-section {
-    padding: 3rem 0;
-    text-align: center;
-  }
-
-  .cta-heading {
-    font-size: var(--text-h3, 1.25rem);
-    font-weight: var(--font-semibold);
-    color: var(--color-fg-primary);
-    margin-bottom: var(--space-2, 0.5rem);
-  }
-
-  .cta-subtext {
-    font-size: var(--text-body-sm);
-    color: var(--color-fg-secondary);
-    margin-bottom: var(--space-4, 1rem);
-  }
-
-  .cta-link {
-    font-size: var(--text-body);
-    font-weight: var(--font-semibold);
-    color: var(--color-fg-secondary);
-    transition: color var(--duration-micro, 200ms) var(--ease-standard);
-  }
-
-  .cta-link:hover {
-    color: var(--color-fg-primary);
-  }
-
-  /* Responsive */
-  @media (max-width: 768px) {
-    .hero {
-      padding: 3rem var(--container-padding, 1.5rem) 2rem;
+  @media (max-width: 980px) {
+    .proof-path {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .hero-title {
-      font-size: var(--text-h2);
+    .proof-path__item:nth-child(2n) {
+      border-right: 0;
     }
 
-    .proof-map {
+    .proof-path__item:nth-child(-n + 2) {
+      border-bottom: 1px solid var(--color-clear-border, #e1e1e1);
+    }
+  }
+
+  @media (max-width: 640px) {
+    .proof-path {
       grid-template-columns: 1fr;
     }
 
-    .proof-role-grid {
-      grid-template-columns: 1fr;
+    .proof-path__item,
+    .proof-path__item:nth-child(2n),
+    .proof-path__item:nth-child(-n + 2) {
+      min-height: auto;
+      border-right: 0;
+      border-bottom: 1px solid var(--color-clear-border, #e1e1e1);
     }
 
-    .featured-grid,
-    .category-grid,
-    .client-grid {
-      grid-template-columns: 1fr;
-    }
-
-    .products-section {
-      padding: 2rem var(--container-padding, 1.5rem);
-    }
-
-    .cta-section {
-      padding: 2rem 0;
-    }
-
-    .product-footer {
-      flex-direction: column;
-      align-items: flex-start;
-    }
-
-    .product-npm {
-      width: 100%;
-    }
-
-    .product-cta {
-      margin-left: 0;
+    .proof-path__item:last-child {
+      border-bottom: 0;
     }
   }
 </style>

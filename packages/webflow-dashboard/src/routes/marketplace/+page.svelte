@@ -50,6 +50,17 @@
     };
   }
 
+  type MarketplaceSalesSource =
+    | 'category-performance'
+    | 'leaderboard-top-50'
+    | 'unavailable';
+
+  type MarketplaceSummary = Omit<LeaderboardResponse['summary'], 'totalMarketplaceSales'> & {
+    totalMarketplaceSales: number | null;
+    salesSource: MarketplaceSalesSource;
+    dataWarning?: string | null;
+  };
+
   interface CategoriesResponse {
     categories: CategoryEntry[];
     insights: Insight[];
@@ -80,12 +91,14 @@
   let categories = $state<CategoryEntry[]>([]);
   let insights = $state<Insight[]>([]);
   let userTemplates = $state<LeaderboardEntry[]>([]);
-  let summary = $state<LeaderboardResponse['summary']>({
-    totalMarketplaceSales: 0,
+  let summary = $state<MarketplaceSummary>({
+    totalMarketplaceSales: null,
     userBestRank: null,
     lastUpdated: '',
     nextUpdateDate: undefined,
-    isFreshnessEstimated: true
+    isFreshnessEstimated: true,
+    salesSource: 'unavailable',
+    dataWarning: null
   });
 
   /**
@@ -129,6 +142,69 @@
     });
   }
 
+  function buildMarketplaceSummary(
+    leaderboardData: LeaderboardResponse,
+    categoriesData: CategoriesResponse
+  ): MarketplaceSummary {
+    const categorySummary = categoriesData.summary;
+    const categoryRows = categoriesData.categories.length;
+    const leaderboardRows = leaderboardData.leaderboard.length;
+    const categoryTotal = categorySummary?.totalSales ?? 0;
+    const leaderboardTotal = leaderboardData.summary.totalMarketplaceSales ?? 0;
+
+    const categoryFreshness = categorySummary
+      ? {
+          lastUpdated: categorySummary.lastUpdated,
+          nextUpdateDate: categorySummary.nextUpdate,
+          expectedLastSyncTime: categorySummary.expectedLastSyncTime,
+          syncSchedule: categorySummary.syncSchedule,
+          dataWindow: categorySummary.dataWindow,
+          timeUntilNextSync: categorySummary.timeUntilNextSync,
+          freshnessSource: categorySummary.freshnessSource,
+          isFreshnessEstimated: categorySummary.isFreshnessEstimated,
+          isStale: categorySummary.isStale,
+          staleSinceHours: categorySummary.staleSinceHours
+        }
+      : {};
+
+    const freshness =
+      categoryRows > 0 || categorySummary?.freshnessSource === 'airtable-field'
+        ? categoryFreshness
+        : {};
+
+    const baseSummary: MarketplaceSummary = {
+      ...leaderboardData.summary,
+      ...freshness,
+      totalMarketplaceSales: null,
+      salesSource: 'unavailable',
+      dataWarning:
+        'Marketplace sales snapshot is unavailable; zero is not shown because the source snapshot is empty.'
+    };
+
+    if (categoryRows > 0 && categoryTotal > 0) {
+      return {
+        ...baseSummary,
+        totalMarketplaceSales: categoryTotal,
+        salesSource: 'category-performance',
+        dataWarning: null
+      };
+    }
+
+    if (leaderboardRows > 0 && leaderboardTotal > 0) {
+      return {
+        ...baseSummary,
+        totalMarketplaceSales: leaderboardTotal,
+        salesSource: 'leaderboard-top-50',
+        dataWarning:
+          categoryRows > 0
+            ? 'Category performance snapshot has no sales total; showing top-50 leaderboard total until the category feed is repaired.'
+            : 'Category performance snapshot is empty; showing top-50 leaderboard total until the category feed refreshes.'
+      };
+    }
+
+    return baseSummary;
+  }
+
   $effect(() => {
     loadData();
   });
@@ -155,20 +231,15 @@
       categories = categoriesData.categories;
       insights = categoriesData.insights;
 
-      // Use categories-based total sales (all marketplace) instead of
-      // leaderboard total (top 50 only). This matches v1 behavior and gives
-      // a more accurate marketplace-wide picture.
-      summary = {
-        ...leaderboardData.summary,
-        totalMarketplaceSales:
-          categoriesData.summary?.totalSales ?? leaderboardData.summary.totalMarketplaceSales
-      };
+      summary = buildMarketplaceSummary(leaderboardData, categoriesData);
 
       trackEvent('marketplace_data_loaded', {
         leaderboard_count: leaderboardData.leaderboard.length,
         user_template_count: leaderboardData.userTemplates.length,
         category_rows: categoriesData.categories.length,
-        total_sales_30d: summary.totalMarketplaceSales
+        total_sales_30d: summary.totalMarketplaceSales ?? undefined,
+        total_sales_source: summary.salesSource,
+        data_warning: summary.dataWarning ?? undefined
       });
     } catch (err) {
       error = err instanceof Error ? err.message : 'Failed to load data';
@@ -209,12 +280,12 @@
         <div class="header-content">
           <h1 class="page-title page-intro__title">Marketplace Insights</h1>
           <p class="page-subtitle page-intro__subtitle">
-            Weekly marketplace snapshot with 30-day performance data
+            Marketplace performance snapshot with 30-day data
           </p>
           <div class="marketplace-evidence" aria-label="Marketplace evidence">
             <span><strong>30-day window</strong> for category and template performance</span>
             <span><strong>Portfolio categories first</strong> to find relevant signal quickly</span>
-            <span><strong>Weekly refresh</strong> for comparative market context</span>
+            <span><strong>Source freshness</strong> shown from sync metadata when available</span>
           </div>
           {#if summary.lastUpdated}
             <div class="sync-info-container">
@@ -231,13 +302,14 @@
               </p>
               <p class="sync-note">
                 {#if summary.isFreshnessEstimated}
-                  Data refreshes weekly on Mondays at 4 PM UTC with a rolling 30-day sales window.
-                  Last update timestamp is estimated from the schedule.
+                  Data uses a rolling 30-day sales window. Last update timestamp is estimated from
+                  the configured source schedule.
                 {:else if summary.freshnessSource === 'airtable-record-created-time'}
-                  Data refreshes weekly on Mondays at 4 PM UTC. Timestamp is inferred from Airtable
+                  Data uses a rolling 30-day sales window. Timestamp is inferred from Airtable
                   record creation metadata.
                 {:else}
-                  Data refreshes weekly on Mondays at 4 PM UTC with a rolling 30-day sales window.
+                  Data uses a rolling 30-day sales window. Latest source timestamp comes from
+                  Airtable sync data.
                 {/if}
               </p>
               {#if summary.isStale && summary.expectedLastSyncTime}

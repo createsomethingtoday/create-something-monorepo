@@ -28,6 +28,8 @@
     showNewsletter?: boolean;
     newsletterTitle?: string;
     newsletterDescription?: string;
+    newsletterSubmitLabel?: string;
+    newsletterPendingLabel?: string;
     quickLinks?: QuickLink[];
     quickLinkGroups?: QuickLinkGroup[];
     footerCta?: FooterCta;
@@ -51,6 +53,8 @@
     showNewsletter = false,
     newsletterTitle = 'Stay updated with new experiments',
     newsletterDescription = 'Get notified when new research is published. Real metrics, tracked experiments, honest learnings.',
+    newsletterSubmitLabel = 'Get the note',
+    newsletterPendingLabel = 'Sending request...',
     quickLinks = [],
     quickLinkGroups = [],
     footerCta,
@@ -289,7 +293,7 @@
                 disabled={isSubmitting}
                 class="newsletter-button group px-8 py-4 flex items-center justify-center gap-2"
               >
-                <span>{isSubmitting ? 'Subscribing...' : 'Subscribe'}</span>
+                <span>{isSubmitting ? newsletterPendingLabel : newsletterSubmitLabel}</span>
                 {#if !isSubmitting}
                   <svg
                     class="w-4 h-4 transition-transform group-hover:translate-x-1"

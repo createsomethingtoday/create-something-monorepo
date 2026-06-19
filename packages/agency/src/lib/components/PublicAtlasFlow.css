@@ -1,0 +1,233 @@
+.public-atlas-flow {
+	width: 100%;
+	height: 100%;
+	min-height: 31rem;
+	background:
+		linear-gradient(#f4f4ef 1px, transparent 1px),
+		linear-gradient(90deg, #f4f4ef 1px, transparent 1px);
+	background-color: #fbfbf8;
+	background-size: 32px 32px;
+	font-family:
+		ABCDiatype,
+		Inter,
+		ui-sans-serif,
+		system-ui,
+		-apple-system,
+		BlinkMacSystemFont,
+		"Segoe UI",
+		sans-serif;
+}
+
+.public-atlas-flow .react-flow__pane {
+	cursor: grab;
+}
+
+.public-atlas-flow .react-flow__pane:active {
+	cursor: grabbing;
+}
+
+.public-atlas-flow .react-flow__attribution {
+	display: none;
+}
+
+.public-atlas-flow .react-flow__controls {
+	box-shadow: 0 14px 32px rgba(10, 14, 25, 0.08);
+}
+
+.public-atlas-flow .react-flow__controls-button {
+	border-color: rgba(10, 14, 25, 0.08);
+	background: rgba(255, 255, 255, 0.94);
+	color: #0a0e19;
+}
+
+.public-atlas-flow .react-flow__handle {
+	width: 7px;
+	height: 7px;
+	border: 1px solid #b8b8af;
+	background: #ffffff;
+}
+
+.public-atlas-flow .react-flow__handle-left {
+	left: -4px;
+}
+
+.public-atlas-flow .react-flow__handle-right {
+	right: -4px;
+}
+
+.public-atlas-flow .react-flow__edge-path {
+	stroke: #aaa69b;
+	stroke-width: 1.35;
+}
+
+.public-atlas-flow .react-flow__edge-text {
+	fill: #6f6f67;
+	font-size: 11px;
+	font-weight: 600;
+}
+
+.public-atlas-flow .react-flow__edge-textbg {
+	fill: #fbfbf8;
+	fill-opacity: 0.92;
+}
+
+.public-atlas-kicker {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.45rem;
+	border: 1px solid rgba(10, 14, 25, 0.08);
+	border-radius: 999px;
+	background: rgba(255, 255, 255, 0.86);
+	color: #0a0e19;
+	font-size: 0.82rem;
+	font-weight: 700;
+	padding: 0.55rem 0.75rem;
+	box-shadow: 0 14px 32px rgba(10, 14, 25, 0.06);
+}
+
+.public-atlas-kicker small {
+	color: #74746c;
+	font-size: 0.78rem;
+	font-weight: 500;
+}
+
+.public-atlas-legend {
+	display: inline-flex;
+	gap: 0.45rem;
+	border: 1px solid rgba(10, 14, 25, 0.08);
+	border-radius: 999px;
+	background: rgba(255, 255, 255, 0.88);
+	padding: 0.35rem;
+	box-shadow: 0 14px 32px rgba(10, 14, 25, 0.06);
+}
+
+.public-atlas-legend span {
+	border: 1px solid transparent;
+	border-radius: 6px;
+	font-size: 0.72rem;
+	font-weight: 700;
+	padding: 0.35rem 0.55rem;
+	text-transform: uppercase;
+}
+
+.public-atlas-legend .run {
+	border-color: #b8dfc4;
+	background: #e8f6ec;
+	color: #1e3c2c;
+}
+
+.public-atlas-legend .wait {
+	border-color: #cbd6ff;
+	background: #eef2ff;
+	color: #0048ff;
+}
+
+.public-atlas-legend .stop {
+	border-color: #ffc8d0;
+	background: #fff0f2;
+	color: #c41e3a;
+}
+
+.public-atlas-flow-node {
+	display: grid;
+	gap: 0.35rem;
+	width: 100%;
+	min-height: 7.5rem;
+	border: 1px solid rgba(10, 14, 25, 0.1);
+	border-radius: 7px;
+	background: #ffffff;
+	box-shadow: 0 12px 26px rgba(10, 14, 25, 0.06);
+	color: #0a0e19;
+	cursor: grab;
+	padding: 0.72rem;
+	text-align: left;
+	transition:
+		border-color 140ms ease,
+		box-shadow 140ms ease,
+		transform 140ms ease;
+}
+
+.public-atlas-flow-node:hover {
+	border-color: rgba(10, 14, 25, 0.22);
+	box-shadow: 0 18px 36px rgba(10, 14, 25, 0.1);
+	transform: translateY(-1px);
+}
+
+.react-flow__node.selected .public-atlas-flow-node {
+	border-color: #0a0e19;
+	box-shadow: 0 0 0 2px rgba(10, 14, 25, 0.08), 0 18px 38px rgba(10, 14, 25, 0.12);
+}
+
+.public-atlas-flow-node.status-run {
+	background: #f5fbf6;
+}
+
+.public-atlas-flow-node.status-wait {
+	background: #f4f1ff;
+}
+
+.public-atlas-flow-node.status-stop {
+	background: #fff1f3;
+}
+
+.public-atlas-flow-node.status-unknown {
+	background: #ffffff;
+}
+
+.public-atlas-flow-node header {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 0.7rem;
+}
+
+.public-atlas-flow-node .kind {
+	color: #777770;
+	font-size: 0.66rem;
+	font-weight: 800;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+}
+
+.public-atlas-flow-node .status {
+	border-radius: 999px;
+	background: rgba(10, 14, 25, 0.05);
+	color: #6d6d66;
+	font-size: 0.66rem;
+	font-weight: 800;
+	padding: 0.22rem 0.45rem;
+	text-transform: uppercase;
+}
+
+.public-atlas-flow-node.status-run .status {
+	background: #e2f4e7;
+	color: #1e3c2c;
+}
+
+.public-atlas-flow-node.status-wait .status {
+	background: #e7ebff;
+	color: #0048ff;
+}
+
+.public-atlas-flow-node.status-stop .status {
+	background: #ffe1e7;
+	color: #c41e3a;
+}
+
+.public-atlas-flow-node strong {
+	display: block;
+	font-size: 0.9rem;
+	line-height: 1.12;
+}
+
+.public-atlas-flow-node .owner {
+	color: #707068;
+	font-size: 0.72rem;
+	font-weight: 700;
+}
+
+.public-atlas-flow-node small {
+	color: #696963;
+	font-size: 0.72rem;
+	line-height: 1.25;
+}

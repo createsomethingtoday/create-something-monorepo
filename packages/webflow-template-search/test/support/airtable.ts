@@ -6,6 +6,7 @@ interface MockDataset {
   webflowAssets?: Array<Record<string, unknown>>;
   webflowCollections?: Array<Record<string, unknown>>;
   webflowCollectionItems?: Record<string, Array<Record<string, unknown>>>;
+  webflowCollectionItemErrors?: Record<string, { status: number; body: unknown }>;
   publishedTemplatePages?: Record<string, string>;
   styles?: Array<{ id: string; fields: Record<string, unknown> }>;
   childCategories?: Array<{ id: string; fields: Record<string, unknown> }>;
@@ -37,6 +38,11 @@ export function installAirtableFetchMock(dataset: MockDataset) {
       const collectionItemsMatch = url.pathname.match(/\/v2\/collections\/([^/]+)\/items$/);
       if (collectionItemsMatch) {
         const collectionId = collectionItemsMatch[1] ?? '';
+        const error = dataset.webflowCollectionItemErrors?.[collectionId];
+        if (error) {
+          return Response.json(error.body, { status: error.status });
+        }
+
         const offset = Number(url.searchParams.get('offset') ?? '0') || 0;
         const limit = Number(url.searchParams.get('limit') ?? '100') || 100;
         const items = dataset.webflowCollectionItems?.[collectionId] ?? [];
@@ -73,6 +79,8 @@ export function installAirtableFetchMock(dataset: MockDataset) {
     }
 
     if (tableId === 'tblRwzpWoLgE9MrUm') {
+      const maxRecords = Number(url.searchParams.get('maxRecords') ?? '0') || null;
+
       if (formula.includes('RECORD_ID()')) {
         return Response.json({
           records: dataset.publishedAssets.filter((record) => formula.includes(`"${record.id}"`)),
@@ -81,10 +89,11 @@ export function installAirtableFetchMock(dataset: MockDataset) {
 
       if (formula.includes('IS_AFTER(')) {
         const records = dataset.incrementalAssets ?? [];
+        const matchingRecords = records.some((record) => typeof record.fields['📅LMT'] === 'string')
+          ? records.filter((record) => dateMatchesModifiedWindow(record, formula))
+          : records;
         return Response.json({
-          records: records.some((record) => typeof record.fields['📅LMT'] === 'string')
-            ? records.filter((record) => dateMatchesModifiedWindow(record, formula))
-            : records,
+          records: maxRecords ? matchingRecords.slice(0, maxRecords) : matchingRecords,
         });
       }
 

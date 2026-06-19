@@ -8,11 +8,11 @@ Brokered, local, dormant, and non-HTTP servers are summarized but excluded from 
 
 ## Summary
 
-- MCP registry servers: 1034
-- Dify-direct candidates: 39
+- MCP registry servers: 1038
+- Dify-direct candidates: 43
 - Dify inventory status: `partial`
-- Dify MCP server cards in inventory: 16
-- Dify agents in inventory: 14
+- Dify MCP server cards in inventory: 17
+- Dify agents in inventory: 15
 - Dify MCP intake artifacts: 22
 
 ## Candidate Status
@@ -24,7 +24,7 @@ Brokered, local, dormant, and non-HTTP servers are summarized but excluded from 
 | `agent-draft` | 0 | Agent exists but is not published yet. |
 | `intake-ready` | 22 | Repo has a Dify Studio intake artifact, but the server card and discovered tools are not codified yet. |
 | `server-only` | 0 | Dify MCP server exists but no Dify agent uses it yet. |
-| `missing-dify-server` | 12 | No Dify MCP server card is codified for this registry server. |
+| `missing-dify-server` | 16 | No Dify MCP server card is codified for this registry server. |
 
 ## Excluded From Direct Dify Coverage
 
@@ -41,6 +41,10 @@ Brokered, local, dormant, and non-HTTP servers are summarized but excluded from 
 | --- | --- | --- | --- | --- | --- | ---: | --- | --- |
 | `abundance-staff-mcp` | `missing-dify-server` | - | - | - | - | 1 | `direct` | Run pnpm dify:mcp:intake -- --registry-server-id abundance-staff-mcp --write. |
 | `bettermode-creator` | `missing-dify-server` | - | - | - | - | 4 | `direct` | Run pnpm dify:mcp:intake -- --registry-server-id bettermode-creator --write. |
+| `halfdozen-agent-analyzer-telemetry` | `missing-dify-server` | - | - | - | - | 11 | `direct` | Run pnpm dify:mcp:intake -- --registry-server-id halfdozen-agent-analyzer-telemetry --write. |
+| `halfdozen-blondish-sync-mcp` | `missing-dify-server` | - | - | - | - | 8 | `direct` | Run pnpm dify:mcp:intake -- --registry-server-id halfdozen-blondish-sync-mcp --write. |
+| `halfdozen-c3-management-sync-mcp` | `missing-dify-server` | - | - | - | - | 8 | `direct` | Run pnpm dify:mcp:intake -- --registry-server-id halfdozen-c3-management-sync-mcp --write. |
+| `halfdozen-lightswitch-sync-mcp` | `missing-dify-server` | - | - | - | - | 8 | `direct` | Run pnpm dify:mcp:intake -- --registry-server-id halfdozen-lightswitch-sync-mcp --write. |
 | `hydra-db-recall-mcp` | `missing-dify-server` | - | - | - | - | 4 | `direct` | Run pnpm dify:mcp:intake -- --registry-server-id hydra-db-recall-mcp --write. |
 | `interaction-atlas-mcp` | `missing-dify-server` | - | - | - | - | 0 | `direct` | Run pnpm dify:mcp:intake -- --registry-server-id interaction-atlas-mcp --write. |
 | `notion-halfdozen-cracked` | `missing-dify-server` | - | - | - | - | 0 | `direct` | Run pnpm dify:mcp:intake -- --registry-server-id notion-halfdozen-cracked --write. |
@@ -70,7 +74,7 @@ Brokered, local, dormant, and non-HTTP servers are summarized but excluded from 
 | `slack-create-something` | `intake-ready` | - | `config/dify-mcp-intake/slack-create-something.json` | - | - | 0 | `direct` | Register the Dify MCP server card from the intake artifact, discover tools, then codify inventory. |
 | `spotify-mcp` | `intake-ready` | - | `config/dify-mcp-intake/spotify.json` | - | - | 29 | `direct` | Register the Dify MCP server card from the intake artifact, discover tools, then codify inventory. |
 | `substrate-mcp` | `intake-ready` | - | `config/dify-mcp-intake/substrate.json` | - | - | 0 | `direct` | Register the Dify MCP server card from the intake artifact, discover tools, then codify inventory. |
-| `webflow-app-review-mcp` | `intake-ready` | - | `config/dify-mcp-intake/webflow-app-review.json` | - | - | 0 | `direct` | Register the Dify MCP server card from the intake artifact, discover tools, then codify inventory. |
+| `webflow-app-review-mcp` | `intake-ready` | - | `config/dify-mcp-intake/webflow-app-review.json` | - | - | 21 | `direct` | Register the Dify MCP server card from the intake artifact, discover tools, then codify inventory. |
 | `webflow-local` | `intake-ready` | - | `config/dify-mcp-intake/webflow-local.json` | - | - | 10 | `direct` | Register the Dify MCP server card from the intake artifact, discover tools, then codify inventory. |
 | `webflow-template-review-mcp` | `intake-ready` | - | `config/dify-mcp-intake/webflow-template-review.json` | - | - | 0 | `direct` | Register the Dify MCP server card from the intake artifact, discover tools, then codify inventory. |
 | `abundance-jobs-mcp` | `ready` | `abundance-jobs` | - | `abundance-hub` | `abundance-hub` | 4 | `direct` | Keep smoke/eval evidence current. |
@@ -102,7 +106,7 @@ Brokered, local, dormant, and non-HTTP servers are summarized but excluded from 
 | `slack-create-something` | `config/dify-mcp-intake/slack-create-something.json` | `https://mcp.slack.com/mcp` | Slack MCP for CREATE SOMETHING workspace |
 | `spotify-mcp` | `config/dify-mcp-intake/spotify.json` | `https://spotify-mcp.createsomething.workers.dev/mcp` | CREATE SOMETHING governed Spotify MCP wrapper over RapidAPI with D1 and Braintrust telemetry |
 | `substrate-mcp` | `config/dify-mcp-intake/substrate.json` | `https://substrate.mcp.createsomething.agency/mcp` | Substrate execution/storage MCP |
-| `webflow-app-review-mcp` | `config/dify-mcp-intake/webflow-app-review.json` | `https://webflow-app-review-mcp.createsomething.workers.dev/mcp` | Webflow App Review MCP for app asset and version workflows |
+| `webflow-app-review-mcp` | `config/dify-mcp-intake/webflow-app-review.json` | `https://webflow-app-review-mcp.createsomething.workers.dev/mcp` | Webflow App Review MCP for app asset, version, and governance tracking workflows |
 | `webflow-local` | `config/dify-mcp-intake/webflow-local.json` | `https://webflow-mcp.createsomething.workers.dev/mcp` | Remote Webflow Marketplace MCP for plagiarism and framework analysis; kept as webflow-local for existing Hub bundle compatibility |
 | `webflow-template-review-mcp` | `config/dify-mcp-intake/webflow-template-review.json` | `https://webflow-template-review-mcp.createsomething.workers.dev/mcp` | Webflow Template Review MCP for template asset and version workflows |
 
@@ -112,6 +116,10 @@ Brokered, local, dormant, and non-HTTP servers are summarized but excluded from 
 | --- | --- | --- |
 | `abundance-staff-mcp` | `https://abundance-staff-mcp.createsomething.workers.dev/mcp` | Abundance Staff MCP for NPG staff/operator headcount and private staffing context. Token-bearing access stays in Infisical and is excluded from public delivery artifacts. |
 | `bettermode-creator` | `https://bettermode-creator.mcp.createsomething.agency/mcp` | Bettermode Marketplace Creator drafting MCP — read-only Bettermode + Airtable + community queue helpers consumed by the Dify drafter agent. |
+| `halfdozen-agent-analyzer-telemetry` | `https://halfdozen-agent-analyzer-telemetry-mcp.half-dozen.workers.dev/mcp` | Append-only telemetry MCP for Half Dozen native Notion AGENT ANALYZER eval runs. |
+| `halfdozen-blondish-sync-mcp` | `https://halfdozen-blondish-sync-mcp.createsomething.workers.dev/mcp` | Operator-invoked BLOND:ISH Support Tickets to Half Dozen Tickets reconciliation MCP. |
+| `halfdozen-c3-management-sync-mcp` | `https://halfdozen-c3-management-sync-mcp.createsomething.workers.dev/mcp` | Operator-invoked C3 Management Support Tickets to Half Dozen Tickets reconciliation MCP. |
+| `halfdozen-lightswitch-sync-mcp` | `https://halfdozen-lightswitch-sync-mcp.createsomething.workers.dev/mcp` | Operator-invoked Lightswitch Support Tickets to Half Dozen Tickets reconciliation MCP. |
 | `hydra-db-recall-mcp` | `https://hydra-db-recall-mcp.createsomething.workers.dev/mcp` | CREATE SOMETHING governed read-only HydraDB recall wrapper with D1 and Braintrust telemetry |
 | `interaction-atlas-mcp` | `https://interaction-atlas-mcp.createsomething.workers.dev/mcp` | Interaction Atlas MCP for policy, workflow, and agent/MCP capability mapping |
 | `notion-halfdozen-cracked` | `https://cracked-notion.mcp.workway.co/mcp` | Half Dozen Notion MCP for Cracked |

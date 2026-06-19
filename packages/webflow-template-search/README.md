@@ -72,7 +72,9 @@ source of truth for public template thumbnails. Source precedence:
 1. Webflow CMS template fields are preferred for canonical slugs, listing URLs,
    thumbnails, hover thumbnails, and carousel images when a Webflow API token is configured.
 2. Airtable `Marketplace Assets` remains the metadata source of truth for names,
-   categories, styles, tags, creator links, price, popularity, and published status.
+   categories, styles, tags, creator links, popularity, and published status.
+   Webflow CMS offer metadata overrides Airtable price/free fields when available so
+   published template detail pages and search results stay aligned.
 3. Webflow site assets are used as a fallback image index when `WEBFLOW_API_TOKEN` and
    `WEBFLOW_TEMPLATE_ASSET_SITE_ID` are configured.
 4. The published Webflow template page `og:image` is used as a bounded fallback for stale
@@ -102,6 +104,24 @@ already-indexed templates. The bounded refresh prioritizes Featured/popular temp
 published Webflow template detail page as a fallback, which keeps the search/API response aligned
 when Airtable review status changes first and Whalesync publishes or updates the corresponding
 Webflow image shortly afterward.
+
+## Template price and free state
+
+The public search API stores both `price` and `is_free`. Search display, free-only
+filtering, and price sorting treat numeric `price` as authoritative: `0` means free
+and any positive number means paid.
+
+Sync starts from Airtable's `🥞💲Template Price Filter (🏗️ only)` and `Is free?`
+fields, then overrides those values with Webflow CMS offer metadata when a matching
+published template item exposes price/free fields such as `price`, `template-price`,
+or free/purchase-type fields. This prevents stale Airtable price filters from keeping
+search results paid after the published detail page has moved to free.
+
+The same override runs in three places:
+
+- full rebuild and targeted record sync through the Webflow CMS index
+- signed Webflow template collection webhooks
+- scheduled/admin Webflow CMS refresh via `POST /api/templates/admin/refresh-images`
 
 Use `POST /api/templates/admin/backfill-images?limit=48` for historical cleanup. The endpoint scans
 existing rows with missing or temporary Airtable thumbnail URLs, resolves stable Webflow thumbnails

@@ -38,6 +38,7 @@ import {
   Navigation,
   Footer,
   ClearPageSection,
+  ClearDecisionPanel,
   ClearProofStrip,
   ClearStateRows,
   ClearReceiptGrid,
@@ -139,8 +140,10 @@ Canon uses CSS custom properties for all design decisions:
 
 Canon uses Ona's public design/UI/UX direction as the communication reference for CREATE
 SOMETHING: plain first-screen claims, readable type, porcelain surfaces, visible proof artifacts,
-compact navigation, and restrained action states. `.agency` is the first verified rollout surface;
-the shared primitives are the path for the rest of CREATE SOMETHING as surfaces are migrated.
+compact navigation, and restrained action states. The micro-interaction rule is communication
+first: use motion or selection only when it clarifies state, evidence, or the next action.
+`.agency` is the first verified rollout surface; the shared primitives are the path for the rest
+of CREATE SOMETHING as surfaces are migrated.
 
 ```svelte
 <Navigation visualStyle="clear" {...navProps} />
@@ -152,6 +155,22 @@ the shared primitives are the path for the rest of CREATE SOMETHING as surfaces 
   eyebrow="Governed workflows"
   title="Put agents to work inside workflows you can govern."
   description="Name the object, action, approval rule, stop condition, and receipt before an agent acts."
+/>
+
+<ClearDecisionPanel
+  eyebrow="Decision path"
+  title="Show whether to run, review, or stop."
+  items={[
+    {
+      label: 'Run',
+      summary: 'Bounded action',
+      title: 'The workflow can act.',
+      detail: 'The objects, tools, policy, and receipts are visible before execution.',
+      tone: 'allow',
+      evidence: ['Object is named', 'Write is bounded', 'Receipt is attached'],
+      receipts: ['workflow-map', 'policy-rule', 'run-receipt']
+    }
+  ]}
 />
 
 <Footer visualStyle="clear" {...footerProps} />

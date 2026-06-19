@@ -1,26 +1,49 @@
 <script lang="ts">
   import {
     Button,
-    ClearCtaBand,
+    ClearActionFooter,
+    ClearCardGrid,
+    ClearContentHighlights,
+    ClearLogoStrip,
+    ClearMetadataRail,
     ClearPageSection,
+    ClearPillarGrid,
+    ClearPlatformHero,
     ClearProofStrip,
+    ClearQuoteMetricPanel,
     ClearReceiptGrid,
+    ClearSecurityPanel,
     ClearStateRows,
+    ClearUseCaseBand,
     SEO,
+    type ClearActionFooterItem,
+    type ClearCardItem,
+    type ClearContentHighlight,
+    type ClearLogoStripItem,
+    type ClearMetadataGroup,
+    type ClearPillarItem,
     type ClearProofItem,
+    type ClearQuoteMetric,
     type ClearReceipt,
+    type ClearSecurityItem,
+    type ClearSecurityLog,
+    type ClearUseCaseItem,
     type ClearWorkflowState
   } from '@create-something/canon';
   import ExecutionWorkbench from '$lib/components/ExecutionWorkbench.svelte';
-  import WorkflowSignalIcon from '$lib/components/WorkflowSignalIcon.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
-
-  type WorkflowSignalIconName = 'objects' | 'actions' | 'states' | 'receipts';
-  type ProofMetric = ClearProofItem & { icon: WorkflowSignalIconName };
 
   const services = [
     {
-      name: 'Workflow System',
+      name: 'Trust Map',
+      description:
+        'A fixed first map of the workflow, object model, action boundary, approval path, and first safe delegation point.',
+      type: 'Entry wedge',
+      price: 'Custom',
+      priceDescription: 'Scoped diagnostic'
+    },
+    {
+      name: 'Workflow Pilot',
       description:
         'One painful workflow turned into a reliable operating path with clear rules, clean handoffs, and ownership.',
       type: 'Implementation Sprint',
@@ -45,13 +68,6 @@
     }
   ];
 
-  const proofMetrics: ProofMetric[] = [
-    { value: 'Objects', label: 'Customer, order, payment, case', icon: 'objects' },
-    { value: 'Actions', label: 'Read, draft, write, notify', icon: 'actions' },
-    { value: 'States', label: 'Run, wait, stop', icon: 'states' },
-    { value: 'Receipts', label: 'Every handoff leaves evidence', icon: 'receipts' }
-  ];
-
   const workflowStates: ClearWorkflowState[] = [
     {
       tone: 'run',
@@ -73,6 +89,162 @@
     }
   ];
 
+  const platformSignals: ClearLogoStripItem[] = [
+    {
+      label: 'Objects',
+      detail: 'Customer, order, payment, case'
+    },
+    {
+      label: 'Actions',
+      detail: 'Read, draft, write, notify'
+    },
+    {
+      label: 'States',
+      detail: 'Run, wait, stop'
+    },
+    {
+      label: 'Receipts',
+      detail: 'Delivery pages and private evidence',
+      href: '/delivery/abundance'
+    }
+  ];
+
+  const serviceFlowPillars: ClearPillarItem[] = [
+    {
+      eyebrow: '01 Map',
+      title: 'Bring one workflow',
+      detail:
+        'Start with the manual handoff, repeated rescue, or risky workflow your team already recognizes.',
+      proof: 'Output: object map, owner map, action boundary, and first receipt plan.',
+      links: [{ label: agencyCoreMessaging.selfMapLabel, href: agencyCoreMessaging.selfMapHref }]
+    },
+    {
+      eyebrow: '02 Pilot',
+      title: 'Build the first safe path',
+      detail:
+        'Turn the workflow into scoped actions, approval-needed states, blocked states, and an operator surface.',
+      proof: 'Output: working path, runbook, release evidence, and client-safe delivery page.',
+      links: [{ label: 'See service path', href: '/services#service-path' }]
+    },
+    {
+      eyebrow: '03 Control',
+      title: 'Add the trust layer',
+      detail:
+        'Wrap live automation with decision rules, receipts, recovery notes, and accountable ownership.',
+      proof:
+        'Output: monthly control plan for work that touches revenue, customers, or production.',
+      links: [{ label: 'See stack boundary', href: '/stack' }]
+    },
+    {
+      eyebrow: '04 Operate',
+      title: 'Keep the evidence visible',
+      detail:
+        'Use delivery records to show what changed, what stayed private, what remains blocked, and who decides next.',
+      proof: 'Output: proof surface your team can inspect without exposing secrets.',
+      links: [{ label: 'See proof', href: '/products' }]
+    }
+  ];
+
+  const useCases: ClearUseCaseItem[] = [
+    {
+      title: 'Recover support cases',
+      detail: 'Inspect the case, order, shipment, and payment before any customer-facing action.'
+    },
+    {
+      title: 'Verify merged changes',
+      detail: 'Run checks, gather proof, and keep deploy evidence with the issue.'
+    },
+    {
+      title: 'Summarize CI failures',
+      detail: 'Turn failing logs into a precise owner handoff or a bounded fix path.'
+    },
+    {
+      title: 'Triage production errors',
+      detail: 'Read monitoring context, classify severity, and route the next action.'
+    },
+    {
+      title: 'Patch vulnerable dependencies',
+      detail: 'Limit package changes, run the narrow gate, and leave rollback notes.'
+    },
+    {
+      title: 'Draft release notes',
+      detail: 'Translate merged work into customer-safe changes without inventing status.'
+    },
+    {
+      title: 'Pick up backlog work',
+      detail: 'Claim scoped issues only when the policy and verification path are visible.'
+    },
+    {
+      title: 'Migrate deprecated APIs',
+      detail: 'Map every call site, make the smallest safe edit, and prove the behavior.'
+    }
+  ];
+
+  const buyerLanes: ClearCardItem[] = [
+    {
+      eyebrow: 'Revenue ops',
+      icon: 'refresh',
+      title: 'Leads or handoffs stall after intake',
+      detail:
+        'Map the first lane where context disappears, ownership gets fuzzy, or follow-up slows down revenue.',
+      href: '/contact?source=lane&intent=workflow-teardown&lane=workflow_infrastructure',
+      points: [
+        'First run: classify, summarize, route, or draft',
+        'Proof: source record, owner handoff, and next action receipt'
+      ]
+    },
+    {
+      eyebrow: 'Customer trust',
+      icon: 'check',
+      title: 'Support work needs safe recovery',
+      detail:
+        'Use when order, payment, case, or account context must be inspected before anything touches the customer.',
+      href: '/contact?source=lane&intent=workflow-mapping&lane=reliability_and_control',
+      points: [
+        'First run: run, wait, or stop with a reason',
+        'Proof: approval note, blocked-state record, and customer-safe draft'
+      ]
+    },
+    {
+      eyebrow: 'Delivery ops',
+      icon: 'document',
+      title: 'Client or production work needs receipts',
+      detail:
+        'Use when builds, launches, or handoffs need visible status without exposing credentials, raw logs, or private client data.',
+      href: '/contact?source=lane&intent=workflow-teardown&lane=workflow_infrastructure',
+      points: [
+        'First run: release evidence, handoff surface, or owner queue',
+        'Proof: delivery page, validation output, and rollback note'
+      ]
+    }
+  ];
+
+  const workflowMetadataGroups: ClearMetadataGroup[] = [
+    {
+      title: 'Primitive stack',
+      items: [
+        { label: 'Database', value: 'Objects and source state' },
+        { label: 'Automation', value: 'Tools and run paths' },
+        { label: 'Judgment', value: 'Policy and approval rules' }
+      ]
+    },
+    {
+      title: 'Control points',
+      items: [
+        { label: 'Run', value: 'Bounded write or notification' },
+        { label: 'Wait', value: 'Human approval before revenue or trust impact' },
+        { label: 'Stop', value: 'Reason-coded handoff when the lane is exceeded' }
+      ]
+    },
+    {
+      title: 'Evidence',
+      items: [
+        { label: 'Delivery page', value: 'Client-safe status surface' },
+        { label: 'Private receipt', value: 'Commands, pass/fail output, deploy IDs' }
+      ]
+    }
+  ];
+
   const deliveryReceipts: ClearReceipt[] = [
     {
       number: '01',
@@ -81,7 +253,7 @@
     },
     {
       number: '02',
-      label: 'Trust boundary',
+      label: 'Control boundary',
       detail: 'What can run, what needs approval, and what must stop with a reason.'
     },
     {
@@ -96,41 +268,141 @@
     }
   ];
 
-  function workflowIconName(icon: string | undefined): WorkflowSignalIconName {
-    if (icon === 'actions' || icon === 'states' || icon === 'receipts') return icon;
-    return 'objects';
-  }
+  const proofStripItems: ClearProofItem[] = [
+    {
+      value: 'Run / wait / stop',
+      label: 'Execution states are visible before an agent acts.'
+    },
+    {
+      value: '4 receipts',
+      label: 'The map, boundary, delivery page, and private evidence stay separate.'
+    },
+    {
+      value: 'No secret spill',
+      label: 'Public proof surfaces avoid credentials, raw logs, and private client data.'
+    },
+    {
+      value: 'Owner handoff',
+      label: 'Blocked work names the decision owner and the reason it stopped.'
+    }
+  ];
+
+  const quoteMetrics: ClearQuoteMetric[] = [
+    {
+      value: '1',
+      label: 'Workflow at a time',
+      detail: 'The service starts with a named manual handoff instead of a broad platform pitch.'
+    },
+    {
+      value: '3',
+      label: 'Action states',
+      detail: 'Run, wait, and stop turn policy into inspectable product behavior.'
+    },
+    {
+      value: '4',
+      label: 'Evidence artifacts',
+      detail: 'Map, boundary, delivery page, and private receipt define the proof package.'
+    },
+    {
+      value: '0',
+      label: 'Unbounded writes',
+      detail: 'The trust layer names which systems can be touched before execution.'
+    }
+  ];
+
+  const securityItems: ClearSecurityItem[] = [
+    {
+      label: 'Network',
+      title: 'Named systems only',
+      detail:
+        'The workflow lists which systems are read, which writes are allowed, and where execution stops.'
+    },
+    {
+      label: 'Credential',
+      title: 'Scoped access before speed',
+      detail:
+        'Agent access is treated as an operating surface: least privilege, owner review, and rollback notes.'
+    },
+    {
+      label: 'Policy',
+      title: 'Approval rules are artifacts',
+      detail:
+        'The rule is not hidden in a prompt. It is written down beside the workflow, state, and receipt.'
+    },
+    {
+      label: 'Audit',
+      title: 'Receipts travel with the work',
+      detail:
+        'Each run leaves enough evidence for a client, operator, or reviewer to understand what happened.'
+    }
+  ];
+
+  const securityLogs: ClearSecurityLog[] = [
+    { label: 'Lane', value: 'support-recovery.run' },
+    { label: 'Allowed writes', value: 'warehouse_note, case_reply_draft' },
+    { label: 'Approval rule', value: 'revenue_touch waits for owner' },
+    { label: 'Stop condition', value: 'refund_threshold exceeded' },
+    { label: 'Receipt', value: 'blocked-state.json' }
+  ];
+
+  const contentHighlights: ClearContentHighlight[] = [
+    {
+      eyebrow: 'Delivery',
+      meta: 'Abundance',
+      title: 'Recruiter-gated workflow pilot.',
+      detail:
+        'The pilot shows the business model, agent boundary, remaining owner decisions, and visible proof without exposing private secrets.',
+      href: '/delivery/abundance'
+    },
+    {
+      eyebrow: 'Delivery',
+      meta: 'ShivWorks',
+      title: 'Backend handoff with named access lanes.',
+      detail:
+        'The handoff record separates account ownership, credentials, app admin, database state, and acceptance checks.',
+      href: '/delivery/shivworks'
+    },
+    {
+      eyebrow: 'Service',
+      meta: 'Funnel',
+      title: 'The flow stays narrow before it expands.',
+      detail:
+        'Map one workflow, pilot the safe path, then add the trust layer only when live risk justifies it.',
+      href: agencyCoreMessaging.selfMapHref
+    }
+  ];
+
+  const actionFooterItems: ClearActionFooterItem[] = [
+    { label: 'Bring', value: 'One manual workflow that keeps needing rescue' },
+    { label: 'Map', value: 'Objects, actions, approvals, stops, and receipts' },
+    { label: 'Leave', value: 'A first controlled run path your team can inspect' }
+  ];
 </script>
 
 <SEO
-  title="Governed Agent Workflows | CREATE SOMETHING .agency"
-  description="CREATE SOMETHING puts agents to work inside workflows you can govern: clear objects, scoped actions, approval paths, stop states, and receipts."
-  keywords="governed agent workflows, workflow trust layer, safe AI workflow delegation, agent workflow controls, MCP wedge, production automation, technical operators"
+  title="Workflow Control Service | CREATE SOMETHING .agency"
+  description="CREATE SOMETHING maps one manual workflow, builds the first safe agent path, and leaves your team with approvals, stop states, and delivery receipts."
+  keywords="workflow control service, workflow trust layer, safe AI workflow delegation, agent workflow controls, workflow pilot, production automation, technical operators"
   ogImage="/og-image.svg"
   propertyName="agency"
   {services}
 />
 
 <div class="home-pilot">
-  <ClearPageSection
-    variant="hero"
-    layout="split"
-    titleLevel="h1"
+  <ClearPlatformHero
     eyebrow={agencyCoreMessaging.categoryLabel}
-    title="Put agents to work inside workflows you can govern."
-    description="CREATE SOMETHING turns one operational workflow into a controlled run path. The system knows the object, action, approval rule, stop condition, and receipt before an agent acts."
+    title="Map one workflow. Build the first safe agent path."
+    description="CREATE SOMETHING turns one repeated handoff into scoped actions, approval paths, stop conditions, and receipts before anything touches the customer, revenue, or production."
+    hideAsideOnMobile={true}
   >
     {#snippet actions()}
-      <Button href={agencyCoreMessaging.workflowMappingSessionHref}>
+      <Button href={agencyCoreMessaging.selfMapHref}>
+        {agencyCoreMessaging.selfMapLabel}
+      </Button>
+      <Button href={agencyCoreMessaging.workflowMappingSessionHref} variant="secondary">
         {agencyCoreMessaging.bookMappingSessionLabel}
       </Button>
-      <Button href="#workflow-pattern" variant="secondary">See The Workflow</Button>
     {/snippet}
-
-    <p class="clear-note">
-      For operators with manual support, finance, delivery, or review work that needs speed without
-      losing control.
-    </p>
 
     {#snippet aside()}
       <ClearStateRows
@@ -138,26 +410,75 @@
         title="What can happen now?"
         states={workflowStates}
         receipts={['blocked-state.json', 'credit-approval-note.md', 'warehouse-note.md']}
-        ariaLabel="Governed workflow state example"
+        ariaLabel="Controlled workflow state example"
       />
+    {/snippet}
+  </ClearPlatformHero>
+
+  <ClearLogoStrip
+    eyebrow="Operating proof"
+    items={platformSignals}
+    ariaLabel="CREATE SOMETHING operating proof surfaces"
+  />
+
+  <ClearPageSection
+    id="service-flow"
+    variant="white"
+    eyebrow="Service flow"
+    title="Map one workflow, then build only the trust layer it needs."
+    description="The funnel is intentionally narrow: bring one real workflow, leave with a visible operating path, and expand only when the risk justifies more control."
+  >
+    {#snippet actions()}
+      <Button href={agencyCoreMessaging.selfMapHref}>
+        {agencyCoreMessaging.selfMapLabel}
+      </Button>
+      <Button href="/services" variant="secondary">See How I Work</Button>
     {/snippet}
 
     {#snippet after()}
-      <ClearProofStrip items={proofMetrics} ariaLabel="Workflow proof artifacts">
-        {#snippet icon(metric)}
-          <WorkflowSignalIcon name={workflowIconName(metric.icon)} />
-        {/snippet}
-      </ClearProofStrip>
+      <ClearPillarGrid items={serviceFlowPillars} ariaLabel="CREATE SOMETHING service flow" />
+    {/snippet}
+  </ClearPageSection>
+
+  <ClearUseCaseBand
+    id="use-cases"
+    eyebrow="Concrete work first"
+    title="Start with tasks an operator already recognizes."
+    description="The page leads with operational situations before abstract platform language, so the agent capability stays tied to business work."
+    items={useCases}
+    ariaLabel="Controlled workflow use cases"
+  />
+
+  <ClearPageSection
+    variant="soft"
+    eyebrow="Buyer lanes"
+    title="Pick the business lane before picking the tool."
+    description="The fastest path is not a platform demo. It is a known workflow, a named business risk, and the first controlled run that proves the service should expand."
+  >
+    {#snippet after()}
+      <ClearCardGrid items={buyerLanes} columns={3} ariaLabel="Workflow buyer lanes" />
     {/snippet}
   </ClearPageSection>
 
   <ClearPageSection
     id="workflow-pattern"
     variant="white"
-    eyebrow="Concrete workflow first"
+    layout="split"
+    eyebrow="Execution console"
     title="Show the business case before the agent demo."
     description="Here the workflow is ecommerce support recovery: inspect the case, order, shipment, and payment state, then decide whether the action can run, needs approval, or stops."
   >
+    {#snippet aside()}
+      <ClearMetadataRail
+        eyebrow="Workflow metadata"
+        title="What the agent knows"
+        description="The agent only receives the objects, tools, policies, and receipts that match the lane."
+        groups={workflowMetadataGroups}
+        tags={['objects', 'actions', 'states', 'receipts']}
+        ariaLabel="Controlled workflow metadata"
+      />
+    {/snippet}
+
     {#snippet after()}
       <ExecutionWorkbench />
     {/snippet}
@@ -165,26 +486,59 @@
 
   <ClearPageSection
     variant="soft"
-    eyebrow="Proof after the call"
+    eyebrow="Receipts"
     title="Leave with the operating path, not another abstract workflow diagram."
     description="The delivery pages set the standard for what the work becomes: a visible business model, a private evidence trail, and clear rules for what agents can do."
   >
     {#snippet after()}
-      <ClearReceiptGrid receipts={deliveryReceipts} ariaLabel="Delivery receipts" />
+      <div class="home-proof-stack">
+        <ClearReceiptGrid receipts={deliveryReceipts} ariaLabel="Delivery receipts" />
+        <ClearProofStrip items={proofStripItems} ariaLabel="Workflow proof artifacts" />
+      </div>
     {/snippet}
   </ClearPageSection>
 
-  <ClearCtaBand
+  <ClearQuoteMetricPanel
+    eyebrow="Proof contract"
+    quote="Policy is an artifact."
+    source="CREATE SOMETHING operating rule"
+    metrics={quoteMetrics}
+    ariaLabel="Workflow control proof metrics"
+  />
+
+  <ClearSecurityPanel
+    id="trust-layer"
+    eyebrow="Runtime control layer"
+    title="Control is part of the run, not a paragraph after it."
+    description="The workflow names the network boundary, credential boundary, policy boundary, and audit boundary before an agent acts."
+    items={securityItems}
+    logs={securityLogs}
+    ariaLabel="Controlled workflow trust controls"
+  />
+
+  <ClearContentHighlights
+    eyebrow="Recent proof"
+    title="Proof stays tied to real delivery records."
+    description="Delivery records show how the service flow becomes client-safe proof, private evidence, and a clear next decision."
+    items={contentHighlights}
+    ariaLabel="CREATE SOMETHING proof highlights"
+  />
+
+  <ClearActionFooter
     eyebrow="Start with one workflow"
     title={agencyCoreMessaging.workflowCtaHeading}
     description={agencyCoreMessaging.workflowCtaDetail}
+    items={actionFooterItems}
   >
     {#snippet actions()}
-      <Button href={agencyCoreMessaging.workflowMappingSessionHref}>
+      <Button href={agencyCoreMessaging.selfMapHref}>
+        {agencyCoreMessaging.selfMapLabel}
+      </Button>
+      <Button href={agencyCoreMessaging.workflowMappingSessionHref} variant="secondary">
         {agencyCoreMessaging.bookMappingSessionLabel}
       </Button>
     {/snippet}
-  </ClearCtaBand>
+  </ClearActionFooter>
 </div>
 
 <style>
@@ -193,11 +547,8 @@
     color: var(--color-clear-onyx, #0a0e19);
   }
 
-  .clear-note {
-    margin: 0;
-    max-width: 36rem;
-    color: var(--color-clear-grey, #636363);
-    font-size: 0.94rem;
-    line-height: 1.55;
+  .home-proof-stack {
+    display: grid;
+    gap: 0.85rem;
   }
 </style>

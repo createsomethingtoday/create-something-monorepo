@@ -1,0 +1,42 @@
+name = "halfdozen-lightswitch-sync-mcp"
+main = "src/index.ts"
+compatibility_date = "2026-05-28"
+compatibility_flags = ["nodejs_compat"]
+account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
+workers_dev = true
+
+[observability]
+enabled = true
+
+[[durable_objects.bindings]]
+name = "MCP_OBJECT"
+class_name = "BlondishSyncMcp"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["BlondishSyncMcp"]
+
+[vars]
+SYNC_SERVER_NAME = "halfdozen-lightswitch-sync-mcp"
+SYNC_CLIENT_SLUG = "lightswitch"
+SYNC_TENANT_SLUG = "lightswitch"
+SYNC_CLIENT_DISPLAY_NAME = "Lightswitch"
+SYNC_TOOL_PREFIX = "lightswitch_sync"
+SYNC_CLIENT_LABEL = "Lightswitch Studio Black"
+CLIENT_SUPPORT_TICKETS_DATA_SOURCE_ID = "65f01384-61f7-824d-a699-076d37f9c91c"
+CLIENT_SUPPORT_TICKETS_DATA_SOURCE_TITLE = "Support Tickets [OS]"
+HALFDOZEN_TICKETS_DATA_SOURCE_ID = "2a101918-7ac5-8074-bf06-000b97592481"
+HALFDOZEN_TICKETS_DATA_SOURCE_TITLE = "Tickets [HD]"
+CLIENT_OS_STATUS_PROPERTY = "Status"
+BRAINTRUST_PROJECT_NAME = "Half Dozen Lightswitch Sync MCP"
+
+# Required secrets before live writes:
+# MCP_API_KEY
+# CLIENT_NOTION_API_KEY
+# HALFDOZEN_NOTION_API_KEY
+#
+# Optional:
+# CLIENT_SUPPORT_TICKETS_DATA_SOURCE_ID
+# HALFDOZEN_TICKETS_DATA_SOURCE_ID
+# BRAINTRUST_API_KEY
+# BRAINTRUST_PROJECT_ID

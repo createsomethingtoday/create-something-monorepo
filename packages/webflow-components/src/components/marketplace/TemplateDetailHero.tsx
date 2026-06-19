@@ -67,6 +67,12 @@ const CATEGORY_ROUTE_ALIASES: Record<string, string> = {
   'community-and-nonprofit': 'community-and-nonprofit-websites',
   'community-and-nonprofits': 'community-and-nonprofit-websites',
   'community-and-nonprofits-websites': 'community-and-nonprofit-websites',
+  'culture-performance-and-entertainment': 'arts-and-entertainment-websites',
+  'culture-performance-and-entertainment-websites': 'arts-and-entertainment-websites',
+  'entertainment': 'arts-and-entertainment-websites',
+  'entertainment-websites': 'arts-and-entertainment-websites',
+  'performance-and-entertainment': 'arts-and-entertainment-websites',
+  'performance-and-entertainment-websites': 'arts-and-entertainment-websites',
   'real-estate-and-property-management': 'real-estate-websites',
   'automotive-and-transportation': 'transportation-websites',
   'automotive-and-transportation-websites': 'transportation-websites',
@@ -74,12 +80,6 @@ const CATEGORY_ROUTE_ALIASES: Record<string, string> = {
   'transportation-and-automotive-websites': 'transportation-websites',
   'retail-and-ecommerce': 'retail-and-e-commerce-websites',
   'retail-and-e-commerce': 'retail-and-e-commerce-websites',
-  'culture-performance-and-entertainment': 'arts-and-entertainment-websites',
-  'culture-performance-and-entertainment-websites': 'arts-and-entertainment-websites',
-  'entertainment': 'arts-and-entertainment-websites',
-  'entertainment-websites': 'arts-and-entertainment-websites',
-  'performance-and-entertainment': 'arts-and-entertainment-websites',
-  'performance-and-entertainment-websites': 'arts-and-entertainment-websites',
   'construction-and-home-services': 'home-services-websites',
   'construction-and-home-services-websites': 'home-services-websites',
 };
@@ -190,10 +190,21 @@ function splitCommaSeparatedCategoryList(value: string): string[] {
 function splitCategoryList(value?: string): string[] {
   const raw = value?.trim();
   if (!raw) return [];
+
+  const unquoted = stripCategoryQuotes(cleanCategoryListItem(raw));
+  if (unquoted.includes(',') && CATEGORY_LABEL_ALIASES[unquoted.toLowerCase()]) return [unquoted];
+
   const items = raw.includes('\n') ? raw.split(/\n+/) : splitCommaSeparatedCategoryList(raw);
   return items
-    .map(cleanCategoryListItem)
+    .map((item) => stripCategoryQuotes(cleanCategoryListItem(item)))
     .filter(Boolean);
+}
+
+function stripCategoryQuotes(value: string): string {
+  return value
+    .replace(/&quot;/g, '"')
+    .replace(/^["']+|["']+$/g, '')
+    .trim();
 }
 
 function displayCategoryLabel(label: string): string {

@@ -1,0 +1,183 @@
+app:
+  description: Collect client context and produce a Policy OS MCP audit brief with explicit Database, Automation, and Judgment boundaries.
+  icon: P
+  icon_background: '#1F1F1F'
+  icon_type: emoji
+  mode: agent-chat
+  name: Policy OS Client Intake And MCP Audit
+  use_icon_as_answer_icon: true
+dependencies:
+  - current_identifier: null
+    type: marketplace
+    value:
+      marketplace_plugin_unique_identifier: langgenius/openai:0.3.8@592c8252795b5f75807de2d609a03196ed02596b409f7642b4a07548c7ff57ef
+      version: null
+kind: app
+model_config:
+  agent_mode:
+    enabled: true
+    max_iteration: 8
+    prompt: null
+    strategy: function_call
+    tools:
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: create-something
+        provider_name: CREATE SOMETHING Content MCP
+        provider_type: mcp
+        tool_label: search
+        tool_name: search
+        tool_parameters:
+          query: null
+        type: mcp
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: three-tier-framework
+        provider_name: Three-Tier Framework MCP
+        provider_type: mcp
+        tool_label: classify_component
+        tool_name: classify_component
+        tool_parameters:
+          description: null
+        type: mcp
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: three-tier-framework
+        provider_name: Three-Tier Framework MCP
+        provider_type: mcp
+        tool_label: identify_policy_artifacts
+        tool_name: identify_policy_artifacts
+        tool_parameters:
+          system: null
+        type: mcp
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: playbook
+        provider_name: Playbook MCP
+        provider_type: mcp
+        tool_label: list_outcome_playbooks
+        tool_name: list_outcome_playbooks
+        tool_parameters: {}
+        type: mcp
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: playbook
+        provider_name: Playbook MCP
+        provider_type: mcp
+        tool_label: get_outcome_playbook
+        tool_name: get_outcome_playbook
+        tool_parameters:
+          playbook_id: null
+        type: mcp
+  annotation_reply:
+    enabled: false
+  chat_prompt_config:
+    prompt:
+      - role: system
+        text: ''
+  completion_prompt_config:
+    conversation_histories_role:
+      assistant_prefix: ''
+      user_prefix: ''
+    prompt:
+      text: ''
+  dataset_configs:
+    datasets:
+      datasets: []
+    metadata_filtering_mode: disabled
+    retrieval_model: multiple
+    top_k: 4
+  dataset_query_variable: ''
+  external_data_tools: []
+  file_upload:
+    allowed_file_extensions:
+      - .PDF
+      - .DOCX
+      - .TXT
+      - .MD
+      - .CSV
+    allowed_file_types:
+      - document
+    allowed_file_upload_methods:
+      - local_file
+    enabled: true
+    image:
+      detail: high
+      enabled: false
+      number_limits: 0
+      transfer_methods: []
+    number_limits: 5
+  model:
+    completion_params:
+      stop: []
+      temperature: 0.2
+    mode: chat
+    name: gpt-5.4
+    provider: langgenius/openai/openai
+  more_like_this:
+    enabled: false
+  opening_statement: ''
+  pre_prompt: |-
+    You are the Policy OS Client Intake and MCP Audit agent for CREATE SOMETHING.
+
+    Your job is to collect business context and produce a scoped MCP audit brief. Use the CREATE SOMETHING, Three-Tier Framework, and Playbook MCP tools for public framework and workflow grounding. Do not claim to inspect private systems unless the user provides artifacts or a connected client MCP.
+
+    Intake flow:
+    1. Identify the client's business model, team, current systems, and the workflow they want to improve.
+    2. Classify each relevant system into Database, Automation, or Judgment using the Three-Tier Framework.
+    3. Ask for missing risk context: sensitive data, write actions, approval owners, compliance needs, and audit requirements.
+    4. Use Playbook outcome patterns when they match the requested workflow. If no pattern fits, say that a custom MCP audit is needed.
+    5. Produce a concise audit brief with: recommended MCPs, app/chatflow shape, required knowledge bases, write boundaries, policy artifacts, smoke tests, eval gates, and rollout risks.
+
+    Boundaries:
+    - Never ask for or expose API keys, bearer tokens, Dify keys, Infisical values, or private URLs.
+    - Do not promise partner status, certification, or marketplace acceptance.
+    - Treat all proposed writes as requiring explicit confirmation and an eval gate.
+    - Separate observed facts from assumptions and next discovery questions.
+  prompt_type: simple
+  retriever_resource:
+    enabled: true
+  sensitive_word_avoidance:
+    config: {}
+    enabled: false
+    type: ''
+  speech_to_text:
+    enabled: false
+  suggested_questions: []
+  suggested_questions_after_answer:
+    enabled: false
+  text_to_speech:
+    enabled: false
+    language: ''
+    voice: ''
+  user_input_form:
+    - text-input:
+        default: ''
+        label: client_name
+        max_length: 120
+        required: false
+        variable: client_name
+    - paragraph:
+        default: ''
+        label: workflow_goal
+        max_length: 2000
+        required: true
+        variable: workflow_goal
+    - paragraph:
+        default: ''
+        label: connected_systems
+        max_length: 2000
+        required: false
+        variable: connected_systems
+    - paragraph:
+        default: ''
+        label: risk_notes
+        max_length: 2000
+        required: false
+        variable: risk_notes
+version: 0.6.0

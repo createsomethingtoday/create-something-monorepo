@@ -5,8 +5,9 @@
 # Get staged TypeScript/Svelte files
 STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(ts|tsx|svelte)$' || true)
 STAGED_LOCKFILE_INPUTS=$(git diff --cached --name-only --diff-filter=ACDMR | grep -E '(^|/)package\.json$|^pnpm-lock\.yaml$' || true)
+STAGED_MCP_COVERAGE_INPUTS=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '^packages/|^scripts/mcp-registry-coverage\.mjs$' || true)
 
-if [ -z "$STAGED_FILES" ] && [ -z "$STAGED_LOCKFILE_INPUTS" ]; then
+if [ -z "$STAGED_FILES" ] && [ -z "$STAGED_LOCKFILE_INPUTS" ] && [ -z "$STAGED_MCP_COVERAGE_INPUTS" ]; then
   exit 0
 fi
 
@@ -171,6 +172,23 @@ if [ -n "$STAGED_LOCKFILE_INPUTS" ]; then
     echo ""
     echo "❌ Lockfile sync check failed."
     echo "   Run pnpm install --lockfile-only --ignore-scripts and stage pnpm-lock.yaml."
+    exit 1
+  fi
+fi
+
+# =============================================================================
+# CHECK 7: staged MCP package / PACKAGE_COVERAGE sync
+# =============================================================================
+if [ -n "$STAGED_MCP_COVERAGE_INPUTS" ]; then
+  echo ""
+  echo "🗂️  Checking staged MCP package coverage..."
+
+  if node scripts/check-staged-mcp-registry-coverage.mjs; then
+    echo "✅ MCP package coverage check passed"
+  else
+    echo ""
+    echo "❌ MCP package coverage check failed."
+    echo "   Update scripts/mcp-registry-coverage.mjs with the missing package path entries."
     exit 1
   fi
 fi

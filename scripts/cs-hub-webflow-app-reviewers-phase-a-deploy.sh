@@ -17,7 +17,7 @@ SESSION_RESOLVE_URL="${SESSION_RESOLVE_URL:-https://id.createsomething.space/v1/
 HUB_ENABLED_BUNDLE="${HUB_ENABLED_BUNDLE:-webflow-marketplace-app-review-phase-a}"
 DISCOVERY_MODE="${DISCOVERY_MODE:-full}"
 DISCOVERY_PACK="${DISCOVERY_PACK:-}"
-DISCOVERY_MAX_PROXY_TOOLS="${DISCOVERY_MAX_PROXY_TOOLS:-18}"
+DISCOVERY_MAX_PROXY_TOOLS="${DISCOVERY_MAX_PROXY_TOOLS:-32}"
 RATE_LIMIT_MAX_CALLS="${RATE_LIMIT_MAX_CALLS:-120}"
 RATE_LIMIT_WINDOW_SECONDS="${RATE_LIMIT_WINDOW_SECONDS:-60}"
 QUOTA_MAX_PROXY_CALLS_PER_PERIOD="${QUOTA_MAX_PROXY_CALLS_PER_PERIOD:-10000}"
@@ -271,22 +271,27 @@ verify_one() {
       }
     }' | jq .
 
+  local search_payload
+  search_payload="$(jq -cn \
+    --argjson maxProxyTools "$DISCOVERY_MAX_PROXY_TOOLS" \
+    '{
+      jsonrpc:"2.0",
+      id:"phase-a-search",
+      method:"tools/call",
+      params:{
+        name:"hub_search_proxy_tools",
+        arguments:{
+          serverName:"webflow-app-review-mcp",
+          limit:$maxProxyTools
+        }
+      }
+    }')"
+
   curl -sS -X POST "$mcp_url" \
     "${auth_headers[@]}" \
     -H "Content-Type: application/json" \
     -H "Accept: application/json, text/event-stream" \
-    -d '{
-      "jsonrpc":"2.0",
-      "id":"phase-a-search",
-      "method":"tools/call",
-      "params":{
-        "name":"hub_search_proxy_tools",
-        "arguments":{
-          "serverName":"webflow-app-review-mcp",
-          "limit":20
-        }
-      }
-    }' | jq .
+    -d "$search_payload" | jq .
 }
 
 require_cmd pnpm

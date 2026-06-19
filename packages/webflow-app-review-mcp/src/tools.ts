@@ -7,6 +7,9 @@ import type { ReviewerProfile } from './reviewer-directory.js';
 import {
   APP_REVIEW_FIELD_MAP,
   CAPABILITIES_OPTIONS,
+  GOVERNANCE_FINDING_CATEGORY_OPTIONS,
+  GOVERNANCE_FINDING_PRIORITY_OPTIONS,
+  GOVERNANCE_FINDING_STATUS_OPTIONS,
   MARKETPLACE_STATUS_OPTIONS,
   REJECTION_REASON_OPTIONS,
   REVIEW_STATUS_OPTIONS,
@@ -159,6 +162,12 @@ function reviewerPayload(reviewer: ReviewerProfile) {
   };
 }
 
+function reviewerAttribution(getReviewer: ReviewerFactory): string {
+  const reviewer = getReviewer();
+  if (!reviewer) return 'Dify App Review Hub';
+  return reviewer.name ?? reviewer.email ?? reviewer.accountId;
+}
+
 function ensureRequestChangesStatus(value: string | undefined) {
   if (value === undefined) return;
   if ((REQUEST_CHANGES_STATUS_OPTIONS as readonly string[]).includes(value)) return;
@@ -282,6 +291,130 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
     'Return canonical Airtable field mappings, writability, and allowed status options.',
     {},
     async () => asSuccess(APP_REVIEW_FIELD_MAP),
+  );
+
+  server.tool(
+    'app_review_list_governance_findings',
+    'List Airtable governance/transparency findings captured from app-review threads.',
+    {
+      limit: z.number().int().min(1).max(500).optional(),
+      status: z.enum(GOVERNANCE_FINDING_STATUS_OPTIONS).optional(),
+      category: z.enum(GOVERNANCE_FINDING_CATEGORY_OPTIONS).optional(),
+      priority: z.enum(GOVERNANCE_FINDING_PRIORITY_OPTIONS).optional(),
+      decision_needed: z.boolean().optional(),
+      search: z.string().min(1).optional(),
+    },
+    async ({ limit, status, category, priority, decision_needed, search }) => {
+      try {
+        const findings = await getClient().listGovernanceFindings({
+          limit: limit ?? 100,
+          status,
+          category,
+          priority,
+          decisionNeeded: decision_needed,
+          search,
+        });
+        return asSuccess({ count: findings.length, findings });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'app_review_get_governance_finding',
+    'Get one governance/transparency finding by Airtable record ID.',
+    {
+      finding_id: z.string().min(1),
+    },
+    async ({ finding_id }) => {
+      try {
+        const finding = await getClient().getGovernanceFinding(finding_id);
+        if (!finding) {
+          throw new AirtableClientError('GOVERNANCE_FINDING_NOT_FOUND', 'Governance finding not found.', 404, {
+            finding_id,
+          });
+        }
+        return asSuccess({ finding });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'app_review_create_governance_finding',
+    'Create an Airtable governance/transparency finding from a Slack thread, Zendesk ticket, app review, or docs gap.',
+    {
+      title: z.string().min(1).max(160),
+      category: z.enum(GOVERNANCE_FINDING_CATEGORY_OPTIONS),
+      summary: z.string().min(1),
+      status: z.enum(GOVERNANCE_FINDING_STATUS_OPTIONS).optional(),
+      priority: z.enum(GOVERNANCE_FINDING_PRIORITY_OPTIONS).optional(),
+      evidence: z.string().optional(),
+      recommendation: z.string().optional(),
+      decision_needed: z.boolean().optional(),
+      next_action: z.string().optional(),
+      owner: z.string().optional(),
+      app_name: z.string().optional(),
+      app_id: z.string().optional(),
+      asset_id: z.string().optional(),
+      version_id: z.string().optional(),
+      source_url: z.string().url().optional(),
+      linked_urls: z.array(z.string().url()).optional(),
+      reporter: z.string().optional(),
+    },
+    async (params) => {
+      try {
+        const finding = await getClient().createGovernanceFinding({
+          ...params,
+          reporter: params.reporter ?? reviewerAttribution(getReviewer),
+          created_by_agent: 'webflow-app-review-mcp',
+        });
+        return asSuccess({
+          reviewer: getReviewer(),
+          finding,
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'app_review_update_governance_finding',
+    'Update allowed fields on an Airtable governance/transparency finding.',
+    {
+      finding_id: z.string().min(1),
+      title: z.string().min(1).max(160).optional(),
+      category: z.enum(GOVERNANCE_FINDING_CATEGORY_OPTIONS).optional(),
+      summary: z.string().optional(),
+      status: z.enum(GOVERNANCE_FINDING_STATUS_OPTIONS).optional(),
+      priority: z.enum(GOVERNANCE_FINDING_PRIORITY_OPTIONS).optional(),
+      evidence: z.string().optional(),
+      recommendation: z.string().optional(),
+      decision_needed: z.boolean().optional(),
+      next_action: z.string().optional(),
+      owner: z.string().optional(),
+      app_name: z.string().optional(),
+      app_id: z.string().optional(),
+      asset_id: z.string().optional(),
+      version_id: z.string().optional(),
+      source_url: z.string().url().optional(),
+      linked_urls: z.array(z.string().url()).optional(),
+      reporter: z.string().optional(),
+    },
+    async ({ finding_id, ...params }) => {
+      try {
+        const finding = await getClient().updateGovernanceFinding(finding_id, params);
+        return asSuccess({
+          reviewer: getReviewer(),
+          finding,
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
   );
 
   server.tool(

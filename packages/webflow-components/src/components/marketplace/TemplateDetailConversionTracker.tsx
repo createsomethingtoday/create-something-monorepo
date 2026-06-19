@@ -22,8 +22,14 @@ export interface TemplateDetailConversionTrackerProps {
   trackPurchaseClicks?: boolean;
 }
 
-const PURCHASE_SELECTOR =
-  '.cc-purchase, a[href*="/dashboard/marketplace-checkout/redirect"], a[href*="marketplace-checkout"]';
+const PURCHASE_SELECTOR = [
+  '[data-template-detail-primary-cta]',
+  '[data-template-detail-secondary-cta]',
+  '[data-purchase-type]',
+  '.cc-purchase',
+  'a[href*="/dashboard/marketplace-checkout/redirect"]',
+  'a[href*="marketplace-checkout"]',
+].join(',');
 const PREVIEW_SELECTOR = [
   '#hero-browser-preview',
   '#hero-designer-preview',
@@ -58,6 +64,9 @@ function ctaLocation(element: Element): string {
   const id = element.id.toLowerCase();
   if (id.includes('footer')) return 'sticky_footer';
   if (id.includes('hero')) return 'hero';
+  if (element.closest('[data-template-detail-sticky-bar]')) return 'sticky_bar';
+  if (element.closest('[data-template-detail-offer-panel]')) return 'offer_panel';
+  if (element.closest('[data-template-detail-hero]')) return 'hero';
   if (element.closest('[data-wf--template-details-footer--variant]')) return 'sticky_footer';
   return 'unknown';
 }
@@ -67,6 +76,13 @@ function previewType(element: Element): string {
   if (id.includes('designer')) return 'designer';
   if (id.includes('browser')) return 'browser';
   return 'unknown';
+}
+
+function purchaseType(element: Element, price?: string): string {
+  const attributedElement = element.closest('[data-purchase-type]');
+  const attributedType = attributedElement?.getAttribute('data-purchase-type')?.trim();
+  if (attributedType) return attributedType;
+  return priceBucket(price) === 'free' ? 'use_free_template' : 'checkout';
 }
 
 export const TemplateDetailConversionTracker: React.FC<TemplateDetailConversionTrackerProps> = ({
@@ -138,7 +154,7 @@ export const TemplateDetailConversionTracker: React.FC<TemplateDetailConversionT
             ...baseData(),
             scope: 'detail_purchase_cta_clicked',
             cta_location: ctaLocation(purchaseEl),
-            purchase_type: priceBucket(price) === 'free' ? 'use_free_template' : 'checkout',
+            purchase_type: purchaseType(purchaseEl, price),
           },
           enableAnalytics,
         );

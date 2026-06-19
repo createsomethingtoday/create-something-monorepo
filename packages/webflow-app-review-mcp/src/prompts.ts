@@ -1,6 +1,12 @@
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 
+import {
+  GOVERNANCE_FINDING_CATEGORY_OPTIONS,
+  GOVERNANCE_FINDING_PRIORITY_OPTIONS,
+  GOVERNANCE_FINDING_STATUS_OPTIONS,
+} from './schema.js';
+
 const REVIEW_CONTEXT = `You are assisting Webflow's App Review Team. Keep recommendations practical and policy-safe.
 
 Prioritize:
@@ -91,5 +97,54 @@ Return only the refined feedback text.`,
       };
     },
   );
-}
 
+  server.prompt(
+    'app_review_governance_finding_capture',
+    'Convert Slack/Zendesk/docs context into an app_review_create_governance_finding payload.',
+    {
+      source_context: z.string().describe('Raw thread, ticket, docs gap, or reviewer notes to turn into a finding.'),
+      category: z.enum(GOVERNANCE_FINDING_CATEGORY_OPTIONS).optional(),
+      priority: z.enum(GOVERNANCE_FINDING_PRIORITY_OPTIONS).optional(),
+      status: z.enum(GOVERNANCE_FINDING_STATUS_OPTIONS).optional(),
+    },
+    async ({ source_context, category, priority, status }) => {
+      return {
+        messages: [
+          {
+            role: 'user' as const,
+            content: {
+              type: 'text' as const,
+              text: `${REVIEW_CONTEXT}
+
+Task:
+Produce a JSON object suitable for app_review_create_governance_finding.
+
+Use only these categories:
+${GOVERNANCE_FINDING_CATEGORY_OPTIONS.map((value) => `- ${value}`).join('\n')}
+
+Defaults:
+- status: ${status ?? 'New'}
+- priority: ${priority ?? 'P2'}
+${category ? `- category: ${category}` : ''}
+
+Source context:
+${source_context}
+
+Required JSON keys:
+title, category, summary
+
+Optional JSON keys:
+status, priority, evidence, recommendation, decision_needed, next_action, owner, app_name, app_id, asset_id, version_id, source_url, linked_urls, reporter
+
+Rules:
+- Do not invent Airtable record IDs.
+- Put Slack, Zendesk, Google Doc, Airtable, or docs links in source_url or linked_urls only if present in the context.
+- Set decision_needed to true only when a human policy/product/legal decision is explicitly needed.
+- Return only valid JSON.`,
+            },
+          },
+        ],
+      };
+    },
+  );
+}

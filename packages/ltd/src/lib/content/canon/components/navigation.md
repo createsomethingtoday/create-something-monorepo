@@ -79,6 +79,7 @@ The clear navigation and footer are designed to pair with:
 - `ClearPageSection`: claim, proof, action, and split hero sections
 - `ClearProofStrip`: compact objects/actions/states/receipts proof
 - `ClearStateRows`: governed run/wait/stop rows
+- `ClearDecisionPanel`: selectable allow/review/block decision paths with evidence and receipts
 - `ClearReceiptGrid` and `ClearArtifactCard`: evidence and delivery receipts
 - `ClearCtaBand`: restrained final action band
 

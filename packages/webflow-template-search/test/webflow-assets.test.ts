@@ -6,21 +6,22 @@ describe('webflow template image resolution', () => {
     const index = {
       byTemplateKey: new Map([
         [
-          'exact:fluxen template website template',
+          'slug:fluxen template website template',
           [{ hostedUrl: 'https://cdn.example.com/meta-flow-fluxen.webp', scoreName: 'primary thumbnail' }],
         ],
         [
-          'exact:fluxen website template',
+          'slug:fluxen website template',
           [{ hostedUrl: 'https://cdn.example.com/flow-nija-fluxen.webp', scoreName: 'primary thumbnail' }],
         ],
         [
-          'fluxen',
+          'fuzzy:fluxen',
           [
             { hostedUrl: 'https://cdn.example.com/meta-flow-fluxen.webp', scoreName: 'primary thumbnail' },
             { hostedUrl: 'https://cdn.example.com/flow-nija-fluxen.webp', scoreName: 'primary thumbnail' },
           ],
         ],
       ]),
+      offerByTemplateKey: new Map(),
     } satisfies WebflowTemplateImageIndex;
 
     expect(

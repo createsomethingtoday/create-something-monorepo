@@ -201,6 +201,7 @@ docs/
   [guides/AGENCY_BUYER_INTENT_ARTICLE_WORKFLOW.md](./guides/AGENCY_BUYER_INTENT_ARTICLE_WORKFLOW.md),
   [guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md](./guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md),
   [guides/DIFY_PARTNER_AFFILIATE_OPERATING_RUNBOOK.md](./guides/DIFY_PARTNER_AFFILIATE_OPERATING_RUNBOOK.md),
+  [guides/DIFY_POLICY_OS_TEMPLATE_PACK.md](./guides/DIFY_POLICY_OS_TEMPLATE_PACK.md),
   [internal/partnership-applications/dify-partner-affiliate.md](./internal/partnership-applications/dify-partner-affiliate.md),
   [DIFY_WORKSPACE_INVENTORY.generated.md](./DIFY_WORKSPACE_INVENTORY.generated.md),
   [DIFY_MCP_COVERAGE.generated.md](./DIFY_MCP_COVERAGE.generated.md),

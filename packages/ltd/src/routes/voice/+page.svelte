@@ -3,8 +3,8 @@
 </script>
 
 <SEO
-  title="Voice"
-  description="The CREATE SOMETHING voice guidelines. How we write, what we avoid, and the principles that govern all content across the ecosystem."
+  title="Voice Standards"
+  description="Plain language rules for CREATE SOMETHING claims, proof, decisions, and next actions across the ecosystem."
   propertyName="ltd"
   breadcrumbs={[
     { name: 'Home', url: 'https://createsomething.ltd' },
@@ -16,9 +16,10 @@
 <section class="header-section pt-24 pb-16 px-6">
   <div class="max-w-4xl mx-auto text-center">
     <p class="eyebrow mb-4">Writing Standards</p>
-    <h1 class="mb-6">Voice</h1>
+    <h1 class="mb-6">Write so people can act.</h1>
     <p class="header-description leading-relaxed">
-      Write for your reader, not yourself. Say what you mean. Cut what you can.
+      Say what the reader can inspect, decide, approve, or stop. Cut the language that hides the
+      work.
     </p>
   </div>
 </section>

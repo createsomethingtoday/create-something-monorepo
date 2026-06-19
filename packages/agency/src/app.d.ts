@@ -90,6 +90,12 @@ declare global {
 				AGENCY_INTERNAL_API_KEY?: string;
 				AGENCY_OPERATOR_EMAILS?: string;
 				CANON_OPERATOR_ORIGINS?: string;
+				// Public Atlas mapping agent
+				OPENAI_API_KEY?: string;
+				PUBLIC_ATLAS_AGENT_MODEL?: string;
+				PUBLIC_ATLAS_AGENT_MAX_OUTPUT_TOKENS?: string;
+				PUBLIC_ATLAS_AGENT_REASONING_EFFORT?: string;
+				PUBLIC_ATLAS_AGENT_TIMEOUT_MS?: string;
 			};
 			context: {
 				waitUntil(promise: Promise<unknown>): void;

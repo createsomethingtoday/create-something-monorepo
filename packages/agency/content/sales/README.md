@@ -12,35 +12,39 @@
    - `policy-os-buyer-brief-ops-revops.md`
    - Purpose: frame problem, outcomes, offer ladder, and CTA in under 3 minutes.
 
-2. **Discovery script (run live for 20-30 minutes)**
+2. **Public Atlas canvas (send as a low-friction warmup)**
+   - `/atlas` or `/services#atlas-warmup`
+   - Purpose: let cold or medium-fit buyers map one workflow, understand the trust boundary, and carry readiness metadata into booking without exposing secrets or running production tools.
+
+3. **Discovery script (run live for 20-30 minutes)**
    - `discovery-call-script.md`
    - Purpose: qualify fit, map tier, handle objections, and close to a concrete next step.
 
-3. **Discovery policy and standards**
+4. **Discovery policy and standards**
    - `discovery-policy.md`
    - Purpose: define what discovery must produce, what shortcuts are prohibited, and how to route into policy/control work.
 
-4. **Operator runbook**
+5. **Operator runbook**
    - `discovery-runbook.md`
    - Purpose: run workflow-first discovery consistently and convert calls into package-routing decisions.
 
-5. **Operator checklist**
+6. **Operator checklist**
    - `operator-checklist.md`
    - Purpose: single internal checklist covering the full path from first contact to release readiness.
 
-6. **Commercial interface spec (machine-readable source of truth)**
+7. **Commercial interface spec (machine-readable source of truth)**
    - `policy-os-interface-spec.yaml`
    - Purpose: standardize one-pager inputs/outputs, call script branch logic, and taxonomy.
 
-7. **Discovery note (required after every call)**
+8. **Discovery note (required after every call)**
    - `../templates/sales/discovery-note-template.md`
    - Purpose: standardize proposal inputs in one pass.
 
-8. **Client-facing Workflow Mapping Session agenda**
+9. **Client-facing Workflow Mapping Session agenda**
    - `../templates/sales/workflow-mapping-session-agenda.md`
    - Purpose: align stakeholders on session inputs, structure, and outputs before the paid mapping session.
 
-9. **Delivery artifact templates**
+10. **Delivery artifact templates**
    - `../templates/delivery/README.md`
    - `../templates/delivery/mcp_contract.yaml`
    - `../templates/delivery/agent_contract.yaml`
@@ -51,11 +55,11 @@
    - `../templates/delivery/halfdozen-mcp-onboarding-checklist.md`
    - Purpose: convert workflow mapping outputs into implementation-ready artifact drafts.
 
-10. **Proposal input template (delivery handoff)**
+11. **Proposal input template (delivery handoff)**
    - `../templates/sales/policy-os-proposal-input-template.md`
    - Purpose: convert discovery output into proposal scope and contract artifact implications.
 
-11. **Follow-up sequence (post-call execution)**
+12. **Follow-up sequence (post-call execution)**
    - `../templates/sales/policy-os-follow-up-sequence.md`
    - Purpose: move high and medium fit deals to decision with clear owner and date.
 
@@ -72,18 +76,19 @@
 ## Operating flow
 
 1. Send one-pager.
-2. Review `discovery-policy.md`, `discovery-runbook.md`, and `operator-checklist.md`.
-3. Run discovery script as a branching guide.
-4. Capture discovery note.
-5. Assign fit (`high|medium|low`) and select close path.
-6. For high-fit work, send `workflow-mapping-session-agenda.md`.
-7. Execute follow-up sequence and lock next action.
-8. Build proposal using:
+2. Offer the public Atlas canvas when the buyer needs a low-friction way to understand the mapping process.
+3. Review `discovery-policy.md`, `discovery-runbook.md`, and `operator-checklist.md`.
+4. Run discovery script as a branching guide.
+5. Capture discovery note, including Atlas readiness/session metadata when present.
+6. Assign fit (`high|medium|low`) and select close path.
+7. For high-fit work, send `workflow-mapping-session-agenda.md`.
+8. Execute follow-up sequence and lock next action.
+9. Build proposal using:
    - `mcp_contract.yaml`
    - `agent_contract.yaml`
    - `outcome_contract.md`
    - `golden_tasks.yaml`
-9. After the Workflow Mapping Session, instantiate the delivery templates before implementation starts.
+10. After the Workflow Mapping Session, instantiate the delivery templates before implementation starts.
 
 ---
 

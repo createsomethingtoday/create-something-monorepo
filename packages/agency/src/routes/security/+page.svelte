@@ -1,207 +1,146 @@
 <script lang="ts">
-  import { SEO } from '@create-something/canon';
-  import ControlStackDiagram from '$lib/components/ControlStackDiagram.svelte';
-  import BlockedStatePanel from '$lib/components/BlockedStatePanel.svelte';
+  import {
+    Button,
+    ClearCardGrid,
+    ClearCtaBand,
+    ClearPageSection,
+    SEO,
+    type ClearCardItem,
+    type ClearCtaItem
+  } from '@create-something/canon';
+  import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
-  const layers = [
+  const updatedDate = 'March 9, 2026';
+
+  const securityPath: ClearCardItem[] = [
     {
-      title: 'Identity boundary',
-      text: 'Auth0 establishes the person or tenant boundary. `.agency` does not treat a bearer token as a replacement for identity.'
+      eyebrow: 'Identity',
+      icon: 'user',
+      title: 'Person and tenant boundary',
+      detail:
+        'Portal sign-in establishes who is acting and which organization boundary the request belongs to.'
     },
     {
-      title: 'Live entitlement',
-      text: 'Every request is checked against organization membership, service entitlement, contract standing, billing state, and policy acceptance.'
+      eyebrow: 'Entitlement',
+      icon: 'check',
+      title: 'Live access check',
+      detail:
+        'Organization membership, service entitlement, contract standing, billing state, and policy acceptance are checked at request time.'
     },
     {
-      title: 'Credential separation',
-      text: 'Portal sign-in, managed bearer tokens, and hosted product credentials remain distinct so compromise or revocation can be handled deliberately.'
+      eyebrow: 'Credential',
+      icon: 'warning',
+      title: 'Separate managed tokens',
+      detail:
+        'Portal identity, managed bearer tokens, and hosted product credentials remain distinct so compromise and revocation stay deliberate.'
     },
     {
-      title: 'Operational control',
-      text: 'Revocation, regeneration, anomaly review, and audit trails are part of the standing operating model, not an optional support add-on.'
+      eyebrow: 'Control',
+      icon: 'document',
+      title: 'Audit-ready operations',
+      detail:
+        'Revocation, regeneration, anomaly review, blocked states, and audit trails are part of the standing operating model.'
+    }
+  ];
+
+  const runtimeRules: ClearCardItem[] = [
+    {
+      eyebrow: 'Allowed',
+      icon: 'success',
+      title: 'A valid token is not enough',
+      detail:
+        'Execution still depends on live entitlement and policy. Access can stop even when a token exists.'
+    },
+    {
+      eyebrow: 'Blocked',
+      icon: 'error',
+      title: 'Commercial and legal state matter',
+      detail:
+        'Contract status, billing standing, and required policy acceptance can deny execution before the workflow acts.'
+    },
+    {
+      eyebrow: 'Recover',
+      icon: 'refresh',
+      title: 'Compromise has a direct path',
+      detail:
+        'CREATE SOMETHING can revoke or regenerate access immediately without waiting for a token expiry window.'
+    }
+  ];
+
+  const ctaItems: ClearCtaItem[] = [
+    {
+      label: 'Map',
+      icon: 'folder',
+      title: 'Name the protected workflow',
+      detail: 'Define which objects, actions, and systems need security review.'
+    },
+    {
+      label: 'Gate',
+      icon: 'check',
+      title: 'Define allowed and blocked states',
+      detail: 'Separate routine execution from approval, denial, and recovery.'
+    },
+    {
+      label: 'Prove',
+      icon: 'document',
+      title: 'Keep the audit trail',
+      detail: 'Attach evidence to the workflow path instead of relying on prompt memory.'
     }
   ];
 </script>
 
 <SEO
   title="Security"
-  description="How CREATE SOMETHING .agency turns identity, entitlement, blocked states, and audit trails into governed execution for production automation."
+  description="How CREATE SOMETHING .agency turns identity, entitlement, blocked states, and audit trails into controlled execution for production automation."
   propertyName="agency"
 />
 
-<section class="hero">
-  <div class="shell-inner">
-    <div class="eyebrow animate-reveal">Proof Surface</div>
-    <div class="copy animate-reveal">
-      <h1 class="page-title">Security</h1>
-      <p class="lede">
-        Policy OS is what turns credentials into governable runtime behavior. A token can
-        exist and access can still stop. That is intentional. Identity, entitlement, commercial
-        state, and policy all participate in the final decision.
-      </p>
-      <p class="date-text">Last updated: March 9, 2026</p>
-    </div>
-  </div>
-</section>
+<ClearPageSection
+  variant="hero"
+  layout="split"
+  titleLevel="h1"
+  eyebrow="Security"
+  title="A token can exist and access can still stop."
+  description="Policy OS turns credentials into controlled runtime behavior. Identity, entitlement, commercial state, and policy all participate in the final decision."
+>
+  {#snippet actions()}
+    <Button href={agencyCoreMessaging.workflowMappingSessionHref}>
+      {agencyCoreMessaging.bookMappingSessionLabel}
+    </Button>
+    <Button href="/bearer-token-policy" variant="secondary">Read Token Policy</Button>
+  {/snippet}
 
-<section class="section-shell">
-  <div class="shell-inner">
-    <ControlStackDiagram
-      title="How `.agency` enforces governable automation"
-      description="Each request passes through an explicit chain. That is why approval requirements, blocked states, and recovery paths stay legible instead of hiding inside prompt behavior."
+  {#snippet aside()}
+    <ClearCardGrid
+      items={runtimeRules}
+      columns={1}
+      density="compact"
+      ariaLabel="Runtime security rules"
     />
-  </div>
-</section>
+  {/snippet}
+</ClearPageSection>
 
-<section class="section-shell">
-  <div class="shell-inner">
-    <BlockedStatePanel />
-  </div>
-</section>
+<ClearPageSection
+  variant="white"
+  eyebrow={`Last updated ${updatedDate}`}
+  title="Controlled automation needs an explicit access chain."
+  description="Each request passes through a clear path so approval requirements, blocked states, and recovery paths stay legible instead of hiding inside prompt behavior."
+>
+  {#snippet after()}
+    <ClearCardGrid items={securityPath} columns={4} ariaLabel="Security control path" />
+  {/snippet}
+</ClearPageSection>
 
-<section class="section-shell">
-  <div class="shell-inner security-grid">
-    {#each layers as layer}
-      <article class="security-card">
-        <h2>{layer.title}</h2>
-        <p>{layer.text}</p>
-      </article>
-    {/each}
-
-    <article class="security-card full-span">
-      <h2>Bearer token risk management</h2>
-      <p>
-        `.agency` issues one managed bearer token per authenticated user for approved hosts and
-        background agents. The token is portable, but authorization remains conditional at request
-        time through live entitlement and policy checks.
-      </p>
-      <p>
-        If compromise is suspected, CREATE SOMETHING can revoke or regenerate access immediately
-        without waiting for a token expiry window.
-      </p>
-    </article>
-
-    <article class="security-card full-span">
-      <h2>Why commercial and legal state belongs in the access decision</h2>
-      <p>
-        Access is not determined by token validity alone. `.agency` can deny execution when
-        contract status, billing standing, or required policy acceptance is not current. This keeps
-        back-office reality tied to runtime behavior instead of leaving a governance gap between the
-        agreement and the workflow.
-      </p>
-      <p>
-        For security inquiries, contact <a href="mailto:legal@createsomething.io">legal@createsomething.io</a>.
-      </p>
-    </article>
-  </div>
-</section>
-
-<style>
-  .hero {
-    padding: 8rem 1.5rem 3rem;
-  }
-
-  .section-shell {
-    padding: 0 1.5rem 4rem;
-  }
-
-  .eyebrow {
-    color: var(--color-fg-tertiary);
-    text-transform: uppercase;
-    letter-spacing: 0.14em;
-    font-size: 0.75rem;
-    margin-bottom: 1.25rem;
-  }
-
-  .copy {
-    max-width: 62rem;
-  }
-
-  .page-title {
-    font-size: var(--text-h1);
-    font-weight: 700;
-    color: var(--color-fg-primary);
-    margin-bottom: 1rem;
-  }
-
-  .lede {
-    font-size: var(--text-body-lg);
-    color: var(--color-fg-secondary);
-    max-width: 58rem;
-    line-height: 1.7;
-  }
-
-  .date-text {
-    margin-top: 1rem;
-    color: var(--color-fg-tertiary);
-    font-size: var(--text-body-sm);
-  }
-
-  .security-grid {
-    display: grid;
-    gap: 1.5rem;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .security-card {
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    background:
-      radial-gradient(circle at top left, rgba(45, 212, 191, 0.09), transparent 45%),
-      linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.015)),
-      rgba(0, 0, 0, 0.5);
-    padding: 1.5rem;
-    border-radius: 20px;
-    backdrop-filter: blur(8px);
-  }
-
-  .security-card h2 {
-    font-size: var(--text-h4);
-    color: var(--color-fg-primary);
-    margin-bottom: 0.9rem;
-  }
-
-  .security-card p {
-    color: var(--color-fg-secondary);
-    line-height: 1.7;
-    margin: 0 0 1rem;
-  }
-
-  .security-card p:last-child {
-    margin-bottom: 0;
-  }
-
-  .security-card a {
-    color: var(--color-fg-primary);
-  }
-
-  .full-span {
-    grid-column: 1 / -1;
-  }
-
-  .animate-reveal {
-    opacity: 0;
-    transform: translateY(20px);
-    animation: reveal 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-  }
-
-  @keyframes reveal {
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .animate-reveal {
-      animation: none;
-      opacity: 1;
-      transform: none;
-    }
-  }
-
-  @media (max-width: 760px) {
-    .security-grid {
-      grid-template-columns: 1fr;
-    }
-  }
-</style>
+<ClearCtaBand
+  eyebrow="Access boundary"
+  title="Map the workflow before you hand it credentials."
+  description="Security is strongest when the workflow names its objects, permissions, stop conditions, and receipts before any agent acts."
+  items={ctaItems}
+>
+  {#snippet actions()}
+    <Button href={agencyCoreMessaging.workflowMappingSessionHref}>
+      {agencyCoreMessaging.bookMappingSessionLabel}
+    </Button>
+    <Button href="mailto:legal@createsomething.io" variant="secondary">Security Contact</Button>
+  {/snippet}
+</ClearCtaBand>

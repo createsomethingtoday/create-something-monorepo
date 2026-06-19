@@ -29,6 +29,8 @@
 
 <style>
 	.clear-artifact-card {
+		position: relative;
+		overflow: hidden;
 		display: grid;
 		align-content: start;
 		gap: 0.55rem;
@@ -41,6 +43,14 @@
 		text-decoration: none;
 	}
 
+	.clear-artifact-card::before {
+		content: '';
+		position: absolute;
+		inset: 0 0 auto;
+		height: 0.22rem;
+		background: var(--color-clear-pill-active, #cad7fa);
+	}
+
 	a.clear-artifact-card {
 		transition:
 			border-color var(--duration-micro) var(--ease-standard),
@@ -49,6 +59,7 @@
 
 	a.clear-artifact-card:hover {
 		border-color: var(--color-clear-border-strong, #cecece);
+		background: var(--color-clear-porcelain, #f9f9f9);
 		opacity: 1;
 		transform: none;
 	}

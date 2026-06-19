@@ -27,10 +27,12 @@
   --warn-soft: rgba(241, 197, 107, 0.16);
   --danger: #ff9690;
   --danger-soft: rgba(255, 150, 144, 0.16);
+  --accent-warm: #f4b184;
   --button-bg: linear-gradient(135deg, #a7b8ff 0%, #6c84ff 100%);
   --button-ink: #06070c;
   --focus: rgba(167, 184, 255, 0.72);
   --radius: 20px;
+  --radius-tight: 8px;
   --shadow: 0 28px 72px rgba(0, 0, 0, 0.42);
   --font-heading: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   --font-display: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;

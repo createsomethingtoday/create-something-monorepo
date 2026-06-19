@@ -6,6 +6,21 @@ This package is the end-user conversation product. It is distinct from:
 
 - `.agency` control-plane UX
 - MCP App `ui://...` resources inside server packages
+- raw Dify web-app clients or browser-side Dify API calls
+
+## Operator Chat Direction
+
+Use this package for the comprehensive operator chat shell around Dify-backed agents.
+
+The internal operator UI should copy Ona's clear-communication design discipline: light operational surfaces, compact navigation, crisp borders, readable hierarchy, direct action language, and proof beside each claim. CREATE SOMETHING still owns the product identity, governance copy, evidence model, and approval surface.
+
+The app should render three stable rails for staff/operator views:
+
+1. **Context rail**: client, lane, agent, credential state, blockers, and current operator state.
+2. **Chat rail**: Dify-backed conversation, inline widgets, and composer state.
+3. **Proof and actions rail**: artifacts, tool calls, approvals, handoff packets, eval evidence, and Linear references.
+
+Dify remains runtime plumbing. The browser must never receive a Dify API key or call the Dify Service API directly. Server orchestration resolves Dify app configuration, calls `chat-messages`, stores conversation IDs, maps stream/tool events into chat artifacts, and returns bounded widget/state payloads to the Svelte client.
 
 ## Current Scope
 
@@ -21,6 +36,8 @@ This package is the end-user conversation product. It is distinct from:
 - shortlist generation, recruiter review booking, recruiter review completion, staffing coordinator outreach, governed facility-submission handoff progression, facility-response capture, onboarding handoff progression, and terminal start-ready or closed-request outcomes once intake blockers clear
 - route loads and `/api/threads/*` mutations for thread creation, messaging, confirmation, consent, attachment uploads, recruiter review transitions, staffing queue transitions, facility-response transitions, onboarding transitions, reconnect recovery, and reset
 - local `/control-plane/*` bridge routes that redirect Abundance control-plane actions into real `.agency` dashboard, MCP access, and security surfaces
+- Ona-style operator shell contract in `src/lib/operator/clear-shell.ts`, surfaced on the public orientation page and staff/operator chat routes
+- staff-only `/agents` and `/agents/[agentId]` routes for the Ona-style multi-agent Dify operator shell, backed by server-side Dify `chat-messages` calls and bounded proof events
 - root layout now reads the optional shared `.agency` browser session and live `.agency` entitlement snapshot so the Abundance shell can show whether governed staffing access is active, blocked, or unavailable
 - governed recruiter, staffing, facility-response, and onboarding actions remain read-only until `.agency` reports an active entitlement decision for the current browser session
 - anonymous `/chat` and `/settings` access now routes back into `/apply` so the candidate path stays conversation-first
@@ -43,6 +60,7 @@ This package is the end-user conversation product. It is distinct from:
 - set `ABUNDANCE_GEO_MAPBOX_ACCESS_TOKEN` to enable server-side external preferred-location recovery when the internal market catalog cannot normalize a nurse's location message confidently; this path stores normalized results in-thread, so it is intended for a Mapbox token allowed for permanent geocoding
 - the canonical Infisical path for that token is `/agency/abundance/geo`; once the secret exists there, run `pnpm --filter @create-something/concierge-chat geo:secret:sync` to promote it into the Pages project
 - set `ABUNDANCE_INTAKE_EMAIL_FROM` if the verification sender should differ from the runtime default
+- set Dify Service API keys as Cloudflare Pages secrets to enable `/agents` production calls. Use the checked-in Dify inventory names exactly, for example `DIFY_TEMPLATE_REVIEW_HUB_API_KEY`, `DIFY_PABLO_HUB_API_KEY`, `DIFY_ERIC_HUB_API_KEY`, `DIFY_NATALIA_HUB_API_KEY`, `DIFY_MARIANA_HUB_API_KEY`, `DIFY_VICKI_HUB_API_KEY`, and the other `DIFY_*_API_KEY` bindings listed in `wrangler.toml`
 - public write paths now enforce server-side rate limits for thread creation, candidate messaging, verification request/verify, uploads, and workflow actions; blocked requests return `429` with `Retry-After`
 - local non-production staff sessions can use the Settings `Preview Entitlement` controls to mint a cookie-scoped `.agency` access override for recruiter, staffing, and onboarding walkthroughs without a live `.agency` session
 - production mode disables the Settings preview override route and boots nurse sessions with no seeded demo threads
@@ -58,5 +76,5 @@ This package is the end-user conversation product. It is distinct from:
 | Smoke command | `pnpm --filter @create-something/concierge-chat smoke` |
 | Acceptance command | `pnpm --filter @create-something/concierge-chat acceptance` |
 | Validation surfaces | Svelte typecheck output, production build, route rendering, widget registry compilation, public-apply routing, anonymous redirects from `/chat` and `/settings`, candidate acceptance flow, internal staffing acceptance flow, inbound claim creation, `/apply/claim` continuation routing, self-serve verification request/verify flows, secure-intake gating, terminal Indeed disposition writeback |
-| UI validation path | `/`, `/apply`, `/apply/claim?token=...`, `/chat` (redirect), `/chat/[threadId]`, `/chat/[threadId]/profile`, `/chat/[threadId]/handoff` (staff only when available) |
+| UI validation path | `/`, `/apply`, `/apply/claim?token=...`, `/agents`, `/agents/[agentId]`, `/chat` (redirect), `/chat/[threadId]`, `/chat/[threadId]/profile`, `/chat/[threadId]/handoff` (staff only when available) |
 | Escalation rule | stop if a new widget requires arbitrary executable UI or if a workflow needs real persistence/auth without an agreed data contract |

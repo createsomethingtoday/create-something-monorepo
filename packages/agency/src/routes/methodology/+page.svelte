@@ -55,7 +55,7 @@
 		{
 			weeks: 'Step 4',
 			name: 'Ship the operator path',
-				description: 'Deliver the MCP wedge, runbook, trust notes, and operator brief surface.'
+				description: 'Deliver the first safe connection, runbook, trust notes, and operator brief surface.'
 		}
 	];
 
@@ -87,7 +87,7 @@
 <SEO
 	title="How It Works | CREATE SOMETHING .agency"
 	description="CREATE SOMETHING removes duplication, excess, and disconnection before turning a workflow into controlled delegation with a trust layer."
-	keywords="how CREATE SOMETHING works, workflow trust layer, controlled workflow, MCP wedge, automation audit, Subtractive Triad"
+	keywords="how CREATE SOMETHING works, workflow trust layer, controlled workflow, first safe connection, automation audit, Subtractive Triad"
 	ogImage="/og-image.svg"
 	propertyName="agency"
 	breadcrumbs={[
@@ -96,6 +96,7 @@
 	]}
 />
 
+<main class="methodology-page">
 <!-- Hero -->
 <section class="hero">
 	<div class="hero-grid"></div>
@@ -316,9 +317,23 @@
 		</BlurFade>
 	</div>
 </section>
+</main>
 
 <style>
 	/* ─── Layout ─── */
+	.methodology-page {
+		background: var(--color-clear-panel, #ffffff);
+		color: var(--color-clear-onyx, #0a0e19);
+		--color-fg-primary: var(--color-clear-onyx, #0a0e19);
+		--color-fg-secondary: #252a34;
+		--color-fg-muted: var(--color-clear-grey, #636363);
+		--color-fg-tertiary: var(--color-clear-grey, #636363);
+		--color-bg-pure: var(--color-clear-panel, #ffffff);
+		--color-bg-surface: var(--color-clear-panel, #ffffff);
+		--color-bg-subtle: var(--color-clear-porcelain, #f9f9f9);
+		--color-border-emphasis: var(--color-clear-border, #e1e1e1);
+	}
+
 	.section-container {
 		max-width: var(--content-width-xl);
 		margin: 0 auto;

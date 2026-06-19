@@ -11,6 +11,7 @@ import {
   syncSourceTicketsToHalfDozen,
 } from './sync.js';
 import { emitBraintrustToolInvocation } from './braintrust.js';
+import { resolveRuntimeConfig } from './config.js';
 import type { Env, ToolResponse } from './types.js';
 
 const optionalPageIdsSchema = z.object({
@@ -18,117 +19,102 @@ const optionalPageIdsSchema = z.object({
   page_id: z.string().optional().describe('Single Notion page ID or source Page ID value to reconcile.'),
 });
 
-const CONTRACT = {
-  source: 'BLOND:ISH Support Tickets [OS]',
-  target: 'Half Dozen Tickets [HD]',
-  match_key: 'source Page ID -> target External Page ID or Ext Page ID',
-  source_owned_fields: ['Ticket', 'Source', 'Owner', 'Client', 'External Page ID / Ext Page ID', 'External URL', 'External Files & Media', 'page body'],
-  hd_owned_fields: ['Status'],
-  status_map: {
-    Assigned: 'Under Review',
-    'In Progress': 'In Progress',
-    'Client Action': 'Action Required',
-    Complete: 'Complete',
-    Archive: 'Archive',
-    Roadblock: 'Roadblock',
-  },
-  unsupported: ['generic arbitrary property sync', 'delete propagation', 'field-level conflict resolution', 'reverse syncing HD edits to title/body/external references'],
-  scale_notes: [
-    'Use audit and plan tools for operator sessions.',
-    'Use scoped repair tools before broad reconcile tools.',
-    'Use Notion webhooks or a persisted sync index before frequent large-database polling.',
-  ],
-};
-
 export function createBlondishSyncMcpServer(env: Env): McpServer {
+  return createTicketSyncMcpServer(env);
+}
+
+export function createTicketSyncMcpServer(env: Env): McpServer {
+  const runtime = resolveRuntimeConfig(env);
+  const tools = toolNames(runtime.toolPrefix);
   const server = new McpServer({
-    name: 'halfdozen-blondish-sync-mcp',
+    name: runtime.serverName,
     version: '0.1.0',
   });
 
   server.tool(
-    'blondish_sync_preflight',
-    'Validate BLOND:ISH and Half Dozen Notion token access, data source visibility, and required sync properties. No writes.',
+    tools.preflight,
+    `Validate ${runtime.clientDisplayName} and Half Dozen Notion token access, data source visibility, and required sync properties. No writes.`,
     {},
-    async () => tracedJsonToolResponse(env, 'blondish_sync_preflight', () => preflight(env)),
+    async () => tracedJsonToolResponse(env, tools.preflight, () => preflight(env)),
   );
 
   server.tool(
-    'blondish_sync_audit',
-    'Audit BLOND:ISH and Half Dozen ticket rows for missing HD rows, duplicate matches, contract-field drift, body drift, and reverse-status drift. No writes.',
+    tools.audit,
+    `Audit ${runtime.clientDisplayName} and Half Dozen ticket rows for missing HD rows, duplicate matches, contract-field drift, body drift, and reverse-status drift. No writes.`,
     {},
-    async () => tracedJsonToolResponse(env, 'blondish_sync_audit', () => auditSync(env)),
+    async () => tracedJsonToolResponse(env, tools.audit, () => auditSync(env)),
   );
 
   server.tool(
-    'blondish_sync_plan_source_to_hd_repairs',
+    tools.planSourceToHdRepairs,
     'Plan source-to-HD repairs from a fresh audit. No writes. Prefer this before write tools so the operator sees scoped repair options.',
     {},
-    async () => tracedJsonToolResponse(env, 'blondish_sync_plan_source_to_hd_repairs', () => planSourceToHalfDozenRepairs(env)),
+    async () => tracedJsonToolResponse(env, tools.planSourceToHdRepairs, () => planSourceToHalfDozenRepairs(env)),
   );
 
   server.tool(
-    'blondish_sync_repair_missing_hd_rows',
+    tools.repairMissingHdRows,
     'Create only HD rows that are currently missing from the source-to-HD match. Does not update existing rows and never overwrites HD Status.',
     {},
-    async () => tracedJsonToolResponse(env, 'blondish_sync_repair_missing_hd_rows', () => repairMissingHalfDozenRows(env)),
+    async () => tracedJsonToolResponse(env, tools.repairMissingHdRows, () => repairMissingHalfDozenRows(env)),
   );
 
   server.tool(
-    'blondish_sync_repair_external_url_drift',
+    tools.repairExternalUrlDrift,
     'Repair only External URL drift on currently matched HD rows. Does not create rows, change page body, repair titles, or overwrite HD Status.',
     {},
-    async () => tracedJsonToolResponse(env, 'blondish_sync_repair_external_url_drift', () => repairExternalUrlDrift(env)),
+    async () => tracedJsonToolResponse(env, tools.repairExternalUrlDrift, () => repairExternalUrlDrift(env)),
   );
 
   server.tool(
-    'blondish_sync_source_to_hd',
-    'Directly create or repair Half Dozen ticket rows from BLOND:ISH source rows. Never overwrites HD Status.',
+    tools.sourceToHd,
+    `Directly create or repair Half Dozen ticket rows from ${runtime.clientDisplayName} source rows. Never overwrites HD Status.`,
     optionalPageIdsSchema.shape,
     async (params) => tracedJsonToolResponse(
       env,
-      'blondish_sync_source_to_hd',
+      tools.sourceToHd,
       () => syncSourceTicketsToHalfDozen(env, { sourcePageIds: normalizePageIds(params) }),
     ),
   );
 
   server.tool(
-    'blondish_sync_hd_status_to_source',
-    'Directly write mapped Half Dozen Status values back to BLOND:ISH. Only mapped statuses are written.',
+    tools.hdStatusToSource,
+    `Directly write mapped Half Dozen Status values back to ${runtime.clientDisplayName}. Only mapped statuses are written.`,
     optionalPageIdsSchema.shape,
     async (params) => tracedJsonToolResponse(
       env,
-      'blondish_sync_hd_status_to_source',
+      tools.hdStatusToSource,
       () => syncHalfDozenStatusToSource(env, { targetPageIds: normalizePageIds(params) }),
     ),
   );
 
   server.tool(
-    'blondish_sync_full',
-    'Run source-to-HD reconciliation, then HD-status-to-BLONDISH status reconciliation.',
+    tools.full,
+    `Run source-to-HD reconciliation, then HD-status-to-${runtime.clientDisplayName} status reconciliation.`,
     {},
-    async () => tracedJsonToolResponse(env, 'blondish_sync_full', () => fullReconcile(env)),
+    async () => tracedJsonToolResponse(env, tools.full, () => fullReconcile(env)),
   );
 
+  const contractUri = `sync://${runtime.clientSlug}/contract`;
   server.resource(
-    'BLONDISH Sync Contract',
-    'sync://blondish/contract',
+    `${runtime.clientDisplayName} Sync Contract`,
+    contractUri,
     {
-      description: 'BLOND:ISH / Half Dozen sync ownership, match keys, status mapping, and unsupported behaviors.',
+      description: `${runtime.clientDisplayName} / Half Dozen sync ownership, match keys, status mapping, and unsupported behaviors.`,
       mimeType: 'application/json',
     },
     async () => ({
       contents: [{
-        uri: 'sync://blondish/contract',
+        uri: contractUri,
         mimeType: 'application/json',
-        text: JSON.stringify(CONTRACT, null, 2),
+        text: JSON.stringify(buildContract(runtime.clientDisplayName), null, 2),
       }],
     }),
   );
 
   server.prompt(
-    'blondish_sync_operator',
-    'Guide a Notion agent/operator through BLOND:ISH / Half Dozen ticket reconciliation.',
+    `${runtime.toolPrefix}_operator`,
+    `Guide a Notion agent/operator through ${runtime.clientDisplayName} / Half Dozen ticket reconciliation.`,
     {
       intent: z.string().optional().describe('What the operator wants to do, such as audit, repair one row, or reconcile all rows.'),
     },
@@ -139,15 +125,15 @@ export function createBlondishSyncMcpServer(env: Env): McpServer {
           content: {
             type: 'text',
             text: [
-              'You are operating the BLOND:ISH / Half Dozen ticket sync MCP.',
-              'Use blondish_sync_preflight before first use in a session if runtime health is unknown.',
-              'For diagnosis, call blondish_sync_audit and summarize exact row IDs and drift categories.',
-              'For repair planning, call blondish_sync_plan_source_to_hd_repairs and prefer scoped repair tools when they cover the drift.',
-              'Use blondish_sync_repair_missing_hd_rows only for missing source-to-HD rows.',
-              'Use blondish_sync_repair_external_url_drift only for matched rows whose External URL drifted.',
-              'Use blondish_sync_source_to_hd only when the operator explicitly wants broader page-data contract repair.',
-              'Use blondish_sync_hd_status_to_source only for HD-owned status drift.',
-              'Do not claim this is generic bidirectional replication. HD title/body/source/owner/client/external-reference edits are not reverse-synced to BLOND:ISH.',
+              `You are operating the ${runtime.clientDisplayName} / Half Dozen ticket sync MCP.`,
+              `Use ${tools.preflight} before first use in a session if runtime health is unknown.`,
+              `For diagnosis, call ${tools.audit} and summarize exact row IDs and drift categories.`,
+              `For repair planning, call ${tools.planSourceToHdRepairs} and prefer scoped repair tools when they cover the drift.`,
+              `Use ${tools.repairMissingHdRows} only for missing source-to-HD rows.`,
+              `Use ${tools.repairExternalUrlDrift} only for matched rows whose External URL drifted.`,
+              `Use ${tools.sourceToHd} only when the operator explicitly wants broader page-data contract repair.`,
+              `Use ${tools.hdStatusToSource} only for HD-owned status drift.`,
+              `Do not claim this is generic bidirectional replication. HD title/body/source/owner/client/external-reference edits are not reverse-synced to ${runtime.clientDisplayName}.`,
               'For future scale, treat Notion webhooks and a persisted sync index as the normal event path; this MCP remains the operator control plane.',
               args.intent ? `Operator intent: ${args.intent}` : '',
             ].filter(Boolean).join('\n'),
@@ -158,6 +144,43 @@ export function createBlondishSyncMcpServer(env: Env): McpServer {
   );
 
   return server;
+}
+
+function toolNames(prefix: string) {
+  return {
+    preflight: `${prefix}_preflight`,
+    audit: `${prefix}_audit`,
+    planSourceToHdRepairs: `${prefix}_plan_source_to_hd_repairs`,
+    repairMissingHdRows: `${prefix}_repair_missing_hd_rows`,
+    repairExternalUrlDrift: `${prefix}_repair_external_url_drift`,
+    sourceToHd: `${prefix}_source_to_hd`,
+    hdStatusToSource: `${prefix}_hd_status_to_source`,
+    full: `${prefix}_full`,
+  };
+}
+
+function buildContract(clientDisplayName: string) {
+  return {
+    source: `${clientDisplayName} Support Tickets [OS]`,
+    target: 'Half Dozen Tickets [HD]',
+    match_key: 'source Page ID -> target External Page ID or Ext Page ID',
+    source_owned_fields: ['Ticket', 'Source', 'Owner', 'Client', 'External Page ID / Ext Page ID', 'External URL', 'External Files & Media', 'page body'],
+    hd_owned_fields: ['Status'],
+    status_map: {
+      Assigned: 'Under Review',
+      'In Progress': 'In Progress',
+      'Client Action': 'Action Required',
+      Complete: 'Complete',
+      Archive: 'Archive',
+      Roadblock: 'Roadblock',
+    },
+    unsupported: ['generic arbitrary property sync', 'delete propagation', 'field-level conflict resolution', 'reverse syncing HD edits to title/body/external references'],
+    scale_notes: [
+      'Use audit and plan tools for operator sessions.',
+      'Use scoped repair tools before broad reconcile tools.',
+      'Use Notion webhooks or a persisted sync index before frequent large-database polling.',
+    ],
+  };
 }
 
 function normalizePageIds(params: unknown): string[] | undefined {

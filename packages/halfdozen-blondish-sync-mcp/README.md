@@ -1,29 +1,39 @@
-# Half Dozen BLOND:ISH Sync MCP
+# Half Dozen Client Ticket Sync MCP
 
-Operator-invoked MCP for reconciling BLOND:ISH `Support Tickets [OS]` with
-Half Dozen `Tickets [HD]`.
+Operator-invoked MCP for reconciling client `Support Tickets [OS]` data sources
+with Half Dozen `Tickets [HD]`.
 
-This is intentionally narrower than generic database replication. BLOND:ISH is
-the source of ticket page data, and Half Dozen is the source of mapped status.
+This is intentionally narrower than generic database replication. The client
+workspace is the source of ticket page data, and Half Dozen is the source of
+mapped status.
 The tools are direct-write tools for a Notion agent, with audit/preflight tools
 for diagnosis.
 
+Current Worker configs:
+
+| Worker | Client | Tool prefix |
+| --- | --- | --- |
+| `wrangler.toml` | BLOND:ISH | `blondish_sync` |
+| `wrangler.c3-management.toml` | C3 Management | `c3_management_sync` |
+| `wrangler.cracked.toml` | Cracked Live | `cracked_sync` |
+| `wrangler.lightswitch.toml` | Lightswitch | `lightswitch_sync` |
+
 ## Tools
 
-- `blondish_sync_preflight` checks tokens, data source visibility, and schemas.
-- `blondish_sync_audit` reports missing rows, duplicate matches, contract-field
+- `<prefix>_preflight` checks tokens, data source visibility, and schemas.
+- `<prefix>_audit` reports missing rows, duplicate matches, contract-field
   drift, body drift, attachment drift, and reverse-status drift.
-- `blondish_sync_plan_source_to_hd_repairs` turns a fresh audit into a scoped
+- `<prefix>_plan_source_to_hd_repairs` turns a fresh audit into a scoped
   no-write repair plan.
-- `blondish_sync_repair_missing_hd_rows` creates only HD rows that are currently
+- `<prefix>_repair_missing_hd_rows` creates only HD rows that are currently
   missing from the source-to-HD match.
-- `blondish_sync_repair_external_url_drift` repairs only `External URL` drift on
+- `<prefix>_repair_external_url_drift` repairs only `External URL` drift on
   matched HD rows.
-- `blondish_sync_source_to_hd` creates or repairs HD rows from BLOND:ISH source
+- `<prefix>_source_to_hd` creates or repairs HD rows from client source
   rows. It never overwrites HD `Status`.
-- `blondish_sync_hd_status_to_source` writes mapped HD statuses back to
-  BLOND:ISH. Unmapped statuses are skipped.
-- `blondish_sync_full` runs source-to-HD, then HD-status-to-source.
+- `<prefix>_hd_status_to_source` writes mapped HD statuses back to the client.
+  Unmapped statuses are skipped.
+- `<prefix>_full` runs source-to-HD, then HD-status-to-source.
 
 ## Contract
 
@@ -31,7 +41,7 @@ Forward sync matches source `Page ID` to target `External Page ID` or
 `Ext Page ID`. It governs `Ticket`, `Source`, `Owner`, optional `Client`,
 external page ID, external URL, external files/media, and synced page body.
 
-Reverse sync updates only the BLOND:ISH status property:
+Reverse sync updates only the client status property:
 
 - `Assigned` -> `Under Review`
 - `In Progress` -> `In Progress`
@@ -79,6 +89,9 @@ pnpm --filter @create-something/halfdozen-blondish-sync-mcp typecheck
 pnpm --filter @create-something/halfdozen-blondish-sync-mcp test
 pnpm braintrust:eval:mcp:halfdozen-blondish-sync:local
 pnpm deploy:halfdozen-blondish-sync-mcp
+pnpm deploy:halfdozen-c3-management-sync-mcp
+pnpm deploy:halfdozen-cracked-sync-mcp
+pnpm deploy:halfdozen-lightswitch-sync-mcp
 ```
 
 Set secrets with Wrangler or Infisical-backed deployment:
@@ -86,7 +99,7 @@ Set secrets with Wrangler or Infisical-backed deployment:
 ```bash
 cd packages/halfdozen-blondish-sync-mcp
 pnpm exec wrangler secret put MCP_API_KEY
-pnpm exec wrangler secret put BLONDISH_NOTION_API_KEY
+pnpm exec wrangler secret put CLIENT_NOTION_API_KEY
 pnpm exec wrangler secret put HALFDOZEN_NOTION_API_KEY
 pnpm exec wrangler secret put HALFDOZEN_TICKETS_DATA_SOURCE_ID
 pnpm exec wrangler secret put BRAINTRUST_API_KEY

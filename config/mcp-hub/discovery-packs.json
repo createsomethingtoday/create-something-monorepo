@@ -18,6 +18,67 @@
       ],
       "maxProxyTools": null
     },
+    "viv-blondish-named-lane": {
+      "description": "Viv BLOND:ISH named lane: client-specific Notion bridge, Gmail, and Exa.",
+      "mode": "compact",
+      "activeServers": [
+        "composio-toolkit-exa",
+        "composio-toolkit-gmail",
+        "notion-halfdozen-blondish"
+      ],
+      "maxProxyTools": null
+    },
+    "morgan-young-c3-management-named-lane": {
+      "description": "Morgan Young C3 Management named lane: client-specific Notion bridge, Gmail, and Exa.",
+      "mode": "compact",
+      "activeServers": [
+        "composio-toolkit-exa",
+        "composio-toolkit-gmail",
+        "notion-halfdozen-c3-management"
+      ],
+      "maxProxyTools": null
+    },
+    "blondish-client-hub": {
+      "description": "BLOND:ISH client hub: broad shared-auth client workspace surface.",
+      "mode": "compact",
+      "activeServers": [
+        "composio-toolkit-box",
+        "composio-toolkit-dropbox",
+        "composio-toolkit-exa",
+        "composio-toolkit-firecrawl",
+        "composio-toolkit-gmail",
+        "composio-toolkit-googledrive",
+        "composio-toolkit-googlemeet",
+        "composio-toolkit-googlesheets",
+        "composio-toolkit-notion",
+        "composio-toolkit-perplexityai",
+        "composio-toolkit-whatsapp",
+        "composio-toolkit-youtube",
+        "composio-toolkit-zoom",
+        "halfdozen-operator-notion-mcp"
+      ],
+      "maxProxyTools": null
+    },
+    "cracked-client-hub": {
+      "description": "Cracked Live client hub: broad shared-auth client workspace surface.",
+      "mode": "compact",
+      "activeServers": [
+        "composio-toolkit-canva",
+        "composio-toolkit-dropbox",
+        "composio-toolkit-exa",
+        "composio-toolkit-firecrawl",
+        "composio-toolkit-gmail",
+        "composio-toolkit-googledrive",
+        "composio-toolkit-googlemeet",
+        "composio-toolkit-googlesheets",
+        "composio-toolkit-notion",
+        "composio-toolkit-perplexityai",
+        "composio-toolkit-whatsapp",
+        "composio-toolkit-zoom",
+        "halfdozen-operator-notion-mcp"
+      ],
+      "maxProxyTools": null
+    },
     "outerfields-shared-auth-clickup": {
       "description": "Outerfields discovery pack: shared auth core plus ClickUp.",
       "mode": "compact",

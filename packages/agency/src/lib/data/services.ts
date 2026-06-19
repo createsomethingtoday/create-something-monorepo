@@ -35,16 +35,16 @@ export const products: Product[] = [
 	// ─── Featured ────────────────────────────────────────────────
 	{
 		id: 'loom',
-		title: 'Loom',
-		tagline: 'Memory and coordination for AI agents',
+		title: 'Loom Archive',
+		tagline: 'Historical proof for agent continuity',
 		description:
-			'Shared memory, smart task routing, crash recovery. Multi-agent coordination for Claude, Cursor, Codex.',
-		badge: 'Free & Open Source',
+			'Archived MCP coordination work that proved agents need ownership, checkpoints, routing, and recovery. New repo work now uses Linear as the task source of truth.',
+		badge: 'Historical Proof',
 		category: 'featured',
 		href: '/products/loom',
 		npmPackage: '@createsomething/loom-mcp',
-		pricing: 'Free',
-		timeline: 'Instant setup'
+		pricing: 'Archived',
+		timeline: 'Linear-first coordination'
 	},
 	{
 		id: 'ground',

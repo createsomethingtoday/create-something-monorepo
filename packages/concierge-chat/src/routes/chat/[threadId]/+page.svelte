@@ -310,6 +310,10 @@
 	});
 	$: showExpandedVerificationBanner = showInternalOperatorUi || !data.intakeAccess.granted;
 	$: threadEyebrow = showInternalOperatorUi ? 'Primary Conversation Surface' : 'Chat with Concierge';
+	$: operatorPlaneSummary = data.operatorShellPlanes
+		.map((plane) => plane.label)
+		.join(' / ');
+	$: commandCenter = data.operatorCommandCenter;
 	$: snapshotEyebrow = showInternalOperatorUi ? 'Application Snapshot' : 'What I know so far';
 	$: snapshotTitle = showInternalOperatorUi ? 'What I have so far' : 'A calm running summary';
 	$: snapshotSummary = showInternalOperatorUi ? liveThreadView.thread.turn.summary : nurseGuidance.body;
@@ -326,12 +330,71 @@
 	}
 </script>
 
-<section class="split-layout">
+<section class={`split-layout ${showInternalOperatorUi ? 'operator' : 'nurse'}`}>
+	{#if showInternalOperatorUi}
+		<aside class="context-column">
+			<section class="glass panel operator-context">
+				<div class="eyebrow">Operator Context</div>
+				<h2 class="rail-title">{data.operatorMode.label}</h2>
+				<p>{data.operatorMode.promise}</p>
+				<div class="context-list">
+					<div>
+						<span>Runtime</span>
+						<strong>{data.operatorMode.runtime}</strong>
+					</div>
+					<div>
+						<span>Current state</span>
+						<strong>{data.operatorState.label}</strong>
+					</div>
+					<div>
+						<span>Policy</span>
+						<strong>{liveThreadView.nextStep.policyRef}</strong>
+					</div>
+					<div>
+						<span>Rails</span>
+						<strong>{operatorPlaneSummary}</strong>
+					</div>
+				</div>
+				<div class="command-summary">
+					<div>
+						<span>State reason</span>
+						<strong>{commandCenter.stateReason}</strong>
+					</div>
+					<div>
+						<span>Next owner</span>
+						<strong>{commandCenter.nextActionOwner}</strong>
+					</div>
+				</div>
+				<div class="metric-list" aria-label="Operator command metrics">
+					{#each commandCenter.metrics as metric}
+						<div class="metric-row">
+							<div>
+								<span>{metric.label}</span>
+								<strong>{metric.value}</strong>
+								<p>{metric.detail}</p>
+							</div>
+							<span class={`status-dot ${metric.tone}`} aria-label={metric.tone}></span>
+						</div>
+					{/each}
+				</div>
+			</section>
+
+			<section class="glass panel">
+				<div class="eyebrow">Clear Language</div>
+				<ul class="rule-list">
+					{#each data.clearCommunicationRules as rule}
+						<li>{rule}</li>
+					{/each}
+				</ul>
+			</section>
+		</aside>
+	{/if}
+
 	<div class="main-column">
 		<section class={`glass panel thread-hero ${showInternalOperatorUi ? 'internal' : 'nurse'}`}>
 			<div class="thread-top">
 				<div>
-					<div class="eyebrow">{threadEyebrow}</div>
+					<div class="eyebrow">{showInternalOperatorUi ? 'Chat Rail' : threadEyebrow}</div>
 					<h1 class="section-title">{liveThreadView.thread.title}</h1>
 					<p class="muted">{liveThreadView.thread.subtitle}</p>
 					{#if !showInternalOperatorUi && data.intakeAccess.granted}
@@ -341,18 +404,30 @@
 						</div>
 					{/if}
 				</div>
-				<span class={`status-pill ${statusClass[liveThreadView.thread.status]}`}>
-					{liveThreadView.thread.status.replace('_', ' ')}
+				<span
+					class={`status-pill ${
+						showInternalOperatorUi ? data.operatorState.tone : statusClass[liveThreadView.thread.status]
+					}`}
+				>
+					{showInternalOperatorUi
+						? data.operatorState.label
+						: liveThreadView.thread.status.replace('_', ' ')}
 				</span>
 			</div>
 
 			{#if showInternalOperatorUi}
 				<div class="summary-banner">
 					<div>
-						<strong>{liveThreadView.nextStep.label}</strong>
-						<p>{liveThreadView.nextStep.description}</p>
+						<strong>{commandCenter.nextActionLabel}</strong>
+						<p>{commandCenter.nextActionDetail}</p>
+						<p class="operator-copy">{data.operatorState.operatorCopy}</p>
 					</div>
-					<div class="policy-ref">{liveThreadView.nextStep.policyRef}</div>
+					<div class="summary-meta">
+						<span>Owner</span>
+						<strong>{commandCenter.nextActionOwner}</strong>
+						<span>Policy</span>
+						<strong class="policy-ref">{commandCenter.policyRef}</strong>
+					</div>
 				</div>
 			{/if}
 		</section>
@@ -499,7 +574,7 @@
 
 	<aside class="side-column">
 		<section class={`glass panel snapshot-panel ${showInternalOperatorUi ? 'internal' : 'nurse'}`}>
-			<div class="eyebrow">{snapshotEyebrow}</div>
+			<div class="eyebrow">{showInternalOperatorUi ? 'Proof Rail' : snapshotEyebrow}</div>
 			<h2 class="section-title">{snapshotTitle}</h2>
 			<p>{snapshotSummary}</p>
 			{#if snapshotHelper}
@@ -516,6 +591,25 @@
 				</ul>
 			{:else}
 				<p class="muted compact">Nothing is blocking the next guided step right now.</p>
+			{/if}
+			{#if showInternalOperatorUi}
+				<div class="proof-inventory">
+					<p class="muted compact section-kicker">Proof inventory</p>
+					<div class="proof-list">
+						{#each commandCenter.proofInventory as proof}
+							<div class="proof-row">
+								<div>
+									<span>{proof.label}</span>
+									<strong>{proof.value}</strong>
+									{#if proof.detail}
+										<p class="muted">{proof.detail}</p>
+									{/if}
+								</div>
+								<span class={`status-pill ${proof.tone}`}>{proof.tone}</span>
+							</div>
+						{/each}
+					</div>
+				</div>
 			{/if}
 			<a class="inline-link" href={`/chat/${liveThreadView.thread.id}/profile`}>Review the details I captured</a>
 		</section>
@@ -553,6 +647,21 @@
 									{tool.status.replace('_', ' ')}
 								</span>
 							{/if}
+						</div>
+					{/each}
+				</div>
+			</section>
+
+			<section class="glass panel">
+				<div class="eyebrow">Operator Checks</div>
+				<div class="check-list">
+					{#each commandCenter.checks as check}
+						<div class="check-row">
+							<div>
+								<strong>{check.label}</strong>
+								<p class="muted">{check.detail}</p>
+							</div>
+							<span class={`status-pill ${check.tone}`}>{check.status}</span>
 						</div>
 					{/each}
 				</div>
@@ -599,6 +708,17 @@
 				{/if}
 			</section>
 		{/if}
+
+		{#if showInternalOperatorUi}
+			<section class="glass panel">
+				<div class="eyebrow">Dify Boundary</div>
+				<ul class="rule-list">
+					{#each data.difyRuntimeBoundary.operator as rule}
+						<li>{rule}</li>
+					{/each}
+				</ul>
+			</section>
+		{/if}
 	</aside>
 </section>
 
@@ -610,6 +730,11 @@
 		align-items: start;
 	}
 
+	.split-layout.operator {
+		grid-template-columns: minmax(220px, 0.72fr) minmax(0, 1.45fr) minmax(320px, 0.9fr);
+	}
+
+	.context-column,
 	.main-column,
 	.side-column {
 		display: grid;
@@ -620,6 +745,15 @@
 	.panel,
 	.composer {
 		padding: clamp(1.1rem, 2vw, 1.35rem);
+	}
+
+	.rail-title {
+		margin: 0.7rem 0 0;
+		font-size: 1.1rem;
+	}
+
+	.operator-context {
+		background: var(--surface-strong);
 	}
 
 	.thread-hero.nurse {
@@ -692,9 +826,30 @@
 		border: 1px solid var(--line);
 	}
 
+	.summary-meta {
+		display: grid;
+		gap: 0.28rem;
+		min-width: min(12rem, 100%);
+		align-content: start;
+	}
+
+	.summary-meta span {
+		color: var(--muted);
+		font-size: 0.74rem;
+		font-family: var(--font-mono);
+		text-transform: uppercase;
+		letter-spacing: 0.08em;
+	}
+
 	.policy-ref {
+		font-family: var(--font-mono);
 		font-size: 0.82rem;
 		color: var(--muted);
+	}
+
+	.operator-copy {
+		color: var(--ink);
+		font-weight: 600;
 	}
 
 	.guidance-panel {
@@ -812,6 +967,119 @@
 		padding: 0.38rem 0.68rem;
 		background: rgba(26, 34, 50, 0.55);
 		font-size: 0.68rem;
+	}
+
+	.context-list {
+		display: grid;
+		gap: 0.75rem;
+		margin-top: 1rem;
+	}
+
+	.context-list div,
+	.command-summary div {
+		display: grid;
+		gap: 0.25rem;
+		border-top: 1px solid var(--line);
+		padding-top: 0.75rem;
+	}
+
+	.context-list span,
+	.command-summary span,
+	.metric-row span,
+	.proof-row span {
+		color: var(--muted);
+		font-size: 0.82rem;
+	}
+
+	.context-list strong,
+	.command-summary strong {
+		font-size: 0.94rem;
+		line-height: 1.35;
+	}
+
+	.command-summary,
+	.metric-list,
+	.proof-list,
+	.check-list {
+		display: grid;
+		gap: 0.75rem;
+		margin-top: 1rem;
+	}
+
+	.metric-row,
+	.proof-row,
+	.check-row {
+		display: flex;
+		align-items: flex-start;
+		justify-content: space-between;
+		gap: 0.85rem;
+		border-top: 1px solid var(--line);
+		padding-top: 0.75rem;
+	}
+
+	.metric-row > div,
+	.proof-row > div,
+	.check-row > div {
+		min-width: 0;
+		display: grid;
+		gap: 0.25rem;
+	}
+
+	.metric-row strong,
+	.proof-row strong {
+		font-size: 1rem;
+		line-height: 1.3;
+	}
+
+	.metric-row p,
+	.proof-row p,
+	.check-row p {
+		margin: 0;
+		line-height: 1.45;
+	}
+
+	.status-dot {
+		width: 0.65rem;
+		height: 0.65rem;
+		flex: 0 0 auto;
+		margin-top: 0.25rem;
+		border-radius: 999px;
+		background: var(--muted);
+		box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.04);
+	}
+
+	.status-dot.good {
+		background: var(--good);
+	}
+
+	.status-dot.warn {
+		background: var(--warn);
+	}
+
+	.status-dot.danger {
+		background: var(--danger);
+	}
+
+	.proof-inventory {
+		margin-top: 1rem;
+	}
+
+	.proof-row .status-pill,
+	.check-row .status-pill {
+		flex: 0 0 auto;
+		max-width: 12rem;
+		white-space: normal;
+		text-align: center;
+	}
+
+	.rule-list {
+		margin: 0.9rem 0 0;
+		padding-left: 1.1rem;
+		color: var(--muted);
+	}
+
+	.rule-list li + li {
+		margin-top: 0.65rem;
 	}
 
 	.typing-dots {
@@ -951,6 +1219,7 @@
 	}
 
 	@media (max-width: 1024px) {
+		.split-layout.operator,
 		.split-layout {
 			grid-template-columns: 1fr;
 		}

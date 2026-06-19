@@ -7,7 +7,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { TemplateCard, type TemplateCardBadge, type TemplateCardLink } from '../cards/TemplateCard';
+import { TemplateCard, TEMPLATE_CARD_STYLES, type TemplateCardBadge, type TemplateCardLink } from '../cards/TemplateCard';
 import { trackMarketplaceEvent } from '../marketplace/analytics';
 import {
   MarketplaceComponentErrorBoundary,
@@ -894,7 +894,7 @@ const GRID_STYLES = `
     max-width: 100% !important;
   }
 }
-`;
+` + TEMPLATE_CARD_STYLES;
 
 const S: Record<string, CSSProperties> = {
   root: {
@@ -1096,6 +1096,7 @@ const TemplateGridItemView = memo<TemplateGridItemViewProps>(({
         }
         priorityIndex={index}
         deferSecondaryImage
+        stylesProvided
         approvalDate={item.published_date ?? ''}
         popularityScore={String(item.popularity_score ?? '')}
         showCategoryMeta={showCategoryMeta}

@@ -1,4 +1,4 @@
-import React, { CSSProperties, useState, useCallback, useLayoutEffect, memo } from 'react';
+import React, { CSSProperties, useState, useCallback, memo } from 'react';
 
 export type TemplateCardBadge = 'none' | 'new' | 'featured' | 'reviewed' | 'top-rated';
 
@@ -65,13 +65,15 @@ export interface TemplateCardProps {
   // DOM to infer its position when infinite scroll appends large result sets.
   priorityIndex?: number;
   deferSecondaryImage?: boolean;
+
+  // Containers that already inline TEMPLATE_CARD_STYLES in their own <style>
+  // tag (TemplateGrid, TemplateCarouselSection) set this to suppress the
+  // per-card copy.
+  stylesProvided?: boolean;
 }
 
 const ARROW_ICON_URL =
   'https://cdn.prod.website-files.com/5e593fb060cf87bbaf75dd20/670878b0296e4ae4034fe652_view-details-arrow.svg';
-
-// Global style injection — one <style> per page, not one per card instance
-let _stylesInjected = false;
 
 // 1×1 grey SVG used when the primary image fails to load
 const FALLBACK_IMAGE =
@@ -262,7 +264,6 @@ const S: Record<string, CSSProperties> = {
     color: 'rgb(0, 0, 0)',
     fontSize: '14px',
     fontWeight: 600,
-    boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
     transform: 'scale(0.96)',
     transition: 'transform 220ms cubic-bezier(0.25, 0.46, 0.45, 0.94)',
   },
@@ -526,7 +527,12 @@ const S: Record<string, CSSProperties> = {
 // All interactive behavior is CSS-driven so it works on CMS Load cloned items.
 // When Finsweet CMS Load clones a card, React never re-mounts — but CSS :hover
 // and @keyframes work on cloned HTML without any JavaScript.
-const INJECTED_STYLES = `
+//
+// Rendered as an inline <style> inside the component tree: Webflow Code
+// Components mount in an isolated root, so document.head injection never
+// reaches the card markup. Cloned cards carry the tag with them, so clones
+// stay styled too.
+export const TEMPLATE_CARD_STYLES = `
 /* Entrance animation — plays immediately on DOM insertion, no JS scroll observer needed */
 @keyframes tmcard-enter {
   from { opacity: 0; }
@@ -534,7 +540,7 @@ const INJECTED_STYLES = `
 }
 .tmcard-wrapper {
   animation: tmcard-enter 500ms ease-out var(--tmcard-stagger, 0ms) both;
-  transition: transform 200ms ease, box-shadow 220ms ease, outline-color 150ms ease;
+  transition: outline-color 150ms ease;
 }
 @media (prefers-reduced-motion: reduce) {
   .tmcard-wrapper {
@@ -543,11 +549,6 @@ const INJECTED_STYLES = `
   }
 }
 
-/* Card hover: lift + shadow */
-.tmcard-wrapper:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.10);
-}
 .tmcard-wrapper:focus-within {
   outline: 2px solid rgba(59,130,246,0.8);
   outline-offset: 3px;
@@ -715,6 +716,7 @@ const TemplateCardInner: React.FC<TemplateCardProps> = ({
   marketplaceSignalsText = '',
   priorityIndex = 0,
   deferSecondaryImage = false,
+  stylesProvided = false,
 }) => {
   const [primaryLoaded, setPrimaryLoaded] = useState(false);
   const [primaryError, setPrimaryError] = useState(false);
@@ -738,16 +740,6 @@ const TemplateCardInner: React.FC<TemplateCardProps> = ({
     setHasRequestedSecondary(true);
   }, []);
   const hideHoverAssets = useCallback(() => setIsLinkHovered(false), []);
-
-  // Inject global styles once, synchronously before first paint (useLayoutEffect
-  // fires before the browser paints, so the overlay is never visible without CSS)
-  useLayoutEffect(() => {
-    if (_stylesInjected) return;
-    _stylesInjected = true;
-    const styleEl = document.createElement('style');
-    styleEl.textContent = INJECTED_STYLES;
-    document.head.appendChild(styleEl);
-  }, []);
 
   const resolvedPriorityIndex = Math.max(0, priorityIndex);
   const imageLoading: 'eager' | 'lazy' = resolvedPriorityIndex < 6 ? 'eager' : 'lazy';
@@ -812,6 +804,7 @@ const TemplateCardInner: React.FC<TemplateCardProps> = ({
       className="tmcard-wrapper"
       style={cardStyle}
     >
+      {!stylesProvided && <style dangerouslySetInnerHTML={{ __html: TEMPLATE_CARD_STYLES }} />}
       {/* Primary card link with images */}
       <a
         href={templateLink?.href ?? '#'}
@@ -849,7 +842,9 @@ const TemplateCardInner: React.FC<TemplateCardProps> = ({
             width="150"
             height="199"
             loading={imageLoading}
-            fetchPriority={resolvedPriorityIndex < 4 ? 'high' : undefined}
+            // Lowercase: React 18 drops the camelCase fetchPriority prop; only
+            // the literal DOM attribute reaches the browser (React 19 fixed this).
+            {...(resolvedPriorityIndex < 4 ? { fetchpriority: 'high' } : {})}
             decoding="async"
             src={primaryImage?.src ?? FALLBACK_IMAGE}
             onLoad={handlePrimaryLoad}

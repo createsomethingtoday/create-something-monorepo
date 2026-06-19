@@ -1,12 +1,45 @@
 <script lang="ts">
   import { SEO } from '@create-something/canon';
   import type { PageData } from './$types';
+  import DeliveryOutcomeStrip, {
+    type DeliveryOutcomeItem
+  } from '$lib/components/DeliveryOutcomeStrip.svelte';
 
   export let data: PageData;
 
   const context = data.context;
   const engagement = context.engagement;
   const privateEvidence = context.evidence.filter((item) => item.visibility !== 'public');
+  const outcomeItems: DeliveryOutcomeItem[] = [
+    {
+      label: 'Before',
+      title: 'Backend ownership could scatter across chat, accounts, secrets, and data.',
+      detail:
+        'The handoff needed to be safe for a PM to forward and precise enough for a developer to inherit.',
+      tone: 'neutral'
+    },
+    {
+      label: 'Now',
+      title: 'Repo, secrets, database, app admin, and acceptance checks have named lanes.',
+      detail:
+        'The runbook separates GitHub, Infisical, Cloudflare, and app admin access so each grant can be approved and verified.',
+      tone: 'success'
+    },
+    {
+      label: 'Risk reduced',
+      title: 'No broad credential or CREATE SOMETHING internal access is required.',
+      detail:
+        'Secret values stay in Infisical and Cloudflare, production data stays out of the public page, and grants remain attributable.',
+      tone: 'info'
+    },
+    {
+      label: 'Next decision',
+      title: 'Name the recipient and choose scoped access or full account transfer.',
+      detail:
+        'The remaining work is explicit: identities, access grants, production ownership, and app admin role setup.',
+      tone: 'warning'
+    }
+  ];
 </script>
 
 <SEO
@@ -22,7 +55,7 @@
 <section class="delivery-hero">
   <div class="shell-inner-pad delivery-hero__inner">
     <div class="delivery-copy">
-      <span class="product-kicker">Client Delivery</span>
+      <span class="product-kicker">Delivery record</span>
       <h1>{context.title}.</h1>
       <p>{context.summary}</p>
     </div>
@@ -38,11 +71,18 @@
   </div>
 </section>
 
+<DeliveryOutcomeStrip
+  eyebrow="Business outcome"
+  title="The handoff is now an ownership system."
+  description="The page lets a non-technical owner forward the right artifact while keeping production access and private data behind named approval lanes."
+  items={outcomeItems}
+/>
+
 <section class="delivery-section">
   <div class="shell-inner-pad">
     <div class="section-lead">
-      <span class="product-kicker">Delivery Package</span>
-      <h2>What needs to be delivered, and how.</h2>
+      <span class="product-kicker">Handoff packet</span>
+      <h2>What to send and where ownership moves.</h2>
       <p>
         This is written so a non-technical PM can forward the page, while the technical recipient
         can take ownership without guessing where the repo, secrets, database, and acceptance checks
@@ -68,8 +108,8 @@
 <section class="delivery-section">
   <div class="shell-inner-pad">
     <div class="section-lead">
-      <span class="product-kicker">Developer Materials</span>
-      <h2>What the developer needs.</h2>
+      <span class="product-kicker">Shareable references</span>
+      <h2>What the developer can open.</h2>
       <p>
         These references are safe to share. Secret values, production member data, and Cloudflare
         write permissions stay in GitHub, Infisical, Cloudflare, and the app admin workflow.
@@ -79,7 +119,12 @@
     <div class="artifact-grid">
       {#each context.artifacts as artifact}
         {#if artifact.href}
-          <a class="artifact-link product-surface" href={artifact.href} target="_blank" rel="noreferrer">
+          <a
+            class="artifact-link product-surface"
+            href={artifact.href}
+            target="_blank"
+            rel="noreferrer"
+          >
             <span>{artifact.type}</span>
             <strong>{artifact.title}</strong>
           </a>
@@ -98,7 +143,7 @@
   <div class="shell-inner-pad">
     <div class="section-lead">
       <span class="product-kicker">Database / Automation / Judgment</span>
-      <h2>The handoff is organized around the operating model.</h2>
+      <h2>Map every handoff item to the operating layer.</h2>
     </div>
 
     <div class="layer-grid">
@@ -118,7 +163,7 @@
   <div class="shell-inner-pad">
     <div class="section-lead">
       <span class="product-kicker">Developer Runbook</span>
-      <h2>Start with dev secrets and local data.</h2>
+      <h2>Start with access, then local proof.</h2>
       <p>
         The normal path is GitHub access plus Infisical dev access. Cloudflare D1 access can be
         granted now to the named technical owner who needs direct production database operations.
@@ -141,7 +186,7 @@
   <div class="shell-inner-pad">
     <div class="section-lead">
       <span class="product-kicker">Access Lanes</span>
-      <h2>Grant each permission explicitly.</h2>
+      <h2>Grant only the needed lane.</h2>
       <p>
         GitHub, Infisical, Cloudflare, and app-admin access solve different problems. Avoid using
         one broad credential as a shortcut for all four.
@@ -165,7 +210,7 @@
   <div class="shell-inner-pad evidence-layout">
     <div class="product-surface product-surface--soft evidence-panel">
       <span class="product-kicker">Private Boundary</span>
-      <h2>Known, but not published.</h2>
+      <h2>Known but not published.</h2>
       <div class="evidence-list">
         {#each privateEvidence as item}
           <p>{item.detail}</p>
@@ -175,7 +220,7 @@
 
     <div class="product-surface product-surface--soft evidence-panel evidence-panel--accent">
       <span class="product-kicker">Next Review</span>
-      <h2>What needs a human decision.</h2>
+      <h2>Decisions still open.</h2>
       <div class="evidence-list">
         {#each context.decisions as decision}
           <p>{decision.title}</p>
@@ -187,10 +232,11 @@
 
 <style>
   .delivery-hero {
-    min-height: 82vh;
+    min-height: 68vh;
     display: flex;
     align-items: center;
-    padding: clamp(56px, 8vw, 112px) 0 clamp(36px, 6vw, 72px);
+    padding: clamp(52px, 7vw, 96px) 0 clamp(36px, 5vw, 64px);
+    color: var(--color-clear-onyx, #0a0e19);
   }
 
   .delivery-hero__inner {
@@ -207,9 +253,10 @@
   .delivery-copy h1 {
     margin: 14px 0 20px;
     max-width: 820px;
+    color: var(--color-clear-onyx, #0a0e19);
     font-family: var(--font-display);
-    font-size: clamp(48px, 8vw, 104px);
-    line-height: 0.92;
+    font-size: clamp(44px, 7vw, 82px);
+    line-height: 0.96;
     letter-spacing: 0;
   }
 
@@ -218,20 +265,45 @@
   .layer-card p,
   .runbook-card p,
   .evidence-list p {
-    color: rgba(246, 247, 251, 0.72);
+    color: var(--color-clear-grey, #636363);
   }
 
   .delivery-copy p {
     max-width: 760px;
-    font-size: clamp(19px, 2vw, 25px);
-    line-height: 1.35;
+    font-size: clamp(18px, 1.8vw, 22px);
+    line-height: 1.45;
+  }
+
+  .delivery-hero :global(.product-surface),
+  .delivery-section :global(.product-surface) {
+    border: 1px solid var(--color-clear-border, #e1e1e1);
+    border-radius: 4px;
+    background: var(--color-clear-panel, #ffffff);
+    box-shadow: var(--shadow-clear-restraint, 0 4px 20px rgba(0, 0, 0, 0.06));
+    color: var(--color-clear-onyx, #0a0e19);
+  }
+
+  .delivery-hero :global(.product-surface)::after,
+  .delivery-section :global(.product-surface)::after {
+    display: none;
+  }
+
+  .delivery-hero :global(.product-kicker),
+  .delivery-section :global(.product-kicker) {
+    color: var(--color-clear-grey, #636363);
+  }
+
+  .delivery-hero :global(.product-kicker)::before,
+  .delivery-section :global(.product-kicker)::before {
+    background: var(--color-clear-ocean, #0048ff);
+    box-shadow: none;
   }
 
   .delivery-status {
     display: grid;
     gap: 18px;
     padding: 22px;
-    border-top: 4px solid rgba(94, 234, 212, 0.78);
+    border-top: 1px solid var(--color-clear-border-strong, #cecece);
   }
 
   .delivery-status p {
@@ -239,7 +311,7 @@
     justify-content: space-between;
     gap: 20px;
     margin: 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    border-bottom: 1px solid var(--color-clear-border, #e1e1e1);
     padding-bottom: 12px;
   }
 
@@ -254,7 +326,7 @@
   }
 
   .delivery-status span {
-    color: rgba(246, 247, 251, 0.68);
+    color: var(--color-clear-grey, #636363);
     text-align: right;
   }
 
@@ -262,12 +334,12 @@
     width: 11px;
     height: 11px;
     border-radius: 999px;
-    background: #5eead4;
-    box-shadow: 0 0 34px rgba(94, 234, 212, 0.75);
+    background: var(--color-clear-ocean, #0048ff);
   }
 
   .delivery-section {
     padding: clamp(36px, 6vw, 76px) 0;
+    color: var(--color-clear-onyx, #0a0e19);
   }
 
   .section-lead {
@@ -278,6 +350,7 @@
   .section-lead h2 {
     margin: 10px 0 12px;
     max-width: 720px;
+    color: var(--color-clear-onyx, #0a0e19);
     font-family: var(--font-display);
     font-size: clamp(32px, 5vw, 64px);
     line-height: 1;
@@ -334,14 +407,15 @@
   .package-card span,
   .runbook-card > span,
   .access-table article > span {
-    color: #5eead4;
+    color: var(--color-clear-grey, #636363);
     font-family: var(--font-mono);
     font-size: 0.78rem;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.06em;
   }
 
   .artifact-link strong {
+    color: var(--color-clear-onyx, #0a0e19);
     font-size: 1.2rem;
     line-height: 1.15;
   }
@@ -350,13 +424,14 @@
   .package-card,
   .runbook-card {
     padding: 24px;
-    border-top: 4px solid rgba(167, 184, 255, 0.76);
+    border-top: 1px solid var(--color-clear-border-strong, #cecece);
   }
 
   .layer-card h3,
   .package-card h3,
   .evidence-panel h2 {
     margin: 14px 0 10px;
+    color: var(--color-clear-onyx, #0a0e19);
     font-size: clamp(24px, 3vw, 36px);
     line-height: 1.05;
     letter-spacing: 0;
@@ -372,12 +447,12 @@
     display: grid;
     gap: 7px;
     margin: 0;
-    color: rgba(246, 247, 251, 0.72);
+    color: var(--color-clear-grey, #636363);
     line-height: 1.5;
   }
 
   .package-card strong {
-    color: rgba(246, 247, 251, 0.9);
+    color: var(--color-clear-onyx, #0a0e19);
     font-size: 0.9rem;
   }
 
@@ -394,13 +469,14 @@
   .runbook-card pre {
     overflow-x: auto;
     margin: 0;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    background: rgba(0, 0, 0, 0.36);
+    border: 1px solid var(--color-clear-border, #e1e1e1);
+    border-radius: 4px;
+    background: var(--color-clear-porcelain, #f9f9f9);
     padding: 18px;
   }
 
   .runbook-card code {
-    color: rgba(246, 247, 251, 0.88);
+    color: var(--color-clear-onyx, #0a0e19);
     font-family: var(--font-mono);
     font-size: 0.9rem;
     line-height: 1.65;
@@ -420,7 +496,7 @@
     gap: 18px;
     align-items: start;
     padding: 20px;
-    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    border-top: 1px solid var(--color-clear-border, #e1e1e1);
   }
 
   .access-table article:first-child {
@@ -431,12 +507,12 @@
     display: grid;
     gap: 5px;
     margin: 0;
-    color: rgba(246, 247, 251, 0.72);
+    color: var(--color-clear-grey, #636363);
     line-height: 1.45;
   }
 
   .access-table strong {
-    color: rgba(246, 247, 251, 0.9);
+    color: var(--color-clear-onyx, #0a0e19);
     font-size: 0.88rem;
   }
 
@@ -451,7 +527,7 @@
   }
 
   .evidence-panel--accent {
-    border-top: 4px solid rgba(247, 200, 115, 0.8);
+    border-top: 1px solid var(--color-clear-border-strong, #cecece);
   }
 
   .evidence-list {
@@ -461,7 +537,7 @@
 
   .evidence-list p {
     margin: 0;
-    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    border-top: 1px solid var(--color-clear-border, #e1e1e1);
     padding-top: 12px;
   }
 

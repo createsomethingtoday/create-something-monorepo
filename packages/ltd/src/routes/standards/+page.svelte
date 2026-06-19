@@ -3,8 +3,8 @@
 </script>
 
 <SEO
-	title="Standards"
-	description="Canonical standards for evaluating work across the Create Something ecosystem. Codified criteria from 'less, but better.'"
+	title="Operational Standards"
+	description="Canonical criteria for evaluating CREATE SOMETHING pages, workflows, and deliverables before they ship."
 	propertyName="ltd"
 	breadcrumbs={[
 		{ name: 'Home', url: 'https://createsomething.ltd' },
@@ -16,9 +16,10 @@
 <section class="pt-24 pb-16 px-6 border-b border-canon">
 	<div class="max-w-4xl mx-auto text-center">
 		<p class="text-sm-canon tracking-widest uppercase opacity-60-canon mb-4">The Canon</p>
-		<h1 class="mb-6">Standards</h1>
+		<h1 class="mb-6">Make standards visible.</h1>
 		<p class="text-xl-canon opacity-70-canon leading-relaxed">
-			Codified criteria for evaluating work. Every project, experiment, and deliverable must meet these standards.
+			Codified criteria for evaluating pages, workflows, experiments, and deliverables. The
+			reader should see the rule, the proof, and the next action.
 		</p>
 	</div>
 </section>

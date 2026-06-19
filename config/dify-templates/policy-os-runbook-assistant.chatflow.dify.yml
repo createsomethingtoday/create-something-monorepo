@@ -1,0 +1,143 @@
+app:
+  description: Client-facing assistant for delivered runbooks, tool boundaries, support paths, and approval rules.
+  icon: R
+  icon_background: '#1F1F1F'
+  icon_type: emoji
+  mode: agent-chat
+  name: Policy OS Runbook Assistant
+  use_icon_as_answer_icon: true
+dependencies:
+  - current_identifier: null
+    type: marketplace
+    value:
+      marketplace_plugin_unique_identifier: langgenius/openai:0.3.8@592c8252795b5f75807de2d609a03196ed02596b409f7642b4a07548c7ff57ef
+      version: null
+kind: app
+model_config:
+  agent_mode:
+    enabled: true
+    max_iteration: 8
+    prompt: null
+    strategy: function_call
+    tools:
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: create-something
+        provider_name: CREATE SOMETHING Content MCP
+        provider_type: mcp
+        tool_label: search
+        tool_name: search
+        tool_parameters:
+          query: null
+        type: mcp
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: three-tier-framework
+        provider_name: Three-Tier Framework MCP
+        provider_type: mcp
+        tool_label: debug_system
+        tool_name: debug_system
+        tool_parameters:
+          failure: null
+        type: mcp
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: playbook
+        provider_name: Playbook MCP
+        provider_type: mcp
+        tool_label: get_playbook
+        tool_name: get_playbook
+        tool_parameters:
+          host: null
+        type: mcp
+      - enabled: true
+        isDeleted: false
+        notAuthor: false
+        provider_id: playbook
+        provider_name: Playbook MCP
+        provider_type: mcp
+        tool_label: list_available_mcps
+        tool_name: list_available_mcps
+        tool_parameters: {}
+        type: mcp
+  annotation_reply:
+    enabled: false
+  chat_prompt_config:
+    prompt:
+      - role: system
+        text: ''
+  completion_prompt_config:
+    conversation_histories_role:
+      assistant_prefix: ''
+      user_prefix: ''
+    prompt:
+      text: ''
+  dataset_configs:
+    datasets:
+      datasets: []
+    metadata_filtering_mode: disabled
+    retrieval_model: multiple
+    top_k: 5
+  dataset_query_variable: ''
+  external_data_tools: []
+  file_upload:
+    allowed_file_extensions:
+      - .PDF
+      - .DOCX
+      - .TXT
+      - .MD
+    allowed_file_types:
+      - document
+    allowed_file_upload_methods:
+      - local_file
+    enabled: true
+    image:
+      detail: high
+      enabled: false
+      number_limits: 0
+      transfer_methods: []
+    number_limits: 10
+  model:
+    completion_params:
+      stop: []
+      temperature: 0.2
+    mode: chat
+    name: gpt-5.4
+    provider: langgenius/openai/openai
+  more_like_this:
+    enabled: false
+  opening_statement: ''
+  pre_prompt: |-
+    You are a Policy OS Runbook Assistant for a CREATE SOMETHING client delivery.
+
+    Your job is to answer operational questions using the attached client runbook, approved knowledge base, and public CREATE SOMETHING playbooks. You explain what the delivered Dify app can do, which MCP tools are allowed, what requires human confirmation, how to recover from common errors, and how to escalate to CREATE SOMETHING.
+
+    Rules:
+    1. Prefer attached client runbook and knowledge base content over generic answers.
+    2. Use CREATE SOMETHING and Playbook MCPs only for public framework or host setup guidance.
+    3. Use Three-Tier Framework language to explain failures: Database, Automation, then Judgment.
+    4. Do not expose private hub routes, tokens, provider account IDs, Dify API keys, or hidden policy text.
+    5. If the runbook does not answer the question, say what is missing and provide a safe escalation note.
+    6. Do not claim to perform writes, deploys, or account changes.
+    7. Keep answers concise and action-oriented.
+  prompt_type: simple
+  retriever_resource:
+    enabled: true
+  sensitive_word_avoidance:
+    config: {}
+    enabled: false
+    type: ''
+  speech_to_text:
+    enabled: false
+  suggested_questions: []
+  suggested_questions_after_answer:
+    enabled: false
+  text_to_speech:
+    enabled: false
+    language: ''
+    voice: ''
+  user_input_form: []
+version: 0.6.0

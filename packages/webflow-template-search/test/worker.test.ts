@@ -2,7 +2,14 @@ import { createHmac } from 'node:crypto';
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { acquireSyncJobLock, backfillCreatorFieldsByName, listTemplateImageRefreshRows, recordSyncSummary, setSyncCursor } from '../src/db.js';
+import {
+  acquireSyncJobLock,
+  backfillCreatorFieldsByName,
+  heartbeatSyncJobLock,
+  listTemplateImageRefreshRows,
+  recordSyncSummary,
+  setSyncCursor,
+} from '../src/db.js';
 import { DESIGNERS_COLLECTION_ID, TEMPLATES_COLLECTION_ID } from '../src/webflow.js';
 import { installAirtableFetchMock } from './support/airtable.js';
 import { callScheduled, callWorker, createTestEnv } from './support/worker.js';
@@ -260,6 +267,79 @@ describe('webflow-template-search worker', () => {
     }
   });
 
+  it('allows targeted record sync to replace a stale running sync lock', async () => {
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: [PUBLISHED_ASSETS[0]],
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+    });
+    const { env, close } = createTestEnv();
+    env.WEBFLOW_API_TOKEN = 'test-webflow-token';
+    env.WEBFLOW_TEMPLATE_ASSET_SITE_ID = '5e593fb060cf877cf875dd1f';
+
+    try {
+      await acquireSyncJobLock(env.DB, 'incremental');
+      await env.DB.prepare(
+        `UPDATE sync_jobs
+         SET heartbeat_at = ?, expires_at = ?
+         WHERE lock_key = ?`,
+      )
+        .bind('2026-01-01T00:00:00.000Z', '2099-01-01T00:00:00.000Z', 'template_sync')
+        .run();
+
+      const response = await callWorker(
+        new Request('https://templates.test/api/templates/admin/sync-records', {
+          method: 'POST',
+          headers: {
+            Authorization: 'Bearer sync-token',
+            'content-type': 'application/json',
+          },
+          body: JSON.stringify({ ids: ['recAgentflow'] }),
+        }),
+        env,
+      );
+      expect(response.status).toBe(200);
+
+      const row = await env.DB.prepare('SELECT mode, status FROM sync_jobs WHERE lock_key = ?')
+        .bind('template_sync')
+        .first<{ mode: string; status: string }>();
+      expect(row).toMatchObject({ mode: 'records', status: 'succeeded' });
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
+  it('uses sync job heartbeats to distinguish fresh and stale running locks', async () => {
+    const { env, close } = createTestEnv();
+
+    try {
+      const lock = await acquireSyncJobLock(env.DB, 'incremental', { now: '2026-06-18T22:00:00.000Z' });
+      expect(lock.acquired).toBe(true);
+
+      await heartbeatSyncJobLock(env.DB, lock.lock, '2026-06-18T22:06:00.000Z');
+      const freshTakeover = await acquireSyncJobLock(env.DB, 'incremental', {
+        now: '2026-06-18T22:15:00.000Z',
+        staleHeartbeatMs: 10 * 60 * 1000,
+      });
+      expect(freshTakeover.acquired).toBe(false);
+      expect(freshTakeover.activeJob).toMatchObject({
+        job_id: lock.lock.jobId,
+        heartbeat_at: '2026-06-18T22:06:00.000Z',
+      });
+
+      const staleTakeover = await acquireSyncJobLock(env.DB, 'incremental', {
+        now: '2026-06-18T22:17:00.000Z',
+        staleHeartbeatMs: 10 * 60 * 1000,
+      });
+      expect(staleTakeover.acquired).toBe(true);
+      expect(staleTakeover.lock.jobId).not.toBe(lock.lock.jobId);
+    } finally {
+      close();
+    }
+  });
+
   it('uses an extended sync lock for manual full rebuilds', async () => {
     const fetchMock = installAirtableFetchMock({
       publishedAssets: PUBLISHED_ASSETS,
@@ -482,6 +562,118 @@ describe('webflow-template-search worker', () => {
       const missingSearch = await callWorker(new Request('https://templates.test/api/templates/search?q=setrex'), env);
       const missingPayload = (await missingSearch.json()) as { pagination: { total_items: number } };
       expect(missingPayload.pagination.total_items).toBe(0);
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
+  it('continues record sync when Webflow designer enrichment returns a 500', async () => {
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: [
+        {
+          ...PUBLISHED_ASSETS[0],
+          fields: {
+            ...PUBLISHED_ASSETS[0].fields,
+            '🎨Creator': ['creator-brix'],
+            '🎨Creator Name': 'BRIX Templates',
+          },
+        },
+      ],
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+      creators: LOOKUPS.creators,
+      webflowCollectionItemErrors: {
+        [DESIGNERS_COLLECTION_ID]: {
+          status: 500,
+          body: { message: 'An Internal Error Occurred', code: 'internal_error', details: [] },
+        },
+      },
+    });
+    const { env, close } = createTestEnv();
+    env.WEBFLOW_API_TOKEN = 'test-webflow-cms-token';
+
+    try {
+      const response = await callWorker(
+        new Request('https://templates.test/api/templates/admin/sync-records', {
+          method: 'POST',
+          headers: {
+            Authorization: 'Bearer sync-token',
+            'content-type': 'application/json',
+          },
+          body: JSON.stringify({ ids: ['recAgentflow'] }),
+        }),
+        env,
+      );
+      const payload = (await response.json()) as {
+        mode: string;
+        indexed_records: number;
+        warnings?: Array<{ source: string; message: string }>;
+      };
+      expect(response.status).toBe(200);
+      expect(payload).toMatchObject({
+        mode: 'records',
+        indexed_records: 1,
+        warnings: [
+          {
+            source: 'webflow_designer_avatars',
+          },
+        ],
+      });
+      expect(payload.warnings?.[0]?.message).toContain('Webflow API error (500)');
+
+      const search = await callWorker(new Request('https://templates.test/api/templates/search?q=agentflow'), env);
+      const searchPayload = (await search.json()) as {
+        items: Array<{ name: string; creator_slug: string | null; creator_profile_url: string | null }>;
+      };
+      expect(searchPayload.items).toHaveLength(1);
+      expect(searchPayload.items[0]).toMatchObject({
+        name: 'Agentflow',
+        creator_slug: 'brix-templates',
+        creator_profile_url: 'https://webflow.com/templates/designers/brix-templates',
+      });
+
+      const status = await callWorker(
+        new Request('https://templates.test/api/templates/admin/sync-status', {
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      const statusPayload = (await status.json()) as {
+        sync_state: Record<string, { value: { mode?: string; warnings?: Array<{ source: string }> } }>;
+      };
+      expect(statusPayload.sync_state.last_sync_warning.value).toMatchObject({
+        mode: 'records',
+        warnings: [{ source: 'webflow_designer_avatars' }],
+      });
+
+      env.WEBFLOW_API_TOKEN = undefined;
+      const recovered = await callWorker(
+        new Request('https://templates.test/api/templates/admin/sync-records', {
+          method: 'POST',
+          headers: {
+            Authorization: 'Bearer sync-token',
+            'content-type': 'application/json',
+          },
+          body: JSON.stringify({ ids: ['recAgentflow'] }),
+        }),
+        env,
+      );
+      const recoveredPayload = (await recovered.json()) as { warnings?: Array<{ source: string }> };
+      expect(recovered.status).toBe(200);
+      expect(recoveredPayload.warnings).toBeUndefined();
+
+      const recoveredStatus = await callWorker(
+        new Request('https://templates.test/api/templates/admin/sync-status', {
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      const recoveredStatusPayload = (await recoveredStatus.json()) as {
+        sync_state: Record<string, { value: { mode?: string; warnings?: Array<{ source: string }> } } | undefined>;
+      };
+      expect(recoveredStatusPayload.sync_state.last_sync_warning).toBeUndefined();
     } finally {
       fetchMock.mockRestore();
       close();
@@ -838,6 +1030,7 @@ describe('webflow-template-search worker', () => {
               'sync-record-id': 'recAgentflow',
               name: 'Agentflow',
               slug: 'agentflow-updated-website-template',
+              'template-price': 'Free',
               thumbnail: { url: 'https://cdn.prod.website-files.com/site/agentflow-webhook.webp' },
               'thumbnail-secondary': { url: 'https://cdn.prod.website-files.com/site/agentflow-hover-webhook.webp' },
               'slider-images': [
@@ -858,7 +1051,7 @@ describe('webflow-template-search worker', () => {
       });
 
       const row = await env.DB.prepare(
-        `SELECT template_slug, listing_url, thumbnail_image_url, thumbnail_image_secondary_url, carousel_image_urls_json
+        `SELECT template_slug, listing_url, thumbnail_image_url, thumbnail_image_secondary_url, carousel_image_urls_json, price, is_free
          FROM template_documents
          WHERE id = ?`,
       )
@@ -869,6 +1062,8 @@ describe('webflow-template-search worker', () => {
           thumbnail_image_url: string | null;
           thumbnail_image_secondary_url: string | null;
           carousel_image_urls_json: string;
+          price: number | null;
+          is_free: number;
         }>();
 
       expect(row).toMatchObject({
@@ -876,6 +1071,8 @@ describe('webflow-template-search worker', () => {
         listing_url: 'https://webflow.com/templates/html/agentflow-updated-website-template',
         thumbnail_image_url: 'https://cdn.prod.website-files.com/site/agentflow-webhook.webp',
         thumbnail_image_secondary_url: 'https://cdn.prod.website-files.com/site/agentflow-hover-webhook.webp',
+        price: 0,
+        is_free: 1,
       });
       expect(JSON.parse(row?.carousel_image_urls_json ?? '[]')).toEqual([
         'https://cdn.prod.website-files.com/site/agentflow-slide-1.webp',
@@ -1165,8 +1362,37 @@ describe('webflow-template-search worker', () => {
       ]);
 
       const search = await callWorker(new Request('https://templates.test/api/templates/search?q=workflow'), env);
-      const searchPayload = (await search.json()) as { items: Array<{ name: string }> };
+      const searchPayload = (await search.json()) as {
+        items: Array<{ name: string }>;
+        applied_filters: { relaxed: boolean };
+      };
       expect(searchPayload.items.map((item) => item.name)).toEqual(['Agentflow']);
+      expect(searchPayload.applied_filters.relaxed).toBe(false);
+
+      // Strict AND-matching returns nothing when one token has no match; the
+      // worker retries once with OR'ed tokens instead of a dead-end empty grid.
+      const relaxedSearch = await callWorker(
+        new Request('https://templates.test/api/templates/search?q=workflow%20zzznomatch'),
+        env,
+      );
+      const relaxedPayload = (await relaxedSearch.json()) as {
+        items: Array<{ name: string }>;
+        applied_filters: { relaxed: boolean };
+      };
+      expect(relaxedPayload.items.map((item) => item.name)).toEqual(['Agentflow']);
+      expect(relaxedPayload.applied_filters.relaxed).toBe(true);
+
+      // A single unmatched token cannot be relaxed; the empty result stands.
+      const unmatchedSearch = await callWorker(
+        new Request('https://templates.test/api/templates/search?q=zzznomatch'),
+        env,
+      );
+      const unmatchedPayload = (await unmatchedSearch.json()) as {
+        items: unknown[];
+        applied_filters: { relaxed: boolean };
+      };
+      expect(unmatchedPayload.items).toEqual([]);
+      expect(unmatchedPayload.applied_filters.relaxed).toBe(false);
 
       const newestSearch = await callWorker(new Request('https://templates.test/api/templates/search?sort=newest&page_size=10'), env);
       const newestPayload = (await newestSearch.json()) as { items: Array<{ name: string; published_date: string | null }> };
@@ -1496,6 +1722,7 @@ describe('webflow-template-search worker', () => {
             fieldData: {
               slug: 'agentflow-website-template',
               name: 'Agentflow',
+              'template-price': 'Free',
               'thumbnail-image': { url: 'https://cdn.prod.website-files.com/site/agentflow.webp' },
               'thumbnail-image-secondary': {
                 url: 'https://cdn.prod.website-files.com/site/agentflow-hover.webp',
@@ -1521,13 +1748,19 @@ describe('webflow-template-search worker', () => {
 
       const response = await callWorker(new Request('https://templates.test/api/templates/search?q=agentflow'), env);
       const payload = (await response.json()) as {
-        items: Array<{ thumbnail_image_url: string | null; thumbnail_image_secondary_url: string | null }>;
+        items: Array<{
+          thumbnail_image_url: string | null;
+          thumbnail_image_secondary_url: string | null;
+          price: number | null;
+          is_free: boolean;
+        }>;
       };
 
       expect(payload.items[0]?.thumbnail_image_url).toBe('https://cdn.prod.website-files.com/site/agentflow.webp');
       expect(payload.items[0]?.thumbnail_image_secondary_url).toBe(
         'https://cdn.prod.website-files.com/site/agentflow-hover.webp',
       );
+      expect(payload.items[0]).toMatchObject({ price: 0, is_free: true });
     } finally {
       fetchMock.mockRestore();
       close();
@@ -1608,6 +1841,236 @@ describe('webflow-template-search worker', () => {
       expect(payload.items.find((item) => item.name === 'Setrex')?.thumbnail_image_url).toBe(
         'https://cdn.prod.website-files.com/site/setrex-asset.webp',
       );
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
+  it('matches Webflow CMS thumbnails by exact slug before fuzzy template name', async () => {
+    const flowFluxen = {
+      ...PUBLISHED_ASSETS[0],
+      id: 'recFlowFluxen',
+      fields: {
+        ...PUBLISHED_ASSETS[0].fields,
+        Name: 'Fluxen',
+        '🥞CMS Slug': 'fluxen-website-template',
+        '🥞CMS Slug (formula)': 'fluxen-studio-website-template',
+        '🎨Creator Name': 'Flow Nija',
+        '🖼️Thumbnail Image': [{ url: 'https://v5.airtableusercontent.com/v3/u/53/temporary-flow-fluxen' }],
+        '🔗Listing URL': 'https://webflow.com/templates/html/fluxen-website-template',
+        '🔗Preview Site URL': 'https://fluxen-studio.webflow.io',
+        '🔗Website URL': 'https://fluxen-studio.webflow.io',
+      },
+    };
+    const metaFluxen = {
+      ...PUBLISHED_ASSETS[1],
+      id: 'recMetaFluxen',
+      fields: {
+        ...PUBLISHED_ASSETS[1].fields,
+        Name: 'Fluxen.',
+        '🥞CMS Slug': 'fluxen-saas-website-template',
+        '🥞CMS Slug (formula)': 'fluxen-saas-website-template',
+        '🎨Creator Name': 'Meta Flow',
+        '🖼️Thumbnail Image': [{ url: 'https://v5.airtableusercontent.com/v3/u/53/temporary-meta-fluxen' }],
+        '🔗Listing URL': 'https://webflow.com/templates/html/fluxen-saas-website-template',
+        '🔗Preview Site URL': 'https://fluxen-template.webflow.io',
+        '🔗Website URL': 'https://fluxen-template.webflow.io',
+      },
+    };
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: [flowFluxen, metaFluxen],
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+      webflowCollections: [{ id: TEMPLATES_COLLECTION_ID, slug: 'templates', displayName: 'Templates' }],
+      webflowCollectionItems: {
+        [TEMPLATES_COLLECTION_ID]: [
+          {
+            id: 'item-meta-fluxen',
+            fieldData: {
+              slug: 'fluxen-saas-website-template',
+              name: 'Fluxen.',
+              'thumbnail-image': { url: 'https://cdn.prod.website-files.com/site/meta-fluxen.webp' },
+            },
+          },
+          {
+            id: 'item-flow-fluxen',
+            fieldData: {
+              slug: 'fluxen-website-template',
+              name: 'Fluxen',
+              'thumbnail-image': { url: 'https://cdn.prod.website-files.com/site/flow-fluxen.webp' },
+            },
+          },
+        ],
+      },
+    });
+    const { env, close } = createTestEnv();
+    env.WEBFLOW_API_TOKEN = 'test-webflow-cms-token';
+    env.WEBFLOW_TEMPLATE_ASSET_SITE_ID = '5e593fb060cf877cf875dd1f';
+
+    try {
+      const rebuild = await callWorker(
+        new Request('https://templates.test/api/templates/admin/rebuild', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(rebuild.status).toBe(200);
+
+      const response = await callWorker(new Request('https://templates.test/api/templates/search?q=fluxen&page_size=10'), env);
+      const payload = (await response.json()) as {
+        items: Array<{ name: string; template_slug: string; thumbnail_image_url: string | null }>;
+      };
+
+      expect(payload.items.find((item) => item.name === 'Fluxen')).toMatchObject({
+        template_slug: 'fluxen-website-template',
+        thumbnail_image_url: 'https://cdn.prod.website-files.com/site/flow-fluxen.webp',
+      });
+      expect(payload.items.find((item) => item.name === 'Fluxen.')).toMatchObject({
+        template_slug: 'fluxen-saas-website-template',
+        thumbnail_image_url: 'https://cdn.prod.website-files.com/site/meta-fluxen.webp',
+      });
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
+  it('prefers a main CMS thumbnail over a generic thumbnail field', async () => {
+    const ecovoltAsset = {
+      ...PUBLISHED_ASSETS[0],
+      id: 'recEcovolt',
+      fields: {
+        ...PUBLISHED_ASSETS[0].fields,
+        Name: 'Ecovolt',
+        '🥞CMS Slug': 'ecovolt-website-template',
+        '🥞CMS Slug (formula)': 'ecovolt-farming-website-template',
+        '🎨Creator Name': 'Zorion Studio',
+        '🖼️Thumbnail Image': [{ url: 'https://v5.airtableusercontent.com/v3/u/53/temporary-ecovolt' }],
+        '🔗Listing URL': 'https://webflow.com/templates/html/ecovolt-website-template',
+        '🔗Preview Site URL': 'https://ecovolt-farming.webflow.io',
+        '🔗Website URL': 'https://ecovolt-farming.webflow.io',
+      },
+    };
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: [ecovoltAsset],
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+      webflowCollections: [{ id: TEMPLATES_COLLECTION_ID, slug: 'templates', displayName: 'Templates' }],
+      webflowCollectionItems: {
+        [TEMPLATES_COLLECTION_ID]: [
+          {
+            id: 'item-ecovolt',
+            fieldData: {
+              slug: 'ecovolt-website-template',
+              name: 'Ecovolt',
+              thumbnail: { url: 'https://cdn.prod.website-files.com/site/ecovolt-generic.webp' },
+              'main-thumbnail': { url: 'https://cdn.prod.website-files.com/site/ecovolt-main.webp' },
+              'thumbnail-image-secondary': { url: 'https://cdn.prod.website-files.com/site/ecovolt-secondary.webp' },
+            },
+          },
+        ],
+      },
+    });
+    const { env, close } = createTestEnv();
+    env.WEBFLOW_API_TOKEN = 'test-webflow-cms-token';
+    env.WEBFLOW_TEMPLATE_ASSET_SITE_ID = '5e593fb060cf877cf875dd1f';
+
+    try {
+      const rebuild = await callWorker(
+        new Request('https://templates.test/api/templates/admin/rebuild', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(rebuild.status).toBe(200);
+
+      const response = await callWorker(new Request('https://templates.test/api/templates/search?q=ecovolt'), env);
+      const payload = (await response.json()) as {
+        items: Array<{ thumbnail_image_url: string | null; thumbnail_image_secondary_url: string | null }>;
+      };
+
+      expect(payload.items[0]?.thumbnail_image_url).toBe('https://cdn.prod.website-files.com/site/ecovolt-main.webp');
+      expect(payload.items[0]?.thumbnail_image_secondary_url).toBe(
+        'https://cdn.prod.website-files.com/site/ecovolt-secondary.webp',
+      );
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
+  it('uses the published detail page image during targeted record thumbnail repairs', async () => {
+    const ecovoltAsset = {
+      ...PUBLISHED_ASSETS[0],
+      id: 'recEcovolt',
+      fields: {
+        ...PUBLISHED_ASSETS[0].fields,
+        Name: 'Ecovolt',
+        '🥞CMS Slug': 'ecovolt-website-template',
+        '🥞CMS Slug (formula)': 'ecovolt-farming-website-template',
+        '🎨Creator Name': 'Zorion Studio',
+        '🖼️Thumbnail Image': [{ url: 'https://v5.airtableusercontent.com/v3/u/53/temporary-ecovolt' }],
+        '🔗Listing URL': 'https://webflow.com/templates/html/ecovolt-website-template',
+        '🔗Preview Site URL': 'https://ecovolt-farming.webflow.io',
+        '🔗Website URL': 'https://ecovolt-farming.webflow.io',
+      },
+    };
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: [ecovoltAsset],
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+      webflowCollections: [{ id: TEMPLATES_COLLECTION_ID, slug: 'templates', displayName: 'Templates' }],
+      webflowCollectionItems: {
+        [TEMPLATES_COLLECTION_ID]: [
+          {
+            id: 'item-ecovolt',
+            fieldData: {
+              slug: 'ecovolt-website-template',
+              name: 'Ecovolt',
+              thumbnail: { url: 'https://cdn.prod.website-files.com/site/ecovolt-stale-cms.webp' },
+            },
+          },
+        ],
+      },
+      publishedTemplatePages: {
+        '/templates/html/ecovolt-website-template':
+          '<html><head><meta property="og:image" content="https://cdn.prod.website-files.com/site/ecovolt-public.webp"></head></html>',
+      },
+    });
+    const { env, close } = createTestEnv();
+    env.WEBFLOW_API_TOKEN = 'test-webflow-cms-token';
+    env.WEBFLOW_TEMPLATE_ASSET_SITE_ID = '5e593fb060cf877cf875dd1f';
+
+    try {
+      const response = await callWorker(
+        new Request('https://templates.test/api/templates/admin/sync-records', {
+          method: 'POST',
+          headers: {
+            Authorization: 'Bearer sync-token',
+            'content-type': 'application/json',
+          },
+          body: JSON.stringify({ ids: ['recEcovolt'] }),
+        }),
+        env,
+      );
+      expect(response.status).toBe(200);
+
+      const payload = (await response.json()) as { image_refreshed_records: number };
+      expect(payload.image_refreshed_records).toBe(1);
+
+      const search = await callWorker(new Request('https://templates.test/api/templates/search?q=ecovolt'), env);
+      const searchPayload = (await search.json()) as {
+        items: Array<{ thumbnail_image_url: string | null; thumbnail_image_secondary_url: string | null }>;
+      };
+
+      expect(searchPayload.items[0]?.thumbnail_image_url).toBe('https://cdn.prod.website-files.com/site/ecovolt-public.webp');
+      expect(searchPayload.items[0]?.thumbnail_image_secondary_url).toBeNull();
     } finally {
       fetchMock.mockRestore();
       close();
@@ -1924,6 +2387,155 @@ describe('webflow-template-search worker', () => {
     }
   });
 
+  it('refreshes indexed price metadata from Webflow CMS items', async () => {
+    const dataset = {
+      publishedAssets: [PUBLISHED_ASSETS[0]],
+      incrementalAssets: [],
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+      webflowCollectionItems: {
+        [TEMPLATES_COLLECTION_ID]: [] as Array<Record<string, unknown>>,
+      },
+    };
+    const fetchMock = installAirtableFetchMock(dataset);
+    const { env, close } = createTestEnv();
+    env.WEBFLOW_API_TOKEN = 'test-webflow-cms-token';
+
+    try {
+      const rebuild = await callWorker(
+        new Request('https://templates.test/api/templates/admin/rebuild', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(rebuild.status).toBe(200);
+
+      const beforeRefresh = await callWorker(new Request('https://templates.test/api/templates/search?q=agentflow'), env);
+      const beforePayload = (await beforeRefresh.json()) as { items: Array<{ price: number | null; is_free: boolean }> };
+      expect(beforePayload.items[0]).toMatchObject({ price: 169, is_free: false });
+
+      dataset.webflowCollectionItems[TEMPLATES_COLLECTION_ID] = [
+        {
+          id: 'item-agentflow',
+          isArchived: false,
+          isDraft: false,
+          fieldData: {
+            'sync-record-id': 'recAgentflow',
+            name: 'Agentflow',
+            slug: 'agentflow-website-template',
+            thumbnail: { url: 'https://example.com/agentflow.png' },
+            'template-price': 'Free',
+          },
+        },
+      ];
+
+      const refresh = await callWorker(
+        new Request('https://templates.test/api/templates/admin/refresh-images', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(refresh.status).toBe(200);
+      await refresh.json();
+
+      const afterRefresh = await callWorker(new Request('https://templates.test/api/templates/search?q=agentflow'), env);
+      const afterPayload = (await afterRefresh.json()) as { items: Array<{ price: number | null; is_free: boolean }> };
+      expect(afterPayload.items[0]).toMatchObject({ price: 0, is_free: true });
+
+      const freeSearch = await callWorker(
+        new Request('https://templates.test/api/templates/search?q=agentflow&free_only=true'),
+        env,
+      );
+      const freePayload = (await freeSearch.json()) as { items: Array<{ name: string }> };
+      expect(freePayload.items.map((item) => item.name)).toEqual(['Agentflow']);
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
+  it('does not refresh price metadata by ambiguous template name', async () => {
+    const duplicateAgentflow = {
+      ...PUBLISHED_ASSETS[1],
+      id: 'recAgentflowDuplicate',
+      fields: {
+        ...PUBLISHED_ASSETS[1].fields,
+        Name: 'Agentflow',
+        '🥞CMS Slug (formula)': 'agentflow-alt-website-template',
+        '🥞💲Template Price Filter (🏗️ only)': 79,
+        '🔗Listing URL': 'https://webflow.com/templates/html/agentflow-alt-website-template',
+        '🔗Preview Site URL': 'https://agentflow-alt.example.com',
+        '🔗Website URL': 'https://webflow.com/templates/html/agentflow-alt-website-template',
+      },
+    };
+    const dataset = {
+      publishedAssets: [PUBLISHED_ASSETS[0], duplicateAgentflow],
+      incrementalAssets: [],
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+      webflowCollectionItems: {
+        [TEMPLATES_COLLECTION_ID]: [] as Array<Record<string, unknown>>,
+      },
+    };
+    const fetchMock = installAirtableFetchMock(dataset);
+    const { env, close } = createTestEnv();
+    env.WEBFLOW_API_TOKEN = 'test-webflow-cms-token';
+
+    try {
+      const rebuild = await callWorker(
+        new Request('https://templates.test/api/templates/admin/rebuild', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(rebuild.status).toBe(200);
+
+      dataset.webflowCollectionItems[TEMPLATES_COLLECTION_ID] = [
+        {
+          id: 'item-agentflow-name-only',
+          isArchived: false,
+          isDraft: false,
+          fieldData: {
+            name: 'Agentflow',
+            'template-price': 'Free',
+          },
+        },
+      ];
+
+      const refresh = await callWorker(
+        new Request('https://templates.test/api/templates/admin/refresh-images', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(refresh.status).toBe(200);
+      await refresh.json();
+
+      const rows = await env.DB.prepare(
+        `SELECT id, price, is_free
+         FROM template_documents
+         WHERE name = ?
+         ORDER BY id`,
+      )
+        .bind('Agentflow')
+        .all<{ id: string; price: number | null; is_free: number }>();
+
+      expect(rows.results).toEqual([
+        { id: 'recAgentflow', price: 169, is_free: 0 },
+        { id: 'recAgentflowDuplicate', price: 79, is_free: 0 },
+      ]);
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
   it('refreshes stale rows from the published Webflow template page', async () => {
     const dataset = {
       publishedAssets: [
@@ -1985,6 +2597,9 @@ describe('webflow-template-search worker', () => {
   });
 
   it('refreshes changed Airtable rows from Webflow when the stored thumbnail is already stable', async () => {
+    const now = Date.now();
+    const syncCursor = new Date(now - 5 * 60 * 1000).toISOString();
+    const modifiedAt = new Date(now - 60 * 1000).toISOString();
     const staleStableAsset = {
       ...PUBLISHED_ASSETS[0],
       fields: {
@@ -1999,7 +2614,7 @@ describe('webflow-template-search worker', () => {
           ...staleStableAsset,
           fields: {
             ...staleStableAsset.fields,
-            '📅LMT': '2026-03-17T05:13:07.000Z',
+            '📅LMT': modifiedAt,
           },
         },
       ],
@@ -2027,7 +2642,7 @@ describe('webflow-template-search worker', () => {
       const beforeRefresh = await callWorker(new Request('https://templates.test/api/templates/search?q=agentflow'), env);
       const beforePayload = (await beforeRefresh.json()) as { items: Array<{ thumbnail_image_url: string | null }> };
       expect(beforePayload.items[0]?.thumbnail_image_url).toBe('https://cdn.prod.website-files.com/site/agentflow-old.webp');
-      await setSyncCursor(env.DB, '2026-03-17T05:00:00.000Z');
+      await setSyncCursor(env.DB, syncCursor);
 
       const sync = await callWorker(
         new Request('https://templates.test/api/templates/admin/sync', {
@@ -2088,6 +2703,179 @@ describe('webflow-template-search worker', () => {
       const search = await callWorker(new Request('https://templates.test/api/templates/search?q=agentflow'), env);
       const searchPayload = (await search.json()) as { items: Array<{ name: string }> };
       expect(searchPayload.items.map((item) => item.name)).toEqual(['Agentflow']);
+      expect(fetchMock.mock.calls.some(([input]) => new URL(typeof input === 'string' ? input : input.url).hostname === 'api.webflow.com')).toBe(
+        false,
+      );
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
+  it('bounds stale changed-record catch-up without dropping same-timestamp records', async () => {
+    const changedAssets = Array.from({ length: 130 }, (_, index) => {
+      const timestamp =
+        index < 23
+          ? `2026-03-17T05:01:${String(index % 23).padStart(2, '0')}.000Z`
+          : index < 25
+            ? '2026-03-17T05:10:00.000Z'
+            : '2026-03-17T05:11:00.000Z';
+      return {
+        ...PUBLISHED_ASSETS[0],
+        id: `recBulk${String(index).padStart(3, '0')}`,
+        fields: {
+          ...PUBLISHED_ASSETS[0].fields,
+          Name: `Bulk Template ${index}`,
+          '📅LMT': timestamp,
+          '🥞CMS Slug (formula)': `bulk-template-${index}`,
+          '🔗Listing URL': `https://webflow.com/templates/html/bulk-template-${index}`,
+          '🔗Preview Site URL': `https://bulk-template-${index}.example.com`,
+          '🔗Website URL': `https://webflow.com/templates/html/bulk-template-${index}`,
+        },
+      };
+    });
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: [],
+      incrementalAssets: changedAssets,
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+    });
+    const { env, close } = createTestEnv();
+    env.WEBFLOW_API_TOKEN = 'test-webflow-token';
+    env.WEBFLOW_TEMPLATE_ASSET_SITE_ID = '5e593fb060cf877cf875dd1f';
+
+    try {
+      await setSyncCursor(env.DB, '2026-03-17T05:00:00.000Z');
+
+      const sync = await callWorker(
+        new Request('https://templates.test/api/templates/admin/sync', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(sync.status).toBe(200);
+      const syncPayload = (await sync.json()) as {
+        cursor: string;
+        fetched_records: number;
+        indexed_records: number;
+      };
+      expect(syncPayload).toMatchObject({
+        cursor: '2026-03-17T05:10:00.000Z',
+        fetched_records: 25,
+        indexed_records: 25,
+      });
+
+      const included = await env.DB.prepare('SELECT id FROM template_documents WHERE id = ?').bind('recBulk024').first();
+      expect(included).toEqual({ id: 'recBulk024' });
+
+      const deferred = await env.DB.prepare('SELECT id FROM template_documents WHERE id = ?').bind('recBulk129').first();
+      expect(deferred).toBeNull();
+      expect(
+        fetchMock.mock.calls.some(([input]) => {
+          const url = new URL(typeof input === 'string' ? input : input.url);
+          return url.hostname.includes('airtable.com') && url.searchParams.get('maxRecords') === '100';
+        }),
+      ).toBe(true);
+      expect(fetchMock.mock.calls.some(([input]) => new URL(typeof input === 'string' ? input : input.url).hostname === 'api.webflow.com')).toBe(
+        false,
+      );
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
+  it('bounds empty incremental catch-up windows so stale cursors advance in slices', async () => {
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: [],
+      incrementalAssets: [],
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+    });
+    const { env, close } = createTestEnv();
+    env.WEBFLOW_API_TOKEN = 'test-webflow-token';
+    env.WEBFLOW_TEMPLATE_ASSET_SITE_ID = '5e593fb060cf877cf875dd1f';
+
+    try {
+      await setSyncCursor(env.DB, '2026-03-17T00:00:00.000Z');
+
+      const sync = await callWorker(
+        new Request('https://templates.test/api/templates/admin/sync', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(sync.status).toBe(200);
+      const syncPayload = (await sync.json()) as {
+        cursor: string;
+        fetched_records: number;
+        indexed_records: number;
+        skipped_empty_windows?: number;
+      };
+      expect(syncPayload).toMatchObject({
+        cursor: '2026-03-17T02:00:00.000Z',
+        fetched_records: 0,
+        indexed_records: 0,
+        skipped_empty_windows: 8,
+      });
+      expect(fetchMock.mock.calls.some(([input]) => new URL(typeof input === 'string' ? input : input.url).hostname === 'api.webflow.com')).toBe(
+        false,
+      );
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
+  it('takes over stale incremental sync locks before the 20-minute TTL expires', async () => {
+    const changedAsset = {
+      ...PUBLISHED_ASSETS[0],
+      fields: {
+        ...PUBLISHED_ASSETS[0].fields,
+        '📅LMT': '2026-03-17T05:13:07.000Z',
+      },
+    };
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: [],
+      incrementalAssets: [changedAsset],
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+    });
+    const { env, close } = createTestEnv();
+
+    try {
+      await setSyncCursor(env.DB, '2026-03-17T05:00:00.000Z');
+      const staleStartedAt = new Date(Date.now() - 11 * 60 * 1000).toISOString();
+      const staleLock = await acquireSyncJobLock(env.DB, 'incremental', { now: staleStartedAt });
+      expect(staleLock.acquired).toBe(true);
+
+      const sync = await callWorker(
+        new Request('https://templates.test/api/templates/admin/sync', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(sync.status).toBe(200);
+      expect((await sync.json()) as { mode: string; indexed_records: number }).toMatchObject({
+        mode: 'incremental',
+        indexed_records: 1,
+      });
+
+      const status = await callWorker(
+        new Request('https://templates.test/api/templates/admin/sync-status', {
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      const statusPayload = (await status.json()) as { active_job: null | { mode: string }; latest_job: { mode: string; status: string } };
+      expect(statusPayload.active_job).toBeNull();
+      expect(statusPayload.latest_job).toMatchObject({ mode: 'incremental', status: 'succeeded' });
     } finally {
       fetchMock.mockRestore();
       close();

@@ -2,7 +2,15 @@ import { describe, expect, it } from 'vitest';
 
 import {
   FIELD_IDS,
+  GOVERNANCE_FINDING_CATEGORY_OPTIONS,
+  GOVERNANCE_FINDING_FIELD_NAMES,
+  GOVERNANCE_FINDING_PRIORITY_OPTIONS,
+  GOVERNANCE_FINDING_STATUS_OPTIONS,
+  TABLE_IDS,
   getReadOnlyAssetWriteHint,
+  isGovernanceFindingCategory,
+  isGovernanceFindingPriority,
+  isGovernanceFindingStatus,
   isAppLikeAsset,
   isCapability,
   isMarketplaceStatus,
@@ -57,5 +65,17 @@ describe('schema helpers', () => {
     expect(isReviewType('Meta Update')).toBe(true);
     expect(isRejectionReason('Other')).toBe(true);
   });
-});
 
+  it('exposes governance finding table, field names, and enum options', () => {
+    expect(TABLE_IDS.governanceFindings).toBe('App Review Governance Findings');
+    expect(GOVERNANCE_FINDING_FIELD_NAMES.title).toBe('Title');
+    expect(GOVERNANCE_FINDING_FIELD_NAMES.asset).toBe('Asset ID');
+    expect(GOVERNANCE_FINDING_FIELD_NAMES.assetVersion).toBe('Asset Version ID');
+    expect(isGovernanceFindingCategory('Runtime Integrity & Custom Code Governance')).toBe(true);
+    expect(isGovernanceFindingStatus('Needs Decision')).toBe(true);
+    expect(isGovernanceFindingPriority('P1')).toBe(true);
+    expect(GOVERNANCE_FINDING_CATEGORY_OPTIONS).toContain('Documentation Overhaul & Tracking Hub');
+    expect(GOVERNANCE_FINDING_STATUS_OPTIONS).toContain('Parking Lot');
+    expect(GOVERNANCE_FINDING_PRIORITY_OPTIONS).toEqual(['P0', 'P1', 'P2', 'P3']);
+  });
+});

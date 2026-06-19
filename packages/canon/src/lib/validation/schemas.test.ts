@@ -171,6 +171,38 @@ describe('contactSchema', () => {
 		expect(result.success).toBe(true);
 	});
 
+	it('retains optional funnel tracking fields', () => {
+		const result = contactSchema.safeParse({
+			name: 'John Doe',
+			email: 'john@example.com',
+			message: 'Hello',
+			company: 'CREATE SOMETHING',
+			service: 'Workflow teardown',
+			assessment_id: 'assessment-123',
+			source: 'resource',
+			intent: 'workflow-teardown',
+			lane: 'workflow_infrastructure',
+			campaign: 'spring-pilot',
+			source_property: 'agency',
+			session_id: 'session-123',
+			landing_url: 'https://createsomething.agency/contact?intent=workflow-teardown',
+			referrer: 'https://createsomething.agency/dify/content-engine'
+		});
+		expect(result.success).toBe(true);
+		if (result.success) {
+			expect(result.data.source).toBe('resource');
+			expect(result.data.intent).toBe('workflow-teardown');
+			expect(result.data.lane).toBe('workflow_infrastructure');
+			expect(result.data.campaign).toBe('spring-pilot');
+			expect(result.data.source_property).toBe('agency');
+			expect(result.data.session_id).toBe('session-123');
+			expect(result.data.landing_url).toBe(
+				'https://createsomething.agency/contact?intent=workflow-teardown'
+			);
+			expect(result.data.referrer).toBe('https://createsomething.agency/dify/content-engine');
+		}
+	});
+
 	it('validates with empty phone string', () => {
 		const result = contactSchema.safeParse({
 			name: 'John Doe',

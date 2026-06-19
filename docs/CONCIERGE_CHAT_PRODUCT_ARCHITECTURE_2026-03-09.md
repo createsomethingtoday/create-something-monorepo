@@ -1,7 +1,7 @@
 # Concierge Chat Product Architecture
 
 > Prepared: March 9, 2026
-> Scope: hosted AI-native concierge product for progressive profiling, dynamic in-chat tools, and governed MCP-backed execution
+> Scope: hosted AI-native concierge and operator chat product for progressive profiling, dynamic in-chat tools, Dify-backed agents, and governed MCP-backed execution
 
 ## Decision
 
@@ -18,8 +18,35 @@ Do not build this as:
 The system should use three UI planes:
 
 1. `.agency` for account, entitlement, credentials, and admin
-2. `packages/concierge-chat` for the hosted end-user conversation product
+2. `packages/concierge-chat` for the hosted end-user and operator conversation product
 3. MCP package DUI for in-host workflows and broker guidance
+
+## Operator Clear Shell
+
+The Dify agent frontend should be a first-party operator shell in `packages/concierge-chat`, not a fork of a Dify web client.
+
+The shell should copy Ona's clear communication style: light operational surfaces, compact navigation, crisp borders, restrained color, direct action labels, and proof close to each claim. The branding can borrow the Ona visual language, but the product contract remains CREATE SOMETHING: policy, evidence, approvals, and handoff are first-class UI concepts.
+
+Required operator rails:
+
+1. **Context rail**: client, lane, agent, credential state, blockers, and current state.
+2. **Chat rail**: Dify-backed assistant turns, inline widgets, and composer state.
+3. **Proof and actions rail**: artifacts, tool calls, approvals, handoff packets, eval status, Linear issue IDs, and production evidence.
+
+Required operator states:
+
+1. `Ready`
+2. `Needs auth`
+3. `Waiting on approval`
+4. `Preview blocked`
+5. `Eval stale`
+6. `Production verified`
+
+Every state should answer three questions in plain language:
+
+1. What is true right now?
+2. Who owns the next action?
+3. What proof or policy supports that claim?
 
 ## Product Role Split
 
@@ -43,6 +70,8 @@ Owns:
 - approved in-chat widgets
 - human handoff UX
 - user-visible conversation artifacts
+- operator state, proof rails, and approval UI
+- Dify stream/tool event translation into CREATE SOMETHING language
 
 ### `packages/cs-mcp-hub-remote`
 
@@ -322,6 +351,29 @@ or `hub_route_intent` / `hub_run_intent` when the workflow is allowlisted.
 The chat package owns the user experience.
 The hub owns the governed execution path.
 
+## Dify Runtime Boundary
+
+Dify should be treated as an agent runtime, not the frontend product.
+
+Browser rules:
+
+1. Do not expose a Dify API key through `NEXT_PUBLIC_*`, `PUBLIC_*`, or any client bundle.
+2. Do not call Dify Service API directly from the browser.
+3. Only send bounded messages, widgets, operator states, and artifact references to the Svelte client.
+
+Server rules:
+
+1. Resolve Dify app id, API key, and API URL from server-side configuration or secret storage.
+2. Call Dify `chat-messages` from the orchestration layer.
+3. Persist Dify conversation ids as implementation metadata, not as the operator-facing state model.
+4. Map streaming chunks, tool events, errors, and blocked states into `chat_messages`, `tool_action_events`, `widget_events`, and operator states.
+
+Operator rules:
+
+1. Operators see CREATE SOMETHING language, evidence, and approvals.
+2. Operators do not need to know whether a turn came from Dify, a hub tool, or a handoff rule unless that distinction affects actionability.
+3. Runtime failures should become clear UI states such as `Needs auth`, `Preview blocked`, or `Eval stale`.
+
 ## Policy Dependencies
 
 This package should be implemented under:
@@ -350,6 +402,8 @@ This package should be implemented under:
 - thread and message persistence
 - profile field lifecycle
 - `profile_progress`, `field_confirmation`, `tool_reconnect`, and `handoff` widgets
+- Ona-style operator shell rails and state model
+- Dify server proxy contract
 - hub-backed tool orchestration
 
 ### Phase 2

@@ -3,8 +3,8 @@
 </script>
 
 <SEO
-	title="Patterns"
-	description="Common patterns and anti-patterns in applying 'less, but better.' Repeating solutions from the masters."
+	title="Operational Patterns"
+	description="Reusable patterns for choosing constraints, repairing breakdowns, reducing complexity, and leaving proof behind."
 	propertyName="ltd"
 	breadcrumbs={[
 		{ name: 'Home', url: 'https://createsomething.ltd' },
@@ -16,9 +16,10 @@
 <section class="pt-24 pb-16 px-6 border-b border-canon">
 	<div class="max-w-4xl mx-auto text-center">
 		<p class="text-sm-canon tracking-widest uppercase opacity-60-canon mb-4">The Canon</p>
-		<h1 class="mb-6">Patterns</h1>
+		<h1 class="mb-6">Pick the pattern first.</h1>
 		<p class="text-xl-canon opacity-70-canon leading-relaxed">
-			Repeatable solutions that work. Choose the pattern that fits your problem.
+			A pattern should name the constraint, the repair, or the reduction before a team adds
+			more surface area.
 		</p>
 	</div>
 </section>
