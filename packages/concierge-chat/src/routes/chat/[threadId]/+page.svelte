@@ -8,7 +8,7 @@
 		getAgencyGovernedActionGate,
 		isGovernedNextStepIntent
 	} from '$lib/agency-access';
-	import { sendThreadMessage } from '$chat/client-actions';
+	import { createConciergeThreadClient, sendThreadMessage } from '$chat/client-actions';
 	import { CONCIERGE_THREAD_MUTATION_EVENT, type ThreadMutationResponse } from '$chat/api-contract';
 	import { getNurseGuidance } from '$chat/nurse-guidance';
 	import { buildControlPlaneBridgeHref } from '$lib/control-plane';
@@ -24,7 +24,9 @@
 	let composerText = '';
 	let composerPending = false;
 	let composerError = '';
+	let railActionError = '';
 	let assistantTyping = false;
+	let creatingThread = false;
 	let liveThreadView: ThreadViewState = structuredClone(data.threadView);
 	let renderedMessages: UiMessage[] = liveThreadView.thread.messages.map((message) => ({ ...message }));
 	let renderedInlineWidgets = liveThreadView.inlineWidgets;
@@ -47,6 +49,13 @@
 		'staffing_closure',
 		'onboarding_completion'
 	]);
+
+	function formatThreadUpdatedAt(updatedAt: string) {
+		return new Date(updatedAt).toLocaleDateString([], {
+			month: 'short',
+			day: 'numeric'
+		});
+	}
 
 	function toUiMessages(messages: ThreadMessage[]): UiMessage[] {
 		return messages.map((message) => ({ ...message }));
@@ -239,6 +248,20 @@
 		}
 	}
 
+	async function startNewThread() {
+		creatingThread = true;
+		railActionError = '';
+
+		try {
+			await createConciergeThreadClient();
+		} catch (error) {
+			railActionError =
+				error instanceof Error ? error.message : 'Unable to start a new intake thread.';
+		} finally {
+			creatingThread = false;
+		}
+	}
+
 	function handleComposerKeydown(event: KeyboardEvent) {
 		if (
 			event.key !== 'Enter' ||
@@ -386,6 +409,55 @@
 						<li>{rule}</li>
 					{/each}
 				</ul>
+			</section>
+		</aside>
+	{:else}
+		<aside class="history-column" aria-label="Chat history">
+			<section class="glass panel history-panel">
+				<div class="history-header">
+					<div>
+						<div class="eyebrow">Chat History</div>
+						<h2 class="rail-title">Nurse intakes</h2>
+					</div>
+					<button
+						class="rail-icon-button"
+						type="button"
+						aria-label="Start new intake"
+						title="Start new intake"
+						on:click={startNewThread}
+						disabled={creatingThread}
+					>
+						+
+					</button>
+				</div>
+
+				{#if railActionError}
+					<p class="error-text compact">{railActionError}</p>
+				{/if}
+
+				<div class="history-list">
+					{#each data.threadSummaries as thread}
+						<a
+							class={`history-thread ${thread.id === liveThreadView.thread.id ? 'active' : ''}`}
+							aria-current={thread.id === liveThreadView.thread.id ? 'page' : undefined}
+							href={`/chat/${thread.id}`}
+						>
+							<div class="history-thread-top">
+								<strong>{thread.title}</strong>
+								<span class={`status-dot ${statusClass[thread.status]}`} aria-label={thread.status}></span>
+							</div>
+							<p>{thread.subtitle}</p>
+							<div class="history-progress" aria-hidden="true">
+								<div class="history-progress-fill" style={`width: ${thread.profileCompletion}%`}></div>
+							</div>
+							<div class="history-thread-meta">
+								<span>{thread.profileCompletion}% complete</span>
+								<span>{formatThreadUpdatedAt(thread.updatedAt)}</span>
+							</div>
+							<div class="history-pending">{thread.pendingAction}</div>
+						</a>
+					{/each}
+				</div>
 			</section>
 		</aside>
 	{/if}
@@ -730,11 +802,16 @@
 		align-items: start;
 	}
 
+	.split-layout.nurse {
+		grid-template-columns: minmax(230px, 0.64fr) minmax(0, 1.42fr) minmax(300px, 0.82fr);
+	}
+
 	.split-layout.operator {
 		grid-template-columns: minmax(220px, 0.72fr) minmax(0, 1.45fr) minmax(320px, 0.9fr);
 	}
 
 	.context-column,
+	.history-column,
 	.main-column,
 	.side-column {
 		display: grid;
@@ -754,6 +831,119 @@
 
 	.operator-context {
 		background: var(--surface-strong);
+	}
+
+	.history-column {
+		position: sticky;
+		top: 7rem;
+	}
+
+	.history-panel {
+		display: grid;
+		gap: 1rem;
+		max-height: calc(100vh - 8rem);
+		overflow: auto;
+		background: var(--surface-strong);
+	}
+
+	.history-header,
+	.history-thread-top,
+	.history-thread-meta {
+		display: flex;
+		align-items: flex-start;
+		justify-content: space-between;
+		gap: 0.75rem;
+	}
+
+	.rail-icon-button {
+		display: inline-grid;
+		place-items: center;
+		width: 2.15rem;
+		height: 2.15rem;
+		flex: 0 0 auto;
+		border: 1px solid var(--line);
+		border-radius: 999px;
+		background: var(--surface-soft);
+		color: var(--ink);
+		font: inherit;
+		font-size: 1.25rem;
+		line-height: 1;
+		cursor: pointer;
+	}
+
+	.rail-icon-button:disabled {
+		cursor: wait;
+		opacity: 0.58;
+	}
+
+	.history-list {
+		display: grid;
+		gap: 0.7rem;
+	}
+
+	.history-thread {
+		display: grid;
+		gap: 0.58rem;
+		padding: 0.82rem;
+		border: 1px solid var(--line);
+		border-radius: var(--radius-tight);
+		background: rgba(7, 10, 16, 0.42);
+		color: var(--ink-soft);
+		text-decoration: none;
+		transition:
+			background 140ms ease,
+			border-color 140ms ease,
+			transform 140ms ease;
+	}
+
+	.history-thread:hover,
+	.history-thread.active {
+		border-color: var(--line-accent);
+		background: rgba(167, 184, 255, 0.12);
+	}
+
+	.history-thread:hover {
+		transform: translateY(-1px);
+	}
+
+	.history-thread strong {
+		min-width: 0;
+		font-size: 0.95rem;
+		line-height: 1.35;
+	}
+
+	.history-thread p,
+	.history-pending {
+		margin: 0;
+		color: var(--muted);
+		font-size: 0.86rem;
+		line-height: 1.45;
+	}
+
+	.history-progress {
+		height: 0.4rem;
+		border-radius: 999px;
+		background: rgba(167, 184, 255, 0.1);
+		overflow: hidden;
+	}
+
+	.history-progress-fill {
+		height: 100%;
+		border-radius: inherit;
+		background: var(--accent-gradient);
+	}
+
+	.history-thread-meta {
+		color: var(--muted-strong);
+		font-family: var(--font-mono);
+		font-size: 0.68rem;
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+	}
+
+	.history-pending {
+		padding-top: 0.55rem;
+		border-top: 1px solid var(--line);
 	}
 
 	.thread-hero.nurse {
@@ -1197,6 +1387,10 @@
 		border-color: rgba(167, 184, 255, 0.18);
 	}
 
+	.composer.nurse {
+		position: static;
+	}
+
 	.composer-form {
 		display: grid;
 		gap: 0.75rem;
@@ -1220,8 +1414,17 @@
 
 	@media (max-width: 1024px) {
 		.split-layout.operator,
+		.split-layout.nurse,
 		.split-layout {
 			grid-template-columns: 1fr;
+		}
+
+		.history-column {
+			position: static;
+		}
+
+		.history-panel {
+			max-height: none;
 		}
 
 		.composer {
