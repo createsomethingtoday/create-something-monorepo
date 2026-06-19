@@ -6,29 +6,25 @@
 		<title>%sveltekit.status% · Abundance Concierge</title>
 		<style>
 			:root {
-				--bg: #06070c;
-				--bg-depth: #0c1018;
-				--surface: linear-gradient(180deg, rgba(18, 24, 37, 0.94) 0%, rgba(10, 14, 22, 0.98) 100%);
-				--surface-strong: rgba(19, 25, 38, 0.88);
-				--surface-contrast: rgba(7, 10, 16, 0.92);
-				--surface-overlay: rgba(167, 184, 255, 0.08);
-				--ink: #f2f5ff;
-				--ink-soft: #dbe3ff;
-				--muted: #9ea8c9;
-				--muted-strong: #c0c9e8;
-				--line: rgba(167, 184, 255, 0.16);
-				--line-strong: rgba(167, 184, 255, 0.28);
-				--accent-soft: rgba(167, 184, 255, 0.14);
-				--button-bg: linear-gradient(135deg, #a7b8ff 0%, #6c84ff 100%);
-				--button-ink: #06070c;
-				--warn: #f1c56b;
-				--warn-soft: rgba(241, 197, 107, 0.16);
-				--danger: #ff9690;
-				--danger-soft: rgba(255, 150, 144, 0.16);
-				--radius: 20px;
-				--shadow: 0 28px 72px rgba(0, 0, 0, 0.42);
-				--font-sans: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-				--font-mono: 'JetBrains Mono', 'SF Mono', Monaco, 'Cascadia Code', monospace;
+				--bg: #f9f9f9;
+				--surface: #ffffff;
+				--surface-soft: #f2f2f2;
+				--surface-overlay: rgba(10, 14, 25, 0.04);
+				--ink: #0a0e19;
+				--ink-soft: #1f2633;
+				--muted: #636363;
+				--muted-strong: #3c4658;
+				--line: #e1e1e1;
+				--button-bg: #0a0e19;
+				--button-ink: #ffffff;
+				--warn: #8a5f00;
+				--warn-soft: #fff1c7;
+				--danger: #c41e3a;
+				--danger-soft: #ffe2e6;
+				--radius: 8px;
+				--shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+				--font-sans: 'ABC Diatype', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+				--font-mono: 'ABC Diatype Mono', 'SF Mono', Monaco, 'Cascadia Code', monospace;
 			}
 
 			* {
@@ -44,11 +40,8 @@
 			body {
 				font-family: var(--font-sans);
 				color: var(--ink);
-				background:
-					radial-gradient(circle at top, rgba(49, 92, 255, 0.16), transparent 28%),
-					radial-gradient(circle at 85% 12%, rgba(167, 184, 255, 0.12), transparent 20%),
-					linear-gradient(180deg, #0c0c10 0%, #06070c 52%, #000000 100%);
-				letter-spacing: -0.012em;
+				background: var(--bg);
+				letter-spacing: 0;
 				text-rendering: optimizeLegibility;
 				-webkit-font-smoothing: antialiased;
 				-moz-osx-font-smoothing: grayscale;
@@ -77,7 +70,7 @@
 				gap: 1.25rem;
 				padding: 1.4rem;
 				background: var(--surface);
-				backdrop-filter: blur(20px);
+				backdrop-filter: none;
 				border: 1px solid var(--line);
 				border-radius: var(--radius);
 				box-shadow: var(--shadow);
@@ -112,7 +105,7 @@
 				gap: 0.35rem;
 				border-radius: 999px;
 				padding: 0.3rem 0.7rem;
-				border: 1px solid rgba(167, 184, 255, 0.14);
+					border: 1px solid var(--line);
 				font-family: var(--font-mono);
 				font-size: 0.72rem;
 				letter-spacing: 0.08em;
@@ -134,9 +127,9 @@
 			}
 
 			.page-title {
-				font-size: clamp(2.4rem, 5vw, 4.6rem);
-				line-height: 0.95;
-				letter-spacing: -0.05em;
+				font-size: clamp(2.25rem, 4.3vw, 3.85rem);
+				line-height: 1;
+				letter-spacing: 0;
 				margin: 0;
 			}
 
@@ -160,7 +153,7 @@
 				padding: 0.85rem 1.2rem;
 				border-radius: 999px;
 				text-decoration: none;
-				font-weight: 600;
+					font-weight: 500;
 				transition:
 					transform 140ms ease,
 					border-color 140ms ease,
@@ -175,7 +168,7 @@
 			.cta-link.primary {
 				background: var(--button-bg);
 				color: var(--button-ink);
-				box-shadow: 0 16px 34px rgba(49, 92, 255, 0.22);
+				box-shadow: none;
 			}
 
 			.cta-link.secondary {
@@ -317,7 +310,7 @@
 					if (title) title.textContent = 'Verify to continue';
 					if (lead) {
 						lead.textContent =
-							'Return to your application and complete the one-time email verification step there before retrying this protected page.';
+							'Return to your application and complete the one-time email verification step there before retrying this secure page.';
 					}
 					if (note1Copy) {
 						note1Copy.textContent =

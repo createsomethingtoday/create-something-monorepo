@@ -75,8 +75,8 @@
 		accessGranted={data.intakeAccess.granted}
 		verifiedEmail={data.intakeAccess.grant?.email ?? null}
 		verificationSupport={data.intakeVerification}
-		title="Verify this browser session"
-		description="Use a one-time email code to unlock protected uploads and recruiter review before advancing any nurse thread."
+		title="Verify your email to continue"
+		description="Use a one-time email code when an application is ready for document upload or recruiter review."
 	/>
 {/if}
 
@@ -142,14 +142,14 @@
 		align-items: center;
 		justify-content: center;
 		padding: 0.8rem 1.2rem;
-		border-radius: 999px;
+		border-radius: var(--radius-tight);
 		background: var(--button-bg);
 		color: var(--button-ink);
 		text-decoration: none;
-		border: 1px solid rgba(167, 184, 255, 0.18);
+		border: 1px solid var(--button-bg);
 		cursor: pointer;
 		font: inherit;
-		box-shadow: 0 16px 34px rgba(49, 92, 255, 0.22);
+		box-shadow: none;
 	}
 
 	.cta.secondary {
@@ -170,21 +170,21 @@
 		gap: 0.6rem;
 		margin-top: 1rem;
 		padding: 1rem;
-		border-radius: 18px;
+		border-radius: var(--radius);
 		background: var(--surface-soft);
 		border: 1px solid var(--line);
 	}
 
 	.verification-banner.good {
-		border-color: rgba(107, 201, 152, 0.24);
+		border-color: var(--good-line);
 	}
 
 	.verification-banner.warn {
-		border-color: rgba(255, 214, 153, 0.24);
+		border-color: var(--warn-line);
 	}
 
 	.verification-banner.danger {
-		border-color: rgba(255, 150, 144, 0.24);
+		border-color: var(--danger-line);
 	}
 
 	.thread-grid {
@@ -205,15 +205,6 @@
 
 	.meter {
 		margin: 1rem 0;
-		height: 0.65rem;
-		border-radius: 999px;
-		background: var(--surface-overlay);
-		overflow: hidden;
-	}
-
-	.fill {
-		height: 100%;
-		background: var(--accent-gradient);
 	}
 
 	.badges {

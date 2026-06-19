@@ -8,9 +8,9 @@
 	export let accessGranted = false;
 	export let verifiedEmail: string | null = null;
 	export let verificationSupport: IntakeVerificationSupport;
-	export let title = 'Unlock secure credential steps';
+	export let title = 'Verify your email to continue';
 	export let description =
-		'Verify your email to unlock protected document upload and recruiter review.';
+		'Use a one-time code when the application is ready for document upload or recruiter review.';
 	export let compact = false;
 
 	let emailInput = verifiedEmail ?? '';
@@ -235,7 +235,7 @@
 	.field input {
 		min-height: 2.85rem;
 		padding: 0.75rem 0.9rem;
-		border-radius: 14px;
+		border-radius: var(--radius);
 		border: 1px solid var(--line);
 		background: var(--surface-soft);
 		color: var(--ink);
@@ -245,7 +245,7 @@
 	.field input:focus {
 		outline: none;
 		border-color: var(--line-accent);
-		box-shadow: 0 0 0 1px rgba(167, 184, 255, 0.16);
+		box-shadow: 0 0 0 1px rgba(0, 72, 255, 0.18);
 	}
 
 	.success-card,
@@ -253,7 +253,7 @@
 		display: grid;
 		gap: 0.45rem;
 		padding: 0.95rem 1rem;
-		border-radius: 16px;
+		border-radius: var(--radius);
 		background: var(--surface-soft);
 		border: 1px solid var(--line);
 	}

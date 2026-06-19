@@ -24,7 +24,7 @@
 	$: navItems = isPublicIntakeRoute || !showInternalNavigation
 		? [
 					{ href: '/', label: 'Home' },
-					{ href: '/apply', label: 'Apply' }
+					{ href: '/apply', label: 'Start' }
 				]
 		: [
 				{ href: '/', label: 'Home' },
@@ -40,7 +40,7 @@
 	<div>
 		<div class="eyebrow">CREATE SOMETHING .agency</div>
 		<div class="brand">Abundance Concierge</div>
-		<div class="brand-note">Nurse staffing product plane</div>
+		<div class="brand-note">Guided nurse applications</div>
 	</div>
 
 		<div class="nav-cluster">
@@ -82,19 +82,23 @@
 		position: sticky;
 		top: 1rem;
 		z-index: 10;
+		border-radius: var(--radius);
 	}
 
 	.brand {
 		font-family: var(--font-display);
-		font-size: 1.45rem;
-		letter-spacing: -0.04em;
+		font-size: var(--text-h3, 1.2rem);
+		font-weight: var(--font-medium, 500);
+		line-height: var(--leading-tight, 1.25);
+		letter-spacing: 0;
 		margin-top: 0.55rem;
 	}
 
 	.brand-note {
 		margin-top: 0.3rem;
 		color: var(--muted);
-		font-size: 0.92rem;
+		font-size: var(--text-body-sm, 0.913rem);
+		line-height: var(--leading-normal, 1.5);
 	}
 
 	nav {
@@ -115,10 +119,11 @@
 		text-decoration: none;
 		background: var(--surface-overlay);
 		border: 1px solid var(--line);
-		color: var(--ink-soft);
-		font-family: var(--font-mono);
-		font-size: 0.76rem;
-		letter-spacing: 0.08em;
+			color: var(--ink-soft);
+			font-family: var(--font-mono);
+			font-size: 0.72rem;
+			line-height: 1;
+			letter-spacing: 0.08em;
 		text-transform: uppercase;
 		transition:
 			background 140ms ease,
@@ -144,16 +149,17 @@
 		align-items: center;
 		justify-content: center;
 		padding: 0.55rem 0.95rem;
-		border-radius: 999px;
-		background: rgba(18, 22, 36, 0.72);
+		border-radius: var(--radius-tight);
+		background: var(--surface-soft);
 		border: 1px solid var(--line);
 	}
 
 	.session-public-label {
-		color: var(--accent-warm);
-		font-family: var(--font-mono);
-		font-size: 0.72rem;
-		letter-spacing: 0.08em;
+			color: var(--accent-warm);
+			font-family: var(--font-mono);
+			font-size: 0.72rem;
+			line-height: 1;
+			letter-spacing: 0.08em;
 		text-transform: uppercase;
 	}
 

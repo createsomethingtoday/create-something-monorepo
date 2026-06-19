@@ -108,22 +108,22 @@ export let renderEmptyState = true;
 		height: 1px;
 		background: linear-gradient(
 			90deg,
-			rgba(167, 184, 255, 0),
-			rgba(167, 184, 255, 0.34),
-			rgba(167, 184, 255, 0)
+			rgba(10, 14, 25, 0),
+			rgba(10, 14, 25, 0.14),
+			rgba(10, 14, 25, 0)
 		);
 		pointer-events: none;
 	}
 
 	.widget-card.inline.nurse-facing {
-		background: linear-gradient(180deg, rgba(18, 24, 37, 0.74), rgba(12, 16, 25, 0.9));
-		border-radius: 24px 24px 24px 14px;
-		border-color: rgba(167, 184, 255, 0.14);
-		box-shadow: 0 18px 36px rgba(0, 0, 0, 0.22);
+		background: var(--surface);
+		border-radius: var(--radius);
+		border-color: var(--line);
+		box-shadow: var(--shadow);
 	}
 
 	.widget-card.rail {
-		box-shadow: 0 18px 44px rgba(0, 0, 0, 0.2);
+		box-shadow: var(--shadow);
 	}
 
 	.widget-header {
@@ -136,7 +136,9 @@ export let renderEmptyState = true;
 
 	h3 {
 		margin: 0;
-		font-size: 1.02rem;
-		letter-spacing: -0.02em;
+		font-size: var(--text-body, 1rem);
+		font-weight: var(--font-medium, 500);
+		line-height: var(--leading-snug, 1.375);
+		letter-spacing: 0;
 	}
 </style>
