@@ -86,12 +86,23 @@ export function installAirtableFetchMock(dataset: MockDataset) {
       }
 
       if (formula.includes('IS_AFTER(')) {
-        const records = dataset.incrementalAssets ?? [];
-        return Response.json({
-          records: records.some((record) => typeof record.fields['📅LMT'] === 'string')
-            ? records.filter((record) => dateMatchesModifiedWindow(record, formula))
-            : records,
+        const all = dataset.incrementalAssets ?? [];
+        const filtered = all.some((record) => typeof record.fields['📅LMT'] === 'string')
+          ? all.filter((record) => dateMatchesModifiedWindow(record, formula))
+          : all;
+        // Real Airtable returns records sorted by the requested field and paginates
+        // 100 at a time, surfacing an `offset` token until exhausted. Mirror that so
+        // tests exercise the fetch's record cap (which stops pagination early).
+        const sorted = [...filtered].sort((a, b) => {
+          const left = typeof a.fields['📅LMT'] === 'string' ? Date.parse(a.fields['📅LMT'] as string) : 0;
+          const right = typeof b.fields['📅LMT'] === 'string' ? Date.parse(b.fields['📅LMT'] as string) : 0;
+          return left - right;
         });
+        const pageSize = Number(url.searchParams.get('pageSize') ?? '100') || 100;
+        const offset = Number(url.searchParams.get('offset') ?? '0') || 0;
+        const page = sorted.slice(offset, offset + pageSize);
+        const nextOffset = offset + pageSize < sorted.length ? String(offset + pageSize) : undefined;
+        return Response.json({ records: page, offset: nextOffset });
       }
 
       return Response.json({ records: dataset.publishedAssets });

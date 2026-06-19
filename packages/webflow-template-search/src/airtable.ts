@@ -103,6 +103,10 @@ interface FetchOptions {
   optionalFields?: string[];
   formula?: string;
   sortField?: string;
+  // Stop paginating once this many records are collected. With an ascending
+  // sortField this yields the oldest matching records — bounding both the
+  // number of Airtable subrequests and the wall time of a single invocation.
+  maxRecords?: number;
 }
 
 function parseConfiguredSearchVisibilityFields(env: Env): string[] {
@@ -155,6 +159,10 @@ async function fetchAirtableRecords<TFields extends Record<string, unknown>>(
       const payload = (await response.json()) as AirtableListResponse<TFields>;
       records.push(...payload.records);
       offset = payload.offset;
+
+      if (typeof options.maxRecords === 'number' && records.length >= options.maxRecords) {
+        return records.slice(0, options.maxRecords);
+      }
     } while (offset);
 
     return records;
@@ -214,6 +222,7 @@ export async function fetchModifiedAssetsSince(
   env: Env,
   cursor: string,
   until?: string,
+  maxRecords?: number,
 ): Promise<Array<AirtableRecord<AirtableAssetFields>>> {
   return fetchAirtableRecords<AirtableAssetFields>(env, {
     tableId: env.AIRTABLE_ASSETS_TABLE_ID ?? DEFAULT_ASSETS_TABLE_ID,
@@ -221,6 +230,7 @@ export async function fetchModifiedAssetsSince(
     optionalFields: parseConfiguredSearchVisibilityFields(env),
     formula: buildModifiedAfterFormula(cursor, until),
     sortField: '📅LMT',
+    maxRecords,
   });
 }
 

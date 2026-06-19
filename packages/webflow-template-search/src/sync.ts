@@ -632,6 +632,15 @@ async function runFullSync(env: Env, heartbeat: SyncHeartbeat): Promise<SyncSumm
 // each scanned window remains capped to 15 minutes of LMT range.
 const MAX_SYNC_WINDOW_MS = 15 * 60 * 1000;
 const MAX_EMPTY_SYNC_WINDOWS_PER_RUN = 8;
+// Hard cap on records fetched per window. A bulk Airtable edit can stamp
+// thousands of rows into one 15-minute window; without this cap the paginated
+// fetch makes 30+ sequential Airtable calls and the scheduled invocation is
+// killed mid-fetch before it can advance the cursor (the lock then dangles
+// "running" until stale-takeover re-runs the same doomed fetch). Capping the
+// fetch makes a saturated window break the scan loop, after which
+// boundStaleChangedAssets advances the cursor *within* the window so the next
+// run continues from where this one stopped. Records are fetched oldest-first
+// (sortField LMT asc), so the cap never skips earlier changes.
 const MAX_INCREMENTAL_RECORDS_PER_RUN = 600;
 const MAX_STALE_INCREMENTAL_RECORDS_PER_RUN = 24;
 const INCREMENTAL_WRITE_BATCH_SIZE = 12;
@@ -702,7 +711,12 @@ async function runIncrementalSync(env: Env, heartbeat: SyncHeartbeat): Promise<S
 
   while (scannedWindows < MAX_EMPTY_SYNC_WINDOWS_PER_RUN) {
     const syncWindow = resolveSyncWindow(scanCursor, now);
-    const windowAssets = await fetchModifiedAssetsSince(env, scanCursor, syncWindow.until);
+    const windowAssets = await fetchModifiedAssetsSince(
+      env,
+      scanCursor,
+      syncWindow.until,
+      MAX_INCREMENTAL_RECORDS_PER_RUN,
+    );
     await heartbeat();
     scannedWindows += 1;
     windowEnd = syncWindow.end;

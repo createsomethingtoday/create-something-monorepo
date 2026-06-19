@@ -2736,6 +2736,78 @@ describe('webflow-template-search worker', () => {
     }
   });
 
+  it('caps the per-window fetch so a dense bulk-edit window cannot exhaust the invocation', async () => {
+    // A bulk Airtable edit stamped 1,500 records into one 15-minute window. Without
+    // a fetch cap the paginated fetch makes 15 sequential Airtable calls and the
+    // scheduled invocation is killed mid-fetch before the cursor can advance. The
+    // cap (MAX_INCREMENTAL_RECORDS_PER_RUN = 600) stops pagination at 6 pages, the
+    // saturated window breaks the scan loop, and the cursor advances within the
+    // window so the next run continues from where this one stopped.
+    const windowStart = Date.parse('2026-03-17T06:00:00.000Z');
+    const changedAssets = Array.from({ length: 1500 }, (_, index) => {
+      const timestamp = new Date(windowStart + (index + 1) * 500).toISOString();
+      return {
+        ...PUBLISHED_ASSETS[0],
+        id: `recDense${String(index).padStart(4, '0')}`,
+        fields: {
+          ...PUBLISHED_ASSETS[0].fields,
+          Name: `Dense Template ${index}`,
+          '📅LMT': timestamp,
+          '🥞CMS Slug (formula)': `dense-template-${index}`,
+          '🔗Listing URL': `https://webflow.com/templates/html/dense-template-${index}`,
+          '🔗Preview Site URL': `https://dense-template-${index}.example.com`,
+          '🔗Website URL': `https://webflow.com/templates/html/dense-template-${index}`,
+        },
+      };
+    });
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: [],
+      incrementalAssets: changedAssets,
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+    });
+    const { env, close } = createTestEnv();
+
+    try {
+      await setSyncCursor(env.DB, '2026-03-17T06:00:00.000Z');
+
+      const sync = await callWorker(
+        new Request('https://templates.test/api/templates/admin/sync', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(sync.status).toBe(200);
+      const syncPayload = (await sync.json()) as {
+        cursor: string;
+        fetched_records: number;
+        indexed_records: number;
+      };
+
+      // The fetch stopped at the 600-record cap (6 pages), not all 1,500 (15 pages).
+      const incrementalFetchCalls = fetchMock.mock.calls.filter(([input]) => {
+        const url = new URL(typeof input === 'string' ? input : (input as Request).url);
+        return (
+          url.hostname.includes('airtable.com') &&
+          url.pathname.endsWith('tblRwzpWoLgE9MrUm') &&
+          (url.searchParams.get('filterByFormula') ?? '').includes('IS_AFTER(')
+        );
+      });
+      expect(incrementalFetchCalls.length).toBe(6);
+
+      // The run completed and advanced the cursor to a bounded high-water mark that
+      // is still inside the dense window — the rest drains on subsequent runs.
+      expect(syncPayload.indexed_records).toBe(24);
+      expect(Date.parse(syncPayload.cursor)).toBeGreaterThan(windowStart);
+      expect(Date.parse(syncPayload.cursor)).toBeLessThan(windowStart + 15 * 60 * 1000);
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
   it('bounds empty incremental catch-up windows so stale cursors advance in slices', async () => {
     const fetchMock = installAirtableFetchMock({
       publishedAssets: [],
