@@ -57,6 +57,52 @@
 		});
 	}
 
+	function formatMessageSentAt(createdAt: string, referenceDate = new Date()) {
+		const sentAt = new Date(createdAt);
+
+		if (Number.isNaN(sentAt.getTime())) {
+			return 'Sent time unavailable';
+		}
+
+		const time = sentAt.toLocaleTimeString([], {
+			hour: 'numeric',
+			minute: '2-digit'
+		});
+		const isToday = sentAt.toDateString() === referenceDate.toDateString();
+
+		if (isToday) {
+			return `Sent today at ${time}`;
+		}
+
+		const dateOptions: Intl.DateTimeFormatOptions = {
+			month: 'short',
+			day: 'numeric'
+		};
+
+		if (sentAt.getFullYear() !== referenceDate.getFullYear()) {
+			dateOptions.year = 'numeric';
+		}
+
+		return `Sent ${sentAt.toLocaleDateString([], dateOptions)} at ${time}`;
+	}
+
+	function formatMessageSentAtTitle(createdAt: string) {
+		const sentAt = new Date(createdAt);
+
+		if (Number.isNaN(sentAt.getTime())) {
+			return 'Sent time unavailable';
+		}
+
+		return sentAt.toLocaleString([], {
+			month: 'short',
+			day: 'numeric',
+			year: 'numeric',
+			hour: 'numeric',
+			minute: '2-digit',
+			timeZoneName: 'short'
+		});
+	}
+
 	function formatThreadStatus(status: ThreadViewState['thread']['status']) {
 		switch (status) {
 			case 'awaiting_user':
@@ -590,11 +636,8 @@
 				<article class={`message glass ${message.role} ${message.uiState ?? ''}`}>
 					<div class="message-meta">
 						<strong>{message.author}</strong>
-						<span>
-							{new Date(message.createdAt).toLocaleTimeString([], {
-								hour: 'numeric',
-								minute: '2-digit'
-							})}
+						<span class="message-sent-at" title={formatMessageSentAtTitle(message.createdAt)}>
+							{formatMessageSentAt(message.createdAt)}
 						</span>
 					</div>
 					<p>{message.body}</p>
