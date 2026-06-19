@@ -57,6 +57,17 @@
 		});
 	}
 
+	function formatThreadStatus(status: ThreadViewState['thread']['status']) {
+		switch (status) {
+			case 'awaiting_user':
+				return 'Waiting on you';
+			case 'handoff_ready':
+				return 'Team review';
+			default:
+				return 'In progress';
+		}
+	}
+
 	function toUiMessages(messages: ThreadMessage[]): UiMessage[] {
 		return messages.map((message) => ({ ...message }));
 	}
@@ -318,32 +329,35 @@
 			? 'danger'
 			: 'warn';
 	$: intakeVerificationLabel = data.intakeAccess.granted
-		? 'Secure verification active'
+		? 'Email verified'
 		: data.intakeAccess.reason === 'missing_secret'
 			? 'Verification unavailable'
-			: 'Verification required before protected steps';
+			: 'Email verification comes later';
 	$: intakeVerificationDetail = data.intakeAccess.granted
-		? 'This thread can upload protected documents and progress into recruiter review when other policy gates clear.'
+		? 'Uploads and recruiter review can continue in this browser when they are ready.'
 		: data.intakeAccess.reason === 'missing_secret'
-			? 'Protected document and staffing transitions are unavailable because the runtime verification secret is missing.'
-			: 'Continue the public intake conversation here. A one-time email verification step is still required before uploads and later-stage staffing progression.';
+			? 'Document upload and recruiter review are unavailable until verification is restored.'
+			: 'Keep chatting now. When it is time for documents or recruiter review, I will ask for a one-time email code in this thread.';
 	$: intakeProtectedActionsBlocked = !data.intakeAccess.granted;
 	$: nurseGuidance = getNurseGuidance(liveThreadView.thread, {
 		intakeVerified: data.intakeAccess.granted
 	});
-	$: showExpandedVerificationBanner = showInternalOperatorUi || !data.intakeAccess.granted;
-	$: threadEyebrow = showInternalOperatorUi ? 'Primary Conversation Surface' : 'Chat with Concierge';
+	$: showNurseVerificationPrompt =
+		!showInternalOperatorUi && !data.intakeAccess.granted && liveThreadView.thread.profile.completion >= 25;
+	$: showExpandedVerificationBanner = showInternalOperatorUi || showNurseVerificationPrompt;
+	$: showStarterPrompt = !showInternalOperatorUi && liveThreadView.thread.profile.completion === 0;
+	$: threadEyebrow = showInternalOperatorUi ? 'Primary Conversation Surface' : 'Application Chat';
 	$: operatorPlaneSummary = data.operatorShellPlanes
 		.map((plane) => plane.label)
 		.join(' / ');
 	$: commandCenter = data.operatorCommandCenter;
-	$: snapshotEyebrow = showInternalOperatorUi ? 'Application Snapshot' : 'What I know so far';
-	$: snapshotTitle = showInternalOperatorUi ? 'What I have so far' : 'A calm running summary';
+	$: snapshotEyebrow = showInternalOperatorUi ? 'Application Snapshot' : 'Application Notes';
+	$: snapshotTitle = showInternalOperatorUi ? 'What I have so far' : 'What Concierge has so far';
 	$: snapshotSummary = showInternalOperatorUi ? liveThreadView.thread.turn.summary : nurseGuidance.body;
 	$: snapshotHelper = showInternalOperatorUi
 		? ''
-		: nurseGuidance.helper ??
-			'I will ask for documents, confirmation, or booking right here in chat as soon as they are needed.';
+			: nurseGuidance.helper ??
+				'I will ask for documents, confirmation, or booking here as soon as they are needed.';
 	$: visibleArtifacts = showInternalOperatorUi
 		? liveThreadView.thread.artifacts
 		: liveThreadView.thread.artifacts.filter((artifact) => nurseVisibleArtifactKinds.has(artifact.kind));
@@ -416,8 +430,8 @@
 			<section class="glass panel history-panel">
 				<div class="history-header">
 					<div>
-						<div class="eyebrow">Chat History</div>
-						<h2 class="rail-title">Nurse intakes</h2>
+						<div class="eyebrow">Saved Chats</div>
+						<h2 class="rail-title">Applications</h2>
 					</div>
 					<button
 						class="rail-icon-button"
@@ -427,7 +441,7 @@
 						on:click={startNewThread}
 						disabled={creatingThread}
 					>
-						+
+						<span aria-hidden="true"></span>
 					</button>
 				</div>
 
@@ -444,7 +458,10 @@
 						>
 							<div class="history-thread-top">
 								<strong>{thread.title}</strong>
-								<span class={`status-dot ${statusClass[thread.status]}`} aria-label={thread.status}></span>
+								<span
+									class={`status-dot ${statusClass[thread.status]}`}
+									aria-label={formatThreadStatus(thread.status)}
+								></span>
 							</div>
 							<p>{thread.subtitle}</p>
 							<div class="history-progress" aria-hidden="true">
@@ -483,7 +500,7 @@
 				>
 					{showInternalOperatorUi
 						? data.operatorState.label
-						: liveThreadView.thread.status.replace('_', ' ')}
+						: formatThreadStatus(liveThreadView.thread.status)}
 				</span>
 			</div>
 
@@ -530,15 +547,29 @@
 			</section>
 		{/if}
 
-		{#if !data.intakeAccess.granted}
+		{#if showInternalOperatorUi ? !data.intakeAccess.granted : showNurseVerificationPrompt}
 			<IntakeVerificationPanel
 				accessGranted={data.intakeAccess.granted}
 				verifiedEmail={data.intakeAccess.grant?.email ?? null}
 				verificationSupport={data.intakeVerification}
-				title="Verify this intake to unlock protected steps"
-				description="Use a one-time email code to unlock secure document upload, recruiter review, staffing progression, and onboarding actions for this browser session."
+				title="Verify your email to keep going"
+				description="Use a one-time code when this application is ready for document upload or recruiter review."
 				compact={true}
 			/>
+		{/if}
+
+		{#if showStarterPrompt}
+			<section class="starter-card">
+				<div>
+					<div class="eyebrow">Good First Message</div>
+					<p>Share specialty, shift, and location. A sentence is enough.</p>
+				</div>
+				<div class="starter-examples" aria-label="Example first messages">
+					<span>ICU nights in Dallas</span>
+					<span>ER days near Phoenix</span>
+					<span>Compact license, open to Texas</span>
+				</div>
+			</section>
 		{/if}
 
 		{#if showInternalOperatorUi && governedNextStep}
@@ -654,7 +685,7 @@
 			{/if}
 			{#if liveThreadView.thread.turn.blockers.length > 0}
 				<p class="muted compact section-kicker">
-					{showInternalOperatorUi ? 'Active blockers' : 'Next I still need'}
+					{showInternalOperatorUi ? 'Active blockers' : 'Next I Need'}
 				</p>
 				<ul class="blockers">
 					{#each liveThreadView.thread.turn.blockers as blocker}
@@ -825,8 +856,10 @@
 	}
 
 	.rail-title {
-		margin: 0.7rem 0 0;
-		font-size: 1.1rem;
+		margin: 0.62rem 0 0;
+		font-size: var(--text-body-lg, 1.095rem);
+		font-weight: var(--font-medium, 500);
+		line-height: var(--leading-snug, 1.375);
 	}
 
 	.operator-context {
@@ -860,20 +893,45 @@
 		place-items: center;
 		width: 2.15rem;
 		height: 2.15rem;
+		padding: 0;
 		flex: 0 0 auto;
 		border: 1px solid var(--line);
 		border-radius: 999px;
 		background: var(--surface-soft);
 		color: var(--ink);
-		font: inherit;
-		font-size: 1.25rem;
-		line-height: 1;
 		cursor: pointer;
+		box-shadow: none;
 	}
 
 	.rail-icon-button:disabled {
 		cursor: wait;
-		opacity: 0.58;
+		opacity: 1;
+		background: var(--disabled-bg);
+		color: var(--disabled-ink);
+	}
+
+	.rail-icon-button span {
+		position: relative;
+		display: block;
+		width: 0.86rem;
+		height: 0.86rem;
+	}
+
+	.rail-icon-button span::before,
+	.rail-icon-button span::after {
+		content: '';
+		position: absolute;
+		left: 50%;
+		top: 50%;
+		width: 0.82rem;
+		height: 2px;
+		border-radius: 999px;
+		background: currentColor;
+		transform: translate(-50%, -50%);
+	}
+
+	.rail-icon-button span::after {
+		transform: translate(-50%, -50%) rotate(90deg);
 	}
 
 	.history-list {
@@ -887,7 +945,7 @@
 		padding: 0.82rem;
 		border: 1px solid var(--line);
 		border-radius: var(--radius-tight);
-		background: rgba(7, 10, 16, 0.42);
+		background: var(--surface);
 		color: var(--ink-soft);
 		text-decoration: none;
 		transition:
@@ -898,8 +956,12 @@
 
 	.history-thread:hover,
 	.history-thread.active {
-		border-color: var(--line-accent);
-		background: rgba(167, 184, 255, 0.12);
+		border-color: var(--line-strong);
+		background: var(--selected-bg);
+	}
+
+	.history-thread.active {
+		box-shadow: inset 0 0 0 1px var(--line-strong);
 	}
 
 	.history-thread:hover {
@@ -908,36 +970,39 @@
 
 	.history-thread strong {
 		min-width: 0;
-		font-size: 0.95rem;
-		line-height: 1.35;
+		font-size: var(--text-body-sm, 0.913rem);
+		font-weight: var(--font-medium, 500);
+		line-height: var(--leading-snug, 1.375);
 	}
 
 	.history-thread p,
 	.history-pending {
 		margin: 0;
 		color: var(--muted);
-		font-size: 0.86rem;
-		line-height: 1.45;
+		font-size: var(--text-caption, 0.833rem);
+		line-height: var(--leading-normal, 1.5);
 	}
 
 	.history-progress {
 		height: 0.4rem;
 		border-radius: 999px;
-		background: rgba(167, 184, 255, 0.1);
+		background: var(--surface-overlay);
+		border: 1px solid var(--line);
 		overflow: hidden;
 	}
 
 	.history-progress-fill {
 		height: 100%;
 		border-radius: inherit;
-		background: var(--accent-gradient);
+		background: var(--progress-fill);
 	}
 
 	.history-thread-meta {
 		color: var(--muted-strong);
 		font-family: var(--font-mono);
-		font-size: 0.68rem;
-		letter-spacing: 0.06em;
+		font-size: var(--text-overline, 0.618rem);
+		line-height: 1;
+		letter-spacing: var(--tracking-wider, 0.05em);
 		text-transform: uppercase;
 	}
 
@@ -950,6 +1015,19 @@
 		padding-block: 1rem 1.05rem;
 	}
 
+	.thread-hero .section-title {
+		font-size: var(--text-h2, clamp(1.2rem, 2vw + 0.5rem, 1.618rem));
+		font-weight: var(--font-medium, 500);
+		line-height: var(--leading-tight, 1.25);
+	}
+
+	.guidance-panel .section-title,
+	.snapshot-panel .section-title {
+		font-size: var(--text-h3, clamp(1.02rem, 1vw + 0.5rem, 1.2rem));
+		font-weight: var(--font-medium, 500);
+		line-height: var(--leading-snug, 1.375);
+	}
+
 	.access-banner {
 		display: flex;
 		align-items: flex-start;
@@ -959,15 +1037,52 @@
 	}
 
 	.access-banner.good {
-		border-color: rgba(107, 201, 152, 0.24);
+		border-color: var(--good-line);
 	}
 
 	.access-banner.warn {
-		border-color: rgba(255, 214, 153, 0.24);
+		border-color: var(--warn-line);
 	}
 
 	.access-banner.danger {
-		border-color: rgba(255, 150, 144, 0.24);
+		border-color: var(--danger-line);
+	}
+
+	.starter-card {
+		display: grid;
+		grid-template-columns: minmax(0, 0.95fr) minmax(220px, 1.05fr);
+		gap: 1rem;
+		align-items: center;
+		padding: 1rem 1.05rem;
+		border: 1px solid var(--line);
+		border-radius: var(--radius);
+		background: var(--surface);
+	}
+
+	.starter-card p {
+		margin: 0.58rem 0 0;
+		color: var(--muted-strong);
+		font-size: var(--text-body-sm, 0.913rem);
+	}
+
+	.starter-examples {
+		display: flex;
+		gap: 0.5rem;
+		flex-wrap: wrap;
+		justify-content: flex-end;
+	}
+
+	.starter-examples span {
+		min-height: 1.55rem;
+		padding: 0.27rem 0.58rem;
+		border: 1px solid var(--line);
+		border-radius: 999px;
+		background: var(--surface-soft);
+		color: var(--ink-soft);
+		font-size: 0.78rem;
+		line-height: 1;
+		display: inline-flex;
+		align-items: center;
 	}
 
 	.thread-top,
@@ -1011,7 +1126,7 @@
 	.summary-banner {
 		margin-top: 1rem;
 		padding: 1rem;
-		border-radius: 18px;
+		border-radius: var(--radius);
 		background: var(--surface-soft);
 		border: 1px solid var(--line);
 	}
@@ -1025,7 +1140,7 @@
 
 	.summary-meta span {
 		color: var(--muted);
-		font-size: 0.74rem;
+		font-size: 0.72rem;
 		font-family: var(--font-mono);
 		text-transform: uppercase;
 		letter-spacing: 0.08em;
@@ -1033,25 +1148,25 @@
 
 	.policy-ref {
 		font-family: var(--font-mono);
-		font-size: 0.82rem;
+		font-size: 0.78rem;
 		color: var(--muted);
 	}
 
 	.operator-copy {
 		color: var(--ink);
-		font-weight: 600;
+		font-weight: var(--font-medium, 500);
 	}
 
 	.guidance-panel {
-		border-color: rgba(167, 184, 255, 0.22);
+		border-color: var(--line);
 	}
 
 	.guidance-panel.good {
-		border-color: rgba(107, 201, 152, 0.24);
+		border-color: var(--good-line);
 	}
 
 	.guidance-panel.warn {
-		border-color: rgba(255, 214, 153, 0.24);
+		border-color: var(--warn-line);
 	}
 
 	.guidance-top {
@@ -1068,7 +1183,8 @@
 		background: var(--surface-soft);
 		border: 1px solid var(--line);
 		font-family: var(--font-mono);
-		font-size: 0.76rem;
+		font-size: 0.72rem;
+		line-height: 1;
 		letter-spacing: 0.08em;
 		text-transform: uppercase;
 	}
@@ -1087,18 +1203,18 @@
 		padding: 1rem 1.1rem;
 		max-width: min(100%, 92%);
 		overflow: hidden;
-		border-radius: 24px 24px 24px 14px;
+		border-radius: var(--radius);
 		scroll-margin-bottom: 16rem;
 	}
 
 	.message.user {
 		margin-left: auto;
 		max-width: min(100%, 80%);
-		background: var(--surface-contrast);
+		background: var(--surface-soft);
 		color: var(--ink);
-		border-color: rgba(167, 184, 255, 0.24);
-		box-shadow: 0 22px 48px rgba(0, 0, 0, 0.28);
-		border-radius: 24px 24px 14px 24px;
+		border-color: var(--line-strong);
+		box-shadow: var(--shadow);
+		border-radius: var(--radius);
 	}
 
 	.message.assistant {
@@ -1107,7 +1223,7 @@
 
 	.message.pending,
 	.message.streaming {
-		border-color: rgba(167, 184, 255, 0.28);
+		border-color: var(--line-strong);
 	}
 
 	.message p,
@@ -1140,8 +1256,8 @@
 		width: 1px;
 		background: linear-gradient(
 			180deg,
-			rgba(167, 184, 255, 0.42),
-			rgba(167, 184, 255, 0.08)
+			rgba(10, 14, 25, 0.18),
+			rgba(10, 14, 25, 0.04)
 		);
 	}
 
@@ -1155,7 +1271,7 @@
 	.assistant-chip.subtle {
 		min-width: auto;
 		padding: 0.38rem 0.68rem;
-		background: rgba(26, 34, 50, 0.55);
+		background: var(--surface-soft);
 		font-size: 0.68rem;
 	}
 
@@ -1177,14 +1293,15 @@
 	.command-summary span,
 	.metric-row span,
 	.proof-row span {
-		color: var(--muted);
-		font-size: 0.82rem;
+			color: var(--muted);
+			font-size: 0.78rem;
 	}
 
 	.context-list strong,
 	.command-summary strong {
 		font-size: 0.94rem;
-		line-height: 1.35;
+		font-weight: var(--font-medium, 500);
+		line-height: var(--leading-snug, 1.375);
 	}
 
 	.command-summary,
@@ -1218,14 +1335,15 @@
 	.metric-row strong,
 	.proof-row strong {
 		font-size: 1rem;
-		line-height: 1.3;
+		font-weight: var(--font-medium, 500);
+		line-height: var(--leading-snug, 1.375);
 	}
 
 	.metric-row p,
 	.proof-row p,
 	.check-row p {
 		margin: 0;
-		line-height: 1.45;
+		line-height: var(--leading-normal, 1.5);
 	}
 
 	.status-dot {
@@ -1235,7 +1353,9 @@
 		margin-top: 0.25rem;
 		border-radius: 999px;
 		background: var(--muted);
-		box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.04);
+		box-shadow:
+			0 0 0 3px var(--surface),
+			0 0 0 4px var(--line);
 	}
 
 	.status-dot.good {
@@ -1282,7 +1402,7 @@
 		width: 0.5rem;
 		height: 0.5rem;
 		border-radius: 999px;
-		background: rgba(167, 184, 255, 0.9);
+		background: var(--accent);
 		animation: pulse 1s ease-in-out infinite;
 	}
 
@@ -1309,6 +1429,7 @@
 		background: var(--surface-overlay);
 		border: 1px solid var(--line);
 		font-size: 0.86rem;
+		line-height: 1.2;
 		margin-right: 0.45rem;
 	}
 
@@ -1321,7 +1442,7 @@
 	.tool-link {
 		color: var(--accent);
 		text-decoration: none;
-		font-weight: 600;
+		font-weight: var(--font-medium, 500);
 	}
 
 	.artifact-meta {
@@ -1342,8 +1463,12 @@
 	}
 
 	.snapshot-panel.nurse {
-		background: linear-gradient(180deg, rgba(16, 22, 34, 0.9), rgba(10, 14, 22, 0.92));
-		border-color: rgba(167, 184, 255, 0.14);
+		background: var(--surface);
+		border-color: var(--line);
+	}
+
+	.snapshot-panel > .eyebrow {
+		margin-bottom: 0.65rem;
 	}
 
 	.snapshot-helper {
@@ -1352,7 +1477,7 @@
 
 	.section-kicker {
 		font-family: var(--font-mono);
-		font-size: 0.74rem;
+		font-size: 0.72rem;
 		letter-spacing: 0.08em;
 		text-transform: uppercase;
 	}
@@ -1360,7 +1485,7 @@
 	textarea {
 		width: 100%;
 		margin: 0.9rem 0 0;
-		border-radius: 18px;
+		border-radius: var(--radius);
 		padding: 1rem 1rem 1.05rem;
 		border: 1px solid var(--line);
 		resize: none;
@@ -1372,9 +1497,9 @@
 	}
 
 	textarea:focus-visible {
-		border-color: var(--line-accent);
-		box-shadow: 0 0 0 1px rgba(167, 184, 255, 0.26);
-		background: rgba(16, 21, 33, 0.96);
+		border-color: var(--accent);
+		box-shadow: 0 0 0 1px rgba(0, 72, 255, 0.18);
+		background: var(--surface);
 	}
 
 	.composer {
@@ -1382,9 +1507,8 @@
 		bottom: 1rem;
 		z-index: 2;
 		padding-block: 1rem;
-		background:
-			linear-gradient(180deg, rgba(18, 24, 37, 0.94) 0%, rgba(10, 14, 22, 0.98) 100%);
-		border-color: rgba(167, 184, 255, 0.18);
+		background: var(--surface);
+		border-color: var(--line);
 	}
 
 	.composer.nurse {
@@ -1405,7 +1529,17 @@
 	}
 
 	.composer-actions button {
-		min-width: 7rem;
+		min-width: 5.6rem;
+		min-height: 2.5rem;
+		padding: 0.55rem 0.95rem;
+		border-radius: var(--radius-tight);
+		line-height: 1;
+	}
+
+	.composer-actions button:disabled {
+		background: var(--disabled-bg);
+		border-color: var(--line);
+		color: var(--disabled-ink);
 	}
 
 	.compact {
@@ -1447,6 +1581,14 @@
 	}
 
 	@media (max-width: 720px) {
+		.starter-card {
+			grid-template-columns: 1fr;
+		}
+
+		.starter-examples {
+			justify-content: flex-start;
+		}
+
 		.thread-top .status-pill {
 			order: -1;
 		}

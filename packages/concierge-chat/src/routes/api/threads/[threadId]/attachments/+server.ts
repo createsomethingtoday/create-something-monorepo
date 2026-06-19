@@ -196,7 +196,7 @@ export const POST: RequestHandler = async ({ cookies, params, platform, request,
 				}
 			});
 			return createRateLimitedJsonResponse(
-				'Too many protected uploads were attempted from this browser. Wait a bit and try again.',
+				'Too many secure uploads were attempted from this browser. Wait a bit and try again.',
 				limitResult.blockedPolicy.retryAfterSeconds
 			);
 		}
