@@ -123,10 +123,28 @@ const UPSERT_TEMPLATE_SQL = `
     creator_record_id = excluded.creator_record_id,
     creator_slug = excluded.creator_slug,
     creator_profile_url = excluded.creator_profile_url,
-    creator_avatar_url = excluded.creator_avatar_url,
-    creator_avatar_alt = excluded.creator_avatar_alt,
-    thumbnail_image_url = excluded.thumbnail_image_url,
-    thumbnail_image_secondary_url = excluded.thumbnail_image_secondary_url,
+    creator_avatar_url = CASE
+      WHEN excluded.creator_avatar_url IS NOT NULL THEN excluded.creator_avatar_url
+      WHEN template_documents.creator_avatar_url LIKE '%airtableusercontent.com%'
+        OR template_documents.creator_avatar_url LIKE '%dl.airtable.com%' THEN NULL
+      ELSE template_documents.creator_avatar_url
+    END,
+    creator_avatar_alt = CASE
+      WHEN excluded.creator_avatar_url IS NOT NULL THEN excluded.creator_avatar_alt
+      ELSE template_documents.creator_avatar_alt
+    END,
+    thumbnail_image_url = CASE
+      WHEN excluded.thumbnail_image_url IS NOT NULL THEN excluded.thumbnail_image_url
+      WHEN template_documents.thumbnail_image_url LIKE '%airtableusercontent.com%'
+        OR template_documents.thumbnail_image_url LIKE '%dl.airtable.com%' THEN NULL
+      ELSE template_documents.thumbnail_image_url
+    END,
+    thumbnail_image_secondary_url = CASE
+      WHEN excluded.thumbnail_image_secondary_url IS NOT NULL THEN excluded.thumbnail_image_secondary_url
+      WHEN template_documents.thumbnail_image_secondary_url LIKE '%airtableusercontent.com%'
+        OR template_documents.thumbnail_image_secondary_url LIKE '%dl.airtable.com%' THEN NULL
+      ELSE template_documents.thumbnail_image_secondary_url
+    END,
     carousel_image_urls_json = excluded.carousel_image_urls_json,
     description_short = excluded.description_short,
     description_long_html = excluded.description_long_html,

@@ -1767,6 +1767,94 @@ describe('webflow-template-search worker', () => {
     }
   });
 
+  it('preserves stable CDN images and creator avatars when record sync has only temporary Airtable attachments', async () => {
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: [
+        {
+          ...PUBLISHED_ASSETS[0],
+          fields: {
+            ...PUBLISHED_ASSETS[0].fields,
+            '🖼️Thumbnail Image': [{ url: 'https://v5.airtableusercontent.com/v3/u/53/temporary-agentflow' }],
+            '🖼️Thumbnail Image (Secondary)': [
+              { url: 'https://v5.airtableusercontent.com/v3/u/53/temporary-agentflow-secondary' },
+            ],
+          },
+        },
+      ],
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+      creators: [
+        {
+          ...LOOKUPS.creators[0],
+          fields: {
+            ...LOOKUPS.creators[0].fields,
+            '🖼️Avatar (Primary)': [{ url: 'https://v5.airtableusercontent.com/v3/u/53/temporary-brix' }],
+          },
+        },
+      ],
+    });
+    const { env, close } = createTestEnv();
+
+    try {
+      const rebuild = await callWorker(
+        new Request('https://templates.test/api/templates/admin/rebuild', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(rebuild.status).toBe(200);
+
+      await env.DB.prepare(
+        `UPDATE template_documents
+         SET thumbnail_image_url = ?,
+             thumbnail_image_secondary_url = ?,
+             creator_avatar_url = ?,
+             creator_avatar_alt = ?
+         WHERE id = ?`,
+      )
+        .bind(
+          'https://cdn.prod.website-files.com/site/agentflow-existing.webp',
+          'https://cdn.prod.website-files.com/site/agentflow-existing-hover.webp',
+          'https://cdn.prod.website-files.com/site/brix-existing-avatar.webp',
+          'BRIX Templates',
+          'recAgentflow',
+        )
+        .run();
+
+      const sync = await callWorker(
+        new Request('https://templates.test/api/templates/admin/sync-records', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token', 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ids: ['recAgentflow'] }),
+        }),
+        env,
+      );
+      expect(sync.status).toBe(200);
+
+      const response = await callWorker(new Request('https://templates.test/api/templates/search?q=agentflow'), env);
+      const payload = (await response.json()) as {
+        items: Array<{
+          thumbnail_image_url: string | null;
+          thumbnail_image_secondary_url: string | null;
+          creator_avatar_url: string | null;
+          creator_avatar_alt: string | null;
+        }>;
+      };
+
+      expect(payload.items[0]).toMatchObject({
+        thumbnail_image_url: 'https://cdn.prod.website-files.com/site/agentflow-existing.webp',
+        thumbnail_image_secondary_url: 'https://cdn.prod.website-files.com/site/agentflow-existing-hover.webp',
+        creator_avatar_url: 'https://cdn.prod.website-files.com/site/brix-existing-avatar.webp',
+        creator_avatar_alt: 'BRIX Templates',
+      });
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
   it('uses Webflow assets for templates missing from the CMS image index without overriding CMS images', async () => {
     const fetchMock = installAirtableFetchMock({
       publishedAssets: [

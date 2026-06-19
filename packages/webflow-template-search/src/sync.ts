@@ -410,7 +410,7 @@ function resolveCreatorMetadata(
     creatorRecordId,
     creatorSlug,
     creatorProfileUrl,
-    creatorAvatarUrl: webflowCreator?.avatarUrl ?? airtableCreator?.avatarUrl ?? null,
+    creatorAvatarUrl: stableAttachmentUrl(webflowCreator?.avatarUrl ?? airtableCreator?.avatarUrl ?? null),
     creatorAvatarAlt: webflowCreator?.avatarAlt ?? airtableCreator?.avatarAlt ?? (airtableCreator?.name ?? null),
   };
 }
