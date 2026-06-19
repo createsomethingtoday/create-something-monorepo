@@ -77,6 +77,11 @@
 				'Name the workflow, the owner, and the first decision. I will help turn that into a map with human tasks, AI tasks, systems, data, constraints, and touchpoints.'
 		}
 	];
+	const agentPrompts = [
+		{ label: 'Owner', text: 'The workflow is owned by...' },
+		{ label: 'Approval', text: 'The approval point is...' },
+		{ label: 'Risk', text: 'The riskiest handoff is...' }
+	];
 
 	$: selectedNode = canvas.nodes.find((node) => node.id === selectedNodeId) ?? canvas.nodes[0];
 	$: readiness = computePublicAtlasReadiness(canvas);
@@ -93,6 +98,8 @@
 		};
 	});
 	$: bookingUrl = buildBookingUrl();
+	$: mappedPercent = Math.round((selectedDimensionCount / PUBLIC_ATLAS_LANES.length) * 100);
+	$: leadTierLabel = usage.tier === 'warmLead' ? 'Warm lead' : 'Anonymous map';
 
 	function buildBookingUrl() {
 		const base = bookingHref.split('?')[0] || '/book';
@@ -364,8 +371,11 @@
 				<div class="canvas-header">
 					<div class="canvas-status">
 						<div>
-							<span>{selectedDimensionCount}/7 dimensions mapped</span>
+							<span>Map readiness</span>
 							<strong>{readiness.level}</strong>
+						</div>
+						<div class="progress-meter" aria-label={`${mappedPercent}% of Atlas dimensions mapped`}>
+							<span style={`width: ${mappedPercent}%`}></span>
 						</div>
 						<div class="dimension-strip" aria-label="Atlas dimension coverage">
 							{#each dimensionCoverage as lane}
@@ -377,7 +387,10 @@
 						</div>
 					</div>
 					<div class="canvas-header-actions">
-						<small>{readiness.score}/100</small>
+						<div class="score-pill">
+							<span>{readiness.score}</span>
+							<small>/100</small>
+						</div>
 						<div class="add-node-menu">
 							<button
 								type="button"
@@ -386,7 +399,7 @@
 								aria-controls="public-atlas-add-menu"
 								onclick={() => (addMenuOpen = !addMenuOpen)}
 							>
-								+ Add
+								Add node
 							</button>
 							{#if addMenuOpen}
 								<div id="public-atlas-add-menu" class="add-node-options">
@@ -409,7 +422,10 @@
 				></div>
 
 				<div class="handoffs">
-					<span>Handoffs</span>
+					<div class="handoffs-title">
+						<span>Handoffs</span>
+						<strong>{canvas.edges.length}</strong>
+					</div>
 					{#if canvas.edges.length}
 						<ul>
 							{#each canvas.edges as edge}
@@ -432,12 +448,18 @@
 
 		<aside class="atlas-side">
 			<section class="agent-panel">
-				<div class="panel-title">
-					<span>Mapping agent</span>
-					<strong>{usage.messagesUsed}/{usage.messagesLimit} messages</strong>
+				<div class="agent-hero">
+					<div>
+						<span>Mapping agent</span>
+						<strong>Shape the workflow map</strong>
+					</div>
+					<div class="agent-meter">
+						<span>{usage.messagesUsed}/{usage.messagesLimit}</span>
+						<small>messages</small>
+					</div>
 				</div>
 				<label class="email-field">
-					<span>Optional email for higher warm-lead limit</span>
+					<span>{leadTierLabel}</span>
 					<input bind:value={visitorEmail} type="email" placeholder="you@example.com" />
 				</label>
 				<div class="chat-log" aria-live="polite">
@@ -462,17 +484,22 @@
 							: PUBLIC_ATLAS_LIMITS.anonymous.maxMessageChars}
 						placeholder="Describe the workflow, owner, tools, approval point, or risk."
 					></textarea>
+					<div class="prompt-row" aria-label="Prompt starters">
+						{#each agentPrompts as prompt}
+							<button type="button" onclick={() => (agentInput = prompt.text)}>{prompt.label}</button>
+						{/each}
+					</div>
 					<button type="submit" disabled={agentBusy || !agentInput.trim()}>
-						{agentBusy ? 'Mapping...' : 'Ask agent'}
+						{agentBusy ? 'Mapping...' : 'Ask mapping agent'}
 					</button>
 				</form>
 				{#if agentError}
 					<p class="error">{agentError}</p>
 				{/if}
-				<p class="limit-copy">
-					{usage.mutationsUsed}/{usage.mutationsLimit} mutations used. Public maps cannot run
-					production tools or access private systems.
-				</p>
+				<div class="limit-copy">
+					<span>{usage.mutationsUsed}/{usage.mutationsLimit} mutations</span>
+					<span>Public map only</span>
+				</div>
 			</section>
 
 			<section class="inspector-panel">
@@ -497,32 +524,24 @@
 								updateNode(selectedNode.id, { owner: event.currentTarget.value })}
 						/>
 					</label>
-					<label>
-						<span>Status</span>
-						<select
-							value={selectedNode.status}
-							onchange={(event) =>
-								updateNode(selectedNode.id, {
-									status: event.currentTarget.value as PublicAtlasNodeStatus
-								})}
-						>
-							<option value="unknown">unknown</option>
-							<option value="run">run</option>
-							<option value="wait">wait</option>
-							<option value="stop">stop</option>
-						</select>
-					</label>
-					<label>
-						<span>Notes</span>
-						<textarea
-							value={selectedNode.notes ?? ''}
-							oninput={(event) =>
-								updateNode(selectedNode.id, { notes: event.currentTarget.value })}
-						></textarea>
-					</label>
-					<div class="connect-row">
+					<div class="field-pair">
 						<label>
-							<span>Connect selected to</span>
+							<span>Status</span>
+							<select
+								value={selectedNode.status}
+								onchange={(event) =>
+									updateNode(selectedNode.id, {
+										status: event.currentTarget.value as PublicAtlasNodeStatus
+									})}
+							>
+								<option value="unknown">unknown</option>
+								<option value="run">run</option>
+								<option value="wait">wait</option>
+								<option value="stop">stop</option>
+							</select>
+						</label>
+						<label>
+							<span>Connect to</span>
 							<select onchange={(event) => connectSelectedTo(event.currentTarget.value)}>
 								<option value="">Choose target</option>
 								{#each canvas.nodes.filter((node) => node.id !== selectedSourceId) as node}
@@ -531,6 +550,14 @@
 							</select>
 						</label>
 					</div>
+					<label>
+						<span>Notes</span>
+						<textarea
+							value={selectedNode.notes ?? ''}
+							oninput={(event) =>
+								updateNode(selectedNode.id, { notes: event.currentTarget.value })}
+						></textarea>
+					</label>
 					<button
 						type="button"
 						class="danger"
@@ -543,16 +570,18 @@
 			</section>
 
 			<section class="summary-panel">
-				<div class="panel-title">
-					<span>Booking context</span>
-					<strong>{saveState}</strong>
-				</div>
-				<pre>{summary}</pre>
-				<div class="summary-actions">
-					<button type="button" onclick={copySummary}>{copyState || 'Copy summary'}</button>
-					<a href={bookingUrl} onclick={persistCanvas}>Use this in booking</a>
-					<button type="button" class="danger" onclick={resetCanvas}>Reset</button>
-				</div>
+				<details>
+					<summary>
+						<span>Booking context</span>
+						<strong>{saveState}</strong>
+					</summary>
+					<pre>{summary}</pre>
+					<div class="summary-actions">
+						<button type="button" onclick={copySummary}>{copyState || 'Copy summary'}</button>
+						<a href={bookingUrl} onclick={persistCanvas}>Use this in booking</a>
+						<button type="button" class="danger" onclick={resetCanvas}>Reset</button>
+					</div>
+				</details>
 			</section>
 		</aside>
 	</div>
@@ -570,10 +599,12 @@
 
 	.atlas-copy > span,
 	.panel-title span,
+	.agent-hero span,
 	.canvas-header span,
-	.handoffs > span,
+	.handoffs-title span,
 	.email-field span,
-	.inspector-panel label span {
+	.inspector-panel label span,
+	.summary-panel summary span {
 		color: var(--color-clear-grey, #636363);
 		font-size: 0.72rem;
 		font-weight: 700;
@@ -590,7 +621,6 @@
 	}
 
 	.atlas-copy p,
-	.limit-copy,
 	.handoffs p {
 		margin: 0;
 		color: var(--color-clear-grey, #636363);
@@ -599,8 +629,8 @@
 
 	.atlas-layout {
 		display: grid;
-		grid-template-columns: minmax(0, 1.45fr) minmax(22rem, 0.75fr);
-		gap: 1rem;
+		grid-template-columns: minmax(0, 1.5fr) minmax(23rem, 0.7fr);
+		gap: 1.1rem;
 		align-items: start;
 	}
 
@@ -616,6 +646,7 @@
 	.add-node-trigger,
 	.add-node-options button,
 	.agent-form button,
+	.prompt-row button,
 	.summary-actions button,
 	.summary-actions a,
 	.danger {
@@ -640,21 +671,25 @@
 		border: 1px solid var(--color-clear-border, #e1e1e1);
 		border-radius: 8px;
 		background: #ffffff;
-		box-shadow: 0 12px 30px rgba(10, 14, 25, 0.04);
+		box-shadow: 0 18px 44px rgba(10, 14, 25, 0.045);
 	}
 
 	.canvas-header,
-	.panel-title {
+	.panel-title,
+	.agent-hero,
+	.summary-panel summary {
 		display: flex;
 		align-items: flex-start;
 		justify-content: space-between;
 		gap: 0.75rem;
-		padding: 0.85rem;
+		padding: 0.95rem;
 		border-bottom: 1px solid var(--color-clear-border, #e1e1e1);
 	}
 
 	.canvas-header div,
-	.panel-title {
+	.panel-title,
+	.agent-hero,
+	.summary-panel summary {
 		min-width: 0;
 	}
 
@@ -664,7 +699,9 @@
 	}
 
 	.canvas-header strong,
-	.panel-title strong {
+	.panel-title strong,
+	.agent-hero strong,
+	.summary-panel summary strong {
 		display: block;
 		color: var(--color-clear-onyx, #0a0e19);
 		font-size: 0.95rem;
@@ -679,10 +716,44 @@
 		gap: 0.45rem;
 	}
 
-	.canvas-header-actions > small {
+	.score-pill {
+		display: inline-flex;
+		align-items: baseline;
+		gap: 0.12rem;
 		border: 1px solid var(--color-clear-border, #e1e1e1);
 		border-radius: 999px;
-		padding: 0.35rem 0.55rem;
+		background: #fbfbf8;
+		color: var(--color-clear-onyx, #0a0e19);
+		padding: 0.45rem 0.65rem;
+	}
+
+	.score-pill span {
+		color: inherit;
+		font-size: 1rem;
+		font-weight: 800;
+		letter-spacing: 0;
+		text-transform: none;
+	}
+
+	.score-pill small {
+		color: var(--color-clear-grey, #636363);
+		font-size: 0.72rem;
+		font-weight: 700;
+	}
+
+	.progress-meter {
+		width: min(100%, 28rem);
+		height: 0.45rem;
+		overflow: hidden;
+		border-radius: 999px;
+		background: #ecece6;
+	}
+
+	.progress-meter span {
+		display: block;
+		height: 100%;
+		border-radius: inherit;
+		background: #0a0e19;
 	}
 
 	.dimension-strip {
@@ -698,7 +769,7 @@
 		gap: 0.3rem;
 		border: 1px solid var(--color-clear-border, #e1e1e1);
 		border-radius: 999px;
-		background: #ffffff;
+		background: #fbfbf8;
 		color: var(--color-clear-grey, #636363);
 		font-size: 0.72rem;
 		font-weight: 700;
@@ -760,14 +831,32 @@
 		height: clamp(31rem, 58vh, 46rem);
 		min-height: 31rem;
 		overflow: hidden;
-		background-color: #fbfbf8;
+		background:
+			linear-gradient(180deg, rgba(255, 255, 255, 0.8), rgba(251, 251, 248, 0.92)),
+			#fbfbf8;
 	}
 
 	.handoffs {
 		display: grid;
 		gap: 0.45rem;
-		padding: 0.85rem;
+		padding: 0.85rem 0.95rem;
 		border-top: 1px solid var(--color-clear-border, #e1e1e1);
+		background: #fcfcfa;
+	}
+
+	.handoffs-title {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.75rem;
+	}
+
+	.handoffs-title strong {
+		border-radius: 999px;
+		background: #ffffff;
+		color: var(--color-clear-onyx, #0a0e19);
+		font-size: 0.8rem;
+		padding: 0.25rem 0.5rem;
 	}
 
 	.handoffs ul {
@@ -780,14 +869,46 @@
 	.atlas-side {
 		display: grid;
 		gap: 0.75rem;
+		position: sticky;
+		top: 1rem;
 	}
 
 	.agent-panel,
 	.inspector-panel,
 	.summary-panel {
 		display: grid;
-		gap: 0.75rem;
-		padding-bottom: 0.85rem;
+		gap: 0.8rem;
+		padding: 0 0 0.9rem;
+	}
+
+	.agent-hero {
+		border-bottom: 0;
+		padding-bottom: 0.25rem;
+	}
+
+	.agent-meter {
+		display: grid;
+		min-width: 4.6rem;
+		border: 1px solid #d7e6dc;
+		border-radius: 8px;
+		background: #f5fbf6;
+		color: #1e3c2c;
+		padding: 0.45rem 0.55rem;
+		text-align: right;
+	}
+
+	.agent-meter span {
+		color: inherit;
+		font-size: 0.95rem;
+		letter-spacing: 0;
+		line-height: 1;
+		text-transform: none;
+	}
+
+	.agent-meter small {
+		color: inherit;
+		font-size: 0.7rem;
+		font-weight: 700;
 	}
 
 	.email-field,
@@ -809,7 +930,22 @@
 		background: var(--color-clear-porcelain, #f9f9f9);
 		color: var(--color-clear-onyx, #0a0e19);
 		font: inherit;
-		padding: 0.7rem;
+		padding: 0.75rem;
+		transition:
+			border-color 140ms ease,
+			background 140ms ease,
+			box-shadow 140ms ease;
+	}
+
+	.email-field input:focus,
+	.inspector-panel input:focus,
+	.inspector-panel select:focus,
+	.inspector-panel textarea:focus,
+	.agent-form textarea:focus {
+		outline: none;
+		border-color: rgba(10, 14, 25, 0.38);
+		background: #ffffff;
+		box-shadow: 0 0 0 3px rgba(10, 14, 25, 0.06);
 	}
 
 	.chat-log {
@@ -853,8 +989,29 @@
 
 	.agent-form textarea,
 	.inspector-panel textarea {
-		min-height: 5.5rem;
+		min-height: 5.25rem;
 		resize: vertical;
+	}
+
+	.prompt-row {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.35rem;
+	}
+
+	.prompt-row button {
+		min-height: 2rem;
+		background: #fbfbf8;
+		color: var(--color-clear-grey, #636363);
+		font-size: 0.78rem;
+		font-weight: 700;
+		padding: 0.35rem 0.5rem;
+	}
+
+	.prompt-row button:hover {
+		border-color: rgba(10, 14, 25, 0.18);
+		background: #f4f4ef;
+		color: var(--color-clear-onyx, #0a0e19);
 	}
 
 	.agent-form button,
@@ -877,6 +1034,11 @@
 		color: #ffffff;
 	}
 
+	.agent-form .prompt-row button {
+		background: #fbfbf8;
+		color: var(--color-clear-grey, #636363);
+	}
+
 	.agent-form button:disabled,
 	.danger:disabled {
 		cursor: not-allowed;
@@ -889,13 +1051,34 @@
 		font-size: 0.82rem;
 	}
 
+	.limit-copy {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.35rem;
+		margin: 0;
+		color: var(--color-clear-grey, #636363);
+	}
+
+	.limit-copy span {
+		border: 1px solid var(--color-clear-border, #e1e1e1);
+		border-radius: 999px;
+		background: #fbfbf8;
+		padding: 0.3rem 0.5rem;
+	}
+
 	.error {
 		color: #9d1b1b;
 	}
 
-	.connect-row {
+	.field-pair {
 		display: grid;
+		grid-template-columns: 1fr 1fr;
 		gap: 0.5rem;
+		padding: 0 0.85rem;
+	}
+
+	.field-pair label {
+		padding: 0;
 	}
 
 	.danger {
@@ -906,7 +1089,7 @@
 	.summary-panel pre {
 		max-height: 14rem;
 		overflow: auto;
-		margin: 0 0.85rem;
+		margin: 0.75rem 0.85rem 0;
 		border: 1px solid var(--color-clear-border, #e1e1e1);
 		border-radius: 6px;
 		background: var(--color-clear-porcelain, #f9f9f9);
@@ -930,6 +1113,32 @@
 		padding: 0 0.85rem;
 	}
 
+	.summary-panel {
+		padding: 0;
+	}
+
+	.summary-panel details {
+		display: grid;
+	}
+
+	.summary-panel summary {
+		cursor: pointer;
+		list-style: none;
+		border-bottom: 0;
+	}
+
+	.summary-panel summary::-webkit-details-marker {
+		display: none;
+	}
+
+	.summary-panel details[open] summary {
+		border-bottom: 1px solid var(--color-clear-border, #e1e1e1);
+	}
+
+	.summary-panel details[open] {
+		padding-bottom: 0.85rem;
+	}
+
 	.compact .atlas-layout {
 		grid-template-columns: 1fr;
 	}
@@ -937,6 +1146,10 @@
 	@media (max-width: 1120px) {
 		.atlas-layout {
 			grid-template-columns: 1fr;
+		}
+
+		.atlas-side {
+			position: static;
 		}
 	}
 
@@ -948,6 +1161,10 @@
 		.canvas-header-actions {
 			width: 100%;
 			justify-content: space-between;
+		}
+
+		.field-pair {
+			grid-template-columns: 1fr;
 		}
 
 		.add-node-menu {
