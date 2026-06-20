@@ -44,7 +44,7 @@ jobs:
     name: MCP Evals (Local / No Upload)
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.run_local != 'false' }}
+    if: ${{ (github.event_name != 'schedule' || vars.ENABLE_BRAINTRUST_MCP_EVALS_SCHEDULE == 'true') && (github.event_name != 'workflow_dispatch' || github.event.inputs.run_local != 'false') }}
 
     steps:
       - name: Checkout
@@ -83,7 +83,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     needs: evals-local
-    if: ${{ always() && (needs.evals-local.result == 'success' || needs.evals-local.result == 'skipped') && ((github.event_name == 'workflow_dispatch' && github.event.inputs.run_live == 'true') || (github.event_name != 'workflow_dispatch' && github.event_name != 'pull_request')) }}
+    if: ${{ always() && (github.event_name != 'schedule' || vars.ENABLE_BRAINTRUST_MCP_EVALS_SCHEDULE == 'true') && (needs.evals-local.result == 'success' || needs.evals-local.result == 'skipped') && ((github.event_name == 'workflow_dispatch' && github.event.inputs.run_live == 'true') || (github.event_name != 'workflow_dispatch' && github.event_name != 'pull_request')) }}
     env:
       BRAINTRUST_API_KEY: ${{ secrets.BRAINTRUST_API_KEY }}
       BRAINTRUST_PROJECT_NAME: ${{ vars.BRAINTRUST_PROJECT_NAME }}
