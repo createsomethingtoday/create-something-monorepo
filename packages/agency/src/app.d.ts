@@ -58,6 +58,7 @@ declare global {
 				IDENTITY_WORKER_URL?: string;
 				IDENTITY_WORKER_SECRET?: string;
 				IDENTITY_WORKER_ADMIN_API_KEY?: string;
+				ANALYTICS_SERVICE_TOKEN?: string;
 				// Optional gateway bearer injected into strict MCP access bundles.
 				MCP_HUB_GATEWAY_BEARER?: string;
 				// Partner auth portal
