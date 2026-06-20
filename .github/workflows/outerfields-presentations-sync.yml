@@ -10,6 +10,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 concurrency:
   group: outerfields-presentations-sync
@@ -38,10 +39,19 @@ jobs:
             --squash \
             -m "chore(outerfields): sync presentations subtree"
 
-      - name: Push if changed
-        run: |
-          if [ -n "$(git status --porcelain)" ]; then
-            git push
-          else
-            echo "No changes to push."
-          fi
+      - name: Create sync pull request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          branch: codex/outerfields-presentations-sync
+          commit-message: 'chore(outerfields): sync presentations subtree'
+          title: 'chore(outerfields): sync presentations subtree'
+          body: |
+            Automated sync of the OUTERFIELDS presentations subtree.
+
+            Source repository: `createsomethingtoday/outerfields-presentations`
+            Source branch: `main`
+            Target prefix: `packages/agency/clients/outerfields/src/routes/presentations`
+          labels: |
+            automation
+            outerfields
+          delete-branch: true

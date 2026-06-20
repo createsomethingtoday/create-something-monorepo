@@ -45,27 +45,18 @@
 	}
 
 	.row strong {
-		font-size: 1.02rem;
-		letter-spacing: -0.02em;
+		font-size: var(--text-body, 1rem);
+		font-weight: var(--font-medium, 500);
+		letter-spacing: 0;
 	}
 
 	.meta {
 		color: var(--muted);
-		font-size: 0.88rem;
+		font-size: var(--text-body-sm, 0.913rem);
 	}
 
 	.meter {
 		height: 0.7rem;
-		border-radius: 999px;
-		background: var(--surface-overlay);
-		border: 1px solid rgba(167, 184, 255, 0.08);
-		overflow: hidden;
-	}
-
-	.fill {
-		height: 100%;
-		border-radius: inherit;
-		background: var(--accent-gradient);
 	}
 
 	ul {
@@ -79,6 +70,6 @@
 	p {
 		margin: 0;
 		color: var(--muted-strong);
-		line-height: 1.55;
+		line-height: var(--leading-normal, 1.5);
 	}
 </style>

@@ -24,7 +24,7 @@
 				? 'That page is not available'
 				: 'Something interrupted the application';
 	$: lead = isAccessDenied
-		? 'Return to your application and complete the one-time email verification step there before retrying this protected page.'
+		? 'Return to your application and complete the one-time email verification step there before retrying this secure page.'
 		: isMissingSecret
 			? 'The application is reachable, but secure steps are temporarily offline. Please try again shortly.'
 			: isNotFound
@@ -149,7 +149,7 @@
 		padding: 0.85rem 1.2rem;
 		border-radius: 999px;
 		text-decoration: none;
-		font-weight: 600;
+		font-weight: var(--font-medium, 500);
 		transition:
 			transform 140ms ease,
 			border-color 140ms ease,
@@ -160,7 +160,7 @@
 	.cta-link.primary {
 		background: var(--button-bg);
 		color: var(--button-ink);
-		box-shadow: 0 16px 34px rgba(49, 92, 255, 0.22);
+		box-shadow: none;
 	}
 
 	.cta-link.secondary {

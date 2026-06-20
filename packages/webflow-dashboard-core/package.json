@@ -23,6 +23,7 @@
   },
   "scripts": {
     "check": "tsc --noEmit",
+    "repair:fivetran-mrp-overrides": "node --import tsx scripts/repair-fivetran-mrp-overrides.ts",
     "test": "node --import tsx --test src/*.test.ts",
     "test:knock-login": "node --import tsx scripts/test-knock-login.ts"
   },

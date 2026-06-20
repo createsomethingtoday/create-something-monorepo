@@ -6,46 +6,13 @@
  *
  * Distinguished from experiments which DEMONSTRATE the circle.
  *
- * Auto-discovers papers from ./[slug]/meta.ts files.
+ * Auto-discovers papers from ./[slug]/meta.ts files and file-based paper config.
  */
 
 import type { PageServerLoad } from './$types';
-import type { PaperMeta } from './types';
-import { fileBasedPapers } from '$lib/config/fileBasedPapers';
+import { getPublishedPaperMetas } from '$lib/config/paperCatalog';
 
-// Auto-discover all papers with meta.ts files
-const paperModules = import.meta.glob<{ meta: PaperMeta }>('./*/meta.ts', { eager: true });
-
-function normalizeCategory(category: string): PaperMeta['category'] {
-	const normalized = category.toLowerCase().replace(/\s+/g, '-');
-	if (normalized === 'case-study' || normalized === 'methodology' || normalized === 'research') {
-		return normalized;
-	}
-	return 'research';
-}
-
-// Static route metadata remains canonical when both exist.
-const staticPapers: PaperMeta[] = Object.values(paperModules).map((mod) => mod.meta);
-const staticSlugs = new Set(staticPapers.map((paper) => paper.slug));
-
-const markdownPapers: PaperMeta[] = fileBasedPapers
-	.filter((paper) => !staticSlugs.has(paper.slug))
-	.map((paper) => ({
-		slug: paper.slug,
-		title: paper.title,
-		subtitle: '',
-		description: paper.description,
-		category: normalizeCategory(paper.category),
-		readingTime: paper.reading_time_minutes,
-		difficulty: paper.difficulty,
-		date: paper.created_at.split('T')[0],
-		keywords: paper.tags
-	}));
-
-// Merge and sort by date (newest first)
-const papers: PaperMeta[] = [...staticPapers, ...markdownPapers].sort(
-	(a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-);
+const papers = getPublishedPaperMetas();
 
 export const load: PageServerLoad = async () => {
 	return {

@@ -1,7 +1,8 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { Header, Button, Card, WebflowWayCard, BackNavigation } from '$lib/components';
+  import { Header, Card, WebflowWayCard, BackNavigation } from '$lib/components';
   import { trackEvent } from '$lib/utils/analytics';
+  import { ArrowRight, CheckCircle2, FlaskConical, Route } from 'lucide-svelte';
   import type { PageData } from './$types';
 
   let { data }: { data: PageData } = $props();
@@ -51,18 +52,38 @@
     <div class="content-wrapper">
       <BackNavigation />
 
-      <div class="page-header page-intro">
-        <div class="header-content">
-          <h1 class="page-title page-intro__title">Install the Webflow Way Validator</h1>
-          <p class="page-subtitle page-intro__subtitle">
-            Install the Validator app first. It produces the required pass that the submission flow
-            checks before marketplace review.
+      <section class="validation-hero" aria-labelledby="validation-title">
+        <div class="hero-copy">
+          <span class="page-kicker">Validation</span>
+          <h1 class="page-title" id="validation-title">Prepare a template for marketplace review</h1>
+          <p class="page-subtitle">
+            Install the Webflow Way Validator, run it in Designer, and submit only after the
+            published site has a confirmed 100% pass.
           </p>
-          <div class="validation-evidence" aria-label="Validation outcomes">
-            <span><strong>Required app install</strong></span>
-            <span><strong>Runs inside Designer</strong></span>
-            <span><strong>Submission form checks the pass</strong></span>
+        </div>
+
+        <div class="hero-status" aria-label="Submission gate">
+          <div>
+            <span>Required gate</span>
+            <strong>100% Validator pass</strong>
           </div>
+        </div>
+      </section>
+
+      <div class="validation-strip" aria-label="Validation workflow">
+        <div>
+          <span>1</span>
+          <strong>Install app</strong>
+        </div>
+        <ArrowRight size={15} aria-hidden="true" />
+        <div>
+          <span>2</span>
+          <strong>Run in Designer</strong>
+        </div>
+        <ArrowRight size={15} aria-hidden="true" />
+        <div>
+          <span>3</span>
+          <strong>Submit with pass</strong>
         </div>
       </div>
 
@@ -72,20 +93,19 @@
             <span class="tool-kicker">Required before submission</span>
             <h2 class="section-title" id="required-validator-title">Required install access</h2>
             <p class="tool-description">
-              Use this install link to add the app to Webflow, open it in Designer, and generate the
-              confirmed 100% Validator pass.
+              Start here. This install gives the workspace access to the Designer app that creates
+              the pass checked by the submission flow.
             </p>
           </div>
           <WebflowWayCard userEmail={data.user?.email} featured />
         </section>
 
         <div class="support-stack">
-          <Card class="workflow-checklist-card validator-steps-card">
+          <Card class="workflow-checklist-card">
             <div>
               <h2 class="section-title section-title--secondary">Required path</h2>
               <p class="tool-description">
-                The install action is the important step. Quick checks are optional helpers after
-                this.
+                Keep this order so the submission form can verify the published pass.
               </p>
             </div>
             <ol class="workflow-steps" aria-label="Recommended validation workflow">
@@ -108,27 +128,37 @@
             <div>
               <h2 class="section-title section-title--secondary">Optional preflight checks</h2>
               <p class="tool-description">
-                Use these only when you want a fast technical read before or after running the
-                Validator.
+                Fast checks for technical issues before the full Designer pass.
               </p>
             </div>
             <div class="secondary-tool-actions">
-              <Button variant="outline" onclick={handleOpenGsapValidator} class="tool-button"
-                >Quick Validate</Button
-              >
-              <Button variant="secondary" onclick={handleOpenPlayground} class="tool-button"
-                >Open Full Playground</Button
-              >
+              <button class="preflight-action" type="button" onclick={handleOpenGsapValidator}>
+                <span><FlaskConical size={16} /></span>
+                <div>
+                  <strong>Quick check</strong>
+                  <small>Run a focused GSAP scan</small>
+                </div>
+              </button>
+              <button class="preflight-action" type="button" onclick={handleOpenPlayground}>
+                <span><Route size={16} /></span>
+                <div>
+                  <strong>Playground</strong>
+                  <small>Inspect a published URL</small>
+                </div>
+              </button>
             </div>
           </Card>
 
-          <div class="validator-note">
-            <span class="tool-kicker">Review note</span>
-            <p class="tool-description">
-              The submission form validates the published site for the confirmed Validator pass.
-              Publish after adding the script before re-checking.
-            </p>
-          </div>
+          <Card class="submission-gate-card">
+            <CheckCircle2 size={18} />
+            <div>
+              <h2 class="section-title section-title--secondary">Submission gate</h2>
+              <p class="tool-description">
+                The published site must carry the confirmed Validator pass. Publish after adding the
+                script, then re-check before submitting.
+              </p>
+            </div>
+          </Card>
         </div>
       </div>
     </div>
@@ -159,9 +189,126 @@
     margin: 0 auto;
   }
 
+  .validation-hero {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--space-lg);
+    padding: var(--space-lg) 0 var(--space-md);
+    border-bottom: 1px solid var(--color-shell-border-default);
+  }
+
+  .hero-copy {
+    display: grid;
+    gap: var(--space-xs);
+    max-width: 52rem;
+  }
+
+  .page-kicker,
+  .tool-kicker {
+    color: var(--color-fg-muted);
+    font-size: var(--text-caption);
+    font-weight: var(--font-semibold);
+    letter-spacing: 0;
+    text-transform: uppercase;
+  }
+
+  .page-title {
+    margin: 0;
+    color: var(--color-fg-primary);
+    font-family: var(--font-heading);
+    font-size: 4rem;
+    font-weight: var(--font-semibold);
+    letter-spacing: 0;
+    line-height: 0.98;
+  }
+
+  .page-subtitle {
+    max-width: 48rem;
+    margin: var(--space-xs) 0 0;
+    color: var(--color-fg-secondary);
+    font-size: var(--text-body-lg);
+    line-height: 1.45;
+  }
+
+  .hero-status {
+    display: flex;
+    align-items: flex-start;
+    min-width: 15.25rem;
+    padding: var(--space-sm);
+    border: 1px solid var(--color-shell-border-default);
+    border-radius: var(--radius-sm);
+    background: var(--color-bg-surface);
+  }
+
+  .hero-status span {
+    display: block;
+    color: var(--color-fg-muted);
+    font-size: var(--text-caption);
+    line-height: 1.2;
+  }
+
+  .hero-status strong {
+    display: block;
+    margin-top: 0.15rem;
+    color: var(--color-fg-primary);
+    font-size: var(--text-body-sm);
+    font-weight: var(--font-semibold);
+    line-height: 1.25;
+  }
+
+  .validation-strip {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr auto 1fr;
+    align-items: center;
+    gap: var(--space-sm);
+    margin: var(--space-md) 0 var(--space-lg);
+    padding: var(--space-sm);
+    border: 1px solid var(--color-shell-border-default);
+    border-radius: var(--radius-sm);
+    background: var(--color-bg-surface);
+  }
+
+  .validation-strip > div {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    min-width: 0;
+  }
+
+  .validation-strip span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.4rem;
+    height: 1.4rem;
+    flex: 0 0 auto;
+    border-radius: 999px;
+    border: 1px solid var(--color-shell-border-default);
+    color: var(--color-fg-secondary);
+    background: var(--color-bg-subtle);
+    font-size: var(--text-caption);
+    font-weight: var(--font-semibold);
+  }
+
+  .validation-strip strong {
+    min-width: 0;
+    overflow: hidden;
+    color: var(--color-fg-primary);
+    font-size: var(--text-body-sm);
+    font-weight: var(--font-semibold);
+    line-height: 1.2;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .validation-strip :global(svg) {
+    color: var(--color-fg-muted);
+  }
+
   .validator-focus-grid {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(300px, 0.46fr);
+    grid-template-columns: minmax(0, 1fr) minmax(19rem, 0.38fr);
     gap: var(--space-lg);
     align-items: start;
     margin-bottom: var(--space-md);
@@ -175,37 +322,6 @@
     min-width: 0;
   }
 
-  .validation-evidence {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.45rem 0.9rem;
-    margin-top: 0.7rem;
-    font-size: var(--text-body-sm);
-    color: var(--color-fg-secondary);
-  }
-
-  .validation-evidence span {
-    position: relative;
-    padding-left: 0.8rem;
-  }
-
-  .validation-evidence span::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0.58em;
-    width: 0.32rem;
-    height: 0.32rem;
-    border-radius: 999px;
-    background: var(--color-info);
-  }
-
-  .validation-evidence strong {
-    color: var(--color-fg-primary);
-    font-weight: var(--font-semibold);
-  }
-
   .section-title {
     font-family: var(--font-heading);
     font-size: var(--text-h2);
@@ -216,25 +332,8 @@
   }
 
   .section-title--secondary {
-    margin-bottom: var(--space-sm);
+    margin-bottom: var(--space-xs);
     font-size: var(--text-body-lg);
-  }
-
-  :global(.tool-card) {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-sm);
-    padding: 0.9rem;
-    border-radius: var(--radius-sm);
-    border-color: color-mix(in srgb, var(--color-shell-border-default) 74%, transparent);
-    box-shadow: none;
-  }
-
-  .tool-kicker {
-    font-size: var(--text-caption);
-    color: var(--color-info);
-    text-transform: uppercase;
-    letter-spacing: 0;
   }
 
   .tool-description {
@@ -248,7 +347,7 @@
   :global(.secondary-tools-card) {
     display: grid;
     gap: var(--space-sm);
-    padding: 0.9rem;
+    padding: var(--space-md);
     border-radius: var(--radius-sm);
     border-color: color-mix(in srgb, var(--color-shell-border-default) 74%, transparent);
     box-shadow: none;
@@ -269,16 +368,16 @@
     position: relative;
     min-width: 0;
     padding: var(--space-sm);
-    padding-top: 2.25rem;
+    padding-left: 3rem;
     border: 1px solid color-mix(in srgb, var(--color-shell-border-default) 72%, transparent);
     border-radius: var(--radius-sm);
-    background: color-mix(in srgb, var(--color-bg-surface) 94%, var(--color-info-muted));
+    background: var(--color-bg-subtle);
   }
 
   .workflow-steps li::before {
     content: counter(workflow-step);
     position: absolute;
-    top: var(--space-sm);
+    top: 0.9rem;
     left: var(--space-sm);
     display: inline-flex;
     align-items: center;
@@ -286,8 +385,9 @@
     width: 1.25rem;
     height: 1.25rem;
     border-radius: 999px;
-    background: color-mix(in srgb, var(--color-info-muted) 48%, transparent);
-    color: var(--color-info);
+    border: 1px solid var(--color-shell-border-default);
+    background: var(--color-bg-surface);
+    color: var(--color-fg-secondary);
     font-size: var(--text-caption);
     font-weight: var(--font-semibold);
   }
@@ -312,10 +412,79 @@
     gap: var(--space-sm);
   }
 
-  .validator-note {
+  .preflight-action {
     display: grid;
-    gap: var(--space-xs);
-    padding: 0 var(--space-xs);
+    grid-template-columns: auto 1fr;
+    gap: var(--space-sm);
+    align-items: center;
+    width: 100%;
+    min-height: 4.25rem;
+    padding: var(--space-sm);
+    border: 1px solid var(--color-shell-border-default);
+    border-radius: var(--radius-sm);
+    color: inherit;
+    background: transparent;
+    cursor: pointer;
+    text-align: left;
+    transition:
+      background-color var(--duration-micro) var(--ease-standard),
+      border-color var(--duration-micro) var(--ease-standard);
+  }
+
+  .preflight-action:hover {
+    border-color: color-mix(in srgb, var(--color-fg-muted) 36%, var(--color-shell-border-default));
+    background: var(--color-bg-subtle);
+  }
+
+  .preflight-action:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-focus) 22%, transparent);
+  }
+
+  .preflight-action > span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.2rem;
+    height: 2.2rem;
+    border: 1px solid var(--color-shell-border-default);
+    border-radius: var(--radius-sm);
+    color: var(--color-fg-muted);
+    background: var(--color-bg-subtle);
+  }
+
+  .preflight-action strong,
+  .preflight-action small {
+    display: block;
+  }
+
+  .preflight-action strong {
+    color: var(--color-fg-primary);
+    font-size: var(--text-body-sm);
+    font-weight: var(--font-semibold);
+    line-height: 1.2;
+  }
+
+  .preflight-action small {
+    margin-top: 0.15rem;
+    color: var(--color-fg-muted);
+    font-size: var(--text-caption);
+    line-height: 1.25;
+  }
+
+  :global(.submission-gate-card) {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: var(--space-sm);
+    padding: var(--space-md);
+    border-radius: var(--radius-sm);
+    border-color: var(--color-shell-border-default);
+    background: var(--color-bg-surface);
+  }
+
+  :global(.submission-gate-card > svg) {
+    margin-top: 0.1rem;
+    color: var(--color-success);
   }
 
   .required-tool-heading {
@@ -329,7 +498,7 @@
 
   :global(.validator-primary .webflow-way-card) {
     height: auto;
-    border-color: color-mix(in srgb, var(--color-info-border) 78%, var(--color-shell-border-default));
+    border-color: var(--color-shell-border-default);
   }
 
   :global(.tool-button) {
@@ -338,8 +507,44 @@
   }
 
   @media (max-width: 900px) {
+    .validation-hero {
+      align-items: stretch;
+      flex-direction: column;
+    }
+
+    .hero-status {
+      min-width: 0;
+    }
+
     .validator-focus-grid {
       grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .main-content {
+      padding: var(--space-md) var(--space-sm);
+    }
+
+    .page-title {
+      font-size: 2.25rem;
+      line-height: 1.04;
+    }
+
+    .page-subtitle {
+      font-size: var(--text-body);
+    }
+
+    .validation-strip {
+      grid-template-columns: 1fr;
+    }
+
+    .validation-strip :global(svg) {
+      display: none;
+    }
+
+    .validation-strip strong {
+      white-space: normal;
     }
   }
 </style>

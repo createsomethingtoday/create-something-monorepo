@@ -88,6 +88,26 @@ async function run_script(name, script, cwd, timeout_ms, logger, fatal) {
         throw new SymphonyError('hook_failed', message);
     }
 }
+async function git_status_porcelain(path) {
+    const child = spawn('git', ['-C', path, 'status', '--porcelain'], {
+        stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    let stdout = '';
+    let stderr = '';
+    child.stdout?.on('data', (chunk) => {
+        stdout += String(chunk);
+    });
+    child.stderr?.on('data', (chunk) => {
+        stderr += String(chunk);
+    });
+    const code = await new Promise((resolve) => {
+        child.once('exit', resolve);
+    });
+    if (code !== 0) {
+        throw new SymphonyError('git_status_failed', `git status failed for ${path}: ${truncate(stderr).trim() || `exit code ${code}`}`);
+    }
+    return stdout.trim();
+}
 export class WorkspaceManager {
     config;
     logger;
@@ -231,7 +251,13 @@ export class WorkspaceManager {
             throw error;
         }
         if (this.config.hooks.before_remove) {
-            await run_script('before_remove', this.config.hooks.before_remove, paths.workspace_path, this.config.hooks.timeout_ms, this.logger, false);
+            await run_script('before_remove', this.config.hooks.before_remove, paths.workspace_path, this.config.hooks.timeout_ms, this.logger, true);
+        }
+        if (await path_exists(join(paths.workspace_path, '.git'))) {
+            const status = await git_status_porcelain(paths.workspace_path);
+            if (status) {
+                throw new SymphonyError('dirty_workspace', `Refusing to remove dirty workspace ${paths.workspace_path}:\n${status}`);
+            }
         }
         await rm(paths.workspace_path, { recursive: true, force: true });
         await rm(paths.metadata_path, { force: true });

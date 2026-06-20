@@ -12,6 +12,7 @@ on:
     paths:
       - 'packages/io/src/routes/papers/**'
       - 'packages/io/src/routes/experiments/**'
+      - 'packages/io/src/lib/config/**'
       - 'packages/io/content/papers/**'
       - 'packages/io/content/experiments/**'
       - 'docs/policies/**'
@@ -102,9 +103,10 @@ jobs:
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
         run: |
-          pnpm exec wrangler pages deploy packages/io/.svelte-kit/cloudflare \
+          node scripts/run-wrangler.mjs --cwd packages/io pages deploy .svelte-kit/cloudflare \
             --project-name=create-something-io \
-            --branch="$PR_BRANCH_ALIAS"
+            --branch="$PR_BRANCH_ALIAS" \
+            --commit-dirty=true
 
       - name: Upsert preview comment
         if: steps.context.outputs.publishable == 'true' && env.CLOUDFLARE_API_TOKEN != ''

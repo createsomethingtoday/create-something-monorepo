@@ -20,6 +20,7 @@
 @import '@create-something/canon/styles/cards.css';
 @import '@create-something/canon/styles/grid-patterns.css';
 @import '@create-something/canon/styles/interactions.css';
+@import './lib/styles/delivery-pages.css';
 
 /* Tailwind CSS directives */
 @tailwind base;

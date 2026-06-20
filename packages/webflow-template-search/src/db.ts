@@ -386,6 +386,19 @@ export async function finishSyncJobLock(
     .run();
 }
 
+export async function heartbeatSyncJobLock(db: D1Database, lock: SyncJobLock, heartbeatAt = nowIso()): Promise<void> {
+  await db
+    .prepare(
+      `UPDATE sync_jobs
+       SET heartbeat_at = ?
+       WHERE lock_key = ?
+         AND job_id = ?
+         AND status = 'running'`,
+    )
+    .bind(heartbeatAt, lock.lockKey, lock.jobId)
+    .run();
+}
+
 export async function clearIndex(db: D1Database): Promise<void> {
   // Delete in chunks to avoid D1's per-statement CPU time limit on large tables.
   for (const table of ['template_styles', 'template_child_categories', 'template_category_memberships', 'template_documents'] as const) {

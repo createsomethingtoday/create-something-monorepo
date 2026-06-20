@@ -1,0 +1,15 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="630" fill="#080808"/>
+  <rect x="64" y="64" width="1072" height="502" rx="28" fill="#101010" stroke="#ff8a00" stroke-width="3"/>
+  <text x="118" y="132" font-family="Inter, Arial, sans-serif" font-size="26" font-weight="700" fill="#ff8a00" letter-spacing="4">CREATE SOMETHING .AGENCY</text>
+  <text x="118" y="245" font-family="Inter, Arial, sans-serif" font-size="72" font-weight="800" fill="#f7f7f2">Cloudflare Runtime</text>
+  <text x="118" y="310" font-family="Inter, Arial, sans-serif" font-size="34" fill="#d9d9d2">Route. Gate. State. Act. Prove.</text>
+  <g font-family="JetBrains Mono, monospace" font-size="28" fill="#f7f7f2">
+    <text x="150" y="452">Workers</text>
+    <text x="345" y="452">Pages</text>
+    <text x="515" y="452">D1</text>
+    <text x="635" y="452">Queues</text>
+    <text x="850" y="452">Receipts</text>
+  </g>
+  <path d="M128 490h944" stroke="#ff8a00" stroke-width="5" stroke-linecap="round"/>
+</svg>

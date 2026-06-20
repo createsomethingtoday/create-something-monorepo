@@ -103,6 +103,7 @@ interface FetchOptions {
   optionalFields?: string[];
   formula?: string;
   sortField?: string;
+  maxRecords?: number;
 }
 
 function parseConfiguredSearchVisibilityFields(env: Env): string[] {
@@ -131,7 +132,10 @@ async function fetchAirtableRecords<TFields extends Record<string, unknown>>(
 
     do {
       const params = new URLSearchParams();
-      params.set('pageSize', '100');
+      const remainingRecords =
+        typeof options.maxRecords === 'number' ? Math.max(1, Math.min(100, options.maxRecords - records.length)) : 100;
+      params.set('pageSize', String(remainingRecords));
+      if (typeof options.maxRecords === 'number') params.set('maxRecords', String(options.maxRecords));
       fields.forEach((field) => params.append('fields[]', field));
       if (options.formula) params.set('filterByFormula', options.formula);
       if (options.sortField) {
@@ -154,6 +158,9 @@ async function fetchAirtableRecords<TFields extends Record<string, unknown>>(
 
       const payload = (await response.json()) as AirtableListResponse<TFields>;
       records.push(...payload.records);
+      if (typeof options.maxRecords === 'number' && records.length >= options.maxRecords) {
+        return records.slice(0, options.maxRecords);
+      }
       offset = payload.offset;
     } while (offset);
 
@@ -214,6 +221,7 @@ export async function fetchModifiedAssetsSince(
   env: Env,
   cursor: string,
   until?: string,
+  maxRecords?: number,
 ): Promise<Array<AirtableRecord<AirtableAssetFields>>> {
   return fetchAirtableRecords<AirtableAssetFields>(env, {
     tableId: env.AIRTABLE_ASSETS_TABLE_ID ?? DEFAULT_ASSETS_TABLE_ID,
@@ -221,6 +229,7 @@ export async function fetchModifiedAssetsSince(
     optionalFields: parseConfiguredSearchVisibilityFields(env),
     formula: buildModifiedAfterFormula(cursor, until),
     sortField: '📅LMT',
+    maxRecords,
   });
 }
 

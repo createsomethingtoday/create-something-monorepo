@@ -260,12 +260,12 @@ export function getNurseGuidance(
 	if (!hasStartedIntake(thread)) {
 		return {
 			eyebrow: 'Concierge',
-			title: 'Start by telling me what kind of role you want',
-			body: 'You can answer in plain language. I will build your application while we chat.',
-			helper: 'A good first message is your specialty, preferred shift, and where you want to work.',
+			title: 'Start with the role you want',
+			body: 'You can answer in plain language. I will build the application as we chat.',
+			helper: 'A good first message includes specialty, preferred shift, and where you want to work.',
 			tone: 'neutral',
 			chatReply:
-				'Tell me what kind of role you want in plain language, and I will build your application while we chat.'
+				'Tell me what kind of role you want in plain language, and I will build the application while we chat.'
 		};
 	}
 
@@ -286,9 +286,9 @@ export function getNurseGuidance(
 		return {
 			eyebrow: 'Concierge',
 			title: 'Keep going in chat',
-			body: `I still need your ${formatLabelList(missingBasics)} before I can move you into the document step.`,
+			body: `I still need your ${formatLabelList(missingBasics)} before the application can move to documents.`,
 			helper:
-				'Reply naturally here in chat. Once I have those basics, I will ask for your resume and compact license image right here in this thread.',
+				'Reply naturally here in chat. Once I have those basics, I will ask for your resume and compact license image in this thread.',
 			tone: 'neutral',
 			chatReply: `I still need your ${formatLabelList(
 				missingBasics

@@ -75,6 +75,15 @@ Templates and scaffolding tools have commoditized *starting* an MCP server. The 
 | UI validation path | `/`, `/papers`, `/plugins` |
 | Escalation rule | stop if research content, plugin catalog, or D1-backed experiment data cannot be reconciled with the checked-in source artifacts |
 
+### Paper Catalog Guard
+
+`pnpm check` runs `scripts/check-paper-catalog.mjs` before Svelte diagnostics. The guard fails when:
+
+- a static paper route under `src/routes/papers/{slug}/` lacks `meta.ts`
+- `static/sitemap.xml` is reintroduced and shadows the generated sitemap route
+- the old `content/papers/test-markdown-paper.md` fixture appears in production content
+- a markdown file under `content/papers/` lacks either a static route or `fileBasedPapers` entry
+
 ---
 
 ## Development

@@ -21,11 +21,14 @@ pnpm linear:list -- --status open --label code-quality
 pnpm linear:get -- --issue CRE-123
 pnpm linear:create -- --title "..." --description "..." --label code-quality
 pnpm linear:claim -- --issue CRE-123
+pnpm agent:claim-worktree -- --issue CRE-123
 pnpm linear:comment -- --issue CRE-123 --body "..."
 pnpm linear:done -- --issue CRE-123 --evidence "Validation: ..."
 ```
 
 The wrapper uses `LINEAR_API_KEY`. Store that key in Infisical or another secret manager; never commit it. For CREATE SOMETHING automation, the production key lives in Infisical at `prod` `/`.
+
+Use `pnpm agent:claim-worktree -- --issue CRE-123` for implementation work that needs a new isolated workspace. It claims the issue, creates a branch/worktree from fresh `origin/main`, and writes a Linear comment with the branch, worktree path, base ref, and base SHA. That comment is the handoff record other agents and engineers should check before pushing, rebasing, merging, or promoting work.
 
 To verify the wrapper through Infisical:
 
@@ -79,6 +82,7 @@ Record concise evidence as a Linear comment or completion evidence:
 Task: <Linear issue id/title>
 Surface: <package/page/service>
 Commit: <sha or none>
+Workspace: <branch, worktree path, base ref, base sha>
 Validation: <commands and pass/fail>
 Deploy: <environment, URL, run id, or none>
 Smoke: <route/status/content check>

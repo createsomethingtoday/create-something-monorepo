@@ -155,6 +155,24 @@
     }
   ];
 
+  const faqItems = [
+    {
+      question: 'When does an enterprise need Policy OS?',
+      answer:
+        'Policy OS fits teams already running automation that now need controlled execution states, approval rules, monitoring, and operating receipts.'
+    },
+    {
+      question: 'What should be added after the first workflow wedge?',
+      answer:
+        'After the first wedge is live, add policy rules, evaluation gates, monitoring, incident loops, release evidence, and a review rhythm.'
+    },
+    {
+      question: 'How does enterprise workflow reliability stay auditable?',
+      answer:
+        'It stays auditable by attaching evidence, runbooks, release notes, blocked-state reasons, and owner decisions to the operating path.'
+    }
+  ];
+
   const ctaItems: ClearCtaItem[] = [
     {
       label: 'Bring',
@@ -181,8 +199,9 @@
   title="Policy OS for Enterprise Workflow Reliability | CREATE SOMETHING .agency"
   description="Policy OS for teams already running automation. Add controlled execution states, approval rules, monitoring, and operating receipts once the first workflow wedge is live."
   keywords="enterprise automation reliability, workflow controls, policy operations, ai control layer, workflow reliability"
-  ogImage="/og-image.svg"
+  ogImage="/og/policy-os.svg"
   propertyName="agency"
+  {faqItems}
 />
 
 <ClearPageSection

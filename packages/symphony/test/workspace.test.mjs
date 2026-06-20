@@ -1,10 +1,14 @@
 import assert from 'node:assert/strict';
+import { execFile } from 'node:child_process';
 import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
+import { promisify } from 'node:util';
 
 import { WorkspaceManager } from '../src/workspace.js';
+
+const execFileAsync = promisify(execFile);
 
 function createLogger() {
   const entries = [];
@@ -104,4 +108,23 @@ test('WorkspaceManager removes workspace metadata with the workspace', async (t)
 
   await assert.rejects(() => readFile(workspace.path, 'utf8'), /ENOENT/);
   await assert.rejects(() => readFile(workspace.metadata_path, 'utf8'), /ENOENT/);
+});
+
+test('WorkspaceManager refuses to remove dirty git workspaces', async (t) => {
+  const tempRoot = await mkdtemp(join(tmpdir(), 'symphony-workspace-'));
+  t.after(async () => {
+    await rm(tempRoot, { recursive: true, force: true });
+  });
+
+  const root = join(tempRoot, 'workspaces');
+  const logger = createLogger();
+  const manager = new WorkspaceManager(createConfig(root, join(tempRoot, 'hook.log')), logger);
+  const workspace = await manager.ensure_workspace('CRE-999');
+
+  await execFileAsync('git', ['init'], { cwd: workspace.path });
+  await writeFile(join(workspace.path, 'progress.txt'), 'agent progress\n', 'utf8');
+
+  await assert.rejects(() => manager.remove_workspace('CRE-999'), /dirty_workspace|Refusing to remove dirty workspace/);
+  assert.equal(await readFile(join(workspace.path, 'progress.txt'), 'utf8'), 'agent progress\n');
+  assert.equal(await readFile(workspace.metadata_path, 'utf8').then(() => true), true);
 });

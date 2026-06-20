@@ -1,8 +1,8 @@
 export const agencyCoreMessaging = {
-  categoryLabel: 'Workflow control service',
-  startWithWorkflowLabel: 'Start Atlas Map',
+  categoryLabel: 'Workflow Trust Layer',
+  startWithWorkflowLabel: 'Start Workflow Map',
   startWithWorkflowHref: '/services#atlas-warmup',
-  selfMapLabel: 'Start Atlas Map',
+  selfMapLabel: 'Start Workflow Map',
   selfMapHref: '/services#atlas-warmup',
   governanceChecklistLabel: 'Get Workflow Checklist',
   governanceChecklistHref: '/contact?source=resource&intent=governance-checklist&lane=not_sure',
@@ -14,7 +14,7 @@ export const agencyCoreMessaging = {
   servicesMappingSessionHref:
     '/book?source=services&intent=workflow-mapping&lane=workflow_infrastructure',
   engagementModelLabel: 'See the service path →',
-  workflowCtaHeading: 'Bring one workflow that should not stay manual.',
+  workflowCtaHeading: 'Bring the workflow your team still protects by hand.',
   workflowCtaDetail:
-    'I map what agents can do, what needs approval, what must stop, and what evidence your team keeps.'
+    'I map what can run, what needs approval, what must stop, and what evidence your team keeps.'
 } as const;

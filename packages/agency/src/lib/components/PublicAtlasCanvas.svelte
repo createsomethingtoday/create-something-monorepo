@@ -6,9 +6,7 @@
 		createPublicAtlasCanvas,
 		createPublicAtlasEdge,
 		createPublicAtlasNode,
-		layoutPublicAtlasNodes,
 		normalizePublicAtlasCanvas,
-		PUBLIC_ATLAS_FLOW_SIZE,
 		PUBLIC_ATLAS_LANES,
 		PUBLIC_ATLAS_LIMITS,
 		PUBLIC_ATLAS_STORAGE_KEYS,
@@ -19,6 +17,10 @@
 		type PublicAtlasNodeStatus,
 		type PublicAtlasReadiness
 	} from '$lib/atlas/public';
+	import type {
+		PublicAtlasFlowController,
+		PublicAtlasFlowProps
+	} from '$lib/components/PublicAtlasFlow';
 
 	type AgentMessage = {
 		role: 'assistant' | 'visitor';
@@ -56,7 +58,9 @@
 	let copyState = '';
 	let saveState = 'Draft not saved';
 	let hydrated = false;
-	let canvasZoom = 0.78;
+	let addMenuOpen = false;
+	let flowHost: HTMLDivElement;
+	let flowController: PublicAtlasFlowController | undefined;
 	let usage: AgentResponse['usage'] = {
 		tier: 'anonymous',
 		messagesUsed: 0,
@@ -73,52 +77,29 @@
 				'Name the workflow, the owner, and the first decision. I will help turn that into a map with human tasks, AI tasks, systems, data, constraints, and touchpoints.'
 		}
 	];
+	const agentPrompts = [
+		{ label: 'Owner', text: 'The workflow is owned by...' },
+		{ label: 'Approval', text: 'The approval point is...' },
+		{ label: 'Risk', text: 'The riskiest handoff is...' }
+	];
 
 	$: selectedNode = canvas.nodes.find((node) => node.id === selectedNodeId) ?? canvas.nodes[0];
 	$: readiness = computePublicAtlasReadiness(canvas);
 	$: summary = summarizePublicAtlasCanvas(canvas, readiness);
-	$: laidOutNodes = layoutPublicAtlasNodes(canvas.nodes);
-	$: laidOutNodeMap = new Map(laidOutNodes.map((node) => [node.id, node]));
-	$: flowHeight = Math.max(
-		PUBLIC_ATLAS_FLOW_SIZE.height,
-		...laidOutNodes.map((node) => (node.y ?? 0) + 170)
-	);
 	$: selectedDimensionCount = PUBLIC_ATLAS_LANES.filter((lane) =>
 		canvas.nodes.some((node) => node.kind === lane.kind)
 	).length;
-	$: bookingUrl = buildBookingUrl();
-
-	function nodeById(nodeId: string) {
-		return laidOutNodeMap.get(nodeId) ?? canvas.nodes.find((node) => node.id === nodeId);
-	}
-
-	function edgePath(edge: PublicAtlasCanvas['edges'][number]) {
-		const source = nodeById(edge.source);
-		const target = nodeById(edge.target);
-		if (!source || !target) return '';
-		const sourceWidth = source.width ?? 280;
-		const startX = (source.x ?? 0) + sourceWidth;
-		const startY = (source.y ?? 0) + 70;
-		const endX = target.x ?? 0;
-		const endY = (target.y ?? 0) + 70;
-		const bend = Math.max(80, Math.abs(endX - startX) * 0.42);
-		return `M ${startX} ${startY} C ${startX + bend} ${startY}, ${endX - bend} ${endY}, ${endX} ${endY}`;
-	}
-
-	function edgeLabelPosition(edge: PublicAtlasCanvas['edges'][number]) {
-		const source = nodeById(edge.source);
-		const target = nodeById(edge.target);
-		if (!source || !target) return { x: 0, y: 0 };
-		const sourceWidth = source.width ?? 280;
+	$: dimensionCoverage = PUBLIC_ATLAS_LANES.map((lane) => {
+		const count = canvas.nodes.filter((node) => node.kind === lane.kind).length;
 		return {
-			x: ((source.x ?? 0) + sourceWidth + (target.x ?? 0)) / 2,
-			y: ((source.y ?? 0) + (target.y ?? 0)) / 2 + 62
+			...lane,
+			count,
+			mapped: count > 0
 		};
-	}
-
-	function setZoom(next: number) {
-		canvasZoom = Math.max(0.54, Math.min(1.1, next));
-	}
+	});
+	$: bookingUrl = buildBookingUrl();
+	$: mappedPercent = Math.round((selectedDimensionCount / PUBLIC_ATLAS_LANES.length) * 100);
+	$: leadTierLabel = usage.tier === 'warmLead' ? 'Warm lead' : 'Anonymous map';
 
 	function buildBookingUrl() {
 		const base = bookingHref.split('?')[0] || '/book';
@@ -167,6 +148,16 @@
 		saveState = 'Saved for booking';
 	}
 
+	function buildFlowProps(): PublicAtlasFlowProps {
+		return {
+			canvas,
+			selectedNodeId,
+			onConnectNodes: connectNodes,
+			onMoveNode: moveNode,
+			onSelectNode: selectNode
+		};
+	}
+
 	function updateCanvas(next: PublicAtlasCanvas) {
 		canvas = normalizePublicAtlasCanvas({ ...next, updatedAt: new Date().toISOString() });
 		if (!canvas.nodes.some((node) => node.id === selectedNodeId)) {
@@ -178,6 +169,11 @@
 		persistCanvas();
 	}
 
+	function selectNode(nodeId: string) {
+		selectedNodeId = nodeId;
+		selectedSourceId = nodeId;
+	}
+
 	function addNode(kind: PublicAtlasNodeKind) {
 		const node = createPublicAtlasNode(kind, { createdBy: 'visitor' });
 		updateCanvas({
@@ -186,6 +182,12 @@
 			mutationCount: canvas.mutationCount + 1
 		});
 		selectedNodeId = node.id;
+		selectedSourceId = node.id;
+	}
+
+	function addNodeFromMenu(kind: PublicAtlasNodeKind) {
+		addNode(kind);
+		addMenuOpen = false;
 	}
 
 	function removeNode(nodeId: string) {
@@ -208,23 +210,30 @@
 		});
 	}
 
-	function connectSelectedTo(targetId: string) {
-		if (!selectedSourceId || selectedSourceId === targetId) return;
-		const exists = canvas.edges.some(
-			(edge) => edge.source === selectedSourceId && edge.target === targetId
-		);
+	function connectNodes(sourceId: string, targetId: string) {
+		if (!sourceId || !targetId || sourceId === targetId) return;
+		const exists = canvas.edges.some((edge) => edge.source === sourceId && edge.target === targetId);
 		if (exists) return;
 		updateCanvas({
 			...canvas,
 			edges: [
 				...canvas.edges,
-				createPublicAtlasEdge(selectedSourceId, targetId, {
+				createPublicAtlasEdge(sourceId, targetId, {
 					label: 'hands off to',
 					createdBy: 'visitor'
 				})
 			],
 			mutationCount: canvas.mutationCount + 1
 		});
+	}
+
+	function connectSelectedTo(targetId: string) {
+		connectNodes(selectedSourceId, targetId);
+	}
+
+	function moveNode(nodeId: string, position: { x: number; y: number }) {
+		selectNode(nodeId);
+		updateNode(nodeId, position);
 	}
 
 	async function askAgent() {
@@ -303,6 +312,7 @@
 			window.localStorage.removeItem(PUBLIC_ATLAS_STORAGE_KEYS.warmupDraft);
 		}
 		saveState = 'Draft cleared';
+		addMenuOpen = false;
 	}
 
 	onMount(() => {
@@ -318,11 +328,30 @@
 			}
 		}
 		hydrated = true;
+
+		let destroyed = false;
+		void (async () => {
+			const module = await import('$lib/components/PublicAtlasFlow');
+			if (destroyed || !flowHost) return;
+			flowController = module.mountPublicAtlasFlow(flowHost, buildFlowProps());
+		})();
+
+		return () => {
+			destroyed = true;
+			flowController?.destroy();
+			flowController = undefined;
+		};
 	});
 
 	$: if (browser && hydrated) {
 		canvas;
 		persistCanvas();
+	}
+
+	$: if (flowController && hydrated) {
+		canvas;
+		selectedNodeId;
+		flowController.update(buildFlowProps());
 	}
 </script>
 
@@ -338,93 +367,65 @@
 
 	<div class="atlas-layout">
 		<div class="atlas-main">
-			<div class="atlas-toolbar" aria-label="Add map nodes">
-				{#each PUBLIC_ATLAS_LANES as lane}
-					<button type="button" onclick={() => addNode(lane.kind)}>
-						<strong>{lane.label}</strong>
-						<small>{lane.description}</small>
-					</button>
-				{/each}
-			</div>
-
 			<div class="canvas-shell">
 				<div class="canvas-header">
-					<div>
-						<span>{selectedDimensionCount}/7 dimensions mapped</span>
-						<strong>{readiness.level}</strong>
+					<div class="canvas-status">
+						<div>
+							<span>Map readiness</span>
+							<strong>{readiness.level}</strong>
+						</div>
+						<div class="progress-meter" aria-label={`${mappedPercent}% of Atlas dimensions mapped`}>
+							<span style={`width: ${mappedPercent}%`}></span>
+						</div>
+						<div class="dimension-strip" aria-label="Atlas dimension coverage">
+							{#each dimensionCoverage as lane}
+								<span class:mapped={lane.mapped} title={lane.description}>
+									{lane.label}
+									<small>{lane.count || '—'}</small>
+								</span>
+							{/each}
+						</div>
 					</div>
-					<small>{readiness.score}/100</small>
-				</div>
-
-				<div class="atlas-flow-viewport" aria-label="Atlas flow canvas">
-					<div class="flow-controls" aria-label="Canvas zoom controls">
-						<button type="button" onclick={() => setZoom(canvasZoom - 0.1)} aria-label="Zoom out">
-							-
-						</button>
-						<button type="button" onclick={() => setZoom(0.78)}>Fit</button>
-						<button type="button" onclick={() => setZoom(canvasZoom + 0.1)} aria-label="Zoom in">
-							+
-						</button>
-					</div>
-					<div
-						class="atlas-flow-scale"
-						style={`width: ${PUBLIC_ATLAS_FLOW_SIZE.width * canvasZoom}px; height: ${flowHeight * canvasZoom}px;`}
-					>
-						<div
-							class="atlas-board"
-							style={`width: ${PUBLIC_ATLAS_FLOW_SIZE.width}px; height: ${flowHeight}px; transform: scale(${canvasZoom});`}
-						>
-							<svg class="atlas-edges" viewBox={`0 0 ${PUBLIC_ATLAS_FLOW_SIZE.width} ${flowHeight}`}>
-								<defs>
-									<marker
-										id="public-atlas-arrow"
-										viewBox="0 0 10 10"
-										refX="8"
-										refY="5"
-										markerWidth="6"
-										markerHeight="6"
-										orient="auto-start-reverse"
-									>
-										<path d="M 0 0 L 10 5 L 0 10 z"></path>
-									</marker>
-								</defs>
-								{#each canvas.edges as edge}
-									{@const labelPosition = edgeLabelPosition(edge)}
-									<path d={edgePath(edge)}></path>
-									{#if edge.label}
-										<text x={labelPosition.x} y={labelPosition.y}>{edge.label}</text>
-									{/if}
-								{/each}
-							</svg>
-							{#each PUBLIC_ATLAS_LANES as lane}
-								<div class={`lane-guide lane-${lane.kind}`}>
-									<span>{lane.label}</span>
+					<div class="canvas-header-actions">
+						<div class="score-pill">
+							<span>{readiness.score}</span>
+							<small>/100</small>
+						</div>
+						<div class="add-node-menu">
+							<button
+								type="button"
+								class="add-node-trigger"
+								aria-expanded={addMenuOpen}
+								aria-controls="public-atlas-add-menu"
+								onclick={() => (addMenuOpen = !addMenuOpen)}
+							>
+								Add node
+							</button>
+							{#if addMenuOpen}
+								<div id="public-atlas-add-menu" class="add-node-options">
+									{#each PUBLIC_ATLAS_LANES as lane}
+										<button type="button" onclick={() => addNodeFromMenu(lane.kind)}>
+											<strong>{lane.label}</strong>
+											<small>{lane.description}</small>
+										</button>
+									{/each}
 								</div>
-							{/each}
-							{#each laidOutNodes as node}
-								<button
-									type="button"
-									class:selected={node.id === selectedNodeId}
-									class={`atlas-node status-${node.status}`}
-									style={`left: ${node.x ?? 0}px; top: ${node.y ?? 0}px; width: ${node.width ?? 280}px;`}
-									onclick={() => {
-										selectedNodeId = node.id;
-										selectedSourceId = node.id;
-									}}
-								>
-									<strong>{node.label}</strong>
-									<span>{node.status}</span>
-									{#if node.notes}
-										<small>{node.notes}</small>
-									{/if}
-								</button>
-							{/each}
+							{/if}
 						</div>
 					</div>
 				</div>
 
+				<div
+					class="atlas-flow-viewport"
+					bind:this={flowHost}
+					aria-label="Atlas flow canvas"
+				></div>
+
 				<div class="handoffs">
-					<span>Handoffs</span>
+					<div class="handoffs-title">
+						<span>Handoffs</span>
+						<strong>{canvas.edges.length}</strong>
+					</div>
 					{#if canvas.edges.length}
 						<ul>
 							{#each canvas.edges as edge}
@@ -447,12 +448,18 @@
 
 		<aside class="atlas-side">
 			<section class="agent-panel">
-				<div class="panel-title">
-					<span>Mapping agent</span>
-					<strong>{usage.messagesUsed}/{usage.messagesLimit} messages</strong>
+				<div class="agent-hero">
+					<div>
+						<span>Mapping agent</span>
+						<strong>Shape the workflow map</strong>
+					</div>
+					<div class="agent-meter">
+						<span>{usage.messagesUsed}/{usage.messagesLimit}</span>
+						<small>messages</small>
+					</div>
 				</div>
 				<label class="email-field">
-					<span>Optional email for higher warm-lead limit</span>
+					<span>{leadTierLabel}</span>
 					<input bind:value={visitorEmail} type="email" placeholder="you@example.com" />
 				</label>
 				<div class="chat-log" aria-live="polite">
@@ -477,17 +484,22 @@
 							: PUBLIC_ATLAS_LIMITS.anonymous.maxMessageChars}
 						placeholder="Describe the workflow, owner, tools, approval point, or risk."
 					></textarea>
+					<div class="prompt-row" aria-label="Prompt starters">
+						{#each agentPrompts as prompt}
+							<button type="button" onclick={() => (agentInput = prompt.text)}>{prompt.label}</button>
+						{/each}
+					</div>
 					<button type="submit" disabled={agentBusy || !agentInput.trim()}>
-						{agentBusy ? 'Mapping...' : 'Ask agent'}
+						{agentBusy ? 'Mapping...' : 'Ask mapping agent'}
 					</button>
 				</form>
 				{#if agentError}
 					<p class="error">{agentError}</p>
 				{/if}
-				<p class="limit-copy">
-					{usage.mutationsUsed}/{usage.mutationsLimit} mutations used. Public maps cannot run
-					production tools or access private systems.
-				</p>
+				<div class="limit-copy">
+					<span>{usage.mutationsUsed}/{usage.mutationsLimit} mutations</span>
+					<span>Public map only</span>
+				</div>
 			</section>
 
 			<section class="inspector-panel">
@@ -512,32 +524,24 @@
 								updateNode(selectedNode.id, { owner: event.currentTarget.value })}
 						/>
 					</label>
-					<label>
-						<span>Status</span>
-						<select
-							value={selectedNode.status}
-							onchange={(event) =>
-								updateNode(selectedNode.id, {
-									status: event.currentTarget.value as PublicAtlasNodeStatus
-								})}
-						>
-							<option value="unknown">unknown</option>
-							<option value="run">run</option>
-							<option value="wait">wait</option>
-							<option value="stop">stop</option>
-						</select>
-					</label>
-					<label>
-						<span>Notes</span>
-						<textarea
-							value={selectedNode.notes ?? ''}
-							oninput={(event) =>
-								updateNode(selectedNode.id, { notes: event.currentTarget.value })}
-						></textarea>
-					</label>
-					<div class="connect-row">
+					<div class="field-pair">
 						<label>
-							<span>Connect selected to</span>
+							<span>Status</span>
+							<select
+								value={selectedNode.status}
+								onchange={(event) =>
+									updateNode(selectedNode.id, {
+										status: event.currentTarget.value as PublicAtlasNodeStatus
+									})}
+							>
+								<option value="unknown">unknown</option>
+								<option value="run">run</option>
+								<option value="wait">wait</option>
+								<option value="stop">stop</option>
+							</select>
+						</label>
+						<label>
+							<span>Connect to</span>
 							<select onchange={(event) => connectSelectedTo(event.currentTarget.value)}>
 								<option value="">Choose target</option>
 								{#each canvas.nodes.filter((node) => node.id !== selectedSourceId) as node}
@@ -546,6 +550,14 @@
 							</select>
 						</label>
 					</div>
+					<label>
+						<span>Notes</span>
+						<textarea
+							value={selectedNode.notes ?? ''}
+							oninput={(event) =>
+								updateNode(selectedNode.id, { notes: event.currentTarget.value })}
+						></textarea>
+					</label>
 					<button
 						type="button"
 						class="danger"
@@ -558,16 +570,18 @@
 			</section>
 
 			<section class="summary-panel">
-				<div class="panel-title">
-					<span>Booking context</span>
-					<strong>{saveState}</strong>
-				</div>
-				<pre>{summary}</pre>
-				<div class="summary-actions">
-					<button type="button" onclick={copySummary}>{copyState || 'Copy summary'}</button>
-					<a href={bookingUrl} onclick={persistCanvas}>Use this in booking</a>
-					<button type="button" class="danger" onclick={resetCanvas}>Reset</button>
-				</div>
+				<details>
+					<summary>
+						<span>Booking context</span>
+						<strong>{saveState}</strong>
+					</summary>
+					<pre>{summary}</pre>
+					<div class="summary-actions">
+						<button type="button" onclick={copySummary}>{copyState || 'Copy summary'}</button>
+						<a href={bookingUrl} onclick={persistCanvas}>Use this in booking</a>
+						<button type="button" class="danger" onclick={resetCanvas}>Reset</button>
+					</div>
+				</details>
 			</section>
 		</aside>
 	</div>
@@ -585,10 +599,12 @@
 
 	.atlas-copy > span,
 	.panel-title span,
+	.agent-hero span,
 	.canvas-header span,
-	.handoffs > span,
+	.handoffs-title span,
 	.email-field span,
-	.inspector-panel label span {
+	.inspector-panel label span,
+	.summary-panel summary span {
 		color: var(--color-clear-grey, #636363);
 		font-size: 0.72rem;
 		font-weight: 700;
@@ -605,7 +621,6 @@
 	}
 
 	.atlas-copy p,
-	.limit-copy,
 	.handoffs p {
 		margin: 0;
 		color: var(--color-clear-grey, #636363);
@@ -614,8 +629,8 @@
 
 	.atlas-layout {
 		display: grid;
-		grid-template-columns: minmax(0, 1.45fr) minmax(22rem, 0.75fr);
-		gap: 1rem;
+		grid-template-columns: minmax(0, 1.5fr) minmax(23rem, 0.7fr);
+		gap: 1.1rem;
 		align-items: start;
 	}
 
@@ -628,16 +643,10 @@
 		min-width: 0;
 	}
 
-	.atlas-toolbar {
-		display: grid;
-		grid-template-columns: repeat(7, minmax(0, 1fr));
-		gap: 0.45rem;
-		margin-bottom: 0.75rem;
-	}
-
-	.atlas-toolbar button,
-	.atlas-node,
+	.add-node-trigger,
+	.add-node-options button,
 	.agent-form button,
+	.prompt-row button,
 	.summary-actions button,
 	.summary-actions a,
 	.danger {
@@ -648,16 +657,7 @@
 		font: inherit;
 	}
 
-	.atlas-toolbar button {
-		display: grid;
-		gap: 0.2rem;
-		min-height: 4.2rem;
-		padding: 0.65rem;
-		text-align: left;
-	}
-
-	.atlas-toolbar small,
-	.atlas-node small,
+	.add-node-options small,
 	.handoffs small {
 		color: var(--color-clear-grey, #636363);
 		font-size: 0.72rem;
@@ -671,217 +671,192 @@
 		border: 1px solid var(--color-clear-border, #e1e1e1);
 		border-radius: 8px;
 		background: #ffffff;
-		box-shadow: 0 12px 30px rgba(10, 14, 25, 0.04);
+		box-shadow: 0 18px 44px rgba(10, 14, 25, 0.045);
 	}
 
 	.canvas-header,
-	.panel-title {
+	.panel-title,
+	.agent-hero,
+	.summary-panel summary {
 		display: flex;
-		align-items: center;
+		align-items: flex-start;
 		justify-content: space-between;
 		gap: 0.75rem;
-		padding: 0.85rem;
+		padding: 0.95rem;
 		border-bottom: 1px solid var(--color-clear-border, #e1e1e1);
 	}
 
 	.canvas-header div,
-	.panel-title {
+	.panel-title,
+	.agent-hero,
+	.summary-panel summary {
 		min-width: 0;
 	}
 
+	.canvas-status {
+		display: grid;
+		gap: 0.65rem;
+	}
+
 	.canvas-header strong,
-	.panel-title strong {
+	.panel-title strong,
+	.agent-hero strong,
+	.summary-panel summary strong {
 		display: block;
 		color: var(--color-clear-onyx, #0a0e19);
 		font-size: 0.95rem;
 		line-height: 1.25;
 	}
 
-	.canvas-header small {
+	.canvas-header-actions {
+		position: relative;
+		display: flex;
+		flex: 0 0 auto;
+		align-items: flex-start;
+		gap: 0.45rem;
+	}
+
+	.score-pill {
+		display: inline-flex;
+		align-items: baseline;
+		gap: 0.12rem;
 		border: 1px solid var(--color-clear-border, #e1e1e1);
 		border-radius: 999px;
-		padding: 0.35rem 0.55rem;
+		background: #fbfbf8;
+		color: var(--color-clear-onyx, #0a0e19);
+		padding: 0.45rem 0.65rem;
+	}
+
+	.score-pill span {
+		color: inherit;
+		font-size: 1rem;
+		font-weight: 800;
+		letter-spacing: 0;
+		text-transform: none;
+	}
+
+	.score-pill small {
+		color: var(--color-clear-grey, #636363);
+		font-size: 0.72rem;
+		font-weight: 700;
+	}
+
+	.progress-meter {
+		width: min(100%, 28rem);
+		height: 0.45rem;
+		overflow: hidden;
+		border-radius: 999px;
+		background: #ecece6;
+	}
+
+	.progress-meter span {
+		display: block;
+		height: 100%;
+		border-radius: inherit;
+		background: #0a0e19;
+	}
+
+	.dimension-strip {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.35rem;
+		max-width: 46rem;
+	}
+
+	.dimension-strip span {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.3rem;
+		border: 1px solid var(--color-clear-border, #e1e1e1);
+		border-radius: 999px;
+		background: #fbfbf8;
+		color: var(--color-clear-grey, #636363);
+		font-size: 0.72rem;
+		font-weight: 700;
+		line-height: 1;
+		padding: 0.35rem 0.5rem;
+	}
+
+	.dimension-strip span.mapped {
+		border-color: #d7e6dc;
+		background: #f5fbf6;
+		color: #1e3c2c;
+	}
+
+	.dimension-strip small {
+		color: inherit;
+		font-size: 0.68rem;
+		font-weight: 800;
+	}
+
+	.add-node-menu {
+		position: relative;
+	}
+
+	.add-node-trigger {
+		min-height: 2rem;
+		padding: 0.35rem 0.6rem;
+		white-space: nowrap;
+	}
+
+	.add-node-options {
+		position: absolute;
+		top: calc(100% + 0.45rem);
+		right: 0;
+		z-index: 20;
+		display: grid;
+		gap: 0.35rem;
+		width: min(19rem, calc(100vw - 2rem));
+		border: 1px solid var(--color-clear-border, #e1e1e1);
+		border-radius: 8px;
+		background: #ffffff;
+		box-shadow: 0 18px 38px rgba(10, 14, 25, 0.14);
+		padding: 0.45rem;
+	}
+
+	.add-node-options button {
+		display: grid;
+		gap: 0.15rem;
+		padding: 0.55rem;
+		text-align: left;
+	}
+
+	.add-node-options button:hover,
+	.add-node-trigger:hover {
+		background: #f4f4ef;
 	}
 
 	.atlas-flow-viewport {
 		position: relative;
+		height: clamp(31rem, 58vh, 46rem);
 		min-height: 31rem;
-		overflow: auto;
+		overflow: hidden;
 		background:
-			linear-gradient(#f4f4ef 1px, transparent 1px),
-			linear-gradient(90deg, #f4f4ef 1px, transparent 1px);
-		background-color: #fbfbf8;
-		background-size: 32px 32px;
-	}
-
-	.atlas-flow-scale {
-		position: relative;
-		min-width: 100%;
-		min-height: 31rem;
-	}
-
-	.atlas-board {
-		position: absolute;
-		inset: 0 auto auto 0;
-		transform-origin: 0 0;
-	}
-
-	.flow-controls {
-		position: sticky;
-		top: 0.75rem;
-		left: 0.75rem;
-		z-index: 5;
-		display: inline-flex;
-		gap: 0.35rem;
-		border: 1px solid rgba(10, 14, 25, 0.1);
-		border-radius: 999px;
-		background: rgba(255, 255, 255, 0.9);
-		padding: 0.25rem;
-		backdrop-filter: blur(10px);
-	}
-
-	.flow-controls button {
-		min-width: 2rem;
-		border: 0;
-		border-radius: 999px;
-		background: transparent;
-		color: var(--color-clear-onyx, #0a0e19);
-		cursor: pointer;
-		font: inherit;
-		font-size: 0.78rem;
-		font-weight: 700;
-		padding: 0.35rem 0.55rem;
-	}
-
-	.flow-controls button:hover {
-		background: #f4f4ef;
-	}
-
-	.atlas-edges {
-		position: absolute;
-		inset: 0;
-		width: 100%;
-		height: 100%;
-		overflow: visible;
-		pointer-events: none;
-	}
-
-	.atlas-edges path {
-		fill: none;
-		stroke: #aaa69b;
-		stroke-width: 1.35;
-		marker-end: url('#public-atlas-arrow');
-	}
-
-	.atlas-edges marker path {
-		fill: #aaa69b;
-	}
-
-	.atlas-edges text {
-		fill: #6f6f67;
-		font-size: 0.7rem;
-		font-weight: 600;
-		paint-order: stroke;
-		stroke: #fbfbf8;
-		stroke-width: 5px;
-	}
-
-	.lane-guide {
-		position: absolute;
-		top: 0.85rem;
-		width: 12rem;
-		border-radius: 999px;
-		background: rgba(255, 255, 255, 0.86);
-		color: var(--color-clear-grey, #636363);
-		font-size: 0.72rem;
-		font-weight: 700;
-		padding: 0.3rem 0.55rem;
-		text-transform: uppercase;
-	}
-
-	.lane-actor {
-		left: 72px;
-	}
-
-	.lane-data,
-	.lane-touchpoint {
-		left: 398px;
-	}
-
-	.lane-system,
-	.lane-ai {
-		left: 728px;
-	}
-
-	.lane-human,
-	.lane-constraint {
-		left: 1060px;
-	}
-
-	.lane-touchpoint,
-	.lane-ai,
-	.lane-constraint {
-		top: 3.2rem;
-	}
-
-	.lane-guide span {
-		margin: 0;
-		letter-spacing: 0;
-	}
-
-	.atlas-node {
-		position: absolute;
-		display: grid;
-		gap: 0.35rem;
-		min-height: 7.5rem;
-		padding: 0.7rem;
-		text-align: left;
-		transition:
-			border-color 140ms ease,
-			box-shadow 140ms ease,
-			transform 140ms ease;
-	}
-
-	.atlas-node:hover {
-		transform: translateY(-1px);
-	}
-
-	.atlas-node.selected {
-		border-color: #0a0e19;
-		box-shadow: 0 0 0 2px rgba(10, 14, 25, 0.08);
-	}
-
-	.atlas-node strong {
-		font-size: 0.9rem;
-		line-height: 1.2;
-	}
-
-	.atlas-node span {
-		justify-self: start;
-		border-radius: 999px;
-		background: #f4f4ef;
-		color: #636363;
-		font-size: 0.7rem;
-		padding: 0.2rem 0.45rem;
-	}
-
-	.status-run {
-		background: #f3fbf2;
-	}
-
-	.status-wait {
-		background: #f7f4ff;
-	}
-
-	.status-stop {
-		background: #fff4f4;
+			linear-gradient(180deg, rgba(255, 255, 255, 0.8), rgba(251, 251, 248, 0.92)),
+			#fbfbf8;
 	}
 
 	.handoffs {
 		display: grid;
 		gap: 0.45rem;
-		padding: 0.85rem;
+		padding: 0.85rem 0.95rem;
 		border-top: 1px solid var(--color-clear-border, #e1e1e1);
+		background: #fcfcfa;
+	}
+
+	.handoffs-title {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.75rem;
+	}
+
+	.handoffs-title strong {
+		border-radius: 999px;
+		background: #ffffff;
+		color: var(--color-clear-onyx, #0a0e19);
+		font-size: 0.8rem;
+		padding: 0.25rem 0.5rem;
 	}
 
 	.handoffs ul {
@@ -894,14 +869,46 @@
 	.atlas-side {
 		display: grid;
 		gap: 0.75rem;
+		position: sticky;
+		top: 1rem;
 	}
 
 	.agent-panel,
 	.inspector-panel,
 	.summary-panel {
 		display: grid;
-		gap: 0.75rem;
-		padding-bottom: 0.85rem;
+		gap: 0.8rem;
+		padding: 0 0 0.9rem;
+	}
+
+	.agent-hero {
+		border-bottom: 0;
+		padding-bottom: 0.25rem;
+	}
+
+	.agent-meter {
+		display: grid;
+		min-width: 4.6rem;
+		border: 1px solid #d7e6dc;
+		border-radius: 8px;
+		background: #f5fbf6;
+		color: #1e3c2c;
+		padding: 0.45rem 0.55rem;
+		text-align: right;
+	}
+
+	.agent-meter span {
+		color: inherit;
+		font-size: 0.95rem;
+		letter-spacing: 0;
+		line-height: 1;
+		text-transform: none;
+	}
+
+	.agent-meter small {
+		color: inherit;
+		font-size: 0.7rem;
+		font-weight: 700;
 	}
 
 	.email-field,
@@ -923,7 +930,22 @@
 		background: var(--color-clear-porcelain, #f9f9f9);
 		color: var(--color-clear-onyx, #0a0e19);
 		font: inherit;
-		padding: 0.7rem;
+		padding: 0.75rem;
+		transition:
+			border-color 140ms ease,
+			background 140ms ease,
+			box-shadow 140ms ease;
+	}
+
+	.email-field input:focus,
+	.inspector-panel input:focus,
+	.inspector-panel select:focus,
+	.inspector-panel textarea:focus,
+	.agent-form textarea:focus {
+		outline: none;
+		border-color: rgba(10, 14, 25, 0.38);
+		background: #ffffff;
+		box-shadow: 0 0 0 3px rgba(10, 14, 25, 0.06);
 	}
 
 	.chat-log {
@@ -967,8 +989,29 @@
 
 	.agent-form textarea,
 	.inspector-panel textarea {
-		min-height: 5.5rem;
+		min-height: 5.25rem;
 		resize: vertical;
+	}
+
+	.prompt-row {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.35rem;
+	}
+
+	.prompt-row button {
+		min-height: 2rem;
+		background: #fbfbf8;
+		color: var(--color-clear-grey, #636363);
+		font-size: 0.78rem;
+		font-weight: 700;
+		padding: 0.35rem 0.5rem;
+	}
+
+	.prompt-row button:hover {
+		border-color: rgba(10, 14, 25, 0.18);
+		background: #f4f4ef;
+		color: var(--color-clear-onyx, #0a0e19);
 	}
 
 	.agent-form button,
@@ -991,6 +1034,11 @@
 		color: #ffffff;
 	}
 
+	.agent-form .prompt-row button {
+		background: #fbfbf8;
+		color: var(--color-clear-grey, #636363);
+	}
+
 	.agent-form button:disabled,
 	.danger:disabled {
 		cursor: not-allowed;
@@ -1003,13 +1051,34 @@
 		font-size: 0.82rem;
 	}
 
+	.limit-copy {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.35rem;
+		margin: 0;
+		color: var(--color-clear-grey, #636363);
+	}
+
+	.limit-copy span {
+		border: 1px solid var(--color-clear-border, #e1e1e1);
+		border-radius: 999px;
+		background: #fbfbf8;
+		padding: 0.3rem 0.5rem;
+	}
+
 	.error {
 		color: #9d1b1b;
 	}
 
-	.connect-row {
+	.field-pair {
 		display: grid;
+		grid-template-columns: 1fr 1fr;
 		gap: 0.5rem;
+		padding: 0 0.85rem;
+	}
+
+	.field-pair label {
+		padding: 0;
 	}
 
 	.danger {
@@ -1020,7 +1089,7 @@
 	.summary-panel pre {
 		max-height: 14rem;
 		overflow: auto;
-		margin: 0 0.85rem;
+		margin: 0.75rem 0.85rem 0;
 		border: 1px solid var(--color-clear-border, #e1e1e1);
 		border-radius: 6px;
 		background: var(--color-clear-porcelain, #f9f9f9);
@@ -1044,6 +1113,32 @@
 		padding: 0 0.85rem;
 	}
 
+	.summary-panel {
+		padding: 0;
+	}
+
+	.summary-panel details {
+		display: grid;
+	}
+
+	.summary-panel summary {
+		cursor: pointer;
+		list-style: none;
+		border-bottom: 0;
+	}
+
+	.summary-panel summary::-webkit-details-marker {
+		display: none;
+	}
+
+	.summary-panel details[open] summary {
+		border-bottom: 1px solid var(--color-clear-border, #e1e1e1);
+	}
+
+	.summary-panel details[open] {
+		padding-bottom: 0.85rem;
+	}
+
 	.compact .atlas-layout {
 		grid-template-columns: 1fr;
 	}
@@ -1053,14 +1148,33 @@
 			grid-template-columns: 1fr;
 		}
 
-		.atlas-toolbar {
-			grid-template-columns: repeat(2, minmax(0, 1fr));
+		.atlas-side {
+			position: static;
 		}
 	}
 
 	@media (max-width: 720px) {
-		.atlas-toolbar {
+		.canvas-header {
+			display: grid;
+		}
+
+		.canvas-header-actions {
+			width: 100%;
+			justify-content: space-between;
+		}
+
+		.field-pair {
 			grid-template-columns: 1fr;
+		}
+
+		.add-node-menu {
+			position: static;
+		}
+
+		.add-node-options {
+			right: 0;
+			left: auto;
+			width: min(19rem, calc(100vw - 2rem));
 		}
 
 		.atlas-flow-viewport {

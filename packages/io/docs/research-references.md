@@ -54,4 +54,4 @@ Demonstrates that poetic structures can bypass LLM safety constraints through li
 
 ---
 
-*This document tracks external research. For original CREATE SOMETHING papers, see `/src/lib/config/fileBasedPapers.ts`*
+*This document tracks external research. For original CREATE SOMETHING papers, see `/src/lib/config/paperCatalog.ts` and `/src/lib/config/fileBasedPapers.ts`.*
