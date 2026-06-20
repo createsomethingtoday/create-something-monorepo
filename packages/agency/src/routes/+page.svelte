@@ -407,7 +407,7 @@
   {faqItems}
 />
 
-<div class="home-pilot">
+<div class="home-pilot performance-property performance-property--agency">
   <ClearPlatformHero
     eyebrow={agencyCoreMessaging.categoryLabel}
     title="Fix the workflow your team still protects by hand."
@@ -433,6 +433,27 @@
       />
     {/snippet}
   </ClearPlatformHero>
+
+  <section class="agency-performance-strip performance-container" aria-label="Agency performance model">
+    <div class="performance-stat-strip">
+      <div class="performance-stat" data-tone="ink">
+        <span>Map</span>
+        <strong>1 workflow</strong>
+      </div>
+      <div class="performance-stat" data-tone="pressure">
+        <span>Control</span>
+        <strong>Run / wait / stop</strong>
+      </div>
+      <div class="performance-stat" data-tone="growth">
+        <span>Proof</span>
+        <strong>Receipts</strong>
+      </div>
+      <div class="performance-stat" data-tone="signal">
+        <span>Ship</span>
+        <strong>Safe path</strong>
+      </div>
+    </div>
+  </section>
 
   <ClearLogoStrip
     eyebrow="How the work becomes real"
@@ -562,8 +583,13 @@
 
 <style>
   .home-pilot {
-    background: var(--color-clear-panel, #ffffff);
-    color: var(--color-clear-onyx, #0a0e19);
+    background: var(--color-performance-paper, var(--color-clear-panel, #ffffff));
+    color: var(--color-performance-ink, var(--color-clear-onyx, #0a0e19));
+  }
+
+  .agency-performance-strip {
+    margin-top: -0.25rem;
+    margin-bottom: 1.15rem;
   }
 
   .home-proof-stack {

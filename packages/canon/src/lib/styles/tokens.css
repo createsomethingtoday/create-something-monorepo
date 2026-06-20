@@ -183,6 +183,10 @@
   --shadow-performance-node: 0 16px 32px rgba(17, 17, 17, 0.1);
   --radius-performance-sm: 4px;
   --radius-performance-md: 8px;
+  --motion-performance-snap: 120ms;
+  --motion-performance-drive: 180ms;
+  --ease-performance-snap: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-performance-press: cubic-bezier(0.2, 0, 0, 1);
   --content-width-performance: 73.75rem;
 
   /* Interactive states */
