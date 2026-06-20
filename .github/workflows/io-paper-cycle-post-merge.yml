@@ -115,9 +115,10 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
         run: |
           pnpm --filter @create-something/io build
-          pnpm exec wrangler pages deploy packages/io/.svelte-kit/cloudflare \
+          node scripts/run-wrangler.mjs --cwd packages/io pages deploy .svelte-kit/cloudflare \
             --project-name=create-something-io \
-            --branch=main
+            --branch=main \
+            --commit-dirty=true
 
       - name: Verify published routes
         if: steps.context.outputs.publishable == 'true' && steps.pr.outputs.publish_approved == 'true'

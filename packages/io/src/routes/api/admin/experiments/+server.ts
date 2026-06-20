@@ -4,6 +4,7 @@ import { adminDelete } from '$lib/admin/index.js';
 
 interface ExperimentRequest {
 	id?: string;
+	slug?: string;
 	title?: string;
 	description?: string;
 	content?: string;
@@ -46,28 +47,29 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 	}
 
 	try {
-		const { title, description, content, category, url, featured, published } =
+		const { title, description, content, category, url, featured, published, slug: requestedSlug } =
 			(await request.json()) as ExperimentRequest;
 
 		if (!title) {
 			return json({ error: 'Title is required' }, { status: 400 });
 		}
 
-		// Generate ID from title (slug format)
-		const id = title
+		const slug = (requestedSlug || title)
 			.toLowerCase()
 			.replace(/[^a-z0-9]+/g, '-')
 			.replace(/^-|-$/g, '');
+		const id = slug;
 
 		const now = new Date().toISOString();
 
 		await db
 			.prepare(
-				`INSERT INTO papers (id, title, description, content, category, url, featured, published, created_at, updated_at)
-				VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+				`INSERT INTO papers (id, slug, title, description, content, category, url, featured, published, created_at, updated_at)
+				VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 			)
 			.bind(
 				id,
+				slug,
 				title,
 				description || '',
 				content || '',
@@ -80,7 +82,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 			)
 			.run();
 
-		return json({ success: true, id });
+		return json({ success: true, id, slug });
 	} catch (error) {
 		console.error('Failed to create experiment:', error);
 		return json({ error: 'Failed to create experiment' }, { status: 500 });
@@ -95,7 +97,7 @@ export const PATCH: RequestHandler = async ({ request, platform }) => {
 	}
 
 	try {
-		const { id, featured, title, description, content, category, url, published } =
+		const { id, slug, featured, title, description, content, category, url, published } =
 			(await request.json()) as ExperimentRequest;
 
 		if (!id) {
@@ -116,6 +118,15 @@ export const PATCH: RequestHandler = async ({ request, platform }) => {
 		if (title !== undefined) {
 			updates.push('title = ?');
 			values.push(title);
+		}
+		if (slug !== undefined) {
+			updates.push('slug = ?');
+			values.push(
+				slug
+					.toLowerCase()
+					.replace(/[^a-z0-9]+/g, '-')
+					.replace(/^-|-$/g, '')
+			);
 		}
 		if (description !== undefined) {
 			updates.push('description = ?');

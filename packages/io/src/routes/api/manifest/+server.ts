@@ -15,7 +15,7 @@
  *
  * WHEN ADDING A NEW PAPER:
  * 1. Create either a static route or a markdown-backed file-based paper
- * 2. Ensure the slug is included in this manifest output
+ * 2. Add static route metadata in papers/{slug}/meta.ts or file-based metadata in fileBasedPapers
  * 3. The search indexer will pick it up on the next re-index
  *
  * GET /api/manifest
@@ -23,7 +23,7 @@
 
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { fileBasedPapers } from '$lib/config/fileBasedPapers';
+import { getPaperManifestItems } from '$lib/config/paperCatalog';
 import {
 	PUBLIC_AGENT_TRUST_CARDS,
 	PUBLIC_MCP_TRUST_CARDS
@@ -36,54 +36,8 @@ interface ContentItem {
 	category?: string;
 }
 
-/**
- * Papers with static routes in src/routes/papers/
- *
- * Each entry here MUST have a corresponding:
- *   src/routes/papers/{slug}/+page.svelte
- *
- * Update this array when adding/removing paper routes.
- */
-const PAPERS: ContentItem[] = [
-	{ slug: 'agent-sdk-gemini-tools-integration', title: 'Agent SDK Gemini Tools Integration', description: 'Integrating Gemini tools with the Agent SDK for enhanced model capabilities', category: 'technical' },
-	{ slug: 'agent-sdk-model-routing-optimization', title: 'Agent SDK Model Routing Optimization', description: 'Optimizing model routing in the Agent SDK for better performance', category: 'technical' },
-	{ slug: 'animation-spec-architecture', title: 'Animation Spec Architecture', description: 'Architectural patterns for animation specifications in modern web apps', category: 'methodology' },
-	{ slug: 'autonomous-harness-architecture', title: 'Autonomous Harness Architecture', description: 'Building autonomous agent harnesses with structured workflows', category: 'technical' },
-	{ slug: 'beads-cross-session-memory', title: 'Beads Cross-Session Memory', description: 'Implementing cross-session memory with the Beads system', category: 'technical' },
-	{ slug: 'beads-integration-patterns', title: 'Beads Integration Patterns', description: 'Integration patterns for the Beads memory system', category: 'technical' },
-	{ slug: 'code-mode-hermeneutic-analysis', title: 'Code-Mediated Tool Use: A Hermeneutic Analysis', description: 'Why Code Mode achieves Zuhandenheit while tool calling forces Vorhandenheit', category: 'theoretical' },
-	{ slug: 'codex-orchestration', title: 'Codex Orchestration', description: 'Orchestrating multiple AI agents with Codex patterns', category: 'technical' },
-	{ slug: 'cumulative-state-antipattern', title: 'Cumulative State Antipattern', description: 'Identifying and avoiding the cumulative state antipattern in agent systems', category: 'methodology' },
-	{ slug: 'dual-agent-routing-experiment', title: 'Dual Agent Routing Experiment', description: 'Experiments with dual agent routing strategies', category: 'experiment' },
-	{ slug: 'ethos-transfer-agentic-engineering', title: 'Ethos Transfer in Agentic Engineering', description: 'Transferring design ethos to AI agents through structured patterns', category: 'theoretical' },
-	{ slug: 'haiku-optimization', title: 'Haiku Optimization', description: 'Optimizing Claude Haiku for cost-effective agent operations', category: 'technical' },
-	{ slug: 'haiku-ultrathink-validation', title: 'Haiku Ultrathink Validation', description: 'Validating ultrathink patterns with Haiku models', category: 'experiment' },
-	{ slug: 'harness-agent-sdk-migration', title: 'Harness Agent SDK Migration', description: 'Migrating from custom harness to the Anthropic Agent SDK', category: 'technical' },
-	{ slug: 'hermeneutic-debugging', title: 'Hermeneutic Debugging', description: 'Applying hermeneutic methods to debug complex AI systems', category: 'methodology' },
-	{ slug: 'hermeneutic-spiral-ux', title: 'The Hermeneutic Spiral in UX Design', description: 'Applying Heidegger\'s hermeneutic circle to UX design', category: 'methodology' },
-	{ slug: 'hermeneutic-triad-review', title: 'Hermeneutic Triad Review', description: 'Reviewing the hermeneutic triad pattern in software design', category: 'methodology' },
-	{ slug: 'intellectual-genealogy', title: 'Intellectual Genealogy', description: 'Tracing the intellectual genealogy of AI-native development', category: 'theoretical' },
-	{ slug: 'kickstand-triad-audit', title: 'Kickstand Triad Audit', description: 'Auditing the Kickstand system using triad analysis', category: 'experiment' },
-	{ slug: 'norvig-partnership', title: 'Norvig Partnership', description: 'Exploring the Norvig partnership model for AI collaboration', category: 'theoretical' },
-	{ slug: 'ralph-implementation', title: 'Ralph Implementation', description: 'Implementing the Ralph orchestration pattern', category: 'technical' },
-	{ slug: 'ralph-vs-gastown', title: 'Ralph vs Gastown', description: 'Comparing Ralph and Gastown orchestration approaches', category: 'experiment' },
-	{ slug: 'spec-driven-development', title: 'Spec-Driven Development', description: 'Development methodology driven by structured specifications', category: 'methodology' },
-	{ slug: 'subtractive-form-design', title: 'Subtractive Form Design', description: 'Applying Dieter Rams\' "less but better" to form design', category: 'methodology' },
-	{ slug: 'subtractive-studio', title: 'Subtractive Studio', description: 'Building a subtractive design studio workflow', category: 'methodology' },
-	{ slug: 'teaching-modalities-experiment', title: 'Teaching Modalities Experiment', description: 'Experimenting with different teaching modalities for AI', category: 'experiment' },
-	{ slug: 'understanding-graphs', title: 'Understanding Graphs', description: 'Building understanding through knowledge graph visualization', category: 'technical' },
-	{ slug: 'webflow-dashboard-refactor', title: 'Webflow Dashboard Refactor', description: 'Refactoring the Webflow dashboard with Canon patterns', category: 'experiment' },
-	{ slug: 'workers-vs-python-sdk-plagiarism-detection', title: 'Workers vs Python SDK: Plagiarism Detection', description: 'Comparing Cloudflare Workers and Python SDK for plagiarism detection', category: 'experiment' }
-];
-
-const FILE_BASED_PAPERS: ContentItem[] = fileBasedPapers.map((paper) => ({
-	slug: paper.slug,
-	title: paper.title,
-	description: paper.description,
-	category: String(paper.category || '').toLowerCase().replace(/\s+/g, '-')
-}));
-
-// Experiments with static routes in src/routes/experiments/
+// Experiments with static routes in src/routes/experiments/.
+// Paper routes are derived from the shared paper catalog above.
 const EXPERIMENTS: ContentItem[] = [
 	{ slug: 'agent-operations', title: 'Agent Operations', description: 'Interactive experiment for agent operation patterns', category: 'interactive' },
 	{ slug: 'agentic-visualization', title: 'Agentic Visualization', description: 'Visualizing agent decision-making in real-time', category: 'interactive' },
@@ -116,18 +70,16 @@ const AGENT_TRUST_CARDS: ContentItem[] = PUBLIC_AGENT_TRUST_CARDS.map((card) => 
 }));
 
 export const GET: RequestHandler = async () => {
-	const mergedPapers = [...PAPERS, ...FILE_BASED_PAPERS].filter(
-		(paper, index, all) => all.findIndex((candidate) => candidate.slug === paper.slug) === index
-	);
+	const papers = getPaperManifestItems();
 
 	return json({
 		property: 'io',
-		papers: mergedPapers,
+		papers,
 		experiments: EXPERIMENTS,
 		mcpTrustCards: MCP_TRUST_CARDS,
 		agentTrustCards: AGENT_TRUST_CARDS,
 		// Legacy format for backward compatibility
-		paperSlugs: mergedPapers.map(p => p.slug),
+		paperSlugs: papers.map(p => p.slug),
 		experimentSlugs: EXPERIMENTS.map(e => e.slug),
 		mcpTrustCardSlugs: MCP_TRUST_CARDS.map((card) => card.slug),
 		agentTrustCardSlugs: AGENT_TRUST_CARDS.map((card) => card.slug),

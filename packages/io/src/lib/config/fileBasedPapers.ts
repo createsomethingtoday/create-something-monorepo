@@ -186,6 +186,42 @@ export const fileBasedPapers: FileBasedPaper[] = [
       ╰───────────────────────────────────────────╯
            Creation over consumption.
 `
+	},
+	{
+		id: 'paper-braintrust-trace-unsurfacing',
+		slug: 'braintrust-trace-unsurfacing',
+		title: 'Braintrust Trace Unsurfacing: Finding What Normal Aggregates Hide',
+		description: 'How a 1,000-row trace snapshot exposed clustered permission failures, routing misses, and latent control-plane stalls.',
+		excerpt_short: 'Trace-level evidence exposes the operational structure aggregate metrics hide',
+		excerpt_long: 'This paper documents a CREATE SOMETHING Braintrust trace audit and explains why aggregate uptime metrics were insufficient to diagnose practical reliability risk. A mostly successful 1,000-row sample still surfaced concentrated failure clusters: LinkedIn permission denials, intent route misses, repeated 429 throttles, and extreme control-plane latency outliers.',
+		category: 'Research',
+		tags: [
+			'Braintrust',
+			'Observability',
+			'MCP',
+			'Reliability',
+			'Experiment Design',
+			'Dashboarding'
+		],
+		created_at: '2026-03-04T00:00:00Z',
+		updated_at: '2026-03-04T00:00:00Z',
+		reading_time_minutes: 15,
+		difficulty: 'intermediate',
+		is_file_based: true,
+		tests_principles: [
+			'verification-first',
+			'three-tier-framework',
+			'policy-as-artifact'
+		],
+		route: '/papers/braintrust-trace-unsurfacing',
+		ascii_art: `
+        ╭───────────────────────────────────────╮
+       ╱   Mostly green aggregate metrics        ╲
+      │   Trace clusters → permission, routing    │
+      │   and tail-latency reliability work       │
+      ╰───────────────────────────────────────────╯
+           Observability as decision infrastructure.
+`
 	}
 ];
 
