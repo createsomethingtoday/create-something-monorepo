@@ -13,6 +13,7 @@ export { default as ArticleHeader } from './ArticleHeader.svelte';
 export { default as HeroSection } from './HeroSection.svelte';
 export { default as NextExperimentCard } from './NextExperimentCard.svelte';
 export { default as Paper } from './Paper.svelte';
+export { default as ResearchArtifactPage } from './ResearchArtifactPage.svelte';
 export { default as StickyCTA } from './StickyCTA.svelte';
 export { default as TrackedPaper } from './TrackedPaper.svelte';
 export { default as TufteDashboard } from './TufteDashboard.svelte';

@@ -84,6 +84,22 @@ Templates and scaffolding tools have commoditized *starting* an MCP server. The 
 - the old `content/papers/test-markdown-paper.md` fixture appears in production content
 - a markdown file under `content/papers/` lacks either a static route or `fileBasedPapers` entry
 
+### Research Artifact Template Guard
+
+Papers and experiments share the `ResearchArtifactPage` shell for file-backed artifacts. New papers should use:
+
+1. `src/lib/config/fileBasedPapers.ts`
+2. `content/papers/{slug}.md`
+3. the dynamic `/papers/[slug]` route
+
+New experiments should use:
+
+1. `src/lib/config/fileBasedExperiments.ts`
+2. `content/experiments/{slug}.md` when the detail page is text-backed
+3. the dynamic `/experiments/[slug]` route unless an interactive route needs explicit review
+
+`pnpm check` runs `scripts/check-research-artifact-templates.mjs` and fails when a new static paper route is added outside the shared artifact path, when a new static experiment route bypasses the reviewed exception list, when dynamic routes stop rendering through `ResearchArtifactPage`, or when paper markdown omits required publication frontmatter.
+
 ---
 
 ## Development

@@ -592,9 +592,11 @@
 
 <style>
 	.studio-page {
+		box-sizing: border-box;
 		max-width: var(--width-wide);
 		margin: 0 auto;
 		padding: var(--space-xl) var(--gutter);
+		overflow-x: hidden;
 	}
 
 	/* Header */
@@ -605,13 +607,16 @@
 
 	.header-meta {
 		display: flex;
+		flex-wrap: wrap;
 		align-items: center;
 		gap: var(--space-xs);
 		margin-bottom: var(--space-sm);
 		font-size: var(--text-caption);
+		line-height: var(--leading-snug);
 		color: var(--color-fg-muted);
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
+		max-width: 100%;
 	}
 
 	.separator {
@@ -1016,6 +1021,17 @@
 	}
 
 	@media (max-width: 640px) {
+		.studio-page {
+			padding-right: max(1rem, env(safe-area-inset-right));
+			padding-left: max(1rem, env(safe-area-inset-left));
+		}
+
+		.header-meta {
+			align-items: flex-start;
+			gap: 0.35rem 0.5rem;
+			overflow-wrap: anywhere;
+		}
+
 		.studio-header h1 {
 			font-size: var(--text-h2);
 		}
