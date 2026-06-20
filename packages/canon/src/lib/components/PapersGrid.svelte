@@ -14,17 +14,20 @@
 	const rotations = [-1, 1, -0.5, 0.5, -1.5, 1.5, -1, 1];
 </script>
 
-<section class="papers-section py-16 px-6">
-	<div class="max-w-7xl mx-auto">
-		<!-- Section Header -->
-		<div class="mb-12">
-			<h2 class="section-title font-bold mb-2">
-				{title}
-			</h2>
-			{#if subtitle}
-				<p class="section-subtitle">{subtitle}</p>
+	<section class="papers-section py-16 px-6">
+		<div class="max-w-7xl mx-auto">
+			{#if title || subtitle}
+				<div class="section-header mb-12">
+					{#if title}
+						<h2 class="section-title font-bold mb-2">
+							{title}
+						</h2>
+					{/if}
+					{#if subtitle}
+						<p class="section-subtitle">{subtitle}</p>
+					{/if}
+				</div>
 			{/if}
-		</div>
 
 		<!-- Responsive Grid - Matches Webflow inspiration -->
 		<ul class="papers-list grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 highlight-grid" role="list">
@@ -71,6 +74,16 @@
 	.section-subtitle {
 		font-size: var(--text-body-lg);
 		color: var(--color-fg-tertiary);
+	}
+
+	@media (max-width: 640px) {
+		.papers-section {
+			padding: var(--space-md) var(--space-md) var(--space-xl);
+		}
+
+		.section-header {
+			margin-bottom: var(--space-md);
+		}
 	}
 
 	.empty-icon {

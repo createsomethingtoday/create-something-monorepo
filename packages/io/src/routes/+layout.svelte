@@ -118,7 +118,12 @@
 <Analytics property="io" userId={data.user?.id} userOptedOut={data.user?.analytics_opt_out ?? false} />
 
 <!-- Unified Search - Cmd/Ctrl+K to open -->
-<UnifiedSearch currentProperty="io" localItems={quickAccessItems} />
+<UnifiedSearch
+	currentProperty="io"
+	localItems={quickAccessItems}
+	showMobileButton={!$page.url.pathname.startsWith('/papers') &&
+		!$page.url.pathname.startsWith('/experiments')}
+/>
 
 <div class="layout-root">
 	<Navigation
