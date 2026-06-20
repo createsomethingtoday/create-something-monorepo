@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { execFileSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -195,6 +195,8 @@ function publicTrustRoutes(kind = 'all') {
 
 function routesFromIoRouteFile(file) {
   if (file.startsWith(PAPER_ROUTE_PREFIX)) {
+    if (!existsSync(file)) return ['/papers'];
+
     const remainder = file.slice(PAPER_ROUTE_PREFIX.length);
     const [slug = ''] = remainder.split('/');
     if (!slug || slug.startsWith('+') || slug === '[slug]' || slug.endsWith('.ts')) {
@@ -204,6 +206,8 @@ function routesFromIoRouteFile(file) {
   }
 
   if (file.startsWith(EXPERIMENT_ROUTE_PREFIX)) {
+    if (!existsSync(file)) return ['/experiments'];
+
     const remainder = file.slice(EXPERIMENT_ROUTE_PREFIX.length);
     const [slug = ''] = remainder.split('/');
     if (!slug || slug.startsWith('+') || slug === '[slug]') {
@@ -213,6 +217,8 @@ function routesFromIoRouteFile(file) {
   }
 
   if (file.startsWith(PAPER_CONTENT_PREFIX)) {
+    if (!existsSync(file)) return ['/papers'];
+
     const remainder = file.slice(PAPER_CONTENT_PREFIX.length);
     if (remainder === 'README.md') return ['/papers'];
     if (!remainder.endsWith('.md')) return ['/papers'];
@@ -220,6 +226,8 @@ function routesFromIoRouteFile(file) {
   }
 
   if (file.startsWith(EXPERIMENT_CONTENT_PREFIX)) {
+    if (!existsSync(file)) return ['/experiments'];
+
     const remainder = file.slice(EXPERIMENT_CONTENT_PREFIX.length);
     if (remainder === 'README.md') return ['/experiments'];
     if (!remainder.endsWith('.md')) return ['/experiments'];
