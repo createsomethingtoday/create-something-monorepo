@@ -28,7 +28,7 @@ const PROPERTY_URLS: Record<Property, string> = {
  * Aggregates analytics data from all CREATE SOMETHING properties
  * for the authenticated user. Returns a unified UserAnalytics object.
  */
-export const GET: RequestHandler = async ({ locals, url, fetch: localFetch }) => {
+export const GET: RequestHandler = async ({ locals, url, fetch: localFetch, platform }) => {
 	// Get user from locals (set by auth middleware)
 	const userId = locals.user?.id;
 
@@ -37,6 +37,7 @@ export const GET: RequestHandler = async ({ locals, url, fetch: localFetch }) =>
 	}
 
 	const days = url.searchParams.get('days') || '30';
+	const serviceToken = platform?.env?.ANALYTICS_SERVICE_TOKEN?.trim();
 
 	try {
 		// Fetch from all properties in parallel
@@ -44,10 +45,10 @@ export const GET: RequestHandler = async ({ locals, url, fetch: localFetch }) =>
 			// Local fetch for .io (same origin)
 			localFetch(`/api/user/analytics?days=${days}`).then((r) => r.json() as Promise<PropertyAnalytics>),
 			// Cross-origin fetches for other properties
-			fetchPropertyAnalytics('space', userId, days),
-			fetchPropertyAnalytics('ltd', userId, days),
-			fetchPropertyAnalytics('agency', userId, days),
-			fetchPropertyAnalytics('lms', userId, days)
+			fetchPropertyAnalytics('space', userId, days, serviceToken),
+			fetchPropertyAnalytics('ltd', userId, days, serviceToken),
+			fetchPropertyAnalytics('agency', userId, days, serviceToken),
+			fetchPropertyAnalytics('lms', userId, days, serviceToken)
 		]);
 
 		// Extract successful results
@@ -77,19 +78,23 @@ export const GET: RequestHandler = async ({ locals, url, fetch: localFetch }) =>
 async function fetchPropertyAnalytics(
 	property: Property,
 	userId: string,
-	days: string
+	days: string,
+	serviceToken: string | undefined
 ): Promise<PropertyAnalytics | null> {
 	const baseUrl = PROPERTY_URLS[property];
 	if (!baseUrl) return null;
+	if (!serviceToken) {
+		console.warn(`Skipping property ${property}: ANALYTICS_SERVICE_TOKEN is not configured`);
+		return null;
+	}
 
 	try {
-		// Note: In production, this would need proper service-to-service auth
-		// For now, using userId param which the endpoint accepts
 		const response = await fetch(
-			`${baseUrl}/api/user/analytics?userId=${encodeURIComponent(userId)}&days=${days}&token=internal`,
+			`${baseUrl}/api/user/analytics?userId=${encodeURIComponent(userId)}&days=${encodeURIComponent(days)}`,
 			{
 				headers: {
-					'Content-Type': 'application/json'
+					'Content-Type': 'application/json',
+					Authorization: `Bearer ${serviceToken}`
 				}
 			}
 		);
