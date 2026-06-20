@@ -12,6 +12,7 @@ pnpm linear:ready
 pnpm linear:list -- --status open --label code-quality
 pnpm linear:create -- --title "..." --description "..." --label code-quality
 pnpm linear:claim -- --issue CRE-123
+pnpm agent:claim-worktree -- --issue CRE-123
 pnpm linear:done -- --issue CRE-123 --evidence "..."
 ```
 
@@ -66,10 +67,11 @@ When coordinating agents, pass **policy artifacts** alongside task artifacts.
 ## Default repo workflow
 
 1. Find or create tracked work in Linear.
-2. Verify symbols and import paths before using them.
-3. Run the relevant quality gates.
-4. Record evidence in Linear and use the narrowest trustworthy validation surface.
-5. Push or open/update a PR only when production promotion, shared review, or explicit user intent requires it.
+2. For isolated implementation work, claim an explicit worktree with `pnpm agent:claim-worktree -- --issue CRE-123` so Linear records branch, worktree path, base ref, and base SHA.
+3. Verify symbols and import paths before using them.
+4. Run the relevant quality gates.
+5. Record evidence in Linear and use the narrowest trustworthy validation surface.
+6. Push or open/update a PR only when production promotion, shared review, or explicit user intent requires it.
 
 Core commands:
 
@@ -80,6 +82,7 @@ pnpm linear:ready
 pnpm linear:list -- --status open
 pnpm linear:get -- --issue CRE-123
 pnpm linear:claim -- --issue CRE-123
+pnpm agent:claim-worktree -- --issue CRE-123
 pnpm linear:done -- --issue CRE-123 --evidence "Validation: ..."
 
 pnpm check
