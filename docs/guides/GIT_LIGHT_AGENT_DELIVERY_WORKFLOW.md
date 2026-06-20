@@ -73,6 +73,33 @@ Default production promotion remains:
 
 An alternative production path is acceptable only when it uses an explicitly defined immutable release artifact with equivalent provenance and rollback properties.
 
+## GitHub Actions Budget Posture
+
+When GitHub Actions free quota or a billing budget is exhausted, keep Actions as the PR and production promotion evidence surface. Do not move core quality gates or deploy provenance to an ad hoc runner just to avoid a small overage.
+
+Use repo-side controls in this order:
+
+1. Confirm whether the affected usage is from private repositories, larger runners, artifact or cache storage, or scheduled workflows. Standard GitHub-hosted runners in public repositories should not consume private-repo minutes.
+2. Raise a small capped Actions budget in GitHub billing if private workflows are blocked.
+3. Pause nonessential scheduled automations before changing PR gates or production deploy workflows.
+4. Move only consistently expensive background work to another scheduler after it has a stable owner, logs, and rollback path.
+
+This repo keeps expensive scheduled automations behind repository variables. Keep these variables set to `true` while the GitHub Actions budget is healthy. Set one to `false` or delete it to pause that scheduled run; manual `workflow_dispatch` remains available.
+
+| Repository variable                             | Scheduled workflow                   |
+| ----------------------------------------------- | ------------------------------------ |
+| `ENABLE_TEMPLATE_REVIEW_HUB_SCHEDULE=true`      | `Template Review Hub Agent Feedback` |
+| `ENABLE_TEMPLATE_DESCRIPTION_FIX_SCHEDULE=true` | `Fix Broken Template Descriptions`   |
+| `ENABLE_BRAINTRUST_MCP_EVALS_SCHEDULE=true`     | `Braintrust MCP Evals`               |
+
+To re-enable one scheduled automation after budget review:
+
+```bash
+gh variable set ENABLE_TEMPLATE_REVIEW_HUB_SCHEDULE --body true --repo createsomethingtoday/create-something-monorepo
+```
+
+Manual runs are still the preferred escape hatch during a budget crunch because they preserve GitHub logs, secrets, and provenance without silently spending on background loops.
+
 ## What This Changes For Agents
 
 - Do not commit or push only to create a checkpoint.
