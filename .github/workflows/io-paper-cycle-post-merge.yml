@@ -7,6 +7,7 @@ on:
     paths:
       - 'packages/io/src/routes/papers/**'
       - 'packages/io/src/routes/experiments/**'
+      - 'packages/io/src/lib/config/**'
       - 'packages/io/content/papers/**'
       - 'packages/io/content/experiments/**'
       - 'docs/policies/**'
@@ -109,8 +110,8 @@ jobs:
             exit 1
           fi
 
-      - name: Deploy IO via Wrangler fallback
-        if: steps.context.outputs.publishable == 'true' && steps.pr.outputs.publish_approved == 'true' && vars.IO_PAGES_USE_WRANGLER_DEPLOY == 'true' && env.CLOUDFLARE_API_TOKEN != ''
+      - name: Deploy IO via Wrangler
+        if: steps.context.outputs.publishable == 'true' && steps.pr.outputs.publish_approved == 'true' && env.CLOUDFLARE_API_TOKEN != ''
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
         run: |

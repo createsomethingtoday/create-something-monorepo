@@ -115,11 +115,11 @@ function buildRouteExpectations(routes) {
 
   return new Map(routes.map((route) => {
     if (routeSlug(route, '/papers/')) {
-      return [route, [routeSlug(route, '/papers/')]];
+      return [route, []];
     }
 
     if (routeSlug(route, '/experiments/')) {
-      return [route, [routeSlug(route, '/experiments/')]];
+      return [route, []];
     }
 
     if (route === '/papers') {
