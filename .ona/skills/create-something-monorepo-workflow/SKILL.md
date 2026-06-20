@@ -10,9 +10,10 @@ Use this skill when the task is about operating inside this repository rather th
 ## Start Here
 
 1. Read `AGENTS.md` for the repo operating model.
-2. Read `docs/guides/ONA_CORE_ROLLOUT.md` when the task touches Ona environment setup, project layout, secrets, or runtime alignment.
-3. Treat `.ona/automations.yaml` as the source of truth for startup tasks, manual checks, and dev services.
-4. Treat `.devcontainer/devcontainer.json` and `.ona/scripts/bootstrap.sh` as the source of truth for the pinned runtime.
+2. For implementation work, start with `pnpm agent:claim-worktree -- --issue CRE-123` so Linear records the branch, worktree path, base ref, and base SHA before edits begin.
+3. Read `docs/guides/ONA_CORE_ROLLOUT.md` when the task touches Ona environment setup, project layout, secrets, or runtime alignment.
+4. Treat `.ona/automations.yaml` as the source of truth for startup tasks, manual checks, and dev services.
+5. Treat `.devcontainer/devcontainer.json` and `.ona/scripts/bootstrap.sh` as the source of truth for the pinned runtime.
 
 ## Runtime Rules
 
@@ -29,6 +30,7 @@ Use this skill when the task is about operating inside this repository rather th
 - Use `pnpm linear:list -- --status open` to inspect open work.
 - Use `pnpm linear:get -- --issue CRE-123` before claiming or completing existing work.
 - Use `pnpm linear:claim -- --issue CRE-123` when taking ownership.
+- Use `pnpm agent:claim-worktree -- --issue CRE-123` as the default implementation handoff. It claims the issue, creates an isolated worktree, and comments the branch/worktree/base SHA back to Linear.
 - Use `pnpm linear:done -- --issue CRE-123 --evidence "Validation: ..."` when closing work.
 - Keep `LINEAR_API_KEY` in Infisical or another secret manager, not in repo files.
 - Do not create new Loom work. If legacy Loom evidence is needed, read it only as migration context and mirror the finding into the relevant Linear issue.

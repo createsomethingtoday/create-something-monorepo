@@ -40,6 +40,7 @@ These tools are available and should be preferred over bash workarounds:
 | `/linear` | Browse ready Linear issues with interactive selector |
 | `/linear claim` | Pick and claim a Linear issue, auto-names the session |
 | `/linear open` | Browse open issues |
+| `bash: pnpm agent:claim-worktree -- --issue CRE-123` | Default implementation handoff; claims Linear and records branch/worktree/base SHA |
 | `/check` | Run type checks on modified packages |
 | `/test [pkg]` | Run tests on modified packages (or a specific package) |
 | `/exports [pkg] [symbol]` | Verify package exports |
@@ -87,7 +88,7 @@ The Glass theme (`glass`) is the default, aligned with the Canon Glass Design Sy
 
 ### MCP Replacement
 
-Pi does not use MCP. The `context7_query` and `verify_exports` custom tools replace the MCP dependencies. For Ground analysis, use `bash` with the ground CLI or `pnpm exports`. For Linear, use the `/linear` command or `bash` with `pnpm linear:*`.
+Pi does not use MCP. The `context7_query` and `verify_exports` custom tools replace the MCP dependencies. For Ground analysis, use `bash` with the ground CLI or `pnpm exports`. For Linear, use the `/linear` command or `bash` with `pnpm linear:*`. For implementation work, prefer `bash` with `pnpm agent:claim-worktree -- --issue CRE-123` before editing so the branch/worktree/base SHA handoff is visible in Linear.
 
 ### Skills
 

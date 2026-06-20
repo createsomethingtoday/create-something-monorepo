@@ -5,7 +5,7 @@
  */
 
 import { exec } from 'node:child_process';
-import { readFile, mkdir, rm } from 'node:fs/promises';
+import { readFile, mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
 import type {
@@ -1002,9 +1002,10 @@ export async function getHarnessStatus(
  * Run multiple sessions in parallel for independent tasks.
  * Uses Promise.all to execute up to maxParallel sessions concurrently.
  */
-interface SwarmWorktree {
+export interface SwarmWorktree {
   path: string;
   branch: string;
+  baseSha: string;
 }
 
 function quoteForShell(value: string): string {
@@ -1031,29 +1032,55 @@ export function buildSwarmWorktreePath(repoRoot: string, issueId: string): strin
   return join(repoRoot, '.harness', 'worktrees', issuePart);
 }
 
+export function formatSwarmWorktreeHandoff(worktree: SwarmWorktree): string {
+  return [
+    'Agent workspace claim:',
+    `- Branch: ${worktree.branch}`,
+    `- Worktree: ${worktree.path}`,
+    `- Base SHA: ${worktree.baseSha}`,
+    '- Cleanup: clean worktrees are removed automatically; dirty worktrees are preserved for review',
+  ].join('\n');
+}
+
+async function readGitOutput(cwd: string, args: string[]): Promise<string> {
+  const command = `git ${args.map(quoteForShell).join(' ')}`;
+  const { stdout } = await execAsync(command, { cwd });
+  return stdout.trim();
+}
+
 async function createSwarmWorktree(repoRoot: string, harnessId: string, issueId: string): Promise<SwarmWorktree> {
   const branch = buildSwarmBranchName(harnessId, issueId);
   const path = buildSwarmWorktreePath(repoRoot, issueId);
+  const baseSha = await readGitOutput(repoRoot, ['rev-parse', 'HEAD']);
+
   await mkdir(join(repoRoot, '.harness', 'worktrees'), { recursive: true });
-  await rm(path, { recursive: true, force: true });
   await execAsync(
-    `git -C ${quoteForShell(repoRoot)} worktree add --force --detach ${quoteForShell(path)}`
+    `git -C ${quoteForShell(repoRoot)} worktree add -b ${quoteForShell(branch)} ${quoteForShell(path)} ${quoteForShell(baseSha)}`
   );
-  await execAsync(
-    `git -C ${quoteForShell(path)} checkout -B ${quoteForShell(branch)}`
-  );
-  return { path, branch };
+
+  return { path, branch, baseSha };
 }
 
-async function cleanupSwarmWorktree(repoRoot: string, worktree: SwarmWorktree): Promise<void> {
+async function isWorktreeDirty(path: string): Promise<boolean> {
+  const status = await readGitOutput(path, ['status', '--porcelain']);
+  return status.length > 0;
+}
+
+async function cleanupSwarmWorktree(repoRoot: string, worktree: SwarmWorktree): Promise<boolean> {
+  if (await isWorktreeDirty(worktree.path)) {
+    console.log(`  Preserving dirty swarm worktree for review:\n${formatSwarmWorktreeHandoff(worktree)}`);
+    return false;
+  }
+
   try {
     await execAsync(
-      `git -C ${quoteForShell(repoRoot)} worktree remove --force ${quoteForShell(worktree.path)}`
+      `git -C ${quoteForShell(repoRoot)} worktree remove ${quoteForShell(worktree.path)}`
     );
+    return true;
   } catch {
-    // Best-effort cleanup if git metadata already removed.
+    console.warn(`  Could not remove clean swarm worktree automatically: ${worktree.path}`);
+    return false;
   }
-  await rm(worktree.path, { recursive: true, force: true });
 }
 
 export async function runParallelSessions(
@@ -1095,6 +1122,8 @@ export async function runParallelSessions(
         worktree = await createSwarmWorktree(options.cwd, harnessState.id, issue.id);
         sessionCwd = worktree.path;
         console.log(`  [${agentId}] Worktree: ${worktree.path}`);
+        console.log(`  [${agentId}] Branch: ${worktree.branch}`);
+        console.log(`  [${agentId}] Base SHA: ${worktree.baseSha}`);
       }
 
       // Build priming context
