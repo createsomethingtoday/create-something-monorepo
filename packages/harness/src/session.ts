@@ -122,7 +122,7 @@ export function generatePrimingPrompt(context: PrimingContext): string {
   lines.push('# Harness Session Context');
   lines.push('');
   lines.push(
-    'You are running in an automated harness. Complete the assigned task, leave a reviewable diff, and exit cleanly. Commit only when production promotion, shared review, or explicit operator intent requires it.',
+    'You are running in an automated harness. Complete the assigned task, leave a reviewable diff, and exit cleanly. Commit only when production promotion, shared review, or explicit operator intent requires it. For repo implementation work, start from the Linear/worktree handoff recorded by `pnpm agent:claim-worktree -- --issue <id>` or preserve the current isolated worktree handoff in your evidence.',
   );
   lines.push('');
 
@@ -197,11 +197,12 @@ export function generatePrimingPrompt(context: PrimingContext): string {
   lines.push('');
 
   lines.push('## Instructions');
-  lines.push('1. Complete the task described above');
-  lines.push('2. Run relevant tests to verify your work');
-  lines.push('3. Leave a reviewable diff; commit only when production promotion, shared review, or explicit operator intent requires it');
-  lines.push('4. If blocked or unclear, document the issue and move on');
-  lines.push('5. Do NOT wait for human input - work autonomously');
+  lines.push('1. Confirm the Linear/worktree handoff or record the current isolated branch, worktree path, and base SHA before editing');
+  lines.push('2. Complete the task described above');
+  lines.push('3. Run relevant tests to verify your work');
+  lines.push('4. Leave a reviewable diff; commit only when production promotion, shared review, or explicit operator intent requires it');
+  lines.push('5. If blocked or unclear, document the issue and move on');
+  lines.push('6. Do NOT wait for human input - work autonomously');
   lines.push('');
 
   lines.push('Begin working on the task now.');

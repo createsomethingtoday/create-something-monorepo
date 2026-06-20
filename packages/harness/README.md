@@ -49,10 +49,12 @@ Recommended operator loop:
 
 ```bash
 pnpm linear:ready
-pnpm linear:claim -- --issue <id>
+pnpm agent:claim-worktree -- --issue <id>
 harness start specs/my-project.md
 pnpm linear:get -- --issue <id>
 ```
+
+Use `pnpm agent:claim-worktree` as the default implementation handoff. It claims the Linear issue, creates an isolated branch/worktree, and records the branch, worktree path, base ref, and base SHA in Linear before edits begin.
 
 ## Agent Legibility Contract
 
@@ -72,12 +74,14 @@ The intended loop is closer to the harness-engineering pattern described by Open
 ### 1. Intake and routing
 
 - claim or create tracked work in Linear
+- record the branch/worktree/base SHA handoff with `pnpm agent:claim-worktree`
 - gather repo context and prior checkpoints
 - choose execution mode and model/runtime defaults
 
 ### 2. Isolated execution
 
 - create a dedicated git worktree per task or swarm worker
+- refuse path/branch collisions instead of overwriting an existing workspace
 - run the agent in that worktree
 - let the agent inspect code, run tools, and gather evidence directly
 
@@ -109,6 +113,8 @@ This is the default recommended execution mode for swarm or background runs beca
 - reviewability
 - cleanup
 - safety when multiple agents are active
+
+Harness-created swarm worktrees log their branch, path, and base SHA. Clean worker worktrees may be removed automatically; dirty worker worktrees are preserved for review instead of being deleted.
 
 ## Review model
 
