@@ -1,9 +1,14 @@
 <script lang="ts">
-	import { onMount } from "svelte";
+	import { tick } from "svelte";
 	import { marked } from "marked";
 	import hljs from "highlight.js";
 	import type { Paper } from "$lib/types/paper";
 	import { InteractiveExperimentCTA } from "@create-something/canon/interactive";
+
+	marked.setOptions({
+		gfm: true,
+		breaks: true
+	});
 
 	interface Props {
 		paper: Paper;
@@ -21,31 +26,20 @@
 	);
 	const contentToRender = $derived(hasSubstantialHtmlContent ? paper.html_content : paper.content);
 
-	// For markdown content, configure marked
-	let renderedContent = $state("");
+	const renderedContent = $derived.by(() => {
+		if (!contentToRender) return "";
+		if (hasSubstantialHtmlContent) return contentToRender;
+		return marked.parse(contentToRender, { async: false });
+	});
 
-	onMount(async () => {
-		if (!hasSubstantialHtmlContent && contentToRender) {
-			// Configure marked for GitHub-flavored markdown
-			marked.setOptions({
-				gfm: true,
-				breaks: true
+	$effect(() => {
+		renderedContent;
+		if (typeof document === 'undefined') return;
+		tick().then(() => {
+			document.querySelectorAll('pre code').forEach((block) => {
+				hljs.highlightElement(block as HTMLElement);
 			});
-
-			// Render markdown (marked now returns a Promise)
-			renderedContent = await marked(contentToRender);
-
-			// Apply syntax highlighting to code blocks after rendering
-			if (typeof document !== 'undefined') {
-				setTimeout(() => {
-					document.querySelectorAll('pre code').forEach((block) => {
-						hljs.highlightElement(block as HTMLElement);
-					});
-				}, 0);
-			}
-		} else if (hasSubstantialHtmlContent) {
-			renderedContent = contentToRender;
-		}
+		});
 	});
 </script>
 

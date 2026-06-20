@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { execFileSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -23,6 +23,10 @@ const API_MANIFEST_ROUTE_PREFIX = 'packages/io/src/routes/api/manifest/';
 const SITEMAP_ROUTE_PREFIX = 'packages/io/src/routes/sitemap.xml/';
 const PAPER_CONTENT_PREFIX = 'packages/io/content/papers/';
 const EXPERIMENT_CONTENT_PREFIX = 'packages/io/content/experiments/';
+const PAPER_CATALOG_FILE = 'packages/io/src/lib/config/paperCatalog.ts';
+const FILE_BASED_PAPERS_FILE = 'packages/io/src/lib/config/fileBasedPapers.ts';
+const EXPERIMENT_CATALOG_FILE = 'packages/io/src/lib/config/experimentCatalog.ts';
+const FILE_BASED_EXPERIMENTS_FILE = 'packages/io/src/lib/config/fileBasedExperiments.ts';
 const PUBLIC_TRUST_DATA_PREFIX = 'config/public-trust/';
 const PUBLIC_TRUST_CONFIG_FILE = 'packages/io/src/lib/config/publicTrustCatalog.ts';
 const PUBLIC_TRUST_GENERATED_CONFIG_FILE = 'packages/io/src/lib/config/publicTrustCatalog.generated.ts';
@@ -138,6 +142,10 @@ function isPublishableIoFile(file) {
     file.startsWith(SITEMAP_ROUTE_PREFIX) ||
     file.startsWith(PAPER_CONTENT_PREFIX) ||
     file.startsWith(EXPERIMENT_CONTENT_PREFIX) ||
+    file === PAPER_CATALOG_FILE ||
+    file === FILE_BASED_PAPERS_FILE ||
+    file === EXPERIMENT_CATALOG_FILE ||
+    file === FILE_BASED_EXPERIMENTS_FILE ||
     file.startsWith(PUBLIC_TRUST_DATA_PREFIX) ||
     file === PUBLIC_TRUST_CONFIG_FILE ||
     file === PUBLIC_TRUST_GENERATED_CONFIG_FILE ||
@@ -193,8 +201,57 @@ function publicTrustRoutes(kind = 'all') {
   }
 }
 
+function slugsFromSourceFile(file) {
+  try {
+    const source = readFileSync(file, 'utf8');
+    return uniqueSorted([...source.matchAll(/slug:\s*'([^']+)'/gu)].map((match) => match[1]));
+  } catch {
+    return [];
+  }
+}
+
+function staticRouteSlugs(routePrefix) {
+  try {
+    return uniqueSorted(
+      readdirSync(routePrefix, { withFileTypes: true })
+        .filter((entry) => entry.isDirectory() && entry.name !== '[slug]')
+        .map((entry) => entry.name),
+    );
+  } catch {
+    return [];
+  }
+}
+
+function catalogRoutes(kind) {
+  if (kind === 'paper') {
+    const slugs = uniqueSorted([
+      ...staticRouteSlugs(PAPER_ROUTE_PREFIX),
+      ...slugsFromSourceFile(FILE_BASED_PAPERS_FILE),
+    ]);
+    return uniqueSorted([
+      '/papers',
+      '/api/manifest',
+      '/sitemap.xml',
+      ...slugs.map((slug) => `/papers/${slug}`),
+    ]);
+  }
+
+  const slugs = uniqueSorted([
+    ...slugsFromSourceFile(FILE_BASED_EXPERIMENTS_FILE),
+    ...slugsFromSourceFile(EXPERIMENT_CATALOG_FILE),
+  ]);
+  return uniqueSorted([
+    '/experiments',
+    '/api/manifest',
+    '/sitemap.xml',
+    ...slugs.map((slug) => `/experiments/${slug}`),
+  ]);
+}
+
 function routesFromIoRouteFile(file) {
   if (file.startsWith(PAPER_ROUTE_PREFIX)) {
+    if (!existsSync(file)) return ['/papers'];
+
     const remainder = file.slice(PAPER_ROUTE_PREFIX.length);
     const [slug = ''] = remainder.split('/');
     if (!slug || slug.startsWith('+') || slug === '[slug]' || slug.endsWith('.ts')) {
@@ -204,6 +261,8 @@ function routesFromIoRouteFile(file) {
   }
 
   if (file.startsWith(EXPERIMENT_ROUTE_PREFIX)) {
+    if (!existsSync(file)) return ['/experiments'];
+
     const remainder = file.slice(EXPERIMENT_ROUTE_PREFIX.length);
     const [slug = ''] = remainder.split('/');
     if (!slug || slug.startsWith('+') || slug === '[slug]') {
@@ -213,6 +272,8 @@ function routesFromIoRouteFile(file) {
   }
 
   if (file.startsWith(PAPER_CONTENT_PREFIX)) {
+    if (!existsSync(file)) return ['/papers'];
+
     const remainder = file.slice(PAPER_CONTENT_PREFIX.length);
     if (remainder === 'README.md') return ['/papers'];
     if (!remainder.endsWith('.md')) return ['/papers'];
@@ -220,10 +281,20 @@ function routesFromIoRouteFile(file) {
   }
 
   if (file.startsWith(EXPERIMENT_CONTENT_PREFIX)) {
+    if (!existsSync(file)) return ['/experiments'];
+
     const remainder = file.slice(EXPERIMENT_CONTENT_PREFIX.length);
     if (remainder === 'README.md') return ['/experiments'];
     if (!remainder.endsWith('.md')) return ['/experiments'];
     return [`/experiments/${remainder.replace(/\.md$/u, '')}`];
+  }
+
+  if (file === PAPER_CATALOG_FILE || file === FILE_BASED_PAPERS_FILE) {
+    return catalogRoutes('paper');
+  }
+
+  if (file === EXPERIMENT_CATALOG_FILE || file === FILE_BASED_EXPERIMENTS_FILE) {
+    return catalogRoutes('experiment');
   }
 
   if (file.startsWith(MCP_TRUST_ROUTE_PREFIX)) {
@@ -272,8 +343,18 @@ export function collectIoPaperCycleContext(files) {
   const supportFiles = changedFiles.filter(isLifecycleSupportFile);
   const changedRoutes = uniqueSorted(publishableFiles.flatMap(routesFromIoRouteFile).filter(Boolean));
   const artifactKinds = uniqueSorted([
-    ...(publishableFiles.some((file) => file.startsWith(PAPER_ROUTE_PREFIX) || file.startsWith(PAPER_CONTENT_PREFIX)) ? ['paper'] : []),
-    ...(publishableFiles.some((file) => file.startsWith(EXPERIMENT_ROUTE_PREFIX) || file.startsWith(EXPERIMENT_CONTENT_PREFIX)) ? ['experiment'] : []),
+    ...(publishableFiles.some((file) => (
+      file.startsWith(PAPER_ROUTE_PREFIX) ||
+      file.startsWith(PAPER_CONTENT_PREFIX) ||
+      file === PAPER_CATALOG_FILE ||
+      file === FILE_BASED_PAPERS_FILE
+    )) ? ['paper'] : []),
+    ...(publishableFiles.some((file) => (
+      file.startsWith(EXPERIMENT_ROUTE_PREFIX) ||
+      file.startsWith(EXPERIMENT_CONTENT_PREFIX) ||
+      file === EXPERIMENT_CATALOG_FILE ||
+      file === FILE_BASED_EXPERIMENTS_FILE
+    )) ? ['experiment'] : []),
     ...(publishableFiles.some((file) => (
       file.startsWith(MCP_TRUST_ROUTE_PREFIX) ||
       file.startsWith(AGENT_TRUST_ROUTE_PREFIX) ||

@@ -12,6 +12,7 @@ interface Env {
 	ARENA_API_TOKEN?: string;
 	ARENA_CLIENT_ID?: string;
 	ARENA_CLIENT_SECRET?: string;
+	ANALYTICS_SERVICE_TOKEN?: string;
 	ENVIRONMENT: string;
 }
 

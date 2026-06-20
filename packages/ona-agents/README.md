@@ -2,7 +2,9 @@
 
 Standalone Ona-styled operator chat frontend for CREATE SOMETHING Dify agents.
 
-This app is separate from Abundance Concierge. It provides a staff-only roster and chat shell for the Dify agents listed in `src/lib/server/dify/agent-registry.ts`, with all Dify Service API calls proxied server-side.
+This is not the Ona Core rollout environment. It is a CREATE SOMETHING-owned app that borrows Ona's clear operator-shell pattern for staff-only Dify agent work.
+
+This app is also separate from Abundance Concierge. It provides a staff-only roster and chat shell for the Dify agents listed in `src/lib/server/dify/agent-registry.ts`, with all Dify Service API calls proxied server-side.
 
 ## Agent Legibility Contract
 

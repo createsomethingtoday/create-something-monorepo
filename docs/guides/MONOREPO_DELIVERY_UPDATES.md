@@ -63,7 +63,7 @@ Later delivery surfaces can render the same content:
 
 - Cloudflare/Webflow Cloud client portal
 - Webflow Code Components operator surface
-- Loom handoff note
+- Linear handoff or delivery-evidence note
 - PDF or deck export
 - client email digest
 
@@ -98,7 +98,7 @@ The progress report summarizes:
 - allowed agent actions
 - human approval gates
 
-This should become the base for scheduled or event-driven delivery reporting. A future Cloudflare cron, GitHub Action, or Loom-triggered agent can run the same command and stage the result.
+This should become the base for scheduled or event-driven delivery reporting. A future Cloudflare cron, GitHub Action, or Linear-triggered agent can run the same command and stage the result.
 
 ## Delivery Pages
 
@@ -113,8 +113,8 @@ The page is generated from:
 - evidence paths
 - generated delivery images
 - recent Git history for configured `recentChangePaths`
-- Loom task IDs in `coordination.loomTaskIds`
 - Linear issue IDs and URLs in `coordination.linearIssueIds` and `coordination.linearUrls`
+- legacy Loom task IDs in `coordination.loomTaskIds` for migration traceability only
 
 Deploy with:
 

@@ -70,8 +70,20 @@
 
   .delivery-outcome-strip__header {
     display: grid;
-    gap: 0.7rem;
+    gap: 1rem;
     max-width: 48rem;
+  }
+
+  .delivery-outcome-strip__header span {
+    display: inline-flex;
+    width: fit-content;
+    max-width: 100%;
+    min-height: 1.9rem;
+    align-items: center;
+    border: 1px solid var(--color-clear-border, #e1e1e1);
+    border-radius: var(--radius-clear-sm, 4px);
+    background: var(--color-clear-panel, #ffffff);
+    padding: 0.36rem 0.62rem;
   }
 
   .delivery-outcome-strip__header span,
@@ -87,13 +99,12 @@
 
   .delivery-outcome-strip__header h2 {
     margin: 0;
-    max-width: 14ch;
+    max-width: 15ch;
     color: var(--color-clear-onyx, #0a0e19);
-    font-family: var(--font-display);
-    font-size: clamp(2.1rem, 5vw, 4rem);
+    font-size: 3.1rem;
     font-weight: var(--font-medium);
     letter-spacing: 0;
-    line-height: 1;
+    line-height: 1.02;
     text-wrap: balance;
   }
 
@@ -101,8 +112,9 @@
     margin: 0;
     max-width: 42rem;
     color: var(--color-clear-grey, #636363);
-    font-size: clamp(1rem, 1.3vw, 1.15rem);
-    line-height: 1.5;
+    font-size: 1.08rem;
+    line-height: 1.55;
+    text-wrap: pretty;
   }
 
   .delivery-outcome-strip__items {
@@ -113,9 +125,9 @@
 
   .delivery-outcome-card {
     display: grid;
-    gap: 0.65rem;
+    gap: 0.62rem;
     align-content: start;
-    min-height: 13rem;
+    min-height: 12rem;
     padding: 1rem;
     border: 1px solid var(--color-clear-border, #e1e1e1);
     border-top-color: var(--delivery-outcome-accent, var(--color-clear-border-strong, #cecece));
@@ -138,16 +150,18 @@
 
   .delivery-outcome-card strong {
     color: var(--color-clear-onyx, #0a0e19);
-    font-size: 1.06rem;
+    font-size: 1.18rem;
     font-weight: var(--font-medium);
-    line-height: 1.16;
+    line-height: 1.18;
+    text-wrap: balance;
   }
 
   .delivery-outcome-card p {
     margin: 0;
     color: var(--color-clear-grey, #636363);
     font-size: 0.94rem;
-    line-height: 1.45;
+    line-height: 1.48;
+    text-wrap: pretty;
   }
 
   @media (max-width: 980px) {
@@ -167,6 +181,16 @@
 
     .delivery-outcome-card {
       min-height: auto;
+    }
+
+    .delivery-outcome-strip__header h2 {
+      font-size: 2.35rem;
+      line-height: 1.04;
+    }
+
+    .delivery-outcome-strip__header p {
+      font-size: 1rem;
+      line-height: 1.56;
     }
   }
 </style>

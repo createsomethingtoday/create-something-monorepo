@@ -25,7 +25,7 @@ The system should use three UI planes:
 
 The Dify agent frontend should be a first-party operator shell in `packages/concierge-chat`, not a fork of a Dify web client.
 
-The shell should copy Ona's clear communication style: light operational surfaces, compact navigation, crisp borders, restrained color, direct action labels, and proof close to each claim. The branding can borrow the Ona visual language, but the product contract remains CREATE SOMETHING: policy, evidence, approvals, and handoff are first-class UI concepts.
+The shell should adapt Ona's clear communication style into owned CREATE SOMETHING code: light operational surfaces, compact navigation, crisp borders, restrained color, direct action labels, and proof close to each claim. The product contract remains CREATE SOMETHING: policy, evidence, approvals, and handoff are first-class UI concepts.
 
 Required operator rails:
 

@@ -259,6 +259,8 @@
     "webflow:governance:check": "node scripts/webflow-governance-control-plane.mjs check",
     "webflow:governance:manifest": "node scripts/webflow-governance-control-plane.mjs manifest",
     "webflow:governance:verify": "pnpm webflow:governance:check && pnpm webflow:components:verify",
+    "agent:claim-worktree": "node scripts/agent-claim-worktree.mjs",
+    "agent:claim-worktree:test": "node --test scripts/test/agent-claim-worktree.test.mjs",
     "linear": "node scripts/linear/remote.mjs",
     "linear:ready": "node scripts/linear/remote.mjs ready",
     "linear:list": "node scripts/linear/remote.mjs list",

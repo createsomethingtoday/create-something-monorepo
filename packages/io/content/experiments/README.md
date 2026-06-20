@@ -1,92 +1,130 @@
-# Experiments Content - Hybrid Architecture
+# Experiments Content
 
-## Pattern: Markdown Documentation + Interactive Components
+Experiments on `.io` are a public research surface. The current implementation is route/catalog based, not MDsveX component-import based.
 
-Experiments use a **hybrid approach** that separates documentation from interactivity:
+## Runtime Model
 
-```
-content/experiments/{slug}.md           ← Documentation, frontmatter, context
-src/lib/experiments/{slug}.svelte       ← Interactive demo component
-src/routes/experiments/[slug]/          ← Dynamic route (loads markdown)
-```
+The archive at `/experiments` merges:
 
-## Why Hybrid?
+- file-based experiment metadata from `src/lib/config/fileBasedExperiments.ts`
+- database-backed experiment rows from D1 `papers`, when available
 
-Unlike papers (pure documentation), experiments include:
-- Interactive visualizations
-- Live data manipulation
-- SVG/Canvas operations
-- Scroll-driven animations
+The detail route at `/experiments/[slug]` resolves in this order:
 
-Markdown handles context; Svelte handles interaction.
+1. cross-property redirects for experiments whose canonical home is another CREATE SOMETHING property
+2. file-based experiments in `fileBasedExperiments.ts`
+3. D1 `papers` rows by `slug`, with an `id` fallback for legacy/admin-created rows without `slug`
 
-## Frontmatter Schema
+Local preview can run without a populated D1 `papers` table. In that case, `/experiments` and `sitemap.xml` fall back to file-based experiments.
 
-```yaml
----
-title: "Experiment Title"
-category: "research" | "tutorial"
-abstract: "One-sentence description"
-keywords: ["tag1", "tag2"]
-publishedAt: "2025-01-08T00:00:00Z"
-readingTime: 10
-difficulty: "beginner" | "intermediate" | "advanced"
-published: true
-componentPath: "$lib/experiments/{slug}.svelte"  # Path to interactive component
----
+## File-Based Experiments
+
+File-based experiment metadata lives in:
+
+```text
+src/lib/config/fileBasedExperiments.ts
 ```
 
-## Component Import Pattern
+Required fields follow `FileBasedExperiment` from `@create-something/canon`:
 
-In the markdown file:
-
-```markdown
-## Interactive Demo
-
-<script>
-  import DemoComponent from '$lib/experiments/component-name.svelte';
-</script>
-
-<DemoComponent />
-
-## Analysis
-
-...documentation continues...
+```ts
+{
+  id: 'file-example',
+  slug: 'example',
+  title: 'Example Experiment',
+  description: 'One-sentence public description.',
+  excerpt_short: 'Short card copy',
+  excerpt_long: 'Longer article/header copy',
+  category: 'research',
+  tags: ['MCP', 'Policy', 'Workflow'],
+  created_at: '2026-01-01T00:00:00Z',
+  updated_at: '2026-01-01T00:00:00Z',
+  reading_time_minutes: 8,
+  difficulty: 'intermediate',
+  is_file_based: true,
+  tests_principles: ['three-tier-framework'],
+  ascii_art: '...'
+}
 ```
 
-MDsveX renders the imported component inline.
+The shared transformer maps these records into the `Paper` shape used by archive cards, article headers, SEO, and sitemap generation.
 
-## Migration Status
+## Markdown Bodies
 
-- ✅ **text-revelation** - Proof of concept (hybrid pattern established)
-- 🔄 **Remaining 14 experiments** - To be migrated iteratively
+Markdown bodies live in:
 
-## When to Use Full Markdown
-
-If an experiment becomes primarily documentation (interactivity removed or simplified), migrate to pure markdown like papers. The hybrid pattern allows gradual evolution.
-
-## Directory Structure
-
-```
-content/experiments/
-├── README.md                      ← This file
-├── text-revelation.md             ← Hybrid (docs + component import)
-└── [future experiments].md
-
-src/lib/experiments/
-├── text-revelation.svelte         ← Interactive component
-└── [future components].svelte
-
-src/routes/experiments/
-├── [slug]/
-│   ├── +page.server.ts           ← Loads from markdown OR database
-│   └── +page.svelte              ← Renders markdown with components
-└── {legacy-routes}/              ← To be migrated
+```text
+content/experiments/{slug}.md
 ```
 
-## Next Steps
+Markdown is loaded as raw text by `src/routes/experiments/[slug]/+page.server.ts`, frontmatter is stripped, and the body is rendered by the shared `.io` `ArticleContent` component with `marked`.
 
-1. Move `text-revelation/+page.svelte` → `lib/experiments/text-revelation.svelte`
-2. Update `[slug]` route to load from markdown content
-3. Test MDsveX component import
-4. Migrate remaining experiments iteratively as patterns emerge
+Current markdown files should contain normal Markdown only. Do not import Svelte components from experiment markdown; this route does not compile MDsveX component imports.
+
+Use markdown bodies for documentation-first experiments that do not need a custom interactive route.
+
+## Dedicated Interactive Routes
+
+Interactive or highly custom experiments use dedicated Svelte routes:
+
+```text
+src/routes/experiments/{slug}/+page.svelte
+src/routes/experiments/{slug}/+page.server.ts  # when route metadata/data is needed
+```
+
+If a file-based experiment has a dedicated route, add its slug to `FILE_BASED_WITH_ROUTES` in `src/routes/experiments/[slug]/+page.server.ts`. That prevents the dynamic markdown route from also trying to serve it.
+
+Dedicated routes are appropriate for:
+
+- canvas, WebGPU, SVG, or scroll-driven interactions
+- demos that import experiment components from `@create-something/canon`
+- pages that need custom controls, upload flows, or runtime state
+- experiments whose article layout differs materially from the default article shell
+
+## D1/Admin-Backed Experiments
+
+Admin-created experiments are stored in D1 `papers`. Public routing requires a stable `slug`.
+
+The admin API now writes `slug` on create and can update it on patch. Legacy rows without `slug` can still resolve by `id`, but new rows should treat `slug` as the public URL contract.
+
+Minimum public fields:
+
+- `id`
+- `slug`
+- `title`
+- `description` or `excerpt_long`
+- `content` or `html_content`
+- `category`
+- `published = 1`
+- `is_hidden = 0`
+- `archived = 0`
+
+## Archive And Sitemap Rules
+
+The archive and sitemap intentionally include file-based experiments even when D1 is unavailable.
+
+They also exclude known paper slugs so `/experiments` does not become a duplicate papers archive. Known paper slugs come from:
+
+- `src/lib/config/fileBasedPapers.ts`
+- static paper route `meta.ts` files
+
+## Adding A New Experiment
+
+1. Add metadata to `src/lib/config/fileBasedExperiments.ts`.
+2. Add `content/experiments/{slug}.md` if the default article shell is enough.
+3. Create `src/routes/experiments/{slug}/` if the experiment needs a custom interactive page.
+4. If using a dedicated route, add the slug to `FILE_BASED_WITH_ROUTES`.
+5. Run:
+
+```bash
+pnpm --filter @create-something/io check
+pnpm --filter @create-something/io build
+```
+
+For user-visible route changes, also run a local preview and smoke:
+
+```bash
+pnpm --filter @create-something/io preview --host 127.0.0.1 --port 4173
+```
+
+Verify `/experiments`, the new detail route, and `/sitemap.xml`.

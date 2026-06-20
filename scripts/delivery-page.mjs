@@ -547,7 +547,7 @@ function renderIndex({ projects, agent, git }) {
     <section class="hero">
       <div>
         <h1>Delivery surfaces generated from the monorepo.</h1>
-        <p class="lede">Each project or package gets a client-ready page backed by manifests, repo evidence, Git history, Loom coordination, and Linear work tracking.</p>
+        <p class="lede">Each project or package gets a client-ready page backed by manifests, repo evidence, Git history, Linear work tracking, and legacy Loom traceability.</p>
       </div>
       <aside class="meta">
         <p><strong>Agent mode:</strong> ${escapeHtml(agent.mode)}</p>
@@ -625,10 +625,10 @@ function renderCoordination(project) {
   return `
     <div class="grid two">
       <div class="card blue">
-        <h3>Loom</h3>
+        <h3>Legacy Loom</h3>
         ${loomIds.length > 0
-          ? `<p class="muted">${loomIds.map((id) => `<code>${escapeHtml(id)}</code>`).join(' ')}</p>`
-          : '<p class="muted">No Loom task IDs recorded in the manifest yet.</p>'}
+          ? `<p class="muted">Historical IDs: ${loomIds.map((id) => `<code>${escapeHtml(id)}</code>`).join(' ')}</p>`
+          : '<p class="muted">No legacy Loom IDs recorded in the manifest.</p>'}
       </div>
       <div class="card teal">
         <h3>Linear</h3>
@@ -821,7 +821,7 @@ function renderProjectPage({ project, agent, git, outputDir, clientRegistry }) {
     </section>
 
     <section class="section">
-      <h2>Loom and Linear</h2>
+      <h2>Linear and Legacy Coordination</h2>
       ${renderCoordination(project)}
     </section>
 

@@ -30,30 +30,30 @@
     {
       eyebrow: 'Ground',
       icon: 'check',
-      title: 'Judgment needs evidence',
+      title: 'Claims need evidence',
       detail:
-        'Agents must check before they claim. That principle becomes release evidence and blocked-state logic.'
+        'Agents must check before they claim. That discipline becomes release evidence, approval rules, and blocked-state logic.'
     },
     {
       eyebrow: 'Loom',
       icon: 'users',
-      title: 'Operators need continuity',
+      title: 'Agent work needs continuity',
       detail:
-        'Agent work needs ownership, checkpoints, and evidence so progress survives handoffs. Linear now owns tracked coordination in this repo.'
+        'Long-running work needs ownership, checkpoints, and evidence so progress survives handoffs across tools and teams.'
     },
     {
       eyebrow: 'Connections',
       icon: 'plus',
-      title: 'Connections prove the path',
+      title: 'Connections are the start',
       detail:
-        'Read-only or constrained connections prove the path before the workflow earns more authority.'
+        'Read-only or constrained access proves the path before the workflow earns more authority.'
     },
     {
       eyebrow: 'Control',
       icon: 'settings',
-      title: 'The service adds the boundary',
+      title: 'The service adds judgment',
       detail:
-        'The products are proof primitives. The paid work turns them into controlled operating paths.'
+        'The paid work turns proof primitives into a controlled operating path your team can inspect.'
     }
   ];
 
@@ -61,16 +61,16 @@
     {
       eyebrow: 'Receipts',
       icon: 'document',
-      title: 'Proof shows the operating result',
+      title: 'Receipts show the operating result',
       detail:
         'Read the artifacts as receipts: what changed, what was verified, what stayed private, and what still needs an owner.'
     },
     {
       eyebrow: 'Primitives',
       icon: 'settings',
-      title: 'Tools show the discipline',
+      title: 'Tools show the method',
       detail:
-        'Ground, archived Loom work, and connector work expose the control principles before they become a client-specific workflow.'
+        'Ground, Loom MCP, and connector work expose the control principles before they become a client-specific workflow.'
     },
     {
       eyebrow: 'Boundary',
@@ -85,6 +85,24 @@
       title: 'Start by mapping the first workflow',
       detail:
         'Use proof as evidence for the method, then map the first safe delegation point for your own system.'
+    }
+  ];
+
+  const faqItems = [
+    {
+      question: 'What counts as proof?',
+      answer:
+        'Proof means delivery records, tools, connectors, and client builds that show what changed, what was verified, what stayed private, and what still needs an owner.'
+    },
+    {
+      question: 'Why are Ground and Loom MCP included?',
+      answer:
+        'Ground shows the verify-before-claiming discipline, while Loom MCP shows why long-running agent work needs ownership, checkpoints, and handoff evidence.'
+    },
+    {
+      question: 'How does proof become a client workflow?',
+      answer:
+        'The paid work turns proof primitives into scoped actions, approval states, blocked-state receipts, and an operating path the client can inspect.'
     }
   ];
 
@@ -175,7 +193,7 @@
   const proofMetrics: ClearQuoteMetric[] = [
     {
       value: '2',
-      label: 'client delivery records',
+      label: 'delivery records',
       detail: 'Abundance and ShivWorks show business-readable handoff and evidence surfaces.'
     },
     {
@@ -249,11 +267,12 @@
 </script>
 
 <SEO
-  title="Proof | CREATE SOMETHING .agency"
-  description="Proof behind CREATE SOMETHING .agency: delivery records, tools, connectors, and client builds that show how workflow control becomes inspectable."
-  keywords="MCP servers, trust layer, Linear coordination, grounded AI code analysis, workflow controls, operator surfaces"
+  title="Proof and Receipts | CREATE SOMETHING .agency"
+  description="Proof behind CREATE SOMETHING .agency: delivery records, tools, connectors, and client builds that show how the Workflow Trust Layer becomes inspectable."
+  keywords="workflow trust layer proof, workflow receipts, MCP servers, grounded AI code analysis, workflow controls, operator surfaces"
   ogImage="/og-image.svg"
   propertyName="agency"
+  {faqItems}
 />
 
 <ClearPageSection
@@ -261,8 +280,8 @@
   layout="split"
   titleLevel="h1"
   eyebrow="Proof"
-  title="The service is backed by inspectable parts."
-  description="Ground, archived Loom coordination work, connectors, and client builds are not a random product shelf. They show the same path the service follows: connect the system, verify the claim, coordinate the work, then control the workflow."
+  title="Proof is the product once work leaves chat."
+  description="Ground, Loom MCP, connectors, and client builds are not a product shelf. They show the same path the service follows: connect the system, verify the claim, coordinate the work, then control the workflow."
 >
   {#snippet actions()}
     <Button href={agencyCoreMessaging.selfMapHref}>
@@ -281,7 +300,7 @@
 <ClearPageSection
   variant="white"
   eyebrow="Run state proof"
-  title="The proof model is visible before the workflow expands."
+  title="A buyer should see what can run, wait, stop, and prove."
   description="Every artifact on this page should help a buyer understand what can run, what waits, what stops, and which receipt proves the decision."
 >
   {#snippet after()}
@@ -338,8 +357,8 @@
 <ClearPageSection
   variant="white"
   eyebrow="Flagship proof"
-  title="Verify before claiming, then coordinate the work."
-  description="The two core proof threads behind the operating-layer thesis: Ground checks claims, and the archived Loom work shows why agent coordination needs owned task state, now handled here through Linear."
+  title="Verify before claiming. Preserve the handoff."
+  description="The two core proof threads behind the operating-layer thesis: Ground checks claims, and Loom MCP shows why agent work needs memory, ownership, and handoff evidence."
 >
   {#snippet after()}
     <ClearCardGrid
@@ -397,8 +416,8 @@
 
 <ClearCtaBand
   eyebrow="Apply the proof"
-  title="Need the proof applied to your workflow?"
-  description="I’ll map the first workflow, identify the safest connection point, and define when the control layer should take over."
+  title="Apply the proof to the workflow your team still protects by hand."
+  description="I’ll map the first workflow, identify the safest connection point, and define when the trust layer should take over."
   items={ctaItems}
 >
   {#snippet actions()}

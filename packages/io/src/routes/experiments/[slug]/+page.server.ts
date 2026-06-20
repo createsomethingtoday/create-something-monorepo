@@ -96,16 +96,18 @@ export const load: PageServerLoad = async ({ params, platform }) => {
           ascii_art, ascii_thumbnail, prerequisites, resource_downloads,
           video_walkthrough_url, interactive_demo_url, pathway, "order"
         FROM papers
-        WHERE slug = ? AND published = 1 AND is_hidden = 0 AND archived = 0
+        WHERE (slug = ? OR (slug IS NULL AND id = ?)) AND published = 1 AND is_hidden = 0 AND archived = 0
         LIMIT 1
       `
 		)
-			.bind(slug)
+			.bind(slug, slug)
 			.first<Paper>();
 
 		if (!paperResult) {
 			throw error(404, 'Experiment not found');
 		}
+
+		paperResult.slug = paperResult.slug || paperResult.id;
 
 		const relatedResult = await DB.prepare(
 			`

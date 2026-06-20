@@ -26,36 +26,35 @@
 		: data.threadSummaries[0] ?? null;
 	$: savedThreadCount = data.threadSummaries.length;
 	$: trustTone = data.intakeAccess.granted ? 'good' : 'warn';
-	$: trustLabel = data.intakeAccess.granted ? 'Verified in this browser' : 'Public start, secure finish';
+	$: trustLabel = data.intakeAccess.granted ? 'Verified in this browser' : 'Start now, verify later';
 	$: trustDetail = data.intakeAccess.granted
-		? 'This browser is already verified, so secure uploads and recruiter scheduling can continue without another code.'
-		: 'Start the conversation now. One-time email verification only appears later, when documents or recruiter review are actually needed.';
+		? 'If a document or recruiter review step appears, this browser can continue without another code.'
+		: 'Begin with the role you want. If we need documents or recruiter review later, Concierge will ask for a one-time email code then.';
 </script>
 
 <section class="glass panel hero">
 	<div class="section-header">
 		<div>
 			<div class="eyebrow">Apply</div>
-			<h1 class="section-title">Pick up your nursing application in chat</h1>
+			<h1 class="section-title">Start or continue your nurse application</h1>
 		</div>
 		<div class="actions">
 			{#if latestThread}
-				<a class="cta" href={`/chat/${latestThread.id}`}>Continue application</a>
+				<a class="cta" href={`/chat/${latestThread.id}`}>Continue</a>
 			{/if}
 			<button class="cta secondary" type="button" on:click={startNewThread} disabled={creatingThread}>
 				{creatingThread
-					? 'Starting intake...'
+					? 'Starting...'
 					: latestThread
-						? 'Start fresh application'
-						: 'Start application'}
+						? 'Start new'
+						: 'Start'}
 			</button>
 		</div>
 	</div>
 
 	<p class="muted lede">
-		Tell Concierge what kind of nursing role you want, where you want to work, and what schedule
-		you prefer. When a document or confirmation is needed, the chat will ask for it in the same
-		thread.
+		Tell Concierge your specialty, shift, preferred location, and any constraints. The application
+		builds as you chat, and every later confirmation stays in the same thread.
 	</p>
 
 	<div class={`trust-strip ${trustTone}`}>
@@ -72,7 +71,7 @@
 	<section class="glass panel resume-panel">
 		<div class="resume-header">
 			<div>
-				<div class="eyebrow">Continue where you left off</div>
+				<div class="eyebrow">Saved Application</div>
 				<h2 class="section-title">{latestThread.title}</h2>
 			</div>
 			<span class={`status-pill ${latestThread.status === 'handoff_ready' ? 'danger' : 'warn'}`}>
@@ -81,7 +80,7 @@
 		</div>
 
 		<p class="muted">
-			{latestThread.subtitle}. Resume the same conversation and Concierge will guide the next step.
+			{latestThread.subtitle}. Open the same conversation and Concierge will guide the next step.
 		</p>
 
 		<div class="meter" aria-hidden="true">
@@ -103,18 +102,18 @@
 
 		{#if savedThreadCount > 1}
 			<p class="muted helper">
-				This browser has {savedThreadCount} saved application threads. Continue the latest one here,
-				or start fresh if you want a clean conversation.
+				This browser has {savedThreadCount} saved application threads. Continue this one or start a
+				new chat if you are applying for a different role.
 			</p>
 		{/if}
 	</section>
 {:else}
 	<section class="glass panel next-steps">
-		<div class="eyebrow">What happens next</div>
+		<div class="eyebrow">What Happens Next</div>
 		<ul>
-			<li>Start by chatting naturally about role, location, and shift preferences.</li>
-			<li>Review or correct the details Concierge captures along the way.</li>
-			<li>Verify by email only when protected uploads or recruiter review are needed.</li>
+			<li>Share the role, shift, and location you want in plain language.</li>
+			<li>Review or correct the details Concierge captures as you go.</li>
+			<li>Verify by email only when uploads or recruiter review are ready.</li>
 		</ul>
 	</section>
 {/if}
@@ -146,14 +145,15 @@
 		align-items: center;
 		justify-content: center;
 		padding: 0.8rem 1.2rem;
-		border-radius: 999px;
+		border-radius: var(--radius-tight);
 		background: var(--button-bg);
 		color: var(--button-ink);
 		text-decoration: none;
-		border: 1px solid rgba(167, 184, 255, 0.18);
+		border: 1px solid var(--button-bg);
 		cursor: pointer;
 		font: inherit;
-		box-shadow: 0 16px 34px rgba(49, 92, 255, 0.22);
+		font-weight: var(--font-medium, 500);
+		box-shadow: none;
 	}
 
 	.cta.secondary {
@@ -171,38 +171,8 @@
 
 	.lede {
 		max-width: 48rem;
-		font-size: 1.02rem;
-	}
-
-	.trust-strip {
-		display: flex;
-		align-items: center;
-		gap: 0.9rem;
-		flex-wrap: wrap;
-		padding: 1rem 1.05rem;
-		border-radius: 18px;
-		background: var(--surface-soft);
-		border: 1px solid var(--line);
-	}
-
-	.trust-strip.good {
-		border-color: rgba(107, 201, 152, 0.24);
-	}
-
-	.trust-strip.warn {
-		border-color: rgba(255, 214, 153, 0.24);
-	}
-
-	.meter {
-		height: 0.65rem;
-		border-radius: 999px;
-		background: var(--surface-overlay);
-		overflow: hidden;
-	}
-
-	.fill {
-		height: 100%;
-		background: var(--accent-gradient);
+		font-size: var(--text-body-lg, 1.095rem);
+		line-height: var(--leading-relaxed, 1.618);
 	}
 
 	.badges {
@@ -216,7 +186,8 @@
 		border-radius: 999px;
 		background: var(--surface-overlay);
 		border: 1px solid var(--line);
-		font-size: 0.88rem;
+		font-size: 0.78rem;
+		line-height: 1.2;
 	}
 
 	.helper,
@@ -231,6 +202,6 @@
 	ul {
 		margin: 0;
 		padding-left: 1.1rem;
-		line-height: 1.7;
+		line-height: var(--leading-relaxed, 1.618);
 	}
 </style>

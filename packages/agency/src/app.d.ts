@@ -58,6 +58,7 @@ declare global {
 				IDENTITY_WORKER_URL?: string;
 				IDENTITY_WORKER_SECRET?: string;
 				IDENTITY_WORKER_ADMIN_API_KEY?: string;
+				ANALYTICS_SERVICE_TOKEN?: string;
 				// Optional gateway bearer injected into strict MCP access bundles.
 				MCP_HUB_GATEWAY_BEARER?: string;
 				// Partner auth portal
@@ -94,6 +95,7 @@ declare global {
 				OPENAI_API_KEY?: string;
 				PUBLIC_ATLAS_AGENT_MODEL?: string;
 				PUBLIC_ATLAS_AGENT_MAX_OUTPUT_TOKENS?: string;
+				PUBLIC_ATLAS_AGENT_REASONING_EFFORT?: string;
 				PUBLIC_ATLAS_AGENT_TIMEOUT_MS?: string;
 			};
 			context: {
