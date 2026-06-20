@@ -33,7 +33,6 @@ const legacyStaticPaperRoutes = new Set([
 	'norvig-partnership',
 	'observability-infrastructure',
 	'open-weight-models-mcp-guidance',
-	'policy-os-development-infrastructure',
 	'ralph-implementation',
 	'ralph-vs-gastown',
 	'recursive-language-models',
