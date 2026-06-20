@@ -7,10 +7,12 @@ This guide documents how to migrate papers from static Svelte routes to the mark
 ## Infrastructure (Completed)
 
 - `src/routes/papers/[slug]/+page.server.ts` - Dynamic route that serves file-based papers
-- `src/routes/papers/[slug]/+page.svelte` - Template for rendering file-based papers
+- `src/routes/papers/[slug]/+page.svelte` - Dynamic route wrapper for the shared research artifact shell
+- `../canon/src/lib/domains/io/ResearchArtifactPage.svelte` - Shared page shell for file-backed papers and experiments
 - `src/lib/config/fileBasedPapers.ts` - Configuration for file-based papers
 - `src/lib/config/paperCatalog.ts` - Shared archive, manifest, and sitemap catalog
 - `scripts/check-paper-catalog.mjs` - Drift guard for paper routes and sitemap ownership
+- `scripts/check-research-artifact-templates.mjs` - Template guard that blocks new bespoke static artifact routes
 
 ## Migration Steps
 
@@ -133,5 +135,6 @@ Content here...
 ## Notes
 
 - Static routes take precedence over dynamic routes
-- Papers with interactive components should stay as static routes
+- New papers should not add static routes. Use the markdown-backed dynamic route unless an interactive component requires an explicit reviewed exception.
+- Interactive experiments may keep bespoke body components, but the exception should be intentional and tracked by `scripts/check-research-artifact-templates.mjs`.
 - The ArticleContent component renders markdown via html_content field
