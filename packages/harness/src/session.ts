@@ -121,7 +121,9 @@ export function generatePrimingPrompt(context: PrimingContext): string {
 
   lines.push('# Harness Session Context');
   lines.push('');
-  lines.push('You are running in an automated harness. Complete the assigned task, commit your work, and exit cleanly.');
+  lines.push(
+    'You are running in an automated harness. Complete the assigned task, leave a reviewable diff, and exit cleanly. Commit only when production promotion, shared review, or explicit operator intent requires it.',
+  );
   lines.push('');
 
   // Current task
@@ -197,7 +199,7 @@ export function generatePrimingPrompt(context: PrimingContext): string {
   lines.push('## Instructions');
   lines.push('1. Complete the task described above');
   lines.push('2. Run relevant tests to verify your work');
-  lines.push('3. Commit your changes with a clear message');
+  lines.push('3. Leave a reviewable diff; commit only when production promotion, shared review, or explicit operator intent requires it');
   lines.push('4. If blocked or unclear, document the issue and move on');
   lines.push('5. Do NOT wait for human input - work autonomously');
   lines.push('');
