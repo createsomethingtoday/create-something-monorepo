@@ -35,6 +35,12 @@ type AddNodeInput = {
 
 type UpdateNodeInput = Partial<Omit<AtlasCanvasNode, 'id' | 'createdBy'>>;
 
+export type RemoveNodeResult = {
+  removedEdges: AtlasCanvasEdge[];
+  removedNode: AtlasCanvasNode;
+  session: AtlasSession;
+};
+
 type AddEdgeInput = {
   source: string;
   target: string;
@@ -299,6 +305,62 @@ export async function updateNode(
     updatedAt: now()
   };
   return writeSession(session, cwd);
+}
+
+export async function updateNodes(
+  sessionId: string,
+  inputs: Array<{ id: string } & UpdateNodeInput>,
+  cwd = process.cwd()
+): Promise<AtlasSession> {
+  const session = await readSession(sessionId, cwd);
+  if (!inputs.length) return session;
+
+  const inputById = new Map(inputs.map((input) => [input.id, input]));
+  const missing = inputs
+    .map((input) => input.id)
+    .filter((id) => !session.canvas.nodes.some((node) => node.id === id));
+  if (missing.length) throw new Error(`Unknown node${missing.length === 1 ? '' : 's'}: ${missing.join(', ')}`);
+
+  const updatedAt = now();
+  session.canvas.nodes = session.canvas.nodes.map((node) => {
+    const input = inputById.get(node.id);
+    if (!input) return node;
+    const { id, ...patch } = input;
+    return {
+      ...node,
+      ...patch,
+      id,
+      updatedAt
+    };
+  });
+
+  return writeSession(session, cwd);
+}
+
+export async function removeNode(
+  sessionId: string,
+  nodeId: string,
+  cwd = process.cwd()
+): Promise<RemoveNodeResult> {
+  const session = await readSession(sessionId, cwd);
+  const nodeIndex = session.canvas.nodes.findIndex((node) => node.id === nodeId);
+  if (nodeIndex === -1) throw new Error(`Unknown node: ${nodeId}`);
+
+  const removedNode = session.canvas.nodes[nodeIndex];
+  session.canvas.nodes = session.canvas.nodes.filter((node) => node.id !== nodeId);
+
+  const removedEdges = session.canvas.edges.filter(
+    (edge) => edge.source === nodeId || edge.target === nodeId
+  );
+  session.canvas.edges = session.canvas.edges.filter(
+    (edge) => edge.source !== nodeId && edge.target !== nodeId
+  );
+
+  return {
+    removedEdges,
+    removedNode,
+    session: await writeSession(session, cwd)
+  };
 }
 
 export async function addEdge(

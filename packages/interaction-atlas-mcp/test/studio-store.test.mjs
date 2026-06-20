@@ -18,6 +18,7 @@ import {
   createSession,
   exportSessionMarkdown,
   readSession,
+  removeNode,
   writeSession
 } from '../dist/studio/store.js';
 
@@ -67,6 +68,32 @@ test('local Atlas Studio sessions can be mutated by agent commands', async () =>
   const markdown = exportSessionMarkdown(reloaded);
   assert.match(markdown, /Acme - Atlas Workflow Map/);
   assert.match(markdown, /Linear issue/);
+});
+
+test('removing an Atlas Studio node also removes connected edges', async () => {
+  const cwd = await mkdtemp(path.join(tmpdir(), 'atlas-studio-remove-node-test-'));
+  const session = await createSession(
+    { client: 'Acme', workflow: 'Support recovery', owner: 'Ops' },
+    cwd
+  );
+
+  const result = await removeNode(session.id, 'data_workflow', cwd);
+
+  assert.equal(result.removedNode.id, 'data_workflow');
+  assert.deepEqual(
+    result.removedEdges.map((edge) => edge.id).sort(),
+    ['edge_client_workflow', 'edge_workflow_agent']
+  );
+  assert.equal(
+    result.session.canvas.nodes.some((node) => node.id === 'data_workflow'),
+    false
+  );
+  assert.equal(
+    result.session.canvas.edges.some(
+      (edge) => edge.source === 'data_workflow' || edge.target === 'data_workflow'
+    ),
+    false
+  );
 });
 
 test('Atlas Studio can self-heal Template System production primitive bindings', async () => {
