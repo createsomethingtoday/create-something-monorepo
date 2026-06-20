@@ -21,6 +21,45 @@ export type FileBasedPaper = FileBasedExperiment;
  */
 export const fileBasedPapers: FileBasedPaper[] = [
 	{
+		id: 'paper-workflow-trust-layer',
+		slug: 'workflow-trust-layer',
+		title: 'The Workflow Trust Layer',
+		description: 'Why agents need handoffs, approval states, and evidence before they need more tools. A practical operating model for mapping one workflow into auto-allowed, approval-needed, and blocked states before expanding autonomy.',
+		excerpt_short: 'Connection does not create trust',
+		excerpt_long: 'This paper turns recent CREATE SOMETHING implementation work into a practical model for users evaluating agentic workflows. MCP exposes capability, app surfaces make workflows usable, runtime services provide durable boundaries, and SDK-backed services can graduate risky orchestration into code when evidence justifies the platform burden. The workflow trust layer is the artifact family that keeps those surfaces coherent.',
+		category: 'Research',
+		tags: [
+			'Workflow Trust Layer',
+			'Policy OS',
+			'MCP',
+			'Dify',
+			'OpenAI Agents SDK',
+			'Approval States',
+			'Agent Governance',
+			'Three-Tier Framework'
+		],
+		created_at: '2026-06-20T15:00:00Z',
+		updated_at: '2026-06-20T15:00:00Z',
+		reading_time_minutes: 18,
+		difficulty: 'intermediate',
+		is_file_based: true,
+		tests_principles: [
+			'mcp-first-thesis',
+			'three-tier-framework',
+			'policy-as-artifact',
+			'verification-first'
+		],
+		route: '/papers/workflow-trust-layer',
+		ascii_art: `
+╭──────────────────────────────────────────────────────────────╮
+│ TOOL ACCESS  →  DECISION STATE  →  RECEIPT                  │
+│ can it run?     allow / approve / block    prove the path    │
+│                                                              │
+│ Connection does not create trust. The workflow boundary does.│
+╰──────────────────────────────────────────────────────────────╯
+`
+	},
+	{
 		id: 'paper-analyzer-mcp-review-architecture',
 		slug: 'analyzer-mcp-review-architecture',
 		title: 'The Analyzer MCP: A Policy-Grounded Review Architecture',
