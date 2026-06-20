@@ -2,6 +2,14 @@
 
 This guide wires the CREATE SOMETHING monorepo into Ona Core without splitting the repository or replacing Infisical.
 
+## Naming And Use
+
+- **Ona Core** is the supervised remote execution environment for persistent repo work.
+- **Ona-styled UI** means CREATE SOMETHING-owned product surfaces that borrow Ona's clarity patterns without copying source assets.
+- **`packages/ona-agents`** is a standalone Dify operator chat app; it is not the Ona Core rollout itself.
+- Use Ona when the task needs memory, tools, browser or live verification, and multi-step ownership.
+- Do not spend Ona cycles on cheap isolated work that does not need persistence, live truth, or operator follow-through.
+
 ## What Lives In Repo
 
 - `.devcontainer/` defines the shared monorepo environment.
@@ -111,7 +119,7 @@ The runtime pin is deliberate. Do not treat a newer local Node version as equiva
 
 ## Secrets
 
-Use Ona project secrets only for internal engineering and runtime delivery. Do not use Ona as the client bearer-token distribution system in this phase.
+Use Ona project secrets only for internal engineering and runtime delivery. Ona secrets are mirrors for project execution, not the authority for client or production credential policy. Do not use Ona as the client bearer-token distribution system in this phase.
 
 ### Agency Project Secrets
 
@@ -134,6 +142,8 @@ Mirror these values from Infisical or the existing operational source into the `
 - `STRIPE_PRICE_VERTICAL_TEAM`
 
 Use Ona user secrets for personal credentials such as developer-specific tokens.
+
+Infisical remains the source of truth for shared runtime secrets. When Ona needs one of those values, copy the current value from Infisical into the relevant Ona project and treat drift as a rotation/sync task, not as a new source of truth.
 
 ### Product Project Secrets
 
