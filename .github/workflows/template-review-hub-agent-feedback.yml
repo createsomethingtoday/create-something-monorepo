@@ -38,6 +38,7 @@ jobs:
   review:
     name: Review recent blank Agent Review Feedback rows
     runs-on: ubuntu-latest
+    if: ${{ github.event_name != 'schedule' || vars.ENABLE_TEMPLATE_REVIEW_HUB_SCHEDULE == 'true' }}
     timeout-minutes: 60
 
     env:
