@@ -152,6 +152,7 @@
 				{#each policies as policy}
 					<button
 						type="button"
+						aria-pressed={selectedPolicy === policy.key}
 						class:active={selectedPolicy === policy.key}
 						class:performance-pressure-rail={selectedPolicy === policy.key}
 						onclick={() => (selectedPolicy = policy.key)}
@@ -286,6 +287,7 @@
 			system-ui,
 			sans-serif;
 		letter-spacing: 0;
+		text-rendering: geometricPrecision;
 	}
 
 	.bsl-hero {
@@ -378,6 +380,7 @@
 		padding: 16px;
 		display: grid;
 		gap: 14px;
+		contain: layout paint style;
 	}
 
 	.panel-header,
@@ -557,11 +560,28 @@
 		color: var(--bsl-ink);
 		text-align: left;
 		cursor: pointer;
+		transition:
+			transform var(--motion-performance-snap) var(--ease-performance-press),
+			border-color var(--motion-performance-snap) var(--ease-performance-snap),
+			box-shadow var(--motion-performance-drive) var(--ease-performance-snap);
 	}
 
 	.policy-list button.active,
 	.policy-list button:hover {
 		border-color: var(--bsl-ink);
+	}
+
+	.policy-list button:hover {
+		transform: translateY(-1px);
+	}
+
+	.policy-list button:active {
+		transform: translateY(0) scale(0.99);
+	}
+
+	.policy-list button:focus-visible {
+		outline: 3px solid color-mix(in srgb, var(--bsl-orange) 46%, white);
+		outline-offset: 3px;
 	}
 
 	.policy-list span,
@@ -585,6 +605,7 @@
 	.systems-map {
 		min-width: 0;
 		padding: 18px;
+		contain: layout paint style;
 	}
 
 	.map-header {
@@ -696,6 +717,7 @@
 		display: grid;
 		gap: 10px;
 		padding: 18px;
+		contain: layout paint;
 	}
 
 	.report h3 {
@@ -798,6 +820,17 @@
 
 		.map-node strong {
 			font-size: 0.82rem;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.policy-list button {
+			transition: none;
+		}
+
+		.policy-list button:hover,
+		.policy-list button:active {
+			transform: none;
 		}
 	}
 </style>

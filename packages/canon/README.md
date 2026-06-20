@@ -158,6 +158,17 @@ copying third-party identity.
 
 Use the performance layer for labs, systems maps, operational dashboards, simulation surfaces, and
 high-stakes decision rooms where clarity needs more physical energy than a standard SaaS panel.
+The layer includes:
+
+- `performance-property` for property-level product polish and the performance signal bar.
+- `performance-stat-strip` and `performance-stat` for compact operating metrics.
+- `performance-action`, `performance-panel`, `performance-metric`, and `performance-pressure-rail`
+  for sharp interaction, evidence panels, and pressure-state feedback.
+- `performance-deferred` for opt-in `content-visibility` on heavy below-the-fold regions.
+
+The runtime rule is speed with restraint: use the performance motion tokens for direct manipulation,
+honor reduced-motion preferences, and use containment by default. Add `performance-deferred` only
+when a heavy lower-page region has been visually verified in its target route.
 
 ```svelte
 <Navigation visualStyle="clear" {...navProps} />
