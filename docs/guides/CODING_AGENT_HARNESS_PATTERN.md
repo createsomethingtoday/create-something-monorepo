@@ -24,6 +24,7 @@ Use Linear as the control plane.
 pnpm linear:ready
 pnpm linear:list -- --status open
 pnpm linear:get -- --issue CRE-123
+pnpm agent:claim-worktree -- --issue CRE-123
 ```
 
 The agent should start from a tracked task, not from an untracked conversation fragment.
@@ -50,6 +51,14 @@ When changing package directives, package-local `AGENTS.md`, or the legibility s
 ## 3. Execute in isolation
 
 Prefer isolated git worktrees for long-running or parallel work.
+
+Use the repo helper when starting implementation work:
+
+```bash
+pnpm agent:claim-worktree -- --issue CRE-123
+```
+
+The helper records the Linear issue, branch, worktree path, base ref, and base SHA as a Linear comment. Treat that record as the shared ownership handoff. If `origin/main` has moved before push or production promotion, rebase or merge the current base and update Linear evidence.
 
 Why:
 
