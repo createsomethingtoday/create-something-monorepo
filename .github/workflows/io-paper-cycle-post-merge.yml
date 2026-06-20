@@ -115,6 +115,8 @@ jobs:
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
         run: |
+          pnpm --filter @create-something/eslint-plugin-canon build
+          pnpm --filter @create-something/spritz package
           pnpm --filter @create-something/io build
           node scripts/run-wrangler.mjs --cwd packages/io pages deploy .svelte-kit/cloudflare \
             --project-name=create-something-io \
