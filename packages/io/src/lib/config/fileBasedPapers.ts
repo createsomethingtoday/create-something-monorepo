@@ -227,6 +227,44 @@ export const fileBasedPapers: FileBasedPaper[] = [
 `
 	},
 	{
+		id: 'paper-policy-os-development-infrastructure',
+		slug: 'policy-os-development-infrastructure',
+		title: 'Policy OS Applied to Development Infrastructure',
+		description: 'Applying the Three-Tier Framework and Policy OS to the development workflow itself, demonstrating that agent governance emerges as a structural property at every scale.',
+		excerpt_short: 'Governed agent execution via the Pi coding agent harness',
+		excerpt_long: 'Policy OS was designed for client MCP deployments. This case study documents applying the same product to CREATE SOMETHING development workflow via the Pi coding agent harness, showing that agent governance is not an add-on but a structural property that emerges from the Three-Tier Framework at every scale.',
+		category: 'Case Study',
+		tags: [
+			'Policy OS',
+			'Three-Tier Framework',
+			'Pi',
+			'Agent Governance',
+			'Quality Gates',
+			'MCP',
+			'Development Infrastructure'
+		],
+		created_at: '2026-05-11T00:00:00Z',
+		updated_at: '2026-05-11T00:00:00Z',
+		reading_time_minutes: 10,
+		difficulty: 'intermediate',
+		is_file_based: true,
+		tests_principles: [
+			'policy-as-artifact',
+			'three-tier-framework',
+			'verification-first',
+			'agent-governance'
+		],
+		route: '/papers/policy-os-development-infrastructure',
+		ascii_art: `
+╭──────────────────────────────────────────────────────────────╮
+│ POLICY OS  →  PI HARNESS  →  DEVELOPMENT WORKFLOW            │
+│ governance    quality gates   receipts and evidence          │
+│                                                              │
+│ The harness is policy. The configuration is the contract.    │
+╰──────────────────────────────────────────────────────────────╯
+`
+	},
+	{
 		id: 'paper-braintrust-trace-unsurfacing',
 		slug: 'braintrust-trace-unsurfacing',
 		title: 'Braintrust Trace Unsurfacing: Finding What Normal Aggregates Hide',
