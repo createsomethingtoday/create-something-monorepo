@@ -82,7 +82,7 @@
 <!-- Unified Search - Cmd/Ctrl+K to open -->
 <UnifiedSearch currentProperty="space" localItems={quickAccessItems} />
 
-<div class="layout">
+<div class="layout property-performance">
 	<Navigation
 		logo="CREATE SOMETHING"
 		logoSuffix=".space"
