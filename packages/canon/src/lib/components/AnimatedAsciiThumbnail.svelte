@@ -245,7 +245,7 @@
 
 	.ascii-art {
 		font-family: 'SF Mono', 'Monaco', 'Menlo', 'Consolas', monospace;
-		font-size: var(--text-overline);
+		font-size: clamp(0.32rem, 1vw, 0.38rem);
 		line-height: 1.1;
 		color: var(--color-fg-primary);
 		opacity: 0.9;

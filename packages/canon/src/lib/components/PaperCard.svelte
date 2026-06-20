@@ -236,6 +236,33 @@
     background: rgba(10, 14, 25, 0.04);
   }
 
+  @media (max-width: 640px) {
+    .group {
+      transform: none !important;
+    }
+
+    .paper-image {
+      aspect-ratio: 16 / 9;
+      padding: var(--space-xs);
+    }
+
+    .paper-image :global(.ascii-art),
+    .ascii-art {
+      font-size: clamp(0.32rem, 1vw, 0.38rem);
+      line-height: 1.08;
+      max-width: 100%;
+    }
+
+    .paper-title {
+      font-size: var(--text-body);
+    }
+
+    .paper-meta {
+      flex-wrap: wrap;
+      row-gap: 0.25rem;
+    }
+  }
+
   /* Staggered reveal animation - CSS only */
   .animate-reveal {
     opacity: 0;

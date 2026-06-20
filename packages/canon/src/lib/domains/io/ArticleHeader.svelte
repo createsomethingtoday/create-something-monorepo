@@ -37,10 +37,10 @@
 	};
 </script>
 
-<header class="w-full max-w-5xl mx-auto px-6 py-12 animate-reveal">
+<header class="article-header w-full max-w-5xl mx-auto px-6 py-12 animate-reveal">
 	<!-- ASCII Art Hero -->
 	<div class="ascii-hero mb-8 overflow-hidden">
-		<div class="aspect-[21/9] flex items-center justify-center p-8">
+		<div class="ascii-hero-frame aspect-[21/9] flex items-center justify-center p-8">
 			{#if paper.ascii_art}
 				<pre class="ascii-art ascii-art-real">{paper.ascii_art}</pre>
 			{:else}
@@ -154,7 +154,9 @@
 
 	.ascii-art {
 		font-family: monospace;
+		tab-size: 2;
 		user-select: none;
+		white-space: pre;
 	}
 
 	.ascii-art-real {
@@ -285,6 +287,59 @@
 			animation: none;
 			opacity: 1;
 			transform: none;
+		}
+	}
+
+	@media (max-width: 640px) {
+		.article-header {
+			padding: 1.5rem 1rem 2rem;
+		}
+
+		.ascii-hero {
+			margin-bottom: 1.5rem;
+			overflow-x: auto;
+			border-radius: var(--radius-md);
+			-webkit-overflow-scrolling: touch;
+		}
+
+		.ascii-hero-frame {
+			aspect-ratio: 16 / 7;
+			min-width: max-content;
+			padding: 1rem;
+			justify-content: flex-start;
+		}
+
+		.ascii-art-real {
+			font-size: 0.5rem;
+			line-height: 1.25;
+		}
+
+		.ascii-art-placeholder {
+			font-size: 0.46rem;
+		}
+
+		.category-tag {
+			padding: 0.375rem 0.625rem;
+			font-size: var(--text-caption);
+		}
+
+		.article-title {
+			font-size: 2.125rem;
+			line-height: 1.12;
+		}
+
+		.article-excerpt {
+			font-size: var(--text-body);
+			line-height: 1.55;
+		}
+
+		.metadata-row {
+			gap: 0.875rem;
+			padding-top: 1rem;
+		}
+
+		.tech-tag {
+			white-space: normal;
 		}
 	}
 </style>

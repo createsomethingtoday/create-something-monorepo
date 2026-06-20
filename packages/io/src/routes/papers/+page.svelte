@@ -634,6 +634,47 @@
 		color: var(--color-fg-muted);
 	}
 
+	@media (max-width: 640px) {
+		.hero-section {
+			padding: var(--space-lg) var(--space-md) var(--space-sm);
+		}
+
+		.hero-title {
+			font-size: clamp(2rem, 10vw, 2.65rem);
+			line-height: 1.05;
+		}
+
+		.hero-subtitle {
+			max-width: 18rem;
+			margin-inline: auto;
+			font-size: var(--text-body);
+			line-height: 1.5;
+		}
+
+		.controls-container {
+			margin-top: var(--space-md);
+			gap: 0.72rem;
+		}
+
+		.papers-page {
+			padding-inline: 1.1rem;
+		}
+
+		.papers-grid {
+			gap: var(--space-sm);
+		}
+
+		.paper-content {
+			padding: var(--space-sm) 0;
+		}
+
+		.paper-meta {
+			flex-wrap: wrap;
+			gap: 0.32rem 0.78rem;
+			line-height: 1.35;
+		}
+	}
+
 	/* Screen reader only - visually hidden but accessible */
 	.sr-only {
 		position: absolute;

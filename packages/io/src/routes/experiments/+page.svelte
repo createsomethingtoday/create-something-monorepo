@@ -399,6 +399,33 @@
 		background: var(--color-bg-surface);
 	}
 
+	@media (max-width: 640px) {
+		.hero-section {
+			padding: var(--space-lg) var(--space-md) var(--space-sm);
+		}
+
+		.hero-title {
+			font-size: clamp(2rem, 10vw, 2.65rem);
+			line-height: 1.05;
+		}
+
+		.hero-subtitle {
+			max-width: 19rem;
+			margin-inline: auto;
+			font-size: var(--text-body);
+			line-height: 1.5;
+		}
+
+		.controls-container {
+			margin-top: var(--space-md);
+			gap: 0.72rem;
+		}
+
+		:global(.papers-section) {
+			padding-top: var(--space-md);
+		}
+	}
+
 	/* Screen reader only - visually hidden but accessible */
 	.sr-only {
 		position: absolute;

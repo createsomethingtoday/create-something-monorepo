@@ -32,10 +32,32 @@
 		return marked.parse(contentToRender, { async: false });
 	});
 
+	function enhanceTables() {
+		document.querySelectorAll('.article-prose table').forEach((table) => {
+			if (table.parentElement?.classList.contains('table-scroll')) return;
+
+			const headers = Array.from(table.querySelectorAll('thead th')).map((header) =>
+				header.textContent?.trim() || ''
+			);
+
+			table.querySelectorAll('tbody tr').forEach((row) => {
+				Array.from(row.querySelectorAll('td')).forEach((cell, index) => {
+					cell.setAttribute('data-label', headers[index] || `Column ${index + 1}`);
+				});
+			});
+
+			const wrapper = document.createElement('div');
+			wrapper.className = 'table-scroll';
+			table.parentNode?.insertBefore(wrapper, table);
+			wrapper.appendChild(table);
+		});
+	}
+
 	$effect(() => {
 		renderedContent;
 		if (typeof document === 'undefined') return;
 		tick().then(() => {
+			enhanceTables();
 			document.querySelectorAll('pre code').forEach((block) => {
 				hljs.highlightElement(block as HTMLElement);
 			});
@@ -60,6 +82,10 @@
 </article>
 
 <style>
+	.article-container {
+		overflow-x: hidden;
+	}
+
 	.article-prose :global(h1) {
 		font-size: var(--text-display);
 		font-weight: bold;
@@ -174,16 +200,26 @@
 
 	.article-prose :global(img) {
 		border-radius: var(--radius-lg);
+		max-width: 100%;
 		width: 100%;
 		margin-top: 2rem;
 		margin-bottom: 2rem;
 	}
 
-	.article-prose :global(table) {
-		min-width: 100%;
-		border-radius: var(--radius-lg);
+	.article-prose :global(.table-scroll) {
+		width: 100%;
+		max-width: 100%;
 		margin-top: 1.5rem;
 		margin-bottom: 1.5rem;
+		overflow-x: auto;
+		-webkit-overflow-scrolling: touch;
+	}
+
+	.article-prose :global(table) {
+		width: 100%;
+		min-width: 100%;
+		border-radius: var(--radius-lg);
+		border-collapse: collapse;
 	}
 
 	.article-prose :global(thead) {
@@ -195,11 +231,13 @@
 		text-align: left;
 		color: var(--color-fg-primary);
 		font-weight: 600;
+		vertical-align: top;
 	}
 
 	.article-prose :global(td) {
 		padding: 0.75rem 1rem;
 		color: var(--color-fg-secondary);
+		vertical-align: top;
 	}
 
 	.article-prose :global(hr) {
@@ -236,6 +274,101 @@
 			animation: none;
 			opacity: 1;
 			transform: none;
+		}
+	}
+
+	@media (max-width: 640px) {
+		.article-container {
+			padding: 1.5rem 1rem 2.5rem;
+		}
+
+		.article-prose {
+			overflow-wrap: anywhere;
+		}
+
+		.article-prose :global(h1) {
+			font-size: var(--text-h1);
+			margin-top: 2rem;
+		}
+
+		.article-prose :global(h2) {
+			font-size: var(--text-h2);
+			margin-top: 2rem;
+		}
+
+		.article-prose :global(h3) {
+			font-size: var(--text-h3);
+		}
+
+		.article-prose :global(p),
+		.article-prose :global(li) {
+			line-height: 1.65;
+		}
+
+		.article-prose :global(ul),
+		.article-prose :global(ol) {
+			padding-left: 1.25rem;
+		}
+
+		.article-prose :global(pre) {
+			padding: 1rem;
+			border-radius: var(--radius-md);
+		}
+
+		.article-prose :global(table) {
+			display: block;
+			min-width: 0;
+			border-radius: var(--radius-md);
+			font-size: var(--text-body-sm);
+		}
+
+		.article-prose :global(thead) {
+			position: absolute;
+			width: 1px;
+			height: 1px;
+			margin: -1px;
+			padding: 0;
+			overflow: hidden;
+			clip: rect(0, 0, 0, 0);
+			clip-path: inset(50%);
+			white-space: nowrap;
+		}
+
+		.article-prose :global(tbody),
+		.article-prose :global(tr),
+		.article-prose :global(td) {
+			display: block;
+			width: 100%;
+		}
+
+		.article-prose :global(tr) {
+			margin-bottom: 0.875rem;
+			border: 1px solid var(--color-border-default);
+			border-radius: var(--radius-md);
+			background: var(--color-bg-pure);
+			overflow: hidden;
+		}
+
+		.article-prose :global(td) {
+			display: grid;
+			grid-template-columns: minmax(7rem, 38%) 1fr;
+			gap: 0.75rem;
+			min-width: 0;
+			padding: 0.75rem;
+			border-bottom: 1px solid var(--color-border-subtle);
+			overflow-wrap: anywhere;
+			word-break: normal;
+		}
+
+		.article-prose :global(td:last-child) {
+			border-bottom: 0;
+		}
+
+		.article-prose :global(td::before) {
+			content: attr(data-label);
+			font-weight: 600;
+			color: var(--color-fg-primary);
+			overflow-wrap: normal;
 		}
 	}
 </style>
