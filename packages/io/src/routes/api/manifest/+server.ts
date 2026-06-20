@@ -23,6 +23,7 @@
 
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import { getExperimentManifestItems } from '$lib/config/experimentCatalog';
 import { getPaperManifestItems } from '$lib/config/paperCatalog';
 import {
 	PUBLIC_AGENT_TRUST_CARDS,
@@ -35,25 +36,6 @@ interface ContentItem {
 	description: string;
 	category?: string;
 }
-
-// Experiments with static routes in src/routes/experiments/.
-// Paper routes are derived from the shared paper catalog above.
-const EXPERIMENTS: ContentItem[] = [
-	{ slug: 'agent-operations', title: 'Agent Operations', description: 'Interactive experiment for agent operation patterns', category: 'interactive' },
-	{ slug: 'agentic-visualization', title: 'Agentic Visualization', description: 'Visualizing agent decision-making in real-time', category: 'interactive' },
-	{ slug: 'awwwards-patterns', title: 'Awwwards Patterns', description: 'Design patterns from award-winning websites', category: 'interactive' },
-	{ slug: 'canvas-interactivity', title: 'Canvas Interactivity', description: 'Interactive canvas experiments', category: 'interactive' },
-	{ slug: 'data-patterns', title: 'Data Patterns', description: 'Exploring data visualization patterns', category: 'interactive' },
-	{ slug: 'diagrams', title: 'Diagrams', description: 'Interactive diagram components', category: 'interactive' },
-	{ slug: 'hybrid-scheduling', title: 'Hybrid Scheduling', description: 'Hybrid agent scheduling experiments', category: 'interactive' },
-	{ slug: 'ic-mvp-pipeline', title: 'IC MVP Pipeline', description: 'Interactive concept MVP pipeline', category: 'interactive' },
-	{ slug: 'kinetic-typography', title: 'Kinetic Typography', description: 'Motion typography experiments', category: 'interactive' },
-	{ slug: 'living-arena', title: 'Living Arena', description: 'Living documentation arena', category: 'interactive' },
-	{ slug: 'render-preview', title: 'Render Preview', description: 'Real-time render preview system', category: 'interactive' },
-	{ slug: 'render-studio', title: 'Render Studio', description: 'Interactive rendering studio', category: 'interactive' },
-	{ slug: 'spritz', title: 'Spritz', description: 'Speed reading with Spritz technique', category: 'interactive' },
-	{ slug: 'text-revelation', title: 'Text Revelation', description: 'Progressive text revelation patterns', category: 'interactive' }
-];
 
 const MCP_TRUST_CARDS: ContentItem[] = PUBLIC_MCP_TRUST_CARDS.map((card) => ({
 	slug: card.slug,
@@ -71,16 +53,17 @@ const AGENT_TRUST_CARDS: ContentItem[] = PUBLIC_AGENT_TRUST_CARDS.map((card) => 
 
 export const GET: RequestHandler = async () => {
 	const papers = getPaperManifestItems();
+	const experiments = getExperimentManifestItems();
 
 	return json({
 		property: 'io',
 		papers,
-		experiments: EXPERIMENTS,
+		experiments,
 		mcpTrustCards: MCP_TRUST_CARDS,
 		agentTrustCards: AGENT_TRUST_CARDS,
 		// Legacy format for backward compatibility
 		paperSlugs: papers.map(p => p.slug),
-		experimentSlugs: EXPERIMENTS.map(e => e.slug),
+		experimentSlugs: experiments.map(e => e.slug),
 		mcpTrustCardSlugs: MCP_TRUST_CARDS.map((card) => card.slug),
 		agentTrustCardSlugs: AGENT_TRUST_CARDS.map((card) => card.slug),
 		generated: new Date().toISOString()

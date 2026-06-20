@@ -3,7 +3,10 @@ import {
 	PUBLIC_AGENT_TRUST_CARDS,
 	PUBLIC_MCP_TRUST_CARDS
 } from '$lib/config/publicTrustCatalog';
-import { getFileBasedExperiments } from '$lib/config/fileBasedExperiments';
+import {
+	getPublishedExperimentMetas,
+	getPublishedExperimentSlugs
+} from '$lib/config/experimentCatalog';
 import { getPublishedPaperMetas, getPublishedPaperSlugs } from '$lib/config/paperCatalog';
 
 const paperMetas = getPublishedPaperMetas();
@@ -64,8 +67,8 @@ export const GET: RequestHandler = async ({ platform }) => {
 		});
 	}
 
-	const knownExperimentSlugs = new Set<string>();
-	for (const experiment of getFileBasedExperiments()) {
+	const knownExperimentSlugs = getPublishedExperimentSlugs();
+	for (const experiment of getPublishedExperimentMetas()) {
 		knownExperimentSlugs.add(experiment.slug);
 		urls.push({
 			loc: `${baseUrl}/experiments/${experiment.slug}`,
