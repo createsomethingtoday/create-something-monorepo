@@ -23,6 +23,7 @@ const API_MANIFEST_ROUTE_PREFIX = 'packages/io/src/routes/api/manifest/';
 const SITEMAP_ROUTE_PREFIX = 'packages/io/src/routes/sitemap.xml/';
 const PAPER_CONTENT_PREFIX = 'packages/io/content/papers/';
 const EXPERIMENT_CONTENT_PREFIX = 'packages/io/content/experiments/';
+const EXPERIMENT_CATALOG_FILE = 'packages/io/src/lib/config/experimentCatalog.ts';
 const PUBLIC_TRUST_DATA_PREFIX = 'config/public-trust/';
 const PUBLIC_TRUST_CONFIG_FILE = 'packages/io/src/lib/config/publicTrustCatalog.ts';
 const PUBLIC_TRUST_GENERATED_CONFIG_FILE = 'packages/io/src/lib/config/publicTrustCatalog.generated.ts';
@@ -138,6 +139,7 @@ function isPublishableIoFile(file) {
     file.startsWith(SITEMAP_ROUTE_PREFIX) ||
     file.startsWith(PAPER_CONTENT_PREFIX) ||
     file.startsWith(EXPERIMENT_CONTENT_PREFIX) ||
+    file === EXPERIMENT_CATALOG_FILE ||
     file.startsWith(PUBLIC_TRUST_DATA_PREFIX) ||
     file === PUBLIC_TRUST_CONFIG_FILE ||
     file === PUBLIC_TRUST_GENERATED_CONFIG_FILE ||
@@ -234,6 +236,10 @@ function routesFromIoRouteFile(file) {
     return [`/experiments/${remainder.replace(/\.md$/u, '')}`];
   }
 
+  if (file === EXPERIMENT_CATALOG_FILE) {
+    return ['/experiments', '/api/manifest', '/sitemap.xml'];
+  }
+
   if (file.startsWith(MCP_TRUST_ROUTE_PREFIX)) {
     return publicTrustRoutes('mcp');
   }
@@ -281,7 +287,11 @@ export function collectIoPaperCycleContext(files) {
   const changedRoutes = uniqueSorted(publishableFiles.flatMap(routesFromIoRouteFile).filter(Boolean));
   const artifactKinds = uniqueSorted([
     ...(publishableFiles.some((file) => file.startsWith(PAPER_ROUTE_PREFIX) || file.startsWith(PAPER_CONTENT_PREFIX)) ? ['paper'] : []),
-    ...(publishableFiles.some((file) => file.startsWith(EXPERIMENT_ROUTE_PREFIX) || file.startsWith(EXPERIMENT_CONTENT_PREFIX)) ? ['experiment'] : []),
+    ...(publishableFiles.some((file) => (
+      file.startsWith(EXPERIMENT_ROUTE_PREFIX) ||
+      file.startsWith(EXPERIMENT_CONTENT_PREFIX) ||
+      file === EXPERIMENT_CATALOG_FILE
+    )) ? ['experiment'] : []),
     ...(publishableFiles.some((file) => (
       file.startsWith(MCP_TRUST_ROUTE_PREFIX) ||
       file.startsWith(AGENT_TRUST_ROUTE_PREFIX) ||

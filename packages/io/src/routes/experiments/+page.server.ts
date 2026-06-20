@@ -1,11 +1,12 @@
 import type { PageServerLoad } from './$types';
 import type { Paper } from '@create-something/canon/types';
 import { getPlatform } from '@create-something/canon/platform';
-import { getFileBasedExperiments } from '$lib/config/fileBasedExperiments';
+import { getCatalogExperimentPapers } from '$lib/config/experimentCatalog';
 import { fileBasedPapers } from '$lib/config/fileBasedPapers';
 import type { PaperMeta } from '../papers/types';
 
-const fileBasedSlugs = new Set(getFileBasedExperiments().map((experiment) => experiment.slug));
+const catalogExperiments = getCatalogExperimentPapers();
+const fileBasedSlugs = new Set(catalogExperiments.map((experiment) => experiment.slug));
 const paperModules = import.meta.glob<{ meta: PaperMeta }>('../papers/*/meta.ts', { eager: true });
 const knownPaperSlugs = new Set([
 	...fileBasedPapers.map((paper) => paper.slug),
@@ -30,7 +31,7 @@ function sortByFeaturedThenDate<T extends { featured?: number; published_at?: st
 }
 
 export const load: PageServerLoad = async ({ platform }) => {
-	const fileBasedExperiments = getFileBasedExperiments();
+	const fileBasedExperiments = catalogExperiments;
 	const fileBasedIds = new Set(fileBasedExperiments.map((experiment) => experiment.id));
 
 	try {

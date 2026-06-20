@@ -12,6 +12,7 @@ function parseArgs(argv) {
     intervalSeconds: 15,
     rangeMode: 'direct',
     routes: [],
+    skipContentAssertions: false,
     timeoutSeconds: 900,
   };
 
@@ -47,6 +48,10 @@ function parseArgs(argv) {
     }
     if (arg === '--range-mode' && argv[i + 1]) {
       args.rangeMode = argv[++i];
+      continue;
+    }
+    if (arg === '--skip-content-assertions') {
+      args.skipContentAssertions = true;
       continue;
     }
     if (arg === '--help' || arg === '-h') {
@@ -95,7 +100,49 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function fetchRoute(baseUrl, route) {
+function routeSlug(route, prefix) {
+  if (!route.startsWith(prefix)) return '';
+
+  const slug = route.slice(prefix.length).split('/')[0]?.trim() ?? '';
+  return slug && !slug.startsWith('[') ? slug : '';
+}
+
+function buildRouteExpectations(routes) {
+  const paperRoutes = uniqueSorted(routes.filter((route) => routeSlug(route, '/papers/')));
+  const experimentRoutes = uniqueSorted(routes.filter((route) => routeSlug(route, '/experiments/')));
+  const paperSlugs = paperRoutes.map((route) => routeSlug(route, '/papers/')).filter(Boolean);
+  const experimentSlugs = experimentRoutes.map((route) => routeSlug(route, '/experiments/')).filter(Boolean);
+
+  return new Map(routes.map((route) => {
+    if (routeSlug(route, '/papers/')) {
+      return [route, [routeSlug(route, '/papers/')]];
+    }
+
+    if (routeSlug(route, '/experiments/')) {
+      return [route, [routeSlug(route, '/experiments/')]];
+    }
+
+    if (route === '/papers') {
+      return [route, paperSlugs];
+    }
+
+    if (route === '/experiments') {
+      return [route, experimentSlugs];
+    }
+
+    if (route === '/api/manifest') {
+      return [route, [...paperSlugs, ...experimentSlugs]];
+    }
+
+    if (route === '/sitemap.xml') {
+      return [route, [...paperRoutes, ...experimentRoutes]];
+    }
+
+    return [route, []];
+  }));
+}
+
+async function fetchRoute(baseUrl, route, expectedFragments = []) {
   const url = new URL(route, baseUrl);
   url.searchParams.set('__paper_cycle_verify', `${Date.now()}`);
 
@@ -106,15 +153,22 @@ async function fetchRoute(baseUrl, route) {
       },
       redirect: 'follow',
     });
+    const body = await response.text();
+    const missingFragments = expectedFragments.filter((fragment) => !body.includes(fragment));
+    const contentOk = missingFragments.length === 0;
 
     return {
-      ok: response.ok,
+      content_ok: contentOk,
+      missing_fragments: missingFragments,
+      ok: response.ok && contentOk,
       status: response.status,
       status_text: response.statusText,
       url: url.toString(),
     };
   } catch (error) {
     return {
+      content_ok: false,
+      missing_fragments: expectedFragments,
       ok: false,
       status: 0,
       status_text: error instanceof Error ? error.message : String(error),
@@ -123,10 +177,21 @@ async function fetchRoute(baseUrl, route) {
   }
 }
 
-async function verifyRoutes({ baseUrl, routes, timeoutSeconds, intervalSeconds }) {
+async function verifyRoutes({ baseUrl, routes, timeoutSeconds, intervalSeconds, skipContentAssertions }) {
   const deadline = Date.now() + timeoutSeconds * 1000;
+  const expectations = skipContentAssertions ? new Map() : buildRouteExpectations(routes);
   const state = new Map(
-    routes.map((route) => [route, { attempts: 0, ok: false, last_status: 0, last_status_text: 'pending' }]),
+    routes.map((route) => [
+      route,
+      {
+        attempts: 0,
+        content_ok: skipContentAssertions || (expectations.get(route)?.length ?? 0) === 0,
+        missing_fragments: [],
+        ok: false,
+        last_status: 0,
+        last_status_text: 'pending',
+      },
+    ]),
   );
 
   while (Date.now() <= deadline) {
@@ -135,14 +200,18 @@ async function verifyRoutes({ baseUrl, routes, timeoutSeconds, intervalSeconds }
       break;
     }
 
-    const results = await Promise.all(pendingRoutes.map((route) => fetchRoute(baseUrl, route)));
+    const results = await Promise.all(
+      pendingRoutes.map((route) => fetchRoute(baseUrl, route, expectations.get(route) ?? [])),
+    );
     for (let i = 0; i < pendingRoutes.length; i += 1) {
       const route = pendingRoutes[i];
       const result = results[i];
       const current = state.get(route);
       state.set(route, {
         attempts: (current?.attempts ?? 0) + 1,
+        content_ok: result.content_ok,
         ok: result.ok,
+        missing_fragments: result.missing_fragments,
         last_status: result.status,
         last_status_text: result.status_text,
         url: result.url,
@@ -180,6 +249,9 @@ function printText(summary) {
   console.log(`Route verification ${summary.passed ? 'passed' : 'failed'} for ${summary.routes.length} route(s).`);
   for (const route of summary.routes) {
     console.log(`- ${route.route}: ${route.ok ? 'ok' : 'failed'} after ${route.attempts} attempt(s) [${route.last_status} ${route.last_status_text}]`);
+    if (route.missing_fragments?.length > 0) {
+      console.log(`  missing content: ${route.missing_fragments.join(', ')}`);
+    }
   }
 }
 
@@ -198,6 +270,7 @@ async function main() {
         routes,
         timeoutSeconds: args.timeoutSeconds,
         intervalSeconds: args.intervalSeconds,
+        skipContentAssertions: args.skipContentAssertions,
       });
 
   if (args.format === 'json') {
