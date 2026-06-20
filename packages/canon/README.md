@@ -135,6 +135,7 @@ Canon uses CSS custom properties for all design decisions:
 | **Spacing** | `--space-xs` through `--space-3xl` (Golden Ratio) |
 | **Glass** | `--glass-blur-*`, `--glass-bg-*`, `--liquid-glass-*` |
 | **Clear Communication** | `--color-clear-*`, `--radius-clear-*`, `--shadow-clear-*` |
+| **Performance Excellence** | `--color-performance-*`, `--radius-performance-*`, `--shadow-performance-*` |
 
 ## Ona-Derived Clear Communication
 
@@ -144,6 +145,19 @@ compact navigation, and restrained action states. The micro-interaction rule is 
 first: use motion or selection only when it clarifies state, evidence, or the next action.
 `.agency` is the first verified rollout surface; the shared primitives are the path for the rest
 of CREATE SOMETHING as surfaces are migrated.
+
+Canon also carries a performance-excellence layer influenced by Nike-level product discipline:
+athletic precision, decisive contrast, measured motion, material cues from performance spaces,
+and clear pressure states. Use this as a CREATE SOMETHING design principle, not as Nike branding:
+tokens and classes use `performance` language so every property can inherit the discipline without
+copying third-party identity.
+
+```css
+@import '@create-something/canon/styles/performance.css';
+```
+
+Use the performance layer for labs, systems maps, operational dashboards, simulation surfaces, and
+high-stakes decision rooms where clarity needs more physical energy than a standard SaaS panel.
 
 ```svelte
 <Navigation visualStyle="clear" {...navProps} />

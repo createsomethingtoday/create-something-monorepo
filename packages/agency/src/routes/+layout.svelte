@@ -394,7 +394,7 @@
 <!-- Unified Search - Cmd/Ctrl+K to open -->
 <UnifiedSearch currentProperty="agency" localItems={quickAccessItems} showMobileButton={false} />
 
-<div class="layout-root min-h-screen">
+<div class="layout-root min-h-screen property-performance">
   <Navigation
     logo="CREATE SOMETHING"
     logoSuffix=".agency"

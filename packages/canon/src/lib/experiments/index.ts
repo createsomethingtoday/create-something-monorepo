@@ -30,6 +30,7 @@
  * - `living-arena-gpu` — WebGPU crowd simulation (6 modules + 6 shaders)
  * - `render-preview` — Preview canvas (1 component)
  * - `render-studio` — SVG rendering workflow (2 components + 1 module)
+ * - `basketball-systems-lab` — League-office systems game design prototype (1 component)
  * 
  * ## Moved to property packages (depend on $lib)
  * 
@@ -44,3 +45,4 @@ export * as livingArena from './living-arena/index.js';
 export * as livingArenaGpu from './living-arena-gpu/index.js';
 export * as renderPreview from './render-preview/index.js';
 export * as renderStudio from './render-studio/index.js';
+export * as basketballSystemsLab from './basketball-systems-lab/index.js';

@@ -22,6 +22,7 @@
 @import './components.css';
 @import './editorial.css';
 @import './animations.css';
+@import './performance.css';
 
 /* ==========================================================================
    Base Styles - Wrapped in @layer base for Tailwind compatibility

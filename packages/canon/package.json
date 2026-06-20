@@ -36,6 +36,7 @@
 		"./styles/components.css": "./dist/styles/components.css",
 		"./styles/editorial.css": "./dist/styles/editorial.css",
 		"./styles/animations.css": "./dist/styles/animations.css",
+		"./styles/performance.css": "./dist/styles/performance.css",
 		"./styles/glass.css": "./dist/styles/glass.css",
 		"./styles/prose.css": "./dist/styles/prose.css",
 		"./styles/spacing.css": "./dist/styles/spacing.css",
@@ -112,6 +113,10 @@
 		"./experiments/render-studio": {
 			"types": "./dist/experiments/render-studio/index.d.ts",
 			"svelte": "./dist/experiments/render-studio/index.js"
+		},
+		"./experiments/basketball-systems-lab": {
+			"types": "./dist/experiments/basketball-systems-lab/index.d.ts",
+			"svelte": "./dist/experiments/basketball-systems-lab/index.js"
 		},
 		"./filtering": {
 			"types": "./dist/filtering/index.d.ts",
