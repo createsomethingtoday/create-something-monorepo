@@ -26,7 +26,7 @@ import { getEngineMetricsSummary, recordEngineEvent } from '../storage/engine-ev
 import { claimNextSecurityIncidentForReview, evaluateAbusePatternAndMitigate, getSecurityIncidentById, getAccountAccess, listRecentSecurityIncidents, resolveSecurityIncident, setAccountAccess, } from '../storage/security.js';
 import { createAutomationRun, decideApproval, getActiveAutomationContract, listActiveAutomationContracts, listPendingApprovals, upsertAutomationContract, } from '../storage/control-plane.js';
 import { getJudgmentDashboardSummary } from '../storage/dashboard.js';
-import { acceptSuggestion, addEdge, addNode, addObservation, createSession, exportSessionMarkdown, listSessions, readSession, writeSession, } from '../studio/store.js';
+import { acceptSuggestion, addEdge, addNode, addObservation, createSession, exportSessionMarkdown, listSessions, readSession, updateNodes, } from '../studio/store.js';
 import { getAtlasStudioAppHome, getAtlasBrowserPortalStatus, startAtlasBrowserPortal, stopAtlasBrowserPortal, } from '../studio/portal.js';
 import { healSessionProductionBindings } from '../studio/production-bindings.js';
 import { createWritebackProposal, exportWritebackProposalHandoffForSession, reviewWritebackProposalAction, } from '../studio/writeback-proposals.js';
@@ -688,18 +688,7 @@ export function registerTools(server) {
         const input = AtlasStudioSessionIdSchema.parse(params);
         const session = await readSession(input.session_id, atlasStudioCwd());
         const updates = tidyNodeUpdates(session);
-        const updateById = new Map(updates.map((update) => [update.id, update]));
-        const next = {
-            ...session,
-            canvas: {
-                ...session.canvas,
-                nodes: session.canvas.nodes.map((node) => {
-                    const update = updateById.get(node.id);
-                    return update ? { ...node, ...update } : node;
-                }),
-            },
-        };
-        const written = updates.length ? await writeSession(next, atlasStudioCwd()) : session;
+        const written = updates.length ? await updateNodes(input.session_id, updates, atlasStudioCwd()) : session;
         return jsonContent({
             accountId: ctx.accountId,
             sessionId: written.id,

@@ -714,20 +714,20 @@ function buildBlankThread(): ConciergeThread {
 
 	return {
 		id: threadId,
-		title: 'New Travel Nurse Intake',
-		subtitle: 'Fresh nurse-side intake session',
+		title: 'New nurse application',
+		subtitle: 'Tell Concierge what role you want',
 		userName: 'New nurse candidate',
 		updatedAt: timestamp,
 		status: 'awaiting_user',
-		pendingAction: 'Describe the contract you want and the profile will build while you talk.',
-		badges: ['AI-native concierge', 'New session'],
+		pendingAction: 'Start with specialty, preferred shift, and location.',
+		badges: ['Guided chat', 'New application'],
 		messages: [
 			{
 				id: createMessageId('assistant'),
 				role: 'assistant',
 				author: 'Concierge',
 				body:
-					"I'll guide this step by step here in chat. Start by telling me what kind of nursing role you want, and when I need a file or confirmation I'll ask for it directly in this thread.",
+					"I'll guide this step by step here in chat. Start by telling me your specialty, preferred shift, and where you want to work. When I need a file or confirmation, I'll ask for it directly in this thread.",
 				createdAt: timestamp
 			}
 		],
@@ -744,7 +744,7 @@ function buildBlankThread(): ConciergeThread {
 		artifacts: [],
 		turn: {
 			stage: 'idle',
-			summary: 'The session is waiting for the first nurse intake message.',
+			summary: 'The application is waiting for the first message.',
 			blockers: [],
 			nextActionLabel: 'Start intake',
 			policyRef: POLICY_REF
@@ -1234,7 +1234,7 @@ function extractFieldsFromMessage(
 				sourceMessageIds,
 				sourceArtifactIds: [],
 				updatedAt: createTimestamp(),
-				note: 'Derived from the latest nurse-side intake message.'
+				note: 'Derived from the latest application message.'
 			})
 		) {
 			extractedLabels.push('preferred shift');
@@ -3193,7 +3193,7 @@ function getPendingAction(
 	matchingState?: MatchingState
 ) {
 	if (!hasStartedIntake(thread)) {
-		return 'Start the nurse intake thread.';
+		return 'Start with specialty, preferred shift, and location.';
 	}
 
 	if (!hasCollectedIntakeData(thread)) {
@@ -3347,7 +3347,7 @@ function getTurnSummary(
 	matchingState?: MatchingState
 ) {
 	if (!intakeStarted) {
-		return 'The session is waiting for the first nurse intake message.';
+		return 'The application is waiting for the first message.';
 	}
 
 	if (!intakeDataReady) {
@@ -3392,7 +3392,7 @@ function getTurnBlockers(
 ) {
 	return [
 		...(!hasCollectedIntakeData(thread)
-			? getMissingIntakeFieldLabels(thread).map((label) => `Share ${label}.`)
+			? getMissingIntakeFieldLabels(thread).map((label) => `Share ${label.toLowerCase()}.`)
 			: []),
 		...rejectedFields.map((field) => `Correct ${field.label}.`),
 		...confirmableFields.map((field) => `Confirm ${field.label}.`),

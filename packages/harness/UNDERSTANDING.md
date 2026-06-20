@@ -72,6 +72,8 @@ src/
 ```text
 claim work in Linear
   ↓
+record branch/worktree/base SHA handoff
+  ↓
 collect task context
   ↓
 create isolated worktree
@@ -114,6 +116,7 @@ resume with resolved policy
 Older harness language in this package still references Beads and Claude Code. The intended mental model is now:
 
 - **Linear**, not Beads or Loom, is the control plane
+- **Linear/worktree handoffs**, not untracked local directories, mark implementation ownership
 - **Codex-first**, not Claude-specific, is the runtime direction
 - **review loops**, not one-pass generation, are the default quality model
 - **judgment artifacts**, not ad hoc human interruption, are the escalation boundary
@@ -145,6 +148,7 @@ The harness sits in **Automation**. It should surface judgment needs, not absorb
 ## Failure modes to watch
 
 - shared working directory instead of isolated worktree
+- deleting dirty worker worktrees before their diffs are reviewed
 - completion claimed before validation
 - reviewer findings not turned into tracked work
 - checkpoint artifacts too thin to support resume

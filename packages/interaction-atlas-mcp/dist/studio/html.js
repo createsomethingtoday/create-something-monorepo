@@ -1,5 +1,4 @@
-export function renderStudioHtml() {
-    const assetVersion = Date.now().toString(36);
+export function renderStudioHtml(assetVersion) {
     return String.raw `<!doctype html>
 <html lang="en">
   <head>

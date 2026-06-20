@@ -9,6 +9,8 @@ This guide documents how to migrate papers from static Svelte routes to the mark
 - `src/routes/papers/[slug]/+page.server.ts` - Dynamic route that serves file-based papers
 - `src/routes/papers/[slug]/+page.svelte` - Template for rendering file-based papers
 - `src/lib/config/fileBasedPapers.ts` - Configuration for file-based papers
+- `src/lib/config/paperCatalog.ts` - Shared archive, manifest, and sitemap catalog
+- `scripts/check-paper-catalog.mjs` - Drift guard for paper routes and sitemap ownership
 
 ## Migration Steps
 
@@ -69,9 +71,10 @@ rm -rf src/routes/papers/{slug}/
 
 ### 4. Verify
 
-1. Build: `pnpm build`
-2. Test: Visit `/papers/{slug}`
-3. Check: PageActions, ShareButtons, SEO work
+1. Check: `pnpm --filter @create-something/io check`
+2. Build: `pnpm --filter @create-something/io build`
+3. Test: Visit `/papers/{slug}`, `/api/manifest`, and `/sitemap.xml`
+4. Check: PageActions, ShareButtons, SEO, manifest output, and sitemap output
 
 ## Papers to Migrate
 

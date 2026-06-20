@@ -32,9 +32,10 @@ The source of truth is the project manifest in `config/delivery/projects/`
 plus the evidence paths it references. Generated Markdown, images, and pages
 are reviewable delivery artifacts, not the primary project record.
 
-Each manifest can include a `coordination` block with Loom task IDs and Linear
-issue IDs/URLs. The generated delivery page renders those references alongside
-recent Git commits for the manifest's configured paths.
+Each manifest can include a `coordination` block with Linear issue IDs/URLs and
+legacy Loom task IDs retained for migration traceability. The generated delivery
+page renders those references alongside recent Git commits for the manifest's
+configured paths.
 
 ## Agent Boundary
 

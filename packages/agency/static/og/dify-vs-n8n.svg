@@ -1,0 +1,12 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="630" fill="#090909"/>
+  <rect x="64" y="64" width="1072" height="502" rx="28" fill="#111111" stroke="#f97066" stroke-width="3"/>
+  <text x="118" y="132" font-family="Inter, Arial, sans-serif" font-size="26" font-weight="700" fill="#f97066" letter-spacing="4">CREATE SOMETHING .AGENCY</text>
+  <text x="118" y="245" font-family="Inter, Arial, sans-serif" font-size="76" font-weight="800" fill="#f7f7f2">Dify vs n8n</text>
+  <text x="118" y="310" font-family="Inter, Arial, sans-serif" font-size="34" fill="#d9d9d2">Choose by operating layer, not by tool loyalty.</text>
+  <g font-family="JetBrains Mono, monospace" font-size="30" fill="#f7f7f2">
+    <text x="150" y="440">n8n: internal automation</text>
+    <text x="150" y="495">Dify: client-facing agent app</text>
+  </g>
+  <path d="M780 384l118 68-118 68" fill="none" stroke="#f97066" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

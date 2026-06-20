@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 
 import { startStudioServer } from '../dist/studio/server.js';
-import { addObservation, createSession } from '../dist/studio/store.js';
+import { addObservation, createSession, readSession } from '../dist/studio/store.js';
 
 function wait(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -119,13 +119,93 @@ test('Atlas Studio serves the React Flow canvas shell and bundled assets', async
 
     const script = await fetch(`http://127.0.0.1:${address.port}/studio/assets/app.js`);
     assert.equal(script.status, 200);
+    assert.match(script.headers.get('cache-control') ?? '', /immutable/);
     assert.match(script.headers.get('content-type') ?? '', /text\/javascript/);
     assert.match(await script.text(), /ReactFlow|react-flow/);
 
     const css = await fetch(`http://127.0.0.1:${address.port}/studio/assets/app.css`);
     assert.equal(css.status, 200);
+    assert.match(css.headers.get('cache-control') ?? '', /immutable/);
     assert.match(css.headers.get('content-type') ?? '', /text\/css/);
     assert.match(await css.text(), /atlas-node/);
+
+    const sourceMap = await fetch(`http://127.0.0.1:${address.port}/studio/assets/app.js.map`);
+    assert.equal(sourceMap.status, 200);
+    assert.match(sourceMap.headers.get('cache-control') ?? '', /immutable/);
+  } finally {
+    await closeServer(server);
+  }
+});
+
+test('Atlas Studio tidies the canvas with one persisted session update', async () => {
+  const cwd = await mkdtemp(path.join(tmpdir(), 'atlas-studio-tidy-test-'));
+  const session = await createSession(
+    { client: 'CREATE SOMETHING Test', workflow: 'Agent-assisted Atlas onboarding' },
+    cwd
+  );
+  const server = await startStudioServer({
+    host: '127.0.0.1',
+    port: 0,
+    sessionId: session.id,
+    cwd
+  });
+  const address = server.address();
+  assert.equal(typeof address, 'object');
+
+  try {
+    const response = await fetch(
+      `http://127.0.0.1:${address.port}/api/sessions/${session.id}/tidy`,
+      { body: '{}', method: 'POST' }
+    );
+    assert.equal(response.status, 200);
+    const result = await response.json();
+    assert.ok(result.updates.length > 0);
+    assert.equal(result.session.canvas.nodes.find((node) => node.id === 'actor_client')?.x, 84);
+
+    const written = await readSession(session.id, cwd);
+    assert.equal(written.updatedAt, result.session.updatedAt);
+    assert.equal(written.canvas.nodes.find((node) => node.id === 'actor_client')?.x, 84);
+  } finally {
+    await closeServer(server);
+  }
+});
+
+test('Atlas Studio deletes a canvas node and connected edges over HTTP', async () => {
+  const cwd = await mkdtemp(path.join(tmpdir(), 'atlas-studio-delete-node-test-'));
+  const session = await createSession(
+    { client: 'CREATE SOMETHING Test', workflow: 'Agent-assisted Atlas onboarding' },
+    cwd
+  );
+  const server = await startStudioServer({
+    host: '127.0.0.1',
+    port: 0,
+    sessionId: session.id,
+    cwd
+  });
+  const address = server.address();
+  assert.equal(typeof address, 'object');
+
+  try {
+    const response = await fetch(
+      `http://127.0.0.1:${address.port}/api/sessions/${session.id}/nodes/data_workflow`,
+      { method: 'DELETE' }
+    );
+    assert.equal(response.status, 200);
+    const result = await response.json();
+    assert.equal(result.removedNode.id, 'data_workflow');
+    assert.deepEqual(
+      result.removedEdges.map((edge) => edge.id).sort(),
+      ['edge_client_workflow', 'edge_workflow_agent']
+    );
+
+    const written = await readSession(session.id, cwd);
+    assert.equal(written.canvas.nodes.some((node) => node.id === 'data_workflow'), false);
+    assert.equal(
+      written.canvas.edges.some(
+        (edge) => edge.source === 'data_workflow' || edge.target === 'data_workflow'
+      ),
+      false
+    );
   } finally {
     await closeServer(server);
   }

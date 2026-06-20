@@ -1,8 +1,8 @@
 # CREATE SOMETHING Agency
 
-**createsomething.agency** — production-safe workflow infrastructure for technical operators
+**createsomething.agency** — the Workflow Trust Layer for technical operators
 
-We build the connectivity layer between your tools and AI.
+We make one business workflow safe to delegate.
 
 ---
 
@@ -17,7 +17,8 @@ Neither Claude Desktop, Claude Cowork, nor Codex can create MCP servers from wit
 - Integration experience (data mapping, security boundaries)
 - Workflow control design (Skills + MCP with trust boundaries)
 
-This is what `.agency` delivers.
+This is the creation expertise `.agency` turns into a governed operating path:
+named objects, scoped actions, approval states, stop conditions, and evidence.
 
 ---
 
@@ -46,15 +47,16 @@ This is what `.agency` delivers.
 └─────────────────────────────────────────────────────────────┘
 ```
 
-**Entry point**: a scoped MCP wedge that connects one important workflow with trusted action paths  
-**Expansion**: Workflow Infrastructure first, Policy OS for governed execution, then Enterprise Extension based on risk and workflow complexity
+**Entry point**: Trust Map, a scoped diagnostic for one workflow, its owners, and its first safe delegation point
+**Default build**: Workflow Pilot, one workflow rebuilt with clear rules, handoffs, runbooks, and release evidence
+**Expansion**: Trust Layer for governed execution, then Enterprise Extension based on risk and workflow complexity
 
 ---
 
 ## Positioning
 
 **Before**: "We build websites/apps with modern templates"
-**After**: "We build the connectivity layer between your tools and AI"
+**After**: "We make one workflow safe to delegate"
 
 Templates are table stakes. The moat is creation expertise applied to specific domains.
 

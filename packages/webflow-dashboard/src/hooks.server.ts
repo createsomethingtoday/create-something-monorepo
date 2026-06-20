@@ -1,3 +1,5 @@
+import { dev } from '$app/environment';
+import { env } from '$env/dynamic/private';
 import type { Handle } from '@sveltejs/kit';
 import { getSession } from '$lib/server/kv';
 import { isTrustedRequestOrigin } from '$lib/server/security';
@@ -28,6 +30,10 @@ export const handle: Handle = async ({ event, resolve }) => {
     } catch (error) {
       console.error('Session validation error in hooks:', error);
     }
+  }
+
+  if (!event.locals.user && dev && env.PLAYWRIGHT_AUTH_EMAIL) {
+    event.locals.user = { email: env.PLAYWRIGHT_AUTH_EMAIL };
   }
 
   // CSRF/origin protection for cookie-authenticated API mutations.

@@ -26,6 +26,7 @@ declare global {
 				RESEND_WEBHOOK_SECRET?: string;
 				TURNSTILE_SECRET_KEY?: string;
 				TURNSTILE_SITE_KEY?: string;
+				ANALYTICS_SERVICE_TOKEN?: string;
 				LINKEDIN_CLIENT_ID?: string;
 				LINKEDIN_CLIENT_SECRET?: string;
 				TWITTER_CLIENT_ID?: string;

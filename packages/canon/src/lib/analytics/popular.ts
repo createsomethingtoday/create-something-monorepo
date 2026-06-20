@@ -176,7 +176,7 @@ async function fetchPopular(
 	const query = `
 		SELECT
 			url as path,
-			COUNT(*) as views,
+			SUM(CASE WHEN category = 'navigation' AND action = 'page_view' THEN 1 ELSE 0 END) as views,
 			COUNT(DISTINCT session_id) as unique_sessions,
 			COALESCE(AVG(CASE WHEN action = 'time_on_page' THEN value END), 0) as avg_read_time,
 			COALESCE(MAX(CASE WHEN action = 'scroll_depth' THEN value END), 0) as avg_scroll_depth
@@ -186,6 +186,7 @@ async function fetchPopular(
 			AND created_at >= ?
 			${pathFilter}
 		GROUP BY url
+		HAVING views > 0
 		ORDER BY views DESC
 		LIMIT ?
 	`;

@@ -10,6 +10,12 @@
   const context = data.context;
   const engagement = context.engagement;
   const privateEvidence = context.evidence.filter((item) => item.visibility !== 'public');
+  const statusItems = [
+    { label: 'Client', value: engagement?.client ?? 'ShivWorks' },
+    { label: 'Surface', value: 'Backend handoff record' },
+    { label: 'Boundary', value: 'Scoped access before transfer' },
+    { label: 'Secrets', value: 'Infisical, not chat or GitHub' }
+  ];
   const outcomeItems: DeliveryOutcomeItem[] = [
     {
       label: 'Before',
@@ -55,18 +61,25 @@
 <section class="delivery-hero">
   <div class="shell-inner-pad delivery-hero__inner">
     <div class="delivery-copy">
-      <span class="product-kicker">Delivery record</span>
-      <h1>{context.title}.</h1>
+      <span class="product-kicker">ShivWorks delivery record</span>
+      <h1>A backend handoff with named access lanes.</h1>
       <p>{context.summary}</p>
+      <div class="delivery-actions" aria-label="Primary ShivWorks delivery actions">
+        <a class="delivery-action delivery-action--primary" href="#developer-runbook">
+          Review runbook
+        </a>
+        <a class="delivery-action" href="#access-lanes">Review access lanes</a>
+      </div>
     </div>
 
     <aside class="delivery-status product-surface product-surface--soft">
-      <span class="status-dot"></span>
-      <p><strong>Client</strong><span>{engagement?.client}</span></p>
-      <p><strong>Owner</strong><span>{engagement?.owner}</span></p>
-      <p><strong>Phase</strong><span>{engagement?.phase}</span></p>
-      <p><strong>Recipient</strong><span>{engagement?.recipient}</span></p>
-      <p><strong>Secrets</strong><span>Infisical, not chat or GitHub</span></p>
+      <div class="delivery-status__heading">
+        <span class="status-dot"></span>
+        <strong>Handoff review</strong>
+      </div>
+      {#each statusItems as item}
+        <p><strong>{item.label}</strong><span>{item.value}</span></p>
+      {/each}
     </aside>
   </div>
 </section>
@@ -78,7 +91,7 @@
   items={outcomeItems}
 />
 
-<section class="delivery-section">
+<section class="delivery-section" id="access-lanes">
   <div class="shell-inner-pad">
     <div class="section-lead">
       <span class="product-kicker">Handoff packet</span>
@@ -230,338 +243,3 @@
   </div>
 </section>
 
-<style>
-  .delivery-hero {
-    min-height: 68vh;
-    display: flex;
-    align-items: center;
-    padding: clamp(52px, 7vw, 96px) 0 clamp(36px, 5vw, 64px);
-    color: var(--color-clear-onyx, #0a0e19);
-  }
-
-  .delivery-hero__inner {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(280px, 420px);
-    gap: clamp(28px, 5vw, 68px);
-    align-items: end;
-  }
-
-  .delivery-copy {
-    max-width: 860px;
-  }
-
-  .delivery-copy h1 {
-    margin: 14px 0 20px;
-    max-width: 820px;
-    color: var(--color-clear-onyx, #0a0e19);
-    font-family: var(--font-display);
-    font-size: clamp(44px, 7vw, 82px);
-    line-height: 0.96;
-    letter-spacing: 0;
-  }
-
-  .delivery-copy p,
-  .section-lead p,
-  .layer-card p,
-  .runbook-card p,
-  .evidence-list p {
-    color: var(--color-clear-grey, #636363);
-  }
-
-  .delivery-copy p {
-    max-width: 760px;
-    font-size: clamp(18px, 1.8vw, 22px);
-    line-height: 1.45;
-  }
-
-  .delivery-hero :global(.product-surface),
-  .delivery-section :global(.product-surface) {
-    border: 1px solid var(--color-clear-border, #e1e1e1);
-    border-radius: 4px;
-    background: var(--color-clear-panel, #ffffff);
-    box-shadow: var(--shadow-clear-restraint, 0 4px 20px rgba(0, 0, 0, 0.06));
-    color: var(--color-clear-onyx, #0a0e19);
-  }
-
-  .delivery-hero :global(.product-surface)::after,
-  .delivery-section :global(.product-surface)::after {
-    display: none;
-  }
-
-  .delivery-hero :global(.product-kicker),
-  .delivery-section :global(.product-kicker) {
-    color: var(--color-clear-grey, #636363);
-  }
-
-  .delivery-hero :global(.product-kicker)::before,
-  .delivery-section :global(.product-kicker)::before {
-    background: var(--color-clear-ocean, #0048ff);
-    box-shadow: none;
-  }
-
-  .delivery-status {
-    display: grid;
-    gap: 18px;
-    padding: 22px;
-    border-top: 1px solid var(--color-clear-border-strong, #cecece);
-  }
-
-  .delivery-status p {
-    display: flex;
-    justify-content: space-between;
-    gap: 20px;
-    margin: 0;
-    border-bottom: 1px solid var(--color-clear-border, #e1e1e1);
-    padding-bottom: 12px;
-  }
-
-  .delivery-status p:last-child {
-    border-bottom: 0;
-    padding-bottom: 0;
-  }
-
-  .delivery-status strong,
-  .delivery-status span {
-    font-size: 0.92rem;
-  }
-
-  .delivery-status span {
-    color: var(--color-clear-grey, #636363);
-    text-align: right;
-  }
-
-  .status-dot {
-    width: 11px;
-    height: 11px;
-    border-radius: 999px;
-    background: var(--color-clear-ocean, #0048ff);
-  }
-
-  .delivery-section {
-    padding: clamp(36px, 6vw, 76px) 0;
-    color: var(--color-clear-onyx, #0a0e19);
-  }
-
-  .section-lead {
-    max-width: 760px;
-    margin-bottom: 28px;
-  }
-
-  .section-lead h2 {
-    margin: 10px 0 12px;
-    max-width: 720px;
-    color: var(--color-clear-onyx, #0a0e19);
-    font-family: var(--font-display);
-    font-size: clamp(32px, 5vw, 64px);
-    line-height: 1;
-    letter-spacing: 0;
-  }
-
-  .artifact-grid,
-  .layer-grid,
-  .package-grid,
-  .runbook-grid {
-    display: grid;
-    gap: 16px;
-  }
-
-  .artifact-grid {
-    grid-template-columns: repeat(6, minmax(0, 1fr));
-  }
-
-  .layer-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .package-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .runbook-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .artifact-link:nth-child(-n + 3) {
-    grid-column: span 2;
-  }
-
-  .artifact-link:nth-child(n + 4) {
-    grid-column: span 3;
-  }
-
-  .artifact-link {
-    display: grid;
-    min-height: 170px;
-    align-content: space-between;
-    padding: 20px;
-    text-decoration: none;
-  }
-
-  .artifact-link--static {
-    opacity: 0.88;
-  }
-
-  .artifact-link span,
-  .layer-tier,
-  .layer-status,
-  .package-card span,
-  .runbook-card > span,
-  .access-table article > span {
-    color: var(--color-clear-grey, #636363);
-    font-family: var(--font-mono);
-    font-size: 0.78rem;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-  }
-
-  .artifact-link strong {
-    color: var(--color-clear-onyx, #0a0e19);
-    font-size: 1.2rem;
-    line-height: 1.15;
-  }
-
-  .layer-card,
-  .package-card,
-  .runbook-card {
-    padding: 24px;
-    border-top: 1px solid var(--color-clear-border-strong, #cecece);
-  }
-
-  .layer-card h3,
-  .package-card h3,
-  .evidence-panel h2 {
-    margin: 14px 0 10px;
-    color: var(--color-clear-onyx, #0a0e19);
-    font-size: clamp(24px, 3vw, 36px);
-    line-height: 1.05;
-    letter-spacing: 0;
-  }
-
-  .package-card {
-    display: grid;
-    gap: 16px;
-    align-content: start;
-  }
-
-  .package-card p {
-    display: grid;
-    gap: 7px;
-    margin: 0;
-    color: var(--color-clear-grey, #636363);
-    line-height: 1.5;
-  }
-
-  .package-card strong {
-    color: var(--color-clear-onyx, #0a0e19);
-    font-size: 0.9rem;
-  }
-
-  .runbook-card {
-    display: grid;
-    gap: 14px;
-  }
-
-  .runbook-card p {
-    margin: 0;
-    max-width: 820px;
-  }
-
-  .runbook-card pre {
-    overflow-x: auto;
-    margin: 0;
-    border: 1px solid var(--color-clear-border, #e1e1e1);
-    border-radius: 4px;
-    background: var(--color-clear-porcelain, #f9f9f9);
-    padding: 18px;
-  }
-
-  .runbook-card code {
-    color: var(--color-clear-onyx, #0a0e19);
-    font-family: var(--font-mono);
-    font-size: 0.9rem;
-    line-height: 1.65;
-    white-space: pre;
-  }
-
-  .access-table {
-    display: grid;
-    gap: 0;
-    padding: 0;
-    overflow: hidden;
-  }
-
-  .access-table article {
-    display: grid;
-    grid-template-columns: 0.6fr 1fr 1.2fr 1.4fr;
-    gap: 18px;
-    align-items: start;
-    padding: 20px;
-    border-top: 1px solid var(--color-clear-border, #e1e1e1);
-  }
-
-  .access-table article:first-child {
-    border-top: 0;
-  }
-
-  .access-table p {
-    display: grid;
-    gap: 5px;
-    margin: 0;
-    color: var(--color-clear-grey, #636363);
-    line-height: 1.45;
-  }
-
-  .access-table strong {
-    color: var(--color-clear-onyx, #0a0e19);
-    font-size: 0.88rem;
-  }
-
-  .evidence-layout {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 18px;
-  }
-
-  .evidence-panel {
-    padding: 24px;
-  }
-
-  .evidence-panel--accent {
-    border-top: 1px solid var(--color-clear-border-strong, #cecece);
-  }
-
-  .evidence-list {
-    display: grid;
-    gap: 12px;
-  }
-
-  .evidence-list p {
-    margin: 0;
-    border-top: 1px solid var(--color-clear-border, #e1e1e1);
-    padding-top: 12px;
-  }
-
-  @media (max-width: 980px) {
-    .delivery-hero__inner,
-    .artifact-grid,
-    .layer-grid,
-    .package-grid,
-    .evidence-layout {
-      grid-template-columns: 1fr;
-    }
-
-    .artifact-link,
-    .artifact-link:nth-child(-n + 3),
-    .artifact-link:nth-child(n + 4) {
-      grid-column: auto;
-    }
-
-    .delivery-hero {
-      min-height: auto;
-    }
-
-    .access-table article {
-      grid-template-columns: 1fr;
-    }
-  }
-</style>

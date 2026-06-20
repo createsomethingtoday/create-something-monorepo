@@ -137,6 +137,24 @@
     }
   ];
 
+  const faqItems = [
+    {
+      question: 'How should a small team start with workflow automation?',
+      answer:
+        'Start with one painful workflow, map the manual bridge, build the first safe wedge, and leave the operator with code, policy, and runbook evidence.'
+    },
+    {
+      question: 'What makes a workflow safe to delegate?',
+      answer:
+        'A workflow is safer to delegate when it has named owners, source systems, scoped actions, approval-needed states, blocked states, and receipts.'
+    },
+    {
+      question: 'Does the first wedge need full platform migration?',
+      answer:
+        'No. The first wedge should preserve existing systems and add only the smallest reliable control path around the current handoff.'
+    }
+  ];
+
   const ctaItems: ClearCtaItem[] = [
     {
       label: 'Bring',
@@ -165,6 +183,7 @@
   keywords="small business automation, workflow integration, custom MCP, HubSpot automation, Notion integration, ops automation, SMB AI"
   ogImage="/og-image.svg"
   propertyName="agency"
+  {faqItems}
 />
 
 <ClearPageSection

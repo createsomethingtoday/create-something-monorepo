@@ -140,7 +140,7 @@ import {
   exportSessionMarkdown,
   listSessions,
   readSession,
-  writeSession,
+  updateNodes,
 } from '../studio/store.js';
 import {
   getAtlasStudioAppHome,
@@ -1072,18 +1072,7 @@ export function registerTools(server: ScopedMcpServer): void {
       const input = AtlasStudioSessionIdSchema.parse(params);
       const session = await readSession(input.session_id, atlasStudioCwd());
       const updates = tidyNodeUpdates(session);
-      const updateById = new Map(updates.map((update) => [update.id, update]));
-      const next = {
-        ...session,
-        canvas: {
-          ...session.canvas,
-          nodes: session.canvas.nodes.map((node) => {
-            const update = updateById.get(node.id);
-            return update ? { ...node, ...update } : node;
-          }),
-        },
-      };
-      const written = updates.length ? await writeSession(next, atlasStudioCwd()) : session;
+      const written = updates.length ? await updateNodes(input.session_id, updates, atlasStudioCwd()) : session;
       return jsonContent({
         accountId: ctx.accountId,
         sessionId: written.id,

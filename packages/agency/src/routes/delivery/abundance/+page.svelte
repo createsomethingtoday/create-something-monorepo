@@ -14,31 +14,59 @@
     (artifact) => artifact.visibility !== 'private' && artifact.visibility !== 'internal'
   );
   const privateEvidence = context.evidence.filter((item) => item.visibility !== 'public');
+  const liveConciergeHref =
+    publicArtifacts.find((artifact) => artifact.title.includes('Concierge'))?.href ??
+    'https://abundance-concierge-chat.pages.dev/';
+  const statusItems = [
+    { label: 'Client', value: engagement?.client ?? 'The NP Group / NPG' },
+    { label: 'Surface', value: 'Nurse intake + delivery record' },
+    { label: 'Boundary', value: 'Recruiter-gated before protected steps' },
+    { label: 'Private data', value: 'Kept outside the public page' }
+  ];
+  const intakePathItems = [
+    {
+      step: '01',
+      title: 'Nurse starts in chat',
+      detail: 'The public app begins with plain-language intake instead of a long form.'
+    },
+    {
+      step: '02',
+      title: 'Concierge organizes the profile',
+      detail:
+        'Specialty, shift, location, license, and next steps stay visible as the thread develops.'
+    },
+    {
+      step: '03',
+      title: 'Protected work waits for review',
+      detail:
+        'Uploads, bookings, and funnel movement stay behind email verification and recruiter approval.'
+    }
+  ];
   const outcomeItems: DeliveryOutcomeItem[] = [
     {
       label: 'Before',
-      title: 'Recruiting work was split across intake, jobs, staff data, and review.',
+      title: 'Nurse intake, job search, staff data, and review lived in separate places.',
       detail:
-        'The workflow needed a visible path from candidate intake through job discovery and recruiter judgment.',
+        'The workflow needed one client-safe path from candidate conversation to recruiter judgment.',
       tone: 'neutral'
     },
     {
       label: 'Now',
-      title: 'Intake, job discovery, recruiter review, and delivery evidence share one record.',
+      title: 'The polished Concierge app is the nurse-facing front door.',
       detail:
-        'The delivery page compresses the working surfaces, safe artifacts, and operator boundary into a client-readable status surface.',
+        'The delivery page now explains how intake, public job discovery, review, and evidence fit together.',
       tone: 'success'
     },
     {
       label: 'Risk reduced',
-      title: 'Agent work is recruiter-gated before it reaches candidates or clients.',
+      title: 'Candidate movement stays recruiter-gated.',
       detail:
-        'Public job discovery is read-only here, funnel writes require confirmation, and write-capable automation stays blocked until owners reauthorize accounts.',
+        'Public job discovery is read-only here. Uploads, bookings, and write-capable actions require explicit verification or owner approval.',
       tone: 'info'
     },
     {
       label: 'Next decision',
-      title: 'Authorize the remaining account, webhook, mapping, and roster choices.',
+      title: 'Account, webhook, mapping, and roster choices remain visible.',
       detail:
         'The open decisions are explicit, attributable, and separated from private token-bearing evidence.',
       tone: 'warning'
@@ -204,26 +232,53 @@
 <section class="delivery-hero">
   <div class="shell-inner-pad delivery-hero__inner">
     <div class="delivery-copy">
-      <span class="product-kicker">Delivery record</span>
-      <h1>{context.title}.</h1>
+      <span class="product-kicker">Abundance delivery record</span>
+      <h1>The nurse intake experience is now the front door.</h1>
       <p>
-        {context.summary}
+        A client-safe view of the Abundance pilot: nurses start in Concierge, public role discovery
+        stays read-only, protected steps wait for verification, and recruiter judgment remains the
+        gate before candidates or clients are moved.
       </p>
+      <div class="delivery-actions" aria-label="Primary Abundance delivery actions">
+        <a
+          class="delivery-action delivery-action--primary"
+          href={liveConciergeHref}
+          target="_blank"
+          rel="noreferrer"
+        >
+          Open live intake
+        </a>
+        <a class="delivery-action" href="#job-agent">Review job agent</a>
+      </div>
     </div>
 
     <aside class="delivery-status product-surface product-surface--soft">
-      <span class="status-dot"></span>
-      <p><strong>Client</strong><span>{engagement?.client}</span></p>
-      <p><strong>Owner</strong><span>{engagement?.owner}</span></p>
-      <p><strong>Phase</strong><span>{engagement?.phase}</span></p>
-      <p><strong>Private data</strong><span>Paylocity export received</span></p>
+      <div class="delivery-status__heading">
+        <span class="status-dot"></span>
+        <strong>Pilot review</strong>
+      </div>
+      {#each statusItems as item}
+        <p><strong>{item.label}</strong><span>{item.value}</span></p>
+      {/each}
     </aside>
+  </div>
+
+  <div class="shell-inner-pad">
+    <div class="intake-path" aria-label="Abundance nurse intake path">
+      {#each intakePathItems as item}
+        <article>
+          <span>{item.step}</span>
+          <strong>{item.title}</strong>
+          <p>{item.detail}</p>
+        </article>
+      {/each}
+    </div>
   </div>
 </section>
 
 <DeliveryOutcomeStrip
   eyebrow="Business outcome"
-  title="The pilot is now legible as an operating path."
+  title="The pilot reads as an operating path."
   description="A buyer can see what changed, what is safer, and which decisions still gate the next phase without reading private evidence."
   items={outcomeItems}
 />
@@ -232,10 +287,11 @@
   <div class="shell-inner-pad">
     <div class="section-lead">
       <span class="product-kicker">Review packet</span>
-      <h2>What can be shared.</h2>
+      <h2>Client-safe links and proof.</h2>
       <p>
-        These links are client-safe. Token-bearing tool URLs, employee rows, and private Notion
-        details are intentionally excluded.
+        Start with the live nurse intake surface, then use the walkthroughs and delivery package to
+        review the operating boundary. Token-bearing URLs, employee rows, and private notes stay out
+        of this page.
       </p>
     </div>
 
@@ -259,12 +315,11 @@
   <div class="shell-inner-pad">
     <div class="job-agent product-surface">
       <div class="job-agent__intro">
-        <span class="product-kicker">Abundance Jobs Agent</span>
-        <h2>Search public roles through the job agent.</h2>
+        <span class="product-kicker">Public role discovery</span>
+        <h2>Search jobs without opening the funnel.</h2>
         <p>
-          This panel calls the production-smoked Abundance Hub agent from the server. It can list
-          and search public nursing jobs while keeping credentials and funnel writes out of the
-          page.
+          This panel calls the production-smoked Abundance Hub agent from the server. It can answer
+          against public nursing roles while credentials and funnel writes stay out of the browser.
         </p>
       </div>
 
@@ -308,7 +363,7 @@
             bind:value={jobAgentQuestion}
             rows="3"
             maxlength="700"
-            placeholder="Example: Search for travel nurse roles in Texas"
+            placeholder="Try: Search for ICU travel nurse roles in Texas."
           ></textarea>
           <button type="submit" disabled={isAskingJobAgent || !jobAgentQuestion.trim()}>
             {isAskingJobAgent ? 'Searching' : 'Search'}
@@ -327,11 +382,11 @@
   <div class="shell-inner-pad">
     <div class="delivery-agent product-surface">
       <div class="delivery-agent__intro">
-        <span class="product-kicker">Delivery agent</span>
-        <h2>Ask against sanitized evidence.</h2>
+        <span class="product-kicker">Delivery notes</span>
+        <h2>Ask what is safe, blocked, or ready.</h2>
         <p>
-          This bounded agent answers only from the sanitized delivery context. Use it to explain the
-          work, identify decisions, and turn client replies into structured notes.
+          This bounded agent answers from the sanitized delivery context. Use it to explain the
+          work, name the open decisions, and turn client replies into structured next steps.
         </p>
       </div>
 
@@ -388,7 +443,7 @@
             bind:value={deliveryQuestion}
             rows="3"
             maxlength="900"
-            placeholder="Example: What is safe to send to our team?"
+            placeholder="Try: What is safe to send to our team?"
           ></textarea>
           <button type="submit" disabled={isAskingDeliveryAgent || !deliveryQuestion.trim()}>
             {isAskingDeliveryAgent ? 'Answering' : 'Ask'}
@@ -407,7 +462,7 @@
   <div class="shell-inner-pad">
     <div class="section-lead">
       <span class="product-kicker">Database / Automation / Judgment</span>
-      <h2>Organized by operating layer.</h2>
+      <h2>The operating layers stay separate.</h2>
     </div>
 
     <div class="layer-grid">
@@ -427,7 +482,7 @@
   <div class="shell-inner-pad evidence-layout">
     <div class="product-surface product-surface--soft evidence-panel">
       <span class="product-kicker">Private Source Materials</span>
-      <h2>Held outside the public page.</h2>
+      <h2>Private evidence stays private.</h2>
       <div class="evidence-list">
         {#each privateEvidence as item}
           <p>{item.detail}</p>
@@ -437,7 +492,7 @@
 
     <div class="product-surface product-surface--soft evidence-panel evidence-panel--accent">
       <span class="product-kicker">Next Review</span>
-      <h2>Decisions still open.</h2>
+      <h2>Decisions still need owners.</h2>
       <div class="evidence-list">
         {#each context.decisions as decision}
           <p>{decision.title}</p>
@@ -447,423 +502,3 @@
   </div>
 </section>
 
-<style>
-  .delivery-hero {
-    min-height: 68vh;
-    display: flex;
-    align-items: center;
-    padding: clamp(52px, 7vw, 96px) 0 clamp(36px, 5vw, 64px);
-    color: var(--color-clear-onyx, #0a0e19);
-  }
-
-  .delivery-hero__inner {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(280px, 420px);
-    gap: clamp(28px, 5vw, 68px);
-    align-items: end;
-  }
-
-  .delivery-copy {
-    max-width: 860px;
-  }
-
-  .delivery-copy h1 {
-    margin: 14px 0 20px;
-    max-width: 820px;
-    color: var(--color-clear-onyx, #0a0e19);
-    font-family: var(--font-display);
-    font-size: clamp(44px, 7vw, 82px);
-    line-height: 0.96;
-    letter-spacing: 0;
-  }
-
-  .delivery-copy p,
-  .section-lead p,
-  .layer-card p,
-  .evidence-list p {
-    color: var(--color-clear-grey, #636363);
-  }
-
-  .delivery-copy p {
-    max-width: 760px;
-    font-size: clamp(18px, 1.8vw, 22px);
-    line-height: 1.45;
-  }
-
-  .delivery-hero :global(.product-surface),
-  .delivery-section :global(.product-surface) {
-    border: 1px solid var(--color-clear-border, #e1e1e1);
-    border-radius: 4px;
-    background: var(--color-clear-panel, #ffffff);
-    box-shadow: var(--shadow-clear-restraint, 0 4px 20px rgba(0, 0, 0, 0.06));
-    color: var(--color-clear-onyx, #0a0e19);
-  }
-
-  .delivery-hero :global(.product-surface)::after,
-  .delivery-section :global(.product-surface)::after {
-    display: none;
-  }
-
-  .delivery-hero :global(.product-kicker),
-  .delivery-section :global(.product-kicker) {
-    color: var(--color-clear-grey, #636363);
-  }
-
-  .delivery-hero :global(.product-kicker)::before,
-  .delivery-section :global(.product-kicker)::before {
-    background: var(--color-clear-ocean, #0048ff);
-    box-shadow: none;
-  }
-
-  .delivery-status {
-    display: grid;
-    gap: 18px;
-    padding: 22px;
-    border-top: 1px solid var(--color-clear-border-strong, #cecece);
-  }
-
-  .delivery-status p {
-    display: flex;
-    justify-content: space-between;
-    gap: 20px;
-    margin: 0;
-    border-bottom: 1px solid var(--color-clear-border, #e1e1e1);
-    padding-bottom: 12px;
-  }
-
-  .delivery-status p:last-child {
-    border-bottom: 0;
-    padding-bottom: 0;
-  }
-
-  .delivery-status strong,
-  .delivery-status span {
-    font-size: 0.92rem;
-  }
-
-  .delivery-status span {
-    color: var(--color-clear-grey, #636363);
-    text-align: right;
-  }
-
-  .status-dot {
-    width: 11px;
-    height: 11px;
-    border-radius: 999px;
-    background: var(--color-clear-ocean, #0048ff);
-  }
-
-  .delivery-section {
-    padding: clamp(36px, 6vw, 76px) 0;
-    color: var(--color-clear-onyx, #0a0e19);
-  }
-
-  .section-lead {
-    max-width: 760px;
-    margin-bottom: 28px;
-  }
-
-  .section-lead h2 {
-    margin: 10px 0 12px;
-    max-width: 720px;
-    color: var(--color-clear-onyx, #0a0e19);
-    font-family: var(--font-display);
-    font-size: clamp(32px, 5vw, 64px);
-    line-height: 1;
-    letter-spacing: 0;
-  }
-
-  .artifact-grid,
-  .layer-grid {
-    display: grid;
-    gap: 16px;
-  }
-
-  .artifact-grid {
-    grid-template-columns: repeat(6, minmax(0, 1fr));
-  }
-
-  .layer-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .artifact-link:nth-child(-n + 3) {
-    grid-column: span 2;
-  }
-
-  .artifact-link:nth-child(n + 4) {
-    grid-column: span 3;
-  }
-
-  .artifact-link {
-    display: grid;
-    min-height: 170px;
-    align-content: space-between;
-    padding: 20px;
-    text-decoration: none;
-  }
-
-  .artifact-link span,
-  .layer-tier,
-  .layer-status {
-    color: var(--color-clear-grey, #636363);
-    font-family: var(--font-mono);
-    font-size: 0.78rem;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-  }
-
-  .artifact-link strong {
-    color: var(--color-clear-onyx, #0a0e19);
-    font-size: 1.2rem;
-    line-height: 1.15;
-  }
-
-  .delivery-agent {
-    display: grid;
-    gap: 22px;
-    padding: clamp(20px, 4vw, 34px);
-    border-top: 1px solid var(--color-clear-border-strong, #cecece);
-  }
-
-  .job-agent {
-    display: grid;
-    gap: 22px;
-    padding: clamp(20px, 4vw, 34px);
-    border-top: 1px solid var(--color-clear-border-strong, #cecece);
-  }
-
-  .delivery-agent__intro,
-  .job-agent__intro {
-    max-width: 820px;
-  }
-
-  .delivery-agent__intro h2,
-  .job-agent__intro h2 {
-    margin: 10px 0 12px;
-    color: var(--color-clear-onyx, #0a0e19);
-    font-family: var(--font-display);
-    font-size: clamp(30px, 5vw, 58px);
-    line-height: 1;
-    letter-spacing: 0;
-  }
-
-  .delivery-agent__intro p,
-  .job-agent__intro p {
-    color: var(--color-clear-grey, #636363);
-    font-size: 1.05rem;
-    line-height: 1.55;
-  }
-
-  .job-agent__guardrails {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-  }
-
-  .job-agent__guardrails span {
-    border: 1px solid var(--color-clear-border, #e1e1e1);
-    border-radius: 4px;
-    background: var(--color-clear-porcelain, #f9f9f9);
-    color: var(--color-clear-grey, #636363);
-    padding: 9px 11px;
-    font-size: 0.9rem;
-  }
-
-  .suggested-prompts,
-  .follow-up-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-  }
-
-  .suggested-prompts button,
-  .follow-up-list button,
-  .delivery-agent__form button {
-    border: 1px solid var(--color-clear-border, #e1e1e1);
-    border-radius: 4px;
-    background: var(--color-clear-panel, #ffffff);
-    color: var(--color-clear-onyx, #0a0e19);
-    padding: 10px 13px;
-    font: inherit;
-    cursor: pointer;
-  }
-
-  .suggested-prompts button:hover,
-  .follow-up-list button:hover,
-  .delivery-agent__form button:hover {
-    border-color: var(--color-clear-ocean, #0048ff);
-    background: color-mix(in srgb, var(--color-clear-pill-active, #cad7fa) 42%, white);
-  }
-
-  .suggested-prompts button:disabled,
-  .follow-up-list button:disabled,
-  .delivery-agent__form button:disabled {
-    cursor: not-allowed;
-    opacity: 0.54;
-  }
-
-  .chat-log,
-  .job-chat-log {
-    display: grid;
-    gap: 12px;
-    max-height: 620px;
-    overflow: auto;
-    padding-right: 6px;
-  }
-
-  .chat-message {
-    display: grid;
-    gap: 10px;
-    max-width: 82%;
-    padding: 16px;
-    background: var(--color-clear-panel, #ffffff);
-    border: 1px solid var(--color-clear-border, #e1e1e1);
-    border-radius: 4px;
-  }
-
-  .chat-message.message-client {
-    justify-self: end;
-    background: var(--color-clear-frosted-mint, #d9fff7);
-    border-color: color-mix(in srgb, var(--color-clear-link-green, #397554) 30%, white);
-  }
-
-  .chat-message > span,
-  .agent-meta strong,
-  .follow-up-list strong,
-  .delivery-agent__form label {
-    color: var(--color-clear-grey, #636363);
-    font-family: var(--font-mono);
-    font-size: 0.74rem;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-  }
-
-  .chat-message p {
-    margin: 0;
-    color: var(--color-clear-grey, #636363);
-    line-height: 1.55;
-    white-space: pre-line;
-  }
-
-  .agent-meta {
-    display: grid;
-    gap: 4px;
-    border-top: 1px solid var(--color-clear-border, #e1e1e1);
-    padding-top: 10px;
-  }
-
-  .agent-meta span {
-    color: var(--color-clear-grey, #636363);
-  }
-
-  .follow-up-list {
-    border-top: 1px solid var(--color-clear-border, #e1e1e1);
-    padding-top: 10px;
-  }
-
-  .follow-up-list strong {
-    flex-basis: 100%;
-  }
-
-  .delivery-agent__form {
-    display: grid;
-    gap: 10px;
-  }
-
-  .delivery-agent__form div {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 10px;
-    align-items: stretch;
-  }
-
-  .delivery-agent__form textarea {
-    min-height: 92px;
-    resize: vertical;
-    border: 1px solid var(--color-clear-border, #e1e1e1);
-    border-radius: 4px;
-    background: var(--color-clear-panel, #ffffff);
-    color: var(--color-clear-onyx, #0a0e19);
-    padding: 13px 14px;
-    font: inherit;
-    line-height: 1.45;
-  }
-
-  .delivery-agent__form textarea:focus {
-    outline: 2px solid var(--color-clear-ocean, #0048ff);
-    outline-offset: 2px;
-  }
-
-  .delivery-agent__form button {
-    min-width: 116px;
-    background: var(--color-clear-onyx, #0a0e19);
-    color: #ffffff;
-  }
-
-  .delivery-agent__error {
-    margin: 0;
-    color: #fca5a5;
-  }
-
-  .layer-card {
-    padding: 24px;
-    border-top: 1px solid var(--color-clear-border-strong, #cecece);
-  }
-
-  .layer-card h3,
-  .evidence-panel h2 {
-    margin: 14px 0 10px;
-    color: var(--color-clear-onyx, #0a0e19);
-    font-size: clamp(24px, 3vw, 36px);
-    line-height: 1.05;
-    letter-spacing: 0;
-  }
-
-  .evidence-layout {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 18px;
-  }
-
-  .evidence-panel {
-    padding: 24px;
-  }
-
-  .evidence-panel--accent {
-    border-top: 1px solid var(--color-clear-border-strong, #cecece);
-  }
-
-  .evidence-list {
-    display: grid;
-    gap: 12px;
-  }
-
-  .evidence-list p {
-    margin: 0;
-    border-top: 1px solid var(--color-clear-border, #e1e1e1);
-    padding-top: 12px;
-  }
-
-  @media (max-width: 980px) {
-    .delivery-hero__inner,
-    .artifact-grid,
-    .layer-grid,
-    .evidence-layout,
-    .delivery-agent__form div {
-      grid-template-columns: 1fr;
-    }
-
-    .artifact-link {
-      grid-column: auto;
-    }
-
-    .delivery-hero {
-      min-height: auto;
-    }
-
-    .chat-message {
-      max-width: 100%;
-    }
-  }
-</style>

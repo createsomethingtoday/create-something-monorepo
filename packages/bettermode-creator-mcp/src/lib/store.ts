@@ -27,7 +27,7 @@ export async function listRecentApprovedDrafts(
     )
     .bind(PLATFORM, limit)
     .all<ApprovedDraftSample>();
-  return (result.results || []).filter((row) => row.post_excerpt && row.approved_reply);
+  return (result.results || []).filter((row: ApprovedDraftSample) => row.post_excerpt && row.approved_reply);
 }
 
 export type DraftStatus = {

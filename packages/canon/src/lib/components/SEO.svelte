@@ -72,6 +72,7 @@
   const canonicalPath = $page.url.pathname === '/' ? '/' : $page.url.pathname.replace(/\/$/, '');
   const canonicalUrl = canonical || `${config.domain}${canonicalPath === '/' ? '' : canonicalPath}`;
   const fullOgImage = ogImage.startsWith('http') ? ogImage : `${config.domain}${ogImage}`;
+  const effectiveBreadcrumbs = breadcrumbs.length > 0 ? breadcrumbs : createBreadcrumbs(canonicalPath);
 
   // Schema.org Organization
   const organizationSchema = {
@@ -160,8 +161,8 @@
     headline: title,
     description: description,
     image: fullOgImage,
-    datePublished: publishedTime,
-    dateModified: modifiedTime || publishedTime,
+    ...(publishedTime && { datePublished: publishedTime }),
+    ...((modifiedTime || publishedTime) && { dateModified: modifiedTime || publishedTime }),
     author: {
       '@type': 'Organization',
       name: author
@@ -171,8 +172,8 @@
       '@type': 'WebPage',
       '@id': canonicalUrl
     },
-    articleSection: articleSection,
-    keywords: articleTags.join(', ')
+    ...(articleSection && { articleSection }),
+    ...(articleTags.length > 0 && { keywords: articleTags.join(', ') })
   } : null;
 
   // Service schema (for .agency services page)
@@ -212,10 +213,10 @@
   } : null;
 
   // Breadcrumb schema
-  const breadcrumbSchema = breadcrumbs.length > 0 ? {
+  const breadcrumbSchema = effectiveBreadcrumbs.length > 0 ? {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
-    itemListElement: breadcrumbs.map((item, index) => ({
+    itemListElement: effectiveBreadcrumbs.map((item, index) => ({
       '@type': 'ListItem',
       position: index + 1,
       name: item.name,
@@ -302,6 +303,41 @@
 
   function jsonLd(schema: unknown): string {
     return `<script type="application/ld+json">${JSON.stringify(schema)}</scr` + 'ipt>';
+  }
+
+  function createBreadcrumbs(pathname: string): Array<{ name: string; url: string }> {
+    if (pathname === '/') {
+      return [];
+    }
+
+    const segments = pathname.split('/').filter(Boolean);
+    return [
+      { name: 'Home', url: config.domain },
+      ...segments.map((segment, index) => {
+        const path = `/${segments.slice(0, index + 1).join('/')}`;
+        return {
+          name: titleCaseSegment(segment),
+          url: `${config.domain}${path}`
+        };
+      })
+    ];
+  }
+
+  function titleCaseSegment(segment: string): string {
+    const acronyms: Record<string, string> = {
+      aeo: 'AEO',
+      ai: 'AI',
+      api: 'API',
+      dify: 'Dify',
+      mcp: 'MCP',
+      n8n: 'n8n',
+      seo: 'SEO'
+    };
+
+    return segment
+      .split('-')
+      .map((part) => acronyms[part.toLowerCase()] ?? part.charAt(0).toUpperCase() + part.slice(1))
+      .join(' ');
   }
 </script>
 

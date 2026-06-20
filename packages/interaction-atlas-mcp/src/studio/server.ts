@@ -1,7 +1,10 @@
 import http from 'node:http';
-import { readFile } from 'node:fs/promises';
+import { watch, type FSWatcher } from 'node:fs';
+import { readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { URL, fileURLToPath } from 'node:url';
+import { gzip } from 'node:zlib';
+import { promisify } from 'node:util';
 
 import { getAtlasStudioPalette } from './atlas.js';
 import { renderStudioHtml } from './html.js';
@@ -21,10 +24,14 @@ import {
   addObservation,
   createSession,
   exportSessionMarkdown,
+  getSessionPath,
   listSessions,
   readSession,
-  updateNode
+  removeNode,
+  updateNode,
+  updateNodes
 } from './store.js';
+import { tidyNodeUpdates } from './client/layout.js';
 import type { AtlasWritebackActionStatus } from './types.js';
 
 type StudioServerOptions = {
@@ -33,6 +40,21 @@ type StudioServerOptions = {
   sessionId?: string;
   cwd?: string;
 };
+
+type SessionEventStream = {
+  clients: Set<http.ServerResponse>;
+  lastUpdatedAt: string;
+  pending: NodeJS.Timeout | null;
+  watcher: FSWatcher | null;
+};
+
+type CachedAsset = {
+  body: Buffer;
+  contentType: string;
+  gzipBody: Buffer;
+};
+
+const gzipAsync = promisify(gzip);
 
 async function readJson<T = Record<string, unknown>>(request: http.IncomingMessage): Promise<T> {
   const chunks: Buffer[] = [];
@@ -64,19 +86,50 @@ function sendText(
   response.end(text);
 }
 
+function studioClientAssetPath(filename: string): string {
+  const studioDistDir = path.dirname(fileURLToPath(import.meta.url));
+  return path.join(studioDistDir, 'client', filename);
+}
+
+async function getStudioAssetVersion(): Promise<string> {
+  const assets = await Promise.all(
+    ['app.js', 'app.css'].map(async (filename) => {
+      const info = await stat(studioClientAssetPath(filename));
+      return `${filename}:${info.size}:${Math.trunc(info.mtimeMs)}`;
+    })
+  );
+  return Buffer.from(assets.join('|')).toString('base64url').slice(0, 16);
+}
+
 async function sendAsset(
+  request: http.IncomingMessage,
   response: http.ServerResponse,
+  cache: Map<string, CachedAsset>,
   filename: string,
   contentType: string
 ): Promise<void> {
-  const studioDistDir = path.dirname(fileURLToPath(import.meta.url));
-  const assetPath = path.join(studioDistDir, 'client', filename);
-  const asset = await readFile(assetPath);
-  response.writeHead(200, {
-    'content-type': contentType,
-    'cache-control': 'no-store'
-  });
-  response.end(asset);
+  let asset = cache.get(filename);
+  if (!asset) {
+    const body = await readFile(studioClientAssetPath(filename));
+    asset = {
+      body,
+      contentType,
+      gzipBody: await gzipAsync(body)
+    };
+    cache.set(filename, asset);
+  }
+
+  const acceptsGzip = /\bgzip\b/.test(request.headers['accept-encoding'] ?? '');
+  const body = acceptsGzip ? asset.gzipBody : asset.body;
+  const headers: http.OutgoingHttpHeaders = {
+    'cache-control': 'public, max-age=31536000, immutable',
+    'content-length': body.byteLength,
+    'content-type': asset.contentType,
+    vary: 'accept-encoding'
+  };
+  if (acceptsGzip) headers['content-encoding'] = 'gzip';
+  response.writeHead(200, headers);
+  response.end(body);
 }
 
 function badRequest(response: http.ServerResponse, error: unknown): void {
@@ -91,6 +144,87 @@ function sendEvent(response: http.ServerResponse, event: string, payload: unknow
 export async function startStudioServer(options: StudioServerOptions): Promise<http.Server> {
   const cwd = options.cwd ?? process.cwd();
   let defaultSessionId = options.sessionId;
+  const assetCache = new Map<string, CachedAsset>();
+  const assetVersion = await getStudioAssetVersion().catch(() => 'dev');
+  const sessionEventStreams = new Map<string, SessionEventStream>();
+
+  const publishSessionIfChanged = async (sessionId: string, stream: SessionEventStream) => {
+    try {
+      const session = await readSession(sessionId, cwd);
+      if (session.updatedAt === stream.lastUpdatedAt) return;
+      stream.lastUpdatedAt = session.updatedAt;
+      for (const client of stream.clients) sendEvent(client, 'session', session);
+    } catch (error) {
+      for (const client of stream.clients) {
+        sendEvent(client, 'error', {
+          error: error instanceof Error ? error.message : String(error)
+        });
+      }
+    }
+  };
+
+  const publishSessionSnapshot = async (
+    sessionId: string,
+    stream: SessionEventStream,
+    client: http.ServerResponse
+  ) => {
+    try {
+      const session = await readSession(sessionId, cwd);
+      if (session.updatedAt !== stream.lastUpdatedAt) {
+        stream.lastUpdatedAt = session.updatedAt;
+        for (const activeClient of stream.clients) sendEvent(activeClient, 'session', session);
+        return;
+      }
+      sendEvent(client, 'session', session);
+    } catch (error) {
+      sendEvent(client, 'error', {
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  };
+
+  const scheduleSessionPublish = (sessionId: string, stream: SessionEventStream) => {
+    if (stream.pending) return;
+    stream.pending = setTimeout(() => {
+      stream.pending = null;
+      void publishSessionIfChanged(sessionId, stream);
+    }, 35);
+  };
+
+  const getSessionEventStream = (sessionId: string): SessionEventStream => {
+    const existing = sessionEventStreams.get(sessionId);
+    if (existing) return existing;
+
+    const stream: SessionEventStream = {
+      clients: new Set(),
+      lastUpdatedAt: '',
+      pending: null,
+      watcher: null
+    };
+    try {
+      stream.watcher = watch(getSessionPath(sessionId, cwd), { persistent: false }, () => {
+        scheduleSessionPublish(sessionId, stream);
+      });
+      stream.watcher.on('error', () => {
+        scheduleSessionPublish(sessionId, stream);
+      });
+    } catch {
+      stream.watcher = null;
+    }
+
+    sessionEventStreams.set(sessionId, stream);
+    return stream;
+  };
+
+  const releaseSessionEventStream = (sessionId: string, response: http.ServerResponse) => {
+    const stream = sessionEventStreams.get(sessionId);
+    if (!stream) return;
+    stream.clients.delete(response);
+    if (stream.clients.size) return;
+    if (stream.pending) clearTimeout(stream.pending);
+    stream.watcher?.close();
+    sessionEventStreams.delete(sessionId);
+  };
 
   if (!defaultSessionId) {
     const sessions = await listSessions(cwd);
@@ -120,17 +254,33 @@ export async function startStudioServer(options: StudioServerOptions): Promise<h
       }
 
       if (method === 'GET' && /^\/sessions\/[^/]+$/.test(url.pathname)) {
-        sendText(response, 200, renderStudioHtml(), 'text/html');
+        sendText(response, 200, renderStudioHtml(assetVersion), 'text/html');
         return;
       }
 
       if (method === 'GET' && url.pathname === '/studio/assets/app.js') {
-        await sendAsset(response, 'app.js', 'text/javascript; charset=utf-8');
+        await sendAsset(request, response, assetCache, 'app.js', 'text/javascript; charset=utf-8');
         return;
       }
 
       if (method === 'GET' && url.pathname === '/studio/assets/app.css') {
-        await sendAsset(response, 'app.css', 'text/css; charset=utf-8');
+        await sendAsset(request, response, assetCache, 'app.css', 'text/css; charset=utf-8');
+        return;
+      }
+
+      if (method === 'GET' && url.pathname === '/studio/assets/app.js.map') {
+        await sendAsset(request, response, assetCache, 'app.js.map', 'application/json; charset=utf-8');
+        return;
+      }
+
+      if (method === 'GET' && url.pathname === '/studio/assets/app.css.map') {
+        await sendAsset(
+          request,
+          response,
+          assetCache,
+          'app.css.map',
+          'application/json; charset=utf-8'
+        );
         return;
       }
 
@@ -269,29 +419,12 @@ export async function startStudioServer(options: StudioServerOptions): Promise<h
         });
         response.write(': connected\n\n');
 
-        let lastUpdatedAt = '';
-        let closed = false;
-        const publishIfChanged = async () => {
-          if (closed) return;
-          try {
-            const session = await readSession(sessionId, cwd);
-            if (session.updatedAt === lastUpdatedAt) return;
-            lastUpdatedAt = session.updatedAt;
-            sendEvent(response, 'session', session);
-          } catch (error) {
-            sendEvent(response, 'error', {
-              error: error instanceof Error ? error.message : String(error)
-            });
-          }
-        };
-        const timer = setInterval(() => {
-          void publishIfChanged();
-        }, 650);
+        const stream = getSessionEventStream(sessionId);
+        stream.clients.add(response);
         request.on('close', () => {
-          closed = true;
-          clearInterval(timer);
+          releaseSessionEventStream(sessionId, response);
         });
-        void publishIfChanged();
+        void publishSessionSnapshot(sessionId, stream, response);
         return;
       }
 
@@ -319,6 +452,29 @@ export async function startStudioServer(options: StudioServerOptions): Promise<h
             cwd
           )
         );
+        return;
+      }
+
+      if (method === 'DELETE' && updateNodeMatch) {
+        sendJson(
+          response,
+          200,
+          await removeNode(
+            decodeURIComponent(updateNodeMatch[1] ?? ''),
+            decodeURIComponent(updateNodeMatch[2] ?? ''),
+            cwd
+          )
+        );
+        return;
+      }
+
+      const tidyMatch = url.pathname.match(/^\/api\/sessions\/([^/]+)\/tidy$/);
+      if (method === 'POST' && tidyMatch) {
+        const sessionId = decodeURIComponent(tidyMatch[1] ?? '');
+        const session = await readSession(sessionId, cwd);
+        const updates = tidyNodeUpdates(session);
+        const next = updates.length ? await updateNodes(sessionId, updates, cwd) : session;
+        sendJson(response, 200, { session: next, updates });
         return;
       }
 

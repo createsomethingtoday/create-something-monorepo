@@ -13,6 +13,12 @@ import { json, error } from '@sveltejs/kit';
 const VALID_PROPERTIES: Property[] = ['space', 'io', 'agency', 'ltd', 'lms'];
 const DEFAULT_HEALTH_STALE_AFTER_HOURS = 24;
 const MAX_SESSION_DURATION_SECONDS = 4 * 60 * 60;
+const MAX_BATCH_EVENTS = 50;
+const MAX_EVENT_STRING_LENGTH = 500;
+const MAX_URL_LENGTH = 2048;
+const MAX_METADATA_JSON_LENGTH = 4096;
+const DEFAULT_USER_ANALYTICS_DAYS = 30;
+const MAX_USER_ANALYTICS_DAYS = 90;
 
 // =============================================================================
 // SHARED REQUEST HANDLERS
@@ -29,9 +35,12 @@ const MAX_SESSION_DURATION_SECONDS = 4 * 60 * 60;
  */
 export function createAnalyticsEventsHandler() {
 	return {
-		POST: async ({ request, platform }: { 
-			request: Request; 
-			platform?: { env?: { DB?: D1Database } } 
+		POST: async ({
+			request,
+			platform
+		}: {
+			request: Request;
+			platform?: { env?: AnalyticsEnv };
 		}) => {
 			const db = platform?.env?.DB;
 
@@ -44,6 +53,13 @@ export function createAnalyticsEventsHandler() {
 
 				if (!batch || !Array.isArray(batch.events)) {
 					return Response.json({ success: false, error: 'Invalid batch format' }, { status: 400 });
+				}
+
+				if (batch.events.length > MAX_BATCH_EVENTS) {
+					return Response.json(
+						{ success: false, error: `Batch exceeds ${MAX_BATCH_EVENTS} events` },
+						{ status: 413 }
+					);
 				}
 
 				const context = {
@@ -75,8 +91,11 @@ export function createAnalyticsHealthHandler(
 	const staleAfterHours = options.staleAfterHours ?? DEFAULT_HEALTH_STALE_AFTER_HOURS;
 
 	return {
-		GET: async ({ platform, url }: {
-			platform?: { env?: { DB?: D1Database } };
+		GET: async ({
+			platform,
+			url
+		}: {
+			platform?: { env?: AnalyticsEnv };
 			url?: URL;
 		}) => {
 			const db = platform?.env?.DB;
@@ -155,9 +174,15 @@ export function createAnalyticsHealthHandler(
 export function createUserAnalyticsHandler(options: { property: Property }) {
 	const PROPERTY = options.property;
 
-	return async ({ locals, platform, url }: {
+	return async ({
+		request,
+		locals,
+		platform,
+		url
+	}: {
+		request: Request;
 		locals: { user?: { id: string } };
-		platform?: { env?: { DB?: D1Database } };
+		platform?: { env?: AnalyticsEnv };
 		url: URL;
 	}) => {
 		const db = platform?.env?.DB;
@@ -167,10 +192,10 @@ export function createUserAnalyticsHandler(options: { property: Property }) {
 		}
 
 		const userId = locals.user?.id;
-		const serviceToken = url.searchParams.get('token');
 		const requestUserId = url.searchParams.get('userId');
+		const serviceAuthorized = isAuthorizedAnalyticsServiceRequest(request, platform?.env);
 
-		if (!userId && !serviceToken) {
+		if (!userId && !serviceAuthorized) {
 			throw error(401, 'Authentication required');
 		}
 
@@ -180,7 +205,7 @@ export function createUserAnalyticsHandler(options: { property: Property }) {
 			throw error(400, 'User ID required');
 		}
 
-		const days = parseInt(url.searchParams.get('days') || '30');
+		const days = parseBoundedDays(url.searchParams.get('days'));
 
 		try {
 			const [sessionsResult, dailyResult, categoryResult, topPagesResult] = await Promise.all([
@@ -238,10 +263,10 @@ export function createUserAnalyticsHandler(options: { property: Property }) {
 
 			const sessions = sessionsResult || { total: 0, page_views: 0, duration_seconds: 0 };
 			const dailyActivity: DailyActivityPoint[] = dailyResult.results || [];
-		const categoryBreakdown: CategoryBreakdown[] = (categoryResult.results || []).map((r: { category: string; count: number }) => ({
-			category: r.category as CategoryBreakdown['category'],
-			count: r.count
-		}));
+			const categoryBreakdown: CategoryBreakdown[] = (categoryResult.results || []).map((r: { category: string; count: number }) => ({
+				category: r.category as CategoryBreakdown['category'],
+				count: r.count
+			}));
 			const topPages = topPagesResult.results || [];
 
 			const response: PropertyAnalytics = {
@@ -273,7 +298,14 @@ export interface D1Database {
 	batch<T = unknown>(statements: D1PreparedStatement[]): Promise<D1Result<T>[]>;
 }
 
-interface D1PreparedStatement {
+export interface AnalyticsEnv {
+	DB?: D1Database;
+	ANALYTICS_SERVICE_TOKEN?: string;
+	USER_ANALYTICS_SERVICE_TOKEN?: string;
+	INTERNAL_ANALYTICS_TOKEN?: string;
+}
+
+export interface D1PreparedStatement {
 	bind(...values: unknown[]): D1PreparedStatement;
 	run(): Promise<D1Result>;
 	first<T = unknown>(): Promise<T | null>;
@@ -281,7 +313,7 @@ interface D1PreparedStatement {
 	all<T = unknown>(): Promise<D1Result<T>>;
 }
 
-interface D1Result<T = unknown> {
+export interface D1Result<T = unknown> {
 	success: boolean;
 	results?: T[];
 	error?: string;
@@ -289,6 +321,44 @@ interface D1Result<T = unknown> {
 
 function isProperty(value: unknown): value is Property {
 	return typeof value === 'string' && VALID_PROPERTIES.includes(value as Property);
+}
+
+function getConfiguredAnalyticsServiceToken(env?: AnalyticsEnv): string | null {
+	return (
+		env?.ANALYTICS_SERVICE_TOKEN?.trim() ||
+		env?.USER_ANALYTICS_SERVICE_TOKEN?.trim() ||
+		env?.INTERNAL_ANALYTICS_TOKEN?.trim() ||
+		null
+	);
+}
+
+function getBearerToken(request: Request): string | null {
+	const authorization = request.headers.get('authorization');
+	const match = authorization?.match(/^Bearer\s+(.+)$/i);
+	return match?.[1]?.trim() || null;
+}
+
+function getAnalyticsServiceTokenFromRequest(request: Request): string | null {
+	return (
+		getBearerToken(request) ||
+		request.headers.get('x-analytics-service-token')?.trim() ||
+		request.headers.get('x-api-key')?.trim() ||
+		null
+	);
+}
+
+function isAuthorizedAnalyticsServiceRequest(request: Request, env?: AnalyticsEnv): boolean {
+	const expected = getConfiguredAnalyticsServiceToken(env);
+	const actual = getAnalyticsServiceTokenFromRequest(request);
+
+	return Boolean(expected && actual && actual === expected);
+}
+
+function parseBoundedDays(raw: string | null): number {
+	const parsed = Number.parseInt(raw ?? String(DEFAULT_USER_ANALYTICS_DAYS), 10);
+	if (!Number.isFinite(parsed)) return DEFAULT_USER_ANALYTICS_DAYS;
+
+	return Math.max(1, Math.min(parsed, MAX_USER_ANALYTICS_DAYS));
 }
 
 function getEventSourceProperty(event: AnalyticsEvent): Property | null {
@@ -306,6 +376,94 @@ function getEventSourceProperty(event: AnalyticsEvent): Property | null {
 function clampDurationSeconds(value: number): number {
 	if (!Number.isFinite(value)) return 0;
 	return Math.max(0, Math.min(Math.round(value), MAX_SESSION_DURATION_SECONDS));
+}
+
+function truncateString(value: string, maxLength = MAX_EVENT_STRING_LENGTH): string {
+	return value.length > maxLength ? value.slice(0, maxLength) : value;
+}
+
+function redactSensitiveText(value: string): string {
+	return value
+		.replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, '[email]')
+		.replace(/\b(?:sk|pk|pat|ghp|gho|ghu|ghs|ghr)-[A-Za-z0-9_-]{8,}\b/g, '[secret]')
+		.replace(/\b(?:Bearer\s+)[A-Za-z0-9._~+/=-]{12,}\b/gi, 'Bearer [secret]')
+		.replace(/\b(?:\+?\d[\d\s().-]{8,}\d)\b/g, '[number]');
+}
+
+function sanitizeText(value: unknown, maxLength = MAX_EVENT_STRING_LENGTH): string | undefined {
+	if (typeof value !== 'string') return undefined;
+	return truncateString(redactSensitiveText(value), maxLength);
+}
+
+function sanitizeUrl(value: unknown): string | undefined {
+	const text = sanitizeText(value, MAX_URL_LENGTH);
+	if (!text) return undefined;
+
+	try {
+		const url = new URL(text);
+		return truncateString(`${url.origin}${url.pathname}`, MAX_URL_LENGTH);
+	} catch {
+		return truncateString(text.split('?')[0].split('#')[0], MAX_URL_LENGTH);
+	}
+}
+
+function sanitizeMetadataValue(value: unknown, depth = 0): unknown {
+	if (depth > 4) return '[truncated]';
+	if (typeof value === 'string') return sanitizeText(value);
+	if (typeof value === 'number') return Number.isFinite(value) ? value : null;
+	if (typeof value === 'boolean' || value === null) return value;
+	if (Array.isArray(value)) return value.slice(0, 25).map((item) => sanitizeMetadataValue(item, depth + 1));
+	if (typeof value === 'object') {
+		const sanitized: Record<string, unknown> = {};
+		for (const [key, childValue] of Object.entries(value as Record<string, unknown>).slice(0, 50)) {
+			sanitized[sanitizeText(key, 100) ?? 'field'] = sanitizeMetadataValue(childValue, depth + 1);
+		}
+		return sanitized;
+	}
+
+	return null;
+}
+
+function sanitizeMetadata(metadata: unknown): Record<string, unknown> | undefined {
+	if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) return undefined;
+
+	const sanitized = sanitizeMetadataValue(metadata);
+	const json = JSON.stringify(sanitized);
+	if (json.length <= MAX_METADATA_JSON_LENGTH) {
+		return sanitized as Record<string, unknown>;
+	}
+
+	return { truncated: true };
+}
+
+function sanitizeAnalyticsEvent(event: unknown): AnalyticsEvent | null {
+	if (!event || typeof event !== 'object') return null;
+	const candidate = event as AnalyticsEvent;
+
+	const url = sanitizeUrl(candidate.url);
+	const timestamp = sanitizeText(candidate.timestamp, 100);
+	const eventId = sanitizeText(candidate.eventId, 120);
+	const sessionId = sanitizeText(candidate.sessionId, 120);
+	const action = sanitizeText(candidate.action, 120);
+
+	if (!url || !timestamp || !eventId || !sessionId || !action) return null;
+
+	return {
+		...candidate,
+		eventId,
+		sessionId,
+		userId: sanitizeText(candidate.userId, 120),
+		property: candidate.property,
+		sourceProperty: isProperty(candidate.sourceProperty) ? candidate.sourceProperty : undefined,
+		timestamp,
+		url,
+		referrer: sanitizeUrl(candidate.referrer),
+		category: candidate.category,
+		action,
+		target: sanitizeText(candidate.target),
+		value: typeof candidate.value === 'number' && Number.isFinite(candidate.value) ? candidate.value : undefined,
+		metadata: sanitizeMetadata(candidate.metadata)
+	};
 }
 
 // =============================================================================
@@ -329,14 +487,26 @@ export async function processEventBatch(
 		return { success: true, received: 0 };
 	}
 
+	if (events.length > MAX_BATCH_EVENTS) {
+		return {
+			success: false,
+			received: 0,
+			errors: [`Batch exceeds ${MAX_BATCH_EVENTS} events`]
+		};
+	}
+
 	const errors: string[] = [];
 	const statements: D1PreparedStatement[] = [];
+	const validEvents: AnalyticsEvent[] = [];
 
 	for (const event of events) {
 		try {
+			const sanitizedEvent = sanitizeAnalyticsEvent(event);
+
 			// Validate event
-			if (!validateEvent(event)) {
-				errors.push(`Invalid event: ${event.eventId}`);
+			if (!sanitizedEvent || !validateEvent(sanitizedEvent)) {
+				const eventId = typeof event === 'object' && event && 'eventId' in event ? String(event.eventId) : 'unknown';
+				errors.push(`Invalid event: ${eventId}`);
 				continue;
 			}
 
@@ -348,23 +518,24 @@ export async function processEventBatch(
            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 				)
 				.bind(
-					event.eventId,
-					event.sessionId,
-					event.userId || null,
-					event.property,
-					event.category,
-					event.action,
-					event.target || null,
-					event.value || null,
-					event.url,
-					event.referrer || null,
+					sanitizedEvent.eventId,
+					sanitizedEvent.sessionId,
+					sanitizedEvent.userId || null,
+					sanitizedEvent.property,
+					sanitizedEvent.category,
+					sanitizedEvent.action,
+					sanitizedEvent.target || null,
+					sanitizedEvent.value ?? null,
+					sanitizedEvent.url,
+					sanitizedEvent.referrer || null,
 					context.userAgent || null,
 					context.ipCountry || null,
-					event.metadata ? JSON.stringify(event.metadata) : null,
-					event.timestamp
+					sanitizedEvent.metadata ? JSON.stringify(sanitizedEvent.metadata) : null,
+					sanitizedEvent.timestamp
 				);
 
 			statements.push(stmt);
+			validEvents.push(sanitizedEvent);
 		} catch (error) {
 			errors.push(`Error processing event ${event.eventId}: ${String(error)}`);
 		}
@@ -381,14 +552,14 @@ export async function processEventBatch(
 
 	// Update daily aggregates asynchronously
 	try {
-		await updateDailyAggregates(db, events);
+		await updateDailyAggregates(db, validEvents);
 	} catch {
 		// Non-critical, don't fail the request
 	}
 
 	// Update session summaries asynchronously
 	try {
-		await updateSessionSummaries(db, events, context);
+		await updateSessionSummaries(db, validEvents, context);
 	} catch {
 		// Non-critical, don't fail the request
 	}
@@ -407,8 +578,14 @@ function validateEvent(event: AnalyticsEvent): boolean {
 	if (!event.eventId || !event.sessionId) return false;
 	if (!event.property || !event.category || !event.action) return false;
 	if (!event.url || !event.timestamp) return false;
+	if (Number.isNaN(Date.parse(event.timestamp))) return false;
 
 	if (!VALID_PROPERTIES.includes(event.property)) return false;
+	if (event.eventId.length > 120 || event.sessionId.length > 120) return false;
+	if (event.action.length > 120 || event.url.length > MAX_URL_LENGTH) return false;
+	if (event.target && event.target.length > MAX_EVENT_STRING_LENGTH) return false;
+	if (event.referrer && event.referrer.length > MAX_URL_LENGTH) return false;
+	if (event.metadata && JSON.stringify(event.metadata).length > MAX_METADATA_JSON_LENGTH) return false;
 
 	const validCategories = [
 		'navigation',
@@ -462,7 +639,7 @@ async function updateDailyAggregates(db: D1Database, events: AnalyticsEvent[]): 
 
 		agg.count++;
 		agg.sessions.add(event.sessionId);
-		if (event.value) agg.totalValue += event.value;
+		if (event.value !== undefined && event.value !== null) agg.totalValue += event.value;
 	}
 
 	// Upsert aggregates
@@ -478,7 +655,14 @@ async function updateDailyAggregates(db: D1Database, events: AnalyticsEvent[]): 
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
          ON CONFLICT(date, property, category, action) DO UPDATE SET
            count = count + excluded.count,
-           unique_sessions = unique_sessions + excluded.unique_sessions,
+           unique_sessions = (
+             SELECT COUNT(DISTINCT session_id)
+             FROM unified_events
+             WHERE date(created_at) = excluded.date
+               AND property = excluded.property
+               AND category = excluded.category
+               AND action = excluded.action
+           ),
            total_value = total_value + excluded.total_value,
            updated_at = datetime('now')`
 				)

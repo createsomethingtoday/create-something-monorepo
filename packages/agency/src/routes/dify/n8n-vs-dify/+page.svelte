@@ -171,7 +171,9 @@
   keywords="Dify vs n8n, n8n vs Dify, workflow automation vs agent apps, Dify MCP, n8n MCP, AI workflow automation"
   canonical="https://createsomething.agency/dify/n8n-vs-dify"
   ogType="article"
-  ogImage="/og-image.svg"
+  ogImage="/og/dify-vs-n8n.svg"
+  publishedTime="2026-05-18"
+  modifiedTime="2026-06-19"
   articleSection="Dify Implementation"
   articleTags={['Dify', 'n8n', 'workflow automation', 'agent apps', 'MCP']}
   propertyName="agency"

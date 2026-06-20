@@ -1,4 +1,4 @@
-import type { AtlasCanvasNode, AtlasCanvasNodeKind, AtlasCanvasNodeStatus, AtlasSession, AtlasSessionActor } from './types.js';
+import type { AtlasCanvasEdge, AtlasCanvasNode, AtlasCanvasNodeKind, AtlasCanvasNodeStatus, AtlasSession, AtlasSessionActor } from './types.js';
 type CreateSessionInput = {
     client: string;
     workflow: string;
@@ -17,6 +17,11 @@ type AddNodeInput = {
     createdBy?: AtlasSessionActor;
 };
 type UpdateNodeInput = Partial<Omit<AtlasCanvasNode, 'id' | 'createdBy'>>;
+export type RemoveNodeResult = {
+    removedEdges: AtlasCanvasEdge[];
+    removedNode: AtlasCanvasNode;
+    session: AtlasSession;
+};
 type AddEdgeInput = {
     source: string;
     target: string;
@@ -37,6 +42,10 @@ export declare function writeSession(session: AtlasSession, cwd?: string): Promi
 export declare function listSessions(cwd?: string): Promise<AtlasSession[]>;
 export declare function addNode(sessionId: string, input: AddNodeInput, cwd?: string): Promise<AtlasSession>;
 export declare function updateNode(sessionId: string, nodeId: string, input: UpdateNodeInput, cwd?: string): Promise<AtlasSession>;
+export declare function updateNodes(sessionId: string, inputs: Array<{
+    id: string;
+} & UpdateNodeInput>, cwd?: string): Promise<AtlasSession>;
+export declare function removeNode(sessionId: string, nodeId: string, cwd?: string): Promise<RemoveNodeResult>;
 export declare function addEdge(sessionId: string, input: AddEdgeInput, cwd?: string): Promise<AtlasSession>;
 export declare function addObservation(sessionId: string, input: AddObservationInput, cwd?: string): Promise<AtlasSession>;
 export declare function acceptSuggestion(sessionId: string, suggestionId: string, cwd?: string): Promise<AtlasSession>;

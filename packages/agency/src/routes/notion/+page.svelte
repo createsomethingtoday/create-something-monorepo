@@ -62,6 +62,24 @@
     }
   ];
 
+  const faqItems = [
+    {
+      question: 'What role should Notion play in AI workflow systems?',
+      answer:
+        'Notion should be the PM and operator-facing review layer while canonical state, Linear engineering state, and external system records keep their own ownership.'
+    },
+    {
+      question: 'When should Notion Workers or MCP be used?',
+      answer:
+        'Start with narrow read-only Custom Agent tools or MCP paths, then add approved writes or managed syncs only after ownership and review behavior are clear.'
+    },
+    {
+      question: 'What does a Notion operating system need?',
+      answer:
+        'It needs visible timelines, risks, decisions, evidence, approved next actions, and explicit boundaries for what Notion owns versus other systems.'
+    }
+  ];
+
   const audienceCards: ClearCardItem[] = [
     {
       eyebrow: 'Operators',
@@ -176,8 +194,9 @@
   title="Notion Partner Lane | CREATE SOMETHING .agency"
   description="CREATE SOMETHING builds Notion operating systems for AI-enabled teams, with PM views, Worker automation, tool boundaries, and Policy OS control."
   keywords="Notion partner, Notion Solutions Partner, Notion operating systems, Notion Workers, Notion MCP, Policy OS"
-  ogImage="/og-image.svg"
+  ogImage="/og/notion-lane.svg"
   propertyName="agency"
+  {faqItems}
 />
 
 <ClearPageSection

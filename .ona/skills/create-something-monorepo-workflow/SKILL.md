@@ -1,6 +1,6 @@
 ---
 name: create-something-monorepo-workflow
-description: Follow the CREATE SOMETHING monorepo workflow in Ona. Use when starting work in this repository, bootstrapping an Ona environment, choosing a lane, coordinating Loom work, or deciding which repo task or service to run.
+description: Follow the CREATE SOMETHING monorepo workflow in Ona. Use when starting work in this repository, bootstrapping an Ona environment, choosing a lane, coordinating Linear work, or deciding which repo task or service to run.
 ---
 
 # CREATE SOMETHING Monorepo Workflow
@@ -10,9 +10,10 @@ Use this skill when the task is about operating inside this repository rather th
 ## Start Here
 
 1. Read `AGENTS.md` for the repo operating model.
-2. Read `docs/guides/ONA_CORE_ROLLOUT.md` when the task touches Ona environment setup, project layout, secrets, or runtime alignment.
-3. Treat `.ona/automations.yaml` as the source of truth for startup tasks, manual checks, and dev services.
-4. Treat `.devcontainer/devcontainer.json` and `.ona/scripts/bootstrap.sh` as the source of truth for the pinned runtime.
+2. For implementation work, start with `pnpm agent:claim-worktree -- --issue CRE-123` so Linear records the branch, worktree path, base ref, and base SHA before edits begin.
+3. Read `docs/guides/ONA_CORE_ROLLOUT.md` when the task touches Ona environment setup, project layout, secrets, or runtime alignment.
+4. Treat `.ona/automations.yaml` as the source of truth for startup tasks, manual checks, and dev services.
+5. Treat `.devcontainer/devcontainer.json` and `.ona/scripts/bootstrap.sh` as the source of truth for the pinned runtime.
 
 ## Runtime Rules
 
@@ -22,13 +23,17 @@ Use this skill when the task is about operating inside this repository rather th
 - If bootstrap fails on a different local Node version, do not wave it through because `package.json` has a broader engine range.
 - Prefer opening the repo through `.devcontainer/devcontainer.json` or using `./scripts/ona-bootstrap-local.sh` before improvising local fixes.
 
-## Loom Rules
+## Linear Rules
 
-- In provisioned Ona or shared remote environments, skip `lm init`.
-- Use `pnpm loom:remote ready` for shared remote work queues.
-- Use `pnpm loom:remote done --task-id <id> --evidence "..."` for shared completion.
-- Use `lm --local ...` only when you intentionally mean the repo-local `.loom` database.
-- If a remote Loom wrapper requires an explicit agent identity, check the wrapper usage or existing repo conventions before retrying.
+- Linear is the source of truth for tracked work, ownership, status, and evidence.
+- Use `pnpm linear:ready` to find ready work.
+- Use `pnpm linear:list -- --status open` to inspect open work.
+- Use `pnpm linear:get -- --issue CRE-123` before claiming or completing existing work.
+- Use `pnpm linear:claim -- --issue CRE-123` when taking ownership.
+- Use `pnpm agent:claim-worktree -- --issue CRE-123` as the default implementation handoff. It claims the issue, creates an isolated worktree, and comments the branch/worktree/base SHA back to Linear.
+- Use `pnpm linear:done -- --issue CRE-123 --evidence "Validation: ..."` when closing work.
+- Keep `LINEAR_API_KEY` in Infisical or another secret manager, not in repo files.
+- Do not create new Loom work. If legacy Loom evidence is needed, read it only as migration context and mirror the finding into the relevant Linear issue.
 
 ## Prefer Repo Tasks Over Ad Hoc Commands
 
@@ -62,8 +67,8 @@ Only broaden to repo-wide commands when the work clearly spans multiple lanes.
 
 ## Anti-Patterns
 
-- Do not run `lm init` in a provisioned Ona environment that already has remote Loom.
-- Do not use bare `lm done` for shared remote work in this repo.
+- Do not run `lm init`, `lm done`, or `pnpm loom:*` for new coordination in this repo.
+- Do not treat legacy `.loom` records as active work queues; mirror any relevant historical evidence into Linear.
 - Do not bypass `.ona/automations.yaml` with a custom command when an equivalent task or service already exists.
 - Do not treat a newer Node version as equivalent to the pinned toolchain.
 - Do not split the monorepo or move packages between lanes just to work around a local storage bottleneck.
@@ -73,7 +78,7 @@ Only broaden to repo-wide commands when the work clearly spans multiple lanes.
 
 Slow down and verify before proceeding when:
 
-- a remote Loom command fails because identity or task ownership is unclear
+- Linear identity, issue ownership, or required evidence is unclear
 - the required Ona project secret is missing
 - the task spans multiple lanes and the narrowest owner is ambiguous
 - a deploy or preview action would use project-scoped credentials

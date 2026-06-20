@@ -66,9 +66,11 @@
         })
       : null
   );
+
+  const href = $derived((paper as Paper & { route?: string }).route || `/experiments/${paper.slug}`);
 </script>
 
-<a href={`/experiments/${paper.slug}`} class="block h-full">
+<a href={href} class="block h-full">
   <article
     class="group animate-reveal h-full"
     style="transform: rotate({rotation}deg); --delay: {index};"

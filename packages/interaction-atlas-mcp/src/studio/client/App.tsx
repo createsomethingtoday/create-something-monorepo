@@ -46,6 +46,7 @@ import {
   ShieldAlert,
   Sparkles,
   Terminal,
+  Trash2,
   UserRound,
   Waypoints,
   Workflow,
@@ -64,6 +65,7 @@ import React, {
 import { createRoot } from 'react-dom/client';
 
 import type {
+  AtlasCanvasEdge,
   AtlasCanvasNode,
   AtlasCanvasNodeKind,
   AtlasCanvasNodeStatus,
@@ -75,7 +77,6 @@ import type {
 import {
   detailModeForZoom,
   nodeWidthForMode,
-  tidyNodeUpdates,
   type CanvasDetailMode
 } from './layout.js';
 
@@ -154,12 +155,37 @@ function nodeActivitySignature(node: AtlasCanvasNode): string {
     node.updatedAt,
     node.kind,
     node.label,
-  node.owner ?? '',
-  node.status,
-  node.notes ?? '',
-  node.evidence ?? '',
-  node.sync?.checkedAt ?? '',
-  node.sync?.status ?? ''
+    node.owner ?? '',
+    node.status,
+    node.notes ?? '',
+    node.evidence ?? '',
+    node.sync?.checkedAt ?? '',
+    node.sync?.status ?? '',
+    node.sync?.summary ?? ''
+  ].join('|');
+}
+
+function flowNodeSignature(node: FlowNode): string {
+  return [
+    node.id,
+    node.selected ? 'selected' : 'idle',
+    node.position.x,
+    node.position.y,
+    node.style?.width ?? '',
+    node.data.detailMode,
+    node.data.isAgentActive ? 'active' : 'quiet',
+    nodeActivitySignature(node.data.node)
+  ].join('|');
+}
+
+function edgeSignature(edge: Edge): string {
+  return [
+    edge.id,
+    edge.source,
+    edge.target,
+    edge.label ?? '',
+    edge.type ?? '',
+    JSON.stringify(edge.style ?? {})
   ].join('|');
 }
 
@@ -179,8 +205,8 @@ function toFlowNodes(
   }));
 }
 
-function toFlowEdges(session: AtlasSession): Edge[] {
-  return session.canvas.edges.map((edge) => ({
+function toFlowEdge(edge: AtlasSession['canvas']['edges'][number]): Edge {
+  return {
     id: edge.id,
     source: edge.source,
     target: edge.target,
@@ -194,7 +220,31 @@ function toFlowEdges(session: AtlasSession): Edge[] {
       fontWeight: 400
     },
     ...DEFAULT_EDGE_OPTIONS
-  }));
+  };
+}
+
+function toStableFlowEdges(
+  session: AtlasSession,
+  cache: Map<string, { edge: Edge; signature: string }>,
+  previousList: { edges: Edge[]; signature: string } | null
+): { edges: Edge[]; signature: string } {
+  const liveIds = new Set(session.canvas.edges.map((edge) => edge.id));
+  for (const id of cache.keys()) {
+    if (!liveIds.has(id)) cache.delete(id);
+  }
+
+  const nextEdges = session.canvas.edges.map((edge) => {
+    const next = toFlowEdge(edge);
+    const signature = edgeSignature(next);
+    const cached = cache.get(edge.id);
+    if (cached?.signature === signature) return cached.edge;
+    cache.set(edge.id, { edge: next, signature });
+    return next;
+  });
+  const signature = nextEdges.map((edge) => cache.get(edge.id)?.signature ?? edgeSignature(edge)).join('\n');
+
+  if (previousList?.signature === signature) return previousList;
+  return { edges: nextEdges, signature };
 }
 
 async function requestJson<T>(url: string, options: RequestInit = {}): Promise<T> {
@@ -229,6 +279,12 @@ function readStoredViewport(sessionId: string): Viewport | undefined {
     return undefined;
   }
   return undefined;
+}
+
+function isEditableTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false;
+  const tagName = target.tagName.toLowerCase();
+  return target.isContentEditable || tagName === 'input' || tagName === 'select' || tagName === 'textarea';
 }
 
 function CubeMark({ className = '' }: { className?: string }): React.ReactElement {
@@ -569,6 +625,7 @@ function Inspector({
   onAddNode,
   onChangeDraft,
   onClose,
+  onRemoveNode,
   onSave,
   open,
   palette,
@@ -579,6 +636,7 @@ function Inspector({
   onAddNode: (kind: AtlasCanvasNodeKind) => void;
   onChangeDraft: (draft: NodeDraft) => void;
   onClose: () => void;
+  onRemoveNode: (nodeId: string) => void;
   onSave: () => void;
   open: boolean;
   palette: Palette | null;
@@ -656,6 +714,14 @@ function Inspector({
             <button className="primary" onClick={onSave} type="button">
               <Check aria-hidden="true" />
               <span>Save node</span>
+            </button>
+            <button
+              className="subtle-button danger"
+              onClick={() => onRemoveNode(selectedNode.id)}
+              type="button"
+            >
+              <Trash2 aria-hidden="true" />
+              <span>Remove node</span>
             </button>
             <div className="sync-panel">
               <div className="section-title compact">
@@ -770,12 +836,17 @@ function AtlasStudio(): React.ReactElement {
   const [healSummary, setHealSummary] = useState<string | null>(null);
   const [proposalSummary, setProposalSummary] = useState<string | null>(null);
   const flowRef = useRef<ReactFlowInstance<FlowNode, Edge> | null>(null);
-  const lastRevision = useRef<string | null>(null);
+  const edgeCache = useRef<Map<string, { edge: Edge; signature: string }>>(new Map());
+  const edgeListCache = useRef<{ edges: Edge[]; signature: string } | null>(null);
   const sessionRef = useRef<AtlasSession | null>(null);
   const nodeSignatures = useRef<Map<string, string>>(new Map());
   const activityTimer = useRef<number | null>(null);
 
-  const edges = useMemo(() => (session ? toFlowEdges(session) : []), [session]);
+  const edges = useMemo(() => {
+    if (!session) return [];
+    edgeListCache.current = toStableFlowEdges(session, edgeCache.current, edgeListCache.current);
+    return edgeListCache.current.edges;
+  }, [session]);
   const selectedNode = useMemo(
     () => session?.canvas.nodes.find((node) => node.id === selectedNodeId) ?? null,
     [selectedNodeId, session]
@@ -850,17 +921,28 @@ function AtlasStudio(): React.ReactElement {
 
   useEffect(() => {
     if (!session) return;
-    const isNewRevision = lastRevision.current !== session.updatedAt;
-    lastRevision.current = session.updatedAt;
     const nextNodes = toFlowNodes(session, selectedNodeId, activeNodeIds, detailMode);
 
     setNodes((current) => {
-      if (isNewRevision) return nextNodes;
       const currentById = new Map(current.map((node) => [node.id, node]));
-      return nextNodes.map((node) => {
+      let changed = current.length !== nextNodes.length;
+      const merged = nextNodes.map((node, index) => {
+        if (current[index]?.id !== node.id) changed = true;
         const existing = currentById.get(node.id);
-        return existing ? { ...node, position: existing.position } : node;
+        if (!existing) {
+          changed = true;
+          return node;
+        }
+
+        const canonicalPositionChanged =
+          existing.data.node.x !== node.data.node.x || existing.data.node.y !== node.data.node.y;
+        const nextNode = canonicalPositionChanged ? node : { ...node, position: existing.position };
+
+        if (flowNodeSignature(existing) === flowNodeSignature(nextNode)) return existing;
+        changed = true;
+        return nextNode;
       });
+      return changed ? merged : current;
     });
   }, [activeNodeIds, detailMode, selectedNodeId, session]);
 
@@ -1035,37 +1117,64 @@ function AtlasStudio(): React.ReactElement {
     });
   }, [draft, patchNode, selectedNode]);
 
+  const removeSelectedNode = useCallback(
+    async (nodeId: string) => {
+      const node = session?.canvas.nodes.find((item) => item.id === nodeId);
+      const label = node?.label ?? nodeId;
+      if (!window.confirm(`Remove "${label}" from this canvas? Connected edges will also be removed.`)) {
+        return;
+      }
+
+      const result = await requestJson<{
+        removedEdges: AtlasCanvasEdge[];
+        removedNode: AtlasCanvasNode;
+        session: AtlasSession;
+      }>(`/api/sessions/${encodeURIComponent(sessionId)}/nodes/${encodeURIComponent(nodeId)}`, {
+        method: 'DELETE'
+      });
+      applySession(result.session, 'local');
+      setSelectedNodeId(null);
+      setDraft(null);
+      setInspectorOpen(false);
+      setError(null);
+    },
+    [applySession, session, sessionId]
+  );
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (!selectedNodeId || isEditableTarget(event.target)) return;
+      if (event.key !== 'Delete' && event.key !== 'Backspace') return;
+      event.preventDefault();
+      void removeSelectedNode(selectedNodeId);
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [removeSelectedNode, selectedNodeId]);
+
   const fitCanvas = useCallback(() => {
     void flowRef.current?.fitView(FIT_VIEW_OPTIONS);
   }, []);
 
   const tidyCanvas = useCallback(async () => {
-    if (!session) return;
-    const updates = tidyNodeUpdates(session);
-    if (!updates.length) {
+    const result = await requestJson<{
+      session: AtlasSession;
+      updates: Array<{ id: string; width: number; x: number; y: number }>;
+    }>(`/api/sessions/${encodeURIComponent(sessionId)}/tidy`, {
+      body: '{}',
+      method: 'POST'
+    });
+
+    if (!result.updates.length) {
       fitCanvas();
       return;
     }
 
-    let next = session;
-    for (const update of updates) {
-      next = await requestJson<AtlasSession>(
-        `/api/sessions/${encodeURIComponent(sessionId)}/nodes/${encodeURIComponent(update.id)}`,
-        {
-          body: JSON.stringify({
-            width: update.width,
-            x: update.x,
-            y: update.y
-          }),
-          method: 'PATCH'
-        }
-      );
-    }
-
-    applySession(next, 'local');
+    applySession(result.session, 'local');
     setError(null);
     window.setTimeout(() => fitCanvas(), 40);
-  }, [applySession, fitCanvas, session, sessionId]);
+  }, [applySession, fitCanvas, sessionId]);
 
   const healCanvas = useCallback(async () => {
     const result = await requestJson<{
@@ -1309,6 +1418,7 @@ function AtlasStudio(): React.ReactElement {
           onAddNode={addNode}
           onChangeDraft={setDraft}
           onClose={() => setInspectorOpen(false)}
+          onRemoveNode={(nodeId) => void removeSelectedNode(nodeId)}
           onSave={saveDraft}
           open={inspectorOpen}
           palette={palette}

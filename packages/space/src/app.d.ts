@@ -26,6 +26,7 @@ declare global {
 				RESEND_API_KEY: string;
 				TURNSTILE_SECRET_KEY?: string;
 				TURNSTILE_SITE_KEY?: string;
+				ANALYTICS_SERVICE_TOKEN?: string;
 				ENVIRONMENT: string;
 				TERMINAL_VERSION: string;
 				DEFAULT_THEME: string;

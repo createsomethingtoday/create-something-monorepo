@@ -16,6 +16,7 @@ declare global {
 				name?: string;
 				tier: 'free' | 'pro' | 'agency';
 				source: 'workway' | 'templates' | 'io' | 'space' | 'lms';
+				analytics_opt_out?: boolean;
 			};
 		}
 
@@ -25,6 +26,7 @@ declare global {
 				KV: KVNamespace;
 				ENVIRONMENT: string;
 				IDENTITY_WORKER_URL: string;
+				ANALYTICS_SERVICE_TOKEN?: string;
 				RESEND_API_KEY: string;
 			};
 			context: ExecutionContext;

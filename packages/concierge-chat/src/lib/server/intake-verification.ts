@@ -382,7 +382,7 @@ export function getIntakeVerificationSupport(platform?: App.Platform): IntakeVer
 		return {
 			available: true,
 			mode: 'email',
-			detail: 'We can email a one-time verification code before protected credential steps.'
+			detail: 'We can email a one-time verification code when documents or recruiter review are ready.'
 		};
 	}
 

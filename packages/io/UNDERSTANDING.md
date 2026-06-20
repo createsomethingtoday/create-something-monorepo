@@ -361,34 +361,34 @@ This is different from `.space`, which uses D1 for experiment content.
 
 | Route | Source | Content Type |
 |-------|--------|--------------|
-| `/papers/{slug}` | Static `.svelte` routes | Rich interactive papers |
+| `/papers/{slug}` | Static `.svelte` routes or file-based markdown config | Rich interactive papers and migrated markdown papers |
 | `/experiments/{slug}` | D1 + Static routes | Both D1 and file-based |
-| `/api/manifest` | Manifest endpoint | Metadata for search indexing |
+| `/api/manifest` | Shared paper catalog + static experiment list | Metadata for search indexing |
 
 ### Adding a New Paper
 
 1. **Create static route**: `src/routes/papers/new-paper/+page.svelte`
-2. **Update manifest**: `src/routes/api/manifest/+server.ts` - add entry to `PAPERS` array
-3. **Search indexing**: Happens automatically via manifest every 6 hours
+2. **Add route metadata**: `src/routes/papers/new-paper/meta.ts`
+3. **Run validation**: `pnpm --filter @create-something/io check`
+4. **Search and sitemap indexing**: Happens automatically through the shared paper catalog
 
 ### The Manifest API
 
 The manifest at `/api/manifest` provides metadata for the unified search indexer:
 
 ```typescript
-// src/routes/api/manifest/+server.ts
-const PAPERS: ContentItem[] = [
-  {
-    slug: 'hermeneutic-spiral-ux',
-    title: 'The Hermeneutic Spiral in UX Design',
-    description: 'Applying Heidegger\'s hermeneutic circle to UX design',
-    category: 'methodology'
-  },
-  // ... add new papers here
-];
+// src/lib/config/paperCatalog.ts
+export function getPaperManifestItems() {
+  return getPublishedPaperMetas().map((paper) => ({
+    slug: paper.slug,
+    title: paper.title,
+    description: paper.description,
+    category: paper.category
+  }));
+}
 ```
 
-The search indexer fetches this manifest instead of querying D1, ensuring only papers with actual routes are indexed.
+The search indexer fetches this manifest instead of querying D1, ensuring only papers with actual routes and catalog metadata are indexed. Do not maintain a manual paper list in `/api/manifest`; add `meta.ts` for static papers or `fileBasedPapers.ts` metadata for markdown-backed papers.
 
 ## Paper Structure
 
