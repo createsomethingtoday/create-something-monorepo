@@ -2,6 +2,19 @@ import type { PageServerLoad } from './$types';
 import type { Paper } from '@create-something/canon/types';
 import { getPlatform } from '@create-something/canon/platform';
 import { getFileBasedExperiments } from '$lib/config/fileBasedExperiments';
+import { fileBasedPapers } from '$lib/config/fileBasedPapers';
+import type { PaperMeta } from '../papers/types';
+
+const fileBasedSlugs = new Set(getFileBasedExperiments().map((experiment) => experiment.slug));
+const paperModules = import.meta.glob<{ meta: PaperMeta }>('../papers/*/meta.ts', { eager: true });
+const knownPaperSlugs = new Set([
+	...fileBasedPapers.map((paper) => paper.slug),
+	...Object.values(paperModules).map((module) => module.meta.slug)
+]);
+
+function isMissingPapersTable(error: unknown): boolean {
+	return error instanceof Error && error.message.includes('no such table: papers');
+}
 
 function sortByFeaturedThenDate<T extends { featured?: number; published_at?: string | null; created_at?: string }>(
 	items: T[]
@@ -18,6 +31,7 @@ function sortByFeaturedThenDate<T extends { featured?: number; published_at?: st
 
 export const load: PageServerLoad = async ({ platform }) => {
 	const fileBasedExperiments = getFileBasedExperiments();
+	const fileBasedIds = new Set(fileBasedExperiments.map((experiment) => experiment.id));
 
 	try {
 		// getPlatform() abstracts D1/SQLite - same code works on Cloudflare or Mac Mini
@@ -31,15 +45,33 @@ export const load: PageServerLoad = async ({ platform }) => {
         excerpt_long, slug, featured, published, is_hidden, archived,
         date, excerpt, description, created_at, updated_at, published_at, ascii_art
       FROM papers
-      WHERE published = 1 AND is_hidden = 0 AND archived = 0
+	      WHERE published = 1
+	        AND is_hidden = 0
+	        AND archived = 0
+	        AND (
+	          slug IS NOT NULL
+	          OR id IS NOT NULL
+	        )
     `
 		).all<Paper>();
 
-		const databaseExperiments = result.results || [];
+		const databaseExperiments = (result.results || [])
+			.map((experiment) => ({
+				...experiment,
+				slug: experiment.slug || experiment.id
+			}))
+			.filter(
+				(experiment) =>
+					!knownPaperSlugs.has(experiment.slug) &&
+					!fileBasedSlugs.has(experiment.slug) &&
+					!fileBasedIds.has(experiment.id)
+			);
 		const merged = [...fileBasedExperiments, ...databaseExperiments];
 		return { papers: sortByFeaturedThenDate(merged) };
 	} catch (error) {
-		console.error('Error fetching experiments:', error);
+		if (!isMissingPapersTable(error)) {
+			console.error('Error fetching experiments:', error);
+		}
 		return { papers: sortByFeaturedThenDate(fileBasedExperiments) };
 	}
 };

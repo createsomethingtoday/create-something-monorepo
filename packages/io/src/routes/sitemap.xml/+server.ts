@@ -3,6 +3,15 @@ import {
 	PUBLIC_AGENT_TRUST_CARDS,
 	PUBLIC_MCP_TRUST_CARDS
 } from '$lib/config/publicTrustCatalog';
+import { getFileBasedExperiments } from '$lib/config/fileBasedExperiments';
+import { getPublishedPaperMetas, getPublishedPaperSlugs } from '$lib/config/paperCatalog';
+
+const paperMetas = getPublishedPaperMetas();
+const knownPaperSlugs = getPublishedPaperSlugs();
+
+function isMissingPapersTable(error: unknown): boolean {
+	return error instanceof Error && error.message.includes('no such table: papers');
+}
 
 type SitemapUrl = {
 	loc: string;
@@ -17,6 +26,7 @@ export const GET: RequestHandler = async ({ platform }) => {
 	const urls: SitemapUrl[] = [
 		{ loc: `${baseUrl}/`, changefreq: 'daily', priority: '1.0', lastmod: today },
 		{ loc: `${baseUrl}/experiments`, changefreq: 'daily', priority: '0.9', lastmod: today },
+		{ loc: `${baseUrl}/papers`, changefreq: 'weekly', priority: '0.9', lastmod: today },
 		{ loc: `${baseUrl}/methodology`, changefreq: 'weekly', priority: '0.8', lastmod: today },
 		{ loc: `${baseUrl}/categories`, changefreq: 'weekly', priority: '0.8', lastmod: today },
 		{ loc: `${baseUrl}/mcp`, changefreq: 'weekly', priority: '0.9', lastmod: today },
@@ -45,12 +55,32 @@ export const GET: RequestHandler = async ({ platform }) => {
 		});
 	}
 
+	for (const paper of paperMetas) {
+		urls.push({
+			loc: `${baseUrl}/papers/${paper.slug}`,
+			changefreq: 'monthly',
+			priority: '0.8',
+			lastmod: paper.date || today
+		});
+	}
+
+	const knownExperimentSlugs = new Set<string>();
+	for (const experiment of getFileBasedExperiments()) {
+		knownExperimentSlugs.add(experiment.slug);
+		urls.push({
+			loc: `${baseUrl}/experiments/${experiment.slug}`,
+			changefreq: 'monthly',
+			priority: '0.9',
+			lastmod: (experiment.updated_at || experiment.created_at || today).split('T')[0]
+		});
+	}
+
 	const db = platform?.env?.DB;
 	if (db) {
 		try {
 			const experimentsResult = await db
 				.prepare(
-					`SELECT id, updated_at, created_at
+					`SELECT id, slug, updated_at, created_at
 					FROM papers
 					WHERE published = 1
 					ORDER BY created_at DESC`
@@ -58,10 +88,13 @@ export const GET: RequestHandler = async ({ platform }) => {
 				.all();
 
 			for (const experiment of experimentsResult.results || []) {
-				const record = experiment as { id: string; updated_at?: string; created_at?: string };
+				const record = experiment as { id: string; slug?: string | null; updated_at?: string; created_at?: string };
+				const slug = record.slug || record.id;
+				if (!slug || knownPaperSlugs.has(slug) || knownExperimentSlugs.has(slug)) continue;
+				knownExperimentSlugs.add(slug);
 				const lastmod = record.updated_at || record.created_at || today;
 				urls.push({
-					loc: `${baseUrl}/experiments/${record.id}`,
+					loc: `${baseUrl}/experiments/${slug}`,
 					changefreq: 'monthly',
 					priority: '0.9',
 					lastmod: lastmod.split('T')[0]
@@ -90,7 +123,9 @@ export const GET: RequestHandler = async ({ platform }) => {
 				});
 			}
 		} catch (error) {
-			console.error('Failed to add database-backed sitemap entries:', error);
+			if (!isMissingPapersTable(error)) {
+				console.error('Failed to add database-backed sitemap entries:', error);
+			}
 		}
 	}
 
