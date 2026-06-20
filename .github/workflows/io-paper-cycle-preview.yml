@@ -12,6 +12,7 @@ on:
     paths:
       - 'packages/io/src/routes/papers/**'
       - 'packages/io/src/routes/experiments/**'
+      - 'packages/io/src/lib/config/**'
       - 'packages/io/content/papers/**'
       - 'packages/io/content/experiments/**'
       - 'docs/policies/**'
