@@ -60,6 +60,48 @@ export const fileBasedPapers: FileBasedPaper[] = [
 `
 	},
 	{
+		id: 'paper-policy-os-contract-bundle',
+		slug: 'policy-os-contract-bundle',
+		title: 'The Policy OS Contract Bundle',
+		description: 'Why governed AI workflows need a portable contract bundle before they need more autonomy. A practical model for defining MCP capability, agent behavior, outcome success, golden tasks, runbooks, and runtime graduation.',
+		excerpt_short: 'The portable unit of governed AI work',
+		excerpt_long: 'This paper explains the Policy OS contract bundle as the practical unit that makes AI workflows inspectable, testable, portable, and governable. MCP exposes capability, agent contracts define behavior, outcome contracts define success, golden tasks preserve proof, and runbooks keep humans in control across Dify, Codex, Pi, repo-owned services, and SDK-backed graduation paths.',
+		category: 'Research',
+		tags: [
+			'Policy OS',
+			'Contract Bundle',
+			'MCP',
+			'Dify',
+			'OpenAI Agents SDK',
+			'Golden Tasks',
+			'Agent Governance',
+			'Skills on MCP',
+			'Three-Tier Framework'
+		],
+		created_at: '2026-06-21T19:53:36Z',
+		updated_at: '2026-06-21T19:53:36Z',
+		reading_time_minutes: 16,
+		difficulty: 'intermediate',
+		is_file_based: true,
+		tests_principles: [
+			'mcp-first-thesis',
+			'three-tier-framework',
+			'policy-as-artifact',
+			'verification-first',
+			'agent-governance'
+		],
+		route: '/papers/policy-os-contract-bundle',
+		ascii_art: `
+╭──────────────────────────────────────────────────────────────╮
+│ MCP CONTRACT  →  AGENT CONTRACT  →  OUTCOME CONTRACT        │
+│ capability       behavior           success                 │
+│                                                              │
+│ GOLDEN TASKS  →  RUNBOOK  →  RUNTIME GRADUATION             │
+│ prove it          operate it   move only with evidence       │
+╰──────────────────────────────────────────────────────────────╯
+`
+	},
+	{
 		id: 'paper-analyzer-mcp-review-architecture',
 		slug: 'analyzer-mcp-review-architecture',
 		title: 'The Analyzer MCP: A Policy-Grounded Review Architecture',
