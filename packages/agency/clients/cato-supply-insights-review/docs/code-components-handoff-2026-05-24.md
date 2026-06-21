@@ -17,7 +17,9 @@ Reviewed against `/Users/micahjohnson/Downloads/cato-supply.webflow` and the loc
 
 | Surface | Baseline Grade | Why | Improvement Path |
 |---|---:|---|---|
-| About page | B- | The export has strong raw content, useful proof metrics, values, mission, and team sections. The experience is long, section rhythm is uneven, the hero relies on animation that is harder to preserve in Code Components, and the page does not quickly connect the company story to the updated Insights-style procurement intelligence narrative. | Use `Cato About Page` to create a clearer first viewport, platform-focus panel, tighter proof stack, CMS-friendly values/team sections, and self-contained styling. |
+| About page | B- | The export has strong raw content, useful proof metrics, values, mission, and team sections. The experience is long, section rhythm is uneven, the hero relies on animation that is harder to preserve in Code Components, and the page does not quickly connect the company story to the updated Insights-style procurement intelligence narrative. | Use `Cato About Page` to create a clearer first viewport, platform-focus panel, tighter proof stack, values, mission, and self-contained styling. Move people profiles to dedicated About dropdown pages. |
+| Leadership page | New | Cato requested a separate `Leadership` tab under About Us. | Create a new page and place `Cato Leadership Page`, which defaults to Ryan Zackon placeholder, Lainy Jahnke, and Ethan Weinberg. |
+| Board of Directors page | New | Cato requested a separate `Board of Directors` tab under About Us. | Create a new page and place `Cato Board of Directors Page`, which defaults to five board profiles. |
 | Case Studies landing | C+ | The export has the right collection structure but reads like a CMS listing scaffold. It does not strongly feature the best customer story, results are not surfaced early, and the page needs a more decisive path from proof to contact. | Use `Cato Case Studies Landing` to lead with a featured story, result proof, customer-story grid, and CTA rhythm aligned with Insights. |
 | Case Study detail template | C+ | The native template has useful sections for customer profile, challenge, solution, results, and related stories, but several fields render empty in the export baseline and the carousel dependency creates more moving parts than needed for first delivery. | Use `Cato Case Study Detail` as a CMS-bindable fallback with rich-text props, result cards, related-story cards, and no external carousel dependency. |
 
@@ -35,7 +37,9 @@ Group in Webflow Designer: `Cato Supply`
 - `Cato Insights Archive` - focused archive surface for Resiliency, Research, Resources, or Newsroom.
 - `Cato Insight Category Archive` - CMS category template surface that resolves the active archive from the Insight Categories page slug.
 - `Cato Insight Detail` - CMS-bindable detail article shell for future live CMS item templates.
-- `Cato About Page` - improved About page with self-contained style, proof metrics, values, mission, leadership, and board sections.
+- `Cato About Page` - improved About page with self-contained style, proof metrics, values, and mission sections.
+- `Cato Leadership Page` - dedicated About dropdown page for 3 leadership profiles.
+- `Cato Board of Directors Page` - dedicated About dropdown page for 5 board profiles.
 - `Cato Case Studies Landing` - improved Case Studies landing surface with featured story, result proof, and customer story grid.
 - `Cato Case Study Detail` - CMS-bindable case study detail template with customer profile, challenge, solution, results, and related stories.
 
@@ -48,9 +52,11 @@ Group in Webflow Designer: `Cato Supply`
 5. Use `Cato Insights Archive` on the four focused pages, with `categoryId` set per page.
 6. Use `Cato Insight Category Archive` on the `Insight Categories` CMS template. Bind `Archive Slug` to the CMS slug field when Designer exposes the new prop, or leave it blank so the component infers `resiliency-reports`, `resource-library`, `cato-research`, or `newsroom` from the published URL.
 7. Use `Cato Insight Detail` only if the team wants a Code Component detail template before final native Collection List binding.
-8. Use `Cato About Page` as the body of `/about-us`, between the existing shared Nav and Footer/CTA. Bind `Values JSON`, `Leadership JSON`, and `Board JSON` if the CMS fields are convenient; otherwise the current client-safe defaults are already populated from the latest Webflow CMS review.
-9. Use `Cato Case Studies Landing` on `/case-studies`. Keep `Show Featured Case` on so the strongest proof story appears before the full grid.
-10. Use `Cato Case Study Detail` on the Case Studies CMS template. Bind slug, title, client name, short summary, customer profile, challenge rich text, solution rich text, result JSON, and images where possible. The newest declaration includes native `Challenge Image` and `Solution Image` props in addition to URL fallbacks so CMS image fields can bind cleanly in Designer.
+8. Use `Cato About Page` as the body of `/about-us`, between the existing shared Nav and Footer/CTA. Keep `Show Legacy Team Sections` off unless Cato explicitly asks for the people sections to remain on About.
+9. Create a `/leadership` page, place `Cato Leadership Page`, and add `Leadership` as an item under the native About Us dropdown.
+10. Create a `/board-of-directors` page, place `Cato Board of Directors Page`, and add `Board of Directors` as an item under the native About Us dropdown.
+11. Use `Cato Case Studies Landing` on `/case-studies`. Keep `Show Featured Case` on so the strongest proof story appears before the full grid.
+12. Use `Cato Case Study Detail` on the Case Studies CMS template. Bind slug, title, client name, short summary, customer profile, challenge rich text, solution rich text, result JSON, and images where possible. The newest declaration includes native `Challenge Image` and `Solution Image` props in addition to URL fallbacks so CMS image fields can bind cleanly in Designer.
 
 ## Style Notes
 
