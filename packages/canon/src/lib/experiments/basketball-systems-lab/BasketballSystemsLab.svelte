@@ -26,7 +26,7 @@
 		{
 			key: 'schedule',
 			label: 'Schedule Load',
-			arena: 'Performance Lab',
+			arena: 'State Lab',
 			change: 'Cut back-to-backs by 30%',
 			pressure: 'Less star fatigue, tighter national inventory',
 			score: '+12 health'
@@ -99,11 +99,11 @@
 	<div class="bsl-hero performance-container">
 		<div class="hero-copy">
 			<p class="eyebrow performance-eyebrow">Basketball Systems Lab</p>
-			<h1 id="bsl-title">Run the league like a living performance system.</h1>
+			<h1 id="bsl-title">Run the league like a living system.</h1>
 			<p class="lede">
 				A commissioner-mode strategy lab for schedule policy, labor trust, media value, fan
-				attention, and competitive balance. Built with Ona clarity and performance design
-				discipline.
+				attention, and competitive balance. Built with Ona clarity: visible state, compact
+				controls, and receipts for every decision.
 			</p>
 			<div class="hero-actions" aria-label="Prototype modes">
 				<a href="#lab" class="primary-action performance-action" data-variant="primary">Open lab</a>
@@ -168,7 +168,7 @@
 		<div class="systems-map performance-panel" aria-label="Causal systems map">
 			<div class="map-header">
 				<div>
-					<p class="eyebrow performance-eyebrow">Causal Court</p>
+					<p class="eyebrow performance-eyebrow">Causal Map</p>
 					<h2>{activePolicy.label}</h2>
 				</div>
 				<div class="map-badge">
@@ -224,8 +224,8 @@
 			</div>
 			<h2>Every move leaves a receipt.</h2>
 			<p>
-				The design direction keeps the interface executive, athletic, and inspectable. The game
-				should explain why the league changed, not just display that it changed.
+				The design direction keeps the interface quiet, legible, and inspectable. The game should
+				explain why the league changed, not just display that it changed.
 			</p>
 		</div>
 
@@ -240,10 +240,10 @@
 		</div>
 	</div>
 
-	<div class="discipline-strip performance-container" aria-label="Design pillars">
+	<div class="discipline-strip performance-container" aria-label="System pillars">
 		<div>
 			<Activity size={20} strokeWidth={1.8} />
-			<span>Performance</span>
+			<span>System state</span>
 		</div>
 		<div>
 			<Clock3 size={20} strokeWidth={1.8} />
@@ -277,7 +277,7 @@
 		--bsl-surface: var(--color-performance-panel);
 		--bsl-blue: var(--color-performance-signal);
 		--bsl-green: var(--color-performance-growth);
-		--bsl-orange: var(--color-performance-pressure);
+		--bsl-orange: var(--color-performance-muted);
 		--bsl-red: var(--color-performance-risk);
 		--bsl-gold: var(--color-performance-gold);
 		font-family:
@@ -310,9 +310,9 @@
 		margin: 0;
 		color: var(--bsl-orange);
 		font-size: 0.76rem;
-		font-weight: 800;
+		font-weight: 700;
 		text-transform: uppercase;
-		letter-spacing: 0.08em;
+		letter-spacing: 0;
 	}
 
 	h1,
@@ -322,11 +322,11 @@
 		margin: 0;
 	}
 
-	h1 {
+		h1 {
 		max-width: 12ch;
 		font-size: clamp(3.7rem, 6vw, 5.9rem);
-		line-height: 0.94;
-		font-weight: 900;
+		line-height: 0.98;
+		font-weight: 700;
 		letter-spacing: 0;
 		text-wrap: balance;
 	}
@@ -363,7 +363,7 @@
 		padding: 0 18px;
 		color: var(--bsl-ink);
 		font-size: 0.88rem;
-		font-weight: 800;
+		font-weight: 700;
 		text-decoration: none;
 	}
 
@@ -396,7 +396,7 @@
 		padding-bottom: 12px;
 		font-size: 0.78rem;
 		text-transform: uppercase;
-		letter-spacing: 0.08em;
+		letter-spacing: 0;
 	}
 
 	.panel-header span {
@@ -407,9 +407,11 @@
 		position: relative;
 		min-height: 336px;
 		overflow: hidden;
-		border: 1px solid #cfc9bd;
+		border: 1px solid var(--bsl-line);
 		border-radius: 8px;
-		background: #d39a4d;
+		background:
+			linear-gradient(90deg, rgba(10, 14, 25, 0.035) 1px, transparent 1px) 0 0 / 44px 44px,
+			color-mix(in srgb, var(--color-clear-pastel-blue) 14%, white);
 	}
 
 	.court-card::before {
@@ -417,14 +419,14 @@
 		position: absolute;
 		inset: 0;
 		background:
-			linear-gradient(90deg, rgba(255, 255, 255, 0.16) 1px, transparent 1px) 0 0 / 44px 44px,
-			linear-gradient(0deg, rgba(60, 31, 10, 0.08) 1px, transparent 1px) 0 0 / 100% 28px;
+			linear-gradient(90deg, rgba(10, 14, 25, 0.035) 1px, transparent 1px) 0 0 / 44px 44px,
+			linear-gradient(0deg, rgba(10, 14, 25, 0.035) 1px, transparent 1px) 0 0 / 100% 28px;
 	}
 
 	.court-lines {
 		position: absolute;
 		inset: 22px;
-		border: 3px solid rgba(255, 255, 255, 0.86);
+		border: 2px solid rgba(10, 14, 25, 0.12);
 		border-radius: 6px;
 	}
 
@@ -433,14 +435,14 @@
 	.court-arc,
 	.court-dot {
 		position: absolute;
-		border-color: rgba(255, 255, 255, 0.86);
+		border-color: rgba(10, 14, 25, 0.12);
 	}
 
 	.court-half {
 		left: 50%;
 		top: 0;
 		bottom: 0;
-		border-left: 3px solid rgba(255, 255, 255, 0.86);
+		border-left: 2px solid rgba(10, 14, 25, 0.12);
 	}
 
 	.court-key {
@@ -448,7 +450,7 @@
 		top: 31%;
 		width: 31%;
 		height: 38%;
-		border: 3px solid rgba(255, 255, 255, 0.86);
+		border: 2px solid rgba(10, 14, 25, 0.12);
 		border-left: 0;
 	}
 
@@ -457,7 +459,7 @@
 		top: 23%;
 		width: 43%;
 		height: 54%;
-		border: 3px solid rgba(255, 255, 255, 0.86);
+		border: 2px solid rgba(10, 14, 25, 0.12);
 		border-left: 0;
 		border-radius: 0 999px 999px 0;
 	}
@@ -468,7 +470,7 @@
 		width: 12px;
 		height: 12px;
 		border-radius: 999px;
-		background: white;
+		background: rgba(10, 14, 25, 0.16);
 		border: 0;
 	}
 
@@ -480,7 +482,7 @@
 		display: grid;
 		gap: 8px;
 		padding: 16px;
-		background: rgba(17, 17, 17, 0.86);
+		background: rgba(10, 14, 25, 0.9);
 		color: white;
 		border-radius: 6px;
 		backdrop-filter: blur(10px);
@@ -495,9 +497,9 @@
 		color: inherit;
 		opacity: 0.74;
 		font-size: 0.76rem;
-		font-weight: 800;
+		font-weight: 700;
 		text-transform: uppercase;
-		letter-spacing: 0.06em;
+		letter-spacing: 0;
 	}
 
 	.court-readout strong {
@@ -537,8 +539,8 @@
 	.report-intro h2 {
 		margin-top: 14px;
 		font-size: clamp(1.8rem, 3vw, 3rem);
-		line-height: 0.98;
-		font-weight: 900;
+		line-height: 1.04;
+		font-weight: 700;
 		letter-spacing: 0;
 	}
 
@@ -563,7 +565,7 @@
 		transition:
 			transform var(--motion-performance-snap) var(--ease-performance-press),
 			border-color var(--motion-performance-snap) var(--ease-performance-snap),
-			box-shadow var(--motion-performance-drive) var(--ease-performance-snap);
+			opacity var(--motion-performance-drive) var(--ease-performance-snap);
 	}
 
 	.policy-list button.active,
@@ -572,15 +574,16 @@
 	}
 
 	.policy-list button:hover {
-		transform: translateY(-1px);
+		opacity: 0.86;
 	}
 
 	.policy-list button:active {
-		transform: translateY(0) scale(0.99);
+		opacity: 1;
+		transform: scale(0.99);
 	}
 
 	.policy-list button:focus-visible {
-		outline: 3px solid color-mix(in srgb, var(--bsl-orange) 46%, white);
+		outline: 2px solid var(--bsl-ink);
 		outline-offset: 3px;
 	}
 
@@ -588,9 +591,9 @@
 	.policy-list small {
 		color: var(--bsl-muted);
 		font-size: 0.73rem;
-		font-weight: 800;
+		font-weight: 700;
 		text-transform: uppercase;
-		letter-spacing: 0.06em;
+		letter-spacing: 0;
 	}
 
 	.policy-list strong {
@@ -620,7 +623,7 @@
 		background: white;
 		color: var(--bsl-muted);
 		font-size: 0.82rem;
-		font-weight: 800;
+		font-weight: 700;
 		white-space: nowrap;
 	}
 
@@ -670,7 +673,7 @@
 		border-radius: 6px;
 		padding: 12px;
 		background: white;
-		box-shadow: var(--shadow-performance-node);
+		box-shadow: var(--shadow-clear-restraint);
 	}
 
 	.map-node strong {
@@ -743,9 +746,9 @@
 		gap: 8px;
 		color: var(--bsl-muted);
 		font-size: 0.82rem;
-		font-weight: 800;
+		font-weight: 700;
 		text-transform: uppercase;
-		letter-spacing: 0.06em;
+		letter-spacing: 0;
 	}
 
 	.discipline-strip a {
