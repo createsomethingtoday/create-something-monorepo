@@ -125,7 +125,7 @@
 		!$page.url.pathname.startsWith('/experiments')}
 />
 
-<div class="layout-root property-performance">
+<div class="layout-root">
 	<Navigation
 		logo="CREATE SOMETHING"
 		links={navLinks}

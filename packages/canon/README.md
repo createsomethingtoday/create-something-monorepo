@@ -135,7 +135,6 @@ Canon uses CSS custom properties for all design decisions:
 | **Spacing** | `--space-xs` through `--space-3xl` (Golden Ratio) |
 | **Glass** | `--glass-blur-*`, `--glass-bg-*`, `--liquid-glass-*` |
 | **Clear Communication** | `--color-clear-*`, `--radius-clear-*`, `--shadow-clear-*` |
-| **Performance Excellence** | `--color-performance-*`, `--radius-performance-*`, `--shadow-performance-*` |
 
 ## Ona-Derived Clear Communication
 
@@ -146,29 +145,23 @@ first: use motion or selection only when it clarifies state, evidence, or the ne
 `.agency` is the first verified rollout surface; the shared primitives are the path for the rest
 of CREATE SOMETHING as surfaces are migrated.
 
-Canon also carries a performance-excellence layer influenced by Nike-level product discipline:
-athletic precision, decisive contrast, measured motion, material cues from performance spaces,
-and clear pressure states. Use this as a CREATE SOMETHING design principle, not as Nike branding:
-tokens and classes use `performance` language so every property can inherit the discipline without
-copying third-party identity.
+For simulation surfaces, system maps, operating consoles, and decision labs, use the shared
+`ona-system-*` primitives instead of creating a local visual namespace. These primitives keep
+interactive prototypes on the same Ona-derived language as the properties: porcelain surfaces,
+compact panels, visible state, restrained motion, and reusable map/report/metric structures.
 
-```css
-@import '@create-something/canon/styles/performance.css';
+```svelte
+<section class="ona-system-shell">
+  <div class="ona-system-hero ona-system-container">
+    <div class="ona-system-copy">
+      <p class="ona-system-eyebrow">Systems Lab</p>
+      <h1>Run the system with visible state.</h1>
+      <p class="ona-system-lede">Explain the policy, state, and receipt before action.</p>
+    </div>
+    <div class="ona-system-panel">...</div>
+  </div>
+</section>
 ```
-
-Use the performance layer for labs, systems maps, operational dashboards, simulation surfaces, and
-high-stakes decision rooms where clarity needs more physical energy than a standard SaaS panel.
-The layer includes:
-
-- `performance-property` for property-level product polish and the performance signal bar.
-- `performance-stat-strip` and `performance-stat` for compact operating metrics.
-- `performance-action`, `performance-panel`, `performance-metric`, and `performance-pressure-rail`
-  for sharp interaction, evidence panels, and pressure-state feedback.
-- `performance-deferred` for opt-in `content-visibility` on heavy below-the-fold regions.
-
-The runtime rule is speed with restraint: use the performance motion tokens for direct manipulation,
-honor reduced-motion preferences, and use containment by default. Add `performance-deferred` only
-when a heavy lower-page region has been visually verified in its target route.
 
 ```svelte
 <Navigation visualStyle="clear" {...navProps} />
