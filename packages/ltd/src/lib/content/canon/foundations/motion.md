@@ -31,6 +31,19 @@ Every animation must answer: what does this communicate that stillness cannot? M
 </div>
 </div>
 
+## Clear Communication Motion
+
+Ona-derived clear surfaces use motion only when it clarifies operational state. The acceptable uses
+are narrow:
+
+- state changed: allow, review, block, waiting, complete
+- selection changed: the active proof object, decision tab, or receipt changed
+- progression happened: a step moved from mapped to validated to handed off
+- attention is needed: an operator must review or stop before execution
+
+Do not animate decorative backgrounds, idle proof panels, or generic AI atmosphere. If the motion
+does not clarify state, selection, progression, or handoff, remove it.
+
 ## Duration Tokens
 
 Five duration levels from instant feedback to deliberate reveals.

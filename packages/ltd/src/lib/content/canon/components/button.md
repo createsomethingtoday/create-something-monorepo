@@ -36,6 +36,7 @@ published: true
 
 ## Related
 
+- [Clear Components](/canon/components/clear)
 - [Card](/canon/components/card)
 - [Navigation](/canon/components/navigation)
 - [Get Started](/canon/resources/get-started)

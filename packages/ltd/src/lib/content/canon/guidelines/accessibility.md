@@ -20,6 +20,18 @@ All text in the Canon system meets WCAG AA contrast requirements. The minimum ra
 
 **Note:** `--color-fg-subtle` (0.2 opacity) does not meet AA contrast and should only be used for decorative elements, never for informational content.
 
+### Clear Proof and Status Surfaces
+
+Ona-derived clear surfaces often show workflow state, receipts, validation gates, and approval
+boundaries. Do not communicate those states with color alone.
+
+Every proof or status surface must include:
+
+- a visible text label such as `Review`, `Blocked`, `Ready`, or `Validated`
+- a semantic region or heading when the proof object is a major page section
+- keyboard-reachable actions for any approval, review, receipt, or handoff link
+- live-region behavior only for meaningful state changes, not decorative rotation
+
 ## Focus Management
 
 All interactive elements must have visible focus indicators. Canon uses a consistent focus ring system.

@@ -47,6 +47,11 @@ brand atmosphere. The clear style follows the Ona-derived communication layer: f
 compact readable links, crisp dividers, restrained active states, direct dark CTA, and no decorative
 navigation complexity.
 
+Clear navigation should route people into proof-bearing work, not generic brand exploration. Prefer
+labels for maps, policies, systems, workflows, receipts, and contact paths. Keep the primary CTA
+bounded to a concrete next action such as mapping one workflow, reviewing a handoff, or opening a
+governed surface.
+
 ```svelte
 <Navigation
   logo="CREATE SOMETHING"
@@ -121,6 +126,7 @@ The clear navigation and footer are designed to pair with:
 
 ## Related
 
+- [Clear Components](/canon/components/clear)
 - [Layout](/canon/foundations/layout)
 - [Content](/canon/guidelines/content)
 - [Responsive](/canon/guidelines/responsive)
