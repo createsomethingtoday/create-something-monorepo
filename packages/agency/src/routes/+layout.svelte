@@ -394,7 +394,7 @@
 <!-- Unified Search - Cmd/Ctrl+K to open -->
 <UnifiedSearch currentProperty="agency" localItems={quickAccessItems} showMobileButton={false} />
 
-<div class="layout-root min-h-screen property-performance">
+<div class="layout-root min-h-screen">
   <Navigation
     logo="CREATE SOMETHING"
     logoSuffix=".agency"
@@ -428,7 +428,7 @@
     visualStyle="clear"
   />
 
-  {#if $page.url.pathname !== '/'}
+  {#if $page.url.pathname !== '/' && $page.url.pathname !== '/basketball-systems-lab'}
     <ModeIndicator current="agency" />
   {/if}
 </div>

@@ -36,7 +36,6 @@
 		"./styles/components.css": "./dist/styles/components.css",
 		"./styles/editorial.css": "./dist/styles/editorial.css",
 		"./styles/animations.css": "./dist/styles/animations.css",
-		"./styles/performance.css": "./dist/styles/performance.css",
 		"./styles/glass.css": "./dist/styles/glass.css",
 		"./styles/prose.css": "./dist/styles/prose.css",
 		"./styles/spacing.css": "./dist/styles/spacing.css",

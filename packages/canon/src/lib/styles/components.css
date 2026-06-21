@@ -873,6 +873,615 @@
   .terminal-surface__dots span:nth-child(3) {
     background: rgba(40, 200, 64, 0.9);
   }
+
+  /* ==========================================================================
+     Ona System Surface
+     Reusable primitives for system maps, simulation labs, operating consoles,
+     and evidence-first decision surfaces.
+     ========================================================================== */
+  .ona-system-shell {
+    --ona-system-ink: var(--color-clear-onyx);
+    --ona-system-muted: var(--color-clear-grey);
+    --ona-system-line: var(--color-clear-border);
+    --ona-system-line-strong: var(--color-clear-border-strong);
+    --ona-system-paper: var(--color-clear-porcelain);
+    --ona-system-surface: var(--color-clear-panel);
+    --ona-system-blue: var(--color-clear-ocean);
+    --ona-system-green: var(--color-clear-moss);
+    --ona-system-soft-blue: var(--color-clear-pastel-blue);
+    --ona-system-red: var(--color-clear-stop);
+    background: var(--ona-system-paper);
+    color: var(--ona-system-ink);
+    font-family: var(--font-sans);
+    letter-spacing: 0;
+    text-rendering: geometricPrecision;
+  }
+
+  .ona-system-container {
+    width: min(var(--content-width-clear), calc(100vw - 32px));
+    margin-inline: auto;
+  }
+
+  .ona-system-panel {
+    border: 1px solid var(--ona-system-line);
+    border-radius: var(--radius-clear-md);
+    background: color-mix(in srgb, var(--ona-system-surface) 90%, transparent);
+    box-shadow: var(--shadow-clear-restraint);
+  }
+
+  .ona-system-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 0.95fr) minmax(360px, 1.05fr);
+    gap: 56px;
+    align-items: center;
+    padding: 92px 0 44px;
+  }
+
+  .ona-system-copy {
+    display: grid;
+    gap: 22px;
+    align-content: center;
+  }
+
+  .ona-system-shell :where(h1, h2, h3, p) {
+    margin: 0;
+  }
+
+  .ona-system-shell h1 {
+    max-width: 12ch;
+    font-size: clamp(3.7rem, 6vw, 5.9rem);
+    line-height: 0.98;
+    font-weight: 700;
+    letter-spacing: 0;
+    text-wrap: balance;
+  }
+
+  .ona-system-eyebrow,
+  .ona-system-kicker {
+    margin: 0;
+    color: var(--ona-system-muted);
+    font-size: 0.76rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0;
+  }
+
+  .ona-system-lede {
+    max-width: 660px;
+    color: #34373d;
+    font-size: clamp(1.04rem, 1.6vw, 1.32rem);
+    line-height: 1.55;
+  }
+
+  .ona-system-actions,
+  .ona-system-strip,
+  .ona-system-kicker,
+  .ona-system-map-badge {
+    display: flex;
+    align-items: center;
+  }
+
+  .ona-system-actions {
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .ona-system-action,
+  .ona-system-strip a {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--ona-system-ink);
+    border-radius: var(--radius-clear-sm);
+    padding: 0 18px;
+    color: var(--ona-system-ink);
+    font-size: 0.88rem;
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+  .ona-system-action--primary {
+    background: var(--ona-system-ink);
+    color: white;
+  }
+
+  .ona-system-action--secondary {
+    background: transparent;
+  }
+
+  .ona-system-league-panel {
+    padding: 16px;
+    display: grid;
+    gap: 14px;
+    contain: layout paint style;
+  }
+
+  .ona-system-panel-header,
+  .ona-system-map-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .ona-system-panel-header {
+    border-bottom: 1px solid var(--ona-system-line);
+    padding-bottom: 12px;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0;
+  }
+
+  .ona-system-panel-header span {
+    color: var(--ona-system-muted);
+  }
+
+  .ona-system-court,
+  .ona-system-map-stage {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--ona-system-line);
+    border-radius: var(--radius-clear-md);
+  }
+
+  .ona-system-court {
+    min-height: 336px;
+    background:
+      linear-gradient(90deg, rgba(10, 14, 25, 0.035) 1px, transparent 1px) 0 0 / 44px 44px,
+      color-mix(in srgb, var(--ona-system-soft-blue) 14%, white);
+  }
+
+  .ona-system-court::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(90deg, rgba(10, 14, 25, 0.035) 1px, transparent 1px) 0 0 / 44px 44px,
+      linear-gradient(0deg, rgba(10, 14, 25, 0.035) 1px, transparent 1px) 0 0 / 100% 28px;
+  }
+
+  .ona-system-court-lines {
+    position: absolute;
+    inset: 22px;
+    border: 2px solid rgba(10, 14, 25, 0.12);
+    border-radius: var(--radius-clear-sm);
+  }
+
+  .ona-system-court-half,
+  .ona-system-court-key,
+  .ona-system-court-arc,
+  .ona-system-court-dot {
+    position: absolute;
+    border-color: rgba(10, 14, 25, 0.12);
+  }
+
+  .ona-system-court-half {
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    border-left: 2px solid rgba(10, 14, 25, 0.12);
+  }
+
+  .ona-system-court-key {
+    left: 0;
+    top: 31%;
+    width: 31%;
+    height: 38%;
+    border: 2px solid rgba(10, 14, 25, 0.12);
+    border-left: 0;
+  }
+
+  .ona-system-court-arc {
+    left: -17%;
+    top: 23%;
+    width: 43%;
+    height: 54%;
+    border: 2px solid rgba(10, 14, 25, 0.12);
+    border-left: 0;
+    border-radius: 0 999px 999px 0;
+  }
+
+  .ona-system-court-dot {
+    left: calc(50% - 6px);
+    top: calc(50% - 6px);
+    width: 12px;
+    height: 12px;
+    border-radius: 999px;
+    background: rgba(10, 14, 25, 0.16);
+    border: 0;
+  }
+
+  .ona-system-court-readout {
+    position: absolute;
+    left: 18px;
+    right: 18px;
+    bottom: 18px;
+    display: grid;
+    gap: 8px;
+    padding: 16px;
+    background: rgba(10, 14, 25, 0.9);
+    color: white;
+    border-radius: var(--radius-clear-sm);
+    backdrop-filter: blur(10px);
+  }
+
+  .ona-system-court-readout span,
+  .ona-system-court-readout small,
+  .ona-system-metric span,
+  .ona-system-metric small,
+  .ona-system-report span,
+  .ona-system-node span {
+    color: inherit;
+    opacity: 0.74;
+    font-size: 0.76rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0;
+  }
+
+  .ona-system-court-readout strong {
+    font-size: 1.2rem;
+    line-height: 1.2;
+  }
+
+  .ona-system-metric-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .ona-system-metric {
+    min-height: 108px;
+    display: grid;
+    align-content: space-between;
+    gap: 8px;
+    border: 1px solid var(--ona-system-line);
+    border-top: 3px solid var(--ona-system-ink);
+    border-radius: var(--radius-clear-sm);
+    padding: 12px;
+    background: var(--ona-system-surface);
+    contain: layout paint;
+  }
+
+  .ona-system-metric[data-tone='green'] {
+    border-top-color: var(--ona-system-green);
+  }
+
+  .ona-system-metric[data-tone='blue'] {
+    border-top-color: var(--ona-system-blue);
+  }
+
+  .ona-system-metric[data-tone='neutral'] {
+    border-top-color: var(--ona-system-line-strong);
+  }
+
+  .ona-system-metric[data-tone='red'] {
+    border-top-color: var(--ona-system-red);
+  }
+
+  .ona-system-metric strong {
+    font-size: clamp(1.35rem, 2.2vw, 2rem);
+    line-height: 1;
+  }
+
+  .ona-system-lab-grid {
+    display: grid;
+    grid-template-columns: 310px minmax(0, 1fr);
+    gap: 18px;
+    padding: 30px 0;
+  }
+
+  .ona-system-policy-rail {
+    padding: 18px;
+    align-self: stretch;
+  }
+
+  .ona-system-kicker {
+    gap: 8px;
+  }
+
+  .ona-system-policy-rail h2,
+  .ona-system-map-header h2,
+  .ona-system-report-intro h2 {
+    margin-top: 14px;
+    font-size: clamp(1.8rem, 3vw, 3rem);
+    line-height: 1.04;
+    font-weight: 700;
+    letter-spacing: 0;
+  }
+
+  .ona-system-policy-list {
+    display: grid;
+    gap: 10px;
+    margin-top: 22px;
+  }
+
+  .ona-system-policy-list button {
+    width: 100%;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 6px 12px;
+    border: 1px solid var(--ona-system-line);
+    border-radius: var(--radius-clear-sm);
+    padding: 14px;
+    background: white;
+    color: var(--ona-system-ink);
+    text-align: left;
+    cursor: pointer;
+    transition:
+      transform 120ms cubic-bezier(0.19, 1, 0.22, 1),
+      border-color 120ms linear,
+      opacity 180ms linear;
+  }
+
+  .ona-system-policy-list button.active,
+  .ona-system-policy-list button:hover {
+    border-color: var(--ona-system-ink);
+  }
+
+  .ona-system-policy-list button:hover {
+    opacity: 0.86;
+  }
+
+  .ona-system-policy-list button:active {
+    opacity: 1;
+    transform: scale(0.99);
+  }
+
+  .ona-system-policy-list button:focus-visible {
+    outline: 2px solid var(--ona-system-ink);
+    outline-offset: 3px;
+  }
+
+  .ona-system-policy-list span,
+  .ona-system-policy-list small {
+    color: var(--ona-system-muted);
+    font-size: 0.73rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0;
+  }
+
+  .ona-system-policy-list strong {
+    font-size: 1.02rem;
+  }
+
+  .ona-system-policy-list small {
+    justify-self: end;
+    color: var(--ona-system-green);
+  }
+
+  .ona-system-map {
+    min-width: 0;
+    padding: 18px;
+    contain: layout paint style;
+  }
+
+  .ona-system-map-header {
+    margin-bottom: 14px;
+  }
+
+  .ona-system-map-badge {
+    gap: 8px;
+    border: 1px solid var(--ona-system-line);
+    border-radius: 999px;
+    padding: 8px 12px;
+    background: white;
+    color: var(--ona-system-muted);
+    font-size: 0.82rem;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .ona-system-map-stage {
+    min-height: 520px;
+  }
+
+  .ona-system-map-stage svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .ona-system-court-boundary,
+  .ona-system-court-line {
+    fill: none;
+    stroke: rgba(10, 14, 25, 0.12);
+    stroke-width: 2;
+  }
+
+  .ona-system-effect-edge {
+    fill: none;
+    stroke: var(--ona-system-ink);
+    stroke-width: 2.4;
+    stroke-dasharray: 8 8;
+    opacity: 0.72;
+  }
+
+  .ona-system-map-stage marker path {
+    fill: var(--ona-system-ink);
+  }
+
+  .ona-system-node {
+    position: absolute;
+    left: var(--desktop-x);
+    top: var(--desktop-y);
+    width: clamp(140px, 18vw, 176px);
+    display: grid;
+    gap: 6px;
+    transform: translate(-50%, -50%);
+    border: 1px solid var(--ona-system-ink);
+    border-radius: var(--radius-clear-sm);
+    padding: 12px;
+    background: white;
+    box-shadow: var(--shadow-clear-restraint);
+  }
+
+  .ona-system-node strong {
+    font-size: 1rem;
+    line-height: 1.1;
+  }
+
+  .ona-system-node[data-tone='green'] {
+    border-color: var(--ona-system-green);
+  }
+
+  .ona-system-node[data-tone='blue'] {
+    border-color: var(--ona-system-blue);
+  }
+
+  .ona-system-node[data-tone='neutral'] {
+    border-color: var(--ona-system-line-strong);
+  }
+
+  .ona-system-node[data-tone='red'] {
+    border-color: var(--ona-system-red);
+  }
+
+  .ona-system-report-band {
+    display: grid;
+    grid-template-columns: 0.78fr 1.22fr;
+    gap: 28px;
+    padding: 52px 0 34px;
+  }
+
+  .ona-system-report-intro p {
+    margin-top: 16px;
+    color: #44484f;
+    font-size: 1.04rem;
+    line-height: 1.6;
+  }
+
+  .ona-system-report-grid {
+    display: grid;
+    gap: 12px;
+  }
+
+  .ona-system-report {
+    display: grid;
+    gap: 10px;
+    padding: 18px;
+    contain: layout paint;
+  }
+
+  .ona-system-report h3 {
+    max-width: 48ch;
+    font-size: 1.28rem;
+    line-height: 1.18;
+  }
+
+  .ona-system-report p {
+    color: var(--ona-system-muted);
+    line-height: 1.55;
+  }
+
+  .ona-system-strip {
+    justify-content: space-between;
+    gap: 10px;
+    border-top: 1px solid var(--ona-system-line);
+    padding: 22px 0 44px;
+  }
+
+  .ona-system-strip div,
+  .ona-system-strip a {
+    gap: 8px;
+    color: var(--ona-system-muted);
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0;
+  }
+
+  .ona-system-strip a {
+    min-height: 38px;
+    color: var(--ona-system-ink);
+    text-transform: none;
+    letter-spacing: 0;
+  }
+
+  @media (max-width: 960px) {
+    .ona-system-hero,
+    .ona-system-lab-grid,
+    .ona-system-report-band {
+      grid-template-columns: 1fr;
+    }
+
+    .ona-system-hero {
+      gap: 28px;
+      padding-top: 46px;
+    }
+
+    .ona-system-shell h1 {
+      max-width: 10ch;
+    }
+
+    .ona-system-policy-rail {
+      align-self: auto;
+    }
+
+    .ona-system-map-stage {
+      min-height: 470px;
+    }
+
+    .ona-system-strip {
+      flex-wrap: wrap;
+      justify-content: flex-start;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .ona-system-container {
+      width: min(100vw - 22px, var(--content-width-clear));
+    }
+
+    .ona-system-metric-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .ona-system-actions {
+      display: grid;
+      grid-template-columns: 1fr;
+    }
+
+    .ona-system-action {
+      width: 100%;
+    }
+
+    .ona-system-map-header,
+    .ona-system-panel-header {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+
+    .ona-system-node {
+      left: var(--mobile-x);
+      top: var(--mobile-y);
+      width: 104px;
+      padding: 10px;
+      transform: none;
+    }
+
+    .ona-system-node span {
+      font-size: 0.62rem;
+    }
+
+    .ona-system-node strong {
+      font-size: 0.82rem;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ona-system-policy-list button {
+      transition: none;
+    }
+
+    .ona-system-policy-list button:hover,
+    .ona-system-policy-list button:active {
+      transform: none;
+    }
+  }
 }
 
 /* ==========================================================================
