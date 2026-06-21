@@ -3,10 +3,10 @@ title: "The Policy OS Contract Bundle"
 subtitle: "The portable unit of governed AI work"
 authors: ["CREATE SOMETHING"]
 category: "Research"
-abstract: "Most AI workflow projects start by choosing an agent surface, model, or connector. The more durable starting point is a contract bundle: the small set of artifacts that defines what the workflow may access, what it may do, when it must ask, how success is measured, and how the work can move between runtimes without losing governance. This paper explains the Policy OS contract bundle as the portable unit of governed AI work across MCP servers, visual operator surfaces, repo-owned services, and SDK-backed orchestration."
+abstract: "Most AI workflow projects start by choosing an agent surface, model, or connector. The more durable starting point is a contract bundle: the small set of artifacts that defines what the workflow may access, what it may do, when it must ask, how success is measured, and how the work can move between runtimes without losing governance. This paper explains the Policy OS contract bundle as the portable unit of governed AI work and gives teams a practical way to evaluate MCP servers, visual operator surfaces, repo-owned services, and SDK-backed orchestration."
 keywords: ["Policy OS", "Contract Bundle", "MCP", "Dify", "OpenAI Agents SDK", "Golden Tasks", "Agent Governance", "Skills on MCP", "Three-Tier Framework"]
 publishedAt: "2026-06-21"
-readingTime: 16
+readingTime: 18
 difficulty: "intermediate"
 published: true
 ---
@@ -32,6 +32,18 @@ The answer is the **Policy OS contract bundle**: a small, explicit artifact fami
 The bundle is not documentation after the fact. It is the operating boundary. It defines the workflow before autonomy expands, keeps the workflow portable across agent clients, and gives humans a concrete object to review when the system changes.
 
 The practical recommendation is simple: before asking which agent should run the work, ask whether the work has a contract bundle.
+
+## What This Paper Gives You
+
+Use this paper when an AI workflow is past the demo stage but not yet safe to treat as an operating system.
+
+It gives you three practical outputs:
+
+1. A way to explain why "we connected the tools" is not the same as "the workflow is governed."
+2. A five-artifact bundle that turns access, behavior, success, regression testing, and operations into reviewable objects.
+3. A migration rule for moving work between Dify, MCP servers, repo-owned services, coding agents, and SDK-backed orchestration without losing the policy boundary.
+
+The target reader is not only an engineer. It is also the operator, founder, product lead, or client sponsor who needs to know whether an AI workflow can be trusted with real work.
 
 ## Why Agent Projects Drift
 
@@ -64,7 +76,7 @@ Without a contract bundle, those questions collapse into one unhelpful conclusio
 
 Policy OS separates them.
 
-## The Bundle
+## The Bundle In One Page
 
 Every governed AI workflow should ship with five core artifacts.
 
@@ -77,6 +89,14 @@ Every governed AI workflow should ship with five core artifacts.
 | `runbook.md` | Defines setup, operation, incident response, rollback, and human handoff. |
 
 This bundle is small enough to write for one workflow and strong enough to govern real work.
+
+The bundle is finished when a reviewer can answer five questions without reading the implementation:
+
+- What may this workflow access?
+- What may it do?
+- When must it ask?
+- What result is it trying to produce?
+- What evidence proves the behavior still holds?
 
 It also changes the buyer conversation. The question stops being "Do you have an AI agent?" and becomes:
 
@@ -386,6 +406,26 @@ Then write the bundle in this order:
 5. **Runbook:** document operation, review, incident response, rollback, and evidence.
 
 This sequence keeps the work grounded. The business outcome comes before tool exposure. Tool exposure comes before agent behavior. Agent behavior comes before regression testing. Regression testing comes before recurring operation.
+
+## A Starter Bundle Example
+
+Imagine a customer inbox triage workflow.
+
+The weak version says: "Use AI to help with support."
+
+The contract-bundle version says:
+
+| Artifact | Example content |
+| --- | --- |
+| `outcome_contract.md` | The workflow classifies inbound customer messages, drafts responses, and routes refund, deletion, legal, and security cases to named humans. It never sends customer-facing mail without approval. |
+| `mcp_contract.yaml` | The workflow can read authorized inbox threads, read customer account status, search approved help content, draft a reply, and create an internal handoff note. It cannot issue refunds, delete accounts, or send email directly. |
+| `agent_contract.yaml` | Low-risk classification is auto-allowed. Drafting is auto-allowed. Sending, refunding, deleting, exporting, and policy exceptions are approval-needed or blocked. Missing account context stops the workflow with a reason. |
+| `golden_tasks.yaml` | Examples cover normal support, refund request, account deletion, missing customer record, suspicious attachment, angry but non-policy-breaking message, and secret exposure attempt. |
+| `runbook.md` | The support owner reviews blocked cases daily, checks golden-task drift after prompt or tool changes, and falls back to manual triage if the inbox connector, account lookup, or approval queue fails. |
+
+That small bundle communicates more than a demo because it makes the operating boundary visible.
+
+It tells an operator what will happen. It tells an engineer what to expose. It tells a reviewer what to test. It tells a buyer what evidence to request.
 
 ## What To Ask Vendors
 
