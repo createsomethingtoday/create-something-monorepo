@@ -4,7 +4,7 @@ import { CatoAboutPage } from './CatoCompanyPages';
 
 export default declareComponent(CatoAboutPage, {
   name: 'Cato About Page',
-  description: 'Improved About page experience with self-contained Cato styling, proof, values, mission, leadership, and board sections.',
+  description: 'Improved About page experience with self-contained Cato styling, proof, values, and mission sections. Leadership and Board now live on separate About dropdown pages by default.',
   group: 'Cato Supply',
   options: {
     applyTagSelectors: true,
@@ -75,8 +75,8 @@ export default declareComponent(CatoAboutPage, {
       defaultValue: true,
     }),
     showTeam: props.Boolean({
-      name: 'Show Team',
-      defaultValue: true,
+      name: 'Show Legacy Team Sections',
+      defaultValue: false,
     }),
   },
 });

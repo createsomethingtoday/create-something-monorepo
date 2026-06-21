@@ -7,7 +7,9 @@
   "main": "src/index.ts",
   "scripts": {
     "bundle": "npx webflow library bundle --public-path / --no-input",
+    "bundle:cato": "npx webflow library bundle --manifest webflow.cato.json --public-path / --no-input",
     "share": "npx webflow library share",
+    "share:cato": "WEBFLOW_WORKSPACE_API_TOKEN= WEBFLOW_SKIP_UPDATE_CHECKS=true npx webflow library share --manifest webflow.cato.json",
     "check": "pnpm run typecheck && pnpm run test",
     "lint": "pnpm run typecheck",
     "test": "node --import tsx --test test/*.test.tsx",

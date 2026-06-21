@@ -64,6 +64,24 @@ export interface CatoAboutPageProps {
   showTeam?: boolean;
 }
 
+export interface CatoLeadershipPageProps {
+  title?: string;
+  summary?: string;
+  leadershipJson?: string;
+  assetBasePath?: string;
+  ctaLabel?: string;
+  ctaHref?: string;
+}
+
+export interface CatoBoardOfDirectorsPageProps {
+  title?: string;
+  summary?: string;
+  boardJson?: string;
+  assetBasePath?: string;
+  ctaLabel?: string;
+  ctaHref?: string;
+}
+
 export interface CatoCaseStudiesLandingProps {
   title?: string;
   summary?: string;
@@ -133,48 +151,48 @@ const DEFAULT_VALUES: CatoValueItem[] = [
 
 const DEFAULT_LEADERSHIP: CatoTeamMember[] = [
   {
-    name: 'Lainy Jahnke',
-    role: 'COO, Co-Founder & Board Member',
-    bio: 'Leads Cato operations and customer delivery across healthcare procurement and supply continuity programs.',
+    name: 'Ryan Zackon',
+    role: 'President & Chief Executive Officer',
+    bio: 'Ryan leads Cato as it helps healthcare teams strengthen supply continuity across volatile sourcing conditions. Photo and full approved bio forthcoming from Cato.',
   },
   {
-    name: 'Toby Ryan',
-    role: 'Chief of Staff, Co-Founder',
-    bio: 'Guides company operations, execution rhythm, and cross-functional coordination.',
+    name: 'Lainy Jahnke',
+    role: 'Chief Operating Officer, Co-Founder & Board Member',
+    bio: 'Operations leader with experience scaling organizations and guiding Cato customer delivery, management discipline, and supply continuity programs.',
   },
   {
     name: 'Ethan Weinberg',
     role: 'VP, Supply Chain, Co-Founder',
-    bio: 'Leads supply chain strategy, supplier pathways, and procurement response capabilities.',
-  },
-  {
-    name: 'Brian Weichel',
-    role: 'VP Engineering',
-    bio: 'Leads the technology platform supporting product search, risk visibility, and operational workflows.',
-  },
-  {
-    name: 'Hannah Hall',
-    role: 'Account Executive',
-    bio: 'Supports health system teams evaluating Cato for resilient sourcing and procurement intelligence.',
-  },
-  {
-    name: 'Nathan Brandon',
-    role: 'Strategic Sourcing Manager',
-    bio: 'Works with customers and suppliers to evaluate sourcing options during disruption.',
-  },
-  {
-    name: 'Rhonda Podschelne',
-    role: 'Sales Administrator',
-    bio: 'Supports customer operations, account coordination, and response workflows.',
+    bio: 'Supply chain executive who has sourced and delivered medical supplies across broad SKU sets and supplier pathways.',
   },
 ];
 
 const DEFAULT_BOARD: CatoTeamMember[] = [
-  { name: 'Bala Iyer', role: 'Board Member' },
-  { name: 'Heather Matzke-Hamlin', role: 'Board Member' },
-  { name: 'John Courtney', role: 'Board Member' },
-  { name: 'Tiffani Shaw', role: 'Board Member' },
-  { name: 'Lainy Jahnke', role: 'Board Member' },
+  {
+    name: 'Bala Iyer',
+    role: 'Board Chair',
+    bio: 'Veteran technology operator with experience overseeing acquisitions, divestitures, and growth-stage company strategy.',
+  },
+  {
+    name: 'Andy James',
+    role: 'Board Member',
+    bio: 'Technology-forward leader with decades of experience guiding healthcare, impact, and growth initiatives.',
+  },
+  {
+    name: 'Heather Matzke-Hamlin',
+    role: 'Board Member',
+    bio: 'Finance and transformation leader with experience guiding accounting, auditing, and acquisition integration teams.',
+  },
+  {
+    name: 'John Courtney',
+    role: 'Board Member',
+    bio: 'Operating partner and growth executive with experience scaling teams, operations, and technology-led businesses.',
+  },
+  {
+    name: 'Tiffani Shaw',
+    role: 'Board Member',
+    bio: 'Impact investing and operating leader focused on improving health, well-being, and institutional growth.',
+  },
 ];
 
 const DEFAULT_CASE_STUDIES: CatoCaseStudyItem[] = [
@@ -493,6 +511,285 @@ const CATO_COMPANY_CSS = `
     box-shadow: 0 1.25rem 3.5rem rgba(40,39,35,.1);
   }
   .cato-company-mission-visual img { display: block; width: 100%; height: 100%; object-fit: cover; }
+  .cato-company .section_about-hero {
+    position: relative;
+    overflow: hidden;
+    background: var(--cato-bg);
+  }
+  .cato-company .padding-global {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    padding-left: 2.5rem;
+    padding-right: 2.5rem;
+  }
+  .cato-company .container-medium {
+    width: min(100%, 64rem);
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .cato-company .container-large {
+    width: min(100%, 80rem);
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .cato-company .padding-section-medium {
+    padding-top: 4rem;
+    padding-bottom: 4rem;
+  }
+  .cato-company .padding-section-medium.is-about-hero {
+    padding-top: 8rem;
+    padding-bottom: 5rem;
+  }
+  .cato-company .padding-section-medium.is-about-hero.is-no-padding {
+    padding-bottom: 3rem;
+  }
+  .cato-company .about-hero_outer-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 3.5rem;
+  }
+  .cato-company .about-hero_outer {
+    display: flex;
+    max-width: 58rem;
+    margin-left: auto;
+    margin-right: auto;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    text-align: center;
+  }
+  .cato-company .about-hero_outer h1 {
+    font-size: clamp(3rem, 6vw, 5.8rem);
+    line-height: .98;
+    letter-spacing: 0;
+  }
+  .cato-company .text-size-large {
+    max-width: 48rem;
+    font-size: 1.2rem;
+    line-height: 1.55;
+  }
+  .cato-company .about_lottie-wrap {
+    position: relative;
+    min-height: 11rem;
+    display: grid;
+    place-items: center;
+  }
+  .cato-company .about_lottie {
+    width: min(100%, 44rem);
+    min-height: 10rem;
+    border: 1px solid rgba(10, 69, 46, .1);
+    border-radius: 1rem;
+    background:
+      radial-gradient(circle at 18% 45%, rgba(66, 197, 143, .2), transparent 26%),
+      radial-gradient(circle at 78% 35%, rgba(84, 226, 254, .18), transparent 24%),
+      linear-gradient(135deg, rgba(10, 69, 46, .08), rgba(251, 249, 244, .92));
+  }
+  .cato-company .u-bg-slot {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .cato-company .hero-v2_bg-element {
+    position: absolute;
+    left: -9rem;
+    top: 2rem;
+    width: min(55vw, 42rem);
+    max-width: none;
+    opacity: .16;
+  }
+  .cato-company .hero-v2_bg-element.is-right {
+    left: auto;
+    right: -10rem;
+    transform: scaleX(-1);
+  }
+  .cato-company .hero-v2_gradient.is-about {
+    position: absolute;
+    inset: auto 0 0;
+    height: 48%;
+    background: linear-gradient(rgba(255,255,255,0), var(--cato-bg));
+  }
+  .cato-company .button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .75rem;
+    color: inherit;
+  }
+  .cato-company .button.is-parent {
+    min-height: 3.5rem;
+    border-radius: .5rem;
+    background: linear-gradient(105deg, #004080, #8baed0 49%, #3b83cc);
+    color: #fff;
+    padding: .9rem 1.25rem;
+    text-decoration: none;
+    font-weight: 700;
+    transition: transform .5s cubic-bezier(.19, 1, .22, 1), box-shadow .5s cubic-bezier(.19, 1, .22, 1);
+  }
+  .cato-company .button.is-parent:hover {
+    transform: translate3d(0, -.1rem, 0);
+    box-shadow: 0 8px 12px rgba(23,132,240,.25), 0 4px 8px rgba(23,132,240,.25);
+  }
+  .cato-company .button_text {
+    color: inherit;
+    font-weight: 600;
+  }
+  .cato-company .button_icon {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+  .cato-company .button_spacer {
+    width: .2rem;
+    height: .2rem;
+  }
+  .cato-company .section_team {
+    background-color: var(--cato-bg-soft);
+  }
+  .cato-company .team_content {
+    display: flex;
+    flex-direction: column;
+    gap: 4rem;
+  }
+  .cato-company .team_half-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 3.5rem;
+  }
+  .cato-company .heading-style-h3 {
+    font-family: Switzer, "Inter Variable", Arial, sans-serif;
+    font-size: clamp(2.6rem, 5vw, 4.6rem);
+    font-weight: 400;
+    line-height: 1.08;
+  }
+  .cato-company .team_cms-list-wrapper {
+    width: 100%;
+  }
+  .cato-company .team_cms-list {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 2rem;
+  }
+  .cato-company .team_card {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    height: 100%;
+    border: 1px solid transparent;
+    border-radius: 1rem;
+    background: transparent;
+    padding: 1rem;
+    text-align: left;
+    transition: border-color .5s cubic-bezier(.19, 1, .22, 1), background-color .5s cubic-bezier(.19, 1, .22, 1);
+  }
+  .cato-company .team_card:hover {
+    border-color: var(--cato-border);
+    background-color: rgba(255,255,255,.42);
+  }
+  .cato-company .team_card-image {
+    width: 8.125rem;
+    height: 8.125rem;
+    aspect-ratio: 1;
+    flex: 0 0 auto;
+    border: 1px solid var(--cato-border);
+    border-radius: .5rem;
+    object-fit: cover;
+    display: block;
+    overflow: hidden;
+    filter: grayscale(1) sepia(.22) hue-rotate(80deg) saturate(.6);
+  }
+  .cato-company .team_card-image.cato-team-card-initials {
+    display: grid;
+    place-items: center;
+    background: linear-gradient(135deg, rgba(10, 69, 46, .12), rgba(66, 197, 143, .22));
+    color: var(--cato-green);
+    font-family: Switzer, "Inter Variable", Arial, sans-serif;
+    font-size: 2rem;
+  }
+  .cato-company .team_card-text-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  .cato-company .team_card-details-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .cato-company .team_card h3,
+  .cato-company .team_card h4 {
+    font-size: 1.25rem;
+    line-height: 1.2;
+  }
+  .cato-company .team_card p {
+    color: rgba(40, 39, 35, .66);
+    font-size: 1rem;
+    line-height: 1.45;
+  }
+  .cato-company .cato-team-read-bio {
+    border: 0;
+    background: transparent;
+    color: var(--cato-green);
+    padding: 0;
+    font: inherit;
+    cursor: pointer;
+  }
+  .cato-company .team_modal {
+    position: fixed;
+    inset: 0;
+    z-index: 999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    overflow: auto;
+  }
+  .cato-company .team_modal.is-open {
+    display: flex;
+  }
+  .cato-company .team_modal-content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    width: min(100%, 42rem);
+    flex-direction: column;
+    gap: 2rem;
+    border-radius: 1.5rem;
+    background-color: #fff;
+    padding: 3rem;
+    box-shadow: 0 2rem 5rem rgba(0,0,0,.18);
+  }
+  .cato-company .team_modal-top-wrap {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+  }
+  .cato-company .team_modal-close-button {
+    position: absolute;
+    top: 1.5rem;
+    right: 1.5rem;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    padding: .75rem;
+    cursor: pointer;
+  }
+  .cato-company .team_modal-close-button:hover {
+    background-color: var(--cato-border);
+  }
+  .cato-company .team_modal-close-svg {
+    width: 1.5rem;
+    height: 1.5rem;
+    display: block;
+  }
+  .cato-company .team_modal-bg {
+    position: absolute;
+    inset: 0;
+    border: 0;
+    background-color: rgba(0,0,0,.22);
+  }
   .cato-company-team-grid {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -652,6 +949,7 @@ const CATO_COMPANY_CSS = `
     .cato-company-board-grid,
     .cato-company-case-list,
     .cato-company-results-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .cato-company .team_cms-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   }
   @media (max-width: 767px) {
     .cato-company-band { padding: 4rem 1rem; }
@@ -666,6 +964,12 @@ const CATO_COMPANY_CSS = `
     .cato-company-board-grid,
     .cato-company-case-list,
     .cato-company-results-grid { grid-template-columns: 1fr; }
+    .cato-company .padding-global { padding-left: 1rem; padding-right: 1rem; }
+    .cato-company .padding-section-medium.is-about-hero { padding-top: 5rem; }
+    .cato-company .team_cms-list { grid-template-columns: 1fr; }
+    .cato-company .team_card { align-items: flex-start; }
+    .cato-company .team_card-image { width: 6.5rem; height: 6.5rem; }
+    .cato-company .team_modal-content { padding: 1.5rem; }
     .cato-company-section-head,
     .cato-company-cta { align-items: flex-start; flex-direction: column; }
     .cato-company-detail-header { padding: 4rem 1rem; }
@@ -765,6 +1069,84 @@ function RichText({ html }: { html?: string }) {
   return <div className="cato-company-richtext" dangerouslySetInnerHTML={{ __html: cleanHtml(html) }} />;
 }
 
+function ArrowIcon({ className }: { className?: string }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="100%" viewBox="0 0 20 20" fill="none" className={className}>
+      <path d="M7.5 15L12.5 10L7.5 5" stroke="currentcolor" strokeWidth="1.66667" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function CloseIcon() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="100%" viewBox="0 0 24 24" fill="none" className="team_modal-close-svg">
+      <path
+        d="M17.5996 5.925C17.7639 5.925 17.8659 5.97351 17.9463 6.05391C18.0265 6.13422 18.0751 6.2357 18.0752 6.39961C18.0752 6.56382 18.0266 6.6659 17.9463 6.74629L12.6924 12.0002L13.0459 12.3537L17.9463 17.2531C18.0267 17.3335 18.0752 17.4357 18.0752 17.5998C18.0752 17.7641 18.0267 17.8661 17.9463 17.9465C17.8659 18.0269 17.7639 18.0754 17.5996 18.0754C17.4355 18.0754 17.3333 18.0269 17.2529 17.9465L12.3535 13.0461L12 12.6926L6.74609 17.9465C6.66571 18.0268 6.56362 18.0754 6.39941 18.0754C6.23551 18.0753 6.13402 18.0267 6.05371 17.9465C5.97331 17.8661 5.9248 17.7641 5.9248 17.5998C5.92484 17.4357 5.97334 17.3335 6.05371 17.2531L11.3066 12.0002L10.9531 11.6467L6.05371 6.74629C5.97331 6.66589 5.9248 6.56388 5.9248 6.39961C5.92488 6.23557 5.97337 6.13425 6.05371 6.05391C6.13405 5.97357 6.23537 5.92508 6.39941 5.925C6.56368 5.925 6.66569 5.97351 6.74609 6.05391L11.6465 10.9533L12 11.3068L17.2529 6.05391C17.3333 5.97354 17.4355 5.92504 17.5996 5.925Z"
+        fill="currentColor"
+        stroke="currentColor"
+      />
+    </svg>
+  );
+}
+
+function ExportButton({ href, label }: { href: string; label: string }) {
+  return (
+    <a data-modal-target="" data-anim-load="fade" data-anim-scroll="" data-wf--button--variant="base" href={href} className="button is-parent w-inline-block">
+      <div className="button">
+        <div className="button_text">{label}</div>
+        <div className="button_spacer" />
+        <ArrowIcon className="button_icon" />
+      </div>
+    </a>
+  );
+}
+
+function TeamPageHero({
+  title,
+  summary,
+  ctaLabel,
+  ctaHref,
+  assetBasePath,
+}: {
+  title: string;
+  summary: string;
+  ctaLabel: string;
+  ctaHref: string;
+  assetBasePath?: string;
+}) {
+  const bg = assetUrl('images/solutions-bg-element.webp', assetBasePath);
+
+  return (
+    <section className="section_about-hero">
+      <div className="padding-global z-index-2">
+        <div className="container-medium">
+          <div className="padding-section-medium is-about-hero is-no-padding">
+            <div className="about-hero_outer-wrap">
+              <div className="about-hero_outer">
+                <h1 data-anim-load="words" data-split="words">
+                  {title}
+                </h1>
+                <p data-anim-load="lines" data-split="lines" className="text-size-large">
+                  {summary}
+                </p>
+                <ExportButton href={ctaHref} label={ctaLabel} />
+              </div>
+              <div data-anim-load="fade" className="about_lottie-wrap" aria-hidden="true">
+                <div className="about_lottie" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="u-bg-slot">
+        {bg ? <img className="hero-v2_bg-element" src={bg} width={938} alt="" loading="eager" /> : null}
+        {bg ? <img className="hero-v2_bg-element is-right" src={bg} width={938} alt="" loading="eager" /> : null}
+        <div className="hero-v2_gradient is-about" />
+      </div>
+    </section>
+  );
+}
+
 function PersonCard({ person, assetBasePath }: { person: CatoTeamMember; assetBasePath?: string }) {
   const image = assetUrl(person.imageUrl, assetBasePath);
 
@@ -784,6 +1166,113 @@ function PersonCard({ person, assetBasePath }: { person: CatoTeamMember; assetBa
         ) : null}
       </div>
     </article>
+  );
+}
+
+function TeamProfileCard({ person, assetBasePath }: { person: CatoTeamMember; assetBasePath?: string }) {
+  const [isOpen, setIsOpen] = React.useState(false);
+  const image = assetUrl(person.imageUrl, assetBasePath);
+
+  return (
+    <div role="listitem" className="team_cms-item w-dyn-item">
+      <article data-team="modal-trigger" className="team_card">
+        {image ? (
+          <img src={image} loading="lazy" alt={person.name} className="team_card-image" />
+        ) : (
+          <div className="team_card-image cato-team-card-initials" aria-hidden="true">
+            {initials(person.name)}
+          </div>
+        )}
+        <div className="team_card-text-wrap">
+          <div className="team_card-details-wrap">
+            <h3 className="heading-style-h6">{person.name}</h3>
+            <p>{person.role}</p>
+          </div>
+          <button
+            type="button"
+            className="button w-variant-29e6a0b3-2e8a-369c-02f9-73f5b53e55dd is-parent w-inline-block cato-team-read-bio"
+            aria-haspopup="dialog"
+            aria-expanded={isOpen}
+            onClick={() => setIsOpen(true)}
+          >
+            <span className="button_text w-variant-29e6a0b3-2e8a-369c-02f9-73f5b53e55dd">Read bio</span>
+            <span className="button_spacer w-variant-29e6a0b3-2e8a-369c-02f9-73f5b53e55dd" />
+            <ArrowIcon className="button_icon w-variant-29e6a0b3-2e8a-369c-02f9-73f5b53e55dd" />
+          </button>
+        </div>
+        <div data-team="modal" className={`team_modal${isOpen ? ' is-open' : ''}`} role="dialog" aria-modal="true" aria-label={`${person.name} bio`}>
+          <div className="padding-global padding-section-large">
+            <div className="container-small">
+              <div className="team_modal-content">
+                <div className="team_modal-top-wrap">
+                  {image ? (
+                    <img src={image} loading="lazy" alt={person.name} className="team_card-image" />
+                  ) : (
+                    <div className="team_card-image cato-team-card-initials" aria-hidden="true">
+                      {initials(person.name)}
+                    </div>
+                  )}
+                  <div className="team_card-text-wrap">
+                    <div className="team_card-details-wrap">
+                      <h4 className="heading-style-h6">{person.name}</h4>
+                      <p>{person.role}</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="w-richtext">
+                  <p>{person.bio || 'Approved biography is forthcoming from Cato.'}</p>
+                  {person.linkedinUrl ? (
+                    <p>
+                      <a href={person.linkedinUrl} target="_blank" rel="noreferrer">
+                        LinkedIn
+                      </a>
+                    </p>
+                  ) : null}
+                </div>
+                <button type="button" data-team="modal-close" className="team_modal-close-button" aria-label="Close bio" onClick={() => setIsOpen(false)}>
+                  <CloseIcon />
+                </button>
+              </div>
+            </div>
+          </div>
+          <button type="button" data-team="modal-close" className="team_modal-bg" aria-label="Close bio" onClick={() => setIsOpen(false)} />
+        </div>
+      </article>
+    </div>
+  );
+}
+
+function TeamSection({
+  title,
+  people,
+  assetBasePath,
+}: {
+  title: string;
+  people: CatoTeamMember[];
+  assetBasePath?: string;
+}) {
+  return (
+    <section className="section_team">
+      <div className="custom-css w-embed" aria-hidden="true" />
+      <div className="padding-global padding-section-medium">
+        <div className="container-large">
+          <div className="team_content">
+            <div className="team_half-wrap">
+              <h2 data-anim-scroll="words" data-split="words" className="heading-style-h3">
+                {title}
+              </h2>
+              <div className="team_cms-list-wrapper w-dyn-list">
+                <div role="list" className="team_cms-list w-dyn-items">
+                  {people.map((person) => (
+                    <TeamProfileCard key={`${person.name}-${person.role}`} person={person} assetBasePath={assetBasePath} />
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -826,7 +1315,7 @@ export function CatoAboutPage({
   boardJson,
   assetBasePath,
   showMission = true,
-  showTeam = true,
+  showTeam = false,
 }: CatoAboutPageProps) {
   const metrics = parseJsonArray<CatoImpactMetric>(metricsJson, DEFAULT_METRICS);
   const values = parseJsonArray<CatoValueItem>(valuesJson, DEFAULT_VALUES);
@@ -923,7 +1412,7 @@ export function CatoAboutPage({
         <section className="cato-company-band" data-tone="soft" aria-labelledby="cato-team-title">
           <div className="cato-company-container">
             <div className="cato-company-section-head">
-              <h2 id="cato-team-title">Leadership Team</h2>
+              <h2 id="cato-team-title">Leadership</h2>
             </div>
             <div className="cato-company-team-grid">
               {leadership.map((person) => (
@@ -931,7 +1420,7 @@ export function CatoAboutPage({
               ))}
             </div>
             <div className="cato-company-section-head" style={{ marginTop: '4rem' }}>
-              <h2>Board Members</h2>
+              <h2>Board of Directors</h2>
             </div>
             <div className="cato-company-board-grid">
               {board.map((person) => (
@@ -944,6 +1433,44 @@ export function CatoAboutPage({
           </div>
         </section>
       ) : null}
+    </div>
+  );
+}
+
+export function CatoLeadershipPage({
+  title = 'Meet the team helping hospitals protect supply continuity',
+  summary = 'Cato combines healthcare procurement experience, supplier network discipline, and operator-led execution to help supply chain teams respond when standard channels cannot keep pace.',
+  leadershipJson,
+  assetBasePath,
+  ctaLabel = 'Contact Us',
+  ctaHref = '/contact-us',
+}: CatoLeadershipPageProps) {
+  const leadership = parseJsonArray<CatoTeamMember>(leadershipJson, DEFAULT_LEADERSHIP);
+
+  return (
+    <div className="cato-company cato-company-shell">
+      <style>{CATO_COMPANY_CSS}</style>
+      <TeamPageHero title={title} summary={summary} ctaLabel={ctaLabel} ctaHref={ctaHref} assetBasePath={assetBasePath} />
+      <TeamSection title="Leadership Team" people={leadership} assetBasePath={assetBasePath} />
+    </div>
+  );
+}
+
+export function CatoBoardOfDirectorsPage({
+  title = 'Governance built for resilient healthcare supply',
+  summary = 'Cato is guided by leaders with healthcare, technology, impact investing, operating, and growth experience so hospitals can rely on stronger supply pathways when disruption hits.',
+  boardJson,
+  assetBasePath,
+  ctaLabel = 'Contact Us',
+  ctaHref = '/contact-us',
+}: CatoBoardOfDirectorsPageProps) {
+  const board = parseJsonArray<CatoTeamMember>(boardJson, DEFAULT_BOARD);
+
+  return (
+    <div className="cato-company cato-company-shell">
+      <style>{CATO_COMPANY_CSS}</style>
+      <TeamPageHero title={title} summary={summary} ctaLabel={ctaLabel} ctaHref={ctaHref} assetBasePath={assetBasePath} />
+      <TeamSection title="Board of Directors" people={board} assetBasePath={assetBasePath} />
     </div>
   );
 }
