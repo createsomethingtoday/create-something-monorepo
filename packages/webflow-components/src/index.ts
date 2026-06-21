@@ -184,6 +184,9 @@ export type {
   CatoInsightsMegaMenuProps,
 } from './components/cato/CatoInsights';
 
+export { CatoNavigation } from './components/cato/CatoNavigation';
+export type { CatoNavigationImage, CatoNavigationProps } from './components/cato/CatoNavigation';
+
 export {
   CatoProductSearchForm,
   CatoRiskRadarCatalog,
@@ -198,17 +201,21 @@ export type {
 
 export {
   CatoAboutPage,
+  CatoBoardOfDirectorsPage,
   CatoCaseStudiesLanding,
   CatoCaseStudyDetail,
+  CatoLeadershipPage,
 } from './components/cato/CatoCompanyPages';
 export type {
   CatoAboutPageProps,
+  CatoBoardOfDirectorsPageProps,
   CatoCaseStudiesLandingProps,
   CatoCaseStudyDetailProps,
   CatoCaseStudyItem,
   CatoCaseStudyResult,
   CatoCompanyLinkMode,
   CatoImpactMetric,
+  CatoLeadershipPageProps,
   CatoTeamMember,
   CatoValueItem,
 } from './components/cato/CatoCompanyPages';

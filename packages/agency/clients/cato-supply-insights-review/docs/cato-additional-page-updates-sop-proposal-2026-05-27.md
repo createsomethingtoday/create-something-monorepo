@@ -141,15 +141,18 @@ Recommended handling:
    - `Cato Insights Archive` on focused archive pages
    - `Cato Insight Category Archive` on Insight Categories collection template
    - `Cato Insight Detail` on Insight detail template when needed
-4. Replace `/about-us` body with `Cato About Page`.
-5. Replace `/case-studies` body with `Cato Case Studies Landing`.
-6. Replace the Case Studies collection template body with `Cato Case Study Detail` when a Code Component fallback is faster than native rebuilding.
-7. Polish Contact only at the native section level unless a separate Contact component is approved.
-8. QA all updated pages and collect approval before publish.
+4. Replace `/about-us` body with `Cato About Page`, keeping team/profile sections off by default.
+5. Create `/leadership`, place `Cato Leadership Page`, and add `Leadership` under the native About Us dropdown.
+6. Create `/board-of-directors`, place `Cato Board of Directors Page`, and add `Board of Directors` under the native About Us dropdown.
+7. Replace `/case-studies` body with `Cato Case Studies Landing`.
+8. Replace the Case Studies collection template body with `Cato Case Study Detail` when a Code Component fallback is faster than native rebuilding.
+9. Polish Contact only at the native section level unless a separate Contact component is approved.
+10. QA all updated pages and collect approval before publish.
 
 ## Acceptance Criteria
 
 - About page clearly explains Cato's credibility and procurement-intelligence relevance in the first viewport.
+- Leadership and Board of Directors are separate pages reachable from the About Us dropdown.
 - Case Studies landing highlights a featured proof story and visible outcomes before the full grid.
 - Case Study detail pages render complete customer narratives even when optional CMS fields are missing.
 - Collection templates survive page switching and Designer refresh without losing the component instance.

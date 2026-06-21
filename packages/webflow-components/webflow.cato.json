@@ -1,0 +1,19 @@
+{
+  "name": "Cato Supply Components",
+  "components": "./src/components/cato/**/*.webflow.@(js|jsx|mjs|ts|tsx)",
+  "library": {
+    "components": [
+      "src/components/cato/**/*.webflow.@(js|jsx|mjs|ts|tsx)"
+    ],
+    "name": "Cato Supply Components",
+    "description": "Cato Supply-specific Webflow Code Component library. Includes Cato Navigation, About, Leadership, Board, Insights, Product Search, Risk Radar, and Case Study components without the broader CREATE SOMETHING Canon component inventory.",
+    "id": "cato-supply-components"
+  },
+  "telemetry": {
+    "global": {
+      "allowTelemetry": true,
+      "lastPrompted": 1781811932059,
+      "version": "1.11.1"
+    }
+  }
+}

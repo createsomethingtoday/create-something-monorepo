@@ -122,6 +122,11 @@ export interface CatoInsightsMegaMenuProps extends CatoInsightsDataProps {
   featureTitle?: string;
   featureSummary?: string;
   featureCta?: string;
+  insightsHomeLink?: CatoInsightLinkProp;
+  resiliencyLink?: CatoInsightLinkProp;
+  researchLink?: CatoInsightLinkProp;
+  whitepapersLink?: CatoInsightLinkProp;
+  newsroomLink?: CatoInsightLinkProp;
 }
 
 const DEFAULT_CATEGORIES: CatoInsightCategory[] = [
@@ -2047,12 +2052,27 @@ export const CatoInsightsMegaMenu: React.FC<CatoInsightsMegaMenuProps> = ({
   featureTitle = 'Resiliency Report Alerts',
   featureSummary = 'Active supply disruptions and market signals for care continuity.',
   featureCta = 'Explore Our Insights',
+  insightsHomeLink,
+  resiliencyLink,
+  researchLink,
+  whitepapersLink,
+  newsroomLink,
   linkMode = 'webflow',
   pathPrefix = '',
   ...dataProps
 }) => {
   const { categories, items } = useInsightsData(dataProps);
   const featureItems = items.filter((item) => item.category === 'resiliency').slice(0, 3);
+  const insightsHomeHref = hrefFromLink(insightsHomeLink, hrefForPage('insights.html', linkMode, pathPrefix));
+  const categoryLinkOverrides: Record<string, CatoInsightLinkProp | undefined> = {
+    resiliency: resiliencyLink,
+    research: researchLink,
+    resources: whitepapersLink,
+    newsroom: newsroomLink,
+  };
+  const hrefForCategory = (category: CatoInsightCategory) =>
+    hrefFromLink(categoryLinkOverrides[category.id], hrefForPage(category.page, linkMode, pathPrefix));
+  const resiliencyHref = hrefFromLink(resiliencyLink, hrefForPage('resiliency-reports.html', linkMode, pathPrefix));
 
   return (
     <div className="cato-cc">
@@ -2063,26 +2083,35 @@ export const CatoInsightsMegaMenu: React.FC<CatoInsightsMegaMenuProps> = ({
             <p className="cato-cc-mega-kicker">Insights</p>
             <h2 className="cato-cc-mega-title">{heading}</h2>
             <p className="cato-cc-mega-copy">{summary}</p>
-            <a href={hrefForPage('insights.html', linkMode, pathPrefix)} className="cato-cc-mega-home">
+            <a href={insightsHomeHref} target={insightsHomeLink?.target} rel={relForTarget(insightsHomeLink?.target)} className="cato-cc-mega-home">
               Explore Cato Insights
             </a>
           </section>
           <section aria-label="Insights navigation">
             <p className="cato-cc-mega-kicker">Browse insights</p>
             <div className="cato-cc-mega-links">
-              <a href={hrefForPage('insights.html', linkMode, pathPrefix)} className="cato-cc-mega-link">
+              <a href={insightsHomeHref} target={insightsHomeLink?.target} rel={relForTarget(insightsHomeLink?.target)} className="cato-cc-mega-link">
                 <strong>Insights Home</strong>
                 <span>All reports, research, resources, and newsroom updates.</span>
               </a>
-              {categories.map((category) => (
-                <a key={category.id} href={hrefForPage(category.page, linkMode, pathPrefix)} className="cato-cc-mega-link">
-                  <strong>{category.title}</strong>
-                  <span>{category.cardSummary}</span>
-                </a>
-              ))}
+              {categories.map((category) => {
+                const categoryLink = categoryLinkOverrides[category.id];
+                return (
+                  <a
+                    key={category.id}
+                    href={hrefForCategory(category)}
+                    target={categoryLink?.target}
+                    rel={relForTarget(categoryLink?.target)}
+                    className="cato-cc-mega-link"
+                  >
+                    <strong>{category.title}</strong>
+                    <span>{category.cardSummary}</span>
+                  </a>
+                );
+              })}
             </div>
           </section>
-          <a href={hrefForPage('resiliency-reports.html', linkMode, pathPrefix)} className="cato-cc-mega-feature">
+          <a href={resiliencyHref} target={resiliencyLink?.target} rel={relForTarget(resiliencyLink?.target)} className="cato-cc-mega-feature">
             <span className="cato-cc-pill">Featured</span>
             <div>
               <h3>{featureTitle}</h3>
