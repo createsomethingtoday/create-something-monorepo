@@ -79,8 +79,8 @@ export const fileBasedPapers: FileBasedPaper[] = [
 			'Three-Tier Framework'
 		],
 		created_at: '2026-06-21T19:53:36Z',
-		updated_at: '2026-06-21T19:53:36Z',
-		reading_time_minutes: 16,
+		updated_at: '2026-06-21T21:06:00Z',
+		reading_time_minutes: 18,
 		difficulty: 'intermediate',
 		is_file_based: true,
 		tests_principles: [
