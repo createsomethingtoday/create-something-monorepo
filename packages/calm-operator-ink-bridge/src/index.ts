@@ -3,6 +3,7 @@ import { buildOperatorBrief, toFirmwareBrief } from './brief.js';
 import { buildInkClock } from './clock.js';
 import { isAuthorized } from './auth.js';
 import { DEFAULT_HEALTH_STALE_AFTER_MS, buildHealthReviewReport } from './health-review.js';
+import { claimLinearIssue, fetchLinearOpenIssues } from './linear-open.js';
 import {
   buildHealthReviewRunRecord,
   missingHealthReviewRunColumnMigrations,
@@ -41,10 +42,19 @@ interface Env {
   INK_BRIDGE_TOKEN?: string;
   INK_DEVICE_TOKEN?: string;
   INK_SOURCE_TOKEN?: string;
+  LINEAR_API_KEY?: string;
+  LINEAR_TEAM_KEY?: string;
 }
 
 const JSON_HEADERS = {
   'content-type': 'application/json; charset=utf-8'
+};
+
+const CORS_HEADERS = {
+  'access-control-allow-origin': '*',
+  'access-control-allow-methods': 'GET,POST,OPTIONS',
+  'access-control-allow-headers': 'authorization,x-api-key,x-ink-token,content-type,accept',
+  'access-control-max-age': '86400'
 };
 
 const MAX_BODY_BYTES = 64 * 1024;
@@ -73,6 +83,7 @@ function json(data: unknown, init: ResponseInit = {}): Response {
   return new Response(JSON.stringify(data, null, 2), {
     ...init,
     headers: {
+      ...CORS_HEADERS,
       ...JSON_HEADERS,
       ...Object.fromEntries(new Headers(init.headers ?? undefined))
     }
@@ -80,7 +91,13 @@ function json(data: unknown, init: ResponseInit = {}): Response {
 }
 
 function text(data: string, init: ResponseInit = {}): Response {
-  return new Response(data, init);
+  return new Response(data, {
+    ...init,
+    headers: {
+      ...CORS_HEADERS,
+      ...Object.fromEntries(new Headers(init.headers ?? undefined))
+    }
+  });
 }
 
 function workspaceId(env: Env): string {
@@ -1009,6 +1026,31 @@ async function route(request: Request, env: Env): Promise<Response> {
   if (method === 'GET' && path === '/ink/device') {
     const deviceId = url.searchParams.get('device_id') || defaultDeviceId(env);
     return json({ ok: true, device: await stub.device(deviceId) });
+  }
+
+  if (method === 'GET' && path === '/ink/linear-open') {
+    return json(
+      await fetchLinearOpenIssues({
+        apiKey: env.LINEAR_API_KEY ?? '',
+        teamKey: url.searchParams.get('team') || env.LINEAR_TEAM_KEY || 'CRE',
+        limit: Number(url.searchParams.get('limit') || 5)
+      })
+    );
+  }
+
+  if (method === 'POST' && path === '/ink/linear-action') {
+    const body = await parseJsonBody<{ action?: string; issue?: string; team?: string }>(request);
+    if (body.action !== 'claim') {
+      return json({ ok: false, error: 'Unsupported Linear action.' }, { status: 400 });
+    }
+
+    return json(
+      await claimLinearIssue({
+        apiKey: env.LINEAR_API_KEY ?? '',
+        identifier: body.issue ?? '',
+        teamKey: body.team || env.LINEAR_TEAM_KEY || 'CRE'
+      })
+    );
   }
 
   if (method === 'POST' && path === '/ink/alert') {

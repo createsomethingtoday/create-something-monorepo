@@ -1,0 +1,17 @@
+{
+  "package_id": "agency.createsomething.operatorbrief",
+  "name": "CS Operator Brief",
+  "version": "0.2.0",
+  "edition": "202601",
+  "min_app_version": "2.0.0",
+  "min_sdk_version": "0.0.10",
+  "entrypoint": "index.html",
+  "permissions": [
+    {
+      "name": "network",
+      "desc": "Fetch and update the current CREATE SOMETHING Linear queue through the Ink bridge.",
+      "whitelist": ["https://ink.createsomething.agency"]
+    }
+  ],
+  "supported_languages": ["en"]
+}
