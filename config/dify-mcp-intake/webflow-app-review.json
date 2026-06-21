@@ -7,10 +7,10 @@
     "id": "webflow-app-review-mcp",
     "transport": "http",
     "url": "https://webflow-app-review-mcp.createsomething.workers.dev/mcp",
-    "description": "Webflow App Review MCP for app asset, version, and governance tracking workflows",
+    "description": "Webflow App Review MCP for app asset, version, and governance database workflows",
     "tags": ["webflow", "review", "airtable", "apps", "cs"],
     "catalog_exposure_mode": "direct",
-    "estimated_tool_count": 21
+    "estimated_tool_count": 24
   },
   "dify_mcp_server": {
     "server_id": "webflow-app-review",
@@ -32,6 +32,7 @@
     "Set the MCP URL to https://webflow-app-review-mcp.createsomething.workers.dev/mcp.",
     "Configure bearer auth from Infisical prod:/webflow-app-review-mcp:MCP_BEARER_TOKEN.",
     "Refresh/discover tools in Dify Studio.",
+    "For governance database access, enable the governance_database_* tools; do not register Airtable base or table URLs as separate MCP servers.",
     "Transcribe every discovered tool into config/dify/inventory.json with risk classification.",
     "Run pnpm dify:inventory:generate and pnpm dify:coverage:generate."
   ],
@@ -56,6 +57,7 @@
     "This intake artifact is not a Dify inventory entry.",
     "Do not paste the inventory fragment until Dify Studio has discovered tools and each tool is classified.",
     "Keep secret values in Infisical only; this artifact stores references, not values.",
+    "The Governance & Transparency Airtable table is reached through governance_database_* tools on this MCP server, not through a direct Airtable MCP card.",
     "After the server card is codified, scaffold one or more Dify agents with pnpm dify:agent:scaffold."
   ]
 }

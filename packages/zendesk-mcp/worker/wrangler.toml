@@ -1,0 +1,42 @@
+name = "zendesk-mcp"
+main = "index.ts"
+compatibility_date = "2026-06-19"
+account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+BRAINTRUST_PROJECT_NAME = "CREATE SOMETHING"
+WEBFLOW_ZENDESK_SUBDOMAIN = "webflow2579"
+
+# Required secrets, set via Infisical-backed env or wrangler secret put:
+# - ZENDESK_MCP_API_KEY or MCP_API_KEY: bearer token for MCP transport
+# - WEBFLOW_ZENDESK_EMAIL or ZENDESK_EMAIL: Zendesk agent email for API-token auth
+# - WEBFLOW_ZENDESK_API_TOKEN or ZENDESK_API_TOKEN: Zendesk API token
+#
+# Password-login fallback, if Webflow provides an integration user login instead of API token:
+# - WEBFLOW_ZENDESK_PASSWORD or ZENDESK_PASSWORD
+#
+# Optional OAuth alternative:
+# - WEBFLOW_ZENDESK_OAUTH_TOKEN or ZENDESK_OAUTH_TOKEN
+#
+# Optional controls:
+# - ZENDESK_READ_ONLY=true
+# - MCP_TOOL_ACCESS_MODE=normal|read_only|off
+# - ZENDESK_TIMEOUT_MS=20000
+#
+# Optional telemetry:
+# - BRAINTRUST_API_KEY
+# - BRAINTRUST_PROJECT_ID
+
+[[d1_databases]]
+binding = "TELEMETRY_DB"
+database_name = "cs-telemetry"
+database_id = "f710641a-0c85-4a7b-bb73-2c16f8d024c3"
+
+[[durable_objects.bindings]]
+name = "MCP_OBJECT"
+class_name = "ZendeskMCP"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["ZendeskMCP"]

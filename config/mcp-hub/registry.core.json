@@ -713,7 +713,7 @@
       "transport": "http",
       "url": "https://webflow-app-review-mcp.createsomething.workers.dev/mcp",
       "bearer_token_env_var": "WEBFLOW_APP_REVIEW_MCP_API_KEY",
-      "description": "Webflow App Review MCP for app asset, version, and governance tracking workflows",
+      "description": "Webflow App Review MCP for app asset, version, and governance database workflows",
       "tags": ["webflow", "review", "airtable", "apps", "cs"],
       "catalog": {
         "include": true,
@@ -725,7 +725,27 @@
         "transports": ["http", "sse"]
       },
       "catalog_exposure_mode": "direct",
-      "estimated_tool_count": 21
+      "estimated_tool_count": 24
+    },
+    "zendesk-mcp": {
+      "transport": "http",
+      "url": "https://zendesk-mcp.createsomething.workers.dev/mcp",
+      "bearer_token_env_var": "ZENDESK_MCP_API_KEY",
+      "description": "Zendesk MCP for Webflow asset reviewer ticket search, comments, and status workflows",
+      "tags": ["webflow", "review", "zendesk", "support", "cs"],
+      "package_path": "packages/zendesk-mcp",
+      "catalog": {
+        "include": true,
+        "name": "Webflow Zendesk",
+        "slug": "webflow-zendesk",
+        "category": "create-something",
+        "requiresAuth": true,
+        "authType": "bearer",
+        "transports": ["http"]
+      },
+      "catalog_exposure_mode": "direct",
+      "estimated_tool_count": 10,
+      "setupNotes": "First-class reviewer surface alongside Webflow App Review MCP. Use Zendesk for ticket conversation/status state and app-review MCP for Airtable review/governance state. Worker secrets: ZENDESK_MCP_API_KEY or MCP_API_KEY plus WEBFLOW_ZENDESK_EMAIL and WEBFLOW_ZENDESK_API_TOKEN, WEBFLOW_ZENDESK_PASSWORD, or WEBFLOW_ZENDESK_OAUTH_TOKEN."
     },
     "webflow-local": {
       "transport": "http",
@@ -824,8 +844,8 @@
     "ops": ["schedule-mcp", "substrate-mcp"],
     "policy-os": ["interaction-atlas-mcp"],
     "slack": ["slack-create-something", "slack-webflow"],
-    "webflow-marketplace-app-review-phase-a": ["webflow-app-review-mcp"],
-    "webflow-marketplace-app-review-phase-b": ["webflow-app-review-mcp"],
+    "webflow-marketplace-app-review-phase-a": ["webflow-app-review-mcp", "zendesk-mcp"],
+    "webflow-marketplace-app-review-phase-b": ["webflow-app-review-mcp", "zendesk-mcp"],
     "webflow-marketplace-review-phase-a": ["webflow-template-review-mcp"],
     "webflow-marketplace-review-phase-b": ["webflow-template-review-mcp", "webflow-local"]
   },

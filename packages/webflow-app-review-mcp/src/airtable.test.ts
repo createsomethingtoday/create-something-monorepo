@@ -226,7 +226,7 @@ describe('AirtableClient governance findings', () => {
   });
 });
 
-describe('AirtableClient reviewer ownership helpers', () => {
+describe('AirtableClient app review context and queue helpers', () => {
   const reviewer = { id: 'usr_pablo', email: 'pablo.miranda@webflow.com', name: 'Pablo Miranda' };
   const otherReviewer = { id: 'usr_other', email: 'other@webflow.com', name: 'Other Reviewer' };
 
@@ -304,48 +304,13 @@ describe('AirtableClient reviewer ownership helpers', () => {
     };
   }
 
-  it('blocks self-assignment when another reviewer already owns the version', async () => {
+  it('returns neutral normalized review context with assignment state', async () => {
     const { client } = createClient();
 
-    await expect(client.assignSelfToVersion('rec-version-other', reviewer)).rejects.toMatchObject({
-      code: 'REVIEWER_ASSIGNMENT_CONFLICT',
-    });
-  });
-
-  it('rejects reviewer-owned helpers for versions outside app-review scope', async () => {
-    const { client } = createClient();
-
-    await expect(client.assignSelfToVersion('rec-version-out-of-scope', reviewer)).rejects.toMatchObject({
-      code: 'ASSET_NOT_FOUND_OR_OUT_OF_SCOPE',
-    });
-  });
-
-  it('clears the reviewer field when unassigning the current reviewer', async () => {
-    const { client, fetchFn } = createClient();
-
-    const updated = await client.unassignVersionReviewer('rec-version-self', reviewer);
-
-    expect(updated.reviewer).toBeNull();
-    expect(fetchFn).toHaveBeenCalled();
-  });
-
-  it('requires reviewer ownership before reviewer-owned writes', async () => {
-    const { client } = createClient();
-
-    await expect(client.requireAssignedVersion('rec-version-unassigned', reviewer)).rejects.toMatchObject({
-      code: 'REVIEWER_ASSIGNMENT_REQUIRED',
-    });
-  });
-
-  it('returns normalized review context with reviewer flags', async () => {
-    const { client } = createClient();
-
-    const context = await client.getReviewContext('rec-version-self', reviewer);
+    const context = await client.getReviewContext('rec-version-self');
 
     expect(context.appName).toBe('Example App');
-    expect(context.isAssignedToCurrentReviewer).toBe(true);
-    expect(context.canAssign).toBe(false);
-    expect(context.canReview).toBe(true);
+    expect(context.isAssigned).toBe(true);
     expect(context.reviewer?.id).toBe('usr_pablo');
   });
 
@@ -389,7 +354,7 @@ describe('AirtableClient reviewer ownership helpers', () => {
     expect(asset?.appName).toBe('Target App');
   });
 
-  it('applies queue limit after reviewer filtering for my_queue-style queries', async () => {
+  it('applies queue limit after neutral assignment filtering', async () => {
     const fetchFn = vi.fn(async (input: RequestInfo | URL) => {
       const url = new URL(String(input));
 
@@ -436,12 +401,9 @@ describe('AirtableClient reviewer ownership helpers', () => {
     const result = await client.listAssetQueueDetailed({
       limit: 1,
       assigned: 'assigned',
-      onlyAssignedToCurrentReviewer: true,
-      currentReviewer: reviewer,
     });
 
     expect(result.items).toHaveLength(1);
-    expect(result.items[0]?.assetId).toBe('recAsset2');
-    expect(result.items[0]?.isAssignedToCurrentReviewer).toBe(true);
+    expect(result.items[0]?.isAssigned).toBe(true);
   });
 });

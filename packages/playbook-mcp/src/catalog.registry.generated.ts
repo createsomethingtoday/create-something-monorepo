@@ -121,7 +121,7 @@ export const REGISTRY_CATALOG_ENTRIES = [
     "name": "Webflow App Review",
     "slug": "webflow-app-review",
     "url": "https://webflow-app-review-mcp.createsomething.workers.dev",
-    "description": "Webflow App Review MCP for app asset, version, and governance tracking workflows",
+    "description": "Webflow App Review MCP for app asset, version, and governance database workflows",
     "category": "create-something",
     "transports": [
       "http",
@@ -139,6 +139,18 @@ export const REGISTRY_CATALOG_ENTRIES = [
     "transports": [
       "http",
       "sse"
+    ],
+    "requiresAuth": true,
+    "authType": "bearer"
+  },
+  {
+    "name": "Webflow Zendesk",
+    "slug": "webflow-zendesk",
+    "url": "https://zendesk-mcp.createsomething.workers.dev",
+    "description": "Zendesk MCP for Webflow asset reviewer ticket search, comments, and status workflows",
+    "category": "create-something",
+    "transports": [
+      "http"
     ],
     "requiresAuth": true,
     "authType": "bearer"

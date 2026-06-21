@@ -1,0 +1,44 @@
+{
+  "name": "@create-something/zendesk-mcp",
+  "version": "0.1.0",
+  "description": "Zendesk MCP for Webflow asset reviewer support workflows",
+  "type": "module",
+  "createSomething": {
+    "agentLegibilityContract": true,
+    "tier": "automation",
+    "surface": "mcp",
+    "entrypoints": [
+      "src/index.ts",
+      "src/server.ts",
+      "worker/index.ts"
+    ],
+    "boot": "pnpm build && pnpm start",
+    "smoke": "pnpm typecheck && pnpm build"
+  },
+  "main": "dist/index.js",
+  "bin": {
+    "zendesk-mcp": "dist/index.js"
+  },
+  "scripts": {
+    "build": "pnpm --filter @create-something/mcp-core build && tsc",
+    "dev": "tsc --watch",
+    "start": "node dist/index.js",
+    "typecheck": "pnpm --filter @create-something/mcp-core build && tsc --noEmit"
+  },
+  "dependencies": {
+    "@create-something/mcp-core": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.25.3",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.7.0"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "zendesk-mcp"
+  ],
+  "author": "CREATE SOMETHING <hello@createsomething.agency>",
+  "license": "MIT"
+}
