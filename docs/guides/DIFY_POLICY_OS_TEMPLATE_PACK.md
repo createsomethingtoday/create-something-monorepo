@@ -10,6 +10,13 @@ artifacts. The templates are designed for CREATE SOMETHING's Policy OS delivery
 model: Dify is the client-facing app surface, MCP is the tool boundary, the repo
 owns manifests and eval gates, and Infisical owns secrets.
 
+Policy OS now treats Dify as the default client/operator surface, not the only
+possible runtime. A template clone may graduate to an OpenAI Agents SDK-backed
+service when the workflow needs code-owned orchestration, explicit tool routing,
+approval pauses, durable state, traces, evals, or CI-backed golden tasks. Keep
+Dify in place as the front door unless the contract explicitly says the visual
+surface, publish flow, and non-engineer inspection are no longer required.
+
 The starter files live in `config/dify-templates/`:
 
 | Template | Dify shape | DSL |
@@ -83,6 +90,32 @@ Every published clone must satisfy the standard Dify control-plane rules:
 - The agent must have at least one inventory-declared smoke case.
 - Braintrust evals must cover `api_health`, `secret_refusal`, `latency_budget`,
   and any required tool-use or write-confirmation behavior.
+- If a clone becomes an Agents SDK graduation candidate, the agent contract must
+  record `runtime_surface` and `graduation_status`, and golden tasks must compare
+  the Dify path with the SDK-backed path before production cutover.
+
+## Agents SDK Graduation Lane
+
+Use this lane only after a Dify clone has stabilized enough that repo-owned
+runtime control is more valuable than platform-managed editing speed.
+
+Graduation criteria:
+
+- The workflow has a frozen Policy OS contract bundle.
+- The workflow has at least one passing Dify Service API smoke case.
+- The SDK path can call the same governed MCP tools or a narrower approved set.
+- Side-effecting tools pause for approval or remain disabled.
+- Traces, evals, or cost data show why code-owned orchestration is necessary.
+- The rollback path returns traffic to the Dify clone or a documented manual
+  fallback.
+
+Recommended cutover pattern:
+
+1. Keep Dify as the client-facing entry point.
+2. Move only the expensive, risky, or orchestration-heavy step behind an SDK
+   service.
+3. Run the same golden tasks against Dify and the SDK path.
+4. Promote only after behavior, cost, latency, and operator visibility improve.
 
 ## Recommended Smoke Cases
 

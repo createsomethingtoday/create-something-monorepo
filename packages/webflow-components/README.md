@@ -208,6 +208,7 @@ These components are based on the exported project at `/Users/micahjohnson/Downl
 
 | Component | Description | Key Props |
 |-----------|-------------|-----------|
+| **Cato Navigation** | Primary Cato navigation with About dropdown links for Who We Are, Leadership, Board, Solutions, and Technology plus Insights mega menu, Case Studies, Risk Radar, and Product Search | `logoImage`, Webflow `Link` props, URL fallbacks, `itemsEndpointUrl`, `showInsightsMegaMenu`, `linkMode` |
 | **Cato Supply Search Hero** | Homepage hero with Product Search redirect and Risk Radar catalog | `heading`, `productSearchUrl`, `apiUrl`, `showRiskRadar` |
 | **Cato Product Search Form** | Standalone search form redirecting to Cato Product Search | `placeholder`, `buttonLabel`, `productSearchUrl` |
 | **Cato Risk Radar Catalog** | Live Risk Radar table replacing the custom-code embed | `apiUrl`, `riskRadarUrl`, `rowsJson`, `fetchEnabled`, `autoScroll` |
@@ -218,9 +219,24 @@ These components are based on the exported project at `/Users/micahjohnson/Downl
 | **Cato Insight Category Archive** | CMS category template archive that resolves the active Insight Category from the slug | `categorySlug`, `categoryId`, `showSubscribe`, `itemsEndpointUrl` |
 | **Cato Insight CMS Card** | CMS-bindable Insight card for native Webflow Collection Lists | `title`, `summary`, `date`, `contentLabel`, `itemLink` |
 | **Cato Insight Detail** | CMS-bindable detail-page article shell | `title`, `summary`, `itemsEndpointUrl`, `bodyJson`, `takeawaysJson`, `categoryId` |
-| **Cato About Page** | Improved About page experience with hero, platform focus, proof metrics, values, mission, leadership, and board sections | `valuesJson`, `leadershipJson`, `boardJson`, `metricsJson`, `showMission`, `showTeam` |
+| **Cato About Page** | Improved About page experience with hero, platform focus, proof metrics, values, and mission sections | `valuesJson`, `metricsJson`, `showMission`, `showTeam` |
+| **Cato Leadership Page** | Dedicated About dropdown page for leadership profiles | `leadershipJson`, `assetBasePath`, `ctaLabel`, `ctaHref` |
+| **Cato Board of Directors Page** | Dedicated About dropdown page for board profiles | `boardJson`, `ctaLabel`, `ctaHref` |
 | **Cato Case Studies Landing** | Improved Case Studies landing page with featured story, result proof, and customer story grid | `caseStudiesJson`, `showFeatured`, `linkMode`, `pathPrefix` |
 | **Cato Case Study Detail** | CMS-bindable case study detail template with customer profile, challenge, solution, results, and related stories | `slug`, `clientName`, `challengeHtml`, `solutionHtml`, `challengeImage`, `solutionImage`, `resultsJson`, `caseStudiesJson`, `backHref` |
+
+The June 18, 2026 Cato request should be implemented as separate About dropdown pages, not team sections inside the main About page. Use `Cato Leadership Page` for 3 leadership profiles by default (Ryan Zackon placeholder, Lainy Jahnke, Ethan Weinberg), and use `Cato Board of Directors Page` for 5 board profiles by default (Bala Iyer, Andy James, Heather Matzke-Hamlin, John Courtney, Tiffani Shaw). Brian Weichel is removed from the default profile set. Override with `leadershipJson` or `boardJson` only when Cato provides updated approved content.
+
+#### Cato-Specific Webflow Library
+
+Use `webflow.cato.json` when sharing Cato-only components into the Cato Supply workspace. This creates or updates the `Cato Supply Components` library with the stable library ID `cato-supply-components` and includes only `src/components/cato/**/*.webflow.*` declarations, including the restored `Cato Navigation` declaration.
+
+```bash
+pnpm --dir packages/webflow-components run bundle:cato
+pnpm --dir packages/webflow-components run share:cato
+```
+
+The `share:cato` script intentionally clears `WEBFLOW_WORKSPACE_API_TOKEN` so the Webflow CLI opens the workspace-selection OAuth flow. Select **Cato Supply** in the browser prompt. Do not rely on the package `.env` token unless it was just verified to resolve to `workspace/cato-supply`.
 
 #### Cato Insights CMS Archive Build
 

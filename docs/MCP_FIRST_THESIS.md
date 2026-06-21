@@ -201,6 +201,30 @@ The Atlas provides vocabulary for reasoning about AI systems "beyond 'User → M
 CREATE SOMETHING stays **horizontal** (the MCP-first thesis applies to any vertical).
 WORKWAY goes **vertical** (construction via Procore).
 
+### Ona as Communication Reference
+
+Ona is the right communication reference for CREATE SOMETHING's public and
+operator-facing surfaces: calm hierarchy, sparse claims, visible proof,
+compact controls, and an interface that treats AI work as supervised
+operations rather than generic chat.
+
+CREATE SOMETHING should not become an Ona-shaped brand. It should stand on the
+mapping and implementation side:
+
+| Reference | Center of gravity |
+|-----------|-------------------|
+| **Ona** | How supervised autonomy should feel to an operator |
+| **CREATE SOMETHING** | How supervised autonomy gets mapped, integrated, governed, shipped, and improved |
+
+The product language should borrow Ona's clarity without copying its category.
+CREATE SOMETHING speaks through evidence: system maps, MCP boundaries, policy
+artifacts, implementation contracts, live workflow surfaces, validation gates,
+and delivery proof.
+
+The operating claim:
+
+> CREATE SOMETHING turns AI ambition into operational systems.
+
 ### Property Roles (Post-Pivot)
 
 Templates are no longer the entry point. **MCP creation expertise** is.

@@ -43,6 +43,27 @@ published: true
 </svg>
 </div>
 </a>
+<a class="component-card" href="/canon/components/clear">
+<div class="card-icon">
+<svg fill="none" height="24" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24" width="24">
+<path d="M4 6h16"></path>
+<path d="M4 12h10"></path>
+<path d="M4 18h7"></path>
+<path d="M17 11l2 2 4-4"></path>
+</svg>
+</div>
+<div class="card-content">
+<h2 class="card-title">Clear Components</h2>
+<p class="card-description">
+				Map workflows, proof, receipts, and governed states with Ona-derived clarity.
+			</p>
+</div>
+<div class="card-arrow">
+<svg fill="none" height="16" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24" width="16">
+<path d="M5 12h14M12 5l7 7-7 7"></path>
+</svg>
+</div>
+</a>
 <a class="component-card" href="/canon/components/navigation">
 <div class="card-icon">
 <svg fill="none" height="24" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24" width="24">

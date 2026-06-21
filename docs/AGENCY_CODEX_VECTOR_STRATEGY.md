@@ -13,6 +13,11 @@ The commercial default is now **Policy OS** (**Skills + MCP**), with **MCP-only*
 - Outcomes are the product: execution quality, escalation policy, and continuous tuning.
 - Codex is the primary setup and demo vector, with Pi and Claude Code as co-equal delivery targets.
 - MCP contracts and policy artifacts stay portable across all agent harnesses.
+- Dify remains the preferred client/operator surface when visual workflow
+  editing, app publishing, MCP server cards, or non-engineer inspection matter.
+- OpenAI Agents SDK is a graduation lane for workflows that require code-owned
+  orchestration, approval pauses, durable state, traces, evals, and CI-backed
+  golden tasks.
 - Canonical phrasing for delivery vector is now **Skills on MCP**.
 
 ## Delivery Vector Language System
@@ -51,6 +56,7 @@ Policy OS ships to all major agent harnesses. Artifacts are portable by design:
 | **Pi** | Pi packages (extensions + skills + prompts + themes) | `pi install npm:@create-something/pi-policy-os` |
 | **Claude Code** | `.claude/` directory (rules + skills + commands + hooks) | Repository config |
 | **Cursor** | MCP servers + `.cursorrules` | Repository config |
+| **OpenAI Agents SDK** | SDK workflow service + MCP servers + traces/evals | Graduation lane for governed execution |
 
 ### Pi as Delivery Vector
 
@@ -81,6 +87,14 @@ See `packages/pi-three-tier-framework/`, `packages/pi-policy-os/`, `packages/pi-
 3. Supplier wrap pattern remains unchanged:
    - Commodity connectivity via `@create-something/composio-bridge`.
    - Deep-domain logic and intelligence layer are always custom.
+4. Runtime graduation is explicit:
+   - Dify-first delivery remains valid for client-facing agent surfaces.
+   - Agents SDK is introduced only when the Policy OS contract needs code-owned
+     orchestration, tool routing, approval pauses, state, traces, evals, or
+     repeatable cost controls.
+   - The migration must not silently drop platform affordances such as visual
+     review, publish/update flow, operator handoff, rollback, or team-compatible
+     governance.
 
 ## Offer architecture
 
@@ -111,6 +125,7 @@ Deliverables:
 - **Codex setup + policy + runbook included**
 - Agent behavior contracts (allowed tools, guardrails, approvals)
 - Golden task suite + regression checks
+- Runtime-surface decision and graduation status
 - Monthly tuning cadence
 
 ## Standard client contracts
@@ -130,6 +145,10 @@ Every engagement ships three artifacts:
 - Escalation triggers
 - Budget and latency guardrails
 - Model/client portability assumptions
+- Runtime surface (`dify`, `cloudflare_service`, `openai_agents_sdk`, or
+  equivalent client-specific lane)
+- Graduation status (`prototype`, `dify_first`, `sdk_candidate`,
+  `sdk_graduated`, `rollback_required`)
 - `delivery_vector` metadata (`canonical_phrase`, `client_facing_label`, `technical_label`)
 
 3. `outcome_contract.md`
@@ -148,6 +167,8 @@ Policy OS metadata must also include:
 - `escalation_policy`
 - `review_cadence`
 - `billing_and_entitlement_assumptions`
+- `runtime_surface`
+- `graduation_status`
 
 ## Per-client handoff bundle
 
