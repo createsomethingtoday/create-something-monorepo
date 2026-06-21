@@ -434,7 +434,7 @@
     {/snippet}
   </ClearPlatformHero>
 
-  <section class="agency-performance-strip performance-container" aria-label="Agency performance model">
+  <section class="agency-clarity-strip performance-container" aria-label="Agency workflow model">
     <div class="performance-stat-strip">
       <div class="performance-stat" data-tone="ink">
         <span>Map</span>
@@ -587,7 +587,7 @@
     color: var(--color-performance-ink, var(--color-clear-onyx, #0a0e19));
   }
 
-  .agency-performance-strip {
+  .agency-clarity-strip {
     margin-top: -0.25rem;
     margin-bottom: 1.15rem;
   }
