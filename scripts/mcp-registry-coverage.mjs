@@ -220,6 +220,12 @@ const PACKAGE_COVERAGE = {
   'packages/webflow-app-review-mcp/worker': {
     registry: ['webflow-app-review-mcp']
   },
+  'packages/zendesk-mcp': {
+    registry: ['zendesk-mcp']
+  },
+  'packages/zendesk-mcp/worker': {
+    registry: ['zendesk-mcp']
+  },
   'packages/webflow-mcp': {
     registry: ['webflow-local']
   },

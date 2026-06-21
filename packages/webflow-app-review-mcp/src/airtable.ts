@@ -138,11 +138,8 @@ export interface AppReviewQueueItem {
   submissionDatetime?: string;
   normalizedStatus?: AppReviewQueueStatus | null;
   isReadyToReview?: boolean;
+  isAssigned?: boolean;
   isUnassigned?: boolean;
-  canAssign?: boolean;
-  canReview?: boolean;
-  isAssignedToCurrentReviewer?: boolean;
-  isBlockedByOtherReviewer?: boolean;
 }
 
 export interface AppReviewAsset extends AppReviewQueueItem {
@@ -202,8 +199,6 @@ export interface AppReviewQueueQuery {
   status?: AppReviewQueueStatus;
   assigned?: AppReviewQueueAssignmentFilter;
   sort?: AppReviewQueueSort;
-  currentReviewer?: CollaboratorRef | null;
-  onlyAssignedToCurrentReviewer?: boolean;
 }
 
 export interface AppReviewContext {
@@ -215,10 +210,7 @@ export interface AppReviewContext {
   reviewType?: string;
   rejectionReason?: string;
   reviewFeedback?: string;
-  canAssign: boolean;
-  canReview: boolean;
-  isAssignedToCurrentReviewer: boolean;
-  currentReviewer?: CollaboratorRef | null;
+  isAssigned: boolean;
   asset?: AppReviewAsset | null;
   version: AppReviewVersion;
 }
@@ -588,17 +580,8 @@ function normalizeQueueStatus(asset: AppReviewAsset, version?: AppReviewVersion 
   return null;
 }
 
-function toQueueItem(
-  asset: AppReviewAsset,
-  version?: AppReviewVersion | null,
-  query: AppReviewQueueQuery = {},
-): AppReviewQueueItem {
+function toQueueItem(asset: AppReviewAsset, version?: AppReviewVersion | null): AppReviewQueueItem {
   const reviewer = version?.reviewer ?? null;
-  const isAssignedToCurrentReviewer = Boolean(
-    query.currentReviewer?.id &&
-      reviewer?.id &&
-      query.currentReviewer.id === reviewer.id,
-  );
   const normalizedStatus = normalizeQueueStatus(asset, version);
 
   return {
@@ -610,11 +593,8 @@ function toQueueItem(
     submissionDatetime: version?.submissionDatetime ?? version?.createdTime,
     normalizedStatus,
     isReadyToReview: normalizedStatus === 'ready_to_review',
+    isAssigned: Boolean(reviewer),
     isUnassigned: !reviewer,
-    canAssign: Boolean(version?.versionId && query.currentReviewer?.id && !reviewer),
-    canReview: Boolean(!reviewer || isAssignedToCurrentReviewer),
-    isAssignedToCurrentReviewer,
-    isBlockedByOtherReviewer: Boolean(reviewer?.id && !isAssignedToCurrentReviewer),
   };
 }
 
@@ -1043,16 +1023,15 @@ export class AirtableClient {
   }> {
     const limit = query.limit ?? 100;
     const sort = query.sort ?? 'submissionDatetime_desc';
-    const needsPostFilterCompleteness = Boolean(query.status || query.assigned !== undefined || query.onlyAssignedToCurrentReviewer);
+    const needsPostFilterCompleteness = Boolean(query.status || query.assigned !== undefined);
     const queue = await this.listAssetQueue(needsPostFilterCompleteness ? undefined : limit);
     const latestVersions = await this.listLatestVersionsForAssets(queue.map((item) => item.assetId));
-    const items = queue.map((item) => toQueueItem(item, latestVersions.get(item.assetId) ?? null, query));
+    const items = queue.map((item) => toQueueItem(item, latestVersions.get(item.assetId) ?? null));
 
     const filtered = items.filter((item) => {
       if (query.status && item.normalizedStatus !== query.status) return false;
       if (query.assigned === 'assigned' && item.isUnassigned) return false;
       if (query.assigned === 'unassigned' && !item.isUnassigned) return false;
-      if (query.onlyAssignedToCurrentReviewer && !item.isAssignedToCurrentReviewer) return false;
       return true;
     });
 
@@ -1169,108 +1148,8 @@ export class AirtableClient {
     return { version, asset };
   }
 
-  async assignVersionReviewer(versionId: string, reviewer: CollaboratorRef | null): Promise<AppReviewVersion> {
-    return this.updateVersionReview(versionId, { reviewer });
-  }
-
-  async assignSelfToVersion(versionId: string, currentReviewer?: CollaboratorRef | null): Promise<AppReviewVersion> {
-    if (!currentReviewer?.id) {
-      throw new AirtableClientError(
-        'REVIEWER_IDENTITY_UNAVAILABLE',
-        'Current reviewer identity is not configured for this MCP runtime.',
-        503,
-      );
-    }
-
-    const { version } = await this.getScopedVersion(versionId);
-    if (version.reviewer?.id && version.reviewer.id !== currentReviewer.id) {
-      throw new AirtableClientError(
-        'REVIEWER_ASSIGNMENT_CONFLICT',
-        'Version is already assigned to a different reviewer.',
-        409,
-        {
-          version_id: versionId,
-          current_reviewer_id: currentReviewer.id,
-          assigned_reviewer_id: version.reviewer.id,
-        },
-      );
-    }
-    if (version.reviewer?.id === currentReviewer.id) {
-      return version;
-    }
-
-    return this.assignVersionReviewer(versionId, currentReviewer);
-  }
-
-  async unassignVersionReviewer(versionId: string, currentReviewer?: CollaboratorRef | null): Promise<AppReviewVersion> {
-    const { version } = await this.getScopedVersion(versionId);
-    if (!currentReviewer?.id) {
-      throw new AirtableClientError(
-        'REVIEWER_IDENTITY_UNAVAILABLE',
-        'Current reviewer identity is not configured for this MCP runtime.',
-        503,
-      );
-    }
-    if (!version.reviewer?.id) {
-      return version;
-    }
-    if (version.reviewer.id !== currentReviewer.id) {
-      throw new AirtableClientError(
-        'REVIEWER_ASSIGNMENT_CONFLICT',
-        'Version is assigned to a different reviewer and cannot be unassigned from this lane.',
-        409,
-        {
-          version_id: versionId,
-          current_reviewer_id: currentReviewer.id,
-          assigned_reviewer_id: version.reviewer.id,
-        },
-      );
-    }
-    return this.assignVersionReviewer(versionId, null);
-  }
-
-  async requireAssignedVersion(versionId: string, currentReviewer?: CollaboratorRef | null): Promise<AppReviewVersion> {
-    const { version } = await this.getScopedVersion(versionId);
-    if (!currentReviewer?.id) {
-      throw new AirtableClientError(
-        'REVIEWER_IDENTITY_UNAVAILABLE',
-        'Current reviewer identity is not configured for this MCP runtime.',
-        503,
-      );
-    }
-    if (!version.reviewer?.id) {
-      throw new AirtableClientError(
-        'REVIEWER_ASSIGNMENT_REQUIRED',
-        'Version must be assigned to the authenticated reviewer before this action can run.',
-        409,
-        {
-          version_id: versionId,
-          current_reviewer_id: currentReviewer.id,
-        },
-      );
-    }
-    if (version.reviewer.id !== currentReviewer.id) {
-      throw new AirtableClientError(
-        'REVIEWER_ASSIGNMENT_CONFLICT',
-        'Version is assigned to a different reviewer.',
-        409,
-        {
-          version_id: versionId,
-          current_reviewer_id: currentReviewer.id,
-          assigned_reviewer_id: version.reviewer.id,
-        },
-      );
-    }
-    return version;
-  }
-
-  async getReviewContext(versionId: string, currentReviewer?: CollaboratorRef | null): Promise<AppReviewContext> {
+  async getReviewContext(versionId: string): Promise<AppReviewContext> {
     const { version, asset } = await this.getScopedVersion(versionId);
-    const isAssignedToCurrentReviewer = Boolean(
-      currentReviewer?.id &&
-        version.reviewer?.id &&
-        currentReviewer.id === version.reviewer.id,
-    );
 
     return {
       versionId: version.versionId,
@@ -1281,10 +1160,7 @@ export class AirtableClient {
       reviewType: version.reviewType,
       rejectionReason: version.rejectionReason,
       reviewFeedback: version.reviewFeedback,
-      canAssign: Boolean(currentReviewer?.id && !version.reviewer),
-      canReview: !version.reviewer || isAssignedToCurrentReviewer,
-      isAssignedToCurrentReviewer,
-      currentReviewer: currentReviewer ?? null,
+      isAssigned: Boolean(version.reviewer?.id),
       asset,
       version,
     };

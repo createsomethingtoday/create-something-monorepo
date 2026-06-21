@@ -1,6 +1,6 @@
 # Webflow App Review MCP
 
-Remote MCP server for Webflow App Review workflows, scoped to Airtable `Assets`, `Asset Versions`, and the app-review governance tracking hub.
+Remote MCP server for Webflow App Review workflows and the Airtable-backed Webflow Governance & Transparency database.
 
 ## Scope
 
@@ -38,7 +38,6 @@ Optional:
 - `AIRTABLE_GOVERNANCE_API_KEY` (optional PAT for a separate tracker base; falls back to `AIRTABLE_API_KEY`)
 - `AIRTABLE_GOVERNANCE_BASE_ID` (optional separate tracker base; discovered tracker base: `app1Q0o9xw2Zny7gw`)
 - `AIRTABLE_GOVERNANCE_FINDINGS_TABLE_ID` (defaults to table name `App Review Governance Findings`)
-- `REVIEWER_DIRECTORY_JSON` (JSON map from hub `account_id` to reviewer identity, used by reviewer resources and write attribution payloads)
 
 ## Tools
 
@@ -47,13 +46,15 @@ Optional:
 - `app_review_get_asset`
 - `app_review_list_versions`
 - `app_review_get_version`
-- `app_review_my_queue`
 - `app_review_get_review_context`
-- `app_review_assign_self`
-- `app_review_unassign_self`
 - `app_review_save_draft_feedback`
 - `app_review_set_review_status`
 - `app_review_get_field_map`
+- `governance_database_health`
+- `governance_database_list_findings`
+- `governance_database_get_finding`
+- `governance_database_create_finding`
+- `governance_database_update_finding`
 - `app_review_list_governance_findings`
 - `app_review_get_governance_finding`
 - `app_review_create_governance_finding`
@@ -65,12 +66,13 @@ Optional:
 - `app_review_update_asset_metadata`
 - `app_review_set_marketplace_status`
 
-Reviewer-owned write posture is intended to mirror the Webflow template-review lane:
+Write posture:
 
-- self-assignment before review writes
-- draft feedback and controlled status changes before final decisions
-- narrow decision verbs for request-changes, approve, and reject
-- broad metadata and marketplace-status updates kept outside the normal reviewer flow
+- no reviewer session or assigned-reviewer context is required
+- queue filters can inspect assigned, unassigned, or all records without binding to a reviewer
+- draft feedback and controlled status changes write explicit Airtable fields only
+- narrow decision verbs are available for request-changes, approve, and reject
+- broad metadata and marketplace-status updates should stay operator-gated
 
 ## Resources
 
@@ -78,15 +80,29 @@ Reviewer-owned write posture is intended to mirror the Webflow template-review l
 - `app-review://status-options`
 - `app-review://governance-finding-schema`
 - `app-review://governance-findings-snapshot`
+- `governance://finding-schema`
+- `governance://findings-snapshot`
 - `app-review://queue-snapshot`
-- `app-review://reviewer-me`
-- `app-review://reviewer-workflow`
+- `app-review://database-workflow`
 
 ## Prompts
 
 - `app_review_decision_support`
 - `app_review_feedback_refiner`
 - `app_review_governance_finding_capture`
+- `governance_database_finding_capture`
+
+## Dify Governance Database Access
+
+For Dify cards whose job is direct access to the governance database, register this MCP server once:
+
+- Server ID: `webflow-app-review`
+- URL: `https://webflow-app-review-mcp.createsomething.workers.dev/mcp`
+- Auth: bearer token from Infisical `prod:/webflow-app-review-mcp:MCP_BEARER_TOKEN`
+
+Enable the neutral `governance_database_*` tools for the governance database workflow. Do not register Airtable API URLs, base IDs, or table IDs as MCP servers in Dify. The table `tblIH1LQ8H3b2piNi` is accessed through this MCP, not as a standalone MCP endpoint.
+
+The older `app_review_*_governance_finding` tools remain for backward compatibility with app-review hubs, but the neutral tools are preferred when the caller is not acting as a specific reviewer.
 
 ## Governance Findings Table
 
@@ -125,7 +141,7 @@ Recommended fields:
 | `Asset Version ID` | Single line text | Optional app-review version record ID |
 | `Source URL` | URL | Primary Slack/Zendesk/docs/Airtable source |
 | `Linked URLs` | Long text | One URL per line |
-| `Reporter` | Single line text | Defaults to resolved reviewer identity when available |
+| `Reporter` | Single line text | Defaults to `Dify Governance Database` when omitted |
 | `Created By Agent` | Single line text | Defaults to `webflow-app-review-mcp` |
 
 ## Canonical Mappings

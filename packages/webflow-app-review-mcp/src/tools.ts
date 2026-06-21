@@ -3,7 +3,6 @@ import { z } from 'zod';
 
 import type { AirtableClient, AppReviewVersion, CollaboratorRef } from './airtable.js';
 import { AirtableClientError } from './airtable.js';
-import type { ReviewerProfile } from './reviewer-directory.js';
 import {
   APP_REVIEW_FIELD_MAP,
   CAPABILITIES_OPTIONS,
@@ -19,7 +18,7 @@ import {
 } from './schema.js';
 
 type ClientFactory = () => AirtableClient;
-type ReviewerFactory = () => ReviewerProfile | null;
+type ReviewerFactory = () => unknown;
 
 const collaboratorRefSchema = z.object({
   id: z.string().min(1),
@@ -130,42 +129,86 @@ function cleanObject<T extends Record<string, unknown>>(value: T): T {
   return Object.fromEntries(entries) as T;
 }
 
-function currentReviewerAsCollaborator(getReviewer: ReviewerFactory) {
-  const reviewer = getReviewer();
-  if (!reviewer) return null;
-  return {
-    id: reviewer.airtableCollaboratorId,
-    ...(reviewer.email ? { email: reviewer.email } : {}),
-    ...(reviewer.name ? { name: reviewer.name } : {}),
-  };
+const governanceFindingQuerySchema = {
+  limit: z.number().int().min(1).max(500).optional(),
+  status: z.enum(GOVERNANCE_FINDING_STATUS_OPTIONS).optional(),
+  category: z.enum(GOVERNANCE_FINDING_CATEGORY_OPTIONS).optional(),
+  priority: z.enum(GOVERNANCE_FINDING_PRIORITY_OPTIONS).optional(),
+  decision_needed: z.boolean().optional(),
+  search: z.string().min(1).optional(),
+};
+
+const governanceFindingCreateSchema = {
+  title: z.string().min(1).max(160),
+  category: z.enum(GOVERNANCE_FINDING_CATEGORY_OPTIONS),
+  summary: z.string().min(1),
+  status: z.enum(GOVERNANCE_FINDING_STATUS_OPTIONS).optional(),
+  priority: z.enum(GOVERNANCE_FINDING_PRIORITY_OPTIONS).optional(),
+  evidence: z.string().optional(),
+  recommendation: z.string().optional(),
+  decision_needed: z.boolean().optional(),
+  next_action: z.string().optional(),
+  owner: z.string().optional(),
+  app_name: z.string().optional(),
+  app_id: z.string().optional(),
+  asset_id: z.string().optional(),
+  version_id: z.string().optional(),
+  source_url: z.string().url().optional(),
+  linked_urls: z.array(z.string().url()).optional(),
+  reporter: z.string().optional(),
+};
+
+const governanceFindingUpdateSchema = {
+  finding_id: z.string().min(1),
+  title: z.string().min(1).max(160).optional(),
+  category: z.enum(GOVERNANCE_FINDING_CATEGORY_OPTIONS).optional(),
+  summary: z.string().optional(),
+  status: z.enum(GOVERNANCE_FINDING_STATUS_OPTIONS).optional(),
+  priority: z.enum(GOVERNANCE_FINDING_PRIORITY_OPTIONS).optional(),
+  evidence: z.string().optional(),
+  recommendation: z.string().optional(),
+  decision_needed: z.boolean().optional(),
+  next_action: z.string().optional(),
+  owner: z.string().optional(),
+  app_name: z.string().optional(),
+  app_id: z.string().optional(),
+  asset_id: z.string().optional(),
+  version_id: z.string().optional(),
+  source_url: z.string().url().optional(),
+  linked_urls: z.array(z.string().url()).optional(),
+  reporter: z.string().optional(),
+};
+
+async function listGovernanceFindings(
+  client: AirtableClient,
+  params: {
+    limit?: number;
+    status?: (typeof GOVERNANCE_FINDING_STATUS_OPTIONS)[number];
+    category?: (typeof GOVERNANCE_FINDING_CATEGORY_OPTIONS)[number];
+    priority?: (typeof GOVERNANCE_FINDING_PRIORITY_OPTIONS)[number];
+    decision_needed?: boolean;
+    search?: string;
+  },
+) {
+  const findings = await client.listGovernanceFindings({
+    limit: params.limit ?? 100,
+    status: params.status,
+    category: params.category,
+    priority: params.priority,
+    decisionNeeded: params.decision_needed,
+    search: params.search,
+  });
+  return { count: findings.length, findings };
 }
 
-function requireResolvedReviewer(getReviewer: ReviewerFactory) {
-  const reviewer = getReviewer();
-  if (!reviewer) {
-    throw new AirtableClientError(
-      'REVIEWER_IDENTITY_UNAVAILABLE',
-      'Current reviewer identity is not configured for this MCP runtime.',
-      503,
-    );
+async function getGovernanceFinding(client: AirtableClient, findingId: string) {
+  const finding = await client.getGovernanceFinding(findingId);
+  if (!finding) {
+    throw new AirtableClientError('GOVERNANCE_FINDING_NOT_FOUND', 'Governance finding not found.', 404, {
+      finding_id: findingId,
+    });
   }
-  return reviewer;
-}
-
-function reviewerPayload(reviewer: ReviewerProfile) {
-  return {
-    accountId: reviewer.accountId,
-    airtableCollaboratorId: reviewer.airtableCollaboratorId,
-    email: reviewer.email,
-    name: reviewer.name,
-    lane: reviewer.lane,
-  };
-}
-
-function reviewerAttribution(getReviewer: ReviewerFactory): string {
-  const reviewer = getReviewer();
-  if (!reviewer) return 'Dify App Review Hub';
-  return reviewer.name ?? reviewer.email ?? reviewer.accountId;
+  return finding;
 }
 
 function ensureRequestChangesStatus(value: string | undefined) {
@@ -182,7 +225,7 @@ function ensureRequestChangesStatus(value: string | undefined) {
   );
 }
 
-export function registerTools(server: McpServer, getClient: ClientFactory, getReviewer: ReviewerFactory = () => null): void {
+export function registerTools(server: McpServer, getClient: ClientFactory, _getReviewer: ReviewerFactory = () => null): void {
   server.tool(
     'app_review_health',
     'Runtime health check for Webflow App Review MCP and Airtable connectivity.',
@@ -193,7 +236,6 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
         return asSuccess({
           ...health,
           auth: 'Bearer token required at worker boundary.',
-          reviewerIdentity: getReviewer(),
         });
       } catch (error) {
         return asError(error);
@@ -203,14 +245,28 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
 
   server.tool(
     'app_review_list_queue',
-    'List apps-only review queue with key status fields from Assets.',
+    'List apps-only review queue with neutral status, assignment, and sorting filters.',
     {
+      status: z.enum(APP_REVIEW_QUEUE_STATUS_OPTIONS).optional(),
+      assigned: z.enum(['any', 'assigned', 'unassigned']).optional(),
+      sort: z.enum(APP_REVIEW_QUEUE_SORT_OPTIONS).optional(),
       limit: z.number().int().min(1).max(500).optional(),
     },
-    async (params) => {
+    async ({ limit, status, assigned, sort }) => {
       try {
-        const queue = await getClient().listAssetQueue(params.limit ?? 100);
-        return asSuccess({ count: queue.length, records: queue });
+        const queue = await getClient().listAssetQueueDetailed({
+          limit: limit ?? 100,
+          status,
+          assigned: assigned ?? 'any',
+          sort: sort ?? 'submissionDatetime_desc',
+        });
+        return asSuccess({
+          count: queue.items.length,
+          sortApplied: queue.sortApplied,
+          statusApplied: status ?? null,
+          assignedApplied: assigned ?? 'any',
+          records: queue.items,
+        });
       } catch (error) {
         return asError(error);
       }
@@ -294,27 +350,58 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
   );
 
   server.tool(
+    'governance_database_health',
+    'Runtime health check for the Airtable-backed Webflow app governance database.',
+    {},
+    async () => {
+      try {
+        const health = await getClient().healthCheck();
+        return asSuccess({
+          ok: health.ok,
+          governance_base_id: health.governanceBaseId,
+          governance_findings_table: health.governanceFindingsTable,
+          app_review_base_id: health.baseId,
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
     'app_review_list_governance_findings',
     'List Airtable governance/transparency findings captured from app-review threads.',
-    {
-      limit: z.number().int().min(1).max(500).optional(),
-      status: z.enum(GOVERNANCE_FINDING_STATUS_OPTIONS).optional(),
-      category: z.enum(GOVERNANCE_FINDING_CATEGORY_OPTIONS).optional(),
-      priority: z.enum(GOVERNANCE_FINDING_PRIORITY_OPTIONS).optional(),
-      decision_needed: z.boolean().optional(),
-      search: z.string().min(1).optional(),
-    },
+    governanceFindingQuerySchema,
     async ({ limit, status, category, priority, decision_needed, search }) => {
       try {
-        const findings = await getClient().listGovernanceFindings({
-          limit: limit ?? 100,
+        return asSuccess(await listGovernanceFindings(getClient(), {
+          limit,
           status,
           category,
           priority,
-          decisionNeeded: decision_needed,
+          decision_needed,
           search,
-        });
-        return asSuccess({ count: findings.length, findings });
+        }));
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'governance_database_list_findings',
+    'List records from the Airtable Governance & Transparency findings database. This tool is not scoped to a reviewer identity.',
+    governanceFindingQuerySchema,
+    async ({ limit, status, category, priority, decision_needed, search }) => {
+      try {
+        return asSuccess(await listGovernanceFindings(getClient(), {
+          limit,
+          status,
+          category,
+          priority,
+          decision_needed,
+          search,
+        }));
       } catch (error) {
         return asError(error);
       }
@@ -329,13 +416,22 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
     },
     async ({ finding_id }) => {
       try {
-        const finding = await getClient().getGovernanceFinding(finding_id);
-        if (!finding) {
-          throw new AirtableClientError('GOVERNANCE_FINDING_NOT_FOUND', 'Governance finding not found.', 404, {
-            finding_id,
-          });
-        }
-        return asSuccess({ finding });
+        return asSuccess({ finding: await getGovernanceFinding(getClient(), finding_id) });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'governance_database_get_finding',
+    'Get one Airtable Governance & Transparency finding by record ID. This tool is not scoped to a reviewer identity.',
+    {
+      finding_id: z.string().min(1),
+    },
+    async ({ finding_id }) => {
+      try {
+        return asSuccess({ finding: await getGovernanceFinding(getClient(), finding_id) });
       } catch (error) {
         return asError(error);
       }
@@ -345,36 +441,33 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
   server.tool(
     'app_review_create_governance_finding',
     'Create an Airtable governance/transparency finding from a Slack thread, Zendesk ticket, app review, or docs gap.',
-    {
-      title: z.string().min(1).max(160),
-      category: z.enum(GOVERNANCE_FINDING_CATEGORY_OPTIONS),
-      summary: z.string().min(1),
-      status: z.enum(GOVERNANCE_FINDING_STATUS_OPTIONS).optional(),
-      priority: z.enum(GOVERNANCE_FINDING_PRIORITY_OPTIONS).optional(),
-      evidence: z.string().optional(),
-      recommendation: z.string().optional(),
-      decision_needed: z.boolean().optional(),
-      next_action: z.string().optional(),
-      owner: z.string().optional(),
-      app_name: z.string().optional(),
-      app_id: z.string().optional(),
-      asset_id: z.string().optional(),
-      version_id: z.string().optional(),
-      source_url: z.string().url().optional(),
-      linked_urls: z.array(z.string().url()).optional(),
-      reporter: z.string().optional(),
-    },
+    governanceFindingCreateSchema,
     async (params) => {
       try {
         const finding = await getClient().createGovernanceFinding({
           ...params,
-          reporter: params.reporter ?? reviewerAttribution(getReviewer),
+          reporter: params.reporter ?? 'Dify Governance Database',
           created_by_agent: 'webflow-app-review-mcp',
         });
-        return asSuccess({
-          reviewer: getReviewer(),
-          finding,
+        return asSuccess({ finding });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'governance_database_create_finding',
+    'Create a record in the Airtable Governance & Transparency findings database. This tool is not scoped to a reviewer identity.',
+    governanceFindingCreateSchema,
+    async (params) => {
+      try {
+        const finding = await getClient().createGovernanceFinding({
+          ...params,
+          reporter: params.reporter ?? 'Dify Governance Database',
+          created_by_agent: 'webflow-governance-database',
         });
+        return asSuccess({ finding });
       } catch (error) {
         return asError(error);
       }
@@ -384,33 +477,11 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
   server.tool(
     'app_review_update_governance_finding',
     'Update allowed fields on an Airtable governance/transparency finding.',
-    {
-      finding_id: z.string().min(1),
-      title: z.string().min(1).max(160).optional(),
-      category: z.enum(GOVERNANCE_FINDING_CATEGORY_OPTIONS).optional(),
-      summary: z.string().optional(),
-      status: z.enum(GOVERNANCE_FINDING_STATUS_OPTIONS).optional(),
-      priority: z.enum(GOVERNANCE_FINDING_PRIORITY_OPTIONS).optional(),
-      evidence: z.string().optional(),
-      recommendation: z.string().optional(),
-      decision_needed: z.boolean().optional(),
-      next_action: z.string().optional(),
-      owner: z.string().optional(),
-      app_name: z.string().optional(),
-      app_id: z.string().optional(),
-      asset_id: z.string().optional(),
-      version_id: z.string().optional(),
-      source_url: z.string().url().optional(),
-      linked_urls: z.array(z.string().url()).optional(),
-      reporter: z.string().optional(),
-    },
+    governanceFindingUpdateSchema,
     async ({ finding_id, ...params }) => {
       try {
         const finding = await getClient().updateGovernanceFinding(finding_id, params);
-        return asSuccess({
-          reviewer: getReviewer(),
-          finding,
-        });
+        return asSuccess({ finding });
       } catch (error) {
         return asError(error);
       }
@@ -418,38 +489,13 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
   );
 
   server.tool(
-    'app_review_my_queue',
-    'List app review queue items currently assigned to the authenticated reviewer.',
-    {
-      status: z.enum(APP_REVIEW_QUEUE_STATUS_OPTIONS).optional(),
-      sort: z.enum(APP_REVIEW_QUEUE_SORT_OPTIONS).optional(),
-      limit: z.number().int().min(1).max(500).optional(),
-    },
-    async ({ limit, status, sort }) => {
+    'governance_database_update_finding',
+    'Update allowed fields on an Airtable Governance & Transparency finding. This tool is not scoped to a reviewer identity.',
+    governanceFindingUpdateSchema,
+    async ({ finding_id, ...params }) => {
       try {
-        const actingReviewer = currentReviewerAsCollaborator(getReviewer);
-        if (!actingReviewer?.id) {
-          throw new AirtableClientError(
-            'REVIEWER_IDENTITY_UNAVAILABLE',
-            'Current reviewer identity is not configured for this MCP runtime.',
-            503,
-          );
-        }
-        const queue = await getClient().listAssetQueueDetailed({
-          limit: limit ?? 100,
-          status,
-          assigned: 'assigned',
-          sort: sort ?? 'submissionDatetime_desc',
-          currentReviewer: actingReviewer,
-          onlyAssignedToCurrentReviewer: true,
-        });
-        return asSuccess({
-          count: queue.items.length,
-          sortApplied: queue.sortApplied,
-          statusApplied: status ?? null,
-          assignedApplied: 'assigned_to_current_reviewer',
-          items: queue.items,
-        });
+        const finding = await getClient().updateGovernanceFinding(finding_id, params);
+        return asSuccess({ finding });
       } catch (error) {
         return asError(error);
       }
@@ -458,56 +504,14 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
 
   server.tool(
     'app_review_get_review_context',
-    'Get normalized review context for one app version, including reviewer ownership flags.',
+    'Get normalized review context for one app version without reviewer-session scoping.',
     {
       version_id: z.string().min(1),
     },
     async ({ version_id }) => {
       try {
         return asSuccess({
-          context: await getClient().getReviewContext(version_id, currentReviewerAsCollaborator(getReviewer)),
-        });
-      } catch (error) {
-        return asError(error);
-      }
-    },
-  );
-
-  server.tool(
-    'app_review_assign_self',
-    'Assign the authenticated reviewer to an app version when it is unassigned or already owned by the same reviewer.',
-    {
-      version_id: z.string().min(1),
-    },
-    async ({ version_id }) => {
-      try {
-        const reviewer = requireResolvedReviewer(getReviewer);
-        const updated = await getClient().assignSelfToVersion(version_id, currentReviewerAsCollaborator(getReviewer));
-        return asSuccess({
-          reviewer: reviewerPayload(reviewer),
-          acting_reviewer: currentReviewerAsCollaborator(getReviewer),
-          updated_version: updated,
-        });
-      } catch (error) {
-        return asError(error);
-      }
-    },
-  );
-
-  server.tool(
-    'app_review_unassign_self',
-    'Clear the reviewer field only when the selected app version is currently assigned to the authenticated reviewer.',
-    {
-      version_id: z.string().min(1),
-    },
-    async ({ version_id }) => {
-      try {
-        const reviewer = requireResolvedReviewer(getReviewer);
-        const updated = await getClient().unassignVersionReviewer(version_id, currentReviewerAsCollaborator(getReviewer));
-        return asSuccess({
-          reviewer: reviewerPayload(reviewer),
-          acting_reviewer: currentReviewerAsCollaborator(getReviewer),
-          updated_version: updated,
+          context: await getClient().getReviewContext(version_id),
         });
       } catch (error) {
         return asError(error);
@@ -524,18 +528,11 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
     },
     async ({ version_id, review_feedback }) => {
       try {
-        const reviewer = requireResolvedReviewer(getReviewer);
-        const actingReviewer = currentReviewerAsCollaborator(getReviewer);
-        await getClient().requireAssignedVersion(version_id, actingReviewer);
+        await requireAppVersion(getClient(), version_id);
         const updated = await getClient().updateVersionReview(version_id, {
-          reviewer: { id: reviewer.airtableCollaboratorId },
           review_feedback,
         });
-        return asSuccess({
-          reviewer: reviewerPayload(reviewer),
-          acting_reviewer: actingReviewer,
-          updated_version: updated,
-        });
+        return asSuccess({ updated_version: updated });
       } catch (error) {
         return asError(error);
       }
@@ -544,25 +541,18 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
 
   server.tool(
     'app_review_set_review_status',
-    'Set a reviewer-controlled app review status after ownership has been established through self-assignment.',
+    'Set an app review status on an Asset Version record without reviewer-session scoping.',
     {
       version_id: z.string().min(1),
       review_status: z.enum(REVIEWER_CONTROLLED_STATUS_OPTIONS),
     },
     async ({ version_id, review_status }) => {
       try {
-        const reviewer = requireResolvedReviewer(getReviewer);
-        const actingReviewer = currentReviewerAsCollaborator(getReviewer);
-        await getClient().requireAssignedVersion(version_id, actingReviewer);
+        await requireAppVersion(getClient(), version_id);
         const updated = await getClient().updateVersionReview(version_id, {
           review_status,
-          reviewer: { id: reviewer.airtableCollaboratorId },
         });
-        return asSuccess({
-          reviewer: reviewerPayload(reviewer),
-          acting_reviewer: actingReviewer,
-          updated_version: updated,
-        });
+        return asSuccess({ updated_version: updated });
       } catch (error) {
         return asError(error);
       }
@@ -571,7 +561,7 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
 
   server.tool(
     'app_review_request_changes',
-    'Set an app version to changes-requested and attach reviewer feedback using the authenticated reviewer identity.',
+    'Set an app version to changes-requested and attach feedback without reviewer-session scoping.',
     {
       version_id: z.string().min(1),
       review_feedback: z.string().min(1),
@@ -581,20 +571,13 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
     async ({ version_id, review_feedback, rejection_reason, review_status }) => {
       try {
         ensureRequestChangesStatus(review_status);
-        const reviewer = requireResolvedReviewer(getReviewer);
-        const actingReviewer = currentReviewerAsCollaborator(getReviewer);
-        await getClient().requireAssignedVersion(version_id, actingReviewer);
+        await requireAppVersion(getClient(), version_id);
         const updated = await getClient().updateVersionReview(version_id, {
           review_status: review_status ?? '📤Changes Requested',
-          reviewer: { id: reviewer.airtableCollaboratorId },
           rejection_reason,
           review_feedback,
         });
-        return asSuccess({
-          reviewer: reviewerPayload(reviewer),
-          acting_reviewer: actingReviewer,
-          updated_version: updated,
-        });
+        return asSuccess({ updated_version: updated });
       } catch (error) {
         return asError(error);
       }
@@ -603,7 +586,7 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
 
   server.tool(
     'app_review_approve_version',
-    'Approve an app version using the authenticated reviewer identity.',
+    'Approve an app version without reviewer-session scoping.',
     {
       version_id: z.string().min(1),
       review_feedback: z.string().optional(),
@@ -611,20 +594,13 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
     },
     async ({ version_id, review_feedback, review_type }) => {
       try {
-        const reviewer = requireResolvedReviewer(getReviewer);
-        const actingReviewer = currentReviewerAsCollaborator(getReviewer);
-        await getClient().requireAssignedVersion(version_id, actingReviewer);
+        await requireAppVersion(getClient(), version_id);
         const updated = await getClient().updateVersionReview(version_id, {
           review_status: '✅Approved',
-          reviewer: { id: reviewer.airtableCollaboratorId },
           review_type,
           review_feedback,
         });
-        return asSuccess({
-          reviewer: reviewerPayload(reviewer),
-          acting_reviewer: actingReviewer,
-          updated_version: updated,
-        });
+        return asSuccess({ updated_version: updated });
       } catch (error) {
         return asError(error);
       }
@@ -633,7 +609,7 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
 
   server.tool(
     'app_review_reject_version',
-    'Reject an app version with reason and reviewer feedback using the authenticated reviewer identity.',
+    'Reject an app version with reason and feedback without reviewer-session scoping.',
     {
       version_id: z.string().min(1),
       rejection_reason: z.enum(REJECTION_REASON_OPTIONS),
@@ -642,21 +618,14 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
     },
     async ({ version_id, rejection_reason, review_feedback, review_type }) => {
       try {
-        const reviewer = requireResolvedReviewer(getReviewer);
-        const actingReviewer = currentReviewerAsCollaborator(getReviewer);
-        await getClient().requireAssignedVersion(version_id, actingReviewer);
+        await requireAppVersion(getClient(), version_id);
         const updated = await getClient().updateVersionReview(version_id, {
           review_status: '❌Rejected',
-          reviewer: { id: reviewer.airtableCollaboratorId },
           review_type,
           rejection_reason,
           review_feedback,
         });
-        return asSuccess({
-          reviewer: reviewerPayload(reviewer),
-          acting_reviewer: actingReviewer,
-          updated_version: updated,
-        });
+        return asSuccess({ updated_version: updated });
       } catch (error) {
         return asError(error);
       }
@@ -679,8 +648,6 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
       try {
         const client = getClient();
         await requireAppVersion(client, params.version_id);
-        const actingReviewer = currentReviewerAsCollaborator(getReviewer);
-
         const mutation = cleanObject({
           review_status: params.review_status,
           review_type: params.review_type,
@@ -699,11 +666,7 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
         }
 
         const updated = await client.updateVersionReview(params.version_id, mutation);
-        return asSuccess({
-          reviewer: getReviewer(),
-          acting_reviewer: actingReviewer,
-          updated_version: updated,
-        });
+        return asSuccess({ updated_version: updated });
       } catch (error) {
         return asError(error);
       }
@@ -860,12 +823,7 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
           );
         }
 
-        return asSuccess({
-          reviewer: getReviewer(),
-          acting_reviewer: currentReviewerAsCollaborator(getReviewer),
-          updated_asset: updatedAsset,
-          routed_updates: routedUpdates,
-        });
+        return asSuccess({ updated_asset: updatedAsset, routed_updates: routedUpdates });
       } catch (error) {
         return asError(error);
       }
@@ -884,11 +842,7 @@ export function registerTools(server: McpServer, getClient: ClientFactory, getRe
         const client = getClient();
         await requireAppAsset(client, params.asset_id);
         const updated = await client.setMarketplaceStatus(params.asset_id, params.marketplace_status);
-        return asSuccess({
-          reviewer: getReviewer(),
-          acting_reviewer: currentReviewerAsCollaborator(getReviewer),
-          updated_asset: updated,
-        });
+        return asSuccess({ updated_asset: updated });
       } catch (error) {
         return asError(error);
       }

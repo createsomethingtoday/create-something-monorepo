@@ -1,0 +1,66 @@
+{
+  "version": 1,
+  "status": "pending-dify-studio-registration",
+  "owner": "create-something",
+  "created_at": "2026-06-19",
+  "registry_server": {
+    "id": "zendesk-mcp",
+    "transport": "http",
+    "url": "https://zendesk-mcp.createsomething.workers.dev/mcp",
+    "description": "Zendesk MCP for Webflow asset reviewer ticket search, comments, and status workflows",
+    "tags": ["webflow", "review", "zendesk", "support", "cs"],
+    "catalog_exposure_mode": "direct",
+    "estimated_tool_count": 10
+  },
+  "dify_mcp_server": {
+    "server_id": "webflow-zendesk",
+    "display_name": "Webflow Zendesk",
+    "transport": "http",
+    "url": "https://zendesk-mcp.createsomething.workers.dev/mcp",
+    "auth": {
+      "type": "bearer",
+      "infisical": {
+        "environment": "prod",
+        "path": "/webflow/zendesk",
+        "secret_key": "ZENDESK_MCP_API_KEY"
+      }
+    }
+  },
+  "dify_studio_steps": [
+    "Open Dify Studio -> Tools -> MCP.",
+    "Create an HTTP MCP server card with server ID webflow-zendesk.",
+    "Set the MCP URL to https://zendesk-mcp.createsomething.workers.dev/mcp.",
+    "Configure bearer auth from Infisical prod:/webflow/zendesk:ZENDESK_MCP_API_KEY.",
+    "Refresh/discover tools in Dify Studio.",
+    "Classify zendesk_search_* and zendesk_get_* tools as read-only.",
+    "Classify zendesk_add_ticket_comment, zendesk_update_ticket_status, and zendesk_add_internal_note as write tools requiring reviewer confirmation.",
+    "Keep Webflow App Review MCP registered alongside this server. Agents choose Zendesk for ticket conversation/status state and Webflow App Review MCP for Airtable review/governance state.",
+    "Transcribe every discovered tool into config/dify/inventory.json with risk classification.",
+    "Run pnpm dify:inventory:generate and pnpm dify:coverage:generate."
+  ],
+  "inventory_fragment_after_tool_discovery": {
+    "webflow-zendesk": {
+      "display_name": "Webflow Zendesk",
+      "source_mcp_registry_server": "zendesk-mcp",
+      "transport": "http",
+      "url": "https://zendesk-mcp.createsomething.workers.dev/mcp",
+      "auth": {
+        "type": "bearer",
+        "infisical": {
+          "environment": "prod",
+          "path": "/webflow/zendesk",
+          "secret_key": "ZENDESK_MCP_API_KEY"
+        }
+      },
+      "tools": []
+    }
+  },
+  "notes": [
+    "This intake artifact is not a Dify inventory entry.",
+    "Do not paste the inventory fragment until Dify Studio has discovered tools and each tool is classified.",
+    "Keep secret values in Infisical only; this artifact stores references, not values.",
+    "Zendesk service auth should also live under the same Infisical path, using WEBFLOW_ZENDESK_EMAIL plus WEBFLOW_ZENDESK_API_TOKEN, WEBFLOW_ZENDESK_PASSWORD, or WEBFLOW_ZENDESK_OAUTH_TOKEN.",
+    "The Zendesk MCP and Webflow App Review MCP are both first-class reviewer options; route based on whether the current task depends on Zendesk ticket state or Airtable app-review/governance state.",
+    "Use https://webflow2579.zendesk.com/agent/tickets/1147219 as a write-permission validation target when credentials are configured and the operator approves the exact comment/status update."
+  ]
+}
