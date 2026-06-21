@@ -135,6 +135,7 @@ Canon uses CSS custom properties for all design decisions:
 | **Spacing** | `--space-xs` through `--space-3xl` (Golden Ratio) |
 | **Glass** | `--glass-blur-*`, `--glass-bg-*`, `--liquid-glass-*` |
 | **Clear Communication** | `--color-clear-*`, `--radius-clear-*`, `--shadow-clear-*` |
+| **Performance Excellence** | `--color-performance-*`, `--radius-performance-*`, `--shadow-performance-*` |
 
 ## Ona-Derived Clear Communication
 
@@ -162,6 +163,39 @@ compact panels, visible state, restrained motion, and reusable map/report/metric
   </div>
 </section>
 ```
+
+The codification rule is practical: Ona is a reference for communication quality, not a brand
+surface to copy. Canon turns that reference into owned CREATE SOMETHING primitives:
+
+| Layer | Canon rule |
+|-------|------------|
+| **Claims** | State the operational promise plainly, then put proof beside it. |
+| **Layout** | Prefer open page sections, compact navigation, and dense-but-readable operator surfaces. |
+| **Components** | Use `Clear*` primitives before inventing local cards, shells, or proof panels. |
+| **Evidence** | Show maps, contracts, receipts, gates, state, and next actions as first-class UI objects. |
+| **Motion** | Use motion only to clarify status, selection, progression, or handoff. |
+| **Copy** | Write in nouns and verbs from the workflow: object, action, policy, owner, receipt. |
+| **Boundary** | Do not copy Ona identity, campaign language, or category framing. |
+
+This means a CREATE SOMETHING surface should feel calm and inevitable, but it should prove a
+different thing: that the workflow has been mapped, integrated, governed, validated, and handed
+off with evidence.
+
+For component-level usage rules, see
+[`src/lib/components/clear/README.md`](./src/lib/components/clear/README.md).
+
+Canon also carries a performance-excellence layer influenced by Nike-level product discipline:
+athletic precision, decisive contrast, measured motion, material cues from performance spaces,
+and clear pressure states. Use this as a CREATE SOMETHING design principle, not as Nike branding:
+tokens and classes use `performance` language so every property can inherit the discipline without
+copying third-party identity.
+
+```css
+@import '@create-something/canon/styles/performance.css';
+```
+
+Use the performance layer for labs, systems maps, operational dashboards, simulation surfaces, and
+high-stakes decision rooms where clarity needs more physical energy than a standard SaaS panel.
 
 ```svelte
 <Navigation visualStyle="clear" {...navProps} />

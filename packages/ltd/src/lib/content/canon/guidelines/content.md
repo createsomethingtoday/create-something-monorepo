@@ -41,6 +41,29 @@ Write like a colleague, not a robot.
 | "Please wait while processing" | "Working on it..." |
 | "Terminate session" | "Sign out" |
 
+## Clear Communication Copy
+
+For Ona-derived clear surfaces, write for operational comprehension before brand atmosphere. The
+copy should make the mapped workflow, governed action, proof object, and next step visible.
+
+Use the concrete noun before the abstract category:
+
+| Don't | Do |
+|-------|-----|
+| "AI-powered workflow automation" | "Map the approval before the agent writes." |
+| "Seamless governance layer" | "Attach the policy, receipt, and rollback path." |
+| "Unlock productivity" | "Route the intake, review the match, then hand off." |
+
+Clear copy should answer one of these questions:
+
+1. What object is being mapped?
+2. What action can run, needs review, or is blocked?
+3. What policy, contract, receipt, trace, or eval proves the claim?
+4. Who owns the next step?
+
+Avoid generic AI language when a workflow noun exists. Prefer `map`, `review`, `approve`, `block`,
+`run`, `validate`, and `hand off` over softer verbs like `streamline`, `unlock`, or `empower`.
+
 ## Capitalization
 
 ### Sentence case

@@ -135,7 +135,11 @@
   --color-info-muted: rgba(80, 130, 185, 0.2);
   --color-info-border: rgba(80, 130, 185, 0.3);
 
-  /* Clear communication pilot - light, operational, proof-first surfaces */
+  /* Clear communication - light, operational, proof-first surfaces
+   * Ona is the communication reference; these tokens are the owned CREATE
+   * SOMETHING implementation surface. Use them for mapped workflows, proof
+   * panels, receipts, governed action states, and operator handoff UI.
+   */
   --color-clear-porcelain: #f9f9f9;
   --color-clear-porcelain-soft: #f2f2f2;
   --color-clear-panel: #ffffff;
@@ -159,6 +163,31 @@
   --radius-clear-sm: 4px;
   --radius-clear-md: 8px;
   --shadow-clear-restraint: 0 4px 20px rgba(0, 0, 0, 0.06);
+
+  /* Performance excellence - Ona clarity with athletic discipline
+   * Inspired by elite performance-product design: precise contrast, measured
+   * motion, court/field material cues, and visible pressure states. Keep these
+   * brand-safe: use them as CREATE SOMETHING system tokens, not third-party
+   * brand identifiers.
+   */
+  --color-performance-paper: #f7f5ef;
+  --color-performance-panel: #ffffff;
+  --color-performance-ink: #111111;
+  --color-performance-muted: #60646c;
+  --color-performance-line: #d9d6cf;
+  --color-performance-line-strong: #bdb6aa;
+  --color-performance-court: #d39a4d;
+  --color-performance-court-line: rgba(255, 255, 255, 0.86);
+  --color-performance-growth: #28724f;
+  --color-performance-signal: #255f85;
+  --color-performance-pressure: #c35d21;
+  --color-performance-risk: #b83f36;
+  --color-performance-gold: #b48a2c;
+  --shadow-performance-panel: 0 22px 70px rgba(18, 18, 18, 0.08);
+  --shadow-performance-node: 0 16px 32px rgba(17, 17, 17, 0.1);
+  --radius-performance-sm: 4px;
+  --radius-performance-md: 8px;
+  --content-width-performance: 73.75rem;
 
   /* Interactive states */
   --color-hover: rgba(255, 255, 255, 0.05);
