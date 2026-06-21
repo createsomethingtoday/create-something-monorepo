@@ -54,6 +54,10 @@ Three border levels for separation and emphasis.
 The Ona-derived CREATE SOMETHING communication layer uses a light operational palette. Use these
 tokens for buyer-facing and operator-facing surfaces that need immediate comprehension.
 
+This is now a stable Canon layer, not a one-off property treatment. Ona sets the clarity bar;
+CREATE SOMETHING owns the implementation language. Use the palette when the interface must show
+workflow maps, trust boundaries, approval states, receipts, validation gates, or handoff evidence.
+
 | Token | Value | Use |
 |-------|-------|-----|
 | `--color-clear-porcelain` | `#f9f9f9` | Page canvas |
@@ -67,6 +71,10 @@ tokens for buyer-facing and operator-facing surfaces that need immediate compreh
 | `--color-clear-ocean` | `#0048ff` | System/action accent |
 | `--color-clear-moss` | `#1e3c2c` | Governed run/wait states |
 | `--color-clear-stop` | `#c41e3a` | Stop/block states |
+
+Do not use the clear palette as generic decoration. A clear surface should answer at least one
+operational question: what is mapped, what can run, what needs review, what is blocked, or what
+evidence proves the handoff.
 
 ## Semantic Colors
 

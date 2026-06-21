@@ -12,6 +12,7 @@ It combines:
 - custom MCP connectivity
 - agent and workflow behavior contracts
 - policy artifacts and approval boundaries
+- managed execution-surface selection and graduation criteria
 - operator runbooks and golden-task regressions
 - recurring review, tuning, and escalation operations
 
@@ -19,7 +20,7 @@ It combines:
 
 ## Product shape
 
-Policy OS is delivered as one package with two primary delivery layers:
+Policy OS is delivered as one package with three delivery layers:
 
 1. **Workflow Infrastructure**
    - trusted MCP connectivity
@@ -35,6 +36,39 @@ Policy OS is delivered as one package with two primary delivery layers:
    - compliance-heavy or multi-team operating constraints
 
 `Workflow Infrastructure` and `Enterprise Extension` describe delivery layers. `Policy OS` is the public governed package name.
+
+## Execution surfaces and graduation
+
+Policy OS may run through more than one agent surface. Surface choice is part of
+the governed package, not an implementation afterthought.
+
+Default surface roles:
+
+- **Dify** remains the preferred client and operator surface when the workflow
+  needs visual editing, app publishing, Service API access, MCP server cards,
+  non-engineer inspection, or client-facing chat/workflow UX.
+- **Cloudflare and repo-owned services** remain the preferred runtime surface
+  when the workflow needs auth, queues, D1 state, tenant boundaries, custom
+  endpoints, durable recovery paths, or package-local validation.
+- **OpenAI Agents SDK** is a Policy OS graduation lane for workflows that now
+  need code-owned orchestration, explicit tool routing, approval pauses,
+  durable state, traces, evals, and CI-backed golden tasks.
+
+Do not treat Agents SDK adoption as a blanket replacement for Dify. A workflow
+graduates from Dify-first delivery into an SDK-backed runtime only when the
+added control is worth the platform burden CREATE SOMETHING must now own:
+versioning, preview, rollback, team review, operator handoff, observability,
+and governance compatibility.
+
+Graduation requires:
+
+- a frozen Policy OS contract bundle for the workflow
+- a documented `runtime_surface` decision in the agent contract
+- golden-task parity between the Dify path and the SDK-backed path, when Dify
+  already owns the live surface
+- explicit approval and rollback behavior for side-effecting tools
+- trace or eval evidence showing the SDK path improves governance, cost,
+  latency, reliability, or operator visibility
 
 ## Naming rules
 
@@ -64,6 +98,8 @@ The bundle must define:
 - `escalation_policy`
 - `review_cadence`
 - `billing_and_entitlement_assumptions`
+- `runtime_surface`
+- `graduation_status`
 
 ## Runtime and entitlement model
 
@@ -86,6 +122,7 @@ Paid-scope decisions must continue to evaluate the normalized entitlement snapsh
 Minimum standing cadence for Policy OS:
 
 - weekly review of incidents, blocked actions, and golden-task drift
+- weekly review of workflows eligible for runtime graduation or rollback
 - monthly tuning of policy, prompts, and workflow controls
 - change review whenever tool scope, approval mode, or commercial state changes
 - rollback-ready runbook for auth, entitlement, and policy failures
@@ -99,6 +136,8 @@ The repo can claim Policy OS productization when all of the following are true:
 - runtime-backed authz manifests are active and compiled
 - publish flow promotes all active manifests rather than a single symbolic policy id
 - blocked-state UX and access decisions reflect real commercial and policy checks
+- SDK-backed graduation paths preserve Dify/operator usability or document why
+  that surface is no longer required
 - exemplar bundles and validation evidence prove repeatable package shape without overstating multi-client live deployment
 
 ## Historical note

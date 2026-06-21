@@ -65,6 +65,10 @@ The Ona-derived clear communication layer uses ABC Diatype for interface and bod
 Mono for compact system labels, and Martina Plantijn only when an editorial serif voice is useful.
 CREATE SOMETHING keeps local fallbacks so surfaces remain stable if external font loading fails.
 
+The type rule is operational comprehension first. Headlines name the workflow or offer plainly;
+supporting copy explains the object, action, policy, owner, receipt, or next step. Use mono for
+short state labels and identifiers, not long explanatory paragraphs.
+
 ## Fluid Typography
 
 Display text scales with viewport:

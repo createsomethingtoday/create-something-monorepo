@@ -39,6 +39,7 @@ published: true
 
 ## Related
 
+- [Clear Components](/canon/components/clear)
 - [Button](/canon/components/button)
 - [Navigation](/canon/components/navigation)
 - [Layout](/canon/foundations/layout)
