@@ -21,6 +21,46 @@ export type FileBasedPaper = FileBasedExperiment;
  */
 export const fileBasedPapers: FileBasedPaper[] = [
 	{
+		id: 'paper-proof-surface',
+		slug: 'proof-surface',
+		title: 'The Proof Surface',
+		description: 'Why agent work needs public receipts, private evidence, and owner authority once it leaves chat. A practical model for turning traces, deploys, approval notes, blocked states, delivery records, and workflow templates into business-readable proof.',
+		excerpt_short: 'Proof is the product once work leaves chat',
+		excerpt_long: 'This paper defines the Proof Surface as the business-readable layer that turns agent work into inspectable operating receipts. It sits above private logs, traces, deploy output, and workflow contracts, separating public-safe status from sensitive evidence while keeping ownership visible after the agent has acted. The paper includes a support-recovery example and starter proof template.',
+		category: 'Research',
+		tags: [
+			'Proof Surface',
+			'Receipts',
+			'Workflow Trust Layer',
+			'Policy OS',
+			'Agent Governance',
+			'Delivery Records',
+			'Operator Surface',
+			'Three-Tier Framework'
+		],
+		created_at: '2026-06-22T15:00:00Z',
+		updated_at: '2026-06-22T15:00:00Z',
+		reading_time_minutes: 18,
+		difficulty: 'intermediate',
+		is_file_based: true,
+		tests_principles: [
+			'mcp-first-thesis',
+			'three-tier-framework',
+			'policy-as-artifact',
+			'verification-first',
+			'agent-governance'
+		],
+		route: '/papers/proof-surface',
+		ascii_art: `
+╭──────────────────────────────────────────────────────────────╮
+│ RUN  →  WAIT  →  STOP  →  RECEIPT                           │
+│ act     owner    reason   proof                              │
+│                                                              │
+│ Make agent work inspectable without exposing private proof.  │
+╰──────────────────────────────────────────────────────────────╯
+`
+	},
+	{
 		id: 'paper-eval-evidence-layer',
 		slug: 'eval-evidence-layer',
 		title: 'The Eval Evidence Layer',
