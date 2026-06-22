@@ -1,4 +1,0 @@
-interface:
-  display_name: "Webflow Review Write Guardrails"
-  short_description: "Protect approval-required reviewer write actions"
-  default_prompt: "Use $webflow-template-review-write-guardrails to validate reviewer-owned write actions, require traceable ownership, and fail closed to manual fallback on ambiguity."

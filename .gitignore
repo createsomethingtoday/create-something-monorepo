@@ -103,6 +103,7 @@ csm/csm/.repo.git
 
 # Loom (agent coordination)
 .loom/
+.symphony/
 __pycache__/
 .dev.vars
 
