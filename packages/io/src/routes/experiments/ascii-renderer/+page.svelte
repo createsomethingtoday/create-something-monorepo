@@ -8,6 +8,7 @@
 	 * @see https://alexharri.com/blog/ascii-rendering
 	 */
 	import { SEO } from '@create-something/canon';
+	import ExperimentVisualSummary from '$lib/components/ExperimentVisualSummary.svelte';
 	import type { PageData } from './$types';
 	import { onMount } from 'svelte';
 
@@ -527,6 +528,8 @@
 			>.
 		</p>
 	</header>
+
+	<ExperimentVisualSummary visual={experiment.visual_summary} />
 
 	<section class="demo-section">
 		<div class="demo-container">

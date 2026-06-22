@@ -6,10 +6,12 @@
 
 import type { ServerLoadEvent } from '@sveltejs/kit';
 import { parseProductFromDB, type Product } from '$lib/agents/filter-agent';
+import { getFileBasedExperiment } from '$lib/config/fileBasedExperiments';
 
 export const load = async ({ platform }: ServerLoadEvent) => {
 	let products: Product[] = [];
 	let error: string | null = null;
+	const experiment = getFileBasedExperiment('ai-native-filtering');
 
 	if (!platform?.env?.DB) {
 		error = 'Database not available. Ensure D1 is configured.';
@@ -45,6 +47,7 @@ export const load = async ({ platform }: ServerLoadEvent) => {
 	};
 
 	return {
+		experiment,
 		products,
 		stats,
 		error

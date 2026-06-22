@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { QuoteBlock, SEO } from '@create-something/canon';
+	import ExperimentVisualSummary from '$lib/components/ExperimentVisualSummary.svelte';
 	import { Spritz } from '@create-something/spritz';
 	import type { PageData } from './$types';
 
@@ -82,6 +83,8 @@
 	{#if experiment.ascii_art}
 		<pre class="ascii-art">{experiment.ascii_art}</pre>
 	{/if}
+
+	<ExperimentVisualSummary visual={experiment.visual_summary} />
 
 	<!-- Live Demo: Nicely Said Principles -->
 	<section class="section">
