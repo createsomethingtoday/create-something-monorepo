@@ -13,7 +13,7 @@ const PREFLIGHT_BUILD_PACKAGES = [
   '@create-something/observability',
   '@create-something/playbook-mcp'
 ];
-const PREFLIGHT_STAGES = new Set(['typecheck', 'test']);
+const PREFLIGHT_STAGES = new Set(['typecheck', 'lint', 'test']);
 
 // Source of truth aligned with docs/MCP_FLEET_REGISTRY.md.
 const FLEET_REGISTRY = {
