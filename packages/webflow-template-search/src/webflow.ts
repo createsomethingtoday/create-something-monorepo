@@ -2,6 +2,7 @@ import type { Env } from './types.js';
 
 export const TEMPLATES_COLLECTION_ID = '641b464e78789f611a5d4496';
 export const DESIGNERS_COLLECTION_ID = '641b464e78789fc19d5d4461';
+const WEBFLOW_PAGE_FETCH_TIMEOUT_MS = 15_000;
 
 interface WebflowImage {
   fileId: string;
@@ -19,6 +20,34 @@ interface WebflowCmsItem {
 interface WebflowListResponse {
   items: WebflowCmsItem[];
   pagination: { limit: number; offset: number; total: number };
+}
+
+interface WebflowTemplateLookupTarget {
+  id?: string | null;
+  templateSlug?: string | null;
+  name?: string | null;
+}
+
+interface WebflowDesignerLookupTarget {
+  syncRecordId?: string | null;
+  slug?: string | null;
+  name?: string | null;
+}
+
+async function fetchWebflowPage(url: string, apiToken: string): Promise<Response> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), WEBFLOW_PAGE_FETCH_TIMEOUT_MS);
+  try {
+    return await fetch(url, {
+      signal: controller.signal,
+      headers: {
+        Authorization: `Bearer ${apiToken}`,
+        'accept-version': '2.0.0',
+      },
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 export interface WebflowTemplateImageRecord {
@@ -46,6 +75,7 @@ async function paginateWebflow<T>(
   apiToken: string,
   collectionId: string,
   mapper: (item: WebflowCmsItem) => T | null,
+  options: { onPage?: () => Promise<void> } = {},
 ): Promise<T[]> {
   const results: T[] = [];
   let offset = 0;
@@ -53,15 +83,15 @@ async function paginateWebflow<T>(
 
   while (true) {
     const url = `https://api.webflow.com/v2/collections/${collectionId}/items?limit=${limit}&offset=${offset}`;
-    const response = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${apiToken}`,
-        'accept-version': '2.0.0',
-      },
-    });
+    let response: Response;
+    try {
+      response = await fetchWebflowPage(url, apiToken);
+    } catch (error) {
+      throw new Error(`Webflow API request timed out for collection ${collectionId} at offset ${offset}: ${error instanceof Error ? error.message : String(error)}`);
+    }
 
     if (!response.ok) {
-      throw new Error(`Webflow API error (${response.status}): ${await response.text()}`);
+      throw new Error(`Webflow API error (${response.status}) for collection ${collectionId} at offset ${offset}: ${await response.text()}`);
     }
 
     const data = (await response.json()) as WebflowListResponse;
@@ -74,10 +104,119 @@ async function paginateWebflow<T>(
     }
 
     offset += limit;
+    await options.onPage?.();
     if (offset >= data.pagination.total) break;
   }
 
   return results;
+}
+
+async function fetchWebflowCollectionItems<T>(
+  apiToken: string,
+  collectionId: string,
+  query: Record<string, string>,
+  mapper: (item: WebflowCmsItem) => T | null,
+  options: { onPage?: () => Promise<void> } = {},
+): Promise<T[]> {
+  const results: T[] = [];
+  let offset = 0;
+  const limit = 100;
+
+  while (true) {
+    const url = new URL(`https://api.webflow.com/v2/collections/${collectionId}/items`);
+    url.searchParams.set('limit', String(limit));
+    url.searchParams.set('offset', String(offset));
+    for (const [key, value] of Object.entries(query)) {
+      if (value) url.searchParams.set(key, value);
+    }
+
+    let response: Response;
+    try {
+      response = await fetchWebflowPage(url.toString(), apiToken);
+    } catch (error) {
+      throw new Error(
+        `Webflow API request timed out for collection ${collectionId} at offset ${offset}: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+    }
+
+    if (!response.ok) {
+      throw new Error(`Webflow API error (${response.status}) for collection ${collectionId} at offset ${offset}: ${await response.text()}`);
+    }
+
+    const data = (await response.json()) as WebflowListResponse;
+    for (const item of data.items) {
+      if (!item.isArchived && !item.isDraft) {
+        const mapped = mapper(item);
+        if (mapped !== null) results.push(mapped);
+      }
+    }
+
+    offset += limit;
+    await options.onPage?.();
+    if (offset >= data.pagination.total || data.items.length === 0) break;
+  }
+
+  return results;
+}
+
+function normalizedMatchValue(value: string | null | undefined): string {
+  return value?.trim().toLowerCase() ?? '';
+}
+
+function templateRecordMatchesTarget(record: WebflowTemplateImageRecord, target: WebflowTemplateLookupTarget): boolean {
+  const targetId = normalizedMatchValue(target.id);
+  const targetSlug = normalizedMatchValue(target.templateSlug);
+  const targetName = normalizedMatchValue(target.name);
+  return (
+    (targetId.length > 0 && normalizedMatchValue(record.id) === targetId) ||
+    (targetSlug.length > 0 && normalizedMatchValue(record.templateSlug) === targetSlug) ||
+    (targetName.length > 0 && normalizedMatchValue(record.name) === targetName)
+  );
+}
+
+function designerRecordMatchesTarget(record: WebflowDesignerAvatarRecord, target: WebflowDesignerLookupTarget): boolean {
+  const targetId = normalizedMatchValue(target.syncRecordId);
+  const targetSlug = normalizedMatchValue(target.slug);
+  const targetName = normalizedMatchValue(target.name);
+  return (
+    (targetId.length > 0 && normalizedMatchValue(record.syncRecordId) === targetId) ||
+    (targetSlug.length > 0 && normalizedMatchValue(record.slug) === targetSlug) ||
+    (targetName.length > 0 && normalizedMatchValue(record.name) === targetName)
+  );
+}
+
+function uniqueLookupQueries(targets: Array<{ slug?: string | null; name?: string | null }>): Array<Record<string, string>> {
+  const seen = new Set<string>();
+  const queries: Array<Record<string, string>> = [];
+
+  for (const target of targets) {
+    for (const [key, rawValue] of [
+      ['slug', target.slug],
+      ['name', target.name],
+    ] as const) {
+      const value = rawValue?.trim();
+      if (!value) continue;
+      const queryKey = `${key}:${value.toLowerCase()}`;
+      if (seen.has(queryKey)) continue;
+      seen.add(queryKey);
+      queries.push({ [key]: value });
+    }
+  }
+
+  return queries;
+}
+
+function appendUniqueRecord<T extends { id?: string | null; syncRecordId?: string | null; templateSlug?: string | null; slug?: string | null; name?: string | null }>(
+  records: T[],
+  seen: Set<string>,
+  record: T,
+) {
+  const key = [record.id, record.syncRecordId, record.templateSlug, record.slug, record.name].map((value) => value ?? '').join('|');
+  if (seen.has(key)) return;
+  seen.add(key);
+  records.push(record);
 }
 
 function trimString(value: unknown): string | null {
@@ -114,7 +253,7 @@ function imageUrls(fields: Record<string, unknown>, keys: string[]): string[] {
 
 function fieldKeyMatchesPrice(value: string): boolean {
   const normalized = value.toLowerCase().replace(/[^a-z0-9]+/g, ' ');
-  return /\b(price|pricing|cost|amount)\b/.test(normalized);
+  return /\b(price|pricing|cost)\b/.test(normalized);
 }
 
 function fieldKeyMatchesFree(value: string): boolean {
@@ -229,11 +368,39 @@ function mapDesignerFieldData(fieldData: Record<string, unknown>): WebflowDesign
   };
 }
 
-export async function fetchWebflowTemplateImages(env: Env): Promise<WebflowTemplateImageRecord[]> {
+export async function fetchWebflowTemplateImages(
+  env: Env,
+  options: { onPage?: () => Promise<void> } = {},
+): Promise<WebflowTemplateImageRecord[]> {
   const token = webflowApiToken(env);
   if (!token) throw new Error('A Webflow CMS read token is not configured.');
 
-  return paginateWebflow(token, TEMPLATES_COLLECTION_ID, (item) => mapTemplateFieldData(item.fieldData));
+  return paginateWebflow(token, TEMPLATES_COLLECTION_ID, (item) => mapTemplateFieldData(item.fieldData), options);
+}
+
+export async function fetchWebflowTemplateImagesForTargets(
+  env: Env,
+  targets: WebflowTemplateLookupTarget[],
+  options: { onPage?: () => Promise<void> } = {},
+): Promise<WebflowTemplateImageRecord[]> {
+  const token = webflowApiToken(env);
+  if (!token) throw new Error('A Webflow CMS read token is not configured.');
+
+  const queries = uniqueLookupQueries(targets.map((target) => ({ slug: target.templateSlug, name: target.name })));
+  if (queries.length === 0) return [];
+
+  const records: WebflowTemplateImageRecord[] = [];
+  const seen = new Set<string>();
+  for (const query of queries) {
+    const matches = await fetchWebflowCollectionItems(token, TEMPLATES_COLLECTION_ID, query, (item) => mapTemplateFieldData(item.fieldData), options);
+    for (const match of matches) {
+      if (targets.some((target) => templateRecordMatchesTarget(match, target))) {
+        appendUniqueRecord(records, seen, match);
+      }
+    }
+  }
+
+  return records;
 }
 
 // Webhook payload shape sent by Webflow for collection_item_* events.
@@ -282,9 +449,37 @@ export async function verifyWebflowSignature(secret: string, rawBody: string, si
   }
 }
 
-export async function fetchWebflowDesignerAvatars(env: Env): Promise<WebflowDesignerAvatarRecord[]> {
+export async function fetchWebflowDesignerAvatars(
+  env: Env,
+  options: { onPage?: () => Promise<void> } = {},
+): Promise<WebflowDesignerAvatarRecord[]> {
   const token = webflowApiToken(env);
   if (!token) throw new Error('A Webflow CMS read token is not configured.');
 
-  return paginateWebflow(token, DESIGNERS_COLLECTION_ID, (item) => mapDesignerFieldData(item.fieldData));
+  return paginateWebflow(token, DESIGNERS_COLLECTION_ID, (item) => mapDesignerFieldData(item.fieldData), options);
+}
+
+export async function fetchWebflowDesignerAvatarsForTargets(
+  env: Env,
+  targets: WebflowDesignerLookupTarget[],
+  options: { onPage?: () => Promise<void> } = {},
+): Promise<WebflowDesignerAvatarRecord[]> {
+  const token = webflowApiToken(env);
+  if (!token) throw new Error('A Webflow CMS read token is not configured.');
+
+  const queries = uniqueLookupQueries(targets);
+  if (queries.length === 0) return [];
+
+  const records: WebflowDesignerAvatarRecord[] = [];
+  const seen = new Set<string>();
+  for (const query of queries) {
+    const matches = await fetchWebflowCollectionItems(token, DESIGNERS_COLLECTION_ID, query, (item) => mapDesignerFieldData(item.fieldData), options);
+    for (const match of matches) {
+      if (targets.some((target) => designerRecordMatchesTarget(match, target))) {
+        appendUniqueRecord(records, seen, match);
+      }
+    }
+  }
+
+  return records;
 }
