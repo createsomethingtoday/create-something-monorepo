@@ -3,7 +3,8 @@ import { buildOperatorBrief, toFirmwareBrief } from './brief.js';
 import { buildInkClock } from './clock.js';
 import { isAuthorized } from './auth.js';
 import { DEFAULT_HEALTH_STALE_AFTER_MS, buildHealthReviewReport } from './health-review.js';
-import { claimLinearIssue, fetchLinearOpenIssues } from './linear-open.js';
+import { claimLinearIssue, fetchLinearOpenIssues, prepareLinearIssue } from './linear-open.js';
+import { buildOperatorRoutingResponse } from './operator-routing.js';
 import {
   buildHealthReviewRunRecord,
   missingHealthReviewRunColumnMigrations,
@@ -975,6 +976,7 @@ async function route(request: Request, env: Env): Promise<Response> {
         'GET /ink/brief',
         'GET /ink/surface-brief',
         'GET /ink/clock',
+        'GET /ink/operator-routing',
         'POST /ink/alert',
         'POST /ink/operator-priority',
         'POST /ink/operator-event',
@@ -1038,8 +1040,32 @@ async function route(request: Request, env: Env): Promise<Response> {
     );
   }
 
+  if (method === 'GET' && path === '/ink/operator-routing') {
+    const surface = url.searchParams.get('surface') || defaultSurface(env);
+    const deviceId = url.searchParams.get('device_id') || defaultDeviceId(env);
+    const [queue, brief] = await Promise.all([
+      fetchLinearOpenIssues({
+        apiKey: env.LINEAR_API_KEY ?? '',
+        teamKey: url.searchParams.get('team') || env.LINEAR_TEAM_KEY || 'CRE',
+        limit: Number(url.searchParams.get('limit') || 8)
+      }),
+      stub.brief(surface, deviceId)
+    ]);
+    return json(buildOperatorRoutingResponse({ queue, brief }));
+  }
+
   if (method === 'POST' && path === '/ink/linear-action') {
     const body = await parseJsonBody<{ action?: string; issue?: string; team?: string }>(request);
+    if (body.action === 'prep') {
+      return json(
+        await prepareLinearIssue({
+          apiKey: env.LINEAR_API_KEY ?? '',
+          identifier: body.issue ?? '',
+          teamKey: body.team || env.LINEAR_TEAM_KEY || 'CRE'
+        })
+      );
+    }
+
     if (body.action !== 'claim') {
       return json({ ok: false, error: 'Unsupported Linear action.' }, { status: 400 });
     }

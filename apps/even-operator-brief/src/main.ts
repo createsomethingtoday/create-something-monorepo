@@ -15,11 +15,14 @@ import {
   clampSelection,
   formatClaimPrompt,
   formatClaimResult,
+  formatPrepResult,
   formatIssueDetail,
   formatLinearQueue,
   moveSelection,
+  actionForIssue,
   normalizeClaimResult,
   normalizeLinearQueue,
+  normalizePrepResult,
   selectedIssue,
   type LinearOpenQueue
 } from './linear';
@@ -151,7 +154,7 @@ async function refreshQueue(options: { silent?: boolean } = {}): Promise<void> {
   }
 
   try {
-    const response = await fetch(`${config.bridgeUrl}/ink/linear-open?team=CRE&limit=5`, {
+    const response = await fetch(`${config.bridgeUrl}/ink/operator-routing?team=CRE&limit=5`, {
       headers: {
         'x-ink-token': config.token,
         accept: 'application/json'
@@ -183,7 +186,8 @@ async function claimSelectedIssue(): Promise<void> {
     return;
   }
 
-  await render(['CLAIMING', '', issue.identifier, '', 'Please wait...'].join('\n'));
+  const action = actionForIssue(issue);
+  await render([action === 'prep' ? 'PREPARING' : 'CLAIMING', '', issue.identifier, '', 'Please wait...'].join('\n'));
 
   try {
     const response = await fetch(`${config.bridgeUrl}/ink/linear-action`, {
@@ -194,7 +198,7 @@ async function claimSelectedIssue(): Promise<void> {
         accept: 'application/json'
       },
       body: JSON.stringify({
-        action: 'claim',
+        action,
         issue: issue.identifier,
         team: 'CRE'
       })
@@ -205,7 +209,8 @@ async function claimSelectedIssue(): Promise<void> {
     }
 
     viewMode = 'message';
-    await render(formatClaimResult(normalizeClaimResult(await response.json())));
+    const payload = await response.json();
+    await render(action === 'prep' ? formatPrepResult(normalizePrepResult(payload)) : formatClaimResult(normalizeClaimResult(payload)));
     void refreshQueue({ silent: true });
   } catch (error) {
     viewMode = 'message';

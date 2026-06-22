@@ -1,6 +1,6 @@
 import type { AuthRole } from './auth.js';
 
-const deviceGetPaths = new Set(['/ink/brief', '/ink/surface-brief', '/ink/clock', '/ink/device', '/ink/linear-open']);
+const deviceGetPaths = new Set(['/ink/brief', '/ink/surface-brief', '/ink/clock', '/ink/device', '/ink/linear-open', '/ink/operator-routing']);
 const devicePostPaths = new Set(['/ink/device-heartbeat', '/ink/health-review/request', '/ink/operator-event', '/ink/linear-action']);
 
 export function authRoleForInkRoute(method: string, path: string): AuthRole | null {

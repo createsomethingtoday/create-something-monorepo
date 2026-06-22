@@ -4,11 +4,13 @@ import { describe, it } from 'node:test';
 import {
   formatClaimPrompt,
   formatClaimResult,
+  formatPrepResult,
   formatIssueDetail,
   formatLinearQueue,
   moveSelection,
   normalizeClaimResult,
-  normalizeLinearQueue
+  normalizeLinearQueue,
+  normalizePrepResult
 } from '../src/linear';
 
 describe('linear queue formatting', () => {
@@ -20,19 +22,26 @@ describe('linear queue formatting', () => {
           identifier: 'CRE-701',
           title: 'Add Even G2 operator brief app',
           state: { name: 'In Progress' },
-          assignee: 'Micah Johnson'
+          assignee: 'Micah Johnson',
+          primary_action: 'prep',
+          action_label: 'Prepare handoff',
+          reason: 'Started work likely needs continuation or handoff.'
         },
         {
           identifier: 'CRE-702',
           title: 'Review dashboard package',
-          state: { name: 'Todo' }
+          state: { name: 'Todo' },
+          primary_action: 'claim'
         }
-      ]
+      ],
+      primary_action: 'prep',
+      confidence: 81
     });
 
     const content = formatLinearQueue(queue, 0);
 
-    assert.match(content, /LINEAR OPEN 1\/2/);
+    assert.match(content, /ROUTE 1\/2/);
+    assert.match(content, /PREP 81%/);
     assert.match(content, />CRE-701 Add Even G2\.\.\./);
     for (const line of content.split('\n')) {
       assert.ok(line.length <= 24, line);
@@ -61,7 +70,9 @@ describe('linear queue formatting', () => {
           title: 'Add Even G2 operator brief app',
           state: { name: 'In Progress' },
           assignee: 'Micah Johnson',
-          project: 'Even'
+          project: 'Even',
+          primary_action: 'prep',
+          action_label: 'Prepare handoff'
         }
       ]
     });
@@ -75,11 +86,21 @@ describe('linear queue formatting', () => {
         issue: queue.issues?.[0]
       })
     );
+    const prepped = formatPrepResult(
+      normalizePrepResult({
+        ok: true,
+        issue: queue.issues?.[0],
+        prep: {
+          next_action: 'Review current owner state and continue the issue.'
+        }
+      })
+    );
 
-    assert.match(detail, /tap claim/);
-    assert.match(prompt, /CLAIM ISSUE/);
+    assert.match(detail, /tap action/);
+    assert.match(prompt, /PREP ISSUE/);
     assert.match(claimed, /CLAIMED/);
-    for (const content of [detail, prompt, claimed]) {
+    assert.match(prepped, /PREP READY/);
+    for (const content of [detail, prompt, claimed, prepped]) {
       for (const line of content.split('\n')) {
         assert.ok(line.length <= 24, line);
       }

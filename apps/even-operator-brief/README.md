@@ -3,23 +3,32 @@
 CREATE SOMETHING operator-priority plugin for Even G2.
 
 This app is a private heads-up surface over the existing Calm Operator Ink bridge.
-It renders the current Linear open-items queue from:
+It renders the current operator routing queue from:
 
 ```text
-https://ink.createsomething.agency/ink/linear-open?team=CRE&limit=5
+https://ink.createsomething.agency/ink/operator-routing?team=CRE&limit=5
 ```
 
 ## Role
 
-- Show the first few open `CRE` Linear issues as a selectable queue.
+- Show the first few routed `CRE` Linear issues as a selectable queue.
+- Put the bridge-side recommended action and confidence on the first screen.
 - Keep each issue to a compact identifier plus title line.
 - Swipe up/down to move selection.
 - Tap once to open issue detail.
-- Tap detail to open a claim confirmation.
-- Tap confirmation to claim the issue through the Ink bridge.
+- Tap detail to open an action confirmation.
+- Tap confirmation to claim an unassigned issue or prepare a read-only handoff
+  packet through the Ink bridge.
 - Let a double tap exit through the Even system confirmation flow.
 - Reuse the Ink bridge as the device-authenticated server-side proxy so the
   phone package never carries a Linear token.
+
+## Experience Model
+
+This app is intentionally not a general chat surface. The G2 works best as an
+interrupt and routing display: one ranked queue, one selected issue, one primary
+action, and short confirmations. The bridge does the agent work; the glasses
+keep the operator moving.
 
 ## Runtime Configuration
 
