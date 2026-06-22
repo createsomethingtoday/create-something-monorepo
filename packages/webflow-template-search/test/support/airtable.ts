@@ -45,7 +45,14 @@ export function installAirtableFetchMock(dataset: MockDataset) {
 
         const offset = Number(url.searchParams.get('offset') ?? '0') || 0;
         const limit = Number(url.searchParams.get('limit') ?? '100') || 100;
-        const items = dataset.webflowCollectionItems?.[collectionId] ?? [];
+        const requestedName = url.searchParams.get('name');
+        const requestedSlug = url.searchParams.get('slug');
+        const items = (dataset.webflowCollectionItems?.[collectionId] ?? []).filter((item) => {
+          const fieldData = (item.fieldData ?? {}) as Record<string, unknown>;
+          if (requestedName && fieldData.name !== requestedName) return false;
+          if (requestedSlug && fieldData.slug !== requestedSlug) return false;
+          return true;
+        });
         return Response.json({
           items: items.slice(offset, offset + limit),
           pagination: {

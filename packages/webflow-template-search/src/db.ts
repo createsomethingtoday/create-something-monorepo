@@ -35,6 +35,10 @@ const STALE_IMAGE_REFRESH_LIMIT = 24;
 const IMAGE_REFRESH_LOOKUP_BATCH_SIZE = 50;
 const SYNC_JOB_LOCK_KEY = 'template_sync';
 
+function normalizeCreatorLookupName(value: string): string {
+  return value.trim().toLowerCase();
+}
+
 export interface SyncJobRecord {
   lock_key: string;
   job_id: string;
@@ -969,7 +973,14 @@ export async function updateCreatorAvatarsFromWebflow(
 // Some template rows have a creator display name but no linked creator record ID.
 // When another row with the same exact creator name has complete creator metadata,
 // copy that metadata across. The HAVING guard avoids ambiguous duplicate names.
-export async function backfillCreatorFieldsByName(db: D1Database, syncedAt: string): Promise<number> {
+export async function backfillCreatorFieldsByName(
+  db: D1Database,
+  syncedAt: string,
+  options: { documentIds?: string[] } = {},
+): Promise<number> {
+  const uniqueDocumentIds = Array.from(new Set((options.documentIds ?? []).filter(Boolean)));
+  const scopedDocumentFilter =
+    uniqueDocumentIds.length > 0 ? `\n         AND id IN (${placeholderList(uniqueDocumentIds.length)})` : '';
   const result = await db
     .prepare(
       `WITH known_creators AS (
@@ -1034,12 +1045,122 @@ export async function backfillCreatorFieldsByName(db: D1Database, syncedAt: stri
            OR creator_avatar_url = ''
            OR creator_avatar_alt IS NULL
            OR creator_avatar_alt = ''
-         )`,
+         )${scopedDocumentFilter}`,
     )
-    .bind(syncedAt)
+    .bind(syncedAt, ...uniqueDocumentIds)
     .run();
 
   return result.meta?.changes ?? 0;
+}
+
+// Rows can arrive with only the creator display name when Airtable linked-record
+// fields are incomplete. Fill missing creator fields from the current creator
+// lookup only when the display name maps to exactly one creator.
+export async function backfillCreatorFieldsFromLookup(
+  db: D1Database,
+  creators: Map<string, CreatorLookupValue>,
+  syncedAt: string,
+  options: { documentIds?: string[] } = {},
+): Promise<number> {
+  if (creators.size === 0) return 0;
+  const uniqueDocumentIds = Array.from(new Set((options.documentIds ?? []).filter(Boolean)));
+  const scopedDocumentFilter =
+    uniqueDocumentIds.length > 0 ? `\n             AND id IN (${placeholderList(uniqueDocumentIds.length)})` : '';
+
+  const creatorsByName = new Map<string, CreatorLookupValue[]>();
+  for (const creator of creators.values()) {
+    const normalizedName = normalizeCreatorLookupName(creator.name);
+    if (!normalizedName) continue;
+    const current = creatorsByName.get(normalizedName) ?? [];
+    current.push(creator);
+    creatorsByName.set(normalizedName, current);
+  }
+
+  const statements: D1PreparedStatement[] = [];
+  for (const [normalizedName, matchingCreators] of creatorsByName.entries()) {
+    if (matchingCreators.length !== 1) continue;
+    const creator = matchingCreators[0];
+    const creatorSlug = creator.slug || null;
+    const profileUrl = creator.profileUrl || (creatorSlug ? `https://webflow.com/templates/designers/${creatorSlug}` : null);
+    const avatarAlt = creator.avatarAlt ?? creator.name;
+    if (!creator.id && !creatorSlug && !profileUrl && !creator.avatarUrl) continue;
+
+    statements.push(
+      db
+        .prepare(
+          `UPDATE template_documents
+           SET creator_record_id = CASE
+                 WHEN ? IS NOT NULL AND (creator_record_id IS NULL OR creator_record_id = '') THEN ?
+                 ELSE creator_record_id
+               END,
+               creator_slug = CASE
+                 WHEN ? IS NOT NULL AND (creator_slug IS NULL OR creator_slug = '') THEN ?
+                 ELSE creator_slug
+               END,
+               creator_profile_url = CASE
+                 WHEN ? IS NOT NULL AND (creator_profile_url IS NULL OR creator_profile_url = '') THEN ?
+                 ELSE creator_profile_url
+               END,
+               creator_avatar_url = CASE
+                 WHEN ? IS NOT NULL
+                   AND (
+                     creator_avatar_url IS NULL
+                     OR creator_avatar_url = ''
+                     OR creator_avatar_url LIKE '%airtableusercontent.com%'
+                     OR creator_avatar_url LIKE '%dl.airtable.com%'
+                   )
+                   THEN ?
+                 ELSE creator_avatar_url
+               END,
+               creator_avatar_alt = CASE
+                 WHEN creator_avatar_alt IS NULL OR creator_avatar_alt = '' THEN ?
+                 ELSE creator_avatar_alt
+               END,
+               synced_at = ?
+           WHERE lower(trim(creator_name)) = ?
+             AND (
+               creator_record_id IS NULL
+               OR creator_record_id = ''
+               OR creator_slug IS NULL
+               OR creator_slug = ''
+               OR creator_profile_url IS NULL
+               OR creator_profile_url = ''
+               OR creator_avatar_url IS NULL
+               OR creator_avatar_url = ''
+               OR creator_avatar_url LIKE '%airtableusercontent.com%'
+               OR creator_avatar_url LIKE '%dl.airtable.com%'
+               OR creator_avatar_alt IS NULL
+               OR creator_avatar_alt = ''
+             )${scopedDocumentFilter}`,
+        )
+        .bind(
+          creator.id,
+          creator.id,
+          creatorSlug,
+          creatorSlug,
+          profileUrl,
+          profileUrl,
+          creator.avatarUrl,
+          creator.avatarUrl,
+          avatarAlt,
+          syncedAt,
+          normalizedName,
+          ...uniqueDocumentIds,
+        ),
+    );
+  }
+
+  if (statements.length === 0) return 0;
+
+  let totalChanges = 0;
+  for (const group of chunk(statements, 50)) {
+    const results = await db.batch(group);
+    for (const result of results) {
+      totalChanges += result.meta?.changes ?? 0;
+    }
+  }
+
+  return totalChanges;
 }
 
 // Creator avatar/profile URL updates in Airtable do not bump the template's LMT,
@@ -1180,6 +1301,7 @@ export async function backfillCreatorAvatars(
 export async function listTemplateImageRefreshRows(
   db: D1Database,
   changedIds: string[] = [],
+  options: { includeStale?: boolean } = {},
 ): Promise<TemplateImageRefreshRow[]> {
   const rowsById = new Map<string, TemplateImageRefreshRow>();
   const uniqueChangedIds = Array.from(new Set(changedIds.filter(Boolean)));
@@ -1195,6 +1317,10 @@ export async function listTemplateImageRefreshRows(
         rowsById.set(row.id, row);
       }
     }
+  }
+
+  if (options.includeStale === false) {
+    return Array.from(rowsById.values());
   }
 
   const staleResult = await db

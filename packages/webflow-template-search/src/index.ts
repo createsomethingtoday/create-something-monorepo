@@ -14,6 +14,7 @@ import { parseSearchParams } from './query.js';
 import { searchTemplates } from './search.js';
 import {
   SyncAlreadyRunningError,
+  backfillCreatorMetadata,
   backfillTemplateImages,
   forceRefreshCreatorProfiles,
   pruneMissingTemplateImages,
@@ -32,6 +33,7 @@ const SYNC_STATUS_STATE_KEYS = [
   'last_record_sync',
   'last_image_refresh',
   'last_creator_refresh',
+  'last_creator_backfill',
   'last_image_backfill',
   'last_image_prune',
   'last_sync_error',
@@ -226,6 +228,23 @@ async function handleManualSync(
   }
 
   return jsonResponse(request, env, await syncTemplates(env, mode));
+}
+
+async function handleImageRefresh(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+  const authError = validateAdminToken(request, env);
+  if (authError) return authError;
+
+  const url = new URL(request.url);
+  if (url.searchParams.get('background') === 'true') {
+    ctx.waitUntil(
+      refreshImages(env).catch((error) => {
+        console.error('Background image refresh failed.', error);
+      }),
+    );
+    return jsonResponse(request, env, { status: 'image_refresh_started', message: 'Image refresh started in background.' });
+  }
+
+  return jsonResponse(request, env, await refreshImages(env));
 }
 
 async function parseRecordIds(request: Request): Promise<string[]> {
@@ -459,9 +478,13 @@ export default {
       }
 
       if (url.pathname === '/api/templates/admin/refresh-images' && request.method === 'POST') {
+        return await handleImageRefresh(request, env, ctx);
+      }
+
+      if (url.pathname === '/api/templates/admin/backfill-creators' && request.method === 'POST') {
         const authError = validateAdminToken(request, env);
         if (authError) return authError;
-        return jsonResponse(request, env, await refreshImages(env));
+        return jsonResponse(request, env, await backfillCreatorMetadata(env, parseCreatorNames(url)));
       }
 
       if (url.pathname === '/api/templates/admin/refresh-creators' && request.method === 'POST') {

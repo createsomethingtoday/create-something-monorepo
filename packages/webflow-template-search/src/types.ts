@@ -246,7 +246,7 @@ export interface SearchResponsePayload {
 }
 
 export interface ImageRefreshSummary {
-  mode: 'image_refresh' | 'creator_refresh';
+  mode: 'image_refresh' | 'creator_refresh' | 'creator_backfill';
   started_at: string;
   finished_at: string;
   fetched_records: number;
