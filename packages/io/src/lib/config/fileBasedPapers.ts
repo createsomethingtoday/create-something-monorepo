@@ -58,7 +58,74 @@ export const fileBasedPapers: FileBasedPaper[] = [
 │                                                              │
 │ Make agent work inspectable without exposing private proof.  │
 ╰──────────────────────────────────────────────────────────────╯
-`
+`,
+		visual_summary: {
+			kind: 'state-strip',
+			title: 'Agent work becomes trustworthy when each state has a receipt.',
+			caption:
+				'The visual grammar is intentionally small: show what can run, what must wait, what must stop, and what proves the decision.',
+			nodes: [
+				{
+					label: 'Run',
+					detail: 'Bounded work proceeds inside an approved workflow boundary.',
+					icon: 'check',
+					tone: 'run'
+				},
+				{
+					label: 'Wait',
+					detail: 'A named owner must approve before the workflow creates impact.',
+					icon: 'clock',
+					tone: 'wait'
+				},
+				{
+					label: 'Stop',
+					detail: 'The system refuses or defers work when evidence, scope, or policy is missing.',
+					icon: 'warning',
+					tone: 'stop'
+				},
+				{
+					label: 'Receipt',
+					detail: 'The outcome is preserved as a public-safe proof surface with private evidence behind it.',
+					icon: 'document',
+					tone: 'receipt'
+				}
+			]
+		},
+		generated_brand_image: {
+			prompt_contract: 'create-something-research-visual.v1',
+			model: 'gpt-image-2',
+			status: 'prompt-only',
+			intended_use: 'article-hero',
+			size: '1536x1024',
+			quality: 'medium',
+			alt: 'Abstract CREATE SOMETHING proof surface showing public receipts above private evidence for agent work.',
+			prompt: `CREATE SOMETHING research visual system.
+
+Purpose:
+Create a publication-quality visual abstract for a research paper.
+
+Brand:
+Minimal, rigorous, systems-oriented, black and white foundation with one restrained amber accent. High contrast, quiet interface density, no decorative clutter.
+
+Visual language:
+Abstract operating-system diagram. Architectural systems thinking. Sparse geometry. Visible layers, boundaries, traces, receipts, handoff paths, and owner checkpoints. Subtle terminal or paper texture. No stock-photo people. No glossy SaaS gradients. No mascot. No cartoon. No fake UI chrome.
+
+Composition:
+16:9 editorial hero. Centered system object with generous negative space. Readable at article header size. Suitable above a title, but do not include title text in the image.
+
+Subject:
+A proof surface for AI agent work: private evidence below, public receipt above, with four visible states: run, wait, stop, receipt.
+
+Required motifs:
+- layered surface separating public status from private evidence
+- small receipt cards or evidence packets
+- bounded workflow path
+- owner approval checkpoint
+- visible stop state that feels intentional, not broken
+
+Forbidden:
+watermarks, extra logos, random text, illegible labels, fake brand names, colorful dashboard clutter, decorative blobs.`
+		}
 	},
 	{
 		id: 'paper-eval-evidence-layer',

@@ -36,7 +36,26 @@ Edit `src/lib/config/fileBasedPapers.ts`:
   difficulty: 'intermediate', // beginner, intermediate, advanced
   is_file_based: true,
   tests_principles: ['rams-principle-2', 'subtractive-triad'],
-  ascii_art: `ASCII art here`
+  ascii_art: `ASCII art here`,
+  visual_summary: {
+    kind: 'state-strip',
+    title: 'Short visual claim',
+    nodes: [
+      { label: 'Run', detail: 'What can proceed.', icon: 'check', tone: 'run' },
+      { label: 'Wait', detail: 'Who must approve.', icon: 'clock', tone: 'wait' },
+      { label: 'Stop', detail: 'Why work stops.', icon: 'warning', tone: 'stop' },
+      { label: 'Receipt', detail: 'What proves the path.', icon: 'document', tone: 'receipt' }
+    ]
+  },
+  generated_brand_image: {
+    prompt_contract: 'create-something-research-visual.v1',
+    model: 'gpt-image-2',
+    status: 'prompt-only',
+    intended_use: 'article-hero',
+    size: '1536x1024',
+    quality: 'medium',
+    prompt: 'Use packages/io/docs/ai-native-visual-communication.md as the prompt contract.'
+  }
 }
 ```
 
@@ -138,3 +157,4 @@ Content here...
 - New papers should not add static routes. Use the markdown-backed dynamic route unless an interactive component requires an explicit reviewed exception.
 - Interactive experiments may keep bespoke body components, but the exception should be intentional and tracked by `scripts/check-research-artifact-templates.mjs`.
 - The ArticleContent component renders markdown via html_content field
+- Visual communication rules live in [docs/ai-native-visual-communication.md](./docs/ai-native-visual-communication.md). Prefer `visual_summary` for framework meaning and `generated_brand_image` for prompt-governed editorial imagery.
