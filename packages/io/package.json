@@ -29,6 +29,7 @@
 		"check:experiments": "node scripts/check-experiment-catalog.mjs",
 		"check": "pnpm check:content && svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings --watch",
+		"prelint": "pnpm --filter @create-something/eslint-plugin-canon build",
 		"lint": "eslint .",
 		"deploy": "pnpm build && CLOUDFLARE_ACCOUNT_ID=9645bd52e640b8a4f40a3a55ff1dd75a node ../../scripts/run-wrangler.mjs pages deploy .svelte-kit/cloudflare --project-name=create-something-io --commit-dirty=true",
 		"deploy:preview": "pnpm build && CLOUDFLARE_ACCOUNT_ID=9645bd52e640b8a4f40a3a55ff1dd75a node ../../scripts/run-wrangler.mjs pages deploy .svelte-kit/cloudflare --project-name=create-something-io --branch=preview --commit-dirty=true",
