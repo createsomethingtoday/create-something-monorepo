@@ -1,5 +1,5 @@
 import type { Env } from './types.js';
-import { extractTemplateOffer } from './webflow.js';
+import { extractTemplateOffer, type WebflowTemplateImageRecord } from './webflow.js';
 
 interface WebflowAssetVariant {
   hostedUrl?: string;
@@ -64,6 +64,11 @@ interface WebflowTemplateOffer {
   isFree: boolean | null;
 }
 
+interface WebflowTemplateIdentity {
+  templateSlug: string;
+  listingUrl: string;
+}
+
 const PUBLISHED_TEMPLATE_FETCH_TIMEOUT_MS = 3000;
 const KEY_PREFIXES = {
   exactSlug: 'slug',
@@ -74,6 +79,7 @@ const KEY_PREFIXES = {
 export interface WebflowTemplateImageIndex {
   byTemplateKey: Map<string, WebflowTemplateImageCandidate[]>;
   offerByTemplateKey: Map<string, WebflowTemplateOffer>;
+  identityByTemplateKey: Map<string, WebflowTemplateIdentity[]>;
 }
 
 export interface ResolvedWebflowTemplateImages {
@@ -231,6 +237,26 @@ function appendTemplateOfferCandidate(
   const groups = templateKeyGroups(templateSlug, name);
   for (const key of [...groups.exactSlug, ...groups.exactName]) {
     if (!offerByTemplateKey.has(key)) offerByTemplateKey.set(key, offer);
+  }
+}
+
+function appendTemplateIdentityCandidate(
+  identityByTemplateKey: WebflowTemplateImageIndex['identityByTemplateKey'],
+  templateSlug: string,
+  name: string,
+) {
+  if (!templateSlug || !name) return;
+  const identity: WebflowTemplateIdentity = {
+    templateSlug,
+    listingUrl: publishedTemplateUrl(templateSlug, null),
+  };
+  const groups = templateKeyGroups(templateSlug, name);
+  for (const key of [...groups.exactSlug, ...groups.exactName]) {
+    const current = identityByTemplateKey.get(key) ?? [];
+    if (!current.some((entry) => entry.templateSlug === identity.templateSlug)) {
+      current.push(identity);
+      identityByTemplateKey.set(key, current);
+    }
   }
 }
 
@@ -413,6 +439,7 @@ async function resolveTemplateCollectionIds(env: Env, siteId: string, token: str
 function appendCollectionItemImages(
   byTemplateKey: WebflowTemplateImageIndex['byTemplateKey'],
   offerByTemplateKey: WebflowTemplateImageIndex['offerByTemplateKey'],
+  identityByTemplateKey: WebflowTemplateImageIndex['identityByTemplateKey'],
   item: WebflowCollectionItem,
 ): number {
   const fieldData = item.fieldData ?? {};
@@ -422,6 +449,7 @@ function appendCollectionItemImages(
 
   const offer = extractTemplateOffer(fieldData);
   if (offer) appendTemplateOfferCandidate(offerByTemplateKey, templateSlug, name, offer);
+  appendTemplateIdentityCandidate(identityByTemplateKey, templateSlug, name);
 
   let added = 0;
   for (const [fieldName, value] of Object.entries(fieldData)) {
@@ -436,12 +464,58 @@ function appendCollectionItemImages(
   return added;
 }
 
+export function buildWebflowTemplateImageIndexFromRecords(records: WebflowTemplateImageRecord[]): WebflowTemplateImageIndex | null {
+  const byTemplateKey = new Map<string, WebflowTemplateImageCandidate[]>();
+  const offerByTemplateKey = new Map<string, WebflowTemplateOffer>();
+  const identityByTemplateKey = new Map<string, WebflowTemplateIdentity[]>();
+
+  for (const record of records) {
+    const templateSlug = record.templateSlug ?? '';
+    const name = record.name ?? '';
+    if (!templateSlug && !name) continue;
+
+    if (record.price !== null || record.isFree !== null) {
+      appendTemplateOfferCandidate(offerByTemplateKey, templateSlug, name, {
+        price: record.price,
+        isFree: record.isFree,
+      });
+    }
+    appendTemplateIdentityCandidate(identityByTemplateKey, templateSlug, name);
+
+    if (isImageUrl(record.thumbnailImageUrl ?? undefined)) {
+      appendTemplateCandidate(byTemplateKey, templateSlug, name, {
+        hostedUrl: record.thumbnailImageUrl as string,
+        scoreName: normalizeScoreName(`main thumbnail ${basenameFromUrl(record.thumbnailImageUrl as string)}`),
+      });
+    }
+    if (isImageUrl(record.thumbnailImageSecondaryUrl ?? undefined)) {
+      appendTemplateCandidate(byTemplateKey, templateSlug, name, {
+        hostedUrl: record.thumbnailImageSecondaryUrl as string,
+        scoreName: normalizeScoreName(`secondary thumbnail ${basenameFromUrl(record.thumbnailImageSecondaryUrl as string)}`),
+      });
+    }
+    for (const imageUrl of record.carouselImageUrls) {
+      if (!isImageUrl(imageUrl)) continue;
+      appendTemplateCandidate(byTemplateKey, templateSlug, name, {
+        hostedUrl: imageUrl,
+        scoreName: normalizeScoreName(`carousel image ${basenameFromUrl(imageUrl)}`),
+      });
+    }
+  }
+
+  return byTemplateKey.size > 0 || offerByTemplateKey.size > 0 || identityByTemplateKey.size > 0
+    ? { byTemplateKey, offerByTemplateKey, identityByTemplateKey }
+    : null;
+}
+
 async function appendWebflowCmsImages(
   env: Env,
   siteId: string,
   token: string,
   byTemplateKey: WebflowTemplateImageIndex['byTemplateKey'],
   offerByTemplateKey: WebflowTemplateImageIndex['offerByTemplateKey'],
+  identityByTemplateKey: WebflowTemplateImageIndex['identityByTemplateKey'],
+  options: { onPage?: () => Promise<void> } = {},
 ): Promise<number> {
   const collectionIds = await resolveTemplateCollectionIds(env, siteId, token);
   let added = 0;
@@ -468,11 +542,12 @@ async function appendWebflowCmsImages(
       const payload = (await response.json()) as WebflowCollectionItemsResponse;
       const items = payload.items ?? [];
       for (const item of items) {
-        added += appendCollectionItemImages(byTemplateKey, offerByTemplateKey, item);
+        added += appendCollectionItemImages(byTemplateKey, offerByTemplateKey, identityByTemplateKey, item);
       }
 
       const total = payload.pagination?.total ?? items.length;
       offset += payload.pagination?.limit ?? limit;
+      await options.onPage?.();
       if (offset >= total || items.length === 0) break;
     }
   }
@@ -485,6 +560,7 @@ async function appendWebflowAssetImages(
   siteId: string,
   token: string,
   byTemplateKey: WebflowTemplateImageIndex['byTemplateKey'],
+  options: { onPage?: () => Promise<void> } = {},
 ): Promise<number> {
   let offset = 0;
   const limit = 100;
@@ -531,6 +607,7 @@ async function appendWebflowAssetImages(
 
       const total = payload.pagination?.total ?? assets.length;
       offset += payload.pagination?.limit ?? limit;
+      await options.onPage?.();
       if (offset >= total || assets.length === 0) break;
     }
   } catch (error) {
@@ -541,24 +618,30 @@ async function appendWebflowAssetImages(
   return added;
 }
 
-export async function loadWebflowTemplateImageIndex(env: Env): Promise<WebflowTemplateImageIndex | null> {
+export async function loadWebflowTemplateImageIndex(
+  env: Env,
+  options: { onPage?: () => Promise<void> } = {},
+): Promise<WebflowTemplateImageIndex | null> {
   const siteId = env.WEBFLOW_TEMPLATE_ASSET_SITE_ID?.trim();
   if (!siteId) return null;
 
   const byTemplateKey = new Map<string, WebflowTemplateImageCandidate[]>();
   const offerByTemplateKey = new Map<string, WebflowTemplateOffer>();
+  const identityByTemplateKey = new Map<string, WebflowTemplateIdentity[]>();
   const cmsToken = env.WEBFLOW_API_TOKEN?.trim() || env.CMS_READ_ONLY?.trim();
   const cmsIndexEnabled = env.WEBFLOW_TEMPLATE_ENABLE_CMS_INDEX !== 'false';
   if (cmsToken && cmsIndexEnabled) {
-    await appendWebflowCmsImages(env, siteId, cmsToken, byTemplateKey, offerByTemplateKey);
+    await appendWebflowCmsImages(env, siteId, cmsToken, byTemplateKey, offerByTemplateKey, identityByTemplateKey, options);
   }
 
   const assetToken = env.WEBFLOW_API_TOKEN?.trim();
   if (assetToken) {
-    await appendWebflowAssetImages(env, siteId, assetToken, byTemplateKey);
+    await appendWebflowAssetImages(env, siteId, assetToken, byTemplateKey, options);
   }
 
-  return byTemplateKey.size > 0 || offerByTemplateKey.size > 0 ? { byTemplateKey, offerByTemplateKey } : null;
+  return byTemplateKey.size > 0 || offerByTemplateKey.size > 0 || identityByTemplateKey.size > 0
+    ? { byTemplateKey, offerByTemplateKey, identityByTemplateKey }
+    : null;
 }
 
 export function resolveWebflowTemplateImages(
@@ -598,6 +681,21 @@ export function resolveWebflowTemplateOffer(
   return null;
 }
 
+export function resolveWebflowTemplateIdentity(
+  index: WebflowTemplateImageIndex | null,
+  template: { templateSlug: string; name: string },
+): WebflowTemplateIdentity | null {
+  if (!index) return null;
+
+  const groups = templateKeyGroups(template.templateSlug, template.name);
+  for (const keyGroup of [groups.exactSlug, groups.exactName]) {
+    const identities = collectTemplateIdentities(index, keyGroup);
+    if (identities.length === 1) return identities[0];
+  }
+
+  return null;
+}
+
 function collectTemplateImageCandidates(
   index: WebflowTemplateImageIndex,
   keys: string[],
@@ -613,4 +711,18 @@ function collectTemplateImageCandidates(
   }
 
   return candidates;
+}
+
+function collectTemplateIdentities(index: WebflowTemplateImageIndex, keys: string[]): WebflowTemplateIdentity[] {
+  const identities: WebflowTemplateIdentity[] = [];
+  const seen = new Set<string>();
+  for (const key of keys) {
+    for (const identity of index.identityByTemplateKey.get(key) ?? []) {
+      if (seen.has(identity.templateSlug)) continue;
+      identities.push(identity);
+      seen.add(identity.templateSlug);
+    }
+  }
+
+  return identities;
 }
