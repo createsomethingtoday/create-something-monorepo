@@ -121,6 +121,8 @@
     "agent:legibility:map": "node scripts/agent-legibility-map.mjs",
     "agent:legibility:test": "node --test scripts/test/agent-legibility.test.mjs",
     "agent:legibility:verify": "node --check scripts/agent-legibility-check.mjs && node --check scripts/agent-legibility-map.mjs && pnpm agent:legibility:test && pnpm agent:legibility:check -- --format json && pnpm agent:legibility:map -- --format json > /dev/null",
+    "agent:loop-pilot": "node scripts/agent-loop-pilot.mjs",
+    "agent:loop-pilot:dispatch": "node scripts/agent-loop-pilot.mjs --dispatch",
     "policy:artifacts:check": "node scripts/policy-artifact-check.mjs",
     "paper-cycle:context": "node scripts/io-paper-cycle-context.mjs",
     "paper-cycle:labels:sync": "node scripts/io-paper-cycle-labels.mjs",
