@@ -1,0 +1,9 @@
+tunnel: create-something-codex-g2
+
+ingress:
+  - hostname: codex-g2.createsomething.agency
+    service: http://127.0.0.1:19931
+    originRequest:
+      connectTimeout: 10s
+      noHappyEyeballs: true
+  - service: http_status:404

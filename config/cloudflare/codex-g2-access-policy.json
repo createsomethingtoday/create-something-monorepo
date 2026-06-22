@@ -1,0 +1,20 @@
+{
+  "id": "codex-g2-all-day-access",
+  "hostname": "codex-g2.createsomething.agency",
+  "tunnelName": "create-something-codex-g2",
+  "localOriginDefault": "http://127.0.0.1:19931",
+  "access": {
+    "applicationName": "Codex G2 operator access",
+    "sessionDuration": "12h",
+    "allowedIdentities": ["micah@createsomething.io"],
+    "denyByDefault": true,
+    "requireCloudflareAccess": true
+  },
+  "operatorRules": [
+    "Keep the Codex origin bound to 127.0.0.1.",
+    "Expose only the single local Codex or Even Terminal port through the tunnel.",
+    "Do not use a broad email-domain allow rule for this application.",
+    "Stop the tunnel when glasses access is no longer needed.",
+    "Rotate any secret that appears in the remote session."
+  ]
+}
