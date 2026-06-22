@@ -1,3 +1,5 @@
+import type { IconName } from '../icons/types.js';
+
 /**
  * Analytics Event Request - shared across all properties
  * Used for tracking page views, experiments, etc.
@@ -9,6 +11,41 @@ export interface AnalyticsEventRequest {
   experiment_id?: string;
   tag_id?: string;
   referrer?: string;
+}
+
+export type ArtifactVisualKind =
+  | 'state-strip'
+  | 'layer-stack'
+  | 'boundary-matrix'
+  | 'flow'
+  | 'proof-card';
+
+export type ArtifactVisualTone = 'neutral' | 'run' | 'wait' | 'stop' | 'receipt';
+
+export interface ArtifactVisualNode {
+  label: string;
+  detail?: string;
+  icon?: IconName;
+  tone?: ArtifactVisualTone;
+}
+
+export interface ArtifactVisualSummary {
+  kind: ArtifactVisualKind;
+  title: string;
+  caption?: string;
+  nodes: ArtifactVisualNode[];
+}
+
+export interface GeneratedBrandImageSpec {
+  prompt_contract: 'create-something-research-visual.v1';
+  model: 'gpt-image-2' | string;
+  prompt: string;
+  status: 'prompt-only' | 'generated' | 'approved';
+  intended_use?: 'article-hero' | 'social-card' | 'section-opener' | 'visual-abstract';
+  size?: string;
+  quality?: 'low' | 'medium' | 'high';
+  asset_path?: string | null;
+  alt?: string | null;
 }
 
 /**
@@ -55,6 +92,8 @@ export interface Paper {
   // File-based experiments typically only need ascii_art (already compact)
   ascii_art?: string | null
   ascii_thumbnail?: string | null
+  visual_summary?: ArtifactVisualSummary | null
+  generated_brand_image?: GeneratedBrandImageSpec | null
   created_at: string
   updated_at: string
   published_at?: string | null

@@ -100,6 +100,18 @@ New experiments should use:
 
 `pnpm check` runs `scripts/check-research-artifact-templates.mjs` and fails when a new static paper route is added outside the shared artifact path, when a new static experiment route bypasses the reviewed exception list, when dynamic routes stop rendering through `ResearchArtifactPage`, or when paper markdown omits required publication frontmatter.
 
+### AI-Native Visual Communication
+
+Papers and experiments can use a repeatable visual communication layer instead of one-off illustrations:
+
+1. `ascii_art` for terminal-native conceptual heroes
+2. `visual_summary` for Canon-rendered state, layer, boundary, flow, or proof-card diagrams
+3. `generated_brand_image` for prompt-governed `gpt-image-2` editorial image specs
+
+Use [docs/ai-native-visual-communication.md](./docs/ai-native-visual-communication.md) when adding or reviewing visuals for a research artifact.
+
+`pnpm check` runs `scripts/check-visual-communication.mjs` and fails when visual metadata is missing the shared prompt contract, `gpt-image-2` model declaration, status, prompt, or visual-summary basics.
+
 ---
 
 ## Development

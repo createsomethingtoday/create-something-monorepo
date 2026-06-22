@@ -1,4 +1,4 @@
-import type { Paper } from './paper.js';
+import type { ArtifactVisualSummary, GeneratedBrandImageSpec, Paper } from './paper.js';
 
 /**
  * File-Based Experiment Type
@@ -37,6 +37,8 @@ export interface FileBasedExperiment {
 	is_executable?: 0 | 1; // Optional: 1 = interactive, 0 = documentation-only
 	featured?: number; // Featured priority (optional, defaults to 0)
 	ascii_art?: string;
+	visual_summary?: ArtifactVisualSummary;
+	generated_brand_image?: GeneratedBrandImageSpec;
 	// Hermeneutic Circle: Which principles does this experiment test?
 	// Note: Some experiments have QUALITATIVE evidence (existence proves principle)
 	// rather than quantitative metrics

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { TrackedExperimentBadge } from "@create-something/canon/interactive";
 	import type { Paper } from "$lib/types/paper";
+	import ArtifactVisualSummary from './ArtifactVisualSummary.svelte';
 
 	interface Props {
 		paper: Paper;
@@ -144,6 +145,12 @@
 	<div class="mt-8 animate-reveal" style="--delay: 6">
 		<TrackedExperimentBadge {paper} showFullStats={true} />
 	</div>
+
+	{#if paper.visual_summary}
+		<div class="animate-reveal" style="--delay: 7">
+			<ArtifactVisualSummary visual={paper.visual_summary} />
+		</div>
+	{/if}
 </header>
 
 <style>

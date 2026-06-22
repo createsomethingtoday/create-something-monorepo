@@ -10,6 +10,7 @@ export { default as PluginCard } from './plugins/PluginCard.svelte';
 // Main components
 export { default as ArticleContent } from './ArticleContent.svelte';
 export { default as ArticleHeader } from './ArticleHeader.svelte';
+export { default as ArtifactVisualSummary } from './ArtifactVisualSummary.svelte';
 export { default as HeroSection } from './HeroSection.svelte';
 export { default as NextExperimentCard } from './NextExperimentCard.svelte';
 export { default as Paper } from './Paper.svelte';

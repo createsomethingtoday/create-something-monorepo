@@ -43,11 +43,29 @@ Required fields follow `FileBasedExperiment` from `@create-something/canon`:
   difficulty: 'intermediate',
   is_file_based: true,
   tests_principles: ['three-tier-framework'],
-  ascii_art: '...'
+  ascii_art: '...',
+  visual_summary: {
+    kind: 'flow',
+    title: 'What the experiment demonstrates',
+    nodes: [
+      { label: 'Input', detail: 'The starting condition.', icon: 'document' },
+      { label: 'Action', detail: 'What the experiment runs.', icon: 'settings' },
+      { label: 'Evidence', detail: 'What proves the result.', icon: 'check' }
+    ]
+  },
+  generated_brand_image: {
+    prompt_contract: 'create-something-research-visual.v1',
+    model: 'gpt-image-2',
+    status: 'prompt-only',
+    intended_use: 'visual-abstract',
+    prompt: 'Use packages/io/docs/ai-native-visual-communication.md as the prompt contract.'
+  }
 }
 ```
 
 The shared transformer maps these records into the `Paper` shape used by archive cards, article headers, SEO, and sitemap generation.
+
+For visual rules, use `packages/io/docs/ai-native-visual-communication.md`. Keep precise framework labels in `visual_summary`; use generated images for editorial tone and recognition.
 
 ## Markdown Bodies
 
