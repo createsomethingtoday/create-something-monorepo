@@ -21,6 +21,48 @@ export type FileBasedPaper = FileBasedExperiment;
  */
 export const fileBasedPapers: FileBasedPaper[] = [
 	{
+		id: 'paper-eval-evidence-layer',
+		slug: 'eval-evidence-layer',
+		title: 'The Eval Evidence Layer',
+		description: 'How Langfuse traces and Braintrust gates make agent workflows measurable. A quantitative model for turning Dify runtime traces, MCP eval gates, approval receipts, and blocked-state evidence into publish, hold, rollback, or graduation decisions.',
+		excerpt_short: 'Traces and evals matter when they change a release decision',
+		excerpt_long: 'This paper extends the Policy OS contract bundle with a quantitative evidence layer. Dify carries the app, Langfuse explains the app runtime, Braintrust gates the CREATE SOMETHING-owned MCP contracts, and release decisions depend on thresholds that operators can inspect.',
+		category: 'Research',
+		tags: [
+			'Eval Evidence Layer',
+			'Langfuse',
+			'Braintrust',
+			'Dify',
+			'MCP',
+			'Policy OS',
+			'Agent Governance',
+			'Observability',
+			'Release Evidence'
+		],
+		created_at: '2026-06-22T12:00:00Z',
+		updated_at: '2026-06-22T12:00:00Z',
+		reading_time_minutes: 17,
+		difficulty: 'intermediate',
+		is_file_based: true,
+		tests_principles: [
+			'mcp-first-thesis',
+			'three-tier-framework',
+			'policy-as-artifact',
+			'verification-first',
+			'agent-governance'
+		],
+		route: '/papers/eval-evidence-layer',
+		ascii_art: `
+╭──────────────────────────────────────────────────────────────╮
+│ DIFY APP TRACE  →  LANGFUSE  →  RUNTIME EVIDENCE            │
+│ MCP CONTRACT    →  BRAINTRUST →  GATE EVIDENCE              │
+│                                                              │
+│ Measure only what can change publish, hold, rollback,        │
+│ or graduation decisions.                                    │
+╰──────────────────────────────────────────────────────────────╯
+`
+	},
+	{
 		id: 'paper-workflow-trust-layer',
 		slug: 'workflow-trust-layer',
 		title: 'The Workflow Trust Layer',

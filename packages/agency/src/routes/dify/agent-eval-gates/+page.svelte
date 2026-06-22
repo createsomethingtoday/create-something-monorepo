@@ -347,5 +347,8 @@
       {agencyCoreMessaging.bookMappingSessionLabel}
     </Button>
     <Button href="/dify/content-engine" variant="secondary">See Content Engine</Button>
+    <Button href="https://createsomething.io/papers/eval-evidence-layer" variant="secondary">
+      Read Eval Evidence Paper
+    </Button>
   {/snippet}
 </ClearCtaBand>
