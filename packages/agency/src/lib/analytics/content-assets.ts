@@ -105,6 +105,17 @@ const AGENCY_CONTENT_ASSETS_BY_PATH: Record<string, AgencyContentAssetAnalytics>
     contentPrimaryCta: 'request-workflow-teardown',
     contentLinearIssue: 'CRE-444'
   },
+  '/dify/agent-eval-gates': {
+    contentAssetId: 'article.dify-agent-eval-gates.v20260622',
+    contentType: 'article',
+    contentCluster: 'dify-governed-agent-systems',
+    contentIntent: 'how-to',
+    contentBuyer: 'operator validating a Dify app before production use',
+    contentFunnelStage: 'decision',
+    contentPrimaryKeyword: 'Dify agent eval gates',
+    contentPrimaryCta: 'book-mapping-session',
+    contentLinearIssue: 'CRE-751'
+  },
   '/dify/n8n-vs-dify': {
     contentAssetId: 'article.dify-vs-n8n.v20260518',
     contentType: 'article',

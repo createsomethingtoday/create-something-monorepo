@@ -74,6 +74,7 @@
       ariaLabel: 'Guides and articles',
       links: [
         { label: 'Dify MCP Control Plane', href: '/dify/mcp-control-plane' },
+        { label: 'Dify Agent Eval Gates', href: '/dify/agent-eval-gates' },
         { label: 'Dify Content Engine', href: '/dify/content-engine' },
         { label: 'Dify vs n8n', href: '/dify/n8n-vs-dify' },
         {
@@ -210,6 +211,23 @@
         'blog',
         'custom domain',
         'newsletter'
+      ]
+    },
+    {
+      id: 'nav-dify-eval-gates',
+      label: 'Dify Agent Eval Gates',
+      description:
+        'Eval gates for API health, expected tool use, blocked actions, approvals, secret refusal, and cost limits',
+      href: '/dify/agent-eval-gates',
+      icon: 'DG',
+      keywords: [
+        'dify',
+        'eval gates',
+        'agent evals',
+        'mcp testing',
+        'approval gates',
+        'secret refusal',
+        'policy os'
       ]
     },
     {

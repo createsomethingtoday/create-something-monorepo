@@ -75,19 +75,25 @@
 		"path": "/dify/content-engine",
 		"changefreq": "weekly",
 		"priority": "0.85",
-		"lastmod": "2026-06-19"
+		"lastmod": "2026-06-22"
 	},
 	{
 		"path": "/dify/mcp-control-plane",
 		"changefreq": "weekly",
 		"priority": "0.85",
-		"lastmod": "2026-06-19"
+		"lastmod": "2026-06-22"
+	},
+	{
+		"path": "/dify/agent-eval-gates",
+		"changefreq": "weekly",
+		"priority": "0.85",
+		"lastmod": "2026-06-22"
 	},
 	{
 		"path": "/dify/n8n-vs-dify",
 		"changefreq": "weekly",
 		"priority": "0.85",
-		"lastmod": "2026-06-19"
+		"lastmod": "2026-06-22"
 	},
 	{
 		"path": "/cloudflare",

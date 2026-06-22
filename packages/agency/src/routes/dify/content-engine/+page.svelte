@@ -74,7 +74,7 @@
       icon: 'check',
       title: 'Dify Agent Eval Gates',
       detail: 'The evals that make Dify safer to operate.',
-      href: '/book'
+      href: '/dify/agent-eval-gates'
     },
     {
       eyebrow: 'Agencies',
@@ -170,7 +170,7 @@
   ogType="article"
   ogImage="/og/dify-content-engine.svg"
   publishedTime="2026-05-18"
-  modifiedTime="2026-06-19"
+  modifiedTime="2026-06-22"
   articleSection="Dify Affiliate Content"
   articleTags={['Dify', 'affiliate', 'Substack', 'content strategy', 'MCP']}
   propertyName="agency"
@@ -266,6 +266,7 @@
     <Button href={agencyCoreMessaging.workflowMappingSessionHref}>
       {agencyCoreMessaging.bookMappingSessionLabel}
     </Button>
+    <Button href="/dify/agent-eval-gates" variant="secondary">Read Eval Gates</Button>
     <Button href="/dify/n8n-vs-dify" variant="secondary">Read Dify vs n8n</Button>
   {/snippet}
 </ClearCtaBand>
