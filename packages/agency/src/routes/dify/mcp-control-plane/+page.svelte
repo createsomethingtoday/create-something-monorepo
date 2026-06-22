@@ -67,6 +67,44 @@
     }
   ];
 
+  const contractBundleCards: ClearCardItem[] = [
+    {
+      eyebrow: 'Surface',
+      icon: 'settings',
+      title: 'Dify app',
+      detail:
+        'The workflow stays visible to operators: app surface, workflow packaging, and handoff context.'
+    },
+    {
+      eyebrow: 'Capability',
+      icon: 'folder',
+      title: 'MCP contract',
+      detail:
+        'The tool and resource boundary names what the agent may read, call, and describe.'
+    },
+    {
+      eyebrow: 'Behavior',
+      icon: 'check',
+      title: 'Agent contract',
+      detail:
+        'Allowed, approval-needed, and blocked actions are explicit before the workflow gains autonomy.'
+    },
+    {
+      eyebrow: 'Outcome',
+      icon: 'document',
+      title: 'Success contract',
+      detail:
+        'The business result, fallback path, owner, and review cadence are separate from the prompt.'
+    },
+    {
+      eyebrow: 'Proof',
+      icon: 'search',
+      title: 'Golden tasks and runbook',
+      detail:
+        'Regression examples and operating steps prove the workflow can survive model, tool, or runtime changes.'
+    }
+  ];
+
   const useCases: ClearCardItem[] = [
     {
       eyebrow: 'Builders',
@@ -112,12 +150,12 @@
 
 <SEO
   title="Dify + MCP Control Plane | CREATE SOMETHING .agency"
-  description="How CREATE SOMETHING packages Dify, MCP server cards, and Policy OS into a governed control plane for agent workflows."
-  keywords="Dify MCP control plane, Dify agent governance, MCP server cards, Policy OS, Dify app templates"
+  description="How CREATE SOMETHING packages Dify, MCP server cards, and Policy OS contract bundles into a governed control plane for agent workflows."
+  keywords="Dify MCP control plane, Dify agent governance, MCP server cards, Policy OS, contract bundle, Dify app templates"
   ogType="article"
   ogImage="/og/dify-mcp-control-plane.svg"
   publishedTime="2026-05-18"
-  modifiedTime="2026-06-19"
+  modifiedTime="2026-06-21"
   articleSection="Dify Implementation"
   articleTags={['Dify', 'MCP', 'Policy OS', 'agent workflows']}
   propertyName="agency"
@@ -176,8 +214,24 @@
 </ClearPageSection>
 
 <ClearPageSection
-  id="adoption"
+  id="contract-bundle"
   variant="white"
+  eyebrow="Contract bundle"
+  title="The control plane becomes real when the bundle is reviewable."
+  description="Dify provides the visible workflow surface, but the operating boundary should travel as artifacts: MCP capability, agent behavior, outcome success, golden tasks, and a runbook."
+>
+  {#snippet after()}
+    <ClearCardGrid
+      items={contractBundleCards}
+      columns={4}
+      ariaLabel="Dify control plane contract bundle"
+    />
+  {/snippet}
+</ClearPageSection>
+
+<ClearPageSection
+  id="adoption"
+  variant="soft"
   eyebrow="Who it serves"
   title="The same architecture supports three routes to Dify adoption."
   description="Builder adoption, operator governance, and agency packaging all become easier when the control plane is visible."
@@ -198,5 +252,8 @@
       {agencyCoreMessaging.bookMappingSessionLabel}
     </Button>
     <Button href="/dify/content-engine" variant="secondary">See Content Engine</Button>
+    <Button href="https://createsomething.io/papers/policy-os-contract-bundle" variant="secondary">
+      Read Contract Bundle Paper
+    </Button>
   {/snippet}
 </ClearCtaBand>
