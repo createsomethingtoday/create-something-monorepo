@@ -10,6 +10,7 @@
 	 */
 
 	import { SEO } from '@create-something/canon';
+	import ExperimentVisualSummary from '$lib/components/ExperimentVisualSummary.svelte';
 	import {
 		ComparativeSparklines,
 		DistributionBar,
@@ -17,6 +18,10 @@
 		MetricCard,
 		HighDensityTable
 	} from '@create-something/tufte';
+	import type { PageData } from './$types';
+
+	let { data }: { data: PageData } = $props();
+	const experiment = $derived(data.experiment);
 
 	// Sample data for demonstrations
 	const propertyData = {
@@ -114,6 +119,8 @@
 			transforming visualization from manual craft into intelligent revelation.
 		</p>
 	</div>
+
+	<ExperimentVisualSummary visual={experiment.visual_summary} />
 
 	<!-- Abstract -->
 	<section class="abstract-section pl-6 space-y-4">

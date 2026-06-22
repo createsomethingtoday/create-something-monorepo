@@ -10,6 +10,7 @@
 	 */
 
 	import { SEO } from '@create-something/canon';
+	import ExperimentVisualSummary from '$lib/components/ExperimentVisualSummary.svelte';
 	import {
 		KnowledgeGraphCanvas,
 		CanvasDiagram,
@@ -208,6 +209,8 @@
 			Demonstrating force-directed graphs, animation timelines, and exportable diagrams.
 		</p>
 	</header>
+
+	<ExperimentVisualSummary visual={experiment.visual_summary} />
 
 	<section class="demo-section">
 		<h2>1. Knowledge Graph Visualizer</h2>

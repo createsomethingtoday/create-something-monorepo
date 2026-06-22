@@ -11,6 +11,8 @@
 
 	import { onMount } from 'svelte';
 	import { SEO } from '@create-something/canon';
+	import ExperimentVisualSummary from '$lib/components/ExperimentVisualSummary.svelte';
+	import type { PageData } from './$types';
 	import {
 		Shield,
 		Lightbulb,
@@ -46,6 +48,9 @@
 		generateParticles,
 		updateParticles as updateParticlePositions
 	} from '@create-something/canon/experiments/living-arena';
+
+	let { data }: { data: PageData } = $props();
+	const experiment = $derived(data.experiment);
 
 	// System states - simulating real-time automation data
 	let securityStatus = $state<SecurityStatus>('monitoring');
@@ -245,6 +250,8 @@
 			</div>
 		</div>
 	</header>
+
+	<ExperimentVisualSummary visual={experiment.visual_summary} />
 
 	<!-- Main Visualization -->
 	<div class="visualization-container">
