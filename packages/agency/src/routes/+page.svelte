@@ -4,7 +4,6 @@
     ClearActionFooter,
     ClearCardGrid,
     ClearContentHighlights,
-    ClearLogoStrip,
     ClearMetadataRail,
     ClearPageSection,
     ClearPillarGrid,
@@ -19,7 +18,6 @@
     type ClearActionFooterItem,
     type ClearCardItem,
     type ClearContentHighlight,
-    type ClearLogoStripItem,
     type ClearMetadataGroup,
     type ClearPillarItem,
     type ClearProofItem,
@@ -104,26 +102,6 @@
       state: 'Stop',
       label: 'Blocked with a reason',
       detail: 'The refund exceeds the support lane and opens an owner handoff.'
-    }
-  ];
-
-  const platformSignals: ClearLogoStripItem[] = [
-    {
-      label: 'Trust Map',
-      detail: 'Objects, owners, approvals'
-    },
-    {
-      label: 'Workflow Pilot',
-      detail: 'First safe run path'
-    },
-    {
-      label: 'Trust Layer',
-      detail: 'Run, wait, stop controls'
-    },
-    {
-      label: 'Receipts',
-      detail: 'Delivery pages and private evidence',
-      href: '/delivery/abundance'
     }
   ];
 
@@ -433,12 +411,6 @@
       />
     {/snippet}
   </ClearPlatformHero>
-
-  <ClearLogoStrip
-    eyebrow="How the work becomes real"
-    items={platformSignals}
-    ariaLabel="CREATE SOMETHING operating proof surfaces"
-  />
 
   <ClearPageSection
     id="service-flow"
