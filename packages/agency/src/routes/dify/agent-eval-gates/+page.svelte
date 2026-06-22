@@ -55,6 +55,77 @@
     }
   ];
 
+  const observabilityCards: ClearCardItem[] = [
+    {
+      eyebrow: 'Dify',
+      icon: 'search',
+      title: 'Langfuse watches the app runtime',
+      detail:
+        'Dify can send app traces to Langfuse, so operators can inspect conversations, prompts, model calls, latency, cost, and runtime errors where the Dify app actually runs.'
+    },
+    {
+      eyebrow: 'MCP',
+      icon: 'check',
+      title: 'Braintrust gates the tool contract',
+      detail:
+        'CREATE SOMETHING uses Braintrust for the MCPs we create, so expected tool use, forbidden tool use, write confirmation, and policy-boundary checks stay tied to the repo-owned contract.'
+    },
+    {
+      eyebrow: 'Evidence',
+      icon: 'folder',
+      title: 'The two traces answer different questions',
+      detail:
+        'Langfuse explains what happened inside the Dify app. Braintrust proves whether the MCP boundary behaved the way the workflow contract promised.'
+    }
+  ];
+
+  const evidenceCards: ClearCardItem[] = [
+    {
+      eyebrow: 'Health',
+      icon: 'check',
+      title: 'API and MCP connectivity',
+      detail:
+        'Use a Service API smoke plus Dify MCP setup state to prove the app can reach the expected server cards and tools.',
+      points: [
+        'Evidence: route health, tool availability, harmless read result',
+        'Failure: block publish until the card or bearer path is fixed'
+      ]
+    },
+    {
+      eyebrow: 'Langfuse',
+      icon: 'search',
+      title: 'Runtime trace quality',
+      detail:
+        'Use Langfuse for Dify app sessions, prompt changes, model behavior, latency, token use, and runtime errors.',
+      points: [
+        'Evidence: trace link, session summary, cost and latency envelope',
+        'Failure: narrow context, revise prompt, or change model path'
+      ]
+    },
+    {
+      eyebrow: 'Braintrust',
+      icon: 'document',
+      title: 'MCP contract behavior',
+      detail:
+        'Use Braintrust for the CREATE SOMETHING-owned MCP gates that prove the agent uses the right tools and avoids disallowed tools.',
+      points: [
+        'Evidence: eval run, expected and forbidden tool assertions',
+        'Failure: revise tool contract, tool description, or policy pack'
+      ]
+    },
+    {
+      eyebrow: 'Approval',
+      icon: 'user',
+      title: 'Write confirmation',
+      detail:
+        'Use negative and approval-path cases to prove write-capable tools pause before customer-facing or irreversible actions.',
+      points: [
+        'Evidence: confirmation prompt and no write before approval',
+        'Failure: remove write scope or require a stricter approval state'
+      ]
+    }
+  ];
+
   const workflowCards: ClearCardItem[] = [
     {
       eyebrow: '01',
@@ -75,7 +146,7 @@
       icon: 'check',
       title: 'Run gates before publishing',
       detail:
-        'A Dify workflow is not production-ready until the required gates pass against the current app and MCP cards.'
+        'A Dify workflow is not production-ready until Langfuse tracing is connected and the required Braintrust MCP gates pass against the current app and MCP cards.'
     },
     {
       eyebrow: '04',
@@ -99,7 +170,7 @@
       icon: 'folder',
       title: 'Operator evidence',
       detail:
-        'Keep detailed traces, account records, prompt variants, secrets, and approval receipts in the owning private system.'
+        'Keep Langfuse traces, Braintrust runs, account records, prompt variants, secrets, and approval receipts in the owning private system.'
     },
     {
       eyebrow: 'Decision',
@@ -158,8 +229,8 @@
 
 <SEO
   title="Dify Agent Eval Gates | CREATE SOMETHING .agency"
-  description="The eval gates that make Dify safer to operate: API health, expected tool use, forbidden actions, write confirmation, secret refusal, latency, cost, and release evidence."
-  keywords="Dify agent eval gates, Dify evals, Dify MCP testing, AI agent governance, Policy OS, Dify approval gates"
+  description="The eval gates that make Dify safer to operate: Dify-native Langfuse traces, Braintrust MCP gates, API health, expected tool use, forbidden actions, write confirmation, secret refusal, latency, cost, and release evidence."
+  keywords="Dify agent eval gates, Dify Langfuse, Dify evals, Braintrust MCP evals, Dify MCP testing, AI agent governance, Policy OS, Dify approval gates"
   canonical="https://createsomething.agency/dify/agent-eval-gates"
   ogType="article"
   ogImage="/og/dify-lane.svg"
@@ -176,7 +247,7 @@
   titleLevel="h1"
   eyebrow="Dify Agent Eval Gates"
   title="The evals that make Dify safer to operate."
-  description="A Dify app becomes production-worthy when its tool use, approval behavior, blocked paths, secret handling, and operating limits are testable before the workflow gets more autonomy."
+  description="A Dify app becomes production-worthy when Langfuse can explain the runtime trace and Braintrust can prove the MCP contract before the workflow gets more autonomy."
 >
   {#snippet actions()}
     <Button href={agencyCoreMessaging.workflowMappingSessionHref}>
@@ -196,6 +267,21 @@
 </ClearPageSection>
 
 <ClearPageSection
+  variant="soft"
+  eyebrow="Trace split"
+  title="Use Langfuse for Dify traces, Braintrust for MCP gates."
+  description="Dify carries the app. Langfuse observes the Dify runtime. Braintrust evaluates the MCP contracts CREATE SOMETHING creates."
+>
+  {#snippet after()}
+    <ClearCardGrid
+      items={observabilityCards}
+      columns={3}
+      ariaLabel="Dify Langfuse Braintrust observability split"
+    />
+  {/snippet}
+</ClearPageSection>
+
+<ClearPageSection
   variant="white"
   eyebrow="Gate set"
   title="The first gates should match the real workflow risk."
@@ -208,6 +294,17 @@
 
 <ClearPageSection
   variant="soft"
+  eyebrow="Evidence map"
+  title="Each gate should point to the system that proves it."
+  description="The goal is not duplicate observability. The goal is to know which trace or eval run answers the operator's question."
+>
+  {#snippet after()}
+    <ClearCardGrid items={evidenceCards} columns={4} ariaLabel="Dify eval gate evidence map" />
+  {/snippet}
+</ClearPageSection>
+
+<ClearPageSection
+  variant="white"
   eyebrow="Operating loop"
   title="Eval gates travel with the contract bundle."
   description="The gates should be derived from the same artifacts that define the workflow: tool access, allowed behavior, success criteria, golden tasks, and runbook."
@@ -218,7 +315,7 @@
 </ClearPageSection>
 
 <ClearPageSection
-  variant="white"
+  variant="soft"
   eyebrow="Examples"
   title="A gate is useful only when it names a concrete failure."
   description="Each workflow needs a small set of cases that prove the expected path and the stop path."
@@ -229,7 +326,7 @@
 </ClearPageSection>
 
 <ClearPageSection
-  variant="soft"
+  variant="white"
   eyebrow="Evidence"
   title="Public proof and private evidence are different artifacts."
   description="Buyers need proof that the workflow is governed. Operators still need private traces, receipts, and detailed records that should not be published."

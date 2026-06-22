@@ -13,6 +13,7 @@ The inventory records:
 - discovered Dify MCP tools and risk classification
 - Dify builtin/Marketplace tools attached directly to agents
 - Dify agents, app IDs, DSL/manifest paths, enabled tools, policy packs, and eval ownership
+- whether Dify-native Langfuse tracing is connected for the app runtime
 
 Use `config/dify-mcp-intake/*.json` only for MCPs that are ready to register in
 Dify Studio but do not yet have discovered tools codified in inventory.
@@ -173,10 +174,19 @@ For prompt-only updates to an already published app, keep the existing Dify app 
 - Every published Dify agent must have at least one inventory-declared `smoke_cases` entry.
 - Every `config/dify-agents/*.json` manifest must be referenced by the inventory.
 
-## Eval Gate Model
+## Eval And Trace Model
 
-Dify is the runtime and client-facing chat surface. Braintrust is the eval system
-of record. The inventory should make that split explicit for every agent.
+Dify is the runtime and client-facing chat surface. Langfuse is the native trace
+surface for the Dify app runtime. Braintrust is the eval system for
+CREATE SOMETHING-owned MCP gates. The inventory should make that split explicit
+for every agent.
+
+Use Langfuse to inspect:
+
+- Dify app sessions and conversations
+- prompt and model behavior
+- latency, token usage, cost, and runtime errors
+- operator debugging evidence
 
 Use `evals.required_checks` to name the behavioral gates the agent must satisfy.
 The validator enforces this minimum:
@@ -206,4 +216,5 @@ That relationship keeps the split clear:
 - `config/mcp-hub/registry.json` says what MCP capabilities exist.
 - `config/dify/inventory.json` says which MCP capabilities are exposed to Dify agents.
 - `config/dify-agents/*.dify.yml` carries the importable Dify app shape.
-- Braintrust evals prove each Dify agent follows policy.
+- Langfuse traces explain what happened inside the Dify app.
+- Braintrust evals prove each CREATE SOMETHING-owned MCP boundary follows policy.
