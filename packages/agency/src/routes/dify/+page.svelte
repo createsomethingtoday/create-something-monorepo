@@ -115,7 +115,7 @@
       title: 'Agent eval gates',
       detail:
         'Show API health, expected tool use, forbidden tool use, secret refusal, latency, and write confirmation checks.',
-      href: '/dify/mcp-control-plane#evals'
+      href: '/dify/agent-eval-gates'
     },
     {
       eyebrow: 'Publish',
@@ -299,5 +299,6 @@
       {agencyCoreMessaging.bookMappingSessionLabel}
     </Button>
     <Button href="/dify/mcp-control-plane" variant="secondary">Read Control Plane</Button>
+    <Button href="/dify/agent-eval-gates" variant="secondary">Read Eval Gates</Button>
   {/snippet}
 </ClearCtaBand>

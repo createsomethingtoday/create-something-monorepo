@@ -2,7 +2,7 @@
 
 Article URL: `/dify/mcp-control-plane`
 Article asset ID: `article.dify-mcp-control-plane.v20260518`
-Updated: 2026-06-21
+Updated: 2026-06-22
 
 ## Original Visuals
 

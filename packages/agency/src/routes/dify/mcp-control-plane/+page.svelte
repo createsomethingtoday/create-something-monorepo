@@ -155,7 +155,7 @@
   ogType="article"
   ogImage="/og/dify-mcp-control-plane.svg"
   publishedTime="2026-05-18"
-  modifiedTime="2026-06-21"
+  modifiedTime="2026-06-22"
   articleSection="Dify Implementation"
   articleTags={['Dify', 'MCP', 'Policy OS', 'agent workflows']}
   propertyName="agency"
@@ -251,6 +251,7 @@
     <Button href={agencyCoreMessaging.workflowMappingSessionHref}>
       {agencyCoreMessaging.bookMappingSessionLabel}
     </Button>
+    <Button href="/dify/agent-eval-gates" variant="secondary">Read Eval Gates</Button>
     <Button href="/dify/content-engine" variant="secondary">See Content Engine</Button>
     <Button href="https://createsomething.io/papers/policy-os-contract-bundle" variant="secondary">
       Read Contract Bundle Paper

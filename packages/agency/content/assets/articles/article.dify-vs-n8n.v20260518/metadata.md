@@ -2,7 +2,7 @@
 
 Article URL: `/dify/n8n-vs-dify`
 Article asset ID: `article.dify-vs-n8n.v20260518`
-Updated: 2026-05-25
+Updated: 2026-06-22
 
 ## Original Visuals
 

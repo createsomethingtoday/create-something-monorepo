@@ -173,7 +173,7 @@
   ogType="article"
   ogImage="/og/dify-vs-n8n.svg"
   publishedTime="2026-05-18"
-  modifiedTime="2026-06-19"
+  modifiedTime="2026-06-22"
   articleSection="Dify Implementation"
   articleTags={['Dify', 'n8n', 'workflow automation', 'agent apps', 'MCP']}
   propertyName="agency"
@@ -258,6 +258,7 @@
     <Button href={agencyCoreMessaging.workflowMappingSessionHref}>
       {agencyCoreMessaging.bookMappingSessionLabel}
     </Button>
+    <Button href="/dify/agent-eval-gates" variant="secondary">Read Eval Gates</Button>
     <Button href="/dify/mcp-control-plane" variant="secondary">Read Control Plane</Button>
   {/snippet}
 </ClearCtaBand>
