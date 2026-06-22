@@ -9,6 +9,7 @@
 
 import type { FileBasedExperiment } from '@create-something/canon';
 import { transformExperimentToPaper } from '@create-something/canon';
+import { applyArtifactVisuals, defineArtifactVisuals } from './visualCommunication';
 
 // Re-use the FileBasedExperiment type since it has the same shape
 export type FileBasedPaper = FileBasedExperiment;
@@ -19,7 +20,7 @@ export type FileBasedPaper = FileBasedExperiment;
  * These papers have their full content in /content/papers/{slug}.md
  * and can be served by the [slug] dynamic route.
  */
-export const fileBasedPapers: FileBasedPaper[] = [
+const fileBasedPaperMetadata: FileBasedPaper[] = [
 	{
 		id: 'paper-proof-surface',
 		slug: 'proof-surface',
@@ -492,6 +493,267 @@ watermarks, extra logos, random text, illegible labels, fake brand names, colorf
 `
 	}
 ];
+
+const fileBasedPaperVisuals = {
+	'paper-proof-surface': defineArtifactVisuals({
+		kind: 'state-strip',
+		title: 'Agent work becomes trustworthy when each state has a receipt.',
+		caption:
+			'The visual grammar is intentionally small: show what can run, what must wait, what must stop, and what proves the decision.',
+		nodes: [
+			{
+				label: 'Run',
+				detail: 'Bounded work proceeds inside an approved workflow boundary.',
+				icon: 'check',
+				tone: 'run'
+			},
+			{
+				label: 'Wait',
+				detail: 'A named owner must approve before the workflow creates impact.',
+				icon: 'clock',
+				tone: 'wait'
+			},
+			{
+				label: 'Stop',
+				detail: 'The system refuses or defers work when evidence, scope, or policy is missing.',
+				icon: 'warning',
+				tone: 'stop'
+			},
+			{
+				label: 'Receipt',
+				detail: 'The outcome is preserved as a public-safe proof surface with private evidence behind it.',
+				icon: 'document',
+				tone: 'receipt'
+			}
+		],
+		subject:
+			'A proof surface for AI agent work: private evidence below, public receipt above, with four visible states: run, wait, stop, receipt.',
+		motifs: [
+			'layered surface separating public status from private evidence',
+			'small receipt cards or evidence packets',
+			'bounded workflow path',
+			'owner approval checkpoint',
+			'visible stop state that feels intentional, not broken'
+		],
+		alt: 'Abstract CREATE SOMETHING proof surface showing public receipts above private evidence for agent work.'
+	}),
+	'paper-eval-evidence-layer': defineArtifactVisuals({
+		kind: 'layer-stack',
+		title: 'Measurements matter when they change a release decision.',
+		caption:
+			'Dify, Langfuse, Braintrust, and approval receipts become one evidence layer only when they gate publish, hold, rollback, or graduation.',
+		nodes: [
+			{ label: 'Runtime trace', detail: 'Dify and Langfuse explain what happened.', icon: 'refresh', tone: 'neutral' },
+			{ label: 'Contract gate', detail: 'Braintrust checks the owned MCP behavior.', icon: 'check', tone: 'run' },
+			{ label: 'Decision', detail: 'Thresholds choose publish, hold, rollback, or graduate.', icon: 'warning', tone: 'wait' },
+			{ label: 'Receipt', detail: 'Evidence is attached where operators can inspect it.', icon: 'document', tone: 'receipt' }
+		],
+		subject:
+			'An eval evidence layer where app traces and contract gates converge into release decisions for AI workflows.',
+		motifs: [
+			'Dify app trace feeding a runtime evidence lane',
+			'Braintrust contract gate with pass and hold thresholds',
+			'four release decisions: publish, hold, rollback, graduate',
+			'operator-facing evidence receipt'
+		],
+		alt: 'Abstract eval evidence layer connecting traces and gates to release decisions.'
+	}),
+	'paper-workflow-trust-layer': defineArtifactVisuals({
+		kind: 'boundary-matrix',
+		title: 'Trust begins when a workflow names what can run, wait, and stop.',
+		caption:
+			'The visual model separates tool access from operating authority so capability does not masquerade as trust.',
+		nodes: [
+			{ label: 'Access', detail: 'MCP exposes capability.', icon: 'settings', tone: 'neutral' },
+			{ label: 'Run', detail: 'Allowed work proceeds inside the boundary.', icon: 'check', tone: 'run' },
+			{ label: 'Wait', detail: 'Risky actions ask a named owner.', icon: 'clock', tone: 'wait' },
+			{ label: 'Stop', detail: 'Out-of-scope actions refuse with a reason.', icon: 'warning', tone: 'stop' }
+		],
+		subject:
+			'A workflow trust layer showing tool access being sorted into run, wait, and stop states before autonomy expands.',
+		motifs: [
+			'tool connection entering a decision boundary',
+			'three state lanes labeled run, wait, stop',
+			'approval checkpoint with owner marker',
+			'receipt trail after a permitted action'
+		],
+		alt: 'Abstract workflow trust layer showing capability separated from approval and blocked states.'
+	}),
+	'paper-policy-os-contract-bundle': defineArtifactVisuals({
+		kind: 'layer-stack',
+		title: 'Governed AI work ships as a contract bundle.',
+		caption:
+			'Capability, behavior, outcomes, golden tasks, and runbooks stay portable when policy is treated as the artifact.',
+		nodes: [
+			{ label: 'MCP contract', detail: 'Capability boundary.', icon: 'settings', tone: 'neutral' },
+			{ label: 'Agent contract', detail: 'Behavior boundary.', icon: 'user', tone: 'neutral' },
+			{ label: 'Outcome contract', detail: 'Success boundary.', icon: 'check', tone: 'run' },
+			{ label: 'Runbook', detail: 'Human control boundary.', icon: 'document', tone: 'receipt' }
+		],
+		subject:
+			'A portable Policy OS contract bundle stacking capability, behavior, outcome, golden-task, and runbook artifacts.',
+		motifs: [
+			'five artifact layers aligned as a governed bundle',
+			'portable package boundary',
+			'golden task receipt cards',
+			'runbook control handle for a human operator'
+		],
+		alt: 'Abstract Policy OS contract bundle with stacked governance artifacts.'
+	}),
+	'paper-analyzer-mcp-review-architecture': defineArtifactVisuals({
+		kind: 'flow',
+		title: 'Review quality improves when evidence surfaces stay separate.',
+		caption:
+			'Published pages, Designer state, and policy snapshots feed one governed analyzer artifact without collapsing trust boundaries.',
+		nodes: [
+			{ label: 'Published site', detail: 'Observable page evidence.', icon: 'external-link', tone: 'neutral' },
+			{ label: 'Designer state', detail: 'Private build metadata.', icon: 'edit', tone: 'wait' },
+			{ label: 'Policy', detail: 'Versioned review rules.', icon: 'document', tone: 'receipt' },
+			{ label: 'Analyzer MCP', detail: 'Governed review output.', icon: 'check', tone: 'run' }
+		],
+		subject:
+			'A Webflow Analyzer MCP review architecture joining public site evidence, Designer metadata, and policy snapshots.',
+		motifs: [
+			'three evidence streams converging into a review artifact',
+			'clear boundary between public and private inputs',
+			'policy snapshot packet',
+			'manual-bounded review output'
+		],
+		alt: 'Abstract analyzer MCP review architecture with three bounded evidence inputs.'
+	}),
+	'paper-webflow-analyzer-productization': defineArtifactVisuals({
+		kind: 'flow',
+		title: 'Productization translates evidence without exposing reviewer judgment.',
+		caption:
+			'Creator-facing validation, autofill, screenshots, and submission guidance are useful because they preserve the reviewer boundary.',
+		nodes: [
+			{ label: 'Analyzer', detail: 'Reviewer evidence stays governed.', icon: 'search', tone: 'neutral' },
+			{ label: 'Validate', detail: 'Creator-safe checks happen early.', icon: 'check', tone: 'run' },
+			{ label: 'Autofill', detail: 'Known data becomes submission help.', icon: 'edit', tone: 'neutral' },
+			{ label: 'Handoff', detail: 'Reviewers inherit cleaner packets.', icon: 'share', tone: 'receipt' }
+		],
+		subject:
+			'A creator-facing Webflow analyzer product path that translates review evidence into validation and submission assistance.',
+		motifs: [
+			'analyzer core behind a trust boundary',
+			'validation and autofill lanes',
+			'screenshot evidence packet',
+			'creator-to-reviewer handoff'
+		],
+		alt: 'Abstract Webflow analyzer productization flow preserving reviewer trust boundaries.'
+	}),
+	'paper-andon-protocol': defineArtifactVisuals({
+		kind: 'state-strip',
+		title: 'Escalation is a protocol, not a vibe.',
+		caption:
+			'The Andon path makes uncertainty visible before an agent silently guesses or keeps working past its authority.',
+		nodes: [
+			{ label: 'Sense', detail: 'Uncertainty or obligation appears.', icon: 'info', tone: 'neutral' },
+			{ label: 'Pull', detail: 'The agent raises the cord.', icon: 'warning', tone: 'wait' },
+			{ label: 'Stop', detail: 'Impact pauses when the line must halt.', icon: 'close', tone: 'stop' },
+			{ label: 'Resolve', detail: 'Batch review returns a decision.', icon: 'check', tone: 'receipt' }
+		],
+		subject:
+			'An AI-native Andon escalation protocol with first pull, line stop, resolution surface, and silent-running detection.',
+		motifs: [
+			'visible cord pull signal',
+			'line-stop boundary for agent work',
+			'resolution surface with batch review cards',
+			'silent-running audit trail'
+		],
+		alt: 'Abstract Andon protocol showing escalation from uncertainty to line stop and resolution.'
+	}),
+	'paper-ground-case-study': defineArtifactVisuals({
+		kind: 'proof-card',
+		title: 'Verification replaces confidence theater with computed claims.',
+		caption:
+			'Ground turns similarity, symbol, and package claims into evidence an agent can cite without guessing.',
+		nodes: [
+			{ label: 'Claim', detail: 'A codebase question is made explicit.', icon: 'document', tone: 'neutral' },
+			{ label: 'Compute', detail: 'AST and package facts are measured.', icon: 'settings', tone: 'run' },
+			{ label: 'Reject guess', detail: 'Unsupported claims stop.', icon: 'warning', tone: 'stop' },
+			{ label: 'Cite', detail: 'The answer carries evidence.', icon: 'check', tone: 'receipt' }
+		],
+		subject:
+			'A verification-first code analysis workflow where computed code facts replace approximate AI confidence.',
+		motifs: [
+			'code graph transformed into measured evidence',
+			'confidence percentage crossed out',
+			'AST similarity receipt',
+			'agent answer linked to source proof'
+		],
+		alt: 'Abstract Ground case study showing computed code evidence replacing guessed confidence.'
+	}),
+	'paper-composio-three-tier-delivery': defineArtifactVisuals({
+		kind: 'layer-stack',
+		title: 'Commodity connectivity belongs below owned outcomes.',
+		caption:
+			'Composio can accelerate CRUD and OAuth, while CREATE SOMETHING keeps margin in policy, workflow, and judgment.',
+		nodes: [
+			{ label: 'Database', detail: 'External app state and records.', icon: 'folder', tone: 'neutral' },
+			{ label: 'Automation', detail: 'Composio handles commodity actions.', icon: 'settings', tone: 'run' },
+			{ label: 'Judgment', detail: 'Policy and outcomes stay owned.', icon: 'user', tone: 'wait' },
+			{ label: 'Wrap', detail: 'Client sees the CREATE SOMETHING surface.', icon: 'check', tone: 'receipt' }
+		],
+		subject:
+			'A Composio delivery stack where commodity connectivity is wrapped by owned CREATE SOMETHING policy and outcome layers.',
+		motifs: [
+			'three-tier stack labeled Database, Automation, Judgment',
+			'commodity connector inside a wrapper boundary',
+			'client-facing surface above hidden integration plumbing',
+			'policy receipt controlling graduation'
+		],
+		alt: 'Abstract Composio three-tier delivery stack with owned judgment above commodity connectivity.'
+	}),
+	'paper-policy-os-development-infrastructure': defineArtifactVisuals({
+		kind: 'flow',
+		title: 'The development harness is also a policy surface.',
+		caption:
+			'Policy OS applied to Pi makes local agent work inspectable through gates, receipts, and explicit handoffs.',
+		nodes: [
+			{ label: 'Policy OS', detail: 'Rules become artifacts.', icon: 'document', tone: 'receipt' },
+			{ label: 'Pi harness', detail: 'Agent execution is bounded.', icon: 'settings', tone: 'neutral' },
+			{ label: 'Quality gate', detail: 'Checks run before promotion.', icon: 'check', tone: 'run' },
+			{ label: 'Handoff', detail: 'Evidence survives the session.', icon: 'share', tone: 'receipt' }
+		],
+		subject:
+			'A development infrastructure workflow where Policy OS governs the Pi coding agent harness through quality gates.',
+		motifs: [
+			'policy artifact entering a coding harness',
+			'quality gates as checkpoints',
+			'agent worktree and evidence receipt',
+			'handoff packet for the next operator'
+		],
+		alt: 'Abstract Policy OS development infrastructure with Pi harness quality gates.'
+	}),
+	'paper-braintrust-trace-unsurfacing': defineArtifactVisuals({
+		kind: 'proof-card',
+		title: 'Trace clusters expose what aggregate health hides.',
+		caption:
+			'A mostly green sample can still contain permission, routing, throttling, and latency structures that need operational decisions.',
+		nodes: [
+			{ label: 'Aggregate', detail: 'The top-line metric looks healthy.', icon: 'success', tone: 'run' },
+			{ label: 'Trace sample', detail: 'Rows preserve runtime detail.', icon: 'document', tone: 'neutral' },
+			{ label: 'Cluster', detail: 'Failures group by cause.', icon: 'search', tone: 'wait' },
+			{ label: 'Decision', detail: 'Reliability work becomes targeted.', icon: 'check', tone: 'receipt' }
+		],
+		subject:
+			'A Braintrust trace audit where clustered failures emerge from a mostly green aggregate metric.',
+		motifs: [
+			'green aggregate panel with hidden lower trace rows',
+			'clusters for permission, routing, throttling, latency',
+			'trace cards grouped into decision lanes',
+			'operator receipt for targeted reliability work'
+		],
+		alt: 'Abstract Braintrust trace unsurfacing visual showing hidden failure clusters under green aggregates.'
+	})
+};
+
+export const fileBasedPapers: FileBasedPaper[] = applyArtifactVisuals(
+	fileBasedPaperMetadata,
+	fileBasedPaperVisuals,
+	'fileBasedPapers'
+);
 
 /**
  * Get all file-based papers, transformed to match Paper interface

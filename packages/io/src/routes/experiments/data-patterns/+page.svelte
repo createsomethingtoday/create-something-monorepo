@@ -7,12 +7,17 @@
 	 */
 
 	import { SEO } from '@create-something/canon';
+	import ExperimentVisualSummary from '$lib/components/ExperimentVisualSummary.svelte';
 	import {
 		ComparativeSparklines,
 		TrendIndicator,
 		DistributionBar,
 		MetricCard
 	} from '@create-something/tufte';
+	import type { PageData } from './$types';
+
+	let { data }: { data: PageData } = $props();
+	const experiment = $derived(data.experiment);
 
 	// Simulated API response times across services
 	const apiMetrics = {
@@ -108,6 +113,8 @@
 				trends, and anomalies without manual analysis. The components make the insights obvious.
 			</p>
 		</div>
+
+		<ExperimentVisualSummary visual={experiment.visual_summary} />
 
 		<!-- Pattern 1: Performance Degradation -->
 		<section class="space-y-6">

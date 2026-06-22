@@ -8,6 +8,7 @@
 	 * - Conditioning image is transparent (see what the AI sees)
 	 */
 	import { QuoteBlock, SEO } from '@create-something/canon';
+	import ExperimentVisualSummary from '$lib/components/ExperimentVisualSummary.svelte';
 	import {
 		PresetPicker,
 		OperationPicker,
@@ -420,6 +421,8 @@
 	{#if experiment.ascii_art}
 		<pre class="ascii-art">{experiment.ascii_art}</pre>
 	{/if}
+
+	<ExperimentVisualSummary visual={experiment.visual_summary} />
 
 	<!-- Main Studio Layout -->
 	<div class="studio-layout">

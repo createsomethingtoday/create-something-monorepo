@@ -6,6 +6,7 @@
 	 * with the filter agent from $lib/agents/filter-agent.
 	 */
 	import { QuoteBlock, SEO } from '@create-something/canon';
+	import ExperimentVisualSummary from '$lib/components/ExperimentVisualSummary.svelte';
 	import {
 		FilterTogglePanel,
 		ProductGrid,
@@ -18,6 +19,7 @@
 	import type { PageData } from './$types';
 
 	export let data: PageData;
+	const fileExperiment = data.experiment;
 
 	// Get experiment metadata
 	const experiment = {
@@ -153,6 +155,8 @@
 		{#if experiment.ascii_art}
 			<pre class="ascii-art">{experiment.ascii_art}</pre>
 		{/if}
+
+		<ExperimentVisualSummary visual={fileExperiment?.visual_summary} />
 
 		<!-- Abstract -->
 		<section class="abstract-section pl-6 space-y-4">

@@ -40,6 +40,7 @@ const CROSS_PROPERTY_REDIRECTS: Record<string, string> = {
 // File-based experiments that have dedicated route files (with custom interactive content)
 const FILE_BASED_WITH_ROUTES = new Set([
 	'agentic-visualization',
+	'ai-native-filtering',
 	'data-patterns',
 	'ascii-renderer',
 	'canvas-interactivity',

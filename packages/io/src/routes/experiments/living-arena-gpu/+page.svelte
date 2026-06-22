@@ -17,6 +17,8 @@
 	import { goto } from '$app/navigation';
 	import { browser } from '$app/environment';
 	import { SEO } from '@create-something/canon';
+	import ExperimentVisualSummary from '$lib/components/ExperimentVisualSummary.svelte';
+	import type { PageData } from './$types';
 	import {
 		Shield,
 		Lightbulb,
@@ -54,6 +56,9 @@
 		scenarioMessages,
 		incidentTypes
 	} from '@create-something/canon/experiments/living-arena';
+
+	let { data }: { data: PageData } = $props();
+	const experiment = $derived(data.experiment);
 
 	// WebGPU state
 	let webgpuSupported = $state(false);
@@ -448,6 +453,8 @@
 			</div>
 		</div>
 	</header>
+
+	<ExperimentVisualSummary visual={experiment.visual_summary} />
 
 	<!-- Scale & Seed Controls -->
 	{#if webgpuSupported}
