@@ -22,49 +22,6 @@ export type FileBasedPaper = FileBasedExperiment;
  */
 const fileBasedPaperMetadata: FileBasedPaper[] = [
 	{
-		id: 'paper-heads-up-operator-surface',
-		slug: 'heads-up-operator-surface',
-		title: 'The Heads-Up Operator Surface',
-		description: 'How governed agent work becomes portable without losing control. A practical model for using Even G2, Cloudflare Tunnel, Even Terminal, Codex, repo evidence, and Policy OS boundaries as a mobile operator surface.',
-		excerpt_short: 'The workstation should not be the boundary of agent supervision',
-		excerpt_long: 'This paper frames the G2 Cloudflare Codex access experiment as an operator mobility pattern, not a tunnel tutorial. The glasses carry a compact proof and decision surface while the repo, Linear issue, Cloudflare route, policy artifacts, and deployment receipts remain the source of truth.',
-		category: 'Research',
-		tags: [
-			'Heads-Up Operator Surface',
-			'Operator Mobility',
-			'Workflow Trust Layer',
-			'Proof Surface',
-			'Policy OS',
-			'Codex',
-			'Even G2',
-			'Cloudflare Tunnel',
-			'Agent Governance',
-			'Three-Tier Framework'
-		],
-		created_at: '2026-06-22T19:30:00Z',
-		updated_at: '2026-06-22T19:30:00Z',
-		reading_time_minutes: 15,
-		difficulty: 'intermediate',
-		is_file_based: true,
-		tests_principles: [
-			'mcp-first-thesis',
-			'three-tier-framework',
-			'policy-as-artifact',
-			'verification-first',
-			'agent-governance'
-		],
-		route: '/papers/heads-up-operator-surface',
-		ascii_art: `
-╭──────────────────────────────────────────────────────────────╮
-│ REPO TRUTH  →  CLOUD ROUTE  →  HEADS-UP OPERATOR            │
-│ issue, code     bounded path     observe / decide / verify   │
-│                                                              │
-│ The glasses are an access surface. Policy remains the        │
-│ authority model.                                             │
-╰──────────────────────────────────────────────────────────────╯
-`
-	},
-	{
 		id: 'paper-proof-surface',
 		slug: 'proof-surface',
 		title: 'The Proof Surface',
@@ -538,27 +495,6 @@ watermarks, extra logos, random text, illegible labels, fake brand names, colorf
 ];
 
 const fileBasedPaperVisuals = {
-	'paper-heads-up-operator-surface': defineArtifactVisuals({
-		kind: 'flow',
-		title: 'The operator surface follows the work instead of replacing the workstation.',
-		caption:
-			'Repo truth, route boundaries, and proof receipts stay durable while the heads-up display carries lightweight supervision.',
-		nodes: [
-			{ label: 'Repo truth', detail: 'Issues, code, commits, tests, and deploy receipts remain canonical.', icon: 'document', tone: 'receipt' },
-			{ label: 'Bounded route', detail: 'Cloudflare Tunnel exposes only the approved loopback service.', icon: 'settings', tone: 'neutral' },
-			{ label: 'Heads-up surface', detail: 'The operator observes state and gives direction from glasses.', icon: 'search', tone: 'wait' },
-			{ label: 'Decision', detail: 'Continue, stop, merge, deploy, or rotate through policy.', icon: 'check', tone: 'run' }
-		],
-		subject:
-			'A heads-up operator surface for governed Codex work where the glasses show supervision state while repo and policy artifacts remain authoritative.',
-		motifs: [
-			'monorepo and Linear receipts as source of truth',
-			'Cloudflare route as a narrow boundary',
-			'glasses view with compact operator state',
-			'decision receipt returning to the repo'
-		],
-		alt: 'Abstract heads-up operator surface showing repo truth routed through a bounded tunnel to a glasses decision view.'
-	}),
 	'paper-proof-surface': defineArtifactVisuals({
 		kind: 'state-strip',
 		title: 'Agent work becomes trustworthy when each state has a receipt.',
