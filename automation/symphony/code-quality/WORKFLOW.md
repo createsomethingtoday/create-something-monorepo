@@ -7,8 +7,6 @@ tracker:
   agent_id: symphony-code-quality
   label: code-quality
   active_states:
-    - Backlog
-    - Todo
     - In Progress
   terminal_states:
     - Done
@@ -26,8 +24,7 @@ hooks:
 agent:
   max_concurrent_agents: 2
   max_concurrent_agents_by_state:
-    ready: 2
-    claimed: 2
+    in progress: 2
   max_turns: 8
   max_retry_backoff_ms: 300000
 codex:

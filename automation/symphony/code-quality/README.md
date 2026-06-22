@@ -16,7 +16,12 @@ and the Symphony test suite.
 
 ## Task convention
 
-Create Linear issues for this lane with the `code-quality` label. Example:
+Create Linear issues for this lane in the `CREATE SOMETHING Agent Coordination`
+project with the `code-quality` label. Keep new issues in `Backlog` or `Todo`
+until an operator has reviewed the scope. Move or claim one issue into
+`In Progress` when it is ready for an unattended bounded pass.
+
+Example:
 
 ```bash
 pnpm linear:create -- \
@@ -52,6 +57,11 @@ pnpm agent:loop-pilot:dispatch
 `pnpm symphony:code-quality:once`. That command performs one poll/dispatch pass
 and drains to idle instead of leaving a daemon running.
 
+Only `In Progress` Linear issues in the configured project with the
+`code-quality` label are dispatchable. `Backlog` and `Todo` issues may appear in
+broad Linear ready views, but the code-quality Symphony workflow must not
+automatically claim them.
+
 Continuous orchestration:
 
 ```bash
@@ -74,7 +84,7 @@ the continuous daemon until the single-pass evidence is boring.
 Default authority:
 
 - may read Linear issues labeled `code-quality`
-- may claim work through Symphony when dispatch is explicitly requested
+- may claim `In Progress` work through Symphony when dispatch is explicitly requested
 - may create isolated workspaces under `./.symphony/workspaces/code-quality`
 - may run targeted package checks and leave a reviewable diff
 - may record evidence through the tracker when the worker succeeds
