@@ -22,6 +22,48 @@ export type FileBasedPaper = FileBasedExperiment;
  */
 const fileBasedPaperMetadata: FileBasedPaper[] = [
 	{
+		id: 'paper-loop-operable-codebase',
+		slug: 'loop-operable-codebase',
+		title: 'The Loop-Operable Codebase',
+		description: 'A CREATE SOMETHING field paper on converting loop-engineering hype into a bounded repo-native operating system using Linear, Symphony, worktrees, legibility contracts, policy artifacts, and explicit dispatch gates.',
+		excerpt_short: 'Loops work when the codebase can observe and stop them',
+		excerpt_long: 'This paper documents the CREATE SOMETHING loop pilot after reviewing public loop-engineering signals and validating the monorepo readiness gates. The result is not a Hermes-first rewrite. It is a Symphony-first operating pattern: read-only preflight by default, explicit dispatch for one bounded pass, Linear as durable state, worktrees as isolation, and policy artifacts as the stop boundary.',
+		category: 'Research',
+		tags: [
+			'Loop Engineering',
+			'Symphony',
+			'Linear',
+			'Codex',
+			'Hermes',
+			'Agent Harness',
+			'Worktrees',
+			'Policy OS',
+			'Three-Tier Framework'
+		],
+		created_at: '2026-06-22T15:32:59Z',
+		updated_at: '2026-06-22T15:32:59Z',
+		reading_time_minutes: 16,
+		difficulty: 'intermediate',
+		is_file_based: true,
+		tests_principles: [
+			'mcp-first-thesis',
+			'three-tier-framework',
+			'policy-as-artifact',
+			'verification-first',
+			'agent-governance'
+		],
+		route: '/papers/loop-operable-codebase',
+		ascii_art: `
+╭──────────────────────────────────────────────────────────────╮
+│ LINEAR  →  SYMPHONY  →  WORKTREE  →  CHECKS  →  RECEIPT     │
+│ queue      dispatch     isolation    evidence   memory       │
+│                                                              │
+│ A loop is useful only when the codebase can observe it,      │
+│ bound it, and stop it.                                      │
+╰──────────────────────────────────────────────────────────────╯
+`
+	},
+	{
 		id: 'paper-proof-surface',
 		slug: 'proof-surface',
 		title: 'The Proof Surface',
@@ -495,6 +537,27 @@ watermarks, extra logos, random text, illegible labels, fake brand names, colorf
 ];
 
 const fileBasedPaperVisuals = {
+	'paper-loop-operable-codebase': defineArtifactVisuals({
+		kind: 'flow',
+		title: 'A useful loop is observable, bounded, and able to stop.',
+		caption:
+			'Linear, Symphony, worktrees, checks, and receipts become one operating path only when dispatch authority is explicit.',
+		nodes: [
+			{ label: 'Queue', detail: 'Linear owns durable work state and evidence.', icon: 'document', tone: 'neutral' },
+			{ label: 'Dispatch', detail: 'Symphony starts one bounded pass only when requested.', icon: 'settings', tone: 'wait' },
+			{ label: 'Worktree', detail: 'Codex workers edit inside isolated checkouts.', icon: 'refresh', tone: 'run' },
+			{ label: 'Receipt', detail: 'Validation and cleanup evidence decide the next step.', icon: 'check', tone: 'receipt' }
+		],
+		subject:
+			'A repo-native agent loop where Linear queues work, Symphony dispatches one bounded worker, a worktree isolates edits, checks validate the result, and receipts decide whether autonomy can increase.',
+		motifs: [
+			'Linear issue queue connected to a bounded Symphony dispatch gate',
+			'isolated git worktree as an execution chamber',
+			'policy artifact boundary around the worker path',
+			'evidence receipt that either promotes, retries, or stops the loop'
+		],
+		alt: 'Abstract CREATE SOMETHING agent loop showing Linear, Symphony, worktree isolation, checks, and evidence receipts.'
+	}),
 	'paper-proof-surface': defineArtifactVisuals({
 		kind: 'state-strip',
 		title: 'Agent work becomes trustworthy when each state has a receipt.',
