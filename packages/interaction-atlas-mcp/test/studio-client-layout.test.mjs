@@ -102,9 +102,39 @@ test('tidy layout returns deterministic lane updates', () => {
     })),
     [
       { id: 'client', x: 84, y: 198 },
-      { id: 'workflow', x: 424, y: 144 },
-      { id: 'agent', x: 768, y: 326 },
-      { id: 'approval', x: 1112, y: 144 }
+      { id: 'workflow', x: 456, y: 136 },
+      { id: 'agent', x: 828, y: 112 },
+      { id: 'approval', x: 1200, y: 136 }
     ]
+  );
+});
+
+test('tidy layout stacks node kinds that share a visual column', () => {
+  const session = makeSession([
+    makeNode({ id: 'asset-table', kind: 'data', label: 'Airtable Assets', x: 420, y: 120 }),
+    makeNode({ id: 'review-dashboard', kind: 'touchpoint', label: 'Review dashboard', x: 420, y: 130 }),
+    makeNode({ id: 'asset-versions', kind: 'data', label: 'Airtable Asset Versions', x: 420, y: 140 }),
+    makeNode({ id: 'template-review-hub', kind: 'system', label: 'Template Review Hub', x: 760, y: 120 }),
+    makeNode({ id: 'feedback-runner', kind: 'ai', label: 'Feedback runner', x: 760, y: 130 })
+  ]);
+
+  const updates = tidyNodeUpdates(session);
+  const byId = new Map(updates.map((update) => [update.id, update]));
+
+  assert.deepEqual(
+    ['asset-table', 'review-dashboard', 'asset-versions'].map((id) => byId.get(id)?.x),
+    [456, 456, 456]
+  );
+  assert.deepEqual(
+    ['asset-table', 'review-dashboard', 'asset-versions'].map((id) => byId.get(id)?.y),
+    [136, 342, 548]
+  );
+  assert.deepEqual(
+    ['template-review-hub', 'feedback-runner'].map((id) => byId.get(id)?.x),
+    [828, 828]
+  );
+  assert.deepEqual(
+    ['template-review-hub', 'feedback-runner'].map((id) => byId.get(id)?.y),
+    [112, 318]
   );
 });

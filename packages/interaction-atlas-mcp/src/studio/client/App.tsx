@@ -27,6 +27,8 @@ import {
   Bot,
   Braces,
   Check,
+  ChevronLeft,
+  ChevronRight,
   Clipboard,
   Database,
   FileText,
@@ -39,7 +41,7 @@ import {
   PanelRightClose,
   PanelRightOpen,
   Plus,
-  Radio,
+  Presentation,
   RefreshCw,
   Rows3,
   ScanLine,
@@ -71,6 +73,7 @@ import type {
   AtlasCanvasNodeStatus,
   AtlasPaletteItem,
   AtlasSession,
+  AtlasStoryStep,
   AtlasWritebackActionStatus,
   AtlasWritebackProposal
 } from '../types.js';
@@ -83,6 +86,10 @@ import {
 type AtlasNodeData = {
   detailMode: CanvasDetailMode;
   isAgentActive: boolean;
+  isStoryDimmed: boolean;
+  isStoryFocused: boolean;
+  storyCalloutSeverity?: 'decision' | 'info' | 'risk';
+  storyStepIndex?: number;
   node: AtlasCanvasNode;
 };
 
@@ -174,6 +181,10 @@ function flowNodeSignature(node: FlowNode): string {
     node.style?.width ?? '',
     node.data.detailMode,
     node.data.isAgentActive ? 'active' : 'quiet',
+    node.data.isStoryFocused ? 'story-focus' : 'story-idle',
+    node.data.isStoryDimmed ? 'story-dim' : 'story-visible',
+    node.data.storyCalloutSeverity ?? '',
+    node.data.storyStepIndex ?? '',
     nodeActivitySignature(node.data.node)
   ].join('|');
 }
@@ -195,18 +206,49 @@ function toFlowNodes(
   activeNodeIds: Set<string>,
   detailMode: CanvasDetailMode
 ): FlowNode[] {
+  const story = session.story?.active ? session.story : undefined;
+  const focusNodeIds = new Set(story?.focusNodeIds ?? []);
+  const activeStepIndex = story?.steps?.findIndex((step) => step.id === story.activeStepId) ?? -1;
+  const storyStepIndex = activeStepIndex >= 0 ? activeStepIndex + 1 : undefined;
+  const calloutByNode = new Map(
+    (story?.callouts ?? [])
+      .filter((callout) => callout.nodeId)
+      .map((callout) => [callout.nodeId as string, callout.severity])
+  );
   return session.canvas.nodes.map((node) => ({
     id: node.id,
     type: 'atlas',
     position: { x: node.x, y: node.y },
-    data: { detailMode, isAgentActive: activeNodeIds.has(node.id), node },
+    data: {
+      detailMode,
+      isAgentActive: activeNodeIds.has(node.id),
+      isStoryDimmed: Boolean(story?.dimUnfocused && focusNodeIds.size && !focusNodeIds.has(node.id)),
+      isStoryFocused: focusNodeIds.has(node.id),
+      node,
+      storyCalloutSeverity: calloutByNode.get(node.id),
+      storyStepIndex: focusNodeIds.has(node.id) ? storyStepIndex : undefined
+    },
     selected: node.id === selectedNodeId,
     style: { width: nodeWidthForMode(node, detailMode) }
   }));
 }
 
-function toFlowEdge(edge: AtlasSession['canvas']['edges'][number]): Edge {
+function toFlowEdge(edge: AtlasSession['canvas']['edges'][number], session: AtlasSession): Edge {
+  const story = session.story?.active ? session.story : undefined;
+  const focusEdgeIds = new Set(story?.focusEdgeIds ?? []);
+  const focusNodeIds = new Set(story?.focusNodeIds ?? []);
+  const explicitlyFocused = focusEdgeIds.has(edge.id);
+  const connectedFocus =
+    focusNodeIds.size > 0 && focusNodeIds.has(edge.source) && focusNodeIds.has(edge.target);
+  const isFocused = explicitlyFocused || connectedFocus;
+  const isDimmed = Boolean(story?.dimUnfocused && (focusNodeIds.size || focusEdgeIds.size) && !isFocused);
+  const style = isFocused
+    ? { stroke: '#0048ff', strokeWidth: 2.25 }
+    : isDimmed
+      ? { stroke: '#d6d6cf', strokeOpacity: 0.26, strokeWidth: 0.9 }
+      : DEFAULT_EDGE_OPTIONS.style;
   return {
+    className: `${isFocused ? 'story-edge-focused' : ''} ${isDimmed ? 'story-edge-dimmed' : ''}`,
     id: edge.id,
     source: edge.source,
     target: edge.target,
@@ -219,7 +261,8 @@ function toFlowEdge(edge: AtlasSession['canvas']['edges'][number]): Edge {
       fontSize: 11,
       fontWeight: 400
     },
-    ...DEFAULT_EDGE_OPTIONS
+    ...DEFAULT_EDGE_OPTIONS,
+    style
   };
 }
 
@@ -234,7 +277,7 @@ function toStableFlowEdges(
   }
 
   const nextEdges = session.canvas.edges.map((edge) => {
-    const next = toFlowEdge(edge);
+    const next = toFlowEdge(edge, session);
     const signature = edgeSignature(next);
     const cached = cache.get(edge.id);
     if (cached?.signature === signature) return cached.edge;
@@ -338,10 +381,15 @@ const AtlasFlowNode = memo(function AtlasFlowNode({
     <article
       className={`atlas-node kind-${node.kind} detail-${data.detailMode} ${
         data.isAgentActive ? 'agent-active' : ''
-      } ${selected ? 'selected' : ''}`}
+      } ${data.isStoryFocused ? 'story-focused' : ''} ${
+        data.isStoryDimmed ? 'story-dimmed' : ''
+      } ${data.storyCalloutSeverity ? `story-callout-${data.storyCalloutSeverity}` : ''} ${
+        selected ? 'selected' : ''
+      }`}
     >
       <Handle className="atlas-handle target" position={Position.Left} type="target" />
       <Handle className="atlas-handle source" position={Position.Right} type="source" />
+      {data.storyStepIndex ? <span className="story-step-badge">{data.storyStepIndex}</span> : null}
       <div className="node-topline">
         <span className="node-kind">
           <Icon aria-hidden="true" />
@@ -370,6 +418,142 @@ const AtlasFlowNode = memo(function AtlasFlowNode({
 const NODE_TYPES = {
   atlas: AtlasFlowNode
 };
+
+function StoryPanel({
+  onClear,
+  onNextStep,
+  onPreviousStep,
+  onSelectStep,
+  session
+}: {
+  onClear: () => void;
+  onNextStep: () => void;
+  onPreviousStep: () => void;
+  onSelectStep: (step: AtlasStoryStep) => void;
+  session: AtlasSession | null;
+}): React.ReactElement | null {
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const story = session?.story;
+  if (!story?.active && !story?.questions.length) return null;
+
+  const openQuestions = story.questions.filter((question) => question.status === 'open');
+  const steps = story.steps ?? [];
+  const activeStepIndex = steps.findIndex((step) => step.id === story.activeStepId);
+  const activeStep = steps[activeStepIndex] ?? steps.find((step) => step.status === 'current');
+  const canGoPrevious = activeStepIndex > 0;
+  const canGoNext = activeStepIndex >= 0 && activeStepIndex < steps.length - 1;
+  const detailCount = story.callouts.length + openQuestions.length + (story.nextAction ? 1 : 0);
+  return (
+    <aside className={`story-panel ${story.active ? 'active' : 'quiet'}`}>
+      <div className="story-panel-header">
+        <span className="title-lockup">
+          <span className="title-icon">
+            <Sparkles aria-hidden="true" />
+          </span>
+          <span>
+            <strong>{story.title ?? 'Agent walkthrough'}</strong>
+            <em>
+              {steps.length && activeStepIndex >= 0
+                ? `Step ${activeStepIndex + 1} of ${steps.length}`
+                : story.active
+                  ? 'Live canvas focus'
+                  : 'Questions preserved'}
+            </em>
+          </span>
+        </span>
+        {story.active ? (
+          <button className="icon-only" onClick={onClear} title="Clear story focus" type="button">
+            <X aria-hidden="true" />
+          </button>
+        ) : null}
+      </div>
+      {activeStep ? (
+        <div className="story-current-step">
+          <span>{activeStep.owner ?? 'Agent'}</span>
+          <strong>{activeStep.title}</strong>
+          <p>{activeStep.summary}</p>
+        </div>
+      ) : null}
+      {steps.length ? (
+        <div className="story-nav" aria-label="Presenter controls">
+          <button disabled={!canGoPrevious} onClick={onPreviousStep} type="button">
+            <ChevronLeft aria-hidden="true" />
+            <span>Back</span>
+          </button>
+          <button disabled={!canGoNext} onClick={onNextStep} type="button">
+            <span>Next</span>
+            <ChevronRight aria-hidden="true" />
+          </button>
+        </div>
+      ) : null}
+      {story.narration ? <p className="story-narration">{story.narration}</p> : null}
+      {steps.length ? (
+        <div className="story-steps" aria-label="Walkthrough steps">
+          {steps.map((step, index) => {
+            const isActive = step.id === story.activeStepId || (!story.activeStepId && step.status === 'current');
+            return (
+              <button
+                className={isActive ? 'active' : ''}
+                key={step.id}
+                onClick={() => onSelectStep(step)}
+                type="button"
+              >
+                <span>{index + 1}</span>
+                <strong>{step.title}</strong>
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
+      {detailCount ? (
+        <button
+          aria-expanded={detailsOpen}
+          className="story-details-toggle"
+          onClick={() => setDetailsOpen((value) => !value)}
+          type="button"
+        >
+          <span>{detailsOpen ? 'Hide details' : `Details · ${detailCount}`}</span>
+        </button>
+      ) : null}
+      {detailsOpen ? (
+        <div className="story-details">
+          {activeStep?.proof ? (
+            <p className="story-proof">
+              <span>Proof</span>
+              {activeStep.proof}
+            </p>
+          ) : null}
+          {story.callouts.length ? (
+            <div className="story-callouts">
+              {story.callouts.map((callout) => (
+                <p className={`story-callout ${callout.severity}`} key={callout.id}>
+                  {callout.text}
+                </p>
+              ))}
+            </div>
+          ) : null}
+          {story.nextAction ? (
+            <p className="story-next-action">
+              <span>Next move</span>
+              {story.nextAction}
+            </p>
+          ) : null}
+          {openQuestions.length ? (
+            <div className="story-questions">
+              <strong>Validation questions · {openQuestions.length}</strong>
+              {openQuestions.slice(0, 3).map((question) => (
+                <p key={question.id}>
+                  {question.owner ? <span>{question.owner}: </span> : null}
+                  {question.question}
+                </p>
+              ))}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+    </aside>
+  );
+}
 
 function Rail({
   onAcceptSuggestion,
@@ -831,6 +1015,7 @@ function AtlasStudio(): React.ReactElement {
   );
   const [railOpen, setRailOpen] = useState(false);
   const [inspectorOpen, setInspectorOpen] = useState(false);
+  const [presenterMode, setPresenterMode] = useState(false);
   const [draft, setDraft] = useState<NodeDraft | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [healSummary, setHealSummary] = useState<string | null>(null);
@@ -841,6 +1026,8 @@ function AtlasStudio(): React.ReactElement {
   const sessionRef = useRef<AtlasSession | null>(null);
   const nodeSignatures = useRef<Map<string, string>>(new Map());
   const activityTimer = useRef<number | null>(null);
+  const storyFrameKey = useRef<string | null>(null);
+  const presenterModeInitialized = useRef(false);
 
   const edges = useMemo(() => {
     if (!session) return [];
@@ -851,7 +1038,6 @@ function AtlasStudio(): React.ReactElement {
     () => session?.canvas.nodes.find((node) => node.id === selectedNodeId) ?? null,
     [selectedNodeId, session]
   );
-  const queuedCount = session?.suggestions.filter((item) => item.status === 'queued').length ?? 0;
   const counts = `${session?.canvas.nodes.length ?? 0} nodes / ${session?.canvas.edges.length ?? 0} edges`;
   const sessionTitle = session
     ? `${formatClient(session.client)} / ${session.workflow}`
@@ -921,6 +1107,10 @@ function AtlasStudio(): React.ReactElement {
 
   useEffect(() => {
     if (!session) return;
+    if (!presenterModeInitialized.current && session.story?.active && session.story.steps.length) {
+      presenterModeInitialized.current = true;
+      setPresenterMode(true);
+    }
     const nextNodes = toFlowNodes(session, selectedNodeId, activeNodeIds, detailMode);
 
     setNodes((current) => {
@@ -1059,6 +1249,47 @@ function AtlasStudio(): React.ReactElement {
     [applySession, sessionId]
   );
 
+  const clearStoryFocus = useCallback(async () => {
+    const next = await requestJson<AtlasSession>(
+      `/api/sessions/${encodeURIComponent(sessionId)}/story`,
+      {
+        method: 'DELETE'
+      }
+    );
+    applySession(next, 'local');
+    setError(null);
+  }, [applySession, sessionId]);
+
+  const selectStoryStep = useCallback(
+    async (step: AtlasStoryStep) => {
+      const next = await requestJson<AtlasSession>(
+        `/api/sessions/${encodeURIComponent(sessionId)}/story/steps/${encodeURIComponent(
+          step.id
+        )}/activate`,
+        {
+          method: 'POST'
+        }
+      );
+      applySession(next, 'local');
+      setError(null);
+    },
+    [applySession, sessionId]
+  );
+
+  const advancePresenterStep = useCallback(
+    async (direction: 'next' | 'previous') => {
+      const next = await requestJson<AtlasSession>(
+        `/api/sessions/${encodeURIComponent(sessionId)}/story/${direction}`,
+        {
+          method: 'POST'
+        }
+      );
+      applySession(next, 'local');
+      setError(null);
+    },
+    [applySession, sessionId]
+  );
+
   const acceptSuggestion = useCallback(
     async (suggestionId: string) => {
       const next = await requestJson<AtlasSession>(
@@ -1153,9 +1384,44 @@ function AtlasStudio(): React.ReactElement {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [removeSelectedNode, selectedNodeId]);
 
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (!presenterMode || !session?.story?.active || isEditableTarget(event.target)) return;
+      if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return;
+      event.preventDefault();
+      void advancePresenterStep(event.key === 'ArrowRight' ? 'next' : 'previous');
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [advancePresenterStep, presenterMode, session?.story?.active]);
+
   const fitCanvas = useCallback(() => {
     void flowRef.current?.fitView(FIT_VIEW_OPTIONS);
   }, []);
+
+  const fitStoryFocus = useCallback(() => {
+    const story = session?.story;
+    if (!story?.active || !story.focusNodeIds.length) {
+      storyFrameKey.current = null;
+      return;
+    }
+    const key = [story.activeStepId ?? 'story', ...story.focusNodeIds].join('|');
+    if (storyFrameKey.current === key) return;
+    storyFrameKey.current = key;
+    window.setTimeout(() => {
+      void flowRef.current?.fitView({
+        ...FIT_VIEW_OPTIONS,
+        maxZoom: 1.18,
+        nodes: story.focusNodeIds.map((id) => ({ id })),
+        padding: 0.34
+      });
+    }, 60);
+  }, [session]);
+
+  useEffect(() => {
+    fitStoryFocus();
+  }, [fitStoryFocus, nodes]);
 
   const tidyCanvas = useCallback(async () => {
     const result = await requestJson<{
@@ -1275,13 +1541,6 @@ function AtlasStudio(): React.ReactElement {
             <span>{sessionTitle}</span>
           </span>
         </div>
-        <div className="session-chips" aria-label="Session state">
-          <span className="count-chip">
-            <Radio aria-hidden="true" />
-            <span>Agent live</span>
-          </span>
-          <span className="count-chip">{queuedCount} queued</span>
-        </div>
         <div className="toolbar">
           <IconButton
             active={railOpen}
@@ -1298,6 +1557,14 @@ function AtlasStudio(): React.ReactElement {
             title="Toggle inspector"
           >
             Inspector
+          </IconButton>
+          <IconButton
+            active={presenterMode}
+            icon={Presentation}
+            onClick={() => setPresenterMode((value) => !value)}
+            title="Toggle presenter mode"
+          >
+            Present
           </IconButton>
           <IconButton icon={MapIcon} onClick={fitCanvas} title="Fit map">
             Fit
@@ -1326,7 +1593,10 @@ function AtlasStudio(): React.ReactElement {
 
       <main className="studio-main">
         <ReactFlowProvider>
-          <div className="canvas-stage" aria-label="Atlas workflow canvas">
+          <div
+            className={`canvas-stage ${presenterMode ? 'presenter-mode' : ''}`}
+            aria-label="Atlas workflow canvas"
+          >
             <ReactFlow
               attributionPosition="bottom-left"
               colorMode="light"
@@ -1343,8 +1613,8 @@ function AtlasStudio(): React.ReactElement {
               nodeDragThreshold={8}
               nodeTypes={NODE_TYPES}
               nodes={nodes}
-              nodesConnectable
-              nodesDraggable
+              nodesConnectable={!presenterMode}
+              nodesDraggable={!presenterMode}
               onConnect={onConnect}
               onInit={onInit}
               onMoveEnd={onMoveEnd}
@@ -1397,6 +1667,15 @@ function AtlasStudio(): React.ReactElement {
               </Panel>
               <Panel className="canvas-mark" position="bottom-right">
                 <CubeMark />
+              </Panel>
+              <Panel className="story-panel-wrap" position="bottom-left">
+                <StoryPanel
+                  onClear={() => void clearStoryFocus()}
+                  onNextStep={() => void advancePresenterStep('next')}
+                  onPreviousStep={() => void advancePresenterStep('previous')}
+                  onSelectStep={(step) => void selectStoryStep(step)}
+                  session={session}
+                />
               </Panel>
             </ReactFlow>
           </div>

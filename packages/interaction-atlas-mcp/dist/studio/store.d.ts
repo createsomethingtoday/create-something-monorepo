@@ -1,4 +1,4 @@
-import type { AtlasCanvasEdge, AtlasCanvasNode, AtlasCanvasNodeKind, AtlasCanvasNodeStatus, AtlasSession, AtlasSessionActor } from './types.js';
+import type { AtlasCanvasEdge, AtlasCanvasNode, AtlasCanvasNodeKind, AtlasCanvasNodeStatus, AtlasSession, AtlasSessionActor, AtlasStoryCallout, AtlasStoryQuestion, AtlasStoryStep } from './types.js';
 type CreateSessionInput = {
     client: string;
     workflow: string;
@@ -34,6 +34,30 @@ type AddObservationInput = {
     source?: AtlasSessionActor;
     suggest?: boolean;
 };
+type SetStoryInput = {
+    activeStepId?: string;
+    callouts?: Array<Omit<AtlasStoryCallout, 'id'> & {
+        id?: string;
+    }>;
+    dimUnfocused?: boolean;
+    focusEdgeIds?: string[];
+    focusNodeIds?: string[];
+    narration?: string;
+    nextAction?: string;
+    questions?: Array<Omit<AtlasStoryQuestion, 'id' | 'status'> & {
+        id?: string;
+        status?: AtlasStoryQuestion['status'];
+    }>;
+    steps?: Array<Omit<AtlasStoryStep, 'id'> & {
+        id?: string;
+    }>;
+    title?: string;
+    updatedBy?: AtlasSessionActor;
+};
+type AddStoryQuestionInput = Omit<AtlasStoryQuestion, 'id' | 'status'> & {
+    updatedBy?: AtlasSessionActor;
+};
+type StoryStepDirection = 'next' | 'previous';
 export declare function getStudioHome(cwd?: string): string;
 export declare function getSessionPath(sessionId: string, cwd?: string): string;
 export declare function createSession(input: CreateSessionInput, cwd?: string): Promise<AtlasSession>;
@@ -48,6 +72,13 @@ export declare function updateNodes(sessionId: string, inputs: Array<{
 export declare function removeNode(sessionId: string, nodeId: string, cwd?: string): Promise<RemoveNodeResult>;
 export declare function addEdge(sessionId: string, input: AddEdgeInput, cwd?: string): Promise<AtlasSession>;
 export declare function addObservation(sessionId: string, input: AddObservationInput, cwd?: string): Promise<AtlasSession>;
+export declare function setStoryFocus(sessionId: string, input: SetStoryInput, cwd?: string): Promise<AtlasSession>;
+export declare function activateStoryStep(sessionId: string, stepId: string, cwd?: string): Promise<AtlasSession>;
+export declare function advanceStoryStep(sessionId: string, direction: StoryStepDirection, cwd?: string): Promise<AtlasSession>;
+export declare function addStoryQuestion(sessionId: string, input: AddStoryQuestionInput, cwd?: string): Promise<AtlasSession>;
+export declare function clearStoryFocus(sessionId: string, input?: {
+    updatedBy?: AtlasSessionActor;
+}, cwd?: string): Promise<AtlasSession>;
 export declare function acceptSuggestion(sessionId: string, suggestionId: string, cwd?: string): Promise<AtlasSession>;
 export declare function exportSessionMarkdown(session: AtlasSession): string;
 export {};

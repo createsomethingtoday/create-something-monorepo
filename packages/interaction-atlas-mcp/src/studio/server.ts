@@ -19,15 +19,20 @@ import {
 } from './writeback-proposals.js';
 import {
   acceptSuggestion,
+  activateStoryStep,
   addEdge,
   addNode,
   addObservation,
+  addStoryQuestion,
+  advanceStoryStep,
+  clearStoryFocus,
   createSession,
   exportSessionMarkdown,
   getSessionPath,
   listSessions,
   readSession,
   removeNode,
+  setStoryFocus,
   updateNode,
   updateNodes
 } from './store.js';
@@ -496,6 +501,69 @@ export async function startStudioServer(options: StudioServerOptions): Promise<h
           response,
           201,
           await addObservation(decodeURIComponent(observationMatch[1] ?? ''), body, cwd)
+        );
+        return;
+      }
+
+      const storyMatch = url.pathname.match(/^\/api\/sessions\/([^/]+)\/story$/);
+      if (method === 'POST' && storyMatch) {
+        const body = await readJson<Parameters<typeof setStoryFocus>[1]>(request);
+        sendJson(
+          response,
+          200,
+          await setStoryFocus(decodeURIComponent(storyMatch[1] ?? ''), body, cwd)
+        );
+        return;
+      }
+
+      if (method === 'DELETE' && storyMatch) {
+        sendJson(
+          response,
+          200,
+          await clearStoryFocus(decodeURIComponent(storyMatch[1] ?? ''), {}, cwd)
+        );
+        return;
+      }
+
+      const storyStepActivateMatch = url.pathname.match(
+        /^\/api\/sessions\/([^/]+)\/story\/steps\/([^/]+)\/activate$/
+      );
+      if (method === 'POST' && storyStepActivateMatch) {
+        sendJson(
+          response,
+          200,
+          await activateStoryStep(
+            decodeURIComponent(storyStepActivateMatch[1] ?? ''),
+            decodeURIComponent(storyStepActivateMatch[2] ?? ''),
+            cwd
+          )
+        );
+        return;
+      }
+
+      const storyDirectionMatch = url.pathname.match(
+        /^\/api\/sessions\/([^/]+)\/story\/(next|previous)$/
+      );
+      if (method === 'POST' && storyDirectionMatch) {
+        sendJson(
+          response,
+          200,
+          await advanceStoryStep(
+            decodeURIComponent(storyDirectionMatch[1] ?? ''),
+            storyDirectionMatch[2] === 'previous' ? 'previous' : 'next',
+            cwd
+          )
+        );
+        return;
+      }
+
+      const storyQuestionMatch = url.pathname.match(/^\/api\/sessions\/([^/]+)\/story\/questions$/);
+      if (method === 'POST' && storyQuestionMatch) {
+        const body = await readJson<Parameters<typeof addStoryQuestion>[1]>(request);
+        sendJson(
+          response,
+          201,
+          await addStoryQuestion(decodeURIComponent(storyQuestionMatch[1] ?? ''), body, cwd)
         );
         return;
       }

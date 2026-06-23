@@ -14,7 +14,7 @@ import { buildWorkflowTemplate } from '../workflows/build.js';
 import { workflowTemplateToMermaid } from '../workflows/mermaid.js';
 import { mapToolSequenceToWorkflowDefinition } from '../workflows/map.js';
 import { evaluateConstraintPolicyHybrid, evaluateConstraintPolicyWithRollout, compileConstraintPolicy, } from '@create-something/policy-os-engine';
-import { AtlasGetSchema, AtlasSearchSchema, AtlasStudioEdgeAddSchema, AtlasStudioNodeAddSchema, AtlasStudioObserveSchema, AtlasStudioHealSchema, AtlasStudioProposalActionReviewSchema, AtlasStudioProposalHandoffSchema, AtlasStudioProposalSchema, AtlasStudioPortalStartSchema, AtlasStudioSessionCreateSchema, AtlasStudioSessionIdSchema, AtlasStudioSuggestionAcceptSchema, WorkflowIdSchema, WorkflowMapFromToolSequenceSchema, McpCatalogListSchema, McpIntrospectSchema, McpMapSchema, VersionSelectionGetSchema, VersionSelectionSetSchema, JudgmentPolicyActivateSchema, JudgmentPolicyCompareReportGetSchema, JudgmentDashboardSummaryParamsSchema, JudgmentDashboardSummarySchema, JudgmentPolicyEstimateSchema, JudgmentEngineRolloutGetSchema, JudgmentEngineRolloutSetSchema, JudgmentSecurityStatusGetSchema, JudgmentSecurityAccessSetSchema, JudgmentSecurityIncidentResolveSchema, JudgmentSecurityIncidentReviewNextSchema, JudgmentPolicyGetSchema, JudgmentPolicySaveSchema, AutomationContractGetSchema, AutomationContractUpsertSchema, AutomationRunStartSchema, ApprovalInboxDecideSchema, } from '../schemas/index.js';
+import { AtlasGetSchema, AtlasSearchSchema, AtlasStudioEdgeAddSchema, AtlasStudioNodeAddSchema, AtlasStudioObserveSchema, AtlasStudioHealSchema, AtlasStudioProposalActionReviewSchema, AtlasStudioProposalHandoffSchema, AtlasStudioProposalSchema, AtlasStudioPortalStartSchema, AtlasStudioSessionCreateSchema, AtlasStudioSessionIdSchema, AtlasStudioStoryFocusSchema, AtlasStudioStoryQuestionAddSchema, AtlasStudioStoryStepActivateSchema, AtlasStudioSuggestionAcceptSchema, WorkflowIdSchema, WorkflowMapFromToolSequenceSchema, McpCatalogListSchema, McpIntrospectSchema, McpMapSchema, VersionSelectionGetSchema, VersionSelectionSetSchema, JudgmentPolicyActivateSchema, JudgmentPolicyCompareReportGetSchema, JudgmentDashboardSummaryParamsSchema, JudgmentDashboardSummarySchema, JudgmentPolicyEstimateSchema, JudgmentEngineRolloutGetSchema, JudgmentEngineRolloutSetSchema, JudgmentSecurityStatusGetSchema, JudgmentSecurityAccessSetSchema, JudgmentSecurityIncidentResolveSchema, JudgmentSecurityIncidentReviewNextSchema, JudgmentPolicyGetSchema, JudgmentPolicySaveSchema, AutomationContractGetSchema, AutomationContractUpsertSchema, AutomationRunStartSchema, ApprovalInboxDecideSchema, } from '../schemas/index.js';
 import { findMcpCatalogEntry, listMcpCatalog, resolveMcpHttpEndpointUrl, resolveMcpHttpEndpointUrlFromUrl, } from '../mcps/catalog.js';
 import { introspectMcpServer } from '../mcps/introspect.js';
 import { mapMcpToWorkflowDefinition } from '../mcps/map.js';
@@ -26,7 +26,7 @@ import { getEngineMetricsSummary, recordEngineEvent } from '../storage/engine-ev
 import { claimNextSecurityIncidentForReview, evaluateAbusePatternAndMitigate, getSecurityIncidentById, getAccountAccess, listRecentSecurityIncidents, resolveSecurityIncident, setAccountAccess, } from '../storage/security.js';
 import { createAutomationRun, decideApproval, getActiveAutomationContract, listActiveAutomationContracts, listPendingApprovals, upsertAutomationContract, } from '../storage/control-plane.js';
 import { getJudgmentDashboardSummary } from '../storage/dashboard.js';
-import { acceptSuggestion, addEdge, addNode, addObservation, createSession, exportSessionMarkdown, listSessions, readSession, updateNodes, } from '../studio/store.js';
+import { acceptSuggestion, activateStoryStep, addEdge, addNode, addObservation, addStoryQuestion, advanceStoryStep, clearStoryFocus, createSession, exportSessionMarkdown, listSessions, readSession, setStoryFocus, updateNodes, } from '../studio/store.js';
 import { getAtlasStudioAppHome, getAtlasBrowserPortalStatus, startAtlasBrowserPortal, stopAtlasBrowserPortal, } from '../studio/portal.js';
 import { healSessionProductionBindings } from '../studio/production-bindings.js';
 import { createWritebackProposal, exportWritebackProposalHandoffForSession, reviewWritebackProposalAction, } from '../studio/writeback-proposals.js';
@@ -681,6 +681,99 @@ export function registerTools(server) {
             sessionId: session.id,
             nodes: session.canvas.nodes.length,
             queuedSuggestions: session.suggestions.filter((suggestion) => suggestion.status === 'queued').length,
+            session,
+        });
+    }, { readOnly: false });
+    server.tool('atlas_studio_story_focus', 'Set transient Atlas Studio story focus for a live walkthrough. This highlights canvas context without changing durable nodes or edges.', AtlasStudioStoryFocusSchema.shape, async (params, ctx) => {
+        const input = AtlasStudioStoryFocusSchema.parse(params);
+        const session = await setStoryFocus(input.session_id, {
+            activeStepId: input.active_step_id,
+            callouts: input.callout_text
+                ? [
+                    {
+                        nodeId: input.callout_node_id,
+                        severity: input.callout_severity ?? 'info',
+                        text: input.callout_text,
+                    },
+                ]
+                : undefined,
+            dimUnfocused: input.dim_unfocused,
+            focusEdgeIds: input.focus_edge_ids,
+            focusNodeIds: input.focus_node_ids,
+            narration: input.narration,
+            nextAction: input.next_action,
+            steps: input.steps?.map((step) => ({
+                id: step.id,
+                focusEdgeIds: step.focus_edge_ids,
+                focusNodeIds: step.focus_node_ids,
+                owner: step.owner,
+                proof: step.proof,
+                status: step.status,
+                summary: step.summary,
+                title: step.title,
+            })),
+            title: input.title,
+            updatedBy: input.operator ? 'operator' : 'agent',
+        }, atlasStudioCwd());
+        return jsonContent({
+            accountId: ctx.accountId,
+            sessionId: session.id,
+            story: session.story,
+            session,
+        });
+    }, { readOnly: false });
+    server.tool('atlas_studio_story_question_add', 'Add a live validation question to the Atlas Studio story layer and optionally focus its canvas node.', AtlasStudioStoryQuestionAddSchema.shape, async (params, ctx) => {
+        const input = AtlasStudioStoryQuestionAddSchema.parse(params);
+        const session = await addStoryQuestion(input.session_id, {
+            nodeId: input.node_id,
+            owner: input.owner,
+            question: input.question,
+            updatedBy: input.operator ? 'operator' : 'agent',
+        }, atlasStudioCwd());
+        return jsonContent({
+            accountId: ctx.accountId,
+            sessionId: session.id,
+            story: session.story,
+            session,
+        });
+    }, { readOnly: false });
+    server.tool('atlas_studio_story_clear', 'Clear transient Atlas Studio story focus while preserving durable workflow mapping and unanswered questions.', AtlasStudioSessionIdSchema.shape, async (params, ctx) => {
+        const input = AtlasStudioSessionIdSchema.parse(params);
+        const session = await clearStoryFocus(input.session_id, {}, atlasStudioCwd());
+        return jsonContent({
+            accountId: ctx.accountId,
+            sessionId: session.id,
+            story: session.story,
+            session,
+        });
+    }, { readOnly: false });
+    server.tool('atlas_studio_story_step_activate', 'Activate one Atlas Studio presenter step and focus the canvas on its nodes and edges.', AtlasStudioStoryStepActivateSchema.shape, async (params, ctx) => {
+        const input = AtlasStudioStoryStepActivateSchema.parse(params);
+        const session = await activateStoryStep(input.session_id, input.step_id, atlasStudioCwd());
+        return jsonContent({
+            accountId: ctx.accountId,
+            sessionId: session.id,
+            story: session.story,
+            session,
+        });
+    }, { readOnly: false });
+    server.tool('atlas_studio_story_step_next', 'Advance the Atlas Studio presenter to the next story step.', AtlasStudioSessionIdSchema.shape, async (params, ctx) => {
+        const input = AtlasStudioSessionIdSchema.parse(params);
+        const session = await advanceStoryStep(input.session_id, 'next', atlasStudioCwd());
+        return jsonContent({
+            accountId: ctx.accountId,
+            sessionId: session.id,
+            story: session.story,
+            session,
+        });
+    }, { readOnly: false });
+    server.tool('atlas_studio_story_step_previous', 'Move the Atlas Studio presenter to the previous story step.', AtlasStudioSessionIdSchema.shape, async (params, ctx) => {
+        const input = AtlasStudioSessionIdSchema.parse(params);
+        const session = await advanceStoryStep(input.session_id, 'previous', atlasStudioCwd());
+        return jsonContent({
+            accountId: ctx.accountId,
+            sessionId: session.id,
+            story: session.story,
             session,
         });
     }, { readOnly: false });
