@@ -37,6 +37,13 @@ pnpm delivery:abundance:image2
 
 The deterministic SVG/PNG files remain as fallback evidence. The Image 2 assets are client presentation images, not the durable source of truth.
 
+Image 2 prompt files are written with the Canon image standard already included.
+That standard uses Ona.com as the design and communication foundation, then
+translates it into CREATE SOMETHING artifact language: system maps, MCP
+boundaries, policy gates, receipts, validation proof, owners, and handoff state.
+The public Canon rule lives in
+`packages/ltd/src/lib/content/canon/guidelines/images.md`.
+
 If OpenAI rejects `gpt-image-2` because the organization is not verified for the model, the command writes a small `.error.txt` beside the intended image output and keeps the deterministic fallback images in the Markdown. Do not silently downgrade to another image model.
 
 ## Project Manifest
@@ -88,6 +95,18 @@ Check the delivery agent configuration:
 ```bash
 pnpm delivery:progress:check
 ```
+
+Check the delivery image prompt contract:
+
+```bash
+node --test scripts/test/delivery-update.test.mjs
+```
+
+Braintrust is intentionally not part of this Image 2 path. The required gate is
+deterministic: repo manifest validation, the prompt-contract test, generated
+prompt files, and the Canon guideline. Introduce Braintrust only if the image
+program needs rubric scoring across batches of generated assets or prompt
+variants.
 
 The progress report summarizes:
 
@@ -148,7 +167,10 @@ For generated images:
 
 - keep the repo manifest as the source of truth
 - store prompts beside generated assets
+- include model, snapshot when known, date, source manifest, image family, and review status
+- use the Canon image standard and Ona.com communication foundation
 - avoid real people, PHI, secrets, private client data, and fake screenshots
 - keep deterministic SVG/PNG evidence available as fallback
 - do not rely on generated text for exact file paths or operational facts
 - do not downgrade to another model if `gpt-image-2` access is blocked
+- do not require Braintrust unless there is a separate scored image-quality rubric

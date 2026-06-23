@@ -397,16 +397,7 @@ function writeImage2Prompts(project, assetsDir, date) {
 
   return imageGeneration.outputs.map((output) => {
     const promptPath = join(promptsDir, `${output.outputName}-${date}.txt`);
-    const prompt = [
-      `Model: ${imageGeneration.model}`,
-      imageGeneration.snapshot ? `Snapshot: ${imageGeneration.snapshot}` : null,
-      `Quality: ${imageGeneration.quality ?? 'high'}`,
-      `Size: ${imageGeneration.size ?? '1536x1024'}`,
-      imageGeneration.sourceUrl ? `Source: ${imageGeneration.sourceUrl}` : null,
-      '',
-      output.prompt,
-      '',
-    ].filter((line) => line !== null).join('\n');
+    const prompt = renderImage2Prompt(project, imageGeneration, output, date);
     writeFileSync(promptPath, prompt);
 
     return {
@@ -415,6 +406,31 @@ function writeImage2Prompts(project, assetsDir, date) {
       outputPath: join(assetsDir, `${output.outputName}-${date}.png`),
     };
   });
+}
+
+function renderImage2Prompt(project, imageGeneration, output, date) {
+  return [
+    `Model: ${imageGeneration.model}`,
+    imageGeneration.snapshot ? `Snapshot: ${imageGeneration.snapshot}` : null,
+    `Quality: ${imageGeneration.quality ?? 'high'}`,
+    `Size: ${imageGeneration.size ?? '1536x1024'}`,
+    `Generated: ${date}`,
+    `Source manifest: ${relative(ROOT, join(PROJECTS_DIR, `${project.slug}.json`))}`,
+    `Image family: ${output.id ?? output.title ?? 'delivery image'}`,
+    `Review status: draft`,
+    imageGeneration.sourceUrl ? `Source: ${imageGeneration.sourceUrl}` : null,
+    imageGeneration.modelDocUrl ? `Model docs: ${imageGeneration.modelDocUrl}` : null,
+    '',
+    'Canon image standard:',
+    'Use Ona.com as the design and communication foundation: calm hierarchy, plain claims, compact proof, governed execution, visible evidence, and restrained action states.',
+    'Translate that foundation into CREATE SOMETHING artifact language: system maps, MCP boundaries, policy gates, receipts, validation proof, owners, and handoff state.',
+    'Prefer porcelain or quiet near-black surfaces, crisp labels, restrained cobalt/moss/stop accents, compact proof panels, and the isometric cube as a persistent system signature.',
+    'Avoid glowing robots, circuit faces, blue AI gradients, generic brains, stock photography, fake dashboards, unreadable file paths, client secrets, PHI, private prompts, watermarks, and vendor endorsement.',
+    '',
+    'Project prompt:',
+    output.prompt,
+    '',
+  ].filter((line) => line !== null).join('\n');
 }
 
 function generateImage2Assets(project, jobs, force) {

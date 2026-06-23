@@ -8,6 +8,7 @@
     type ClearCardItem,
     type ClearCtaItem
   } from '@create-something/canon';
+  import ArticleVisualFigure from '$lib/components/ArticleVisualFigure.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
   const timelineCards: ClearCardItem[] = [
@@ -212,6 +213,14 @@
 >
   {#snippet after()}
     <ClearCardGrid items={layerFit} columns={3} ariaLabel="Dify n8n layer fit" />
+    <ArticleVisualFigure
+      src="/images/articles/dify-vs-n8n/dify-n8n-layer-map.svg"
+      alt="Layer map comparing n8n for internal automation, Cloudflare for runtime ownership, Dify for client-facing agent surfaces, and Policy OS for governance."
+      eyebrow="Original visual"
+      title="Choose the tool by the operating layer."
+      caption="This owned layer map keeps the comparison from becoming a winner-take-all ranking: n8n, Cloudflare, Dify, MCP, and Policy OS each have a different job."
+      sourceLabel="Created by CREATE SOMETHING for this article."
+    />
   {/snippet}
 </ClearPageSection>
 
