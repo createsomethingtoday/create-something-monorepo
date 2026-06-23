@@ -9,11 +9,13 @@ Remote MCP server for Webflow App Review workflows and the Airtable-backed Webfl
   - `👛Assets` (`tblRwzpWoLgE9MrUm`)
   - `🖌️Asset Versions` (`tblHxZ2hgSFLZxsZu`)
   - `App Review Governance Findings` (`AIRTABLE_GOVERNANCE_FINDINGS_TABLE_ID` when provisioned)
+  - `Reviewer Exceptions` (`tblqkbW0SptshgPiw`) in base `appXfYXnivsUT1kLg`
 - Data policy:
   - apps-only filtering (`Capabilities`, `Client ID`, `APP ID`, `Visibility`)
   - read/write for approved fields
   - computed/lookup fields are read-only
   - governance findings are the structured backlog for cross-app policy/docs/platform gaps; they do not mutate official app review decisions
+  - reviewer exceptions are mutable knowledge candidates; MCP-created records are not retrievable by Dify until approved in Airtable
 
 ## Auth
 
@@ -38,6 +40,17 @@ Optional:
 - `AIRTABLE_GOVERNANCE_API_KEY` (optional PAT for a separate tracker base; falls back to `AIRTABLE_API_KEY`)
 - `AIRTABLE_GOVERNANCE_BASE_ID` (optional separate tracker base; discovered tracker base: `app1Q0o9xw2Zny7gw`)
 - `AIRTABLE_GOVERNANCE_FINDINGS_TABLE_ID` (defaults to table name `App Review Governance Findings`)
+- `AIRTABLE_REVIEWER_EXCEPTIONS_API_KEY` (PAT scoped to the reviewer exceptions base; falls back to `AIRTABLE_GOVERNANCE_API_KEY`/`AIRTABLE_API_KEY`)
+- `AIRTABLE_REVIEWER_EXCEPTIONS_BASE_ID` (defaults to `appXfYXnivsUT1kLg`)
+- `AIRTABLE_REVIEWER_EXCEPTIONS_TABLE_ID` (defaults to `tblqkbW0SptshgPiw`)
+- `DIFY_EXTERNAL_KNOWLEDGE_API_KEY` (bearer token for Dify External Knowledge API `/retrieval`)
+- `DIFY_REVIEWER_EXCEPTIONS_KNOWLEDGE_ID` (defaults to `reviewer-exceptions`)
+
+Recommended Infisical path:
+
+- `prod:/webflow-app-review-mcp:MCP_BEARER_TOKEN`
+- `prod:/webflow-app-review-mcp:AIRTABLE_REVIEWER_EXCEPTIONS_API_KEY`
+- `prod:/webflow-app-review-mcp:DIFY_EXTERNAL_KNOWLEDGE_API_KEY`
 
 ## Tools
 
@@ -55,6 +68,9 @@ Optional:
 - `governance_database_get_finding`
 - `governance_database_create_finding`
 - `governance_database_update_finding`
+- `app_review_list_reviewer_exceptions`
+- `app_review_propose_reviewer_exception`
+- `app_review_preview_reviewer_exception_knowledge`
 - `app_review_list_governance_findings`
 - `app_review_get_governance_finding`
 - `app_review_create_governance_finding`
@@ -72,6 +88,7 @@ Write posture:
 - queue filters can inspect assigned, unassigned, or all records without binding to a reviewer
 - draft feedback and controlled status changes write explicit Airtable fields only
 - narrow decision verbs are available for request-changes, approve, and reject
+- reviewer exception proposals create `Draft`/`Proposed` non-retrievable knowledge candidates only
 - broad metadata and marketplace-status updates should stay operator-gated
 
 ## Resources
@@ -82,6 +99,8 @@ Write posture:
 - `app-review://governance-findings-snapshot`
 - `governance://finding-schema`
 - `governance://findings-snapshot`
+- `app-review://reviewer-exception-schema`
+- `app-review://reviewer-exceptions-snapshot`
 - `app-review://queue-snapshot`
 - `app-review://database-workflow`
 
@@ -103,6 +122,23 @@ For Dify cards whose job is direct access to the governance database, register t
 Enable the neutral `governance_database_*` tools for the governance database workflow. Do not register Airtable API URLs, base IDs, or table IDs as MCP servers in Dify. The table `tblIH1LQ8H3b2piNi` is accessed through this MCP, not as a standalone MCP endpoint.
 
 The older `app_review_*_governance_finding` tools remain for backward compatibility with app-review hubs, but the neutral tools are preferred when the caller is not acting as a specific reviewer.
+
+## Dify External Knowledge: Reviewer Exceptions
+
+The Worker exposes Dify's External Knowledge API at:
+
+- Endpoint base URL: `https://webflow-app-review-mcp.createsomething.workers.dev`
+- Dify request path: `/retrieval`
+- Knowledge ID: `reviewer-exceptions`
+- Auth: bearer token from Infisical `prod:/webflow-app-review-mcp:DIFY_EXTERNAL_KNOWLEDGE_API_KEY`
+
+Dify retrieval returns Airtable records only when all retrieval gates pass:
+
+- `Knowledge Status` is `Approved` or `Active`
+- `Include in Dify Retrieval` is checked
+- `Expires At` is empty or today/future
+
+Reviewer agents should use `app_review_propose_reviewer_exception` when a reviewer reports a missed guideline, exception, or temporary update. That tool always creates a non-retrievable `Draft`/`Proposed` record. A human reviewer lead must approve the row in Airtable before Dify can retrieve it.
 
 ## Governance Findings Table
 

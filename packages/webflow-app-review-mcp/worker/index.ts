@@ -4,7 +4,12 @@ import { enableTelemetry } from '@create-something/mcp-core';
 
 import { misconfiguredResponse, validateBearerToken } from '../src/auth.js';
 import { AirtableClient } from '../src/airtable.js';
-import { DEFAULT_AIRTABLE_BASE_ID, DEFAULT_GOVERNANCE_FINDINGS_TABLE_ID } from '../src/schema.js';
+import {
+  DEFAULT_AIRTABLE_BASE_ID,
+  DEFAULT_GOVERNANCE_FINDINGS_TABLE_ID,
+  DEFAULT_REVIEWER_EXCEPTIONS_BASE_ID,
+  DEFAULT_REVIEWER_EXCEPTIONS_TABLE_ID,
+} from '../src/schema.js';
 import { registerPrompts } from '../src/prompts.js';
 import { registerResources } from '../src/resources.js';
 import { registerTools } from '../src/tools.js';
@@ -16,9 +21,14 @@ interface Env {
   MCP_API_KEY?: string;
   AIRTABLE_API_KEY?: string;
   AIRTABLE_GOVERNANCE_API_KEY?: string;
+  AIRTABLE_REVIEWER_EXCEPTIONS_API_KEY?: string;
   AIRTABLE_BASE_ID?: string;
   AIRTABLE_GOVERNANCE_BASE_ID?: string;
   AIRTABLE_GOVERNANCE_FINDINGS_TABLE_ID?: string;
+  AIRTABLE_REVIEWER_EXCEPTIONS_BASE_ID?: string;
+  AIRTABLE_REVIEWER_EXCEPTIONS_TABLE_ID?: string;
+  DIFY_EXTERNAL_KNOWLEDGE_API_KEY?: string;
+  DIFY_REVIEWER_EXCEPTIONS_KNOWLEDGE_ID?: string;
 }
 
 export function validateApiKey(request: Request, env: Env): Response | null {
@@ -26,6 +36,99 @@ export function validateApiKey(request: Request, env: Env): Response | null {
     return misconfiguredResponse('MCP_API_KEY is not configured for this deployment.');
   }
   return validateBearerToken(request, env.MCP_API_KEY);
+}
+
+function jsonResponse(value: unknown, status = 200): Response {
+  return new Response(JSON.stringify(value, null, 2), {
+    status,
+    headers: {
+      'Content-Type': 'application/json',
+      ...CORS_HEADERS,
+    },
+  });
+}
+
+function validateExternalKnowledgeApiKey(request: Request, env: Env): Response | null {
+  if (!env.DIFY_EXTERNAL_KNOWLEDGE_API_KEY) {
+    return jsonResponse(
+      {
+        error_code: 1002,
+        error_msg: 'DIFY_EXTERNAL_KNOWLEDGE_API_KEY is not configured for this deployment.',
+      },
+      500,
+    );
+  }
+  return validateBearerToken(request, env.DIFY_EXTERNAL_KNOWLEDGE_API_KEY);
+}
+
+function getClient(env: Env): AirtableClient {
+  if (!env.AIRTABLE_API_KEY) {
+    throw new Error('Missing AIRTABLE_API_KEY environment variable.');
+  }
+  return new AirtableClient({
+    apiKey: env.AIRTABLE_API_KEY,
+    governanceApiKey: env.AIRTABLE_GOVERNANCE_API_KEY,
+    reviewerExceptionsApiKey: env.AIRTABLE_REVIEWER_EXCEPTIONS_API_KEY,
+    baseId: env.AIRTABLE_BASE_ID ?? DEFAULT_AIRTABLE_BASE_ID,
+    governanceBaseId: env.AIRTABLE_GOVERNANCE_BASE_ID,
+    governanceFindingsTableId: env.AIRTABLE_GOVERNANCE_FINDINGS_TABLE_ID,
+    reviewerExceptionsBaseId: env.AIRTABLE_REVIEWER_EXCEPTIONS_BASE_ID,
+    reviewerExceptionsTableId: env.AIRTABLE_REVIEWER_EXCEPTIONS_TABLE_ID,
+  });
+}
+
+async function handleReviewerExceptionsRetrieval(request: Request, env: Env): Promise<Response> {
+  if (request.method !== 'POST') {
+    return jsonResponse({ error_code: 4001, error_msg: 'Use POST for Dify external knowledge retrieval.' }, 405);
+  }
+
+  const authError = validateExternalKnowledgeApiKey(request, env);
+  if (authError) return authError;
+
+  const body = (await request.json().catch(() => null)) as {
+    knowledge_id?: unknown;
+    query?: unknown;
+    retrieval_setting?: {
+      top_k?: unknown;
+      score_threshold?: unknown;
+    };
+  } | null;
+
+  if (!body || typeof body.query !== 'string' || typeof body.knowledge_id !== 'string') {
+    return jsonResponse({ error_code: 4002, error_msg: 'Request must include string knowledge_id and query.' }, 400);
+  }
+
+  const expectedKnowledgeId = env.DIFY_REVIEWER_EXCEPTIONS_KNOWLEDGE_ID?.trim() || 'reviewer-exceptions';
+  if (body.knowledge_id !== expectedKnowledgeId) {
+    return jsonResponse(
+      {
+        error_code: 2001,
+        error_msg: `Knowledge base not found: ${body.knowledge_id}`,
+      },
+      404,
+    );
+  }
+
+  const topK =
+    typeof body.retrieval_setting?.top_k === 'number' && Number.isFinite(body.retrieval_setting.top_k)
+      ? body.retrieval_setting.top_k
+      : 3;
+  const scoreThreshold =
+    typeof body.retrieval_setting?.score_threshold === 'number' && Number.isFinite(body.retrieval_setting.score_threshold)
+      ? body.retrieval_setting.score_threshold
+      : 0;
+
+  try {
+    const records = await getClient(env).retrieveReviewerExceptionKnowledge({
+      query: body.query,
+      topK,
+      scoreThreshold,
+    });
+    return jsonResponse({ records });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return jsonResponse({ error_code: 5001, error_msg: message }, 500);
+  }
 }
 
 export class WebflowAppReviewMCP extends McpAgent<Env> {
@@ -44,21 +147,10 @@ export class WebflowAppReviewMCP extends McpAgent<Env> {
       );
     }
 
-    const getClient = () => {
-      if (!this.env.AIRTABLE_API_KEY) {
-        throw new Error('Missing AIRTABLE_API_KEY environment variable.');
-      }
-      return new AirtableClient({
-        apiKey: this.env.AIRTABLE_API_KEY,
-        governanceApiKey: this.env.AIRTABLE_GOVERNANCE_API_KEY,
-        baseId: this.env.AIRTABLE_BASE_ID ?? DEFAULT_AIRTABLE_BASE_ID,
-        governanceBaseId: this.env.AIRTABLE_GOVERNANCE_BASE_ID,
-        governanceFindingsTableId: this.env.AIRTABLE_GOVERNANCE_FINDINGS_TABLE_ID,
-      });
-    };
+    const clientFactory = () => getClient(this.env);
 
-    registerResources(this.server, getClient);
-    registerTools(this.server, getClient);
+    registerResources(this.server, clientFactory);
+    registerTools(this.server, clientFactory);
     registerPrompts(this.server);
   }
 }
@@ -80,6 +172,10 @@ export default {
     if (url.pathname === '/mcp' || url.pathname.startsWith('/mcp/') || url.pathname === '/sse' || url.pathname.startsWith('/sse/')) {
       const authError = validateApiKey(request, env);
       if (authError) return authError;
+    }
+
+    if (url.pathname === '/retrieval') {
+      return handleReviewerExceptionsRetrieval(request, env);
     }
 
     if (url.pathname === '/mcp' || url.pathname.startsWith('/mcp/')) {
@@ -105,12 +201,15 @@ export default {
             endpoints: {
               mcp: '/mcp',
               sse: '/sse',
+              difyExternalKnowledge: '/retrieval',
             },
             tables: {
               assets: 'tblRwzpWoLgE9MrUm',
               assetVersions: 'tblHxZ2hgSFLZxsZu',
               governanceBase: env.AIRTABLE_GOVERNANCE_BASE_ID ?? env.AIRTABLE_BASE_ID ?? DEFAULT_AIRTABLE_BASE_ID,
               governanceFindings: env.AIRTABLE_GOVERNANCE_FINDINGS_TABLE_ID ?? DEFAULT_GOVERNANCE_FINDINGS_TABLE_ID,
+              reviewerExceptionsBase: env.AIRTABLE_REVIEWER_EXCEPTIONS_BASE_ID ?? DEFAULT_REVIEWER_EXCEPTIONS_BASE_ID,
+              reviewerExceptions: env.AIRTABLE_REVIEWER_EXCEPTIONS_TABLE_ID ?? DEFAULT_REVIEWER_EXCEPTIONS_TABLE_ID,
             },
           },
           null,
