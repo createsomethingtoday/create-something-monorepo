@@ -10,7 +10,7 @@
     "description": "Webflow App Review MCP for app asset, version, and governance database workflows",
     "tags": ["webflow", "review", "airtable", "apps", "cs"],
     "catalog_exposure_mode": "direct",
-    "estimated_tool_count": 24
+    "estimated_tool_count": 27
   },
   "dify_mcp_server": {
     "server_id": "webflow-app-review",
@@ -33,6 +33,8 @@
     "Configure bearer auth from Infisical prod:/webflow-app-review-mcp:MCP_BEARER_TOKEN.",
     "Refresh/discover tools in Dify Studio.",
     "For governance database access, enable the governance_database_* tools; do not register Airtable base or table URLs as separate MCP servers.",
+    "For mutable reviewer exceptions, enable app_review_list_reviewer_exceptions, app_review_propose_reviewer_exception, and app_review_preview_reviewer_exception_knowledge.",
+    "Create a Dify External Knowledge API connection with endpoint https://webflow-app-review-mcp.createsomething.workers.dev, knowledge ID reviewer-exceptions, and bearer auth from Infisical prod:/webflow-app-review-mcp:DIFY_EXTERNAL_KNOWLEDGE_API_KEY.",
     "Transcribe every discovered tool into config/dify/inventory.json with risk classification.",
     "Run pnpm dify:inventory:generate and pnpm dify:coverage:generate."
   ],
@@ -58,6 +60,7 @@
     "Do not paste the inventory fragment until Dify Studio has discovered tools and each tool is classified.",
     "Keep secret values in Infisical only; this artifact stores references, not values.",
     "The Governance & Transparency Airtable table is reached through governance_database_* tools on this MCP server, not through a direct Airtable MCP card.",
+    "The Reviewer Exceptions Airtable base is exposed to Dify as retrieval-only external knowledge plus MCP proposal tools. Agent-created rows are non-retrievable until a human sets Knowledge Status to Approved/Active and checks Include in Dify Retrieval.",
     "After the server card is codified, scaffold one or more Dify agents with pnpm dify:agent:scaffold."
   ]
 }

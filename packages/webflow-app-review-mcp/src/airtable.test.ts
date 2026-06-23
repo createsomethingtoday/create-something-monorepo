@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { AirtableClient, AirtableClientError, assertScopedTable, type CollaboratorRef } from './airtable.js';
-import { FIELD_IDS, GOVERNANCE_FINDING_FIELD_NAMES, TABLE_IDS } from './schema.js';
+import { FIELD_IDS, GOVERNANCE_FINDING_FIELD_NAMES, REVIEWER_EXCEPTION_FIELD_NAMES, TABLE_IDS } from './schema.js';
 
 function jsonResponse(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -223,6 +223,156 @@ describe('AirtableClient governance findings', () => {
       title: 'Private app beta contradiction',
       decisionNeeded: true,
     });
+  });
+});
+
+describe('AirtableClient reviewer exceptions', () => {
+  const fields = REVIEWER_EXCEPTION_FIELD_NAMES;
+
+  it('creates proposed reviewer exceptions as non-retrievable by default', async () => {
+    const fetchFn = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
+      const payload = JSON.parse(String(init?.body)) as {
+        records: Array<{ fields: Record<string, unknown> }>;
+      };
+      const createdFields = payload.records[0]?.fields ?? {};
+
+      return jsonResponse({
+        records: [
+          {
+            id: 'recException',
+            createdTime: '2026-06-23T20:00:00.000Z',
+            fields: createdFields,
+          },
+        ],
+      });
+    });
+
+    const client = new AirtableClient({
+      apiKey: 'token',
+      reviewerExceptionsApiKey: 'exceptions-token',
+      reviewerExceptionsBaseId: 'appExceptions',
+      reviewerExceptionsTableId: 'tblExceptions',
+      fetchFn,
+    });
+
+    const exception = await client.createReviewerException({
+      title: 'OAuth callback exception',
+      guidance: 'Allow approval with caveat when OAuth callback is documented in the install guide.',
+      scope: 'App Review',
+      source_type: 'Reviewer Note',
+      source_record_id: 'slack:123',
+      review_decision_impact: 'Allows approval with caveat',
+      applies_to: ['App', 'Install / OAuth'],
+      canonical_promotion_target: ['Reviewer Prompt', 'Eval / Golden Task'],
+    });
+
+    const callUrl = new URL(String(fetchFn.mock.calls[0]?.[0]));
+    const payload = JSON.parse(String(fetchFn.mock.calls[0]?.[1]?.body)) as {
+      records: Array<{ fields: Record<string, unknown> }>;
+    };
+
+    expect(callUrl.pathname).toContain('/appExceptions/tblExceptions');
+    expect(fetchFn.mock.calls[0]?.[1]?.headers).toMatchObject({
+      Authorization: 'Bearer exceptions-token',
+    });
+    expect(payload.records[0]?.fields).toMatchObject({
+      [fields.title]: 'OAuth callback exception',
+      [fields.guidance]: 'Allow approval with caveat when OAuth callback is documented in the install guide.',
+      [fields.knowledgeStatus]: 'Proposed',
+      [fields.confidence]: 'Medium',
+      [fields.includeInDifyRetrieval]: false,
+      [fields.appliesTo]: ['App', 'Install / OAuth'],
+      [fields.canonicalPromotionTarget]: ['Reviewer Prompt', 'Eval / Golden Task'],
+    });
+    expect(exception.exceptionId).toBe('recException');
+    expect(exception.includeInDifyRetrieval).toBe(false);
+  });
+
+  it('rejects MCP-created reviewer exceptions that try to approve retrieval', async () => {
+    const fetchFn = vi.fn();
+    const client = new AirtableClient({
+      apiKey: 'token',
+      fetchFn,
+    });
+
+    await expect(
+      client.createReviewerException({
+        title: 'Unsafe approval',
+        guidance: 'Do not allow this through MCP.',
+        knowledge_status: 'Approved',
+      }),
+    ).rejects.toMatchObject({ code: 'REVIEWER_EXCEPTION_APPROVAL_REQUIRES_HUMAN' });
+    expect(fetchFn).not.toHaveBeenCalled();
+  });
+
+  it('retrieves only approved active reviewer exception knowledge records', async () => {
+    const fetchFn = vi.fn(async () =>
+      jsonResponse({
+        records: [
+          {
+            id: 'recApproved',
+            createdTime: '2026-06-23T20:00:00.000Z',
+            fields: {
+              [fields.title]: 'OAuth callback exception',
+              [fields.guidance]: 'Allow approval with caveat when the OAuth callback is documented.',
+              [fields.knowledgeStatus]: 'Approved',
+              [fields.scope]: 'App Review',
+              [fields.reviewDecisionImpact]: 'Allows approval with caveat',
+              [fields.includeInDifyRetrieval]: true,
+              [fields.sourceUrl]: 'https://example.com/source',
+              [fields.appliesTo]: ['App', 'Install / OAuth'],
+            },
+          },
+          {
+            id: 'recDraft',
+            fields: {
+              [fields.title]: 'Draft only',
+              [fields.guidance]: 'Should not retrieve.',
+              [fields.knowledgeStatus]: 'Draft',
+              [fields.includeInDifyRetrieval]: true,
+            },
+          },
+          {
+            id: 'recExpired',
+            fields: {
+              [fields.title]: 'Expired',
+              [fields.guidance]: 'Should not retrieve.',
+              [fields.knowledgeStatus]: 'Active',
+              [fields.includeInDifyRetrieval]: true,
+              [fields.expiresAt]: '2020-01-01',
+            },
+          },
+        ],
+      }),
+    );
+
+    const client = new AirtableClient({
+      apiKey: 'token',
+      reviewerExceptionsBaseId: 'appExceptions',
+      reviewerExceptionsTableId: 'tblExceptions',
+      fetchFn,
+    });
+
+    const records = await client.retrieveReviewerExceptionKnowledge({
+      query: 'oauth callback approval caveat',
+      topK: 3,
+      scoreThreshold: 0,
+    });
+
+    const url = new URL(String(fetchFn.mock.calls[0]?.[0]));
+    expect(url.searchParams.get('filterByFormula')).toContain(fields.includeInDifyRetrieval);
+    expect(records).toHaveLength(1);
+    expect(records[0]).toMatchObject({
+      title: 'OAuth callback exception',
+      metadata: {
+        airtable_record_id: 'recApproved',
+        source: 'airtable_reviewer_exceptions',
+        knowledge_status: 'Approved',
+        source_url: 'https://example.com/source',
+      },
+    });
+    expect(records[0]?.content).toContain('OAuth callback exception');
+    expect(records[0]?.score).toBeGreaterThan(0);
   });
 });
 
