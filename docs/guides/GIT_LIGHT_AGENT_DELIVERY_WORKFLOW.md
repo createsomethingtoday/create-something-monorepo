@@ -22,11 +22,13 @@ Do not use the Git-light path as a substitute for production provenance.
 
 ## Inner Loop
 
-1. Start from a Linear issue.
+1. For solo exploratory work, start with `pnpm agent:solo-loop` in the current
+   checkout. For delegated or shared work, start from a Linear issue.
 2. Build context from repo artifacts and package docs.
 3. Run the narrow relevant checks for the touched surface.
 4. Deploy directly to DEV or preview from the current workspace if runtime evidence is needed.
-5. Record the deploy evidence in Linear.
+5. Record the deploy evidence in Linear when the checkpoint affects handoff,
+   review, rollback, or promotion.
 
 Use `pnpm linear:comment` or `pnpm linear:done -- --evidence "..."` to attach checkpoint evidence to the Linear issue.
 
