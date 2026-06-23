@@ -12,6 +12,11 @@ claim, comparison, or workflow observation.
 Original visuals are the CREATE SOMETHING signature. Screenshots are evidence.
 Stock AI imagery is neither.
 
+Use the Canon image guidelines as the shared standard for generated and designed
+marketing visuals: `packages/ltd/src/lib/content/canon/guidelines/images.md`.
+Ona.com is the design and communication foundation, but CREATE SOMETHING owns the
+system-map, policy, receipt, validation, and handoff language.
+
 ## Visual Asset Mix
 
 Every flagship article should plan for:
@@ -40,6 +45,10 @@ Create original visuals for the operating-design point of view:
 
 These should be owned assets with editable source files. They can be reused,
 updated, and adapted across articles, demos, sales decks, and social posts.
+
+For generated images, use `gpt-image-2` when access is available and keep the
+source prompt beside the export. The prompt must state the image family, proof
+requirement, target surface, and constraints before style direction.
 
 ## Collect
 
@@ -102,6 +111,29 @@ Maintain a reusable visual kit with:
 
 The goal is consistent recognition: a reader should know a diagram came from
 CREATE SOMETHING before they read the byline.
+
+Use these templates for each article image set:
+
+- `packages/agency/content/templates/marketing/image-prompt.md`
+- `packages/agency/content/templates/marketing/image-metadata.md`
+
+Check the template and metadata contract before publishing:
+
+```bash
+node scripts/marketing-image-assets-check.mjs
+```
+
+## Route Placement
+
+An owned article visual is not complete when it exists only as a social image,
+OG image, or asset-folder export. Place the primary original diagram in the live
+article body near the section where it clarifies the argument.
+
+For Svelte agency routes, use `ArticleVisualFigure` for owned diagrams and keep
+the route path, static image path, alt text, caption, and source label aligned
+with the article image metadata. High-intent article routes should also be
+covered by `packages/agency/scripts/check-seo-aeo.mjs` when the image is part of
+the communication contract.
 
 ## File Convention
 
@@ -168,9 +200,11 @@ Before publishing:
 
 - [ ] Visual plan is complete in the article brief.
 - [ ] Original hero or framework visual exists.
+- [ ] Primary owned visual is placed in the article body, not only as OG/social art.
 - [ ] Screenshot targets support concrete claims.
 - [ ] Screenshots are redacted and annotated.
 - [ ] Alt text and captions are written.
+- [ ] Route-level visual guardrail is added when the visual is part of the page contract.
 - [ ] Metadata file includes capture date and refresh due date.
 - [ ] Tracker row has image status and rights status.
 

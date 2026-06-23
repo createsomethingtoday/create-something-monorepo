@@ -8,6 +8,7 @@
     type ClearCardItem,
     type ClearCtaItem
   } from '@create-something/canon';
+  import ArticleVisualFigure from '$lib/components/ArticleVisualFigure.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
   const statusCards: ClearCardItem[] = [
@@ -227,6 +228,14 @@
 >
   {#snippet after()}
     <ClearCardGrid items={proofCards} columns={4} ariaLabel="Notion proof cards" />
+    <ArticleVisualFigure
+      src="/images/articles/notion-ops-workspace/notion-operator-workspace.svg"
+      alt="Diagram showing Notion as the operator workspace, with Linear, production systems, and policy evidence kept in their own source-of-truth boundaries."
+      eyebrow="Original visual"
+      title="Notion is the reviewable workspace, not the whole system."
+      caption="This owned diagram makes the partner lane concrete: Notion helps humans inspect timelines, risks, decisions, and evidence while source-of-truth systems keep their own ownership."
+      sourceLabel="Created by CREATE SOMETHING for this partner lane."
+    />
   {/snippet}
 </ClearPageSection>
 
