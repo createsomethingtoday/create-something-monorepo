@@ -108,6 +108,31 @@ Establish cadence:
 - **Weekly**: Review funnel, identify bottlenecks (30 min)
 - **Bi-weekly**: Content performance analysis (1 hr)
 
+#### 5.5 Atlas Starter Map Launch Package
+Use the public Atlas starter maps as the give-first outreach artifact:
+
+- Campaign plan: `content/campaigns/atlas-starter-map-launch.md`
+- Warm follow-up templates: `content/templates/outreach/atlas-starter-map-follow-up.md`
+- Public surface: `/atlas`
+
+**Operating rule:** lead with a useful workflow boundary, not a pitch. Ask the
+prospect to name the owner, source record, run action, approval point, stop
+condition, and evidence receipt before moving to a Workflow Mapping Session.
+
+**Channel split:**
+
+| Channel | Role | Cadence |
+|---------|------|---------|
+| LinkedIn | Primary conversation and ICP signal | 3 workflow posts per week |
+| Substack | Weekly relationship dispatch linking back to the custom domain | 1 dispatch per week |
+| Instagram | Visual proof of `run / wait / stop` workflow boundaries | 2-3 carousels per week |
+
+**Success criteria:**
+
+- [ ] 5 qualified workflow comments or replies in 2 weeks
+- [ ] 3 Atlas follow-up conversations started
+- [ ] 1 Workflow Mapping Session booked from campaign source
+
 ### Success Criteria
 - [ ] 5 connection requests sent per day
 - [ ] 10+ profile views from ICP per week
