@@ -103,8 +103,10 @@ changes. It still does not authorize Hermes to claim or mutate Linear work.
 2. Run `pnpm agent:hermes:evaluate:strict`.
 3. Create one Linear issue in `CREATE SOMETHING Agent Coordination` with a
    Hermes-specific evaluation label.
-4. Run exactly one bounded pass in an isolated worktree.
-5. Compare against the current Codex/Symphony baseline:
+4. Claim a Hermes-safe isolated worktree under a normal user-owned root:
+   `AGENT_WORKTREE_ROOT="$HOME/Code/create-something-worktrees" pnpm agent:claim-worktree -- --issue CRE-123`.
+5. Run exactly one bounded pass in that isolated worktree.
+6. Compare against the current Codex/Symphony baseline:
    - issue claimed only when explicitly eligible
    - workspace created under a known root
    - no unrelated file changes
