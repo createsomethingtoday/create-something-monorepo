@@ -48,6 +48,19 @@ divergence, Hermes/Codex command availability, and the recommended operating
 loop. It does not mutate git, Linear, deployments, secrets, or production
 state.
 
+Generate an inspectable starter prompt for the next loop without launching or
+mutating anything:
+
+```bash
+pnpm agent:solo-loop:starter
+pnpm agent:solo-loop -- --provider hermes --task "Fix the failing agency SEO smoke"
+pnpm agent:solo-loop -- --provider codex --task "Add a CLI smoke for the template sync path"
+```
+
+The starter output includes the provider launch shape plus the prompt to paste
+or hand to the worker. Use `--starter` without `--task` when you want the same
+prompt scaffold with a task placeholder.
+
 ## Operating Loop
 
 1. Work in the current checkout when the operator owns it.
@@ -103,13 +116,13 @@ resource-heavy, or needs parallel disposable environments.
 
 ## Quick Decision Table
 
-| Situation | Preferred lane |
-| --- | --- |
-| Solo exploratory edit | `pnpm agent:solo-loop` plus current-checkout agent session |
-| Low-risk DEV or preview deploy | Git-light delivery with Linear evidence if useful |
-| Shared production change | branch, PR, merge, deploy, post-deploy verification |
-| Parallel agent work touching overlapping files | Linear plus isolated worktrees |
-| Untrusted or destructive test | disposable sandbox such as E2B |
+| Situation                                      | Preferred lane                                             |
+| ---------------------------------------------- | ---------------------------------------------------------- |
+| Solo exploratory edit                          | `pnpm agent:solo-loop` plus current-checkout agent session |
+| Low-risk DEV or preview deploy                 | Git-light delivery with Linear evidence if useful          |
+| Shared production change                       | branch, PR, merge, deploy, post-deploy verification        |
+| Parallel agent work touching overlapping files | Linear plus isolated worktrees                             |
+| Untrusted or destructive test                  | disposable sandbox such as E2B                             |
 
 ## Validation
 
