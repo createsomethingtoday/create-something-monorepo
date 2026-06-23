@@ -61,6 +61,25 @@ Use `HERMES_COMMAND` when the binary is installed outside `PATH`:
 HERMES_COMMAND="$HOME/.hermes/bin/hermes" pnpm agent:hermes:evaluate:strict
 ```
 
+Full-agent smoke requires a configured model provider, not just an installed
+binary. Keep provider secrets in Infisical and inject them at runtime instead of
+writing API keys into `~/.hermes/.env`:
+
+```bash
+hermes config set model.provider custom
+hermes config set model.default gpt-5-mini
+hermes config set model.base_url https://api.openai.com/v1
+hermes config set model.api_mode chat_completions
+
+infisical run --env=prod --path=/ --include-imports=true -- \
+  hermes --cli -z "Full-agent smoke. Reply with exactly: HERMES_FULL_AGENT_OK"
+```
+
+Hermes 0.17.0 exposes OpenAI API credentials under the `openai-api` setup path,
+but the direct `provider: openai` runtime route is not accepted by the agent
+loop. Use the OpenAI-compatible `custom` endpoint route above until upstream
+accepts a native OpenAI runtime provider slug.
+
 ## What The Smoke Proves
 
 The evaluator checks:
@@ -72,6 +91,10 @@ The evaluator checks:
 
 This does not prove that Hermes should mutate the repo. It proves only that a
 host is ready for the next controlled test.
+
+The full-agent smoke proves one model-backed Hermes turn can start, call the
+configured provider, return a deterministic response, and exit without file
+changes. It still does not authorize Hermes to claim or mutate Linear work.
 
 ## Production Test Order
 
