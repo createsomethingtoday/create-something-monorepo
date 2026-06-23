@@ -25,6 +25,13 @@ function dateMatchesModifiedWindow(record: { fields: Record<string, unknown> }, 
   return modifiedTime > afterTime && (untilTime === null || modifiedTime <= untilTime);
 }
 
+function dateMatchesPublishedSince(record: { fields: Record<string, unknown> }, formula: string): boolean {
+  const since = formula.match(/DATETIME_PARSE\("([^"]+)"\)/)?.[1];
+  const publishedAt = record.fields['🚀📅Published Date'];
+  if (!since || typeof publishedAt !== 'string') return true;
+  return Date.parse(publishedAt) > Date.parse(since);
+}
+
 export function installAirtableFetchMock(dataset: MockDataset) {
   return vi.spyOn(globalThis, 'fetch').mockImplementation(async (input) => {
     const url = new URL(typeof input === 'string' ? input : input.url);
@@ -101,6 +108,13 @@ export function installAirtableFetchMock(dataset: MockDataset) {
       }
 
       if (formula.includes('IS_AFTER(')) {
+        if (formula.includes('🚀📅Published Date')) {
+          const matchingRecords = dataset.publishedAssets.filter((record) => dateMatchesPublishedSince(record, formula));
+          return Response.json({
+            records: maxRecords ? matchingRecords.slice(0, maxRecords) : matchingRecords,
+          });
+        }
+
         const records = dataset.incrementalAssets ?? [];
         const matchingRecords = records.some((record) => typeof record.fields['📅LMT'] === 'string')
           ? records.filter((record) => dateMatchesModifiedWindow(record, formula))

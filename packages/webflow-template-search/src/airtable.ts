@@ -81,6 +81,10 @@ function buildModifiedAfterFormula(cursor: string, until?: string): string {
   return `IS_AFTER({📅LMT}, DATETIME_PARSE("${cursor}"))`;
 }
 
+function buildPublishedSinceFormula(date: string): string {
+  return `AND(${buildPublishedTemplateFormula()}, IS_AFTER({🚀📅Published Date}, DATETIME_PARSE("${date}")))`;
+}
+
 function buildRecordIdFormula(recordIds: string[]): string {
   for (const id of recordIds) {
     if (!/^rec[A-Za-z0-9]+$/.test(id)) {
@@ -103,6 +107,7 @@ interface FetchOptions {
   optionalFields?: string[];
   formula?: string;
   sortField?: string;
+  sortDirection?: 'asc' | 'desc';
   maxRecords?: number;
 }
 
@@ -140,7 +145,7 @@ async function fetchAirtableRecords<TFields extends Record<string, unknown>>(
       if (options.formula) params.set('filterByFormula', options.formula);
       if (options.sortField) {
         params.set('sort[0][field]', options.sortField);
-        params.set('sort[0][direction]', 'asc');
+        params.set('sort[0][direction]', options.sortDirection ?? 'asc');
       }
       if (offset) params.set('offset', offset);
 
@@ -214,6 +219,22 @@ export async function fetchPublishedTemplateAssets(env: Env): Promise<Array<Airt
     optionalFields: parseConfiguredSearchVisibilityFields(env),
     formula: buildPublishedTemplateFormula(),
     sortField: '📅LMT',
+  });
+}
+
+export async function fetchRecentlyPublishedTemplateAssets(
+  env: Env,
+  publishedSinceDate: string,
+  maxRecords: number,
+): Promise<Array<AirtableRecord<AirtableAssetFields>>> {
+  return fetchAirtableRecords<AirtableAssetFields>(env, {
+    tableId: env.AIRTABLE_ASSETS_TABLE_ID ?? DEFAULT_ASSETS_TABLE_ID,
+    fields: ASSET_FIELDS,
+    optionalFields: parseConfiguredSearchVisibilityFields(env),
+    formula: buildPublishedSinceFormula(publishedSinceDate),
+    sortField: '📅LMT',
+    sortDirection: 'desc',
+    maxRecords,
   });
 }
 

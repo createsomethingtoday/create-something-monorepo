@@ -1,5 +1,6 @@
 import {
   backfillCreatorFieldsByName,
+  getPublicSearchCacheVersion,
   getActiveSyncJob,
   getLatestSyncJob,
   getSyncStateRecords,
@@ -36,6 +37,7 @@ const SYNC_STATUS_STATE_KEYS = [
   'last_creator_backfill',
   'last_image_backfill',
   'last_image_prune',
+  'public_search_cache_version',
   'last_sync_error',
   'last_sync_skipped',
   'last_sync_warning',
@@ -52,7 +54,7 @@ const PUBLIC_SEARCH_CACHE_HEADERS = {
   'Cache-Control': 'public, max-age=60, s-maxage=300, stale-while-revalidate=86400',
   'CDN-Cache-Control': 'public, max-age=300, stale-while-revalidate=86400',
 };
-const PUBLIC_SEARCH_CACHE_VERSION = '2026-06-18-webflow-price-sync';
+const DEFAULT_PUBLIC_SEARCH_CACHE_VERSION = '2026-06-18-webflow-price-sync';
 const PUBLIC_SEARCH_CACHE_PARAM_ORDER = [
   'view',
   'include',
@@ -118,11 +120,11 @@ function includeCacheValue(params: SearchParams): string {
     .join(',');
 }
 
-function buildPublicSearchCacheRequest(requestUrl: URL, params: SearchParams): Request | null {
+function buildPublicSearchCacheRequest(requestUrl: URL, params: SearchParams, cacheVersion: string): Request | null {
   if (params.page !== 1 || params.q) return null;
 
   const cacheUrl = new URL(requestUrl.pathname, requestUrl.origin);
-  cacheUrl.searchParams.set('cache_version', PUBLIC_SEARCH_CACHE_VERSION);
+  cacheUrl.searchParams.set('cache_version', cacheVersion);
   for (const key of PUBLIC_SEARCH_CACHE_PARAM_ORDER) {
     switch (key) {
       case 'view':
@@ -181,7 +183,8 @@ async function handleSearch(request: Request, env: Env, ctx: ExecutionContext): 
   const defaultPageSize = Number(env.DEFAULT_PAGE_SIZE ?? '24') || 24;
   const url = new URL(request.url);
   const params = parseSearchParams(url, defaultPageSize);
-  const cacheRequest = buildPublicSearchCacheRequest(url, params);
+  const cacheVersion = await getPublicSearchCacheVersion(env.DB, DEFAULT_PUBLIC_SEARCH_CACHE_VERSION);
+  const cacheRequest = buildPublicSearchCacheRequest(url, params, cacheVersion);
   const cache = cacheRequest ? getDefaultCache() : null;
 
   if (cache && cacheRequest) {

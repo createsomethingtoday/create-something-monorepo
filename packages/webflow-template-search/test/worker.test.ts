@@ -6,6 +6,7 @@ import {
   acquireSyncJobLock,
   backfillCreatorFieldsByName,
   backfillCreatorFieldsFromLookup,
+  getPublicSearchCacheVersion,
   heartbeatSyncJobLock,
   listTemplateImageBackfillRows,
   listTemplateImageRefreshRows,
@@ -196,6 +197,7 @@ const PUBLISHED_ASSETS = [
 ];
 
 afterEach(() => {
+  vi.useRealTimers();
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
 });
@@ -2327,6 +2329,57 @@ describe('webflow-template-search worker', () => {
     }
   });
 
+  it('rotates first-page public search cache keys after sync writes', async () => {
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: PUBLISHED_ASSETS,
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+      creators: LOOKUPS.creators,
+    });
+    const cache = installSearchCacheStub();
+    const { env, close } = createTestEnv();
+
+    try {
+      const rebuild = await callWorker(
+        new Request('https://templates.test/api/templates/admin/rebuild', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(rebuild.status).toBe(200);
+      const firstVersion = await getPublicSearchCacheVersion(env.DB, 'fallback');
+
+      const request = new Request(
+        'https://templates.test/api/templates/search?category_group_slug=technology-websites&include=items&view=grid&page=1&page_size=24',
+      );
+      const first = await callWorker(request, env);
+      expect(first.headers.get('x-template-search-cache')).toBe('MISS');
+      const second = await callWorker(request, env);
+      expect(second.headers.get('x-template-search-cache')).toBe('HIT');
+
+      const recordSync = await callWorker(
+        new Request('https://templates.test/api/templates/admin/sync-records', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token', 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ids: ['recAgentflow'] }),
+        }),
+        env,
+      );
+      expect(recordSync.status).toBe(200);
+      const secondVersion = await getPublicSearchCacheVersion(env.DB, 'fallback');
+      expect(secondVersion).not.toBe(firstVersion);
+
+      const afterSync = await callWorker(request, env);
+      expect(afterSync.headers.get('x-template-search-cache')).toBe('MISS');
+      expect(cache.put).toHaveBeenCalledTimes(2);
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
   it('prefers Webflow CMS item images over temporary Airtable attachments', async () => {
     const fetchMock = installAirtableFetchMock({
       publishedAssets: [
@@ -3624,6 +3677,156 @@ describe('webflow-template-search worker', () => {
       expect(fetchMock.mock.calls.some(([input]) => new URL(typeof input === 'string' ? input : input.url).hostname === 'api.webflow.com')).toBe(
         false,
       );
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
+  it('sweeps missing recent publishes even while the LMT cursor is still catching up', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-06-23T14:30:00.000Z'));
+    const recentPublishedAsset = {
+      ...PUBLISHED_ASSETS[0],
+      id: 'recRecentPayly',
+      fields: {
+        ...PUBLISHED_ASSETS[0].fields,
+        Name: 'Recent Payly',
+        '🚀📅Published Date': '2026-06-22',
+        '🥞CMS Slug': 'recent-payly-website-template',
+        '🥞CMS Slug (formula)': 'recent-payly-website-template',
+        '🔗Listing URL': 'https://webflow.com/templates/html/recent-payly-website-template',
+        '🔗Website URL': 'https://webflow.com/templates/html/recent-payly-website-template',
+        '📅LMT': '2026-06-23T14:04:12.000Z',
+      },
+    };
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: [recentPublishedAsset],
+      incrementalAssets: [],
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+      creators: LOOKUPS.creators,
+    });
+    const { env, close } = createTestEnv();
+
+    try {
+      await setSyncCursor(env.DB, '2026-03-17T00:00:00.000Z');
+
+      const sync = await callWorker(
+        new Request('https://templates.test/api/templates/admin/sync', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(sync.status).toBe(200);
+      const syncPayload = (await sync.json()) as {
+        fetched_records: number;
+        indexed_records: number;
+        recent_published_records?: number;
+        skipped_empty_windows?: number;
+      };
+      expect(syncPayload).toMatchObject({
+        fetched_records: 1,
+        indexed_records: 1,
+        recent_published_records: 1,
+        skipped_empty_windows: 8,
+      });
+
+      const search = await callWorker(new Request('https://templates.test/api/templates/search?q=Recent%20Payly'), env);
+      const payload = (await search.json()) as { items: Array<{ id: string; template_slug: string }> };
+      expect(payload.items).toEqual([
+        expect.objectContaining({
+          id: 'recRecentPayly',
+          template_slug: 'recent-payly-website-template',
+        }),
+      ]);
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
+  it('sweeps stale recent publishes even while the LMT cursor is still catching up', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-06-23T14:30:00.000Z'));
+    const stalePublishedAsset = {
+      ...PUBLISHED_ASSETS[0],
+      id: 'recRecentUpdate',
+      fields: {
+        ...PUBLISHED_ASSETS[0].fields,
+        Name: 'Recent Update Old',
+        '🚀📅Published Date': '2026-06-22',
+        '🥞CMS Slug': 'recent-update-website-template',
+        '🥞CMS Slug (formula)': 'recent-update-website-template',
+        '🔗Listing URL': 'https://webflow.com/templates/html/recent-update-website-template',
+        '🔗Website URL': 'https://webflow.com/templates/html/recent-update-website-template',
+        '📅LMT': '2026-06-23T14:00:00.000Z',
+      },
+    };
+    const updatedPublishedAsset = {
+      ...stalePublishedAsset,
+      fields: {
+        ...stalePublishedAsset.fields,
+        Name: 'Recent Update',
+        'ℹ️Description (Short)': 'Updated while cursor is behind',
+        '📅LMT': '2026-06-23T14:04:12.000Z',
+      },
+    };
+    const dataset = {
+      publishedAssets: [stalePublishedAsset],
+      incrementalAssets: [],
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+      creators: LOOKUPS.creators,
+    };
+    const fetchMock = installAirtableFetchMock(dataset);
+    const { env, close } = createTestEnv();
+
+    try {
+      const recordSync = await callWorker(
+        new Request('https://templates.test/api/templates/admin/sync-records', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token', 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ids: ['recRecentUpdate'] }),
+        }),
+        env,
+      );
+      expect(recordSync.status).toBe(200);
+      dataset.publishedAssets = [updatedPublishedAsset];
+      await setSyncCursor(env.DB, '2026-03-17T00:00:00.000Z');
+
+      const sync = await callWorker(
+        new Request('https://templates.test/api/templates/admin/sync', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(sync.status).toBe(200);
+      const syncPayload = (await sync.json()) as {
+        fetched_records: number;
+        indexed_records: number;
+        recent_published_records?: number;
+        skipped_empty_windows?: number;
+      };
+      expect(syncPayload).toMatchObject({
+        fetched_records: 1,
+        indexed_records: 1,
+        recent_published_records: 1,
+        skipped_empty_windows: 8,
+      });
+
+      const row = await env.DB.prepare('SELECT name, description_short, source_last_modified_time FROM template_documents WHERE id = ?')
+        .bind('recRecentUpdate')
+        .first<{ name: string; description_short: string; source_last_modified_time: string }>();
+      expect(row).toMatchObject({
+        name: 'Recent Update',
+        description_short: 'Updated while cursor is behind',
+        source_last_modified_time: '2026-06-23T14:04:12.000Z',
+      });
     } finally {
       fetchMock.mockRestore();
       close();
