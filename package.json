@@ -125,6 +125,7 @@
     "agent:loop-pilot:dispatch": "node scripts/agent-loop-pilot.mjs --dispatch",
     "agent:solo-loop": "node scripts/agent-solo-loop.mjs",
     "agent:solo-loop:json": "node scripts/agent-solo-loop.mjs --json",
+    "agent:solo-loop:starter": "node scripts/agent-solo-loop.mjs --starter",
     "agent:solo-loop:check": "node scripts/agent-solo-loop.mjs --check",
     "agent:solo-loop:test": "node --test scripts/test/agent-solo-loop.test.mjs",
     "agent:hermes:evaluate": "node scripts/hermes-agent-eval.mjs",

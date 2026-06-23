@@ -8,14 +8,18 @@ const DEFAULT_REQUIRED_FILES = [
   'docs/guides/SOLO_OPERATOR_AGENT_LOOP.md',
   'docs/guides/CODING_AGENT_HARNESS_PATTERN.md',
   'docs/guides/GIT_LIGHT_AGENT_DELIVERY_WORKFLOW.md',
-  'package.json',
+  'package.json'
 ];
+
+const VALID_PROVIDERS = new Set(['codex', 'hermes']);
 
 export function parseArgs(argv) {
   const options = {
     check: false,
     json: false,
+    provider: 'codex',
     strict: false,
+    starter: false
   };
 
   for (let index = 2; index < argv.length; index += 1) {
@@ -24,11 +28,34 @@ export function parseArgs(argv) {
     else if (arg === '--check') options.check = true;
     else if (arg === '--json') options.json = true;
     else if (arg === '--strict') options.strict = true;
-    else if (arg === '--help' || arg === '-h') options.help = true;
+    else if (arg === '--starter' || arg === '--prompt') options.starter = true;
+    else if (arg === '--provider') {
+      index += 1;
+      options.provider = readOptionValue(arg, argv[index]);
+    } else if (arg.startsWith('--provider=')) options.provider = arg.slice('--provider='.length);
+    else if (arg === '--task') {
+      index += 1;
+      options.task = readOptionValue(arg, argv[index]);
+      options.starter = true;
+    } else if (arg.startsWith('--task=')) {
+      options.task = arg.slice('--task='.length);
+      options.starter = true;
+    } else if (arg === '--help' || arg === '-h') options.help = true;
     else throw new Error(`Unknown argument: ${arg}`);
   }
 
+  if (!VALID_PROVIDERS.has(options.provider)) {
+    throw new Error(
+      `Unknown provider: ${options.provider}. Expected one of: ${[...VALID_PROVIDERS].join(', ')}`
+    );
+  }
+
   return options;
+}
+
+function readOptionValue(flag, value) {
+  if (!value || value.startsWith('--')) throw new Error(`Missing value for ${flag}`);
+  return value;
 }
 
 function run(command, args, options = {}) {
@@ -38,7 +65,7 @@ function run(command, args, options = {}) {
     env: process.env,
     encoding: 'utf8',
     maxBuffer: 1024 * 1024 * 20,
-    timeout: options.timeoutMs ?? 120_000,
+    timeout: options.timeoutMs ?? 120_000
   });
   const stdout = result.stdout ?? '';
   const stderr = result.stderr ?? '';
@@ -53,7 +80,9 @@ function run(command, args, options = {}) {
     completed_at: new Date().toISOString(),
     stdout,
     stderr,
-    summary: options.summarize ? options.summarize(stdout, stderr, result.status === 0) : summarize(output),
+    summary: options.summarize
+      ? options.summarize(stdout, stderr, result.status === 0)
+      : summarize(output)
   };
 }
 
@@ -67,7 +96,7 @@ export function classifyStatus(statusText) {
   const entries = lines.map((line) => ({
     raw: line,
     code: line.slice(0, 2),
-    path: line.slice(3),
+    path: line.slice(3)
   }));
 
   return {
@@ -76,7 +105,7 @@ export function classifyStatus(statusText) {
     staged: entries.filter((entry) => entry.code[0] !== ' ' && entry.code[0] !== '?').length,
     unstaged: entries.filter((entry) => entry.code[1] !== ' ' && entry.code[1] !== '?').length,
     untracked: entries.filter((entry) => entry.code === '??').length,
-    entries,
+    entries
   };
 }
 
@@ -88,7 +117,7 @@ export function parseDivergence(statusLine) {
   const behind = match.groups.content.match(/behind (?<count>\d+)/)?.groups?.count;
   return {
     ahead: ahead ? Number(ahead) : 0,
-    behind: behind ? Number(behind) : 0,
+    behind: behind ? Number(behind) : 0
   };
 }
 
@@ -96,22 +125,75 @@ export function decideSoloPosture({ status, divergence, strict }) {
   const warnings = [];
   if (!status.clean) {
     warnings.push(
-      `Checkout has ${status.total} changed file(s): ${status.staged} staged, ${status.unstaged} unstaged, ${status.untracked} untracked.`,
+      `Checkout has ${status.total} changed file(s): ${status.staged} staged, ${status.unstaged} unstaged, ${status.untracked} untracked.`
     );
   }
   if (divergence.behind > 0) {
-    warnings.push(`Checkout is behind upstream by ${divergence.behind} commit(s). Rebase or pull before production promotion.`);
+    warnings.push(
+      `Checkout is behind upstream by ${divergence.behind} commit(s). Rebase or pull before production promotion.`
+    );
   }
   if (divergence.ahead > 0) {
-    warnings.push(`Checkout is ahead of upstream by ${divergence.ahead} commit(s). Push or preserve before switching lanes.`);
+    warnings.push(
+      `Checkout is ahead of upstream by ${divergence.ahead} commit(s). Push or preserve before switching lanes.`
+    );
   }
 
   return {
     ok: strict ? status.clean && divergence.behind === 0 : true,
     mode: 'solo-operator',
-    production_boundary: 'Use branch/PR/merge or an approved immutable release path before production promotion.',
-    warnings,
+    production_boundary:
+      'Use branch/PR/merge or an approved immutable release path before production promotion.',
+    warnings
   };
+}
+
+export function buildStarterPrompt({
+  task,
+  provider = 'codex',
+  branch = 'unknown',
+  warnings = []
+}) {
+  const providerLine =
+    provider === 'hermes'
+      ? 'Use Hermes as the implementation worker. Normal repo-local tests do not require E2B unless the task is untrusted, destructive, resource-heavy, or needs disposable parallel environments.'
+      : 'Use Codex as the implementation worker from this checkout.';
+  const taskText =
+    task?.trim() ||
+    '[Replace this with one compact task, including the nearest file, command, error, or smoke target.]';
+  const warningText =
+    warnings.length > 0
+      ? `\nCurrent checkout warnings:\n${warnings.map((warning) => `- ${warning}`).join('\n')}\n`
+      : '';
+
+  return `You are running the CREATE SOMETHING solo-operator loop.
+
+Task:
+${taskText}
+
+Worker:
+${providerLine}
+
+Current branch:
+${branch || 'unknown'}${warningText}
+Operating constraints:
+- Work in the current checkout unless the operator explicitly asks for a Linear issue or isolated worktree.
+- Start with repo-local evidence: nearest CLI, test, smoke, doc, route, or failing command.
+- Keep changes narrow and reversible; do not refactor unrelated surfaces.
+- Prefer targeted tests or the smallest useful smoke before finishing.
+- Do not mutate production, rotate secrets, deploy, merge, or push without explicit promotion approval.
+- Production promotion requires branch, PR, merge, deploy, and rollback evidence, or an approved immutable release path with equivalent evidence.
+- Before finishing, report files changed, commands run, validation result, remaining risks, and the recommended next loop.`;
+}
+
+export function buildLaunchCommand({
+  provider = 'codex',
+  hermesCommand = process.env.HERMES_COMMAND || 'hermes'
+}) {
+  if (provider === 'hermes') {
+    return `${hermesCommand} --cli -z '<paste the starter prompt here>'`;
+  }
+  return 'codex # paste the starter prompt into the session';
 }
 
 function step(id, label, result, ok = result.ok) {
@@ -124,13 +206,14 @@ function step(id, label, result, ok = result.ok) {
     signal: result.signal,
     started_at: result.started_at,
     completed_at: result.completed_at,
-    summary: result.summary,
+    summary: result.summary
   };
 }
 
 function fileProbe(files) {
   return run('bash', ['-lc', files.map((file) => `test -f ${shellQuote(file)}`).join(' && ')], {
-    summarize: (_stdout, stderr, ok) => (ok ? `Found ${files.length} solo-loop control file(s).` : summarize(stderr)),
+    summarize: (_stdout, stderr, ok) =>
+      ok ? `Found ${files.length} solo-loop control file(s).` : summarize(stderr)
   });
 }
 
@@ -141,15 +224,19 @@ function shellQuote(value) {
 function usage() {
   console.log(`Usage:
   node scripts/agent-solo-loop.mjs [--json] [--check] [--strict]
+  node scripts/agent-solo-loop.mjs --starter [--provider codex|hermes] [--task "..."]
 
 Peter Steinberger-inspired solo-operator loop readiness for this repo.
 
 Default mode is read-only and never mutates git, Linear, or deployments.
 
 Options:
-  --check   Run fast repo-local validation commands for the solo-loop contract.
-  --strict  Fail when checkout is dirty or behind upstream.
-  --json    Print machine-readable output.
+  --check              Run fast repo-local validation commands for the solo-loop contract.
+  --strict             Fail when checkout is dirty or behind upstream.
+  --json               Print machine-readable output.
+  --starter, --prompt  Include an inspectable starter prompt and launch command.
+  --provider <name>    Prompt for codex or hermes. Default: codex.
+  --task <text>        Task text to embed in the starter prompt.
 `);
 }
 
@@ -162,7 +249,7 @@ function main() {
 
   const branch = run('git', ['status', '--short', '--branch']);
   const statusShort = run('git', ['status', '--short'], {
-    summarize: (stdout) => (stdout.trim() ? stdout.trim() : 'Checkout is clean.'),
+    summarize: (stdout) => (stdout.trim() ? stdout.trim() : 'Checkout is clean.')
   });
   const status = classifyStatus(statusShort.stdout);
   const branchLine = branch.stdout.split(/\r?\n/)[0] ?? '';
@@ -171,20 +258,28 @@ function main() {
 
   const steps = [
     step('git-status', 'Inspect current checkout state', statusShort),
-    step('control-files', 'Confirm solo-loop control files exist', fileProbe(DEFAULT_REQUIRED_FILES)),
+    step(
+      'control-files',
+      'Confirm solo-loop control files exist',
+      fileProbe(DEFAULT_REQUIRED_FILES)
+    )
   ];
 
-  const hermesProbe = run('bash', ['-lc', `command -v ${shellQuote(process.env.HERMES_COMMAND || 'hermes')}`], {
-    summarize: (stdout, _stderr, ok) =>
-      ok
-        ? `Hermes command resolved: ${stdout.trim()}`
-        : 'Hermes command not found. Use Codex for the solo loop or set HERMES_COMMAND.',
-  });
+  const hermesProbe = run(
+    'bash',
+    ['-lc', `command -v ${shellQuote(process.env.HERMES_COMMAND || 'hermes')}`],
+    {
+      summarize: (stdout, _stderr, ok) =>
+        ok
+          ? `Hermes command resolved: ${stdout.trim()}`
+          : 'Hermes command not found. Use Codex for the solo loop or set HERMES_COMMAND.'
+    }
+  );
   steps.push(step('hermes-command', 'Check optional Hermes CLI availability', hermesProbe, true));
 
   const codexProbe = run('bash', ['-lc', 'command -v codex'], {
     summarize: (stdout, _stderr, ok) =>
-      ok ? `Codex command resolved: ${stdout.trim()}` : 'Codex command not found on PATH.',
+      ok ? `Codex command resolved: ${stdout.trim()}` : 'Codex command not found on PATH.'
   });
   steps.push(step('codex-command', 'Check optional Codex CLI availability', codexProbe, true));
 
@@ -202,21 +297,40 @@ function main() {
             } catch {
               return summarize(stdout);
             }
-          },
-        }),
-      ),
+          }
+        })
+      )
     );
     steps.push(
       step(
         'policy-artifacts',
         'Run policy artifact check',
-        run('node', ['scripts/policy-artifact-check.mjs']),
-      ),
+        run('node', ['scripts/policy-artifact-check.mjs'])
+      )
     );
-    steps.push(step('solo-loop-test', 'Run solo-loop unit tests', run('node', ['--test', 'scripts/test/agent-solo-loop.test.mjs'])));
+    steps.push(
+      step(
+        'solo-loop-test',
+        'Run solo-loop unit tests',
+        run('node', ['--test', 'scripts/test/agent-solo-loop.test.mjs'])
+      )
+    );
   }
 
   const passed = posture.ok && steps.every((entry) => entry.ok);
+  const starter =
+    options.starter || options.task
+      ? {
+          provider: options.provider,
+          launch_command: buildLaunchCommand({ provider: options.provider }),
+          prompt: buildStarterPrompt({
+            task: options.task,
+            provider: options.provider,
+            branch: branchLine.replace(/^##\s*/, ''),
+            warnings: posture.warnings
+          })
+        }
+      : null;
   const report = {
     generated_at: new Date().toISOString(),
     mode: 'solo-operator',
@@ -231,9 +345,10 @@ function main() {
       'Keep the prompt short and point at the nearest CLI, doc, or failing command.',
       'Watch the stream; interrupt or redirect on drift.',
       'Ask for tests or write targeted tests in the same context.',
-      'Use branch/PR or an approved immutable release path for production promotion.',
+      'Use branch/PR or an approved immutable release path for production promotion.'
     ],
-    steps,
+    starter,
+    steps
   };
 
   if (options.json) {
@@ -257,6 +372,14 @@ function main() {
     }
     console.log('## Recommended Loop');
     for (const item of report.recommended_loop) console.log(`- ${item}`);
+    if (starter) {
+      console.log('');
+      console.log('## Starter Launch');
+      console.log(starter.launch_command);
+      console.log('');
+      console.log('## Starter Prompt');
+      console.log(starter.prompt);
+    }
   }
 
   process.exit(passed ? 0 : 1);
