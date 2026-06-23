@@ -31,6 +31,7 @@ const TEMP_ATTACHMENT_IMAGE_WHERE = `thumbnail_image_url LIKE '%airtableusercont
           OR thumbnail_image_secondary_url LIKE '%airtableusercontent.com%'
           OR thumbnail_image_secondary_url LIKE '%dl.airtable.com%'`;
 
+const IMAGE_BACKFILL_ATTEMPT_RETRY_AFTER_MS = 6 * 60 * 60 * 1000;
 const STALE_IMAGE_REFRESH_LIMIT = 24;
 const IMAGE_REFRESH_LOOKUP_BATCH_SIZE = 50;
 const SYNC_JOB_LOCK_KEY = 'template_sync';
@@ -126,11 +127,53 @@ const UPSERT_TEMPLATE_SQL = `
     creator_name = excluded.creator_name,
     creator_record_id = excluded.creator_record_id,
     creator_slug = excluded.creator_slug,
-    creator_profile_url = excluded.creator_profile_url,
-    creator_avatar_url = excluded.creator_avatar_url,
-    creator_avatar_alt = excluded.creator_avatar_alt,
-    thumbnail_image_url = excluded.thumbnail_image_url,
-    thumbnail_image_secondary_url = excluded.thumbnail_image_secondary_url,
+    creator_profile_url = CASE
+      WHEN (excluded.creator_profile_url IS NULL OR excluded.creator_profile_url = '')
+        AND template_documents.creator_profile_url IS NOT NULL
+        AND template_documents.creator_profile_url != ''
+        THEN template_documents.creator_profile_url
+      ELSE excluded.creator_profile_url
+    END,
+    creator_avatar_url = CASE
+      WHEN (
+          excluded.creator_avatar_url IS NULL
+          OR excluded.creator_avatar_url = ''
+          OR excluded.creator_avatar_url LIKE '%airtableusercontent.com%'
+          OR excluded.creator_avatar_url LIKE '%dl.airtable.com%'
+        )
+        AND template_documents.creator_avatar_url LIKE 'https://cdn.prod.website-files.com/%'
+        THEN template_documents.creator_avatar_url
+      ELSE excluded.creator_avatar_url
+    END,
+    creator_avatar_alt = CASE
+      WHEN (excluded.creator_avatar_alt IS NULL OR excluded.creator_avatar_alt = '')
+        AND template_documents.creator_avatar_alt IS NOT NULL
+        AND template_documents.creator_avatar_alt != ''
+        THEN template_documents.creator_avatar_alt
+      ELSE excluded.creator_avatar_alt
+    END,
+    thumbnail_image_url = CASE
+      WHEN (
+          excluded.thumbnail_image_url IS NULL
+          OR excluded.thumbnail_image_url = ''
+          OR excluded.thumbnail_image_url LIKE '%airtableusercontent.com%'
+          OR excluded.thumbnail_image_url LIKE '%dl.airtable.com%'
+        )
+        AND template_documents.thumbnail_image_url LIKE 'https://cdn.prod.website-files.com/%'
+        THEN template_documents.thumbnail_image_url
+      ELSE excluded.thumbnail_image_url
+    END,
+    thumbnail_image_secondary_url = CASE
+      WHEN (
+          excluded.thumbnail_image_secondary_url IS NULL
+          OR excluded.thumbnail_image_secondary_url = ''
+          OR excluded.thumbnail_image_secondary_url LIKE '%airtableusercontent.com%'
+          OR excluded.thumbnail_image_secondary_url LIKE '%dl.airtable.com%'
+        )
+        AND template_documents.thumbnail_image_secondary_url LIKE 'https://cdn.prod.website-files.com/%'
+        THEN template_documents.thumbnail_image_secondary_url
+      ELSE excluded.thumbnail_image_secondary_url
+    END,
     carousel_image_urls_json = excluded.carousel_image_urls_json,
     description_short = excluded.description_short,
     description_long_html = excluded.description_long_html,
@@ -763,7 +806,10 @@ export async function updateCreatorAvatarsFromWebflow(
         db
           .prepare(
             `UPDATE template_documents
-             SET creator_avatar_url = COALESCE(?, creator_avatar_url),
+             SET creator_avatar_url = CASE
+                   WHEN ? IS NOT NULL AND NOT (creator_avatar_url IS ?) THEN ?
+                   ELSE creator_avatar_url
+                 END,
                  creator_avatar_alt = CASE
                    WHEN ? IS NOT NULL THEN ?
                    ELSE creator_avatar_alt
@@ -798,6 +844,8 @@ export async function updateCreatorAvatarsFromWebflow(
           .bind(
             avatarUrl,
             avatarUrl,
+            avatarUrl,
+            avatarUrl,
             avatarAlt,
             record.slug,
             record.slug,
@@ -826,7 +874,10 @@ export async function updateCreatorAvatarsFromWebflow(
         db
           .prepare(
             `UPDATE template_documents
-             SET creator_avatar_url = COALESCE(?, creator_avatar_url),
+             SET creator_avatar_url = CASE
+                   WHEN ? IS NOT NULL AND NOT (creator_avatar_url IS ?) THEN ?
+                   ELSE creator_avatar_url
+                 END,
                  creator_avatar_alt = CASE
                    WHEN ? IS NOT NULL THEN ?
                    ELSE creator_avatar_alt
@@ -863,6 +914,8 @@ export async function updateCreatorAvatarsFromWebflow(
           .bind(
             avatarUrl,
             avatarUrl,
+            avatarUrl,
+            avatarUrl,
             avatarAlt,
             record.slug,
             record.slug,
@@ -890,7 +943,10 @@ export async function updateCreatorAvatarsFromWebflow(
         db
           .prepare(
             `UPDATE template_documents
-             SET creator_avatar_url = COALESCE(?, creator_avatar_url),
+             SET creator_avatar_url = CASE
+                   WHEN ? IS NOT NULL AND NOT (creator_avatar_url IS ?) THEN ?
+                   ELSE creator_avatar_url
+                 END,
                  creator_avatar_alt = CASE
                    WHEN ? IS NOT NULL THEN ?
                    ELSE creator_avatar_alt
@@ -931,6 +987,8 @@ export async function updateCreatorAvatarsFromWebflow(
                )`,
           )
           .bind(
+            avatarUrl,
+            avatarUrl,
             avatarUrl,
             avatarUrl,
             avatarAlt,
@@ -1343,6 +1401,7 @@ export async function listTemplateImageBackfillRows(
   db: D1Database,
   limit: number,
   templateSlugs: string[] = [],
+  options: { now?: string; retryAfterMs?: number } = {},
 ): Promise<TemplateImageRefreshRow[]> {
   const uniqueTemplateSlugs = Array.from(new Set(templateSlugs.map((slug) => slug.trim()).filter(Boolean)));
   if (uniqueTemplateSlugs.length > 0) {
@@ -1363,14 +1422,63 @@ export async function listTemplateImageBackfillRows(
   const result = await db
     .prepare(
       `${TEMPLATE_IMAGE_REFRESH_SELECT}
+       LEFT JOIN template_image_backfill_attempts AS image_attempts
+         ON image_attempts.template_document_id = template_documents.id
        WHERE ${STALE_IMAGE_WHERE}
-       ORDER BY is_featured DESC, COALESCE(popularity_score, 0) DESC, COALESCE(source_last_modified_time, '') DESC
+       ORDER BY
+         CASE
+           WHEN image_attempts.last_attempted_at IS NULL THEN 0
+           WHEN image_attempts.last_attempted_at <= ? THEN 1
+           ELSE 2
+         END,
+         image_attempts.consecutive_misses ASC,
+         is_featured DESC,
+         COALESCE(popularity_score, 0) DESC,
+         COALESCE(source_last_modified_time, '') DESC
        LIMIT ?`,
     )
-    .bind(limit)
+    .bind(
+      new Date(new Date(options.now ?? nowIso()).getTime() - (options.retryAfterMs ?? IMAGE_BACKFILL_ATTEMPT_RETRY_AFTER_MS)).toISOString(),
+      limit,
+    )
     .all<TemplateImageRefreshRow>();
 
   return result.results ?? [];
+}
+
+export async function markTemplateImageBackfillAttempts(
+  db: D1Database,
+  rows: TemplateImageRefreshRow[],
+  resolvedIds: string[],
+  attemptedAt = nowIso(),
+): Promise<void> {
+  if (rows.length === 0) return;
+
+  const resolved = new Set(resolvedIds);
+  const statements: D1PreparedStatement[] = [];
+
+  for (const row of rows) {
+    if (resolved.has(row.id)) {
+      statements.push(db.prepare('DELETE FROM template_image_backfill_attempts WHERE template_document_id = ?').bind(row.id));
+      continue;
+    }
+
+    statements.push(
+      db
+        .prepare(
+          `INSERT INTO template_image_backfill_attempts (template_document_id, last_attempted_at, consecutive_misses)
+           VALUES (?, ?, 1)
+           ON CONFLICT(template_document_id) DO UPDATE SET
+             last_attempted_at = excluded.last_attempted_at,
+             consecutive_misses = template_image_backfill_attempts.consecutive_misses + 1`,
+        )
+        .bind(row.id, attemptedAt),
+    );
+  }
+
+  for (const group of chunk(statements, 50)) {
+    await db.batch(group);
+  }
 }
 
 export async function updateTemplateDocumentImages(

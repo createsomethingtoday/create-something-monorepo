@@ -116,6 +116,16 @@ const AGENCY_CONTENT_ASSETS_BY_PATH: Record<string, AgencyContentAssetAnalytics>
     contentPrimaryCta: 'book-mapping-session',
     contentLinearIssue: 'CRE-751'
   },
+  '/dify/ship-dify-app-with-mcp-tools': {
+    contentAssetId: 'article.ship-dify-app-with-mcp-tools.v20260623',
+    contentType: 'article',
+    contentCluster: 'dify-governed-agent-systems',
+    contentIntent: 'how-to',
+    contentBuyer: 'builder turning a Dify prototype into a governed MCP-backed workflow',
+    contentFunnelStage: 'decision',
+    contentPrimaryKeyword: 'ship Dify app with MCP tools',
+    contentPrimaryCta: 'request-workflow-teardown'
+  },
   '/dify/n8n-vs-dify': {
     contentAssetId: 'article.dify-vs-n8n.v20260518',
     contentType: 'article',

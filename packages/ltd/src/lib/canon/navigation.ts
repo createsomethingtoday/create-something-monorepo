@@ -76,6 +76,7 @@ export const canonNavigation: NavSection[] = [
 		items: [
 			{ label: 'Accessibility', href: '/canon/guidelines/accessibility' },
 			{ label: 'Content', href: '/canon/guidelines/content' },
+			{ label: 'Images', href: '/canon/guidelines/images', badge: 'New' },
 			{ label: 'Responsive', href: '/canon/guidelines/responsive' },
 			{ label: 'Theming', href: '/canon/guidelines/theming' }
 		]

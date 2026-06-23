@@ -75,6 +75,7 @@
       links: [
         { label: 'Dify MCP Control Plane', href: '/dify/mcp-control-plane' },
         { label: 'Dify Agent Eval Gates', href: '/dify/agent-eval-gates' },
+        { label: 'Ship Dify With MCP', href: '/dify/ship-dify-app-with-mcp-tools' },
         { label: 'Dify Content Engine', href: '/dify/content-engine' },
         { label: 'Dify vs n8n', href: '/dify/n8n-vs-dify' },
         {
@@ -228,6 +229,23 @@
         'approval gates',
         'secret refusal',
         'policy os'
+      ]
+    },
+    {
+      id: 'nav-dify-ship-mcp',
+      label: 'Ship Dify With MCP',
+      description:
+        'Practical build path for shipping Dify apps with MCP tools, Policy OS contracts, eval gates, and proof packets',
+      href: '/dify/ship-dify-app-with-mcp-tools',
+      icon: 'DS',
+      keywords: [
+        'dify',
+        'mcp',
+        'shipping guide',
+        'agent workflow',
+        'policy os',
+        'eval gates',
+        'proof packet'
       ]
     },
     {

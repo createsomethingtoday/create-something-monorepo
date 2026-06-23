@@ -181,6 +181,12 @@ This means a CREATE SOMETHING surface should feel calm and inevitable, but it sh
 different thing: that the workflow has been mapped, integrated, governed, validated, and handed
 off with evidence.
 
+The same rule applies to marketing images and generated visuals. Use Ona.com as the design and
+communication foundation, then translate it into CREATE SOMETHING artifact language: system maps,
+MCP boundaries, policy gates, receipts, validation proof, owners, and handoff state. For the
+repeatable image-generation contract, see the public Canon Images guideline in
+`packages/ltd/src/lib/content/canon/guidelines/images.md`.
+
 For component-level usage rules, see
 [`src/lib/components/clear/README.md`](./src/lib/components/clear/README.md).
 

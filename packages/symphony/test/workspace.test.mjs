@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { execFile } from 'node:child_process';
-import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, readdir, realpath, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
@@ -106,6 +106,50 @@ test('WorkspaceManager removes workspace metadata with the workspace', async (t)
 
   await manager.remove_workspace('CRE-789');
 
+  await assert.rejects(() => readFile(workspace.path, 'utf8'), /ENOENT/);
+  await assert.rejects(() => readFile(workspace.metadata_path, 'utf8'), /ENOENT/);
+});
+
+test('WorkspaceManager unregisters clean linked git worktrees before removing them', async (t) => {
+  const tempRoot = await mkdtemp(join(tmpdir(), 'symphony-workspace-'));
+  t.after(async () => {
+    await rm(tempRoot, { recursive: true, force: true });
+  });
+
+  const repoRoot = join(tempRoot, 'repo');
+  const root = join(tempRoot, 'workspaces');
+  const hookLogPath = join(tempRoot, 'hook.log');
+  await mkdir(repoRoot, { recursive: true });
+  await execFileAsync('git', ['init'], { cwd: repoRoot });
+  await execFileAsync('git', ['config', 'user.email', 'symphony@example.com'], { cwd: repoRoot });
+  await execFileAsync('git', ['config', 'user.name', 'Symphony Test'], { cwd: repoRoot });
+  await writeFile(join(repoRoot, 'README.md'), 'fixture\n', 'utf8');
+  await execFileAsync('git', ['add', 'README.md'], { cwd: repoRoot });
+  await execFileAsync('git', ['commit', '-m', 'fixture'], { cwd: repoRoot });
+
+  const logger = createLogger();
+  const manager = new WorkspaceManager(
+    {
+      ...createConfig(root, hookLogPath),
+      hooks: {
+        ...createConfig(root, hookLogPath).hooks,
+        after_create: `git -C '${repoRoot}' worktree add -b codex/CRE-321-code-quality '${join(root, 'CRE-321')}' HEAD`,
+        before_remove: null,
+      },
+    },
+    logger,
+  );
+
+  const workspace = await manager.ensure_workspace('CRE-321');
+  const workspaceRealPath = await realpath(workspace.path);
+  const workspacePattern = new RegExp(`worktree ${workspaceRealPath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`);
+  const beforeRemove = await execFileAsync('git', ['-C', repoRoot, 'worktree', 'list', '--porcelain']);
+  assert.match(beforeRemove.stdout, workspacePattern);
+
+  await manager.remove_workspace('CRE-321');
+
+  const afterRemove = await execFileAsync('git', ['-C', repoRoot, 'worktree', 'list', '--porcelain']);
+  assert.doesNotMatch(afterRemove.stdout, workspacePattern);
   await assert.rejects(() => readFile(workspace.path, 'utf8'), /ENOENT/);
   await assert.rejects(() => readFile(workspace.metadata_path, 'utf8'), /ENOENT/);
 });

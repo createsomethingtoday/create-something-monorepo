@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc" viewBox="0 0 1600 900">
+  <title id="title">Dify app with MCP tools shipping path</title>
+  <desc id="desc">A four-layer operating diagram showing Dify as app surface, MCP as tool boundary, Policy OS as control layer, and proof as the release surface.</desc>
+  <rect width="1600" height="900" fill="#060607"/>
+  <rect x="64" y="64" width="1472" height="772" rx="18" fill="#101111" stroke="#2d2d2b"/>
+  <g fill="none" stroke="#f0ede4" stroke-width="2">
+    <path d="M168 238h1264"/>
+    <path d="M168 414h1264"/>
+    <path d="M168 590h1264"/>
+  </g>
+  <g font-family="Inter, Arial, sans-serif" fill="#f6f3ea">
+    <text x="168" y="152" font-size="34" font-weight="700">Dify + MCP shipping path</text>
+    <text x="168" y="190" font-size="18" fill="#a9a59b">Surface, boundary, control, proof stay separate so the workflow can be reviewed.</text>
+  </g>
+  <g font-family="Inter, Arial, sans-serif">
+    <g>
+      <rect x="168" y="278" width="250" height="96" rx="10" fill="#171817" stroke="#d2c17b"/>
+      <text x="192" y="316" fill="#f6f3ea" font-size="24" font-weight="700">Dify app</text>
+      <text x="192" y="346" fill="#bbb6aa" font-size="17">visible workflow surface</text>
+    </g>
+    <g>
+      <rect x="488" y="278" width="250" height="96" rx="10" fill="#171817" stroke="#5d6267"/>
+      <text x="512" y="316" fill="#f6f3ea" font-size="24" font-weight="700">MCP tools</text>
+      <text x="512" y="346" fill="#bbb6aa" font-size="17">scoped capability</text>
+    </g>
+    <g>
+      <rect x="808" y="278" width="250" height="96" rx="10" fill="#171817" stroke="#5d6267"/>
+      <text x="832" y="316" fill="#f6f3ea" font-size="24" font-weight="700">Policy OS</text>
+      <text x="832" y="346" fill="#bbb6aa" font-size="17">approval and blocks</text>
+    </g>
+    <g>
+      <rect x="1128" y="278" width="250" height="96" rx="10" fill="#171817" stroke="#5d6267"/>
+      <text x="1152" y="316" fill="#f6f3ea" font-size="24" font-weight="700">Proof surface</text>
+      <text x="1152" y="346" fill="#bbb6aa" font-size="17">client-safe receipt</text>
+    </g>
+  </g>
+  <g fill="none" stroke="#d2c17b" stroke-width="3" stroke-linecap="round">
+    <path d="M420 326h58"/>
+    <path d="M470 318l8 8-8 8"/>
+    <path d="M740 326h58"/>
+    <path d="M790 318l8 8-8 8"/>
+    <path d="M1060 326h58"/>
+    <path d="M1110 318l8 8-8 8"/>
+  </g>
+  <g font-family="Inter, Arial, sans-serif">
+    <text x="168" y="470" fill="#d2c17b" font-size="18" font-weight="700">Gate before publish</text>
+    <text x="168" y="504" fill="#f6f3ea" font-size="23">health, expected path, forbidden path, approval pause, secret refusal, latency</text>
+    <text x="168" y="646" fill="#d2c17b" font-size="18" font-weight="700">Runtime decision</text>
+    <text x="168" y="680" fill="#f6f3ea" font-size="23">stay Dify-first, move one step to Cloudflare, graduate orchestration, or roll back</text>
+  </g>
+  <g fill="#d2c17b">
+    <circle cx="1288" cy="480" r="7"/>
+    <circle cx="1328" cy="480" r="7"/>
+    <circle cx="1368" cy="480" r="7"/>
+    <circle cx="1408" cy="480" r="7"/>
+  </g>
+  <rect x="1128" y="618" width="250" height="86" rx="10" fill="#171817" stroke="#d2c17b"/>
+  <text x="1152" y="654" fill="#f6f3ea" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="700">Run / wait / stop</text>
+  <text x="1152" y="682" fill="#bbb6aa" font-family="Inter, Arial, sans-serif" font-size="17">with evidence attached</text>
+</svg>

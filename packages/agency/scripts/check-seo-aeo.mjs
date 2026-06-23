@@ -44,6 +44,11 @@ const requiredDedicatedOgImages = new Map([
 	['/notion', '/og/notion-lane.svg'],
 	['/use-cases/enterprise', '/og/policy-os.svg']
 ]);
+const requiredInPageArticleVisuals = new Map([
+	['/dify/content-engine', '/images/articles/dify-content-engine/content-engine-funnel.svg'],
+	['/dify/n8n-vs-dify', '/images/articles/dify-vs-n8n/dify-n8n-layer-map.svg'],
+	['/notion', '/images/articles/notion-ops-workspace/notion-operator-workspace.svg']
+]);
 
 for (const entry of routeEntries) {
 	if (!entry.path || !entry.path.startsWith('/')) {
@@ -87,6 +92,22 @@ for (const entry of routeEntries) {
 		const assetPath = path.join(packageRoot, 'static', requiredOgImage.replace(/^\//, ''));
 		if (!fs.existsSync(assetPath)) {
 			errors.push(`${entry.path} references missing OG image asset ${requiredOgImage}`);
+		}
+	}
+
+	const requiredInPageArticleVisual = requiredInPageArticleVisuals.get(entry.path);
+	if (requiredInPageArticleVisual) {
+		if (!source.includes('ArticleVisualFigure')) {
+			errors.push(`${entry.path} should render its owned article visual with ArticleVisualFigure`);
+		}
+
+		if (!source.includes(`src="${requiredInPageArticleVisual}"`)) {
+			errors.push(`${entry.path} should render owned article visual ${requiredInPageArticleVisual}`);
+		}
+
+		const assetPath = path.join(packageRoot, 'static', requiredInPageArticleVisual.replace(/^\//, ''));
+		if (!fs.existsSync(assetPath)) {
+			errors.push(`${entry.path} references missing in-page article visual ${requiredInPageArticleVisual}`);
 		}
 	}
 }

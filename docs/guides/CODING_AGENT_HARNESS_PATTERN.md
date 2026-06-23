@@ -16,6 +16,21 @@ Turn a coding agent from a one-shot assistant into a repeatable worker by giving
 
 ## The default loop
 
+### Solo-operator fast lane
+
+When one operator owns the checkout and is actively steering the agent, use the
+solo loop before adding coordination overhead:
+
+```bash
+pnpm agent:solo-loop
+```
+
+This is the Peter Steinberger-inspired path: current checkout, short prompts,
+CLI-first verification, visible stream steering, and targeted tests in the same
+context. It does not replace production provenance or shared-work safeguards.
+Use [SOLO_OPERATOR_AGENT_LOOP.md](./SOLO_OPERATOR_AGENT_LOOP.md) for the full
+decision table.
+
 ### 1. Track the work
 
 Use Linear as the control plane.
@@ -59,6 +74,14 @@ pnpm agent:claim-worktree -- --issue CRE-123
 ```
 
 The helper records the Linear issue, branch, worktree path, base ref, and base SHA as a Linear comment. Treat that record as the shared ownership handoff. If `origin/main` has moved before push or production promotion, rebase or merge the current base and update Linear evidence.
+
+For Hermes-backed runs, use a normal user-owned worktree root so Hermes can edit
+repo files through its own tools:
+
+```bash
+AGENT_WORKTREE_ROOT="$HOME/Code/create-something-worktrees" \
+  pnpm agent:claim-worktree -- --issue CRE-123
+```
 
 Why:
 

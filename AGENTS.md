@@ -66,17 +66,27 @@ When coordinating agents, pass **policy artifacts** alongside task artifacts.
 
 ## Default repo workflow
 
-1. Find or create tracked work in Linear.
-2. For isolated implementation work, claim an explicit worktree with `pnpm agent:claim-worktree -- --issue CRE-123` so Linear records branch, worktree path, base ref, and base SHA.
-3. Verify symbols and import paths before using them.
-4. Run the relevant quality gates.
-5. Record evidence in Linear and use the narrowest trustworthy validation surface.
-6. Push or open/update a PR only when production promotion, shared review, or explicit user intent requires it.
+1. For solo exploratory work where one operator owns the checkout, start with
+   `pnpm agent:solo-loop` and work in the current checkout with tight CLI
+   validation.
+2. Find or create tracked work in Linear when the work is shared, delegated,
+   long-running, production-bound, or needs durable evidence.
+3. For isolated implementation work, claim an explicit worktree with
+   `pnpm agent:claim-worktree -- --issue CRE-123` so Linear records branch,
+   worktree path, base ref, and base SHA.
+4. Verify symbols and import paths before using them.
+5. Run the relevant quality gates.
+6. Record evidence in Linear when the checkpoint affects handoff, review,
+   rollback, or promotion.
+7. Push or open/update a PR only when production promotion, shared review, or explicit user intent requires it.
 
 Core commands:
 
 ```bash
 pnpm bootstrap:worktree
+
+pnpm agent:solo-loop
+pnpm agent:solo-loop:check
 
 pnpm linear:ready
 pnpm linear:list -- --status open

@@ -33,6 +33,37 @@ named objects, scoped actions, approval states, stop conditions, and evidence.
 
 ---
 
+## Public Atlas Starter Maps
+
+The public Atlas canvas is the give-first surface for prospects. It lets a visitor
+start from a concrete industry workflow, edit the owner/systems/approval boundary,
+and carry the summary into booking without exposing production systems.
+
+Current starter maps:
+
+| Starter | Industry | Boundary to preserve |
+|---------|----------|----------------------|
+| RevOps lead handoff | RevOps / B2B SaaS | Stop on consent, duplicate, or territory uncertainty |
+| Prior authorization prep | Healthcare operations | Stop before medical-necessity or final submission decisions |
+| RFI/submittal control | Construction / project controls | Stop before scope, cost, schedule, or contract commitments |
+| Marketplace review queue | Marketplace operations | Stop before ungrounded approval, rejection, or security claims |
+| Insurance claims intake | Insurance operations | Stop before payout, denial, fraud escalation, or sensitive decisioning |
+
+Each starter map must include all public Atlas dimensions: `Actor`, `Human task`,
+`AI task`, `System operation`, `Data artifact`, `Constraint`, and `Touchpoint`.
+Each map must also expose at least one `run`, one `wait`, and one `stop` node so
+the prospect sees the action boundary before the sales conversation.
+
+Implementation surface:
+
+- `src/lib/atlas/public.ts` owns starter-map data and normalization.
+- `src/lib/components/PublicAtlasCanvas.svelte` renders the selector and persists
+  the chosen map into booking context.
+- `test/public-atlas-starter-maps.test.ts` verifies coverage and policy-boundary
+  shape.
+
+---
+
 ## The Two-Layer Model
 
 ```

@@ -14,7 +14,8 @@
 
 2. **Public Atlas canvas (send as a low-friction warmup)**
    - `/atlas` or `/services#atlas-warmup`
-   - Purpose: let cold or medium-fit buyers map one workflow, understand the trust boundary, and carry readiness metadata into booking without exposing secrets or running production tools.
+   - Purpose: let cold or medium-fit buyers start from an industry starter map, understand the trust boundary, and carry readiness metadata into booking without exposing secrets or running production tools.
+   - Starter maps: RevOps lead handoff, prior authorization prep, RFI/submittal control, marketplace review queue, and insurance claims intake.
 
 3. **Discovery script (run live for 20-30 minutes)**
    - `discovery-call-script.md`
@@ -77,18 +78,19 @@
 
 1. Send one-pager.
 2. Offer the public Atlas canvas when the buyer needs a low-friction way to understand the mapping process.
-3. Review `discovery-policy.md`, `discovery-runbook.md`, and `operator-checklist.md`.
-4. Run discovery script as a branching guide.
-5. Capture discovery note, including Atlas readiness/session metadata when present.
-6. Assign fit (`high|medium|low`) and select close path.
-7. For high-fit work, send `workflow-mapping-session-agenda.md`.
-8. Execute follow-up sequence and lock next action.
-9. Build proposal using:
+3. If the buyer fits a starter-map lane, ask them to load the closest industry workflow and edit the owner, systems, approval point, and stop condition.
+4. Review `discovery-policy.md`, `discovery-runbook.md`, and `operator-checklist.md`.
+5. Run discovery script as a branching guide.
+6. Capture discovery note, including Atlas readiness/session metadata when present.
+7. Assign fit (`high|medium|low`) and select close path.
+8. For high-fit work, send `workflow-mapping-session-agenda.md`.
+9. Execute follow-up sequence and lock next action.
+10. Build proposal using:
    - `mcp_contract.yaml`
    - `agent_contract.yaml`
    - `outcome_contract.md`
    - `golden_tasks.yaml`
-10. After the Workflow Mapping Session, instantiate the delivery templates before implementation starts.
+11. After the Workflow Mapping Session, instantiate the delivery templates before implementation starts.
 
 ---
 

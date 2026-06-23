@@ -4,9 +4,11 @@
 	import {
 		computePublicAtlasReadiness,
 		createPublicAtlasCanvas,
+		createPublicAtlasCanvasFromStarter,
 		createPublicAtlasEdge,
 		createPublicAtlasNode,
 		normalizePublicAtlasCanvas,
+		PUBLIC_ATLAS_INDUSTRY_STARTERS,
 		PUBLIC_ATLAS_LANES,
 		PUBLIC_ATLAS_LIMITS,
 		PUBLIC_ATLAS_STORAGE_KEYS,
@@ -57,6 +59,7 @@
 	let agentError = '';
 	let copyState = '';
 	let saveState = 'Draft not saved';
+	let starterState = '';
 	let hydrated = false;
 	let addMenuOpen = false;
 	let flowHost: HTMLDivElement;
@@ -82,6 +85,19 @@
 		{ label: 'Approval', text: 'The approval point is...' },
 		{ label: 'Risk', text: 'The riskiest handoff is...' }
 	];
+
+	function initialUsage(tier: AgentResponse['usage']['tier']): AgentResponse['usage'] {
+		const limits = PUBLIC_ATLAS_LIMITS[tier];
+		return {
+			tier,
+			messagesUsed: 0,
+			messagesLimit: limits.messagesPerMap,
+			mutationsUsed: 0,
+			mutationsLimit: limits.mutationsPerMap,
+			dailyMessagesUsed: 0,
+			dailyMessagesLimit: limits.dailyMessagesPerVisitor
+		};
+	}
 
 	$: selectedNode = canvas.nodes.find((node) => node.id === selectedNodeId) ?? canvas.nodes[0];
 	$: readiness = computePublicAtlasReadiness(canvas);
@@ -146,6 +162,28 @@
 			})
 		);
 		saveState = 'Saved for booking';
+	}
+
+	function loadStarterMap(starterId: string) {
+		const starter = PUBLIC_ATLAS_INDUSTRY_STARTERS.find((item) => item.id === starterId);
+		const next = createPublicAtlasCanvasFromStarter(starterId);
+		canvas = next;
+		selectedNodeId = next.nodes.find((node) => node.id === 'data_workflow')?.id ?? next.nodes[0]?.id ?? '';
+		selectedSourceId = selectedNodeId;
+		messages = [
+			messages[0],
+			{
+				role: 'assistant',
+				text: starter
+					? `${starter.name} is loaded. Adjust the owner, systems, approval point, or stop condition before booking.`
+					: 'Starter map loaded.'
+			}
+		];
+		usage = initialUsage(visitorEmail.trim() ? 'warmLead' : 'anonymous');
+		copyState = '';
+		starterState = starter ? `${starter.name} loaded` : 'Starter loaded';
+		saveState = 'Starter loaded';
+		persistCanvas();
 	}
 
 	function buildFlowProps(): PublicAtlasFlowProps {
@@ -290,21 +328,7 @@
 		selectedNodeId = 'data_workflow';
 		selectedSourceId = 'data_workflow';
 		messages = messages.slice(0, 1);
-		usage = {
-			tier: visitorEmail.trim() ? 'warmLead' : 'anonymous',
-			messagesUsed: 0,
-			messagesLimit: visitorEmail.trim()
-				? PUBLIC_ATLAS_LIMITS.warmLead.messagesPerMap
-				: PUBLIC_ATLAS_LIMITS.anonymous.messagesPerMap,
-			mutationsUsed: 0,
-			mutationsLimit: visitorEmail.trim()
-				? PUBLIC_ATLAS_LIMITS.warmLead.mutationsPerMap
-				: PUBLIC_ATLAS_LIMITS.anonymous.mutationsPerMap,
-			dailyMessagesUsed: 0,
-			dailyMessagesLimit: visitorEmail.trim()
-				? PUBLIC_ATLAS_LIMITS.warmLead.dailyMessagesPerVisitor
-				: PUBLIC_ATLAS_LIMITS.anonymous.dailyMessagesPerVisitor
-		};
+		usage = initialUsage(visitorEmail.trim() ? 'warmLead' : 'anonymous');
 		if (browser) {
 			window.localStorage.removeItem(PUBLIC_ATLAS_STORAGE_KEYS.canvas);
 			window.localStorage.removeItem(PUBLIC_ATLAS_STORAGE_KEYS.meta);
@@ -312,6 +336,7 @@
 			window.localStorage.removeItem(PUBLIC_ATLAS_STORAGE_KEYS.warmupDraft);
 		}
 		saveState = 'Draft cleared';
+		starterState = '';
 		addMenuOpen = false;
 	}
 
@@ -447,6 +472,22 @@
 		</div>
 
 		<aside class="atlas-side">
+			<section class="starter-panel">
+				<div class="panel-title">
+					<span>Starter maps</span>
+					<strong>{starterState || 'Choose an industry'}</strong>
+				</div>
+				<div class="starter-grid">
+					{#each PUBLIC_ATLAS_INDUSTRY_STARTERS as starter}
+						<button type="button" onclick={() => loadStarterMap(starter.id)}>
+							<span>{starter.industry}</span>
+							<strong>{starter.name}</strong>
+							<small>{starter.description}</small>
+						</button>
+					{/each}
+				</div>
+			</section>
+
 			<section class="agent-panel">
 				<div class="agent-hero">
 					<div>
@@ -604,7 +645,8 @@
 	.handoffs-title span,
 	.email-field span,
 	.inspector-panel label span,
-	.summary-panel summary span {
+	.summary-panel summary span,
+	.starter-grid button > span {
 		color: var(--color-clear-grey, #636363);
 		font-size: 0.72rem;
 		font-weight: 700;
@@ -647,6 +689,7 @@
 	.add-node-options button,
 	.agent-form button,
 	.prompt-row button,
+	.starter-grid button,
 	.summary-actions button,
 	.summary-actions a,
 	.danger {
@@ -658,7 +701,8 @@
 	}
 
 	.add-node-options small,
-	.handoffs small {
+	.handoffs small,
+	.starter-grid small {
 		color: var(--color-clear-grey, #636363);
 		font-size: 0.72rem;
 		line-height: 1.25;
@@ -667,6 +711,7 @@
 	.canvas-shell,
 	.agent-panel,
 	.inspector-panel,
+	.starter-panel,
 	.summary-panel {
 		border: 1px solid var(--color-clear-border, #e1e1e1);
 		border-radius: 8px;
@@ -684,6 +729,35 @@
 		gap: 0.75rem;
 		padding: 0.95rem;
 		border-bottom: 1px solid var(--color-clear-border, #e1e1e1);
+	}
+
+	.starter-panel {
+		overflow: hidden;
+	}
+
+	.starter-grid {
+		display: grid;
+		gap: 0.45rem;
+		padding: 0.95rem;
+	}
+
+	.starter-grid button {
+		display: grid;
+		gap: 0.18rem;
+		padding: 0.7rem 0.78rem;
+		text-align: left;
+	}
+
+	.starter-grid button:hover,
+	.starter-grid button:focus-visible {
+		border-color: #0a0e19;
+		background: #fbfbf8;
+	}
+
+	.starter-grid strong {
+		color: var(--color-clear-onyx, #0a0e19);
+		font-size: 0.88rem;
+		line-height: 1.2;
 	}
 
 	.canvas-header div,

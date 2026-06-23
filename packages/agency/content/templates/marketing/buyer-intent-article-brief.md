@@ -59,6 +59,10 @@ Use criteria that reflect operating design, not only features.
 ## Visual Plan
 
 Default rule: create strategic visuals, collect screenshots for evidence.
+Use `packages/agency/content/templates/marketing/image-prompt.md` for generated
+or designed visuals, and copy
+`packages/agency/content/templates/marketing/image-metadata.md` into the article
+asset folder before publish.
 
 | Asset             | Create or collect | Purpose                                       | Source / target | Status |
 | ----------------- | ----------------- | --------------------------------------------- | --------------- | ------ |
@@ -81,6 +85,8 @@ not use vendor homepage screenshots as filler.
 - Screenshot capture date:
 - Screenshot refresh due:
 - Image rights status: pending | cleared | original-owned | replace-before-publish
+- In-page visual placement:
+- Route guardrail:
 - Alt text owner:
 - Annotation owner:
 - Redaction notes:

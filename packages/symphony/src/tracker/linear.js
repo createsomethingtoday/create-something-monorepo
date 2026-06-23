@@ -44,6 +44,22 @@ function normalize_timestamp(value) {
 function normalize_state_name(value) {
     return String(value ?? '').trim().toLowerCase();
 }
+function required_label_names(config) {
+    return [
+        ...(config.tracker.label ? [config.tracker.label] : []),
+        ...config.tracker.labels,
+    ]
+        .map((label) => label.trim().toLowerCase())
+        .filter((label) => label !== '');
+}
+function has_required_labels(issue, config) {
+    const required = required_label_names(config);
+    if (required.length === 0) {
+        return true;
+    }
+    const issue_labels = new Set(issue.labels.map((label) => label.toLowerCase()));
+    return required.every((label) => issue_labels.has(label));
+}
 function select_state_id(states, preferred_names, fallback_type) {
     for (const name of preferred_names) {
         const matched = states.find((state) => normalize_state_name(state.name) === normalize_state_name(name));
@@ -89,7 +105,8 @@ export class LinearTrackerClient {
         this.fetch_impl = fetch_impl;
     }
     async fetch_candidate_issues() {
-        return this.fetch_issues_by_states(this.config.tracker.active_states);
+        const issues = await this.fetch_issues_by_states(this.config.tracker.active_states);
+        return issues.filter((issue) => has_required_labels(issue, this.config));
     }
     async fetch_issues_by_states(states) {
         if (states.length === 0) {

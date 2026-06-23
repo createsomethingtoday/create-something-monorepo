@@ -50,6 +50,21 @@ test('buildDefaults falls back to os tmpdir when no root is provided', () => {
   assert.equal(defaults.worktree, path.join(os.tmpdir(), 'cre-1-agent-worktree'));
 });
 
+test('buildDefaults honors AGENT_WORKTREE_ROOT for non-temp agent worktrees', (t) => {
+  const previousRoot = process.env.AGENT_WORKTREE_ROOT;
+  process.env.AGENT_WORKTREE_ROOT = '/Users/example/Code/create-something-worktrees';
+  t.after(() => {
+    if (previousRoot === undefined) delete process.env.AGENT_WORKTREE_ROOT;
+    else process.env.AGENT_WORKTREE_ROOT = previousRoot;
+  });
+
+  const defaults = buildDefaults({ issue: 'CRE-776' });
+  assert.equal(
+    defaults.worktree,
+    path.resolve('/Users/example/Code/create-something-worktrees/cre-776-agent-worktree'),
+  );
+});
+
 test('issue and branch normalization reject unsafe values', () => {
   assert.throws(() => normalizeIssueIdentifier('724'), /Issue must look like/);
   assert.throws(() => normalizeBranchName('../main'), /Unsafe branch name/);

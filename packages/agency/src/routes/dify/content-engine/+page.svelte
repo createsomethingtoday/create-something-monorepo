@@ -8,6 +8,7 @@
     type ClearCardItem,
     type ClearCtaItem
   } from '@create-something/canon';
+  import ArticleVisualFigure from '$lib/components/ArticleVisualFigure.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
   const channelRoles: ClearCardItem[] = [
@@ -209,6 +210,14 @@
 >
   {#snippet after()}
     <ClearCardGrid items={channelRoles} columns={3} ariaLabel="Dify content channel split" />
+    <ArticleVisualFigure
+      src="/images/articles/dify-content-engine/content-engine-funnel.svg"
+      alt="Diagram showing the CREATE SOMETHING site as the canonical content hub, with Substack dispatches and discovery clips routing readers back to owned proof and conversion paths."
+      eyebrow="Original visual"
+      title="The canonical page owns proof, disclosure, and routing."
+      caption="This owned diagram makes the content engine visible: long-form proof lives on the agency domain, dispatch channels point back to it, and conversion evidence stays measurable."
+      sourceLabel="Created by CREATE SOMETHING for this article."
+    />
   {/snippet}
 </ClearPageSection>
 
@@ -265,6 +274,9 @@
   {#snippet actions()}
     <Button href={agencyCoreMessaging.workflowMappingSessionHref}>
       {agencyCoreMessaging.bookMappingSessionLabel}
+    </Button>
+    <Button href="/dify/ship-dify-app-with-mcp-tools" variant="secondary">
+      Read Shipping Guide
     </Button>
     <Button href="/dify/agent-eval-gates" variant="secondary">Read Eval Gates</Button>
     <Button href="/dify/n8n-vs-dify" variant="secondary">Read Dify vs n8n</Button>
