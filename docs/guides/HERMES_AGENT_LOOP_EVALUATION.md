@@ -98,15 +98,17 @@ changes. It still does not authorize Hermes to claim or mutate Linear work.
 
 ## Production Test Order
 
-1. Run `pnpm agent:loop-pilot -- --json` from a clean worktree on latest
-   `origin/main`.
-2. Run `pnpm agent:hermes:evaluate:strict`.
-3. Create one Linear issue in `CREATE SOMETHING Agent Coordination` with a
+1. Run `pnpm agent:solo-loop -- --check` from the checkout the operator intends
+   to use for solo work.
+2. Run `pnpm agent:loop-pilot -- --json` from a clean worktree on latest
+   `origin/main` when testing the shared/background lane.
+3. Run `pnpm agent:hermes:evaluate:strict`.
+4. Create one Linear issue in `CREATE SOMETHING Agent Coordination` with a
    Hermes-specific evaluation label.
-4. Claim a Hermes-safe isolated worktree under a normal user-owned root:
+5. Claim a Hermes-safe isolated worktree under a normal user-owned root:
    `AGENT_WORKTREE_ROOT="$HOME/Code/create-something-worktrees" pnpm agent:claim-worktree -- --issue CRE-123`.
-5. Run exactly one bounded pass in that isolated worktree.
-6. Compare against the current Codex/Symphony baseline:
+6. Run exactly one bounded pass in that isolated worktree.
+7. Compare against the current Codex/Symphony baseline:
    - issue claimed only when explicitly eligible
    - workspace created under a known root
    - no unrelated file changes

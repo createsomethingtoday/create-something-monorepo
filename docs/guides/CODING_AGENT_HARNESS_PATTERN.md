@@ -16,6 +16,21 @@ Turn a coding agent from a one-shot assistant into a repeatable worker by giving
 
 ## The default loop
 
+### Solo-operator fast lane
+
+When one operator owns the checkout and is actively steering the agent, use the
+solo loop before adding coordination overhead:
+
+```bash
+pnpm agent:solo-loop
+```
+
+This is the Peter Steinberger-inspired path: current checkout, short prompts,
+CLI-first verification, visible stream steering, and targeted tests in the same
+context. It does not replace production provenance or shared-work safeguards.
+Use [SOLO_OPERATOR_AGENT_LOOP.md](./SOLO_OPERATOR_AGENT_LOOP.md) for the full
+decision table.
+
 ### 1. Track the work
 
 Use Linear as the control plane.
