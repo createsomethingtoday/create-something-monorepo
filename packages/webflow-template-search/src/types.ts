@@ -283,7 +283,9 @@ export interface TemplateImageBackfillSummary {
   requested_limit: number;
   requested_template_slugs?: string[];
   scanned_records: number;
+  attempted_records: number;
   updated_records: number;
+  unresolved_records: number;
   remaining_temp_airtable_rows: number;
   image_source_stats: TemplateImageSourceStats;
 }

@@ -7,7 +7,9 @@ import {
   backfillCreatorFieldsByName,
   backfillCreatorFieldsFromLookup,
   heartbeatSyncJobLock,
+  listTemplateImageBackfillRows,
   listTemplateImageRefreshRows,
+  markTemplateImageBackfillAttempts,
   recordSyncSummary,
   setSyncCursor,
 } from '../src/db.js';
@@ -394,6 +396,66 @@ describe('webflow-template-search worker', () => {
     }
   });
 
+  it('rotates generic image backfill past recently unresolved rows', async () => {
+    const { env, close } = createTestEnv();
+
+    try {
+      const rows = [
+        ['recMissingHot', 'missing-hot-template', 'Missing Hot', 1, 100, '2026-06-23T00:00:00.000Z'],
+        ['recMissingWarm', 'missing-warm-template', 'Missing Warm', 0, 90, '2026-06-23T00:00:00.000Z'],
+        ['recRepairableLater', 'repairable-later-template', 'Repairable Later', 0, 10, '2026-06-22T00:00:00.000Z'],
+      ];
+
+      for (const row of rows) {
+        await env.DB.prepare(
+          `INSERT INTO template_documents (
+            id,
+            template_slug,
+            name,
+            is_featured,
+            popularity_score,
+            source_last_modified_time,
+            synced_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        )
+          .bind(...row, '2026-06-23T01:00:00.000Z')
+          .run();
+      }
+
+      await markTemplateImageBackfillAttempts(
+        env.DB,
+        [
+          {
+            id: 'recMissingHot',
+            templateSlug: 'missing-hot-template',
+            name: 'Missing Hot',
+            listingUrl: null,
+            thumbnailImageUrl: null,
+            thumbnailImageSecondaryUrl: null,
+          },
+          {
+            id: 'recMissingWarm',
+            templateSlug: 'missing-warm-template',
+            name: 'Missing Warm',
+            listingUrl: null,
+            thumbnailImageUrl: null,
+            thumbnailImageSecondaryUrl: null,
+          },
+        ],
+        [],
+        '2026-06-23T04:00:00.000Z',
+      );
+
+      const selected = await listTemplateImageBackfillRows(env.DB, 1, [], {
+        now: '2026-06-23T05:00:00.000Z',
+      });
+
+      expect(selected.map((row) => row.id)).toEqual(['recRepairableLater']);
+    } finally {
+      close();
+    }
+  });
+
   it('uses sync job heartbeats to distinguish fresh and stale running locks', async () => {
     const { env, close } = createTestEnv();
 
@@ -508,9 +570,16 @@ describe('webflow-template-search worker', () => {
           'https://v5.airtableusercontent.com/v3/u/53/temporary-brix',
           'Airtable BRIX',
           '2026-05-26T00:00:00.000Z',
-        )
+      )
         .run();
       await acquireSyncJobLock(env.DB, 'incremental');
+      await env.DB.prepare(
+        `UPDATE sync_jobs
+         SET heartbeat_at = ?, expires_at = ?
+         WHERE lock_key = ?`,
+      )
+        .bind('2026-01-01T00:00:00.000Z', '2099-01-01T00:00:00.000Z', 'template_sync')
+        .run();
       const response = await callWorker(
         new Request('https://templates.test/api/templates/admin/refresh-creators?force=true', {
           method: 'POST',
@@ -542,6 +611,29 @@ describe('webflow-template-search worker', () => {
       });
     } finally {
       fetchMock.mockRestore();
+      close();
+    }
+  });
+
+  it('does not force-refresh creator profiles while a fresh sync lock is running', async () => {
+    const { env, close } = createTestEnv();
+    env.WEBFLOW_API_TOKEN = 'test-webflow-cms-token';
+
+    try {
+      await acquireSyncJobLock(env.DB, 'incremental');
+      const response = await callWorker(
+        new Request('https://templates.test/api/templates/admin/refresh-creators?force=true', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      const payload = (await response.json()) as { error: string; active_job: { mode: string; status: string } | null };
+
+      expect(response.status).toBe(409);
+      expect(payload.error).toBe('A template sync job is already running.');
+      expect(payload.active_job).toMatchObject({ mode: 'incremental', status: 'running' });
+    } finally {
       close();
     }
   });
