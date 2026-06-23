@@ -3,6 +3,9 @@ import type { Env } from './types.js';
 export const TEMPLATES_COLLECTION_ID = '641b464e78789f611a5d4496';
 export const DESIGNERS_COLLECTION_ID = '641b464e78789fc19d5d4461';
 const WEBFLOW_PAGE_FETCH_TIMEOUT_MS = 15_000;
+const WEBFLOW_API_MAX_RETRIES = 3;
+const WEBFLOW_API_BASE_BACKOFF_MS = 750;
+const WEBFLOW_API_MAX_BACKOFF_MS = 4_000;
 
 interface WebflowImage {
   fileId: string;
@@ -50,6 +53,53 @@ async function fetchWebflowPage(url: string, apiToken: string): Promise<Response
   }
 }
 
+function retryAfterMs(response: Response): number | null {
+  const value = response.headers.get('retry-after');
+  if (!value) return null;
+
+  const seconds = Number(value);
+  if (Number.isFinite(seconds) && seconds >= 0) return seconds * 1000;
+
+  const date = Date.parse(value);
+  if (Number.isFinite(date)) return Math.max(0, date - Date.now());
+  return null;
+}
+
+function shouldRetryWebflowResponse(response: Response): boolean {
+  return response.status === 429 || (response.status >= 500 && response.status < 600);
+}
+
+function webflowBackoffMs(response: Response, attempt: number): number {
+  const retryAfter = retryAfterMs(response);
+  if (retryAfter !== null) return Math.min(retryAfter, WEBFLOW_API_MAX_BACKOFF_MS);
+  return Math.min(WEBFLOW_API_BASE_BACKOFF_MS * 2 ** attempt, WEBFLOW_API_MAX_BACKOFF_MS);
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function fetchWebflowPageWithRetry(url: string, apiToken: string): Promise<Response> {
+  let lastResponse: Response | null = null;
+  let lastError: unknown = null;
+
+  for (let attempt = 0; attempt <= WEBFLOW_API_MAX_RETRIES; attempt += 1) {
+    try {
+      const response = await fetchWebflowPage(url, apiToken);
+      if (!shouldRetryWebflowResponse(response) || attempt === WEBFLOW_API_MAX_RETRIES) return response;
+      lastResponse = response;
+      await sleep(webflowBackoffMs(response, attempt));
+    } catch (error) {
+      lastError = error;
+      if (attempt === WEBFLOW_API_MAX_RETRIES) throw error;
+      await sleep(Math.min(WEBFLOW_API_BASE_BACKOFF_MS * 2 ** attempt, WEBFLOW_API_MAX_BACKOFF_MS));
+    }
+  }
+
+  if (lastResponse) return lastResponse;
+  throw lastError instanceof Error ? lastError : new Error(String(lastError));
+}
+
 export interface WebflowTemplateImageRecord {
   id: string | null; // sync-record-id = Airtable record ID = D1 id when present
   templateSlug: string | null;
@@ -85,7 +135,7 @@ async function paginateWebflow<T>(
     const url = `https://api.webflow.com/v2/collections/${collectionId}/items?limit=${limit}&offset=${offset}`;
     let response: Response;
     try {
-      response = await fetchWebflowPage(url, apiToken);
+      response = await fetchWebflowPageWithRetry(url, apiToken);
     } catch (error) {
       throw new Error(`Webflow API request timed out for collection ${collectionId} at offset ${offset}: ${error instanceof Error ? error.message : String(error)}`);
     }
@@ -132,7 +182,7 @@ async function fetchWebflowCollectionItems<T>(
 
     let response: Response;
     try {
-      response = await fetchWebflowPage(url.toString(), apiToken);
+      response = await fetchWebflowPageWithRetry(url.toString(), apiToken);
     } catch (error) {
       throw new Error(
         `Webflow API request timed out for collection ${collectionId} at offset ${offset}: ${

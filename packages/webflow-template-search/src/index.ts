@@ -45,7 +45,7 @@ const INCREMENTAL_SYNC_CRON = '*/5 * * * *';
 const IMAGE_REFRESH_CRON = '0 */2 * * *';
 const IMAGE_BACKFILL_MAINTENANCE_CRON = '17 * * * *';
 const IMAGE_PRUNE_MAINTENANCE_CRON = '47 3 * * *';
-const SCHEDULED_IMAGE_BACKFILL_LIMIT = 96;
+const SCHEDULED_IMAGE_BACKFILL_LIMIT = 48;
 const SCHEDULED_IMAGE_PRUNE_LIMIT = 24;
 
 const PUBLIC_SEARCH_CACHE_HEADERS = {
@@ -348,7 +348,7 @@ async function handleWebflowWebhook(request: Request, env: Env): Promise<Respons
   return jsonResponse(request, env, { status: 'ignored', reason: 'unknown collection' });
 }
 
-async function handleImageBackfill(request: Request, env: Env): Promise<Response> {
+async function handleImageBackfill(request: Request, env: Env, ctx?: ExecutionContext): Promise<Response> {
   const authError = validateAdminToken(request, env);
   if (authError) return authError;
 
@@ -362,11 +362,17 @@ async function handleImageBackfill(request: Request, env: Env): Promise<Response
       .map((slug) => slug.trim())
       .filter(Boolean),
   ];
-  return jsonResponse(
-    request,
-    env,
-    await backfillTemplateImages(env, { limit: limit === undefined || Number.isFinite(limit) ? limit : undefined, templateSlugs }),
-  );
+  const options = { limit: limit === undefined || Number.isFinite(limit) ? limit : undefined, templateSlugs };
+  if (url.searchParams.get('async') === 'true' && ctx) {
+    ctx.waitUntil(
+      backfillTemplateImages(env, options).catch((error) => {
+        console.error('Background image backfill failed.', error);
+      }),
+    );
+    return jsonResponse(request, env, { status: 'image_backfill_started', message: 'Image backfill started in background.' });
+  }
+
+  return jsonResponse(request, env, await backfillTemplateImages(env, options));
 }
 
 async function handleImagePrune(request: Request, env: Env): Promise<Response> {
@@ -504,7 +510,7 @@ export default {
       }
 
       if (url.pathname === '/api/templates/admin/backfill-images' && request.method === 'POST') {
-        return await handleImageBackfill(request, env);
+        return await handleImageBackfill(request, env, ctx);
       }
 
       if (url.pathname === '/api/templates/admin/prune-missing-images' && request.method === 'POST') {

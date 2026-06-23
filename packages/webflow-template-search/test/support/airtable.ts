@@ -6,7 +6,8 @@ interface MockDataset {
   webflowAssets?: Array<Record<string, unknown>>;
   webflowCollections?: Array<Record<string, unknown>>;
   webflowCollectionItems?: Record<string, Array<Record<string, unknown>>>;
-  webflowCollectionItemErrors?: Record<string, { status: number; body: unknown }>;
+  webflowCollectionItemErrors?: Record<string, { status: number; body: unknown; headers?: Record<string, string> }>;
+  webflowCollectionItemErrorSequences?: Record<string, Array<{ status: number; body: unknown; headers?: Record<string, string> }>>;
   publishedTemplatePages?: Record<string, string>;
   styles?: Array<{ id: string; fields: Record<string, unknown> }>;
   childCategories?: Array<{ id: string; fields: Record<string, unknown> }>;
@@ -38,9 +39,14 @@ export function installAirtableFetchMock(dataset: MockDataset) {
       const collectionItemsMatch = url.pathname.match(/\/v2\/collections\/([^/]+)\/items$/);
       if (collectionItemsMatch) {
         const collectionId = collectionItemsMatch[1] ?? '';
+        const sequencedError = dataset.webflowCollectionItemErrorSequences?.[collectionId]?.shift();
+        if (sequencedError) {
+          return Response.json(sequencedError.body, { status: sequencedError.status, headers: sequencedError.headers });
+        }
+
         const error = dataset.webflowCollectionItemErrors?.[collectionId];
         if (error) {
-          return Response.json(error.body, { status: error.status });
+          return Response.json(error.body, { status: error.status, headers: error.headers });
         }
 
         const offset = Number(url.searchParams.get('offset') ?? '0') || 0;
