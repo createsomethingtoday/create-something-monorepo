@@ -60,6 +60,14 @@ pnpm agent:claim-worktree -- --issue CRE-123
 
 The helper records the Linear issue, branch, worktree path, base ref, and base SHA as a Linear comment. Treat that record as the shared ownership handoff. If `origin/main` has moved before push or production promotion, rebase or merge the current base and update Linear evidence.
 
+For Hermes-backed runs, use a normal user-owned worktree root so Hermes can edit
+repo files through its own tools:
+
+```bash
+AGENT_WORKTREE_ROOT="$HOME/Code/create-something-worktrees" \
+  pnpm agent:claim-worktree -- --issue CRE-123
+```
+
 Why:
 
 - prevents cross-task contamination
