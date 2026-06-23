@@ -118,6 +118,14 @@
       href: '/dify/agent-eval-gates'
     },
     {
+      eyebrow: 'Ship',
+      icon: 'check',
+      title: 'Ship a Dify app with MCP tools',
+      detail:
+        'Turn the control-plane and eval-gate papers into a practical build path for governed Dify workflows.',
+      href: '/dify/ship-dify-app-with-mcp-tools'
+    },
+    {
       eyebrow: 'Publish',
       icon: 'upload',
       title: 'Custom-domain content engine',
