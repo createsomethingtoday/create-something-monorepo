@@ -132,6 +132,48 @@ export type AtlasObservation = {
   createdAt: string;
 };
 
+export type AtlasStoryCallout = {
+  id: string;
+  nodeId?: string;
+  text: string;
+  severity: 'info' | 'risk' | 'decision';
+};
+
+export type AtlasStoryQuestion = {
+  id: string;
+  nodeId?: string;
+  owner?: string;
+  question: string;
+  status: 'open' | 'answered';
+};
+
+export type AtlasStoryStep = {
+  id: string;
+  title: string;
+  summary: string;
+  focusNodeIds?: string[];
+  focusEdgeIds?: string[];
+  owner?: string;
+  proof?: string;
+  status?: 'current' | 'done' | 'next';
+};
+
+export type AtlasStoryState = {
+  active: boolean;
+  activeStepId?: string;
+  title?: string;
+  narration?: string;
+  nextAction?: string;
+  focusNodeIds: string[];
+  focusEdgeIds: string[];
+  dimUnfocused: boolean;
+  callouts: AtlasStoryCallout[];
+  questions: AtlasStoryQuestion[];
+  steps: AtlasStoryStep[];
+  updatedAt: string;
+  updatedBy: AtlasSessionActor;
+};
+
 export type AtlasSuggestion = {
   id: string;
   status: AtlasSuggestionStatus;
@@ -156,6 +198,7 @@ export type AtlasSession = {
   updatedAt: string;
   canvas: AtlasSessionCanvas;
   observations: AtlasObservation[];
+  story?: AtlasStoryState;
   proposals?: AtlasWritebackProposal[];
   suggestions: AtlasSuggestion[];
 };

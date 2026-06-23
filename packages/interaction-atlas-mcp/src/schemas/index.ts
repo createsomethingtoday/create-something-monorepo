@@ -105,6 +105,49 @@ export const AtlasStudioSuggestionAcceptSchema = z.object({
   suggestion_id: z.string().min(1)
 });
 
+export const AtlasStudioStoryFocusSchema = z.object({
+  session_id: z.string().min(1),
+  title: z.string().min(1).optional().describe('Short label for the current walkthrough step.'),
+  narration: z.string().min(1).optional().describe('What the agent is explaining to the client.'),
+  next_action: z.string().min(1).optional().describe('The immediate operator move after this explanation.'),
+  focus_node_ids: z.array(z.string().min(1)).optional().describe('Canvas node ids to spotlight.'),
+  focus_edge_ids: z.array(z.string().min(1)).optional().describe('Canvas edge ids to spotlight.'),
+  dim_unfocused: z.boolean().optional().describe('Dim unrelated canvas items while focused.'),
+  active_step_id: z.string().min(1).optional().describe('Current walkthrough step id.'),
+  steps: z
+    .array(
+      z.object({
+        id: z.string().min(1).optional(),
+        title: z.string().min(1),
+        summary: z.string().min(1),
+        focus_node_ids: z.array(z.string().min(1)).optional(),
+        focus_edge_ids: z.array(z.string().min(1)).optional(),
+        owner: z.string().min(1).optional(),
+        proof: z.string().min(1).optional(),
+        status: z.enum(['current', 'done', 'next']).optional()
+      })
+    )
+    .optional()
+    .describe('Ordered presenter steps for the live canvas walkthrough.'),
+  callout_node_id: z.string().min(1).optional().describe('Optional node id for a temporary callout.'),
+  callout_text: z.string().min(1).optional().describe('Temporary callout text shown in the story rail.'),
+  callout_severity: z.enum(['info', 'risk', 'decision']).optional().describe('Callout tone.'),
+  operator: z.boolean().optional().describe('Mark the story step as operator-authored.')
+});
+
+export const AtlasStudioStoryQuestionAddSchema = z.object({
+  session_id: z.string().min(1),
+  question: z.string().min(1),
+  node_id: z.string().min(1).optional().describe('Canvas node id this validation question belongs to.'),
+  owner: z.string().min(1).optional().describe('Person or team expected to answer.'),
+  operator: z.boolean().optional().describe('Mark the question as operator-authored.')
+});
+
+export const AtlasStudioStoryStepActivateSchema = z.object({
+  session_id: z.string().min(1),
+  step_id: z.string().min(1).describe('Presenter step id to activate.')
+});
+
 export const AtlasStudioHealSchema = z.object({
   session_id: z.string().min(1),
   profile: z

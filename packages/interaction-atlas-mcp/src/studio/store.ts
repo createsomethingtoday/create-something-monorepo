@@ -11,6 +11,9 @@ import type {
   AtlasObservation,
   AtlasSession,
   AtlasSessionActor,
+  AtlasStoryCallout,
+  AtlasStoryQuestion,
+  AtlasStoryStep,
   AtlasSuggestion
 } from './types.js';
 
@@ -54,6 +57,26 @@ type AddObservationInput = {
   source?: AtlasSessionActor;
   suggest?: boolean;
 };
+
+type SetStoryInput = {
+  activeStepId?: string;
+  callouts?: Array<Omit<AtlasStoryCallout, 'id'> & { id?: string }>;
+  dimUnfocused?: boolean;
+  focusEdgeIds?: string[];
+  focusNodeIds?: string[];
+  narration?: string;
+  nextAction?: string;
+  questions?: Array<Omit<AtlasStoryQuestion, 'id' | 'status'> & { id?: string; status?: AtlasStoryQuestion['status'] }>;
+  steps?: Array<Omit<AtlasStoryStep, 'id'> & { id?: string }>;
+  title?: string;
+  updatedBy?: AtlasSessionActor;
+};
+
+type AddStoryQuestionInput = Omit<AtlasStoryQuestion, 'id' | 'status'> & {
+  updatedBy?: AtlasSessionActor;
+};
+
+type StoryStepDirection = 'next' | 'previous';
 
 function now(): string {
   return new Date().toISOString();
@@ -473,6 +496,183 @@ export async function addObservation(
   if (input.suggest) {
     session.suggestions.unshift(...suggestionsFromText(input.text, session));
   }
+  return writeSession(session, cwd);
+}
+
+export async function setStoryFocus(
+  sessionId: string,
+  input: SetStoryInput,
+  cwd = process.cwd()
+): Promise<AtlasSession> {
+  const session = await readSession(sessionId, cwd);
+  const existing = session.story;
+  const steps = (input.steps ?? existing?.steps ?? []).map((step) => ({
+    id: step.id ?? randomId('step'),
+    focusEdgeIds: step.focusEdgeIds,
+    focusNodeIds: step.focusNodeIds,
+    owner: step.owner,
+    proof: step.proof,
+    status: step.status,
+    summary: step.summary,
+    title: step.title
+  }));
+  const activeStepId =
+    input.activeStepId ??
+    existing?.activeStepId ??
+    steps.find((step) => step.status === 'current')?.id ??
+    steps[0]?.id;
+  session.story = {
+    active: true,
+    activeStepId,
+    callouts: (input.callouts ?? existing?.callouts ?? []).map((callout) => ({
+      id: callout.id ?? randomId('callout'),
+      nodeId: callout.nodeId,
+      severity: callout.severity,
+      text: callout.text
+    })),
+    dimUnfocused: input.dimUnfocused ?? existing?.dimUnfocused ?? true,
+    focusEdgeIds: input.focusEdgeIds ?? existing?.focusEdgeIds ?? [],
+    focusNodeIds: input.focusNodeIds ?? existing?.focusNodeIds ?? [],
+    narration: input.narration ?? existing?.narration,
+    nextAction: input.nextAction ?? existing?.nextAction,
+    questions: (input.questions ?? existing?.questions ?? []).map((question) => ({
+      id: question.id ?? randomId('question'),
+      nodeId: question.nodeId,
+      owner: question.owner,
+      question: question.question,
+      status: question.status ?? 'open'
+    })),
+    steps,
+    title: input.title ?? existing?.title,
+    updatedAt: now(),
+    updatedBy: input.updatedBy ?? 'agent'
+  };
+  return writeSession(session, cwd);
+}
+
+function storyStepIndex(session: AtlasSession, stepId?: string): number {
+  const steps = session.story?.steps ?? [];
+  if (!steps.length) return -1;
+  if (stepId) {
+    const byId = steps.findIndex((step) => step.id === stepId);
+    if (byId >= 0) return byId;
+  }
+  const activeId = session.story?.activeStepId;
+  if (activeId) {
+    const byActive = steps.findIndex((step) => step.id === activeId);
+    if (byActive >= 0) return byActive;
+  }
+  const current = steps.findIndex((step) => step.status === 'current');
+  return current >= 0 ? current : 0;
+}
+
+function applyStoryStep(session: AtlasSession, index: number): AtlasSession {
+  const story = session.story;
+  const steps = story?.steps ?? [];
+  const step = steps[index];
+  if (!story || !step) throw new Error('Unknown Atlas Studio story step.');
+
+  session.story = {
+    ...story,
+    active: true,
+    activeStepId: step.id,
+    focusEdgeIds: step.focusEdgeIds ?? [],
+    focusNodeIds: step.focusNodeIds ?? [],
+    narration: step.summary,
+    steps: steps.map((item, itemIndex) => ({
+      ...item,
+      status: itemIndex < index ? 'done' : itemIndex === index ? 'current' : 'next'
+    })),
+    updatedAt: now(),
+    updatedBy: 'agent'
+  };
+  return session;
+}
+
+export async function activateStoryStep(
+  sessionId: string,
+  stepId: string,
+  cwd = process.cwd()
+): Promise<AtlasSession> {
+  const session = await readSession(sessionId, cwd);
+  const index = storyStepIndex(session, stepId);
+  if (index < 0 || session.story?.steps[index]?.id !== stepId) {
+    throw new Error(`Unknown Atlas Studio story step: ${stepId}`);
+  }
+  return writeSession(applyStoryStep(session, index), cwd);
+}
+
+export async function advanceStoryStep(
+  sessionId: string,
+  direction: StoryStepDirection,
+  cwd = process.cwd()
+): Promise<AtlasSession> {
+  const session = await readSession(sessionId, cwd);
+  const steps = session.story?.steps ?? [];
+  if (!steps.length) throw new Error('This Atlas Studio session has no story steps.');
+  const current = storyStepIndex(session);
+  const next =
+    direction === 'next'
+      ? Math.min(current + 1, steps.length - 1)
+      : Math.max(current - 1, 0);
+  return writeSession(applyStoryStep(session, next), cwd);
+}
+
+export async function addStoryQuestion(
+  sessionId: string,
+  input: AddStoryQuestionInput,
+  cwd = process.cwd()
+): Promise<AtlasSession> {
+  const session = await readSession(sessionId, cwd);
+  const existing = session.story;
+  session.story = {
+    active: true,
+    activeStepId: existing?.activeStepId,
+    callouts: existing?.callouts ?? [],
+    dimUnfocused: existing?.dimUnfocused ?? true,
+    focusEdgeIds: existing?.focusEdgeIds ?? [],
+    focusNodeIds: input.nodeId
+      ? Array.from(new Set([...(existing?.focusNodeIds ?? []), input.nodeId]))
+      : existing?.focusNodeIds ?? [],
+    narration: existing?.narration,
+    questions: [
+      ...(existing?.questions ?? []),
+      {
+        id: randomId('question'),
+        nodeId: input.nodeId,
+        owner: input.owner,
+        question: input.question,
+        status: 'open'
+      }
+    ],
+    nextAction: existing?.nextAction,
+    steps: existing?.steps ?? [],
+    title: existing?.title ?? 'Validation question',
+    updatedAt: now(),
+    updatedBy: input.updatedBy ?? 'agent'
+  };
+  return writeSession(session, cwd);
+}
+
+export async function clearStoryFocus(
+  sessionId: string,
+  input: { updatedBy?: AtlasSessionActor } = {},
+  cwd = process.cwd()
+): Promise<AtlasSession> {
+  const session = await readSession(sessionId, cwd);
+  session.story = {
+    active: false,
+    activeStepId: undefined,
+    callouts: [],
+    dimUnfocused: false,
+    focusEdgeIds: [],
+    focusNodeIds: [],
+    nextAction: undefined,
+    questions: session.story?.questions ?? [],
+    steps: [],
+    updatedAt: now(),
+    updatedBy: input.updatedBy ?? 'agent'
+  };
   return writeSession(session, cwd);
 }
 

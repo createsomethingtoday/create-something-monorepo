@@ -15,10 +15,15 @@ import {
   addEdge,
   addNode,
   addObservation,
+  addStoryQuestion,
+  activateStoryStep,
+  advanceStoryStep,
+  clearStoryFocus,
   createSession,
   exportSessionMarkdown,
   readSession,
   removeNode,
+  setStoryFocus,
   writeSession
 } from '../dist/studio/store.js';
 
@@ -94,6 +99,75 @@ test('removing an Atlas Studio node also removes connected edges', async () => {
     ),
     false
   );
+});
+
+test('Atlas Studio story focus is transient presentation state', async () => {
+  const cwd = await mkdtemp(path.join(tmpdir(), 'atlas-studio-story-test-'));
+  const session = await createSession(
+    { client: 'Acme', workflow: 'Support recovery', owner: 'Ops' },
+    cwd
+  );
+
+  const focused = await setStoryFocus(
+    session.id,
+    {
+      callouts: [{ nodeId: 'data_workflow', severity: 'info', text: 'Start here.' }],
+      activeStepId: 'ingest',
+      focusNodeIds: ['data_workflow', 'actor_agent'],
+      narration: 'Walk the client through the golden path.',
+      nextAction: 'Ask the operator to confirm the system of record.',
+      steps: [
+        {
+          id: 'ingest',
+          title: 'Ingest',
+          summary: 'Bring the workflow source data into the map.',
+          focusNodeIds: ['data_workflow'],
+          proof: 'Source data owner named.'
+        },
+        {
+          id: 'approve',
+          title: 'Approve',
+          summary: 'Confirm the human approval boundary.',
+          focusNodeIds: ['human_approval'],
+          status: 'next'
+        }
+      ],
+      title: 'Golden path',
+      updatedBy: 'agent'
+    },
+    cwd
+  );
+
+  assert.equal(focused.canvas.nodes.length, session.canvas.nodes.length);
+  assert.equal(focused.canvas.edges.length, session.canvas.edges.length);
+  assert.equal(focused.story?.active, true);
+  assert.equal(focused.story?.activeStepId, 'ingest');
+  assert.equal(focused.story?.steps.length, 2);
+  assert.equal(focused.story?.nextAction, 'Ask the operator to confirm the system of record.');
+  assert.deepEqual(focused.story?.focusNodeIds, ['data_workflow', 'actor_agent']);
+
+  const activated = await activateStoryStep(session.id, 'approve', cwd);
+  assert.equal(activated.story?.activeStepId, 'approve');
+  assert.deepEqual(activated.story?.focusNodeIds, ['human_approval']);
+  assert.equal(activated.story?.steps[0].status, 'done');
+  assert.equal(activated.story?.steps[1].status, 'current');
+
+  const previous = await advanceStoryStep(session.id, 'previous', cwd);
+  assert.equal(previous.story?.activeStepId, 'ingest');
+
+  const withQuestion = await addStoryQuestion(
+    session.id,
+    { nodeId: 'data_workflow', owner: 'Ops', question: 'Which system owns this state?' },
+    cwd
+  );
+  assert.equal(withQuestion.story?.questions.length, 1);
+  assert.equal(withQuestion.story?.focusNodeIds.includes('data_workflow'), true);
+
+  const cleared = await clearStoryFocus(session.id, {}, cwd);
+  assert.equal(cleared.story?.active, false);
+  assert.equal(cleared.story?.questions.length, 1);
+  assert.equal(cleared.story?.steps.length, 0);
+  assert.equal(cleared.canvas.nodes.length, session.canvas.nodes.length);
 });
 
 test('Atlas Studio can self-heal Template System production primitive bindings', async () => {

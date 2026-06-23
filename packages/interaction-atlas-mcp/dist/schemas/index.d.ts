@@ -227,6 +227,123 @@ export declare const AtlasStudioSuggestionAcceptSchema: z.ZodObject<{
     session_id: string;
     suggestion_id: string;
 }>;
+export declare const AtlasStudioStoryFocusSchema: z.ZodObject<{
+    session_id: z.ZodString;
+    title: z.ZodOptional<z.ZodString>;
+    narration: z.ZodOptional<z.ZodString>;
+    next_action: z.ZodOptional<z.ZodString>;
+    focus_node_ids: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+    focus_edge_ids: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+    dim_unfocused: z.ZodOptional<z.ZodBoolean>;
+    active_step_id: z.ZodOptional<z.ZodString>;
+    steps: z.ZodOptional<z.ZodArray<z.ZodObject<{
+        id: z.ZodOptional<z.ZodString>;
+        title: z.ZodString;
+        summary: z.ZodString;
+        focus_node_ids: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+        focus_edge_ids: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
+        owner: z.ZodOptional<z.ZodString>;
+        proof: z.ZodOptional<z.ZodString>;
+        status: z.ZodOptional<z.ZodEnum<["current", "done", "next"]>>;
+    }, "strip", z.ZodTypeAny, {
+        title: string;
+        summary: string;
+        id?: string | undefined;
+        status?: "current" | "done" | "next" | undefined;
+        owner?: string | undefined;
+        focus_node_ids?: string[] | undefined;
+        focus_edge_ids?: string[] | undefined;
+        proof?: string | undefined;
+    }, {
+        title: string;
+        summary: string;
+        id?: string | undefined;
+        status?: "current" | "done" | "next" | undefined;
+        owner?: string | undefined;
+        focus_node_ids?: string[] | undefined;
+        focus_edge_ids?: string[] | undefined;
+        proof?: string | undefined;
+    }>, "many">>;
+    callout_node_id: z.ZodOptional<z.ZodString>;
+    callout_text: z.ZodOptional<z.ZodString>;
+    callout_severity: z.ZodOptional<z.ZodEnum<["info", "risk", "decision"]>>;
+    operator: z.ZodOptional<z.ZodBoolean>;
+}, "strip", z.ZodTypeAny, {
+    session_id: string;
+    operator?: boolean | undefined;
+    steps?: {
+        title: string;
+        summary: string;
+        id?: string | undefined;
+        status?: "current" | "done" | "next" | undefined;
+        owner?: string | undefined;
+        focus_node_ids?: string[] | undefined;
+        focus_edge_ids?: string[] | undefined;
+        proof?: string | undefined;
+    }[] | undefined;
+    title?: string | undefined;
+    narration?: string | undefined;
+    next_action?: string | undefined;
+    focus_node_ids?: string[] | undefined;
+    focus_edge_ids?: string[] | undefined;
+    dim_unfocused?: boolean | undefined;
+    active_step_id?: string | undefined;
+    callout_node_id?: string | undefined;
+    callout_text?: string | undefined;
+    callout_severity?: "info" | "risk" | "decision" | undefined;
+}, {
+    session_id: string;
+    operator?: boolean | undefined;
+    steps?: {
+        title: string;
+        summary: string;
+        id?: string | undefined;
+        status?: "current" | "done" | "next" | undefined;
+        owner?: string | undefined;
+        focus_node_ids?: string[] | undefined;
+        focus_edge_ids?: string[] | undefined;
+        proof?: string | undefined;
+    }[] | undefined;
+    title?: string | undefined;
+    narration?: string | undefined;
+    next_action?: string | undefined;
+    focus_node_ids?: string[] | undefined;
+    focus_edge_ids?: string[] | undefined;
+    dim_unfocused?: boolean | undefined;
+    active_step_id?: string | undefined;
+    callout_node_id?: string | undefined;
+    callout_text?: string | undefined;
+    callout_severity?: "info" | "risk" | "decision" | undefined;
+}>;
+export declare const AtlasStudioStoryQuestionAddSchema: z.ZodObject<{
+    session_id: z.ZodString;
+    question: z.ZodString;
+    node_id: z.ZodOptional<z.ZodString>;
+    owner: z.ZodOptional<z.ZodString>;
+    operator: z.ZodOptional<z.ZodBoolean>;
+}, "strip", z.ZodTypeAny, {
+    session_id: string;
+    question: string;
+    operator?: boolean | undefined;
+    owner?: string | undefined;
+    node_id?: string | undefined;
+}, {
+    session_id: string;
+    question: string;
+    operator?: boolean | undefined;
+    owner?: string | undefined;
+    node_id?: string | undefined;
+}>;
+export declare const AtlasStudioStoryStepActivateSchema: z.ZodObject<{
+    session_id: z.ZodString;
+    step_id: z.ZodString;
+}, "strip", z.ZodTypeAny, {
+    session_id: string;
+    step_id: string;
+}, {
+    session_id: string;
+    step_id: string;
+}>;
 export declare const AtlasStudioHealSchema: z.ZodObject<{
     session_id: z.ZodString;
     profile: z.ZodOptional<z.ZodEnum<["template-system"]>>;
