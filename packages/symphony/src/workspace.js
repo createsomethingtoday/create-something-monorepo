@@ -108,6 +108,48 @@ async function git_status_porcelain(path) {
     }
     return stdout.trim();
 }
+async function git_command(path, args) {
+    const child = spawn('git', ['-C', path, ...args], {
+        stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    let stdout = '';
+    let stderr = '';
+    child.stdout?.on('data', (chunk) => {
+        stdout += String(chunk);
+    });
+    child.stderr?.on('data', (chunk) => {
+        stderr += String(chunk);
+    });
+    const code = await new Promise((resolve) => {
+        child.once('exit', resolve);
+    });
+    return { code, stdout, stderr };
+}
+async function is_linked_git_worktree(path) {
+    try {
+        const stats = await lstat(join(path, '.git'));
+        return stats.isFile();
+    }
+    catch (error) {
+        if (error.code === 'ENOENT') {
+            return false;
+        }
+        throw error;
+    }
+}
+async function remove_linked_git_worktree(path, logger) {
+    if (!(await is_linked_git_worktree(path))) {
+        return false;
+    }
+    const result = await git_command(path, ['worktree', 'remove', path]);
+    if (result.code !== 0) {
+        throw new SymphonyError('git_worktree_remove_failed', `git worktree remove failed for ${path}: ${truncate(result.stderr).trim() || `exit code ${result.code}`}`);
+    }
+    logger.info('git worktree removed completed', {
+        workspace_path: path,
+    });
+    return true;
+}
 export class WorkspaceManager {
     config;
     logger;
@@ -253,13 +295,25 @@ export class WorkspaceManager {
         if (this.config.hooks.before_remove) {
             await run_script('before_remove', this.config.hooks.before_remove, paths.workspace_path, this.config.hooks.timeout_ms, this.logger, true);
         }
+        if (!(await path_exists(paths.workspace_path))) {
+            await rm(paths.metadata_path, { force: true });
+            await remove_empty_directory(paths.metadata_root);
+            this.logger.info('workspace removed completed', {
+                issue_identifier,
+                workspace_path: paths.workspace_path,
+            });
+            return;
+        }
         if (await path_exists(join(paths.workspace_path, '.git'))) {
             const status = await git_status_porcelain(paths.workspace_path);
             if (status) {
                 throw new SymphonyError('dirty_workspace', `Refusing to remove dirty workspace ${paths.workspace_path}:\n${status}`);
             }
         }
-        await rm(paths.workspace_path, { recursive: true, force: true });
+        const removed_by_git = await remove_linked_git_worktree(paths.workspace_path, this.logger);
+        if (!removed_by_git) {
+            await rm(paths.workspace_path, { recursive: true, force: true });
+        }
         await rm(paths.metadata_path, { force: true });
         await remove_empty_directory(paths.metadata_root);
         this.logger.info('workspace removed completed', {
