@@ -17,7 +17,7 @@
 		"smoke": "pnpm check"
 	},
 	"scripts": {
-		"prebuild": "pnpm --filter @create-something/canon package && pnpm --filter @create-something/tufte package",
+		"prebuild": "pnpm --filter @create-something/canon package && pnpm --filter @create-something/tufte package && pnpm --filter @create-something/spritz package",
 		"dev": "vite dev",
 		"build": "pnpm check:content && pnpm lint && vite build",
 		"preview": "vite preview",
