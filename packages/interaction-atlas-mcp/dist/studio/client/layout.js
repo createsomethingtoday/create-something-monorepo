@@ -1,12 +1,3 @@
-const LANES = {
-    actor: { x: 84, y: 198 },
-    data: { x: 424, y: 144 },
-    system: { x: 768, y: 112 },
-    ai: { x: 768, y: 326 },
-    human: { x: 1112, y: 144 },
-    constraint: { x: 1112, y: 354 },
-    touchpoint: { x: 424, y: 456 }
-};
 const LANE_ORDER = [
     'actor',
     'data',
@@ -16,6 +7,15 @@ const LANE_ORDER = [
     'constraint',
     'touchpoint'
 ];
+const VISUAL_COLUMNS = [
+    { kinds: ['actor'], x: 84, y: 198 },
+    { kinds: ['data', 'touchpoint'], x: 456, y: 136 },
+    { kinds: ['system', 'ai'], x: 828, y: 112 },
+    { kinds: ['human', 'constraint'], x: 1200, y: 136 }
+];
+const COLUMN_GAP = 64;
+const KIND_RANK = new Map(LANE_ORDER.map((kind, index) => [kind, index]));
+const KIND_COLUMN = new Map(VISUAL_COLUMNS.flatMap((column, index) => column.kinds.map((kind) => [kind, { index, x: column.x, y: column.y }])));
 export function detailModeForZoom(zoom) {
     if (zoom < 0.58)
         return 'compact';
@@ -34,6 +34,17 @@ export function nodeWidthForMode(node, mode) {
         return Math.max(316, Math.min(364, Math.max(node.width || 0, base + 24)));
     }
     return Math.max(264, Math.min(332, Math.max(node.width || 0, base)));
+}
+function estimatedNodeHeight(node, width) {
+    const contentWidth = Math.max(180, width - 34);
+    const titleCharactersPerLine = Math.max(18, Math.floor(contentWidth / 8.5));
+    const noteCharactersPerLine = Math.max(24, Math.floor(contentWidth / 7));
+    const titleLines = Math.max(1, Math.ceil(node.label.length / titleCharactersPerLine));
+    const note = node.notes ?? node.evidence ?? '';
+    const noteLines = note ? Math.min(4, Math.ceil(note.length / noteCharactersPerLine)) : 2;
+    const syncAllowance = node.sync ? 10 : 0;
+    const estimated = 96 + titleLines * 18 + noteLines * 14 + syncAllowance;
+    return Math.max(node.height || 0, estimated, 122);
 }
 export function agentActivityFromSessionChange(previous, next) {
     if (!previous)
@@ -56,24 +67,28 @@ export function agentActivityFromSessionChange(previous, next) {
     return { message, nodeIds };
 }
 export function tidyNodeUpdates(session) {
-    const offsets = new Map();
+    const cursors = new Map();
     const ordered = [...session.canvas.nodes].sort((a, b) => {
-        const laneDelta = LANE_ORDER.indexOf(a.kind) - LANE_ORDER.indexOf(b.kind);
-        if (laneDelta !== 0)
-            return laneDelta;
+        const columnDelta = (KIND_COLUMN.get(a.kind)?.index ?? 0) - (KIND_COLUMN.get(b.kind)?.index ?? 0);
+        if (columnDelta !== 0)
+            return columnDelta;
         if (a.y !== b.y)
             return a.y - b.y;
+        const kindDelta = (KIND_RANK.get(a.kind) ?? 0) - (KIND_RANK.get(b.kind) ?? 0);
+        if (kindDelta !== 0)
+            return kindDelta;
         return a.x - b.x;
     });
     return ordered.flatMap((node) => {
-        const lane = LANES[node.kind];
-        const offset = offsets.get(node.kind) ?? 0;
-        offsets.set(node.kind, offset + 1);
+        const column = KIND_COLUMN.get(node.kind) ?? { index: 0, x: 84, y: 198 };
+        const width = nodeWidthForMode(node, 'standard');
+        const y = cursors.get(column.index) ?? column.y;
+        cursors.set(column.index, y + estimatedNodeHeight(node, width) + COLUMN_GAP);
         const next = {
             id: node.id,
-            width: nodeWidthForMode(node, 'standard'),
-            x: lane.x,
-            y: lane.y + offset * 174
+            width,
+            x: column.x,
+            y
         };
         const hasChanged = Math.abs(node.x - next.x) > 1 ||
             Math.abs(node.y - next.y) > 1 ||
