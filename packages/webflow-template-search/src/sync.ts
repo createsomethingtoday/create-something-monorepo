@@ -58,7 +58,6 @@ import {
   loadWebflowTemplateImageIndex,
   buildWebflowTemplateImageIndexFromRecords,
   fetchPublishedTemplateStatus,
-  resolvePublishedTemplateImages,
   resolveWebflowTemplateIdentity,
   resolveWebflowTemplateOffer,
   resolveWebflowTemplateImages,
@@ -340,29 +339,17 @@ async function resolveAndUpdateTemplateImages(
   webflowImageIndex: WebflowTemplateImageIndex | null,
   syncedAt: string,
   fetchBatchSize = 6,
-  options: { preferPublishedTemplatePage?: boolean } = {},
+  options: { onBatch?: SyncHeartbeat } = {},
 ): Promise<number> {
   const updates: TemplateImageUpdateInput[] = [];
 
   for (const rowBatch of chunk(rows, fetchBatchSize)) {
     const resolvedRows = await Promise.all(
       rowBatch.map(async (row) => {
-        const publishedImages = options.preferPublishedTemplatePage
-          ? await resolvePublishedTemplateImages({
-              templateSlug: row.templateSlug,
-              listingUrl: row.listingUrl,
-            })
-          : null;
-        const webflowImages =
-          publishedImages ??
-          resolveWebflowTemplateImages(webflowImageIndex, {
-            templateSlug: row.templateSlug,
-            name: row.name,
-          }) ??
-          (await resolvePublishedTemplateImages({
-            templateSlug: row.templateSlug,
-            listingUrl: row.listingUrl,
-          }));
+        const webflowImages = resolveWebflowTemplateImages(webflowImageIndex, {
+          templateSlug: row.templateSlug,
+          name: row.name,
+        });
         return { row, webflowImages };
       }),
     );
@@ -385,6 +372,8 @@ async function resolveAndUpdateTemplateImages(
         thumbnailImageSecondaryUrl: nextSecondaryThumbnailUrl,
       });
     }
+
+    await options.onBatch?.();
   }
 
   return updateTemplateDocumentImages(db, updates, syncedAt);
@@ -395,10 +384,10 @@ async function refreshIndexedWebflowImages(
   webflowImageIndex: WebflowTemplateImageIndex | null,
   syncedAt: string,
   changedTemplateIds: string[] = [],
-  options: { preferPublishedTemplatePage?: boolean; includeStale?: boolean } = {},
+  options: { includeStale?: boolean } = {},
 ): Promise<number> {
   const rows = await listTemplateImageRefreshRows(db, changedTemplateIds, { includeStale: options.includeStale });
-  return resolveAndUpdateTemplateImages(db, rows, webflowImageIndex, syncedAt, 6, options);
+  return resolveAndUpdateTemplateImages(db, rows, webflowImageIndex, syncedAt, 6);
 }
 
 function hasWebflowCmsToken(env: Env): boolean {
@@ -747,6 +736,14 @@ function templateLookupTargets(records: Array<AirtableRecord<AirtableAssetFields
     id: record.id,
     templateSlug: String(record.fields['🥞CMS Slug'] ?? record.fields['🥞CMS Slug (formula)'] ?? '').trim() || null,
     name: String(record.fields.Name ?? '').trim() || null,
+  }));
+}
+
+function templateImageBackfillTargets(rows: TemplateImageRefreshRow[]) {
+  return rows.map((row) => ({
+    id: row.id,
+    templateSlug: row.templateSlug || null,
+    name: row.name || null,
   }));
 }
 
@@ -1159,9 +1156,13 @@ async function runForcedCreatorProfileRefresh(env: Env, creatorNames: string[] =
   }
 
   const requestedNames = new Set(creatorNames.map((name) => normalizeCreatorName(name)).filter(Boolean));
-  const designerAvatars = (await fetchWebflowDesignerAvatars(env)).filter(
-    (record) => requestedNames.size === 0 || requestedNames.has(normalizeCreatorName(record.name)),
-  );
+  const designerAvatars =
+    requestedNames.size > 0
+      ? await fetchWebflowDesignerAvatarsForTargets(
+          env,
+          creatorNames.map((name) => ({ name })),
+        )
+      : await fetchWebflowDesignerAvatars(env);
   const refreshedAvatars = await updateCreatorAvatarsFromWebflow(env.DB, designerAvatars, startedAt, {
     forceMatchByName: true,
   });
@@ -1196,7 +1197,15 @@ export async function backfillTemplateImages(
     const requestedLimit = clamp(Math.floor(options.limit ?? IMAGE_BACKFILL_DEFAULT_LIMIT), 1, IMAGE_BACKFILL_MAX_LIMIT);
     const requestedTemplateSlugs = uniqueStrings((options.templateSlugs ?? []).map((slug) => slug.trim()).filter(Boolean));
     const rows = await listTemplateImageBackfillRows(env.DB, requestedLimit, requestedTemplateSlugs);
-    const webflowImageIndex = rows.length > 0 ? await loadWebflowTemplateImageIndex(env) : null;
+    const warnings: SyncWarning[] = [];
+    const webflowImageRecords =
+      rows.length > 0
+        ? await withPeriodicHeartbeat(
+            heartbeat,
+            bestEffortTargetedWebflowTemplateImages(env, warnings, templateImageBackfillTargets(rows), { onPage: heartbeat }),
+          )
+        : [];
+    const webflowImageIndex = buildWebflowTemplateImageIndexFromRecords(webflowImageRecords);
     await heartbeat();
     const updatedRecords = await resolveAndUpdateTemplateImages(
       env.DB,
@@ -1204,6 +1213,7 @@ export async function backfillTemplateImages(
       webflowImageIndex,
       startedAt,
       IMAGE_BACKFILL_FETCH_BATCH_SIZE,
+      { onBatch: heartbeat },
     );
     await heartbeat();
     const imageSourceStats = await templateImageSourceStats(env.DB);
@@ -1235,7 +1245,15 @@ export async function pruneMissingTemplateImages(
     const requestedLimit = clamp(Math.floor(options.limit ?? IMAGE_BACKFILL_DEFAULT_LIMIT), 1, IMAGE_BACKFILL_MAX_LIMIT);
     const requestedTemplateSlugs = uniqueStrings((options.templateSlugs ?? []).map((slug) => slug.trim()).filter(Boolean));
     const rows = await listTemplateImageBackfillRows(env.DB, requestedLimit, requestedTemplateSlugs);
-    const webflowImageIndex = rows.length > 0 ? await loadWebflowTemplateImageIndex(env) : null;
+    const warnings: SyncWarning[] = [];
+    const webflowImageRecords =
+      rows.length > 0
+        ? await withPeriodicHeartbeat(
+            heartbeat,
+            bestEffortTargetedWebflowTemplateImages(env, warnings, templateImageBackfillTargets(rows), { onPage: heartbeat }),
+          )
+        : [];
+    const webflowImageIndex = buildWebflowTemplateImageIndexFromRecords(webflowImageRecords);
     await heartbeat();
     const idsToDelete: string[] = [];
     const skippedRecords: TemplateImagePruneSummary['skipped_records'] = [];

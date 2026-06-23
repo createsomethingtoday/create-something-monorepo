@@ -546,6 +546,104 @@ describe('webflow-template-search worker', () => {
     }
   });
 
+  it('force-refreshes requested creator profiles through targeted Webflow designer lookup', async () => {
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: [],
+      webflowCollectionItems: {
+        [DESIGNERS_COLLECTION_ID]: [
+          {
+            id: 'designer-brix',
+            isArchived: false,
+            isDraft: false,
+            fieldData: {
+              'sync-record-id': 'creator-brix',
+              name: 'BRIX Templates',
+              slug: 'brix-templates',
+              avatar: {
+                url: 'https://cdn.prod.website-files.com/site/brix-targeted.webp',
+                alt: 'BRIX Templates',
+              },
+            },
+          },
+          {
+            id: 'designer-webestica',
+            isArchived: false,
+            isDraft: false,
+            fieldData: {
+              'sync-record-id': 'creator-webestica',
+              name: 'Webestica',
+              slug: 'webestica',
+              avatar: {
+                url: 'https://cdn.prod.website-files.com/site/webestica-targeted.webp',
+                alt: 'Webestica',
+              },
+            },
+          },
+        ],
+      },
+    });
+    const { env, close } = createTestEnv();
+    env.WEBFLOW_API_TOKEN = 'test-webflow-cms-token';
+
+    try {
+      await env.DB.prepare(
+        `INSERT INTO template_documents (
+          id,
+          template_slug,
+          name,
+          creator_name,
+          creator_record_id,
+          creator_avatar_url,
+          synced_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?), (?, ?, ?, ?, ?, ?, ?)`,
+      )
+        .bind(
+          'recBrixTemplate',
+          'brix-template',
+          'BRIX Template',
+          'BRIX Templates',
+          'creator-brix',
+          'https://v5.airtableusercontent.com/v3/u/53/temporary-brix',
+          '2026-05-26T00:00:00.000Z',
+          'recWebesticaTemplate',
+          'webestica-template',
+          'Webestica Template',
+          'Webestica',
+          'creator-webestica',
+          'https://v5.airtableusercontent.com/v3/u/53/temporary-webestica',
+          '2026-05-26T00:00:00.000Z',
+        )
+        .run();
+
+      const response = await callWorker(
+        new Request('https://templates.test/api/templates/admin/refresh-creators?force=true&name=BRIX%20Templates', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      const payload = (await response.json()) as { mode: string; fetched_records: number; refreshed_records: number };
+      expect(response.status).toBe(200);
+      expect(payload).toMatchObject({ mode: 'creator_refresh', fetched_records: 1 });
+
+      const rows = await env.DB.prepare(
+        `SELECT id, creator_avatar_url
+         FROM template_documents
+         WHERE id IN (?, ?)
+         ORDER BY id`,
+      )
+        .bind('recBrixTemplate', 'recWebesticaTemplate')
+        .all<{ id: string; creator_avatar_url: string | null }>();
+      expect(rows.results).toEqual([
+        { id: 'recBrixTemplate', creator_avatar_url: 'https://cdn.prod.website-files.com/site/brix-targeted.webp' },
+        { id: 'recWebesticaTemplate', creator_avatar_url: 'https://v5.airtableusercontent.com/v3/u/53/temporary-webestica' },
+      ]);
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
   it('syncs specific Airtable template records by ID', async () => {
     const fetchMock = installAirtableFetchMock({
       publishedAssets: [
@@ -755,6 +853,7 @@ describe('webflow-template-search worker', () => {
         [DESIGNERS_COLLECTION_ID]: {
           status: 500,
           body: { message: 'An Internal Error Occurred', code: 'internal_error', details: [] },
+          headers: { 'retry-after': '0' },
         },
       },
     });
@@ -816,6 +915,226 @@ describe('webflow-template-search worker', () => {
       expect(statusPayload.sync_state.last_sync_warning?.value).toMatchObject({
         mode: 'records',
         warnings: [{ source: 'webflow_designer_targets' }],
+      });
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
+  it('retries transient Webflow target rate limits before indexing targeted records', async () => {
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: [
+        {
+          ...PUBLISHED_ASSETS[0],
+          fields: {
+            ...PUBLISHED_ASSETS[0].fields,
+            '🎨Creator': ['creator-brix'],
+            '🎨Creator Name': 'BRIX Templates',
+            '🖼️Thumbnail Image': [{ url: 'https://v5.airtableusercontent.com/v3/u/53/temporary-agentflow' }],
+          },
+        },
+      ],
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+      creators: LOOKUPS.creators,
+      webflowCollectionItemErrorSequences: {
+        [TEMPLATES_COLLECTION_ID]: [
+          {
+            status: 429,
+            body: { message: 'Too Many Requests', code: 'too_many_requests', details: [] },
+            headers: { 'retry-after': '0' },
+          },
+        ],
+        [DESIGNERS_COLLECTION_ID]: [
+          {
+            status: 429,
+            body: { message: 'Too Many Requests', code: 'too_many_requests', details: [] },
+            headers: { 'retry-after': '0' },
+          },
+        ],
+      },
+      webflowCollectionItems: {
+        [TEMPLATES_COLLECTION_ID]: [
+          {
+            id: 'template-agentflow',
+            isArchived: false,
+            isDraft: false,
+            fieldData: {
+              'sync-record-id': 'recAgentflow',
+              name: 'Agentflow',
+              slug: 'agentflow-website-template',
+              'main-thumbnail': { url: 'https://cdn.prod.website-files.com/site/agentflow-retried.webp' },
+            },
+          },
+        ],
+        [DESIGNERS_COLLECTION_ID]: [
+          {
+            id: 'designer-brix',
+            isArchived: false,
+            isDraft: false,
+            fieldData: {
+              'sync-record-id': 'creator-brix',
+              name: 'BRIX Templates',
+              slug: 'brix-templates',
+              avatar: {
+                url: 'https://cdn.prod.website-files.com/site/brix-retried.webp',
+                alt: 'BRIX Templates',
+              },
+            },
+          },
+        ],
+      },
+    });
+    const { env, close } = createTestEnv();
+    env.WEBFLOW_API_TOKEN = 'test-webflow-cms-token';
+
+    try {
+      const response = await callWorker(
+        new Request('https://templates.test/api/templates/admin/sync-records', {
+          method: 'POST',
+          headers: {
+            Authorization: 'Bearer sync-token',
+            'content-type': 'application/json',
+          },
+          body: JSON.stringify({ ids: ['recAgentflow'] }),
+        }),
+        env,
+      );
+      const payload = (await response.json()) as { warnings?: Array<{ source: string }> };
+      expect(response.status).toBe(200);
+      expect(payload.warnings).toBeUndefined();
+
+      const search = await callWorker(new Request('https://templates.test/api/templates/search?q=agentflow'), env);
+      const searchPayload = (await search.json()) as {
+        items: Array<{ thumbnail_image_url: string | null; creator_avatar_url: string | null }>;
+      };
+      expect(searchPayload.items[0]).toMatchObject({
+        thumbnail_image_url: 'https://cdn.prod.website-files.com/site/agentflow-retried.webp',
+        creator_avatar_url: 'https://cdn.prod.website-files.com/site/brix-retried.webp',
+      });
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
+  it('preserves stable Webflow assets when targeted enrichment is rate limited', async () => {
+    const dataset = {
+      publishedAssets: [
+        {
+          ...PUBLISHED_ASSETS[0],
+          fields: {
+            ...PUBLISHED_ASSETS[0].fields,
+            '🎨Creator': ['creator-brix'],
+            '🎨Creator Name': 'BRIX Templates',
+            '🖼️Thumbnail Image': [{ url: 'https://v5.airtableusercontent.com/v3/u/53/temporary-agentflow' }],
+          },
+        },
+      ],
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+      creators: LOOKUPS.creators,
+      webflowCollectionItems: {
+        [TEMPLATES_COLLECTION_ID]: [
+          {
+            id: 'template-agentflow',
+            isArchived: false,
+            isDraft: false,
+            fieldData: {
+              'sync-record-id': 'recAgentflow',
+              name: 'Agentflow',
+              slug: 'agentflow-website-template',
+              'main-thumbnail': { url: 'https://cdn.prod.website-files.com/site/agentflow-stable.webp' },
+            },
+          },
+        ],
+        [DESIGNERS_COLLECTION_ID]: [
+          {
+            id: 'designer-brix',
+            isArchived: false,
+            isDraft: false,
+            fieldData: {
+              'sync-record-id': 'creator-brix',
+              name: 'BRIX Templates',
+              slug: 'brix-templates',
+              avatar: {
+                url: 'https://cdn.prod.website-files.com/site/brix-stable.webp',
+                alt: 'BRIX Templates',
+              },
+            },
+          },
+        ],
+      },
+    };
+    const fetchMock = installAirtableFetchMock(dataset);
+    const { env, close } = createTestEnv();
+    env.WEBFLOW_API_TOKEN = 'test-webflow-cms-token';
+
+    try {
+      const firstSync = await callWorker(
+        new Request('https://templates.test/api/templates/admin/sync-records', {
+          method: 'POST',
+          headers: {
+            Authorization: 'Bearer sync-token',
+            'content-type': 'application/json',
+          },
+          body: JSON.stringify({ ids: ['recAgentflow'] }),
+        }),
+        env,
+      );
+      expect(firstSync.status).toBe(200);
+      const firstSearch = await callWorker(new Request('https://templates.test/api/templates/search?q=agentflow'), env);
+      const firstSearchPayload = (await firstSearch.json()) as {
+        items: Array<{ thumbnail_image_url: string | null; creator_avatar_url: string | null }>;
+      };
+      const stableThumbnailUrl = firstSearchPayload.items[0]?.thumbnail_image_url;
+      const stableCreatorAvatarUrl = firstSearchPayload.items[0]?.creator_avatar_url;
+      expect(stableThumbnailUrl?.startsWith('https://cdn.prod.website-files.com/')).toBe(true);
+      expect(stableCreatorAvatarUrl).toBe('https://cdn.prod.website-files.com/site/brix-stable.webp');
+
+      dataset.webflowCollectionItemErrors = {
+        [TEMPLATES_COLLECTION_ID]: {
+          status: 429,
+          body: { message: 'Too Many Requests', code: 'too_many_requests', details: [] },
+          headers: { 'retry-after': '0' },
+        },
+        [DESIGNERS_COLLECTION_ID]: {
+          status: 429,
+          body: { message: 'Too Many Requests', code: 'too_many_requests', details: [] },
+          headers: { 'retry-after': '0' },
+        },
+      };
+
+      const secondSync = await callWorker(
+        new Request('https://templates.test/api/templates/admin/sync-records', {
+          method: 'POST',
+          headers: {
+            Authorization: 'Bearer sync-token',
+            'content-type': 'application/json',
+          },
+          body: JSON.stringify({ ids: ['recAgentflow'] }),
+        }),
+        env,
+      );
+      const secondPayload = (await secondSync.json()) as { warnings?: Array<{ source: string }> };
+      expect(secondSync.status).toBe(200);
+      expect(secondPayload.warnings).toEqual(
+        expect.arrayContaining([
+          { source: 'webflow_template_targets', message: expect.any(String) },
+          { source: 'webflow_designer_targets', message: expect.any(String) },
+        ]),
+      );
+
+      const search = await callWorker(new Request('https://templates.test/api/templates/search?q=agentflow'), env);
+      const searchPayload = (await search.json()) as {
+        items: Array<{ thumbnail_image_url: string | null; creator_avatar_url: string | null }>;
+      };
+      expect(searchPayload.items[0]).toMatchObject({
+        thumbnail_image_url: stableThumbnailUrl,
+        creator_avatar_url: stableCreatorAvatarUrl,
       });
     } finally {
       fetchMock.mockRestore();
@@ -2659,7 +2978,8 @@ describe('webflow-template-search worker', () => {
         env,
       );
       expect(sync.status).toBe(200);
-      expect((await sync.json()) as { image_refreshed_records: number }).toMatchObject({
+      expect((await sync.json()) as { indexed_records: number; image_refreshed_records: number }).toMatchObject({
+        indexed_records: 0,
         image_refreshed_records: 1,
       });
 
@@ -2829,7 +3149,7 @@ describe('webflow-template-search worker', () => {
     }
   });
 
-  it('refreshes stale rows from the published Webflow template page', async () => {
+  it('refreshes stale rows from the Webflow template API image index', async () => {
     const dataset = {
       publishedAssets: [
         {
@@ -2844,7 +3164,7 @@ describe('webflow-template-search worker', () => {
       styles: LOOKUPS.styles,
       childCategories: LOOKUPS.childCategories,
       tags: LOOKUPS.tags,
-      publishedTemplatePages: {} as Record<string, string>,
+      webflowCollectionItems: {} as Record<string, Array<Record<string, unknown>>>,
     };
     const fetchMock = installAirtableFetchMock(dataset);
     const { env, close } = createTestEnv();
@@ -2863,8 +3183,22 @@ describe('webflow-template-search worker', () => {
       const beforePayload = (await beforeRefresh.json()) as { items: Array<{ thumbnail_image_url: string | null }> };
       expect(beforePayload.items[0]?.thumbnail_image_url).toBeNull();
 
-      dataset.publishedTemplatePages['/templates/html/agentflow-website-template'] =
-        '<html><head><meta property="og:image" content="https://cdn.prod.website-files.com/site/agentflow-published.webp"></head></html>';
+      env.WEBFLOW_API_TOKEN = 'test-webflow-cms-token';
+      env.WEBFLOW_TEMPLATE_ASSET_SITE_ID = 'site-webflow-templates';
+      env.WEBFLOW_TEMPLATE_COLLECTION_ID = TEMPLATES_COLLECTION_ID;
+      dataset.webflowCollectionItems[TEMPLATES_COLLECTION_ID] = [
+        {
+          id: 'template-agentflow',
+          isArchived: false,
+          isDraft: false,
+          fieldData: {
+            'sync-record-id': 'recAgentflow',
+            name: 'Agentflow',
+            slug: 'agentflow-website-template',
+            'main-thumbnail': { url: 'https://cdn.prod.website-files.com/site/agentflow-published.webp' },
+          },
+        },
+      ];
 
       const sync = await callWorker(
         new Request('https://templates.test/api/templates/admin/sync', {
@@ -2874,7 +3208,8 @@ describe('webflow-template-search worker', () => {
         env,
       );
       expect(sync.status).toBe(200);
-      expect((await sync.json()) as { image_refreshed_records: number }).toMatchObject({
+      expect((await sync.json()) as { indexed_records: number; image_refreshed_records: number }).toMatchObject({
+        indexed_records: 0,
         image_refreshed_records: 1,
       });
 
@@ -2889,7 +3224,7 @@ describe('webflow-template-search worker', () => {
     }
   });
 
-  it('refreshes changed Airtable rows from Webflow when the stored thumbnail is already stable', async () => {
+  it('refreshes changed Airtable rows from Webflow API when the stored thumbnail is already stable', async () => {
     const now = Date.now();
     const syncCursor = new Date(now - 5 * 60 * 1000).toISOString();
     const modifiedAt = new Date(now - 60 * 1000).toISOString();
@@ -2914,10 +3249,7 @@ describe('webflow-template-search worker', () => {
       styles: LOOKUPS.styles,
       childCategories: LOOKUPS.childCategories,
       tags: LOOKUPS.tags,
-      publishedTemplatePages: {
-        '/templates/html/agentflow-website-template':
-          '<html><head><meta property="og:image" content="https://cdn.prod.website-files.com/site/agentflow-new.webp"></head></html>',
-      },
+      webflowCollectionItems: {} as Record<string, Array<Record<string, unknown>>>,
     };
     const fetchMock = installAirtableFetchMock(dataset);
     const { env, close } = createTestEnv();
@@ -2936,6 +3268,22 @@ describe('webflow-template-search worker', () => {
       const beforePayload = (await beforeRefresh.json()) as { items: Array<{ thumbnail_image_url: string | null }> };
       expect(beforePayload.items[0]?.thumbnail_image_url).toBe('https://cdn.prod.website-files.com/site/agentflow-old.webp');
       await setSyncCursor(env.DB, syncCursor);
+      env.WEBFLOW_API_TOKEN = 'test-webflow-cms-token';
+      env.WEBFLOW_TEMPLATE_ASSET_SITE_ID = 'site-webflow-templates';
+      env.WEBFLOW_TEMPLATE_COLLECTION_ID = TEMPLATES_COLLECTION_ID;
+      dataset.webflowCollectionItems[TEMPLATES_COLLECTION_ID] = [
+        {
+          id: 'template-agentflow',
+          isArchived: false,
+          isDraft: false,
+          fieldData: {
+            'sync-record-id': 'recAgentflow',
+            name: 'Agentflow',
+            slug: 'agentflow-website-template',
+            'main-thumbnail': { url: 'https://cdn.prod.website-files.com/site/agentflow-new.webp' },
+          },
+        },
+      ];
 
       const sync = await callWorker(
         new Request('https://templates.test/api/templates/admin/sync', {
@@ -2945,8 +3293,9 @@ describe('webflow-template-search worker', () => {
         env,
       );
       expect(sync.status).toBe(200);
-      expect((await sync.json()) as { image_refreshed_records: number }).toMatchObject({
-        image_refreshed_records: 1,
+      expect((await sync.json()) as { indexed_records: number; image_refreshed_records: number }).toMatchObject({
+        indexed_records: 1,
+        image_refreshed_records: 0,
       });
 
       const response = await callWorker(new Request('https://templates.test/api/templates/search?q=agentflow'), env);
@@ -3284,11 +3633,31 @@ describe('webflow-template-search worker', () => {
       styles: LOOKUPS.styles,
       childCategories: LOOKUPS.childCategories,
       tags: LOOKUPS.tags,
-      publishedTemplatePages: {
-        '/templates/html/agentflow-website-template':
-          '<html><head><meta property="og:image" content="https://cdn.prod.website-files.com/site/agentflow-targeted.webp"></head></html>',
-        '/templates/html/setrex-website-template':
-          '<html><head><meta property="og:image" content="https://cdn.prod.website-files.com/site/setrex-targeted.webp"></head></html>',
+      webflowCollectionItems: {
+        [TEMPLATES_COLLECTION_ID]: [
+          {
+            id: 'template-agentflow',
+            isArchived: false,
+            isDraft: false,
+            fieldData: {
+              'sync-record-id': 'recAgentflow',
+              name: 'Agentflow',
+              slug: 'agentflow-website-template',
+              'main-thumbnail': { url: 'https://cdn.prod.website-files.com/site/agentflow-targeted.webp' },
+            },
+          },
+          {
+            id: 'template-setrex',
+            isArchived: false,
+            isDraft: false,
+            fieldData: {
+              'sync-record-id': 'recSetrex',
+              name: 'Setrex',
+              slug: 'setrex-website-template',
+              'main-thumbnail': { url: 'https://cdn.prod.website-files.com/site/setrex-targeted.webp' },
+            },
+          },
+        ],
       },
     });
     const { env, close } = createTestEnv();
@@ -3307,6 +3676,9 @@ describe('webflow-template-search worker', () => {
         .bind('recAgentflow', 'recSetrex')
         .run();
 
+      env.WEBFLOW_API_TOKEN = 'test-webflow-cms-token';
+      env.WEBFLOW_TEMPLATE_ASSET_SITE_ID = 'site-webflow-templates';
+      env.WEBFLOW_TEMPLATE_COLLECTION_ID = TEMPLATES_COLLECTION_ID;
       const backfill = await callWorker(
         new Request('https://templates.test/api/templates/admin/backfill-images?slug=agentflow-website-template', {
           method: 'POST',
@@ -3418,9 +3790,23 @@ describe('webflow-template-search worker', () => {
       styles: LOOKUPS.styles,
       childCategories: LOOKUPS.childCategories,
       tags: LOOKUPS.tags,
+      webflowCollectionItems: {
+        [TEMPLATES_COLLECTION_ID]: [
+          {
+            id: 'template-agentflow',
+            isArchived: false,
+            isDraft: false,
+            fieldData: {
+              'sync-record-id': 'recAgentflow',
+              name: 'Agentflow',
+              slug: 'agentflow-website-template',
+              'main-thumbnail': { url: 'https://cdn.prod.website-files.com/site/agentflow-scheduled.webp' },
+            },
+          },
+        ],
+      },
       publishedTemplatePages: {
-        '/templates/html/agentflow-website-template':
-          '<html><head><meta property="og:image" content="https://cdn.prod.website-files.com/site/agentflow-scheduled.webp"></head></html>',
+        '/templates/html/agentflow-website-template': '<html><head><title>Agentflow</title></head></html>',
       },
     });
     const { env, close } = createTestEnv();
@@ -3439,13 +3825,16 @@ describe('webflow-template-search worker', () => {
         .bind('recAgentflow', 'recSetrex')
         .run();
 
+      env.WEBFLOW_API_TOKEN = 'test-webflow-cms-token';
+      env.WEBFLOW_TEMPLATE_ASSET_SITE_ID = 'site-webflow-templates';
+      env.WEBFLOW_TEMPLATE_COLLECTION_ID = TEMPLATES_COLLECTION_ID;
       await callScheduled('17 * * * *', env);
       const backfillState = await env.DB.prepare('SELECT value_json FROM sync_state WHERE key = ?')
         .bind('last_image_backfill')
         .first<{ value_json: string }>();
       expect(JSON.parse(backfillState?.value_json ?? '{}')).toMatchObject({
         mode: 'image_backfill',
-        requested_limit: 96,
+        requested_limit: 48,
         scanned_records: 2,
         updated_records: 1,
       });
@@ -3476,17 +3865,37 @@ describe('webflow-template-search worker', () => {
     }
   });
 
-  it('backfills historical missing and temporary Airtable thumbnails from Webflow pages', async () => {
+  it('backfills historical missing and temporary Airtable thumbnails from Webflow API', async () => {
     const fetchMock = installAirtableFetchMock({
       publishedAssets: PUBLISHED_ASSETS,
       styles: LOOKUPS.styles,
       childCategories: LOOKUPS.childCategories,
       tags: LOOKUPS.tags,
-      publishedTemplatePages: {
-        '/templates/html/agentflow-website-template':
-          '<html><head><meta property="og:image" content="https://cdn.prod.website-files.com/site/agentflow-backfill.webp"></head></html>',
-        '/templates/html/setrex-website-template':
-          '<html><head><meta property="og:image" content="https://cdn.prod.website-files.com/site/setrex-backfill.webp"></head></html>',
+      webflowCollectionItems: {
+        [TEMPLATES_COLLECTION_ID]: [
+          {
+            id: 'template-agentflow',
+            isArchived: false,
+            isDraft: false,
+            fieldData: {
+              'sync-record-id': 'recAgentflow',
+              name: 'Agentflow',
+              slug: 'agentflow-website-template',
+              'main-thumbnail': { url: 'https://cdn.prod.website-files.com/site/agentflow-backfill.webp' },
+            },
+          },
+          {
+            id: 'template-setrex',
+            isArchived: false,
+            isDraft: false,
+            fieldData: {
+              'sync-record-id': 'recSetrex',
+              name: 'Setrex',
+              slug: 'setrex-website-template',
+              'main-thumbnail': { url: 'https://cdn.prod.website-files.com/site/setrex-backfill.webp' },
+            },
+          },
+        ],
       },
     });
     const { env, close } = createTestEnv();
@@ -3508,6 +3917,9 @@ describe('webflow-template-search worker', () => {
         .bind(null, 'recSetrex')
         .run();
 
+      env.WEBFLOW_API_TOKEN = 'test-webflow-cms-token';
+      env.WEBFLOW_TEMPLATE_ASSET_SITE_ID = 'site-webflow-templates';
+      env.WEBFLOW_TEMPLATE_COLLECTION_ID = TEMPLATES_COLLECTION_ID;
       const backfill = await callWorker(
         new Request('https://templates.test/api/templates/admin/backfill-images?limit=2', {
           method: 'POST',

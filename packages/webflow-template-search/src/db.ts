@@ -126,11 +126,53 @@ const UPSERT_TEMPLATE_SQL = `
     creator_name = excluded.creator_name,
     creator_record_id = excluded.creator_record_id,
     creator_slug = excluded.creator_slug,
-    creator_profile_url = excluded.creator_profile_url,
-    creator_avatar_url = excluded.creator_avatar_url,
-    creator_avatar_alt = excluded.creator_avatar_alt,
-    thumbnail_image_url = excluded.thumbnail_image_url,
-    thumbnail_image_secondary_url = excluded.thumbnail_image_secondary_url,
+    creator_profile_url = CASE
+      WHEN (excluded.creator_profile_url IS NULL OR excluded.creator_profile_url = '')
+        AND template_documents.creator_profile_url IS NOT NULL
+        AND template_documents.creator_profile_url != ''
+        THEN template_documents.creator_profile_url
+      ELSE excluded.creator_profile_url
+    END,
+    creator_avatar_url = CASE
+      WHEN (
+          excluded.creator_avatar_url IS NULL
+          OR excluded.creator_avatar_url = ''
+          OR excluded.creator_avatar_url LIKE '%airtableusercontent.com%'
+          OR excluded.creator_avatar_url LIKE '%dl.airtable.com%'
+        )
+        AND template_documents.creator_avatar_url LIKE 'https://cdn.prod.website-files.com/%'
+        THEN template_documents.creator_avatar_url
+      ELSE excluded.creator_avatar_url
+    END,
+    creator_avatar_alt = CASE
+      WHEN (excluded.creator_avatar_alt IS NULL OR excluded.creator_avatar_alt = '')
+        AND template_documents.creator_avatar_alt IS NOT NULL
+        AND template_documents.creator_avatar_alt != ''
+        THEN template_documents.creator_avatar_alt
+      ELSE excluded.creator_avatar_alt
+    END,
+    thumbnail_image_url = CASE
+      WHEN (
+          excluded.thumbnail_image_url IS NULL
+          OR excluded.thumbnail_image_url = ''
+          OR excluded.thumbnail_image_url LIKE '%airtableusercontent.com%'
+          OR excluded.thumbnail_image_url LIKE '%dl.airtable.com%'
+        )
+        AND template_documents.thumbnail_image_url LIKE 'https://cdn.prod.website-files.com/%'
+        THEN template_documents.thumbnail_image_url
+      ELSE excluded.thumbnail_image_url
+    END,
+    thumbnail_image_secondary_url = CASE
+      WHEN (
+          excluded.thumbnail_image_secondary_url IS NULL
+          OR excluded.thumbnail_image_secondary_url = ''
+          OR excluded.thumbnail_image_secondary_url LIKE '%airtableusercontent.com%'
+          OR excluded.thumbnail_image_secondary_url LIKE '%dl.airtable.com%'
+        )
+        AND template_documents.thumbnail_image_secondary_url LIKE 'https://cdn.prod.website-files.com/%'
+        THEN template_documents.thumbnail_image_secondary_url
+      ELSE excluded.thumbnail_image_secondary_url
+    END,
     carousel_image_urls_json = excluded.carousel_image_urls_json,
     description_short = excluded.description_short,
     description_long_html = excluded.description_long_html,
@@ -763,7 +805,10 @@ export async function updateCreatorAvatarsFromWebflow(
         db
           .prepare(
             `UPDATE template_documents
-             SET creator_avatar_url = COALESCE(?, creator_avatar_url),
+             SET creator_avatar_url = CASE
+                   WHEN ? IS NOT NULL AND NOT (creator_avatar_url IS ?) THEN ?
+                   ELSE creator_avatar_url
+                 END,
                  creator_avatar_alt = CASE
                    WHEN ? IS NOT NULL THEN ?
                    ELSE creator_avatar_alt
@@ -798,6 +843,8 @@ export async function updateCreatorAvatarsFromWebflow(
           .bind(
             avatarUrl,
             avatarUrl,
+            avatarUrl,
+            avatarUrl,
             avatarAlt,
             record.slug,
             record.slug,
@@ -826,7 +873,10 @@ export async function updateCreatorAvatarsFromWebflow(
         db
           .prepare(
             `UPDATE template_documents
-             SET creator_avatar_url = COALESCE(?, creator_avatar_url),
+             SET creator_avatar_url = CASE
+                   WHEN ? IS NOT NULL AND NOT (creator_avatar_url IS ?) THEN ?
+                   ELSE creator_avatar_url
+                 END,
                  creator_avatar_alt = CASE
                    WHEN ? IS NOT NULL THEN ?
                    ELSE creator_avatar_alt
@@ -863,6 +913,8 @@ export async function updateCreatorAvatarsFromWebflow(
           .bind(
             avatarUrl,
             avatarUrl,
+            avatarUrl,
+            avatarUrl,
             avatarAlt,
             record.slug,
             record.slug,
@@ -890,7 +942,10 @@ export async function updateCreatorAvatarsFromWebflow(
         db
           .prepare(
             `UPDATE template_documents
-             SET creator_avatar_url = COALESCE(?, creator_avatar_url),
+             SET creator_avatar_url = CASE
+                   WHEN ? IS NOT NULL AND NOT (creator_avatar_url IS ?) THEN ?
+                   ELSE creator_avatar_url
+                 END,
                  creator_avatar_alt = CASE
                    WHEN ? IS NOT NULL THEN ?
                    ELSE creator_avatar_alt
@@ -931,6 +986,8 @@ export async function updateCreatorAvatarsFromWebflow(
                )`,
           )
           .bind(
+            avatarUrl,
+            avatarUrl,
             avatarUrl,
             avatarUrl,
             avatarAlt,
