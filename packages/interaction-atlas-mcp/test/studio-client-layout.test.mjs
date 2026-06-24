@@ -138,3 +138,28 @@ test('tidy layout stacks node kinds that share a visual column', () => {
     [112, 318]
   );
 });
+
+test('tidy layout compacts lanes for narrow operator panes', () => {
+  const session = makeSession([
+    makeNode({ id: 'client', kind: 'actor', label: 'Client', x: 500, y: 500 }),
+    makeNode({ id: 'workflow', kind: 'data', label: 'Workflow artifact', x: 200, y: 800 }),
+    makeNode({ id: 'agent', kind: 'ai', label: 'Agent support', x: 300, y: 1000 }),
+    makeNode({ id: 'approval', kind: 'human', label: 'Approval boundary', x: 900, y: 50 })
+  ]);
+
+  const updates = tidyNodeUpdates(session, { viewportWidth: 700 });
+
+  assert.deepEqual(
+    updates.map((update) => ({
+      id: update.id,
+      x: update.x,
+      y: update.y
+    })),
+    [
+      { id: 'client', x: 48, y: 112 },
+      { id: 'workflow', x: 48, y: 318 },
+      { id: 'agent', x: 48, y: 524 },
+      { id: 'approval', x: 48, y: 730 }
+    ]
+  );
+});

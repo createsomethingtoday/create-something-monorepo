@@ -307,8 +307,9 @@ export async function startStudioServer(options) {
             const tidyMatch = url.pathname.match(/^\/api\/sessions\/([^/]+)\/tidy$/);
             if (method === 'POST' && tidyMatch) {
                 const sessionId = decodeURIComponent(tidyMatch[1] ?? '');
+                const body = await readJson(request);
                 const session = await readSession(sessionId, cwd);
-                const updates = tidyNodeUpdates(session);
+                const updates = tidyNodeUpdates(session, { viewportWidth: body.viewportWidth });
                 const next = updates.length ? await updateNodes(sessionId, updates, cwd) : session;
                 sendJson(response, 200, { session: next, updates });
                 return;
