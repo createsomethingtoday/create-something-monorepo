@@ -44,7 +44,6 @@ const SYNC_STATUS_STATE_KEYS = [
 ];
 
 const INCREMENTAL_SYNC_CRON = '*/5 * * * *';
-const IMAGE_REFRESH_CRON = '2 */2 * * *';
 const IMAGE_BACKFILL_MAINTENANCE_CRON = '17 * * * *';
 const IMAGE_PRUNE_MAINTENANCE_CRON = '47 3 * * *';
 const SCHEDULED_IMAGE_BACKFILL_LIMIT = 48;
@@ -421,18 +420,12 @@ async function handleSyncStatus(request: Request, env: Env): Promise<Response> {
 }
 
 function scheduledMode(cron: string): string {
-  if (cron === IMAGE_REFRESH_CRON) return 'image_refresh';
   if (cron === IMAGE_BACKFILL_MAINTENANCE_CRON) return 'image_backfill';
   if (cron === IMAGE_PRUNE_MAINTENANCE_CRON) return 'image_prune';
   return 'incremental';
 }
 
 async function runScheduledJob(cron: string, env: Env): Promise<void> {
-  if (cron === IMAGE_REFRESH_CRON) {
-    await refreshImages(env);
-    return;
-  }
-
   if (cron === IMAGE_BACKFILL_MAINTENANCE_CRON) {
     await backfillTemplateImages(env, { limit: SCHEDULED_IMAGE_BACKFILL_LIMIT });
     return;
@@ -537,7 +530,6 @@ export default {
 
   async scheduled(controller: ScheduledController, env: Env): Promise<void> {
     // */5 cron: incremental sync — picks up Airtable records modified since last cursor.
-    // 2 */2 cron: image URL refresh — re-fetches thumbnail/carousel URLs.
     // 17 * cron: bounded stale thumbnail backfill using stable Webflow image sources.
     // 47 3 cron: conservative stale-row prune for missing-image rows whose Webflow listing is 404.
     const mode = scheduledMode(controller.cron);
