@@ -390,11 +390,10 @@
     eyebrow={agencyCoreMessaging.categoryLabel}
     title="Fix the workflow your team still protects by hand."
     description="CREATE SOMETHING maps one business workflow, builds the first safe delegation path, and leaves approvals, stop states, and receipts before anything touches the customer, revenue, or production."
-    hideAsideOnMobile={true}
   >
     {#snippet actions()}
       <Button href={agencyCoreMessaging.selfMapHref}>
-        {agencyCoreMessaging.selfMapLabel}
+        {agencyCoreMessaging.tryMapLabel}
       </Button>
       <Button href={agencyCoreMessaging.workflowMappingSessionHref} variant="secondary">
         {agencyCoreMessaging.bookMappingSessionLabel}
@@ -419,13 +418,6 @@
     title="Start narrow. Expand only when the workflow earns it."
     description="Bring one real workflow, leave with a visible operating path, and add the trust layer only when live work needs more control."
   >
-    {#snippet actions()}
-      <Button href={agencyCoreMessaging.selfMapHref}>
-        {agencyCoreMessaging.selfMapLabel}
-      </Button>
-      <Button href="/services" variant="secondary">See How I Work</Button>
-    {/snippet}
-
     {#snippet after()}
       <ClearPillarGrid items={serviceFlowPillars} ariaLabel="CREATE SOMETHING service flow" />
     {/snippet}
