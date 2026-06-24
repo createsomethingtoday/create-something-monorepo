@@ -29,6 +29,7 @@ type AddEdgeInput = {
     evidence?: string;
     createdBy?: AtlasSessionActor;
 };
+type UpdateEdgeInput = Partial<Omit<AtlasCanvasEdge, 'id' | 'createdBy' | 'source' | 'target'>>;
 type AddObservationInput = {
     text: string;
     source?: AtlasSessionActor;
@@ -71,6 +72,7 @@ export declare function updateNodes(sessionId: string, inputs: Array<{
 } & UpdateNodeInput>, cwd?: string): Promise<AtlasSession>;
 export declare function removeNode(sessionId: string, nodeId: string, cwd?: string): Promise<RemoveNodeResult>;
 export declare function addEdge(sessionId: string, input: AddEdgeInput, cwd?: string): Promise<AtlasSession>;
+export declare function updateEdge(sessionId: string, edgeId: string, input: UpdateEdgeInput, cwd?: string): Promise<AtlasSession>;
 export declare function addObservation(sessionId: string, input: AddObservationInput, cwd?: string): Promise<AtlasSession>;
 export declare function setStoryFocus(sessionId: string, input: SetStoryInput, cwd?: string): Promise<AtlasSession>;
 export declare function activateStoryStep(sessionId: string, stepId: string, cwd?: string): Promise<AtlasSession>;

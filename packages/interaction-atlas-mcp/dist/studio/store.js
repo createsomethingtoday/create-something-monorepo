@@ -267,6 +267,19 @@ export async function addEdge(sessionId, input, cwd = process.cwd()) {
     session.canvas.edges.push(edge);
     return writeSession(session, cwd);
 }
+export async function updateEdge(sessionId, edgeId, input, cwd = process.cwd()) {
+    const session = await readSession(sessionId, cwd);
+    const index = session.canvas.edges.findIndex((edge) => edge.id === edgeId);
+    if (index === -1)
+        throw new Error(`Unknown edge: ${edgeId}`);
+    session.canvas.edges[index] = {
+        ...session.canvas.edges[index],
+        ...input,
+        id: edgeId,
+        updatedAt: now()
+    };
+    return writeSession(session, cwd);
+}
 function suggestionsFromText(text, session) {
     const normalized = text.toLowerCase();
     const createdAt = now();
