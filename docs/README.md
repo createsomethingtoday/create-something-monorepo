@@ -84,6 +84,7 @@ Read in this order when you need broad repo context:
 ### MCP creation and integration patterns
 
 - [MCP_SCAFFOLD.md](./MCP_SCAFFOLD.md)
+- [examples/endpoint-construction-contract.template.yaml](./examples/endpoint-construction-contract.template.yaml)
 - [COMPOSIO_PATTERNS.md](./COMPOSIO_PATTERNS.md)
 - [guides/HYDRA_DB_GOVERNED_RECALL.md](./guides/HYDRA_DB_GOVERNED_RECALL.md)
 - [guides/MCP_DUI_ORGANIZATION.md](./guides/MCP_DUI_ORGANIZATION.md)
