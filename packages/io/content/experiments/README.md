@@ -69,6 +69,43 @@ Current markdown files should contain normal Markdown only. Do not import Svelte
 
 Use markdown bodies for documentation-first experiments that do not need a custom interactive route.
 
+## Living Experiment Evidence
+
+Experiments are allowed to be provisional, but their evidence status should be
+inspectable when the experiment is used to support a product, paper, template,
+or delivery claim.
+
+Use the shared transparency template for new experiments and material updates:
+
+```text
+docs/examples/living-research-transparency.template.yaml
+```
+
+For the shared paper and experiment standard, see:
+
+```text
+packages/io/docs/research-content-transparency.md
+```
+
+At minimum, document:
+
+- claim status: hypothesis, supported, validated, contested, or superseded
+- confidence: low, medium, or high
+- evidence grade: implementation evidence, benchmark, market signal, community sentiment, field signal, official docs, or anecdotal
+- last reviewed date and next review date
+- supporting evidence
+- counter-signals
+- open questions
+- update log
+
+This can live as a YAML block in Markdown content, as a visible section in a
+dedicated Svelte route, or as route-local data rendered into the page. Do not
+hide material uncertainty in comments or metadata that readers cannot inspect.
+
+Existing experiments do not need bulk retrofits before small edits. Add the
+living evidence block when an experiment is promoted, republished, compared
+against newer research, or used as a reference for implementation decisions.
+
 ## Dedicated Interactive Routes
 
 Interactive or highly custom experiments use dedicated Svelte routes:
@@ -120,7 +157,8 @@ They also exclude known paper slugs so `/experiments` does not become a duplicat
 2. Add `content/experiments/{slug}.md` if the default article shell is enough.
 3. Create `src/routes/experiments/{slug}/` if the experiment needs a custom interactive page.
 4. If using a dedicated route, add the slug to `FILE_BASED_WITH_ROUTES`.
-5. Run:
+5. Add a living evidence section when the experiment supports a claim that can drift.
+6. Run:
 
 ```bash
 pnpm --filter @create-something/io check
