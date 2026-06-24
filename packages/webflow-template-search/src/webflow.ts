@@ -237,27 +237,6 @@ function designerRecordMatchesTarget(record: WebflowDesignerAvatarRecord, target
   );
 }
 
-function uniqueLookupQueries(targets: Array<{ slug?: string | null; name?: string | null }>): Array<Record<string, string>> {
-  const seen = new Set<string>();
-  const queries: Array<Record<string, string>> = [];
-
-  for (const target of targets) {
-    for (const [key, rawValue] of [
-      ['slug', target.slug],
-      ['name', target.name],
-    ] as const) {
-      const value = rawValue?.trim();
-      if (!value) continue;
-      const queryKey = `${key}:${value.toLowerCase()}`;
-      if (seen.has(queryKey)) continue;
-      seen.add(queryKey);
-      queries.push({ [key]: value });
-    }
-  }
-
-  return queries;
-}
-
 function appendUniqueRecord<T extends { id?: string | null; syncRecordId?: string | null; templateSlug?: string | null; slug?: string | null; name?: string | null }>(
   records: T[],
   seen: Set<string>,
@@ -267,6 +246,70 @@ function appendUniqueRecord<T extends { id?: string | null; syncRecordId?: strin
   if (seen.has(key)) return;
   seen.add(key);
   records.push(record);
+}
+
+function lookupTargetKey(values: Array<string | null | undefined>): string {
+  return values.map((value) => normalizedMatchValue(value)).join('|');
+}
+
+function templateLookupTargetKey(target: WebflowTemplateLookupTarget): string {
+  return lookupTargetKey([target.id, target.templateSlug, target.name]);
+}
+
+function designerLookupTargetKey(target: WebflowDesignerLookupTarget): string {
+  return lookupTargetKey([target.syncRecordId, target.slug, target.name]);
+}
+
+async function fetchTargetedWebflowCollectionItems<TTarget, TRecord extends { id?: string | null; syncRecordId?: string | null; templateSlug?: string | null; slug?: string | null; name?: string | null }>(
+  apiToken: string,
+  collectionId: string,
+  targets: TTarget[],
+  targetKey: (target: TTarget) => string,
+  targetSlug: (target: TTarget) => string | null | undefined,
+  targetName: (target: TTarget) => string | null | undefined,
+  mapper: (item: WebflowCmsItem) => TRecord | null,
+  matchesTarget: (record: TRecord, target: TTarget) => boolean,
+  options: { onPage?: () => Promise<void> } = {},
+): Promise<TRecord[]> {
+  const unresolvedTargets = new Map<string, TTarget>();
+  for (const target of targets) {
+    const key = targetKey(target);
+    if (key.replace(/\|/g, '').length === 0 || unresolvedTargets.has(key)) continue;
+    unresolvedTargets.set(key, target);
+  }
+  if (unresolvedTargets.size === 0) return [];
+
+  const records: TRecord[] = [];
+  const seenRecords = new Set<string>();
+
+  const resolveMatches = (matches: TRecord[]) => {
+    for (const match of matches) {
+      for (const [key, target] of unresolvedTargets) {
+        if (!matchesTarget(match, target)) continue;
+        appendUniqueRecord(records, seenRecords, match);
+        unresolvedTargets.delete(key);
+      }
+    }
+  };
+
+  const runLookupPass = async (field: 'slug' | 'name', valueForTarget: (target: TTarget) => string | null | undefined) => {
+    const seenQueries = new Set<string>();
+    for (const [key, target] of Array.from(unresolvedTargets)) {
+      const value = valueForTarget(target)?.trim();
+      if (!value) continue;
+      const queryKey = `${field}:${value.toLowerCase()}`;
+      if (seenQueries.has(queryKey)) continue;
+      seenQueries.add(queryKey);
+
+      const matches = await fetchWebflowCollectionItems(apiToken, collectionId, { [field]: value }, mapper, options);
+      resolveMatches(matches);
+    }
+  };
+
+  await runLookupPass('slug', targetSlug);
+  await runLookupPass('name', targetName);
+
+  return records;
 }
 
 function trimString(value: unknown): string | null {
@@ -436,21 +479,17 @@ export async function fetchWebflowTemplateImagesForTargets(
   const token = webflowApiToken(env);
   if (!token) throw new Error('A Webflow CMS read token is not configured.');
 
-  const queries = uniqueLookupQueries(targets.map((target) => ({ slug: target.templateSlug, name: target.name })));
-  if (queries.length === 0) return [];
-
-  const records: WebflowTemplateImageRecord[] = [];
-  const seen = new Set<string>();
-  for (const query of queries) {
-    const matches = await fetchWebflowCollectionItems(token, TEMPLATES_COLLECTION_ID, query, (item) => mapTemplateFieldData(item.fieldData), options);
-    for (const match of matches) {
-      if (targets.some((target) => templateRecordMatchesTarget(match, target))) {
-        appendUniqueRecord(records, seen, match);
-      }
-    }
-  }
-
-  return records;
+  return fetchTargetedWebflowCollectionItems(
+    token,
+    TEMPLATES_COLLECTION_ID,
+    targets,
+    templateLookupTargetKey,
+    (target) => target.templateSlug,
+    (target) => target.name,
+    (item) => mapTemplateFieldData(item.fieldData),
+    templateRecordMatchesTarget,
+    options,
+  );
 }
 
 // Webhook payload shape sent by Webflow for collection_item_* events.
@@ -517,19 +556,15 @@ export async function fetchWebflowDesignerAvatarsForTargets(
   const token = webflowApiToken(env);
   if (!token) throw new Error('A Webflow CMS read token is not configured.');
 
-  const queries = uniqueLookupQueries(targets);
-  if (queries.length === 0) return [];
-
-  const records: WebflowDesignerAvatarRecord[] = [];
-  const seen = new Set<string>();
-  for (const query of queries) {
-    const matches = await fetchWebflowCollectionItems(token, DESIGNERS_COLLECTION_ID, query, (item) => mapDesignerFieldData(item.fieldData), options);
-    for (const match of matches) {
-      if (targets.some((target) => designerRecordMatchesTarget(match, target))) {
-        appendUniqueRecord(records, seen, match);
-      }
-    }
-  }
-
-  return records;
+  return fetchTargetedWebflowCollectionItems(
+    token,
+    DESIGNERS_COLLECTION_ID,
+    targets,
+    designerLookupTargetKey,
+    (target) => target.slug,
+    (target) => target.name,
+    (item) => mapDesignerFieldData(item.fieldData),
+    designerRecordMatchesTarget,
+    options,
+  );
 }

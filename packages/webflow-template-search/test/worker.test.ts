@@ -1108,6 +1108,107 @@ describe('webflow-template-search worker', () => {
         thumbnail_image_url: 'https://cdn.prod.website-files.com/site/agentflow-retried.webp',
         creator_avatar_url: 'https://cdn.prod.website-files.com/site/brix-retried.webp',
       });
+
+      const webflowItemUrls = fetchMock.mock.calls
+        .map(([input]) => new URL(typeof input === 'string' ? input : input.url))
+        .filter((url) => url.hostname === 'api.webflow.com' && /\/v2\/collections\/[^/]+\/items$/.test(url.pathname));
+      expect(webflowItemUrls.some((url) => url.searchParams.get('slug') === 'agentflow-website-template')).toBe(true);
+      expect(webflowItemUrls.some((url) => url.searchParams.get('slug') === 'brix-templates')).toBe(true);
+      expect(webflowItemUrls.some((url) => url.searchParams.get('name') === 'Agentflow')).toBe(false);
+      expect(webflowItemUrls.some((url) => url.searchParams.get('name') === 'BRIX Templates')).toBe(false);
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
+  it('falls back to targeted Webflow name lookup when the Airtable slug is stale', async () => {
+    const equalizeAsset = {
+      ...PUBLISHED_ASSETS[0],
+      id: 'recEqualize',
+      fields: {
+        ...PUBLISHED_ASSETS[0].fields,
+        Name: 'Equalize',
+        '🥞CMS Slug (formula)': 'equalize-website-template',
+        '🎨Creator': ['creator-brix'],
+        '🎨Creator Name': 'BRIX Templates',
+        '🖼️Thumbnail Image': [{ url: 'https://v5.airtableusercontent.com/v3/u/53/temporary-equalize' }],
+        '🔗Listing URL': 'https://webflow.com/templates/html/equalize-website-template',
+        '🔗Preview Site URL': 'https://equalize.webflow.io',
+        '🔗Website URL': 'https://equalize.webflow.io',
+      },
+    };
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: [equalizeAsset],
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+      creators: LOOKUPS.creators,
+      webflowCollectionItems: {
+        [TEMPLATES_COLLECTION_ID]: [
+          {
+            id: 'item-equalize',
+            isArchived: false,
+            isDraft: false,
+            fieldData: {
+              name: 'Equalize',
+              slug: 'equalize-charity-website-template',
+              thumbnail: { url: 'https://cdn.prod.website-files.com/site/equalize.webp' },
+            },
+          },
+        ],
+        [DESIGNERS_COLLECTION_ID]: [
+          {
+            id: 'designer-brix',
+            isArchived: false,
+            isDraft: false,
+            fieldData: {
+              'sync-record-id': 'creator-brix',
+              name: 'BRIX Templates',
+              slug: 'brix-templates',
+              avatar: {
+                url: 'https://cdn.prod.website-files.com/site/brix.webp',
+                alt: 'BRIX Templates',
+              },
+            },
+          },
+        ],
+      },
+    });
+    const { env, close } = createTestEnv();
+    env.WEBFLOW_API_TOKEN = 'test-webflow-cms-token';
+
+    try {
+      const response = await callWorker(
+        new Request('https://templates.test/api/templates/admin/sync-records', {
+          method: 'POST',
+          headers: {
+            Authorization: 'Bearer sync-token',
+            'content-type': 'application/json',
+          },
+          body: JSON.stringify({ ids: ['recEqualize'] }),
+        }),
+        env,
+      );
+      const payload = (await response.json()) as { warnings?: Array<{ source: string }> };
+      expect(response.status).toBe(200);
+      expect(payload.warnings).toBeUndefined();
+
+      const search = await callWorker(new Request('https://templates.test/api/templates/search?q=equalize'), env);
+      const searchPayload = (await search.json()) as {
+        items: Array<{ template_slug: string; thumbnail_image_url: string | null; creator_avatar_url: string | null }>;
+      };
+      expect(searchPayload.items[0]).toMatchObject({
+        template_slug: 'equalize-charity-website-template',
+        thumbnail_image_url: 'https://cdn.prod.website-files.com/site/equalize.webp',
+        creator_avatar_url: 'https://cdn.prod.website-files.com/site/brix.webp',
+      });
+
+      const templateItemUrls = fetchMock.mock.calls
+        .map(([input]) => new URL(typeof input === 'string' ? input : input.url))
+        .filter((url) => url.hostname === 'api.webflow.com' && url.pathname.includes(TEMPLATES_COLLECTION_ID));
+      expect(templateItemUrls.some((url) => url.searchParams.get('slug') === 'equalize-website-template')).toBe(true);
+      expect(templateItemUrls.some((url) => url.searchParams.get('name') === 'Equalize')).toBe(true);
     } finally {
       fetchMock.mockRestore();
       close();
