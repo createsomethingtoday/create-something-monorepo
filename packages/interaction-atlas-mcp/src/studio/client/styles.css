@@ -1244,6 +1244,60 @@ input::placeholder {
   gap: 0.5rem;
 }
 
+.operator-summary {
+  display: flex;
+  align-items: center;
+  flex: 1 1 auto;
+  gap: 0.42rem;
+  min-width: 0;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  white-space: nowrap;
+}
+
+.operator-summary::-webkit-scrollbar {
+  display: none;
+}
+
+.operator-summary span {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  gap: 0.28rem;
+  min-height: 1.76rem;
+  border: 1px solid rgba(224, 224, 218, 0.92);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--muted-strong);
+  font-size: 0.74rem;
+  padding: 0 0.52rem;
+}
+
+.operator-summary .operator-state {
+  color: var(--text);
+}
+
+.operator-summary .operator-state strong {
+  font-size: 0.78rem;
+  font-weight: 650;
+}
+
+.operator-summary.tone-ready .operator-state {
+  border-color: rgba(30, 60, 44, 0.24);
+  background: rgba(231, 243, 233, 0.72);
+}
+
+.operator-summary.tone-review .operator-state {
+  border-color: rgba(0, 72, 255, 0.2);
+  background: rgba(223, 230, 255, 0.66);
+}
+
+.operator-summary.tone-blocked .operator-state {
+  border-color: rgba(196, 30, 58, 0.22);
+  background: rgba(255, 230, 236, 0.68);
+}
+
 .output-summary strong {
   flex: none;
   font-size: 0.9rem;
@@ -1369,11 +1423,29 @@ input::placeholder {
     min-width: 0;
   }
 
+  .operator-summary {
+    gap: 0.32rem;
+  }
+
+  .operator-summary span {
+    min-height: 1.66rem;
+    font-size: 0.68rem;
+    padding: 0 0.42rem;
+  }
+
+  .operator-summary .operator-state strong {
+    font-size: 0.72rem;
+  }
+
   .output-summary strong {
     font-size: 0.78rem;
   }
 
   .output-summary span {
+    display: none;
+  }
+
+  .operator-summary span:nth-of-type(4) {
     display: none;
   }
 

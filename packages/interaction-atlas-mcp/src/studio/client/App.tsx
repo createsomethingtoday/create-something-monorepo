@@ -370,12 +370,14 @@ function CubeMark({ className = '' }: { className?: string }): React.ReactElemen
 
 function IconButton({
   active = false,
+  ariaLabel,
   children,
   icon: Icon,
   onClick,
   title
 }: {
   active?: boolean;
+  ariaLabel?: string;
   children: React.ReactNode;
   icon: LucideIcon;
   onClick: () => void;
@@ -383,6 +385,7 @@ function IconButton({
 }): React.ReactElement {
   return (
     <button
+      aria-label={ariaLabel ?? title ?? (typeof children === 'string' ? children : undefined)}
       aria-pressed={active}
       className="toolbar-button"
       onClick={onClick}
@@ -393,6 +396,78 @@ function IconButton({
       <span>{children}</span>
     </button>
   );
+}
+
+type OperatorStateTone = 'ready' | 'review' | 'blocked';
+
+type OperatorStateSummary = {
+  handoff: string;
+  proof: string;
+  review: string;
+  state: string;
+  tone: OperatorStateTone;
+};
+
+function pluralize(count: number, singular: string, plural = `${singular}s`): string {
+  return `${count} ${count === 1 ? singular : plural}`;
+}
+
+function summarizeOperatorState(session: AtlasSession | null): OperatorStateSummary {
+  if (!session) {
+    return {
+      handoff: 'Handoff loading',
+      proof: 'Proof loading',
+      review: 'Review loading',
+      state: 'Loading',
+      tone: 'review'
+    };
+  }
+
+  const nodes = session.canvas.nodes;
+  const latestProposal = session.proposals?.[0];
+  const queuedSuggestions = session.suggestions.filter((item) => item.status === 'queued').length;
+  const openQuestions = session.story?.questions.filter((question) => question.status === 'open').length ?? 0;
+  const stoppedNodes = nodes.filter((node) => node.status === 'stop').length;
+  const waitingNodes = nodes.filter((node) => node.status === 'wait').length;
+  const syncIssues = nodes.filter((node) =>
+    node.sync ? ['missing', 'partial', 'unbound', 'unknown'].includes(node.sync.status) : false
+  ).length;
+  const proofCount = nodes.filter(
+    (node) => node.evidence?.trim() || node.bindings?.length || node.sync?.bindingCount
+  ).length;
+  const proposedActions =
+    latestProposal?.actions.filter((action) => action.status === 'proposed').length ?? 0;
+  const approvalActions =
+    latestProposal?.actions.filter(
+      (action) => action.status === 'proposed' && action.risk === 'approval'
+    ).length ?? 0;
+  const approvedActions = latestProposal?.summary.approved ?? 0;
+
+  const reviewCount = approvalActions + queuedSuggestions + openQuestions;
+  const tone: OperatorStateTone = stoppedNodes ? 'blocked' : reviewCount || syncIssues ? 'review' : 'ready';
+  const state = stoppedNodes
+    ? `${pluralize(stoppedNodes, 'blocked node')}`
+    : reviewCount
+      ? `${pluralize(reviewCount, 'review item')}`
+      : syncIssues
+        ? `${pluralize(syncIssues, 'proof gap')}`
+        : 'Ready to brief';
+
+  return {
+    handoff: latestProposal
+      ? `${pluralize(approvedActions, 'approved action')} / ${pluralize(proposedActions, 'open action')}`
+      : 'No handoff plan yet',
+    proof: syncIssues
+      ? `${pluralize(syncIssues, 'binding gap')}`
+      : `${pluralize(proofCount, 'proof point')}`,
+    review: reviewCount
+      ? `${pluralize(approvalActions, 'approval')} / ${pluralize(queuedSuggestions, 'suggestion')} / ${pluralize(openQuestions, 'question')}`
+      : waitingNodes
+        ? `${pluralize(waitingNodes, 'waiting node')}`
+        : 'No open review',
+    state,
+    tone
+  };
 }
 
 const AtlasFlowNode = memo(function AtlasFlowNode({
@@ -653,7 +728,13 @@ function Rail({
               <em>Live notes and agent suggestions</em>
             </span>
           </span>
-          <button className="icon-only" onClick={onClose} title="Close rail" type="button">
+          <button
+            aria-label="Close rail"
+            className="icon-only"
+            onClick={onClose}
+            title="Close rail"
+            type="button"
+          >
             <X aria-hidden="true" />
           </button>
         </div>
@@ -680,7 +761,7 @@ function Rail({
               <FileText aria-hidden="true" />
             </span>
             <span>
-              <strong>Write-back Proposal</strong>
+              <strong>Review Plan</strong>
               <em>Review before any production edit</em>
             </span>
           </span>
@@ -708,7 +789,7 @@ function Rail({
                 <p>
                   {latestProposal.summary.drift} mapped node
                   {latestProposal.summary.drift === 1 ? '' : 's'} need sync attention before
-                  edits ripple through.
+                  any production change is prepared.
                 </p>
               </article>
               {latestProposal.actions.slice(0, 8).map((action) => (
@@ -755,12 +836,11 @@ function Rail({
           ) : (
             <article className="rail-item proposal-summary">
               <p>
-                Generate a proposal after Heal to turn this canvas into a reviewable production
-                change plan.
+                Check production bindings, then create a review plan before anything changes.
               </p>
               <button className="subtle-button" onClick={onCreateProposal} type="button">
                 <FileText aria-hidden="true" />
-                <span>Create proposal</span>
+                <span>Create review plan</span>
               </button>
             </article>
           )}
@@ -775,7 +855,7 @@ function Rail({
             </span>
             <span>
               <strong>Suggestions</strong>
-              <em>Review before truth</em>
+              <em>Operator approves changes</em>
             </span>
           </span>
           <span className="count-chip">{queued.length}</span>
@@ -891,7 +971,13 @@ function Inspector({
               <em>{selectedNode?.id ?? 'Select a node'}</em>
             </span>
           </span>
-          <button className="icon-only" onClick={onClose} title="Close inspector" type="button">
+          <button
+            aria-label="Close inspector"
+            className="icon-only"
+            onClick={onClose}
+            title="Close inspector"
+            type="button"
+          >
             <X aria-hidden="true" />
           </button>
         </div>
@@ -964,7 +1050,7 @@ function Inspector({
                   </span>
                   <span>
                     <strong>Production bindings</strong>
-                    <em>{selectedNode.sync?.summary ?? 'Run Heal to bind this node.'}</em>
+                    <em>{selectedNode.sync?.summary ?? 'Check bindings to connect this node.'}</em>
                   </span>
                 </span>
                 {selectedNode.sync ? (
@@ -1041,7 +1127,7 @@ function Inspector({
             </span>
             <span>
               <strong>Agent Console</strong>
-              <em>Terminal mutation path</em>
+              <em>Agent-side note capture</em>
             </span>
           </span>
         </div>
@@ -1071,6 +1157,7 @@ function AtlasStudio(): React.ReactElement {
   const [error, setError] = useState<string | null>(null);
   const [healSummary, setHealSummary] = useState<string | null>(null);
   const [proposalSummary, setProposalSummary] = useState<string | null>(null);
+  const canvasStageRef = useRef<HTMLDivElement | null>(null);
   const flowRef = useRef<ReactFlowInstance<FlowNode, Edge> | null>(null);
   const edgeCache = useRef<Map<string, { edge: Edge; signature: string }>>(new Map());
   const edgeListCache = useRef<{ edges: Edge[]; signature: string } | null>(null);
@@ -1104,6 +1191,7 @@ function AtlasStudio(): React.ReactElement {
   const sessionTitle = session
     ? `${formatClient(session.client)} / ${session.workflow}`
     : 'Loading session...';
+  const operatorSummary = useMemo(() => summarizeOperatorState(session), [session]);
 
   const applySession = useCallback((next: AtlasSession, source: 'local' | 'remote') => {
     const previous = sessionRef.current;
@@ -1535,11 +1623,12 @@ function AtlasStudio(): React.ReactElement {
   }, [fitStoryFocus, nodes]);
 
   const tidyCanvas = useCallback(async () => {
+    const viewportWidth = canvasStageRef.current?.clientWidth ?? window.innerWidth;
     const result = await requestJson<{
       session: AtlasSession;
       updates: Array<{ id: string; width: number; x: number; y: number }>;
     }>(`/api/sessions/${encodeURIComponent(sessionId)}/tidy`, {
-      body: '{}',
+      body: JSON.stringify({ viewportWidth }),
       method: 'POST'
     });
 
@@ -1657,7 +1746,7 @@ function AtlasStudio(): React.ReactElement {
             active={railOpen}
             icon={railOpen ? PanelLeftClose : PanelLeftOpen}
             onClick={() => setRailOpen((value) => !value)}
-            title="Toggle rail"
+            title={railOpen ? 'Hide review rail' : 'Show review rail'}
           >
             Rail
           </IconButton>
@@ -1665,7 +1754,7 @@ function AtlasStudio(): React.ReactElement {
             active={inspectorOpen}
             icon={inspectorOpen ? PanelRightClose : PanelRightOpen}
             onClick={() => setInspectorOpen((value) => !value)}
-            title="Toggle inspector"
+            title={inspectorOpen ? 'Hide node details' : 'Show node details'}
           >
             Inspector
           </IconButton>
@@ -1680,24 +1769,24 @@ function AtlasStudio(): React.ReactElement {
           <IconButton icon={MapIcon} onClick={fitCanvas} title="Fit map">
             Fit
           </IconButton>
-          <IconButton icon={Rows3} onClick={() => void tidyCanvas()} title="Tidy map">
-            Tidy
+          <IconButton icon={Rows3} onClick={() => void tidyCanvas()} title="Arrange map">
+            Arrange
           </IconButton>
-          <IconButton icon={ScanLine} onClick={() => void healCanvas()} title="Self-heal bindings">
-            Heal
+          <IconButton icon={ScanLine} onClick={() => void healCanvas()} title="Check production bindings">
+            Check
           </IconButton>
           <IconButton
             icon={FileText}
             onClick={() => void createProposal()}
-            title="Create write-back proposal"
+            title="Create review plan"
           >
-            Propose
+            Review plan
           </IconButton>
           <IconButton icon={RefreshCw} onClick={() => void loadSession()} title="Refresh session">
             Refresh
           </IconButton>
-          <IconButton icon={Clipboard} onClick={() => void copyCommand()} title="Copy command">
-            Copy command
+          <IconButton icon={Clipboard} onClick={() => void copyCommand()} title="Copy note capture">
+            Copy note capture
           </IconButton>
         </div>
       </header>
@@ -1705,6 +1794,7 @@ function AtlasStudio(): React.ReactElement {
       <main className="studio-main">
         <ReactFlowProvider>
           <div
+            ref={canvasStageRef}
             className={`canvas-stage ${presenterMode ? 'presenter-mode' : ''}`}
             aria-label="Atlas workflow canvas"
           >
@@ -1826,6 +1916,15 @@ function AtlasStudio(): React.ReactElement {
       </main>
 
       <footer className="studio-footer">
+        <div className={`operator-summary tone-${operatorSummary.tone}`} aria-label="Operator state">
+          <span className="operator-state">
+            <ShieldAlert aria-hidden="true" />
+            <strong>{operatorSummary.state}</strong>
+          </span>
+          <span>{operatorSummary.review}</span>
+          <span>{operatorSummary.proof}</span>
+          <span>{operatorSummary.handoff}</span>
+        </div>
         <div className="output-summary">
           <strong>{counts}</strong>
           <span>{session ? `Updated ${new Date(session.updatedAt).toLocaleTimeString()}` : ''}</span>
@@ -1835,17 +1934,29 @@ function AtlasStudio(): React.ReactElement {
         </div>
         <div className="toolbar">
           <a
+            aria-label="Open handoff"
             className="toolbar-link"
             href={`/api/sessions/${encodeURIComponent(sessionId)}/proposals/latest/handoff.md`}
+            title="Open handoff"
           >
             <NotebookTabs aria-hidden="true" />
             <span>Handoff</span>
           </a>
-          <a className="toolbar-link" href={`/api/sessions/${encodeURIComponent(sessionId)}/export.md`}>
+          <a
+            aria-label="Open client summary"
+            className="toolbar-link"
+            href={`/api/sessions/${encodeURIComponent(sessionId)}/export.md`}
+            title="Open client summary"
+          >
             <FileText aria-hidden="true" />
             <span>Client summary</span>
           </a>
-          <a className="toolbar-link" href={`/api/sessions/${encodeURIComponent(sessionId)}`}>
+          <a
+            aria-label="Open session JSON"
+            className="toolbar-link"
+            href={`/api/sessions/${encodeURIComponent(sessionId)}`}
+            title="Open session JSON"
+          >
             <Braces aria-hidden="true" />
             <span>JSON</span>
           </a>
