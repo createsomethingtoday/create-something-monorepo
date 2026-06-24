@@ -3,6 +3,7 @@ import {
   fetchModifiedAssetsSince,
   fetchPublishedTemplateAssets,
   fetchPublishedTemplateImageFields,
+  fetchRecentlyPublishedTemplateAssets,
   loadLookupMaps,
   DEFAULT_SEARCH_VISIBILITY_FIELDS,
 } from './airtable.js';
@@ -11,8 +12,10 @@ import {
   backfillCreatorFieldsByName,
   backfillCreatorFieldsFromLookup,
   acquireSyncJobLock,
+  bumpPublicSearchCacheVersion,
   clearIndex,
   deleteTemplateDocuments,
+  filterMissingOrStaleTemplateLookupTargets,
   finishSyncJobLock,
   getSyncCursor,
   heartbeatSyncJobLock,
@@ -706,6 +709,9 @@ async function runFullSync(env: Env, heartbeat: SyncHeartbeat): Promise<SyncSumm
   };
 
   await setSyncCursor(env.DB, startedAt);
+  if (summary.indexed_records > 0 || summary.removed_records > 0 || summary.image_refreshed_records > 0 || summary.backfilled_records > 0) {
+    await bumpPublicSearchCacheVersion(env.DB, summary.mode);
+  }
   await recordSyncSummaryAndWarnings(env, summary, 'last_full_sync', warnings);
   return summary;
 }
@@ -724,6 +730,8 @@ const MAX_INCREMENTAL_RECORDS_PER_RUN = 600;
 const MAX_STALE_INCREMENTAL_FETCH_RECORDS_PER_RUN = 100;
 const MAX_STALE_INCREMENTAL_RECORDS_PER_RUN = 80;
 const INCREMENTAL_WRITE_BATCH_SIZE = 12;
+const RECENT_PUBLISHED_SWEEP_LOOKBACK_DAYS = 21;
+const RECENT_PUBLISHED_SWEEP_LIMIT = 50;
 
 function resolveSyncWindow(cursor: string, now: Date): { end: Date; until: string | undefined; isCaughtUp: boolean } {
   const end = new Date(Math.min(new Date(cursor).getTime() + MAX_SYNC_WINDOW_MS, now.getTime()));
@@ -740,12 +748,46 @@ function sourceLastModifiedTime(record: AirtableRecord<AirtableAssetFields>): st
   return typeof value === 'string' && value.trim().length > 0 ? value : null;
 }
 
+function recentPublishedSweepSinceDate(now: Date): string {
+  const since = new Date(now.getTime() - RECENT_PUBLISHED_SWEEP_LOOKBACK_DAYS * 24 * 60 * 60 * 1000);
+  return since.toISOString().slice(0, 10);
+}
+
 function templateLookupTargets(records: Array<AirtableRecord<AirtableAssetFields>>) {
   return records.map((record) => ({
     id: record.id,
     templateSlug: String(record.fields['🥞CMS Slug'] ?? record.fields['🥞CMS Slug (formula)'] ?? '').trim() || null,
     name: String(record.fields.Name ?? '').trim() || null,
   }));
+}
+
+async function fetchChangedRecentPublishedAssets(
+  env: Env,
+  now: Date,
+  alreadyQueuedRecords: Array<AirtableRecord<AirtableAssetFields>>,
+): Promise<Array<AirtableRecord<AirtableAssetFields>>> {
+  const queuedIds = new Set(alreadyQueuedRecords.map((record) => record.id));
+  const queuedSlugs = new Set(templateLookupTargets(alreadyQueuedRecords).map((target) => target.templateSlug).filter(Boolean));
+  const recentAssets = await fetchRecentlyPublishedTemplateAssets(
+    env,
+    recentPublishedSweepSinceDate(now),
+    RECENT_PUBLISHED_SWEEP_LIMIT,
+  );
+  const candidates = recentAssets.filter((record) => {
+    const target = templateLookupTargets([record])[0];
+    return !queuedIds.has(record.id) && (!target.templateSlug || !queuedSlugs.has(target.templateSlug));
+  });
+  if (candidates.length === 0) return [];
+
+  const missingOrStaleTargets = await filterMissingOrStaleTemplateLookupTargets(
+    env.DB,
+    candidates.map((record) => {
+      const target = templateLookupTargets([record])[0];
+      return { id: record.id, templateSlug: target.templateSlug, sourceLastModifiedTime: sourceLastModifiedTime(record) };
+    }),
+  );
+  const changedIds = new Set(missingOrStaleTargets.map((target) => target.id));
+  return candidates.filter((record) => changedIds.has(record.id));
 }
 
 function templateImageBackfillTargets(rows: TemplateImageRefreshRow[]) {
@@ -820,6 +862,7 @@ async function runIncrementalSync(env: Env, heartbeat: SyncHeartbeat): Promise<S
   let scannedWindows = 0;
   let boundedCursor: string | null = null;
   let hitStaleFetchLimit = false;
+  let recentPublishedRecords = 0;
 
   while (scannedWindows < MAX_EMPTY_SYNC_WINDOWS_PER_RUN) {
     const syncWindow = resolveSyncWindow(scanCursor, now);
@@ -850,6 +893,15 @@ async function runIncrementalSync(env: Env, heartbeat: SyncHeartbeat): Promise<S
     assets = bounded.assets;
     boundedCursor = bounded.cursor;
     if (boundedCursor) windowEnd = new Date(boundedCursor);
+  }
+
+  if (!isCaughtUp) {
+    const recentPublishedAssets = await fetchChangedRecentPublishedAssets(env, now, assets);
+    await heartbeat();
+    if (recentPublishedAssets.length > 0) {
+      assets.push(...recentPublishedAssets);
+      recentPublishedRecords = recentPublishedAssets.length;
+    }
   }
 
   const toUpsert: TemplateDocumentInput[] = [];
@@ -918,9 +970,13 @@ async function runIncrementalSync(env: Env, heartbeat: SyncHeartbeat): Promise<S
     image_refreshed_records: imageRefreshedRecords,
     cursor: newCursor,
     skipped_empty_windows: skippedEmptyWindows,
+    recent_published_records: recentPublishedRecords,
   };
 
   await setSyncCursor(env.DB, newCursor);
+  if (summary.indexed_records > 0 || summary.removed_records > 0 || summary.image_refreshed_records > 0) {
+    await bumpPublicSearchCacheVersion(env.DB, summary.mode);
+  }
   await recordSyncSummaryAndWarnings(env, summary, 'last_incremental_sync', warnings);
   return summary;
 }
@@ -990,6 +1046,9 @@ export async function syncTemplateRecordsByIds(env: Env, recordIds: string[]): P
       cursor: startedAt,
     };
 
+    if (summary.indexed_records > 0 || summary.removed_records > 0 || summary.image_refreshed_records > 0 || summary.backfilled_records > 0) {
+      await bumpPublicSearchCacheVersion(env.DB, summary.mode);
+    }
     await recordSyncSummaryAndWarnings(env, summary, 'last_record_sync', warnings);
     return summary;
   });
