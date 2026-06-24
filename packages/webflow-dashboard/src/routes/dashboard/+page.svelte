@@ -178,8 +178,8 @@
     currentEditingAsset = null;
   }
 
-  async function handleEditSave(updateData: AssetUpdateData): Promise<void> {
-    if (!currentEditingAsset) return;
+  async function handleEditSave(updateData: AssetUpdateData): Promise<{ versionWarning?: string }> {
+    if (!currentEditingAsset) return {};
 
     const response = await fetch(`/api/assets/${currentEditingAsset.id}`, {
       method: 'PUT',
@@ -192,9 +192,10 @@
       throw new Error(errorData.message || 'Failed to update asset');
     }
 
-    toast.success('Asset updated successfully');
+    const result = (await response.json().catch(() => ({}))) as { versionWarning?: string };
     handleEditClose();
     await handleRefreshAssets();
+    return { versionWarning: result.versionWarning };
   }
 
   function handleArchiveAsset(id: string) {
