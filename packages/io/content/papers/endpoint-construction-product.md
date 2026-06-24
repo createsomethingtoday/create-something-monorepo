@@ -364,11 +364,111 @@ That is product work.
 
 Endpoint construction is product construction.
 
+## Transparency And Evidence Status
+
+This paper is a living research artifact. Its core claim is currently supported by a combination of CREATE SOMETHING implementation evidence, official protocol and platform documentation, market writing about agent-callable APIs, and emerging benchmarks that test whether agents can actually discover endpoints, follow policy, and complete cross-application work.
+
+```yaml
+transparency:
+  claim_status: "supported"
+  confidence: "medium"
+  evidence_grade: "field-signal"
+  last_reviewed_at: "2026-06-24"
+  next_review_due: "2026-09-24"
+  review_owner: "CREATE SOMETHING"
+  primary_claim: "AI-native product quality is determined by the capability boundaries that models and operators can safely inhabit."
+  current_read: "The strongest evidence supports endpoint construction as a product discipline, not simply an API implementation task. APIs, CLIs, and MCPs appear best understood as different projections of one capability contract: API as durable system contract, CLI as developer execution rail, and MCP as agent-facing capability membrane."
+  supports:
+    - "Atlas and Canvas implementation evidence: typed map objects, bounded mutations, persisted events, deterministic fallback, readiness scoring, and refusal of production actions made the product more agent-operable."
+    - "MCP specification: tools, resources, and prompts define model-callable capability, application-provided context, and user-selected guidance."
+    - "OpenAI Apps SDK and function-calling documentation: structured content, schemas, tool metadata, and strict structured outputs make endpoint shape visible to models and clients."
+    - "Market writing on agent-callable APIs: current API-readiness discussions emphasize schemas, error semantics, auth, rate limits, and machine-actionable responses."
+    - "AutomationBench: realistic cross-application workflows require endpoint discovery, policy adherence, and correct writes, and current frontier agents still struggle."
+  counter_signals:
+    - "More endpoints can make an agent system worse if the surface mirrors raw SaaS APIs instead of meaningful delegation points."
+    - "CLIs remain better for many local developer inner-loop tasks because they are cheap, fast, familiar to models, and composable."
+    - "MCP adoption does not remove the need for underlying API quality, identity, observability, and governance."
+    - "Benchmarks showing low agent success rates mean endpoint construction is necessary but not sufficient for reliable autonomy."
+  open_questions:
+    - "Which endpoint grammar fields should become mandatory in CREATE SOMETHING delivery contracts?"
+    - "When should a capability remain a CLI command instead of becoming an MCP tool?"
+    - "Which evidence threshold justifies moving an endpoint from proposal-only to write-capable?"
+    - "How should source freshness be rendered in the public .io paper UI?"
+  source_review:
+    - title: "Model Context Protocol Specification 2025-06-18"
+      url_or_path: "https://modelcontextprotocol.io/specification/2025-06-18"
+      source_type: "official-doc"
+      supports: "MCP provides a standardized way to connect LLM applications with external data sources and tools."
+      freshness: "current"
+      reviewed_at: "2026-06-24"
+      notes: "Use as the authority for tools, resources, prompts, and MCP control boundaries."
+    - title: "Model Context Protocol: Tools"
+      url_or_path: "https://modelcontextprotocol.io/specification/2025-06-18/server/tools"
+      source_type: "official-doc"
+      supports: "Tools expose named, schema-described capabilities that language models can invoke."
+      freshness: "current"
+      reviewed_at: "2026-06-24"
+      notes: "Supports the claim that endpoint/tool shape is part of model action space."
+    - title: "OpenAI Apps SDK Reference"
+      url_or_path: "https://developers.openai.com/apps-sdk/reference"
+      source_type: "official-doc"
+      supports: "Tool results separate structuredContent, content, and component-only _meta data."
+      freshness: "current"
+      reviewed_at: "2026-06-24"
+      notes: "Supports evidence and UI hydration boundaries for agent-facing products."
+    - title: "OpenAI Function Calling"
+      url_or_path: "https://developers.openai.com/api/docs/guides/function-calling"
+      source_type: "official-doc"
+      supports: "Strict mode and schemas improve reliability of model-generated function arguments."
+      freshness: "current"
+      reviewed_at: "2026-06-24"
+      notes: "Supports schema as product affordance, not only type safety."
+    - title: "Zuplo: The API Readiness Gap"
+      url_or_path: "https://zuplo.com/learning-center/api-readiness-gap-agent-callable-apis"
+      source_type: "market-signal"
+      supports: "Agent-callable APIs need different design attention than human-developer APIs."
+      freshness: "watch"
+      reviewed_at: "2026-06-24"
+      notes: "Useful market framing; statistics should be refreshed before sales-heavy reuse."
+    - title: "AutomationBench"
+      url_or_path: "https://arxiv.org/abs/2604.18934"
+      source_type: "benchmark"
+      supports: "Realistic agent workflows require endpoint discovery, policy adherence, and correct data writes."
+      freshness: "current"
+      reviewed_at: "2026-06-24"
+      notes: "Important counterweight: strong endpoint construction does not by itself solve autonomy."
+    - title: "Tinybird: MCP vs APIs"
+      url_or_path: "https://www.tinybird.co/blog/mcp-vs-apis-when-to-use-which-for-ai-agent-development"
+      source_type: "market-signal"
+      supports: "MCP and APIs are complementary; MCP often wraps APIs rather than replacing them."
+      freshness: "watch"
+      reviewed_at: "2026-06-24"
+      notes: "Supports the layered API, CLI, MCP framing."
+    - title: "CircleCI: MCP vs CLI for AI-native development"
+      url_or_path: "https://circleci.com/blog/mcp-vs-cli/"
+      source_type: "market-signal"
+      supports: "CLI and MCP fit different development loops rather than competing directly."
+      freshness: "watch"
+      reviewed_at: "2026-06-24"
+      notes: "Use to temper MCP-first claims with inner-loop CLI pragmatism."
+  update_log:
+    - date: "2026-06-24"
+      change: "Added living-document transparency ledger and expanded source review after comparing API, CLI, MCP, and AI-native system sentiment."
+      reason: "The paper now serves as an active claim surface, not only a static thesis."
+```
+
 ## Sources
 
+- [Model Context Protocol: Specification 2025-06-18](https://modelcontextprotocol.io/specification/2025-06-18)
 - [Model Context Protocol: Tools](https://modelcontextprotocol.io/specification/2025-06-18/server/tools)
 - [Model Context Protocol: Resources](https://modelcontextprotocol.io/specification/2025-06-18/server/resources)
+- [OpenAI Apps SDK Reference](https://developers.openai.com/apps-sdk/reference)
 - [OpenAI Apps SDK Quickstart](https://developers.openai.com/apps-sdk/quickstart)
+- [OpenAI Function Calling](https://developers.openai.com/api/docs/guides/function-calling)
 - [IBM: What Is Tool Calling?](https://www.ibm.com/think/topics/tool-calling)
 - [Nordic APIs: 10 AI-Driven API Economy Predictions for 2026](https://nordicapis.com/10-ai-driven-api-economy-predictions-for-2026/)
 - [Truto: Unified APIs for LLM Function Calling and AI Agent Tools](https://truto.one/blog/the-best-unified-apis-for-llm-function-calling-ai-agent-tools-2026/)
+- [Zuplo: The API Readiness Gap](https://zuplo.com/learning-center/api-readiness-gap-agent-callable-apis)
+- [AutomationBench](https://arxiv.org/abs/2604.18934)
+- [Tinybird: MCP vs APIs](https://www.tinybird.co/blog/mcp-vs-apis-when-to-use-which-for-ai-agent-development)
+- [CircleCI: MCP vs CLI for AI-native development](https://circleci.com/blog/mcp-vs-cli/)
