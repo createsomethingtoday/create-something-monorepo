@@ -2,6 +2,7 @@ export const agencyCoreMessaging = {
   categoryLabel: 'Workflow Trust Layer',
   startWithWorkflowLabel: 'Start Workflow Map',
   startWithWorkflowHref: '/services#atlas-warmup',
+  tryMapLabel: 'Try the Map',
   selfMapLabel: 'Start Workflow Map',
   selfMapHref: '/services#atlas-warmup',
   governanceChecklistLabel: 'Get Workflow Checklist',
