@@ -12,7 +12,6 @@
     ClearQuoteMetricPanel,
     ClearReceiptGrid,
     ClearSecurityPanel,
-    ClearStateRows,
     ClearUseCaseBand,
     SEO,
     type ClearActionFooterItem,
@@ -25,10 +24,10 @@
     type ClearReceipt,
     type ClearSecurityItem,
     type ClearSecurityLog,
-    type ClearUseCaseItem,
-    type ClearWorkflowState
+    type ClearUseCaseItem
   } from '@create-something/canon';
   import ExecutionWorkbench from '$lib/components/ExecutionWorkbench.svelte';
+  import HeroTrustArtifact from '$lib/components/HeroTrustArtifact.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
   const services = [
@@ -81,27 +80,6 @@
       question: 'What do clients leave with?',
       answer:
         'Clients leave with a visible workflow map, action boundary, approval path, run/wait/stop states, and evidence that a team can inspect.'
-    }
-  ];
-
-  const workflowStates: ClearWorkflowState[] = [
-    {
-      tone: 'run',
-      state: 'Run',
-      label: 'Agent can act',
-      detail: 'The order is unfulfilled and the write is limited to a warehouse note.'
-    },
-    {
-      tone: 'wait',
-      state: 'Wait',
-      label: 'Owner approval needed',
-      detail: 'The draft is ready, but the goodwill credit touches revenue.'
-    },
-    {
-      tone: 'stop',
-      state: 'Stop',
-      label: 'Blocked with a reason',
-      detail: 'The refund exceeds the support lane and opens an owner handoff.'
     }
   ];
 
@@ -401,13 +379,7 @@
     {/snippet}
 
     {#snippet aside()}
-      <ClearStateRows
-        eyebrow="Support recovery run"
-        title="What can happen now?"
-        states={workflowStates}
-        receipts={['blocked-state.json', 'credit-approval-note.md', 'warehouse-note.md']}
-        ariaLabel="Controlled workflow state example"
-      />
+      <HeroTrustArtifact />
     {/snippet}
   </ClearPlatformHero>
 
