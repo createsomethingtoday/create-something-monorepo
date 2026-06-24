@@ -52,6 +52,8 @@ type AddEdgeInput = {
   createdBy?: AtlasSessionActor;
 };
 
+type UpdateEdgeInput = Partial<Omit<AtlasCanvasEdge, 'id' | 'createdBy' | 'source' | 'target'>>;
+
 type AddObservationInput = {
   text: string;
   source?: AtlasSessionActor;
@@ -406,6 +408,24 @@ export async function addEdge(
     updatedAt: now()
   };
   session.canvas.edges.push(edge);
+  return writeSession(session, cwd);
+}
+
+export async function updateEdge(
+  sessionId: string,
+  edgeId: string,
+  input: UpdateEdgeInput,
+  cwd = process.cwd()
+): Promise<AtlasSession> {
+  const session = await readSession(sessionId, cwd);
+  const index = session.canvas.edges.findIndex((edge) => edge.id === edgeId);
+  if (index === -1) throw new Error(`Unknown edge: ${edgeId}`);
+  session.canvas.edges[index] = {
+    ...session.canvas.edges[index],
+    ...input,
+    id: edgeId,
+    updatedAt: now()
+  };
   return writeSession(session, cwd);
 }
 

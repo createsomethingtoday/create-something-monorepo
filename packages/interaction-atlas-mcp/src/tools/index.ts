@@ -42,6 +42,7 @@ import {
   AtlasGetSchema,
   AtlasSearchSchema,
   AtlasStudioEdgeAddSchema,
+  AtlasStudioEdgeUpdateSchema,
   AtlasStudioNodeAddSchema,
   AtlasStudioObserveSchema,
   AtlasStudioHealSchema,
@@ -148,6 +149,7 @@ import {
   listSessions,
   readSession,
   setStoryFocus,
+  updateEdge,
   updateNodes,
 } from '../studio/store.js';
 import {
@@ -1048,6 +1050,31 @@ export function registerTools(server: ScopedMcpServer): void {
         accountId: ctx.accountId,
         sessionId: session.id,
         edge: session.canvas.edges.at(-1),
+        session,
+      });
+    },
+    { readOnly: false },
+  );
+
+  server.tool(
+    'atlas_studio_edge_update',
+    'Update communication fields on an existing Atlas Studio canvas edge.',
+    AtlasStudioEdgeUpdateSchema.shape,
+    async (params, ctx) => {
+      const input = AtlasStudioEdgeUpdateSchema.parse(params);
+      const session = await updateEdge(
+        input.session_id,
+        input.edge_id,
+        {
+          label: input.label,
+          evidence: input.evidence,
+        },
+        atlasStudioCwd(),
+      );
+      return jsonContent({
+        accountId: ctx.accountId,
+        sessionId: session.id,
+        edge: session.canvas.edges.find((edge) => edge.id === input.edge_id),
         session,
       });
     },

@@ -62,7 +62,8 @@ import React, {
   useMemo,
   useRef,
   useState,
-  type FormEvent
+  type FormEvent,
+  type PointerEvent as ReactPointerEvent
 } from 'react';
 import { createRoot } from 'react-dom/client';
 
@@ -148,6 +149,11 @@ const FIT_VIEW_OPTIONS = {
   padding: 0.24
 };
 
+type StoryPanelOffset = {
+  x: number;
+  y: number;
+};
+
 function formatKind(kind: AtlasCanvasNodeKind): string {
   return kind === 'ai' ? 'AI' : kind;
 }
@@ -204,9 +210,10 @@ function toFlowNodes(
   session: AtlasSession,
   selectedNodeId: string | null,
   activeNodeIds: Set<string>,
-  detailMode: CanvasDetailMode
+  detailMode: CanvasDetailMode,
+  storyEnabled: boolean
 ): FlowNode[] {
-  const story = session.story?.active ? session.story : undefined;
+  const story = storyEnabled && session.story?.active ? session.story : undefined;
   const focusNodeIds = new Set(story?.focusNodeIds ?? []);
   const activeStepIndex = story?.steps?.findIndex((step) => step.id === story.activeStepId) ?? -1;
   const storyStepIndex = activeStepIndex >= 0 ? activeStepIndex + 1 : undefined;
@@ -233,8 +240,12 @@ function toFlowNodes(
   }));
 }
 
-function toFlowEdge(edge: AtlasSession['canvas']['edges'][number], session: AtlasSession): Edge {
-  const story = session.story?.active ? session.story : undefined;
+function toFlowEdge(
+  edge: AtlasSession['canvas']['edges'][number],
+  session: AtlasSession,
+  storyEnabled: boolean
+): Edge {
+  const story = storyEnabled && session.story?.active ? session.story : undefined;
   const focusEdgeIds = new Set(story?.focusEdgeIds ?? []);
   const focusNodeIds = new Set(story?.focusNodeIds ?? []);
   const explicitlyFocused = focusEdgeIds.has(edge.id);
@@ -269,7 +280,8 @@ function toFlowEdge(edge: AtlasSession['canvas']['edges'][number], session: Atla
 function toStableFlowEdges(
   session: AtlasSession,
   cache: Map<string, { edge: Edge; signature: string }>,
-  previousList: { edges: Edge[]; signature: string } | null
+  previousList: { edges: Edge[]; signature: string } | null,
+  storyEnabled: boolean
 ): { edges: Edge[]; signature: string } {
   const liveIds = new Set(session.canvas.edges.map((edge) => edge.id));
   for (const id of cache.keys()) {
@@ -277,7 +289,7 @@ function toStableFlowEdges(
   }
 
   const nextEdges = session.canvas.edges.map((edge) => {
-    const next = toFlowEdge(edge, session);
+    const next = toFlowEdge(edge, session, storyEnabled);
     const signature = edgeSignature(next);
     const cached = cache.get(edge.id);
     if (cached?.signature === signature) return cached.edge;
@@ -322,6 +334,22 @@ function readStoredViewport(sessionId: string): Viewport | undefined {
     return undefined;
   }
   return undefined;
+}
+
+function readStoredStoryPanelOffset(sessionId: string): StoryPanelOffset {
+  try {
+    const raw = localStorage.getItem(`atlas-studio:${sessionId}:story-panel-offset`);
+    if (!raw) return { x: 0, y: 0 };
+    const parsed = JSON.parse(raw) as StoryPanelOffset;
+    if (typeof parsed.x === 'number' && typeof parsed.y === 'number') return parsed;
+  } catch {
+    return { x: 0, y: 0 };
+  }
+  return { x: 0, y: 0 };
+}
+
+function writeStoredStoryPanelOffset(sessionId: string, offset: StoryPanelOffset): void {
+  localStorage.setItem(`atlas-studio:${sessionId}:story-panel-offset`, JSON.stringify(offset));
 }
 
 function isEditableTarget(target: EventTarget | null): boolean {
@@ -421,14 +449,18 @@ const NODE_TYPES = {
 
 function StoryPanel({
   onClear,
+  onDragStart,
   onNextStep,
   onPreviousStep,
+  onResetPosition,
   onSelectStep,
   session
 }: {
   onClear: () => void;
+  onDragStart: (event: ReactPointerEvent<HTMLElement>) => void;
   onNextStep: () => void;
   onPreviousStep: () => void;
+  onResetPosition: () => void;
   onSelectStep: (step: AtlasStoryStep) => void;
   session: AtlasSession | null;
 }): React.ReactElement | null {
@@ -445,7 +477,7 @@ function StoryPanel({
   const detailCount = story.callouts.length + openQuestions.length + (story.nextAction ? 1 : 0);
   return (
     <aside className={`story-panel ${story.active ? 'active' : 'quiet'}`}>
-      <div className="story-panel-header">
+      <div className="story-panel-header" onPointerDown={onDragStart} title="Drag to move story panel">
         <span className="title-lockup">
           <span className="title-icon">
             <Sparkles aria-hidden="true" />
@@ -461,11 +493,28 @@ function StoryPanel({
             </em>
           </span>
         </span>
-        {story.active ? (
-          <button className="icon-only" onClick={onClear} title="Clear story focus" type="button">
-            <X aria-hidden="true" />
+        <span className="story-panel-actions">
+          <button
+            className="icon-only"
+            onClick={onResetPosition}
+            onPointerDown={(event) => event.stopPropagation()}
+            title="Reset story panel position"
+            type="button"
+          >
+            <MapIcon aria-hidden="true" />
           </button>
-        ) : null}
+          {story.active ? (
+            <button
+              className="icon-only"
+              onClick={onClear}
+              onPointerDown={(event) => event.stopPropagation()}
+              title="Clear story focus"
+              type="button"
+            >
+              <X aria-hidden="true" />
+            </button>
+          ) : null}
+        </span>
       </div>
       {activeStep ? (
         <div className="story-current-step">
@@ -1005,6 +1054,7 @@ function Inspector({
 function AtlasStudio(): React.ReactElement {
   const sessionId = useMemo(getSessionId, []);
   const initialViewport = useMemo(() => readStoredViewport(sessionId), [sessionId]);
+  const initialStoryPanelOffset = useMemo(() => readStoredStoryPanelOffset(sessionId), [sessionId]);
   const [session, setSession] = useState<AtlasSession | null>(null);
   const [palette, setPalette] = useState<Palette | null>(null);
   const [nodes, setNodes] = useState<FlowNode[]>([]);
@@ -1016,6 +1066,7 @@ function AtlasStudio(): React.ReactElement {
   const [railOpen, setRailOpen] = useState(false);
   const [inspectorOpen, setInspectorOpen] = useState(false);
   const [presenterMode, setPresenterMode] = useState(false);
+  const [storyPanelOffset, setStoryPanelOffset] = useState<StoryPanelOffset>(initialStoryPanelOffset);
   const [draft, setDraft] = useState<NodeDraft | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [healSummary, setHealSummary] = useState<string | null>(null);
@@ -1027,13 +1078,24 @@ function AtlasStudio(): React.ReactElement {
   const nodeSignatures = useRef<Map<string, string>>(new Map());
   const activityTimer = useRef<number | null>(null);
   const storyFrameKey = useRef<string | null>(null);
+  const storyPanelDrag = useRef<{
+    originX: number;
+    originY: number;
+    pointerX: number;
+    pointerY: number;
+  } | null>(null);
   const presenterModeInitialized = useRef(false);
 
   const edges = useMemo(() => {
     if (!session) return [];
-    edgeListCache.current = toStableFlowEdges(session, edgeCache.current, edgeListCache.current);
+    edgeListCache.current = toStableFlowEdges(
+      session,
+      edgeCache.current,
+      edgeListCache.current,
+      presenterMode
+    );
     return edgeListCache.current.edges;
-  }, [session]);
+  }, [presenterMode, session]);
   const selectedNode = useMemo(
     () => session?.canvas.nodes.find((node) => node.id === selectedNodeId) ?? null,
     [selectedNodeId, session]
@@ -1098,6 +1160,55 @@ function AtlasStudio(): React.ReactElement {
     [applySession, sessionId]
   );
 
+  const resetStoryPanelPosition = useCallback(() => {
+    const next = { x: 0, y: 0 };
+    storyPanelDrag.current = null;
+    setStoryPanelOffset(next);
+    writeStoredStoryPanelOffset(sessionId, next);
+  }, [sessionId]);
+
+  const startStoryPanelDrag = useCallback(
+    (event: ReactPointerEvent<HTMLElement>) => {
+      if (event.button !== 0) return;
+      const target = event.target;
+      if (target instanceof HTMLElement && target.closest('button, a, input, textarea, select')) return;
+
+      event.preventDefault();
+      event.currentTarget.setPointerCapture?.(event.pointerId);
+      const start = {
+        originX: storyPanelOffset.x,
+        originY: storyPanelOffset.y,
+        pointerX: event.clientX,
+        pointerY: event.clientY
+      };
+      storyPanelDrag.current = start;
+      let latest = storyPanelOffset;
+
+      const onPointerMove = (moveEvent: PointerEvent) => {
+        const drag = storyPanelDrag.current;
+        if (!drag) return;
+        latest = {
+          x: drag.originX + moveEvent.clientX - drag.pointerX,
+          y: drag.originY + moveEvent.clientY - drag.pointerY
+        };
+        setStoryPanelOffset(latest);
+      };
+
+      const onPointerUp = () => {
+        storyPanelDrag.current = null;
+        writeStoredStoryPanelOffset(sessionId, latest);
+        window.removeEventListener('pointermove', onPointerMove);
+        window.removeEventListener('pointerup', onPointerUp);
+        window.removeEventListener('pointercancel', onPointerUp);
+      };
+
+      window.addEventListener('pointermove', onPointerMove);
+      window.addEventListener('pointerup', onPointerUp);
+      window.addEventListener('pointercancel', onPointerUp);
+    },
+    [sessionId, storyPanelOffset]
+  );
+
   useEffect(() => {
     void loadSession();
     void requestJson<Palette>('/api/palette').then(setPalette).catch((err: unknown) => {
@@ -1111,7 +1222,7 @@ function AtlasStudio(): React.ReactElement {
       presenterModeInitialized.current = true;
       setPresenterMode(true);
     }
-    const nextNodes = toFlowNodes(session, selectedNodeId, activeNodeIds, detailMode);
+    const nextNodes = toFlowNodes(session, selectedNodeId, activeNodeIds, detailMode, presenterMode);
 
     setNodes((current) => {
       const currentById = new Map(current.map((node) => [node.id, node]));
@@ -1134,7 +1245,7 @@ function AtlasStudio(): React.ReactElement {
       });
       return changed ? merged : current;
     });
-  }, [activeNodeIds, detailMode, selectedNodeId, session]);
+  }, [activeNodeIds, detailMode, presenterMode, selectedNodeId, session]);
 
   useEffect(() => {
     return () => {
@@ -1562,7 +1673,7 @@ function AtlasStudio(): React.ReactElement {
             active={presenterMode}
             icon={Presentation}
             onClick={() => setPresenterMode((value) => !value)}
-            title="Toggle presenter mode"
+            title={presenterMode ? 'Exit presenter mode' : 'Enter presenter mode'}
           >
             Present
           </IconButton>
@@ -1668,15 +1779,23 @@ function AtlasStudio(): React.ReactElement {
               <Panel className="canvas-mark" position="bottom-right">
                 <CubeMark />
               </Panel>
-              <Panel className="story-panel-wrap" position="bottom-left">
-                <StoryPanel
-                  onClear={() => void clearStoryFocus()}
-                  onNextStep={() => void advancePresenterStep('next')}
-                  onPreviousStep={() => void advancePresenterStep('previous')}
-                  onSelectStep={(step) => void selectStoryStep(step)}
-                  session={session}
-                />
-              </Panel>
+              {presenterMode ? (
+                <Panel
+                  className="story-panel-wrap"
+                  position="bottom-left"
+                  style={{ transform: `translate(${storyPanelOffset.x}px, ${storyPanelOffset.y}px)` }}
+                >
+                  <StoryPanel
+                    onClear={() => void clearStoryFocus()}
+                    onDragStart={startStoryPanelDrag}
+                    onNextStep={() => void advancePresenterStep('next')}
+                    onPreviousStep={() => void advancePresenterStep('previous')}
+                    onResetPosition={resetStoryPanelPosition}
+                    onSelectStep={(step) => void selectStoryStep(step)}
+                    session={session}
+                  />
+                </Panel>
+              ) : null}
             </ReactFlow>
           </div>
         </ReactFlowProvider>

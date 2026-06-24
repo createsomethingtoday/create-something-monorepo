@@ -34,6 +34,7 @@ import {
   removeNode,
   setStoryFocus,
   updateNode,
+  updateEdge,
   updateNodes
 } from './store.js';
 import { tidyNodeUpdates } from './client/layout.js';
@@ -490,6 +491,22 @@ export async function startStudioServer(options: StudioServerOptions): Promise<h
           response,
           201,
           await addEdge(decodeURIComponent(addEdgeMatch[1] ?? ''), body, cwd)
+        );
+        return;
+      }
+
+      const updateEdgeMatch = url.pathname.match(/^\/api\/sessions\/([^/]+)\/edges\/([^/]+)$/);
+      if (method === 'PATCH' && updateEdgeMatch) {
+        const body = await readJson<Parameters<typeof updateEdge>[2]>(request);
+        sendJson(
+          response,
+          200,
+          await updateEdge(
+            decodeURIComponent(updateEdgeMatch[1] ?? ''),
+            decodeURIComponent(updateEdgeMatch[2] ?? ''),
+            body,
+            cwd
+          )
         );
         return;
       }
