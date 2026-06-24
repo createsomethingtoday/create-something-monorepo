@@ -27,6 +27,8 @@ interface CreateEventRequest {
 	source?: string;
 	intent?: string;
 	lane?: string;
+	campaign?: string;
+	entry_source?: string;
 	atlas_warmup?: string;
 	atlas_session_id?: string;
 	atlas_readiness?: string;
@@ -97,6 +99,8 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 		source = 'book',
 		intent = 'workflow-mapping',
 		lane = 'not_sure',
+		campaign,
+		entry_source,
 		atlas_warmup,
 		atlas_session_id,
 		atlas_readiness,
@@ -207,8 +211,10 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 						metadata: {
 							eventId: event.id,
 							source,
+							entrySource: normalizeOptionalToken(entry_source),
 							intent,
 							lane,
+							campaign: normalizeOptionalToken(campaign),
 							...(hasAtlasMetadata && { atlas: atlasMetadata }),
 							experimentId: experiment_id,
 							tagId: tag_id,
@@ -229,7 +235,7 @@ export const POST: RequestHandler = async ({ request, platform }) => {
 					sourceDetail: `booking:${source}:${intent}:${lane}${
 						atlasMetadata.readiness ? `:${atlasMetadata.readiness}` : ''
 					}`,
-					campaign: tag_id,
+					campaign: normalizeOptionalToken(campaign) ?? tag_id,
 					stage: 'decision',
 					serviceInterest: lane,
 					discoveryCallAt: event.start_at,
