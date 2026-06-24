@@ -32,6 +32,7 @@ Token-gated:
 - `GET /ink/surface-brief`
 - `GET /ink/clock`
 - `GET /ink/device`
+- `GET /ink/operator-routing`
 - `POST /ink/alert`
 - `POST /ink/operator-priority`
 - `POST /ink/source-event`
@@ -48,6 +49,29 @@ Token-gated:
 - `POST /ink/clear`
 
 Tokens may be sent as `Authorization: Bearer ...`, `x-ink-token`, or `x-api-key`.
+
+`GET /ink/operator-routing` is the device-safe routing-agent surface for Even
+G2. It keeps the app as a thin HUD while the Worker ranks the Linear queue,
+folds in the current operator brief, and returns one compact primary action plus
+bounded actions such as `claim`, `prep`, and `open`. `prep` is a read-only
+`POST /ink/linear-action` action that returns a short Linear handoff packet; it
+does not mutate Linear.
+
+## Even G2 agent model
+
+The optimal G2 agent is a routing agent, not a chat agent. The glasses should
+only show interruptible decisions that can be judged at a glance, while the
+Worker performs ranking, compression, and trust-boundary enforcement.
+
+Keep these boundaries:
+
+- The G2 app renders and captures input only.
+- The Worker owns secrets, Linear access, ranking, and bounded action policy.
+- The first screen should answer "what now?" with one primary action.
+- Long reasoning belongs in source links, handoff packets, Codex, or desktop
+  evidence surfaces, not on the glasses.
+- New writes should be explicit, narrow actions. Prefer read-only `prep` before
+  adding another mutation.
 
 ## Secrets
 

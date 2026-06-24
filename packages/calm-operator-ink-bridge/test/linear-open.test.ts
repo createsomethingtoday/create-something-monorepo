@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { claimLinearIssue, fetchLinearOpenIssues } from '../src/linear-open.js';
+import { claimLinearIssue, fetchLinearOpenIssues, prepareLinearIssue } from '../src/linear-open.js';
 
 function linearResponse(nodes: unknown[]): Response {
   return new Response(JSON.stringify({ data: { issues: { nodes } } }), {
@@ -132,4 +132,45 @@ test('claims an open CRE issue as the Linear viewer', async () => {
 
 test('claim rejects non-CRE identifiers', async () => {
   await assert.rejects(() => claimLinearIssue({ apiKey: 'linear-token', identifier: 'WEB-1' }), /Only CRE/);
+});
+
+test('prepares a read-only handoff packet for an open CRE issue', async () => {
+  const result = await prepareLinearIssue({
+    apiKey: 'linear-token',
+    identifier: 'CRE-763',
+    fetch: async (_url, init) => {
+      assert.equal(new Headers(init?.headers).get('authorization'), 'linear-token');
+      return new Response(
+        JSON.stringify({
+          data: {
+            issues: {
+              nodes: [
+                {
+                  identifier: 'CRE-763',
+                  title: 'Build Even G2 operator routing agent endpoint',
+                  url: 'https://linear.app/createsomething/issue/CRE-763',
+                  priority: 2,
+                  updatedAt: '2026-06-22T18:00:00.000Z',
+                  state: { name: 'Todo', type: 'unstarted' },
+                  assignee: null,
+                  team: { key: 'CRE' },
+                  project: { name: 'Even G2' }
+                }
+              ]
+            }
+          }
+        })
+      );
+    }
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.issue.identifier, 'CRE-763');
+  assert.match(result.prep.headline, /CRE-763/);
+  assert.match(result.prep.next_action, /Claim or assign/);
+  assert.match(result.prep.handoff, /Owner: Unassigned/);
+});
+
+test('prep rejects non-CRE identifiers', async () => {
+  await assert.rejects(() => prepareLinearIssue({ apiKey: 'linear-token', identifier: 'WEB-1' }), /Only CRE/);
 });

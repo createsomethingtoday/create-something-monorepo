@@ -93,6 +93,13 @@ export interface ClaimLinearIssueOptions {
   fetch?: typeof fetch;
 }
 
+export interface PrepareLinearIssueOptions {
+  apiKey: string;
+  identifier: string;
+  teamKey?: string;
+  fetch?: typeof fetch;
+}
+
 const LINEAR_API = 'https://api.linear.app/graphql';
 
 export async function fetchLinearOpenIssues(options: FetchLinearOpenIssuesOptions): Promise<LinearOpenQueue> {
@@ -236,6 +243,70 @@ export async function claimLinearIssue(options: ClaimLinearIssueOptions): Promis
     ok: true,
     issue: mapIssueSummary(updated),
     claimed_by: viewer.name || 'Linear viewer'
+  };
+}
+
+export async function prepareLinearIssue(options: PrepareLinearIssueOptions): Promise<{
+  ok: true;
+  issue: LinearIssueSummary;
+  prep: {
+    headline: string;
+    next_action: string;
+    handoff: string;
+    source_url: string;
+  };
+}> {
+  const apiKey = options.apiKey.trim();
+  if (!apiKey) throw new Error('LINEAR_API_KEY is required.');
+  const identifier = options.identifier.trim().toUpperCase();
+  if (!/^CRE-\d+$/.test(identifier)) throw new Error('Only CRE issue identifiers can be prepared from Ink.');
+
+  const team = (options.teamKey?.trim() || 'CRE').toUpperCase();
+  const fetchImpl = options.fetch ?? fetch;
+  const context = await linearGraphql<LinearContextResponse>(
+    fetchImpl,
+    apiKey,
+    `
+      query EvenPrepareIssue($filter: IssueFilter) {
+        issues(first: 5, filter: $filter) {
+          nodes {
+            identifier
+            title
+            url
+            priority
+            updatedAt
+            state { name type }
+            assignee { name }
+            team { key }
+            project { name }
+          }
+        }
+      }
+    `,
+    { filter: { identifier: { eq: identifier } } }
+  );
+
+  const issue = context.data?.issues?.nodes?.find((node) => node.identifier === identifier && node.team?.key === team);
+  if (!issue) throw new Error(`Linear issue not found: ${identifier}`);
+  if (issue.state?.type === 'completed' || issue.state?.type === 'canceled') {
+    throw new Error(`Linear issue is not open: ${identifier}`);
+  }
+
+  const summary = mapIssueSummary(issue);
+  return {
+    ok: true,
+    issue: summary,
+    prep: {
+      headline: `${summary.identifier}: ${summary.title}`,
+      next_action: summary.assignee ? 'Review current owner state and continue the issue.' : 'Claim or assign the issue before implementation.',
+      handoff: [
+        `State: ${summary.state.name}`,
+        `Owner: ${summary.assignee ?? 'Unassigned'}`,
+        summary.project ? `Project: ${summary.project}` : '',
+        `Priority: ${summary.priority || 'none'}`
+      ].filter(Boolean).join('\n'),
+      source_url: summary.url
+    }
   };
 }
 

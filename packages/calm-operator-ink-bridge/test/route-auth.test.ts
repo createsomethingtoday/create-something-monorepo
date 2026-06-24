@@ -6,6 +6,7 @@ import { authRoleForInkRoute } from '../src/route-auth.js';
 test('classifies device-readable routes as device authenticated', () => {
   assert.equal(authRoleForInkRoute('GET', '/ink/brief'), 'device');
   assert.equal(authRoleForInkRoute('GET', '/ink/clock'), 'device');
+  assert.equal(authRoleForInkRoute('GET', '/ink/operator-routing'), 'device');
   assert.equal(authRoleForInkRoute('POST', '/ink/device-heartbeat'), 'device');
 });
 
