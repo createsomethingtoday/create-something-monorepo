@@ -10,6 +10,6 @@
     "deploy:preview": "pnpm exec wrangler pages deploy site --project-name=cato-supply-insights-review --branch=main --commit-dirty=true"
   },
   "devDependencies": {
-    "wrangler": "^4.64.0"
+    "wrangler": "^4.103.0"
   }
 }

@@ -30,7 +30,7 @@
 		"migrate:papers:prod": "MIGRATION_URL=https://createsomething.space/api/migrate/sync-papers tsx scripts/migrate-papers.ts"
 	},
 	"devDependencies": {
-		"@cloudflare/workers-types": "^4.20251128.0",
+		"@cloudflare/workers-types": "^4.20260621.1",
 		"@sveltejs/adapter-auto": "^7.0.0",
 		"@sveltejs/adapter-cloudflare": "^7.2.4",
 		"@sveltejs/kit": "^2.47.1",
@@ -51,7 +51,7 @@
 		"vite": "^7.1.10",
 		"vite-plugin-top-level-await": "^1.6.0",
 		"vite-plugin-wasm": "^3.5.0",
-		"wrangler": "^4.64.0"
+		"wrangler": "^4.103.0"
 	},
 	"dependencies": {
 		"@cloudflare/sandbox": "^0.4.18",
