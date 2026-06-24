@@ -10,7 +10,7 @@
     "description": "Standalone read/write reviewer exception memory MCP for template-review agents and Dify external knowledge retrieval",
     "tags": ["webflow", "review", "airtable", "templates", "knowledge", "cs"],
     "catalog_exposure_mode": "direct",
-    "estimated_tool_count": 5
+    "estimated_tool_count": 7
   },
   "dify_mcp_server": {
     "server_id": "webflow-reviewer-exceptions",
@@ -72,7 +72,7 @@
   "notes": [
     "This is a separate MCP, not part of webflow-app-review-mcp.",
     "Template-review Hub discovery includes this server first; app-review rollout is intentionally deferred.",
-    "Agents can create and update exception records. Records become Dify-retrievable when Include in Dify Retrieval is true, Knowledge Status is Approved or Active, and the record is not expired.",
+    "Agents can create, update, and delete exception records. Records become Dify-retrievable when Include in Dify Retrieval is true, Knowledge Status is Approved or Active, and the record is not expired.",
     "Keep secret values in Infisical only; this artifact stores references, not values."
   ]
 }

@@ -5,6 +5,7 @@ import {
   type DifyKnowledgeRecord,
   type ReviewerException,
   type ReviewerExceptionCreateInput,
+  type ReviewerExceptionDeleteResult,
   type ReviewerExceptionQuery,
   type ReviewerExceptionUpdateInput,
   type ReviewerExceptionWriteInput,
@@ -22,6 +23,11 @@ interface AirtableRecord {
 interface AirtableListResponse {
   records: AirtableRecord[];
   offset?: string;
+}
+
+interface AirtableDeleteResponse {
+  id: string;
+  deleted: boolean;
 }
 
 export interface AirtableClientOptions {
@@ -360,6 +366,10 @@ export class AirtableClient {
     return this.requestJson<AirtableRecord>(`/${encodeURIComponent(this.tableId)}/${encodeURIComponent(recordId)}`, { method: 'PATCH', body: payload }, params);
   }
 
+  private async deleteReviewerExceptionRecord(recordId: string): Promise<AirtableDeleteResponse> {
+    return this.requestJson<AirtableDeleteResponse>(`/${encodeURIComponent(this.tableId)}/${encodeURIComponent(recordId)}`, { method: 'DELETE' });
+  }
+
   async healthCheck(): Promise<{
     ok: boolean;
     baseId: string;
@@ -393,6 +403,14 @@ export class AirtableClient {
       last_reviewed_at: rest.last_reviewed_at ?? (rest.include_in_dify_retrieval ? new Date().toISOString() : undefined),
     });
     return mapReviewerExceptionRecord(await this.updateReviewerExceptionRecord(exceptionId, fields));
+  }
+
+  async deleteReviewerException(exceptionId: string): Promise<ReviewerExceptionDeleteResult> {
+    const result = await this.deleteReviewerExceptionRecord(exceptionId);
+    return {
+      exceptionId: result.id,
+      deleted: result.deleted,
+    };
   }
 
   async listReviewerExceptions(query: ReviewerExceptionQuery = {}): Promise<ReviewerException[]> {

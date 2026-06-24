@@ -153,6 +153,11 @@ export interface ReviewerExceptionUpdateInput extends ReviewerExceptionWriteInpu
   exceptionId: string;
 }
 
+export interface ReviewerExceptionDeleteResult {
+  exceptionId: string;
+  deleted: boolean;
+}
+
 export interface ReviewerExceptionQuery {
   limit?: number;
   knowledgeStatus?: ReviewerExceptionKnowledgeStatus;
@@ -197,6 +202,7 @@ export const REVIEWER_EXCEPTION_FIELD_MAP = {
   writable: {
     create: WRITE_FIELDS,
     update: WRITE_FIELDS,
+    delete: ['Airtable record ID'],
   },
   retrievalGate: {
     includeInDifyRetrieval: true,

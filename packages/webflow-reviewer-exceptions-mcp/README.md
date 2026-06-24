@@ -2,7 +2,7 @@
 
 Standalone read/write MCP for reviewer exception memory.
 
-This service is intentionally separate from `webflow-template-review-mcp` and `webflow-app-review-mcp`. It gives template-review agents a small AI-native surface for creating, updating, publishing, unpublishing, and retrieving reviewer exceptions without changing official review status.
+This service is intentionally separate from `webflow-template-review-mcp` and `webflow-app-review-mcp`. It gives template-review agents a small AI-native surface for creating, updating, deleting, publishing, unpublishing, and retrieving reviewer exceptions without changing official review status.
 
 ## Production
 
@@ -20,9 +20,10 @@ This service is intentionally separate from `webflow-template-review-mcp` and `w
 - `reviewer_exceptions_list`
 - `reviewer_exceptions_create`
 - `reviewer_exceptions_update`
+- `reviewer_exceptions_delete`
 - `reviewer_exceptions_preview_knowledge`
 
-Create and update are both write-capable. To make an exception immediately available to Dify retrieval, set:
+Create, update, and delete are write-capable. Use delete only after listing or searching to confirm the Airtable record ID. To make an exception immediately available to Dify retrieval, set:
 
 ```json
 {

@@ -42,10 +42,11 @@ export function registerResources(server: McpServer, getClient: ClientFactory): 
           'Use reviewer_exceptions_create for new reviewer corrections, exceptions, or temporary policy updates.',
           'Set include_in_dify_retrieval true with Knowledge Status Active or Approved when the exception should be immediately available to Dify external knowledge.',
           'Use reviewer_exceptions_update to revise, publish, unpublish, expire, or promote existing records.',
+          'Use reviewer_exceptions_delete to remove mistakenly-created records after confirming the Airtable record ID.',
           'Use reviewer_exceptions_preview_knowledge to confirm the Dify retrieval payload before relying on it in review guidance.',
         ],
         retrievalGate: REVIEWER_EXCEPTION_FIELD_MAP.retrievalGate,
-        writeTools: ['reviewer_exceptions_create', 'reviewer_exceptions_update'],
+        writeTools: ['reviewer_exceptions_create', 'reviewer_exceptions_update', 'reviewer_exceptions_delete'],
         readTools: ['reviewer_exceptions_list', 'reviewer_exceptions_get_field_map', 'reviewer_exceptions_preview_knowledge'],
       }),
   );
