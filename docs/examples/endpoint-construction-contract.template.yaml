@@ -130,6 +130,29 @@ quality_gates:
   forbidden_tasks:
     - "<task that must be refused or approval-gated>"
 
+transparency:
+  claim_status: "hypothesis" # hypothesis | supported | validated | contested | superseded
+  confidence: "medium" # low | medium | high
+  evidence_grade: "field-signal" # official-docs | implementation-evidence | benchmark | market-signal | community-sentiment | field-signal | anecdotal
+  last_reviewed_at: "<YYYY-MM-DD>"
+  next_review_due: "<YYYY-MM-DD>"
+  primary_claim: "<what this endpoint contract assumes about the workflow or capability boundary>"
+  supports:
+    - "<source, implementation result, user observation, benchmark, or trace supporting this boundary>"
+  counter_signals:
+    - "<risk, limitation, disagreement, or scenario where this endpoint shape may be wrong>"
+  source_review:
+    - title: "<source or evidence title>"
+      url_or_path: "<https://... or repo/path>"
+      source_type: "implementation-evidence" # official-doc | paper | benchmark | implementation-evidence | field-report | community-sentiment | internal-evidence
+      supports: "<which contract assumption it supports>"
+      freshness: "current" # current | watch | stale | replaced
+      reviewed_at: "<YYYY-MM-DD>"
+  update_log:
+    - date: "<YYYY-MM-DD>"
+      change: "<what changed in the boundary, evidence, confidence, or source set>"
+      reason: "<new source, validation result, incident, counter-signal, or scheduled review>"
+
 release_boundary:
   promotion_path: "<dev|preview|staging|production path>"
   required_labels_or_approvals:

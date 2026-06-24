@@ -85,6 +85,7 @@ Read in this order when you need broad repo context:
 
 - [MCP_SCAFFOLD.md](./MCP_SCAFFOLD.md)
 - [examples/endpoint-construction-contract.template.yaml](./examples/endpoint-construction-contract.template.yaml)
+- [examples/living-research-transparency.template.yaml](./examples/living-research-transparency.template.yaml)
 - [COMPOSIO_PATTERNS.md](./COMPOSIO_PATTERNS.md)
 - [guides/HYDRA_DB_GOVERNED_RECALL.md](./guides/HYDRA_DB_GOVERNED_RECALL.md)
 - [guides/MCP_DUI_ORGANIZATION.md](./guides/MCP_DUI_ORGANIZATION.md)
@@ -113,6 +114,8 @@ Read in this order when you need broad repo context:
 - [guides/EXAMPLES.md](./guides/EXAMPLES.md)
 - [guides/COMPONENT_GUIDE.md](./guides/COMPONENT_GUIDE.md)
 - [guides/SKILLS.md](./guides/SKILLS.md)
+- [examples/living-research-transparency.template.yaml](./examples/living-research-transparency.template.yaml)
+- [../packages/io/docs/research-content-transparency.md](../packages/io/docs/research-content-transparency.md)
 - [guides/NOTION_WORKERS_AND_CLI_2026.md](./guides/NOTION_WORKERS_AND_CLI_2026.md)
 - [guides/NOTION_API_COMPATIBILITY_AUDIT_2026.md](./guides/NOTION_API_COMPATIBILITY_AUDIT_2026.md)
 - [guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md](./guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md)
