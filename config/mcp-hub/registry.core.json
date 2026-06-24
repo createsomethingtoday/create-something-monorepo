@@ -774,6 +774,26 @@
       "catalog_exposure_mode": "direct",
       "estimated_tool_count": 0
     },
+    "webflow-reviewer-exceptions-mcp": {
+      "transport": "http",
+      "url": "https://webflow-reviewer-exceptions-mcp.createsomething.workers.dev/mcp",
+      "bearer_token_env_var": "WEBFLOW_REVIEWER_EXCEPTIONS_MCP_API_KEY",
+      "description": "Standalone read/write reviewer exception memory MCP for template-review agents and Dify external knowledge retrieval",
+      "tags": ["webflow", "review", "airtable", "templates", "knowledge", "cs"],
+      "package_path": "packages/webflow-reviewer-exceptions-mcp",
+      "catalog": {
+        "include": true,
+        "name": "Webflow Reviewer Exceptions",
+        "slug": "webflow-reviewer-exceptions",
+        "category": "create-something",
+        "requiresAuth": true,
+        "authType": "bearer",
+        "transports": ["http", "sse"]
+      },
+      "catalog_exposure_mode": "direct",
+      "estimated_tool_count": 5,
+      "setupNotes": "AI-native read/write exception memory for reviewers. MCP tools can create, update, publish, unpublish, and preview reviewer exceptions. Dify external knowledge reads /retrieval with knowledge_id reviewer-exceptions and only returns records where Include in Dify Retrieval is true, Knowledge Status is Approved or Active, and the record is not expired."
+    },
     "youtube-transcript-notion-mcp": {
       "transport": "http",
       "url": "https://youtube-transcript-notion-mcp.createsomething.workers.dev/mcp",
@@ -846,8 +866,8 @@
     "slack": ["slack-create-something", "slack-webflow"],
     "webflow-marketplace-app-review-phase-a": ["webflow-app-review-mcp", "zendesk-mcp"],
     "webflow-marketplace-app-review-phase-b": ["webflow-app-review-mcp", "zendesk-mcp"],
-    "webflow-marketplace-review-phase-a": ["webflow-template-review-mcp"],
-    "webflow-marketplace-review-phase-b": ["webflow-template-review-mcp", "webflow-local"]
+    "webflow-marketplace-review-phase-a": ["webflow-template-review-mcp", "webflow-reviewer-exceptions-mcp"],
+    "webflow-marketplace-review-phase-b": ["webflow-template-review-mcp", "webflow-reviewer-exceptions-mcp", "webflow-local"]
   },
   "defaults": {
     "enabledBundles": ["core", "observability"],

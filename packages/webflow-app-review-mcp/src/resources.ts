@@ -119,53 +119,6 @@ export function registerResources(server: McpServer, getClient: ClientFactory): 
   );
 
   server.resource(
-    'app-review-reviewer-exception-schema',
-    'app-review://reviewer-exception-schema',
-    {
-      description: 'Airtable schema contract for mutable reviewer exceptions and Dify external knowledge promotion.',
-      mimeType: 'application/json',
-    },
-    async (uri: URL) =>
-      asJsonResource(uri, {
-        baseId: APP_REVIEW_FIELD_MAP.reviewerExceptions.baseId,
-        tableId: APP_REVIEW_FIELD_MAP.reviewerExceptions.tableId,
-        fields: APP_REVIEW_FIELD_MAP.reviewerExceptions.fieldNames,
-        retrievalGate: APP_REVIEW_FIELD_MAP.reviewerExceptions.retrievalGate,
-        statusOptions: {
-          knowledgeStatus: APP_REVIEW_FIELD_MAP.statusOptions.reviewerExceptionKnowledgeStatus,
-          scope: APP_REVIEW_FIELD_MAP.statusOptions.reviewerExceptionScope,
-          sourceType: APP_REVIEW_FIELD_MAP.statusOptions.reviewerExceptionSourceType,
-          impact: APP_REVIEW_FIELD_MAP.statusOptions.reviewerExceptionImpact,
-          appliesTo: APP_REVIEW_FIELD_MAP.statusOptions.reviewerExceptionAppliesTo,
-          confidence: APP_REVIEW_FIELD_MAP.statusOptions.reviewerExceptionConfidence,
-          promotionTarget: APP_REVIEW_FIELD_MAP.statusOptions.reviewerExceptionPromotionTarget,
-        },
-        tools: {
-          list: 'app_review_list_reviewer_exceptions',
-          propose: 'app_review_propose_reviewer_exception',
-          previewRetrieval: 'app_review_preview_reviewer_exception_knowledge',
-        },
-      }),
-  );
-
-  server.resource(
-    'app-review-reviewer-exceptions-snapshot',
-    'app-review://reviewer-exceptions-snapshot',
-    {
-      description: 'Current reviewer exceptions snapshot, including draft/proposed/non-retrievable records.',
-      mimeType: 'application/json',
-    },
-    async (uri: URL) => {
-      const exceptions = await getClient().listReviewerExceptions({ limit: 100 });
-      return asJsonResource(uri, {
-        count: exceptions.length,
-        generatedAt: new Date().toISOString(),
-        exceptions,
-      });
-    },
-  );
-
-  server.resource(
     'app-review-queue-snapshot',
     'app-review://queue-snapshot',
     {
@@ -200,8 +153,6 @@ export function registerResources(server: McpServer, getClient: ClientFactory): 
           'Use app_review_decision_support and app_review_feedback_refiner for recommendation drafting only.',
           'Use app_review_list_governance_findings and app_review_get_governance_finding to inspect cross-app policy, docs, platform, and transparency findings.',
           'Use app_review_governance_finding_capture, then app_review_create_governance_finding or app_review_update_governance_finding, to capture Slack/Zendesk/docs findings into the tracking hub.',
-          'Use app_review_propose_reviewer_exception when a reviewer reports that the agent missed a guideline or temporary exception.',
-          'Use app_review_preview_reviewer_exception_knowledge to verify what Dify external knowledge would retrieve after human approval.',
           'Use app_review_save_draft_feedback, app_review_set_review_status, app_review_request_changes, app_review_approve_version, or app_review_reject_version only when the operator has authorized the Airtable write.',
         ],
         notes: {
@@ -214,7 +165,6 @@ export function registerResources(server: McpServer, getClient: ClientFactory): 
             'app_review_reject_version',
             'app_review_create_governance_finding',
             'app_review_update_governance_finding',
-            'app_review_propose_reviewer_exception',
           ],
           blockedWriteSurface: [
             'app_review_update_version_review',

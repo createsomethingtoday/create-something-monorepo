@@ -8,7 +8,7 @@
 > `composio-toolkit-*` server list lives in
 > [`config/mcp-hub/registry.composio.generated.json`](../config/mcp-hub/registry.composio.generated.json).
 
-## Active (core, 46)
+## Active (core, 47)
 
 | Server | Transport | Endpoint | Exposure | Est. Tools | Tags |
 | --- | --- | --- | --- | --- | --- |
@@ -55,6 +55,7 @@
 | `three-tier-framework` | `http` | `https://framework.mcp.createsomething.agency/mcp` | `direct` | `6` | `core`, `framework`, `cs`, `policy_os_only` |
 | `webflow-app-review-mcp` | `http` | `https://webflow-app-review-mcp.createsomething.workers.dev/mcp` | `direct` | `24` | `webflow`, `review`, `airtable`, `apps`, `cs` |
 | `webflow-local` | `http` | `https://webflow-mcp.createsomething.workers.dev/mcp` | `direct` | `10` | `webflow`, `review`, `plagiarism`, `frameworks`, `cs` |
+| `webflow-reviewer-exceptions-mcp` | `http` | `https://webflow-reviewer-exceptions-mcp.createsomething.workers.dev/mcp` | `direct` | `5` | `webflow`, `review`, `airtable`, `templates`, `knowledge`, `cs` |
 | `webflow-template-review-mcp` | `http` | `https://webflow-template-review-mcp.createsomething.workers.dev/mcp` | `direct` | `0` | `webflow`, `review`, `airtable`, `templates`, `cs` |
 | `youtube-transcript-notion-mcp` | `http` | `https://youtube-transcript-notion-mcp.createsomething.workers.dev/mcp` | `direct` | `6` | `youtube`, `transcript`, `notion`, `dify`, `cs` |
 | `zendesk-mcp` | `http` | `https://zendesk-mcp.createsomething.workers.dev/mcp` | `direct` | `10` | `webflow`, `review`, `zendesk`, `support`, `cs` |
@@ -200,5 +201,5 @@ Hand-curated bundles are listed inline. Composio category bundles are listed in 
 | `slack` | `slack-create-something`, `slack-webflow` |
 | `webflow-marketplace-app-review-phase-a` | `webflow-app-review-mcp`, `zendesk-mcp` |
 | `webflow-marketplace-app-review-phase-b` | `webflow-app-review-mcp`, `zendesk-mcp` |
-| `webflow-marketplace-review-phase-a` | `webflow-template-review-mcp` |
-| `webflow-marketplace-review-phase-b` | `webflow-template-review-mcp`, `webflow-local` |
+| `webflow-marketplace-review-phase-a` | `webflow-template-review-mcp`, `webflow-reviewer-exceptions-mcp` |
+| `webflow-marketplace-review-phase-b` | `webflow-template-review-mcp`, `webflow-reviewer-exceptions-mcp`, `webflow-local` |

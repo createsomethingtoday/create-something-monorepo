@@ -2,18 +2,8 @@ import {
   CAPABILITIES_OPTIONS,
   DEFAULT_AIRTABLE_BASE_ID,
   DEFAULT_GOVERNANCE_FINDINGS_TABLE_ID,
-  DEFAULT_REVIEWER_EXCEPTIONS_BASE_ID,
-  DEFAULT_REVIEWER_EXCEPTIONS_TABLE_ID,
   FIELD_IDS,
   GOVERNANCE_FINDING_FIELD_NAMES,
-  REVIEWER_EXCEPTION_FIELD_NAMES,
-  type ReviewerExceptionAppliesTo,
-  type ReviewerExceptionConfidence,
-  type ReviewerExceptionImpact,
-  type ReviewerExceptionKnowledgeStatus,
-  type ReviewerExceptionPromotionTarget,
-  type ReviewerExceptionScope,
-  type ReviewerExceptionSourceType,
   type GovernanceFindingCategory,
   type GovernanceFindingPriority,
   type GovernanceFindingStatus,
@@ -248,69 +238,6 @@ export interface AppReviewGovernanceFinding {
   createdTime?: string;
 }
 
-export interface AppReviewReviewerException {
-  exceptionId: string;
-  title: string;
-  guidance?: string;
-  workflowStatus?: string;
-  knowledgeStatus?: ReviewerExceptionKnowledgeStatus | string;
-  scope?: ReviewerExceptionScope | string;
-  sourceType?: ReviewerExceptionSourceType | string;
-  sourceUrl?: string;
-  sourceRecordId?: string;
-  reviewDecisionImpact?: ReviewerExceptionImpact | string;
-  appliesTo?: string[];
-  effectiveDate?: string;
-  expiresAt?: string;
-  confidence?: ReviewerExceptionConfidence | string;
-  includeInDifyRetrieval?: boolean;
-  canonicalPromotionTarget?: string[];
-  promotionNotes?: string;
-  retrievalText?: string;
-  lastReviewedAt?: string;
-  createdTime?: string;
-}
-
-export interface ReviewerExceptionWriteInput {
-  title?: string;
-  guidance?: string;
-  knowledge_status?: ReviewerExceptionKnowledgeStatus;
-  scope?: ReviewerExceptionScope;
-  source_type?: ReviewerExceptionSourceType;
-  source_url?: string;
-  source_record_id?: string;
-  review_decision_impact?: ReviewerExceptionImpact;
-  applies_to?: ReviewerExceptionAppliesTo[];
-  effective_date?: string;
-  expires_at?: string | null;
-  confidence?: ReviewerExceptionConfidence;
-  include_in_dify_retrieval?: boolean;
-  canonical_promotion_target?: ReviewerExceptionPromotionTarget[];
-  promotion_notes?: string;
-  retrieval_text?: string;
-  last_reviewed_at?: string;
-}
-
-export interface ReviewerExceptionCreateInput extends ReviewerExceptionWriteInput {
-  title: string;
-  guidance: string;
-}
-
-export interface ReviewerExceptionQuery {
-  limit?: number;
-  knowledgeStatus?: ReviewerExceptionKnowledgeStatus;
-  scope?: ReviewerExceptionScope;
-  includeInDifyRetrieval?: boolean;
-  search?: string;
-}
-
-export interface DifyKnowledgeRecord {
-  content: string;
-  score: number;
-  title: string;
-  metadata: Record<string, unknown>;
-}
-
 export interface GovernanceFindingWriteInput {
   title?: string;
   status?: GovernanceFindingStatus;
@@ -366,9 +293,6 @@ export interface AirtableClientOptions {
   governanceApiKey?: string;
   governanceBaseId?: string;
   governanceFindingsTableId?: string;
-  reviewerExceptionsApiKey?: string;
-  reviewerExceptionsBaseId?: string;
-  reviewerExceptionsTableId?: string;
   fetchFn?: FetchFn;
   sleepFn?: SleepFn;
   maxRetries?: number;
@@ -581,32 +505,6 @@ function mapGovernanceFindingRecord(record: AirtableRecord): AppReviewGovernance
   };
 }
 
-function mapReviewerExceptionRecord(record: AirtableRecord): AppReviewReviewerException {
-  const fields = record.fields;
-  return {
-    exceptionId: record.id,
-    title: firstString(fields[REVIEWER_EXCEPTION_FIELD_NAMES.title]) ?? '',
-    guidance: firstString(fields[REVIEWER_EXCEPTION_FIELD_NAMES.guidance]),
-    workflowStatus: firstString(fields[REVIEWER_EXCEPTION_FIELD_NAMES.workflowStatus]),
-    knowledgeStatus: firstString(fields[REVIEWER_EXCEPTION_FIELD_NAMES.knowledgeStatus]),
-    scope: firstString(fields[REVIEWER_EXCEPTION_FIELD_NAMES.scope]),
-    sourceType: firstString(fields[REVIEWER_EXCEPTION_FIELD_NAMES.sourceType]),
-    sourceUrl: firstString(fields[REVIEWER_EXCEPTION_FIELD_NAMES.sourceUrl]),
-    sourceRecordId: firstString(fields[REVIEWER_EXCEPTION_FIELD_NAMES.sourceRecordId]),
-    reviewDecisionImpact: firstString(fields[REVIEWER_EXCEPTION_FIELD_NAMES.reviewDecisionImpact]),
-    appliesTo: toStringArray(fields[REVIEWER_EXCEPTION_FIELD_NAMES.appliesTo]),
-    effectiveDate: firstString(fields[REVIEWER_EXCEPTION_FIELD_NAMES.effectiveDate]),
-    expiresAt: firstString(fields[REVIEWER_EXCEPTION_FIELD_NAMES.expiresAt]),
-    confidence: firstString(fields[REVIEWER_EXCEPTION_FIELD_NAMES.confidence]),
-    includeInDifyRetrieval: toBooleanValue(fields[REVIEWER_EXCEPTION_FIELD_NAMES.includeInDifyRetrieval]),
-    canonicalPromotionTarget: toStringArray(fields[REVIEWER_EXCEPTION_FIELD_NAMES.canonicalPromotionTarget]),
-    promotionNotes: firstString(fields[REVIEWER_EXCEPTION_FIELD_NAMES.promotionNotes]),
-    retrievalText: firstString(fields[REVIEWER_EXCEPTION_FIELD_NAMES.retrievalText]),
-    lastReviewedAt: firstString(fields[REVIEWER_EXCEPTION_FIELD_NAMES.lastReviewedAt]),
-    createdTime: record.createdTime,
-  };
-}
-
 function normalizeString(value: string | undefined): string | undefined {
   const trimmed = value?.trim();
   return trimmed ? trimmed : undefined;
@@ -616,52 +514,6 @@ function normalizeLinkedUrls(values: string[] | undefined): string | undefined {
   if (!values) return undefined;
   const urls = [...new Set(values.map((value) => value.trim()).filter(Boolean))];
   return urls.length > 0 ? urls.join('\n') : undefined;
-}
-
-function normalizeStringArray(values: string[] | undefined): string[] | undefined {
-  if (!values) return undefined;
-  const normalized = [...new Set(values.map((value) => value.trim()).filter(Boolean))];
-  return normalized.length > 0 ? normalized : undefined;
-}
-
-function buildReviewerExceptionFields(input: ReviewerExceptionWriteInput): Record<string, unknown> {
-  const fields: Record<string, unknown> = {};
-
-  function setString(fieldName: string, value: string | undefined) {
-    const normalized = normalizeString(value);
-    if (normalized !== undefined) fields[fieldName] = normalized;
-  }
-
-  setString(REVIEWER_EXCEPTION_FIELD_NAMES.title, input.title);
-  setString(REVIEWER_EXCEPTION_FIELD_NAMES.guidance, input.guidance);
-  setString(REVIEWER_EXCEPTION_FIELD_NAMES.knowledgeStatus, input.knowledge_status);
-  setString(REVIEWER_EXCEPTION_FIELD_NAMES.scope, input.scope);
-  setString(REVIEWER_EXCEPTION_FIELD_NAMES.sourceType, input.source_type);
-  setString(REVIEWER_EXCEPTION_FIELD_NAMES.sourceUrl, input.source_url);
-  setString(REVIEWER_EXCEPTION_FIELD_NAMES.sourceRecordId, input.source_record_id);
-  setString(REVIEWER_EXCEPTION_FIELD_NAMES.reviewDecisionImpact, input.review_decision_impact);
-  setString(REVIEWER_EXCEPTION_FIELD_NAMES.effectiveDate, input.effective_date);
-  setString(REVIEWER_EXCEPTION_FIELD_NAMES.confidence, input.confidence);
-  setString(REVIEWER_EXCEPTION_FIELD_NAMES.promotionNotes, input.promotion_notes);
-  setString(REVIEWER_EXCEPTION_FIELD_NAMES.retrievalText, input.retrieval_text);
-  setString(REVIEWER_EXCEPTION_FIELD_NAMES.lastReviewedAt, input.last_reviewed_at);
-
-  if (input.expires_at !== undefined) {
-    fields[REVIEWER_EXCEPTION_FIELD_NAMES.expiresAt] = input.expires_at ?? null;
-  }
-  if (input.include_in_dify_retrieval !== undefined) {
-    fields[REVIEWER_EXCEPTION_FIELD_NAMES.includeInDifyRetrieval] = input.include_in_dify_retrieval;
-  }
-
-  const appliesTo = normalizeStringArray(input.applies_to);
-  if (appliesTo !== undefined) fields[REVIEWER_EXCEPTION_FIELD_NAMES.appliesTo] = appliesTo;
-
-  const promotionTarget = normalizeStringArray(input.canonical_promotion_target);
-  if (promotionTarget !== undefined) {
-    fields[REVIEWER_EXCEPTION_FIELD_NAMES.canonicalPromotionTarget] = promotionTarget;
-  }
-
-  return fields;
 }
 
 function buildGovernanceFindingFields(input: GovernanceFindingWriteInput): Record<string, unknown> {
@@ -821,111 +673,12 @@ function buildGovernanceFindingFilter(query: GovernanceFindingQuery): string | u
   return buildAndFormula(clauses);
 }
 
-function buildReviewerExceptionFilter(query: ReviewerExceptionQuery): string | undefined {
-  const clauses: string[] = [];
-  const fields = REVIEWER_EXCEPTION_FIELD_NAMES;
-
-  if (query.knowledgeStatus) clauses.push(`{${fields.knowledgeStatus}} = '${escapeFormulaValue(query.knowledgeStatus)}'`);
-  if (query.scope) clauses.push(`{${fields.scope}} = '${escapeFormulaValue(query.scope)}'`);
-  if (query.includeInDifyRetrieval !== undefined) {
-    clauses.push(query.includeInDifyRetrieval ? `{${fields.includeInDifyRetrieval}} = TRUE()` : `NOT({${fields.includeInDifyRetrieval}})`);
-  }
-
-  const search = normalizeString(query.search);
-  if (search) {
-    const haystack = `{${fields.title}} & ' ' & {${fields.guidance}} & ' ' & {${fields.retrievalText}} & ' ' & {${fields.sourceRecordId}}`;
-    clauses.push(`SEARCH('${escapeFormulaValue(search)}', ${haystack})`);
-  }
-
-  return buildAndFormula(clauses);
-}
-
-function tokenizeForKnowledge(value: string): string[] {
-  return value
-    .toLowerCase()
-    .split(/[^a-z0-9]+/)
-    .map((token) => token.trim())
-    .filter((token) => token.length >= 3);
-}
-
-function scoreReviewerException(exception: AppReviewReviewerException, query: string): number {
-  const queryTokens = new Set(tokenizeForKnowledge(query));
-  if (queryTokens.size === 0) return 1;
-
-  const searchable = [
-    exception.title,
-    exception.guidance,
-    exception.retrievalText,
-    exception.scope,
-    exception.reviewDecisionImpact,
-    ...(exception.appliesTo ?? []),
-  ]
-    .filter(Boolean)
-    .join(' ');
-  const recordTokens = new Set(tokenizeForKnowledge(searchable));
-  let matches = 0;
-  for (const token of queryTokens) {
-    if (recordTokens.has(token)) matches += 1;
-  }
-
-  return Math.max(0.01, Math.min(1, matches / queryTokens.size));
-}
-
-function isReviewerExceptionRetrievable(exception: AppReviewReviewerException, now = new Date()): boolean {
-  if (!exception.includeInDifyRetrieval) return false;
-  if (exception.knowledgeStatus !== 'Approved' && exception.knowledgeStatus !== 'Active') return false;
-  if (!exception.expiresAt) return true;
-
-  const expiresAt = Date.parse(exception.expiresAt);
-  if (!Number.isFinite(expiresAt)) return false;
-  const endOfExpiryDay = new Date(expiresAt);
-  endOfExpiryDay.setUTCHours(23, 59, 59, 999);
-  return endOfExpiryDay.getTime() >= now.getTime();
-}
-
-function reviewerExceptionContent(exception: AppReviewReviewerException): string {
-  const explicit = normalizeString(exception.retrievalText);
-  if (explicit) return explicit;
-
-  const lines = [
-    `Reviewer exception: ${exception.title}`,
-    exception.scope ? `Scope: ${exception.scope}` : undefined,
-    exception.reviewDecisionImpact ? `Review impact: ${exception.reviewDecisionImpact}` : undefined,
-    exception.guidance ? `Guidance: ${exception.guidance}` : undefined,
-    exception.sourceUrl ? `Source: ${exception.sourceUrl}` : undefined,
-  ].filter((line): line is string => Boolean(line));
-
-  return lines.join('\n');
-}
-
-function reviewerExceptionMetadata(exception: AppReviewReviewerException): Record<string, unknown> {
-  return {
-    airtable_record_id: exception.exceptionId,
-    source: 'airtable_reviewer_exceptions',
-    knowledge_status: exception.knowledgeStatus ?? null,
-    scope: exception.scope ?? null,
-    source_type: exception.sourceType ?? null,
-    source_url: exception.sourceUrl ?? null,
-    source_record_id: exception.sourceRecordId ?? null,
-    review_decision_impact: exception.reviewDecisionImpact ?? null,
-    applies_to: exception.appliesTo ?? [],
-    effective_date: exception.effectiveDate ?? null,
-    expires_at: exception.expiresAt ?? null,
-    confidence: exception.confidence ?? null,
-    canonical_promotion_target: exception.canonicalPromotionTarget ?? [],
-    last_reviewed_at: exception.lastReviewedAt ?? null,
-  };
-}
-
 export class AirtableClient {
   private readonly apiKey: string;
   private readonly governanceApiKey: string;
-  private readonly reviewerExceptionsApiKey: string;
   private readonly baseId: string;
   private readonly governanceBaseId: string;
   private readonly governanceFindingsTableId: string;
-  private readonly reviewerExceptionsBaseId: string;
-  private readonly reviewerExceptionsTableId: string;
   private readonly fetchFn: FetchFn;
   private readonly sleepFn: SleepFn;
   private readonly maxRetries: number;
@@ -933,12 +686,9 @@ export class AirtableClient {
   constructor(options: AirtableClientOptions) {
     this.apiKey = options.apiKey;
     this.governanceApiKey = options.governanceApiKey ?? options.apiKey;
-    this.reviewerExceptionsApiKey = options.reviewerExceptionsApiKey ?? options.governanceApiKey ?? options.apiKey;
     this.baseId = options.baseId ?? DEFAULT_AIRTABLE_BASE_ID;
     this.governanceBaseId = options.governanceBaseId ?? this.baseId;
     this.governanceFindingsTableId = options.governanceFindingsTableId ?? DEFAULT_GOVERNANCE_FINDINGS_TABLE_ID;
-    this.reviewerExceptionsBaseId = options.reviewerExceptionsBaseId ?? DEFAULT_REVIEWER_EXCEPTIONS_BASE_ID;
-    this.reviewerExceptionsTableId = options.reviewerExceptionsTableId ?? DEFAULT_REVIEWER_EXCEPTIONS_TABLE_ID;
     this.fetchFn = options.fetchFn ?? defaultFetch;
     this.sleepFn = options.sleepFn ?? defaultSleep;
     this.maxRetries = options.maxRetries ?? 3;
@@ -1181,66 +931,12 @@ export class AirtableClient {
     return data.records[0];
   }
 
-  private async listReviewerExceptionRecords(query: ReviewerExceptionQuery): Promise<AirtableRecord[]> {
-    const all: AirtableRecord[] = [];
-    let offset: string | undefined;
-
-    while (true) {
-      const params = new URLSearchParams();
-      params.set('pageSize', '100');
-      params.set('sort[0][field]', REVIEWER_EXCEPTION_FIELD_NAMES.title);
-      params.set('sort[0][direction]', 'asc');
-      for (const fieldName of Object.values(REVIEWER_EXCEPTION_FIELD_NAMES)) {
-        params.append('fields[]', fieldName);
-      }
-      const filterByFormula = buildReviewerExceptionFilter(query);
-      if (filterByFormula) params.set('filterByFormula', filterByFormula);
-      if (offset) params.set('offset', offset);
-
-      const data = await this.requestJson<AirtableListResponse>(
-        `/${encodeURIComponent(this.reviewerExceptionsTableId)}`,
-        { method: 'GET' },
-        params,
-        this.reviewerExceptionsBaseId,
-        this.reviewerExceptionsApiKey,
-      );
-
-      all.push(...data.records);
-      if (query.limit && all.length >= query.limit) {
-        return all.slice(0, query.limit);
-      }
-
-      if (!data.offset) return all;
-      offset = data.offset;
-    }
-  }
-
-  private async createReviewerExceptionRecord(fields: Record<string, unknown>): Promise<AirtableRecord> {
-    const params = new URLSearchParams();
-    params.set('typecast', 'true');
-    const payload = JSON.stringify({ records: [{ fields }] });
-    const data = await this.requestJson<AirtableListResponse>(
-      `/${encodeURIComponent(this.reviewerExceptionsTableId)}`,
-      { method: 'POST', body: payload },
-      params,
-      this.reviewerExceptionsBaseId,
-      this.reviewerExceptionsApiKey,
-    );
-
-    if (!data.records[0]) {
-      throw new AirtableClientError('AIRTABLE_EMPTY_CREATE', 'Airtable create returned no reviewer exception.');
-    }
-    return data.records[0];
-  }
-
   async healthCheck(): Promise<{
     ok: boolean;
     baseId: string;
     scopedTables: typeof TABLE_IDS;
     governanceBaseId: string;
     governanceFindingsTable: string;
-    reviewerExceptionsBaseId: string;
-    reviewerExceptionsTable: string;
     sampleAssetsRead: number;
   }> {
     const records = await this.listRecords({
@@ -1254,8 +950,6 @@ export class AirtableClient {
       scopedTables: TABLE_IDS,
       governanceBaseId: this.governanceBaseId,
       governanceFindingsTable: this.governanceFindingsTableId,
-      reviewerExceptionsBaseId: this.reviewerExceptionsBaseId,
-      reviewerExceptionsTable: this.reviewerExceptionsTableId,
       sampleAssetsRead: records.length,
     };
   }
@@ -1310,63 +1004,6 @@ export class AirtableClient {
     }
 
     return mapGovernanceFindingRecord(await this.updateGovernanceFindingRecord(findingId, fields));
-  }
-
-  async createReviewerException(input: ReviewerExceptionCreateInput): Promise<AppReviewReviewerException> {
-    const fields = buildReviewerExceptionFields({
-      ...input,
-      knowledge_status: input.knowledge_status ?? 'Proposed',
-      confidence: input.confidence ?? 'Medium',
-      include_in_dify_retrieval: false,
-    });
-
-    if (!fields[REVIEWER_EXCEPTION_FIELD_NAMES.title]) {
-      throw new AirtableClientError('INVALID_REVIEWER_EXCEPTION', 'Reviewer exception title is required.', 400);
-    }
-    if (!fields[REVIEWER_EXCEPTION_FIELD_NAMES.guidance]) {
-      throw new AirtableClientError('INVALID_REVIEWER_EXCEPTION', 'Reviewer exception guidance is required.', 400);
-    }
-    if (fields[REVIEWER_EXCEPTION_FIELD_NAMES.knowledgeStatus] === 'Approved' || fields[REVIEWER_EXCEPTION_FIELD_NAMES.knowledgeStatus] === 'Active') {
-      throw new AirtableClientError(
-        'REVIEWER_EXCEPTION_APPROVAL_REQUIRES_HUMAN',
-        'MCP-created reviewer exceptions must start as Draft or Proposed. Approve in Airtable after human review.',
-        400,
-      );
-    }
-
-    return mapReviewerExceptionRecord(await this.createReviewerExceptionRecord(fields));
-  }
-
-  async listReviewerExceptions(query: ReviewerExceptionQuery = {}): Promise<AppReviewReviewerException[]> {
-    const limit = query.limit ?? 100;
-    const records = await this.listReviewerExceptionRecords({ ...query, limit });
-    return records.map((record) => mapReviewerExceptionRecord(record));
-  }
-
-  async retrieveReviewerExceptionKnowledge(args: {
-    query: string;
-    topK?: number;
-    scoreThreshold?: number;
-  }): Promise<DifyKnowledgeRecord[]> {
-    const topK = Math.min(Math.max(args.topK ?? 3, 1), 20);
-    const scoreThreshold = args.scoreThreshold ?? 0;
-    const records = await this.listReviewerExceptionRecords({
-      limit: 100,
-      includeInDifyRetrieval: true,
-    });
-
-    return records
-      .map((record) => mapReviewerExceptionRecord(record))
-      .filter((exception) => isReviewerExceptionRetrievable(exception))
-      .map((exception) => ({
-        content: reviewerExceptionContent(exception),
-        score: scoreReviewerException(exception, args.query),
-        title: exception.title,
-        metadata: reviewerExceptionMetadata(exception),
-      }))
-      .filter((record) => record.score >= scoreThreshold)
-      .sort((left, right) => right.score - left.score)
-      .slice(0, topK);
   }
 
   async listAssetQueue(limit?: number): Promise<AppReviewQueueItem[]> {
