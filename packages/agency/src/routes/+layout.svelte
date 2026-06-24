@@ -236,17 +236,17 @@
       id: 'nav-dify-ship-mcp',
       label: 'Ship Dify With MCP',
       description:
-        'Practical build path for shipping Dify apps with MCP tools, Policy OS contracts, eval gates, and proof packets',
+        'Field guide for shipping one Dify app with scoped MCP tools, approvals, eval gates, and proof',
       href: '/dify/ship-dify-app-with-mcp-tools',
       icon: 'DS',
       keywords: [
         'dify',
-        'mcp',
-        'shipping guide',
-        'agent workflow',
+        'mcp tools',
+        'ship dify app',
+        'implementation guide',
         'policy os',
-        'eval gates',
-        'proof packet'
+        'agent governance',
+        'approval gates'
       ]
     },
     {

@@ -82,7 +82,7 @@
       icon: 'settings',
       title: 'Ship A Dify App With MCP Tools',
       detail: 'A practical shipping checklist for Dify plus MCP.',
-      href: '/book'
+      href: '/dify/ship-dify-app-with-mcp-tools'
     },
     {
       eyebrow: 'Comparison',
@@ -275,10 +275,8 @@
     <Button href={agencyCoreMessaging.workflowMappingSessionHref}>
       {agencyCoreMessaging.bookMappingSessionLabel}
     </Button>
-    <Button href="/dify/ship-dify-app-with-mcp-tools" variant="secondary">
-      Read Shipping Guide
-    </Button>
     <Button href="/dify/agent-eval-gates" variant="secondary">Read Eval Gates</Button>
+    <Button href="/dify/ship-dify-app-with-mcp-tools" variant="secondary">Read Shipping Guide</Button>
     <Button href="/dify/n8n-vs-dify" variant="secondary">Read Dify vs n8n</Button>
   {/snippet}
 </ClearCtaBand>
