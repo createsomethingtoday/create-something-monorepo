@@ -87,6 +87,31 @@ describe('AirtableClient reviewer exceptions', () => {
     expect(exception.includeInDifyRetrieval).toBe(false);
   });
 
+  it('deletes reviewer exception records through DELETE', async () => {
+    const fetchFn = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      expect(String(input)).toContain('/tblExceptions/recException');
+      expect(init?.method).toBe('DELETE');
+      return jsonResponse({
+        id: 'recException',
+        deleted: true,
+      });
+    });
+
+    const client = new AirtableClient({
+      apiKey: 'token',
+      baseId: 'appExceptions',
+      tableId: 'tblExceptions',
+      fetchFn,
+    });
+
+    const deletion = await client.deleteReviewerException('recException');
+
+    expect(deletion).toEqual({
+      exceptionId: 'recException',
+      deleted: true,
+    });
+  });
+
   it('retrieves only approved or active reviewer exception knowledge records', async () => {
     const fetchFn = vi.fn(async () =>
       jsonResponse({

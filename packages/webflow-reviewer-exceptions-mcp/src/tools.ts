@@ -104,6 +104,11 @@ const reviewerExceptionUpdateSchema = {
   ...reviewerExceptionWriteSchema,
 };
 
+const reviewerExceptionDeleteSchema = {
+  exception_id: z.string().min(1).describe('Airtable record ID for the reviewer exception to delete. Use list/search first when uncertain.'),
+  reason: z.string().min(3).optional().describe('Optional human-readable reason for the deletion, used only in the tool response/audit transcript.'),
+};
+
 const previewKnowledgeSchema = {
   query: z.string().min(1).describe('Dify-style retrieval query.'),
   top_k: z.number().int().min(1).max(20).optional().describe('Maximum records to return. Defaults to 3.'),
@@ -187,6 +192,24 @@ export function registerTools(server: McpServer, getClient: ClientFactory): void
             exception.includeInDifyRetrieval && (exception.knowledgeStatus === 'Approved' || exception.knowledgeStatus === 'Active')
               ? 'retrievable'
               : 'stored_not_retrievable',
+        });
+      } catch (error) {
+        return asError(error);
+      }
+    },
+  );
+
+  server.tool(
+    'reviewer_exceptions_delete',
+    'Delete a reviewer exception by Airtable record ID. Use this to revert mistakenly-created exception records after listing or searching to confirm the target.',
+    reviewerExceptionDeleteSchema,
+    async ({ exception_id, reason }) => {
+      try {
+        const result = await getClient().deleteReviewerException(exception_id);
+        return asSuccess({
+          deletion: result,
+          reason,
+          retrieval_state: 'deleted_not_retrievable',
         });
       } catch (error) {
         return asError(error);

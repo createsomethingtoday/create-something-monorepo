@@ -791,8 +791,8 @@
         "transports": ["http", "sse"]
       },
       "catalog_exposure_mode": "direct",
-      "estimated_tool_count": 5,
-      "setupNotes": "AI-native read/write exception memory for reviewers. MCP tools can create, update, publish, unpublish, and preview reviewer exceptions. Dify external knowledge reads /retrieval with knowledge_id reviewer-exceptions and only returns records where Include in Dify Retrieval is true, Knowledge Status is Approved or Active, and the record is not expired."
+      "estimated_tool_count": 7,
+      "setupNotes": "AI-native read/write exception memory for reviewers. MCP tools can create, update, delete, publish, unpublish, and preview reviewer exceptions. Dify external knowledge reads /retrieval with knowledge_id reviewer-exceptions and only returns records where Include in Dify Retrieval is true, Knowledge Status is Approved or Active, and the record is not expired."
     },
     "youtube-transcript-notion-mcp": {
       "transport": "http",
