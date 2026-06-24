@@ -246,6 +246,12 @@ const PACKAGE_COVERAGE = {
   },
   'packages/webflow-template-review-mcp/worker': {
     registry: ['webflow-template-review-mcp']
+  },
+  'packages/webflow-reviewer-exceptions-mcp': {
+    registry: ['webflow-reviewer-exceptions-mcp']
+  },
+  'packages/webflow-reviewer-exceptions-mcp/worker': {
+    registry: ['webflow-reviewer-exceptions-mcp']
   }
 };
 

@@ -11,13 +11,6 @@ import {
   GOVERNANCE_FINDING_STATUS_OPTIONS,
   MARKETPLACE_STATUS_OPTIONS,
   REJECTION_REASON_OPTIONS,
-  REVIEWER_EXCEPTION_APPLIES_TO_OPTIONS,
-  REVIEWER_EXCEPTION_CONFIDENCE_OPTIONS,
-  REVIEWER_EXCEPTION_IMPACT_OPTIONS,
-  REVIEWER_EXCEPTION_KNOWLEDGE_STATUS_OPTIONS,
-  REVIEWER_EXCEPTION_PROMOTION_TARGET_OPTIONS,
-  REVIEWER_EXCEPTION_SCOPE_OPTIONS,
-  REVIEWER_EXCEPTION_SOURCE_TYPE_OPTIONS,
   REVIEW_STATUS_OPTIONS,
   REVIEW_TYPE_OPTIONS,
   VISIBILITY_OPTIONS,
@@ -186,32 +179,6 @@ const governanceFindingUpdateSchema = {
   reporter: z.string().optional(),
 };
 
-const reviewerExceptionQuerySchema = {
-  limit: z.number().int().min(1).max(500).optional(),
-  knowledge_status: z.enum(REVIEWER_EXCEPTION_KNOWLEDGE_STATUS_OPTIONS).optional(),
-  scope: z.enum(REVIEWER_EXCEPTION_SCOPE_OPTIONS).optional(),
-  include_in_dify_retrieval: z.boolean().optional(),
-  search: z.string().min(1).optional(),
-};
-
-const reviewerExceptionCreateSchema = {
-  title: z.string().min(1).max(160),
-  guidance: z.string().min(1),
-  knowledge_status: z.enum(['Draft', 'Proposed']).optional(),
-  scope: z.enum(REVIEWER_EXCEPTION_SCOPE_OPTIONS).optional(),
-  source_type: z.enum(REVIEWER_EXCEPTION_SOURCE_TYPE_OPTIONS).optional(),
-  source_url: z.string().url().optional(),
-  source_record_id: z.string().optional(),
-  review_decision_impact: z.enum(REVIEWER_EXCEPTION_IMPACT_OPTIONS).optional(),
-  applies_to: z.array(z.enum(REVIEWER_EXCEPTION_APPLIES_TO_OPTIONS)).optional(),
-  effective_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-  expires_at: z.union([z.string().regex(/^\d{4}-\d{2}-\d{2}$/), z.null()]).optional(),
-  confidence: z.enum(REVIEWER_EXCEPTION_CONFIDENCE_OPTIONS).optional(),
-  canonical_promotion_target: z.array(z.enum(REVIEWER_EXCEPTION_PROMOTION_TARGET_OPTIONS)).optional(),
-  promotion_notes: z.string().optional(),
-  retrieval_text: z.string().optional(),
-};
-
 async function listGovernanceFindings(
   client: AirtableClient,
   params: {
@@ -232,26 +199,6 @@ async function listGovernanceFindings(
     search: params.search,
   });
   return { count: findings.length, findings };
-}
-
-async function listReviewerExceptions(
-  client: AirtableClient,
-  params: {
-    limit?: number;
-    knowledge_status?: (typeof REVIEWER_EXCEPTION_KNOWLEDGE_STATUS_OPTIONS)[number];
-    scope?: (typeof REVIEWER_EXCEPTION_SCOPE_OPTIONS)[number];
-    include_in_dify_retrieval?: boolean;
-    search?: string;
-  },
-) {
-  const exceptions = await client.listReviewerExceptions({
-    limit: params.limit ?? 100,
-    knowledgeStatus: params.knowledge_status,
-    scope: params.scope,
-    includeInDifyRetrieval: params.include_in_dify_retrieval,
-    search: params.search,
-  });
-  return { count: exceptions.length, exceptions };
 }
 
 async function getGovernanceFinding(client: AirtableClient, findingId: string) {
@@ -413,8 +360,6 @@ export function registerTools(server: McpServer, getClient: ClientFactory, _getR
           ok: health.ok,
           governance_base_id: health.governanceBaseId,
           governance_findings_table: health.governanceFindingsTable,
-          reviewer_exceptions_base_id: health.reviewerExceptionsBaseId,
-          reviewer_exceptions_table: health.reviewerExceptionsTable,
           app_review_base_id: health.baseId,
         });
       } catch (error) {
@@ -551,64 +496,6 @@ export function registerTools(server: McpServer, getClient: ClientFactory, _getR
       try {
         const finding = await getClient().updateGovernanceFinding(finding_id, params);
         return asSuccess({ finding });
-      } catch (error) {
-        return asError(error);
-      }
-    },
-  );
-
-  server.tool(
-    'app_review_list_reviewer_exceptions',
-    'List reviewer exception/update records that may later feed Dify external knowledge.',
-    reviewerExceptionQuerySchema,
-    async ({ limit, knowledge_status, scope, include_in_dify_retrieval, search }) => {
-      try {
-        return asSuccess(await listReviewerExceptions(getClient(), {
-          limit,
-          knowledge_status,
-          scope,
-          include_in_dify_retrieval,
-          search,
-        }));
-      } catch (error) {
-        return asError(error);
-      }
-    },
-  );
-
-  server.tool(
-    'app_review_propose_reviewer_exception',
-    'Create a Draft/Proposed reviewer exception from a missed guideline, Slack/Zendesk thread, or reviewer note. This never approves retrieval; a human must approve in Airtable.',
-    reviewerExceptionCreateSchema,
-    async (params) => {
-      try {
-        const exception = await getClient().createReviewerException(params);
-        return asSuccess({
-          exception,
-          retrieval_note: 'Created as non-retrievable. Set Knowledge Status to Approved/Active and Include in Dify Retrieval in Airtable after human review.',
-        });
-      } catch (error) {
-        return asError(error);
-      }
-    },
-  );
-
-  server.tool(
-    'app_review_preview_reviewer_exception_knowledge',
-    'Preview approved reviewer-exception chunks that the Dify External Knowledge API would return for a query.',
-    {
-      query: z.string().min(1),
-      top_k: z.number().int().min(1).max(20).optional(),
-      score_threshold: z.number().min(0).max(1).optional(),
-    },
-    async ({ query, top_k, score_threshold }) => {
-      try {
-        const records = await getClient().retrieveReviewerExceptionKnowledge({
-          query,
-          topK: top_k,
-          scoreThreshold: score_threshold,
-        });
-        return asSuccess({ count: records.length, records });
       } catch (error) {
         return asError(error);
       }

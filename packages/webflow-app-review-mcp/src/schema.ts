@@ -1,6 +1,4 @@
 export const DEFAULT_AIRTABLE_BASE_ID = 'appMoIgXMTTTNIc3p';
-export const DEFAULT_REVIEWER_EXCEPTIONS_BASE_ID = 'appXfYXnivsUT1kLg';
-export const DEFAULT_REVIEWER_EXCEPTIONS_TABLE_ID = 'tblqkbW0SptshgPiw';
 
 export const TABLE_IDS = {
   assets: 'tblRwzpWoLgE9MrUm',
@@ -176,94 +174,6 @@ export const GOVERNANCE_FINDING_FIELD_NAMES = {
   createdByAgent: 'Created By Agent',
 } as const;
 
-export const REVIEWER_EXCEPTION_FIELD_NAMES = {
-  title: 'Title',
-  guidance: 'Guidance',
-  reviewerOwner: 'Reviewer / Owner',
-  workflowStatus: 'Workflow Status',
-  evidenceAttachments: 'Evidence Attachments',
-  knowledgeStatus: 'Knowledge Status',
-  scope: 'Scope',
-  sourceType: 'Source Type',
-  sourceUrl: 'Source URL',
-  sourceRecordId: 'Source Record ID',
-  reviewDecisionImpact: 'Review Decision Impact',
-  appliesTo: 'Applies To',
-  effectiveDate: 'Effective Date',
-  expiresAt: 'Expires At',
-  confidence: 'Confidence',
-  includeInDifyRetrieval: 'Include in Dify Retrieval',
-  canonicalPromotionTarget: 'Canonical Promotion Target',
-  promotionNotes: 'Promotion Notes',
-  retrievalText: 'Retrieval Text',
-  lastReviewedAt: 'Last Reviewed At',
-} as const;
-
-export const REVIEWER_EXCEPTION_KNOWLEDGE_STATUS_OPTIONS = [
-  'Draft',
-  'Proposed',
-  'Approved',
-  'Active',
-  'Promoted',
-  'Expired',
-  'Rejected',
-] as const;
-
-export const REVIEWER_EXCEPTION_SCOPE_OPTIONS = [
-  'App Review',
-  'Template Review',
-  'Submission Guidelines',
-  'Grading Rubric',
-  'Creator Support',
-  'Zendesk / Slack Reply',
-  'General Marketplace',
-] as const;
-
-export const REVIEWER_EXCEPTION_SOURCE_TYPE_OPTIONS = [
-  'Reviewer Note',
-  'Slack Thread',
-  'Zendesk Ticket',
-  'Airtable Record',
-  'Dify Output',
-  'Google Doc',
-  'Policy Doc',
-  'Meeting',
-] as const;
-
-export const REVIEWER_EXCEPTION_IMPACT_OPTIONS = [
-  'Clarifies existing rule',
-  'Temporary exception',
-  'Blocks approval',
-  'Allows approval with caveat',
-  'Requires escalation',
-  'No direct decision impact',
-] as const;
-
-export const REVIEWER_EXCEPTION_APPLIES_TO_OPTIONS = [
-  'Template',
-  'App',
-  'Extension',
-  'Bundle',
-  'Listing copy',
-  'Pricing',
-  'Privacy / Security',
-  'Install / OAuth',
-  'Creator communication',
-  'Internal operations',
-] as const;
-
-export const REVIEWER_EXCEPTION_CONFIDENCE_OPTIONS = ['Low', 'Medium', 'High', 'Policy-confirmed'] as const;
-
-export const REVIEWER_EXCEPTION_PROMOTION_TARGET_OPTIONS = [
-  'Submission Guidelines',
-  'Grading Rubric',
-  'Reviewer Prompt',
-  'MCP Policy Contract',
-  'Eval / Golden Task',
-  'Creator Comms Template',
-  'Runbook',
-] as const;
-
 export const GOVERNANCE_FINDING_WRITABLE_FIELDS = {
   title: GOVERNANCE_FINDING_FIELD_NAMES.title,
   status: GOVERNANCE_FINDING_FIELD_NAMES.status,
@@ -294,13 +204,6 @@ export type RejectionReason = (typeof REJECTION_REASON_OPTIONS)[number];
 export type GovernanceFindingCategory = (typeof GOVERNANCE_FINDING_CATEGORY_OPTIONS)[number];
 export type GovernanceFindingStatus = (typeof GOVERNANCE_FINDING_STATUS_OPTIONS)[number];
 export type GovernanceFindingPriority = (typeof GOVERNANCE_FINDING_PRIORITY_OPTIONS)[number];
-export type ReviewerExceptionKnowledgeStatus = (typeof REVIEWER_EXCEPTION_KNOWLEDGE_STATUS_OPTIONS)[number];
-export type ReviewerExceptionScope = (typeof REVIEWER_EXCEPTION_SCOPE_OPTIONS)[number];
-export type ReviewerExceptionSourceType = (typeof REVIEWER_EXCEPTION_SOURCE_TYPE_OPTIONS)[number];
-export type ReviewerExceptionImpact = (typeof REVIEWER_EXCEPTION_IMPACT_OPTIONS)[number];
-export type ReviewerExceptionAppliesTo = (typeof REVIEWER_EXCEPTION_APPLIES_TO_OPTIONS)[number];
-export type ReviewerExceptionConfidence = (typeof REVIEWER_EXCEPTION_CONFIDENCE_OPTIONS)[number];
-export type ReviewerExceptionPromotionTarget = (typeof REVIEWER_EXCEPTION_PROMOTION_TARGET_OPTIONS)[number];
 
 export type AssetWritableKey =
   | 'app_name'
@@ -526,17 +429,6 @@ export const APP_REVIEW_FIELD_MAP = {
     writable: GOVERNANCE_FINDING_WRITABLE_FIELDS,
     fieldNames: GOVERNANCE_FINDING_FIELD_NAMES,
   },
-  reviewerExceptions: {
-    baseId: DEFAULT_REVIEWER_EXCEPTIONS_BASE_ID,
-    tableId: DEFAULT_REVIEWER_EXCEPTIONS_TABLE_ID,
-    fieldNames: REVIEWER_EXCEPTION_FIELD_NAMES,
-    retrievalGate: {
-      knowledgeStatus: ['Approved', 'Active'],
-      includeInDifyRetrieval: true,
-      expiresAt: 'empty or today/future',
-      approvalNote: 'MCP-created records start non-retrievable; approve in Airtable before Dify can retrieve them.',
-    },
-  },
   canonicalMappings: CANONICAL_FIELD_MAPPINGS,
   statusOptions: {
     marketplace: MARKETPLACE_STATUS_OPTIONS,
@@ -548,12 +440,5 @@ export const APP_REVIEW_FIELD_MAP = {
     governanceFindingCategory: GOVERNANCE_FINDING_CATEGORY_OPTIONS,
     governanceFindingStatus: GOVERNANCE_FINDING_STATUS_OPTIONS,
     governanceFindingPriority: GOVERNANCE_FINDING_PRIORITY_OPTIONS,
-    reviewerExceptionKnowledgeStatus: REVIEWER_EXCEPTION_KNOWLEDGE_STATUS_OPTIONS,
-    reviewerExceptionScope: REVIEWER_EXCEPTION_SCOPE_OPTIONS,
-    reviewerExceptionSourceType: REVIEWER_EXCEPTION_SOURCE_TYPE_OPTIONS,
-    reviewerExceptionImpact: REVIEWER_EXCEPTION_IMPACT_OPTIONS,
-    reviewerExceptionAppliesTo: REVIEWER_EXCEPTION_APPLIES_TO_OPTIONS,
-    reviewerExceptionConfidence: REVIEWER_EXCEPTION_CONFIDENCE_OPTIONS,
-    reviewerExceptionPromotionTarget: REVIEWER_EXCEPTION_PROMOTION_TARGET_OPTIONS,
   },
 } as const;
