@@ -540,11 +540,16 @@ engine.play();`}</pre>
 	/* Phases Table */
 	.phases-table {
 		margin: var(--space-md) 0;
+		width: 100%;
+		max-width: 100%;
 		overflow-x: auto;
+		-webkit-overflow-scrolling: touch;
 	}
 
 	.phases-table table {
-		width: 100%;
+		width: max-content;
+		min-width: 24rem;
+		max-width: none;
 		border-collapse: collapse;
 	}
 
@@ -632,6 +637,14 @@ engine.play();`}</pre>
 
 		.treatment-grid {
 			grid-template-columns: 1fr;
+		}
+
+		:global(.spritz--lg .spritz-word) {
+			font-size: clamp(2.25rem, 16vw, 3.25rem);
+		}
+
+		:global(.spritz--lg .spritz-redicle) {
+			padding: var(--space-lg) var(--space-md);
 		}
 	}
 </style>

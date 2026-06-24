@@ -46,6 +46,7 @@
   }
 
   const animationScene = $derived(getAnimationScene(paper));
+  const hasAsciiArt = $derived(!!paper.ascii_art);
 
   // Map category to display name
   const categoryDisplayNames: Record<string, string> = {
@@ -70,7 +71,7 @@
   const href = $derived((paper as Paper & { route?: string }).route || `/experiments/${paper.slug}`);
 </script>
 
-<a href={href} class="block h-full">
+<a href={href} class="paper-card-link block h-full">
   <article
     class="group animate-reveal h-full"
     style="transform: rotate({rotation}deg); --delay: {index};"
@@ -78,9 +79,9 @@
     <div class="paper-card relative h-full overflow-hidden">
       <!-- Image or ASCII Art -->
       <div
-        class="paper-image aspect-[4/3] flex items-center justify-center p-4 relative overflow-hidden"
+        class="paper-image aspect-[4/3] flex items-center justify-center p-4 relative overflow-hidden {hasAsciiArt ? '' : 'paper-image--empty'}"
       >
-        {#if paper.ascii_art && animate}
+        {#if hasAsciiArt && animate}
           <AnimatedAsciiThumbnail
             staticArt={paper.ascii_art}
             scene={animationScene}
@@ -88,7 +89,7 @@
             rows={18}
             speed={0.8}
           />
-        {:else if paper.ascii_art}
+        {:else if hasAsciiArt}
           <pre
             class="ascii-art text-[0.45rem] leading-[1.1] font-mono select-none">{paper.ascii_art}</pre>
         {:else}
@@ -160,6 +161,11 @@
       border-color var(--duration-standard) var(--ease-standard);
   }
 
+  .paper-card-link,
+  .paper-card {
+    min-width: 0;
+  }
+
   .paper-card:hover {
     background: var(--color-clear-porcelain, #f9f9f9);
     border-color: var(--color-clear-border-strong, #cecece);
@@ -205,6 +211,7 @@
   .paper-meta {
     font-size: var(--text-caption);
     color: var(--color-fg-tertiary);
+    min-width: 0;
   }
 
   .meta-dot {
@@ -217,6 +224,7 @@
     font-size: var(--text-body-lg);
     color: var(--color-fg-primary);
     transition: color var(--duration-micro) var(--ease-standard);
+    overflow-wrap: anywhere;
   }
 
   .group:hover .paper-title {
@@ -229,6 +237,8 @@
     background: var(--color-hover);
     border-radius: var(--radius-sm);
     color: var(--color-fg-secondary);
+    max-width: 100%;
+    overflow-wrap: anywhere;
   }
 
   /* Hover Overlay */
@@ -246,6 +256,16 @@
       padding: var(--space-xs);
     }
 
+    .paper-image--empty {
+      aspect-ratio: auto;
+      min-height: 4rem;
+      padding: var(--space-sm);
+    }
+
+    .paper-placeholder {
+      font-size: 2rem;
+    }
+
     .paper-image :global(.ascii-art),
     .ascii-art {
       font-size: clamp(0.32rem, 1vw, 0.38rem);
@@ -260,6 +280,10 @@
     .paper-meta {
       flex-wrap: wrap;
       row-gap: 0.25rem;
+    }
+
+    .category-badge {
+      font-size: var(--text-overline);
     }
   }
 
