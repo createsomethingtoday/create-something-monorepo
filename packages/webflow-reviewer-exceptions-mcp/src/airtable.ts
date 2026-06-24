@@ -45,6 +45,7 @@ export class AirtableClientError extends Error {
 }
 
 const defaultSleep: SleepFn = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const defaultFetch: FetchFn = (input, init) => fetch(input, init);
 
 function normalizeString(value: unknown): string | undefined {
   if (typeof value !== 'string') return undefined;
@@ -277,7 +278,7 @@ export class AirtableClient {
     this.apiKey = options.apiKey;
     this.baseId = options.baseId ?? DEFAULT_REVIEWER_EXCEPTIONS_BASE_ID;
     this.tableId = options.tableId ?? DEFAULT_REVIEWER_EXCEPTIONS_TABLE_ID;
-    this.fetchFn = options.fetchFn ?? fetch;
+    this.fetchFn = options.fetchFn ?? defaultFetch;
     this.sleepFn = options.sleepFn ?? defaultSleep;
     this.maxRetries = options.maxRetries ?? 3;
   }
