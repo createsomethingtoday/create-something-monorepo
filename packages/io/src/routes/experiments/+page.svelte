@@ -418,7 +418,41 @@
 
 		.controls-container {
 			margin-top: var(--space-md);
-			gap: 0.72rem;
+			gap: 0.85rem;
+		}
+
+		.search-input {
+			min-height: 2.75rem;
+			padding-right: 2.75rem;
+		}
+
+		.search-clear {
+			right: 0.18rem;
+			width: 2.5rem;
+			height: 2.5rem;
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+		}
+
+		.filter-chip {
+			min-height: 2.75rem;
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			padding-inline: 0.9rem;
+			line-height: 1.2;
+		}
+
+		.sort-control {
+			width: min(100%, 22rem);
+		}
+
+		.sort-button {
+			flex: 1 1 0;
+			min-height: 2.75rem;
+			min-width: 0;
+			padding-inline: 0.55rem;
 		}
 
 		:global(.papers-section) {

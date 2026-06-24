@@ -615,12 +615,17 @@
   }
 
   .nav-clear .nav-mobile-menu .nav-link {
+    display: flex;
+    align-items: center;
+    min-height: 2.75rem;
     color: var(--color-clear-onyx, #0a0e19);
   }
 
   .nav-clear .nav-mobile-menu .nav-cta {
     display: inline-flex;
+    align-items: center;
     justify-content: center;
+    min-height: 2.75rem;
     width: 100%;
   }
 

@@ -832,6 +832,40 @@
     border-top: 1px solid var(--color-clear-border, #e1e1e1);
   }
 
+  .footer-clear #newsletter {
+    padding-top: clamp(4rem, 8vw, 5rem);
+    padding-bottom: clamp(3.25rem, 7vw, 5rem);
+    padding-inline: 1.5rem;
+  }
+
+  .footer-clear .newsletter-title {
+    max-width: 38rem;
+    margin-inline: auto;
+    color: var(--color-clear-onyx, #0a0e19);
+    line-height: 1.08;
+  }
+
+  .footer-clear .newsletter-description {
+    color: var(--color-clear-grey, #636363);
+    font-size: 1rem;
+    line-height: 1.55;
+  }
+
+  .footer-clear .newsletter-input,
+  .footer-clear .newsletter-button {
+    min-height: 3.35rem;
+    border-radius: var(--radius-clear-sm, 4px);
+  }
+
+  .footer-clear .newsletter-input {
+    background: var(--color-clear-panel, #ffffff);
+  }
+
+  .footer-clear .newsletter-button {
+    background: var(--color-clear-onyx, #0a0e19);
+    color: #ffffff;
+  }
+
   .footer-clear .footer-links {
     padding-top: 5rem;
     padding-bottom: 1.25rem;
@@ -988,8 +1022,39 @@
   }
 
   @media (max-width: 640px) {
-    .footer-clear .footer-links {
+    .footer-clear #newsletter {
       padding-top: 3rem;
+      padding-bottom: 2.25rem;
+      padding-inline: 1.25rem;
+    }
+
+    .footer-clear .newsletter-title {
+      max-width: 21rem;
+      font-size: clamp(1.9rem, 9vw, 2.35rem);
+      line-height: 1.1;
+    }
+
+    .footer-clear .newsletter-description {
+      max-width: 18rem;
+      margin-bottom: 1.25rem;
+      font-size: 0.98rem;
+      line-height: 1.5;
+    }
+
+    .footer-clear #newsletter form {
+      max-width: 100%;
+    }
+
+    .footer-clear .newsletter-input,
+    .footer-clear .newsletter-button {
+      min-height: 3.25rem;
+      padding-block: 0.86rem;
+      padding-inline: 1rem;
+      font-size: 1rem;
+    }
+
+    .footer-clear .footer-links {
+      padding-top: 2.4rem;
       padding-bottom: 1rem;
     }
 
@@ -998,12 +1063,12 @@
     }
 
     .footer-clear .footer-links-grid {
-      gap: 1.8rem;
+      gap: 1.45rem;
       padding: 1.2rem;
     }
 
     .footer-clear .footer-brand-column {
-      padding-bottom: 1.35rem;
+      padding-bottom: 1.1rem;
       border-bottom: 1px solid var(--color-clear-border, #e1e1e1);
     }
 

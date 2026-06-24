@@ -15,7 +15,7 @@
 </script>
 
 	<section class="papers-section py-16 px-6">
-		<div class="max-w-7xl mx-auto">
+		<div class="papers-inner max-w-7xl mx-auto">
 			{#if title || subtitle}
 				<div class="section-header mb-12">
 					{#if title}
@@ -58,12 +58,22 @@
 <style>
 	.papers-section {
 		background: var(--color-bg-pure);
+		overflow-x: clip;
+	}
+
+	.papers-inner {
+		min-width: 0;
 	}
 
 	.papers-list {
 		list-style: none;
 		margin: 0;
 		padding: 0;
+		min-width: 0;
+	}
+
+	.papers-list > li {
+		min-width: 0;
 	}
 
 	.section-title {
@@ -78,11 +88,15 @@
 
 	@media (max-width: 640px) {
 		.papers-section {
-			padding: var(--space-md) var(--space-md) var(--space-xl);
+			padding: var(--space-md) 1rem var(--space-xl);
 		}
 
 		.section-header {
 			margin-bottom: var(--space-md);
+		}
+
+		.papers-list {
+			gap: var(--space-sm);
 		}
 	}
 
