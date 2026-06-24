@@ -48,6 +48,7 @@
   ];
   const primaryCtaHref = agencyCoreMessaging.startWithWorkflowHref;
   const globalAnalyticsMetadata = $derived(getAgencyGlobalAnalyticsMetadata($page.url.pathname));
+  const useCompactPrivacyPrompt = $derived($page.url.pathname === '/');
   const footerQuickLinkGroups = [
     {
       title: 'Commercial',
@@ -425,6 +426,7 @@
   userId={data.user?.id}
   userOptedOut={data.user?.analytics_opt_out ?? false}
   globalMetadata={globalAnalyticsMetadata}
+  compactPrompt={useCompactPrivacyPrompt}
 />
 
 <!-- Unified Search - Cmd/Ctrl+K to open -->
