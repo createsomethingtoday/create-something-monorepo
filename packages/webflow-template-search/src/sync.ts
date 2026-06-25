@@ -385,7 +385,7 @@ async function resolveAndUpdateTemplateImages(
     await options.onBatch?.();
   }
 
-  const updatedCount = await updateTemplateDocumentImages(db, updates, syncedAt);
+  const updatedCount = await updateTemplateDocumentImages(db, updates, syncedAt, { onBatch: options.onBatch });
   const unresolvedIds = rows.map((row) => row.id).filter((id) => !resolvedIds.has(id));
   return { updatedCount, resolvedIds: Array.from(resolvedIds), unresolvedIds };
 }
@@ -395,10 +395,10 @@ async function refreshIndexedWebflowImages(
   webflowImageIndex: WebflowTemplateImageIndex | null,
   syncedAt: string,
   changedTemplateIds: string[] = [],
-  options: { includeStale?: boolean } = {},
+  options: { includeStale?: boolean; onBatch?: SyncHeartbeat } = {},
 ): Promise<number> {
   const rows = await listTemplateImageRefreshRows(db, changedTemplateIds, { includeStale: options.includeStale });
-  const result = await resolveAndUpdateTemplateImages(db, rows, webflowImageIndex, syncedAt, 6);
+  const result = await resolveAndUpdateTemplateImages(db, rows, webflowImageIndex, syncedAt, 6, { onBatch: options.onBatch });
   return result.updatedCount;
 }
 
@@ -691,7 +691,7 @@ async function runFullSync(env: Env, heartbeat: SyncHeartbeat): Promise<SyncSumm
     Promise.all([
       backfillCreatorFieldsByName(env.DB, startedAt),
       backfillCreatorFieldsFromLookup(env.DB, lookups.creators, startedAt),
-      refreshIndexedWebflowImages(env.DB, webflowImageIndex, startedAt),
+      refreshIndexedWebflowImages(env.DB, webflowImageIndex, startedAt, [], { onBatch: heartbeat }),
     ]),
   );
   await heartbeat();
@@ -959,6 +959,7 @@ async function runIncrementalSync(env: Env, heartbeat: SyncHeartbeat): Promise<S
           webflowImageIndex,
           startedAt,
           toUpsert.map((document) => document.id),
+          { onBatch: heartbeat },
         )
       : 0;
   await heartbeat();
@@ -1034,7 +1035,7 @@ export async function syncTemplateRecordsByIds(env: Env, recordIds: string[]): P
           webflowImageIndex,
           startedAt,
           documents.map((document) => document.id),
-          { includeStale: false },
+          { includeStale: false, onBatch: heartbeat },
         )
       : 0;
     await heartbeat();

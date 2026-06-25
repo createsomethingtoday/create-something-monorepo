@@ -1471,6 +1471,7 @@ export async function updateTemplateDocumentImages(
   db: D1Database,
   updates: TemplateImageUpdateInput[],
   syncedAt = nowIso(),
+  options: { onBatch?: BatchProgress } = {},
 ): Promise<number> {
   if (updates.length === 0) return 0;
 
@@ -1482,9 +1483,7 @@ export async function updateTemplateDocumentImages(
       .bind(update.thumbnailImageUrl, update.thumbnailImageSecondaryUrl, syncedAt, update.id),
   );
 
-  for (const group of chunk(statements, 50)) {
-    await db.batch(group);
-  }
+  await runStatementBatches(db, statements, options);
 
   return updates.length;
 }
