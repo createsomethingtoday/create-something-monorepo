@@ -6,7 +6,8 @@ import {
   extractFormattedAgentFeedbackFromToolCalls,
   extractReturnedSaveAgentFeedback,
   REQUIRED_MANUAL_CHECK_TOPICS,
-  retryTransientOperation
+  retryTransientOperation,
+  waitForAgentReviewFeedback
 } from '../template-review-hub-agent-feedback.ts';
 
 const candidate = {
@@ -136,4 +137,50 @@ test('retryTransientOperation retries failed reads with bounded backoff', async 
   assert.equal(result, 'ok');
   assert.equal(attempts, 3);
   assert.deepEqual(delays, [100, 200]);
+});
+
+test('waitForAgentReviewFeedback polls until Airtable readback exposes saved feedback', async () => {
+  let reads = 0;
+  const delays: number[] = [];
+
+  const feedback = await waitForAgentReviewFeedback(
+    async () => {
+      reads += 1;
+      return {
+        agentReviewFeedback: reads < 3 ? '   ' : 'Saved feedback'
+      } as any;
+    },
+    {
+      attempts: 3,
+      delayMs: 50,
+      label: 'test_feedback_readback',
+      sleep: async (ms) => {
+        delays.push(ms);
+      }
+    }
+  );
+
+  assert.equal(feedback, 'Saved feedback');
+  assert.equal(reads, 3);
+  assert.deepEqual(delays, [50, 100]);
+});
+
+test('waitForAgentReviewFeedback returns null after bounded blank readback attempts', async () => {
+  let reads = 0;
+
+  const feedback = await waitForAgentReviewFeedback(
+    async () => {
+      reads += 1;
+      return { agentReviewFeedback: '' } as any;
+    },
+    {
+      attempts: 2,
+      delayMs: 50,
+      label: 'test_feedback_readback_empty',
+      sleep: async () => {}
+    }
+  );
+
+  assert.equal(feedback, null);
+  assert.equal(reads, 2);
 });

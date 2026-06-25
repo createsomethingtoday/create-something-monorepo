@@ -65,6 +65,8 @@ const DEFAULT_SINCE_DAYS = 7;
 const DEFAULT_TIMEOUT_MS = 600_000;
 const DEFAULT_MAX_ATTEMPTS = 2;
 const DEFAULT_DIFY_USER = 'template-review-hub-agent-feedback-runner';
+const FEEDBACK_READBACK_ATTEMPTS = 3;
+const FEEDBACK_READBACK_DELAY_MS = 2_000;
 const TEMPLATE_REVIEW_HUB_API_KEY_ENV = 'DIFY_TEMPLATE_REVIEW_HUB_API_KEY';
 const TEMPLATE_REVIEW_HUB_INFISICAL_PATH = '/dify/template-review-hub';
 export const REQUIRED_MANUAL_CHECK_TOPICS = [
@@ -305,6 +307,36 @@ export async function retryTransientOperation<T>(
   throw lastError instanceof Error ? lastError : new Error(String(lastError));
 }
 
+export async function waitForAgentReviewFeedback(
+  readVersion: () => Promise<TemplateReviewVersion | null>,
+  options: Partial<RetryOptions> = {}
+): Promise<string | null> {
+  const attempts = options.attempts ?? FEEDBACK_READBACK_ATTEMPTS;
+  const delayMs = options.delayMs ?? FEEDBACK_READBACK_DELAY_MS;
+  const wait = options.sleep ?? sleep;
+
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    const version = await readVersion();
+    const feedback = version?.agentReviewFeedback?.trim();
+    if (feedback) return feedback;
+    if (attempt >= attempts) break;
+
+    const nextDelayMs = delayMs * attempt;
+    console.warn(
+      JSON.stringify({
+        warning: 'agent_review_feedback_readback_empty',
+        label: options.label ?? 'agent_review_feedback_readback',
+        attempt,
+        attempts,
+        next_delay_ms: nextDelayMs
+      })
+    );
+    await wait(nextDelayMs);
+  }
+
+  return null;
+}
+
 async function loadCandidates(airtableClient: AirtableClient, args: Args): Promise<Candidate[]> {
   const versions = args.versionId
     ? await (async () => {
@@ -451,10 +483,7 @@ export function extractReturnedSaveAgentFeedback(
   const parsed = parseLeadingJsonObject(trimmed);
   if (!parsed) return null;
 
-  if (
-    parsed.proxyToolName !==
-    'webflow-template-review-mcp__template_review_save_agent_feedback'
-  ) {
+  if (parsed.proxyToolName !== 'webflow-template-review-mcp__template_review_save_agent_feedback') {
     return null;
   }
   if (!parsed.args || parsed.args.version_id !== expectedVersionId) return null;
@@ -652,8 +681,9 @@ async function processCandidate(
     };
   }
 
-  let saved = await airtableClient.getVersionById(candidate.version.versionId);
-  let feedback = saved?.agentReviewFeedback?.trim();
+  let feedback = await waitForAgentReviewFeedback(() =>
+    airtableClient.getVersionById(candidate.version.versionId)
+  );
   let savedFromReturnedPayload = false;
 
   if (!feedback) {
@@ -664,8 +694,9 @@ async function processCandidate(
       await airtableClient.updateVersionReview(candidate.version.versionId, {
         agent_review_feedback: returnedFeedback
       });
-      saved = await airtableClient.getVersionById(candidate.version.versionId);
-      feedback = saved?.agentReviewFeedback?.trim();
+      feedback = await waitForAgentReviewFeedback(() =>
+        airtableClient.getVersionById(candidate.version.versionId)
+      );
       savedFromReturnedPayload = true;
     }
   }
@@ -769,8 +800,9 @@ async function main(): Promise<void> {
   if (!summary.ok) process.exitCode = 1;
 }
 
-const invokedAsScript =
-  process.argv[1] ? import.meta.url === pathToFileURL(process.argv[1]).href : false;
+const invokedAsScript = process.argv[1]
+  ? import.meta.url === pathToFileURL(process.argv[1]).href
+  : false;
 
 if (invokedAsScript) {
   main().catch((error) => {
