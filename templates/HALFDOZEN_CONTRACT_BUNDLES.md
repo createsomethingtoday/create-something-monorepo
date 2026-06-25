@@ -8,6 +8,9 @@ Each scenario ships as a 5-artifact bundle:
 - `golden_tasks`
 - `runbook`
 
+Use `templates/runbook.md` as the canonical runbook starting point for each
+scenario until a scenario-specific runbook is written.
+
 ## Runtime Wiring
 
 Smoke runner scenario mapping is implemented in:
