@@ -911,13 +911,22 @@ async function runIncrementalSync(env: Env, heartbeat: SyncHeartbeat): Promise<S
   if (assets.length > 0) {
     const lookups = await loadLookupMaps(env);
     const [loadedWebflowImageIndex, webflowDesigners] = isCaughtUp
-      ? await Promise.all([bestEffortWebflowTemplateImageIndex(env, warnings), bestEffortWebflowDesignerAvatars(env, warnings)])
-      : await Promise.all([
-          bestEffortTargetedWebflowTemplateImages(env, warnings, templateLookupTargets(assets), { onPage: heartbeat }).then((records) =>
-            buildWebflowTemplateImageIndexFromRecords(records),
-          ),
-          bestEffortTargetedWebflowDesignerAvatars(env, warnings, designerLookupTargets(assets, lookups), { onPage: heartbeat }),
-        ]);
+      ? await withPeriodicHeartbeat(
+          heartbeat,
+          Promise.all([
+            bestEffortWebflowTemplateImageIndex(env, warnings, { onPage: heartbeat }),
+            bestEffortWebflowDesignerAvatars(env, warnings, { onPage: heartbeat }),
+          ]),
+        )
+      : await withPeriodicHeartbeat(
+          heartbeat,
+          Promise.all([
+            bestEffortTargetedWebflowTemplateImages(env, warnings, templateLookupTargets(assets), { onPage: heartbeat }).then((records) =>
+              buildWebflowTemplateImageIndexFromRecords(records),
+            ),
+            bestEffortTargetedWebflowDesignerAvatars(env, warnings, designerLookupTargets(assets, lookups), { onPage: heartbeat }),
+          ]),
+        );
     await heartbeat();
     webflowImageIndex = loadedWebflowImageIndex;
     const webflowDesignerIndex = buildWebflowDesignerAvatarIndex(webflowDesigners);
@@ -937,7 +946,10 @@ async function runIncrementalSync(env: Env, heartbeat: SyncHeartbeat): Promise<S
   await heartbeat();
   const shouldRefreshIndexedImages = isCaughtUp;
   if (shouldRefreshIndexedImages && !webflowImageIndex && !warnings.some((warning) => warning.source === 'webflow_template_image_index')) {
-    webflowImageIndex = await bestEffortWebflowTemplateImageIndex(env, warnings);
+    webflowImageIndex = await withPeriodicHeartbeat(
+      heartbeat,
+      bestEffortWebflowTemplateImageIndex(env, warnings, { onPage: heartbeat }),
+    );
     await heartbeat();
   }
   const imageRefreshedRecords =
