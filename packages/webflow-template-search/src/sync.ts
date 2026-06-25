@@ -895,7 +895,7 @@ async function runIncrementalSync(env: Env, heartbeat: SyncHeartbeat): Promise<S
     if (boundedCursor) windowEnd = new Date(boundedCursor);
   }
 
-  if (!isCaughtUp) {
+  if (!hitStaleFetchLimit) {
     const recentPublishedAssets = await fetchChangedRecentPublishedAssets(env, now, assets);
     await heartbeat();
     if (recentPublishedAssets.length > 0) {
@@ -910,23 +910,15 @@ async function runIncrementalSync(env: Env, heartbeat: SyncHeartbeat): Promise<S
 
   if (assets.length > 0) {
     const lookups = await loadLookupMaps(env);
-    const [loadedWebflowImageIndex, webflowDesigners] = isCaughtUp
-      ? await withPeriodicHeartbeat(
-          heartbeat,
-          Promise.all([
-            bestEffortWebflowTemplateImageIndex(env, warnings, { onPage: heartbeat }),
-            bestEffortWebflowDesignerAvatars(env, warnings, { onPage: heartbeat }),
-          ]),
-        )
-      : await withPeriodicHeartbeat(
-          heartbeat,
-          Promise.all([
-            bestEffortTargetedWebflowTemplateImages(env, warnings, templateLookupTargets(assets), { onPage: heartbeat }).then((records) =>
-              buildWebflowTemplateImageIndexFromRecords(records),
-            ),
-            bestEffortTargetedWebflowDesignerAvatars(env, warnings, designerLookupTargets(assets, lookups), { onPage: heartbeat }),
-          ]),
-        );
+    const [loadedWebflowImageIndex, webflowDesigners] = await withPeriodicHeartbeat(
+      heartbeat,
+      Promise.all([
+        bestEffortTargetedWebflowTemplateImages(env, warnings, templateLookupTargets(assets), { onPage: heartbeat }).then((records) =>
+          buildWebflowTemplateImageIndexFromRecords(records),
+        ),
+        bestEffortTargetedWebflowDesignerAvatars(env, warnings, designerLookupTargets(assets, lookups), { onPage: heartbeat }),
+      ]),
+    );
     await heartbeat();
     webflowImageIndex = loadedWebflowImageIndex;
     const webflowDesignerIndex = buildWebflowDesignerAvatarIndex(webflowDesigners);
@@ -944,24 +936,7 @@ async function runIncrementalSync(env: Env, heartbeat: SyncHeartbeat): Promise<S
   if (toDelete.length > 0) await deleteTemplateDocumentsInChunks(env.DB, toDelete, heartbeat);
   if (toUpsert.length > 0) await upsertTemplateDocumentsInChunks(env.DB, toUpsert, heartbeat);
   await heartbeat();
-  const shouldRefreshIndexedImages = isCaughtUp;
-  if (shouldRefreshIndexedImages && !webflowImageIndex && !warnings.some((warning) => warning.source === 'webflow_template_image_index')) {
-    webflowImageIndex = await withPeriodicHeartbeat(
-      heartbeat,
-      bestEffortWebflowTemplateImageIndex(env, warnings, { onPage: heartbeat }),
-    );
-    await heartbeat();
-  }
-  const imageRefreshedRecords =
-    shouldRefreshIndexedImages
-      ? await refreshIndexedWebflowImages(
-          env.DB,
-          webflowImageIndex,
-          startedAt,
-          toUpsert.map((document) => document.id),
-          { onBatch: heartbeat },
-        )
-      : 0;
+  const imageRefreshedRecords = 0;
   await heartbeat();
 
   // Keep the frequent 5-minute incremental path limited to changed template rows.
