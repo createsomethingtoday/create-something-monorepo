@@ -39,6 +39,11 @@ The public Atlas canvas is the give-first surface for prospects. It lets a visit
 start from a concrete industry workflow, edit the owner/systems/approval boundary,
 and carry the summary into booking without exposing production systems.
 
+The broader visual standard lives in
+`docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md`: workflow, governance, and
+agent-behavior visuals should default to Atlas-style canvases before one-off
+graphics.
+
 Current starter maps:
 
 | Starter | Industry | Boundary to preserve |
@@ -57,10 +62,54 @@ the prospect sees the action boundary before the sales conversation.
 Implementation surface:
 
 - `src/lib/atlas/public.ts` owns starter-map data and normalization.
+- `createPublicAtlasGraphArtifact(...)` exports the renderer-independent Atlas
+  graph contract for humans and agents: semantic node roles, relationship labels,
+  readiness, and renderer guidance.
+- `createPublicAtlasStoryArtifact(...)` turns the same graph into deterministic
+  story chapters for static canvases, scrollytelling, article visuals, social
+  cards, and accessibility summaries.
+- `src/lib/components/PublicAtlasStoryCanvas.svelte` renders the static story
+  artifact as a node-map presentation surface without invoking the mapping agent.
 - `src/lib/components/PublicAtlasCanvas.svelte` renders the selector and persists
   the chosen map into booking context.
 - `test/public-atlas-starter-maps.test.ts` verifies coverage and policy-boundary
   shape.
+- `test/public-atlas-route.test.ts` verifies that `/atlas` and `/services`
+  present the story canvas before the editable public canvas, and that
+  `/methodology`, `/stack`, and `/products` can use the same story surface
+  without mounting the editable canvas.
+
+Story-canvas usage contract:
+
+- Pass an explicit `storyId` on route-level uses so SVG marker IDs and heading
+  references remain stable if multiple story canvases appear on the same page.
+- Keep the story canvas before the editable canvas when both are present. The
+  story teaches the workflow language; the editable canvas collects booking
+  context.
+- Keep motion semantics in markup, not visible copy. Chapter motion cues belong
+  in `data-motion-cue` attributes so animations can target them without exposing
+  implementation labels to readers.
+
+Renderer rule:
+
+- React Flow is the primary renderer for workflow education, intake, editing,
+  accessibility, and agent-operable maps.
+- Static story canvases are the fallback for marketing, articles, social cards,
+  and non-JS presentation.
+- Sigma/Cosmograph are reserved for large read-only network exploration. Do not
+  move the canonical workflow contract into those renderers; adapt them from the
+  Atlas graph artifact when graph scale requires WebGL.
+- Story canvases should animate only chapter focus, handoff traces, stop
+  boundaries, and proof reveals. The `accessibilitySummary` must remain complete
+  when motion is disabled.
+- `/atlas` presents the read-only story canvas before the editable public Atlas
+  canvas so visitors can understand the workflow language before using the agent.
+- `/methodology` uses a read-only story canvas to explain the method without
+  collecting booking context.
+- `/stack` uses a read-only story canvas to explain the ownership and vendor
+  boundary without collecting booking context.
+- `/products` uses a read-only story canvas to explain how proof becomes a
+  governed workflow boundary without collecting booking context.
 
 ---
 

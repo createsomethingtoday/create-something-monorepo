@@ -8,6 +8,7 @@
     type ClearCardItem,
     type ClearCtaItem
   } from '@create-something/canon';
+  import PublicAtlasStoryCanvas from '$lib/components/PublicAtlasStoryCanvas.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
   const boundarySummary: ClearCardItem[] = [
@@ -335,6 +336,24 @@
 
 <ClearPageSection
   variant="soft"
+  eyebrow="Boundary canvas"
+  title="A stack boundary becomes useful when it shows what must stop."
+  description="The story canvas turns vendor roles into an operating map: source data, allowed routing, assistive work, human judgment, hard stops, and the receipt surface."
+>
+  {#snippet after()}
+    <PublicAtlasStoryCanvas
+      starterId="insurance-claims-intake"
+      storyId="stack-insurance-claims-intake-story"
+      eyebrow="Stack boundary canvas"
+      title="The workflow boundary decides what tools are allowed to do."
+      description="This read-only map shows the stack promise in workflow terms: tools can route and prepare, but payout, denial, fraud, and sensitive decisions stop for named authority."
+      compact
+    />
+  {/snippet}
+</ClearPageSection>
+
+<ClearPageSection
+  variant="white"
   eyebrow="What your team keeps"
   title="You keep the receipts, not a mystery stack."
   description="The technical stack can change. These maps, runbooks, and evidence make the system explainable, inheritable, and easier to trust after launch."
@@ -345,7 +364,7 @@
 </ClearPageSection>
 
 <ClearPageSection
-  variant="white"
+  variant="soft"
   eyebrow="Procurement trust"
   title="The stack is buyable because the boundary is explicit."
   description="A serious workflow buyer needs to know who owns accounts, where secrets live, what access is granted, how revocation works, and what evidence survives after launch."
@@ -356,7 +375,7 @@
 </ClearPageSection>
 
 <ClearPageSection
-  variant="soft"
+  variant="white"
   eyebrow="Vendor roles"
   title="Vendor names are receipts, not the product."
   description="Each service earns a clear job. The connected tools are not the moat. CREATE SOMETHING owns the operating boundary around the workflow: what connects, what runs, what pauses, what stops, and what the operator receives."
@@ -371,7 +390,7 @@
 </ClearPageSection>
 
 <ClearPageSection
-  variant="white"
+  variant="soft"
   eyebrow="Proof path"
   title="The examples tell the whole story without tool sprawl."
   description="Each proof surface shows a different part of the same path: connect, verify, coordinate, control, and leave evidence behind."

@@ -59,19 +59,22 @@ Use criteria that reflect operating design, not only features.
 ## Visual Plan
 
 Default rule: create strategic visuals, collect screenshots for evidence.
+For workflow, governance, offer, case-study, tool-comparison, or agent-behavior
+visuals, attempt an Atlas-style canvas before creating a one-off graphic.
 Use `packages/agency/content/templates/marketing/image-prompt.md` for generated
 or designed visuals, and copy
 `packages/agency/content/templates/marketing/image-metadata.md` into the article
 asset folder before publish.
 
-| Asset             | Create or collect | Purpose                                       | Source / target | Status |
-| ----------------- | ----------------- | --------------------------------------------- | --------------- | ------ |
-| Hero visual       | create            | Make the article recognizable and ownable     |                 |        |
-| Comparison matrix | create            | Help buyers scan options                      |                 |        |
-| Tool screenshot 1 | collect           | Prove a specific product claim                |                 |        |
-| Tool screenshot 2 | collect           | Prove a specific product claim                |                 |        |
-| Framework diagram | create            | Show the CREATE SOMETHING point of view       |                 |        |
-| CTA graphic       | create            | Convert readers without generic marketing art |                 |        |
+| Asset              | Create or collect | Canvas-first fit | Purpose                                       | Source / target | Status |
+| ------------------ | ----------------- | ---------------- | --------------------------------------------- | --------------- | ------ |
+| Hero visual        | create            | yes / no         | Make the article recognizable and ownable     |                 |        |
+| Story canvas       | create            | yes              | Map owner, workflow, run/wait/stop, receipt   |                 |        |
+| Comparison matrix  | create            | yes / no         | Help buyers scan options                      |                 |        |
+| Tool screenshot 1  | collect           | no               | Prove a specific product claim                |                 |        |
+| Tool screenshot 2  | collect           | no               | Prove a specific product claim                |                 |        |
+| Framework diagram  | create            | yes              | Show the CREATE SOMETHING point of view       |                 |        |
+| CTA graphic        | create            | yes / no         | Convert readers without generic marketing art |                 |        |
 
 Screenshot targets should be workflow builders, approval settings, audit logs,
 observability dashboards, integration setup, or human-in-the-loop controls. Do
@@ -80,6 +83,9 @@ not use vendor homepage screenshots as filler.
 ### Image Metadata
 
 - Visual source folder:
+- Atlas canvas source: existing starter map | new graph artifact | not applicable
+- Canvas renderer: static-story | react-flow | sigma | cosmograph | not applicable
+- Canvas must show: owner | workflow artifact | automation | AI task | human judgment | stop boundary | receipt
 - Hero visual:
 - Screenshot targets:
 - Screenshot capture date:

@@ -43,6 +43,66 @@ export type PublicAtlasCanvas = {
 	updatedAt: string;
 };
 
+export type PublicAtlasRendererKind = 'react-flow' | 'static-story' | 'sigma' | 'cosmograph';
+
+export type PublicAtlasSemanticNode = Pick<
+	PublicAtlasNode,
+	'id' | 'kind' | 'label' | 'owner' | 'status' | 'notes'
+> & {
+	agentRole: 'owner' | 'judgment' | 'automation' | 'memory' | 'guardrail' | 'interface';
+	agentInstruction: string;
+};
+
+export type PublicAtlasSemanticEdge = Pick<PublicAtlasEdge, 'id' | 'source' | 'target' | 'label'> & {
+	relationship: 'owns' | 'triggers' | 'delegates' | 'waits_for' | 'bounded_by' | 'observed_in' | 'hands_off_to';
+};
+
+export type PublicAtlasGraphArtifact = {
+	version: 1;
+	canvasId: string;
+	nodeCount: number;
+	edgeCount: number;
+	readiness: PublicAtlasReadiness;
+	renderer: {
+		primary: PublicAtlasRendererKind;
+		fallback: PublicAtlasRendererKind;
+		scale: 'workflow' | 'system-map' | 'network';
+		reason: string;
+	};
+	agentContract: {
+		purpose: 'workflow-education' | 'workflow-intake' | 'network-exploration';
+		allowedStatuses: PublicAtlasNodeStatus[];
+		requiredNodeKinds: PublicAtlasNodeKind[];
+		sourceOfTruth: 'atlas-graph';
+	};
+	nodes: PublicAtlasSemanticNode[];
+	edges: PublicAtlasSemanticEdge[];
+};
+
+export type PublicAtlasStoryChapter = {
+	id: string;
+	sequence: number;
+	kind: 'claim' | 'map' | 'automation' | 'judgment' | 'boundary' | 'receipt' | 'next-step';
+	eyebrow: string;
+	title: string;
+	body: string;
+	focusNodeIds: string[];
+	relationshipIds: string[];
+	state: PublicAtlasNodeStatus;
+	proofLabel: string;
+	motionCue: 'none' | 'highlight-nodes' | 'trace-handoff' | 'reveal-proof';
+};
+
+export type PublicAtlasStoryArtifact = {
+	version: 1;
+	canvasId: string;
+	renderer: 'static-story';
+	headline: string;
+	summary: string;
+	accessibilitySummary: string;
+	chapters: PublicAtlasStoryChapter[];
+};
+
 export type PublicAtlasStarterMap = {
 	id: string;
 	name: string;
@@ -142,6 +202,26 @@ const KIND_DEFAULTS: Record<PublicAtlasNodeKind, string> = {
 	data: 'Workflow artifact',
 	constraint: 'Trust boundary',
 	touchpoint: 'Inspection touchpoint'
+};
+
+const AGENT_ROLE_BY_KIND: Record<PublicAtlasNodeKind, PublicAtlasSemanticNode['agentRole']> = {
+	actor: 'owner',
+	human: 'judgment',
+	ai: 'automation',
+	system: 'automation',
+	data: 'memory',
+	constraint: 'guardrail',
+	touchpoint: 'interface'
+};
+
+const AGENT_INSTRUCTION_BY_KIND: Record<PublicAtlasNodeKind, string> = {
+	actor: 'Identify the accountable person or team before proposing work.',
+	human: 'Preserve judgment, approval, and escalation decisions for a human owner.',
+	ai: 'Treat AI work as bounded assistive execution, not autonomous authority.',
+	system: 'Map deterministic tool, sync, route, log, or notification behavior.',
+	data: 'Treat records, files, tickets, and receipts as durable workflow memory.',
+	constraint: 'Stop, ask, or escalate when privacy, access, policy, cost, or accuracy is unclear.',
+	touchpoint: 'Show where an operator inspects state, evidence, and next action.'
 };
 
 type StarterNodeSpec = {
@@ -502,6 +582,82 @@ function clampNumber(value: unknown, min: number, max: number): number | undefin
 	return Math.min(max, Math.max(min, Number(value)));
 }
 
+function classifyPublicAtlasRelationship(edge: PublicAtlasEdge): PublicAtlasSemanticEdge['relationship'] {
+	const label = (edge.label ?? '').toLowerCase();
+	if (label.includes('own')) return 'owns';
+	if (label.includes('trigger')) return 'triggers';
+	if (label.includes('delegate')) return 'delegates';
+	if (label.includes('wait')) return 'waits_for';
+	if (label.includes('bound') || label.includes('stop') || label.includes('constraint')) return 'bounded_by';
+	if (label.includes('review') || label.includes('receipt') || label.includes('log')) return 'observed_in';
+	return 'hands_off_to';
+}
+
+function selectPublicAtlasRenderer(canvas: PublicAtlasCanvas): PublicAtlasGraphArtifact['renderer'] {
+	if (canvas.nodes.length > 2000 || canvas.edges.length > 3000) {
+		return {
+			primary: 'cosmograph',
+			fallback: 'sigma',
+			scale: 'network',
+			reason: 'Use GPU graph exploration when the artifact is a large read-only network, not an editable workflow map.'
+		};
+	}
+
+	if (canvas.nodes.length > 120 || canvas.edges.length > 180) {
+		return {
+			primary: 'sigma',
+			fallback: 'static-story',
+			scale: 'system-map',
+			reason: 'Use a WebGL graph renderer for larger read-only system maps where rich node editing is no longer the primary job.'
+		};
+	}
+
+	return {
+		primary: 'react-flow',
+		fallback: 'static-story',
+		scale: 'workflow',
+		reason: 'Use rich workflow nodes for education, intake, editing, accessibility, and agent-operable graph state.'
+	};
+}
+
+function uniqueDefined(values: Array<string | undefined>): string[] {
+	return [...new Set(values.filter((value): value is string => Boolean(value)))];
+}
+
+function firstNodeByKind(
+	artifact: PublicAtlasGraphArtifact,
+	kind: PublicAtlasNodeKind
+): PublicAtlasSemanticNode | undefined {
+	return artifact.nodes.find((node) => node.kind === kind);
+}
+
+function firstNodeByStatus(
+	artifact: PublicAtlasGraphArtifact,
+	status: PublicAtlasNodeStatus
+): PublicAtlasSemanticNode | undefined {
+	return artifact.nodes.find((node) => node.status === status);
+}
+
+function relationshipIdsForNodes(
+	artifact: PublicAtlasGraphArtifact,
+	nodeIds: string[]
+): string[] {
+	const nodeIdSet = new Set(nodeIds);
+	return artifact.edges
+		.filter((edge) => nodeIdSet.has(edge.source) || nodeIdSet.has(edge.target))
+		.map((edge) => edge.id);
+}
+
+function storyChapter(
+	artifact: PublicAtlasGraphArtifact,
+	input: Omit<PublicAtlasStoryChapter, 'relationshipIds'>
+): PublicAtlasStoryChapter {
+	return {
+		...input,
+		relationshipIds: relationshipIdsForNodes(artifact, input.focusNodeIds)
+	};
+}
+
 export function createPublicAtlasNode(
 	kind: PublicAtlasNodeKind,
 	input: Partial<PublicAtlasNode> = {}
@@ -813,6 +969,150 @@ export function summarizePublicAtlasCanvas(
 		`Agent messages used: ${canvas.agentMessages}`,
 		`Canvas mutations: ${canvas.mutationCount}`
 	].join('\n');
+}
+
+export function createPublicAtlasGraphArtifact(
+	inputCanvas: PublicAtlasCanvas,
+	readiness = computePublicAtlasReadiness(inputCanvas)
+): PublicAtlasGraphArtifact {
+	const canvas = normalizePublicAtlasCanvas(inputCanvas);
+	const requiredNodeKinds = PUBLIC_ATLAS_LANES.map((lane) => lane.kind);
+
+	return {
+		version: 1,
+		canvasId: canvas.id,
+		nodeCount: canvas.nodes.length,
+		edgeCount: canvas.edges.length,
+		readiness,
+		renderer: selectPublicAtlasRenderer(canvas),
+		agentContract: {
+			purpose: readiness.intent === 'workflow-mapping' ? 'workflow-intake' : 'workflow-education',
+			allowedStatuses: ['run', 'wait', 'stop', 'unknown'],
+			requiredNodeKinds,
+			sourceOfTruth: 'atlas-graph'
+		},
+		nodes: canvas.nodes.map((node) => ({
+			id: node.id,
+			kind: node.kind,
+			label: node.label,
+			owner: node.owner,
+			status: node.status,
+			notes: node.notes,
+			agentRole: AGENT_ROLE_BY_KIND[node.kind],
+			agentInstruction: AGENT_INSTRUCTION_BY_KIND[node.kind]
+		})),
+		edges: canvas.edges.map((edge) => ({
+			id: edge.id,
+			source: edge.source,
+			target: edge.target,
+			label: edge.label,
+			relationship: classifyPublicAtlasRelationship(edge)
+		}))
+	};
+}
+
+export function createPublicAtlasStoryArtifact(
+	inputCanvas: PublicAtlasCanvas,
+	readiness = computePublicAtlasReadiness(inputCanvas)
+): PublicAtlasStoryArtifact {
+	const artifact = createPublicAtlasGraphArtifact(inputCanvas, readiness);
+	const owner = firstNodeByKind(artifact, 'actor');
+	const workflow = firstNodeByKind(artifact, 'data');
+	const system = firstNodeByKind(artifact, 'system');
+	const ai = firstNodeByKind(artifact, 'ai');
+	const human = firstNodeByKind(artifact, 'human') ?? firstNodeByStatus(artifact, 'wait');
+	const boundary = firstNodeByKind(artifact, 'constraint') ?? firstNodeByStatus(artifact, 'stop');
+	const receipt = firstNodeByKind(artifact, 'touchpoint');
+	const workflowLabel = workflow?.label ?? 'Workflow map';
+	const ownerLabel = owner?.label ?? 'Workflow owner';
+	const chapters: PublicAtlasStoryChapter[] = [
+		storyChapter(artifact, {
+			id: 'claim',
+			sequence: 1,
+			kind: 'claim',
+			eyebrow: 'Atlas graph',
+			title: `Map ${workflowLabel} before execution.`,
+			body: `${ownerLabel} owns the operating path. The canvas makes the workflow, handoffs, and next decision legible before an agent or system acts.`,
+			focusNodeIds: uniqueDefined([owner?.id, workflow?.id]),
+			state: workflow?.status ?? 'unknown',
+			proofLabel: 'owner and workflow named',
+			motionCue: 'highlight-nodes'
+		}),
+		storyChapter(artifact, {
+			id: 'automation',
+			sequence: 2,
+			kind: 'automation',
+			eyebrow: 'What can run',
+			title: system ? `${system.label} can run when the rule is clear.` : 'Automation waits for a clear rule.',
+			body: ai
+				? `${system?.label ?? 'The system path'} coordinates with ${ai.label}; the map keeps AI assistance bounded to the work it can safely support.`
+				: `${system?.label ?? 'The system path'} is the deterministic route, sync, log, or notification layer once the workflow boundary is known.`,
+			focusNodeIds: uniqueDefined([system?.id, ai?.id]),
+			state: system?.status ?? ai?.status ?? 'unknown',
+			proofLabel: 'run path visible',
+			motionCue: 'trace-handoff'
+		}),
+		storyChapter(artifact, {
+			id: 'judgment',
+			sequence: 3,
+			kind: 'judgment',
+			eyebrow: 'What waits',
+			title: human ? `${human.label} stays with a person.` : 'Human judgment stays explicit.',
+			body: `${human?.notes ?? 'Approval, review, and escalation remain named so the agent knows where to stop and ask.'}`,
+			focusNodeIds: uniqueDefined([human?.id]),
+			state: human?.status ?? 'wait',
+			proofLabel: 'human review named',
+			motionCue: 'highlight-nodes'
+		}),
+		storyChapter(artifact, {
+			id: 'boundary',
+			sequence: 4,
+			kind: 'boundary',
+			eyebrow: 'What stops',
+			title: boundary ? `${boundary.label} is the stop condition.` : 'The map needs a stop condition.',
+			body: `${boundary?.notes ?? 'The canvas should show the policy, privacy, access, accuracy, or authority boundary before execution.'}`,
+			focusNodeIds: uniqueDefined([boundary?.id]),
+			state: boundary?.status ?? 'stop',
+			proofLabel: 'stop boundary visible',
+			motionCue: 'reveal-proof'
+		}),
+		storyChapter(artifact, {
+			id: 'receipt',
+			sequence: 5,
+			kind: 'receipt',
+			eyebrow: 'Where proof lands',
+			title: receipt ? `${receipt.label} shows the receipt.` : 'The workflow needs a receipt surface.',
+			body: `${receipt?.notes ?? 'Operators need a place to inspect state, evidence, owner, and next action.'}`,
+			focusNodeIds: uniqueDefined([receipt?.id]),
+			state: receipt?.status ?? 'unknown',
+			proofLabel: 'inspection point named',
+			motionCue: 'reveal-proof'
+		}),
+		storyChapter(artifact, {
+			id: 'next-step',
+			sequence: 6,
+			kind: 'next-step',
+			eyebrow: readiness.level,
+			title: readiness.nextStep,
+			body: readiness.reason,
+			focusNodeIds: [],
+			state: 'unknown',
+			proofLabel: `readiness ${readiness.score}/100`,
+			motionCue: 'none'
+		})
+	];
+
+	return {
+		version: 1,
+		canvasId: artifact.canvasId,
+		renderer: 'static-story',
+		headline: `Atlas story for ${workflowLabel}`,
+		summary: `${artifact.nodeCount} nodes, ${artifact.edgeCount} handoffs, ${readiness.level.toLowerCase()} readiness.`,
+		accessibilitySummary: chapters
+			.map((chapter) => `${chapter.sequence}. ${chapter.title} ${chapter.body}`)
+			.join(' '),
+		chapters
+	};
 }
 
 function includesAny(text: string, terms: string[]): boolean {
