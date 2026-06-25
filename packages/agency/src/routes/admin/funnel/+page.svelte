@@ -180,6 +180,7 @@
 		<Card variant="glass" radius="md" padding="md" class="glass-emphasis flex flex-wrap gap-4">
 			<a href="/admin/funnel/record" class="action-button">Record Daily Metrics</a>
 			<a href="/admin/funnel/leads/new" class="action-button">Add Lead</a>
+			<a href="/admin/capture" class="action-button">Capture Review</a>
 			<a href="/admin/social" class="action-button">Social Calendar</a>
 			<a href="/admin/community" class="action-button">Community</a>
 		</Card>
