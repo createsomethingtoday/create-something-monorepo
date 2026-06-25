@@ -36,6 +36,27 @@ export interface CatoNavigationProps extends CatoInsightsDataProps {
   productSearchLabel?: string;
   fixed?: boolean;
   showInsightsMegaMenu?: boolean;
+  introKicker?: string;
+  heading?: string;
+  summary?: string;
+  introCtaLabel?: string;
+  browseKicker?: string;
+  resiliencyMenuTitle?: string;
+  resiliencyMenuSummary?: string;
+  researchMenuTitle?: string;
+  researchMenuSummary?: string;
+  newsroomMenuTitle?: string;
+  newsroomMenuSummary?: string;
+  featureLabel?: string;
+  featureTitle?: string;
+  featureSummary?: string;
+  featureCta?: string;
+  featureItemOneTitle?: string;
+  featureItemOneMeta?: string;
+  featureItemTwoTitle?: string;
+  featureItemTwoMeta?: string;
+  featureItemThreeTitle?: string;
+  featureItemThreeMeta?: string;
 }
 
 const CATO_NAV_CSS = `

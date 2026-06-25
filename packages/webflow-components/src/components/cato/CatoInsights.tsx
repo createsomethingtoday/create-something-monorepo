@@ -1,5 +1,16 @@
 import React, { FormEvent, useEffect, useId, useState } from 'react';
 
+export interface CatoInsightImage {
+  src: string;
+  alt?: string;
+}
+
+interface CatoNormalizedImage {
+  src?: string;
+  url?: string;
+  alt?: string;
+}
+
 export interface CatoInsightCategory {
   id: string;
   page: string;
@@ -42,6 +53,7 @@ export interface CatoInsightItem {
   takeaways: string[];
   href?: string;
   externalUrl?: string;
+  featuredImage?: unknown;
 }
 
 export interface CatoInsightsDataProps {
@@ -52,6 +64,8 @@ export interface CatoInsightsDataProps {
   linkMode?: 'webflow' | 'export';
   pathPrefix?: string;
 }
+
+type InsightItemsStatus = 'idle' | 'loading' | 'ready' | 'error';
 
 export interface CatoInsightsHubProps extends CatoInsightsDataProps {
   title?: string;
@@ -66,6 +80,13 @@ export interface CatoInsightsHubProps extends CatoInsightsDataProps {
   itemLimit?: number;
   showFilterRail?: boolean;
   showCmsModel?: boolean;
+  filterRailNote?: string;
+  insightsHomeLink?: CatoInsightLinkProp;
+  featuredPanelLink?: CatoInsightLinkProp;
+  resiliencyLink?: CatoInsightLinkProp;
+  researchLink?: CatoInsightLinkProp;
+  whitepapersLink?: CatoInsightLinkProp;
+  newsroomLink?: CatoInsightLinkProp;
 }
 
 export interface CatoInsightsArchiveProps extends CatoInsightsDataProps {
@@ -89,6 +110,13 @@ export interface CatoInsightLinkProp {
   preload?: string;
 }
 
+export interface CatoInsightRelatedItem {
+  title: string;
+  href?: string;
+  meta?: string;
+  summary?: string;
+}
+
 export interface CatoInsightCmsCardProps extends Pick<CatoInsightsDataProps, 'linkMode' | 'pathPrefix'> {
   title?: string;
   summary?: string;
@@ -109,6 +137,25 @@ export interface CatoInsightDetailProps extends CatoInsightsDataProps {
   date?: string;
   pill?: string;
   audience?: string;
+  heroCardLabel?: string;
+  heroCardTitle?: string;
+  heroCardSummary?: string;
+  heroCardCta?: string;
+  heroCardHref?: string;
+  heroCardLink?: CatoInsightLinkProp;
+  featuredImage?: CatoInsightImage;
+  featuredImageUrl?: string;
+  featuredImageAlt?: string;
+  featuredImageCaption?: string;
+  featuredImageFit?: 'contain' | 'cover';
+  takeawaysPlacement?: 'main' | 'sidebar' | 'both' | 'hidden';
+  shareCtaLabel?: string;
+  shareCtaHref?: string;
+  shareCtaLink?: CatoInsightLinkProp;
+  relatedRailTitle?: string;
+  relatedItemsJson?: string;
+  showRelatedRail?: boolean;
+  showResourceDetails?: boolean;
   categoryId?: string;
   bodyHtml?: React.ReactNode;
   bodyJson?: string;
@@ -117,11 +164,27 @@ export interface CatoInsightDetailProps extends CatoInsightsDataProps {
 }
 
 export interface CatoInsightsMegaMenuProps extends CatoInsightsDataProps {
+  introKicker?: string;
   heading?: string;
   summary?: string;
+  introCtaLabel?: string;
+  browseKicker?: string;
+  resiliencyMenuTitle?: string;
+  resiliencyMenuSummary?: string;
+  researchMenuTitle?: string;
+  researchMenuSummary?: string;
+  newsroomMenuTitle?: string;
+  newsroomMenuSummary?: string;
+  featureLabel?: string;
   featureTitle?: string;
   featureSummary?: string;
   featureCta?: string;
+  featureItemOneTitle?: string;
+  featureItemOneMeta?: string;
+  featureItemTwoTitle?: string;
+  featureItemTwoMeta?: string;
+  featureItemThreeTitle?: string;
+  featureItemThreeMeta?: string;
   insightsHomeLink?: CatoInsightLinkProp;
   resiliencyLink?: CatoInsightLinkProp;
   researchLink?: CatoInsightLinkProp;
@@ -134,19 +197,18 @@ const DEFAULT_CATEGORIES: CatoInsightCategory[] = [
     id: 'resiliency',
     page: 'resiliency-reports.html',
     title: 'Resiliency Report Alerts',
-    filterLabel: 'Reports',
+    filterLabel: 'Resiliency Report',
     cardLabel: 'Resiliency Report',
-    cardTitle: 'Supply volatility tracking.',
+    cardTitle: 'Supply volatility tracking',
     cardSummary: 'Access market signals for active supply disruptions.',
     cardCta: 'Explore alerts',
-    heroSummary:
-      "Subscribe for recurring healthcare supply risk alerts and browse Cato's archive of disruption reports, sourcing signals, and care continuity analysis.",
+    heroSummary: "Subscribe for recurring market signals and browse Cato's archive of disruption reports, sourcing signals, and care continuity analysis.",
     panelLabel: 'Subscribe + archive',
-    panelTitle: 'Built for recurring supply risk reports.',
-    panelSummary: 'Use this page as the entry point for Resiliency Report Alerts and the archive for recurring healthcare supply risk analysis.',
+    panelTitle: 'Built for recurring market signals',
+    panelSummary: 'Subscribe for Resiliency Report Alerts and browse recurring healthcare supply risk analysis in one archive.',
     archiveEyebrow: 'Archive',
     archiveTitle: 'Latest Resiliency Reports',
-    archiveSummary: 'Published reports collect here so supply chain, procurement, and clinical operations teams can scan recent disruption signals.',
+    archiveSummary: 'Recent reports help supply chain, procurement, and clinical operations teams scan active disruption signals.',
     hasSubscribe: true,
   },
   {
@@ -154,14 +216,14 @@ const DEFAULT_CATEGORIES: CatoInsightCategory[] = [
     page: 'cato-research.html',
     title: 'Cato Research',
     filterLabel: 'Research',
-    cardLabel: 'Cato Research',
-    cardTitle: 'Procurement strategy unpacked.',
+    cardLabel: 'Research',
+    cardTitle: 'Procurement strategy unpacked',
     cardSummary: 'Explore supply chain resilience best practices.',
     cardCta: 'Browse research',
     heroSummary: 'Whitepapers and research on intelligent procurement, supply optionality, and healthcare supply chain resilience.',
     panelLabel: 'Research archive',
     panelTitle: "A home for Cato's procurement point of view.",
-    panelSummary: "Approved research, whitepapers, and annual reports collect here as Cato's market perspective grows.",
+    panelSummary: "Explore Cato research, whitepapers, and annual reports for practical context on healthcare supply resilience.",
     archiveEyebrow: 'Research archive',
     archiveTitle: 'Latest Cato Research',
     archiveSummary: 'Whitepapers and analysis organized for executives, procurement leaders, and supply chain operators.',
@@ -169,27 +231,27 @@ const DEFAULT_CATEGORIES: CatoInsightCategory[] = [
   {
     id: 'resources',
     page: 'resource-library.html',
-    title: 'Resource Library',
-    filterLabel: 'Resources',
+    title: 'Whitepapers',
+    filterLabel: 'Whitepapers',
     cardLabel: 'Whitepapers',
-    cardTitle: 'Executive thought leadership.',
+    cardTitle: 'Executive thought leadership',
     cardSummary: 'Implement sourcing frameworks for operational continuity.',
-    cardCta: 'Learn best practices',
-    heroSummary: 'Guides, explainers, and operational resources for healthcare procurement, supply chain, and clinical value teams.',
-    panelLabel: 'Resource archive',
-    panelTitle: 'A practical library for supply gap response.',
-    panelSummary: 'Guides, explainers, and briefings collect here for teams managing substitution, shortage, and backorder response.',
-    archiveEyebrow: 'Resource library',
-    archiveTitle: 'Latest Operational Resources',
-    archiveSummary: 'Practical resources for procurement, supply chain, and clinical value teams protecting care continuity.',
+    cardCta: 'Browse whitepapers',
+    heroSummary: 'Whitepapers and executive thought leadership for healthcare procurement, supply chain, and clinical value teams.',
+    panelLabel: 'Whitepapers archive',
+    panelTitle: 'A practical library for procurement leaders',
+    panelSummary: 'Whitepapers, explainers, and briefings collect here for teams managing substitution, shortage, and backorder response.',
+    archiveEyebrow: 'Whitepapers archive',
+    archiveTitle: 'Latest Whitepapers',
+    archiveSummary: 'Whitepapers and practical resources for procurement, supply chain, and clinical value teams protecting care continuity.',
   },
   {
     id: 'newsroom',
     page: 'newsroom.html',
     title: 'Newsroom',
-    filterLabel: 'News',
+    filterLabel: 'Newsroom',
     cardLabel: 'Newsroom',
-    cardTitle: 'Press releases, events, and company updates.',
+    cardTitle: 'Press releases, events, and company updates',
     cardSummary: 'Follow Cato launches, events, press notes, and milestones.',
     cardCta: 'Visit newsroom',
     heroSummary: 'Company news, launch updates, events, and announcements from Cato.',
@@ -198,7 +260,7 @@ const DEFAULT_CATEGORIES: CatoInsightCategory[] = [
     panelSummary: 'Track Cato announcements, event field notes, media mentions, and product milestones in one newsroom archive.',
     archiveEyebrow: 'Newsroom archive',
     archiveTitle: 'Latest Company Updates',
-    archiveSummary: 'Launch notes, event recaps, media mentions, and company announcements collect here as approved Newsroom entries are published.',
+    archiveSummary: 'Launch notes, event recaps, media mentions, and company announcements collect here as new Newsroom updates are released.',
   },
 ];
 
@@ -334,8 +396,8 @@ const REVIEW_ITEMS: CatoInsightItem[] = [
     id: 'medical-supply-sourcing-checklist',
     slug: 'medical-supply-sourcing-checklist',
     category: 'resources',
-    resourceType: 'Resource Library',
-    pill: 'Resource Library',
+    resourceType: 'Whitepapers',
+    pill: 'Whitepapers',
     title: 'Medical Supply Sourcing Checklist',
     summary: 'A practical checklist for teams evaluating disrupted SKUs, substitution options, supplier readiness, and delivery timelines.',
     date: 'May 8, 2026',
@@ -404,7 +466,7 @@ const REVIEW_ITEMS: CatoInsightItem[] = [
     resourceType: 'Company update',
     pill: 'Company update',
     title: 'Cato Launches Expanded Procurement Intelligence Hub',
-    summary: "A company update introducing Cato's expanded Insights structure for reports, research, resources, and launch news.",
+    summary: "A company update introducing a clearer destination for Cato's market signals, research, practical resources, and launch news.",
     date: 'May 8, 2026',
     ctaLabel: 'Read update',
     audience: 'Customers, partners, investors, and media contacts.',
@@ -415,10 +477,14 @@ const REVIEW_ITEMS: CatoInsightItem[] = [
       },
       {
         heading: 'Why it matters',
-        paragraphs: ['The new structure makes it easier to publish high-priority updates once and surface them across the hub, category pages, and navigation feature areas.'],
+        paragraphs: ['The expanded hub helps healthcare teams move quickly from market updates to practical sourcing context, related resources, and Cato company news.'],
       },
     ],
-    takeaways: ["Insights becomes the hub for Cato's publishing system.", 'Category pages can grow as content volume increases.', 'Featured items can be promoted in the menu and hub.'],
+    takeaways: [
+      "Cato Insights brings market signals, research, resources, and company news into one destination.",
+      'Healthcare procurement teams can browse updates by content type and urgency.',
+      'Featured reports and announcements are easier to find when teams need timely context.',
+    ],
   },
   {
     id: 'idm-summit-field-notes',
@@ -460,7 +526,7 @@ const REVIEW_ITEMS: CatoInsightItem[] = [
         paragraphs: ['Capstone gives Cato a way to package product and market updates as concise launch briefs for audiences that need the operational context, not just the announcement.'],
       },
       {
-        heading: 'Publishing use',
+        heading: 'Market use',
         paragraphs: ['This format can support future partner launches, product milestones, and market-facing announcements.'],
       },
     ],
@@ -548,38 +614,6 @@ const PUBLISHED_CMS_ITEMS: CatoInsightItem[] = [
       },
     ],
     takeaways: ['Review the original Cato post for the source update.', 'Use the signal to evaluate affected categories and sourcing exposure.', 'Coordinate next steps across procurement, supply chain, and clinical stakeholders.'],
-  },
-  {
-    id: 'capstone-partnership-copy',
-    slug: 'capstone-partnership-copy',
-    category: 'newsroom',
-    resourceType: 'News',
-    pill: 'News',
-    title: 'Capstone Partnership Copy',
-    summary: 'Cato announced a partnership with Capstone Health Alliance to support supply chain resiliency, sourcing initiatives, care continuity, and cost-saving opportunities for Capstone members.',
-    date: 'May 26, 2026',
-    ctaLabel: 'Read announcement',
-    audience: 'Customers, partners, media contacts, and healthcare procurement leaders.',
-    body: [
-      {
-        heading: 'Partnership announcement',
-        paragraphs: [
-          'Cato announced a new partnership with Capstone Health Alliance, a leading regional group purchasing organization that collaborates with hundreds of hospitals and thousands of healthcare providers across the nation.',
-          'The partnership is focused on driving collaboration, sharing best practices, and launching innovative sourcing initiatives to strengthen supply chain resiliency for Capstone members. Together, Cato and Capstone aim to improve patient outcomes while expanding access to meaningful cost-saving opportunities for stakeholders.',
-          'Cato was built to bring transparency and reliability to healthcare procurement during times of disruption. Partnering with Capstone represents an opportunity to advance that mission and expand access to essential medical supplies across a broader network of health systems nationwide.',
-          "Cato looks forward to supporting Capstone's members in keeping patient care moving without interruption.",
-        ],
-      },
-      {
-        heading: 'Capstone announcement',
-        paragraphs: ['Capstone also announced the partnership, noting that Cato will bring members a healthcare procurement platform designed to make supply chains nimbler and help guarantee care continuity.'],
-      },
-    ],
-    takeaways: [
-      'Cato and Capstone Health Alliance are partnering to support stronger healthcare supply chain resiliency.',
-      'The collaboration focuses on best practices, innovative sourcing initiatives, and broader access to essential medical supplies.',
-      'Capstone members gain access to a procurement platform designed to improve agility and continuity of care.',
-    ],
   },
   {
     id: 'capstone-partnership',
@@ -799,7 +833,7 @@ const CATO_CSS = `
   .cato-cc-card-component { background: transparent; }
   .cato-cc-card-component .cato-cc-cms-card { height: 100%; min-height: 15rem; }
   .cato-cc-section { padding: 4rem 2.5rem; }
-  .cato-cc-hero { position: relative; overflow: hidden; background: var(--cato-bg-soft); padding-top: 10rem; }
+  .cato-cc-hero { position: relative; overflow: hidden; background: var(--cato-bg-soft); padding-top: 13.25rem; }
   .cato-cc-container { width: min(100%, 80rem); margin: 0 auto; }
   .cato-cc-hero-grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(20rem, .65fr); gap: 2rem; align-items: stretch; margin-bottom: 3rem; }
   .cato-cc-copy { display: flex; flex-direction: column; gap: 1.25rem; justify-content: center; max-width: 58rem; }
@@ -825,9 +859,19 @@ const CATO_CSS = `
   .cato-cc-panel-label { text-transform: uppercase; border: 1px solid rgba(255,255,255,.18); background: rgba(255,255,255,.10); padding: .38rem .75rem; font-family: Switzer, Arial, sans-serif; font-size: .8125rem; font-weight: 600; }
   .cato-cc-pill { color: rgba(40,39,35,.72); background: rgba(10,69,46,.06); border: 1px solid rgba(10,69,46,.14); padding: .38rem .75rem; font-size: .8125rem; text-transform: uppercase; }
   .cato-cc-card-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1.25rem; }
+  .cato-cc-card-grid[data-count="3"] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .cato-cc-card-grid[data-count="2"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .cato-cc-card, .cato-cc-cms-card, .cato-cc-detail-card, .cato-cc-sidebar-card { border: 1px solid var(--cato-border); background: var(--cato-bg); border-radius: .75rem; box-shadow: 0 1px 2px rgba(17,16,15,.04); }
   .cato-cc-card, .cato-cc-cms-card { display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; gap: 1rem; color: var(--cato-text); text-decoration: none; transition: transform .18s, border-color .18s, box-shadow .18s; }
   .cato-cc-card { min-height: 21rem; padding: 2rem; }
+  .cato-cc-card[data-category="resiliency"] .cato-cc-pill { color: #0a452e; background: rgba(10,69,46,.07); border-color: rgba(10,69,46,.18); }
+  .cato-cc-card[data-category="research"] .cato-cc-pill { color: #245082; background: rgba(36,80,130,.08); border-color: rgba(36,80,130,.18); }
+  .cato-cc-card[data-category="resources"] .cato-cc-pill { color: #775321; background: rgba(119,83,33,.09); border-color: rgba(119,83,33,.18); }
+  .cato-cc-card[data-category="newsroom"] .cato-cc-pill { color: #61456d; background: rgba(97,69,109,.08); border-color: rgba(97,69,109,.18); }
+  .cato-cc-card[data-category="resiliency"] h3 { color: #0a452e; }
+  .cato-cc-card[data-category="research"] h3 { color: #245082; }
+  .cato-cc-card[data-category="resources"] h3 { color: #775321; }
+  .cato-cc-card[data-category="newsroom"] h3 { color: #61456d; }
   .cato-cc-card:hover, .cato-cc-cms-card:hover { border-color: var(--cato-border-strong); transform: translate3d(0, -.25rem, 0); box-shadow: 0 1rem 2rem rgba(17,16,15,.08); }
   .cato-cc-card p, .cato-cc-cms-card p { color: var(--cato-muted); margin: 0; line-height: 1.5; }
   .cato-cc-link { color: var(--cato-green); margin-top: auto; font-weight: 600; display: inline-block; transition: transform .18s, color .18s; }
@@ -914,6 +958,14 @@ const CATO_CSS = `
   .cato-cc-detail-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(18rem, .38fr); align-items: start; gap: 2.5rem; }
   .cato-cc-detail-card { padding: clamp(1.5rem, 3vw, 2.5rem); }
   .cato-cc-detail-meta { display: flex; align-items: center; flex-wrap: wrap; gap: .75rem; color: var(--cato-muted); margin-bottom: 2rem; }
+  .cato-cc-share-row { display: flex; align-items: center; gap: .75rem; margin: -1rem 0 1.75rem; }
+  .cato-cc-share-row a { display: inline-flex; align-items: center; border: 1px solid rgba(10,69,46,.18); border-radius: 999px; padding: .55rem .85rem; color: var(--cato-green); font-size: .88rem; font-weight: 800; text-decoration: none; }
+  .cato-cc-featured-image { display: flex; flex-direction: column; align-items: stretch; justify-content: center; overflow: hidden; border: 1px solid var(--cato-border); border-radius: .75rem; background: rgba(10,69,46,.04); margin: 0 0 2rem; }
+  .cato-cc-featured-image-frame { display: flex; align-items: center; justify-content: center; aspect-ratio: 16 / 9; overflow: hidden; }
+  .cato-cc-featured-image img { display: block; width: 100%; height: 100%; object-fit: contain; }
+  .cato-cc-featured-image[data-fit="cover"] img { object-fit: cover; }
+  .cato-cc-featured-image figcaption { color: var(--cato-muted); border-top: 1px solid rgba(40,39,35,.08); padding: .7rem .9rem; font-size: .84rem; line-height: 1.45; }
+  .cato-cc-takeaways-card { display: flex; flex-direction: column; gap: .85rem; border: 1px solid rgba(10,69,46,.14); border-radius: .75rem; background: rgba(10,69,46,.045); margin: 0 0 2rem; padding: 1.25rem; }
   .cato-cc-rich { max-width: 44rem; }
   .cato-cc-rich section + section { margin-top: 2.5rem; }
   .cato-cc-rich > *:first-child, .cato-cc-rich-content > *:first-child, .cato-cc-rich [class*="w-richtext"] > *:first-child { margin-top: 0; }
@@ -962,7 +1014,24 @@ const CATO_CSS = `
   .cato-cc-rich p, .cato-cc .cato-cc-detail-card .cato-cc-rich-content p { margin: 0 0 1rem !important; }
   .cato-cc-rich ul, .cato-cc-rich ol, .cato-cc .cato-cc-detail-card .cato-cc-rich-content ul, .cato-cc .cato-cc-detail-card .cato-cc-rich-content ol, .cato-cc .cato-cc-detail-card :where(ul, ol) { display: flex; flex-direction: column; gap: .65rem; margin: 1rem 0 1.25rem !important; padding-left: 1.25rem !important; }
   .cato-cc-rich blockquote, .cato-cc .cato-cc-detail-card .cato-cc-rich-content blockquote { margin: 1.5rem 0 !important; border-left: .2rem solid rgba(10,69,46,.24); padding: .25rem 0 .25rem 1rem; color: var(--cato-text) !important; }
-  .cato-cc-rich a, .cato-cc .cato-cc-detail-card .cato-cc-rich-content a { color: var(--cato-green) !important; font-weight: 600; text-decoration-thickness: .06em; text-underline-offset: .18em; }
+  .cato-cc-rich a:not(.cato-cc-cta):not(.cato-cc-back-link),
+  .cato-cc-rich [class*="w-richtext"] a:not(.cato-cc-cta):not(.cato-cc-back-link),
+  .cato-cc .cato-cc-detail-card .cato-cc-rich-content a:not(.cato-cc-cta):not(.cato-cc-back-link),
+  .cato-cc .cato-cc-detail-card a[href]:not(.cato-cc-cta):not(.cato-cc-back-link) {
+    color: var(--cato-green) !important;
+    -webkit-text-fill-color: var(--cato-green) !important;
+    border-bottom: 1px solid rgba(10,69,46,.28) !important;
+    font-weight: 700 !important;
+    text-decoration: none !important;
+    transition: background-color .18s, border-color .18s, color .18s;
+  }
+  .cato-cc-rich a:not(.cato-cc-cta):not(.cato-cc-back-link):hover,
+  .cato-cc-rich [class*="w-richtext"] a:not(.cato-cc-cta):not(.cato-cc-back-link):hover,
+  .cato-cc .cato-cc-detail-card .cato-cc-rich-content a:not(.cato-cc-cta):not(.cato-cc-back-link):hover,
+  .cato-cc .cato-cc-detail-card a[href]:not(.cato-cc-cta):not(.cato-cc-back-link):hover {
+    background: rgba(10,69,46,.06) !important;
+    border-bottom-color: var(--cato-green) !important;
+  }
   .cato-cc-rich img, .cato-cc-rich figure, .cato-cc .cato-cc-detail-card .cato-cc-rich-content img, .cato-cc .cato-cc-detail-card .cato-cc-rich-content figure { max-width: 100%; border-radius: .5rem; }
   .cato-cc-rich-content slot::slotted(h1) { font-size: 2rem !important; line-height: 1.18 !important; margin: 2rem 0 .85rem !important; }
   .cato-cc-rich-content slot::slotted(h2) { font-size: 1.75rem !important; line-height: 1.25 !important; margin: 2rem 0 .85rem !important; }
@@ -977,23 +1046,39 @@ const CATO_CSS = `
   .cato-cc-takeaways-html h1, .cato-cc-takeaways-html h2, .cato-cc-takeaways-html h3 { margin: 0 0 .75rem; font-size: 1rem; line-height: 1.35; font-weight: 700; letter-spacing: 0; }
   .cato-cc-takeaways-html ul, .cato-cc-takeaways-html ol { display: flex; flex-direction: column; gap: .65rem; margin: 0; padding-left: 1.25rem; }
   .cato-cc-takeaways-html p { margin: 0 0 .75rem; line-height: 1.5; }
+  .cato-cc-related-list { display: flex; flex-direction: column; gap: .85rem; }
+  .cato-cc-related-item { display: flex; flex-direction: column; gap: .32rem; border-top: 1px solid rgba(40,39,35,.1); padding-top: .85rem; color: var(--cato-text); text-decoration: none; }
+  .cato-cc-related-item:first-child { border-top: 0; padding-top: 0; }
+  .cato-cc-related-item strong { color: var(--cato-text); font-size: .98rem; line-height: 1.28; }
+  .cato-cc-related-item span { color: var(--cato-muted); font-size: .78rem; line-height: 1.3; text-transform: uppercase; letter-spacing: .04em; }
+  .cato-cc-related-item p { color: var(--cato-muted); margin: 0; font-size: .88rem; line-height: 1.45; }
   .cato-cc-mega { background: var(--cato-bg); color: var(--cato-text); border-top: 1px solid rgba(40,39,35,.08); border-bottom: 1px solid rgba(40,39,35,.12); box-shadow: 0 28px 70px rgba(46,34,27,.16); }
-  .cato-cc-mega-inner { display: grid; grid-template-columns: .78fr 1.4fr .82fr; gap: 2.5rem; align-items: stretch; width: min(100%, 80rem); min-height: 25.5rem; margin: 0 auto; padding: 2.75rem 2rem; }
-  .cato-cc-mega-intro { border-right: 1px solid rgba(40,39,35,.10); padding-right: 2rem; }
+  .cato-cc-mega-inner { display: grid; grid-template-columns: minmax(15rem, .82fr) minmax(22rem, 1.04fr) minmax(17rem, .82fr); gap: 1.6rem; align-items: stretch; width: min(100%, 80rem); min-height: 23rem; margin: 0 auto; padding: 2.1rem 2rem; }
+  .cato-cc-mega-intro { border-right: 1px solid rgba(40,39,35,.10); padding-right: 1.6rem; }
   .cato-cc-mega-kicker { color: var(--cato-muted); text-transform: uppercase; margin: 0 0 1rem; font-size: .76rem; font-weight: 800; }
-  .cato-cc-mega-title { max-width: 23rem; margin: 0 0 .9rem; font-size: clamp(2rem, 3vw, 3rem); line-height: 1.02; font-weight: 800; }
+  .cato-cc-mega-title { max-width: 22rem; margin: 0 0 .9rem; font-size: clamp(1.85rem, 2.4vw, 2.55rem); line-height: 1.08; font-weight: 800; }
   .cato-cc-mega-copy { color: var(--cato-muted); max-width: 18rem; margin: 0 0 1.6rem; font-size: .95rem; line-height: 1.5; }
   .cato-cc-mega-home { font-weight: 800; text-decoration: none; }
-  .cato-cc-mega-links { display: grid; grid-template-columns: 1fr 1fr; align-content: start; gap: .35rem 2rem; }
-  .cato-cc-mega-link { display: flex; flex-direction: column; align-items: flex-start; gap: .35rem; border-radius: .5rem; padding: .72rem .8rem; text-decoration: none; }
+  .cato-cc-mega-links { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-content: start; gap: .35rem 1rem; }
+  .cato-cc-mega-link { display: flex; flex-direction: column; align-items: flex-start; gap: .32rem; border-radius: .5rem; padding: .68rem .7rem; text-decoration: none; }
   .cato-cc-mega-link:hover { background: var(--base-color-cream--cream-200, #f2eee8); }
   .cato-cc-mega-link strong { font-size: .98rem; line-height: 1.2; }
   .cato-cc-mega-link span { color: var(--cato-muted); font-size: .86rem; line-height: 1.4; }
-  .cato-cc-mega-feature { display: flex; flex-direction: column; gap: 1.35rem; min-height: 20rem; background: var(--cato-green-mid); color: var(--cato-white); border-radius: .5rem; padding: 1.65rem; text-decoration: none; }
+  .cato-cc-mega-feature { display: flex; flex-direction: column; gap: 1.1rem; min-height: 18rem; background: var(--cato-green-mid); color: var(--cato-white); border-radius: .5rem; padding: 1.45rem; text-decoration: none; transition: transform .35s cubic-bezier(.19,1,.22,1), box-shadow .35s cubic-bezier(.19,1,.22,1); }
+  .cato-cc-mega-feature:hover { transform: translateY(-2px); box-shadow: 0 18px 44px rgba(10,69,46,.18); }
+  .cato-cc-mega-feature-body { display: flex; flex-direction: column; gap: 1rem; }
+  .cato-cc-mega-feature h3 { color: var(--cato-white) !important; margin: 0; font-size: 1.34rem; line-height: 1.22; letter-spacing: 0; }
   .cato-cc-mega-feature span, .cato-cc-mega-feature p, .cato-cc-mega-feature strong { color: var(--cato-white); }
+  .cato-cc-mega-feature p { margin: 0; font-size: .98rem; line-height: 1.45; }
   .cato-cc-mega-feature .cato-cc-pill { color: var(--cato-white); border-color: rgba(255,255,255,.35); background: transparent; }
-  .cato-cc-mega-feature-list { display: flex; flex-direction: column; gap: .45rem; border-top: 1px solid rgba(255,255,255,.16); border-bottom: 1px solid rgba(255,255,255,.16); padding: .9rem 0; }
-  .cato-cc-mega-feature-list span { opacity: .72; text-transform: uppercase; font-size: .78rem; }
+  .cato-cc-mega-feature-list { display: flex; flex-direction: column; border-top: 1px solid rgba(255,255,255,.16); border-bottom: 1px solid rgba(255,255,255,.16); margin: 0; padding: .15rem 0; }
+  .cato-cc-mega-feature-item { display: grid; gap: .32rem; padding: .68rem 0; border-bottom: 1px solid rgba(255,255,255,.12); }
+  .cato-cc-mega-feature-item:last-child { border-bottom: 0; }
+  .cato-cc-mega-feature-item-title { display: block; font-size: .94rem; line-height: 1.32; font-weight: 700; }
+  .cato-cc-mega-feature-item-meta { display: block; color: var(--cato-white); opacity: .72; text-transform: uppercase; font-size: .68rem; line-height: 1.2; letter-spacing: .04em; }
+  .cato-cc-mega-feature-item-meta span { display: block; }
+  .cato-cc-mega-feature-item-meta span + span { margin-top: .18rem; }
+  .cato-cc-mega-feature-cta { display: inline-flex; align-items: center; width: fit-content; font-size: .95rem; line-height: 1.2; }
   .cato-cc a:focus-visible, .cato-cc button:focus-visible { outline: 2px solid var(--cato-green-bright); outline-offset: 3px; }
   @media (prefers-reduced-motion: reduce) {
     .cato-cc *, .cato-cc *::before, .cato-cc *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
@@ -1003,13 +1088,12 @@ const CATO_CSS = `
     .cato-cc-card-grid, .cato-cc-cms-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .cato-cc-filter-rail, .cato-cc-sidebar { position: static; }
     .cato-cc-filter-list { flex-flow: row wrap; }
-    .cato-cc-hero { padding-top: 8rem; }
     .cato-cc-mega-inner { grid-template-columns: 1fr; min-height: auto; }
     .cato-cc-mega-intro { border-right: 0; padding-right: 0; }
   }
   @media (max-width: 767px) {
     .cato-cc-section { padding: 4rem 1.25rem; }
-    .cato-cc-hero { padding-top: 7rem; }
+    .cato-cc-hero { padding-top: 10rem; padding-bottom: 2.5rem; }
     .cato-cc h1 { font-size: 3.5rem; line-height: 1.2; }
     .cato-cc h2 { font-size: 1.65rem; line-height: 1.25; }
     .cato-cc-preview-header h2,
@@ -1081,11 +1165,17 @@ const CATO_DETAIL_GLOBAL_CSS = `
     color: var(--cato-text, #282723) !important;
     font-weight: 700 !important;
   }
-  .cato-cc .cato-cc-detail-card :is(a) {
+  .cato-cc .cato-cc-detail-card :is(a[href]):not(.cato-cc-cta):not(.cato-cc-back-link) {
     color: var(--cato-green, #0a452e) !important;
-    font-weight: 600 !important;
-    text-decoration-thickness: .06em !important;
-    text-underline-offset: .18em !important;
+    -webkit-text-fill-color: var(--cato-green, #0a452e) !important;
+    border-bottom: 1px solid rgba(10,69,46,.28) !important;
+    font-weight: 700 !important;
+    text-decoration: none !important;
+    transition: background-color .18s, border-color .18s, color .18s;
+  }
+  .cato-cc .cato-cc-detail-card :is(a[href]):not(.cato-cc-cta):not(.cato-cc-back-link):hover {
+    background: rgba(10,69,46,.06) !important;
+    border-bottom-color: var(--cato-green, #0a452e) !important;
   }
   .cato-cc .cato-cc-detail-card :is(p, ul, ol, blockquote):last-child {
     margin-bottom: 0 !important;
@@ -1200,6 +1290,14 @@ function displayDate(value: unknown, fallback = ''): string {
   }).format(date);
 }
 
+function publicTitleFromCms(title: string, slug: string) {
+  if (slug.endsWith('-copy') && /\s+copy$/i.test(title)) {
+    return title.replace(/\s+copy$/i, '');
+  }
+
+  return title;
+}
+
 function cleanHtml(html: unknown): string {
   const rawHtml = richTextToHtml(html);
   if (!rawHtml.trim()) return '';
@@ -1239,6 +1337,38 @@ function pickRecordString(record: Record<string, unknown>, keys: string[]) {
     if (typeof value === 'number') return String(value);
   }
   return '';
+}
+
+function pickRecordValue(record: Record<string, unknown>, keys: string[]) {
+  for (const key of keys) {
+    if (record[key] !== undefined && record[key] !== null) return record[key];
+  }
+  return null;
+}
+
+function normalizeImageValue(value: unknown): CatoNormalizedImage | null {
+  if (!value) return null;
+  if (typeof value === 'string') {
+    const url = value.trim();
+    return url ? { url } : null;
+  }
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const normalized = normalizeImageValue(item);
+      if (normalized) return normalized;
+    }
+    return null;
+  }
+  if (typeof value !== 'object') return null;
+
+  const record = value as Record<string, unknown>;
+  const url = pickRecordString(record, ['url', 'src', 'href', 'hostedUrl', 'hosted-url', 'fileUrl', 'file-url']);
+  const nested = normalizeImageValue(record.asset) || normalizeImageValue(record.file) || normalizeImageValue(record.image) || normalizeImageValue(record.original);
+  const alt = pickRecordString(record, ['alt', 'altText', 'alt-text', 'description', 'name']);
+
+  if (url) return { url, alt: alt || undefined };
+  if (nested) return { ...nested, alt: alt || nested.alt };
+  return null;
 }
 
 function pickRecordBoolean(record: Record<string, unknown>, keys: string[]) {
@@ -1281,6 +1411,7 @@ function normalizeEndpointItem(raw: unknown): CatoInsightItem | null {
   const title = pickRecordString(record, ['title', 'Title', 'name', 'Name']);
   const slug = pickRecordString(record, ['slug', 'Slug']);
   if (!title && !slug) return null;
+  const publicTitle = publicTitleFromCms(title || slug, slug);
 
   const summary = pickRecordString(record, ['summary', 'Summary', 'shortSummary', 'short-summary', 'Short Summary', 'short_summary']);
   const resourceType = pickRecordString(record, ['resourceType', 'resource-type', 'Resource Type', 'resource_type', 'type']);
@@ -1291,12 +1422,12 @@ function normalizeEndpointItem(raw: unknown): CatoInsightItem | null {
   const ctaLabel = pickRecordString(record, ['ctaLabel', 'cta-label', 'CTA Label', 'cta_label']) || (category === 'newsroom' ? 'Read update' : 'Read report');
 
   return {
-    id: pickRecordString(record, ['id', '_id', 'itemId', 'item-id']) || slug || title,
-    slug: slug || title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''),
+    id: pickRecordString(record, ['id', '_id', 'itemId', 'item-id']) || slug || publicTitle,
+    slug: slug || publicTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''),
     category,
     resourceType: resourceType || label,
     pill: label,
-    title: title || slug,
+    title: publicTitle,
     summary: summary || 'Read the latest Cato insight.',
     date: displayDate(date),
     ctaLabel,
@@ -1304,6 +1435,7 @@ function normalizeEndpointItem(raw: unknown): CatoInsightItem | null {
     audience: pickRecordString(record, ['audience', 'Audience']),
     body: [],
     takeaways: [],
+    featuredImage: normalizeImageValue(pickRecordValue(record, ['featuredImage', 'featured-image', 'Featured Image', 'featured_image', 'image', 'Image'])),
   };
 }
 
@@ -1311,21 +1443,26 @@ function normalizeEndpointItems(payload: unknown) {
   return recordsFromEndpointPayload(payload).map(normalizeEndpointItem).filter((item): item is CatoInsightItem => Boolean(item));
 }
 
+function shouldUseItemsEndpoint(dataProps: CatoInsightsDataProps) {
+  return dataProps.fetchItems !== false && Boolean(dataProps.itemsEndpointUrl?.trim());
+}
+
 function useInsightItems(dataProps: CatoInsightsDataProps) {
-  const { items } = resolveData(dataProps);
+  const { items: fallbackItems } = resolveData(dataProps);
   const [remoteItems, setRemoteItems] = useState<CatoInsightItem[] | null>(null);
-  const [status, setStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
+  const [status, setStatus] = useState<InsightItemsStatus>(shouldUseItemsEndpoint(dataProps) ? 'loading' : 'idle');
   const endpointUrl = dataProps.itemsEndpointUrl?.trim() || '';
-  const shouldFetch = dataProps.fetchItems !== false && Boolean(endpointUrl);
+  const endpointEnabled = shouldUseItemsEndpoint(dataProps);
 
   useEffect(() => {
-    if (!shouldFetch || typeof fetch === 'undefined') {
+    if (!endpointEnabled || typeof fetch === 'undefined') {
       setRemoteItems(null);
       setStatus('idle');
       return;
     }
 
     let isMounted = true;
+    setRemoteItems(null);
     setStatus('loading');
 
     fetch(endpointUrl, { headers: { Accept: 'application/json' } })
@@ -1336,21 +1473,26 @@ function useInsightItems(dataProps: CatoInsightsDataProps) {
       .then((payload: unknown) => {
         if (!isMounted) return;
         const normalizedItems = normalizeEndpointItems(payload);
-        setRemoteItems(normalizedItems.length ? normalizedItems : null);
+        setRemoteItems(normalizedItems);
         setStatus('ready');
       })
       .catch(() => {
         if (!isMounted) return;
-        setRemoteItems(null);
+        setRemoteItems([]);
         setStatus('error');
       });
 
     return () => {
       isMounted = false;
     };
-  }, [endpointUrl, shouldFetch]);
+  }, [endpointUrl, endpointEnabled]);
 
-  return { items: remoteItems || items, status };
+  return {
+    items: endpointEnabled ? remoteItems ?? [] : fallbackItems,
+    fallbackItems,
+    status,
+    endpointEnabled,
+  };
 }
 
 function useInsightsData(dataProps: CatoInsightsDataProps) {
@@ -1378,8 +1520,12 @@ function hrefForItem(item: CatoInsightItem, linkMode: CatoInsightsDataProps['lin
   if (item.href) return item.href;
 
   const suffix = linkMode === 'export' ? '.html' : '';
-  const prefix = normalizePrefix(pathPrefix);
+  const prefix = normalizePrefix(pathPrefix || (linkMode === 'webflow' ? '/insights' : ''));
   return `${prefix}/${item.slug}${suffix}`.replace(/\/{2,}/g, '/');
+}
+
+function countItemsForCategory(items: CatoInsightItem[], categoryId: string) {
+  return items.filter((item) => item.category === categoryId).length;
 }
 
 function hrefFromLink(link: CatoInsightLinkProp | undefined, fallbackHref: string) {
@@ -1445,6 +1591,8 @@ function Hero({
   panelSummary,
   panelCta,
   panelHref,
+  panelTarget,
+  panelRel,
   backLink,
   children,
 }: {
@@ -1455,6 +1603,8 @@ function Hero({
   panelSummary: string;
   panelCta?: string;
   panelHref?: string;
+  panelTarget?: string;
+  panelRel?: string;
   backLink?: React.ReactNode;
   children?: React.ReactNode;
 }) {
@@ -1473,7 +1623,7 @@ function Hero({
             <h2>{panelTitle}</h2>
             <p>{panelSummary}</p>
             {panelCta && panelHref ? (
-              <a className="cato-cc-panel-link" href={panelHref}>
+              <a className="cato-cc-panel-link" href={panelHref} target={panelTarget} rel={panelRel}>
                 {panelCta}
               </a>
             ) : null}
@@ -1485,9 +1635,9 @@ function Hero({
   );
 }
 
-function CategoryCard({ category, href }: { category: CatoInsightCategory; href: string }) {
+function CategoryCard({ category, href, target, rel }: { category: CatoInsightCategory; href: string; target?: string; rel?: string }) {
   return (
-    <a href={href} className="cato-cc-card">
+    <a href={href} className="cato-cc-card" data-category={category.id} target={target} rel={rel}>
       <span className="cato-cc-pill">{category.cardLabel}</span>
       <h3>{category.cardTitle}</h3>
       <p>{category.cardSummary}</p>
@@ -1561,14 +1711,14 @@ function ArchiveItemList({
       {status === 'loading' && items.length === 0 ? <div className="cato-cc-system-card">Loading latest insights...</div> : null}
       {status === 'error' ? (
         <div className="cato-cc-system-card cato-cc-note-card">
-          <strong>Showing cached archive items.</strong>
-          <p>The live CMS endpoint did not respond, so this component is using its configured fallback data.</p>
+          <strong>Showing the latest available archive items.</strong>
+          <p>The archive is refreshing. Please check back shortly for the newest Cato updates.</p>
         </div>
       ) : null}
       {items.length === 0 && status !== 'loading' ? (
         <div className="cato-cc-system-card cato-cc-note-card">
-          <strong>No published items yet.</strong>
-          <p>Published CMS entries will appear here after the endpoint refreshes.</p>
+          <strong>No insights available yet.</strong>
+          <p>New Cato updates will appear here as soon as they are released.</p>
         </div>
       ) : null}
       {shouldShowSubscribe ? (
@@ -1584,6 +1734,28 @@ function ArchiveItemList({
       ) : null}
     </div>
   );
+}
+
+function InsightItemsMessage({ status }: { status: InsightItemsStatus }) {
+  if (status === 'loading') return <div className="cato-cc-system-card">Loading latest insights...</div>;
+  if (status === 'error') {
+    return (
+      <div className="cato-cc-system-card cato-cc-note-card">
+        <strong>Insights are refreshing.</strong>
+        <p>Please check back shortly for the latest Cato updates.</p>
+      </div>
+    );
+  }
+  if (status === 'ready') {
+    return (
+      <div className="cato-cc-system-card cato-cc-note-card">
+        <strong>No insights available yet.</strong>
+        <p>New Cato updates will appear here as soon as they are released.</p>
+      </div>
+    );
+  }
+
+  return null;
 }
 
 function SubscribeBlock() {
@@ -1644,8 +1816,8 @@ function SubscribeBlock() {
               </form>
             </div>
             <div className="cato-cc-system-card cato-cc-note-card">
-              <strong>Archive status</strong>
-              <p>Browse published resiliency reports below as the archive grows from recurring market signals and care continuity analysis.</p>
+              <strong>Latest archive</strong>
+              <p>Browse recurring market signals and care continuity analysis from Cato's Resiliency Report Alerts.</p>
             </div>
           </div>
         </div>
@@ -1654,29 +1826,114 @@ function SubscribeBlock() {
   );
 }
 
+function TakeawaysContent({
+  takeawaysHtml,
+  takeaways,
+}: {
+  takeawaysHtml?: React.ReactNode;
+  takeaways: string[];
+}) {
+  if (richTextHasContent(takeawaysHtml)) {
+    return <RichHtml html={takeawaysHtml} className="cato-cc-takeaways-html" />;
+  }
+
+  return (
+    <ul className="cato-cc-takeaways">
+      {takeaways.map((takeaway) => (
+        <li key={takeaway}>{takeaway}</li>
+      ))}
+    </ul>
+  );
+}
+
+function TakeawaysCard({
+  takeawaysHtml,
+  takeaways,
+}: {
+  takeawaysHtml?: React.ReactNode;
+  takeaways: string[];
+}) {
+  return (
+    <div className="cato-cc-takeaways-card">
+      <p className="cato-cc-eyebrow">Key takeaways</p>
+      <TakeawaysContent takeawaysHtml={takeawaysHtml} takeaways={takeaways} />
+    </div>
+  );
+}
+
+function RelatedRail({
+  title,
+  items,
+}: {
+  title: string;
+  items: CatoInsightRelatedItem[];
+}) {
+  return (
+    <div className="cato-cc-sidebar-card">
+      <p className="cato-cc-eyebrow">{title}</p>
+      <div className="cato-cc-related-list">
+        {items.map((item) => {
+          const href = item.href || '#';
+          return (
+            <a className="cato-cc-related-item" href={href} key={`${item.title}-${href}`}>
+              {item.meta ? <span>{item.meta}</span> : null}
+              <strong>{item.title}</strong>
+              {item.summary ? <p>{item.summary}</p> : null}
+            </a>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export const CatoInsightsHub: React.FC<CatoInsightsHubProps> = ({
   title = 'Supply Chain Insights for Outstanding Patient Care',
-  summary = 'Stay ahead of disruptions with practical procurement intelligence.',
-  featuredPanelLabel = 'Featured now',
-  featuredPanelTitle = 'Relevant disruptions and strategic resources.',
-  featuredPanelSummary = 'Use this area to feature the market signals, whitepapers, and company updates that matter most from a business perspective.',
+  summary = 'Stay ahead of disruptions and protect margins with practical procurement intelligence.',
+  featuredPanelLabel = 'Featured insight',
+  featuredPanelTitle = 'Current signals for healthcare supply teams.',
+  featuredPanelSummary = "Explore timely market signals, research, and company updates from Cato's healthcare procurement team.",
   featuredPanelCta = '',
-  previewEyebrow = 'Insights hub',
+  previewEyebrow = 'Insights',
   previewTitle = 'Actionable Supply Chain Insights for Healthcare Leaders',
   previewSummary = 'Browse by content type to access active supply disruptions, overcome market volatility, and apply sourcing strategies that increase supply chain resilience.',
   itemLimit = 4,
   showFilterRail = false,
-  showCmsModel = false,
+  filterRailNote = 'Use these filters to scan current reports, research, and newsroom updates by content type.',
+  insightsHomeLink,
+  featuredPanelLink,
+  resiliencyLink,
+  researchLink,
+  whitepapersLink,
+  newsroomLink,
   linkMode = 'webflow',
   pathPrefix = '',
   ...dataProps
 }) => {
   const { categories, items } = useInsightsData(dataProps);
-  const featured = items.find((item) => item.featured) || items[0];
-  const rest = items.filter((item) => item.id !== featured?.id);
+  const hubCategories = categories.filter((category) => category.id !== 'resources');
+  const hubCategoryIds = new Set(hubCategories.map((category) => category.id));
+  const hubItems = items.filter((item) => {
+    const itemType = [item.resourceType, item.pill, item.ctaLabel].join(' ').toLowerCase();
+    return hubCategoryIds.has(item.category) && !itemType.includes('whitepaper');
+  });
+  const featured = hubItems.find((item) => item.featured) || hubItems[0];
+  const rest = hubItems.filter((item) => item.id !== featured?.id);
   const previewItems = showFilterRail
     ? [featured, ...rest].filter((item): item is CatoInsightItem => Boolean(item))
-    : items.slice(0, Math.max(1, itemLimit));
+    : hubItems.slice(0, Math.max(1, itemLimit));
+  const categoryLinkOverrides: Record<string, CatoInsightLinkProp | undefined> = {
+    resiliency: resiliencyLink,
+    research: researchLink,
+    resources: whitepapersLink,
+    newsroom: newsroomLink,
+  };
+  const insightsHomeHref = hrefFromLink(insightsHomeLink, hrefForPage('insights.html', linkMode, pathPrefix));
+  const panelLink = featuredPanelLink || resiliencyLink;
+  const panelHref = hrefFromLink(panelLink, hrefForPage('resiliency-reports.html', linkMode, pathPrefix));
+  const linkForCategory = (category: CatoInsightCategory) => categoryLinkOverrides[category.id];
+  const hrefForCategory = (category: CatoInsightCategory) =>
+    hrefFromLink(linkForCategory(category), hrefForPage(category.page, linkMode, pathPrefix));
 
   return (
     <div className="cato-cc">
@@ -1688,12 +1945,15 @@ export const CatoInsightsHub: React.FC<CatoInsightsHubProps> = ({
         panelTitle={featuredPanelTitle}
         panelSummary={featuredPanelSummary}
         panelCta={featuredPanelCta}
-        panelHref={hrefForPage('resiliency-reports.html', linkMode, pathPrefix)}
+        panelHref={panelHref}
+        panelTarget={panelLink?.target}
+        panelRel={relForTarget(panelLink?.target)}
       >
-        <div className="cato-cc-card-grid">
-          {categories.map((category) => (
-            <CategoryCard key={category.id} category={category} href={hrefForPage(category.page, linkMode, pathPrefix)} />
-          ))}
+        <div className="cato-cc-card-grid" data-count={hubCategories.length}>
+          {hubCategories.map((category) => {
+            const link = linkForCategory(category);
+            return <CategoryCard key={category.id} category={category} href={hrefForCategory(category)} target={link?.target} rel={relForTarget(link?.target)} />;
+          })}
         </div>
       </Hero>
       <section className="cato-cc-section">
@@ -1708,18 +1968,27 @@ export const CatoInsightsHub: React.FC<CatoInsightsHubProps> = ({
               <aside className="cato-cc-filter-rail" aria-label="Browse insights by content type">
                 <div className="cato-cc-filter-title">Browse by type</div>
                 <div className="cato-cc-filter-list">
-                  <a href={hrefForPage('insights.html', linkMode, pathPrefix)} className="cato-cc-filter" data-active="true">
+                  <a
+                    href={insightsHomeHref}
+                    className="cato-cc-filter"
+                    data-active="true"
+                    target={insightsHomeLink?.target}
+                    rel={relForTarget(insightsHomeLink?.target)}
+                  >
                     <span>All insights</span>
-                    <span className="cato-cc-filter-count">{items.length}</span>
+                    <span className="cato-cc-filter-count">{hubItems.length}</span>
                   </a>
-                  {categories.map((category) => (
-                    <a key={category.id} href={hrefForPage(category.page, linkMode, pathPrefix)} className="cato-cc-filter">
-                      <span>{category.filterLabel}</span>
-                      <span className="cato-cc-filter-count">{items.filter((item) => item.category === category.id).length}</span>
-                    </a>
-                  ))}
+                  {hubCategories.map((category) => {
+                    const link = linkForCategory(category);
+                    return (
+                      <a key={category.id} href={hrefForCategory(category)} className="cato-cc-filter" target={link?.target} rel={relForTarget(link?.target)}>
+                        <span>{category.filterLabel}</span>
+                        <span className="cato-cc-filter-count">{items.filter((item) => item.category === category.id).length}</span>
+                      </a>
+                    );
+                  })}
                 </div>
-                <p className="cato-cc-filter-note">Start with one hub, then split high-volume categories into focused pages as publishing grows.</p>
+                {displayText(filterRailNote) ? <p className="cato-cc-filter-note">{filterRailNote}</p> : null}
               </aside>
               <div className="cato-cc-cms-grid">
                 {previewItems.map((item, index) => (
@@ -1736,33 +2005,6 @@ export const CatoInsightsHub: React.FC<CatoInsightsHubProps> = ({
           )}
         </div>
       </section>
-      {showCmsModel ? (
-        <section className="cato-cc-section">
-          <div className="cato-cc-container">
-            <div className="cato-cc-system-band">
-              <div className="cato-cc-system-copy">
-                <p className="cato-cc-eyebrow">CMS model</p>
-                <h2>A local preview of the Webflow collection shape.</h2>
-                <p className="cato-cc-lede">This component mirrors the exported fields needed in Webflow: title, slug, type, category, summary, body, date, featured state, menu feature state, CTA label, audience, and archive routing.</p>
-              </div>
-              <div className="cato-cc-system-list">
-                <div className="cato-cc-system-card">
-                  <strong>Collection</strong>
-                  <p>Insights entries power the hub, focused archive pages, detail pages, and featured navigation content.</p>
-                </div>
-                <div className="cato-cc-system-card">
-                  <strong>Focused archives</strong>
-                  <p>Resiliency Reports, Newsroom, Research, and Resources can each filter the same collection by category.</p>
-                </div>
-                <div className="cato-cc-system-card">
-                  <strong>Native target</strong>
-                  <p>Drop the component into Webflow now; replace JSON props with CMS-bound fields when the live collection is ready.</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-      ) : null}
     </div>
   );
 };
@@ -1921,6 +2163,25 @@ export const CatoInsightDetail: React.FC<CatoInsightDetailProps> = ({
   date,
   pill,
   audience,
+  heroCardLabel,
+  heroCardTitle,
+  heroCardSummary,
+  heroCardCta,
+  heroCardHref,
+  heroCardLink,
+  featuredImage,
+  featuredImageUrl,
+  featuredImageAlt,
+  featuredImageCaption,
+  featuredImageFit = 'contain',
+  takeawaysPlacement = 'main',
+  shareCtaLabel = '',
+  shareCtaHref = '',
+  shareCtaLink,
+  relatedRailTitle = 'Featured articles',
+  relatedItemsJson,
+  showRelatedRail = true,
+  showResourceDetails = false,
   categoryId,
   bodyHtml,
   bodyJson,
@@ -1958,7 +2219,31 @@ export const CatoInsightDetail: React.FC<CatoInsightDetailProps> = ({
     body,
     takeaways,
   };
+  const image = normalizeImageValue(featuredImage) || normalizeImageValue(featuredImageUrl) || normalizeImageValue(item.featuredImage);
+  const imageUrl = image?.url || image?.src || '';
+  const imageAlt = imageUrl ? displayText(featuredImageAlt, image?.alt || item.title) : '';
+  const imageCaption = displayText(featuredImageCaption);
+  const imageFit = featuredImageFit === 'cover' ? 'cover' : 'contain';
   const audienceContext = item.audience ? `Designed for ${item.audience.toLowerCase()}` : 'Designed for healthcare procurement teams';
+  const panelLink = heroCardLink || (heroCardHref ? { href: heroCardHref } : undefined);
+  const panelHref = panelLink?.href || hrefForPage(category.page, linkMode, pathPrefix);
+  const shareLink = shareCtaLink || (shareCtaHref ? { href: shareCtaHref } : undefined);
+  const normalizedTakeawaysPlacement = ['main', 'sidebar', 'both', 'hidden'].includes(takeawaysPlacement) ? takeawaysPlacement : 'main';
+  const showMainTakeaways = normalizedTakeawaysPlacement === 'main' || normalizedTakeawaysPlacement === 'both';
+  const showSidebarTakeaways = normalizedTakeawaysPlacement === 'sidebar' || normalizedTakeawaysPlacement === 'both';
+  const relatedItems = parseJsonArray<CatoInsightRelatedItem>(
+    relatedItemsJson,
+    items
+      .filter((candidate) => candidate.id !== item.id && candidate.category === item.category)
+      .slice(0, 3)
+      .map((candidate) => ({
+        title: candidate.title,
+        href: hrefForItem(candidate, linkMode, pathPrefix),
+        meta: candidate.resourceType,
+        summary: candidate.summary,
+      })),
+  );
+  const hasSidebar = (showRelatedRail && relatedItems.length > 0) || showResourceDetails || showSidebarTakeaways;
 
   return (
     <div className="cato-cc">
@@ -1967,9 +2252,13 @@ export const CatoInsightDetail: React.FC<CatoInsightDetailProps> = ({
       <Hero
         title={item.title}
         summary={item.summary}
-        panelLabel={item.resourceType}
-        panelTitle={category.title}
-        panelSummary={audienceContext}
+        panelLabel={displayText(heroCardLabel, item.resourceType)}
+        panelTitle={displayText(heroCardTitle, category.title)}
+        panelSummary={displayText(heroCardSummary, audienceContext)}
+        panelCta={displayText(heroCardCta)}
+        panelHref={panelHref}
+        panelTarget={panelLink?.target}
+        panelRel={relForTarget(panelLink?.target)}
         backLink={
           <a href={hrefForPage(category.page, linkMode, pathPrefix)} className="cato-cc-back-link">
             Back to {category.title}
@@ -1984,6 +2273,22 @@ export const CatoInsightDetail: React.FC<CatoInsightDetailProps> = ({
                 <span className="cato-cc-pill">{item.pill}</span>
                 <span>{item.date}</span>
               </div>
+              {shareLink?.href && displayText(shareCtaLabel) ? (
+                <div className="cato-cc-share-row">
+                  <a href={shareLink.href} target={shareLink.target} rel={relForTarget(shareLink.target)}>
+                    {shareCtaLabel}
+                  </a>
+                </div>
+              ) : null}
+              {imageUrl ? (
+                <figure className="cato-cc-featured-image" data-fit={imageFit}>
+                  <div className="cato-cc-featured-image-frame">
+                    <img src={imageUrl} alt={imageAlt} loading="eager" />
+                  </div>
+                  {imageCaption ? <figcaption>{imageCaption}</figcaption> : null}
+                </figure>
+              ) : null}
+              {showMainTakeaways ? <TakeawaysCard takeawaysHtml={takeawaysHtml} takeaways={item.takeaways} /> : null}
               <div className="cato-cc-rich">
                 {richTextHasContent(bodyHtml) ? (
                   <RichHtml html={bodyHtml} className="cato-cc-rich-content" />
@@ -2006,39 +2311,38 @@ export const CatoInsightDetail: React.FC<CatoInsightDetailProps> = ({
                 )}
               </div>
             </article>
-            <aside className="cato-cc-sidebar" aria-label="Resource details">
-              <div className="cato-cc-sidebar-card">
-                <p className="cato-cc-eyebrow">Resource details</p>
-                <div className="cato-cc-field">
-                  <strong>Resource type</strong>
-                  <span>{item.resourceType}</span>
-                </div>
-                <div className="cato-cc-field">
-                  <strong>Archive</strong>
-                  <a href={hrefForPage(category.page, linkMode, pathPrefix)}>{category.title}</a>
-                </div>
-                <div className="cato-cc-field">
-                  <strong>Built for</strong>
-                  <span>{item.audience}</span>
-                </div>
-                <div className="cato-cc-field">
-                  <strong>Published</strong>
-                  <span>{item.date}</span>
-                </div>
-              </div>
-              <div className="cato-cc-sidebar-card">
-                <p className="cato-cc-eyebrow">Key takeaways</p>
-                {richTextHasContent(takeawaysHtml) ? (
-                  <RichHtml html={takeawaysHtml} className="cato-cc-takeaways-html" />
-                ) : (
-                  <ul className="cato-cc-takeaways">
-                    {item.takeaways.map((takeaway) => (
-                      <li key={takeaway}>{takeaway}</li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            </aside>
+            {hasSidebar ? (
+              <aside className="cato-cc-sidebar" aria-label="Article sidebar">
+                {showRelatedRail && relatedItems.length > 0 ? <RelatedRail title={displayText(relatedRailTitle, 'Featured articles')} items={relatedItems} /> : null}
+                {showResourceDetails ? (
+                  <div className="cato-cc-sidebar-card">
+                    <p className="cato-cc-eyebrow">Resource details</p>
+                    <div className="cato-cc-field">
+                      <strong>Resource type</strong>
+                      <span>{item.resourceType}</span>
+                    </div>
+                    <div className="cato-cc-field">
+                      <strong>Archive</strong>
+                      <a href={hrefForPage(category.page, linkMode, pathPrefix)}>{category.title}</a>
+                    </div>
+                    <div className="cato-cc-field">
+                      <strong>Built for</strong>
+                      <span>{item.audience}</span>
+                    </div>
+                    <div className="cato-cc-field">
+                      <strong>Published</strong>
+                      <span>{item.date}</span>
+                    </div>
+                  </div>
+                ) : null}
+                {showSidebarTakeaways ? (
+                  <div className="cato-cc-sidebar-card">
+                    <p className="cato-cc-eyebrow">Key takeaways</p>
+                    <TakeawaysContent takeawaysHtml={takeawaysHtml} takeaways={item.takeaways} />
+                  </div>
+                ) : null}
+              </aside>
+            ) : null}
           </div>
         </div>
       </section>
@@ -2047,11 +2351,27 @@ export const CatoInsightDetail: React.FC<CatoInsightDetailProps> = ({
 };
 
 export const CatoInsightsMegaMenu: React.FC<CatoInsightsMegaMenuProps> = ({
+  introKicker = 'Insights',
   heading = 'Procurement Intelligence for Resilient Care',
   summary = 'Current analysis of the dynamics shaping the healthcare supply chain.',
+  introCtaLabel = 'Explore Cato Insights',
+  browseKicker = 'Browse insights',
+  resiliencyMenuTitle = 'Resiliency Report Alerts',
+  resiliencyMenuSummary = 'Access market signals for active supply disruptions.',
+  researchMenuTitle = 'Cato Research',
+  researchMenuSummary = 'Explore supply chain resilience best practices.',
+  newsroomMenuTitle = 'Newsroom',
+  newsroomMenuSummary = 'Follow Cato launches, events, press notes, and milestones.',
+  featureLabel = 'Featured',
   featureTitle = 'Resiliency Report Alerts',
   featureSummary = 'Active supply disruptions and market signals for care continuity.',
   featureCta = 'Explore Our Insights',
+  featureItemOneTitle,
+  featureItemOneMeta,
+  featureItemTwoTitle,
+  featureItemTwoMeta,
+  featureItemThreeTitle,
+  featureItemThreeMeta,
   insightsHomeLink,
   resiliencyLink,
   researchLink,
@@ -2063,6 +2383,24 @@ export const CatoInsightsMegaMenu: React.FC<CatoInsightsMegaMenuProps> = ({
 }) => {
   const { categories, items } = useInsightsData(dataProps);
   const featureItems = items.filter((item) => item.category === 'resiliency').slice(0, 3);
+  const browseCategories = categories.filter((category) => category.id !== 'resources');
+  const featureTextOverrides = [
+    { title: featureItemOneTitle, meta: featureItemOneMeta },
+    { title: featureItemTwoTitle, meta: featureItemTwoMeta },
+    { title: featureItemThreeTitle, meta: featureItemThreeMeta },
+  ];
+  const textForCategory = (category: CatoInsightCategory) => {
+    switch (category.id) {
+      case 'resiliency':
+        return { title: displayText(resiliencyMenuTitle, category.title), summary: displayText(resiliencyMenuSummary, category.cardSummary) };
+      case 'research':
+        return { title: displayText(researchMenuTitle, category.title), summary: displayText(researchMenuSummary, category.cardSummary) };
+      case 'newsroom':
+        return { title: displayText(newsroomMenuTitle, category.title), summary: displayText(newsroomMenuSummary, category.cardSummary) };
+      default:
+        return { title: category.title, summary: category.cardSummary };
+    }
+  };
   const insightsHomeHref = hrefFromLink(insightsHomeLink, hrefForPage('insights.html', linkMode, pathPrefix));
   const categoryLinkOverrides: Record<string, CatoInsightLinkProp | undefined> = {
     resiliency: resiliencyLink,
@@ -2080,22 +2418,19 @@ export const CatoInsightsMegaMenu: React.FC<CatoInsightsMegaMenuProps> = ({
       <div className="cato-cc-mega">
         <div className="cato-cc-mega-inner">
           <section className="cato-cc-mega-intro" aria-label="Insights overview">
-            <p className="cato-cc-mega-kicker">Insights</p>
+            <p className="cato-cc-mega-kicker">{introKicker}</p>
             <h2 className="cato-cc-mega-title">{heading}</h2>
             <p className="cato-cc-mega-copy">{summary}</p>
             <a href={insightsHomeHref} target={insightsHomeLink?.target} rel={relForTarget(insightsHomeLink?.target)} className="cato-cc-mega-home">
-              Explore Cato Insights
+              {introCtaLabel}
             </a>
           </section>
           <section aria-label="Insights navigation">
-            <p className="cato-cc-mega-kicker">Browse insights</p>
+            <p className="cato-cc-mega-kicker">{browseKicker}</p>
             <div className="cato-cc-mega-links">
-              <a href={insightsHomeHref} target={insightsHomeLink?.target} rel={relForTarget(insightsHomeLink?.target)} className="cato-cc-mega-link">
-                <strong>Insights Home</strong>
-                <span>All reports, research, resources, and newsroom updates.</span>
-              </a>
-              {categories.map((category) => {
+              {browseCategories.map((category) => {
                 const categoryLink = categoryLinkOverrides[category.id];
+                const categoryText = textForCategory(category);
                 return (
                   <a
                     key={category.id}
@@ -2104,27 +2439,30 @@ export const CatoInsightsMegaMenu: React.FC<CatoInsightsMegaMenuProps> = ({
                     rel={relForTarget(categoryLink?.target)}
                     className="cato-cc-mega-link"
                   >
-                    <strong>{category.title}</strong>
-                    <span>{category.cardSummary}</span>
+                    <strong>{categoryText.title}</strong>
+                    <span>{categoryText.summary}</span>
                   </a>
                 );
               })}
             </div>
           </section>
           <a href={resiliencyHref} target={resiliencyLink?.target} rel={relForTarget(resiliencyLink?.target)} className="cato-cc-mega-feature">
-            <span className="cato-cc-pill">Featured</span>
-            <div>
+            <span className="cato-cc-pill">{featureLabel}</span>
+            <div className="cato-cc-mega-feature-body">
               <h3>{featureTitle}</h3>
               <p>{featureSummary}</p>
               <div className="cato-cc-mega-feature-list">
-                {featureItems.map((item) => (
-                  <div key={item.id}>
-                    <strong>{item.title}</strong>
-                    <span>{item.resourceType}</span>
+                {featureItems.map((item, index) => (
+                  <div className="cato-cc-mega-feature-item" key={item.id}>
+                    <strong className="cato-cc-mega-feature-item-title">{displayText(featureTextOverrides[index]?.title, item.title)}</strong>
+                    <div className="cato-cc-mega-feature-item-meta">
+                      <span>{displayText(featureTextOverrides[index]?.meta, item.resourceType)}</span>
+                      {item.date ? <span>{item.date}</span> : null}
+                    </div>
                   </div>
                 ))}
               </div>
-              <strong>{featureCta}</strong>
+              <strong className="cato-cc-mega-feature-cta">{featureCta}</strong>
             </div>
           </a>
         </div>

@@ -126,6 +126,90 @@ export default declareComponent(CatoNavigation, {
       name: 'Show Insights Mega Menu',
       defaultValue: true,
     }),
+    introKicker: props.Text({
+      name: 'Mega Menu Intro Kicker',
+      defaultValue: 'Insights',
+    }),
+    heading: props.Text({
+      name: 'Mega Menu Heading',
+      defaultValue: 'Procurement Intelligence for Resilient Care',
+    }),
+    summary: props.Text({
+      name: 'Mega Menu Summary',
+      defaultValue: 'Current analysis of the dynamics shaping the healthcare supply chain.',
+    }),
+    introCtaLabel: props.Text({
+      name: 'Mega Menu Intro CTA Label',
+      defaultValue: 'Explore Cato Insights',
+    }),
+    browseKicker: props.Text({
+      name: 'Mega Menu Browse Kicker',
+      defaultValue: 'Browse insights',
+    }),
+    resiliencyMenuTitle: props.Text({
+      name: 'Mega Menu Resiliency Title',
+      defaultValue: 'Resiliency Report Alerts',
+    }),
+    resiliencyMenuSummary: props.Text({
+      name: 'Mega Menu Resiliency Summary',
+      defaultValue: 'Access market signals for active supply disruptions.',
+    }),
+    researchMenuTitle: props.Text({
+      name: 'Mega Menu Research Title',
+      defaultValue: 'Cato Research',
+    }),
+    researchMenuSummary: props.Text({
+      name: 'Mega Menu Research Summary',
+      defaultValue: 'Explore supply chain resilience best practices.',
+    }),
+    newsroomMenuTitle: props.Text({
+      name: 'Mega Menu Newsroom Title',
+      defaultValue: 'Newsroom',
+    }),
+    newsroomMenuSummary: props.Text({
+      name: 'Mega Menu Newsroom Summary',
+      defaultValue: 'Follow Cato launches, events, press notes, and milestones.',
+    }),
+    featureLabel: props.Text({
+      name: 'Mega Menu Feature Label',
+      defaultValue: 'Featured',
+    }),
+    featureTitle: props.Text({
+      name: 'Mega Menu Feature Title',
+      defaultValue: 'Resiliency Report Alerts',
+    }),
+    featureSummary: props.Text({
+      name: 'Mega Menu Feature Summary',
+      defaultValue: 'Active supply disruptions and market signals for care continuity.',
+    }),
+    featureCta: props.Text({
+      name: 'Mega Menu Feature CTA',
+      defaultValue: 'Explore Our Insights',
+    }),
+    featureItemOneTitle: props.Text({
+      name: 'Mega Menu Feature Item 1 Title',
+      defaultValue: 'Vascular, Angiographic, and Dialysis Kits Shortages',
+    }),
+    featureItemOneMeta: props.Text({
+      name: 'Mega Menu Feature Item 1 Meta',
+      defaultValue: 'Resiliency Report',
+    }),
+    featureItemTwoTitle: props.Text({
+      name: 'Mega Menu Feature Item 2 Title',
+      defaultValue: 'Nasal Oral ETT Backorders',
+    }),
+    featureItemTwoMeta: props.Text({
+      name: 'Mega Menu Feature Item 2 Meta',
+      defaultValue: 'Resiliency Report',
+    }),
+    featureItemThreeTitle: props.Text({
+      name: 'Mega Menu Feature Item 3 Title',
+      defaultValue: 'Neurosponges Disruption',
+    }),
+    featureItemThreeMeta: props.Text({
+      name: 'Mega Menu Feature Item 3 Meta',
+      defaultValue: 'Resiliency Report',
+    }),
     categoriesJson: props.Text({
       name: 'Categories JSON',
       defaultValue: '',
