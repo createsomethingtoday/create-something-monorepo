@@ -251,9 +251,7 @@
     <Button href={agencyCoreMessaging.workflowMappingSessionHref}>
       {agencyCoreMessaging.bookMappingSessionLabel}
     </Button>
-    <Button href="/dify/ship-dify-app-with-mcp-tools" variant="secondary">
-      Read Shipping Guide
-    </Button>
+    <Button href="/dify/ship-dify-app-with-mcp-tools" variant="secondary">Read Shipping Guide</Button>
     <Button href="/dify/agent-eval-gates" variant="secondary">Read Eval Gates</Button>
     <Button href="/dify/content-engine" variant="secondary">See Content Engine</Button>
     <Button href="https://createsomething.io/papers/policy-os-contract-bundle" variant="secondary">

@@ -74,6 +74,36 @@ export default declareComponent(CatoNavigation, {
       name: 'Insights Home Link',
       tooltip: 'Optional override for the Insights Home link inside the mega menu.',
     }),
+    featureLabel: props.Text({
+      name: 'Mega Menu Feature Label',
+      defaultValue: 'Featured',
+    }),
+    featureTitle: props.Text({
+      name: 'Mega Menu Feature Title',
+      defaultValue: 'Resiliency Report Alerts',
+    }),
+    featureSummary: props.Text({
+      name: 'Mega Menu Feature Summary',
+      defaultValue: 'Active supply disruptions and market signals for care continuity.',
+    }),
+    featureCta: props.Text({
+      name: 'Mega Menu Feature CTA',
+      defaultValue: 'Explore Our Insights',
+    }),
+    featureHref: props.Text({
+      name: 'Mega Menu Feature URL',
+      defaultValue: '',
+      tooltip: 'Optional URL for the right-side mega-menu feature card. If blank, the Resiliency Report Alerts link is used.',
+    }),
+    featureItemsJson: props.Text({
+      name: 'Mega Menu Feature Items JSON',
+      defaultValue: '',
+      tooltip: 'Optional JSON array for the right-side feature list: [{ "title": "...", "resourceType": "..." }].',
+    }),
+    showFeatureItems: props.Boolean({
+      name: 'Show Mega Menu Feature Items',
+      defaultValue: true,
+    }),
     resiliencyLink: props.Link({
       name: 'Resiliency Report Alerts Link',
       tooltip: 'Preferred: select the Resiliency Report Alerts page used in the mega menu.',
@@ -81,10 +111,6 @@ export default declareComponent(CatoNavigation, {
     researchLink: props.Link({
       name: 'Cato Research Link',
       tooltip: 'Preferred: select the Cato Research page used in the mega menu.',
-    }),
-    whitepapersLink: props.Link({
-      name: 'Whitepapers Link',
-      tooltip: 'Preferred: select the Whitepapers page used in the mega menu.',
     }),
     newsroomLink: props.Link({
       name: 'Newsroom Link',
@@ -125,90 +151,6 @@ export default declareComponent(CatoNavigation, {
     showInsightsMegaMenu: props.Boolean({
       name: 'Show Insights Mega Menu',
       defaultValue: true,
-    }),
-    introKicker: props.Text({
-      name: 'Mega Menu Intro Kicker',
-      defaultValue: 'Insights',
-    }),
-    heading: props.Text({
-      name: 'Mega Menu Heading',
-      defaultValue: 'Procurement Intelligence for Resilient Care',
-    }),
-    summary: props.Text({
-      name: 'Mega Menu Summary',
-      defaultValue: 'Current analysis of the dynamics shaping the healthcare supply chain.',
-    }),
-    introCtaLabel: props.Text({
-      name: 'Mega Menu Intro CTA Label',
-      defaultValue: 'Explore Cato Insights',
-    }),
-    browseKicker: props.Text({
-      name: 'Mega Menu Browse Kicker',
-      defaultValue: 'Browse insights',
-    }),
-    resiliencyMenuTitle: props.Text({
-      name: 'Mega Menu Resiliency Title',
-      defaultValue: 'Resiliency Report Alerts',
-    }),
-    resiliencyMenuSummary: props.Text({
-      name: 'Mega Menu Resiliency Summary',
-      defaultValue: 'Access market signals for active supply disruptions.',
-    }),
-    researchMenuTitle: props.Text({
-      name: 'Mega Menu Research Title',
-      defaultValue: 'Cato Research',
-    }),
-    researchMenuSummary: props.Text({
-      name: 'Mega Menu Research Summary',
-      defaultValue: 'Explore supply chain resilience best practices.',
-    }),
-    newsroomMenuTitle: props.Text({
-      name: 'Mega Menu Newsroom Title',
-      defaultValue: 'Newsroom',
-    }),
-    newsroomMenuSummary: props.Text({
-      name: 'Mega Menu Newsroom Summary',
-      defaultValue: 'Follow Cato launches, events, press notes, and milestones.',
-    }),
-    featureLabel: props.Text({
-      name: 'Mega Menu Feature Label',
-      defaultValue: 'Featured',
-    }),
-    featureTitle: props.Text({
-      name: 'Mega Menu Feature Title',
-      defaultValue: 'Resiliency Report Alerts',
-    }),
-    featureSummary: props.Text({
-      name: 'Mega Menu Feature Summary',
-      defaultValue: 'Active supply disruptions and market signals for care continuity.',
-    }),
-    featureCta: props.Text({
-      name: 'Mega Menu Feature CTA',
-      defaultValue: 'Explore Our Insights',
-    }),
-    featureItemOneTitle: props.Text({
-      name: 'Mega Menu Feature Item 1 Title',
-      defaultValue: 'Vascular, Angiographic, and Dialysis Kits Shortages',
-    }),
-    featureItemOneMeta: props.Text({
-      name: 'Mega Menu Feature Item 1 Meta',
-      defaultValue: 'Resiliency Report',
-    }),
-    featureItemTwoTitle: props.Text({
-      name: 'Mega Menu Feature Item 2 Title',
-      defaultValue: 'Nasal Oral ETT Backorders',
-    }),
-    featureItemTwoMeta: props.Text({
-      name: 'Mega Menu Feature Item 2 Meta',
-      defaultValue: 'Resiliency Report',
-    }),
-    featureItemThreeTitle: props.Text({
-      name: 'Mega Menu Feature Item 3 Title',
-      defaultValue: 'Neurosponges Disruption',
-    }),
-    featureItemThreeMeta: props.Text({
-      name: 'Mega Menu Feature Item 3 Meta',
-      defaultValue: 'Resiliency Report',
     }),
     categoriesJson: props.Text({
       name: 'Categories JSON',

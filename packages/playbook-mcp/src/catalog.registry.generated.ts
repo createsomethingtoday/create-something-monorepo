@@ -131,6 +131,19 @@ export const REGISTRY_CATALOG_ENTRIES = [
     "authType": "bearer"
   },
   {
+    "name": "Webflow Reviewer Exceptions",
+    "slug": "webflow-reviewer-exceptions",
+    "url": "https://webflow-reviewer-exceptions-mcp.createsomething.workers.dev",
+    "description": "Standalone read/write reviewer exception memory MCP for template-review agents and Dify external knowledge retrieval",
+    "category": "create-something",
+    "transports": [
+      "http",
+      "sse"
+    ],
+    "requiresAuth": true,
+    "authType": "bearer"
+  },
+  {
     "name": "Webflow Template Review",
     "slug": "webflow-template-review",
     "url": "https://webflow-template-review-mcp.createsomething.workers.dev",

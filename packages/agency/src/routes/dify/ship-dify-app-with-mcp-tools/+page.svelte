@@ -502,7 +502,7 @@
 <ClearCtaBand
   eyebrow="Next step"
   title="Bring one Dify workflow before adding more tools."
-  description="I'll map the workflow, MCP tool boundary, approval path, eval gates, and client-safe proof package before the app gets more autonomy."
+  description="I’ll map the workflow, MCP tool boundary, approval path, eval gates, and client-safe proof package before the app gets more autonomy."
   items={ctaItems}
 >
   {#snippet actions()}

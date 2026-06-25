@@ -12,6 +12,7 @@
     type ClearProofItem,
     type ClearQuoteMetric
   } from '@create-something/canon';
+  import PublicAtlasStoryCanvas from '$lib/components/PublicAtlasStoryCanvas.svelte';
   import WorkflowSignalIcon from '$lib/components/WorkflowSignalIcon.svelte';
   import { products, type Product } from '$lib/data/services';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
@@ -321,6 +322,24 @@
         </article>
       {/each}
     </div>
+  {/snippet}
+</ClearPageSection>
+
+<ClearPageSection
+  variant="soft"
+  eyebrow="Proof canvas"
+  title="Proof becomes useful when the map shows the commitment boundary."
+  description="A receipt is not just a log. It names what can run, what waits for judgment, what must stop, and what evidence lets the next owner trust the handoff."
+>
+  {#snippet after()}
+    <PublicAtlasStoryCanvas
+      starterId="construction-rfi-submittal-control"
+      storyId="products-construction-proof-story"
+      eyebrow="Proof canvas"
+      title="The receipt matters because the commitment boundary is visible."
+      description="This read-only map shows proof as an operating path: collect evidence, route the packet, draft support, preserve human judgment, and stop before scope or contract commitment."
+      compact
+    />
   {/snippet}
 </ClearPageSection>
 

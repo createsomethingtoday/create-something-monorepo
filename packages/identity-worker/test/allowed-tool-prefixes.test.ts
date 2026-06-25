@@ -13,7 +13,7 @@ test('Webflow template reviewer accounts resolve to the current Phase A tool sur
 		allowedToolPrefixes: ['webflow-template-review-mcp__template_review_assign_self'],
 	});
 
-	assert.equal(prefixes?.length, 22);
+	assert.equal(prefixes?.length, 23);
 	assert.ok(prefixes?.includes('webflow-template-review-mcp__template_review_get_metrics'));
 	assert.ok(prefixes?.includes('webflow-template-review-mcp__template_review_run_published_site_validation'));
 	assert.ok(prefixes?.includes('webflow-template-review-mcp__template_review_request_changes'));
@@ -23,6 +23,7 @@ test('Webflow template reviewer accounts resolve to the current Phase A tool sur
 	assert.ok(prefixes?.includes('webflow-template-review-mcp__template_review_prepare_published_site_sandbox'));
 	assert.ok(prefixes?.includes('webflow-template-review-mcp__template_review_save_agent_feedback'));
 	assert.ok(prefixes?.includes('webflow-template-review-mcp__template_review_save_draft_feedback'));
+	assert.ok(prefixes?.includes('webflow-reviewer-exceptions-mcp__reviewer_exceptions_'));
 	assert.equal(prefixes?.includes('webflow-template-review-mcp__template_review_assign_reviewer'), false);
 });
 
@@ -34,7 +35,7 @@ test('Webflow template reviewer host binding resolves stale empty prefixes to th
 		allowedToolPrefixes: [],
 	});
 
-	assert.equal(prefixes?.length, 22);
+	assert.equal(prefixes?.length, 23);
 	assert.ok(prefixes?.includes('webflow-template-review-mcp__template_review_get_metrics'));
 	assert.ok(prefixes?.includes('webflow-template-review-mcp__template_review_run_published_site_validation'));
 });
@@ -47,10 +48,11 @@ test('central Webflow template review host resolves to the Phase A surface', () 
 		allowedToolPrefixes: ['webflow-template-review-mcp__template_review_get_metrics'],
 	});
 
-	assert.equal(prefixes?.length, 22);
+	assert.equal(prefixes?.length, 23);
 	assert.ok(prefixes?.includes('webflow-template-review-mcp__template_review_save_agent_feedback'));
 	assert.ok(prefixes?.includes('webflow-template-review-mcp__template_review_format_agent_review_feedback'));
 	assert.ok(prefixes?.includes('webflow-template-review-mcp__template_review_prepare_published_site_sandbox'));
+	assert.ok(prefixes?.includes('webflow-reviewer-exceptions-mcp__reviewer_exceptions_'));
 });
 
 test('Webflow template reviewer tokens may resolve against the central review host', () => {

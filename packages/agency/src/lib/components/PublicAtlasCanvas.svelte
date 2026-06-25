@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
 	import { onMount } from 'svelte';
+	import { getAnalytics } from '@create-something/canon/analytics';
 	import {
 		computePublicAtlasReadiness,
 		createPublicAtlasCanvas,
@@ -19,10 +20,7 @@
 		type PublicAtlasNodeStatus,
 		type PublicAtlasReadiness
 	} from '$lib/atlas/public';
-	import type {
-		PublicAtlasFlowController,
-		PublicAtlasFlowProps
-	} from '$lib/components/PublicAtlasFlow';
+	import PublicAtlasFlow from '$lib/components/PublicAtlasFlow.svelte';
 
 	type AgentMessage = {
 		role: 'assistant' | 'visitor';
@@ -62,8 +60,6 @@
 	let starterState = '';
 	let hydrated = false;
 	let addMenuOpen = false;
-	let flowHost: HTMLDivElement;
-	let flowController: PublicAtlasFlowController | undefined;
 	let usage: AgentResponse['usage'] = {
 		tier: 'anonymous',
 		messagesUsed: 0,
@@ -77,7 +73,7 @@
 		{
 			role: 'assistant',
 			text:
-				'Name the workflow, the owner, and the first decision. I will help turn that into a map with human tasks, AI tasks, systems, data, constraints, and touchpoints.'
+				'Set the direction: name the workflow, owner, and first decision. Atlas will map the governed execution path with human review, tool boundaries, data, systems, constraints, and touchpoints.'
 		}
 	];
 	const agentPrompts = [
@@ -117,6 +113,53 @@
 	$: mappedPercent = Math.round((selectedDimensionCount / PUBLIC_ATLAS_LANES.length) * 100);
 	$: leadTierLabel = usage.tier === 'warmLead' ? 'Warm lead' : 'Anonymous map';
 
+	function normalizeAttributionToken(value: string | null, fallback?: string) {
+		const normalized = (value ?? fallback ?? '')
+			.toLowerCase()
+			.replace(/[^a-z0-9_-]+/g, '-')
+			.replace(/^-+|-+$/g, '')
+			.slice(0, 90);
+		return normalized || undefined;
+	}
+
+	function getEntryAttribution() {
+		if (!browser) return {};
+		const params = new URLSearchParams(window.location.search);
+		return {
+			entrySource: normalizeAttributionToken(
+				params.get('entry_source') ?? params.get('source') ?? params.get('utm_source')
+			),
+			campaign: normalizeAttributionToken(params.get('campaign') ?? params.get('utm_campaign')),
+			content: normalizeAttributionToken(params.get('utm_content')),
+			medium: normalizeAttributionToken(params.get('utm_medium'))
+		};
+	}
+
+	function getAtlasAnalyticsMetadata(extra: Record<string, unknown> = {}) {
+		return {
+			surface: 'public_atlas_canvas',
+			canvasId: canvas.id,
+			readiness: readiness.slug,
+			readinessScore: readiness.score,
+			mappedDimensionCount: selectedDimensionCount,
+			nodeCount: canvas.nodes.length,
+			edgeCount: canvas.edges.length,
+			mutationCount: canvas.mutationCount,
+			agentMessages: canvas.agentMessages,
+			usageTier: usage.tier,
+			...getEntryAttribution(),
+			...extra
+		};
+	}
+
+	function trackAtlasEvent(action: string, extra?: Record<string, unknown>) {
+		getAnalytics()?.track('interaction', action, {
+			target: 'public_atlas_canvas',
+			value: readiness.score,
+			metadata: getAtlasAnalyticsMetadata(extra)
+		});
+	}
+
 	function buildBookingUrl() {
 		const base = bookingHref.split('?')[0] || '/book';
 		const params = new URLSearchParams({
@@ -129,6 +172,11 @@
 			atlas_session_id: canvas.id,
 			agent_messages: String(canvas.agentMessages)
 		});
+		const attribution = getEntryAttribution();
+		if (attribution.entrySource) params.set('entry_source', String(attribution.entrySource));
+		if (attribution.campaign) params.set('campaign', String(attribution.campaign));
+		if (attribution.content) params.set('utm_content', String(attribution.content));
+		if (attribution.medium) params.set('utm_medium', String(attribution.medium));
 		return `${base}?${params.toString()}`;
 	}
 
@@ -184,16 +232,10 @@
 		starterState = starter ? `${starter.name} loaded` : 'Starter loaded';
 		saveState = 'Starter loaded';
 		persistCanvas();
-	}
-
-	function buildFlowProps(): PublicAtlasFlowProps {
-		return {
-			canvas,
-			selectedNodeId,
-			onConnectNodes: connectNodes,
-			onMoveNode: moveNode,
-			onSelectNode: selectNode
-		};
+		trackAtlasEvent('atlas_starter_loaded', {
+			starterId,
+			starterFound: Boolean(starter)
+		});
 	}
 
 	function updateCanvas(next: PublicAtlasCanvas) {
@@ -221,6 +263,7 @@
 		});
 		selectedNodeId = node.id;
 		selectedSourceId = node.id;
+		trackAtlasEvent('atlas_node_added', { nodeKind: kind });
 	}
 
 	function addNodeFromMenu(kind: PublicAtlasNodeKind) {
@@ -237,6 +280,7 @@
 			edges: canvas.edges.filter((edge) => edge.source !== nodeId && edge.target !== nodeId),
 			mutationCount: canvas.mutationCount + 1
 		});
+		trackAtlasEvent('atlas_node_removed', { nodeKind: node.kind });
 	}
 
 	function updateNode(nodeId: string, patch: Partial<PublicAtlasNode>) {
@@ -263,6 +307,7 @@
 			],
 			mutationCount: canvas.mutationCount + 1
 		});
+		trackAtlasEvent('atlas_edge_connected');
 	}
 
 	function connectSelectedTo(targetId: string) {
@@ -281,6 +326,10 @@
 		agentBusy = true;
 		agentError = '';
 		messages = [...messages, { role: 'visitor', text }];
+		trackAtlasEvent('atlas_agent_prompt_submitted', {
+			messageLength: text.length,
+			hasVisitorEmail: Boolean(visitorEmail.trim())
+		});
 
 		try {
 			const response = await fetch('/api/atlas/public-agent', {
@@ -301,9 +350,17 @@
 			usage = result.usage;
 			updateCanvas(result.canvas);
 			messages = [...messages, { role: 'assistant', text: result.reply }];
+			trackAtlasEvent('atlas_agent_response_received', {
+				agentMode: result.agentMode ?? 'unknown',
+				mutationCount: result.mutationCount,
+				suggestionCount: result.suggestions?.length ?? 0
+			});
 		} catch (error) {
 			agentError = error instanceof Error ? error.message : 'The mapping agent is unavailable.';
 			messages = [...messages, { role: 'assistant', text: agentError }];
+			trackAtlasEvent('atlas_agent_response_failed', {
+				errorName: error instanceof Error ? error.name : 'unknown'
+			});
 		} finally {
 			agentBusy = false;
 		}
@@ -313,17 +370,24 @@
 		persistCanvas();
 		if (!browser || !navigator.clipboard) {
 			copyState = 'Saved';
+			trackAtlasEvent('atlas_summary_copied', { clipboardAvailable: false });
 			return;
 		}
 		try {
 			await navigator.clipboard.writeText(summary);
 			copyState = 'Copied';
+			trackAtlasEvent('atlas_summary_copied', { clipboardAvailable: true });
 		} catch {
 			copyState = 'Saved';
+			trackAtlasEvent('atlas_summary_copied', {
+				clipboardAvailable: true,
+				clipboardWriteSucceeded: false
+			});
 		}
 	}
 
 	function resetCanvas() {
+		trackAtlasEvent('atlas_canvas_reset');
 		canvas = createPublicAtlasCanvas();
 		selectedNodeId = 'data_workflow';
 		selectedSourceId = 'data_workflow';
@@ -340,32 +404,29 @@
 		addMenuOpen = false;
 	}
 
+	function handleBookingClick() {
+		persistCanvas();
+		trackAtlasEvent('atlas_booking_cta_clicked', {
+			bookingHref: bookingUrl
+		});
+	}
+
 	onMount(() => {
 		const raw = window.localStorage.getItem(PUBLIC_ATLAS_STORAGE_KEYS.canvas);
+		let restored = false;
 		if (raw) {
 			try {
 				canvas = normalizePublicAtlasCanvas(JSON.parse(raw));
 				selectedNodeId = canvas.nodes[0]?.id ?? '';
 				selectedSourceId = canvas.nodes.find((node) => node.id === 'data_workflow')?.id ?? selectedNodeId;
 				saveState = 'Draft restored';
+				restored = true;
 			} catch {
 				saveState = 'Draft not saved';
 			}
 		}
 		hydrated = true;
-
-		let destroyed = false;
-		void (async () => {
-			const module = await import('$lib/components/PublicAtlasFlow');
-			if (destroyed || !flowHost) return;
-			flowController = module.mountPublicAtlasFlow(flowHost, buildFlowProps());
-		})();
-
-		return () => {
-			destroyed = true;
-			flowController?.destroy();
-			flowController = undefined;
-		};
+		trackAtlasEvent('atlas_canvas_started', { restored });
 	});
 
 	$: if (browser && hydrated) {
@@ -373,20 +434,15 @@
 		persistCanvas();
 	}
 
-	$: if (flowController && hydrated) {
-		canvas;
-		selectedNodeId;
-		flowController.update(buildFlowProps());
-	}
 </script>
 
 <section class="public-atlas" class:compact={compact} aria-label="Public Atlas workflow canvas">
 	<div class="atlas-copy">
 		<span>Public Atlas canvas</span>
-		<h3>Turn one workflow into a map before booking.</h3>
+		<h3>Set the direction. Atlas maps the execution.</h3>
 		<p>
-			Chat with the constrained mapping agent, shape the canvas, then carry the summary into the
-			mapping session. This public agent can only edit this prospect map.
+			Start with a workflow, owner, and decision. The canvas turns that context into a governed
+			map with human review, tool boundaries, and booking-ready evidence.
 		</p>
 	</div>
 
@@ -440,11 +496,15 @@
 					</div>
 				</div>
 
-				<div
-					class="atlas-flow-viewport"
-					bind:this={flowHost}
-					aria-label="Atlas flow canvas"
-				></div>
+				<div class="atlas-flow-viewport" aria-label="Atlas flow canvas">
+					<PublicAtlasFlow
+						{canvas}
+						{selectedNodeId}
+						onConnectNodes={connectNodes}
+						onMoveNode={moveNode}
+						onSelectNode={selectNode}
+					/>
+				</div>
 
 				<div class="handoffs">
 					<div class="handoffs-title">
@@ -619,7 +679,7 @@
 					<pre>{summary}</pre>
 					<div class="summary-actions">
 						<button type="button" onclick={copySummary}>{copyState || 'Copy summary'}</button>
-						<a href={bookingUrl} onclick={persistCanvas}>Use this in booking</a>
+						<a href={bookingUrl} onclick={handleBookingClick}>Use this in booking</a>
 						<button type="button" class="danger" onclick={resetCanvas}>Reset</button>
 					</div>
 				</details>
@@ -695,7 +755,7 @@
 	.danger {
 		border: 1px solid var(--color-clear-border, #e1e1e1);
 		border-radius: 6px;
-		background: #ffffff;
+		background: var(--color-clear-panel, #ffffff);
 		color: var(--color-clear-onyx, #0a0e19);
 		font: inherit;
 	}
@@ -715,7 +775,7 @@
 	.summary-panel {
 		border: 1px solid var(--color-clear-border, #e1e1e1);
 		border-radius: 8px;
-		background: #ffffff;
+		background: var(--color-clear-panel, #ffffff);
 		box-shadow: 0 18px 44px rgba(10, 14, 25, 0.045);
 	}
 
@@ -750,8 +810,8 @@
 
 	.starter-grid button:hover,
 	.starter-grid button:focus-visible {
-		border-color: #0a0e19;
-		background: #fbfbf8;
+		border-color: var(--color-clear-onyx, #0a0e19);
+		background: var(--color-clear-porcelain, #f9f9f9);
 	}
 
 	.starter-grid strong {
@@ -796,7 +856,7 @@
 		gap: 0.12rem;
 		border: 1px solid var(--color-clear-border, #e1e1e1);
 		border-radius: 999px;
-		background: #fbfbf8;
+		background: var(--color-clear-porcelain, #f9f9f9);
 		color: var(--color-clear-onyx, #0a0e19);
 		padding: 0.45rem 0.65rem;
 	}
@@ -820,14 +880,14 @@
 		height: 0.45rem;
 		overflow: hidden;
 		border-radius: 999px;
-		background: #ecece6;
+		background: var(--color-clear-border, #e1e1e1);
 	}
 
 	.progress-meter span {
 		display: block;
 		height: 100%;
 		border-radius: inherit;
-		background: #0a0e19;
+		background: var(--color-clear-onyx, #0a0e19);
 	}
 
 	.dimension-strip {
@@ -843,7 +903,7 @@
 		gap: 0.3rem;
 		border: 1px solid var(--color-clear-border, #e1e1e1);
 		border-radius: 999px;
-		background: #fbfbf8;
+		background: var(--color-clear-porcelain, #f9f9f9);
 		color: var(--color-clear-grey, #636363);
 		font-size: 0.72rem;
 		font-weight: 700;
@@ -852,9 +912,9 @@
 	}
 
 	.dimension-strip span.mapped {
-		border-color: #d7e6dc;
-		background: #f5fbf6;
-		color: #1e3c2c;
+		border-color: color-mix(in srgb, var(--color-clear-moss, #397554) 24%, white);
+		background: color-mix(in srgb, var(--color-clear-pistachio, #dbefdb) 34%, white);
+		color: var(--color-clear-moss, #397554);
 	}
 
 	.dimension-strip small {
@@ -883,7 +943,7 @@
 		width: min(19rem, calc(100vw - 2rem));
 		border: 1px solid var(--color-clear-border, #e1e1e1);
 		border-radius: 8px;
-		background: #ffffff;
+		background: var(--color-clear-panel, #ffffff);
 		box-shadow: 0 18px 38px rgba(10, 14, 25, 0.14);
 		padding: 0.45rem;
 	}
@@ -897,7 +957,7 @@
 
 	.add-node-options button:hover,
 	.add-node-trigger:hover {
-		background: #f4f4ef;
+		background: var(--color-clear-porcelain-soft, #f2f2f2);
 	}
 
 	.atlas-flow-viewport {
@@ -906,8 +966,12 @@
 		min-height: 31rem;
 		overflow: hidden;
 		background:
-			linear-gradient(180deg, rgba(255, 255, 255, 0.8), rgba(251, 251, 248, 0.92)),
-			#fbfbf8;
+			linear-gradient(
+				180deg,
+				color-mix(in srgb, var(--color-clear-panel, #ffffff) 82%, transparent),
+				color-mix(in srgb, var(--color-clear-porcelain, #f9f9f9) 92%, transparent)
+			),
+			var(--color-clear-porcelain, #f9f9f9);
 	}
 
 	.handoffs {
@@ -915,7 +979,7 @@
 		gap: 0.45rem;
 		padding: 0.85rem 0.95rem;
 		border-top: 1px solid var(--color-clear-border, #e1e1e1);
-		background: #fcfcfa;
+		background: var(--color-clear-porcelain, #f9f9f9);
 	}
 
 	.handoffs-title {
@@ -927,7 +991,7 @@
 
 	.handoffs-title strong {
 		border-radius: 999px;
-		background: #ffffff;
+		background: var(--color-clear-panel, #ffffff);
 		color: var(--color-clear-onyx, #0a0e19);
 		font-size: 0.8rem;
 		padding: 0.25rem 0.5rem;
@@ -963,10 +1027,10 @@
 	.agent-meter {
 		display: grid;
 		min-width: 4.6rem;
-		border: 1px solid #d7e6dc;
+		border: 1px solid color-mix(in srgb, var(--color-clear-moss, #397554) 24%, white);
 		border-radius: 8px;
-		background: #f5fbf6;
-		color: #1e3c2c;
+		background: color-mix(in srgb, var(--color-clear-pistachio, #dbefdb) 34%, white);
+		color: var(--color-clear-moss, #397554);
 		padding: 0.45rem 0.55rem;
 		text-align: right;
 	}
@@ -1018,7 +1082,7 @@
 	.agent-form textarea:focus {
 		outline: none;
 		border-color: rgba(10, 14, 25, 0.38);
-		background: #ffffff;
+		background: var(--color-clear-panel, #ffffff);
 		box-shadow: 0 0 0 3px rgba(10, 14, 25, 0.06);
 	}
 
@@ -1038,11 +1102,11 @@
 	}
 
 	.chat-log article.assistant {
-		background: #f4f4ef;
+		background: var(--color-clear-porcelain-soft, #f2f2f2);
 	}
 
 	.chat-log article.visitor {
-		background: #eef4ff;
+		background: color-mix(in srgb, var(--color-clear-pastel-blue, #afc1fd) 22%, white);
 	}
 
 	.chat-log strong {
@@ -1075,7 +1139,7 @@
 
 	.prompt-row button {
 		min-height: 2rem;
-		background: #fbfbf8;
+		background: var(--color-clear-porcelain, #f9f9f9);
 		color: var(--color-clear-grey, #636363);
 		font-size: 0.78rem;
 		font-weight: 700;
@@ -1084,7 +1148,7 @@
 
 	.prompt-row button:hover {
 		border-color: rgba(10, 14, 25, 0.18);
-		background: #f4f4ef;
+		background: var(--color-clear-porcelain-soft, #f2f2f2);
 		color: var(--color-clear-onyx, #0a0e19);
 	}
 
@@ -1105,11 +1169,11 @@
 	.agent-form button,
 	.summary-actions a {
 		background: var(--color-clear-onyx, #0a0e19);
-		color: #ffffff;
+		color: var(--color-clear-panel, #ffffff);
 	}
 
 	.agent-form .prompt-row button {
-		background: #fbfbf8;
+		background: var(--color-clear-porcelain, #f9f9f9);
 		color: var(--color-clear-grey, #636363);
 	}
 
@@ -1136,7 +1200,7 @@
 	.limit-copy span {
 		border: 1px solid var(--color-clear-border, #e1e1e1);
 		border-radius: 999px;
-		background: #fbfbf8;
+		background: var(--color-clear-porcelain, #f9f9f9);
 		padding: 0.3rem 0.5rem;
 	}
 

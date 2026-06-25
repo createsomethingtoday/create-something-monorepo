@@ -143,7 +143,8 @@
         "composio-toolkit-notion",
         "composio-toolkit-exa",
         "meetings",
-        "webflow-template-review-mcp"
+        "webflow-template-review-mcp",
+        "webflow-reviewer-exceptions-mcp"
       ],
       "maxProxyTools": null
     },
@@ -179,18 +180,20 @@
       "description": "Phase A reviewer pack for Webflow Marketplace template review. Compact reviewer workflow reads plus bounded reviewer-safe actions and metrics.",
       "mode": "compact",
       "activeServers": [
-        "webflow-template-review-mcp"
+        "webflow-template-review-mcp",
+        "webflow-reviewer-exceptions-mcp"
       ],
-      "maxProxyTools": 18
+      "maxProxyTools": 24
     },
     "webflow-marketplace-review-phase-b": {
       "description": "Phase B reviewer pack for Webflow Marketplace template review. Compact reviewer workflow reads plus selected analysis/originality tools.",
       "mode": "compact",
       "activeServers": [
         "webflow-template-review-mcp",
+        "webflow-reviewer-exceptions-mcp",
         "webflow-local"
       ],
-      "maxProxyTools": 30
+      "maxProxyTools": 36
     },
     "webflow-marketplace-app-review-phase-a": {
       "description": "Phase A reviewer pack for Webflow Marketplace app review. Read-only app review context only.",

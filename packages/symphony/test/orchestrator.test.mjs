@@ -3,7 +3,7 @@ import test from 'node:test';
 
 import { SymphonyService } from '../src/orchestrator.js';
 
-test('SymphonyService does not dispatch blocked ready issues', () => {
+function createService() {
   const service = new SymphonyService();
   service.current_config = {
     tracker: {
@@ -15,22 +15,41 @@ test('SymphonyService does not dispatch blocked ready issues', () => {
       max_concurrent_agents_by_state: {},
     },
   };
+  return service;
+}
 
+function createIssue(overrides = {}) {
+  return {
+    id: 'lm-blocked-1',
+    identifier: 'lm-blocked-1',
+    title: 'Blocked code-quality task',
+    description: null,
+    priority: 2,
+    state: 'ready',
+    branch_name: null,
+    url: null,
+    labels: ['code-quality'],
+    blocked_by: [{ id: 'lm-blocker-1', identifier: 'lm-blocker-1', state: 'claimed' }],
+    created_at: '2026-03-14T00:00:00.000Z',
+    updated_at: '2026-03-14T00:00:00.000Z',
+    ...overrides,
+  };
+}
+
+test('SymphonyService does not dispatch blocked ready issues', () => {
+  const service = createService();
   const should_dispatch = service.should_dispatch(
-    {
-      id: 'lm-blocked-1',
-      identifier: 'lm-blocked-1',
-      title: 'Blocked code-quality task',
-      description: null,
-      priority: 2,
-      state: 'ready',
-      branch_name: null,
-      url: null,
-      labels: ['code-quality'],
-      blocked_by: [{ id: 'lm-blocker-1', identifier: 'lm-blocker-1', state: 'claimed' }],
-      created_at: '2026-03-14T00:00:00.000Z',
-      updated_at: '2026-03-14T00:00:00.000Z',
-    },
+    createIssue(),
+    false,
+  );
+
+  assert.equal(should_dispatch, false);
+});
+
+test('SymphonyService does not dispatch blocked in-progress issues', () => {
+  const service = createService();
+  const should_dispatch = service.should_dispatch(
+    createIssue({ state: 'claimed' }),
     false,
   );
 

@@ -14,7 +14,7 @@ import { buildWorkflowTemplate } from '../workflows/build.js';
 import { workflowTemplateToMermaid } from '../workflows/mermaid.js';
 import { mapToolSequenceToWorkflowDefinition } from '../workflows/map.js';
 import { evaluateConstraintPolicyHybrid, evaluateConstraintPolicyWithRollout, compileConstraintPolicy, } from '@create-something/policy-os-engine';
-import { AtlasGetSchema, AtlasSearchSchema, AtlasStudioEdgeAddSchema, AtlasStudioNodeAddSchema, AtlasStudioObserveSchema, AtlasStudioHealSchema, AtlasStudioProposalActionReviewSchema, AtlasStudioProposalHandoffSchema, AtlasStudioProposalSchema, AtlasStudioPortalStartSchema, AtlasStudioSessionCreateSchema, AtlasStudioSessionIdSchema, AtlasStudioStoryFocusSchema, AtlasStudioStoryQuestionAddSchema, AtlasStudioStoryStepActivateSchema, AtlasStudioSuggestionAcceptSchema, WorkflowIdSchema, WorkflowMapFromToolSequenceSchema, McpCatalogListSchema, McpIntrospectSchema, McpMapSchema, VersionSelectionGetSchema, VersionSelectionSetSchema, JudgmentPolicyActivateSchema, JudgmentPolicyCompareReportGetSchema, JudgmentDashboardSummaryParamsSchema, JudgmentDashboardSummarySchema, JudgmentPolicyEstimateSchema, JudgmentEngineRolloutGetSchema, JudgmentEngineRolloutSetSchema, JudgmentSecurityStatusGetSchema, JudgmentSecurityAccessSetSchema, JudgmentSecurityIncidentResolveSchema, JudgmentSecurityIncidentReviewNextSchema, JudgmentPolicyGetSchema, JudgmentPolicySaveSchema, AutomationContractGetSchema, AutomationContractUpsertSchema, AutomationRunStartSchema, ApprovalInboxDecideSchema, } from '../schemas/index.js';
+import { AtlasGetSchema, AtlasSearchSchema, AtlasStudioEdgeAddSchema, AtlasStudioEdgeUpdateSchema, AtlasStudioNodeAddSchema, AtlasStudioObserveSchema, AtlasStudioHealSchema, AtlasStudioProposalActionReviewSchema, AtlasStudioProposalHandoffSchema, AtlasStudioProposalSchema, AtlasStudioPortalStartSchema, AtlasStudioSessionCreateSchema, AtlasStudioSessionIdSchema, AtlasStudioStoryFocusSchema, AtlasStudioStoryQuestionAddSchema, AtlasStudioStoryStepActivateSchema, AtlasStudioSuggestionAcceptSchema, WorkflowIdSchema, WorkflowMapFromToolSequenceSchema, McpCatalogListSchema, McpIntrospectSchema, McpMapSchema, VersionSelectionGetSchema, VersionSelectionSetSchema, JudgmentPolicyActivateSchema, JudgmentPolicyCompareReportGetSchema, JudgmentDashboardSummaryParamsSchema, JudgmentDashboardSummarySchema, JudgmentPolicyEstimateSchema, JudgmentEngineRolloutGetSchema, JudgmentEngineRolloutSetSchema, JudgmentSecurityStatusGetSchema, JudgmentSecurityAccessSetSchema, JudgmentSecurityIncidentResolveSchema, JudgmentSecurityIncidentReviewNextSchema, JudgmentPolicyGetSchema, JudgmentPolicySaveSchema, AutomationContractGetSchema, AutomationContractUpsertSchema, AutomationRunStartSchema, ApprovalInboxDecideSchema, } from '../schemas/index.js';
 import { findMcpCatalogEntry, listMcpCatalog, resolveMcpHttpEndpointUrl, resolveMcpHttpEndpointUrlFromUrl, } from '../mcps/catalog.js';
 import { introspectMcpServer } from '../mcps/introspect.js';
 import { mapMcpToWorkflowDefinition } from '../mcps/map.js';
@@ -26,7 +26,7 @@ import { getEngineMetricsSummary, recordEngineEvent } from '../storage/engine-ev
 import { claimNextSecurityIncidentForReview, evaluateAbusePatternAndMitigate, getSecurityIncidentById, getAccountAccess, listRecentSecurityIncidents, resolveSecurityIncident, setAccountAccess, } from '../storage/security.js';
 import { createAutomationRun, decideApproval, getActiveAutomationContract, listActiveAutomationContracts, listPendingApprovals, upsertAutomationContract, } from '../storage/control-plane.js';
 import { getJudgmentDashboardSummary } from '../storage/dashboard.js';
-import { acceptSuggestion, activateStoryStep, addEdge, addNode, addObservation, addStoryQuestion, advanceStoryStep, clearStoryFocus, createSession, exportSessionMarkdown, listSessions, readSession, setStoryFocus, updateNodes, } from '../studio/store.js';
+import { acceptSuggestion, activateStoryStep, addEdge, addNode, addObservation, addStoryQuestion, advanceStoryStep, clearStoryFocus, createSession, exportSessionMarkdown, listSessions, readSession, setStoryFocus, updateEdge, updateNodes, } from '../studio/store.js';
 import { getAtlasStudioAppHome, getAtlasBrowserPortalStatus, startAtlasBrowserPortal, stopAtlasBrowserPortal, } from '../studio/portal.js';
 import { healSessionProductionBindings } from '../studio/production-bindings.js';
 import { createWritebackProposal, exportWritebackProposalHandoffForSession, reviewWritebackProposalAction, } from '../studio/writeback-proposals.js';
@@ -670,6 +670,19 @@ export function registerTools(server) {
             accountId: ctx.accountId,
             sessionId: session.id,
             edge: session.canvas.edges.at(-1),
+            session,
+        });
+    }, { readOnly: false });
+    server.tool('atlas_studio_edge_update', 'Update communication fields on an existing Atlas Studio canvas edge.', AtlasStudioEdgeUpdateSchema.shape, async (params, ctx) => {
+        const input = AtlasStudioEdgeUpdateSchema.parse(params);
+        const session = await updateEdge(input.session_id, input.edge_id, {
+            label: input.label,
+            evidence: input.evidence,
+        }, atlasStudioCwd());
+        return jsonContent({
+            accountId: ctx.accountId,
+            sessionId: session.id,
+            edge: session.canvas.edges.find((edge) => edge.id === input.edge_id),
             session,
         });
     }, { readOnly: false });

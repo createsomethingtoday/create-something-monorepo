@@ -121,7 +121,7 @@ const AGENCY_CONTENT_ASSETS_BY_PATH: Record<string, AgencyContentAssetAnalytics>
     contentType: 'article',
     contentCluster: 'dify-governed-agent-systems',
     contentIntent: 'how-to',
-    contentBuyer: 'builder turning a Dify prototype into a governed MCP-backed workflow',
+    contentBuyer: 'builder or agency packaging a Dify workflow with governed MCP tools',
     contentFunnelStage: 'decision',
     contentPrimaryKeyword: 'ship Dify app with MCP tools',
     contentPrimaryCta: 'request-workflow-teardown'

@@ -16,6 +16,37 @@ const VISUAL_COLUMNS = [
 const COLUMN_GAP = 64;
 const KIND_RANK = new Map(LANE_ORDER.map((kind, index) => [kind, index]));
 const KIND_COLUMN = new Map(VISUAL_COLUMNS.flatMap((column, index) => column.kinds.map((kind) => [kind, { index, x: column.x, y: column.y }])));
+function boundedViewportWidth(width) {
+    if (!Number.isFinite(width) || !width)
+        return undefined;
+    return Math.max(360, Math.min(1680, width));
+}
+function kindColumnForViewport(viewportWidth) {
+    const width = boundedViewportWidth(viewportWidth);
+    if (!width || width >= 1360)
+        return KIND_COLUMN;
+    if (width < 760) {
+        return new Map(LANE_ORDER.map((kind) => {
+            const column = KIND_COLUMN.get(kind) ?? { index: 0 };
+            return [kind, { index: column.index, x: 48, y: 112 }];
+        }));
+    }
+    if (width < 1120) {
+        const rightX = Math.min(396, Math.max(328, width - 420));
+        const columns = [
+            { index: 0, kinds: ['actor', 'data', 'touchpoint'], x: 48, y: 124 },
+            { index: 1, kinds: ['system', 'ai', 'human', 'constraint'], x: rightX, y: 124 }
+        ];
+        return new Map(columns.flatMap((column) => column.kinds.map((kind) => [kind, column])));
+    }
+    const left = 64;
+    const step = Math.max(300, Math.min(372, (width - left - 340) / 3));
+    const columns = VISUAL_COLUMNS.map((column, index) => ({
+        ...column,
+        x: Math.round(left + step * index)
+    }));
+    return new Map(columns.flatMap((column, index) => column.kinds.map((kind) => [kind, { index, x: column.x, y: column.y }])));
+}
 export function detailModeForZoom(zoom) {
     if (zoom < 0.58)
         return 'compact';
@@ -66,10 +97,12 @@ export function agentActivityFromSessionChange(previous, next) {
     const message = changed.length === 1 ? `Agent ${action} ${first.label}` : `Agent updated ${changed.length} cards`;
     return { message, nodeIds };
 }
-export function tidyNodeUpdates(session) {
+export function tidyNodeUpdates(session, options = {}) {
     const cursors = new Map();
+    const singleColumn = (boundedViewportWidth(options.viewportWidth) ?? Infinity) < 760;
+    const kindColumn = kindColumnForViewport(options.viewportWidth);
     const ordered = [...session.canvas.nodes].sort((a, b) => {
-        const columnDelta = (KIND_COLUMN.get(a.kind)?.index ?? 0) - (KIND_COLUMN.get(b.kind)?.index ?? 0);
+        const columnDelta = (kindColumn.get(a.kind)?.index ?? 0) - (kindColumn.get(b.kind)?.index ?? 0);
         if (columnDelta !== 0)
             return columnDelta;
         if (a.y !== b.y)
@@ -80,10 +113,11 @@ export function tidyNodeUpdates(session) {
         return a.x - b.x;
     });
     return ordered.flatMap((node) => {
-        const column = KIND_COLUMN.get(node.kind) ?? { index: 0, x: 84, y: 198 };
+        const column = kindColumn.get(node.kind) ?? { index: 0, x: 84, y: 198 };
         const width = nodeWidthForMode(node, 'standard');
-        const y = cursors.get(column.index) ?? column.y;
-        cursors.set(column.index, y + estimatedNodeHeight(node, width) + COLUMN_GAP);
+        const cursorIndex = singleColumn ? 0 : column.index;
+        const y = cursors.get(cursorIndex) ?? column.y;
+        cursors.set(cursorIndex, y + estimatedNodeHeight(node, width) + COLUMN_GAP);
         const next = {
             id: node.id,
             width,

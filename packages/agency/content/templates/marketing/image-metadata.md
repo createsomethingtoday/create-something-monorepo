@@ -12,6 +12,15 @@
 | ---- | ------------- | ----------- | ----- | ----- | ------------- | ----------- | ----- |
 |      |               |             |       |       |               |             |       |
 
+## Canvas Artifacts
+
+Use this section when a visual explains workflow behavior, governance, an offer,
+a case study, a tool comparison, or agent behavior.
+
+| File | Graph source | Renderer | Nodes shown | Relationships shown | Motion plan | Accessibility summary | Notes |
+| ---- | ------------ | -------- | ----------- | ------------------- | ----------- | --------------------- | ----- |
+|      |              |          |             |                     |             |                       |       |
+
 ## Generated Exports
 
 | File | Target surface | Size | Source prompt | Approved by | Published at | Notes |
@@ -33,6 +42,9 @@
 ## Review Gate
 
 - [ ] Original visuals use the Canon Images guideline.
+- [ ] Workflow, governance, and agent-behavior visuals were attempted as Atlas canvas artifacts before one-off graphics.
+- [ ] Canvas artifacts preserve a graph source and do not move the source of truth into the renderer.
+- [ ] Canvas artifacts show owner, workflow artifact, automation, human judgment, stop boundary, and receipt surface.
 - [ ] Screenshots prove a concrete claim and are not decorative.
 - [ ] Screenshots are redacted and do not expose secrets, private data, prompts, or customer records.
 - [ ] Primary owned visual is placed in the article body when it is part of the page argument.

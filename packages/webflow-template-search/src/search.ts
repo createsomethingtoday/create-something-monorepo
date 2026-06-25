@@ -32,16 +32,21 @@ function canRelaxQuery(q: string | null): boolean {
   return q !== null && queryTokens(q).length > 1;
 }
 
-function sortClause(sort: TemplateSort): string {
+function orderTieBreaker(includeTextRank: boolean): string {
+  return includeTextRank ? 'text_rank ASC, d.id ASC' : 'd.id ASC';
+}
+
+function sortClause(sort: TemplateSort, options: { textRankTieBreaker?: boolean } = {}): string {
+  const tieBreaker = orderTieBreaker(options.textRankTieBreaker === true);
   switch (sort) {
     case 'newest':
-      return "COALESCE(d.published_date, '') DESC, COALESCE(d.popularity_score, 0) DESC, d.id ASC";
+      return `COALESCE(d.published_date, '') DESC, COALESCE(d.popularity_score, 0) DESC, ${tieBreaker}`;
     case 'price_asc':
-      return "CASE WHEN d.price IS NULL THEN 1 ELSE 0 END ASC, COALESCE(d.price, 0) ASC, COALESCE(d.popularity_score, 0) DESC, d.id ASC";
+      return `CASE WHEN d.price IS NULL THEN 1 ELSE 0 END ASC, COALESCE(d.price, 0) ASC, COALESCE(d.popularity_score, 0) DESC, ${tieBreaker}`;
     case 'price_desc':
-      return "CASE WHEN d.price IS NULL THEN 1 ELSE 0 END ASC, COALESCE(d.price, 0) DESC, COALESCE(d.popularity_score, 0) DESC, d.id ASC";
+      return `CASE WHEN d.price IS NULL THEN 1 ELSE 0 END ASC, COALESCE(d.price, 0) DESC, COALESCE(d.popularity_score, 0) DESC, ${tieBreaker}`;
     default:
-      return "COALESCE(d.popularity_score, 0) DESC, COALESCE(d.cumulative_purchases, 0) DESC, COALESCE(d.unique_viewers, 0) DESC, COALESCE(d.published_date, '') DESC, d.id ASC";
+      return `COALESCE(d.popularity_score, 0) DESC, COALESCE(d.cumulative_purchases, 0) DESC, COALESCE(d.unique_viewers, 0) DESC, COALESCE(d.published_date, '') DESC, ${tieBreaker}`;
   }
 }
 
@@ -285,7 +290,9 @@ function buildSqlParts(params: SearchParams, options: FilterOptions = {}): SqlPa
 }
 
 function queryOrderClause(params: SearchParams, queryMode: boolean): string {
-  return queryMode ? `text_rank ASC, ${sortClause(params.sort)}` : sortClause(params.sort);
+  if (!queryMode) return sortClause(params.sort);
+  if (params.sort === 'popular') return `text_rank ASC, ${sortClause(params.sort)}`;
+  return sortClause(params.sort, { textRankTieBreaker: true });
 }
 
 async function getTotalCount(db: D1Database, sqlParts: SqlParts): Promise<number> {

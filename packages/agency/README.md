@@ -39,6 +39,11 @@ The public Atlas canvas is the give-first surface for prospects. It lets a visit
 start from a concrete industry workflow, edit the owner/systems/approval boundary,
 and carry the summary into booking without exposing production systems.
 
+The broader visual standard lives in
+`docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md`: workflow, governance, and
+agent-behavior visuals should default to Atlas-style canvases before one-off
+graphics.
+
 Current starter maps:
 
 | Starter | Industry | Boundary to preserve |
@@ -57,10 +62,59 @@ the prospect sees the action boundary before the sales conversation.
 Implementation surface:
 
 - `src/lib/atlas/public.ts` owns starter-map data and normalization.
+- `createPublicAtlasGraphArtifact(...)` exports the renderer-independent Atlas
+  graph contract for humans and agents: semantic node roles, relationship labels,
+  readiness, and renderer guidance.
+- `createPublicAtlasStoryArtifact(...)` turns the same graph into deterministic
+  story chapters for static canvases, scrollytelling, article visuals, social
+  cards, and accessibility summaries.
+- `src/lib/components/PublicAtlasStoryCanvas.svelte` renders the static story
+  artifact as a node-map presentation surface without invoking the mapping agent.
 - `src/lib/components/PublicAtlasCanvas.svelte` renders the selector and persists
   the chosen map into booking context.
 - `test/public-atlas-starter-maps.test.ts` verifies coverage and policy-boundary
   shape.
+- `test/public-atlas-route.test.ts` verifies that `/atlas` and `/services`
+  present the story canvas before the editable public canvas, and that
+  `/methodology`, `/stack`, and `/products` can use the same story surface
+  without mounting the editable canvas.
+
+Story-canvas usage contract:
+
+- Pass an explicit `storyId` on route-level uses so heading and instruction
+  references remain stable if multiple story canvases appear on the same page.
+- Keep the story canvas before the editable canvas when both are present. The
+  story teaches the workflow language; the editable canvas collects booking
+  context.
+- Keep motion semantics in markup, not visible copy. Chapter motion cues belong
+  in `data-motion-cue` attributes so animations can target them without exposing
+  implementation labels to readers.
+
+Renderer rule:
+
+- Svelte Flow is the primary renderer for workflow education, intake, editing,
+  accessibility, story maps, and agent-operable maps in this Svelte frontend.
+- Canvas copy should follow the Ona.com communication pattern: short declarative
+  claims, "set the direction" framing, governed execution language, and concrete
+  nouns like workflow, owner, decision, evidence, tools, and boundaries.
+- Do not expose renderer names such as Svelte Flow, Sigma, or Cosmograph in
+  user-facing canvas copy. The product language is Atlas canvas and Atlas graph.
+- Static story exports are the fallback for articles, social cards, and non-JS
+  presentation, not the base in-app canvas implementation.
+- Sigma/Cosmograph are reserved for large read-only network exploration. Do not
+  move the canonical workflow contract into those renderers; adapt them from the
+  Atlas graph artifact when graph scale requires WebGL.
+- Story canvases should animate only chapter focus, handoff traces, stop
+  boundaries, and proof reveals. The `accessibilitySummary` must remain complete
+  when motion is disabled.
+- `/atlas` presents the read-only story canvas before the editable public Atlas
+  canvas so visitors can understand the workflow language before using the agent.
+- `/methodology` uses a read-only story canvas to explain the method without
+  collecting booking context.
+- `/stack` uses a read-only story canvas to explain the ownership and vendor
+  boundary without collecting booking context.
+- `/products` uses a read-only story canvas to explain how proof becomes a
+  governed workflow boundary without collecting booking context.
 
 ---
 
@@ -169,6 +223,18 @@ packages/agency/
 | Validation surfaces | Svelte check output, Cloudflare Pages build output, route preview, sales content review |
 | UI validation path | `/`, `/services` |
 | Escalation rule | stop if Auth0, D1, or client-delivery data is required and cannot be reproduced from local fixtures or Infisical-backed environment |
+
+## Capture Review Admin API
+
+Operator-only lead and signup review lives at `/api/admin/capture`.
+
+- `GET /api/admin/capture?limit=100` returns newsletter, contact, lead, and public Atlas capture rows with computed classification and recommended action.
+- `GET /api/admin/capture?include=all&limit=100` includes operational account, billing, legacy contact, and MCP entitlement context.
+- Add `surface`, `classification`, `action`, `reviewed`, and `q` query params to narrow either the JSON response or `/admin/capture` operator view.
+- GET responses include `decision_storage.available`; the UI disables decision writes until migration 0029 is applied.
+- `POST /api/admin/capture` stores an operator decision in `capture_review_decisions` without mutating the original capture rows.
+- `DELETE /api/admin/capture` with `surface` and `source_id` clears a stored operator decision so the row returns to computed classification.
+- Apply `migrations/0029_capture_review_decisions.sql` before using durable decisions in production.
 
 ## Sales Assets
 

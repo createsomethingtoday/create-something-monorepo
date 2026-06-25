@@ -48,6 +48,7 @@
   ];
   const primaryCtaHref = agencyCoreMessaging.startWithWorkflowHref;
   const globalAnalyticsMetadata = $derived(getAgencyGlobalAnalyticsMetadata($page.url.pathname));
+  const useCompactPrivacyPrompt = $derived($page.url.pathname === '/');
   const footerQuickLinkGroups = [
     {
       title: 'Commercial',
@@ -235,17 +236,17 @@
       id: 'nav-dify-ship-mcp',
       label: 'Ship Dify With MCP',
       description:
-        'Practical build path for shipping Dify apps with MCP tools, Policy OS contracts, eval gates, and proof packets',
+        'Field guide for shipping one Dify app with scoped MCP tools, approvals, eval gates, and proof',
       href: '/dify/ship-dify-app-with-mcp-tools',
       icon: 'DS',
       keywords: [
         'dify',
-        'mcp',
-        'shipping guide',
-        'agent workflow',
+        'mcp tools',
+        'ship dify app',
+        'implementation guide',
         'policy os',
-        'eval gates',
-        'proof packet'
+        'agent governance',
+        'approval gates'
       ]
     },
     {
@@ -425,6 +426,7 @@
   userId={data.user?.id}
   userOptedOut={data.user?.analytics_opt_out ?? false}
   globalMetadata={globalAnalyticsMetadata}
+  compactPrompt={useCompactPrivacyPrompt}
 />
 
 <!-- Unified Search - Cmd/Ctrl+K to open -->

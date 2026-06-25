@@ -23,6 +23,13 @@ export interface CatoNavigationProps extends CatoInsightsDataProps {
   insightsLink?: CatoInsightLinkProp;
   insightsHref?: string;
   insightsHomeLink?: CatoInsightLinkProp;
+  featureLabel?: string;
+  featureTitle?: string;
+  featureSummary?: string;
+  featureCta?: string;
+  featureHref?: string;
+  featureItemsJson?: string;
+  showFeatureItems?: boolean;
   resiliencyLink?: CatoInsightLinkProp;
   researchLink?: CatoInsightLinkProp;
   whitepapersLink?: CatoInsightLinkProp;
@@ -36,27 +43,6 @@ export interface CatoNavigationProps extends CatoInsightsDataProps {
   productSearchLabel?: string;
   fixed?: boolean;
   showInsightsMegaMenu?: boolean;
-  introKicker?: string;
-  heading?: string;
-  summary?: string;
-  introCtaLabel?: string;
-  browseKicker?: string;
-  resiliencyMenuTitle?: string;
-  resiliencyMenuSummary?: string;
-  researchMenuTitle?: string;
-  researchMenuSummary?: string;
-  newsroomMenuTitle?: string;
-  newsroomMenuSummary?: string;
-  featureLabel?: string;
-  featureTitle?: string;
-  featureSummary?: string;
-  featureCta?: string;
-  featureItemOneTitle?: string;
-  featureItemOneMeta?: string;
-  featureItemTwoTitle?: string;
-  featureItemTwoMeta?: string;
-  featureItemThreeTitle?: string;
-  featureItemThreeMeta?: string;
 }
 
 const CATO_NAV_CSS = `
@@ -87,11 +73,11 @@ const CATO_NAV_CSS = `
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 1.5rem;
+    gap: 2.5rem;
     width: min(100%, 80rem);
     min-height: 5.5rem;
     margin: 0 auto;
-    padding: 1rem 2rem;
+    padding: 1.25rem 2.5rem;
   }
   .cato-nav a {
     color: inherit;
@@ -137,7 +123,7 @@ const CATO_NAV_CSS = `
   .cato-nav__links {
     display: flex;
     align-items: center;
-    gap: .35rem;
+    gap: 2rem;
     padding: .25rem;
     border-radius: .75rem;
   }
@@ -151,7 +137,7 @@ const CATO_NAV_CSS = `
     border-radius: .5rem;
     background: transparent;
     color: var(--cato-nav-muted);
-    padding: .65rem .85rem;
+    padding: .5rem 0;
     font: inherit;
     font-size: 1rem;
     line-height: 1.2;
@@ -188,10 +174,10 @@ const CATO_NAV_CSS = `
     left: 0;
     min-width: 14rem;
     border: 1px solid var(--cato-nav-border);
-    border-radius: .625rem;
+    border-radius: 1rem;
     background: var(--cato-nav-bg);
     box-shadow: 0 1.25rem 3rem rgba(17,16,15,.12);
-    padding: .5rem;
+    padding: 1rem 1.75rem 1rem 1.5rem;
     opacity: 0;
     transform: translate3d(0, .4rem, 0);
     pointer-events: none;
@@ -216,7 +202,7 @@ const CATO_NAV_CSS = `
     display: block;
     border-radius: .45rem;
     color: var(--cato-nav-muted);
-    padding: .72rem .85rem;
+    padding: .5rem 0;
     font-weight: 700;
   }
   .cato-nav__dropdown-item:hover,

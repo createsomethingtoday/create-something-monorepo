@@ -12,9 +12,9 @@
     "@create-something/bundle-scanner-core": "workspace:*"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20241218.0",
+    "@cloudflare/workers-types": "^4.20260621.1",
     "typescript": "^5.7.2",
     "vitest": "^2.1.8",
-    "wrangler": "^3.99.0"
+    "wrangler": "^4.103.0"
   }
 }

@@ -8,15 +8,20 @@ Use it as the system of record for strategy, architecture, policy, runbooks, and
 
 Read in this order when you need broad repo context:
 
-1. [MCP_FIRST_THESIS.md](./MCP_FIRST_THESIS.md) — strategic thesis, packaging, and market framing
-2. [THREE_TIER_FRAMEWORK.md](./THREE_TIER_FRAMEWORK.md) — Database / Automation / Judgment model
-3. [POLICY_OS_PRODUCT_DEFINITION.md](./POLICY_OS_PRODUCT_DEFINITION.md) — canonical paid package definition
-4. [policies/README.md](./policies/README.md) — versioned policy artifacts
+1. [CREATE_SOMETHING_SYSTEMS_THESIS.md](./CREATE_SOMETHING_SYSTEMS_THESIS.md) — synthesis spine for the practice-led systems thesis
+2. [CREATE_SOMETHING_SYSTEMS_THESIS_EVIDENCE.generated.md](./CREATE_SOMETHING_SYSTEMS_THESIS_EVIDENCE.generated.md) — living claim and citation report generated from `docs/thesis/claims.yaml`
+3. [MCP_FIRST_THESIS.md](./MCP_FIRST_THESIS.md) — strategic thesis, packaging, and market framing
+4. [THREE_TIER_FRAMEWORK.md](./THREE_TIER_FRAMEWORK.md) — Database / Automation / Judgment model
+5. [POLICY_OS_PRODUCT_DEFINITION.md](./POLICY_OS_PRODUCT_DEFINITION.md) — canonical paid package definition
+6. [policies/README.md](./policies/README.md) — versioned policy artifacts
 
 ## Navigation by task
 
 ### Strategy and positioning
 
+- [CREATE_SOMETHING_SYSTEMS_THESIS.md](./CREATE_SOMETHING_SYSTEMS_THESIS.md)
+- [CREATE_SOMETHING_SYSTEMS_THESIS_EVIDENCE.generated.md](./CREATE_SOMETHING_SYSTEMS_THESIS_EVIDENCE.generated.md)
+- [thesis/README.md](./thesis/README.md)
 - [MCP_FIRST_THESIS.md](./MCP_FIRST_THESIS.md)
 - [POLICY_OS_PRODUCT_DEFINITION.md](./POLICY_OS_PRODUCT_DEFINITION.md)
 - [AGENCY_BUSINESS_HEALTH_DASHBOARD.md](./AGENCY_BUSINESS_HEALTH_DASHBOARD.md)
@@ -42,6 +47,7 @@ Read in this order when you need broad repo context:
 - [POLICY_OS_TRIAL_PACKAGING_MEMO_2026-03-09.md](./POLICY_OS_TRIAL_PACKAGING_MEMO_2026-03-09.md)
 - [SERVICE_TIER_ENTITLEMENT_OSO_MAPPING_2026-03-09.md](./SERVICE_TIER_ENTITLEMENT_OSO_MAPPING_2026-03-09.md)
 - [OPENAI_NEWS_STRATEGY_MEMO_2026-03-04.md](./OPENAI_NEWS_STRATEGY_MEMO_2026-03-04.md)
+- [papers/ENDPOINT_CONSTRUCTION_IS_PRODUCT_CONSTRUCTION.md](./papers/ENDPOINT_CONSTRUCTION_IS_PRODUCT_CONSTRUCTION.md)
 
 ### Architecture and control planes
 
@@ -83,6 +89,8 @@ Read in this order when you need broad repo context:
 ### MCP creation and integration patterns
 
 - [MCP_SCAFFOLD.md](./MCP_SCAFFOLD.md)
+- [examples/endpoint-construction-contract.template.yaml](./examples/endpoint-construction-contract.template.yaml)
+- [examples/living-research-transparency.template.yaml](./examples/living-research-transparency.template.yaml)
 - [COMPOSIO_PATTERNS.md](./COMPOSIO_PATTERNS.md)
 - [guides/HYDRA_DB_GOVERNED_RECALL.md](./guides/HYDRA_DB_GOVERNED_RECALL.md)
 - [guides/MCP_DUI_ORGANIZATION.md](./guides/MCP_DUI_ORGANIZATION.md)
@@ -111,6 +119,8 @@ Read in this order when you need broad repo context:
 - [guides/EXAMPLES.md](./guides/EXAMPLES.md)
 - [guides/COMPONENT_GUIDE.md](./guides/COMPONENT_GUIDE.md)
 - [guides/SKILLS.md](./guides/SKILLS.md)
+- [examples/living-research-transparency.template.yaml](./examples/living-research-transparency.template.yaml)
+- [../packages/io/docs/research-content-transparency.md](../packages/io/docs/research-content-transparency.md)
 - [guides/NOTION_WORKERS_AND_CLI_2026.md](./guides/NOTION_WORKERS_AND_CLI_2026.md)
 - [guides/NOTION_API_COMPATIBILITY_AUDIT_2026.md](./guides/NOTION_API_COMPATIBILITY_AUDIT_2026.md)
 - [guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md](./guides/AGENCY_OPS_PM_AGENT_NOTION_REVIEW_2026.md)

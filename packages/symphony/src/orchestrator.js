@@ -31,6 +31,10 @@ function is_active_state(issue, config) {
     const normalized = normalize_state(issue.state);
     return config.tracker.active_states.some((state) => normalize_state(state) === normalized);
 }
+function has_open_blocker(issue, config) {
+    return issue.blocked_by.some((blocker) => blocker.state &&
+        !config.tracker.terminal_states.some((state) => normalize_state(state) === normalize_state(blocker.state)));
+}
 function retry_delay_ms(config, attempt, continuation) {
     if (continuation)
         return 1000;
@@ -409,8 +413,7 @@ export class SymphonyService {
         if (!ignore_claimed && this.claimed.has(issue.id)) {
             return false;
         }
-        if (['todo', 'ready'].includes(normalize_state(issue.state)) &&
-            issue.blocked_by.some((blocker) => blocker.state && !this.is_terminal_state_name(blocker.state))) {
+        if (has_open_blocker(issue, this.current_config)) {
             return false;
         }
         if (this.available_slots() <= 0) {

@@ -62,7 +62,8 @@ import React, {
   useMemo,
   useRef,
   useState,
-  type FormEvent
+  type FormEvent,
+  type PointerEvent as ReactPointerEvent
 } from 'react';
 import { createRoot } from 'react-dom/client';
 
@@ -148,6 +149,11 @@ const FIT_VIEW_OPTIONS = {
   padding: 0.24
 };
 
+type StoryPanelOffset = {
+  x: number;
+  y: number;
+};
+
 function formatKind(kind: AtlasCanvasNodeKind): string {
   return kind === 'ai' ? 'AI' : kind;
 }
@@ -204,9 +210,10 @@ function toFlowNodes(
   session: AtlasSession,
   selectedNodeId: string | null,
   activeNodeIds: Set<string>,
-  detailMode: CanvasDetailMode
+  detailMode: CanvasDetailMode,
+  storyEnabled: boolean
 ): FlowNode[] {
-  const story = session.story?.active ? session.story : undefined;
+  const story = storyEnabled && session.story?.active ? session.story : undefined;
   const focusNodeIds = new Set(story?.focusNodeIds ?? []);
   const activeStepIndex = story?.steps?.findIndex((step) => step.id === story.activeStepId) ?? -1;
   const storyStepIndex = activeStepIndex >= 0 ? activeStepIndex + 1 : undefined;
@@ -233,8 +240,12 @@ function toFlowNodes(
   }));
 }
 
-function toFlowEdge(edge: AtlasSession['canvas']['edges'][number], session: AtlasSession): Edge {
-  const story = session.story?.active ? session.story : undefined;
+function toFlowEdge(
+  edge: AtlasSession['canvas']['edges'][number],
+  session: AtlasSession,
+  storyEnabled: boolean
+): Edge {
+  const story = storyEnabled && session.story?.active ? session.story : undefined;
   const focusEdgeIds = new Set(story?.focusEdgeIds ?? []);
   const focusNodeIds = new Set(story?.focusNodeIds ?? []);
   const explicitlyFocused = focusEdgeIds.has(edge.id);
@@ -269,7 +280,8 @@ function toFlowEdge(edge: AtlasSession['canvas']['edges'][number], session: Atla
 function toStableFlowEdges(
   session: AtlasSession,
   cache: Map<string, { edge: Edge; signature: string }>,
-  previousList: { edges: Edge[]; signature: string } | null
+  previousList: { edges: Edge[]; signature: string } | null,
+  storyEnabled: boolean
 ): { edges: Edge[]; signature: string } {
   const liveIds = new Set(session.canvas.edges.map((edge) => edge.id));
   for (const id of cache.keys()) {
@@ -277,7 +289,7 @@ function toStableFlowEdges(
   }
 
   const nextEdges = session.canvas.edges.map((edge) => {
-    const next = toFlowEdge(edge, session);
+    const next = toFlowEdge(edge, session, storyEnabled);
     const signature = edgeSignature(next);
     const cached = cache.get(edge.id);
     if (cached?.signature === signature) return cached.edge;
@@ -324,6 +336,22 @@ function readStoredViewport(sessionId: string): Viewport | undefined {
   return undefined;
 }
 
+function readStoredStoryPanelOffset(sessionId: string): StoryPanelOffset {
+  try {
+    const raw = localStorage.getItem(`atlas-studio:${sessionId}:story-panel-offset`);
+    if (!raw) return { x: 0, y: 0 };
+    const parsed = JSON.parse(raw) as StoryPanelOffset;
+    if (typeof parsed.x === 'number' && typeof parsed.y === 'number') return parsed;
+  } catch {
+    return { x: 0, y: 0 };
+  }
+  return { x: 0, y: 0 };
+}
+
+function writeStoredStoryPanelOffset(sessionId: string, offset: StoryPanelOffset): void {
+  localStorage.setItem(`atlas-studio:${sessionId}:story-panel-offset`, JSON.stringify(offset));
+}
+
 function isEditableTarget(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) return false;
   const tagName = target.tagName.toLowerCase();
@@ -342,12 +370,14 @@ function CubeMark({ className = '' }: { className?: string }): React.ReactElemen
 
 function IconButton({
   active = false,
+  ariaLabel,
   children,
   icon: Icon,
   onClick,
   title
 }: {
   active?: boolean;
+  ariaLabel?: string;
   children: React.ReactNode;
   icon: LucideIcon;
   onClick: () => void;
@@ -355,6 +385,7 @@ function IconButton({
 }): React.ReactElement {
   return (
     <button
+      aria-label={ariaLabel ?? title ?? (typeof children === 'string' ? children : undefined)}
       aria-pressed={active}
       className="toolbar-button"
       onClick={onClick}
@@ -365,6 +396,78 @@ function IconButton({
       <span>{children}</span>
     </button>
   );
+}
+
+type OperatorStateTone = 'ready' | 'review' | 'blocked';
+
+type OperatorStateSummary = {
+  handoff: string;
+  proof: string;
+  review: string;
+  state: string;
+  tone: OperatorStateTone;
+};
+
+function pluralize(count: number, singular: string, plural = `${singular}s`): string {
+  return `${count} ${count === 1 ? singular : plural}`;
+}
+
+function summarizeOperatorState(session: AtlasSession | null): OperatorStateSummary {
+  if (!session) {
+    return {
+      handoff: 'Handoff loading',
+      proof: 'Proof loading',
+      review: 'Review loading',
+      state: 'Loading',
+      tone: 'review'
+    };
+  }
+
+  const nodes = session.canvas.nodes;
+  const latestProposal = session.proposals?.[0];
+  const queuedSuggestions = session.suggestions.filter((item) => item.status === 'queued').length;
+  const openQuestions = session.story?.questions.filter((question) => question.status === 'open').length ?? 0;
+  const stoppedNodes = nodes.filter((node) => node.status === 'stop').length;
+  const waitingNodes = nodes.filter((node) => node.status === 'wait').length;
+  const syncIssues = nodes.filter((node) =>
+    node.sync ? ['missing', 'partial', 'unbound', 'unknown'].includes(node.sync.status) : false
+  ).length;
+  const proofCount = nodes.filter(
+    (node) => node.evidence?.trim() || node.bindings?.length || node.sync?.bindingCount
+  ).length;
+  const proposedActions =
+    latestProposal?.actions.filter((action) => action.status === 'proposed').length ?? 0;
+  const approvalActions =
+    latestProposal?.actions.filter(
+      (action) => action.status === 'proposed' && action.risk === 'approval'
+    ).length ?? 0;
+  const approvedActions = latestProposal?.summary.approved ?? 0;
+
+  const reviewCount = approvalActions + queuedSuggestions + openQuestions;
+  const tone: OperatorStateTone = stoppedNodes ? 'blocked' : reviewCount || syncIssues ? 'review' : 'ready';
+  const state = stoppedNodes
+    ? `${pluralize(stoppedNodes, 'blocked node')}`
+    : reviewCount
+      ? `${pluralize(reviewCount, 'review item')}`
+      : syncIssues
+        ? `${pluralize(syncIssues, 'proof gap')}`
+        : 'Ready to brief';
+
+  return {
+    handoff: latestProposal
+      ? `${pluralize(approvedActions, 'approved action')} / ${pluralize(proposedActions, 'open action')}`
+      : 'No handoff plan yet',
+    proof: syncIssues
+      ? `${pluralize(syncIssues, 'binding gap')}`
+      : `${pluralize(proofCount, 'proof point')}`,
+    review: reviewCount
+      ? `${pluralize(approvalActions, 'approval')} / ${pluralize(queuedSuggestions, 'suggestion')} / ${pluralize(openQuestions, 'question')}`
+      : waitingNodes
+        ? `${pluralize(waitingNodes, 'waiting node')}`
+        : 'No open review',
+    state,
+    tone
+  };
 }
 
 const AtlasFlowNode = memo(function AtlasFlowNode({
@@ -421,14 +524,18 @@ const NODE_TYPES = {
 
 function StoryPanel({
   onClear,
+  onDragStart,
   onNextStep,
   onPreviousStep,
+  onResetPosition,
   onSelectStep,
   session
 }: {
   onClear: () => void;
+  onDragStart: (event: ReactPointerEvent<HTMLElement>) => void;
   onNextStep: () => void;
   onPreviousStep: () => void;
+  onResetPosition: () => void;
   onSelectStep: (step: AtlasStoryStep) => void;
   session: AtlasSession | null;
 }): React.ReactElement | null {
@@ -445,7 +552,7 @@ function StoryPanel({
   const detailCount = story.callouts.length + openQuestions.length + (story.nextAction ? 1 : 0);
   return (
     <aside className={`story-panel ${story.active ? 'active' : 'quiet'}`}>
-      <div className="story-panel-header">
+      <div className="story-panel-header" onPointerDown={onDragStart} title="Drag to move story panel">
         <span className="title-lockup">
           <span className="title-icon">
             <Sparkles aria-hidden="true" />
@@ -461,11 +568,28 @@ function StoryPanel({
             </em>
           </span>
         </span>
-        {story.active ? (
-          <button className="icon-only" onClick={onClear} title="Clear story focus" type="button">
-            <X aria-hidden="true" />
+        <span className="story-panel-actions">
+          <button
+            className="icon-only"
+            onClick={onResetPosition}
+            onPointerDown={(event) => event.stopPropagation()}
+            title="Reset story panel position"
+            type="button"
+          >
+            <MapIcon aria-hidden="true" />
           </button>
-        ) : null}
+          {story.active ? (
+            <button
+              className="icon-only"
+              onClick={onClear}
+              onPointerDown={(event) => event.stopPropagation()}
+              title="Clear story focus"
+              type="button"
+            >
+              <X aria-hidden="true" />
+            </button>
+          ) : null}
+        </span>
       </div>
       {activeStep ? (
         <div className="story-current-step">
@@ -604,7 +728,13 @@ function Rail({
               <em>Live notes and agent suggestions</em>
             </span>
           </span>
-          <button className="icon-only" onClick={onClose} title="Close rail" type="button">
+          <button
+            aria-label="Close rail"
+            className="icon-only"
+            onClick={onClose}
+            title="Close rail"
+            type="button"
+          >
             <X aria-hidden="true" />
           </button>
         </div>
@@ -631,7 +761,7 @@ function Rail({
               <FileText aria-hidden="true" />
             </span>
             <span>
-              <strong>Write-back Proposal</strong>
+              <strong>Review Plan</strong>
               <em>Review before any production edit</em>
             </span>
           </span>
@@ -659,7 +789,7 @@ function Rail({
                 <p>
                   {latestProposal.summary.drift} mapped node
                   {latestProposal.summary.drift === 1 ? '' : 's'} need sync attention before
-                  edits ripple through.
+                  any production change is prepared.
                 </p>
               </article>
               {latestProposal.actions.slice(0, 8).map((action) => (
@@ -706,12 +836,11 @@ function Rail({
           ) : (
             <article className="rail-item proposal-summary">
               <p>
-                Generate a proposal after Heal to turn this canvas into a reviewable production
-                change plan.
+                Check production bindings, then create a review plan before anything changes.
               </p>
               <button className="subtle-button" onClick={onCreateProposal} type="button">
                 <FileText aria-hidden="true" />
-                <span>Create proposal</span>
+                <span>Create review plan</span>
               </button>
             </article>
           )}
@@ -726,7 +855,7 @@ function Rail({
             </span>
             <span>
               <strong>Suggestions</strong>
-              <em>Review before truth</em>
+              <em>Operator approves changes</em>
             </span>
           </span>
           <span className="count-chip">{queued.length}</span>
@@ -842,7 +971,13 @@ function Inspector({
               <em>{selectedNode?.id ?? 'Select a node'}</em>
             </span>
           </span>
-          <button className="icon-only" onClick={onClose} title="Close inspector" type="button">
+          <button
+            aria-label="Close inspector"
+            className="icon-only"
+            onClick={onClose}
+            title="Close inspector"
+            type="button"
+          >
             <X aria-hidden="true" />
           </button>
         </div>
@@ -915,7 +1050,7 @@ function Inspector({
                   </span>
                   <span>
                     <strong>Production bindings</strong>
-                    <em>{selectedNode.sync?.summary ?? 'Run Heal to bind this node.'}</em>
+                    <em>{selectedNode.sync?.summary ?? 'Check bindings to connect this node.'}</em>
                   </span>
                 </span>
                 {selectedNode.sync ? (
@@ -992,7 +1127,7 @@ function Inspector({
             </span>
             <span>
               <strong>Agent Console</strong>
-              <em>Terminal mutation path</em>
+              <em>Agent-side note capture</em>
             </span>
           </span>
         </div>
@@ -1005,6 +1140,7 @@ function Inspector({
 function AtlasStudio(): React.ReactElement {
   const sessionId = useMemo(getSessionId, []);
   const initialViewport = useMemo(() => readStoredViewport(sessionId), [sessionId]);
+  const initialStoryPanelOffset = useMemo(() => readStoredStoryPanelOffset(sessionId), [sessionId]);
   const [session, setSession] = useState<AtlasSession | null>(null);
   const [palette, setPalette] = useState<Palette | null>(null);
   const [nodes, setNodes] = useState<FlowNode[]>([]);
@@ -1016,10 +1152,12 @@ function AtlasStudio(): React.ReactElement {
   const [railOpen, setRailOpen] = useState(false);
   const [inspectorOpen, setInspectorOpen] = useState(false);
   const [presenterMode, setPresenterMode] = useState(false);
+  const [storyPanelOffset, setStoryPanelOffset] = useState<StoryPanelOffset>(initialStoryPanelOffset);
   const [draft, setDraft] = useState<NodeDraft | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [healSummary, setHealSummary] = useState<string | null>(null);
   const [proposalSummary, setProposalSummary] = useState<string | null>(null);
+  const canvasStageRef = useRef<HTMLDivElement | null>(null);
   const flowRef = useRef<ReactFlowInstance<FlowNode, Edge> | null>(null);
   const edgeCache = useRef<Map<string, { edge: Edge; signature: string }>>(new Map());
   const edgeListCache = useRef<{ edges: Edge[]; signature: string } | null>(null);
@@ -1027,13 +1165,24 @@ function AtlasStudio(): React.ReactElement {
   const nodeSignatures = useRef<Map<string, string>>(new Map());
   const activityTimer = useRef<number | null>(null);
   const storyFrameKey = useRef<string | null>(null);
+  const storyPanelDrag = useRef<{
+    originX: number;
+    originY: number;
+    pointerX: number;
+    pointerY: number;
+  } | null>(null);
   const presenterModeInitialized = useRef(false);
 
   const edges = useMemo(() => {
     if (!session) return [];
-    edgeListCache.current = toStableFlowEdges(session, edgeCache.current, edgeListCache.current);
+    edgeListCache.current = toStableFlowEdges(
+      session,
+      edgeCache.current,
+      edgeListCache.current,
+      presenterMode
+    );
     return edgeListCache.current.edges;
-  }, [session]);
+  }, [presenterMode, session]);
   const selectedNode = useMemo(
     () => session?.canvas.nodes.find((node) => node.id === selectedNodeId) ?? null,
     [selectedNodeId, session]
@@ -1042,6 +1191,7 @@ function AtlasStudio(): React.ReactElement {
   const sessionTitle = session
     ? `${formatClient(session.client)} / ${session.workflow}`
     : 'Loading session...';
+  const operatorSummary = useMemo(() => summarizeOperatorState(session), [session]);
 
   const applySession = useCallback((next: AtlasSession, source: 'local' | 'remote') => {
     const previous = sessionRef.current;
@@ -1098,6 +1248,55 @@ function AtlasStudio(): React.ReactElement {
     [applySession, sessionId]
   );
 
+  const resetStoryPanelPosition = useCallback(() => {
+    const next = { x: 0, y: 0 };
+    storyPanelDrag.current = null;
+    setStoryPanelOffset(next);
+    writeStoredStoryPanelOffset(sessionId, next);
+  }, [sessionId]);
+
+  const startStoryPanelDrag = useCallback(
+    (event: ReactPointerEvent<HTMLElement>) => {
+      if (event.button !== 0) return;
+      const target = event.target;
+      if (target instanceof HTMLElement && target.closest('button, a, input, textarea, select')) return;
+
+      event.preventDefault();
+      event.currentTarget.setPointerCapture?.(event.pointerId);
+      const start = {
+        originX: storyPanelOffset.x,
+        originY: storyPanelOffset.y,
+        pointerX: event.clientX,
+        pointerY: event.clientY
+      };
+      storyPanelDrag.current = start;
+      let latest = storyPanelOffset;
+
+      const onPointerMove = (moveEvent: PointerEvent) => {
+        const drag = storyPanelDrag.current;
+        if (!drag) return;
+        latest = {
+          x: drag.originX + moveEvent.clientX - drag.pointerX,
+          y: drag.originY + moveEvent.clientY - drag.pointerY
+        };
+        setStoryPanelOffset(latest);
+      };
+
+      const onPointerUp = () => {
+        storyPanelDrag.current = null;
+        writeStoredStoryPanelOffset(sessionId, latest);
+        window.removeEventListener('pointermove', onPointerMove);
+        window.removeEventListener('pointerup', onPointerUp);
+        window.removeEventListener('pointercancel', onPointerUp);
+      };
+
+      window.addEventListener('pointermove', onPointerMove);
+      window.addEventListener('pointerup', onPointerUp);
+      window.addEventListener('pointercancel', onPointerUp);
+    },
+    [sessionId, storyPanelOffset]
+  );
+
   useEffect(() => {
     void loadSession();
     void requestJson<Palette>('/api/palette').then(setPalette).catch((err: unknown) => {
@@ -1111,7 +1310,7 @@ function AtlasStudio(): React.ReactElement {
       presenterModeInitialized.current = true;
       setPresenterMode(true);
     }
-    const nextNodes = toFlowNodes(session, selectedNodeId, activeNodeIds, detailMode);
+    const nextNodes = toFlowNodes(session, selectedNodeId, activeNodeIds, detailMode, presenterMode);
 
     setNodes((current) => {
       const currentById = new Map(current.map((node) => [node.id, node]));
@@ -1134,7 +1333,7 @@ function AtlasStudio(): React.ReactElement {
       });
       return changed ? merged : current;
     });
-  }, [activeNodeIds, detailMode, selectedNodeId, session]);
+  }, [activeNodeIds, detailMode, presenterMode, selectedNodeId, session]);
 
   useEffect(() => {
     return () => {
@@ -1424,11 +1623,12 @@ function AtlasStudio(): React.ReactElement {
   }, [fitStoryFocus, nodes]);
 
   const tidyCanvas = useCallback(async () => {
+    const viewportWidth = canvasStageRef.current?.clientWidth ?? window.innerWidth;
     const result = await requestJson<{
       session: AtlasSession;
       updates: Array<{ id: string; width: number; x: number; y: number }>;
     }>(`/api/sessions/${encodeURIComponent(sessionId)}/tidy`, {
-      body: '{}',
+      body: JSON.stringify({ viewportWidth }),
       method: 'POST'
     });
 
@@ -1546,7 +1746,7 @@ function AtlasStudio(): React.ReactElement {
             active={railOpen}
             icon={railOpen ? PanelLeftClose : PanelLeftOpen}
             onClick={() => setRailOpen((value) => !value)}
-            title="Toggle rail"
+            title={railOpen ? 'Hide review rail' : 'Show review rail'}
           >
             Rail
           </IconButton>
@@ -1554,7 +1754,7 @@ function AtlasStudio(): React.ReactElement {
             active={inspectorOpen}
             icon={inspectorOpen ? PanelRightClose : PanelRightOpen}
             onClick={() => setInspectorOpen((value) => !value)}
-            title="Toggle inspector"
+            title={inspectorOpen ? 'Hide node details' : 'Show node details'}
           >
             Inspector
           </IconButton>
@@ -1562,31 +1762,31 @@ function AtlasStudio(): React.ReactElement {
             active={presenterMode}
             icon={Presentation}
             onClick={() => setPresenterMode((value) => !value)}
-            title="Toggle presenter mode"
+            title={presenterMode ? 'Exit presenter mode' : 'Enter presenter mode'}
           >
             Present
           </IconButton>
           <IconButton icon={MapIcon} onClick={fitCanvas} title="Fit map">
             Fit
           </IconButton>
-          <IconButton icon={Rows3} onClick={() => void tidyCanvas()} title="Tidy map">
-            Tidy
+          <IconButton icon={Rows3} onClick={() => void tidyCanvas()} title="Arrange map">
+            Arrange
           </IconButton>
-          <IconButton icon={ScanLine} onClick={() => void healCanvas()} title="Self-heal bindings">
-            Heal
+          <IconButton icon={ScanLine} onClick={() => void healCanvas()} title="Check production bindings">
+            Check
           </IconButton>
           <IconButton
             icon={FileText}
             onClick={() => void createProposal()}
-            title="Create write-back proposal"
+            title="Create review plan"
           >
-            Propose
+            Review plan
           </IconButton>
           <IconButton icon={RefreshCw} onClick={() => void loadSession()} title="Refresh session">
             Refresh
           </IconButton>
-          <IconButton icon={Clipboard} onClick={() => void copyCommand()} title="Copy command">
-            Copy command
+          <IconButton icon={Clipboard} onClick={() => void copyCommand()} title="Copy note capture">
+            Copy note capture
           </IconButton>
         </div>
       </header>
@@ -1594,6 +1794,7 @@ function AtlasStudio(): React.ReactElement {
       <main className="studio-main">
         <ReactFlowProvider>
           <div
+            ref={canvasStageRef}
             className={`canvas-stage ${presenterMode ? 'presenter-mode' : ''}`}
             aria-label="Atlas workflow canvas"
           >
@@ -1668,15 +1869,23 @@ function AtlasStudio(): React.ReactElement {
               <Panel className="canvas-mark" position="bottom-right">
                 <CubeMark />
               </Panel>
-              <Panel className="story-panel-wrap" position="bottom-left">
-                <StoryPanel
-                  onClear={() => void clearStoryFocus()}
-                  onNextStep={() => void advancePresenterStep('next')}
-                  onPreviousStep={() => void advancePresenterStep('previous')}
-                  onSelectStep={(step) => void selectStoryStep(step)}
-                  session={session}
-                />
-              </Panel>
+              {presenterMode ? (
+                <Panel
+                  className="story-panel-wrap"
+                  position="bottom-left"
+                  style={{ transform: `translate(${storyPanelOffset.x}px, ${storyPanelOffset.y}px)` }}
+                >
+                  <StoryPanel
+                    onClear={() => void clearStoryFocus()}
+                    onDragStart={startStoryPanelDrag}
+                    onNextStep={() => void advancePresenterStep('next')}
+                    onPreviousStep={() => void advancePresenterStep('previous')}
+                    onResetPosition={resetStoryPanelPosition}
+                    onSelectStep={(step) => void selectStoryStep(step)}
+                    session={session}
+                  />
+                </Panel>
+              ) : null}
             </ReactFlow>
           </div>
         </ReactFlowProvider>
@@ -1707,6 +1916,15 @@ function AtlasStudio(): React.ReactElement {
       </main>
 
       <footer className="studio-footer">
+        <div className={`operator-summary tone-${operatorSummary.tone}`} aria-label="Operator state">
+          <span className="operator-state">
+            <ShieldAlert aria-hidden="true" />
+            <strong>{operatorSummary.state}</strong>
+          </span>
+          <span>{operatorSummary.review}</span>
+          <span>{operatorSummary.proof}</span>
+          <span>{operatorSummary.handoff}</span>
+        </div>
         <div className="output-summary">
           <strong>{counts}</strong>
           <span>{session ? `Updated ${new Date(session.updatedAt).toLocaleTimeString()}` : ''}</span>
@@ -1716,17 +1934,29 @@ function AtlasStudio(): React.ReactElement {
         </div>
         <div className="toolbar">
           <a
+            aria-label="Open handoff"
             className="toolbar-link"
             href={`/api/sessions/${encodeURIComponent(sessionId)}/proposals/latest/handoff.md`}
+            title="Open handoff"
           >
             <NotebookTabs aria-hidden="true" />
             <span>Handoff</span>
           </a>
-          <a className="toolbar-link" href={`/api/sessions/${encodeURIComponent(sessionId)}/export.md`}>
+          <a
+            aria-label="Open client summary"
+            className="toolbar-link"
+            href={`/api/sessions/${encodeURIComponent(sessionId)}/export.md`}
+            title="Open client summary"
+          >
             <FileText aria-hidden="true" />
             <span>Client summary</span>
           </a>
-          <a className="toolbar-link" href={`/api/sessions/${encodeURIComponent(sessionId)}`}>
+          <a
+            aria-label="Open session JSON"
+            className="toolbar-link"
+            href={`/api/sessions/${encodeURIComponent(sessionId)}`}
+            title="Open session JSON"
+          >
             <Braces aria-hidden="true" />
             <span>JSON</span>
           </a>

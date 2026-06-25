@@ -135,6 +135,8 @@ a:not([class*="button"]):not(.btn):hover {
 
 html {
   scroll-behavior: smooth;
+  max-width: 100%;
+  overflow-x: clip;
 }
 
 body {
@@ -143,4 +145,194 @@ body {
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+/* ==========================================================================
+   Legacy Research Artifact Mobile Guards
+
+   Older static papers predate the shared ResearchArtifactPage shell and keep
+   their own table/code wrappers. These guards keep that legacy content inside
+   the mobile viewport while preserving local horizontal scrolling for dense
+   code and comparison tables.
+   ========================================================================== */
+
+.paper-container {
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+.paper-container .overflow-x-auto,
+.paper-container .responsive-table-scroll,
+.paper-container .code-block {
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.paper-container table {
+  max-width: 100%;
+}
+
+.paper-container pre {
+  max-width: 100%;
+  overflow-x: auto;
+  white-space: pre;
+  -webkit-overflow-scrolling: touch;
+}
+
+.paper-container .grid > *,
+.paper-container .paper-content,
+.paper-container .paper-section {
+  min-width: 0;
+}
+
+.paper-container .paper-title,
+.paper-container .paper-subtitle,
+.paper-container .body-text,
+.paper-container .section-heading,
+.paper-container .subsection-heading,
+.paper-container .quote-text {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 640px) {
+  .paper-container .paper-meta,
+  .paper-container .paper-footer .flex,
+  .paper-container .footer-actions {
+    flex-wrap: wrap;
+    gap: 0.5rem 0.875rem;
+  }
+
+  .paper-container .overflow-x-auto,
+  .paper-container .responsive-table-scroll {
+    width: 100%;
+    max-width: calc(100vw - 2rem);
+  }
+
+  .paper-container .overflow-x-auto > table,
+  .paper-container .responsive-table-scroll > table {
+    width: max-content;
+    min-width: 42rem;
+    max-width: none;
+  }
+}
+
+/* ==========================================================================
+   Legacy Static Detail Mobile Guards
+
+   Some older paper and experiment routes use bespoke shells instead of the
+   shared ResearchArtifactPage or paper-container wrapper. Keep their dense
+   diagrams, tables, code blocks, and comparison cards from widening the page.
+   ========================================================================== */
+
+article.paper,
+.page-container,
+.container {
+  max-width: 100%;
+}
+
+article.paper {
+  overflow-x: clip;
+}
+
+article.paper .comparison-grid > *,
+article.paper .results-comparison > *,
+article.paper .cost-breakdown > *,
+.page-container .grid > *,
+.container .diagram-row > * {
+  min-width: 0;
+}
+
+article.paper pre,
+article.paper .code-block,
+article.paper .comparison-table,
+.page-container pre,
+.page-container .code-block,
+.page-container .overflow-x-auto,
+.container .diagram-wrapper {
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+article.paper h1,
+article.paper h2,
+article.paper h3,
+article.paper h4,
+article.paper p,
+article.paper li,
+.page-container h1,
+.page-container h2,
+.page-container h3,
+.page-container p,
+.page-container li,
+.container h1,
+.container h2,
+.container p {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 640px) {
+  article.paper {
+    padding-inline: 1.25rem;
+  }
+
+  article.paper table {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  article.paper .comparison-table table,
+  .page-container .overflow-x-auto > table {
+    display: table;
+    width: max-content;
+    min-width: 42rem;
+    max-width: none;
+  }
+
+  .container {
+    padding-inline: 1rem;
+  }
+
+  .container .diagram-wrapper {
+    display: block;
+    width: 100%;
+  }
+
+  .container .diagram-wrapper svg {
+    max-width: none;
+  }
+
+  .page-container .latency-row,
+  .page-container .budget-row,
+  .page-container .budget-total,
+  .page-container .bottleneck-row,
+  .page-container .opt-item,
+  .page-container .cache-row {
+    grid-template-columns: 1fr !important;
+  }
+
+  .page-container .cost-calc {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.35rem;
+  }
+
+  .page-container .latency-value,
+  .page-container .budget-value,
+  .page-container .budget-pct,
+  .page-container .bottleneck-pct {
+    text-align: left !important;
+  }
+
+  .page-container .code-block code {
+    display: block;
+    width: max-content;
+    min-width: 100%;
+  }
 }

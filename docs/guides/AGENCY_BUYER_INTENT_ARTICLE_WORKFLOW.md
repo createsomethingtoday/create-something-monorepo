@@ -152,6 +152,9 @@ For each live article, update:
 - `leads`
 - `revenue_influenced`
 - `visual_plan_status`
+- `canvas_plan_status`
+- `canvas_source`
+- `canvas_renderer`
 - `screenshot_refresh_due`
 - `image_rights_status`
 - `last_reviewed`
@@ -165,6 +168,8 @@ Decision rules:
 - If CTA clicks rise but leads are weak, review whether the page is forcing a
   booking when a checklist or teardown request would fit better.
 - If rankings fall after a vendor release, refresh the article and source notes.
+- If the article explains workflow, governance, or agent behavior and the canvas
+  plan is blank, add a static story-canvas plan before commissioning one-off art.
 - If screenshots are stale, refresh them or replace them with original diagrams.
 
 ## Distribution

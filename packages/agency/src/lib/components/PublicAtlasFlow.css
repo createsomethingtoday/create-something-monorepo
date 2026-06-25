@@ -18,67 +18,67 @@
 		sans-serif;
 }
 
-.public-atlas-flow .react-flow__pane {
+.public-atlas-flow .svelte-flow__pane {
 	cursor: grab;
 }
 
-.public-atlas-flow .react-flow__pane:active {
+.public-atlas-flow .svelte-flow__pane:active {
 	cursor: grabbing;
 }
 
-.public-atlas-flow .react-flow__attribution {
+.public-atlas-flow .svelte-flow__attribution {
 	display: none;
 }
 
-.public-atlas-flow .react-flow__controls {
+.public-atlas-flow .svelte-flow__controls {
 	overflow: hidden;
 	border: 1px solid rgba(10, 14, 25, 0.08);
 	border-radius: 8px;
 	box-shadow: 0 14px 32px rgba(10, 14, 25, 0.08);
 }
 
-.public-atlas-flow .react-flow__controls-button {
+.public-atlas-flow .svelte-flow__controls-button {
 	border: 0;
 	border-bottom: 1px solid rgba(10, 14, 25, 0.08);
 	background: rgba(255, 255, 255, 0.94);
 	color: #0a0e19;
 }
 
-.public-atlas-flow .react-flow__controls-button:last-child {
+.public-atlas-flow .svelte-flow__controls-button:last-child {
 	border-bottom: 0;
 }
 
-.public-atlas-flow .react-flow__controls-button:hover {
+.public-atlas-flow .svelte-flow__controls-button:hover {
 	background: #f4f4ef;
 }
 
-.public-atlas-flow .react-flow__handle {
+.public-atlas-flow .svelte-flow__handle {
 	width: 7px;
 	height: 7px;
 	border: 1px solid #b8b8af;
 	background: #ffffff;
 }
 
-.public-atlas-flow .react-flow__handle-left {
+.public-atlas-flow .svelte-flow__handle-left {
 	left: -4px;
 }
 
-.public-atlas-flow .react-flow__handle-right {
+.public-atlas-flow .svelte-flow__handle-right {
 	right: -4px;
 }
 
-.public-atlas-flow .react-flow__edge-path {
+.public-atlas-flow .svelte-flow__edge-path {
 	stroke: #9f9b90;
 	stroke-width: 1.35;
 }
 
-.public-atlas-flow .react-flow__edge-text {
+.public-atlas-flow .svelte-flow__edge-text {
 	fill: #6f6f67;
 	font-size: 11px;
 	font-weight: 600;
 }
 
-.public-atlas-flow .react-flow__edge-textbg {
+.public-atlas-flow .svelte-flow__edge-textbg {
 	fill: #fbfbf8;
 	fill-opacity: 0.92;
 }
@@ -167,7 +167,7 @@
 	transform: translateY(-1px);
 }
 
-.react-flow__node.selected .public-atlas-flow-node {
+.svelte-flow__node.selected .public-atlas-flow-node {
 	border-color: #0a0e19;
 	box-shadow: 0 0 0 2px rgba(10, 14, 25, 0.08), 0 18px 38px rgba(10, 14, 25, 0.12);
 }

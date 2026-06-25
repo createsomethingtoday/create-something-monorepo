@@ -7,11 +7,12 @@
 
 1. Copy the scaffold
 2. Let `create-mcp` infer a profile from the package name, or pass `--profile` to override
-3. Replace placeholders
-4. Add legibility contract + README
-5. Add to workspace + install
-6. Apply telemetry migration (if new D1)
-7. Deploy
+3. Fill an endpoint construction contract for each agent-callable capability
+4. Replace placeholders
+5. Add legibility contract + README
+6. Add to workspace + install
+7. Apply telemetry migration (if new D1)
+8. Deploy
 
 ## Scaffold Profiles
 
@@ -36,6 +37,29 @@ If `--profile` is omitted, `create-mcp` infers a conservative default from the p
 - everything else stays `generic`
 
 Use `--dry-run` to preview the inferred profile, target directory, and generated file list without writing anything to `packages/`.
+
+## Endpoint construction contract
+
+Before implementing resources, tools, prompts, routes, or worker handlers, fill
+the endpoint construction template:
+
+- [examples/endpoint-construction-contract.template.yaml](./examples/endpoint-construction-contract.template.yaml)
+
+Use one contract per meaningful capability boundary. The goal is to decide the
+product surface before code makes the boundary implicit:
+
+- intent: what capability this endpoint gives an agent or operator
+- schema: what inputs are accepted and what is forbidden
+- authority: whether the endpoint can read, propose, approve, apply, rollback, or must block
+- state: what is persisted, how idempotency works, and where audit events land
+- limits: rate, scope, cost, time, and autonomy ceilings
+- errors: known failure codes and the next safe action for the model
+- evidence: success, refusal, and partial-success receipts
+- fallback: deterministic recovery, manual handoff, and rollback path
+
+This keeps the MCP-First thesis concrete: the value is not merely connecting an
+API. The value is constructing the capability boundary the model can safely
+inhabit.
 
 ## 1. Directory Structure
 

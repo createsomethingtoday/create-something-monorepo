@@ -3,7 +3,9 @@
 > Content asset ID:
 > Image asset slug:
 > Surface: article | social | deck | delivery | sales | client-update
-> Image family: system-map-hero | db-automation-judgment | policy-gate-chart | evidence-map | handoff-receipt | screenshot-annotation | cta-visual
+> Image family: atlas-story-canvas | system-map-hero | db-automation-judgment | policy-gate-chart | evidence-map | handoff-receipt | screenshot-annotation | cta-visual
+> Canvas renderer: static-story | react-flow | sigma | cosmograph | not applicable
+> Atlas graph source: existing starter map | new graph artifact | not applicable
 > Owner:
 > Review status: draft | approved | published | retired
 > Target export:
@@ -28,6 +30,8 @@ Audience:
 Primary claim:
 Proof object:
 Next action:
+Canvas source:
+Canvas must show: owner | workflow artifact | automation | AI task | human judgment | stop boundary | receipt
 ```
 
 ## Prompt
@@ -38,6 +42,10 @@ Create a CREATE SOMETHING <image family> for <surface>.
 Purpose: <what the image must prove>.
 Audience: <operator, buyer, builder, reviewer, client>.
 Show: <workflow objects, states, proof artifacts, owners, gates>.
+
+If the image explains workflow behavior, governance, an offer, a case study, a
+tool comparison, or agent behavior, use an Atlas-style canvas with nodes and
+mapped relationships before any decorative composition. Preserve the graph as the source of truth: owner, workflow or data artifact, automation route, AI-assisted task when present, human judgment point, stop condition, and receipt surface. Use static story canvas for marketing and article visuals, React Flow only when the surface needs editing or intake, and Sigma/Cosmograph only for large read-only network exploration.
 
 Style: Use Ona.com as the design and communication foundation: calm hierarchy,
 plain claims, compact proof, governed execution, visible evidence, and restrained
@@ -56,6 +64,8 @@ prompts, watermarks, vendor endorsement, and decorative AI atmosphere.
 
 - [ ] Text is legible at 50% size.
 - [ ] The image answers a specific operational question.
+- [ ] Workflow, governance, or agent-behavior visuals use an Atlas canvas unless explicitly marked not applicable.
+- [ ] The canvas shows owner, workflow artifact, automation, human judgment, stop boundary, and receipt surface.
 - [ ] The claim is supported by visible proof or a real screenshot.
 - [ ] No fake UI is presented as a screenshot.
 - [ ] No secrets, private data, private prompts, client records, or tokens appear.

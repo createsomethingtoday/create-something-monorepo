@@ -27,7 +27,7 @@ DEFAULT_PAGE_SIZE = "24"
 DEFAULT_CLIENT_MODE = "shadow"
 
 [triggers]
-crons = ["*/5 * * * *", "0 */2 * * *", "17 * * * *", "47 3 * * *"]
+crons = ["*/5 * * * *", "17 * * * *", "47 3 * * *"]
 
 # Secrets:
 # - AIRTABLE_API_KEY

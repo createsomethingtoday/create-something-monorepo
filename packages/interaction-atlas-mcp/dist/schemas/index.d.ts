@@ -217,6 +217,22 @@ export declare const AtlasStudioEdgeAddSchema: z.ZodObject<{
     label?: string | undefined;
     evidence?: string | undefined;
 }>;
+export declare const AtlasStudioEdgeUpdateSchema: z.ZodObject<{
+    session_id: z.ZodString;
+    edge_id: z.ZodString;
+    label: z.ZodOptional<z.ZodString>;
+    evidence: z.ZodOptional<z.ZodString>;
+}, "strip", z.ZodTypeAny, {
+    session_id: string;
+    edge_id: string;
+    label?: string | undefined;
+    evidence?: string | undefined;
+}, {
+    session_id: string;
+    edge_id: string;
+    label?: string | undefined;
+    evidence?: string | undefined;
+}>;
 export declare const AtlasStudioSuggestionAcceptSchema: z.ZodObject<{
     session_id: z.ZodString;
     suggestion_id: z.ZodString;

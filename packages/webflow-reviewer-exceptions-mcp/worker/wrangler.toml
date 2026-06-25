@@ -1,0 +1,26 @@
+name = "webflow-reviewer-exceptions-mcp"
+main = "index.ts"
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat"]
+account_id = "9645bd52e640b8a4f40a3a55ff1dd75a"
+
+[observability]
+enabled = true
+
+[vars]
+AIRTABLE_REVIEWER_EXCEPTIONS_BASE_ID = "appXfYXnivsUT1kLg"
+AIRTABLE_REVIEWER_EXCEPTIONS_TABLE_ID = "tblqkbW0SptshgPiw"
+DIFY_REVIEWER_EXCEPTIONS_KNOWLEDGE_ID = "reviewer-exceptions"
+
+[[d1_databases]]
+binding = "TELEMETRY_DB"
+database_name = "cs-telemetry"
+database_id = "f710641a-0c85-4a7b-bb73-2c16f8d024c3"
+
+[[durable_objects.bindings]]
+name = "MCP_OBJECT"
+class_name = "WebflowReviewerExceptionsMCP"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["WebflowReviewerExceptionsMCP"]

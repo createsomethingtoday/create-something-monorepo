@@ -10,9 +10,12 @@ type TidyUpdate = {
     x: number;
     y: number;
 };
+type TidyLayoutOptions = {
+    viewportWidth?: number;
+};
 export declare function detailModeForZoom(zoom: number): CanvasDetailMode;
 export declare function nodeWidthForMode(node: AtlasCanvasNode, mode: CanvasDetailMode): number;
 export declare function agentActivityFromSessionChange(previous: AtlasSession | null, next: AtlasSession): ActivitySummary | null;
-export declare function tidyNodeUpdates(session: AtlasSession): TidyUpdate[];
+export declare function tidyNodeUpdates(session: AtlasSession, options?: TidyLayoutOptions): TidyUpdate[];
 export {};
 //# sourceMappingURL=layout.d.ts.map
