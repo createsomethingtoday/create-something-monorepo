@@ -81,7 +81,7 @@ Implementation surface:
 
 Story-canvas usage contract:
 
-- Pass an explicit `storyId` on route-level uses so SVG marker IDs and heading
+- Pass an explicit `storyId` on route-level uses so heading and instruction
   references remain stable if multiple story canvases appear on the same page.
 - Keep the story canvas before the editable canvas when both are present. The
   story teaches the workflow language; the editable canvas collects booking
@@ -92,10 +92,10 @@ Story-canvas usage contract:
 
 Renderer rule:
 
-- React Flow is the primary renderer for workflow education, intake, editing,
-  accessibility, and agent-operable maps.
-- Static story canvases are the fallback for marketing, articles, social cards,
-  and non-JS presentation.
+- Svelte Flow is the primary renderer for workflow education, intake, editing,
+  accessibility, story maps, and agent-operable maps in this Svelte frontend.
+- Static story exports are the fallback for articles, social cards, and non-JS
+  presentation, not the base in-app canvas implementation.
 - Sigma/Cosmograph are reserved for large read-only network exploration. Do not
   move the canonical workflow contract into those renderers; adapt them from the
   Atlas graph artifact when graph scale requires WebGL.

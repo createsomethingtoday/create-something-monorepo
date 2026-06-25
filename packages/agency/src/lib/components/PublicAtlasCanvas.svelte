@@ -20,10 +20,7 @@
 		type PublicAtlasNodeStatus,
 		type PublicAtlasReadiness
 	} from '$lib/atlas/public';
-	import type {
-		PublicAtlasFlowController,
-		PublicAtlasFlowProps
-	} from '$lib/components/PublicAtlasFlow';
+	import PublicAtlasFlow from '$lib/components/PublicAtlasFlow.svelte';
 
 	type AgentMessage = {
 		role: 'assistant' | 'visitor';
@@ -63,8 +60,6 @@
 	let starterState = '';
 	let hydrated = false;
 	let addMenuOpen = false;
-	let flowHost: HTMLDivElement;
-	let flowController: PublicAtlasFlowController | undefined;
 	let usage: AgentResponse['usage'] = {
 		tier: 'anonymous',
 		messagesUsed: 0,
@@ -241,16 +236,6 @@
 			starterId,
 			starterFound: Boolean(starter)
 		});
-	}
-
-	function buildFlowProps(): PublicAtlasFlowProps {
-		return {
-			canvas,
-			selectedNodeId,
-			onConnectNodes: connectNodes,
-			onMoveNode: moveNode,
-			onSelectNode: selectNode
-		};
 	}
 
 	function updateCanvas(next: PublicAtlasCanvas) {
@@ -442,19 +427,6 @@
 		}
 		hydrated = true;
 		trackAtlasEvent('atlas_canvas_started', { restored });
-
-		let destroyed = false;
-		void (async () => {
-			const module = await import('$lib/components/PublicAtlasFlow');
-			if (destroyed || !flowHost) return;
-			flowController = module.mountPublicAtlasFlow(flowHost, buildFlowProps());
-		})();
-
-		return () => {
-			destroyed = true;
-			flowController?.destroy();
-			flowController = undefined;
-		};
 	});
 
 	$: if (browser && hydrated) {
@@ -462,11 +434,6 @@
 		persistCanvas();
 	}
 
-	$: if (flowController && hydrated) {
-		canvas;
-		selectedNodeId;
-		flowController.update(buildFlowProps());
-	}
 </script>
 
 <section class="public-atlas" class:compact={compact} aria-label="Public Atlas workflow canvas">
@@ -529,11 +496,15 @@
 					</div>
 				</div>
 
-				<div
-					class="atlas-flow-viewport"
-					bind:this={flowHost}
-					aria-label="Atlas flow canvas"
-				></div>
+				<div class="atlas-flow-viewport" aria-label="Atlas flow canvas">
+					<PublicAtlasFlow
+						{canvas}
+						{selectedNodeId}
+						onConnectNodes={connectNodes}
+						onMoveNode={moveNode}
+						onSelectNode={selectNode}
+					/>
+				</div>
 
 				<div class="handoffs">
 					<div class="handoffs-title">
