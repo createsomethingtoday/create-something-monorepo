@@ -23,6 +23,8 @@ export interface TemplateLookupTarget {
   sourceLastModifiedTime?: string | null;
 }
 
+type BatchProgress = () => Promise<void>;
+
 const TEMPLATE_IMAGE_REFRESH_SELECT = `SELECT id, template_slug AS templateSlug, name, listing_url AS listingUrl, thumbnail_image_url AS thumbnailImageUrl, thumbnail_image_secondary_url AS thumbnailImageSecondaryUrl
        FROM template_documents`;
 
@@ -36,6 +38,22 @@ const TEMP_ATTACHMENT_IMAGE_WHERE = `thumbnail_image_url LIKE '%airtableusercont
           OR thumbnail_image_url LIKE '%dl.airtable.com%'
           OR thumbnail_image_secondary_url LIKE '%airtableusercontent.com%'
           OR thumbnail_image_secondary_url LIKE '%dl.airtable.com%'`;
+
+async function runStatementBatches(
+  db: D1Database,
+  statements: D1PreparedStatement[],
+  options: { onBatch?: BatchProgress } = {},
+): Promise<number> {
+  let totalChanges = 0;
+  for (const group of chunk(statements, 50)) {
+    const results = await db.batch(group);
+    for (const result of results) {
+      totalChanges += result.meta?.changes ?? 0;
+    }
+    await options.onBatch?.();
+  }
+  return totalChanges;
+}
 
 const IMAGE_BACKFILL_ATTEMPT_RETRY_AFTER_MS = 6 * 60 * 60 * 1000;
 const STALE_IMAGE_REFRESH_LIMIT = 24;
@@ -606,6 +624,7 @@ export async function refreshTemplateImageUrls(
   db: D1Database,
   records: Array<{ id: string; thumbnailImageUrl: string | null; thumbnailImageSecondaryUrl: string | null; carouselImageUrls: string[] }>,
   syncedAt: string,
+  options: { onBatch?: BatchProgress } = {},
 ): Promise<number> {
   if (records.length === 0) return 0;
 
@@ -628,15 +647,7 @@ export async function refreshTemplateImageUrls(
       ),
   );
 
-  let totalChanges = 0;
-  for (const group of chunk(statements, 50)) {
-    const results = await db.batch(group);
-    for (const result of results) {
-      totalChanges += result.meta?.changes ?? 0;
-    }
-  }
-
-  return totalChanges;
+  return runStatementBatches(db, statements, options);
 }
 
 // Bulk-update thumbnail and carousel URLs sourced from stable Webflow CDN URLs.
@@ -646,6 +657,7 @@ export async function updateTemplateImagesFromWebflow(
   db: D1Database,
   records: WebflowTemplateImageRecord[],
   syncedAt: string,
+  options: { onBatch?: BatchProgress } = {},
 ): Promise<number> {
   if (records.length === 0) return 0;
 
@@ -777,15 +789,7 @@ export async function updateTemplateImagesFromWebflow(
     }
   }
 
-  let totalChanges = 0;
-  for (const group of chunk(statements, 50)) {
-    const results = await db.batch(group);
-    for (const result of results) {
-      totalChanges += result.meta?.changes ?? 0;
-    }
-  }
-
-  return totalChanges;
+  return runStatementBatches(db, statements, options);
 }
 
 // Bulk-update creator profile URLs and avatar URLs sourced from Webflow CMS.
@@ -795,7 +799,7 @@ export async function updateCreatorAvatarsFromWebflow(
   db: D1Database,
   records: WebflowDesignerAvatarRecord[],
   syncedAt: string,
-  options: { matchByName?: boolean; forceMatchByName?: boolean } = {},
+  options: { matchByName?: boolean; forceMatchByName?: boolean; onBatch?: BatchProgress } = {},
 ): Promise<number> {
   if (records.length === 0) return 0;
 
@@ -1023,15 +1027,7 @@ export async function updateCreatorAvatarsFromWebflow(
     }
   }
 
-  let totalChanges = 0;
-  for (const group of chunk(statements, 50)) {
-    const results = await db.batch(group);
-    for (const result of results) {
-      totalChanges += result.meta?.changes ?? 0;
-    }
-  }
-
-  return totalChanges;
+  return runStatementBatches(db, statements, options);
 }
 
 // Some template rows have a creator display name but no linked creator record ID.
@@ -1124,7 +1120,7 @@ export async function backfillCreatorFieldsFromLookup(
   db: D1Database,
   creators: Map<string, CreatorLookupValue>,
   syncedAt: string,
-  options: { documentIds?: string[] } = {},
+  options: { documentIds?: string[]; onBatch?: BatchProgress } = {},
 ): Promise<number> {
   if (creators.size === 0) return 0;
   const uniqueDocumentIds = Array.from(new Set((options.documentIds ?? []).filter(Boolean)));
@@ -1216,15 +1212,7 @@ export async function backfillCreatorFieldsFromLookup(
 
   if (statements.length === 0) return 0;
 
-  let totalChanges = 0;
-  for (const group of chunk(statements, 50)) {
-    const results = await db.batch(group);
-    for (const result of results) {
-      totalChanges += result.meta?.changes ?? 0;
-    }
-  }
-
-  return totalChanges;
+  return runStatementBatches(db, statements, options);
 }
 
 // Creator avatar/profile URL updates in Airtable do not bump the template's LMT,
@@ -1234,7 +1222,7 @@ export async function backfillCreatorAvatars(
   db: D1Database,
   creators: Map<string, CreatorLookupValue>,
   syncedAt: string,
-  options: { overwriteExisting?: boolean } = {},
+  options: { overwriteExisting?: boolean; onBatch?: BatchProgress } = {},
 ): Promise<number> {
   if (creators.size === 0) return 0;
 
@@ -1351,15 +1339,7 @@ export async function backfillCreatorAvatars(
 
   if (statements.length === 0) return 0;
 
-  let totalChanges = 0;
-  for (const group of chunk(statements, 50)) {
-    const results = await db.batch(group);
-    for (const result of results) {
-      totalChanges += result.meta?.changes ?? 0;
-    }
-  }
-
-  return totalChanges;
+  return runStatementBatches(db, statements, options);
 }
 
 export async function listTemplateImageRefreshRows(

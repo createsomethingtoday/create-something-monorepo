@@ -1088,10 +1088,10 @@ async function runImageUrlRefresh(env: Env, heartbeat: SyncHeartbeat): Promise<I
     const [refreshedImages, refreshedAvatars, backfilledAvatars, lookupBackfilledAvatars] = await withPeriodicHeartbeat(
       heartbeat,
       Promise.all([
-        updateTemplateImagesFromWebflow(env.DB, templateImages, startedAt),
-        updateCreatorAvatarsFromWebflow(env.DB, designerAvatars, startedAt),
-        backfillCreatorAvatars(env.DB, airtableFallbackCreators, startedAt, { overwriteExisting: true }),
-        backfillCreatorFieldsFromLookup(env.DB, lookups.creators, startedAt),
+        updateTemplateImagesFromWebflow(env.DB, templateImages, startedAt, { onBatch: heartbeat }),
+        updateCreatorAvatarsFromWebflow(env.DB, designerAvatars, startedAt, { onBatch: heartbeat }),
+        backfillCreatorAvatars(env.DB, airtableFallbackCreators, startedAt, { overwriteExisting: true, onBatch: heartbeat }),
+        backfillCreatorFieldsFromLookup(env.DB, lookups.creators, startedAt, { onBatch: heartbeat }),
       ]),
     );
     await heartbeat();
@@ -1128,9 +1128,9 @@ async function runImageUrlRefresh(env: Env, heartbeat: SyncHeartbeat): Promise<I
   const [refreshedImages, backfilledAvatars, lookupBackfilledAvatars] = await withPeriodicHeartbeat(
     heartbeat,
     Promise.all([
-      refreshTemplateImageUrls(env.DB, records, startedAt),
-      backfillCreatorAvatars(env.DB, lookups.creators, startedAt, { overwriteExisting: true }),
-      backfillCreatorFieldsFromLookup(env.DB, lookups.creators, startedAt),
+      refreshTemplateImageUrls(env.DB, records, startedAt, { onBatch: heartbeat }),
+      backfillCreatorAvatars(env.DB, lookups.creators, startedAt, { overwriteExisting: true, onBatch: heartbeat }),
+      backfillCreatorFieldsFromLookup(env.DB, lookups.creators, startedAt, { onBatch: heartbeat }),
     ]),
   );
   await heartbeat();
