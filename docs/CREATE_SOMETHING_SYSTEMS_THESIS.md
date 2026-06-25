@@ -12,6 +12,12 @@ delivery docs. It explains how they fit together as one systems-thinking
 argument, what the repo already proves, and what remains before the work can be
 experienced as a comprehensive thesis, lab, and school.
 
+The living evidence layer for this thesis is generated from
+`docs/thesis/claims.yaml` into
+`docs/CREATE_SOMETHING_SYSTEMS_THESIS_EVIDENCE.generated.md`. Treat that report
+as the citation map: each claim should become stronger, weaker, stale, or
+contradicted as repo evidence changes.
+
 The premise is direct:
 
 > CREATE SOMETHING is a working thesis on how modern AI systems become useful
@@ -553,6 +559,9 @@ Recommended sequence:
 - Keep this document current.
 - Add it to `docs/README.md`.
 - Link it from strategy and architecture routes where appropriate.
+- Keep `docs/thesis/claims.yaml` and
+  `docs/CREATE_SOMETHING_SYSTEMS_THESIS_EVIDENCE.generated.md` current as the
+  living citation system.
 
 ### Phase 2: Flagship case packet
 

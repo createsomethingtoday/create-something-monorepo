@@ -9,16 +9,19 @@ Use it as the system of record for strategy, architecture, policy, runbooks, and
 Read in this order when you need broad repo context:
 
 1. [CREATE_SOMETHING_SYSTEMS_THESIS.md](./CREATE_SOMETHING_SYSTEMS_THESIS.md) — synthesis spine for the practice-led systems thesis
-2. [MCP_FIRST_THESIS.md](./MCP_FIRST_THESIS.md) — strategic thesis, packaging, and market framing
-3. [THREE_TIER_FRAMEWORK.md](./THREE_TIER_FRAMEWORK.md) — Database / Automation / Judgment model
-4. [POLICY_OS_PRODUCT_DEFINITION.md](./POLICY_OS_PRODUCT_DEFINITION.md) — canonical paid package definition
-5. [policies/README.md](./policies/README.md) — versioned policy artifacts
+2. [CREATE_SOMETHING_SYSTEMS_THESIS_EVIDENCE.generated.md](./CREATE_SOMETHING_SYSTEMS_THESIS_EVIDENCE.generated.md) — living claim and citation report generated from `docs/thesis/claims.yaml`
+3. [MCP_FIRST_THESIS.md](./MCP_FIRST_THESIS.md) — strategic thesis, packaging, and market framing
+4. [THREE_TIER_FRAMEWORK.md](./THREE_TIER_FRAMEWORK.md) — Database / Automation / Judgment model
+5. [POLICY_OS_PRODUCT_DEFINITION.md](./POLICY_OS_PRODUCT_DEFINITION.md) — canonical paid package definition
+6. [policies/README.md](./policies/README.md) — versioned policy artifacts
 
 ## Navigation by task
 
 ### Strategy and positioning
 
 - [CREATE_SOMETHING_SYSTEMS_THESIS.md](./CREATE_SOMETHING_SYSTEMS_THESIS.md)
+- [CREATE_SOMETHING_SYSTEMS_THESIS_EVIDENCE.generated.md](./CREATE_SOMETHING_SYSTEMS_THESIS_EVIDENCE.generated.md)
+- [thesis/README.md](./thesis/README.md)
 - [MCP_FIRST_THESIS.md](./MCP_FIRST_THESIS.md)
 - [POLICY_OS_PRODUCT_DEFINITION.md](./POLICY_OS_PRODUCT_DEFINITION.md)
 - [AGENCY_BUSINESS_HEALTH_DASHBOARD.md](./AGENCY_BUSINESS_HEALTH_DASHBOARD.md)
