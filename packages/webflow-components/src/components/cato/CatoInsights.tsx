@@ -69,6 +69,13 @@ export interface CatoInsightsHubProps extends CatoInsightsDataProps {
   featuredPanelTitle?: string;
   featuredPanelSummary?: string;
   featuredPanelCta?: string;
+  filterRailNote?: string;
+  insightsHomeLink?: CatoInsightLinkProp;
+  featuredPanelLink?: CatoInsightLinkProp;
+  resiliencyLink?: CatoInsightLinkProp;
+  researchLink?: CatoInsightLinkProp;
+  whitepapersLink?: CatoInsightLinkProp;
+  newsroomLink?: CatoInsightLinkProp;
   previewEyebrow?: string;
   previewTitle?: string;
   previewSummary?: string;
@@ -862,6 +869,8 @@ const CATO_CSS = `
   .cato-cc-panel-label { text-transform: uppercase; border: 1px solid rgba(255,255,255,.18); background: rgba(255,255,255,.10); padding: .38rem .75rem; font-family: Switzer, Arial, sans-serif; font-size: .8125rem; font-weight: 600; }
   .cato-cc-pill { color: rgba(40,39,35,.72); background: rgba(10,69,46,.06); border: 1px solid rgba(10,69,46,.14); padding: .38rem .75rem; font-size: .8125rem; text-transform: uppercase; }
   .cato-cc-card-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1.25rem; }
+  .cato-cc-card-grid[data-count="3"] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .cato-cc-card-grid[data-count="2"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .cato-cc-card, .cato-cc-cms-card, .cato-cc-detail-card, .cato-cc-sidebar-card { border: 1px solid var(--cato-border); background: var(--cato-bg); border-radius: .75rem; box-shadow: 0 1px 2px rgba(17,16,15,.04); }
   .cato-cc-card, .cato-cc-cms-card { display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; gap: 1rem; color: var(--cato-text); text-decoration: none; transition: transform .18s, border-color .18s, box-shadow .18s; }
   .cato-cc-card { min-height: 21rem; padding: 2rem; }
@@ -1504,6 +1513,8 @@ function Hero({
   panelSummary,
   panelCta,
   panelHref,
+  panelTarget,
+  panelRel,
   backLink,
   actions,
   children,
@@ -1515,6 +1526,8 @@ function Hero({
   panelSummary: string;
   panelCta?: string;
   panelHref?: string;
+  panelTarget?: string;
+  panelRel?: string;
   backLink?: React.ReactNode;
   actions?: React.ReactNode;
   children?: React.ReactNode;
@@ -1535,7 +1548,7 @@ function Hero({
             <h2>{panelTitle}</h2>
             <p>{panelSummary}</p>
             {panelCta && panelHref ? (
-              <a className="cato-cc-panel-link" href={panelHref}>
+              <a className="cato-cc-panel-link" href={panelHref} target={panelTarget} rel={panelRel}>
                 {panelCta}
               </a>
             ) : null}
@@ -1547,9 +1560,9 @@ function Hero({
   );
 }
 
-function CategoryCard({ category, href }: { category: CatoInsightCategory; href: string }) {
+function CategoryCard({ category, href, target, rel }: { category: CatoInsightCategory; href: string; target?: string; rel?: string }) {
   return (
-    <a href={href} className="cato-cc-card">
+    <a href={href} className="cato-cc-card" data-category={category.id} target={target} rel={rel}>
       <span className="cato-cc-pill">{category.cardLabel}</span>
       <h3>{category.cardTitle}</h3>
       <p>{category.cardSummary}</p>
@@ -1794,8 +1807,15 @@ export const CatoInsightsHub: React.FC<CatoInsightsHubProps> = ({
   summary = 'Stay ahead of disruptions with practical procurement intelligence.',
   featuredPanelLabel = 'Featured now',
   featuredPanelTitle = 'Relevant disruptions and strategic resources.',
-  featuredPanelSummary = 'Use this area to feature the market signals, whitepapers, and company updates that matter most from a business perspective.',
+  featuredPanelSummary = 'Use this area to feature the market signals, research, and company updates that matter most from a business perspective.',
   featuredPanelCta = '',
+  filterRailNote = 'Use these filters to scan current reports, research, and newsroom updates by content type.',
+  insightsHomeLink,
+  featuredPanelLink,
+  resiliencyLink,
+  researchLink,
+  whitepapersLink,
+  newsroomLink,
   previewEyebrow = 'Insights hub',
   previewTitle = 'Actionable Supply Chain Insights for Healthcare Leaders',
   previewSummary = 'Browse by content type to access active supply disruptions, overcome market volatility, and apply sourcing strategies that increase supply chain resilience.',
@@ -1807,11 +1827,29 @@ export const CatoInsightsHub: React.FC<CatoInsightsHubProps> = ({
   ...dataProps
 }) => {
   const { categories, items } = useInsightsData(dataProps);
-  const featured = items.find((item) => item.featured) || items[0];
-  const rest = items.filter((item) => item.id !== featured?.id);
+  const hubCategories = categories.filter((category) => category.id !== 'resources');
+  const hubCategoryIds = new Set(hubCategories.map((category) => category.id));
+  const hubItems = items.filter((item) => {
+    const itemType = [item.resourceType, item.pill, item.ctaLabel].join(' ').toLowerCase();
+    return hubCategoryIds.has(item.category) && !itemType.includes('whitepaper');
+  });
+  const categoryLinkOverrides: Record<string, CatoInsightLinkProp | undefined> = {
+    resiliency: resiliencyLink,
+    research: researchLink,
+    resources: whitepapersLink,
+    newsroom: newsroomLink,
+  };
+  const insightsHomeHref = hrefFromLink(insightsHomeLink, hrefForPage('insights.html', linkMode, pathPrefix));
+  const panelLink = featuredPanelLink || resiliencyLink;
+  const panelHref = hrefFromLink(panelLink, hrefForPage('resiliency-reports.html', linkMode, pathPrefix));
+  const linkForCategory = (category: CatoInsightCategory) => categoryLinkOverrides[category.id];
+  const hrefForCategory = (category: CatoInsightCategory) =>
+    hrefFromLink(linkForCategory(category), hrefForPage(category.page, linkMode, pathPrefix));
+  const featured = hubItems.find((item) => item.featured) || hubItems[0];
+  const rest = hubItems.filter((item) => item.id !== featured?.id);
   const previewItems = showFilterRail
     ? [featured, ...rest].filter((item): item is CatoInsightItem => Boolean(item))
-    : items.slice(0, Math.max(1, itemLimit));
+    : hubItems.slice(0, Math.max(1, itemLimit));
 
   return (
     <div className="cato-cc">
@@ -1823,12 +1861,15 @@ export const CatoInsightsHub: React.FC<CatoInsightsHubProps> = ({
         panelTitle={featuredPanelTitle}
         panelSummary={featuredPanelSummary}
         panelCta={featuredPanelCta}
-        panelHref={hrefForPage('resiliency-reports.html', linkMode, pathPrefix)}
+        panelHref={panelHref}
+        panelTarget={panelLink?.target}
+        panelRel={relForTarget(panelLink?.target)}
       >
-        <div className="cato-cc-card-grid">
-          {categories.map((category) => (
-            <CategoryCard key={category.id} category={category} href={hrefForPage(category.page, linkMode, pathPrefix)} />
-          ))}
+        <div className="cato-cc-card-grid" data-count={hubCategories.length}>
+          {hubCategories.map((category) => {
+            const link = linkForCategory(category);
+            return <CategoryCard key={category.id} category={category} href={hrefForCategory(category)} target={link?.target} rel={relForTarget(link?.target)} />;
+          })}
         </div>
       </Hero>
       <section className="cato-cc-section">
@@ -1843,18 +1884,27 @@ export const CatoInsightsHub: React.FC<CatoInsightsHubProps> = ({
               <aside className="cato-cc-filter-rail" aria-label="Browse insights by content type">
                 <div className="cato-cc-filter-title">Browse by type</div>
                 <div className="cato-cc-filter-list">
-                  <a href={hrefForPage('insights.html', linkMode, pathPrefix)} className="cato-cc-filter" data-active="true">
+                  <a
+                    href={insightsHomeHref}
+                    className="cato-cc-filter"
+                    data-active="true"
+                    target={insightsHomeLink?.target}
+                    rel={relForTarget(insightsHomeLink?.target)}
+                  >
                     <span>All insights</span>
-                    <span className="cato-cc-filter-count">{items.length}</span>
+                    <span className="cato-cc-filter-count">{hubItems.length}</span>
                   </a>
-                  {categories.map((category) => (
-                    <a key={category.id} href={hrefForPage(category.page, linkMode, pathPrefix)} className="cato-cc-filter">
-                      <span>{category.filterLabel}</span>
-                      <span className="cato-cc-filter-count">{items.filter((item) => item.category === category.id).length}</span>
-                    </a>
-                  ))}
+                  {hubCategories.map((category) => {
+                    const link = linkForCategory(category);
+                    return (
+                      <a key={category.id} href={hrefForCategory(category)} className="cato-cc-filter" target={link?.target} rel={relForTarget(link?.target)}>
+                        <span>{category.filterLabel}</span>
+                        <span className="cato-cc-filter-count">{items.filter((item) => item.category === category.id).length}</span>
+                      </a>
+                    );
+                  })}
                 </div>
-                <p className="cato-cc-filter-note">Start with one hub, then split high-volume categories into focused pages as publishing grows.</p>
+                {displayText(filterRailNote) ? <p className="cato-cc-filter-note">{filterRailNote}</p> : null}
               </aside>
               <div className="cato-cc-cms-grid">
                 {previewItems.map((item, index) => (

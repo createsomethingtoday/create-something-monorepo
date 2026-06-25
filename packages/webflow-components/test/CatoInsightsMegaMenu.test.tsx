@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { CatoInsightsMegaMenu } from '../src/components/cato/CatoInsights';
+import { CatoInsightsHub, CatoInsightsMegaMenu } from '../src/components/cato/CatoInsights';
 import { CatoNavigation } from '../src/components/cato/CatoNavigation';
 
 test('renders the launch mega menu with three browse options', () => {
@@ -36,4 +36,29 @@ test('allows editors to customize the right-side mega menu feature through navig
   assert.match(html, /Open the report/);
   assert.match(html, /href="\/resiliency-reports"/);
   assert.match(html, /Gowns and drapes alert/);
+});
+
+test('renders Cato Insights Hub with editable Webflow link overrides and hides launch-gated Whitepapers', () => {
+  const html = renderToStaticMarkup(
+    <CatoInsightsHub
+      showFilterRail
+      featuredPanelCta="Review signals"
+      featuredPanelLink={{ href: '/custom-panel', target: '_blank' }}
+      insightsHomeLink={{ href: '/custom-insights' }}
+      resiliencyLink={{ href: '/custom-resiliency' }}
+      researchLink={{ href: '/custom-research' }}
+      whitepapersLink={{ href: '/custom-whitepapers' }}
+      newsroomLink={{ href: '/custom-newsroom' }}
+    />,
+  );
+
+  assert.match(html, /href="\/custom-panel" target="_blank" rel="noreferrer"/);
+  assert.match(html, /href="\/custom-insights" class="cato-cc-filter" data-active="true"/);
+  assert.match(html, /class="cato-cc-card-grid" data-count="3"/);
+  assert.match(html, /href="\/custom-resiliency" class="cato-cc-card" data-category="resiliency"/);
+  assert.match(html, /href="\/custom-research" class="cato-cc-card" data-category="research"/);
+  assert.match(html, /href="\/custom-newsroom" class="cato-cc-card" data-category="newsroom"/);
+  assert.doesNotMatch(html, /href="\/custom-whitepapers"/);
+  assert.doesNotMatch(html, /data-category="resources"/);
+  assert.doesNotMatch(html, /Whitepaper/);
 });

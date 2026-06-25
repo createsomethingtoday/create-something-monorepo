@@ -28,11 +28,15 @@ export default declareComponent(CatoInsightsHub, {
     }),
     featuredPanelSummary: props.Text({
       name: 'Panel Summary',
-      defaultValue: 'Use this area to feature the market signals, whitepapers, and company updates that matter most from a business perspective.',
+      defaultValue: 'Use this area to feature the market signals, research, and company updates that matter most from a business perspective.',
     }),
     featuredPanelCta: props.Text({
       name: 'Panel CTA',
       defaultValue: '',
+    }),
+    featuredPanelLink: props.Link({
+      name: 'Panel CTA Link',
+      tooltip: 'Optional override for the featured panel CTA. Falls back to the Resiliency Report Alerts link.',
     }),
     previewEyebrow: props.Text({
       name: 'Preview Eyebrow',
@@ -58,6 +62,30 @@ export default declareComponent(CatoInsightsHub, {
     showCmsModel: props.Boolean({
       name: 'Show CMS Model Notes',
       defaultValue: false,
+    }),
+    filterRailNote: props.Text({
+      name: 'Filter Rail Note',
+      defaultValue: 'Use these filters to scan current reports, research, and newsroom updates by content type.',
+    }),
+    insightsHomeLink: props.Link({
+      name: 'Insights Home Link',
+      tooltip: 'Preferred: select the Insights page used by the filter rail All insights link.',
+    }),
+    resiliencyLink: props.Link({
+      name: 'Resiliency Report Alerts Link',
+      tooltip: 'Preferred: select the Resiliency Report Alerts page used by category cards and filters.',
+    }),
+    researchLink: props.Link({
+      name: 'Cato Research Link',
+      tooltip: 'Preferred: select the Cato Research page used by category cards and filters.',
+    }),
+    whitepapersLink: props.Link({
+      name: 'Whitepapers Link',
+      tooltip: 'Preferred: select the Whitepapers or Resource Library page used by category cards and filters.',
+    }),
+    newsroomLink: props.Link({
+      name: 'Newsroom Link',
+      tooltip: 'Preferred: select the Newsroom page used by category cards and filters.',
     }),
     categoriesJson: props.Text({
       name: 'Categories JSON',
