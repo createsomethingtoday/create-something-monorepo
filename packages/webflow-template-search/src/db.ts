@@ -1387,7 +1387,7 @@ export async function listTemplateImageBackfillRows(
   db: D1Database,
   limit: number,
   templateSlugs: string[] = [],
-  options: { now?: string; retryAfterMs?: number } = {},
+  options: { now?: string; retryAfterMs?: number; includeStable?: boolean } = {},
 ): Promise<TemplateImageRefreshRow[]> {
   const uniqueTemplateSlugs = Array.from(new Set(templateSlugs.map((slug) => slug.trim()).filter(Boolean)));
   if (uniqueTemplateSlugs.length > 0) {
@@ -1395,7 +1395,7 @@ export async function listTemplateImageBackfillRows(
       .prepare(
         `${TEMPLATE_IMAGE_REFRESH_SELECT}
          WHERE template_slug IN (${placeholderList(uniqueTemplateSlugs.length)})
-           AND (${STALE_IMAGE_WHERE})
+           ${options.includeStable ? '' : `AND (${STALE_IMAGE_WHERE})`}
          ORDER BY is_featured DESC, COALESCE(popularity_score, 0) DESC, COALESCE(source_last_modified_time, '') DESC
          LIMIT ?`,
       )
