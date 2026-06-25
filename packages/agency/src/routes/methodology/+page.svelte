@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { SEO } from '@create-something/canon';
 	import { BlurFade, ShimmerButton } from '@create-something/canon/magicui';
+	import PublicAtlasStoryCanvas from '$lib/components/PublicAtlasStoryCanvas.svelte';
 	import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
 	const disciplines = [
@@ -214,6 +215,31 @@
 				</BlurFade>
 			{/each}
 		</div>
+	</div>
+</section>
+
+<!-- Method Visualized -->
+<section class="method-canvas-section">
+	<div class="section-container">
+		<BlurFade delay={0.1}>
+			<h2 class="section-heading">The method as a map</h2>
+		</BlurFade>
+		<BlurFade delay={0.15}>
+			<p class="section-subhead">
+				The same canvas language explains what can run, what waits for judgment, what stops,
+				and where proof lands before a workflow earns more authority.
+			</p>
+		</BlurFade>
+		<BlurFade delay={0.2}>
+			<PublicAtlasStoryCanvas
+				starterId="revops-lead-handoff"
+				storyId="methodology-revops-lead-handoff-story"
+				eyebrow="Method canvas"
+				title="A workflow becomes trustworthy when the boundary is visible."
+				description="This is the visual grammar behind the service: one owner, one workflow artifact, bounded automation, human judgment, a stop rule, and an inspection surface."
+				compact
+			/>
+		</BlurFade>
 	</div>
 </section>
 
@@ -661,6 +687,10 @@
 	}
 
 	/* ─── Why Three Levels ─── */
+	.method-canvas-section {
+		padding: var(--section-padding, 6rem) var(--container-padding, 1.5rem);
+	}
+
 	.why-section {
 		padding: var(--section-padding, 6rem) var(--container-padding, 1.5rem);
 	}
@@ -892,6 +922,7 @@
 		.principle-section,
 		.disciplines-section,
 		.process-section,
+		.method-canvas-section,
 		.why-section,
 		.framework-section,
 		.cta-section {

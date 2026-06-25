@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { Button, ClearPageSection, SEO } from '@create-something/canon';
 	import PublicAtlasCanvas from '$lib/components/PublicAtlasCanvas.svelte';
+	import PublicAtlasStoryCanvas from '$lib/components/PublicAtlasStoryCanvas.svelte';
 	import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 </script>
 
@@ -24,6 +25,20 @@
 			<Button href={agencyCoreMessaging.workflowMappingSessionHref} variant="secondary">
 				{agencyCoreMessaging.bookMappingSessionLabel}
 			</Button>
+		{/snippet}
+	</ClearPageSection>
+
+	<ClearPageSection
+		variant="soft"
+		eyebrow="Atlas story"
+		title="See the workflow as a story before editing the map."
+		description="The static Atlas story uses the same graph contract as the interactive canvas. It explains what can run, what waits for judgment, where execution must stop, and where proof lands."
+	>
+		{#snippet after()}
+			<PublicAtlasStoryCanvas
+				starterId="marketplace-review-queue"
+				storyId="atlas-page-marketplace-review-story"
+			/>
 		{/snippet}
 	</ClearPageSection>
 

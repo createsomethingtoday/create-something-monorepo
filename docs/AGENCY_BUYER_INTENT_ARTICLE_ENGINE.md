@@ -260,6 +260,8 @@ Every Friday, update the tracker row with:
 - Revenue influenced.
 - What changed in ranking, conversion, or buyer signal.
 - Whether the article needs an update.
+- Canvas plan status, graph source, and renderer for workflow, governance, and
+  agent-behavior visuals.
 - Screenshot refresh status and image rights status.
 
 ## Rules
@@ -271,6 +273,9 @@ Every Friday, update the tracker row with:
 - Keep comparison pieces fair but opinionated.
 - Update product comparison articles when vendor features change.
 - Refresh or replace screenshots when the tool UI changes.
+- Use an Atlas-style canvas before one-off graphics when the article explains
+  workflow behavior, governance, case studies, offers, tool comparisons, or
+  agent behavior.
 - Use screenshots as evidence, not decoration.
 - Redact secrets, client data, private prompts, and account identifiers.
 - Do not publish article routes without analytics metadata and a tracker row.

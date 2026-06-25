@@ -17,6 +17,45 @@ marketing visuals: `packages/ltd/src/lib/content/canon/guidelines/images.md`.
 Ona.com is the design and communication foundation, but CREATE SOMETHING owns the
 system-map, policy, receipt, validation, and handoff language.
 
+## Canvas-First Visual Language
+
+When a visual needs to explain a workflow, service, offer, case study, tool
+comparison, governance boundary, or agent behavior, default to an Atlas-style
+canvas with nodes and mapped relationships before creating a decorative graphic.
+
+The canvas is the communication artifact because it can serve both audiences:
+
+- Humans see ownership, handoffs, waits, stops, and proof surfaces quickly.
+- Agents receive a structured graph with roles, relationships, policy
+  boundaries, and next-action context.
+
+Use this hierarchy:
+
+1. Static story canvas for marketing, articles, presentations, social crops, and
+   non-interactive route sections.
+2. React Flow canvas for education, intake, editing, accessibility, and
+   agent-operable workflow state.
+3. Sigma or Cosmograph only for large read-only network exploration where the
+   graph is too large for rich workflow editing.
+
+Do not move the source of truth into a renderer. The source of truth should be a
+graph artifact that can be adapted into a story canvas, an interactive canvas,
+or a large-network renderer.
+
+Canvas visuals should show, at minimum:
+
+- accountable owner
+- durable workflow or data artifact
+- automation or system route
+- AI-assisted task when present
+- human judgment point
+- stop condition or policy boundary
+- receipt, log, dashboard, or inspection surface
+
+Animations can support story presentation, but they should only emphasize chapter
+focus, handoff traces, stop boundaries, and proof reveals. The underlying visual
+must remain understandable with motion disabled.
+
 ## Visual Asset Mix
 
 Every flagship article should plan for:
@@ -45,6 +84,11 @@ Create original visuals for the operating-design point of view:
 
 These should be owned assets with editable source files. They can be reused,
 updated, and adapted across articles, demos, sales decks, and social posts.
+
+Prefer generating these as Atlas story-canvas variants when the visual is about
+system behavior, not just brand mood. If the live route already has a matching
+starter map, reuse its graph and render a static story canvas instead of
+redrawing the workflow by hand.
 
 For generated images, use `gpt-image-2` when access is available and keep the
 source prompt beside the export. The prompt must state the image family, proof
@@ -101,6 +145,8 @@ Maintain a reusable visual kit with:
 
 - article hero template
 - comparison table style
+- Atlas node and relationship blocks
+- static story-canvas section layout
 - workflow diagram blocks
 - app icon cards
 - allowed / ask / blocked chips
@@ -200,6 +246,8 @@ Before publishing:
 
 - [ ] Visual plan is complete in the article brief.
 - [ ] Original hero or framework visual exists.
+- [ ] Workflow, governance, or agent-behavior visuals were attempted as an Atlas
+      canvas before a one-off graphic was created.
 - [ ] Primary owned visual is placed in the article body, not only as OG/social art.
 - [ ] Screenshot targets support concrete claims.
 - [ ] Screenshots are redacted and annotated.

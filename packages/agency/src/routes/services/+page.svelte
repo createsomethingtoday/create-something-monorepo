@@ -18,6 +18,7 @@
   } from '@create-something/canon';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
   import PublicAtlasCanvas from '$lib/components/PublicAtlasCanvas.svelte';
+  import PublicAtlasStoryCanvas from '$lib/components/PublicAtlasStoryCanvas.svelte';
 
   const services = [
     {
@@ -435,6 +436,11 @@
   description="The public Atlas surface turns human tasks, AI tasks, system operations, data, constraints, and touchpoints into a first onboarding artifact. A constrained mapping agent can help shape the canvas without touching production systems."
 >
   {#snippet after()}
+    <PublicAtlasStoryCanvas
+      starterId="marketplace-review-queue"
+      storyId="services-marketplace-review-story"
+      compact
+    />
     <PublicAtlasCanvas />
   {/snippet}
 </ClearPageSection>
