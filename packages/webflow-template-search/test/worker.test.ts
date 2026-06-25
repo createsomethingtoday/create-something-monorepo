@@ -2899,7 +2899,7 @@ describe('webflow-template-search worker', () => {
     }
   });
 
-  it('uses the Webflow CMS image during targeted record thumbnail repairs', async () => {
+  it('prefers the public detail thumbnail during targeted record thumbnail repairs', async () => {
     const ecovoltAsset = {
       ...PUBLISHED_ASSETS[0],
       id: 'recEcovolt',
@@ -2957,17 +2957,17 @@ describe('webflow-template-search worker', () => {
       expect(response.status).toBe(200);
 
       const payload = (await response.json()) as { image_refreshed_records: number };
-      expect(payload.image_refreshed_records).toBe(0);
+      expect(payload.image_refreshed_records).toBe(1);
 
       const search = await callWorker(new Request('https://templates.test/api/templates/search?q=ecovolt'), env);
       const searchPayload = (await search.json()) as {
         items: Array<{ thumbnail_image_url: string | null; thumbnail_image_secondary_url: string | null }>;
       };
 
-      expect(searchPayload.items[0]?.thumbnail_image_url).toBe('https://cdn.prod.website-files.com/site/ecovolt-stale-cms.webp');
+      expect(searchPayload.items[0]?.thumbnail_image_url).toBe('https://cdn.prod.website-files.com/site/ecovolt-public.webp');
       expect(searchPayload.items[0]?.thumbnail_image_secondary_url).toBeNull();
       expect(fetchMock.mock.calls.some(([input]) => new URL(typeof input === 'string' ? input : input.url).hostname === 'webflow.com')).toBe(
-        false,
+        true,
       );
     } finally {
       fetchMock.mockRestore();
@@ -4350,6 +4350,80 @@ describe('webflow-template-search worker', () => {
       const setrexResponse = await callWorker(new Request('https://templates.test/api/templates/search?q=setrex'), env);
       const setrexPayload = (await setrexResponse.json()) as { items: Array<{ thumbnail_image_url: string | null }> };
       expect(setrexPayload.items[0]?.thumbnail_image_url).toBeNull();
+    } finally {
+      fetchMock.mockRestore();
+      close();
+    }
+  });
+
+  it('uses the public detail thumbnail during targeted image backfill for stable rows', async () => {
+    const fetchMock = installAirtableFetchMock({
+      publishedAssets: PUBLISHED_ASSETS,
+      styles: LOOKUPS.styles,
+      childCategories: LOOKUPS.childCategories,
+      tags: LOOKUPS.tags,
+      webflowCollectionItems: {
+        [TEMPLATES_COLLECTION_ID]: [
+          {
+            id: 'template-agentflow',
+            isArchived: false,
+            isDraft: false,
+            fieldData: {
+              'sync-record-id': 'recAgentflow',
+              name: 'Agentflow',
+              slug: 'agentflow-website-template',
+              'main-thumbnail': { url: 'https://cdn.prod.website-files.com/site/agentflow-gallery.webp' },
+            },
+          },
+        ],
+      },
+      publishedTemplatePages: {
+        '/templates/html/agentflow-website-template':
+          '<html><head><meta property="og:image" content="https://cdn.prod.website-files.com/site/agentflow-detail-thumbnail.webp"></head></html>',
+      },
+    });
+    const { env, close } = createTestEnv();
+
+    try {
+      const rebuild = await callWorker(
+        new Request('https://templates.test/api/templates/admin/rebuild', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(rebuild.status).toBe(200);
+
+      const beforeResponse = await callWorker(new Request('https://templates.test/api/templates/search?q=agentflow'), env);
+      const beforePayload = (await beforeResponse.json()) as { items: Array<{ thumbnail_image_url: string | null }> };
+      expect(beforePayload.items[0]?.thumbnail_image_url).toBe('https://example.com/agentflow.png');
+
+      env.WEBFLOW_API_TOKEN = 'test-webflow-cms-token';
+      const backfill = await callWorker(
+        new Request('https://templates.test/api/templates/admin/backfill-images?slug=agentflow-website-template', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer sync-token' },
+        }),
+        env,
+      );
+      expect(backfill.status).toBe(200);
+      expect(
+        (await backfill.json()) as {
+          scanned_records: number;
+          updated_records: number;
+          requested_template_slugs: string[];
+        },
+      ).toMatchObject({
+        requested_template_slugs: ['agentflow-website-template'],
+        scanned_records: 1,
+        updated_records: 1,
+      });
+
+      const afterResponse = await callWorker(new Request('https://templates.test/api/templates/search?q=agentflow'), env);
+      const afterPayload = (await afterResponse.json()) as { items: Array<{ thumbnail_image_url: string | null }> };
+      expect(afterPayload.items[0]?.thumbnail_image_url).toBe(
+        'https://cdn.prod.website-files.com/site/agentflow-detail-thumbnail.webp',
+      );
     } finally {
       fetchMock.mockRestore();
       close();

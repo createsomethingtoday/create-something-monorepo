@@ -62,6 +62,7 @@ import {
   loadWebflowTemplateImageIndex,
   buildWebflowTemplateImageIndexFromRecords,
   fetchPublishedTemplateStatus,
+  resolvePublishedTemplateImages,
   resolveWebflowTemplateIdentity,
   resolveWebflowTemplateOffer,
   resolveWebflowTemplateImages,
@@ -355,14 +356,18 @@ async function resolveAndUpdateTemplateImages(
           templateSlug: row.templateSlug,
           name: row.name,
         });
-        return { row, webflowImages };
+        const publishedImages = await resolvePublishedTemplateImages({
+          templateSlug: row.templateSlug,
+          listingUrl: row.listingUrl,
+        });
+        return { row, webflowImages, publishedImages };
       }),
     );
 
-    for (const { row, webflowImages } of resolvedRows) {
+    for (const { row, webflowImages, publishedImages } of resolvedRows) {
       const currentThumbnailUrl = stableAttachmentUrl(row.thumbnailImageUrl);
       const currentSecondaryThumbnailUrl = stableAttachmentUrl(row.thumbnailImageSecondaryUrl);
-      const nextThumbnailUrl = webflowImages?.thumbnailImageUrl ?? currentThumbnailUrl;
+      const nextThumbnailUrl = publishedImages?.thumbnailImageUrl ?? webflowImages?.thumbnailImageUrl ?? currentThumbnailUrl;
       const nextSecondaryThumbnailUrl =
         webflowImages?.thumbnailImageSecondaryUrl ??
         (currentSecondaryThumbnailUrl === nextThumbnailUrl ? null : currentSecondaryThumbnailUrl);
@@ -1259,7 +1264,9 @@ export async function backfillTemplateImages(
     const startedAt = nowIso();
     const requestedLimit = clamp(Math.floor(options.limit ?? IMAGE_BACKFILL_DEFAULT_LIMIT), 1, IMAGE_BACKFILL_MAX_LIMIT);
     const requestedTemplateSlugs = uniqueStrings((options.templateSlugs ?? []).map((slug) => slug.trim()).filter(Boolean));
-    const rows = await listTemplateImageBackfillRows(env.DB, requestedLimit, requestedTemplateSlugs);
+    const rows = await listTemplateImageBackfillRows(env.DB, requestedLimit, requestedTemplateSlugs, {
+      includeStable: requestedTemplateSlugs.length > 0,
+    });
     const warnings: SyncWarning[] = [];
     const webflowImageRecords =
       rows.length > 0
