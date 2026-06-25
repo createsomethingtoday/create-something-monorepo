@@ -25,6 +25,11 @@ export interface CatoInsightBodySection {
   bullets?: string[];
 }
 
+export interface CatoInsightImageValue {
+  src: string;
+  alt?: string;
+}
+
 export interface CatoInsightItem {
   id: string;
   slug: string;
@@ -40,6 +45,10 @@ export interface CatoInsightItem {
   audience: string;
   body: CatoInsightBodySection[];
   takeaways: string[];
+  featuredImage?: CatoInsightImageValue | string;
+  featuredImageUrl?: CatoInsightImageValue | string;
+  featuredImageAlt?: string;
+  featuredImageCaption?: string;
   href?: string;
   externalUrl?: string;
 }
@@ -89,6 +98,13 @@ export interface CatoInsightLinkProp {
   preload?: string;
 }
 
+export interface CatoInsightRelatedItem {
+  title: string;
+  href?: string;
+  resourceType?: string;
+  date?: string;
+}
+
 export interface CatoInsightCmsCardProps extends Pick<CatoInsightsDataProps, 'linkMode' | 'pathPrefix'> {
   title?: string;
   summary?: string;
@@ -109,19 +125,40 @@ export interface CatoInsightDetailProps extends CatoInsightsDataProps {
   date?: string;
   pill?: string;
   audience?: string;
+  heroCardLabel?: string;
+  heroCardTitle?: string;
+  heroCardSummary?: string;
+  heroCardCta?: string;
+  heroCardHref?: string;
+  featuredImage?: CatoInsightImageValue | string;
+  featuredImageUrl?: string;
+  featuredImageAlt?: string;
+  featuredImageCaption?: string;
+  featuredImageFit?: 'cover' | 'contain';
   categoryId?: string;
   bodyHtml?: React.ReactNode;
   bodyJson?: string;
   takeawaysHtml?: React.ReactNode;
   takeawaysJson?: string;
+  takeawaysPlacement?: 'main' | 'sidebar' | 'both' | 'hidden';
+  shareCtaLabel?: string;
+  shareCtaHref?: string;
+  relatedRailTitle?: string;
+  relatedItemsJson?: string;
+  showRelatedRail?: boolean;
+  showResourceDetails?: boolean;
 }
 
 export interface CatoInsightsMegaMenuProps extends CatoInsightsDataProps {
   heading?: string;
   summary?: string;
+  featureLabel?: string;
   featureTitle?: string;
   featureSummary?: string;
   featureCta?: string;
+  featureHref?: string;
+  featureItemsJson?: string;
+  showFeatureItems?: boolean;
   insightsHomeLink?: CatoInsightLinkProp;
   resiliencyLink?: CatoInsightLinkProp;
   researchLink?: CatoInsightLinkProp;
@@ -859,6 +896,9 @@ const CATO_CSS = `
   .cato-cc-archive-list { display: flex; flex-direction: column; gap: .875rem; }
   .cato-cc-archive-list .cato-cc-cms-card { min-height: auto; padding: 1.25rem; }
   .cato-cc-back-link { color: var(--cato-green); margin-top: .25rem; font-weight: 700; text-decoration: none; display: inline-block; }
+  .cato-cc-hero-actions { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: .25rem; }
+  .cato-cc-share-link { display: inline-flex; align-items: center; justify-content: center; min-height: 2.75rem; border: 1px solid rgba(10,69,46,.18); border-radius: .5rem; background: rgba(10,69,46,.055); color: var(--cato-green); padding: .7rem 1rem; font-weight: 800; line-height: 1.2; text-decoration: none; }
+  .cato-cc-share-link:hover { border-color: rgba(10,69,46,.28); background: rgba(10,69,46,.09); }
   .cato-cc-subscribe-card { background: var(--cato-bg); border: 1px solid var(--cato-border); box-shadow: 0 1px 2px rgba(17,16,15,.04); }
   .cato-cc-note-card { background: rgba(10,69,46,.04); }
   .cato-cc-form-intro { display: flex; flex-direction: column; gap: .65rem; }
@@ -914,6 +954,10 @@ const CATO_CSS = `
   .cato-cc-detail-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(18rem, .38fr); align-items: start; gap: 2.5rem; }
   .cato-cc-detail-card { padding: clamp(1.5rem, 3vw, 2.5rem); }
   .cato-cc-detail-meta { display: flex; align-items: center; flex-wrap: wrap; gap: .75rem; color: var(--cato-muted); margin-bottom: 2rem; }
+  .cato-cc-featured-image { width: 100%; margin: 0 0 2rem; }
+  .cato-cc-featured-image-frame { width: 100%; aspect-ratio: 16 / 9; overflow: hidden; border: 1px solid var(--cato-border); border-radius: .75rem; background: rgba(10,69,46,.045); }
+  .cato-cc-featured-image img { display: block; width: 100%; height: 100%; object-position: center; }
+  .cato-cc-featured-caption { color: var(--cato-muted); margin: .65rem 0 0; font-size: .875rem; line-height: 1.45; }
   .cato-cc-rich { max-width: 44rem; }
   .cato-cc-rich section + section { margin-top: 2.5rem; }
   .cato-cc-rich > *:first-child, .cato-cc-rich-content > *:first-child, .cato-cc-rich [class*="w-richtext"] > *:first-child { margin-top: 0; }
@@ -970,6 +1014,15 @@ const CATO_CSS = `
   .cato-cc-rich-content slot::slotted(p), .cato-cc-rich-content slot::slotted(li) { font-size: 1.0625rem !important; line-height: 1.65 !important; color: var(--cato-muted) !important; }
   .cato-cc-sidebar { display: flex; flex-direction: column; gap: 1rem; position: sticky; top: 7rem; }
   .cato-cc-sidebar-card { display: flex; flex-direction: column; gap: 1rem; padding: 1.5rem; }
+  .cato-cc-takeaways-card { display: flex; flex-direction: column; gap: 1rem; border: 1px solid rgba(10,69,46,.24); background: rgba(10,69,46,.035); border-radius: .65rem; margin: 0 0 2rem; padding: 1.5rem; }
+  .cato-cc-takeaways-card .cato-cc-eyebrow, .cato-cc-sidebar-card .cato-cc-eyebrow { margin: 0; }
+  .cato-cc-sidebar-list { display: flex; flex-direction: column; gap: 0; }
+  .cato-cc-sidebar-link { display: flex; flex-direction: column; gap: .35rem; border-top: 1px solid var(--cato-border); color: var(--cato-text); padding: 1rem 0; text-decoration: none; }
+  .cato-cc-sidebar-link:first-child { border-top: 0; padding-top: 0; }
+  .cato-cc-sidebar-link:last-child { padding-bottom: 0; }
+  .cato-cc-sidebar-link strong { font-size: 1rem; line-height: 1.28; }
+  .cato-cc-sidebar-link span { color: var(--cato-muted); font-size: .86rem; line-height: 1.35; }
+  .cato-cc-sidebar-link:hover strong { color: var(--cato-green); }
   .cato-cc-field { display: flex; flex-direction: column; gap: .35rem; }
   .cato-cc-field span, .cato-cc-field a, .cato-cc-takeaways, .cato-cc-takeaways-html { color: var(--cato-muted); }
   .cato-cc-field a { font-weight: 700; text-decoration: none; }
@@ -978,18 +1031,18 @@ const CATO_CSS = `
   .cato-cc-takeaways-html ul, .cato-cc-takeaways-html ol { display: flex; flex-direction: column; gap: .65rem; margin: 0; padding-left: 1.25rem; }
   .cato-cc-takeaways-html p { margin: 0 0 .75rem; line-height: 1.5; }
   .cato-cc-mega { background: var(--cato-bg); color: var(--cato-text); border-top: 1px solid rgba(40,39,35,.08); border-bottom: 1px solid rgba(40,39,35,.12); box-shadow: 0 28px 70px rgba(46,34,27,.16); }
-  .cato-cc-mega-inner { display: grid; grid-template-columns: .78fr 1.4fr .82fr; gap: 2.5rem; align-items: stretch; width: min(100%, 80rem); min-height: 25.5rem; margin: 0 auto; padding: 2.75rem 2rem; }
+  .cato-cc-mega-inner { display: grid; grid-template-columns: .78fr 1.4fr .82fr; gap: 2.5rem; align-items: stretch; width: min(100%, 80rem); min-height: 25.5rem; margin: 0 auto; padding: 2.5rem; }
   .cato-cc-mega-intro { border-right: 1px solid rgba(40,39,35,.10); padding-right: 2rem; }
   .cato-cc-mega-kicker { color: var(--cato-muted); text-transform: uppercase; margin: 0 0 1rem; font-size: .76rem; font-weight: 800; }
   .cato-cc-mega-title { max-width: 23rem; margin: 0 0 .9rem; font-size: clamp(2rem, 3vw, 3rem); line-height: 1.02; font-weight: 800; }
   .cato-cc-mega-copy { color: var(--cato-muted); max-width: 18rem; margin: 0 0 1.6rem; font-size: .95rem; line-height: 1.5; }
   .cato-cc-mega-home { font-weight: 800; text-decoration: none; }
-  .cato-cc-mega-links { display: grid; grid-template-columns: 1fr 1fr; align-content: start; gap: .35rem 2rem; }
-  .cato-cc-mega-link { display: flex; flex-direction: column; align-items: flex-start; gap: .35rem; border-radius: .5rem; padding: .72rem .8rem; text-decoration: none; }
+  .cato-cc-mega-links { display: grid; grid-template-columns: 1fr 1fr; align-content: start; gap: 1.25rem 2rem; }
+  .cato-cc-mega-link { display: flex; flex-direction: column; align-items: flex-start; gap: .5rem; border-radius: .5rem; padding: .75rem 1rem; text-decoration: none; }
   .cato-cc-mega-link:hover { background: var(--base-color-cream--cream-200, #f2eee8); }
   .cato-cc-mega-link strong { font-size: .98rem; line-height: 1.2; }
   .cato-cc-mega-link span { color: var(--cato-muted); font-size: .86rem; line-height: 1.4; }
-  .cato-cc-mega-feature { display: flex; flex-direction: column; gap: 1.35rem; min-height: 20rem; background: var(--cato-green-mid); color: var(--cato-white); border-radius: .5rem; padding: 1.65rem; text-decoration: none; }
+  .cato-cc-mega-feature { display: flex; flex-direction: column; gap: 1.5rem; min-height: 20rem; background: var(--cato-green-mid); color: var(--cato-white); border-radius: .5rem; padding: 2rem; text-decoration: none; }
   .cato-cc-mega-feature span, .cato-cc-mega-feature p, .cato-cc-mega-feature strong { color: var(--cato-white); }
   .cato-cc-mega-feature .cato-cc-pill { color: var(--cato-white); border-color: rgba(255,255,255,.35); background: transparent; }
   .cato-cc-mega-feature-list { display: flex; flex-direction: column; gap: .45rem; border-top: 1px solid rgba(255,255,255,.16); border-bottom: 1px solid rgba(255,255,255,.16); padding: .9rem 0; }
@@ -1183,6 +1236,12 @@ function richTextToPlain(value: unknown): string {
 function displayText(value: unknown, fallback = ''): string {
   const text = richTextToPlain(value).trim();
   return text || fallback;
+}
+
+function normalizeInsightImage(image?: CatoInsightImageValue | string | null): Partial<CatoInsightImageValue> {
+  if (!image) return {};
+  if (typeof image === 'string') return { src: image };
+  return image;
 }
 
 function displayDate(value: unknown, fallback = ''): string {
@@ -1446,6 +1505,7 @@ function Hero({
   panelCta,
   panelHref,
   backLink,
+  actions,
   children,
 }: {
   title: string;
@@ -1456,6 +1516,7 @@ function Hero({
   panelCta?: string;
   panelHref?: string;
   backLink?: React.ReactNode;
+  actions?: React.ReactNode;
   children?: React.ReactNode;
 }) {
   return (
@@ -1466,6 +1527,7 @@ function Hero({
             <p className="cato-cc-eyebrow">Insights</p>
             <h1>{title}</h1>
             <p className="cato-cc-lede">{summary}</p>
+            {actions ? <div className="cato-cc-hero-actions">{actions}</div> : null}
             {backLink}
           </div>
           <div className="cato-cc-panel">
@@ -1537,6 +1599,79 @@ function InsightCard({
         </>
       )}
     </a>
+  );
+}
+
+function TakeawaysBox({ html, items }: { html?: React.ReactNode; items: string[] }) {
+  if (!richTextHasContent(html) && items.length === 0) return null;
+
+  return (
+    <div className="cato-cc-takeaways-card">
+      <p className="cato-cc-eyebrow">Key takeaways</p>
+      {richTextHasContent(html) ? (
+        <RichHtml html={html} className="cato-cc-takeaways-html" />
+      ) : (
+        <ul className="cato-cc-takeaways">
+          {items.map((takeaway) => (
+            <li key={takeaway}>{takeaway}</li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function RelatedRail({
+  title,
+  items,
+}: {
+  title: string;
+  items: CatoInsightRelatedItem[];
+}) {
+  if (items.length === 0) return null;
+
+  return (
+    <div className="cato-cc-sidebar-card">
+      <p className="cato-cc-eyebrow">{title}</p>
+      <div className="cato-cc-sidebar-list">
+        {items.map((item) => (
+          <a key={`${item.title}-${item.href || ''}`} className="cato-cc-sidebar-link" href={displayText(item.href, '#')}>
+            <strong>{item.title}</strong>
+            {item.resourceType || item.date ? <span>{[item.resourceType, item.date].filter(Boolean).join(' - ')}</span> : null}
+          </a>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function FeaturedImage({
+  image,
+  url,
+  alt,
+  caption,
+  fit = 'cover',
+}: {
+  image?: CatoInsightImageValue | string;
+  url?: CatoInsightImageValue | string;
+  alt?: string;
+  caption?: string;
+  fit?: 'cover' | 'contain';
+}) {
+  const boundImage = normalizeInsightImage(image);
+  const fallbackImage = normalizeInsightImage(url);
+  const src = displayText(boundImage.src, displayText(fallbackImage.src));
+  if (!src) return null;
+
+  const altText = displayText(alt, displayText(boundImage.alt, displayText(fallbackImage.alt)));
+
+  return (
+    <figure className="cato-cc-featured-image">
+      <div className="cato-cc-featured-image-frame">
+        <img src={src} alt={altText} loading="lazy" style={{ objectFit: fit }} />
+      </div>
+      {displayText(caption) ? <figcaption className="cato-cc-featured-caption">{caption}</figcaption> : null}
+    </figure>
   );
 }
 
@@ -1921,11 +2056,28 @@ export const CatoInsightDetail: React.FC<CatoInsightDetailProps> = ({
   date,
   pill,
   audience,
+  heroCardLabel,
+  heroCardTitle,
+  heroCardSummary,
+  heroCardCta,
+  heroCardHref,
+  featuredImage,
+  featuredImageUrl,
+  featuredImageAlt,
+  featuredImageCaption,
+  featuredImageFit = 'cover',
   categoryId,
   bodyHtml,
   bodyJson,
   takeawaysHtml,
   takeawaysJson,
+  takeawaysPlacement = 'main',
+  shareCtaLabel = 'Share',
+  shareCtaHref,
+  relatedRailTitle,
+  relatedItemsJson,
+  showRelatedRail = true,
+  showResourceDetails = false,
   linkMode = 'webflow',
   pathPrefix = '',
   ...dataProps
@@ -1958,7 +2110,31 @@ export const CatoInsightDetail: React.FC<CatoInsightDetailProps> = ({
     body,
     takeaways,
   };
+  const selectedFeaturedImage = featuredImage || item.featuredImage || item.featuredImageUrl;
+  const selectedFeaturedImageUrl = featuredImageUrl || (typeof item.featuredImageUrl === 'string' ? item.featuredImageUrl : undefined);
+  const selectedFeaturedImageAlt = displayText(featuredImageAlt, displayText(item.featuredImageAlt, item.title));
+  const selectedFeaturedImageCaption = displayText(featuredImageCaption, displayText(item.featuredImageCaption));
+  const selectedFeaturedImageFit = featuredImageFit === 'contain' ? 'contain' : 'cover';
   const audienceContext = item.audience ? `Designed for ${item.audience.toLowerCase()}` : 'Designed for healthcare procurement teams';
+  const heroCardCtaText = displayText(heroCardCta);
+  const normalizedTakeawaysPlacement = ['main', 'sidebar', 'both', 'hidden'].includes(takeawaysPlacement) ? takeawaysPlacement : 'main';
+  const showMainTakeaways = normalizedTakeawaysPlacement === 'main' || normalizedTakeawaysPlacement === 'both';
+  const showSidebarTakeaways = normalizedTakeawaysPlacement === 'sidebar' || normalizedTakeawaysPlacement === 'both';
+  const shareLabel = displayText(shareCtaLabel);
+  const shareHref = displayText(shareCtaHref, `mailto:?subject=${encodeURIComponent(item.title)}`);
+  const fallbackRelatedItems: CatoInsightRelatedItem[] = items
+    .filter((candidate) => candidate.slug !== item.slug && candidate.category === item.category)
+    .slice(0, 4)
+    .map((candidate) => ({
+      title: candidate.title,
+      href: hrefForItem(candidate, linkMode, pathPrefix),
+      resourceType: candidate.resourceType,
+      date: candidate.date,
+    }));
+  const relatedItems = parseJsonArray<CatoInsightRelatedItem>(relatedItemsJson, fallbackRelatedItems)
+    .filter((candidate) => displayText(candidate.title))
+    .slice(0, 5);
+  const relatedTitle = displayText(relatedRailTitle, item.category === 'resiliency' ? 'Latest alerts' : `More in ${category.title}`);
 
   return (
     <div className="cato-cc">
@@ -1967,9 +2143,18 @@ export const CatoInsightDetail: React.FC<CatoInsightDetailProps> = ({
       <Hero
         title={item.title}
         summary={item.summary}
-        panelLabel={item.resourceType}
-        panelTitle={category.title}
-        panelSummary={audienceContext}
+        panelLabel={displayText(heroCardLabel, item.resourceType)}
+        panelTitle={displayText(heroCardTitle, category.title)}
+        panelSummary={displayText(heroCardSummary, audienceContext)}
+        panelCta={heroCardCtaText}
+        panelHref={heroCardCtaText ? displayText(heroCardHref, hrefForPage(category.page, linkMode, pathPrefix)) : undefined}
+        actions={
+          shareLabel ? (
+            <a className="cato-cc-share-link" href={shareHref}>
+              {shareLabel}
+            </a>
+          ) : undefined
+        }
         backLink={
           <a href={hrefForPage(category.page, linkMode, pathPrefix)} className="cato-cc-back-link">
             Back to {category.title}
@@ -1984,6 +2169,8 @@ export const CatoInsightDetail: React.FC<CatoInsightDetailProps> = ({
                 <span className="cato-cc-pill">{item.pill}</span>
                 <span>{item.date}</span>
               </div>
+              <FeaturedImage image={selectedFeaturedImage} url={selectedFeaturedImageUrl} alt={selectedFeaturedImageAlt} caption={selectedFeaturedImageCaption} fit={selectedFeaturedImageFit} />
+              {showMainTakeaways ? <TakeawaysBox html={takeawaysHtml} items={item.takeaways} /> : null}
               <div className="cato-cc-rich">
                 {richTextHasContent(bodyHtml) ? (
                   <RichHtml html={bodyHtml} className="cato-cc-rich-content" />
@@ -2006,38 +2193,30 @@ export const CatoInsightDetail: React.FC<CatoInsightDetailProps> = ({
                 )}
               </div>
             </article>
-            <aside className="cato-cc-sidebar" aria-label="Resource details">
-              <div className="cato-cc-sidebar-card">
-                <p className="cato-cc-eyebrow">Resource details</p>
-                <div className="cato-cc-field">
-                  <strong>Resource type</strong>
-                  <span>{item.resourceType}</span>
+            <aside className="cato-cc-sidebar" aria-label="Related content">
+              {showRelatedRail ? <RelatedRail title={relatedTitle} items={relatedItems} /> : null}
+              {showResourceDetails ? (
+                <div className="cato-cc-sidebar-card">
+                  <p className="cato-cc-eyebrow">Resource details</p>
+                  <div className="cato-cc-field">
+                    <strong>Resource type</strong>
+                    <span>{item.resourceType}</span>
+                  </div>
+                  <div className="cato-cc-field">
+                    <strong>Archive</strong>
+                    <a href={hrefForPage(category.page, linkMode, pathPrefix)}>{category.title}</a>
+                  </div>
+                  <div className="cato-cc-field">
+                    <strong>Built for</strong>
+                    <span>{item.audience}</span>
+                  </div>
+                  <div className="cato-cc-field">
+                    <strong>Published</strong>
+                    <span>{item.date}</span>
+                  </div>
                 </div>
-                <div className="cato-cc-field">
-                  <strong>Archive</strong>
-                  <a href={hrefForPage(category.page, linkMode, pathPrefix)}>{category.title}</a>
-                </div>
-                <div className="cato-cc-field">
-                  <strong>Built for</strong>
-                  <span>{item.audience}</span>
-                </div>
-                <div className="cato-cc-field">
-                  <strong>Published</strong>
-                  <span>{item.date}</span>
-                </div>
-              </div>
-              <div className="cato-cc-sidebar-card">
-                <p className="cato-cc-eyebrow">Key takeaways</p>
-                {richTextHasContent(takeawaysHtml) ? (
-                  <RichHtml html={takeawaysHtml} className="cato-cc-takeaways-html" />
-                ) : (
-                  <ul className="cato-cc-takeaways">
-                    {item.takeaways.map((takeaway) => (
-                      <li key={takeaway}>{takeaway}</li>
-                    ))}
-                  </ul>
-                )}
-              </div>
+              ) : null}
+              {showSidebarTakeaways ? <TakeawaysBox html={takeawaysHtml} items={item.takeaways} /> : null}
             </aside>
           </div>
         </div>
@@ -2049,9 +2228,13 @@ export const CatoInsightDetail: React.FC<CatoInsightDetailProps> = ({
 export const CatoInsightsMegaMenu: React.FC<CatoInsightsMegaMenuProps> = ({
   heading = 'Procurement Intelligence for Resilient Care',
   summary = 'Current analysis of the dynamics shaping the healthcare supply chain.',
+  featureLabel = 'Featured',
   featureTitle = 'Resiliency Report Alerts',
   featureSummary = 'Active supply disruptions and market signals for care continuity.',
   featureCta = 'Explore Our Insights',
+  featureHref = '',
+  featureItemsJson = '',
+  showFeatureItems = true,
   insightsHomeLink,
   resiliencyLink,
   researchLink,
@@ -2062,7 +2245,7 @@ export const CatoInsightsMegaMenu: React.FC<CatoInsightsMegaMenuProps> = ({
   ...dataProps
 }) => {
   const { categories, items } = useInsightsData(dataProps);
-  const featureItems = items.filter((item) => item.category === 'resiliency').slice(0, 3);
+  const featureItems = parseJsonArray<Pick<CatoInsightItem, 'title' | 'resourceType'>>(featureItemsJson, items.filter((item) => item.category === 'resiliency')).slice(0, 3);
   const insightsHomeHref = hrefFromLink(insightsHomeLink, hrefForPage('insights.html', linkMode, pathPrefix));
   const categoryLinkOverrides: Record<string, CatoInsightLinkProp | undefined> = {
     resiliency: resiliencyLink,
@@ -2070,9 +2253,10 @@ export const CatoInsightsMegaMenu: React.FC<CatoInsightsMegaMenuProps> = ({
     resources: whitepapersLink,
     newsroom: newsroomLink,
   };
+  const launchCategories = categories.filter((category) => category.id !== 'resources');
   const hrefForCategory = (category: CatoInsightCategory) =>
     hrefFromLink(categoryLinkOverrides[category.id], hrefForPage(category.page, linkMode, pathPrefix));
-  const resiliencyHref = hrefFromLink(resiliencyLink, hrefForPage('resiliency-reports.html', linkMode, pathPrefix));
+  const resiliencyHref = displayText(featureHref) || hrefFromLink(resiliencyLink, hrefForPage('resiliency-reports.html', linkMode, pathPrefix));
 
   return (
     <div className="cato-cc">
@@ -2090,11 +2274,7 @@ export const CatoInsightsMegaMenu: React.FC<CatoInsightsMegaMenuProps> = ({
           <section aria-label="Insights navigation">
             <p className="cato-cc-mega-kicker">Browse insights</p>
             <div className="cato-cc-mega-links">
-              <a href={insightsHomeHref} target={insightsHomeLink?.target} rel={relForTarget(insightsHomeLink?.target)} className="cato-cc-mega-link">
-                <strong>Insights Home</strong>
-                <span>All reports, research, resources, and newsroom updates.</span>
-              </a>
-              {categories.map((category) => {
+              {launchCategories.map((category) => {
                 const categoryLink = categoryLinkOverrides[category.id];
                 return (
                   <a
@@ -2112,18 +2292,20 @@ export const CatoInsightsMegaMenu: React.FC<CatoInsightsMegaMenuProps> = ({
             </div>
           </section>
           <a href={resiliencyHref} target={resiliencyLink?.target} rel={relForTarget(resiliencyLink?.target)} className="cato-cc-mega-feature">
-            <span className="cato-cc-pill">Featured</span>
+            <span className="cato-cc-pill">{featureLabel}</span>
             <div>
               <h3>{featureTitle}</h3>
               <p>{featureSummary}</p>
-              <div className="cato-cc-mega-feature-list">
-                {featureItems.map((item) => (
-                  <div key={item.id}>
-                    <strong>{item.title}</strong>
-                    <span>{item.resourceType}</span>
-                  </div>
-                ))}
-              </div>
+              {showFeatureItems && featureItems.length ? (
+                <div className="cato-cc-mega-feature-list">
+                  {featureItems.map((item) => (
+                    <div key={`${item.title}-${item.resourceType}`}>
+                      <strong>{item.title}</strong>
+                      <span>{item.resourceType}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
               <strong>{featureCta}</strong>
             </div>
           </a>
