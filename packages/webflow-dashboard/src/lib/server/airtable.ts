@@ -613,6 +613,7 @@ export interface AssetUpdateData {
 	appSupportUrl?: string;
 	appTermsUrl?: string;
 	appScreenshotAltTexts?: string[];
+	assetVersionChanges?: Record<string, unknown> | string;
 }
 
 export type TemplateOfferStrategy =
@@ -709,6 +710,41 @@ export interface AssetVersion {
 
 export interface AssetVersionSnapshot extends AssetUpdateData {
 	description?: string;
+}
+
+export function buildAssetVersionSnapshot(asset: Asset): AssetVersionSnapshot {
+	return {
+		name: asset.name,
+		description: asset.description,
+		descriptionShort: asset.descriptionShort,
+		descriptionLongHtml: asset.descriptionLongHtml,
+		websiteUrl: asset.websiteUrl,
+		previewUrl: asset.previewUrl,
+		thumbnailUrl: asset.thumbnailUrl,
+		secondaryThumbnailUrl: asset.secondaryThumbnailUrl,
+		secondaryThumbnails: asset.secondaryThumbnails,
+		carouselImages: asset.carouselImages,
+		appCapabilities: asset.appCapabilities,
+		appInstallUrl: asset.appInstallUrl,
+		appScopes: asset.appScopes,
+		appAvatarAltText: asset.appAvatarAltText,
+		paymentType: asset.paymentType,
+		visibility: asset.visibility,
+		appCategory: asset.appCategory,
+		creatorName: asset.creatorName,
+		creatorWebsite: asset.creatorWebsite,
+		creatorContactEmail: asset.creatorContactEmail,
+		appFeaturesOverview: asset.appFeaturesOverview,
+		appDeveloperNotes: asset.appDeveloperNotes,
+		appAccessCredentials: asset.appAccessCredentials,
+		appVideoUrl: asset.appVideoUrl,
+		appDemoVideoUrl: asset.appDemoVideoUrl,
+		appPrivacyPolicyUrl: asset.appPrivacyPolicyUrl,
+		appSupportEmail: asset.appSupportEmail,
+		appSupportUrl: asset.appSupportUrl,
+		appTermsUrl: asset.appTermsUrl,
+		appScreenshotAltTexts: asset.appScreenshotAltTexts
+	};
 }
 
 type AirtableWritableValue =
@@ -2457,133 +2493,115 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 		 * - fldc999gbJ8LWWoTC: Changes JSON
 		 * - fldknoYakli2sqznT: Asset ID (for filtering)
 		 */
-		async createAssetVersion(
-			assetId: string,
-			createdBy: string,
-			changes: Record<string, unknown> | string
-		): Promise<AssetVersion | null> {
-			debugLog('[Airtable] createAssetVersion called:', { assetId, createdBy, changesType: typeof changes });
-			debugLog('[Airtable] Using ASSET_VERSIONS table:', TABLES.ASSET_VERSIONS);
-			
-			try {
-				// Get current asset state
-				debugLog('[Airtable] Fetching asset state...');
-				const asset = await this.getAsset(assetId);
-				if (!asset) {
-					debugLog('[Airtable] Asset not found:', assetId);
-					return null;
-				}
-				debugLog('[Airtable] Asset found:', asset.name);
+			async createAssetVersion(
+				assetId: string,
+				createdBy: string,
+				changes: Record<string, unknown> | string
+			): Promise<AssetVersion | null> {
+				debugLog('[Airtable] createAssetVersion called:', { assetId, createdBy, changesType: typeof changes });
+				debugLog('[Airtable] Using ASSET_VERSIONS table:', TABLES.ASSET_VERSIONS);
 
-				// Check if asset is "Upcoming" - don't create versions for upcoming assets
-				// Matches v1 logic: pages/api/asset/createVersion/[id].js lines 50-57
-				const cleanStatus = asset.status.replace(/^\d️⃣/u, '').replace(/🆕|🚀/gu, '').trim();
-				if (cleanStatus === 'Upcoming') {
-					debugLog('[Airtable] Asset is Upcoming, skipping version creation');
-					return null;
-				}
-
-			// Get the next version number by counting existing versions
-			// Matches v1 logic exactly: pages/api/asset/createVersion/[id].js lines 62-64
-			// Only the count is needed, so fetch a single field instead of full records.
-			debugLog('[Airtable] Querying existing versions...');
-			const existingVersions = await base(TABLES.ASSET_VERSIONS)
-				.select({
-					filterByFormula: `{fldknoYakli2sqznT} = '${escapeAirtableString(assetId)}'`,
-					fields: ['fldknoYakli2sqznT']
-				})
-				.all();
-			
-			const nextVersion = existingVersions.length + 1;
-			debugLog('[Airtable] Existing versions count:', existingVersions.length, '-> Next version:', nextVersion);
-
-				// Create snapshot of current state
-				const snapshot: AssetVersionSnapshot = {
-					name: asset.name,
-					description: asset.description,
-					descriptionShort: asset.descriptionShort,
-					descriptionLongHtml: asset.descriptionLongHtml,
-					websiteUrl: asset.websiteUrl,
-					previewUrl: asset.previewUrl,
-					thumbnailUrl: asset.thumbnailUrl,
-					secondaryThumbnailUrl: asset.secondaryThumbnailUrl,
-					secondaryThumbnails: asset.secondaryThumbnails,
-					carouselImages: asset.carouselImages,
-					appCapabilities: asset.appCapabilities,
-					appInstallUrl: asset.appInstallUrl,
-					appScopes: asset.appScopes,
-					appAvatarAltText: asset.appAvatarAltText,
-					paymentType: asset.paymentType,
-					visibility: asset.visibility,
-					appCategory: asset.appCategory,
-					creatorName: asset.creatorName,
-					creatorWebsite: asset.creatorWebsite,
-					creatorContactEmail: asset.creatorContactEmail,
-					appFeaturesOverview: asset.appFeaturesOverview,
-					appDeveloperNotes: asset.appDeveloperNotes,
-					appAccessCredentials: asset.appAccessCredentials,
-					appVideoUrl: asset.appVideoUrl,
-					appDemoVideoUrl: asset.appDemoVideoUrl,
-					appPrivacyPolicyUrl: asset.appPrivacyPolicyUrl,
-					appSupportEmail: asset.appSupportEmail,
-					appSupportUrl: asset.appSupportUrl,
-					appTermsUrl: asset.appTermsUrl,
-					appScreenshotAltTexts: asset.appScreenshotAltTexts
-				};
-
-				// For structured changes, check if there are significant changes
-				// Matches v1 logic: pages/api/asset/createVersion/[id].js lines 90-98
-				if (typeof changes === 'object') {
-					if (Object.keys(changes).length === 0) {
-						debugLog('[Airtable] No significant changes detected, skipping version creation');
+				try {
+					// Get current asset state
+					debugLog('[Airtable] Fetching asset state...');
+					const asset = await this.getAsset(assetId);
+					if (!asset) {
+						debugLog('[Airtable] Asset not found:', assetId);
 						return null;
 					}
-					if (isLongDescriptionOnlyAssetVersionChange(changes)) {
-						debugLog('[Airtable] Long-description-only change detected, skipping version creation');
+					debugLog('[Airtable] Asset found:', asset.name);
+					return await this.createAssetVersionFromAsset(asset, createdBy, changes);
+				} catch (err) {
+					console.error('[Airtable] Error creating asset version:', err);
+					console.error('[Airtable] Error details:', JSON.stringify(err, Object.getOwnPropertyNames(err)));
+					return null;
+				}
+			},
+
+			async createAssetVersionFromAsset(
+				asset: Asset,
+				createdBy: string,
+				changes: Record<string, unknown> | string
+			): Promise<AssetVersion | null> {
+				try {
+					// Check if asset is "Upcoming" - don't create versions for upcoming assets
+					// Matches v1 logic: pages/api/asset/createVersion/[id].js lines 50-57
+					const cleanStatus = asset.status.replace(/^\d️⃣/u, '').replace(/🆕|🚀/gu, '').trim();
+					if (cleanStatus === 'Upcoming') {
+						debugLog('[Airtable] Asset is Upcoming, skipping version creation');
 						return null;
 					}
+
+					// Get the next version number by counting existing versions
+					// Matches v1 logic exactly: pages/api/asset/createVersion/[id].js lines 62-64
+					// Only the count is needed, so fetch a single field instead of full records.
+					debugLog('[Airtable] Querying existing versions...');
+					const existingVersions = await base(TABLES.ASSET_VERSIONS)
+						.select({
+							filterByFormula: `{fldknoYakli2sqznT} = '${escapeAirtableString(asset.id)}'`,
+							fields: ['fldknoYakli2sqznT']
+						})
+						.all();
+
+					const nextVersion = existingVersions.length + 1;
+					debugLog('[Airtable] Existing versions count:', existingVersions.length, '-> Next version:', nextVersion);
+
+					// Create snapshot of current state
+					const snapshot = buildAssetVersionSnapshot(asset);
+
+					// For structured changes, check if there are significant changes
+					// Matches v1 logic: pages/api/asset/createVersion/[id].js lines 90-98
+					if (typeof changes === 'object') {
+						if (Object.keys(changes).length === 0) {
+							debugLog('[Airtable] No significant changes detected, skipping version creation');
+							return null;
+						}
+						if (isLongDescriptionOnlyAssetVersionChange(changes)) {
+							debugLog('[Airtable] Long-description-only change detected, skipping version creation');
+							return null;
+						}
+					}
+
+					// Create version record using field IDs from old dashboard
+					// Matches exactly: pages/api/asset/createVersion/[id].js lines 101-107
+					// IMPORTANT: Store changes in same format as v1 - just the structured changes object
+					// The Airtable automation expects: {"fld43LxLHMZb2yF7F":{"added":[...],"removed":0},...}
+					const changesJson = typeof changes === 'string'
+						? JSON.stringify({ changes, snapshot, createdBy }) // Legacy format for string changes
+						: JSON.stringify(changes); // V1 format - just the structured changes
+
+					debugLog('[Airtable] Creating version record with fields:', {
+						'fldemWilqCQcOCh5s': [asset.id],
+						'fldn2ImbgwKfCdWWA': nextVersion,
+						'fldjYFJMGTerFYlol': 'Meta Update',
+						'fldc999gbJ8LWWoTC': changesJson.substring(0, 100) + '...',
+						'fldLEIZMEjZvH5n23': ['zendesk']
+					});
+					const records = await base(TABLES.ASSET_VERSIONS).create({
+						'fldemWilqCQcOCh5s': [asset.id], // Linked record to asset
+						'fldn2ImbgwKfCdWWA': nextVersion, // Version number
+						'fldjYFJMGTerFYlol': 'Meta Update', // Type
+						'fldc999gbJ8LWWoTC': changesJson, // Changes JSON - matches v1 format
+						'fldLEIZMEjZvH5n23': ['zendesk'] // Source - must match existing linked record
+					});
+					debugLog('[Airtable] Version record created:', records.id);
+
+					const changesStr = typeof changes === 'string' ? changes : JSON.stringify(changes);
+					return {
+						id: records.id,
+						assetId: asset.id,
+						versionNumber: nextVersion,
+						createdAt: new Date().toISOString(),
+						createdBy: createdBy,
+						changes: changesStr,
+						snapshot: snapshot
+					};
+				} catch (err) {
+					console.error('[Airtable] Error creating asset version:', err);
+					console.error('[Airtable] Error details:', JSON.stringify(err, Object.getOwnPropertyNames(err)));
+					return null;
 				}
-
-				// Create version record using field IDs from old dashboard
-				// Matches exactly: pages/api/asset/createVersion/[id].js lines 101-107
-				// IMPORTANT: Store changes in same format as v1 - just the structured changes object
-				// The Airtable automation expects: {"fld43LxLHMZb2yF7F":{"added":[...],"removed":0},...}
-				const changesJson = typeof changes === 'string' 
-					? JSON.stringify({ changes, snapshot, createdBy })  // Legacy format for string changes
-					: JSON.stringify(changes);  // V1 format - just the structured changes
-				
-				debugLog('[Airtable] Creating version record with fields:', {
-					'fldemWilqCQcOCh5s': [assetId],
-					'fldn2ImbgwKfCdWWA': nextVersion,
-					'fldjYFJMGTerFYlol': 'Meta Update',
-					'fldc999gbJ8LWWoTC': changesJson.substring(0, 100) + '...',
-					'fldLEIZMEjZvH5n23': ['zendesk']
-				});
-				const records = await base(TABLES.ASSET_VERSIONS).create({
-					'fldemWilqCQcOCh5s': [assetId], // Linked record to asset
-					'fldn2ImbgwKfCdWWA': nextVersion, // Version number
-					'fldjYFJMGTerFYlol': 'Meta Update', // Type
-					'fldc999gbJ8LWWoTC': changesJson, // Changes JSON - matches v1 format
-					'fldLEIZMEjZvH5n23': ['zendesk'] // Source - must match existing linked record
-				});
-				debugLog('[Airtable] Version record created:', records.id);
-
-				const changesStr = typeof changes === 'string' ? changes : JSON.stringify(changes);
-				return {
-					id: records.id,
-					assetId: assetId,
-					versionNumber: nextVersion,
-					createdAt: new Date().toISOString(),
-					createdBy: createdBy,
-					changes: changesStr,
-					snapshot: snapshot
-				};
-			} catch (err) {
-				console.error('[Airtable] Error creating asset version:', err);
-				console.error('[Airtable] Error details:', JSON.stringify(err, Object.getOwnPropertyNames(err)));
-				return null;
-			}
-		},
+			},
 
 		/**
 		 * Get all versions for an asset.

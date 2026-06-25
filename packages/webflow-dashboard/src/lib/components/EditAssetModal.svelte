@@ -56,7 +56,7 @@
   interface Props {
     asset: Asset;
     onClose: () => void;
-    onSave: (data: AssetUpdateData) => Promise<void>;
+    onSave: (data: AssetUpdateData) => Promise<{ versionWarning?: string } | void>;
     onArchive?: () => Promise<void>;
   }
 
@@ -555,7 +555,7 @@
           formData.creatorName
         );
         registerTextChange(
-          'creator website',
+          'creator Webflow account email override',
           '👀🎨📧 Creator WF Account Email (Override)',
           asset.creatorWebsite || '',
           formData.creatorWebsite
@@ -662,22 +662,6 @@
         };
       }
 
-      if (shouldCreateAssetVersionForChanges(structuredChanges)) {
-        fetch(`/api/assets/${asset.id}/versions`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ changes: structuredChanges })
-        })
-          .then((response) => {
-            if (!response.ok) throw new Error(`Version snapshot failed (${response.status})`);
-          })
-          .catch((err) => {
-            // The save itself succeeded; warn so the user knows the history entry is missing.
-            console.error('Version snapshot failed:', err);
-            toast.warning('Saved, but version history could not be recorded for this change.');
-          });
-      }
-
       trackEvent('asset_update_started', {
         asset_id: asset.id,
         asset_name: asset.name,
@@ -696,6 +680,9 @@
         thumbnailUrl,
         carouselImages
       };
+      if (shouldCreateAssetVersionForChanges(structuredChanges)) {
+        payload.assetVersionChanges = structuredChanges;
+      }
 
       if (canEditName) {
         payload.name = formData.name.trim();
@@ -728,7 +715,7 @@
         payload.secondaryThumbnails = [...secondaryThumbnails];
       }
 
-      await onSave(payload);
+      const saveResult = await onSave(payload);
 
       trackEvent('asset_update_completed', {
         asset_id: asset.id,
@@ -739,6 +726,9 @@
       });
 
       toast.success('Asset updated successfully');
+      if (saveResult?.versionWarning) {
+        toast.warning(saveResult.versionWarning);
+      }
       onClose();
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to save changes';
@@ -1086,8 +1076,13 @@
             <Input id="creatorName" type="text" bind:value={formData.creatorName} />
           </div>
           <div class="form-field">
-            <Label for="creatorWebsite">Creator Website</Label>
-            <Input id="creatorWebsite" type="text" bind:value={formData.creatorWebsite} />
+            <Label for="creatorWebsite">Creator Webflow Account Email Override</Label>
+            <Input
+              id="creatorWebsite"
+              type="email"
+              bind:value={formData.creatorWebsite}
+              placeholder="creator@example.com"
+            />
           </div>
         </div>
 
