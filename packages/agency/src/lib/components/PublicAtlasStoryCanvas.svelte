@@ -23,7 +23,7 @@
 	export let eyebrow = 'Atlas story canvas';
 	export let title: string | undefined = undefined;
 	export let description =
-		'The same Atlas graph can teach the workflow to a person and preserve the typed contract an agent needs to act safely.';
+		'Set the workflow direction once. Atlas shows how agents can route execution while governance keeps human authority named.';
 	export let compact = false;
 
 	let sourceCanvas: PublicAtlasCanvas;
@@ -58,8 +58,8 @@
 	<div class="atlas-story__layout">
 		<div class="atlas-story__map" aria-label={story.summary} aria-describedby={mapInstructionId}>
 			<p id={mapInstructionId} class="sr-only">
-				Drag to pan the canvas. Pinch or use the controls to zoom. Svelte Flow keeps edges
-				attached to their source and target nodes.
+				Drag to pan the Atlas canvas. Pinch or use the controls to zoom. Edges stay attached
+				to their source and target nodes.
 			</p>
 			<PublicAtlasFlow
 				canvas={sourceCanvas}
@@ -71,7 +71,7 @@
 
 		<aside class="atlas-story__chapters" aria-label="Atlas story chapters">
 			<div class="atlas-story__score">
-				<span>{graph.renderer.primary}</span>
+				<span>Atlas graph</span>
 				<strong>{graph.readiness.score}/100</strong>
 				<small>{graph.readiness.level}</small>
 			</div>

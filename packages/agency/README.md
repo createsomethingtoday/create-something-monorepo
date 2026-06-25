@@ -94,6 +94,11 @@ Renderer rule:
 
 - Svelte Flow is the primary renderer for workflow education, intake, editing,
   accessibility, story maps, and agent-operable maps in this Svelte frontend.
+- Canvas copy should follow the Ona.com communication pattern: short declarative
+  claims, "set the direction" framing, governed execution language, and concrete
+  nouns like workflow, owner, decision, evidence, tools, and boundaries.
+- Do not expose renderer names such as Svelte Flow, Sigma, or Cosmograph in
+  user-facing canvas copy. The product language is Atlas canvas and Atlas graph.
 - Static story exports are the fallback for articles, social cards, and non-JS
   presentation, not the base in-app canvas implementation.
 - Sigma/Cosmograph are reserved for large read-only network exploration. Do not
