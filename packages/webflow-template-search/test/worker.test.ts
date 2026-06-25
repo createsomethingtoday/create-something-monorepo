@@ -13,6 +13,7 @@ import {
   markTemplateImageBackfillAttempts,
   recordSyncSummary,
   setSyncCursor,
+  updateTemplateDocumentImages,
   updateTemplateImagesFromWebflow,
 } from '../src/db.js';
 import worker from '../src/index.js';
@@ -3390,6 +3391,45 @@ describe('webflow-template-search worker', () => {
         .first<{ thumbnail_image_url: string | null }>();
 
       expect(row?.thumbnail_image_url).toBe('https://cdn.prod.website-files.com/site/batch-50.webp');
+      expect(onBatch.mock.calls.length).toBeGreaterThan(1);
+    } finally {
+      close();
+    }
+  });
+
+  it('reports progress between indexed image update batches', async () => {
+    const { env, close } = createTestEnv();
+    const updates = Array.from({ length: 51 }, (_, index) => {
+      const suffix = String(index).padStart(2, '0');
+      return {
+        id: `recIndexedBatch${suffix}`,
+        thumbnailImageUrl: `https://cdn.prod.website-files.com/site/indexed-batch-${suffix}.webp`,
+        thumbnailImageSecondaryUrl: null,
+      };
+    });
+
+    try {
+      await env.DB.batch(
+        updates.map((update, index) =>
+          env.DB.prepare(
+            `INSERT INTO template_documents (id, template_slug, name, synced_at)
+             VALUES (?, ?, ?, ?)`,
+          ).bind(
+            update.id,
+            `indexed-batch-${String(index).padStart(2, '0')}-website-template`,
+            `Indexed Batch ${String(index).padStart(2, '0')}`,
+            '2026-06-25T16:00:00.000Z',
+          ),
+        ),
+      );
+
+      const onBatch = vi.fn(async () => {});
+      await updateTemplateDocumentImages(env.DB, updates, '2026-06-25T17:00:00.000Z', { onBatch });
+      const row = await env.DB.prepare('SELECT thumbnail_image_url FROM template_documents WHERE id = ?')
+        .bind('recIndexedBatch50')
+        .first<{ thumbnail_image_url: string | null }>();
+
+      expect(row?.thumbnail_image_url).toBe('https://cdn.prod.website-files.com/site/indexed-batch-50.webp');
       expect(onBatch.mock.calls.length).toBeGreaterThan(1);
     } finally {
       close();
