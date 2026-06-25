@@ -95,11 +95,15 @@ test('story canvas uses stable overridable ids instead of fixed DOM ids', () => 
 	assert.equal(storyCanvasComponent.includes('<small>{chapter.motionCue}</small>'), false);
 });
 
-test('story canvas uses read-only Svelte Flow for mobile pan and zoom', () => {
+test('story canvas hides renderer implementation while preserving mobile pan and zoom', () => {
 	assert.ok(storyCanvasComponent.includes("import PublicAtlasFlow"));
 	assert.ok(storyCanvasComponent.includes('<PublicAtlasFlow'));
 	assert.ok(storyCanvasComponent.includes('readOnly'));
-	assert.ok(storyCanvasComponent.includes('Svelte Flow keeps edges'));
+	assert.ok(storyCanvasComponent.includes('Drag to pan the Atlas canvas'));
+	assert.ok(storyCanvasComponent.includes('Edges stay attached'));
+	assert.ok(storyCanvasComponent.includes('<span>Atlas graph</span>'));
+	assert.equal(storyCanvasComponent.includes('Svelte Flow keeps edges'), false);
+	assert.equal(storyCanvasComponent.includes('{graph.renderer.primary}'), false);
 	assert.equal(storyCanvasComponent.includes('class="atlas-story__pan-layer"'), false);
 	assert.equal(storyCanvasComponent.includes('on:touchmove|nonpassive={handleMapTouchMove}'), false);
 });
@@ -123,4 +127,8 @@ test('agency README documents story canvas route usage contract', () => {
 	assert.ok(agencyReadme.includes('Keep the story canvas before the editable canvas'));
 	assert.ok(agencyReadme.includes('`/methodology`, `/stack`, and `/products` can use the same story surface'));
 	assert.ok(agencyReadme.includes('`data-motion-cue` attributes'));
+	assert.ok(agencyReadme.includes('Canvas copy should follow the Ona.com communication pattern'));
+	assert.ok(agencyReadme.includes('"set the direction" framing'));
+	assert.ok(agencyReadme.includes('Do not expose renderer names such as Svelte Flow'));
+	assert.ok(agencyReadme.includes('The product language is Atlas canvas and Atlas graph'));
 });

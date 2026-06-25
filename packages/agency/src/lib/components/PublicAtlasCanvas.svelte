@@ -73,7 +73,7 @@
 		{
 			role: 'assistant',
 			text:
-				'Name the workflow, the owner, and the first decision. I will help turn that into a map with human tasks, AI tasks, systems, data, constraints, and touchpoints.'
+				'Set the direction: name the workflow, owner, and first decision. Atlas will map the governed execution path with human review, tool boundaries, data, systems, constraints, and touchpoints.'
 		}
 	];
 	const agentPrompts = [
@@ -439,10 +439,10 @@
 <section class="public-atlas" class:compact={compact} aria-label="Public Atlas workflow canvas">
 	<div class="atlas-copy">
 		<span>Public Atlas canvas</span>
-		<h3>Turn one workflow into a map before booking.</h3>
+		<h3>Set the direction. Atlas maps the execution.</h3>
 		<p>
-			Chat with the constrained mapping agent, shape the canvas, then carry the summary into the
-			mapping session. This public agent can only edit this prospect map.
+			Start with a workflow, owner, and decision. The canvas turns that context into a governed
+			map with human review, tool boundaries, and booking-ready evidence.
 		</p>
 	</div>
 
