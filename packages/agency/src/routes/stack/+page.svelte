@@ -36,32 +36,25 @@
 
   const journey: ClearCardItem[] = [
     {
-      eyebrow: '01 Connect',
-      icon: 'plus',
-      title: 'Trust Map',
+      eyebrow: '01 Map',
+      icon: 'folder',
+      title: 'Workflow Trust Map',
       detail:
-        'Name the business objects, source accounts, first action boundary, and evidence needed before delegation.'
+        'Name the workflow, source accounts, approval owner, first action boundary, and evidence needed before delegation.'
     },
     {
-      eyebrow: '02 Automate',
+      eyebrow: '02 Pilot',
       icon: 'settings',
       title: 'Workflow Pilot',
       detail:
-        'Turn one repeated handoff into callable actions, durable data, controlled agent capacity, and a runbook.'
+        'Turn one repeated handoff into scoped actions, durable state, receipts, and a runbook only after the safe path is clear.'
     },
     {
       eyebrow: '03 Control',
       icon: 'check',
-      title: 'Control layer',
+      title: 'Trust Layer',
       detail:
-        'Classify actions as auto-allowed, approval-needed, or blocked with reason before the workflow touches risk.'
-    },
-    {
-      eyebrow: '04 Operate',
-      icon: 'document',
-      title: 'Operator Surface',
-      detail:
-        'Put the right state in Webflow, Dify, Linear, Notion, or a custom app, with evidence attached.'
+        'Classify live actions as auto-allowed, approval-needed, or blocked with a reason before the workflow touches risk.'
     }
   ];
 
@@ -69,7 +62,7 @@
     {
       eyebrow: 'Map',
       icon: 'folder',
-      title: 'Workflow map',
+      title: 'Workflow Trust Map',
       detail: 'One workflow, source systems, owners, handoffs, and failure points.'
     },
     {
@@ -300,9 +293,9 @@
   variant="hero"
   layout="split"
   titleLevel="h1"
-  eyebrow="Delegated Work Control"
-  title="Know what every tool is allowed to do."
-  description="The stack is transparent when a visitor can see who owns the accounts, which actions can run, which decisions need approval, what stops, and what evidence travels with the handoff."
+  eyebrow="Stack Boundary"
+  title="Know what you own before any tool acts."
+  description="A buyer should be able to see who owns the accounts, where secrets live, which actions can run, which decisions need approval, what stops, and what evidence travels with the handoff."
 >
   {#snippet actions()}
     <Button href={agencyCoreMessaging.selfMapHref}>
@@ -326,11 +319,11 @@
 <ClearPageSection
   variant="white"
   eyebrow="How the stack becomes a service"
-  title="The stack should read like a handoff."
-  description="The story stays simple for a non-technical team: map the boundary, prove one workflow, control the risky actions, then operate through the visible surface."
+  title="The stack should read like a handoff, not a vendor diagram."
+  description="The story stays simple for a non-technical team: map the boundary, pilot one safe workflow, then control the risky actions only when live work needs it."
 >
   {#snippet after()}
-    <ClearCardGrid items={journey} columns={4} ariaLabel="Stack service journey" />
+    <ClearCardGrid items={journey} columns={3} ariaLabel="Stack service journey" />
   {/snippet}
 </ClearPageSection>
 
@@ -356,7 +349,7 @@
   variant="white"
   eyebrow="What your team keeps"
   title="You keep the receipts, not a mystery stack."
-  description="The technical stack can change. These maps, runbooks, and evidence make the system explainable, inheritable, and easier to trust after launch."
+  description="The technical stack can change. The durable asset is the workflow boundary: objects, actions, states, owners, approvals, runbooks, and evidence."
 >
   {#snippet after()}
     <ClearCardGrid items={deliveryArtifacts} columns={3} ariaLabel="Stack delivery artifacts" />
@@ -378,7 +371,7 @@
   variant="white"
   eyebrow="Vendor roles"
   title="Vendor names are receipts, not the explanation."
-  description="Each service earns a clear job. The connected tools are not the moat. CREATE SOMETHING owns the operating boundary around delegated work: what connects, what runs, what waits, what stops, who decides, and what the operator receives."
+  description="Each service earns a clear job. The connected tools are replaceable infrastructure. The operating boundary is what connects, what runs, what waits, what stops, who decides, and what the operator receives."
 >
   {#snippet after()}
     <ClearCardGrid

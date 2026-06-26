@@ -7,7 +7,7 @@ export const agencyCoreMessaging = {
   selfMapHref: '/services#atlas-warmup',
   governanceChecklistLabel: 'Get Workflow Checklist',
   governanceChecklistHref: '/contact?source=resource&intent=governance-checklist&lane=not_sure',
-  workflowTeardownLabel: 'Request Trust Map',
+  workflowTeardownLabel: 'Request Workflow Trust Map',
   workflowTeardownHref: '/contact?source=resource&intent=workflow-teardown&lane=not_sure',
   bookMappingSessionLabel: 'Talk Through a Workflow',
   workflowMappingSessionHref:

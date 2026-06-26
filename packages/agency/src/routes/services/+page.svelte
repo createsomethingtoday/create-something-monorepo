@@ -22,12 +22,12 @@
 
   const services = [
     {
-      name: 'Trust Map',
+      name: 'Workflow Trust Map',
       description:
         'A fixed first map of the workflow, object model, action boundary, approval path, and first safe delegation point.',
       type: 'Entry wedge',
-      price: 'Custom',
-      priceDescription: 'Scoped diagnostic'
+      price: 'Fixed scope',
+      priceDescription: 'Map before any build decision'
     },
     {
       name: 'Workflow Pilot',
@@ -59,8 +59,8 @@
     {
       eyebrow: 'Map',
       icon: 'folder',
-      title: '1 workflow',
-      detail: 'The handoff your team needs done without constant human coverage.'
+      title: '1 risky workflow',
+      detail: 'The support, revenue, production, or credential-touching handoff your team protects by hand.'
     },
     {
       eyebrow: 'Control',
@@ -71,8 +71,8 @@
     {
       eyebrow: 'Surface',
       icon: 'document',
-      title: 'Quiet brief',
-      detail: 'The operator sees only what needs judgment.'
+      title: 'Receipt plan',
+      detail: 'The operator sees what ran, what waited, what stopped, and which owner decides next.'
     }
   ];
 
@@ -84,6 +84,7 @@
       detail:
         'The strongest starting point is one workflow with a visible owner, repeated handoffs, and consequences when the handoff fails.',
       points: [
+        'Support recovery, customer trust, revenue ops, or delivery work is already being rescued by hand',
         'Crosses systems, teams, or permissions',
         'Creates rework, customer risk, compliance concern, or revenue drag',
         'Has someone who owns approval without wanting to watch all day'
@@ -105,12 +106,13 @@
 
   const servicePathDecisions: ClearDecisionItem[] = [
     {
-      label: 'Trust Map',
+      label: 'Workflow Trust Map',
       summary: 'Map',
-      title: 'Diagnostic before build',
-      detail: 'Use this when the workflow is real but the safe delegation point is still unclear.',
+      title: 'Fixed-scope first offer',
+      detail:
+        'Use this when the workflow is real but the safe delegation point is still unclear. If the map does not show a safe path, stop there.',
       tone: 'review',
-      evidence: ['Workflow map', 'Owner map', 'Action boundary'],
+      evidence: ['Workflow map', 'Owner map', 'Action boundary', 'First receipt plan'],
       receipts: ['first-receipt-plan.md', 'pilot-recommendation.md']
     },
     {
@@ -189,13 +191,13 @@
     {
       eyebrow: 'Map',
       icon: 'search',
-      title: 'Request a trust map',
+      title: 'Request a Workflow Trust Map',
       detail:
-        'Use this when the workflow, stack, bottleneck, and risk boundary can be named without a long discovery cycle.',
+        'Use this when the workflow, stack, bottleneck, owner, and risk boundary can be named without a long discovery cycle.',
       href: agencyCoreMessaging.workflowTeardownHref,
       points: [
         'Buyer gives: systems, owner, drag, risk',
-        'Buyer gets: the first safe delegation path'
+        'Buyer gets: workflow map, owner map, action boundary, and first receipt plan'
       ]
     },
     {
@@ -227,6 +229,30 @@
         'Developer runbook, named access lanes, production data boundaries, and a named-recipient approval gate.',
       href: '/delivery/shivworks',
       points: ['Shows: handoff proof, access control, ownership transfer options']
+    }
+  ];
+
+  const supportRecoveryExamples: ClearCardItem[] = [
+    {
+      eyebrow: 'Run',
+      icon: 'check',
+      title: 'Address fix before fulfillment',
+      detail:
+        'Order state, address validation, and warehouse cutoff are clear enough for a bounded note and customer-safe confirmation.'
+    },
+    {
+      eyebrow: 'Wait',
+      icon: 'user',
+      title: 'Delayed order credit',
+      detail:
+        'The agent can verify the shipment and draft the apology, but the goodwill credit touches revenue and waits for the owner.'
+    },
+    {
+      eyebrow: 'Stop',
+      icon: 'warning',
+      title: 'Refund exception',
+      detail:
+        'A post-delivery full refund exceeds the support lane, so the workflow blocks money movement and opens an owner handoff.'
     }
   ];
 
@@ -345,7 +371,7 @@
     {
       question: 'What is your primary service?',
       answer:
-        'Workflow Pilot fixes the first painful workflow. Workflow Trust Layer becomes the ongoing plan once delegated work needs approvals, release controls, and oversight.'
+        'The first offer is a fixed-scope Workflow Trust Map. Workflow Pilot follows only when the first safe delegation path is clear enough to build.'
     },
     {
       question: 'Are agents part of the workforce?',
@@ -381,7 +407,7 @@
   titleLevel="h1"
   eyebrow="How I Work"
   title="Make one workflow safe to delegate."
-  description="Bring work your team already handles by hand. I show the inputs, owners, approvals, stop states, receipts, and failure modes, then build only the first delegation path that is clear enough to trust."
+  description="Bring the support recovery, customer-trust, revenue, production, or credential-touching workflow your team still protects by hand. I map what can run, what waits, what stops, who owns the decision, and what receipt survives the handoff."
 >
   {#snippet actions()}
     <Button href="#atlas-warmup">
@@ -406,7 +432,7 @@
   variant="white"
   eyebrow="Fit check"
   title="Bring one workflow with an owner, risk, and repeatable drag."
-  description="The work is strongest when the problem is concrete enough to map and important enough that brittle handoffs are already costing attention."
+  description="The work is strongest when the problem is concrete enough to map and important enough that brittle handoffs are already costing attention. Support recovery is the default wedge because the risk is visible."
 >
   {#snippet after()}
     <ClearCardGrid items={fitCards} columns={2} ariaLabel="Workflow fit check" />
@@ -415,6 +441,21 @@
 
 <ClearPageSection
   variant="soft"
+  eyebrow="Default wedge"
+  title="Support recovery shows the whole boundary quickly."
+  description="Cases, orders, payments, shipments, accounts, customer promises, and revenue decisions make the run/wait/stop boundary concrete before the build starts."
+>
+  {#snippet after()}
+    <ClearCardGrid
+      items={supportRecoveryExamples}
+      columns={3}
+      ariaLabel="Support recovery run wait stop examples"
+    />
+  {/snippet}
+</ClearPageSection>
+
+<ClearPageSection
+  variant="white"
   eyebrow="Why this layer exists"
   title="Tools can connect the work. They cannot explain the boundary."
   description="Delegated Work Control makes the boundary visible: what can run, what waits, what stops, who owns the decision, and what evidence survives."
@@ -432,8 +473,8 @@
   id="atlas-warmup"
   variant="soft"
   eyebrow="Public Atlas canvas"
-  title="Map the workflow before booking."
-  description="The public Atlas surface turns human tasks, AI tasks, system operations, data, constraints, and touchpoints into a first onboarding artifact. A constrained mapping agent can help shape the canvas without touching production systems."
+  title="Use Atlas to make the boundary visible before booking."
+  description="The public Atlas surface turns human tasks, AI tasks, system operations, data, constraints, touchpoints, owners, stop conditions, and receipts into a first onboarding artifact. It does not touch production systems."
 >
   {#snippet after()}
     <PublicAtlasStoryCanvas
@@ -448,8 +489,8 @@
 <ClearDecisionPanel
   id="service-path"
   eyebrow="Service path"
-  title="Every engagement has a clean exit."
-  description="Start with the smallest safe delegation point, prove the first workflow, then add the Workflow Trust Layer only when live work needs more control. Each step has a concrete output, a decision point, and a next-state the buyer can understand."
+  title="Start with a fixed-scope map before any build decision."
+  description="The first offer is a Workflow Trust Map. If the map shows a safe delegation path, the next move is a pilot. If it does not, the work stops with a useful boundary artifact instead of becoming an open-ended automation project."
   items={servicePathDecisions}
   ariaLabel="Service path from map to trust layer"
 />

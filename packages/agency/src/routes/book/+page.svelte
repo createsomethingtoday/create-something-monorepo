@@ -45,14 +45,15 @@
 	const laneOptions: Array<{ value: ServiceLane; label: string; description: string }> = [
 		{
 			value: 'workflow_infrastructure',
-			label: 'Workflow Pilot',
-			description: 'One handoff your team still completes, checks, or rescues by hand.'
+			label: 'Workflow Trust Map / Pilot',
+			description:
+				'Start with the fixed-scope map; pilot only when the first safe delegation path is clear.'
 		},
 		{
 			value: 'reliability_and_control',
-			label: 'Trust Layer',
+			label: 'Support Recovery / Trust Layer',
 			description:
-				'Approval rules, blocked states, release evidence, and operator briefs around live automation.'
+				'Support, customer-trust, revenue, or account workflows that need approval rules and receipts.'
 		},
 		{
 			value: 'enterprise_extension',
@@ -107,8 +108,6 @@
 
 	const bookingSource = normalizeQueryToken(bookingUrlParams.get('source'), 'direct');
 	const bookingIntent = normalizeQueryToken(bookingUrlParams.get('intent'), 'workflow-mapping');
-	const bookingCampaign = normalizeOptionalQueryToken(bookingUrlParams.get('campaign'));
-	const bookingEntrySource = normalizeOptionalQueryToken(bookingUrlParams.get('entry_source'));
 	const bookingPath = browser ? `${window.location.pathname}${window.location.search}` : '/book';
 	const initialLane = normalizeLane(bookingUrlParams.get('lane')) ?? 'not_sure';
 	const atlasWarmup = normalizeOptionalQueryToken(bookingUrlParams.get('warmup'));
@@ -124,7 +123,7 @@
 		{
 			eyebrow: 'Handoff',
 			icon: 'folder',
-			title: 'Handoff map',
+			title: 'Workflow Trust Map',
 			detail: 'Objects, owners, source systems, handoffs, and failure points.'
 		},
 		{
@@ -362,8 +361,6 @@
 				serviceLane: selectedLane,
 				bookingSource,
 				bookingIntent,
-				bookingCampaign,
-				bookingEntrySource,
 				source: bookingSource,
 				intent: bookingIntent,
 				lane: selectedLane,
@@ -403,8 +400,6 @@
 					source: bookingSource,
 					intent: bookingIntent,
 					lane: selectedLane,
-					campaign: bookingCampaign,
-					entry_source: bookingEntrySource,
 					atlas_warmup: atlasWarmup,
 					atlas_session_id: atlasSessionId,
 					atlas_readiness: atlasReadiness,
@@ -428,8 +423,6 @@
 				serviceLane: selectedLane,
 				bookingSource,
 				bookingIntent,
-				bookingCampaign,
-				bookingEntrySource,
 				source: bookingSource,
 				intent: bookingIntent,
 				lane: selectedLane,
@@ -472,7 +465,7 @@
 
 <SEO
 	title="Book a CREATE SOMETHING Mapping Session"
-	description="Schedule a scoped workflow mapping session to clarify the handoff, ownership boundary, decision rules, and first safe build path."
+	description="Schedule a scoped Workflow Trust Map session to clarify the handoff, ownership boundary, decision rules, receipts, and first safe build path."
 	propertyName="agency"
 />
 
@@ -482,8 +475,8 @@
 		layout="split"
 		titleLevel="h1"
 		eyebrow="Workflow mapping session"
-		title="Map the workflow your team needs to trust."
-		description="Bring the handoff with the most drag, risk, or manual rescue. You leave with the objects named, actions scoped, decision states, and receipts that make the first safe service path visible."
+		title="Map the workflow before the build decision."
+		description="Bring the support recovery, customer-trust, revenue, production, or credential-touching handoff with the most drag. You leave with the objects named, actions scoped, decision states, receipts, and the first safe path or a clear stop."
 	>
 		{#snippet actions()}
 			<Button href="#booking-flow">Choose a time</Button>
@@ -506,7 +499,7 @@
 		variant="white"
 		eyebrow="Bring enough context"
 		title="Bring context, not secrets."
-		description="The session works best when we can see the real handoff and decide what your team keeps. Credentials move through Infisical or the approved runtime path only after scope is clear."
+		description="The session works best when we can see the real handoff and decide what your team keeps. Credentials move through Infisical or the approved runtime path only after the map shows a safe build path."
 	>
 		{#snippet after()}
 			<ClearCardGrid
@@ -521,7 +514,7 @@
 		variant="soft"
 		eyebrow="Fit check"
 		title="Book when the workflow is ready to become an operating path."
-		description="The mapping session is for a real handoff with an owner, risk, and next decision. It is not a generic automation brainstorm."
+		description="The mapping session is for a real handoff with an owner, risk, and next decision. It is the fixed-scope first step before any workflow pilot."
 	>
 		{#snippet after()}
 			<ClearCardGrid items={sessionFitSignals} columns={2} ariaLabel="Mapping session fit" />

@@ -8,31 +8,31 @@
     icon: SignalName;
     label: string;
     title: string;
-    detail: string;
+    detail: [string, string];
   }> = [
     {
       icon: 'objects',
       label: 'What it reads',
       title: 'Named objects',
-      detail: 'Case, order, account, shipment'
+      detail: ['Case, order, account', 'Shipment context']
     },
     {
       icon: 'actions',
       label: 'What it can do',
       title: 'Scoped actions',
-      detail: 'Draft reply, add note, assign owner'
+      detail: ['Draft reply, add note', 'Assign owner']
     },
     {
       icon: 'states',
       label: 'What must pause',
       title: 'Decision state',
-      detail: 'Run, wait, or stop with a reason'
+      detail: ['Run, wait, or stop', 'Reason required']
     },
     {
       icon: 'receipts',
       label: 'What proves it',
       title: 'Receipts',
-      detail: 'Boundary, approval, blocked state'
+      detail: ['Boundary, approval', 'Blocked state']
     }
   ];
 
@@ -67,7 +67,11 @@
         <div>
           <small>{signal.label}</small>
           <strong>{signal.title}</strong>
-          <p>{signal.detail}</p>
+          <p>
+            {#each signal.detail as detailLine}
+              <span>{detailLine}</span>
+            {/each}
+          </p>
         </div>
       </article>
     {/each}
@@ -101,6 +105,7 @@
     overflow: hidden;
     display: grid;
     gap: 0;
+    max-width: 35rem;
     border: 1px solid var(--color-clear-border-strong, #cecece);
     border-radius: var(--radius-clear-md, 8px);
     background: var(--color-clear-panel, #ffffff);
@@ -123,7 +128,7 @@
   .hero-trust-artifact__header {
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: start;
-    padding-top: 1.12rem;
+    padding: 1rem 1.05rem 1.02rem;
   }
 
   .hero-trust-artifact__header span,
@@ -144,7 +149,8 @@
     display: block;
     margin-top: 0.32rem;
     color: var(--color-clear-onyx, #0a0e19);
-    font-size: clamp(1.55rem, 2vw, 1.95rem);
+    max-width: 18ch;
+    font-size: clamp(1.5rem, 1.85vw, 1.86rem);
     font-weight: var(--font-medium);
     line-height: 1.04;
     text-wrap: balance;
@@ -170,8 +176,8 @@
   .hero-trust-artifact__path {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.72rem;
-    padding: 0.72rem;
+    gap: 0.62rem;
+    padding: 0.62rem;
     background: var(--color-clear-panel, #ffffff);
   }
 
@@ -179,20 +185,20 @@
     position: relative;
     display: grid;
     grid-template-columns: auto minmax(0, 1fr);
-    gap: 0.7rem;
+    gap: 0.64rem;
     align-items: start;
-    min-height: 7.25rem;
-    padding: 0.82rem;
+    min-height: 7.05rem;
+    padding: 0.76rem;
     border: 1px solid var(--color-clear-border, #e1e1e1);
     border-radius: 6px;
     background: #ffffff;
   }
 
   .hero-trust-artifact__icon {
-    --workflow-signal-icon-size: 1.7rem;
+    --workflow-signal-icon-size: 1.52rem;
     display: grid;
-    width: 2.3rem;
-    height: 2.3rem;
+    width: 2.12rem;
+    height: 2.12rem;
     place-items: center;
     border: 1px solid var(--color-clear-border, #e1e1e1);
     border-radius: var(--radius-clear-sm, 4px);
@@ -212,15 +218,18 @@
   .hero-trust-artifact__signal p {
     margin: 0.24rem 0 0;
     color: var(--color-clear-grey, #636363);
-    font-size: 0.86rem;
-    line-height: 1.35;
-    text-wrap: pretty;
+    font-size: 0.82rem;
+    line-height: 1.28;
+  }
+
+  .hero-trust-artifact__signal p span {
+    display: block;
   }
 
   .hero-trust-artifact__decision {
     display: grid;
-    gap: 0.68rem;
-    padding: 0.94rem 1.05rem;
+    gap: 0.62rem;
+    padding: 0.86rem 1.05rem;
     border-top: 1px solid var(--color-clear-border, #e1e1e1);
   }
 
@@ -233,7 +242,7 @@
   .hero-trust-artifact__state {
     display: grid;
     gap: 0.24rem;
-    min-height: 4.45rem;
+    min-height: 4.18rem;
     align-content: center;
     padding: 0.72rem;
     border: 1px solid var(--color-clear-border, #e1e1e1);
@@ -287,8 +296,10 @@
     display: inline-flex;
     align-items: center;
     gap: 0.36rem;
-    width: fit-content;
+    min-width: 9.6rem;
+    flex: 1 1 9.6rem;
     max-width: 100%;
+    justify-content: flex-start;
     padding: 0.28rem 0.45rem;
     border: 1px solid var(--color-clear-border, #e1e1e1);
     border-radius: var(--radius-clear-sm, 4px);
@@ -311,6 +322,7 @@
 
   @media (max-width: 640px) {
     .hero-trust-artifact {
+      max-width: none;
       box-shadow: 0 14px 38px rgba(10, 14, 25, 0.08);
     }
 
@@ -337,6 +349,11 @@
     .hero-trust-artifact__signal {
       min-height: auto;
       padding: 0.72rem;
+    }
+
+    .hero-trust-artifact__footer strong {
+      min-width: 0;
+      flex-basis: 100%;
     }
 
     .hero-trust-artifact__states {
