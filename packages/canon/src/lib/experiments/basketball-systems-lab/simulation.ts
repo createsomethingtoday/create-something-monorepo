@@ -125,6 +125,31 @@ export type SystemProjection = {
 	detail: string;
 };
 
+export type GameRequirementSeverity = 'pass' | 'watch' | 'fail';
+
+export type GameRequirementKey =
+	| 'state-bounds'
+	| 'tradeoff-integrity'
+	| 'owner-room'
+	| 'labor-plausibility'
+	| 'projection-honesty'
+	| 'system-balance';
+
+export type GameRequirement = {
+	key: GameRequirementKey;
+	label: string;
+	status: GameRequirementSeverity;
+	summary: string;
+	detail: string;
+};
+
+export type ValidationSummary = {
+	status: GameRequirementSeverity;
+	label: string;
+	summary: string;
+	requirements: GameRequirement[];
+};
+
 export type SystemTimelineEntry = {
 	year: number;
 	phase: SeasonPhase;
@@ -162,6 +187,7 @@ export type SystemMatch = {
 	systems: SystemResult[];
 	winner: SystemResult;
 	projections: SystemProjection[];
+	validation: ValidationSummary;
 	reports: BoardReport[];
 	ledger: SeasonLedgerEntry[];
 };
@@ -400,6 +426,7 @@ export function runSystemMatch(input: SystemMatchInput = {}): SystemMatch {
 		systems: ranked,
 		winner,
 		projections: buildSystemProjections(ranked, unsteeredPrimary, years, steeringYear, steeringPhase),
+		validation: buildValidationSummary(mode, environmentBaseline, ranked, years),
 		reports: buildSystemReports(mode, environment, years, ranked),
 		ledger: buildSystemLedger(
 			mode,
@@ -589,6 +616,209 @@ function buildSystemProjections(
 			detail: `${steeringPhase.readout} Subsequent years use the new policy at full strength.`
 		}
 	];
+}
+
+function buildValidationSummary(
+	mode: LabMode,
+	baseline: LeagueState,
+	results: SystemResult[],
+	years: number
+): ValidationSummary {
+	const requirements = [
+		validateStateBounds(results),
+		validateTradeoffs(baseline, results),
+		validateOwnerRoom(results),
+		validateLaborPlausibility(results),
+		validateProjectionHonesty(results),
+		validateSystemBalance(mode, results, years)
+	];
+	const status = requirements.reduce<GameRequirementSeverity>(
+		(current, requirement) =>
+			severityRank(requirement.status) > severityRank(current) ? requirement.status : current,
+		'pass'
+	);
+
+	return {
+		status,
+		label:
+			status === 'fail'
+				? 'Validation failed'
+				: status === 'watch'
+					? 'Watch required'
+					: 'Validated prototype',
+		summary:
+			status === 'fail'
+				? 'At least one baked-in realism gate broke under this run.'
+				: status === 'watch'
+					? 'The model is playable, but one or more assumptions should be treated as directional.'
+					: 'Core bounds, tradeoffs, and balance checks passed for this run.',
+		requirements
+	};
+}
+
+function validateStateBounds(results: SystemResult[]): GameRequirement {
+	const states = results.flatMap((result) => result.timeline.map((entry) => entry.state));
+	const invalidStates = states.filter(
+		(state) =>
+			!Number.isFinite(state.mediaValueB) ||
+			state.mediaValueB < 0 ||
+			state.mediaValueB > 30 ||
+			!boundedPercentMetric(state.leagueHealth) ||
+			!boundedPercentMetric(state.competitiveBalance) ||
+			!boundedPercentMetric(state.laborTrust) ||
+			!boundedPercentMetric(state.starAvailability) ||
+			!boundedPercentMetric(state.ownerMargin) ||
+			!boundedPercentMetric(state.globalAttention) ||
+			!boundedPercentMetric(state.scheduleLoad) ||
+			!boundedPercentMetric(state.travelWear) ||
+			!boundedPercentMetric(state.smallMarketVisibility)
+	);
+
+	return {
+		key: 'state-bounds',
+		label: 'State bounds',
+		status: invalidStates.length > 0 ? 'fail' : 'pass',
+		summary: invalidStates.length > 0 ? 'Broken state values' : 'Bounded league state',
+		detail:
+			invalidStates.length > 0
+				? `${invalidStates.length} state snapshot${invalidStates.length === 1 ? '' : 's'} left the supported score or media range.`
+				: 'All score metrics stayed inside 0-100 and media value stayed inside the prototype range.'
+	};
+}
+
+function validateTradeoffs(baseline: LeagueState, results: SystemResult[]): GameRequirement {
+	const winner = results[0];
+	const finalState = winner.timeline.at(-1)?.state ?? winner.scenario.state;
+	const improved = winner.compoundedScoreDelta > 8;
+	const tradeoffs = [
+		finalState.ownerMargin < baseline.ownerMargin,
+		finalState.scheduleLoad > baseline.scheduleLoad,
+		finalState.travelWear > baseline.travelWear,
+		finalState.competitiveBalance < baseline.competitiveBalance,
+		finalState.laborTrust < baseline.laborTrust,
+		finalState.starAvailability < baseline.starAvailability
+	].filter(Boolean).length;
+
+	if (improved && tradeoffs === 0) {
+		return {
+			key: 'tradeoff-integrity',
+			label: 'Tradeoff integrity',
+			status: 'fail',
+			summary: 'Free upside detected',
+			detail: `${winner.system.name} gained ${winner.compoundedScoreDelta.toFixed(1)} points without a visible operational downside.`
+		};
+	}
+
+	return {
+		key: 'tradeoff-integrity',
+		label: 'Tradeoff integrity',
+		status: tradeoffs === 0 ? 'watch' : 'pass',
+		summary: tradeoffs === 0 ? 'Tradeoff is thin' : `${tradeoffs} visible tradeoff${tradeoffs === 1 ? '' : 's'}`,
+		detail:
+			tradeoffs === 0
+				? 'This run stayed stable, so the next rules pass should pressure at least one counter-metric.'
+				: 'Winning upside is paired with board, schedule, availability, trust, or parity pressure.'
+	};
+}
+
+function validateOwnerRoom(results: SystemResult[]): GameRequirement {
+	const minimumOwnerMargin = minTimelineMetric(results, 'ownerMargin');
+
+	return {
+		key: 'owner-room',
+		label: 'Owner room',
+		status: minimumOwnerMargin < 35 ? 'fail' : minimumOwnerMargin < 60 ? 'watch' : 'pass',
+		summary:
+			minimumOwnerMargin < 35
+				? 'Owner room broke'
+				: minimumOwnerMargin < 60
+					? 'Owner room is tight'
+					: 'Owner room preserved',
+		detail: `Minimum owner margin across the run was ${formatScore(minimumOwnerMargin)}. Below 60 needs governance pressure; below 35 is not credible.`
+	};
+}
+
+function validateLaborPlausibility(results: SystemResult[]): GameRequirement {
+	const minimumLaborTrust = minTimelineMetric(results, 'laborTrust');
+	const maximumLaborTrust = maxTimelineMetric(results, 'laborTrust');
+	const minimumOwnerMargin = minTimelineMetric(results, 'ownerMargin');
+	const cappedLaborPeace = maximumLaborTrust >= 100 && minimumOwnerMargin < 55;
+
+	return {
+		key: 'labor-plausibility',
+		label: 'Labor plausibility',
+		status: minimumLaborTrust < 50 ? 'fail' : minimumLaborTrust < 65 || cappedLaborPeace ? 'watch' : 'pass',
+		summary:
+			minimumLaborTrust < 50
+				? 'Trust collapsed'
+				: cappedLaborPeace
+					? 'Labor peace is expensive'
+					: minimumLaborTrust < 65
+						? 'Trust is fragile'
+						: 'Labor path is plausible',
+		detail: cappedLaborPeace
+			? 'The model reached maximum labor trust while owner margin was below 55, so the projection should be treated as politically expensive.'
+			: `Labor trust stayed between ${formatScore(minimumLaborTrust)} and ${formatScore(maximumLaborTrust)} across the run.`
+	};
+}
+
+function validateProjectionHonesty(results: SystemResult[]): GameRequirement {
+	const saturatedMetrics = new Set<string>();
+
+	for (const result of results) {
+		for (const entry of result.timeline) {
+			if (entry.state.leagueHealth >= 100) saturatedMetrics.add('health');
+			if (entry.state.laborTrust >= 100) saturatedMetrics.add('trust');
+			if (entry.state.competitiveBalance >= 100) saturatedMetrics.add('balance');
+			if (entry.state.starAvailability >= 100) saturatedMetrics.add('availability');
+			if (entry.state.ownerMargin <= 0) saturatedMetrics.add('owner margin');
+		}
+	}
+
+	const saturated = [...saturatedMetrics];
+
+	return {
+		key: 'projection-honesty',
+		label: 'Projection honesty',
+		status: saturated.length > 0 ? 'watch' : 'pass',
+		summary: saturated.length > 0 ? 'Capped projection' : 'Uncapped projection',
+		detail:
+			saturated.length > 0
+				? `The run hit the ${saturated.join(', ')} cap, so later-year projections are directional rather than exact.`
+				: 'No major state metric hit a model cap during the selected horizon.'
+	};
+}
+
+function validateSystemBalance(
+	mode: LabMode,
+	results: SystemResult[],
+	years: number
+): GameRequirement {
+	if (results.length < 2) {
+		return {
+			key: 'system-balance',
+			label: 'System balance',
+			status: 'pass',
+			summary: 'Single System run',
+			detail: 'Balance is deferred until a versus run puts at least two Systems under the same horizon.'
+		};
+	}
+
+	const margin = roundTo(results[0].score - results[1].score, 1);
+	const normalizedMargin = roundTo(margin / Math.max(years, 1), 1);
+
+	return {
+		key: 'system-balance',
+		label: 'System balance',
+		status: margin > 32 ? 'fail' : margin > 18 ? 'watch' : 'pass',
+		summary:
+			margin > 32
+				? 'Dominant System'
+				: margin > 18
+					? 'Large winner margin'
+					: `${mode === 'versus' ? 'Versus' : 'System'} balance held`,
+		detail: `${results[0].system.name} led by ${margin.toFixed(1)} total points, or ${normalizedMargin.toFixed(1)} per season.`
+	};
 }
 
 function sumTimelineScores(timeline: SystemTimelineEntry[]): number {
@@ -915,6 +1145,24 @@ function compareLowerIsBetter(previous: number, next: number): string {
 	if (delta < -4) return 'Lower';
 	if (delta > 4) return 'Higher';
 	return 'Stable';
+}
+
+function boundedPercentMetric(value: number): boolean {
+	return Number.isFinite(value) && value >= 0 && value <= 100;
+}
+
+function minTimelineMetric(results: SystemResult[], key: keyof LeagueState): number {
+	return Math.min(...results.flatMap((result) => result.timeline.map((entry) => entry.state[key])));
+}
+
+function maxTimelineMetric(results: SystemResult[], key: keyof LeagueState): number {
+	return Math.max(...results.flatMap((result) => result.timeline.map((entry) => entry.state[key])));
+}
+
+function severityRank(status: GameRequirementSeverity): number {
+	if (status === 'fail') return 2;
+	if (status === 'watch') return 1;
+	return 0;
 }
 
 function toneForDelta(delta: number, positiveTone: Tone): Tone {

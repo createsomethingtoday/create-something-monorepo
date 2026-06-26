@@ -19,6 +19,9 @@ export {
 	runSystemMatch,
 	type BoardReport,
 	type Environment,
+	type GameRequirement,
+	type GameRequirementKey,
+	type GameRequirementSeverity,
 	type LabMode,
 	type LeagueState,
 	type ManagementPolicy,
@@ -35,5 +38,6 @@ export {
 	type SystemMatchInput,
 	type SystemProjection,
 	type SystemResult,
-	type SystemTimelineEntry
+	type SystemTimelineEntry,
+	type ValidationSummary
 } from './simulation.js';

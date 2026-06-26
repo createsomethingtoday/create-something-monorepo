@@ -8,6 +8,7 @@
 		Globe2,
 		LineChart,
 		Route,
+		ShieldCheck,
 		SlidersHorizontal,
 		Users
 	} from 'lucide-svelte';
@@ -299,6 +300,35 @@
 				{/each}
 			</div>
 
+			<div
+				class="ona-system-validation"
+				data-status={match.validation.status}
+				aria-label="Game requirement validation"
+			>
+				<div class="ona-system-validation-header">
+					<div>
+						<div class="ona-system-timeline-header">
+							<ShieldCheck size={17} strokeWidth={1.8} />
+							<span>Requirement gate</span>
+						</div>
+						<strong>{match.validation.label}</strong>
+					</div>
+					<p>{match.validation.summary}</p>
+				</div>
+
+				<div class="ona-system-validation-list">
+					{#each match.validation.requirements as requirement}
+						<article data-status={requirement.status}>
+							<div>
+								<span>{requirement.label}</span>
+								<strong>{requirement.summary}</strong>
+							</div>
+							<p>{requirement.detail}</p>
+						</article>
+					{/each}
+				</div>
+			</div>
+
 			<div class="ona-system-timeline" aria-label="Compounding timeline">
 				<div class="ona-system-timeline-header">
 					<Route size={17} strokeWidth={1.8} />
@@ -330,7 +360,8 @@
 			<h2>Every move leaves a receipt.</h2>
 			<p>
 				The design direction keeps the interface quiet, legible, and inspectable. The game should
-				explain how decisions compound, where the System was steered, and why the winner changed.
+				explain how decisions compound, where the System was steered, why the winner changed, and
+				which realism gates still need attention.
 			</p>
 		</div>
 

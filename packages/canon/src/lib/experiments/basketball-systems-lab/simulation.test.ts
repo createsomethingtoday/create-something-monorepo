@@ -110,4 +110,68 @@ describe('basketball systems management simulation', () => {
 			'Ripple window'
 		]);
 	});
+
+	it('bakes requirement validation into every System match', () => {
+		const match = runSystemMatch({
+			mode: 'versus',
+			systemKey: 'recovery',
+			opponentKey: 'attention',
+			years: 5,
+			steeringYear: 3,
+			steeringPhase: 'midseason',
+			steeringPolicyKey: 'labor'
+		});
+
+		expect(match.validation.requirements.map((requirement) => requirement.key)).toEqual([
+			'state-bounds',
+			'tradeoff-integrity',
+			'owner-room',
+			'labor-plausibility',
+			'projection-honesty',
+			'system-balance'
+		]);
+		expect(match.validation.requirements.map((requirement) => requirement.status)).toEqual(
+			expect.arrayContaining(['pass'])
+		);
+		expect(['pass', 'watch', 'fail']).toContain(match.validation.status);
+	});
+
+	it('flags unrealistic stress environments through validation gates', () => {
+		const match = runSystemMatch({
+			systemKey: 'trust',
+			years: 4,
+			environment: {
+				key: 'stress-test',
+				name: 'Stress Test',
+				pressure: 'Owner economics and labor trust begin below the credible range',
+				winCondition: 'Expose validation gates before scoring optics',
+				effects: {
+					ownerMargin: -40,
+					laborTrust: -55,
+					travelWear: 18
+				}
+			}
+		});
+
+		expect(match.validation.status).toBe('fail');
+		expect(match.validation.requirements).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({
+					key: 'owner-room',
+					status: 'fail'
+				}),
+				expect.objectContaining({
+					key: 'labor-plausibility',
+					status: 'fail'
+				})
+			])
+		);
+	});
+
+	it('keeps validation deterministic for repeated runs', () => {
+		const first = runSystemMatch({ systemKey: 'recovery', years: 8, steeringPolicyKey: 'media' });
+		const second = runSystemMatch({ systemKey: 'recovery', years: 8, steeringPolicyKey: 'media' });
+
+		expect(first.validation).toEqual(second.validation);
+	});
 });

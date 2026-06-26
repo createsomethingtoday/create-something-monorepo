@@ -1361,7 +1361,8 @@
   .ona-system-scoreboard span,
   .ona-system-scoreboard small,
   .ona-system-projection-grid span,
-  .ona-system-timeline span {
+  .ona-system-timeline span,
+  .ona-system-validation span {
     color: var(--ona-system-muted);
     font-size: 0.68rem;
     font-weight: 700;
@@ -1479,6 +1480,84 @@
     color: var(--ona-system-muted);
     font-size: 0.86rem;
     line-height: 1.42;
+  }
+
+  .ona-system-validation {
+    --ona-system-validation-line: var(--ona-system-green);
+    display: grid;
+    gap: 14px;
+    border-block: 1px solid var(--ona-system-line);
+    border-left: 3px solid var(--ona-system-validation-line);
+    margin-top: 14px;
+    padding: 16px 0 16px 14px;
+  }
+
+  .ona-system-validation[data-status='watch'] {
+    --ona-system-validation-line: var(--ona-system-ink);
+  }
+
+  .ona-system-validation[data-status='fail'] {
+    --ona-system-validation-line: var(--ona-system-red);
+  }
+
+  .ona-system-validation-header {
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(280px, 1.1fr);
+    gap: 18px;
+    align-items: start;
+  }
+
+  .ona-system-validation-header > div {
+    display: grid;
+    gap: 7px;
+  }
+
+  .ona-system-validation-header strong {
+    font-size: 1rem;
+    line-height: 1.2;
+  }
+
+  .ona-system-validation-header p,
+  .ona-system-validation-list p {
+    color: var(--ona-system-muted);
+    font-size: 0.86rem;
+    line-height: 1.42;
+  }
+
+  .ona-system-validation-list {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .ona-system-validation-list article {
+    min-height: 132px;
+    display: grid;
+    align-content: space-between;
+    gap: 12px;
+    border: 1px solid var(--ona-system-line);
+    border-top: 3px solid var(--ona-system-green);
+    border-radius: var(--radius-clear-sm);
+    padding: 12px;
+    background: white;
+  }
+
+  .ona-system-validation-list article[data-status='watch'] {
+    border-top-color: var(--ona-system-ink);
+  }
+
+  .ona-system-validation-list article[data-status='fail'] {
+    border-top-color: var(--ona-system-red);
+  }
+
+  .ona-system-validation-list article > div {
+    display: grid;
+    gap: 7px;
+  }
+
+  .ona-system-validation-list strong {
+    font-size: 0.92rem;
+    line-height: 1.15;
   }
 
   .ona-system-timeline {
@@ -1677,6 +1756,11 @@
     }
 
     .ona-system-projection-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .ona-system-validation-header,
+    .ona-system-validation-list {
       grid-template-columns: 1fr;
     }
 
