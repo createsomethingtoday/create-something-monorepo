@@ -9,3 +9,16 @@
  */
 
 export { default as BasketballSystemsLab } from './BasketballSystemsLab.svelte';
+export {
+	getDefaultLeagueState,
+	listManagementPolicies,
+	runManagementScenario,
+	type BoardReport,
+	type LeagueState,
+	type ManagementPolicy,
+	type ManagementScenario,
+	type MapNode,
+	type MetricOutput,
+	type PolicyKey,
+	type SeasonLedgerEntry
+} from './simulation.js';
