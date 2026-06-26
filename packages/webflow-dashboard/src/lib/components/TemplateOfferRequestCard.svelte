@@ -70,14 +70,7 @@
 	const isRecoveryStrategy = $derived(isRecoveryOfferStrategy(offerStrategy));
 	const isRecoveryBlocked = $derived(isRecoveryStrategy && Boolean(asset.recoveryOfferUsed));
 	const isSubmitDisabled = $derived(
-		isSubmitting ||
-			!canSurfaceOfferRequest ||
-			!offerPrice.trim() ||
-			!fulfillmentUrl.trim() ||
-			!endsAt.trim() ||
-			!termsAccepted ||
-			(requiresVisibilityAck && !visibilityTermsAccepted) ||
-			isRecoveryBlocked
+		isSubmitting || !canSurfaceOfferRequest || isRecoveryBlocked
 	);
 
 	$effect(() => {
@@ -340,7 +333,7 @@
 				</div>
 
 				<label class="terms-row">
-					<input type="checkbox" bind:checked={termsAccepted} onchange={resetMessages} />
+					<input type="checkbox" bind:checked={termsAccepted} required onchange={resetMessages} />
 					<span>
 						I confirm this link is intended for this template offer, existing buyer access is not
 						affected, and the offer must pass policy before it appears publicly.
@@ -349,7 +342,12 @@
 
 				{#if requiresVisibilityAck}
 					<label class="terms-row terms-row--visibility">
-						<input type="checkbox" bind:checked={visibilityTermsAccepted} onchange={resetMessages} />
+						<input
+							type="checkbox"
+							bind:checked={visibilityTermsAccepted}
+							required
+							onchange={resetMessages}
+						/>
 						<span>
 							I understand this lifecycle choice can remove the template from marketplace search
 							after the offer window while keeping buyer access and direct links intact.
