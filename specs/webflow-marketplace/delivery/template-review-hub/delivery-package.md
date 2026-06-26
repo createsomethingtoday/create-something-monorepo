@@ -16,7 +16,7 @@ For the first reviewer rollout, that workflow should be delivered through **revi
 The delivered lane combines:
 
 - queue and Airtable review context from `webflow-template-review-mcp`
-- reviewer-specific Hub policy records for the first six reviewers
+- reviewer-specific Hub policy records for the active reviewers
 - skill-led onboarding for reviewer and operator use of the Hub lane
 - manual Airtable fallback for official review-state changes during Phase A
 
@@ -30,7 +30,7 @@ Planned but not authoritative for Phase A:
 ## What the team gets
 
 - one reviewer workflow in the MCP Hub
-- six reviewer-specific Hub surfaces for the initial pilot cohort
+- active reviewer-specific Hub surfaces for the pilot cohort
 - a defined operator and reviewer workflow
 - a skill-led onboarding path that matches the current live-safe runtime
 - policy boundaries for read, write, and blocked actions
@@ -71,4 +71,4 @@ It should not be presented as:
 2. Prove the lane reduces time spent on objective checklist work.
 3. Keep all creator-facing decisions explicitly human-owned.
 4. Produce enough evidence to decide whether broader rollout is justified.
-5. Keep reviewer attribution and write-path scope narrow enough for a six-reviewer pilot.
+5. Keep reviewer attribution and write-path scope narrow enough for the active reviewer pilot.

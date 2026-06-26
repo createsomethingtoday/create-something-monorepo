@@ -7,7 +7,7 @@
 
 ## 1. Purpose
 
-This document gives the exact Hub posture to use for the first six reviewer-specific Hub surfaces.
+This document gives the exact Hub posture to use for the active reviewer-specific Hub surfaces.
 
 It is intended to answer:
 
@@ -33,13 +33,12 @@ Use one reviewer-specific Hub surface or account-scoped Hub posture per reviewer
 | Reviewer | Email | Hub slug |
 | --- | --- | --- |
 | Natalia Ledford | `natalia.ledford@webflow.com` | `wf-template-review-natalia` |
-| Sudiksha Khanduja | `sudiksha.khanduja@webflow.com` | `wf-template-review-sudiksha` |
 | Eric Unger | `eric.unger@webflow.com` | `wf-template-review-eric` |
 | Vicki Chen | `vicki.chen@webflow.com` | `wf-template-review-vicki` |
 | Mariana Segura | `mariana.segura@webflow.com` | `wf-template-review-mariana` |
 | Micah Johnson | `micah@webflow.com` | `wf-template-review-micah` |
 
-If these are implemented as separate custom-domain Hubs, keep the same posture across all six. If they are implemented as one remote runtime with per-account state, persist discovery preferences separately per reviewer account.
+If these are implemented as separate custom-domain Hubs, keep the same posture across all active reviewer Hubs. If they are implemented as one remote runtime with per-account state, persist discovery preferences separately per reviewer account.
 
 ## 4. Phase A: current-live-safe posture
 
@@ -330,21 +329,20 @@ If you need tighter control later, move to `account_server` or `account_server_t
 Recommended order:
 
 1. Natalia Ledford
-2. Sudiksha Khanduja
-3. Eric Unger
-4. Vicki Chen
-5. Mariana Segura
-6. Micah Johnson
+2. Eric Unger
+3. Vicki Chen
+4. Mariana Segura
+5. Micah Johnson
 
 Reason:
 
 - start with one reviewer
 - validate traces and fallback
-- expand gradually instead of enabling all six write-capable at once
+- expand gradually instead of enabling every reviewer Hub write-capable at once
 
 ## 13. Recommended operator sequence
 
-1. Apply Phase A compact discovery posture to all six reviewer Hubs.
+1. Apply Phase A compact discovery posture to all active reviewer Hubs.
 2. Confirm the visible surface is the Phase A read/context tools plus the five narrow reviewer-owned write verbs.
 3. Confirm broad mutation tools and operator assignment routes are not visible in reviewer discovery.
 4. Confirm reviewer sessions are actor-resolved.
@@ -365,4 +363,4 @@ Revert a reviewer Hub to Phase A immediately if:
 - write behavior is ambiguous
 - fallback is too slow or unclear
 
-If more than one reviewer Hub hits the same issue, revert all six to Phase A and pause write rollout.
+If more than one reviewer Hub hits the same issue, revert all active reviewer Hubs to Phase A and pause write rollout.

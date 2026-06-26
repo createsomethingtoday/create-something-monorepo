@@ -12,7 +12,7 @@ Use this session to align the Marketplace team on what is being delivered in the
 
 The delivery is a reviewer-facing Hub lane that packages the current Webflow review surfaces into one operational workflow for template review.
 
-For alpha, that workflow is delivered through reviewer-specific Hub surfaces for the first six reviewers rather than one shared write-capable reviewer Hub.
+For alpha, that workflow is delivered through active reviewer-specific Hub surfaces rather than one shared write-capable reviewer Hub.
 
 Included in this delivery:
 

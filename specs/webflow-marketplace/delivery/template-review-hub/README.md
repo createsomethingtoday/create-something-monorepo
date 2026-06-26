@@ -50,19 +50,19 @@ Condensed operational map of the current objective review coverage as `auto`, `p
 Pilot and launch metrics for adoption, quality, governance, and reliability.
 
 12. `reviewer-hub-rollout-spec.md`
-Concrete rollout plan for six reviewer-specific Hubs, including mapping, tool exposure, write gates, and containment rules.
+Concrete rollout plan for active reviewer-specific Hubs, including mapping, tool exposure, write gates, and containment rules.
 
 13. `reviewer-hub-implementation-checklist.md`
 Operator checklist for Hub identity, discovery, trace validation, rate limits, quotas, and phased write enablement.
 
 14. `reviewer-hub-runtime-posture.md`
-Exact Hub server, discovery, and rollout posture for the six reviewer-specific Hub surfaces.
+Exact Hub server, discovery, and rollout posture for the active reviewer-specific Hub surfaces.
 
 15. `reviewer-hub-policy-records.yaml`
-Six separate reviewer-specific policy records for the authoritative Phase A rollout.
+Separate reviewer-specific policy records for the authoritative Phase A rollout.
 
 16. `reviewer-hub-phase-a-operator-runbook.md`
-Exact deploy, normalize, and verify path for the six Phase A reviewer Hub surfaces.
+Exact deploy, normalize, and verify path for the active Phase A reviewer Hub surfaces.
 
 17. `onboarding-skills.md`
 Skill-led onboarding sequence for reviewers and operators, including what is included now versus gated for later rollout phases.

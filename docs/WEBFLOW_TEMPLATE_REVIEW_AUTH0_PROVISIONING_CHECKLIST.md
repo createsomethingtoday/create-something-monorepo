@@ -2,12 +2,11 @@
 
 ## Goal
 
-Provision the six Webflow Marketplace template reviewers into `.agency`, create the corresponding Auth0 users, and verify first-login identity binding for the Phase A reviewer rollout.
+Provision the active Webflow Marketplace template reviewers into `.agency`, create the corresponding Auth0 users, and verify first-login identity binding for the Phase A reviewer rollout.
 
 ## Reviewers
 
 - `natalia.ledford@webflow.com` -> `acct_wf_natalia` -> `wf-template-review-natalia`
-- `sudiksha.khanduja@webflow.com` -> `acct_wf_sudiksha` -> `wf-template-review-sudiksha`
 - `eric.unger@webflow.com` -> `acct_wf_eric` -> `wf-template-review-eric`
 - `vicki.chen@webflow.com` -> `acct_wf_vicki` -> `wf-template-review-vicki`
 - `mariana.segura@webflow.com` -> `acct_wf_mariana` -> `wf-template-review-mariana`
@@ -25,7 +24,7 @@ Shared tenant:
 ## Workflow
 
 1. Seed identity rows into `.agency`.
-2. Create or invite the six Auth0 users.
+2. Create or invite the active Auth0 users.
 3. Have each reviewer complete first login through `.agency`.
 4. Confirm the login binds the seed row to the Auth0 `sub`.
 5. Confirm each reviewer lands in the expected reviewer-scoped Hub lane.

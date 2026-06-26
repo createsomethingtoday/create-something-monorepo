@@ -16,22 +16,6 @@
     }
   },
   {
-    "email": "sudiksha.khanduja@webflow.com",
-    "name": "Sudiksha Khanduja",
-    "given_name": "Sudiksha",
-    "family_name": "Khanduja",
-    "email_verified": false,
-    "verify_email": true,
-    "app_metadata": {
-      "workflow": "template_review_hub_lane",
-      "hub_slug": "wf-template-review-sudiksha",
-      "account_id": "acct_wf_sudiksha",
-      "tenant_id": "tenant_webflow_marketplace",
-      "workspace_account_id": "acct_wf_sudiksha",
-      "reviewer_role": "template_reviewer"
-    }
-  },
-  {
     "email": "eric.unger@webflow.com",
     "name": "Eric Unger",
     "given_name": "Eric",

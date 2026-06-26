@@ -7,7 +7,7 @@
 
 ## 1. Purpose
 
-This runbook is the operational implementation path for the six reviewer-specific Hub surfaces in Phase A.
+This runbook is the operational implementation path for the active reviewer-specific Hub surfaces in Phase A.
 
 Phase A outcome:
 
@@ -22,7 +22,6 @@ Phase A outcome:
 | Reviewer | Hub slug | Worker name | Domain |
 | --- | --- | --- | --- |
 | Natalia Ledford | `wf-template-review-natalia` | `cs-hub-wf-template-review-natalia` | `wf-template-review-natalia.mcp.createsomething.agency` |
-| Sudiksha Khanduja | `wf-template-review-sudiksha` | `cs-hub-wf-template-review-sudiksha` | `wf-template-review-sudiksha.mcp.createsomething.agency` |
 | Eric Unger | `wf-template-review-eric` | `cs-hub-wf-template-review-eric` | `wf-template-review-eric.mcp.createsomething.agency` |
 | Vicki Chen | `wf-template-review-vicki` | `cs-hub-wf-template-review-vicki` | `wf-template-review-vicki.mcp.createsomething.agency` |
 | Mariana Segura | `wf-template-review-mariana` | `cs-hub-wf-template-review-mariana` | `wf-template-review-mariana.mcp.createsomething.agency` |
@@ -89,7 +88,7 @@ cd "/Users/micahjohnson/Documents/Github/Create Something/create-something-monor
 pnpm exec wrangler secret put REVIEWER_DIRECTORY_JSON
 ```
 
-## 5. Deploy all six reviewer Hubs
+## 5. Deploy all active reviewer Hubs
 
 ```bash
 cd "/Users/micahjohnson/Documents/Github/Create Something/create-something-monorepo"

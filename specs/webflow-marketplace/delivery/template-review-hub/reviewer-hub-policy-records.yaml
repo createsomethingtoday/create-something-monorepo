@@ -4,7 +4,7 @@ status: "working_draft"
 date: "2026-03-10"
 
 policy_intent:
-  summary: "Reviewer-specific Hub policy records for the six-reviewer Phase A rollout."
+  summary: "Reviewer-specific Hub policy records for the active reviewer Phase A rollout."
   authoritative_scope: "Phase A only"
   rollout_mode: "narrow_reviewer_workflow_write_lane"
   notes:
@@ -76,14 +76,6 @@ reviewers:
     approval_owner: "Natalia Ledford"
     access_mode: "narrow_reviewer_workflow_writes"
     policy_record_id: "wf_template_review_natalia_phase_a"
-
-  - reviewer_name: "Sudiksha Khanduja"
-    reviewer_email: "sudiksha.khanduja@webflow.com"
-    hub_slug: "wf-template-review-sudiksha"
-    account_model: "per_user"
-    approval_owner: "Sudiksha Khanduja"
-    access_mode: "narrow_reviewer_workflow_writes"
-    policy_record_id: "wf_template_review_sudiksha_phase_a"
 
   - reviewer_name: "Eric Unger"
     reviewer_email: "eric.unger@webflow.com"

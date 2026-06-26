@@ -148,14 +148,6 @@ const LANE_CONFIGS: Record<string, LaneConfig> = {
 		defaultToolkitProfile: LEGACY_WEBFLOW_REVIEWER_TOOLKITS,
 		defaultAllowedToolPrefixes: WEBFLOW_TEMPLATE_REVIEW_PHASE_A_ALLOWED_TOOL_PREFIXES,
 	},
-	wf_sudiksha: {
-		displayName: 'Sudiksha Khanduja',
-		hubSubdomain: 'wf-template-review-sudiksha',
-		bridgeSubdomain: 'wf-template-review-sudiksha',
-		bridgeUsername: 'acct_wf_sudiksha',
-		defaultToolkitProfile: LEGACY_WEBFLOW_REVIEWER_TOOLKITS,
-		defaultAllowedToolPrefixes: WEBFLOW_TEMPLATE_REVIEW_PHASE_A_ALLOWED_TOOL_PREFIXES,
-	},
 	wf_eric: {
 		displayName: 'Eric Unger',
 		hubSubdomain: 'wf-template-review-eric',

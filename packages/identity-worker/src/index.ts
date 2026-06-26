@@ -773,7 +773,6 @@ const POLICY_USER_BEARER_TOKEN_GOVERNANCE_ID = 'policy.user-bearer-token-governa
 const WEBFLOW_TEMPLATE_REVIEW_REVIEWER_ACCOUNT_IDS = new Set([
 	'acct_wf_template_review',
 	'acct_wf_natalia',
-	'acct_wf_sudiksha',
 	'acct_wf_eric',
 	'acct_wf_vicki',
 	'acct_wf_mariana',

@@ -7,7 +7,7 @@
 
 ## 1. Purpose
 
-This checklist turns the reviewer rollout policy into concrete Hub implementation work for the first six reviewer-specific Hubs.
+This checklist turns the reviewer rollout policy into concrete Hub implementation work for the active reviewer-specific Hubs.
 
 Use it after the rollout spec and before enabling reviewer writes.
 
@@ -22,12 +22,11 @@ As of `2026-03-10`, the live Hub surface shows:
 
 That means the Hub already has the needed downstream server connected, but its default posture is still broader and looser than the reviewer rollout requires.
 
-## 3. Build the six reviewer-specific Hubs
+## 3. Build the reviewer-specific Hubs
 
 Create one reviewer-scoped Hub surface per reviewer:
 
 - `wf-template-review-natalia`
-- `wf-template-review-sudiksha`
 - `wf-template-review-eric`
 - `wf-template-review-vicki`
 - `wf-template-review-mariana`
@@ -252,19 +251,19 @@ Revert a reviewer Hub to read-only immediately if:
 - policy-denied actions are executing anyway
 - quota or rate-limit behavior is not functioning as configured
 
-If this affects more than one reviewer Hub, revert all six to read-only and triage centrally.
+If this affects more than one reviewer Hub, revert all active reviewer Hubs to read-only and triage centrally.
 
 ## 15. Suggested operator workflow
 
-1. Create the six reviewer-specific Hub surfaces.
-2. Put all six in read-only preflight mode.
+1. Create the active reviewer-specific Hub surfaces.
+2. Put all active reviewer Hubs in read-only preflight mode.
 3. Narrow discovery to review-only servers.
 4. Verify hidden broad mutation and operator-assignment surfaces.
 5. Turn on rate limits and quotas.
 6. Run discovery and execution authz checks with a reviewer session.
 7. Confirm trace visibility in `cs-telemetry`.
 8. Confirm field mappings, including `fldHxIGHMHn4xb9U4` for reviewer feedback and `flde8Huk5NRIdm2wZ` for `📝Review Status`.
-9. Normalize all six to the Phase A narrow reviewer-owned write lane.
+9. Normalize all active reviewer Hubs to the Phase A narrow reviewer-owned write lane.
 10. Smoke `assign_self` and `unassign_self` for one reviewer Hub first.
 11. Smoke `request_changes`, `set_review_status`, and `save_draft_feedback` on noncritical records.
 12. Expand official decision writes action-by-action and reviewer-by-reviewer only after clean results.
