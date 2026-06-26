@@ -1342,13 +1342,16 @@
 
   .ona-system-report-band {
     display: grid;
-    grid-template-columns: 0.78fr 1.22fr;
-    gap: 28px;
-    padding: 52px 0 34px;
+    grid-template-columns: minmax(280px, 0.62fr) minmax(0, 1.38fr);
+    gap: 48px 56px;
+    align-items: start;
+    border-top: 1px solid var(--ona-system-line);
+    padding: 68px 0 48px;
   }
 
   .ona-system-report-intro p {
     margin-top: 16px;
+    max-width: 560px;
     color: #44484f;
     font-size: 1.04rem;
     line-height: 1.6;
@@ -1356,25 +1359,80 @@
 
   .ona-system-report-grid {
     display: grid;
-    gap: 12px;
+    gap: 0;
   }
 
   .ona-system-report {
     display: grid;
-    gap: 10px;
-    padding: 18px;
+    gap: 12px;
+    border-top: 1px solid var(--ona-system-line);
+    padding: 22px 0;
     contain: layout paint;
   }
 
+  .ona-system-report:first-child {
+    padding-top: 0;
+    border-top: 0;
+  }
+
+  .ona-system-report:last-child {
+    padding-bottom: 0;
+  }
+
   .ona-system-report h3 {
-    max-width: 48ch;
-    font-size: 1.28rem;
-    line-height: 1.18;
+    max-width: 58ch;
+    font-size: clamp(1.28rem, 1.9vw, 1.7rem);
+    line-height: 1.13;
+    text-wrap: balance;
   }
 
   .ona-system-report p {
     color: var(--ona-system-muted);
     line-height: 1.55;
+  }
+
+  .ona-system-receipt-ledger {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    border-block: 1px solid var(--ona-system-line);
+    margin-top: 8px;
+  }
+
+  .ona-system-receipt {
+    min-height: 132px;
+    display: grid;
+    grid-template-rows: 1fr auto;
+    gap: 18px;
+    border-right: 1px solid var(--ona-system-line);
+    padding: 18px 18px 20px;
+    background: color-mix(in srgb, var(--ona-system-surface) 58%, transparent);
+  }
+
+  .ona-system-receipt:last-child {
+    border-right: 0;
+  }
+
+  .ona-system-receipt span {
+    color: var(--ona-system-muted);
+    font-size: 0.76rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0;
+  }
+
+  .ona-system-receipt p {
+    margin-top: 10px;
+    color: var(--ona-system-muted);
+    font-size: 0.95rem;
+    line-height: 1.45;
+  }
+
+  .ona-system-receipt strong {
+    color: var(--ona-system-ink);
+    font-size: clamp(1.35rem, 2.6vw, 2.25rem);
+    line-height: 0.95;
+    letter-spacing: 0;
   }
 
   .ona-system-strip {
@@ -1425,6 +1483,18 @@
       min-height: 470px;
     }
 
+    .ona-system-receipt-ledger {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .ona-system-receipt:nth-child(2n) {
+      border-right: 0;
+    }
+
+    .ona-system-receipt:nth-child(n + 3) {
+      border-top: 1px solid var(--ona-system-line);
+    }
+
     .ona-system-strip {
       flex-wrap: wrap;
       justify-content: flex-start;
@@ -1469,6 +1539,25 @@
 
     .ona-system-node strong {
       font-size: 0.82rem;
+    }
+
+    .ona-system-report-band {
+      gap: 28px;
+      padding: 48px 0 34px;
+    }
+
+    .ona-system-receipt-ledger {
+      grid-template-columns: 1fr;
+    }
+
+    .ona-system-receipt,
+    .ona-system-receipt:nth-child(2n) {
+      min-height: 0;
+      border-right: 0;
+    }
+
+    .ona-system-receipt + .ona-system-receipt {
+      border-top: 1px solid var(--ona-system-line);
     }
   }
 

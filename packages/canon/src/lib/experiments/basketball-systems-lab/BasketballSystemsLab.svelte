@@ -170,21 +170,23 @@
 			</p>
 		</div>
 
-		<div class="ona-system-report-grid">
+		<div class="ona-system-report-grid ona-system-report-grid--briefs">
 			{#each scenario.reports as report}
-				<article class="ona-system-report ona-system-panel">
+				<article class="ona-system-report">
 					<span>{report.label}</span>
 					<h3>{report.title}</h3>
 					<p>{report.detail}</p>
 				</article>
 			{/each}
 		</div>
-		<div class="ona-system-report-grid" aria-label="Simulation receipts">
+		<div class="ona-system-receipt-ledger" aria-label="Simulation receipts">
 			{#each scenario.ledger as entry}
-				<article class="ona-system-report ona-system-panel">
-					<span>{entry.label}</span>
-					<h3>{entry.value}</h3>
-					<p>{entry.detail}</p>
+				<article class="ona-system-receipt">
+					<div>
+						<span>{entry.label}</span>
+						<p>{entry.detail}</p>
+					</div>
+					<strong>{entry.value}</strong>
 				</article>
 			{/each}
 		</div>
