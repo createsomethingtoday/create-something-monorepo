@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
 	getDefaultLeagueState,
+	getSampleSystemUpload,
 	listManagementPolicies,
 	listSeasonPhases,
 	listSystems,
+	parseSystemUpload,
 	runManagementScenario,
 	runSystemMatch
 } from './simulation.js';
@@ -197,5 +199,95 @@ describe('basketball systems management simulation', () => {
 		const second = runSystemMatch({ systemKey: 'recovery', years: 8, steeringPolicyKey: 'media' });
 
 		expect(first.validation).toEqual(second.validation);
+	});
+
+	it('accepts a structured uploaded System and runs it through the algorithm', () => {
+		const upload = parseSystemUpload(JSON.stringify(getSampleSystemUpload()));
+		const custom = upload.systems[0];
+		const match = runSystemMatch({
+			mode: 'versus',
+			systemKey: custom?.key,
+			opponentKey: 'recovery',
+			years: 5,
+			customSystems: upload.systems
+		});
+
+		expect(upload.issues).toEqual([]);
+		expect(custom).toMatchObject({
+			key: expect.stringMatching(/^custom-/),
+			name: 'Small Market Balance System',
+			policyKey: 'media'
+		});
+		expect(listSystems(upload.systems).map((system) => system.key)).toContain(custom?.key);
+		expect(match.systems.map((result) => result.system.key)).toContain(custom?.key);
+		expect(match.systems).toHaveLength(2);
+		expect(match.winner.timeline).toHaveLength(5);
+	});
+
+	it('accepts multiple uploaded Systems for custom versus custom matches', () => {
+		const first = getSampleSystemUpload();
+		const second = {
+			...first,
+			name: 'Labor Stability System',
+			policyKey: 'labor',
+			weights: {
+				leagueHealth: 0.18,
+				mediaValueB: 0.1,
+				competitiveBalance: 0.14,
+				laborTrust: 0.3,
+				ownerMargin: 0.1,
+				resilience: 0.18
+			}
+		};
+		const upload = parseSystemUpload(JSON.stringify({ systems: [first, second] }));
+		const match = runSystemMatch({
+			mode: 'versus',
+			systemKey: upload.systems[0]?.key,
+			opponentKey: upload.systems[1]?.key,
+			years: 3,
+			customSystems: upload.systems
+		});
+
+		expect(upload.issues).toEqual([]);
+		expect(upload.systems).toHaveLength(2);
+		expect(match.systems.map((result) => result.system.key).sort()).toEqual(
+			upload.systems.map((system) => system.key).sort()
+		);
+		expect(match.validation.requirements.find((requirement) => requirement.key === 'system-balance'))
+			.toMatchObject({
+				status: expect.not.stringMatching('deferred')
+			});
+	});
+
+	it('rejects uploaded Systems that try to avoid tradeoff policy', () => {
+		const upload = parseSystemUpload(
+			JSON.stringify({
+				name: 'All Upside System',
+				thesis: 'Only optimize one metric and ignore operating constraints.',
+				policyKey: 'media',
+				weights: {
+					leagueHealth: 0,
+					mediaValueB: 0.9,
+					competitiveBalance: 0,
+					laborTrust: 0,
+					ownerMargin: 0,
+					resilience: 0.1
+				}
+			})
+		);
+
+		expect(upload.systems).toHaveLength(0);
+		expect(upload.issues).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({
+					path: 'systems[0].weights.mediaValueB',
+					message: 'Weight must be between 0 and 0.45.'
+				}),
+				expect.objectContaining({
+					path: 'systems[0].weights.ownerMargin',
+					message: 'Owner margin weight must be at least 0.04.'
+				})
+			])
+		);
 	});
 });

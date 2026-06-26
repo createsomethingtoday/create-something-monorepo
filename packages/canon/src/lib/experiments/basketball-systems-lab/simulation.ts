@@ -1,5 +1,6 @@
 export type PolicyKey = 'schedule' | 'media' | 'labor';
 export type SystemKey = 'recovery' | 'attention' | 'trust';
+export type SystemId = string;
 export type LabMode = 'single' | 'versus';
 export type SeasonPhaseKey = 'opening' | 'midseason' | 'deadline';
 
@@ -82,7 +83,7 @@ export type SystemScoreWeights = {
 };
 
 export type System = {
-	key: SystemKey;
+	key: SystemId;
 	name: string;
 	thesis: string;
 	stance: string;
@@ -90,6 +91,27 @@ export type System = {
 	adaptation: string;
 	policyKey: PolicyKey;
 	weights: SystemScoreWeights;
+};
+
+export type SystemUploadDefinition = {
+	key?: string;
+	name: string;
+	thesis: string;
+	stance?: string;
+	constraint?: string;
+	adaptation?: string;
+	policyKey: PolicyKey;
+	weights: SystemScoreWeights;
+};
+
+export type SystemUploadIssue = {
+	path: string;
+	message: string;
+};
+
+export type SystemUploadResult = {
+	systems: System[];
+	issues: SystemUploadIssue[];
 };
 
 export type SeasonPhase = {
@@ -165,13 +187,14 @@ export type SystemTimelineEntry = {
 
 export type SystemMatchInput = {
 	mode?: LabMode;
-	systemKey?: SystemKey;
-	opponentKey?: SystemKey;
+	systemKey?: SystemId;
+	opponentKey?: SystemId;
 	years?: number;
 	steeringYear?: number;
 	steeringPhase?: SeasonPhaseKey;
 	steeringPolicyKey?: PolicyKey;
 	environment?: Environment;
+	customSystems?: System[];
 };
 
 export type SystemMatch = {
@@ -352,6 +375,32 @@ const systems: System[] = [
 	}
 ];
 
+const systemWeightKeys = [
+	'leagueHealth',
+	'mediaValueB',
+	'competitiveBalance',
+	'laborTrust',
+	'ownerMargin',
+	'resilience'
+] as const satisfies (keyof SystemScoreWeights)[];
+
+const sampleSystemUpload: SystemUploadDefinition = {
+	name: 'Small Market Balance System',
+	thesis: 'Protect competitive balance and small-market visibility before chasing short-term media certainty.',
+	stance: 'Uploaded System',
+	constraint: 'Owner margin must stay visible while attention shifts away from incumbent markets.',
+	adaptation: 'Moves showcase inventory into rising markets but keeps enough resilience in the score.',
+	policyKey: 'media',
+	weights: {
+		leagueHealth: 0.14,
+		mediaValueB: 0.18,
+		competitiveBalance: 0.28,
+		laborTrust: 0.12,
+		ownerMargin: 0.1,
+		resilience: 0.18
+	}
+};
+
 const nodePositions: Record<string, Pick<MapNode, 'x' | 'y' | 'mx' | 'my'>> = {
 	policy: { x: 9, y: 18, mx: 4, my: 12 },
 	fatigue: { x: 35, y: 13, mx: 36, my: 12 },
@@ -369,8 +418,47 @@ export function listManagementPolicies(): ManagementPolicy[] {
 	return managementPolicies.map((policy) => ({ ...policy, effects: { ...policy.effects } }));
 }
 
-export function listSystems(): System[] {
-	return systems.map(cloneSystem);
+export function listSystems(customSystems: System[] = []): System[] {
+	return buildSystemPool(customSystems);
+}
+
+export function getSampleSystemUpload(): SystemUploadDefinition {
+	return cloneUploadDefinition(sampleSystemUpload);
+}
+
+export function parseSystemUpload(input: string): SystemUploadResult {
+	const issues: SystemUploadIssue[] = [];
+	let parsed: unknown;
+
+	try {
+		parsed = JSON.parse(input);
+	} catch {
+		return {
+			systems: [],
+			issues: [{ path: 'json', message: 'Upload must be valid JSON.' }]
+		};
+	}
+
+	const definitions = extractUploadDefinitions(parsed, issues);
+	const usedKeys = new Set(systems.map((system) => system.key));
+	const accepted: System[] = [];
+
+	for (const [index, definition] of definitions.entries()) {
+		const system = normalizeUploadedSystem(definition, index, usedKeys, issues);
+		if (system) {
+			usedKeys.add(system.key);
+			accepted.push(system);
+		}
+	}
+
+	if (accepted.length > 6) {
+		issues.push({ path: 'systems', message: 'Only the first 6 uploaded Systems can enter a run.' });
+	}
+
+	return {
+		systems: accepted.slice(0, 6),
+		issues
+	};
 }
 
 export function listSeasonPhases(): SeasonPhase[] {
@@ -388,8 +476,9 @@ export function runSystemMatch(input: SystemMatchInput = {}): SystemMatch {
 	const steeringPhase = findSeasonPhase(input.steeringPhase ?? 'midseason');
 	const steeringPolicy = input.steeringPolicyKey ? findPolicy(input.steeringPolicyKey) : null;
 	const environment = cloneEnvironment(input.environment ?? defaultEnvironment);
-	const primary = findSystem(input.systemKey ?? 'recovery');
-	const opponent = findOpponent(primary.key, input.opponentKey);
+	const systemPool = buildSystemPool(input.customSystems);
+	const primary = findSystem(input.systemKey ?? 'recovery', systemPool);
+	const opponent = findOpponent(systemPool, primary.key, input.opponentKey);
 	const entrants = mode === 'versus' ? [primary, opponent] : [primary];
 	const environmentBaseline = applyEnvironmentEffects(baselineLeagueState, environment);
 	const unsteeredPrimary = buildSystemResult(primary, environmentBaseline, environment, {
@@ -469,7 +558,7 @@ function buildSystemResult(
 		steeringYear: number;
 		steeringPhase: SeasonPhase;
 		steeringPolicy: ManagementPolicy | null;
-		targetSystemKey: SystemKey;
+		targetSystemKey: SystemId;
 	}
 ): SystemResult {
 	let seasonBaseline = { ...baseline };
@@ -910,8 +999,21 @@ function applyEnvironmentEffects(baseline: LeagueState, environment: Environment
 	return state;
 }
 
-function findSystem(key: SystemKey): System {
-	return systems.find((system) => system.key === key) ?? systems[0];
+function buildSystemPool(customSystems: System[] | undefined): System[] {
+	const pool = systems.map(cloneSystem);
+	const usedKeys = new Set(pool.map((system) => system.key));
+
+	for (const system of customSystems ?? []) {
+		if (usedKeys.has(system.key)) continue;
+		usedKeys.add(system.key);
+		pool.push(cloneSystem(system));
+	}
+
+	return pool;
+}
+
+function findSystem(key: SystemId, systemPool = systems): System {
+	return systemPool.find((system) => system.key === key) ?? systemPool[0] ?? systems[0];
 }
 
 function findPolicy(key: PolicyKey): ManagementPolicy {
@@ -922,10 +1024,10 @@ function findSeasonPhase(key: SeasonPhaseKey): SeasonPhase {
 	return seasonPhases.find((phase) => phase.key === key) ?? seasonPhases[1];
 }
 
-function findOpponent(primaryKey: SystemKey, opponentKey?: SystemKey): System {
-	const requested = opponentKey ? findSystem(opponentKey) : undefined;
+function findOpponent(systemPool: System[], primaryKey: SystemId, opponentKey?: SystemId): System {
+	const requested = opponentKey ? findSystem(opponentKey, systemPool) : undefined;
 	if (requested && requested.key !== primaryKey) return requested;
-	return systems.find((system) => system.key !== primaryKey) ?? systems[1];
+	return systemPool.find((system) => system.key !== primaryKey) ?? systemPool[1] ?? systems[1];
 }
 
 function clampHorizon(years: number | undefined): number {
@@ -940,6 +1042,196 @@ function clampSteeringYear(year: number | undefined, years: number): number {
 
 function cloneSystem(system: System): System {
 	return { ...system, weights: { ...system.weights } };
+}
+
+function cloneUploadDefinition(definition: SystemUploadDefinition): SystemUploadDefinition {
+	return { ...definition, weights: { ...definition.weights } };
+}
+
+function extractUploadDefinitions(
+	parsed: unknown,
+	issues: SystemUploadIssue[]
+): unknown[] {
+	if (Array.isArray(parsed)) return parsed;
+
+	if (isRecord(parsed)) {
+		if (Array.isArray(parsed.systems)) return parsed.systems;
+		return [parsed];
+	}
+
+	issues.push({ path: 'json', message: 'Upload must be a System object or a systems array.' });
+	return [];
+}
+
+function normalizeUploadedSystem(
+	definition: unknown,
+	index: number,
+	usedKeys: Set<string>,
+	issues: SystemUploadIssue[]
+): System | null {
+	const path = `systems[${index}]`;
+
+	if (!isRecord(definition)) {
+		issues.push({ path, message: 'System definition must be an object.' });
+		return null;
+	}
+
+	const name = readBoundedString(definition.name, `${path}.name`, issues, {
+		min: 3,
+		max: 44,
+		label: 'System name'
+	});
+	const thesis = readBoundedString(definition.thesis, `${path}.thesis`, issues, {
+		min: 12,
+		max: 180,
+		label: 'Thesis'
+	});
+	const policyKey = readPolicyKey(definition.policyKey, `${path}.policyKey`, issues);
+	const weights = readSystemWeights(definition.weights, `${path}.weights`, issues);
+
+	if (!name || !thesis || !policyKey || !weights) return null;
+
+	return {
+		key: uniqueCustomKey(definition.key, name, usedKeys),
+		name,
+		thesis,
+		stance: readOptionalString(definition.stance, 'Uploaded System', 48),
+		constraint: readOptionalString(
+			definition.constraint,
+			'Custom System must survive the same owner, labor, and market pressure as the built-ins.',
+			180
+		),
+		adaptation: readOptionalString(
+			definition.adaptation,
+			'Runs its declared policy bias and lets the validation gates expose the tradeoffs.',
+			180
+		),
+		policyKey,
+		weights
+	};
+}
+
+function readSystemWeights(
+	value: unknown,
+	path: string,
+	issues: SystemUploadIssue[]
+): SystemScoreWeights | null {
+	if (!isRecord(value)) {
+		issues.push({ path, message: 'Weights must be an object with all scoring keys.' });
+		return null;
+	}
+
+	const weights: Partial<SystemScoreWeights> = {};
+
+	for (const key of systemWeightKeys) {
+		const weight = value[key];
+		if (typeof weight !== 'number' || !Number.isFinite(weight)) {
+			issues.push({ path: `${path}.${key}`, message: 'Weight must be a finite number.' });
+			continue;
+		}
+
+		if (weight < 0 || weight > 0.45) {
+			issues.push({ path: `${path}.${key}`, message: 'Weight must be between 0 and 0.45.' });
+			continue;
+		}
+
+		weights[key] = roundTo(weight, 3);
+	}
+
+	let policyIssue = false;
+
+	if (typeof weights.ownerMargin === 'number' && weights.ownerMargin < 0.04) {
+		issues.push({ path: `${path}.ownerMargin`, message: 'Owner margin weight must be at least 0.04.' });
+		policyIssue = true;
+	}
+
+	if (typeof weights.resilience === 'number' && weights.resilience < 0.08) {
+		issues.push({ path: `${path}.resilience`, message: 'Resilience weight must be at least 0.08.' });
+		policyIssue = true;
+	}
+
+	if (systemWeightKeys.some((key) => typeof weights[key] !== 'number')) return null;
+
+	const normalized = weights as SystemScoreWeights;
+	const sum = roundTo(
+		systemWeightKeys.reduce((total, key) => total + normalized[key], 0),
+		3
+	);
+
+	if (Math.abs(sum - 1) > 0.01) {
+		issues.push({ path, message: `Weights must sum to 1. Current sum is ${sum.toFixed(3)}.` });
+		return null;
+	}
+
+	if (policyIssue) {
+		return null;
+	}
+
+	return normalized;
+}
+
+function readBoundedString(
+	value: unknown,
+	path: string,
+	issues: SystemUploadIssue[],
+	options: { min: number; max: number; label: string }
+): string | null {
+	if (typeof value !== 'string') {
+		issues.push({ path, message: `${options.label} is required.` });
+		return null;
+	}
+
+	const trimmed = value.trim();
+	if (trimmed.length < options.min || trimmed.length > options.max) {
+		issues.push({
+			path,
+			message: `${options.label} must be ${options.min}-${options.max} characters.`
+		});
+		return null;
+	}
+
+	return trimmed;
+}
+
+function readOptionalString(value: unknown, fallback: string, max: number): string {
+	if (typeof value !== 'string') return fallback;
+	const trimmed = value.trim();
+	return trimmed.length > 0 ? trimmed.slice(0, max) : fallback;
+}
+
+function readPolicyKey(
+	value: unknown,
+	path: string,
+	issues: SystemUploadIssue[]
+): PolicyKey | null {
+	if (value === 'schedule' || value === 'media' || value === 'labor') return value;
+	issues.push({ path, message: 'Policy key must be schedule, media, or labor.' });
+	return null;
+}
+
+function uniqueCustomKey(value: unknown, name: string, usedKeys: Set<string>): string {
+	const base = slugify(typeof value === 'string' && value.trim() ? value : name);
+	let candidate = `custom-${base || 'system'}`;
+	let index = 2;
+
+	while (usedKeys.has(candidate)) {
+		candidate = `custom-${base || 'system'}-${index}`;
+		index += 1;
+	}
+
+	return candidate;
+}
+
+function slugify(value: string): string {
+	return value
+		.toLowerCase()
+		.replace(/[^a-z0-9]+/g, '-')
+		.replace(/^-+|-+$/g, '')
+		.slice(0, 36);
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+	return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 function cloneEnvironment(environment: Environment): Environment {

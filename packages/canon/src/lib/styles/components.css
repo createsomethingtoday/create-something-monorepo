@@ -1326,6 +1326,94 @@
     color: var(--ona-system-green);
   }
 
+  .ona-system-upload {
+    display: grid;
+    gap: 10px;
+    border-top: 1px solid var(--ona-system-line);
+    margin-top: 20px;
+    padding-top: 18px;
+  }
+
+  .ona-system-upload textarea {
+    width: 100%;
+    min-height: 184px;
+    resize: vertical;
+    border: 1px solid var(--ona-system-line);
+    border-radius: var(--radius-clear-sm);
+    padding: 12px;
+    background: white;
+    color: var(--ona-system-ink);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.72rem;
+    line-height: 1.45;
+  }
+
+  .ona-system-upload-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .ona-system-upload-actions input {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .ona-system-upload-actions label,
+  .ona-system-upload-actions button {
+    min-height: 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--ona-system-line);
+    border-radius: var(--radius-clear-sm);
+    background: white;
+    color: var(--ona-system-muted);
+    font: inherit;
+    font-size: 0.72rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .ona-system-upload-actions button:nth-child(2) {
+    border-color: var(--ona-system-ink);
+    background: var(--ona-system-ink);
+    color: white;
+  }
+
+  .ona-system-upload-status {
+    display: grid;
+    gap: 8px;
+    border: 1px solid var(--ona-system-line);
+    border-left: 3px solid var(--ona-system-line-strong);
+    border-radius: var(--radius-clear-sm);
+    padding: 10px 12px;
+    background: color-mix(in srgb, white 82%, var(--ona-system-surface));
+  }
+
+  .ona-system-upload-status[data-state='accepted'] {
+    border-left-color: var(--ona-system-green);
+  }
+
+  .ona-system-upload-status strong {
+    font-size: 0.82rem;
+    line-height: 1.2;
+  }
+
+  .ona-system-upload-status ul {
+    display: grid;
+    gap: 5px;
+    margin: 0;
+    padding-left: 16px;
+    color: var(--ona-system-muted);
+    font-size: 0.72rem;
+    line-height: 1.35;
+  }
+
   .ona-system-map {
     min-width: 0;
     padding: 18px;
