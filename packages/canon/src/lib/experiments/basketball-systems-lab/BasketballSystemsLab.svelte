@@ -17,6 +17,7 @@
 		listSeasonPhases,
 		listSystems,
 		runSystemMatch,
+		type GameRequirementSeverity,
 		type LabMode,
 		type PolicyKey,
 		type SeasonPhaseKey,
@@ -68,6 +69,39 @@
 	const scenario = $derived(match.winner.scenario);
 	const activePolicy = $derived(scenario.policy);
 	const activeTimeline = $derived(match.winner.timeline);
+	const validationCounts = $derived(
+		match.validation.requirements.reduce(
+			(counts, requirement) => ({
+				...counts,
+				[requirement.status]: counts[requirement.status] + 1
+			}),
+			{ pass: 0, watch: 0, fail: 0, deferred: 0 } satisfies Record<
+				GameRequirementSeverity,
+				number
+			>
+		)
+	);
+	const surfacedRequirements = $derived([
+		...match.validation.requirements.filter((requirement) => requirement.status !== 'pass'),
+		...match.validation.requirements.filter((requirement) => requirement.status === 'pass')
+	]);
+	const validationCountLabel = $derived(
+		[
+			validationCounts.fail ? `${validationCounts.fail} break` : '',
+			validationCounts.watch ? `${validationCounts.watch} watch` : '',
+			validationCounts.deferred ? `${validationCounts.deferred} deferred` : '',
+			validationCounts.pass ? `${validationCounts.pass} passed` : ''
+		]
+			.filter(Boolean)
+			.join(' / ')
+	);
+
+	function formatRequirementStatus(status: GameRequirementSeverity): string {
+		if (status === 'fail') return 'Break';
+		if (status === 'watch') return 'Watch';
+		if (status === 'deferred') return 'Deferred';
+		return 'Pass';
+	}
 </script>
 
 <section class="ona-system-shell" aria-labelledby="ona-system-title">
@@ -312,15 +346,19 @@
 							<span>Requirement gate</span>
 						</div>
 						<strong>{match.validation.label}</strong>
+						<small>{validationCountLabel}</small>
 					</div>
 					<p>{match.validation.summary}</p>
 				</div>
 
 				<div class="ona-system-validation-list">
-					{#each match.validation.requirements as requirement}
+					{#each surfacedRequirements as requirement}
 						<article data-status={requirement.status}>
 							<div>
-								<span>{requirement.label}</span>
+								<div class="ona-system-validation-card-header">
+									<span>{requirement.label}</span>
+									<small>{formatRequirementStatus(requirement.status)}</small>
+								</div>
 								<strong>{requirement.summary}</strong>
 							</div>
 							<p>{requirement.detail}</p>

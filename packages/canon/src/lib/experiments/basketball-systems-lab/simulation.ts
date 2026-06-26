@@ -125,7 +125,7 @@ export type SystemProjection = {
 	detail: string;
 };
 
-export type GameRequirementSeverity = 'pass' | 'watch' | 'fail';
+export type GameRequirementSeverity = 'pass' | 'watch' | 'fail' | 'deferred';
 
 export type GameRequirementKey =
 	| 'state-bounds'
@@ -642,15 +642,15 @@ function buildValidationSummary(
 		status,
 		label:
 			status === 'fail'
-				? 'Validation failed'
+				? 'Validation break'
 				: status === 'watch'
-					? 'Watch required'
-					: 'Validated prototype',
+					? 'Prototype watch'
+					: 'Validated run',
 		summary:
 			status === 'fail'
 				? 'At least one baked-in realism gate broke under this run.'
 				: status === 'watch'
-					? 'The model is playable, but one or more assumptions should be treated as directional.'
+					? 'The run is playable, with assumptions that should be inspected before treating the projection as exact.'
 					: 'Core bounds, tradeoffs, and balance checks passed for this run.',
 		requirements
 	};
@@ -784,7 +784,7 @@ function validateProjectionHonesty(results: SystemResult[]): GameRequirement {
 		summary: saturated.length > 0 ? 'Capped projection' : 'Uncapped projection',
 		detail:
 			saturated.length > 0
-				? `The run hit the ${saturated.join(', ')} cap, so later-year projections are directional rather than exact.`
+				? `The run hit the ${formatList(saturated)} cap, so later-year projections are directional rather than exact.`
 				: 'No major state metric hit a model cap during the selected horizon.'
 	};
 }
@@ -798,9 +798,9 @@ function validateSystemBalance(
 		return {
 			key: 'system-balance',
 			label: 'System balance',
-			status: 'pass',
-			summary: 'Single System run',
-			detail: 'Balance is deferred until a versus run puts at least two Systems under the same horizon.'
+			status: 'deferred',
+			summary: 'Versus not run',
+			detail: 'Switch to versus mode to evaluate balance between two Systems under the same horizon.'
 		};
 	}
 
@@ -1163,6 +1163,12 @@ function severityRank(status: GameRequirementSeverity): number {
 	if (status === 'fail') return 2;
 	if (status === 'watch') return 1;
 	return 0;
+}
+
+function formatList(items: string[]): string {
+	if (items.length <= 1) return items[0] ?? '';
+	if (items.length === 2) return `${items[0]} and ${items[1]}`;
+	return `${items.slice(0, -1).join(', ')}, and ${items.at(-1)}`;
 }
 
 function toneForDelta(delta: number, positiveTone: Tone): Tone {
