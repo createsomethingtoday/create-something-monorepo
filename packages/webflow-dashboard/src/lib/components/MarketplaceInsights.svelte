@@ -220,6 +220,29 @@
     }
   }
 
+  function handleSearchInput(event: Event) {
+    searchQuery = (event.currentTarget as HTMLInputElement).value;
+  }
+
+  function handleCategoryFilterChange(event: Event) {
+    categoryFilter = (event.currentTarget as HTMLSelectElement).value;
+  }
+
+  function handleCompetitionFilterChange(event: Event) {
+    const value = (event.currentTarget as HTMLSelectElement).value;
+    competitionFilter = isCompetitionFilter(value) ? value : 'all';
+  }
+
+  function handleUserCategoryFilterChange(event: Event) {
+    const value = (event.currentTarget as HTMLSelectElement).value;
+    userCategoryFilter = value === 'user' ? 'user' : 'all';
+  }
+
+  function handleGridSortChange(event: Event) {
+    const value = (event.currentTarget as HTMLSelectElement).value;
+    if (isCategorySortKey(value)) sortKey = value;
+  }
+
   function isCategorySortKey(value: unknown): value is CategorySortKey {
     return typeof value === 'string' && validSortKeys.includes(value as CategorySortKey);
   }
@@ -415,13 +438,15 @@
           <input
             class="control-input"
             type="search"
-            bind:value={searchQuery}
+            value={searchQuery}
+            oninput={handleSearchInput}
             placeholder="Search category or subcategory"
             aria-label="Search category or subcategory"
           />
           <select
             class="control-select"
-            bind:value={categoryFilter}
+            value={categoryFilter}
+            onchange={handleCategoryFilterChange}
             aria-label="Filter by category"
           >
             <option value="all">All Categories</option>
@@ -431,7 +456,8 @@
           </select>
           <select
             class="control-select"
-            bind:value={competitionFilter}
+            value={competitionFilter}
+            onchange={handleCompetitionFilterChange}
             aria-label="Filter by competition"
           >
             <option value="all">All Competition Levels</option>
@@ -442,7 +468,8 @@
           </select>
           <select
             class="control-select"
-            bind:value={userCategoryFilter}
+            value={userCategoryFilter}
+            onchange={handleUserCategoryFilterChange}
             aria-label="Filter by your categories"
           >
             <option value="all">All Portfolios</option>
@@ -457,7 +484,8 @@
           <div class="grid-sort-controls">
             <select
               class="control-select"
-              bind:value={sortKey}
+              value={sortKey}
+              onchange={handleGridSortChange}
               aria-label="Sort grid by"
             >
               {#each gridSortOptions as option}
