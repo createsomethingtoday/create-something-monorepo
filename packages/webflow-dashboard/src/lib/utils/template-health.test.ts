@@ -36,6 +36,20 @@ describe('computeTemplateHealth', () => {
 		expect(health.actions.map((action) => action.title)).toContain('Finish the publishing checklist');
 	});
 
+	it('uses the decision date as a fallback live date for published templates', () => {
+		const health = computeTemplateHealth(
+			templateAsset({
+				status: 'Published',
+				publishedDate: undefined,
+				decisionDate: '2026-05-01T00:00:00.000Z'
+			}),
+			NOW
+		);
+
+		expect(health.daysLive).toBe(33);
+		expect(health.signals.find((signal) => signal.label === 'Time live')?.value).toBe('1 mo');
+	});
+
 	it('returns strong for positive quality and healthy conversion', () => {
 		const health = computeTemplateHealth(
 			templateAsset({

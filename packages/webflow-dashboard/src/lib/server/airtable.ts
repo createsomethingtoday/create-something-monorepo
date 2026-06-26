@@ -1086,7 +1086,7 @@ function getScreenshotAltTexts(fields: Airtable.FieldSet): string[] {
 	return Array.from({ length: 5 }, (_, index) => firstString(fields[`Alt Text Screenshot ${index + 1}`]) || '');
 }
 
-function mapAssetRecord(record: Airtable.Record<Airtable.FieldSet>): Asset {
+export function mapAssetRecord(record: Airtable.Record<Airtable.FieldSet>): Asset {
 	const cleanedStatus = cleanMarketplaceStatus(record.fields['🚀Marketplace Status']) as Asset['status'];
 	const category = extractPrimaryCategory(record.fields);
 	const subcategory = extractPrimarySubcategory(record.fields);
@@ -1140,7 +1140,9 @@ function mapAssetRecord(record: Airtable.Record<Airtable.FieldSet>): Asset {
 			firstString(record.fields['fldROrXCnuZyKNCxW']),
 		marketplaceUrl: firstString(record.fields['🔗Marketplace URL']),
 		submittedDate: firstString(record.fields['📅Submitted Date']),
-		publishedDate: firstString(record.fields['📅Published Date']),
+		publishedDate:
+			firstString(record.fields['🚀📅Published Date']) ||
+			firstString(record.fields['📅Published Date']),
 		decisionDate: firstString(record.fields['🚀📅Decision Date']),
 		uniqueViewers: Number(record.fields['📋 Unique Viewers']) || 0,
 		cumulativePurchases: Number(record.fields['📋 Cumulative Purchases']) || 0,
