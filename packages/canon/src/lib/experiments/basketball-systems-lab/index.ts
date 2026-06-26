@@ -11,14 +11,29 @@
 export { default as BasketballSystemsLab } from './BasketballSystemsLab.svelte';
 export {
 	getDefaultLeagueState,
+	getDefaultEnvironment,
 	listManagementPolicies,
+	listSeasonPhases,
+	listSystems,
 	runManagementScenario,
+	runSystemMatch,
 	type BoardReport,
+	type Environment,
+	type LabMode,
 	type LeagueState,
 	type ManagementPolicy,
 	type ManagementScenario,
 	type MapNode,
 	type MetricOutput,
 	type PolicyKey,
-	type SeasonLedgerEntry
+	type SeasonLedgerEntry,
+	type SeasonPhase,
+	type SeasonPhaseKey,
+	type System,
+	type SystemKey,
+	type SystemMatch,
+	type SystemMatchInput,
+	type SystemProjection,
+	type SystemResult,
+	type SystemTimelineEntry
 } from './simulation.js';
