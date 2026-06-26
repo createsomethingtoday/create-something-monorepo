@@ -6,6 +6,15 @@
   import KineticNumber from './KineticNumber.svelte';
   import { HelpCircle } from 'lucide-svelte';
   import { trackEvent } from '$lib/utils/analytics';
+  import {
+    filterMarketplaceCategories,
+    getCompetitionClass,
+    getCompetitionIndicator,
+    getUserCategorySet,
+    isCompetitionFilter,
+    type CompetitionFilter,
+    type UserCategoryFilter
+  } from '$lib/utils/marketplace-insights-filters';
 
   interface LeaderboardEntry {
     templateName: string;
@@ -75,8 +84,8 @@
     viewMode: 'table' | 'grid';
     searchQuery: string;
     categoryFilter: string;
-    competitionFilter: string;
-    userCategoryFilter: 'all' | 'user';
+    competitionFilter: CompetitionFilter;
+    userCategoryFilter: UserCategoryFilter;
   }
 
   const CATEGORY_PREFERENCES_STORAGE_KEY = 'webflow-dashboard.marketplace-insights.preferences.v1';
@@ -110,9 +119,9 @@
   let viewMode = $state<'table' | 'grid'>('table');
   let searchQuery = $state('');
   let categoryFilter = $state('all');
-  let competitionFilter = $state('all');
-  let userCategoryFilter = $state<'all' | 'user'>('all');
-  const userCategories = $derived.by(() => new Set(userTemplates.map((t) => t.category)));
+  let competitionFilter = $state<CompetitionFilter>('all');
+  let userCategoryFilter = $state<UserCategoryFilter>('all');
+  const userCategories = $derived.by(() => getUserCategorySet(userTemplates));
 
   const gridSortOptions: Array<{ key: CategorySortKey; label: string }> = [
     { key: 'revenueRank', label: 'Rank' },
@@ -138,26 +147,12 @@
   });
 
   const filteredCategories = $derived.by(() => {
-    const query = searchQuery.trim().toLowerCase();
-
-    return categories.filter((category) => {
-      if (query) {
-        const text = `${category.category} ${category.subcategory}`.toLowerCase();
-        if (!text.includes(query)) return false;
-      }
-
-      if (categoryFilter !== 'all' && category.category !== categoryFilter) return false;
-
-      if (competitionFilter !== 'all') {
-        const competitionLevel = getCompetitionIndicator(category.templatesInSubcategory)
-          .level.toLowerCase()
-          .replace(/\s+/g, '-');
-        if (competitionLevel !== competitionFilter) return false;
-      }
-
-      if (userCategoryFilter === 'user' && !userCategories.has(category.category)) return false;
-
-      return true;
+    return filterMarketplaceCategories(categories, {
+      searchQuery,
+      categoryFilter,
+      competitionFilter,
+      userCategoryFilter,
+      userCategories
     });
   });
 
@@ -234,7 +229,8 @@
   }
 
   function handleCompetitionFilterChange(event: Event) {
-    competitionFilter = (event.currentTarget as HTMLSelectElement).value;
+    const value = (event.currentTarget as HTMLSelectElement).value;
+    competitionFilter = isCompetitionFilter(value) ? value : 'all';
   }
 
   function handleUserCategoryFilterChange(event: Event) {
@@ -266,8 +262,9 @@
       if (parsed.viewMode === 'table' || parsed.viewMode === 'grid') viewMode = parsed.viewMode;
       if (typeof parsed.searchQuery === 'string') searchQuery = parsed.searchQuery;
       if (typeof parsed.categoryFilter === 'string') categoryFilter = parsed.categoryFilter;
-      if (typeof parsed.competitionFilter === 'string')
+      if (isCompetitionFilter(parsed.competitionFilter)) {
         competitionFilter = parsed.competitionFilter;
+      }
       if (parsed.userCategoryFilter === 'all' || parsed.userCategoryFilter === 'user') {
         userCategoryFilter = parsed.userCategoryFilter;
       }
@@ -304,17 +301,6 @@
     if (availableCategoryFilters.includes(categoryFilter)) return;
     categoryFilter = 'all';
   });
-
-  function getCompetitionIndicator(templateCount: number) {
-    if (templateCount < 10) return { level: 'Low', color: 'success' };
-    if (templateCount < 30) return { level: 'Medium', color: 'info' };
-    if (templateCount < 70) return { level: 'High', color: 'warning' };
-    return { level: 'Very High', color: 'error' };
-  }
-
-  function getCompetitionClass(level: string): string {
-    return level.toLowerCase().replace(/\s+/g, '-');
-  }
 
   const hasMarketplaceSalesSummaryData = $derived(
     () =>
@@ -445,8 +431,8 @@
               onclick={toggleUserPortfolioFilter}
             >
               {userCategoryFilter === 'user'
-                ? 'Showing your portfolio categories'
-                : 'Your portfolio categories'}
+                ? 'Showing your template categories'
+                : 'Your template categories'}
             </button>
           {/if}
           <input
@@ -487,7 +473,7 @@
             aria-label="Filter by your categories"
           >
             <option value="all">All Portfolios</option>
-            <option value="user">Your Portfolio Categories</option>
+            <option value="user">Your Template Categories</option>
           </select>
           {#if hasActiveFilters}
             <button class="control-btn" type="button" onclick={clearFilters}> Clear </button>
@@ -535,14 +521,14 @@
         <div class="table-mobile-cards">
           {#each sortedCategories as category (`${category.category}::${category.subcategory}`)}
             {@const competition = getCompetitionIndicator(category.templatesInSubcategory)}
-            {@const hasUserTemplate = userCategories.has(category.category)}
-            <div class="table-mobile-card" class:user-category={hasUserTemplate}>
+            {@const isUserCategory = userCategories.has(category.category)}
+            <div class="table-mobile-card" class:user-category={isUserCategory}>
               <div class="mobile-card-header">
                 <div class="mobile-card-title">
                   <span class="category-parent">{category.category}</span>
                   <span class="category-name">{category.subcategory}</span>
-                  {#if hasUserTemplate}
-                    <span class="user-indicator">Your portfolio</span>
+                  {#if isUserCategory}
+                    <span class="user-indicator">Your template category</span>
                   {/if}
                 </div>
                 <span class="rank-pill">#{category.revenueRank}</span>
@@ -652,15 +638,15 @@
             <tbody>
               {#each sortedCategories as category (`${category.category}::${category.subcategory}`)}
                 {@const competition = getCompetitionIndicator(category.templatesInSubcategory)}
-                {@const hasUserTemplate = userCategories.has(category.category)}
-                <tr class:user-row={hasUserTemplate}>
+                {@const isUserCategory = userCategories.has(category.category)}
+                <tr class:user-row={isUserCategory}>
                   <td>
                     <span class="category-stack">
                       <span class="category-parent">{category.category}</span>
                       <span class="category-name">{category.subcategory}</span>
                     </span>
-                    {#if hasUserTemplate}
-                      <span class="user-indicator">Your portfolio</span>
+                    {#if isUserCategory}
+                      <span class="user-indicator">Your template category</span>
                     {/if}
                   </td>
                   <td class="right rank-cell">
@@ -692,8 +678,8 @@
         <div class="categories-grid">
           {#each sortedCategories as category (`${category.category}::${category.subcategory}`)}
             {@const competition = getCompetitionIndicator(category.templatesInSubcategory)}
-            {@const hasUserTemplate = userCategories.has(category.category)}
-            <div class="category-card" class:user-category={hasUserTemplate}>
+            {@const isUserCategory = userCategories.has(category.category)}
+            <div class="category-card" class:user-category={isUserCategory}>
               <div class="category-card-header">
                 <div class="category-info">
                   <span class="category-parent">{category.category}</span>
@@ -751,8 +737,8 @@
                 >
                   {competition.level} Competition
                 </Badge>
-                {#if hasUserTemplate}
-                  <span class="user-indicator-badge">Your category</span>
+                {#if isUserCategory}
+                  <span class="user-indicator-badge">Your template category</span>
                 {/if}
               </div>
             </div>
