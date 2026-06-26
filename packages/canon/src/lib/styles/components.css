@@ -1517,6 +1517,13 @@
     line-height: 1.2;
   }
 
+  .ona-system-validation-header small {
+    color: var(--ona-system-muted);
+    font-size: 0.72rem;
+    font-weight: 700;
+    line-height: 1.3;
+  }
+
   .ona-system-validation-header p,
   .ona-system-validation-list p {
     color: var(--ona-system-muted);
@@ -1531,28 +1538,59 @@
   }
 
   .ona-system-validation-list article {
-    min-height: 132px;
+    min-height: 126px;
     display: grid;
     align-content: space-between;
     gap: 12px;
     border: 1px solid var(--ona-system-line);
-    border-top: 3px solid var(--ona-system-green);
+    border-top: 3px solid color-mix(in srgb, var(--ona-system-green) 78%, var(--ona-system-line));
     border-radius: var(--radius-clear-sm);
     padding: 12px;
-    background: white;
+    background: color-mix(in srgb, white 86%, var(--ona-system-surface));
   }
 
   .ona-system-validation-list article[data-status='watch'] {
     border-top-color: var(--ona-system-ink);
+    background: white;
   }
 
   .ona-system-validation-list article[data-status='fail'] {
     border-top-color: var(--ona-system-red);
+    background: white;
+  }
+
+  .ona-system-validation-list article[data-status='deferred'] {
+    border-top-color: var(--ona-system-line-strong);
+    background: white;
   }
 
   .ona-system-validation-list article > div {
     display: grid;
     gap: 7px;
+  }
+
+  .ona-system-validation-card-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .ona-system-validation-card-header small {
+    color: var(--ona-system-muted);
+    font-size: 0.62rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .ona-system-validation-list article[data-status='watch'] .ona-system-validation-card-header small,
+  .ona-system-validation-list article[data-status='fail'] .ona-system-validation-card-header small {
+    color: var(--ona-system-ink);
+  }
+
+  .ona-system-validation-list article[data-status='fail'] .ona-system-validation-card-header small {
+    color: var(--ona-system-red);
   }
 
   .ona-system-validation-list strong {

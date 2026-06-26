@@ -136,6 +136,30 @@ describe('basketball systems management simulation', () => {
 		expect(['pass', 'watch', 'fail']).toContain(match.validation.status);
 	});
 
+	it('keeps the default single-player validation playable while deferring versus balance', () => {
+		const match = runSystemMatch({
+			systemKey: 'recovery',
+			years: 5,
+			steeringYear: 3,
+			steeringPhase: 'midseason',
+			steeringPolicyKey: 'labor'
+		});
+
+		expect(match.validation).toMatchObject({
+			status: 'watch',
+			label: 'Prototype watch'
+		});
+		expect(match.validation.requirements).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({
+					key: 'system-balance',
+					status: 'deferred',
+					summary: 'Versus not run'
+				})
+			])
+		);
+	});
+
 	it('flags unrealistic stress environments through validation gates', () => {
 		const match = runSystemMatch({
 			systemKey: 'trust',
