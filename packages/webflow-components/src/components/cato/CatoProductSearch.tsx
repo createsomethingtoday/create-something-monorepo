@@ -94,7 +94,7 @@ const PRODUCT_CSS = `
   }
   .cato-search *, .cato-search *::before, .cato-search *::after { box-sizing: border-box; }
   .cato-search a { color: inherit; }
-  .cato-search-shell { position: relative; overflow: hidden; background: linear-gradient(180deg, rgba(234,245,236,.96), rgba(251,249,244,.96)); padding: 8rem 1.25rem 5rem; }
+  .cato-search-shell { position: relative; overflow: hidden; background: linear-gradient(180deg, rgba(234,245,236,.96), rgba(251,249,244,.96)); padding: 13.25rem 2.5rem 4rem; }
   .cato-search-shell::before, .cato-search-shell::after {
     content: "c";
     position: absolute;
@@ -157,7 +157,7 @@ const PRODUCT_CSS = `
     border: 1px solid var(--cato-cream-border);
     border-radius: 1.5rem;
     background: var(--cato-bg);
-    margin-top: 4rem;
+    margin-top: 5rem;
     padding: 3rem;
   }
   .cato-radar-copy { display: flex; flex-direction: column; align-items: flex-start; gap: 1.5rem; width: 100%; max-width: 23.5rem; }
@@ -220,15 +220,16 @@ const PRODUCT_CSS = `
   @media (max-width: 991px) {
     .cato-radar-card { flex-direction: column; gap: 2rem; padding: 2rem; }
     .cato-radar-copy { max-width: none; }
+    .cato-search-shell { padding-top: 10rem; }
     .cato-search-shell::before, .cato-search-shell::after { font-size: 30rem; opacity: .7; }
   }
   @media (max-width: 767px) {
-    .cato-search-shell { padding-top: 6rem; }
+    .cato-search-shell { padding: 10rem 1.25rem 2.5rem; }
     .cato-search h1 { font-size: 2.5rem; }
     .cato-search-input { height: auto; min-height: 4rem; padding: .9rem 1rem; }
     .cato-search-submit { position: static; width: 100%; margin-top: .75rem; transform: none; }
     .cato-search-submit:hover { transform: none; }
-    .cato-radar-card { padding: 1.25rem; margin-top: 3rem; }
+    .cato-radar-card { padding: 2rem; margin-top: 3rem; }
     .cato-radar-table-shell { height: 22rem; }
     .cato-radar-link { width: 100%; justify-content: center; }
   }

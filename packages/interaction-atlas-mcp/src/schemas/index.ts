@@ -100,6 +100,13 @@ export const AtlasStudioEdgeAddSchema = z.object({
   operator: z.boolean().optional().describe('Mark the edge as operator-authored.')
 });
 
+export const AtlasStudioEdgeUpdateSchema = z.object({
+  session_id: z.string().min(1),
+  edge_id: z.string().min(1),
+  label: z.string().min(1).optional(),
+  evidence: z.string().optional()
+});
+
 export const AtlasStudioSuggestionAcceptSchema = z.object({
   session_id: z.string().min(1),
   suggestion_id: z.string().min(1)

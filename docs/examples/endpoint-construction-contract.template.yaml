@@ -1,0 +1,160 @@
+# Endpoint Construction Contract Template
+#
+# Use this before creating or changing an MCP tool, REST endpoint, webhook,
+# worker route, or agent-callable action surface. The contract makes the product
+# boundary explicit before code turns it into an execution path.
+
+version: 1
+contract_id: "<workflow-or-package>-<capability>-endpoint"
+status: "draft" # draft | active | deprecated
+owner: "<human-or-team-owner>"
+review_cadence: "<weekly|monthly|per-release|other>"
+last_reviewed_at: "<YYYY-MM-DD>"
+
+capability:
+  name: "<business capability, not transport detail>"
+  user_outcome: "<what the operator or customer gets when this succeeds>"
+  delegation_point: "<the moment where a model or automation should inherit work>"
+  non_goals:
+    - "<work this endpoint must not attempt>"
+
+touchpoint:
+  surface: "<mcp-tool|mcp-resource|mcp-prompt|rest-route|webhook|worker-route|ui-action>"
+  public_name: "<model/user-facing name>"
+  route_or_uri: "<method/path, resource URI, or tool name>"
+  callers:
+    - "<agent, app, cron, webhook source, operator UI, etc.>"
+
+three_tier_mapping:
+  database:
+    reads:
+      - "<resource, table, file, API, object store, or policy artifact>"
+    writes:
+      - "<state mutation or artifact persisted; use [] for read-only>"
+  automation:
+    execution:
+      - "<deterministic operation, model-controlled tool call, queue job, etc.>"
+    side_effects:
+      - "<external system changes, notifications, writes, deploys, etc.>"
+  judgment:
+    policy_artifacts:
+      - "<policy, prompt, approval rule, rubric, or escalation standard>"
+    human_decisions:
+      - "<what a human must choose, approve, reject, or inspect>"
+
+input_contract:
+  schema_name: "<InputSchema>"
+  required_fields:
+    - name: "<field>"
+      type: "<string|number|boolean|array|object|enum>"
+      reason: "<why the endpoint needs this>"
+  optional_fields:
+    - name: "<field>"
+      type: "<type>"
+      default: "<default or null>"
+  validation_rules:
+    - "<bounds, enum values, format checks, ownership checks, etc.>"
+  forbidden_inputs:
+    - "<secrets, raw credentials, unbounded free text, unsafe selectors, etc.>"
+
+authority:
+  default_mode: "read" # read | propose | approve | apply | rollback | blocked
+  allowed_actions:
+    read:
+      - "<what can be fetched without approval>"
+    propose:
+      - "<proposal artifacts the endpoint can create>"
+    apply:
+      - "<mutations allowed without additional approval; use [] if none>"
+    rollback:
+      - "<recovery actions available; use [] if none>"
+  approval_required_for:
+    - "<risky mutation, external send, deploy, billing, data export, etc.>"
+  always_blocked:
+    - "<actions the endpoint must refuse even if requested>"
+
+state:
+  persistence:
+    - name: "<state object or artifact>"
+      location: "<D1|KV|R2|Airtable|Git|Linear|Notion|local session|other>"
+      retention: "<duration or policy>"
+  idempotency_key: "<field or strategy>"
+  concurrency_rule: "<single-flight, last-write-wins, optimistic lock, queue, etc.>"
+  audit_log:
+    enabled: true
+    location: "<where receipts/events are recorded>"
+
+limits:
+  rate_limit: "<requests/actions per actor/window>"
+  scope_limit: "<tenant, account, package, repo path, object set, etc.>"
+  cost_limit: "<token, API, runtime, or spend ceiling>"
+  time_limit: "<timeout or max workflow age>"
+  autonomy_limit: "<what the agent may do before stopping for review>"
+
+error_contract:
+  known_failures:
+    - code: "<machine_readable_code>"
+      operator_message: "<short human-readable explanation>"
+      agent_next_step: "<retry|ask-user|create-proposal|stop|escalate|rollback>"
+  unknown_failure_behavior: "<stop with receipt, retry bounded times, queue for review, etc.>"
+  partial_success_behavior: "<what persists and how the operator can continue>"
+
+evidence:
+  success_receipt:
+    fields:
+      - "<what ran>"
+      - "<what changed or was proposed>"
+      - "<what did not run>"
+      - "<links to artifacts, logs, previews, or external records>"
+  refusal_receipt:
+    fields:
+      - "<blocked action>"
+      - "<policy or validation reason>"
+      - "<safe alternative>"
+  visibility:
+    operator_view: "<where a human inspects the receipt>"
+    agent_view: "<what the model receives after the call>"
+
+fallback:
+  deterministic_fallback: "<non-model path if reasoning or external service fails>"
+  manual_handoff: "<who owns manual continuation and where it is recorded>"
+  rollback_path: "<how to undo or neutralize a mutation>"
+
+quality_gates:
+  local_validation:
+    - "<unit test, typecheck, route smoke, schema check, fixture, etc.>"
+  live_validation:
+    - "<preview URL, deployed route smoke, external system readback, etc.>"
+  golden_tasks:
+    - "<representative task that should pass>"
+  forbidden_tasks:
+    - "<task that must be refused or approval-gated>"
+
+transparency:
+  claim_status: "hypothesis" # hypothesis | supported | validated | contested | superseded
+  confidence: "medium" # low | medium | high
+  evidence_grade: "field-signal" # official-docs | implementation-evidence | benchmark | market-signal | community-sentiment | field-signal | anecdotal
+  last_reviewed_at: "<YYYY-MM-DD>"
+  next_review_due: "<YYYY-MM-DD>"
+  primary_claim: "<what this endpoint contract assumes about the workflow or capability boundary>"
+  supports:
+    - "<source, implementation result, user observation, benchmark, or trace supporting this boundary>"
+  counter_signals:
+    - "<risk, limitation, disagreement, or scenario where this endpoint shape may be wrong>"
+  source_review:
+    - title: "<source or evidence title>"
+      url_or_path: "<https://... or repo/path>"
+      source_type: "implementation-evidence" # official-doc | paper | benchmark | implementation-evidence | field-report | community-sentiment | internal-evidence
+      supports: "<which contract assumption it supports>"
+      freshness: "current" # current | watch | stale | replaced
+      reviewed_at: "<YYYY-MM-DD>"
+  update_log:
+    - date: "<YYYY-MM-DD>"
+      change: "<what changed in the boundary, evidence, confidence, or source set>"
+      reason: "<new source, validation result, incident, counter-signal, or scheduled review>"
+
+release_boundary:
+  promotion_path: "<dev|preview|staging|production path>"
+  required_labels_or_approvals:
+    - "<publish-approved, security-review, customer-approval, etc.>"
+  rollback_note: "<how to revert and what evidence proves rollback>"

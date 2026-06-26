@@ -1,10 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import {
 	buildAssetListFormula,
+	buildAssetVersionSnapshot,
 	buildCreatorEmailMatchFormula,
 	cleanMarketplaceStatus,
 	cleanMarketplaceType,
-	resolveAssetType
+	mapAssetRecord,
+	resolveAssetType,
+	type Asset
 } from './airtable';
 
 describe('cleanMarketplaceType', () => {
@@ -42,6 +45,25 @@ describe('resolveAssetType', () => {
 	});
 });
 
+describe('mapAssetRecord', () => {
+	it('maps the rocket-prefixed published date field used by Marketplace Assets', () => {
+		const asset = mapAssetRecord({
+			id: 'recTemplate',
+			fields: {
+				Name: 'GenieNova',
+				'⚙️🆎Type (Text)': 'Template🏗️',
+				'🚀Marketplace Status': '3️⃣Published🚀',
+				'🚀📅Published Date': '2025-06-18',
+				'🚀📅Decision Date': '2025-06-18T05:52:53.967Z'
+			}
+		} as unknown as Parameters<typeof mapAssetRecord>[0]);
+
+		expect(asset.status).toBe('Published');
+		expect(asset.publishedDate).toBe('2025-06-18');
+		expect(asset.decisionDate).toBe('2025-06-18T05:52:53.967Z');
+	});
+});
+
 describe('cleanMarketplaceStatus', () => {
 	it('removes emoji prefixes from statuses', () => {
 		expect(cleanMarketplaceStatus('1️⃣🆕Upcoming')).toBe('Upcoming');
@@ -74,5 +96,51 @@ describe('Airtable asset formulas', () => {
 		expect(formula).toContain("o''connor@example.com");
 		expect(formula).not.toContain("{🆎Type} = 'Template🏗️'");
 		expect(formula.startsWith('OR(')).toBe(true);
+	});
+});
+
+describe('buildAssetVersionSnapshot', () => {
+	it('preserves app review fields from the pre-change asset', () => {
+		const asset: Asset = {
+			id: 'recAsset',
+			name: 'Workflow App',
+			type: 'App',
+			status: 'Published',
+			descriptionShort: 'Old short',
+			descriptionLongHtml: '<p>Old long</p>',
+			websiteUrl: 'https://example.com',
+			thumbnailUrl: 'https://example.com/icon.png',
+			carouselImages: ['https://example.com/screenshot.png'],
+			appCapabilities: 'Hybrid',
+			appInstallUrl: 'https://example.com/install',
+			appScopes: ['sites', 'cms'],
+			appAvatarAltText: 'Workflow icon',
+			paymentType: ['Paid'],
+			visibility: 'Private',
+			appCategory: ['Automation'],
+			creatorName: 'Example Creator',
+			creatorWebsite: 'creator@example.com',
+			creatorContactEmail: 'support@example.com',
+			appFeaturesOverview: ['Sync content'],
+			appDeveloperNotes: 'Use test workspace',
+			appAccessCredentials: 'N/A',
+			appVideoUrl: 'https://example.com/promo',
+			appDemoVideoUrl: 'https://example.com/demo',
+			appPrivacyPolicyUrl: 'https://example.com/privacy',
+			appSupportEmail: 'support@example.com',
+			appSupportUrl: 'https://example.com/support',
+			appTermsUrl: 'https://example.com/terms',
+			appScreenshotAltTexts: ['Workflow screenshot']
+		};
+
+		expect(buildAssetVersionSnapshot(asset)).toMatchObject({
+			name: 'Workflow App',
+			descriptionShort: 'Old short',
+			descriptionLongHtml: '<p>Old long</p>',
+			appCapabilities: 'Hybrid',
+			appScopes: ['sites', 'cms'],
+			creatorWebsite: 'creator@example.com',
+			appScreenshotAltTexts: ['Workflow screenshot']
+		});
 	});
 });

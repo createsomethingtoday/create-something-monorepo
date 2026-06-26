@@ -22,6 +22,9 @@ test('marketing image asset check validates templates and existing article metad
   const payload = JSON.parse(result.stdout);
   assert.equal(payload.audit.passed, true);
   assert(payload.results.some((item) =>
+    item.target === 'packages/agency/content/templates/marketing/buyer-intent-article-brief.md'
+    && item.ok === true));
+  assert(payload.results.some((item) =>
     item.target === 'packages/agency/content/templates/marketing/image-prompt.md'
     && item.ok === true));
   assert(payload.results.some((item) =>

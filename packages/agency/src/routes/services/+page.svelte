@@ -3,13 +3,22 @@
     Button,
     ClearCardGrid,
     ClearCtaBand,
+    ClearDecisionPanel,
     ClearPageSection,
+    ClearProofStrip,
+    ClearReceiptGrid,
+    ClearStateRows,
     SEO,
     type ClearCardItem,
-    type ClearCtaItem
+    type ClearCtaItem,
+    type ClearDecisionItem,
+    type ClearProofItem,
+    type ClearReceipt,
+    type ClearWorkflowState
   } from '@create-something/canon';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
   import PublicAtlasCanvas from '$lib/components/PublicAtlasCanvas.svelte';
+  import PublicAtlasStoryCanvas from '$lib/components/PublicAtlasStoryCanvas.svelte';
 
   const services = [
     {
@@ -31,7 +40,7 @@
     {
       name: 'Trust Layer',
       description:
-        'Scoped actions, approval states, release checks, blocked states, and incident loops for workflows already in motion.',
+        'The Workflow Trust Layer for delegated work already in motion: scoped actions, approval states, release checks, blocked states, and incident loops.',
       type: 'Workflow Control Plan',
       price: 'Custom',
       priceDescription: 'Monthly'
@@ -94,53 +103,45 @@
     }
   ];
 
-  const commercialShape: ClearCardItem[] = [
+  const servicePathDecisions: ClearDecisionItem[] = [
     {
-      eyebrow: 'Trust Map',
-      icon: 'search',
+      label: 'Trust Map',
+      summary: 'Map',
       title: 'Diagnostic before build',
       detail: 'Use this when the workflow is real but the safe delegation point is still unclear.',
-      points: [
-        'Timing: before implementation or platform selection',
-        'Output: workflow map, owner map, action boundary, first receipt plan',
-        'Exit: pilot recommendation, trust-layer scope, or no-build handoff'
-      ]
+      tone: 'review',
+      evidence: ['Workflow map', 'Owner map', 'Action boundary'],
+      receipts: ['first-receipt-plan.md', 'pilot-recommendation.md']
     },
     {
-      eyebrow: 'Workflow Pilot',
-      icon: 'settings',
+      label: 'Workflow Pilot',
+      summary: 'Run',
       title: 'One workflow to production proof',
       detail:
         'Use this when the first handoff is clear enough to rebuild and verify with real operating evidence.',
-      points: [
-        'Timing: one scoped workflow before broader automation',
-        'Output: implemented path, operator surface, runbook, release evidence',
-        'Exit: accepted handoff, blocked decisions, or trust-layer retainer'
-      ]
+      tone: 'allow',
+      evidence: ['Implemented path', 'Operator surface', 'Runbook'],
+      receipts: ['release-evidence.md', 'accepted-handoff.md']
     },
     {
-      eyebrow: 'Trust Layer',
-      icon: 'check',
+      label: 'Trust Layer',
+      summary: 'Wait',
       title: 'Monthly control around live work',
       detail:
         'Use this when a live workflow needs approval states, blocked states, release checks, and recovery loops.',
-      points: [
-        'Cadence: monthly control around work already in motion',
-        'Output: monitored decisions, receipts, incident notes, iteration queue',
-        'Exit: maintained control layer or transfer-ready operating package'
-      ]
+      tone: 'review',
+      evidence: ['Monitored decisions', 'Approval states', 'Recovery notes'],
+      receipts: ['incident-loop.md', 'iteration-queue.md']
     },
     {
-      eyebrow: 'Enterprise Extension',
-      icon: 'users',
+      label: 'Enterprise Extension',
+      summary: 'Gate',
       title: 'Multi-team control path',
       detail:
         'Use this when the workflow crosses teams, systems, compliance needs, or account boundaries.',
-      points: [
-        'Shape: phased rollout with explicit procurement and access gates',
-        'Output: rollout plan, access model, audit posture, ownership design',
-        'Exit: managed implementation, platform handoff, or account transfer'
-      ]
+      tone: 'block',
+      evidence: ['Rollout plan', 'Access model', 'Audit posture'],
+      receipts: ['procurement-gate.md', 'ownership-transfer.md']
     }
   ];
 
@@ -167,11 +168,11 @@
         'A workflow can run and still be unsafe if nobody can see what changed, why it ran, what stopped, or who approves the next move.'
     },
     {
-      eyebrow: 'Workflow Trust Layer',
+      eyebrow: 'Delegated Work Control',
       icon: 'check',
-      title: 'The layer underneath the agent work',
+      title: 'The control layer underneath delegated work',
       detail:
-        'CREATE SOMETHING defines the operating path first, then wires agents, tools, approvals, and evidence into one controlled workflow.'
+        'CREATE SOMETHING defines the operating path first, then wires agents, tools, approvals, owners, and evidence into one controlled workflow.'
     }
   ];
 
@@ -229,53 +230,68 @@
     }
   ];
 
-  const boundaryCards: ClearCardItem[] = [
+  const boundaryStates: ClearWorkflowState[] = [
     {
-      eyebrow: 'You bring',
-      icon: 'user',
-      title: 'Workflow and approval owner',
+      tone: 'wait',
+      state: 'Bring',
+      label: 'Workflow and approval owner',
       detail:
         'The business path, source accounts, constraints, and the person who can approve risk.'
     },
     {
-      eyebrow: 'I deliver',
-      icon: 'settings',
-      title: 'Rules, handoff, and evidence',
+      tone: 'run',
+      state: 'Build',
+      label: 'Rules, handoff, and evidence',
       detail:
         'The workflow map, action boundary, safe delegation path, runbook, and release evidence.'
     },
     {
-      eyebrow: 'Your team keeps',
-      icon: 'folder',
-      title: 'Context and control',
+      tone: 'stop',
+      state: 'Keep',
+      label: 'Context and control',
       detail: 'Business context, approval ownership, operating receipts, code, and handoff notes.'
     }
   ];
 
-  const artifactCards: ClearCardItem[] = [
+  const artifactReceipts: ClearReceipt[] = [
     {
-      eyebrow: 'Map',
-      icon: 'folder',
-      title: 'Workflow map',
+      number: '01',
+      label: 'Workflow map',
       detail: 'Objects, owners, source systems, handoffs, and known failure points.'
     },
     {
-      eyebrow: 'Boundary',
-      icon: 'check',
-      title: 'Action rules',
+      number: '02',
+      label: 'Action rules',
       detail: 'Auto-allow, approval-needed, and blocked states with reasons.'
     },
     {
-      eyebrow: 'Surface',
-      icon: 'document',
-      title: 'Operator brief',
+      number: '03',
+      label: 'Operator brief',
       detail: 'The visible state for Webflow, Dify, Linear, Notion, or a custom app.'
     },
     {
-      eyebrow: 'Evidence',
-      icon: 'download',
-      title: 'Runbook and receipts',
+      number: '04',
+      label: 'Runbook and receipts',
       detail: 'Validation commands, deploy IDs, recovery paths, and handoff notes.'
+    }
+  ];
+
+  const artifactProofItems: ClearProofItem[] = [
+    {
+      value: 'Map',
+      label: 'Source objects, owners, and handoffs stay visible.'
+    },
+    {
+      value: 'Boundary',
+      label: 'Run, wait, and stop rules are explicit before execution.'
+    },
+    {
+      value: 'Brief',
+      label: 'Operators see the current state without raw internal logs.'
+    },
+    {
+      value: 'Receipts',
+      label: 'Validation, deploy, rollback, and handoff evidence travel together.'
     }
   ];
 
@@ -329,12 +345,12 @@
     {
       question: 'What is your primary service?',
       answer:
-        'Workflow Pilot fixes the first painful workflow. Trust Layer becomes the ongoing plan once speed needs approvals, release controls, and oversight.'
+        'Workflow Pilot fixes the first painful workflow. Workflow Trust Layer becomes the ongoing plan once delegated work needs approvals, release controls, and oversight.'
     },
     {
       question: 'Are agents part of the workforce?',
       answer:
-        'They can be, when the workflow gives them a clear job, scoped tools, approval boundaries, and evidence.'
+        'They can be, when the workflow gives them a clear job, scoped tools, approval boundaries, named ownership, and evidence.'
     },
     {
       question: 'Do we need to understand MCP first?',
@@ -350,9 +366,9 @@
 </script>
 
 <SEO
-  title="Workflow Trust Layer | How I Work"
-  description="How CREATE SOMETHING makes one workflow safe to delegate: clear stack boundaries, decision states, evidence, and escalation when judgment is required."
-  keywords="workflow trust layer, workflow mapping, AI interaction design, safe to delegate AI workflow, workflow pilot, production automation, agent reliability"
+  title="Delegated Work Control | How I Work"
+  description="How CREATE SOMETHING makes one workflow safe to delegate: clear stack boundaries, decision states, owners, evidence, and escalation when judgment is required."
+  keywords="delegated work control, workflow trust layer, workflow mapping, AI interaction design, safe to delegate AI workflow, workflow pilot, production automation, agent reliability"
   ogImage="/og-image.svg"
   propertyName="agency"
   {services}
@@ -365,7 +381,7 @@
   titleLevel="h1"
   eyebrow="How I Work"
   title="Make one workflow safe to delegate."
-  description="Bring the operating path your team cannot keep covering by hand. I map the inputs, owners, approvals, and failure modes; rebuild the handoff; and add controlled agent capacity only where the boundary is clear."
+  description="Bring work your team already handles by hand. I show the inputs, owners, approvals, stop states, receipts, and failure modes, then build only the first delegation path that is clear enough to trust."
 >
   {#snippet actions()}
     <Button href="#atlas-warmup">
@@ -400,14 +416,14 @@
 <ClearPageSection
   variant="soft"
   eyebrow="Why this layer exists"
-  title="Tools can connect the work. They do not decide what should be trusted."
-  description="The durable value is the layer underneath the agent: the workflow boundary, approval model, recovery path, and evidence trail."
+  title="Tools can connect the work. They cannot explain the boundary."
+  description="Delegated Work Control makes the boundary visible: what can run, what waits, what stops, who owns the decision, and what evidence survives."
 >
   {#snippet after()}
     <ClearCardGrid
       items={directToolComparison}
       columns={4}
-      ariaLabel="Direct tool setup versus Workflow Trust Layer"
+      ariaLabel="Direct tool setup versus Delegated Work Control"
     />
   {/snippet}
 </ClearPageSection>
@@ -420,25 +436,23 @@
   description="The public Atlas surface turns human tasks, AI tasks, system operations, data, constraints, and touchpoints into a first onboarding artifact. A constrained mapping agent can help shape the canvas without touching production systems."
 >
   {#snippet after()}
+    <PublicAtlasStoryCanvas
+      starterId="marketplace-review-queue"
+      storyId="services-marketplace-review-story"
+      compact
+    />
     <PublicAtlasCanvas />
   {/snippet}
 </ClearPageSection>
 
-<ClearPageSection
+<ClearDecisionPanel
   id="service-path"
-  variant="white"
   eyebrow="Service path"
   title="Every engagement has a clean exit."
-  description="Start with the smallest safe delegation point, prove the first workflow, then add the trust layer only when live work needs more control. Each step has a concrete output, a decision point, and a next-state the buyer can understand."
->
-  {#snippet after()}
-    <ClearCardGrid
-      items={commercialShape}
-      columns={4}
-      ariaLabel="Service path from map to trust layer"
-    />
-  {/snippet}
-</ClearPageSection>
+  description="Start with the smallest safe delegation point, prove the first workflow, then add the Workflow Trust Layer only when live work needs more control. Each step has a concrete output, a decision point, and a next-state the buyer can understand."
+  items={servicePathDecisions}
+  ariaLabel="Service path from map to trust layer"
+/>
 
 <ClearPageSection
   variant="soft"
@@ -465,11 +479,18 @@
 <ClearPageSection
   variant="white"
   eyebrow="Ownership boundary"
-  title="Transparency creates calm when the workflow has clear boundaries."
+  title="The visitor should understand what they keep."
   description="Your team sees enough to trust and inherit the system. Sensitive credentials, private data, and platform-specific complexity stay behind the right operational boundary."
 >
   {#snippet after()}
-    <ClearCardGrid items={boundaryCards} columns={3} ariaLabel="Workflow ownership boundary" />
+    <ClearStateRows
+      eyebrow="Workflow ownership"
+      title="What moves and what stays owned?"
+      states={boundaryStates}
+      receiptLabel="Boundary receipts"
+      receipts={['workflow-map.md', 'action-boundary.md', 'handoff-notes.md']}
+      ariaLabel="Workflow ownership boundary"
+    />
   {/snippet}
 </ClearPageSection>
 
@@ -477,10 +498,13 @@
   variant="soft"
   eyebrow="What your team keeps"
   title="Leave with maps, runbooks, and receipts your team can operate."
-  description="Every trust-layer project ships with artifacts your team can inspect, run, inherit, and improve after launch."
+  description="Every Workflow Trust Layer project ships with artifacts your team can inspect, run, inherit, and improve after launch."
 >
   {#snippet after()}
-    <ClearCardGrid items={artifactCards} columns={4} ariaLabel="Service artifacts" />
+    <div class="service-artifact-stack">
+      <ClearReceiptGrid receipts={artifactReceipts} ariaLabel="Service artifacts" />
+      <ClearProofStrip items={artifactProofItems} ariaLabel="Service artifact proof states" />
+    </div>
   {/snippet}
 </ClearPageSection>
 
@@ -491,14 +515,14 @@
   description="The first engagement should make the next step clearer before it asks for a build."
 >
   {#snippet after()}
-    <ClearCardGrid items={objectionCards} columns={3} ariaLabel="Workflow Trust Layer objections" />
+    <ClearCardGrid items={objectionCards} columns={3} ariaLabel="Delegated Work Control objections" />
   {/snippet}
 </ClearPageSection>
 
 <ClearCtaBand
   eyebrow="Map the workflow"
   title="Map the workflow your team still protects by hand."
-  description="We will define the handoffs, approvals, failure modes, and escalation path before any implementation work starts."
+  description="We will define the handoffs, approvals, decision owners, failure modes, and escalation path before any implementation work starts."
   items={ctaItems}
 >
   {#snippet actions()}
@@ -510,3 +534,10 @@
     </Button>
   {/snippet}
 </ClearCtaBand>
+
+<style>
+  .service-artifact-stack {
+    display: grid;
+    gap: 0.85rem;
+  }
+</style>

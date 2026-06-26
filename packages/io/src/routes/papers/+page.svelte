@@ -266,7 +266,7 @@
 						<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
 						</svg>
-						Previous
+						<span class="pagination-label">Previous</span>
 					</button>
 
 					<div class="pagination-pages">
@@ -292,7 +292,7 @@
 						class="pagination-button"
 						aria-label="Next page"
 					>
-						Next
+						<span class="pagination-label">Next</span>
 						<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
 						</svg>
@@ -475,12 +475,16 @@
 	.pagination-container {
 		display: flex;
 		align-items: center;
+		justify-content: center;
+		flex-wrap: wrap;
 		gap: var(--space-sm);
+		max-width: 100%;
 	}
 
 	.pagination-button {
 		display: inline-flex;
 		align-items: center;
+		justify-content: center;
 		gap: var(--space-xs);
 		padding: var(--space-xs) var(--space-sm);
 		font-size: var(--text-body-sm);
@@ -505,6 +509,8 @@
 	.pagination-pages {
 		display: flex;
 		align-items: center;
+		justify-content: center;
+		flex-wrap: wrap;
 		gap: var(--space-xs);
 	}
 
@@ -557,6 +563,7 @@
 		max-width: 800px;
 		margin: 0 auto;
 		padding: 0 var(--space-md) var(--space-lg);
+		overflow-x: clip;
 	}
 
 	/* Papers Grid */
@@ -568,6 +575,7 @@
 
 	.paper-card {
 		display: block;
+		min-width: 0;
 		border-radius: var(--radius-md);
 		overflow: hidden;
 		text-decoration: none;
@@ -585,6 +593,7 @@
 
 	.paper-content {
 		padding: var(--space-md);
+		min-width: 0;
 	}
 
 	.paper-meta {
@@ -606,6 +615,7 @@
 		margin: 0 0 var(--space-xs) 0;
 		line-height: var(--leading-snug);
 		color: var(--color-fg-primary);
+		overflow-wrap: anywhere;
 	}
 
 	.paper-subtitle {
@@ -619,6 +629,7 @@
 		color: var(--color-fg-secondary);
 		line-height: var(--leading-relaxed);
 		margin: 0 0 var(--space-sm) 0;
+		overflow-wrap: anywhere;
 	}
 
 	.paper-keywords {
@@ -632,6 +643,8 @@
 		border-radius: var(--radius-sm);
 		font-size: var(--text-overline);
 		color: var(--color-fg-muted);
+		max-width: 100%;
+		overflow-wrap: anywhere;
 	}
 
 	@media (max-width: 640px) {
@@ -653,7 +666,41 @@
 
 		.controls-container {
 			margin-top: var(--space-md);
-			gap: 0.72rem;
+			gap: 0.85rem;
+		}
+
+		.search-input {
+			min-height: 2.75rem;
+			padding-right: 2.75rem;
+		}
+
+		.search-clear {
+			right: 0.18rem;
+			width: 2.5rem;
+			height: 2.5rem;
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+		}
+
+		.filter-chip {
+			min-height: 2.75rem;
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			padding-inline: 0.9rem;
+			line-height: 1.2;
+		}
+
+		.sort-control {
+			width: min(100%, 22rem);
+		}
+
+		.sort-button {
+			flex: 1 1 0;
+			min-height: 2.75rem;
+			min-width: 0;
+			padding-inline: 0.55rem;
 		}
 
 		.papers-page {
@@ -672,6 +719,53 @@
 			flex-wrap: wrap;
 			gap: 0.32rem 0.78rem;
 			line-height: 1.35;
+		}
+
+		.pagination-nav {
+			gap: var(--space-sm);
+			margin-top: var(--space-md);
+		}
+
+		.pagination-container {
+			width: 100%;
+			gap: 0.5rem;
+		}
+
+		.pagination-pages {
+			order: -1;
+			width: 100%;
+			gap: 0.4rem;
+		}
+
+		.pagination-button {
+			flex: 1 1 calc(50% - 0.5rem);
+			min-height: 2.75rem;
+			min-width: 0;
+			padding-inline: var(--space-xs);
+		}
+
+		.pagination-page {
+			min-width: 2.75rem;
+			height: 2.75rem;
+		}
+
+		.pagination-info {
+			max-width: 18rem;
+			line-height: 1.45;
+		}
+	}
+
+	@media (max-width: 360px) {
+		.pagination-label {
+			position: absolute;
+			width: 1px;
+			height: 1px;
+			padding: 0;
+			margin: -1px;
+			overflow: hidden;
+			clip: rect(0, 0, 0, 0);
+			white-space: nowrap;
+			border: 0;
 		}
 	}
 

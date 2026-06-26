@@ -265,6 +265,7 @@ export interface SyncSummary {
   image_refreshed_records: number;
   cursor: string;
   skipped_empty_windows?: number;
+  recent_published_records?: number;
   warnings?: Array<{ source: string; message: string }>;
 }
 

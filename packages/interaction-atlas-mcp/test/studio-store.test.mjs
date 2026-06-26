@@ -24,6 +24,7 @@ import {
   readSession,
   removeNode,
   setStoryFocus,
+  updateEdge,
   writeSession
 } from '../dist/studio/store.js';
 
@@ -67,7 +68,20 @@ test('local Atlas Studio sessions can be mutated by agent commands', async () =>
     { source: 'data_workflow', target: node.id, label: 'records evidence', createdBy: 'agent' },
     cwd
   );
-  assert.equal(withEdge.canvas.edges.at(-1)?.target, node.id);
+  const edge = withEdge.canvas.edges.at(-1);
+  assert.equal(edge?.target, node.id);
+
+  const withUpdatedEdge = await updateEdge(
+    session.id,
+    edge.id,
+    { label: 'records governed evidence', evidence: 'Linear issue stores approval trace.' },
+    cwd
+  );
+  const updatedEdge = withUpdatedEdge.canvas.edges.find((item) => item.id === edge.id);
+  assert.equal(updatedEdge?.label, 'records governed evidence');
+  assert.equal(updatedEdge?.evidence, 'Linear issue stores approval trace.');
+  assert.equal(updatedEdge?.source, 'data_workflow');
+  assert.equal(updatedEdge?.target, node.id);
 
   const reloaded = await readSession(session.id, cwd);
   const markdown = exportSessionMarkdown(reloaded);

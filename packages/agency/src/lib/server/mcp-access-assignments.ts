@@ -87,6 +87,7 @@ const WEBFLOW_TEMPLATE_REVIEW_PHASE_A_ALLOWED_TOOL_PREFIXES = [
 	'webflow-template-review-mcp__template_review_set_review_status',
 	'webflow-template-review-mcp__template_review_save_agent_feedback',
 	'webflow-template-review-mcp__template_review_save_draft_feedback',
+	'webflow-reviewer-exceptions-mcp__reviewer_exceptions_',
 ];
 
 const LANE_CONFIGS: Record<string, LaneConfig> = {

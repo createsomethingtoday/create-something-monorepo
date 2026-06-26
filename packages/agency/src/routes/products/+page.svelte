@@ -12,6 +12,7 @@
     type ClearProofItem,
     type ClearQuoteMetric
   } from '@create-something/canon';
+  import PublicAtlasStoryCanvas from '$lib/components/PublicAtlasStoryCanvas.svelte';
   import WorkflowSignalIcon from '$lib/components/WorkflowSignalIcon.svelte';
   import { products, type Product } from '$lib/data/services';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
@@ -92,7 +93,7 @@
     {
       question: 'What counts as proof?',
       answer:
-        'Proof means delivery records, tools, connectors, and client builds that show what changed, what was verified, what stayed private, and what still needs an owner.'
+        'Proof means delivery records, tools, connectors, and client builds that show what changed, what was verified, what stayed private, who owns the decision, and what still needs an owner.'
     },
     {
       question: 'Why are Ground and Loom MCP included?',
@@ -268,8 +269,8 @@
 
 <SEO
   title="Proof and Receipts | CREATE SOMETHING .agency"
-  description="Proof behind CREATE SOMETHING .agency: delivery records, tools, connectors, and client builds that show how the Workflow Trust Layer becomes inspectable."
-  keywords="workflow trust layer proof, workflow receipts, MCP servers, grounded AI code analysis, workflow controls, operator surfaces"
+  description="Proof behind CREATE SOMETHING .agency: delivery records, tools, connectors, and client builds that show how Delegated Work Control becomes inspectable."
+  keywords="delegated work control proof, workflow trust layer proof, workflow receipts, MCP servers, grounded AI code analysis, workflow controls, operator surfaces"
   ogImage="/og-image.svg"
   propertyName="agency"
   {faqItems}
@@ -280,8 +281,8 @@
   layout="split"
   titleLevel="h1"
   eyebrow="Proof"
-  title="Proof is the product once work leaves chat."
-  description="Ground, Loom MCP, connectors, and client builds are not a product shelf. They show the same path the service follows: connect the system, verify the claim, coordinate the work, then control the workflow."
+  title="See what ran, waited, stopped, and why."
+  description="Ground, Linear-backed coordination, connectors, and client builds are not a product shelf. They show the same path the service follows: connect the system, verify the claim, coordinate the work, then control what can be delegated."
 >
   {#snippet actions()}
     <Button href={agencyCoreMessaging.selfMapHref}>
@@ -299,9 +300,9 @@
 
 <ClearPageSection
   variant="white"
-  eyebrow="Run state proof"
-  title="A buyer should see what can run, wait, stop, and prove."
-  description="Every artifact on this page should help a buyer understand what can run, what waits, what stops, and which receipt proves the decision."
+  eyebrow="Delegated Work Control proof"
+  title="Proof should be readable before it is technical."
+  description="Every artifact on this page helps a buyer understand what can run, what waits, what stops, who owns the decision, and which receipt proves it."
 >
   {#snippet after()}
     <ClearProofStrip items={proofStripItems} ariaLabel="Workflow proof states">
@@ -325,10 +326,28 @@
 </ClearPageSection>
 
 <ClearPageSection
+  variant="soft"
+  eyebrow="Proof canvas"
+  title="Proof becomes useful when the map shows the commitment boundary."
+  description="A receipt is not just a log. It names what can run, what waits for judgment, what must stop, and what evidence lets the next owner trust the handoff."
+>
+  {#snippet after()}
+    <PublicAtlasStoryCanvas
+      starterId="construction-rfi-submittal-control"
+      storyId="products-construction-proof-story"
+      eyebrow="Proof canvas"
+      title="The receipt matters because the commitment boundary is visible."
+      description="This read-only map shows proof as an operating path: collect evidence, route the packet, draft support, preserve human judgment, and stop before scope or contract commitment."
+      compact
+    />
+  {/snippet}
+</ClearPageSection>
+
+<ClearPageSection
   variant="white"
   eyebrow="How to read this page"
   title="Tools are evidence. The service is the operating path."
-  description="The free and open tools show the discipline underneath the service: grounded claims, agent continuity, constrained MCP access, and evidence-backed decisions. The paid work turns those primitives into one workflow your operator can trust."
+  description="The free and open tools show the discipline underneath the service: grounded claims, agent continuity, constrained access, and evidence-backed decisions. The paid work turns those primitives into one delegated workflow your operator can trust."
 >
   {#snippet after()}
     <ClearCardGrid items={proofReadingCards} columns={4} ariaLabel="How to read proof" />
@@ -338,7 +357,7 @@
 <ClearQuoteMetricPanel
   eyebrow="Proof metrics"
   quote="Proof stays useful when it names what ran, what waited, and what stopped."
-  source="CREATE SOMETHING .agency workflow control model"
+  source="CREATE SOMETHING .agency delegated-work control model"
   metrics={proofMetrics}
   ariaLabel="Workflow proof metrics"
 />

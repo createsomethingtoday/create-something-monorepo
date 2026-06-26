@@ -17,7 +17,7 @@ test('legacy Webflow reviewer lanes carry the current Phase A exact tool surface
 	const assignment = assignments[0]!;
 	assert.equal(assignment.laneKey, 'wf_eric');
 	assert.deepEqual(assignment.toolkitProfile, []);
-	assert.equal(assignment.allowedToolPrefixes.length, 22);
+	assert.equal(assignment.allowedToolPrefixes.length, 23);
 	assert.ok(assignment.allowedToolPrefixes.includes('webflow-template-review-mcp__template_review_get_metrics'));
 	assert.ok(
 		assignment.allowedToolPrefixes.includes(
@@ -43,6 +43,7 @@ test('legacy Webflow reviewer lanes carry the current Phase A exact tool surface
 	);
 	assert.ok(assignment.allowedToolPrefixes.includes('webflow-template-review-mcp__template_review_save_agent_feedback'));
 	assert.ok(assignment.allowedToolPrefixes.includes('webflow-template-review-mcp__template_review_save_draft_feedback'));
+	assert.ok(assignment.allowedToolPrefixes.includes('webflow-reviewer-exceptions-mcp__reviewer_exceptions_'));
 	assert.equal(
 		assignment.allowedToolPrefixes.includes('webflow-template-review-mcp__template_review_assign_reviewer'),
 		false,

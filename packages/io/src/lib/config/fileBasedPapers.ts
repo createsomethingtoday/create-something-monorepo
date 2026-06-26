@@ -252,6 +252,46 @@ watermarks, extra logos, random text, illegible labels, fake brand names, colorf
 `
 	},
 	{
+		id: 'paper-endpoint-construction-product',
+		slug: 'endpoint-construction-product',
+		title: 'Endpoint Construction Is Product Construction',
+		description: 'Why AI-native products depend on the capability boundary more than the chat surface. A practical model for treating endpoints as the product grammar that defines intent, schema, authority, state, limits, errors, evidence, and fallback.',
+		excerpt_short: 'The product is the capability boundary the model inhabits',
+		excerpt_long: 'This paper argues that endpoint construction is product construction in AI-native systems. Using Atlas as the case study, it shows how typed objects, bounded mutations, tiered limits, durable state, fallback behavior, and inspectable readiness turn a canvas from a diagram into an agent-operable product surface.',
+		category: 'Research',
+		tags: [
+			'Endpoint Construction',
+			'MCP',
+			'Tool Calling',
+			'AI-Native Product',
+			'Atlas',
+			'Policy OS',
+			'Workflow Trust Layer',
+			'Three-Tier Framework'
+		],
+		created_at: '2026-06-24T02:21:21Z',
+		updated_at: '2026-06-24T04:05:00Z',
+		reading_time_minutes: 18,
+		difficulty: 'intermediate',
+		is_file_based: true,
+		tests_principles: [
+			'mcp-first-thesis',
+			'three-tier-framework',
+			'policy-as-artifact',
+			'verification-first',
+			'agent-governance'
+		],
+		route: '/papers/endpoint-construction-product',
+		ascii_art: `
+╭──────────────────────────────────────────────────────────────╮
+│ CHAT SURFACE  ->  ENDPOINT GRAMMAR  ->  OPERATING RECEIPT   │
+│ intent            schema / authority      proof              │
+│                                                              │
+│ The product is the boundary the model can safely inhabit.    │
+╰──────────────────────────────────────────────────────────────╯
+`
+	},
+	{
 		id: 'paper-policy-os-contract-bundle',
 		slug: 'policy-os-contract-bundle',
 		title: 'The Policy OS Contract Bundle',
@@ -641,6 +681,27 @@ const fileBasedPaperVisuals = {
 			'receipt trail after a permitted action'
 		],
 		alt: 'Abstract workflow trust layer showing capability separated from approval and blocked states.'
+	}),
+	'paper-endpoint-construction-product': defineArtifactVisuals({
+		kind: 'boundary-matrix',
+		title: 'AI-native product power lives in the endpoint grammar.',
+		caption:
+			'The visual model turns a chat request into a bounded endpoint contract with intent, schema, authority, state, limits, errors, evidence, and fallback.',
+		nodes: [
+			{ label: 'Intent', detail: 'Name the business capability.', icon: 'document', tone: 'neutral' },
+			{ label: 'Authority', detail: 'Separate read, propose, approve, apply, and rollback.', icon: 'user', tone: 'wait' },
+			{ label: 'State', detail: 'Persist sessions, events, limits, and artifacts.', icon: 'folder', tone: 'neutral' },
+			{ label: 'Receipt', detail: 'Return evidence and recovery paths.', icon: 'check', tone: 'receipt' }
+		],
+		subject:
+			'An AI-native product endpoint grammar where chat requests pass through typed capability boundaries before becoming governed work.',
+		motifs: [
+			'chat request entering an endpoint boundary',
+			'contract fields for intent, schema, authority, state, limits, errors, evidence, fallback',
+			'Atlas-style workflow map behind the boundary',
+			'operator receipt showing what ran, waited, stopped, or persisted'
+		],
+		alt: 'Abstract endpoint construction visual showing chat becoming a governed capability boundary with receipts.'
 	}),
 	'paper-policy-os-contract-bundle': defineArtifactVisuals({
 		kind: 'layer-stack',

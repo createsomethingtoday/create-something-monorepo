@@ -210,3 +210,50 @@ test('Atlas Studio deletes a canvas node and connected edges over HTTP', async (
     await closeServer(server);
   }
 });
+
+test('Atlas Studio updates edge communication fields over HTTP', async () => {
+  const cwd = await mkdtemp(path.join(tmpdir(), 'atlas-studio-update-edge-test-'));
+  const session = await createSession(
+    { client: 'CREATE SOMETHING Test', workflow: 'Agent-assisted Atlas onboarding' },
+    cwd
+  );
+  const server = await startStudioServer({
+    host: '127.0.0.1',
+    port: 0,
+    sessionId: session.id,
+    cwd
+  });
+  const address = server.address();
+  assert.equal(typeof address, 'object');
+
+  try {
+    const response = await fetch(
+      `http://127.0.0.1:${address.port}/api/sessions/${session.id}/edges/edge_client_workflow`,
+      {
+        body: JSON.stringify({
+          evidence: 'Slack thread, app version, and security review feed this decision.',
+          label: 'request enters governed intake'
+        }),
+        headers: { 'content-type': 'application/json' },
+        method: 'PATCH'
+      }
+    );
+    assert.equal(response.status, 200);
+    const result = await response.json();
+    const edge = result.canvas.edges.find((item) => item.id === 'edge_client_workflow');
+    assert.equal(edge.label, 'request enters governed intake');
+    assert.equal(edge.evidence, 'Slack thread, app version, and security review feed this decision.');
+    assert.equal(edge.source, 'actor_client');
+    assert.equal(edge.target, 'data_workflow');
+
+    const written = await readSession(session.id, cwd);
+    const writtenEdge = written.canvas.edges.find((item) => item.id === 'edge_client_workflow');
+    assert.equal(writtenEdge?.label, 'request enters governed intake');
+    assert.equal(
+      writtenEdge?.evidence,
+      'Slack thread, app version, and security review feed this decision.'
+    );
+  } finally {
+    await closeServer(server);
+  }
+});

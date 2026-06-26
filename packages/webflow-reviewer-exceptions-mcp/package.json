@@ -1,0 +1,41 @@
+{
+  "name": "@create-something/webflow-reviewer-exceptions-mcp",
+  "version": "1.0.0",
+  "description": "Standalone read/write reviewer exceptions MCP backed by Airtable and Dify external knowledge retrieval",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "webflow-reviewer-exceptions-mcp": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node dist/index.js",
+    "lint": "pnpm run typecheck",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.25.3",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.3.0",
+    "vitest": "^2.1.8"
+  },
+  "keywords": [
+    "mcp",
+    "webflow",
+    "airtable",
+    "reviewer-exceptions",
+    "dify"
+  ],
+  "author": "CREATE SOMETHING <hello@createsomething.agency>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/createsomethingtoday/create-something-monorepo.git",
+    "directory": "packages/webflow-reviewer-exceptions-mcp"
+  }
+}

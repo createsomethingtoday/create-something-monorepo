@@ -3,6 +3,7 @@ import {
   fetchModifiedAssetsSince,
   fetchPublishedTemplateAssets,
   fetchPublishedTemplateImageFields,
+  fetchRecentlyPublishedTemplateAssets,
   loadLookupMaps,
   DEFAULT_SEARCH_VISIBILITY_FIELDS,
 } from './airtable.js';
@@ -11,8 +12,10 @@ import {
   backfillCreatorFieldsByName,
   backfillCreatorFieldsFromLookup,
   acquireSyncJobLock,
+  bumpPublicSearchCacheVersion,
   clearIndex,
   deleteTemplateDocuments,
+  filterMissingOrStaleTemplateLookupTargets,
   finishSyncJobLock,
   getSyncCursor,
   heartbeatSyncJobLock,
@@ -59,6 +62,7 @@ import {
   loadWebflowTemplateImageIndex,
   buildWebflowTemplateImageIndexFromRecords,
   fetchPublishedTemplateStatus,
+  resolvePublishedTemplateImages,
   resolveWebflowTemplateIdentity,
   resolveWebflowTemplateOffer,
   resolveWebflowTemplateImages,
@@ -352,14 +356,18 @@ async function resolveAndUpdateTemplateImages(
           templateSlug: row.templateSlug,
           name: row.name,
         });
-        return { row, webflowImages };
+        const publishedImages = await resolvePublishedTemplateImages({
+          templateSlug: row.templateSlug,
+          listingUrl: row.listingUrl,
+        });
+        return { row, webflowImages, publishedImages };
       }),
     );
 
-    for (const { row, webflowImages } of resolvedRows) {
+    for (const { row, webflowImages, publishedImages } of resolvedRows) {
       const currentThumbnailUrl = stableAttachmentUrl(row.thumbnailImageUrl);
       const currentSecondaryThumbnailUrl = stableAttachmentUrl(row.thumbnailImageSecondaryUrl);
-      const nextThumbnailUrl = webflowImages?.thumbnailImageUrl ?? currentThumbnailUrl;
+      const nextThumbnailUrl = publishedImages?.thumbnailImageUrl ?? webflowImages?.thumbnailImageUrl ?? currentThumbnailUrl;
       const nextSecondaryThumbnailUrl =
         webflowImages?.thumbnailImageSecondaryUrl ??
         (currentSecondaryThumbnailUrl === nextThumbnailUrl ? null : currentSecondaryThumbnailUrl);
@@ -382,7 +390,7 @@ async function resolveAndUpdateTemplateImages(
     await options.onBatch?.();
   }
 
-  const updatedCount = await updateTemplateDocumentImages(db, updates, syncedAt);
+  const updatedCount = await updateTemplateDocumentImages(db, updates, syncedAt, { onBatch: options.onBatch });
   const unresolvedIds = rows.map((row) => row.id).filter((id) => !resolvedIds.has(id));
   return { updatedCount, resolvedIds: Array.from(resolvedIds), unresolvedIds };
 }
@@ -392,10 +400,10 @@ async function refreshIndexedWebflowImages(
   webflowImageIndex: WebflowTemplateImageIndex | null,
   syncedAt: string,
   changedTemplateIds: string[] = [],
-  options: { includeStale?: boolean } = {},
+  options: { includeStale?: boolean; onBatch?: SyncHeartbeat } = {},
 ): Promise<number> {
   const rows = await listTemplateImageRefreshRows(db, changedTemplateIds, { includeStale: options.includeStale });
-  const result = await resolveAndUpdateTemplateImages(db, rows, webflowImageIndex, syncedAt, 6);
+  const result = await resolveAndUpdateTemplateImages(db, rows, webflowImageIndex, syncedAt, 6, { onBatch: options.onBatch });
   return result.updatedCount;
 }
 
@@ -688,7 +696,7 @@ async function runFullSync(env: Env, heartbeat: SyncHeartbeat): Promise<SyncSumm
     Promise.all([
       backfillCreatorFieldsByName(env.DB, startedAt),
       backfillCreatorFieldsFromLookup(env.DB, lookups.creators, startedAt),
-      refreshIndexedWebflowImages(env.DB, webflowImageIndex, startedAt),
+      refreshIndexedWebflowImages(env.DB, webflowImageIndex, startedAt, [], { onBatch: heartbeat }),
     ]),
   );
   await heartbeat();
@@ -706,6 +714,9 @@ async function runFullSync(env: Env, heartbeat: SyncHeartbeat): Promise<SyncSumm
   };
 
   await setSyncCursor(env.DB, startedAt);
+  if (summary.indexed_records > 0 || summary.removed_records > 0 || summary.image_refreshed_records > 0 || summary.backfilled_records > 0) {
+    await bumpPublicSearchCacheVersion(env.DB, summary.mode);
+  }
   await recordSyncSummaryAndWarnings(env, summary, 'last_full_sync', warnings);
   return summary;
 }
@@ -724,6 +735,8 @@ const MAX_INCREMENTAL_RECORDS_PER_RUN = 600;
 const MAX_STALE_INCREMENTAL_FETCH_RECORDS_PER_RUN = 100;
 const MAX_STALE_INCREMENTAL_RECORDS_PER_RUN = 80;
 const INCREMENTAL_WRITE_BATCH_SIZE = 12;
+const RECENT_PUBLISHED_SWEEP_LOOKBACK_DAYS = 21;
+const RECENT_PUBLISHED_SWEEP_LIMIT = 50;
 
 function resolveSyncWindow(cursor: string, now: Date): { end: Date; until: string | undefined; isCaughtUp: boolean } {
   const end = new Date(Math.min(new Date(cursor).getTime() + MAX_SYNC_WINDOW_MS, now.getTime()));
@@ -740,12 +753,46 @@ function sourceLastModifiedTime(record: AirtableRecord<AirtableAssetFields>): st
   return typeof value === 'string' && value.trim().length > 0 ? value : null;
 }
 
+function recentPublishedSweepSinceDate(now: Date): string {
+  const since = new Date(now.getTime() - RECENT_PUBLISHED_SWEEP_LOOKBACK_DAYS * 24 * 60 * 60 * 1000);
+  return since.toISOString().slice(0, 10);
+}
+
 function templateLookupTargets(records: Array<AirtableRecord<AirtableAssetFields>>) {
   return records.map((record) => ({
     id: record.id,
     templateSlug: String(record.fields['🥞CMS Slug'] ?? record.fields['🥞CMS Slug (formula)'] ?? '').trim() || null,
     name: String(record.fields.Name ?? '').trim() || null,
   }));
+}
+
+async function fetchChangedRecentPublishedAssets(
+  env: Env,
+  now: Date,
+  alreadyQueuedRecords: Array<AirtableRecord<AirtableAssetFields>>,
+): Promise<Array<AirtableRecord<AirtableAssetFields>>> {
+  const queuedIds = new Set(alreadyQueuedRecords.map((record) => record.id));
+  const queuedSlugs = new Set(templateLookupTargets(alreadyQueuedRecords).map((target) => target.templateSlug).filter(Boolean));
+  const recentAssets = await fetchRecentlyPublishedTemplateAssets(
+    env,
+    recentPublishedSweepSinceDate(now),
+    RECENT_PUBLISHED_SWEEP_LIMIT,
+  );
+  const candidates = recentAssets.filter((record) => {
+    const target = templateLookupTargets([record])[0];
+    return !queuedIds.has(record.id) && (!target.templateSlug || !queuedSlugs.has(target.templateSlug));
+  });
+  if (candidates.length === 0) return [];
+
+  const missingOrStaleTargets = await filterMissingOrStaleTemplateLookupTargets(
+    env.DB,
+    candidates.map((record) => {
+      const target = templateLookupTargets([record])[0];
+      return { id: record.id, templateSlug: target.templateSlug, sourceLastModifiedTime: sourceLastModifiedTime(record) };
+    }),
+  );
+  const changedIds = new Set(missingOrStaleTargets.map((target) => target.id));
+  return candidates.filter((record) => changedIds.has(record.id));
 }
 
 function templateImageBackfillTargets(rows: TemplateImageRefreshRow[]) {
@@ -820,6 +867,7 @@ async function runIncrementalSync(env: Env, heartbeat: SyncHeartbeat): Promise<S
   let scannedWindows = 0;
   let boundedCursor: string | null = null;
   let hitStaleFetchLimit = false;
+  let recentPublishedRecords = 0;
 
   while (scannedWindows < MAX_EMPTY_SYNC_WINDOWS_PER_RUN) {
     const syncWindow = resolveSyncWindow(scanCursor, now);
@@ -852,20 +900,30 @@ async function runIncrementalSync(env: Env, heartbeat: SyncHeartbeat): Promise<S
     if (boundedCursor) windowEnd = new Date(boundedCursor);
   }
 
+  if (!hitStaleFetchLimit) {
+    const recentPublishedAssets = await fetchChangedRecentPublishedAssets(env, now, assets);
+    await heartbeat();
+    if (recentPublishedAssets.length > 0) {
+      assets.push(...recentPublishedAssets);
+      recentPublishedRecords = recentPublishedAssets.length;
+    }
+  }
+
   const toUpsert: TemplateDocumentInput[] = [];
   const toDelete: string[] = [];
   let webflowImageIndex: Awaited<ReturnType<typeof loadWebflowTemplateImageIndex>> = null;
 
   if (assets.length > 0) {
     const lookups = await loadLookupMaps(env);
-    const [loadedWebflowImageIndex, webflowDesigners] = isCaughtUp
-      ? await Promise.all([bestEffortWebflowTemplateImageIndex(env, warnings), bestEffortWebflowDesignerAvatars(env, warnings)])
-      : await Promise.all([
-          bestEffortTargetedWebflowTemplateImages(env, warnings, templateLookupTargets(assets), { onPage: heartbeat }).then((records) =>
-            buildWebflowTemplateImageIndexFromRecords(records),
-          ),
-          bestEffortTargetedWebflowDesignerAvatars(env, warnings, designerLookupTargets(assets, lookups), { onPage: heartbeat }),
-        ]);
+    const [loadedWebflowImageIndex, webflowDesigners] = await withPeriodicHeartbeat(
+      heartbeat,
+      Promise.all([
+        bestEffortTargetedWebflowTemplateImages(env, warnings, templateLookupTargets(assets), { onPage: heartbeat }).then((records) =>
+          buildWebflowTemplateImageIndexFromRecords(records),
+        ),
+        bestEffortTargetedWebflowDesignerAvatars(env, warnings, designerLookupTargets(assets, lookups), { onPage: heartbeat }),
+      ]),
+    );
     await heartbeat();
     webflowImageIndex = loadedWebflowImageIndex;
     const webflowDesignerIndex = buildWebflowDesignerAvatarIndex(webflowDesigners);
@@ -883,20 +941,7 @@ async function runIncrementalSync(env: Env, heartbeat: SyncHeartbeat): Promise<S
   if (toDelete.length > 0) await deleteTemplateDocumentsInChunks(env.DB, toDelete, heartbeat);
   if (toUpsert.length > 0) await upsertTemplateDocumentsInChunks(env.DB, toUpsert, heartbeat);
   await heartbeat();
-  const shouldRefreshIndexedImages = isCaughtUp;
-  if (shouldRefreshIndexedImages && !webflowImageIndex && !warnings.some((warning) => warning.source === 'webflow_template_image_index')) {
-    webflowImageIndex = await bestEffortWebflowTemplateImageIndex(env, warnings);
-    await heartbeat();
-  }
-  const imageRefreshedRecords =
-    shouldRefreshIndexedImages
-      ? await refreshIndexedWebflowImages(
-          env.DB,
-          webflowImageIndex,
-          startedAt,
-          toUpsert.map((document) => document.id),
-        )
-      : 0;
+  const imageRefreshedRecords = 0;
   await heartbeat();
 
   // Keep the frequent 5-minute incremental path limited to changed template rows.
@@ -918,9 +963,13 @@ async function runIncrementalSync(env: Env, heartbeat: SyncHeartbeat): Promise<S
     image_refreshed_records: imageRefreshedRecords,
     cursor: newCursor,
     skipped_empty_windows: skippedEmptyWindows,
+    recent_published_records: recentPublishedRecords,
   };
 
   await setSyncCursor(env.DB, newCursor);
+  if (summary.indexed_records > 0 || summary.removed_records > 0 || summary.image_refreshed_records > 0) {
+    await bumpPublicSearchCacheVersion(env.DB, summary.mode);
+  }
   await recordSyncSummaryAndWarnings(env, summary, 'last_incremental_sync', warnings);
   return summary;
 }
@@ -966,7 +1015,7 @@ export async function syncTemplateRecordsByIds(env: Env, recordIds: string[]): P
           webflowImageIndex,
           startedAt,
           documents.map((document) => document.id),
-          { includeStale: false },
+          { includeStale: false, onBatch: heartbeat },
         )
       : 0;
     await heartbeat();
@@ -990,6 +1039,9 @@ export async function syncTemplateRecordsByIds(env: Env, recordIds: string[]): P
       cursor: startedAt,
     };
 
+    if (summary.indexed_records > 0 || summary.removed_records > 0 || summary.image_refreshed_records > 0 || summary.backfilled_records > 0) {
+      await bumpPublicSearchCacheVersion(env.DB, summary.mode);
+    }
     await recordSyncSummaryAndWarnings(env, summary, 'last_record_sync', warnings);
     return summary;
   });
@@ -1017,10 +1069,10 @@ async function runImageUrlRefresh(env: Env, heartbeat: SyncHeartbeat): Promise<I
     const [refreshedImages, refreshedAvatars, backfilledAvatars, lookupBackfilledAvatars] = await withPeriodicHeartbeat(
       heartbeat,
       Promise.all([
-        updateTemplateImagesFromWebflow(env.DB, templateImages, startedAt),
-        updateCreatorAvatarsFromWebflow(env.DB, designerAvatars, startedAt),
-        backfillCreatorAvatars(env.DB, airtableFallbackCreators, startedAt, { overwriteExisting: true }),
-        backfillCreatorFieldsFromLookup(env.DB, lookups.creators, startedAt),
+        updateTemplateImagesFromWebflow(env.DB, templateImages, startedAt, { onBatch: heartbeat }),
+        updateCreatorAvatarsFromWebflow(env.DB, designerAvatars, startedAt, { onBatch: heartbeat }),
+        backfillCreatorAvatars(env.DB, airtableFallbackCreators, startedAt, { overwriteExisting: true, onBatch: heartbeat }),
+        backfillCreatorFieldsFromLookup(env.DB, lookups.creators, startedAt, { onBatch: heartbeat }),
       ]),
     );
     await heartbeat();
@@ -1057,9 +1109,9 @@ async function runImageUrlRefresh(env: Env, heartbeat: SyncHeartbeat): Promise<I
   const [refreshedImages, backfilledAvatars, lookupBackfilledAvatars] = await withPeriodicHeartbeat(
     heartbeat,
     Promise.all([
-      refreshTemplateImageUrls(env.DB, records, startedAt),
-      backfillCreatorAvatars(env.DB, lookups.creators, startedAt, { overwriteExisting: true }),
-      backfillCreatorFieldsFromLookup(env.DB, lookups.creators, startedAt),
+      refreshTemplateImageUrls(env.DB, records, startedAt, { onBatch: heartbeat }),
+      backfillCreatorAvatars(env.DB, lookups.creators, startedAt, { overwriteExisting: true, onBatch: heartbeat }),
+      backfillCreatorFieldsFromLookup(env.DB, lookups.creators, startedAt, { onBatch: heartbeat }),
     ]),
   );
   await heartbeat();
@@ -1212,7 +1264,9 @@ export async function backfillTemplateImages(
     const startedAt = nowIso();
     const requestedLimit = clamp(Math.floor(options.limit ?? IMAGE_BACKFILL_DEFAULT_LIMIT), 1, IMAGE_BACKFILL_MAX_LIMIT);
     const requestedTemplateSlugs = uniqueStrings((options.templateSlugs ?? []).map((slug) => slug.trim()).filter(Boolean));
-    const rows = await listTemplateImageBackfillRows(env.DB, requestedLimit, requestedTemplateSlugs);
+    const rows = await listTemplateImageBackfillRows(env.DB, requestedLimit, requestedTemplateSlugs, {
+      includeStable: requestedTemplateSlugs.length > 0,
+    });
     const warnings: SyncWarning[] = [];
     const webflowImageRecords =
       rows.length > 0

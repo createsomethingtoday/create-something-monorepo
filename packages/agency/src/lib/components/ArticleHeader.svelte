@@ -29,7 +29,7 @@
 		}
 	);
 
-	const formatDate = (dateString?: string) => {
+	const formatDate = (dateString: string | undefined = undefined) => {
 		if (!dateString) return '';
 		const date = new Date(dateString);
 		return date.toLocaleDateString('en-US', {

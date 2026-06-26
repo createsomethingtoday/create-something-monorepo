@@ -2084,8 +2084,10 @@
 
 	.log-legend {
 		display: flex;
+		flex-wrap: wrap;
 		gap: var(--space-md);
 		font-size: var(--text-caption);
+		max-width: 100%;
 	}
 
 	.legend-item {
@@ -2093,6 +2095,7 @@
 		align-items: center;
 		gap: var(--space-xs);
 		color: var(--color-fg-muted);
+		min-width: 0;
 	}
 
 	.legend-item.success {
@@ -2301,7 +2304,7 @@
 
 	.loop-principles {
 		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+		grid-template-columns: repeat(auto-fit, minmax(min(250px, 100%), 1fr));
 		gap: var(--space-md);
 	}
 
@@ -2312,6 +2315,7 @@
 		padding: var(--space-sm);
 		background: var(--color-bg-subtle);
 		border-radius: var(--radius-md);
+		min-width: 0;
 	}
 
 	.principle-icon {
@@ -2323,6 +2327,8 @@
 		font-size: var(--text-body-sm);
 		color: var(--color-fg-secondary);
 		line-height: 1.4;
+		min-width: 0;
+		overflow-wrap: anywhere;
 	}
 
 	/* Not Perfect Note */

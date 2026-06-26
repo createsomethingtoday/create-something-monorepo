@@ -116,6 +116,7 @@
 :global(.link) {
 	color: var(--color-fg-secondary);
 	text-decoration: underline;
+	overflow-wrap: anywhere;
 	transition: color var(--duration-micro) var(--ease-standard);
 }
 

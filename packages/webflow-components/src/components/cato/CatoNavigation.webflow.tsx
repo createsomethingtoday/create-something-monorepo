@@ -74,6 +74,36 @@ export default declareComponent(CatoNavigation, {
       name: 'Insights Home Link',
       tooltip: 'Optional override for the Insights Home link inside the mega menu.',
     }),
+    featureLabel: props.Text({
+      name: 'Mega Menu Feature Label',
+      defaultValue: 'Featured',
+    }),
+    featureTitle: props.Text({
+      name: 'Mega Menu Feature Title',
+      defaultValue: 'Resiliency Report Alerts',
+    }),
+    featureSummary: props.Text({
+      name: 'Mega Menu Feature Summary',
+      defaultValue: 'Active supply disruptions and market signals for care continuity.',
+    }),
+    featureCta: props.Text({
+      name: 'Mega Menu Feature CTA',
+      defaultValue: 'Explore Our Insights',
+    }),
+    featureHref: props.Text({
+      name: 'Mega Menu Feature URL',
+      defaultValue: '',
+      tooltip: 'Optional URL for the right-side mega-menu feature card. If blank, the Resiliency Report Alerts link is used.',
+    }),
+    featureItemsJson: props.Text({
+      name: 'Mega Menu Feature Items JSON',
+      defaultValue: '',
+      tooltip: 'Optional JSON array for the right-side feature list: [{ "title": "...", "resourceType": "..." }].',
+    }),
+    showFeatureItems: props.Boolean({
+      name: 'Show Mega Menu Feature Items',
+      defaultValue: true,
+    }),
     resiliencyLink: props.Link({
       name: 'Resiliency Report Alerts Link',
       tooltip: 'Preferred: select the Resiliency Report Alerts page used in the mega menu.',
@@ -81,10 +111,6 @@ export default declareComponent(CatoNavigation, {
     researchLink: props.Link({
       name: 'Cato Research Link',
       tooltip: 'Preferred: select the Cato Research page used in the mega menu.',
-    }),
-    whitepapersLink: props.Link({
-      name: 'Whitepapers Link',
-      tooltip: 'Preferred: select the Whitepapers page used in the mega menu.',
     }),
     newsroomLink: props.Link({
       name: 'Newsroom Link',

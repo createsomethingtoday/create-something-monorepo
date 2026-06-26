@@ -1,0 +1,33 @@
+# Living Research Transparency Template
+#
+# Use this block in .io papers, experiments, and capability contracts when a
+# claim should remain reviewable as public standards, platform behavior,
+# implementation evidence, or field sentiment changes.
+
+transparency:
+  claim_status: "hypothesis" # hypothesis | supported | validated | contested | superseded
+  confidence: "medium" # low | medium | high
+  evidence_grade: "field-signal" # official-docs | implementation-evidence | benchmark | market-signal | community-sentiment | field-signal | anecdotal
+  last_reviewed_at: "<YYYY-MM-DD>"
+  next_review_due: "<YYYY-MM-DD>"
+  review_owner: "<human-or-team-owner>"
+  primary_claim: "<the claim this paper, experiment, or contract currently makes>"
+  current_read: "<one or two sentences summarizing the current best interpretation>"
+  supports:
+    - "<source, implementation result, benchmark, trace, run, or field observation supporting the claim>"
+  counter_signals:
+    - "<credible limitation, counterexample, risk, or dissenting interpretation>"
+  open_questions:
+    - "<what would change confidence or update the conclusion>"
+  source_review:
+    - title: "<source or evidence title>"
+      url_or_path: "<https://... or repo/path>"
+      source_type: "official-doc" # official-doc | paper | benchmark | implementation-evidence | field-report | community-sentiment | internal-evidence
+      supports: "<which claim or subclaim it supports>"
+      freshness: "current" # current | watch | stale | replaced
+      reviewed_at: "<YYYY-MM-DD>"
+      notes: "<why this source matters or what changed>"
+  update_log:
+    - date: "<YYYY-MM-DD>"
+      change: "<what changed in the claim, wording, source set, or confidence>"
+      reason: "<new source, implementation result, correction, counter-signal, or scheduled review>"

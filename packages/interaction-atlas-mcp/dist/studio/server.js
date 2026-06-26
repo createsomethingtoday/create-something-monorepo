@@ -9,7 +9,7 @@ import { getAtlasStudioPalette } from './atlas.js';
 import { renderStudioHtml } from './html.js';
 import { healSessionProductionBindings } from './production-bindings.js';
 import { createWritebackProposal, exportWritebackProposalHandoffForSession, reviewWritebackProposalAction } from './writeback-proposals.js';
-import { acceptSuggestion, activateStoryStep, addEdge, addNode, addObservation, addStoryQuestion, advanceStoryStep, clearStoryFocus, createSession, exportSessionMarkdown, getSessionPath, listSessions, readSession, removeNode, setStoryFocus, updateNode, updateNodes } from './store.js';
+import { acceptSuggestion, activateStoryStep, addEdge, addNode, addObservation, addStoryQuestion, advanceStoryStep, clearStoryFocus, createSession, exportSessionMarkdown, getSessionPath, listSessions, readSession, removeNode, setStoryFocus, updateNode, updateEdge, updateNodes } from './store.js';
 import { tidyNodeUpdates } from './client/layout.js';
 const gzipAsync = promisify(gzip);
 async function readJson(request) {
@@ -307,8 +307,9 @@ export async function startStudioServer(options) {
             const tidyMatch = url.pathname.match(/^\/api\/sessions\/([^/]+)\/tidy$/);
             if (method === 'POST' && tidyMatch) {
                 const sessionId = decodeURIComponent(tidyMatch[1] ?? '');
+                const body = await readJson(request);
                 const session = await readSession(sessionId, cwd);
-                const updates = tidyNodeUpdates(session);
+                const updates = tidyNodeUpdates(session, { viewportWidth: body.viewportWidth });
                 const next = updates.length ? await updateNodes(sessionId, updates, cwd) : session;
                 sendJson(response, 200, { session: next, updates });
                 return;
@@ -317,6 +318,12 @@ export async function startStudioServer(options) {
             if (method === 'POST' && addEdgeMatch) {
                 const body = await readJson(request);
                 sendJson(response, 201, await addEdge(decodeURIComponent(addEdgeMatch[1] ?? ''), body, cwd));
+                return;
+            }
+            const updateEdgeMatch = url.pathname.match(/^\/api\/sessions\/([^/]+)\/edges\/([^/]+)$/);
+            if (method === 'PATCH' && updateEdgeMatch) {
+                const body = await readJson(request);
+                sendJson(response, 200, await updateEdge(decodeURIComponent(updateEdgeMatch[1] ?? ''), decodeURIComponent(updateEdgeMatch[2] ?? ''), body, cwd));
                 return;
             }
             const observationMatch = url.pathname.match(/^\/api\/sessions\/([^/]+)\/observations$/);

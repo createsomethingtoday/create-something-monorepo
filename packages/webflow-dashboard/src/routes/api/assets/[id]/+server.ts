@@ -2,6 +2,7 @@ import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { invalidateAssetsCache } from '$lib/server/assets-cache';
 import { getAirtableClient, type AssetUpdateData } from '$lib/server/airtable';
+import { shouldCreateAssetVersionForChanges } from '$lib/utils/asset-version-changes';
 import { sanitizeLongDescriptionHtml } from '@create-something/webflow-dashboard-core/long-description';
 
 function assertOptionalString(
@@ -36,6 +37,16 @@ function assertOptionalStringArray(
   }
 }
 
+function assertOptionalAssetVersionChanges(
+  value: unknown,
+  message: string
+): asserts value is Record<string, unknown> | string | undefined {
+  if (value === undefined) return;
+  if (typeof value === 'string') return;
+  if (typeof value === 'object' && value !== null && !Array.isArray(value)) return;
+  throw error(400, message);
+}
+
 function validateAssetUpdateBody(body: AssetUpdateData): void {
   assertOptionalString(body.name, 'Name must be a string');
   assertOptionalString(body.description, 'Description must be a string');
@@ -61,7 +72,10 @@ function validateAssetUpdateBody(body: AssetUpdateData): void {
   assertOptionalString(body.visibility, 'Visibility must be a string');
   assertOptionalStringArray(body.appCategory, 'App categories must be an array of strings');
   assertOptionalString(body.creatorName, 'Creator name must be a string');
-  assertOptionalString(body.creatorWebsite, 'Creator website must be a string');
+  assertOptionalString(
+    body.creatorWebsite,
+    'Creator Webflow account email override must be a string'
+  );
   assertOptionalString(body.creatorContactEmail, 'Creator contact email must be a string');
   assertOptionalStringArray(body.appFeaturesOverview, 'App features must be an array of strings');
   assertOptionalString(body.appDeveloperNotes, 'Developer notes must be a string');
@@ -75,6 +89,10 @@ function validateAssetUpdateBody(body: AssetUpdateData): void {
   assertOptionalStringArray(
     body.appScreenshotAltTexts,
     'App screenshot alt texts must be an array of strings'
+  );
+  assertOptionalAssetVersionChanges(
+    body.assetVersionChanges,
+    'Asset version changes must be a structured object or string'
   );
 }
 
@@ -161,29 +179,51 @@ export const PUT: RequestHandler = async ({ params, request, locals, platform })
 
   const airtable = getAirtableClient(platform.env);
 
-  // Verify ownership
-  const isOwner = await airtable.verifyAssetOwnership(params.id, locals.user.email);
+  // Fetch the original record once so version history can keep the pre-change snapshot.
+  const { asset: originalAsset, isOwner } = await airtable.getAssetForOwner(
+    params.id,
+    locals.user.email
+  );
+  if (!originalAsset) {
+    throw error(404, 'Asset not found');
+  }
   if (!isOwner) {
     throw error(403, 'You do not have permission to edit this asset');
   }
 
   const body = normalizeAssetUpdateBody((await request.json()) as AssetUpdateData);
   validateAssetUpdateBody(body);
+  const { assetVersionChanges, ...updateBody } = body;
 
   // Check name uniqueness if name is being changed
-  if (body.name) {
-    const nameCheck = await airtable.checkAssetNameUniqueness(body.name, params.id);
+  if (updateBody.name) {
+    const nameCheck = await airtable.checkAssetNameUniqueness(updateBody.name, params.id);
     if (!nameCheck.unique) {
       throw error(400, 'An asset with this name already exists');
     }
   }
 
-  const updatedAsset = await airtable.updateAssetWithImages(params.id, body);
+  const updatedAsset = await airtable.updateAssetWithImages(params.id, updateBody);
   if (!updatedAsset) {
     throw error(500, 'Failed to update asset');
   }
 
+  let versionWarning: string | undefined;
+  if (
+    assetVersionChanges !== undefined &&
+    shouldCreateAssetVersionForChanges(assetVersionChanges)
+  ) {
+    const version = await airtable.createAssetVersionFromAsset(
+      originalAsset,
+      locals.user.email,
+      assetVersionChanges
+    );
+    if (!version) {
+      versionWarning = 'Asset updated, but version history could not be recorded.';
+    }
+  }
+
   await invalidateAssetsCache(platform.env.SESSIONS, locals.user.email);
 
-  return json({ asset: updatedAsset });
+  return json({ asset: updatedAsset, versionWarning });
 };

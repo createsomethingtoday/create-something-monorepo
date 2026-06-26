@@ -1,10 +1,38 @@
 # CREATE SOMETHING Agency
 
-**createsomething.agency** — the Workflow Trust Layer for technical operators
+**createsomething.agency** — Delegated Work Control for technical operators
 
 We make one business workflow safe to delegate.
 
 ---
+
+## Positioning Hierarchy
+
+`.agency` is the public service surface for the larger CREATE SOMETHING thesis:
+
+| Name | Job |
+|------|-----|
+| **Delegated Work Control** | Durable category: what can run, what waits, what stops, who owns the decision, and what evidence proves the work. |
+| **Workflow Trust Layer** | Current service language for making one workflow safe to delegate. |
+| **Policy OS** | Canonical paid package for governed execution, approval rules, runbooks, golden tasks, and recurring tuning. |
+| **MCP-only** | Constrained discovery or compliance wedge, not the default paid offer. |
+
+Do not reposition `.agency` as a generic AI agency, prompt shop, model reseller,
+or Webflow implementation shop. The durable claim is:
+
+> CREATE SOMETHING makes delegated work trustworthy.
+
+## Ona Foundation
+
+Ona is the communication foundation for `.agency`, not the category to copy.
+Use the pattern underneath Ona's public surface: one clear category claim, one
+operator outcome, direct CTAs, and a concrete proof object. On `.agency`, that
+proof object is the delegated-work boundary: what can run, what waits, what
+stops, who owns the decision, and what evidence proves the work.
+
+Future edits should keep public language easy to inspect before it becomes
+technical. Explain the workflow first, then the stack. Do not add decorative
+iconography or unverified market claims to make the page feel bigger.
 
 ## The Creation Moat
 
@@ -17,8 +45,9 @@ Neither Claude Desktop, Claude Cowork, nor Codex can create MCP servers from wit
 - Integration experience (data mapping, security boundaries)
 - Workflow control design (Skills + MCP with trust boundaries)
 
-This is the creation expertise `.agency` turns into a governed operating path:
-named objects, scoped actions, approval states, stop conditions, and evidence.
+This is the creation expertise `.agency` turns into Delegated Work Control:
+named objects, scoped actions, approval states, stop conditions, owners, and
+evidence.
 
 ---
 
@@ -39,6 +68,11 @@ The public Atlas canvas is the give-first surface for prospects. It lets a visit
 start from a concrete industry workflow, edit the owner/systems/approval boundary,
 and carry the summary into booking without exposing production systems.
 
+The broader visual standard lives in
+`docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md`: workflow, governance, and
+agent-behavior visuals should default to Atlas-style canvases before one-off
+graphics.
+
 Current starter maps:
 
 | Starter | Industry | Boundary to preserve |
@@ -57,10 +91,58 @@ the prospect sees the action boundary before the sales conversation.
 Implementation surface:
 
 - `src/lib/atlas/public.ts` owns starter-map data and normalization.
+- `createPublicAtlasGraphArtifact(...)` exports the renderer-independent Atlas
+  graph contract for humans and agents: semantic node roles, relationship labels,
+  readiness, and renderer guidance.
+- `createPublicAtlasStoryArtifact(...)` turns the same graph into deterministic
+  story chapters for static canvases, scrollytelling, article visuals, social
+  cards, and accessibility summaries.
+- `src/lib/components/PublicAtlasStoryCanvas.svelte` renders the static story
+  artifact as a node-map presentation surface without invoking the mapping agent.
 - `src/lib/components/PublicAtlasCanvas.svelte` renders the selector and persists
   the chosen map into booking context.
 - `test/public-atlas-starter-maps.test.ts` verifies coverage and policy-boundary
   shape.
+- `test/public-atlas-route.test.ts` verifies that `/atlas` and `/services`
+  present the story canvas before the editable public canvas, and that
+  `/methodology`, `/stack`, and `/products` can use the same story surface
+  without mounting the editable canvas.
+
+Story-canvas usage contract:
+
+- Pass an explicit `storyId` on route-level uses so SVG marker IDs and heading
+  references remain stable if multiple story canvases appear on the same page.
+- Keep the story canvas before the editable canvas when both are present. The
+  story teaches the workflow language; the editable canvas collects booking
+  context.
+- Keep motion semantics in markup, not visible copy. Chapter motion cues belong
+  in `data-motion-cue` attributes so animations can target them without exposing
+  implementation labels to readers.
+- Canvas copy should follow the Ona.com communication pattern: simple operator
+  language, visible proof, and "set the direction" framing before technical
+  implementation detail.
+- Do not expose renderer names such as Svelte Flow in public copy. The product language is Atlas canvas and Atlas graph.
+
+Renderer rule:
+
+- React Flow is the primary renderer for workflow education, intake, editing,
+  accessibility, and agent-operable maps.
+- Static story canvases are the fallback for marketing, articles, social cards,
+  and non-JS presentation.
+- Sigma/Cosmograph are reserved for large read-only network exploration. Do not
+  move the canonical workflow contract into those renderers; adapt them from the
+  Atlas graph artifact when graph scale requires WebGL.
+- Story canvases should animate only chapter focus, handoff traces, stop
+  boundaries, and proof reveals. The `accessibilitySummary` must remain complete
+  when motion is disabled.
+- `/atlas` presents the read-only story canvas before the editable public Atlas
+  canvas so visitors can understand the workflow language before using the agent.
+- `/methodology` uses a read-only story canvas to explain the method without
+  collecting booking context.
+- `/stack` uses a read-only story canvas to explain the ownership and vendor
+  boundary without collecting booking context.
+- `/products` uses a read-only story canvas to explain how proof becomes a
+  governed workflow boundary without collecting booking context.
 
 ---
 
@@ -87,9 +169,10 @@ Implementation surface:
 ## Positioning
 
 **Before**: "We build websites/apps with modern templates"
-**After**: "We make one workflow safe to delegate"
+**After**: "We make delegated work trustworthy"
 
-Templates are table stakes. The moat is creation expertise applied to specific domains.
+Templates are table stakes. The moat is workflow-boundary design, creation
+expertise, proof patterns, and policy artifacts applied to specific domains.
 
 ---
 
@@ -169,6 +252,18 @@ packages/agency/
 | Validation surfaces | Svelte check output, Cloudflare Pages build output, route preview, sales content review |
 | UI validation path | `/`, `/services` |
 | Escalation rule | stop if Auth0, D1, or client-delivery data is required and cannot be reproduced from local fixtures or Infisical-backed environment |
+
+## Capture Review Admin API
+
+Operator-only lead and signup review lives at `/api/admin/capture`.
+
+- `GET /api/admin/capture?limit=100` returns newsletter, contact, lead, and public Atlas capture rows with computed classification and recommended action.
+- `GET /api/admin/capture?include=all&limit=100` includes operational account, billing, legacy contact, and MCP entitlement context.
+- Add `surface`, `classification`, `action`, `reviewed`, and `q` query params to narrow either the JSON response or `/admin/capture` operator view.
+- GET responses include `decision_storage.available`; the UI disables decision writes until migration 0029 is applied.
+- `POST /api/admin/capture` stores an operator decision in `capture_review_decisions` without mutating the original capture rows.
+- `DELETE /api/admin/capture` with `surface` and `source_id` clears a stored operator decision so the row returns to computed classification.
+- Apply `migrations/0029_capture_review_decisions.sql` before using durable decisions in production.
 
 ## Sales Assets
 

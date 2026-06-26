@@ -10,10 +10,10 @@ REVIEWER="${REVIEWER:-all}"
 SESSION_RESOLVE_URL="${SESSION_RESOLVE_URL:-https://id.createsomething.space/v1/mcp/sessions/resolve}"
 BUNDLE_NAME="${BUNDLE_NAME:-webflow-marketplace-review-phase-a}"
 DISCOVERY_PACK="${DISCOVERY_PACK:-webflow-marketplace-review-phase-a}"
-ENABLED_SERVERS="${ENABLED_SERVERS:-webflow-template-review-mcp}"
+ENABLED_SERVERS="${ENABLED_SERVERS:-webflow-template-review-mcp,webflow-reviewer-exceptions-mcp}"
 DISABLED_SERVERS="${DISABLED_SERVERS:-webflow-local}"
 DISCOVERY_ACTIVE_SERVERS="${DISCOVERY_ACTIVE_SERVERS:-$ENABLED_SERVERS}"
-DISCOVERY_MAX_PROXY_TOOLS="${DISCOVERY_MAX_PROXY_TOOLS:-18}"
+DISCOVERY_MAX_PROXY_TOOLS="${DISCOVERY_MAX_PROXY_TOOLS:-24}"
 RATE_LIMIT_MAX_CALLS="${RATE_LIMIT_MAX_CALLS:-120}"
 RATE_LIMIT_WINDOW_SECONDS="${RATE_LIMIT_WINDOW_SECONDS:-60}"
 QUOTA_MAX_PROXY_CALLS_PER_PERIOD="${QUOTA_MAX_PROXY_CALLS_PER_PERIOD:-10000}"
@@ -313,6 +313,23 @@ verify_one() {
         "name":"hub_search_proxy_tools",
         "arguments":{
           "serverName":"webflow-template-review-mcp",
+          "limit":20
+        }
+      }
+    }' | jq .
+
+  curl_with_url "$mcp_url" -sS -X POST \
+    "${auth_headers[@]}" \
+    -H "Content-Type: application/json" \
+    -H "Accept: application/json, text/event-stream" \
+    -d '{
+      "jsonrpc":"2.0",
+      "id":"phase-a-exceptions-search",
+      "method":"tools/call",
+      "params":{
+        "name":"hub_search_proxy_tools",
+        "arguments":{
+          "serverName":"webflow-reviewer-exceptions-mcp",
           "limit":20
         }
       }

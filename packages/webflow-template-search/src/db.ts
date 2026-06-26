@@ -17,6 +17,14 @@ export interface TemplateImageUpdateInput {
   thumbnailImageSecondaryUrl: string | null;
 }
 
+export interface TemplateLookupTarget {
+  id: string;
+  templateSlug: string | null;
+  sourceLastModifiedTime?: string | null;
+}
+
+type BatchProgress = () => Promise<void>;
+
 const TEMPLATE_IMAGE_REFRESH_SELECT = `SELECT id, template_slug AS templateSlug, name, listing_url AS listingUrl, thumbnail_image_url AS thumbnailImageUrl, thumbnail_image_secondary_url AS thumbnailImageSecondaryUrl
        FROM template_documents`;
 
@@ -30,6 +38,22 @@ const TEMP_ATTACHMENT_IMAGE_WHERE = `thumbnail_image_url LIKE '%airtableusercont
           OR thumbnail_image_url LIKE '%dl.airtable.com%'
           OR thumbnail_image_secondary_url LIKE '%airtableusercontent.com%'
           OR thumbnail_image_secondary_url LIKE '%dl.airtable.com%'`;
+
+async function runStatementBatches(
+  db: D1Database,
+  statements: D1PreparedStatement[],
+  options: { onBatch?: BatchProgress } = {},
+): Promise<number> {
+  let totalChanges = 0;
+  for (const group of chunk(statements, 50)) {
+    const results = await db.batch(group);
+    for (const result of results) {
+      totalChanges += result.meta?.changes ?? 0;
+    }
+    await options.onBatch?.();
+  }
+  return totalChanges;
+}
 
 const IMAGE_BACKFILL_ATTEMPT_RETRY_AFTER_MS = 6 * 60 * 60 * 1000;
 const STALE_IMAGE_REFRESH_LIMIT = 24;
@@ -600,6 +624,7 @@ export async function refreshTemplateImageUrls(
   db: D1Database,
   records: Array<{ id: string; thumbnailImageUrl: string | null; thumbnailImageSecondaryUrl: string | null; carouselImageUrls: string[] }>,
   syncedAt: string,
+  options: { onBatch?: BatchProgress } = {},
 ): Promise<number> {
   if (records.length === 0) return 0;
 
@@ -622,15 +647,7 @@ export async function refreshTemplateImageUrls(
       ),
   );
 
-  let totalChanges = 0;
-  for (const group of chunk(statements, 50)) {
-    const results = await db.batch(group);
-    for (const result of results) {
-      totalChanges += result.meta?.changes ?? 0;
-    }
-  }
-
-  return totalChanges;
+  return runStatementBatches(db, statements, options);
 }
 
 // Bulk-update thumbnail and carousel URLs sourced from stable Webflow CDN URLs.
@@ -640,6 +657,7 @@ export async function updateTemplateImagesFromWebflow(
   db: D1Database,
   records: WebflowTemplateImageRecord[],
   syncedAt: string,
+  options: { onBatch?: BatchProgress } = {},
 ): Promise<number> {
   if (records.length === 0) return 0;
 
@@ -771,15 +789,7 @@ export async function updateTemplateImagesFromWebflow(
     }
   }
 
-  let totalChanges = 0;
-  for (const group of chunk(statements, 50)) {
-    const results = await db.batch(group);
-    for (const result of results) {
-      totalChanges += result.meta?.changes ?? 0;
-    }
-  }
-
-  return totalChanges;
+  return runStatementBatches(db, statements, options);
 }
 
 // Bulk-update creator profile URLs and avatar URLs sourced from Webflow CMS.
@@ -789,7 +799,7 @@ export async function updateCreatorAvatarsFromWebflow(
   db: D1Database,
   records: WebflowDesignerAvatarRecord[],
   syncedAt: string,
-  options: { matchByName?: boolean; forceMatchByName?: boolean } = {},
+  options: { matchByName?: boolean; forceMatchByName?: boolean; onBatch?: BatchProgress } = {},
 ): Promise<number> {
   if (records.length === 0) return 0;
 
@@ -1017,15 +1027,7 @@ export async function updateCreatorAvatarsFromWebflow(
     }
   }
 
-  let totalChanges = 0;
-  for (const group of chunk(statements, 50)) {
-    const results = await db.batch(group);
-    for (const result of results) {
-      totalChanges += result.meta?.changes ?? 0;
-    }
-  }
-
-  return totalChanges;
+  return runStatementBatches(db, statements, options);
 }
 
 // Some template rows have a creator display name but no linked creator record ID.
@@ -1118,7 +1120,7 @@ export async function backfillCreatorFieldsFromLookup(
   db: D1Database,
   creators: Map<string, CreatorLookupValue>,
   syncedAt: string,
-  options: { documentIds?: string[] } = {},
+  options: { documentIds?: string[]; onBatch?: BatchProgress } = {},
 ): Promise<number> {
   if (creators.size === 0) return 0;
   const uniqueDocumentIds = Array.from(new Set((options.documentIds ?? []).filter(Boolean)));
@@ -1210,15 +1212,7 @@ export async function backfillCreatorFieldsFromLookup(
 
   if (statements.length === 0) return 0;
 
-  let totalChanges = 0;
-  for (const group of chunk(statements, 50)) {
-    const results = await db.batch(group);
-    for (const result of results) {
-      totalChanges += result.meta?.changes ?? 0;
-    }
-  }
-
-  return totalChanges;
+  return runStatementBatches(db, statements, options);
 }
 
 // Creator avatar/profile URL updates in Airtable do not bump the template's LMT,
@@ -1228,7 +1222,7 @@ export async function backfillCreatorAvatars(
   db: D1Database,
   creators: Map<string, CreatorLookupValue>,
   syncedAt: string,
-  options: { overwriteExisting?: boolean } = {},
+  options: { overwriteExisting?: boolean; onBatch?: BatchProgress } = {},
 ): Promise<number> {
   if (creators.size === 0) return 0;
 
@@ -1345,15 +1339,7 @@ export async function backfillCreatorAvatars(
 
   if (statements.length === 0) return 0;
 
-  let totalChanges = 0;
-  for (const group of chunk(statements, 50)) {
-    const results = await db.batch(group);
-    for (const result of results) {
-      totalChanges += result.meta?.changes ?? 0;
-    }
-  }
-
-  return totalChanges;
+  return runStatementBatches(db, statements, options);
 }
 
 export async function listTemplateImageRefreshRows(
@@ -1401,7 +1387,7 @@ export async function listTemplateImageBackfillRows(
   db: D1Database,
   limit: number,
   templateSlugs: string[] = [],
-  options: { now?: string; retryAfterMs?: number } = {},
+  options: { now?: string; retryAfterMs?: number; includeStable?: boolean } = {},
 ): Promise<TemplateImageRefreshRow[]> {
   const uniqueTemplateSlugs = Array.from(new Set(templateSlugs.map((slug) => slug.trim()).filter(Boolean)));
   if (uniqueTemplateSlugs.length > 0) {
@@ -1409,7 +1395,7 @@ export async function listTemplateImageBackfillRows(
       .prepare(
         `${TEMPLATE_IMAGE_REFRESH_SELECT}
          WHERE template_slug IN (${placeholderList(uniqueTemplateSlugs.length)})
-           AND (${STALE_IMAGE_WHERE})
+           ${options.includeStable ? '' : `AND (${STALE_IMAGE_WHERE})`}
          ORDER BY is_featured DESC, COALESCE(popularity_score, 0) DESC, COALESCE(source_last_modified_time, '') DESC
          LIMIT ?`,
       )
@@ -1485,6 +1471,7 @@ export async function updateTemplateDocumentImages(
   db: D1Database,
   updates: TemplateImageUpdateInput[],
   syncedAt = nowIso(),
+  options: { onBatch?: BatchProgress } = {},
 ): Promise<number> {
   if (updates.length === 0) return 0;
 
@@ -1496,9 +1483,7 @@ export async function updateTemplateDocumentImages(
       .bind(update.thumbnailImageUrl, update.thumbnailImageSecondaryUrl, syncedAt, update.id),
   );
 
-  for (const group of chunk(statements, 50)) {
-    await db.batch(group);
-  }
+  await runStatementBatches(db, statements, options);
 
   return updates.length;
 }
@@ -1549,6 +1534,78 @@ export async function setSyncCursor(db: D1Database, cursor: string, key = 'airta
     )
     .bind(key, JSON.stringify({ cursor }), nowIso())
     .run();
+}
+
+export async function getPublicSearchCacheVersion(db: D1Database, fallback: string): Promise<string> {
+  const row = await db.prepare('SELECT value_json FROM sync_state WHERE key = ?').bind('public_search_cache_version').first<{ value_json: string }>();
+  if (!row?.value_json) return fallback;
+
+  const parsed = parseJson(row.value_json);
+  if (!parsed || typeof parsed !== 'object') return fallback;
+  const version = (parsed as { version?: unknown }).version;
+  return typeof version === 'string' && version.trim().length > 0 ? version : fallback;
+}
+
+export async function bumpPublicSearchCacheVersion(db: D1Database, reason: string): Promise<string> {
+  const updatedAt = nowIso();
+  const version = `${updatedAt}:${reason}`;
+  await db
+    .prepare(
+      'INSERT INTO sync_state (key, value_json, updated_at) VALUES (?, ?, ?) ON CONFLICT(key) DO UPDATE SET value_json = excluded.value_json, updated_at = excluded.updated_at',
+    )
+    .bind('public_search_cache_version', JSON.stringify({ version, reason }), updatedAt)
+    .run();
+  return version;
+}
+
+function isSourceNewer(nextSourceLastModifiedTime: string | null | undefined, currentSourceLastModifiedTime: string | null): boolean {
+  if (!nextSourceLastModifiedTime) return false;
+  if (!currentSourceLastModifiedTime) return true;
+  const nextTime = Date.parse(nextSourceLastModifiedTime);
+  const currentTime = Date.parse(currentSourceLastModifiedTime);
+  if (!Number.isFinite(nextTime) || !Number.isFinite(currentTime)) return nextSourceLastModifiedTime > currentSourceLastModifiedTime;
+  return nextTime > currentTime;
+}
+
+export async function filterMissingOrStaleTemplateLookupTargets(
+  db: D1Database,
+  targets: TemplateLookupTarget[],
+): Promise<TemplateLookupTarget[]> {
+  const uniqueTargets = Array.from(
+    new Map(targets.filter((target) => target.id || target.templateSlug).map((target) => [target.id, target])).values(),
+  );
+  if (uniqueTargets.length === 0) return [];
+
+  const ids = uniqueTargets.map((target) => target.id).filter(Boolean);
+  const slugs = uniqueTargets.map((target) => target.templateSlug).filter((slug): slug is string => Boolean(slug));
+  const clauses: string[] = [];
+  const binds: string[] = [];
+  if (ids.length > 0) {
+    clauses.push(`id IN (${placeholderList(ids.length)})`);
+    binds.push(...ids);
+  }
+  if (slugs.length > 0) {
+    clauses.push(`template_slug IN (${placeholderList(slugs.length)})`);
+    binds.push(...slugs);
+  }
+  if (clauses.length === 0) return uniqueTargets;
+
+  const result = await db
+    .prepare(
+      `SELECT id, template_slug AS templateSlug, source_last_modified_time AS sourceLastModifiedTime
+       FROM template_documents
+       WHERE ${clauses.join(' OR ')}`,
+    )
+    .bind(...binds)
+    .all<{ id: string; templateSlug: string | null; sourceLastModifiedTime: string | null }>();
+  const existingById = new Map((result.results ?? []).map((row) => [row.id, row]));
+  const existingBySlug = new Map((result.results ?? []).filter((row) => row.templateSlug).map((row) => [row.templateSlug, row]));
+
+  return uniqueTargets.filter((target) => {
+    const existing = existingById.get(target.id) ?? (target.templateSlug ? existingBySlug.get(target.templateSlug) : undefined);
+    if (!existing) return true;
+    return isSourceNewer(target.sourceLastModifiedTime, existing.sourceLastModifiedTime);
+  });
 }
 
 export async function recordSyncSummary(db: D1Database, summary: unknown, key: string): Promise<void> {

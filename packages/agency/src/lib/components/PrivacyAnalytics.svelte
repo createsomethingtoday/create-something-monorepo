@@ -13,18 +13,21 @@
     userId?: string;
     userOptedOut?: boolean;
     globalMetadata?: Record<string, unknown>;
+    compactPrompt?: boolean;
   }
 
   let {
     property = 'agency',
     userId = undefined,
     userOptedOut = false,
-    globalMetadata = undefined
+    globalMetadata = undefined,
+    compactPrompt = false
   }: Props = $props();
 
   let mounted = $state(false);
   let analyticsAllowed = $state(false);
   let showPanel = $state(false);
+  let compactPromptActive = $state(false);
   let consentState = $state<ConsentState | null>(null);
 
   const hasStoredChoice = $derived(consentState !== null);
@@ -35,7 +38,8 @@
   onMount(() => {
     consentState = getConsentState();
     analyticsAllowed = Boolean(consentState?.analytics) && !userOptedOut;
-    showPanel = !consentState && !userOptedOut;
+    compactPromptActive = compactPrompt && !consentState && !userOptedOut;
+    showPanel = !consentState && !userOptedOut && !compactPromptActive;
     mounted = true;
   });
 
@@ -43,6 +47,12 @@
     consentState = updateAnalyticsConsent(analytics);
     analyticsAllowed = analytics && !userOptedOut;
     showPanel = false;
+    compactPromptActive = false;
+  }
+
+  function openPrivacyPanel() {
+    compactPromptActive = false;
+    showPanel = true;
   }
 </script>
 
@@ -51,7 +61,11 @@
 {/if}
 
 {#if mounted}
-  <aside class="privacy-choice" aria-label="Privacy choices">
+  <aside
+    class="privacy-choice"
+    class:privacy-choice--compact={compactPromptActive}
+    aria-label="Privacy choices"
+  >
     {#if showPanel}
       <div class="privacy-panel" role="dialog" aria-modal="false" aria-labelledby="privacy-title">
         <div class="privacy-panel__copy">
@@ -76,12 +90,21 @@
           </button>
         </div>
       </div>
+    {:else if compactPromptActive}
+      <button
+        type="button"
+        class="privacy-pill privacy-pill--compact"
+        aria-expanded={showPanel}
+        onclick={openPrivacyPanel}
+      >
+        <span>Privacy choices</span>
+      </button>
     {:else}
       <button
         type="button"
         class="privacy-pill"
         aria-expanded={showPanel}
-        onclick={() => (showPanel = true)}
+        onclick={openPrivacyPanel}
       >
         <span>{statusLabel}</span>
         {#if hasStoredChoice}
@@ -206,6 +229,17 @@
     font-size: 0.72rem;
   }
 
+  .privacy-choice--compact {
+    max-width: max-content;
+  }
+
+  .privacy-pill--compact {
+    min-height: 1.7rem;
+    padding: 0.28rem 0.5rem;
+    box-shadow: 0 6px 18px rgba(10, 14, 25, 0.1);
+    font-size: 0.68rem;
+  }
+
   .privacy-pill__sub {
     color: var(--color-clear-onyx, #0a0e19);
     font-family: var(--font-mono);
@@ -230,6 +264,11 @@
       bottom: max(0.5rem, env(safe-area-inset-bottom));
       left: max(0.5rem, env(safe-area-inset-left));
       max-width: none;
+    }
+
+    .privacy-choice--compact {
+      left: auto;
+      max-width: max-content;
     }
 
     .privacy-panel {
@@ -288,6 +327,10 @@
 
     .privacy-pill > span:first-child {
       display: none;
+    }
+
+    .privacy-pill--compact > span:first-child {
+      display: inline;
     }
 
     .privacy-pill__sub {

@@ -1,0 +1,78 @@
+{
+  "version": 1,
+  "status": "pending-dify-studio-registration",
+  "owner": "create-something",
+  "created_at": "2026-06-23",
+  "registry_server": {
+    "id": "webflow-reviewer-exceptions-mcp",
+    "transport": "http",
+    "url": "https://webflow-reviewer-exceptions-mcp.createsomething.workers.dev/mcp",
+    "description": "Standalone read/write reviewer exception memory MCP for template-review agents and Dify external knowledge retrieval",
+    "tags": ["webflow", "review", "airtable", "templates", "knowledge", "cs"],
+    "catalog_exposure_mode": "direct",
+    "estimated_tool_count": 7
+  },
+  "dify_mcp_server": {
+    "server_id": "webflow-reviewer-exceptions",
+    "display_name": "Webflow Reviewer Exceptions",
+    "transport": "http",
+    "url": "https://webflow-reviewer-exceptions-mcp.createsomething.workers.dev/mcp",
+    "auth": {
+      "type": "bearer",
+      "infisical": {
+        "environment": "prod",
+        "path": "/webflow-reviewer-exceptions-mcp",
+        "secret_key": "MCP_BEARER_TOKEN"
+      }
+    }
+  },
+  "dify_external_knowledge": {
+    "knowledge_id": "reviewer-exceptions",
+    "url": "https://webflow-reviewer-exceptions-mcp.createsomething.workers.dev/retrieval",
+    "auth": {
+      "type": "bearer",
+      "infisical": {
+        "environment": "prod",
+        "path": "/webflow-reviewer-exceptions-mcp",
+        "secret_key": "DIFY_EXTERNAL_KNOWLEDGE_API_KEY"
+      }
+    },
+    "retrieval_gate": {
+      "include_in_dify_retrieval": true,
+      "knowledge_status": ["Approved", "Active"],
+      "not_expired": true
+    }
+  },
+  "dify_studio_steps": [
+    "Open Dify Studio -> Tools -> MCP.",
+    "Create an HTTP MCP server card with server ID webflow-reviewer-exceptions.",
+    "Set the MCP URL to https://webflow-reviewer-exceptions-mcp.createsomething.workers.dev/mcp.",
+    "Configure bearer auth from Infisical prod:/webflow-reviewer-exceptions-mcp:MCP_BEARER_TOKEN.",
+    "Refresh/discover tools in Dify Studio.",
+    "Add the reviewer-exceptions external knowledge endpoint with knowledge_id reviewer-exceptions and bearer auth from Infisical prod:/webflow-reviewer-exceptions-mcp:DIFY_EXTERNAL_KNOWLEDGE_API_KEY.",
+    "Roll out through template-review Hub discovery first; do not add to app-review agents until the later app-agent rollout."
+  ],
+  "inventory_fragment_after_tool_discovery": {
+    "webflow-reviewer-exceptions": {
+      "display_name": "Webflow Reviewer Exceptions",
+      "source_mcp_registry_server": "webflow-reviewer-exceptions-mcp",
+      "transport": "http",
+      "url": "https://webflow-reviewer-exceptions-mcp.createsomething.workers.dev/mcp",
+      "auth": {
+        "type": "bearer",
+        "infisical": {
+          "environment": "prod",
+          "path": "/webflow-reviewer-exceptions-mcp",
+          "secret_key": "MCP_BEARER_TOKEN"
+        }
+      },
+      "tools": []
+    }
+  },
+  "notes": [
+    "This is a separate MCP, not part of webflow-app-review-mcp.",
+    "Template-review Hub discovery includes this server first; app-review rollout is intentionally deferred.",
+    "Agents can create, update, and delete exception records. Records become Dify-retrievable when Include in Dify Retrieval is true, Knowledge Status is Approved or Active, and the record is not expired.",
+    "Keep secret values in Infisical only; this artifact stores references, not values."
+  ]
+}

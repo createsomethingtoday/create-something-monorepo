@@ -14,8 +14,8 @@
     "@create-something/observability": "workspace:*"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20241127.0",
-    "wrangler": "^4.59.0",
+    "@cloudflare/workers-types": "^4.20260621.1",
+    "wrangler": "^4.103.0",
     "typescript": "^5.7.2"
   }
 }

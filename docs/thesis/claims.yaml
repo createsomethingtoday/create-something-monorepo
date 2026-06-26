@@ -1,0 +1,279 @@
+version: 1
+updated: 2026-06-25
+title: CREATE SOMETHING Living Systems Thesis Claims
+source_thesis: docs/CREATE_SOMETHING_SYSTEMS_THESIS.md
+generated_report: docs/CREATE_SOMETHING_SYSTEMS_THESIS_EVIDENCE.generated.md
+purpose: >
+  Repo-native claim and evidence map for the CREATE SOMETHING systems thesis.
+  Claims should become stronger, weaker, stale, or contradicted as the codebase
+  changes.
+statuses:
+  supported: Evidence directly supports the claim today.
+  partial: Evidence supports part of the claim, but the operating proof is incomplete.
+  unproven: The claim is plausible but not yet grounded in repo evidence.
+  contradicted: Current repo evidence weakens or disproves the claim.
+  stale: The claim once had support, but the evidence is no longer current.
+relations:
+  supports: The evidence directly supports the claim.
+  implements: The evidence implements the claim in code or runtime structure.
+  tests: The evidence validates expected behavior.
+  illustrates: The evidence is an example, not sufficient proof by itself.
+  contradicts: The evidence weakens or disproves the claim.
+  stale: The evidence needs refresh before it can support the claim.
+claims:
+  - id: thesis.governed-ai-operating-system
+    title: AI work becomes operational through governed systems, not agents alone.
+    status: supported
+    tier:
+      - database
+      - automation
+      - judgment
+    claim: >
+      AI-enabled work becomes operational only when data, execution, policy,
+      ownership, and proof are designed as one governed system.
+    burden_of_proof:
+      - A canonical thesis document states the argument.
+      - The repo contains framework, policy, proof, and runtime artifacts.
+      - Verification commands exist for at least part of the operating surface.
+    evidence:
+      - id: thesis-spine
+        type: file
+        relation: supports
+        path: docs/CREATE_SOMETHING_SYSTEMS_THESIS.md
+        anchors:
+          - CREATE SOMETHING is a working thesis on how modern AI systems become useful
+          - Build the connectivity and control layer between tools and AI
+        note: Canonical synthesis of the systems thesis.
+      - id: docs-map-route
+        type: file
+        relation: supports
+        path: docs/README.md
+        anchors:
+          - CREATE_SOMETHING_SYSTEMS_THESIS.md
+        note: Routes agents and operators to the thesis first.
+      - id: agent-legibility-check
+        type: command
+        relation: tests
+        command: pnpm agent:legibility:check -- --format json
+        note: Verifies opted-in packages expose the expected legibility surface.
+      - id: policy-artifact-check
+        type: command
+        relation: tests
+        command: pnpm policy:artifacts:check
+        note: Verifies versioned policy artifact pairs and required sections.
+    falsification:
+      - Generic agent setup produces equally reliable governed outcomes without explicit state, policy, ownership, and proof artifacts.
+      - Repo artifacts cannot be used to debug, hand off, or improve real workflows.
+    open_questions:
+      - Which flagship case should become the first fully evidenced public defense?
+
+  - id: thesis.mcp-creation-is-the-moat
+    title: MCP creation is the durable capability boundary.
+    status: supported
+    tier:
+      - database
+      - automation
+    claim: >
+      MCP consumption is becoming commoditized, but the design and creation of
+      trustworthy MCP boundaries remains the strategic moat.
+    burden_of_proof:
+      - The repo states the MCP-first thesis.
+      - The repo includes MCP creation scaffolds, registry controls, and deployed MCP package surfaces.
+    evidence:
+      - id: mcp-first-thesis
+        type: file
+        relation: supports
+        path: docs/MCP_FIRST_THESIS.md
+        anchors:
+          - MCP creation
+          - MCP consumption
+        note: Strategic statement of the creation moat.
+      - id: mcp-scaffold
+        type: file
+        relation: implements
+        path: docs/MCP_SCAFFOLD.md
+        note: Operational scaffold for creating new MCPs.
+      - id: mcp-registry
+        type: file
+        relation: implements
+        path: config/mcp-hub/registry.json
+        note: Registry of MCP servers and exposed capability boundaries.
+      - id: registry-check-command
+        type: command
+        relation: tests
+        command: pnpm mcp:registry:check
+        note: Verifies generated registry state when MCP inventory changes.
+    falsification:
+      - MCP runtime boundaries become irrelevant because agent platforms safely infer and enforce tool authority without explicit contracts.
+      - Buyers no longer value custom connectivity, auth boundaries, or capability design.
+    open_questions:
+      - Which public MCP creation walkthrough best demonstrates the moat to outside developers?
+
+  - id: thesis.three-tier-framework
+    title: Database, Automation, and Judgment are the operating ontology.
+    status: supported
+    tier:
+      - database
+      - automation
+      - judgment
+    claim: >
+      Database, Automation, and Judgment provide a useful operating ontology for
+      designing, debugging, and explaining agentic systems.
+    burden_of_proof:
+      - The framework is documented.
+      - The framework is exposed as an MCP, not only prose.
+      - Package legibility maps repo surfaces into the framework vocabulary.
+    evidence:
+      - id: three-tier-doc
+        type: file
+        relation: supports
+        path: docs/THREE_TIER_FRAMEWORK.md
+        anchors:
+          - Database
+          - Rules
+          - Policy
+        note: Canonical framework document.
+      - id: three-tier-mcp
+        type: package
+        relation: implements
+        path: packages/three-tier-framework-mcp
+        note: MCP implementation of the framework.
+      - id: legibility-map
+        type: command
+        relation: tests
+        command: pnpm agent:legibility:map -- --format json
+        note: Maps opted-in packages to legible operating roles.
+    falsification:
+      - Real workflows consistently require a fourth core tier that cannot be treated as a composition of these three.
+      - Operators cannot use the framework to localize failures or design better boundaries.
+    open_questions:
+      - Should external reviewers score cases against this ontology before it is treated as stable?
+
+  - id: thesis.policy-as-artifact
+    title: Policy must be represented as inspectable artifacts.
+    status: supported
+    tier:
+      - judgment
+    claim: >
+      Policy becomes operational only when represented as versioned, inspectable
+      artifacts that humans and agents can cite, test, and revise.
+    burden_of_proof:
+      - The repo contains versioned policy artifacts.
+      - Policy artifacts have both machine-readable and human-readable forms.
+      - A checker verifies their required structure.
+    evidence:
+      - id: policies-index
+        type: directory
+        relation: implements
+        path: docs/policies/v1
+        note: Versioned policy artifact directory.
+      - id: policy-readme
+        type: file
+        relation: supports
+        path: docs/policies/README.md
+        note: Policy catalog and navigation surface.
+      - id: policy-checker
+        type: file
+        relation: tests
+        path: scripts/policy-artifact-check.mjs
+        anchors:
+          - Policy artifact check passed
+          - Source Anchors
+        note: Structural checker for policy artifact pairs.
+      - id: policy-check-command
+        type: command
+        relation: tests
+        command: pnpm policy:artifacts:check
+        note: Current command for policy artifact verification.
+    falsification:
+      - Policy artifacts are not referenced by workflows, reviews, or release decisions.
+      - Runtime behavior diverges from the policy artifacts without detection.
+    open_questions:
+      - Which policy artifacts should be linked directly from Atlas maps and proof receipts?
+
+  - id: thesis.proof-is-product
+    title: Proof is the product once work leaves chat.
+    status: partial
+    tier:
+      - database
+      - automation
+      - judgment
+    claim: >
+      Governed AI delivery becomes trustworthy when evidence is packaged as
+      readable proof surfaces, not only hidden logs or chat transcripts.
+    burden_of_proof:
+      - The repo contains proof-surface theory.
+      - The repo contains delivery records and generated trust catalogs.
+      - Proof artifacts affect publish, hold, rollback, or graduation decisions.
+    evidence:
+      - id: proof-surface-paper
+        type: file
+        relation: supports
+        path: packages/io/content/papers/proof-surface.md
+        note: Research framing for proof as operating surface.
+      - id: eval-evidence-paper
+        type: file
+        relation: supports
+        path: packages/io/content/papers/eval-evidence-layer.md
+        note: Defines eval evidence as decision support rather than vanity metrics.
+      - id: deliveries-dir
+        type: directory
+        relation: illustrates
+        path: docs/deliveries
+        note: Client-safe proof records and delivery summaries.
+      - id: public-trust-catalog
+        type: file
+        relation: implements
+        path: docs/PUBLIC_AGENT_MCP_TRUST_CATALOG.generated.md
+        note: Generated public trust catalog for agents and MCPs.
+      - id: public-trust-command
+        type: command
+        relation: tests
+        command: pnpm trust:catalog:check
+        note: Checks generated public trust catalog drift.
+    falsification:
+      - Proof surfaces do not change deployment, rollback, review, or buyer trust decisions.
+      - Evidence stays buried in implementation logs and cannot be read by operators.
+    open_questions:
+      - Which proof receipts should be promoted into the first flagship case packet?
+
+  - id: thesis.atlas-as-proof-interface
+    title: Atlas should become the proof interface for governed workflows.
+    status: partial
+    tier:
+      - database
+      - automation
+      - judgment
+    claim: >
+      Atlas maps can become the interface where actors, tasks, system operations,
+      policy boundaries, proof, and review state stay legible together.
+    burden_of_proof:
+      - Atlas Studio exists as a repo-owned mapping and proposal surface.
+      - Public Atlas surfaces exist or are emerging.
+      - Atlas maps remain bound to repo or runtime evidence rather than becoming static diagrams.
+    evidence:
+      - id: atlas-mcp-package
+        type: package
+        relation: implements
+        path: packages/interaction-atlas-mcp
+        note: Atlas Studio MCP and local studio package.
+      - id: agency-atlas-model
+        type: file
+        relation: implements
+        path: packages/agency/src/lib/atlas/public.ts
+        note: Public Atlas model and starter-map data surface.
+      - id: atlas-starter-tests
+        type: file
+        relation: tests
+        path: packages/agency/test/public-atlas-starter-maps.test.ts
+        note: Tests starter map data shape and behavior.
+      - id: atlas-route-test
+        type: file
+        relation: tests
+        path: packages/agency/test/public-atlas-route.test.ts
+        note: Tests public Atlas route behavior when present.
+    falsification:
+      - Atlas maps cannot stay current with source-of-truth systems.
+      - Operators do not use Atlas maps to understand, review, or improve workflows.
+    open_questions:
+      - What is the minimum evidence binding required before an Atlas map counts as proof?

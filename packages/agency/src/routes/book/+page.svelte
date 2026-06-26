@@ -107,6 +107,8 @@
 
 	const bookingSource = normalizeQueryToken(bookingUrlParams.get('source'), 'direct');
 	const bookingIntent = normalizeQueryToken(bookingUrlParams.get('intent'), 'workflow-mapping');
+	const bookingCampaign = normalizeOptionalQueryToken(bookingUrlParams.get('campaign'));
+	const bookingEntrySource = normalizeOptionalQueryToken(bookingUrlParams.get('entry_source'));
 	const bookingPath = browser ? `${window.location.pathname}${window.location.search}` : '/book';
 	const initialLane = normalizeLane(bookingUrlParams.get('lane')) ?? 'not_sure';
 	const atlasWarmup = normalizeOptionalQueryToken(bookingUrlParams.get('warmup'));
@@ -360,6 +362,8 @@
 				serviceLane: selectedLane,
 				bookingSource,
 				bookingIntent,
+				bookingCampaign,
+				bookingEntrySource,
 				source: bookingSource,
 				intent: bookingIntent,
 				lane: selectedLane,
@@ -399,6 +403,8 @@
 					source: bookingSource,
 					intent: bookingIntent,
 					lane: selectedLane,
+					campaign: bookingCampaign,
+					entry_source: bookingEntrySource,
 					atlas_warmup: atlasWarmup,
 					atlas_session_id: atlasSessionId,
 					atlas_readiness: atlasReadiness,
@@ -422,6 +428,8 @@
 				serviceLane: selectedLane,
 				bookingSource,
 				bookingIntent,
+				bookingCampaign,
+				bookingEntrySource,
 				source: bookingSource,
 				intent: bookingIntent,
 				lane: selectedLane,

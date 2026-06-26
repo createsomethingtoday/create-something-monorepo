@@ -18,6 +18,10 @@ export default declareComponent(CatoInsightsMegaMenu, {
       name: 'Summary',
       defaultValue: 'Current analysis of the dynamics shaping the healthcare supply chain.',
     }),
+    featureLabel: props.Text({
+      name: 'Feature Label',
+      defaultValue: 'Featured',
+    }),
     featureTitle: props.Text({
       name: 'Feature Title',
       defaultValue: 'Resiliency Report Alerts',
@@ -29,6 +33,20 @@ export default declareComponent(CatoInsightsMegaMenu, {
     featureCta: props.Text({
       name: 'Feature CTA',
       defaultValue: 'Explore Our Insights',
+    }),
+    featureHref: props.Text({
+      name: 'Feature URL',
+      defaultValue: '',
+      tooltip: 'Optional URL for the right-side feature card. If blank, the Resiliency Report Alerts link is used.',
+    }),
+    featureItemsJson: props.Text({
+      name: 'Feature Items JSON',
+      defaultValue: '',
+      tooltip: 'Optional JSON array for the right-side feature list: [{ "title": "...", "resourceType": "..." }].',
+    }),
+    showFeatureItems: props.Boolean({
+      name: 'Show Feature Items',
+      defaultValue: true,
     }),
     categoriesJson: props.Text({
       name: 'Categories JSON',
