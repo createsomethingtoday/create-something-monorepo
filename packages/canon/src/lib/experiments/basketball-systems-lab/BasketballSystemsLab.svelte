@@ -5,6 +5,7 @@
 		BadgeDollarSign,
 		BarChart3,
 		Clock3,
+		FileJson,
 		Globe2,
 		LineChart,
 		Route,
@@ -13,21 +14,25 @@
 		Users
 	} from 'lucide-svelte';
 	import {
+		getSampleSystemUpload,
 		listManagementPolicies,
 		listSeasonPhases,
 		listSystems,
+		parseSystemUpload,
 		runSystemMatch,
 		type GameRequirementSeverity,
 		type LabMode,
 		type PolicyKey,
 		type SeasonPhaseKey,
-		type SystemKey
+		type System,
+		type SystemId,
+		type SystemUploadIssue
 	} from './simulation.js';
 
 	const policies = listManagementPolicies();
-	const systems = listSystems();
 	const seasonPhases = listSeasonPhases();
 	const horizonOptions = [3, 5, 8];
+	const sampleSystemDefinition = JSON.stringify(getSampleSystemUpload(), null, 2);
 
 	const edges = [
 		{ path: 'M 92 106 C 165 78 210 74 278 90', label: 'reduces' },
@@ -38,15 +43,29 @@
 	];
 
 	let mode = $state<LabMode>('single');
-	let selectedSystem = $state<SystemKey>('recovery');
-	let opponentSystem = $state<SystemKey>('attention');
+	let selectedSystem = $state<SystemId>('recovery');
+	let opponentSystem = $state<SystemId>('attention');
 	let horizonYears = $state(5);
 	let steeringYear = $state(3);
 	let steeringPhase = $state<SeasonPhaseKey>('midseason');
 	let steeringPolicy = $state<PolicyKey | 'none'>('labor');
+	let uploadedSystems = $state<System[]>([]);
+	let uploadText = $state(sampleSystemDefinition);
+	let uploadIssues = $state<SystemUploadIssue[]>([]);
+	let uploadMessage = $state('Sample System ready');
+
+	const systems = $derived(listSystems(uploadedSystems));
+	const uploadedSystemKeys = $derived(new Set(uploadedSystems.map((system) => system.key)));
 
 	$effect(() => {
-		if (opponentSystem === selectedSystem) {
+		if (!systems.some((system) => system.key === selectedSystem)) {
+			selectedSystem = systems[0]?.key ?? 'recovery';
+		}
+
+		if (
+			opponentSystem === selectedSystem ||
+			!systems.some((system) => system.key === opponentSystem)
+		) {
 			opponentSystem = systems.find((system) => system.key !== selectedSystem)?.key ?? 'attention';
 		}
 
@@ -63,7 +82,8 @@
 			years: horizonYears,
 			steeringYear,
 			steeringPhase,
-			steeringPolicyKey: steeringPolicy === 'none' ? undefined : steeringPolicy
+			steeringPolicyKey: steeringPolicy === 'none' ? undefined : steeringPolicy,
+			customSystems: uploadedSystems
 		})
 	);
 	const scenario = $derived(match.winner.scenario);
@@ -101,6 +121,38 @@
 		if (status === 'watch') return 'Watch';
 		if (status === 'deferred') return 'Deferred';
 		return 'Pass';
+	}
+
+	function importSystems(): void {
+		const result = parseSystemUpload(uploadText);
+		uploadedSystems = result.systems;
+		uploadIssues = result.issues;
+
+		if (result.systems.length === 0) {
+			uploadMessage = 'No Systems accepted';
+			return;
+		}
+
+		selectedSystem = result.systems[0].key;
+		opponentSystem = result.systems[1]?.key ?? 'recovery';
+		mode = result.systems.length > 1 ? 'versus' : mode;
+		uploadMessage = `${result.systems.length} System${result.systems.length === 1 ? '' : 's'} accepted`;
+	}
+
+	function loadSampleSystem(): void {
+		uploadText = sampleSystemDefinition;
+		uploadIssues = [];
+		uploadMessage = 'Sample System ready';
+	}
+
+	async function readSystemFile(event: Event): Promise<void> {
+		const input = event.currentTarget as HTMLInputElement;
+		const file = input.files?.[0];
+		if (!file) return;
+
+		uploadText = await file.text();
+		importSystems();
+		input.value = '';
 	}
 </script>
 
@@ -187,11 +239,37 @@
 						class:active={selectedSystem === system.key}
 						onclick={() => (selectedSystem = system.key)}
 					>
-						<span>{system.stance}</span>
+						<span>{uploadedSystemKeys.has(system.key) ? 'Uploaded System' : system.stance}</span>
 						<strong>{system.name}</strong>
 						<small>{policies.find((policy) => policy.key === system.policyKey)?.score}</small>
 					</button>
 				{/each}
+			</div>
+
+			<div class="ona-system-upload">
+				<div class="ona-system-kicker">
+					<FileJson size={17} strokeWidth={1.8} />
+					<span>System Upload</span>
+				</div>
+				<textarea bind:value={uploadText} aria-label="System JSON definition"></textarea>
+				<div class="ona-system-upload-actions">
+					<label>
+						<input type="file" accept="application/json,.json" onchange={readSystemFile} />
+						<span>Upload JSON</span>
+					</label>
+					<button type="button" onclick={importSystems}>Import Systems</button>
+					<button type="button" onclick={loadSampleSystem}>Load sample</button>
+				</div>
+				<div class="ona-system-upload-status" data-state={uploadedSystems.length > 0 ? 'accepted' : 'idle'}>
+					<strong>{uploadMessage}</strong>
+					{#if uploadIssues.length > 0}
+						<ul>
+							{#each uploadIssues.slice(0, 4) as issue}
+								<li>{issue.path}: {issue.message}</li>
+							{/each}
+						</ul>
+					{/if}
+				</div>
 			</div>
 
 			{#if mode === 'versus'}

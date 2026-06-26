@@ -12,9 +12,11 @@ export { default as BasketballSystemsLab } from './BasketballSystemsLab.svelte';
 export {
 	getDefaultLeagueState,
 	getDefaultEnvironment,
+	getSampleSystemUpload,
 	listManagementPolicies,
 	listSeasonPhases,
 	listSystems,
+	parseSystemUpload,
 	runManagementScenario,
 	runSystemMatch,
 	type BoardReport,
@@ -33,11 +35,15 @@ export {
 	type SeasonPhase,
 	type SeasonPhaseKey,
 	type System,
+	type SystemId,
 	type SystemKey,
 	type SystemMatch,
 	type SystemMatchInput,
 	type SystemProjection,
 	type SystemResult,
 	type SystemTimelineEntry,
+	type SystemUploadDefinition,
+	type SystemUploadIssue,
+	type SystemUploadResult,
 	type ValidationSummary
 } from './simulation.js';
