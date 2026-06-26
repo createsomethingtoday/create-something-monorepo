@@ -520,6 +520,15 @@ function parseHubExecuteObservation(observation: string): Record<string, unknown
     : null;
 }
 
+function parseHubExecuteToolInput(toolInput: string): Record<string, unknown> | null {
+  const outer = parseJsonRecord(toolInput);
+  const payload = outer?.hub_execute_proxy_tool;
+  if (typeof payload === 'string') return parseJsonRecord(payload);
+  return payload && typeof payload === 'object' && !Array.isArray(payload)
+    ? (payload as Record<string, unknown>)
+    : null;
+}
+
 export function extractFormattedAgentFeedbackFromToolCalls(
   toolCalls: DifyChatOutput['toolCalls'],
   expectedVersionId: string
@@ -542,6 +551,39 @@ export function extractFormattedAgentFeedbackFromToolCalls(
       feedbackMentionsVersion(trimmed, expectedVersionId)
     ) {
       return trimmed;
+    }
+  }
+
+  return null;
+}
+
+export function extractSaveAgentFeedbackFromToolCalls(
+  toolCalls: DifyChatOutput['toolCalls'],
+  expectedVersionId: string
+): string | null {
+  for (const call of [...toolCalls].reverse()) {
+    if (!call.tool.includes('hub_execute_proxy_tool')) continue;
+
+    const payload = parseHubExecuteToolInput(call.toolInput);
+    if (
+      payload?.proxyToolName !== 'webflow-template-review-mcp__template_review_save_agent_feedback'
+    ) {
+      continue;
+    }
+
+    const args = payload.args;
+    if (!args || typeof args !== 'object' || Array.isArray(args)) continue;
+    const record = args as Record<string, unknown>;
+    if (record.version_id !== expectedVersionId) continue;
+    if (typeof record.agent_review_feedback !== 'string') continue;
+
+    const feedback = record.agent_review_feedback.trim();
+    if (
+      feedback &&
+      looksLikeFormattedAgentReviewFeedback(feedback) &&
+      feedbackMentionsVersion(feedback, expectedVersionId)
+    ) {
+      return feedback;
     }
   }
 
@@ -689,6 +731,7 @@ async function processCandidate(
   if (!feedback) {
     const returnedFeedback =
       extractReturnedSaveAgentFeedback(output.answer, candidate.version.versionId) ??
+      extractSaveAgentFeedbackFromToolCalls(output.toolCalls, candidate.version.versionId) ??
       extractFormattedAgentFeedbackFromToolCalls(output.toolCalls, candidate.version.versionId);
     if (returnedFeedback) {
       await airtableClient.updateVersionReview(candidate.version.versionId, {

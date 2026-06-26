@@ -5,6 +5,7 @@ import {
   buildDifyQuery,
   extractFormattedAgentFeedbackFromToolCalls,
   extractReturnedSaveAgentFeedback,
+  extractSaveAgentFeedbackFromToolCalls,
   REQUIRED_MANUAL_CHECK_TOPICS,
   retryTransientOperation,
   waitForAgentReviewFeedback
@@ -112,6 +113,70 @@ test('extractFormattedAgentFeedbackFromToolCalls accepts formatter observations 
 
   assert.equal(extractFormattedAgentFeedbackFromToolCalls(toolCalls, 'recVersion'), feedback);
   assert.equal(extractFormattedAgentFeedbackFromToolCalls(toolCalls, 'recOther'), null);
+});
+
+test('extractSaveAgentFeedbackFromToolCalls accepts save tool inputs for the expected version', () => {
+  const feedback = [
+    'Supplemental agent initial review evidence for Sample Template (version recVersion).',
+    'Manual checks remaining',
+    '- components and variables remain manual.',
+    'Decision boundary',
+    'This is not an official review decision.'
+  ].join('\n');
+
+  const toolCalls = [
+    {
+      tool: 'hub_execute_proxy_tool',
+      toolInput: JSON.stringify({
+        hub_execute_proxy_tool: {
+          proxyToolName: 'webflow-template-review-mcp__template_review_save_agent_feedback',
+          args: {
+            version_id: 'recVersion',
+            agent_review_feedback: feedback
+          }
+        }
+      }),
+      observation: JSON.stringify({
+        hub_execute_proxy_tool: JSON.stringify({
+          ok: true,
+          data: {
+            saved: true
+          }
+        })
+      })
+    }
+  ];
+
+  assert.equal(extractSaveAgentFeedbackFromToolCalls(toolCalls, 'recVersion'), feedback);
+  assert.equal(extractSaveAgentFeedbackFromToolCalls(toolCalls, 'recOther'), null);
+});
+
+test('extractSaveAgentFeedbackFromToolCalls ignores non-save proxy tool inputs', () => {
+  const feedback = [
+    'Supplemental agent initial review evidence for Sample Template (version recVersion).',
+    'Manual checks remaining',
+    '- components and variables remain manual.',
+    'Decision boundary',
+    'This is not an official review decision.'
+  ].join('\n');
+
+  const toolCalls = [
+    {
+      tool: 'hub_execute_proxy_tool',
+      toolInput: JSON.stringify({
+        hub_execute_proxy_tool: {
+          proxyToolName: 'webflow-template-review-mcp__template_review_update_version_review',
+          args: {
+            version_id: 'recVersion',
+            agent_review_feedback: feedback
+          }
+        }
+      }),
+      observation: '{}'
+    }
+  ];
+
+  assert.equal(extractSaveAgentFeedbackFromToolCalls(toolCalls, 'recVersion'), null);
 });
 
 test('retryTransientOperation retries failed reads with bounded backoff', async () => {
