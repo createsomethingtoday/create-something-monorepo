@@ -225,6 +225,28 @@
     }
   }
 
+  function handleSearchInput(event: Event) {
+    searchQuery = (event.currentTarget as HTMLInputElement).value;
+  }
+
+  function handleCategoryFilterChange(event: Event) {
+    categoryFilter = (event.currentTarget as HTMLSelectElement).value;
+  }
+
+  function handleCompetitionFilterChange(event: Event) {
+    competitionFilter = (event.currentTarget as HTMLSelectElement).value;
+  }
+
+  function handleUserCategoryFilterChange(event: Event) {
+    const value = (event.currentTarget as HTMLSelectElement).value;
+    userCategoryFilter = value === 'user' ? 'user' : 'all';
+  }
+
+  function handleGridSortChange(event: Event) {
+    const value = (event.currentTarget as HTMLSelectElement).value;
+    if (isCategorySortKey(value)) sortKey = value;
+  }
+
   function isCategorySortKey(value: unknown): value is CategorySortKey {
     return typeof value === 'string' && validSortKeys.includes(value as CategorySortKey);
   }
@@ -430,13 +452,15 @@
           <input
             class="control-input"
             type="search"
-            bind:value={searchQuery}
-            placeholder="Filter category or subcategory"
-            aria-label="Filter category or subcategory"
+            value={searchQuery}
+            oninput={handleSearchInput}
+            placeholder="Search category or subcategory"
+            aria-label="Search category or subcategory"
           />
           <select
             class="control-select"
-            bind:value={categoryFilter}
+            value={categoryFilter}
+            onchange={handleCategoryFilterChange}
             aria-label="Filter by category"
           >
             <option value="all">All Categories</option>
@@ -446,7 +470,8 @@
           </select>
           <select
             class="control-select"
-            bind:value={competitionFilter}
+            value={competitionFilter}
+            onchange={handleCompetitionFilterChange}
             aria-label="Filter by competition"
           >
             <option value="all">All Competition Levels</option>
@@ -457,7 +482,8 @@
           </select>
           <select
             class="control-select"
-            bind:value={userCategoryFilter}
+            value={userCategoryFilter}
+            onchange={handleUserCategoryFilterChange}
             aria-label="Filter by your categories"
           >
             <option value="all">All Portfolios</option>
@@ -470,7 +496,12 @@
 
         {#if viewMode === 'grid'}
           <div class="grid-sort-controls">
-            <select class="control-select" bind:value={sortKey} aria-label="Sort grid by">
+            <select
+              class="control-select"
+              value={sortKey}
+              onchange={handleGridSortChange}
+              aria-label="Sort grid by"
+            >
               {#each gridSortOptions as option}
                 <option value={option.key}>{option.label}</option>
               {/each}
@@ -487,11 +518,18 @@
       </div>
 
       <p class="categories-meta">
-        Showing {sortedCategories.length} of {categories.length} subcategories
+        Showing {sortedCategories.length} of {categories.length} category rows
       </p>
 
       {#if sortedCategories.length === 0}
-        <div class="categories-empty">No categories match your current filters.</div>
+        <div class="categories-empty">
+          <p>No category rows match your current filters.</p>
+          {#if searchQuery.trim()}
+            <p class="categories-empty-hint">
+              This search checks category and subcategory names, not template names.
+            </p>
+          {/if}
+        </div>
       {:else if viewMode === 'table'}
         <!-- Mobile Card Layout for Table View -->
         <div class="table-mobile-cards">
