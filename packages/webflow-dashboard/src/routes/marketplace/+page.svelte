@@ -34,6 +34,7 @@
   interface LeaderboardResponse {
     leaderboard: LeaderboardEntry[];
     userTemplates: LeaderboardEntry[];
+    userCategories?: string[];
     summary: {
       totalMarketplaceSales: number;
       userBestRank: number | null;
@@ -91,6 +92,7 @@
   let categories = $state<CategoryEntry[]>([]);
   let insights = $state<Insight[]>([]);
   let userTemplates = $state<LeaderboardEntry[]>([]);
+  let userCategories = $state<string[]>([]);
   let summary = $state<MarketplaceSummary>({
     totalMarketplaceSales: null,
     userBestRank: null,
@@ -228,6 +230,7 @@
 
       leaderboard = leaderboardData.leaderboard;
       userTemplates = leaderboardData.userTemplates;
+      userCategories = leaderboardData.userCategories ?? [];
       categories = categoriesData.categories;
       insights = categoriesData.insights;
 
@@ -236,6 +239,7 @@
       trackEvent('marketplace_data_loaded', {
         leaderboard_count: leaderboardData.leaderboard.length,
         user_template_count: leaderboardData.userTemplates.length,
+        user_category_count: userCategories.length,
         category_rows: categoriesData.categories.length,
         total_sales_30d: summary.totalMarketplaceSales ?? undefined,
         total_sales_source: summary.salesSource,
@@ -370,7 +374,14 @@
           </div>
         </div>
       {:else}
-        <MarketplaceInsights {leaderboard} {categories} {insights} {userTemplates} {summary} />
+        <MarketplaceInsights
+          {leaderboard}
+          {categories}
+          {insights}
+          {userTemplates}
+          {userCategories}
+          {summary}
+        />
       {/if}
     </div>
   </main>

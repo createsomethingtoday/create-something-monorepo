@@ -36,10 +36,11 @@ export const GET: RequestHandler = async ({ locals, platform }) => {
 
 		const airtable = getAirtableClient(platform?.env);
 
-		// Fetch leaderboard data and creator profile in parallel
-		const [leaderboardResult, creator] = await Promise.all([
+		// Fetch leaderboard data, creator profile, and owned assets in parallel.
+		const [leaderboardResult, creator, assets] = await Promise.all([
 			airtable.getLeaderboard(),
-			airtable.getCreatorByEmail(userEmail)
+			airtable.getCreatorByEmail(userEmail),
+			airtable.getAssetsByEmail(locals.user.email)
 		]);
 		const records = leaderboardResult.records;
 		const enrichedRecords = await enrichLeaderboardWithHistory(
@@ -83,6 +84,13 @@ export const GET: RequestHandler = async ({ locals, platform }) => {
 
 		// Get user's templates from the leaderboard
 		const userTemplates = leaderboard.filter((t) => t.isUserTemplate);
+		const userCategories = Array.from(
+			new Set(
+				assets
+					.filter((asset) => asset.type === 'Template' && asset.category)
+					.map((asset) => asset.category as string)
+			)
+		).sort((a, b) => a.localeCompare(b));
 
 		// Calculate summary stats
 		const topTemplate = leaderboard[0] || null;
@@ -99,6 +107,7 @@ export const GET: RequestHandler = async ({ locals, platform }) => {
 				{
 					leaderboard,
 					userTemplates,
+					userCategories,
 					summary: {
 						topTemplate: topTemplate
 							? {

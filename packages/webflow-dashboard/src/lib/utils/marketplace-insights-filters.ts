@@ -58,6 +58,40 @@ export function getUserCategorySet(
   return new Set(userTemplates.map((template) => template.category).filter(Boolean));
 }
 
+function normalizeCategoryMatchValue(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/&/g, ' and ')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+
+export function getExpandedUserCategorySet(
+  userCategories: ReadonlySet<string>,
+  categories: MarketplaceCategoryEntry[]
+): ReadonlySet<string> {
+  const expanded = new Set(userCategories);
+  const normalizedUserCategories = Array.from(userCategories, (category) =>
+    normalizeCategoryMatchValue(category)
+  ).filter(Boolean);
+
+  for (const category of categories) {
+    const normalizedCategory = normalizeCategoryMatchValue(category.category);
+
+    if (
+      normalizedUserCategories.some(
+        (userCategory) =>
+          userCategory === normalizedCategory ||
+          userCategory.includes(normalizedCategory)
+      )
+    ) {
+      expanded.add(category.category);
+    }
+  }
+
+  return expanded;
+}
+
 export function filterMarketplaceCategories(
   categories: MarketplaceCategoryEntry[],
   filters: MarketplaceCategoryFilterState
