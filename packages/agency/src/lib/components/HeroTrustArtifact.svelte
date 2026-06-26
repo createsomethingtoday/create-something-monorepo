@@ -12,25 +12,25 @@
   }> = [
     {
       icon: 'objects',
-      label: 'Database',
+      label: 'What it reads',
       title: 'Named objects',
       detail: 'Case, order, account, shipment'
     },
     {
       icon: 'actions',
-      label: 'Automation',
+      label: 'What it can do',
       title: 'Scoped actions',
       detail: 'Draft reply, add note, assign owner'
     },
     {
       icon: 'states',
-      label: 'Judgment',
+      label: 'What must pause',
       title: 'Decision state',
       detail: 'Run, wait, or stop with a reason'
     },
     {
       icon: 'receipts',
-      label: 'Evidence',
+      label: 'What proves it',
       title: 'Receipts',
       detail: 'Boundary, approval, blocked state'
     }
@@ -52,8 +52,8 @@
 <aside class="hero-trust-artifact" aria-label="Workflow Trust Layer artifact">
   <div class="hero-trust-artifact__header">
     <div>
-      <span>Workflow Trust Layer</span>
-      <strong>One safe delegation path</strong>
+      <span>Delegated Work Control</span>
+      <strong>One workflow, visible boundaries</strong>
     </div>
     <small>Support recovery</small>
   </div>
@@ -104,20 +104,11 @@
     border: 1px solid var(--color-clear-border-strong, #cecece);
     border-radius: var(--radius-clear-md, 8px);
     background: var(--color-clear-panel, #ffffff);
-    box-shadow: 0 22px 64px rgba(10, 14, 25, 0.1);
+    box-shadow: 0 18px 44px rgba(10, 14, 25, 0.08);
   }
 
   .hero-trust-artifact::before {
-    content: '';
-    position: absolute;
-    inset: 0 0 auto;
-    height: 0.24rem;
-    background: linear-gradient(
-      90deg,
-      var(--color-clear-pistachio, #dbefdb),
-      var(--color-clear-pastel-blue, #afc1fd),
-      var(--color-clear-candy-purple, #efd4ff)
-    );
+    content: none;
   }
 
   .hero-trust-artifact__header,
@@ -181,10 +172,7 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.72rem;
     padding: 0.72rem;
-    background:
-      linear-gradient(90deg, rgba(10, 14, 25, 0.035) 1px, transparent 1px) 0 0 / 2.75rem
-        2.75rem,
-      var(--color-clear-panel, #ffffff);
+    background: var(--color-clear-panel, #ffffff);
   }
 
   .hero-trust-artifact__signal {
@@ -197,23 +185,7 @@
     padding: 0.82rem;
     border: 1px solid var(--color-clear-border, #e1e1e1);
     border-radius: 6px;
-    background: rgba(255, 255, 255, 0.9);
-  }
-
-  .hero-trust-artifact__signal:nth-child(1) {
-    background: color-mix(in srgb, var(--color-clear-frosted-mint, #d9fff7) 26%, white);
-  }
-
-  .hero-trust-artifact__signal:nth-child(2) {
-    background: color-mix(in srgb, var(--color-clear-pastel-blue, #afc1fd) 18%, white);
-  }
-
-  .hero-trust-artifact__signal:nth-child(3) {
-    background: color-mix(in srgb, var(--color-clear-candy-purple, #efd4ff) 17%, white);
-  }
-
-  .hero-trust-artifact__signal:nth-child(4) {
-    background: color-mix(in srgb, var(--color-clear-pistachio, #dbefdb) 25%, white);
+    background: #ffffff;
   }
 
   .hero-trust-artifact__icon {

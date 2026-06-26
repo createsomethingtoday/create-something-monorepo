@@ -19,6 +19,7 @@
     type ClearContentHighlight,
     type ClearMetadataGroup,
     type ClearPillarItem,
+    type ClearPlatformHeroProof,
     type ClearProofItem,
     type ClearQuoteMetric,
     type ClearReceipt,
@@ -50,7 +51,7 @@
     {
       name: 'Trust Layer',
       description:
-        'The trust layer: scoped actions, approval states, release checks, and incident loops once the workflow touches revenue or customer trust.',
+        'The Workflow Trust Layer: scoped actions, approval states, release checks, and incident loops once delegated work touches revenue or customer trust.',
       type: 'Workflow Control Plan',
       price: 'Custom',
       priceDescription: 'Monthly trust layer'
@@ -67,9 +68,14 @@
 
   const faqItems = [
     {
+      question: 'What is Delegated Work Control?',
+      answer:
+        'Delegated Work Control is the operating boundary around delegated work: source systems, owners, scoped actions, approval states, stop conditions, and receipts.'
+    },
+    {
       question: 'What is a Workflow Trust Layer?',
       answer:
-        'A Workflow Trust Layer is the operating boundary around one workflow: source systems, owners, scoped actions, approval states, stop conditions, and receipts.'
+        'A Workflow Trust Layer is the current service path for one workflow: map the work, build the first safe delegation path, and keep evidence visible.'
     },
     {
       question: 'Where does CREATE SOMETHING start?',
@@ -80,6 +86,25 @@
       question: 'What do clients leave with?',
       answer:
         'Clients leave with a visible workflow map, action boundary, approval path, run/wait/stop states, and evidence that a team can inspect.'
+    }
+  ];
+
+  const heroProofItems: ClearPlatformHeroProof[] = [
+    {
+      value: 'Run',
+      label: 'Safe actions move without a meeting.'
+    },
+    {
+      value: 'Wait',
+      label: 'Judgment calls pause for the owner.'
+    },
+    {
+      value: 'Stop',
+      label: 'Work outside the lane records a reason.'
+    },
+    {
+      value: 'Prove',
+      label: 'Receipts show what happened and who decided.'
     }
   ];
 
@@ -104,7 +129,7 @@
       eyebrow: '03 Control',
       title: 'Add the trust layer',
       detail:
-        'Wrap live automation with decision rules, receipts, recovery notes, and accountable ownership.',
+        'Wrap delegated work with decision rules, receipts, recovery notes, and accountable ownership.',
       proof:
         'Output: monthly control plan for work that touches revenue, customers, or production.',
       links: [{ label: 'See stack boundary', href: '/stack' }]
@@ -354,9 +379,9 @@
 </script>
 
 <SEO
-  title="Workflow Trust Layer | CREATE SOMETHING .agency"
-  description="CREATE SOMETHING fixes the workflow your team still protects by hand: one map, one safe delegation path, clear approvals, stop states, and receipts."
-  keywords="workflow trust layer, governed workflow infrastructure, safe AI workflow delegation, agent workflow controls, workflow pilot, production automation, technical operators"
+  title="Delegated Work Control | CREATE SOMETHING .agency"
+  description="CREATE SOMETHING makes delegated work trustworthy: one workflow map, one safe delegation path, clear approvals, stop states, decision owners, and receipts."
+  keywords="delegated work control, workflow trust layer, governed workflow infrastructure, safe AI workflow delegation, agent workflow controls, workflow pilot, production automation, technical operators"
   ogImage="/og-image.svg"
   propertyName="agency"
   {services}
@@ -366,8 +391,9 @@
 <div class="home-pilot">
   <ClearPlatformHero
     eyebrow={agencyCoreMessaging.categoryLabel}
-    title="Fix the workflow your team still protects by hand."
-    description="CREATE SOMETHING maps one business workflow, builds the first safe delegation path, and leaves approvals, stop states, and receipts before anything touches the customer, revenue, or production."
+    title="The control plane for delegated work."
+    description="CREATE SOMETHING makes it clear what can run, what waits for approval, what stops, who owns the decision, and what evidence proves the work."
+    proofItems={heroProofItems}
   >
     {#snippet actions()}
       <Button href={agencyCoreMessaging.selfMapHref}>
@@ -387,8 +413,8 @@
     id="service-flow"
     variant="white"
     eyebrow="Service path"
-    title="Start narrow. Expand only when the workflow earns it."
-    description="Bring one real workflow, leave with a visible operating path, and add the trust layer only when live work needs more control."
+    title="Start with one job your team already understands."
+    description="Map the current handoff, show the first safe delegation path, then add the Workflow Trust Layer only when live work needs more control."
   >
     {#snippet after()}
       <ClearPillarGrid items={serviceFlowPillars} ariaLabel="CREATE SOMETHING service flow" />
@@ -398,8 +424,8 @@
   <ClearUseCaseBand
     id="use-cases"
     eyebrow="Concrete work first"
-    title="Start with tasks an operator already recognizes."
-    description="The agent capability stays tied to business work: the handoffs, approvals, launches, and recovery loops your team already manages."
+    title="Use cases should sound like the work people already do."
+    description="The first workflow stays concrete: handoffs, approvals, launches, recovery loops, and owner updates your team already manages."
     items={useCases}
     ariaLabel="Controlled workflow use cases"
   />
@@ -407,8 +433,8 @@
   <ClearPageSection
     variant="soft"
     eyebrow="Buyer lanes"
-    title="Pick the business lane before picking the tool."
-    description="The fastest path is not a platform demo. It is a known workflow, a named business risk, and the first controlled run that proves the service should expand."
+    title="Choose the workflow before choosing the tools."
+    description="The fastest path is a known workflow, a named business risk, and one controlled delegation that proves whether the service should expand."
   >
     {#snippet after()}
       <ClearCardGrid items={buyerLanes} columns={3} ariaLabel="Workflow buyer lanes" />
@@ -420,8 +446,8 @@
     variant="white"
     layout="split"
     eyebrow="Execution console"
-    title="Show the business case before the agent demo."
-    description="Here the workflow is ecommerce support recovery: inspect the case, order, shipment, and payment state, then decide whether the action can run, needs approval, or stops."
+    title="Show the decision before the automation."
+    description="In this example, support recovery inspects the case, order, shipment, and payment state before deciding whether delegated work can run, wait, or stop."
   >
     {#snippet aside()}
       <ClearMetadataRail
@@ -442,8 +468,8 @@
   <ClearPageSection
     variant="soft"
     eyebrow="Receipts"
-    title="Leave with the operating path, not another abstract workflow diagram."
-    description="The delivery pages set the standard for what the work becomes: a visible business model, a private evidence trail, and clear rules for what agents can do."
+    title="Visitors should see the operating path."
+    description="Every delivery page separates the public story, private evidence, and clear rules for what delegated work is allowed to do."
   >
     {#snippet after()}
       <div class="home-proof-stack">
@@ -464,8 +490,8 @@
   <ClearSecurityPanel
     id="trust-layer"
     eyebrow="Runtime control layer"
-    title="Control is part of the run, not a paragraph after it."
-    description="The workflow names the network boundary, credential boundary, policy boundary, and audit boundary before an agent acts."
+    title="Control belongs in the workflow, not in fine print."
+    description="The workflow names the network boundary, credential boundary, policy boundary, and audit boundary before delegated work acts."
     items={securityItems}
     logs={securityLogs}
     ariaLabel="Controlled workflow trust controls"

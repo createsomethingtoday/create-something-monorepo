@@ -1,10 +1,38 @@
 # CREATE SOMETHING Agency
 
-**createsomething.agency** — the Workflow Trust Layer for technical operators
+**createsomething.agency** — Delegated Work Control for technical operators
 
 We make one business workflow safe to delegate.
 
 ---
+
+## Positioning Hierarchy
+
+`.agency` is the public service surface for the larger CREATE SOMETHING thesis:
+
+| Name | Job |
+|------|-----|
+| **Delegated Work Control** | Durable category: what can run, what waits, what stops, who owns the decision, and what evidence proves the work. |
+| **Workflow Trust Layer** | Current service language for making one workflow safe to delegate. |
+| **Policy OS** | Canonical paid package for governed execution, approval rules, runbooks, golden tasks, and recurring tuning. |
+| **MCP-only** | Constrained discovery or compliance wedge, not the default paid offer. |
+
+Do not reposition `.agency` as a generic AI agency, prompt shop, model reseller,
+or Webflow implementation shop. The durable claim is:
+
+> CREATE SOMETHING makes delegated work trustworthy.
+
+## Ona Foundation
+
+Ona is the communication foundation for `.agency`, not the category to copy.
+Use the pattern underneath Ona's public surface: one clear category claim, one
+operator outcome, direct CTAs, and a concrete proof object. On `.agency`, that
+proof object is the delegated-work boundary: what can run, what waits, what
+stops, who owns the decision, and what evidence proves the work.
+
+Future edits should keep public language easy to inspect before it becomes
+technical. Explain the workflow first, then the stack. Do not add decorative
+iconography or unverified market claims to make the page feel bigger.
 
 ## The Creation Moat
 
@@ -17,8 +45,9 @@ Neither Claude Desktop, Claude Cowork, nor Codex can create MCP servers from wit
 - Integration experience (data mapping, security boundaries)
 - Workflow control design (Skills + MCP with trust boundaries)
 
-This is the creation expertise `.agency` turns into a governed operating path:
-named objects, scoped actions, approval states, stop conditions, and evidence.
+This is the creation expertise `.agency` turns into Delegated Work Control:
+named objects, scoped actions, approval states, stop conditions, owners, and
+evidence.
 
 ---
 
@@ -81,7 +110,7 @@ Implementation surface:
 
 Story-canvas usage contract:
 
-- Pass an explicit `storyId` on route-level uses so heading and instruction
+- Pass an explicit `storyId` on route-level uses so SVG marker IDs and heading
   references remain stable if multiple story canvases appear on the same page.
 - Keep the story canvas before the editable canvas when both are present. The
   story teaches the workflow language; the editable canvas collects booking
@@ -89,18 +118,17 @@ Story-canvas usage contract:
 - Keep motion semantics in markup, not visible copy. Chapter motion cues belong
   in `data-motion-cue` attributes so animations can target them without exposing
   implementation labels to readers.
+- Canvas copy should follow the Ona.com communication pattern: simple operator
+  language, visible proof, and "set the direction" framing before technical
+  implementation detail.
+- Do not expose renderer names such as Svelte Flow in public copy. The product language is Atlas canvas and Atlas graph.
 
 Renderer rule:
 
-- Svelte Flow is the primary renderer for workflow education, intake, editing,
-  accessibility, story maps, and agent-operable maps in this Svelte frontend.
-- Canvas copy should follow the Ona.com communication pattern: short declarative
-  claims, "set the direction" framing, governed execution language, and concrete
-  nouns like workflow, owner, decision, evidence, tools, and boundaries.
-- Do not expose renderer names such as Svelte Flow, Sigma, or Cosmograph in
-  user-facing canvas copy. The product language is Atlas canvas and Atlas graph.
-- Static story exports are the fallback for articles, social cards, and non-JS
-  presentation, not the base in-app canvas implementation.
+- React Flow is the primary renderer for workflow education, intake, editing,
+  accessibility, and agent-operable maps.
+- Static story canvases are the fallback for marketing, articles, social cards,
+  and non-JS presentation.
 - Sigma/Cosmograph are reserved for large read-only network exploration. Do not
   move the canonical workflow contract into those renderers; adapt them from the
   Atlas graph artifact when graph scale requires WebGL.
@@ -141,9 +169,10 @@ Renderer rule:
 ## Positioning
 
 **Before**: "We build websites/apps with modern templates"
-**After**: "We make one workflow safe to delegate"
+**After**: "We make delegated work trustworthy"
 
-Templates are table stakes. The moat is creation expertise applied to specific domains.
+Templates are table stakes. The moat is workflow-boundary design, creation
+expertise, proof patterns, and policy artifacts applied to specific domains.
 
 ---
 

@@ -40,7 +40,7 @@
     {
       name: 'Trust Layer',
       description:
-        'Scoped actions, approval states, release checks, blocked states, and incident loops for workflows already in motion.',
+        'The Workflow Trust Layer for delegated work already in motion: scoped actions, approval states, release checks, blocked states, and incident loops.',
       type: 'Workflow Control Plan',
       price: 'Custom',
       priceDescription: 'Monthly'
@@ -168,11 +168,11 @@
         'A workflow can run and still be unsafe if nobody can see what changed, why it ran, what stopped, or who approves the next move.'
     },
     {
-      eyebrow: 'Workflow Trust Layer',
+      eyebrow: 'Delegated Work Control',
       icon: 'check',
-      title: 'The layer underneath the agent work',
+      title: 'The control layer underneath delegated work',
       detail:
-        'CREATE SOMETHING defines the operating path first, then wires agents, tools, approvals, and evidence into one controlled workflow.'
+        'CREATE SOMETHING defines the operating path first, then wires agents, tools, approvals, owners, and evidence into one controlled workflow.'
     }
   ];
 
@@ -345,12 +345,12 @@
     {
       question: 'What is your primary service?',
       answer:
-        'Workflow Pilot fixes the first painful workflow. Trust Layer becomes the ongoing plan once speed needs approvals, release controls, and oversight.'
+        'Workflow Pilot fixes the first painful workflow. Workflow Trust Layer becomes the ongoing plan once delegated work needs approvals, release controls, and oversight.'
     },
     {
       question: 'Are agents part of the workforce?',
       answer:
-        'They can be, when the workflow gives them a clear job, scoped tools, approval boundaries, and evidence.'
+        'They can be, when the workflow gives them a clear job, scoped tools, approval boundaries, named ownership, and evidence.'
     },
     {
       question: 'Do we need to understand MCP first?',
@@ -366,9 +366,9 @@
 </script>
 
 <SEO
-  title="Workflow Trust Layer | How I Work"
-  description="How CREATE SOMETHING makes one workflow safe to delegate: clear stack boundaries, decision states, evidence, and escalation when judgment is required."
-  keywords="workflow trust layer, workflow mapping, AI interaction design, safe to delegate AI workflow, workflow pilot, production automation, agent reliability"
+  title="Delegated Work Control | How I Work"
+  description="How CREATE SOMETHING makes one workflow safe to delegate: clear stack boundaries, decision states, owners, evidence, and escalation when judgment is required."
+  keywords="delegated work control, workflow trust layer, workflow mapping, AI interaction design, safe to delegate AI workflow, workflow pilot, production automation, agent reliability"
   ogImage="/og-image.svg"
   propertyName="agency"
   {services}
@@ -381,7 +381,7 @@
   titleLevel="h1"
   eyebrow="How I Work"
   title="Make one workflow safe to delegate."
-  description="Bring the operating path your team cannot keep covering by hand. I map the inputs, owners, approvals, and failure modes; rebuild the handoff; and add controlled agent capacity only where the boundary is clear."
+  description="Bring work your team already handles by hand. I show the inputs, owners, approvals, stop states, receipts, and failure modes, then build only the first delegation path that is clear enough to trust."
 >
   {#snippet actions()}
     <Button href="#atlas-warmup">
@@ -416,14 +416,14 @@
 <ClearPageSection
   variant="soft"
   eyebrow="Why this layer exists"
-  title="Tools can connect the work. They do not decide what should be trusted."
-  description="The durable value is the layer underneath the agent: the workflow boundary, approval model, recovery path, and evidence trail."
+  title="Tools can connect the work. They cannot explain the boundary."
+  description="Delegated Work Control makes the boundary visible: what can run, what waits, what stops, who owns the decision, and what evidence survives."
 >
   {#snippet after()}
     <ClearCardGrid
       items={directToolComparison}
       columns={4}
-      ariaLabel="Direct tool setup versus Workflow Trust Layer"
+      ariaLabel="Direct tool setup versus Delegated Work Control"
     />
   {/snippet}
 </ClearPageSection>
@@ -449,7 +449,7 @@
   id="service-path"
   eyebrow="Service path"
   title="Every engagement has a clean exit."
-  description="Start with the smallest safe delegation point, prove the first workflow, then add the trust layer only when live work needs more control. Each step has a concrete output, a decision point, and a next-state the buyer can understand."
+  description="Start with the smallest safe delegation point, prove the first workflow, then add the Workflow Trust Layer only when live work needs more control. Each step has a concrete output, a decision point, and a next-state the buyer can understand."
   items={servicePathDecisions}
   ariaLabel="Service path from map to trust layer"
 />
@@ -479,7 +479,7 @@
 <ClearPageSection
   variant="white"
   eyebrow="Ownership boundary"
-  title="Transparency creates calm when the workflow has clear boundaries."
+  title="The visitor should understand what they keep."
   description="Your team sees enough to trust and inherit the system. Sensitive credentials, private data, and platform-specific complexity stay behind the right operational boundary."
 >
   {#snippet after()}
@@ -498,7 +498,7 @@
   variant="soft"
   eyebrow="What your team keeps"
   title="Leave with maps, runbooks, and receipts your team can operate."
-  description="Every trust-layer project ships with artifacts your team can inspect, run, inherit, and improve after launch."
+  description="Every Workflow Trust Layer project ships with artifacts your team can inspect, run, inherit, and improve after launch."
 >
   {#snippet after()}
     <div class="service-artifact-stack">
@@ -515,14 +515,14 @@
   description="The first engagement should make the next step clearer before it asks for a build."
 >
   {#snippet after()}
-    <ClearCardGrid items={objectionCards} columns={3} ariaLabel="Workflow Trust Layer objections" />
+    <ClearCardGrid items={objectionCards} columns={3} ariaLabel="Delegated Work Control objections" />
   {/snippet}
 </ClearPageSection>
 
 <ClearCtaBand
   eyebrow="Map the workflow"
   title="Map the workflow your team still protects by hand."
-  description="We will define the handoffs, approvals, failure modes, and escalation path before any implementation work starts."
+  description="We will define the handoffs, approvals, decision owners, failure modes, and escalation path before any implementation work starts."
   items={ctaItems}
 >
   {#snippet actions()}

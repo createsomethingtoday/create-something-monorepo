@@ -260,7 +260,10 @@
 	}
 
 	/** Programmatic scroll to position */
-	export function scrollTo(target: number | HTMLElement, options?: { immediate?: boolean }): void {
+	export function scrollTo(
+		target: number | HTMLElement,
+		options: { immediate?: boolean } | undefined = undefined
+	): void {
 		let position: number;
 
 		if (typeof target === 'number') {
