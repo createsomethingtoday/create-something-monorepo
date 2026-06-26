@@ -412,7 +412,9 @@ export function computeTemplateHealth(asset: Asset, now = new Date()): TemplateH
 	const viewers = Math.max(0, asset.uniqueViewers ?? 0);
 	const purchases = Math.max(0, asset.cumulativePurchases ?? 0);
 	const conversionRate = viewers > 0 ? (purchases / viewers) * 100 : null;
-	const publishedDate = parseDate(asset.publishedDate);
+	const publishedDate =
+		parseDate(asset.publishedDate) ||
+		(asset.status === 'Published' ? parseDate(asset.decisionDate) : null);
 	const daysLive = publishedDate ? daysBetween(publishedDate, now) : null;
 	const isPublished = isPublishedForHealth(asset);
 	const hasEnoughViewers = viewers >= MIN_VIEWERS_FOR_HEALTH;

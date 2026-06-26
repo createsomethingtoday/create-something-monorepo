@@ -5,6 +5,7 @@ import {
 	buildCreatorEmailMatchFormula,
 	cleanMarketplaceStatus,
 	cleanMarketplaceType,
+	mapAssetRecord,
 	resolveAssetType,
 	type Asset
 } from './airtable';
@@ -41,6 +42,25 @@ describe('resolveAssetType', () => {
 				'⚙️🆎Type (Text)': 'Library📚'
 			})
 		).toBe('Library');
+	});
+});
+
+describe('mapAssetRecord', () => {
+	it('maps the rocket-prefixed published date field used by Marketplace Assets', () => {
+		const asset = mapAssetRecord({
+			id: 'recTemplate',
+			fields: {
+				Name: 'GenieNova',
+				'⚙️🆎Type (Text)': 'Template🏗️',
+				'🚀Marketplace Status': '3️⃣Published🚀',
+				'🚀📅Published Date': '2025-06-18',
+				'🚀📅Decision Date': '2025-06-18T05:52:53.967Z'
+			}
+		} as unknown as Parameters<typeof mapAssetRecord>[0]);
+
+		expect(asset.status).toBe('Published');
+		expect(asset.publishedDate).toBe('2025-06-18');
+		expect(asset.decisionDate).toBe('2025-06-18T05:52:53.967Z');
 	});
 });
 
