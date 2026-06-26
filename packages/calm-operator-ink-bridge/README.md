@@ -70,6 +70,37 @@ The Core Ink firmware lives in `packages/calm-operator-ink-firmware`. It uses
 the device token for `/ink/brief`, `/ink/clock`, `/ink/health-review/request`,
 `/ink/operator-event`, and `/ink/device-heartbeat`.
 
+## Decision Garden Review Packets
+
+Core Ink uses `POST /ink/operator-event` for untethered Decision Garden check-ins.
+The route remains the import path for Retool. Firmware sends only compact fields:
+source, marked-slot count, cursor, timestamp source, device ID, and battery. It
+does not send task text, client context, secrets, approval notes, or business
+content.
+
+For `offline_decision_garden` events, the bridge stores a `review_packet` inside
+the event payload for Retool. The packet fields are:
+
+- `source`
+- `marked_slots`
+- `cursor`
+- `timestamp`
+- `device_id`
+- `battery`
+- `suggested_review_lane`
+- `blocked_actions`
+
+`blocked_actions` always keeps expansion gated. ChatGPT, apps, agents, Retool
+automations, and production jobs may not expand the packet into config,
+metadata, client work, code, production changes, secrets, or permissions until a
+human approves the review packet.
+
+Validate the Retool boundary before deploys or Retool manifest changes:
+
+```bash
+pnpm retool:operating-model:check
+```
+
 ## Deploy
 
 ```bash

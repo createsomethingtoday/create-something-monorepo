@@ -1,0 +1,68 @@
+{
+  "name": "Core Ink Decision Garden Review Packet Import",
+  "version": "1.0.0",
+  "owner": "CREATE SOMETHING",
+  "source": {
+    "surface": "calm-operator-ink",
+    "import_path": "/ink/operator-event",
+    "event_type": "offline_decision_garden",
+    "bridge_package": "packages/calm-operator-ink-bridge",
+    "firmware_package": "packages/calm-operator-ink-firmware"
+  },
+  "review_packet": {
+    "fields": [
+      "source",
+      "marked_slots",
+      "cursor",
+      "timestamp",
+      "device_id",
+      "battery",
+      "suggested_review_lane",
+      "blocked_actions"
+    ],
+    "field_contract": {
+      "source": "String source family such as core-ink.",
+      "marked_slots": "Integer count from 0 to 9. No semantic labels or notes.",
+      "cursor": "Integer cursor from 0 to 8.",
+      "timestamp": "Bridge-observed ISO timestamp.",
+      "device_id": "Device identifier, not an operator or client identifier.",
+      "battery": "Battery percentage or null.",
+      "suggested_review_lane": "Operator review lane hint only.",
+      "blocked_actions": "Expansion actions blocked until human approval."
+    },
+    "blocked_actions": [
+      "expand_into_config",
+      "mutate_client_metadata",
+      "create_client_work",
+      "change_code_or_production",
+      "rotate_or_write_secrets",
+      "change_permissions"
+    ]
+  },
+  "boundaries": {
+    "human_approval_required": true,
+    "autonomous_expansion_allowed": false,
+    "firmware_stores_sensitive_text": false,
+    "firmware_allowed_local_state": [
+      "alerts_enabled",
+      "quiet_mode",
+      "cached_operator_brief",
+      "decision_garden_marked_slot_count",
+      "decision_garden_cursor"
+    ],
+    "forbidden_packet_fields": [
+      "client_name",
+      "task_text",
+      "business_context",
+      "secret",
+      "approval_note",
+      "permission_change",
+      "code_change"
+    ]
+  },
+  "checks": {
+    "manifest": "pnpm retool:operating-model:check",
+    "bridge": "pnpm --dir packages/calm-operator-ink-bridge check && pnpm --dir packages/calm-operator-ink-bridge test",
+    "firmware": "pnpm --dir packages/calm-operator-ink-firmware build"
+  }
+}

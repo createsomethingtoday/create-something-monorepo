@@ -13,6 +13,7 @@ import {
 import { collectRemoteHealthChecks, configuredRemoteHealthChecks } from './remote-health-checks.js';
 import { dueDailyAlarms, shouldRunHealthReviewAtUtcHour } from './scheduled-alarms.js';
 import { authRoleForInkRoute } from './route-auth.js';
+import { eventPayloadWithRetoolReviewPacket } from './retool-review-packet.js';
 import type {
   DeviceHeartbeatInput,
   HealthReviewReport,
@@ -597,9 +598,10 @@ export class InkState extends DurableObject<Env> {
     return { ok: true, health, brief: this.brief('core-ink') };
   }
 
-  recordEvent(input: OperatorEventInput): { ok: true; event_id: string; alert?: StoredAlert } {
+  recordEvent(input: OperatorEventInput): { ok: true; event_id: string; review_packet?: unknown; alert?: StoredAlert } {
     const now = Date.now();
     const eventId = crypto.randomUUID();
+    const { payload, review_packet: reviewPacket } = eventPayloadWithRetoolReviewPacket(input, now);
     this.ctx.storage.sql.exec(
       `INSERT INTO events (id, type, source, summary, created_at, payload_json)
        VALUES (?, ?, ?, ?, ?, ?)`,
@@ -608,7 +610,7 @@ export class InkState extends DurableObject<Env> {
       input.source?.trim() || 'unknown',
       input.summary?.trim() || '',
       now,
-      JSON.stringify(input.payload ?? {})
+      JSON.stringify(payload)
     );
 
     if (input.escalate || input.alert) {
@@ -616,12 +618,12 @@ export class InkState extends DurableObject<Env> {
         ...input.alert,
         source: input.alert?.source ?? input.source,
         subject: input.alert?.subject ?? input.summary ?? 'Operator event',
-        payload: input.alert?.payload ?? input.payload
+        payload: input.alert?.payload ?? payload
       });
-      return { ok: true, event_id: eventId, alert: result.alert };
+      return { ok: true, event_id: eventId, ...(reviewPacket ? { review_packet: reviewPacket } : {}), alert: result.alert };
     }
 
-    return { ok: true, event_id: eventId };
+    return { ok: true, event_id: eventId, ...(reviewPacket ? { review_packet: reviewPacket } : {}) };
   }
 
   heartbeat(input: DeviceHeartbeatInput, fallbackDeviceId: string): {
