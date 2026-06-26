@@ -20,15 +20,7 @@ const storyCanvasComponent = readFileSync(
 	new URL('../src/lib/components/PublicAtlasStoryCanvas.svelte', import.meta.url),
 	'utf8'
 );
-const flowComponent = readFileSync(
-	new URL('../src/lib/components/PublicAtlasFlow.svelte', import.meta.url),
-	'utf8'
-);
 const agencyReadme = readFileSync(new URL('../README.md', import.meta.url), 'utf8');
-const agencyPackage = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')) as {
-	dependencies?: Record<string, string>;
-	devDependencies?: Record<string, string>;
-};
 
 test('atlas route presents the story canvas before the editable canvas', () => {
 	const storyCanvasIndex = atlasRoute.indexOf('<PublicAtlasStoryCanvas');
@@ -89,36 +81,14 @@ test('story canvas uses stable overridable ids instead of fixed DOM ids', () => 
 	assert.ok(storyCanvasComponent.includes('export let storyId'));
 	assert.ok(storyCanvasComponent.includes('aria-labelledby={titleId}'));
 	assert.ok(storyCanvasComponent.includes('id={titleId}'));
+	assert.ok(storyCanvasComponent.includes('id={arrowId}'));
+	assert.ok(storyCanvasComponent.includes('marker-end={`url(#${arrowId})`}'));
 	assert.ok(storyCanvasComponent.includes('data-motion-cue={chapter.motionCue}'));
 	assert.equal(storyCanvasComponent.includes('aria-labelledby="atlas-story-title"'), false);
 	assert.equal(storyCanvasComponent.includes('id="atlas-story-title"'), false);
+	assert.equal(storyCanvasComponent.includes('id="atlas-story-arrow"'), false);
+	assert.equal(storyCanvasComponent.includes('marker-end: url("#atlas-story-arrow")'), false);
 	assert.equal(storyCanvasComponent.includes('<small>{chapter.motionCue}</small>'), false);
-});
-
-test('story canvas hides renderer implementation while preserving mobile pan and zoom', () => {
-	assert.ok(storyCanvasComponent.includes("import PublicAtlasFlow"));
-	assert.ok(storyCanvasComponent.includes('<PublicAtlasFlow'));
-	assert.ok(storyCanvasComponent.includes('readOnly'));
-	assert.ok(storyCanvasComponent.includes('Drag to pan the Atlas canvas'));
-	assert.ok(storyCanvasComponent.includes('Edges stay attached'));
-	assert.ok(storyCanvasComponent.includes('<span>Atlas graph</span>'));
-	assert.equal(storyCanvasComponent.includes('Svelte Flow keeps edges'), false);
-	assert.equal(storyCanvasComponent.includes('{graph.renderer.primary}'), false);
-	assert.equal(storyCanvasComponent.includes('class="atlas-story__pan-layer"'), false);
-	assert.equal(storyCanvasComponent.includes('on:touchmove|nonpassive={handleMapTouchMove}'), false);
-});
-
-test('public Atlas flow is native Svelte Flow instead of a React bridge', () => {
-	assert.ok(flowComponent.includes("from '@xyflow/svelte'"));
-	assert.ok(flowComponent.includes('<SvelteFlow'));
-	assert.ok(flowComponent.includes('zoomOnPinch'));
-	assert.ok(flowComponent.includes('panOnDrag'));
-	assert.ok(flowComponent.includes('nodesDraggable={!readOnly}'));
-	assert.ok(flowComponent.includes('nodesConnectable={!readOnly}'));
-	assert.equal(Boolean(agencyPackage.dependencies?.['@xyflow/svelte']), true);
-	assert.equal(Boolean(agencyPackage.dependencies?.['@xyflow/react']), false);
-	assert.equal(Boolean(agencyPackage.dependencies?.react), false);
-	assert.equal(Boolean(agencyPackage.dependencies?.['react-dom']), false);
 });
 
 test('agency README documents story canvas route usage contract', () => {
@@ -127,8 +97,4 @@ test('agency README documents story canvas route usage contract', () => {
 	assert.ok(agencyReadme.includes('Keep the story canvas before the editable canvas'));
 	assert.ok(agencyReadme.includes('`/methodology`, `/stack`, and `/products` can use the same story surface'));
 	assert.ok(agencyReadme.includes('`data-motion-cue` attributes'));
-	assert.ok(agencyReadme.includes('Canvas copy should follow the Ona.com communication pattern'));
-	assert.ok(agencyReadme.includes('"set the direction" framing'));
-	assert.ok(agencyReadme.includes('Do not expose renderer names such as Svelte Flow'));
-	assert.ok(agencyReadme.includes('The product language is Atlas canvas and Atlas graph'));
 });

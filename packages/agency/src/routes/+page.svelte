@@ -29,6 +29,7 @@
   } from '@create-something/canon';
   import ExecutionWorkbench from '$lib/components/ExecutionWorkbench.svelte';
   import HeroTrustArtifact from '$lib/components/HeroTrustArtifact.svelte';
+  import PublicAtlasStoryCanvas from '$lib/components/PublicAtlasStoryCanvas.svelte';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
   const services = [
@@ -37,8 +38,8 @@
       description:
         'A fixed first map of the workflow, object model, action boundary, approval path, and first safe delegation point.',
       type: 'Entry wedge',
-      price: 'Custom',
-      priceDescription: 'Scoped diagnostic'
+      price: 'Fixed scope',
+      priceDescription: 'Map before any build decision'
     },
     {
       name: 'Workflow Pilot',
@@ -92,19 +93,55 @@
   const heroProofItems: ClearPlatformHeroProof[] = [
     {
       value: 'Run',
-      label: 'Safe actions move without a meeting.'
+      label: 'Safe actions move\ninside the lane.'
     },
     {
       value: 'Wait',
-      label: 'Judgment calls pause for the owner.'
+      label: 'Judgment calls pause\nfor the owner.'
     },
     {
       value: 'Stop',
-      label: 'Work outside the lane records a reason.'
+      label: 'Outside work stops\nwith a reason.'
     },
     {
       value: 'Prove',
-      label: 'Receipts show what happened and who decided.'
+      label: 'Receipts name the\nowner and outcome.'
+    }
+  ];
+
+  const painCards: ClearCardItem[] = [
+    {
+      eyebrow: 'Trust gap',
+      icon: 'warning',
+      title: 'Your tools can act before the workflow is safe',
+      detail:
+        'AI tools, automations, and connectors can move work. The risk is unclear owners, unsafe writes, missing approvals, hidden credentials, and no receipt when the work moves.'
+    },
+    {
+      eyebrow: 'Buyer pain',
+      icon: 'user',
+      title: 'Someone still has to babysit the edge cases',
+      detail:
+        'The workflow touches customers, revenue, production, credentials, or approvals, so the team keeps watching instead of safely delegating.'
+    },
+    {
+      eyebrow: 'First answer',
+      icon: 'check',
+      title: 'Make one risky workflow inspectable',
+      detail:
+        'Start by defining what can run, what waits, what stops, who decides, and what proof survives the handoff.'
+    }
+  ];
+
+  const founderCredibility: ClearCardItem[] = [
+    {
+      eyebrow: 'Built by',
+      icon: 'user',
+      title: 'Micah Johnson, Senior Systems Architect at Webflow',
+      detail:
+        'Experience across marketplace systems, internal tooling, onboarding systems, Salesforce, HubSpot, Notion, Slack, Procore, and production handoffs.',
+      href: '/about',
+      points: ['Founder-led service', 'Risk reduction through real systems work']
     }
   ];
 
@@ -113,7 +150,7 @@
       eyebrow: '01 Map',
       title: 'Bring one workflow',
       detail:
-        'Start with the manual handoff, repeated rescue, or risky workflow your team already recognizes.',
+        'Start with the support recovery, customer-trust, revenue, or production handoff your team already protects by hand.',
       proof: 'Output: object map, owner map, action boundary, and first receipt plan.',
       links: [{ label: agencyCoreMessaging.selfMapLabel, href: agencyCoreMessaging.selfMapHref }]
     },
@@ -133,53 +170,55 @@
       proof:
         'Output: monthly control plan for work that touches revenue, customers, or production.',
       links: [{ label: 'See stack boundary', href: '/stack' }]
-    },
-    {
-      eyebrow: '04 Operate',
-      title: 'Keep the evidence visible',
-      detail:
-        'Use delivery records to show what changed, what stayed private, what remains blocked, and who decides next.',
-      proof: 'Output: proof surface your team can inspect without exposing secrets.',
-      links: [{ label: 'See proof', href: '/products' }]
     }
   ];
 
   const useCases: ClearUseCaseItem[] = [
     {
-      title: 'Route inbound leads',
-      detail: 'Classify the request, enrich the record, assign the owner, and leave the next action.'
+      title: 'Address fix: run',
+      detail:
+        'The order is unfulfilled, the address validates, and the only write is a fulfillment note plus customer-safe confirmation.'
     },
     {
-      title: 'Recover support cases',
-      detail: 'Inspect the case, order, shipment, and payment before any customer-facing action.'
+      title: 'Delayed order credit: wait',
+      detail:
+        'The agent verifies carrier status and drafts the recovery note, but the credit touches revenue and waits for the owner.'
     },
     {
-      title: 'Approve credits or refunds',
-      detail: 'Let safe drafts move quickly while revenue-touching decisions wait for the owner.'
+      title: 'Refund exception: stop',
+      detail:
+        'The refund exceeds the support lane, so the workflow blocks the money movement and opens an owner handoff with facts attached.'
     },
     {
-      title: 'Verify launches',
-      detail: 'Run checks, gather proof, and keep release evidence with the delivery record.'
+      title: 'Account change: wait',
+      detail:
+        'The workflow can collect account context and draft the change note, but permissions or commercial impact require named approval.'
     },
     {
-      title: 'Triage production issues',
-      detail: 'Read monitoring context, classify severity, and route the next action.'
+      title: 'Shipment issue: run',
+      detail:
+        'Carrier status, warehouse cutoff, and case state can be inspected before the customer receives a verified update.'
     },
     {
-      title: 'Reconcile system records',
-      detail: 'Compare source systems, identify drift, and stop before writing uncertain data.'
-    },
-    {
-      title: 'Prepare owner updates',
-      detail: 'Turn workflow state into a concise brief with decisions, blockers, and evidence.'
-    },
-    {
-      title: 'Move backlog work',
-      detail: 'Claim scoped tasks only when the owner, policy, and verification path are visible.'
+      title: 'Sensitive claim: stop',
+      detail:
+        'If the evidence is incomplete, the workflow stops before making a client-facing promise the team cannot defend.'
     }
   ];
 
   const buyerLanes: ClearCardItem[] = [
+    {
+      eyebrow: 'Customer trust',
+      icon: 'check',
+      title: 'Support work needs safe recovery',
+      detail:
+        'The default wedge: order, payment, case, shipment, or account context must be inspected before anything touches the customer.',
+      href: '/contact?source=lane&intent=workflow-mapping&lane=reliability_and_control',
+      points: [
+        'First run: run, wait, or stop with a reason',
+        'Proof: approval note, blocked-state record, and customer-safe draft'
+      ]
+    },
     {
       eyebrow: 'Revenue ops',
       icon: 'refresh',
@@ -193,18 +232,6 @@
       ]
     },
     {
-      eyebrow: 'Customer trust',
-      icon: 'check',
-      title: 'Support work needs safe recovery',
-      detail:
-        'Use when order, payment, case, or account context must be inspected before anything touches the customer.',
-      href: '/contact?source=lane&intent=workflow-mapping&lane=reliability_and_control',
-      points: [
-        'First run: run, wait, or stop with a reason',
-        'Proof: approval note, blocked-state record, and customer-safe draft'
-      ]
-    },
-    {
       eyebrow: 'Delivery ops',
       icon: 'document',
       title: 'Client or production work needs receipts',
@@ -215,6 +242,45 @@
         'First run: release evidence, handoff surface, or owner queue',
         'Proof: delivery page, validation output, and rollback note'
       ]
+    }
+  ];
+
+  const clientKeeps: ClearCardItem[] = [
+    {
+      eyebrow: 'Accounts',
+      icon: 'user',
+      title: 'Source systems stay client-owned',
+      detail:
+        'Accounts, business context, data rights, approval authority, and final operating decisions stay with the team that owns the work.'
+    },
+    {
+      eyebrow: 'Access',
+      icon: 'check',
+      title: 'Least privilege before speed',
+      detail:
+        'The map names which systems are read, which writes are allowed, and where execution must stop for approval.'
+    },
+    {
+      eyebrow: 'Evidence',
+      icon: 'document',
+      title: 'Receipts travel with the workflow',
+      detail:
+        'Validation output, blocked-state records, release notes, and rollback notes stay close to the operating path.'
+    }
+  ];
+
+  const commitmentCards: ClearCardItem[] = [
+    {
+      eyebrow: 'First offer',
+      icon: 'search',
+      title: 'Workflow Trust Map',
+      detail:
+        'Most first engagements begin with a fixed-scope map before any build decision.',
+      points: [
+        'You leave with the workflow map, owner map, action boundary, and first receipt plan',
+        'If the map does not show a safe delegation path, the work stops there'
+      ],
+      href: agencyCoreMessaging.selfMapHref
     }
   ];
 
@@ -391,16 +457,17 @@
 <div class="home-pilot">
   <ClearPlatformHero
     eyebrow={agencyCoreMessaging.categoryLabel}
-    title="The control plane for delegated work."
-    description="CREATE SOMETHING makes it clear what can run, what waits for approval, what stops, who owns the decision, and what evidence proves the work."
+    title="Make one risky workflow safe to delegate."
+    description="CREATE SOMETHING maps what can run, what waits for approval, what must stop, and what evidence proves the work before agents or automations touch customers, revenue, production, or credentials."
     proofItems={heroProofItems}
+    hideAsideOnMobile={true}
   >
     {#snippet actions()}
       <Button href={agencyCoreMessaging.selfMapHref}>
-        {agencyCoreMessaging.tryMapLabel}
+        Map one workflow
       </Button>
-      <Button href={agencyCoreMessaging.workflowMappingSessionHref} variant="secondary">
-        {agencyCoreMessaging.bookMappingSessionLabel}
+      <Button href="/products" variant="secondary">
+        See proof
       </Button>
     {/snippet}
 
@@ -410,34 +477,19 @@
   </ClearPlatformHero>
 
   <ClearPageSection
-    id="service-flow"
     variant="white"
-    eyebrow="Service path"
-    title="Start with one job your team already understands."
-    description="Map the current handoff, show the first safe delegation path, then add the Workflow Trust Layer only when live work needs more control."
+    eyebrow="The pain"
+    title="The problem is not capability. The problem is trust."
+    description="Your team already has AI tools, automations, and connectors. The missing layer is the operating boundary around delegated work."
   >
     {#snippet after()}
-      <ClearPillarGrid items={serviceFlowPillars} ariaLabel="CREATE SOMETHING service flow" />
+      <ClearCardGrid items={painCards} columns={3} ariaLabel="Delegated work buyer pain" />
     {/snippet}
   </ClearPageSection>
 
-  <ClearUseCaseBand
-    id="use-cases"
-    eyebrow="Concrete work first"
-    title="Use cases should sound like the work people already do."
-    description="The first workflow stays concrete: handoffs, approvals, launches, recovery loops, and owner updates your team already manages."
-    items={useCases}
-    ariaLabel="Controlled workflow use cases"
-  />
-
-  <ClearPageSection
-    variant="soft"
-    eyebrow="Buyer lanes"
-    title="Choose the workflow before choosing the tools."
-    description="The fastest path is a known workflow, a named business risk, and one controlled delegation that proves whether the service should expand."
-  >
+  <ClearPageSection variant="soft" eyebrow="Credibility" title="Founder-led systems work.">
     {#snippet after()}
-      <ClearCardGrid items={buyerLanes} columns={3} ariaLabel="Workflow buyer lanes" />
+      <ClearCardGrid items={founderCredibility} columns={1} ariaLabel="Founder credibility" />
     {/snippet}
   </ClearPageSection>
 
@@ -445,9 +497,9 @@
     id="workflow-pattern"
     variant="white"
     layout="split"
-    eyebrow="Execution console"
-    title="Show the decision before the automation."
-    description="In this example, support recovery inspects the case, order, shipment, and payment state before deciding whether delegated work can run, wait, or stop."
+    eyebrow="Default wedge"
+    title="Start with support recovery and customer-trust work."
+    description="Support recovery is easy to understand and hard to fake: cases, orders, payments, shipments, accounts, customer promises, revenue decisions, and visible receipts."
   >
     {#snippet aside()}
       <ClearMetadataRail
@@ -462,6 +514,67 @@
 
     {#snippet after()}
       <ExecutionWorkbench />
+    {/snippet}
+  </ClearPageSection>
+
+  <ClearUseCaseBand
+    id="use-cases"
+    eyebrow="Run / wait / stop"
+    title="Support recovery makes the boundary obvious."
+    description="The same workflow can contain safe actions, approval-needed actions, and hard stops. The control layer makes those states visible before anything touches the customer."
+    items={useCases}
+    ariaLabel="Controlled workflow use cases"
+  />
+
+  <ClearPageSection
+    id="service-flow"
+    variant="white"
+    eyebrow="Service path"
+    title="Map one workflow. Pilot the safe path. Control live risk."
+    description="The process stays narrow until the first safe delegation point is visible, proven, and owned."
+  >
+    {#snippet after()}
+      <ClearPillarGrid items={serviceFlowPillars} ariaLabel="CREATE SOMETHING service flow" />
+    {/snippet}
+  </ClearPageSection>
+
+  <ClearPageSection
+    variant="soft"
+    eyebrow="What the client keeps"
+    title="You keep control. The workflow gets clearer."
+    description="Accounts, access, secrets, approvals, and evidence stay explicit so the delegated workflow does not become another mystery stack."
+  >
+    {#snippet after()}
+      <ClearCardGrid items={clientKeeps} columns={3} ariaLabel="Client-owned workflow boundary" />
+    {/snippet}
+  </ClearPageSection>
+
+  <ClearPageSection
+    variant="white"
+    eyebrow="Atlas entry point"
+    title="The map is the productized wedge."
+    description="Atlas turns the workflow into an inspectable artifact: human tasks, AI tasks, system operations, source data, constraints, touchpoints, owners, stop conditions, and receipts."
+  >
+    {#snippet after()}
+      <PublicAtlasStoryCanvas
+        starterId="marketplace-review-queue"
+        storyId="home-support-recovery-atlas-story"
+        eyebrow="Workflow Trust Map"
+        title="A buyer should see the boundary before the build."
+        description="This read-only Atlas canvas shows how a workflow becomes safe to discuss: source state, allowed action, approval owner, hard stop, and receipt surface."
+        compact
+      />
+    {/snippet}
+  </ClearPageSection>
+
+  <ClearPageSection
+    variant="soft"
+    eyebrow="Buyer lanes"
+    title="Choose the workflow before choosing the tools."
+    description="The fastest path is a known workflow, a named business risk, and one controlled delegation that proves whether the service should expand."
+  >
+    {#snippet after()}
+      <ClearCardGrid items={buyerLanes} columns={3} ariaLabel="Workflow buyer lanes" />
     {/snippet}
   </ClearPageSection>
 
@@ -498,12 +611,23 @@
   />
 
   <ClearContentHighlights
-    eyebrow="Recent proof"
-    title="Proof stays tied to real delivery records."
-    description="Delivery records show how the service flow becomes client-safe proof, private evidence, and a clear next decision."
+    eyebrow="Delivery proof"
+    title="Proof starts with delivery records."
+    description="Client-safe records show what changed, what stayed private, what the client kept, and which decision still belongs to the owner."
     items={contentHighlights}
     ariaLabel="CREATE SOMETHING proof highlights"
   />
+
+  <ClearPageSection
+    variant="soft"
+    eyebrow="Commitment boundary"
+    title="The first engagement should be easy to understand."
+    description="The first paid step is not an open-ended automation project. It is a fixed-scope Workflow Trust Map that decides whether the workflow has a safe delegation path."
+  >
+    {#snippet after()}
+      <ClearCardGrid items={commitmentCards} columns={1} ariaLabel="Workflow Trust Map commitment" />
+    {/snippet}
+  </ClearPageSection>
 
   <ClearActionFooter
     eyebrow="Start with one workflow"
@@ -531,5 +655,9 @@
   .home-proof-stack {
     display: grid;
     gap: 0.85rem;
+  }
+
+  .home-pilot :global(.clear-platform-hero__proof span) {
+    white-space: pre-line;
   }
 </style>

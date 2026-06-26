@@ -118,10 +118,6 @@ Story-canvas usage contract:
 - Keep motion semantics in markup, not visible copy. Chapter motion cues belong
   in `data-motion-cue` attributes so animations can target them without exposing
   implementation labels to readers.
-- Canvas copy should follow the Ona.com communication pattern: simple operator
-  language, visible proof, and "set the direction" framing before technical
-  implementation detail.
-- Do not expose renderer names such as Svelte Flow in public copy. The product language is Atlas canvas and Atlas graph.
 
 Renderer rule:
 
@@ -252,18 +248,6 @@ packages/agency/
 | Validation surfaces | Svelte check output, Cloudflare Pages build output, route preview, sales content review |
 | UI validation path | `/`, `/services` |
 | Escalation rule | stop if Auth0, D1, or client-delivery data is required and cannot be reproduced from local fixtures or Infisical-backed environment |
-
-## Capture Review Admin API
-
-Operator-only lead and signup review lives at `/api/admin/capture`.
-
-- `GET /api/admin/capture?limit=100` returns newsletter, contact, lead, and public Atlas capture rows with computed classification and recommended action.
-- `GET /api/admin/capture?include=all&limit=100` includes operational account, billing, legacy contact, and MCP entitlement context.
-- Add `surface`, `classification`, `action`, `reviewed`, and `q` query params to narrow either the JSON response or `/admin/capture` operator view.
-- GET responses include `decision_storage.available`; the UI disables decision writes until migration 0029 is applied.
-- `POST /api/admin/capture` stores an operator decision in `capture_review_decisions` without mutating the original capture rows.
-- `DELETE /api/admin/capture` with `surface` and `source_id` clears a stored operator decision so the row returns to computed classification.
-- Apply `migrations/0029_capture_review_decisions.sql` before using durable decisions in production.
 
 ## Sales Assets
 

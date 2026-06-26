@@ -41,10 +41,10 @@
     },
     {
       value: 'workflow-teardown',
-      label: 'Request a workflow map',
-      description: 'Best when you can name the stack, bottleneck, and risk boundary.',
+      label: 'Request a Workflow Trust Map',
+      description: 'Best when you can name the stack, owner, bottleneck, and risk boundary.',
       funnelStage: 'consideration',
-      serviceInterest: 'Workflow trust map',
+      serviceInterest: 'Workflow Trust Map',
       submitLabel: 'Request map',
       successMessage: "Sent. I'll review the workflow and reply with the likely operating path."
     },
@@ -62,8 +62,8 @@
 
   const laneOptions: Array<{ value: ServiceLane; label: string }> = [
     { value: 'not_sure', label: 'Not sure yet' },
-    { value: 'workflow_infrastructure', label: 'Workflow Pilot' },
-    { value: 'reliability_and_control', label: 'Trust Layer' },
+    { value: 'workflow_infrastructure', label: 'Workflow Trust Map / Pilot' },
+    { value: 'reliability_and_control', label: 'Support Recovery / Trust Layer' },
     { value: 'enterprise_extension', label: 'Enterprise Extension' },
     { value: 'system_development_referral', label: 'System Development Referral' }
   ];
@@ -103,19 +103,19 @@
     'workflow-teardown': {
       seoTitle: 'Request a Workflow Trust Map | CREATE SOMETHING .agency',
       seoDescription:
-        'Request a workflow map for the stack, bottleneck, risk boundary, owners, and first safe automation wedge.',
-      eyebrow: 'Workflow map',
+        'Request a Workflow Trust Map for the stack, bottleneck, risk boundary, owners, action rules, receipts, and first safe delegation path.',
+      eyebrow: 'Workflow Trust Map',
       title: 'Bring the workflow that needs a control path.',
       description:
-        'Use this path when you can name the stack, bottleneck, owner, and the place where approval or evidence matters.',
-      formTitle: 'Request a workflow map',
+        'Use this path when you can name the stack, bottleneck, owner, and the place where approval or evidence matters. The first output is a fixed-scope map, not an open-ended build.',
+      formTitle: 'Request a Workflow Trust Map',
       formDescription:
-        'Share the current workflow shape so I can identify the likely operating path and first safe wedge.',
+        'Share the current workflow shape so I can identify the likely operating path, first safe wedge, and no-build stop condition.',
       messageLabel: 'Which workflow needs attention first?',
       messageHelper:
         'Name the stack, bottleneck, owner, and what should require approval before AI takes action. Do not include credentials or client secrets.',
       messagePlaceholder:
-        'e.g., HubSpot + Notion + Slack. Leads move cleanly until handoff, then the team rebuilds context by hand. We need the first safe wedge before adding more automation.'
+        'e.g., Zendesk + Shopify + Stripe. Support can draft replies, but credits, refunds, and account changes need approval rules and receipts before anything can act.'
     },
     'workflow-mapping': {
       seoTitle: 'Start a Workflow Mapping Session | CREATE SOMETHING .agency',
@@ -124,7 +124,7 @@
       eyebrow: 'Mapping session',
       title: 'Start when the workflow and owner are clear.',
       description:
-        'Use this path when there is a real workflow, a decision owner, and enough urgency to map the allowed, approval-needed, blocked, and receipt states.',
+        'Use this path when there is a real workflow, a decision owner, and enough urgency to map the allowed, approval-needed, blocked, and receipt states before a build decision.',
       formTitle: 'Send mapping details',
       formDescription:
         'Share the workflow, owner, systems, timeline, and first decision you need to make before booking.',

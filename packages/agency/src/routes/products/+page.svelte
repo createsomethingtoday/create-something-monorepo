@@ -27,37 +27,6 @@
   const integrations = products.filter((product) => product.category === 'integration');
   const clientWork = products.filter((product) => product.category === 'client');
 
-  const proofRoles: ClearCardItem[] = [
-    {
-      eyebrow: 'Ground',
-      icon: 'check',
-      title: 'Claims need evidence',
-      detail:
-        'Agents must check before they claim. That discipline becomes release evidence, approval rules, and blocked-state logic.'
-    },
-    {
-      eyebrow: 'Loom',
-      icon: 'users',
-      title: 'Agent work needs continuity',
-      detail:
-        'Long-running work needs ownership, checkpoints, and evidence so progress survives handoffs across tools and teams.'
-    },
-    {
-      eyebrow: 'Connections',
-      icon: 'plus',
-      title: 'Connections are the start',
-      detail:
-        'Read-only or constrained access proves the path before the workflow earns more authority.'
-    },
-    {
-      eyebrow: 'Control',
-      icon: 'settings',
-      title: 'The service adds judgment',
-      detail:
-        'The paid work turns proof primitives into a controlled operating path your team can inspect.'
-    }
-  ];
-
   const proofReadingCards: ClearCardItem[] = [
     {
       eyebrow: 'Receipts',
@@ -281,8 +250,8 @@
   layout="split"
   titleLevel="h1"
   eyebrow="Proof"
-  title="See what ran, waited, stopped, and why."
-  description="Ground, Linear-backed coordination, connectors, and client builds are not a product shelf. They show the same path the service follows: connect the system, verify the claim, coordinate the work, then control what can be delegated."
+  title="See the delivery record before the framework."
+  description="The useful proof is business-readable first: what changed, what was controlled, what stayed private, what the client kept, and which decision still belongs to an owner."
 >
   {#snippet actions()}
     <Button href={agencyCoreMessaging.selfMapHref}>
@@ -294,14 +263,30 @@
   {/snippet}
 
   {#snippet aside()}
-    <ClearCardGrid items={proofRoles} columns={1} density="compact" ariaLabel="Proof primitives" />
+    <ClearCardGrid
+      items={proofLedger}
+      columns={1}
+      density="compact"
+      ariaLabel="Client delivery proof signals"
+    />
   {/snippet}
 </ClearPageSection>
 
 <ClearPageSection
   variant="white"
+  eyebrow="Client delivery records"
+  title="Lead with what survived real delivery."
+  description="Abundance and ShivWorks show the buyer-facing sequence: what changed, what was controlled, what stayed private, what the client kept, and what decision came next."
+>
+  {#snippet after()}
+    <ClearCardGrid items={proofLedger} columns={4} ariaLabel="Business proof ledger" />
+  {/snippet}
+</ClearPageSection>
+
+<ClearPageSection
+  variant="soft"
   eyebrow="Delegated Work Control proof"
-  title="Proof should be readable before it is technical."
+  title="Then show the run, wait, stop, and receipt states."
   description="Every artifact on this page helps a buyer understand what can run, what waits, what stops, who owns the decision, and which receipt proves it."
 >
   {#snippet after()}
@@ -326,7 +311,7 @@
 </ClearPageSection>
 
 <ClearPageSection
-  variant="soft"
+  variant="white"
   eyebrow="Proof canvas"
   title="Proof becomes useful when the map shows the commitment boundary."
   description="A receipt is not just a log. It names what can run, what waits for judgment, what must stop, and what evidence lets the next owner trust the handoff."
@@ -344,7 +329,7 @@
 </ClearPageSection>
 
 <ClearPageSection
-  variant="white"
+  variant="soft"
   eyebrow="How to read this page"
   title="Tools are evidence. The service is the operating path."
   description="The free and open tools show the discipline underneath the service: grounded claims, agent continuity, constrained access, and evidence-backed decisions. The paid work turns those primitives into one delegated workflow your operator can trust."
@@ -363,21 +348,10 @@
 />
 
 <ClearPageSection
-  variant="soft"
-  eyebrow="Proof ledger"
-  title="The evidence is business-readable before it is technical."
-  description="Elite workflow buyers need to see the path from problem to control. The proof ledger shows how each build preserves business context, owner authority, and inspectable receipts."
->
-  {#snippet after()}
-    <ClearCardGrid items={proofLedger} columns={4} ariaLabel="Business proof ledger" />
-  {/snippet}
-</ClearPageSection>
-
-<ClearPageSection
   variant="white"
-  eyebrow="Flagship proof"
-  title="Verify before claiming. Preserve the handoff."
-  description="The two core proof threads behind the operating-layer thesis: Ground checks claims, and Loom MCP shows why agent work needs memory, ownership, and handoff evidence."
+  eyebrow="Framework and tool proof"
+  title="Open-source proof sits below the delivery record."
+  description="Ground checks claims, Loom MCP shows why agent work needs ownership and handoff evidence, and connector work shows how capability becomes constrained access."
 >
   {#snippet after()}
     <ClearCardGrid
