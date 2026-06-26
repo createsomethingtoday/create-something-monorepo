@@ -9,6 +9,7 @@
   import {
     filterMarketplaceCategories,
     getCompetitionClass,
+    getExpandedUserCategorySet,
     getCompetitionIndicator,
     getUserCategorySet,
     isCompetitionFilter,
@@ -54,6 +55,7 @@
     categories: CategoryEntry[];
     insights: Insight[];
     userTemplates: LeaderboardEntry[];
+    userCategories?: string[];
     summary: {
       totalMarketplaceSales: number | null;
       userBestRank: number | null;
@@ -67,7 +69,8 @@
     };
   }
 
-  let { leaderboard, categories, insights, userTemplates, summary }: Props = $props();
+  let { leaderboard, categories, insights, userTemplates, userCategories = [], summary }: Props =
+    $props();
 
   type CategorySortKey =
     | 'revenueRank'
@@ -121,7 +124,15 @@
   let categoryFilter = $state('all');
   let competitionFilter = $state<CompetitionFilter>('all');
   let userCategoryFilter = $state<UserCategoryFilter>('all');
-  const userCategories = $derived.by(() => getUserCategorySet(userTemplates));
+  const ownedUserCategorySet = $derived.by(() => {
+    const categoryEntries =
+      userCategories.length > 0 ? userCategories.map((category) => ({ category })) : userTemplates;
+
+    return getUserCategorySet(categoryEntries);
+  });
+  const userCategorySet = $derived.by(() =>
+    getExpandedUserCategorySet(ownedUserCategorySet, categories)
+  );
 
   const gridSortOptions: Array<{ key: CategorySortKey; label: string }> = [
     { key: 'revenueRank', label: 'Rank' },
@@ -146,21 +157,21 @@
     );
   });
 
-  const filteredCategories = $derived.by(() => {
-    return filterMarketplaceCategories(categories, {
+  const sortedCategories = $derived.by(() => {
+    const currentSortKey = sortKey;
+    const currentSortDirection = sortDirection;
+    const currentCategories = filterMarketplaceCategories(categories, {
       searchQuery,
       categoryFilter,
       competitionFilter,
       userCategoryFilter,
-      userCategories
+      userCategories: userCategorySet
     });
-  });
 
-  const sortedCategories = $derived.by(() => {
-    return [...filteredCategories].sort((a, b) => {
-      const multiplier = sortDirection === 'asc' ? 1 : -1;
+    return [...currentCategories].sort((a, b) => {
+      const multiplier = currentSortDirection === 'asc' ? 1 : -1;
 
-      if (sortKey === 'competition') {
+      if (currentSortKey === 'competition') {
         const competitionOrder: Record<string, number> = {
           Low: 0,
           Medium: 1,
@@ -174,8 +185,8 @@
         return (aCompetition - bCompetition) * multiplier;
       }
 
-      const aVal = a[sortKey];
-      const bVal = b[sortKey];
+      const aVal = a[currentSortKey];
+      const bVal = b[currentSortKey];
 
       if (typeof aVal === 'string' && typeof bVal === 'string') {
         return aVal.localeCompare(bVal) * multiplier;
@@ -247,31 +258,42 @@
     return typeof value === 'string' && validSortKeys.includes(value as CategorySortKey);
   }
 
+  function getCategoryRowKey(category: CategoryEntry, index: number): string {
+    return [
+      category.category,
+      category.subcategory,
+      category.revenueRank,
+      category.templatesInSubcategory,
+      category.totalSales30d,
+      index
+    ].join('::');
+  }
+
   $effect(() => {
     if (!browser || preferencesLoaded) return;
 
     try {
       const raw = localStorage.getItem(CATEGORY_PREFERENCES_STORAGE_KEY);
-      if (!raw) return;
+      if (raw) {
+        const parsed = JSON.parse(raw) as Partial<CategoryPreferences>;
 
-      const parsed = JSON.parse(raw) as Partial<CategoryPreferences>;
+        if (isCategorySortKey(parsed.sortKey)) sortKey = parsed.sortKey;
+        if (parsed.sortDirection === 'asc' || parsed.sortDirection === 'desc')
+          sortDirection = parsed.sortDirection;
+        if (parsed.viewMode === 'table' || parsed.viewMode === 'grid') viewMode = parsed.viewMode;
+        if (typeof parsed.searchQuery === 'string') searchQuery = parsed.searchQuery;
+        if (typeof parsed.categoryFilter === 'string') categoryFilter = parsed.categoryFilter;
+        if (isCompetitionFilter(parsed.competitionFilter)) {
+          competitionFilter = parsed.competitionFilter;
+        }
+        if (parsed.userCategoryFilter === 'all' || parsed.userCategoryFilter === 'user') {
+          userCategoryFilter = parsed.userCategoryFilter;
+        }
 
-      if (isCategorySortKey(parsed.sortKey)) sortKey = parsed.sortKey;
-      if (parsed.sortDirection === 'asc' || parsed.sortDirection === 'desc')
-        sortDirection = parsed.sortDirection;
-      if (parsed.viewMode === 'table' || parsed.viewMode === 'grid') viewMode = parsed.viewMode;
-      if (typeof parsed.searchQuery === 'string') searchQuery = parsed.searchQuery;
-      if (typeof parsed.categoryFilter === 'string') categoryFilter = parsed.categoryFilter;
-      if (isCompetitionFilter(parsed.competitionFilter)) {
-        competitionFilter = parsed.competitionFilter;
-      }
-      if (parsed.userCategoryFilter === 'all' || parsed.userCategoryFilter === 'user') {
-        userCategoryFilter = parsed.userCategoryFilter;
-      }
-
-      if (viewMode === 'table' && !tableSortableKeys.includes(sortKey)) {
-        sortKey = 'revenueRank';
-        sortDirection = 'asc';
+        if (viewMode === 'table' && !tableSortableKeys.includes(sortKey)) {
+          sortKey = 'revenueRank';
+          sortDirection = 'asc';
+        }
       }
     } catch {
       // Ignore malformed preference payloads and continue with defaults.
@@ -423,7 +445,7 @@
 
       <div class="categories-controls">
         <div class="filter-controls">
-          {#if userTemplates.length > 0}
+          {#if userCategorySet.size > 0}
             <button
               class="portfolio-shortcut"
               class:active={userCategoryFilter === 'user'}
@@ -519,9 +541,11 @@
       {:else if viewMode === 'table'}
         <!-- Mobile Card Layout for Table View -->
         <div class="table-mobile-cards">
-          {#each sortedCategories as category (`${category.category}::${category.subcategory}`)}
+          {#each sortedCategories as category, index (getCategoryRowKey(category, index))}
             {@const competition = getCompetitionIndicator(category.templatesInSubcategory)}
-            {@const isUserCategory = userCategories.has(category.category)}
+            {@const isUserCategory =
+              ownedUserCategorySet.has(category.category) ||
+              ownedUserCategorySet.has(category.subcategory)}
             <div class="table-mobile-card" class:user-category={isUserCategory}>
               <div class="mobile-card-header">
                 <div class="mobile-card-title">
@@ -636,9 +660,11 @@
               </tr>
             </thead>
             <tbody>
-              {#each sortedCategories as category (`${category.category}::${category.subcategory}`)}
+              {#each sortedCategories as category, index (getCategoryRowKey(category, index))}
                 {@const competition = getCompetitionIndicator(category.templatesInSubcategory)}
-                {@const isUserCategory = userCategories.has(category.category)}
+                {@const isUserCategory =
+                  ownedUserCategorySet.has(category.category) ||
+                  ownedUserCategorySet.has(category.subcategory)}
                 <tr class:user-row={isUserCategory}>
                   <td>
                     <span class="category-stack">
@@ -676,9 +702,11 @@
         </div>
       {:else}
         <div class="categories-grid">
-          {#each sortedCategories as category (`${category.category}::${category.subcategory}`)}
+          {#each sortedCategories as category, index (getCategoryRowKey(category, index))}
             {@const competition = getCompetitionIndicator(category.templatesInSubcategory)}
-            {@const isUserCategory = userCategories.has(category.category)}
+            {@const isUserCategory =
+              ownedUserCategorySet.has(category.category) ||
+              ownedUserCategorySet.has(category.subcategory)}
             <div class="category-card" class:user-category={isUserCategory}>
               <div class="category-card-header">
                 <div class="category-info">

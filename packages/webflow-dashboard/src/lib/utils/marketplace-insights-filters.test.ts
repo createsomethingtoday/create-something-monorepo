@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   filterMarketplaceCategories,
+  getExpandedUserCategorySet,
   getCompetitionIndicator,
   getUserCategorySet,
   type MarketplaceCategoryEntry
@@ -42,6 +43,15 @@ const categoryRows: MarketplaceCategoryEntry[] = [
     totalRevenue30d: 1226,
     avgRevenuePerTemplate: 1226,
     revenueRank: 1
+  },
+  {
+    category: 'Design',
+    subcategory: 'Architecture',
+    templatesInSubcategory: 6,
+    totalSales30d: 16,
+    totalRevenue30d: 3664,
+    avgRevenuePerTemplate: 229,
+    revenueRank: 68
   }
 ];
 
@@ -68,7 +78,12 @@ describe('marketplace insights filters', () => {
       userCategories
     });
 
-    expect(filtered.map((row) => row.category)).toEqual(['Design', 'Design', 'Design']);
+    expect(filtered.map((row) => row.subcategory)).toEqual([
+      'Creative Agency',
+      'Portfolio',
+      'Agency',
+      'Architecture'
+    ]);
   });
 
   it('combines search, competition, and template-category filters', () => {
@@ -89,5 +104,12 @@ describe('marketplace insights filters', () => {
     expect(getCompetitionIndicator(10).key).toBe('medium');
     expect(getCompetitionIndicator(30).key).toBe('high');
     expect(getCompetitionIndicator(70).key).toBe('very-high');
+  });
+
+  it('expands combined creator category labels to matching performance parents', () => {
+    const expanded = getExpandedUserCategorySet(new Set(['Architecture & Design']), categoryRows);
+
+    expect(expanded.has('Architecture & Design')).toBe(true);
+    expect(expanded.has('Design')).toBe(true);
   });
 });
