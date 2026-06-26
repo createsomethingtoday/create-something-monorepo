@@ -1,12 +1,18 @@
 # The MCP-First Thesis
 
 > Research conducted: February 4, 2026
-> Updated: February 16, 2026 (Creation Moat pivot + Codex-vector packaging)
+> Updated: June 26, 2026 (Delegated Work Control hierarchy)
 > Context: Strategic pivot for WORKWAY and CREATE SOMETHING
 
 ## Executive Summary
 
 **The entry point to automation is connectivity, not intelligence.**
+
+The 20-year CREATE SOMETHING category is **Delegated Work Control**: the control
+plane for what delegated workers can do, what waits for approval, what must
+stop, who owns the decision, and what evidence proves the work. MCP is the
+connectivity and authority substrate inside that category, not the whole
+category by itself.
 
 MCP (Model Context Protocol) has emerged as the universal connector layer for AI. The pattern from Claude Cowork, Codex App, and industry adoption (100M+ monthly downloads) is clear:
 
@@ -54,11 +60,19 @@ Scaffolding tools have *started* to lower the barrier, but they still require:
 
 ### Strategic Implication
 
-The value is not in **commodity scaffolds** but in **creation expertise** applied to specific domains. CREATE SOMETHING pivots all properties toward this:
+The value is not in **commodity scaffolds** but in **creation expertise** applied
+to specific domains. Within Delegated Work Control, custom MCP creation is the
+technical moat because it turns tool access into governed workflow boundaries:
 
 ```
 OLD: Scaffolds → Learning → Services (scaffolds as entry point)
 NEW: MCP Servers → Connectivity → Intelligence Layer (creation as entry point)
+```
+
+The longer-lived claim is broader than MCP:
+
+```
+Delegated Work Control → Workflow Trust Layer → Policy OS → MCP/Skills/runtime artifacts
 ```
 
 ### Packaging Rule (Codex Vector)
@@ -68,6 +82,7 @@ The go-to-market sequence is explicit:
 1. **Entry wedge**: `MCP-only` for discovery and compliance-constrained cases.
 2. **Default paid offer**: `Policy OS` (custom MCP + agent layer + policy operations).
 3. **Vector**: Codex-first setup and demos, with MCP/policy artifacts portable to Claude and Cursor.
+4. **Category**: Delegated Work Control, with Workflow Trust Layer as current public service language.
 
 ---
 
@@ -201,6 +216,12 @@ The Atlas provides vocabulary for reasoning about AI systems "beyond 'User → M
 CREATE SOMETHING stays **horizontal** (the MCP-first thesis applies to any vertical).
 WORKWAY goes **vertical** (construction via Procore).
 
+The horizontal category is **Delegated Work Control**. CREATE SOMETHING should
+not be positioned as a generic AI agency, prompt engineering shop, model
+reseller, or Webflow implementation shop. The durable value is the operating
+boundary around delegated work: objects, owners, authority, run/wait/stop
+states, receipts, and recovery paths.
+
 ### Ona as Communication Reference
 
 Ona is the right communication reference for CREATE SOMETHING's public and
@@ -221,31 +242,45 @@ CREATE SOMETHING speaks through evidence: system maps, MCP boundaries, policy
 artifacts, implementation contracts, live workflow surfaces, validation gates,
 and delivery proof.
 
+For visitors, this means the public page should be legible before it is
+technical: name the category, state the operator outcome, show the proof object,
+then reveal the stack. Avoid borrowed market-stat claims or internal
+implementation language unless the page also shows the owned evidence behind
+the claim.
+
 The operating claim:
+
+> CREATE SOMETHING makes delegated work trustworthy.
+
+The implementation claim remains:
 
 > CREATE SOMETHING turns AI ambition into operational systems.
 
 ### Property Roles (Post-Pivot)
 
-Templates are no longer the entry point. **MCP creation expertise** is.
+Templates are no longer the entry point. **Delegated Work Control** is the
+category; **MCP creation expertise** is one of the hard-to-copy capabilities
+inside it.
 
-| Property | Old Focus | New Focus (Creation Moat) |
+| Property | Old Focus | New Focus (Delegated Work Control) |
 |----------|-----------|---------------------------|
-| **.ltd** | Philosophy of creation | Philosophy of *automation infrastructure*—articulate why creation > consumption |
-| **.io** | Research, tools, docs | MCP patterns, SDK research, reference implementations for *builders* |
-| **.space** | Practice via experiments | **The Workbench**—live tools for code execution, motion analysis, data dashboards |
-| **.agency** | Client services | **Custom MCP development**—the creation moat as a service |
+| **.ltd** | Philosophy of creation | Philosophy of controlled delegation and automation infrastructure |
+| **.io** | Research, tools, docs | MCP, SDK, policy, and proof patterns for builders |
+| **.space** | Practice via experiments | **The Workbench** for maps, checks, code execution, and proof tools |
+| **.agency** | Client services | Workflow Trust Layer implementation for delegated work |
 
 ### .agency Service Offerings
 
 | Service | Description | Value |
 |---------|-------------|-------|
-| **MCP Audit** | What MCPs would unlock value for your business? | Strategic clarity |
+| **Trust Map** | Which workflow can be safely delegated first? | Workflow, owner, action, stop, and receipt clarity |
 | **MCP-only (Discovery/Compliance)** | Limited-scope or read-only connectivity for teams operating agents internally | Fast trust setup with lower autonomy risk |
 | **Policy OS (Default)** | Custom MCP server(s) + Codex setup + policy + runbook + managed judgment loop | Differentiated outcomes + premium margin |
 | **Ongoing Support** | Auth updates, policy tuning, golden-task regressions, new capabilities | Recurring relationship |
 
-**Positioning shift**: From "We build websites/apps with modern stacks" to "We build the connectivity and outcome layers between your tools and AI."
+**Positioning shift**: From "We build websites/apps with modern stacks" to "We
+make delegated work trustworthy." In technical proof surfaces, that becomes "we
+build the connectivity and control layer between tools and AI."
 
 ### The Hermeneutic Circle
 

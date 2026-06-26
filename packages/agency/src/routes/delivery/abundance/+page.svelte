@@ -123,7 +123,7 @@
   let isAskingDeliveryAgent = false;
   let deliveryAgentError = '';
 
-  async function askJobAgent(prompt?: string) {
+  async function askJobAgent(prompt: string | undefined = undefined) {
     const message = (prompt ?? jobAgentQuestion).trim();
 
     if (!message || isAskingJobAgent) {
@@ -171,7 +171,7 @@
     }
   }
 
-  async function askDeliveryAgent(prompt?: string) {
+  async function askDeliveryAgent(prompt: string | undefined = undefined) {
     const message = (prompt ?? deliveryQuestion).trim();
 
     if (!message || isAskingDeliveryAgent) {
@@ -501,4 +501,3 @@
     </div>
   </div>
 </section>
-

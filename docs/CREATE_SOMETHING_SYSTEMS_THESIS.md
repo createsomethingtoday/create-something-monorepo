@@ -1,7 +1,7 @@
 # CREATE SOMETHING Systems Thesis
 
 > Status: working synthesis
-> Scope: CREATE SOMETHING as a practice-led thesis in governed AI systems
+> Scope: CREATE SOMETHING as the practice-led thesis for Delegated Work Control
 > Canonical inputs: `MCP_FIRST_THESIS.md`, `THREE_TIER_FRAMEWORK.md`, `POLICY_OS_PRODUCT_DEFINITION.md`, public `.io` papers, Atlas Studio, Policy OS templates, delivery records, and agent-legibility gates.
 
 ## Purpose
@@ -12,21 +12,26 @@ delivery docs. It explains how they fit together as one systems-thinking
 argument, what the repo already proves, and what remains before the work can be
 experienced as a comprehensive thesis, lab, and school.
 
-The living evidence layer for this thesis is generated from
-`docs/thesis/claims.yaml` into
-`docs/CREATE_SOMETHING_SYSTEMS_THESIS_EVIDENCE.generated.md`. Treat that report
-as the citation map: each claim should become stronger, weaker, stale, or
-contradicted as repo evidence changes.
-
 The premise is direct:
 
 > CREATE SOMETHING is a working thesis on how modern AI systems become useful
 > only when connectivity, execution, and judgment are designed as one governed
 > operating system.
 
+The 20-year category is **Delegated Work Control**:
+
+> CREATE SOMETHING is the control plane for delegated work: it defines what
+> agents and operators can do, what requires human authority, what must stop, and
+> what evidence proves the work.
+
+This is the durable company boundary. The long-term product is not an AI agency,
+prompt shop, model reseller, or generic automation studio. It is the system a
+company uses before any agent, automation, contractor, or internal operator
+touches customer trust, revenue, production, credentials, or regulated decisions.
+
 ## Research Question
 
-How do we design AI-enabled operating systems where tools, policies, people,
+How do we design delegated-work systems where tools, policies, people, agents,
 and data remain legible, governable, and improvable over time?
 
 The practical form of the question:
@@ -38,6 +43,8 @@ The practical form of the question:
 5. What evidence proves the workflow behaved correctly?
 6. What changes when the workflow moves across Dify, Codex, Pi, Claude, Cursor,
    repo-owned services, or SDK-backed orchestration?
+7. Which worker type is acting: AI agent, automation, contractor, internal team,
+   deployment bot, reviewer, or operator?
 
 ## Core Claim
 
@@ -54,9 +61,18 @@ The thesis is not "add an agent." The thesis is:
 > Build the connectivity and control layer between tools and AI, then encode the
 > operating policy as artifacts that humans and agents can inspect.
 
+The category hierarchy is:
+
+| Layer | Role |
+| --- | --- |
+| **Delegated Work Control** | Long-term company category and durable buyer problem. |
+| **Workflow Trust Layer** | Current service language for making one workflow safe to delegate. |
+| **Policy OS** | Canonical paid package for governed execution. |
+| **MCP-only** | Constrained discovery or compliance wedge, not the default paid offer. |
+
 ## Original Contribution
 
-CREATE SOMETHING contributes a practical method for governed AI systems:
+CREATE SOMETHING contributes a practical method for governed delegated work:
 
 1. Treat MCP as the trust and capability boundary.
 2. Treat policy as an artifact, not a hidden prompt.
@@ -65,10 +81,31 @@ CREATE SOMETHING contributes a practical method for governed AI systems:
 5. Treat maps, contracts, golden tasks, runbooks, traces, and receipts as one
    operating system.
 
+The eventual Delegated Work Control protocol should stay portable across models,
+agent surfaces, business systems, and human operators. Its minimum shape is:
+
+```text
+object
+owner
+system
+action
+authority
+risk_state
+approval_rule
+stop_condition
+receipt
+rollback_path
+```
+
+That shape is deliberately broader than "AI agent." The worker may be an agent,
+automation, contractor, support rep, reviewer, revenue-ops assistant, deployment
+bot, marketplace analyst, claims processor, or internal operator.
+
 The repo supports this contribution through code, docs, and delivery surfaces:
 
-- `docs/MCP_FIRST_THESIS.md` defines the creation moat: MCP consumption is
-  commoditized; MCP creation is not.
+- `docs/MCP_FIRST_THESIS.md` defines the creation moat inside the larger
+  delegated-work thesis: MCP consumption is commoditized; MCP creation and
+  boundary design are not.
 - `docs/THREE_TIER_FRAMEWORK.md` maps Database / Automation / Judgment to MCP
   Resources / Tools / Prompts.
 - `docs/POLICY_OS_PRODUCT_DEFINITION.md` defines Policy OS as the canonical
@@ -135,6 +172,37 @@ The CREATE SOMETHING method is:
 7. **Review, tune, and record drift.**
    Recurring review, golden-task regression, incident review, and rollout notes
    are part of the system, not aftercare.
+
+## 20-Year Shape
+
+Delegated Work Control can mature through four stages without pretending to be a
+platform before repeated workflow patterns justify one:
+
+1. **Premium implementation firm.**
+   Sell narrow, high-trust workflow maps, pilots, and control retainers. Learn
+   which workflows repeat, which buyers pay, which approvals matter, and which
+   receipts create trust.
+
+2. **Productized workflow kits.**
+   Package repeated patterns such as support recovery, revenue-ops handoff,
+   marketplace review, launch evidence, construction RFI/submittal control, and
+   claims intake. Each kit includes the workflow map, action rules, approval
+   rules, stop conditions, receipt templates, operator surface, runbook, and
+   integration recipes.
+
+3. **SaaS control plane.**
+   Let teams map workflows, connect systems, assign approval owners, version
+   policies, review blocked work, export evidence, and swap models or vendors
+   without losing the operating boundary.
+
+4. **Standard and ecosystem.**
+   Define portable delegation contracts, policy libraries, receipt ledgers,
+   integration marketplaces, implementation partner certification, procurement
+   templates, vertical control packs, and APIs for agent builders.
+
+The moat compounds in five places: workflow-boundary data, receipt patterns,
+policy templates, cross-tool integration position, and a trust brand associated
+with calm controlled delegation rather than speed or magic.
 
 ## Artifact Model
 
@@ -559,9 +627,6 @@ Recommended sequence:
 - Keep this document current.
 - Add it to `docs/README.md`.
 - Link it from strategy and architecture routes where appropriate.
-- Keep `docs/thesis/claims.yaml` and
-  `docs/CREATE_SOMETHING_SYSTEMS_THESIS_EVIDENCE.generated.md` current as the
-  living citation system.
 
 ### Phase 2: Flagship case packet
 

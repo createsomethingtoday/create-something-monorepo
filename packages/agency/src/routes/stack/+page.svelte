@@ -108,7 +108,7 @@
     {
       question: 'What is the stack boundary?',
       answer:
-        'The stack boundary separates what the client owns, what CREATE SOMETHING delivers, and what vendors provide before agent work becomes production work.'
+        'The stack boundary separates what the client owns, what CREATE SOMETHING delivers, and what vendors provide before delegated work becomes production work.'
     },
     {
       question: 'Why does vendor ownership matter?',
@@ -289,8 +289,8 @@
 
 <SEO
   title="Stack Boundary | CREATE SOMETHING .agency"
-  description="CREATE SOMETHING separates what your team owns, what vendors provide, and what the workflow needs before agent work becomes production work."
-  keywords="workflow trust layer, transparent AI stack, MCP stack, vendor boundaries, Composio, Cloudflare, Dify, Notion, OpenAI, Webflow"
+  description="CREATE SOMETHING separates what your team owns, what vendors provide, and what the workflow needs before delegated work becomes production work."
+  keywords="delegated work control, workflow trust layer, transparent AI stack, MCP stack, vendor boundaries, Composio, Cloudflare, Dify, Notion, OpenAI, Webflow"
   ogImage="/og-image.svg"
   propertyName="agency"
   {faqItems}
@@ -300,9 +300,9 @@
   variant="hero"
   layout="split"
   titleLevel="h1"
-  eyebrow="Stack Boundary"
-  title="The tools are replaceable. The workflow boundary is the product."
-  description="Proven services help the work run. CREATE SOMETHING owns the durable part: who owns the accounts, which actions can run, which decisions need approval, what stops, and what evidence travels with the handoff."
+  eyebrow="Delegated Work Control"
+  title="Know what every tool is allowed to do."
+  description="The stack is transparent when a visitor can see who owns the accounts, which actions can run, which decisions need approval, what stops, and what evidence travels with the handoff."
 >
   {#snippet actions()}
     <Button href={agencyCoreMessaging.selfMapHref}>
@@ -326,8 +326,8 @@
 <ClearPageSection
   variant="white"
   eyebrow="How the stack becomes a service"
-  title="From tool choices to a controlled handoff."
-  description="The story stays simple for a non-technical team: map the boundary, prove one workflow, control the risky actions, then operate through the right visible surface."
+  title="The stack should read like a handoff."
+  description="The story stays simple for a non-technical team: map the boundary, prove one workflow, control the risky actions, then operate through the visible surface."
 >
   {#snippet after()}
     <ClearCardGrid items={journey} columns={4} ariaLabel="Stack service journey" />
@@ -377,8 +377,8 @@
 <ClearPageSection
   variant="white"
   eyebrow="Vendor roles"
-  title="Vendor names are receipts, not the product."
-  description="Each service earns a clear job. The connected tools are not the moat. CREATE SOMETHING owns the operating boundary around the workflow: what connects, what runs, what pauses, what stops, and what the operator receives."
+  title="Vendor names are receipts, not the explanation."
+  description="Each service earns a clear job. The connected tools are not the moat. CREATE SOMETHING owns the operating boundary around delegated work: what connects, what runs, what waits, what stops, who decides, and what the operator receives."
 >
   {#snippet after()}
     <ClearCardGrid
@@ -403,7 +403,7 @@
 <ClearCtaBand
   eyebrow="Start with the workflow"
   title="Bring the workflow, the accounts, and the approval owner."
-  description="CREATE SOMETHING will map the stack boundary, define the first safe delegation path, identify what can become agent capacity, and show what stays visible to the operator before implementation starts."
+  description="CREATE SOMETHING will map the stack boundary, define the first safe delegation path, identify what can be safely assigned, and show what stays visible to the operator before implementation starts."
   items={ctaItems}
 >
   {#snippet actions()}

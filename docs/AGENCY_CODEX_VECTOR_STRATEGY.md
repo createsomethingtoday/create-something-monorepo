@@ -1,14 +1,24 @@
 # Agency Codex Vector Strategy
 
 > Date: February 16, 2026
-> Updated: May 11, 2026 (Pi delivery vector)
+> Updated: June 26, 2026 (Delegated Work Control hierarchy)
 > Scope: CREATE SOMETHING `.agency` packaging and delivery model
 > Priority: Max differentiation
 
 ## Summary
 
-The commercial default is now **Policy OS** (**Skills + MCP**), with **MCP-only** as a narrow entry wedge.
+`.agency` sells the current service expression of **Delegated Work Control**:
+making one workflow safe to delegate before agents, automations, contractors, or
+internal operators touch customer trust, revenue, production, credentials, or
+regulated decisions.
 
+The commercial default remains **Policy OS** (**Skills + MCP**), with
+**MCP-only** as a narrow entry wedge.
+
+- Delegated Work Control is the durable category: what can run, what waits, what
+  stops, who owns the decision, and what evidence proves the work.
+- Workflow Trust Layer is the current `.agency` service language for one
+  workflow at a time.
 - MCP remains the chassis: trust boundaries, connectivity, policy artifacts.
 - Outcomes are the product: execution quality, escalation policy, and continuous tuning.
 - Codex is the primary setup and demo vector, with Pi and Claude Code as co-equal delivery targets.
@@ -44,7 +54,9 @@ Context-bloat objection handling (approved line):
 
 Competitive moat emphasis:
 
-- Hard-to-copy elements lead all positioning: custom MCP creation, auth/security boundary design, policy artifacts, approval/escalation runbooks, and monthly tuning.
+- Hard-to-copy elements lead all positioning: workflow-boundary mapping, custom
+  MCP creation, auth/security boundary design, policy artifacts,
+  approval/escalation runbooks, receipt patterns, and monthly tuning.
 
 ## Delivery Targets
 
@@ -77,17 +89,20 @@ See `packages/pi-three-tier-framework/`, `packages/pi-policy-os/`, `packages/pi-
 
 ## Strategic decision
 
-1. `MCP-only` is sold only for discovery/compliance use cases.
-2. `Policy OS` is the default paid package:
+1. `Delegated Work Control` is the long-term category, not a route name or
+   entitlement enum.
+2. `Workflow Trust Layer` is the current public service language for `.agency`.
+3. `MCP-only` is sold only for discovery/compliance use cases.
+4. `Policy OS` is the default paid package:
    - Custom MCP server(s) for client systems.
    - Codex-ready agent setup and prompt/policy artifacts.
    - Managed judgment loop (approvals, escalation, monthly tuning).
    - `Workflow Infrastructure` is the implementation layer inside the package.
    - `Enterprise Extension` is the high-stakes expansion layer inside the package.
-3. Supplier wrap pattern remains unchanged:
+5. Supplier wrap pattern remains unchanged:
    - Commodity connectivity via `@create-something/composio-bridge`.
    - Deep-domain logic and intelligence layer are always custom.
-4. Runtime graduation is explicit:
+6. Runtime graduation is explicit:
    - Dify-first delivery remains valid for client-facing agent surfaces.
    - Agents SDK is introduced only when the Policy OS contract needs code-owned
      orchestration, tool routing, approval pauses, state, traces, evals, or
@@ -97,6 +112,20 @@ See `packages/pi-three-tier-framework/`, `packages/pi-policy-os/`, `packages/pi-
      governance.
 
 ## Offer architecture
+
+### Workflow Trust Layer (service language)
+
+Use when:
+- A buyer can name one workflow that is currently protected by human attention.
+- The workflow crosses systems, teams, accounts, or permissions.
+- The buyer needs a controlled delegation path before choosing agent tooling.
+
+Deliverables:
+- Workflow map
+- Object and owner map
+- Run/wait/stop action boundary
+- Receipt plan
+- First safe delegation recommendation
 
 ### MCP-only (entry wedge)
 
@@ -114,7 +143,7 @@ Deliverables:
 ### Policy OS (default)
 
 Use when:
-- Client asks for measurable time savings or autonomous follow-through.
+- Client asks for measurable time savings or delegated follow-through.
 - Workflow needs escalation policy, approval gates, or quality controls.
 - Client expects ongoing optimization.
 
