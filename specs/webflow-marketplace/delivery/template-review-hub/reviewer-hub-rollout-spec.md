@@ -7,7 +7,7 @@
 
 ## 1. Purpose
 
-This document defines the rollout shape for the first six Webflow Marketplace reviewers using the template review Hub lane.
+This document defines the rollout shape for the active Webflow Marketplace reviewers using the template review Hub lane.
 
 The goal is to make the pilot operationally safe before broader rollout by aligning the runtime with the documented policy model:
 
@@ -20,7 +20,7 @@ This spec should be treated as the concrete rollout plan for alpha.
 
 ## 2. Rollout decision
 
-The initial reviewer pilot should use **six reviewer-specific Hubs**, not one shared write-capable Hub.
+The reviewer pilot should use **active reviewer-specific Hubs**, not one shared write-capable Hub.
 
 Reason:
 
@@ -28,14 +28,13 @@ Reason:
 - the current MCP surface exposes direct mutation tools
 - a reviewer-specific Hub is the cleanest way to enforce identity, tool exposure, and audit attribution without blocking the pilot entirely
 
-This does **not** mean six materially different workflows. It means one workflow delivered through six reviewer-scoped Hub surfaces.
+This does **not** mean materially different workflows per reviewer. It means one workflow delivered through reviewer-scoped Hub surfaces.
 
 ## 3. Reviewer to Hub mapping
 
 | Reviewer | Email | Recommended Hub slug | Primary approval owner |
 | --- | --- | --- | --- |
 | Natalia Ledford | `natalia.ledford@webflow.com` | `wf-template-review-natalia` | Natalia Ledford |
-| Sudiksha Khanduja | `sudiksha.khanduja@webflow.com` | `wf-template-review-sudiksha` | Sudiksha Khanduja |
 | Eric Unger | `eric.unger@webflow.com` | `wf-template-review-eric` | Eric Unger |
 | Vicki Chen | `vicki.chen@webflow.com` | `wf-template-review-vicki` | Vicki Chen |
 | Mariana Segura | `mariana.segura@webflow.com` | `wf-template-review-mariana` | Mariana Segura |
@@ -52,7 +51,7 @@ Requirements for each reviewer Hub:
 
 ### Phase A: current reviewer-visible surface
 
-Expose these tools to all six reviewer Hubs by default:
+Expose these tools to all active reviewer Hubs by default:
 
 - `template_review_health`
 - `template_review_get_metrics`
@@ -176,8 +175,8 @@ The reviewer should be the approval owner for the write, and the workflow owner 
 
 ### Alpha week one
 
-- create the six reviewer-specific Hubs
-- normalize all six Hubs to the Phase A read/context plus narrow reviewer-owned write surface
+- create the active reviewer-specific Hubs
+- normalize all active reviewer Hubs to the Phase A read/context plus narrow reviewer-owned write surface
 - validate queue, asset, version, analysis, and release context
 - smoke self-assignment, self-unassignment, draft feedback, controlled status, and request-changes on a noncritical record before regular reviewer use
 - collect reviewer trust, false-positive, false-negative, and friction data
@@ -197,7 +196,7 @@ The reviewer should be the approval owner for the write, and the workflow owner 
 
 ## 9. Operational rules
 
-During the six-reviewer pilot:
+During the reviewer pilot:
 
 - every reviewer override should be captured
 - every failed write should trigger manual fallback and be logged
@@ -215,7 +214,7 @@ Containment rules:
 
 Broader rollout should not happen until:
 
-- all six reviewer Hubs are in steady use
+- all active reviewer Hubs are in steady use
 - reviewer identity is consistently attributable on write traces
 - write-path audit fields are complete
 - unsupported mutation surfaces are hidden from reviewer-facing discovery
@@ -229,6 +228,6 @@ These must be answered before enabling writes broadly:
 - does the outer Hub layer already inject reviewer identity independent of the shared MCP bearer token?
 - where is the canonical write audit event stored and queried?
 - how are reviewer-specific tool exposure and discovery controlled operationally?
-- what is the exact rollback mechanism for reverting all six reviewer Hubs to read-only mode?
+- what is the exact rollback mechanism for reverting all active reviewer Hubs to read-only mode?
 
 Until those answers are demonstrated in runtime behavior, the reviewer-specific Hubs may use only the Phase A narrow reviewer-owned write lane; everything outside that lane must stay read-only/manual with Airtable fallback for official state changes.
