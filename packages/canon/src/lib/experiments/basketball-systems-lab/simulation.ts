@@ -1,4 +1,7 @@
 export type PolicyKey = 'schedule' | 'media' | 'labor';
+export type SystemKey = 'recovery' | 'attention' | 'trust';
+export type LabMode = 'single' | 'versus';
+export type SeasonPhaseKey = 'opening' | 'midseason' | 'deadline';
 
 export type Tone = 'black' | 'green' | 'blue' | 'neutral' | 'red';
 
@@ -65,6 +68,100 @@ export type ManagementScenario = {
 	state: LeagueState;
 	metrics: MetricOutput[];
 	nodes: MapNode[];
+	reports: BoardReport[];
+	ledger: SeasonLedgerEntry[];
+};
+
+export type SystemScoreWeights = {
+	leagueHealth: number;
+	mediaValueB: number;
+	competitiveBalance: number;
+	laborTrust: number;
+	ownerMargin: number;
+	resilience: number;
+};
+
+export type System = {
+	key: SystemKey;
+	name: string;
+	thesis: string;
+	stance: string;
+	constraint: string;
+	adaptation: string;
+	policyKey: PolicyKey;
+	weights: SystemScoreWeights;
+};
+
+export type SeasonPhase = {
+	key: SeasonPhaseKey;
+	label: string;
+	impact: number;
+	readout: string;
+};
+
+export type Environment = {
+	key: string;
+	name: string;
+	pressure: string;
+	winCondition: string;
+	effects: Partial<LeagueState>;
+};
+
+export type SystemResult = {
+	system: System;
+	scenario: ManagementScenario;
+	timeline: SystemTimelineEntry[];
+	score: number;
+	startScore: number;
+	compoundedScoreDelta: number;
+	rank: number;
+	outcome: string;
+	failureMode: string;
+};
+
+export type SystemProjection = {
+	label: string;
+	value: string;
+	detail: string;
+};
+
+export type SystemTimelineEntry = {
+	year: number;
+	phase: SeasonPhase;
+	policy: ManagementPolicy;
+	policyIntensity: number;
+	state: LeagueState;
+	score: number;
+	delta: number;
+	decision: string;
+	receipt: string;
+	steered: boolean;
+};
+
+export type SystemMatchInput = {
+	mode?: LabMode;
+	systemKey?: SystemKey;
+	opponentKey?: SystemKey;
+	years?: number;
+	steeringYear?: number;
+	steeringPhase?: SeasonPhaseKey;
+	steeringPolicyKey?: PolicyKey;
+	environment?: Environment;
+};
+
+export type SystemMatch = {
+	mode: LabMode;
+	environment: Environment;
+	years: number;
+	steering: {
+		year: number;
+		phase: SeasonPhase;
+		policy: ManagementPolicy | null;
+		targetSystem: System;
+	};
+	systems: SystemResult[];
+	winner: SystemResult;
+	projections: SystemProjection[];
 	reports: BoardReport[];
 	ledger: SeasonLedgerEntry[];
 };
@@ -136,6 +233,99 @@ const managementPolicies: ManagementPolicy[] = [
 	}
 ];
 
+const defaultEnvironment: Environment = {
+	key: 'national-window',
+	name: 'National TV Labor Crunch',
+	pressure: 'Same schedule, same media demand, same labor scrutiny',
+	winCondition: 'Highest resilient league score after pressure is applied',
+	effects: {
+		scheduleLoad: 6,
+		travelWear: 5,
+		globalAttention: 5,
+		ownerMargin: -3,
+		laborTrust: -2
+	}
+};
+
+const defaultHorizonYears = 5;
+const minHorizonYears = 1;
+const maxHorizonYears = 12;
+
+const seasonPhases: SeasonPhase[] = [
+	{
+		key: 'opening',
+		label: 'Opening window',
+		impact: 1,
+		readout: 'Full-season steering; the decision has the whole year to compound.'
+	},
+	{
+		key: 'midseason',
+		label: 'Midseason window',
+		impact: 0.62,
+		readout: 'Partial-season steering; the decision ripples through the remaining schedule.'
+	},
+	{
+		key: 'deadline',
+		label: 'Deadline window',
+		impact: 0.34,
+		readout: 'Late steering; near-term impact is limited but projections still change.'
+	}
+];
+
+const systems: System[] = [
+	{
+		key: 'recovery',
+		name: 'Recovery System',
+		thesis: 'Protect star availability first, then let media value follow healthier inventory.',
+		stance: 'System vs environment',
+		constraint: 'Owner room tightens when rest windows reduce flexible inventory.',
+		adaptation: 'Cuts back-to-backs and accepts lower short-term margin flexibility.',
+		policyKey: 'schedule',
+		weights: {
+			leagueHealth: 0.26,
+			mediaValueB: 0.14,
+			competitiveBalance: 0.18,
+			laborTrust: 0.18,
+			ownerMargin: 0.08,
+			resilience: 0.16
+		}
+	},
+	{
+		key: 'attention',
+		name: 'Attention System',
+		thesis: 'Move attention into rising markets so the league grows without only leaning on incumbents.',
+		stance: 'System vs system',
+		constraint: 'Short-term certainty drops when marquee inventory spreads out.',
+		adaptation: 'Shifts showcase games toward high-upside markets and accepts more volatility.',
+		policyKey: 'media',
+		weights: {
+			leagueHealth: 0.12,
+			mediaValueB: 0.3,
+			competitiveBalance: 0.16,
+			laborTrust: 0.08,
+			ownerMargin: 0.16,
+			resilience: 0.18
+		}
+	},
+	{
+		key: 'trust',
+		name: 'Trust System',
+		thesis: 'Build around player trust because durable labor peace protects the whole product.',
+		stance: 'System vs pressure',
+		constraint: 'Guarantees create board pressure before the upside fully compounds.',
+		adaptation: 'Locks recovery enforcement into the operating model and makes tradeoffs visible.',
+		policyKey: 'labor',
+		weights: {
+			leagueHealth: 0.2,
+			mediaValueB: 0.1,
+			competitiveBalance: 0.16,
+			laborTrust: 0.3,
+			ownerMargin: 0.08,
+			resilience: 0.16
+		}
+	}
+];
+
 const nodePositions: Record<string, Pick<MapNode, 'x' | 'y' | 'mx' | 'my'>> = {
 	policy: { x: 9, y: 18, mx: 4, my: 12 },
 	fatigue: { x: 35, y: 13, mx: 36, my: 12 },
@@ -153,13 +343,84 @@ export function listManagementPolicies(): ManagementPolicy[] {
 	return managementPolicies.map((policy) => ({ ...policy, effects: { ...policy.effects } }));
 }
 
+export function listSystems(): System[] {
+	return systems.map(cloneSystem);
+}
+
+export function listSeasonPhases(): SeasonPhase[] {
+	return seasonPhases.map(cloneSeasonPhase);
+}
+
+export function getDefaultEnvironment(): Environment {
+	return { ...defaultEnvironment, effects: { ...defaultEnvironment.effects } };
+}
+
+export function runSystemMatch(input: SystemMatchInput = {}): SystemMatch {
+	const mode = input.mode ?? 'single';
+	const years = clampHorizon(input.years);
+	const steeringYear = clampSteeringYear(input.steeringYear, years);
+	const steeringPhase = findSeasonPhase(input.steeringPhase ?? 'midseason');
+	const steeringPolicy = input.steeringPolicyKey ? findPolicy(input.steeringPolicyKey) : null;
+	const environment = cloneEnvironment(input.environment ?? defaultEnvironment);
+	const primary = findSystem(input.systemKey ?? 'recovery');
+	const opponent = findOpponent(primary.key, input.opponentKey);
+	const entrants = mode === 'versus' ? [primary, opponent] : [primary];
+	const environmentBaseline = applyEnvironmentEffects(baselineLeagueState, environment);
+	const unsteeredPrimary = buildSystemResult(primary, environmentBaseline, environment, {
+		years,
+		steeringYear,
+		steeringPhase,
+		steeringPolicy: null,
+		targetSystemKey: primary.key
+	});
+	const ranked = entrants
+		.map((system) =>
+			buildSystemResult(system, environmentBaseline, environment, {
+				years,
+				steeringYear,
+				steeringPhase,
+				steeringPolicy,
+				targetSystemKey: primary.key
+			})
+		)
+		.sort((left, right) => right.score - left.score)
+		.map((result, index) => ({ ...result, rank: index + 1 }));
+	const winner = ranked[0];
+
+	return {
+		mode,
+		environment,
+		years,
+		steering: {
+			year: steeringYear,
+			phase: cloneSeasonPhase(steeringPhase),
+			policy: steeringPolicy ? clonePolicy(steeringPolicy) : null,
+			targetSystem: cloneSystem(primary)
+		},
+		systems: ranked,
+		winner,
+		projections: buildSystemProjections(ranked, unsteeredPrimary, years, steeringYear, steeringPhase),
+		reports: buildSystemReports(mode, environment, years, ranked),
+		ledger: buildSystemLedger(
+			mode,
+			environment,
+			years,
+			ranked,
+			steeringYear,
+			steeringPhase,
+			steeringPolicy
+		)
+	};
+}
+
 export function runManagementScenario(
 	policyKey: PolicyKey,
-	baseline: LeagueState = baselineLeagueState
+	baseline: LeagueState = baselineLeagueState,
+	policyIntensity = 1
 ): ManagementScenario {
 	const policy =
 		managementPolicies.find((candidate) => candidate.key === policyKey) ?? managementPolicies[0];
-	const state = applyPolicyEffects(baseline, policy);
+	const state = applyPolicyEffects(baseline, policy, policyIntensity);
 
 	return {
 		policy: { ...policy, effects: { ...policy.effects } },
@@ -172,12 +433,310 @@ export function runManagementScenario(
 	};
 }
 
-function applyPolicyEffects(baseline: LeagueState, policy: ManagementPolicy): LeagueState {
+function buildSystemResult(
+	system: System,
+	baseline: LeagueState,
+	environment: Environment,
+	options: {
+		years: number;
+		steeringYear: number;
+		steeringPhase: SeasonPhase;
+		steeringPolicy: ManagementPolicy | null;
+		targetSystemKey: SystemKey;
+	}
+): SystemResult {
+	let seasonBaseline = { ...baseline };
+	let scenario = runManagementScenario(system.policyKey, seasonBaseline);
+	const timeline: SystemTimelineEntry[] = [];
+	const startScore = scoreSystem(system, baseline);
+	let previousScore = startScore;
+
+	for (let year = 1; year <= options.years; year += 1) {
+		const isSteered =
+			system.key === options.targetSystemKey &&
+			options.steeringPolicy !== null &&
+			year >= options.steeringYear;
+		const policyKey = isSteered ? options.steeringPolicy.key : system.policyKey;
+		const policyIntensity =
+			isSteered && year === options.steeringYear ? options.steeringPhase.impact : 1;
+		scenario = runManagementScenario(policyKey, seasonBaseline, policyIntensity);
+		const score = scoreSystem(system, scenario.state);
+		const delta = roundTo(score - previousScore, 1);
+
+		timeline.push({
+			year,
+			phase: cloneSeasonPhase(isSteered && year === options.steeringYear ? options.steeringPhase : seasonPhases[0]),
+			policy: clonePolicy(scenario.policy),
+			policyIntensity,
+			state: { ...scenario.state },
+			score,
+			delta,
+			decision: isSteered
+				? `Steered into ${scenario.policy.label}`
+				: `${system.name} ran ${scenario.policy.label}`,
+			receipt: `${formatDelta(delta)} score; health ${formatScore(scenario.state.leagueHealth)}, trust ${formatScore(scenario.state.laborTrust)}, media $${scenario.state.mediaValueB.toFixed(2)}B.`,
+			steered: isSteered
+		});
+
+		previousScore = score;
+		seasonBaseline = advanceEnvironmentYear(scenario.state, environment, year);
+	}
+
+	const score = timeline.at(-1)?.score ?? startScore;
+	const compoundedScoreDelta = roundTo(score - startScore, 1);
+
+	return {
+		system: cloneSystem(system),
+		scenario,
+		timeline,
+		score,
+		startScore,
+		compoundedScoreDelta,
+		rank: 1,
+		outcome: `${system.name} scored ${score.toFixed(1)} after ${options.years} years.`,
+		failureMode: buildFailureMode(system, scenario.state)
+	};
+}
+
+function scoreSystem(system: System, state: LeagueState): number {
+	const resilience = clampScore(
+		(state.leagueHealth +
+			state.laborTrust +
+			state.competitiveBalance +
+			state.starAvailability +
+			(100 - state.travelWear)) /
+			5
+	);
+	const mediaScore = clampScore(state.mediaValueB * 10);
+	const weighted =
+		state.leagueHealth * system.weights.leagueHealth +
+		mediaScore * system.weights.mediaValueB +
+		state.competitiveBalance * system.weights.competitiveBalance +
+		state.laborTrust * system.weights.laborTrust +
+		state.ownerMargin * system.weights.ownerMargin +
+		resilience * system.weights.resilience;
+
+	return roundTo(weighted, 1);
+}
+
+function buildFailureMode(system: System, state: LeagueState): string {
+	if (state.ownerMargin < 64) return `${system.name} wins trust but leaves the owner room tight.`;
+	if (state.laborTrust < 68) return `${system.name} grows value before labor trust catches up.`;
+	if (state.competitiveBalance < 66) return `${system.name} needs a stronger parity backstop.`;
+	return system.constraint;
+}
+
+function buildSystemReports(
+	mode: LabMode,
+	environment: Environment,
+	years: number,
+	results: SystemResult[]
+): BoardReport[] {
+	const winner = results[0];
+	const challenger = results[1];
+
+	return [
+		{
+			label: mode === 'versus' ? 'Winning System' : 'Single System',
+			title:
+				mode === 'versus' && challenger
+					? `${winner.system.name} beat ${challenger.system.name} by ${roundTo(winner.score - challenger.score, 1).toFixed(1)} points after ${years} years.`
+					: `${winner.system.name} survived ${years} years with a ${winner.score.toFixed(1)} system score.`,
+			detail: `${winner.system.thesis} Decisions compound inside ${environment.name}: ${environment.pressure.toLowerCase()}.`
+		},
+		{
+			label: 'Environment Signal',
+			title: `The algorithm judged every System against the same pressure model and horizon.`,
+			detail: `${environment.winCondition}. Scores update each year from health, media value, competitive balance, labor trust, margin, and resilience.`
+		},
+		{
+			label: 'Failure Mode',
+			title: winner.failureMode,
+			detail: `The compounding ledger keeps the System steerable: a decision can change from any year without hiding the tradeoff.`
+		}
+	];
+}
+
+function buildSystemProjections(
+	results: SystemResult[],
+	unsteeredPrimary: SystemResult,
+	years: number,
+	steeringYear: number,
+	steeringPhase: SeasonPhase
+): SystemProjection[] {
+	const winner = results[0];
+	const primary = results.find((result) => result.system.key === unsteeredPrimary.system.key) ?? winner;
+	const steeringDelta = roundTo(
+		sumTimelineScores(primary.timeline) - sumTimelineScores(unsteeredPrimary.timeline),
+		1
+	);
+	const remainingYears = Math.max(0, years - steeringYear);
+
+	return [
+		{
+			label: 'Projected finish',
+			value: `${winner.score.toFixed(1)}`,
+			detail: `${winner.system.name} projects as the final leader after ${years} years.`
+		},
+		{
+			label: 'Steering impact',
+			value: formatDelta(steeringDelta),
+			detail: `${steeringPhase.label} cumulative movement compared with the same System holding its original policy.`
+		},
+		{
+			label: 'Ripple window',
+			value: remainingYears === 0 ? 'This year' : `${remainingYears + 1} seasons`,
+			detail: `${steeringPhase.readout} Subsequent years use the new policy at full strength.`
+		}
+	];
+}
+
+function sumTimelineScores(timeline: SystemTimelineEntry[]): number {
+	return roundTo(
+		timeline.reduce((total, entry) => total + entry.score, 0),
+		1
+	);
+}
+
+function buildSystemLedger(
+	mode: LabMode,
+	environment: Environment,
+	years: number,
+	results: SystemResult[],
+	steeringYear: number,
+	steeringPhase: SeasonPhase,
+	steeringPolicy: ManagementPolicy | null
+): SeasonLedgerEntry[] {
+	const winner = results[0];
+	const challenger = results[1];
+
+	return [
+		{
+			label: 'Mode',
+			value: mode === 'versus' ? 'System vs System' : 'System vs Environment',
+			detail:
+				mode === 'versus'
+					? 'Two Systems ran against the same seeded league pressure.'
+					: 'One System ran against the environment as the opponent.'
+		},
+		{
+			label: 'Horizon',
+			value: `${years} years`,
+			detail: `${environment.name}: ${environment.pressure}.`
+		},
+		{
+			label: 'Winning System',
+			value: winner.system.name,
+			detail:
+				mode === 'versus' && challenger
+					? `${winner.score.toFixed(1)} versus ${challenger.score.toFixed(1)}. Compounded ${formatDelta(winner.compoundedScoreDelta)}.`
+					: `${winner.score.toFixed(1)} weighted score. Compounded ${formatDelta(winner.compoundedScoreDelta)}.`
+		},
+		{
+			label: 'Steering',
+			value: steeringPolicy ? `Year ${steeringYear}, ${steeringPhase.label}` : 'Original system',
+			detail: steeringPolicy
+				? `Active System switches to ${steeringPolicy.label}; first-season impact is ${Math.round(steeringPhase.impact * 100)}%, then ripples forward.`
+				: 'No mid-run steering applied; the System keeps its native operating policy.'
+		}
+	];
+}
+
+function advanceEnvironmentYear(
+	state: LeagueState,
+	environment: Environment,
+	year: number
+): LeagueState {
+	const next = { ...state };
+	const pressureFactor = 0.12 + Math.min(year, 8) * 0.01;
+
+	for (const [key, delta] of Object.entries(environment.effects) as [keyof LeagueState, number][]) {
+		next[key] =
+			key === 'mediaValueB'
+				? roundTo(next[key] + delta * pressureFactor, 2)
+				: clampScore(next[key] + delta * pressureFactor);
+	}
+
+	const wearDrag = Math.max(0, next.travelWear - 58);
+	const trustDrag = Math.max(0, 70 - next.laborTrust);
+	const visibilityLift = Math.max(0, next.smallMarketVisibility - 58);
+
+	return {
+		...next,
+		leagueHealth: clampScore(next.leagueHealth - wearDrag * 0.04 - trustDrag * 0.03),
+		mediaValueB: roundTo(next.mediaValueB + next.globalAttention * 0.002 + visibilityLift * 0.006, 2),
+		competitiveBalance: clampScore(next.competitiveBalance + visibilityLift * 0.025 - wearDrag * 0.015)
+	};
+}
+
+function applyEnvironmentEffects(baseline: LeagueState, environment: Environment): LeagueState {
+	const state = { ...baseline };
+
+	for (const [key, delta] of Object.entries(environment.effects) as [keyof LeagueState, number][]) {
+		state[key] =
+			key === 'mediaValueB' ? roundTo(state[key] + delta, 2) : clampScore(state[key] + delta);
+	}
+
+	return state;
+}
+
+function findSystem(key: SystemKey): System {
+	return systems.find((system) => system.key === key) ?? systems[0];
+}
+
+function findPolicy(key: PolicyKey): ManagementPolicy {
+	return managementPolicies.find((policy) => policy.key === key) ?? managementPolicies[0];
+}
+
+function findSeasonPhase(key: SeasonPhaseKey): SeasonPhase {
+	return seasonPhases.find((phase) => phase.key === key) ?? seasonPhases[1];
+}
+
+function findOpponent(primaryKey: SystemKey, opponentKey?: SystemKey): System {
+	const requested = opponentKey ? findSystem(opponentKey) : undefined;
+	if (requested && requested.key !== primaryKey) return requested;
+	return systems.find((system) => system.key !== primaryKey) ?? systems[1];
+}
+
+function clampHorizon(years: number | undefined): number {
+	if (typeof years !== 'number' || Number.isNaN(years)) return defaultHorizonYears;
+	return Math.min(maxHorizonYears, Math.max(minHorizonYears, Math.round(years)));
+}
+
+function clampSteeringYear(year: number | undefined, years: number): number {
+	if (typeof year !== 'number' || Number.isNaN(year)) return Math.min(3, years);
+	return Math.min(years, Math.max(1, Math.round(year)));
+}
+
+function cloneSystem(system: System): System {
+	return { ...system, weights: { ...system.weights } };
+}
+
+function cloneEnvironment(environment: Environment): Environment {
+	return { ...environment, effects: { ...environment.effects } };
+}
+
+function clonePolicy(policy: ManagementPolicy): ManagementPolicy {
+	return { ...policy, effects: { ...policy.effects } };
+}
+
+function cloneSeasonPhase(phase: SeasonPhase): SeasonPhase {
+	return { ...phase };
+}
+
+function applyPolicyEffects(
+	baseline: LeagueState,
+	policy: ManagementPolicy,
+	policyIntensity = 1
+): LeagueState {
 	const direct = { ...baseline };
 
 	for (const [key, delta] of Object.entries(policy.effects) as [keyof LeagueState, number][]) {
+		const scaledDelta = delta * policyIntensity;
 		direct[key] =
-			key === 'mediaValueB' ? roundTo(direct[key] + delta, 2) : clampScore(direct[key] + delta);
+			key === 'mediaValueB'
+				? roundTo(direct[key] + scaledDelta, 2)
+				: clampScore(direct[key] + scaledDelta);
 	}
 
 	const travelRelief = baseline.travelWear - direct.travelWear;

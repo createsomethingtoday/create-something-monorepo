@@ -2,7 +2,10 @@ import { describe, expect, it } from 'vitest';
 import {
 	getDefaultLeagueState,
 	listManagementPolicies,
-	runManagementScenario
+	listSeasonPhases,
+	listSystems,
+	runManagementScenario,
+	runSystemMatch
 } from './simulation.js';
 
 describe('basketball systems management simulation', () => {
@@ -49,6 +52,62 @@ describe('basketball systems management simulation', () => {
 			'Health model',
 			'Market model',
 			'Governance pressure'
+		]);
+	});
+
+	it('runs a System through a deterministic multi-year timeline', () => {
+		const match = runSystemMatch({ systemKey: 'recovery', years: 5 });
+
+		expect(listSystems().map((system) => system.key)).toEqual(['recovery', 'attention', 'trust']);
+		expect(match.mode).toBe('single');
+		expect(match.years).toBe(5);
+		expect(match.winner.timeline).toHaveLength(5);
+		expect(match.winner.timeline.map((entry) => entry.year)).toEqual([1, 2, 3, 4, 5]);
+		expect(match.winner.compoundedScoreDelta).toBe(
+			Number((match.winner.score - match.winner.startScore).toFixed(1))
+		);
+	});
+
+	it('applies mid-season steering from the chosen year and exposes projections', () => {
+		const match = runSystemMatch({
+			mode: 'versus',
+			systemKey: 'recovery',
+			opponentKey: 'attention',
+			years: 5,
+			steeringYear: 3,
+			steeringPhase: 'midseason',
+			steeringPolicyKey: 'labor'
+		});
+		const steeredSystem = match.systems.find((result) => result.system.key === 'recovery');
+
+		expect(listSeasonPhases().map((phase) => phase.key)).toEqual([
+			'opening',
+			'midseason',
+			'deadline'
+		]);
+		expect(match.systems).toHaveLength(2);
+		expect(match.steering.phase.key).toBe('midseason');
+		expect(steeredSystem?.timeline.map((entry) => entry.steered)).toEqual([
+			false,
+			false,
+			true,
+			true,
+			true
+		]);
+		expect(steeredSystem?.timeline[2]).toMatchObject({
+			year: 3,
+			policyIntensity: 0.62,
+			policy: expect.objectContaining({ key: 'labor' })
+		});
+		expect(steeredSystem?.timeline[3]).toMatchObject({
+			year: 4,
+			policyIntensity: 1,
+			policy: expect.objectContaining({ key: 'labor' })
+		});
+		expect(match.projections.map((projection) => projection.label)).toEqual([
+			'Projected finish',
+			'Steering impact',
+			'Ripple window'
 		]);
 	});
 });

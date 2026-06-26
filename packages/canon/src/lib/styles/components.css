@@ -1204,6 +1204,72 @@
     margin-top: 22px;
   }
 
+  .ona-system-mode-control,
+  .ona-system-option-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .ona-system-mode-control {
+    margin-top: 18px;
+  }
+
+  .ona-system-option-row {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .ona-system-option-row--wrap {
+    grid-template-columns: 1fr;
+  }
+
+  .ona-system-control-group {
+    display: grid;
+    gap: 8px;
+    margin-top: 18px;
+  }
+
+  .ona-system-control-group > span {
+    color: var(--ona-system-muted);
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0;
+  }
+
+  .ona-system-control-group select {
+    width: 100%;
+    min-height: 42px;
+    border: 1px solid var(--ona-system-line);
+    border-radius: var(--radius-clear-sm);
+    padding: 0 12px;
+    background: white;
+    color: var(--ona-system-ink);
+    font: inherit;
+    font-size: 0.86rem;
+    font-weight: 700;
+  }
+
+  .ona-system-mode-control button,
+  .ona-system-option-row button {
+    min-height: 40px;
+    border: 1px solid var(--ona-system-line);
+    border-radius: var(--radius-clear-sm);
+    background: white;
+    color: var(--ona-system-muted);
+    font: inherit;
+    font-size: 0.72rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .ona-system-mode-control button.active,
+  .ona-system-option-row button.active {
+    border-color: var(--ona-system-ink);
+    background: var(--ona-system-ink);
+    color: white;
+  }
+
   .ona-system-policy-list button {
     width: 100%;
     display: grid;
@@ -1268,6 +1334,44 @@
 
   .ona-system-map-header {
     margin-bottom: 14px;
+  }
+
+  .ona-system-scoreboard {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+
+  .ona-system-scoreboard article {
+    min-height: 84px;
+    display: grid;
+    align-content: space-between;
+    gap: 8px;
+    border: 1px solid var(--ona-system-line);
+    border-radius: var(--radius-clear-sm);
+    padding: 12px;
+    background: white;
+  }
+
+  .ona-system-scoreboard article.active {
+    border-color: var(--ona-system-ink);
+  }
+
+  .ona-system-scoreboard span,
+  .ona-system-scoreboard small,
+  .ona-system-projection-grid span,
+  .ona-system-timeline span {
+    color: var(--ona-system-muted);
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0;
+  }
+
+  .ona-system-scoreboard strong {
+    font-size: 1.34rem;
+    line-height: 1;
   }
 
   .ona-system-map-badge {
@@ -1346,6 +1450,82 @@
 
   .ona-system-node[data-tone='red'] {
     border-color: var(--ona-system-red);
+  }
+
+  .ona-system-projection-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  .ona-system-projection-grid article {
+    min-height: 128px;
+    display: grid;
+    align-content: space-between;
+    gap: 10px;
+    border: 1px solid var(--ona-system-line);
+    border-radius: var(--radius-clear-sm);
+    padding: 14px;
+    background: white;
+  }
+
+  .ona-system-projection-grid strong {
+    font-size: 1.18rem;
+    line-height: 1;
+  }
+
+  .ona-system-projection-grid p {
+    color: var(--ona-system-muted);
+    font-size: 0.86rem;
+    line-height: 1.42;
+  }
+
+  .ona-system-timeline {
+    display: grid;
+    gap: 0;
+    border-block: 1px solid var(--ona-system-line);
+    margin-top: 14px;
+  }
+
+  .ona-system-timeline-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 0;
+  }
+
+  .ona-system-timeline article {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 128px;
+    gap: 18px;
+    border-top: 1px solid var(--ona-system-line);
+    padding: 14px 0;
+  }
+
+  .ona-system-timeline article.active {
+    color: var(--ona-system-ink);
+  }
+
+  .ona-system-timeline article > div {
+    display: grid;
+    gap: 7px;
+    align-content: start;
+  }
+
+  .ona-system-timeline article > div:last-child {
+    text-align: right;
+  }
+
+  .ona-system-timeline strong {
+    font-size: 0.95rem;
+    line-height: 1.2;
+  }
+
+  .ona-system-timeline p {
+    color: var(--ona-system-muted);
+    font-size: 0.86rem;
+    line-height: 1.42;
   }
 
   .ona-system-report-band {
@@ -1496,6 +1676,10 @@
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
+    .ona-system-projection-grid {
+      grid-template-columns: 1fr;
+    }
+
     .ona-system-receipt:nth-child(2n) {
       border-right: 0;
     }
@@ -1521,6 +1705,11 @@
 
     .ona-system-actions {
       display: grid;
+      grid-template-columns: 1fr;
+    }
+
+    .ona-system-scoreboard,
+    .ona-system-timeline article {
       grid-template-columns: 1fr;
     }
 
@@ -1553,6 +1742,10 @@
     .ona-system-report-band {
       gap: 28px;
       padding: 48px 0 34px;
+    }
+
+    .ona-system-timeline article > div:last-child {
+      text-align: left;
     }
 
     .ona-system-receipt-ledger {
