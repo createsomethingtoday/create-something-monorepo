@@ -107,6 +107,7 @@
     "ink:bridge:smoke": "pnpm --dir packages/calm-operator-ink-bridge smoke:production",
     "ink:priority": "pnpm --dir packages/calm-operator-ink-bridge post:priority",
     "ink:braintrust-quality": "pnpm --dir packages/calm-operator-ink-bridge post:braintrust-quality",
+    "retool:operating-model:check": "node scripts/check-retool-operating-model.mjs",
     "codex:g2:access:check": "node scripts/codex-g2-cloudflare-access.mjs check",
     "codex:g2:access:config": "node scripts/codex-g2-cloudflare-access.mjs config",
     "codex:g2:access:start": "node scripts/codex-g2-cloudflare-access.mjs start",

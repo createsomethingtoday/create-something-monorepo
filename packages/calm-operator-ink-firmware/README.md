@@ -46,7 +46,7 @@ chain outside that root, update `include/trust_roots.h` before flashing.
 pnpm --dir packages/calm-operator-ink-firmware build
 ```
 
-## Upload
+## Upload And Untethered Use
 
 The current Core Ink USB port is expected to be:
 
@@ -65,6 +65,11 @@ Monitor:
 ```bash
 pnpm --dir packages/calm-operator-ink-firmware monitor
 ```
+
+Setup is the only tethered phase. After Wi-Fi and `INK_DEVICE_TOKEN` are written
+and the firmware is uploaded, normal use is untethered: the device polls the
+production Ink bridge, stores only compact local settings, and can save a
+Decision Garden review packet later when the operator chooses Check In.
 
 ## Controls
 
@@ -98,7 +103,7 @@ Menu buckets:
 
 - `Operator`: Sync, MCP Review, Check In
 - `Rhythm`: Clock, Rhythm
-- `Calm`: Calm Reset, Stone Garden
+- `Calm`: Calm Reset, Decision Garden
 - `Settings`: Alerts, Quiet Mode, Status
 
 Local settings are stored on the device:
@@ -106,6 +111,38 @@ Local settings are stored on the device:
 - `Alerts` toggles sound alerts on or off.
 - `Quiet Mode` suppresses all beeps without changing the alert preference.
 - The footer shows `BEEP`, `MUTE`, or `QUIET` so the current sound behavior is visible.
+- `Decision Garden` stores only the marked-slot count and cursor. It does not
+  store client names, task text, business context, secrets, or approval notes.
+  Check In posts the compact packet to `/ink/operator-event` with source,
+  marked-slot count, cursor, device ID, and battery. Retool or agents may expand
+  it only after a human approves the review packet.
+
+When all nine Decision Garden slots are marked, pressing `B` on that screen
+clears the local packet back to zero. Use this after the packet is reviewed or
+when the marks were only a tactile reset.
+
+## Production Smoke Path
+
+Before any bridge deploy, validate the bridge and the Retool boundary locally:
+
+```bash
+pnpm --dir packages/calm-operator-ink-bridge check
+pnpm --dir packages/calm-operator-ink-bridge test
+pnpm retool:operating-model:check
+```
+
+After an intentional bridge deploy, run the production smoke with a device token
+from Infisical:
+
+```bash
+infisical run --env=prod --path=/ --include-imports=true -- pnpm ink:bridge:smoke
+```
+
+Firmware upload remains a manual device step. Build first, upload to the known
+USB port, then confirm: boot screen renders, `PWR` sync succeeds, Decision
+Garden marks persist across a restart, Check In saves a packet, and the bridge
+continues to show the current operator brief. Do not store production tokens in
+repo files.
 
 ## Notes
 

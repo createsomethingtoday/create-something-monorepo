@@ -55,7 +55,7 @@ const MenuAction MENU[] = {
   {"Rhythm", "Clock"},
   {"Rhythm", "Rhythm"},
   {"Calm", "Calm Reset"},
-  {"Calm", "Stone Garden"},
+  {"Calm", "Decision Garden"},
   {"Settings", "Alerts"},
   {"Settings", "Quiet Mode"},
   {"Settings", "Status"}
@@ -137,12 +137,19 @@ void loadSettings() {
   prefs.begin(SETTINGS_NAMESPACE, false);
   alertsEnabled = prefs.getBool("alerts", true);
   quietMode = prefs.getBool("quiet", false);
+  stoneCount = constrain(prefs.getInt("dg_count", 0), 0, STONE_SLOTS);
+  stoneCursor = constrain(prefs.getInt("dg_cursor", 0), 0, STONE_SLOTS - 1);
   Serial.printf("[ink] settings alerts=%s quiet=%s\n", alertsEnabled ? "on" : "off", quietMode ? "on" : "off");
 }
 
 void saveSettings() {
   prefs.putBool("alerts", alertsEnabled);
   prefs.putBool("quiet", quietMode);
+}
+
+void saveDecisionGarden() {
+  prefs.putInt("dg_count", constrain(stoneCount, 0, STONE_SLOTS));
+  prefs.putInt("dg_cursor", constrain(stoneCursor, 0, STONE_SLOTS - 1));
 }
 
 void clearBriefSourceFields() {
@@ -474,7 +481,7 @@ String menuHint(const String& label) {
   if (label == "Clock") return "Show Central Time";
   if (label == "Rhythm") return "Daily anchors";
   if (label == "Calm Reset") return "Breathing reset";
-  if (label == "Stone Garden") return "Slow tactile play";
+  if (label == "Decision Garden") return "Mark review slots";
   if (label == "Alerts") return "Toggle beeps";
   if (label == "Quiet Mode") return "Mute all beeps";
   if (label == "Status") return "Device status";
@@ -754,13 +761,19 @@ void requestMcpReview() {
 
 void operatorCheckIn() {
   Serial.println("[ink] saving operator check-in");
-  renderStatus("CHECK IN", "Saving operator state", "Manual Ink check-in");
+  renderStatus("CHECK IN", "Saving review packet", "Decision Garden only");
   String payload;
+  const int markedSlots = constrain(stoneCount, 0, STONE_SLOTS);
+  const int cursor = constrain(stoneCursor, 0, STONE_SLOTS - 1);
   const String body =
-    String("{\"type\":\"manual_check_in\",\"source\":\"core-ink\",") +
-    "\"summary\":\"Manual Core Ink operator check-in\"," +
-    "\"payload\":{\"surface\":\"" + jsonEscape(CALM_OPERATOR_SURFACE) + "\"," +
+    String("{\"type\":\"offline_decision_garden\",\"source\":\"core-ink\",") +
+    "\"summary\":\"Core Ink Decision Garden packet\"," +
+    "\"payload\":{\"kind\":\"offline_decision_garden\",\"surface\":\"" + jsonEscape(CALM_OPERATOR_SURFACE) + "\"," +
     "\"device_id\":\"" + jsonEscape(CALM_OPERATOR_DEVICE_ID) + "\"," +
+    "\"marked_slots\":" + String(markedSlots) + "," +
+    "\"cursor\":" + String(cursor) + "," +
+    "\"slot_total\":" + String(STONE_SLOTS) + "," +
+    "\"battery\":" + String(batteryPercent()) + "," +
     "\"battery_percent\":" + String(batteryPercent()) + "}}";
   const int status = requestBridge("POST", "/ink/operator-event", body, payload);
   if (status >= 200 && status < 300) {
@@ -822,7 +835,7 @@ void renderCalmReset() {
 
 void renderStoneGarden() {
   screen = Screen::StoneGarden;
-  startFrame("STONE GARDEN", false);
+  startFrame("DECISION GARDEN", false);
   for (int i = 0; i < STONE_SLOTS; i++) {
     canvas.drawCircle(STONE_X[i], STONE_Y[i], 10, TFT_BLACK);
     if (i < stoneCount) {
@@ -831,7 +844,7 @@ void renderStoneGarden() {
   }
   canvas.drawRect(STONE_X[stoneCursor] - 14, STONE_Y[stoneCursor] - 14, 28, 28, TFT_BLACK);
   const bool full = stoneCount >= STONE_SLOTS;
-  canvas.drawString(full ? "B clears garden" : "A/C move  B place", 28, 162);
+  canvas.drawString(full ? "B clears packet" : "A/C move  B mark", 28, 162);
   drawFooter("PWR sync");
   flushFrame(screenKey("stone", String(stoneCursor), String(stoneCount), full ? "full" : "place"));
 }
@@ -862,7 +875,7 @@ void selectMenuAction() {
     renderRhythm();
   } else if (label == "Calm Reset") {
     renderCalmReset();
-  } else if (label == "Stone Garden") {
+  } else if (label == "Decision Garden") {
     renderStoneGarden();
   } else if (label == "Alerts") {
     alertsEnabled = !alertsEnabled;
@@ -895,10 +908,12 @@ void handleSelect() {
     if (stoneCount >= STONE_SLOTS) {
       stoneCount = 0;
       stoneCursor = 0;
+      saveDecisionGarden();
       renderStoneGarden();
       return;
     }
     if (stoneCount < STONE_SLOTS && stoneCursor == stoneCount) stoneCount++;
+    saveDecisionGarden();
     renderStoneGarden();
     return;
   }
@@ -912,6 +927,7 @@ void handlePrevious() {
     renderMenu();
   } else if (screen == Screen::StoneGarden) {
     stoneCursor = (stoneCursor + STONE_SLOTS - 1) % STONE_SLOTS;
+    saveDecisionGarden();
     renderStoneGarden();
   }
 }
@@ -922,6 +938,7 @@ void handleNext() {
     renderMenu();
   } else if (screen == Screen::StoneGarden) {
     stoneCursor = (stoneCursor + 1) % STONE_SLOTS;
+    saveDecisionGarden();
     renderStoneGarden();
   }
 }
