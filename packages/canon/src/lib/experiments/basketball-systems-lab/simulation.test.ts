@@ -205,6 +205,66 @@ describe('basketball systems management simulation', () => {
 		]);
 	});
 
+	it('supports multiple steering decisions that compound and can return to the original System', () => {
+		const match = runSystemMatch({
+			mode: 'versus',
+			systemKey: 'recovery',
+			opponentKey: 'attention',
+			years: 5,
+			steeringDecisions: [
+				{ year: 2, phaseKey: 'opening', policyKey: 'media' },
+				{ year: 4, phaseKey: 'deadline', policyKey: null }
+			]
+		});
+		const steeredSystem = match.systems.find((result) => result.system.key === 'recovery');
+
+		expect(match.steering.decisions.map((decision) => ({
+			year: decision.year,
+			phase: decision.phase.key,
+			policy: decision.policy?.key ?? null
+		}))).toEqual([
+			{ year: 2, phase: 'opening', policy: 'media' },
+			{ year: 4, phase: 'deadline', policy: null }
+		]);
+		expect(steeredSystem?.timeline.map((entry) => ({
+			year: entry.year,
+			policy: entry.policy.key,
+			decision: entry.decision,
+			steered: entry.steered
+		}))).toEqual([
+			{
+				year: 1,
+				policy: 'schedule',
+				decision: 'Recovery System ran Schedule Load',
+				steered: false
+			},
+			{
+				year: 2,
+				policy: 'media',
+				decision: 'Steered into Media Allocation',
+				steered: true
+			},
+			{
+				year: 3,
+				policy: 'media',
+				decision: 'Rippled Media Allocation',
+				steered: true
+			},
+			{
+				year: 4,
+				policy: 'schedule',
+				decision: "Held Recovery System's original System",
+				steered: false
+			},
+			{
+				year: 5,
+				policy: 'schedule',
+				decision: 'Recovery System ran Schedule Load',
+				steered: false
+			}
+		]);
+	});
+
 	it('bakes requirement validation into every System match', () => {
 		const match = runSystemMatch({
 			mode: 'versus',

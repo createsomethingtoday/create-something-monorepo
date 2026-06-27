@@ -237,6 +237,18 @@ export type SystemTimelineEntry = {
 	steered: boolean;
 };
 
+export type SystemSteeringDecisionInput = {
+	year: number;
+	phaseKey?: SeasonPhaseKey;
+	policyKey: PolicyKey | null;
+};
+
+export type SystemSteeringDecision = {
+	year: number;
+	phase: SeasonPhase;
+	policy: ManagementPolicy | null;
+};
+
 export type SystemMatchInput = {
 	mode?: LabMode;
 	systemKey?: SystemId;
@@ -245,6 +257,7 @@ export type SystemMatchInput = {
 	steeringYear?: number;
 	steeringPhase?: SeasonPhaseKey;
 	steeringPolicyKey?: PolicyKey;
+	steeringDecisions?: SystemSteeringDecisionInput[];
 	environment?: Environment;
 	customSystems?: System[];
 };
@@ -258,6 +271,7 @@ export type SystemMatch = {
 		phase: SeasonPhase;
 		policy: ManagementPolicy | null;
 		targetSystem: System;
+		decisions: SystemSteeringDecision[];
 	};
 	systems: SystemResult[];
 	winner: SystemResult;
@@ -655,6 +669,7 @@ export function runSystemMatch(input: SystemMatchInput = {}): SystemMatch {
 	const steeringYear = clampSteeringYear(input.steeringYear, years);
 	const steeringPhase = findSeasonPhase(input.steeringPhase ?? 'midseason');
 	const steeringPolicy = input.steeringPolicyKey ? findPolicy(input.steeringPolicyKey) : null;
+	const steeringDecisions = normalizeSteeringDecisions(input, years);
 	const environment = cloneEnvironment(input.environment ?? defaultEnvironment);
 	const systemPool = buildSystemPool(input.customSystems);
 	const primary = findSystem(input.systemKey ?? 'recovery', systemPool);
@@ -666,17 +681,13 @@ export function runSystemMatch(input: SystemMatchInput = {}): SystemMatch {
 	const environmentBaseline = applyEnvironmentEffects(baselineLeagueState, environment);
 	const unsteeredPrimary = buildSystemResult(primary, environmentBaseline, environment, {
 		years,
-		steeringYear,
-		steeringPhase,
-		steeringPolicy: null,
+		steeringDecisions: [],
 		targetSystemKey: primary.key
 	});
 	const rawResults = entrants.map((system) =>
 			buildSystemResult(system, environmentBaseline, environment, {
 				years,
-				steeringYear,
-				steeringPhase,
-				steeringPolicy,
+				steeringDecisions,
 				targetSystemKey: primary.key
 			})
 	);
@@ -693,7 +704,8 @@ export function runSystemMatch(input: SystemMatchInput = {}): SystemMatch {
 			year: steeringYear,
 			phase: cloneSeasonPhase(steeringPhase),
 			policy: steeringPolicy ? clonePolicy(steeringPolicy) : null,
-			targetSystem: cloneSystem(primary)
+			targetSystem: cloneSystem(primary),
+			decisions: steeringDecisions.map(cloneSteeringDecision)
 		},
 		systems: ranked,
 		winner,
@@ -739,9 +751,7 @@ function buildSystemResult(
 	environment: Environment,
 	options: {
 		years: number;
-		steeringYear: number;
-		steeringPhase: SeasonPhase;
-		steeringPolicy: ManagementPolicy | null;
+		steeringDecisions: SystemSteeringDecision[];
 		targetSystemKey: SystemId;
 	}
 ): SystemResult {
@@ -750,15 +760,21 @@ function buildSystemResult(
 	const timeline: SystemTimelineEntry[] = [];
 	const startScore = scoreSystem(system, baseline);
 	let previousScore = startScore;
+	let activeDecision: SystemSteeringDecision | null = null;
 
 	for (let year = 1; year <= options.years; year += 1) {
-		const isSteered =
-			system.key === options.targetSystemKey &&
-			options.steeringPolicy !== null &&
-			year >= options.steeringYear;
-		const policyKey = isSteered ? options.steeringPolicy.key : system.policyKey;
+		const turnDecision =
+			system.key === options.targetSystemKey
+				? options.steeringDecisions.find((decision) => decision.year === year) ?? null
+				: null;
+		if (turnDecision) {
+			activeDecision = turnDecision;
+		}
+		const activePolicy = activeDecision?.policy ?? null;
+		const isSteered = system.key === options.targetSystemKey && activePolicy !== null;
+		const policyKey = activePolicy?.key ?? system.policyKey;
 		const policyIntensity =
-			isSteered && year === options.steeringYear ? options.steeringPhase.impact : 1;
+			turnDecision && activePolicy !== null ? turnDecision.phase.impact : 1;
 		scenario = runManagementScenario(policyKey, seasonBaseline, policyIntensity);
 		const scoreContributions = buildScoreContributions(system, scenario.state);
 		const score = scoreSystem(system, scenario.state);
@@ -766,7 +782,7 @@ function buildSystemResult(
 
 		timeline.push({
 			year,
-			phase: cloneSeasonPhase(isSteered && year === options.steeringYear ? options.steeringPhase : seasonPhases[0]),
+			phase: cloneSeasonPhase(turnDecision ? turnDecision.phase : seasonPhases[0]),
 			policy: clonePolicy(scenario.policy),
 			policyIntensity,
 			state: { ...scenario.state },
@@ -775,9 +791,13 @@ function buildSystemResult(
 			scoreContributions,
 			score,
 			delta,
-			decision: isSteered
-				? `Steered into ${scenario.policy.label}`
-				: `${system.name} ran ${scenario.policy.label}`,
+			decision: turnDecision
+				? turnDecision.policy
+					? `Steered into ${scenario.policy.label}`
+					: `Held ${system.name}'s original System`
+				: isSteered
+					? `Rippled ${scenario.policy.label}`
+					: `${system.name} ran ${scenario.policy.label}`,
 			receipt: `${formatDelta(delta)} score; health ${formatScore(scenario.state.leagueHealth)}, trust ${formatScore(scenario.state.laborTrust)}, media $${scenario.state.mediaValueB.toFixed(2)}B.`,
 			steered: isSteered
 		});
@@ -1455,6 +1475,41 @@ function findSeasonPhase(key: SeasonPhaseKey): SeasonPhase {
 	return seasonPhases.find((phase) => phase.key === key) ?? seasonPhases[1];
 }
 
+function normalizeSteeringDecisions(
+	input: SystemMatchInput,
+	years: number
+): SystemSteeringDecision[] {
+	const rawDecisions =
+		Array.isArray(input.steeringDecisions) && input.steeringDecisions.length > 0
+			? input.steeringDecisions
+			: input.steeringPolicyKey
+				? [
+						{
+							year: input.steeringYear ?? Math.min(3, years),
+							phaseKey: input.steeringPhase,
+							policyKey: input.steeringPolicyKey
+						}
+					]
+				: [];
+	const decisionsByYear = new Map<number, SystemSteeringDecision>();
+
+	for (const decision of rawDecisions) {
+		const year = clampSteeringYear(decision.year, years);
+		const phase = findSeasonPhase(decision.phaseKey ?? 'midseason');
+		const policy = decision.policyKey ? findPolicy(decision.policyKey) : null;
+
+		decisionsByYear.set(year, {
+			year,
+			phase,
+			policy
+		});
+	}
+
+	return [...decisionsByYear.values()]
+		.sort((left, right) => left.year - right.year)
+		.map(cloneSteeringDecision);
+}
+
 function findOpponent(systemPool: System[], primaryKey: SystemId, opponentKey?: SystemId): System {
 	const requested = opponentKey ? findSystem(opponentKey, systemPool) : undefined;
 	if (requested && requested.key !== primaryKey) return requested;
@@ -1708,6 +1763,14 @@ function clonePolicy(policy: ManagementPolicy): ManagementPolicy {
 
 function cloneSeasonPhase(phase: SeasonPhase): SeasonPhase {
 	return { ...phase };
+}
+
+function cloneSteeringDecision(decision: SystemSteeringDecision): SystemSteeringDecision {
+	return {
+		year: decision.year,
+		phase: cloneSeasonPhase(decision.phase),
+		policy: decision.policy ? clonePolicy(decision.policy) : null
+	};
 }
 
 function applyPolicyEffects(

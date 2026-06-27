@@ -38,6 +38,7 @@
 		type SystemMatch,
 		type SystemResult,
 		type SystemScoreWeights,
+		type SystemSteeringDecisionInput,
 		type SystemTimelineEntry,
 		type SystemUploadDefinition,
 		type SystemUploadIssue
@@ -114,6 +115,13 @@
 		margin: number;
 		label: string;
 		detail: string;
+	};
+	type DecisionLedgerItem = {
+		year: number;
+		label: string;
+		value: string;
+		detail: string;
+		active: boolean;
 	};
 	type TurnRecapLane = {
 		label: string;
@@ -233,6 +241,7 @@
 	let steeringYear = $state(3);
 	let steeringPhase = $state<SeasonPhaseKey>('midseason');
 	let steeringPolicy = $state<PolicyKey | 'none'>('labor');
+	let steeringDecisions = $state<SystemSteeringDecisionInput[]>([]);
 	let uploadedSystems = $state<System[]>([]);
 	let uploadText = $state(sampleSystemDefinition);
 	let uploadIssues = $state<SystemUploadIssue[]>([]);
@@ -288,8 +297,14 @@
 	);
 	const isSolo = $derived(mode === 'single');
 	const canSteer = $derived(isSolo || (mode === 'versus' && versusControl === 'coach'));
-	const effectiveSteeringPolicy = $derived(
-		canSteer && steeringPolicy !== 'none' ? steeringPolicy : undefined
+	const effectiveSteeringDecisions = $derived(
+		canSteer ? steeringDecisions.filter((decision) => decision.year <= horizonYears) : []
+	);
+	const priorSteeringDecisions = $derived(
+		canSteer ? effectiveSteeringDecisions.filter((decision) => decision.year < viewedYear) : []
+	);
+	const currentYearDecision = $derived(
+		effectiveSteeringDecisions.find((decision) => decision.year === viewedYear) ?? null
 	);
 	const modeRule = $derived(
 		isSolo
@@ -334,6 +349,10 @@
 		if (viewedYear > horizonYears) {
 			viewedYear = horizonYears;
 		}
+
+		if (steeringDecisions.some((decision) => decision.year > horizonYears)) {
+			steeringDecisions = steeringDecisions.filter((decision) => decision.year <= horizonYears);
+		}
 	});
 
 	$effect(() => {
@@ -360,7 +379,7 @@
 			years: horizonYears,
 			steeringYear,
 			steeringPhase,
-			steeringPolicyKey: effectiveSteeringPolicy,
+			steeringDecisions: effectiveSteeringDecisions,
 			customSystems: uploadedSystems
 		})
 	);
@@ -373,6 +392,7 @@
 			years: horizonYears,
 			steeringYear,
 			steeringPhase,
+			steeringDecisions: priorSteeringDecisions,
 			customSystems: uploadedSystems
 		})
 	);
@@ -486,17 +506,26 @@
 			: 'Clean run'
 	);
 	const activeSteeringPolicy = $derived(
-		steeringPolicy === 'none'
+		currentYearDecision
+			? currentYearDecision.policyKey === null
+				? null
+				: (policies.find((policy) => policy.key === currentYearDecision.policyKey) ?? null)
+		: steeringPolicy === 'none'
 			? null
 			: (policies.find((policy) => policy.key === steeringPolicy) ?? null)
 	);
 	const selectedSteeringPhase = $derived(
-		seasonPhases.find((phase) => phase.key === steeringPhase) ?? seasonPhases[1]
+		seasonPhases.find((phase) => phase.key === (currentYearDecision?.phaseKey ?? steeringPhase)) ??
+			seasonPhases[1]
 	);
 	const steeringPlanLabel = $derived(
 		canSteer
-			? activeSteeringPolicy
-				? `Year ${steeringYear}, ${selectedSteeringPhase.label}`
+			? currentYearDecision
+				? activeSteeringPolicy
+					? `Year ${viewedYear}, ${selectedSteeringPhase.label}`
+					: `Year ${viewedYear}, held original`
+			: activeSteeringPolicy
+				? `Preview ${selectedSteeringPhase.label}`
 				: 'Original System'
 			: hasUploadedField
 				? 'Autonomous field'
@@ -504,8 +533,14 @@
 	);
 	const steeringReceipt = $derived(
 		canSteer
-			? activeSteeringPolicy
-				? `${activeSteeringPolicy.label} starts in year ${steeringYear}; first-season force ${Math.round(
+			? currentYearDecision
+				? activeSteeringPolicy
+					? `${activeSteeringPolicy.label} was logged in year ${viewedYear}; first-season force ${Math.round(
+							selectedSteeringPhase.impact * 100
+						)}%.`
+					: `Year ${viewedYear} is logged as a hold; the System returns to its original policy.`
+			: activeSteeringPolicy
+				? `${activeSteeringPolicy.label} is the next preview; first-season force ${Math.round(
 						selectedSteeringPhase.impact * 100
 					)}%.`
 				: `${viewedLeader.result.system.name} keeps its native policy.`
@@ -558,9 +593,22 @@
 	]);
 	const steeringRecommendation = $derived(getSteeringRecommendation());
 	const steeringPreviews = $derived<SteeringPreview[]>(getSteeringPreviews());
+	const decisionLedger = $derived<DecisionLedgerItem[]>(
+		match.steering.decisions.map((decision) => {
+			const entry = timelineEntryFor(steeredPrimary, decision.year);
+
+			return {
+				year: decision.year,
+				label: `Year ${decision.year}`,
+				value: decision.policy ? decision.policy.label : 'Held original',
+				detail: `${decision.phase.label}; ${entry.decision}; ${entry.receipt}`,
+				active: decision.year === viewedYear
+			};
+		})
+	);
 	const canAdvanceTurn = $derived(viewedYear < match.years);
 	const nextTurnPrompt = $derived.by<NextTurnPrompt>(() =>
-		getNextTurnPrompt(canSteer && steeringYear === viewedYear)
+		getNextTurnPrompt(canSteer && currentYearDecision !== null)
 	);
 	const viewedRunnerUp = $derived(
 		viewedStandings.find(
@@ -695,7 +743,8 @@
 					})
 					.sort((left, right) => right.delta - left.delta)[0] ?? null;
 			const isOpeningYear = snapshot.year === 1;
-			const isCoachWindow = canSteer && snapshot.year === steeringYear;
+			const isCoachWindow =
+				canSteer && steeringDecisions.some((decision) => decision.year === snapshot.year);
 			const label = isOpeningYear
 				? 'Opening state'
 				: snapshot.changed
@@ -758,7 +807,7 @@
 			: finalOutcomeVisible
 				? 'Replay from year 1'
 				: activeFirstRunStep === 'Decide' && canSteer
-					? steeringYear === viewedYear
+					? currentYearDecision
 						? canAdvanceTurn
 							? 'Watch next year'
 							: 'Final year'
@@ -901,7 +950,7 @@
 		{
 			label: 'Next action',
 			value: canSteer
-				? steeringYear === viewedYear
+				? currentYearDecision
 					? 'Turn applied'
 					: steeringRecommendation.actionLabel
 				: 'Let Systems run',
@@ -975,8 +1024,8 @@
 			label: isSolo ? 'Run swing' : canSteer ? 'Coached swing' : 'Winning margin',
 			value: canSteer ? formatDelta(steeringScoreSwing) : finalScoreGap.toFixed(1),
 			detail: canSteer
-				? activeSteeringPolicy
-					? `${activeSteeringPolicy.label} from year ${steeringYear}.`
+				? decisionLedger.length > 0
+					? `${decisionLedger.length} logged decision${decisionLedger.length === 1 ? '' : 's'} shaped the run.`
 					: 'Original System held through the run.'
 				: finalRunnerUp
 					? `${finalRunnerUp.system.name} finished second.`
@@ -1123,6 +1172,44 @@
 		viewedYear = 1;
 	}
 
+	function decisionForViewedYear(
+		policyKey: PolicyKey | null,
+		phaseKey: SeasonPhaseKey = steeringPhase
+	): SystemSteeringDecisionInput {
+		return {
+			year: viewedYear,
+			phaseKey,
+			policyKey
+		};
+	}
+
+	function withDecisionForViewedYear(
+		policyKey: PolicyKey | null,
+		phaseKey: SeasonPhaseKey = steeringPhase
+	): SystemSteeringDecisionInput[] {
+		return [
+			...steeringDecisions.filter((decision) => decision.year !== viewedYear),
+			decisionForViewedYear(policyKey, phaseKey)
+		].sort((left, right) => left.year - right.year);
+	}
+
+	function logDecisionForViewedYear(
+		policyKey: PolicyKey | null,
+		phaseKey: SeasonPhaseKey = steeringPhase
+	): void {
+		steeringDecisions = withDecisionForViewedYear(policyKey, phaseKey);
+		steeringYear = viewedYear;
+		steeringPhase = phaseKey;
+		steeringPolicy = policyKey ?? 'none';
+	}
+
+	function resetSteeringDecisions(): void {
+		steeringDecisions = [];
+		steeringYear = Math.min(3, horizonYears);
+		steeringPhase = 'midseason';
+		steeringPolicy = 'labor';
+	}
+
 	function runPrimaryAction(): void {
 		if (playbackRunning) {
 			playbackRunning = false;
@@ -1136,7 +1223,7 @@
 		}
 
 		if (activeFirstRunStep === 'Decide' && canSteer) {
-			if (steeringYear === viewedYear) {
+			if (currentYearDecision) {
 				watchNextTurn();
 				return;
 			}
@@ -1151,18 +1238,16 @@
 	function steerFromViewedYear(policyKey = steeringPolicy): void {
 		if (!canSteer) return;
 
-		steeringYear = viewedYear;
-		if (policyKey === 'none') {
-			steeringPolicy = 'none';
-			return;
-		}
-
-		steeringPolicy = policyKey;
+		logDecisionForViewedYear(policyKey === 'none' ? null : policyKey);
 	}
 
 	function setSteeringPhase(phaseKey: SeasonPhaseKey): void {
 		steeringPhase = phaseKey;
 		if (canSteer) {
+			if (currentYearDecision) {
+				logDecisionForViewedYear(currentYearDecision.policyKey, phaseKey);
+				return;
+			}
 			steeringYear = viewedYear;
 		}
 	}
@@ -1170,23 +1255,22 @@
 	function applySteeringRecommendation(): void {
 		if (!canSteer) return;
 
-		steeringYear = viewedYear;
-		steeringPhase = steeringRecommendation.phaseKey;
-		steeringPolicy = steeringRecommendation.policyKey;
+		logDecisionForViewedYear(
+			steeringRecommendation.policyKey === 'none' ? null : steeringRecommendation.policyKey,
+			steeringRecommendation.phaseKey
+		);
 	}
 
 	function holdOriginalFromViewedYear(): void {
 		if (!canSteer) return;
 
-		steeringYear = viewedYear;
-		steeringPolicy = 'none';
+		logDecisionForViewedYear(null);
 	}
 
 	function applySteeringPreview(preview: SteeringPreview): void {
 		if (!canSteer) return;
 
-		steeringYear = viewedYear;
-		steeringPolicy = preview.policyKey;
+		logDecisionForViewedYear(preview.policyKey);
 	}
 
 	function watchNextTurn(): void {
@@ -1380,6 +1464,7 @@
 					steeringYear: viewedYear,
 					steeringPhase: phase.key,
 					steeringPolicyKey: policy.key,
+					steeringDecisions: withDecisionForViewedYear(policy.key, phase.key),
 					customSystems: uploadedSystems
 				});
 				const result =
@@ -1427,6 +1512,7 @@
 				steeringYear: viewedYear,
 				steeringPhase,
 				steeringPolicyKey: policy.key,
+				steeringDecisions: withDecisionForViewedYear(policy.key),
 				customSystems: uploadedSystems
 			});
 			const result =
@@ -1448,7 +1534,7 @@
 				swing,
 				gateSwing,
 				detail: `${formatDelta(swing)} score; ${formatDelta(Number((raceContext.margin - unsteeredPrimaryRaceContext.margin).toFixed(1)))} margin; ${formatDelta(gateSwing)} gate movement from year ${viewedYear}.`,
-				active: steeringPolicy === policy.key && steeringYear === viewedYear,
+				active: currentYearDecision?.policyKey === policy.key,
 				recommended: false
 			} satisfies SteeringPreview;
 		});
@@ -1520,6 +1606,7 @@
 		mode = result.systems.length > 1 ? 'versus' : mode;
 		viewedYear = 1;
 		playbackRunning = false;
+		resetSteeringDecisions();
 		systemWorkbenchOpen = false;
 		uploadMessage = `${result.systems.length} entrant${result.systems.length === 1 ? '' : 's'} entered`;
 	}
@@ -1539,6 +1626,7 @@
 		opponentSystem = uploadedSystems.find((system) => system.key !== systemKey)?.key ?? opponentSystem;
 		playbackRunning = false;
 		viewedYear = 1;
+		resetSteeringDecisions();
 	}
 
 	function raceUploadedSystems(): void {
@@ -1553,6 +1641,7 @@
 		mode = uploadedSystems.length > 1 ? 'versus' : 'single';
 		viewedYear = 1;
 		playbackRunning = false;
+		resetSteeringDecisions();
 		systemWorkbenchOpen = false;
 	}
 
@@ -1561,6 +1650,7 @@
 		viewedYear = Math.min(viewedYear, years);
 		playbackRunning = false;
 		mode = 'versus';
+		steeringDecisions = steeringDecisions.filter((decision) => decision.year <= years);
 	}
 
 	function setRaceMomentumYear(year: number): void {
@@ -1591,6 +1681,7 @@
 		mode = result.systems.length > 1 ? 'versus' : mode;
 		viewedYear = 1;
 		playbackRunning = false;
+		resetSteeringDecisions();
 		builderMessage = `${builderName.trim()} entered the run`;
 		uploadMessage = `${result.systems.length} entrant${result.systems.length === 1 ? '' : 's'} entered`;
 	}
@@ -2052,7 +2143,7 @@
 							<Pause size={15} strokeWidth={2} />
 						{:else if finalOutcomeVisible}
 							<RotateCcw size={15} strokeWidth={2} />
-						{:else if activeFirstRunStep === 'Decide' && canSteer && steeringYear !== viewedYear}
+						{:else if activeFirstRunStep === 'Decide' && canSteer && !currentYearDecision}
 							<SlidersHorizontal size={15} strokeWidth={2} />
 						{:else}
 							<Play size={15} strokeWidth={2} />
@@ -2763,7 +2854,7 @@
 							</button>
 							<button
 								type="button"
-								disabled={steeringPolicy === 'none' && steeringYear === viewedYear}
+								disabled={currentYearDecision?.policyKey === null}
 								onclick={holdOriginalFromViewedYear}
 							>
 								<span>Hold</span>
@@ -2776,6 +2867,31 @@
 						</div>
 					</div>
 
+					<div class="ona-system-decision-ledger" aria-label="Logged steering decisions">
+						<div>
+							<span>Decision ledger</span>
+							<strong>
+								{decisionLedger.length === 0
+									? 'No logged turns'
+									: `${decisionLedger.length} logged turn${decisionLedger.length === 1 ? '' : 's'}`}
+							</strong>
+							<p>
+								Each logged turn compounds forward until a later steer or hold changes the System.
+							</p>
+						</div>
+						{#if decisionLedger.length > 0}
+							<div class="ona-system-decision-ledger-list">
+								{#each decisionLedger as decision}
+									<article class:active={decision.active}>
+										<span>{decision.label}</span>
+										<strong>{decision.value}</strong>
+										<p>{decision.detail}</p>
+									</article>
+								{/each}
+							</div>
+						{/if}
+					</div>
+
 					<details class="ona-system-turn-disclosure">
 						<summary>
 							<span>Tune this turn</span>
@@ -2785,7 +2901,7 @@
 							<div class="ona-system-steering-actions" aria-label="Steering policy choices">
 								<button
 									type="button"
-									class:active={steeringYear === viewedYear}
+									class:active={currentYearDecision !== null}
 									onclick={() => steerFromViewedYear()}
 								>
 									<span>Use year {viewedYear}</span>
@@ -2793,12 +2909,9 @@
 								</button>
 								<button
 									type="button"
-									class:active={steeringPolicy === 'none'}
-									aria-pressed={steeringPolicy === 'none'}
-									onclick={() => {
-										steeringYear = viewedYear;
-										steeringPolicy = 'none';
-									}}
+									class:active={currentYearDecision?.policyKey === null}
+									aria-pressed={currentYearDecision?.policyKey === null}
+									onclick={holdOriginalFromViewedYear}
 								>
 									<span>Original</span>
 									<small>No steer</small>
@@ -2806,8 +2919,8 @@
 								{#each policies as policy}
 									<button
 										type="button"
-										class:active={steeringPolicy === policy.key && steeringYear === viewedYear}
-										aria-pressed={steeringPolicy === policy.key && steeringYear === viewedYear}
+										class:active={currentYearDecision?.policyKey === policy.key}
+										aria-pressed={currentYearDecision?.policyKey === policy.key}
 										onclick={() => steerFromViewedYear(policy.key)}
 									>
 										<span>{policy.label}</span>
