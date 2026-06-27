@@ -2873,11 +2873,62 @@
     font-size: 0.9rem;
   }
 
+  .ona-system-turn-disclosure {
+    display: grid;
+    border: 1px solid var(--ona-system-line);
+    border-radius: var(--radius-clear-sm);
+    background: color-mix(in srgb, white 92%, var(--ona-system-surface));
+  }
+
+  .ona-system-turn-disclosure summary {
+    min-height: 48px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+    align-items: center;
+    padding: 10px;
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .ona-system-turn-disclosure summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .ona-system-turn-disclosure summary span,
+  .ona-system-turn-disclosure summary strong {
+    min-width: 0;
+  }
+
+  .ona-system-turn-disclosure summary span {
+    color: var(--ona-system-muted);
+    font-size: 0.66rem;
+    font-weight: 800;
+    line-height: 1;
+    text-transform: uppercase;
+    letter-spacing: 0;
+  }
+
+  .ona-system-turn-disclosure summary strong {
+    color: var(--ona-system-ink);
+    font-size: 0.82rem;
+    line-height: 1.12;
+    text-align: right;
+  }
+
+  .ona-system-turn-disclosure[open] summary {
+    border-bottom: 1px solid var(--ona-system-line);
+  }
+
+  .ona-system-turn-disclosure-body {
+    display: grid;
+    gap: 8px;
+    padding: 10px;
+  }
+
   .ona-system-steering-previews {
     display: grid;
     gap: 8px;
-    border-top: 1px solid var(--ona-system-line);
-    padding-top: 10px;
   }
 
   .ona-system-steering-previews-header {
