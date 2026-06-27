@@ -2683,6 +2683,92 @@
     line-height: 1.1;
   }
 
+  .ona-system-race-history {
+    display: grid;
+    gap: 10px;
+    border: 1px solid var(--ona-system-line);
+    border-radius: var(--radius-clear-sm);
+    margin-bottom: 10px;
+    padding: 12px;
+    background: color-mix(in srgb, white 90%, var(--ona-system-surface));
+  }
+
+  .ona-system-race-history-header {
+    display: grid;
+    grid-template-columns: minmax(0, 0.72fr) minmax(240px, 1fr);
+    gap: 12px;
+    align-items: start;
+  }
+
+  .ona-system-race-history-header > div {
+    display: grid;
+    gap: 6px;
+  }
+
+  .ona-system-race-history-header strong {
+    color: var(--ona-system-ink);
+    font-size: 1.02rem;
+    line-height: 1.08;
+  }
+
+  .ona-system-race-history-header p {
+    margin: 0;
+    color: var(--ona-system-muted);
+    font-size: 0.76rem;
+    font-weight: 700;
+    line-height: 1.36;
+  }
+
+  .ona-system-race-history-list {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .ona-system-race-history-list button {
+    min-height: 118px;
+    display: grid;
+    align-content: space-between;
+    gap: 6px;
+    border: 1px solid var(--ona-system-line);
+    border-radius: var(--radius-clear-sm);
+    padding: 10px;
+    background: #fff;
+    color: var(--ona-system-ink);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .ona-system-race-history-list button.active {
+    border-color: var(--ona-system-ink);
+    box-shadow: inset 0 0 0 1px var(--ona-system-ink);
+  }
+
+  .ona-system-race-history-list span,
+  .ona-system-race-history-list small {
+    color: var(--ona-system-muted);
+    font-size: 0.66rem;
+    font-weight: 800;
+    line-height: 1;
+    text-transform: uppercase;
+    letter-spacing: 0;
+  }
+
+  .ona-system-race-history-list strong {
+    color: var(--ona-system-ink);
+    font-size: 0.94rem;
+    line-height: 1.08;
+  }
+
+  .ona-system-race-history-list p {
+    margin: 0;
+    color: var(--ona-system-muted);
+    font-size: 0.7rem;
+    font-weight: 700;
+    line-height: 1.28;
+  }
+
   .ona-system-gate-impact {
     display: grid;
     grid-template-columns: minmax(0, 0.9fr) minmax(220px, 0.7fr);
@@ -3196,6 +3282,7 @@
     .ona-system-compounding-trail-header,
     .ona-system-final-outcome-header,
     .ona-system-steering-cockpit-header,
+    .ona-system-race-history-header,
     .ona-system-gate-impact,
     .ona-system-gate-impact-list,
     .ona-system-challenge-list,
@@ -3264,6 +3351,8 @@
     .ona-system-steering-actions,
     .ona-system-steering-season,
     .ona-system-steering-comparison,
+    .ona-system-race-history-header,
+    .ona-system-race-history-list,
     .ona-system-coach-recommendation,
     .ona-system-challenge-list article > div,
     .ona-system-timeline article {

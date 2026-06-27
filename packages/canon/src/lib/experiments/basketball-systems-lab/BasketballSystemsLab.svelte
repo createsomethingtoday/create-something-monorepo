@@ -95,6 +95,15 @@
 		value: string;
 		detail: string;
 	};
+	type RaceHistoryItem = {
+		years: number;
+		winner: string;
+		score: string;
+		margin: string;
+		detail: string;
+		active: boolean;
+		customCount: number;
+	};
 
 	const edges = [
 		{ path: 'M 92 106 C 165 78 210 74 278 90', label: 'reduces' },
@@ -117,7 +126,7 @@
 	let uploadedSystems = $state<System[]>([]);
 	let uploadText = $state(sampleSystemDefinition);
 	let uploadIssues = $state<SystemUploadIssue[]>([]);
-	let uploadMessage = $state('Sample System ready');
+	let uploadMessage = $state('Sample entrant ready');
 	let systemWorkbenchOpen = $state(false);
 	let builderName = $state('Expansion Balance System');
 	let builderThesis = $state(
@@ -142,17 +151,17 @@
 	const uploadedSystemKeys = $derived(new Set(uploadedSystems.map((system) => system.key)));
 	const uploadedCompetitionLabel = $derived(
 		uploadedSystems.length === 0
-			? 'Stock league'
+			? 'Stock bracket'
 			: uploadedSystems.length === 1
-				? 'One custom System loaded'
-				: `${uploadedSystems.length} custom Systems ready`
+				? 'One entrant entered'
+				: `${uploadedSystems.length} entrants ready`
 	);
 	const uploadedCompetitionDetail = $derived(
 		uploadedSystems.length === 0
-			? 'Load a sample matchup or bring JSON to race Systems against the same environment.'
+			? 'Enter sample Systems or import JSON to start a same-environment race.'
 			: uploadedSystems.length === 1
-				? `${uploadedSystems[0]?.name ?? 'Custom System'} can run solo. Add a second System to unlock a custom race.`
-				: `${uploadedSystems[0]?.name ?? 'Custom System'} and ${uploadedSystems[1]?.name ?? 'opponent'} can race immediately.`
+				? `${uploadedSystems[0]?.name ?? 'Custom System'} can run solo. Add a second entrant to unlock versus.`
+				: `${uploadedSystems[0]?.name ?? 'Custom System'} and ${uploadedSystems[1]?.name ?? 'opponent'} are in the bracket.`
 	);
 	const builderTotal = $derived(
 		builderWeightFields.reduce((total, field) => total + builderWeights[field.key], 0)
@@ -446,6 +455,40 @@
 					: 'No runner-up loaded.'
 		}
 	]);
+	const raceHistory = $derived<RaceHistoryItem[]>(
+		horizonOptions.map((years) => {
+			const horizonMatch = runSystemMatch({
+				mode: 'versus',
+				systemKey: selectedSystem,
+				opponentKey: opponentSystem,
+				environment: selectedEnvironment,
+				years,
+				customSystems: uploadedSystems
+			});
+			const runnerUp =
+				horizonMatch.systems.find(
+					(result) => result.system.key !== horizonMatch.winner.system.key
+				) ?? null;
+			const margin = runnerUp
+				? Number((horizonMatch.winner.score - runnerUp.score).toFixed(1))
+				: 0;
+			const customCount = horizonMatch.systems.filter((result) =>
+				uploadedSystemKeys.has(result.system.key)
+			).length;
+
+			return {
+				years,
+				winner: horizonMatch.winner.system.name,
+				score: horizonMatch.winner.score.toFixed(1),
+				margin: margin.toFixed(1),
+				detail: runnerUp
+					? `${runnerUp.system.name} trailed after gates.`
+					: 'No second System is loaded.',
+				active: years === horizonYears,
+				customCount
+			};
+		})
+	);
 	const scoutingRequirements = $derived(
 		match.validation.requirements.filter((requirement) =>
 			scoutingRequirementKeys.has(requirement.key)
@@ -621,14 +664,14 @@
 		uploadIssues = result.issues;
 
 		if (result.systems.length === 0) {
-			uploadMessage = 'No Systems accepted';
+			uploadMessage = 'No entrants accepted';
 			return;
 		}
 
 		selectedSystem = result.systems[0].key;
 		opponentSystem = result.systems[1]?.key ?? 'recovery';
 		mode = result.systems.length > 1 ? 'versus' : mode;
-		uploadMessage = `${result.systems.length} System${result.systems.length === 1 ? '' : 's'} accepted`;
+		uploadMessage = `${result.systems.length} entrant${result.systems.length === 1 ? '' : 's'} entered`;
 	}
 
 	function loadSampleMatchup(): void {
@@ -653,6 +696,13 @@
 		mode = uploadedSystems.length > 1 ? 'versus' : 'single';
 	}
 
+	function setRaceHistoryHorizon(years: number): void {
+		horizonYears = years;
+		viewedYear = Math.min(viewedYear, years);
+		playbackRunning = false;
+		mode = 'versus';
+	}
+
 	function addBuiltSystem(): void {
 		const definitions = [...uploadedSystems.map(systemToUploadDefinition), buildSystemDefinition()];
 		const result = parseSystemUpload(JSON.stringify({ systems: definitions }));
@@ -662,7 +712,7 @@
 
 		if (result.systems.length === 0) {
 			builderMessage = 'Builder System needs valid fields';
-			uploadMessage = 'No Systems accepted';
+			uploadMessage = 'No entrants accepted';
 			return;
 		}
 
@@ -675,14 +725,14 @@
 
 		mode = result.systems.length > 1 ? 'versus' : mode;
 		builderMessage = `${builderName.trim()} entered the run`;
-		uploadMessage = `${result.systems.length} System${result.systems.length === 1 ? '' : 's'} accepted`;
+		uploadMessage = `${result.systems.length} entrant${result.systems.length === 1 ? '' : 's'} entered`;
 	}
 
 	function previewBuiltSystemJson(): void {
 		uploadText = JSON.stringify(buildSystemDefinition(), null, 2);
 		uploadIssues = [];
-		uploadMessage = 'Builder System staged as JSON';
-		builderMessage = 'Builder JSON ready';
+		uploadMessage = 'Builder entrant staged as JSON';
+		builderMessage = 'Entrant JSON ready';
 	}
 
 	function resetBuilder(): void {
@@ -698,7 +748,7 @@
 	function loadSampleSystem(): void {
 		uploadText = sampleSystemDefinition;
 		uploadIssues = [];
-		uploadMessage = 'Sample System ready';
+		uploadMessage = 'Sample entrant ready';
 	}
 
 	async function readSystemFile(event: Event): Promise<void> {
@@ -910,13 +960,13 @@
 			>
 				<div class="ona-system-timeline-header">
 					<Users size={17} strokeWidth={1.8} />
-					<span>Custom competition</span>
+					<span>Tournament entry</span>
 				</div>
 				<strong>{uploadedCompetitionLabel}</strong>
 				<p>{uploadedCompetitionDetail}</p>
 
 				{#if uploadedSystems.length > 0}
-					<div class="ona-system-competition-roster" aria-label="Loaded custom Systems">
+					<div class="ona-system-competition-roster" aria-label="Tournament entrants">
 						{#each uploadedSystems.slice(0, 3) as system}
 							<article
 								class:active={system.key === selectedSystem || system.key === opponentSystem}
@@ -932,7 +982,7 @@
 					<div class="ona-system-competition-proof">
 						<span>In this race</span>
 						<strong
-							>{customEntrantsInRun.length} custom entrant{customEntrantsInRun.length === 1
+							>{customEntrantsInRun.length} tournament entrant{customEntrantsInRun.length === 1
 								? ''
 								: 's'}</strong
 						>
@@ -947,9 +997,9 @@
 				<div class="ona-system-competition-actions">
 					<button type="button" onclick={raceUploadedSystems}>
 						<Play size={15} strokeWidth={2} />
-						<span>{uploadedSystems.length > 0 ? 'Run custom race' : 'Load sample race'}</span>
+						<span>{uploadedSystems.length > 0 ? 'Start entrant race' : 'Load sample race'}</span>
 					</button>
-					<button type="button" onclick={openSystemWorkbench}>Bring Systems</button>
+					<button type="button" onclick={openSystemWorkbench}>Enter Systems</button>
 				</div>
 			</div>
 
@@ -1023,7 +1073,7 @@
 						class:active={selectedSystem === system.key}
 						onclick={() => (selectedSystem = system.key)}
 					>
-						<span>{uploadedSystemKeys.has(system.key) ? 'Uploaded System' : system.stance}</span>
+						<span>{uploadedSystemKeys.has(system.key) ? 'Tournament entrant' : system.stance}</span>
 						<strong>{system.name}</strong>
 						<small>{policies.find((policy) => policy.key === system.policyKey)?.score}</small>
 					</button>
@@ -1120,11 +1170,11 @@
 
 			<details class="ona-system-advanced" bind:open={systemWorkbenchOpen}>
 				<summary>
-					<span>Bring a System</span>
+					<span>Enter a System</span>
 					<strong
 						>{uploadedSystems.length > 0
-							? `${uploadedSystems.length} loaded`
-							: 'Builder and upload'}</strong
+							? `${uploadedSystems.length} entered`
+							: 'Builder or JSON'}</strong
 					>
 				</summary>
 
@@ -1184,16 +1234,16 @@
 				<div class="ona-system-upload">
 					<div class="ona-system-kicker">
 						<FileJson size={17} strokeWidth={1.8} />
-						<span>System Upload</span>
+						<span>Entrant Import</span>
 					</div>
 					<textarea bind:value={uploadText} aria-label="System JSON definition"></textarea>
 					<div class="ona-system-upload-actions">
 						<label>
 							<input type="file" accept="application/json,.json" onchange={readSystemFile} />
-							<span>Upload JSON</span>
+							<span>Import JSON file</span>
 						</label>
-						<button type="button" onclick={importSystems}>Import Systems</button>
-						<button type="button" onclick={loadSampleSystem}>Load sample</button>
+						<button type="button" onclick={importSystems}>Enter Systems</button>
+						<button type="button" onclick={loadSampleSystem}>Sample System</button>
 					</div>
 					<div
 						class="ona-system-upload-status"
@@ -1485,6 +1535,44 @@
 					</div>
 				{/if}
 			</div>
+
+			{#if mode === 'versus'}
+				<div class="ona-system-race-history" aria-label="Race history">
+					<div class="ona-system-race-history-header">
+						<div>
+							<div class="ona-system-timeline-header">
+								<Trophy size={17} strokeWidth={1.8} />
+								<span>Race history</span>
+							</div>
+							<strong>Best-of-horizons record</strong>
+						</div>
+						<p>
+							Compare the same two Systems across short, standard, and long horizons before
+							choosing which run to watch.
+						</p>
+					</div>
+					<div class="ona-system-race-history-list">
+						{#each raceHistory as race}
+							<button
+								type="button"
+								class:active={race.active}
+								aria-pressed={race.active}
+								onclick={() => setRaceHistoryHorizon(race.years)}
+							>
+								<span>{race.years}-year race</span>
+								<strong>{race.winner}</strong>
+								<small>Score {race.score}; margin {race.margin}</small>
+								<p>
+									{race.detail}
+									{#if race.customCount > 0}
+										{race.customCount} entrant{race.customCount === 1 ? '' : 's'} in this matchup.
+									{/if}
+								</p>
+							</button>
+						{/each}
+					</div>
+				</div>
+			{/if}
 
 			<div class="ona-system-scoreboard" aria-label="System scores">
 				{#each viewedStandings as standing, index}
