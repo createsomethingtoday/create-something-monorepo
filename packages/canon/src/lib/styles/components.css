@@ -2216,7 +2216,38 @@
     margin-bottom: 10px;
   }
 
+  .ona-system-kickoff {
+    display: grid;
+    gap: 10px;
+    border: 1px solid var(--ona-system-line);
+    border-left: 3px solid var(--ona-system-ink);
+    border-radius: var(--radius-clear-sm);
+    margin-bottom: 10px;
+    padding: 12px;
+    background: white;
+  }
+
+  .ona-system-kickoff-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(220px, 0.72fr);
+    gap: 14px;
+    align-items: start;
+  }
+
+  .ona-system-kickoff-header > div {
+    display: grid;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .ona-system-kickoff-grid {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 8px;
+  }
+
   .ona-system-rulebook article,
+  .ona-system-kickoff-grid article,
   .ona-system-challenge,
   .ona-system-gate-impact,
   .ona-system-score-explain {
@@ -2229,6 +2260,14 @@
     display: grid;
     gap: 6px;
     padding: 12px;
+  }
+
+  .ona-system-kickoff-grid article {
+    display: grid;
+    align-content: start;
+    gap: 6px;
+    min-height: 112px;
+    padding: 10px;
   }
 
   .ona-system-scoreboard {
@@ -2255,6 +2294,8 @@
 
   .ona-system-scoreboard span,
   .ona-system-scoreboard small,
+  .ona-system-kickoff span,
+  .ona-system-kickoff small,
   .ona-system-rulebook span,
   .ona-system-rulebook small,
   .ona-system-gate-impact span,
@@ -2279,6 +2320,23 @@
   .ona-system-rulebook strong {
     font-size: 0.92rem;
     line-height: 1.2;
+  }
+
+  .ona-system-kickoff strong {
+    color: var(--ona-system-ink);
+    font-size: 0.9rem;
+    line-height: 1.15;
+    overflow-wrap: anywhere;
+  }
+
+  .ona-system-kickoff-header > p,
+  .ona-system-kickoff-grid p {
+    margin: 0;
+    color: var(--ona-system-muted);
+    font-size: 0.75rem;
+    font-weight: 650;
+    line-height: 1.34;
+    overflow-wrap: anywhere;
   }
 
   .ona-system-rulebook p {
@@ -4070,6 +4128,7 @@
     }
 
     .ona-system-rulebook,
+    .ona-system-kickoff-header,
     .ona-system-game-turn-header,
     .ona-system-playback,
     .ona-system-turn-recap,
@@ -4086,6 +4145,10 @@
     .ona-system-challenge-list,
     .ona-system-score-explain > div:last-child {
       grid-template-columns: 1fr;
+    }
+
+    .ona-system-kickoff-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     .ona-system-steering-actions {
@@ -4142,6 +4205,7 @@
     }
 
     .ona-system-scoreboard,
+    .ona-system-kickoff-grid,
     .ona-system-gate-impact > div:nth-child(2),
     .ona-system-versus-control,
     .ona-system-game-turn-header,

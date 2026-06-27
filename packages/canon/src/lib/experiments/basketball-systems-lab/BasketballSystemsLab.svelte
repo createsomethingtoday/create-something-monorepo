@@ -700,6 +700,43 @@
 			detail: isSolo ? match.challenge.summary : selectedEnvironment.winCondition
 		}
 	]);
+	const kickoffBriefing = $derived([
+		{
+			label: 'Field',
+			value: isSolo
+				? match.steering.targetSystem.name
+				: hasUploadedField
+					? `${match.systems.length} Systems`
+					: `${match.steering.targetSystem.name} vs ${viewedRunnerUp?.result.system.name ?? 'opponent'}`,
+			detail: isSolo
+				? 'One System tries to clear the environment objectives.'
+				: hasUploadedField
+					? 'Every uploaded System runs against the same pressure model.'
+					: 'Both Systems run the same horizon and pressure.'
+		},
+		{
+			label: 'Environment',
+			value: selectedEnvironment.name,
+			detail: selectedEnvironment.pressure
+		},
+		{
+			label: 'Horizon',
+			value: `${match.years} years`,
+			detail: `Playback advances one year at a time; final outcome unlocks in year ${match.years}.`
+		},
+		{
+			label: 'Control',
+			value: canSteer ? `Coach ${match.steering.targetSystem.name}` : 'Autonomous',
+			detail: canSteer
+				? `${selectedSteeringPhase.label} steering can change the remaining years.`
+				: 'Systems keep their native policies after kickoff.'
+		},
+		{
+			label: 'Winner',
+			value: isSolo ? 'Clear objectives' : 'Highest valid score',
+			detail: isSolo ? match.challenge.summary : match.environment.winCondition
+		}
+	]);
 	const finalResult = $derived(isSolo ? steeredPrimary : match.winner);
 	const finalDecisiveTurn = $derived.by<DecisiveTurnReceipt>(() =>
 		getDecisiveTurnReceipt(finalResult)
@@ -2101,6 +2138,28 @@
 				<div class="ona-system-map-badge">
 					<LineChart size={17} strokeWidth={1.8} />
 					<span>Year {viewedYear} of {match.years}</span>
+				</div>
+			</div>
+
+			<div class="ona-system-kickoff" aria-label="Run kickoff briefing">
+				<div class="ona-system-kickoff-header">
+					<div>
+						<div class="ona-system-timeline-header">
+							<Route size={17} strokeWidth={1.8} />
+							<span>Kickoff brief</span>
+						</div>
+						<strong>{gameTurnLabel}</strong>
+					</div>
+					<p>{modeRule}</p>
+				</div>
+				<div class="ona-system-kickoff-grid">
+					{#each kickoffBriefing as item}
+						<article>
+							<span>{item.label}</span>
+							<strong>{item.value}</strong>
+							<p>{item.detail}</p>
+						</article>
+					{/each}
 				</div>
 			</div>
 
