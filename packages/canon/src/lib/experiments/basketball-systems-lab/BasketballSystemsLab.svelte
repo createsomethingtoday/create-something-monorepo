@@ -26,6 +26,8 @@
 		type SeasonPhaseKey,
 		type System,
 		type SystemId,
+		type SystemScoreWeights,
+		type SystemUploadDefinition,
 		type SystemUploadIssue
 	} from './simulation.js';
 
@@ -33,6 +35,23 @@
 	const seasonPhases = listSeasonPhases();
 	const horizonOptions = [3, 5, 8];
 	const sampleSystemDefinition = JSON.stringify(getSampleSystemUpload(), null, 2);
+	const builderWeightFields = [
+		{ key: 'leagueHealth', label: 'League health' },
+		{ key: 'mediaValueB', label: 'Media value' },
+		{ key: 'competitiveBalance', label: 'Competitive balance' },
+		{ key: 'laborTrust', label: 'Labor trust' },
+		{ key: 'ownerMargin', label: 'Owner margin' },
+		{ key: 'resilience', label: 'Resilience' }
+	] as const satisfies { key: keyof SystemScoreWeights; label: string }[];
+	const builderMinimumWeights = {
+		leagueHealth: 0,
+		mediaValueB: 0,
+		competitiveBalance: 0,
+		laborTrust: 0,
+		ownerMargin: 4,
+		resilience: 8
+	} as const satisfies Record<keyof SystemScoreWeights, number>;
+	const builderMaximumWeight = 45;
 
 	const edges = [
 		{ path: 'M 92 106 C 165 78 210 74 278 90', label: 'reduces' },
@@ -53,9 +72,26 @@
 	let uploadText = $state(sampleSystemDefinition);
 	let uploadIssues = $state<SystemUploadIssue[]>([]);
 	let uploadMessage = $state('Sample System ready');
+	let builderName = $state('Expansion Balance System');
+	let builderThesis = $state(
+		'Grow national attention without letting labor trust, owner margin, or competitive balance break.'
+	);
+	let builderPolicy = $state<PolicyKey>('media');
+	let builderWeights = $state<Record<keyof SystemScoreWeights, number>>({
+		leagueHealth: 14,
+		mediaValueB: 18,
+		competitiveBalance: 28,
+		laborTrust: 12,
+		ownerMargin: 10,
+		resilience: 18
+	});
+	let builderMessage = $state('Builder weights are valid');
 
 	const systems = $derived(listSystems(uploadedSystems));
 	const uploadedSystemKeys = $derived(new Set(uploadedSystems.map((system) => system.key)));
+	const builderTotal = $derived(
+		builderWeightFields.reduce((total, field) => total + builderWeights[field.key], 0)
+	);
 	const canSteer = $derived(mode === 'single');
 	const effectiveSteeringPolicy = $derived(
 		canSteer && steeringPolicy !== 'none' ? steeringPolicy : undefined
@@ -148,6 +184,47 @@
 		uploadMessage = `${result.systems.length} System${result.systems.length === 1 ? '' : 's'} accepted`;
 	}
 
+	function addBuiltSystem(): void {
+		const definitions = [...uploadedSystems.map(systemToUploadDefinition), buildSystemDefinition()];
+		const result = parseSystemUpload(JSON.stringify({ systems: definitions }));
+		uploadedSystems = result.systems;
+		uploadIssues = result.issues;
+		uploadText = JSON.stringify({ systems: definitions }, null, 2);
+
+		if (result.systems.length === 0) {
+			builderMessage = 'Builder System needs valid fields';
+			uploadMessage = 'No Systems accepted';
+			return;
+		}
+
+		const builtSystem = result.systems.at(-1);
+		if (builtSystem) {
+			selectedSystem = builtSystem.key;
+			opponentSystem = result.systems.find((system) => system.key !== builtSystem.key)?.key ?? 'recovery';
+		}
+
+		mode = result.systems.length > 1 ? 'versus' : mode;
+		builderMessage = `${builderName.trim()} entered the run`;
+		uploadMessage = `${result.systems.length} System${result.systems.length === 1 ? '' : 's'} accepted`;
+	}
+
+	function previewBuiltSystemJson(): void {
+		uploadText = JSON.stringify(buildSystemDefinition(), null, 2);
+		uploadIssues = [];
+		uploadMessage = 'Builder System staged as JSON';
+		builderMessage = 'Builder JSON ready';
+	}
+
+	function resetBuilder(): void {
+		const sample = getSampleSystemUpload();
+		builderName = 'Expansion Balance System';
+		builderThesis =
+			'Grow national attention without letting labor trust, owner margin, or competitive balance break.';
+		builderPolicy = sample.policyKey;
+		builderWeights = percentWeights(sample.weights);
+		builderMessage = 'Builder weights are valid';
+	}
+
 	function loadSampleSystem(): void {
 		uploadText = sampleSystemDefinition;
 		uploadIssues = [];
@@ -162,6 +239,113 @@
 		uploadText = await file.text();
 		importSystems();
 		input.value = '';
+	}
+
+	function setBuilderWeight(key: keyof SystemScoreWeights, event: Event): void {
+		const input = event.currentTarget as HTMLInputElement;
+		const next = { ...builderWeights };
+		const current = next[key];
+		const target = clampBuilderWeight(key, Number(input.value), next);
+		const delta = target - current;
+		next[key] = target;
+
+		if (delta > 0) {
+			shiftBuilderWeight(next, key, delta, 'down');
+		} else if (delta < 0) {
+			shiftBuilderWeight(next, key, Math.abs(delta), 'up');
+		}
+
+		builderWeights = next;
+		builderMessage = 'Builder weights are valid';
+	}
+
+	function clampBuilderWeight(
+		key: keyof SystemScoreWeights,
+		value: number,
+		weights: Record<keyof SystemScoreWeights, number>
+	): number {
+		const otherKeys = builderWeightFields.map((field) => field.key).filter((fieldKey) => fieldKey !== key);
+		const otherMinimum = otherKeys.reduce((total, fieldKey) => total + builderMinimumWeights[fieldKey], 0);
+		const otherMaximum = otherKeys.length * builderMaximumWeight;
+		const feasibleMinimum = Math.max(builderMinimumWeights[key], 100 - otherMaximum);
+		const feasibleMaximum = Math.min(builderMaximumWeight, 100 - otherMinimum);
+		const rounded = Number.isFinite(value) ? Math.round(value) : weights[key];
+
+		return Math.min(feasibleMaximum, Math.max(feasibleMinimum, rounded));
+	}
+
+	function shiftBuilderWeight(
+		weights: Record<keyof SystemScoreWeights, number>,
+		activeKey: keyof SystemScoreWeights,
+		amount: number,
+		direction: 'up' | 'down'
+	): void {
+		let remaining = amount;
+		const orderedKeys = builderWeightFields
+			.map((field) => field.key)
+			.filter((key) => key !== activeKey)
+			.sort((left, right) =>
+				direction === 'down' ? weights[right] - weights[left] : weights[left] - weights[right]
+			);
+
+		for (const key of orderedKeys) {
+			const room =
+				direction === 'down'
+					? weights[key] - builderMinimumWeights[key]
+					: builderMaximumWeight - weights[key];
+			const shift = Math.min(room, remaining);
+			weights[key] += direction === 'down' ? -shift : shift;
+			remaining -= shift;
+			if (remaining <= 0) return;
+		}
+	}
+
+	function buildSystemDefinition(): SystemUploadDefinition {
+		const policy = policies.find((candidate) => candidate.key === builderPolicy) ?? policies[0];
+
+		return {
+			name: builderName.trim(),
+			thesis: builderThesis.trim(),
+			stance: 'Built System',
+			constraint: 'The System must keep owner margin and resilience visible while pursuing its priority.',
+			adaptation: `Runs ${policy.label} as its native policy and lets the requirement gates expose the tradeoffs.`,
+			policyKey: builderPolicy,
+			weights: decimalWeights(builderWeights)
+		};
+	}
+
+	function systemToUploadDefinition(system: System): SystemUploadDefinition {
+		return {
+			name: system.name,
+			thesis: system.thesis,
+			stance: system.stance,
+			constraint: system.constraint,
+			adaptation: system.adaptation,
+			policyKey: system.policyKey,
+			weights: { ...system.weights }
+		};
+	}
+
+	function decimalWeights(weights: Record<keyof SystemScoreWeights, number>): SystemScoreWeights {
+		return {
+			leagueHealth: weights.leagueHealth / 100,
+			mediaValueB: weights.mediaValueB / 100,
+			competitiveBalance: weights.competitiveBalance / 100,
+			laborTrust: weights.laborTrust / 100,
+			ownerMargin: weights.ownerMargin / 100,
+			resilience: weights.resilience / 100
+		};
+	}
+
+	function percentWeights(weights: SystemScoreWeights): Record<keyof SystemScoreWeights, number> {
+		return {
+			leagueHealth: Math.round(weights.leagueHealth * 100),
+			mediaValueB: Math.round(weights.mediaValueB * 100),
+			competitiveBalance: Math.round(weights.competitiveBalance * 100),
+			laborTrust: Math.round(weights.laborTrust * 100),
+			ownerMargin: Math.round(weights.ownerMargin * 100),
+			resilience: Math.round(weights.resilience * 100)
+		};
 	}
 </script>
 
@@ -257,6 +441,58 @@
 						<small>{policies.find((policy) => policy.key === system.policyKey)?.score}</small>
 					</button>
 				{/each}
+			</div>
+
+			<div class="ona-system-builder">
+				<div class="ona-system-kicker">
+					<SlidersHorizontal size={17} strokeWidth={1.8} />
+					<span>System Builder</span>
+				</div>
+				<label>
+					<span>System name</span>
+					<input bind:value={builderName} aria-label="Builder System name" maxlength="44" />
+				</label>
+				<label>
+					<span>Native policy</span>
+					<select bind:value={builderPolicy} aria-label="Builder native policy">
+						{#each policies as policy}
+							<option value={policy.key}>{policy.label}</option>
+						{/each}
+					</select>
+				</label>
+				<label>
+					<span>Thesis</span>
+					<textarea bind:value={builderThesis} aria-label="Builder System thesis" maxlength="180"></textarea>
+				</label>
+				<div class="ona-system-builder-weights" aria-label="Builder scoring weights">
+					{#each builderWeightFields as field}
+						<article>
+							<label for={`builder-weight-${field.key}`}>
+								<span>{field.label}</span>
+								<strong>{builderWeights[field.key]}%</strong>
+							</label>
+							<input
+								id={`builder-weight-${field.key}`}
+								type="range"
+								min={builderMinimumWeights[field.key]}
+								max={builderMaximumWeight}
+								step="1"
+								value={builderWeights[field.key]}
+								aria-label={`${field.label} weight`}
+								oninput={(event) => setBuilderWeight(field.key, event)}
+							/>
+						</article>
+					{/each}
+				</div>
+				<div class="ona-system-builder-status">
+					<strong>{builderTotal}% allocated</strong>
+					<span>{builderMessage}</span>
+				</div>
+				<div class="ona-system-upload-actions">
+					<button type="button" onclick={addBuiltSystem}>Add built System</button>
+					<button type="button" onclick={previewBuiltSystemJson}>Preview JSON</button>
+					<button type="button" onclick={resetBuilder}>Reset builder</button>
+				</div>
 			</div>
 
 			<div class="ona-system-upload">

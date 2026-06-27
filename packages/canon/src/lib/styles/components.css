@@ -1348,6 +1348,98 @@
     color: var(--ona-system-green);
   }
 
+  .ona-system-builder {
+    display: grid;
+    gap: 10px;
+    border-top: 1px solid var(--ona-system-line);
+    margin-top: 20px;
+    padding-top: 18px;
+  }
+
+  .ona-system-builder > label {
+    display: grid;
+    gap: 6px;
+  }
+
+  .ona-system-builder > label > span,
+  .ona-system-builder-weights label span,
+  .ona-system-builder-status span {
+    color: var(--ona-system-muted);
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0;
+  }
+
+  .ona-system-builder input:not([type='range']),
+  .ona-system-builder select,
+  .ona-system-builder textarea {
+    width: 100%;
+    border: 1px solid var(--ona-system-line);
+    border-radius: var(--radius-clear-sm);
+    background: white;
+    color: var(--ona-system-ink);
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 700;
+  }
+
+  .ona-system-builder input:not([type='range']),
+  .ona-system-builder select {
+    min-height: 40px;
+    padding: 0 11px;
+  }
+
+  .ona-system-builder textarea {
+    min-height: 84px;
+    resize: vertical;
+    padding: 10px 11px;
+    font-weight: 600;
+    line-height: 1.42;
+  }
+
+  .ona-system-builder-weights {
+    display: grid;
+    gap: 9px;
+  }
+
+  .ona-system-builder-weights article {
+    display: grid;
+    gap: 5px;
+    border: 1px solid var(--ona-system-line);
+    border-radius: var(--radius-clear-sm);
+    padding: 9px 10px;
+    background: color-mix(in srgb, white 88%, var(--ona-system-surface));
+  }
+
+  .ona-system-builder-weights label,
+  .ona-system-builder-status {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .ona-system-builder-weights label strong,
+  .ona-system-builder-status strong {
+    color: var(--ona-system-ink);
+    font-size: 0.82rem;
+    line-height: 1;
+  }
+
+  .ona-system-builder-weights input[type='range'] {
+    width: 100%;
+    accent-color: var(--ona-system-ink);
+  }
+
+  .ona-system-builder-status {
+    border: 1px solid var(--ona-system-line);
+    border-left: 3px solid var(--ona-system-green);
+    border-radius: var(--radius-clear-sm);
+    padding: 10px 12px;
+    background: color-mix(in srgb, white 86%, var(--ona-system-surface));
+  }
+
   .ona-system-upload {
     display: grid;
     gap: 10px;
@@ -1402,6 +1494,18 @@
   }
 
   .ona-system-upload-actions button:nth-child(2) {
+    border-color: var(--ona-system-ink);
+    background: var(--ona-system-ink);
+    color: white;
+  }
+
+  .ona-system-builder .ona-system-upload-actions button:nth-child(2) {
+    border-color: var(--ona-system-line);
+    background: white;
+    color: var(--ona-system-muted);
+  }
+
+  .ona-system-builder .ona-system-upload-actions button:first-child {
     border-color: var(--ona-system-ink);
     background: var(--ona-system-ink);
     color: white;
