@@ -56,8 +56,13 @@ describe('basketball systems management simulation', () => {
 			'Policy action',
 			'Health model',
 			'Market model',
-			'Governance pressure'
+			'Governance pressure',
+			'Resource economy'
 		]);
+		expect(first.ledger.find((entry) => entry.label === 'Resource economy')).toMatchObject({
+			value: expect.stringContaining('floor'),
+			detail: expect.stringContaining('resource floor')
+		});
 	});
 
 	it('runs a System through a deterministic multi-year timeline', () => {
@@ -70,11 +75,14 @@ describe('basketball systems management simulation', () => {
 		expect(match.winner.timeline.map((entry) => entry.year)).toEqual([1, 2, 3, 4, 5]);
 		expect(match.winner.timeline[0]).toMatchObject({
 			metrics: expect.arrayContaining([expect.objectContaining({ key: 'leagueHealth' })]),
+			resourceMetrics: expect.arrayContaining([
+				expect.objectContaining({ key: 'politicalCapital' }),
+				expect.objectContaining({ key: 'ownerPatience' })
+			]),
 			nodes: expect.arrayContaining([expect.objectContaining({ id: 'policy' })]),
-			scoreContributions: expect.arrayContaining([
-				expect.objectContaining({ key: 'leagueHealth' })
-			])
+			scoreContributions: expect.arrayContaining([expect.objectContaining({ key: 'leagueHealth' })])
 		});
+		expect(match.winner.timeline[0]?.resourceReceipt).toContain('resource floor');
 		expect(match.winner.timeline[0]?.score).not.toBe(match.winner.timeline[4]?.score);
 		expect(match.winner.compoundedScoreDelta).toBe(
 			Number((match.winner.score - match.winner.startScore).toFixed(1))
@@ -111,7 +119,11 @@ describe('basketball systems management simulation', () => {
 	});
 
 	it('explains the raw score through weighted score contributions', () => {
-		const match = runSystemMatch({ mode: 'versus', systemKey: 'recovery', opponentKey: 'attention' });
+		const match = runSystemMatch({
+			mode: 'versus',
+			systemKey: 'recovery',
+			opponentKey: 'attention'
+		});
 		const contributionTotal = match.winner.scoreContributions.reduce(
 			(total, contribution) => total + contribution.value,
 			0
@@ -126,13 +138,17 @@ describe('basketball systems management simulation', () => {
 			'resilience'
 		]);
 		expect(Number(contributionTotal.toFixed(1))).toBe(match.winner.rawScore);
-		expect(match.winner.scoreContributions.every((contribution) => contribution.readout.includes('x'))).toBe(
-			true
-		);
+		expect(
+			match.winner.scoreContributions.every((contribution) => contribution.readout.includes('x'))
+		).toBe(true);
 	});
 
 	it('applies requirement gate adjustments before final ranking', () => {
-		const match = runSystemMatch({ mode: 'versus', systemKey: 'recovery', opponentKey: 'attention' });
+		const match = runSystemMatch({
+			mode: 'versus',
+			systemKey: 'recovery',
+			opponentKey: 'attention'
+		});
 
 		expect(match.winner.validationImpact).toMatchObject({
 			rawScore: 92.7,
@@ -218,20 +234,24 @@ describe('basketball systems management simulation', () => {
 		});
 		const steeredSystem = match.systems.find((result) => result.system.key === 'recovery');
 
-		expect(match.steering.decisions.map((decision) => ({
-			year: decision.year,
-			phase: decision.phase.key,
-			policy: decision.policy?.key ?? null
-		}))).toEqual([
+		expect(
+			match.steering.decisions.map((decision) => ({
+				year: decision.year,
+				phase: decision.phase.key,
+				policy: decision.policy?.key ?? null
+			}))
+		).toEqual([
 			{ year: 2, phase: 'opening', policy: 'media' },
 			{ year: 4, phase: 'deadline', policy: null }
 		]);
-		expect(steeredSystem?.timeline.map((entry) => ({
-			year: entry.year,
-			policy: entry.policy.key,
-			decision: entry.decision,
-			steered: entry.steered
-		}))).toEqual([
+		expect(
+			steeredSystem?.timeline.map((entry) => ({
+				year: entry.year,
+				policy: entry.policy.key,
+				decision: entry.decision,
+				steered: entry.steered
+			}))
+		).toEqual([
 			{
 				year: 1,
 				policy: 'schedule',
@@ -282,12 +302,42 @@ describe('basketball systems management simulation', () => {
 			'owner-room',
 			'labor-plausibility',
 			'projection-honesty',
+			'resource-solvency',
 			'system-balance'
 		]);
 		expect(match.validation.requirements.map((requirement) => requirement.status)).toEqual(
 			expect.arrayContaining(['pass'])
 		);
 		expect(['pass', 'watch', 'fail']).toContain(match.validation.status);
+	});
+
+	it('tracks a resource economy for steering costs without changing the upload contract', () => {
+		const match = runSystemMatch({
+			systemKey: 'recovery',
+			years: 5,
+			steeringYear: 3,
+			steeringPhase: 'midseason',
+			steeringPolicyKey: 'labor'
+		});
+		const steeredTurn = match.winner.timeline[2];
+		const resourceGate = match.validation.requirements.find(
+			(requirement) => requirement.key === 'resource-solvency'
+		);
+
+		expect(steeredTurn?.resourceMetrics.map((metric) => metric.key)).toEqual([
+			'politicalCapital',
+			'budgetFlexibility',
+			'trustReserve',
+			'mediaAttention',
+			'ownerPatience'
+		]);
+		expect(steeredTurn?.resourceReceipt).toContain('Trust reserve');
+		expect(steeredTurn?.resourceReceipt).toContain('Political capital');
+		expect(steeredTurn?.resourceFloor).toBeGreaterThan(30);
+		expect(resourceGate).toMatchObject({
+			status: 'pass',
+			summary: 'Resource floor preserved'
+		});
 	});
 
 	it('keeps the default single-player validation playable while deferring versus balance', () => {
@@ -358,7 +408,11 @@ describe('basketball systems management simulation', () => {
 	});
 
 	it('keeps versus mode focused on race outcome instead of solo challenge targets', () => {
-		const match = runSystemMatch({ mode: 'versus', systemKey: 'recovery', opponentKey: 'attention' });
+		const match = runSystemMatch({
+			mode: 'versus',
+			systemKey: 'recovery',
+			opponentKey: 'attention'
+		});
 
 		expect(match.challenge).toMatchObject({
 			label: 'Versus race',
@@ -462,10 +516,11 @@ describe('basketball systems management simulation', () => {
 		expect(match.systems.map((result) => result.system.key).sort()).toEqual(
 			upload.systems.map((system) => system.key).sort()
 		);
-		expect(match.validation.requirements.find((requirement) => requirement.key === 'system-balance'))
-			.toMatchObject({
-				status: expect.not.stringMatching('deferred')
-			});
+		expect(
+			match.validation.requirements.find((requirement) => requirement.key === 'system-balance')
+		).toMatchObject({
+			status: expect.not.stringMatching('deferred')
+		});
 	});
 
 	it('provides a sample uploaded field with more than two competing Systems', () => {
@@ -498,10 +553,12 @@ describe('basketball systems management simulation', () => {
 			...getSampleSystemMatchup(),
 			{
 				name: 'Owner Room System',
-				thesis: 'Protect owner margin and resilience while keeping enough league health to survive the field.',
+				thesis:
+					'Protect owner margin and resilience while keeping enough league health to survive the field.',
 				stance: 'Uploaded System',
 				constraint: 'Growth has to stay affordable for the board.',
-				adaptation: 'Uses schedule relief as the native operating policy while scoring owner room visibly.',
+				adaptation:
+					'Uses schedule relief as the native operating policy while scoring owner room visibly.',
 				policyKey: 'schedule',
 				weights: {
 					leagueHealth: 0.18,
