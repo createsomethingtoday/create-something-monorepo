@@ -104,6 +104,7 @@
 		active: boolean;
 		customCount: number;
 	};
+	type VersusControlMode = 'autonomous' | 'coach';
 
 	const edges = [
 		{ path: 'M 92 106 C 165 78 210 74 278 90', label: 'reduces' },
@@ -114,6 +115,7 @@
 	];
 
 	let mode = $state<LabMode>('single');
+	let versusControl = $state<VersusControlMode>('autonomous');
 	let selectedSystem = $state<SystemId>('recovery');
 	let opponentSystem = $state<SystemId>('attention');
 	let selectedEnvironmentKey = $state(defaultEnvironment.key);
@@ -170,14 +172,17 @@
 	const builderTotal = $derived(
 		builderWeightFields.reduce((total, field) => total + builderWeights[field.key], 0)
 	);
-	const canSteer = $derived(mode === 'single');
+	const isSolo = $derived(mode === 'single');
+	const canSteer = $derived(isSolo || (mode === 'versus' && versusControl === 'coach'));
 	const effectiveSteeringPolicy = $derived(
 		canSteer && steeringPolicy !== 'none' ? steeringPolicy : undefined
 	);
 	const modeRule = $derived(
-		canSteer
+		isSolo
 			? 'Clear a challenge against the environment. Choose a System, steer once, then replay the years to see whether the targets survive.'
-			: 'Race two Systems in the same environment. No steering; the winner is the highest valid score after requirement gates.'
+			: canSteer
+				? 'Coach one System inside the race. Steering can change that System, but the winner is still decided by final valid score after gates.'
+				: 'Race two Systems in the same environment. No steering; the winner is the highest valid score after requirement gates.'
 	);
 
 	$effect(() => {
@@ -307,7 +312,7 @@
 						selectedSteeringPhase.impact * 100
 					)}%.`
 				: `${viewedLeader.result.system.name} keeps its native policy.`
-			: 'Versus mode keeps both Systems autonomous after setup.'
+			: 'The race keeps both Systems autonomous after setup.'
 	);
 	const unsteeredPrimary = $derived(
 		unsteeredMatch.systems.find((result) => result.system.key === selectedSystem) ??
@@ -364,12 +369,50 @@
 			? Number((activeEntry.score - viewedRunnerUp.entry.score).toFixed(1))
 			: 0
 	);
-	const turnRecapStatus = $derived(canSteer ? match.challenge.status : 'versus');
+	const gameTurnLabel = $derived(
+		isSolo ? 'Solo turn' : canSteer ? 'Coach race' : 'Autonomous race'
+	);
+	const gameTurnTitle = $derived(
+		isSolo
+			? `${selectedEnvironment.name}: ${match.challenge.label}`
+			: canSteer
+				? `Coach ${match.steering.targetSystem.name} against ${viewedRunnerUp?.result.system.name ?? 'the field'}`
+				: `${match.winner.system.name} leads the race`
+	);
+	const primaryRunActionLabel = $derived(
+		playbackRunning
+			? 'Pause run'
+			: viewedYear === match.years
+				? mode === 'versus'
+					? 'Replay race'
+					: 'Replay season'
+				: mode === 'versus'
+					? 'Watch race'
+					: 'Run season'
+	);
+	const gameTurnLanes = $derived([
+		{
+			label: 'System',
+			value: match.steering.targetSystem.name,
+			detail: match.steering.targetSystem.thesis
+		},
+		{
+			label: 'Pressure',
+			value: selectedEnvironment.name,
+			detail: selectedEnvironment.pressure
+		},
+		{
+			label: isSolo ? 'Objective' : 'Stakes',
+			value: isSolo ? match.challenge.label : `${match.years}-year race`,
+			detail: isSolo ? match.challenge.summary : selectedEnvironment.winCondition
+		}
+	]);
+	const turnRecapStatus = $derived(isSolo ? match.challenge.status : 'versus');
 	const turnRecap = $derived<TurnRecapLane[]>([
 		{
 			label: 'Turn state',
-			value: canSteer ? formatChallengeStatus(match.challenge.status) : `Lead ${viewedLeaderGap.toFixed(1)}`,
-			detail: canSteer
+			value: isSolo ? formatChallengeStatus(match.challenge.status) : `Lead ${viewedLeaderGap.toFixed(1)}`,
+			detail: isSolo
 				? `${viewedLeader.result.system.name} is at ${activeEntry.score.toFixed(1)} in year ${viewedYear}.`
 				: `${viewedLeader.result.system.name} leads ${viewedRunnerUp?.result.system.name ?? 'the field'} in year ${viewedYear}.`
 		},
@@ -413,9 +456,9 @@
 	const finalScoreGap = $derived(
 		finalRunnerUp ? Number((match.winner.score - finalRunnerUp.score).toFixed(1)) : 0
 	);
-	const finalOutcomeStatus = $derived(canSteer ? match.challenge.status : 'versus');
+	const finalOutcomeStatus = $derived(isSolo ? match.challenge.status : 'versus');
 	const finalOutcomeTitle = $derived(
-		canSteer
+		isSolo
 			? match.challenge.status === 'cleared'
 				? 'Final whistle: challenge cleared'
 				: match.challenge.status === 'close'
@@ -424,7 +467,7 @@
 			: `Final whistle: ${match.winner.system.name} wins`
 	);
 	const finalOutcomeSummary = $derived(
-		canSteer
+		isSolo
 			? match.challenge.summary
 			: finalRunnerUp
 				? `${match.winner.system.name} beat ${finalRunnerUp.system.name} by ${finalScoreGap.toFixed(1)} after requirement gates.`
@@ -433,22 +476,22 @@
 	const finalOutcomeLanes = $derived<FinalOutcomeLane[]>([
 		{
 			label: 'Final valid score',
-			value: canSteer ? steeredPrimary.score.toFixed(1) : match.winner.score.toFixed(1),
-			detail: canSteer ? steeredPrimary.system.name : match.winner.system.name
+			value: isSolo ? steeredPrimary.score.toFixed(1) : match.winner.score.toFixed(1),
+			detail: isSolo ? steeredPrimary.system.name : match.winner.system.name
 		},
 		{
 			label: 'Gate adjustment',
 			value: formatDelta(
-				canSteer
+				isSolo
 					? steeredPrimary.validationImpact.adjustment
 					: match.winner.validationImpact.adjustment
 			),
-			detail: canSteer
+			detail: isSolo
 				? steeredPrimary.validationImpact.label
 				: match.winner.validationImpact.label
 		},
 		{
-			label: canSteer ? 'Run swing' : 'Winning margin',
+			label: isSolo ? 'Run swing' : canSteer ? 'Coached swing' : 'Winning margin',
 			value: canSteer ? formatDelta(steeringScoreSwing) : finalScoreGap.toFixed(1),
 			detail: canSteer
 				? activeSteeringPolicy
@@ -576,6 +619,10 @@
 	function resetPlayback(): void {
 		playbackRunning = false;
 		viewedYear = 1;
+	}
+
+	function runPrimaryAction(): void {
+		togglePlayback();
 	}
 
 	function steerFromViewedYear(policyKey = steeringPolicy): void {
@@ -1151,8 +1198,57 @@
 				</button>
 			</div>
 			<div class="ona-system-mode-note">
-				<strong>{canSteer ? 'Solo challenge' : 'Versus race'}</strong>
+				<strong>{isSolo ? 'Solo challenge' : canSteer ? 'Coach race' : 'Versus race'}</strong>
 				<p>{modeRule}</p>
+			</div>
+
+			{#if mode === 'versus'}
+				<div class="ona-system-versus-control" aria-label="Versus control">
+					<button
+						type="button"
+						class:active={versusControl === 'autonomous'}
+						aria-pressed={versusControl === 'autonomous'}
+						onclick={() => (versusControl = 'autonomous')}
+					>
+						<span>Autonomous</span>
+						<small>Systems run clean</small>
+					</button>
+					<button
+						type="button"
+						class:active={versusControl === 'coach'}
+						aria-pressed={versusControl === 'coach'}
+						onclick={() => (versusControl = 'coach')}
+					>
+						<span>Coach System</span>
+						<small>Steer one side</small>
+					</button>
+				</div>
+			{/if}
+
+			<div class="ona-system-game-turn" aria-label="Game turn">
+				<div class="ona-system-game-turn-header">
+					<div>
+						<span>{gameTurnLabel}</span>
+						<strong>{gameTurnTitle}</strong>
+					</div>
+					<button type="button" class:active={playbackRunning} onclick={runPrimaryAction}>
+						{#if playbackRunning}
+							<Pause size={15} strokeWidth={2} />
+						{:else}
+							<Play size={15} strokeWidth={2} />
+						{/if}
+						<span>{primaryRunActionLabel}</span>
+					</button>
+				</div>
+				<div class="ona-system-game-turn-lanes">
+					{#each gameTurnLanes as lane}
+						<article>
+							<span>{lane.label}</span>
+							<strong>{lane.value}</strong>
+							<p>{lane.detail}</p>
+						</article>
+					{/each}
+				</div>
 			</div>
 
 			<div
@@ -1210,10 +1306,10 @@
 				aria-label="Current objective"
 			>
 				<div>
-					<span>{canSteer ? 'Objective' : 'Race rule'}</span>
+					<span>{isSolo ? 'Objective' : 'Race rule'}</span>
 					<strong>{match.challenge.label}</strong>
 					<p>
-						{canSteer
+						{isSolo
 							? 'Clear the target score and keep both floor metrics alive through the final year.'
 							: match.challenge.summary}
 					</p>
@@ -1492,16 +1588,22 @@
 			<div class="ona-system-rulebook" aria-label="Run rules">
 				<article>
 					<span>Win condition</span>
-					<strong>{canSteer ? 'Clear challenge objectives' : 'Highest valid system score'}</strong>
+					<strong>{isSolo ? 'Clear challenge objectives' : 'Highest valid system score'}</strong>
 					<p>
-						{canSteer
+						{isSolo
 							? 'Single-player runs are judged by score, owner room, and labor trust targets.'
 							: `${match.environment.winCondition}. Requirement gates adjust unrealistic wins.`}
 					</p>
 				</article>
 				<article>
 					<span>Play model</span>
-					<strong>{canSteer ? 'Coach vs environment' : 'System vs System'}</strong>
+					<strong
+						>{isSolo
+							? 'Coach vs environment'
+							: canSteer
+								? 'Coach within race'
+								: 'System vs System'}</strong
+					>
 					<p>{modeRule}</p>
 				</article>
 			</div>
@@ -1515,7 +1617,7 @@
 					<div>
 						<div class="ona-system-timeline-header">
 							<ShieldCheck size={17} strokeWidth={1.8} />
-							<span>{canSteer ? 'Single challenge' : 'Versus objective'}</span>
+							<span>{isSolo ? 'Single challenge' : 'Versus objective'}</span>
 						</div>
 						<strong>{match.challenge.label}</strong>
 					</div>
@@ -1629,13 +1731,13 @@
 					aria-label="Final outcome"
 				>
 					<div class="ona-system-final-outcome-header">
-						<div>
-							<div class="ona-system-timeline-header">
-								<Trophy size={17} strokeWidth={1.8} />
-								<span>{canSteer ? 'Single result' : 'Versus result'}</span>
+							<div>
+								<div class="ona-system-timeline-header">
+									<Trophy size={17} strokeWidth={1.8} />
+									<span>{isSolo ? 'Single result' : 'Versus result'}</span>
+								</div>
+								<strong>{finalOutcomeTitle}</strong>
 							</div>
-							<strong>{finalOutcomeTitle}</strong>
-						</div>
 						<p>{finalOutcomeSummary}</p>
 						<button type="button" onclick={resetPlayback}>
 							<RotateCcw size={15} strokeWidth={2} />
@@ -1661,7 +1763,11 @@
 							<SlidersHorizontal size={17} strokeWidth={1.8} />
 							<span>{canSteer ? 'Live steering' : 'Autonomous run'}</span>
 						</div>
-						<strong>{canSteer ? `Steer from year ${viewedYear}` : 'Versus race is locked'}</strong>
+						<strong
+							>{canSteer
+								? `Steer ${match.steering.targetSystem.name} from year ${viewedYear}`
+								: 'Versus race is autonomous'}</strong
+						>
 					</div>
 					<p>{steeringReceipt}</p>
 				</div>
