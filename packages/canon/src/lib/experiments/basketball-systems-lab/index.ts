@@ -41,6 +41,7 @@ export {
 	type SystemMatchInput,
 	type SystemProjection,
 	type SystemResult,
+	type SystemScoreContribution,
 	type SystemTimelineEntry,
 	type SystemUploadDefinition,
 	type SystemUploadIssue,

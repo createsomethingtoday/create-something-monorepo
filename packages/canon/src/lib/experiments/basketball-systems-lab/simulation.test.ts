@@ -70,6 +70,27 @@ describe('basketball systems management simulation', () => {
 		);
 	});
 
+	it('explains the winning score through weighted score contributions', () => {
+		const match = runSystemMatch({ mode: 'versus', systemKey: 'recovery', opponentKey: 'attention' });
+		const contributionTotal = match.winner.scoreContributions.reduce(
+			(total, contribution) => total + contribution.value,
+			0
+		);
+
+		expect(match.winner.scoreContributions.map((contribution) => contribution.key)).toEqual([
+			'leagueHealth',
+			'mediaValueB',
+			'competitiveBalance',
+			'laborTrust',
+			'ownerMargin',
+			'resilience'
+		]);
+		expect(Number(contributionTotal.toFixed(1))).toBe(match.winner.score);
+		expect(match.winner.scoreContributions.every((contribution) => contribution.readout.includes('x'))).toBe(
+			true
+		);
+	});
+
 	it('applies mid-season steering from the chosen year and exposes projections', () => {
 		const match = runSystemMatch({
 			mode: 'versus',

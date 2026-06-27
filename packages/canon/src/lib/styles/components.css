@@ -1215,6 +1215,28 @@
     margin-top: 18px;
   }
 
+  .ona-system-mode-note {
+    display: grid;
+    gap: 6px;
+    border: 1px solid var(--ona-system-line);
+    border-left: 3px solid var(--ona-system-ink);
+    border-radius: var(--radius-clear-sm);
+    margin-top: 8px;
+    padding: 10px 12px;
+    background: color-mix(in srgb, white 86%, var(--ona-system-surface));
+  }
+
+  .ona-system-mode-note strong {
+    font-size: 0.82rem;
+    line-height: 1.2;
+  }
+
+  .ona-system-mode-note p {
+    color: var(--ona-system-muted);
+    font-size: 0.76rem;
+    line-height: 1.42;
+  }
+
   .ona-system-option-row {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
@@ -1424,6 +1446,26 @@
     margin-bottom: 14px;
   }
 
+  .ona-system-rulebook {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .ona-system-rulebook article,
+  .ona-system-score-explain {
+    border: 1px solid var(--ona-system-line);
+    border-radius: var(--radius-clear-sm);
+    background: color-mix(in srgb, white 90%, var(--ona-system-surface));
+  }
+
+  .ona-system-rulebook article {
+    display: grid;
+    gap: 6px;
+    padding: 12px;
+  }
+
   .ona-system-scoreboard {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1448,6 +1490,10 @@
 
   .ona-system-scoreboard span,
   .ona-system-scoreboard small,
+  .ona-system-rulebook span,
+  .ona-system-rulebook small,
+  .ona-system-score-explain span,
+  .ona-system-score-explain small,
   .ona-system-projection-grid span,
   .ona-system-timeline span,
   .ona-system-validation span {
@@ -1460,6 +1506,42 @@
 
   .ona-system-scoreboard strong {
     font-size: 1.34rem;
+    line-height: 1;
+  }
+
+  .ona-system-rulebook strong {
+    font-size: 0.92rem;
+    line-height: 1.2;
+  }
+
+  .ona-system-rulebook p {
+    color: var(--ona-system-muted);
+    font-size: 0.78rem;
+    line-height: 1.42;
+  }
+
+  .ona-system-score-explain {
+    display: grid;
+    gap: 10px;
+    margin-bottom: 14px;
+    padding: 12px;
+  }
+
+  .ona-system-score-explain > div:last-child {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .ona-system-score-explain article {
+    display: grid;
+    gap: 5px;
+    border-top: 1px solid var(--ona-system-line);
+    padding-top: 8px;
+  }
+
+  .ona-system-score-explain strong {
+    font-size: 1rem;
     line-height: 1;
   }
 
@@ -1882,6 +1964,11 @@
     }
 
     .ona-system-projection-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .ona-system-rulebook,
+    .ona-system-score-explain > div:last-child {
       grid-template-columns: 1fr;
     }
 

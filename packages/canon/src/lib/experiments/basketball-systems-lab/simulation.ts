@@ -82,6 +82,15 @@ export type SystemScoreWeights = {
 	resilience: number;
 };
 
+export type SystemScoreContribution = {
+	key: keyof SystemScoreWeights;
+	label: string;
+	rawValue: number;
+	weight: number;
+	value: number;
+	readout: string;
+};
+
 export type System = {
 	key: SystemId;
 	name: string;
@@ -133,6 +142,7 @@ export type SystemResult = {
 	system: System;
 	scenario: ManagementScenario;
 	timeline: SystemTimelineEntry[];
+	scoreContributions: SystemScoreContribution[];
 	score: number;
 	startScore: number;
 	compoundedScoreDelta: number;
@@ -384,6 +394,15 @@ const systemWeightKeys = [
 	'resilience'
 ] as const satisfies (keyof SystemScoreWeights)[];
 
+const systemWeightLabels = {
+	leagueHealth: 'League health',
+	mediaValueB: 'Media value',
+	competitiveBalance: 'Competitive balance',
+	laborTrust: 'Labor trust',
+	ownerMargin: 'Owner margin',
+	resilience: 'Resilience'
+} as const satisfies Record<keyof SystemScoreWeights, string>;
+
 const sampleSystemUpload: SystemUploadDefinition = {
 	name: 'Small Market Balance System',
 	thesis: 'Protect competitive balance and small-market visibility before chasing short-term media certainty.',
@@ -600,11 +619,13 @@ function buildSystemResult(
 
 	const score = timeline.at(-1)?.score ?? startScore;
 	const compoundedScoreDelta = roundTo(score - startScore, 1);
+	const scoreContributions = buildScoreContributions(system, scenario.state);
 
 	return {
 		system: cloneSystem(system),
 		scenario,
 		timeline,
+		scoreContributions,
 		score,
 		startScore,
 		compoundedScoreDelta,
@@ -615,6 +636,42 @@ function buildSystemResult(
 }
 
 function scoreSystem(system: System, state: LeagueState): number {
+	return roundTo(
+		buildScoreContributions(system, state).reduce(
+			(total, contribution) => total + contribution.value,
+			0
+		),
+		1
+	);
+}
+
+function buildScoreContributions(system: System, state: LeagueState): SystemScoreContribution[] {
+	const values: Record<keyof SystemScoreWeights, number> = {
+		leagueHealth: state.leagueHealth,
+		mediaValueB: clampScore(state.mediaValueB * 10),
+		competitiveBalance: state.competitiveBalance,
+		laborTrust: state.laborTrust,
+		ownerMargin: state.ownerMargin,
+		resilience: getResilienceScore(state)
+	};
+
+	return systemWeightKeys.map((key) => {
+		const rawValue = roundTo(values[key], 1);
+		const weight = system.weights[key];
+		const value = roundTo(rawValue * weight, 1);
+
+		return {
+			key,
+			label: systemWeightLabels[key],
+			rawValue,
+			weight,
+			value,
+			readout: `${formatScore(rawValue)} x ${Math.round(weight * 100)}%`
+		};
+	});
+}
+
+function getResilienceScore(state: LeagueState): number {
 	const resilience = clampScore(
 		(state.leagueHealth +
 			state.laborTrust +
@@ -623,16 +680,8 @@ function scoreSystem(system: System, state: LeagueState): number {
 			(100 - state.travelWear)) /
 			5
 	);
-	const mediaScore = clampScore(state.mediaValueB * 10);
-	const weighted =
-		state.leagueHealth * system.weights.leagueHealth +
-		mediaScore * system.weights.mediaValueB +
-		state.competitiveBalance * system.weights.competitiveBalance +
-		state.laborTrust * system.weights.laborTrust +
-		state.ownerMargin * system.weights.ownerMargin +
-		resilience * system.weights.resilience;
 
-	return roundTo(weighted, 1);
+	return roundTo(resilience, 1);
 }
 
 function buildFailureMode(system: System, state: LeagueState): string {
