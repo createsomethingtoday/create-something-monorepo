@@ -66,6 +66,14 @@ describe('basketball systems management simulation', () => {
 		expect(match.years).toBe(5);
 		expect(match.winner.timeline).toHaveLength(5);
 		expect(match.winner.timeline.map((entry) => entry.year)).toEqual([1, 2, 3, 4, 5]);
+		expect(match.winner.timeline[0]).toMatchObject({
+			metrics: expect.arrayContaining([expect.objectContaining({ key: 'leagueHealth' })]),
+			nodes: expect.arrayContaining([expect.objectContaining({ id: 'policy' })]),
+			scoreContributions: expect.arrayContaining([
+				expect.objectContaining({ key: 'leagueHealth' })
+			])
+		});
+		expect(match.winner.timeline[0]?.score).not.toBe(match.winner.timeline[4]?.score);
 		expect(match.winner.compoundedScoreDelta).toBe(
 			Number((match.winner.score - match.winner.startScore).toFixed(1))
 		);

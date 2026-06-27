@@ -28,7 +28,9 @@
 		type SeasonPhaseKey,
 		type System,
 		type SystemId,
+		type SystemResult,
 		type SystemScoreWeights,
+		type SystemTimelineEntry,
 		type SystemUploadDefinition,
 		type SystemUploadIssue
 	} from './simulation.js';
@@ -70,6 +72,7 @@
 	let opponentSystem = $state<SystemId>('attention');
 	let selectedEnvironmentKey = $state(defaultEnvironment.key);
 	let horizonYears = $state(5);
+	let viewedYear = $state(1);
 	let steeringYear = $state(3);
 	let steeringPhase = $state<SeasonPhaseKey>('midseason');
 	let steeringPolicy = $state<PolicyKey | 'none'>('labor');
@@ -126,6 +129,10 @@
 		if (steeringYear > horizonYears) {
 			steeringYear = horizonYears;
 		}
+
+		if (viewedYear > horizonYears) {
+			viewedYear = horizonYears;
+		}
 	});
 
 	const match = $derived(
@@ -141,9 +148,22 @@
 			customSystems: uploadedSystems
 		})
 	);
-	const scenario = $derived(match.winner.scenario);
-	const activePolicy = $derived(scenario.policy);
-	const activeTimeline = $derived(match.winner.timeline);
+	const viewedStandings = $derived(
+		match.systems
+			.map((result) => ({
+				result,
+				entry: timelineEntryFor(result, viewedYear)
+			}))
+			.sort((left, right) => right.entry.score - left.entry.score)
+	);
+	const viewedLeader = $derived(
+		viewedStandings[0] ?? {
+			result: match.winner,
+			entry: timelineEntryFor(match.winner, viewedYear)
+		}
+	);
+	const activeEntry = $derived(viewedLeader.entry);
+	const activeTimeline = $derived(viewedLeader.result.timeline);
 	const validationCounts = $derived(
 		match.validation.requirements.reduce(
 			(counts, requirement) => ({
@@ -176,6 +196,18 @@
 		if (status === 'watch') return 'Watch';
 		if (status === 'deferred') return 'Deferred';
 		return 'Pass';
+	}
+
+	function setViewedYear(year: number): void {
+		viewedYear = Math.min(Math.max(Math.round(year), 1), horizonYears);
+	}
+
+	function timelineEntryFor(result: SystemResult, year: number): SystemTimelineEntry {
+		return (
+			result.timeline.find((entry) => entry.year === year) ??
+			result.timeline.at(-1) ??
+			result.timeline[0]
+		);
 	}
 
 	function importSystems(): void {
@@ -379,7 +411,7 @@
 
 		<div class="ona-system-league-panel ona-system-panel" aria-label="League operating state">
 			<div class="ona-system-panel-header">
-				<span>Season 07</span>
+				<span>Year {viewedYear}</span>
 				<strong>Policy Window</strong>
 			</div>
 			<div class="ona-system-court">
@@ -390,13 +422,13 @@
 					<div class="ona-system-court-dot"></div>
 				</div>
 				<div class="ona-system-court-readout">
-					<span>Projected leader</span>
-					<strong>{match.winner.system.name}</strong>
-					<small>{match.winner.outcome} Current intervention: {activePolicy.label}.</small>
+					<span>Current leader</span>
+					<strong>{viewedLeader.result.system.name}</strong>
+					<small>{activeEntry.decision}. {activeEntry.receipt}</small>
 				</div>
 			</div>
 			<div class="ona-system-metric-grid">
-				{#each scenario.metrics as metric}
+				{#each activeEntry.metrics as metric}
 					<div class="ona-system-metric" data-tone={metric.tone}>
 						<span>{metric.label}</span>
 						<strong>{metric.value}</strong>
@@ -422,7 +454,7 @@
 					aria-pressed={mode === 'single'}
 					onclick={() => (mode = 'single')}
 				>
-					Coach
+					Single
 				</button>
 				<button
 					type="button"
@@ -613,11 +645,11 @@
 			<div class="ona-system-map-header">
 				<div>
 					<p class="ona-system-eyebrow">Causal Map</p>
-					<h2>{match.winner.system.name}</h2>
+					<h2>{viewedLeader.result.system.name}</h2>
 				</div>
 				<div class="ona-system-map-badge">
 					<LineChart size={17} strokeWidth={1.8} />
-					<span>{match.years}-year projection</span>
+					<span>Year {viewedYear} of {match.years}</span>
 				</div>
 			</div>
 
@@ -625,7 +657,7 @@
 				<article>
 					<span>Win condition</span>
 					<strong>Highest valid system score</strong>
-					<p>{match.environment.winCondition}. Validation gates can downgrade unrealistic wins.</p>
+					<p>{match.environment.winCondition}. Validation gates flag unrealistic wins.</p>
 				</article>
 				<article>
 					<span>Play model</span>
@@ -634,12 +666,41 @@
 				</article>
 			</div>
 
+			<div class="ona-system-playback" aria-label="Run playback">
+				<div>
+					<span>Run playback</span>
+					<strong>Year {viewedYear} of {match.years}</strong>
+					<p>{activeEntry.receipt}</p>
+				</div>
+				<div class="ona-system-playback-controls">
+					<button type="button" disabled={viewedYear === 1} onclick={() => setViewedYear(viewedYear - 1)}>
+						Previous
+					</button>
+					<input
+						type="range"
+						min="1"
+						max={match.years}
+						step="1"
+						value={viewedYear}
+						aria-label="Run year"
+						oninput={(event) => setViewedYear(Number(event.currentTarget.value))}
+					/>
+					<button
+						type="button"
+						disabled={viewedYear === match.years}
+						onclick={() => setViewedYear(viewedYear + 1)}
+					>
+						Next
+					</button>
+				</div>
+			</div>
+
 			<div class="ona-system-scoreboard" aria-label="System scores">
-				{#each match.systems as result}
-					<article class:active={result.system.key === match.winner.system.key}>
-						<span>#{result.rank} {result.system.name}</span>
-						<strong>{result.score.toFixed(1)}</strong>
-						<small>{result.compoundedScoreDelta >= 0 ? '+' : ''}{result.compoundedScoreDelta.toFixed(1)} compounded</small>
+				{#each viewedStandings as standing, index}
+					<article class:active={standing.result.system.key === viewedLeader.result.system.key}>
+						<span>#{index + 1} in year {viewedYear} {standing.result.system.name}</span>
+						<strong>{standing.entry.score.toFixed(1)}</strong>
+						<small>Projects {standing.result.score.toFixed(1)} after {match.years} years</small>
 					</article>
 				{/each}
 			</div>
@@ -647,10 +708,10 @@
 			<div class="ona-system-score-explain" aria-label="Winning score explanation">
 				<div class="ona-system-timeline-header">
 					<BarChart3 size={17} strokeWidth={1.8} />
-					<span>Why {match.winner.system.name} leads</span>
+					<span>Why {viewedLeader.result.system.name} leads in year {viewedYear}</span>
 				</div>
 				<div>
-					{#each match.winner.scoreContributions as contribution}
+					{#each activeEntry.scoreContributions as contribution}
 						<article>
 							<span>{contribution.label}</span>
 							<strong>{contribution.value.toFixed(1)}</strong>
@@ -693,7 +754,7 @@
 					{/each}
 				</svg>
 
-				{#each scenario.nodes as node}
+				{#each activeEntry.nodes as node}
 					<div
 						class="ona-system-node"
 						data-tone={node.tone}
@@ -754,7 +815,7 @@
 					<span>Compounding receipts</span>
 				</div>
 				{#each activeTimeline as entry}
-					<article class:active={entry.steered}>
+					<article class:active={entry.year === viewedYear}>
 						<div>
 							<span>Year {entry.year}</span>
 							<strong>{entry.decision}</strong>

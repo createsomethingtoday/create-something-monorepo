@@ -188,6 +188,9 @@ export type SystemTimelineEntry = {
 	policy: ManagementPolicy;
 	policyIntensity: number;
 	state: LeagueState;
+	metrics: MetricOutput[];
+	nodes: MapNode[];
+	scoreContributions: SystemScoreContribution[];
 	score: number;
 	delta: number;
 	decision: string;
@@ -649,6 +652,7 @@ function buildSystemResult(
 		const policyIntensity =
 			isSteered && year === options.steeringYear ? options.steeringPhase.impact : 1;
 		scenario = runManagementScenario(policyKey, seasonBaseline, policyIntensity);
+		const scoreContributions = buildScoreContributions(system, scenario.state);
 		const score = scoreSystem(system, scenario.state);
 		const delta = roundTo(score - previousScore, 1);
 
@@ -658,6 +662,9 @@ function buildSystemResult(
 			policy: clonePolicy(scenario.policy),
 			policyIntensity,
 			state: { ...scenario.state },
+			metrics: scenario.metrics.map((metric) => ({ ...metric })),
+			nodes: scenario.nodes.map((node) => ({ ...node })),
+			scoreContributions,
 			score,
 			delta,
 			decision: isSteered
