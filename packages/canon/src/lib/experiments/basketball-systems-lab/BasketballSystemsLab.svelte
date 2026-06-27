@@ -457,16 +457,11 @@
 		}
 	]);
 	const steeringRecommendation = $derived(getSteeringRecommendation());
-	const steeringRecommendationApplied = $derived(
-		canSteer &&
-			steeringYear === viewedYear &&
-			steeringPolicy === steeringRecommendation.policyKey &&
-			(steeringRecommendation.policyKey === 'none' ||
-				steeringPhase === steeringRecommendation.phaseKey)
-	);
 	const steeringPreviews = $derived<SteeringPreview[]>(getSteeringPreviews());
 	const canAdvanceTurn = $derived(viewedYear < match.years);
-	const nextTurnPrompt = $derived<NextTurnPrompt>(getNextTurnPrompt());
+	const nextTurnPrompt = $derived.by<NextTurnPrompt>(() =>
+		getNextTurnPrompt(canSteer && steeringYear === viewedYear)
+	);
 	const viewedRunnerUp = $derived(
 		viewedStandings.find(
 			(standing) => standing.result.system.key !== viewedLeader.result.system.key
@@ -694,8 +689,8 @@
 		{
 			label: 'Next action',
 			value: canSteer
-				? steeringRecommendationApplied
-					? 'Recommendation applied'
+				? steeringYear === viewedYear
+					? 'Turn applied'
 					: steeringRecommendation.actionLabel
 				: 'Let Systems run',
 			detail: canSteer
@@ -946,8 +941,8 @@
 		return `${delta >= 0 ? '+' : ''}${delta.toFixed(1)}`;
 	}
 
-	function getNextTurnPrompt(): NextTurnPrompt {
-		if (steeringRecommendationApplied) {
+	function getNextTurnPrompt(turnApplied: boolean): NextTurnPrompt {
+		if (turnApplied) {
 			return {
 				status: 'applied',
 				label: 'Turn applied',
@@ -2210,54 +2205,6 @@
 				</div>
 
 				{#if canSteer}
-					<div class="ona-system-steering-actions" aria-label="Steering policy choices">
-						<button
-							type="button"
-							class:active={steeringYear === viewedYear}
-							onclick={() => steerFromViewedYear()}
-						>
-							<span>Use year {viewedYear}</span>
-							<small>{steeringPlanLabel}</small>
-						</button>
-						<button
-							type="button"
-							class:active={steeringPolicy === 'none'}
-							aria-pressed={steeringPolicy === 'none'}
-							onclick={() => {
-								steeringYear = viewedYear;
-								steeringPolicy = 'none';
-							}}
-						>
-							<span>Original</span>
-							<small>No steer</small>
-						</button>
-						{#each policies as policy}
-							<button
-								type="button"
-								class:active={steeringPolicy === policy.key && steeringYear === viewedYear}
-								aria-pressed={steeringPolicy === policy.key && steeringYear === viewedYear}
-								onclick={() => steerFromViewedYear(policy.key)}
-							>
-								<span>{policy.label}</span>
-								<small>{policy.score}</small>
-							</button>
-						{/each}
-					</div>
-
-					<div class="ona-system-steering-season" aria-label="Steering season window">
-						{#each seasonPhases as phase}
-							<button
-								type="button"
-								class:active={steeringPhase === phase.key}
-								aria-pressed={steeringPhase === phase.key}
-								onclick={() => setSteeringPhase(phase.key)}
-							>
-								<span>{phase.label}</span>
-								<small>{Math.round(phase.impact * 100)}%</small>
-							</button>
-						{/each}
-					</div>
-
 					<div
 						class="ona-system-next-turn"
 						data-status={nextTurnPrompt.status}
@@ -2299,40 +2246,100 @@
 						</div>
 					</div>
 
-					<div class="ona-system-steering-previews" aria-label="Steering previews">
-						<div class="ona-system-steering-previews-header">
-							<span>Preview before steering</span>
-							<strong>{selectedSteeringPhase.label} from year {viewedYear}</strong>
-						</div>
-						<div class="ona-system-steering-preview-grid">
-							{#each steeringPreviews as preview}
+					<details class="ona-system-turn-disclosure">
+						<summary>
+							<span>Tune this turn</span>
+							<strong>{steeringPlanLabel}</strong>
+						</summary>
+						<div class="ona-system-turn-disclosure-body">
+							<div class="ona-system-steering-actions" aria-label="Steering policy choices">
 								<button
 									type="button"
-									class:active={preview.active}
-									data-recommended={preview.recommended}
-									aria-pressed={preview.active}
-									onclick={() => applySteeringPreview(preview)}
+									class:active={steeringYear === viewedYear}
+									onclick={() => steerFromViewedYear()}
 								>
-									<div>
-										<span>{preview.label}</span>
-										<small>{preview.recommended ? 'Best preview' : 'Projected'}</small>
-									</div>
-									<strong>{preview.scoreLabel}</strong>
-									<p>{preview.detail}</p>
+									<span>Use year {viewedYear}</span>
+									<small>{steeringPlanLabel}</small>
 								</button>
-							{/each}
-						</div>
-					</div>
+								<button
+									type="button"
+									class:active={steeringPolicy === 'none'}
+									aria-pressed={steeringPolicy === 'none'}
+									onclick={() => {
+										steeringYear = viewedYear;
+										steeringPolicy = 'none';
+									}}
+								>
+									<span>Original</span>
+									<small>No steer</small>
+								</button>
+								{#each policies as policy}
+									<button
+										type="button"
+										class:active={steeringPolicy === policy.key && steeringYear === viewedYear}
+										aria-pressed={steeringPolicy === policy.key && steeringYear === viewedYear}
+										onclick={() => steerFromViewedYear(policy.key)}
+									>
+										<span>{policy.label}</span>
+										<small>{policy.score}</small>
+									</button>
+								{/each}
+							</div>
 
-					<div class="ona-system-steering-comparison" aria-label="Steering comparison">
-						{#each steeringComparison as comparison}
-							<article>
-								<span>{comparison.label}</span>
-								<strong>{comparison.value}</strong>
-								<small>{comparison.detail}</small>
-							</article>
-						{/each}
-					</div>
+							<div class="ona-system-steering-season" aria-label="Steering season window">
+								{#each seasonPhases as phase}
+									<button
+										type="button"
+										class:active={steeringPhase === phase.key}
+										aria-pressed={steeringPhase === phase.key}
+										onclick={() => setSteeringPhase(phase.key)}
+									>
+										<span>{phase.label}</span>
+										<small>{Math.round(phase.impact * 100)}%</small>
+									</button>
+								{/each}
+							</div>
+						</div>
+					</details>
+
+					<details class="ona-system-turn-disclosure ona-system-turn-disclosure--compare">
+						<summary>
+							<span>Compare moves</span>
+							<strong>{selectedSteeringPhase.label} from year {viewedYear}</strong>
+						</summary>
+						<div class="ona-system-turn-disclosure-body">
+							<div class="ona-system-steering-previews" aria-label="Steering previews">
+								<div class="ona-system-steering-preview-grid">
+									{#each steeringPreviews as preview}
+										<button
+											type="button"
+											class:active={preview.active}
+											data-recommended={preview.recommended}
+											aria-pressed={preview.active}
+											onclick={() => applySteeringPreview(preview)}
+										>
+											<div>
+												<span>{preview.label}</span>
+												<small>{preview.recommended ? 'Best preview' : 'Projected'}</small>
+											</div>
+											<strong>{preview.scoreLabel}</strong>
+											<p>{preview.detail}</p>
+										</button>
+									{/each}
+								</div>
+							</div>
+
+							<div class="ona-system-steering-comparison" aria-label="Steering comparison">
+								{#each steeringComparison as comparison}
+									<article>
+										<span>{comparison.label}</span>
+										<strong>{comparison.value}</strong>
+										<small>{comparison.detail}</small>
+									</article>
+								{/each}
+							</div>
+						</div>
+					</details>
 
 				{:else}
 					<div class="ona-system-steering-locked">
