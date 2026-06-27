@@ -894,10 +894,16 @@ function buildSystemChallenge(
 	const winner = results[0];
 
 	if (mode === 'versus') {
+		const runnerUp = results.find((result) => result.system.key !== winner.system.key) ?? null;
+		const fieldLabel =
+			results.length > 2
+				? `${winner.system.name} is judged against a ${results.length}-System field by final valid score.`
+				: `${winner.system.name} is judged against ${runnerUp?.system.name ?? 'the other System'} by final valid score.`;
+
 		return {
 			label: 'Versus race',
 			status: 'versus',
-			summary: `${winner.system.name} is judged against the other System by final valid score.`,
+			summary: fieldLabel,
 			objectives: []
 		};
 	}
