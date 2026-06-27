@@ -1571,7 +1571,7 @@
     gap: 6px;
   }
 
-  .ona-system-competition-roster article,
+  .ona-system-competition-roster button,
   .ona-system-competition-proof {
     display: grid;
     gap: 6px;
@@ -1579,25 +1579,50 @@
     border-radius: var(--radius-clear-sm);
     padding: 9px 10px;
     background: color-mix(in srgb, white 88%, var(--ona-system-surface));
+    color: var(--ona-system-ink);
+    font: inherit;
+    text-align: left;
   }
 
-  .ona-system-competition-roster article.active {
+  .ona-system-competition-roster button {
+    cursor: pointer;
+    transition:
+      border-color 120ms linear,
+      opacity 160ms linear,
+      transform 120ms cubic-bezier(0.19, 1, 0.22, 1);
+  }
+
+  .ona-system-competition-roster button:hover {
+    opacity: 0.86;
+  }
+
+  .ona-system-competition-roster button:active {
+    opacity: 1;
+    transform: scale(0.99);
+  }
+
+  .ona-system-competition-roster button:focus-visible {
+    outline: 2px solid var(--ona-system-ink);
+    outline-offset: 3px;
+  }
+
+  .ona-system-competition-roster button.active {
     border-color: var(--ona-system-ink);
   }
 
-  .ona-system-competition-roster article[data-readiness='ready'] {
+  .ona-system-competition-roster button[data-readiness='ready'] {
     border-left: 3px solid var(--ona-system-green);
   }
 
-  .ona-system-competition-roster article[data-readiness='watch'] {
+  .ona-system-competition-roster button[data-readiness='watch'] {
     border-left: 3px solid var(--ona-system-blue);
   }
 
-  .ona-system-competition-roster article[data-readiness='break'] {
+  .ona-system-competition-roster button[data-readiness='break'] {
     border-left: 3px solid var(--ona-system-red);
   }
 
-  .ona-system-competition-roster article > div:first-child,
+  .ona-system-competition-roster button > div:first-child,
   .ona-system-competition-roster-meta,
   .ona-system-competition-roster-gate {
     display: grid;
@@ -1659,6 +1684,44 @@
     font-size: 0.72rem;
     line-height: 1.1;
     white-space: nowrap;
+  }
+
+  .ona-system-field-setup-lanes {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .ona-system-field-setup-lanes article {
+    display: grid;
+    gap: 4px;
+    border-top: 1px solid var(--ona-system-line);
+    padding-top: 8px;
+  }
+
+  .ona-system-field-setup-lanes span {
+    color: var(--ona-system-muted);
+    font-size: 0.62rem;
+    font-weight: 700;
+    line-height: 1.1;
+    text-transform: uppercase;
+    letter-spacing: 0;
+  }
+
+  .ona-system-field-setup-lanes strong {
+    color: var(--ona-system-ink);
+    font-size: 0.78rem;
+    line-height: 1.12;
+    overflow-wrap: anywhere;
+  }
+
+  .ona-system-field-setup-lanes p {
+    margin: 0;
+    color: var(--ona-system-muted);
+    font-size: 0.68rem;
+    font-weight: 700;
+    line-height: 1.28;
+    overflow-wrap: anywhere;
   }
 
   .ona-system-competition-actions {
@@ -4344,6 +4407,7 @@
     .ona-system-scoreboard,
     .ona-system-kickoff-grid,
     .ona-system-live-standings-list,
+    .ona-system-field-setup-lanes,
     .ona-system-gate-impact > div:nth-child(2),
     .ona-system-versus-control,
     .ona-system-game-turn-header,
