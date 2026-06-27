@@ -1,20 +1,18 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import {
-	PUBLIC_ATLAS_LIMITS,
 	computePublicAtlasReadiness,
 	normalizePublicAtlasCanvas,
-	runPublicAtlasMappingAgent,
 	summarizePublicAtlasCanvas,
 	type PublicAtlasCanvas
-} from '$lib/atlas/public';
+} from '@create-something/canon/atlas/headless';
+import { PUBLIC_ATLAS_LIMITS, type PublicAtlasTier } from '$lib/atlas/intake-policy';
+import { runPublicAtlasMappingAgent } from '$lib/atlas/public';
 import { runOpenAiPublicAtlasMappingAgent } from '$lib/atlas/model-agent';
 import { createLogger } from '@create-something/canon/utils';
 
 const logger = createLogger('PublicAtlasAgentAPI');
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-type PublicAtlasTier = keyof typeof PUBLIC_ATLAS_LIMITS;
 
 type AgentRequestBody = {
 	message?: unknown;

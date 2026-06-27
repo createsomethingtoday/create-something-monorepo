@@ -191,6 +191,15 @@
 			"types": "./dist/diagrams/index.d.ts",
 			"svelte": "./dist/diagrams/index.js"
 		},
+		"./atlas": {
+			"types": "./dist/atlas/index.d.ts",
+			"svelte": "./dist/atlas/index.js"
+		},
+		"./atlas/headless": {
+			"types": "./dist/atlas/headless.d.ts",
+			"import": "./dist/atlas/headless.js",
+			"default": "./dist/atlas/headless.js"
+		},
 		"./icons": {
 			"types": "./dist/icons/index.d.ts",
 			"svelte": "./dist/icons/index.js"

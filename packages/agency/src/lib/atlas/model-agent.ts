@@ -4,13 +4,13 @@ import {
 	createPublicAtlasEdge,
 	createPublicAtlasNode,
 	normalizePublicAtlasCanvas,
-	type PublicAtlasAgentResult,
 	type PublicAtlasCanvas,
 	type PublicAtlasEdge,
 	type PublicAtlasNode,
 	type PublicAtlasNodeKind,
 	type PublicAtlasNodeStatus
-} from './public';
+} from '@create-something/canon/atlas/headless';
+import type { PublicAtlasAgentResult } from './agent-contract';
 import { createLogger } from '@create-something/canon/utils';
 
 type ModelOperationType = 'add_node' | 'update_node' | 'add_edge';

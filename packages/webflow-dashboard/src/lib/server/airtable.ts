@@ -582,6 +582,8 @@ export interface Asset {
 	appScreenshotAltTexts?: string[];
 }
 
+export type AssetVersionChanges = Record<string, unknown> | string;
+
 export interface AssetUpdateData {
 	name?: string;
 	description?: string;
@@ -613,7 +615,7 @@ export interface AssetUpdateData {
 	appSupportUrl?: string;
 	appTermsUrl?: string;
 	appScreenshotAltTexts?: string[];
-	assetVersionChanges?: Record<string, unknown> | string;
+	assetVersionChanges?: AssetVersionChanges;
 }
 
 export type TemplateOfferStrategy =
@@ -755,6 +757,68 @@ type AirtableWritableValue =
 	| readonly { url: string }[]
 	| null
 	| undefined;
+
+export function buildAssetVersionCreateFields(
+	assetId: string,
+	versionNumber: number,
+	changes: AssetVersionChanges,
+	snapshot: AssetVersionSnapshot,
+	createdBy: string
+): Record<string, AirtableWritableValue> {
+	const changesJson =
+		typeof changes === 'string'
+			? JSON.stringify({ changes, snapshot, createdBy })
+			: JSON.stringify(changes);
+
+	return {
+		'fldemWilqCQcOCh5s': [assetId],
+		'fldn2ImbgwKfCdWWA': versionNumber,
+		'fldjYFJMGTerFYlol': 'Meta Update',
+		'fldc999gbJ8LWWoTC': changesJson,
+		'fldLEIZMEjZvH5n23': ['zendesk'],
+		Snapshot: JSON.stringify(snapshot)
+	};
+}
+
+function parseAssetVersionSnapshot(record: Airtable.Record<Airtable.FieldSet>): AssetVersionSnapshot | null {
+	const snapshotField = record.fields['Snapshot'];
+	if (typeof snapshotField === 'string' && snapshotField.trim()) {
+		try {
+			return JSON.parse(snapshotField) as AssetVersionSnapshot;
+		} catch {
+			return null;
+		}
+	}
+
+	const changesField = record.fields['Changes'];
+	if (typeof changesField === 'string' && changesField.trim()) {
+		try {
+			const parsed = JSON.parse(changesField) as { snapshot?: AssetVersionSnapshot };
+			if (parsed && typeof parsed === 'object' && parsed.snapshot) {
+				return parsed.snapshot;
+			}
+		} catch {
+			return null;
+		}
+	}
+
+	return null;
+}
+
+function mapAssetVersionRecord(record: Airtable.Record<Airtable.FieldSet>): AssetVersion | null {
+	const snapshot = parseAssetVersionSnapshot(record);
+	if (!snapshot) return null;
+
+	return {
+		id: record.id,
+		assetId: record.fields['Asset ID'] as string,
+		versionNumber: record.fields['Version Number'] as number,
+		createdAt: record.fields['Created At'] as string,
+		createdBy: record.fields['Created By'] as string,
+		changes: record.fields['Changes'] as string,
+		snapshot
+	};
+}
 
 function firstString(value: unknown): string | undefined {
 	if (typeof value === 'string') {
@@ -2498,7 +2562,7 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 			async createAssetVersion(
 				assetId: string,
 				createdBy: string,
-				changes: Record<string, unknown> | string
+				changes: AssetVersionChanges
 			): Promise<AssetVersion | null> {
 				debugLog('[Airtable] createAssetVersion called:', { assetId, createdBy, changesType: typeof changes });
 				debugLog('[Airtable] Using ASSET_VERSIONS table:', TABLES.ASSET_VERSIONS);
@@ -2523,7 +2587,7 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 			async createAssetVersionFromAsset(
 				asset: Asset,
 				createdBy: string,
-				changes: Record<string, unknown> | string
+				changes: AssetVersionChanges
 			): Promise<AssetVersion | null> {
 				try {
 					// Check if asset is "Upcoming" - don't create versions for upcoming assets
@@ -2564,28 +2628,22 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 						}
 					}
 
-					// Create version record using field IDs from old dashboard
-					// Matches exactly: pages/api/asset/createVersion/[id].js lines 101-107
-					// IMPORTANT: Store changes in same format as v1 - just the structured changes object
-					// The Airtable automation expects: {"fld43LxLHMZb2yF7F":{"added":[...],"removed":0},...}
-					const changesJson = typeof changes === 'string'
-						? JSON.stringify({ changes, snapshot, createdBy }) // Legacy format for string changes
-						: JSON.stringify(changes); // V1 format - just the structured changes
+					const fields = buildAssetVersionCreateFields(
+						asset.id,
+						nextVersion,
+						changes,
+						snapshot,
+						createdBy
+					);
 
 					debugLog('[Airtable] Creating version record with fields:', {
-						'fldemWilqCQcOCh5s': [asset.id],
-						'fldn2ImbgwKfCdWWA': nextVersion,
-						'fldjYFJMGTerFYlol': 'Meta Update',
-						'fldc999gbJ8LWWoTC': changesJson.substring(0, 100) + '...',
-						'fldLEIZMEjZvH5n23': ['zendesk']
+						...fields,
+						fldc999gbJ8LWWoTC: String(fields.fldc999gbJ8LWWoTC).substring(0, 100) + '...',
+						Snapshot: String(fields.Snapshot).substring(0, 100) + '...'
 					});
-					const records = await base(TABLES.ASSET_VERSIONS).create({
-						'fldemWilqCQcOCh5s': [asset.id], // Linked record to asset
-						'fldn2ImbgwKfCdWWA': nextVersion, // Version number
-						'fldjYFJMGTerFYlol': 'Meta Update', // Type
-						'fldc999gbJ8LWWoTC': changesJson, // Changes JSON - matches v1 format
-						'fldLEIZMEjZvH5n23': ['zendesk'] // Source - must match existing linked record
-					});
+					const records = await base(TABLES.ASSET_VERSIONS).create(
+						fields as Partial<Airtable.FieldSet>
+					);
 					debugLog('[Airtable] Version record created:', records.id);
 
 					const changesStr = typeof changes === 'string' ? changes : JSON.stringify(changes);
@@ -2617,15 +2675,9 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 					})
 					.all();
 
-				return records.map(record => ({
-					id: record.id,
-					assetId: record.fields['Asset ID'] as string,
-					versionNumber: record.fields['Version Number'] as number,
-					createdAt: record.fields['Created At'] as string,
-					createdBy: record.fields['Created By'] as string,
-					changes: record.fields['Changes'] as string,
-					snapshot: JSON.parse(record.fields['Snapshot'] as string)
-				}));
+				return records
+					.map(mapAssetVersionRecord)
+					.filter((version): version is AssetVersion => version !== null);
 			} catch (err) {
 				console.error('Error getting asset versions:', err);
 				return [];
@@ -2638,15 +2690,7 @@ export function getAirtableClient(env: AirtableEnv | undefined) {
 		async getAssetVersion(versionId: string): Promise<AssetVersion | null> {
 			try {
 				const record = await base(TABLES.ASSET_VERSIONS).find(versionId);
-				return {
-					id: record.id,
-					assetId: record.fields['Asset ID'] as string,
-					versionNumber: record.fields['Version Number'] as number,
-					createdAt: record.fields['Created At'] as string,
-					createdBy: record.fields['Created By'] as string,
-					changes: record.fields['Changes'] as string,
-					snapshot: JSON.parse(record.fields['Snapshot'] as string)
-				};
+				return mapAssetVersionRecord(record);
 			} catch {
 				return null;
 			}

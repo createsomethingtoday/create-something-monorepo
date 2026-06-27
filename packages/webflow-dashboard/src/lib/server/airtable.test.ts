@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
 	buildAssetListFormula,
+	buildAssetVersionCreateFields,
 	buildAssetVersionSnapshot,
 	buildCreatorEmailMatchFormula,
 	cleanMarketplaceStatus,
@@ -142,5 +143,53 @@ describe('buildAssetVersionSnapshot', () => {
 			creatorWebsite: 'creator@example.com',
 			appScreenshotAltTexts: ['Workflow screenshot']
 		});
+	});
+});
+
+describe('buildAssetVersionCreateFields', () => {
+	const snapshot = {
+		name: 'Workflow App',
+		descriptionShort: 'Old short',
+		descriptionLongHtml: '<p>Old long</p>',
+		appCapabilities: 'Hybrid',
+		appScopes: ['sites', 'cms']
+	};
+
+	it('stores structured changes in v1-compatible format and persists the snapshot field', () => {
+		const fields = buildAssetVersionCreateFields(
+			'recAsset',
+			3,
+			{ fldShortDescription: { from: 'Old short', to: 'New short' } },
+			snapshot,
+			'creator@example.com'
+		);
+
+		expect(fields).toMatchObject({
+			fldemWilqCQcOCh5s: ['recAsset'],
+			fldn2ImbgwKfCdWWA: 3,
+			fldjYFJMGTerFYlol: 'Meta Update',
+			fldLEIZMEjZvH5n23: ['zendesk'],
+			Snapshot: JSON.stringify(snapshot)
+		});
+		expect(JSON.parse(fields.fldc999gbJ8LWWoTC as string)).toEqual({
+			fldShortDescription: { from: 'Old short', to: 'New short' }
+		});
+	});
+
+	it('keeps the legacy wrapper for string changes', () => {
+		const fields = buildAssetVersionCreateFields(
+			'recAsset',
+			1,
+			'Manual version capture',
+			snapshot,
+			'creator@example.com'
+		);
+
+		expect(JSON.parse(fields.fldc999gbJ8LWWoTC as string)).toEqual({
+			changes: 'Manual version capture',
+			snapshot,
+			createdBy: 'creator@example.com'
+		});
+		expect(fields.Snapshot).toBe(JSON.stringify(snapshot));
 	});
 });

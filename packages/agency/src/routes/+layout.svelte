@@ -9,6 +9,10 @@
   import { page } from '$app/stores';
   import { onMount } from 'svelte';
   import { afterNavigate, disableScrollHandling, goto, onNavigate } from '$app/navigation';
+  import {
+    isAgencyDifyArticlePath,
+    usesCompactAgencyPrivacyPrompt
+  } from '$lib/atlas/surface-policy';
 
   let { children, data } = $props();
 
@@ -48,7 +52,8 @@
   ];
   const primaryCtaHref = agencyCoreMessaging.startWithWorkflowHref;
   const globalAnalyticsMetadata = $derived(getAgencyGlobalAnalyticsMetadata($page.url.pathname));
-  const useCompactPrivacyPrompt = $derived($page.url.pathname === '/');
+  const isDifyArticleRoute = $derived(isAgencyDifyArticlePath($page.url.pathname));
+  const useCompactPrivacyPrompt = $derived(usesCompactAgencyPrivacyPrompt($page.url.pathname));
   const footerQuickLinkGroups = [
     {
       title: 'Commercial',
@@ -466,7 +471,7 @@
     visualStyle="clear"
   />
 
-  {#if $page.url.pathname !== '/' && $page.url.pathname !== '/basketball-systems-lab'}
+  {#if $page.url.pathname !== '/' && $page.url.pathname !== '/basketball-systems-lab' && !isDifyArticleRoute}
     <ModeIndicator current="agency" />
   {/if}
 </div>

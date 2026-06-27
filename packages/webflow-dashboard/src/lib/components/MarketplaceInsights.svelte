@@ -1,5 +1,6 @@
 <script lang="ts">
   import { browser } from '$app/environment';
+  import { onMount } from 'svelte';
   import { fade } from 'svelte/transition';
   import { Badge } from './ui';
   import Sparkline from './Sparkline.svelte';
@@ -16,39 +17,12 @@
     type CompetitionFilter,
     type UserCategoryFilter
   } from '$lib/utils/marketplace-insights-filters';
-
-  interface LeaderboardEntry {
-    templateName: string;
-    category: string;
-    totalSales30d: number;
-    totalRevenue30d?: number;
-    salesRank: number;
-    revenueRank: number;
-    isUserTemplate: boolean;
-    /** Historical trend data from backend (optional) */
-    trendData?: number[];
-  }
-
-  interface CategoryEntry {
-    category: string;
-    subcategory: string;
-    templatesInSubcategory: number;
-    totalSales30d: number;
-    totalRevenue30d: number;
-    avgRevenuePerTemplate: number;
-    revenueRank: number;
-    /** Trend direction: positive, negative, or neutral */
-    trend?: 'up' | 'down' | 'neutral';
-    /** Percentage change from previous period */
-    changePercent?: number;
-  }
-
-  interface Insight {
-    type: 'opportunity' | 'trend' | 'warning';
-    message: string;
-    /** Priority score for sorting (higher = more important) */
-    priority?: number;
-  }
+  import type {
+    CategoryEntry,
+    Insight,
+    LeaderboardEntry,
+    MarketplaceSummary
+  } from '$lib/marketplace-insights';
 
   interface Props {
     leaderboard: LeaderboardEntry[];
@@ -56,17 +30,7 @@
     insights: Insight[];
     userTemplates: LeaderboardEntry[];
     userCategories?: string[];
-    summary: {
-      totalMarketplaceSales: number | null;
-      userBestRank: number | null;
-      lastUpdated: string;
-      nextUpdateDate?: string;
-      syncSchedule?: string;
-      dataWindow?: string;
-      timeUntilNextSync?: string;
-      salesSource?: 'category-performance' | 'leaderboard-top-50' | 'unavailable';
-      dataWarning?: string | null;
-    };
+    summary: MarketplaceSummary;
   }
 
   let { leaderboard, categories, insights, userTemplates, userCategories = [], summary }: Props =
@@ -124,6 +88,7 @@
   let categoryFilter = $state('all');
   let competitionFilter = $state<CompetitionFilter>('all');
   let userCategoryFilter = $state<UserCategoryFilter>('all');
+  let tableViewport = $state<'unknown' | 'mobile' | 'desktop'>('unknown');
   const ownedUserCategorySet = $derived.by(() => {
     const categoryEntries =
       userCategories.length > 0 ? userCategories.map((category) => ({ category })) : userTemplates;
@@ -133,6 +98,8 @@
   const userCategorySet = $derived.by(() =>
     getExpandedUserCategorySet(ownedUserCategorySet, categories)
   );
+  const shouldRenderMobileTable = $derived(tableViewport !== 'desktop');
+  const shouldRenderDesktopTable = $derived(tableViewport !== 'mobile');
 
   const gridSortOptions: Array<{ key: CategorySortKey; label: string }> = [
     { key: 'revenueRank', label: 'Rank' },
@@ -210,6 +177,11 @@
       sortKey = key;
       sortDirection = 'asc';
     }
+  }
+
+  function getAriaSort(key: CategorySortKey): 'ascending' | 'descending' | 'none' {
+    if (sortKey !== key) return 'none';
+    return sortDirection === 'asc' ? 'ascending' : 'descending';
   }
 
   function clearFilters() {
@@ -359,6 +331,20 @@
     }
     return windowLabel;
   }
+
+  onMount(() => {
+    const desktopQuery = window.matchMedia('(min-width: 768px)');
+    const updateTableViewport = () => {
+      tableViewport = desktopQuery.matches ? 'desktop' : 'mobile';
+    };
+
+    updateTableViewport();
+    desktopQuery.addEventListener('change', updateTableViewport);
+
+    return () => {
+      desktopQuery.removeEventListener('change', updateTableViewport);
+    };
+  });
 </script>
 
 <div class="marketplace-insights">
@@ -540,61 +526,64 @@
         </div>
       {:else if viewMode === 'table'}
         <!-- Mobile Card Layout for Table View -->
-        <div class="table-mobile-cards">
-          {#each sortedCategories as category, index (getCategoryRowKey(category, index))}
-            {@const competition = getCompetitionIndicator(category.templatesInSubcategory)}
-            {@const isUserCategory =
-              ownedUserCategorySet.has(category.category) ||
-              ownedUserCategorySet.has(category.subcategory)}
-            <div class="table-mobile-card" class:user-category={isUserCategory}>
-              <div class="mobile-card-header">
-                <div class="mobile-card-title">
-                  <span class="category-parent">{category.category}</span>
-                  <span class="category-name">{category.subcategory}</span>
-                  {#if isUserCategory}
-                    <span class="user-indicator">Your template category</span>
-                  {/if}
+        {#if shouldRenderMobileTable}
+          <div class="table-mobile-cards">
+            {#each sortedCategories as category, index (getCategoryRowKey(category, index))}
+              {@const competition = getCompetitionIndicator(category.templatesInSubcategory)}
+              {@const isUserCategory =
+                ownedUserCategorySet.has(category.category) ||
+                ownedUserCategorySet.has(category.subcategory)}
+              <div class="table-mobile-card" class:user-category={isUserCategory}>
+                <div class="mobile-card-header">
+                  <div class="mobile-card-title">
+                    <span class="category-parent">{category.category}</span>
+                    <span class="category-name">{category.subcategory}</span>
+                    {#if isUserCategory}
+                      <span class="user-indicator">Your template category</span>
+                    {/if}
+                  </div>
+                  <span class="rank-pill">#{category.revenueRank}</span>
                 </div>
-                <span class="rank-pill">#{category.revenueRank}</span>
-              </div>
-              <div class="mobile-card-metric">
-                <span class="metric-value"
-                  >${Math.round(category.avgRevenuePerTemplate).toLocaleString()}</span
-                >
-                <span class="metric-label">avg revenue</span>
-              </div>
-              <div class="mobile-card-stats">
-                <div class="mobile-stat">
-                  <span class="stat-label">Sales (30d)</span>
-                  <span class="stat-value">{category.totalSales30d.toLocaleString()}</span>
-                </div>
-                <div class="mobile-stat">
-                  <span
-                    class="stat-label stat-label-with-tooltip"
-                    title="Templates with sales in 30-day window"
+                <div class="mobile-card-metric">
+                  <span class="metric-value"
+                    >${Math.round(category.avgRevenuePerTemplate).toLocaleString()}</span
                   >
-                    Active Templates
-                    <HelpCircle size={10} />
-                  </span>
-                  <span class="stat-value">{category.templatesInSubcategory}</span>
+                  <span class="metric-label">avg revenue</span>
                 </div>
+                <div class="mobile-card-stats">
+                  <div class="mobile-stat">
+                    <span class="stat-label">Sales (30d)</span>
+                    <span class="stat-value">{category.totalSales30d.toLocaleString()}</span>
+                  </div>
+                  <div class="mobile-stat">
+                    <span
+                      class="stat-label stat-label-with-tooltip"
+                      title="Templates with sales in 30-day window"
+                    >
+                      Active Templates
+                      <HelpCircle size={10} />
+                    </span>
+                    <span class="stat-value">{category.templatesInSubcategory}</span>
+                  </div>
+                </div>
+                <Badge
+                  variant={competition.color === 'success'
+                    ? 'success'
+                    : competition.color === 'warning'
+                      ? 'warning'
+                      : competition.color === 'error'
+                        ? 'error'
+                        : 'info'}
+                >
+                  {competition.level} Competition
+                </Badge>
               </div>
-              <Badge
-                variant={competition.color === 'success'
-                  ? 'success'
-                  : competition.color === 'warning'
-                    ? 'warning'
-                    : competition.color === 'error'
-                      ? 'error'
-                      : 'info'}
-              >
-                {competition.level} Competition
-              </Badge>
-            </div>
-          {/each}
-        </div>
+            {/each}
+          </div>
+        {/if}
 
         <!-- Desktop Table Layout -->
+        {#if shouldRenderDesktopTable}
         <div class="table-container table-desktop">
           <table class="data-table">
             <colgroup>
@@ -608,53 +597,73 @@
             <thead>
               <tr>
                 <th scope="col">Category • Subcategory</th>
-                <th
-                  scope="col"
-                  class="sortable right-head"
-                  onclick={() => handleSort('revenueRank')}
-                >
-                  Rank
-                  {#if sortKey === 'revenueRank'}
-                    <span class="sort-icon">{sortDirection === 'asc' ? '↑' : '↓'}</span>
-                  {/if}
+                <th scope="col" class="right-head" aria-sort={getAriaSort('revenueRank')}>
+                  <button
+                    type="button"
+                    class="table-sort-button"
+                    onclick={() => handleSort('revenueRank')}
+                  >
+                    Rank
+                    {#if sortKey === 'revenueRank'}
+                      <span class="sort-icon">{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                    {/if}
+                  </button>
                 </th>
                 <th
                   scope="col"
-                  class="sortable right-head"
-                  onclick={() => handleSort('templatesInSubcategory')}
+                  class="right-head"
+                  aria-sort={getAriaSort('templatesInSubcategory')}
                 >
-                  <span class="th-with-tooltip">
-                    Active
-                    <span
-                      class="tooltip-trigger"
-                      title="Templates with sales in 30-day window (not total marketplace inventory)"
-                    >
-                      <HelpCircle size={12} />
+                  <button
+                    type="button"
+                    class="table-sort-button"
+                    onclick={() => handleSort('templatesInSubcategory')}
+                  >
+                    <span class="th-with-tooltip">
+                      Active
+                      <span
+                        class="tooltip-trigger"
+                        title="Templates with sales in 30-day window (not total marketplace inventory)"
+                      >
+                        <HelpCircle size={12} />
+                      </span>
                     </span>
-                  </span>
-                  {#if sortKey === 'templatesInSubcategory'}
-                    <span class="sort-icon">{sortDirection === 'asc' ? '↑' : '↓'}</span>
-                  {/if}
+                    {#if sortKey === 'templatesInSubcategory'}
+                      <span class="sort-icon">{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                    {/if}
+                  </button>
                 </th>
                 <th
                   scope="col"
-                  class="sortable right-head"
-                  onclick={() => handleSort('totalSales30d')}
+                  class="right-head"
+                  aria-sort={getAriaSort('totalSales30d')}
                 >
-                  Sales (30d)
-                  {#if sortKey === 'totalSales30d'}
-                    <span class="sort-icon">{sortDirection === 'asc' ? '↑' : '↓'}</span>
-                  {/if}
+                  <button
+                    type="button"
+                    class="table-sort-button"
+                    onclick={() => handleSort('totalSales30d')}
+                  >
+                    Sales (30d)
+                    {#if sortKey === 'totalSales30d'}
+                      <span class="sort-icon">{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                    {/if}
+                  </button>
                 </th>
                 <th
                   scope="col"
-                  class="sortable right-head"
-                  onclick={() => handleSort('avgRevenuePerTemplate')}
+                  class="right-head"
+                  aria-sort={getAriaSort('avgRevenuePerTemplate')}
                 >
-                  Avg / Template
-                  {#if sortKey === 'avgRevenuePerTemplate'}
-                    <span class="sort-icon">{sortDirection === 'asc' ? '↑' : '↓'}</span>
-                  {/if}
+                  <button
+                    type="button"
+                    class="table-sort-button"
+                    onclick={() => handleSort('avgRevenuePerTemplate')}
+                  >
+                    Avg / Template
+                    {#if sortKey === 'avgRevenuePerTemplate'}
+                      <span class="sort-icon">{sortDirection === 'asc' ? '↑' : '↓'}</span>
+                    {/if}
+                  </button>
                 </th>
                 <th scope="col" class="competition-head">Competition</th>
               </tr>
@@ -700,6 +709,7 @@
             </tbody>
           </table>
         </div>
+        {/if}
       {:else}
         <div class="categories-grid">
           {#each sortedCategories as category, index (getCategoryRowKey(category, index))}
@@ -1571,10 +1581,6 @@
     background: color-mix(in srgb, var(--color-bg-surface) 94%, var(--color-bg-pure));
   }
 
-  .data-table th.sortable {
-    cursor: pointer;
-  }
-
   .data-table th.right-head {
     text-align: right;
   }
@@ -1583,13 +1589,35 @@
     text-align: left;
   }
 
-  .data-table th.sortable:hover {
-    background: color-mix(in srgb, var(--color-bg-subtle) 46%, var(--color-bg-surface));
+  .table-sort-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--space-xs);
+    width: 100%;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-transform: inherit;
+    letter-spacing: inherit;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+
+  .table-sort-button:hover {
     color: var(--color-fg-secondary);
   }
 
+  .table-sort-button:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 3px;
+    border-radius: var(--radius-xs);
+  }
+
   .sort-icon {
-    margin-left: var(--space-xs);
+    min-width: 0.7rem;
   }
 
   .data-table td {

@@ -2,218 +2,51 @@
   import { onMount } from 'svelte';
   import { Header, Button, BackNavigation } from '$lib/components';
   import { trackEvent } from '$lib/utils/analytics';
+  import {
+    formatLongDate,
+    formatRelativeFutureDate,
+    formatRelativePastDate
+  } from '$lib/utils/format';
   import MarketplaceInsights from '$lib/components/MarketplaceInsights.svelte';
   import { AlertCircle } from 'lucide-svelte';
   import type { PageData } from './$types';
-
-  interface LeaderboardEntry {
-    templateName: string;
-    category: string;
-    totalSales30d: number;
-    totalRevenue30d?: number;
-    salesRank: number;
-    revenueRank: number;
-    isUserTemplate: boolean;
-  }
-
-  interface CategoryEntry {
-    category: string;
-    subcategory: string;
-    templatesInSubcategory: number;
-    totalSales30d: number;
-    totalRevenue30d: number;
-    avgRevenuePerTemplate: number;
-    revenueRank: number;
-  }
-
-  interface Insight {
-    type: 'opportunity' | 'trend' | 'warning';
-    message: string;
-  }
-
-  interface LeaderboardResponse {
-    leaderboard: LeaderboardEntry[];
-    userTemplates: LeaderboardEntry[];
-    userCategories?: string[];
-    summary: {
-      totalMarketplaceSales: number;
-      userBestRank: number | null;
-      lastUpdated: string;
-      nextUpdateDate?: string;
-      expectedLastSyncTime?: string;
-      syncSchedule?: string;
-      dataWindow?: string;
-      timeUntilNextSync?: string;
-      freshnessSource?: 'schedule-estimate' | 'airtable-field' | 'airtable-record-created-time';
-      isFreshnessEstimated?: boolean;
-      isStale?: boolean;
-      staleSinceHours?: number | null;
-    };
-  }
-
-  type MarketplaceSalesSource =
-    | 'category-performance'
-    | 'leaderboard-top-50'
-    | 'unavailable';
-
-  type MarketplaceSummary = Omit<LeaderboardResponse['summary'], 'totalMarketplaceSales'> & {
-    totalMarketplaceSales: number | null;
-    salesSource: MarketplaceSalesSource;
-    dataWarning?: string | null;
-  };
-
-  interface CategoriesResponse {
-    categories: CategoryEntry[];
-    insights: Insight[];
-    summary: {
-      totalCategories: number;
-      totalTemplates: number;
-      totalSales: number;
-      totalRevenue: number;
-      avgRevenue: number;
-      lastUpdated: string;
-      nextUpdate: string;
-      expectedLastSyncTime?: string;
-      syncSchedule: string;
-      dataWindow: string;
-      timeUntilNextSync: string;
-      freshnessSource?: 'schedule-estimate' | 'airtable-field' | 'airtable-record-created-time';
-      isFreshnessEstimated?: boolean;
-      isStale?: boolean;
-      staleSinceHours?: number | null;
-    };
-  }
+  import {
+    EMPTY_MARKETPLACE_SUMMARY,
+    composeMarketplaceData,
+    type CategoriesResponse,
+    type LeaderboardEntry,
+    type LeaderboardResponse,
+    type CategoryEntry,
+    type Insight,
+    type MarketplaceData,
+    type MarketplaceSummary
+  } from '$lib/marketplace-insights';
 
   let { data }: { data: PageData } = $props();
 
-  let isLoading = $state(true);
-  let error = $state<string | null>(null);
-  let leaderboard = $state<LeaderboardEntry[]>([]);
-  let categories = $state<CategoryEntry[]>([]);
-  let insights = $state<Insight[]>([]);
-  let userTemplates = $state<LeaderboardEntry[]>([]);
-  let userCategories = $state<string[]>([]);
-  let summary = $state<MarketplaceSummary>({
-    totalMarketplaceSales: null,
-    userBestRank: null,
-    lastUpdated: '',
-    nextUpdateDate: undefined,
-    isFreshnessEstimated: true,
-    salesSource: 'unavailable',
-    dataWarning: null
-  });
+  let isLoading = $state(false);
+  let hasClientLoadResult = $state(false);
+  let clientMarketplaceData = $state<MarketplaceData | null>(null);
+  let clientError = $state<string | null>(null);
 
-  /**
-   * Format the last updated timestamp
-   */
-  function formatLastUpdated(isoDate: string): string {
-    const date = new Date(isoDate);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-    if (diffDays === 0) return 'today';
-    if (diffDays === 1) return 'yesterday';
-    if (diffDays < 7) return `${diffDays} days ago`;
-
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-  }
-
-  /**
-   * Format the next update date
-   */
-  function formatNextUpdate(isoDate: string): string {
-    const date = new Date(isoDate);
-    const now = new Date();
-    const diffMs = date.getTime() - now.getTime();
-    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-
-    if (diffDays === 0) return 'today';
-    if (diffDays === 1) return 'tomorrow';
-    if (diffDays < 7) return `in ${diffDays} days`;
-
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  }
-
-  function formatAbsoluteDate(isoDate: string): string {
-    const date = new Date(isoDate);
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    });
-  }
-
-  function buildMarketplaceSummary(
-    leaderboardData: LeaderboardResponse,
-    categoriesData: CategoriesResponse
-  ): MarketplaceSummary {
-    const categorySummary = categoriesData.summary;
-    const categoryRows = categoriesData.categories.length;
-    const leaderboardRows = leaderboardData.leaderboard.length;
-    const categoryTotal = categorySummary?.totalSales ?? 0;
-    const leaderboardTotal = leaderboardData.summary.totalMarketplaceSales ?? 0;
-
-    const categoryFreshness = categorySummary
-      ? {
-          lastUpdated: categorySummary.lastUpdated,
-          nextUpdateDate: categorySummary.nextUpdate,
-          expectedLastSyncTime: categorySummary.expectedLastSyncTime,
-          syncSchedule: categorySummary.syncSchedule,
-          dataWindow: categorySummary.dataWindow,
-          timeUntilNextSync: categorySummary.timeUntilNextSync,
-          freshnessSource: categorySummary.freshnessSource,
-          isFreshnessEstimated: categorySummary.isFreshnessEstimated,
-          isStale: categorySummary.isStale,
-          staleSinceHours: categorySummary.staleSinceHours
-        }
-      : {};
-
-    const freshness =
-      categoryRows > 0 || categorySummary?.freshnessSource === 'airtable-field'
-        ? categoryFreshness
-        : {};
-
-    const baseSummary: MarketplaceSummary = {
-      ...leaderboardData.summary,
-      ...freshness,
-      totalMarketplaceSales: null,
-      salesSource: 'unavailable',
-      dataWarning:
-        'Marketplace sales snapshot is unavailable; zero is not shown because the source snapshot is empty.'
-    };
-
-    if (categoryRows > 0 && categoryTotal > 0) {
-      return {
-        ...baseSummary,
-        totalMarketplaceSales: categoryTotal,
-        salesSource: 'category-performance',
-        dataWarning: null
-      };
-    }
-
-    if (leaderboardRows > 0 && leaderboardTotal > 0) {
-      return {
-        ...baseSummary,
-        totalMarketplaceSales: leaderboardTotal,
-        salesSource: 'leaderboard-top-50',
-        dataWarning:
-          categoryRows > 0
-            ? 'Category performance snapshot has no sales total; showing top-50 leaderboard total until the category feed is repaired.'
-            : 'Category performance snapshot is empty; showing top-50 leaderboard total until the category feed refreshes.'
-      };
-    }
-
-    return baseSummary;
-  }
-
-  $effect(() => {
-    loadData();
-  });
+  const marketplaceData = $derived(
+    hasClientLoadResult ? clientMarketplaceData : data.marketplaceData
+  );
+  const error = $derived(hasClientLoadResult ? clientError : data.marketplaceError);
+  const leaderboard = $derived<LeaderboardEntry[]>(marketplaceData?.leaderboard ?? []);
+  const categories = $derived<CategoryEntry[]>(marketplaceData?.categories ?? []);
+  const insights = $derived<Insight[]>(marketplaceData?.insights ?? []);
+  const userTemplates = $derived<LeaderboardEntry[]>(marketplaceData?.userTemplates ?? []);
+  const userCategories = $derived<string[]>(marketplaceData?.userCategories ?? []);
+  const summary = $derived<MarketplaceSummary>(
+    marketplaceData?.summary ?? EMPTY_MARKETPLACE_SUMMARY
+  );
 
   async function loadData() {
     isLoading = true;
-    error = null;
+    hasClientLoadResult = true;
+    clientMarketplaceData = null;
+    clientError = null;
 
     try {
       const [leaderboardRes, categoriesRes] = await Promise.all([
@@ -227,29 +60,27 @@
 
       const leaderboardData = (await leaderboardRes.json()) as LeaderboardResponse;
       const categoriesData = (await categoriesRes.json()) as CategoriesResponse;
-
-      leaderboard = leaderboardData.leaderboard;
-      userTemplates = leaderboardData.userTemplates;
-      userCategories = leaderboardData.userCategories ?? [];
-      categories = categoriesData.categories;
-      insights = categoriesData.insights;
-
-      summary = buildMarketplaceSummary(leaderboardData, categoriesData);
+      const nextMarketplaceData = composeMarketplaceData(leaderboardData, categoriesData);
+      hasClientLoadResult = true;
+      clientMarketplaceData = nextMarketplaceData;
+      clientError = null;
 
       trackEvent('marketplace_data_loaded', {
         leaderboard_count: leaderboardData.leaderboard.length,
         user_template_count: leaderboardData.userTemplates.length,
-        user_category_count: userCategories.length,
+        user_category_count: nextMarketplaceData.userCategories.length,
         category_rows: categoriesData.categories.length,
-        total_sales_30d: summary.totalMarketplaceSales ?? undefined,
-        total_sales_source: summary.salesSource,
-        data_warning: summary.dataWarning ?? undefined
+        total_sales_30d: nextMarketplaceData.summary.totalMarketplaceSales ?? undefined,
+        total_sales_source: nextMarketplaceData.summary.salesSource,
+        data_warning: nextMarketplaceData.summary.dataWarning ?? undefined
       });
     } catch (err) {
-      error = err instanceof Error ? err.message : 'Failed to load data';
+      hasClientLoadResult = true;
+      clientMarketplaceData = null;
+      clientError = err instanceof Error ? err.message : 'Failed to load data';
 
       trackEvent('marketplace_data_load_failed', {
-        error_message: error
+        error_message: clientError
       });
     } finally {
       isLoading = false;
@@ -296,10 +127,10 @@
               <p class="sync-info">
                 <span class="sync-text">
                   {summary.isFreshnessEstimated ? 'Last expected update:' : 'Last updated:'}
-                  <strong>{formatLastUpdated(summary.lastUpdated)}</strong>
+                  <strong>{formatRelativePastDate(summary.lastUpdated)}</strong>
                   {#if summary.nextUpdateDate}
                     <span class="next-update"
-                      >• Next update: {formatNextUpdate(summary.nextUpdateDate)}</span
+                      >• Next update: {formatRelativeFutureDate(summary.nextUpdateDate)}</span
                     >
                   {/if}
                 </span>
@@ -319,7 +150,7 @@
               {#if summary.isStale && summary.expectedLastSyncTime}
                 <p class="sync-warning">
                   <AlertCircle size={12} />
-                  Data appears stale. Expected refresh: {formatAbsoluteDate(
+                  Data appears stale. Expected refresh: {formatLongDate(
                     summary.expectedLastSyncTime
                   )}.
                 </p>
