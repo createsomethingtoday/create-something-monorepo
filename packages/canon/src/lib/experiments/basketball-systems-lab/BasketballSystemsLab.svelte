@@ -29,6 +29,7 @@
 		type PolicyKey,
 		type SeasonPhaseKey,
 		type System,
+		type SystemChallengeStatus,
 		type SystemChallengeObjectiveStatus,
 		type SystemId,
 		type SystemResult,
@@ -72,6 +73,11 @@
 		swing: number;
 		detail: string;
 		actionLabel: string;
+	};
+	type TurnRecapLane = {
+		label: string;
+		value: string;
+		detail: string;
 	};
 
 	const edges = [
@@ -303,6 +309,44 @@
 			(steeringRecommendation.policyKey === 'none' ||
 				steeringPhase === steeringRecommendation.phaseKey)
 	);
+	const viewedRunnerUp = $derived(
+		viewedStandings.find(
+			(standing) => standing.result.system.key !== viewedLeader.result.system.key
+		) ?? null
+	);
+	const viewedLeaderGap = $derived(
+		viewedRunnerUp
+			? Number((activeEntry.score - viewedRunnerUp.entry.score).toFixed(1))
+			: 0
+	);
+	const turnRecapStatus = $derived(canSteer ? match.challenge.status : 'versus');
+	const turnRecap = $derived<TurnRecapLane[]>([
+		{
+			label: 'Turn state',
+			value: canSteer ? formatChallengeStatus(match.challenge.status) : `Lead ${viewedLeaderGap.toFixed(1)}`,
+			detail: canSteer
+				? `${viewedLeader.result.system.name} is at ${activeEntry.score.toFixed(1)} in year ${viewedYear}.`
+				: `${viewedLeader.result.system.name} leads ${viewedRunnerUp?.result.system.name ?? 'the field'} in year ${viewedYear}.`
+		},
+		{
+			label: 'Pressure',
+			value: activeGateRiskLabel,
+			detail: activeGateImpacts[0]?.detail ?? match.validation.summary
+		},
+		{
+			label: 'Next action',
+			value: canSteer
+				? steeringRecommendationApplied
+					? 'Recommendation applied'
+					: steeringRecommendation.actionLabel
+				: 'Let Systems run',
+			detail: canSteer
+				? `${steeringRecommendation.label}; ${formatDelta(steeringRecommendation.swing)} projected swing.`
+				: viewedRunnerUp
+					? `${viewedRunnerUp.result.system.name} trails by ${viewedLeaderGap.toFixed(1)} entering the next year.`
+					: 'No challenger is loaded for this run.'
+		}
+	]);
 	const scoutingRequirements = $derived(
 		match.validation.requirements.filter((requirement) =>
 			scoutingRequirementKeys.has(requirement.key)
@@ -356,6 +400,13 @@
 	function formatChallengeObjectiveStatus(status: SystemChallengeObjectiveStatus): string {
 		if (status === 'missed') return 'Missed';
 		if (status === 'close') return 'Needs steering';
+		return 'Cleared';
+	}
+
+	function formatChallengeStatus(status: SystemChallengeStatus): string {
+		if (status === 'missed') return 'Missed';
+		if (status === 'close') return 'Needs steering';
+		if (status === 'versus') return 'Versus race';
 		return 'Cleared';
 	}
 
@@ -1137,6 +1188,16 @@
 						Next
 					</button>
 				</div>
+			</div>
+
+			<div class="ona-system-turn-recap" data-status={turnRecapStatus} aria-label="Turn recap">
+				{#each turnRecap as lane}
+					<article>
+						<span>{lane.label}</span>
+						<strong>{lane.value}</strong>
+						<p>{lane.detail}</p>
+					</article>
+				{/each}
 			</div>
 
 			<div class="ona-system-steering-cockpit" aria-label="Live steering cockpit">
