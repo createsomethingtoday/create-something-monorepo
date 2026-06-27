@@ -513,6 +513,26 @@ const sampleSystemUpload: SystemUploadDefinition = {
 	}
 };
 
+const sampleSystemMatchup: SystemUploadDefinition[] = [
+	sampleSystemUpload,
+	{
+		name: 'Labor Stability System',
+		thesis: 'Protect labor trust and long-run resilience even when the media window gets noisy.',
+		stance: 'Uploaded System',
+		constraint: 'Owner margin has to stay credible while labor trust compounds.',
+		adaptation: 'Uses labor enforcement as its native policy and lets the gates test whether trust was affordable.',
+		policyKey: 'labor',
+		weights: {
+			leagueHealth: 0.18,
+			mediaValueB: 0.1,
+			competitiveBalance: 0.14,
+			laborTrust: 0.3,
+			ownerMargin: 0.1,
+			resilience: 0.18
+		}
+	}
+];
+
 const nodePositions: Record<string, Pick<MapNode, 'x' | 'y' | 'mx' | 'my'>> = {
 	policy: { x: 9, y: 18, mx: 4, my: 12 },
 	fatigue: { x: 35, y: 13, mx: 36, my: 12 },
@@ -536,6 +556,10 @@ export function listSystems(customSystems: System[] = []): System[] {
 
 export function getSampleSystemUpload(): SystemUploadDefinition {
 	return cloneUploadDefinition(sampleSystemUpload);
+}
+
+export function getSampleSystemMatchup(): SystemUploadDefinition[] {
+	return sampleSystemMatchup.map(cloneUploadDefinition);
 }
 
 export function parseSystemUpload(input: string): SystemUploadResult {
