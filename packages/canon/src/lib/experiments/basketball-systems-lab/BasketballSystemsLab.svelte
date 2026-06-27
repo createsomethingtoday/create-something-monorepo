@@ -681,21 +681,6 @@
 				? `${match.winner.system.name} leads ${match.systems.length} Systems`
 				: `${match.winner.system.name} leads the race`
 	);
-	const primaryRunActionLabel = $derived(
-		playbackRunning
-			? 'Pause run'
-			: viewedYear === match.years
-				? mode === 'versus'
-					? hasUploadedField
-						? 'Replay field'
-						: 'Replay race'
-					: 'Replay season'
-				: mode === 'versus'
-					? hasUploadedField
-						? 'Watch field'
-						: 'Watch race'
-					: 'Run season'
-	);
 	const finalOutcomeVisible = $derived(viewedYear === match.years);
 	const activeFirstRunStep = $derived(
 		finalOutcomeVisible
@@ -705,6 +690,23 @@
 				: viewedYear > 1 || playbackRunning
 					? 'Watch'
 					: 'Setup'
+	);
+	const primaryRunActionLabel = $derived(
+		playbackRunning
+			? 'Pause run'
+			: finalOutcomeVisible
+				? 'Replay from year 1'
+				: activeFirstRunStep === 'Decide' && canSteer
+					? steeringYear === viewedYear
+						? canAdvanceTurn
+							? 'Watch next year'
+							: 'Final year'
+						: nextTurnPrompt.primaryLabel
+					: mode === 'versus'
+						? hasUploadedField
+							? 'Watch field'
+							: 'Watch race'
+						: 'Run season'
 	);
 	const gameTurnLanes = $derived([
 		{
@@ -1063,6 +1065,27 @@
 	}
 
 	function runPrimaryAction(): void {
+		if (playbackRunning) {
+			playbackRunning = false;
+			return;
+		}
+
+		if (finalOutcomeVisible) {
+			viewedYear = 1;
+			playbackRunning = true;
+			return;
+		}
+
+		if (activeFirstRunStep === 'Decide' && canSteer) {
+			if (steeringYear === viewedYear) {
+				watchNextTurn();
+				return;
+			}
+
+			applySteeringRecommendation();
+			return;
+		}
+
 		togglePlayback();
 	}
 
@@ -1861,6 +1884,10 @@
 					<button type="button" class:active={playbackRunning} onclick={runPrimaryAction}>
 						{#if playbackRunning}
 							<Pause size={15} strokeWidth={2} />
+						{:else if finalOutcomeVisible}
+							<RotateCcw size={15} strokeWidth={2} />
+						{:else if activeFirstRunStep === 'Decide' && canSteer && steeringYear !== viewedYear}
+							<SlidersHorizontal size={15} strokeWidth={2} />
 						{:else}
 							<Play size={15} strokeWidth={2} />
 						{/if}
