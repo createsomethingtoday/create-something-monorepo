@@ -619,7 +619,10 @@ export function runSystemMatch(input: SystemMatchInput = {}): SystemMatch {
 	const systemPool = buildSystemPool(input.customSystems);
 	const primary = findSystem(input.systemKey ?? 'recovery', systemPool);
 	const opponent = findOpponent(systemPool, primary.key, input.opponentKey);
-	const entrants = mode === 'versus' ? [primary, opponent] : [primary];
+	const entrants =
+		mode === 'versus'
+			? buildVersusEntrants(primary, opponent, systemPool, input.customSystems)
+			: [primary];
 	const environmentBaseline = applyEnvironmentEffects(baselineLeagueState, environment);
 	const unsteeredPrimary = buildSystemResult(primary, environmentBaseline, environment, {
 		years,
@@ -1416,6 +1419,39 @@ function findOpponent(systemPool: System[], primaryKey: SystemId, opponentKey?: 
 	const requested = opponentKey ? findSystem(opponentKey, systemPool) : undefined;
 	if (requested && requested.key !== primaryKey) return requested;
 	return systemPool.find((system) => system.key !== primaryKey) ?? systemPool[1] ?? systems[1];
+}
+
+function buildVersusEntrants(
+	primary: System,
+	opponent: System,
+	systemPool: System[],
+	customSystems: System[] | undefined
+): System[] {
+	const customKeys = new Set((customSystems ?? []).map((system) => system.key));
+	const customEntrants = systemPool.filter((system) => customKeys.has(system.key));
+
+	if (customEntrants.length < 2) {
+		return uniqueSystems([primary, opponent]);
+	}
+
+	if (customKeys.has(primary.key)) {
+		return uniqueSystems(customEntrants);
+	}
+
+	return uniqueSystems([primary, ...customEntrants]);
+}
+
+function uniqueSystems(entrants: System[]): System[] {
+	const usedKeys = new Set<SystemId>();
+	const unique: System[] = [];
+
+	for (const entrant of entrants) {
+		if (usedKeys.has(entrant.key)) continue;
+		usedKeys.add(entrant.key);
+		unique.push(entrant);
+	}
+
+	return unique;
 }
 
 function clampHorizon(years: number | undefined): number {

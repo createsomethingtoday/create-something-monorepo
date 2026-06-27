@@ -407,6 +407,45 @@ describe('basketball systems management simulation', () => {
 			});
 	});
 
+	it('runs uploaded entrant fields instead of only the selected pair', () => {
+		const systems = [
+			...getSampleSystemMatchup(),
+			{
+				name: 'Owner Room System',
+				thesis: 'Protect owner margin and resilience while keeping enough league health to survive the field.',
+				stance: 'Uploaded System',
+				constraint: 'Growth has to stay affordable for the board.',
+				adaptation: 'Uses schedule relief as the native operating policy while scoring owner room visibly.',
+				policyKey: 'schedule',
+				weights: {
+					leagueHealth: 0.18,
+					mediaValueB: 0.08,
+					competitiveBalance: 0.14,
+					laborTrust: 0.12,
+					ownerMargin: 0.28,
+					resilience: 0.2
+				}
+			}
+		];
+		const upload = parseSystemUpload(JSON.stringify({ systems }));
+		const match = runSystemMatch({
+			mode: 'versus',
+			systemKey: upload.systems[0]?.key,
+			opponentKey: upload.systems[1]?.key,
+			years: 5,
+			customSystems: upload.systems
+		});
+
+		expect(upload.issues).toEqual([]);
+		expect(upload.systems).toHaveLength(3);
+		expect(match.systems).toHaveLength(3);
+		expect(match.systems.map((result) => result.system.key).sort()).toEqual(
+			upload.systems.map((system) => system.key).sort()
+		);
+		expect(match.systems.map((result) => result.rank)).toEqual([1, 2, 3]);
+		expect(match.challenge.summary).toContain(match.winner.system.name);
+	});
+
 	it('rejects uploaded Systems that try to avoid tradeoff policy', () => {
 		const upload = parseSystemUpload(
 			JSON.stringify({

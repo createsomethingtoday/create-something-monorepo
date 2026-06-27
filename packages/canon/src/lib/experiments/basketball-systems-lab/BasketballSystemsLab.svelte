@@ -175,19 +175,22 @@
 			defaultEnvironment
 	);
 	const uploadedSystemKeys = $derived(new Set(uploadedSystems.map((system) => system.key)));
+	const hasUploadedField = $derived(uploadedSystems.length > 2);
 	const uploadedCompetitionLabel = $derived(
 		uploadedSystems.length === 0
-			? 'Stock bracket'
+			? 'Sample field'
 			: uploadedSystems.length === 1
 				? 'One entrant entered'
 				: `${uploadedSystems.length} entrants ready`
 	);
 	const uploadedCompetitionDetail = $derived(
 		uploadedSystems.length === 0
-			? 'Enter sample Systems or import JSON to start a same-environment race.'
-			: uploadedSystems.length === 1
+			? 'Load the sample field or enter Systems to start a same-environment run.'
+		: uploadedSystems.length === 1
 				? `${uploadedSystems[0]?.name ?? 'Custom System'} can run solo. Add a second entrant to unlock versus.`
-				: `${uploadedSystems[0]?.name ?? 'Custom System'} and ${uploadedSystems[1]?.name ?? 'opponent'} are in the bracket.`
+			: hasUploadedField
+				? `All ${uploadedSystems.length} uploaded Systems will run in the same environment field.`
+				: `${uploadedSystems[0]?.name ?? 'Custom System'} and ${uploadedSystems[1]?.name ?? 'opponent'} are ready for a same-environment race.`
 	);
 	const builderTotal = $derived(
 		builderWeightFields.reduce((total, field) => total + builderWeights[field.key], 0)
@@ -200,10 +203,15 @@
 	const modeRule = $derived(
 		isSolo
 			? 'Clear a challenge against the environment. Choose a System, steer once, then replay the years to see whether the targets survive.'
-			: canSteer
-				? 'Coach one System inside the race. Steering can change that System, but the winner is still decided by final valid score after gates.'
+		: canSteer
+			? hasUploadedField
+				? 'Coach one System inside the uploaded field. Steering can change that System, but the winner is still decided by final valid score after gates.'
+				: 'Coach one System inside the race. Steering can change that System, but the winner is still decided by final valid score after gates.'
+			: hasUploadedField
+				? 'Run every uploaded System in the same environment. No steering; the winner is the highest valid score after requirement gates.'
 				: 'Race two Systems in the same environment. No steering; the winner is the highest valid score after requirement gates.'
 	);
+	const versusModeLabel = $derived(hasUploadedField ? 'Versus field' : 'Versus race');
 
 	$effect(() => {
 		if (!systems.some((system) => system.key === selectedSystem)) {
@@ -323,7 +331,9 @@
 			? activeSteeringPolicy
 				? `Year ${steeringYear}, ${selectedSteeringPhase.label}`
 				: 'Original System'
-			: 'Autonomous race'
+			: hasUploadedField
+				? 'Autonomous field'
+				: 'Autonomous race'
 	);
 	const steeringReceipt = $derived(
 		canSteer
@@ -332,7 +342,9 @@
 						selectedSteeringPhase.impact * 100
 					)}%.`
 				: `${viewedLeader.result.system.name} keeps its native policy.`
-			: 'The race keeps both Systems autonomous after setup.'
+			: hasUploadedField
+				? 'The field keeps every System autonomous after setup.'
+				: 'The race keeps both Systems autonomous after setup.'
 	);
 	const unsteeredPrimary = $derived(
 		unsteeredMatch.systems.find((result) => result.system.key === selectedSystem) ??
@@ -458,13 +470,23 @@
 			: 'Advance the run to see which System is gaining.'
 	);
 	const gameTurnLabel = $derived(
-		isSolo ? 'Solo turn' : canSteer ? 'Coach race' : 'Autonomous race'
+		isSolo
+			? 'Solo turn'
+			: canSteer
+				? hasUploadedField
+					? 'Coach field'
+					: 'Coach race'
+				: hasUploadedField
+					? 'Autonomous field'
+					: 'Autonomous race'
 	);
 	const gameTurnTitle = $derived(
 		isSolo
 			? `${selectedEnvironment.name}: ${match.challenge.label}`
-			: canSteer
+		: canSteer
 				? `Coach ${match.steering.targetSystem.name} against ${viewedRunnerUp?.result.system.name ?? 'the field'}`
+			: hasUploadedField
+				? `${match.winner.system.name} leads ${match.systems.length} Systems`
 				: `${match.winner.system.name} leads the race`
 	);
 	const primaryRunActionLabel = $derived(
@@ -472,10 +494,14 @@
 			? 'Pause run'
 			: viewedYear === match.years
 				? mode === 'versus'
-					? 'Replay race'
+					? hasUploadedField
+						? 'Replay field'
+						: 'Replay race'
 					: 'Replay season'
 				: mode === 'versus'
-					? 'Watch race'
+					? hasUploadedField
+						? 'Watch field'
+						: 'Watch race'
 					: 'Run season'
 	);
 	const gameTurnLanes = $derived([
@@ -491,7 +517,11 @@
 		},
 		{
 			label: isSolo ? 'Objective' : 'Stakes',
-			value: isSolo ? match.challenge.label : `${match.years}-year race`,
+			value: isSolo
+				? match.challenge.label
+				: hasUploadedField
+					? `${match.systems.length}-System field`
+					: `${match.years}-year race`,
 			detail: isSolo ? match.challenge.summary : selectedEnvironment.winCondition
 		}
 	]);
@@ -718,7 +748,7 @@
 
 		steeringYear = viewedYear;
 		if (policyKey === 'none') {
-			steeringPolicy = viewedLeader.result.system.policyKey;
+			steeringPolicy = 'none';
 			return;
 		}
 
@@ -1291,7 +1321,7 @@
 				</button>
 			</div>
 			<div class="ona-system-mode-note">
-				<strong>{isSolo ? 'Solo challenge' : canSteer ? 'Coach race' : 'Versus race'}</strong>
+				<strong>{isSolo ? 'Solo challenge' : canSteer ? 'Coach run' : versusModeLabel}</strong>
 				<p>{modeRule}</p>
 			</div>
 
@@ -1350,14 +1380,14 @@
 			>
 				<div class="ona-system-timeline-header">
 					<Users size={17} strokeWidth={1.8} />
-					<span>Tournament entry</span>
+					<span>Field setup</span>
 				</div>
 				<strong>{uploadedCompetitionLabel}</strong>
 				<p>{uploadedCompetitionDetail}</p>
 
 				{#if uploadedSystems.length > 0}
-					<div class="ona-system-competition-roster" aria-label="Tournament entrants">
-						{#each uploadedSystems.slice(0, 3) as system}
+					<div class="ona-system-competition-roster" aria-label="Field entrants">
+						{#each uploadedSystems as system}
 							<article
 								class:active={system.key === selectedSystem || system.key === opponentSystem}
 							>
@@ -1370,9 +1400,9 @@
 
 				{#if mode === 'versus' && customEntrantsInRun.length > 0}
 					<div class="ona-system-competition-proof">
-						<span>In this race</span>
+						<span>{hasUploadedField ? 'In this field' : 'In this race'}</span>
 						<strong
-							>{customEntrantsInRun.length} tournament entrant{customEntrantsInRun.length === 1
+							>{customEntrantsInRun.length} {hasUploadedField ? 'field' : 'race'} entrant{customEntrantsInRun.length === 1
 								? ''
 								: 's'}</strong
 						>
@@ -1387,9 +1417,15 @@
 				<div class="ona-system-competition-actions">
 					<button type="button" onclick={raceUploadedSystems}>
 						<Play size={15} strokeWidth={2} />
-						<span>{uploadedSystems.length > 0 ? 'Start entrant race' : 'Load sample race'}</span>
+						<span
+							>{uploadedSystems.length > 0
+								? hasUploadedField
+									? 'Start entrant field'
+									: 'Start entrant race'
+								: 'Load sample field'}</span
+						>
 					</button>
-					<button type="button" onclick={openSystemWorkbench}>Enter Systems</button>
+					<button type="button" onclick={openSystemWorkbench}>Add Systems</button>
 				</div>
 			</div>
 
@@ -1463,7 +1499,7 @@
 						class:active={selectedSystem === system.key}
 						onclick={() => (selectedSystem = system.key)}
 					>
-						<span>{uploadedSystemKeys.has(system.key) ? 'Tournament entrant' : system.stance}</span>
+						<span>{uploadedSystemKeys.has(system.key) ? 'Field entrant' : system.stance}</span>
 						<strong>{system.name}</strong>
 						<small>{policies.find((policy) => policy.key === system.policyKey)?.score}</small>
 					</button>
@@ -1471,14 +1507,27 @@
 			</div>
 
 			{#if mode === 'versus'}
-				<div class="ona-system-control-group">
-					<span>Opponent System</span>
-					<select bind:value={opponentSystem} aria-label="Opponent System">
-						{#each systems.filter((system) => system.key !== selectedSystem) as system}
-							<option value={system.key}>{system.name}</option>
-						{/each}
-					</select>
-				</div>
+				{#if hasUploadedField}
+					<div class="ona-system-control-group">
+						<span>Uploaded Field</span>
+						<div class="ona-system-environment-note">
+							<strong>{uploadedSystems.length} Systems are in this field.</strong>
+							<p>
+								All uploaded entrants run together. The selected System is the coach target
+								when coach mode is active.
+							</p>
+						</div>
+					</div>
+				{:else}
+					<div class="ona-system-control-group">
+						<span>Opponent System</span>
+						<select bind:value={opponentSystem} aria-label="Opponent System">
+							{#each systems.filter((system) => system.key !== selectedSystem) as system}
+								<option value={system.key}>{system.name}</option>
+							{/each}
+						</select>
+					</div>
+				{/if}
 			{/if}
 
 			<div
@@ -1694,8 +1743,12 @@
 						>{isSolo
 							? 'Coach vs environment'
 							: canSteer
-								? 'Coach within race'
-								: 'System vs System'}</strong
+								? hasUploadedField
+									? 'Coach within field'
+									: 'Coach within race'
+								: hasUploadedField
+									? 'System field'
+									: 'System vs System'}</strong
 					>
 					<p>{modeRule}</p>
 				</article>
@@ -1859,7 +1912,9 @@
 						<strong
 							>{canSteer
 								? `Steer ${match.steering.targetSystem.name} from year ${viewedYear}`
-								: 'Versus race is autonomous'}</strong
+								: hasUploadedField
+									? 'Versus field is autonomous'
+									: 'Versus race is autonomous'}</strong
 						>
 					</div>
 					<p>{steeringReceipt}</p>
@@ -1961,8 +2016,9 @@
 							<strong>Best-of-horizons record</strong>
 						</div>
 						<p>
-							Compare the same two Systems across short, standard, and long horizons before
-							choosing which run to watch.
+							{hasUploadedField
+								? 'Compare the uploaded field across short, standard, and long horizons before choosing which run to watch.'
+								: 'Compare the same two Systems across short, standard, and long horizons before choosing which run to watch.'}
 						</p>
 					</div>
 					<div class="ona-system-race-history-list">
@@ -1979,7 +2035,7 @@
 								<p>
 									{race.detail}
 									{#if race.customCount > 0}
-										{race.customCount} entrant{race.customCount === 1 ? '' : 's'} in this matchup.
+										{race.customCount} entrant{race.customCount === 1 ? '' : 's'} in this {hasUploadedField ? 'field' : 'matchup'}.
 									{/if}
 								</p>
 							</button>
