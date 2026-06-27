@@ -153,6 +153,8 @@
 		year: number;
 		label: string;
 		value: string;
+		eventLabel: string;
+		eventDetail: string;
 		detail: string;
 	};
 	type FieldStandingReceipt = {
@@ -680,7 +682,7 @@
 				delta,
 				finalScore: standing.result.score,
 				gateAdjustment: standing.result.validationImpact.adjustment,
-				detail: standing.entry.decision,
+				detail: `${standing.entry.event.label}: ${standing.entry.decision}`,
 				active: standing.result.system.key === viewedLeader.result.system.key
 			};
 		})
@@ -739,7 +741,7 @@
 	);
 	const raceMomentumDetail = $derived(
 		momentumLeader
-			? `${momentumLeader.name} has the strongest current-year movement at ${formatDelta(momentumLeader.delta)}.`
+			? `${momentumLeader.name} has the strongest current-year movement at ${formatDelta(momentumLeader.delta)} after ${activeEntry.event.label}.`
 			: 'Advance the run to see which System is gaining.'
 	);
 	const activeDecisionMoment = $derived<DecisionMoment>({
@@ -764,9 +766,9 @@
 			leadChangedThisYear && momentumLeader
 				? `${momentumLeader.name} made the strongest year move at ${formatDelta(momentumLeader.delta)}.`
 				: viewedYear === 1
-					? `${viewedLeader.result.system.name} opened the run with ${viewedRunnerUp ? `${viewedRunnerUp.result.system.name} close behind` : 'no runner-up loaded'}.`
+					? `${viewedLeader.result.system.name} opened through ${activeEntry.event.label} with ${viewedRunnerUp ? `${viewedRunnerUp.result.system.name} close behind` : 'no runner-up loaded'}.`
 					: canSteer
-						? `${steeringEvent.stake} ${steeringRecommendation.label} projects ${formatDelta(steeringRecommendation.swing)} from here.`
+						? `${activeEntry.event.steeringPrompt} ${steeringRecommendation.label} projects ${formatDelta(steeringRecommendation.swing)} from here.`
 						: raceMomentumDetail,
 		action: canSteer
 			? viewedYear === 1
@@ -814,7 +816,7 @@
 					? `${previousLeader.result.system.name} -> ${leader.result.system.name}`
 					: (leader?.result.system.name ?? snapshot.leader);
 			const detail = strongestMove
-				? `${strongestMove.standing.result.system.name} moved ${formatDelta(strongestMove.delta)}; ${runnerUp ? `${runnerUp.result.system.name} trails by ${snapshot.margin.toFixed(1)}.` : 'no runner-up is loaded.'}`
+				? `${strongestMove.standing.entry.event.label}: ${strongestMove.standing.result.system.name} moved ${formatDelta(strongestMove.delta)}; ${runnerUp ? `${runnerUp.result.system.name} trails by ${snapshot.margin.toFixed(1)}.` : 'no runner-up is loaded.'}`
 				: snapshot.detail;
 
 			return {
@@ -845,8 +847,8 @@
 			: canSteer
 				? `Coach ${match.steering.targetSystem.name} against ${hasUploadedField ? 'the field' : configuredOpponentName}`
 				: hasUploadedField
-					? `${match.winner.system.name} leads ${match.systems.length} Systems`
-					: `${match.winner.system.name} leads the race`
+					? `${viewedLeader.result.system.name} leads year ${viewedYear}`
+					: `${viewedLeader.result.system.name} leads year ${viewedYear}`
 	);
 	const finalOutcomeVisible = $derived(viewedYear === match.years);
 	const activeFirstRunStep = $derived(
@@ -878,22 +880,23 @@
 	const gameTurnLanes = $derived([
 		{
 			label: 'System',
-			value: match.steering.targetSystem.name,
-			detail: match.steering.targetSystem.thesis
+			value: viewedLeader.result.system.name,
+			detail: `${selectedEnvironment.name}: ${viewedLeader.result.system.thesis}`
 		},
 		{
-			label: 'Pressure',
-			value: selectedEnvironment.name,
-			detail: selectedEnvironment.pressure
+			label: 'Event',
+			value: activeEntry.event.label,
+			detail: `${activeEntry.event.trigger}: ${activeEntry.event.steeringPrompt}`
 		},
 		{
-			label: isSolo ? 'Objective' : 'Stakes',
-			value: isSolo
-				? match.challenge.label
-				: hasUploadedField
-					? `${match.systems.length}-System field`
-					: `${match.years}-year race`,
-			detail: isSolo ? match.challenge.summary : selectedEnvironment.winCondition
+			label: 'Decision',
+			value: activeEntry.policy.label,
+			detail: `${activeEntry.decision}; ${activeEntry.eventReceipt}`
+		},
+		{
+			label: 'Valid score',
+			value: viewedLeader.result.score.toFixed(1),
+			detail: `Current year ${activeEntry.score.toFixed(1)}; gate ${formatDelta(viewedLeader.result.validationImpact.adjustment)}.`
 		},
 		{
 			label: 'Resource floor',
@@ -926,7 +929,7 @@
 		{
 			label: '3 / Watch',
 			value: `Year ${viewedYear} of ${match.years}`,
-			detail: activeEntry.receipt,
+			detail: `${activeEntry.eventReceipt} ${activeEntry.receipt}`,
 			status:
 				activeFirstRunStep === 'Watch'
 					? 'current'
@@ -975,7 +978,7 @@
 		{
 			label: 'Horizon',
 			value: `${match.years} years`,
-			detail: `Playback advances one year at a time; final outcome unlocks in year ${match.years}.`
+			detail: `Playback advances one year at a time; each season draws an event before the System responds.`
 		},
 		{
 			label: 'Control',
@@ -1007,6 +1010,11 @@
 		},
 		{
 			label: 'Pressure',
+			value: activeEntry.event.label,
+			detail: `${activeEntry.event.trigger}: ${activeEntry.event.steeringPrompt}`
+		},
+		{
+			label: 'Gate pressure',
 			value: activeGateRiskLabel,
 			detail: activeGateImpacts[0]?.detail ?? match.validation.summary
 		},
@@ -1041,9 +1049,9 @@
 			.filter((entry) => entry.year <= viewedYear)
 			.map((entry) => ({
 				year: entry.year,
-				label: entry.steered ? 'Steered' : entry.policy.label,
+				label: entry.steered ? 'Steered' : entry.event.label,
 				value: formatDelta(entry.delta),
-				detail: `${entry.decision}; ${entry.resourceReceipt}`,
+				detail: `${entry.eventReceipt} ${entry.decision}; ${entry.resourceReceipt}`,
 				active: entry.year === viewedYear,
 				steered: entry.steered
 			}))
@@ -1101,6 +1109,11 @@
 			label: 'Decisive turn',
 			value: finalDecisiveTurn.value,
 			detail: finalDecisiveTurn.detail
+		},
+		{
+			label: 'Decisive event',
+			value: finalDecisiveTurn.eventLabel,
+			detail: finalDecisiveTurn.eventDetail
 		},
 		{
 			label: 'Resource floor',
@@ -1438,6 +1451,8 @@
 				year: 1,
 				label: 'No turn',
 				value: 'Year 1',
+				eventLabel: 'No event',
+				eventDetail: 'No event pressure was recorded.',
 				detail: `${result.system.name} has no timeline receipt yet.`
 			};
 		}
@@ -1446,7 +1461,9 @@
 			year: decisiveEntry.year,
 			label: decisiveEntry.steered ? 'Steered turn' : 'System turn',
 			value: `Year ${decisiveEntry.year}`,
-			detail: `${decisiveEntry.policy.label} moved ${formatDelta(decisiveEntry.delta)}; ${gateLabel}.`
+			eventLabel: decisiveEntry.event.label,
+			eventDetail: decisiveEntry.eventReceipt,
+			detail: `${decisiveEntry.event.label} set the pressure; ${decisiveEntry.policy.label} moved ${formatDelta(decisiveEntry.delta)}; ${gateLabel}.`
 		};
 	}
 
@@ -2761,7 +2778,7 @@
 				<div>
 					<span>Run playback</span>
 					<strong>Year {viewedYear} of {match.years}</strong>
-					<p>{activeEntry.receipt}</p>
+					<p>{activeEntry.eventReceipt} {activeEntry.receipt}</p>
 				</div>
 				<div class="ona-system-playback-panel">
 					<div class="ona-system-playback-controls">

@@ -6,6 +6,7 @@ import {
 	getSampleSystemUpload,
 	listEnvironments,
 	listManagementPolicies,
+	listSeasonEvents,
 	listSeasonPhases,
 	listSystems,
 	parseSystemUpload,
@@ -80,7 +81,9 @@ describe('basketball systems management simulation', () => {
 				expect.objectContaining({ key: 'ownerPatience' })
 			]),
 			nodes: expect.arrayContaining([expect.objectContaining({ id: 'policy' })]),
-			scoreContributions: expect.arrayContaining([expect.objectContaining({ key: 'leagueHealth' })])
+			scoreContributions: expect.arrayContaining([expect.objectContaining({ key: 'leagueHealth' })]),
+			event: expect.objectContaining({ key: 'broadcast-pressure' }),
+			eventReceipt: expect.stringContaining('Broadcast pressure')
 		});
 		expect(match.winner.timeline[0]?.resourceReceipt).toContain('resource floor');
 		expect(match.winner.timeline[0]?.score).not.toBe(match.winner.timeline[4]?.score);
@@ -118,6 +121,31 @@ describe('basketball systems management simulation', () => {
 		);
 	});
 
+	it('draws the same deterministic season event deck for every System in a race', () => {
+		const expectedDeck = [
+			'broadcast-pressure',
+			'star-injury-wave',
+			'labor-flare-up',
+			'playoff-inventory-shock'
+		];
+		const match = runSystemMatch({
+			mode: 'versus',
+			systemKey: 'recovery',
+			opponentKey: 'attention',
+			years: 4
+		});
+
+		expect(listSeasonEvents('national-window').map((event) => event.key)).toEqual(expectedDeck);
+		expect(match.systems.map((result) => result.timeline.map((entry) => entry.event.key))).toEqual([
+			expectedDeck,
+			expectedDeck
+		]);
+		expect(match.systems[0]?.timeline[0]?.eventReceipt).toContain('Broadcast pressure');
+		expect(match.reports.find((report) => report.label === 'Environment Signal')?.title).toContain(
+			'same pressure model, event deck, and horizon'
+		);
+	});
+
 	it('explains the raw score through weighted score contributions', () => {
 		const match = runSystemMatch({
 			mode: 'versus',
@@ -151,9 +179,9 @@ describe('basketball systems management simulation', () => {
 		});
 
 		expect(match.winner.validationImpact).toMatchObject({
-			rawScore: 92.7,
+			rawScore: 90.2,
 			adjustment: -9,
-			score: 83.7,
+			score: 81.2,
 			label: 'Risk-adjusted score'
 		});
 		expect(match.winner.score).toBe(match.winner.validationImpact.score);
@@ -331,8 +359,9 @@ describe('basketball systems management simulation', () => {
 			'mediaAttention',
 			'ownerPatience'
 		]);
-		expect(steeredTurn?.resourceReceipt).toContain('Trust reserve');
 		expect(steeredTurn?.resourceReceipt).toContain('Political capital');
+		expect(steeredTurn?.resourceReceipt).toContain('resource floor');
+		expect(steeredTurn?.eventReceipt).toContain('Labor flare-up');
 		expect(steeredTurn?.resourceFloor).toBeGreaterThan(30);
 		expect(resourceGate).toMatchObject({
 			status: 'pass',
@@ -388,13 +417,13 @@ describe('basketball systems management simulation', () => {
 				expect.objectContaining({
 					key: 'valid-score',
 					target: '76.0 valid score',
-					value: '77.7',
+					value: '83.2',
 					status: 'cleared'
 				}),
 				expect.objectContaining({
 					key: 'owner-room-floor',
 					target: '35 floor',
-					value: '37',
+					value: '39',
 					status: 'cleared'
 				}),
 				expect.objectContaining({

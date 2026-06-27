@@ -11,6 +11,13 @@ export type GameResourceKey =
 	| 'trustReserve'
 	| 'mediaAttention'
 	| 'ownerPatience';
+export type SeasonEventKey =
+	| 'star-injury-wave'
+	| 'broadcast-pressure'
+	| 'labor-flare-up'
+	| 'owner-meeting'
+	| 'expansion-window'
+	| 'playoff-inventory-shock';
 
 export type LeagueState = {
 	leagueHealth: number;
@@ -149,6 +156,16 @@ export type SeasonPhase = {
 	readout: string;
 };
 
+export type SeasonEvent = {
+	key: SeasonEventKey;
+	label: string;
+	trigger: string;
+	detail: string;
+	steeringPrompt: string;
+	effects: Partial<LeagueState>;
+	resourceEffects: Partial<GameResourceState>;
+};
+
 export type Environment = {
 	key: string;
 	name: string;
@@ -246,6 +263,8 @@ export type SystemTimelineEntry = {
 	phase: SeasonPhase;
 	policy: ManagementPolicy;
 	policyIntensity: number;
+	event: SeasonEvent;
+	eventReceipt: string;
 	state: LeagueState;
 	resources: GameResourceState;
 	metrics: MetricOutput[];
@@ -342,6 +361,156 @@ const resourceLabels = {
 	mediaAttention: 'Media attention',
 	ownerPatience: 'Owner patience'
 } as const satisfies Record<GameResourceKey, string>;
+
+const seasonEvents: SeasonEvent[] = [
+	{
+		key: 'star-injury-wave',
+		label: 'Star injury wave',
+		trigger: 'Injury board',
+		detail: 'A national slate loses star availability before the System can respond.',
+		steeringPrompt: 'Protect bodies or accept weaker inventory.',
+		effects: {
+			leagueHealth: -3,
+			starAvailability: -8,
+			travelWear: 5,
+			laborTrust: -2,
+			mediaValueB: -0.12
+		},
+		resourceEffects: {
+			politicalCapital: -2,
+			trustReserve: -4,
+			mediaAttention: -3,
+			ownerPatience: -1
+		}
+	},
+	{
+		key: 'broadcast-pressure',
+		label: 'Broadcast pressure',
+		trigger: 'TV window',
+		detail: 'National partners ask for more certainty while attention is available now.',
+		steeringPrompt: 'Capture attention without overloading the calendar.',
+		effects: {
+			mediaValueB: 0.24,
+			globalAttention: 8,
+			scheduleLoad: 5,
+			travelWear: 2,
+			ownerMargin: 2
+		},
+		resourceEffects: {
+			mediaAttention: 7,
+			ownerPatience: 2,
+			trustReserve: -2,
+			politicalCapital: -1
+		}
+	},
+	{
+		key: 'labor-flare-up',
+		label: 'Labor flare-up',
+		trigger: 'Union room',
+		detail: 'A recovery dispute turns public and narrows the trust buffer.',
+		steeringPrompt: 'Spend capital on trust or risk a credibility break.',
+		effects: {
+			laborTrust: -8,
+			leagueHealth: -2,
+			ownerMargin: -3,
+			travelWear: 2,
+			starAvailability: -2
+		},
+		resourceEffects: {
+			politicalCapital: -5,
+			trustReserve: -6,
+			budgetFlexibility: -2,
+			ownerPatience: -3
+		}
+	},
+	{
+		key: 'owner-meeting',
+		label: 'Owner governors meeting',
+		trigger: 'Board room',
+		detail: 'Governors demand margin proof before approving another league-office move.',
+		steeringPrompt: 'Keep owner patience credible while still compounding the System.',
+		effects: {
+			ownerMargin: -5,
+			competitiveBalance: 2,
+			globalAttention: -1
+		},
+		resourceEffects: {
+			ownerPatience: -7,
+			budgetFlexibility: -5,
+			politicalCapital: -3,
+			mediaAttention: -1
+		}
+	},
+	{
+		key: 'expansion-window',
+		label: 'Expansion window',
+		trigger: 'Market map',
+		detail: 'New markets create upside, but travel and parity stress move with it.',
+		steeringPrompt: 'Choose whether to chase the new market before competitors do.',
+		effects: {
+			globalAttention: 5,
+			smallMarketVisibility: 10,
+			competitiveBalance: -2,
+			scheduleLoad: 3,
+			travelWear: 4,
+			mediaValueB: 0.1
+		},
+		resourceEffects: {
+			mediaAttention: 5,
+			budgetFlexibility: -3,
+			politicalCapital: -2,
+			trustReserve: -1
+		}
+	},
+	{
+		key: 'playoff-inventory-shock',
+		label: 'Playoff inventory shock',
+		trigger: 'Postseason slate',
+		detail: 'High-leverage inventory spikes attention while pushing fatigue into the next season.',
+		steeringPrompt: 'Cash in the attention or protect next-season availability.',
+		effects: {
+			mediaValueB: 0.32,
+			globalAttention: 6,
+			scheduleLoad: 6,
+			travelWear: 4,
+			starAvailability: -4,
+			ownerMargin: 1
+		},
+		resourceEffects: {
+			mediaAttention: 6,
+			trustReserve: -3,
+			budgetFlexibility: 1,
+			ownerPatience: 2
+		}
+	}
+];
+
+const environmentEventDecks = {
+	'national-window': [
+		'broadcast-pressure',
+		'star-injury-wave',
+		'labor-flare-up',
+		'playoff-inventory-shock'
+	],
+	'expansion-surge': [
+		'expansion-window',
+		'broadcast-pressure',
+		'owner-meeting',
+		'playoff-inventory-shock'
+	],
+	'labor-deadline': [
+		'labor-flare-up',
+		'owner-meeting',
+		'star-injury-wave',
+		'broadcast-pressure'
+	],
+	'parity-reset': [
+		'expansion-window',
+		'owner-meeting',
+		'star-injury-wave',
+		'labor-flare-up'
+	]
+} as const satisfies Record<string, readonly SeasonEventKey[]>;
 
 const managementPolicies: ManagementPolicy[] = [
 	{
@@ -732,6 +901,11 @@ export function listSeasonPhases(): SeasonPhase[] {
 	return seasonPhases.map(cloneSeasonPhase);
 }
 
+export function listSeasonEvents(environmentKey?: string): SeasonEvent[] {
+	if (!environmentKey) return seasonEvents.map(cloneSeasonEvent);
+	return getEnvironmentEventDeck(environmentKey).map(cloneSeasonEvent);
+}
+
 export function listEnvironments(): Environment[] {
 	return environments.map(cloneEnvironment);
 }
@@ -866,7 +1040,14 @@ function buildSystemResult(
 		const isSteered = system.key === options.targetSystemKey && activePolicy !== null;
 		const policyKey = activePolicy?.key ?? system.policyKey;
 		const policyIntensity = turnDecision && activePolicy !== null ? turnDecision.phase.impact : 1;
-		scenario = runManagementScenario(policyKey, seasonBaseline, policyIntensity, resourceBaseline);
+		const event = getSeasonEvent(environment, year);
+		const eventBaseline = applySeasonEvent(seasonBaseline, resourceBaseline, event);
+		scenario = runManagementScenario(
+			policyKey,
+			eventBaseline.state,
+			policyIntensity,
+			eventBaseline.resources
+		);
 		const scoreContributions = buildScoreContributions(system, scenario.state);
 		const score = scoreSystem(system, scenario.state);
 		const delta = roundTo(score - previousScore, 1);
@@ -877,6 +1058,8 @@ function buildSystemResult(
 			phase: cloneSeasonPhase(turnDecision ? turnDecision.phase : seasonPhases[0]),
 			policy: clonePolicy(scenario.policy),
 			policyIntensity,
+			event: cloneSeasonEvent(event),
+			eventReceipt: buildSeasonEventReceipt(event, seasonBaseline, eventBaseline.state),
 			state: { ...scenario.state },
 			resources: { ...scenario.resources },
 			metrics: scenario.metrics.map((metric) => ({ ...metric })),
@@ -1257,6 +1440,7 @@ function buildSystemReports(
 ): BoardReport[] {
 	const winner = results[0];
 	const challenger = results[1];
+	const decisiveEvent = getDecisiveEventReceipt(winner);
 
 	return [
 		{
@@ -1269,13 +1453,13 @@ function buildSystemReports(
 		},
 		{
 			label: 'Environment Signal',
-			title: `The algorithm judged every System against the same pressure model and horizon.`,
-			detail: `${environment.winCondition}. Scores update each year from health, media value, competitive balance, labor trust, margin, and resilience.`
+			title: `The algorithm judged every System against the same pressure model, event deck, and horizon.`,
+			detail: `${environment.winCondition}. Scores update each year from health, media value, competitive balance, labor trust, margin, resilience, and the active season event.`
 		},
 		{
-			label: 'Failure Mode',
-			title: winner.failureMode,
-			detail: `The compounding ledger keeps the System steerable: a decision can change from any year without hiding the tradeoff or gate cost.`
+			label: 'Event Hinge',
+			title: `${decisiveEvent.label} mattered in year ${decisiveEvent.year}.`,
+			detail: `${decisiveEvent.receipt} The compounding ledger keeps the System steerable without hiding event pressure, tradeoff cost, or gate cost.`
 		}
 	];
 }
@@ -1543,7 +1727,7 @@ function buildSystemLedger(
 		{
 			label: 'Horizon',
 			value: `${years} years`,
-			detail: `${environment.name}: ${environment.pressure}.`
+			detail: `${environment.name}: ${environment.pressure}. Event deck: ${formatList(getEnvironmentEventDeck(environment.key).map((event) => event.label))}.`
 		},
 		{
 			label: 'Winning System',
@@ -1559,6 +1743,11 @@ function buildSystemLedger(
 			detail: steeringPolicy
 				? `Active System switches to ${steeringPolicy.label}; first-season impact is ${Math.round(steeringPhase.impact * 100)}%, then ripples forward.`
 				: 'No mid-run steering applied; the System keeps its native operating policy.'
+		},
+		{
+			label: 'Event deck',
+			value: getDecisiveEventReceipt(winner).label,
+			detail: `${getDecisiveEventReceipt(winner).receipt} Every System receives the same deterministic event sequence for the selected environment.`
 		}
 	];
 }
@@ -1604,6 +1793,59 @@ function applyEnvironmentEffects(baseline: LeagueState, environment: Environment
 	}
 
 	return state;
+}
+
+function getEnvironmentEventDeck(environmentKey: string): SeasonEvent[] {
+	const keys = environmentEventDecks[environmentKey] ?? environmentEventDecks['national-window'];
+	return keys.map((key) => findSeasonEvent(key));
+}
+
+function getSeasonEvent(environment: Environment, year: number): SeasonEvent {
+	const deck = getEnvironmentEventDeck(environment.key);
+	const index = (year - 1) % deck.length;
+	return deck[index] ?? deck[0] ?? seasonEvents[0];
+}
+
+function findSeasonEvent(key: SeasonEventKey): SeasonEvent {
+	return seasonEvents.find((event) => event.key === key) ?? seasonEvents[0];
+}
+
+function applySeasonEvent(
+	state: LeagueState,
+	resources: GameResourceState,
+	event: SeasonEvent
+): { state: LeagueState; resources: GameResourceState } {
+	return {
+		state: applyLeagueStateDelta(state, event.effects),
+		resources: applyResourceDelta(resources, event.resourceEffects)
+	};
+}
+
+function applyLeagueStateDelta(
+	state: LeagueState,
+	effects: Partial<LeagueState>
+): LeagueState {
+	const next = { ...state };
+
+	for (const [key, delta] of Object.entries(effects) as [keyof LeagueState, number][]) {
+		next[key] =
+			key === 'mediaValueB' ? roundTo(next[key] + delta, 2) : clampScore(next[key] + delta);
+	}
+
+	return next;
+}
+
+function applyResourceDelta(
+	resources: GameResourceState,
+	effects: Partial<GameResourceState>
+): GameResourceState {
+	const next = { ...resources };
+
+	for (const [key, delta] of Object.entries(effects) as [GameResourceKey, number][]) {
+		next[key] = clampScore(next[key] + delta);
+	}
+
+	return next;
 }
 
 function buildSystemPool(customSystems: System[] | undefined): System[] {
@@ -1928,6 +2170,14 @@ function cloneSeasonPhase(phase: SeasonPhase): SeasonPhase {
 	return { ...phase };
 }
 
+function cloneSeasonEvent(event: SeasonEvent): SeasonEvent {
+	return {
+		...event,
+		effects: { ...event.effects },
+		resourceEffects: { ...event.resourceEffects }
+	};
+}
+
 function cloneSteeringDecision(decision: SystemSteeringDecision): SystemSteeringDecision {
 	return {
 		year: decision.year,
@@ -2219,6 +2469,37 @@ function buildLedger(
 			detail: buildResourceReceipt(resourceBaseline, resources)
 		}
 	];
+}
+
+function getDecisiveEventReceipt(result: SystemResult): {
+	year: number;
+	label: string;
+	receipt: string;
+} {
+	const entry =
+		[...result.timeline]
+			.slice(result.timeline.length > 1 ? 1 : 0)
+			.sort((left, right) => Math.abs(right.delta) - Math.abs(left.delta))[0] ??
+		result.timeline[0];
+
+	return {
+		year: entry?.year ?? 1,
+		label: entry?.event.label ?? 'No event',
+		receipt: entry?.eventReceipt ?? 'No event pressure was recorded.'
+	};
+}
+
+function buildSeasonEventReceipt(
+	event: SeasonEvent,
+	previous: LeagueState,
+	next: LeagueState
+): string {
+	const healthDelta = next.leagueHealth - previous.leagueHealth;
+	const trustDelta = next.laborTrust - previous.laborTrust;
+	const mediaDelta = next.mediaValueB - previous.mediaValueB;
+	const availabilityDelta = next.starAvailability - previous.starAvailability;
+
+	return `${event.label}: health ${formatDelta(healthDelta)}, trust ${formatDelta(trustDelta)}, availability ${formatDelta(availabilityDelta)}, media ${formatMoneyDelta(mediaDelta)}.`;
 }
 
 function compareHigherIsBetter(previous: number, next: number): string {
