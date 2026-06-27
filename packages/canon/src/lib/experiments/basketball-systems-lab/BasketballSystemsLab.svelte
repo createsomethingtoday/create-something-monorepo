@@ -164,6 +164,31 @@
 	);
 	const activeEntry = $derived(viewedLeader.entry);
 	const activeTimeline = $derived(viewedLeader.result.timeline);
+	const activeGateImpacts = $derived(
+		viewedLeader.result.validationImpact.impacts.filter((impact) => impact.status !== 'pass')
+	);
+	const runScoreLanes = $derived([
+		{
+			label: 'Current year',
+			value: activeEntry.score.toFixed(1),
+			detail: `${activeEntry.decision}; ${formatDelta(activeEntry.delta)} from last year.`
+		},
+		{
+			label: 'Projected finish',
+			value: viewedLeader.result.rawScore.toFixed(1),
+			detail: `Raw ${match.years}-year System score before gates.`
+		},
+		{
+			label: 'Valid final',
+			value: viewedLeader.result.score.toFixed(1),
+			detail: `${formatDelta(viewedLeader.result.validationImpact.adjustment)} gate adjustment.`
+		}
+	]);
+	const activeGateRiskLabel = $derived(
+		activeGateImpacts.length > 0
+			? `${activeGateImpacts.length} active gate${activeGateImpacts.length === 1 ? '' : 's'}`
+			: 'Clean run'
+	);
 	const validationCounts = $derived(
 		match.validation.requirements.reduce(
 			(counts, requirement) => ({
@@ -200,6 +225,10 @@
 
 	function setViewedYear(year: number): void {
 		viewedYear = Math.min(Math.max(Math.round(year), 1), horizonYears);
+	}
+
+	function formatDelta(delta: number): string {
+		return `${delta >= 0 ? '+' : ''}${delta.toFixed(1)}`;
 	}
 
 	function timelineEntryFor(result: SystemResult, year: number): SystemTimelineEntry {
@@ -470,6 +499,23 @@
 				<p>{modeRule}</p>
 			</div>
 
+			<div class="ona-system-run-summary" aria-label="Season run summary">
+				<div>
+					<span>Season run</span>
+					<strong>{viewedLeader.result.system.name}</strong>
+					<p>{selectedEnvironment.name}; {horizonYears} years; {activeGateRiskLabel}.</p>
+				</div>
+				<div class="ona-system-run-lanes">
+					{#each runScoreLanes as lane}
+						<article>
+							<span>{lane.label}</span>
+							<strong>{lane.value}</strong>
+							<small>{lane.detail}</small>
+						</article>
+					{/each}
+				</div>
+			</div>
+
 			<div class="ona-system-control-group">
 				<span>Environment</span>
 				<select bind:value={selectedEnvironmentKey} aria-label="Environment">
@@ -496,84 +542,6 @@
 						<small>{policies.find((policy) => policy.key === system.policyKey)?.score}</small>
 					</button>
 				{/each}
-			</div>
-
-			<div class="ona-system-builder">
-				<div class="ona-system-kicker">
-					<SlidersHorizontal size={17} strokeWidth={1.8} />
-					<span>System Builder</span>
-				</div>
-				<label>
-					<span>System name</span>
-					<input bind:value={builderName} aria-label="Builder System name" maxlength="44" />
-				</label>
-				<label>
-					<span>Native policy</span>
-					<select bind:value={builderPolicy} aria-label="Builder native policy">
-						{#each policies as policy}
-							<option value={policy.key}>{policy.label}</option>
-						{/each}
-					</select>
-				</label>
-				<label>
-					<span>Thesis</span>
-					<textarea bind:value={builderThesis} aria-label="Builder System thesis" maxlength="180"></textarea>
-				</label>
-				<div class="ona-system-builder-weights" aria-label="Builder scoring weights">
-					{#each builderWeightFields as field}
-						<article>
-							<label for={`builder-weight-${field.key}`}>
-								<span>{field.label}</span>
-								<strong>{builderWeights[field.key]}%</strong>
-							</label>
-							<input
-								id={`builder-weight-${field.key}`}
-								type="range"
-								min={builderMinimumWeights[field.key]}
-								max={builderMaximumWeight}
-								step="1"
-								value={builderWeights[field.key]}
-								aria-label={`${field.label} weight`}
-								oninput={(event) => setBuilderWeight(field.key, event)}
-							/>
-						</article>
-					{/each}
-				</div>
-				<div class="ona-system-builder-status">
-					<strong>{builderTotal}% allocated</strong>
-					<span>{builderMessage}</span>
-				</div>
-				<div class="ona-system-upload-actions">
-					<button type="button" onclick={addBuiltSystem}>Add built System</button>
-					<button type="button" onclick={previewBuiltSystemJson}>Preview JSON</button>
-					<button type="button" onclick={resetBuilder}>Reset builder</button>
-				</div>
-			</div>
-
-			<div class="ona-system-upload">
-				<div class="ona-system-kicker">
-					<FileJson size={17} strokeWidth={1.8} />
-					<span>System Upload</span>
-				</div>
-				<textarea bind:value={uploadText} aria-label="System JSON definition"></textarea>
-				<div class="ona-system-upload-actions">
-					<label>
-						<input type="file" accept="application/json,.json" onchange={readSystemFile} />
-						<span>Upload JSON</span>
-					</label>
-					<button type="button" onclick={importSystems}>Import Systems</button>
-					<button type="button" onclick={loadSampleSystem}>Load sample</button>
-				</div>
-				<div class="ona-system-upload-status" data-state={uploadedSystems.length > 0 ? 'accepted' : 'idle'}>
-					<strong>{uploadMessage}</strong>
-					{#if uploadIssues.length > 0}
-						<ul>
-							{#each uploadIssues.slice(0, 4) as issue}
-								<li>{issue.path}: {issue.message}</li>
-							{/each}
-						</ul>
-					{/if}
-				</div>
 			</div>
 
 			{#if mode === 'versus'}
@@ -639,6 +607,91 @@
 					</select>
 				</div>
 			{/if}
+
+			<details class="ona-system-advanced">
+				<summary>
+					<span>Bring a System</span>
+					<strong>{uploadedSystems.length > 0 ? `${uploadedSystems.length} loaded` : 'Builder and upload'}</strong>
+				</summary>
+
+				<div class="ona-system-builder">
+					<div class="ona-system-kicker">
+						<SlidersHorizontal size={17} strokeWidth={1.8} />
+						<span>System Builder</span>
+					</div>
+					<label>
+						<span>System name</span>
+						<input bind:value={builderName} aria-label="Builder System name" maxlength="44" />
+					</label>
+					<label>
+						<span>Native policy</span>
+						<select bind:value={builderPolicy} aria-label="Builder native policy">
+							{#each policies as policy}
+								<option value={policy.key}>{policy.label}</option>
+							{/each}
+						</select>
+					</label>
+					<label>
+						<span>Thesis</span>
+						<textarea bind:value={builderThesis} aria-label="Builder System thesis" maxlength="180"></textarea>
+					</label>
+					<div class="ona-system-builder-weights" aria-label="Builder scoring weights">
+						{#each builderWeightFields as field}
+							<article>
+								<label for={`builder-weight-${field.key}`}>
+									<span>{field.label}</span>
+									<strong>{builderWeights[field.key]}%</strong>
+								</label>
+								<input
+									id={`builder-weight-${field.key}`}
+									type="range"
+									min={builderMinimumWeights[field.key]}
+									max={builderMaximumWeight}
+									step="1"
+									value={builderWeights[field.key]}
+									aria-label={`${field.label} weight`}
+									oninput={(event) => setBuilderWeight(field.key, event)}
+								/>
+							</article>
+						{/each}
+					</div>
+					<div class="ona-system-builder-status">
+						<strong>{builderTotal}% allocated</strong>
+						<span>{builderMessage}</span>
+					</div>
+					<div class="ona-system-upload-actions">
+						<button type="button" onclick={addBuiltSystem}>Add built System</button>
+						<button type="button" onclick={previewBuiltSystemJson}>Preview JSON</button>
+						<button type="button" onclick={resetBuilder}>Reset builder</button>
+					</div>
+				</div>
+
+				<div class="ona-system-upload">
+					<div class="ona-system-kicker">
+						<FileJson size={17} strokeWidth={1.8} />
+						<span>System Upload</span>
+					</div>
+					<textarea bind:value={uploadText} aria-label="System JSON definition"></textarea>
+					<div class="ona-system-upload-actions">
+						<label>
+							<input type="file" accept="application/json,.json" onchange={readSystemFile} />
+							<span>Upload JSON</span>
+						</label>
+						<button type="button" onclick={importSystems}>Import Systems</button>
+						<button type="button" onclick={loadSampleSystem}>Load sample</button>
+					</div>
+					<div class="ona-system-upload-status" data-state={uploadedSystems.length > 0 ? 'accepted' : 'idle'}>
+						<strong>{uploadMessage}</strong>
+						{#if uploadIssues.length > 0}
+							<ul>
+								{#each uploadIssues.slice(0, 4) as issue}
+									<li>{issue.path}: {issue.message}</li>
+								{/each}
+							</ul>
+						{/if}
+					</div>
+				</div>
+			</details>
 		</aside>
 
 		<div class="ona-system-map ona-system-panel" aria-label="Causal systems map">
