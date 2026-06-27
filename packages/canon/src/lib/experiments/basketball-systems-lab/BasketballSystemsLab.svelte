@@ -187,6 +187,11 @@
 		detail: string;
 		active: boolean;
 	};
+	type FieldSetupLane = {
+		label: string;
+		value: string;
+		detail: string;
+	};
 	type VersusControlMode = 'autonomous' | 'coach';
 	type FirstRunStep = {
 		label: string;
@@ -285,6 +290,15 @@
 	);
 	const modeLabel = $derived(
 		isSolo ? 'Solo Challenge' : canSteer ? 'Coach a System' : 'Watch Systems Race'
+	);
+	const competitionActionLabel = $derived(
+		uploadedSystems.length === 0
+			? 'Load sample field'
+			: uploadedSystems.length === 1
+				? 'Start solo entrant'
+				: hasUploadedField
+					? 'Start field at year 1'
+					: 'Start race at year 1'
 	);
 
 	$effect(() => {
@@ -385,7 +399,7 @@
 							: 'Ready',
 				readinessTone,
 				detail: trimToWordBoundary(system.thesis, 104),
-				active: system.key === selectedSystem || system.key === opponentSystem
+				active: system.key === selectedSystem
 			};
 		})
 	);
@@ -403,6 +417,33 @@
 			entry: timelineEntryFor(match.winner, viewedYear)
 		}
 	);
+	const fieldSetupLanes = $derived<FieldSetupLane[]>([
+		{
+			label: 'Run start',
+			value:
+				uploadedSystems.length === 1
+					? 'Solo entrant'
+					: hasUploadedField
+						? `${uploadedSystems.length}-System field`
+						: 'Head-to-head',
+			detail:
+				uploadedSystems.length === 1
+					? 'Run this System against the environment, or add a second entrant for versus.'
+					: 'Start from year 1 so every uploaded System compounds inside the same environment.'
+		},
+		{
+			label: canSteer ? 'Coach target' : 'Selected System',
+			value: match.steering.targetSystem.name,
+			detail: canSteer
+				? 'Click an entrant card to choose which System you can steer mid-run.'
+				: 'Click an entrant card to inspect its receipts while the race stays autonomous.'
+		},
+		{
+			label: 'Current leader',
+			value: viewedLeader.result.system.name,
+			detail: `Year ${viewedYear}; final valid ${viewedLeader.result.score.toFixed(1)} after gates.`
+		}
+	]);
 	const activeEntry = $derived(viewedLeader.entry);
 	const activeTimeline = $derived(viewedLeader.result.timeline);
 	const activeGateImpacts = $derived(
@@ -1367,6 +1408,9 @@
 		selectedSystem = result.systems[0].key;
 		opponentSystem = result.systems[1]?.key ?? 'recovery';
 		mode = result.systems.length > 1 ? 'versus' : mode;
+		viewedYear = 1;
+		playbackRunning = false;
+		systemWorkbenchOpen = false;
 		uploadMessage = `${result.systems.length} entrant${result.systems.length === 1 ? '' : 's'} entered`;
 	}
 
@@ -1380,6 +1424,13 @@
 		systemWorkbenchOpen = true;
 	}
 
+	function selectEntrantForRun(systemKey: SystemId): void {
+		selectedSystem = systemKey;
+		opponentSystem = uploadedSystems.find((system) => system.key !== systemKey)?.key ?? opponentSystem;
+		playbackRunning = false;
+		viewedYear = 1;
+	}
+
 	function raceUploadedSystems(): void {
 		if (uploadedSystems.length === 0) {
 			loadSampleMatchup();
@@ -1390,6 +1441,9 @@
 		opponentSystem =
 			uploadedSystems.find((system) => system.key !== selectedSystem)?.key ?? opponentSystem;
 		mode = uploadedSystems.length > 1 ? 'versus' : 'single';
+		viewedYear = 1;
+		playbackRunning = false;
+		systemWorkbenchOpen = false;
 	}
 
 	function setRaceHistoryHorizon(years: number): void {
@@ -1425,6 +1479,8 @@
 		}
 
 		mode = result.systems.length > 1 ? 'versus' : mode;
+		viewedYear = 1;
+		playbackRunning = false;
 		builderMessage = `${builderName.trim()} entered the run`;
 		uploadMessage = `${result.systems.length} entrant${result.systems.length === 1 ? '' : 's'} entered`;
 	}
@@ -1928,30 +1984,49 @@
 				{#if uploadedSystems.length > 0}
 					<div class="ona-system-competition-roster" aria-label="Field entrants">
 						{#each entrantReadiness as entrant}
-							<article
+							<button
+								type="button"
 								class:active={entrant.active}
 								data-readiness={entrant.readinessTone}
+								aria-pressed={entrant.active}
+								onclick={() => selectEntrantForRun(entrant.key)}
 							>
+								<div>
+									<span>{entrant.policyLabel}</span>
+									<small
+										>{entrant.active
+											? canSteer
+												? 'Coach target'
+												: 'Selected'
+											: entrant.readinessLabel}</small
+									>
+								</div>
+								<strong>{entrant.name}</strong>
+								<p>{entrant.detail}</p>
+								<div class="ona-system-competition-roster-meta">
+									<small>{entrant.topWeights}</small>
+									<strong>Valid {entrant.score}</strong>
+								</div>
+								<div class="ona-system-competition-roster-gate">
 									<div>
-										<span>{entrant.policyLabel}</span>
-										<small>{entrant.readinessLabel}</small>
+										<span>{entrant.gateLabel}</span>
+										<small>{entrant.gateDetail}</small>
 									</div>
-									<strong>{entrant.name}</strong>
-									<p>{entrant.detail}</p>
-									<div class="ona-system-competition-roster-meta">
-										<small>{entrant.topWeights}</small>
-										<strong>Valid {entrant.score}</strong>
-									</div>
-									<div class="ona-system-competition-roster-gate">
-										<div>
-											<span>{entrant.gateLabel}</span>
-											<small>{entrant.gateDetail}</small>
-										</div>
-										<strong>Gate {entrant.gateAdjustment}</strong>
-									</div>
-								</article>
+									<strong>Gate {entrant.gateAdjustment}</strong>
+								</div>
+							</button>
 							{/each}
 						</div>
+
+					<div class="ona-system-field-setup-lanes" aria-label="Uploaded field setup">
+						{#each fieldSetupLanes as lane}
+							<article>
+								<span>{lane.label}</span>
+								<strong>{lane.value}</strong>
+								<p>{lane.detail}</p>
+							</article>
+						{/each}
+					</div>
 				{/if}
 
 				{#if mode === 'versus' && customEntrantsInRun.length > 0}
@@ -1973,13 +2048,7 @@
 				<div class="ona-system-competition-actions">
 					<button type="button" onclick={raceUploadedSystems}>
 						<Play size={15} strokeWidth={2} />
-						<span
-							>{uploadedSystems.length > 0
-								? hasUploadedField
-									? 'Start entrant field'
-									: 'Start entrant race'
-								: 'Load sample field'}</span
-						>
+						<span>{competitionActionLabel}</span>
 					</button>
 					<button type="button" onclick={openSystemWorkbench}>Add Systems</button>
 				</div>
