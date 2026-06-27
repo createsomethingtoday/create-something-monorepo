@@ -186,6 +186,26 @@ export type SystemProjection = {
 	detail: string;
 };
 
+export type SystemChallengeStatus = 'cleared' | 'close' | 'missed' | 'versus';
+
+export type SystemChallengeObjectiveStatus = Exclude<SystemChallengeStatus, 'versus'>;
+
+export type SystemChallengeObjective = {
+	key: 'valid-score' | 'owner-room-floor' | 'labor-trust-floor';
+	label: string;
+	status: SystemChallengeObjectiveStatus;
+	target: string;
+	value: string;
+	detail: string;
+};
+
+export type SystemChallenge = {
+	label: string;
+	status: SystemChallengeStatus;
+	summary: string;
+	objectives: SystemChallengeObjective[];
+};
+
 export type GameRequirement = {
 	key: GameRequirementKey;
 	label: string;
@@ -241,6 +261,7 @@ export type SystemMatch = {
 	};
 	systems: SystemResult[];
 	winner: SystemResult;
+	challenge: SystemChallenge;
 	projections: SystemProjection[];
 	validation: ValidationSummary;
 	reports: BoardReport[];
@@ -609,6 +630,7 @@ export function runSystemMatch(input: SystemMatchInput = {}): SystemMatch {
 		},
 		systems: ranked,
 		winner,
+		challenge: buildSystemChallenge(mode, environment, ranked),
 		projections: buildSystemProjections(ranked, unsteeredPrimary, years, steeringYear, steeringPhase),
 		validation: buildValidationSummary(mode, environmentBaseline, ranked, years),
 		reports: buildSystemReports(mode, environment, years, ranked),
@@ -775,6 +797,95 @@ function buildSystemValidationImpact(
 				: 'No requirement gate changed the System score.',
 		impacts
 	};
+}
+
+function buildSystemChallenge(
+	mode: LabMode,
+	environment: Environment,
+	results: SystemResult[]
+): SystemChallenge {
+	const winner = results[0];
+
+	if (mode === 'versus') {
+		return {
+			label: 'Versus race',
+			status: 'versus',
+			summary: `${winner.system.name} is judged against the other System by final valid score.`,
+			objectives: []
+		};
+	}
+
+	const scoreTarget = getChallengeScoreTarget(environment.key);
+	const finalState = winner.timeline.at(-1)?.state ?? winner.scenario.state;
+	const objectives: SystemChallengeObjective[] = [
+		{
+			key: 'valid-score',
+			label: 'Beat the pressure model',
+			status: scoreStatus(winner.score, scoreTarget, 6),
+			target: `${scoreTarget.toFixed(1)} valid score`,
+			value: winner.score.toFixed(1),
+			detail: `${winner.system.name} must clear the environment after requirement gates, not just post a high raw score.`
+		},
+		{
+			key: 'owner-room-floor',
+			label: 'Keep owner room credible',
+			status: scoreStatus(minTimelineMetric([winner], 'ownerMargin'), 35, 5),
+			target: '35 floor',
+			value: formatScore(minTimelineMetric([winner], 'ownerMargin')),
+			detail: 'Below 35 breaks the business side of the model; a narrow clear still leaves negotiating pressure.'
+		},
+		{
+			key: 'labor-trust-floor',
+			label: 'Protect labor trust',
+			status: scoreStatus(minTimelineMetric([winner], 'laborTrust'), 65, 10),
+			target: '65 floor',
+			value: formatScore(minTimelineMetric([winner], 'laborTrust')),
+			detail: `Final labor trust was ${formatScore(finalState.laborTrust)} after the steering path compounded.`
+		}
+	];
+	const status = objectives.some((objective) => objective.status === 'missed')
+		? 'missed'
+		: objectives.some((objective) => objective.status === 'close')
+			? 'close'
+			: 'cleared';
+
+	return {
+		label:
+			status === 'cleared'
+				? 'Challenge cleared'
+				: status === 'close'
+					? 'Needs steering'
+					: 'Challenge missed',
+		status,
+		summary:
+			status === 'cleared'
+				? `${winner.system.name} cleared the single-player challenge across score, owner room, and labor trust.`
+				: status === 'close'
+					? `${winner.system.name} stayed playable, but one objective is close enough to need steering attention.`
+					: `${winner.system.name} missed at least one core objective; steer earlier or choose a different System.`,
+		objectives
+	};
+}
+
+function getChallengeScoreTarget(environmentKey: string): number {
+	const targets: Record<string, number> = {
+		'national-window': 76,
+		'expansion-surge': 78,
+		'labor-deadline': 72,
+		'parity-reset': 76
+	};
+
+	return targets[environmentKey] ?? 76;
+}
+
+function scoreStatus(
+	value: number,
+	target: number,
+	closeWindow: number
+): SystemChallengeObjectiveStatus {
+	if (value >= target) return 'cleared';
+	if (value >= target - closeWindow) return 'close';
+	return 'missed';
 }
 
 function buildStateBoundsImpact(result: SystemResult): SystemGateImpact {

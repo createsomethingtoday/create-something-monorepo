@@ -27,6 +27,7 @@
 		type PolicyKey,
 		type SeasonPhaseKey,
 		type System,
+		type SystemChallengeObjectiveStatus,
 		type SystemId,
 		type SystemResult,
 		type SystemScoreWeights,
@@ -110,8 +111,8 @@
 	);
 	const modeRule = $derived(
 		canSteer
-			? 'Coach one System against the environment. Steering can change policy from the chosen year forward.'
-			: 'Run two Systems under the same environment. Both Systems stay autonomous so the design wins or loses on its own.'
+			? 'Clear a challenge against the environment. Choose a System, steer once, then replay the years to see whether the targets survive.'
+			: 'Race two Systems in the same environment. No steering; the winner is the highest valid score after requirement gates.'
 	);
 
 	$effect(() => {
@@ -221,6 +222,12 @@
 		if (status === 'watch') return 'Watch';
 		if (status === 'deferred') return 'Deferred';
 		return 'Pass';
+	}
+
+	function formatChallengeObjectiveStatus(status: SystemChallengeObjectiveStatus): string {
+		if (status === 'missed') return 'Missed';
+		if (status === 'close') return 'Needs steering';
+		return 'Cleared';
 	}
 
 	function setViewedYear(year: number): void {
@@ -483,7 +490,7 @@
 					aria-pressed={mode === 'single'}
 					onclick={() => (mode = 'single')}
 				>
-					Single
+					Solo
 				</button>
 				<button
 					type="button"
@@ -495,15 +502,40 @@
 				</button>
 			</div>
 			<div class="ona-system-mode-note">
-				<strong>{canSteer ? 'Steerable run' : 'Autonomous race'}</strong>
+				<strong>{canSteer ? 'Solo challenge' : 'Versus race'}</strong>
 				<p>{modeRule}</p>
+			</div>
+
+			<div class="ona-system-objective-brief" data-status={match.challenge.status} aria-label="Current objective">
+				<div>
+					<span>{canSteer ? 'Objective' : 'Race rule'}</span>
+					<strong>{match.challenge.label}</strong>
+					<p>
+						{canSteer
+							? 'Clear the target score and keep both floor metrics alive through the final year.'
+							: match.challenge.summary}
+					</p>
+				</div>
+
+				{#if match.challenge.objectives.length > 0}
+					<div class="ona-system-objective-brief-list">
+						{#each match.challenge.objectives as objective}
+							<article data-status={objective.status}>
+								<span>{objective.label}</span>
+								<strong>{objective.value}</strong>
+								<small>{formatChallengeObjectiveStatus(objective.status)}</small>
+								<p>Target {objective.target}</p>
+							</article>
+						{/each}
+					</div>
+				{/if}
 			</div>
 
 			<div class="ona-system-run-summary" aria-label="Season run summary">
 				<div>
 					<span>Season run</span>
 					<strong>{viewedLeader.result.system.name}</strong>
-					<p>{selectedEnvironment.name}; {horizonYears} years; {activeGateRiskLabel}.</p>
+					<p>{selectedEnvironment.name}; {horizonYears} years; {activeGateRiskLabel}; {match.challenge.label}.</p>
 				</div>
 				<div class="ona-system-run-lanes">
 					{#each runScoreLanes as lane}
@@ -709,14 +741,47 @@
 			<div class="ona-system-rulebook" aria-label="Run rules">
 				<article>
 					<span>Win condition</span>
-					<strong>Highest valid system score</strong>
-					<p>{match.environment.winCondition}. Requirement gates adjust unrealistic wins.</p>
+					<strong>{canSteer ? 'Clear challenge objectives' : 'Highest valid system score'}</strong>
+					<p>
+						{canSteer
+							? 'Single-player runs are judged by score, owner room, and labor trust targets.'
+							: `${match.environment.winCondition}. Requirement gates adjust unrealistic wins.`}
+					</p>
 				</article>
 				<article>
 					<span>Play model</span>
 					<strong>{canSteer ? 'Coach vs environment' : 'System vs System'}</strong>
 					<p>{modeRule}</p>
 				</article>
+			</div>
+
+			<div class="ona-system-challenge" data-status={match.challenge.status} aria-label="Run challenge">
+				<div class="ona-system-challenge-header">
+					<div>
+						<div class="ona-system-timeline-header">
+							<ShieldCheck size={17} strokeWidth={1.8} />
+							<span>{canSteer ? 'Single challenge' : 'Versus objective'}</span>
+						</div>
+						<strong>{match.challenge.label}</strong>
+					</div>
+					<p>{match.challenge.summary}</p>
+				</div>
+
+				{#if match.challenge.objectives.length > 0}
+					<div class="ona-system-challenge-list">
+						{#each match.challenge.objectives as objective}
+							<article data-status={objective.status}>
+								<div>
+									<span>{objective.label}</span>
+									<small>{formatChallengeObjectiveStatus(objective.status)}</small>
+								</div>
+								<strong>{objective.value}</strong>
+								<small>Target {objective.target}</small>
+								<p>{objective.detail}</p>
+							</article>
+						{/each}
+					</div>
+				{/if}
 			</div>
 
 			<div class="ona-system-playback" aria-label="Run playback">
