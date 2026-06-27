@@ -2276,6 +2276,29 @@
     gap: 8px;
   }
 
+  .ona-system-live-callout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(180px, 0.85fr);
+    gap: 8px;
+  }
+
+  .ona-system-live-callout > div {
+    display: grid;
+    gap: 6px;
+    border: 1px solid var(--ona-system-line);
+    border-radius: var(--radius-clear-sm);
+    padding: 10px;
+    background: white;
+  }
+
+  .ona-system-live-callout[data-tone='changed'] > div:first-child {
+    border-left: 3px solid var(--ona-system-blue);
+  }
+
+  .ona-system-live-callout[data-tone='coach'] > div:first-child {
+    border-left: 3px solid var(--ona-system-green);
+  }
+
   .ona-system-rulebook article,
   .ona-system-kickoff-grid article,
   .ona-system-live-standings-list article,
@@ -2389,6 +2412,7 @@
 
   .ona-system-kickoff-header > p,
   .ona-system-kickoff-grid p,
+  .ona-system-live-callout p,
   .ona-system-live-standings-header > p,
   .ona-system-live-standings-list p {
     margin: 0;
@@ -4190,6 +4214,7 @@
     .ona-system-rulebook,
     .ona-system-kickoff-header,
     .ona-system-live-standings-header,
+    .ona-system-live-callout,
     .ona-system-game-turn-header,
     .ona-system-playback,
     .ona-system-turn-recap,

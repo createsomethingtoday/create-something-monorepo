@@ -2178,6 +2178,18 @@
 							the winner.
 						</p>
 					</div>
+					<div class="ona-system-live-callout" data-tone={activeDecisionMoment.tone}>
+						<div>
+							<span>Race call</span>
+							<strong>{raceMomentumSummary}</strong>
+							<p>{raceMomentumDetail}</p>
+						</div>
+						<div>
+							<span>{activeDecisionMoment.label}</span>
+							<strong>{activeDecisionMoment.value}</strong>
+							<p>{activeDecisionMoment.action}</p>
+						</div>
+					</div>
 					<div class="ona-system-live-standings-list">
 						{#each raceMomentum as standing}
 							<article class:active={standing.active}>
