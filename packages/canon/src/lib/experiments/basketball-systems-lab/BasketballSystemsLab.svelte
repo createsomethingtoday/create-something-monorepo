@@ -56,6 +56,15 @@
 
 	const systems = $derived(listSystems(uploadedSystems));
 	const uploadedSystemKeys = $derived(new Set(uploadedSystems.map((system) => system.key)));
+	const canSteer = $derived(mode === 'single');
+	const effectiveSteeringPolicy = $derived(
+		canSteer && steeringPolicy !== 'none' ? steeringPolicy : undefined
+	);
+	const modeRule = $derived(
+		canSteer
+			? 'Coach one System against the environment. Steering can change policy from the chosen year forward.'
+			: 'Run two Systems under the same environment. Both Systems stay autonomous so the design wins or loses on its own.'
+	);
 
 	$effect(() => {
 		if (!systems.some((system) => system.key === selectedSystem)) {
@@ -82,7 +91,7 @@
 			years: horizonYears,
 			steeringYear,
 			steeringPhase,
-			steeringPolicyKey: steeringPolicy === 'none' ? undefined : steeringPolicy,
+			steeringPolicyKey: effectiveSteeringPolicy,
 			customSystems: uploadedSystems
 		})
 	);
@@ -219,7 +228,7 @@
 					aria-pressed={mode === 'single'}
 					onclick={() => (mode = 'single')}
 				>
-					Single
+					Coach
 				</button>
 				<button
 					type="button"
@@ -229,6 +238,10 @@
 				>
 					Versus
 				</button>
+			</div>
+			<div class="ona-system-mode-note">
+				<strong>{canSteer ? 'Steerable run' : 'Autonomous race'}</strong>
+				<p>{modeRule}</p>
 			</div>
 
 			<div class="ona-system-policy-list">
@@ -299,40 +312,42 @@
 				</div>
 			</div>
 
-			<div class="ona-system-control-group">
-				<span>Steer In Year</span>
-				<select bind:value={steeringYear} aria-label="Steering year">
-					{#each Array.from({ length: horizonYears }, (_, index) => index + 1) as year}
-						<option value={year}>Year {year}</option>
-					{/each}
-				</select>
-			</div>
-
-			<div class="ona-system-control-group">
-				<span>Season Window</span>
-				<div class="ona-system-option-row ona-system-option-row--wrap">
-					{#each seasonPhases as phase}
-						<button
-							type="button"
-							class:active={steeringPhase === phase.key}
-							aria-pressed={steeringPhase === phase.key}
-							onclick={() => (steeringPhase = phase.key)}
-						>
-							{phase.label}
-						</button>
-					{/each}
+			{#if canSteer}
+				<div class="ona-system-control-group">
+					<span>Steer In Year</span>
+					<select bind:value={steeringYear} aria-label="Steering year">
+						{#each Array.from({ length: horizonYears }, (_, index) => index + 1) as year}
+							<option value={year}>Year {year}</option>
+						{/each}
+					</select>
 				</div>
-			</div>
 
-			<div class="ona-system-control-group">
-				<span>Steering Policy</span>
-				<select bind:value={steeringPolicy} aria-label="Steering policy">
-					<option value="none">Keep original System</option>
-					{#each policies as policy}
-						<option value={policy.key}>{policy.label}</option>
-					{/each}
-				</select>
-			</div>
+				<div class="ona-system-control-group">
+					<span>Season Window</span>
+					<div class="ona-system-option-row ona-system-option-row--wrap">
+						{#each seasonPhases as phase}
+							<button
+								type="button"
+								class:active={steeringPhase === phase.key}
+								aria-pressed={steeringPhase === phase.key}
+								onclick={() => (steeringPhase = phase.key)}
+							>
+								{phase.label}
+							</button>
+						{/each}
+					</div>
+				</div>
+
+				<div class="ona-system-control-group">
+					<span>Steering Policy</span>
+					<select bind:value={steeringPolicy} aria-label="Steering policy">
+						<option value="none">Keep original System</option>
+						{#each policies as policy}
+							<option value={policy.key}>{policy.label}</option>
+						{/each}
+					</select>
+				</div>
+			{/if}
 		</aside>
 
 		<div class="ona-system-map ona-system-panel" aria-label="Causal systems map">
@@ -347,6 +362,19 @@
 				</div>
 			</div>
 
+			<div class="ona-system-rulebook" aria-label="Run rules">
+				<article>
+					<span>Win condition</span>
+					<strong>Highest valid system score</strong>
+					<p>{match.environment.winCondition}. Validation gates can downgrade unrealistic wins.</p>
+				</article>
+				<article>
+					<span>Play model</span>
+					<strong>{canSteer ? 'Coach vs environment' : 'System vs System'}</strong>
+					<p>{modeRule}</p>
+				</article>
+			</div>
+
 			<div class="ona-system-scoreboard" aria-label="System scores">
 				{#each match.systems as result}
 					<article class:active={result.system.key === match.winner.system.key}>
@@ -355,6 +383,22 @@
 						<small>{result.compoundedScoreDelta >= 0 ? '+' : ''}{result.compoundedScoreDelta.toFixed(1)} compounded</small>
 					</article>
 				{/each}
+			</div>
+
+			<div class="ona-system-score-explain" aria-label="Winning score explanation">
+				<div class="ona-system-timeline-header">
+					<BarChart3 size={17} strokeWidth={1.8} />
+					<span>Why {match.winner.system.name} leads</span>
+				</div>
+				<div>
+					{#each match.winner.scoreContributions as contribution}
+						<article>
+							<span>{contribution.label}</span>
+							<strong>{contribution.value.toFixed(1)}</strong>
+							<small>{contribution.readout}</small>
+						</article>
+					{/each}
+				</div>
 			</div>
 
 			<div class="ona-system-map-stage">
