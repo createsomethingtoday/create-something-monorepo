@@ -1,8 +1,29 @@
+const MS_PER_DAY = 1000 * 60 * 60 * 24;
+
+function resolveDate(date: Date | string | null | undefined): Date | null {
+  if (!date) return null;
+  const resolvedDate = typeof date === 'string' ? new Date(date) : date;
+  return Number.isNaN(resolvedDate.getTime()) ? null : resolvedDate;
+}
+
+function startOfLocalDay(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+function localDayDifference(date: Date, now: Date): number {
+  return Math.round(
+    (startOfLocalDay(date).getTime() - startOfLocalDay(now).getTime()) / MS_PER_DAY
+  );
+}
+
 export function formatShortDate(dateStr?: string): string {
   if (!dateStr) return '—';
 
   try {
-    return new Date(dateStr).toLocaleDateString('en-US', {
+    const resolvedDate = resolveDate(dateStr);
+    if (!resolvedDate) return '—';
+
+    return resolvedDate.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric'
     });
@@ -15,7 +36,10 @@ export function formatNumericDate(dateStr?: string): string {
   if (!dateStr) return '';
 
   try {
-    return new Date(dateStr).toLocaleDateString('en-US', {
+    const resolvedDate = resolveDate(dateStr);
+    if (!resolvedDate) return '';
+
+    return resolvedDate.toLocaleDateString('en-US', {
       month: 'numeric',
       day: 'numeric',
       year: '2-digit'
@@ -29,7 +53,9 @@ export function formatLongDate(date: Date | string | null | undefined): string {
   if (!date) return '';
 
   try {
-    const resolvedDate = typeof date === 'string' ? new Date(date) : date;
+    const resolvedDate = resolveDate(date);
+    if (!resolvedDate) return '';
+
     return resolvedDate.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
@@ -38,6 +64,94 @@ export function formatLongDate(date: Date | string | null | undefined): string {
   } catch {
     return '';
   }
+}
+
+export function formatDateTime(date: Date | string | null | undefined): string {
+  const resolvedDate = resolveDate(date);
+  if (!resolvedDate) return '';
+
+  try {
+    return new Intl.DateTimeFormat('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    }).format(resolvedDate);
+  } catch {
+    return '';
+  }
+}
+
+export function formatRelativePastDate(
+  date: Date | string | null | undefined,
+  now: Date = new Date()
+): string {
+  const resolvedDate = resolveDate(date);
+  if (!resolvedDate) return '';
+
+  const diffDays = -localDayDifference(resolvedDate, now);
+
+  if (diffDays === 0) return 'today';
+  if (diffDays === 1) return 'yesterday';
+  if (diffDays > 1 && diffDays < 7) return `${diffDays} days ago`;
+
+  return formatLongDate(resolvedDate);
+}
+
+export function formatRelativeFutureDate(
+  date: Date | string | null | undefined,
+  now: Date = new Date()
+): string {
+  const resolvedDate = resolveDate(date);
+  if (!resolvedDate) return '';
+
+  const diffDays = localDayDifference(resolvedDate, now);
+
+  if (diffDays === 0) return 'today';
+  if (diffDays === 1) return 'tomorrow';
+  if (diffDays > 1 && diffDays < 7) return `in ${diffDays} days`;
+
+  return formatShortDate(resolvedDate.toISOString());
+}
+
+export function formatRelativeAge(
+  date: Date | string | null | undefined,
+  now: Date = new Date()
+): string {
+  const resolvedDate = resolveDate(date);
+  if (!resolvedDate) return '';
+
+  const diffDays = Math.floor((now.getTime() - resolvedDate.getTime()) / MS_PER_DAY);
+
+  if (diffDays === 0) return 'Today';
+  if (diffDays === 1) return 'Yesterday';
+  if (diffDays < 7) return `${diffDays} days ago`;
+  if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+  if (diffDays < 365) return `${Math.floor(diffDays / 30)} months ago`;
+  return `${Math.floor(diffDays / 365)} years ago`;
+}
+
+export function formatRelativeScheduleDate(
+  date: Date | string | null | undefined,
+  now: Date = new Date()
+): string {
+  const resolvedDate = resolveDate(date);
+  if (!resolvedDate) return '';
+
+  const diffMs = resolvedDate.getTime() - now.getTime();
+  const diffDays = Math.round(diffMs / MS_PER_DAY);
+
+  if (diffDays === 0) {
+    const diffHours = Math.round(diffMs / (1000 * 60 * 60));
+    if (diffHours <= 0) return 'Today';
+    if (diffHours === 1) return 'in 1 hour';
+    return `in ${diffHours} hours`;
+  }
+  if (diffDays === 1) return 'Tomorrow';
+  if (diffDays === -1) return 'Yesterday';
+  if (diffDays < 0) return `${Math.abs(diffDays)} days ago`;
+  return `in ${diffDays} days`;
 }
 
 export function formatCompactNumber(num?: number | null): string {

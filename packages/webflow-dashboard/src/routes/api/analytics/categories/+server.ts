@@ -1,15 +1,10 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { getAirtableClient } from '$lib/server/airtable';
+import { marketplaceAnalyticsCacheHeaders } from '$lib/server/marketplace-cache';
 import { enrichCategoriesWithHistory } from '$lib/server/marketplace-history';
 import { requireTemplateAssetAccess } from '$lib/server/template-access';
 import { getSyncMetadata } from '$lib/utils/sync-schedule';
-
-const noCacheHeaders = {
-	'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
-	'Pragma': 'no-cache',
-	'Expires': '0'
-} as const;
 
 /**
  * API endpoint to fetch category performance data
@@ -120,7 +115,7 @@ export const GET: RequestHandler = async ({ locals, platform }) => {
 						staleSinceHours: syncMetadata.staleSinceHours
 					}
 				},
-				{ headers: noCacheHeaders }
+				{ headers: marketplaceAnalyticsCacheHeaders }
 			);
 	} catch (err) {
 		console.error('Categories API Error:', err);

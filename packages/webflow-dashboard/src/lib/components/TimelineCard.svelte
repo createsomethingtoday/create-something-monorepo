@@ -6,6 +6,7 @@
 	 * Submitted → In Review → Decision → Published/Rejected
 	 */
 	import type { Asset } from '$lib/server/airtable';
+	import { formatLongDate, formatRelativeAge } from '$lib/utils/format';
 	import DOMPurify from 'isomorphic-dompurify';
 	import { Card, CardHeader, CardTitle, CardContent } from './ui';
 	import {
@@ -37,35 +38,7 @@
 	// Format date for display
 	function formatDate(dateStr?: string): string {
 		if (!dateStr) return 'Pending';
-		try {
-			return new Date(dateStr).toLocaleDateString('en-US', {
-				month: 'short',
-				day: 'numeric',
-				year: 'numeric'
-			});
-		} catch {
-			return 'Invalid date';
-		}
-	}
-
-	// Format relative time (e.g., "5 days ago")
-	function formatRelativeTime(dateStr?: string): string {
-		if (!dateStr) return '';
-		try {
-			const date = new Date(dateStr);
-			const now = new Date();
-			const diffMs = now.getTime() - date.getTime();
-			const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-			
-			if (diffDays === 0) return 'Today';
-			if (diffDays === 1) return 'Yesterday';
-			if (diffDays < 7) return `${diffDays} days ago`;
-			if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
-			if (diffDays < 365) return `${Math.floor(diffDays / 30)} months ago`;
-			return `${Math.floor(diffDays / 365)} years ago`;
-		} catch {
-			return '';
-		}
+		return formatLongDate(dateStr) || 'Invalid date';
 	}
 
 	// Calculate days between two dates
@@ -98,7 +71,7 @@
 			label: 'Submitted',
 			date: asset.submittedDate,
 			status: asset.submittedDate ? 'completed' : 'pending',
-			description: asset.submittedDate ? formatRelativeTime(asset.submittedDate) : 'Not yet submitted'
+			description: asset.submittedDate ? formatRelativeAge(asset.submittedDate) : 'Not yet submitted'
 		});
 
 		// 2. In Review
@@ -109,7 +82,7 @@
 			label: 'In Review',
 			date: asset.latestReviewDate,
 			status: pastReview ? 'completed' : isInReview ? 'current' : 'pending',
-			description: isInReview ? 'Currently under review' : asset.latestReviewDate ? formatRelativeTime(asset.latestReviewDate) : undefined
+			description: isInReview ? 'Currently under review' : asset.latestReviewDate ? formatRelativeAge(asset.latestReviewDate) : undefined
 		});
 
 		// 3. Decision
@@ -120,7 +93,7 @@
 			label: isRejected ? 'Rejected' : 'Approved',
 			date: asset.decisionDate,
 			status: isRejected ? 'rejected' : hasDecision ? 'completed' : 'pending',
-			description: asset.decisionDate ? formatRelativeTime(asset.decisionDate) : undefined
+			description: asset.decisionDate ? formatRelativeAge(asset.decisionDate) : undefined
 		});
 
 		// 4. Published (only if not rejected)
@@ -133,7 +106,7 @@
 				label: 'Published',
 				date: publishDate,
 				status: isPublished ? 'completed' : 'pending',
-				description: publishDate ? formatRelativeTime(publishDate) : undefined
+				description: publishDate ? formatRelativeAge(publishDate) : undefined
 			});
 		}
 

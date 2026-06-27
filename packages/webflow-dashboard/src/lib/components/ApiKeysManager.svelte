@@ -11,6 +11,7 @@
     Dialog
   } from './ui';
   import { Plus, CheckCircle, Key, Trash2, BookOpen, Upload } from 'lucide-svelte';
+  import { formatLongDate } from '$lib/utils/format';
 
   interface ApiKey {
     keyId: string;
@@ -137,14 +138,6 @@
     }
   }
 
-  function formatDate(dateString: string): string {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-  }
-
   const activeKeys = $derived(apiKeys.filter((k) => k.status === 'Active'));
 </script>
 
@@ -200,7 +193,7 @@
           </div>
           <div>
             <span class="info-label">Expires:</span>
-            <span class="info-value">{formatDate(generatedKey.expiresAt)}</span>
+            <span class="info-value">{formatLongDate(generatedKey.expiresAt)}</span>
           </div>
         </div>
         <Button variant="secondary" onclick={() => (generatedKey = null)} class="dismiss-btn">
@@ -314,12 +307,12 @@
                   <div class="key-meta">
                     <div class="meta-item">
                       <span class="meta-label">Created</span>
-                      <span class="meta-value">{formatDate(key.createdAt)}</span>
+                      <span class="meta-value">{formatLongDate(key.createdAt)}</span>
                     </div>
                     <div class="meta-item">
                       <span class="meta-label">Last Used</span>
                       <span class="meta-value"
-                        >{key.lastUsed ? formatDate(key.lastUsed) : 'Never'}</span
+                        >{key.lastUsed ? formatLongDate(key.lastUsed) : 'Never'}</span
                       >
                     </div>
                     <div class="meta-item">
