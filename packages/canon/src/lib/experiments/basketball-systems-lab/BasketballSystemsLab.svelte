@@ -167,6 +167,18 @@
 			customSystems: uploadedSystems
 		})
 	);
+	const unsteeredMatch = $derived(
+		runSystemMatch({
+			mode,
+			systemKey: selectedSystem,
+			opponentKey: opponentSystem,
+			environment: selectedEnvironment,
+			years: horizonYears,
+			steeringYear,
+			steeringPhase,
+			customSystems: uploadedSystems
+		})
+	);
 	const customEntrantsInRun = $derived(
 		match.systems.filter((result) => uploadedSystemKeys.has(result.system.key))
 	);
@@ -235,6 +247,43 @@
 				: `${viewedLeader.result.system.name} keeps its native policy.`
 			: 'Versus mode keeps both Systems autonomous after setup.'
 	);
+	const unsteeredPrimary = $derived(
+		unsteeredMatch.systems.find((result) => result.system.key === selectedSystem) ??
+			unsteeredMatch.winner
+	);
+	const steeredPrimary = $derived(
+		match.systems.find((result) => result.system.key === selectedSystem) ?? match.winner
+	);
+	const steeringScoreSwing = $derived(
+		Number((steeredPrimary.score - unsteeredPrimary.score).toFixed(1))
+	);
+	const steeringGateSwing = $derived(
+		Number(
+			(
+				steeredPrimary.validationImpact.adjustment -
+				unsteeredPrimary.validationImpact.adjustment
+			).toFixed(1)
+		)
+	);
+	const steeringComparison = $derived([
+		{
+			label: 'Original hold',
+			value: unsteeredPrimary.score.toFixed(1),
+			detail: `${unsteeredPrimary.system.name} keeps ${unsteeredPrimary.timeline[0]?.policy.label ?? 'native policy'}.`
+		},
+		{
+			label: activeSteeringPolicy ? 'Steered finish' : 'Current finish',
+			value: steeredPrimary.score.toFixed(1),
+			detail: activeSteeringPolicy
+				? `${activeSteeringPolicy.label} from year ${steeringYear}.`
+				: 'No active steering policy.'
+		},
+		{
+			label: 'Net swing',
+			value: formatDelta(steeringScoreSwing),
+			detail: `${formatDelta(steeringGateSwing)} gate movement included.`
+		}
+	]);
 	const scoutingRequirements = $derived(
 		match.validation.requirements.filter((requirement) =>
 			scoutingRequirementKeys.has(requirement.key)
@@ -1076,6 +1125,16 @@
 								<span>{phase.label}</span>
 								<small>{Math.round(phase.impact * 100)}%</small>
 							</button>
+						{/each}
+					</div>
+
+					<div class="ona-system-steering-comparison" aria-label="Steering comparison">
+						{#each steeringComparison as comparison}
+							<article>
+								<span>{comparison.label}</span>
+								<strong>{comparison.value}</strong>
+								<small>{comparison.detail}</small>
+							</article>
 						{/each}
 					</div>
 				{:else}
