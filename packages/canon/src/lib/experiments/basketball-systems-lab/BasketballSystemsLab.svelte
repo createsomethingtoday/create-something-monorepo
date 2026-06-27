@@ -124,6 +124,15 @@
 		detail: string;
 		active: boolean;
 	};
+	type DecisionMoment = {
+		year: number;
+		label: string;
+		value: string;
+		detail: string;
+		action: string;
+		tone: 'changed' | 'coach' | 'held';
+		active: boolean;
+	};
 	type VersusControlMode = 'autonomous' | 'coach';
 
 	const edges = [
@@ -459,6 +468,12 @@
 			};
 		})
 	);
+	const activeYearSnapshot = $derived(
+		raceYearSnapshots.find((snapshot) => snapshot.year === viewedYear) ?? raceYearSnapshots[0]
+	);
+	const previousYearStandings = $derived(viewedYear > 1 ? standingsForYear(viewedYear - 1) : []);
+	const previousLeaderName = $derived(previousYearStandings[0]?.result.system.name ?? null);
+	const leadChangedThisYear = $derived(Boolean(activeYearSnapshot?.changed));
 	const raceMomentumSummary = $derived(
 		viewedRunnerUp
 			? `${viewedLeader.result.system.name} leads ${viewedRunnerUp.result.system.name} by ${viewedLeaderGap.toFixed(1)} in year ${viewedYear}.`
@@ -468,6 +483,76 @@
 		momentumLeader
 			? `${momentumLeader.name} has the strongest current-year movement at ${formatDelta(momentumLeader.delta)}.`
 			: 'Advance the run to see which System is gaining.'
+	);
+	const activeDecisionMoment = $derived<DecisionMoment>({
+		year: viewedYear,
+		label: leadChangedThisYear ? 'Lead changed' : canSteer ? 'Steering window' : 'Leader held',
+		value:
+			leadChangedThisYear && previousLeaderName
+				? `${previousLeaderName} -> ${viewedLeader.result.system.name}`
+				: canSteer
+					? steeringRecommendation.actionLabel
+					: `${viewedLeader.result.system.name} holds`,
+		detail:
+			leadChangedThisYear && momentumLeader
+				? `${momentumLeader.name} made the strongest year move at ${formatDelta(momentumLeader.delta)}.`
+				: viewedYear === 1
+					? `${viewedLeader.result.system.name} opened the run with ${viewedRunnerUp ? `${viewedRunnerUp.result.system.name} close behind` : 'no runner-up loaded'}.`
+				: canSteer
+					? `${steeringRecommendation.label} projects ${formatDelta(steeringRecommendation.swing)} from this point.`
+					: raceMomentumDetail,
+		action: canSteer ? `Coach from year ${viewedYear}` : viewedRunnerUp ? `Protect ${viewedLeaderGap.toFixed(1)} lead` : 'Advance the run',
+		tone: leadChangedThisYear ? 'changed' : canSteer ? 'coach' : 'held',
+		active: true
+	});
+	const decisionMoments = $derived<DecisionMoment[]>(
+		raceYearSnapshots.map((snapshot) => {
+			const standings = standingsForYear(snapshot.year);
+			const previousStandings = snapshot.year > 1 ? standingsForYear(snapshot.year - 1) : [];
+			const leader = standings[0];
+			const runnerUp = standings[1] ?? null;
+			const previousLeader = previousStandings[0] ?? null;
+			const strongestMove =
+				standings
+					.map((standing) => {
+						const previousEntry =
+							previousStandings.find(
+								(candidate) => candidate.result.system.key === standing.result.system.key
+							)?.entry ?? standing.entry;
+
+						return {
+							standing,
+							delta: Number((standing.entry.score - previousEntry.score).toFixed(1))
+						};
+					})
+					.sort((left, right) => right.delta - left.delta)[0] ?? null;
+			const isOpeningYear = snapshot.year === 1;
+			const isCoachWindow = canSteer && snapshot.year === steeringYear;
+			const label = isOpeningYear
+				? 'Opening state'
+				: snapshot.changed
+					? 'Lead changed'
+					: isCoachWindow
+						? 'Coach window'
+						: 'Compounded';
+			const value =
+				snapshot.changed && previousLeader && leader
+					? `${previousLeader.result.system.name} -> ${leader.result.system.name}`
+					: leader?.result.system.name ?? snapshot.leader;
+			const detail = strongestMove
+				? `${strongestMove.standing.result.system.name} moved ${formatDelta(strongestMove.delta)}; ${runnerUp ? `${runnerUp.result.system.name} trails by ${snapshot.margin.toFixed(1)}.` : 'no runner-up is loaded.'}`
+				: snapshot.detail;
+
+			return {
+				year: snapshot.year,
+				label,
+				value,
+				detail,
+				action: isCoachWindow ? 'Active steer year' : `View year ${snapshot.year}`,
+				tone: snapshot.changed ? 'changed' : isCoachWindow ? 'coach' : 'held',
+				active: snapshot.active
+			};
+		})
 	);
 	const gameTurnLabel = $derived(
 		isSolo
@@ -825,6 +910,15 @@
 			result.timeline.at(-1) ??
 			result.timeline[0]
 		);
+	}
+
+	function standingsForYear(year: number): { result: SystemResult; entry: SystemTimelineEntry }[] {
+		return match.systems
+			.map((result) => ({
+				result,
+				entry: timelineEntryFor(result, year)
+			}))
+			.sort((left, right) => right.entry.score - left.entry.score);
 	}
 
 	function importSystems(): void {
@@ -2053,6 +2147,30 @@
 							<strong>{raceMomentumSummary}</strong>
 						</div>
 						<p>{raceMomentumDetail}</p>
+					</div>
+					<div class="ona-system-decision-moments" aria-label="Decision swing moments">
+						<article class="ona-system-decision-moment-feature" data-tone={activeDecisionMoment.tone}>
+							<span>Year {activeDecisionMoment.year} swing / {activeDecisionMoment.label}</span>
+							<strong>{activeDecisionMoment.value}</strong>
+							<p>{activeDecisionMoment.detail}</p>
+							<small>{activeDecisionMoment.action}</small>
+						</article>
+						<div class="ona-system-decision-moment-list">
+							{#each decisionMoments as moment}
+								<button
+									type="button"
+									class:active={moment.active}
+									data-tone={moment.tone}
+									aria-pressed={moment.active}
+									onclick={() => setRaceMomentumYear(moment.year)}
+								>
+									<span>Year {moment.year}</span>
+									<strong>{moment.label}</strong>
+									<p>{moment.value}</p>
+									<small>{moment.action}</small>
+								</button>
+							{/each}
+						</div>
 					</div>
 					<div class="ona-system-race-momentum-grid">
 						{#each raceMomentum as item}
