@@ -2074,6 +2074,114 @@
     accent-color: var(--ona-system-ink);
   }
 
+  .ona-system-steering-cockpit {
+    display: grid;
+    gap: 12px;
+    border: 1px solid var(--ona-system-line);
+    border-radius: var(--radius-clear-sm);
+    margin-bottom: 10px;
+    padding: 12px;
+    background: white;
+  }
+
+  .ona-system-steering-cockpit-header {
+    display: grid;
+    grid-template-columns: minmax(0, 0.82fr) minmax(260px, 1.18fr);
+    gap: 12px;
+    align-items: start;
+  }
+
+  .ona-system-steering-cockpit-header > div {
+    display: grid;
+    gap: 6px;
+  }
+
+  .ona-system-steering-cockpit-header strong {
+    color: var(--ona-system-ink);
+    font-size: 1.05rem;
+    line-height: 1.08;
+  }
+
+  .ona-system-steering-cockpit-header p,
+  .ona-system-steering-locked span {
+    margin: 0;
+    color: var(--ona-system-muted);
+    font-size: 0.78rem;
+    line-height: 1.42;
+  }
+
+  .ona-system-steering-actions {
+    display: grid;
+    grid-template-columns: minmax(120px, 1.1fr) minmax(96px, 0.75fr) repeat(3, minmax(112px, 1fr));
+    gap: 8px;
+  }
+
+  .ona-system-steering-season {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .ona-system-steering-actions button,
+  .ona-system-steering-season button {
+    min-height: 54px;
+    display: grid;
+    gap: 4px;
+    align-content: center;
+    border: 1px solid var(--ona-system-line);
+    border-radius: var(--radius-clear-sm);
+    padding: 9px 10px;
+    background: #fff;
+    color: var(--ona-system-ink);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .ona-system-steering-actions button.active,
+  .ona-system-steering-season button.active {
+    border-color: var(--ona-system-ink);
+    background: var(--ona-system-ink);
+    color: #fff;
+  }
+
+  .ona-system-steering-actions span,
+  .ona-system-steering-season span {
+    overflow-wrap: anywhere;
+    font-size: 0.76rem;
+    font-weight: 800;
+    line-height: 1.08;
+  }
+
+  .ona-system-steering-actions small,
+  .ona-system-steering-season small {
+    color: var(--ona-system-muted);
+    font-size: 0.65rem;
+    font-weight: 700;
+    line-height: 1.1;
+    text-transform: uppercase;
+    letter-spacing: 0;
+  }
+
+  .ona-system-steering-actions button.active small,
+  .ona-system-steering-season button.active small {
+    color: rgba(255, 255, 255, 0.72);
+  }
+
+  .ona-system-steering-locked {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid var(--ona-system-line);
+    padding-top: 10px;
+  }
+
+  .ona-system-steering-locked strong {
+    font-size: 0.86rem;
+    line-height: 1.1;
+  }
+
   .ona-system-gate-impact {
     display: grid;
     grid-template-columns: minmax(0, 0.9fr) minmax(220px, 0.7fr);
@@ -2583,11 +2691,16 @@
 
     .ona-system-rulebook,
     .ona-system-playback,
+    .ona-system-steering-cockpit-header,
     .ona-system-gate-impact,
     .ona-system-gate-impact-list,
     .ona-system-challenge-list,
     .ona-system-score-explain > div:last-child {
       grid-template-columns: 1fr;
+    }
+
+    .ona-system-steering-actions {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     .ona-system-challenge-header {
@@ -2630,6 +2743,8 @@
     .ona-system-scoreboard,
     .ona-system-gate-impact > div:nth-child(2),
     .ona-system-playback-controls,
+    .ona-system-steering-actions,
+    .ona-system-steering-season,
     .ona-system-challenge-list article > div,
     .ona-system-timeline article {
       grid-template-columns: 1fr;

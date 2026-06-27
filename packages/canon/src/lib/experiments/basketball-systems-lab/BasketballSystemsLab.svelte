@@ -210,16 +210,37 @@
 			? `${activeGateImpacts.length} active gate${activeGateImpacts.length === 1 ? '' : 's'}`
 			: 'Clean run'
 	);
+	const activeSteeringPolicy = $derived(
+		steeringPolicy === 'none'
+			? null
+			: (policies.find((policy) => policy.key === steeringPolicy) ?? null)
+	);
+	const selectedSteeringPhase = $derived(
+		seasonPhases.find((phase) => phase.key === steeringPhase) ?? seasonPhases[1]
+	);
+	const steeringPlanLabel = $derived(
+		canSteer
+			? activeSteeringPolicy
+				? `Year ${steeringYear}, ${selectedSteeringPhase.label}`
+				: 'Original System'
+			: 'Autonomous race'
+	);
+	const steeringReceipt = $derived(
+		canSteer
+			? activeSteeringPolicy
+				? `${activeSteeringPolicy.label} starts in year ${steeringYear}; first-season force ${Math.round(
+						selectedSteeringPhase.impact * 100
+					)}%.`
+				: `${viewedLeader.result.system.name} keeps its native policy.`
+			: 'Versus mode keeps both Systems autonomous after setup.'
+	);
 	const validationCounts = $derived(
 		match.validation.requirements.reduce(
 			(counts, requirement) => ({
 				...counts,
 				[requirement.status]: counts[requirement.status] + 1
 			}),
-			{ pass: 0, watch: 0, fail: 0, deferred: 0 } satisfies Record<
-				GameRequirementSeverity,
-				number
-			>
+			{ pass: 0, watch: 0, fail: 0, deferred: 0 } satisfies Record<GameRequirementSeverity, number>
 		)
 	);
 	const surfacedRequirements = $derived([
@@ -252,6 +273,25 @@
 
 	function setViewedYear(year: number): void {
 		viewedYear = Math.min(Math.max(Math.round(year), 1), horizonYears);
+	}
+
+	function steerFromViewedYear(policyKey = steeringPolicy): void {
+		if (!canSteer) return;
+
+		steeringYear = viewedYear;
+		if (policyKey === 'none') {
+			steeringPolicy = viewedLeader.result.system.policyKey;
+			return;
+		}
+
+		steeringPolicy = policyKey;
+	}
+
+	function setSteeringPhase(phaseKey: SeasonPhaseKey): void {
+		steeringPhase = phaseKey;
+		if (canSteer) {
+			steeringYear = viewedYear;
+		}
 	}
 
 	function formatDelta(delta: number): string {
@@ -320,7 +360,8 @@
 		const builtSystem = result.systems.at(-1);
 		if (builtSystem) {
 			selectedSystem = builtSystem.key;
-			opponentSystem = result.systems.find((system) => system.key !== builtSystem.key)?.key ?? 'recovery';
+			opponentSystem =
+				result.systems.find((system) => system.key !== builtSystem.key)?.key ?? 'recovery';
 		}
 
 		mode = result.systems.length > 1 ? 'versus' : mode;
@@ -384,8 +425,13 @@
 		value: number,
 		weights: Record<keyof SystemScoreWeights, number>
 	): number {
-		const otherKeys = builderWeightFields.map((field) => field.key).filter((fieldKey) => fieldKey !== key);
-		const otherMinimum = otherKeys.reduce((total, fieldKey) => total + builderMinimumWeights[fieldKey], 0);
+		const otherKeys = builderWeightFields
+			.map((field) => field.key)
+			.filter((fieldKey) => fieldKey !== key);
+		const otherMinimum = otherKeys.reduce(
+			(total, fieldKey) => total + builderMinimumWeights[fieldKey],
+			0
+		);
 		const otherMaximum = otherKeys.length * builderMaximumWeight;
 		const feasibleMinimum = Math.max(builderMinimumWeights[key], 100 - otherMaximum);
 		const feasibleMaximum = Math.min(builderMaximumWeight, 100 - otherMinimum);
@@ -427,7 +473,8 @@
 			name: builderName.trim(),
 			thesis: builderThesis.trim(),
 			stance: 'Built System',
-			constraint: 'The System must keep owner margin and resilience visible while pursuing its priority.',
+			constraint:
+				'The System must keep owner margin and resilience visible while pursuing its priority.',
 			adaptation: `Runs ${policy.label} as its native policy and lets the requirement gates expose the tradeoffs.`,
 			policyKey: builderPolicy,
 			weights: decimalWeights(builderWeights)
@@ -548,7 +595,10 @@
 				<p>{modeRule}</p>
 			</div>
 
-			<div class="ona-system-competition-setup" data-state={uploadedSystems.length > 0 ? 'custom' : 'stock'}>
+			<div
+				class="ona-system-competition-setup"
+				data-state={uploadedSystems.length > 0 ? 'custom' : 'stock'}
+			>
 				<div class="ona-system-timeline-header">
 					<Users size={17} strokeWidth={1.8} />
 					<span>Custom competition</span>
@@ -559,7 +609,9 @@
 				{#if uploadedSystems.length > 0}
 					<div class="ona-system-competition-roster" aria-label="Loaded custom Systems">
 						{#each uploadedSystems.slice(0, 3) as system}
-							<article class:active={system.key === selectedSystem || system.key === opponentSystem}>
+							<article
+								class:active={system.key === selectedSystem || system.key === opponentSystem}
+							>
 								<span>{policies.find((policy) => policy.key === system.policyKey)?.label}</span>
 								<strong>{system.name}</strong>
 							</article>
@@ -570,8 +622,16 @@
 				{#if mode === 'versus' && customEntrantsInRun.length > 0}
 					<div class="ona-system-competition-proof">
 						<span>In this race</span>
-						<strong>{customEntrantsInRun.length} custom entrant{customEntrantsInRun.length === 1 ? '' : 's'}</strong>
-						<p>Final winner after gates: {match.winner.system.name} at {match.winner.score.toFixed(1)}.</p>
+						<strong
+							>{customEntrantsInRun.length} custom entrant{customEntrantsInRun.length === 1
+								? ''
+								: 's'}</strong
+						>
+						<p>
+							Final winner after gates: {match.winner.system.name} at {match.winner.score.toFixed(
+								1
+							)}.
+						</p>
 					</div>
 				{/if}
 
@@ -584,7 +644,11 @@
 				</div>
 			</div>
 
-			<div class="ona-system-objective-brief" data-status={match.challenge.status} aria-label="Current objective">
+			<div
+				class="ona-system-objective-brief"
+				data-status={match.challenge.status}
+				aria-label="Current objective"
+			>
 				<div>
 					<span>{canSteer ? 'Objective' : 'Race rule'}</span>
 					<strong>{match.challenge.label}</strong>
@@ -613,7 +677,10 @@
 				<div>
 					<span>Season run</span>
 					<strong>{viewedLeader.result.system.name}</strong>
-					<p>{selectedEnvironment.name}; {horizonYears} years; {activeGateRiskLabel}; {match.challenge.label}.</p>
+					<p>
+						{selectedEnvironment.name}; {horizonYears} years; {activeGateRiskLabel}; {match
+							.challenge.label}.
+					</p>
 				</div>
 				<div class="ona-system-run-lanes">
 					{#each runScoreLanes as lane}
@@ -721,7 +788,11 @@
 			<details class="ona-system-advanced" bind:open={systemWorkbenchOpen}>
 				<summary>
 					<span>Bring a System</span>
-					<strong>{uploadedSystems.length > 0 ? `${uploadedSystems.length} loaded` : 'Builder and upload'}</strong>
+					<strong
+						>{uploadedSystems.length > 0
+							? `${uploadedSystems.length} loaded`
+							: 'Builder and upload'}</strong
+					>
 				</summary>
 
 				<div class="ona-system-builder">
@@ -743,7 +814,8 @@
 					</label>
 					<label>
 						<span>Thesis</span>
-						<textarea bind:value={builderThesis} aria-label="Builder System thesis" maxlength="180"></textarea>
+						<textarea bind:value={builderThesis} aria-label="Builder System thesis" maxlength="180"
+						></textarea>
 					</label>
 					<div class="ona-system-builder-weights" aria-label="Builder scoring weights">
 						{#each builderWeightFields as field}
@@ -790,7 +862,10 @@
 						<button type="button" onclick={importSystems}>Import Systems</button>
 						<button type="button" onclick={loadSampleSystem}>Load sample</button>
 					</div>
-					<div class="ona-system-upload-status" data-state={uploadedSystems.length > 0 ? 'accepted' : 'idle'}>
+					<div
+						class="ona-system-upload-status"
+						data-state={uploadedSystems.length > 0 ? 'accepted' : 'idle'}
+					>
 						<strong>{uploadMessage}</strong>
 						{#if uploadIssues.length > 0}
 							<ul>
@@ -833,7 +908,11 @@
 				</article>
 			</div>
 
-			<div class="ona-system-challenge" data-status={match.challenge.status} aria-label="Run challenge">
+			<div
+				class="ona-system-challenge"
+				data-status={match.challenge.status}
+				aria-label="Run challenge"
+			>
 				<div class="ona-system-challenge-header">
 					<div>
 						<div class="ona-system-timeline-header">
@@ -869,7 +948,11 @@
 					<p>{activeEntry.receipt}</p>
 				</div>
 				<div class="ona-system-playback-controls">
-					<button type="button" disabled={viewedYear === 1} onclick={() => setViewedYear(viewedYear - 1)}>
+					<button
+						type="button"
+						disabled={viewedYear === 1}
+						onclick={() => setViewedYear(viewedYear - 1)}
+					>
 						Previous
 					</button>
 					<input
@@ -889,6 +972,74 @@
 						Next
 					</button>
 				</div>
+			</div>
+
+			<div class="ona-system-steering-cockpit" aria-label="Live steering cockpit">
+				<div class="ona-system-steering-cockpit-header">
+					<div>
+						<div class="ona-system-timeline-header">
+							<SlidersHorizontal size={17} strokeWidth={1.8} />
+							<span>{canSteer ? 'Live steering' : 'Autonomous run'}</span>
+						</div>
+						<strong>{canSteer ? `Steer from year ${viewedYear}` : 'Versus race is locked'}</strong>
+					</div>
+					<p>{steeringReceipt}</p>
+				</div>
+
+				{#if canSteer}
+					<div class="ona-system-steering-actions" aria-label="Steering policy choices">
+						<button
+							type="button"
+							class:active={steeringYear === viewedYear}
+							onclick={() => steerFromViewedYear()}
+						>
+							<span>Use year {viewedYear}</span>
+							<small>{steeringPlanLabel}</small>
+						</button>
+						<button
+							type="button"
+							class:active={steeringPolicy === 'none'}
+							aria-pressed={steeringPolicy === 'none'}
+							onclick={() => {
+								steeringYear = viewedYear;
+								steeringPolicy = 'none';
+							}}
+						>
+							<span>Original</span>
+							<small>No steer</small>
+						</button>
+						{#each policies as policy}
+							<button
+								type="button"
+								class:active={steeringPolicy === policy.key && steeringYear === viewedYear}
+								aria-pressed={steeringPolicy === policy.key && steeringYear === viewedYear}
+								onclick={() => steerFromViewedYear(policy.key)}
+							>
+								<span>{policy.label}</span>
+								<small>{policy.score}</small>
+							</button>
+						{/each}
+					</div>
+
+					<div class="ona-system-steering-season" aria-label="Steering season window">
+						{#each seasonPhases as phase}
+							<button
+								type="button"
+								class:active={steeringPhase === phase.key}
+								aria-pressed={steeringPhase === phase.key}
+								onclick={() => setSteeringPhase(phase.key)}
+							>
+								<span>{phase.label}</span>
+								<small>{Math.round(phase.impact * 100)}%</small>
+							</button>
+						{/each}
+					</div>
+				{:else}
+					<div class="ona-system-steering-locked">
+						<strong>{match.winner.system.name}</strong>
+						<span>Winner is decided by final valid score after requirement gates.</span>
+					</div>
+				{/if}
 			</div>
 
 			<div class="ona-system-scoreboard" aria-label="System scores">
