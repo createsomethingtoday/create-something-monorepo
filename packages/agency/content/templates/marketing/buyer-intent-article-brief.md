@@ -84,7 +84,7 @@ not use vendor homepage screenshots as filler.
 
 - Visual source folder:
 - Atlas canvas source: existing starter map | new graph artifact | not applicable
-- Canvas renderer: static-story | react-flow | sigma | cosmograph | not applicable
+- Canvas renderer: static-story | atlas | sigma | cosmograph | not applicable
 - Canvas must show: owner | workflow artifact | automation | AI task | human judgment | stop boundary | receipt
 - Hero visual:
 - Screenshot targets:
