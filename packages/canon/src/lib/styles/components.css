@@ -2466,7 +2466,7 @@
 
   .ona-system-turn-recap {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 8px;
     border: 1px solid var(--ona-system-line);
     border-left: 3px solid var(--ona-system-ink);
@@ -2684,7 +2684,7 @@
 
   .ona-system-final-outcome-lanes {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
     gap: 8px;
   }
 
