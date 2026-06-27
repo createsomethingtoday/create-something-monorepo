@@ -125,6 +125,16 @@
 		value: string;
 		detail: string;
 	};
+	type FieldStandingReceipt = {
+		key: SystemId;
+		rank: number;
+		name: string;
+		score: string;
+		gateAdjustment: string;
+		decisiveTurn: string;
+		detail: string;
+		active: boolean;
+	};
 	type RaceHistoryItem = {
 		years: number;
 		winner: string;
@@ -787,6 +797,22 @@
 			detail: finalDecisiveTurn.detail
 		}
 	]);
+	const finalFieldStandings = $derived<FieldStandingReceipt[]>(
+		match.systems.map((result) => {
+			const receipt = getDecisiveTurnReceipt(result);
+
+			return {
+				key: result.system.key,
+				rank: result.rank,
+				name: result.system.name,
+				score: result.score.toFixed(1),
+				gateAdjustment: formatDelta(result.validationImpact.adjustment),
+				decisiveTurn: receipt.value,
+				detail: `${receipt.detail} Raw ${result.rawScore.toFixed(1)} became ${result.score.toFixed(1)} after gates.`,
+				active: result.system.key === match.winner.system.key
+			};
+		})
+	);
 	const raceHistory = $derived<RaceHistoryItem[]>(
 		horizonOptions.map((years) => {
 			const horizonMatch = runSystemMatch({
@@ -2228,6 +2254,39 @@
 								<span>{lane.label}</span>
 								<strong>{lane.value}</strong>
 								<p>{lane.detail}</p>
+							</article>
+						{/each}
+					</div>
+				</div>
+			{/if}
+
+			{#if mode === 'versus' && finalOutcomeVisible}
+				<div class="ona-system-field-standings" aria-label="Final field standings">
+					<div class="ona-system-field-standings-header">
+						<div>
+							<div class="ona-system-timeline-header">
+								<Trophy size={17} strokeWidth={1.8} />
+								<span>Final standings</span>
+							</div>
+							<strong>{match.systems.length} Systems ranked after gates</strong>
+						</div>
+						<p>
+							Every entrant is scored by final valid score. Gate adjustments and decisive turns
+							explain why the field finished in this order.
+						</p>
+					</div>
+					<div class="ona-system-field-standings-list">
+						{#each finalFieldStandings as standing}
+							<article class:active={standing.active}>
+								<div>
+									<span>#{standing.rank} {standing.name}</span>
+									<strong>{standing.score}</strong>
+								</div>
+								<div>
+									<small>Gate {standing.gateAdjustment}</small>
+									<small>Decisive {standing.decisiveTurn}</small>
+								</div>
+								<p>{standing.detail}</p>
 							</article>
 						{/each}
 					</div>

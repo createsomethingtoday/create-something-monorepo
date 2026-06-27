@@ -2714,6 +2714,98 @@
     line-height: 1;
   }
 
+  .ona-system-field-standings {
+    display: grid;
+    gap: 10px;
+    border: 1px solid var(--ona-system-line);
+    border-radius: var(--radius-clear-sm);
+    margin-bottom: 10px;
+    padding: 12px;
+    background: white;
+  }
+
+  .ona-system-field-standings-header {
+    display: grid;
+    grid-template-columns: minmax(0, 0.78fr) minmax(220px, 1fr);
+    gap: 12px;
+    align-items: start;
+  }
+
+  .ona-system-field-standings-header > div {
+    display: grid;
+    gap: 6px;
+  }
+
+  .ona-system-field-standings-header strong {
+    color: var(--ona-system-ink);
+    font-size: 1.04rem;
+    line-height: 1.08;
+  }
+
+  .ona-system-field-standings-header p {
+    margin: 0;
+    color: var(--ona-system-muted);
+    font-size: 0.74rem;
+    font-weight: 700;
+    line-height: 1.34;
+  }
+
+  .ona-system-field-standings-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 8px;
+  }
+
+  .ona-system-field-standings-list article {
+    min-height: 142px;
+    display: grid;
+    align-content: space-between;
+    gap: 8px;
+    border: 1px solid var(--ona-system-line);
+    border-radius: var(--radius-clear-sm);
+    padding: 10px;
+    background: color-mix(in srgb, white 88%, var(--ona-system-surface));
+  }
+
+  .ona-system-field-standings-list article.active {
+    border-left: 3px solid var(--ona-system-green);
+  }
+
+  .ona-system-field-standings-list article > div {
+    display: grid;
+    gap: 4px;
+  }
+
+  .ona-system-field-standings-list article > div:first-child {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+    align-items: baseline;
+  }
+
+  .ona-system-field-standings-list span,
+  .ona-system-field-standings-list small {
+    color: var(--ona-system-muted);
+    font-size: 0.66rem;
+    font-weight: 800;
+    line-height: 1;
+    text-transform: uppercase;
+    letter-spacing: 0;
+  }
+
+  .ona-system-field-standings-list strong {
+    color: var(--ona-system-ink);
+    font-size: 1.18rem;
+    line-height: 1;
+  }
+
+  .ona-system-field-standings-list p {
+    margin: 0;
+    color: var(--ona-system-muted);
+    font-size: 0.7rem;
+    font-weight: 700;
+    line-height: 1.28;
+  }
+
   .ona-system-steering-cockpit {
     display: grid;
     gap: 12px;
@@ -3955,6 +4047,7 @@
     .ona-system-turn-recap,
     .ona-system-compounding-trail-header,
     .ona-system-final-outcome-header,
+    .ona-system-field-standings-header,
     .ona-system-steering-cockpit-header,
     .ona-system-next-turn,
     .ona-system-race-history-header,
@@ -4031,6 +4124,7 @@
     .ona-system-compounding-trail-list,
     .ona-system-final-outcome-header,
     .ona-system-final-outcome-lanes,
+    .ona-system-field-standings-header,
     .ona-system-steering-actions,
     .ona-system-steering-season,
     .ona-system-steering-previews-header,
