@@ -77,6 +77,17 @@
 		detail: string;
 		actionLabel: string;
 	};
+	type SteeringPreview = {
+		policyKey: PolicyKey;
+		label: string;
+		score: number;
+		scoreLabel: string;
+		swing: number;
+		gateSwing: number;
+		detail: string;
+		active: boolean;
+		recommended: boolean;
+	};
 	type TurnRecapLane = {
 		label: string;
 		value: string;
@@ -440,6 +451,7 @@
 			(steeringRecommendation.policyKey === 'none' ||
 				steeringPhase === steeringRecommendation.phaseKey)
 	);
+	const steeringPreviews = $derived<SteeringPreview[]>(getSteeringPreviews());
 	const viewedRunnerUp = $derived(
 		viewedStandings.find(
 			(standing) => standing.result.system.key !== viewedLeader.result.system.key
@@ -895,6 +907,13 @@
 		steeringPolicy = steeringRecommendation.policyKey;
 	}
 
+	function applySteeringPreview(preview: SteeringPreview): void {
+		if (!canSteer) return;
+
+		steeringYear = viewedYear;
+		steeringPolicy = preview.policyKey;
+	}
+
 	function formatDelta(delta: number): string {
 		return `${delta >= 0 ? '+' : ''}${delta.toFixed(1)}`;
 	}
@@ -942,6 +961,47 @@
 		);
 
 		return [original, ...candidates].sort((left, right) => right.score - left.score)[0] ?? original;
+	}
+
+	function getSteeringPreviews(): SteeringPreview[] {
+		const previews = policies.map((policy) => {
+			const previewMatch = runSystemMatch({
+				mode,
+				systemKey: selectedSystem,
+				opponentKey: opponentSystem,
+				environment: selectedEnvironment,
+				years: horizonYears,
+				steeringYear: viewedYear,
+				steeringPhase,
+				steeringPolicyKey: policy.key,
+				customSystems: uploadedSystems
+			});
+			const result =
+				previewMatch.systems.find((candidate) => candidate.system.key === selectedSystem) ??
+				previewMatch.winner;
+			const swing = Number((result.score - unsteeredPrimary.score).toFixed(1));
+			const gateSwing = Number(
+				(result.validationImpact.adjustment - unsteeredPrimary.validationImpact.adjustment).toFixed(1)
+			);
+
+			return {
+				policyKey: policy.key,
+				label: policy.label,
+				score: result.score,
+				scoreLabel: result.score.toFixed(1),
+				swing,
+				gateSwing,
+				detail: `${formatDelta(swing)} score; ${formatDelta(gateSwing)} gate movement from year ${viewedYear}.`,
+				active: steeringPolicy === policy.key && steeringYear === viewedYear,
+				recommended: false
+			} satisfies SteeringPreview;
+		});
+		const bestScore = Math.max(...previews.map((preview) => preview.score));
+
+		return previews.map((preview) => ({
+			...preview,
+			recommended: preview.score === bestScore
+		}));
 	}
 
 	function timelineEntryFor(result: SystemResult, year: number): SystemTimelineEntry {
@@ -2122,6 +2182,31 @@
 								<small>{Math.round(phase.impact * 100)}%</small>
 							</button>
 						{/each}
+					</div>
+
+					<div class="ona-system-steering-previews" aria-label="Steering previews">
+						<div class="ona-system-steering-previews-header">
+							<span>Preview before steering</span>
+							<strong>{selectedSteeringPhase.label} from year {viewedYear}</strong>
+						</div>
+						<div class="ona-system-steering-preview-grid">
+							{#each steeringPreviews as preview}
+								<button
+									type="button"
+									class:active={preview.active}
+									data-recommended={preview.recommended}
+									aria-pressed={preview.active}
+									onclick={() => applySteeringPreview(preview)}
+								>
+									<div>
+										<span>{preview.label}</span>
+										<small>{preview.recommended ? 'Best preview' : 'Projected'}</small>
+									</div>
+									<strong>{preview.scoreLabel}</strong>
+									<p>{preview.detail}</p>
+								</button>
+							{/each}
+						</div>
 					</div>
 
 					<div class="ona-system-steering-comparison" aria-label="Steering comparison">
