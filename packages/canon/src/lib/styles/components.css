@@ -2246,8 +2246,39 @@
     gap: 8px;
   }
 
+  .ona-system-live-standings {
+    display: grid;
+    gap: 10px;
+    border: 1px solid var(--ona-system-line);
+    border-left: 3px solid var(--ona-system-blue);
+    border-radius: var(--radius-clear-sm);
+    margin-bottom: 10px;
+    padding: 12px;
+    background: color-mix(in srgb, white 92%, var(--ona-system-surface));
+  }
+
+  .ona-system-live-standings-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(220px, 0.7fr);
+    gap: 14px;
+    align-items: start;
+  }
+
+  .ona-system-live-standings-header > div {
+    display: grid;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .ona-system-live-standings-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 8px;
+  }
+
   .ona-system-rulebook article,
   .ona-system-kickoff-grid article,
+  .ona-system-live-standings-list article,
   .ona-system-challenge,
   .ona-system-gate-impact,
   .ona-system-score-explain {
@@ -2268,6 +2299,24 @@
     gap: 6px;
     min-height: 112px;
     padding: 10px;
+  }
+
+  .ona-system-live-standings-list article {
+    display: grid;
+    gap: 8px;
+    padding: 10px;
+    background: white;
+  }
+
+  .ona-system-live-standings-list article.active {
+    border-color: var(--ona-system-ink);
+  }
+
+  .ona-system-live-standings-list article > div {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+    align-items: baseline;
   }
 
   .ona-system-scoreboard {
@@ -2296,6 +2345,8 @@
   .ona-system-scoreboard small,
   .ona-system-kickoff span,
   .ona-system-kickoff small,
+  .ona-system-live-standings span,
+  .ona-system-live-standings small,
   .ona-system-rulebook span,
   .ona-system-rulebook small,
   .ona-system-gate-impact span,
@@ -2329,8 +2380,17 @@
     overflow-wrap: anywhere;
   }
 
+  .ona-system-live-standings strong {
+    color: var(--ona-system-ink);
+    font-size: 0.9rem;
+    line-height: 1.15;
+    overflow-wrap: anywhere;
+  }
+
   .ona-system-kickoff-header > p,
-  .ona-system-kickoff-grid p {
+  .ona-system-kickoff-grid p,
+  .ona-system-live-standings-header > p,
+  .ona-system-live-standings-list p {
     margin: 0;
     color: var(--ona-system-muted);
     font-size: 0.75rem;
@@ -4129,6 +4189,7 @@
 
     .ona-system-rulebook,
     .ona-system-kickoff-header,
+    .ona-system-live-standings-header,
     .ona-system-game-turn-header,
     .ona-system-playback,
     .ona-system-turn-recap,
@@ -4206,6 +4267,7 @@
 
     .ona-system-scoreboard,
     .ona-system-kickoff-grid,
+    .ona-system-live-standings-list,
     .ona-system-gate-impact > div:nth-child(2),
     .ona-system-versus-control,
     .ona-system-game-turn-header,
