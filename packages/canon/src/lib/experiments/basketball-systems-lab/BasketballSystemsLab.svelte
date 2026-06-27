@@ -27,6 +27,7 @@
 		listSystems,
 		parseSystemUpload,
 		runSystemMatch,
+		type GameResourceOutput,
 		type GameRequirementSeverity,
 		type LabMode,
 		type PolicyKey,
@@ -84,6 +85,8 @@
 		gateLabel: string;
 		gateDetail: string;
 		raceDetail: string;
+		resourceFloor: number;
+		resourceReceipt: string;
 		detail: string;
 		actionLabel: string;
 	};
@@ -106,6 +109,8 @@
 		margin: number;
 		swing: number;
 		gateSwing: number;
+		resourceFloor: number;
+		resourceReceipt: string;
 		detail: string;
 		active: boolean;
 		recommended: boolean;
@@ -115,6 +120,9 @@
 		margin: number;
 		label: string;
 		detail: string;
+	};
+	type ResourceLane = GameResourceOutput & {
+		critical: boolean;
 	};
 	type DecisionLedgerItem = {
 		year: number;
@@ -528,6 +536,15 @@
 			detail: `${formatDelta(viewedLeader.result.validationImpact.adjustment)} gate adjustment.`
 		}
 	]);
+	const activeResourceFloor = $derived(
+		Math.min(...activeEntry.resourceMetrics.map((metric) => Number(metric.value)))
+	);
+	const activeResourceLanes = $derived<ResourceLane[]>(
+		activeEntry.resourceMetrics.map((metric) => ({
+			...metric,
+			critical: Number(metric.value) < 32
+		}))
+	);
 	const activeGateRiskLabel = $derived(
 		activeGateImpacts.length > 0
 			? `${activeGateImpacts.length} active gate${activeGateImpacts.length === 1 ? '' : 's'}`
@@ -627,7 +644,7 @@
 				year: decision.year,
 				label: `Year ${decision.year}`,
 				value: decision.policy ? decision.policy.label : 'Held original',
-				detail: `${decision.phase.label}; ${entry.decision}; ${entry.receipt}`,
+				detail: `${decision.phase.label}; ${entry.decision}; ${entry.receipt} ${entry.resourceReceipt}`,
 				active: decision.year === viewedYear
 			};
 		})
@@ -728,15 +745,21 @@
 	const activeDecisionMoment = $derived<DecisionMoment>({
 		year: viewedYear,
 		label:
-			viewedYear === 1 ? 'Opening state' : leadChangedThisYear ? 'Lead changed' : canSteer ? 'Decision event' : 'Leader held',
+			viewedYear === 1
+				? 'Opening state'
+				: leadChangedThisYear
+					? 'Lead changed'
+					: canSteer
+						? 'Decision event'
+						: 'Leader held',
 		value:
 			viewedYear === 1
 				? viewedLeader.result.system.name
 				: leadChangedThisYear && previousLeaderName
-				? `${previousLeaderName} -> ${viewedLeader.result.system.name}`
-				: canSteer
-					? steeringEvent.title
-					: `${viewedLeader.result.system.name} holds`,
+					? `${previousLeaderName} -> ${viewedLeader.result.system.name}`
+					: canSteer
+						? steeringEvent.title
+						: `${viewedLeader.result.system.name} holds`,
 		detail:
 			leadChangedThisYear && momentumLeader
 				? `${momentumLeader.name} made the strongest year move at ${formatDelta(momentumLeader.delta)}.`
@@ -871,6 +894,11 @@
 					? `${match.systems.length}-System field`
 					: `${match.years}-year race`,
 			detail: isSolo ? match.challenge.summary : selectedEnvironment.winCondition
+		},
+		{
+			label: 'Resource floor',
+			value: formatWhole(activeEntry.resourceFloor),
+			detail: activeEntry.resourceReceipt
 		}
 	]);
 	const firstRunSteps = $derived<FirstRunStep[]>([
@@ -990,10 +1018,15 @@
 					: steeringEvent.title
 				: 'Let Systems run',
 			detail: canSteer
-				? `${steeringEvent.stake} ${formatDelta(steeringRecommendation.swing)} projected swing.`
+				? `${steeringEvent.stake} ${formatDelta(steeringRecommendation.swing)} projected swing; ${steeringRecommendation.resourceReceipt}`
 				: viewedRunnerUp
 					? `${viewedRunnerUp.result.system.name} trails by ${viewedLeaderGap.toFixed(1)} entering the next year.`
 					: 'No challenger is loaded for this run.'
+		},
+		{
+			label: 'Resource floor',
+			value: formatWhole(activeResourceFloor),
+			detail: activeEntry.resourceReceipt
 		},
 		{
 			label: 'Projected hinge',
@@ -1010,7 +1043,7 @@
 				year: entry.year,
 				label: entry.steered ? 'Steered' : entry.policy.label,
 				value: formatDelta(entry.delta),
-				detail: entry.decision,
+				detail: `${entry.decision}; ${entry.resourceReceipt}`,
 				active: entry.year === viewedYear,
 				steered: entry.steered
 			}))
@@ -1068,6 +1101,11 @@
 			label: 'Decisive turn',
 			value: finalDecisiveTurn.value,
 			detail: finalDecisiveTurn.detail
+		},
+		{
+			label: 'Resource floor',
+			value: formatWhole(finalResult.timeline.at(-1)?.resourceFloor ?? 0),
+			detail: finalResult.timeline.at(-1)?.resourceReceipt ?? 'No resource receipt available.'
 		}
 	]);
 	const finalFieldStandings = $derived<FieldStandingReceipt[]>(
@@ -1314,6 +1352,10 @@
 		return `${delta >= 0 ? '+' : ''}${delta.toFixed(1)}`;
 	}
 
+	function formatWhole(value: number): string {
+		return String(Math.round(value));
+	}
+
 	function formatRankChange(change: number): string {
 		if (change === 0) return 'No rank change';
 		return change < 0 ? `Up ${Math.abs(change)}` : `Down ${change}`;
@@ -1417,7 +1459,7 @@
 				title: activeSteeringPolicy
 					? `${activeSteeringPolicy.label} is active`
 					: 'Original System held',
-				detail: `${appliedEvent.title}: ${appliedEvent.stake} Year ${viewedYear} now projects ${steeredPrimaryRaceContext.label}; ${formatDelta(steeringScoreSwing)} score and ${formatDelta(steeringGateSwing)} gate movement.`,
+				detail: `${appliedEvent.title}: ${appliedEvent.stake} Year ${viewedYear} now projects ${steeredPrimaryRaceContext.label}; ${formatDelta(steeringScoreSwing)} score, ${formatDelta(steeringGateSwing)} gate movement, ${activeEntry.resourceReceipt}`,
 				gateLabel: describeGateRisk(steeredPrimary).label,
 				gateDetail: describeGateRisk(steeredPrimary).detail,
 				primaryLabel: canAdvanceTurn ? 'Watch next year' : 'Final year',
@@ -1430,7 +1472,7 @@
 				status: 'hold',
 				label: 'Decision event',
 				title: steeringEvent.title,
-				detail: `${steeringEvent.stake} Original projects ${steeringRecommendation.raceDetail}; ${formatDelta(steeringRecommendation.gateSwing)} gate movement versus the current hold.`,
+				detail: `${steeringEvent.stake} Original projects ${steeringRecommendation.raceDetail}; ${formatDelta(steeringRecommendation.gateSwing)} gate movement versus the current hold, ${steeringRecommendation.resourceReceipt}`,
 				gateLabel: steeringRecommendation.gateLabel,
 				gateDetail: steeringRecommendation.gateDetail,
 				primaryLabel: steeringEvent.action,
@@ -1442,7 +1484,7 @@
 			status: 'steer',
 			label: 'Decision event',
 			title: steeringEvent.title,
-			detail: `${steeringEvent.stake} Best move projects ${steeringRecommendation.raceDetail}; ${formatDelta(steeringRecommendation.swing)} score, ${formatDelta(steeringRecommendation.marginChange)} margin, and ${formatDelta(steeringRecommendation.gateSwing)} gate movement from year ${viewedYear}.`,
+			detail: `${steeringEvent.stake} Best move projects ${steeringRecommendation.raceDetail}; ${formatDelta(steeringRecommendation.swing)} score, ${formatDelta(steeringRecommendation.marginChange)} margin, ${formatDelta(steeringRecommendation.gateSwing)} gate movement, and ${steeringRecommendation.resourceReceipt}`,
 			gateLabel: steeringRecommendation.gateLabel,
 			gateDetail: steeringRecommendation.gateDetail,
 			primaryLabel: steeringEvent.action,
@@ -1494,6 +1536,9 @@
 			gateLabel: originalGateRisk.label,
 			gateDetail: originalGateRisk.detail,
 			raceDetail: originalContext.label,
+			resourceFloor: unsteeredPrimary.timeline.at(-1)?.resourceFloor ?? 0,
+			resourceReceipt:
+				unsteeredPrimary.timeline.at(-1)?.resourceReceipt ?? 'Original resource path holds.',
 			detail: `${unsteeredPrimary.system.name} holds ${originalContext.label} without a steering change from year ${viewedYear}.`,
 			actionLabel: 'Keep original'
 		};
@@ -1523,6 +1568,7 @@
 				);
 				const gateRisk = describeGateRisk(result);
 				const raceContext = getRaceContext(candidateMatch, selectedSystem, result);
+				const resourceEntry = timelineEntryFor(result, viewedYear);
 
 				return {
 					policyKey: policy.key,
@@ -1539,7 +1585,9 @@
 					gateLabel: gateRisk.label,
 					gateDetail: gateRisk.detail,
 					raceDetail: raceContext.label,
-					detail: `${raceContext.label}; ${formatDelta(swing)} versus original hold from year ${viewedYear}.`,
+					resourceFloor: resourceEntry.resourceFloor,
+					resourceReceipt: resourceEntry.resourceReceipt,
+					detail: `${raceContext.label}; ${formatDelta(swing)} versus original hold from year ${viewedYear}; ${resourceEntry.resourceReceipt}`,
 					actionLabel: `Apply ${policy.label}`
 				} satisfies SteeringCandidate;
 			})
@@ -1572,6 +1620,7 @@
 				)
 			);
 			const raceContext = getRaceContext(previewMatch, selectedSystem, result);
+			const resourceEntry = timelineEntryFor(result, viewedYear);
 
 			return {
 				policyKey: policy.key,
@@ -1582,7 +1631,9 @@
 				margin: raceContext.margin,
 				swing,
 				gateSwing,
-				detail: `${formatDelta(swing)} score; ${formatDelta(Number((raceContext.margin - unsteeredPrimaryRaceContext.margin).toFixed(1)))} margin; ${formatDelta(gateSwing)} gate movement from year ${viewedYear}.`,
+				resourceFloor: resourceEntry.resourceFloor,
+				resourceReceipt: resourceEntry.resourceReceipt,
+				detail: `${formatDelta(swing)} score; ${formatDelta(Number((raceContext.margin - unsteeredPrimaryRaceContext.margin).toFixed(1)))} margin; ${formatDelta(gateSwing)} gates; floor ${formatWhole(resourceEntry.resourceFloor)} from year ${viewedYear}.`,
 				active: currentYearDecision?.policyKey === policy.key,
 				recommended: false
 			} satisfies SteeringPreview;
@@ -2766,6 +2817,16 @@
 						<span>{lane.label}</span>
 						<strong>{lane.value}</strong>
 						<p>{lane.detail}</p>
+					</article>
+				{/each}
+			</div>
+
+			<div class="ona-system-turn-recap ona-system-resource-bank" aria-label="Resource bank">
+				{#each activeResourceLanes as resource}
+					<article data-tone={resource.critical ? 'red' : resource.tone}>
+						<span>{resource.label}</span>
+						<strong>{resource.value}</strong>
+						<p>{resource.delta} this turn</p>
 					</article>
 				{/each}
 			</div>

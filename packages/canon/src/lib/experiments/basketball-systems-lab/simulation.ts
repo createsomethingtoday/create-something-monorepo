@@ -5,6 +5,12 @@ export type LabMode = 'single' | 'versus';
 export type SeasonPhaseKey = 'opening' | 'midseason' | 'deadline';
 
 export type Tone = 'black' | 'green' | 'blue' | 'neutral' | 'red';
+export type GameResourceKey =
+	| 'politicalCapital'
+	| 'budgetFlexibility'
+	| 'trustReserve'
+	| 'mediaAttention'
+	| 'ownerPatience';
 
 export type LeagueState = {
 	leagueHealth: number;
@@ -19,6 +25,16 @@ export type LeagueState = {
 	smallMarketVisibility: number;
 };
 
+export type GameResourceState = Record<GameResourceKey, number>;
+
+export type GameResourceOutput = {
+	key: GameResourceKey;
+	label: string;
+	value: string;
+	delta: string;
+	tone: Tone;
+};
+
 export type ManagementPolicy = {
 	key: PolicyKey;
 	label: string;
@@ -27,6 +43,7 @@ export type ManagementPolicy = {
 	pressure: string;
 	score: string;
 	effects: Partial<LeagueState>;
+	resourceEffects: Partial<GameResourceState>;
 };
 
 export type MetricOutput = {
@@ -67,7 +84,9 @@ export type ManagementScenario = {
 	policy: ManagementPolicy;
 	baseline: LeagueState;
 	state: LeagueState;
+	resources: GameResourceState;
 	metrics: MetricOutput[];
+	resourceMetrics: GameResourceOutput[];
 	nodes: MapNode[];
 	reports: BoardReport[];
 	ledger: SeasonLedgerEntry[];
@@ -146,6 +165,7 @@ export type GameRequirementKey =
 	| 'owner-room'
 	| 'labor-plausibility'
 	| 'projection-honesty'
+	| 'resource-solvency'
 	| 'system-balance';
 
 export type SystemValidationImpact = {
@@ -227,11 +247,15 @@ export type SystemTimelineEntry = {
 	policy: ManagementPolicy;
 	policyIntensity: number;
 	state: LeagueState;
+	resources: GameResourceState;
 	metrics: MetricOutput[];
+	resourceMetrics: GameResourceOutput[];
 	nodes: MapNode[];
 	scoreContributions: SystemScoreContribution[];
 	score: number;
 	delta: number;
+	resourceFloor: number;
+	resourceReceipt: string;
 	decision: string;
 	receipt: string;
 	steered: boolean;
@@ -295,6 +319,30 @@ const baselineLeagueState: LeagueState = {
 	smallMarketVisibility: 54
 };
 
+const baselineResourceState: GameResourceState = {
+	politicalCapital: 72,
+	budgetFlexibility: 70,
+	trustReserve: 66,
+	mediaAttention: 58,
+	ownerPatience: 74
+};
+
+const resourceKeys = [
+	'politicalCapital',
+	'budgetFlexibility',
+	'trustReserve',
+	'mediaAttention',
+	'ownerPatience'
+] as const satisfies GameResourceKey[];
+
+const resourceLabels = {
+	politicalCapital: 'Political capital',
+	budgetFlexibility: 'Budget flexibility',
+	trustReserve: 'Trust reserve',
+	mediaAttention: 'Media attention',
+	ownerPatience: 'Owner patience'
+} as const satisfies Record<GameResourceKey, string>;
+
 const managementPolicies: ManagementPolicy[] = [
 	{
 		key: 'schedule',
@@ -311,6 +359,13 @@ const managementPolicies: ManagementPolicy[] = [
 			competitiveBalance: 6,
 			ownerMargin: -4,
 			globalAttention: 2
+		},
+		resourceEffects: {
+			politicalCapital: -6,
+			budgetFlexibility: -4,
+			trustReserve: 3,
+			mediaAttention: -1,
+			ownerPatience: -4
 		}
 	},
 	{
@@ -328,6 +383,13 @@ const managementPolicies: ManagementPolicy[] = [
 			ownerMargin: -6,
 			scheduleLoad: 3,
 			starAvailability: -2
+		},
+		resourceEffects: {
+			politicalCapital: -5,
+			budgetFlexibility: -3,
+			trustReserve: -2,
+			mediaAttention: 8,
+			ownerPatience: -5
 		}
 	},
 	{
@@ -345,6 +407,13 @@ const managementPolicies: ManagementPolicy[] = [
 			competitiveBalance: 5,
 			mediaValueB: 0.18,
 			ownerMargin: -10
+		},
+		resourceEffects: {
+			politicalCapital: -8,
+			budgetFlexibility: -5,
+			trustReserve: 9,
+			mediaAttention: 2,
+			ownerPatience: -7
 		}
 	}
 ];
@@ -459,7 +528,8 @@ const systems: System[] = [
 	{
 		key: 'attention',
 		name: 'Attention System',
-		thesis: 'Move attention into rising markets so the league grows without only leaning on incumbents.',
+		thesis:
+			'Move attention into rising markets so the league grows without only leaning on incumbents.',
 		stance: 'System vs system',
 		constraint: 'Short-term certainty drops when marquee inventory spreads out.',
 		adaptation: 'Shifts showcase games toward high-upside markets and accepts more volatility.',
@@ -512,10 +582,12 @@ const systemWeightLabels = {
 
 const sampleSystemUpload: SystemUploadDefinition = {
 	name: 'Small Market Balance System',
-	thesis: 'Protect competitive balance and small-market visibility before chasing short-term media certainty.',
+	thesis:
+		'Protect competitive balance and small-market visibility before chasing short-term media certainty.',
 	stance: 'Uploaded System',
 	constraint: 'Owner margin must stay visible while attention shifts away from incumbent markets.',
-	adaptation: 'Moves showcase inventory into rising markets but keeps enough resilience in the score.',
+	adaptation:
+		'Moves showcase inventory into rising markets but keeps enough resilience in the score.',
 	policyKey: 'media',
 	weights: {
 		leagueHealth: 0.14,
@@ -534,7 +606,8 @@ const sampleSystemMatchup: SystemUploadDefinition[] = [
 		thesis: 'Protect labor trust and long-run resilience even when the media window gets noisy.',
 		stance: 'Uploaded System',
 		constraint: 'Owner margin has to stay credible while labor trust compounds.',
-		adaptation: 'Uses labor enforcement as its native policy and lets the gates test whether trust was affordable.',
+		adaptation:
+			'Uses labor enforcement as its native policy and lets the gates test whether trust was affordable.',
 		policyKey: 'labor',
 		weights: {
 			leagueHealth: 0.18,
@@ -551,10 +624,12 @@ const sampleSystemField: SystemUploadDefinition[] = [
 	...sampleSystemMatchup,
 	{
 		name: 'Owner Room System',
-		thesis: 'Protect owner margin and resilience while keeping enough league health to survive the field.',
+		thesis:
+			'Protect owner margin and resilience while keeping enough league health to survive the field.',
 		stance: 'Uploaded System',
 		constraint: 'Growth has to stay affordable for the board.',
-		adaptation: 'Uses schedule relief as the native operating policy while scoring owner room visibly.',
+		adaptation:
+			'Uses schedule relief as the native operating policy while scoring owner room visibly.',
 		policyKey: 'schedule',
 		weights: {
 			leagueHealth: 0.18,
@@ -567,10 +642,12 @@ const sampleSystemField: SystemUploadDefinition[] = [
 	},
 	{
 		name: 'Global Growth System',
-		thesis: 'Push national and international attention while preserving enough competitive balance to keep the field credible.',
+		thesis:
+			'Push national and international attention while preserving enough competitive balance to keep the field credible.',
 		stance: 'Uploaded System',
 		constraint: 'Media value can outrun trust if the schedule concentrates too much inventory.',
-		adaptation: 'Uses media allocation as the native policy and lets requirement gates punish brittle growth.',
+		adaptation:
+			'Uses media allocation as the native policy and lets requirement gates punish brittle growth.',
 		policyKey: 'media',
 		weights: {
 			leagueHealth: 0.12,
@@ -597,7 +674,7 @@ export function getDefaultLeagueState(): LeagueState {
 }
 
 export function listManagementPolicies(): ManagementPolicy[] {
-	return managementPolicies.map((policy) => ({ ...policy, effects: { ...policy.effects } }));
+	return managementPolicies.map(clonePolicy);
 }
 
 export function listSystems(customSystems: System[] = []): System[] {
@@ -679,17 +756,20 @@ export function runSystemMatch(input: SystemMatchInput = {}): SystemMatch {
 			? buildVersusEntrants(primary, opponent, systemPool, input.customSystems)
 			: [primary];
 	const environmentBaseline = applyEnvironmentEffects(baselineLeagueState, environment);
+	const resourceBaseline = buildInitialResourceState(environmentBaseline);
 	const unsteeredPrimary = buildSystemResult(primary, environmentBaseline, environment, {
 		years,
+		resourceBaseline,
 		steeringDecisions: [],
 		targetSystemKey: primary.key
 	});
 	const rawResults = entrants.map((system) =>
-			buildSystemResult(system, environmentBaseline, environment, {
-				years,
-				steeringDecisions,
-				targetSystemKey: primary.key
-			})
+		buildSystemResult(system, environmentBaseline, environment, {
+			years,
+			resourceBaseline,
+			steeringDecisions,
+			targetSystemKey: primary.key
+		})
 	);
 	const ranked = applyValidationImpacts(rawResults, environmentBaseline)
 		.sort((left, right) => right.score - left.score)
@@ -710,7 +790,13 @@ export function runSystemMatch(input: SystemMatchInput = {}): SystemMatch {
 		systems: ranked,
 		winner,
 		challenge: buildSystemChallenge(mode, environment, ranked),
-		projections: buildSystemProjections(ranked, unsteeredPrimary, years, steeringYear, steeringPhase),
+		projections: buildSystemProjections(
+			ranked,
+			unsteeredPrimary,
+			years,
+			steeringYear,
+			steeringPhase
+		),
 		validation: buildValidationSummary(mode, environmentBaseline, ranked, years),
 		reports: buildSystemReports(mode, environment, years, ranked),
 		ledger: buildSystemLedger(
@@ -728,20 +814,24 @@ export function runSystemMatch(input: SystemMatchInput = {}): SystemMatch {
 export function runManagementScenario(
 	policyKey: PolicyKey,
 	baseline: LeagueState = baselineLeagueState,
-	policyIntensity = 1
+	policyIntensity = 1,
+	resources: GameResourceState = buildInitialResourceState(baseline)
 ): ManagementScenario {
 	const policy =
 		managementPolicies.find((candidate) => candidate.key === policyKey) ?? managementPolicies[0];
 	const state = applyPolicyEffects(baseline, policy, policyIntensity);
+	const nextResources = applyResourceEffects(resources, policy, policyIntensity, state);
 
 	return {
-		policy: { ...policy, effects: { ...policy.effects } },
+		policy: clonePolicy(policy),
 		baseline: { ...baseline },
 		state,
+		resources: nextResources,
 		metrics: buildMetrics(baseline, state),
+		resourceMetrics: buildResourceMetrics(resources, nextResources),
 		nodes: buildNodes(policy, baseline, state),
 		reports: buildReports(policy, baseline, state),
-		ledger: buildLedger(policy, baseline, state)
+		ledger: buildLedger(policy, baseline, state, resources, nextResources)
 	};
 }
 
@@ -751,12 +841,14 @@ function buildSystemResult(
 	environment: Environment,
 	options: {
 		years: number;
+		resourceBaseline: GameResourceState;
 		steeringDecisions: SystemSteeringDecision[];
 		targetSystemKey: SystemId;
 	}
 ): SystemResult {
 	let seasonBaseline = { ...baseline };
-	let scenario = runManagementScenario(system.policyKey, seasonBaseline);
+	let resourceBaseline = { ...options.resourceBaseline };
+	let scenario = runManagementScenario(system.policyKey, seasonBaseline, 1, resourceBaseline);
 	const timeline: SystemTimelineEntry[] = [];
 	const startScore = scoreSystem(system, baseline);
 	let previousScore = startScore;
@@ -765,7 +857,7 @@ function buildSystemResult(
 	for (let year = 1; year <= options.years; year += 1) {
 		const turnDecision =
 			system.key === options.targetSystemKey
-				? options.steeringDecisions.find((decision) => decision.year === year) ?? null
+				? (options.steeringDecisions.find((decision) => decision.year === year) ?? null)
 				: null;
 		if (turnDecision) {
 			activeDecision = turnDecision;
@@ -773,12 +865,12 @@ function buildSystemResult(
 		const activePolicy = activeDecision?.policy ?? null;
 		const isSteered = system.key === options.targetSystemKey && activePolicy !== null;
 		const policyKey = activePolicy?.key ?? system.policyKey;
-		const policyIntensity =
-			turnDecision && activePolicy !== null ? turnDecision.phase.impact : 1;
-		scenario = runManagementScenario(policyKey, seasonBaseline, policyIntensity);
+		const policyIntensity = turnDecision && activePolicy !== null ? turnDecision.phase.impact : 1;
+		scenario = runManagementScenario(policyKey, seasonBaseline, policyIntensity, resourceBaseline);
 		const scoreContributions = buildScoreContributions(system, scenario.state);
 		const score = scoreSystem(system, scenario.state);
 		const delta = roundTo(score - previousScore, 1);
+		const resourceFloor = getResourceFloor(scenario.resources);
 
 		timeline.push({
 			year,
@@ -786,11 +878,15 @@ function buildSystemResult(
 			policy: clonePolicy(scenario.policy),
 			policyIntensity,
 			state: { ...scenario.state },
+			resources: { ...scenario.resources },
 			metrics: scenario.metrics.map((metric) => ({ ...metric })),
+			resourceMetrics: scenario.resourceMetrics.map((metric) => ({ ...metric })),
 			nodes: scenario.nodes.map((node) => ({ ...node })),
 			scoreContributions,
 			score,
 			delta,
+			resourceFloor,
+			resourceReceipt: buildResourceReceipt(resourceBaseline, scenario.resources),
 			decision: turnDecision
 				? turnDecision.policy
 					? `Steered into ${scenario.policy.label}`
@@ -804,6 +900,7 @@ function buildSystemResult(
 
 		previousScore = score;
 		seasonBaseline = advanceEnvironmentYear(scenario.state, environment, year);
+		resourceBaseline = advanceResourceYear(scenario.resources, scenario.state, environment, year);
 	}
 
 	const score = timeline.at(-1)?.score ?? startScore;
@@ -863,7 +960,8 @@ function buildSystemValidationImpact(
 		buildTradeoffImpact(result, baseline),
 		buildOwnerRoomImpact(result),
 		buildLaborImpact(result),
-		buildProjectionHonestyImpact(result)
+		buildProjectionHonestyImpact(result),
+		buildResourceSolvencyImpact(result)
 	];
 	const adjustment = roundTo(
 		impacts.reduce((total, impact) => total + impact.adjustment, 0),
@@ -877,7 +975,11 @@ function buildSystemValidationImpact(
 		rawScore: result.rawScore,
 		adjustment,
 		score,
-		label: hasFail ? 'Gate penalty applied' : activeImpacts.length > 0 ? 'Risk-adjusted score' : 'Clean score',
+		label: hasFail
+			? 'Gate penalty applied'
+			: activeImpacts.length > 0
+				? 'Risk-adjusted score'
+				: 'Clean score',
 		summary:
 			activeImpacts.length > 0
 				? `${result.system.name} moved from ${result.rawScore.toFixed(1)} to ${score.toFixed(1)} after ${activeImpacts.length} requirement gate${activeImpacts.length === 1 ? '' : 's'}.`
@@ -925,7 +1027,8 @@ function buildSystemChallenge(
 			status: scoreStatus(minTimelineMetric([winner], 'ownerMargin'), 35, 5),
 			target: '35 floor',
 			value: formatScore(minTimelineMetric([winner], 'ownerMargin')),
-			detail: 'Below 35 breaks the business side of the model; a narrow clear still leaves negotiating pressure.'
+			detail:
+				'Below 35 breaks the business side of the model; a narrow clear still leaves negotiating pressure.'
 		},
 		{
 			key: 'labor-trust-floor',
@@ -1048,7 +1151,8 @@ function buildLaborImpact(result: SystemResult): SystemGateImpact {
 	const maximumLaborTrust = maxTimelineMetric([result], 'laborTrust');
 	const minimumOwnerMargin = minTimelineMetric([result], 'ownerMargin');
 	const cappedLaborPeace = maximumLaborTrust >= 100 && minimumOwnerMargin < 55;
-	const status = minimumLaborTrust < 50 ? 'fail' : minimumLaborTrust < 65 || cappedLaborPeace ? 'watch' : 'pass';
+	const status =
+		minimumLaborTrust < 50 ? 'fail' : minimumLaborTrust < 65 || cappedLaborPeace ? 'watch' : 'pass';
 
 	return {
 		key: 'labor-plausibility',
@@ -1073,6 +1177,19 @@ function buildProjectionHonestyImpact(result: SystemResult): SystemGateImpact {
 			saturated.length > 0
 				? `The ${formatList(saturated)} cap${saturated.length === 1 ? '' : 's'} ${saturated.length === 1 ? 'makes' : 'make'} the later-year projection directional.`
 				: 'No major state metric hit a model cap.'
+	};
+}
+
+function buildResourceSolvencyImpact(result: SystemResult): SystemGateImpact {
+	const floor = minTimelineResource(result);
+	const status = floor < 18 ? 'fail' : floor < 32 ? 'watch' : 'pass';
+
+	return {
+		key: 'resource-solvency',
+		label: 'Resource solvency',
+		status,
+		adjustment: status === 'fail' ? -14 : status === 'watch' ? -5 : 0,
+		detail: `Lowest resource floor was ${formatScore(floor)}. Below 32 is strained; below 18 means the System spent past playable governance capacity.`
 	};
 }
 
@@ -1171,7 +1288,8 @@ function buildSystemProjections(
 	steeringPhase: SeasonPhase
 ): SystemProjection[] {
 	const winner = results[0];
-	const primary = results.find((result) => result.system.key === unsteeredPrimary.system.key) ?? winner;
+	const primary =
+		results.find((result) => result.system.key === unsteeredPrimary.system.key) ?? winner;
 	const steeringDelta = roundTo(
 		sumTimelineScores(primary.timeline) - sumTimelineScores(unsteeredPrimary.timeline),
 		1
@@ -1209,6 +1327,7 @@ function buildValidationSummary(
 		validateOwnerRoom(results),
 		validateLaborPlausibility(results),
 		validateProjectionHonesty(results),
+		validateResourceSolvency(results),
 		validateSystemBalance(mode, results, years)
 	];
 	const status = requirements.reduce<GameRequirementSeverity>(
@@ -1271,7 +1390,10 @@ function validateTradeoffs(baseline: LeagueState, results: SystemResult[]): Game
 		key: 'tradeoff-integrity',
 		label: 'Tradeoff integrity',
 		status: tradeoffs === 0 ? 'watch' : 'pass',
-		summary: tradeoffs === 0 ? 'Tradeoff is thin' : `${tradeoffs} visible tradeoff${tradeoffs === 1 ? '' : 's'}`,
+		summary:
+			tradeoffs === 0
+				? 'Tradeoff is thin'
+				: `${tradeoffs} visible tradeoff${tradeoffs === 1 ? '' : 's'}`,
 		detail:
 			tradeoffs === 0
 				? 'This run stayed stable, so the next rules pass should pressure at least one counter-metric.'
@@ -1305,7 +1427,12 @@ function validateLaborPlausibility(results: SystemResult[]): GameRequirement {
 	return {
 		key: 'labor-plausibility',
 		label: 'Labor plausibility',
-		status: minimumLaborTrust < 50 ? 'fail' : minimumLaborTrust < 65 || cappedLaborPeace ? 'watch' : 'pass',
+		status:
+			minimumLaborTrust < 50
+				? 'fail'
+				: minimumLaborTrust < 65 || cappedLaborPeace
+					? 'watch'
+					: 'pass',
 		summary:
 			minimumLaborTrust < 50
 				? 'Trust collapsed'
@@ -1335,6 +1462,23 @@ function validateProjectionHonesty(results: SystemResult[]): GameRequirement {
 	};
 }
 
+function validateResourceSolvency(results: SystemResult[]): GameRequirement {
+	const floor = Math.min(...results.map(minTimelineResource));
+
+	return {
+		key: 'resource-solvency',
+		label: 'Resource solvency',
+		status: floor < 18 ? 'fail' : floor < 32 ? 'watch' : 'pass',
+		summary:
+			floor < 18
+				? 'Resources broke'
+				: floor < 32
+					? 'Resources are strained'
+					: 'Resource floor preserved',
+		detail: `Political capital, budget flexibility, trust reserve, media attention, and owner patience never dropped below ${formatScore(floor)} across the run.`
+	};
+}
+
 function validateSystemBalance(
 	mode: LabMode,
 	results: SystemResult[],
@@ -1346,7 +1490,8 @@ function validateSystemBalance(
 			label: 'System balance',
 			status: 'deferred',
 			summary: 'Versus not run',
-			detail: 'Switch to versus mode to evaluate balance between two Systems under the same horizon.'
+			detail:
+				'Switch to versus mode to evaluate balance between two Systems under the same horizon.'
 		};
 	}
 
@@ -1440,8 +1585,13 @@ function advanceEnvironmentYear(
 	return {
 		...next,
 		leagueHealth: clampScore(next.leagueHealth - wearDrag * 0.04 - trustDrag * 0.03),
-		mediaValueB: roundTo(next.mediaValueB + next.globalAttention * 0.002 + visibilityLift * 0.006, 2),
-		competitiveBalance: clampScore(next.competitiveBalance + visibilityLift * 0.025 - wearDrag * 0.015)
+		mediaValueB: roundTo(
+			next.mediaValueB + next.globalAttention * 0.002 + visibilityLift * 0.006,
+			2
+		),
+		competitiveBalance: clampScore(
+			next.competitiveBalance + visibilityLift * 0.025 - wearDrag * 0.015
+		)
 	};
 }
 
@@ -1573,10 +1723,7 @@ function cloneUploadDefinition(definition: SystemUploadDefinition): SystemUpload
 	return { ...definition, weights: { ...definition.weights } };
 }
 
-function extractUploadDefinitions(
-	parsed: unknown,
-	issues: SystemUploadIssue[]
-): unknown[] {
+function extractUploadDefinitions(parsed: unknown, issues: SystemUploadIssue[]): unknown[] {
 	if (Array.isArray(parsed)) return parsed;
 
 	if (isRecord(parsed)) {
@@ -1666,12 +1813,18 @@ function readSystemWeights(
 	let policyIssue = false;
 
 	if (typeof weights.ownerMargin === 'number' && weights.ownerMargin < 0.04) {
-		issues.push({ path: `${path}.ownerMargin`, message: 'Owner margin weight must be at least 0.04.' });
+		issues.push({
+			path: `${path}.ownerMargin`,
+			message: 'Owner margin weight must be at least 0.04.'
+		});
 		policyIssue = true;
 	}
 
 	if (typeof weights.resilience === 'number' && weights.resilience < 0.08) {
-		issues.push({ path: `${path}.resilience`, message: 'Resilience weight must be at least 0.08.' });
+		issues.push({
+			path: `${path}.resilience`,
+			message: 'Resilience weight must be at least 0.08.'
+		});
 		policyIssue = true;
 	}
 
@@ -1764,7 +1917,11 @@ function cloneEnvironment(environment: Environment): Environment {
 }
 
 function clonePolicy(policy: ManagementPolicy): ManagementPolicy {
-	return { ...policy, effects: { ...policy.effects } };
+	return {
+		...policy,
+		effects: { ...policy.effects },
+		resourceEffects: { ...policy.resourceEffects }
+	};
 }
 
 function cloneSeasonPhase(phase: SeasonPhase): SeasonPhase {
@@ -1822,6 +1979,86 @@ function applyPolicyEffects(
 	};
 }
 
+function buildInitialResourceState(state: LeagueState): GameResourceState {
+	return {
+		politicalCapital: clampScore(
+			baselineResourceState.politicalCapital +
+				(state.leagueHealth - baselineLeagueState.leagueHealth) * 0.08 +
+				(state.laborTrust - baselineLeagueState.laborTrust) * 0.1
+		),
+		budgetFlexibility: clampScore(
+			baselineResourceState.budgetFlexibility +
+				(state.ownerMargin - baselineLeagueState.ownerMargin) * 0.3
+		),
+		trustReserve: clampScore(
+			baselineResourceState.trustReserve + (state.laborTrust - baselineLeagueState.laborTrust) * 0.4
+		),
+		mediaAttention: clampScore(
+			baselineResourceState.mediaAttention +
+				(state.globalAttention - baselineLeagueState.globalAttention) * 0.4 +
+				(state.mediaValueB - baselineLeagueState.mediaValueB) * 2
+		),
+		ownerPatience: clampScore(
+			baselineResourceState.ownerPatience +
+				(state.ownerMargin - baselineLeagueState.ownerMargin) * 0.4
+		)
+	};
+}
+
+function applyResourceEffects(
+	resources: GameResourceState,
+	policy: ManagementPolicy,
+	policyIntensity: number,
+	state: LeagueState
+): GameResourceState {
+	const next = { ...resources };
+
+	for (const [key, delta] of Object.entries(policy.resourceEffects) as [
+		GameResourceKey,
+		number
+	][]) {
+		next[key] = clampScore(next[key] + delta * policyIntensity);
+	}
+
+	return {
+		politicalCapital: clampScore(next.politicalCapital + (state.leagueHealth - 76) * 0.02),
+		budgetFlexibility: clampScore(next.budgetFlexibility + (state.ownerMargin - 70) * 0.03),
+		trustReserve: clampScore(next.trustReserve + (state.laborTrust - 66) * 0.03),
+		mediaAttention: clampScore(next.mediaAttention + (state.globalAttention - 58) * 0.03),
+		ownerPatience: clampScore(next.ownerPatience + (state.ownerMargin - 70) * 0.04)
+	};
+}
+
+function advanceResourceYear(
+	resources: GameResourceState,
+	state: LeagueState,
+	environment: Environment,
+	year: number
+): GameResourceState {
+	const pressureFactor = 0.05 + Math.min(year, 8) * 0.005;
+	const environmentOwnerDrag = Math.max(0, -(environment.effects.ownerMargin ?? 0));
+	const environmentLaborDrag = Math.max(0, -(environment.effects.laborTrust ?? 0));
+
+	return {
+		politicalCapital: clampScore(
+			resources.politicalCapital + 1 - environmentLaborDrag * pressureFactor
+		),
+		budgetFlexibility: clampScore(
+			resources.budgetFlexibility + 0.8 + (state.ownerMargin - 70) * 0.015
+		),
+		trustReserve: clampScore(resources.trustReserve + 0.6 + (state.laborTrust - 66) * 0.02),
+		mediaAttention: clampScore(
+			resources.mediaAttention + 0.4 + (state.globalAttention - 58) * 0.02
+		),
+		ownerPatience: clampScore(
+			resources.ownerPatience +
+				0.7 +
+				(state.ownerMargin - 70) * 0.02 -
+				environmentOwnerDrag * pressureFactor
+		)
+	};
+}
+
 function buildMetrics(baseline: LeagueState, state: LeagueState): MetricOutput[] {
 	return [
 		{
@@ -1853,6 +2090,23 @@ function buildMetrics(baseline: LeagueState, state: LeagueState): MetricOutput[]
 			tone: toneForDelta(state.laborTrust - baseline.laborTrust, 'green')
 		}
 	];
+}
+
+function buildResourceMetrics(
+	baseline: GameResourceState,
+	resources: GameResourceState
+): GameResourceOutput[] {
+	return resourceKeys.map((key) => {
+		const delta = resources[key] - baseline[key];
+
+		return {
+			key,
+			label: resourceLabels[key],
+			value: formatScore(resources[key]),
+			delta: formatDelta(delta),
+			tone: toneForDelta(delta, 'green')
+		};
+	});
 }
 
 function buildNodes(
@@ -1932,8 +2186,12 @@ function buildReports(
 function buildLedger(
 	policy: ManagementPolicy,
 	baseline: LeagueState,
-	state: LeagueState
+	state: LeagueState,
+	resourceBaseline: GameResourceState,
+	resources: GameResourceState
 ): SeasonLedgerEntry[] {
+	const resourceFloor = getResourceFloor(resources);
+
 	return [
 		{
 			label: 'Policy action',
@@ -1954,6 +2212,11 @@ function buildLedger(
 			label: 'Governance pressure',
 			value: formatDelta(state.ownerMargin - baseline.ownerMargin),
 			detail: 'Margin change becomes the next board-room constraint.'
+		},
+		{
+			label: 'Resource economy',
+			value: `${formatScore(resourceFloor)} floor`,
+			detail: buildResourceReceipt(resourceBaseline, resources)
 		}
 	];
 }
@@ -2026,6 +2289,32 @@ function minTimelineMetric(results: SystemResult[], key: keyof LeagueState): num
 
 function maxTimelineMetric(results: SystemResult[], key: keyof LeagueState): number {
 	return Math.max(...results.flatMap((result) => result.timeline.map((entry) => entry.state[key])));
+}
+
+function getResourceFloor(resources: GameResourceState): number {
+	return Math.min(...resourceKeys.map((key) => resources[key]));
+}
+
+function minTimelineResource(result: SystemResult): number {
+	return Math.min(...result.timeline.map((entry) => entry.resourceFloor));
+}
+
+function buildResourceReceipt(previous: GameResourceState, next: GameResourceState): string {
+	const spends = resourceKeys
+		.map((key) => ({
+			key,
+			delta: roundTo(next[key] - previous[key], 1)
+		}))
+		.sort((left, right) => left.delta - right.delta);
+	const largestSpend = spends[0];
+	const largestGain = [...spends].sort((left, right) => right.delta - left.delta)[0];
+	const floor = getResourceFloor(next);
+
+	if (!largestSpend || !largestGain) {
+		return `Resource floor ${formatScore(floor)}.`;
+	}
+
+	return `${resourceLabels[largestSpend.key]} ${formatDelta(largestSpend.delta)}, ${resourceLabels[largestGain.key]} ${formatDelta(largestGain.delta)}; resource floor ${formatScore(floor)}.`;
 }
 
 function severityRank(status: GameRequirementSeverity): number {
