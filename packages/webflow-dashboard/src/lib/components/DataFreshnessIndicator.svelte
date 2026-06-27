@@ -9,8 +9,9 @@
    * - 'inline': Compact inline badge for table headers and stat cards
    * - 'tooltip': Icon-only with hover tooltip (fixed position, never clipped)
    * - 'full': Full message with icon (for page headers)
-   */
+  */
   import { Info, Clock, X } from 'lucide-svelte';
+  import { formatRelativeScheduleDate } from '$lib/utils/format';
 
   interface Props {
     variant?: 'inline' | 'tooltip' | 'full';
@@ -97,27 +98,10 @@
     nextMonday.setUTCHours(16, 0, 0, 0);
 
     return {
-      lastUpdate: formatRelativeDate(lastMonday),
-      nextUpdate: formatRelativeDate(nextMonday),
+      lastUpdate: formatRelativeScheduleDate(lastMonday),
+      nextUpdate: formatRelativeScheduleDate(nextMonday),
       daysUntil: daysUntilMonday
     };
-  }
-
-  function formatRelativeDate(date: Date): string {
-    const now = new Date();
-    const diffMs = date.getTime() - now.getTime();
-    const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
-
-    if (diffDays === 0) {
-      const diffHours = Math.round(diffMs / (1000 * 60 * 60));
-      if (diffHours <= 0) return 'Today';
-      if (diffHours === 1) return 'in 1 hour';
-      return `in ${diffHours} hours`;
-    }
-    if (diffDays === 1) return 'Tomorrow';
-    if (diffDays === -1) return 'Yesterday';
-    if (diffDays < 0) return `${Math.abs(diffDays)} days ago`;
-    return `in ${diffDays} days`;
   }
 
   const updateInfo = $derived(getNextUpdateInfo());

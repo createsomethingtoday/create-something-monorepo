@@ -148,16 +148,17 @@ export const PATCH: RequestHandler = async ({ params, request, locals, platform 
 
   const body = normalizeAssetUpdateBody((await request.json()) as AssetUpdateData);
   validateAssetUpdateBody(body);
+  const { assetVersionChanges: _assetVersionChanges, ...updateBody } = body;
 
   // Check name uniqueness if name is being changed
-  if (body.name) {
-    const nameCheck = await airtable.checkAssetNameUniqueness(body.name, params.id);
+  if (updateBody.name) {
+    const nameCheck = await airtable.checkAssetNameUniqueness(updateBody.name, params.id);
     if (!nameCheck.unique) {
       throw error(400, 'An asset with this name already exists');
     }
   }
 
-  const updatedAsset = await airtable.updateAsset(params.id, body);
+  const updatedAsset = await airtable.updateAsset(params.id, updateBody);
   if (!updatedAsset) {
     throw error(500, 'Failed to update asset');
   }

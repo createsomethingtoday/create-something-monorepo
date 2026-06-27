@@ -2,6 +2,7 @@
   import { Dialog } from './ui';
   import { Badge } from './ui';
   import { Button } from './ui';
+  import { formatDateTime } from '$lib/utils/format';
 
   interface VersionDiff {
     field: string;
@@ -84,16 +85,6 @@
     return value || 'Empty';
   }
 
-  function formatDate(isoString: string): string {
-    const date = new Date(isoString);
-    return new Intl.DateTimeFormat('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    }).format(date);
-  }
 </script>
 
 <Dialog isOpen={open} {onClose} title="Version Comparison" size="xl">
@@ -110,13 +101,13 @@
     <div class="comparison-header">
       <div class="version-info">
         <Badge>v{fromVersion.versionNumber}</Badge>
-        <span class="version-date">{formatDate(fromVersion.createdAt)}</span>
+        <span class="version-date">{formatDateTime(fromVersion.createdAt)}</span>
         <p class="version-author">By {fromVersion.createdBy}</p>
       </div>
       <span class="arrow">→</span>
       <div class="version-info">
         <Badge>v{toVersion.versionNumber}</Badge>
-        <span class="version-date">{formatDate(toVersion.createdAt)}</span>
+        <span class="version-date">{formatDateTime(toVersion.createdAt)}</span>
         <p class="version-author">By {toVersion.createdBy}</p>
       </div>
     </div>

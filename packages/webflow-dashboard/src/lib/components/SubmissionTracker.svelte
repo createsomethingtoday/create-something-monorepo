@@ -7,6 +7,7 @@
     formatTimeUntil,
     type SubmissionState
   } from '$lib/stores/submission';
+  import { formatLongDate } from '$lib/utils/format';
   import { untrack } from 'svelte';
   import { toast } from '$lib/stores/toast';
   import {
@@ -139,15 +140,6 @@
       message: storeData.message
     };
   });
-
-  function formatDate(date: Date | null): string {
-    if (!date) return '';
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    });
-  }
 
   function toggleTooltip() {
     isTooltipOpen = !isTooltipOpen;
@@ -321,7 +313,7 @@
         {#if submissionData.nextExpiryDate && submissionData.isAtLimit && !submissionData.isWhitelisted}
           <div class="next-slot">
             <Clock size={14} />
-            Next slot: {formatDate(submissionData.nextExpiryDate)} ({displayedTimeUntilSlot ||
+            Next slot: {formatLongDate(submissionData.nextExpiryDate)} ({displayedTimeUntilSlot ||
               formatTimeUntil(submissionData.timeUntilNextSlot)})
           </div>
         {/if}
@@ -461,7 +453,7 @@
                         {submission.daysUntilExpiry}d until expiry
                       </span>
                       <span class="submission-date">
-                        exp. {formatDate(submission.expiryDate)}
+                        exp. {formatLongDate(submission.expiryDate)}
                       </span>
                     </div>
                   </div>
@@ -475,7 +467,7 @@
               <Clock size={16} />
               <div class="next-slot-info">
                 <span class="next-slot-label">Next slot available</span>
-                <span class="next-slot-date">{formatDate(submissionData.nextExpiryDate)}</span>
+                <span class="next-slot-date">{formatLongDate(submissionData.nextExpiryDate)}</span>
                 <span class="next-slot-countdown"
                   >({displayedTimeUntilSlot ||
                     formatTimeUntil(submissionData.timeUntilNextSlot)})</span

@@ -3,6 +3,7 @@
   import { Button } from './ui';
   import { Badge } from './ui';
   import { toast } from '$lib/stores/toast';
+  import { formatDateTime } from '$lib/utils/format';
 
   interface AssetVersion {
     id: string;
@@ -35,17 +36,6 @@
   let selectedVersions: string[] = $state([]);
   let isLoading = $state(false);
   let rollbackVersion = $state<AssetVersion | null>(null);
-
-  function formatDate(isoString: string): string {
-    const date = new Date(isoString);
-    return new Intl.DateTimeFormat('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    }).format(date);
-  }
 
   function toggleVersionSelection(versionId: string) {
     if (selectedVersions.includes(versionId)) {
@@ -123,7 +113,7 @@
               <div class="flex-1">
                 <div class="flex items-center gap-2 mb-1">
                   <Badge variant="outline">v{version.versionNumber}</Badge>
-                  <span class="version-date">{formatDate(version.createdAt)}</span>
+                  <span class="version-date">{formatDateTime(version.createdAt)}</span>
                 </div>
                 <p class="version-changes mb-1">{version.changes}</p>
                 <p class="version-author">By {version.createdBy}</p>
