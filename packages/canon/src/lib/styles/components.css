@@ -1547,7 +1547,8 @@
   }
 
   .ona-system-competition-roster article > div:first-child,
-  .ona-system-competition-roster-meta {
+  .ona-system-competition-roster-meta,
+  .ona-system-competition-roster-gate {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     gap: 8px;
@@ -1563,11 +1564,13 @@
     line-height: 1.12;
     text-transform: uppercase;
     letter-spacing: 0;
+    overflow-wrap: anywhere;
   }
 
   .ona-system-competition-roster strong {
     font-size: 0.82rem;
     line-height: 1.15;
+    overflow-wrap: anywhere;
   }
 
   .ona-system-competition-roster p {
@@ -1576,10 +1579,35 @@
     font-size: 0.7rem;
     font-weight: 700;
     line-height: 1.28;
+    overflow-wrap: anywhere;
+  }
+
+  .ona-system-competition-roster-gate {
+    align-items: start;
+    border-top: 1px solid var(--ona-system-line);
+    padding-top: 7px;
+  }
+
+  .ona-system-competition-roster-gate > div {
+    display: grid;
+    gap: 3px;
+    min-width: 0;
+  }
+
+  .ona-system-competition-roster-gate small {
+    font-weight: 600;
+    line-height: 1.25;
+    text-transform: none;
   }
 
   .ona-system-competition-roster-meta strong {
     font-size: 0.92rem;
+  }
+
+  .ona-system-competition-roster-gate strong {
+    font-size: 0.72rem;
+    line-height: 1.1;
+    white-space: nowrap;
   }
 
   .ona-system-competition-actions {
