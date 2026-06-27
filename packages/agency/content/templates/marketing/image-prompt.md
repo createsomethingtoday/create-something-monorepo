@@ -4,7 +4,7 @@
 > Image asset slug:
 > Surface: article | social | deck | delivery | sales | client-update
 > Image family: atlas-story-canvas | system-map-hero | db-automation-judgment | policy-gate-chart | evidence-map | handoff-receipt | screenshot-annotation | cta-visual
-> Canvas renderer: static-story | atlas | sigma | cosmograph | not applicable
+> Canvas renderer: Atlas | static-story | sigma | cosmograph | not applicable
 > Atlas graph source: existing starter map | new graph artifact | not applicable
 > Owner:
 > Review status: draft | approved | published | retired
@@ -45,7 +45,7 @@ Show: <workflow objects, states, proof artifacts, owners, gates>.
 
 If the image explains workflow behavior, governance, an offer, a case study, a
 tool comparison, or agent behavior, use an Atlas-style canvas with nodes and
-mapped relationships before any decorative composition. Preserve the graph as the source of truth: owner, workflow or data artifact, automation route, AI-assisted task when present, human judgment point, stop condition, and receipt surface. Use static story canvas for marketing and article visuals, the native Atlas canvas when the surface needs editing or intake, and Sigma/Cosmograph only for large read-only network exploration.
+mapped relationships before any decorative composition. Preserve the graph as the source of truth: owner, workflow or data artifact, automation route, AI-assisted task when present, human judgment point, stop condition, and receipt surface. Use static story canvas for marketing and article visuals, interactive Atlas canvas only when the surface needs editing or intake, and Sigma/Cosmograph only for large read-only network exploration.
 
 Style: Use Ona.com as the design and communication foundation: calm hierarchy,
 plain claims, compact proof, governed execution, visible evidence, and restrained

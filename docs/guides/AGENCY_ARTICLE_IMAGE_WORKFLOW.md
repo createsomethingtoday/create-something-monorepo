@@ -33,7 +33,7 @@ Use this hierarchy:
 
 1. Static story canvas for marketing, articles, presentations, social crops, and
    non-interactive route sections.
-2. React Flow canvas for education, intake, editing, accessibility, and
+2. Interactive Atlas canvas for education, intake, editing, accessibility, and
    agent-operable workflow state.
 3. Sigma or Cosmograph only for large read-only network exploration where the
    graph is too large for rich workflow editing.

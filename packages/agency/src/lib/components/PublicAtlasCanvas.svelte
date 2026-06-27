@@ -5,21 +5,22 @@
 	import {
 		computePublicAtlasReadiness,
 		createPublicAtlasCanvas,
-		createPublicAtlasCanvasFromStarter,
 		createPublicAtlasEdge,
 		createPublicAtlasNode,
 		normalizePublicAtlasCanvas,
-		PUBLIC_ATLAS_INDUSTRY_STARTERS,
 		PUBLIC_ATLAS_LANES,
-		PUBLIC_ATLAS_LIMITS,
-		PUBLIC_ATLAS_STORAGE_KEYS,
 		summarizePublicAtlasCanvas,
 		type PublicAtlasCanvas,
 		type PublicAtlasNode,
 		type PublicAtlasNodeKind,
 		type PublicAtlasNodeStatus,
 		type PublicAtlasReadiness
+	} from '@create-something/canon/atlas/headless';
+	import {
+		createPublicAtlasCanvasFromStarter,
+		PUBLIC_ATLAS_INDUSTRY_STARTERS
 	} from '$lib/atlas/public';
+	import { PUBLIC_ATLAS_LIMITS, PUBLIC_ATLAS_STORAGE_KEYS } from '$lib/atlas/intake-policy';
 
 	type AgentMessage = {
 		role: 'assistant' | 'visitor';
@@ -46,6 +47,7 @@
 
 	export let compact = false;
 	export let bookingHref = '/book';
+	export let flowId = 'public-atlas-flow';
 
 	let canvas = createPublicAtlasCanvas();
 	let selectedNodeId = 'data_workflow';
@@ -410,6 +412,7 @@
 				<div class="atlas-flow-viewport" aria-label="Atlas flow canvas">
 					<PublicAtlasFlow
 						{canvas}
+						{flowId}
 						{selectedNodeId}
 						onMoveNode={moveNode}
 						onSelectNode={selectNode}

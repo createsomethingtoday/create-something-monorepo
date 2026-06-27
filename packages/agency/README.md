@@ -152,28 +152,40 @@ the prospect sees the action boundary before the sales conversation.
 
 Implementation surface:
 
-- `src/lib/atlas/public.ts` owns starter-map data and normalization.
-- `createPublicAtlasGraphArtifact(...)` exports the renderer-independent Atlas
-  graph contract for humans and agents: semantic node roles, relationship labels,
-  readiness, and renderer guidance.
-- `createPublicAtlasStoryArtifact(...)` turns the same graph into deterministic
-  story chapters for static canvases, scrollytelling, article visuals, social
-  cards, and accessibility summaries.
-- `src/lib/components/PublicAtlasStoryCanvas.svelte` renders the static story
-  artifact as a node-map presentation surface without invoking the mapping agent.
+- `@create-something/canon/atlas/headless` owns the reusable Atlas node, edge,
+  canvas, readiness, graph-artifact, and story-artifact contract.
+- `@create-something/canon/atlas` owns the Svelte `AtlasStoryCanvas` and
+  `AtlasFlow` renderers that adapt the headless contract into read-only story
+  and editable map surfaces.
+- `createPublicAtlasGraphArtifact(...)` and
+  `createPublicAtlasStoryArtifact(...)` are imported from Canon when `.agency`
+  needs renderer-independent graph or story output.
+- `src/lib/atlas/public.ts` owns `.agency` starter-map content and the
+  intake-specific canvas creation path.
+- `src/lib/atlas/intake-policy.ts` owns `.agency` public-intake storage keys,
+  rate tiers, and map-size limits.
+- `src/lib/atlas/surface-policy.ts` owns `.agency` Atlas proof-route and compact
+  privacy-prompt route policy.
+- `src/lib/components/PublicAtlasStoryCanvas.svelte` wraps Canon's
+  `AtlasStoryCanvas` with `.agency` starter-map selection and renders the static
+  story artifact without invoking the mapping agent.
+- `src/lib/components/PublicAtlasFlow.svelte` wraps Canon's `AtlasFlow` so the
+  editable renderer stays reusable while `.agency` owns intake state.
 - `src/lib/components/PublicAtlasCanvas.svelte` renders the selector and persists
-  the chosen map into booking context.
+  the chosen map into booking context; it is the `.agency` intake surface.
 - `test/public-atlas-starter-maps.test.ts` verifies coverage and policy-boundary
   shape.
-- `test/public-atlas-route.test.ts` verifies that `/atlas` and `/services`
-  present the story canvas before the editable public canvas, and that
-  `/methodology`, `/stack`, and `/products` can use the same story surface
-  without mounting the editable canvas.
+- `test/public-atlas-route.test.ts` verifies that `/`, `/atlas`, and
+  `/services` present the story canvas before the editable public canvas where
+  applicable, and that `/methodology`, `/stack`, and `/products` can use the
+  same story surface without mounting the editable canvas.
 
 Story-canvas usage contract:
 
 - Pass an explicit `storyId` on route-level uses so SVG marker IDs and heading
   references remain stable if multiple story canvases appear on the same page.
+- Pass an explicit `flowId` on route-level editable-canvas uses if more than one
+  editable Atlas flow can mount on a page.
 - Keep the story canvas before the editable canvas when both are present. The
   story teaches the workflow language; the editable canvas collects booking
   context.
@@ -183,7 +195,7 @@ Story-canvas usage contract:
 
 Renderer rule:
 
-- The native Svelte Atlas renderer is the primary renderer for workflow
+- The interactive Svelte Atlas flow is the primary renderer for workflow
   education, intake, editing, accessibility, and agent-operable maps.
 - Static story canvases are the fallback for marketing, articles, social cards,
   and non-JS presentation.

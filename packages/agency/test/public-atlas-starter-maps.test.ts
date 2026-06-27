@@ -1,17 +1,95 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 import {
 	computePublicAtlasReadiness,
 	createPublicAtlasGraphArtifact,
 	createPublicAtlasStoryArtifact,
-	createPublicAtlasCanvasFromStarter,
-	PUBLIC_ATLAS_INDUSTRY_STARTERS,
 	PUBLIC_ATLAS_LANES,
 	type PublicAtlasNodeStatus
+} from '@create-something/canon/atlas/headless';
+import {
+	createPublicAtlasCanvasFromStarter,
+	PUBLIC_ATLAS_INDUSTRY_STARTERS
 } from '../src/lib/atlas/public.ts';
 
 const requiredStatuses = new Set<PublicAtlasNodeStatus>(['run', 'wait', 'stop']);
+const agencyPublicAtlasModule = readFileSync(
+	new URL('../src/lib/atlas/public.ts', import.meta.url),
+	'utf8'
+);
+const agencyIntakePolicyModule = readFileSync(
+	new URL('../src/lib/atlas/intake-policy.ts', import.meta.url),
+	'utf8'
+);
+const agencyModelAgentModule = readFileSync(
+	new URL('../src/lib/atlas/model-agent.ts', import.meta.url),
+	'utf8'
+);
+const agencyPublicAgentRoute = readFileSync(
+	new URL('../src/routes/api/atlas/public-agent/+server.ts', import.meta.url),
+	'utf8'
+);
+const agencyPublicAtlasCanvas = readFileSync(
+	new URL('../src/lib/components/PublicAtlasCanvas.svelte', import.meta.url),
+	'utf8'
+);
+const agencyBookingRoute = readFileSync(
+	new URL('../src/routes/book/+page.svelte', import.meta.url),
+	'utf8'
+);
+const agencyAgentContractModule = readFileSync(
+	new URL('../src/lib/atlas/agent-contract.ts', import.meta.url),
+	'utf8'
+);
+
+test('agency public Atlas module re-exports Canon headless primitives', () => {
+	assert.ok(agencyPublicAtlasModule.includes("from '@create-something/canon/atlas/headless'"));
+	assert.ok(agencyPublicAtlasModule.includes('createPublicAtlasGraphArtifact'));
+	assert.ok(agencyPublicAtlasModule.includes('createPublicAtlasStoryArtifact'));
+	assert.equal(agencyPublicAtlasModule.includes('export function createPublicAtlasGraphArtifact'), false);
+	assert.equal(agencyPublicAtlasModule.includes('export function createPublicAtlasStoryArtifact'), false);
+	assert.equal(agencyPublicAtlasModule.includes('export function computePublicAtlasReadiness'), false);
+	assert.equal(agencyPublicAtlasModule.includes('export function normalizePublicAtlasCanvas'), false);
+});
+
+test('agency public Atlas intake policy owns local limits and storage keys', () => {
+	assert.ok(agencyIntakePolicyModule.includes('export const PUBLIC_ATLAS_STORAGE_KEYS'));
+	assert.ok(agencyIntakePolicyModule.includes('export const PUBLIC_ATLAS_LIMITS'));
+	assert.ok(agencyIntakePolicyModule.includes('export type PublicAtlasTier'));
+	assert.ok(agencyPublicAtlasModule.includes("from './intake-policy'"));
+	assert.equal(agencyPublicAtlasModule.includes('export const PUBLIC_ATLAS_STORAGE_KEYS'), false);
+	assert.equal(agencyPublicAtlasModule.includes('export const PUBLIC_ATLAS_LIMITS'), false);
+});
+
+test('public Atlas UI and API import intake policy directly', () => {
+	assert.ok(agencyPublicAtlasCanvas.includes("from '$lib/atlas/intake-policy'"));
+	assert.ok(agencyBookingRoute.includes("from '$lib/atlas/intake-policy'"));
+	assert.ok(agencyPublicAgentRoute.includes("from '$lib/atlas/intake-policy'"));
+	assert.equal(
+		agencyPublicAgentRoute.includes("PUBLIC_ATLAS_LIMITS,\n\trunPublicAtlasMappingAgent"),
+		false
+	);
+	assert.ok(agencyPublicAgentRoute.includes("from '$lib/atlas/public'"));
+	assert.ok(agencyPublicAgentRoute.includes('runPublicAtlasMappingAgent'));
+});
+
+test('server-side Atlas agent code imports Canon headless primitives directly', () => {
+	assert.ok(agencyModelAgentModule.includes("from '@create-something/canon/atlas/headless'"));
+	assert.equal(agencyModelAgentModule.includes("from './public'"), false);
+	assert.ok(agencyModelAgentModule.includes("from './agent-contract'"));
+	assert.ok(agencyPublicAgentRoute.includes("from '@create-something/canon/atlas/headless'"));
+});
+
+test('agency mapping agent result shape is defined once locally', () => {
+	assert.ok(agencyAgentContractModule.includes('export type PublicAtlasAgentResult'));
+	assert.ok(agencyAgentContractModule.includes("from '@create-something/canon/atlas/headless'"));
+	assert.ok(agencyPublicAtlasModule.includes("from './agent-contract'"));
+	assert.ok(agencyModelAgentModule.includes("from './agent-contract'"));
+	assert.equal(agencyPublicAtlasModule.includes('export type PublicAtlasAgentResult ='), false);
+	assert.equal(agencyModelAgentModule.includes('type PublicAtlasAgentResult ='), false);
+});
 
 test('industry starter maps cover every public Atlas dimension', () => {
 	assert.equal(PUBLIC_ATLAS_INDUSTRY_STARTERS.length, 5);
