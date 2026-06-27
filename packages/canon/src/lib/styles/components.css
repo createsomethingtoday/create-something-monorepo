@@ -1566,6 +1566,7 @@
   }
 
   .ona-system-rulebook article,
+  .ona-system-gate-impact,
   .ona-system-score-explain {
     border: 1px solid var(--ona-system-line);
     border-radius: var(--radius-clear-sm);
@@ -1604,6 +1605,8 @@
   .ona-system-scoreboard small,
   .ona-system-rulebook span,
   .ona-system-rulebook small,
+  .ona-system-gate-impact span,
+  .ona-system-gate-impact small,
   .ona-system-score-explain span,
   .ona-system-score-explain small,
   .ona-system-projection-grid span,
@@ -1697,6 +1700,66 @@
   .ona-system-playback-controls input {
     width: 100%;
     accent-color: var(--ona-system-ink);
+  }
+
+  .ona-system-gate-impact {
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(220px, 0.7fr);
+    gap: 12px;
+    margin-bottom: 14px;
+    padding: 12px;
+  }
+
+  .ona-system-gate-impact > div:first-child {
+    display: grid;
+    gap: 6px;
+    align-content: start;
+  }
+
+  .ona-system-gate-impact > div:nth-child(2) {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .ona-system-gate-impact > div:nth-child(2) article,
+  .ona-system-gate-impact-list article {
+    display: grid;
+    gap: 5px;
+    border: 1px solid var(--ona-system-line);
+    border-radius: var(--radius-clear-sm);
+    padding: 10px;
+    background: white;
+  }
+
+  .ona-system-gate-impact strong {
+    font-size: 1.2rem;
+    line-height: 1;
+  }
+
+  .ona-system-gate-impact p {
+    color: var(--ona-system-muted);
+    font-size: 0.78rem;
+    line-height: 1.42;
+  }
+
+  .ona-system-gate-impact-list {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .ona-system-gate-impact-list article[data-status='watch'] {
+    border-top: 3px solid var(--ona-system-ink);
+  }
+
+  .ona-system-gate-impact-list article[data-status='fail'] {
+    border-top: 3px solid var(--ona-system-red);
+  }
+
+  .ona-system-gate-impact-list article[data-status='pass'] {
+    border-top: 3px solid var(--ona-system-green);
   }
 
   .ona-system-score-explain {
@@ -2148,6 +2211,8 @@
 
     .ona-system-rulebook,
     .ona-system-playback,
+    .ona-system-gate-impact,
+    .ona-system-gate-impact-list,
     .ona-system-score-explain > div:last-child {
       grid-template-columns: 1fr;
     }
@@ -2186,6 +2251,7 @@
     }
 
     .ona-system-scoreboard,
+    .ona-system-gate-impact > div:nth-child(2),
     .ona-system-playback-controls,
     .ona-system-timeline article {
       grid-template-columns: 1fr;

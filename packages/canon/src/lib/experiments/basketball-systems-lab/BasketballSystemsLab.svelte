@@ -657,7 +657,7 @@
 				<article>
 					<span>Win condition</span>
 					<strong>Highest valid system score</strong>
-					<p>{match.environment.winCondition}. Validation gates flag unrealistic wins.</p>
+					<p>{match.environment.winCondition}. Requirement gates adjust unrealistic wins.</p>
 				</article>
 				<article>
 					<span>Play model</span>
@@ -700,15 +700,54 @@
 					<article class:active={standing.result.system.key === viewedLeader.result.system.key}>
 						<span>#{index + 1} in year {viewedYear} {standing.result.system.name}</span>
 						<strong>{standing.entry.score.toFixed(1)}</strong>
-						<small>Projects {standing.result.score.toFixed(1)} after {match.years} years</small>
+						<small
+							>Final {standing.result.score.toFixed(1)} after gates; raw {standing.result.rawScore.toFixed(
+								1
+							)}</small
+						>
 					</article>
 				{/each}
+			</div>
+
+			<div class="ona-system-gate-impact" aria-label="Gate-adjusted result">
+				<div>
+					<span>{viewedLeader.result.validationImpact.label}</span>
+					<strong>{viewedLeader.result.validationImpact.score.toFixed(1)}</strong>
+					<p>{viewedLeader.result.validationImpact.summary}</p>
+				</div>
+				<div>
+					<article>
+						<span>Raw score</span>
+						<strong>{viewedLeader.result.validationImpact.rawScore.toFixed(1)}</strong>
+						<small>Before requirement gates</small>
+					</article>
+					<article>
+						<span>Gate adjustment</span>
+						<strong>{viewedLeader.result.validationImpact.adjustment.toFixed(1)}</strong>
+						<small>Applied before final ranking</small>
+					</article>
+				</div>
+				<div class="ona-system-gate-impact-list">
+					{#each viewedLeader.result.validationImpact.impacts.filter((impact) => impact.status !== 'pass') as impact}
+						<article data-status={impact.status}>
+							<span>{impact.label}</span>
+							<strong>{impact.adjustment.toFixed(1)}</strong>
+							<p>{impact.detail}</p>
+						</article>
+					{:else}
+						<article data-status="pass">
+							<span>All gates</span>
+							<strong>Clean</strong>
+							<p>No requirement gate changed the final score.</p>
+						</article>
+					{/each}
+				</div>
 			</div>
 
 			<div class="ona-system-score-explain" aria-label="Winning score explanation">
 				<div class="ona-system-timeline-header">
 					<BarChart3 size={17} strokeWidth={1.8} />
-					<span>Why {viewedLeader.result.system.name} leads in year {viewedYear}</span>
+					<span>Raw year {viewedYear} score drivers for {viewedLeader.result.system.name}</span>
 				</div>
 				<div>
 					{#each activeEntry.scoreContributions as contribution}

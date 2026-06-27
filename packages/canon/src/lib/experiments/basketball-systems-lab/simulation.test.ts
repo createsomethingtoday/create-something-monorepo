@@ -108,7 +108,7 @@ describe('basketball systems management simulation', () => {
 		);
 	});
 
-	it('explains the winning score through weighted score contributions', () => {
+	it('explains the raw score through weighted score contributions', () => {
 		const match = runSystemMatch({ mode: 'versus', systemKey: 'recovery', opponentKey: 'attention' });
 		const contributionTotal = match.winner.scoreContributions.reduce(
 			(total, contribution) => total + contribution.value,
@@ -123,10 +123,41 @@ describe('basketball systems management simulation', () => {
 			'ownerMargin',
 			'resilience'
 		]);
-		expect(Number(contributionTotal.toFixed(1))).toBe(match.winner.score);
+		expect(Number(contributionTotal.toFixed(1))).toBe(match.winner.rawScore);
 		expect(match.winner.scoreContributions.every((contribution) => contribution.readout.includes('x'))).toBe(
 			true
 		);
+	});
+
+	it('applies requirement gate adjustments before final ranking', () => {
+		const match = runSystemMatch({ mode: 'versus', systemKey: 'recovery', opponentKey: 'attention' });
+
+		expect(match.winner.validationImpact).toMatchObject({
+			rawScore: 92.7,
+			adjustment: -9,
+			score: 83.7,
+			label: 'Risk-adjusted score'
+		});
+		expect(match.winner.score).toBe(match.winner.validationImpact.score);
+		expect(match.winner.score).toBe(
+			Number((match.winner.rawScore + match.winner.validationImpact.adjustment).toFixed(1))
+		);
+		expect(match.winner.validationImpact.impacts).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({
+					key: 'owner-room',
+					status: 'watch',
+					adjustment: -6
+				}),
+				expect.objectContaining({
+					key: 'projection-honesty',
+					status: 'watch',
+					adjustment: -3
+				})
+			])
+		);
+		expect(match.systems.map((result) => result.rank)).toEqual([1, 2]);
+		expect(match.systems[0]?.score).toBeGreaterThan(match.systems[1]?.score ?? 0);
 	});
 
 	it('applies mid-season steering from the chosen year and exposes projections', () => {

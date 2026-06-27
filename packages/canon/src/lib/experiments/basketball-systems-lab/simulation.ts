@@ -138,12 +138,41 @@ export type Environment = {
 	effects: Partial<LeagueState>;
 };
 
+export type GameRequirementSeverity = 'pass' | 'watch' | 'fail' | 'deferred';
+
+export type GameRequirementKey =
+	| 'state-bounds'
+	| 'tradeoff-integrity'
+	| 'owner-room'
+	| 'labor-plausibility'
+	| 'projection-honesty'
+	| 'system-balance';
+
+export type SystemValidationImpact = {
+	rawScore: number;
+	adjustment: number;
+	score: number;
+	label: string;
+	summary: string;
+	impacts: SystemGateImpact[];
+};
+
+export type SystemGateImpact = {
+	key: Exclude<GameRequirementKey, 'system-balance'>;
+	label: string;
+	status: Exclude<GameRequirementSeverity, 'deferred'>;
+	adjustment: number;
+	detail: string;
+};
+
 export type SystemResult = {
 	system: System;
 	scenario: ManagementScenario;
 	timeline: SystemTimelineEntry[];
 	scoreContributions: SystemScoreContribution[];
 	score: number;
+	rawScore: number;
+	validationImpact: SystemValidationImpact;
 	startScore: number;
 	compoundedScoreDelta: number;
 	rank: number;
@@ -156,16 +185,6 @@ export type SystemProjection = {
 	value: string;
 	detail: string;
 };
-
-export type GameRequirementSeverity = 'pass' | 'watch' | 'fail' | 'deferred';
-
-export type GameRequirementKey =
-	| 'state-bounds'
-	| 'tradeoff-integrity'
-	| 'owner-room'
-	| 'labor-plausibility'
-	| 'projection-honesty'
-	| 'system-balance';
 
 export type GameRequirement = {
 	key: GameRequirementKey;
@@ -564,8 +583,7 @@ export function runSystemMatch(input: SystemMatchInput = {}): SystemMatch {
 		steeringPolicy: null,
 		targetSystemKey: primary.key
 	});
-	const ranked = entrants
-		.map((system) =>
+	const rawResults = entrants.map((system) =>
 			buildSystemResult(system, environmentBaseline, environment, {
 				years,
 				steeringYear,
@@ -573,7 +591,8 @@ export function runSystemMatch(input: SystemMatchInput = {}): SystemMatch {
 				steeringPolicy,
 				targetSystemKey: primary.key
 			})
-		)
+	);
+	const ranked = applyValidationImpacts(rawResults, environmentBaseline)
 		.sort((left, right) => right.score - left.score)
 		.map((result, index) => ({ ...result, rank: index + 1 }));
 	const winner = ranked[0];
@@ -681,6 +700,7 @@ function buildSystemResult(
 	const score = timeline.at(-1)?.score ?? startScore;
 	const compoundedScoreDelta = roundTo(score - startScore, 1);
 	const scoreContributions = buildScoreContributions(system, scenario.state);
+	const validationImpact = buildCleanValidationImpact(score);
 
 	return {
 		system: cloneSystem(system),
@@ -688,11 +708,167 @@ function buildSystemResult(
 		timeline,
 		scoreContributions,
 		score,
+		rawScore: score,
+		validationImpact,
 		startScore,
 		compoundedScoreDelta,
 		rank: 1,
 		outcome: `${system.name} scored ${score.toFixed(1)} after ${options.years} years.`,
 		failureMode: buildFailureMode(system, scenario.state)
+	};
+}
+
+function applyValidationImpacts(results: SystemResult[], baseline: LeagueState): SystemResult[] {
+	return results.map((result) => {
+		const validationImpact = buildSystemValidationImpact(result, baseline);
+		const score = validationImpact.score;
+
+		return {
+			...result,
+			score,
+			rawScore: validationImpact.rawScore,
+			validationImpact,
+			compoundedScoreDelta: roundTo(score - result.startScore, 1),
+			outcome: `${result.system.name} scored ${score.toFixed(1)} after gate adjustments.`
+		};
+	});
+}
+
+function buildCleanValidationImpact(rawScore: number): SystemValidationImpact {
+	return {
+		rawScore,
+		adjustment: 0,
+		score: rawScore,
+		label: 'Clean score',
+		summary: 'No requirement gate changed the System score.',
+		impacts: []
+	};
+}
+
+function buildSystemValidationImpact(
+	result: SystemResult,
+	baseline: LeagueState
+): SystemValidationImpact {
+	const impacts = [
+		buildStateBoundsImpact(result),
+		buildTradeoffImpact(result, baseline),
+		buildOwnerRoomImpact(result),
+		buildLaborImpact(result),
+		buildProjectionHonestyImpact(result)
+	];
+	const adjustment = roundTo(
+		impacts.reduce((total, impact) => total + impact.adjustment, 0),
+		1
+	);
+	const score = roundTo(Math.max(0, result.rawScore + adjustment), 1);
+	const activeImpacts = impacts.filter((impact) => impact.status !== 'pass');
+	const hasFail = impacts.some((impact) => impact.status === 'fail');
+
+	return {
+		rawScore: result.rawScore,
+		adjustment,
+		score,
+		label: hasFail ? 'Gate penalty applied' : activeImpacts.length > 0 ? 'Risk-adjusted score' : 'Clean score',
+		summary:
+			activeImpacts.length > 0
+				? `${result.system.name} moved from ${result.rawScore.toFixed(1)} to ${score.toFixed(1)} after ${activeImpacts.length} requirement gate${activeImpacts.length === 1 ? '' : 's'}.`
+				: 'No requirement gate changed the System score.',
+		impacts
+	};
+}
+
+function buildStateBoundsImpact(result: SystemResult): SystemGateImpact {
+	const invalidStates = result.timeline.filter((entry) => !isValidLeagueState(entry.state));
+
+	return {
+		key: 'state-bounds',
+		label: 'State bounds',
+		status: invalidStates.length > 0 ? 'fail' : 'pass',
+		adjustment: invalidStates.length > 0 ? -24 : 0,
+		detail:
+			invalidStates.length > 0
+				? `${invalidStates.length} state snapshot${invalidStates.length === 1 ? '' : 's'} left the playable model range.`
+				: 'All state snapshots stayed inside the playable model range.'
+	};
+}
+
+function buildTradeoffImpact(result: SystemResult, baseline: LeagueState): SystemGateImpact {
+	const finalState = result.timeline.at(-1)?.state ?? result.scenario.state;
+	const improved = result.rawScore - result.startScore > 8;
+	const tradeoffs = countVisibleTradeoffs(baseline, finalState);
+
+	if (improved && tradeoffs === 0) {
+		return {
+			key: 'tradeoff-integrity',
+			label: 'Tradeoff integrity',
+			status: 'fail',
+			adjustment: -16,
+			detail: 'Large upside without a visible counter-pressure is treated as an invalid free lunch.'
+		};
+	}
+
+	if (tradeoffs === 0) {
+		return {
+			key: 'tradeoff-integrity',
+			label: 'Tradeoff integrity',
+			status: 'watch',
+			adjustment: -4,
+			detail: 'The System stayed too stable, so the game applies a small optimism haircut.'
+		};
+	}
+
+	return {
+		key: 'tradeoff-integrity',
+		label: 'Tradeoff integrity',
+		status: 'pass',
+		adjustment: 0,
+		detail: `${tradeoffs} visible tradeoff${tradeoffs === 1 ? '' : 's'} kept the upside credible.`
+	};
+}
+
+function buildOwnerRoomImpact(result: SystemResult): SystemGateImpact {
+	const minimumOwnerMargin = minTimelineMetric([result], 'ownerMargin');
+	const status = minimumOwnerMargin < 35 ? 'fail' : minimumOwnerMargin < 60 ? 'watch' : 'pass';
+
+	return {
+		key: 'owner-room',
+		label: 'Owner room',
+		status,
+		adjustment: status === 'fail' ? -18 : status === 'watch' ? -6 : 0,
+		detail: `Minimum owner margin was ${formatScore(minimumOwnerMargin)}. Below 60 costs flexibility; below 35 breaks credibility.`
+	};
+}
+
+function buildLaborImpact(result: SystemResult): SystemGateImpact {
+	const minimumLaborTrust = minTimelineMetric([result], 'laborTrust');
+	const maximumLaborTrust = maxTimelineMetric([result], 'laborTrust');
+	const minimumOwnerMargin = minTimelineMetric([result], 'ownerMargin');
+	const cappedLaborPeace = maximumLaborTrust >= 100 && minimumOwnerMargin < 55;
+	const status = minimumLaborTrust < 50 ? 'fail' : minimumLaborTrust < 65 || cappedLaborPeace ? 'watch' : 'pass';
+
+	return {
+		key: 'labor-plausibility',
+		label: 'Labor plausibility',
+		status,
+		adjustment: status === 'fail' ? -18 : status === 'watch' ? -6 : 0,
+		detail: cappedLaborPeace
+			? 'Maximum labor trust with tight owner room creates political cost.'
+			: `Labor trust stayed between ${formatScore(minimumLaborTrust)} and ${formatScore(maximumLaborTrust)}.`
+	};
+}
+
+function buildProjectionHonestyImpact(result: SystemResult): SystemGateImpact {
+	const saturated = getSaturatedMetrics([result]);
+
+	return {
+		key: 'projection-honesty',
+		label: 'Projection honesty',
+		status: saturated.length > 0 ? 'watch' : 'pass',
+		adjustment: saturated.length > 0 ? -3 : 0,
+		detail:
+			saturated.length > 0
+				? `The ${formatList(saturated)} cap${saturated.length === 1 ? '' : 's'} ${saturated.length === 1 ? 'makes' : 'make'} the later-year projection directional.`
+				: 'No major state metric hit a model cap.'
 	};
 }
 
@@ -767,8 +943,8 @@ function buildSystemReports(
 			title:
 				mode === 'versus' && challenger
 					? `${winner.system.name} beat ${challenger.system.name} by ${roundTo(winner.score - challenger.score, 1).toFixed(1)} points after ${years} years.`
-					: `${winner.system.name} survived ${years} years with a ${winner.score.toFixed(1)} system score.`,
-			detail: `${winner.system.thesis} Decisions compound inside ${environment.name}: ${environment.pressure.toLowerCase()}.`
+					: `${winner.system.name} survived ${years} years with a ${winner.score.toFixed(1)} valid score.`,
+			detail: `${winner.system.thesis} Raw score ${winner.rawScore.toFixed(1)} became ${winner.score.toFixed(1)} after requirement gates inside ${environment.name}: ${environment.pressure.toLowerCase()}.`
 		},
 		{
 			label: 'Environment Signal',
@@ -778,7 +954,7 @@ function buildSystemReports(
 		{
 			label: 'Failure Mode',
 			title: winner.failureMode,
-			detail: `The compounding ledger keeps the System steerable: a decision can change from any year without hiding the tradeoff.`
+			detail: `The compounding ledger keeps the System steerable: a decision can change from any year without hiding the tradeoff or gate cost.`
 		}
 	];
 }
@@ -802,7 +978,7 @@ function buildSystemProjections(
 		{
 			label: 'Projected finish',
 			value: `${winner.score.toFixed(1)}`,
-			detail: `${winner.system.name} projects as the final leader after ${years} years.`
+			detail: `${winner.system.name} projects as the final leader after ${years} years. Raw ${winner.rawScore.toFixed(1)}, gate adjustment ${formatDelta(winner.validationImpact.adjustment)}.`
 		},
 		{
 			label: 'Steering impact',
@@ -847,9 +1023,9 @@ function buildValidationSummary(
 					: 'Validated run',
 		summary:
 			status === 'fail'
-				? 'At least one baked-in realism gate broke under this run.'
+				? 'At least one baked-in realism gate applied a major score penalty.'
 				: status === 'watch'
-					? 'The run is playable, with assumptions that should be inspected before treating the projection as exact.'
+					? 'The run is playable, with requirement-watch penalties already reflected in final scores.'
 					: 'Core bounds, tradeoffs, and balance checks passed for this run.',
 		requirements
 	};
@@ -857,21 +1033,7 @@ function buildValidationSummary(
 
 function validateStateBounds(results: SystemResult[]): GameRequirement {
 	const states = results.flatMap((result) => result.timeline.map((entry) => entry.state));
-	const invalidStates = states.filter(
-		(state) =>
-			!Number.isFinite(state.mediaValueB) ||
-			state.mediaValueB < 0 ||
-			state.mediaValueB > 30 ||
-			!boundedPercentMetric(state.leagueHealth) ||
-			!boundedPercentMetric(state.competitiveBalance) ||
-			!boundedPercentMetric(state.laborTrust) ||
-			!boundedPercentMetric(state.starAvailability) ||
-			!boundedPercentMetric(state.ownerMargin) ||
-			!boundedPercentMetric(state.globalAttention) ||
-			!boundedPercentMetric(state.scheduleLoad) ||
-			!boundedPercentMetric(state.travelWear) ||
-			!boundedPercentMetric(state.smallMarketVisibility)
-	);
+	const invalidStates = states.filter((state) => !isValidLeagueState(state));
 
 	return {
 		key: 'state-bounds',
@@ -888,15 +1050,8 @@ function validateStateBounds(results: SystemResult[]): GameRequirement {
 function validateTradeoffs(baseline: LeagueState, results: SystemResult[]): GameRequirement {
 	const winner = results[0];
 	const finalState = winner.timeline.at(-1)?.state ?? winner.scenario.state;
-	const improved = winner.compoundedScoreDelta > 8;
-	const tradeoffs = [
-		finalState.ownerMargin < baseline.ownerMargin,
-		finalState.scheduleLoad > baseline.scheduleLoad,
-		finalState.travelWear > baseline.travelWear,
-		finalState.competitiveBalance < baseline.competitiveBalance,
-		finalState.laborTrust < baseline.laborTrust,
-		finalState.starAvailability < baseline.starAvailability
-	].filter(Boolean).length;
+	const improved = winner.rawScore - winner.startScore > 8;
+	const tradeoffs = countVisibleTradeoffs(baseline, finalState);
 
 	if (improved && tradeoffs === 0) {
 		return {
@@ -962,19 +1117,7 @@ function validateLaborPlausibility(results: SystemResult[]): GameRequirement {
 }
 
 function validateProjectionHonesty(results: SystemResult[]): GameRequirement {
-	const saturatedMetrics = new Set<string>();
-
-	for (const result of results) {
-		for (const entry of result.timeline) {
-			if (entry.state.leagueHealth >= 100) saturatedMetrics.add('health');
-			if (entry.state.laborTrust >= 100) saturatedMetrics.add('trust');
-			if (entry.state.competitiveBalance >= 100) saturatedMetrics.add('balance');
-			if (entry.state.starAvailability >= 100) saturatedMetrics.add('availability');
-			if (entry.state.ownerMargin <= 0) saturatedMetrics.add('owner margin');
-		}
-	}
-
-	const saturated = [...saturatedMetrics];
+	const saturated = getSaturatedMetrics(results);
 
 	return {
 		key: 'projection-honesty',
@@ -983,7 +1126,7 @@ function validateProjectionHonesty(results: SystemResult[]): GameRequirement {
 		summary: saturated.length > 0 ? 'Capped projection' : 'Uncapped projection',
 		detail:
 			saturated.length > 0
-				? `The run hit the ${formatList(saturated)} cap, so later-year projections are directional rather than exact.`
+				? `The run hit the ${formatList(saturated)} cap${saturated.length === 1 ? '' : 's'}, so later-year projections are directional rather than exact.`
 				: 'No major state metric hit a model cap during the selected horizon.'
 	};
 }
@@ -1058,8 +1201,8 @@ function buildSystemLedger(
 			value: winner.system.name,
 			detail:
 				mode === 'versus' && challenger
-					? `${winner.score.toFixed(1)} versus ${challenger.score.toFixed(1)}. Compounded ${formatDelta(winner.compoundedScoreDelta)}.`
-					: `${winner.score.toFixed(1)} weighted score. Compounded ${formatDelta(winner.compoundedScoreDelta)}.`
+					? `${winner.score.toFixed(1)} valid score versus ${challenger.score.toFixed(1)}. Raw ${winner.rawScore.toFixed(1)}.`
+					: `${winner.score.toFixed(1)} valid score from ${winner.rawScore.toFixed(1)} raw. Compounded ${formatDelta(winner.compoundedScoreDelta)}.`
 		},
 		{
 			label: 'Steering',
@@ -1551,6 +1694,50 @@ function compareLowerIsBetter(previous: number, next: number): string {
 
 function boundedPercentMetric(value: number): boolean {
 	return Number.isFinite(value) && value >= 0 && value <= 100;
+}
+
+function isValidLeagueState(state: LeagueState): boolean {
+	return (
+		Number.isFinite(state.mediaValueB) &&
+		state.mediaValueB >= 0 &&
+		state.mediaValueB <= 30 &&
+		boundedPercentMetric(state.leagueHealth) &&
+		boundedPercentMetric(state.competitiveBalance) &&
+		boundedPercentMetric(state.laborTrust) &&
+		boundedPercentMetric(state.starAvailability) &&
+		boundedPercentMetric(state.ownerMargin) &&
+		boundedPercentMetric(state.globalAttention) &&
+		boundedPercentMetric(state.scheduleLoad) &&
+		boundedPercentMetric(state.travelWear) &&
+		boundedPercentMetric(state.smallMarketVisibility)
+	);
+}
+
+function countVisibleTradeoffs(baseline: LeagueState, finalState: LeagueState): number {
+	return [
+		finalState.ownerMargin < baseline.ownerMargin,
+		finalState.scheduleLoad > baseline.scheduleLoad,
+		finalState.travelWear > baseline.travelWear,
+		finalState.competitiveBalance < baseline.competitiveBalance,
+		finalState.laborTrust < baseline.laborTrust,
+		finalState.starAvailability < baseline.starAvailability
+	].filter(Boolean).length;
+}
+
+function getSaturatedMetrics(results: SystemResult[]): string[] {
+	const saturatedMetrics = new Set<string>();
+
+	for (const result of results) {
+		for (const entry of result.timeline) {
+			if (entry.state.leagueHealth >= 100) saturatedMetrics.add('health');
+			if (entry.state.laborTrust >= 100) saturatedMetrics.add('trust');
+			if (entry.state.competitiveBalance >= 100) saturatedMetrics.add('balance');
+			if (entry.state.starAvailability >= 100) saturatedMetrics.add('availability');
+			if (entry.state.ownerMargin <= 0) saturatedMetrics.add('owner margin');
+		}
+	}
+
+	return [...saturatedMetrics];
 }
 
 function minTimelineMetric(results: SystemResult[], key: keyof LeagueState): number {
