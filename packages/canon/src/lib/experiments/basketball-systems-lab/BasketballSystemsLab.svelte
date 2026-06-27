@@ -188,6 +188,12 @@
 		active: boolean;
 	};
 	type VersusControlMode = 'autonomous' | 'coach';
+	type FirstRunStep = {
+		label: string;
+		value: string;
+		detail: string;
+		status: 'done' | 'current' | 'next';
+	};
 
 	const edges = [
 		{ path: 'M 92 106 C 165 78 210 74 278 90', label: 'reduces' },
@@ -237,6 +243,9 @@
 		environments.find((environment) => environment.key === selectedEnvironmentKey) ??
 			defaultEnvironment
 	);
+	const opponentSystemName = $derived(
+		systems.find((system) => system.key === opponentSystem)?.name ?? 'opponent'
+	);
 	const uploadedSystemKeys = $derived(new Set(uploadedSystems.map((system) => system.key)));
 	const hasUploadedField = $derived(uploadedSystems.length > 2);
 	const uploadedCompetitionLabel = $derived(
@@ -274,7 +283,9 @@
 				? 'Run every uploaded System in the same environment. No steering; the winner is the highest valid score after requirement gates.'
 				: 'Race two Systems in the same environment. No steering; the winner is the highest valid score after requirement gates.'
 	);
-	const versusModeLabel = $derived(hasUploadedField ? 'Versus field' : 'Versus race');
+	const modeLabel = $derived(
+		isSolo ? 'Solo Challenge' : canSteer ? 'Coach a System' : 'Watch Systems Race'
+	);
 
 	$effect(() => {
 		if (!systems.some((system) => system.key === selectedSystem)) {
@@ -495,6 +506,12 @@
 			(standing) => standing.result.system.key !== viewedLeader.result.system.key
 		) ?? null
 	);
+	const configuredOpponentName = $derived(
+		uploadedSystems.length > 1 && !hasUploadedField
+			? (uploadedSystems.find((system) => system.key !== match.steering.targetSystem.key)?.name ??
+					opponentSystemName)
+			: opponentSystemName
+	);
 	const viewedLeaderGap = $derived(
 		viewedRunnerUp
 			? Number((activeEntry.score - viewedRunnerUp.entry.score).toFixed(1))
@@ -646,20 +663,20 @@
 	);
 	const gameTurnLabel = $derived(
 		isSolo
-			? 'Solo turn'
+			? 'Solo Challenge'
 			: canSteer
 				? hasUploadedField
-					? 'Coach field'
-					: 'Coach race'
+					? 'Coach the field'
+					: 'Coach the race'
 				: hasUploadedField
-					? 'Autonomous field'
-					: 'Autonomous race'
+					? 'Watch Systems field'
+					: 'Watch Systems race'
 	);
 	const gameTurnTitle = $derived(
 		isSolo
 			? `${selectedEnvironment.name}: ${match.challenge.label}`
 		: canSteer
-				? `Coach ${match.steering.targetSystem.name} against ${viewedRunnerUp?.result.system.name ?? 'the field'}`
+				? `Coach ${match.steering.targetSystem.name} against ${hasUploadedField ? 'the field' : configuredOpponentName}`
 			: hasUploadedField
 				? `${match.winner.system.name} leads ${match.systems.length} Systems`
 				: `${match.winner.system.name} leads the race`
@@ -678,6 +695,16 @@
 						? 'Watch field'
 						: 'Watch race'
 					: 'Run season'
+	);
+	const finalOutcomeVisible = $derived(viewedYear === match.years);
+	const activeFirstRunStep = $derived(
+		finalOutcomeVisible
+			? 'Final'
+			: canSteer && viewedYear > 1 && !playbackRunning
+				? 'Decide'
+				: viewedYear > 1 || playbackRunning
+					? 'Watch'
+					: 'Setup'
 	);
 	const gameTurnLanes = $derived([
 		{
@@ -700,6 +727,61 @@
 			detail: isSolo ? match.challenge.summary : selectedEnvironment.winCondition
 		}
 	]);
+	const firstRunSteps = $derived<FirstRunStep[]>([
+		{
+			label: '1 / Setup',
+			value: isSolo
+				? match.steering.targetSystem.name
+				: hasUploadedField
+					? `${match.systems.length} Systems loaded`
+					: `${match.steering.targetSystem.name} vs ${configuredOpponentName}`,
+			detail:
+				uploadedSystems.length > 0
+					? 'Custom Systems are in the field; choose the coach target or let them run.'
+					: 'Use built-in Systems now, load the sample field, or add your own entrants.',
+			status: activeFirstRunStep === 'Setup' ? 'current' : 'done'
+		},
+		{
+			label: '2 / Win',
+			value: isSolo ? match.challenge.label : 'Highest valid score',
+			detail: isSolo
+				? 'Beat the environment without breaking owner room or labor trust.'
+				: 'Current-year leads are visible, but final score after gates decides the winner.',
+			status: activeFirstRunStep === 'Setup' ? 'next' : 'done'
+		},
+		{
+			label: '3 / Watch',
+			value: `Year ${viewedYear} of ${match.years}`,
+			detail: activeEntry.receipt,
+			status:
+				activeFirstRunStep === 'Watch'
+					? 'current'
+					: activeFirstRunStep === 'Final' || activeFirstRunStep === 'Decide'
+						? 'done'
+						: 'next'
+		},
+		{
+			label: '4 / Decide',
+			value: finalOutcomeVisible
+				? isSolo
+					? formatChallengeStatus(match.challenge.status)
+					: `${match.winner.system.name} wins`
+				: canSteer
+					? nextTurnPrompt.title
+					: 'Let Systems run',
+			detail: finalOutcomeVisible
+				? isSolo
+					? match.challenge.summary
+					: `${match.winner.system.name} finished at ${match.winner.score.toFixed(1)} after requirement gates.`
+				: canSteer
+					? nextTurnPrompt.detail
+					: `${viewedLeader.result.system.name} leads now; final gates still decide the race.`,
+			status:
+				activeFirstRunStep === 'Final' || activeFirstRunStep === 'Decide'
+					? 'current'
+					: 'next'
+		}
+	]);
 	const kickoffBriefing = $derived([
 		{
 			label: 'Field',
@@ -707,7 +789,7 @@
 				? match.steering.targetSystem.name
 				: hasUploadedField
 					? `${match.systems.length} Systems`
-					: `${match.steering.targetSystem.name} vs ${viewedRunnerUp?.result.system.name ?? 'opponent'}`,
+					: `${match.steering.targetSystem.name} vs ${configuredOpponentName}`,
 			detail: isSolo
 				? 'One System tries to clear the environment objectives.'
 				: hasUploadedField
@@ -788,7 +870,6 @@
 				steered: entry.steered
 			}))
 	);
-	const finalOutcomeVisible = $derived(viewedYear === match.years);
 	const finalRunnerUp = $derived(
 		match.systems.find((result) => result.system.key !== match.winner.system.key) ?? null
 	);
@@ -1732,7 +1813,7 @@
 					aria-pressed={mode === 'single'}
 					onclick={() => (mode = 'single')}
 				>
-					Solo
+					Solo Challenge
 				</button>
 				<button
 					type="button"
@@ -1740,11 +1821,11 @@
 					aria-pressed={mode === 'versus'}
 					onclick={() => (mode = 'versus')}
 				>
-					Versus
+					Systems Race
 				</button>
 			</div>
 			<div class="ona-system-mode-note">
-				<strong>{isSolo ? 'Solo challenge' : canSteer ? 'Coach run' : versusModeLabel}</strong>
+				<strong>{modeLabel}</strong>
 				<p>{modeRule}</p>
 			</div>
 
@@ -1756,8 +1837,8 @@
 						aria-pressed={versusControl === 'autonomous'}
 						onclick={() => (versusControl = 'autonomous')}
 					>
-						<span>Autonomous</span>
-						<small>Systems run clean</small>
+						<span>Watch Race</span>
+						<small>No steering</small>
 					</button>
 					<button
 						type="button"
@@ -1792,6 +1873,15 @@
 							<span>{lane.label}</span>
 							<strong>{lane.value}</strong>
 							<p>{lane.detail}</p>
+						</article>
+					{/each}
+				</div>
+				<div class="ona-system-first-run-flow" aria-label="First run flow">
+					{#each firstRunSteps as step}
+						<article data-status={step.status}>
+							<span>{step.label}</span>
+							<strong>{step.value}</strong>
+							<p>{step.detail}</p>
 						</article>
 					{/each}
 				</div>

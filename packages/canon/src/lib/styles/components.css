@@ -1436,6 +1436,57 @@
     line-height: 1.32;
   }
 
+  .ona-system-first-run-flow {
+    display: grid;
+    gap: 6px;
+    border-top: 1px solid var(--ona-system-line);
+    padding-top: 8px;
+  }
+
+  .ona-system-first-run-flow article {
+    display: grid;
+    gap: 5px;
+    border: 1px solid var(--ona-system-line);
+    border-left: 3px solid transparent;
+    border-radius: var(--radius-clear-sm);
+    padding: 8px 9px;
+    background: color-mix(in srgb, white 90%, var(--ona-system-surface));
+  }
+
+  .ona-system-first-run-flow article[data-status='current'] {
+    border-color: var(--ona-system-ink);
+    border-left-color: var(--ona-system-ink);
+    background: white;
+  }
+
+  .ona-system-first-run-flow article[data-status='done'] {
+    border-left-color: var(--ona-system-green);
+  }
+
+  .ona-system-first-run-flow span {
+    color: var(--ona-system-muted);
+    font-size: 0.64rem;
+    font-weight: 800;
+    line-height: 1;
+    text-transform: uppercase;
+    letter-spacing: 0;
+  }
+
+  .ona-system-first-run-flow strong {
+    color: var(--ona-system-ink);
+    font-size: 0.8rem;
+    line-height: 1.14;
+    overflow-wrap: anywhere;
+  }
+
+  .ona-system-first-run-flow p {
+    margin: 0;
+    color: var(--ona-system-muted);
+    font-size: 0.7rem;
+    font-weight: 700;
+    line-height: 1.3;
+  }
+
   .ona-system-objective-brief > div:first-child,
   .ona-system-objective-brief-list article {
     display: grid;
