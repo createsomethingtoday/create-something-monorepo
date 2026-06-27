@@ -2163,6 +2163,43 @@
 				</div>
 			</div>
 
+			{#if mode === 'versus'}
+				<div class="ona-system-live-standings" aria-label="Live standings">
+					<div class="ona-system-live-standings-header">
+						<div>
+							<div class="ona-system-timeline-header">
+								<BarChart3 size={17} strokeWidth={1.8} />
+								<span>Live standings</span>
+							</div>
+							<strong>Year {viewedYear} field order</strong>
+						</div>
+						<p>
+							Current-year score leads the live board. Final valid score after gates still decides
+							the winner.
+						</p>
+					</div>
+					<div class="ona-system-live-standings-list">
+						{#each raceMomentum as standing}
+							<article class:active={standing.active}>
+								<div>
+									<span>#{standing.rank}</span>
+									<strong>{standing.name}</strong>
+								</div>
+								<div>
+									<strong>{standing.score.toFixed(1)}</strong>
+									<small>{formatDelta(standing.delta)} this year</small>
+								</div>
+								<p>
+									Final {standing.finalScore.toFixed(1)}; gate {formatDelta(
+										standing.gateAdjustment
+									)}.
+								</p>
+							</article>
+						{/each}
+					</div>
+				</div>
+			{/if}
+
 			<div class="ona-system-rulebook" aria-label="Run rules">
 				<article>
 					<span>Win condition</span>
