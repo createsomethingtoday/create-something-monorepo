@@ -252,6 +252,60 @@ describe('basketball systems management simulation', () => {
 		);
 	});
 
+	it('turns single-player into an explicit challenge with objective targets', () => {
+		const match = runSystemMatch({
+			systemKey: 'recovery',
+			years: 5,
+			steeringYear: 3,
+			steeringPhase: 'midseason',
+			steeringPolicyKey: 'labor'
+		});
+
+		expect(match.challenge).toMatchObject({
+			label: 'Challenge cleared',
+			status: 'cleared',
+			summary: expect.stringContaining('score, owner room, and labor trust')
+		});
+		expect(match.challenge.objectives.map((objective) => objective.key)).toEqual([
+			'valid-score',
+			'owner-room-floor',
+			'labor-trust-floor'
+		]);
+		expect(match.challenge.objectives).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({
+					key: 'valid-score',
+					target: '76.0 valid score',
+					value: '77.7',
+					status: 'cleared'
+				}),
+				expect.objectContaining({
+					key: 'owner-room-floor',
+					target: '35 floor',
+					value: '37',
+					status: 'cleared'
+				}),
+				expect.objectContaining({
+					key: 'labor-trust-floor',
+					target: '65 floor',
+					value: '68',
+					status: 'cleared'
+				})
+			])
+		);
+	});
+
+	it('keeps versus mode focused on race outcome instead of solo challenge targets', () => {
+		const match = runSystemMatch({ mode: 'versus', systemKey: 'recovery', opponentKey: 'attention' });
+
+		expect(match.challenge).toMatchObject({
+			label: 'Versus race',
+			status: 'versus',
+			objectives: []
+		});
+		expect(match.challenge.summary).toContain(match.winner.system.name);
+	});
+
 	it('flags unrealistic stress environments through validation gates', () => {
 		const match = runSystemMatch({
 			systemKey: 'trust',
@@ -279,6 +333,19 @@ describe('basketball systems management simulation', () => {
 				expect.objectContaining({
 					key: 'labor-plausibility',
 					status: 'fail'
+				})
+			])
+		);
+		expect(match.challenge.status).toBe('missed');
+		expect(match.challenge.objectives).toEqual(
+			expect.arrayContaining([
+				expect.objectContaining({
+					key: 'owner-room-floor',
+					status: 'missed'
+				}),
+				expect.objectContaining({
+					key: 'labor-trust-floor',
+					status: 'missed'
 				})
 			])
 		);

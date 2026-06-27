@@ -1216,6 +1216,7 @@
   }
 
   .ona-system-mode-note,
+  .ona-system-objective-brief,
   .ona-system-environment-note {
     display: grid;
     gap: 6px;
@@ -1232,17 +1233,88 @@
     border-left-color: var(--ona-system-blue);
   }
 
+  .ona-system-objective-brief {
+    --ona-system-objective-line: var(--ona-system-green);
+    border-left-color: var(--ona-system-objective-line);
+    margin-top: 10px;
+    background: white;
+  }
+
+  .ona-system-objective-brief[data-status='close'] {
+    --ona-system-objective-line: var(--ona-system-ink);
+  }
+
+  .ona-system-objective-brief[data-status='missed'] {
+    --ona-system-objective-line: var(--ona-system-red);
+  }
+
+  .ona-system-objective-brief[data-status='versus'] {
+    --ona-system-objective-line: var(--ona-system-blue);
+  }
+
   .ona-system-mode-note strong,
+  .ona-system-objective-brief strong,
   .ona-system-environment-note strong {
     font-size: 0.82rem;
     line-height: 1.2;
   }
 
   .ona-system-mode-note p,
+  .ona-system-objective-brief p,
   .ona-system-environment-note p {
     color: var(--ona-system-muted);
     font-size: 0.76rem;
     line-height: 1.42;
+  }
+
+  .ona-system-objective-brief > div:first-child,
+  .ona-system-objective-brief-list article {
+    display: grid;
+    gap: 5px;
+  }
+
+  .ona-system-objective-brief span,
+  .ona-system-objective-brief small {
+    color: var(--ona-system-muted);
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0;
+  }
+
+  .ona-system-objective-brief-list article p {
+    margin: 0;
+    color: var(--ona-system-muted);
+    font-size: 0.72rem;
+    line-height: 1.35;
+  }
+
+  .ona-system-objective-brief-list {
+    display: grid;
+    gap: 6px;
+    border-top: 1px solid var(--ona-system-line);
+    margin-top: 2px;
+    padding-top: 8px;
+  }
+
+  .ona-system-objective-brief-list article {
+    border: 1px solid var(--ona-system-line);
+    border-left: 3px solid var(--ona-system-green);
+    border-radius: var(--radius-clear-sm);
+    padding: 8px 9px;
+    background: color-mix(in srgb, white 88%, var(--ona-system-surface));
+  }
+
+  .ona-system-objective-brief-list article[data-status='close'] {
+    border-left-color: var(--ona-system-ink);
+  }
+
+  .ona-system-objective-brief-list article[data-status='missed'] {
+    border-left-color: var(--ona-system-red);
+  }
+
+  .ona-system-objective-brief-list article strong {
+    font-size: 0.94rem;
   }
 
   .ona-system-run-summary {
@@ -1677,6 +1749,7 @@
   }
 
   .ona-system-rulebook article,
+  .ona-system-challenge,
   .ona-system-gate-impact,
   .ona-system-score-explain {
     border: 1px solid var(--ona-system-line);
@@ -1744,6 +1817,104 @@
     color: var(--ona-system-muted);
     font-size: 0.78rem;
     line-height: 1.42;
+  }
+
+  .ona-system-challenge {
+    --ona-system-challenge-line: var(--ona-system-green);
+    display: grid;
+    gap: 12px;
+    border-left: 3px solid var(--ona-system-challenge-line);
+    margin-bottom: 10px;
+    padding: 12px;
+  }
+
+  .ona-system-challenge[data-status='close'] {
+    --ona-system-challenge-line: var(--ona-system-ink);
+  }
+
+  .ona-system-challenge[data-status='missed'] {
+    --ona-system-challenge-line: var(--ona-system-red);
+  }
+
+  .ona-system-challenge[data-status='versus'] {
+    --ona-system-challenge-line: var(--ona-system-blue);
+  }
+
+  .ona-system-challenge-header,
+  .ona-system-challenge-list article > div {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .ona-system-challenge-header > div {
+    display: grid;
+    gap: 6px;
+    min-width: 180px;
+  }
+
+  .ona-system-challenge-header strong {
+    font-size: 1rem;
+    line-height: 1.15;
+  }
+
+  .ona-system-challenge-header p,
+  .ona-system-challenge-list p {
+    color: var(--ona-system-muted);
+    font-size: 0.78rem;
+    line-height: 1.42;
+  }
+
+  .ona-system-challenge-list {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .ona-system-challenge-list article {
+    display: grid;
+    gap: 7px;
+    border: 1px solid var(--ona-system-line);
+    border-top: 3px solid var(--ona-system-green);
+    border-radius: var(--radius-clear-sm);
+    padding: 10px;
+    background: white;
+  }
+
+  .ona-system-challenge-list article[data-status='close'] {
+    border-top-color: var(--ona-system-ink);
+  }
+
+  .ona-system-challenge-list article[data-status='missed'] {
+    border-top-color: var(--ona-system-red);
+  }
+
+  .ona-system-challenge-list span,
+  .ona-system-challenge-list small,
+  .ona-system-challenge .ona-system-timeline-header span {
+    color: var(--ona-system-muted);
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0;
+  }
+
+  .ona-system-challenge-list article > div small {
+    color: var(--ona-system-green);
+  }
+
+  .ona-system-challenge-list article[data-status='close'] > div small {
+    color: var(--ona-system-ink);
+  }
+
+  .ona-system-challenge-list article[data-status='missed'] > div small {
+    color: var(--ona-system-red);
+  }
+
+  .ona-system-challenge-list strong {
+    font-size: 1.1rem;
+    line-height: 1;
   }
 
   .ona-system-playback {
@@ -2324,8 +2495,13 @@
     .ona-system-playback,
     .ona-system-gate-impact,
     .ona-system-gate-impact-list,
+    .ona-system-challenge-list,
     .ona-system-score-explain > div:last-child {
       grid-template-columns: 1fr;
+    }
+
+    .ona-system-challenge-header {
+      display: grid;
     }
 
     .ona-system-validation-header,
@@ -2364,8 +2540,14 @@
     .ona-system-scoreboard,
     .ona-system-gate-impact > div:nth-child(2),
     .ona-system-playback-controls,
+    .ona-system-challenge-list article > div,
     .ona-system-timeline article {
       grid-template-columns: 1fr;
+    }
+
+    .ona-system-challenge-list article > div {
+      display: grid;
+      gap: 4px;
     }
 
     .ona-system-action {
