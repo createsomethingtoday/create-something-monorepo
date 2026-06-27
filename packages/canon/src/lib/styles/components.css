@@ -2351,6 +2351,107 @@
     line-height: 1.28;
   }
 
+  .ona-system-final-outcome {
+    display: grid;
+    gap: 10px;
+    border: 1px solid var(--ona-system-line);
+    border-left: 3px solid var(--ona-system-ink);
+    border-radius: var(--radius-clear-sm);
+    margin-bottom: 10px;
+    padding: 12px;
+    background: color-mix(in srgb, white 87%, var(--ona-system-surface));
+  }
+
+  .ona-system-final-outcome[data-status='cleared'] {
+    border-left-color: var(--ona-system-green);
+  }
+
+  .ona-system-final-outcome[data-status='close'],
+  .ona-system-final-outcome[data-status='versus'] {
+    border-left-color: var(--ona-system-blue);
+  }
+
+  .ona-system-final-outcome[data-status='missed'] {
+    border-left-color: var(--ona-system-red);
+  }
+
+  .ona-system-final-outcome-header {
+    display: grid;
+    grid-template-columns: minmax(0, 0.78fr) minmax(220px, 1fr) auto;
+    gap: 12px;
+    align-items: start;
+  }
+
+  .ona-system-final-outcome-header > div {
+    display: grid;
+    gap: 6px;
+  }
+
+  .ona-system-final-outcome-header strong {
+    color: var(--ona-system-ink);
+    font-size: 1.08rem;
+    line-height: 1.08;
+  }
+
+  .ona-system-final-outcome-header p,
+  .ona-system-final-outcome-lanes p {
+    margin: 0;
+    color: var(--ona-system-muted);
+    font-size: 0.74rem;
+    font-weight: 700;
+    line-height: 1.34;
+  }
+
+  .ona-system-final-outcome-header button {
+    min-height: 38px;
+    display: inline-flex;
+    gap: 7px;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--ona-system-ink);
+    border-radius: var(--radius-clear-sm);
+    padding: 0 12px;
+    background: var(--ona-system-ink);
+    color: #fff;
+    font: inherit;
+    font-size: 0.72rem;
+    font-weight: 800;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+
+  .ona-system-final-outcome-lanes {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .ona-system-final-outcome-lanes article {
+    min-height: 88px;
+    display: grid;
+    align-content: space-between;
+    gap: 6px;
+    border: 1px solid var(--ona-system-line);
+    border-radius: var(--radius-clear-sm);
+    padding: 10px;
+    background: white;
+  }
+
+  .ona-system-final-outcome-lanes span {
+    color: var(--ona-system-muted);
+    font-size: 0.66rem;
+    font-weight: 800;
+    line-height: 1;
+    text-transform: uppercase;
+    letter-spacing: 0;
+  }
+
+  .ona-system-final-outcome-lanes strong {
+    color: var(--ona-system-ink);
+    font-size: 1.05rem;
+    line-height: 1;
+  }
+
   .ona-system-steering-cockpit {
     display: grid;
     gap: 12px;
@@ -3093,6 +3194,7 @@
     .ona-system-playback,
     .ona-system-turn-recap,
     .ona-system-compounding-trail-header,
+    .ona-system-final-outcome-header,
     .ona-system-steering-cockpit-header,
     .ona-system-gate-impact,
     .ona-system-gate-impact-list,
@@ -3157,6 +3259,8 @@
     .ona-system-turn-recap,
     .ona-system-compounding-trail-header,
     .ona-system-compounding-trail-list,
+    .ona-system-final-outcome-header,
+    .ona-system-final-outcome-lanes,
     .ona-system-steering-actions,
     .ona-system-steering-season,
     .ona-system-steering-comparison,
@@ -3184,6 +3288,10 @@
     }
 
     .ona-system-action {
+      width: 100%;
+    }
+
+    .ona-system-final-outcome-header button {
       width: 100%;
     }
 
