@@ -19,7 +19,7 @@
 	} from 'lucide-svelte';
 	import {
 		getDefaultEnvironment,
-		getSampleSystemMatchup,
+		getSampleSystemField,
 		getSampleSystemUpload,
 		listEnvironments,
 		listManagementPolicies,
@@ -1415,7 +1415,7 @@
 	}
 
 	function loadSampleMatchup(): void {
-		uploadText = JSON.stringify({ systems: getSampleSystemMatchup() }, null, 2);
+		uploadText = JSON.stringify({ systems: getSampleSystemField() }, null, 2);
 		importSystems();
 		systemWorkbenchOpen = false;
 	}

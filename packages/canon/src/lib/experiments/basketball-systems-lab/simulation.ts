@@ -533,6 +533,42 @@ const sampleSystemMatchup: SystemUploadDefinition[] = [
 	}
 ];
 
+const sampleSystemField: SystemUploadDefinition[] = [
+	...sampleSystemMatchup,
+	{
+		name: 'Owner Room System',
+		thesis: 'Protect owner margin and resilience while keeping enough league health to survive the field.',
+		stance: 'Uploaded System',
+		constraint: 'Growth has to stay affordable for the board.',
+		adaptation: 'Uses schedule relief as the native operating policy while scoring owner room visibly.',
+		policyKey: 'schedule',
+		weights: {
+			leagueHealth: 0.18,
+			mediaValueB: 0.08,
+			competitiveBalance: 0.14,
+			laborTrust: 0.12,
+			ownerMargin: 0.28,
+			resilience: 0.2
+		}
+	},
+	{
+		name: 'Global Growth System',
+		thesis: 'Push national and international attention while preserving enough competitive balance to keep the field credible.',
+		stance: 'Uploaded System',
+		constraint: 'Media value can outrun trust if the schedule concentrates too much inventory.',
+		adaptation: 'Uses media allocation as the native policy and lets requirement gates punish brittle growth.',
+		policyKey: 'media',
+		weights: {
+			leagueHealth: 0.12,
+			mediaValueB: 0.32,
+			competitiveBalance: 0.16,
+			laborTrust: 0.08,
+			ownerMargin: 0.12,
+			resilience: 0.2
+		}
+	}
+];
+
 const nodePositions: Record<string, Pick<MapNode, 'x' | 'y' | 'mx' | 'my'>> = {
 	policy: { x: 9, y: 18, mx: 4, my: 12 },
 	fatigue: { x: 35, y: 13, mx: 36, my: 12 },
@@ -560,6 +596,10 @@ export function getSampleSystemUpload(): SystemUploadDefinition {
 
 export function getSampleSystemMatchup(): SystemUploadDefinition[] {
 	return sampleSystemMatchup.map(cloneUploadDefinition);
+}
+
+export function getSampleSystemField(): SystemUploadDefinition[] {
+	return sampleSystemField.map(cloneUploadDefinition);
 }
 
 export function parseSystemUpload(input: string): SystemUploadResult {

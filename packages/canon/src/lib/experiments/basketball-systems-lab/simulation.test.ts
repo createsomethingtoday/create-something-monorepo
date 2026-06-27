@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
 	getDefaultLeagueState,
+	getSampleSystemField,
 	getSampleSystemMatchup,
 	getSampleSystemUpload,
 	listEnvironments,
@@ -405,6 +406,30 @@ describe('basketball systems management simulation', () => {
 			.toMatchObject({
 				status: expect.not.stringMatching('deferred')
 			});
+	});
+
+	it('provides a sample uploaded field with more than two competing Systems', () => {
+		const upload = parseSystemUpload(JSON.stringify({ systems: getSampleSystemField() }));
+		const match = runSystemMatch({
+			mode: 'versus',
+			systemKey: upload.systems[0]?.key,
+			opponentKey: upload.systems[1]?.key,
+			years: 5,
+			customSystems: upload.systems
+		});
+
+		expect(upload.issues).toEqual([]);
+		expect(upload.systems).toHaveLength(4);
+		expect(upload.systems.map((system) => system.name)).toEqual([
+			'Small Market Balance System',
+			'Labor Stability System',
+			'Owner Room System',
+			'Global Growth System'
+		]);
+		expect(match.systems).toHaveLength(4);
+		expect(match.systems.map((result) => result.system.key).sort()).toEqual(
+			upload.systems.map((system) => system.key).sort()
+		);
 	});
 
 	it('runs uploaded entrant fields instead of only the selected pair', () => {
