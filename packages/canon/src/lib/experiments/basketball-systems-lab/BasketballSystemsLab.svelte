@@ -133,6 +133,17 @@
 		tone: 'changed' | 'coach' | 'held';
 		active: boolean;
 	};
+	type EntrantReadiness = {
+		key: SystemId;
+		name: string;
+		policyLabel: string;
+		score: string;
+		topWeights: string;
+		readinessLabel: string;
+		readinessTone: 'ready' | 'watch' | 'break';
+		detail: string;
+		active: boolean;
+	};
 	type VersusControlMode = 'autonomous' | 'coach';
 
 	const edges = [
@@ -285,6 +296,35 @@
 	);
 	const customEntrantsInRun = $derived(
 		match.systems.filter((result) => uploadedSystemKeys.has(result.system.key))
+	);
+	const entrantReadiness = $derived<EntrantReadiness[]>(
+		uploadedSystems.map((system) => {
+			const result =
+				match.systems.find((candidate) => candidate.system.key === system.key) ??
+				unsteeredMatch.systems.find((candidate) => candidate.system.key === system.key) ??
+				null;
+			const gateAdjustment = result?.validationImpact.adjustment ?? 0;
+			const readinessTone: EntrantReadiness['readinessTone'] =
+				gateAdjustment <= -12 ? 'break' : gateAdjustment < 0 ? 'watch' : 'ready';
+			const policyLabel = policies.find((policy) => policy.key === system.policyKey)?.label ?? 'Native policy';
+
+			return {
+				key: system.key,
+				name: system.name,
+				policyLabel,
+				score: result ? result.score.toFixed(1) : 'Not run',
+				topWeights: formatTopWeights(system),
+				readinessLabel:
+					readinessTone === 'break'
+						? 'Gate risk'
+						: readinessTone === 'watch'
+							? 'Watch gates'
+							: 'Ready',
+				readinessTone,
+				detail: trimToWordBoundary(system.thesis, 104),
+				active: system.key === selectedSystem || system.key === opponentSystem
+			};
+		})
 	);
 	const viewedStandings = $derived(
 		match.systems
@@ -912,6 +952,18 @@
 		);
 	}
 
+	function formatTopWeights(system: System): string {
+		return [...builderWeightFields]
+			.map((field) => ({
+				label: field.label,
+				value: system.weights[field.key]
+			}))
+			.sort((left, right) => right.value - left.value)
+			.slice(0, 2)
+			.map((weight) => `${weight.label} ${Math.round(weight.value * 100)}%`)
+			.join(' / ');
+	}
+
 	function standingsForYear(year: number): { result: SystemResult; entry: SystemTimelineEntry }[] {
 		return match.systems
 			.map((result) => ({
@@ -1481,12 +1533,21 @@
 
 				{#if uploadedSystems.length > 0}
 					<div class="ona-system-competition-roster" aria-label="Field entrants">
-						{#each uploadedSystems as system}
+						{#each entrantReadiness as entrant}
 							<article
-								class:active={system.key === selectedSystem || system.key === opponentSystem}
+								class:active={entrant.active}
+								data-readiness={entrant.readinessTone}
 							>
-								<span>{policies.find((policy) => policy.key === system.policyKey)?.label}</span>
-								<strong>{system.name}</strong>
+								<div>
+									<span>{entrant.policyLabel}</span>
+									<small>{entrant.readinessLabel}</small>
+								</div>
+								<strong>{entrant.name}</strong>
+								<p>{entrant.detail}</p>
+								<div class="ona-system-competition-roster-meta">
+									<small>{entrant.topWeights}</small>
+									<strong>{entrant.score}</strong>
+								</div>
 							</article>
 						{/each}
 					</div>
