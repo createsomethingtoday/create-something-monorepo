@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
 	getDefaultLeagueState,
 	getSampleSystemUpload,
+	listEnvironments,
 	listManagementPolicies,
 	listSeasonPhases,
 	listSystems,
@@ -67,6 +68,35 @@ describe('basketball systems management simulation', () => {
 		expect(match.winner.timeline.map((entry) => entry.year)).toEqual([1, 2, 3, 4, 5]);
 		expect(match.winner.compoundedScoreDelta).toBe(
 			Number((match.winner.score - match.winner.startScore).toFixed(1))
+		);
+	});
+
+	it('lets players choose distinct competitive environments', () => {
+		const environments = listEnvironments();
+		const defaultMatch = runSystemMatch({ systemKey: 'attention', years: 5 });
+		const expansionEnvironment = environments.find(
+			(environment) => environment.key === 'expansion-surge'
+		);
+		expect(expansionEnvironment).toBeDefined();
+		if (!expansionEnvironment) throw new Error('Expansion Surge environment missing');
+
+		const expansionMatch = runSystemMatch({
+			systemKey: 'attention',
+			years: 5,
+			environment: expansionEnvironment
+		});
+
+		expect(environments.map((environment) => environment.key)).toEqual([
+			'national-window',
+			'expansion-surge',
+			'labor-deadline',
+			'parity-reset'
+		]);
+		expect(expansionMatch.environment.key).toBe('expansion-surge');
+		expect(expansionMatch.winner.score).not.toBe(defaultMatch.winner.score);
+		expect(expansionMatch.reports[0]?.detail).toContain('Expansion Surge');
+		expect(expansionMatch.ledger.find((entry) => entry.label === 'Horizon')?.detail).toContain(
+			'Expansion Surge'
 		);
 	});
 
