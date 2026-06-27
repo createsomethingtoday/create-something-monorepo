@@ -79,6 +79,14 @@
 		value: string;
 		detail: string;
 	};
+	type CompoundingTrailItem = {
+		year: number;
+		label: string;
+		value: string;
+		detail: string;
+		active: boolean;
+		steered: boolean;
+	};
 
 	const edges = [
 		{ path: 'M 92 106 C 165 78 210 74 278 90', label: 'reduces' },
@@ -347,6 +355,20 @@
 					: 'No challenger is loaded for this run.'
 		}
 	]);
+	const compoundingStartScore = $derived(activeTimeline[0]?.score ?? activeEntry.score);
+	const compoundingDelta = $derived(Number((activeEntry.score - compoundingStartScore).toFixed(1)));
+	const compoundingTrail = $derived<CompoundingTrailItem[]>(
+		activeTimeline
+			.filter((entry) => entry.year <= viewedYear)
+			.map((entry) => ({
+				year: entry.year,
+				label: entry.steered ? 'Steered' : entry.policy.label,
+				value: formatDelta(entry.delta),
+				detail: entry.decision,
+				active: entry.year === viewedYear,
+				steered: entry.steered
+			}))
+	);
 	const scoutingRequirements = $derived(
 		match.validation.requirements.filter((requirement) =>
 			scoutingRequirementKeys.has(requirement.key)
@@ -1198,6 +1220,29 @@
 						<p>{lane.detail}</p>
 					</article>
 				{/each}
+			</div>
+
+			<div class="ona-system-compounding-trail" aria-label="Compounding trail">
+				<div class="ona-system-compounding-trail-header">
+					<div>
+						<span>Compounding trail</span>
+						<strong>{formatDelta(compoundingDelta)} through year {viewedYear}</strong>
+					</div>
+					<p>
+						{viewedLeader.result.system.name} has accumulated {compoundingTrail.length}
+						turn{compoundingTrail.length === 1 ? '' : 's'} in this run.
+					</p>
+				</div>
+				<div class="ona-system-compounding-trail-list">
+					{#each compoundingTrail as trail}
+						<article class:active={trail.active} class:steered={trail.steered}>
+							<span>Year {trail.year}</span>
+							<strong>{trail.value}</strong>
+							<small>{trail.label}</small>
+							<p>{trail.detail}</p>
+						</article>
+					{/each}
+				</div>
 			</div>
 
 			<div class="ona-system-steering-cockpit" aria-label="Live steering cockpit">

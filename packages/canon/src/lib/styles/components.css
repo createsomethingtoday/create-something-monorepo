@@ -2224,6 +2224,93 @@
     line-height: 1.32;
   }
 
+  .ona-system-compounding-trail {
+    display: grid;
+    gap: 10px;
+    border: 1px solid var(--ona-system-line);
+    border-radius: var(--radius-clear-sm);
+    margin-bottom: 10px;
+    padding: 12px;
+    background: white;
+  }
+
+  .ona-system-compounding-trail-header {
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(220px, 1.1fr);
+    gap: 12px;
+    align-items: start;
+  }
+
+  .ona-system-compounding-trail-header > div {
+    display: grid;
+    gap: 5px;
+  }
+
+  .ona-system-compounding-trail-header span,
+  .ona-system-compounding-trail-list span,
+  .ona-system-compounding-trail-list small {
+    color: var(--ona-system-muted);
+    font-size: 0.66rem;
+    font-weight: 800;
+    line-height: 1;
+    text-transform: uppercase;
+    letter-spacing: 0;
+  }
+
+  .ona-system-compounding-trail-header strong {
+    color: var(--ona-system-ink);
+    font-size: 1.02rem;
+    line-height: 1.08;
+  }
+
+  .ona-system-compounding-trail-header p {
+    margin: 0;
+    color: var(--ona-system-muted);
+    font-size: 0.76rem;
+    font-weight: 700;
+    line-height: 1.38;
+  }
+
+  .ona-system-compounding-trail-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
+    gap: 8px;
+  }
+
+  .ona-system-compounding-trail-list article {
+    min-height: 112px;
+    display: grid;
+    align-content: space-between;
+    gap: 6px;
+    border: 1px solid var(--ona-system-line);
+    border-radius: var(--radius-clear-sm);
+    padding: 10px;
+    background: color-mix(in srgb, white 90%, var(--ona-system-surface));
+  }
+
+  .ona-system-compounding-trail-list article.active {
+    border-color: var(--ona-system-ink);
+    box-shadow: inset 0 0 0 1px var(--ona-system-ink);
+  }
+
+  .ona-system-compounding-trail-list article.steered {
+    border-left: 3px solid var(--ona-system-blue);
+  }
+
+  .ona-system-compounding-trail-list strong {
+    color: var(--ona-system-ink);
+    font-size: 1.02rem;
+    line-height: 1;
+  }
+
+  .ona-system-compounding-trail-list p {
+    margin: 0;
+    color: var(--ona-system-muted);
+    font-size: 0.68rem;
+    font-weight: 700;
+    line-height: 1.28;
+  }
+
   .ona-system-steering-cockpit {
     display: grid;
     gap: 12px;
@@ -2965,6 +3052,7 @@
     .ona-system-rulebook,
     .ona-system-playback,
     .ona-system-turn-recap,
+    .ona-system-compounding-trail-header,
     .ona-system-steering-cockpit-header,
     .ona-system-gate-impact,
     .ona-system-gate-impact-list,
@@ -3026,6 +3114,8 @@
     .ona-system-gate-impact > div:nth-child(2),
     .ona-system-playback-controls,
     .ona-system-turn-recap,
+    .ona-system-compounding-trail-header,
+    .ona-system-compounding-trail-list,
     .ona-system-steering-actions,
     .ona-system-steering-season,
     .ona-system-steering-comparison,
