@@ -66,7 +66,7 @@ test('starter maps export a renderer-independent agent graph artifact', () => {
 	assert.equal(artifact.canvasId, canvas.id);
 	assert.equal(artifact.nodeCount, canvas.nodes.length);
 	assert.equal(artifact.edgeCount, canvas.edges.length);
-	assert.equal(artifact.renderer.primary, 'react-flow');
+	assert.equal(artifact.renderer.primary, 'svelte-flow');
 	assert.equal(artifact.renderer.fallback, 'static-story');
 	assert.equal(artifact.renderer.scale, 'workflow');
 	assert.equal(artifact.agentContract.sourceOfTruth, 'atlas-graph');
