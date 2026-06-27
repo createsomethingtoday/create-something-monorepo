@@ -14,6 +14,7 @@
 		Route,
 		ShieldCheck,
 		SlidersHorizontal,
+		Trophy,
 		Users
 	} from 'lucide-svelte';
 	import {
@@ -88,6 +89,11 @@
 		detail: string;
 		active: boolean;
 		steered: boolean;
+	};
+	type FinalOutcomeLane = {
+		label: string;
+		value: string;
+		detail: string;
 	};
 
 	const edges = [
@@ -387,6 +393,59 @@
 				steered: entry.steered
 			}))
 	);
+	const finalOutcomeVisible = $derived(viewedYear === match.years);
+	const finalRunnerUp = $derived(
+		match.systems.find((result) => result.system.key !== match.winner.system.key) ?? null
+	);
+	const finalScoreGap = $derived(
+		finalRunnerUp ? Number((match.winner.score - finalRunnerUp.score).toFixed(1)) : 0
+	);
+	const finalOutcomeStatus = $derived(canSteer ? match.challenge.status : 'versus');
+	const finalOutcomeTitle = $derived(
+		canSteer
+			? match.challenge.status === 'cleared'
+				? 'Final whistle: challenge cleared'
+				: match.challenge.status === 'close'
+					? 'Final whistle: one steer away'
+					: 'Final whistle: challenge missed'
+			: `Final whistle: ${match.winner.system.name} wins`
+	);
+	const finalOutcomeSummary = $derived(
+		canSteer
+			? match.challenge.summary
+			: finalRunnerUp
+				? `${match.winner.system.name} beat ${finalRunnerUp.system.name} by ${finalScoreGap.toFixed(1)} after requirement gates.`
+				: `${match.winner.system.name} finished as the valid leader after requirement gates.`
+	);
+	const finalOutcomeLanes = $derived<FinalOutcomeLane[]>([
+		{
+			label: 'Final valid score',
+			value: canSteer ? steeredPrimary.score.toFixed(1) : match.winner.score.toFixed(1),
+			detail: canSteer ? steeredPrimary.system.name : match.winner.system.name
+		},
+		{
+			label: 'Gate adjustment',
+			value: formatDelta(
+				canSteer
+					? steeredPrimary.validationImpact.adjustment
+					: match.winner.validationImpact.adjustment
+			),
+			detail: canSteer
+				? steeredPrimary.validationImpact.label
+				: match.winner.validationImpact.label
+		},
+		{
+			label: canSteer ? 'Run swing' : 'Winning margin',
+			value: canSteer ? formatDelta(steeringScoreSwing) : finalScoreGap.toFixed(1),
+			detail: canSteer
+				? activeSteeringPolicy
+					? `${activeSteeringPolicy.label} from year ${steeringYear}.`
+					: 'Original System held through the run.'
+				: finalRunnerUp
+					? `${finalRunnerUp.system.name} finished second.`
+					: 'No runner-up loaded.'
+		}
+	]);
 	const scoutingRequirements = $derived(
 		match.validation.requirements.filter((requirement) =>
 			scoutingRequirementKeys.has(requirement.key)
@@ -1297,6 +1356,38 @@
 					{/each}
 				</div>
 			</div>
+
+			{#if finalOutcomeVisible}
+				<div
+					class="ona-system-final-outcome"
+					data-status={finalOutcomeStatus}
+					aria-label="Final outcome"
+				>
+					<div class="ona-system-final-outcome-header">
+						<div>
+							<div class="ona-system-timeline-header">
+								<Trophy size={17} strokeWidth={1.8} />
+								<span>{canSteer ? 'Single result' : 'Versus result'}</span>
+							</div>
+							<strong>{finalOutcomeTitle}</strong>
+						</div>
+						<p>{finalOutcomeSummary}</p>
+						<button type="button" onclick={resetPlayback}>
+							<RotateCcw size={15} strokeWidth={2} />
+							<span>Replay from year 1</span>
+						</button>
+					</div>
+					<div class="ona-system-final-outcome-lanes">
+						{#each finalOutcomeLanes as lane}
+							<article>
+								<span>{lane.label}</span>
+								<strong>{lane.value}</strong>
+								<p>{lane.detail}</p>
+							</article>
+						{/each}
+					</div>
+				</div>
+			{/if}
 
 			<div class="ona-system-steering-cockpit" aria-label="Live steering cockpit">
 				<div class="ona-system-steering-cockpit-header">
