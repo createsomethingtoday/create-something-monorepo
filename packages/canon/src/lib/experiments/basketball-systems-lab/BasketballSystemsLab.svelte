@@ -1506,7 +1506,7 @@
 				<SlidersHorizontal size={18} strokeWidth={1.8} />
 				<span>System Console</span>
 			</div>
-			<h2>Choose the System and steering window.</h2>
+			<h2>Choose the Systems and league pressure.</h2>
 
 			<div class="ona-system-mode-control" aria-label="Lab mode">
 				<button
@@ -1786,39 +1786,14 @@
 			</div>
 
 			{#if canSteer}
-				<div class="ona-system-control-group">
-					<span>Steer In Year</span>
-					<select bind:value={steeringYear} aria-label="Steering year">
-						{#each Array.from({ length: horizonYears }, (_, index) => index + 1) as year}
-							<option value={year}>Year {year}</option>
-						{/each}
-					</select>
-				</div>
-
-				<div class="ona-system-control-group">
-					<span>Season Window</span>
-					<div class="ona-system-option-row ona-system-option-row--wrap">
-						{#each seasonPhases as phase}
-							<button
-								type="button"
-								class:active={steeringPhase === phase.key}
-								aria-pressed={steeringPhase === phase.key}
-								onclick={() => (steeringPhase = phase.key)}
-							>
-								{phase.label}
-							</button>
-						{/each}
-					</div>
-				</div>
-
-				<div class="ona-system-control-group">
-					<span>Steering Policy</span>
-					<select bind:value={steeringPolicy} aria-label="Steering policy">
-						<option value="none">Keep original System</option>
-						{#each policies as policy}
-							<option value={policy.key}>{policy.label}</option>
-						{/each}
-					</select>
+				<div class="ona-system-steering-handoff" aria-label="Steering turn status">
+					<span>Steering turn</span>
+					<strong>Live cockpit</strong>
+					<p>
+						Year {viewedYear}; {selectedSteeringPhase.label}; {activeSteeringPolicy
+							? `${activeSteeringPolicy.label} preview`
+							: 'original System preview'}.
+					</p>
 				</div>
 			{/if}
 

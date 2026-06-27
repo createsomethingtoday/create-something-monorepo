@@ -1217,7 +1217,8 @@
 
   .ona-system-mode-note,
   .ona-system-objective-brief,
-  .ona-system-environment-note {
+  .ona-system-environment-note,
+  .ona-system-steering-handoff {
     display: grid;
     gap: 6px;
     border: 1px solid var(--ona-system-line);
@@ -1231,6 +1232,17 @@
   .ona-system-environment-note {
     margin-top: 0;
     border-left-color: var(--ona-system-blue);
+  }
+
+  .ona-system-steering-handoff {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: baseline;
+    border-left-color: var(--ona-system-green);
+    margin-top: 12px;
+  }
+
+  .ona-system-steering-handoff p {
+    grid-column: 1 / -1;
   }
 
   .ona-system-objective-brief {
@@ -1254,14 +1266,25 @@
 
   .ona-system-mode-note strong,
   .ona-system-objective-brief strong,
-  .ona-system-environment-note strong {
+  .ona-system-environment-note strong,
+  .ona-system-steering-handoff strong {
     font-size: 0.82rem;
     line-height: 1.2;
   }
 
+  .ona-system-steering-handoff > span {
+    color: var(--ona-system-muted);
+    font-size: 0.68rem;
+    font-weight: 800;
+    line-height: 1;
+    text-transform: uppercase;
+    letter-spacing: 0;
+  }
+
   .ona-system-mode-note p,
   .ona-system-objective-brief p,
-  .ona-system-environment-note p {
+  .ona-system-environment-note p,
+  .ona-system-steering-handoff p {
     color: var(--ona-system-muted);
     font-size: 0.76rem;
     line-height: 1.42;
