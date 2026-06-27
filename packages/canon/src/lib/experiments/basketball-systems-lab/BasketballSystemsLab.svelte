@@ -127,6 +127,10 @@
 	let uploadText = $state(sampleSystemDefinition);
 	let uploadIssues = $state<SystemUploadIssue[]>([]);
 	let uploadMessage = $state('Sample entrant ready');
+	let draftText = $state(
+		'Small Market Defense System\nProtect parity and small-market visibility while keeping owner room credible. Lean into media allocation without letting labor trust or resilience collapse.'
+	);
+	let draftMessage = $state('Paste notes, then draft a valid entrant.');
 	let systemWorkbenchOpen = $state(false);
 	let builderName = $state('Expansion Balance System');
 	let builderThesis = $state(
@@ -735,6 +739,21 @@
 		builderMessage = 'Entrant JSON ready';
 	}
 
+	function draftEntrantFromNotes(): void {
+		const notes = draftText.trim();
+
+		if (notes.length < 12) {
+			draftMessage = 'Add a little more about what the System optimizes.';
+			return;
+		}
+
+		const definition = buildDraftSystemDefinition(notes);
+		uploadText = JSON.stringify(definition, null, 2);
+		uploadIssues = [];
+		uploadMessage = 'Draft entrant ready for validation';
+		draftMessage = `${definition.name} drafted with ${formatPolicyLabel(definition.policyKey)} bias.`;
+	}
+
 	function resetBuilder(): void {
 		const sample = getSampleSystemUpload();
 		builderName = 'Expansion Balance System';
@@ -838,6 +857,188 @@
 			policyKey: builderPolicy,
 			weights: decimalWeights(builderWeights)
 		};
+	}
+
+	function buildDraftSystemDefinition(notes: string): SystemUploadDefinition {
+		const policyKey = inferDraftPolicy(notes);
+		const name = normalizeDraftName(notes);
+		const thesis = normalizeDraftThesis(notes, policyKey);
+		const weights = inferDraftWeights(notes, policyKey);
+
+		return {
+			name,
+			thesis,
+			stance: 'Drafted entrant',
+			constraint:
+				'The System must survive owner room, labor trust, and resilience gates after the race.',
+			adaptation: `Drafted from notes; runs ${formatPolicyLabel(policyKey)} as its native policy and lets the gates test the tradeoffs.`,
+			policyKey,
+			weights
+		};
+	}
+
+	function normalizeDraftName(notes: string): string {
+		const firstLine =
+			notes
+				.split(/\r?\n/)
+				.map((line) => line.trim())
+				.find(Boolean) ?? 'Drafted System';
+		const cleaned = firstLine
+			.replace(/^(name|system|entrant)\s*[:=-]\s*/i, '')
+			.replace(/[^a-zA-Z0-9 &'-]+/g, ' ')
+			.replace(/\s+/g, ' ')
+			.trim();
+		const base = cleaned.length >= 3 ? cleaned : 'Drafted System';
+		const withSystem = /system$/i.test(base) ? base : `${base} System`;
+
+		return trimToWordBoundary(withSystem, 44);
+	}
+
+	function normalizeDraftThesis(notes: string, policyKey: PolicyKey): string {
+		const compact = notes
+			.replace(/\s+/g, ' ')
+			.replace(/^(name|system|entrant)\s*[:=-]\s*/i, '')
+			.trim();
+		const fallback = `Optimize ${formatPolicyLabel(policyKey).toLowerCase()} while keeping owner, labor, and resilience gates visible.`;
+		const thesis = compact.length >= 12 ? compact : fallback;
+
+		return trimToWordBoundary(thesis, 180);
+	}
+
+	function inferDraftPolicy(notes: string): PolicyKey {
+		const lower = notes.toLowerCase();
+		const scores: Record<PolicyKey, number> = {
+			schedule: keywordScore(lower, [
+				'schedule',
+				'rest',
+				'recovery',
+				'travel',
+				'fatigue',
+				'back-to-back',
+				'star availability'
+			]),
+			media: keywordScore(lower, [
+				'media',
+				'attention',
+				'market',
+				'fan',
+				'visibility',
+				'growth',
+				'national',
+				'small-market'
+			]),
+			labor: keywordScore(lower, ['labor', 'trust', 'union', 'player', 'peace', 'enforcement'])
+		};
+
+		return (Object.entries(scores).sort(
+			([, left], [, right]) => right - left
+		)[0]?.[0] ?? 'media') as PolicyKey;
+	}
+
+	function inferDraftWeights(notes: string, policyKey: PolicyKey): SystemScoreWeights {
+		const lower = notes.toLowerCase();
+		const weights: Record<keyof SystemScoreWeights, number> =
+			policyKey === 'schedule'
+				? {
+						leagueHealth: 24,
+						mediaValueB: 10,
+						competitiveBalance: 16,
+						laborTrust: 16,
+						ownerMargin: 10,
+						resilience: 24
+					}
+				: policyKey === 'labor'
+					? {
+							leagueHealth: 18,
+							mediaValueB: 10,
+							competitiveBalance: 14,
+							laborTrust: 28,
+							ownerMargin: 10,
+							resilience: 20
+						}
+					: {
+							leagueHealth: 14,
+							mediaValueB: 24,
+							competitiveBalance: 22,
+							laborTrust: 10,
+							ownerMargin: 12,
+							resilience: 18
+						};
+
+		if (hasAnyKeyword(lower, ['health', 'recovery', 'availability'])) {
+			shiftDraftWeight(weights, 'leagueHealth', 4);
+		}
+		if (hasAnyKeyword(lower, ['media', 'attention', 'market', 'growth', 'fan'])) {
+			shiftDraftWeight(weights, 'mediaValueB', 4);
+		}
+		if (hasAnyKeyword(lower, ['balance', 'parity', 'small-market', 'small market'])) {
+			shiftDraftWeight(weights, 'competitiveBalance', 4);
+		}
+		if (hasAnyKeyword(lower, ['labor', 'trust', 'union', 'player'])) {
+			shiftDraftWeight(weights, 'laborTrust', 4);
+		}
+		if (hasAnyKeyword(lower, ['owner', 'margin', 'board', 'credible'])) {
+			shiftDraftWeight(weights, 'ownerMargin', 4);
+		}
+		if (hasAnyKeyword(lower, ['resilience', 'durable', 'survive', 'long-run', 'long run'])) {
+			shiftDraftWeight(weights, 'resilience', 4);
+		}
+
+		const nativePriority =
+			policyKey === 'labor'
+				? 'laborTrust'
+				: policyKey === 'schedule'
+					? 'leagueHealth'
+					: 'mediaValueB';
+		if (weights[nativePriority] < 24) {
+			shiftDraftWeight(weights, nativePriority, 24 - weights[nativePriority]);
+		}
+
+		return decimalWeights(weights);
+	}
+
+	function shiftDraftWeight(
+		weights: Record<keyof SystemScoreWeights, number>,
+		target: keyof SystemScoreWeights,
+		amount: number
+	): void {
+		const room = builderMaximumWeight - weights[target];
+		let remaining = Math.min(amount, room);
+		if (remaining <= 0) return;
+
+		for (const key of [...builderWeightFields]
+			.map((field) => field.key)
+			.filter((key) => key !== target)
+			.sort((left, right) => weights[right] - weights[left])) {
+			const available = weights[key] - builderMinimumWeights[key];
+			const shift = Math.min(available, remaining);
+			weights[key] -= shift;
+			weights[target] += shift;
+			remaining -= shift;
+			if (remaining <= 0) return;
+		}
+	}
+
+	function keywordScore(value: string, keywords: string[]): number {
+		return keywords.reduce((score, keyword) => {
+			const escaped = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+			return score + (value.match(new RegExp(escaped, 'g'))?.length ?? 0);
+		}, 0);
+	}
+
+	function hasAnyKeyword(value: string, keywords: string[]): boolean {
+		return keywords.some((keyword) => value.includes(keyword));
+	}
+
+	function trimToWordBoundary(value: string, maxLength: number): string {
+		if (value.length <= maxLength) return value;
+		const sliced = value.slice(0, maxLength).trim();
+		const lastSpace = sliced.lastIndexOf(' ');
+		return (lastSpace > 12 ? sliced.slice(0, lastSpace) : sliced).trim();
+	}
+
+	function formatPolicyLabel(policyKey: PolicyKey): string {
+		return policies.find((policy) => policy.key === policyKey)?.label ?? policyKey;
 	}
 
 	function systemToUploadDefinition(system: System): SystemUploadDefinition {
@@ -1235,6 +1436,20 @@
 					<div class="ona-system-kicker">
 						<FileJson size={17} strokeWidth={1.8} />
 						<span>Entrant Import</span>
+					</div>
+					<div class="ona-system-draft-import" aria-label="Draft entrant from notes">
+						<label>
+							<span>Paste rough System notes</span>
+							<textarea
+								bind:value={draftText}
+								aria-label="Rough System notes"
+								maxlength="420"
+							></textarea>
+						</label>
+						<div class="ona-system-draft-actions">
+							<button type="button" onclick={draftEntrantFromNotes}>Draft entrant JSON</button>
+							<span>{draftMessage}</span>
+						</div>
 					</div>
 					<textarea bind:value={uploadText} aria-label="System JSON definition"></textarea>
 					<div class="ona-system-upload-actions">

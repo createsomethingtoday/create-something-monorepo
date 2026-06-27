@@ -1817,6 +1817,65 @@
     padding-top: 18px;
   }
 
+  .ona-system-draft-import {
+    display: grid;
+    gap: 8px;
+    border: 1px solid var(--ona-system-line);
+    border-radius: var(--radius-clear-sm);
+    padding: 10px;
+    background: color-mix(in srgb, white 88%, var(--ona-system-surface));
+  }
+
+  .ona-system-draft-import label {
+    display: grid;
+    gap: 6px;
+  }
+
+  .ona-system-draft-import label span,
+  .ona-system-draft-actions span {
+    color: var(--ona-system-muted);
+    font-size: 0.68rem;
+    font-weight: 700;
+    line-height: 1.3;
+  }
+
+  .ona-system-draft-import label span {
+    text-transform: uppercase;
+    letter-spacing: 0;
+  }
+
+  .ona-system-draft-import textarea {
+    width: 100%;
+    min-height: 106px;
+    resize: vertical;
+    border: 1px solid var(--ona-system-line);
+    border-radius: var(--radius-clear-sm);
+    padding: 10px 11px;
+    background: white;
+    color: var(--ona-system-ink);
+    font: inherit;
+    font-size: 0.78rem;
+    font-weight: 650;
+    line-height: 1.4;
+  }
+
+  .ona-system-draft-actions {
+    display: grid;
+    gap: 6px;
+  }
+
+  .ona-system-draft-actions button {
+    min-height: 38px;
+    border: 1px solid var(--ona-system-ink);
+    border-radius: var(--radius-clear-sm);
+    background: var(--ona-system-ink);
+    color: white;
+    font: inherit;
+    font-size: 0.72rem;
+    font-weight: 800;
+    cursor: pointer;
+  }
+
   .ona-system-upload textarea {
     width: 100%;
     min-height: 184px;
