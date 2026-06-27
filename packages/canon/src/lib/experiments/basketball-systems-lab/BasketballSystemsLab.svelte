@@ -44,6 +44,7 @@
 	const seasonPhases = listSeasonPhases();
 	const horizonOptions = [3, 5, 8];
 	const sampleSystemDefinition = JSON.stringify(getSampleSystemUpload(), null, 2);
+	const scoutingRequirementKeys = new Set(['owner-room', 'labor-plausibility', 'system-balance']);
 	const builderWeightFields = [
 		{ key: 'leagueHealth', label: 'League health' },
 		{ key: 'mediaValueB', label: 'Media value' },
@@ -233,6 +234,25 @@
 					)}%.`
 				: `${viewedLeader.result.system.name} keeps its native policy.`
 			: 'Versus mode keeps both Systems autonomous after setup.'
+	);
+	const scoutingRequirements = $derived(
+		match.validation.requirements.filter((requirement) =>
+			scoutingRequirementKeys.has(requirement.key)
+		)
+	);
+	const scoutingLabel = $derived(
+		match.validation.status === 'fail'
+			? 'High-risk setup'
+			: match.validation.status === 'watch'
+				? 'Playable with pressure'
+				: 'Clean setup'
+	);
+	const scoutingSummary = $derived(
+		match.validation.status === 'fail'
+			? 'This setup is likely to take a major gate penalty unless the System or environment changes.'
+			: match.validation.status === 'watch'
+				? 'The run is playable, but the scout already sees gate pressure in the selected setup.'
+				: 'No major owner, labor, or balance risk is forecast for the current setup.'
 	);
 	const validationCounts = $derived(
 		match.validation.requirements.reduce(
@@ -731,6 +751,30 @@
 					</select>
 				</div>
 			{/if}
+
+			<div
+				class="ona-system-scouting-report"
+				data-status={match.validation.status}
+				aria-label="Pre-run scouting report"
+			>
+				<div class="ona-system-scouting-header">
+					<span>Pre-run scout</span>
+					<strong>{scoutingLabel}</strong>
+					<p>{scoutingSummary}</p>
+				</div>
+				<div class="ona-system-scouting-list">
+					{#each scoutingRequirements as requirement}
+						<article data-status={requirement.status}>
+							<div>
+								<span>{requirement.label}</span>
+								<small>{formatRequirementStatus(requirement.status)}</small>
+							</div>
+							<strong>{requirement.summary}</strong>
+							<p>{requirement.detail}</p>
+						</article>
+					{/each}
+				</div>
+			</div>
 
 			<div class="ona-system-control-group">
 				<span>Comparison Horizon</span>

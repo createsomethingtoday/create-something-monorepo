@@ -1585,6 +1585,94 @@
     color: var(--ona-system-green);
   }
 
+  .ona-system-scouting-report {
+    --ona-system-scouting-line: var(--ona-system-green);
+    display: grid;
+    gap: 10px;
+    border: 1px solid var(--ona-system-line);
+    border-left: 3px solid var(--ona-system-scouting-line);
+    border-radius: var(--radius-clear-sm);
+    margin-top: 14px;
+    padding: 12px;
+    background: white;
+  }
+
+  .ona-system-scouting-report[data-status='watch'] {
+    --ona-system-scouting-line: var(--ona-system-ink);
+  }
+
+  .ona-system-scouting-report[data-status='fail'] {
+    --ona-system-scouting-line: var(--ona-system-red);
+  }
+
+  .ona-system-scouting-header,
+  .ona-system-scouting-list {
+    display: grid;
+    gap: 7px;
+  }
+
+  .ona-system-scouting-header span,
+  .ona-system-scouting-list span,
+  .ona-system-scouting-list small {
+    color: var(--ona-system-muted);
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0;
+  }
+
+  .ona-system-scouting-header strong,
+  .ona-system-scouting-list strong {
+    color: var(--ona-system-ink);
+    font-size: 0.92rem;
+    line-height: 1.12;
+  }
+
+  .ona-system-scouting-header p,
+  .ona-system-scouting-list p {
+    color: var(--ona-system-muted);
+    font-size: 0.75rem;
+    line-height: 1.38;
+  }
+
+  .ona-system-scouting-list article {
+    display: grid;
+    gap: 5px;
+    border: 1px solid var(--ona-system-line);
+    border-left: 3px solid var(--ona-system-green);
+    border-radius: var(--radius-clear-sm);
+    padding: 9px 10px;
+    background: color-mix(in srgb, white 88%, var(--ona-system-surface));
+  }
+
+  .ona-system-scouting-list article[data-status='watch'] {
+    border-left-color: var(--ona-system-ink);
+  }
+
+  .ona-system-scouting-list article[data-status='fail'] {
+    border-left-color: var(--ona-system-red);
+  }
+
+  .ona-system-scouting-list article[data-status='deferred'] {
+    border-left-color: var(--ona-system-blue);
+  }
+
+  .ona-system-scouting-list article > div {
+    display: flex;
+    gap: 8px;
+    align-items: baseline;
+    justify-content: space-between;
+  }
+
+  .ona-system-scouting-list article[data-status='watch'] small,
+  .ona-system-scouting-list article[data-status='fail'] small {
+    color: var(--ona-system-ink);
+  }
+
+  .ona-system-scouting-list article[data-status='fail'] small {
+    color: var(--ona-system-red);
+  }
+
   .ona-system-advanced {
     border-top: 1px solid var(--ona-system-line);
     margin-top: 20px;
