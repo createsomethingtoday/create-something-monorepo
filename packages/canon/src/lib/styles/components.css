@@ -1500,10 +1500,10 @@
   .ona-system-competition-roster article,
   .ona-system-competition-proof {
     display: grid;
-    gap: 4px;
+    gap: 6px;
     border: 1px solid var(--ona-system-line);
     border-radius: var(--radius-clear-sm);
-    padding: 8px 9px;
+    padding: 9px 10px;
     background: color-mix(in srgb, white 88%, var(--ona-system-surface));
   }
 
@@ -1511,11 +1511,33 @@
     border-color: var(--ona-system-ink);
   }
 
+  .ona-system-competition-roster article[data-readiness='ready'] {
+    border-left: 3px solid var(--ona-system-green);
+  }
+
+  .ona-system-competition-roster article[data-readiness='watch'] {
+    border-left: 3px solid var(--ona-system-blue);
+  }
+
+  .ona-system-competition-roster article[data-readiness='break'] {
+    border-left: 3px solid var(--ona-system-red);
+  }
+
+  .ona-system-competition-roster article > div:first-child,
+  .ona-system-competition-roster-meta {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+    align-items: baseline;
+  }
+
   .ona-system-competition-roster span,
+  .ona-system-competition-roster small,
   .ona-system-competition-proof span {
     color: var(--ona-system-muted);
     font-size: 0.66rem;
     font-weight: 700;
+    line-height: 1.12;
     text-transform: uppercase;
     letter-spacing: 0;
   }
@@ -1523,6 +1545,18 @@
   .ona-system-competition-roster strong {
     font-size: 0.82rem;
     line-height: 1.15;
+  }
+
+  .ona-system-competition-roster p {
+    margin: 0;
+    color: var(--ona-system-muted);
+    font-size: 0.7rem;
+    font-weight: 700;
+    line-height: 1.28;
+  }
+
+  .ona-system-competition-roster-meta strong {
+    font-size: 0.92rem;
   }
 
   .ona-system-competition-actions {
