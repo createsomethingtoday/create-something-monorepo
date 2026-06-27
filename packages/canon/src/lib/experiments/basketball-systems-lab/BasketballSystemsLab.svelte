@@ -35,6 +35,7 @@
 		type SystemChallengeStatus,
 		type SystemChallengeObjectiveStatus,
 		type SystemId,
+		type SystemMatch,
 		type SystemResult,
 		type SystemScoreWeights,
 		type SystemTimelineEntry,
@@ -73,10 +74,15 @@
 		label: string;
 		value: string;
 		score: number;
+		rank: number;
+		rankChange: number;
+		margin: number;
+		marginChange: number;
 		swing: number;
 		gateSwing: number;
 		gateLabel: string;
 		gateDetail: string;
+		raceDetail: string;
 		detail: string;
 		actionLabel: string;
 	};
@@ -95,11 +101,19 @@
 		label: string;
 		score: number;
 		scoreLabel: string;
+		rank: number;
+		margin: number;
 		swing: number;
 		gateSwing: number;
 		detail: string;
 		active: boolean;
 		recommended: boolean;
+	};
+	type RaceContext = {
+		rank: number;
+		margin: number;
+		label: string;
+		detail: string;
 	};
 	type TurnRecapLane = {
 		label: string;
@@ -279,7 +293,7 @@
 	);
 	const modeRule = $derived(
 		isSolo
-			? 'Clear a challenge against the environment. Choose a System, steer once, then replay the years to see whether the targets survive.'
+			? 'Clear a challenge against the environment. Choose a System, make a steering call, then watch whether the targets survive.'
 		: canSteer
 			? hasUploadedField
 				? 'Coach one System inside the uploaded field. Steering can change that System, but the winner is still decided by final valid score after gates.'
@@ -517,23 +531,29 @@
 			).toFixed(1)
 		)
 	);
+	const unsteeredPrimaryRaceContext = $derived(
+		getRaceContext(unsteeredMatch, selectedSystem, unsteeredPrimary)
+	);
+	const steeredPrimaryRaceContext = $derived(
+		getRaceContext(match, selectedSystem, steeredPrimary)
+	);
 	const steeringComparison = $derived([
 		{
 			label: 'Original hold',
 			value: unsteeredPrimary.score.toFixed(1),
-			detail: `${unsteeredPrimary.system.name} keeps ${unsteeredPrimary.timeline[0]?.policy.label ?? 'native policy'}.`
+			detail: `${unsteeredPrimaryRaceContext.label}; keeps ${unsteeredPrimary.timeline[0]?.policy.label ?? 'native policy'}.`
 		},
 		{
 			label: activeSteeringPolicy ? 'Steered finish' : 'Current finish',
 			value: steeredPrimary.score.toFixed(1),
 			detail: activeSteeringPolicy
-				? `${activeSteeringPolicy.label} from year ${steeringYear}.`
+				? `${steeredPrimaryRaceContext.label}; ${activeSteeringPolicy.label} from year ${steeringYear}.`
 				: 'No active steering policy.'
 		},
 		{
-			label: 'Net swing',
-			value: formatDelta(steeringScoreSwing),
-			detail: `${formatDelta(steeringGateSwing)} gate movement included.`
+			label: 'Race swing',
+			value: formatRankChange(steeredPrimaryRaceContext.rank - unsteeredPrimaryRaceContext.rank),
+			detail: `${formatDelta(steeringScoreSwing)} score, ${formatDelta(steeredPrimaryRaceContext.margin - unsteeredPrimaryRaceContext.margin)} margin, ${formatDelta(steeringGateSwing)} gates.`
 		}
 	]);
 	const steeringRecommendation = $derived(getSteeringRecommendation());
@@ -743,11 +763,9 @@
 							? 'Watch next year'
 							: 'Final year'
 						: nextTurnPrompt.primaryLabel
-					: mode === 'versus'
-						? hasUploadedField
-							? 'Watch field'
-							: 'Watch race'
-						: 'Run season'
+					: canAdvanceTurn
+						? `Watch year ${viewedYear + 1}`
+						: 'Final year'
 	);
 	const gameTurnLanes = $derived([
 		{
@@ -1127,7 +1145,7 @@
 			return;
 		}
 
-		togglePlayback();
+		watchNextTurn();
 	}
 
 	function steerFromViewedYear(policyKey = steeringPolicy): void {
@@ -1181,6 +1199,63 @@
 		return `${delta >= 0 ? '+' : ''}${delta.toFixed(1)}`;
 	}
 
+	function formatRankChange(change: number): string {
+		if (change === 0) return 'No rank change';
+		return change < 0 ? `Up ${Math.abs(change)}` : `Down ${change}`;
+	}
+
+	function getRaceContext(raceMatch: SystemMatch, systemKey: SystemId, fallback: SystemResult): RaceContext {
+		const ordered = raceMatch.systems
+			.map((result, index) => ({ result, rank: index + 1 }))
+			.sort((left, right) => left.rank - right.rank);
+		const standing =
+			ordered.find((entry) => entry.result.system.key === systemKey) ??
+			ordered.find((entry) => entry.result.system.key === fallback.system.key) ??
+			{ result: fallback, rank: fallback.rank };
+		const leader = ordered[0];
+		const runnerUp = ordered.find(
+			(entry) => entry.result.system.key !== standing.result.system.key
+		);
+		const margin =
+			raceMatch.mode === 'single'
+				? 0
+				: standing.rank === 1
+					? Number((standing.result.score - (runnerUp?.result.score ?? standing.result.score)).toFixed(1))
+					: Number((standing.result.score - (leader?.result.score ?? standing.result.score)).toFixed(1));
+		const label =
+			raceMatch.mode === 'single'
+				? `Valid ${standing.result.score.toFixed(1)}`
+				: standing.rank === 1
+					? `#1 by ${margin.toFixed(1)}`
+					: `#${standing.rank}, ${Math.abs(margin).toFixed(1)} behind`;
+		const detail =
+			raceMatch.mode === 'single'
+				? `${standing.result.system.name} is judged against challenge targets.`
+				: standing.rank === 1
+					? `${standing.result.system.name} leads ${runnerUp?.result.system.name ?? 'the field'} by ${margin.toFixed(1)}.`
+					: `${standing.result.system.name} trails ${leader?.result.system.name ?? 'the leader'} by ${Math.abs(margin).toFixed(1)}.`;
+
+		return {
+			rank: standing.rank,
+			margin,
+			label,
+			detail
+		};
+	}
+
+	function compareSteeringCandidates(left: SteeringCandidate, right: SteeringCandidate): number {
+		if (mode === 'versus') {
+			return (
+				left.rank - right.rank ||
+				right.margin - left.margin ||
+				right.score - left.score ||
+				right.gateSwing - left.gateSwing
+			);
+		}
+
+		return right.score - left.score || right.gateSwing - left.gateSwing;
+	}
+
 	function getDecisiveTurnReceipt(result: SystemResult): DecisiveTurnReceipt {
 		const decisiveEntry =
 			[...result.timeline]
@@ -1217,7 +1292,7 @@
 				title: activeSteeringPolicy
 					? `${activeSteeringPolicy.label} is active`
 					: 'Original System held',
-				detail: `Year ${viewedYear} now projects ${steeredPrimary.score.toFixed(1)} with ${formatDelta(steeringScoreSwing)} score and ${formatDelta(steeringGateSwing)} gate movement.`,
+				detail: `Year ${viewedYear} now projects ${steeredPrimaryRaceContext.label}; ${formatDelta(steeringScoreSwing)} score and ${formatDelta(steeringGateSwing)} gate movement.`,
 				gateLabel: describeGateRisk(steeredPrimary).label,
 				gateDetail: describeGateRisk(steeredPrimary).detail,
 				primaryLabel: canAdvanceTurn ? 'Watch next year' : 'Final year',
@@ -1230,11 +1305,11 @@
 				status: 'hold',
 				label: 'Next turn',
 				title: 'Hold original System',
-				detail: `Original projects ${steeringRecommendation.value}; ${formatDelta(steeringRecommendation.gateSwing)} gate movement versus the current hold.`,
+				detail: `Original projects ${steeringRecommendation.raceDetail}; ${formatDelta(steeringRecommendation.gateSwing)} gate movement versus the current hold.`,
 				gateLabel: steeringRecommendation.gateLabel,
 				gateDetail: steeringRecommendation.gateDetail,
 				primaryLabel: 'Hold original',
-				primaryValue: formatDelta(steeringRecommendation.swing)
+				primaryValue: formatRankChange(steeringRecommendation.rankChange)
 			};
 		}
 
@@ -1242,11 +1317,14 @@
 			status: 'steer',
 			label: 'Next turn',
 			title: `Apply ${steeringRecommendation.label}`,
-			detail: `Best available move projects ${steeringRecommendation.value}; ${formatDelta(steeringRecommendation.swing)} score and ${formatDelta(steeringRecommendation.gateSwing)} gate movement from year ${viewedYear}.`,
+			detail: `Best available move projects ${steeringRecommendation.raceDetail}; ${formatDelta(steeringRecommendation.swing)} score, ${formatDelta(steeringRecommendation.marginChange)} margin, and ${formatDelta(steeringRecommendation.gateSwing)} gate movement from year ${viewedYear}.`,
 			gateLabel: steeringRecommendation.gateLabel,
 			gateDetail: steeringRecommendation.gateDetail,
 			primaryLabel: steeringRecommendation.actionLabel,
-			primaryValue: formatDelta(steeringRecommendation.swing)
+			primaryValue:
+				mode === 'versus'
+					? formatRankChange(steeringRecommendation.rankChange)
+					: formatDelta(steeringRecommendation.swing)
 		};
 	}
 
@@ -1271,25 +1349,32 @@
 
 	function getSteeringRecommendation(): SteeringCandidate {
 		const originalGateRisk = describeGateRisk(unsteeredPrimary);
+		const originalContext = unsteeredPrimaryRaceContext;
 		const original: SteeringCandidate = {
 			policyKey: 'none',
 			phaseKey: steeringPhase,
 			label: 'Hold original System',
 			value: unsteeredPrimary.score.toFixed(1),
 			score: unsteeredPrimary.score,
+			rank: originalContext.rank,
+			rankChange: 0,
+			margin: originalContext.margin,
+			marginChange: 0,
 			swing: 0,
 			gateSwing: 0,
 			gateLabel: originalGateRisk.label,
 			gateDetail: originalGateRisk.detail,
-			detail: `${unsteeredPrimary.system.name} is strongest without a steering change from year ${viewedYear}.`,
+			raceDetail: originalContext.label,
+			detail: `${unsteeredPrimary.system.name} holds ${originalContext.label} without a steering change from year ${viewedYear}.`,
 			actionLabel: 'Keep original'
 		};
 
 		const candidates = policies.flatMap((policy) =>
 			seasonPhases.map((phase) => {
 				const candidateMatch = runSystemMatch({
-					mode: 'single',
+					mode,
 					systemKey: selectedSystem,
+					opponentKey: opponentSystem,
 					environment: selectedEnvironment,
 					years: horizonYears,
 					steeringYear: viewedYear,
@@ -1305,6 +1390,7 @@
 					(result.validationImpact.adjustment - unsteeredPrimary.validationImpact.adjustment).toFixed(1)
 				);
 				const gateRisk = describeGateRisk(result);
+				const raceContext = getRaceContext(candidateMatch, selectedSystem, result);
 
 				return {
 					policyKey: policy.key,
@@ -1312,17 +1398,22 @@
 					label: `${policy.label}, ${phase.label}`,
 					value: result.score.toFixed(1),
 					score: result.score,
+					rank: raceContext.rank,
+					rankChange: raceContext.rank - originalContext.rank,
+					margin: raceContext.margin,
+					marginChange: Number((raceContext.margin - originalContext.margin).toFixed(1)),
 					swing,
 					gateSwing,
 					gateLabel: gateRisk.label,
 					gateDetail: gateRisk.detail,
-					detail: `${formatDelta(swing)} versus original hold from year ${viewedYear}.`,
+					raceDetail: raceContext.label,
+					detail: `${raceContext.label}; ${formatDelta(swing)} versus original hold from year ${viewedYear}.`,
 					actionLabel: `Apply ${policy.label}`
 				} satisfies SteeringCandidate;
 			})
 		);
 
-		return [original, ...candidates].sort((left, right) => right.score - left.score)[0] ?? original;
+		return [original, ...candidates].sort(compareSteeringCandidates)[0] ?? original;
 	}
 
 	function getSteeringPreviews(): SteeringPreview[] {
@@ -1345,24 +1436,43 @@
 			const gateSwing = Number(
 				(result.validationImpact.adjustment - unsteeredPrimary.validationImpact.adjustment).toFixed(1)
 			);
+			const raceContext = getRaceContext(previewMatch, selectedSystem, result);
 
 			return {
 				policyKey: policy.key,
 				label: policy.label,
 				score: result.score,
-				scoreLabel: result.score.toFixed(1),
+				scoreLabel: mode === 'versus' ? raceContext.label : result.score.toFixed(1),
+				rank: raceContext.rank,
+				margin: raceContext.margin,
 				swing,
 				gateSwing,
-				detail: `${formatDelta(swing)} score; ${formatDelta(gateSwing)} gate movement from year ${viewedYear}.`,
+				detail: `${formatDelta(swing)} score; ${formatDelta(Number((raceContext.margin - unsteeredPrimaryRaceContext.margin).toFixed(1)))} margin; ${formatDelta(gateSwing)} gate movement from year ${viewedYear}.`,
 				active: steeringPolicy === policy.key && steeringYear === viewedYear,
 				recommended: false
 			} satisfies SteeringPreview;
 		});
-		const bestScore = Math.max(...previews.map((preview) => preview.score));
+		const bestPreview = [...previews].sort((left, right) => {
+			if (mode === 'versus') {
+				return (
+					left.rank - right.rank ||
+					right.margin - left.margin ||
+					right.score - left.score ||
+					right.gateSwing - left.gateSwing
+				);
+			}
+
+			return right.score - left.score || right.gateSwing - left.gateSwing;
+		})[0];
 
 		return previews.map((preview) => ({
 			...preview,
-			recommended: preview.score === bestScore
+			recommended: Boolean(
+				bestPreview &&
+				preview.policyKey === bestPreview?.policyKey &&
+				preview.rank === bestPreview.rank &&
+				preview.score === bestPreview.score
+			)
 		}));
 	}
 
