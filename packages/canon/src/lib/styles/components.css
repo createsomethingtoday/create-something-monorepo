@@ -2762,6 +2762,101 @@
     gap: 8px;
   }
 
+  .ona-system-next-turn {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+    align-items: stretch;
+    border: 1px solid var(--ona-system-line);
+    border-left: 3px solid var(--ona-system-green);
+    border-radius: var(--radius-clear-sm);
+    padding: 10px;
+    background: color-mix(in srgb, white 90%, var(--ona-system-surface));
+  }
+
+  .ona-system-next-turn[data-status='hold'] {
+    border-left-color: var(--ona-system-blue);
+  }
+
+  .ona-system-next-turn[data-status='applied'] {
+    border-left-color: var(--ona-system-ink);
+  }
+
+  .ona-system-next-turn > div:first-child {
+    display: grid;
+    gap: 5px;
+    align-content: center;
+  }
+
+  .ona-system-next-turn span,
+  .ona-system-next-turn-actions span {
+    color: var(--ona-system-muted);
+    font-size: 0.66rem;
+    font-weight: 800;
+    line-height: 1;
+    text-transform: uppercase;
+    letter-spacing: 0;
+  }
+
+  .ona-system-next-turn strong {
+    color: var(--ona-system-ink);
+    font-size: 0.98rem;
+    line-height: 1.1;
+  }
+
+  .ona-system-next-turn p {
+    max-width: 74ch;
+    margin: 0;
+    color: var(--ona-system-muted);
+    font-size: 0.74rem;
+    font-weight: 700;
+    line-height: 1.34;
+  }
+
+  .ona-system-next-turn-actions {
+    display: grid;
+    grid-template-columns: minmax(132px, 1.2fr) repeat(2, minmax(94px, 0.8fr));
+    gap: 8px;
+  }
+
+  .ona-system-next-turn-actions button {
+    min-height: 56px;
+    display: grid;
+    gap: 4px;
+    align-content: center;
+    border: 1px solid var(--ona-system-line);
+    border-radius: var(--radius-clear-sm);
+    padding: 8px 10px;
+    background: #fff;
+    color: var(--ona-system-ink);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .ona-system-next-turn-actions button.primary {
+    border-color: var(--ona-system-ink);
+    background: var(--ona-system-ink);
+    color: #fff;
+  }
+
+  .ona-system-next-turn-actions button:disabled {
+    cursor: default;
+    opacity: 0.58;
+  }
+
+  .ona-system-next-turn-actions button.primary span {
+    color: rgba(255, 255, 255, 0.72);
+  }
+
+  .ona-system-next-turn-actions button.primary strong {
+    color: #fff;
+  }
+
+  .ona-system-next-turn-actions strong {
+    font-size: 0.9rem;
+  }
+
   .ona-system-steering-previews {
     display: grid;
     gap: 8px;
@@ -2889,89 +2984,6 @@
     font-size: 0.68rem;
     font-weight: 700;
     line-height: 1.26;
-  }
-
-  .ona-system-coach-recommendation {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 10px;
-    align-items: stretch;
-    border: 1px solid var(--ona-system-line);
-    border-left: 3px solid var(--ona-system-blue);
-    border-radius: var(--radius-clear-sm);
-    padding: 10px;
-    background: color-mix(in srgb, white 90%, var(--ona-system-surface));
-  }
-
-  .ona-system-coach-recommendation > div {
-    display: grid;
-    gap: 5px;
-    align-content: center;
-  }
-
-  .ona-system-coach-recommendation span {
-    color: var(--ona-system-muted);
-    font-size: 0.66rem;
-    font-weight: 800;
-    line-height: 1;
-    text-transform: uppercase;
-    letter-spacing: 0;
-  }
-
-  .ona-system-coach-recommendation strong {
-    color: var(--ona-system-ink);
-    font-size: 0.94rem;
-    line-height: 1.12;
-  }
-
-  .ona-system-coach-recommendation p {
-    max-width: 72ch;
-    margin: 0;
-    color: var(--ona-system-muted);
-    font-size: 0.74rem;
-    font-weight: 700;
-    line-height: 1.34;
-  }
-
-  .ona-system-coach-recommendation button {
-    min-width: 132px;
-    min-height: 52px;
-    display: grid;
-    gap: 4px;
-    align-content: center;
-    border: 1px solid var(--ona-system-ink);
-    border-radius: var(--radius-clear-sm);
-    padding: 8px 12px;
-    background: var(--ona-system-ink);
-    color: #fff;
-    font: inherit;
-    text-align: left;
-    cursor: pointer;
-  }
-
-  .ona-system-coach-recommendation button span {
-    color: rgba(255, 255, 255, 0.72);
-  }
-
-  .ona-system-coach-recommendation button strong {
-    color: #fff;
-    font-size: 1rem;
-    line-height: 1;
-  }
-
-  .ona-system-coach-recommendation button:disabled {
-    border-color: var(--ona-system-line);
-    background: #fff;
-    color: var(--ona-system-ink);
-    cursor: default;
-  }
-
-  .ona-system-coach-recommendation button:disabled span {
-    color: var(--ona-system-muted);
-  }
-
-  .ona-system-coach-recommendation button:disabled strong {
-    color: var(--ona-system-ink);
   }
 
   .ona-system-steering-actions button,
@@ -3877,6 +3889,7 @@
     .ona-system-compounding-trail-header,
     .ona-system-final-outcome-header,
     .ona-system-steering-cockpit-header,
+    .ona-system-next-turn,
     .ona-system-race-history-header,
     .ona-system-race-momentum-header,
     .ona-system-decision-moments,
@@ -3891,15 +3904,15 @@
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
+    .ona-system-next-turn-actions {
+      grid-template-columns: 1fr;
+    }
+
     .ona-system-steering-comparison {
       grid-template-columns: 1fr;
     }
 
     .ona-system-steering-preview-grid {
-      grid-template-columns: 1fr;
-    }
-
-    .ona-system-coach-recommendation {
       grid-template-columns: 1fr;
     }
 
@@ -3963,7 +3976,6 @@
     .ona-system-decision-moment-list,
     .ona-system-race-momentum-grid,
     .ona-system-race-year-strip,
-    .ona-system-coach-recommendation,
     .ona-system-challenge-list article > div,
     .ona-system-timeline article {
       grid-template-columns: 1fr;
