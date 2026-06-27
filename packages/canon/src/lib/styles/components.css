@@ -1267,6 +1267,152 @@
     line-height: 1.42;
   }
 
+  .ona-system-versus-control {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    margin-top: 8px;
+  }
+
+  .ona-system-versus-control button {
+    min-height: 46px;
+    display: grid;
+    gap: 4px;
+    align-content: center;
+    border: 1px solid var(--ona-system-line);
+    border-radius: var(--radius-clear-sm);
+    padding: 8px 10px;
+    background: #fff;
+    color: var(--ona-system-ink);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .ona-system-versus-control button.active {
+    border-color: var(--ona-system-ink);
+    background: var(--ona-system-ink);
+    color: #fff;
+  }
+
+  .ona-system-versus-control span {
+    font-size: 0.78rem;
+    font-weight: 800;
+    line-height: 1.05;
+  }
+
+  .ona-system-versus-control small {
+    color: var(--ona-system-muted);
+    font-size: 0.64rem;
+    font-weight: 700;
+    line-height: 1.1;
+    text-transform: uppercase;
+    letter-spacing: 0;
+  }
+
+  .ona-system-versus-control button.active small {
+    color: rgba(255, 255, 255, 0.7);
+  }
+
+  .ona-system-game-turn {
+    display: grid;
+    gap: 10px;
+    border: 1px solid var(--ona-system-line);
+    border-left: 3px solid var(--ona-system-ink);
+    border-radius: var(--radius-clear-sm);
+    margin-top: 10px;
+    padding: 12px;
+    background: white;
+  }
+
+  .ona-system-game-turn-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+    align-items: stretch;
+  }
+
+  .ona-system-game-turn-header > div {
+    display: grid;
+    gap: 5px;
+    align-content: center;
+  }
+
+  .ona-system-game-turn-header span,
+  .ona-system-game-turn-lanes span {
+    color: var(--ona-system-muted);
+    font-size: 0.66rem;
+    font-weight: 800;
+    line-height: 1;
+    text-transform: uppercase;
+    letter-spacing: 0;
+  }
+
+  .ona-system-game-turn-header strong {
+    color: var(--ona-system-ink);
+    font-size: 0.98rem;
+    line-height: 1.1;
+  }
+
+  .ona-system-game-turn-header button {
+    min-width: 126px;
+    min-height: 50px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    border: 1px solid var(--ona-system-ink);
+    border-radius: var(--radius-clear-sm);
+    padding: 0 12px;
+    background: var(--ona-system-ink);
+    color: #fff;
+    font: inherit;
+    font-size: 0.72rem;
+    font-weight: 800;
+    cursor: pointer;
+  }
+
+  .ona-system-game-turn-header button span {
+    color: inherit;
+    font-size: inherit;
+  }
+
+  .ona-system-game-turn-header button.active {
+    background: var(--ona-system-blue);
+    border-color: var(--ona-system-blue);
+  }
+
+  .ona-system-game-turn-lanes {
+    display: grid;
+    gap: 6px;
+  }
+
+  .ona-system-game-turn-lanes article {
+    display: grid;
+    gap: 5px;
+    border-top: 1px solid var(--ona-system-line);
+    padding-top: 8px;
+  }
+
+  .ona-system-game-turn-lanes article:first-child {
+    border-top: 0;
+    padding-top: 0;
+  }
+
+  .ona-system-game-turn-lanes strong {
+    color: var(--ona-system-ink);
+    font-size: 0.84rem;
+    line-height: 1.14;
+  }
+
+  .ona-system-game-turn-lanes p {
+    margin: 0;
+    color: var(--ona-system-muted);
+    font-size: 0.72rem;
+    font-weight: 700;
+    line-height: 1.32;
+  }
+
   .ona-system-objective-brief > div:first-child,
   .ona-system-objective-brief-list article {
     display: grid;
@@ -1815,6 +1961,65 @@
     border-top: 1px solid var(--ona-system-line);
     margin-top: 20px;
     padding-top: 18px;
+  }
+
+  .ona-system-draft-import {
+    display: grid;
+    gap: 8px;
+    border: 1px solid var(--ona-system-line);
+    border-radius: var(--radius-clear-sm);
+    padding: 10px;
+    background: color-mix(in srgb, white 88%, var(--ona-system-surface));
+  }
+
+  .ona-system-draft-import label {
+    display: grid;
+    gap: 6px;
+  }
+
+  .ona-system-draft-import label span,
+  .ona-system-draft-actions span {
+    color: var(--ona-system-muted);
+    font-size: 0.68rem;
+    font-weight: 700;
+    line-height: 1.3;
+  }
+
+  .ona-system-draft-import label span {
+    text-transform: uppercase;
+    letter-spacing: 0;
+  }
+
+  .ona-system-draft-import textarea {
+    width: 100%;
+    min-height: 106px;
+    resize: vertical;
+    border: 1px solid var(--ona-system-line);
+    border-radius: var(--radius-clear-sm);
+    padding: 10px 11px;
+    background: white;
+    color: var(--ona-system-ink);
+    font: inherit;
+    font-size: 0.78rem;
+    font-weight: 650;
+    line-height: 1.4;
+  }
+
+  .ona-system-draft-actions {
+    display: grid;
+    gap: 6px;
+  }
+
+  .ona-system-draft-actions button {
+    min-height: 38px;
+    border: 1px solid var(--ona-system-ink);
+    border-radius: var(--radius-clear-sm);
+    background: var(--ona-system-ink);
+    color: white;
+    font: inherit;
+    font-size: 0.72rem;
+    font-weight: 800;
+    cursor: pointer;
   }
 
   .ona-system-upload textarea {
@@ -3277,6 +3482,7 @@
     }
 
     .ona-system-rulebook,
+    .ona-system-game-turn-header,
     .ona-system-playback,
     .ona-system-turn-recap,
     .ona-system-compounding-trail-header,
@@ -3341,6 +3547,8 @@
 
     .ona-system-scoreboard,
     .ona-system-gate-impact > div:nth-child(2),
+    .ona-system-versus-control,
+    .ona-system-game-turn-header,
     .ona-system-playback-controls,
     .ona-system-playback-actions,
     .ona-system-turn-recap,

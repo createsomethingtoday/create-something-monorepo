@@ -104,6 +104,7 @@
 		active: boolean;
 		customCount: number;
 	};
+	type VersusControlMode = 'autonomous' | 'coach';
 
 	const edges = [
 		{ path: 'M 92 106 C 165 78 210 74 278 90', label: 'reduces' },
@@ -114,6 +115,7 @@
 	];
 
 	let mode = $state<LabMode>('single');
+	let versusControl = $state<VersusControlMode>('autonomous');
 	let selectedSystem = $state<SystemId>('recovery');
 	let opponentSystem = $state<SystemId>('attention');
 	let selectedEnvironmentKey = $state(defaultEnvironment.key);
@@ -127,6 +129,10 @@
 	let uploadText = $state(sampleSystemDefinition);
 	let uploadIssues = $state<SystemUploadIssue[]>([]);
 	let uploadMessage = $state('Sample entrant ready');
+	let draftText = $state(
+		'Small Market Defense System\nProtect parity and small-market visibility while keeping owner room credible. Lean into media allocation without letting labor trust or resilience collapse.'
+	);
+	let draftMessage = $state('Paste notes, then draft a valid entrant.');
 	let systemWorkbenchOpen = $state(false);
 	let builderName = $state('Expansion Balance System');
 	let builderThesis = $state(
@@ -166,14 +172,17 @@
 	const builderTotal = $derived(
 		builderWeightFields.reduce((total, field) => total + builderWeights[field.key], 0)
 	);
-	const canSteer = $derived(mode === 'single');
+	const isSolo = $derived(mode === 'single');
+	const canSteer = $derived(isSolo || (mode === 'versus' && versusControl === 'coach'));
 	const effectiveSteeringPolicy = $derived(
 		canSteer && steeringPolicy !== 'none' ? steeringPolicy : undefined
 	);
 	const modeRule = $derived(
-		canSteer
+		isSolo
 			? 'Clear a challenge against the environment. Choose a System, steer once, then replay the years to see whether the targets survive.'
-			: 'Race two Systems in the same environment. No steering; the winner is the highest valid score after requirement gates.'
+			: canSteer
+				? 'Coach one System inside the race. Steering can change that System, but the winner is still decided by final valid score after gates.'
+				: 'Race two Systems in the same environment. No steering; the winner is the highest valid score after requirement gates.'
 	);
 
 	$effect(() => {
@@ -303,7 +312,7 @@
 						selectedSteeringPhase.impact * 100
 					)}%.`
 				: `${viewedLeader.result.system.name} keeps its native policy.`
-			: 'Versus mode keeps both Systems autonomous after setup.'
+			: 'The race keeps both Systems autonomous after setup.'
 	);
 	const unsteeredPrimary = $derived(
 		unsteeredMatch.systems.find((result) => result.system.key === selectedSystem) ??
@@ -360,12 +369,50 @@
 			? Number((activeEntry.score - viewedRunnerUp.entry.score).toFixed(1))
 			: 0
 	);
-	const turnRecapStatus = $derived(canSteer ? match.challenge.status : 'versus');
+	const gameTurnLabel = $derived(
+		isSolo ? 'Solo turn' : canSteer ? 'Coach race' : 'Autonomous race'
+	);
+	const gameTurnTitle = $derived(
+		isSolo
+			? `${selectedEnvironment.name}: ${match.challenge.label}`
+			: canSteer
+				? `Coach ${match.steering.targetSystem.name} against ${viewedRunnerUp?.result.system.name ?? 'the field'}`
+				: `${match.winner.system.name} leads the race`
+	);
+	const primaryRunActionLabel = $derived(
+		playbackRunning
+			? 'Pause run'
+			: viewedYear === match.years
+				? mode === 'versus'
+					? 'Replay race'
+					: 'Replay season'
+				: mode === 'versus'
+					? 'Watch race'
+					: 'Run season'
+	);
+	const gameTurnLanes = $derived([
+		{
+			label: 'System',
+			value: match.steering.targetSystem.name,
+			detail: match.steering.targetSystem.thesis
+		},
+		{
+			label: 'Pressure',
+			value: selectedEnvironment.name,
+			detail: selectedEnvironment.pressure
+		},
+		{
+			label: isSolo ? 'Objective' : 'Stakes',
+			value: isSolo ? match.challenge.label : `${match.years}-year race`,
+			detail: isSolo ? match.challenge.summary : selectedEnvironment.winCondition
+		}
+	]);
+	const turnRecapStatus = $derived(isSolo ? match.challenge.status : 'versus');
 	const turnRecap = $derived<TurnRecapLane[]>([
 		{
 			label: 'Turn state',
-			value: canSteer ? formatChallengeStatus(match.challenge.status) : `Lead ${viewedLeaderGap.toFixed(1)}`,
-			detail: canSteer
+			value: isSolo ? formatChallengeStatus(match.challenge.status) : `Lead ${viewedLeaderGap.toFixed(1)}`,
+			detail: isSolo
 				? `${viewedLeader.result.system.name} is at ${activeEntry.score.toFixed(1)} in year ${viewedYear}.`
 				: `${viewedLeader.result.system.name} leads ${viewedRunnerUp?.result.system.name ?? 'the field'} in year ${viewedYear}.`
 		},
@@ -409,9 +456,9 @@
 	const finalScoreGap = $derived(
 		finalRunnerUp ? Number((match.winner.score - finalRunnerUp.score).toFixed(1)) : 0
 	);
-	const finalOutcomeStatus = $derived(canSteer ? match.challenge.status : 'versus');
+	const finalOutcomeStatus = $derived(isSolo ? match.challenge.status : 'versus');
 	const finalOutcomeTitle = $derived(
-		canSteer
+		isSolo
 			? match.challenge.status === 'cleared'
 				? 'Final whistle: challenge cleared'
 				: match.challenge.status === 'close'
@@ -420,7 +467,7 @@
 			: `Final whistle: ${match.winner.system.name} wins`
 	);
 	const finalOutcomeSummary = $derived(
-		canSteer
+		isSolo
 			? match.challenge.summary
 			: finalRunnerUp
 				? `${match.winner.system.name} beat ${finalRunnerUp.system.name} by ${finalScoreGap.toFixed(1)} after requirement gates.`
@@ -429,22 +476,22 @@
 	const finalOutcomeLanes = $derived<FinalOutcomeLane[]>([
 		{
 			label: 'Final valid score',
-			value: canSteer ? steeredPrimary.score.toFixed(1) : match.winner.score.toFixed(1),
-			detail: canSteer ? steeredPrimary.system.name : match.winner.system.name
+			value: isSolo ? steeredPrimary.score.toFixed(1) : match.winner.score.toFixed(1),
+			detail: isSolo ? steeredPrimary.system.name : match.winner.system.name
 		},
 		{
 			label: 'Gate adjustment',
 			value: formatDelta(
-				canSteer
+				isSolo
 					? steeredPrimary.validationImpact.adjustment
 					: match.winner.validationImpact.adjustment
 			),
-			detail: canSteer
+			detail: isSolo
 				? steeredPrimary.validationImpact.label
 				: match.winner.validationImpact.label
 		},
 		{
-			label: canSteer ? 'Run swing' : 'Winning margin',
+			label: isSolo ? 'Run swing' : canSteer ? 'Coached swing' : 'Winning margin',
 			value: canSteer ? formatDelta(steeringScoreSwing) : finalScoreGap.toFixed(1),
 			detail: canSteer
 				? activeSteeringPolicy
@@ -572,6 +619,10 @@
 	function resetPlayback(): void {
 		playbackRunning = false;
 		viewedYear = 1;
+	}
+
+	function runPrimaryAction(): void {
+		togglePlayback();
 	}
 
 	function steerFromViewedYear(policyKey = steeringPolicy): void {
@@ -735,6 +786,21 @@
 		builderMessage = 'Entrant JSON ready';
 	}
 
+	function draftEntrantFromNotes(): void {
+		const notes = draftText.trim();
+
+		if (notes.length < 12) {
+			draftMessage = 'Add a little more about what the System optimizes.';
+			return;
+		}
+
+		const definition = buildDraftSystemDefinition(notes);
+		uploadText = JSON.stringify(definition, null, 2);
+		uploadIssues = [];
+		uploadMessage = 'Draft entrant ready for validation';
+		draftMessage = `${definition.name} drafted with ${formatPolicyLabel(definition.policyKey)} bias.`;
+	}
+
 	function resetBuilder(): void {
 		const sample = getSampleSystemUpload();
 		builderName = 'Expansion Balance System';
@@ -838,6 +904,188 @@
 			policyKey: builderPolicy,
 			weights: decimalWeights(builderWeights)
 		};
+	}
+
+	function buildDraftSystemDefinition(notes: string): SystemUploadDefinition {
+		const policyKey = inferDraftPolicy(notes);
+		const name = normalizeDraftName(notes);
+		const thesis = normalizeDraftThesis(notes, policyKey);
+		const weights = inferDraftWeights(notes, policyKey);
+
+		return {
+			name,
+			thesis,
+			stance: 'Drafted entrant',
+			constraint:
+				'The System must survive owner room, labor trust, and resilience gates after the race.',
+			adaptation: `Drafted from notes; runs ${formatPolicyLabel(policyKey)} as its native policy and lets the gates test the tradeoffs.`,
+			policyKey,
+			weights
+		};
+	}
+
+	function normalizeDraftName(notes: string): string {
+		const firstLine =
+			notes
+				.split(/\r?\n/)
+				.map((line) => line.trim())
+				.find(Boolean) ?? 'Drafted System';
+		const cleaned = firstLine
+			.replace(/^(name|system|entrant)\s*[:=-]\s*/i, '')
+			.replace(/[^a-zA-Z0-9 &'-]+/g, ' ')
+			.replace(/\s+/g, ' ')
+			.trim();
+		const base = cleaned.length >= 3 ? cleaned : 'Drafted System';
+		const withSystem = /system$/i.test(base) ? base : `${base} System`;
+
+		return trimToWordBoundary(withSystem, 44);
+	}
+
+	function normalizeDraftThesis(notes: string, policyKey: PolicyKey): string {
+		const compact = notes
+			.replace(/\s+/g, ' ')
+			.replace(/^(name|system|entrant)\s*[:=-]\s*/i, '')
+			.trim();
+		const fallback = `Optimize ${formatPolicyLabel(policyKey).toLowerCase()} while keeping owner, labor, and resilience gates visible.`;
+		const thesis = compact.length >= 12 ? compact : fallback;
+
+		return trimToWordBoundary(thesis, 180);
+	}
+
+	function inferDraftPolicy(notes: string): PolicyKey {
+		const lower = notes.toLowerCase();
+		const scores: Record<PolicyKey, number> = {
+			schedule: keywordScore(lower, [
+				'schedule',
+				'rest',
+				'recovery',
+				'travel',
+				'fatigue',
+				'back-to-back',
+				'star availability'
+			]),
+			media: keywordScore(lower, [
+				'media',
+				'attention',
+				'market',
+				'fan',
+				'visibility',
+				'growth',
+				'national',
+				'small-market'
+			]),
+			labor: keywordScore(lower, ['labor', 'trust', 'union', 'player', 'peace', 'enforcement'])
+		};
+
+		return (Object.entries(scores).sort(
+			([, left], [, right]) => right - left
+		)[0]?.[0] ?? 'media') as PolicyKey;
+	}
+
+	function inferDraftWeights(notes: string, policyKey: PolicyKey): SystemScoreWeights {
+		const lower = notes.toLowerCase();
+		const weights: Record<keyof SystemScoreWeights, number> =
+			policyKey === 'schedule'
+				? {
+						leagueHealth: 24,
+						mediaValueB: 10,
+						competitiveBalance: 16,
+						laborTrust: 16,
+						ownerMargin: 10,
+						resilience: 24
+					}
+				: policyKey === 'labor'
+					? {
+							leagueHealth: 18,
+							mediaValueB: 10,
+							competitiveBalance: 14,
+							laborTrust: 28,
+							ownerMargin: 10,
+							resilience: 20
+						}
+					: {
+							leagueHealth: 14,
+							mediaValueB: 24,
+							competitiveBalance: 22,
+							laborTrust: 10,
+							ownerMargin: 12,
+							resilience: 18
+						};
+
+		if (hasAnyKeyword(lower, ['health', 'recovery', 'availability'])) {
+			shiftDraftWeight(weights, 'leagueHealth', 4);
+		}
+		if (hasAnyKeyword(lower, ['media', 'attention', 'market', 'growth', 'fan'])) {
+			shiftDraftWeight(weights, 'mediaValueB', 4);
+		}
+		if (hasAnyKeyword(lower, ['balance', 'parity', 'small-market', 'small market'])) {
+			shiftDraftWeight(weights, 'competitiveBalance', 4);
+		}
+		if (hasAnyKeyword(lower, ['labor', 'trust', 'union', 'player'])) {
+			shiftDraftWeight(weights, 'laborTrust', 4);
+		}
+		if (hasAnyKeyword(lower, ['owner', 'margin', 'board', 'credible'])) {
+			shiftDraftWeight(weights, 'ownerMargin', 4);
+		}
+		if (hasAnyKeyword(lower, ['resilience', 'durable', 'survive', 'long-run', 'long run'])) {
+			shiftDraftWeight(weights, 'resilience', 4);
+		}
+
+		const nativePriority =
+			policyKey === 'labor'
+				? 'laborTrust'
+				: policyKey === 'schedule'
+					? 'leagueHealth'
+					: 'mediaValueB';
+		if (weights[nativePriority] < 24) {
+			shiftDraftWeight(weights, nativePriority, 24 - weights[nativePriority]);
+		}
+
+		return decimalWeights(weights);
+	}
+
+	function shiftDraftWeight(
+		weights: Record<keyof SystemScoreWeights, number>,
+		target: keyof SystemScoreWeights,
+		amount: number
+	): void {
+		const room = builderMaximumWeight - weights[target];
+		let remaining = Math.min(amount, room);
+		if (remaining <= 0) return;
+
+		for (const key of [...builderWeightFields]
+			.map((field) => field.key)
+			.filter((key) => key !== target)
+			.sort((left, right) => weights[right] - weights[left])) {
+			const available = weights[key] - builderMinimumWeights[key];
+			const shift = Math.min(available, remaining);
+			weights[key] -= shift;
+			weights[target] += shift;
+			remaining -= shift;
+			if (remaining <= 0) return;
+		}
+	}
+
+	function keywordScore(value: string, keywords: string[]): number {
+		return keywords.reduce((score, keyword) => {
+			const escaped = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+			return score + (value.match(new RegExp(escaped, 'g'))?.length ?? 0);
+		}, 0);
+	}
+
+	function hasAnyKeyword(value: string, keywords: string[]): boolean {
+		return keywords.some((keyword) => value.includes(keyword));
+	}
+
+	function trimToWordBoundary(value: string, maxLength: number): string {
+		if (value.length <= maxLength) return value;
+		const sliced = value.slice(0, maxLength).trim();
+		const lastSpace = sliced.lastIndexOf(' ');
+		return (lastSpace > 12 ? sliced.slice(0, lastSpace) : sliced).trim();
+	}
+
+	function formatPolicyLabel(policyKey: PolicyKey): string {
+		return policies.find((policy) => policy.key === policyKey)?.label ?? policyKey;
 	}
 
 	function systemToUploadDefinition(system: System): SystemUploadDefinition {
@@ -950,8 +1198,57 @@
 				</button>
 			</div>
 			<div class="ona-system-mode-note">
-				<strong>{canSteer ? 'Solo challenge' : 'Versus race'}</strong>
+				<strong>{isSolo ? 'Solo challenge' : canSteer ? 'Coach race' : 'Versus race'}</strong>
 				<p>{modeRule}</p>
+			</div>
+
+			{#if mode === 'versus'}
+				<div class="ona-system-versus-control" aria-label="Versus control">
+					<button
+						type="button"
+						class:active={versusControl === 'autonomous'}
+						aria-pressed={versusControl === 'autonomous'}
+						onclick={() => (versusControl = 'autonomous')}
+					>
+						<span>Autonomous</span>
+						<small>Systems run clean</small>
+					</button>
+					<button
+						type="button"
+						class:active={versusControl === 'coach'}
+						aria-pressed={versusControl === 'coach'}
+						onclick={() => (versusControl = 'coach')}
+					>
+						<span>Coach System</span>
+						<small>Steer one side</small>
+					</button>
+				</div>
+			{/if}
+
+			<div class="ona-system-game-turn" aria-label="Game turn">
+				<div class="ona-system-game-turn-header">
+					<div>
+						<span>{gameTurnLabel}</span>
+						<strong>{gameTurnTitle}</strong>
+					</div>
+					<button type="button" class:active={playbackRunning} onclick={runPrimaryAction}>
+						{#if playbackRunning}
+							<Pause size={15} strokeWidth={2} />
+						{:else}
+							<Play size={15} strokeWidth={2} />
+						{/if}
+						<span>{primaryRunActionLabel}</span>
+					</button>
+				</div>
+				<div class="ona-system-game-turn-lanes">
+					{#each gameTurnLanes as lane}
+						<article>
+							<span>{lane.label}</span>
+							<strong>{lane.value}</strong>
+							<p>{lane.detail}</p>
+						</article>
+					{/each}
+				</div>
 			</div>
 
 			<div
@@ -1009,10 +1306,10 @@
 				aria-label="Current objective"
 			>
 				<div>
-					<span>{canSteer ? 'Objective' : 'Race rule'}</span>
+					<span>{isSolo ? 'Objective' : 'Race rule'}</span>
 					<strong>{match.challenge.label}</strong>
 					<p>
-						{canSteer
+						{isSolo
 							? 'Clear the target score and keep both floor metrics alive through the final year.'
 							: match.challenge.summary}
 					</p>
@@ -1236,6 +1533,20 @@
 						<FileJson size={17} strokeWidth={1.8} />
 						<span>Entrant Import</span>
 					</div>
+					<div class="ona-system-draft-import" aria-label="Draft entrant from notes">
+						<label>
+							<span>Paste rough System notes</span>
+							<textarea
+								bind:value={draftText}
+								aria-label="Rough System notes"
+								maxlength="420"
+							></textarea>
+						</label>
+						<div class="ona-system-draft-actions">
+							<button type="button" onclick={draftEntrantFromNotes}>Draft entrant JSON</button>
+							<span>{draftMessage}</span>
+						</div>
+					</div>
 					<textarea bind:value={uploadText} aria-label="System JSON definition"></textarea>
 					<div class="ona-system-upload-actions">
 						<label>
@@ -1277,16 +1588,22 @@
 			<div class="ona-system-rulebook" aria-label="Run rules">
 				<article>
 					<span>Win condition</span>
-					<strong>{canSteer ? 'Clear challenge objectives' : 'Highest valid system score'}</strong>
+					<strong>{isSolo ? 'Clear challenge objectives' : 'Highest valid system score'}</strong>
 					<p>
-						{canSteer
+						{isSolo
 							? 'Single-player runs are judged by score, owner room, and labor trust targets.'
 							: `${match.environment.winCondition}. Requirement gates adjust unrealistic wins.`}
 					</p>
 				</article>
 				<article>
 					<span>Play model</span>
-					<strong>{canSteer ? 'Coach vs environment' : 'System vs System'}</strong>
+					<strong
+						>{isSolo
+							? 'Coach vs environment'
+							: canSteer
+								? 'Coach within race'
+								: 'System vs System'}</strong
+					>
 					<p>{modeRule}</p>
 				</article>
 			</div>
@@ -1300,7 +1617,7 @@
 					<div>
 						<div class="ona-system-timeline-header">
 							<ShieldCheck size={17} strokeWidth={1.8} />
-							<span>{canSteer ? 'Single challenge' : 'Versus objective'}</span>
+							<span>{isSolo ? 'Single challenge' : 'Versus objective'}</span>
 						</div>
 						<strong>{match.challenge.label}</strong>
 					</div>
@@ -1414,13 +1731,13 @@
 					aria-label="Final outcome"
 				>
 					<div class="ona-system-final-outcome-header">
-						<div>
-							<div class="ona-system-timeline-header">
-								<Trophy size={17} strokeWidth={1.8} />
-								<span>{canSteer ? 'Single result' : 'Versus result'}</span>
+							<div>
+								<div class="ona-system-timeline-header">
+									<Trophy size={17} strokeWidth={1.8} />
+									<span>{isSolo ? 'Single result' : 'Versus result'}</span>
+								</div>
+								<strong>{finalOutcomeTitle}</strong>
 							</div>
-							<strong>{finalOutcomeTitle}</strong>
-						</div>
 						<p>{finalOutcomeSummary}</p>
 						<button type="button" onclick={resetPlayback}>
 							<RotateCcw size={15} strokeWidth={2} />
@@ -1446,7 +1763,11 @@
 							<SlidersHorizontal size={17} strokeWidth={1.8} />
 							<span>{canSteer ? 'Live steering' : 'Autonomous run'}</span>
 						</div>
-						<strong>{canSteer ? `Steer from year ${viewedYear}` : 'Versus race is locked'}</strong>
+						<strong
+							>{canSteer
+								? `Steer ${match.steering.targetSystem.name} from year ${viewedYear}`
+								: 'Versus race is autonomous'}</strong
+						>
 					</div>
 					<p>{steeringReceipt}</p>
 				</div>
