@@ -8,7 +8,9 @@
 		FileJson,
 		Globe2,
 		LineChart,
+		Pause,
 		Play,
+		RotateCcw,
 		Route,
 		ShieldCheck,
 		SlidersHorizontal,
@@ -102,6 +104,7 @@
 	let selectedEnvironmentKey = $state(defaultEnvironment.key);
 	let horizonYears = $state(5);
 	let viewedYear = $state(1);
+	let playbackRunning = $state(false);
 	let steeringYear = $state(3);
 	let steeringPhase = $state<SeasonPhaseKey>('midseason');
 	let steeringPolicy = $state<PolicyKey | 'none'>('labor');
@@ -177,6 +180,21 @@
 		if (viewedYear > horizonYears) {
 			viewedYear = horizonYears;
 		}
+	});
+
+	$effect(() => {
+		if (!playbackRunning) return;
+
+		if (viewedYear >= match.years) {
+			playbackRunning = false;
+			return;
+		}
+
+		const timer = window.setTimeout(() => {
+			viewedYear = Math.min(viewedYear + 1, match.years);
+		}, 900);
+
+		return () => window.clearTimeout(timer);
 	});
 
 	const match = $derived(
@@ -434,6 +452,24 @@
 
 	function setViewedYear(year: number): void {
 		viewedYear = Math.min(Math.max(Math.round(year), 1), horizonYears);
+	}
+
+	function togglePlayback(): void {
+		if (playbackRunning) {
+			playbackRunning = false;
+			return;
+		}
+
+		if (viewedYear >= match.years) {
+			viewedYear = 1;
+		}
+
+		playbackRunning = true;
+	}
+
+	function resetPlayback(): void {
+		playbackRunning = false;
+		viewedYear = 1;
 	}
 
 	function steerFromViewedYear(policyKey = steeringPolicy): void {
@@ -1185,30 +1221,47 @@
 					<strong>Year {viewedYear} of {match.years}</strong>
 					<p>{activeEntry.receipt}</p>
 				</div>
-				<div class="ona-system-playback-controls">
-					<button
-						type="button"
-						disabled={viewedYear === 1}
-						onclick={() => setViewedYear(viewedYear - 1)}
-					>
-						Previous
-					</button>
-					<input
-						type="range"
-						min="1"
-						max={match.years}
-						step="1"
-						value={viewedYear}
-						aria-label="Run year"
-						oninput={(event) => setViewedYear(Number(event.currentTarget.value))}
-					/>
-					<button
-						type="button"
-						disabled={viewedYear === match.years}
-						onclick={() => setViewedYear(viewedYear + 1)}
-					>
-						Next
-					</button>
+				<div class="ona-system-playback-panel">
+					<div class="ona-system-playback-controls">
+						<button
+							type="button"
+							disabled={viewedYear === 1}
+							onclick={() => setViewedYear(viewedYear - 1)}
+						>
+							Previous
+						</button>
+						<input
+							type="range"
+							min="1"
+							max={match.years}
+							step="1"
+							value={viewedYear}
+							aria-label="Run year"
+							oninput={(event) => setViewedYear(Number(event.currentTarget.value))}
+						/>
+						<button
+							type="button"
+							disabled={viewedYear === match.years}
+							onclick={() => setViewedYear(viewedYear + 1)}
+						>
+							Next
+						</button>
+					</div>
+					<div class="ona-system-playback-actions" aria-label="Watch run controls">
+						<button type="button" class:active={playbackRunning} onclick={togglePlayback}>
+							{#if playbackRunning}
+								<Pause size={15} strokeWidth={2} />
+								<span>Pause</span>
+							{:else}
+								<Play size={15} strokeWidth={2} />
+								<span>{viewedYear === match.years ? 'Replay run' : 'Watch run'}</span>
+							{/if}
+						</button>
+						<button type="button" onclick={resetPlayback} disabled={viewedYear === 1 && !playbackRunning}>
+							<RotateCcw size={15} strokeWidth={2} />
+							<span>Reset</span>
+						</button>
+					</div>
 				</div>
 			</div>
 
