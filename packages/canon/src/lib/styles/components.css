@@ -2210,6 +2210,46 @@
     gap: 8px;
   }
 
+  .ona-system-steering-comparison {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    border-top: 1px solid var(--ona-system-line);
+    padding-top: 10px;
+  }
+
+  .ona-system-steering-comparison article {
+    min-height: 88px;
+    display: grid;
+    align-content: space-between;
+    gap: 6px;
+    border: 1px solid var(--ona-system-line);
+    border-radius: var(--radius-clear-sm);
+    padding: 10px;
+    background: color-mix(in srgb, white 88%, var(--ona-system-surface));
+  }
+
+  .ona-system-steering-comparison span {
+    color: var(--ona-system-muted);
+    font-size: 0.66rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0;
+  }
+
+  .ona-system-steering-comparison strong {
+    color: var(--ona-system-ink);
+    font-size: 1.08rem;
+    line-height: 1;
+  }
+
+  .ona-system-steering-comparison small {
+    color: var(--ona-system-muted);
+    font-size: 0.68rem;
+    font-weight: 700;
+    line-height: 1.26;
+  }
+
   .ona-system-steering-actions button,
   .ona-system-steering-season button {
     min-height: 54px;
@@ -2791,6 +2831,10 @@
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
+    .ona-system-steering-comparison {
+      grid-template-columns: 1fr;
+    }
+
     .ona-system-challenge-header {
       display: grid;
     }
@@ -2833,6 +2877,7 @@
     .ona-system-playback-controls,
     .ona-system-steering-actions,
     .ona-system-steering-season,
+    .ona-system-steering-comparison,
     .ona-system-challenge-list article > div,
     .ona-system-timeline article {
       grid-template-columns: 1fr;
