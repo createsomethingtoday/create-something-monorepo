@@ -43,7 +43,7 @@ export type PublicAtlasCanvas = {
 	updatedAt: string;
 };
 
-export type PublicAtlasRendererKind = 'react-flow' | 'static-story' | 'sigma' | 'cosmograph';
+export type PublicAtlasRendererKind = 'svelte-flow' | 'static-story' | 'sigma' | 'cosmograph';
 
 export type PublicAtlasSemanticNode = Pick<
 	PublicAtlasNode,
@@ -613,7 +613,7 @@ function selectPublicAtlasRenderer(canvas: PublicAtlasCanvas): PublicAtlasGraphA
 	}
 
 	return {
-		primary: 'react-flow',
+		primary: 'svelte-flow',
 		fallback: 'static-story',
 		scale: 'workflow',
 		reason: 'Use rich workflow nodes for education, intake, editing, accessibility, and agent-operable graph state.'

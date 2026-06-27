@@ -121,7 +121,7 @@ Story-canvas usage contract:
 
 Renderer rule:
 
-- React Flow is the primary renderer for workflow education, intake, editing,
+- Svelte Flow is the primary renderer for workflow education, intake, editing,
   accessibility, and agent-operable maps.
 - Static story canvases are the fallback for marketing, articles, social cards,
   and non-JS presentation.
