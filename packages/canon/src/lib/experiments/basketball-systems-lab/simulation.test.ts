@@ -490,6 +490,7 @@ describe('basketball systems management simulation', () => {
 		expect(match.systems.map((result) => result.system.key).sort()).toEqual(
 			upload.systems.map((system) => system.key).sort()
 		);
+		expect(match.challenge.summary).toContain('4-System field');
 	});
 
 	it('runs uploaded entrant fields instead of only the selected pair', () => {

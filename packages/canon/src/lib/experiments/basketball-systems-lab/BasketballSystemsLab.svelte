@@ -221,6 +221,11 @@
 		detail: string;
 		status: 'done' | 'current' | 'next';
 	};
+	type SteeringEventCopy = {
+		title: string;
+		stake: string;
+		action: string;
+	};
 
 	const edges = [
 		{ path: 'M 92 106 C 165 78 210 74 278 90', label: 'reduces' },
@@ -229,6 +234,28 @@
 		{ path: 'M 574 409 C 500 468 423 475 349 434', label: 'pressures' },
 		{ path: 'M 278 410 C 200 398 153 356 127 284', label: 'improves' }
 	];
+	const steeringEventCopy = {
+		schedule: {
+			title: 'Travel crunch before national windows',
+			stake: 'Stars need recovery now, but less inventory tightens the media calendar.',
+			action: 'Cut travel load'
+		},
+		media: {
+			title: 'Rising-market window opens',
+			stake: 'Attention can move to new markets, but the safer national slate gets weaker.',
+			action: 'Shift marquee games'
+		},
+		labor: {
+			title: 'Recovery dispute reaches the table',
+			stake: 'Trust can recover visibly, but owner margin absorbs the political cost.',
+			action: 'Guarantee recovery'
+		},
+		none: {
+			title: 'Hold the System line',
+			stake: 'The native System keeps compounding without adding a new mid-season tradeoff.',
+			action: 'Hold original'
+		}
+	} satisfies Record<PolicyKey | 'none', SteeringEventCopy>;
 
 	let mode = $state<LabMode>('single');
 	let versusControl = $state<VersusControlMode>('autonomous');
@@ -286,11 +313,11 @@
 	const uploadedCompetitionDetail = $derived(
 		uploadedSystems.length === 0
 			? 'Load the sample field or enter Systems to start a same-environment run.'
-		: uploadedSystems.length === 1
+			: uploadedSystems.length === 1
 				? `${uploadedSystems[0]?.name ?? 'Custom System'} can run solo. Add a second entrant to unlock versus.`
-			: hasUploadedField
-				? `All ${uploadedSystems.length} uploaded Systems will run in the same environment field.`
-				: `${uploadedSystems[0]?.name ?? 'Custom System'} and ${uploadedSystems[1]?.name ?? 'opponent'} are ready for a same-environment race.`
+				: hasUploadedField
+					? `All ${uploadedSystems.length} uploaded Systems will run in the same environment field.`
+					: `${uploadedSystems[0]?.name ?? 'Custom System'} and ${uploadedSystems[1]?.name ?? 'opponent'} are ready for a same-environment race.`
 	);
 	const builderTotal = $derived(
 		builderWeightFields.reduce((total, field) => total + builderWeights[field.key], 0)
@@ -309,16 +336,16 @@
 	const modeRule = $derived(
 		isSolo
 			? 'Clear a challenge against the environment. Choose a System, make a steering call, then watch whether the targets survive.'
-		: canSteer
-			? hasUploadedField
-				? 'Coach one System inside the uploaded field. Steering can change that System, but the winner is still decided by final valid score after gates.'
-				: 'Coach one System inside the race. Steering can change that System, but the winner is still decided by final valid score after gates.'
-			: hasUploadedField
-				? 'Run every uploaded System in the same environment. No steering; the winner is the highest valid score after requirement gates.'
-				: 'Race two Systems in the same environment. No steering; the winner is the highest valid score after requirement gates.'
+			: canSteer
+				? hasUploadedField
+					? 'Exhibition mode: coach one System inside the uploaded field and see whether your decisions survive the same final gates.'
+					: 'Exhibition mode: coach one System during the race and see whether your decisions survive the same final gates.'
+				: hasUploadedField
+					? 'Official race: every uploaded System runs in the same environment with no mid-run coaching.'
+					: 'Official race: both Systems run the same environment with no mid-run coaching.'
 	);
 	const modeLabel = $derived(
-		isSolo ? 'Solo Challenge' : canSteer ? 'Coach a System' : 'Watch Systems Race'
+		isSolo ? 'Solo Challenge' : canSteer ? 'Coach Exhibition' : 'Official Systems Race'
 	);
 	const competitionActionLabel = $derived(
 		uploadedSystems.length === 0
@@ -414,7 +441,8 @@
 					};
 			const readinessTone: EntrantReadiness['readinessTone'] =
 				gateAdjustment <= -12 ? 'break' : gateAdjustment < 0 ? 'watch' : 'ready';
-			const policyLabel = policies.find((policy) => policy.key === system.policyKey)?.label ?? 'Native policy';
+			const policyLabel =
+				policies.find((policy) => policy.key === system.policyKey)?.label ?? 'Native policy';
 
 			return {
 				key: system.key,
@@ -510,9 +538,9 @@
 			? currentYearDecision.policyKey === null
 				? null
 				: (policies.find((policy) => policy.key === currentYearDecision.policyKey) ?? null)
-		: steeringPolicy === 'none'
-			? null
-			: (policies.find((policy) => policy.key === steeringPolicy) ?? null)
+			: steeringPolicy === 'none'
+				? null
+				: (policies.find((policy) => policy.key === steeringPolicy) ?? null)
 	);
 	const selectedSteeringPhase = $derived(
 		seasonPhases.find((phase) => phase.key === (currentYearDecision?.phaseKey ?? steeringPhase)) ??
@@ -524,9 +552,9 @@
 				? activeSteeringPolicy
 					? `Year ${viewedYear}, ${selectedSteeringPhase.label}`
 					: `Year ${viewedYear}, held original`
-			: activeSteeringPolicy
-				? `Preview ${selectedSteeringPhase.label}`
-				: 'Original System'
+				: activeSteeringPolicy
+					? `Preview ${selectedSteeringPhase.label}`
+					: 'Original System'
 			: hasUploadedField
 				? 'Autonomous field'
 				: 'Autonomous race'
@@ -539,11 +567,11 @@
 							selectedSteeringPhase.impact * 100
 						)}%.`
 					: `Year ${viewedYear} is logged as a hold; the System returns to its original policy.`
-			: activeSteeringPolicy
-				? `${activeSteeringPolicy.label} is the next preview; first-season force ${Math.round(
-						selectedSteeringPhase.impact * 100
-					)}%.`
-				: `${viewedLeader.result.system.name} keeps its native policy.`
+				: activeSteeringPolicy
+					? `${activeSteeringPolicy.label} is the next preview; first-season force ${Math.round(
+							selectedSteeringPhase.impact * 100
+						)}%.`
+					: `${viewedLeader.result.system.name} keeps its native policy.`
 			: hasUploadedField
 				? 'The field keeps every System autonomous after setup.'
 				: 'The race keeps both Systems autonomous after setup.'
@@ -561,17 +589,14 @@
 	const steeringGateSwing = $derived(
 		Number(
 			(
-				steeredPrimary.validationImpact.adjustment -
-				unsteeredPrimary.validationImpact.adjustment
+				steeredPrimary.validationImpact.adjustment - unsteeredPrimary.validationImpact.adjustment
 			).toFixed(1)
 		)
 	);
 	const unsteeredPrimaryRaceContext = $derived(
 		getRaceContext(unsteeredMatch, selectedSystem, unsteeredPrimary)
 	);
-	const steeredPrimaryRaceContext = $derived(
-		getRaceContext(match, selectedSystem, steeredPrimary)
-	);
+	const steeredPrimaryRaceContext = $derived(getRaceContext(match, selectedSystem, steeredPrimary));
 	const steeringComparison = $derived([
 		{
 			label: 'Original hold',
@@ -592,6 +617,7 @@
 		}
 	]);
 	const steeringRecommendation = $derived(getSteeringRecommendation());
+	const steeringEvent = $derived(getSteeringEventCopy(steeringRecommendation.policyKey));
 	const steeringPreviews = $derived<SteeringPreview[]>(getSteeringPreviews());
 	const decisionLedger = $derived<DecisionLedgerItem[]>(
 		match.steering.decisions.map((decision) => {
@@ -622,9 +648,7 @@
 			: opponentSystemName
 	);
 	const viewedLeaderGap = $derived(
-		viewedRunnerUp
-			? Number((activeEntry.score - viewedRunnerUp.entry.score).toFixed(1))
-			: 0
+		viewedRunnerUp ? Number((activeEntry.score - viewedRunnerUp.entry.score).toFixed(1)) : 0
 	);
 	const raceMomentum = $derived<RaceMomentumItem[]>(
 		viewedStandings.map((standing, index) => {
@@ -667,7 +691,8 @@
 							}))
 							.sort((left, right) => right.entry.score - left.entry.score)[0]
 					: null;
-			const margin = leader && runnerUp ? Number((leader.entry.score - runnerUp.entry.score).toFixed(1)) : 0;
+			const margin =
+				leader && runnerUp ? Number((leader.entry.score - runnerUp.entry.score).toFixed(1)) : 0;
 
 			return {
 				year,
@@ -702,22 +727,31 @@
 	);
 	const activeDecisionMoment = $derived<DecisionMoment>({
 		year: viewedYear,
-		label: leadChangedThisYear ? 'Lead changed' : canSteer ? 'Steering window' : 'Leader held',
+		label:
+			viewedYear === 1 ? 'Opening state' : leadChangedThisYear ? 'Lead changed' : canSteer ? 'Decision event' : 'Leader held',
 		value:
-			leadChangedThisYear && previousLeaderName
+			viewedYear === 1
+				? viewedLeader.result.system.name
+				: leadChangedThisYear && previousLeaderName
 				? `${previousLeaderName} -> ${viewedLeader.result.system.name}`
 				: canSteer
-					? steeringRecommendation.actionLabel
+					? steeringEvent.title
 					: `${viewedLeader.result.system.name} holds`,
 		detail:
 			leadChangedThisYear && momentumLeader
 				? `${momentumLeader.name} made the strongest year move at ${formatDelta(momentumLeader.delta)}.`
 				: viewedYear === 1
 					? `${viewedLeader.result.system.name} opened the run with ${viewedRunnerUp ? `${viewedRunnerUp.result.system.name} close behind` : 'no runner-up loaded'}.`
-				: canSteer
-					? `${steeringRecommendation.label} projects ${formatDelta(steeringRecommendation.swing)} from this point.`
-					: raceMomentumDetail,
-		action: canSteer ? `Coach from year ${viewedYear}` : viewedRunnerUp ? `Protect ${viewedLeaderGap.toFixed(1)} lead` : 'Advance the run',
+					: canSteer
+						? `${steeringEvent.stake} ${steeringRecommendation.label} projects ${formatDelta(steeringRecommendation.swing)} from here.`
+						: raceMomentumDetail,
+		action: canSteer
+			? viewedYear === 1
+				? 'Start season'
+				: `${steeringEvent.action} in year ${viewedYear}`
+			: viewedRunnerUp
+				? `Protect ${viewedLeaderGap.toFixed(1)} lead`
+				: 'Advance the run',
 		tone: leadChangedThisYear ? 'changed' : canSteer ? 'coach' : 'held',
 		active: true
 	});
@@ -755,7 +789,7 @@
 			const value =
 				snapshot.changed && previousLeader && leader
 					? `${previousLeader.result.system.name} -> ${leader.result.system.name}`
-					: leader?.result.system.name ?? snapshot.leader;
+					: (leader?.result.system.name ?? snapshot.leader);
 			const detail = strongestMove
 				? `${strongestMove.standing.result.system.name} moved ${formatDelta(strongestMove.delta)}; ${runnerUp ? `${runnerUp.result.system.name} trails by ${snapshot.margin.toFixed(1)}.` : 'no runner-up is loaded.'}`
 				: snapshot.detail;
@@ -776,20 +810,20 @@
 			? 'Solo Challenge'
 			: canSteer
 				? hasUploadedField
-					? 'Coach the field'
-					: 'Coach the race'
+					? 'Coach Exhibition'
+					: 'Coach Exhibition'
 				: hasUploadedField
-					? 'Watch Systems field'
-					: 'Watch Systems race'
+					? 'Official Field Race'
+					: 'Official Systems Race'
 	);
 	const gameTurnTitle = $derived(
 		isSolo
 			? `${selectedEnvironment.name}: ${match.challenge.label}`
-		: canSteer
+			: canSteer
 				? `Coach ${match.steering.targetSystem.name} against ${hasUploadedField ? 'the field' : configuredOpponentName}`
-			: hasUploadedField
-				? `${match.winner.system.name} leads ${match.systems.length} Systems`
-				: `${match.winner.system.name} leads the race`
+				: hasUploadedField
+					? `${match.winner.system.name} leads ${match.systems.length} Systems`
+					: `${match.winner.system.name} leads the race`
 	);
 	const finalOutcomeVisible = $derived(viewedYear === match.years);
 	const activeFirstRunStep = $derived(
@@ -806,15 +840,17 @@
 			? 'Pause run'
 			: finalOutcomeVisible
 				? 'Replay from year 1'
-				: activeFirstRunStep === 'Decide' && canSteer
-					? currentYearDecision
-						? canAdvanceTurn
-							? 'Watch next year'
+				: activeFirstRunStep === 'Setup'
+					? 'Start season'
+					: activeFirstRunStep === 'Decide' && canSteer
+						? currentYearDecision
+							? canAdvanceTurn
+								? 'Watch next year'
+								: 'Final year'
+							: nextTurnPrompt.primaryLabel
+						: canAdvanceTurn
+							? `Watch year ${viewedYear + 1}`
 							: 'Final year'
-						: nextTurnPrompt.primaryLabel
-					: canAdvanceTurn
-						? `Watch year ${viewedYear + 1}`
-						: 'Final year'
 	);
 	const gameTurnLanes = $derived([
 		{
@@ -886,10 +922,7 @@
 				: canSteer
 					? nextTurnPrompt.detail
 					: `${viewedLeader.result.system.name} leads now; final gates still decide the race.`,
-			status:
-				activeFirstRunStep === 'Final' || activeFirstRunStep === 'Decide'
-					? 'current'
-					: 'next'
+			status: activeFirstRunStep === 'Final' || activeFirstRunStep === 'Decide' ? 'current' : 'next'
 		}
 	]);
 	const kickoffBriefing = $derived([
@@ -937,7 +970,9 @@
 	const turnRecap = $derived<TurnRecapLane[]>([
 		{
 			label: 'Turn state',
-			value: isSolo ? formatChallengeStatus(match.challenge.status) : `Lead ${viewedLeaderGap.toFixed(1)}`,
+			value: isSolo
+				? formatChallengeStatus(match.challenge.status)
+				: `Lead ${viewedLeaderGap.toFixed(1)}`,
 			detail: isSolo
 				? `${viewedLeader.result.system.name} is at ${activeEntry.score.toFixed(1)} in year ${viewedYear}.`
 				: `${viewedLeader.result.system.name} leads ${viewedRunnerUp?.result.system.name ?? 'the field'} in year ${viewedYear}.`
@@ -952,10 +987,10 @@
 			value: canSteer
 				? currentYearDecision
 					? 'Turn applied'
-					: steeringRecommendation.actionLabel
+					: steeringEvent.title
 				: 'Let Systems run',
 			detail: canSteer
-				? `${steeringRecommendation.label}; ${formatDelta(steeringRecommendation.swing)} projected swing.`
+				? `${steeringEvent.stake} ${formatDelta(steeringRecommendation.swing)} projected swing.`
 				: viewedRunnerUp
 					? `${viewedRunnerUp.result.system.name} trails by ${viewedLeaderGap.toFixed(1)} entering the next year.`
 					: 'No challenger is loaded for this run.'
@@ -1016,9 +1051,7 @@
 					? steeredPrimary.validationImpact.adjustment
 					: match.winner.validationImpact.adjustment
 			),
-			detail: isSolo
-				? steeredPrimary.validationImpact.label
-				: match.winner.validationImpact.label
+			detail: isSolo ? steeredPrimary.validationImpact.label : match.winner.validationImpact.label
 		},
 		{
 			label: isSolo ? 'Run swing' : canSteer ? 'Coached swing' : 'Winning margin',
@@ -1067,9 +1100,7 @@
 				horizonMatch.systems.find(
 					(result) => result.system.key !== horizonMatch.winner.system.key
 				) ?? null;
-			const margin = runnerUp
-				? Number((horizonMatch.winner.score - runnerUp.score).toFixed(1))
-				: 0;
+			const margin = runnerUp ? Number((horizonMatch.winner.score - runnerUp.score).toFixed(1)) : 0;
 			const customCount = horizonMatch.systems.filter((result) =>
 				uploadedSystemKeys.has(result.system.key)
 			).length;
@@ -1288,14 +1319,19 @@
 		return change < 0 ? `Up ${Math.abs(change)}` : `Down ${change}`;
 	}
 
-	function getRaceContext(raceMatch: SystemMatch, systemKey: SystemId, fallback: SystemResult): RaceContext {
+	function getRaceContext(
+		raceMatch: SystemMatch,
+		systemKey: SystemId,
+		fallback: SystemResult
+	): RaceContext {
 		const ordered = raceMatch.systems
 			.map((result, index) => ({ result, rank: index + 1 }))
 			.sort((left, right) => left.rank - right.rank);
-		const standing =
-			ordered.find((entry) => entry.result.system.key === systemKey) ??
-			ordered.find((entry) => entry.result.system.key === fallback.system.key) ??
-			{ result: fallback, rank: fallback.rank };
+		const standing = ordered.find((entry) => entry.result.system.key === systemKey) ??
+			ordered.find((entry) => entry.result.system.key === fallback.system.key) ?? {
+				result: fallback,
+				rank: fallback.rank
+			};
 		const leader = ordered[0];
 		const runnerUp = ordered.find(
 			(entry) => entry.result.system.key !== standing.result.system.key
@@ -1304,8 +1340,12 @@
 			raceMatch.mode === 'single'
 				? 0
 				: standing.rank === 1
-					? Number((standing.result.score - (runnerUp?.result.score ?? standing.result.score)).toFixed(1))
-					: Number((standing.result.score - (leader?.result.score ?? standing.result.score)).toFixed(1));
+					? Number(
+							(standing.result.score - (runnerUp?.result.score ?? standing.result.score)).toFixed(1)
+						)
+					: Number(
+							(standing.result.score - (leader?.result.score ?? standing.result.score)).toFixed(1)
+						);
 		const label =
 			raceMatch.mode === 'single'
 				? `Valid ${standing.result.score.toFixed(1)}`
@@ -1370,13 +1410,14 @@
 
 	function getNextTurnPrompt(turnApplied: boolean): NextTurnPrompt {
 		if (turnApplied) {
+			const appliedEvent = getSteeringEventCopy(currentYearDecision?.policyKey ?? 'none');
 			return {
 				status: 'applied',
 				label: 'Turn applied',
 				title: activeSteeringPolicy
 					? `${activeSteeringPolicy.label} is active`
 					: 'Original System held',
-				detail: `Year ${viewedYear} now projects ${steeredPrimaryRaceContext.label}; ${formatDelta(steeringScoreSwing)} score and ${formatDelta(steeringGateSwing)} gate movement.`,
+				detail: `${appliedEvent.title}: ${appliedEvent.stake} Year ${viewedYear} now projects ${steeredPrimaryRaceContext.label}; ${formatDelta(steeringScoreSwing)} score and ${formatDelta(steeringGateSwing)} gate movement.`,
 				gateLabel: describeGateRisk(steeredPrimary).label,
 				gateDetail: describeGateRisk(steeredPrimary).detail,
 				primaryLabel: canAdvanceTurn ? 'Watch next year' : 'Final year',
@@ -1387,29 +1428,33 @@
 		if (steeringRecommendation.policyKey === 'none') {
 			return {
 				status: 'hold',
-				label: 'Next turn',
-				title: 'Hold original System',
-				detail: `Original projects ${steeringRecommendation.raceDetail}; ${formatDelta(steeringRecommendation.gateSwing)} gate movement versus the current hold.`,
+				label: 'Decision event',
+				title: steeringEvent.title,
+				detail: `${steeringEvent.stake} Original projects ${steeringRecommendation.raceDetail}; ${formatDelta(steeringRecommendation.gateSwing)} gate movement versus the current hold.`,
 				gateLabel: steeringRecommendation.gateLabel,
 				gateDetail: steeringRecommendation.gateDetail,
-				primaryLabel: 'Hold original',
+				primaryLabel: steeringEvent.action,
 				primaryValue: formatRankChange(steeringRecommendation.rankChange)
 			};
 		}
 
 		return {
 			status: 'steer',
-			label: 'Next turn',
-			title: `Apply ${steeringRecommendation.label}`,
-			detail: `Best available move projects ${steeringRecommendation.raceDetail}; ${formatDelta(steeringRecommendation.swing)} score, ${formatDelta(steeringRecommendation.marginChange)} margin, and ${formatDelta(steeringRecommendation.gateSwing)} gate movement from year ${viewedYear}.`,
+			label: 'Decision event',
+			title: steeringEvent.title,
+			detail: `${steeringEvent.stake} Best move projects ${steeringRecommendation.raceDetail}; ${formatDelta(steeringRecommendation.swing)} score, ${formatDelta(steeringRecommendation.marginChange)} margin, and ${formatDelta(steeringRecommendation.gateSwing)} gate movement from year ${viewedYear}.`,
 			gateLabel: steeringRecommendation.gateLabel,
 			gateDetail: steeringRecommendation.gateDetail,
-			primaryLabel: steeringRecommendation.actionLabel,
+			primaryLabel: steeringEvent.action,
 			primaryValue:
 				mode === 'versus'
 					? formatRankChange(steeringRecommendation.rankChange)
 					: formatDelta(steeringRecommendation.swing)
 		};
+	}
+
+	function getSteeringEventCopy(policyKey: PolicyKey | 'none' | null): SteeringEventCopy {
+		return steeringEventCopy[policyKey ?? 'none'];
 	}
 
 	function describeGateRisk(result: SystemResult): { label: string; detail: string } {
@@ -1472,7 +1517,9 @@
 					candidateMatch.winner;
 				const swing = Number((result.score - unsteeredPrimary.score).toFixed(1));
 				const gateSwing = Number(
-					(result.validationImpact.adjustment - unsteeredPrimary.validationImpact.adjustment).toFixed(1)
+					(
+						result.validationImpact.adjustment - unsteeredPrimary.validationImpact.adjustment
+					).toFixed(1)
 				);
 				const gateRisk = describeGateRisk(result);
 				const raceContext = getRaceContext(candidateMatch, selectedSystem, result);
@@ -1520,7 +1567,9 @@
 				previewMatch.winner;
 			const swing = Number((result.score - unsteeredPrimary.score).toFixed(1));
 			const gateSwing = Number(
-				(result.validationImpact.adjustment - unsteeredPrimary.validationImpact.adjustment).toFixed(1)
+				(result.validationImpact.adjustment - unsteeredPrimary.validationImpact.adjustment).toFixed(
+					1
+				)
 			);
 			const raceContext = getRaceContext(previewMatch, selectedSystem, result);
 
@@ -1623,7 +1672,8 @@
 
 	function selectEntrantForRun(systemKey: SystemId): void {
 		selectedSystem = systemKey;
-		opponentSystem = uploadedSystems.find((system) => system.key !== systemKey)?.key ?? opponentSystem;
+		opponentSystem =
+			uploadedSystems.find((system) => system.key !== systemKey)?.key ?? opponentSystem;
 		playbackRunning = false;
 		viewedYear = 1;
 		resetSteeringDecisions();
@@ -1884,9 +1934,8 @@
 			labor: keywordScore(lower, ['labor', 'trust', 'union', 'player', 'peace', 'enforcement'])
 		};
 
-		return (Object.entries(scores).sort(
-			([, left], [, right]) => right - left
-		)[0]?.[0] ?? 'media') as PolicyKey;
+		return (Object.entries(scores).sort(([, left], [, right]) => right - left)[0]?.[0] ??
+			'media') as PolicyKey;
 	}
 
 	function inferDraftWeights(notes: string, policyKey: PolicyKey): SystemScoreWeights {
@@ -2117,8 +2166,8 @@
 						aria-pressed={versusControl === 'autonomous'}
 						onclick={() => (versusControl = 'autonomous')}
 					>
-						<span>Watch Race</span>
-						<small>No steering</small>
+						<span>Official Race</span>
+						<small>No coaching</small>
 					</button>
 					<button
 						type="button"
@@ -2126,8 +2175,8 @@
 						aria-pressed={versusControl === 'coach'}
 						onclick={() => (versusControl = 'coach')}
 					>
-						<span>Coach System</span>
-						<small>Steer one side</small>
+						<span>Coach Exhibition</span>
+						<small>Steer one System</small>
 					</button>
 				</div>
 			{/if}
@@ -2216,8 +2265,8 @@
 									<strong>Gate {entrant.gateAdjustment}</strong>
 								</div>
 							</button>
-							{/each}
-						</div>
+						{/each}
+					</div>
 
 					<div class="ona-system-field-setup-lanes" aria-label="Uploaded field setup">
 						{#each fieldSetupLanes as lane}
@@ -2234,7 +2283,8 @@
 					<div class="ona-system-competition-proof">
 						<span>{hasUploadedField ? 'In this field' : 'In this race'}</span>
 						<strong
-							>{customEntrantsInRun.length} {hasUploadedField ? 'field' : 'race'} entrant{customEntrantsInRun.length === 1
+							>{customEntrantsInRun.length}
+							{hasUploadedField ? 'field' : 'race'} entrant{customEntrantsInRun.length === 1
 								? ''
 								: 's'}</strong
 						>
@@ -2339,8 +2389,8 @@
 						<div class="ona-system-environment-note">
 							<strong>{uploadedSystems.length} Systems are in this field.</strong>
 							<p>
-								All uploaded entrants run together. The selected System is the coach target
-								when coach mode is active.
+								All uploaded entrants run together. The selected System is the coach target when
+								coach mode is active.
 							</p>
 						</div>
 					</div>
@@ -2479,10 +2529,7 @@
 					<div class="ona-system-draft-import" aria-label="Draft entrant from notes">
 						<label>
 							<span>Paste rough System notes</span>
-							<textarea
-								bind:value={draftText}
-								aria-label="Rough System notes"
-								maxlength="420"
+							<textarea bind:value={draftText} aria-label="Rough System notes" maxlength="420"
 							></textarea>
 						</label>
 						<div class="ona-system-draft-actions">
@@ -2701,7 +2748,11 @@
 								<span>{viewedYear === match.years ? 'Replay run' : 'Watch run'}</span>
 							{/if}
 						</button>
-						<button type="button" onclick={resetPlayback} disabled={viewedYear === 1 && !playbackRunning}>
+						<button
+							type="button"
+							onclick={resetPlayback}
+							disabled={viewedYear === 1 && !playbackRunning}
+						>
 							<RotateCcw size={15} strokeWidth={2} />
 							<span>Reset</span>
 						</button>
@@ -2749,13 +2800,13 @@
 					aria-label="Final outcome"
 				>
 					<div class="ona-system-final-outcome-header">
-							<div>
-								<div class="ona-system-timeline-header">
-									<Trophy size={17} strokeWidth={1.8} />
-									<span>{isSolo ? 'Single result' : 'Versus result'}</span>
-								</div>
-								<strong>{finalOutcomeTitle}</strong>
+						<div>
+							<div class="ona-system-timeline-header">
+								<Trophy size={17} strokeWidth={1.8} />
+								<span>{isSolo ? 'Single result' : 'Versus result'}</span>
 							</div>
+							<strong>{finalOutcomeTitle}</strong>
+						</div>
 						<p>{finalOutcomeSummary}</p>
 						<button type="button" onclick={resetPlayback}>
 							<RotateCcw size={15} strokeWidth={2} />
@@ -2983,7 +3034,6 @@
 							</div>
 						</div>
 					</details>
-
 				{:else}
 					<div class="ona-system-steering-locked">
 						<strong>{match.winner.system.name}</strong>
@@ -3022,7 +3072,9 @@
 								<p>
 									{race.detail}
 									{#if race.customCount > 0}
-										{race.customCount} entrant{race.customCount === 1 ? '' : 's'} in this {hasUploadedField ? 'field' : 'matchup'}.
+										{race.customCount} entrant{race.customCount === 1 ? '' : 's'} in this {hasUploadedField
+											? 'field'
+											: 'matchup'}.
 									{/if}
 								</p>
 							</button>
@@ -3042,7 +3094,10 @@
 						<p>{raceMomentumDetail}</p>
 					</div>
 					<div class="ona-system-decision-moments" aria-label="Decision swing moments">
-						<article class="ona-system-decision-moment-feature" data-tone={activeDecisionMoment.tone}>
+						<article
+							class="ona-system-decision-moment-feature"
+							data-tone={activeDecisionMoment.tone}
+						>
 							<span>Year {activeDecisionMoment.year} swing / {activeDecisionMoment.label}</span>
 							<strong>{activeDecisionMoment.value}</strong>
 							<p>{activeDecisionMoment.detail}</p>
@@ -3074,7 +3129,11 @@
 								</div>
 								<div>
 									<small>Year move {formatDelta(item.delta)}</small>
-									<small>Final {item.finalScore.toFixed(1)}; gate {formatDelta(item.gateAdjustment)}</small>
+									<small
+										>Final {item.finalScore.toFixed(1)}; gate {formatDelta(
+											item.gateAdjustment
+										)}</small
+									>
 								</div>
 								<p>{item.detail}</p>
 							</article>
