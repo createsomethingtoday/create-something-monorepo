@@ -119,6 +119,12 @@
 		value: string;
 		detail: string;
 	};
+	type DecisiveTurnReceipt = {
+		year: number;
+		label: string;
+		value: string;
+		detail: string;
+	};
 	type RaceHistoryItem = {
 		years: number;
 		winner: string;
@@ -672,6 +678,10 @@
 			detail: isSolo ? match.challenge.summary : selectedEnvironment.winCondition
 		}
 	]);
+	const finalResult = $derived(isSolo ? steeredPrimary : match.winner);
+	const finalDecisiveTurn = $derived.by<DecisiveTurnReceipt>(() =>
+		getDecisiveTurnReceipt(finalResult)
+	);
 	const turnRecapStatus = $derived(isSolo ? match.challenge.status : 'versus');
 	const turnRecap = $derived<TurnRecapLane[]>([
 		{
@@ -698,6 +708,11 @@
 				: viewedRunnerUp
 					? `${viewedRunnerUp.result.system.name} trails by ${viewedLeaderGap.toFixed(1)} entering the next year.`
 					: 'No challenger is loaded for this run.'
+		},
+		{
+			label: 'Projected hinge',
+			value: finalDecisiveTurn.value,
+			detail: finalDecisiveTurn.detail
 		}
 	]);
 	const compoundingStartScore = $derived(activeTimeline[0]?.score ?? activeEntry.score);
@@ -765,6 +780,11 @@
 				: finalRunnerUp
 					? `${finalRunnerUp.system.name} finished second.`
 					: 'No runner-up loaded.'
+		},
+		{
+			label: 'Decisive turn',
+			value: finalDecisiveTurn.value,
+			detail: finalDecisiveTurn.detail
 		}
 	]);
 	const raceHistory = $derived<RaceHistoryItem[]>(
@@ -939,6 +959,34 @@
 
 	function formatDelta(delta: number): string {
 		return `${delta >= 0 ? '+' : ''}${delta.toFixed(1)}`;
+	}
+
+	function getDecisiveTurnReceipt(result: SystemResult): DecisiveTurnReceipt {
+		const decisiveEntry =
+			[...result.timeline]
+				.slice(result.timeline.length > 1 ? 1 : 0)
+				.sort((left, right) => Math.abs(right.delta) - Math.abs(left.delta))[0] ??
+			result.timeline[0];
+		const gateLabel =
+			result.validationImpact.adjustment === 0
+				? 'no final gate adjustment'
+				: `${formatDelta(result.validationImpact.adjustment)} final gate adjustment`;
+
+		if (!decisiveEntry) {
+			return {
+				year: 1,
+				label: 'No turn',
+				value: 'Year 1',
+				detail: `${result.system.name} has no timeline receipt yet.`
+			};
+		}
+
+		return {
+			year: decisiveEntry.year,
+			label: decisiveEntry.steered ? 'Steered turn' : 'System turn',
+			value: `Year ${decisiveEntry.year}`,
+			detail: `${decisiveEntry.policy.label} moved ${formatDelta(decisiveEntry.delta)}; ${gateLabel}.`
+		};
 	}
 
 	function getNextTurnPrompt(turnApplied: boolean): NextTurnPrompt {
