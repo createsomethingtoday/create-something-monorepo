@@ -61,7 +61,6 @@
 		"@create-something/delivery-schema": "workspace:*",
 		"@create-something/mcp-authz": "workspace:*",
 		"@create-something/tufte": "workspace:^",
-		"@xyflow/svelte": "^1.6.1",
 		"lucide-svelte": "^0.562.0",
 		"stripe": "^18.5.0"
 	}

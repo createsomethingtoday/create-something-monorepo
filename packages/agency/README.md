@@ -34,6 +34,68 @@ Future edits should keep public language easy to inspect before it becomes
 technical. Explain the workflow first, then the stack. Do not add decorative
 iconography or unverified market claims to make the page feel bigger.
 
+### Readable Control
+
+The public brand system is **Readable Control**.
+
+Use:
+
+- white or neutral document surfaces
+- near-black type
+- thin rules, tables, cards, receipts, and annotated maps
+- monospace labels for workflow state, files, policies, and receipts
+- sparse status color for run, wait, stop, and proof
+- artifact screenshots, Atlas story canvases, delivery pages, and receipt
+  breakdowns as proof objects
+
+Avoid:
+
+- dark cyber-security surfaces
+- cream or beige page washes
+- AI gradient/orb/mesh decoration
+- generic automation icons as the main hero proof
+- broad claims about autonomy before the workflow boundary is named
+- visual systems that make the stack feel mysterious or unbounded
+
+Default public-page hierarchy:
+
+1. Name the category: `Delegated Work Control`.
+2. State the outcome: make one risky workflow safe to delegate.
+3. Show the Delegation Card or Atlas map before explaining the stack.
+4. Name what can run, what waits, what stops, who owns the decision, and what
+   receipt proves the work.
+5. Use one direct action: map one workflow.
+
+### Delegation Card
+
+Use the Delegation Card as the recurring brand object for home-page artifacts,
+Atlas Notes, social cards, sales slides, and article diagrams.
+
+```text
+Workflow: Support recovery
+
+READS
+case · order · account · shipment
+
+RUN
+draft reply · add note · assign owner
+
+WAIT
+credit · refund · customer promise
+
+STOP
+policy conflict · missing data · threshold exceeded
+
+OWNER
+CX lead
+
+RECEIPT
+approval-note.md · blocked-state.json · customer-safe-draft.md
+```
+
+This is the Descript-like simplification for CREATE SOMETHING: delegated work
+should feel like reading a clear operating record.
+
 ## The Creation Moat
 
 **MCP consumption is commoditized. MCP creation is not.**
@@ -121,8 +183,8 @@ Story-canvas usage contract:
 
 Renderer rule:
 
-- Svelte Flow is the primary renderer for workflow education, intake, editing,
-  accessibility, and agent-operable maps.
+- The native Svelte Atlas renderer is the primary renderer for workflow
+  education, intake, editing, accessibility, and agent-operable maps.
 - Static story canvases are the fallback for marketing, articles, social cards,
   and non-JS presentation.
 - Sigma/Cosmograph are reserved for large read-only network exploration. Do not

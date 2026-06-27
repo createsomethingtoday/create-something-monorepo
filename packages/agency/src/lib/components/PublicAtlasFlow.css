@@ -1,4 +1,6 @@
 .public-atlas-flow {
+	position: relative;
+	overflow: auto;
 	width: 100%;
 	height: 100%;
 	min-height: 31rem;
@@ -18,72 +20,66 @@
 		sans-serif;
 }
 
-.public-atlas-flow .svelte-flow__pane {
-	cursor: grab;
+.public-atlas-flow__surface {
+	position: relative;
+	width: 1450px;
+	height: 650px;
 }
 
-.public-atlas-flow .svelte-flow__pane:active {
-	cursor: grabbing;
+.public-atlas-flow__edges {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	pointer-events: none;
 }
 
-.public-atlas-flow .svelte-flow__attribution {
-	display: none;
-}
-
-.public-atlas-flow .svelte-flow__controls {
-	overflow: hidden;
-	border: 1px solid rgba(10, 14, 25, 0.08);
-	border-radius: 8px;
-	box-shadow: 0 14px 32px rgba(10, 14, 25, 0.08);
-}
-
-.public-atlas-flow .svelte-flow__controls-button {
-	border: 0;
-	border-bottom: 1px solid rgba(10, 14, 25, 0.08);
-	background: rgba(255, 255, 255, 0.94);
-	color: #0a0e19;
-}
-
-.public-atlas-flow .svelte-flow__controls-button:last-child {
-	border-bottom: 0;
-}
-
-.public-atlas-flow .svelte-flow__controls-button:hover {
-	background: #f4f4ef;
-}
-
-.public-atlas-flow .svelte-flow__handle {
-	width: 7px;
-	height: 7px;
-	border: 1px solid #b8b8af;
-	background: #ffffff;
-}
-
-.public-atlas-flow .svelte-flow__handle-left {
-	left: -4px;
-}
-
-.public-atlas-flow .svelte-flow__handle-right {
-	right: -4px;
-}
-
-.public-atlas-flow .svelte-flow__edge-path {
+.public-atlas-flow__edges path {
+	fill: none;
 	stroke: #9f9b90;
 	stroke-width: 1.35;
 }
 
-.public-atlas-flow .svelte-flow__edge-text {
+.public-atlas-flow__edges marker path {
+	fill: #9f9b90;
+}
+
+.public-atlas-flow__edges text {
 	fill: #6f6f67;
 	font-size: 11px;
 	font-weight: 600;
+	paint-order: stroke;
+	stroke: #fbfbf8;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+	stroke-width: 7px;
+	text-anchor: middle;
 }
 
-.public-atlas-flow .svelte-flow__edge-textbg {
-	fill: #fbfbf8;
-	fill-opacity: 0.92;
+.public-atlas-flow-node .target,
+.public-atlas-flow-node .source {
+	position: absolute;
+	top: 3.4rem;
+	width: 7px;
+	height: 7px;
+	border: 1px solid #b8b8af;
+	border-radius: 999px;
+	background: #ffffff;
+}
+
+.public-atlas-flow-node .target {
+	left: -4px;
+}
+
+.public-atlas-flow-node .source {
+	right: -4px;
 }
 
 .public-atlas-kicker {
+	position: sticky;
+	top: 0.75rem;
+	left: 0.75rem;
+	z-index: 5;
 	display: inline-flex;
 	align-items: center;
 	gap: 0.45rem;
@@ -105,6 +101,10 @@
 }
 
 .public-atlas-legend {
+	position: sticky;
+	top: 0.75rem;
+	left: calc(100% - 12rem);
+	z-index: 5;
 	display: inline-flex;
 	gap: 0.45rem;
 	border: 1px solid rgba(10, 14, 25, 0.08);
@@ -143,9 +143,9 @@
 }
 
 .public-atlas-flow-node {
+	position: absolute;
 	display: grid;
 	gap: 0.35rem;
-	width: 100%;
 	min-height: 7.5rem;
 	border: 1px solid rgba(10, 14, 25, 0.1);
 	border-radius: 7px;
@@ -155,6 +155,8 @@
 	cursor: grab;
 	padding: 0.72rem;
 	text-align: left;
+	user-select: none;
+	touch-action: none;
 	transition:
 		border-color 140ms ease,
 		box-shadow 140ms ease,
@@ -167,7 +169,7 @@
 	transform: translateY(-1px);
 }
 
-.svelte-flow__node.selected .public-atlas-flow-node {
+.public-atlas-flow-node.selected {
 	border-color: #0a0e19;
 	box-shadow: 0 0 0 2px rgba(10, 14, 25, 0.08), 0 18px 38px rgba(10, 14, 25, 0.12);
 }
