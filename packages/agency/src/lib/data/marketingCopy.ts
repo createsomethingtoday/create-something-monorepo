@@ -17,5 +17,5 @@ export const agencyCoreMessaging = {
   engagementModelLabel: 'See the service path →',
   workflowCtaHeading: 'Bring one workflow your team wants to delegate.',
   workflowCtaDetail:
-    'I show what can run, what needs approval, what must stop, who owns the decision, and what evidence your team keeps.'
+    'I show what can run, what waits, what stops, who owns the decision, and which receipt proves the work.'
 } as const;

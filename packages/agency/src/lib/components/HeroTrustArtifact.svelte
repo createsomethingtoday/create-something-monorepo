@@ -49,13 +49,13 @@
   const receipts = ['action-boundary.md', 'approval-note.md', 'blocked-state.json'];
 </script>
 
-<aside class="hero-trust-artifact" aria-label="Workflow Trust Layer artifact">
+<aside class="hero-trust-artifact" aria-label="Delegation Card for support recovery">
   <div class="hero-trust-artifact__header">
     <div>
-      <span>Delegated Work Control</span>
-      <strong>One workflow, visible boundaries</strong>
+      <span>Delegation Card</span>
+      <strong>Support recovery boundary</strong>
     </div>
-    <small>Support recovery</small>
+    <small>Run / Wait / Stop</small>
   </div>
 
   <div class="hero-trust-artifact__path" aria-label="Controlled workflow path">

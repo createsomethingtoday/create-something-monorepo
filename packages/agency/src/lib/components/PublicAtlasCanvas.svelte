@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
 	import { onMount } from 'svelte';
-	import { getAnalytics } from '@create-something/canon/analytics';
+	import PublicAtlasFlow from '$lib/components/PublicAtlasFlow.svelte';
 	import {
 		computePublicAtlasReadiness,
 		createPublicAtlasCanvas,
@@ -20,7 +20,6 @@
 		type PublicAtlasNodeStatus,
 		type PublicAtlasReadiness
 	} from '$lib/atlas/public';
-	import PublicAtlasFlow from '$lib/components/PublicAtlasFlow.svelte';
 
 	type AgentMessage = {
 		role: 'assistant' | 'visitor';
@@ -73,7 +72,7 @@
 		{
 			role: 'assistant',
 			text:
-				'Set the direction: name the workflow, owner, and first decision. Atlas will map the governed execution path with human review, tool boundaries, data, systems, constraints, and touchpoints.'
+				'Name the workflow, the owner, and the first decision. I will help turn that into a map with human tasks, AI tasks, systems, data, constraints, and touchpoints.'
 		}
 	];
 	const agentPrompts = [
@@ -113,53 +112,6 @@
 	$: mappedPercent = Math.round((selectedDimensionCount / PUBLIC_ATLAS_LANES.length) * 100);
 	$: leadTierLabel = usage.tier === 'warmLead' ? 'Warm lead' : 'Anonymous map';
 
-	function normalizeAttributionToken(value: string | null, fallback?: string) {
-		const normalized = (value ?? fallback ?? '')
-			.toLowerCase()
-			.replace(/[^a-z0-9_-]+/g, '-')
-			.replace(/^-+|-+$/g, '')
-			.slice(0, 90);
-		return normalized || undefined;
-	}
-
-	function getEntryAttribution() {
-		if (!browser) return {};
-		const params = new URLSearchParams(window.location.search);
-		return {
-			entrySource: normalizeAttributionToken(
-				params.get('entry_source') ?? params.get('source') ?? params.get('utm_source')
-			),
-			campaign: normalizeAttributionToken(params.get('campaign') ?? params.get('utm_campaign')),
-			content: normalizeAttributionToken(params.get('utm_content')),
-			medium: normalizeAttributionToken(params.get('utm_medium'))
-		};
-	}
-
-	function getAtlasAnalyticsMetadata(extra: Record<string, unknown> = {}) {
-		return {
-			surface: 'public_atlas_canvas',
-			canvasId: canvas.id,
-			readiness: readiness.slug,
-			readinessScore: readiness.score,
-			mappedDimensionCount: selectedDimensionCount,
-			nodeCount: canvas.nodes.length,
-			edgeCount: canvas.edges.length,
-			mutationCount: canvas.mutationCount,
-			agentMessages: canvas.agentMessages,
-			usageTier: usage.tier,
-			...getEntryAttribution(),
-			...extra
-		};
-	}
-
-	function trackAtlasEvent(action: string, extra?: Record<string, unknown>) {
-		getAnalytics()?.track('interaction', action, {
-			target: 'public_atlas_canvas',
-			value: readiness.score,
-			metadata: getAtlasAnalyticsMetadata(extra)
-		});
-	}
-
 	function buildBookingUrl() {
 		const base = bookingHref.split('?')[0] || '/book';
 		const params = new URLSearchParams({
@@ -172,11 +124,6 @@
 			atlas_session_id: canvas.id,
 			agent_messages: String(canvas.agentMessages)
 		});
-		const attribution = getEntryAttribution();
-		if (attribution.entrySource) params.set('entry_source', String(attribution.entrySource));
-		if (attribution.campaign) params.set('campaign', String(attribution.campaign));
-		if (attribution.content) params.set('utm_content', String(attribution.content));
-		if (attribution.medium) params.set('utm_medium', String(attribution.medium));
 		return `${base}?${params.toString()}`;
 	}
 
@@ -232,10 +179,6 @@
 		starterState = starter ? `${starter.name} loaded` : 'Starter loaded';
 		saveState = 'Starter loaded';
 		persistCanvas();
-		trackAtlasEvent('atlas_starter_loaded', {
-			starterId,
-			starterFound: Boolean(starter)
-		});
 	}
 
 	function updateCanvas(next: PublicAtlasCanvas) {
@@ -263,7 +206,6 @@
 		});
 		selectedNodeId = node.id;
 		selectedSourceId = node.id;
-		trackAtlasEvent('atlas_node_added', { nodeKind: kind });
 	}
 
 	function addNodeFromMenu(kind: PublicAtlasNodeKind) {
@@ -280,7 +222,6 @@
 			edges: canvas.edges.filter((edge) => edge.source !== nodeId && edge.target !== nodeId),
 			mutationCount: canvas.mutationCount + 1
 		});
-		trackAtlasEvent('atlas_node_removed', { nodeKind: node.kind });
 	}
 
 	function updateNode(nodeId: string, patch: Partial<PublicAtlasNode>) {
@@ -307,7 +248,6 @@
 			],
 			mutationCount: canvas.mutationCount + 1
 		});
-		trackAtlasEvent('atlas_edge_connected');
 	}
 
 	function connectSelectedTo(targetId: string) {
@@ -326,10 +266,6 @@
 		agentBusy = true;
 		agentError = '';
 		messages = [...messages, { role: 'visitor', text }];
-		trackAtlasEvent('atlas_agent_prompt_submitted', {
-			messageLength: text.length,
-			hasVisitorEmail: Boolean(visitorEmail.trim())
-		});
 
 		try {
 			const response = await fetch('/api/atlas/public-agent', {
@@ -350,17 +286,9 @@
 			usage = result.usage;
 			updateCanvas(result.canvas);
 			messages = [...messages, { role: 'assistant', text: result.reply }];
-			trackAtlasEvent('atlas_agent_response_received', {
-				agentMode: result.agentMode ?? 'unknown',
-				mutationCount: result.mutationCount,
-				suggestionCount: result.suggestions?.length ?? 0
-			});
 		} catch (error) {
 			agentError = error instanceof Error ? error.message : 'The mapping agent is unavailable.';
 			messages = [...messages, { role: 'assistant', text: agentError }];
-			trackAtlasEvent('atlas_agent_response_failed', {
-				errorName: error instanceof Error ? error.name : 'unknown'
-			});
 		} finally {
 			agentBusy = false;
 		}
@@ -370,24 +298,17 @@
 		persistCanvas();
 		if (!browser || !navigator.clipboard) {
 			copyState = 'Saved';
-			trackAtlasEvent('atlas_summary_copied', { clipboardAvailable: false });
 			return;
 		}
 		try {
 			await navigator.clipboard.writeText(summary);
 			copyState = 'Copied';
-			trackAtlasEvent('atlas_summary_copied', { clipboardAvailable: true });
 		} catch {
 			copyState = 'Saved';
-			trackAtlasEvent('atlas_summary_copied', {
-				clipboardAvailable: true,
-				clipboardWriteSucceeded: false
-			});
 		}
 	}
 
 	function resetCanvas() {
-		trackAtlasEvent('atlas_canvas_reset');
 		canvas = createPublicAtlasCanvas();
 		selectedNodeId = 'data_workflow';
 		selectedSourceId = 'data_workflow';
@@ -404,29 +325,19 @@
 		addMenuOpen = false;
 	}
 
-	function handleBookingClick() {
-		persistCanvas();
-		trackAtlasEvent('atlas_booking_cta_clicked', {
-			bookingHref: bookingUrl
-		});
-	}
-
 	onMount(() => {
 		const raw = window.localStorage.getItem(PUBLIC_ATLAS_STORAGE_KEYS.canvas);
-		let restored = false;
 		if (raw) {
 			try {
 				canvas = normalizePublicAtlasCanvas(JSON.parse(raw));
 				selectedNodeId = canvas.nodes[0]?.id ?? '';
 				selectedSourceId = canvas.nodes.find((node) => node.id === 'data_workflow')?.id ?? selectedNodeId;
 				saveState = 'Draft restored';
-				restored = true;
 			} catch {
 				saveState = 'Draft not saved';
 			}
 		}
 		hydrated = true;
-		trackAtlasEvent('atlas_canvas_started', { restored });
 	});
 
 	$: if (browser && hydrated) {
@@ -439,10 +350,10 @@
 <section class="public-atlas" class:compact={compact} aria-label="Public Atlas workflow canvas">
 	<div class="atlas-copy">
 		<span>Public Atlas canvas</span>
-		<h3>Set the direction. Atlas maps the execution.</h3>
+		<h3>Turn one workflow into a map before booking.</h3>
 		<p>
-			Start with a workflow, owner, and decision. The canvas turns that context into a governed
-			map with human review, tool boundaries, and booking-ready evidence.
+			Chat with the constrained mapping agent, shape the canvas, then carry the summary into the
+			mapping session. This public agent can only edit this prospect map.
 		</p>
 	</div>
 
@@ -500,7 +411,6 @@
 					<PublicAtlasFlow
 						{canvas}
 						{selectedNodeId}
-						onConnectNodes={connectNodes}
 						onMoveNode={moveNode}
 						onSelectNode={selectNode}
 					/>
@@ -679,7 +589,7 @@
 					<pre>{summary}</pre>
 					<div class="summary-actions">
 						<button type="button" onclick={copySummary}>{copyState || 'Copy summary'}</button>
-						<a href={bookingUrl} onclick={handleBookingClick}>Use this in booking</a>
+						<a href={bookingUrl} onclick={persistCanvas}>Use this in booking</a>
 						<button type="button" class="danger" onclick={resetCanvas}>Reset</button>
 					</div>
 				</details>
