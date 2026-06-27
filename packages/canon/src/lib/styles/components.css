@@ -2250,6 +2250,89 @@
     line-height: 1.26;
   }
 
+  .ona-system-coach-recommendation {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+    align-items: stretch;
+    border: 1px solid var(--ona-system-line);
+    border-left: 3px solid var(--ona-system-blue);
+    border-radius: var(--radius-clear-sm);
+    padding: 10px;
+    background: color-mix(in srgb, white 90%, var(--ona-system-surface));
+  }
+
+  .ona-system-coach-recommendation > div {
+    display: grid;
+    gap: 5px;
+    align-content: center;
+  }
+
+  .ona-system-coach-recommendation span {
+    color: var(--ona-system-muted);
+    font-size: 0.66rem;
+    font-weight: 800;
+    line-height: 1;
+    text-transform: uppercase;
+    letter-spacing: 0;
+  }
+
+  .ona-system-coach-recommendation strong {
+    color: var(--ona-system-ink);
+    font-size: 0.94rem;
+    line-height: 1.12;
+  }
+
+  .ona-system-coach-recommendation p {
+    max-width: 72ch;
+    margin: 0;
+    color: var(--ona-system-muted);
+    font-size: 0.74rem;
+    font-weight: 700;
+    line-height: 1.34;
+  }
+
+  .ona-system-coach-recommendation button {
+    min-width: 132px;
+    min-height: 52px;
+    display: grid;
+    gap: 4px;
+    align-content: center;
+    border: 1px solid var(--ona-system-ink);
+    border-radius: var(--radius-clear-sm);
+    padding: 8px 12px;
+    background: var(--ona-system-ink);
+    color: #fff;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .ona-system-coach-recommendation button span {
+    color: rgba(255, 255, 255, 0.72);
+  }
+
+  .ona-system-coach-recommendation button strong {
+    color: #fff;
+    font-size: 1rem;
+    line-height: 1;
+  }
+
+  .ona-system-coach-recommendation button:disabled {
+    border-color: var(--ona-system-line);
+    background: #fff;
+    color: var(--ona-system-ink);
+    cursor: default;
+  }
+
+  .ona-system-coach-recommendation button:disabled span {
+    color: var(--ona-system-muted);
+  }
+
+  .ona-system-coach-recommendation button:disabled strong {
+    color: var(--ona-system-ink);
+  }
+
   .ona-system-steering-actions button,
   .ona-system-steering-season button {
     min-height: 54px;
@@ -2835,6 +2918,10 @@
       grid-template-columns: 1fr;
     }
 
+    .ona-system-coach-recommendation {
+      grid-template-columns: 1fr;
+    }
+
     .ona-system-challenge-header {
       display: grid;
     }
@@ -2878,6 +2965,7 @@
     .ona-system-steering-actions,
     .ona-system-steering-season,
     .ona-system-steering-comparison,
+    .ona-system-coach-recommendation,
     .ona-system-challenge-list article > div,
     .ona-system-timeline article {
       grid-template-columns: 1fr;

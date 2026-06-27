@@ -63,6 +63,17 @@
 	} as const satisfies Record<keyof SystemScoreWeights, number>;
 	const builderMaximumWeight = 45;
 
+	type SteeringCandidate = {
+		policyKey: PolicyKey | 'none';
+		phaseKey: SeasonPhaseKey;
+		label: string;
+		value: string;
+		score: number;
+		swing: number;
+		detail: string;
+		actionLabel: string;
+	};
+
 	const edges = [
 		{ path: 'M 92 106 C 165 78 210 74 278 90', label: 'reduces' },
 		{ path: 'M 332 92 C 414 98 456 112 520 138', label: 'protects' },
@@ -284,6 +295,14 @@
 			detail: `${formatDelta(steeringGateSwing)} gate movement included.`
 		}
 	]);
+	const steeringRecommendation = $derived(getSteeringRecommendation());
+	const steeringRecommendationApplied = $derived(
+		canSteer &&
+			steeringYear === viewedYear &&
+			steeringPolicy === steeringRecommendation.policyKey &&
+			(steeringRecommendation.policyKey === 'none' ||
+				steeringPhase === steeringRecommendation.phaseKey)
+	);
 	const scoutingRequirements = $derived(
 		match.validation.requirements.filter((requirement) =>
 			scoutingRequirementKeys.has(requirement.key)
@@ -363,8 +382,61 @@
 		}
 	}
 
+	function applySteeringRecommendation(): void {
+		if (!canSteer) return;
+
+		steeringYear = viewedYear;
+		steeringPhase = steeringRecommendation.phaseKey;
+		steeringPolicy = steeringRecommendation.policyKey;
+	}
+
 	function formatDelta(delta: number): string {
 		return `${delta >= 0 ? '+' : ''}${delta.toFixed(1)}`;
+	}
+
+	function getSteeringRecommendation(): SteeringCandidate {
+		const original: SteeringCandidate = {
+			policyKey: 'none',
+			phaseKey: steeringPhase,
+			label: 'Hold original System',
+			value: unsteeredPrimary.score.toFixed(1),
+			score: unsteeredPrimary.score,
+			swing: 0,
+			detail: `${unsteeredPrimary.system.name} is strongest without a steering change from year ${viewedYear}.`,
+			actionLabel: 'Keep original'
+		};
+
+		const candidates = policies.flatMap((policy) =>
+			seasonPhases.map((phase) => {
+				const candidateMatch = runSystemMatch({
+					mode: 'single',
+					systemKey: selectedSystem,
+					environment: selectedEnvironment,
+					years: horizonYears,
+					steeringYear: viewedYear,
+					steeringPhase: phase.key,
+					steeringPolicyKey: policy.key,
+					customSystems: uploadedSystems
+				});
+				const result =
+					candidateMatch.systems.find((candidate) => candidate.system.key === selectedSystem) ??
+					candidateMatch.winner;
+				const swing = Number((result.score - unsteeredPrimary.score).toFixed(1));
+
+				return {
+					policyKey: policy.key,
+					phaseKey: phase.key,
+					label: `${policy.label}, ${phase.label}`,
+					value: result.score.toFixed(1),
+					score: result.score,
+					swing,
+					detail: `${formatDelta(swing)} versus original hold from year ${viewedYear}.`,
+					actionLabel: `Apply ${policy.label}`
+				} satisfies SteeringCandidate;
+			})
+		);
+
+		return [original, ...candidates].sort((left, right) => right.score - left.score)[0] ?? original;
 	}
 
 	function timelineEntryFor(result: SystemResult, year: number): SystemTimelineEntry {
@@ -1136,6 +1208,25 @@
 								<small>{comparison.detail}</small>
 							</article>
 						{/each}
+					</div>
+
+					<div class="ona-system-coach-recommendation" aria-label="Coach recommendation">
+						<div>
+							<span>Coach recommendation</span>
+							<strong>{steeringRecommendation.label}</strong>
+							<p>
+								Projected finish {steeringRecommendation.value}. {steeringRecommendation.detail}
+							</p>
+						</div>
+						<button
+							type="button"
+							disabled={steeringRecommendationApplied}
+							aria-pressed={steeringRecommendationApplied}
+							onclick={applySteeringRecommendation}
+						>
+							<span>{steeringRecommendationApplied ? 'Applied' : steeringRecommendation.actionLabel}</span>
+							<strong>{formatDelta(steeringRecommendation.swing)}</strong>
+						</button>
 					</div>
 				{:else}
 					<div class="ona-system-steering-locked">
