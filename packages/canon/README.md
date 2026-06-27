@@ -190,6 +190,28 @@ repeatable image-generation contract, see the public Canon Images guideline in
 For component-level usage rules, see
 [`src/lib/components/clear/README.md`](./src/lib/components/clear/README.md).
 
+## Atlas Graph And Story Primitives
+
+Canon owns the reusable Atlas graph/story contract at
+`@create-something/canon/atlas/headless` and the Svelte Atlas renderers at
+`@create-something/canon/atlas`.
+
+Use this package for:
+
+- `PublicAtlasCanvas`, node, edge, readiness, graph-artifact, and story-artifact
+  types
+- `createPublicAtlasGraphArtifact(...)` as the source-of-truth workflow graph
+  contract for humans, agents, and renderer adapters
+- `createPublicAtlasStoryArtifact(...)` for deterministic static chapters,
+  accessibility summaries, article visuals, and social cards
+- `AtlasStoryCanvas` as the read-only Svelte renderer for the story artifact
+- `AtlasFlow` as the editable Svelte workflow-map renderer for the same graph
+  contract
+
+Property packages should supply their own starter maps, booking behavior,
+persistence, agent mutation path, and production integrations. Do not fork the
+graph/story artifact shape or move source-of-truth state into a renderer.
+
 Canon also carries a performance-excellence layer influenced by Nike-level product discipline:
 athletic precision, decisive contrast, measured motion, material cues from performance spaces,
 and clear pressure states. Use this as a CREATE SOMETHING design principle, not as Nike branding:

@@ -151,6 +151,9 @@ export * from './patterns/index.js';
 // Diagrams (data visualization)
 export * from './diagrams/index.js';
 
+// Atlas (workflow graph and renderer primitives)
+export * from './atlas/index.js';
+
 // Insights (shareable key insight visuals)
 export * from './insights/index.js';
 

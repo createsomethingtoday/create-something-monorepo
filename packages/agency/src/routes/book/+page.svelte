@@ -17,7 +17,7 @@
 		AGENCY_MARKETING_COPY_EXPERIMENT,
 		getAgencyMarketingExperimentMetadata
 	} from '$lib/analytics/marketing-experiment';
-	import { PUBLIC_ATLAS_STORAGE_KEYS } from '$lib/atlas/public';
+	import { PUBLIC_ATLAS_STORAGE_KEYS } from '$lib/atlas/intake-policy';
 	import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
 	interface TimeSlot {
