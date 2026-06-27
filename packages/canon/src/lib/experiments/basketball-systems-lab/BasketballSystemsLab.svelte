@@ -74,8 +74,17 @@
 		value: string;
 		score: number;
 		swing: number;
+		gateSwing: number;
 		detail: string;
 		actionLabel: string;
+	};
+	type NextTurnPrompt = {
+		status: 'applied' | 'steer' | 'hold';
+		label: string;
+		title: string;
+		detail: string;
+		primaryLabel: string;
+		primaryValue: string;
 	};
 	type SteeringPreview = {
 		policyKey: PolicyKey;
@@ -452,6 +461,8 @@
 				steeringPhase === steeringRecommendation.phaseKey)
 	);
 	const steeringPreviews = $derived<SteeringPreview[]>(getSteeringPreviews());
+	const canAdvanceTurn = $derived(viewedYear < match.years);
+	const nextTurnPrompt = $derived<NextTurnPrompt>(getNextTurnPrompt());
 	const viewedRunnerUp = $derived(
 		viewedStandings.find(
 			(standing) => standing.result.system.key !== viewedLeader.result.system.key
@@ -907,6 +918,13 @@
 		steeringPolicy = steeringRecommendation.policyKey;
 	}
 
+	function holdOriginalFromViewedYear(): void {
+		if (!canSteer) return;
+
+		steeringYear = viewedYear;
+		steeringPolicy = 'none';
+	}
+
 	function applySteeringPreview(preview: SteeringPreview): void {
 		if (!canSteer) return;
 
@@ -914,8 +932,49 @@
 		steeringPolicy = preview.policyKey;
 	}
 
+	function watchNextTurn(): void {
+		if (!canAdvanceTurn) return;
+
+		setViewedYear(viewedYear + 1);
+	}
+
 	function formatDelta(delta: number): string {
 		return `${delta >= 0 ? '+' : ''}${delta.toFixed(1)}`;
+	}
+
+	function getNextTurnPrompt(): NextTurnPrompt {
+		if (steeringRecommendationApplied) {
+			return {
+				status: 'applied',
+				label: 'Turn applied',
+				title: activeSteeringPolicy
+					? `${activeSteeringPolicy.label} is active`
+					: 'Original System held',
+				detail: `Year ${viewedYear} now projects ${steeredPrimary.score.toFixed(1)} with ${formatDelta(steeringScoreSwing)} score and ${formatDelta(steeringGateSwing)} gate movement.`,
+				primaryLabel: canAdvanceTurn ? 'Watch next year' : 'Final year',
+				primaryValue: canAdvanceTurn ? `Year ${viewedYear + 1}` : steeredPrimary.score.toFixed(1)
+			};
+		}
+
+		if (steeringRecommendation.policyKey === 'none') {
+			return {
+				status: 'hold',
+				label: 'Next turn',
+				title: 'Hold original System',
+				detail: `Original projects ${steeringRecommendation.value}; ${formatDelta(steeringRecommendation.gateSwing)} gate movement versus the current hold.`,
+				primaryLabel: 'Hold original',
+				primaryValue: formatDelta(steeringRecommendation.swing)
+			};
+		}
+
+		return {
+			status: 'steer',
+			label: 'Next turn',
+			title: `Apply ${steeringRecommendation.label}`,
+			detail: `Best available move projects ${steeringRecommendation.value}; ${formatDelta(steeringRecommendation.swing)} score and ${formatDelta(steeringRecommendation.gateSwing)} gate movement from year ${viewedYear}.`,
+			primaryLabel: steeringRecommendation.actionLabel,
+			primaryValue: formatDelta(steeringRecommendation.swing)
+		};
 	}
 
 	function getSteeringRecommendation(): SteeringCandidate {
@@ -926,6 +985,7 @@
 			value: unsteeredPrimary.score.toFixed(1),
 			score: unsteeredPrimary.score,
 			swing: 0,
+			gateSwing: 0,
 			detail: `${unsteeredPrimary.system.name} is strongest without a steering change from year ${viewedYear}.`,
 			actionLabel: 'Keep original'
 		};
@@ -946,6 +1006,9 @@
 					candidateMatch.systems.find((candidate) => candidate.system.key === selectedSystem) ??
 					candidateMatch.winner;
 				const swing = Number((result.score - unsteeredPrimary.score).toFixed(1));
+				const gateSwing = Number(
+					(result.validationImpact.adjustment - unsteeredPrimary.validationImpact.adjustment).toFixed(1)
+				);
 
 				return {
 					policyKey: policy.key,
@@ -954,6 +1017,7 @@
 					value: result.score.toFixed(1),
 					score: result.score,
 					swing,
+					gateSwing,
 					detail: `${formatDelta(swing)} versus original hold from year ${viewedYear}.`,
 					actionLabel: `Apply ${policy.label}`
 				} satisfies SteeringCandidate;
@@ -2159,6 +2223,43 @@
 						{/each}
 					</div>
 
+					<div
+						class="ona-system-next-turn"
+						data-status={nextTurnPrompt.status}
+						aria-label="Next turn action"
+					>
+						<div>
+							<span>{nextTurnPrompt.label}</span>
+							<strong>{nextTurnPrompt.title}</strong>
+							<p>{nextTurnPrompt.detail}</p>
+						</div>
+						<div class="ona-system-next-turn-actions">
+							<button
+								type="button"
+								class="primary"
+								disabled={nextTurnPrompt.status === 'applied' && !canAdvanceTurn}
+								onclick={nextTurnPrompt.status === 'applied'
+									? watchNextTurn
+									: applySteeringRecommendation}
+							>
+								<span>{nextTurnPrompt.primaryLabel}</span>
+								<strong>{nextTurnPrompt.primaryValue}</strong>
+							</button>
+							<button
+								type="button"
+								disabled={steeringPolicy === 'none' && steeringYear === viewedYear}
+								onclick={holdOriginalFromViewedYear}
+							>
+								<span>Hold</span>
+								<strong>Original</strong>
+							</button>
+							<button type="button" disabled={!canAdvanceTurn} onclick={watchNextTurn}>
+								<span>Watch</span>
+								<strong>{canAdvanceTurn ? `Year ${viewedYear + 1}` : 'Done'}</strong>
+							</button>
+						</div>
+					</div>
+
 					<div class="ona-system-steering-previews" aria-label="Steering previews">
 						<div class="ona-system-steering-previews-header">
 							<span>Preview before steering</span>
@@ -2194,24 +2295,6 @@
 						{/each}
 					</div>
 
-					<div class="ona-system-coach-recommendation" aria-label="Coach recommendation">
-						<div>
-							<span>Coach recommendation</span>
-							<strong>{steeringRecommendation.label}</strong>
-							<p>
-								Projected finish {steeringRecommendation.value}. {steeringRecommendation.detail}
-							</p>
-						</div>
-						<button
-							type="button"
-							disabled={steeringRecommendationApplied}
-							aria-pressed={steeringRecommendationApplied}
-							onclick={applySteeringRecommendation}
-						>
-							<span>{steeringRecommendationApplied ? 'Applied' : steeringRecommendation.actionLabel}</span>
-							<strong>{formatDelta(steeringRecommendation.swing)}</strong>
-						</button>
-					</div>
 				{:else}
 					<div class="ona-system-steering-locked">
 						<strong>{match.winner.system.name}</strong>
