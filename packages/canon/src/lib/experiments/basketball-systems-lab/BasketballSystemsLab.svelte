@@ -8,6 +8,7 @@
 		FileJson,
 		Globe2,
 		LineChart,
+		Play,
 		Route,
 		ShieldCheck,
 		SlidersHorizontal,
@@ -15,6 +16,7 @@
 	} from 'lucide-svelte';
 	import {
 		getDefaultEnvironment,
+		getSampleSystemMatchup,
 		getSampleSystemUpload,
 		listEnvironments,
 		listManagementPolicies,
@@ -81,6 +83,7 @@
 	let uploadText = $state(sampleSystemDefinition);
 	let uploadIssues = $state<SystemUploadIssue[]>([]);
 	let uploadMessage = $state('Sample System ready');
+	let systemWorkbenchOpen = $state(false);
 	let builderName = $state('Expansion Balance System');
 	let builderThesis = $state(
 		'Grow national attention without letting labor trust, owner margin, or competitive balance break.'
@@ -102,6 +105,20 @@
 			defaultEnvironment
 	);
 	const uploadedSystemKeys = $derived(new Set(uploadedSystems.map((system) => system.key)));
+	const uploadedCompetitionLabel = $derived(
+		uploadedSystems.length === 0
+			? 'Stock league'
+			: uploadedSystems.length === 1
+				? 'One custom System loaded'
+				: `${uploadedSystems.length} custom Systems ready`
+	);
+	const uploadedCompetitionDetail = $derived(
+		uploadedSystems.length === 0
+			? 'Load a sample matchup or bring JSON to race Systems against the same environment.'
+			: uploadedSystems.length === 1
+				? `${uploadedSystems[0]?.name ?? 'Custom System'} can run solo. Add a second System to unlock a custom race.`
+				: `${uploadedSystems[0]?.name ?? 'Custom System'} and ${uploadedSystems[1]?.name ?? 'opponent'} can race immediately.`
+	);
 	const builderTotal = $derived(
 		builderWeightFields.reduce((total, field) => total + builderWeights[field.key], 0)
 	);
@@ -148,6 +165,9 @@
 			steeringPolicyKey: effectiveSteeringPolicy,
 			customSystems: uploadedSystems
 		})
+	);
+	const customEntrantsInRun = $derived(
+		match.systems.filter((result) => uploadedSystemKeys.has(result.system.key))
 	);
 	const viewedStandings = $derived(
 		match.systems
@@ -260,6 +280,28 @@
 		opponentSystem = result.systems[1]?.key ?? 'recovery';
 		mode = result.systems.length > 1 ? 'versus' : mode;
 		uploadMessage = `${result.systems.length} System${result.systems.length === 1 ? '' : 's'} accepted`;
+	}
+
+	function loadSampleMatchup(): void {
+		uploadText = JSON.stringify({ systems: getSampleSystemMatchup() }, null, 2);
+		importSystems();
+		systemWorkbenchOpen = false;
+	}
+
+	function openSystemWorkbench(): void {
+		systemWorkbenchOpen = true;
+	}
+
+	function raceUploadedSystems(): void {
+		if (uploadedSystems.length === 0) {
+			loadSampleMatchup();
+			return;
+		}
+
+		selectedSystem = uploadedSystems[0]?.key ?? selectedSystem;
+		opponentSystem =
+			uploadedSystems.find((system) => system.key !== selectedSystem)?.key ?? opponentSystem;
+		mode = uploadedSystems.length > 1 ? 'versus' : 'single';
 	}
 
 	function addBuiltSystem(): void {
@@ -506,6 +548,42 @@
 				<p>{modeRule}</p>
 			</div>
 
+			<div class="ona-system-competition-setup" data-state={uploadedSystems.length > 0 ? 'custom' : 'stock'}>
+				<div class="ona-system-timeline-header">
+					<Users size={17} strokeWidth={1.8} />
+					<span>Custom competition</span>
+				</div>
+				<strong>{uploadedCompetitionLabel}</strong>
+				<p>{uploadedCompetitionDetail}</p>
+
+				{#if uploadedSystems.length > 0}
+					<div class="ona-system-competition-roster" aria-label="Loaded custom Systems">
+						{#each uploadedSystems.slice(0, 3) as system}
+							<article class:active={system.key === selectedSystem || system.key === opponentSystem}>
+								<span>{policies.find((policy) => policy.key === system.policyKey)?.label}</span>
+								<strong>{system.name}</strong>
+							</article>
+						{/each}
+					</div>
+				{/if}
+
+				{#if mode === 'versus' && customEntrantsInRun.length > 0}
+					<div class="ona-system-competition-proof">
+						<span>In this race</span>
+						<strong>{customEntrantsInRun.length} custom entrant{customEntrantsInRun.length === 1 ? '' : 's'}</strong>
+						<p>Final winner after gates: {match.winner.system.name} at {match.winner.score.toFixed(1)}.</p>
+					</div>
+				{/if}
+
+				<div class="ona-system-competition-actions">
+					<button type="button" onclick={raceUploadedSystems}>
+						<Play size={15} strokeWidth={2} />
+						<span>{uploadedSystems.length > 0 ? 'Run custom race' : 'Load sample race'}</span>
+					</button>
+					<button type="button" onclick={openSystemWorkbench}>Bring Systems</button>
+				</div>
+			</div>
+
 			<div class="ona-system-objective-brief" data-status={match.challenge.status} aria-label="Current objective">
 				<div>
 					<span>{canSteer ? 'Objective' : 'Race rule'}</span>
@@ -640,7 +718,7 @@
 				</div>
 			{/if}
 
-			<details class="ona-system-advanced">
+			<details class="ona-system-advanced" bind:open={systemWorkbenchOpen}>
 				<summary>
 					<span>Bring a System</span>
 					<strong>{uploadedSystems.length > 0 ? `${uploadedSystems.length} loaded` : 'Builder and upload'}</strong>

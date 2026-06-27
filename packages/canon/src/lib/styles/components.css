@@ -1317,6 +1317,96 @@
     font-size: 0.94rem;
   }
 
+  .ona-system-competition-setup {
+    display: grid;
+    gap: 8px;
+    border: 1px solid var(--ona-system-line);
+    border-left: 3px solid var(--ona-system-blue);
+    border-radius: var(--radius-clear-sm);
+    margin-top: 10px;
+    padding: 10px 12px;
+    background: white;
+  }
+
+  .ona-system-competition-setup[data-state='custom'] {
+    border-left-color: var(--ona-system-green);
+  }
+
+  .ona-system-competition-setup > strong,
+  .ona-system-competition-proof strong {
+    color: var(--ona-system-ink);
+    font-size: 0.88rem;
+    line-height: 1.15;
+  }
+
+  .ona-system-competition-setup > p,
+  .ona-system-competition-proof p {
+    color: var(--ona-system-muted);
+    font-size: 0.76rem;
+    line-height: 1.42;
+  }
+
+  .ona-system-competition-roster {
+    display: grid;
+    gap: 6px;
+  }
+
+  .ona-system-competition-roster article,
+  .ona-system-competition-proof {
+    display: grid;
+    gap: 4px;
+    border: 1px solid var(--ona-system-line);
+    border-radius: var(--radius-clear-sm);
+    padding: 8px 9px;
+    background: color-mix(in srgb, white 88%, var(--ona-system-surface));
+  }
+
+  .ona-system-competition-roster article.active {
+    border-color: var(--ona-system-ink);
+  }
+
+  .ona-system-competition-roster span,
+  .ona-system-competition-proof span {
+    color: var(--ona-system-muted);
+    font-size: 0.66rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0;
+  }
+
+  .ona-system-competition-roster strong {
+    font-size: 0.82rem;
+    line-height: 1.15;
+  }
+
+  .ona-system-competition-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 6px;
+  }
+
+  .ona-system-competition-actions button {
+    min-height: 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    border: 1px solid var(--ona-system-line);
+    border-radius: var(--radius-clear-sm);
+    background: white;
+    color: var(--ona-system-muted);
+    font: inherit;
+    font-size: 0.72rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .ona-system-competition-actions button:first-child {
+    border-color: var(--ona-system-ink);
+    background: var(--ona-system-ink);
+    color: white;
+  }
+
   .ona-system-run-summary {
     display: grid;
     gap: 10px;

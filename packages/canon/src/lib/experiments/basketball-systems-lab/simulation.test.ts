@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
 	getDefaultLeagueState,
+	getSampleSystemMatchup,
 	getSampleSystemUpload,
 	listEnvironments,
 	listManagementPolicies,
@@ -382,21 +383,7 @@ describe('basketball systems management simulation', () => {
 	});
 
 	it('accepts multiple uploaded Systems for custom versus custom matches', () => {
-		const first = getSampleSystemUpload();
-		const second = {
-			...first,
-			name: 'Labor Stability System',
-			policyKey: 'labor',
-			weights: {
-				leagueHealth: 0.18,
-				mediaValueB: 0.1,
-				competitiveBalance: 0.14,
-				laborTrust: 0.3,
-				ownerMargin: 0.1,
-				resilience: 0.18
-			}
-		};
-		const upload = parseSystemUpload(JSON.stringify({ systems: [first, second] }));
+		const upload = parseSystemUpload(JSON.stringify({ systems: getSampleSystemMatchup() }));
 		const match = runSystemMatch({
 			mode: 'versus',
 			systemKey: upload.systems[0]?.key,
@@ -407,6 +394,10 @@ describe('basketball systems management simulation', () => {
 
 		expect(upload.issues).toEqual([]);
 		expect(upload.systems).toHaveLength(2);
+		expect(upload.systems.map((system) => system.name)).toEqual([
+			'Small Market Balance System',
+			'Labor Stability System'
+		]);
 		expect(match.systems.map((result) => result.system.key).sort()).toEqual(
 			upload.systems.map((system) => system.key).sort()
 		);
