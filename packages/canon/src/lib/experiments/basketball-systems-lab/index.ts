@@ -12,6 +12,7 @@ export { default as BasketballSystemsLab } from './BasketballSystemsLab.svelte';
 export {
 	getDefaultLeagueState,
 	getDefaultEnvironment,
+	getSampleSystemField,
 	getSampleSystemUpload,
 	listEnvironments,
 	listManagementPolicies,
