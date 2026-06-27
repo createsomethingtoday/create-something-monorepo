@@ -2162,6 +2162,68 @@
     accent-color: var(--ona-system-ink);
   }
 
+  .ona-system-turn-recap {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    border: 1px solid var(--ona-system-line);
+    border-left: 3px solid var(--ona-system-ink);
+    border-radius: var(--radius-clear-sm);
+    margin-bottom: 10px;
+    padding: 10px;
+    background: color-mix(in srgb, white 88%, var(--ona-system-surface));
+  }
+
+  .ona-system-turn-recap[data-status='cleared'] {
+    border-left-color: var(--ona-system-green);
+  }
+
+  .ona-system-turn-recap[data-status='close'] {
+    border-left-color: var(--ona-system-blue);
+  }
+
+  .ona-system-turn-recap[data-status='missed'] {
+    border-left-color: var(--ona-system-red);
+  }
+
+  .ona-system-turn-recap article {
+    min-height: 92px;
+    display: grid;
+    align-content: space-between;
+    gap: 6px;
+    border-right: 1px solid var(--ona-system-line);
+    padding: 4px 10px 4px 0;
+  }
+
+  .ona-system-turn-recap article:last-child {
+    border-right: 0;
+    padding-right: 0;
+  }
+
+  .ona-system-turn-recap span {
+    color: var(--ona-system-muted);
+    font-size: 0.66rem;
+    font-weight: 800;
+    line-height: 1;
+    text-transform: uppercase;
+    letter-spacing: 0;
+  }
+
+  .ona-system-turn-recap strong {
+    overflow-wrap: anywhere;
+    color: var(--ona-system-ink);
+    font-size: 1rem;
+    line-height: 1.08;
+  }
+
+  .ona-system-turn-recap p {
+    margin: 0;
+    color: var(--ona-system-muted);
+    font-size: 0.72rem;
+    font-weight: 700;
+    line-height: 1.32;
+  }
+
   .ona-system-steering-cockpit {
     display: grid;
     gap: 12px;
@@ -2902,6 +2964,7 @@
 
     .ona-system-rulebook,
     .ona-system-playback,
+    .ona-system-turn-recap,
     .ona-system-steering-cockpit-header,
     .ona-system-gate-impact,
     .ona-system-gate-impact-list,
@@ -2962,6 +3025,7 @@
     .ona-system-scoreboard,
     .ona-system-gate-impact > div:nth-child(2),
     .ona-system-playback-controls,
+    .ona-system-turn-recap,
     .ona-system-steering-actions,
     .ona-system-steering-season,
     .ona-system-steering-comparison,
@@ -2974,6 +3038,18 @@
     .ona-system-challenge-list article > div {
       display: grid;
       gap: 4px;
+    }
+
+    .ona-system-turn-recap article {
+      min-height: auto;
+      border-right: 0;
+      border-bottom: 1px solid var(--ona-system-line);
+      padding: 2px 0 10px;
+    }
+
+    .ona-system-turn-recap article:last-child {
+      border-bottom: 0;
+      padding-bottom: 2px;
     }
 
     .ona-system-action {
