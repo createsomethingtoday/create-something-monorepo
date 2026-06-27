@@ -2813,6 +2813,22 @@
     line-height: 1.34;
   }
 
+  .ona-system-next-turn-gate {
+    display: grid;
+    gap: 4px;
+    border: 1px solid var(--ona-system-line);
+    border-radius: var(--radius-clear-sm);
+    padding: 8px;
+    background: #fff;
+  }
+
+  .ona-system-next-turn-gate small {
+    color: var(--ona-system-muted);
+    font-size: 0.68rem;
+    font-weight: 700;
+    line-height: 1.3;
+  }
+
   .ona-system-next-turn-actions {
     display: grid;
     grid-template-columns: minmax(132px, 1.2fr) repeat(2, minmax(94px, 0.8fr));

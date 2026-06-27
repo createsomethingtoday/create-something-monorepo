@@ -75,6 +75,8 @@
 		score: number;
 		swing: number;
 		gateSwing: number;
+		gateLabel: string;
+		gateDetail: string;
 		detail: string;
 		actionLabel: string;
 	};
@@ -83,6 +85,8 @@
 		label: string;
 		title: string;
 		detail: string;
+		gateLabel: string;
+		gateDetail: string;
 		primaryLabel: string;
 		primaryValue: string;
 	};
@@ -951,6 +955,8 @@
 					? `${activeSteeringPolicy.label} is active`
 					: 'Original System held',
 				detail: `Year ${viewedYear} now projects ${steeredPrimary.score.toFixed(1)} with ${formatDelta(steeringScoreSwing)} score and ${formatDelta(steeringGateSwing)} gate movement.`,
+				gateLabel: describeGateRisk(steeredPrimary).label,
+				gateDetail: describeGateRisk(steeredPrimary).detail,
 				primaryLabel: canAdvanceTurn ? 'Watch next year' : 'Final year',
 				primaryValue: canAdvanceTurn ? `Year ${viewedYear + 1}` : steeredPrimary.score.toFixed(1)
 			};
@@ -962,6 +968,8 @@
 				label: 'Next turn',
 				title: 'Hold original System',
 				detail: `Original projects ${steeringRecommendation.value}; ${formatDelta(steeringRecommendation.gateSwing)} gate movement versus the current hold.`,
+				gateLabel: steeringRecommendation.gateLabel,
+				gateDetail: steeringRecommendation.gateDetail,
 				primaryLabel: 'Hold original',
 				primaryValue: formatDelta(steeringRecommendation.swing)
 			};
@@ -972,12 +980,34 @@
 			label: 'Next turn',
 			title: `Apply ${steeringRecommendation.label}`,
 			detail: `Best available move projects ${steeringRecommendation.value}; ${formatDelta(steeringRecommendation.swing)} score and ${formatDelta(steeringRecommendation.gateSwing)} gate movement from year ${viewedYear}.`,
+			gateLabel: steeringRecommendation.gateLabel,
+			gateDetail: steeringRecommendation.gateDetail,
 			primaryLabel: steeringRecommendation.actionLabel,
 			primaryValue: formatDelta(steeringRecommendation.swing)
 		};
 	}
 
+	function describeGateRisk(result: SystemResult): { label: string; detail: string } {
+		const activeImpact =
+			result.validationImpact.impacts
+				.filter((impact) => impact.status !== 'pass')
+				.sort((left, right) => Math.abs(right.adjustment) - Math.abs(left.adjustment))[0] ?? null;
+
+		if (!activeImpact) {
+			return {
+				label: 'Gate clear',
+				detail: 'No active requirement gate is changing this projected score.'
+			};
+		}
+
+		return {
+			label: `Gate: ${activeImpact.label} ${formatDelta(activeImpact.adjustment)}`,
+			detail: activeImpact.detail
+		};
+	}
+
 	function getSteeringRecommendation(): SteeringCandidate {
+		const originalGateRisk = describeGateRisk(unsteeredPrimary);
 		const original: SteeringCandidate = {
 			policyKey: 'none',
 			phaseKey: steeringPhase,
@@ -986,6 +1016,8 @@
 			score: unsteeredPrimary.score,
 			swing: 0,
 			gateSwing: 0,
+			gateLabel: originalGateRisk.label,
+			gateDetail: originalGateRisk.detail,
 			detail: `${unsteeredPrimary.system.name} is strongest without a steering change from year ${viewedYear}.`,
 			actionLabel: 'Keep original'
 		};
@@ -1009,6 +1041,7 @@
 				const gateSwing = Number(
 					(result.validationImpact.adjustment - unsteeredPrimary.validationImpact.adjustment).toFixed(1)
 				);
+				const gateRisk = describeGateRisk(result);
 
 				return {
 					policyKey: policy.key,
@@ -1018,6 +1051,8 @@
 					score: result.score,
 					swing,
 					gateSwing,
+					gateLabel: gateRisk.label,
+					gateDetail: gateRisk.detail,
 					detail: `${formatDelta(swing)} versus original hold from year ${viewedYear}.`,
 					actionLabel: `Apply ${policy.label}`
 				} satisfies SteeringCandidate;
@@ -2232,6 +2267,10 @@
 							<span>{nextTurnPrompt.label}</span>
 							<strong>{nextTurnPrompt.title}</strong>
 							<p>{nextTurnPrompt.detail}</p>
+							<div class="ona-system-next-turn-gate">
+								<span>{nextTurnPrompt.gateLabel}</span>
+								<small>{nextTurnPrompt.gateDetail}</small>
+							</div>
 						</div>
 						<div class="ona-system-next-turn-actions">
 							<button
