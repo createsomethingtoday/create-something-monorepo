@@ -178,6 +178,9 @@
 		name: string;
 		policyLabel: string;
 		score: string;
+		gateAdjustment: string;
+		gateLabel: string;
+		gateDetail: string;
 		topWeights: string;
 		readinessLabel: string;
 		readinessTone: 'ready' | 'watch' | 'break';
@@ -344,6 +347,12 @@
 				unsteeredMatch.systems.find((candidate) => candidate.system.key === system.key) ??
 				null;
 			const gateAdjustment = result?.validationImpact.adjustment ?? 0;
+			const gateRisk = result
+				? describeGateRisk(result)
+				: {
+						label: 'Not scouted',
+						detail: 'Start the field to score this System against the selected environment.'
+					};
 			const readinessTone: EntrantReadiness['readinessTone'] =
 				gateAdjustment <= -12 ? 'break' : gateAdjustment < 0 ? 'watch' : 'ready';
 			const policyLabel = policies.find((policy) => policy.key === system.policyKey)?.label ?? 'Native policy';
@@ -353,6 +362,9 @@
 				name: system.name,
 				policyLabel,
 				score: result ? result.score.toFixed(1) : 'Not run',
+				gateAdjustment: formatDelta(gateAdjustment),
+				gateLabel: gateRisk.label,
+				gateDetail: gateRisk.detail,
 				topWeights: formatTopWeights(system),
 				readinessLabel:
 					readinessTone === 'break'
@@ -1766,19 +1778,26 @@
 								class:active={entrant.active}
 								data-readiness={entrant.readinessTone}
 							>
-								<div>
-									<span>{entrant.policyLabel}</span>
-									<small>{entrant.readinessLabel}</small>
-								</div>
-								<strong>{entrant.name}</strong>
-								<p>{entrant.detail}</p>
-								<div class="ona-system-competition-roster-meta">
-									<small>{entrant.topWeights}</small>
-									<strong>{entrant.score}</strong>
-								</div>
-							</article>
-						{/each}
-					</div>
+									<div>
+										<span>{entrant.policyLabel}</span>
+										<small>{entrant.readinessLabel}</small>
+									</div>
+									<strong>{entrant.name}</strong>
+									<p>{entrant.detail}</p>
+									<div class="ona-system-competition-roster-meta">
+										<small>{entrant.topWeights}</small>
+										<strong>Valid {entrant.score}</strong>
+									</div>
+									<div class="ona-system-competition-roster-gate">
+										<div>
+											<span>{entrant.gateLabel}</span>
+											<small>{entrant.gateDetail}</small>
+										</div>
+										<strong>Gate {entrant.gateAdjustment}</strong>
+									</div>
+								</article>
+							{/each}
+						</div>
 				{/if}
 
 				{#if mode === 'versus' && customEntrantsInRun.length > 0}
