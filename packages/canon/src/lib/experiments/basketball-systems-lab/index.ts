@@ -13,6 +13,7 @@ export {
 	getDefaultLeagueState,
 	getDefaultEnvironment,
 	getSampleSystemUpload,
+	listEnvironments,
 	listManagementPolicies,
 	listSeasonPhases,
 	listSystems,

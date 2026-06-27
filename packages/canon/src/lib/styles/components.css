@@ -1215,7 +1215,8 @@
     margin-top: 18px;
   }
 
-  .ona-system-mode-note {
+  .ona-system-mode-note,
+  .ona-system-environment-note {
     display: grid;
     gap: 6px;
     border: 1px solid var(--ona-system-line);
@@ -1226,12 +1227,19 @@
     background: color-mix(in srgb, white 86%, var(--ona-system-surface));
   }
 
-  .ona-system-mode-note strong {
+  .ona-system-environment-note {
+    margin-top: 0;
+    border-left-color: var(--ona-system-blue);
+  }
+
+  .ona-system-mode-note strong,
+  .ona-system-environment-note strong {
     font-size: 0.82rem;
     line-height: 1.2;
   }
 
-  .ona-system-mode-note p {
+  .ona-system-mode-note p,
+  .ona-system-environment-note p {
     color: var(--ona-system-muted);
     font-size: 0.76rem;
     line-height: 1.42;

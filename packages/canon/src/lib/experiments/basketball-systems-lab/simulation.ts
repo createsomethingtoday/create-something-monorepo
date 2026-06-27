@@ -292,19 +292,69 @@ const managementPolicies: ManagementPolicy[] = [
 	}
 ];
 
-const defaultEnvironment: Environment = {
-	key: 'national-window',
-	name: 'National TV Labor Crunch',
-	pressure: 'Same schedule, same media demand, same labor scrutiny',
-	winCondition: 'Highest resilient league score after pressure is applied',
-	effects: {
-		scheduleLoad: 6,
-		travelWear: 5,
-		globalAttention: 5,
-		ownerMargin: -3,
-		laborTrust: -2
+const environments: Environment[] = [
+	{
+		key: 'national-window',
+		name: 'National TV Labor Crunch',
+		pressure: 'Same schedule, same media demand, same labor scrutiny',
+		winCondition: 'Highest resilient league score after pressure is applied',
+		effects: {
+			scheduleLoad: 6,
+			travelWear: 5,
+			globalAttention: 5,
+			ownerMargin: -3,
+			laborTrust: -2
+		}
+	},
+	{
+		key: 'expansion-surge',
+		name: 'Expansion Surge',
+		pressure: 'New markets create attention upside while travel and parity stress rise',
+		winCondition: 'Highest growth score that preserves balance and resilience',
+		effects: {
+			mediaValueB: 0.35,
+			globalAttention: 13,
+			smallMarketVisibility: 9,
+			scheduleLoad: 4,
+			travelWear: 3,
+			competitiveBalance: -4,
+			ownerMargin: -2,
+			laborTrust: -1
+		}
+	},
+	{
+		key: 'labor-deadline',
+		name: 'Labor Deadline',
+		pressure: 'Trust, owner room, and star availability are all under negotiation stress',
+		winCondition: 'Highest durable score without breaking labor or owner-room gates',
+		effects: {
+			leagueHealth: -3,
+			laborTrust: -8,
+			ownerMargin: -6,
+			travelWear: 6,
+			scheduleLoad: 3,
+			starAvailability: -4,
+			competitiveBalance: 2
+		}
+	},
+	{
+		key: 'parity-reset',
+		name: 'Parity Reset',
+		pressure: 'Competitive balance is protected while national upside is less automatic',
+		winCondition: 'Highest balanced score after small-market visibility is weighted up',
+		effects: {
+			leagueHealth: 2,
+			competitiveBalance: 10,
+			smallMarketVisibility: 8,
+			scheduleLoad: -2,
+			globalAttention: -2,
+			mediaValueB: -0.1,
+			ownerMargin: -1
+		}
 	}
-};
+];
+
+const defaultEnvironment: Environment = environments[0];
 
 const defaultHorizonYears = 5;
 const minHorizonYears = 1;
@@ -484,8 +534,12 @@ export function listSeasonPhases(): SeasonPhase[] {
 	return seasonPhases.map(cloneSeasonPhase);
 }
 
+export function listEnvironments(): Environment[] {
+	return environments.map(cloneEnvironment);
+}
+
 export function getDefaultEnvironment(): Environment {
-	return { ...defaultEnvironment, effects: { ...defaultEnvironment.effects } };
+	return cloneEnvironment(defaultEnvironment);
 }
 
 export function runSystemMatch(input: SystemMatchInput = {}): SystemMatch {

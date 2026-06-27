@@ -14,7 +14,9 @@
 		Users
 	} from 'lucide-svelte';
 	import {
+		getDefaultEnvironment,
 		getSampleSystemUpload,
+		listEnvironments,
 		listManagementPolicies,
 		listSeasonPhases,
 		listSystems,
@@ -32,6 +34,8 @@
 	} from './simulation.js';
 
 	const policies = listManagementPolicies();
+	const environments = listEnvironments();
+	const defaultEnvironment = environments[0] ?? getDefaultEnvironment();
 	const seasonPhases = listSeasonPhases();
 	const horizonOptions = [3, 5, 8];
 	const sampleSystemDefinition = JSON.stringify(getSampleSystemUpload(), null, 2);
@@ -64,6 +68,7 @@
 	let mode = $state<LabMode>('single');
 	let selectedSystem = $state<SystemId>('recovery');
 	let opponentSystem = $state<SystemId>('attention');
+	let selectedEnvironmentKey = $state(defaultEnvironment.key);
 	let horizonYears = $state(5);
 	let steeringYear = $state(3);
 	let steeringPhase = $state<SeasonPhaseKey>('midseason');
@@ -88,6 +93,10 @@
 	let builderMessage = $state('Builder weights are valid');
 
 	const systems = $derived(listSystems(uploadedSystems));
+	const selectedEnvironment = $derived(
+		environments.find((environment) => environment.key === selectedEnvironmentKey) ??
+			defaultEnvironment
+	);
 	const uploadedSystemKeys = $derived(new Set(uploadedSystems.map((system) => system.key)));
 	const builderTotal = $derived(
 		builderWeightFields.reduce((total, field) => total + builderWeights[field.key], 0)
@@ -124,6 +133,7 @@
 			mode,
 			systemKey: selectedSystem,
 			opponentKey: opponentSystem,
+			environment: selectedEnvironment,
 			years: horizonYears,
 			steeringYear,
 			steeringPhase,
@@ -426,6 +436,19 @@
 			<div class="ona-system-mode-note">
 				<strong>{canSteer ? 'Steerable run' : 'Autonomous race'}</strong>
 				<p>{modeRule}</p>
+			</div>
+
+			<div class="ona-system-control-group">
+				<span>Environment</span>
+				<select bind:value={selectedEnvironmentKey} aria-label="Environment">
+					{#each environments as environment}
+						<option value={environment.key}>{environment.name}</option>
+					{/each}
+				</select>
+				<div class="ona-system-environment-note">
+					<strong>{selectedEnvironment.pressure}</strong>
+					<p>{selectedEnvironment.winCondition}</p>
+				</div>
 			</div>
 
 			<div class="ona-system-policy-list">
