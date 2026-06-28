@@ -19,6 +19,54 @@ const ACTIVE_ENDPOINTS = ['/active-ats-7d', '/modified-ats-24h'] as const;
 const DEFAULT_REFRESH_ENDPOINTS = ['/modified-ats-24h'] as const satisfies readonly RapidApiActiveJobsEndpoint[];
 const TOOL_NAMES = ['list_public_jobs', 'search_public_jobs', 'get_job', 'send_job_to_funnel'] as const;
 const NORMALIZED_STATUSES = ['open', 'closed', 'expired', 'unknown'] as const;
+const NURSING_TITLE_RANK_SQL = `
+      CASE
+        WHEN (
+          lower(title) LIKE '%registered nurse%'
+          OR lower(title) LIKE 'rn %'
+          OR lower(title) LIKE 'rn-%'
+          OR lower(title) LIKE 'rn,%'
+          OR lower(title) LIKE 'rn/%'
+          OR lower(title) LIKE '% rn %'
+          OR lower(title) LIKE '% rn-%'
+          OR lower(title) LIKE '% rn,%'
+          OR lower(title) LIKE '% rn/%'
+          OR lower(title) LIKE '%(rn)%'
+          OR lower(title) LIKE '%/rn%'
+        )
+        AND lower(title) NOT LIKE '%intern%'
+        AND lower(title) NOT LIKE '%non paid%'
+        AND lower(title) NOT LIKE '%unpaid%' THEN 0
+        WHEN (
+          lower(title) LIKE '%licensed practical nurse%'
+          OR lower(title) LIKE '%licensed vocational nurse%'
+          OR lower(title) LIKE 'lpn %'
+          OR lower(title) LIKE 'lpn-%'
+          OR lower(title) LIKE '% lpn%'
+          OR lower(title) LIKE '%(lpn)%'
+          OR lower(title) LIKE '%/lpn%'
+          OR lower(title) LIKE 'lvn %'
+          OR lower(title) LIKE 'lvn-%'
+          OR lower(title) LIKE '% lvn%'
+          OR lower(title) LIKE '%(lvn)%'
+          OR lower(title) LIKE '%/lvn%'
+        ) THEN 1
+        WHEN (
+          lower(title) LIKE '%certified nurse aide%'
+          OR lower(title) LIKE '%certified nurse assistant%'
+          OR lower(title) LIKE '% cna%'
+          OR lower(title) LIKE '%(cna)%'
+        ) THEN 2
+        WHEN lower(title) LIKE '%nurse practitioner%' AND lower(title) NOT LIKE '%physician assistant%' THEN 3
+        WHEN lower(title) LIKE '%nurse%'
+          AND lower(title) NOT LIKE '%intern%'
+          AND lower(title) NOT LIKE '%non paid%'
+          AND lower(title) NOT LIKE '%unpaid%'
+          AND lower(title) NOT LIKE '%physician assistant%' THEN 4
+        WHEN lower(title) LIKE '%nurse%' THEN 5
+        ELSE 9
+      END
+    `;
 const LEGACY_STATUS_TO_NORMALIZED: Record<string, PublicJobStatus> = {
   new: 'open',
   reviewing: 'open',
@@ -478,7 +526,7 @@ export async function queryPublicJobs(
   const sql = `
     SELECT * FROM abundance_public_jobs
     ${where.length > 0 ? `WHERE ${where.join(' AND ')}` : ''}
-    ORDER BY last_seen_at DESC, posted_at DESC, created_at DESC
+    ORDER BY ${NURSING_TITLE_RANK_SQL}, last_seen_at DESC, posted_at DESC, created_at DESC
     LIMIT ? OFFSET ?
   `;
   const { results } = await db.prepare(sql).bind(...args, limit, offset).all<PublicJobRow>();
@@ -990,6 +1038,29 @@ function toPublicJob(row: PublicJobRow, includeRawPayload: boolean): PublicJob {
     metadata,
     raw_payload: rawPayload,
   });
+}
+
+export function classifyNursingJobTitle(title: string): { rank: number; role: string; reason: string } {
+  const normalized = title.toLowerCase();
+  const hasRn = /\br\.?n\.?\b/i.test(title) || normalized.includes('registered nurse');
+  const hasLpnLvn =
+    /\blpn\b/i.test(title) ||
+    /\blvn\b/i.test(title) ||
+    normalized.includes('licensed practical nurse') ||
+    normalized.includes('licensed vocational nurse');
+  const hasCna = /\bcna\b/i.test(title) || normalized.includes('certified nurse aide') || normalized.includes('certified nurse assistant');
+  const hasPractitioner = normalized.includes('nurse practitioner');
+  const hasNurse = normalized.includes('nurse');
+  const isInternOrUnpaid = normalized.includes('intern') || normalized.includes('non paid') || normalized.includes('unpaid');
+  const isPaBlended = normalized.includes('physician assistant') || /\bpa\b/i.test(title);
+
+  if (hasRn && !isInternOrUnpaid) return { rank: 0, role: 'registered_nurse', reason: 'RN or Registered Nurse title' };
+  if (hasLpnLvn) return { rank: 1, role: 'licensed_practical_or_vocational_nurse', reason: 'LPN/LVN title' };
+  if (hasCna) return { rank: 2, role: 'certified_nursing_assistant', reason: 'CNA title' };
+  if (hasPractitioner && !isPaBlended) return { rank: 3, role: 'nurse_practitioner', reason: 'Nurse practitioner title' };
+  if (hasNurse && !isInternOrUnpaid && !isPaBlended) return { rank: 4, role: 'nursing_general', reason: 'General nurse title' };
+  if (hasNurse) return { rank: 5, role: 'nurse_adjacent_or_mixed', reason: 'Contains nurse but includes mixed, intern, unpaid, or PA language' };
+  return { rank: 9, role: 'not_nursing_title', reason: 'Title does not contain nursing signal' };
 }
 
 type ResolvedProviderConfig = Required<Omit<AbundanceJobsProviderConfig, 'rapidApiKey' | 'rapidApiHost' | 'rapidApiBaseUrl'>> & {

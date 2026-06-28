@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   buildPublicJobUpsert,
+  classifyNursingJobTitle,
   ingestRapidApiJobs,
   normalizeRapidApiJobRecord,
   normalizeRapidApiIngestInput,
@@ -140,6 +141,26 @@ test('nursing jobs refresh backfill remains explicit', () => {
   assert.equal(request.title_filter, 'nurse');
   assert.equal(request.location_filter, 'United States');
   assert.deepEqual(request.endpoints, ['/active-ats-7d', '/modified-ats-24h']);
+});
+
+test('nursing title classifier prioritizes core staffing roles over mixed adjacent titles', () => {
+  assert.deepEqual(classifyNursingJobTitle('Registered Nurse (RN) - ER'), {
+    rank: 0,
+    role: 'registered_nurse',
+    reason: 'RN or Registered Nurse title',
+  });
+  assert.deepEqual(classifyNursingJobTitle('Licensed Practical Nurse (LPN) - Full Time'), {
+    rank: 1,
+    role: 'licensed_practical_or_vocational_nurse',
+    reason: 'LPN/LVN title',
+  });
+  assert.deepEqual(classifyNursingJobTitle('Certified Nurse Aide CNA'), {
+    rank: 2,
+    role: 'certified_nursing_assistant',
+    reason: 'CNA title',
+  });
+  assert.equal(classifyNursingJobTitle('Nurse Practitioner/Physician Assistant - Pediatrics').rank, 5);
+  assert.equal(classifyNursingJobTitle('RN - Nurse Intern - Non Paid').rank, 5);
 });
 
 test('fresh Cloudflare D1 ingestion run skips a paid RapidAPI fetch', async () => {
