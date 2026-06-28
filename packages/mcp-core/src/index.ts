@@ -130,6 +130,9 @@ export type {
   RunCountRow,
   ToolInvocationRow,
   BraintrustTelemetryOptions,
+  LangfuseTelemetryOptions,
+  TelemetryBackendOptions,
+  LangfuseTelemetryInvocation,
 } from './telemetry.js';
 
 // =============================================================================

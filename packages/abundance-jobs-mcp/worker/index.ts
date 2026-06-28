@@ -1,6 +1,6 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpAgent } from 'agents/mcp';
-import { enableTelemetry } from '@create-something/mcp-core';
+import { enableTelemetry, type LangfuseTelemetryInvocation, type TelemetryBackendOptions } from '@create-something/mcp-core';
 import {
   DEFAULT_RAPIDAPI_HOST,
   DEFAULT_TIMEOUT_MS,
@@ -26,6 +26,10 @@ interface Env {
   BRAINTRUST_API_KEY?: string;
   BRAINTRUST_PROJECT_NAME?: string;
   BRAINTRUST_PROJECT_ID?: string;
+  LANGFUSE_PUBLIC_KEY?: string;
+  LANGFUSE_SECRET_KEY?: string;
+  LANGFUSE_BASE_URL?: string;
+  LANGFUSE_HOST?: string;
   MCP_API_KEY?: string;
   ABUNDANCE_MCP_BEARER_TOKEN?: string;
   ABUNDANCE_JOBS_MCP_API_KEY?: string;
@@ -51,6 +55,117 @@ const CORS_HEADERS = {
 function resolveBraintrustProjectName(env: Env): string {
   const configured = env.BRAINTRUST_PROJECT_NAME?.trim();
   return configured && configured.length > 0 ? configured : DEFAULT_BRAINTRUST_PROJECT_NAME;
+}
+
+function resolveLangfuseHost(env: Env): string | undefined {
+  return env.LANGFUSE_BASE_URL?.trim() || env.LANGFUSE_HOST?.trim() || undefined;
+}
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
+}
+
+function firstTextContent(value: unknown): string | undefined {
+  const content = asRecord(value).content;
+  if (!Array.isArray(content)) return undefined;
+  const firstText = content.find((entry) => asRecord(entry).type === 'text');
+  const text = asRecord(firstText).text;
+  return typeof text === 'string' ? text : undefined;
+}
+
+function parseToolOutput(value: unknown): Record<string, unknown> {
+  const record = asRecord(value);
+  const structured = asRecord(record.structuredContent);
+  if (Object.keys(structured).length > 0) return structured;
+
+  const text = firstTextContent(value);
+  if (!text) return {};
+  try {
+    return asRecord(JSON.parse(text));
+  } catch {
+    return {};
+  }
+}
+
+function inferQueryType(input: unknown): string | undefined {
+  const query = String(asRecord(input).query ?? '').toLowerCase();
+  if (!query) return undefined;
+  if (/\bcna\b|certified nursing assistant|certified nurse aide/.test(query)) return 'cna';
+  if (/\blvn\b|licensed vocational nurse/.test(query)) return 'lvn';
+  if (/\blpn\b|licensed practical nurse/.test(query)) return 'lpn';
+  if (/\bnurse practitioner\b|\bnp\b/.test(query)) return 'nurse_practitioner';
+  if (/\bicu\b|intensive care/.test(query)) return 'icu';
+  if (/\ber\b|\bed\b|emergency/.test(query)) return 'emergency';
+  if (/labor|delivery|l&d/.test(query)) return 'labor_delivery';
+  if (/travel/.test(query)) return 'travel';
+  if (/\brn\b|registered nurse/.test(query)) return 'registered_nurse';
+  if (/nurs/.test(query)) return 'generic_nurse';
+  return 'other';
+}
+
+function inferLocationIntent(input: unknown): string | undefined {
+  const record = asRecord(input);
+  const query = String(record.query ?? '').toLowerCase();
+  const location = String(record.location ?? '').trim();
+  const state = String(record.state ?? '').trim();
+  if (/\bdfw\b|dallas|fort worth|arlington|tarrant/.test(query) || /dfw|dallas|fort worth|arlington|tarrant/i.test(location)) {
+    return 'dfw_metro';
+  }
+  if (location && state) return 'city_state';
+  if (location) return 'location';
+  if (state || /\b[a-z]{2}\b|texas|california|florida|new york/.test(query)) return 'state';
+  return query ? 'query_only' : undefined;
+}
+
+function summarizeAbundanceOutput(output: unknown): Record<string, unknown> {
+  const data = parseToolOutput(output);
+  const fallback = asRecord(data.fallback);
+  const results = Array.isArray(data.results) ? data.results : undefined;
+  const jobs = Array.isArray(data.jobs) ? data.jobs : undefined;
+  const requestCount = typeof data.request_count === 'number' ? data.request_count : undefined;
+  const skipped = typeof data.skipped === 'boolean' ? data.skipped : undefined;
+  const resultCount =
+    results?.length ??
+    jobs?.length ??
+    (typeof data.result_count === 'number' ? data.result_count : undefined);
+
+  return {
+    result_count: resultCount,
+    zero_result: typeof resultCount === 'number' ? resultCount === 0 : undefined,
+    fallback_reason: typeof fallback.reason === 'string' ? fallback.reason : undefined,
+    fallback_applied: typeof fallback.applied === 'boolean' ? fallback.applied : undefined,
+    rapidapi_request_count: requestCount,
+    rapidapi_request_avoided: skipped === true || requestCount === 0 ? true : undefined,
+    ingestion_skipped: skipped,
+  };
+}
+
+function telemetryOptions(env: Env, visibility: 'authenticated' | 'chatgpt-public'): TelemetryBackendOptions {
+  return {
+    braintrust: {
+      apiKey: env.BRAINTRUST_API_KEY,
+      projectName: resolveBraintrustProjectName(env),
+      projectId: env.BRAINTRUST_PROJECT_ID,
+    },
+    langfuse: {
+      publicKey: env.LANGFUSE_PUBLIC_KEY,
+      secretKey: env.LANGFUSE_SECRET_KEY,
+      host: resolveLangfuseHost(env),
+      environment: 'prod',
+      tags: ['abundance-jobs', visibility],
+      metadata: {
+        business_workflow: 'abundance_nurse_jobs',
+        mcp_visibility: visibility,
+        chatgpt_public: visibility === 'chatgpt-public',
+        raw_payloads_embedded: false,
+      },
+      getMetadata: (invocation: LangfuseTelemetryInvocation) => ({
+        query_type: inferQueryType(invocation.input),
+        location_intent: inferLocationIntent(invocation.input),
+        ...summarizeAbundanceOutput(invocation.output),
+      }),
+    },
+  };
 }
 
 function parsePositiveInt(value: string | undefined): number | undefined {
@@ -220,11 +335,7 @@ export class AbundanceJobsMCP extends McpAgent<Env> {
   }
 
   async init() {
-    enableTelemetry(this.server, this.env.TELEMETRY_DB, SERVER_NAME, () => this.currentAccountId, {
-      apiKey: this.env.BRAINTRUST_API_KEY,
-      projectName: resolveBraintrustProjectName(this.env),
-      projectId: this.env.BRAINTRUST_PROJECT_ID,
-    });
+    enableTelemetry(this.server, this.env.TELEMETRY_DB, SERVER_NAME, () => this.currentAccountId, telemetryOptions(this.env, 'authenticated'));
 
     registerAbundanceJobsTools(this.server, {
       getDb: () => this.env.JOBS_DB,
@@ -250,11 +361,13 @@ export class AbundanceJobsChatGPTMCP extends McpAgent<Env> {
   }
 
   async init() {
-    enableTelemetry(this.server, this.env.TELEMETRY_DB, `${SERVER_NAME}:chatgpt-public`, () => this.currentAccountId, {
-      apiKey: this.env.BRAINTRUST_API_KEY,
-      projectName: resolveBraintrustProjectName(this.env),
-      projectId: this.env.BRAINTRUST_PROJECT_ID,
-    });
+    enableTelemetry(
+      this.server,
+      this.env.TELEMETRY_DB,
+      `${SERVER_NAME}:chatgpt-public`,
+      () => this.currentAccountId,
+      telemetryOptions(this.env, 'chatgpt-public'),
+    );
 
     registerAbundanceJobsTools(
       this.server,
@@ -388,6 +501,9 @@ export default {
           braintrust_configured: Boolean(env.BRAINTRUST_API_KEY),
           braintrust_project_name: resolveBraintrustProjectName(env),
           braintrust_project_id_configured: Boolean(env.BRAINTRUST_PROJECT_ID),
+          langfuse_configured: Boolean(env.LANGFUSE_PUBLIC_KEY && env.LANGFUSE_SECRET_KEY),
+          langfuse_host_configured: Boolean(resolveLangfuseHost(env)),
+          observability_mode: 'd1_braintrust_langfuse',
         },
         tools: listAbundanceJobToolNames(),
         chatgpt_public_tools: listAbundanceJobToolNames({ includeFunnelTool: false }),

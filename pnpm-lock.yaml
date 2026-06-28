@@ -2337,6 +2337,9 @@ importers:
       braintrust:
         specifier: ^2.2.2
         version: 2.2.2(@aws-sdk/credential-provider-web-identity@3.972.20)(chokidar@3.6.0)(zod@3.25.76)
+      langfuse:
+        specifier: ^3.38.6
+        version: 3.38.6
       zod:
         specifier: ^3.25.34
         version: 3.25.76
