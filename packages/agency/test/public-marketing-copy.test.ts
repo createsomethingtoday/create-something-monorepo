@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
 import { test } from 'node:test';
 
 import {
@@ -25,6 +27,28 @@ test('public agency copy guard discovers every visitor-facing route', () => {
 
 test('public agency copy avoids internal strategy and unclear control language', () => {
   assert.deepEqual(auditPublicCopy(), []);
+});
+
+test('public agency copy guard catches phrases split across markup whitespace', () => {
+  const tempDir = mkdtempSync(path.join(tmpdir(), 'agency-copy-'));
+  const fixture = path.join(tempDir, '+page.svelte');
+
+  try {
+    writeFileSync(fixture, '<p>Bring the approval\n  owner before the build.</p>');
+
+    assert.deepEqual(auditPublicCopy([fixture]), [
+      {
+        file: path.relative(packageRoot, fixture).replaceAll(path.sep, '/'),
+        line: 1,
+        column: 14,
+        rule: 'approval-owner',
+        text: 'approval\n  owner',
+        replacement: 'approval authority'
+      }
+    ]);
+  } finally {
+    rmSync(tempDir, { recursive: true, force: true });
+  }
 });
 
 test('agency README documents the public copy contract', () => {

@@ -355,8 +355,8 @@
     <div class="contact-option contact-option--calendar">
       <h2>Already high-intent?</h2>
       <p>
-        Use the calendar when you can bring one real workflow, the tools involved, the approval
-        owner, and the decision you need to make.
+        Use the calendar when you can bring one real workflow, the tools involved, who owns the
+        decision, and what needs to be decided.
       </p>
       <div class="cal-button">
         <SavvyCalButton variant="primary" size="lg" />
