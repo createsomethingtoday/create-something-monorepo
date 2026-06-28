@@ -154,6 +154,8 @@ curl "$ABUNDANCE_JOBS_MCP_URL/admin/ingest/rapidapi/nursing-jobs" \
 
 The nursing endpoint pins `title_filter` to `nurse`, calls only `/modified-ats-24h` by default, and writes normalized `provider=rapidapi` rows into `abundance_public_jobs`. It records each attempt in `abundance_public_job_ingestion_runs` and skips a paid RapidAPI request when the Cloudflare D1 ledger already has a successful non-dry-run matching run inside the freshness window.
 
+Keep `title_filter=nurse` as the RapidAPI cost-control boundary. Live D1 samples showed it captures RN, LPN/LVN, CNA, NP, and adjacent nurse roles in one paid provider call; narrower paid filters such as `registered nurse`, `rn`, `lpn`, or `cna` reduce recall or require multiple paid calls. The Worker ranks core nursing titles first when serving from D1. If the table grows beyond the current Abundance-scale shortlist, move that rank into a stored/indexed ingestion column instead of adding more provider calls.
+
 Use an explicit backfill only when the operator needs the seven-day active set:
 
 ```bash
