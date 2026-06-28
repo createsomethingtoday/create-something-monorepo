@@ -64,7 +64,7 @@
       icon: 'check',
       title: 'OpenAI readiness',
       detail:
-        'Use OpenAI as reasoning and agent-host proof while CREATE SOMETHING owns scoped tools, approvals, evals, and trust boundaries.',
+        'Use OpenAI as reasoning and agent-host proof while CREATE SOMETHING owns scoped tools, approvals, evals, and operating boundaries.',
       href: '/stack',
       points: ['Do not overclaim', 'No unsupported affiliate or reseller claim']
     }

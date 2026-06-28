@@ -239,7 +239,7 @@
 <SEO
   title="Proof and Receipts | CREATE SOMETHING .agency"
   description="Proof behind CREATE SOMETHING .agency: delivery records, tools, connectors, and client builds that show how AI workflow systems become inspectable."
-  keywords="AI workflow systems proof, workflow trust layer proof, workflow receipts, MCP servers, grounded AI code analysis, workflow controls, operator surfaces"
+  keywords="AI workflow systems proof, workflow control layer proof, workflow audit trails, MCP servers, grounded AI code analysis, workflow controls, operator surfaces"
   ogImage="/og-image.svg"
   propertyName="agency"
   {faqItems}

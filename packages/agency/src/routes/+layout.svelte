@@ -459,7 +459,7 @@
   <Footer
     mode="agency"
     showNewsletter={false}
-    aboutText="Calm, transparent, reliable workflow systems for operator-owned outcomes: clear trust boundaries, evidence-backed delivery, and escalation only when judgment is required."
+    aboutText="Calm, transparent, reliable workflow systems for operator-owned outcomes: clear operating boundaries, evidence-backed delivery, and escalation only when judgment is required."
     quickLinkGroups={footerQuickLinkGroups}
     footerCta={{
       label: agencyCoreMessaging.startWithWorkflowLabel,
