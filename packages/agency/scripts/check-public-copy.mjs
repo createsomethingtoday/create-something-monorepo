@@ -24,42 +24,42 @@ const ROUTE_COPY_FILES = new Set(['+error.svelte', '+layout.svelte', '+page.svel
 export const PUBLIC_COPY_RULES = [
   {
     id: 'workflow-trust-checklist-title',
-    pattern: /Workflow Trust Checklist/g,
+    pattern: /Workflow\s+Trust\s+Checklist/g,
     replacement: 'Workflow Control Checklist'
   },
   {
     id: 'workflow-trust-checklist-lower',
-    pattern: /workflow trust checklist/g,
+    pattern: /workflow\s+trust\s+checklist/g,
     replacement: 'workflow control checklist'
   },
   {
     id: 'trust-checklist-title',
-    pattern: /Trust checklist/g,
+    pattern: /Trust\s+checklist/g,
     replacement: 'Control checklist'
   },
   {
     id: 'trust-checklist-lower',
-    pattern: /trust checklist/g,
+    pattern: /trust\s+checklist/g,
     replacement: 'control checklist'
   },
   {
     id: 'workflow-trust-map',
-    pattern: /Workflow Trust Map/g,
+    pattern: /Workflow\s+Trust\s+Map/g,
     replacement: 'Atlas workflow map'
   },
   {
     id: 'workflow-trust-layer',
-    pattern: /Workflow Trust Layer/g,
+    pattern: /Workflow\s+Trust\s+Layer/g,
     replacement: 'workflow control layer'
   },
   {
     id: 'trust-map-title',
-    pattern: /Trust Map/g,
+    pattern: /Trust\s+Map/g,
     replacement: 'Workflow Map'
   },
   {
     id: 'trust-map-sentence',
-    pattern: /Trust map/g,
+    pattern: /Trust\s+map/g,
     replacement: 'Workflow map'
   },
   {
@@ -69,12 +69,12 @@ export const PUBLIC_COPY_RULES = [
   },
   {
     id: 'trust-layer-title',
-    pattern: /Trust Layer/g,
+    pattern: /Trust\s+Layer/g,
     replacement: 'Control Layer'
   },
   {
     id: 'trust-layer-sentence',
-    pattern: /Trust layer/g,
+    pattern: /Trust\s+layer/g,
     replacement: 'Control layer'
   },
   {
@@ -139,7 +139,7 @@ export const PUBLIC_COPY_RULES = [
   },
   {
     id: 'approval-owner',
-    pattern: /\bapproval owner\b/gi,
+    pattern: /\bapproval\s+owner\b/gi,
     replacement: 'approval authority'
   },
   {
