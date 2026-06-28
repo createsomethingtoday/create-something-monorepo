@@ -17,9 +17,17 @@ ACTIVE_JOBS_RAPIDAPI_HOST = "active-jobs-db.p.rapidapi.com"
 name = "MCP_OBJECT"
 class_name = "AbundanceJobsMCP"
 
+[[durable_objects.bindings]]
+name = "CHATGPT_MCP_OBJECT"
+class_name = "AbundanceJobsChatGPTMCP"
+
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["AbundanceJobsMCP"]
+
+[[migrations]]
+tag = "v2"
+new_sqlite_classes = ["AbundanceJobsChatGPTMCP"]
 
 [[d1_databases]]
 binding = "JOBS_DB"

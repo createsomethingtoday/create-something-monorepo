@@ -4,6 +4,7 @@ import {
   buildPublicJobUpsert,
   classifyNursingJobTitle,
   ingestRapidApiJobs,
+  listAbundanceJobToolNames,
   normalizeRapidApiJobRecord,
   normalizeRapidApiIngestInput,
   normalizeNursingJobsIngestInput,
@@ -161,6 +162,15 @@ test('nursing title classifier prioritizes core staffing roles over mixed adjace
   });
   assert.equal(classifyNursingJobTitle('Nurse Practitioner/Physician Assistant - Pediatrics').rank, 5);
   assert.equal(classifyNursingJobTitle('RN - Nurse Intern - Non Paid').rank, 5);
+});
+
+test('ChatGPT public tool list excludes write-capable funnel action', () => {
+  assert.deepEqual(listAbundanceJobToolNames({ includeFunnelTool: false }), [
+    'list_public_jobs',
+    'search_public_jobs',
+    'get_job',
+  ]);
+  assert.equal(listAbundanceJobToolNames().includes('send_job_to_funnel'), true);
 });
 
 test('fresh Cloudflare D1 ingestion run skips a paid RapidAPI fetch', async () => {

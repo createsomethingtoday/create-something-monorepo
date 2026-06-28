@@ -348,6 +348,44 @@ export async function recordInvocation(
     .run();
 }
 
+export async function recordMcpToolInvocation(args: {
+  db?: D1Database;
+  braintrust?: BraintrustTelemetryOptions;
+  serverName: string;
+  toolName: string;
+  accountId: string;
+  input: unknown;
+  output: unknown;
+  durationMs: number;
+  success: boolean;
+  error?: unknown;
+}): Promise<void> {
+  if (args.db) {
+    await recordInvocation(
+      args.db,
+      args.serverName,
+      args.accountId,
+      args.toolName,
+      args.durationMs,
+      args.success,
+      args.error,
+    );
+  }
+
+  if (initBraintrustTelemetry(args.braintrust || {}, args.serverName)) {
+    await emitBraintrustInvocation({
+      serverName: args.serverName,
+      toolName: args.toolName,
+      accountId: args.accountId,
+      input: args.input,
+      output: args.output,
+      durationMs: args.durationMs,
+      success: args.success,
+      error: args.error ? (args.error instanceof Error ? args.error.message : String(args.error)) : undefined,
+    });
+  }
+}
+
 /**
  * Get usage stats for a server (optionally filtered by account).
  */
