@@ -14,7 +14,7 @@ We make one business workflow safe to delegate.
 |------|-----|
 | **AI workflow systems** | Public category: business workflows with connected tools, scoped AI tasks, approvals, stop conditions, and audit trails. |
 | **Delegated Work Control** | Internal thesis layer: what can run, what waits, what stops, who owns the decision, and what evidence proves the work. |
-| **Workflow Trust Layer** | Current service language for making one workflow safe to delegate. |
+| **Workflow Trust Layer** | Internal service-language layer for governed execution around a workflow. |
 | **Policy OS** | Canonical paid package for governed execution, approval rules, runbooks, golden tasks, and recurring tuning. |
 | **MCP-only** | Constrained discovery or compliance entry path, not the default paid offer. |
 
@@ -34,6 +34,50 @@ stops, who owns the decision, and what evidence proves the work.
 Future edits should keep public language easy to inspect before it becomes
 technical. Explain the workflow first, then the stack. Do not add decorative
 iconography or unverified market claims to make the page feel bigger.
+
+### Public Copy Contract
+
+Public `.agency` copy should read like a clear business conversation before it
+reads like a strategy memo.
+
+Use this order:
+
+1. Name the category in plain language: `AI workflow systems`.
+2. Name the business situation: one messy handoff, repeated workflow, or live
+   operating risk.
+3. State the outcome: a reliable AI-assisted workflow with approvals, stop
+   points, and an audit trail.
+4. Show the proof object: an Atlas map, Delegation Card, delivery record, or
+   audit trail.
+5. Explain the stack only after the workflow boundary is visible.
+
+Prefer public words like:
+
+- workflow
+- handoff
+- map
+- pilot
+- owner
+- approval
+- stop point
+- audit trail
+- evidence
+- runbook
+
+Avoid public words and frames like:
+
+- buyer
+- wedge
+- entry wedge
+- productized wedge
+- GTM vector
+- lead magnet
+- MCP-first thesis
+- delegated work control as a headline
+- workflow trust layer as a first-viewport headline
+
+Those terms can remain in internal strategy docs when they are useful for
+planning, but they should not be the way a visitor learns the offer.
 
 ### Readable Control
 
@@ -119,10 +163,10 @@ evidence.
 
 | Offer | Description | Typical Output |
 |-------|-------------|----------------|
-| **Workflow Infrastructure** | Build trusted workflow substrate for business-critical operations. | Workflow implementation + integration contracts |
+| **Workflow Map / Pilot** | Map one business handoff, then build the first controlled AI-assisted path when the boundary is clear. | Workflow map, pilot implementation, runbook |
 | **Policy OS** | Add policy controls, release gates, approval rules, incident loops, and recurring governed-execution operations. | Governed runtime behavior + release evidence |
 | **Enterprise Extension** | Extend for high-stakes, cross-system, and compliance-heavy workflows. | Custom governance boundaries + enterprise orchestration |
-| **Workflow Mapping Session** | Paid pre-implementation mapping to scope workflow and trust boundary. | Pilot scope, trust boundary, and 30-day plan |
+| **Workflow Mapping Session** | Paid pre-implementation mapping to scope the workflow and operating boundary. | Pilot scope, operating boundary, and 30-day plan |
 
 ---
 
@@ -232,9 +276,9 @@ Renderer rule:
 └─────────────────────────────────────────────────────────────┘
 ```
 
-**Entry point**: Trust Map, a scoped diagnostic for one workflow, its owners, and its first safe delegation point
+**Entry point**: Workflow Map, a scoped diagnostic for one workflow, its owners, and its first controlled point
 **Default build**: Workflow Pilot, one workflow rebuilt with clear rules, handoffs, runbooks, and release evidence
-**Expansion**: Trust Layer for governed execution, then Enterprise Extension based on risk and workflow complexity
+**Expansion**: Ongoing Workflow Control for governed execution, then Enterprise Extension based on risk and workflow complexity
 
 ---
 

@@ -97,7 +97,7 @@
       label: 'Client contract',
       title: 'Bring the workflow and owner',
       detail:
-        'Clients bring the operating constraints and approval owner. I bring diagnosis, controls, runbooks, evidence, and working software.'
+        'Clients bring the operating constraints and decision owner. I bring diagnosis, controls, runbooks, evidence, and working software.'
     }
   ];
 

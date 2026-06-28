@@ -41,10 +41,10 @@
     },
     {
       value: 'workflow-teardown',
-      label: 'Request a Workflow Trust Map',
+      label: 'Request a workflow map',
       description: 'Best when you can name the stack, owner, bottleneck, and risk boundary.',
       funnelStage: 'consideration',
-      serviceInterest: 'Workflow Trust Map',
+      serviceInterest: 'Workflow Map',
       submitLabel: 'Request map',
       successMessage: "Sent. I'll review the workflow and reply with the likely operating path."
     },
@@ -62,8 +62,8 @@
 
   const laneOptions: Array<{ value: ServiceLane; label: string }> = [
     { value: 'not_sure', label: 'Not sure yet' },
-    { value: 'workflow_infrastructure', label: 'Workflow Trust Map / Pilot' },
-    { value: 'reliability_and_control', label: 'Support Recovery / Trust Layer' },
+    { value: 'workflow_infrastructure', label: 'Workflow Map / Pilot' },
+    { value: 'reliability_and_control', label: 'Support Recovery / Ongoing Control' },
     { value: 'enterprise_extension', label: 'Enterprise Extension' },
     { value: 'system_development_referral', label: 'System Development Referral' }
   ];
@@ -101,14 +101,14 @@
         'e.g., We want AI to help with support follow-up, but need approval rules, blocked states, and receipts before anything can act.'
     },
     'workflow-teardown': {
-      seoTitle: 'Request a Workflow Trust Map | CREATE SOMETHING .agency',
+      seoTitle: 'Request a Workflow Map | CREATE SOMETHING .agency',
       seoDescription:
-        'Request a Workflow Trust Map for the stack, bottleneck, risk boundary, owners, action rules, receipts, and first safe delegation path.',
-      eyebrow: 'Workflow Trust Map',
+        'Request a workflow map for the stack, bottleneck, risk boundary, owners, action rules, audit trail, and first controlled pilot.',
+      eyebrow: 'Workflow map',
       title: 'Bring the workflow that needs a control path.',
       description:
         'Use this path when you can name the stack, bottleneck, owner, and the place where approval or evidence matters. The first output is a fixed-scope map, not an open-ended build.',
-      formTitle: 'Request a Workflow Trust Map',
+      formTitle: 'Request a workflow map',
       formDescription:
         'Share the current workflow shape so I can identify the likely operating path, first controlled pilot, and no-build stop condition.',
       messageLabel: 'Which workflow needs attention first?',

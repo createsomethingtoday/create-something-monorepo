@@ -7,7 +7,7 @@
 
 <SEO
 	title="Public Atlas Canvas | CREATE SOMETHING"
-	description="Use the public Atlas canvas to map one workflow, understand the trust boundary, and carry the summary into a CREATE SOMETHING mapping session."
+	description="Use the public Atlas canvas to map one workflow, understand the operating boundary, and carry the summary into a CREATE SOMETHING mapping session."
 	keywords="Atlas canvas, workflow mapping, AI agent workflow, public workflow map"
 	propertyName="agency"
 />

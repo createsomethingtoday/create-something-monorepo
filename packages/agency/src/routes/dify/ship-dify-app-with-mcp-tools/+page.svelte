@@ -41,7 +41,7 @@
       icon: 'search',
       title: 'Name the workflow and owner',
       detail:
-        'Start with the business path, source systems, approval owner, failure mode, and first safe delegation point.'
+        'Start with the business path, source systems, decision owner, failure mode, and first controlled point.'
     },
     {
       eyebrow: '02',
@@ -215,9 +215,9 @@
     {
       eyebrow: '.io paper',
       icon: 'document',
-      title: 'Workflow Trust Layer',
+      title: 'Workflow Control Layer',
       detail:
-        'The operating model behind run, wait, stop, approval owners, receipts, and runtime graduation.',
+        'The operating model behind run, wait, stop, decision owners, audit trails, and runtime graduation.',
       href: 'https://createsomething.io/papers/workflow-trust-layer'
     },
     {
@@ -340,8 +340,8 @@
     {
       label: 'Map',
       icon: 'search',
-      title: 'Trust Map',
-      detail: 'Name the workflow, owner, tool boundary, and first safe delegation point.'
+      title: 'Workflow map',
+      detail: 'Name the workflow, owner, tool boundary, and first controlled point.'
     },
     {
       label: 'Build',

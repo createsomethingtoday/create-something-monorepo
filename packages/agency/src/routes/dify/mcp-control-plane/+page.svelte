@@ -244,7 +244,7 @@
 <ClearCtaBand
   eyebrow="Next step"
   title="Use the control-plane article to qualify the next action."
-  description="Readers can take the governance checklist, request a workflow map, or book the mapping session once the Dify workflow and approval owner are clear."
+  description="Readers can take the governance checklist, request a workflow map, or book the mapping session once the Dify workflow and decision owner are clear."
   items={ctaItems}
 >
   {#snippet actions()}
