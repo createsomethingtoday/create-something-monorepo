@@ -31,11 +31,11 @@
   }> = [
     {
       value: 'governance-checklist',
-      label: 'Send the trust checklist',
+      label: 'Send the control checklist',
       description:
         'Best for cold readers who want the approval, logging, and recovery questions first.',
       funnelStage: 'awareness',
-      serviceInterest: 'AI workflow trust checklist',
+      serviceInterest: 'AI workflow control checklist',
       submitLabel: 'Request checklist',
       successMessage: "Sent. I'll send the checklist and the next-step notes."
     },
@@ -84,14 +84,14 @@
     }
   > = {
     'governance-checklist': {
-      seoTitle: 'Get the Workflow Trust Checklist | CREATE SOMETHING .agency',
+      seoTitle: 'Get the Workflow Control Checklist | CREATE SOMETHING .agency',
       seoDescription:
-        'Request the workflow trust checklist for approval rules, blocked states, receipts, and recovery questions before AI acts.',
-      eyebrow: 'Trust checklist',
+        'Request the workflow control checklist for approval rules, blocked states, receipts, and recovery questions before AI acts.',
+      eyebrow: 'Control checklist',
       title: 'Get the questions before you map the workflow.',
       description:
         'Use the checklist to name what an agent can do, what needs approval, what must stop, and what evidence your team should keep.',
-      formTitle: 'Request the trust checklist',
+      formTitle: 'Request the control checklist',
       formDescription:
         'Send where to reply and one workflow you are considering. A short note is enough for a cold start.',
       messageLabel: 'Which workflow should the checklist help you evaluate?',

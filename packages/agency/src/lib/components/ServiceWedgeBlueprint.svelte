@@ -1,5 +1,5 @@
 <script lang="ts">
-  type WedgeStage = {
+  type PathStage = {
     index: string;
     label: string;
     title: string;
@@ -7,10 +7,10 @@
     width: string;
   };
 
-  const stages: WedgeStage[] = [
+  const stages: PathStage[] = [
     {
       index: '01',
-      label: 'Trust Map',
+      label: 'Workflow Map',
       title: 'Delegation boundary',
       detail: 'The first map names the objects, actions, approval points, and evidence.',
       width: '48%'
@@ -24,7 +24,7 @@
     },
     {
       index: '03',
-      label: 'Trust Layer',
+      label: 'Control Layer',
       title: 'Controlled delegation',
       detail: 'Rules classify work into auto-allow, approval-needed, or blocked with reason.',
       width: '80%'
@@ -41,30 +41,30 @@
   const outcomes = ['Auto-allow', 'Approval needed', 'Blocked with reason'];
 </script>
 
-<div class="wedge-shell product-surface product-surface--soft" aria-labelledby="service-wedge-title">
-  <div class="wedge-copy">
-    <span class="wedge-eyebrow">Service path</span>
-    <h3 id="service-wedge-title">Start with one mapped handoff, then add control only when the workflow earns it.</h3>
+<div class="path-shell product-surface product-surface--soft" aria-labelledby="service-path-title">
+  <div class="path-copy">
+    <span class="path-eyebrow">Service path</span>
+    <h3 id="service-path-title">Start with one mapped handoff, then add control only when the workflow earns it.</h3>
     <p>
       The path is easier to understand as a progression: first map the delegation boundary, then
-      harden one workflow, then install the trust layer that protects operator attention.
+      harden one workflow, then install the control layer that protects operator attention.
     </p>
   </div>
 
-  <div class="wedge-diagram" aria-label="Blueprint from Trust Map to Trust Layer and Operator Surface">
-    <div class="wedge-axis" aria-hidden="true">
+  <div class="path-diagram" aria-label="Blueprint from Workflow Map to Control Layer and Operator Surface">
+    <div class="path-axis" aria-hidden="true">
       <span>Connectivity</span>
       <span>Workflow</span>
       <span>Judgment</span>
       <span>Surface</span>
     </div>
 
-    <div class="wedge-stack" role="list">
+    <div class="path-stack" role="list">
       {#each stages as stage}
-        <article class="wedge-stage" style={`--stage-width: ${stage.width};`} role="listitem">
-          <span class="wedge-stage__index">{stage.index}</span>
+        <article class="path-stage" style={`--stage-width: ${stage.width};`} role="listitem">
+          <span class="path-stage__index">{stage.index}</span>
           <div>
-            <span class="wedge-stage__label">{stage.label}</span>
+            <span class="path-stage__label">{stage.label}</span>
             <h4>{stage.title}</h4>
             <p>{stage.detail}</p>
           </div>
@@ -72,8 +72,8 @@
       {/each}
     </div>
 
-    <div class="policy-card" aria-label="Trust layer decision states">
-      <span>Trust layer output</span>
+    <div class="policy-card" aria-label="Control layer decision states">
+      <span>Control layer output</span>
       <div>
         {#each outcomes as outcome}
           <strong>{outcome}</strong>
@@ -84,7 +84,7 @@
 </div>
 
 <style>
-  .wedge-shell {
+  .path-shell {
     position: relative;
     display: grid;
     grid-template-columns: minmax(0, 0.82fr) minmax(22rem, 1.18fr);
@@ -98,7 +98,7 @@
       rgba(4, 5, 8, 0.9);
   }
 
-  .wedge-shell::before {
+  .path-shell::before {
     content: '';
     position: absolute;
     inset: 0;
@@ -111,35 +111,35 @@
     opacity: 0.45;
   }
 
-  .wedge-copy,
-  .wedge-diagram {
+  .path-copy,
+  .path-diagram {
     position: relative;
     z-index: 1;
   }
 
-  .wedge-copy {
+  .path-copy {
     display: grid;
     align-content: center;
     gap: 0.85rem;
     max-width: 34rem;
   }
 
-  .wedge-eyebrow,
-  .wedge-stage__index,
-  .wedge-stage__label,
+  .path-eyebrow,
+  .path-stage__index,
+  .path-stage__label,
   .policy-card span,
-  .wedge-axis span {
+  .path-axis span {
     color: var(--color-fg-muted);
     font-family: var(--font-mono);
     letter-spacing: 0.12em;
     text-transform: uppercase;
   }
 
-  .wedge-eyebrow {
+  .path-eyebrow {
     font-size: 0.72rem;
   }
 
-  .wedge-copy h3 {
+  .path-copy h3 {
     margin: 0;
     color: var(--color-fg-primary);
     font-size: clamp(1.85rem, 3.2vw, 3rem);
@@ -148,32 +148,32 @@
     text-wrap: balance;
   }
 
-  .wedge-copy p {
+  .path-copy p {
     margin: 0;
     color: var(--color-fg-secondary);
     line-height: 1.72;
     text-wrap: pretty;
   }
 
-  .wedge-diagram {
+  .path-diagram {
     display: grid;
     gap: 0.85rem;
     min-width: 0;
   }
 
-  .wedge-axis {
+  .path-axis {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 0.5rem;
     padding: 0 0.4rem;
   }
 
-  .wedge-axis span {
+  .path-axis span {
     font-size: 0.58rem;
     text-align: center;
   }
 
-  .wedge-stack {
+  .path-stack {
     position: relative;
     display: grid;
     gap: 0.7rem;
@@ -188,7 +188,7 @@
     background-size: 25% 100%, auto, auto;
   }
 
-  .wedge-stack::after {
+  .path-stack::after {
     content: '';
     position: absolute;
     right: 1.15rem;
@@ -199,7 +199,7 @@
     opacity: 0.8;
   }
 
-  .wedge-stage {
+  .path-stage {
     position: relative;
     display: grid;
     grid-template-columns: auto minmax(0, 1fr);
@@ -219,7 +219,7 @@
       0 18px 44px rgba(0, 0, 0, 0.22);
   }
 
-  .wedge-stage::before {
+  .path-stage::before {
     content: '';
     position: absolute;
     left: -0.55rem;
@@ -229,7 +229,7 @@
     background: rgba(255, 255, 255, 0.2);
   }
 
-  .wedge-stage__index {
+  .path-stage__index {
     display: inline-grid;
     place-items: center;
     width: 2rem;
@@ -240,19 +240,19 @@
     font-size: 0.68rem;
   }
 
-  .wedge-stage__label {
+  .path-stage__label {
     display: block;
     font-size: 0.62rem;
   }
 
-  .wedge-stage h4 {
+  .path-stage h4 {
     margin: 0.28rem 0 0.34rem;
     color: var(--color-fg-primary);
     font-size: 1rem;
     line-height: 1.15;
   }
 
-  .wedge-stage p {
+  .path-stage p {
     margin: 0;
     color: var(--color-fg-secondary);
     font-size: 0.84rem;
@@ -294,26 +294,26 @@
   }
 
   @media (max-width: 980px) {
-    .wedge-shell {
+    .path-shell {
       grid-template-columns: 1fr;
     }
 
-    .wedge-copy {
+    .path-copy {
       max-width: none;
     }
   }
 
   @media (max-width: 640px) {
-    .wedge-axis {
+    .path-axis {
       display: none;
     }
 
-    .wedge-stack {
+    .path-stack {
       min-height: auto;
       padding: 0.75rem;
     }
 
-    .wedge-stage {
+    .path-stage {
       width: 100%;
       min-width: 0;
     }

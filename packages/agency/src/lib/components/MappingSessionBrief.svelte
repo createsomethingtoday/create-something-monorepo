@@ -24,7 +24,7 @@
       label: 'Decide',
       title: 'The first path',
       detail:
-        'Whether the right first move is Trust Map, Workflow Pilot, Trust Layer, referral, or controlled agent capacity.'
+        'Whether the right first move is Workflow Map, Workflow Pilot, Control Layer, referral, or controlled agent capacity.'
     },
     {
       label: 'Keep',

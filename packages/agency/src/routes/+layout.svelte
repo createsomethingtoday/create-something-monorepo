@@ -148,7 +148,7 @@
         'webflow',
         'dify',
         'openai',
-        'trust layer'
+        'control layer'
       ]
     },
     {
@@ -200,7 +200,7 @@
         'marketplace',
         'service partner',
         'agent runtime',
-        'trust layer'
+        'control layer'
       ]
     },
     {
@@ -301,7 +301,7 @@
       description: 'Start a lightweight workflow map before booking',
       href: agencyCoreMessaging.startWithWorkflowHref,
       icon: 'WF',
-      keywords: ['contact', 'hire', 'start', 'workflow', 'self map', 'trust map', 'mapping']
+      keywords: ['contact', 'hire', 'start', 'workflow', 'self map', 'workflow map', 'mapping']
     },
     {
       id: 'nav-mcp-access',

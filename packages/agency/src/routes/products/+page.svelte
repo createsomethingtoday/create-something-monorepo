@@ -410,7 +410,7 @@
 <ClearCtaBand
   eyebrow="Apply the proof"
   title="Apply the proof to the workflow your team still protects by hand."
-  description="I’ll map the first workflow, identify the safest connection point, and define when the trust layer should take over."
+  description="I’ll map the first workflow, identify the safest connection point, and define when the control layer should take over."
   items={ctaItems}
 >
   {#snippet actions()}

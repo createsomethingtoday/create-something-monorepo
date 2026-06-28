@@ -80,14 +80,14 @@
 			subtitle: 'What needs the operator',
 				items: ['Controls', 'Approvals', 'Briefs'],
 				description:
-					'The decision layer — where the trust layer classifies safe work, approval-needed work, and blocked states before the operator is interrupted.'
+					'The decision layer — where the control layer classifies safe work, approval-needed work, and blocked states before the operator is interrupted.'
 		}
 	];
 </script>
 
 <SEO
 	title="How It Works | CREATE SOMETHING .agency"
-	description="CREATE SOMETHING removes duplication, excess, and disconnection before turning a workflow into controlled delegation with a trust layer."
+	description="CREATE SOMETHING removes duplication, excess, and disconnection before turning a workflow into a controlled operating path."
 	keywords="how CREATE SOMETHING works, workflow control layer, controlled workflow, first controlled connection, automation audit, Subtractive Triad"
 	ogImage="/og-image.svg"
 	propertyName="agency"
@@ -193,7 +193,7 @@
 		</BlurFade>
 			<BlurFade delay={0.15}>
 				<p class="section-subhead">
-						How the Triad becomes a calm workflow path, from workflow map to trust layer.
+						How the Triad becomes a calm workflow path, from workflow map to control layer.
 				</p>
 			</BlurFade>
 

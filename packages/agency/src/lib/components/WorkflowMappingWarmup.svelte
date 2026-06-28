@@ -20,7 +20,7 @@
   };
 
   type ReadinessResult = {
-    level: 'Needs shape' | 'Ready to map' | 'Pilot candidate' | 'Trust layer candidate';
+    level: 'Needs shape' | 'Ready to map' | 'Pilot candidate' | 'Control layer candidate';
     slug: string;
     score: number;
     intent: 'governance-checklist' | 'workflow-teardown' | 'workflow-mapping';
@@ -48,7 +48,7 @@
     intent: 'governance-checklist',
     lane: 'not_sure',
     reason: 'Name the workflow, owner, and first decision before implementation pressure.',
-    nextStep: 'Use the trust checklist to shape the first map.'
+    nextStep: 'Use the control checklist to shape the first map.'
   };
   let selections = {
     human: [] as string[],
@@ -66,7 +66,7 @@
       title: 'Who stays in the loop?',
       prompt: 'Choose where human judgment still matters.',
       options: [
-        { value: 'review', label: 'Review and approve', benefit: 'clear approval owner' },
+        { value: 'review', label: 'Review and approve', benefit: 'clear approval authority' },
         { value: 'edit', label: 'Edit or refine', benefit: 'better final output' },
         { value: 'validate', label: 'Validate data', benefit: 'fewer bad records' },
         { value: 'stop', label: 'Stop or escalate', benefit: 'visible risk handoff' }
@@ -192,14 +192,14 @@
         lane: 'not_sure',
         reason:
           'The workflow is still missing enough owner, state, or risk context to scope safely.',
-        nextStep: 'Use the trust checklist before asking for implementation.'
+        nextStep: 'Use the control checklist before asking for implementation.'
       };
     }
 
     if (riskSignals >= 5 && selectedDimensionCount >= 4) {
       return {
-        level: 'Trust layer candidate',
-        slug: 'trust-layer-candidate',
+        level: 'Control layer candidate',
+        slug: 'control-layer-candidate',
         score,
         intent: 'workflow-mapping',
         lane: 'reliability_and_control',
@@ -230,7 +230,7 @@
       lane: 'not_sure',
       reason:
         'There is enough shape to discuss the workflow, but the implementation lane should be chosen after mapping.',
-      nextStep: 'Request a trust map before choosing the build path.'
+      nextStep: 'Request a workflow map before choosing the build path.'
     };
   }
 

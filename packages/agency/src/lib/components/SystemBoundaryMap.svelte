@@ -24,7 +24,7 @@
     <span class="boundary-map__eyebrow">System boundary</span>
     <h3 id="boundary-map-title">The vendor stack stays outside the product promise.</h3>
     <p>
-      Your team sees which services help the workflow, but the durable value is the trust layer:
+      Your team sees which services help the workflow, but the durable value is the control layer:
       contracts, action boundaries, evidence, and the operating handoff.
     </p>
   </div>
@@ -32,7 +32,7 @@
   <div class="boundary-map__diagram" aria-label="Client accounts feed the CREATE SOMETHING control layer, which routes to replaceable vendor services and operator surfaces.">
     <div class="boundary-node boundary-node--client">
       <span>Client accounts</span>
-      <strong>Business data + approval owner</strong>
+      <strong>Business data + approval authority</strong>
       <small>Source systems, customer context, constraints</small>
     </div>
 
@@ -40,7 +40,7 @@
 
     <div class="boundary-node boundary-node--core">
       <span>CREATE SOMETHING control layer</span>
-      <strong>MCP contracts + trust layer</strong>
+      <strong>MCP contracts + control layer</strong>
       <small>Rules, runbooks, receipts, operator handoff</small>
     </div>
 

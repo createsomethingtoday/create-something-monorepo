@@ -123,7 +123,7 @@
 <ClearPageSection
   variant="white"
   eyebrow={`Last updated ${updatedDate}`}
-  title="Safe delegation needs an explicit access chain."
+  title="Controlled delegation needs an explicit access chain."
   description="Each request passes through a clear path so approval requirements, blocked states, and recovery paths stay legible instead of hiding inside a prompt or a vendor account."
 >
   {#snippet after()}
