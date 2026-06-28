@@ -14,8 +14,6 @@ export interface CatoNavigationProps extends CatoInsightsDataProps {
   aboutHref?: string;
   leadershipLink?: CatoInsightLinkProp;
   leadershipHref?: string;
-  boardLink?: CatoInsightLinkProp;
-  boardHref?: string;
   solutionsLink?: CatoInsightLinkProp;
   solutionsHref?: string;
   technologyLink?: CatoInsightLinkProp;
@@ -23,13 +21,6 @@ export interface CatoNavigationProps extends CatoInsightsDataProps {
   insightsLink?: CatoInsightLinkProp;
   insightsHref?: string;
   insightsHomeLink?: CatoInsightLinkProp;
-  featureLabel?: string;
-  featureTitle?: string;
-  featureSummary?: string;
-  featureCta?: string;
-  featureHref?: string;
-  featureItemsJson?: string;
-  showFeatureItems?: boolean;
   resiliencyLink?: CatoInsightLinkProp;
   researchLink?: CatoInsightLinkProp;
   whitepapersLink?: CatoInsightLinkProp;
@@ -41,6 +32,22 @@ export interface CatoNavigationProps extends CatoInsightsDataProps {
   productSearchLink?: CatoInsightLinkProp;
   productSearchHref?: string;
   productSearchLabel?: string;
+  introKicker?: string;
+  heading?: string;
+  summary?: string;
+  introCtaLabel?: string;
+  browseKicker?: string;
+  insightsHomeTitle?: string;
+  insightsHomeSummary?: string;
+  featureTitle?: string;
+  featureSummary?: string;
+  featureCta?: string;
+  featureLabel?: string;
+  featureHref?: string;
+  featureItemsJson?: string;
+  showFeatureItems?: boolean;
+  showFeatureCta?: boolean;
+  featureItemLimit?: number;
   fixed?: boolean;
   showInsightsMegaMenu?: boolean;
 }
@@ -392,8 +399,6 @@ export const CatoNavigation: React.FC<CatoNavigationProps> = ({
   aboutHref,
   leadershipLink,
   leadershipHref,
-  boardLink,
-  boardHref,
   solutionsLink,
   solutionsHref,
   technologyLink,
@@ -419,7 +424,6 @@ export const CatoNavigation: React.FC<CatoNavigationProps> = ({
   const resolvedHomeLink = resolveLink(homeLink, homeHref, linkMode === 'export' ? 'index.html' : '/');
   const resolvedAboutLink = resolveLink(aboutLink, aboutHref, hrefForPage('about-us.html', linkMode, pathPrefix));
   const resolvedLeadershipLink = resolveLink(leadershipLink, leadershipHref, hrefForPage('leadership.html', linkMode, pathPrefix));
-  const resolvedBoardLink = resolveLink(boardLink, boardHref, hrefForPage('board-of-directors.html', linkMode, pathPrefix));
   const resolvedSolutionsLink = resolveLink(solutionsLink, solutionsHref, hrefForPage('solutions.html', linkMode, pathPrefix));
   const resolvedTechnologyLink = resolveLink(technologyLink, technologyHref, hrefForPage('technology.html', linkMode, pathPrefix));
   const resolvedInsightsLink = resolveLink(insightsLink, insightsHref, hrefForPage('insights.html', linkMode, pathPrefix));
@@ -484,7 +488,6 @@ export const CatoNavigation: React.FC<CatoNavigationProps> = ({
               <div className="cato-nav__dropdown-menu">
                 <a href={resolvedAboutLink.href} target={resolvedAboutLink.target} rel={resolvedAboutLink.rel} className="cato-nav__dropdown-item">Who We Are</a>
                 <a href={resolvedLeadershipLink.href} target={resolvedLeadershipLink.target} rel={resolvedLeadershipLink.rel} className="cato-nav__dropdown-item">Leadership</a>
-                <a href={resolvedBoardLink.href} target={resolvedBoardLink.target} rel={resolvedBoardLink.rel} className="cato-nav__dropdown-item">Board of Directors</a>
                 <a href={resolvedSolutionsLink.href} target={resolvedSolutionsLink.target} rel={resolvedSolutionsLink.rel} className="cato-nav__dropdown-item">Solutions</a>
                 <a href={resolvedTechnologyLink.href} target={resolvedTechnologyLink.target} rel={resolvedTechnologyLink.rel} className="cato-nav__dropdown-item">Technology</a>
               </div>

@@ -4,7 +4,7 @@ import { CatoBoardOfDirectorsPage } from './CatoCompanyPages';
 
 export default declareComponent(CatoBoardOfDirectorsPage, {
   name: 'Cato Board of Directors Page',
-  description: 'Dedicated About dropdown page for Cato Board of Directors profiles with self-contained Cato styling.',
+  description: 'Dedicated Cato Board of Directors profile page with self-contained Cato styling.',
   group: 'Cato Supply',
   options: {
     applyTagSelectors: true,

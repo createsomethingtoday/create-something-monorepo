@@ -10,17 +10,33 @@ export default declareComponent(CatoInsightsMegaMenu, {
     applyTagSelectors: true,
   },
   props: {
+    introKicker: props.Text({
+      name: 'Intro Kicker',
+      defaultValue: '',
+    }),
     heading: props.Text({
       name: 'Heading',
       defaultValue: 'Procurement Intelligence for Resilient Care',
     }),
     summary: props.Text({
       name: 'Summary',
-      defaultValue: 'Current analysis of the dynamics shaping the healthcare supply chain.',
+      defaultValue: '',
     }),
-    featureLabel: props.Text({
-      name: 'Feature Label',
-      defaultValue: 'Featured',
+    introCtaLabel: props.Text({
+      name: 'Intro CTA Label',
+      defaultValue: 'Explore Cato Insights',
+    }),
+    browseKicker: props.Text({
+      name: 'Browse Kicker',
+      defaultValue: '',
+    }),
+    insightsHomeTitle: props.Text({
+      name: 'Insights Home Title',
+      defaultValue: 'Insights Home',
+    }),
+    insightsHomeSummary: props.Text({
+      name: 'Insights Home Summary',
+      defaultValue: 'All reports, research, resources, and newsroom updates.',
     }),
     featureTitle: props.Text({
       name: 'Feature Title',
@@ -32,21 +48,34 @@ export default declareComponent(CatoInsightsMegaMenu, {
     }),
     featureCta: props.Text({
       name: 'Feature CTA',
-      defaultValue: 'Explore Our Insights',
+      defaultValue: '',
+    }),
+    showFeatureCta: props.Boolean({
+      name: 'Show Feature CTA',
+      defaultValue: false,
+      tooltip: 'Keep off unless the green feature card should show a bottom text CTA.',
+    }),
+    featureLabel: props.Text({
+      name: 'Feature Label',
+      defaultValue: 'Featured',
     }),
     featureHref: props.Text({
       name: 'Feature URL',
       defaultValue: '',
-      tooltip: 'Optional URL for the right-side feature card. If blank, the Resiliency Report Alerts link is used.',
+      tooltip: 'Optional override URL for the green feature card.',
     }),
     featureItemsJson: props.Text({
       name: 'Feature Items JSON',
       defaultValue: '',
-      tooltip: 'Optional JSON array for the right-side feature list: [{ "title": "...", "resourceType": "..." }].',
+      tooltip: 'Optional JSON array for the green feature card list: [{title, resourceType}].',
     }),
     showFeatureItems: props.Boolean({
       name: 'Show Feature Items',
       defaultValue: true,
+    }),
+    featureItemLimit: props.Number({
+      name: 'Feature Item Limit',
+      defaultValue: 4,
     }),
     categoriesJson: props.Text({
       name: 'Categories JSON',

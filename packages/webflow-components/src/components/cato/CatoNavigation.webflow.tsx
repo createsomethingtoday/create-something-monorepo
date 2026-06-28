@@ -4,7 +4,7 @@ import { CatoNavigation } from './CatoNavigation';
 
 export default declareComponent(CatoNavigation, {
   name: 'Cato Navigation',
-  description: 'Cato primary navigation with About, Leadership, Board, Insights mega menu, Case Studies, Risk Radar, and Product Search.',
+  description: 'Cato primary navigation with About, Leadership, Insights mega menu, Case Studies, Risk Radar, and Product Search.',
   group: 'Cato Supply',
   options: {
     applyTagSelectors: false,
@@ -38,14 +38,6 @@ export default declareComponent(CatoNavigation, {
       name: 'Leadership URL Fallback',
       defaultValue: '',
     }),
-    boardLink: props.Link({
-      name: 'Board of Directors Link',
-      tooltip: 'Preferred: select the dedicated Board of Directors page. Board URL remains the fallback.',
-    }),
-    boardHref: props.Text({
-      name: 'Board URL Fallback',
-      defaultValue: '',
-    }),
     solutionsLink: props.Link({
       name: 'Solutions Link',
       tooltip: 'Preferred: select the Solutions page. Solutions URL remains the fallback.',
@@ -73,36 +65,6 @@ export default declareComponent(CatoNavigation, {
     insightsHomeLink: props.Link({
       name: 'Insights Home Link',
       tooltip: 'Optional override for the Insights Home link inside the mega menu.',
-    }),
-    featureLabel: props.Text({
-      name: 'Mega Menu Feature Label',
-      defaultValue: 'Featured',
-    }),
-    featureTitle: props.Text({
-      name: 'Mega Menu Feature Title',
-      defaultValue: 'Resiliency Report Alerts',
-    }),
-    featureSummary: props.Text({
-      name: 'Mega Menu Feature Summary',
-      defaultValue: 'Active supply disruptions and market signals for care continuity.',
-    }),
-    featureCta: props.Text({
-      name: 'Mega Menu Feature CTA',
-      defaultValue: 'Explore Our Insights',
-    }),
-    featureHref: props.Text({
-      name: 'Mega Menu Feature URL',
-      defaultValue: '',
-      tooltip: 'Optional URL for the right-side mega-menu feature card. If blank, the Resiliency Report Alerts link is used.',
-    }),
-    featureItemsJson: props.Text({
-      name: 'Mega Menu Feature Items JSON',
-      defaultValue: '',
-      tooltip: 'Optional JSON array for the right-side feature list: [{ "title": "...", "resourceType": "..." }].',
-    }),
-    showFeatureItems: props.Boolean({
-      name: 'Show Mega Menu Feature Items',
-      defaultValue: true,
     }),
     resiliencyLink: props.Link({
       name: 'Resiliency Report Alerts Link',
@@ -143,6 +105,73 @@ export default declareComponent(CatoNavigation, {
     productSearchLabel: props.Text({
       name: 'Product Search Label',
       defaultValue: 'Product Search',
+    }),
+    introKicker: props.Text({
+      name: 'Mega Menu Intro Kicker',
+      defaultValue: '',
+    }),
+    heading: props.Text({
+      name: 'Mega Menu Heading',
+      defaultValue: 'Procurement Intelligence for Resilient Care',
+    }),
+    summary: props.Text({
+      name: 'Mega Menu Summary',
+      defaultValue: '',
+    }),
+    introCtaLabel: props.Text({
+      name: 'Mega Menu Intro CTA Label',
+      defaultValue: 'Explore Cato Insights',
+    }),
+    browseKicker: props.Text({
+      name: 'Mega Menu Browse Kicker',
+      defaultValue: '',
+    }),
+    insightsHomeTitle: props.Text({
+      name: 'Mega Menu Home Title',
+      defaultValue: 'Insights Home',
+    }),
+    insightsHomeSummary: props.Text({
+      name: 'Mega Menu Home Summary',
+      defaultValue: 'All reports, research, resources, and newsroom updates.',
+    }),
+    featureTitle: props.Text({
+      name: 'Mega Menu Feature Title',
+      defaultValue: 'Resiliency Report Alerts',
+    }),
+    featureSummary: props.Text({
+      name: 'Mega Menu Feature Summary',
+      defaultValue: 'Active supply disruptions and market signals for care continuity.',
+    }),
+    featureCta: props.Text({
+      name: 'Mega Menu Feature CTA',
+      defaultValue: '',
+    }),
+    showFeatureCta: props.Boolean({
+      name: 'Mega Menu Show Feature CTA',
+      defaultValue: false,
+      tooltip: 'Keep off unless the green mega-menu feature card should show a bottom text CTA.',
+    }),
+    featureLabel: props.Text({
+      name: 'Mega Menu Feature Label',
+      defaultValue: 'Featured',
+    }),
+    featureHref: props.Text({
+      name: 'Mega Menu Feature URL',
+      defaultValue: '',
+      tooltip: 'Optional override URL for the green mega-menu feature card.',
+    }),
+    featureItemsJson: props.Text({
+      name: 'Mega Menu Feature Items JSON',
+      defaultValue: '',
+      tooltip: 'Optional JSON array for the green mega-menu feature card list: [{title, resourceType}].',
+    }),
+    showFeatureItems: props.Boolean({
+      name: 'Mega Menu Show Feature Items',
+      defaultValue: true,
+    }),
+    featureItemLimit: props.Number({
+      name: 'Mega Menu Feature Item Limit',
+      defaultValue: 4,
     }),
     fixed: props.Boolean({
       name: 'Sticky Header',

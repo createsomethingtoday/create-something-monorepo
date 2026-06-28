@@ -157,8 +157,13 @@ export interface CatoInsightDetailProps extends CatoInsightsDataProps {
 }
 
 export interface CatoInsightsMegaMenuProps extends CatoInsightsDataProps {
+  introKicker?: string;
   heading?: string;
   summary?: string;
+  introCtaLabel?: string;
+  browseKicker?: string;
+  insightsHomeTitle?: string;
+  insightsHomeSummary?: string;
   featureLabel?: string;
   featureTitle?: string;
   featureSummary?: string;
@@ -166,6 +171,8 @@ export interface CatoInsightsMegaMenuProps extends CatoInsightsDataProps {
   featureHref?: string;
   featureItemsJson?: string;
   showFeatureItems?: boolean;
+  showFeatureCta?: boolean;
+  featureItemLimit?: number;
   insightsHomeLink?: CatoInsightLinkProp;
   resiliencyLink?: CatoInsightLinkProp;
   researchLink?: CatoInsightLinkProp;
@@ -874,6 +881,14 @@ const CATO_CSS = `
   .cato-cc-card, .cato-cc-cms-card, .cato-cc-detail-card, .cato-cc-sidebar-card { border: 1px solid var(--cato-border); background: var(--cato-bg); border-radius: .75rem; box-shadow: 0 1px 2px rgba(17,16,15,.04); }
   .cato-cc-card, .cato-cc-cms-card { display: flex; flex-direction: column; align-items: flex-start; justify-content: space-between; gap: 1rem; color: var(--cato-text); text-decoration: none; transition: transform .18s, border-color .18s, box-shadow .18s; }
   .cato-cc-card { min-height: 21rem; padding: 2rem; }
+  .cato-cc-card[data-category="resiliency"] .cato-cc-pill { color: #0a452e; background: rgba(10,69,46,.07); border-color: rgba(10,69,46,.18); }
+  .cato-cc-card[data-category="research"] .cato-cc-pill { color: #245082; background: rgba(36,80,130,.08); border-color: rgba(36,80,130,.18); }
+  .cato-cc-card[data-category="resources"] .cato-cc-pill { color: #775321; background: rgba(119,83,33,.09); border-color: rgba(119,83,33,.18); }
+  .cato-cc-card[data-category="newsroom"] .cato-cc-pill { color: #61456d; background: rgba(97,69,109,.08); border-color: rgba(97,69,109,.18); }
+  .cato-cc-card[data-category="resiliency"] h3 { color: #0a452e; }
+  .cato-cc-card[data-category="research"] h3 { color: #245082; }
+  .cato-cc-card[data-category="resources"] h3 { color: #775321; }
+  .cato-cc-card[data-category="newsroom"] h3 { color: #61456d; }
   .cato-cc-card:hover, .cato-cc-cms-card:hover { border-color: var(--cato-border-strong); transform: translate3d(0, -.25rem, 0); box-shadow: 0 1rem 2rem rgba(17,16,15,.08); }
   .cato-cc-card p, .cato-cc-cms-card p { color: var(--cato-muted); margin: 0; line-height: 1.5; }
   .cato-cc-link { color: var(--cato-green); margin-top: auto; font-weight: 600; display: inline-block; transition: transform .18s, color .18s; }
@@ -885,6 +900,13 @@ const CATO_CSS = `
   .cato-cc-filter-list { display: flex; flex-direction: column; gap: .5rem; }
   .cato-cc-filter { display: flex; align-items: center; justify-content: space-between; gap: 1rem; border: 1px solid transparent; border-radius: .5rem; color: var(--cato-muted); padding: .65rem .75rem; font-weight: 700; text-decoration: none; transition: background-color .18s, border-color .18s, color .18s, transform .18s; }
   .cato-cc-filter:hover, .cato-cc-filter[data-active="true"] { color: var(--cato-green); background: rgba(10,69,46,.05); border-color: rgba(10,69,46,.14); }
+  .cato-cc-filter[data-category] { color: var(--cato-filter-accent); border-color: var(--cato-filter-border); background: var(--cato-filter-bg); }
+  .cato-cc-filter[data-category="resiliency"] { --cato-filter-accent: #0a452e; --cato-filter-bg: rgba(10,69,46,.06); --cato-filter-border: rgba(10,69,46,.16); }
+  .cato-cc-filter[data-category="research"] { --cato-filter-accent: #245082; --cato-filter-bg: rgba(36,80,130,.07); --cato-filter-border: rgba(36,80,130,.16); }
+  .cato-cc-filter[data-category="resources"] { --cato-filter-accent: #775321; --cato-filter-bg: rgba(119,83,33,.08); --cato-filter-border: rgba(119,83,33,.16); }
+  .cato-cc-filter[data-category="newsroom"] { --cato-filter-accent: #61456d; --cato-filter-bg: rgba(97,69,109,.07); --cato-filter-border: rgba(97,69,109,.16); }
+  .cato-cc-filter[data-category]:hover { border-color: var(--cato-filter-accent); background: var(--cato-filter-bg); }
+  .cato-cc-filter[data-category] .cato-cc-filter-count { color: var(--cato-filter-accent); background: rgba(255,255,255,.72); }
   .cato-cc-filter-count { color: var(--cato-muted); background: rgba(10,69,46,.05); border-radius: 999rem; min-width: 1.65rem; padding: .16rem .48rem; text-align: center; font-size: .78rem; }
   .cato-cc-filter-note { color: var(--cato-muted); margin: 0; font-size: .92rem; line-height: 1.45; }
   .cato-cc-cms-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; align-items: stretch; }
@@ -1043,7 +1065,7 @@ const CATO_CSS = `
   .cato-cc-mega-inner { display: grid; grid-template-columns: .78fr 1.4fr .82fr; gap: 2.5rem; align-items: stretch; width: min(100%, 80rem); min-height: 25.5rem; margin: 0 auto; padding: 2.5rem; }
   .cato-cc-mega-intro { border-right: 1px solid rgba(40,39,35,.10); padding-right: 2rem; }
   .cato-cc-mega-kicker { color: var(--cato-muted); text-transform: uppercase; margin: 0 0 1rem; font-size: .76rem; font-weight: 800; }
-  .cato-cc-mega-title { max-width: 23rem; margin: 0 0 .9rem; font-size: clamp(2rem, 3vw, 3rem); line-height: 1.02; font-weight: 800; }
+  .cato-cc-mega-title { max-width: 23rem; margin: 0 0 1.35rem; font-size: clamp(1.8rem, 2.5vw, 2.55rem); line-height: 1.06; font-weight: 800; }
   .cato-cc-mega-copy { color: var(--cato-muted); max-width: 18rem; margin: 0 0 1.6rem; font-size: .95rem; line-height: 1.5; }
   .cato-cc-mega-home { font-weight: 800; text-decoration: none; }
   .cato-cc-mega-links { display: grid; grid-template-columns: 1fr 1fr; align-content: start; gap: 1.25rem 2rem; }
@@ -1052,7 +1074,7 @@ const CATO_CSS = `
   .cato-cc-mega-link strong { font-size: .98rem; line-height: 1.2; }
   .cato-cc-mega-link span { color: var(--cato-muted); font-size: .86rem; line-height: 1.4; }
   .cato-cc-mega-feature { display: flex; flex-direction: column; gap: 1.5rem; min-height: 20rem; background: var(--cato-green-mid); color: var(--cato-white); border-radius: .5rem; padding: 2rem; text-decoration: none; }
-  .cato-cc-mega-feature span, .cato-cc-mega-feature p, .cato-cc-mega-feature strong { color: var(--cato-white); }
+  .cato-cc-mega-feature span, .cato-cc-mega-feature p, .cato-cc-mega-feature strong, .cato-cc-mega-feature h3 { color: var(--cato-white); }
   .cato-cc-mega-feature .cato-cc-pill { color: var(--cato-white); border-color: rgba(255,255,255,.35); background: transparent; }
   .cato-cc-mega-feature-list { display: flex; flex-direction: column; gap: .45rem; border-top: 1px solid rgba(255,255,255,.16); border-bottom: 1px solid rgba(255,255,255,.16); padding: .9rem 0; }
   .cato-cc-mega-feature-list span { opacity: .72; text-transform: uppercase; font-size: .78rem; }
@@ -1827,12 +1849,9 @@ export const CatoInsightsHub: React.FC<CatoInsightsHubProps> = ({
   ...dataProps
 }) => {
   const { categories, items } = useInsightsData(dataProps);
-  const hubCategories = categories.filter((category) => category.id !== 'resources');
+  const hubCategories = categories;
   const hubCategoryIds = new Set(hubCategories.map((category) => category.id));
-  const hubItems = items.filter((item) => {
-    const itemType = [item.resourceType, item.pill, item.ctaLabel].join(' ').toLowerCase();
-    return hubCategoryIds.has(item.category) && !itemType.includes('whitepaper');
-  });
+  const hubItems = items.filter((item) => hubCategoryIds.has(item.category));
   const categoryLinkOverrides: Record<string, CatoInsightLinkProp | undefined> = {
     resiliency: resiliencyLink,
     research: researchLink,
@@ -1897,7 +1916,7 @@ export const CatoInsightsHub: React.FC<CatoInsightsHubProps> = ({
                   {hubCategories.map((category) => {
                     const link = linkForCategory(category);
                     return (
-                      <a key={category.id} href={hrefForCategory(category)} className="cato-cc-filter" target={link?.target} rel={relForTarget(link?.target)}>
+                      <a key={category.id} href={hrefForCategory(category)} className="cato-cc-filter" data-category={category.id} target={link?.target} rel={relForTarget(link?.target)}>
                         <span>{category.filterLabel}</span>
                         <span className="cato-cc-filter-count">{items.filter((item) => item.category === category.id).length}</span>
                       </a>
@@ -2276,15 +2295,22 @@ export const CatoInsightDetail: React.FC<CatoInsightDetailProps> = ({
 };
 
 export const CatoInsightsMegaMenu: React.FC<CatoInsightsMegaMenuProps> = ({
+  introKicker = '',
   heading = 'Procurement Intelligence for Resilient Care',
-  summary = 'Current analysis of the dynamics shaping the healthcare supply chain.',
+  summary = '',
+  introCtaLabel = 'Explore Cato Insights',
+  browseKicker = '',
+  insightsHomeTitle = 'Insights Home',
+  insightsHomeSummary = 'All reports, research, resources, and newsroom updates.',
   featureLabel = 'Featured',
   featureTitle = 'Resiliency Report Alerts',
   featureSummary = 'Active supply disruptions and market signals for care continuity.',
-  featureCta = 'Explore Our Insights',
+  featureCta = '',
   featureHref = '',
   featureItemsJson = '',
   showFeatureItems = true,
+  showFeatureCta = false,
+  featureItemLimit = 4,
   insightsHomeLink,
   resiliencyLink,
   researchLink,
@@ -2295,7 +2321,9 @@ export const CatoInsightsMegaMenu: React.FC<CatoInsightsMegaMenuProps> = ({
   ...dataProps
 }) => {
   const { categories, items } = useInsightsData(dataProps);
-  const featureItems = parseJsonArray<Pick<CatoInsightItem, 'title' | 'resourceType'>>(featureItemsJson, items.filter((item) => item.category === 'resiliency')).slice(0, 3);
+  const configuredFeatureItems = parseJsonArray<Pick<CatoInsightItem, 'title' | 'resourceType'>>(featureItemsJson, []);
+  const fallbackFeatureItems = items.filter((item) => item.category === 'resiliency');
+  const featureItems = (configuredFeatureItems.length ? configuredFeatureItems : fallbackFeatureItems).slice(0, Math.max(1, featureItemLimit));
   const insightsHomeHref = hrefFromLink(insightsHomeLink, hrefForPage('insights.html', linkMode, pathPrefix));
   const categoryLinkOverrides: Record<string, CatoInsightLinkProp | undefined> = {
     resiliency: resiliencyLink,
@@ -2303,7 +2331,6 @@ export const CatoInsightsMegaMenu: React.FC<CatoInsightsMegaMenuProps> = ({
     resources: whitepapersLink,
     newsroom: newsroomLink,
   };
-  const launchCategories = categories.filter((category) => category.id !== 'resources');
   const hrefForCategory = (category: CatoInsightCategory) =>
     hrefFromLink(categoryLinkOverrides[category.id], hrefForPage(category.page, linkMode, pathPrefix));
   const resiliencyHref = displayText(featureHref) || hrefFromLink(resiliencyLink, hrefForPage('resiliency-reports.html', linkMode, pathPrefix));
@@ -2314,17 +2341,21 @@ export const CatoInsightsMegaMenu: React.FC<CatoInsightsMegaMenuProps> = ({
       <div className="cato-cc-mega">
         <div className="cato-cc-mega-inner">
           <section className="cato-cc-mega-intro" aria-label="Insights overview">
-            <p className="cato-cc-mega-kicker">Insights</p>
+            {introKicker ? <p className="cato-cc-mega-kicker">{introKicker}</p> : null}
             <h2 className="cato-cc-mega-title">{heading}</h2>
-            <p className="cato-cc-mega-copy">{summary}</p>
+            {summary ? <p className="cato-cc-mega-copy">{summary}</p> : null}
             <a href={insightsHomeHref} target={insightsHomeLink?.target} rel={relForTarget(insightsHomeLink?.target)} className="cato-cc-mega-home">
-              Explore Cato Insights
+              {introCtaLabel}
             </a>
           </section>
           <section aria-label="Insights navigation">
-            <p className="cato-cc-mega-kicker">Browse insights</p>
+            {browseKicker ? <p className="cato-cc-mega-kicker">{browseKicker}</p> : null}
             <div className="cato-cc-mega-links">
-              {launchCategories.map((category) => {
+              <a href={insightsHomeHref} target={insightsHomeLink?.target} rel={relForTarget(insightsHomeLink?.target)} className="cato-cc-mega-link">
+                <strong>{insightsHomeTitle}</strong>
+                <span>{insightsHomeSummary}</span>
+              </a>
+              {categories.map((category) => {
                 const categoryLink = categoryLinkOverrides[category.id];
                 return (
                   <a
@@ -2342,7 +2373,7 @@ export const CatoInsightsMegaMenu: React.FC<CatoInsightsMegaMenuProps> = ({
             </div>
           </section>
           <a href={resiliencyHref} target={resiliencyLink?.target} rel={relForTarget(resiliencyLink?.target)} className="cato-cc-mega-feature">
-            <span className="cato-cc-pill">{featureLabel}</span>
+            {featureLabel ? <span className="cato-cc-pill">{featureLabel}</span> : null}
             <div>
               <h3>{featureTitle}</h3>
               <p>{featureSummary}</p>
@@ -2356,7 +2387,7 @@ export const CatoInsightsMegaMenu: React.FC<CatoInsightsMegaMenuProps> = ({
                   ))}
                 </div>
               ) : null}
-              <strong>{featureCta}</strong>
+              {showFeatureCta && featureCta ? <strong>{featureCta}</strong> : null}
             </div>
           </a>
         </div>
