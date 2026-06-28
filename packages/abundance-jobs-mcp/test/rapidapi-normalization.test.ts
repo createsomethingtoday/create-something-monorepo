@@ -2,7 +2,10 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   buildPublicJobUpsert,
+  ingestRapidApiJobs,
   normalizeRapidApiJobRecord,
+  normalizeRapidApiIngestInput,
+  normalizeNursingJobsIngestInput,
   normalizePublicJob,
 } from '../src/index.ts';
 
@@ -104,4 +107,144 @@ test('public job upsert targets provider source external id uniqueness boundary'
   assert.equal(statement.args[1], 'rapidapi');
   assert.equal(statement.args[2], 'paylocity');
   assert.equal(statement.args[4], '2185227032');
+});
+
+test('RapidAPI refresh defaults to the incremental endpoint for cost control', () => {
+  const request = normalizeRapidApiIngestInput({});
+
+  assert.deepEqual(request.endpoints, ['/modified-ats-24h']);
+  assert.equal(request.title_filter, 'nurse');
+  assert.equal(request.location_filter, 'United States');
+  assert.equal(request.include_backfill, false);
+  assert.equal(request.freshness_window_minutes, 60);
+});
+
+test('RapidAPI backfill requires an explicit request', () => {
+  const request = normalizeRapidApiIngestInput({ include_backfill: true });
+
+  assert.deepEqual(request.endpoints, ['/active-ats-7d', '/modified-ats-24h']);
+});
+
+test('nursing jobs refresh contract pins the nursing filter and incremental endpoint', () => {
+  const request = normalizeNursingJobsIngestInput({ location_filter: 'Texas', limit: 25 });
+
+  assert.equal(request.title_filter, 'nurse');
+  assert.equal(request.location_filter, 'Texas');
+  assert.equal(request.limit, 25);
+  assert.deepEqual(request.endpoints, ['/modified-ats-24h']);
+});
+
+test('nursing jobs refresh backfill remains explicit', () => {
+  const request = normalizeNursingJobsIngestInput({ include_backfill: true });
+
+  assert.equal(request.title_filter, 'nurse');
+  assert.equal(request.location_filter, 'United States');
+  assert.deepEqual(request.endpoints, ['/active-ats-7d', '/modified-ats-24h']);
+});
+
+test('fresh Cloudflare D1 ingestion run skips a paid RapidAPI fetch', async () => {
+  const originalFetch = globalThis.fetch;
+  let fetchCalls = 0;
+  globalThis.fetch = (async () => {
+    fetchCalls += 1;
+    throw new Error('RapidAPI should not be called when a fresh D1 run exists.');
+  }) as typeof fetch;
+
+  const requestedFilters = normalizeRapidApiIngestInput({});
+  const writes: Array<{ args: unknown[] }> = [];
+  const db = {
+    prepare(sql: string) {
+      return {
+        bind(...args: unknown[]) {
+          return {
+            async all() {
+              assert.match(sql, /FROM abundance_public_job_ingestion_runs/);
+              return {
+                results: [
+                  {
+                    id: 'abjobrun_recent',
+                    requested_filters_json: JSON.stringify(requestedFilters),
+                    metadata_json: JSON.stringify({ endpoints: [{ endpoint: '/modified-ats-24h' }] }),
+                    finished_at: new Date().toISOString(),
+                  },
+                ],
+              };
+            },
+            async run() {
+              writes.push({ args });
+              return {};
+            },
+          };
+        },
+      };
+    },
+  } as unknown as D1Database;
+
+  try {
+    const result = await ingestRapidApiJobs({
+      db,
+      config: { rapidApiKey: 'test-key' },
+      request: {},
+    });
+
+    assert.equal(fetchCalls, 0);
+    assert.equal(result.skipped, true);
+    assert.equal(result.request_count, 0);
+    assert.equal(result.reused_run_id, 'abjobrun_recent');
+    assert.equal(writes.length, 1);
+    assert.match(String(writes[0]?.args[8]), /fresh_cloudflare_d1_ingestion/);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('dry-run ingestion records do not refresh the reusable D1 freshness window', async () => {
+  const originalFetch = globalThis.fetch;
+  let fetchCalls = 0;
+  globalThis.fetch = (async () => {
+    fetchCalls += 1;
+    return new Response('[]', { status: 200, headers: { 'content-type': 'application/json' } });
+  }) as typeof fetch;
+
+  const requestedFilters = normalizeRapidApiIngestInput({});
+  const db = {
+    prepare(sql: string) {
+      return {
+        bind(..._args: unknown[]) {
+          return {
+            async all() {
+              assert.match(sql, /FROM abundance_public_job_ingestion_runs/);
+              return {
+                results: [
+                  {
+                    id: 'abjobrun_dry_run',
+                    requested_filters_json: JSON.stringify(requestedFilters),
+                    metadata_json: JSON.stringify({ dry_run: true, request_count: 1 }),
+                    finished_at: new Date().toISOString(),
+                  },
+                ],
+              };
+            },
+            async run() {
+              return {};
+            },
+          };
+        },
+      };
+    },
+  } as unknown as D1Database;
+
+  try {
+    const result = await ingestRapidApiJobs({
+      db,
+      config: { rapidApiKey: 'test-key' },
+      request: {},
+    });
+
+    assert.equal(fetchCalls, 1);
+    assert.equal(result.skipped, false);
+    assert.equal(result.request_count, 1);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 });

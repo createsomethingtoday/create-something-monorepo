@@ -140,21 +140,36 @@ The source-controlled Jobs MCP Worker exposes the stable Dify tool surface at:
 https://abundance-jobs-mcp.createsomething.workers.dev/mcp
 ```
 
-It also exposes an authenticated operator endpoint:
+It also exposes an authenticated nursing-specific operator endpoint:
 
 ```bash
-curl "$ABUNDANCE_JOBS_MCP_URL/admin/ingest/rapidapi" \
+curl "$ABUNDANCE_JOBS_MCP_URL/admin/ingest/rapidapi/nursing-jobs" \
   -H "Authorization: Bearer $ABUNDANCE_MCP_BEARER_TOKEN" \
   -H "Content-Type: application/json" \
   -d '{
-    "title_filter": "nurse",
     "location_filter": "United States",
-    "limit": 100,
-    "endpoints": ["/active-ats-7d", "/modified-ats-24h"]
+    "limit": 100
   }'
 ```
 
-The endpoint writes normalized `provider=rapidapi` rows into `abundance_public_jobs` and records a row in `abundance_public_job_ingestion_runs`.
+The nursing endpoint pins `title_filter` to `nurse`, calls only `/modified-ats-24h` by default, and writes normalized `provider=rapidapi` rows into `abundance_public_jobs`. It records each attempt in `abundance_public_job_ingestion_runs` and skips a paid RapidAPI request when the Cloudflare D1 ledger already has a successful non-dry-run matching run inside the freshness window.
+
+Use an explicit backfill only when the operator needs the seven-day active set:
+
+```bash
+curl "$ABUNDANCE_JOBS_MCP_URL/admin/ingest/rapidapi/nursing-jobs" \
+  -H "Authorization: Bearer $ABUNDANCE_MCP_BEARER_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "location_filter": "United States",
+    "limit": 100,
+    "include_backfill": true
+  }'
+```
+
+Set `"force_refresh": true` only when a paid provider pull is intentional despite a fresh matching D1 run. Set `"freshness_window_minutes": 0` to disable the freshness guard for a single call. Treat `"dry_run": true` as a paid provider request; it skips job upserts but still records an ingestion run for cost auditing and does not refresh the reusable D1 freshness window.
+
+The generic `/admin/ingest/rapidapi` endpoint remains available for manual provider diagnostics and non-nursing experiments, but it should not be used for normal Abundance delivery refreshes.
 
 Do not schedule `/active-ats-expired` until the provider returns bounded responses for filtered requests. The Worker exposes `/admin/probe/rapidapi-expired` for capped operator checks, but expired job ingestion should stay disabled unless the response shape is proven safe.
 

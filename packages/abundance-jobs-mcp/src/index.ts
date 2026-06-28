@@ -10,9 +10,13 @@ export const DEFAULT_TIMEOUT_MS = 30_000;
 export const DEFAULT_MAX_RESPONSE_BYTES = 512 * 1024;
 export const DEFAULT_INGEST_LIMIT = 100;
 export const MAX_INGEST_LIMIT = 500;
+export const DEFAULT_FRESHNESS_WINDOW_MINUTES = 60;
+export const NURSING_JOBS_TITLE_FILTER = 'nurse';
+export const DEFAULT_NURSING_JOBS_LOCATION_FILTER = 'United States';
 export const EXPIRED_ENDPOINT = '/active-ats-expired';
 
 const ACTIVE_ENDPOINTS = ['/active-ats-7d', '/modified-ats-24h'] as const;
+const DEFAULT_REFRESH_ENDPOINTS = ['/modified-ats-24h'] as const satisfies readonly RapidApiActiveJobsEndpoint[];
 const TOOL_NAMES = ['list_public_jobs', 'search_public_jobs', 'get_job', 'send_job_to_funnel'] as const;
 const NORMALIZED_STATUSES = ['open', 'closed', 'expired', 'unknown'] as const;
 const LEGACY_STATUS_TO_NORMALIZED: Record<string, PublicJobStatus> = {
@@ -46,6 +50,19 @@ export interface RapidApiIngestInput {
   limit?: number;
   offset?: number;
   endpoints?: RapidApiActiveJobsEndpoint[];
+  include_backfill?: boolean;
+  force_refresh?: boolean;
+  freshness_window_minutes?: number;
+  dry_run?: boolean;
+}
+
+export interface NursingJobsIngestInput {
+  location_filter?: string;
+  limit?: number;
+  offset?: number;
+  include_backfill?: boolean;
+  force_refresh?: boolean;
+  freshness_window_minutes?: number;
   dry_run?: boolean;
 }
 
@@ -177,7 +194,20 @@ interface RapidApiProviderStatus {
   timeout_ms: number;
   max_response_bytes: number;
   active_endpoints: RapidApiActiveJobsEndpoint[];
+  default_refresh_endpoints: RapidApiActiveJobsEndpoint[];
+  default_freshness_window_minutes: number;
   expired_ingest_enabled: boolean;
+}
+
+type NormalizedRapidApiIngestRequest = Required<Omit<RapidApiIngestInput, 'endpoints'>> & {
+  endpoints: RapidApiActiveJobsEndpoint[];
+};
+
+interface RecentRapidApiIngestionRun {
+  id: string;
+  requested_filters_json: string;
+  metadata_json: string;
+  finished_at: string;
 }
 
 const listSchema = {
@@ -479,6 +509,8 @@ export function getRapidApiProviderStatus(config: AbundanceJobsProviderConfig): 
     timeout_ms: resolved.timeoutMs,
     max_response_bytes: resolved.maxResponseBytes,
     active_endpoints: [...ACTIVE_ENDPOINTS],
+    default_refresh_endpoints: [...DEFAULT_REFRESH_ENDPOINTS],
+    default_freshness_window_minutes: DEFAULT_FRESHNESS_WINDOW_MINUTES,
     expired_ingest_enabled: resolved.allowExpiredIngest,
   };
 }
@@ -493,6 +525,10 @@ export async function ingestRapidApiJobs(input: {
   dry_run: boolean;
   endpoints: Array<{ endpoint: RapidApiActiveJobsEndpoint; status: number; count: number; upserted: number }>;
   result_count: number;
+  request_count: number;
+  skipped: boolean;
+  skip_reason?: string;
+  reused_run_id?: string;
   jobs: PublicJob[];
 }> {
   const config = resolveProviderConfig(input.config);
@@ -507,6 +543,42 @@ export async function ingestRapidApiJobs(input: {
   const endpointResults: Array<{ endpoint: RapidApiActiveJobsEndpoint; status: number; count: number; upserted: number }> = [];
 
   try {
+    const recentRun =
+      request.force_refresh || request.freshness_window_minutes <= 0
+        ? null
+        : await findReusableRapidApiIngestionRun(input.db, request, startedAt);
+    if (recentRun) {
+      await createPublicJobIngestionRun(input.db, {
+        id: runId,
+        provider: 'rapidapi',
+        sourceSystem: 'active_jobs_db',
+        status: 'succeeded',
+        requestedFilters: request,
+        resultCount: 0,
+        metadata: {
+          skipped: true,
+          skip_reason: 'fresh_cloudflare_d1_ingestion',
+          reused_run_id: recentRun.id,
+          freshness_window_minutes: request.freshness_window_minutes,
+        },
+        startedAt,
+        finishedAt: new Date().toISOString(),
+      });
+
+      return {
+        ok: true,
+        run_id: runId,
+        dry_run: request.dry_run,
+        endpoints: [],
+        result_count: 0,
+        request_count: 0,
+        skipped: true,
+        skip_reason: 'fresh_cloudflare_d1_ingestion',
+        reused_run_id: recentRun.id,
+        jobs: [],
+      };
+    }
+
     for (const endpoint of request.endpoints) {
       const response = await fetchRapidApiEndpoint(config, endpoint, request);
       const normalized = await Promise.all(
@@ -533,19 +605,21 @@ export async function ingestRapidApiJobs(input: {
       });
     }
 
-    if (!request.dry_run) {
-      await createPublicJobIngestionRun(input.db, {
-        id: runId,
-        provider: 'rapidapi',
-        sourceSystem: 'active_jobs_db',
-        status: 'succeeded',
-        requestedFilters: request,
-        resultCount: endpointResults.reduce((sum, result) => sum + result.upserted, 0),
-        metadata: { endpoints: endpointResults },
-        startedAt,
-        finishedAt: new Date().toISOString(),
-      });
-    }
+    await createPublicJobIngestionRun(input.db, {
+      id: runId,
+      provider: 'rapidapi',
+      sourceSystem: 'active_jobs_db',
+      status: 'succeeded',
+      requestedFilters: request,
+      resultCount: endpointResults.reduce((sum, result) => sum + result.upserted, 0),
+      metadata: {
+        endpoints: endpointResults,
+        dry_run: request.dry_run,
+        request_count: endpointResults.length,
+      },
+      startedAt,
+      finishedAt: new Date().toISOString(),
+    });
 
     return {
       ok: true,
@@ -553,22 +627,23 @@ export async function ingestRapidApiJobs(input: {
       dry_run: request.dry_run,
       endpoints: endpointResults,
       result_count: endpointResults.reduce((sum, result) => sum + result.count, 0),
+      request_count: endpointResults.length,
+      skipped: false,
       jobs: jobs.map((job) => toPublicJob(job, false)),
     };
   } catch (error) {
-    if (!request.dry_run) {
-      await createPublicJobIngestionRun(input.db, {
-        id: runId,
-        provider: 'rapidapi',
-        sourceSystem: 'active_jobs_db',
-        status: 'failed',
-        requestedFilters: request,
-        resultCount: 0,
-        error: error instanceof Error ? error.message : String(error),
-        startedAt,
-        finishedAt: new Date().toISOString(),
-      }).catch(() => undefined);
-    }
+    await createPublicJobIngestionRun(input.db, {
+      id: runId,
+      provider: 'rapidapi',
+      sourceSystem: 'active_jobs_db',
+      status: 'failed',
+      requestedFilters: request,
+      resultCount: 0,
+      error: error instanceof Error ? error.message : String(error),
+      metadata: { dry_run: request.dry_run },
+      startedAt,
+      finishedAt: new Date().toISOString(),
+    }).catch(() => undefined);
     throw error;
   }
 }
@@ -614,7 +689,7 @@ export async function probeRapidApiExpired(input: {
 async function fetchRapidApiEndpoint(
   config: ResolvedProviderConfig,
   endpoint: RapidApiActiveJobsEndpoint,
-  request: Required<RapidApiIngestInput> & { endpoints: RapidApiActiveJobsEndpoint[] },
+  request: NormalizedRapidApiIngestRequest,
 ): Promise<{ status: number; records: Record<string, unknown>[] }> {
   const url = new URL(`${config.rapidApiBaseUrl}${endpoint}`);
   url.searchParams.set('limit', String(request.limit));
@@ -936,22 +1011,107 @@ function resolveProviderConfig(config: AbundanceJobsProviderConfig): ResolvedPro
   };
 }
 
-function normalizeIngestInput(input: RapidApiIngestInput): Required<RapidApiIngestInput> & { endpoints: RapidApiActiveJobsEndpoint[] } {
-  const endpoints = input.endpoints && input.endpoints.length > 0 ? input.endpoints : [...ACTIVE_ENDPOINTS];
+export function normalizeRapidApiIngestInput(input: RapidApiIngestInput): NormalizedRapidApiIngestRequest {
+  const endpoints =
+    input.endpoints && input.endpoints.length > 0
+      ? input.endpoints
+      : input.include_backfill
+        ? [...ACTIVE_ENDPOINTS]
+        : [...DEFAULT_REFRESH_ENDPOINTS];
   for (const endpoint of endpoints) {
     if (!ACTIVE_ENDPOINTS.includes(endpoint)) {
       throw new Error(`Unsupported RapidAPI Active Jobs endpoint: ${endpoint}`);
     }
   }
   return {
-    title_filter: input.title_filter?.trim() || 'nurse',
-    location_filter: input.location_filter?.trim() || 'United States',
+    title_filter: input.title_filter?.trim() || NURSING_JOBS_TITLE_FILTER,
+    location_filter: input.location_filter?.trim() || DEFAULT_NURSING_JOBS_LOCATION_FILTER,
     organization_filter: input.organization_filter?.trim() || '',
     limit: clamp(input.limit ?? DEFAULT_INGEST_LIMIT, 1, MAX_INGEST_LIMIT),
     offset: Math.max(0, Math.trunc(input.offset ?? 0)),
     endpoints,
+    include_backfill: input.include_backfill ?? false,
+    force_refresh: input.force_refresh ?? false,
+    freshness_window_minutes: clamp(input.freshness_window_minutes ?? DEFAULT_FRESHNESS_WINDOW_MINUTES, 0, 24 * 60),
     dry_run: input.dry_run ?? false,
   };
+}
+
+export function normalizeNursingJobsIngestInput(input: NursingJobsIngestInput): NormalizedRapidApiIngestRequest {
+  return normalizeRapidApiIngestInput({
+    title_filter: NURSING_JOBS_TITLE_FILTER,
+    location_filter: input.location_filter?.trim() || DEFAULT_NURSING_JOBS_LOCATION_FILTER,
+    limit: input.limit,
+    offset: input.offset,
+    include_backfill: input.include_backfill,
+    force_refresh: input.force_refresh,
+    freshness_window_minutes: input.freshness_window_minutes,
+    dry_run: input.dry_run,
+  });
+}
+
+function normalizeIngestInput(input: RapidApiIngestInput): NormalizedRapidApiIngestRequest {
+  return normalizeRapidApiIngestInput(input);
+}
+
+async function findReusableRapidApiIngestionRun(
+  db: D1Database,
+  request: NormalizedRapidApiIngestRequest,
+  nowIso: string,
+): Promise<RecentRapidApiIngestionRun | null> {
+  const cutoff = new Date(Date.parse(nowIso) - request.freshness_window_minutes * 60_000).toISOString();
+  const { results } = await db
+    .prepare(
+      `
+        SELECT id, requested_filters_json, metadata_json, finished_at
+        FROM abundance_public_job_ingestion_runs
+        WHERE provider = ?
+          AND source_system = ?
+          AND status = ?
+          AND finished_at IS NOT NULL
+          AND finished_at >= ?
+        ORDER BY finished_at DESC
+        LIMIT 20
+      `,
+    )
+    .bind('rapidapi', 'active_jobs_db', 'succeeded', cutoff)
+    .all<RecentRapidApiIngestionRun>();
+
+  for (const run of results) {
+    const metadata = parseJsonSafe(run.metadata_json);
+    if (isRecord(metadata) && metadata.skipped === true) continue;
+    if (isRecord(metadata) && metadata.dry_run === true) continue;
+    const previous = parseJsonSafe(run.requested_filters_json);
+    if (sameRapidApiRefreshRequest(previous, request)) return run;
+  }
+
+  return null;
+}
+
+function sameRapidApiRefreshRequest(previous: unknown, current: NormalizedRapidApiIngestRequest): boolean {
+  if (!isRecord(previous)) return false;
+  const previousEndpoints = Array.isArray(previous.endpoints) ? previous.endpoints.filter(isRapidApiActiveJobsEndpoint) : [];
+  return (
+    comparableString(firstString(previous, ['title_filter'])) === comparableString(current.title_filter) &&
+    comparableString(firstString(previous, ['location_filter'])) === comparableString(current.location_filter) &&
+    comparableString(firstString(previous, ['organization_filter'])) === comparableString(current.organization_filter) &&
+    firstNumber(previous, ['limit']) === current.limit &&
+    firstNumber(previous, ['offset']) === current.offset &&
+    Boolean(previous.include_backfill) === current.include_backfill &&
+    sameStringArray(previousEndpoints, current.endpoints)
+  );
+}
+
+function isRapidApiActiveJobsEndpoint(value: unknown): value is RapidApiActiveJobsEndpoint {
+  return typeof value === 'string' && (ACTIVE_ENDPOINTS as readonly string[]).includes(value);
+}
+
+function sameStringArray(left: readonly string[], right: readonly string[]): boolean {
+  return left.length === right.length && left.every((value, index) => value === right[index]);
+}
+
+function comparableString(value: string | undefined): string {
+  return value?.trim() ?? '';
 }
 
 function rapidApiHeaders(config: ResolvedProviderConfig): Headers {

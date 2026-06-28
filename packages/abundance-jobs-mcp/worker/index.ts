@@ -7,11 +7,13 @@ import {
   getRapidApiProviderStatus,
   ingestRapidApiJobs,
   listAbundanceJobToolNames,
+  normalizeNursingJobsIngestInput,
   probeRapidApiExpired,
   registerAbundanceJobsTools,
   SERVER_NAME,
   SERVER_VERSION,
   type AbundanceJobsProviderConfig,
+  type NursingJobsIngestInput,
   type RapidApiActiveJobsEndpoint,
   type RapidApiIngestInput,
 } from '../src/index.js';
@@ -173,6 +175,27 @@ function normalizeIngestBody(body: Record<string, unknown>): RapidApiIngestInput
     limit: typeof body.limit === 'number' || typeof body.limit === 'string' ? Number(body.limit) : undefined,
     offset: typeof body.offset === 'number' || typeof body.offset === 'string' ? Number(body.offset) : undefined,
     endpoints,
+    include_backfill: typeof body.include_backfill === 'boolean' ? body.include_backfill : undefined,
+    force_refresh: typeof body.force_refresh === 'boolean' ? body.force_refresh : undefined,
+    freshness_window_minutes:
+      typeof body.freshness_window_minutes === 'number' || typeof body.freshness_window_minutes === 'string'
+        ? Number(body.freshness_window_minutes)
+        : undefined,
+    dry_run: typeof body.dry_run === 'boolean' ? body.dry_run : undefined,
+  };
+}
+
+function normalizeNursingJobsIngestBody(body: Record<string, unknown>): NursingJobsIngestInput {
+  return {
+    location_filter: typeof body.location_filter === 'string' ? body.location_filter : undefined,
+    limit: typeof body.limit === 'number' || typeof body.limit === 'string' ? Number(body.limit) : undefined,
+    offset: typeof body.offset === 'number' || typeof body.offset === 'string' ? Number(body.offset) : undefined,
+    include_backfill: typeof body.include_backfill === 'boolean' ? body.include_backfill : undefined,
+    force_refresh: typeof body.force_refresh === 'boolean' ? body.force_refresh : undefined,
+    freshness_window_minutes:
+      typeof body.freshness_window_minutes === 'number' || typeof body.freshness_window_minutes === 'string'
+        ? Number(body.freshness_window_minutes)
+        : undefined,
     dry_run: typeof body.dry_run === 'boolean' ? body.dry_run : undefined,
   };
 }
@@ -251,6 +274,30 @@ export default {
       }
     }
 
+    if (url.pathname === '/admin/ingest/rapidapi/nursing-jobs' || url.pathname === '/admin/ingest/nursing-jobs') {
+      const authError = await validateApiKey(request, env);
+      if (authError) return authError;
+      if (request.method !== 'POST') return jsonResponse({ error: 'MethodNotAllowed' }, 405);
+      if (!env.JOBS_DB) return jsonResponse({ error: 'ServerMisconfigured', message: 'JOBS_DB is not configured.' }, 500);
+      try {
+        const body = await readJsonBody(request);
+        const result = await ingestRapidApiJobs({
+          db: env.JOBS_DB,
+          config: resolveProviderConfig(env),
+          request: normalizeNursingJobsIngestInput(normalizeNursingJobsIngestBody(body)),
+        });
+        return jsonResponse(result);
+      } catch (error) {
+        return jsonResponse(
+          {
+            ok: false,
+            error: error instanceof Error ? error.message : String(error),
+          },
+          500,
+        );
+      }
+    }
+
     if (url.pathname === '/admin/probe/rapidapi-expired') {
       const authError = await validateApiKey(request, env);
       if (authError) return authError;
@@ -283,6 +330,7 @@ export default {
           mcp: '/mcp',
           sse: '/sse',
           ingest_rapidapi: '/admin/ingest/rapidapi',
+          ingest_nursing_jobs: '/admin/ingest/rapidapi/nursing-jobs',
           probe_expired: '/admin/probe/rapidapi-expired',
         },
         auth: {
