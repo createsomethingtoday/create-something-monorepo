@@ -5,15 +5,25 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { CatoInsightsHub, CatoInsightsMegaMenu } from '../src/components/cato/CatoInsights';
 import { CatoNavigation } from '../src/components/cato/CatoNavigation';
 
-test('renders the launch mega menu with three browse options', () => {
+test('renders the restored mega menu browse options', () => {
   const html = renderToStaticMarkup(<CatoInsightsMegaMenu />);
 
+  assert.match(html, />Insights Home</);
   assert.match(html, /Resiliency Report Alerts/);
   assert.match(html, /Cato Research/);
+  assert.match(html, /Resource Library/);
   assert.match(html, /Newsroom/);
-  assert.doesNotMatch(html, />Insights Home</);
-  assert.doesNotMatch(html, /Resource Library/);
   assert.doesNotMatch(html, /Whitepapers/);
+  assert.doesNotMatch(html, /Explore Our Insights/);
+  assert.doesNotMatch(html, /Access Our Insights/);
+});
+
+test('only renders the right-side mega menu feature CTA when explicitly enabled', () => {
+  const hiddenHtml = renderToStaticMarkup(<CatoInsightsMegaMenu featureCta="Access Our Insights" />);
+  const visibleHtml = renderToStaticMarkup(<CatoInsightsMegaMenu featureCta="Access Our Insights" showFeatureCta />);
+
+  assert.doesNotMatch(hiddenHtml, /Access Our Insights/);
+  assert.match(visibleHtml, /Access Our Insights/);
 });
 
 test('allows editors to customize the right-side mega menu feature through navigation props', () => {
@@ -23,6 +33,7 @@ test('allows editors to customize the right-side mega menu feature through navig
       featureTitle="Custom right-side title"
       featureSummary="Custom right-side copy for the editor."
       featureCta="Open the report"
+      showFeatureCta
       featureHref="/resiliency-reports"
       featureItemsJson={JSON.stringify([
         { title: 'Gowns and drapes alert', resourceType: 'Resiliency Report' },
@@ -38,7 +49,7 @@ test('allows editors to customize the right-side mega menu feature through navig
   assert.match(html, /Gowns and drapes alert/);
 });
 
-test('renders Cato Insights Hub with editable Webflow link overrides and hides launch-gated Whitepapers', () => {
+test('renders Cato Insights Hub with editable Webflow link overrides', () => {
   const html = renderToStaticMarkup(
     <CatoInsightsHub
       showFilterRail
@@ -54,11 +65,9 @@ test('renders Cato Insights Hub with editable Webflow link overrides and hides l
 
   assert.match(html, /href="\/custom-panel" target="_blank" rel="noreferrer"/);
   assert.match(html, /href="\/custom-insights" class="cato-cc-filter" data-active="true"/);
-  assert.match(html, /class="cato-cc-card-grid" data-count="3"/);
+  assert.match(html, /class="cato-cc-card-grid" data-count="4"/);
   assert.match(html, /href="\/custom-resiliency" class="cato-cc-card" data-category="resiliency"/);
   assert.match(html, /href="\/custom-research" class="cato-cc-card" data-category="research"/);
+  assert.match(html, /href="\/custom-whitepapers" class="cato-cc-card" data-category="resources"/);
   assert.match(html, /href="\/custom-newsroom" class="cato-cc-card" data-category="newsroom"/);
-  assert.doesNotMatch(html, /href="\/custom-whitepapers"/);
-  assert.doesNotMatch(html, /data-category="resources"/);
-  assert.doesNotMatch(html, /Whitepaper/);
 });
