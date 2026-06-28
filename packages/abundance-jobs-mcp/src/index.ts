@@ -73,6 +73,15 @@ const US_STATE_CODES = [
   ['wisconsin', 'WI'],
   ['wyoming', 'WY'],
 ] as const;
+const METRO_LOCATION_FALLBACKS = [
+  {
+    id: 'dfw',
+    label: 'Dallas-Fort Worth / Tarrant County',
+    state: 'TX',
+    triggers: ['arlington', 'dfw', 'dallas fort worth', 'dallas-fort worth', 'tarrant county', 'fort worth', 'dallas'],
+    locations: ['Arlington', 'Tarrant County', 'Fort Worth', 'Dallas', 'Irving', 'Grand Prairie', 'DFW'],
+  },
+] as const;
 const NURSING_TITLE_RANK_SQL = `
       CASE
         WHEN (
@@ -288,6 +297,22 @@ interface DbFilters {
   offset?: number;
 }
 
+interface PublicJobsQueryResult {
+  jobs: PublicJob[];
+  limit: number;
+  offset: number;
+  freshness: { newest_last_seen_at?: string; newest_provider?: string };
+}
+
+interface SearchFallbackMetadata {
+  applied: boolean;
+  reason: string;
+  original_filters: DbFilters;
+  matched_filters?: DbFilters;
+  metro?: string;
+  searched_locations?: string[];
+}
+
 interface PreparedUpsert {
   sql: string;
   args: unknown[];
@@ -474,67 +499,23 @@ export function registerAbundanceJobsTools(
 
 async function searchPublicJobDocuments(db: D1Database, input: Record<string, unknown>): Promise<CallToolResult> {
   const query = readRequiredString(input.query, 'query');
-  let result: Awaited<ReturnType<typeof queryPublicJobs>> | null = null;
-
-  for (const filters of buildStandardSearchAttempts(query)) {
-    result = await queryPublicJobs(db, filters);
-    if (result.jobs.length > 0) break;
-  }
-
-  return structuredJsonContent({
-    results: (result?.jobs ?? []).map((job) => ({
-      id: job.id,
-      title: jobDocumentTitle(job),
-      url: jobCanonicalUrl(job),
-    })),
-  });
-}
-
-function buildStandardSearchAttempts(query: string): DbFilters[] {
-  const roleQuery = inferNursingRoleQuery(query);
-  const state = inferUsState(query);
-  const attempts: DbFilters[] = [
+  const result = await queryPublicJobsWithFallback(
+    db,
     {
       query,
       status: 'open',
       limit: 10,
     },
-  ];
+    query,
+  );
 
-  if (roleQuery && state) {
-    attempts.push({
-      query: roleQuery,
-      state,
-      status: 'open',
-      limit: 10,
-    });
-  }
-
-  if (state) {
-    attempts.push({
-      state,
-      status: 'open',
-      limit: 10,
-    });
-  }
-
-  if (roleQuery) {
-    attempts.push({
-      query: roleQuery,
-      status: 'open',
-      limit: 10,
-    });
-  }
-
-  if (roleQuery !== 'nurse') {
-    attempts.push({
-      query: 'nurse',
-      status: 'open',
-      limit: 10,
-    });
-  }
-
-  return attempts;
+  return structuredJsonContent({
+    results: result.jobs.map((job) => ({
+      id: job.id,
+      title: jobDocumentTitle(job),
+      url: jobCanonicalUrl(job),
+    })),
+  });
 }
 
 function inferNursingRoleQuery(query: string): string {
@@ -548,12 +529,158 @@ function inferNursingRoleQuery(query: string): string {
   return query;
 }
 
-function inferUsState(query: string): string | undefined {
+function inferUsState(query: string | undefined): string | undefined {
+  if (!query) return undefined;
   const normalized = query.toLowerCase();
   for (const [name, code] of US_STATE_CODES) {
     if (normalized.includes(name) || new RegExp(`\\b${code.toLowerCase()}\\b`).test(normalized)) return code;
   }
   return undefined;
+}
+
+function normalizeStateCode(value: string | undefined): string | undefined {
+  if (!value) return undefined;
+  if (value.trim().length === 2) return value.trim().toUpperCase();
+  return inferUsState(value);
+}
+
+function buildSearchFallbackAttempts(filters: DbFilters, context: string): Array<{ filters: DbFilters; fallback?: SearchFallbackMetadata }> {
+  const contextState = normalizeStateCode(filters.state) ?? inferUsState(context);
+  const roleQuery = inferNursingRoleQuery([filters.query, context].filter(Boolean).join(' '));
+  const attempts: Array<{ filters: DbFilters; fallback?: SearchFallbackMetadata }> = [];
+  const metro = inferMetroFallback(context, contextState);
+  const baseFilters = pruneUndefined({
+    provider: filters.provider,
+    source_system: filters.source_system,
+    status: filters.status ?? 'open',
+    specialty: filters.specialty,
+    limit: filters.limit,
+    offset: filters.offset,
+  });
+
+  if (metro) {
+    for (const location of metro.locations) {
+      attempts.push({
+        filters: pruneUndefined({
+          ...baseFilters,
+          query: roleQuery,
+          location,
+          state: metro.state,
+        }),
+        fallback: {
+          applied: true,
+          reason: 'metro_location_fallback',
+          original_filters: filters,
+          matched_filters: pruneUndefined({ ...baseFilters, query: roleQuery, location, state: metro.state }),
+          metro: metro.label,
+          searched_locations: [...metro.locations],
+        },
+      });
+    }
+  }
+
+  if (roleQuery && contextState) {
+    attempts.push({
+      filters: pruneUndefined({
+        ...baseFilters,
+        query: roleQuery,
+        state: contextState,
+      }),
+      fallback: {
+        applied: true,
+        reason: 'state_role_fallback',
+        original_filters: filters,
+        matched_filters: pruneUndefined({ ...baseFilters, query: roleQuery, state: contextState }),
+      },
+    });
+  }
+
+  if (contextState) {
+    attempts.push({
+      filters: pruneUndefined({
+        ...baseFilters,
+        state: contextState,
+      }),
+      fallback: {
+        applied: true,
+        reason: 'state_fallback',
+        original_filters: filters,
+        matched_filters: pruneUndefined({ ...baseFilters, state: contextState }),
+      },
+    });
+  }
+
+  if (roleQuery) {
+    attempts.push({
+      filters: pruneUndefined({
+        ...baseFilters,
+        query: roleQuery,
+      }),
+      fallback: {
+        applied: true,
+        reason: 'role_fallback',
+        original_filters: filters,
+        matched_filters: pruneUndefined({ ...baseFilters, query: roleQuery }),
+      },
+    });
+  }
+
+  if (roleQuery !== 'nurse') {
+    attempts.push({
+      filters: pruneUndefined({
+        ...baseFilters,
+        query: 'nurse',
+      }),
+      fallback: {
+        applied: true,
+        reason: 'nurse_role_fallback',
+        original_filters: filters,
+        matched_filters: pruneUndefined({ ...baseFilters, query: 'nurse' }),
+      },
+    });
+  }
+
+  return attempts;
+}
+
+function inferMetroFallback(context: string, state: string | undefined) {
+  const normalized = context.toLowerCase();
+  for (const metro of METRO_LOCATION_FALLBACKS) {
+    if (state && state !== metro.state) continue;
+    const hasTrigger = metro.triggers.some((trigger) => normalized.includes(trigger));
+    if (!hasTrigger) continue;
+    const hasStateSignal = state === metro.state || normalized.includes('texas') || /\btx\b/.test(normalized) || normalized.includes('dfw');
+    if (hasStateSignal) return metro;
+  }
+  return undefined;
+}
+
+async function queryPublicJobsWithFallback(
+  db: D1Database,
+  filters: DbFilters,
+  context: string,
+): Promise<PublicJobsQueryResult & { fallback?: SearchFallbackMetadata }> {
+  const exact = await queryPublicJobs(db, filters);
+  if (exact.jobs.length > 0) return exact;
+
+  for (const attempt of buildSearchFallbackAttempts(filters, context)) {
+    const result = await queryPublicJobs(db, attempt.filters);
+    if (result.jobs.length > 0) {
+      return {
+        ...result,
+        fallback: attempt.fallback,
+      };
+    }
+  }
+
+  return {
+    ...exact,
+    fallback: {
+      applied: false,
+      reason: 'no_fallback_results',
+      original_filters: filters,
+    },
+  };
 }
 
 async function executeDb(
@@ -590,7 +717,7 @@ async function listPublicJobs(db: D1Database, input: Record<string, unknown>): P
 }
 
 async function searchPublicJobs(db: D1Database, input: Record<string, unknown>): Promise<CallToolResult> {
-  const result = await queryPublicJobs(db, {
+  const filters = {
     query: readRequiredString(input.query, 'query'),
     location: readOptionalString(input.location),
     limit: readOptionalInteger(input.limit),
@@ -598,7 +725,8 @@ async function searchPublicJobs(db: D1Database, input: Record<string, unknown>):
     source_system: readOptionalString(input.source_system),
     specialty: readOptionalString(input.specialty),
     state: readOptionalString(input.state),
-  });
+  };
+  const result = await queryPublicJobsWithFallback(db, filters, [filters.query, filters.location, filters.state].filter(Boolean).join(' '));
   return jsonContent(result);
 }
 
