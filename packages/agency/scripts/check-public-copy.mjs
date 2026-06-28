@@ -258,7 +258,12 @@ export function discoverPublicCopyFiles() {
   const canonicalAtlasFiles = walk(path.join(monorepoRoot, 'packages/canon/src/lib/atlas')).filter(
     (file) => /\.(ts|svelte|json)$/.test(file)
   );
-  const extraFiles = existsSync(canonicalSeo) ? [canonicalSeo, ...canonicalAtlasFiles] : canonicalAtlasFiles;
+  const canonicalAtlasDistFiles = walk(path.join(monorepoRoot, 'packages/canon/dist/atlas')).filter(
+    (file) => /\.(js|svelte|json)$/.test(file)
+  );
+  const extraFiles = existsSync(canonicalSeo)
+    ? [canonicalSeo, ...canonicalAtlasFiles, ...canonicalAtlasDistFiles]
+    : [...canonicalAtlasFiles, ...canonicalAtlasDistFiles];
 
   return uniqueSorted([...routeFiles, ...componentFiles, ...dataFiles, ...atlasFiles, ...extraFiles]);
 }
