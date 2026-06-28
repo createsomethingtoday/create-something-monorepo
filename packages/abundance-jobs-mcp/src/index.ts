@@ -285,7 +285,7 @@ interface NormalizedJobInput {
   metadata?: Record<string, unknown>;
 }
 
-interface DbFilters {
+export interface DbFilters {
   query?: string;
   location?: string;
   provider?: string;
@@ -304,13 +304,18 @@ interface PublicJobsQueryResult {
   freshness: { newest_last_seen_at?: string; newest_provider?: string };
 }
 
-interface SearchFallbackMetadata {
+export interface SearchFallbackMetadata {
   applied: boolean;
   reason: string;
   original_filters: DbFilters;
   matched_filters?: DbFilters;
   metro?: string;
   searched_locations?: string[];
+}
+
+export interface RoleSearchPlan {
+  queries: string[];
+  allowGenericFallback: boolean;
 }
 
 interface PreparedUpsert {
@@ -518,15 +523,65 @@ async function searchPublicJobDocuments(db: D1Database, input: Record<string, un
   });
 }
 
-function inferNursingRoleQuery(query: string): string {
+export function inferNursingRolePlan(query: string): RoleSearchPlan {
   const normalized = query.toLowerCase();
-  if (/\bregistered nurse\b/.test(normalized) || /\brn\b/.test(normalized)) return 'registered nurse';
-  if (/\blicensed practical nurse\b/.test(normalized) || /\blpn\b/.test(normalized)) return 'licensed practical nurse';
-  if (/\blicensed vocational nurse\b/.test(normalized) || /\blvn\b/.test(normalized)) return 'licensed vocational nurse';
-  if (/\bcertified nursing assistant\b/.test(normalized) || /\bcertified nurse aide\b/.test(normalized) || /\bcna\b/.test(normalized)) return 'cna';
-  if (/\bnurse practitioner\b/.test(normalized)) return 'nurse practitioner';
-  if (/\bnurs(?:e|ing)\b/.test(normalized)) return 'nurse';
-  return query;
+  if (/\bregistered nurse\b/.test(normalized) || /\brn\b/.test(normalized)) {
+    return roleSearchPlan(['registered nurse', 'rn'], true);
+  }
+  if (/\blicensed practical nurse\b/.test(normalized) || /\blpn\b/.test(normalized)) {
+    return roleSearchPlan(['licensed practical nurse', 'licensed vocational nurse', 'lpn', 'lvn'], false);
+  }
+  if (/\blicensed vocational nurse\b/.test(normalized) || /\blvn\b/.test(normalized)) {
+    return roleSearchPlan(['licensed vocational nurse', 'licensed practical nurse', 'lvn', 'lpn'], false);
+  }
+  if (
+    /\bcertified nursing assistant\b/.test(normalized) ||
+    /\bcertified nurse assistant\b/.test(normalized) ||
+    /\bcertified nurse aide\b/.test(normalized) ||
+    /\bcna\b/.test(normalized)
+  ) {
+    return roleSearchPlan(['cna', 'certified nursing assistant', 'certified nurse assistant', 'certified nurse aide'], false);
+  }
+  if (/\bnurse practitioner\b/.test(normalized) || /\bnp\b/.test(normalized)) {
+    return roleSearchPlan(['nurse practitioner'], false);
+  }
+  if (/\bl(?:abor|abou?r)\s*(?:and|&)?\s*delivery\b/.test(normalized) || /\bl&d\b/.test(normalized)) {
+    return roleSearchPlan(['labor', 'delivery'], false);
+  }
+  if (/\bicu\b/.test(normalized) || /\bintensive care\b/.test(normalized)) {
+    return roleSearchPlan(['icu', 'intensive care'], false);
+  }
+  if (/\ber\b/.test(normalized) || /\bed\b/.test(normalized) || /\bemergency\b/.test(normalized)) {
+    return roleSearchPlan(['emergency', 'emergency room', 'emergency department'], false);
+  }
+  if (/\btravel nurse\b/.test(normalized) || /\btravel rn\b/.test(normalized)) {
+    return roleSearchPlan(['travel nurse', 'travel'], false);
+  }
+  if (/\bnurs(?:e|ing)\b/.test(normalized)) {
+    return roleSearchPlan(['nurse'], true);
+  }
+  return roleSearchPlan([query], false);
+}
+
+function roleSearchPlan(queries: string[], allowGenericFallback: boolean): RoleSearchPlan {
+  return {
+    queries: uniqueNonEmpty(queries),
+    allowGenericFallback,
+  };
+}
+
+function uniqueNonEmpty(values: Array<string | undefined>): string[] {
+  const seen = new Set<string>();
+  const result: string[] = [];
+  for (const value of values) {
+    const normalized = value?.trim().replace(/\s+/g, ' ');
+    if (!normalized) continue;
+    const key = normalized.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    result.push(normalized);
+  }
+  return result;
 }
 
 function inferUsState(query: string | undefined): string | undefined {
@@ -544,11 +599,18 @@ function normalizeStateCode(value: string | undefined): string | undefined {
   return inferUsState(value);
 }
 
-function buildSearchFallbackAttempts(filters: DbFilters, context: string): Array<{ filters: DbFilters; fallback?: SearchFallbackMetadata }> {
+function stateNameForCode(code: string | undefined): string | undefined {
+  if (!code) return undefined;
+  return US_STATE_CODES.find(([, stateCode]) => stateCode === code.toUpperCase())?.[0];
+}
+
+export function buildSearchFallbackAttempts(filters: DbFilters, context: string): Array<{ filters: DbFilters; fallback?: SearchFallbackMetadata }> {
   const contextState = normalizeStateCode(filters.state) ?? inferUsState(context);
-  const roleQuery = inferNursingRoleQuery([filters.query, context].filter(Boolean).join(' '));
+  const rolePlan = inferNursingRolePlan([filters.query, context].filter(Boolean).join(' '));
   const attempts: Array<{ filters: DbFilters; fallback?: SearchFallbackMetadata }> = [];
   const metro = inferMetroFallback(context, contextState);
+  const inferredLocation = filters.location?.trim() || inferRequestedLocation(context, contextState);
+  const hasLocationConstraint = Boolean(contextState || inferredLocation || metro);
   const baseFilters = pruneUndefined({
     provider: filters.provider,
     source_system: filters.source_system,
@@ -558,44 +620,67 @@ function buildSearchFallbackAttempts(filters: DbFilters, context: string): Array
     offset: filters.offset,
   });
 
-  if (metro) {
-    for (const location of metro.locations) {
+  if (inferredLocation && (!metro || !metro.locations.some((location) => location.toLowerCase() === inferredLocation.toLowerCase()))) {
+    for (const roleQuery of rolePlan.queries) {
       attempts.push({
         filters: pruneUndefined({
           ...baseFilters,
           query: roleQuery,
-          location,
-          state: metro.state,
+          location: inferredLocation,
+          state: contextState,
         }),
         fallback: {
           applied: true,
-          reason: 'metro_location_fallback',
+          reason: 'location_role_fallback',
           original_filters: filters,
-          matched_filters: pruneUndefined({ ...baseFilters, query: roleQuery, location, state: metro.state }),
-          metro: metro.label,
-          searched_locations: [...metro.locations],
+          matched_filters: pruneUndefined({ ...baseFilters, query: roleQuery, location: inferredLocation, state: contextState }),
         },
       });
     }
   }
 
-  if (roleQuery && contextState) {
-    attempts.push({
-      filters: pruneUndefined({
-        ...baseFilters,
-        query: roleQuery,
-        state: contextState,
-      }),
-      fallback: {
-        applied: true,
-        reason: 'state_role_fallback',
-        original_filters: filters,
-        matched_filters: pruneUndefined({ ...baseFilters, query: roleQuery, state: contextState }),
-      },
-    });
+  if (metro) {
+    for (const location of metro.locations) {
+      for (const roleQuery of rolePlan.queries) {
+        attempts.push({
+          filters: pruneUndefined({
+            ...baseFilters,
+            query: roleQuery,
+            location,
+            state: metro.state,
+          }),
+          fallback: {
+            applied: true,
+            reason: 'metro_location_fallback',
+            original_filters: filters,
+            matched_filters: pruneUndefined({ ...baseFilters, query: roleQuery, location, state: metro.state }),
+            metro: metro.label,
+            searched_locations: [...metro.locations],
+          },
+        });
+      }
+    }
   }
 
   if (contextState) {
+    for (const roleQuery of rolePlan.queries) {
+      attempts.push({
+        filters: pruneUndefined({
+          ...baseFilters,
+          query: roleQuery,
+          state: contextState,
+        }),
+        fallback: {
+          applied: true,
+          reason: 'state_role_fallback',
+          original_filters: filters,
+          matched_filters: pruneUndefined({ ...baseFilters, query: roleQuery, state: contextState }),
+        },
+      });
+    }
+  }
+
+  if (contextState && rolePlan.allowGenericFallback) {
     attempts.push({
       filters: pruneUndefined({
         ...baseFilters,
@@ -610,22 +695,24 @@ function buildSearchFallbackAttempts(filters: DbFilters, context: string): Array
     });
   }
 
-  if (roleQuery) {
-    attempts.push({
-      filters: pruneUndefined({
-        ...baseFilters,
-        query: roleQuery,
-      }),
-      fallback: {
-        applied: true,
-        reason: 'role_fallback',
-        original_filters: filters,
-        matched_filters: pruneUndefined({ ...baseFilters, query: roleQuery }),
-      },
-    });
+  if (!hasLocationConstraint) {
+    for (const roleQuery of rolePlan.queries) {
+      attempts.push({
+        filters: pruneUndefined({
+          ...baseFilters,
+          query: roleQuery,
+        }),
+        fallback: {
+          applied: true,
+          reason: 'role_fallback',
+          original_filters: filters,
+          matched_filters: pruneUndefined({ ...baseFilters, query: roleQuery }),
+        },
+      });
+    }
   }
 
-  if (roleQuery !== 'nurse') {
+  if (!hasLocationConstraint && rolePlan.allowGenericFallback && !rolePlan.queries.some((query) => query.toLowerCase() === 'nurse')) {
     attempts.push({
       filters: pruneUndefined({
         ...baseFilters,
@@ -641,6 +728,54 @@ function buildSearchFallbackAttempts(filters: DbFilters, context: string): Array
   }
 
   return attempts;
+}
+
+function inferRequestedLocation(context: string, state: string | undefined): string | undefined {
+  const normalizedContext = context.trim();
+  if (!normalizedContext) return undefined;
+
+  let value = ` ${normalizedContext.toLowerCase()} `;
+  for (const [stateName, stateCode] of US_STATE_CODES) {
+    if (state && state !== stateCode) continue;
+    value = value.replace(new RegExp(`\\b${escapeRegExp(stateName)}\\b`, 'g'), ' ');
+    value = value.replace(new RegExp(`\\b${escapeRegExp(stateCode.toLowerCase())}\\b`, 'g'), ' ');
+  }
+
+  value = value
+    .replace(/\bl(?:abor|abou?r)\s*(?:and|&)?\s*delivery\b/g, ' ')
+    .replace(/\bregistered nurse\b/g, ' ')
+    .replace(/\blicensed practical nurse\b/g, ' ')
+    .replace(/\blicensed vocational nurse\b/g, ' ')
+    .replace(/\bcertified nursing assistant\b/g, ' ')
+    .replace(/\bcertified nurse assistant\b/g, ' ')
+    .replace(/\bcertified nurse aide\b/g, ' ')
+    .replace(/\bnurse practitioner\b/g, ' ')
+    .replace(/\bintensive care\b/g, ' ')
+    .replace(/\bemergency (?:room|department)\b/g, ' ')
+    .replace(/\b(?:nursing|nurse|jobs?|openings?|roles?|positions?|near|around|in|for|the|and|travel|rn|lpn|lvn|cna|np|icu|er|ed|emergency|dfw)\b/g, ' ')
+    .replace(/[^a-z0-9\s-]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  if (!value) return undefined;
+  if (US_STATE_CODES.some(([stateName, stateCode]) => value === stateName || value === stateCode.toLowerCase())) return undefined;
+  return toTitleCase(value);
+}
+
+function toTitleCase(value: string): string {
+  return value
+    .split(/\s+/)
+    .map((part) =>
+      part
+        .split('-')
+        .map((piece) => (piece ? `${piece[0]?.toUpperCase() ?? ''}${piece.slice(1)}` : piece))
+        .join('-'),
+    )
+    .join(' ');
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 function inferMetroFallback(context: string, state: string | undefined) {
@@ -921,9 +1056,13 @@ export async function queryPublicJobs(
   }
 
   if (filters.state?.trim()) {
-    where.push('(upper(state) = ? OR lower(location_text) LIKE lower(?))');
     const state = filters.state.trim();
-    args.push(state.toUpperCase(), `%${state}%`);
+    const stateCode = normalizeStateCode(state);
+    const stateName = stateNameForCode(stateCode) ?? state;
+    where.push(
+      '(upper(state) = ? OR lower(state) = lower(?) OR lower(location_text) LIKE lower(?) OR lower(location_text) LIKE lower(?))',
+    );
+    args.push(stateCode ?? state.toUpperCase(), stateName, `%, ${stateCode ?? state},%`, `%, ${stateName},%`);
   }
 
   if (filters.specialty?.trim()) {
