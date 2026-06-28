@@ -54,13 +54,13 @@ const AGENCY_CONTENT_ASSETS_BY_PATH: Record<string, AgencyContentAssetAnalytics>
     contentPrimaryCta: 'book-mapping-session'
   },
   '/partners': {
-    contentAssetId: 'partner.implementation-stack.v20260518',
-    contentType: 'partner-page',
-    contentCluster: 'partner-implementation-lanes',
-    contentIntent: 'partner-proof',
-    contentAudience: 'operator evaluating vendor-neutral implementation support',
+    contentAssetId: 'workflow-tool-stack.v20260518',
+    contentType: 'guide',
+    contentCluster: 'workflow-tool-stack',
+    contentIntent: 'definition',
+    contentAudience: 'operator choosing a tool path for one controlled workflow',
     contentFunnelStage: 'consideration',
-    contentPrimaryKeyword: 'AI implementation partner',
+    contentPrimaryKeyword: 'workflow tool stack',
     contentPrimaryCta: 'request-workflow-teardown'
   },
   '/cloudflare': {

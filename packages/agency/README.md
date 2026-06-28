@@ -110,7 +110,7 @@ The managed portfolio covers the high-intent public funnel:
 |---------|--------|---------------|
 | Core services | `/services` | - |
 | Stack boundary | `/stack` | - |
-| Tool programs | `/partners` | `/cloudflare`, `/notion` |
+| Workflow tool stack | `/partners` | `/cloudflare`, `/notion` |
 | Dify | `/dify` | `/dify/mcp-control-plane`, `/dify/agent-eval-gates`, `/dify/ship-dify-app-with-mcp-tools`, `/dify/content-engine`, `/dify/n8n-vs-dify` |
 | Products | `/products` | - |
 | Business use case | `/use-cases/business` | - |
