@@ -15,23 +15,23 @@
     {
       eyebrow: 'Canonical',
       icon: 'document',
-      title: 'Custom-domain content cluster',
+      title: 'Agency page portfolio',
       detail:
-        'Long-form Dify guides, internal links, disclosures, analytics, partner handoff, and self-serve routing live on the CREATE SOMETHING site.'
+        'Dify guides, internal links, proof summaries, route decisions, and next steps live on the CREATE SOMETHING site.'
     },
     {
       eyebrow: 'Distribution',
       icon: 'mail',
-      title: 'Substack dispatches',
+      title: 'Distribution notes',
       detail:
-        'Weekly notes summarize one idea, point back to the canonical page, collect replies, and build the subscriber list.'
+        'Short notes summarize one idea, point back to the canonical page, and collect reader questions.'
     },
     {
       eyebrow: 'Discovery',
       icon: 'share',
       title: 'Social and video clips',
       detail:
-        'Native snippets and demos create reach, but the measurable conversion path still resolves to the canonical page.'
+        'Native snippets and demos create reach, but the explanation and next step resolve to the canonical page.'
     }
   ];
 
@@ -40,25 +40,25 @@
       eyebrow: '30 days',
       icon: 'calendar',
       title: '4 canonical posts',
-      detail: '100-200 subscribers and 1-2 paid conversions.'
+      detail: 'Every page has a clear job, internal route, CTA, and evidence hook.'
     },
     {
       eyebrow: '90 days',
       icon: 'calendar',
       title: '8-12 canonical posts',
-      detail: '300-500 subscribers and 4-6 paid conversions.'
+      detail: 'Each support page links back to the Dify pillar and one next action.'
     },
     {
       eyebrow: '6 months',
       icon: 'calendar',
-      title: '2,500-5,000 visits/month',
-      detail: '750-1,500 subscribers and 20 paid conversions.'
+      title: 'Search-ready cluster',
+      detail: 'The portfolio scores route strength, schema, internal links, copy quality, and sitemap state.'
     },
     {
       eyebrow: '12 months',
       icon: 'calendar',
-      title: '6,000-10,000 visits/month',
-      detail: '2,000-3,500 subscribers and 50 paid conversions.'
+      title: 'Archive or route review',
+      detail: 'Thin, stale, duplicate, or off-language pages get routed, repaired, or archived.'
     }
   ];
 
@@ -78,7 +78,7 @@
       href: '/dify/agent-eval-gates'
     },
     {
-      eyebrow: 'Agencies',
+      eyebrow: 'Teams',
       icon: 'settings',
       title: 'Ship A Dify App With MCP Tools',
       detail: 'A practical shipping checklist for Dify plus MCP.',
@@ -93,24 +93,24 @@
     }
   ];
 
-  const economics: ClearCardItem[] = [
+  const strengthSignals: ClearCardItem[] = [
     {
-      eyebrow: 'Upgrade milestone',
+      eyebrow: 'Job',
       icon: 'check',
-      title: '20 paid conversions',
-      detail: '$534/mo at 70% Professional and 30% Team on the starting 30% rate.'
+      title: 'One page, one purpose',
+      detail: 'The page declares its audience, funnel stage, route decision, and primary action.'
     },
     {
-      eyebrow: 'First scaled target',
-      icon: 'arrow-up',
-      title: '50 paid conversions',
-      detail: '$1,869/mo with first 20 at 30%, next 30 at 50%, same plan mix.'
+      eyebrow: 'Evidence',
+      icon: 'document',
+      title: 'Proof before claims',
+      detail: 'The page points to concrete maps, gates, checklists, receipts, or shipping steps.'
     },
     {
-      eyebrow: 'Mature run rate',
-      icon: 'arrow-up',
-      title: '100 paid conversions',
-      detail: '$4,094/mo with first 20 at 30%, next 80 at 50%, same plan mix.'
+      eyebrow: 'Language',
+      icon: 'warning',
+      title: 'Plain words win',
+      detail: 'The page explains workflow, owner, approval, stop point, audit trail, and runbook.'
     }
   ];
 
@@ -118,26 +118,26 @@
     {
       eyebrow: '01',
       icon: 'upload',
-      title: 'Publish the custom-domain page first',
-      detail: 'The agency site owns proof, disclosures, analytics, and lead routing.'
+      title: 'Publish the canonical page first',
+      detail: 'The agency site owns the explanation, proof summary, route, and next step.'
     },
     {
       eyebrow: '02',
       icon: 'arrow-right',
-      title: 'Link from Dify and partner pages',
-      detail: 'Keep the cluster discoverable from related commercial and partner routes.'
+      title: 'Link the cluster together',
+      detail: 'Keep the Dify pillar, control model, eval gates, shipping guide, and comparison connected.'
     },
     {
       eyebrow: '03',
       icon: 'warning',
-      title: 'Keep affiliate links direct until acceptance',
-      detail: 'Implementation and enterprise leads stay in the partner lane.'
+      title: 'Keep claims grounded',
+      detail: 'Public language should describe what the workflow does and what evidence exists.'
     },
     {
       eyebrow: '04',
       icon: 'document',
-      title: 'Log the evidence',
-      detail: 'Record URL, audience, disclosure, link type, campaign, and conversion evidence.'
+      title: 'Review page strength',
+      detail: 'Score the page for schema, links, terms, CTA, sitemap state, and plain language.'
     }
   ];
 
@@ -146,34 +146,34 @@
       label: 'Canonical',
       icon: 'document',
       title: 'Own the source of truth',
-      detail: 'The agency domain carries proof and disclosure.'
+      detail: 'The agency domain carries the proof and next step.'
     },
     {
-      label: 'Dispatch',
+      label: 'Route',
       icon: 'mail',
-      title: 'Send readers back',
-      detail: 'Substack distributes the idea without replacing the canonical page.'
+      title: 'Send readers forward',
+      detail: 'Every page points to the next useful explanation or action.'
     },
     {
       label: 'Measure',
       icon: 'check',
       title: 'Track the routing',
-      detail: 'Visits, clicks, conversions, and service leads stay distinct.'
+      detail: 'Scores make weak pages visible before they drift.'
     }
   ];
 </script>
 
 <SEO
-  title="Dify Affiliate Content Engine | CREATE SOMETHING .agency"
-  description="CREATE SOMETHING uses a custom-domain-first Dify content engine with Substack distribution for disclosed affiliate acquisition and partner-safe lead routing."
-  keywords="Dify affiliate content, Dify Substack, Dify blog strategy, Dify partner funnel, Dify MCP content"
+  title="Dify Page Portfolio | CREATE SOMETHING .agency"
+  description="CREATE SOMETHING keeps Dify marketing pages clear, routed, scored, and aligned with workflow-first language."
+  keywords="Dify content system, Dify page portfolio, Dify workflow pages, Dify MCP content, Dify SEO"
   canonical="https://createsomething.agency/dify/content-engine"
   ogType="article"
   ogImage="/og/dify-content-engine.svg"
   publishedTime="2026-05-18"
   modifiedTime="2026-06-22"
-  articleSection="Dify Affiliate Content"
-  articleTags={['Dify', 'affiliate', 'Substack', 'content strategy', 'MCP']}
+  articleSection="Dify Page Portfolio"
+  articleTags={['Dify', 'page portfolio', 'content strategy', 'MCP']}
   propertyName="agency"
 />
 
@@ -181,15 +181,15 @@
   variant="hero"
   layout="split"
   titleLevel="h1"
-  eyebrow="Dify Content Engine"
-  title="Custom-domain content owns the funnel. Substack carries the dispatch."
-  description="The Dify affiliate lane needs one canonical place for proof, disclosures, analytics, and lead routing. The CREATE SOMETHING site owns that source of truth; Substack sends readers back to it."
+  eyebrow="Dify Page Portfolio"
+  title="Each Dify page should have one clear job."
+  description="The agency domain owns the canonical explanation, proof, route, and next step. Distribution channels point readers back to that source of truth."
 >
   {#snippet actions()}
     <Button href={agencyCoreMessaging.governanceChecklistHref}>
       {agencyCoreMessaging.governanceChecklistLabel}
     </Button>
-    <Button href="/dify" variant="secondary">Back To Dify Lane</Button>
+    <Button href="/dify" variant="secondary">Back To Dify</Button>
   {/snippet}
 
   {#snippet aside()}
@@ -206,16 +206,16 @@
   variant="white"
   eyebrow="Channel split"
   title="Each surface has one job."
-  description="Canonical pages, dispatches, and discovery clips should reinforce each other without confusing attribution or lead routing."
+  description="Canonical pages, distribution notes, and discovery clips should reinforce each other without confusing the source of truth."
 >
   {#snippet after()}
     <ClearCardGrid items={channelRoles} columns={3} ariaLabel="Dify content channel split" />
     <ArticleVisualFigure
       src="/images/articles/dify-content-engine/content-engine-funnel.svg"
-      alt="Diagram showing the CREATE SOMETHING site as the canonical content hub, with Substack dispatches and discovery clips routing readers back to owned proof and conversion paths."
+      alt="Diagram showing the CREATE SOMETHING site as the canonical content hub, with distribution notes and discovery clips routing readers back to owned proof and next steps."
       eyebrow="Original visual"
       title="The canonical page owns proof, disclosure, and routing."
-      caption="This owned diagram makes the content engine visible: long-form proof lives on the agency domain, dispatch channels point back to it, and conversion evidence stays measurable."
+      caption="This owned diagram makes the page system visible: long-form proof lives on the agency domain, distribution channels point back to it, and route strength stays measurable."
       sourceLabel="Created by CREATE SOMETHING for this article."
     />
   {/snippet}
@@ -236,7 +236,7 @@
   variant="white"
   eyebrow="Targets"
   title="The content engine has measurable milestones."
-  description="Conversion targets stay explicit so the affiliate path does not blur into implementation or partner-led revenue."
+  description="Milestones should measure whether the cluster is clear, connected, and strong enough to stay indexable."
 >
   {#snippet after()}
     <ClearCardGrid items={targets} columns={4} ariaLabel="Dify content targets" />
@@ -245,19 +245,19 @@
 
 <ClearPageSection
   variant="soft"
-  eyebrow="Economics"
-  title="Affiliate economics are useful only after the routing is clean."
-  description="Self-serve affiliate conversions, service leads, and partner opportunities should be measured separately."
+  eyebrow="Strength"
+  title="A strong page earns its route."
+  description="The registry should make weak, redundant, stale, or off-language pages easy to repair or remove."
 >
   {#snippet after()}
-    <ClearCardGrid items={economics} columns={3} ariaLabel="Dify affiliate economics" />
+    <ClearCardGrid items={strengthSignals} columns={3} ariaLabel="Dify page strength signals" />
   {/snippet}
 </ClearPageSection>
 
 <ClearPageSection
   variant="white"
   eyebrow="Operating loop"
-  title="Publish, link, disclose, and measure."
+  title="Publish, link, ground, and score."
   description="The content workflow is a control path, not just a publishing cadence."
 >
   {#snippet after()}
@@ -267,7 +267,7 @@
 
 <ClearCtaBand
   eyebrow="Next"
-  title="Use content to qualify the workflow, not replace the service path."
+  title="Use content to clarify the workflow, not hide it."
   description="If the reader has a concrete Dify workflow, the next step is to map the workflow, tool boundary, approval path, and evidence."
   items={ctaItems}
 >

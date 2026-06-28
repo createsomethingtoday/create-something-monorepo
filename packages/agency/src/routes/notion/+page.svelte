@@ -129,7 +129,7 @@
       eyebrow: 'Agent runtime',
       icon: 'settings',
       title: 'Dify',
-      detail: 'Client-facing agent workflows, eval gates, marketplace proof, and affiliate-ready adoption.',
+      detail: 'Client-facing agent workflows, MCP tool boundaries, eval gates, and readable evidence.',
       href: '/dify'
     },
     {

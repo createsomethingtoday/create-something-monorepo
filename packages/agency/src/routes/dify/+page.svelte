@@ -12,22 +12,22 @@
 
   const statusCards: ClearCardItem[] = [
     {
-      eyebrow: 'Application',
+      eyebrow: 'Workflow',
       icon: 'settings',
-      title: 'Service Partner',
-      detail: 'Implementation, training, support, governance, and enterprise adoption.'
+      title: 'Visible agent surface',
+      detail: 'The Dify app shows the task, user handoff, and expected outcome.'
     },
     {
-      eyebrow: 'Distribution',
+      eyebrow: 'Boundary',
       icon: 'folder',
-      title: 'Marketplace Partner',
-      detail: 'Templates, plugins, and repeatable Dify plus MCP solutions.'
+      title: 'Scoped tool access',
+      detail: 'MCP cards name the tools, resources, owners, and setup steps.'
     },
     {
-      eyebrow: 'Target',
+      eyebrow: 'Control',
       icon: 'check',
-      title: '20 paid conversions',
-      detail: 'The first affiliate economics milestone after Dify accepts the application.'
+      title: 'Approval and evidence',
+      detail: 'Policy OS names what can run, what stops, and what gets recorded.'
     }
   ];
 
@@ -36,7 +36,7 @@
       eyebrow: 'Sanitized proof',
       icon: 'document',
       title: 'Public Guide Agent',
-      detail: 'A public Dify guide agent backed by read-only MCP cards and trust catalog evidence instead of private traces.'
+      detail: 'A public Dify guide agent backed by read-only MCP cards and evidence summaries instead of private traces.'
     },
     {
       eyebrow: 'Client system',
@@ -54,15 +54,15 @@
       eyebrow: 'Review system',
       icon: 'check',
       title: 'Marketplace Creator Pipeline',
-      detail: 'A Dify-supported marketplace workflow that keeps review context, tool access, and policy boundaries inspectable.'
+      detail: 'A Dify-supported review workflow that keeps context, tool access, and policy boundaries inspectable.'
     }
   ];
 
   const faqItems = [
     {
-      question: 'What is the Dify implementation lane?',
+      question: 'What is the Dify workflow path?',
       answer:
-        'It is the CREATE SOMETHING path for Dify-first agent systems with MCP connectivity, Policy OS governance, eval gates, and client-safe evidence.'
+        'It is the CREATE SOMETHING path for mapping a Dify workflow before it runs: visible app surface, MCP tool boundary, Policy OS rule, eval gates, and evidence.'
     },
     {
       question: 'Where does MCP fit with Dify?',
@@ -92,11 +92,11 @@
         'Policy OS defines what can run, what needs a human, what stops, and what evidence gets recorded.'
     },
     {
-      eyebrow: 'Agencies',
+      eyebrow: 'Teams',
       icon: 'users',
-      title: 'Package repeatable Dify delivery.',
+      title: 'Reuse the workflow pattern.',
       detail:
-        'Turn proven workflows into templates, plugin candidates, client-safe case studies, and affiliate-ready content.'
+        'Turn proven workflows into templates, setup guides, readable proof, and repeatable delivery steps.'
     }
   ];
 
@@ -128,9 +128,9 @@
     {
       eyebrow: 'Publish',
       icon: 'document',
-      title: 'Custom-domain content engine',
+      title: 'Dify page portfolio',
       detail:
-        'Keep canonical Dify articles, disclosures, analytics, and partner handoff on the agency domain.',
+        'Keep canonical Dify explanations, proof, routing, and next steps on the agency domain.',
       href: '/dify/content-engine'
     },
     {
@@ -171,16 +171,16 @@
 
   const complianceCards: ClearCardItem[] = [
     {
-      eyebrow: 'Partner',
+      eyebrow: 'Claims',
       icon: 'warning',
-      title: 'No official partner claim before approval',
-      detail: 'The page can show readiness and proof without implying Dify has accepted the application.'
+      title: 'Say what the workflow does',
+      detail: 'Public copy should explain the mapped task, tool boundary, stop point, owner, and evidence.'
     },
     {
-      eyebrow: 'Affiliate',
-      icon: 'warning',
-      title: 'No affiliate link replacement before acceptance',
-      detail: 'Affiliate routing waits for acceptance, disclosures, and declared surfaces.'
+      eyebrow: 'Routing',
+      icon: 'arrow-right',
+      title: 'Send readers to the next useful page',
+      detail: 'A page should route to the control model, eval gates, shipping guide, comparison, or mapping session.'
     },
     {
       eyebrow: 'Private proof',
@@ -213,9 +213,9 @@
 </script>
 
 <SEO
-  title="Dify Implementation Lane | CREATE SOMETHING .agency"
-  description="CREATE SOMETHING builds Dify-first agent systems with MCP connectivity, Policy OS governance, eval gates, and client-safe evidence."
-  keywords="Dify implementation, Dify MCP, Dify partner application, Dify affiliate, Policy OS, AI agent governance"
+  title="Dify Workflow Systems | CREATE SOMETHING .agency"
+  description="CREATE SOMETHING maps Dify workflows with MCP tool boundaries, Policy OS controls, eval gates, and readable evidence."
+  keywords="Dify workflow systems, Dify MCP, Policy OS, Dify eval gates, AI workflow evidence"
   ogImage="/og/dify-lane.svg"
   propertyName="agency"
   {faqItems}
@@ -225,15 +225,15 @@
   variant="hero"
   layout="split"
   titleLevel="h1"
-  eyebrow="Dify Implementation Lane"
-  title="Dify-ready agent systems with the policy layer attached."
+  eyebrow="Dify Workflow Systems"
+  title="Dify workflows with the operating boundary visible."
   description="CREATE SOMETHING packages Dify as the visible agent runtime, MCP as the tool boundary, and Policy OS as the approval, runbook, and evidence layer."
 >
   {#snippet actions()}
     <Button href={agencyCoreMessaging.workflowMappingSessionHref}>
       {agencyCoreMessaging.bookMappingSessionLabel}
     </Button>
-    <Button href="/partners" variant="secondary">See Partner Stack</Button>
+    <Button href="/stack" variant="secondary">See Stack Boundary</Button>
   {/snippet}
 
   {#snippet aside()}
@@ -245,7 +245,7 @@
   variant="white"
   eyebrow="Proof"
   title="Dify proof should be visible without exposing private traces."
-  description="The lane works when decision owners can see the app shape, tool boundary, eval posture, and delivery evidence."
+  description="The workflow becomes easier to trust when decision owners can see the app shape, tool boundary, eval posture, and delivery evidence."
 >
   {#snippet after()}
     <ClearCardGrid items={proofCards} columns={4} ariaLabel="Dify proof cards" />
@@ -255,7 +255,7 @@
 <ClearPageSection
   variant="soft"
   eyebrow="Audience"
-  title="The same Dify lane serves builders, operators, and agencies."
+  title="The same Dify map serves builders, operators, and teams."
   description="Each audience sees a concrete path instead of a generic chatbot pitch."
 >
   {#snippet after()}
@@ -287,9 +287,9 @@
 
 <ClearPageSection
   variant="white"
-  eyebrow="Compliance"
-  title="The lane is conservative until Dify accepts it."
-  description="The public page should separate implementation proof from affiliate, marketplace, and partner claims that require approval."
+  eyebrow="Language"
+  title="The page should make the workflow easy to understand."
+  description="Clear public pages name the task, boundary, owner, stop point, and evidence before asking anyone to choose a tool."
 >
   {#snippet after()}
     <ClearCardGrid items={complianceCards} columns={3} ariaLabel="Dify compliance guardrails" />
