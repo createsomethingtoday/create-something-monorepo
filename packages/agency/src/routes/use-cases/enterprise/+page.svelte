@@ -162,9 +162,9 @@
         'Policy OS fits teams already running automation that now need controlled execution states, approval rules, monitoring, and operating receipts.'
     },
     {
-      question: 'What should be added after the first workflow wedge?',
+      question: 'What should be added after the first workflow pilot?',
       answer:
-        'After the first wedge is live, add policy rules, evaluation gates, monitoring, incident loops, release evidence, and a review rhythm.'
+        'After the first pilot is live, add policy rules, evaluation gates, monitoring, incident loops, release evidence, and a review rhythm.'
     },
     {
       question: 'How does enterprise workflow reliability stay auditable?',
@@ -197,7 +197,7 @@
 
 <SEO
   title="Policy OS for Enterprise Workflow Reliability | CREATE SOMETHING .agency"
-  description="Policy OS for teams already running automation. Add controlled execution states, approval rules, monitoring, and operating receipts once the first workflow wedge is live."
+  description="Policy OS for teams already running automation. Add controlled execution states, approval rules, monitoring, and operating receipts once the first workflow pilot is live."
   keywords="enterprise automation reliability, workflow controls, policy operations, ai control layer, workflow reliability"
   ogImage="/og/policy-os.svg"
   propertyName="agency"

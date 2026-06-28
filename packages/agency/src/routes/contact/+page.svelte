@@ -110,7 +110,7 @@
         'Use this path when you can name the stack, bottleneck, owner, and the place where approval or evidence matters. The first output is a fixed-scope map, not an open-ended build.',
       formTitle: 'Request a Workflow Trust Map',
       formDescription:
-        'Share the current workflow shape so I can identify the likely operating path, first safe wedge, and no-build stop condition.',
+        'Share the current workflow shape so I can identify the likely operating path, first controlled pilot, and no-build stop condition.',
       messageLabel: 'Which workflow needs attention first?',
       messageHelper:
         'Name the stack, bottleneck, owner, and what should require approval before AI takes action. Do not include credentials or client secrets.',

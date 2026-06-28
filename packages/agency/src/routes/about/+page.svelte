@@ -223,7 +223,7 @@
     </p>
     <p>
       I have shipped integrations across Salesforce, HubSpot, Notion, Slack, Procore, and internal
-      systems. That work informs where native tooling is enough, where MCP is the right wedge, and
+      systems. That work informs where native tooling is enough, where MCP is the right integration path, and
       where approvals, policies, operator briefs, and recovery paths are the difference between a
       launch and a system people actually trust.
     </p>

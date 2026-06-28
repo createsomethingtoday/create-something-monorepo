@@ -1,5 +1,5 @@
 export const agencyCoreMessaging = {
-  categoryLabel: 'Delegated Work Control',
+  categoryLabel: 'AI workflow systems',
   startWithWorkflowLabel: 'Start Workflow Map',
   startWithWorkflowHref: '/services#atlas-warmup',
   tryMapLabel: 'Map a Workflow',
@@ -15,7 +15,7 @@ export const agencyCoreMessaging = {
   servicesMappingSessionHref:
     '/book?source=services&intent=workflow-mapping&lane=workflow_infrastructure',
   engagementModelLabel: 'See the service path →',
-  workflowCtaHeading: 'Bring one workflow your team wants to delegate.',
+  workflowCtaHeading: 'Bring one workflow your team wants to fix.',
   workflowCtaDetail:
-    'I show what can run, what waits, what stops, who owns the decision, and which receipt proves the work.'
+    'I show the handoff, the tools, what AI can do, where people approve, and which record proves the work.'
 } as const;

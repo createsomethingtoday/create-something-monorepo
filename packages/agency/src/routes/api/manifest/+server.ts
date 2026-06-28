@@ -63,8 +63,8 @@ const SERVICES: ContentItem[] = [
 	},
 	{
 		slug: 'mcp-only-discovery',
-		title: 'MCP Wedge (Discovery/Compliance)',
-		description: 'Scoped entry wedge for read-only or limited-scope connectivity when teams need a safe workflow starting point before broader automation.',
+		title: 'MCP Entry Path (Discovery/Compliance)',
+		description: 'Scoped entry path for read-only or limited-scope connectivity when teams need a safe workflow starting point before broader automation.',
 		category: 'service'
 	}
 ];

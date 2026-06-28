@@ -331,7 +331,7 @@
   variant="soft"
   eyebrow="Boundary canvas"
   title="A stack boundary becomes useful when it shows what must stop."
-  description="The story canvas turns vendor roles into an operating map: source data, allowed routing, assistive work, human judgment, hard stops, and the receipt surface."
+  description="The story canvas turns vendor roles into an operating map: source data, allowed routing, assistive work, human judgment, stop conditions, and the audit trail."
 >
   {#snippet after()}
     <PublicAtlasStoryCanvas

@@ -10,7 +10,7 @@
   } from '@create-something/canon';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
-  const wedgeSummary: ClearCardItem[] = [
+  const workflowSummary: ClearCardItem[] = [
     {
       eyebrow: 'Start',
       icon: 'search',
@@ -20,7 +20,7 @@
     {
       eyebrow: 'Build',
       icon: 'settings',
-      title: 'A scoped workflow wedge',
+      title: 'A scoped workflow pilot',
       detail: 'Connect the source systems, write the rules, and keep authority constrained.'
     },
     {
@@ -42,7 +42,7 @@
     {
       eyebrow: '02',
       icon: 'plus',
-      title: 'Connect only the first wedge',
+      title: 'Connect only the first handoff',
       detail:
         'Use the smallest useful connection point instead of rebuilding every system at once.'
     },
@@ -64,7 +64,7 @@
 
   const packageCards: ClearCardItem[] = [
     {
-      eyebrow: 'Workflow Wedge',
+      eyebrow: 'Workflow Pilot',
       icon: 'settings',
       title: '2-4 week implementation',
       detail:
@@ -76,7 +76,7 @@
       icon: 'search',
       title: 'Roadmap after proof',
       detail:
-        'Map tools, workflows, and data flow after the first wedge proves value. Typical range: $5,000-$10,000.',
+        'Map tools, workflows, and data flow after the first pilot proves value. Typical range: $5,000-$10,000.',
       points: ['Duplication', 'Manual movement', 'Disconnected records', 'Priority order']
     },
     {
@@ -93,7 +93,7 @@
     {
       eyebrow: 'Month 1',
       icon: 'plus',
-      title: 'HubSpot pipeline wedge',
+      title: 'HubSpot pipeline pilot',
       detail:
         'MCP endpoint, Codex setup, approval policy, and runbook for a professional-services workflow.',
       points: ['Saves 5 hrs/week', '$3,000 build']
@@ -141,7 +141,7 @@
     {
       question: 'How should a small team start with workflow automation?',
       answer:
-        'Start with one painful workflow, map the manual bridge, build the first safe wedge, and leave the operator with code, policy, and runbook evidence.'
+        'Start with one painful workflow, map the manual bridge, build the first controlled pilot, and leave the operator with code, policy, and runbook evidence.'
     },
     {
       question: 'What makes a workflow safe to delegate?',
@@ -149,9 +149,9 @@
         'A workflow is safer to delegate when it has named owners, source systems, scoped actions, approval-needed states, blocked states, and receipts.'
     },
     {
-      question: 'Does the first wedge need full platform migration?',
+      question: 'Does the first pilot need full platform migration?',
       answer:
-        'No. The first wedge should preserve existing systems and add only the smallest reliable control path around the current handoff.'
+        'No. The first pilot should preserve existing systems and add only the smallest reliable control path around the current handoff.'
     }
   ];
 
@@ -165,7 +165,7 @@
     {
       label: 'Map',
       icon: 'search',
-      title: 'First safe wedge',
+      title: 'First controlled pilot',
       detail: 'The smallest useful delegation boundary.'
     },
     {
@@ -178,8 +178,8 @@
 </script>
 
 <SEO
-  title="Workflow Wedges for Small Teams | CREATE SOMETHING .agency"
-  description="Turn one painful workflow into a reliable system. CREATE SOMETHING maps the manual bridge, builds the first safe wedge, and leaves the operator with code, policy, and runbook evidence."
+  title="Workflow Pilots for Small Teams | CREATE SOMETHING .agency"
+  description="Turn one painful workflow into a reliable system. CREATE SOMETHING maps the manual bridge, builds the first controlled pilot, and leaves the operator with code, policy, and runbook evidence."
   keywords="small business automation, workflow integration, custom MCP, HubSpot automation, Notion integration, ops automation, SMB AI"
   ogImage="/og-image.svg"
   propertyName="agency"
@@ -192,7 +192,7 @@
   titleLevel="h1"
   eyebrow="For teams of 5-50"
   title="Your tools do not talk to each other. Your team fills the gap."
-  description="Start with the workflow that wastes the most time. CREATE SOMETHING maps the manual bridge, builds the first safe wedge, and leaves your operator with a control path they can understand."
+  description="Start with the workflow that wastes the most time. CREATE SOMETHING maps the manual bridge, builds the first controlled pilot, and leaves your operator with a control path they can understand."
 >
   {#snippet actions()}
     <Button href={agencyCoreMessaging.selfMapHref}>
@@ -205,10 +205,10 @@
 
   {#snippet aside()}
     <ClearCardGrid
-      items={wedgeSummary}
+      items={workflowSummary}
       columns={1}
       density="compact"
-      ariaLabel="Workflow wedge summary"
+      ariaLabel="Workflow pilot summary"
     />
   {/snippet}
 </ClearPageSection>
@@ -220,18 +220,18 @@
   description="Your team does not need a full-stack rebuild on the first call. You need to see which handoff can be mapped, delegated, stopped, and proven."
 >
   {#snippet after()}
-    <ClearCardGrid items={journey} columns={4} ariaLabel="Small-team workflow wedge journey" />
+    <ClearCardGrid items={journey} columns={4} ariaLabel="Small-team workflow pilot journey" />
   {/snippet}
 </ClearPageSection>
 
 <ClearPageSection
   variant="soft"
   eyebrow="Service shape"
-  title="The offer expands only after the first wedge proves useful."
+  title="The offer expands only after the first pilot proves useful."
   description="One controlled workflow becomes the evidence for the next map, not a promise to automate everything at once."
 >
   {#snippet after()}
-    <ClearCardGrid items={packageCards} columns={3} ariaLabel="Workflow wedge service packages" />
+    <ClearCardGrid items={packageCards} columns={3} ariaLabel="Workflow pilot service packages" />
   {/snippet}
 </ClearPageSection>
 
@@ -260,7 +260,7 @@
 <ClearCtaBand
   eyebrow="Start with one workflow"
   title="Bring the workflow that wastes the most time."
-  description="I will help map the first safe wedge before expanding authority, scope, or spend."
+  description="I will help map the first controlled pilot before expanding authority, scope, or spend."
   items={ctaItems}
 >
   {#snippet actions()}
