@@ -15,7 +15,7 @@ export interface AgencyContentAssetAnalytics {
   contentType: 'article' | 'conversion-page' | 'guide' | 'partner-page' | 'service-page';
   contentCluster: string;
   contentIntent: AgencyContentIntent;
-  contentBuyer: string;
+  contentAudience: string;
   contentFunnelStage: AgencyContentFunnelStage;
   contentPrimaryKeyword: string;
   contentPrimaryCta: string;
@@ -28,7 +28,7 @@ const AGENCY_CONTENT_ASSETS_BY_PATH: Record<string, AgencyContentAssetAnalytics>
     contentType: 'service-page',
     contentCluster: 'workflow-infrastructure-services',
     contentIntent: 'service',
-    contentBuyer: 'operator evaluating governed workflow implementation support',
+    contentAudience: 'operator evaluating governed workflow implementation support',
     contentFunnelStage: 'decision',
     contentPrimaryKeyword: 'AI workflow systems consultant',
     contentPrimaryCta: 'request-workflow-teardown'
@@ -38,7 +38,7 @@ const AGENCY_CONTENT_ASSETS_BY_PATH: Record<string, AgencyContentAssetAnalytics>
     contentType: 'conversion-page',
     contentCluster: 'workflow-infrastructure-services',
     contentIntent: 'service',
-    contentBuyer: 'reader choosing between checklist, teardown, and mapping session',
+    contentAudience: 'reader choosing between checklist, teardown, and mapping session',
     contentFunnelStage: 'consideration',
     contentPrimaryKeyword: 'AI workflow governance checklist',
     contentPrimaryCta: 'choose-conversion-path'
@@ -48,7 +48,7 @@ const AGENCY_CONTENT_ASSETS_BY_PATH: Record<string, AgencyContentAssetAnalytics>
     contentType: 'conversion-page',
     contentCluster: 'workflow-infrastructure-services',
     contentIntent: 'booking',
-    contentBuyer: 'qualified buyer ready to map a governed workflow',
+    contentAudience: 'qualified team ready to map a governed workflow',
     contentFunnelStage: 'decision',
     contentPrimaryKeyword: 'workflow mapping session',
     contentPrimaryCta: 'book-mapping-session'
@@ -58,7 +58,7 @@ const AGENCY_CONTENT_ASSETS_BY_PATH: Record<string, AgencyContentAssetAnalytics>
     contentType: 'partner-page',
     contentCluster: 'partner-implementation-lanes',
     contentIntent: 'partner-proof',
-    contentBuyer: 'operator evaluating vendor-neutral implementation support',
+    contentAudience: 'operator evaluating vendor-neutral implementation support',
     contentFunnelStage: 'consideration',
     contentPrimaryKeyword: 'AI implementation partner',
     contentPrimaryCta: 'request-workflow-teardown'
@@ -68,7 +68,7 @@ const AGENCY_CONTENT_ASSETS_BY_PATH: Record<string, AgencyContentAssetAnalytics>
     contentType: 'partner-page',
     contentCluster: 'partner-implementation-lanes',
     contentIntent: 'partner-proof',
-    contentBuyer: 'operator evaluating Cloudflare-backed AI workflow infrastructure',
+    contentAudience: 'operator evaluating Cloudflare-backed AI workflow infrastructure',
     contentFunnelStage: 'consideration',
     contentPrimaryKeyword: 'Cloudflare AI workflow implementation partner',
     contentPrimaryCta: 'request-workflow-teardown'
@@ -78,7 +78,7 @@ const AGENCY_CONTENT_ASSETS_BY_PATH: Record<string, AgencyContentAssetAnalytics>
     contentType: 'partner-page',
     contentCluster: 'dify-governed-agent-systems',
     contentIntent: 'partner-proof',
-    contentBuyer: 'operator evaluating Dify implementation support',
+    contentAudience: 'operator evaluating Dify implementation support',
     contentFunnelStage: 'consideration',
     contentPrimaryKeyword: 'Dify implementation partner',
     contentPrimaryCta: 'request-workflow-teardown'
@@ -88,7 +88,7 @@ const AGENCY_CONTENT_ASSETS_BY_PATH: Record<string, AgencyContentAssetAnalytics>
     contentType: 'guide',
     contentCluster: 'dify-affiliate-content',
     contentIntent: 'how-to',
-    contentBuyer: 'agency consultant or operator building a Dify acquisition lane',
+    contentAudience: 'agency consultant or operator building a Dify acquisition lane',
     contentFunnelStage: 'consideration',
     contentPrimaryKeyword: 'Dify affiliate content strategy',
     contentPrimaryCta: 'get-governance-checklist',
@@ -99,7 +99,7 @@ const AGENCY_CONTENT_ASSETS_BY_PATH: Record<string, AgencyContentAssetAnalytics>
     contentType: 'article',
     contentCluster: 'dify-governed-agent-systems',
     contentIntent: 'how-to',
-    contentBuyer: 'technical operator connecting Dify to governed MCP tools',
+    contentAudience: 'technical operator connecting Dify to governed MCP tools',
     contentFunnelStage: 'decision',
     contentPrimaryKeyword: 'Dify MCP control plane',
     contentPrimaryCta: 'request-workflow-teardown',
@@ -110,7 +110,7 @@ const AGENCY_CONTENT_ASSETS_BY_PATH: Record<string, AgencyContentAssetAnalytics>
     contentType: 'article',
     contentCluster: 'dify-governed-agent-systems',
     contentIntent: 'how-to',
-    contentBuyer: 'operator validating a Dify app before production use',
+    contentAudience: 'operator validating a Dify app before production use',
     contentFunnelStage: 'decision',
     contentPrimaryKeyword: 'Dify agent eval gates',
     contentPrimaryCta: 'book-mapping-session',
@@ -121,7 +121,7 @@ const AGENCY_CONTENT_ASSETS_BY_PATH: Record<string, AgencyContentAssetAnalytics>
     contentType: 'article',
     contentCluster: 'dify-governed-agent-systems',
     contentIntent: 'how-to',
-    contentBuyer: 'builder or agency packaging a Dify workflow with governed MCP tools',
+    contentAudience: 'builder or agency packaging a Dify workflow with governed MCP tools',
     contentFunnelStage: 'decision',
     contentPrimaryKeyword: 'ship Dify app with MCP tools',
     contentPrimaryCta: 'request-workflow-teardown'
@@ -131,7 +131,7 @@ const AGENCY_CONTENT_ASSETS_BY_PATH: Record<string, AgencyContentAssetAnalytics>
     contentType: 'article',
     contentCluster: 'ai-workflow-platform-comparisons',
     contentIntent: 'versus',
-    contentBuyer: 'operator comparing workflow automation and agent app tools',
+    contentAudience: 'operator comparing workflow automation and agent app tools',
     contentFunnelStage: 'decision',
     contentPrimaryKeyword: 'Dify vs n8n',
     contentPrimaryCta: 'request-workflow-teardown',
@@ -142,7 +142,7 @@ const AGENCY_CONTENT_ASSETS_BY_PATH: Record<string, AgencyContentAssetAnalytics>
     contentType: 'partner-page',
     contentCluster: 'partner-implementation-lanes',
     contentIntent: 'partner-proof',
-    contentBuyer: 'operator evaluating Notion implementation support',
+    contentAudience: 'operator evaluating Notion implementation support',
     contentFunnelStage: 'consideration',
     contentPrimaryKeyword: 'Notion operations workspace consultant',
     contentPrimaryCta: 'request-workflow-teardown'

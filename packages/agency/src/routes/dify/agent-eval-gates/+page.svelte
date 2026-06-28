@@ -329,7 +329,7 @@
   variant="white"
   eyebrow="Evidence"
   title="Public proof and private evidence are different artifacts."
-  description="Buyers need proof that the workflow is governed. Operators still need private traces, receipts, and detailed records that should not be published."
+  description="Decision owners need proof that the workflow is governed. Operators still need private traces, receipts, and detailed records that should not be published."
 >
   {#snippet after()}
     <ClearCardGrid items={proofCards} columns={3} ariaLabel="Dify eval evidence types" />

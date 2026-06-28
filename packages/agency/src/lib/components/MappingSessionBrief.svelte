@@ -5,7 +5,7 @@
   export let eyebrow = 'Mapping session';
   export let title = 'The first call turns the pitch into a scoped operating path.';
   export let description =
-    'The buyer does not need a technical scavenger hunt. They need to see what agents and tools can do, what stays human, where MCPs fit, and what evidence makes the workflow safe to delegate.';
+    'Your team does not need a technical scavenger hunt. You need to see what agents and tools can do, what stays human, where MCPs fit, and what evidence makes the workflow safe to delegate.';
   export let ctaHref: string = agencyCoreMessaging.workflowMappingSessionHref;
   export let ctaLabel: string = agencyCoreMessaging.bookMappingSessionLabel;
 

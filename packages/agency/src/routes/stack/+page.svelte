@@ -295,7 +295,7 @@
   titleLevel="h1"
   eyebrow="Stack Boundary"
   title="Know what you own before any tool acts."
-  description="A buyer should be able to see who owns the accounts, where secrets live, which actions can run, which decisions need approval, what stops, and what evidence travels with the handoff."
+  description="Your team should be able to see who owns the accounts, where secrets live, which actions can run, which decisions need approval, what stops, and what evidence travels with the handoff."
 >
   {#snippet actions()}
     <Button href={agencyCoreMessaging.selfMapHref}>
@@ -360,7 +360,7 @@
   variant="soft"
   eyebrow="Procurement trust"
   title="The stack is buyable because the boundary is explicit."
-  description="A serious workflow buyer needs to know who owns accounts, where secrets live, what access is granted, how revocation works, and what evidence survives after launch."
+  description="A serious workflow decision needs clear account ownership, secret handling, access scope, revocation, and launch evidence."
 >
   {#snippet after()}
     <ClearCardGrid items={procurementTrust} columns={3} ariaLabel="Procurement trust controls" />

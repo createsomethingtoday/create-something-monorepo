@@ -9,17 +9,17 @@ const MARKETING_TEMPLATES_DIR = join(ROOT, 'packages/agency/content/templates/ma
 const ARTICLE_ASSETS_DIR = join(ROOT, 'packages/agency/content/assets/articles');
 
 const TEMPLATE_REQUIREMENTS = {
-  'buyer-intent-article-brief.md': [
+  'workflow-intent-article-brief.md': [
     'attempt an Atlas-style canvas before creating a one-off graphic',
     'Canvas-first fit',
     'Atlas canvas source: existing starter map | new graph artifact | not applicable',
-    'Canvas renderer: static-story | react-flow | sigma | cosmograph | not applicable',
+    'Canvas renderer: Atlas | static-story | sigma | cosmograph | not applicable',
     'Canvas must show: owner | workflow artifact | automation | AI task | human judgment | stop boundary | receipt',
   ],
   'image-prompt.md': [
     'Model: gpt-image-2',
     'Image family: atlas-story-canvas',
-    'Canvas renderer: static-story | react-flow | sigma | cosmograph | not applicable',
+    'Canvas renderer: Atlas | static-story | sigma | cosmograph | not applicable',
     'Atlas graph source: existing starter map | new graph artifact | not applicable',
     'Preserve the graph as the source of truth',
     'Use Ona.com as the design and communication foundation',

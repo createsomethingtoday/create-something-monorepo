@@ -155,16 +155,16 @@
 
   <ClearPageSection
     variant="white"
-    eyebrow="Proof object"
-    title="The map comes before the automation."
-    description="A buyer should see the work in plain language before anyone argues about tools: source state, allowed action, approval owner, hard stop, and receipt surface."
+    eyebrow="Atlas entry point"
+    title="The map is the productized wedge."
+    description="Atlas turns the workflow into an inspectable artifact: human tasks, AI tasks, system operations, source data, constraints, touchpoints, owners, stop conditions, and receipts."
   >
     {#snippet after()}
       <PublicAtlasStoryCanvas
         starterId="marketplace-review-queue"
         storyId="home-support-recovery-atlas-story"
         eyebrow="Workflow Trust Map"
-        title="A buyer should see the boundary before the build."
+        title="The map comes before the automation."
         description="This read-only Atlas canvas shows how a workflow becomes safe to discuss: source state, allowed action, approval owner, hard stop, and receipt surface."
         compact
       />

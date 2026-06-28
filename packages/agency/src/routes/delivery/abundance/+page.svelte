@@ -279,7 +279,7 @@
 <DeliveryOutcomeStrip
   eyebrow="Business outcome"
   title="The pilot reads as an operating path."
-  description="A buyer can see what changed, what is safer, and which decisions still gate the next phase without reading private evidence."
+  description="The decision owner can see what changed, what is safer, and which decisions still gate the next phase without reading private evidence."
   items={outcomeItems}
 />
 

@@ -43,7 +43,7 @@
   let {
     eyebrow = 'Reason-coded Blocking',
     title = 'Why access can stop even when credentials still exist',
-    description = 'Blocked states are product behavior. Each one needs a clear reason and a recovery path so support, buyers, and operators see the same reality.',
+    description = 'Blocked states are product behavior. Each one needs a clear reason and a recovery path so support, decision owners, and operators see the same reality.',
     states = DEFAULT_STATES
   }: Props = $props();
 </script>

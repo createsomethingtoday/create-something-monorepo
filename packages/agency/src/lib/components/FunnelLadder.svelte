@@ -5,7 +5,7 @@
   export let eyebrow = 'Conversion Path';
   export let title = 'Move from useful reading to a workflow trust decision.';
   export let description =
-    'Cold readers should not be forced straight into a calendar. The ladder starts with a reusable checklist, moves to a trust map, and keeps the booking path for high-intent buyers.';
+    'Cold readers should not be forced straight into a calendar. The ladder starts with a reusable checklist, moves to a trust map, and keeps the booking path for teams with a named workflow.';
 
   const stages = [
     {
@@ -30,7 +30,7 @@
       label: 'Hot',
       title: 'Mapping session',
       detail:
-        'A calendar path for buyers who already know the workflow, owner, approval authority, and decision timeline.',
+        'A calendar path for teams who already know the workflow, owner, approval authority, and decision timeline.',
       cta: agencyCoreMessaging.bookMappingSessionLabel,
       href: '/book?source=funnel-ladder&intent=workflow-mapping&lane=not_sure',
       intent: 'workflow-mapping'
