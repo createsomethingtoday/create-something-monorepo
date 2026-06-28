@@ -70,6 +70,10 @@ Avoid public words and frames like:
 - wedge
 - entry wedge
 - productized wedge
+- partner lane
+- partner claim
+- support lane
+- out-of-lane
 - GTM vector
 - lead magnet
 - MCP-first thesis

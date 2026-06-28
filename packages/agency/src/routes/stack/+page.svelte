@@ -161,7 +161,7 @@
       icon: 'settings',
       title: 'Humans keep the final risk decisions',
       detail:
-        'Revenue, customer trust, compliance, and production-impacting work waits for named approval when the lane requires it.',
+        'Revenue, customer trust, compliance, and production-impacting work waits for named approval when the workflow scope requires it.',
       points: ['Named owner', 'Run, wait, and stop states']
     }
   ];

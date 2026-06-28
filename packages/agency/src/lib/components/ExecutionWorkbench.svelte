@@ -169,7 +169,7 @@
         }
       ],
       plan: ['Confirm carrier status', 'Draft apology with facts', 'Route credit to account owner'],
-      warnings: ['Credit exceeds support lane', 'Customer is marked VIP'],
+      warnings: ['Credit exceeds support scope', 'Customer is marked VIP'],
       connections: [
         { name: 'Carrier API', scope: 'read tracking', tone: 'allow' },
         { name: 'Zendesk', scope: 'draft reply', tone: 'allow' },
