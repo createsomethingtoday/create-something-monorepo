@@ -4,6 +4,7 @@ import {
   buildSearchFallbackAttempts,
   buildPublicJobUpsert,
   classifyNursingJobTitle,
+  getPublicJobsCoverage,
   ingestRapidApiJobs,
   inferNursingRolePlan,
   listAbundanceJobToolNames,
@@ -174,6 +175,7 @@ test('ChatGPT public tool list excludes write-capable funnel action', () => {
     'list_public_jobs',
     'search_public_jobs',
     'get_job',
+    'get_public_jobs_coverage',
   ]);
   assert.equal(listAbundanceJobToolNames().includes('send_job_to_funnel'), true);
 });
@@ -246,6 +248,45 @@ test('public job state filters do not match arbitrary two-letter substrings', as
   assert.ok(boundArgs.includes('california'));
   assert.ok(boundArgs.includes('%, CA,%'));
   assert.ok(boundArgs.includes('%, california,%'));
+});
+
+test('public jobs coverage summarizes indexed state coverage without paid provider calls', async () => {
+  const sqlCalls: string[] = [];
+  const bindCalls: unknown[][] = [];
+  const db = {
+    prepare(sql: string) {
+      sqlCalls.push(sql);
+      return {
+        bind(...args: unknown[]) {
+          bindCalls.push(args);
+          return {
+            async first() {
+              assert.match(sql, /COUNT\(\*\) AS job_count/);
+              return { job_count: 0, newest_last_seen_at: null };
+            },
+            async all() {
+              if (sql.includes('GROUP BY upper(state)')) return { results: [] };
+              if (sql.includes('GROUP BY role')) return { results: [] };
+              if (sql.includes('GROUP BY source_system')) return { results: [] };
+              return { results: [] };
+            },
+          };
+        },
+      };
+    },
+  } as unknown as D1Database;
+
+  const coverage = await getPublicJobsCoverage(db, { state: 'Alabama' });
+
+  assert.equal(coverage.status, 'open');
+  assert.equal(coverage.requested_state, 'AL');
+  assert.equal(coverage.has_coverage, false);
+  assert.match(coverage.notes.join('\n'), /does not call RapidAPI/);
+  assert.match(coverage.notes.join('\n'), /dataset coverage gaps/);
+  assert.equal(sqlCalls.length, 4);
+  assert.ok(bindCalls.every((args) => args.includes('open')));
+  assert.ok(bindCalls.every((args) => args.includes('AL')));
+  assert.ok(bindCalls.every((args) => args.includes('alabama')));
 });
 
 test('fresh Cloudflare D1 ingestion run skips a paid RapidAPI fetch', async () => {

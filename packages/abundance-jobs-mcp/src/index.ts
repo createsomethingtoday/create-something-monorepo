@@ -17,7 +17,7 @@ export const EXPIRED_ENDPOINT = '/active-ats-expired';
 
 const ACTIVE_ENDPOINTS = ['/active-ats-7d', '/modified-ats-24h'] as const;
 const DEFAULT_REFRESH_ENDPOINTS = ['/modified-ats-24h'] as const satisfies readonly RapidApiActiveJobsEndpoint[];
-const READ_ONLY_TOOL_NAMES = ['search', 'fetch', 'list_public_jobs', 'search_public_jobs', 'get_job'] as const;
+const READ_ONLY_TOOL_NAMES = ['search', 'fetch', 'list_public_jobs', 'search_public_jobs', 'get_job', 'get_public_jobs_coverage'] as const;
 const FUNNEL_TOOL_NAME = 'send_job_to_funnel' as const;
 const TOOL_NAMES = [...READ_ONLY_TOOL_NAMES, FUNNEL_TOOL_NAME] as const;
 const NORMALIZED_STATUSES = ['open', 'closed', 'expired', 'unknown'] as const;
@@ -304,6 +304,18 @@ interface PublicJobsQueryResult {
   freshness: { newest_last_seen_at?: string; newest_provider?: string };
 }
 
+export interface PublicJobsCoverageSummary extends Record<string, unknown> {
+  status: string;
+  requested_state?: string;
+  total_jobs: number;
+  has_coverage: boolean;
+  newest_last_seen_at?: string;
+  states: Array<{ state: string; job_count: number; newest_last_seen_at?: string }>;
+  roles: Array<{ role: string; job_count: number }>;
+  sources: Array<{ source_system: string; job_count: number }>;
+  notes: string[];
+}
+
 export interface SearchFallbackMetadata {
   applied: boolean;
   reason: string;
@@ -396,6 +408,12 @@ const getJobSchema = {
   include_raw_payload: optionalBooleanParam('Default false.'),
 };
 
+const coverageSchema = {
+  state: optionalStringParam('Optional US state name or abbreviation. Use this before or after a zero-result state search to tell whether the current Abundance index covers that state.'),
+  status: optionalStringParam('Status filter. Defaults to open. Accepts open, closed, expired, unknown, or legacy new/reviewing/qualified/rejected/archived.'),
+  limit: optionalIntParam('Number of state/source/role buckets to return. Default 10, max 50.', 1, 50),
+};
+
 const sendJobToFunnelSchema = {
   job_id: requiredStringParam('Abundance public job ID to send into the Agency funnel after user confirmation.'),
 };
@@ -435,6 +453,25 @@ export function registerAbundanceJobsTools(
         jobs_db_configured: Boolean(options.getDb()),
         tools: listAbundanceJobToolNames(toolOptions),
       }),
+  );
+
+  server.resource(
+    'abundance-jobs-coverage',
+    'abundance-jobs://coverage',
+    {
+      description: 'Coverage summary for the current public jobs index, grouped by state, role, and source. No RapidAPI requests are made.',
+      mimeType: 'application/json',
+    },
+    async () => {
+      const db = options.getDb();
+      if (!db) {
+        return resourceJson('abundance-jobs://coverage', {
+          ok: false,
+          error: 'JOBS_DB is not configured for this deployment.',
+        });
+      }
+      return resourceJson('abundance-jobs://coverage', await getPublicJobsCoverage(db, {}));
+    },
   );
 
   const readOnlyAnnotations = {
@@ -490,6 +527,14 @@ export function registerAbundanceJobsTools(
     getJobSchema,
     readOnlyAnnotations,
     async (input) => executeDb(options.getDb(), (db) => getPublicJob(db, normalizeInput(input))),
+  );
+
+  server.tool(
+    'get_public_jobs_coverage',
+    'Check which states, nursing roles, and sources are covered by the current public jobs index. Use this to explain zero-result searches without making paid RapidAPI requests. Read-only.',
+    coverageSchema,
+    readOnlyAnnotations,
+    async (input) => executeDb(options.getDb(), (db) => getPublicJobsCoverageTool(db, normalizeInput(input))),
   );
 
   if (toolOptions.includeFunnelTool !== false) {
@@ -875,6 +920,14 @@ export async function getPublicJob(db: D1Database, input: Record<string, unknown
   return jsonContent({ job: toPublicJob(row, includeRawPayload) });
 }
 
+async function getPublicJobsCoverageTool(db: D1Database, input: Record<string, unknown>): Promise<CallToolResult> {
+  return structuredJsonContent(await getPublicJobsCoverage(db, {
+    state: readOptionalString(input.state),
+    status: readOptionalString(input.status),
+    limit: readOptionalInteger(input.limit),
+  }));
+}
+
 async function fetchPublicJobDocument(db: D1Database, input: Record<string, unknown>): Promise<CallToolResult> {
   const jobId = readRequiredString(input.id, 'id');
   const row = await getPublicJobRow(db, jobId);
@@ -1101,6 +1154,111 @@ export async function queryPublicJobs(
       newest_last_seen_at: jobs[0]?.last_seen_at,
       newest_provider: jobs[0]?.provider,
     },
+  };
+}
+
+export async function getPublicJobsCoverage(
+  db: D1Database,
+  filters: { state?: string; status?: string; limit?: number },
+): Promise<PublicJobsCoverageSummary> {
+  const limit = clamp(filters.limit ?? 10, 1, 50);
+  const status = normalizeStatusFilter(filters.status) ?? 'open';
+  const requestedState = normalizeStateCode(filters.state);
+  const requestedStateName = stateNameForCode(requestedState);
+  const where = ['status = ?'];
+  const args: unknown[] = [status];
+
+  if (filters.state?.trim()) {
+    const state = filters.state.trim();
+    const stateCode = requestedState;
+    const stateName = requestedStateName ?? state;
+    where.push('(upper(state) = ? OR lower(state) = lower(?) OR lower(location_text) LIKE lower(?) OR lower(location_text) LIKE lower(?))');
+    args.push(stateCode ?? state.toUpperCase(), stateName, `%, ${stateCode ?? state},%`, `%, ${stateName},%`);
+  }
+
+  const whereSql = where.join(' AND ');
+  const summary = await db
+    .prepare(`SELECT COUNT(*) AS job_count, MAX(last_seen_at) AS newest_last_seen_at FROM abundance_public_jobs WHERE ${whereSql}`)
+    .bind(...args)
+    .first<{ job_count: number; newest_last_seen_at?: string | null }>();
+  const statesResult = await db
+    .prepare(
+      `
+      SELECT upper(state) AS state, COUNT(*) AS job_count, MAX(last_seen_at) AS newest_last_seen_at
+      FROM abundance_public_jobs
+      WHERE ${whereSql} AND state IS NOT NULL AND trim(state) != ''
+      GROUP BY upper(state)
+      ORDER BY job_count DESC, state ASC
+      LIMIT ?
+    `,
+    )
+    .bind(...args, limit)
+    .all<{ state: string; job_count: number; newest_last_seen_at?: string | null }>();
+  const rolesResult = await db
+    .prepare(
+      `
+      SELECT
+        CASE
+          WHEN lower(title) LIKE '%registered nurse%' OR lower(title) LIKE 'rn %' OR lower(title) LIKE '% rn %' OR lower(title) LIKE '%(rn)%' THEN 'registered_nurse'
+          WHEN lower(title) LIKE '%licensed practical nurse%' OR lower(title) LIKE '%licensed vocational nurse%' OR lower(title) LIKE 'lpn %' OR lower(title) LIKE 'lvn %' OR lower(title) LIKE '% lpn%' OR lower(title) LIKE '% lvn%' THEN 'licensed_practical_or_vocational_nurse'
+          WHEN lower(title) LIKE '%certified nursing assistant%' OR lower(title) LIKE '%certified nurse assistant%' OR lower(title) LIKE '%certified nurse aide%' OR lower(title) LIKE '% cna%' OR lower(title) LIKE '%(cna)%' THEN 'certified_nursing_assistant'
+          WHEN lower(title) LIKE '%nurse practitioner%' THEN 'nurse_practitioner'
+          WHEN lower(title) LIKE '%nurse%' THEN 'generic_nurse'
+          ELSE 'other'
+        END AS role,
+        COUNT(*) AS job_count
+      FROM abundance_public_jobs
+      WHERE ${whereSql}
+      GROUP BY role
+      ORDER BY job_count DESC, role ASC
+      LIMIT ?
+    `,
+    )
+    .bind(...args, limit)
+    .all<{ role: string; job_count: number }>();
+  const sourcesResult = await db
+    .prepare(
+      `
+      SELECT source_system, COUNT(*) AS job_count
+      FROM abundance_public_jobs
+      WHERE ${whereSql}
+      GROUP BY source_system
+      ORDER BY job_count DESC, source_system ASC
+      LIMIT ?
+    `,
+    )
+    .bind(...args, limit)
+    .all<{ source_system: string; job_count: number }>();
+
+  const totalJobs = Number(summary?.job_count ?? 0);
+  const stateLabel = requestedState ?? filters.state?.trim();
+  const notes = [
+    'Coverage is based only on jobs already stored in Cloudflare D1; this check does not call RapidAPI.',
+    stateLabel && totalJobs === 0
+      ? `No ${status} jobs are currently indexed for ${stateLabel}. Treat zero-result searches there as dataset coverage gaps unless a fresh ingestion/backfill has been run.`
+      : undefined,
+  ].filter(Boolean) as string[];
+
+  return {
+    status,
+    requested_state: stateLabel,
+    total_jobs: totalJobs,
+    has_coverage: totalJobs > 0,
+    newest_last_seen_at: summary?.newest_last_seen_at ?? undefined,
+    states: statesResult.results.map((row) => ({
+      state: row.state,
+      job_count: Number(row.job_count),
+      newest_last_seen_at: row.newest_last_seen_at ?? undefined,
+    })),
+    roles: rolesResult.results.map((row) => ({
+      role: row.role,
+      job_count: Number(row.job_count),
+    })),
+    sources: sourcesResult.results.map((row) => ({
+      source_system: row.source_system,
+      job_count: Number(row.job_count),
+    })),
+    notes,
   };
 }
 

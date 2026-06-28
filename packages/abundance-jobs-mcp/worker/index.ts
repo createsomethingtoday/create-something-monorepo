@@ -117,6 +117,30 @@ function inferLocationIntent(input: unknown): string | undefined {
   return query ? 'query_only' : undefined;
 }
 
+function safeTelemetryText(value: unknown, maxLength = 120): string | undefined {
+  if (typeof value !== 'string') return undefined;
+  const cleaned = value
+    .trim()
+    .replace(/\b[\w.%+-]+@[\w.-]+\.[a-z]{2,}\b/gi, '[email]')
+    .replace(/https?:\/\/\S+/gi, '[url]')
+    .replace(/\+?\d[\d\s().-]{7,}\d/g, '[phone]')
+    .replace(/\s+/g, ' ');
+  return cleaned.length > 0 ? cleaned.slice(0, maxLength) : undefined;
+}
+
+function summarizeAbundanceInput(input: unknown): Record<string, unknown> {
+  const record = asRecord(input);
+  const limit = typeof record.limit === 'number' ? record.limit : typeof record.limit === 'string' ? Number.parseInt(record.limit, 10) : undefined;
+  return {
+    sanitized_query: safeTelemetryText(record.query),
+    requested_location: safeTelemetryText(record.location),
+    requested_state: safeTelemetryText(record.state, 40),
+    requested_status: safeTelemetryText(record.status, 40),
+    requested_source_system: safeTelemetryText(record.source_system, 60),
+    requested_limit: Number.isFinite(limit) ? limit : undefined,
+  };
+}
+
 function summarizeAbundanceOutput(output: unknown): Record<string, unknown> {
   const data = parseToolOutput(output);
   const fallback = asRecord(data.fallback);
@@ -160,6 +184,7 @@ function telemetryOptions(env: Env, visibility: 'authenticated' | 'chatgpt-publi
         raw_payloads_embedded: false,
       },
       getMetadata: (invocation: LangfuseTelemetryInvocation) => ({
+        ...summarizeAbundanceInput(invocation.input),
         query_type: inferQueryType(invocation.input),
         location_intent: inferLocationIntent(invocation.input),
         ...summarizeAbundanceOutput(invocation.output),
