@@ -15,7 +15,7 @@
     {
       eyebrow: 'Primary',
       icon: 'users',
-      title: 'Solutions Partner',
+      title: 'Consulting path',
       detail: 'Consulting-led implementation, training, optimization, and ongoing support.'
     },
     {
@@ -27,7 +27,7 @@
     {
       eyebrow: 'Later',
       icon: 'warning',
-      title: 'Technology Partner',
+      title: 'Integration path',
       detail: 'Only after a public OAuth integration, docs, demo, support plan, and usage proof.'
     }
   ];
@@ -107,7 +107,7 @@
     {
       eyebrow: 'Apply',
       icon: 'document',
-      title: 'Solutions Partner first',
+      title: 'Consulting first',
       detail: 'Lead with consulting, implementation, training, optimization, and measurable operating outcomes.'
     },
     {
@@ -119,7 +119,7 @@
     {
       eyebrow: 'Productize',
       icon: 'warning',
-      title: 'Technology Partner readiness',
+      title: 'Integration readiness',
       detail: 'Wait for a public OAuth integration, public docs, a demo video, support plan, and usage evidence.'
     }
   ];
@@ -152,14 +152,14 @@
     {
       eyebrow: 'Claim',
       icon: 'warning',
-      title: 'No partner claim before acceptance',
-      detail: 'No official Notion Partner or certified consultant claim before acceptance.'
+      title: 'No official claim before acceptance',
+      detail: 'No official Notion authorization or certified consultant claim before acceptance.'
     },
     {
       eyebrow: 'Integration',
       icon: 'warning',
-      title: 'Technology Partner waits',
-      detail: 'No Technology Partner claim until a public integration and Notion approval exist.'
+      title: 'Integration approval waits',
+      detail: 'No integration approval claim until a public integration and Notion approval exist.'
     },
     {
       eyebrow: 'Privacy',
@@ -192,9 +192,9 @@
 </script>
 
 <SEO
-  title="Notion Partner Lane | CREATE SOMETHING .agency"
-  description="CREATE SOMETHING builds Notion operating systems for AI-enabled teams, with PM views, Worker automation, tool boundaries, and Policy OS control."
-  keywords="Notion partner, Notion Solutions Partner, Notion operating systems, Notion Workers, Notion MCP, Policy OS"
+  title="Notion Review Workspace | CREATE SOMETHING .agency"
+  description="CREATE SOMETHING maps Notion as the operator review workspace around AI-enabled work, with PM views, Worker automation, tool boundaries, and Policy OS control."
+  keywords="Notion review workspace, Notion operating systems, Notion Workers, Notion MCP, Policy OS"
   ogImage="/og/notion-lane.svg"
   propertyName="agency"
   {faqItems}
@@ -204,15 +204,15 @@
   variant="hero"
   layout="split"
   titleLevel="h1"
-  eyebrow="Notion Partner Lane"
-  title="Notion operating systems with controlled automation."
-  description="CREATE SOMETHING designs Notion as the PM and operator layer for AI-enabled teams. The partner path is Solutions Partner first, template and builder proof second, and Technology Partner later."
+  eyebrow="Notion Review Workspace"
+  title="Notion workspaces for reviewable automation."
+  description="CREATE SOMETHING maps Notion as the PM and operator layer around one workflow: what people inspect, what the workspace owns, what stays in source systems, and which automation path is safe to test first."
 >
   {#snippet actions()}
     <Button href={agencyCoreMessaging.workflowMappingSessionHref}>
       {agencyCoreMessaging.bookMappingSessionLabel}
     </Button>
-    <Button href="/partners" variant="secondary">See Partner Stack</Button>
+    <Button href="/partners" variant="secondary">See Workflow Tool Stack</Button>
   {/snippet}
 
   {#snippet aside()}
@@ -233,8 +233,8 @@
       alt="Diagram showing Notion as the operator workspace, with Linear, production systems, and policy evidence kept in their own source-of-truth boundaries."
       eyebrow="Original visual"
       title="Notion is the reviewable workspace, not the whole system."
-      caption="This owned diagram makes the partner lane concrete: Notion helps humans inspect timelines, risks, decisions, and evidence while source-of-truth systems keep their own ownership."
-      sourceLabel="Created by CREATE SOMETHING for this partner lane."
+      caption="This owned diagram makes the workspace role concrete: Notion helps humans inspect timelines, risks, decisions, and evidence while source-of-truth systems keep their own ownership."
+      sourceLabel="Created by CREATE SOMETHING for this workflow tool stack."
     />
   {/snippet}
 </ClearPageSection>
@@ -254,10 +254,10 @@
   variant="white"
   eyebrow="Route"
   title="Consulting first, templates second, technology later."
-  description="The partner path becomes credible when the implementation and template proof exist before a technology-partner claim."
+  description="The public Notion path becomes credible when the implementation and template proof exist before any integration approval claim."
 >
   {#snippet after()}
-    <ClearCardGrid items={routeSteps} columns={3} ariaLabel="Notion partner route" />
+    <ClearCardGrid items={routeSteps} columns={3} ariaLabel="Notion public route" />
   {/snippet}
 </ClearPageSection>
 
@@ -268,7 +268,7 @@
   description="Dify, Cloudflare, and the stack boundary keep their own jobs so the operating model stays explainable."
 >
   {#snippet after()}
-    <ClearCardGrid items={ecosystemCards} columns={3} ariaLabel="Notion ecosystem lanes" />
+    <ClearCardGrid items={ecosystemCards} columns={3} ariaLabel="Notion ecosystem roles" />
   {/snippet}
 </ClearPageSection>
 
@@ -276,7 +276,7 @@
   variant="white"
   eyebrow="Compliance"
   title="Keep the public claim conservative."
-  description="The lane can show readiness and proof without implying Notion approval or exposing client-private workspaces."
+  description="The page can show readiness and proof without implying Notion approval or exposing client-private workspaces."
 >
   {#snippet after()}
     <ClearCardGrid items={complianceCards} columns={3} ariaLabel="Notion compliance guardrails" />

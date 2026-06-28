@@ -45,7 +45,7 @@ pages should explain the business proposition plainly.
 
 ## Registry Contract
 
-Every managed marketing page lives in
+Every public sitemap route must live in
 `packages/agency/src/lib/data/marketingPages.ts`.
 
 Required fields:
@@ -63,6 +63,12 @@ Required fields:
 - `schema`: the structured metadata expectation.
 - `search`: sitemap metadata for indexable pages.
 - `selfHealing`: deterministic repair levers.
+
+If a page is in `searchRoutes.json`, it must be present in the portfolio with
+`decision: 'index'`. If a page stays live only for historical reference or
+handoff, keep it in the portfolio with `decision: 'route'` or
+`decision: 'archive'`, remove it from `searchRoutes.json`, and pass
+`noindex={true}` to its SEO component.
 
 Each cluster should have exactly one pillar page. Support pages in a multi-page
 cluster should route back to the pillar.

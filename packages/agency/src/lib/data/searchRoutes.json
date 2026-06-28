@@ -15,13 +15,13 @@
 		"path": "/book",
 		"changefreq": "weekly",
 		"priority": "0.9",
-		"lastmod": "2026-06-19"
+		"lastmod": "2026-06-28"
 	},
 	{
 		"path": "/contact",
 		"changefreq": "monthly",
 		"priority": "0.8",
-		"lastmod": "2026-06-19"
+		"lastmod": "2026-06-28"
 	},
 	{
 		"path": "/atlas",
@@ -63,7 +63,7 @@
 		"path": "/bearer-token-policy",
 		"changefreq": "monthly",
 		"priority": "0.65",
-		"lastmod": "2026-06-19"
+		"lastmod": "2026-06-28"
 	},
 	{
 		"path": "/dify",
@@ -93,7 +93,7 @@
 		"path": "/dify/ship-dify-app-with-mcp-tools",
 		"changefreq": "weekly",
 		"priority": "0.85",
-		"lastmod": "2026-06-23"
+		"lastmod": "2026-06-28"
 	},
 	{
 		"path": "/dify/n8n-vs-dify",
@@ -105,31 +105,25 @@
 		"path": "/cloudflare",
 		"changefreq": "monthly",
 		"priority": "0.8",
-		"lastmod": "2026-06-19"
+		"lastmod": "2026-06-28"
 	},
 	{
 		"path": "/notion",
 		"changefreq": "monthly",
 		"priority": "0.8",
-		"lastmod": "2026-06-22"
+		"lastmod": "2026-06-28"
 	},
 	{
 		"path": "/products",
 		"changefreq": "monthly",
 		"priority": "0.75",
-		"lastmod": "2026-06-19"
+		"lastmod": "2026-06-28"
 	},
 	{
 		"path": "/products/ground",
 		"changefreq": "monthly",
 		"priority": "0.65",
-		"lastmod": "2026-06-19"
-	},
-	{
-		"path": "/products/loom",
-		"changefreq": "monthly",
-		"priority": "0.65",
-		"lastmod": "2026-06-19"
+		"lastmod": "2026-06-28"
 	},
 	{
 		"path": "/use-cases/business",

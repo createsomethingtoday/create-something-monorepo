@@ -273,12 +273,12 @@
       id: 'nav-notion',
       label: 'Notion',
       description:
-        'Notion Solutions Partner lane, templates, builders, and operator workspace proof',
+        'Notion review workspace, operator views, templates, builders, and workflow evidence',
       href: '/notion',
       icon: 'N',
       keywords: [
         'notion',
-        'solutions partner',
+        'review workspace',
         'templates',
         'builders',
         'workers',

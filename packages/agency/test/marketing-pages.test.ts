@@ -17,7 +17,7 @@ function pageFileForRoute(route: string): string {
 }
 
 test('marketing portfolio covers the high-intent public funnel', () => {
-	assert.ok(marketingPagePortfolio.length >= 14);
+	assert.ok(marketingPagePortfolio.length >= 25);
 
 	for (const cluster of new Set(marketingPagePortfolio.map((entry) => entry.cluster))) {
 		const entries = marketingPagePortfolio.filter((entry) => entry.cluster === cluster);
@@ -26,6 +26,26 @@ test('marketing portfolio covers the high-intent public funnel', () => {
 			1,
 			`${cluster} should have one pillar`
 		);
+	}
+});
+
+test('marketing portfolio owns every sitemap route and route-only page', () => {
+	const searchRoutes = JSON.parse(
+		readFileSync(path.join(packageRoot, 'src/lib/data/searchRoutes.json'), 'utf8')
+	) as Array<{ path: string }>;
+	const portfolioPaths = new Set(marketingPagePortfolio.map((entry) => entry.path));
+	const indexedPortfolioPaths = new Set(
+		marketingPagePortfolio.filter((entry) => entry.decision === 'index').map((entry) => entry.path)
+	);
+
+	for (const route of searchRoutes) {
+		assert.ok(portfolioPaths.has(route.path), `${route.path} is in sitemap but not portfolio`);
+		assert.ok(indexedPortfolioPaths.has(route.path), `${route.path} is in sitemap but not indexable`);
+	}
+
+	for (const entry of marketingPagePortfolio.filter((entry) => entry.decision !== 'index')) {
+		assert.ok(entry.routeTarget, `${entry.path} needs a routeTarget`);
+		assert.ok(!searchRoutes.some((route) => route.path === entry.path), `${entry.path} should not be in sitemap`);
 	}
 });
 

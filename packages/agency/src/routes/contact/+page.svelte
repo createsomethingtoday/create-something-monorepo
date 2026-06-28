@@ -360,6 +360,7 @@
       </p>
       <div class="cal-button">
         <SavvyCalButton variant="primary" size="lg" />
+        <a href="/book" class="calendar-link">Book a mapping session</a>
       </div>
     </div>
   </div>
@@ -436,9 +437,20 @@
     line-height: 1.55;
   }
 
-  .cal-button {
-    display: flex;
-  }
+	.cal-button {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.75rem;
+		align-items: center;
+	}
+
+	.calendar-link {
+		color: var(--color-clear-onyx, #0a0e19);
+		font-size: 0.95rem;
+		font-weight: var(--font-medium);
+		text-decoration: underline;
+		text-underline-offset: 0.18em;
+	}
 
   .contact-option :global(.booking-cta) {
     border-radius: var(--radius-clear-sm, 4px);
