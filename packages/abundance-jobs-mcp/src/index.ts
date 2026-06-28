@@ -343,6 +343,24 @@ const standardFetchSchema = {
   id: requiredStringParam('Abundance public job ID returned by search.'),
 };
 
+const standardSearchOutputSchema = {
+  results: z.array(
+    z.object({
+      id: z.string(),
+      title: z.string(),
+      url: z.string(),
+    }),
+  ),
+};
+
+const standardFetchOutputSchema = {
+  id: z.string(),
+  title: z.string(),
+  text: z.string(),
+  url: z.string(),
+  metadata: z.record(z.unknown()).optional(),
+};
+
 const getJobSchema = {
   job_id: requiredStringParam('Abundance public job ID.'),
   include_raw_payload: optionalBooleanParam('Default false.'),
@@ -402,6 +420,7 @@ export function registerAbundanceJobsTools(
       title: 'Search Nursing Jobs',
       description: 'Search current public nursing jobs. Use this when the user asks to find nursing jobs by role, location, employer, specialty, or pay terms.',
       inputSchema: standardSearchSchema,
+      outputSchema: standardSearchOutputSchema,
       annotations: readOnlyAnnotations,
     },
     async (input) => executeDb(options.getDb(), (db) => searchPublicJobDocuments(db, normalizeInput(input))),
@@ -413,6 +432,7 @@ export function registerAbundanceJobsTools(
       title: 'Fetch Nursing Job',
       description: 'Fetch one public nursing job by ID returned from search. Use this when the user asks for details about a specific job.',
       inputSchema: standardFetchSchema,
+      outputSchema: standardFetchOutputSchema,
       annotations: readOnlyAnnotations,
     },
     async (input) => executeDb(options.getDb(), (db) => fetchPublicJobDocument(db, normalizeInput(input))),
@@ -461,7 +481,7 @@ async function searchPublicJobDocuments(db: D1Database, input: Record<string, un
     if (result.jobs.length > 0) break;
   }
 
-  return jsonContent({
+  return structuredJsonContent({
     results: (result?.jobs ?? []).map((job) => ({
       id: job.id,
       title: jobDocumentTitle(job),
@@ -600,7 +620,7 @@ async function fetchPublicJobDocument(db: D1Database, input: Record<string, unkn
   }
 
   const job = toPublicJob(row, false);
-  return jsonContent({
+  return structuredJsonContent({
     id: job.id,
     title: jobDocumentTitle(job),
     text: jobDocumentText(job),
@@ -738,6 +758,13 @@ function jobDocumentText(job: PublicJob): string {
   ]
     .filter(Boolean)
     .join('\n');
+}
+
+function structuredJsonContent<T extends Record<string, unknown>>(data: T): CallToolResult {
+  return {
+    structuredContent: data,
+    content: [{ type: 'text' as const, text: JSON.stringify(data) }],
+  };
 }
 
 export async function queryPublicJobs(
