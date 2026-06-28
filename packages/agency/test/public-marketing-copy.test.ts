@@ -2,55 +2,29 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 
-const publicMarketingFiles = [
-  'src/lib/data/marketingCopy.ts',
-  'src/lib/data/services.ts',
-  'src/routes/+page.svelte',
-  'src/routes/about/+page.svelte',
-  'src/routes/atlas/+page.svelte',
-  'src/routes/book/+page.svelte',
-  'src/routes/contact/+page.svelte',
-  'src/routes/delivery/+page.svelte',
-  'src/routes/dify/+page.svelte',
-  'src/routes/dify/agent-eval-gates/+page.svelte',
-  'src/routes/dify/content-engine/+page.svelte',
-  'src/routes/dify/mcp-control-plane/+page.svelte',
-  'src/routes/dify/n8n-vs-dify/+page.svelte',
-  'src/routes/dify/ship-dify-app-with-mcp-tools/+page.svelte',
-  'src/routes/methodology/+page.svelte',
-  'src/routes/products/+page.svelte',
-  'src/routes/security/+page.svelte',
-  'src/routes/services/+page.svelte',
-  'src/routes/stack/+page.svelte',
-  'src/routes/use-cases/business/+page.svelte',
-  'src/routes/use-cases/enterprise/+page.svelte'
-];
+import {
+  auditPublicCopy,
+  discoverPublicCopyFiles,
+  packageRoot
+} from '../scripts/check-public-copy.mjs';
 
-const bannedPublicFrames = [
-  /\bbuyers?\b/i,
-  /\bwedge(s)?\b/i,
-  /productized\s+wedge/i,
-  /\bgtm\s+vector\b/i,
-  /\blead\s+magnet\b/i,
-  /\bmcp-first\s+thesis\b/i,
-  /\bMCP\s+consumption\s+is\s+commoditized\b/i
-];
+function packageRelative(file: string): string {
+  return file.replace(`${packageRoot}/`, '');
+}
 
-test('public agency copy avoids internal strategy and buyer language', () => {
-  const failures: string[] = [];
+test('public agency copy guard discovers every visitor-facing route', () => {
+  const files = discoverPublicCopyFiles().map(packageRelative);
 
-  for (const file of publicMarketingFiles) {
-    const path = new URL(`../${file}`, import.meta.url);
-    const source = readFileSync(path, 'utf8');
+  assert.ok(files.includes('src/routes/+page.svelte'));
+  assert.ok(files.includes('src/routes/cloudflare/+page.svelte'));
+  assert.ok(files.includes('src/routes/products/ground/+page.svelte'));
+  assert.ok(files.includes('src/routes/terms/+page.svelte'));
+  assert.ok(!files.includes('src/routes/admin/funnel/+page.svelte'));
+  assert.ok(!files.includes('src/routes/login/+page.svelte'));
+});
 
-    for (const pattern of bannedPublicFrames) {
-      if (pattern.test(source)) {
-        failures.push(`${file} matched ${pattern}`);
-      }
-    }
-  }
-
-  assert.deepEqual(failures, []);
+test('public agency copy avoids internal strategy and unclear control language', () => {
+  assert.deepEqual(auditPublicCopy(), []);
 });
 
 test('agency README documents the public copy contract', () => {
@@ -59,4 +33,6 @@ test('agency README documents the public copy contract', () => {
   assert.match(source, /### Public Copy Contract/);
   assert.match(source, /Public `\.agency` copy should read like a clear business conversation/);
   assert.match(source, /Avoid public words and frames like:/);
+  assert.match(source, /Run `pnpm copy:check`/);
+  assert.match(source, /Run `pnpm copy:heal`/);
 });

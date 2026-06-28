@@ -79,6 +79,15 @@ Avoid public words and frames like:
 Those terms can remain in internal strategy docs when they are useful for
 planning, but they should not be the way a visitor learns the offer.
 
+Validation:
+
+- Run `pnpm copy:check` before shipping public copy. It discovers visitor-facing
+  routes, shared public components, shared data copy, and the agency SEO defaults.
+- Run `pnpm copy:heal` when the audit reports stale language. It applies the
+  approved plain-language replacements, then reruns the audit.
+- Add a rule to `scripts/check-public-copy.mjs` when a phrase becomes a private
+  planning term instead of public language.
+
 ### Readable Control
 
 The public brand system is **Readable Control**.

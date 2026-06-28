@@ -4,14 +4,14 @@
 
 <GovernedExecutionFlow
   eyebrow="Pattern Library"
-  title="Business workflows become trust patterns"
+  title="Business workflows become visible workflow patterns"
   description="Each offer can be shown as a real pattern: the business objects, the systems involved, the actions an agent can take, and the receipts a client can inspect."
-  caption="The trust layer turns business cases into visible patterns: objects, actions, states, and receipts."
+  caption="The control layer turns business cases into visible patterns: objects, actions, states, and receipts."
   hubKicker="Pattern"
   hubTitle="Customer Recovery"
   hubSubtitle="Case, order, shipment"
   controlKicker="Applies"
-  controlTitle="Trust Layer"
+  controlTitle="Control Layer"
   controlSubtitle="Allowed, review, blocked"
   initiators={['Support Inbox', 'Customer Thread', 'Agent Draft']}
   destinations={['Zendesk', 'Shopify', 'Stripe']}

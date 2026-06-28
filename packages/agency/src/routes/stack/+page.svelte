@@ -377,7 +377,7 @@
     <ClearCardGrid
       items={stackRoles}
       columns={4}
-      ariaLabel="Vendor roles in the trust layer stack"
+      ariaLabel="Vendor roles in the control layer stack"
     />
   {/snippet}
 </ClearPageSection>

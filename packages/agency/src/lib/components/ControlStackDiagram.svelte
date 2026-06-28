@@ -24,7 +24,7 @@
       tone: 'entitlement'
     },
     {
-      label: 'Trust Layer',
+      label: 'Control Layer',
       detail: 'Rules decide whether work runs, pauses for review, or stops.',
       tone: 'control'
     },
@@ -42,7 +42,7 @@
 
   let {
     eyebrow = 'Enforcement Chain',
-    title = 'How the trust layer becomes runtime behavior',
+    title = 'How the control layer becomes runtime behavior',
     description = 'This is the sequence that makes controlled delegation different from a prompt plus a token.',
     items = DEFAULT_ITEMS
   }: Props = $props();

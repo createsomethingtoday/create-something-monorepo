@@ -259,7 +259,7 @@
   title="Start with a fixed-scope map before any build decision."
   description="If the map shows a useful controlled pilot, the next move is a build. If it does not, the work stops with a useful boundary artifact instead of becoming an open-ended automation project."
   items={servicePathDecisions}
-  ariaLabel="Service path from map to trust layer"
+  ariaLabel="Service path from map to control layer"
 />
 
 <ClearCtaBand

@@ -81,15 +81,15 @@
   };
 
   let {
-    eyebrow = 'Trust Layer',
+    eyebrow = 'Control Layer',
     title = 'Controlled delegation',
-    description = 'Hub MCP routes work into the trust layer, which decides what can run automatically, what needs approval, and what stops with a reason.',
+    description = 'Hub MCP routes work into the control layer, which decides what can run automatically, what needs approval, and what stops with a reason.',
     caption = 'Safe actions run fast. Risky actions route to approval. Disallowed actions stop with a reason.',
     hubKicker = 'Routes',
     hubTitle = 'Hub MCP',
     hubSubtitle = 'Tenant, host, session',
     controlKicker = 'Decides',
-    controlTitle = 'Trust Layer',
+    controlTitle = 'Control Layer',
     controlSubtitle = 'Reason-coded control',
     initiators = ['Client LLM', 'Ops Inbox', 'Background Agent'],
     destinations = ['CRM', 'ERP', 'Workflow System'],

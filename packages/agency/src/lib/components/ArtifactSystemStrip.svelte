@@ -43,7 +43,7 @@
 
   let {
     eyebrow = 'Maps and Receipts',
-    title = 'What makes the trust layer durable',
+    title = 'What makes the control layer durable',
     description = 'Every project ships concrete files so access, behavior, and recovery stay legible after the kickoff call.',
     items = DEFAULT_ITEMS
   }: Props = $props();

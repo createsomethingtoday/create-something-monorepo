@@ -15,7 +15,7 @@
       eyebrow: 'Primary',
       icon: 'settings',
       title: 'Dify Service Partner',
-      detail: 'Implementation, training, support, MCP setup, and trust-layer controls.'
+      detail: 'Implementation, training, support, MCP setup, and control-layer controls.'
     },
     {
       eyebrow: 'Runtime',
