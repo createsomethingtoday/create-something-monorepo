@@ -1,16 +1,14 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpAgent } from 'agents/mcp';
-import { enableTelemetry, recordMcpToolInvocation } from '@create-something/mcp-core';
+import { enableTelemetry } from '@create-something/mcp-core';
 import {
   DEFAULT_RAPIDAPI_HOST,
   DEFAULT_TIMEOUT_MS,
-  getPublicJob,
   getRapidApiProviderStatus,
   ingestRapidApiJobs,
   listAbundanceJobToolNames,
   normalizeNursingJobsIngestInput,
   probeRapidApiExpired,
-  queryPublicJobs,
   registerAbundanceJobsTools,
   SERVER_NAME,
   SERVER_VERSION,
@@ -158,14 +156,6 @@ function jsonResponse(data: unknown, status = 200): Response {
   });
 }
 
-function jsonRpcResponse(id: unknown, result: unknown, status = 200): Response {
-  return jsonResponse({ jsonrpc: '2.0', id: id ?? null, result }, status);
-}
-
-function jsonRpcError(id: unknown, code: number, message: string, status = 200): Response {
-  return jsonResponse({ jsonrpc: '2.0', id: id ?? null, error: { code, message } }, status);
-}
-
 async function readJsonBody(request: Request): Promise<Record<string, unknown>> {
   if (!request.body) return {};
   try {
@@ -210,222 +200,6 @@ function normalizeNursingJobsIngestBody(body: Record<string, unknown>): NursingJ
         : undefined,
     dry_run: typeof body.dry_run === 'boolean' ? body.dry_run : undefined,
   };
-}
-
-function readChatGptAccountId(request: Request): string {
-  return (
-    request.headers.get('X-MCP-Account-ID')?.trim() ||
-    request.headers.get('X-Account-ID')?.trim() ||
-    request.headers.get('X-CS-Account-ID')?.trim() ||
-    CHATGPT_PUBLIC_ACCOUNT_ID
-  );
-}
-
-function readRpcParams(body: Record<string, unknown>): Record<string, unknown> {
-  const params = body.params;
-  return params && typeof params === 'object' && !Array.isArray(params) ? (params as Record<string, unknown>) : {};
-}
-
-function readToolArguments(params: Record<string, unknown>): Record<string, unknown> {
-  const args = params.arguments;
-  return args && typeof args === 'object' && !Array.isArray(args) ? (args as Record<string, unknown>) : {};
-}
-
-function readOptionalString(value: unknown): string | undefined {
-  return typeof value === 'string' && value.trim().length > 0 ? value.trim() : undefined;
-}
-
-function readOptionalInteger(value: unknown): number | undefined {
-  if (typeof value !== 'number' && typeof value !== 'string') return undefined;
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? Math.trunc(parsed) : undefined;
-}
-
-function textToolResult(data: unknown) {
-  return {
-    content: [
-      {
-        type: 'text' as const,
-        text: JSON.stringify(data, null, 2),
-      },
-    ],
-  };
-}
-
-function chatGptPublicTools() {
-  return [
-    {
-      name: 'list_public_jobs',
-      description: 'List current public nursing job listings from the normalized Abundance jobs database. Read-only.',
-      inputSchema: {
-        type: 'object',
-        properties: {
-          limit: { type: 'number', minimum: 1, maximum: 25 },
-          offset: { type: 'number', minimum: 0 },
-          status: { type: 'string', enum: ['open', 'closed', 'expired', 'unknown'] },
-          state: { type: 'string' },
-          specialty: { type: 'string' },
-          source_system: { type: 'string' },
-        },
-      },
-    },
-    {
-      name: 'search_public_jobs',
-      description: 'Search current public nursing jobs by title, employer, location, specialty, source, or category. Read-only.',
-      inputSchema: {
-        type: 'object',
-        required: ['query'],
-        properties: {
-          query: { type: 'string' },
-          location: { type: 'string' },
-          limit: { type: 'number', minimum: 1, maximum: 25 },
-          offset: { type: 'number', minimum: 0 },
-          status: { type: 'string', enum: ['open', 'closed', 'expired', 'unknown'] },
-          state: { type: 'string' },
-          specialty: { type: 'string' },
-          source_system: { type: 'string' },
-        },
-      },
-    },
-    {
-      name: 'get_job',
-      description: 'Get one public nursing job listing by Abundance public job ID. Read-only.',
-      inputSchema: {
-        type: 'object',
-        required: ['job_id'],
-        properties: {
-          job_id: { type: 'string' },
-        },
-      },
-    },
-  ];
-}
-
-async function executeChatGptPublicTool(env: Env, name: string, args: Record<string, unknown>) {
-  if (!env.JOBS_DB) {
-    return textToolResult({ ok: false, error: 'JOBS_DB is not configured for this deployment.' });
-  }
-
-  if (name === 'list_public_jobs') {
-    return textToolResult(
-      await queryPublicJobs(env.JOBS_DB, {
-        limit: readOptionalInteger(args.limit),
-        offset: readOptionalInteger(args.offset),
-        status: readOptionalString(args.status),
-        source_system: readOptionalString(args.source_system),
-        specialty: readOptionalString(args.specialty),
-        state: readOptionalString(args.state),
-      }),
-    );
-  }
-
-  if (name === 'search_public_jobs') {
-    const query = readOptionalString(args.query);
-    if (!query) return textToolResult({ ok: false, error: 'query is required.' });
-    return textToolResult(
-      await queryPublicJobs(env.JOBS_DB, {
-        query,
-        location: readOptionalString(args.location),
-        limit: readOptionalInteger(args.limit),
-        offset: readOptionalInteger(args.offset),
-        status: readOptionalString(args.status),
-        source_system: readOptionalString(args.source_system),
-        specialty: readOptionalString(args.specialty),
-        state: readOptionalString(args.state),
-      }),
-    );
-  }
-
-  if (name === 'get_job') {
-    return getPublicJob(env.JOBS_DB, {
-      job_id: readOptionalString(args.job_id),
-      include_raw_payload: false,
-    });
-  }
-
-  return textToolResult({ ok: false, error: `Unknown public ChatGPT tool: ${name}` });
-}
-
-async function handleChatGptMcp(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
-  if (request.method !== 'POST') return jsonResponse({ error: 'MethodNotAllowed' }, 405);
-
-  const body = await readJsonBody(request);
-  const id = body.id ?? null;
-  const method = readOptionalString(body.method);
-
-  if (method === 'initialize') {
-    return jsonRpcResponse(id, {
-      protocolVersion: '2024-11-05',
-      capabilities: {
-        tools: {},
-      },
-      serverInfo: {
-        name: `${SERVER_NAME}-chatgpt-public`,
-        version: SERVER_VERSION,
-      },
-    });
-  }
-
-  if (method === 'tools/list') {
-    return jsonRpcResponse(id, {
-      tools: chatGptPublicTools(),
-    });
-  }
-
-  if (method === 'tools/call') {
-    const params = readRpcParams(body);
-    const name = readOptionalString(params.name);
-    if (!name) return jsonRpcError(id, -32602, 'Tool name is required.');
-
-    const args = readToolArguments(params);
-    const accountId = readChatGptAccountId(request);
-    const start = Date.now();
-    try {
-      const result = await executeChatGptPublicTool(env, name, args);
-      const durationMs = Date.now() - start;
-      ctx.waitUntil(
-        recordMcpToolInvocation({
-          db: env.TELEMETRY_DB,
-          braintrust: {
-            apiKey: env.BRAINTRUST_API_KEY,
-            projectName: resolveBraintrustProjectName(env),
-            projectId: env.BRAINTRUST_PROJECT_ID,
-          },
-          serverName: `${SERVER_NAME}:chatgpt-public`,
-          toolName: name,
-          accountId,
-          input: args,
-          output: result,
-          durationMs,
-          success: true,
-        }).catch((error) => console.warn(`[telemetry] chatgpt public metering failed for ${name}:`, error)),
-      );
-      return jsonRpcResponse(id, result);
-    } catch (error) {
-      const durationMs = Date.now() - start;
-      ctx.waitUntil(
-        recordMcpToolInvocation({
-          db: env.TELEMETRY_DB,
-          braintrust: {
-            apiKey: env.BRAINTRUST_API_KEY,
-            projectName: resolveBraintrustProjectName(env),
-            projectId: env.BRAINTRUST_PROJECT_ID,
-          },
-          serverName: `${SERVER_NAME}:chatgpt-public`,
-          toolName: name,
-          accountId,
-          input: args,
-          output: { error: error instanceof Error ? error.message : String(error) },
-          durationMs,
-          success: false,
-          error,
-        }).catch((telemetryError) => console.warn(`[telemetry] chatgpt public metering failed for ${name}:`, telemetryError)),
-      );
-      return jsonRpcError(id, -32603, error instanceof Error ? error.message : String(error));
-    }
-  }
-
-  return jsonRpcError(id, -32601, `Unsupported method: ${method ?? 'unknown'}`);
 }
 
 function isRapidApiActiveJobsEndpoint(value: unknown): value is RapidApiActiveJobsEndpoint {
@@ -515,7 +289,7 @@ export default {
     }
 
     if (url.pathname === '/chatgpt/mcp' || url.pathname.startsWith('/chatgpt/mcp/')) {
-      return handleChatGptMcp(request, env, ctx);
+      return AbundanceJobsChatGPTMCP.serve('/chatgpt/mcp', { binding: 'CHATGPT_MCP_OBJECT' }).fetch(request, env, ctx);
     }
 
     if (url.pathname === '/admin/ingest/rapidapi') {
