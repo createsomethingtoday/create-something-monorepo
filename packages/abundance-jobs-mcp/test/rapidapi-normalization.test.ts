@@ -1,14 +1,17 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
+  buildSearchFallbackAttempts,
   buildPublicJobUpsert,
   classifyNursingJobTitle,
   ingestRapidApiJobs,
+  inferNursingRolePlan,
   listAbundanceJobToolNames,
   normalizeRapidApiJobRecord,
   normalizeRapidApiIngestInput,
   normalizeNursingJobsIngestInput,
   normalizePublicJob,
+  queryPublicJobs,
 } from '../src/index.ts';
 
 const rapidApiRecord = {
@@ -173,6 +176,76 @@ test('ChatGPT public tool list excludes write-capable funnel action', () => {
     'get_job',
   ]);
   assert.equal(listAbundanceJobToolNames().includes('send_job_to_funnel'), true);
+});
+
+test('ChatGPT nursing role plans keep specialty searches narrow', () => {
+  assert.deepEqual(inferNursingRolePlan('LPN jobs Arlington Texas'), {
+    queries: ['licensed practical nurse', 'licensed vocational nurse', 'lpn', 'lvn'],
+    allowGenericFallback: false,
+  });
+  assert.deepEqual(inferNursingRolePlan('CNA Arlington TX'), {
+    queries: ['cna', 'certified nursing assistant', 'certified nurse assistant', 'certified nurse aide'],
+    allowGenericFallback: false,
+  });
+  assert.deepEqual(inferNursingRolePlan('registered nurse California'), {
+    queries: ['registered nurse', 'rn'],
+    allowGenericFallback: true,
+  });
+  assert.deepEqual(inferNursingRolePlan('ER nurse Fort Worth Texas'), {
+    queries: ['emergency', 'emergency room', 'emergency department'],
+    allowGenericFallback: false,
+  });
+});
+
+test('ChatGPT search fallbacks preserve specialty and geography constraints', () => {
+  const cnaAttempts = buildSearchFallbackAttempts({ query: 'CNA Arlington TX', status: 'open', limit: 10 }, 'CNA Arlington TX');
+  assert.equal(cnaAttempts.some((attempt) => attempt.fallback?.reason === 'state_fallback'), false);
+  assert.equal(cnaAttempts.some((attempt) => attempt.fallback?.reason === 'role_fallback'), false);
+  assert.equal(cnaAttempts.some((attempt) => attempt.fallback?.reason === 'nurse_role_fallback'), false);
+  assert.ok(cnaAttempts.some((attempt) => attempt.filters.query === 'cna' && attempt.filters.location === 'Arlington' && attempt.filters.state === 'TX'));
+
+  const lpnAttempts = buildSearchFallbackAttempts({ query: 'LPN Arlington Texas', status: 'open', limit: 10 }, 'LPN Arlington Texas');
+  assert.ok(
+    lpnAttempts.some(
+      (attempt) => attempt.fallback?.reason === 'state_role_fallback' && attempt.filters.query === 'licensed vocational nurse' && attempt.filters.state === 'TX',
+    ),
+  );
+
+  const californiaAttempts = buildSearchFallbackAttempts({ query: 'registered nurse California', status: 'open', limit: 10 }, 'registered nurse California');
+  assert.equal(californiaAttempts.some((attempt) => attempt.fallback?.reason === 'role_fallback'), false);
+  assert.ok(
+    californiaAttempts.every((attempt) => !attempt.filters.state || attempt.filters.state === 'CA'),
+    'state-constrained searches should not drop into national results',
+  );
+});
+
+test('public job state filters do not match arbitrary two-letter substrings', async () => {
+  let boundArgs: unknown[] = [];
+  const db = {
+    prepare(sql: string) {
+      assert.match(sql, /upper\(state\) = \?/);
+      assert.match(sql, /lower\(state\) = lower\(\?\)/);
+      assert.match(sql, /lower\(location_text\) LIKE lower\(\?\)/);
+      return {
+        bind(...args: unknown[]) {
+          boundArgs = args;
+          return {
+            async all() {
+              return { results: [] };
+            },
+          };
+        },
+      };
+    },
+  } as unknown as D1Database;
+
+  await queryPublicJobs(db, { query: 'registered nurse', state: 'CA', limit: 10 });
+
+  assert.equal(boundArgs.includes('%CA%'), false);
+  assert.ok(boundArgs.includes('CA'));
+  assert.ok(boundArgs.includes('california'));
+  assert.ok(boundArgs.includes('%, CA,%'));
+  assert.ok(boundArgs.includes('%, california,%'));
 });
 
 test('fresh Cloudflare D1 ingestion run skips a paid RapidAPI fetch', async () => {
