@@ -1,6 +1,6 @@
 # CREATE SOMETHING Agency
 
-**createsomething.agency** — Delegated Work Control for technical operators
+**createsomething.agency** — AI workflow systems for business operations
 
 We make one business workflow safe to delegate.
 
@@ -12,10 +12,11 @@ We make one business workflow safe to delegate.
 
 | Name | Job |
 |------|-----|
-| **Delegated Work Control** | Durable category: what can run, what waits, what stops, who owns the decision, and what evidence proves the work. |
+| **AI workflow systems** | Public category: business workflows with connected tools, scoped AI tasks, approvals, stop conditions, and audit trails. |
+| **Delegated Work Control** | Internal thesis layer: what can run, what waits, what stops, who owns the decision, and what evidence proves the work. |
 | **Workflow Trust Layer** | Current service language for making one workflow safe to delegate. |
 | **Policy OS** | Canonical paid package for governed execution, approval rules, runbooks, golden tasks, and recurring tuning. |
-| **MCP-only** | Constrained discovery or compliance wedge, not the default paid offer. |
+| **MCP-only** | Constrained discovery or compliance entry path, not the default paid offer. |
 
 Do not reposition `.agency` as a generic AI agency, prompt shop, model reseller,
 or Webflow implementation shop. The durable claim is:
@@ -55,12 +56,13 @@ Avoid:
 - AI gradient/orb/mesh decoration
 - generic automation icons as the main hero proof
 - broad claims about autonomy before the workflow boundary is named
+- public marketing language that uses internal growth-strategy terms for offers
 - visual systems that make the stack feel mysterious or unbounded
 
 Default public-page hierarchy:
 
-1. Name the category: `Delegated Work Control`.
-2. State the outcome: make one risky workflow safe to delegate.
+1. Name the category: `AI workflow systems`.
+2. State the outcome: turn one messy business handoff into a reliable AI-assisted workflow.
 3. Show the Delegation Card or Atlas map before explaining the stack.
 4. Name what can run, what waits, what stops, who owns the decision, and what
    receipt proves the work.
@@ -107,7 +109,7 @@ Neither Claude Desktop, Claude Cowork, nor Codex can create MCP servers from wit
 - Integration experience (data mapping, security boundaries)
 - Workflow control design (Skills + MCP with trust boundaries)
 
-This is the creation expertise `.agency` turns into Delegated Work Control:
+This is the creation expertise `.agency` turns into public AI workflow systems:
 named objects, scoped actions, approval states, stop conditions, owners, and
 evidence.
 

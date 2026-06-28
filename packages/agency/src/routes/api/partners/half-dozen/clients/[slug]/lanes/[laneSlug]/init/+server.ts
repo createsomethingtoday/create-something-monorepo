@@ -244,7 +244,7 @@ function mergeApprovedException(
 				? incoming.reason
 				: typeof existing.reason === 'string'
 					? existing.reason
-					: `Transparent named-lane MCP Wedge pilot for ${displayName}`,
+					: `Transparent named-lane MCP pilot for ${displayName}`,
 		allowed_scope:
 			typeof incoming.allowed_scope === 'string'
 				? incoming.allowed_scope

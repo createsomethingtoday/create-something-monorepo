@@ -70,7 +70,7 @@
       label: 'Next',
       title: 'New delivery records can join this index when they are safe to share.',
       detail:
-        'The directory remains a concise receipt surface rather than a broad portfolio or internal archive.',
+        'The directory remains a concise delivery record rather than a broad portfolio or internal archive.',
       tone: 'warning'
     }
   ];

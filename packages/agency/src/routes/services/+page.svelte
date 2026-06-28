@@ -18,8 +18,8 @@
     {
       name: 'Workflow Trust Map',
       description:
-        'A fixed first map of the workflow, object model, action boundary, approval path, and first safe delegation point.',
-      type: 'Entry wedge',
+        'A fixed first map of the workflow, systems, AI tasks, approval path, and first controlled pilot.',
+      type: 'First workflow map',
       price: 'Fixed scope',
       priceDescription: 'Map before any build decision'
     },
@@ -189,9 +189,9 @@
 </script>
 
 <SEO
-  title="Delegated Work Control | How I Work"
-  description="How CREATE SOMETHING makes one business workflow safe to delegate: name the workflow, map the safe lane, then pilot only when the boundary is clear."
-  keywords="delegated work control, workflow trust layer, workflow mapping, AI interaction design, safe to delegate AI workflow, workflow pilot, production automation, agent reliability"
+  title="AI Workflow Systems | How I Work"
+  description="How CREATE SOMETHING turns one messy business handoff into a reliable AI-assisted workflow with connected tools, approvals, stop conditions, and an audit trail."
+  keywords="AI workflow systems, workflow mapping, AI interaction design, governed AI workflow, workflow pilot, production automation, agent reliability"
   ogImage="/og-image.svg"
   propertyName="agency"
   {services}
@@ -203,8 +203,8 @@
   layout="split"
   titleLevel="h1"
   eyebrow="How I Work"
-  title="Make one business workflow safe to hand to AI."
-  description="Bring the support, revenue, production, or credential-touching handoff your team still protects by hand. I map the safe lane before anything touches customers, money, production, or accounts."
+  title="Turn one messy handoff into a reliable AI-assisted workflow."
+  description="Bring the support, revenue, production, or credential-touching workflow your team still protects by hand. I map the process, connect the tools, define what AI can do, and set the approval and stop points before anything touches customers, money, production, or accounts."
 >
   {#snippet actions()}
     <Button href="#atlas-warmup">
@@ -228,8 +228,8 @@
 <ClearPageSection
   variant="white"
   eyebrow="Fit check"
-  title="This works when the problem is named."
-  description="The right starting point is not a broad automation wishlist. It is one repeated handoff, one accountable owner, and one risk your team no longer wants to watch all day."
+  title="Start with the handoff, not the automation wishlist."
+  description="The right starting point is one repeated handoff, one accountable owner, and one risk your team no longer wants to watch all day."
 >
   {#snippet after()}
     <ClearCardGrid items={fitCards} columns={2} ariaLabel="Workflow fit check" />
@@ -240,8 +240,8 @@
   id="atlas-warmup"
   variant="soft"
   eyebrow="Map before booking"
-  title="See the lane before deciding to build."
-  description="The public Atlas map turns one workflow into a first artifact: the systems involved, the action lane, the approval owner, the hard stop, and the receipt. It does not touch production systems."
+  title="See the workflow before deciding to build."
+  description="The public Atlas map turns one workflow into a first plan: the systems involved, where work moves, what AI can handle, where people approve, and what evidence proves the workflow ran correctly. It does not touch production systems."
 >
   {#snippet after()}
     <PublicAtlasStoryCanvas
@@ -257,7 +257,7 @@
   id="service-path"
   eyebrow="Service path"
   title="Start with a fixed-scope map before any build decision."
-  description="If the map shows a safe lane, the next move is a pilot. If it does not, the work stops with a useful boundary artifact instead of becoming an open-ended automation project."
+  description="If the map shows a useful controlled pilot, the next move is a build. If it does not, the work stops with a useful boundary artifact instead of becoming an open-ended automation project."
   items={servicePathDecisions}
   ariaLabel="Service path from map to trust layer"
 />
@@ -265,7 +265,7 @@
 <ClearCtaBand
   eyebrow="Map the workflow"
   title="Map the workflow your team still protects by hand."
-  description="We will define the handoff, owner, allowed actions, approval pauses, hard stops, and proof record before any implementation work starts."
+  description="We will define the handoff, owner, connected systems, AI tasks, approval pauses, stop conditions, and audit trail before any implementation work starts."
   items={ctaItems}
 >
   {#snippet actions()}

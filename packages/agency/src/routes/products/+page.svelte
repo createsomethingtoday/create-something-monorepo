@@ -238,8 +238,8 @@
 
 <SEO
   title="Proof and Receipts | CREATE SOMETHING .agency"
-  description="Proof behind CREATE SOMETHING .agency: delivery records, tools, connectors, and client builds that show how Delegated Work Control becomes inspectable."
-  keywords="delegated work control proof, workflow trust layer proof, workflow receipts, MCP servers, grounded AI code analysis, workflow controls, operator surfaces"
+  description="Proof behind CREATE SOMETHING .agency: delivery records, tools, connectors, and client builds that show how AI workflow systems become inspectable."
+  keywords="AI workflow systems proof, workflow trust layer proof, workflow receipts, MCP servers, grounded AI code analysis, workflow controls, operator surfaces"
   ogImage="/og-image.svg"
   propertyName="agency"
   {faqItems}
@@ -285,7 +285,7 @@
 
 <ClearPageSection
   variant="soft"
-  eyebrow="Delegated Work Control proof"
+  eyebrow="AI workflow systems proof"
   title="Then show the run, wait, stop, and receipt states."
   description="Every artifact on this page helps the decision owner understand what can run, what waits, what stops, who owns the decision, and which receipt proves it."
 >
@@ -387,7 +387,7 @@
     <ClearCardGrid
       items={integrations.map(productCard)}
       columns={3}
-      ariaLabel="Connection wedge MCPs"
+      ariaLabel="Connection MCPs"
     />
   {/snippet}
 </ClearPageSection>

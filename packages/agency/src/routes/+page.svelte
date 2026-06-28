@@ -18,8 +18,8 @@
     {
       name: 'Trust Map',
       description:
-        'A fixed first map of the workflow, object model, action boundary, approval path, and first safe delegation point.',
-      type: 'Entry wedge',
+        'A fixed first map of the workflow, systems, AI tasks, approval path, and first controlled pilot.',
+      type: 'First workflow map',
       price: 'Fixed scope',
       priceDescription: 'Map before any build decision'
     },
@@ -51,24 +51,24 @@
 
   const faqItems = [
     {
-      question: 'What is Delegated Work Control?',
+      question: 'What does CREATE SOMETHING build?',
       answer:
-        'Delegated Work Control is the operating boundary around delegated work: source systems, owners, scoped actions, approval states, stop conditions, and receipts.'
+        'CREATE SOMETHING builds AI workflow systems for business operations: mapped handoffs, connected tools, scoped AI tasks, approval points, stop conditions, and audit trails.'
     },
     {
       question: 'What is a Workflow Trust Layer?',
       answer:
-        'A Workflow Trust Layer is the current service path for one workflow: map the work, build the first safe delegation path, and keep evidence visible.'
+        'A Workflow Trust Layer is the operating layer around one workflow: what can run, what needs approval, what must stop, who owns the decision, and what evidence stays visible.'
     },
     {
       question: 'Where does CREATE SOMETHING start?',
       answer:
-        'The work starts with one manual workflow your team still protects by hand, then maps the first safe delegation path before expanding automation.'
+        'The work starts with one messy handoff your team still protects by hand, then maps the first controlled pilot before expanding automation.'
     },
     {
       question: 'What do clients leave with?',
       answer:
-        'Clients leave with a visible workflow map, action boundary, approval path, run/wait/stop states, and evidence that a team can inspect.'
+        'Clients leave with a visible workflow map, connected-system plan, approval path, run/wait/stop states, and an audit trail the team can inspect.'
     }
   ];
 
@@ -126,9 +126,9 @@
 </script>
 
 <SEO
-  title="Delegated Work Control | CREATE SOMETHING .agency"
-  description="CREATE SOMETHING makes one business workflow safe to delegate: map the work, build the first safe lane, and keep the owner and receipt visible."
-  keywords="delegated work control, workflow trust layer, governed workflow infrastructure, safe AI workflow delegation, agent workflow controls, workflow pilot, production automation, technical operators"
+  title="AI Workflow Systems | CREATE SOMETHING .agency"
+  description="CREATE SOMETHING turns one messy business handoff into a reliable AI-assisted workflow with connected tools, approvals, stop conditions, and an audit trail."
+  keywords="AI workflow systems, workflow automation consultant, governed AI workflows, workflow trust layer, workflow mapping, workflow pilot, production automation, technical operators"
   ogImage="/og-image.svg"
   propertyName="agency"
   {services}
@@ -138,8 +138,8 @@
 <div class="home-pilot">
   <ClearPlatformHero
     eyebrow={agencyCoreMessaging.categoryLabel}
-    title="Make one business workflow safe to hand to AI."
-    description="Bring the workflow your team still watches by hand. CREATE SOMETHING maps the safe lane: what can run, what pauses for approval, what stops, who owns it, and what record proves the handoff."
+    title="AI workflow systems for business operations."
+    description="Turn one messy handoff into a reliable AI-assisted workflow. CREATE SOMETHING maps the process, connects the tools, defines what AI can do, and gives your team approvals, stop conditions, and an audit trail."
     proofItems={heroProofItems}
     hideAsideOnMobile={true}
   >
@@ -155,9 +155,9 @@
 
   <ClearPageSection
     variant="white"
-    eyebrow="Atlas entry point"
-    title="The map is the productized wedge."
-    description="Atlas turns the workflow into an inspectable artifact: human tasks, AI tasks, system operations, source data, constraints, touchpoints, owners, stop conditions, and receipts."
+    eyebrow="Workflow plan"
+    title="See the workflow before we build it."
+    description="Atlas turns the current process into a clear plan: the systems involved, where work moves, what AI can handle, where people approve, and what evidence proves the workflow ran correctly."
   >
     {#snippet after()}
       <PublicAtlasStoryCanvas
@@ -165,7 +165,7 @@
         storyId="home-support-recovery-atlas-story"
         eyebrow="Workflow Trust Map"
         title="The map comes before the automation."
-        description="This read-only Atlas canvas shows how a workflow becomes safe to discuss: source state, allowed action, approval owner, hard stop, and receipt surface."
+        description="This read-only Atlas canvas shows the workflow in plain language: systems, allowed actions, approval owner, stop condition, and audit trail."
         compact
       />
     {/snippet}
@@ -176,8 +176,8 @@
     variant="white"
     class="home-process-section"
     eyebrow="Service path"
-    title="Map. Pilot. Control."
-    description="The work stays narrow: first name the workflow, then prove one safe lane, then add the control layer only when live work needs it."
+    title="Map the handoff. Build the pilot. Leave with control."
+    description="The work stays narrow: first understand the handoff, then build one controlled pilot, then add operating rules only when live work needs them."
   >
     {#snippet after()}
       <ClearPillarGrid
@@ -191,7 +191,7 @@
   <ClearActionFooter
     eyebrow="Fixed-scope first step"
     title={agencyCoreMessaging.workflowCtaHeading}
-    description="Start with a Workflow Trust Map. If the map does not show a safe lane, the work stops there; if it does, the first pilot has a clear boundary."
+    description="Start with a Workflow Trust Map. If the map does not show a useful controlled pilot, the work stops there; if it does, the first build has a clear boundary."
     items={actionFooterItems}
   >
     {#snippet actions()}

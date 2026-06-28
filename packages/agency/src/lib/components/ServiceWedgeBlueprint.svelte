@@ -51,7 +51,7 @@
     </p>
   </div>
 
-  <div class="wedge-diagram" aria-label="Blueprint wedge from Trust Map to Trust Layer and Operator Surface">
+  <div class="wedge-diagram" aria-label="Blueprint from Trust Map to Trust Layer and Operator Surface">
     <div class="wedge-axis" aria-hidden="true">
       <span>Connectivity</span>
       <span>Workflow</span>
