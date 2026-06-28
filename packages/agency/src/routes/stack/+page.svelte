@@ -38,9 +38,9 @@
     {
       eyebrow: '01 Map',
       icon: 'folder',
-      title: 'Workflow Trust Map',
+      title: 'Workflow Map',
       detail:
-        'Name the workflow, source accounts, approval owner, first action boundary, and evidence needed before delegation.'
+        'Name the workflow, source accounts, decision owner, first action boundary, and evidence needed before delegation.'
     },
     {
       eyebrow: '02 Pilot',
@@ -52,7 +52,7 @@
     {
       eyebrow: '03 Control',
       icon: 'check',
-      title: 'Trust Layer',
+      title: 'Ongoing Control',
       detail:
         'Classify live actions as auto-allowed, approval-needed, or blocked with a reason before the workflow touches risk.'
     }
@@ -62,7 +62,7 @@
     {
       eyebrow: 'Map',
       icon: 'folder',
-      title: 'Workflow Trust Map',
+      title: 'Workflow Map',
       detail: 'One workflow, source systems, owners, handoffs, and failure points.'
     },
     {
@@ -395,8 +395,8 @@
 
 <ClearCtaBand
   eyebrow="Start with the workflow"
-  title="Bring the workflow, the accounts, and the approval owner."
-  description="CREATE SOMETHING will map the stack boundary, define the first safe delegation path, identify what can be safely assigned, and show what stays visible to the operator before implementation starts."
+  title="Bring the workflow, the accounts, and the decision owner."
+  description="CREATE SOMETHING will map the stack boundary, define the first controlled path, identify what can be assigned, and show what stays visible to the operator before implementation starts."
   items={ctaItems}
 >
   {#snippet actions()}

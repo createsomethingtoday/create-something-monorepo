@@ -105,7 +105,7 @@ test('home route uses the read-only story canvas as a proof object', () => {
 	assert.ok(homeRoute.includes('<PublicAtlasStoryCanvas'));
 	assert.ok(homeRoute.includes('starterId="marketplace-review-queue"'));
 	assert.ok(homeRoute.includes('storyId="home-support-recovery-atlas-story"'));
-	assert.ok(homeRoute.includes('eyebrow="Workflow Trust Map"'));
+	assert.ok(homeRoute.includes('eyebrow="Workflow map"'));
 	assert.equal(homeRoute.includes('<PublicAtlasCanvas'), false);
 });
 

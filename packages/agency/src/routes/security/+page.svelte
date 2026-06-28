@@ -134,7 +134,7 @@
 <ClearCtaBand
   eyebrow="Access boundary"
   title="Map the workflow before you hand it credentials."
-  description="Security is strongest when the Workflow Trust Map names its objects, permissions, stop conditions, approval owner, and receipts before any agent acts."
+  description="Security is strongest when the workflow map names its objects, permissions, stop points, decision owner, and audit trail before any agent acts."
   items={ctaItems}
 >
   {#snippet actions()}

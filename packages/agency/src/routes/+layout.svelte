@@ -119,7 +119,7 @@
     {
       id: 'nav-services',
       label: 'How I Work',
-      description: 'Workflow pilots, trust maps, and first safe delegation',
+      description: 'Workflow maps, controlled pilots, and operating evidence',
       href: '/services',
       icon: '🔨',
       keywords: [

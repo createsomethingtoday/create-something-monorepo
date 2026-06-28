@@ -16,7 +16,7 @@
 
   const services = [
     {
-      name: 'Trust Map',
+      name: 'Workflow Map',
       description:
         'A fixed first map of the workflow, systems, AI tasks, approval path, and first controlled pilot.',
       type: 'First workflow map',
@@ -32,12 +32,12 @@
       priceDescription: 'Scoped build with optional ongoing support'
     },
     {
-      name: 'Trust Layer',
+      name: 'Ongoing Workflow Control',
       description:
-        'The Workflow Trust Layer: scoped actions, approval states, release checks, and incident loops once delegated work touches revenue or customer trust.',
-      type: 'Workflow Control Plan',
+        'Ongoing care for live AI-assisted work: approvals, release checks, blocked states, recovery notes, and review rhythm.',
+      type: 'Operating Plan',
       price: 'Custom',
-      priceDescription: 'Monthly trust layer'
+      priceDescription: 'Monthly control plan'
     },
     {
       name: 'Enterprise Extension',
@@ -56,9 +56,9 @@
         'CREATE SOMETHING builds AI workflow systems for business operations: mapped handoffs, connected tools, scoped AI tasks, approval points, stop conditions, and audit trails.'
     },
     {
-      question: 'What is a Workflow Trust Layer?',
+      question: 'What makes a workflow reliable?',
       answer:
-        'A Workflow Trust Layer is the operating layer around one workflow: what can run, what needs approval, what must stop, who owns the decision, and what evidence stays visible.'
+        'A workflow becomes reliable when the team can see what can run, what needs approval, what must stop, who owns the decision, and what evidence stays visible.'
     },
     {
       question: 'Where does CREATE SOMETHING start?',
@@ -163,9 +163,9 @@
       <PublicAtlasStoryCanvas
         starterId="marketplace-review-queue"
         storyId="home-support-recovery-atlas-story"
-        eyebrow="Workflow Trust Map"
+        eyebrow="Workflow map"
         title="The map comes before the automation."
-        description="This read-only Atlas canvas shows the workflow in plain language: systems, allowed actions, approval owner, stop condition, and audit trail."
+        description="This read-only Atlas canvas shows the workflow in plain language: systems, allowed actions, decision owner, stop point, and audit trail."
         compact
       />
     {/snippet}
@@ -191,7 +191,7 @@
   <ClearActionFooter
     eyebrow="Fixed-scope first step"
     title={agencyCoreMessaging.workflowCtaHeading}
-    description="Start with a Workflow Trust Map. If the map does not show a useful controlled pilot, the work stops there; if it does, the first build has a clear boundary."
+    description="Start with a workflow map. If the map does not show a useful controlled pilot, the work stops there; if it does, the first build has a clear boundary."
     items={actionFooterItems}
   >
     {#snippet actions()}

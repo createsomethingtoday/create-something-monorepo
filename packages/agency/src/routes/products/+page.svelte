@@ -54,7 +54,7 @@
       icon: 'plus',
       title: 'Start by mapping the first workflow',
       detail:
-        'Use proof as evidence for the method, then map the first safe delegation point for your own system.'
+        'Use proof as evidence for the method, then map the first controlled point for your own system.'
     }
   ];
 

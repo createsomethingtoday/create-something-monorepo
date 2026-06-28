@@ -45,15 +45,15 @@
 	const laneOptions: Array<{ value: ServiceLane; label: string; description: string }> = [
 		{
 			value: 'workflow_infrastructure',
-			label: 'Workflow Trust Map / Pilot',
+			label: 'Workflow Map / Pilot',
 			description:
-				'Start with the fixed-scope map; pilot only when the first safe delegation path is clear.'
+				'Start with the fixed-scope map; pilot only when the first controlled path is clear.'
 		},
 		{
 			value: 'reliability_and_control',
-			label: 'Support Recovery / Trust Layer',
+			label: 'Support Recovery / Ongoing Control',
 			description:
-				'Support, customer-trust, revenue, or account workflows that need approval rules and receipts.'
+				'Support, customer-trust, revenue, or account workflows that need approval rules and audit trails.'
 		},
 		{
 			value: 'enterprise_extension',
@@ -123,7 +123,7 @@
 		{
 			eyebrow: 'Handoff',
 			icon: 'folder',
-			title: 'Workflow Trust Map',
+			title: 'Workflow Map',
 			detail: 'Objects, owners, source systems, handoffs, and failure points.'
 		},
 		{
@@ -141,8 +141,8 @@
 		{
 			eyebrow: 'Path',
 			icon: 'arrow-right',
-			title: 'First safe path',
-			detail: 'The smallest service lane that adds capacity without hiding risk.'
+			title: 'First controlled path',
+			detail: 'The smallest workflow path that adds capacity without hiding risk.'
 		}
 	];
 
@@ -183,7 +183,7 @@
 			points: [
 				'One workflow is creating visible drag, rework, or missed handoffs.',
 				'Your team needs a clear owner, approval boundary, and next build path.',
-				'You want receipts the team can inspect after the call.'
+				'You want an audit trail the team can inspect after the call.'
 			]
 		},
 		{
@@ -465,7 +465,7 @@
 
 <SEO
 	title="Book a CREATE SOMETHING Mapping Session"
-	description="Schedule a scoped Workflow Trust Map session to clarify the handoff, ownership boundary, decision rules, receipts, and first safe build path."
+	description="Schedule a scoped workflow mapping session to clarify the handoff, ownership boundary, decision rules, audit trail, and first controlled build path."
 	propertyName="agency"
 />
 
@@ -476,7 +476,7 @@
 		titleLevel="h1"
 		eyebrow="Workflow mapping session"
 		title="Map the workflow before the build decision."
-		description="Bring the support recovery, customer-trust, revenue, production, or credential-touching handoff with the most drag. You leave with the objects named, actions scoped, decision states, receipts, and the first safe path or a clear stop."
+		description="Bring the support recovery, customer-trust, revenue, production, or credential-touching handoff with the most drag. You leave with the objects named, actions scoped, decision states, audit trail, and first controlled path or a clear stop."
 	>
 		{#snippet actions()}
 			<Button href="#booking-flow">Choose a time</Button>
@@ -499,7 +499,7 @@
 		variant="white"
 		eyebrow="Bring enough context"
 		title="Bring context, not secrets."
-		description="The session works best when we can see the real handoff and decide what your team keeps. Credentials move through Infisical or the approved runtime path only after the map shows a safe build path."
+		description="The session works best when we can see the real handoff and decide what your team keeps. Credentials move through Infisical or the approved runtime path only after the map shows a controlled build path."
 	>
 		{#snippet after()}
 			<ClearCardGrid

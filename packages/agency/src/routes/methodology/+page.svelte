@@ -56,7 +56,7 @@
 		{
 			weeks: 'Step 4',
 			name: 'Ship the operator path',
-				description: 'Deliver the first safe connection, runbook, trust notes, and operator brief surface.'
+				description: 'Deliver the first controlled connection, runbook, operating notes, and operator brief surface.'
 		}
 	];
 
@@ -78,7 +78,7 @@
 		{
 			name: 'Judgment',
 			subtitle: 'What needs the operator',
-				items: ['Trust Layer', 'Approvals', 'Briefs'],
+				items: ['Controls', 'Approvals', 'Briefs'],
 				description:
 					'The decision layer — where the trust layer classifies safe work, approval-needed work, and blocked states before the operator is interrupted.'
 		}
@@ -88,7 +88,7 @@
 <SEO
 	title="How It Works | CREATE SOMETHING .agency"
 	description="CREATE SOMETHING removes duplication, excess, and disconnection before turning a workflow into controlled delegation with a trust layer."
-	keywords="how CREATE SOMETHING works, workflow trust layer, controlled workflow, first safe connection, automation audit, Subtractive Triad"
+	keywords="how CREATE SOMETHING works, workflow control layer, controlled workflow, first controlled connection, automation audit, Subtractive Triad"
 	ogImage="/og-image.svg"
 	propertyName="agency"
 	breadcrumbs={[

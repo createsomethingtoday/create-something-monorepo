@@ -16,7 +16,7 @@
 
   const services = [
     {
-      name: 'Workflow Trust Map',
+      name: 'Workflow Map',
       description:
         'A fixed first map of the workflow, systems, AI tasks, approval path, and first controlled pilot.',
       type: 'First workflow map',
@@ -32,10 +32,10 @@
       priceDescription: 'Scoped build'
     },
     {
-      name: 'Trust Layer',
+      name: 'Ongoing Workflow Control',
       description:
-        'The Workflow Trust Layer for delegated work already in motion: scoped actions, approval states, release checks, blocked states, and incident loops.',
-      type: 'Workflow Control Plan',
+        'Ongoing care for live AI-assisted work: approvals, release checks, blocked states, recovery notes, and review rhythm.',
+      type: 'Operating Plan',
       price: 'Custom',
       priceDescription: 'Monthly'
     },
@@ -66,8 +66,8 @@
     {
       eyebrow: 'Surface',
       icon: 'document',
-      title: 'Receipt plan',
-      detail: 'The operator sees what ran, what waited, what stopped, and which owner decides next.'
+      title: 'Audit trail',
+      detail: 'The operator sees what ran, what waited, what stopped, and who decides next.'
     }
   ];
 
@@ -82,7 +82,7 @@
         'Support recovery, customer trust, revenue ops, or delivery work is already being rescued by hand',
         'Crosses systems, teams, or permissions',
         'Creates rework, customer risk, compliance concern, or revenue drag',
-        'Has someone who owns approval without wanting to watch all day'
+        'Has a decision owner who should not need to watch all day'
       ]
     },
     {
@@ -92,7 +92,7 @@
       detail:
         'The work is not broad admin coverage, staff augmentation, or fake autonomy. It needs a concrete operating path.',
       points: [
-        'No one can name the approval owner',
+        'No one can name the decision owner',
         'The failure mode is still abstract',
         'The goal is unattended action without scoped rules'
       ]
@@ -101,11 +101,11 @@
 
   const servicePathDecisions: ClearDecisionItem[] = [
     {
-      label: 'Workflow Trust Map',
+      label: 'Workflow Map',
       summary: 'Map',
       title: 'Fixed-scope first offer',
       detail:
-        'Use this when the workflow is real but the safe delegation point is still unclear. If the map does not show a safe path, stop there.',
+        'Use this when the workflow is real but the first controlled pilot is still unclear. If the map does not show a useful path, stop there.',
       tone: 'review',
       evidence: ['Workflow map', 'Owner map', 'Action boundary', 'First receipt plan'],
       receipts: ['first-receipt-plan.md', 'pilot-recommendation.md']
@@ -121,7 +121,7 @@
       receipts: ['release-evidence.md', 'accepted-handoff.md']
     },
     {
-      label: 'Trust Layer',
+      label: 'Ongoing Control',
       summary: 'Wait',
       title: 'Monthly control around live work',
       detail:
@@ -158,9 +158,9 @@
     {
       label: 'After session',
       icon: 'check',
-      title: 'Leave with the first safe path',
+      title: 'Leave with the first controlled path',
       detail:
-        'You get the service lane, trust boundary, and implementation path before build work starts.'
+        'You get the workflow boundary and implementation path before build work starts.'
     }
   ];
 
@@ -168,7 +168,7 @@
     {
       question: 'What is your primary service?',
       answer:
-        'The first offer is a fixed-scope Workflow Trust Map. Workflow Pilot follows only when the first safe delegation path is clear enough to build.'
+        'The first offer is a fixed-scope Workflow Map. Workflow Pilot follows only when the first controlled path is clear enough to build.'
     },
     {
       question: 'Are agents part of the workforce?',
