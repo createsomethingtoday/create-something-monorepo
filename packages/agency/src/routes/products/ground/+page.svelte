@@ -239,6 +239,14 @@
 	<!-- Links -->
 	<section class="links-section">
 		<div class="links-grid">
+			<a href="/products" class="link-card">
+				<span class="link-icon">
+					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+						<path d="M4 6h16M4 12h16M4 18h10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+					</svg>
+				</span>
+				<span class="link-text">Proof and Receipts</span>
+			</a>
 			<a href="https://github.com/createsomethingtoday/create-something-monorepo/tree/main/packages/ground" class="link-card">
 				<span class="link-icon">
 					<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

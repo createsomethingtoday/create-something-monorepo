@@ -165,8 +165,8 @@
     {
       eyebrow: 'Claim',
       icon: 'warning',
-      title: 'No partner claim before acceptance',
-      detail: 'No official Cloudflare Partner or certified provider claim before acceptance.'
+      title: 'No official claim before acceptance',
+      detail: 'No official Cloudflare authorization or certified provider claim before acceptance.'
     },
     {
       eyebrow: 'Alliance',
@@ -205,9 +205,9 @@
 </script>
 
 <SEO
-  title="Cloudflare Partner Lane | CREATE SOMETHING .agency"
+  title="Cloudflare Workflow Runtime | CREATE SOMETHING .agency"
   description="CREATE SOMETHING builds Cloudflare-native workflow systems with Workers, Pages, D1, scoped tool surfaces, and runtime control paths."
-  keywords="Cloudflare partner, Cloudflare PowerUP, Cloudflare Workers, scoped tools, D1, workflow control, AI workflow infrastructure"
+  keywords="Cloudflare workflow runtime, Cloudflare Workers, scoped tools, D1, workflow control, AI workflow infrastructure"
   ogImage="/og/cloudflare-lane.svg"
   propertyName="agency"
   {faqItems}
@@ -217,7 +217,7 @@
   variant="hero"
   layout="split"
   titleLevel="h1"
-  eyebrow="Cloudflare Partner Lane"
+  eyebrow="Cloudflare Workflow Runtime"
   title="Cloudflare runtime with controlled workflows."
   description="Cloudflare is the deployable substrate for controlled workflow surfaces: routes, state, queues, approvals, scoped tool endpoints, and rollback-ready handoffs."
 >
@@ -225,7 +225,7 @@
     <Button href={agencyCoreMessaging.workflowMappingSessionHref}>
       {agencyCoreMessaging.bookMappingSessionLabel}
     </Button>
-    <Button href="/partners" variant="secondary">See Partner Stack</Button>
+    <Button href="/partners" variant="secondary">See Workflow Tool Stack</Button>
   {/snippet}
 
   {#snippet aside()}
@@ -233,7 +233,7 @@
       items={statusCards}
       columns={1}
       density="compact"
-      ariaLabel="Cloudflare partner status"
+      ariaLabel="Cloudflare workflow runtime status"
     />
   {/snippet}
 </ClearPageSection>
@@ -275,18 +275,18 @@
   variant="soft"
   eyebrow="Ecosystem"
   title="Cloudflare is the runtime, not the whole operating model."
-  description="The partner lane works because each adjacent surface keeps a distinct role."
+  description="The workflow tool stack works because each adjacent surface keeps a distinct role."
 >
   {#snippet after()}
-    <ClearCardGrid items={ecosystemCards} columns={3} ariaLabel="Cloudflare ecosystem lanes" />
+    <ClearCardGrid items={ecosystemCards} columns={3} ariaLabel="Cloudflare ecosystem roles" />
   {/snippet}
 </ClearPageSection>
 
 <ClearPageSection
   variant="white"
   eyebrow="Compliance"
-  title="Keep the partner claim conservative."
-  description="The public lane should show readiness and proof without implying authorization before Cloudflare grants it."
+  title="Keep the public claim conservative."
+  description="The public page should show readiness and proof without implying authorization before Cloudflare grants it."
 >
   {#snippet after()}
     <ClearCardGrid items={complianceCards} columns={3} ariaLabel="Cloudflare compliance guardrails" />

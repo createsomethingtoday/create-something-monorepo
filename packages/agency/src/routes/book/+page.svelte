@@ -63,7 +63,7 @@
 		{
 			value: 'system_development_referral',
 			label: 'System Development Referral',
-			description: 'Full system build, admin coverage, or onboarding needs routed to the partner lane.'
+			description: 'Full system build, admin coverage, or onboarding needs routed to a trusted referral path.'
 		},
 		{
 			value: 'not_sure',

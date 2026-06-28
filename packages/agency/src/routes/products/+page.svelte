@@ -5,12 +5,10 @@
     ClearCtaBand,
     ClearPageSection,
     ClearProofStrip,
-    ClearQuoteMetricPanel,
     SEO,
     type ClearCardItem,
     type ClearCtaItem,
-    type ClearProofItem,
-    type ClearQuoteMetric
+    type ClearProofItem
   } from '@create-something/canon';
   import PublicAtlasStoryCanvas from '$lib/components/PublicAtlasStoryCanvas.svelte';
   import WorkflowSignalIcon from '$lib/components/WorkflowSignalIcon.svelte';
@@ -21,11 +19,6 @@
   type ProofStateItem = ClearProofItem & { icon: ProofStateIconName };
 
   const featured = products.filter((product) => product.category === 'featured');
-  const methodAndFramework = products.filter(
-    (product) => product.category === 'framework' || product.category === 'developer-tools'
-  );
-  const integrations = products.filter((product) => product.category === 'integration');
-  const clientWork = products.filter((product) => product.category === 'client');
 
   const proofReadingCards: ClearCardItem[] = [
     {
@@ -132,7 +125,7 @@
     {
       icon: 'objects',
       value: 'Stop',
-      label: 'Out-of-lane work creates a reason-coded handoff instead of pretending to finish.'
+			label: 'Out-of-scope work creates a reason-coded handoff instead of pretending to finish.'
     },
     {
       icon: 'receipts',
@@ -157,29 +150,6 @@
     {
       label: 'Control',
       detail: 'Ship the run, wait, stop, and rollback paths the operator can inspect.'
-    }
-  ];
-
-  const proofMetrics: ClearQuoteMetric[] = [
-    {
-      value: '2',
-      label: 'delivery records',
-      detail: 'Abundance and ShivWorks show business-readable handoff and evidence surfaces.'
-    },
-    {
-      value: '4',
-      label: 'control states',
-      detail: 'Run, wait, stop, and receipt are visible before broader automation is allowed.'
-    },
-    {
-      value: '0',
-      label: 'secret-bearing proof exposed',
-      detail: 'Public pages show status and artifacts while private evidence stays behind owner lanes.'
-    },
-    {
-      value: '1',
-      label: 'workflow first',
-      detail: 'The service starts with one business workflow rather than a generic agent demo.'
     }
   ];
 
@@ -339,70 +309,17 @@
   {/snippet}
 </ClearPageSection>
 
-<ClearQuoteMetricPanel
-  eyebrow="Proof metrics"
-  quote="Proof stays useful when it names what ran, what waited, and what stopped."
-  source="CREATE SOMETHING .agency delegated-work control model"
-  metrics={proofMetrics}
-  ariaLabel="Workflow proof metrics"
-/>
-
 <ClearPageSection
   variant="white"
   eyebrow="Framework and tool proof"
-  title="Open-source proof sits below the delivery record."
-  description="Ground checks claims, Loom MCP shows why agent work needs ownership and handoff evidence, and connector work shows how capability becomes constrained access."
+  title="Product proof should point back to the service path."
+  description="Ground and Loom MCP are useful because they show the same operating rule in public: verify before claiming, preserve ownership, and keep evidence with the work."
 >
   {#snippet after()}
     <ClearCardGrid
       items={featured.map(productCard)}
       columns={2}
       ariaLabel="Flagship proof surfaces"
-    />
-  {/snippet}
-</ClearPageSection>
-
-<ClearPageSection
-  variant="soft"
-  eyebrow="Method and control primitives"
-  title="Framework tools make the delivery philosophy inspectable."
-  description="These tools show the rules underneath the service before they become client workflow systems."
->
-  {#snippet after()}
-    <ClearCardGrid
-      items={methodAndFramework.map(productCard)}
-      columns={3}
-      ariaLabel="Method and framework proof surfaces"
-    />
-  {/snippet}
-</ClearPageSection>
-
-<ClearPageSection
-  variant="white"
-  eyebrow="Connection tools"
-  title="Connections prove the path first."
-  description="When the workflow becomes strategic, the same connection can graduate into approvals, blocked states, and operator briefs."
->
-  {#snippet after()}
-    <ClearCardGrid
-      items={integrations.map(productCard)}
-      columns={3}
-      ariaLabel="Connection MCPs"
-    />
-  {/snippet}
-</ClearPageSection>
-
-<ClearPageSection
-  variant="soft"
-  eyebrow="Client workflow evidence"
-  title="Real systems move from integration work into operating visibility."
-  description="Selected builds show how code, runbooks, policy, handoffs, and evidence turn into work an operator can understand."
->
-  {#snippet after()}
-    <ClearCardGrid
-      items={clientWork.map(productCard)}
-      columns={2}
-      ariaLabel="Client workflow evidence"
     />
   {/snippet}
 </ClearPageSection>

@@ -192,8 +192,8 @@
     <Button href={agencyCoreMessaging.workflowTeardownHref}>
       {agencyCoreMessaging.workflowTeardownLabel}
     </Button>
-    <Button href="/dify" variant="secondary">Back To Dify Lane</Button>
-    <Button href="/dify/content-engine" variant="secondary">Back To Content Engine</Button>
+    <Button href="/dify" variant="secondary">Back To Dify</Button>
+    <Button href="/dify/content-engine" variant="secondary">Back To Dify Page Portfolio</Button>
   {/snippet}
 
   {#snippet aside()}

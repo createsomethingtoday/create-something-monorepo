@@ -1,12 +1,19 @@
 export type MarketingPageDecision = 'index' | 'route' | 'archive';
 export type MarketingPageCluster =
+	| 'home'
 	| 'core-services'
+	| 'conversion'
+	| 'atlas'
 	| 'stack-boundary'
 	| 'workflow-tool-stack'
 	| 'dify'
+	| 'methodology'
 	| 'products'
+	| 'proof-lab'
+	| 'trust'
 	| 'business-use-case'
-	| 'enterprise-use-case';
+	| 'enterprise-use-case'
+	| 'about';
 export type MarketingPageRole = 'pillar' | 'support' | 'comparison' | 'implementation' | 'operations';
 export type MarketingFunnelStage = 'discover' | 'understand' | 'evaluate' | 'implement' | 'book';
 export type MarketingSelfHealingLever =
@@ -27,7 +34,7 @@ export type MarketingPageEntry = {
 	primaryAction: string;
 	requiredTerms: string[];
 	requiredLinks: string[];
-	schema: 'faq' | 'article';
+	schema: 'faq' | 'article' | 'page';
 	search: {
 		changefreq: 'daily' | 'weekly' | 'monthly';
 		priority: string;
@@ -58,6 +65,25 @@ export const marketingPageMinimums: Record<MarketingPageDecision, number> = {
 
 export const marketingPagePortfolio: MarketingPageEntry[] = [
 	{
+		path: '/',
+		cluster: 'home',
+		role: 'pillar',
+		decision: 'index',
+		audience: 'Teams looking for a plain explanation of AI workflow systems.',
+		funnelStage: 'discover',
+		intent: 'Introduce the category and route readers toward workflow mapping.',
+		primaryAction: 'Start Workflow Map',
+		requiredTerms: ['workflow', 'business operations', 'map', 'approval', 'audit trail'],
+		requiredLinks: ['/services', '/partners', '/products'],
+		schema: 'faq',
+		search: {
+			changefreq: 'weekly',
+			priority: '1.0',
+			lastmod: '2026-06-19'
+		},
+		selfHealing: ['copy:heal', 'search-route:sync']
+	},
+	{
 		path: '/services',
 		cluster: 'core-services',
 		role: 'pillar',
@@ -75,6 +101,82 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
 			lastmod: '2026-06-19'
 		},
 		selfHealing: ['copy:heal', 'search-route:sync']
+	},
+	{
+		path: '/book',
+		cluster: 'conversion',
+		role: 'pillar',
+		decision: 'index',
+		audience: 'Teams ready to schedule a workflow mapping session.',
+		funnelStage: 'book',
+		intent: 'Convert a mapped workflow need into a scoped booking path.',
+		primaryAction: 'Choose a time',
+		requiredTerms: ['workflow', 'handoff', 'owner', 'audit trail', 'controlled path'],
+		requiredLinks: ['/services'],
+		schema: 'page',
+		search: {
+			changefreq: 'weekly',
+			priority: '0.9',
+			lastmod: '2026-06-28'
+		},
+		selfHealing: ['copy:heal', 'search-route:sync']
+	},
+	{
+		path: '/contact',
+		cluster: 'conversion',
+		role: 'support',
+		decision: 'index',
+		audience: 'Teams that need to describe a workflow before booking.',
+		funnelStage: 'book',
+		intent: 'Collect the workflow context and route the reader to the right commitment level.',
+		primaryAction: 'Book a mapping session',
+		requiredTerms: ['workflow', 'control path', 'commitment', 'operating lane', 'decision'],
+		requiredLinks: ['/book'],
+		schema: 'page',
+		search: {
+			changefreq: 'monthly',
+			priority: '0.8',
+			lastmod: '2026-06-28'
+		},
+		selfHealing: ['copy:heal', 'search-route:sync']
+	},
+	{
+		path: '/atlas',
+		cluster: 'atlas',
+		role: 'pillar',
+		decision: 'index',
+		audience: 'Visitors who want to map one workflow before a call.',
+		funnelStage: 'understand',
+		intent: 'Let the reader see and edit a public workflow map before booking.',
+		primaryAction: 'Open canvas',
+		requiredTerms: ['workflow', 'owner', 'approvals', 'systems', 'booking context'],
+		requiredLinks: ['/book'],
+		schema: 'page',
+		search: {
+			changefreq: 'weekly',
+			priority: '0.85',
+			lastmod: '2026-06-19'
+		},
+		selfHealing: ['copy:heal', 'search-route:sync']
+	},
+	{
+		path: '/basketball-systems-lab',
+		cluster: 'proof-lab',
+		role: 'pillar',
+		decision: 'index',
+		audience: 'Readers evaluating CREATE SOMETHING systems thinking through a public prototype.',
+		funnelStage: 'discover',
+		intent: 'Show a systems prototype as proof of policy, media, health, labor, and balance tradeoffs.',
+		primaryAction: 'Run',
+		requiredTerms: ['system', 'policy', 'media', 'health', 'labor'],
+		requiredLinks: [],
+		schema: 'page',
+		search: {
+			changefreq: 'monthly',
+			priority: '0.6',
+			lastmod: '2026-06-21'
+		},
+		selfHealing: ['copy:heal', 'search-route:sync', 'canonical-route:review']
 	},
 	{
 		path: '/stack',
@@ -116,6 +218,63 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
 		selfHealing: ['copy:heal', 'search-route:sync', 'canonical-route:review']
 	},
 	{
+		path: '/methodology',
+		cluster: 'methodology',
+		role: 'pillar',
+		decision: 'index',
+		audience: 'Teams trying to understand the method before the service path.',
+		funnelStage: 'understand',
+		intent: 'Explain the subtract-first method and route readers back to services.',
+		primaryAction: 'How I work',
+		requiredTerms: ['workflow', 'approval', 'stop', 'operator', 'control'],
+		requiredLinks: ['/services'],
+		schema: 'page',
+		search: {
+			changefreq: 'monthly',
+			priority: '0.75',
+			lastmod: '2026-06-19'
+		},
+		selfHealing: ['copy:heal', 'search-route:sync', 'canonical-route:review']
+	},
+	{
+		path: '/security',
+		cluster: 'trust',
+		role: 'pillar',
+		decision: 'index',
+		audience: 'Teams evaluating access, identity, and entitlement boundaries.',
+		funnelStage: 'evaluate',
+		intent: 'Explain security as a workflow access chain before credentials are used.',
+		primaryAction: 'Map the workflow',
+		requiredTerms: ['token', 'access', 'workflow', 'approval', 'audit trail'],
+		requiredLinks: ['/bearer-token-policy'],
+		schema: 'page',
+		search: {
+			changefreq: 'monthly',
+			priority: '0.7',
+			lastmod: '2026-06-19'
+		},
+		selfHealing: ['copy:heal', 'search-route:sync']
+	},
+	{
+		path: '/bearer-token-policy',
+		cluster: 'trust',
+		role: 'support',
+		decision: 'index',
+		audience: 'Users and operators who need the token policy in plain terms.',
+		funnelStage: 'evaluate',
+		intent: 'Document bearer-token responsibilities, revocation, audit controls, and enforcement.',
+		primaryAction: 'Security Contact',
+		requiredTerms: ['token', 'Authorization', 'revocation', 'audit', 'policy'],
+		requiredLinks: ['/security'],
+		schema: 'page',
+		search: {
+			changefreq: 'monthly',
+			priority: '0.65',
+			lastmod: '2026-06-28'
+		},
+		selfHealing: ['copy:heal', 'search-route:sync']
+	},
+	{
 		path: '/cloudflare',
 		cluster: 'workflow-tool-stack',
 		role: 'support',
@@ -130,7 +289,7 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
 		search: {
 			changefreq: 'monthly',
 			priority: '0.8',
-			lastmod: '2026-06-19'
+			lastmod: '2026-06-28'
 		},
 		selfHealing: ['copy:heal', 'search-route:sync', 'canonical-route:review']
 	},
@@ -149,7 +308,7 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
 		search: {
 			changefreq: 'monthly',
 			priority: '0.8',
-			lastmod: '2026-06-22'
+			lastmod: '2026-06-28'
 		},
 		selfHealing: ['copy:heal', 'search-route:sync', 'canonical-route:review']
 	},
@@ -225,7 +384,7 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
 		search: {
 			changefreq: 'weekly',
 			priority: '0.85',
-			lastmod: '2026-06-23'
+			lastmod: '2026-06-28'
 		},
 		selfHealing: ['copy:heal', 'search-route:sync', 'canonical-route:review']
 	},
@@ -282,9 +441,48 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
 		search: {
 			changefreq: 'monthly',
 			priority: '0.75',
-			lastmod: '2026-06-19'
+			lastmod: '2026-06-28'
 		},
 		selfHealing: ['copy:heal', 'search-route:sync']
+	},
+	{
+		path: '/products/ground',
+		cluster: 'products',
+		role: 'support',
+		decision: 'index',
+		audience: 'Developers evaluating Ground as proof of verify-before-claiming behavior.',
+		funnelStage: 'evaluate',
+		intent: 'Show Ground as a product proof surface for evidence-backed code analysis.',
+		primaryAction: 'Copy command',
+		requiredTerms: ['Ground', 'verify', 'claim', 'MCP', 'evidence'],
+		requiredLinks: ['/products'],
+		schema: 'page',
+		search: {
+			changefreq: 'monthly',
+			priority: '0.65',
+			lastmod: '2026-06-28'
+		},
+		selfHealing: ['copy:heal', 'search-route:sync', 'canonical-route:review']
+	},
+	{
+		path: '/products/loom',
+		cluster: 'products',
+		role: 'support',
+		decision: 'route',
+		routeTarget: '/products',
+		audience: 'Readers who land on the historical Loom MCP proof page.',
+		funnelStage: 'evaluate',
+		intent: 'Preserve Loom as historical proof while routing active product proof to /products.',
+		primaryAction: 'Proof and Receipts',
+		requiredTerms: ['Loom', 'archive', 'Linear', 'evidence', 'receipts'],
+		requiredLinks: ['/products'],
+		schema: 'page',
+		search: {
+			changefreq: 'monthly',
+			priority: '0.65',
+			lastmod: '2026-06-28'
+		},
+		selfHealing: ['copy:heal', 'search-route:sync', 'archive-route:review']
 	},
 	{
 		path: '/use-cases/business',
@@ -323,6 +521,25 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
 			lastmod: '2026-06-19'
 		},
 		selfHealing: ['copy:heal', 'search-route:sync']
+	},
+	{
+		path: '/about',
+		cluster: 'about',
+		role: 'pillar',
+		decision: 'index',
+		audience: 'Readers who want to understand the operator behind CREATE SOMETHING .agency.',
+		funnelStage: 'evaluate',
+		intent: 'Explain Micah Johnson and route readers back to the workflow service path.',
+		primaryAction: 'Book',
+		requiredTerms: ['workflow', 'operator', 'judgment', 'evidence', 'trust'],
+		requiredLinks: ['/services'],
+		schema: 'page',
+		search: {
+			changefreq: 'monthly',
+			priority: '0.7',
+			lastmod: '2026-06-19'
+		},
+		selfHealing: ['copy:heal', 'search-route:sync', 'canonical-route:review']
 	}
 ];
 
@@ -343,9 +560,9 @@ export function scoreMarketingPage(
 		{
 			id: 'seo',
 			label: 'Page declares SEO title and description',
-			points: /<SEO[\s\S]*?title="/.test(source) && /<SEO[\s\S]*?description="/.test(source) ? 14 : 0,
+			points: hasSeoProp(source, 'title') && hasSeoProp(source, 'description') ? 14 : 0,
 			max: 14,
-			passed: /<SEO[\s\S]*?title="/.test(source) && /<SEO[\s\S]*?description="/.test(source)
+			passed: hasSeoProp(source, 'title') && hasSeoProp(source, 'description')
 		},
 		{
 			id: 'schema',
@@ -355,14 +572,20 @@ export function scoreMarketingPage(
 					? /faqItems/.test(source)
 						? 12
 						: 0
-					: /ogType="article"/.test(source) && /publishedTime=/.test(source)
-						? 12
-						: 0,
+					: entry.schema === 'article'
+						? /ogType="article"/.test(source) && /publishedTime=/.test(source)
+							? 12
+							: 0
+						: /<SEO[\s\S]*?>/.test(source)
+							? 12
+							: 0,
 			max: 12,
 			passed:
 				entry.schema === 'faq'
 					? /faqItems/.test(source)
-					: /ogType="article"/.test(source) && /publishedTime=/.test(source)
+					: entry.schema === 'article'
+						? /ogType="article"/.test(source) && /publishedTime=/.test(source)
+						: /<SEO[\s\S]*?>/.test(source)
 		},
 		{
 			id: 'primary-action',
@@ -419,4 +642,8 @@ export function scoreMarketingPage(
 		status: percent >= marketingPageMinimums.index ? 'strong' : percent >= marketingPageMinimums.route ? 'route-review' : 'archive-review',
 		checks
 	};
+}
+
+function hasSeoProp(source: string, propName: string): boolean {
+	return new RegExp(`<SEO[\\s\\S]*?(?:\\{${propName}\\}|${propName}=)`).test(source);
 }

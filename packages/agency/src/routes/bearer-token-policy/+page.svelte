@@ -1,5 +1,6 @@
 <script lang="ts">
   import {
+    Button,
     ClearCardGrid,
     ClearPageSection,
     SEO,
@@ -76,6 +77,10 @@
   title="The token is portable. Authorization is conditional."
   description="CREATE SOMETHING .agency issues one managed bearer token per authenticated user for approved hosts, local tools, and background agents. A valid token does not guarantee access unless current policy and entitlement checks pass."
 >
+  {#snippet actions()}
+    <Button href="/security">Security Contact</Button>
+  {/snippet}
+
   {#snippet after()}
     <ClearCardGrid items={controls} columns={4} ariaLabel="Bearer token controls" />
   {/snippet}

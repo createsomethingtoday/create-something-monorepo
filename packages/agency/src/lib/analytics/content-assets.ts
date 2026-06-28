@@ -5,14 +5,14 @@ export type AgencyContentIntent =
   | 'how-to'
   | 'checklist'
   | 'definition'
-  | 'partner-proof'
+  | 'workflow-proof'
   | 'service';
 
 export type AgencyContentFunnelStage = 'awareness' | 'consideration' | 'decision';
 
 export interface AgencyContentAssetAnalytics {
   contentAssetId: string;
-  contentType: 'article' | 'conversion-page' | 'guide' | 'partner-page' | 'service-page';
+  contentType: 'article' | 'conversion-page' | 'guide' | 'service-page';
   contentCluster: string;
   contentIntent: AgencyContentIntent;
   contentAudience: string;
@@ -64,13 +64,13 @@ const AGENCY_CONTENT_ASSETS_BY_PATH: Record<string, AgencyContentAssetAnalytics>
     contentPrimaryCta: 'request-workflow-teardown'
   },
   '/cloudflare': {
-    contentAssetId: 'partner.cloudflare-runtime.v20260518',
-    contentType: 'partner-page',
-    contentCluster: 'partner-implementation-lanes',
-    contentIntent: 'partner-proof',
+    contentAssetId: 'workflow.cloudflare-runtime.v20260518',
+    contentType: 'guide',
+    contentCluster: 'workflow-tool-stack',
+    contentIntent: 'workflow-proof',
     contentAudience: 'operator evaluating Cloudflare-backed AI workflow infrastructure',
     contentFunnelStage: 'consideration',
-    contentPrimaryKeyword: 'Cloudflare AI workflow implementation partner',
+    contentPrimaryKeyword: 'Cloudflare workflow runtime',
     contentPrimaryCta: 'request-workflow-teardown'
   },
   '/dify': {
@@ -138,13 +138,13 @@ const AGENCY_CONTENT_ASSETS_BY_PATH: Record<string, AgencyContentAssetAnalytics>
     contentLinearIssue: 'CRE-374'
   },
   '/notion': {
-    contentAssetId: 'partner.notion-ops-workspace.v20260518',
-    contentType: 'partner-page',
-    contentCluster: 'partner-implementation-lanes',
-    contentIntent: 'partner-proof',
+    contentAssetId: 'workflow.notion-review-workspace.v20260518',
+    contentType: 'guide',
+    contentCluster: 'workflow-tool-stack',
+    contentIntent: 'workflow-proof',
     contentAudience: 'operator evaluating Notion implementation support',
     contentFunnelStage: 'consideration',
-    contentPrimaryKeyword: 'Notion operations workspace consultant',
+    contentPrimaryKeyword: 'Notion review workspace',
     contentPrimaryCta: 'request-workflow-teardown'
   }
 };
