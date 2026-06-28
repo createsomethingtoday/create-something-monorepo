@@ -137,7 +137,7 @@
       eyebrow: 'Compare',
       icon: 'search',
       title: 'Dify vs n8n',
-      detail: 'Use the layer comparison when buyers are deciding between automation and agent apps.',
+      detail: 'Use the layer comparison when teams are deciding between automation and agent apps.',
       href: '/dify/n8n-vs-dify'
     }
   ];
@@ -245,7 +245,7 @@
   variant="white"
   eyebrow="Proof"
   title="Dify proof should be visible without exposing private traces."
-  description="The lane works when buyers can see the app shape, tool boundary, eval posture, and delivery evidence."
+  description="The lane works when decision owners can see the app shape, tool boundary, eval posture, and delivery evidence."
 >
   {#snippet after()}
     <ClearCardGrid items={proofCards} columns={4} ariaLabel="Dify proof cards" />
@@ -267,7 +267,7 @@
   variant="white"
   eyebrow="Content path"
   title="Teach the control plane before asking for trust."
-  description="The guide cluster explains the operating model, validates the workflow, and routes buyers to the right next action."
+  description="The guide cluster explains the operating model, validates the workflow, and routes teams to the right next action."
 >
   {#snippet after()}
     <ClearCardGrid items={funnelCards} columns={4} ariaLabel="Dify content path" />

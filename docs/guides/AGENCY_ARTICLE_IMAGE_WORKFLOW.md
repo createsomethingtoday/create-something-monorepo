@@ -1,8 +1,8 @@
 # Agency Article Image Workflow
 
-> Parent plan: `docs/AGENCY_BUYER_INTENT_ARTICLE_ENGINE.md`
-> Brief template: `packages/agency/content/templates/marketing/buyer-intent-article-brief.md`
-> Tracker template: `docs/examples/agency-buyer-intent-article-tracker.template.csv`
+> Parent plan: `docs/AGENCY_WORKFLOW_INTENT_ARTICLE_ENGINE.md`
+> Brief template: `packages/agency/content/templates/marketing/workflow-intent-article-brief.md`
+> Tracker template: `docs/examples/agency-workflow-intent-article-tracker.template.csv`
 
 ## Decision
 

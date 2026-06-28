@@ -217,7 +217,7 @@
   variant="white"
   eyebrow="Operating path"
   title="Do not re-platform. Remove one manual bridge."
-  description="The buyer does not need a full-stack rebuild on the first call. They need to see which handoff can be mapped, delegated, stopped, and proven."
+  description="Your team does not need a full-stack rebuild on the first call. You need to see which handoff can be mapped, delegated, stopped, and proven."
 >
   {#snippet after()}
     <ClearCardGrid items={journey} columns={4} ariaLabel="Small-team workflow wedge journey" />
@@ -250,7 +250,7 @@
   variant="soft"
   eyebrow="Fit"
   title="This is for teams carrying too much workflow in people."
-  description="The right first buyer can name the repeated handoff, the person currently rebuilding context, and the business consequence when that handoff breaks."
+  description="The right starting team can name the repeated handoff, the person currently rebuilding context, and the business consequence when that handoff breaks."
 >
   {#snippet after()}
     <ClearCardGrid items={audienceCards} columns={3} ariaLabel="Small-team workflow fit" />

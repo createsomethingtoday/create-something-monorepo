@@ -40,7 +40,7 @@ Canvas must show: owner | workflow artifact | automation | AI task | human judgm
 Create a CREATE SOMETHING <image family> for <surface>.
 
 Purpose: <what the image must prove>.
-Audience: <operator, buyer, builder, reviewer, client>.
+Audience: <operator, decision owner, builder, reviewer, client>.
 Show: <workflow objects, states, proof artifacts, owners, gates>.
 
 If the image explains workflow behavior, governance, an offer, a case study, a

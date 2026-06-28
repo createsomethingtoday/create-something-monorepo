@@ -47,7 +47,7 @@
 		variant="white"
 		eyebrow="Public mapping surface"
 		title="The canvas turns curiosity into booking context."
-		description="Cold readers can test the method without exposing credentials. Warm buyers leave with a summary, readiness signal, and booking metadata that make the first session sharper."
+		description="Cold readers can test the method without exposing credentials. Warm teams leave with a summary, readiness signal, and booking metadata that make the first session sharper."
 	>
 		{#snippet after()}
 			<PublicAtlasCanvas bookingHref="/book" />

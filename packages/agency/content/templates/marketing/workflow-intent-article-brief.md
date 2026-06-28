@@ -1,4 +1,4 @@
-# Buyer-Intent Article Brief
+# Workflow-Intent Article Brief
 
 > Content asset ID:
 > Linear issue:
@@ -13,7 +13,7 @@
 - Primary keyword:
 - Secondary keywords:
 - Search intent: compare | versus | how-to | checklist | definition
-- Buyer:
+- Audience:
 - Funnel stage: awareness | consideration | decision
 - Competitors, tools, or alternatives included:
 
@@ -28,7 +28,7 @@ Default spine:
 
 ## Quick Answer
 
-Write the answer a buyer should understand in the first 30 seconds.
+Write the answer a reader should understand in the first 30 seconds.
 
 ## Evaluation Criteria
 
@@ -70,7 +70,7 @@ asset folder before publish.
 | ------------------ | ----------------- | ---------------- | --------------------------------------------- | --------------- | ------ |
 | Hero visual        | create            | yes / no         | Make the article recognizable and ownable     |                 |        |
 | Story canvas       | create            | yes              | Map owner, workflow, run/wait/stop, receipt   |                 |        |
-| Comparison matrix  | create            | yes / no         | Help buyers scan options                      |                 |        |
+| Comparison matrix  | create            | yes / no         | Help teams scan options                      |                 |        |
 | Tool screenshot 1  | collect           | no               | Prove a specific product claim                |                 |        |
 | Tool screenshot 2  | collect           | no               | Prove a specific product claim                |                 |        |
 | Framework diagram  | create            | yes              | Show the CREATE SOMETHING point of view       |                 |        |
@@ -84,7 +84,7 @@ not use vendor homepage screenshots as filler.
 
 - Visual source folder:
 - Atlas canvas source: existing starter map | new graph artifact | not applicable
-- Canvas renderer: static-story | atlas | sigma | cosmograph | not applicable
+- Canvas renderer: Atlas | static-story | sigma | cosmograph | not applicable
 - Canvas must show: owner | workflow artifact | automation | AI task | human judgment | stop boundary | receipt
 - Hero visual:
 - Screenshot targets:
@@ -128,7 +128,7 @@ CTA route:
 - `contentAssetId`:
 - `contentCluster`:
 - `contentIntent`:
-- `contentBuyer`:
+- `contentAudience`:
 - `contentFunnelStage`:
 - `contentPrimaryKeyword`:
 - `contentPrimaryCta`:

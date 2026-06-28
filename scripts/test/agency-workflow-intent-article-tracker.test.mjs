@@ -8,7 +8,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, '..', '..');
 const TRACKER_TEMPLATE = path.join(
   REPO_ROOT,
-  'docs/examples/agency-buyer-intent-article-tracker.template.csv',
+  'docs/examples/agency-workflow-intent-article-tracker.template.csv',
 );
 
 function readRows() {
@@ -18,7 +18,7 @@ function readRows() {
     .map((line) => line.split(','));
 }
 
-test('buyer-intent article tracker keeps canvas-first planning fields', () => {
+test('workflow-intent article tracker keeps canvas-first planning fields', () => {
   const [header, ...rows] = readRows();
   assert.ok(header);
   assert.ok(rows.length > 0);

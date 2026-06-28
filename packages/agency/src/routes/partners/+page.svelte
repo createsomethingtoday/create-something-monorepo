@@ -83,7 +83,7 @@
       icon: 'arrow-right',
       title: 'Route each lead correctly',
       detail:
-        'Self-serve buyers use disclosed affiliate or marketplace paths only after approval. Implementation and co-sell buyers stay in partner lanes.'
+        'Self-serve visitors use disclosed affiliate or marketplace paths only after approval. Implementation and co-sell teams stay in partner lanes.'
     },
     {
       eyebrow: '03',
@@ -216,7 +216,7 @@
   variant="white"
   eyebrow="Application lanes"
   title="Each partner page has one job."
-  description="The public pages qualify the lane, explain the boundary, and route buyers without implying approval before the partner program actually grants it."
+  description="The public pages qualify the lane, explain the boundary, and route teams without implying approval before the partner program actually grants it."
 >
   {#snippet after()}
     <ClearCardGrid items={applicationQueue} columns={4} ariaLabel="Partner application lanes" />

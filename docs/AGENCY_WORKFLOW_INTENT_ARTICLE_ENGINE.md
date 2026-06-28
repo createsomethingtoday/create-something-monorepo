@@ -1,17 +1,17 @@
-# Agency Buyer-Intent Article Engine
+# Agency Workflow-Intent Article Engine
 
 > Owner: CREATE SOMETHING
 > Status: ready for execution
 > Tracker: CRE-444
 > Public surface: `createsomething.agency`
 > Analytics hook: `packages/agency/src/lib/analytics/content-assets.ts`
-> Tracker template: `docs/examples/agency-buyer-intent-article-tracker.template.csv`
-> Article brief template: `packages/agency/content/templates/marketing/buyer-intent-article-brief.md`
+> Tracker template: `docs/examples/agency-workflow-intent-article-tracker.template.csv`
+> Article brief template: `packages/agency/content/templates/marketing/workflow-intent-article-brief.md`
 > Image workflow: `docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md`
 
 ## Decision
 
-Build a repeatable buyer-intent article engine for CREATE SOMETHING instead of
+Build a repeatable workflow-intent article engine for CREATE SOMETHING instead of
 publishing one-off thought leadership.
 
 The content lane should convert readers who are already comparing tools,
@@ -21,7 +21,7 @@ durable point of view is:
 > Most AI automation fails because it lacks operating rules: approvals, blocked
 > actions, audit trails, owner responsibilities, and recovery paths.
 
-The article system should shift buyers from "which tool should I buy?" to "what
+The article system should shift teams from "which tool should we choose?" to "what
 governed workflow system should we operate?"
 
 ## Positioning Spine
@@ -48,17 +48,17 @@ The core offer language:
 > CREATE SOMETHING builds AI operating systems for businesses: workflows,
 > policies, approvals, and recovery across the tools they already use.
 
-## Buyer-Intent Formats
+## Workflow-Intent Formats
 
 Use these formats before general essays:
 
 | Format                                           | Search Intent | Default CTA                    |
 | ------------------------------------------------ | ------------- | ------------------------------ |
-| `Best [Category] for [Buyer / Use Case] in 2026` | compare       | Request workflow teardown      |
+| `Best [Category] for [Team / Use Case] in 2026` | compare       | Request workflow teardown      |
 | `[Tool] vs [Tool] vs [Tool]`                     | versus        | Request workflow teardown      |
 | `How to build [governed workflow]`               | how-to        | Request workflow teardown      |
 | `[Risk / governance] checklist`                  | checklist     | Get governance checklist       |
-| `What is [category] for [buyer]?`                | definition    | Open implementation path       |
+| `What is [category] for [team]?`                | definition    | Open implementation path       |
 
 ## Core Article Template
 
@@ -73,7 +73,7 @@ Every flagship article should include:
 7. Common mistakes.
 8. Recommended implementation path.
 9. CTA ladder: checklist for cold readers, teardown for warm readers, mapping
-   session for high-intent buyers.
+   session for high-intent teams.
 10. Source notes and last-updated date.
 
 The internal point of view must be visible by the first third of the article.
@@ -121,7 +121,7 @@ Use three CTAs:
 
 Whitepapers should be short operating artifacts, not generic PDFs. Prefer
 checklists, teardown templates, approval-path worksheets, and field guides that
-make the buyer's workflow easier to describe.
+make the team's workflow easier to describe.
 
 ## First 90-Day Content Sprint
 
@@ -141,7 +141,7 @@ Expected 90-day output:
 
 ### Flagship Queue
 
-| Week | Content Asset ID                                                    | Working Title                                                        | Intent     | Buyer                  | Funnel Stage  | Primary CTA                         |
+| Week | Content Asset ID                                                    | Working Title                                                        | Intent     | Audience              | Funnel Stage  | Primary CTA                         |
 | ---: | ------------------------------------------------------------------- | -------------------------------------------------------------------- | ---------- | ---------------------- | ------------- | ----------------------------------- |
 |    1 | `article.best-ai-workflow-automation-platforms-agencies.v20260601`  | Best AI Workflow Automation Platforms for Agencies in 2026           | compare    | agency owner           | consideration | Request Workflow Teardown           |
 |    2 | `article.dify-vs-langflow-vs-flowise-vs-vellum.v20260608`           | Dify vs Langflow vs Flowise vs Vellum: Which Should You Use?         | versus     | technical operator     | decision      | Request Workflow Teardown           |
@@ -158,7 +158,7 @@ Expected 90-day output:
 
 ## Operating Workflow
 
-Use the guide at `docs/guides/AGENCY_BUYER_INTENT_ARTICLE_WORKFLOW.md`.
+Use the guide at `docs/guides/AGENCY_WORKFLOW_INTENT_ARTICLE_WORKFLOW.md`.
 
 The short version:
 
@@ -186,7 +186,7 @@ Current implementation:
 - `packages/agency/src/routes/+layout.svelte` passes route-level metadata into
   the shared `Analytics` component.
 - `packages/agency/src/lib/analytics/content-assets.ts` maps known article,
-  guide, partner, service, and conversion paths to `contentAssetId`, buyer,
+  guide, partner, service, and conversion paths to `contentAssetId`, audience,
   intent, funnel stage, CTA, and primary keyword.
 - The shared analytics client merges that metadata into every emitted event on
   the page.
@@ -207,7 +207,7 @@ Every live article route should have:
 | `contentAssetId`        | Stable join key across analytics, tracker, Linear, and content docs.          |
 | `contentCluster`        | Groups related articles, for example `ai-workflow-platform-comparisons`.      |
 | `contentIntent`         | `compare`, `versus`, `how-to`, `checklist`, `definition`, or `partner-proof`. |
-| `contentBuyer`          | The reader segment the article is written for.                                |
+| `contentAudience`          | The reader or team segment the article is written for.                                |
 | `contentFunnelStage`    | Awareness, consideration, or decision.                                        |
 | `contentPrimaryKeyword` | Main search target.                                                           |
 | `contentPrimaryCta`     | Main conversion action.                                                       |
@@ -258,7 +258,7 @@ Every Friday, update the tracker row with:
 - Analytics sessions and identified users.
 - CTA clicks, form starts, bookings, and leads.
 - Revenue influenced.
-- What changed in ranking, conversion, or buyer signal.
+- What changed in ranking, conversion, or workflow signal.
 - Whether the article needs an update.
 - Canvas plan status, graph source, and renderer for workflow, governance, and
   agent-behavior visuals.

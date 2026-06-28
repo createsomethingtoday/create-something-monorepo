@@ -276,7 +276,7 @@
   variant="white"
   eyebrow="Client delivery records"
   title="Lead with what survived real delivery."
-  description="Abundance and ShivWorks show the buyer-facing sequence: what changed, what was controlled, what stayed private, what the client kept, and what decision came next."
+  description="Abundance and ShivWorks show the client-facing sequence: what changed, what was controlled, what stayed private, what the client kept, and what decision came next."
 >
   {#snippet after()}
     <ClearCardGrid items={proofLedger} columns={4} ariaLabel="Business proof ledger" />
@@ -287,7 +287,7 @@
   variant="soft"
   eyebrow="Delegated Work Control proof"
   title="Then show the run, wait, stop, and receipt states."
-  description="Every artifact on this page helps a buyer understand what can run, what waits, what stops, who owns the decision, and which receipt proves it."
+  description="Every artifact on this page helps the decision owner understand what can run, what waits, what stops, who owns the decision, and which receipt proves it."
 >
   {#snippet after()}
     <ClearProofStrip items={proofStripItems} ariaLabel="Workflow proof states">

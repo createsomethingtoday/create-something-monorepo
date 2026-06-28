@@ -1,15 +1,15 @@
-# Agency Buyer-Intent Article Workflow
+# Agency Workflow-Intent Article Workflow
 
-> Parent plan: `docs/AGENCY_BUYER_INTENT_ARTICLE_ENGINE.md`
-> Tracker template: `docs/examples/agency-buyer-intent-article-tracker.template.csv`
-> Brief template: `packages/agency/content/templates/marketing/buyer-intent-article-brief.md`
+> Parent plan: `docs/AGENCY_WORKFLOW_INTENT_ARTICLE_ENGINE.md`
+> Tracker template: `docs/examples/agency-workflow-intent-article-tracker.template.csv`
+> Brief template: `packages/agency/content/templates/marketing/workflow-intent-article-brief.md`
 > Image workflow: `docs/guides/AGENCY_ARTICLE_IMAGE_WORKFLOW.md`
 > Analytics source: `packages/agency/src/lib/analytics/content-assets.ts`
 
 ## Purpose
 
 Ship CREATE SOMETHING articles as measurable sales assets. Each article should
-have a buyer, search intent, point of view, route, analytics metadata, CTA, and
+have an audience, search intent, point of view, route, analytics metadata, CTA, and
 review cadence.
 
 ## Tier Served
@@ -24,8 +24,8 @@ review cadence.
 
 1. Select one article from the tracker.
 2. Confirm or create a Linear issue.
-3. Copy `packages/agency/content/templates/marketing/buyer-intent-article-brief.md`.
-4. Fill buyer, keyword, intent, CTA, competitors, and proof requirements.
+3. Copy `packages/agency/content/templates/marketing/workflow-intent-article-brief.md`.
+4. Fill audience, keyword, intent, CTA, competitors, and proof requirements.
 5. Fill the image plan: original visuals, screenshot targets, and rights
    status.
 6. Research from primary sources and current vendor docs.
@@ -47,7 +47,7 @@ review cadence.
 - [ ] Linear issue exists.
 - [ ] Content asset ID is stable.
 - [ ] Primary keyword and secondary keywords are named.
-- [ ] Buyer and funnel stage are named.
+- [ ] Audience and funnel stage are named.
 - [ ] Evaluation criteria are explicit.
 - [ ] Comparison table or decision table exists.
 - [ ] Visual plan names original visuals and screenshot targets.
@@ -70,7 +70,7 @@ review cadence.
 - `Get Governance Checklist` for awareness-stage readers.
 - `Request Workflow Teardown` for consideration and most decision-stage
   readers.
-- `Book Mapping Session` for high-intent buyers with a named workflow, owner,
+- `Book Mapping Session` for high-intent teams with a named workflow, owner,
   approval authority, and decision timeline.
 - `Open Implementation Path` for definition or strategy articles.
 
@@ -91,7 +91,7 @@ Minimum metadata:
 	contentType: 'article',
 	contentCluster: 'ai-workflow-platform-comparisons',
 	contentIntent: 'compare',
-	contentBuyer: 'agency owner evaluating automation platforms',
+	contentAudience: 'agency owner evaluating automation platforms',
 	contentFunnelStage: 'consideration',
 	contentPrimaryKeyword: 'best AI workflow automation platforms for agencies',
 	contentPrimaryCta: 'map-governed-ai-workflow',

@@ -160,7 +160,7 @@
     {
       eyebrow: 'Public',
       icon: 'document',
-      title: 'What buyers can inspect',
+      title: 'What decision owners can inspect',
       detail:
         'App purpose, workflow boundary, gate names, latest pass/fail status, release note, fallback path, and owner.'
     },
@@ -448,7 +448,7 @@
   variant="white"
   eyebrow="Proof"
   title="Separate client-safe proof from private evidence."
-  description="Buyers need enough proof to trust the workflow. Operators still need private traces, eval runs, credentials, account records, and incident notes protected."
+  description="Decision owners need enough proof to trust the workflow. Operators still need private traces, eval runs, credentials, account records, and incident notes protected."
 >
   {#snippet after()}
     <ClearCardGrid items={proofCards} columns={3} ariaLabel="Dify MCP proof split" />
