@@ -178,6 +178,51 @@ export const PUBLIC_COPY_RULES = [
     replacement: 'useful public artifact'
   },
   {
+    id: 'partner-lane',
+    pattern: /\bpartner\s+lanes?\b/gi,
+    replacement: 'workflow tool paths'
+  },
+  {
+    id: 'partner-stack',
+    pattern: /\bpartner\s+stack\b/gi,
+    replacement: 'workflow tool stack'
+  },
+  {
+    id: 'partner-claim',
+    pattern: /\bpartner\s+claim\b/gi,
+    replacement: 'public claim'
+  },
+  {
+    id: 'official-partner-claim',
+    pattern: /\bofficial-partner\s+claim\b/gi,
+    replacement: 'official authorization claim'
+  },
+  {
+    id: 'solutions-partner',
+    pattern: /\bSolutions\s+Partner\b/g,
+    replacement: 'consulting path'
+  },
+  {
+    id: 'technology-partner',
+    pattern: /\bTechnology\s+Partner\b/g,
+    replacement: 'integration path'
+  },
+  {
+    id: 'support-lane',
+    pattern: /\bsupport\s+lane\b/gi,
+    replacement: 'support scope'
+  },
+  {
+    id: 'out-of-lane',
+    pattern: /\bout-of-lane\b/gi,
+    replacement: 'out-of-scope'
+  },
+  {
+    id: 'lane-requires',
+    pattern: /\blane\s+requires\b/gi,
+    replacement: 'workflow scope requires'
+  },
+  {
     id: 'mcp-first-thesis',
     pattern: /\bmcp-first\s+thesis\b/gi,
     replacement: 'workflow systems thesis'
