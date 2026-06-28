@@ -66,10 +66,10 @@
       ]
     },
     {
-      title: 'Partner Lanes',
-      ariaLabel: 'Partner lanes',
+      title: 'Tool Stack',
+      ariaLabel: 'Workflow tool stack',
       links: [
-        { label: 'Partners', href: '/partners' },
+        { label: 'Workflow Tool Stack', href: '/partners' },
         { label: 'Cloudflare', href: '/cloudflare' },
         { label: 'Dify', href: '/dify' },
         { label: 'Notion', href: '/notion' }
@@ -82,7 +82,7 @@
         { label: 'Dify MCP Control Plane', href: '/dify/mcp-control-plane' },
         { label: 'Dify Agent Eval Gates', href: '/dify/agent-eval-gates' },
         { label: 'Ship Dify With MCP', href: '/dify/ship-dify-app-with-mcp-tools' },
-        { label: 'Dify Content Engine', href: '/dify/content-engine' },
+        { label: 'Dify Page Portfolio', href: '/dify/content-engine' },
         { label: 'Dify vs n8n', href: '/dify/n8n-vs-dify' },
         {
           label: agencyCoreMessaging.governanceChecklistLabel,
@@ -153,19 +153,21 @@
     },
     {
       id: 'nav-partners',
-      label: 'Partners',
-      description: 'Unified Dify, Cloudflare, and Notion program-readiness stack',
+      label: 'Workflow Tool Stack',
+      description:
+        'Map one workflow across the app surface, runtime, workspace, reasoning layer, approvals, and evidence',
       href: '/partners',
       icon: 'P',
       keywords: [
-        'partners',
-        'program stack',
+        'workflow tool stack',
+        'tool stack',
         'dify',
         'cloudflare',
         'notion',
+        'openai',
         'workflow systems',
-        'tool programs',
-        'solutions readiness'
+        'tool boundary',
+        'approval path'
       ]
     },
     {

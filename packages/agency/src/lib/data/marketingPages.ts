@@ -2,7 +2,7 @@ export type MarketingPageDecision = 'index' | 'route' | 'archive';
 export type MarketingPageCluster =
 	| 'core-services'
 	| 'stack-boundary'
-	| 'tool-programs'
+	| 'workflow-tool-stack'
 	| 'dify'
 	| 'products'
 	| 'business-use-case'
@@ -97,13 +97,14 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
 	},
 	{
 		path: '/partners',
-		cluster: 'tool-programs',
+		cluster: 'workflow-tool-stack',
 		role: 'pillar',
 		decision: 'index',
-		audience: 'Teams deciding which tool program route fits one workflow.',
+		audience: 'Teams choosing the right tool path for one controlled workflow.',
 		funnelStage: 'understand',
-		intent: 'Route a workflow toward Dify, Cloudflare, Notion, or the broader stack boundary.',
-		primaryAction: 'Map the route',
+		intent:
+			'Explain the workflow tool stack before routing readers toward Dify, Cloudflare, Notion, or the broader stack boundary.',
+		primaryAction: 'Map the workflow',
 		requiredTerms: ['Dify', 'Cloudflare', 'Notion', 'workflow', 'evidence'],
 		requiredLinks: ['/dify', '/cloudflare', '/notion', '/stack'],
 		schema: 'faq',
@@ -116,7 +117,7 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
 	},
 	{
 		path: '/cloudflare',
-		cluster: 'tool-programs',
+		cluster: 'workflow-tool-stack',
 		role: 'support',
 		decision: 'index',
 		audience: 'Teams whose workflow needs owned runtime routes and durable state.',
@@ -135,7 +136,7 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
 	},
 	{
 		path: '/notion',
-		cluster: 'tool-programs',
+		cluster: 'workflow-tool-stack',
 		role: 'support',
 		decision: 'index',
 		audience: 'Teams whose workflow needs an operator-facing review workspace.',

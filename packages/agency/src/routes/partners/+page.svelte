@@ -10,148 +10,69 @@
   } from '@create-something/canon';
   import { agencyCoreMessaging } from '$lib/data/marketingCopy';
 
-  const statusCards: ClearCardItem[] = [
+  const fitCards: ClearCardItem[] = [
     {
-      eyebrow: 'Primary',
+      eyebrow: 'Agent surface',
       icon: 'settings',
-      title: 'Dify workflow systems',
-      detail: 'Visible agent surfaces, MCP setup, eval gates, and control-layer controls.'
+      title: 'Dify shows the work.',
+      detail:
+        'Use Dify when people need a visible agent app with a clear task, tool boundary, and eval gates.',
+      href: '/dify',
+      points: ['Visible task', 'MCP boundary', 'Eval gates']
     },
     {
       eyebrow: 'Runtime',
       icon: 'folder',
-      title: 'Cloudflare runtime',
-      detail: 'Workers, Pages, D1, and remote MCP surfaces as the controlled delivery substrate.'
+      title: 'Cloudflare runs the route.',
+      detail:
+        'Use Cloudflare when the workflow needs owned runtime behavior, durable state, and rollback paths.',
+      href: '/cloudflare',
+      points: ['Workers and Pages', 'Durable state', 'Rollback path']
     },
     {
       eyebrow: 'Workspace',
       icon: 'document',
-      title: 'Notion operating layer',
-      detail: 'The operator workspace, PM layer, and evidence surface.'
-    }
-  ];
-
-  const applicationQueue: ClearCardItem[] = [
-    {
-      eyebrow: 'Agent runtime',
-      icon: 'settings',
-      title: 'Dify',
+      title: 'Notion keeps it reviewable.',
       detail:
-        'Use Dify when the workflow needs a visible agent surface, MCP tool boundary, eval gates, and readable proof.',
-      href: '/dify',
-      points: ['Agent surface', 'MCP boundary', 'Eval gates']
-    },
-    {
-      eyebrow: 'Runtime substrate',
-      icon: 'folder',
-      title: 'Cloudflare',
-      detail:
-        'Use Cloudflare when the workflow needs Workers, Pages, D1, remote MCPs, runbooks, and delivery evidence.',
-      href: '/cloudflare',
-      points: ['Runtime routes', 'Durable state', 'Rollback path']
-    },
-    {
-      eyebrow: 'Operator workspace',
-      icon: 'document',
-      title: 'Notion',
-      detail:
-        'Use Notion when the workflow needs PM visibility, readable evidence, templates, and human review.',
+        'Use Notion when operators need timelines, decisions, evidence, and human review around the workflow.',
       href: '/notion',
-      points: ['Operator workspace', 'Review layer', 'Template proof']
+      points: ['Operator view', 'Decision log', 'Evidence surface']
     },
     {
-      eyebrow: 'Reasoning host',
+      eyebrow: 'Reasoning',
       icon: 'check',
-      title: 'OpenAI readiness',
+      title: 'OpenAI helps decide.',
       detail:
-        'Use OpenAI as reasoning and agent-host proof while CREATE SOMETHING owns scoped tools, approvals, evals, and operating boundaries.',
+        'Use OpenAI where reasoning is useful, with scoped tools, approval behavior, and grounded evidence around it.',
       href: '/stack',
-      points: ['Scoped tools', 'Approval behavior', 'Grounded evidence']
+      points: ['Reasoning layer', 'Approval behavior', 'Grounded context']
     }
   ];
 
-  const operatingLoop: ClearCardItem[] = [
+  const deliverables: ClearCardItem[] = [
     {
-      eyebrow: '01',
+      eyebrow: 'Map',
       icon: 'document',
-      title: 'Explain with one story',
-      detail:
-        'CREATE SOMETHING builds controlled AI workflow systems: agent surface, runtime substrate, operator workspace, and audit trails.'
+      title: 'Workflow map',
+      detail: 'The handoff, owner, source systems, allowed actions, and risk boundary.'
     },
     {
-      eyebrow: '02',
-      icon: 'arrow-right',
-      title: 'Route each workflow correctly',
-      detail:
-        'Readers should understand whether the work belongs in the agent surface, runtime layer, workspace, or broader stack boundary.'
+      eyebrow: 'Boundary',
+      icon: 'settings',
+      title: 'Tool boundary',
+      detail: 'Which tool reads, writes, routes, waits, stops, or asks for approval.'
     },
     {
-      eyebrow: '03',
+      eyebrow: 'Control',
       icon: 'check',
-      title: 'Publish sanitized proof',
-      detail:
-        'Use inventories, evidence summaries, screenshots, diagrams, templates, and setup steps without exposing private records.'
+      title: 'Approval path',
+      detail: 'What can run automatically, what needs a person, and what must stop.'
     },
     {
-      eyebrow: '04',
-      icon: 'refresh',
-      title: 'Turn delivery into reusable proof',
-      detail:
-        'Turn repeated builds into Dify workflow guides, Notion templates, Cloudflare runbooks, and reusable MCP cards once proven.'
-    }
-  ];
-
-  const partnerArtifacts: ClearCardItem[] = [
-    {
-      eyebrow: 'Strategy',
-      icon: 'document',
-      title: 'program_stack_packet.md',
-      detail: 'One narrative tying Dify, Cloudflare, Notion, and OpenAI to the same controlled workflow system.'
-    },
-    {
-      eyebrow: 'Review',
-      icon: 'search',
-      title: 'surface_review_2026_05_17.md',
-      detail: 'Current review of program readiness, MCP, agent, control, and public-page alignment.'
-    },
-    {
-      eyebrow: 'Apply',
-      icon: 'edit',
-      title: 'application_drafts.md',
-      detail: 'Program-specific copy with conservative claims and sanitized implementation proof.'
-    },
-    {
-      eyebrow: 'Route',
+      eyebrow: 'Proof',
       icon: 'arrow-right',
-      title: 'workflow_routing_rules.md',
-      detail: 'Rules separating agent surface, runtime, workspace, and client delivery paths.'
-    }
-  ];
-
-  const guardrails: ClearCardItem[] = [
-    {
-      eyebrow: 'Claims',
-      icon: 'warning',
-      title: 'No unsupported program claim',
-      detail: 'No official certification, reseller, or technology alliance claim before acceptance.'
-    },
-    {
-      eyebrow: 'Brand',
-      icon: 'warning',
-      title: 'No implied endorsement',
-      detail: 'No vendor commercial brand use in sales collateral unless the relevant program authorizes it.'
-    },
-    {
-      eyebrow: 'Privacy',
-      icon: 'folder',
-      title: 'No private proof',
-      detail: 'No raw traces, secrets, private hub details, client records, billing details, or broad connector surfaces in public proof.'
-    },
-    {
-      eyebrow: 'Disclosure',
-      icon: 'check',
-      title: 'No unclear routing',
-      detail: 'Public routes should name the workflow, owner, approval path, stop point, and evidence.'
+      title: 'Evidence trail',
+      detail: 'Runbook, receipt, rollback note, or review surface the operator can keep.'
     }
   ];
 
@@ -160,27 +81,27 @@
       label: 'Agent surface',
       icon: 'settings',
       title: 'Dify',
-      detail: 'Visible workflows, app packaging, templates, and eval gates.'
+      detail: 'Visible workflow app.'
     },
     {
       label: 'Runtime',
       icon: 'folder',
       title: 'Cloudflare',
-      detail: 'Workers, Pages, D1, queues, remote MCP endpoints, and rollback paths.'
+      detail: 'Owned route and state.'
     },
     {
       label: 'Workspace',
       icon: 'document',
       title: 'Notion',
-      detail: 'PM visibility, evidence surfaces, templates, and human review.'
+      detail: 'Review and evidence.'
     }
   ];
 
   const faqItems = [
     {
-      question: 'What is the tool program stack?',
+      question: 'What is the workflow tool stack?',
       answer:
-        'It is the public routing page for Dify, Cloudflare, Notion, and OpenAI-related workflow systems. Each tool gets a clear job inside the operating model.'
+        'It is the practical tool map for one controlled workflow: visible app surface, runtime, workspace, reasoning layer, approval path, and evidence.'
     },
     {
       question: 'Why not lead with vendor badges?',
@@ -190,15 +111,15 @@
     {
       question: 'How does this help a team choose the right path?',
       answer:
-        'The page routes a concrete workflow toward the visible agent surface, runtime substrate, operator workspace, or broader stack boundary before implementation begins.'
+        'The page starts with the workflow and then routes it toward the visible agent surface, runtime substrate, operator workspace, or broader stack boundary before implementation begins.'
     }
   ];
 </script>
 
 <SEO
-  title="Tool Program Stack | CREATE SOMETHING .agency"
-  description="CREATE SOMETHING routes controlled AI workflow systems across Dify agent surfaces, Cloudflare runtime, Notion workspaces, and OpenAI readiness."
-  keywords="AI workflow systems, Dify workflow systems, Cloudflare workflow runtime, Notion operating system, MCP tool stack"
+  title="Workflow Tool Stack | CREATE SOMETHING .agency"
+  description="CREATE SOMETHING maps one controlled workflow across the visible app surface, runtime, workspace, reasoning layer, approval path, and evidence trail."
+  keywords="workflow tool stack, AI workflow systems, Dify workflow systems, Cloudflare workflow runtime, Notion operating system, MCP tool boundary"
   ogImage="/og-image.svg"
   propertyName="agency"
   {faqItems}
@@ -206,11 +127,11 @@
 
 <ClearPageSection
   variant="hero"
-  layout="split"
+  layout="stack"
   titleLevel="h1"
-  eyebrow="Tool Program Stack"
-  title="One operating story for controlled AI workflow systems."
-  description="This page should not read like unrelated badges. Dify carries the visible agent runtime, Cloudflare carries the deployable substrate, Notion carries the operator workspace, and OpenAI readiness stays bounded by real authorization."
+  eyebrow="Workflow Tool Stack"
+  title="Choose the right tool path for one controlled workflow."
+  description="Start with the workflow your team wants to delegate. CREATE SOMETHING maps the visible app surface, runtime, workspace, reasoning layer, approval path, and evidence before any tool gets more authority."
 >
   {#snippet actions()}
     <Button href={agencyCoreMessaging.selfMapHref}>
@@ -220,65 +141,34 @@
       {agencyCoreMessaging.bookMappingSessionLabel}
     </Button>
   {/snippet}
-
-  {#snippet aside()}
-    <ClearCardGrid
-      items={statusCards}
-      columns={1}
-      density="compact"
-      ariaLabel="Tool program stack status"
-    />
-  {/snippet}
 </ClearPageSection>
 
 <ClearPageSection
   variant="white"
-  eyebrow="Route"
-  title="Each tool page has one job."
-  description="The public pages qualify the workflow, explain the boundary, and route teams without implying authorization that does not exist."
+  eyebrow="Tool fit"
+  title="The workflow decides which tool gets a job."
+  description="Dify, Cloudflare, Notion, and OpenAI are useful when each one has a clear role, scoped authority, and evidence path."
 >
   {#snippet after()}
-    <ClearCardGrid items={applicationQueue} columns={4} ariaLabel="Tool program routes" />
+    <ClearCardGrid items={fitCards} columns={4} ariaLabel="Workflow tool fit" />
   {/snippet}
 </ClearPageSection>
 
 <ClearPageSection
   variant="soft"
-  eyebrow="Operating loop"
-  title="Explain, route, prove, then reuse."
-  description="The program system turns delivery evidence into reusable proof only after the workflow, setup, and support path are ready."
+  eyebrow="What you keep"
+  title="The useful output is a map, not a vendor diagram."
+  description="The first artifact should tell an operator what happens, who owns the decision, where the system stops, and what proof remains."
 >
   {#snippet after()}
-    <ClearCardGrid items={operatingLoop} columns={4} ariaLabel="Partner operating loop" />
-  {/snippet}
-</ClearPageSection>
-
-<ClearPageSection
-  variant="white"
-  eyebrow="Evidence files"
-  title="Program proof stays sanitized and traceable."
-  description="The useful artifacts are strategy packets, application drafts, workflow-routing rules, and proof inventories that can be shared without leaking client-private records."
->
-  {#snippet after()}
-    <ClearCardGrid items={partnerArtifacts} columns={4} ariaLabel="Partner evidence files" />
-  {/snippet}
-</ClearPageSection>
-
-<ClearPageSection
-  variant="soft"
-  eyebrow="Guardrails"
-  title="Conservative claims protect the channel."
-  description="The program stack is credible because it does not pretend approval, endorsement, or resale rights exist before they do."
->
-  {#snippet after()}
-    <ClearCardGrid items={guardrails} columns={4} ariaLabel="Partner guardrails" />
+    <ClearCardGrid items={deliverables} columns={4} ariaLabel="Workflow tool stack deliverables" />
   {/snippet}
 </ClearPageSection>
 
 <ClearCtaBand
-  eyebrow="Map the route"
-  title="Bring one workflow into the right tool path."
-  description="I’ll identify whether the work belongs in agent runtime, infrastructure runtime, operator workspace, or a broader implementation referral."
+  eyebrow="Map the workflow"
+  title="Bring the workflow before choosing the stack."
+  description="I’ll map the handoff, owner, connected systems, allowed actions, approval pauses, stop points, and evidence path before implementation starts."
   items={ctaItems}
 >
   {#snippet actions()}
