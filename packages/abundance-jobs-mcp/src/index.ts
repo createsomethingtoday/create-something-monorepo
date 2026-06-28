@@ -17,10 +17,62 @@ export const EXPIRED_ENDPOINT = '/active-ats-expired';
 
 const ACTIVE_ENDPOINTS = ['/active-ats-7d', '/modified-ats-24h'] as const;
 const DEFAULT_REFRESH_ENDPOINTS = ['/modified-ats-24h'] as const satisfies readonly RapidApiActiveJobsEndpoint[];
-const READ_ONLY_TOOL_NAMES = ['list_public_jobs', 'search_public_jobs', 'get_job'] as const;
+const READ_ONLY_TOOL_NAMES = ['search', 'fetch', 'list_public_jobs', 'search_public_jobs', 'get_job'] as const;
 const FUNNEL_TOOL_NAME = 'send_job_to_funnel' as const;
 const TOOL_NAMES = [...READ_ONLY_TOOL_NAMES, FUNNEL_TOOL_NAME] as const;
 const NORMALIZED_STATUSES = ['open', 'closed', 'expired', 'unknown'] as const;
+const US_STATE_CODES = [
+  ['alabama', 'AL'],
+  ['alaska', 'AK'],
+  ['arizona', 'AZ'],
+  ['arkansas', 'AR'],
+  ['california', 'CA'],
+  ['colorado', 'CO'],
+  ['connecticut', 'CT'],
+  ['delaware', 'DE'],
+  ['florida', 'FL'],
+  ['georgia', 'GA'],
+  ['hawaii', 'HI'],
+  ['idaho', 'ID'],
+  ['illinois', 'IL'],
+  ['indiana', 'IN'],
+  ['iowa', 'IA'],
+  ['kansas', 'KS'],
+  ['kentucky', 'KY'],
+  ['louisiana', 'LA'],
+  ['maine', 'ME'],
+  ['maryland', 'MD'],
+  ['massachusetts', 'MA'],
+  ['michigan', 'MI'],
+  ['minnesota', 'MN'],
+  ['mississippi', 'MS'],
+  ['missouri', 'MO'],
+  ['montana', 'MT'],
+  ['nebraska', 'NE'],
+  ['nevada', 'NV'],
+  ['new hampshire', 'NH'],
+  ['new jersey', 'NJ'],
+  ['new mexico', 'NM'],
+  ['new york', 'NY'],
+  ['north carolina', 'NC'],
+  ['north dakota', 'ND'],
+  ['ohio', 'OH'],
+  ['oklahoma', 'OK'],
+  ['oregon', 'OR'],
+  ['pennsylvania', 'PA'],
+  ['rhode island', 'RI'],
+  ['south carolina', 'SC'],
+  ['south dakota', 'SD'],
+  ['tennessee', 'TN'],
+  ['texas', 'TX'],
+  ['utah', 'UT'],
+  ['vermont', 'VT'],
+  ['virginia', 'VA'],
+  ['washington', 'WA'],
+  ['west virginia', 'WV'],
+  ['wisconsin', 'WI'],
+  ['wyoming', 'WY'],
+] as const;
 const NURSING_TITLE_RANK_SQL = `
       CASE
         WHEN (
@@ -283,6 +335,14 @@ const searchSchema = {
   source_system: optionalStringParam('Source system filter.'),
 };
 
+const standardSearchSchema = {
+  query: requiredStringParam('Search text for nursing jobs, such as "registered nurse Arlington Texas".'),
+};
+
+const standardFetchSchema = {
+  id: requiredStringParam('Abundance public job ID returned by search.'),
+};
+
 const getJobSchema = {
   job_id: requiredStringParam('Abundance public job ID.'),
   include_raw_payload: optionalBooleanParam('Default false.'),
@@ -329,10 +389,40 @@ export function registerAbundanceJobsTools(
       }),
   );
 
+  const readOnlyAnnotations = {
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: false,
+  };
+
+  server.registerTool(
+    'search',
+    {
+      title: 'Search Nursing Jobs',
+      description: 'Search current public nursing jobs. Use this when the user asks to find nursing jobs by role, location, employer, specialty, or pay terms.',
+      inputSchema: standardSearchSchema,
+      annotations: readOnlyAnnotations,
+    },
+    async (input) => executeDb(options.getDb(), (db) => searchPublicJobDocuments(db, normalizeInput(input))),
+  );
+
+  server.registerTool(
+    'fetch',
+    {
+      title: 'Fetch Nursing Job',
+      description: 'Fetch one public nursing job by ID returned from search. Use this when the user asks for details about a specific job.',
+      inputSchema: standardFetchSchema,
+      annotations: readOnlyAnnotations,
+    },
+    async (input) => executeDb(options.getDb(), (db) => fetchPublicJobDocument(db, normalizeInput(input))),
+  );
+
   server.tool(
     'list_public_jobs',
     'List a representative national shortlist of public job listings from the normalized Abundance jobs database. Read-only.',
     listSchema,
+    readOnlyAnnotations,
     async (input) => executeDb(options.getDb(), (db) => listPublicJobs(db, normalizeInput(input))),
   );
 
@@ -340,6 +430,7 @@ export function registerAbundanceJobsTools(
     'search_public_jobs',
     'Search public job listings by title, employer, location, specialty, source, or category. Read-only.',
     searchSchema,
+    readOnlyAnnotations,
     async (input) => executeDb(options.getDb(), (db) => searchPublicJobs(db, normalizeInput(input))),
   );
 
@@ -347,6 +438,7 @@ export function registerAbundanceJobsTools(
     'get_job',
     'Get one public job listing by ID.',
     getJobSchema,
+    readOnlyAnnotations,
     async (input) => executeDb(options.getDb(), (db) => getPublicJob(db, normalizeInput(input))),
   );
 
@@ -358,6 +450,90 @@ export function registerAbundanceJobsTools(
       async (input) => executeDb(options.getDb(), (db) => sendJobToFunnel(db, normalizeInput(input))),
     );
   }
+}
+
+async function searchPublicJobDocuments(db: D1Database, input: Record<string, unknown>): Promise<CallToolResult> {
+  const query = readRequiredString(input.query, 'query');
+  let result: Awaited<ReturnType<typeof queryPublicJobs>> | null = null;
+
+  for (const filters of buildStandardSearchAttempts(query)) {
+    result = await queryPublicJobs(db, filters);
+    if (result.jobs.length > 0) break;
+  }
+
+  return jsonContent({
+    results: (result?.jobs ?? []).map((job) => ({
+      id: job.id,
+      title: jobDocumentTitle(job),
+      url: jobCanonicalUrl(job),
+    })),
+  });
+}
+
+function buildStandardSearchAttempts(query: string): DbFilters[] {
+  const roleQuery = inferNursingRoleQuery(query);
+  const state = inferUsState(query);
+  const attempts: DbFilters[] = [
+    {
+      query,
+      status: 'open',
+      limit: 10,
+    },
+  ];
+
+  if (roleQuery && state) {
+    attempts.push({
+      query: roleQuery,
+      state,
+      status: 'open',
+      limit: 10,
+    });
+  }
+
+  if (state) {
+    attempts.push({
+      state,
+      status: 'open',
+      limit: 10,
+    });
+  }
+
+  if (roleQuery) {
+    attempts.push({
+      query: roleQuery,
+      status: 'open',
+      limit: 10,
+    });
+  }
+
+  if (roleQuery !== 'nurse') {
+    attempts.push({
+      query: 'nurse',
+      status: 'open',
+      limit: 10,
+    });
+  }
+
+  return attempts;
+}
+
+function inferNursingRoleQuery(query: string): string {
+  const normalized = query.toLowerCase();
+  if (/\bregistered nurse\b/.test(normalized) || /\brn\b/.test(normalized)) return 'registered nurse';
+  if (/\blicensed practical nurse\b/.test(normalized) || /\blpn\b/.test(normalized)) return 'licensed practical nurse';
+  if (/\blicensed vocational nurse\b/.test(normalized) || /\blvn\b/.test(normalized)) return 'licensed vocational nurse';
+  if (/\bcertified nursing assistant\b/.test(normalized) || /\bcertified nurse aide\b/.test(normalized) || /\bcna\b/.test(normalized)) return 'cna';
+  if (/\bnurse practitioner\b/.test(normalized)) return 'nurse practitioner';
+  if (/\bnurs(?:e|ing)\b/.test(normalized)) return 'nurse';
+  return query;
+}
+
+function inferUsState(query: string): string | undefined {
+  const normalized = query.toLowerCase();
+  for (const [name, code] of US_STATE_CODES) {
+    if (normalized.includes(name) || new RegExp(`\\b${code.toLowerCase()}\\b`).test(normalized)) return code;
+  }
+  return undefined;
 }
 
 async function executeDb(
@@ -414,6 +590,46 @@ export async function getPublicJob(db: D1Database, input: Record<string, unknown
     return toolErrorContent({ ok: false, error: `Job not found: ${jobId}` });
   }
   return jsonContent({ job: toPublicJob(row, includeRawPayload) });
+}
+
+async function fetchPublicJobDocument(db: D1Database, input: Record<string, unknown>): Promise<CallToolResult> {
+  const jobId = readRequiredString(input.id, 'id');
+  const row = await getPublicJobRow(db, jobId);
+  if (!row) {
+    return toolErrorContent({ ok: false, error: `Job not found: ${jobId}` });
+  }
+
+  const job = toPublicJob(row, false);
+  return jsonContent({
+    id: job.id,
+    title: jobDocumentTitle(job),
+    text: jobDocumentText(job),
+    url: jobCanonicalUrl(job),
+    metadata: pruneUndefined({
+      employer: job.employer,
+      location: job.location,
+      city: job.city,
+      state: job.state,
+      country: job.country,
+      specialty: job.specialty,
+      discipline: job.discipline,
+      employment_type: job.employment_type,
+      shift: job.shift,
+      duration: job.duration,
+      start_date: job.start_date,
+      pay_min: job.pay_min,
+      pay_max: job.pay_max,
+      pay_text: job.pay_text,
+      currency: job.currency,
+      openings: job.openings,
+      status: job.status,
+      provider: job.provider,
+      source_system: job.source_system,
+      posted_at: job.posted_at,
+      last_seen_at: job.last_seen_at,
+      fetched_at: job.fetched_at,
+    }),
+  });
 }
 
 async function sendJobToFunnel(db: D1Database, input: Record<string, unknown>): Promise<CallToolResult> {
@@ -486,6 +702,42 @@ async function sendJobToFunnel(db: D1Database, input: Record<string, unknown>): 
     lead_id: leadId,
     job,
   });
+}
+
+function jobDocumentTitle(job: PublicJob): string {
+  const parts = [job.title, job.employer, job.location].filter(Boolean);
+  return parts.join(' - ');
+}
+
+function jobCanonicalUrl(job: PublicJob): string {
+  return job.application_url ?? job.source_url ?? `https://abundance-jobs-mcp.createsomething.workers.dev/public/jobs/${encodeURIComponent(job.id)}`;
+}
+
+function jobDocumentText(job: PublicJob): string {
+  return [
+    `Title: ${job.title}`,
+    job.employer ? `Employer: ${job.employer}` : null,
+    job.location ? `Location: ${job.location}` : null,
+    job.specialty ? `Specialty: ${job.specialty}` : null,
+    job.discipline ? `Discipline: ${job.discipline}` : null,
+    job.employment_type ? `Employment type: ${job.employment_type}` : null,
+    job.shift ? `Shift: ${job.shift}` : null,
+    job.duration ? `Duration: ${job.duration}` : null,
+    job.start_date ? `Start date: ${job.start_date}` : null,
+    job.pay_text ? `Pay: ${job.pay_text}` : null,
+    job.pay_min || job.pay_max
+      ? `Pay range: ${job.pay_min ?? 'unknown'}-${job.pay_max ?? 'unknown'} ${job.currency ?? ''}`.trim()
+      : null,
+    job.openings ? `Openings: ${job.openings}` : null,
+    `Status: ${job.status}`,
+    `Source: ${job.source_system}`,
+    job.application_url ? `Apply: ${job.application_url}` : null,
+    job.source_url && job.source_url !== job.application_url ? `Source URL: ${job.source_url}` : null,
+    `Job ID: ${job.id}`,
+    `Last seen: ${job.last_seen_at}`,
+  ]
+    .filter(Boolean)
+    .join('\n');
 }
 
 export async function queryPublicJobs(

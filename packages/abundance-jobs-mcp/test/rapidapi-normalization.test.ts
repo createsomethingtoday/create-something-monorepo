@@ -166,6 +166,8 @@ test('nursing title classifier prioritizes core staffing roles over mixed adjace
 
 test('ChatGPT public tool list excludes write-capable funnel action', () => {
   assert.deepEqual(listAbundanceJobToolNames({ includeFunnelTool: false }), [
+    'search',
+    'fetch',
     'list_public_jobs',
     'search_public_jobs',
     'get_job',
