@@ -112,6 +112,7 @@ function resolveWorkspaceBuildScript(manifest) {
 }
 
 const preparedWorkspacePackages = new Set();
+const alwaysBuildWorkspacePackages = new Set(['@create-something/canon', '@create-something/tufte']);
 
 function ensureWorkspacePackageReady(workspaceRoot, pkgName, packageDir, ancestry = []) {
 	if (preparedWorkspacePackages.has(pkgName)) return;
@@ -131,7 +132,7 @@ function ensureWorkspacePackageReady(workspaceRoot, pkgName, packageDir, ancestr
 	const requiredOutputs = getRequiredOutputPaths(manifest);
 	const missingOutputs = requiredOutputs.filter((outputPath) => !outputPathExists(packageDir, outputPath));
 
-	if (missingOutputs.length > 0) {
+	if (missingOutputs.length > 0 || alwaysBuildWorkspacePackages.has(pkgName)) {
 		const buildScript = resolveWorkspaceBuildScript(manifest);
 		if (!buildScript) {
 			throw new Error(
