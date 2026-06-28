@@ -58,7 +58,7 @@ export type PublicAtlasSemanticEdge = Pick<PublicAtlasEdge, 'id' | 'source' | 't
 };
 
 export type PublicAtlasReadiness = {
-	level: 'Needs shape' | 'Ready to map' | 'Pilot candidate' | 'Trust layer candidate';
+	level: 'Needs shape' | 'Ready to map' | 'Pilot candidate' | 'Control layer candidate';
 	slug: string;
 	score: number;
 	intent: 'governance-checklist' | 'workflow-teardown' | 'workflow-mapping';
@@ -474,8 +474,8 @@ export function computePublicAtlasReadiness(canvas: PublicAtlasCanvas): PublicAt
 
 	if (riskSignals >= 7 && selectedDimensionCount >= 5) {
 		return {
-			level: 'Trust layer candidate',
-			slug: 'trust-layer-candidate',
+			level: 'Control layer candidate',
+			slug: 'control-layer-candidate',
 			score,
 			intent: 'workflow-mapping',
 			lane: 'reliability_and_control',
@@ -503,7 +503,7 @@ export function computePublicAtlasReadiness(canvas: PublicAtlasCanvas): PublicAt
 		intent: 'workflow-teardown',
 		lane: 'not_sure',
 		reason: 'There is enough shape to discuss the workflow, but the implementation lane should be chosen after mapping.',
-		nextStep: 'Request a trust map or bring this into a mapping session.'
+		nextStep: 'Request a workflow map or bring this into a mapping session.'
 	};
 }
 
@@ -677,7 +677,7 @@ export function createPublicAtlasStoryArtifact(
 			sequence: 5,
 			kind: 'receipt',
 			eyebrow: 'Where proof lands',
-			title: receipt ? `${receipt.label} shows the receipt.` : 'The workflow needs a receipt surface.',
+			title: receipt ? `${receipt.label} shows the receipt.` : 'The workflow needs an audit trail.',
 			body: `${receipt?.notes ?? 'Operators need a place to inspect state, evidence, owner, and next action.'}`,
 			focusNodeIds: uniqueDefined([receipt?.id]),
 			state: receipt?.status ?? 'unknown',

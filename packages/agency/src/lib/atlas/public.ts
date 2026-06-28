@@ -491,7 +491,7 @@ export function runPublicAtlasMappingAgent(
 			canvas,
 			added,
 			'human',
-			'Approval owner',
+			'Approval authority',
 			'The workflow names a human decision or review boundary.',
 			'wait'
 		);

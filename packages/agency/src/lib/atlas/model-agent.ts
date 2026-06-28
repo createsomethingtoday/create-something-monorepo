@@ -207,7 +207,7 @@ function buildPrompt(input: RunModelAgentInput): string {
 		'Allowed node kinds: actor, human, ai, system, data, constraint, touchpoint.',
 		'Allowed statuses: run, wait, stop, unknown.',
 		'Use concise, concrete labels. Do not create secrets, credentials, private records, or production-tool actions.',
-		'Prefer mapping the workflow owner, durable record, system/tool operation, AI assist task, approval owner, privacy/access constraint, and inspection touchpoint.',
+		'Prefer mapping the workflow owner, durable record, system/tool operation, AI assist task, approval authority, privacy/access constraint, and inspection touchpoint.',
 		'When the visitor asks to connect, link the selected source or workflow data node to the most likely next nodes with useful handoff labels.',
 		'Never exceed the requested mutation budget. A node add, edge add, or node update is one mutation. Adding a node and connecting it costs two mutations.',
 		'If the user asks for unavailable/private execution, map it as a constraint or approval boundary instead of claiming it can run.',

@@ -113,9 +113,19 @@ export const PUBLIC_COPY_RULES = [
     replacement: 'controlled delegation'
   },
   {
+    id: 'article-a-receipt-surface',
+    pattern: /\ba receipt surface\b/gi,
+    replacement: 'an audit trail'
+  },
+  {
     id: 'receipt-surface',
     pattern: /\breceipt surface\b/gi,
     replacement: 'audit trail'
+  },
+  {
+    id: 'article-a-audit-trail',
+    pattern: /\ba audit trail\b/g,
+    replacement: 'an audit trail'
   },
   {
     id: 'source-state',
@@ -241,10 +251,16 @@ export function discoverPublicCopyFiles() {
   const dataFiles = walk(path.join(packageRoot, 'src/lib/data')).filter((file) =>
     /\.(ts|svelte|json)$/.test(file)
   );
+  const atlasFiles = walk(path.join(packageRoot, 'src/lib/atlas')).filter((file) =>
+    /\.(ts|svelte|json)$/.test(file)
+  );
   const canonicalSeo = path.join(monorepoRoot, 'packages/canon/src/lib/components/SEO.svelte');
-  const extraFiles = existsSync(canonicalSeo) ? [canonicalSeo] : [];
+  const canonicalAtlasFiles = walk(path.join(monorepoRoot, 'packages/canon/src/lib/atlas')).filter(
+    (file) => /\.(ts|svelte|json)$/.test(file)
+  );
+  const extraFiles = existsSync(canonicalSeo) ? [canonicalSeo, ...canonicalAtlasFiles] : canonicalAtlasFiles;
 
-  return uniqueSorted([...routeFiles, ...componentFiles, ...dataFiles, ...extraFiles]);
+  return uniqueSorted([...routeFiles, ...componentFiles, ...dataFiles, ...atlasFiles, ...extraFiles]);
 }
 
 export function auditPublicCopy(files = discoverPublicCopyFiles()) {

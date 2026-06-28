@@ -126,7 +126,7 @@
 				return {
 					label: 'Wait',
 					outcome: 'Human review keeps the decision.',
-					evidence: 'Approval owner'
+					evidence: 'Approval authority'
 				};
 			case 'boundary':
 				return {
