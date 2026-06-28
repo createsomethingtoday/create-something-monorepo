@@ -17,7 +17,9 @@ export const EXPIRED_ENDPOINT = '/active-ats-expired';
 
 const ACTIVE_ENDPOINTS = ['/active-ats-7d', '/modified-ats-24h'] as const;
 const DEFAULT_REFRESH_ENDPOINTS = ['/modified-ats-24h'] as const satisfies readonly RapidApiActiveJobsEndpoint[];
-const TOOL_NAMES = ['list_public_jobs', 'search_public_jobs', 'get_job', 'send_job_to_funnel'] as const;
+const READ_ONLY_TOOL_NAMES = ['list_public_jobs', 'search_public_jobs', 'get_job'] as const;
+const FUNNEL_TOOL_NAME = 'send_job_to_funnel' as const;
+const TOOL_NAMES = [...READ_ONLY_TOOL_NAMES, FUNNEL_TOOL_NAME] as const;
 const NORMALIZED_STATUSES = ['open', 'closed', 'expired', 'unknown'] as const;
 const NURSING_TITLE_RANK_SQL = `
       CASE
@@ -89,6 +91,10 @@ export interface AbundanceJobsProviderConfig {
 
 export interface AbundanceJobsServerOptions {
   getDb: () => D1Database | undefined;
+}
+
+export interface AbundanceJobsToolRegistrationOptions {
+  includeFunnelTool?: boolean;
 }
 
 export interface RapidApiIngestInput {
@@ -286,20 +292,27 @@ const sendJobToFunnelSchema = {
   job_id: requiredStringParam('Abundance public job ID to send into the Agency funnel after user confirmation.'),
 };
 
-export function listAbundanceJobToolNames(): string[] {
-  return [...TOOL_NAMES];
+export function listAbundanceJobToolNames(options: AbundanceJobsToolRegistrationOptions = {}): string[] {
+  return options.includeFunnelTool === false ? [...READ_ONLY_TOOL_NAMES] : [...TOOL_NAMES];
 }
 
-export function createAbundanceJobsServer(options: AbundanceJobsServerOptions): McpServer {
+export function createAbundanceJobsServer(
+  options: AbundanceJobsServerOptions,
+  toolOptions: AbundanceJobsToolRegistrationOptions = {},
+): McpServer {
   const server = new McpServer({
     name: SERVER_NAME,
     version: SERVER_VERSION,
   });
-  registerAbundanceJobsTools(server, options);
+  registerAbundanceJobsTools(server, options, toolOptions);
   return server;
 }
 
-export function registerAbundanceJobsTools(server: McpServer, options: AbundanceJobsServerOptions): void {
+export function registerAbundanceJobsTools(
+  server: McpServer,
+  options: AbundanceJobsServerOptions,
+  toolOptions: AbundanceJobsToolRegistrationOptions = {},
+): void {
   server.resource(
     'abundance-jobs-status',
     'abundance-jobs://status',
@@ -312,7 +325,7 @@ export function registerAbundanceJobsTools(server: McpServer, options: Abundance
         name: SERVER_NAME,
         version: SERVER_VERSION,
         jobs_db_configured: Boolean(options.getDb()),
-        tools: listAbundanceJobToolNames(),
+        tools: listAbundanceJobToolNames(toolOptions),
       }),
   );
 
@@ -337,12 +350,14 @@ export function registerAbundanceJobsTools(server: McpServer, options: Abundance
     async (input) => executeDb(options.getDb(), (db) => getPublicJob(db, normalizeInput(input))),
   );
 
-  server.tool(
-    'send_job_to_funnel',
-    'Send a qualified public job listing into the Agency funnel. Writes to the shared database and should only be called after user confirmation.',
-    sendJobToFunnelSchema,
-    async (input) => executeDb(options.getDb(), (db) => sendJobToFunnel(db, normalizeInput(input))),
-  );
+  if (toolOptions.includeFunnelTool !== false) {
+    server.tool(
+      FUNNEL_TOOL_NAME,
+      'Send a qualified public job listing into the Agency funnel. Writes to the shared database and should only be called after user confirmation.',
+      sendJobToFunnelSchema,
+      async (input) => executeDb(options.getDb(), (db) => sendJobToFunnel(db, normalizeInput(input))),
+    );
+  }
 }
 
 async function executeDb(
@@ -391,7 +406,7 @@ async function searchPublicJobs(db: D1Database, input: Record<string, unknown>):
   return jsonContent(result);
 }
 
-async function getPublicJob(db: D1Database, input: Record<string, unknown>): Promise<CallToolResult> {
+export async function getPublicJob(db: D1Database, input: Record<string, unknown>): Promise<CallToolResult> {
   const jobId = readRequiredString(input.job_id, 'job_id');
   const includeRawPayload = readOptionalBoolean(input.include_raw_payload) ?? false;
   const row = await getPublicJobRow(db, jobId);

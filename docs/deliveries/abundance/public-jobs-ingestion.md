@@ -140,6 +140,14 @@ The source-controlled Jobs MCP Worker exposes the stable Dify tool surface at:
 https://abundance-jobs-mcp.createsomething.workers.dev/mcp
 ```
 
+For ChatGPT custom app onboarding, use the read-only no-auth surface:
+
+```text
+https://abundance-jobs-mcp.createsomething.workers.dev/chatgpt/mcp
+```
+
+This route is for white-glove onboarding and workflow learning, not broad unauthenticated marketplace distribution. It exposes only `list_public_jobs`, `search_public_jobs`, and `get_job`; write-capable funnel actions and all RapidAPI refresh/admin endpoints remain on the bearer-protected operator surface. The public ChatGPT route still records D1 telemetry and Braintrust events under the ChatGPT-public account label when those bindings are configured, so onboarding sessions can feed evals and future MCP packaging decisions.
+
 It also exposes an authenticated nursing-specific operator endpoint:
 
 ```bash
