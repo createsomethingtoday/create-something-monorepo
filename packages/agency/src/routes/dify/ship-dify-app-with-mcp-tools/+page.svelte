@@ -509,6 +509,7 @@
     <Button href={agencyCoreMessaging.workflowTeardownHref}>
       {agencyCoreMessaging.workflowTeardownLabel}
     </Button>
+    <Button href="/dify" variant="secondary">Back To Dify Lane</Button>
     <Button href="/dify/agent-eval-gates" variant="secondary">Read Eval Gates</Button>
     <Button href="https://createsomething.io/papers/policy-os-contract-bundle" variant="secondary">
       Read Contract Bundle Paper

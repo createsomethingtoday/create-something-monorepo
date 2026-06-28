@@ -88,6 +88,57 @@ Validation:
 - Add a rule to `scripts/check-public-copy.mjs` when a phrase becomes a private
   planning term instead of public language.
 
+### Marketing Page Portfolio
+
+Public SEO/AEO pages should operate as a funnel portfolio, not a pile of
+articles. Each page needs a job:
+
+1. A cluster: the commercial lane the page belongs to.
+2. A role: pillar, support, comparison, implementation, or operations.
+3. A funnel stage: discover, understand, evaluate, implement, or book.
+4. A route decision: index, route, or archive.
+5. A strength score: whether the page is strong enough for its route decision.
+6. Self-healing levers: deterministic repairs the repo can apply without
+   inventing new editorial strategy.
+
+The first portfolio is the Dify cluster:
+
+| Page | Role | Funnel job |
+|------|------|------------|
+| `/dify` | Pillar | Explain the Dify lane and route readers into the cluster. |
+| `/dify/mcp-control-plane` | Support | Teach the operating model: Dify surface, MCP boundary, Policy OS rule. |
+| `/dify/agent-eval-gates` | Operations | Show the gates that prove a Dify workflow can operate safely. |
+| `/dify/ship-dify-app-with-mcp-tools` | Implementation | Give a practical shipping checklist for Dify plus MCP systems. |
+| `/dify/content-engine` | Operations | Explain the custom-domain content funnel and routing model. |
+| `/dify/n8n-vs-dify` | Comparison | Capture comparison intent and route it toward the governed Dify lane. |
+
+The durable SEO/AEO strategy is:
+
+- Keep canonical pages on `createsomething.agency`; use other channels for
+  distribution, not as the source of truth.
+- Let pillar pages define the lane, support pages explain the operating model,
+  comparison pages capture demand, and implementation pages convert.
+- Keep pages indexable only when they have a clear route, visible proof,
+  structured metadata, direct CTA, and language that matches the public copy
+  contract.
+- Route or archive pages that are redundant, thin, stale, off-language, or no
+  longer connected to a commercial next step.
+- Treat AI-answer visibility as a byproduct of clear, expert, well-structured
+  pages rather than a separate content gimmick.
+
+Validation:
+
+- Run `pnpm marketing:check` to score the portfolio, verify cluster routing,
+  verify sitemap/indexing state, and apply the public copy guard to registered
+  marketing pages.
+- Run `pnpm marketing:heal` when route decisions change. It applies approved
+  copy replacements and syncs deterministic `searchRoutes.json` changes from
+  the portfolio registry.
+- Add or update entries in `src/lib/data/marketingPages.ts` before adding a new
+  SEO/AEO page to the funnel.
+- `pnpm seo:check` includes the marketing portfolio check so sitemap, schema,
+  copy, and route strength drift fail together.
+
 ### Readable Control
 
 The public brand system is **Readable Control**.
