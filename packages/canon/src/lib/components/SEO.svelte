@@ -55,7 +55,7 @@
     agency: {
       domain: 'https://createsomething.agency',
       name: 'CREATE SOMETHING Agency',
-      tagline: 'Calm, transparent AI workflow systems with MCP connectivity, trust boundaries, and evidence-backed delivery',
+      tagline: 'Calm, transparent AI workflow systems with MCP connectivity, operating boundaries, and evidence-backed delivery',
       color: '#000000',
     },
     ltd: {
@@ -87,7 +87,7 @@
       'https://github.com/createsomethingtoday'
     ],
     description: propertyName === 'agency'
-      ? 'CREATE SOMETHING builds calm, transparent AI workflow systems with MCP connectivity, trust boundaries, and evidence-backed delivery.'
+      ? 'CREATE SOMETHING builds calm, transparent AI workflow systems with MCP connectivity, operating boundaries, and evidence-backed delivery.'
       : propertyName === 'io'
       ? 'Research papers on AI-native development with tracked experiments and rigorous methodology'
       : propertyName === 'space'
@@ -102,7 +102,7 @@
     knowsAbout: [
       'Model Context Protocol (MCP)',
       'MCP Server Development',
-      'Workflow Trust Layer',
+      'Workflow Control Layer',
       'AI Workflow Systems',
       'Controlled Automation',
       'Dify Agent Apps',

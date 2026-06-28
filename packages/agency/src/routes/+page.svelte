@@ -128,7 +128,7 @@
 <SEO
   title="AI Workflow Systems | CREATE SOMETHING .agency"
   description="CREATE SOMETHING turns one messy business handoff into a reliable AI-assisted workflow with connected tools, approvals, stop conditions, and an audit trail."
-  keywords="AI workflow systems, workflow automation consultant, governed AI workflows, workflow trust layer, workflow mapping, workflow pilot, production automation, technical operators"
+  keywords="AI workflow systems, workflow automation consultant, governed AI workflows, workflow control layer, workflow mapping, workflow pilot, production automation, technical operators"
   ogImage="/og-image.svg"
   propertyName="agency"
   {services}

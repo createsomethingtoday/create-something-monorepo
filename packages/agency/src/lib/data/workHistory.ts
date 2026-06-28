@@ -236,7 +236,7 @@ export const workHistory: WorkHistoryItem[] = [
 			},
 			{
 				label: 'Carry-forward (.agency)',
-				text: 'This is the core .agency muscle: build the connective tissue and trust boundaries so AI can operate safely in real operations.'
+				text: 'This is the core .agency muscle: build the connective tissue and operating boundaries so AI can operate safely in real operations.'
 			}
 		]
 	},

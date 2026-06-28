@@ -14,7 +14,7 @@
   titleLevel="h1"
   eyebrow="Terms"
   title="Terms for using CREATE SOMETHING .agency."
-  description="These terms govern use of the agency site and services. The policy language stays direct so commercial and trust boundaries remain inspectable."
+  description="These terms govern use of the agency site and services. The policy language stays direct so commercial and operating boundaries remain inspectable."
 >
   {#snippet after()}
     <TermsOfServiceContent

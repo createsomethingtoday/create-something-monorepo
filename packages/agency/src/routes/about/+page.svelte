@@ -70,7 +70,7 @@
     },
     {
       label: 'Primary work',
-      value: 'Workflow trust layers',
+      value: 'Workflow control layers',
       detail: 'Scoped actions, approvals, evidence, and escalation surfaces'
     },
     {
@@ -146,8 +146,8 @@
 
 <SEO
   title="Micah Johnson | CREATE SOMETHING .agency"
-  description="Micah Johnson builds workflow trust layers for operator-owned outcomes: scoped actions, approval paths, evidence, and escalation surfaces for human judgment."
-  keywords="Micah Johnson, workflow trust layer, production automation, systems architecture, automation reliability, controlled workflows"
+  description="Micah Johnson builds workflow control layers for operator-owned outcomes: scoped actions, approval paths, evidence, and escalation surfaces for human judgment."
+  keywords="Micah Johnson, workflow control layer, production automation, systems architecture, automation reliability, controlled workflows"
   ogImage="/og-image.svg"
   propertyName="agency"
 />
