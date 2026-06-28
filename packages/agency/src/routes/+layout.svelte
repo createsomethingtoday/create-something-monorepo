@@ -154,70 +154,67 @@
     {
       id: 'nav-partners',
       label: 'Partners',
-      description: 'Unified Dify, Cloudflare, and Notion partner application stack',
+      description: 'Unified Dify, Cloudflare, and Notion program-readiness stack',
       href: '/partners',
       icon: 'P',
       keywords: [
         'partners',
-        'partner stack',
+        'program stack',
         'dify',
         'cloudflare',
         'notion',
-        'affiliate',
-        'marketplace',
-        'solutions partner'
+        'workflow systems',
+        'tool programs',
+        'solutions readiness'
       ]
     },
     {
       id: 'nav-cloudflare',
       label: 'Cloudflare',
       description:
-        'Cloudflare runtime substrate, PowerUP consult path, and agency account-management lane',
+        'Cloudflare runtime substrate, Workers, Pages, D1, and controlled workflow routes',
       href: '/cloudflare',
       icon: 'CF',
       keywords: [
         'cloudflare',
-        'partner',
-        'powerup',
+        'runtime',
         'workers',
         'pages',
         'd1',
         'durable objects',
         'remote mcp',
-        'self-serve agency'
+        'workflow routes'
       ]
     },
     {
       id: 'nav-dify',
       label: 'Dify',
-      description: 'Dify implementation lane, partner application proof, and affiliate funnel',
+      description: 'Dify workflow systems with MCP boundaries, eval gates, and readable evidence',
       href: '/dify',
       icon: 'D',
       keywords: [
         'dify',
-        'partner',
-        'affiliate',
-        'marketplace',
-        'service partner',
+        'workflow systems',
+        'mcp',
+        'eval gates',
         'agent runtime',
         'control layer'
       ]
     },
     {
       id: 'nav-dify-content',
-      label: 'Dify Content Engine',
+      label: 'Dify Page Portfolio',
       description:
-        'Custom-domain Dify content strategy with Substack distribution and affiliate conversion targets',
+        'Dify page portfolio with canonical explanations, route decisions, and strength scoring',
       href: '/dify/content-engine',
       icon: 'DC',
       keywords: [
         'dify',
-        'affiliate',
-        'content engine',
-        'substack',
-        'blog',
-        'custom domain',
-        'newsletter'
+        'page portfolio',
+        'content system',
+        'canonical pages',
+        'route scoring',
+        'workflow pages'
       ]
     },
     {

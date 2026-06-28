@@ -74,23 +74,23 @@ const AGENCY_CONTENT_ASSETS_BY_PATH: Record<string, AgencyContentAssetAnalytics>
     contentPrimaryCta: 'request-workflow-teardown'
   },
   '/dify': {
-    contentAssetId: 'partner.dify-agent-systems.v20260518',
-    contentType: 'partner-page',
+    contentAssetId: 'workflow.dify-agent-systems.v20260518',
+    contentType: 'guide',
     contentCluster: 'dify-governed-agent-systems',
-    contentIntent: 'partner-proof',
-    contentAudience: 'operator evaluating Dify implementation support',
+    contentIntent: 'definition',
+    contentAudience: 'operator evaluating Dify workflow systems',
     contentFunnelStage: 'consideration',
-    contentPrimaryKeyword: 'Dify implementation partner',
+    contentPrimaryKeyword: 'Dify workflow systems',
     contentPrimaryCta: 'request-workflow-teardown'
   },
   '/dify/content-engine': {
     contentAssetId: 'article.dify-content-engine.v20260518',
     contentType: 'guide',
-    contentCluster: 'dify-affiliate-content',
+    contentCluster: 'dify-page-portfolio',
     contentIntent: 'how-to',
-    contentAudience: 'agency consultant or operator building a Dify acquisition lane',
+    contentAudience: 'operator building a routed Dify page portfolio',
     contentFunnelStage: 'consideration',
-    contentPrimaryKeyword: 'Dify affiliate content strategy',
+    contentPrimaryKeyword: 'Dify page portfolio',
     contentPrimaryCta: 'get-governance-checklist',
     contentLinearIssue: 'CRE-373'
   },

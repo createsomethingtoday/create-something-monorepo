@@ -16,7 +16,20 @@ function pageFileForRoute(route: string): string {
 	return path.join(packageRoot, 'src/routes', routePath, '+page.svelte');
 }
 
-test('Dify marketing portfolio has one pillar and indexable support routes', () => {
+test('marketing portfolio covers the high-intent public funnel', () => {
+	assert.ok(marketingPagePortfolio.length >= 14);
+
+	for (const cluster of new Set(marketingPagePortfolio.map((entry) => entry.cluster))) {
+		const entries = marketingPagePortfolio.filter((entry) => entry.cluster === cluster);
+		assert.equal(
+			entries.filter((entry) => entry.role === 'pillar').length,
+			1,
+			`${cluster} should have one pillar`
+		);
+	}
+});
+
+test('Dify marketing cluster has one pillar and indexable support routes', () => {
 	const difyPages = marketingPagePortfolio.filter((entry) => entry.cluster === 'dify');
 
 	assert.equal(difyPages.filter((entry) => entry.role === 'pillar').length, 1);

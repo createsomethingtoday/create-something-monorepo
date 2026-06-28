@@ -93,7 +93,7 @@ Validation:
 Public SEO/AEO pages should operate as a funnel portfolio, not a pile of
 articles. Each page needs a job:
 
-1. A cluster: the commercial lane the page belongs to.
+1. A cluster: the route family the page belongs to.
 2. A role: pillar, support, comparison, implementation, or operations.
 3. A funnel stage: discover, understand, evaluate, implement, or book.
 4. A route decision: index, route, or archive.
@@ -101,22 +101,37 @@ articles. Each page needs a job:
 6. Self-healing levers: deterministic repairs the repo can apply without
    inventing new editorial strategy.
 
-The first portfolio is the Dify cluster:
+The reusable Rdoc for this system lives at
+`docs/guides/AGENCY_MARKETING_PAGE_PORTFOLIO_RDOC.md`.
+
+The managed portfolio covers the high-intent public funnel:
+
+| Cluster | Pillar | Support pages |
+|---------|--------|---------------|
+| Core services | `/services` | - |
+| Stack boundary | `/stack` | - |
+| Tool programs | `/partners` | `/cloudflare`, `/notion` |
+| Dify | `/dify` | `/dify/mcp-control-plane`, `/dify/agent-eval-gates`, `/dify/ship-dify-app-with-mcp-tools`, `/dify/content-engine`, `/dify/n8n-vs-dify` |
+| Products | `/products` | - |
+| Business use case | `/use-cases/business` | - |
+| Enterprise use case | `/use-cases/enterprise` | - |
+
+The Dify cluster is the first multi-page content system:
 
 | Page | Role | Funnel job |
 |------|------|------------|
-| `/dify` | Pillar | Explain the Dify lane and route readers into the cluster. |
+| `/dify` | Pillar | Explain the Dify workflow path and route readers into the cluster. |
 | `/dify/mcp-control-plane` | Support | Teach the operating model: Dify surface, MCP boundary, Policy OS rule. |
 | `/dify/agent-eval-gates` | Operations | Show the gates that prove a Dify workflow can operate safely. |
 | `/dify/ship-dify-app-with-mcp-tools` | Implementation | Give a practical shipping checklist for Dify plus MCP systems. |
-| `/dify/content-engine` | Operations | Explain the custom-domain content funnel and routing model. |
-| `/dify/n8n-vs-dify` | Comparison | Capture comparison intent and route it toward the governed Dify lane. |
+| `/dify/content-engine` | Operations | Explain the routed Dify page portfolio and scoring model. |
+| `/dify/n8n-vs-dify` | Comparison | Capture comparison intent and route it toward the governed Dify workflow path. |
 
 The durable SEO/AEO strategy is:
 
 - Keep canonical pages on `createsomething.agency`; use other channels for
   distribution, not as the source of truth.
-- Let pillar pages define the lane, support pages explain the operating model,
+- Let pillar pages define the route, support pages explain the operating model,
   comparison pages capture demand, and implementation pages convert.
 - Keep pages indexable only when they have a clear route, visible proof,
   structured metadata, direct CTA, and language that matches the public copy

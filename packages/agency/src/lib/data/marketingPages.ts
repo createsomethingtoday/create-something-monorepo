@@ -1,5 +1,12 @@
 export type MarketingPageDecision = 'index' | 'route' | 'archive';
-export type MarketingPageCluster = 'dify';
+export type MarketingPageCluster =
+	| 'core-services'
+	| 'stack-boundary'
+	| 'tool-programs'
+	| 'dify'
+	| 'products'
+	| 'business-use-case'
+	| 'enterprise-use-case';
 export type MarketingPageRole = 'pillar' | 'support' | 'comparison' | 'implementation' | 'operations';
 export type MarketingFunnelStage = 'discover' | 'understand' | 'evaluate' | 'implement' | 'book';
 export type MarketingSelfHealingLever =
@@ -51,16 +58,111 @@ export const marketingPageMinimums: Record<MarketingPageDecision, number> = {
 
 export const marketingPagePortfolio: MarketingPageEntry[] = [
 	{
+		path: '/services',
+		cluster: 'core-services',
+		role: 'pillar',
+		decision: 'index',
+		audience: 'Teams with one messy business handoff that needs controlled AI assistance.',
+		funnelStage: 'book',
+		intent: 'Explain the core service path: map one workflow before build work starts.',
+		primaryAction: 'Map the workflow',
+		requiredTerms: ['workflow', 'handoff', 'approval', 'stop', 'audit trail'],
+		requiredLinks: ['#atlas-warmup'],
+		schema: 'faq',
+		search: {
+			changefreq: 'weekly',
+			priority: '0.95',
+			lastmod: '2026-06-19'
+		},
+		selfHealing: ['copy:heal', 'search-route:sync']
+	},
+	{
+		path: '/stack',
+		cluster: 'stack-boundary',
+		role: 'pillar',
+		decision: 'index',
+		audience: 'Teams deciding what they own before AI tools act across accounts.',
+		funnelStage: 'understand',
+		intent: 'Explain the stack boundary in workflow terms before vendor choices dominate.',
+		primaryAction: 'Map the stack boundary',
+		requiredTerms: ['workflow', 'approval', 'evidence', 'runbook', 'vendor'],
+		requiredLinks: ['/cloudflare', '/dify', '/notion'],
+		schema: 'faq',
+		search: {
+			changefreq: 'monthly',
+			priority: '0.85',
+			lastmod: '2026-06-19'
+		},
+		selfHealing: ['copy:heal', 'search-route:sync']
+	},
+	{
+		path: '/partners',
+		cluster: 'tool-programs',
+		role: 'pillar',
+		decision: 'index',
+		audience: 'Teams deciding which tool program route fits one workflow.',
+		funnelStage: 'understand',
+		intent: 'Route a workflow toward Dify, Cloudflare, Notion, or the broader stack boundary.',
+		primaryAction: 'Map the route',
+		requiredTerms: ['Dify', 'Cloudflare', 'Notion', 'workflow', 'evidence'],
+		requiredLinks: ['/dify', '/cloudflare', '/notion', '/stack'],
+		schema: 'faq',
+		search: {
+			changefreq: 'monthly',
+			priority: '0.85',
+			lastmod: '2026-06-19'
+		},
+		selfHealing: ['copy:heal', 'search-route:sync', 'canonical-route:review']
+	},
+	{
+		path: '/cloudflare',
+		cluster: 'tool-programs',
+		role: 'support',
+		decision: 'index',
+		audience: 'Teams whose workflow needs owned runtime routes and durable state.',
+		funnelStage: 'evaluate',
+		intent: 'Explain Cloudflare as the runtime substrate for controlled workflow routes.',
+		primaryAction: 'Map the runtime',
+		requiredTerms: ['Cloudflare', 'Workers', 'D1', 'workflow', 'evidence'],
+		requiredLinks: ['/partners', '/stack'],
+		schema: 'faq',
+		search: {
+			changefreq: 'monthly',
+			priority: '0.8',
+			lastmod: '2026-06-19'
+		},
+		selfHealing: ['copy:heal', 'search-route:sync', 'canonical-route:review']
+	},
+	{
+		path: '/notion',
+		cluster: 'tool-programs',
+		role: 'support',
+		decision: 'index',
+		audience: 'Teams whose workflow needs an operator-facing review workspace.',
+		funnelStage: 'evaluate',
+		intent: 'Explain Notion as the visible operating layer around AI-enabled work.',
+		primaryAction: 'Map the workspace',
+		requiredTerms: ['Notion', 'workspace', 'workflow', 'evidence', 'review'],
+		requiredLinks: ['/partners', '/stack'],
+		schema: 'faq',
+		search: {
+			changefreq: 'monthly',
+			priority: '0.8',
+			lastmod: '2026-06-22'
+		},
+		selfHealing: ['copy:heal', 'search-route:sync', 'canonical-route:review']
+	},
+	{
 		path: '/dify',
 		cluster: 'dify',
 		role: 'pillar',
 		decision: 'index',
 		audience: 'Teams evaluating Dify for controlled AI workflow systems.',
 		funnelStage: 'understand',
-		intent: 'Explain the Dify implementation lane and route readers into the cluster.',
+		intent: 'Explain the Dify workflow path and route readers into the cluster.',
 		primaryAction: 'Map one workflow',
 		requiredTerms: ['Dify', 'MCP', 'Policy OS', 'approval', 'evidence'],
-		requiredLinks: ['/dify/mcp-control-plane', '/dify/agent-eval-gates', '/partners'],
+		requiredLinks: ['/dify/mcp-control-plane', '/dify/agent-eval-gates', '/stack'],
 		schema: 'faq',
 		search: {
 			changefreq: 'weekly',
@@ -131,11 +233,11 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
 		cluster: 'dify',
 		role: 'operations',
 		decision: 'index',
-		audience: 'Operators planning a custom-domain-first Dify content funnel.',
+		audience: 'Operators planning a routed Dify page portfolio.',
 		funnelStage: 'evaluate',
-		intent: 'Explain how canonical pages, dispatches, and routing support the Dify funnel.',
+		intent: 'Explain how canonical pages, distribution notes, and route scoring support the Dify portfolio.',
 		primaryAction: 'Book workflow mapping',
-		requiredTerms: ['Dify', 'custom-domain', 'routing', 'conversion', 'canonical'],
+		requiredTerms: ['Dify', 'portfolio', 'routing', 'strength', 'canonical'],
 		requiredLinks: ['/dify', '/dify/mcp-control-plane', '/dify/n8n-vs-dify'],
 		schema: 'article',
 		search: {
@@ -152,7 +254,7 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
 		decision: 'index',
 		audience: 'Teams comparing workflow automation with agent app surfaces.',
 		funnelStage: 'evaluate',
-		intent: 'Capture comparison intent and route it toward the governed Dify lane.',
+		intent: 'Capture comparison intent and route it toward the governed Dify workflow path.',
 		primaryAction: 'Request workflow teardown',
 		requiredTerms: ['Dify', 'n8n', 'Cloudflare', 'agent app', 'automation'],
 		requiredLinks: ['/dify', '/dify/mcp-control-plane'],
@@ -163,6 +265,63 @@ export const marketingPagePortfolio: MarketingPageEntry[] = [
 			lastmod: '2026-06-22'
 		},
 		selfHealing: ['copy:heal', 'search-route:sync', 'canonical-route:review']
+	},
+	{
+		path: '/products',
+		cluster: 'products',
+		role: 'pillar',
+		decision: 'index',
+		audience: 'Teams looking for proof before trusting the workflow method.',
+		funnelStage: 'evaluate',
+		intent: 'Show proof objects that make the CREATE SOMETHING method inspectable.',
+		primaryAction: 'Apply the proof',
+		requiredTerms: ['proof', 'workflow', 'evidence', 'approval', 'runbook'],
+		requiredLinks: [],
+		schema: 'faq',
+		search: {
+			changefreq: 'monthly',
+			priority: '0.75',
+			lastmod: '2026-06-19'
+		},
+		selfHealing: ['copy:heal', 'search-route:sync']
+	},
+	{
+		path: '/use-cases/business',
+		cluster: 'business-use-case',
+		role: 'pillar',
+		decision: 'index',
+		audience: 'Small teams carrying repeated workflow handoffs manually.',
+		funnelStage: 'book',
+		intent: 'Explain the small-team workflow pilot path in natural language.',
+		primaryAction: 'Bring the workflow',
+		requiredTerms: ['workflow', 'pilot', 'runbook', 'approval', 'evidence'],
+		requiredLinks: [],
+		schema: 'faq',
+		search: {
+			changefreq: 'monthly',
+			priority: '0.8',
+			lastmod: '2026-06-19'
+		},
+		selfHealing: ['copy:heal', 'search-route:sync']
+	},
+	{
+		path: '/use-cases/enterprise',
+		cluster: 'enterprise-use-case',
+		role: 'pillar',
+		decision: 'index',
+		audience: 'Teams whose AI-assisted workflows already affect operations or risk.',
+		funnelStage: 'book',
+		intent: 'Explain the enterprise Policy OS path after the first workflow is live.',
+		primaryAction: 'Bring the workflow',
+		requiredTerms: ['Policy OS', 'workflow', 'approval', 'evidence', 'reliability'],
+		requiredLinks: [],
+		schema: 'faq',
+		search: {
+			changefreq: 'monthly',
+			priority: '0.8',
+			lastmod: '2026-06-19'
+		},
+		selfHealing: ['copy:heal', 'search-route:sync']
 	}
 ];
 
@@ -206,7 +365,7 @@ export function scoreMarketingPage(
 		},
 		{
 			id: 'primary-action',
-			label: 'Page includes a direct conversion action',
+			label: 'Page includes a direct next action',
 			points: source.includes('agencyCoreMessaging') || source.includes(entry.primaryAction) ? 14 : 0,
 			max: 14,
 			passed: source.includes('agencyCoreMessaging') || source.includes(entry.primaryAction)

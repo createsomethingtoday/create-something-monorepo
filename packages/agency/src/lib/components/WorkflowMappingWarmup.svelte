@@ -229,7 +229,7 @@
       intent: 'workflow-teardown',
       lane: 'not_sure',
       reason:
-        'There is enough shape to discuss the workflow, but the implementation lane should be chosen after mapping.',
+        'There is enough shape to discuss the workflow, but the implementation path should be chosen after mapping.',
       nextStep: 'Request a workflow map before choosing the build path.'
     };
   }
