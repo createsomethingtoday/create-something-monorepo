@@ -1,7 +1,13 @@
 <script lang="ts">
   import type { PageData } from './$types';
   import ImageLightbox from '$lib/components/taste/ImageLightbox.svelte';
-  import { SEO } from '@create-something/canon';
+  import {
+    Button,
+    ClearMetadataRail,
+    ClearPageSection,
+    SEO,
+    type ClearMetadataGroup
+  } from '@create-something/canon';
 
   let { data }: { data: PageData } = $props();
 
@@ -21,6 +27,17 @@
     selectedImageIndex = index;
   }
 
+  const sourceGroups = $derived([
+    {
+      label: 'CREATE SOMETHING',
+      channels: data.channels.filter((channel) => channel.isPrimary)
+    },
+    {
+      label: 'External',
+      channels: data.channels.filter((channel) => !channel.isPrimary)
+    }
+  ]);
+
   // Format date for display
   function formatDate(dateValue: string | number | null): string {
     if (dateValue === null) return 'Never';
@@ -34,6 +51,32 @@
       year: 'numeric'
     });
   }
+
+  const tasteMetadataGroups = $derived<ClearMetadataGroup[]>([
+    {
+      title: 'Current corpus',
+      items: [
+        { label: 'Examples', value: String(data.stats.examples) },
+        { label: 'Resources', value: String(data.stats.resources) },
+        { label: 'Last sync', value: formatDate(data.stats.lastSync) }
+      ]
+    },
+    {
+      title: 'Reading path',
+      items: [
+        {
+          label: 'Next action',
+          value: 'Inspect taste pattern',
+          href: '/taste/insights'
+        },
+        {
+          label: 'Source',
+          value: 'Are.na channels',
+          href: 'https://www.are.na/create-something'
+        }
+      ]
+    }
+  ]);
 </script>
 
 <SEO
@@ -47,67 +90,57 @@
   ]}
 />
 
-<!-- Header -->
-<section class="header-section">
-  <div class="max-w-7xl mx-auto px-6">
-    <p class="eyebrow">Visual Reference</p>
-    <h1 class="mb-6">Make taste inspectable.</h1>
-    <p class="tagline">
-      Human-curated visual references from Are.na, source channels, and derived principles that
-      show why a design decision earns its place.
-    </p>
+<ClearPageSection
+  class="taste-hero"
+  variant="hero"
+  layout="split"
+  titleLevel="h1"
+  eyebrow="Visual Reference"
+  title="Make taste inspectable."
+  description="Human-curated visual references from Are.na, source channels, and derived principles that show why a design decision earns its place."
+>
+  {#snippet actions()}
+    <Button href="/taste/insights">Inspect Pattern</Button>
+    <Button href="#source-channels" variant="secondary">View Sources</Button>
+  {/snippet}
 
-    <!-- Stats -->
-    <div class="stats-row">
-      <span class="stat">{data.stats.examples} examples</span>
-      <span class="stat-divider">·</span>
-      <span class="stat">{data.stats.resources} resources</span>
-      <span class="stat-divider">·</span>
-      <span class="stat">Synced {formatDate(data.stats.lastSync)}</span>
-      <span class="stat-divider">·</span>
-      <a href="/taste/insights" class="stat-link">Inspect your taste pattern</a>
-    </div>
-
-  </div>
-</section>
+  {#snippet aside()}
+    <ClearMetadataRail
+      eyebrow="Proof rail"
+      title="Taste reference state"
+      description="Managed as inspectable evidence, not decoration."
+      groups={tasteMetadataGroups}
+      tags={['human curation', 'source channels', 'derived principles']}
+      ariaLabel="Taste reference metadata"
+    />
+  {/snippet}
+</ClearPageSection>
 
 <!-- Source Channels -->
-<section class="channels-section">
+<section class="channels-section" id="source-channels">
   <div class="max-w-7xl mx-auto px-6">
     <h2 class="section-title">Source Channels</h2>
 
     <div class="channels-grid">
-      <!-- Primary Channels -->
-      <div class="channel-group">
-        <h3 class="group-label">CREATE SOMETHING</h3>
-        {#each data.channels.filter((c) => c.isPrimary) as channel}
+      {#each sourceGroups as group}
+        <div class="channel-group">
+          <h3 class="group-label">{group.label}</h3>
+          {#each group.channels as channel}
           <a
-            href="https://www.are.na/create-something/{channel.slug}"
-            target="_blank"
-            rel="noopener"
-            class="channel-card primary"
-          >
-            <span class="channel-name">{channel.name}</span>
-            <span class="channel-desc">{channel.description}</span>
-          </a>
-        {/each}
-      </div>
-
-      <!-- Secondary Channels -->
-      <div class="channel-group">
-        <h3 class="group-label">External</h3>
-        {#each data.channels.filter((c) => !c.isPrimary) as channel}
-          <a
-            href="https://www.are.na/search/{channel.slug}"
+            href={channel.isPrimary
+              ? `https://www.are.na/create-something/${channel.slug}`
+              : `https://www.are.na/search/${channel.slug}`}
             target="_blank"
             rel="noopener"
             class="channel-card"
+            class:primary={channel.isPrimary}
           >
             <span class="channel-name">{channel.name}</span>
             <span class="channel-desc">{channel.description}</span>
           </a>
-        {/each}
-      </div>
+          {/each}
+        </div>
+      {/each}
     </div>
   </div>
 </section>
@@ -232,57 +265,10 @@
 {/if}
 
 <style>
-  /* Header */
-  .header-section {
-    padding: var(--space-xl) 0 var(--space-lg);
-  }
-
-  .eyebrow {
-    font-size: var(--text-body-sm);
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--color-fg-tertiary);
-    margin-bottom: var(--space-sm);
-  }
-
-  .tagline {
-    font-size: var(--text-h3);
-    color: var(--color-fg-secondary);
-    max-width: 48rem;
-    line-height: 1.5;
-  }
-
-  .stats-row {
-    margin-top: var(--space-md);
-    display: flex;
-    gap: var(--space-sm);
-    align-items: center;
-  }
-
-  .stat {
-    font-size: var(--text-body-sm);
-    color: var(--color-fg-muted);
-  }
-
-  .stat-divider {
-    color: var(--color-fg-subtle);
-  }
-
-  .stat-link {
-    font-size: var(--text-body-sm);
-    color: var(--color-fg-primary);
-    text-decoration: none;
-    font-weight: 500;
-    transition: opacity var(--duration-micro) var(--ease-standard);
-  }
-
-  .stat-link:hover {
-    opacity: 0.7;
-  }
-
   /* Channels */
   .channels-section {
     padding: var(--space-lg) 0;
+    scroll-margin-top: 5.25rem;
   }
 
   .section-title {
@@ -320,6 +306,7 @@
   .channel-card {
     display: flex;
     flex-direction: column;
+    min-height: 5.25rem;
     padding: var(--space-sm);
     border: 1px solid var(--color-clear-border, #e1e1e1);
     border-radius: var(--radius-clear-sm, 4px);
@@ -343,12 +330,14 @@
     font-size: var(--text-body);
     font-weight: 500;
     color: var(--color-fg-primary);
+    overflow-wrap: anywhere;
   }
 
   .channel-desc {
     font-size: var(--text-body-sm);
     color: var(--color-fg-tertiary);
     margin-top: 0.25rem;
+    overflow-wrap: anywhere;
   }
 
   /* Gallery */
@@ -475,6 +464,7 @@
 
   .resource-content {
     flex: 1;
+    min-width: 0;
   }
 
   .resource-type {
@@ -491,11 +481,13 @@
     font-weight: 600;
     color: var(--color-fg-primary);
     margin-bottom: 0.25rem;
+    overflow-wrap: anywhere;
   }
 
   .resource-desc {
     font-size: var(--text-body-sm);
     color: var(--color-fg-tertiary);
+    overflow-wrap: anywhere;
   }
 
   .resource-link {
@@ -523,6 +515,46 @@
   }
 
   @media (max-width: 640px) {
+    :global(.taste-hero .clear-page-section__actions) {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.55rem;
+    }
+
+    :global(.taste-hero .clear-page-section__actions .btn) {
+      width: auto;
+      min-width: 0;
+      padding-inline: 0.65rem;
+      font-size: 0.9rem;
+      white-space: normal;
+    }
+
+    .channels-section,
+    .gallery-section,
+    .resources-section,
+    .principles-section {
+      padding: var(--space-md) 0;
+    }
+
+    .section-title {
+      font-size: clamp(1.65rem, 11vw, var(--text-h2));
+      line-height: 1.08;
+    }
+
+    .masonry-grid {
+      column-count: 1;
+    }
+
+    .resource-card {
+      display: grid;
+      gap: var(--space-xs);
+    }
+
+    .resource-link {
+      width: fit-content;
+      white-space: normal;
+    }
+
     .principles-grid {
       grid-template-columns: 1fr;
     }
