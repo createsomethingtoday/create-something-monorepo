@@ -81,6 +81,12 @@ function generateCanonicalContext(): string {
 	}
 	lines.push('');
 
+	lines.push('### Clear Communication');
+	for (const principle of DESIGN_PRINCIPLES.clearCommunication) {
+		lines.push(`- ${principle}`);
+	}
+	lines.push('');
+
 	lines.push('### Anti-Patterns');
 	for (const antiPattern of DESIGN_PRINCIPLES.antiPatterns) {
 		lines.push(`- ${antiPattern}`);

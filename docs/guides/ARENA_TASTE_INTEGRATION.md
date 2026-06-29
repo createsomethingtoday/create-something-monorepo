@@ -52,6 +52,62 @@ Use the corpus to produce sellable artifacts:
 - Before/after reference boards for `.agency` sales.
 - Project-specific `llm.txt` or MCP resources for client agents.
 
+## Ona Clarity Loop
+
+TASTE should continuously improve CREATE SOMETHING implementation against the
+Ona.com clear-communication standard.
+
+Use Ona.com as a public pattern reference, then translate the useful pattern into
+owned Canon primitives and CREATE SOMETHING language. Do not copy generated CSS,
+font files, images, or source assets from Ona.
+
+The recurring loop is:
+
+1. Observe the current Ona.com pattern: literal offer, short outcome sentence,
+   direct actions, compact navigation, nearby proof, and visible governance.
+2. Compare CREATE SOMETHING pages, product surfaces, and agent outputs against
+   that pattern.
+3. Convert gaps into Canon-level improvements: clearer page hierarchy, lighter
+   operational surfaces, stable spacing, visible proof artifacts, and direct
+   language.
+4. Present the human-in-the-loop decision surface as agent-first and
+   mobile-first. The agent should carry context, evidence, and proposed next
+   moves; the operator should be able to approve, reject, redirect, or request
+   evidence from a phone.
+5. Ship only reviewed corrections through normal checks and promotion gates.
+6. Feed the updated standard back into `/llm.txt`, `/api/taste/context`, and the
+   relevant page or delivery runbook.
+
+The Are.na integration can also find Ona-style/taste candidates inside the wider
+feed. Use `ArenaClient.searchBlocks()` or the proposal-only curator worker with
+queries such as `background agents interface`, `minimal developer tool
+interface`, `mission control software agents`, `clear product UI`, and `agent
+workflow proof`.
+
+Score candidates for:
+
+- literal offer language
+- light operational surfaces
+- compact navigation or task lists
+- visible proof objects, receipts, metrics, or system boundaries
+- direct calls to action
+- restrained motion and limited color
+
+Reject candidates for:
+
+- decorative gradients, spectacle, or abstract mood boards
+- unclear audience or outcome
+- heavy marketing language without operational proof
+- copied source assets, generated CSS, font files, or brand marks
+
+Discovery remains proposal-only. A human decides what belongs in Are.na before
+sync imports it into D1 and exposes it through `/taste`, `/llm.txt`, or
+`/api/taste/context`.
+
+This is not complete self-healing yet. The system can refresh references and
+expose context, but implementation changes remain operator-gated until a drift
+report and approved write-back workflow exist.
+
 ## Validation
 
 Before production promotion:
