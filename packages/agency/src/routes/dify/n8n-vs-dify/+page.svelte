@@ -82,7 +82,8 @@
       eyebrow: 'Repo + Policy OS',
       icon: 'document',
       title: 'Portable evidence',
-      detail: 'Prompts, Dify DSL snapshots, MCP inventory, eval gates, release evidence, and policy artifacts.'
+      detail:
+        'Prompts, Dify DSL snapshots, MCP inventory, eval gates, release evidence, and policy artifacts.'
     }
   ];
 
@@ -91,19 +92,22 @@
       eyebrow: '01',
       icon: 'search',
       title: 'Name the layer',
-      detail: 'Is the workflow internal automation, production infrastructure, or a client agent surface?'
+      detail:
+        'Is the workflow internal automation, production infrastructure, or a client agent surface?'
     },
     {
       eyebrow: '02',
       icon: 'settings',
       title: 'Keep n8n where it fits',
-      detail: 'Keep n8n workflows when the value is app-to-app movement and the operator owns the runbook.'
+      detail:
+        'Keep n8n workflows when the value is app-to-app movement and the operator owns the runbook.'
     },
     {
       eyebrow: '03',
       icon: 'folder',
       title: 'Move runtime-critical paths',
-      detail: 'Use Cloudflare when auth, state, queues, tenant boundaries, or rollback paths matter.'
+      detail:
+        'Use Cloudflare when auth, state, queues, tenant boundaries, or rollback paths matter.'
     },
     {
       eyebrow: '04',
@@ -193,7 +197,7 @@
       {agencyCoreMessaging.workflowTeardownLabel}
     </Button>
     <Button href="/dify" variant="secondary">Back To Dify</Button>
-    <Button href="/dify/content-engine" variant="secondary">Back To Dify Page Portfolio</Button>
+    <Button href="/dify/mcp-control-plane" variant="secondary">Read Control Plane</Button>
   {/snippet}
 
   {#snippet aside()}

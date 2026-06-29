@@ -4,13 +4,13 @@
 > Status: ready for execution
 > Tracker: CRE-373
 > Source packet: `docs/DIFY_PARTNER_AFFILIATE_LEAD_PACKET.md`
-> Public surface: `/dify/content-engine`
+> Public surface: `/dify`
 
 ## Decision
 
 Use the CREATE SOMETHING custom-domain site as the canonical Dify affiliate
 content channel. Use Substack as a distribution and relationship channel that
-points back to canonical posts on the custom domain.
+points back to the public Dify cluster on the custom domain.
 
 This keeps SEO, canonical URLs, analytics, disclosures, CTAs, and lead routing
 under repo control while still using Substack for audience capture and regular

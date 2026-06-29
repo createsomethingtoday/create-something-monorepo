@@ -83,17 +83,6 @@ const AGENCY_CONTENT_ASSETS_BY_PATH: Record<string, AgencyContentAssetAnalytics>
     contentPrimaryKeyword: 'Dify workflow systems',
     contentPrimaryCta: 'request-workflow-teardown'
   },
-  '/dify/content-engine': {
-    contentAssetId: 'article.dify-content-engine.v20260518',
-    contentType: 'guide',
-    contentCluster: 'dify-page-portfolio',
-    contentIntent: 'how-to',
-    contentAudience: 'operator building a routed Dify page portfolio',
-    contentFunnelStage: 'consideration',
-    contentPrimaryKeyword: 'Dify page portfolio',
-    contentPrimaryCta: 'get-governance-checklist',
-    contentLinearIssue: 'CRE-373'
-  },
   '/dify/mcp-control-plane': {
     contentAssetId: 'article.dify-mcp-control-plane.v20260518',
     contentType: 'article',

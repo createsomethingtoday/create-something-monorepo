@@ -45,7 +45,8 @@
       eyebrow: '02',
       icon: 'folder',
       title: 'Confirm the MCP card',
-      detail: 'Create or confirm the MCP server card and tool scope before the agent can claim capability.'
+      detail:
+        'Create or confirm the MCP server card and tool scope before the agent can claim capability.'
     },
     {
       eyebrow: '03',
@@ -57,7 +58,8 @@
       eyebrow: '04',
       icon: 'check',
       title: 'Add eval gates',
-      detail: 'Check expected tool use, forbidden tool use, secret refusal, latency, and write confirmation.'
+      detail:
+        'Check expected tool use, forbidden tool use, secret refusal, latency, and write confirmation.'
     },
     {
       eyebrow: '05',
@@ -79,8 +81,7 @@
       eyebrow: 'Capability',
       icon: 'folder',
       title: 'MCP contract',
-      detail:
-        'The tool and resource boundary names what the agent may read, call, and describe.'
+      detail: 'The tool and resource boundary names what the agent may read, call, and describe.'
     },
     {
       eyebrow: 'Behavior',
@@ -110,19 +111,22 @@
       eyebrow: 'Builders',
       icon: 'settings',
       title: 'Package one useful workflow',
-      detail: 'Use Dify to package the agent and MCP to expose the narrow tools needed for the workflow.'
+      detail:
+        'Use Dify to package the agent and MCP to expose the narrow tools needed for the workflow.'
     },
     {
       eyebrow: 'Operators',
       icon: 'user',
       title: 'Make governance visible',
-      detail: 'Use Policy OS to show approval states, blocked states, runbooks, and evidence before scale.'
+      detail:
+        'Use Policy OS to show approval states, blocked states, runbooks, and evidence before scale.'
     },
     {
       eyebrow: 'Agencies',
       icon: 'users',
       title: 'Turn proof into reusable assets',
-      detail: 'Turn repeatable workflows into Dify templates or plugin candidates after sanitizing setup and proof.'
+      detail:
+        'Turn repeatable workflows into Dify templates or plugin candidates after sanitizing setup and proof.'
     }
   ];
 
@@ -251,9 +255,11 @@
     <Button href={agencyCoreMessaging.workflowMappingSessionHref}>
       {agencyCoreMessaging.bookMappingSessionLabel}
     </Button>
-    <Button href="/dify/ship-dify-app-with-mcp-tools" variant="secondary">Read Shipping Guide</Button>
+    <Button href="/dify/ship-dify-app-with-mcp-tools" variant="secondary"
+      >Read Shipping Guide</Button
+    >
     <Button href="/dify/agent-eval-gates" variant="secondary">Read Eval Gates</Button>
-    <Button href="/dify/content-engine" variant="secondary">See Dify Page Portfolio</Button>
+    <Button href="/dify/n8n-vs-dify" variant="secondary">Read Dify vs n8n</Button>
     <Button href="https://createsomething.io/papers/policy-os-contract-bundle" variant="secondary">
       Read Contract Bundle Paper
     </Button>

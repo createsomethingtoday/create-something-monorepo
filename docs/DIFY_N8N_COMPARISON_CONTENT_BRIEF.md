@@ -137,7 +137,7 @@ Dispatch shape:
 
 Primary CTA: `Book Mapping Session`
 
-Secondary CTA: `/dify/content-engine`
+Secondary CTA: `/dify/mcp-control-plane`
 
 Affiliate posture: direct Dify links only until Dify accepts the affiliate
 application and the surface is registered with disclosure.

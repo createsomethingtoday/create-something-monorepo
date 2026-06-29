@@ -1,7 +1,7 @@
 surface,url,audience,channel_role,disclosure_present,link_type,campaign,date_added,status,notes
 createsomething.agency /dify,https://createsomething.agency/dify,operators,canonical,no,direct,dify-core,,draft,Replace direct Dify references only after affiliate acceptance and disclosure update.
 createsomething.agency /dify/mcp-control-plane,https://createsomething.agency/dify/mcp-control-plane,builders,canonical,no,direct,dify-control-plane,,draft,Use as first high-intent content surface for Dify plus MCP education.
-createsomething.agency /dify/content-engine,https://createsomething.agency/dify/content-engine,agencies,canonical,no,direct,dify-content-engine,,draft,Public source of truth for custom-domain first content and Substack distribution.
+createsomething.agency /dify,https://createsomething.agency/dify,agencies,canonical,no,direct,dify-workflow-systems,,draft,Public source of truth for custom-domain first Dify content and distribution.
 createsomething.agency /dify/n8n-vs-dify,https://createsomething.agency/dify/n8n-vs-dify,operators,canonical,no,direct,dify-n8n-comparison,,draft,Fair comparison of n8n workflow automation Cloudflare runtime and Dify client-facing agent access.
 Substack Dify dispatch 01,,builders,distribution,no,direct,dify-control-plane,,planned,Declare newsletter channel in affiliate dashboard before adding affiliate links.
 Substack Dify dispatch 02,,operators,distribution,no,direct,dify-eval-gates,,planned,Use short dispatch linking back to canonical custom-domain page.

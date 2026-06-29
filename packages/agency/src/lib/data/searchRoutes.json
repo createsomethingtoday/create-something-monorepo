@@ -1,146 +1,140 @@
 [
-	{
-		"path": "/",
-		"changefreq": "weekly",
-		"priority": "1.0",
-		"lastmod": "2026-06-19"
-	},
-	{
-		"path": "/services",
-		"changefreq": "weekly",
-		"priority": "0.95",
-		"lastmod": "2026-06-19"
-	},
-	{
-		"path": "/book",
-		"changefreq": "weekly",
-		"priority": "0.9",
-		"lastmod": "2026-06-28"
-	},
-	{
-		"path": "/contact",
-		"changefreq": "monthly",
-		"priority": "0.8",
-		"lastmod": "2026-06-28"
-	},
-	{
-		"path": "/atlas",
-		"changefreq": "weekly",
-		"priority": "0.85",
-		"lastmod": "2026-06-19"
-	},
-	{
-		"path": "/basketball-systems-lab",
-		"changefreq": "monthly",
-		"priority": "0.6",
-		"lastmod": "2026-06-21"
-	},
-	{
-		"path": "/stack",
-		"changefreq": "monthly",
-		"priority": "0.85",
-		"lastmod": "2026-06-19"
-	},
-	{
-		"path": "/partners",
-		"changefreq": "monthly",
-		"priority": "0.85",
-		"lastmod": "2026-06-19"
-	},
-	{
-		"path": "/methodology",
-		"changefreq": "monthly",
-		"priority": "0.75",
-		"lastmod": "2026-06-19"
-	},
-	{
-		"path": "/security",
-		"changefreq": "monthly",
-		"priority": "0.7",
-		"lastmod": "2026-06-19"
-	},
-	{
-		"path": "/bearer-token-policy",
-		"changefreq": "monthly",
-		"priority": "0.65",
-		"lastmod": "2026-06-28"
-	},
-	{
-		"path": "/dify",
-		"changefreq": "weekly",
-		"priority": "0.9",
-		"lastmod": "2026-06-19"
-	},
-	{
-		"path": "/dify/content-engine",
-		"changefreq": "weekly",
-		"priority": "0.85",
-		"lastmod": "2026-06-22"
-	},
-	{
-		"path": "/dify/mcp-control-plane",
-		"changefreq": "weekly",
-		"priority": "0.85",
-		"lastmod": "2026-06-22"
-	},
-	{
-		"path": "/dify/agent-eval-gates",
-		"changefreq": "weekly",
-		"priority": "0.85",
-		"lastmod": "2026-06-23"
-	},
-	{
-		"path": "/dify/ship-dify-app-with-mcp-tools",
-		"changefreq": "weekly",
-		"priority": "0.85",
-		"lastmod": "2026-06-28"
-	},
-	{
-		"path": "/dify/n8n-vs-dify",
-		"changefreq": "weekly",
-		"priority": "0.85",
-		"lastmod": "2026-06-22"
-	},
-	{
-		"path": "/cloudflare",
-		"changefreq": "monthly",
-		"priority": "0.8",
-		"lastmod": "2026-06-28"
-	},
-	{
-		"path": "/notion",
-		"changefreq": "monthly",
-		"priority": "0.8",
-		"lastmod": "2026-06-28"
-	},
-	{
-		"path": "/products",
-		"changefreq": "monthly",
-		"priority": "0.75",
-		"lastmod": "2026-06-28"
-	},
-	{
-		"path": "/products/ground",
-		"changefreq": "monthly",
-		"priority": "0.65",
-		"lastmod": "2026-06-28"
-	},
-	{
-		"path": "/use-cases/business",
-		"changefreq": "monthly",
-		"priority": "0.8",
-		"lastmod": "2026-06-19"
-	},
-	{
-		"path": "/use-cases/enterprise",
-		"changefreq": "monthly",
-		"priority": "0.8",
-		"lastmod": "2026-06-19"
-	},
-	{
-		"path": "/about",
-		"changefreq": "monthly",
-		"priority": "0.7",
-		"lastmod": "2026-06-19"
-	}
+  {
+    "path": "/",
+    "changefreq": "weekly",
+    "priority": "1.0",
+    "lastmod": "2026-06-19"
+  },
+  {
+    "path": "/services",
+    "changefreq": "weekly",
+    "priority": "0.95",
+    "lastmod": "2026-06-19"
+  },
+  {
+    "path": "/book",
+    "changefreq": "weekly",
+    "priority": "0.9",
+    "lastmod": "2026-06-28"
+  },
+  {
+    "path": "/contact",
+    "changefreq": "monthly",
+    "priority": "0.8",
+    "lastmod": "2026-06-28"
+  },
+  {
+    "path": "/atlas",
+    "changefreq": "weekly",
+    "priority": "0.85",
+    "lastmod": "2026-06-19"
+  },
+  {
+    "path": "/basketball-systems-lab",
+    "changefreq": "monthly",
+    "priority": "0.6",
+    "lastmod": "2026-06-21"
+  },
+  {
+    "path": "/stack",
+    "changefreq": "monthly",
+    "priority": "0.85",
+    "lastmod": "2026-06-19"
+  },
+  {
+    "path": "/partners",
+    "changefreq": "monthly",
+    "priority": "0.85",
+    "lastmod": "2026-06-19"
+  },
+  {
+    "path": "/methodology",
+    "changefreq": "monthly",
+    "priority": "0.75",
+    "lastmod": "2026-06-19"
+  },
+  {
+    "path": "/security",
+    "changefreq": "monthly",
+    "priority": "0.7",
+    "lastmod": "2026-06-19"
+  },
+  {
+    "path": "/bearer-token-policy",
+    "changefreq": "monthly",
+    "priority": "0.65",
+    "lastmod": "2026-06-28"
+  },
+  {
+    "path": "/dify",
+    "changefreq": "weekly",
+    "priority": "0.9",
+    "lastmod": "2026-06-19"
+  },
+  {
+    "path": "/dify/mcp-control-plane",
+    "changefreq": "weekly",
+    "priority": "0.85",
+    "lastmod": "2026-06-22"
+  },
+  {
+    "path": "/dify/agent-eval-gates",
+    "changefreq": "weekly",
+    "priority": "0.85",
+    "lastmod": "2026-06-23"
+  },
+  {
+    "path": "/dify/ship-dify-app-with-mcp-tools",
+    "changefreq": "weekly",
+    "priority": "0.85",
+    "lastmod": "2026-06-28"
+  },
+  {
+    "path": "/dify/n8n-vs-dify",
+    "changefreq": "weekly",
+    "priority": "0.85",
+    "lastmod": "2026-06-22"
+  },
+  {
+    "path": "/cloudflare",
+    "changefreq": "monthly",
+    "priority": "0.8",
+    "lastmod": "2026-06-28"
+  },
+  {
+    "path": "/notion",
+    "changefreq": "monthly",
+    "priority": "0.8",
+    "lastmod": "2026-06-28"
+  },
+  {
+    "path": "/products",
+    "changefreq": "monthly",
+    "priority": "0.75",
+    "lastmod": "2026-06-28"
+  },
+  {
+    "path": "/products/ground",
+    "changefreq": "monthly",
+    "priority": "0.65",
+    "lastmod": "2026-06-28"
+  },
+  {
+    "path": "/use-cases/business",
+    "changefreq": "monthly",
+    "priority": "0.8",
+    "lastmod": "2026-06-19"
+  },
+  {
+    "path": "/use-cases/enterprise",
+    "changefreq": "monthly",
+    "priority": "0.8",
+    "lastmod": "2026-06-19"
+  },
+  {
+    "path": "/about",
+    "changefreq": "monthly",
+    "priority": "0.7",
+    "lastmod": "2026-06-19"
+  }
 ]
