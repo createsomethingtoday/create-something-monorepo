@@ -84,6 +84,16 @@ queries such as `background agents interface`, `minimal developer tool
 interface`, `mission control software agents`, `clear product UI`, and `agent
 workflow proof`.
 
+The operator-facing lane is:
+
+- `GET /api/taste/ona-candidates`
+- `GET /api/taste/ona-candidates?q=background%20agents%20interface&limit=12`
+
+It returns scored, mobile-sized decision cards with `approve`, `reject`,
+`redirect`, and `need_evidence` actions. The endpoint is read-only and
+proposal-only; it never writes to Are.na, D1, `/taste`, `/llm.txt`, or
+`/api/taste/context`.
+
 Score candidates for:
 
 - literal offer language
@@ -117,3 +127,5 @@ Before production promotion:
 3. Confirm `/llm.txt` still returns taste context.
 4. Confirm `/api/arena/sync?channel=canon-minimalism` still syncs without
    Are.na write access.
+5. Confirm `/api/taste/ona-candidates` returns `mode: "proposal-only"` and a
+   no-write policy, even when Are.na search degrades.
