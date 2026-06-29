@@ -6,7 +6,8 @@ import {
   CatoInsightDetail,
   CatoInsightsArchive,
   CatoInsightsHub,
-  CatoInsightsMegaMenu
+  CatoInsightsMegaMenu,
+  normalizeEndpointItems
 } from '../src/components/cato/CatoInsights';
 import { CatoNavigation } from '../src/components/cato/CatoNavigation';
 
@@ -111,4 +112,24 @@ test('renders Insight Detail related rail with current dates and collection link
   assert.match(html, /Resiliency Report - May 1, 2026/);
   assert.doesNotMatch(html, /href="\/nasal-oral-ett-backorders"/);
   assert.doesNotMatch(html, /Resiliency Report - May 26, 2026/);
+});
+
+test('normalizes endpoint resource labels from CMS content labels', () => {
+  const [item] = normalizeEndpointItems({
+    items: [
+      {
+        fieldData: {
+          name: 'Nasal Oral Endotracheal Tubes Backorders',
+          slug: 'nasal-oral-ett-backorders',
+          'resource-type': '0e5ef31b9a043353f4c9fc760c3c669b',
+          'content-label': 'Resiliency Report',
+          'publish-date': '2026-05-07T00:00:00.000Z'
+        }
+      }
+    ]
+  });
+
+  assert.equal(item.resourceType, 'Resiliency Report');
+  assert.equal(item.pill, 'Resiliency Report');
+  assert.equal(item.date, 'May 7, 2026');
 });
