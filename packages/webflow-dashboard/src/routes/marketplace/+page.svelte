@@ -29,6 +29,10 @@
   let clientMarketplaceData = $state<MarketplaceData | null>(null);
   let clientError = $state<string | null>(null);
 
+  const shouldLoadMarketplaceOnMount = $derived(!data.marketplaceData && !data.marketplaceError);
+  const shouldShowLoading = $derived(
+    isLoading || (!hasClientLoadResult && shouldLoadMarketplaceOnMount)
+  );
   const marketplaceData = $derived(
     hasClientLoadResult ? clientMarketplaceData : data.marketplaceData
   );
@@ -96,6 +100,10 @@
     trackEvent('marketplace_opened', {
       has_user: Boolean(data.user?.email)
     });
+
+    if (shouldLoadMarketplaceOnMount) {
+      void loadData();
+    }
   });
 </script>
 
@@ -172,7 +180,7 @@
       </aside>
 
       <!-- Content -->
-      {#if isLoading}
+      {#if shouldShowLoading}
         <!-- Skeleton mirrors the insights layout so content lands without a jolt -->
         <div class="skeleton-layout" role="status" aria-label="Loading marketplace insights">
           <div class="skeleton-stats">
