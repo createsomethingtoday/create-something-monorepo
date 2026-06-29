@@ -16,6 +16,11 @@ import {
 
 const MAX_LIMIT = 24;
 const MAX_PER_QUERY = 20;
+const MANAGED_FALLBACK_CHANNELS = [
+	'canon-minimalism',
+	'motion-language-4hbfmugttwe',
+	'claude-code-puz_2pgfxky'
+];
 
 interface CandidateSearchError {
 	query: string;
@@ -34,6 +39,7 @@ export const GET: RequestHandler = async ({ platform, url }) => {
 
 	const blocks: ArenaBlock[] = [];
 	const errors: CandidateSearchError[] = [];
+	let source = 'are.na-search';
 
 	for (const query of queries) {
 		try {
@@ -47,8 +53,31 @@ export const GET: RequestHandler = async ({ platform, url }) => {
 		}
 	}
 
+	if (blocks.length === 0 && errors.length > 0) {
+		source = 'are.na-managed-channels';
+
+		for (const channel of MANAGED_FALLBACK_CHANNELS) {
+			try {
+				const channelBlocks = await client.getAllChannelBlocks(channel);
+				blocks.push(...filterBlocksForQueries(channelBlocks, queries));
+			} catch (error) {
+				errors.push({
+					query: `channel:${channel}`,
+					message: error instanceof Error ? error.message : 'Unknown Are.na channel error'
+				});
+			}
+		}
+	}
+
 	const candidates = rankOnaCandidates(blocks, limit);
-	const status = errors.length === queries.length ? 'degraded' : 'ok';
+	const status =
+		source === 'are.na-managed-channels'
+			? candidates.length > 0
+				? 'fallback'
+				: 'degraded'
+			: errors.length === queries.length
+				? 'degraded'
+				: 'ok';
 
 	return json(
 		{
@@ -56,8 +85,9 @@ export const GET: RequestHandler = async ({ platform, url }) => {
 			mode: 'proposal-only',
 			status,
 			generatedAt: new Date().toISOString(),
-			source: 'are.na-search',
+			source,
 			queries,
+			fallbackChannels: source === 'are.na-managed-channels' ? MANAGED_FALLBACK_CHANNELS : [],
 			writePolicy: {
 				writesEnabled: false,
 				allowedActions: ONA_OPERATOR_ACTIONS,
@@ -92,6 +122,33 @@ function parseQueries(url: URL): string[] {
 		.slice(0, 8);
 
 	return cleaned.length ? cleaned : [...DEFAULT_ONA_CANDIDATE_QUERIES];
+}
+
+function filterBlocksForQueries(blocks: ArenaBlock[], queries: string[]): ArenaBlock[] {
+	const terms = queries
+		.flatMap((query) => query.toLowerCase().split(/\s+/))
+		.map((term) => term.trim())
+		.filter((term) => term.length > 3);
+
+	if (terms.length === 0) return blocks;
+
+	return blocks.filter((block) => {
+		const text = [
+			block.title,
+			block.generated_title,
+			block.content,
+			block.description,
+			block.source?.title,
+			block.source?.url,
+			block.embed?.title,
+			block.connections?.map((channel) => channel.title).join(' ')
+		]
+			.filter(Boolean)
+			.join(' ')
+			.toLowerCase();
+
+		return terms.some((term) => text.includes(term));
+	});
 }
 
 function parseBoundedInteger(value: string | null, fallback: number, min: number, max: number): number {

@@ -92,7 +92,9 @@ The operator-facing lane is:
 It returns scored, mobile-sized decision cards with `approve`, `reject`,
 `redirect`, and `need_evidence` actions. The endpoint is read-only and
 proposal-only; it never writes to Are.na, D1, `/taste`, `/llm.txt`, or
-`/api/taste/context`.
+`/api/taste/context`. If Are.na global block search is blocked, the endpoint
+falls back to the managed CREATE SOMETHING channels and marks the response
+`status: "fallback"`.
 
 Score candidates for:
 
