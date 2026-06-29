@@ -13,10 +13,9 @@
 <section class="page-hero">
   <div class="hero-copy">
     <div class="eyebrow">For Facilities</div>
-    <h1 class="page-title">Request staffing with the approval boundary visible from the first handoff.</h1>
+    <h1 class="page-title">Request coverage with the handoff clear.</h1>
     <p class="lede">
-      Abundance gives facilities a clearer staffing intake path: role need, schedule, credential
-      requirements, urgency, recruiter owner, and proof of what has been reviewed.
+      Capture the role, schedule, credentials, urgency, owner, and review status in one place.
     </p>
     <div class="hero-actions">
       <a class="link-button" href="/apply">Start a staffing conversation</a>
@@ -26,7 +25,7 @@
 
   <div class="proof-panel">
     <div class="eyebrow">Facility Trust</div>
-    <h2>Automation supports the coordinator. It does not replace staffing judgment.</h2>
+    <h2>Software prepares. Recruiters approve.</h2>
     <ul>
       {#each trustProof as item}
         <li>{item}</li>
@@ -38,7 +37,7 @@
 <section class="section-band">
   <div class="section-heading">
     <div class="eyebrow">Request Flow</div>
-    <h2>From staffing need to governed handoff</h2>
+    <h2>From need to handoff.</h2>
   </div>
   <div class="feature-grid">
     {#each facilitySteps as step}
@@ -54,7 +53,7 @@
 <section class="split-section">
   <div>
     <div class="eyebrow">What Facilities Should See</div>
-    <h2>Staffing sites need more than jobs. They need evidence that the workflow is controlled.</h2>
+    <h2>What stays visible.</h2>
   </div>
   <div class="check-grid">
     <span>Request staffing</span>

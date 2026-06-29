@@ -13,22 +13,21 @@
 <section class="page-hero compact">
   <div class="hero-copy">
     <div class="eyebrow">Style Guide</div>
-    <h1 class="page-title">A healthcare staffing brand system for governed AI work.</h1>
+    <h1 class="page-title">Clear, warm, governed.</h1>
     <p class="lede">
-      This guide bases Abundance on CMS and USWDS discipline: accessible forms, clear hierarchy,
-      earned trust, and continuity across nurse, facility, and operator workflows.
+      Abundance should feel human first, with controls visible when they matter.
     </p>
   </div>
   <div class="proof-panel">
     <div class="eyebrow">Brand Rule</div>
-    <h2>Abundance owns the public agent brand. Ona remains internal design precedent.</h2>
+    <h2>Public language belongs to Abundance.</h2>
   </div>
 </section>
 
 <section class="section-band">
   <div class="section-heading">
     <div class="eyebrow">Principles</div>
-    <h2>What every page should preserve</h2>
+    <h2>Page rules.</h2>
   </div>
   <div class="feature-grid four">
     {#each stylePrinciples as principle}
@@ -43,7 +42,7 @@
 <section class="section-band">
   <div class="section-heading">
     <div class="eyebrow">Color Tokens</div>
-    <h2>Clinical, calm, and operational without becoming one-note.</h2>
+    <h2>Color tokens.</h2>
   </div>
   <div class="swatch-grid">
     {#each colorTokens as color}
@@ -61,7 +60,7 @@
 <section class="section-band">
   <div class="section-heading">
     <div class="eyebrow">Research Base</div>
-    <h2>How the website plan was derived</h2>
+    <h2>Research base.</h2>
   </div>
   <div class="feature-grid">
     {#each sourceModel as source}

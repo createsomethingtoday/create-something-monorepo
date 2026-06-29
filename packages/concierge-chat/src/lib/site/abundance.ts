@@ -1,52 +1,49 @@
 export const staffingStats = [
   {
-    label: 'Two-sided staffing site',
-    value: 'Nurses + facilities',
-    detail: 'Public paths for job seekers, facility staffing requests, and recruiter review.'
+    label: 'Nurses',
+    value: 'Start once',
+    detail: 'Role, shift, location, and timing in one guided thread.'
   },
   {
-    label: 'Agent boundary',
-    value: 'Recruiter-gated',
-    detail: 'Agents prepare intake, jobs, and handoff context without autonomous staffing decisions.'
+    label: 'Facilities',
+    value: 'Request clearly',
+    detail: 'Need, urgency, credentials, and owner captured up front.'
   },
   {
-    label: 'Runtime proof',
-    value: 'D1 + MCP + Dify',
-    detail: 'Jobs, staff context, and operator actions stay behind governed server-side surfaces.'
+    label: 'Recruiters',
+    value: 'Review first',
+    detail: 'Agents prepare context. People approve staffing moves.'
   }
 ];
 
 export const heroVisual = {
   src: 'https://images.unsplash.com/photo-1584515933487-779824d29309?auto=format&fit=crop&w=1200&q=82',
   alt: 'Supportive healthcare moment with hands held in a bright clinical setting',
-  caption: 'Guided intake, recruiter review, and staffing handoff in one calm workflow.',
-  note: 'Designed for real nurses and coordinators, not only for the database behind them.'
+  caption: 'Guided intake. Recruiter review. Clear handoff.',
+  note: 'Designed for nurses, recruiters, and coordinators.'
 };
 
 export const staffingPages = [
   {
     eyebrow: 'For Nurses',
-    title: 'Find the next contract without another long intake form.',
-    body:
-      'Abundance Concierge turns a plain-language conversation into a reviewed profile, matching context, and recruiter-ready next step.',
+    title: 'Tell us the contract you want.',
+    body: 'Concierge turns plain language into a recruiter-ready profile.',
     href: '/nurses',
-    cta: 'Nurse path'
+    cta: 'For nurses'
   },
   {
     eyebrow: 'For Facilities',
-    title: 'Request staffing with the handoff, owner, and approval boundary visible.',
-    body:
-      'Facility requests route into a staffed workflow with role needs, shift context, gaps, and approval points preserved.',
+    title: 'Request coverage without losing context.',
+    body: 'Shift, unit, urgency, and credential needs stay visible.',
     href: '/facilities',
-    cta: 'Facility path'
+    cta: 'For facilities'
   },
   {
-    eyebrow: 'For Operators',
-    title: 'Use Abundance agents with proof beside every claim.',
-    body:
-      'Agent work is branded for Abundance and separated from the internal Ona design precedent. Keys and write actions stay gated.',
+    eyebrow: 'For Recruiters',
+    title: 'Review prepared handoffs.',
+    body: 'Agents stage the packet. Recruiters make the call.',
     href: '/agents',
-    cta: 'Agent system'
+    cta: 'Agent roles'
   }
 ];
 
@@ -123,86 +120,74 @@ export const abundanceAgents = [
   {
     name: 'Abundance Concierge',
     lane: 'Nurse intake',
-    summary:
-      'Guides nurses through specialty, shift, location, documents, consent, and profile confirmation.',
+    summary: 'Captures specialty, shift, location, timing, and profile basics.',
     proof: 'Public application path with protected verification.'
   },
   {
     name: 'Abundance Jobs',
     lane: 'Job discovery',
-    summary:
-      'Searches normalized public job data and explains available coverage without calling paid ingest paths.',
+    summary: 'Surfaces public jobs and coverage without paid browser calls.',
     proof: 'Read-only Jobs MCP and D1 serving contract.'
   },
   {
     name: 'Abundance Recruiter Desk',
     lane: 'Review prep',
-    summary:
-      'Drafts shortlists, highlights missing information, and prepares recruiter review context.',
+    summary: 'Highlights fit, gaps, and recruiter review context.',
     proof: 'Recruiter approval gate before protected staffing moves.'
   },
   {
     name: 'Abundance Staffing Desk',
     lane: 'Facility handoff',
-    summary:
-      'Packages facility needs, staffing queue state, and candidate handoff details for coordinator action.',
+    summary: 'Packages needs, queue state, and candidate handoff details.',
     proof: 'Governed staffing packet and operator action trail.'
   },
   {
     name: 'Abundance Compliance',
     lane: 'Credential readiness',
-    summary:
-      'Keeps document, consent, and verification requirements visible without exposing private records publicly.',
+    summary: 'Keeps document, consent, and verification status visible.',
     proof: 'Secure verification and private upload boundary.'
   }
 ];
 
 export const trustProof = [
-  'No browser-side Dify Service API key',
+  'No service keys in the browser',
   'Recruiter review before staffing decisions',
-  'Protected uploads require verification',
-  'Public job discovery stays read-only',
-  'Private employee rows and credentials stay out of public pages'
+  'Secure verification for uploads',
+  'Public jobs are read-only',
+  'Private records stay private'
 ];
 
 export const careStories = [
   {
-    title: 'For the nurse who is between shifts',
-    body:
-      'Start with a sentence about the role you want. Concierge turns that into the profile details a recruiter actually needs.'
+    title: 'Nurses',
+    body: 'Start with the role, shift, location, and timing.'
   },
   {
-    title: 'For the recruiter protecting fit',
-    body:
-      'Shortlists include gaps, assumptions, and review state so judgment stays visible before a candidate moves forward.'
+    title: 'Recruiters',
+    body: 'See the fit, gaps, and next review step.'
   },
   {
-    title: 'For the facility needing coverage',
-    body:
-      'Requests preserve shift, unit, credential, urgency, and owner context instead of becoming a loose message thread.'
+    title: 'Facilities',
+    body: 'Request coverage with the approval boundary clear.'
   }
 ];
 
 export const stylePrinciples = [
   {
     title: 'Healthcare clarity',
-    body:
-      'Use plain language, direct headings, strong contrast, visible form states, and readable line lengths.'
+    body: 'Plain language, strong contrast, visible states, readable lines.'
   },
   {
     title: 'Trust before automation',
-    body:
-      'Show what runs, what waits, who approves, and what evidence proves the next action.'
+    body: 'Show what runs, what waits, and who approves.'
   },
   {
     title: 'Two-sided navigation',
-    body:
-      'Nurses need jobs and application progress. Facilities need staffing requests, quality proof, and contact paths.'
+    body: 'Separate nurse, facility, job, and agent paths.'
   },
   {
     title: 'Abundance agent brand',
-    body:
-      'Public agent names belong to Abundance. Ona remains an internal operator-design precedent, not the client brand.'
+    body: 'Public names belong to Abundance, not internal tools.'
   }
 ];
 
@@ -218,17 +203,14 @@ export const colorTokens = [
 export const sourceModel = [
   {
     title: 'Market sitemap pattern',
-    body:
-      'Large healthcare staffing agencies consistently split navigation between job seekers and employers, with jobs, staffing request, workforce solution, benefits, about, and contact paths.'
+    body: 'Staffing sites split job seekers, employers, jobs, and contact paths.'
   },
   {
     title: 'Design-system base',
-    body:
-      'The visual system follows CMS and USWDS discipline: accessible components, real user needs, earned trust, and continuity.'
+    body: 'Accessibility, hierarchy, and continuity come first.'
   },
   {
     title: 'Abundance differentiator',
-    body:
-      'The site makes governed AI agents and recruiter approval visible as the product proof, not as an unbounded automation claim.'
+    body: 'Agents are proof support, not autonomous staffing claims.'
   }
 ];
