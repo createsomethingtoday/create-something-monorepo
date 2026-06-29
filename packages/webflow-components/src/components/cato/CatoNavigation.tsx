@@ -1,5 +1,9 @@
 import React, { useRef, useState } from 'react';
-import { CatoInsightsMegaMenu, type CatoInsightLinkProp, type CatoInsightsDataProps } from './CatoInsights';
+import {
+  CatoInsightsMegaMenu,
+  type CatoInsightLinkProp,
+  type CatoInsightsDataProps
+} from './CatoInsights';
 
 export interface CatoNavigationImage {
   src: string;
@@ -37,8 +41,6 @@ export interface CatoNavigationProps extends CatoInsightsDataProps {
   summary?: string;
   introCtaLabel?: string;
   browseKicker?: string;
-  insightsHomeTitle?: string;
-  insightsHomeSummary?: string;
   featureTitle?: string;
   featureSummary?: string;
   featureCta?: string;
@@ -353,7 +355,11 @@ function normalizePrefix(prefix = '') {
   return prefix.endsWith('/') ? prefix.slice(0, -1) : prefix;
 }
 
-function hrefForPage(page: string, linkMode: CatoInsightsDataProps['linkMode'] = 'webflow', pathPrefix = '') {
+function hrefForPage(
+  page: string,
+  linkMode: CatoInsightsDataProps['linkMode'] = 'webflow',
+  pathPrefix = ''
+) {
   const prefix = normalizePrefix(pathPrefix);
   const clean = linkMode === 'export' ? page : page.replace(/\.html$/, '');
   return `${prefix}/${clean}`.replace(/\/{2,}/g, '/');
@@ -363,20 +369,36 @@ function displayHref(value: string | undefined, fallback: string) {
   return value && value.trim() ? value.trim() : fallback;
 }
 
-function resolveLink(link: CatoInsightLinkProp | undefined, href: string | undefined, fallback: string) {
+function resolveLink(
+  link: CatoInsightLinkProp | undefined,
+  href: string | undefined,
+  fallback: string
+) {
   const resolvedHref = link?.href?.trim() || displayHref(href, fallback);
   const target = link?.target || undefined;
   return {
     href: resolvedHref,
     target,
-    rel: target === '_blank' ? 'noreferrer' : undefined,
+    rel: target === '_blank' ? 'noreferrer' : undefined
   };
 }
 
 function CaretIcon() {
   return (
-    <svg className="cato-nav__caret" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" aria-hidden="true">
-      <path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+    <svg
+      className="cato-nav__caret"
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 16 16"
+      aria-hidden="true"
+    >
+      <path
+        d="M4 6l4 4 4-4"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
@@ -384,7 +406,14 @@ function CaretIcon() {
 function ArrowIcon() {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" aria-hidden="true">
-      <path d="M7.5 15L12.5 10L7.5 5" fill="none" stroke="currentColor" strokeWidth="1.66667" strokeLinecap="round" strokeLinejoin="round" />
+      <path
+        d="M7.5 15L12.5 10L7.5 5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.66667"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
@@ -421,15 +450,51 @@ export const CatoNavigation: React.FC<CatoNavigationProps> = ({
   const [menuOpen, setMenuOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<OpenDropdown>(null);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const resolvedHomeLink = resolveLink(homeLink, homeHref, linkMode === 'export' ? 'index.html' : '/');
-  const resolvedAboutLink = resolveLink(aboutLink, aboutHref, hrefForPage('about-us.html', linkMode, pathPrefix));
-  const resolvedLeadershipLink = resolveLink(leadershipLink, leadershipHref, hrefForPage('leadership.html', linkMode, pathPrefix));
-  const resolvedSolutionsLink = resolveLink(solutionsLink, solutionsHref, hrefForPage('solutions.html', linkMode, pathPrefix));
-  const resolvedTechnologyLink = resolveLink(technologyLink, technologyHref, hrefForPage('technology.html', linkMode, pathPrefix));
-  const resolvedInsightsLink = resolveLink(insightsLink, insightsHref, hrefForPage('insights.html', linkMode, pathPrefix));
-  const resolvedCaseStudiesLink = resolveLink(caseStudiesLink, caseStudiesHref, hrefForPage('case-studies.html', linkMode, pathPrefix));
-  const resolvedRiskRadarLink = resolveLink(riskRadarLink, riskRadarHref, 'https://app.catosupply.com/risk_radar/');
-  const resolvedProductSearchLink = resolveLink(productSearchLink, productSearchHref, 'https://app.catosupply.com/product_search/');
+  const resolvedHomeLink = resolveLink(
+    homeLink,
+    homeHref,
+    linkMode === 'export' ? 'index.html' : '/'
+  );
+  const resolvedAboutLink = resolveLink(
+    aboutLink,
+    aboutHref,
+    hrefForPage('about-us.html', linkMode, pathPrefix)
+  );
+  const resolvedLeadershipLink = resolveLink(
+    leadershipLink,
+    leadershipHref,
+    hrefForPage('leadership.html', linkMode, pathPrefix)
+  );
+  const resolvedSolutionsLink = resolveLink(
+    solutionsLink,
+    solutionsHref,
+    hrefForPage('solutions.html', linkMode, pathPrefix)
+  );
+  const resolvedTechnologyLink = resolveLink(
+    technologyLink,
+    technologyHref,
+    hrefForPage('technology.html', linkMode, pathPrefix)
+  );
+  const resolvedInsightsLink = resolveLink(
+    insightsLink,
+    insightsHref,
+    hrefForPage('insights.html', linkMode, pathPrefix)
+  );
+  const resolvedCaseStudiesLink = resolveLink(
+    caseStudiesLink,
+    caseStudiesHref,
+    hrefForPage('case-studies.html', linkMode, pathPrefix)
+  );
+  const resolvedRiskRadarLink = resolveLink(
+    riskRadarLink,
+    riskRadarHref,
+    'https://app.catosupply.com/risk_radar/'
+  );
+  const resolvedProductSearchLink = resolveLink(
+    productSearchLink,
+    productSearchHref,
+    'https://app.catosupply.com/product_search/'
+  );
   const logoSrc = logoImage?.src || '';
   const clearCloseTimer = () => {
     if (closeTimerRef.current) {
@@ -460,8 +525,21 @@ export const CatoNavigation: React.FC<CatoNavigationProps> = ({
     <header className="cato-nav-shell" data-fixed={fixed ? 'true' : undefined}>
       <style>{CATO_NAV_CSS}</style>
       <nav className="cato-nav" aria-label="Primary navigation">
-        <a className="cato-nav__brand" href={resolvedHomeLink.href} target={resolvedHomeLink.target} rel={resolvedHomeLink.rel} aria-label="Cato home">
-          {logoSrc ? <img src={logoSrc} alt={logoImage?.alt || 'Cato'} loading="eager" /> : <><span className="cato-nav__brand-mark">C</span><span>cato</span></>}
+        <a
+          className="cato-nav__brand"
+          href={resolvedHomeLink.href}
+          target={resolvedHomeLink.target}
+          rel={resolvedHomeLink.rel}
+          aria-label="Cato home"
+        >
+          {logoSrc ? (
+            <img src={logoSrc} alt={logoImage?.alt || 'Cato'} loading="eager" />
+          ) : (
+            <>
+              <span className="cato-nav__brand-mark">C</span>
+              <span>cato</span>
+            </>
+          )}
         </a>
 
         <div className="cato-nav__center" data-open={menuOpen ? 'true' : undefined}>
@@ -486,10 +564,38 @@ export const CatoNavigation: React.FC<CatoNavigationProps> = ({
                 <CaretIcon />
               </a>
               <div className="cato-nav__dropdown-menu">
-                <a href={resolvedAboutLink.href} target={resolvedAboutLink.target} rel={resolvedAboutLink.rel} className="cato-nav__dropdown-item">Who We Are</a>
-                <a href={resolvedLeadershipLink.href} target={resolvedLeadershipLink.target} rel={resolvedLeadershipLink.rel} className="cato-nav__dropdown-item">Leadership</a>
-                <a href={resolvedSolutionsLink.href} target={resolvedSolutionsLink.target} rel={resolvedSolutionsLink.rel} className="cato-nav__dropdown-item">Solutions</a>
-                <a href={resolvedTechnologyLink.href} target={resolvedTechnologyLink.target} rel={resolvedTechnologyLink.rel} className="cato-nav__dropdown-item">Technology</a>
+                <a
+                  href={resolvedAboutLink.href}
+                  target={resolvedAboutLink.target}
+                  rel={resolvedAboutLink.rel}
+                  className="cato-nav__dropdown-item"
+                >
+                  Who We Are
+                </a>
+                <a
+                  href={resolvedLeadershipLink.href}
+                  target={resolvedLeadershipLink.target}
+                  rel={resolvedLeadershipLink.rel}
+                  className="cato-nav__dropdown-item"
+                >
+                  Leadership
+                </a>
+                <a
+                  href={resolvedSolutionsLink.href}
+                  target={resolvedSolutionsLink.target}
+                  rel={resolvedSolutionsLink.rel}
+                  className="cato-nav__dropdown-item"
+                >
+                  Solutions
+                </a>
+                <a
+                  href={resolvedTechnologyLink.href}
+                  target={resolvedTechnologyLink.target}
+                  rel={resolvedTechnologyLink.rel}
+                  className="cato-nav__dropdown-item"
+                >
+                  Technology
+                </a>
               </div>
             </div>
 
@@ -524,17 +630,41 @@ export const CatoNavigation: React.FC<CatoNavigationProps> = ({
               ) : null}
             </div>
 
-            <a href={resolvedCaseStudiesLink.href} target={resolvedCaseStudiesLink.target} rel={resolvedCaseStudiesLink.rel} className="cato-nav__link">Case Studies</a>
-            <a href={resolvedRiskRadarLink.href} target={resolvedRiskRadarLink.target} rel={resolvedRiskRadarLink.rel} className="cato-nav__link">Risk Radar</a>
+            <a
+              href={resolvedCaseStudiesLink.href}
+              target={resolvedCaseStudiesLink.target}
+              rel={resolvedCaseStudiesLink.rel}
+              className="cato-nav__link"
+            >
+              Case Studies
+            </a>
+            <a
+              href={resolvedRiskRadarLink.href}
+              target={resolvedRiskRadarLink.target}
+              rel={resolvedRiskRadarLink.rel}
+              className="cato-nav__link"
+            >
+              Risk Radar
+            </a>
           </div>
         </div>
 
         <div className="cato-nav__actions">
-          <a href={resolvedProductSearchLink.href} target={resolvedProductSearchLink.target} rel={resolvedProductSearchLink.rel} className="cato-nav__cta">
+          <a
+            href={resolvedProductSearchLink.href}
+            target={resolvedProductSearchLink.target}
+            rel={resolvedProductSearchLink.rel}
+            className="cato-nav__cta"
+          >
             <span>{productSearchLabel}</span>
             <ArrowIcon />
           </a>
-          <button className="cato-nav__menu-button" type="button" aria-expanded={menuOpen} onClick={() => setMenuOpen((open) => !open)}>
+          <button
+            className="cato-nav__menu-button"
+            type="button"
+            aria-expanded={menuOpen}
+            onClick={() => setMenuOpen((open) => !open)}
+          >
             Menu
           </button>
         </div>
