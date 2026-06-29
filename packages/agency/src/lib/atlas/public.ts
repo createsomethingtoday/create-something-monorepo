@@ -270,7 +270,7 @@ const STARTER_MAP_SPECS: StarterMapSpec[] = [
 				id: 'data_workflow',
 				kind: 'data',
 				label: 'Submitted asset packet',
-				status: 'unknown',
+				status: 'wait',
 				notes: 'Submission metadata, validation output, policy flags, creator notes, and review status.'
 			},
 			{
@@ -284,7 +284,7 @@ const STARTER_MAP_SPECS: StarterMapSpec[] = [
 				id: 'ai_assist',
 				kind: 'ai',
 				label: 'Supplemental reviewer brief',
-				status: 'wait',
+				status: 'run',
 				notes: 'Summarize issues, cite evidence, and draft questions for the reviewer.'
 			},
 			{
@@ -305,7 +305,7 @@ const STARTER_MAP_SPECS: StarterMapSpec[] = [
 				id: 'touchpoint_receipt',
 				kind: 'touchpoint',
 				label: 'Reviewer dashboard receipt',
-				status: 'unknown',
+				status: 'run',
 				notes: 'Shows validation evidence, reviewer state, creator-facing notes, and policy flags.'
 			}
 		],

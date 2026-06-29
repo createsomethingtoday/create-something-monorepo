@@ -127,6 +127,19 @@ test('industry starter maps preserve run wait stop policy boundaries', () => {
 	}
 });
 
+test('marketplace review queue starter uses complete operational statuses', () => {
+	const canvas = createPublicAtlasCanvasFromStarter('marketplace-review-queue');
+	const statusByNode = new Map(canvas.nodes.map((node) => [node.id, node.status]));
+
+	assert.equal(statusByNode.get('actor_owner'), 'wait');
+	assert.equal(statusByNode.get('data_workflow'), 'wait');
+	assert.equal(statusByNode.get('system_route'), 'run');
+	assert.equal(statusByNode.get('ai_assist'), 'run');
+	assert.equal(statusByNode.get('human_review'), 'wait');
+	assert.equal(statusByNode.get('constraint_stop'), 'stop');
+	assert.equal(statusByNode.get('touchpoint_receipt'), 'run');
+});
+
 test('unknown starter id falls back to the blank public canvas', () => {
 	const canvas = createPublicAtlasCanvasFromStarter('missing-starter');
 
