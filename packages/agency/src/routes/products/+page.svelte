@@ -43,7 +43,7 @@
       icon: 'folder',
       title: 'Delivered work shows the pattern',
       detail:
-        'Each record shows the business problem, the access boundary, visible status, private evidence, and the next decision owner.',
+        'A useful delivery record explains the business problem, the access boundary, visible status, private evidence, and next owner decision.',
       points: [
         'Visible: status, decisions, handoff, next action',
         'Private: credentials, logs, raw client data, sensitive proof'
@@ -214,7 +214,7 @@
   variant="white"
   eyebrow="Client delivery records"
   title="Start with delivered work, not theory."
-  description="Abundance and ShivWorks show the method in practice: the business problem, the control boundary, what stayed private, what the client owned, and the next step."
+  description="The delivery records show the method in practice: the business problem, the control boundary, what stayed private, what the client owned, and what happened next."
 >
   {#snippet after()}
     <ClearCardGrid items={proofLedger} columns={4} ariaLabel="Business proof ledger" />
