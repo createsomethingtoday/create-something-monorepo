@@ -1429,6 +1429,7 @@ function normalizeEndpointItem(raw: unknown): CatoInsightItem | null {
     'Pill'
   ]);
   const label = contentLabel || resourceType || 'Insight';
+  const displayResourceType = contentLabel || resourceType || label;
   const category =
     pickRecordString(record, ['category', 'categoryId', 'category-id', 'archive', 'Archive']) ||
     categoryKeyFromResourceType(label) ||
@@ -1456,7 +1457,7 @@ function normalizeEndpointItem(raw: unknown): CatoInsightItem | null {
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/^-+|-+$/g, ''),
     category,
-    resourceType: resourceType || label,
+    resourceType: displayResourceType,
     pill: label,
     title: title || slug,
     summary: summary || 'Read the latest Cato insight.',
@@ -1469,7 +1470,7 @@ function normalizeEndpointItem(raw: unknown): CatoInsightItem | null {
   };
 }
 
-function normalizeEndpointItems(payload: unknown) {
+export function normalizeEndpointItems(payload: unknown) {
   return recordsFromEndpointPayload(payload)
     .map(normalizeEndpointItem)
     .filter((item): item is CatoInsightItem => Boolean(item));
