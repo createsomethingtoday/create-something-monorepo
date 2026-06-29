@@ -1,9 +1,9 @@
 /**
  * Are.na Channel Management API
  *
- * PUT: Update channel settings (open for collaboration, etc.)
+ * PUT: Update channel settings (open for collaboration, etc.).
  *
- * Requires authentication via ARENA_API_TOKEN.
+ * Paused for production. Channel settings are managed directly in Are.na.
  */
 
 import { json } from '@sveltejs/kit';
@@ -17,96 +17,15 @@ const MANAGED_CHANNELS = [
 	'claude-code-puz_2pgfxky'
 ];
 
-interface UpdateChannelRequest {
-	slug: string;
-	title?: string;
-	status?: 'public' | 'closed' | 'private';
-	description?: string;
-}
-
-export const PUT: RequestHandler = async ({ request, platform }) => {
-	const accessToken = platform?.env?.ARENA_API_TOKEN;
-
-	if (!accessToken) {
-		return json(
-			{ error: 'Are.na API token not configured' },
-			{ status: 500 }
-		);
-	}
-
-	let body: UpdateChannelRequest;
-	try {
-		body = await request.json();
-	} catch {
-		return json(
-			{ error: 'Invalid JSON' },
-			{ status: 400 }
-		);
-	}
-
-	if (!body.slug) {
-		return json(
-			{ error: 'Missing slug', managedChannels: MANAGED_CHANNELS },
-			{ status: 400 }
-		);
-	}
-
-	if (!MANAGED_CHANNELS.includes(body.slug)) {
-		return json(
-			{
-				error: 'Channel not managed',
-				message: `Channel must be one of: ${MANAGED_CHANNELS.join(', ')}`,
-				managedChannels: MANAGED_CHANNELS
-			},
-			{ status: 400 }
-		);
-	}
-
-	const client = new ArenaClient({
-		cache: platform?.env?.CACHE,
-		accessToken
-	});
-
-	try {
-		const updates: { title?: string; status?: 'public' | 'closed' | 'private'; description?: string } = {};
-		if (body.title) updates.title = body.title;
-		if (body.status) updates.status = body.status;
-		if (body.description) updates.description = body.description;
-
-		if (Object.keys(updates).length === 0) {
-			return json(
-				{ error: 'No updates provided', hint: 'Provide title and/or status' },
-				{ status: 400 }
-			);
-		}
-
-		const channel = await client.updateChannel(body.slug, updates);
-
-		return json({
-			success: true,
-			channel: {
-				id: channel.id,
-				slug: channel.slug,
-				title: channel.title,
-				status: channel.status,
-				url: `https://www.are.na/create-something/${channel.slug}`
-			}
-		});
-	} catch (error) {
-		const message = error instanceof Error ? error.message : 'Unknown error';
-
-		if (message.includes('401') || message.includes('403')) {
-			return json(
-				{ error: 'Authentication failed', message: 'Are.na API token is invalid' },
-				{ status: 401 }
-			);
-		}
-
-		return json(
-			{ error: 'Channel update failed', message },
-			{ status: 500 }
-		);
-	}
+export const PUT: RequestHandler = async () => {
+	return json(
+		{
+			error: 'Are.na channel writes paused',
+			message:
+				'Manage channel settings directly in Are.na. CREATE SOMETHING only reads channel state.'
+		},
+		{ status: 410 }
+	);
 };
 
 /**

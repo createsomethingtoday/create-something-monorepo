@@ -115,6 +115,7 @@ Read in this order when you need broad repo context:
 - [MCP_HUB_REMOTE_DEPLOY.md](./MCP_HUB_REMOTE_DEPLOY.md)
 - [guides/POLICY_OS_GATING_DEPLOY_CHECKLIST_2026-03-09.md](./guides/POLICY_OS_GATING_DEPLOY_CHECKLIST_2026-03-09.md)
 - [guides/POLICY_OS_LIVE_VERIFICATION_RUNBOOK_2026-03-09.md](./guides/POLICY_OS_LIVE_VERIFICATION_RUNBOOK_2026-03-09.md)
+- [guides/ARENA_TASTE_INTEGRATION.md](./guides/ARENA_TASTE_INTEGRATION.md)
 
 ### Guides and reference material
 

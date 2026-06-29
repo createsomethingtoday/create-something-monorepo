@@ -1,7 +1,6 @@
 <script lang="ts">
   import type { PageData } from './$types';
   import ImageLightbox from '$lib/components/taste/ImageLightbox.svelte';
-  import { ContributeBlock } from '@create-something/canon/domains/ltd';
   import { SEO } from '@create-something/canon';
 
   let { data }: { data: PageData } = $props();
@@ -69,10 +68,6 @@
       <a href="/taste/insights" class="stat-link">Inspect your taste pattern</a>
     </div>
 
-    <!-- Contribution -->
-    <div class="contribute-row">
-      <ContributeBlock />
-    </div>
   </div>
 </section>
 
@@ -283,10 +278,6 @@
 
   .stat-link:hover {
     opacity: 0.7;
-  }
-
-  .contribute-row {
-    margin-top: var(--space-md);
   }
 
   /* Channels */

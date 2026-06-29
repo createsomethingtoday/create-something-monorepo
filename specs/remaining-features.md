@@ -6,12 +6,13 @@ Complete the three remaining open issues in the CREATE SOMETHING monorepo.
 
 ## Features
 
-### Add Are.na Channel Contribution Pathway
-Create a mechanism to add blocks to Are.na channels (canon-minimalism, motion-language) from CREATE SOMETHING properties.
-- Research Are.na API for block creation
-- Create API endpoint on .ltd for adding blocks: POST /api/arena/blocks
-- Implement Are.na OAuth or API key authentication
-- Add admin UI component for submitting new taste references
+### Are.na Channel Contribution Pathway
+Status: paused.
+
+Do not add blocks to Are.na channels from CREATE SOMETHING properties. Are.na
+remains the human curation surface; `.ltd` should sync approved channel contents
+and turn them into agent/client context. See
+`docs/guides/ARENA_TASTE_INTEGRATION.md`.
 - Support image URLs, text blocks, and link blocks
 
 ### Apply Plugin Catalog Pattern to LMS
