@@ -52,11 +52,13 @@
 
 <div class="app-shell">
 	<header class="app-nav glass">
-	<div>
-		<div class="eyebrow">Nurse Staffing</div>
-		<div class="brand">Abundance Staffing</div>
-		<div class="brand-note">Guided nurse applications and recruiter-gated staffing</div>
-	</div>
+		<a class="brand-lockup" href="/">
+			<span class="brand-mark" aria-hidden="true">A</span>
+			<span>
+				<span class="brand">Abundance Staffing</span>
+				<span class="brand-note">Nurse staffing</span>
+			</span>
+		</a>
 
 		<div class="nav-cluster">
 			<nav>
@@ -91,52 +93,78 @@
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		gap: 1rem;
-		padding: 1rem 1.1rem;
-		margin-bottom: 1rem;
+		gap: 1.25rem;
+		padding: 0.8rem 0.9rem;
+		margin-bottom: clamp(1.4rem, 3vw, 2.4rem);
 		position: sticky;
 		top: 1rem;
 		z-index: 10;
 		border-radius: var(--radius);
 	}
 
-	.brand {
+	.brand-lockup {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.7rem;
+		min-width: max-content;
+		text-decoration: none;
+	}
+
+	.brand-mark {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 2.2rem;
+		height: 2.2rem;
+		border-radius: 999px;
+		background: var(--ink);
+		color: var(--button-ink);
 		font-family: var(--font-display);
-		font-size: var(--text-h3, 1.2rem);
+		font-size: 1rem;
 		font-weight: var(--font-medium, 500);
-		line-height: var(--leading-tight, 1.25);
+	}
+
+	.brand {
+		display: block;
+		font-family: var(--font-display);
+		font-size: var(--text-body-lg, 1.05rem);
+		font-weight: var(--font-medium, 500);
+		line-height: 1.05;
 		letter-spacing: 0;
-		margin-top: 0.55rem;
 	}
 
 	.brand-note {
-		margin-top: 0.3rem;
+		display: block;
+		margin-top: 0.15rem;
 		color: var(--muted);
-		font-size: var(--text-body-sm, 0.913rem);
-		line-height: var(--leading-normal, 1.5);
+		font-size: 0.78rem;
+		line-height: 1.2;
 	}
 
 	nav {
 		display: flex;
-		gap: 0.8rem;
+		gap: 0.45rem;
 		flex-wrap: wrap;
+		justify-content: flex-end;
 	}
 
 	.nav-cluster {
-		display: grid;
-		gap: 0.75rem;
-		justify-items: end;
+		display: flex;
+		align-items: center;
+		justify-content: flex-end;
+		gap: 0.55rem;
+		flex-wrap: wrap;
 	}
 
 	nav a {
-		padding: 0.55rem 0.9rem;
+		padding: 0.52rem 0.78rem;
 		border-radius: 999px;
 		text-decoration: none;
-		background: var(--surface-overlay);
+		background: transparent;
 		border: 1px solid var(--line);
 			color: var(--ink-soft);
 			font-family: var(--font-mono);
-			font-size: 0.72rem;
+			font-size: 0.68rem;
 			line-height: 1;
 			letter-spacing: 0.08em;
 		text-transform: uppercase;
@@ -163,8 +191,8 @@
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
-		padding: 0.55rem 0.95rem;
-		border-radius: var(--radius-tight);
+		padding: 0.52rem 0.86rem;
+		border-radius: 999px;
 		background: var(--surface-soft);
 		border: 1px solid var(--line);
 	}
@@ -172,7 +200,7 @@
 	.session-public-label {
 			color: var(--accent-warm);
 			font-family: var(--font-mono);
-			font-size: 0.72rem;
+			font-size: 0.68rem;
 			line-height: 1;
 			letter-spacing: 0.08em;
 		text-transform: uppercase;

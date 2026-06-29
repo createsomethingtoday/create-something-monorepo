@@ -19,7 +19,7 @@
     : 'No account needed to start';
   $: verificationDetail = data.intakeAccess.granted
     ? 'Secure upload and recruiter review steps can continue from this browser when they appear.'
-    : 'Start the conversation now. If documents or recruiter review are needed later, Concierge will ask for a one-time email code at that moment.';
+    : 'Start now. Verification appears only when documents or recruiter review need it.';
 </script>
 
 <svelte:head>
@@ -33,11 +33,10 @@
 <section class="page-hero">
   <div class="hero-copy">
     <div class="eyebrow">Abundance Nurse Staffing</div>
-    <h1 class="page-title">Nurse staffing with guided applications, visible handoffs, and recruiter review.</h1>
+    <h1 class="page-title">Nurse staffing with a clearer handoff.</h1>
     <p class="lede">
-      Abundance brings the staffing website, nurse intake, public job discovery, facility request,
-      and governed agent workflow into one client-ready property. Nurses start in plain language.
-      Facilities see the staffing boundary. Operators get proof beside each action.
+      Nurses start in plain language. Facilities request coverage clearly. Recruiters keep the
+      final staffing decision.
     </p>
 
     <div class="hero-actions">
@@ -56,7 +55,7 @@
       <img src={heroVisual.src} alt={heroVisual.alt} />
       <div class="photo-caption">
         <strong>{heroVisual.caption}</strong>
-        <span>Nurses get a guided path. Recruiters keep the final review.</span>
+        <span>Guided by software. Reviewed by people.</span>
       </div>
     </div>
     <div class="human-note">
@@ -73,8 +72,8 @@
 
 <section class="section-band">
   <div class="section-heading">
-    <div class="eyebrow">Care Stories</div>
-    <h2>Designed around the people inside the staffing handoff.</h2>
+    <div class="eyebrow">Who It Serves</div>
+    <h2>Three audiences. One clean handoff.</h2>
   </div>
   <div class="feature-grid">
     {#each careStories as story}
@@ -88,8 +87,8 @@
 
 <section class="section-band">
   <div class="section-heading">
-    <div class="eyebrow">Website Model</div>
-    <h2>Three public paths, one governed staffing workflow.</h2>
+    <div class="eyebrow">Start Here</div>
+    <h2>Pick the path. Keep the context.</h2>
   </div>
   <div class="feature-grid">
     {#each staffingPages as page}
@@ -105,13 +104,13 @@
 
 <section class="section-band">
   <div class="section-heading">
-    <div class="eyebrow">Trust Model</div>
-    <h2>Warm on the surface, controlled underneath.</h2>
+    <div class="eyebrow">Trust Rules</div>
+    <h2>Simple boundaries, visible from the start.</h2>
   </div>
   <div class="feature-grid four">
-    {#each [...staffingStats, { label: 'Guardrails', value: 'Protected steps', detail: trustProof[0] }] as stat}
+    {#each [...staffingStats, { label: 'Keys', value: 'Server-side', detail: trustProof[0] }] as stat}
       <article class="feature-card">
-        <span class="step-marker">{stat.label.slice(0, 1)}</span>
+        <span class="step-marker">{stat.label}</span>
         <h3>{stat.value}</h3>
         <p>{stat.detail}</p>
       </article>
@@ -121,8 +120,8 @@
 
 <section class="section-band">
   <div class="section-heading">
-    <div class="eyebrow">Abundance Agents</div>
-    <h2>Client-branded agents, separate from the internal Ona design precedent.</h2>
+    <div class="eyebrow">Agents</div>
+    <h2>Support roles, not staffing authorities.</h2>
   </div>
   <div class="feature-grid">
     {#each abundanceAgents.slice(0, 3) as agent}
@@ -130,7 +129,6 @@
         <span class="step-marker">{agent.lane}</span>
         <h3>{agent.name}</h3>
         <p>{agent.summary}</p>
-        <p><strong>{agent.proof}</strong></p>
       </article>
     {/each}
   </div>
@@ -179,10 +177,10 @@
   </section>
 {/if}
 
-<section class="split-section">
+<section class="split-section quiet">
   <div>
     <div class="eyebrow">Research Base</div>
-    <h2>Designed from staffing-market patterns and healthcare accessibility systems.</h2>
+    <h2>Based on staffing-market patterns and accessible healthcare UX.</h2>
   </div>
   <div class="feature-grid">
     {#each sourceModel as source}

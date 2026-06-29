@@ -19,17 +19,15 @@
 <section class="page-hero compact">
   <div class="hero-copy">
     <div class="eyebrow">Abundance Agents</div>
-    <h1 class="page-title">A staffing agent system with recruiter approval built in.</h1>
+    <h1 class="page-title">Agents that support the staffing desk.</h1>
     <p class="lede">
-      These are the client-facing Abundance agent roles. Ona remains a useful internal design
-      precedent for clear operator surfaces, but the staffing brand, naming, and public workflow
-      belong to Abundance.
+      Public roles use Abundance language. Protected work stays behind staff access.
     </p>
   </div>
 
   <div class="proof-panel">
     <div class="eyebrow">Protected Runtime</div>
-    <h2>Agent keys and write-capable actions stay behind staff access.</h2>
+    <h2>Keys and write actions stay private.</h2>
     <ul>
       {#each trustProof.slice(0, 4) as item}
         <li>{item}</li>
@@ -41,7 +39,7 @@
 <section class="section-band">
   <div class="section-heading">
     <div class="eyebrow">Public Agent Roster</div>
-    <h2>Named for the staffing workflow, not for the internal design system.</h2>
+    <h2>Named for the work.</h2>
   </div>
   <div class="feature-grid">
     {#each abundanceAgents as agent}
@@ -49,7 +47,6 @@
         <span class="step-marker">{agent.lane}</span>
         <h3>{agent.name}</h3>
         <p>{agent.summary}</p>
-        <p><strong>{agent.proof}</strong></p>
       </article>
     {/each}
   </div>
@@ -59,10 +56,9 @@
   <section class="access-shell glass panel section-gap">
     <div class="access-copy">
       <div class="eyebrow">Staff Access</div>
-      <h2 class="section-title">Sign in through .agency to use the protected operator chat.</h2>
+      <h2 class="section-title">Staff sign-in unlocks operator chat.</h2>
       <p class="muted">
-        Public pages can describe agent roles. Live Dify calls, credentials, and staffing actions
-        require staff access and remain server-side.
+        Public pages describe roles. Live actions remain server-side.
       </p>
     </div>
     <a class="link-button" href={data.controlPlaneHref} target="_blank" rel="noreferrer"

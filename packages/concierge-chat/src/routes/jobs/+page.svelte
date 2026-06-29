@@ -13,11 +13,9 @@
 <section class="page-hero compact">
   <div class="hero-copy">
     <div class="eyebrow">Nurse Jobs</div>
-    <h1 class="page-title">Search starts with jobs. Matching still ends with recruiter review.</h1>
+    <h1 class="page-title">Browse roles. Start with context.</h1>
     <p class="lede">
-      The production Jobs Agent reads normalized public job data through the governed Abundance Jobs
-      MCP. This page gives the public website a staffing-style jobs entry while keeping writes and
-      paid ingest paths out of the browser.
+      Role cards should help nurses decide fit before they enter a staffing conversation.
     </p>
   </div>
   <div class="metric-stack">
@@ -39,7 +37,7 @@
 <section class="section-band">
   <div class="section-heading">
     <div class="eyebrow">Open Role Pattern</div>
-    <h2>Role cards should make fit scannable before a nurse enters chat.</h2>
+    <h2>Sample roles.</h2>
   </div>
   <div class="job-grid">
     {#each jobHighlights as job}
@@ -59,11 +57,9 @@
 <section class="split-section">
   <div>
     <div class="eyebrow">Production Contract</div>
-    <h2>Public search stays inexpensive and governed.</h2>
+    <h2>Public search stays read-only.</h2>
   </div>
   <p class="lede small">
-    End-user job discovery should read from Abundance-controlled D1 data. Paid upstream refreshes
-    remain behind authenticated admin ingestion, and zero-result searches should explain coverage
-    before creating more vendor calls.
+    Job discovery reads from Abundance-controlled data. Paid refreshes stay behind staff access.
   </p>
 </section>
