@@ -39,11 +39,11 @@
 
   const proofLedger: ClearCardItem[] = [
     {
-      eyebrow: 'Business signal',
+      eyebrow: 'Delivery proof',
       icon: 'folder',
-      title: 'Delivery records use the same service path',
+      title: 'Delivered work shows the pattern',
       detail:
-        'Abundance and ShivWorks show the repeatable pattern: business model, access boundary, visible status, private evidence, and next owner decision.',
+        'Each record shows the business problem, the access boundary, visible status, private evidence, and the next decision owner.',
       points: [
         'Visible: status, decisions, handoff, next action',
         'Private: credentials, logs, raw client data, sensitive proof'
@@ -213,8 +213,8 @@
 <ClearPageSection
   variant="white"
   eyebrow="Client delivery records"
-  title="Lead with what survived real delivery."
-  description="Abundance and ShivWorks show the client-facing sequence: what changed, what was controlled, what stayed private, what the client kept, and what decision came next."
+  title="Start with delivered work, not theory."
+  description="Abundance and ShivWorks show the method in practice: the business problem, the control boundary, what stayed private, what the client owned, and the next step."
 >
   {#snippet after()}
     <ClearCardGrid items={proofLedger} columns={4} ariaLabel="Business proof ledger" />
